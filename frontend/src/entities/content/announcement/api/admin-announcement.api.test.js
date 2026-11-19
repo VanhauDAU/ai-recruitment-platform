@@ -26,7 +26,7 @@ describe('admin announcement lifecycle actions', () => {
       await runAdminAnnouncementAction('ann_1', action, { revision_token: 4 })
 
       expect(post).toHaveBeenCalledWith(
-        `/site/admin/announcements/ann_1/${action}/`,
+        `/admin/site/announcements/ann_1/${action}/`,
         { revision_token: 4 },
       )
     },

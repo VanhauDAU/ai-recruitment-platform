@@ -57,7 +57,7 @@ class CandidateApplicationListQueryBudgetTests(APITestCase):
 
     def test_candidate_application_list_query_count_is_flat(self):
         with self.assertNumQueries(CANDIDATE_APPLICATION_LIST_BUDGET):
-            response = self.client.get(reverse('candidate-application-list-create-v2'))
+            response = self.client.get(reverse('candidate-application-list-create'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data['results']), 3)
 
@@ -99,7 +99,7 @@ class RecruiterApplicationListQueryBudgetTests(APITestCase):
 
     def count_list_queries(self):
         with CaptureQueriesContext(connection) as queries:
-            response = self.client.get(reverse('recruiter-application-list-v2'))
+            response = self.client.get(reverse('recruiter-application-list'))
         self.assertEqual(response.status_code, 200)
         return len(queries)
 

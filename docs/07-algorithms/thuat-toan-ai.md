@@ -20,7 +20,7 @@ nghĩa ở mục 7 đang được xây.
 
 ## 1. Import và cấu trúc hóa CV
 
-Ứng viên tải PDF/DOCX tại `POST /api/v2/cvs/imports/` (multipart hoặc upload
+Ứng viên tải PDF/DOCX tại `POST /api/candidate/cvs/imports/` (multipart hoặc upload
 session đã scan `clean`; xem [`van-hanh-va-kill-switch.md`](../06-deployment/van-hanh-va-kill-switch.md)).
 Service `queue_cv_import` kiểm tra magic bytes, giới hạn 5 MB, tạo `UserCv`
 và `CvImportJob` (`queued`) với `source_expires_at = now +
@@ -183,7 +183,7 @@ Lỗi của `result_validator` cũng tính là một attempt và theo cùng quy 
 - `AiUsageDaily`: tổng theo ngày × use case × provider × model, cộng nguyên tử
   bằng `F()`; thêm `quota_rejection_count` từ `record_ai_quota_rejection`.
 - Chi phí = token vào/ra × giá trong `AI_MODEL_PRICING_USD` (USD/triệu token).
-- `ai_usage_overview(days≤365)` cấp dữ liệu cho `GET /api/ai/admin/overview/`,
+- `ai_usage_overview(days≤365)` cấp dữ liệu cho `GET /api/admin/ai/overview/`,
   gồm p95 latency chính xác trên invocation.
 - Task `purge_expired_ai_metadata` (hằng ngày) xóa theo lô invocation và
   aggregate cũ hơn `AI_INVOCATION_METADATA_RETENTION_DAYS` (365).
@@ -192,7 +192,7 @@ Lỗi của `result_validator` cũng tính là một attempt và theo cùng quy 
 
 Use case `job_post_generation`, prompt/schema `job-post-v2`. Tóm tắt luồng:
 
-1. NTD gửi `POST /api/jobs/mine/ai-generations/` ở mode `ai_brief` hoặc
+1. NTD gửi `POST /api/employer/jobs/ai-generations/` ở mode `ai_brief` hoặc
    `jd_text` kèm `idempotency_key`. Input được sanitize (loại liên hệ/PII);
    cùng key và cùng hash input trả lại generation cũ, khác hash → 409.
 2. Policy `job_ai_policy(company)`: hard switch env AND soft switch Site
@@ -218,7 +218,7 @@ Hợp đồng output, trường cấm và tiêu chí train model xem
 Use case `cv_sample_content`, prompt `cv-sample-v1`, schema
 `cv-sample-content-v1` (`apps/cv_templates/services/sample_generation.py`).
 
-1. Admin gọi `POST /api/v2/admin/cv-sample-contents/generate/` với vị trí ×
+1. Admin gọi `POST /api/admin/cv-sample-contents/generate/` với vị trí ×
    ngôn ngữ × nhóm kinh nghiệm (≤ 16 tổ hợp, ≤ 16 lượt đang chạy; lượt treo quá
    10 phút bị đánh lỗi `stale`). Runtime phải bật và có credential, nếu không
    trả 503 trước khi tạo gì.
@@ -335,7 +335,7 @@ validation do người chấm. Mức: ≥ 80 Rất phù hợp, 65–79 Phù hợ
 phù hợp, < 50 Chưa phù hợp. Độ tin cậy giảm khi có tiêu chí thiếu dữ liệu hoặc
 số tháng kinh nghiệm chỉ ước lượng từ PDF bố cục đảo.
 
-API `/api/matching/analyses/` (xem [tài liệu API](../04-api/tai-lieu-api.md)),
+API `/api/candidate/matching/analyses/` (xem [tài liệu API](../04-api/tai-lieu-api.md)),
 cờ `ai_job_match_enabled`. Vector tính sẵn khi CV có phiên bản mới hoặc tin
 đang mở được lưu (signal, sau commit). Đo trên máy dev (e5-base, CPU trong
 container): chấm một cặp đã có vector khoảng 10 ms, p95 tổng 25 ms; CV vừa sửa

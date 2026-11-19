@@ -22,75 +22,75 @@ export const adminKnowledgeKeys = {
 }
 
 export function getAdminKnowledgeCategories({ signal } = {}) {
-  return data(api.get('/knowledgebase/admin/categories/', { signal }))
+  return data(api.get('/admin/knowledgebase/categories/', { signal }))
 }
 
 export function createAdminKnowledgeCategory(payload) {
-  return data(api.post('/knowledgebase/admin/categories/', payload))
+  return data(api.post('/admin/knowledgebase/categories/', payload))
 }
 
 export function updateAdminKnowledgeCategory(publicId, payload) {
-  return data(api.patch(`/knowledgebase/admin/categories/${publicId}/`, payload))
+  return data(api.patch(`/admin/knowledgebase/categories/${publicId}/`, payload))
 }
 
 export function reorderAdminKnowledgeCategories(publicIds) {
-  return data(api.post('/knowledgebase/admin/categories/reorder/', { public_ids: publicIds }))
+  return data(api.post('/admin/knowledgebase/categories/reorder/', { public_ids: publicIds }))
 }
 
 export function setAdminKnowledgeCategoryActive(publicId, isActive, revisionToken) {
   const action = isActive ? 'activate' : 'deactivate'
-  return data(api.post(`/knowledgebase/admin/categories/${publicId}/${action}/`, {
+  return data(api.post(`/admin/knowledgebase/categories/${publicId}/${action}/`, {
     revision_token: revisionToken,
   }))
 }
 
 export function getAdminKnowledgeArticles(params = {}, { signal } = {}) {
-  return data(api.get('/knowledgebase/admin/articles/', { params, signal }))
+  return data(api.get('/admin/knowledgebase/articles/', { params, signal }))
 }
 
 export function getAdminKnowledgeArticleSummary(params = {}, { signal } = {}) {
-  return data(api.get('/knowledgebase/admin/articles/summary/', { params, signal }))
+  return data(api.get('/admin/knowledgebase/articles/summary/', { params, signal }))
 }
 
 export function getAdminKnowledgeArticle(publicId, { signal } = {}) {
-  return data(api.get(`/knowledgebase/admin/articles/${publicId}/`, { signal }))
+  return data(api.get(`/admin/knowledgebase/articles/${publicId}/`, { signal }))
 }
 
 export function createAdminKnowledgeArticle(payload) {
-  return data(api.post('/knowledgebase/admin/articles/', payload))
+  return data(api.post('/admin/knowledgebase/articles/', payload))
 }
 
 export function updateAdminKnowledgeArticle(publicId, payload) {
-  return data(api.patch(`/knowledgebase/admin/articles/${publicId}/`, payload))
+  return data(api.patch(`/admin/knowledgebase/articles/${publicId}/`, payload))
 }
 
 export function createAdminKnowledgeRevision(publicId, payload) {
-  return data(api.post(`/knowledgebase/admin/articles/${publicId}/revisions/`, payload))
+  return data(api.post(`/admin/knowledgebase/articles/${publicId}/revisions/`, payload))
 }
 
 export function updateAdminKnowledgeRevision(publicId, number, payload) {
-  return data(api.patch(`/knowledgebase/admin/articles/${publicId}/revisions/${number}/`, payload))
+  return data(api.patch(`/admin/knowledgebase/articles/${publicId}/revisions/${number}/`, payload))
 }
 
 export function runAdminKnowledgeRevisionAction(publicId, number, action, payload) {
   return data(api.post(
-    `/knowledgebase/admin/articles/${publicId}/revisions/${number}/${action}/`,
+    `/admin/knowledgebase/articles/${publicId}/revisions/${number}/${action}/`,
     payload,
   ))
 }
 
 export function publishAdminKnowledgeRevision(publicId, payload) {
-  return data(api.post(`/knowledgebase/admin/articles/${publicId}/publish/`, payload))
+  return data(api.post(`/admin/knowledgebase/articles/${publicId}/publish/`, payload))
 }
 
 export function runAdminKnowledgeArticleLifecycle(publicId, action, revisionToken) {
-  return data(api.post(`/knowledgebase/admin/articles/${publicId}/${action}/`, {
+  return data(api.post(`/admin/knowledgebase/articles/${publicId}/${action}/`, {
     revision_token: revisionToken,
   }))
 }
 
 export function getAdminKnowledgeMedia(params = {}, { signal } = {}) {
-  return data(api.get('/knowledgebase/admin/media/', { params, signal })).then((response) => ({
+  return data(api.get('/admin/knowledgebase/media/', { params, signal })).then((response) => ({
     ...response,
     results: (response.results || []).map(normalizeMedia),
   }))
@@ -99,5 +99,5 @@ export function getAdminKnowledgeMedia(params = {}, { signal } = {}) {
 export function uploadAdminKnowledgeMedia(file) {
   const body = new FormData()
   body.append('file', file)
-  return data(api.post('/knowledgebase/admin/media/', body)).then(normalizeMedia)
+  return data(api.post('/admin/knowledgebase/media/', body)).then(normalizeMedia)
 }

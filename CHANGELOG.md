@@ -8,6 +8,16 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-19
 
+#### Changed — API theo cổng (ADR-0022, GĐ4) — **thay đổi phá vỡ**
+
+- Mọi endpoint chuyển sang `/api/{auth,public,candidate,employer,admin,shared}/`;
+  bỏ `/api/v2/`. Ví dụ `/api/jobs/mine/` → `/api/employer/jobs/`,
+  `/api/v2/cvs/` → `/api/candidate/cvs/`, `/api/blog/admin/` → `/api/admin/blog/`.
+  Bảng đầy đủ: `docs/04-api/url-map-2026-11.md`. Không giữ alias cũ.
+- Frontend đổi cùng lúc (API client, mock unit test và E2E).
+- Gỡ API-root của DRF router và route SEO legacy `/jobs`, `/jobs/<slug>`.
+- Bỏ tên `v2` ở module, lớp, tên route và tag OpenAPI.
+
 #### Changed — Backend: tầng API (ADR-0022, GĐ3)
 
 - Lỗi đi qua exception handler chung: Django `ValidationError` thành 400

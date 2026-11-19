@@ -74,13 +74,13 @@ test('knowledgebase admin: explicit save, review and publish workflow', async ({
     let body = {}
     if (path === '/api/auth/refresh/') body = { access: 'e2e-access' }
     else if (path === '/api/auth/me/') body = adminUser
-    else if (path === '/api/privacy/consent/') body = { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
-    else if (path === '/api/knowledgebase/admin/categories/') body = [category]
-    else if (path === '/api/knowledgebase/admin/articles/') {
+    else if (path === '/api/public/privacy/consent/') body = { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
+    else if (path === '/api/admin/knowledgebase/categories/') body = [category]
+    else if (path === '/api/admin/knowledgebase/articles/') {
       body = { count: 1, next: null, previous: null, results: [article] }
-    } else if (path === '/api/knowledgebase/admin/articles/kba_reset/') body = responseArticle()
-    else if (path === '/api/knowledgebase/admin/media/') body = { count: 0, results: [] }
-    else if (path === '/api/knowledgebase/admin/articles/kba_reset/revisions/1/') {
+    } else if (path === '/api/admin/knowledgebase/articles/kba_reset/') body = responseArticle()
+    else if (path === '/api/admin/knowledgebase/media/') body = { count: 0, results: [] }
+    else if (path === '/api/admin/knowledgebase/articles/kba_reset/revisions/1/') {
       const payload = route.request().postDataJSON()
       Object.assign(article.revisions[0], payload, {
         body_plain_text: payload.body.replace(/<[^>]+>/g, ''),
@@ -90,17 +90,17 @@ test('knowledgebase admin: explicit save, review and publish workflow', async ({
       article.revision_token += 1
       article.latest_revision.updated_at = article.revisions[0].updated_at
       body = responseArticle()
-    } else if (path === '/api/knowledgebase/admin/articles/kba_reset/revisions/1/submit/') {
+    } else if (path === '/api/admin/knowledgebase/articles/kba_reset/revisions/1/submit/') {
       article.revisions[0].status = 'IN_REVIEW'
       article.latest_revision.status = 'IN_REVIEW'
       article.revision_token += 1
       body = responseArticle()
-    } else if (path === '/api/knowledgebase/admin/articles/kba_reset/revisions/1/approve/') {
+    } else if (path === '/api/admin/knowledgebase/articles/kba_reset/revisions/1/approve/') {
       article.revisions[0].status = 'APPROVED'
       article.latest_revision.status = 'APPROVED'
       article.revision_token += 1
       body = responseArticle()
-    } else if (path === '/api/knowledgebase/admin/articles/kba_reset/publish/') {
+    } else if (path === '/api/admin/knowledgebase/articles/kba_reset/publish/') {
       article.published_revision_number = 1
       article.first_published_at = '2026-08-05T09:00:00Z'
       article.current_published_at = article.first_published_at
@@ -108,7 +108,7 @@ test('knowledgebase admin: explicit save, review and publish workflow', async ({
       article.revision_token += 1
       category.public_article_count = 1
       body = responseArticle()
-    } else if (path === '/api/knowledgebase/admin/articles/kba_reset/revisions/' && route.request().method() === 'POST') {
+    } else if (path === '/api/admin/knowledgebase/articles/kba_reset/revisions/' && route.request().method() === 'POST') {
       const payload = route.request().postDataJSON()
       const source = article.revisions[0]
       const revision = {

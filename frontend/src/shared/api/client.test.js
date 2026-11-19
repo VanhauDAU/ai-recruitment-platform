@@ -80,7 +80,7 @@ describe('HTTP client interceptor', () => {
     await Promise.all([
       onResponseError(unauthorized('/employer/me/')),
       onResponseError(unauthorized('/employer/company/')),
-      onResponseError(unauthorized('/jobs/')),
+      onResponseError(unauthorized('/public/jobs/')),
     ])
 
     expect(mocks.post).toHaveBeenCalledTimes(1)

@@ -57,23 +57,23 @@ async function mockApi(page) {
     let body = {}
     if (path === '/api/auth/refresh/') body = { access: 'e2e-access' }
     else if (path === '/api/auth/me/') body = { id: 1, role: 'candidate', email_verified: true, job_preferences_configured: true }
-    else if (path === '/api/privacy/consent/') body = request.method() === 'POST' ? { necessary: true } : { consent: null }
-    else if (path === '/api/site/settings/') body = { ai_job_match_enabled: true }
-    else if (path === `/api/jobs/${JOB.slug}/`) body = JOB
-    else if (path === '/api/jobs/') body = { count: 0, results: [] }
-    else if (path === '/api/jobs/categories/' || path === '/api/locations/') body = []
-    else if (path === '/api/v2/applications/rules/') body = APPLICATION_RULES
-    else if (path === '/api/v2/applications/') body = { results: [] }
-    else if (path === '/api/v2/cvs/') {
+    else if (path === '/api/public/privacy/consent/') body = request.method() === 'POST' ? { necessary: true } : { consent: null }
+    else if (path === '/api/public/site/settings/') body = { ai_job_match_enabled: true }
+    else if (path === `/api/public/jobs/${JOB.slug}/`) body = JOB
+    else if (path === '/api/public/jobs/') body = { count: 0, results: [] }
+    else if (path === '/api/public/jobs/categories/' || path === '/api/public/locations/') body = []
+    else if (path === '/api/public/applications/rules/') body = APPLICATION_RULES
+    else if (path === '/api/candidate/applications/') body = { results: [] }
+    else if (path === '/api/candidate/cvs/') {
       body = { results: [{ public_id: 'cv_1', title: 'CV Frontend', is_default: true, cv_type: 'builder', is_complete: true, updated_at: '2026-11-18T08:00:00Z' }] }
-    } else if (path === '/api/matching/analyses/' && request.method() === 'GET') body = []
-    else if (path === '/api/matching/analyses/') body = analysis('queued')
-    else if (path === '/api/matching/analyses/ma_1/') {
+    } else if (path === '/api/candidate/matching/analyses/' && request.method() === 'GET') body = []
+    else if (path === '/api/candidate/matching/analyses/') body = analysis('queued')
+    else if (path === '/api/candidate/matching/analyses/ma_1/') {
       polls += 1
       // Hai lượt poll đầu còn đang xử lý để thấy màn hình phân tích.
       body = analysis(polls <= 2 ? 'processing' : 'succeeded')
     }
-    await route.fulfill({ status: path === '/api/matching/analyses/' && request.method() === 'POST' ? 202 : 200, contentType: 'application/json', body: JSON.stringify(body) })
+    await route.fulfill({ status: path === '/api/candidate/matching/analyses/' && request.method() === 'POST' ? 202 : 200, contentType: 'application/json', body: JSON.stringify(body) })
   })
 }
 

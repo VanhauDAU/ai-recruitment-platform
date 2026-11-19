@@ -61,7 +61,7 @@ test.beforeEach(async ({ page }) => {
 
 test('candidate-data guard redirects a denied applications URL to verification and makes zero sensitive calls', async ({ page }) => {
   let applicationCalls = 0
-  await page.route(/http:\/\/localhost:8000\/api\/v2\/recruiter\/applications\/.*/, async (route) => {
+  await page.route(/http:\/\/localhost:8000\/api\/employer\/applications\/.*/, async (route) => {
     applicationCalls += 1
     await route.fulfill({ contentType: 'application/json', body: '[]' })
   })
@@ -78,7 +78,7 @@ test('candidate-data guard redirects a denied applications URL to verification a
 
 test('job detail keeps aggregate CV count but does not request or render candidate PII', async ({ page }) => {
   let applicationCalls = 0
-  await page.route(/http:\/\/localhost:8000\/api\/v2\/recruiter\/applications\/.*/, async (route) => {
+  await page.route(/http:\/\/localhost:8000\/api\/employer\/applications\/.*/, async (route) => {
     applicationCalls += 1
     await route.fulfill({
       contentType: 'application/json',
@@ -90,7 +90,7 @@ test('job detail keeps aggregate CV count but does not request or render candida
       }]),
     })
   })
-  await page.route('http://localhost:8000/api/jobs/mine/jb_private/', async (route) => {
+  await page.route('http://localhost:8000/api/employer/jobs/jb_private/', async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({
@@ -126,7 +126,7 @@ test('job detail keeps aggregate CV count but does not request or render candida
 test('campaign sensitive tabs keep their URLs without mounting Apply CV or Activity APIs', async ({ page }) => {
   let applicationCalls = 0
   let activityCalls = 0
-  await page.route(/http:\/\/localhost:8000\/api\/v2\/recruiter\/applications\/.*/, async (route) => {
+  await page.route(/http:\/\/localhost:8000\/api\/employer\/applications\/.*/, async (route) => {
     applicationCalls += 1
     await route.fulfill({ contentType: 'application/json', body: '{"count":0,"results":[]}' })
   })

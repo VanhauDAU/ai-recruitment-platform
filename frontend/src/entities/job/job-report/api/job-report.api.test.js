@@ -40,18 +40,18 @@ describe('job report API', () => {
       status: 'dismissed',
     })
 
-    expect(post).toHaveBeenNthCalledWith(1, '/jobs/job_1/report/', {
+    expect(post).toHaveBeenNthCalledWith(1, '/candidate/jobs/job_1/report/', {
       reason: 'scam',
       detail: 'Yêu cầu đóng phí.',
     })
-    expect(get).toHaveBeenCalledWith('/jobs/admin/reports/', {
+    expect(get).toHaveBeenCalledWith('/admin/jobs/reports/', {
       params: { status: 'pending', page: 2 },
     })
-    expect(post).toHaveBeenNthCalledWith(2, '/jobs/admin/reports/jrep_1/resolve/', {
+    expect(post).toHaveBeenNthCalledWith(2, '/admin/jobs/reports/jrep_1/resolve/', {
       status: 'upheld',
       note: 'Đã xác minh.',
     })
-    expect(post).toHaveBeenNthCalledWith(3, '/jobs/admin/reports/jrep_1/reverse/', {
+    expect(post).toHaveBeenNthCalledWith(3, '/admin/jobs/reports/jrep_1/reverse/', {
       note: 'Khiếu nại hợp lệ.',
     })
   })

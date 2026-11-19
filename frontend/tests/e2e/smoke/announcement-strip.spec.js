@@ -38,7 +38,7 @@ async function enableAnnouncementRollout(page) {
 }
 
 async function routeAnnouncementFeed(page, requestedSurfaces = []) {
-  await page.route(/\/api\/site\/announcements\/active\//, async (route) => {
+  await page.route(/\/api\/public\/site\/announcements\/active\//, async (route) => {
     const surface = new URL(route.request().url()).searchParams.get('surface')
     requestedSurfaces.push(surface)
     await route.fulfill({
@@ -124,7 +124,7 @@ test('announcement strip: equal-tier dismiss reveals the next item without a bla
   page.on('pageerror', (error) => pageErrors.push(error.message))
   await enableAnnouncementRollout(page)
   await mockPublicApi(page)
-  await page.route(/\/api\/site\/announcements\/active\//, async (route) => {
+  await page.route(/\/api\/public\/site\/announcements\/active\//, async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({
@@ -252,7 +252,7 @@ test('announcement strip: admin workspace remains below its responsive topbar', 
             email_verified: true,
             admin_access: { is_superuser: true },
           }
-        : path === '/api/site/announcements/active/'
+        : path === '/api/public/site/announcements/active/'
           ? feed(requestUrl.searchParams.get('surface'))
           : path === '/api/admin/accounts/summary/'
             ? requestUrl.searchParams.get('scope') === 'recruiters'
@@ -263,7 +263,7 @@ test('announcement strip: admin workspace remains below its responsive topbar', 
                   verification: { pending: 0 },
                   pending_update_requests: 0,
                 }
-              : path === '/api/privacy/consent/'
+              : path === '/api/public/privacy/consent/'
                 ? {
                     consent: {
                       necessary: true,
@@ -273,7 +273,7 @@ test('announcement strip: admin workspace remains below its responsive topbar', 
                     },
                   }
                 : {}
-    if (path.startsWith('/api/dashboard/admin/')) {
+    if (path.startsWith('/api/admin/dashboard/')) {
       // Dashboard data is not what this test is about: an outage must still
       // leave the topbar and the strip intact.
       await route.fulfill({ status: 503, contentType: 'application/json', body: '{}' })
@@ -301,7 +301,7 @@ test('announcement strip: remote kill switch fails closed without breaking publi
   page.on('pageerror', (error) => pageErrors.push(error.message))
   await enableAnnouncementRollout(page)
   await mockPublicApi(page)
-  await page.route(/\/api\/site\/announcements\/active\//, async (route) => {
+  await page.route(/\/api\/public\/site\/announcements\/active\//, async (route) => {
     const surface = new URL(route.request().url()).searchParams.get('surface')
     await route.fulfill({
       contentType: 'application/json',

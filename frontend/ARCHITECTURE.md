@@ -332,7 +332,7 @@ app/router
   route state, đăng ký metadata rồi compose widget; toàn bộ path/query key và
   HTTP contract công ty công khai thuộc `entities/company/company`. `keyword` là
   contract URL, còn entity/widget ánh xạ sang tham số API `q`.
-- `entities/company/company` chỉ gọi prefix public `/api/companies/`. Không tái sử dụng
+- `entities/company/company` chỉ gọi prefix public `/api/public/companies/`. Không tái sử dụng
   `entities/company/admin-company` hoặc `entities/account/employer-profile`: hai slice đó có
   quyền và payload nội bộ khác. Public DTO không được chứa MST, email, điện
   thoại, địa chỉ có thể là nơi ở hộ kinh doanh, danh tính recruiter hoặc trạng
@@ -405,7 +405,7 @@ pages/admin/companies/CompanyReports
 ```
 
 - Một route, một read model (ADR-0017): `/cong-ty/:slug` đọc
-  `GET /api/companies/<slug>/`. `tim-kiem` là segment tĩnh nên route tìm kiếm
+  `GET /api/public/companies/<slug>/`. `tim-kiem` là segment tĩnh nên route tìm kiếm
   luôn thắng `:slug`; backend giữ nó làm slug dành riêng. Tab và bộ lọc là
   trạng thái URL trên cùng route (`?tab=viec-lam&q=&location=&page=`):
   `companyDetailPath()` sinh URL, `parseCompanyDetailQuery()` chuẩn hoá ngược
@@ -446,7 +446,7 @@ pages/admin/companies/CompanyReports
   `widgets/main/public-company-profile/public-company-profile.css` (đi theo lazy
   chunk), không thêm utility Tailwind mới: CSS khởi tạo đã sát trần budget.
 - `widgets/main/public-company-profile` sở hữu tải việc làm
-  (`GET /api/jobs/?company=<public_id>`, lọc theo mã chứ không theo tên), facet
+  (`GET /api/public/jobs/?company=<public_id>`, lọc theo mã chứ không theo tên), facet
   tỉnh thành (chỉ tải khi mở tab việc làm), công ty cùng lĩnh vực, thẻ tin rút
   gọn không có logo/tên công ty, thanh CTA dính đáy trên màn hẹp, skeleton,
   trạng thái lỗi có thử lại và trạng thái 404. Thanh CTA gắn class
@@ -637,7 +637,7 @@ pages/main/jobs/JobDetail (placement="sidebar": slot dưới thông tin công ty
 - Page quyết định ai được mở (`beforeOpen` = mời đăng nhập/chặn tài khoản không
   phải ứng viên) và chỉ gắn thẻ cho tin còn nhận hồ sơ; feature tự ẩn khi site
   setting `ai_job_match_enabled` tắt.
-- `features/main/application/analyze-job-fit` sở hữu API `/api/matching/analyses/`, poll 800 ms
+- `features/main/application/analyze-job-fit` sở hữu API `/api/candidate/matching/analyses/`, poll 800 ms
   khi `queued`/`processing`, trình bày kết quả (thước bốn mức 50/65/80, tiêu chí,
   kỹ năng kèm câu bằng chứng, yêu cầu, gợi ý, câu "không phải quyết định tuyển
   dụng"). Không tự suy điểm ở frontend; mọi số và câu chữ lấy từ `result_json`.
@@ -739,13 +739,13 @@ pages/employer/jobs/JobList + JobDetail
   (`JobListCard`, `JobDetailHeader`, `JobApplicationsWorkspace`, ...); hàm
   trình bày thuần ở `job-list-presentation.js`/`job-detail-presentation.js`.
 - Số đếm luôn do backend tính: tab trạng thái đọc `status_counts` của
-  `GET /api/jobs/mine/`, badge "N mới" đọc `unviewed_application_count`, chỉ
+  `GET /api/employer/jobs/`, badge "N mới" đọc `unviewed_application_count`, chỉ
   số chi tiết đọc `application_summary`. Không suy số liệu từ trang dữ liệu đã
   tải. Mọi aggregate ứng tuyển tính trên lần nộp mới nhất của mỗi ứng viên;
   "chưa phản hồi" là `Application.UNANSWERED_STATUSES`.
 - URL là nguồn chuẩn: danh sách giữ `status|q|page`; chi tiết giữ `active_tab`
   (`apply_cv|viewed_job|job|cv_label`) và `cv_filter` (`unanswered` hoặc một
-  status). Tab CV gọi `/api/v2/recruiter/applications/?job=…&latest=1` có phân
+  status). Tab CV gọi `/api/employer/applications/?job=…&latest=1` có phân
   trang server và chỉ mount khi `canAccessCandidateData`.
 - Style riêng của hai route nằm trong `employer-jobs.css` (import từ hai page
   lazy); không thêm utility Tailwind mới vì CSS khởi tạo sát trần budget.
@@ -1054,7 +1054,7 @@ app/router (employerAppPath('/company-page'), trong DashboardLayout)
   `employer-company-page.css`), không thêm utility Tailwind mới.
 - Trang công khai: `widgets/main/public-company-profile` gắn nhãn "Nổi bật" cho tin
   có `public_id` thuộc `pinned_job_public_ids` của khối việc làm; thứ tự do
-  `GET /api/jobs/?company=` quyết định, frontend không tự xếp lại.
+  `GET /api/public/jobs/?company=` quyết định, frontend không tự xếp lại.
 
 ## i18n cổng marketing nhà tuyển dụng
 

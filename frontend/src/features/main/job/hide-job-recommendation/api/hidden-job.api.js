@@ -1,7 +1,7 @@
 import api from '@/shared/api/client'
 
 export async function hideJobRecommendation(jobPublicId, source) {
-  const { data } = await api.post('/jobs/recommendations/hidden/', {
+  const { data } = await api.post('/candidate/jobs/recommendations/hidden/', {
     job_public_id: jobPublicId,
     source,
   })
@@ -9,6 +9,6 @@ export async function hideJobRecommendation(jobPublicId, source) {
 }
 
 export async function restoreJobRecommendation(jobPublicId) {
-  const { data } = await api.delete(`/jobs/recommendations/hidden/${jobPublicId}/`)
+  const { data } = await api.delete(`/candidate/jobs/recommendations/hidden/${jobPublicId}/`)
   return data
 }

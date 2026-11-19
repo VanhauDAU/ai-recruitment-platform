@@ -1,3 +1,8 @@
+from apps.applications.api.views.applications import (
+    CandidateApplicationListCreateView,
+    RecruiterApplicationSnapshotView,
+)
+
 from .employer import (
     EmployerApplicationAssessmentView,
     EmployerApplicationDecisionUndoView,
@@ -6,10 +11,9 @@ from .employer import (
     EmployerApplicationListView,
     EmployerApplicationSubmissionsView,
 )
-from .v2 import CandidateApplicationV2ListCreateView, RecruiterApplicationSnapshotView
 
 __all__ = [
-    'CandidateApplicationV2ListCreateView',
+    'CandidateApplicationListCreateView',
     'EmployerApplicationAssessmentView',
     'EmployerApplicationDecisionUndoView',
     'EmployerApplicationDecisionView',

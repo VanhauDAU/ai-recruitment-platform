@@ -9,7 +9,7 @@ workspace. Lý do của từng quyết định nằm ở
 tài liệu này chỉ dẫn ID khi quy tắc phụ thuộc vào nó.
 
 Owner code: app `apps.employers` (model, service, selector, API
-`/api/employer/*`, `/api/admin/*`, `/api/companies/`), app dùng chung
+`/api/employer/*`, `/api/admin/*`, `/api/public/companies/`), app dùng chung
 `apps.uploads` (upload session) và cổng frontend `/tuyendung/app`.
 
 ## 1. Nguyên tắc nền
@@ -292,7 +292,7 @@ gallery) và CV ứng viên đi qua app `uploads`:
 uploading → quarantined → scanning → clean | rejected | error (retry → scanning) | expired
 ```
 
-- API owner-scoped `/api/uploads/sessions/` (tạo, `content/` ghi byte vào
+- API owner-scoped `/api/shared/uploads/sessions/` (tạo, `content/` ghi byte vào
   quarantine, xem trạng thái, `cancel/`, `retry/`). Object của người khác trả
   `404`; không có endpoint download/claim chung. Purpose khai báo tường minh
   theo role: `employer_verification`, `employer_company_update`, `candidate_cv`.
@@ -392,7 +392,7 @@ chạy và PII đã cache bị xóa.
 ## 12. Danh bạ công ty công khai
 
 Theo [ADR-0013](../02-tong-quan/adr-0013-public-companies-api.md):
-`GET /api/companies/` (anonymous) có hai chế độ: không `q` trả tối đa 18 công
+`GET /api/public/companies/` (anonymous) có hai chế độ: không `q` trả tối đa 18 công
 ty nổi bật đã lọc theo recruiter approved, giấy tờ đủ, có logo, ảnh bìa, lĩnh
 vực và tin công khai, xáo thứ tự mỗi lần (`Cache-Control: no-store`); có `q` thì
 tìm không dấu theo tên/tên thương mại trên mọi Company, cursor 18 bản ghi. Không

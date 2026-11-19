@@ -143,7 +143,7 @@ test('admin account management: filters, table actions and quick detail are resp
                   revision: 2,
                 }],
               }
-          : path === '/api/privacy/consent/'
+          : path === '/api/public/privacy/consent/'
             ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
             : {}
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
@@ -241,7 +241,7 @@ test('regular admin: candidate accounts only, no admin accounts, invitations or 
             }
           : path === '/api/admin/accounts/'
             ? { count: 0, next: null, previous: null, results: [] }
-            : path === '/api/privacy/consent/'
+            : path === '/api/public/privacy/consent/'
               ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
               : {}
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
@@ -305,7 +305,7 @@ test('superuser recovers email, then sends password reset', async ({ page }) => 
     let body = {}
     if (path === '/api/auth/refresh/') body = { access: 'e2e-access' }
     else if (path === '/api/auth/me/') body = adminUser
-    else if (path === '/api/privacy/consent/') {
+    else if (path === '/api/public/privacy/consent/') {
       body = {
         consent: {
           necessary: true,
@@ -675,7 +675,7 @@ test('admin employer detail: company media and compact verification comparison r
     else if (path === '/api/admin/company-update-requests/cur_1/') body = companyUpdate
     else if (path === '/api/admin/company-update-requests/') {
       body = { count: 1, next: null, previous: null, results: [companyUpdate] }
-    } else if (path === '/api/privacy/consent/') {
+    } else if (path === '/api/public/privacy/consent/') {
       body = { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
     }
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
@@ -902,7 +902,7 @@ test('admin job management: list, detail and revision-bound hide workflow', asyn
     const request = route.request()
     const path = new URL(request.url()).pathname
     if (
-      path === '/api/jobs/admin/moderation/job_active/decisions/'
+      path === '/api/admin/jobs/moderation/job_active/decisions/'
       && request.method() === 'POST'
     ) {
       decisionPayload = request.postDataJSON()
@@ -911,15 +911,15 @@ test('admin job management: list, detail and revision-bound hide workflow', asyn
       ? { access: 'e2e-access' }
       : path === '/api/auth/me/'
         ? adminUser
-        : path === '/api/privacy/consent/'
+        : path === '/api/public/privacy/consent/'
           ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
-          : path === '/api/jobs/admin/moderation/summary/'
+          : path === '/api/admin/jobs/moderation/summary/'
             ? { total: 1, draft: 0, active: 1, expired: 0, closed: 0, held: 0, pending_reports: 0 }
-            : path === '/api/jobs/admin/moderation/'
+            : path === '/api/admin/jobs/moderation/'
               ? { count: 1, next: null, previous: null, results: [baseJob] }
-              : path === '/api/jobs/admin/moderation/job_active/'
+              : path === '/api/admin/jobs/moderation/job_active/'
                 ? detailJob
-                : path === '/api/jobs/admin/moderation/job_active/decisions/'
+                : path === '/api/admin/jobs/moderation/job_active/decisions/'
                   ? {
                       ...detailJob,
                       moderation_hold: 'manual_review',
@@ -1012,7 +1012,7 @@ test('admin job reports: deep link, filter and resolve workflow', async ({ page 
     const request = route.request()
     const url = new URL(request.url())
     const path = url.pathname
-    if (path === '/api/jobs/admin/reports/jrep_1/resolve/' && request.method() === 'POST') {
+    if (path === '/api/admin/jobs/reports/jrep_1/resolve/' && request.method() === 'POST') {
       resolvePayload = request.postDataJSON()
       status = resolvePayload.status
     }
@@ -1023,16 +1023,16 @@ test('admin job reports: deep link, filter and resolve workflow', async ({ page 
       ? { access: 'e2e-access' }
       : path === '/api/auth/me/'
         ? adminUser
-      : path === '/api/privacy/consent/'
+      : path === '/api/public/privacy/consent/'
         ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
-        : path === '/api/jobs/admin/reports/'
+        : path === '/api/admin/jobs/reports/'
           ? {
               count: matchesFilter ? 1 : 0,
               next: null,
               previous: null,
               results: matchesFilter ? [currentReport] : [],
             }
-          : path === '/api/jobs/admin/reports/jrep_1/resolve/'
+          : path === '/api/admin/jobs/reports/jrep_1/resolve/'
             ? currentReport
             : {}
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
@@ -1109,7 +1109,7 @@ test('admin company reports: queue resolves a report and can hide the company pa
       ? { access: 'e2e-access' }
       : path === '/api/auth/me/'
         ? adminUser
-        : path === '/api/privacy/consent/'
+        : path === '/api/public/privacy/consent/'
           ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
           : path === '/api/admin/company-reports/'
             ? { count: matchesFilter ? 1 : 0, next: null, previous: null, results: matchesFilter ? [currentReport] : [] }

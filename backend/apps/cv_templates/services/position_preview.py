@@ -49,7 +49,7 @@ def compose_position_preview(
     version = template.current_published_version
     cache_key = ':'.join(
         [
-            'cv-position-preview-v2',
+            'cv-position-preview',
             str(version.pk if version else 'missing'),
             locale,
             resolved['position_public_id'] or 'blank',

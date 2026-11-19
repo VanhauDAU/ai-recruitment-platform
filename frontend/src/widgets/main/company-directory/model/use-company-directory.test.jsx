@@ -33,7 +33,7 @@ afterEach(() => vi.clearAllMocks())
 
 describe('nextCompanyCursor', () => {
   it('extracts the opaque cursor without depending on the API host', () => {
-    expect(nextCompanyCursor({ next: 'https://api.example.com/api/companies/?cursor=cD0xOA%3D%3D' }))
+    expect(nextCompanyCursor({ next: 'https://api.example.com/api/public/companies/?cursor=cD0xOA%3D%3D' }))
       .toBe('cD0xOA==')
     expect(nextCompanyCursor({ next: null })).toBeUndefined()
     expect(nextCompanyCursor({ next: 'not a valid url' })).toBeUndefined()
@@ -59,7 +59,7 @@ describe('useCompanyDirectory', () => {
 
   it('loads featured companies once as a finite envelope and ignores next', async () => {
     getPublicCompanies.mockResolvedValue({
-      next: 'https://api.example.com/api/companies/?cursor=must-not-follow',
+      next: 'https://api.example.com/api/public/companies/?cursor=must-not-follow',
       previous: null,
       results: [company('featured_1')],
     })
@@ -89,7 +89,7 @@ describe('useCompanyDirectory', () => {
       if (!params.cursor) {
         return Promise.resolve({
           count: 2,
-          next: 'https://api.example.com/api/companies/?q=Alpha&cursor=page-two',
+          next: 'https://api.example.com/api/public/companies/?q=Alpha&cursor=page-two',
           previous: null,
           results: [company('search_1')],
         })
@@ -97,7 +97,7 @@ describe('useCompanyDirectory', () => {
       return Promise.resolve({
         count: 99,
         next: null,
-        previous: 'https://api.example.com/api/companies/?q=Alpha',
+        previous: 'https://api.example.com/api/public/companies/?q=Alpha',
         results: [company('search_2')],
       })
     })

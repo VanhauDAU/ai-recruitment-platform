@@ -9,7 +9,7 @@ test hợp đồng `test_query_budget.py`.
 ```mermaid
 sequenceDiagram
     participant FE as ApplyForJobModal
-    participant API as POST /api/v2/applications/
+    participant API as POST /api/candidate/applications/
     participant SVC as create_application_record
     participant DB as PostgreSQL
 
@@ -51,7 +51,7 @@ sequenceDiagram
   + `defer` các cột text lớn ở chế độ list — số query **phẳng theo số bản ghi**.
 - ✅ Full-text: dùng `unaccent` (extension bật qua migration) + fold accents ở
   `common/db/search.py`.
-- ✅ Query budget: **5** cho `GET /api/jobs/` (khóa bằng test).
+- ✅ Query budget: **5** cho `GET /api/public/jobs/` (khóa bằng test).
 - Index: `status`, `candidate`, `job` đã có; các cột filter chính đi qua FK đã
   index mặc định.
 

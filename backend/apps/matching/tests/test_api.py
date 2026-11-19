@@ -1,4 +1,4 @@
-"""API `/api/matching/analyses/` theo các kịch bản nghiệm thu (kế hoạch mục 10c)."""
+"""API `/api/candidate/matching/analyses/` theo các kịch bản nghiệm thu (kế hoạch mục 10c)."""
 
 from datetime import timedelta
 from unittest.mock import patch

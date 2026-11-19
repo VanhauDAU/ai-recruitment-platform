@@ -17,10 +17,10 @@ nhầm lẫn trong client, log và tài liệu API.
 Danh bạ công ty công khai dùng prefix theo tài nguyên:
 
 ```text
-GET /api/companies/
+GET /api/public/companies/
 ```
 
-Prefix `/api/companies/` là ngoại lệ có chủ đích so với quy ước `/api/<app>/`
+Prefix `/api/public/companies/` là ngoại lệ có chủ đích so với quy ước `/api/<app>/`
 của ADR-0010 (nay là ADR-0022): app `employers` tiếp tục sở hữu model và read model, còn HTTP
 namespace phân biệt rõ catalogue công khai với cổng employer riêng tư.
 

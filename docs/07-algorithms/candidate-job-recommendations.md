@@ -4,11 +4,11 @@
 
 Tài liệu này mô tả đúng phiên bản rule-based đang chạy cho:
 
-- `GET /api/jobs/recommendations/for-me/`: feed “Việc làm phù hợp” trong tài khoản.
-- `GET /api/jobs/recommendations/by-cv/{cv_public_id}/`: tối đa 6 việc làm sau khi lưu một CV.
-- `GET /api/jobs/recommendations/inline/`: lane 0 hoặc 1–2 tin được chèn vào kết quả
+- `GET /api/candidate/jobs/recommendations/for-me/`: feed “Việc làm phù hợp” trong tài khoản.
+- `GET /api/candidate/jobs/recommendations/by-cv/{cv_public_id}/`: tối đa 6 việc làm sau khi lưu một CV.
+- `GET /api/candidate/jobs/recommendations/inline/`: lane 0 hoặc 1–2 tin được chèn vào kết quả
   tìm việc.
-- `POST/DELETE /api/jobs/recommendations/hidden/...`: ẩn và hoàn tác ẩn một tin
+- `POST/DELETE /api/candidate/jobs/recommendations/hidden/...`: ẩn và hoàn tác ẩn một tin
   trên các bề mặt cá nhân hóa.
 
 Gợi ý riêng từ lịch sử lưu dùng contract và trọng số khác, xem
@@ -125,7 +125,7 @@ mới không hiển thị phần trăm hoặc badge mức độ phù hợp.
 
 ## Lane inline và thao tác ẩn
 
-`GET /api/jobs/recommendations/inline/` yêu cầu `ranking_seed` theo mẫu
+`GET /api/candidate/jobs/recommendations/inline/` yêu cầu `ranking_seed` theo mẫu
 `[A-Za-z0-9_-]` dài tối đa 64 ký tự và `excluded` là CSV tối đa 50 public ID của
 trang canonical; `page>=1` và mặc định là 1. Sau khi kiểm setup/consent, hash SHA-256 của
 `candidate + ranking_seed + page` quyết định xác suất hiển thị 40%. Nhánh
@@ -137,9 +137,9 @@ Inline loại các ID canonical client gửi, tin đã ứng tuyển và tin đ�
 Job dùng nguyên `PublicJobListSerializer`, vì vậy `presentation` (nhãn `tier`,
 HOT, GẤP, phản hồi nhanh) giống hệt danh sách việc làm.
 
-`POST /api/jobs/recommendations/hidden/` nhận `job_public_id` và `source` thuộc
+`POST /api/candidate/jobs/recommendations/hidden/` nhận `job_public_id` và `source` thuộc
 `matching|homepage|inline`. Unique `(candidate, job)` làm POST idempotent.
-`DELETE /api/jobs/recommendations/hidden/{job_public_id}/` chỉ xóa bản ghi của
+`DELETE /api/candidate/jobs/recommendations/hidden/{job_public_id}/` chỉ xóa bản ghi của
 actor hiện tại và cũng idempotent. Tin bị ẩn không còn ở `for-me`, homepage dùng
 feed này, inline hoặc email suitable; public search, job detail và danh sách đã
 lưu không bị ảnh hưởng. Hệ thống chưa suy rộng thao tác ẩn sang các tin liên quan.

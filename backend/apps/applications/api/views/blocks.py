@@ -20,7 +20,7 @@ def _block_context(user):
     return {'user': user, 'is_company_owner': recruiter_is_company_owner(user)}
 
 
-@extend_schema(tags=['applications-v2'])
+@extend_schema(tags=['applications'])
 class RecruiterCandidateBlockListCreateView(generics.ListAPIView):
     permission_classes = [IsEmployer]
     serializer_class = CandidateBlockSerializer
@@ -60,7 +60,7 @@ class RecruiterCandidateBlockListCreateView(generics.ListAPIView):
 
 
 @extend_schema(
-    tags=['applications-v2'],
+    tags=['applications'],
     summary='Gỡ chặn ứng viên',
     request=None,
     responses={200: CandidateBlockSerializer},

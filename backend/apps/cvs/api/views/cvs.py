@@ -25,12 +25,33 @@ from apps.cv_templates.services import (
     PositionContentUnavailable,
     compose_cv_document,
 )
-from apps.uploads.services import UploadServiceError
-from common.metrics import record_metric
-from common.storage.r2 import private_media_storage
-
-from ...models import CvAsset, CvImportJob, CvVersion, UserCv
-from ...selectors import (
+from apps.cvs.api.exceptions import (
+    CandidateCvRejectedResponse,
+    CandidateUploadSessionRequiredResponse,
+    CandidateUploadSessionResponse,
+)
+from apps.cvs.api.serializers.cvs import (
+    CvApplySampleSerializer,
+    CvAssetSerializer,
+    CvAssetUploadSerializer,
+    CvCreateSerializer,
+    CvDraftSerializer,
+    CvDraftWriteSerializer,
+    CvDuplicateSerializer,
+    CvExportCreateSerializer,
+    CvExportSerializer,
+    CvImportSerializer,
+    CvMetadataUpdateSerializer,
+    CvSerializer,
+    CvSharedLinkCreateSerializer,
+    CvSharedLinkSerializer,
+    CvTemplateSwitchSerializer,
+    CvVersionSerializer,
+    CvVersionSummarySerializer,
+    SharedCvVersionSerializer,
+)
+from apps.cvs.models import CvAsset, CvImportJob, CvVersion, UserCv
+from apps.cvs.selectors import (
     candidate_cv_by_public_id,
     candidate_cv_versions_queryset,
     candidate_cvs_queryset,
@@ -39,7 +60,7 @@ from ...selectors import (
     cv_exports_queryset,
     cv_shared_links_queryset,
 )
-from ...services import (
+from apps.cvs.services import (
     CvCreateInProgress,
     CvDocumentRejected,
     CvExportPermissionError,
@@ -80,31 +101,9 @@ from ...services import (
     update_draft,
     validate_import_upload,
 )
-from ..exceptions import (
-    CandidateCvRejectedResponse,
-    CandidateUploadSessionRequiredResponse,
-    CandidateUploadSessionResponse,
-)
-from ..serializers.v2 import (
-    CvApplySampleSerializer,
-    CvAssetSerializer,
-    CvAssetUploadSerializer,
-    CvDraftSerializer,
-    CvDraftWriteSerializer,
-    CvExportCreateSerializer,
-    CvExportSerializer,
-    CvSharedLinkCreateSerializer,
-    CvSharedLinkSerializer,
-    CvTemplateSwitchSerializer,
-    CvV2CreateSerializer,
-    CvV2DuplicateSerializer,
-    CvV2ImportSerializer,
-    CvV2MetadataUpdateSerializer,
-    CvV2Serializer,
-    CvVersionSerializer,
-    CvVersionSummarySerializer,
-    SharedCvVersionSerializer,
-)
+from apps.uploads.services import UploadServiceError
+from common.metrics import record_metric
+from common.storage.r2 import private_media_storage
 
 LOCK_HEADER_RE = re.compile(r'^"?lock-version-(\d+)"?$')
 
@@ -128,7 +127,7 @@ def draft_conflict_response(cv):
     )
 
 
-class CandidateV2CvMixin:
+class CandidateCvMixin:
     permission_classes = [IsCandidate]
 
     def get_cv(self):
@@ -142,19 +141,19 @@ class CandidateV2CvMixin:
     get=extend_schema(summary='Danh sách CV của ứng viên'),
     post=extend_schema(
         summary='Tạo CV mới (Idempotency-Key tùy chọn)',
-        request=CvV2CreateSerializer,
-        responses={200: CvV2Serializer, 201: CvV2Serializer, 409: OpenApiTypes.OBJECT},
+        request=CvCreateSerializer,
+        responses={200: CvSerializer, 201: CvSerializer, 409: OpenApiTypes.OBJECT},
     ),
 )
-@extend_schema(tags=['cvs-v2'])
-class CvV2ListCreateView(generics.ListCreateAPIView):
+@extend_schema(tags=['cvs'])
+class CvListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsCandidate]
 
     def get_queryset(self):
         return candidate_cvs_queryset(self.request.user)
 
     def get_serializer_class(self):
-        return CvV2CreateSerializer if self.request.method == 'POST' else CvV2Serializer
+        return CvCreateSerializer if self.request.method == 'POST' else CvSerializer
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -178,32 +177,32 @@ class CvV2ListCreateView(generics.ListCreateAPIView):
         except CvCreateInProgress as error:
             return Response({'detail': str(error)}, status=status.HTTP_409_CONFLICT)
         return Response(
-            CvV2Serializer(cv).data,
+            CvSerializer(cv).data,
             status=status.HTTP_200_OK if replayed else status.HTTP_201_CREATED,
         )
 
 
-class CvV2DetailView(CandidateV2CvMixin, APIView):
+class CvDetailView(CandidateCvMixin, APIView):
     model = UserCv
 
-    @extend_schema(summary='Chi tiết CV', responses={200: CvV2Serializer}, tags=['cvs-v2'])
+    @extend_schema(summary='Chi tiết CV', responses={200: CvSerializer}, tags=['cvs'])
     def get(self, request, public_id):
-        return Response(CvV2Serializer(self.get_cv(), context={'request': request}).data)
+        return Response(CvSerializer(self.get_cv(), context={'request': request}).data)
 
     @extend_schema(
         summary='Cập nhật metadata CV',
-        request=CvV2MetadataUpdateSerializer,
-        responses={200: CvV2Serializer},
-        tags=['cvs-v2'],
+        request=CvMetadataUpdateSerializer,
+        responses={200: CvSerializer},
+        tags=['cvs'],
     )
     def patch(self, request, public_id):
         cv = self.get_cv()
-        serializer = CvV2MetadataUpdateSerializer(data=request.data)
+        serializer = CvMetadataUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         updated_cv = update_cv_metadata(cv=cv, actor=request.user, **serializer.validated_data)
-        return Response(CvV2Serializer(updated_cv).data)
+        return Response(CvSerializer(updated_cv).data)
 
-    @extend_schema(summary='Xóa vĩnh viễn CV', responses={204: None}, tags=['cvs-v2'])
+    @extend_schema(summary='Xóa vĩnh viễn CV', responses={204: None}, tags=['cvs'])
     def delete(self, request, public_id):
         try:
             permanently_delete_cv(cv=self.get_cv(), actor=request.user)
@@ -212,17 +211,17 @@ class CvV2DetailView(CandidateV2CvMixin, APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class CvV2DuplicateView(CandidateV2CvMixin, APIView):
+class CvDuplicateView(CandidateCvMixin, APIView):
     model = UserCv
 
     @extend_schema(
         summary='Nhân bản CV',
-        request=CvV2DuplicateSerializer,
-        responses={201: CvV2Serializer},
-        tags=['cvs-v2'],
+        request=CvDuplicateSerializer,
+        responses={201: CvSerializer},
+        tags=['cvs'],
     )
     def post(self, request, public_id):
-        serializer = CvV2DuplicateSerializer(data=request.data)
+        serializer = CvDuplicateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
             duplicate = duplicate_cv(
@@ -232,10 +231,10 @@ class CvV2DuplicateView(CandidateV2CvMixin, APIView):
             )
         except ValueError as error:
             raise ValidationError({'detail': str(error)}) from error
-        return Response(CvV2Serializer(duplicate).data, status=status.HTTP_201_CREATED)
+        return Response(CvSerializer(duplicate).data, status=status.HTTP_201_CREATED)
 
 
-class CvV2ImportView(APIView):
+class CvImportView(APIView):
     """Import a user-owned PDF/DOCX without exposing a storage URL."""
 
     permission_classes = [IsCandidate]
@@ -245,12 +244,12 @@ class CvV2ImportView(APIView):
 
     @extend_schema(
         summary='Import CV từ tệp PDF/DOCX',
-        request=CvV2ImportSerializer,
-        responses={200: CvV2Serializer, 201: CvV2Serializer, 202: CvV2Serializer},
-        tags=['cvs-v2'],
+        request=CvImportSerializer,
+        responses={200: CvSerializer, 201: CvSerializer, 202: CvSerializer},
+        tags=['cvs'],
     )
     def post(self, request):
-        serializer = CvV2ImportSerializer(data=request.data)
+        serializer = CvImportSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         upload = serializer.validated_data.get('file')
         upload_session_public_id = serializer.validated_data.get('upload_session', '')
@@ -290,7 +289,7 @@ class CvV2ImportView(APIView):
                 field = 'upload_session' if upload_session_public_id else 'file'
                 raise ValidationError({field: str(error)}) from error
             return Response(
-                CvV2Serializer(cv).data,
+                CvSerializer(cv).data,
                 status=status.HTTP_202_ACCEPTED if created else status.HTTP_200_OK,
             )
         try:
@@ -313,10 +312,10 @@ class CvV2ImportView(APIView):
         except (UnsupportedCvUpload, InvalidCvImport) as error:
             field = 'upload_session' if upload_session_public_id else 'file'
             raise ValidationError({field: str(error)}) from error
-        return Response(CvV2Serializer(cv).data, status=status.HTTP_201_CREATED)
+        return Response(CvSerializer(cv).data, status=status.HTTP_201_CREATED)
 
 
-class CvV2ImportRetryView(CandidateV2CvMixin, APIView):
+class CvImportRetryView(CandidateCvMixin, APIView):
     model = UserCv
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = 'cv_import'
@@ -324,8 +323,8 @@ class CvV2ImportRetryView(CandidateV2CvMixin, APIView):
     @extend_schema(
         summary='Thử lại job import CV',
         request=None,
-        responses={202: CvV2Serializer},
-        tags=['cvs-v2'],
+        responses={202: CvSerializer},
+        tags=['cvs'],
     )
     def post(self, request, public_id):
         cv = self.get_cv()
@@ -336,7 +335,7 @@ class CvV2ImportRetryView(CandidateV2CvMixin, APIView):
         except InvalidCvImport as error:
             raise ValidationError({'detail': str(error)}) from error
         cv.refresh_from_db()
-        return Response(CvV2Serializer(cv).data, status=status.HTTP_202_ACCEPTED)
+        return Response(CvSerializer(cv).data, status=status.HTTP_202_ACCEPTED)
 
 
 def read_only_cv_payload(cv, version, request=None):
@@ -352,7 +351,7 @@ def read_only_cv_payload(cv, version, request=None):
     }
 
 
-class CvV2OwnerVersionView(CandidateV2CvMixin, APIView):
+class CvOwnerVersionView(CandidateCvMixin, APIView):
     """Candidate-only read view deliberately sourced from an immutable version."""
 
     model = UserCv
@@ -377,7 +376,7 @@ class CvV2OwnerVersionView(CandidateV2CvMixin, APIView):
                 },
             )
         },
-        tags=['cvs-v2'],
+        tags=['cvs'],
     )
     def get(self, request, public_id):
         cv = self.get_cv()
@@ -388,7 +387,7 @@ class CvV2OwnerVersionView(CandidateV2CvMixin, APIView):
         return Response(read_only_cv_payload(cv, version, request))
 
 
-class CvV2SharedLinkListCreateView(CandidateV2CvMixin, APIView):
+class CvSharedLinkListCreateView(CandidateCvMixin, APIView):
     """Owner-scoped shared-link management; raw token is returned exactly once."""
 
     model = UserCv
@@ -396,7 +395,7 @@ class CvV2SharedLinkListCreateView(CandidateV2CvMixin, APIView):
     @extend_schema(
         summary='Danh sách link chia sẻ của CV',
         responses={200: CvSharedLinkSerializer(many=True)},
-        tags=['cvs-v2'],
+        tags=['cvs'],
     )
     def get(self, request, public_id):
         links = cv_shared_links_queryset(self.get_cv())
@@ -414,7 +413,7 @@ class CvV2SharedLinkListCreateView(CandidateV2CvMixin, APIView):
                 },
             )
         },
-        tags=['cvs-v2'],
+        tags=['cvs'],
     )
     def post(self, request, public_id):
         cv = self.get_cv()
@@ -435,10 +434,10 @@ class CvV2SharedLinkListCreateView(CandidateV2CvMixin, APIView):
         )
 
 
-class CvV2SharedLinkRevokeView(CandidateV2CvMixin, APIView):
+class CvSharedLinkRevokeView(CandidateCvMixin, APIView):
     model = UserCv
 
-    @extend_schema(summary='Thu hồi link chia sẻ', responses={204: None}, tags=['cvs-v2'])
+    @extend_schema(summary='Thu hồi link chia sẻ', responses={204: None}, tags=['cvs'])
     def delete(self, request, public_id, link_public_id):
         cv = self.get_cv()
         try:
@@ -454,7 +453,7 @@ class CvV2SharedLinkRevokeView(CandidateV2CvMixin, APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class CvV2SharedLinkPublicView(APIView):
+class CvSharedLinkPublicView(APIView):
     """Unauthenticated bearer endpoint. Invalid/revoked/expired links are indistinguishable."""
 
     permission_classes = [permissions.AllowAny]
@@ -480,7 +479,7 @@ class CvV2SharedLinkPublicView(APIView):
                 },
             )
         },
-        tags=['cvs-v2'],
+        tags=['cvs'],
     )
     def get(self, request, token):
         try:
@@ -490,7 +489,7 @@ class CvV2SharedLinkPublicView(APIView):
         return Response(read_only_cv_payload(link.cv, version, request))
 
 
-class CvV2ExportListCreateView(CandidateV2CvMixin, APIView):
+class CvExportListCreateView(CandidateCvMixin, APIView):
     """Owner-only PDF jobs sourced from immutable versions, never drafts."""
 
     model = UserCv
@@ -498,7 +497,7 @@ class CvV2ExportListCreateView(CandidateV2CvMixin, APIView):
     @extend_schema(
         summary='Danh sách job export PDF',
         responses={200: CvExportSerializer(many=True)},
-        tags=['cvs-v2'],
+        tags=['cvs'],
     )
     def get(self, request, public_id):
         exports = cv_exports_queryset(self.get_cv())
@@ -508,7 +507,7 @@ class CvV2ExportListCreateView(CandidateV2CvMixin, APIView):
         summary='Tạo job export PDF từ version bất biến',
         request=CvExportCreateSerializer,
         responses={200: CvExportSerializer, 201: CvExportSerializer},
-        tags=['cvs-v2'],
+        tags=['cvs'],
     )
     def post(self, request, public_id):
         cv = self.get_cv()
@@ -534,11 +533,11 @@ class CvV2ExportListCreateView(CandidateV2CvMixin, APIView):
         )
 
 
-class CvV2ExportDetailView(CandidateV2CvMixin, APIView):
+class CvExportDetailView(CandidateCvMixin, APIView):
     model = UserCv
 
     @extend_schema(
-        summary='Trạng thái job export', responses={200: CvExportSerializer}, tags=['cvs-v2']
+        summary='Trạng thái job export', responses={200: CvExportSerializer}, tags=['cvs']
     )
     def get(self, request, public_id, export_public_id):
         cv = self.get_cv()
@@ -549,14 +548,14 @@ class CvV2ExportDetailView(CandidateV2CvMixin, APIView):
         return Response(CvExportSerializer(export, context={'request': request}).data)
 
 
-class CvV2ExportRetryView(CandidateV2CvMixin, APIView):
+class CvExportRetryView(CandidateCvMixin, APIView):
     model = UserCv
 
     @extend_schema(
         summary='Thử lại job export',
         request=None,
         responses={202: CvExportSerializer},
-        tags=['cvs-v2'],
+        tags=['cvs'],
     )
     def post(self, request, public_id, export_public_id):
         cv = self.get_cv()
@@ -577,7 +576,7 @@ class CvV2ExportRetryView(CandidateV2CvMixin, APIView):
         )
 
 
-class CvV2ExportDownloadView(CandidateV2CvMixin, APIView):
+class CvExportDownloadView(CandidateCvMixin, APIView):
     """Controlled owner download; no storage key or public media URL is exposed."""
 
     model = UserCv
@@ -585,7 +584,7 @@ class CvV2ExportDownloadView(CandidateV2CvMixin, APIView):
     @extend_schema(
         summary='Tải PDF đã export',
         responses={(200, 'application/pdf'): OpenApiTypes.BINARY},
-        tags=['cvs-v2'],
+        tags=['cvs'],
     )
     def get(self, request, public_id, export_public_id):
         cv = self.get_cv()
@@ -615,7 +614,7 @@ def uploaded_cv_pdf_response(cv):
     return response
 
 
-class CvV2SourceFileView(CandidateV2CvMixin, APIView):
+class CvSourceFileView(CandidateCvMixin, APIView):
     """Owner-only inline PDF of an uploaded CV's original file."""
 
     model = UserCv
@@ -623,13 +622,13 @@ class CvV2SourceFileView(CandidateV2CvMixin, APIView):
     @extend_schema(
         summary='Xem tệp gốc của CV tải lên (PDF)',
         responses={(200, 'application/pdf'): OpenApiTypes.BINARY},
-        tags=['cvs-v2'],
+        tags=['cvs'],
     )
     def get(self, request, public_id):
         return uploaded_cv_pdf_response(self.get_cv())
 
 
-class CvV2SharedSourceFileView(APIView):
+class CvSharedSourceFileView(APIView):
     """Original file of an uploaded CV behind a valid share link."""
 
     permission_classes = [permissions.AllowAny]
@@ -638,7 +637,7 @@ class CvV2SharedSourceFileView(APIView):
     @extend_schema(
         summary='Tệp gốc của CV tải lên qua link chia sẻ (PDF)',
         responses={(200, 'application/pdf'): OpenApiTypes.BINARY},
-        tags=['cvs-v2'],
+        tags=['cvs'],
     )
     def get(self, request, token):
         try:
@@ -649,7 +648,7 @@ class CvV2SharedSourceFileView(APIView):
         return uploaded_cv_pdf_response(link.cv)
 
 
-class CvV2ThumbnailView(CandidateV2CvMixin, APIView):
+class CvThumbnailView(CandidateCvMixin, APIView):
     """Owner-only first-page image; the private storage key is never serialized."""
 
     model = UserCv
@@ -657,7 +656,7 @@ class CvV2ThumbnailView(CandidateV2CvMixin, APIView):
     @extend_schema(
         summary='Ảnh preview trang đầu (WebP)',
         responses={(200, 'image/webp'): OpenApiTypes.BINARY},
-        tags=['cvs-v2'],
+        tags=['cvs'],
     )
     def get(self, request, public_id):
         cv = self.get_cv()
@@ -681,7 +680,7 @@ class CvV2ThumbnailView(CandidateV2CvMixin, APIView):
                 },
             )
         },
-        tags=['cvs-v2'],
+        tags=['cvs'],
     )
     def post(self, request, public_id):
         try:
@@ -689,18 +688,18 @@ class CvV2ThumbnailView(CandidateV2CvMixin, APIView):
         except (ValueError, CvVersion.DoesNotExist) as error:
             raise Http404 from error
         ready = current_thumbnail_ready(cv)
-        payload = CvV2Serializer(cv, context={'request': request}).data
+        payload = CvSerializer(cv, context={'request': request}).data
         return Response(
             {'status': 'ready' if ready else 'pending', 'thumbnail_url': payload['thumbnail_url']},
             status=status.HTTP_200_OK if ready else status.HTTP_202_ACCEPTED,
         )
 
 
-class CvV2DraftView(CandidateV2CvMixin, APIView):
+class CvDraftView(CandidateCvMixin, APIView):
     model = UserCv
 
     @extend_schema(
-        summary='Đọc bản nháp đang soạn', responses={200: CvDraftSerializer}, tags=['cvs-v2']
+        summary='Đọc bản nháp đang soạn', responses={200: CvDraftSerializer}, tags=['cvs']
     )
     def get(self, request, public_id):
         draft = cv_draft(self.get_cv())
@@ -715,7 +714,7 @@ class CvV2DraftView(CandidateV2CvMixin, APIView):
         summary='Lưu bản nháp (autosave, cần header If-Match: "lock-version-N")',
         request=CvDraftWriteSerializer,
         responses={200: CvDraftSerializer, 409: OpenApiTypes.OBJECT},
-        tags=['cvs-v2'],
+        tags=['cvs'],
     )
     def put(self, request, public_id):
         cv = self.get_cv()
@@ -741,7 +740,7 @@ class CvV2DraftView(CandidateV2CvMixin, APIView):
         )
 
 
-class CvV2TemplateSwitchView(CandidateV2CvMixin, APIView):
+class CvTemplateSwitchView(CandidateCvMixin, APIView):
     """Switch presentation contract while keeping the canonical content immutable."""
 
     model = UserCv
@@ -753,13 +752,13 @@ class CvV2TemplateSwitchView(CandidateV2CvMixin, APIView):
             200: inline_serializer(
                 'CvTemplateSwitched',
                 {
-                    'cv': CvV2Serializer(),
+                    'cv': CvSerializer(),
                     'draft': CvDraftSerializer(),
                 },
             ),
             409: OpenApiTypes.OBJECT,
         },
-        tags=['cvs-v2'],
+        tags=['cvs'],
     )
     def put(self, request, public_id):
         cv = self.get_cv()
@@ -783,14 +782,14 @@ class CvV2TemplateSwitchView(CandidateV2CvMixin, APIView):
             raise ValidationError(detail) from error
         return Response(
             {
-                'cv': CvV2Serializer(switched_cv).data,
+                'cv': CvSerializer(switched_cv).data,
                 'draft': CvDraftSerializer(draft, context={'request': request}).data,
             },
             headers={'ETag': f'"lock-version-{draft.lock_version}"'},
         )
 
 
-class CvV2TemplatePreviewView(CandidateV2CvMixin, APIView):
+class CvTemplatePreviewView(CandidateCvMixin, APIView):
     """Project one owned draft onto a template without mutating either aggregate."""
 
     model = UserCv
@@ -802,7 +801,7 @@ class CvV2TemplatePreviewView(CandidateV2CvMixin, APIView):
             OpenApiParameter('theme_color', str, description='Hex 6 ký tự, ví dụ #1A73E8'),
         ],
         responses={200: OpenApiTypes.OBJECT},
-        tags=['cvs-v2'],
+        tags=['cvs'],
     )
     def get(self, request, public_id):
         cv = self.get_cv()
@@ -845,7 +844,7 @@ class CvV2TemplatePreviewView(CandidateV2CvMixin, APIView):
         )
 
 
-class CvV2AssetUploadView(APIView):
+class CvAssetUploadView(APIView):
     permission_classes = [IsCandidate]
     parser_classes = [parsers.MultiPartParser, parsers.FormParser]
 
@@ -853,7 +852,7 @@ class CvV2AssetUploadView(APIView):
         summary='Tải ảnh đại diện dùng trong CV',
         request=CvAssetUploadSerializer,
         responses={201: CvAssetSerializer},
-        tags=['cvs-v2'],
+        tags=['cvs'],
     )
     def post(self, request):
         serializer = CvAssetUploadSerializer(data=request.data)
@@ -878,14 +877,14 @@ class CvV2AssetUploadView(APIView):
         )
 
 
-class CvV2AssetContentView(APIView):
+class CvAssetContentView(APIView):
     permission_classes = [permissions.AllowAny]
 
     @extend_schema(
         summary='Nội dung nhị phân của asset CV',
         parameters=[OpenApiParameter('token', str, description='Token truy cập tạm thời')],
         responses={(200, 'application/octet-stream'): OpenApiTypes.BINARY},
-        tags=['cvs-v2'],
+        tags=['cvs'],
     )
     def get(self, request, asset_public_id):
         try:
@@ -903,14 +902,14 @@ class CvV2AssetContentView(APIView):
         return FileResponse(stream, content_type=asset.content_type)
 
 
-class CvV2ApplySampleView(CandidateV2CvMixin, APIView):
+class CvApplySampleView(CandidateCvMixin, APIView):
     model = UserCv
 
     @extend_schema(
         summary='Áp nội dung mẫu vào bản nháp',
         request=CvApplySampleSerializer,
         responses={200: CvDraftSerializer, 409: OpenApiTypes.OBJECT},
-        tags=['cvs-v2'],
+        tags=['cvs'],
     )
     def post(self, request, public_id):
         cv = self.get_cv()
@@ -937,7 +936,7 @@ class CvV2ApplySampleView(CandidateV2CvMixin, APIView):
         )
 
 
-class CvV2SaveVersionView(CandidateV2CvMixin, APIView):
+class CvSaveVersionView(CandidateCvMixin, APIView):
     model = UserCv
     publish = False
 
@@ -945,7 +944,7 @@ class CvV2SaveVersionView(CandidateV2CvMixin, APIView):
         summary='Lưu bản nháp thành version bất biến',
         request=None,
         responses={201: CvVersionSerializer, 409: OpenApiTypes.OBJECT},
-        tags=['cvs-v2'],
+        tags=['cvs'],
     )
     def post(self, request, public_id):
         cv = self.get_cv()
@@ -963,12 +962,12 @@ class CvV2SaveVersionView(CandidateV2CvMixin, APIView):
         return Response(CvVersionSerializer(version).data, status=status.HTTP_201_CREATED)
 
 
-class CvV2PublishView(CvV2SaveVersionView):
+class CvPublishView(CvSaveVersionView):
     publish = True
 
 
-@extend_schema(summary='Lịch sử version bất biến của CV', tags=['cvs-v2'])
-class CvV2VersionListView(CandidateV2CvMixin, generics.ListAPIView):
+@extend_schema(summary='Lịch sử version bất biến của CV', tags=['cvs'])
+class CvVersionListView(CandidateCvMixin, generics.ListAPIView):
     model = UserCv
     serializer_class = CvVersionSummarySerializer
 
@@ -977,8 +976,8 @@ class CvV2VersionListView(CandidateV2CvMixin, generics.ListAPIView):
         return candidate_cv_versions_queryset(self.request.user, self.kwargs['public_id'])
 
 
-@extend_schema(summary='Chi tiết một version của CV', tags=['cvs-v2'])
-class CvV2VersionDetailView(CandidateV2CvMixin, generics.RetrieveAPIView):
+@extend_schema(summary='Chi tiết một version của CV', tags=['cvs'])
+class CvVersionDetailView(CandidateCvMixin, generics.RetrieveAPIView):
     model = UserCv
     serializer_class = CvVersionSerializer
     lookup_field = 'public_id'

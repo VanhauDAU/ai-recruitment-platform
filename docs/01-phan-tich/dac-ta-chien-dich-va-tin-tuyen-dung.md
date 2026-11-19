@@ -24,7 +24,7 @@ Code chính: `backend/apps/jobs/services/posting.py`, `services/moderation.py`,
 - Mọi read/mutation của workspace (job, campaign list/detail/options/report/
   performance/activity) đi qua `ensure_recruiter_job_workspace`; khi
   `job_workspace_ready=false` API trả `EMPLOYER_WORKSPACE_BLOCKED`. Ngoại lệ duy
-  nhất là `GET /api/jobs/mine/posting-context/`, vẫn đọc được để client hiển
+  nhất là `GET /api/employer/jobs/posting-context/`, vẫn đọc được để client hiển
   thị blocker và hướng khắc phục.
 - Dữ liệu cá nhân ứng viên (danh sách hồ sơ, export, lịch sử, snapshot CV,
   preview ứng viên trên job/campaign) chỉ trả khi `candidate_data_access=true`
@@ -160,7 +160,7 @@ thêm kênh sau khi chiến dịch chạy cũng được.
   - bên dưới là thẻ từng kênh.
 - **Trang tuyển dụng công khai** `/tuyen-dung/<slug>`:
   - nội dung: tên đợt tuyển, công ty (logo, ảnh bìa), khoảng thời gian, lời giới
-    thiệu, danh sách tin đang tuyển (`/api/jobs/?campaign=`);
+    thiệu, danh sách tin đang tuyển (`/api/public/jobs/?campaign=`);
   - slug sinh từ tên + mã, đổi theo tên cho tới lần chạy đầu rồi đóng băng;
   - NTD tắt được trang;
   - vỏ SEO trả 404/410/noindex theo trạng thái.
@@ -283,8 +283,8 @@ draft ── đăng ──> active ── đóng ──> closed
 
 | Thao tác | Endpoint | Quy tắc |
 | --- | --- | --- |
-| Lưu nháp | `POST /api/jobs/mine/?as=draft`, `PATCH mine/{id}/` | Không validate đầy đủ, không tiêu quota. |
-| Đăng | `POST /api/jobs/mine/` hoặc `mine/{id}/submit/` | Validate đủ form, kiểm tra blocker và quota, cần cam kết (mục 4). |
+| Lưu nháp | `POST /api/employer/jobs/?as=draft`, `PATCH mine/{id}/` | Không validate đầy đủ, không tiêu quota. |
+| Đăng | `POST /api/employer/jobs/` hoặc `mine/{id}/submit/` | Validate đủ form, kiểm tra blocker và quota, cần cam kết (mục 4). |
 | Sửa tin đang tuyển | `PATCH mine/{id}/` | Có hiệu lực ngay, không đổi `published_at`, không hỏi lại cam kết. |
 | Đóng | `mine/{id}/close/` | Chỉ tin `active`. |
 | Mở lại | `mine/{id}/reopen/` | Chỉ tin `closed`; nhập hạn nhận hồ sơ mới; cần cam kết và qua blocker như khi đăng. |
@@ -449,8 +449,8 @@ Ba mốc thời gian độc lập, không suy mốc này từ mốc khác:
   ngày trước đó; ứng viên nhận email (`auto_rejection_email_body`) và thông báo
   trong chuông 3 ngày sau khi bị từ chối. Trong 3 ngày này recruiter còn đổi lại
   được trạng thái (thông báo tự bị thay thế).
-- API: ứng viên `GET/POST /api/v2/applications/`; recruiter
-  `/api/v2/recruiter/applications/` (list, `export/`, `{id}/` ghi chú/điểm,
+- API: ứng viên `GET/POST /api/candidate/applications/`; recruiter
+  `/api/employer/applications/` (list, `export/`, `{id}/` ghi chú/điểm,
   `{id}/status/`, `{id}/status/undo/`, `{id}/cv/`, `{id}/cv/exports/`,
   `{id}/history/`), luôn lọc `job__posted_by=request.user`.
 
@@ -461,7 +461,7 @@ cáo hoặc phát hiện vi phạm.
 
 ### Báo cáo của ứng viên
 
-- `POST /api/jobs/{public_id}/report/`: chỉ ứng viên đăng nhập, chỉ tin đang
+- `POST /api/candidate/jobs/{public_id}/report/`: chỉ ứng viên đăng nhập, chỉ tin đang
   công khai, mỗi người một báo cáo cho một tin (unique), có throttle theo tài
   khoản và IP. Lý do: `fake_company`, `scam`, `wrong_info`, `duplicate`,
   `expired`, `other`.
@@ -471,7 +471,7 @@ cáo hoặc phát hiện vi phạm.
 
 | Thao tác | Endpoint | Quyền |
 | --- | --- | --- |
-| Hàng chờ | `GET /api/jobs/admin/reports/` | `job_moderation.view` |
+| Hàng chờ | `GET /api/admin/jobs/reports/` | `job_moderation.view` |
 | Kết luận `upheld`/`dismissed` | `POST admin/reports/{id}/resolve/` | `job_moderation.resolve_report` |
 | Gỡ kết luận `upheld → dismissed` | `POST admin/reports/{id}/reverse/` | `job_moderation.resolve_report` |
 
@@ -484,7 +484,7 @@ cáo hoặc phát hiện vi phạm.
 
 ### Tạm ẩn và khôi phục
 
-- `POST /api/jobs/admin/moderation/{id}/decisions/` với `action=hide|restore`,
+- `POST /api/admin/jobs/moderation/{id}/decisions/` với `action=hide|restore`,
   quyền `job_moderation.enforce_visibility`.
 - `hide` chỉ cho tin `active` chưa bị giữ; cần `reason_code`, ghi chú và mức giữ
   `manual_review` hoặc `confirmed_violation`; có thể gắn báo cáo nguồn.

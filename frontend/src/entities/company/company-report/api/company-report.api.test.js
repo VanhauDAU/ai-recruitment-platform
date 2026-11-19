@@ -42,7 +42,7 @@ describe('company report API', () => {
     await expect(reverseAdminCompanyReport('crp_1', 'Khiếu nại hợp lệ.'))
       .resolves.toMatchObject({ status: 'dismissed' })
 
-    expect(post).toHaveBeenNthCalledWith(1, '/companies/co_ab12/reports/', {
+    expect(post).toHaveBeenNthCalledWith(1, '/public/companies/co_ab12/reports/', {
       reason: 'impersonation',
       section_key: 'about',
       detail: '',

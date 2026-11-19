@@ -120,10 +120,13 @@ Một phiên bản API duy nhất, không tiền tố version:
 | `/api/candidate/<resource>/` | cổng ứng viên |
 | `/api/employer/<resource>/` | cổng nhà tuyển dụng |
 | `/api/admin/<resource>/` | toàn bộ endpoint quản trị |
-| `/api/uploads/`, `/api/health/` | hạ tầng dùng chung |
+| `/api/shared/<resource>/` | cần đăng nhập, dùng chung nhiều cổng: phiên upload, trạng thái thông báo |
+| `/api/health/` | kiểm tra sống của dịch vụ |
 
-- `config/urls.py` ghép theo cổng; mỗi app khai `api/urls/<cổng>.py`. Mỗi cổng
-  một router để không trùng API-root.
+- `config/urls.py` ghép theo cổng (`api_portal_patterns`); mỗi app khai
+  `api/urls/<cổng>.py` với route **không** lặp lại tên cổng (không `admin/…`,
+  `mine/…` trong file). Router dùng `SimpleRouter` (không API-root). Bảng ánh xạ
+  từ URL cũ: [`docs/04-api/url-map-2026-11.md`](../04-api/url-map-2026-11.md).
 - URL SEO ngoài `/api` (`/viec-lam`, `/cong-ty`…) giữ ổn định vì đã được index.
 
 ### 4. Tầng HTTP
@@ -174,7 +177,7 @@ về 0 và gỡ baseline, từ đó mọi vi phạm làm fail CI.
 | 1 | Chuẩn hóa bố cục từng app và `common/` (chỉ di chuyển); tên module/lớp `v2` đổi ở GĐ4 cùng URL |
 | 2 | Ranh giới domain: chuyển model chiến dịch sang `campaigns` (migration chỉ đổi state), phá vòng `cvs ↔ cv_templates`, bỏ lazy export của accounts, baseline import về 0 rồi gỡ |
 | 3 | Tầng API: exception handler + `DomainError`, nghiệp vụ ra khỏi view/serializer, GET không ghi DB, `@extend_schema` đủ (OpenAPI 0/0), `parse_bool`; bật phân trang cho list đang trả mảng dời sang GĐ4 (cùng lúc sửa API client frontend) |
-| 4 | URL theo cổng (backend + frontend cùng PR) |
+| 4 | URL theo cổng (backend + frontend cùng PR), bỏ tên `v2` ở module/lớp/route |
 | 5 | Tách file lớn, gộp code trùng, gỡ legacy và lệnh chạy một lần |
 | 6 | Baseline migration mới (chưa có production) |
 

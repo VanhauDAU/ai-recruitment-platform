@@ -11,12 +11,17 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import IsCandidate, IsEmployer
-from apps.campaigns.services import resolve_campaign_attribution
-from apps.employers.services import ensure_recruiter_candidate_data_access
-
-from ...models import Application
-from ...selectors import candidate_applications_queryset, recruiter_application_snapshot_queryset
-from ...services import (
+from apps.applications.api.serializers.applications import (
+    CandidateApplicationCreateSerializer,
+    CandidateApplicationSerializer,
+    RecruiterApplicationSnapshotSerializer,
+)
+from apps.applications.models import Application
+from apps.applications.selectors import (
+    candidate_applications_queryset,
+    recruiter_application_snapshot_queryset,
+)
+from apps.applications.services import (
     ApplicationNotAllowed,
     ApplicationNotFound,
     application_rules,
@@ -25,23 +30,20 @@ from ...services import (
     request_recruiter_reminder,
     withdraw_application,
 )
-from ..serializers.v2 import (
-    CandidateApplicationV2CreateSerializer,
-    CandidateApplicationV2Serializer,
-    RecruiterApplicationSnapshotSerializer,
-)
+from apps.campaigns.services import resolve_campaign_attribution
+from apps.employers.services import ensure_recruiter_candidate_data_access
 
 
 @extend_schema_view(
     list=extend_schema(summary='Hồ sơ ứng tuyển của ứng viên'),
     create=extend_schema(
         summary='Ứng viên nộp hồ sơ (snapshot CV bất biến)',
-        request=CandidateApplicationV2CreateSerializer,
-        responses={201: CandidateApplicationV2Serializer},
+        request=CandidateApplicationCreateSerializer,
+        responses={201: CandidateApplicationSerializer},
     ),
 )
-@extend_schema(tags=['applications-v2'])
-class CandidateApplicationV2ListCreateView(generics.ListCreateAPIView):
+@extend_schema(tags=['applications'])
+class CandidateApplicationListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsCandidate]
 
     def get_queryset(self):
@@ -49,9 +51,9 @@ class CandidateApplicationV2ListCreateView(generics.ListCreateAPIView):
 
     def get_serializer_class(self):
         return (
-            CandidateApplicationV2CreateSerializer
+            CandidateApplicationCreateSerializer
             if self.request.method == 'POST'
-            else CandidateApplicationV2Serializer
+            else CandidateApplicationSerializer
         )
 
     def create(self, request, *args, **kwargs):
@@ -88,7 +90,7 @@ class CandidateApplicationV2ListCreateView(generics.ListCreateAPIView):
                 status=status.HTTP_409_CONFLICT,
             )
         return Response(
-            CandidateApplicationV2Serializer(application).data, status=status.HTTP_201_CREATED
+            CandidateApplicationSerializer(application).data, status=status.HTTP_201_CREATED
         )
 
 
@@ -99,14 +101,14 @@ def _candidate_application_response(action):
         raise Http404 from error
     except ApplicationNotAllowed as error:
         raise ValidationError({'detail': str(error)}) from error
-    return Response(CandidateApplicationV2Serializer(application).data)
+    return Response(CandidateApplicationSerializer(application).data)
 
 
 @extend_schema(
     summary='Ứng viên rút hồ sơ chưa có kết quả',
     request=None,
-    responses={200: CandidateApplicationV2Serializer},
-    tags=['applications-v2'],
+    responses={200: CandidateApplicationSerializer},
+    tags=['applications'],
 )
 class CandidateApplicationWithdrawView(APIView):
     permission_classes = [IsCandidate]
@@ -120,8 +122,8 @@ class CandidateApplicationWithdrawView(APIView):
 @extend_schema(
     summary='Ứng viên nhờ ProCV nhắc nhà tuyển dụng phản hồi hồ sơ',
     request=None,
-    responses={200: CandidateApplicationV2Serializer},
-    tags=['applications-v2'],
+    responses={200: CandidateApplicationSerializer},
+    tags=['applications'],
 )
 class CandidateApplicationRemindView(APIView):
     permission_classes = [IsCandidate]
@@ -135,7 +137,7 @@ class CandidateApplicationRemindView(APIView):
 @extend_schema(
     summary='NTD xem snapshot CV bất biến của một đơn ứng tuyển',
     responses={200: RecruiterApplicationSnapshotSerializer},
-    tags=['applications-v2'],
+    tags=['applications'],
 )
 class RecruiterApplicationSnapshotView(APIView):
     permission_classes = [IsEmployer]
@@ -160,7 +162,7 @@ class RecruiterApplicationSnapshotView(APIView):
 
 
 @extend_schema(
-    tags=['applications-v2'],
+    tags=['applications'],
     summary='Luật ứng tuyển, nhắc NTD và tự từ chối',
     responses={200: OpenApiTypes.OBJECT},
 )

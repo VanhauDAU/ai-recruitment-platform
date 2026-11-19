@@ -29,10 +29,10 @@ describe('follow company API', () => {
     await followCompany('co_ab12', { notify_new_jobs: false })
     await expect(unfollowCompany('co_ab12')).resolves.toMatchObject({ following: false, follower_count: 12 })
 
-    expect(client.get).toHaveBeenCalledWith('/companies/co_ab12/follow/', { signal })
-    expect(client.put).toHaveBeenNthCalledWith(1, '/companies/co_ab12/follow/', {})
-    expect(client.put).toHaveBeenNthCalledWith(2, '/companies/co_ab12/follow/', { notify_new_jobs: false })
-    expect(client.delete).toHaveBeenCalledWith('/companies/co_ab12/follow/')
+    expect(client.get).toHaveBeenCalledWith('/public/companies/co_ab12/follow/', { signal })
+    expect(client.put).toHaveBeenNthCalledWith(1, '/public/companies/co_ab12/follow/', {})
+    expect(client.put).toHaveBeenNthCalledWith(2, '/public/companies/co_ab12/follow/', { notify_new_jobs: false })
+    expect(client.delete).toHaveBeenCalledWith('/public/companies/co_ab12/follow/')
   })
 
   it('pages the followed companies of the signed-in candidate', async () => {

@@ -127,7 +127,7 @@ CvTemplate ──< CvTemplateColorLink    >── CvColor
   hiển thị và validate, sửa trường ở admin không làm hỏng CV cũ. Section đứng sau
   kỹ năng nếu `section_preset` không nhắc tới. Editor có panel "Hồ sơ ứng tuyển"
   để chọn vị trí mục tiêu và cấp bậc mong muốn (không in lên CV); đổi vị trí thì
-  khung `position_details` đổi theo (`GET /api/v2/cv-position-details/`), giữ giá
+  khung `position_details` đổi theo (`GET /api/public/cv-position-details/`), giữ giá
   trị các trường cùng khóa. Thêm section `portfolio`, `publications`; document
   vẫn `schema_version 1` vì mọi thay đổi là bổ sung tùy chọn.
 - Matching (CVT-3) mở rộng `matching_profile`: `education_level` là bậc
@@ -141,7 +141,7 @@ CvTemplate ──< CvTemplateColorLink    >── CvColor
 
 ## 5. API V2
 
-CV của ứng viên (`/api/v2/cvs/`, owner-only):
+CV của ứng viên (`/api/candidate/cvs/`, owner-only):
 
 | Route | Hành vi |
 | --- | --- |
@@ -163,7 +163,7 @@ CV của ứng viên (`/api/v2/cvs/`, owner-only):
 `If-Match: "lock-version-N"`; lock lệch trả `409` kèm `current_lock_version`,
 client tải lại thay vì ghi đè.
 
-Catalogue public (cache control/ETag): `GET /api/v2/cv-templates/` (card gọn,
+Catalogue public (cache control/ETag): `GET /api/public/cv-templates/` (card gọn,
 không trả layout/style/renderer config, lọc `locale`/`category`/`tag`),
 `/cv-templates/{slug}/`, `/cv-templates/{slug}/related/`, `/cv-categories/`,
 `/cv-backgrounds/`, `/cv-position-options/`, `/cv-position-preview/`,
@@ -171,17 +171,17 @@ không trả layout/style/renderer config, lọc `locale`/`category`/`tag`),
 
 Ứng tuyển và recruiter:
 
-- `GET|POST /api/v2/applications/`: POST bắt buộc CV và `version_public_id` cùng
+- `GET|POST /api/candidate/applications/`: POST bắt buộc CV và `version_public_id` cùng
   aggregate; service copy đúng version đó thành `application_snapshot`, không
   đổi con trỏ draft/latest/published và không tự chọn latest hay draft.
-- `GET /api/v2/recruiter/applications/{id}/cv/`: trả `submitted_cv_version`, chỉ
+- `GET /api/employer/applications/{id}/cv/`: trả `submitted_cv_version`, chỉ
   cho recruiter đã đăng tin (`job.posted_by`).
-- `GET /api/jobs/recommendations/by-cv/{cv_public_id}/`: xếp hạng tin active theo
+- `GET /api/candidate/jobs/recommendations/by-cv/{cv_public_id}/`: xếp hạng tin active theo
   CV của chính ứng viên bằng rule giải thích được (điểm, lý do, keyword).
 - `GET|PATCH /api/candidate/recruiter-visibility/`: bật cần xác nhận tường minh;
   mỗi quyết định cập nhật `CandidateConsent` và append `CandidateConsentEvent`.
 
-Quản trị (`/api/v2/admin/`, kiểm quyền `AdminPortalPermission`, mọi
+Quản trị (`/api/admin/`, kiểm quyền `AdminPortalPermission`, mọi
 admin): `cv-templates` (kèm action tạo draft version từ version hiện
 hành, publish, retire, regenerate snapshot; nhận các trường song ngữ),
 `cv-categories`, `cv-colors`, `cv-backgrounds`, `cv-sample-contents` (nhận
@@ -253,7 +253,7 @@ response shared/recruiter; PDF worker đọc storage nội bộ.
 
 ## 8. Import PDF/DOCX
 
-- `POST /api/v2/cvs/imports/` (tùy chọn template/language/màu) trả `202`, tạo
+- `POST /api/candidate/cvs/imports/` (tùy chọn template/language/màu) trả `202`, tạo
   `CvImportJob` bền vững, idempotent theo `Idempotency-Key` của ứng viên; throttle
   `cv_import` 10/giờ.
 - Chỉ nhận PDF/DOCX có signature thật, tối đa 5 MB; PDF tối đa 20 trang; PDF scan

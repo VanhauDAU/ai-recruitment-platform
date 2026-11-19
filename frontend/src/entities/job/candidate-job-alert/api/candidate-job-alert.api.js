@@ -1,6 +1,6 @@
 import api from '@/shared/api/client'
 
-const JOB_ALERTS_PATH = '/jobs/alerts/'
+const JOB_ALERTS_PATH = '/candidate/jobs/alerts/'
 
 export function normalizeCandidateJobAlertList(data) {
   const results = Array.isArray(data)

@@ -1,5 +1,5 @@
 from django.urls import include, path
-from rest_framework.routers import DefaultRouter
+from rest_framework.routers import SimpleRouter
 
 from ..views.admin_companies import AdminCompanyViewSet
 from ..views.admin_company_reports import AdminCompanyReportViewSet
@@ -10,7 +10,7 @@ from ..views.admin_verification import (
     AdminEmployerVerificationViewSet,
 )
 
-router = DefaultRouter()
+router = SimpleRouter()
 router.register(
     'company-domain-claims',
     AdminCompanyDomainClaimViewSet,

@@ -21,10 +21,10 @@ describe('hidden recommendation API', () => {
     await expect(hideJobRecommendation('job_1', 'homepage')).resolves.toMatchObject({ hidden: true })
     await expect(restoreJobRecommendation('job_1')).resolves.toMatchObject({ hidden: false })
 
-    expect(post).toHaveBeenCalledWith('/jobs/recommendations/hidden/', {
+    expect(post).toHaveBeenCalledWith('/candidate/jobs/recommendations/hidden/', {
       job_public_id: 'job_1',
       source: 'homepage',
     })
-    expect(remove).toHaveBeenCalledWith('/jobs/recommendations/hidden/job_1/')
+    expect(remove).toHaveBeenCalledWith('/candidate/jobs/recommendations/hidden/job_1/')
   })
 })

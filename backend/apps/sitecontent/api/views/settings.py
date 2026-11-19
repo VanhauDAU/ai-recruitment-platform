@@ -137,7 +137,7 @@ class AdminSettingUploadView(APIView):
     def post(self, request):
         return Response(
             {
-                'detail': 'Endpoint này đã ngưng dùng. Hãy gửi file cùng PATCH /api/site/admin/settings/ khi bấm lưu.'
+                'detail': 'Endpoint này đã ngưng dùng. Hãy gửi file cùng PATCH /api/admin/site/settings/ khi bấm lưu.'
             },
             status=status.HTTP_410_GONE,
         )

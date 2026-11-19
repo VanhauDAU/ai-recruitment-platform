@@ -97,12 +97,12 @@ function detail(job) {
 
 async function mockComparisonApi(page) {
   await mockPublicApi(page)
-  await page.route(/\/api\/jobs\/(?:\?.*)?$/, (route) => route.fulfill({
+  await page.route(/\/api\/public\/jobs\/(?:\?.*)?$/, (route) => route.fulfill({
     contentType: 'application/json',
     body: JSON.stringify({ count: jobs.length, next: null, previous: null, results: jobs }),
   }))
   for (const job of jobs) {
-    await page.route(`**/api/jobs/${job.slug}/`, (route) => route.fulfill({
+    await page.route(`**/api/public/jobs/${job.slug}/`, (route) => route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify(detail(job)),
     }))
@@ -141,7 +141,7 @@ test('guest selects jobs and opens the responsive public comparison', async ({ p
 test('comparison keeps a removed job isolated when another detail is unavailable', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-chromium')
   await mockComparisonApi(page)
-  await page.route('**/api/jobs/unavailable-job/', (route) => route.fulfill({
+  await page.route('**/api/public/jobs/unavailable-job/', (route) => route.fulfill({
     status: 404,
     contentType: 'application/json',
     body: '{}',

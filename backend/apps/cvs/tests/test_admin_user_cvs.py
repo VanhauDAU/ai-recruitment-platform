@@ -32,12 +32,12 @@ class AdminUserCvApiTests(TestCase):
         create_initial_document(self.cv, self.candidate)
         self.cv.refresh_from_db()
         self.client = APIClient()
-        self.url = f'/api/v2/admin/user-cvs/{self.cv.public_id}/'
+        self.url = f'/api/admin/user-cvs/{self.cv.public_id}/'
 
     def test_metadata_list_never_exposes_email_or_content(self):
         self.client.force_authenticate(make_admin('cv-meta@example.com'))
 
-        response = self.client.get('/api/v2/admin/user-cvs/', {'source': 'builder'})
+        response = self.client.get('/api/admin/user-cvs/', {'source': 'builder'})
 
         self.assertEqual(response.status_code, 200)
         row = response.data['results'][0]

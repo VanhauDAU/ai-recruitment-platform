@@ -45,11 +45,11 @@ async function mockOnboardingApi(page) {
         }
         : path === '/api/candidate/job-preferences/'
           ? { desired_position_others: [], desired_specializations: [], preferred_provinces: [], preferred_skills: [], job_preferences_configured: false }
-          : path === '/api/jobs/categories/'
+          : path === '/api/public/jobs/categories/'
             ? { count: CATEGORIES.length, results: CATEGORIES }
-            : path === '/api/locations/'
+            : path === '/api/public/locations/'
               ? { count: PROVINCES.length, results: PROVINCES }
-              : path === '/api/privacy/consent/'
+              : path === '/api/public/privacy/consent/'
                 ? { consent: { necessary: true, preferences: true, analytics: false, marketing: false } }
                 : {}
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })

@@ -18,63 +18,63 @@ from ..views import (
 
 urlpatterns = [
     path(
-        'admin/announcements/',
+        'announcements/',
         AdminAnnouncementListCreateView.as_view(),
         name='site-admin-announcements',
     ),
     path(
-        'admin/announcements/backgrounds/',
+        'announcements/backgrounds/',
         AdminAnnouncementBackgroundUploadView.as_view(),
         name='site-admin-announcement-backgrounds',
     ),
     path(
-        'admin/announcements/<str:public_id>/',
+        'announcements/<str:public_id>/',
         AdminAnnouncementDetailView.as_view(),
         name='site-admin-announcement-detail',
     ),
     path(
-        'admin/announcements/<str:public_id>/revisions/',
+        'announcements/<str:public_id>/revisions/',
         AdminAnnouncementRevisionCreateView.as_view(),
         name='site-admin-announcement-revisions',
     ),
     path(
-        'admin/announcements/<str:public_id>/publish/',
+        'announcements/<str:public_id>/publish/',
         AdminAnnouncementPublishView.as_view(),
         name='site-admin-announcement-publish',
     ),
     path(
-        'admin/announcements/<str:public_id>/pause/',
+        'announcements/<str:public_id>/pause/',
         AdminAnnouncementPauseView.as_view(),
         name='site-admin-announcement-pause',
     ),
     path(
-        'admin/announcements/<str:public_id>/resume/',
+        'announcements/<str:public_id>/resume/',
         AdminAnnouncementResumeView.as_view(),
         name='site-admin-announcement-resume',
     ),
     path(
-        'admin/announcements/<str:public_id>/archive/',
+        'announcements/<str:public_id>/archive/',
         AdminAnnouncementArchiveView.as_view(),
         name='site-admin-announcement-archive',
     ),
     path(
-        'admin/announcements/<str:public_id>/reset-dismissals/',
+        'announcements/<str:public_id>/reset-dismissals/',
         AdminAnnouncementResetDismissalsView.as_view(),
         name='site-admin-announcement-reset-dismissals',
     ),
     path(
-        'admin/announcements/<str:public_id>/duplicate/',
+        'announcements/<str:public_id>/duplicate/',
         AdminAnnouncementDuplicateView.as_view(),
         name='site-admin-announcement-duplicate',
     ),
     path(
-        'admin/announcements/<str:public_id>/metrics/',
+        'announcements/<str:public_id>/metrics/',
         AdminAnnouncementMetricView.as_view(),
         name='site-admin-announcement-metrics',
     ),
-    path('admin/settings/', AdminSiteSettingView.as_view(), name='site-admin-settings'),
+    path('settings/', AdminSiteSettingView.as_view(), name='site-admin-settings'),
     path(
-        'admin/settings/upload/',
+        'settings/upload/',
         AdminSettingUploadView.as_view(),
         name='site-admin-settings-upload',
     ),

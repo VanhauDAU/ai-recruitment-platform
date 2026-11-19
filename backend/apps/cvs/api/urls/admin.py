@@ -1,8 +1,8 @@
-from rest_framework.routers import DefaultRouter
+from rest_framework.routers import SimpleRouter
 
 from ..views.admin import AdminUserCvViewSet
 
-router = DefaultRouter()
-router.register('admin/user-cvs', AdminUserCvViewSet, basename='admin-user-cv')
+router = SimpleRouter()
+router.register('user-cvs', AdminUserCvViewSet, basename='admin-user-cv')
 
 urlpatterns = router.urls

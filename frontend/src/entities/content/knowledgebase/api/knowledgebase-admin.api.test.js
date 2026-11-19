@@ -27,13 +27,13 @@ describe('knowledgebase admin API', () => {
   it('keeps server filters and AbortSignal on article lists', async () => {
     const params = { q: 'đăng nhập', revision_status: 'IN_REVIEW', page: 2 }
     await getAdminKnowledgeArticles(params, { signal: 'signal' })
-    expect(get).toHaveBeenCalledWith('/knowledgebase/admin/articles/', { params, signal: 'signal' })
+    expect(get).toHaveBeenCalledWith('/admin/knowledgebase/articles/', { params, signal: 'signal' })
   })
 
   it('loads aggregate article KPIs with the same server filters', async () => {
     const params = { category: 'dang-nhap', lifecycle: 'ACTIVE' }
     await getAdminKnowledgeArticleSummary(params, { signal: 'summary-signal' })
-    expect(get).toHaveBeenCalledWith('/knowledgebase/admin/articles/summary/', {
+    expect(get).toHaveBeenCalledWith('/admin/knowledgebase/articles/summary/', {
       params,
       signal: 'summary-signal',
     })
@@ -43,9 +43,9 @@ describe('knowledgebase admin API', () => {
     await setAdminKnowledgeCategoryActive('kbc_1', false, 4)
     await updateAdminKnowledgeRevision('kba_1', 2, { title: 'Mới', revision_token: 8 })
     await runAdminKnowledgeRevisionAction('kba_1', 2, 'approve', { revision_token: 9 })
-    expect(post).toHaveBeenNthCalledWith(1, '/knowledgebase/admin/categories/kbc_1/deactivate/', { revision_token: 4 })
-    expect(patch).toHaveBeenCalledWith('/knowledgebase/admin/articles/kba_1/revisions/2/', { title: 'Mới', revision_token: 8 })
-    expect(post).toHaveBeenNthCalledWith(2, '/knowledgebase/admin/articles/kba_1/revisions/2/approve/', { revision_token: 9 })
+    expect(post).toHaveBeenNthCalledWith(1, '/admin/knowledgebase/categories/kbc_1/deactivate/', { revision_token: 4 })
+    expect(patch).toHaveBeenCalledWith('/admin/knowledgebase/articles/kba_1/revisions/2/', { title: 'Mới', revision_token: 8 })
+    expect(post).toHaveBeenNthCalledWith(2, '/admin/knowledgebase/articles/kba_1/revisions/2/approve/', { revision_token: 9 })
   })
 
   it('adapts backend media metadata to the shared image library', async () => {
@@ -55,7 +55,7 @@ describe('knowledgebase admin API', () => {
 
     post.mockResolvedValue({ data: { public_id: 'kbm_2', size_bytes: 42, default_alt_text: 'Mới' } })
     const uploaded = await uploadAdminKnowledgeMedia(new File(['x'], 'faq.webp', { type: 'image/webp' }))
-    expect(post).toHaveBeenCalledWith('/knowledgebase/admin/media/', expect.any(FormData))
+    expect(post).toHaveBeenCalledWith('/admin/knowledgebase/media/', expect.any(FormData))
     expect(uploaded).toEqual(expect.objectContaining({ size: 42, alt: 'Mới' }))
   })
 })

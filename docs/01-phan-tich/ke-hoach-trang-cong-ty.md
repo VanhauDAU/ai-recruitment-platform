@@ -125,7 +125,7 @@ Một module chính sách duy nhất: `backend/apps/employers/models/page_access
 
 ### 4.3. API
 
-**Công khai** (`/api/companies/`, mở rộng `apps/employers/api/urls/public.py`):
+**Công khai** (`/api/public/companies/`, mở rộng `apps/employers/api/urls/public.py`):
 
 - `GET <slug>/`: DTO dạng khối có kiểu từ một builder duy nhất `build_public_company_profile(company, overrides=None)` (`selectors/company_page.py`). Frontend chỉ đọc `sections[].type`, không suy từ tên cột.
 - `GET <public_id>/similar/`, `GET <public_id>/job-facets/` (tải lười).

@@ -2,7 +2,7 @@ import { expect } from '@playwright/test'
 
 export const API_ROUTE = /^https?:\/\/[^/]+\/api\/.*$/
 
-// Mirrors GET /api/v2/applications/rules/ (the limits the server enforces).
+// Mirrors GET /api/public/applications/rules/ (the limits the server enforces).
 export const APPLICATION_RULES = {
   max_submissions_per_job: 3,
   reapply_cooldown_seconds: 300,
@@ -39,11 +39,11 @@ export async function mockPublicApi(page) {
       })
       return
     }
-    const body = path === '/api/jobs/best/'
+    const body = path === '/api/public/jobs/best/'
       ? []
-      : path === '/api/jobs/'
+      : path === '/api/public/jobs/'
         ? { count: 0, results: [] }
-        : path === '/api/jobs/stats/'
+        : path === '/api/public/jobs/stats/'
           ? {
               candidates: 0,
               employers: 0,
@@ -55,16 +55,16 @@ export async function mockPublicApi(page) {
               latest_jobs: [],
               featured_employers: [],
             }
-      : path === '/api/site/banners/'
+      : path === '/api/public/site/banners/'
         ? []
-      : path === '/api/site/link-groups/'
+      : path === '/api/public/site/link-groups/'
         ? []
-      : path === '/api/site/announcements/active/'
+      : path === '/api/public/site/announcements/active/'
         ? { remote_enabled: false, items: [], next_transition_at: null }
-      : path === '/api/privacy/consent/'
+      : path === '/api/public/privacy/consent/'
         // Consent đã quyết định -> banner cookie không che các nút trong smoke test.
         ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
-        : path === '/api/dashboard/employer/'
+        : path === '/api/employer/dashboard/'
           ? {
               account: {
                 recruiter_public_id: 'rec_test', company_name: 'Công ty Acme',
@@ -75,17 +75,17 @@ export async function mockPublicApi(page) {
               application_activity: Array.from({ length: 7 }, (_, index) => ({ date: `2026-07-${String(12 + index).padStart(2, '0')}`, count: 0 })),
               recruitment_need: null, recent_jobs: [], recent_applications: [],
             }
-        : path === '/api/locations/'
+        : path === '/api/public/locations/'
           ? url.searchParams.get('level') === 'ward'
             ? []
             : [{ id: 1, name: 'Hà Nội', level: 'province' }, { id: 2, name: 'TP. Hồ Chí Minh', level: 'province' }]
-          : path === '/api/v2/cv-templates/'
+          : path === '/api/public/cv-templates/'
             ? { count: 0, next: null, previous: null, results: [] }
-            : ['/api/jobs/categories/', '/api/employer/industries/'].includes(path)
+            : ['/api/public/jobs/categories/', '/api/employer/industries/'].includes(path)
             ? []
           : path === '/api/auth/sessions/'
             ? []
-          : path === '/api/v2/applications/rules/'
+          : path === '/api/public/applications/rules/'
             ? APPLICATION_RULES
             : {}
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })

@@ -71,12 +71,12 @@ class UploadedCvApplicationTests(APITestCase):
             **overrides,
         }
         return self.client.post(
-            reverse('candidate-application-list-create-v2'), payload, format='json'
+            reverse('candidate-application-list-create'), payload, format='json'
         )
 
     def cv_file(self, application, **params):
         return self.client.get(
-            reverse('recruiter-application-cv-file-v2', args=[application.public_id]), params
+            reverse('recruiter-application-cv-file', args=[application.public_id]), params
         )
 
     def submitted(self):
@@ -87,7 +87,7 @@ class UploadedCvApplicationTests(APITestCase):
         )
 
     def listed(self, cv):
-        data = self.client.get(reverse('cv-v2-list-create')).data
+        data = self.client.get(reverse('cv-list-create')).data
         rows = data['results'] if isinstance(data, dict) else data
         return next(item for item in rows if item['public_id'] == cv.public_id)
 
@@ -105,7 +105,7 @@ class UploadedCvApplicationTests(APITestCase):
 
         self.client.force_authenticate(self.employer)
         page = self.client.get(
-            reverse('recruiter-application-snapshot-v2', args=[application.public_id])
+            reverse('recruiter-application-snapshot', args=[application.public_id])
         )
         inline = self.cv_file(application)
         with self.captureOnCommitCallbacks(execute=True):
@@ -156,10 +156,10 @@ class UploadedCvApplicationTests(APITestCase):
         self.client.force_authenticate(self.employer)
 
         export = self.client.post(
-            reverse('recruiter-application-cv-export-v2', args=[application.public_id])
+            reverse('recruiter-application-cv-export', args=[application.public_id])
         )
         link = self.client.post(
-            reverse('recruiter-application-review-links-v2', args=[application.public_id]),
+            reverse('recruiter-application-review-links', args=[application.public_id]),
             {'reviewer_name': 'Trưởng nhóm'},
             format='json',
         )

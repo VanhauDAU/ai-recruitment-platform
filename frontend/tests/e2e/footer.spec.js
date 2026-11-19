@@ -1,13 +1,13 @@
 import { expect, test } from '@playwright/test'
 
 test('footer tải dữ liệu động và không tràn màn hình', async ({ page }) => {
-  await page.route('http://localhost:8000/api/site/**', async (route) => {
+  await page.route('http://localhost:8000/api/public/site/**', async (route) => {
     const path = new URL(route.request().url()).pathname
-    if (path !== '/api/site/settings/' && path !== '/api/site/link-groups/') {
+    if (path !== '/api/public/site/settings/' && path !== '/api/public/site/link-groups/') {
       await route.continue()
       return
     }
-    const body = path === '/api/site/link-groups/'
+    const body = path === '/api/public/site/link-groups/'
       ? [
         { key: 'about', title: 'Về ProCV', items: [{ label: 'Giới thiệu', url: '/gioi-thieu' }] },
         { key: 'candidate', title: 'Hồ sơ & Sự nghiệp', items: [{ label: 'Tạo CV', url: '/tao-cv' }] },

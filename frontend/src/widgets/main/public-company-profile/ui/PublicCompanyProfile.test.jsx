@@ -89,12 +89,12 @@ function jobsPage(total, shown = Math.min(total, 10)) {
 function mockApi({ profile = PROFILE, profileErrors = [], jobs = jobsPage(7), similar = [], locations = [] } = {}) {
   const pendingErrors = [...profileErrors]
   client.get.mockImplementation((url, config) => {
-    if (url === `/companies/${profile.slug}/`) {
+    if (url === `/public/companies/${profile.slug}/`) {
       return pendingErrors.length ? Promise.reject(pendingErrors.shift()) : Promise.resolve({ data: profile })
     }
-    if (url === `/companies/${profile.public_id}/similar/`) return Promise.resolve({ data: { results: similar } })
-    if (url === `/companies/${profile.public_id}/job-facets/`) return Promise.resolve({ data: { locations } })
-    if (url === '/jobs/') return Promise.resolve({ data: typeof jobs === 'function' ? jobs(config.params) : jobs })
+    if (url === `/public/companies/${profile.public_id}/similar/`) return Promise.resolve({ data: { results: similar } })
+    if (url === `/public/companies/${profile.public_id}/job-facets/`) return Promise.resolve({ data: { locations } })
+    if (url === '/public/jobs/') return Promise.resolve({ data: typeof jobs === 'function' ? jobs(config.params) : jobs })
     return Promise.reject(new Error(`Unexpected GET ${url}`))
   })
 }
@@ -170,8 +170,8 @@ describe('PublicCompanyProfile', () => {
     expect(within(firstJob).queryByText(/Phần mềm FPT/)).not.toBeInTheDocument()
     expect(firstJob).toHaveAttribute('data-job-slug', 'ky-su-phan-mem-1')
     expect(within(jobs).getByRole('link', { name: 'Xem tất cả việc làm' })).toHaveAttribute('href', '/cong-ty/fpt-software?tab=viec-lam')
-    expect(requests('/jobs/')).toEqual([['/jobs/', { params: { company: 'co_ab12', page: 1, page_size: 10 } }]])
-    expect(requests('/companies/co_ab12/job-facets/')).toHaveLength(0)
+    expect(requests('/public/jobs/')).toEqual([['/public/jobs/', { params: { company: 'co_ab12', page: 1, page_size: 10 } }]])
+    expect(requests('/public/companies/co_ab12/job-facets/')).toHaveLength(0)
 
     const similar = screen.getByRole('region', { name: 'Công ty cùng lĩnh vực' })
     expect(await within(similar).findByRole('link', { name: /CMC Global/ })).toHaveAttribute('href', '/cong-ty/cmc-global')
@@ -238,7 +238,7 @@ describe('PublicCompanyProfile', () => {
     expect(await screen.findByText('Công ty chưa có việc làm đang tuyển.')).toBeVisible()
     expect(screen.getByRole('heading', { name: 'Thông tin chung' })).toBeVisible()
     expect(screen.getByRole('heading', { name: 'Chia sẻ công ty' })).toBeVisible()
-    await waitFor(() => expect(requests('/companies/co_ab12/similar/')).toHaveLength(1))
+    await waitFor(() => expect(requests('/public/companies/co_ab12/similar/')).toHaveLength(1))
     await waitFor(() => expect(screen.queryByRole('heading', { name: 'Công ty cùng lĩnh vực' })).not.toBeInTheDocument())
     expect(screen.queryByRole('link', { name: /Xem việc làm/ })).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Việc làm (0)' })).toBeVisible()
@@ -251,8 +251,8 @@ describe('PublicCompanyProfile', () => {
 
     expect(await screen.findByText('Không tìm thấy công ty')).toBeVisible()
     expect(screen.getByRole('link', { name: 'Xem danh sách công ty' })).toHaveAttribute('href', '/cong-ty')
-    expect(requests('/companies/fpt-software/')).toHaveLength(1)
-    expect(requests('/jobs/')).toHaveLength(0)
+    expect(requests('/public/companies/fpt-software/')).toHaveLength(1)
+    expect(requests('/public/jobs/')).toHaveLength(0)
   })
 
   it('offers a retry when the profile request fails for another reason', async () => {
@@ -277,8 +277,8 @@ describe('PublicCompanyProfile', () => {
 
     const jobs = await screen.findByRole('region', { name: 'Việc làm đang tuyển' })
     expect(await within(jobs).findAllByRole('article')).toHaveLength(10)
-    expect(requests('/jobs/')).toEqual([[
-      '/jobs/',
+    expect(requests('/public/jobs/')).toEqual([[
+      '/public/jobs/',
       { params: { company: 'co_ab12', page: 2, page_size: 10, search: 'react', location: '1' } },
     ]])
     expect(within(jobs).getByRole('status')).toHaveTextContent('Tìm thấy 25 việc làm phù hợp')
@@ -301,7 +301,7 @@ describe('PublicCompanyProfile', () => {
     await user.click(within(jobs).getByRole('button', { name: 'Tìm kiếm' }))
     expect(screen.getByTestId('location')).toHaveTextContent('/cong-ty/fpt-software?tab=viec-lam&q=node&location=1')
     await waitFor(() => expect(client.get).toHaveBeenCalledWith(
-      '/jobs/',
+      '/public/jobs/',
       { params: { company: 'co_ab12', page: 1, page_size: 10, search: 'node', location: '1' } },
     ))
 

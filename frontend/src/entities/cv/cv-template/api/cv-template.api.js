@@ -5,47 +5,47 @@ function results(data) {
 }
 
 export async function getCvTemplates(params = {}) {
-  const { data } = await api.get('/v2/cv-templates/', { params })
+  const { data } = await api.get('/public/cv-templates/', { params })
   return { ...data, results: results(data) }
 }
 
 export async function getCvTemplate(slug, locale = 'vi-VN') {
-  const { data } = await api.get(`/v2/cv-templates/${slug}/`, { params: { locale } })
+  const { data } = await api.get(`/public/cv-templates/${slug}/`, { params: { locale } })
   return data
 }
 
 export async function getRelatedCvTemplates(slug, locale = 'vi-VN') {
-  const { data } = await api.get(`/v2/cv-templates/${slug}/related/`, { params: { locale } })
+  const { data } = await api.get(`/public/cv-templates/${slug}/related/`, { params: { locale } })
   return results(data)
 }
 
 export async function getCvCategories(categoryType) {
-  const { data } = await api.get('/v2/cv-categories/', {
+  const { data } = await api.get('/public/cv-categories/', {
     params: categoryType ? { type: categoryType } : undefined,
   })
   return results(data)
 }
 
 export async function getCvSampleContents(locale = 'vi-VN') {
-  const { data } = await api.get('/v2/cv-sample-contents/', { params: { locale } })
+  const { data } = await api.get('/public/cv-sample-contents/', { params: { locale } })
   return results(data)
 }
 
 export async function getCvBackgrounds() {
-  const { data } = await api.get('/v2/cv-backgrounds/')
+  const { data } = await api.get('/public/cv-backgrounds/')
   return results(data)
 }
 
 export async function getCvPositionOptions(locale = 'vi-VN', query = '', signal) {
   const config = { params: { locale, ...(query ? { q: query } : {}) } }
   if (signal) config.signal = signal
-  const { data } = await api.get('/v2/cv-position-options/', config)
+  const { data } = await api.get('/public/cv-position-options/', config)
   return results(data)
 }
 
 // Khung mục "Thông tin chuyên môn" (trường riêng) của một vị trí; `null` nếu vị trí không có trường riêng.
 export async function getCvPositionDetails(positionPublicId, locale = 'vi-VN') {
-  const { data } = await api.get('/v2/cv-position-details/', { params: { position_public_id: positionPublicId, locale } })
+  const { data } = await api.get('/public/cv-position-details/', { params: { position_public_id: positionPublicId, locale } })
   return data.section
 }
 
@@ -60,7 +60,7 @@ export async function getCvPositionPreview(positionPublicId, locale = 'vi-VN', t
   }
   const config = { params }
   if (options.signal) config.signal = options.signal
-  const { data } = await api.get('/v2/cv-position-preview/', config)
+  const { data } = await api.get('/public/cv-position-preview/', config)
   return data
 }
 

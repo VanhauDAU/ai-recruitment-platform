@@ -142,7 +142,7 @@ export async function downloadCampaignReport(publicId, type) {
 }
 
 export async function getPublicCampaign(slug) {
-  const { data } = await api.get(`/campaigns/public/${slug}/`)
+  const { data } = await api.get(`/public/campaigns/${slug}/`)
   return data
 }
 

@@ -5,8 +5,8 @@ Hệ thống cài đặt schema-driven: mỗi setting là một row `SiteSetting
 ## Cách hoạt động
 
 - **Trang quản trị chính**: React `/admin/settings` (role admin) — tabs 15 nhóm, lưu theo nhóm. Django admin là fallback.
-- **API**: xem `docs/04-api/tai-lieu-api.md` (mục `/api/site/`).
-- **Frontend đọc cấu hình**: hook `useSiteSettings()` / `useSiteSetting(key, fallback)` — chỉ nhận key có `is_public=true` qua `/api/site/settings/` (cache 1h, tự invalidate khi admin lưu).
+- **API**: xem `docs/04-api/tai-lieu-api.md` (mục `/api/public/site/`).
+- **Frontend đọc cấu hình**: hook `useSiteSettings()` / `useSiteSetting(key, fallback)` — chỉ nhận key có `is_public=true` qua `/api/public/site/settings/` (cache 1h, tự invalidate khi admin lưu).
 - **SEO server-side**: các route public việc làm, công ty, blog và mẫu CV đi qua Django
   SEO shell. `seo_default_title`, `seo_default_description`, `seo_og_image`,
   `seo_robots_index` và `seo_google_site_verification` được áp dụng cả trong

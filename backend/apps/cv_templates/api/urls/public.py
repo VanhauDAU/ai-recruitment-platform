@@ -1,6 +1,6 @@
 from django.urls import path
 
-from ..views.v2 import (
+from apps.cv_templates.api.views.catalog import (
     CvBackgroundCatalogListView,
     CvCategoryCatalogListView,
     CvPositionDetailsView,
@@ -13,29 +13,29 @@ from ..views.v2 import (
 )
 
 urlpatterns = [
-    path('cv-templates/', CvTemplateCatalogListView.as_view(), name='cv-template-v2-list'),
+    path('cv-templates/', CvTemplateCatalogListView.as_view(), name='cv-template-list'),
     path(
         'cv-templates/<slug:slug>/',
         CvTemplateCatalogDetailView.as_view(),
-        name='cv-template-v2-detail',
+        name='cv-template-detail',
     ),
     path(
         'cv-templates/<slug:slug>/related/',
         CvTemplateRelatedListView.as_view(),
-        name='cv-template-v2-related',
+        name='cv-template-related',
     ),
-    path('cv-categories/', CvCategoryCatalogListView.as_view(), name='cv-category-v2-list'),
-    path('cv-backgrounds/', CvBackgroundCatalogListView.as_view(), name='cv-background-v2-list'),
+    path('cv-categories/', CvCategoryCatalogListView.as_view(), name='cv-category-list'),
+    path('cv-backgrounds/', CvBackgroundCatalogListView.as_view(), name='cv-background-list'),
     path(
         'cv-position-options/',
         CvPositionOptionListView.as_view(),
-        name='cv-position-option-v2-list',
+        name='cv-position-option-list',
     ),
-    path('cv-position-preview/', CvPositionPreviewView.as_view(), name='cv-position-preview-v2'),
-    path('cv-position-details/', CvPositionDetailsView.as_view(), name='cv-position-details-v2'),
+    path('cv-position-preview/', CvPositionPreviewView.as_view(), name='cv-position-preview'),
+    path('cv-position-details/', CvPositionDetailsView.as_view(), name='cv-position-details'),
     path(
         'cv-sample-contents/',
         CvSampleContentCatalogListView.as_view(),
-        name='cv-sample-content-v2-list',
+        name='cv-sample-content-list',
     ),
 ]

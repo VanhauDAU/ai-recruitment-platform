@@ -25,9 +25,9 @@ describe('saved jobs API', () => {
     await expect(saveJob('job-1')).resolves.toEqual({ job_detail: { public_id: 'job-1' } })
     await unsaveJob('job-1')
 
-    expect(mocks.get).toHaveBeenCalledWith('/jobs/saved/')
-    expect(mocks.post).toHaveBeenCalledWith('/jobs/saved/', { job: 'job-1' })
-    expect(mocks.delete).toHaveBeenCalledWith('/jobs/saved/job-1/')
+    expect(mocks.get).toHaveBeenCalledWith('/candidate/jobs/saved/')
+    expect(mocks.post).toHaveBeenCalledWith('/candidate/jobs/saved/', { job: 'job-1' })
+    expect(mocks.delete).toHaveBeenCalledWith('/candidate/jobs/saved/job-1/')
   })
 
   it('loads rule-based recommendations from saved-job history', async () => {
@@ -40,7 +40,7 @@ describe('saved jobs API', () => {
     mocks.get.mockResolvedValue({ data: payload })
 
     await expect(getSavedJobRecommendations(8)).resolves.toEqual(payload)
-    expect(mocks.get).toHaveBeenCalledWith('/jobs/recommendations/by-saved/', {
+    expect(mocks.get).toHaveBeenCalledWith('/candidate/jobs/recommendations/by-saved/', {
       params: { limit: 8 },
     })
   })

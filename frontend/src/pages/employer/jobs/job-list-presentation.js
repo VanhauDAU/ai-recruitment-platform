@@ -1,7 +1,7 @@
 import dayjs from 'dayjs'
 import { employerAppPath } from '@/shared/config/portals'
 
-// `countKey` reads `status_counts` of GET /api/jobs/mine/, which counts every
+// `countKey` reads `status_counts` of GET /api/employer/jobs/, which counts every
 // tab under the current search so the numbers never depend on the open tab.
 export const JOB_STATUS_TABS = [
   { value: '', label: 'Tất cả', countKey: 'all' },

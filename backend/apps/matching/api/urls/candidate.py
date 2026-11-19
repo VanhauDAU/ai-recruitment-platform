@@ -1,4 +1,4 @@
-"""Routes của `/api/matching/`."""
+"""Routes của `/api/candidate/matching/`."""
 
 from django.urls import path
 

@@ -14,6 +14,90 @@ def health_check(request):
     return JsonResponse({'status': 'ok'})
 
 
+def portal(*routes):
+    """Một cổng API: mỗi phần tử là (tiền tố tài nguyên, module urls/<cổng>.py của app)."""
+    return [path(prefix, include(module)) for prefix, module in routes]
+
+
+# URL API theo cổng (ADR-0022): /api/{auth,public,candidate,employer,admin,shared}/.
+# Trong một cổng, include có route bắt-tất-cả (`<slug>/`, `<str:public_id>/`) đứng
+# sau include cùng tiền tố có route cố định.
+api_portal_patterns = [
+    path('auth/', include('apps.accounts.api.urls.auth')),
+    path(
+        'public/',
+        include(
+            portal(
+                ('jobs/', 'apps.jobs.api.urls.public'),
+                ('companies/', 'apps.employers.api.urls.public'),
+                ('campaigns/', 'apps.campaigns.api.urls.public'),
+                ('cvs/', 'apps.cvs.api.urls.public'),
+                ('', 'apps.cv_templates.api.urls.public'),
+                ('', 'apps.applications.api.urls.public'),
+                ('blog/', 'apps.blog.api.urls.public'),
+                ('knowledgebase/', 'apps.knowledgebase.api.urls.public'),
+                ('site/', 'apps.sitecontent.api.urls.public'),
+                ('locations/', 'apps.locations.api.urls.public'),
+                ('skills/', 'apps.skills.api.urls.public'),
+                ('privacy/', 'apps.privacy.api.urls.public'),
+            )
+        ),
+    ),
+    path(
+        'candidate/',
+        include(
+            portal(
+                ('', 'apps.candidates.api.urls.candidate'),
+                ('', 'apps.employers.api.urls.candidate'),
+                ('', 'apps.applications.api.urls.candidate'),
+                ('cvs/', 'apps.cvs.api.urls.candidate'),
+                ('jobs/', 'apps.jobs.api.urls.candidate'),
+                ('matching/', 'apps.matching.api.urls.candidate'),
+            )
+        ),
+    ),
+    path(
+        'employer/',
+        include(
+            portal(
+                ('', 'apps.employers.api.urls.employer'),
+                ('', 'apps.campaigns.api.urls.employer'),
+                ('', 'apps.applications.api.urls.employer'),
+                ('jobs/', 'apps.jobs.api.urls.employer'),
+                ('dashboard/', 'apps.dashboard.api.urls.employer'),
+            )
+        ),
+    ),
+    path(
+        'admin/',
+        include(
+            portal(
+                ('', 'apps.accounts.api.urls.admin'),
+                ('', 'apps.employers.api.urls.admin'),
+                ('', 'apps.cvs.api.urls.admin'),
+                ('', 'apps.cv_templates.api.urls.admin'),
+                ('', 'apps.applications.api.urls.admin'),
+                ('jobs/', 'apps.jobs.api.urls.admin'),
+                ('ai/', 'apps.jobs.api.urls.admin_ai'),
+                ('dashboard/', 'apps.dashboard.api.urls.admin'),
+                ('site/', 'apps.sitecontent.api.urls.admin'),
+                ('blog/', 'apps.blog.api.urls.admin'),
+                ('knowledgebase/', 'apps.knowledgebase.api.urls.admin'),
+            )
+        ),
+    ),
+    path(
+        'shared/',
+        include(
+            portal(
+                ('uploads/', 'apps.uploads.api.urls.shared'),
+                ('site/', 'apps.sitecontent.api.urls.shared'),
+            )
+        ),
+    ),
+]
+
+
 urlpatterns = [
     # Search-visible HTML shell routes live outside /api by design. Order keeps
     # their explicit public paths ahead of API and Django-admin composition.
@@ -26,44 +110,7 @@ urlpatterns = [
     path('', include('apps.employers.seo.urls')),
     path('', include('apps.campaigns.seo.urls')),
     path('api/health/', health_check, name='health-check'),
-    path('api/auth/', include('apps.accounts.api.urls.auth')),
-    path('api/admin/', include('apps.accounts.api.urls.admin')),
-    path('api/admin/', include('apps.employers.api.urls.admin')),
-    path('api/candidate/', include('apps.candidates.api.urls.candidate')),
-    path('api/candidate/', include('apps.employers.api.urls.candidate')),
-    path('api/companies/', include('apps.employers.api.urls.public')),
-    path('api/employer/', include('apps.employers.api.urls.employer')),
-    path('api/employer/', include('apps.campaigns.api.urls.employer')),
-    path('api/campaigns/', include('apps.campaigns.api.urls.public')),
-    # Public trước: các route cố định (`shares/`, `assets/`) không bị `<str:public_id>/` che.
-    path('api/v2/cvs/', include('apps.cvs.api.urls.public')),
-    path('api/v2/cvs/', include('apps.cvs.api.urls.candidate')),
-    path('api/v2/', include('apps.cvs.api.urls.admin')),
-    path('api/v2/', include('apps.cv_templates.api.urls.admin')),
-    path('api/v2/', include('apps.cv_templates.api.urls.public')),
-    path('api/jobs/', include('apps.jobs.api.urls.admin')),
-    path('api/jobs/', include('apps.jobs.api.urls.employer')),
-    path('api/jobs/', include('apps.jobs.api.urls.candidate')),
-    path('api/jobs/', include('apps.jobs.api.urls.public')),
-    path('api/ai/', include('apps.jobs.api.urls.admin_ai')),
-    path('api/matching/', include('apps.matching.api.urls.candidate')),
-    path('api/dashboard/', include('apps.dashboard.api.urls.admin')),
-    path('api/dashboard/', include('apps.dashboard.api.urls.employer')),
-    path('api/v2/', include('apps.applications.api.urls.admin')),
-    path('api/v2/', include('apps.applications.api.urls.employer')),
-    path('api/v2/', include('apps.applications.api.urls.candidate')),
-    path('api/v2/', include('apps.applications.api.urls.public')),
-    path('api/locations/', include('apps.locations.api.urls.public')),
-    path('api/skills/', include('apps.skills.api.urls.public')),
-    path('api/site/', include('apps.sitecontent.api.urls.admin')),
-    path('api/site/', include('apps.sitecontent.api.urls.shared')),
-    path('api/site/', include('apps.sitecontent.api.urls.public')),
-    path('api/blog/', include('apps.blog.api.urls.admin')),
-    path('api/blog/', include('apps.blog.api.urls.public')),
-    path('api/privacy/', include('apps.privacy.api.urls.public')),
-    path('api/knowledgebase/', include('apps.knowledgebase.api.urls.admin')),
-    path('api/knowledgebase/', include('apps.knowledgebase.api.urls.public')),
-    path('api/uploads/', include('apps.uploads.api.urls.shared')),
+    path('api/', include(api_portal_patterns)),
 ]
 
 if settings.DJANGO_ADMIN_ENABLED:

@@ -29,12 +29,7 @@ from apps.cv_templates.models import (
     empty_style,
 )
 from apps.cv_templates.services import compose_cv_document, print_payload
-from apps.cvs.tasks.exports import generate_cv_thumbnail, render_cv_export_job
-from apps.cvs.tasks.imports import ImportProcessingError, process_cv_import_job
-from apps.jobs.models import JobCategory, JobCategoryLocalization
-from apps.sitecontent.models import SiteSetting
-
-from ..models import (
+from apps.cvs.models import (
     CvAccessLog,
     CvAsset,
     CvDraft,
@@ -44,13 +39,17 @@ from ..models import (
     CvVersion,
     UserCv,
 )
-from .fixtures import CV_LINES, cv_pdf_upload, docx_bytes, pdf_bytes
+from apps.cvs.tasks.exports import generate_cv_thumbnail, render_cv_export_job
+from apps.cvs.tasks.imports import ImportProcessingError, process_cv_import_job
+from apps.cvs.tests.fixtures import CV_LINES, cv_pdf_upload, docx_bytes, pdf_bytes
+from apps.jobs.models import JobCategory, JobCategoryLocalization
+from apps.sitecontent.models import SiteSetting
 
 TEST_EXPORT_MEDIA_ROOT = tempfile.mkdtemp()
 
 
 @override_settings(MEDIA_ROOT=TEST_EXPORT_MEDIA_ROOT, ALLOWED_HOSTS=['testserver'])
-class CvV2ApiTests(APITestCase):
+class CvApiTests(APITestCase):
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
@@ -95,7 +94,7 @@ class CvV2ApiTests(APITestCase):
 
     def create_cv(self):
         response = self.client.post(
-            reverse('cv-v2-list-create'),
+            reverse('cv-list-create'),
             {'title': 'CV V2', 'template_public_id': self.template.public_id, 'language': 'vi-VN'},
             format='json',
         )
@@ -103,22 +102,22 @@ class CvV2ApiTests(APITestCase):
         return UserCv.objects.get(public_id=response.data['public_id'])
 
     def draft_url(self, cv):
-        return reverse('cv-v2-draft', kwargs={'public_id': cv.public_id})
+        return reverse('cv-draft', kwargs={'public_id': cv.public_id})
 
     def owner_view_url(self, cv):
-        return reverse('cv-v2-owner-view', kwargs={'public_id': cv.public_id})
+        return reverse('cv-owner-view', kwargs={'public_id': cv.public_id})
 
     def shared_links_url(self, cv):
-        return reverse('cv-v2-shared-link-list-create', kwargs={'public_id': cv.public_id})
+        return reverse('cv-shared-link-list-create', kwargs={'public_id': cv.public_id})
 
     def exports_url(self, cv):
-        return reverse('cv-v2-export-list-create', kwargs={'public_id': cv.public_id})
+        return reverse('cv-export-list-create', kwargs={'public_id': cv.public_id})
 
     def export_url(self, cv, export, action=None):
         name = {
-            None: 'cv-v2-export-detail',
-            'retry': 'cv-v2-export-retry',
-            'download': 'cv-v2-export-download',
+            None: 'cv-export-detail',
+            'retry': 'cv-export-retry',
+            'download': 'cv-export-download',
         }[action]
         return reverse(
             name, kwargs={'public_id': cv.public_id, 'export_public_id': export.public_id}
@@ -175,7 +174,7 @@ class CvV2ApiTests(APITestCase):
         cv = self.create_cv()
         self.assertEqual(CvVersion.objects.filter(cv=cv).count(), 1)
 
-        detail = self.client.get(reverse('cv-v2-detail', kwargs={'public_id': cv.public_id}))
+        detail = self.client.get(reverse('cv-detail', kwargs={'public_id': cv.public_id}))
         self.assertEqual(detail.status_code, 200)
         self.assertEqual(detail.data['template_renderer_key'], 'single_column_v1')
         self.assertEqual(detail.data['template_renderer_version'], '1')
@@ -215,7 +214,7 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(stale.data['current_lock_version'], 1)
 
         saved = self.client.post(
-            reverse('cv-v2-save-version', kwargs={'public_id': cv.public_id}),
+            reverse('cv-save-version', kwargs={'public_id': cv.public_id}),
             format='json',
             HTTP_IF_MATCH='"lock-version-1"',
         )
@@ -224,7 +223,7 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(CvVersion.objects.filter(cv=cv).count(), 2)
 
         published = self.client.post(
-            reverse('cv-v2-publish', kwargs={'public_id': cv.public_id}),
+            reverse('cv-publish', kwargs={'public_id': cv.public_id}),
             format='json',
             HTTP_IF_MATCH='"lock-version-1"',
         )
@@ -251,7 +250,7 @@ class CvV2ApiTests(APITestCase):
         alternate, _ = self.create_alternate_template()
 
         response = self.client.post(
-            reverse('cv-v2-list-create'),
+            reverse('cv-list-create'),
             {
                 'title': 'Copied CV',
                 'template_public_id': alternate.public_id,
@@ -276,7 +275,7 @@ class CvV2ApiTests(APITestCase):
         alternate, version = self.create_alternate_template()
 
         response = self.client.get(
-            reverse('cv-v2-template-preview', kwargs={'public_id': cv.public_id}),
+            reverse('cv-template-preview', kwargs={'public_id': cv.public_id}),
             {'template_public_id': alternate.public_id},
         )
 
@@ -287,7 +286,7 @@ class CvV2ApiTests(APITestCase):
 
     def test_create_applies_only_a_color_available_for_the_template(self):
         response = self.client.post(
-            reverse('cv-v2-list-create'),
+            reverse('cv-list-create'),
             {
                 'title': 'Blue CV',
                 'template_public_id': self.template.public_id,
@@ -303,7 +302,7 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(cv.latest_version.style_json['theme_color'], '#2255AA')
 
         invalid = self.client.post(
-            reverse('cv-v2-list-create'),
+            reverse('cv-list-create'),
             {
                 'title': 'Invalid color CV',
                 'template_public_id': self.template.public_id,
@@ -322,7 +321,7 @@ class CvV2ApiTests(APITestCase):
             'template_public_id': self.template.public_id,
             'language': 'vi-VN',
         }
-        url = reverse('cv-v2-list-create')
+        url = reverse('cv-list-create')
         first = self.client.post(url, payload, format='json', HTTP_IDEMPOTENCY_KEY='click-1')
         again = self.client.post(url, payload, format='json', HTTP_IDEMPOTENCY_KEY='click-1')
         other = self.client.post(url, payload, format='json', HTTP_IDEMPOTENCY_KEY='click-2')
@@ -334,12 +333,12 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(UserCv.objects.filter(title='CV một lần').count(), 2)
 
     def import_uploaded_cv(self, upload):
-        response = self.client.post(reverse('cv-v2-import'), {'file': upload}, format='multipart')
+        response = self.client.post(reverse('cv-import'), {'file': upload}, format='multipart')
         self.assertEqual(response.status_code, 201, response.data)
         return UserCv.objects.get(public_id=response.data['public_id'])
 
     def source_file_url(self, cv):
-        return reverse('cv-v2-source-file', kwargs={'public_id': cv.public_id})
+        return reverse('cv-source-file', kwargs={'public_id': cv.public_id})
 
     def test_owner_views_uploaded_pdf_source_inline_and_others_cannot(self):
         cv = self.import_uploaded_cv(cv_pdf_upload('source.pdf'))
@@ -368,10 +367,10 @@ class CvV2ApiTests(APITestCase):
         token = created.data['token']
         self.client.force_authenticate(None)
 
-        page = self.client.get(reverse('cv-v2-shared-link-public', kwargs={'token': token}))
+        page = self.client.get(reverse('cv-shared-link-public', kwargs={'token': token}))
         logs_after_page = CvAccessLog.objects.filter(cv=cv).count()
-        source = self.client.get(reverse('cv-v2-shared-source-file', kwargs={'token': token}))
-        missing = self.client.get(reverse('cv-v2-shared-source-file', kwargs={'token': 'not-real'}))
+        source = self.client.get(reverse('cv-shared-source-file', kwargs={'token': token}))
+        missing = self.client.get(reverse('cv-shared-source-file', kwargs={'token': 'not-real'}))
 
         self.assertEqual(page.data['cv']['cv_type'], UserCv.CvType.UPLOADED)
         self.assertEqual(source.status_code, 200)
@@ -404,17 +403,17 @@ class CvV2ApiTests(APITestCase):
         self.create_cv()
 
         created = self.client.post(
-            reverse('cv-v2-list-create'),
+            reverse('cv-list-create'),
             {'title': 'CV thứ ba', 'template_public_id': self.template.public_id},
             format='json',
         )
         uploaded = self.client.post(
-            reverse('cv-v2-import'),
+            reverse('cv-import'),
             {'file': cv_pdf_upload()},
             format='multipart',
         )
         duplicated = self.client.post(
-            reverse('cv-v2-duplicate', kwargs={'public_id': first.public_id}), {}, format='json'
+            reverse('cv-duplicate', kwargs={'public_id': first.public_id}), {}, format='json'
         )
 
         for response in (created, uploaded, duplicated):
@@ -427,7 +426,7 @@ class CvV2ApiTests(APITestCase):
 
     def test_upload_that_is_not_a_cv_is_rejected_without_creating_one(self):
         response = self.client.post(
-            reverse('cv-v2-import'),
+            reverse('cv-import'),
             {'file': cv_pdf_upload('invoice.pdf', ('Hoa don ban hang so 123, tong 500.000 VND',))},
             format='multipart',
         )
@@ -439,7 +438,7 @@ class CvV2ApiTests(APITestCase):
 
     def test_recruiter_search_opt_in_per_cv_requires_profile_consent(self):
         cv = self.import_uploaded_cv(cv_pdf_upload())
-        url = reverse('cv-v2-detail', kwargs={'public_id': cv.public_id})
+        url = reverse('cv-detail', kwargs={'public_id': cv.public_id})
 
         blocked = self.client.patch(url, {'recruiter_searchable': True}, format='json')
         CandidateConsent.objects.create(
@@ -458,7 +457,7 @@ class CvV2ApiTests(APITestCase):
     def test_import_hard_delete_and_metadata_use_v2_without_legacy_storage_urls(self):
         uploaded = cv_pdf_upload('source.pdf')
         imported = self.client.post(
-            reverse('cv-v2-import'),
+            reverse('cv-import'),
             {'file': uploaded, 'title': 'Imported CV'},
             format='multipart',
         )
@@ -475,7 +474,7 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(imported.data['latest_version_public_id'], cv.latest_version.public_id)
 
         metadata = self.client.patch(
-            reverse('cv-v2-detail', kwargs={'public_id': cv.public_id}),
+            reverse('cv-detail', kwargs={'public_id': cv.public_id}),
             {'title': 'Renamed CV', 'is_default': True},
             format='json',
         )
@@ -483,14 +482,12 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(metadata.data['title'], 'Renamed CV')
         self.assertTrue(metadata.data['is_default'])
 
-        deleted = self.client.delete(reverse('cv-v2-detail', kwargs={'public_id': cv.public_id}))
+        deleted = self.client.delete(reverse('cv-detail', kwargs={'public_id': cv.public_id}))
         self.assertEqual(deleted.status_code, 204)
         self.assertFalse(UserCv.objects.filter(pk=cv.pk).exists())
         self.assertFalse(CvVersion.objects.filter(cv_id=cv.pk).exists())
         self.assertEqual(
-            self.client.get(
-                reverse('cv-v2-detail', kwargs={'public_id': cv.public_id})
-            ).status_code,
+            self.client.get(reverse('cv-detail', kwargs={'public_id': cv.public_id})).status_code,
             404,
         )
 
@@ -515,13 +512,13 @@ class CvV2ApiTests(APITestCase):
         }
         with patch('apps.cvs.tasks.imports.process_cv_import_job.delay'):
             first = self.client.post(
-                reverse('cv-v2-import'),
+                reverse('cv-import'),
                 payload,
                 format='multipart',
                 HTTP_IDEMPOTENCY_KEY='same-import',
             )
             second = self.client.post(
-                reverse('cv-v2-import'),
+                reverse('cv-import'),
                 {**payload, 'file': self._docx_upload()},
                 format='multipart',
                 HTTP_IDEMPOTENCY_KEY='same-import',
@@ -552,7 +549,7 @@ class CvV2ApiTests(APITestCase):
             'spoofed.pdf', b'not a real pdf', content_type='application/pdf'
         )
         response = self.client.post(
-            reverse('cv-v2-import'),
+            reverse('cv-import'),
             {'file': upload, 'template_public_id': self.template.public_id, 'language': 'vi-VN'},
             format='multipart',
         )
@@ -568,7 +565,7 @@ class CvV2ApiTests(APITestCase):
         )
 
         response = self.client.post(
-            reverse('cv-v2-import'),
+            reverse('cv-import'),
             {'file': upload},
             format='multipart',
         )
@@ -579,7 +576,7 @@ class CvV2ApiTests(APITestCase):
     def test_failed_import_exposes_safe_code_and_can_retry(self):
         with patch('apps.cvs.tasks.imports.process_cv_import_job.delay'):
             queued = self.client.post(
-                reverse('cv-v2-import'),
+                reverse('cv-import'),
                 {
                     'file': self._docx_upload(),
                     'template_public_id': self.template.public_id,
@@ -603,7 +600,7 @@ class CvV2ApiTests(APITestCase):
         with patch('apps.cvs.tasks.imports.process_cv_import_job.delay') as enqueue:
             with self.captureOnCommitCallbacks(execute=True):
                 retried = self.client.post(
-                    reverse('cv-v2-import-retry', kwargs={'public_id': cv.public_id}),
+                    reverse('cv-import-retry', kwargs={'public_id': cv.public_id}),
                     {},
                     format='json',
                 )
@@ -616,12 +613,12 @@ class CvV2ApiTests(APITestCase):
         first_cv = self.create_cv()
         second_cv = self.create_cv()
         first = self.client.patch(
-            reverse('cv-v2-detail', kwargs={'public_id': first_cv.public_id}),
+            reverse('cv-detail', kwargs={'public_id': first_cv.public_id}),
             {'is_default': True},
             format='json',
         )
         second = self.client.patch(
-            reverse('cv-v2-detail', kwargs={'public_id': second_cv.public_id}),
+            reverse('cv-detail', kwargs={'public_id': second_cv.public_id}),
             {'is_default': True},
             format='json',
         )
@@ -639,7 +636,7 @@ class CvV2ApiTests(APITestCase):
         source_draft.content_json['personal_info']['full_name'] = 'Original candidate'
         source_draft.save(update_fields=['content_json'])
         saved = self.client.post(
-            reverse('cv-v2-save-version', kwargs={'public_id': source_cv.public_id}),
+            reverse('cv-save-version', kwargs={'public_id': source_cv.public_id}),
             format='json',
             HTTP_IF_MATCH='"lock-version-0"',
         )
@@ -647,7 +644,7 @@ class CvV2ApiTests(APITestCase):
         source_cv.refresh_from_db()
 
         response = self.client.post(
-            reverse('cv-v2-duplicate', kwargs={'public_id': source_cv.public_id}),
+            reverse('cv-duplicate', kwargs={'public_id': source_cv.public_id}),
             {'title': 'CV duplicated'},
             format='json',
         )
@@ -677,12 +674,12 @@ class CvV2ApiTests(APITestCase):
         cv = self.create_cv()
         self.assertEqual(
             self.client.delete(
-                reverse('cv-v2-detail', kwargs={'public_id': cv.public_id})
+                reverse('cv-detail', kwargs={'public_id': cv.public_id})
             ).status_code,
             204,
         )
         self.assertFalse(UserCv.objects.filter(pk=cv.pk).exists())
-        listed = self.client.get(reverse('cv-v2-list-create')).data
+        listed = self.client.get(reverse('cv-list-create')).data
         self.assertEqual(listed['results'] if isinstance(listed, dict) else listed, [])
 
     def test_autosave_rejects_invalid_canonical_documents_before_writing(self):
@@ -711,12 +708,12 @@ class CvV2ApiTests(APITestCase):
         CvDraft.objects.filter(cv=cv).update(style_json={**empty_style(), 'theme_color': 'invalid'})
 
         save = self.client.post(
-            reverse('cv-v2-save-version', kwargs={'public_id': cv.public_id}),
+            reverse('cv-save-version', kwargs={'public_id': cv.public_id}),
             format='json',
             HTTP_IF_MATCH='"lock-version-0"',
         )
         publish = self.client.post(
-            reverse('cv-v2-publish', kwargs={'public_id': cv.public_id}),
+            reverse('cv-publish', kwargs={'public_id': cv.public_id}),
             format='json',
             HTTP_IF_MATCH='"lock-version-0"',
         )
@@ -732,7 +729,7 @@ class CvV2ApiTests(APITestCase):
         original_content = deepcopy(cv.draft.content_json)
 
         response = self.client.put(
-            reverse('cv-v2-template-switch', kwargs={'public_id': cv.public_id}),
+            reverse('cv-template-switch', kwargs={'public_id': cv.public_id}),
             {'template_public_id': alternate_template.public_id, 'client_session_id': 'editor-tab'},
             format='json',
             HTTP_IF_MATCH='"lock-version-0"',
@@ -769,7 +766,7 @@ class CvV2ApiTests(APITestCase):
         self.assertIn('layout_json.regions', invalid_resize.data)
 
         stale = self.client.put(
-            reverse('cv-v2-template-switch', kwargs={'public_id': cv.public_id}),
+            reverse('cv-template-switch', kwargs={'public_id': cv.public_id}),
             {'template_public_id': self.template.public_id},
             format='json',
             HTTP_IF_MATCH='"lock-version-0"',
@@ -848,7 +845,7 @@ class CvV2ApiTests(APITestCase):
             self.draft_url(cv), save_payload, format='json', HTTP_IF_MATCH='"lock-version-0"'
         )
         saved = self.client.post(
-            reverse('cv-v2-save-version', kwargs={'public_id': cv.public_id}),
+            reverse('cv-save-version', kwargs={'public_id': cv.public_id}),
             format='json',
             HTTP_IF_MATCH='"lock-version-1"',
         )
@@ -890,7 +887,7 @@ class CvV2ApiTests(APITestCase):
         self.assertNotIn('token', created.data['link'])
 
         shared = self.client.get(
-            reverse('cv-v2-shared-link-public', kwargs={'token': raw_token}),
+            reverse('cv-shared-link-public', kwargs={'token': raw_token}),
             REMOTE_ADDR='198.51.100.4',
             HTTP_USER_AGENT='shared-browser',
         )
@@ -920,12 +917,12 @@ class CvV2ApiTests(APITestCase):
         created = self.client.post(self.shared_links_url(cv), format='json')
         self.assertEqual(created.status_code, 201, created.data)
         raw_token = created.data['token']
-        public_url = reverse('cv-v2-shared-link-public', kwargs={'token': raw_token})
+        public_url = reverse('cv-shared-link-public', kwargs={'token': raw_token})
         self.assertEqual(self.client.get(public_url).status_code, 200)
 
         revoke = self.client.delete(
             reverse(
-                'cv-v2-shared-link-revoke',
+                'cv-shared-link-revoke',
                 kwargs={
                     'public_id': cv.public_id,
                     'link_public_id': created.data['link']['public_id'],
@@ -936,7 +933,7 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(self.client.get(public_url).status_code, 404)
         self.assertEqual(
             self.client.get(
-                reverse('cv-v2-shared-link-public', kwargs={'token': 'not-a-real-token'})
+                reverse('cv-shared-link-public', kwargs={'token': 'not-a-real-token'})
             ).status_code,
             404,
         )
@@ -948,7 +945,7 @@ class CvV2ApiTests(APITestCase):
         )
         self.assertEqual(
             self.client.get(
-                reverse('cv-v2-shared-link-public', kwargs={'token': expiring.data['token']})
+                reverse('cv-shared-link-public', kwargs={'token': expiring.data['token']})
             ).status_code,
             404,
         )
@@ -966,7 +963,7 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(
             self.client.delete(
                 reverse(
-                    'cv-v2-shared-link-revoke',
+                    'cv-shared-link-revoke',
                     kwargs={
                         'public_id': cv.public_id,
                         'link_public_id': created.data['link']['public_id'],
@@ -982,7 +979,7 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(self.client.get(self.draft_url(cv)).status_code, 404)
         self.assertEqual(
             self.client.get(
-                reverse('cv-v2-version-list', kwargs={'public_id': cv.public_id})
+                reverse('cv-version-list', kwargs={'public_id': cv.public_id})
             ).status_code,
             404,
         )
@@ -1002,7 +999,7 @@ class CvV2ApiTests(APITestCase):
         draft = self.client.get(self.draft_url(cv)).data
         response = self.client.patch(
             reverse(
-                'cv-v2-version-detail',
+                'cv-version-detail',
                 kwargs={
                     'public_id': cv.public_id,
                     'version_public_id': cv.latest_version.public_id,
@@ -1019,7 +1016,7 @@ class CvV2ApiTests(APITestCase):
         ):
             with self.assertRaisesRegex(RuntimeError, 'database failure'):
                 self.client.post(
-                    reverse('cv-v2-save-version', kwargs={'public_id': cv.public_id}),
+                    reverse('cv-save-version', kwargs={'public_id': cv.public_id}),
                     format='json',
                     HTTP_IF_MATCH=f'"lock-version-{draft["lock_version"]}"',
                 )
@@ -1036,7 +1033,7 @@ class CvV2ApiTests(APITestCase):
         )
         self.client.force_authenticate(unverified)
         response = self.client.post(
-            reverse('cv-v2-list-create'),
+            reverse('cv-list-create'),
             {'title': 'Blocked', 'template_public_id': self.template.public_id},
             format='json',
         )
@@ -1045,7 +1042,7 @@ class CvV2ApiTests(APITestCase):
         self.template.current_published_version = None
         self.template.save(update_fields=['current_published_version'])
         response = self.client.post(
-            reverse('cv-v2-list-create'),
+            reverse('cv-list-create'),
             {'title': 'No release', 'template_public_id': self.template.public_id},
             format='json',
         )
@@ -1065,7 +1062,7 @@ class CvV2ApiTests(APITestCase):
         self.template.save(update_fields=['current_published_version'])
 
         response = self.client.post(
-            reverse('cv-v2-list-create'),
+            reverse('cv-list-create'),
             {
                 'title': 'Pinned CV',
                 'template_public_id': self.template.public_id,
@@ -1081,7 +1078,7 @@ class CvV2ApiTests(APITestCase):
 
     def test_create_blank_builds_usercv_initial_version_and_draft(self):
         response = self.client.post(
-            reverse('cv-v2-list-create'),
+            reverse('cv-list-create'),
             {
                 'title': 'Blank CV',
                 'template_public_id': self.template.public_id,
@@ -1125,7 +1122,7 @@ class CvV2ApiTests(APITestCase):
             content_json=sample_content,
             status=CvSampleContent.Status.PUBLISHED,
         )
-        url = reverse('cv-v2-apply-sample', kwargs={'public_id': cv.public_id})
+        url = reverse('cv-apply-sample', kwargs={'public_id': cv.public_id})
 
         applied = self.client.post(
             url,
@@ -1156,9 +1153,7 @@ class CvV2ApiTests(APITestCase):
         Image.new('RGB', (900, 700), '#2255AA').save(buffer, format='JPEG')
         upload = SimpleUploadedFile('avatar.jpg', buffer.getvalue(), content_type='image/jpeg')
 
-        created = self.client.post(
-            reverse('cv-v2-asset-upload'), {'file': upload}, format='multipart'
-        )
+        created = self.client.post(reverse('cv-asset-upload'), {'file': upload}, format='multipart')
 
         self.assertEqual(created.status_code, 201, created.data)
         self.assertNotIn('storage_key', created.data)
@@ -1166,7 +1161,7 @@ class CvV2ApiTests(APITestCase):
         self.assertLessEqual(created.data['height'], 512)
         self.assertIn('?token=', created.data['url'])
         asset = CvAsset.objects.get(public_id=created.data['public_id'])
-        content_url = reverse('cv-v2-asset-content', kwargs={'asset_public_id': asset.public_id})
+        content_url = reverse('cv-asset-content', kwargs={'asset_public_id': asset.public_id})
         self.client.force_authenticate(self.other_candidate)
         self.assertEqual(self.client.get(content_url).status_code, 404)
         self.assertEqual(self.client.get(created.data['url']).status_code, 200)
@@ -1175,7 +1170,7 @@ class CvV2ApiTests(APITestCase):
 
         invalid = SimpleUploadedFile('avatar.png', b'not-an-image', content_type='image/png')
         rejected = self.client.post(
-            reverse('cv-v2-asset-upload'), {'file': invalid}, format='multipart'
+            reverse('cv-asset-upload'), {'file': invalid}, format='multipart'
         )
         self.assertEqual(rejected.status_code, 400)
 
@@ -1217,7 +1212,7 @@ class CvV2ApiTests(APITestCase):
         )
 
         response = self.client.post(
-            reverse('cv-v2-list-create'),
+            reverse('cv-list-create'),
             {
                 'title': 'Customer Service CV',
                 'template_public_id': self.template.public_id,
@@ -1256,7 +1251,7 @@ class CvV2ApiTests(APITestCase):
             self.draft_url(cv), saved_payload, format='json', HTTP_IF_MATCH='"lock-version-0"'
         )
         saved = self.client.post(
-            reverse('cv-v2-save-version', kwargs={'public_id': cv.public_id}),
+            reverse('cv-save-version', kwargs={'public_id': cv.public_id}),
             format='json',
             HTTP_IF_MATCH='"lock-version-1"',
         )
@@ -1304,13 +1299,13 @@ class CvV2ApiTests(APITestCase):
     def test_pdf_export_defaults_to_published_before_newer_latest_version(self):
         cv = self.create_cv()
         published = self.client.post(
-            reverse('cv-v2-publish', kwargs={'public_id': cv.public_id}),
+            reverse('cv-publish', kwargs={'public_id': cv.public_id}),
             format='json',
             HTTP_IF_MATCH='"lock-version-0"',
         )
         self.assertEqual(published.status_code, 201, published.data)
         saved = self.client.post(
-            reverse('cv-v2-save-version', kwargs={'public_id': cv.public_id}),
+            reverse('cv-save-version', kwargs={'public_id': cv.public_id}),
             format='json',
             HTTP_IF_MATCH='"lock-version-0"',
         )
@@ -1326,7 +1321,7 @@ class CvV2ApiTests(APITestCase):
         cv = self.create_cv()
         alternate_template, alternate_version = self.create_alternate_template()
         switched = self.client.put(
-            reverse('cv-v2-template-switch', kwargs={'public_id': cv.public_id}),
+            reverse('cv-template-switch', kwargs={'public_id': cv.public_id}),
             {'template_public_id': alternate_template.public_id},
             format='json',
             HTTP_IF_MATCH='"lock-version-0"',
@@ -1355,7 +1350,7 @@ class CvV2ApiTests(APITestCase):
         )
         self.assertEqual(updated.status_code, 200, updated.data)
         saved = self.client.post(
-            reverse('cv-v2-save-version', kwargs={'public_id': cv.public_id}),
+            reverse('cv-save-version', kwargs={'public_id': cv.public_id}),
             format='json',
             HTTP_IF_MATCH='"lock-version-2"',
         )
@@ -1514,7 +1509,7 @@ class CvV2ApiTests(APITestCase):
         cv.refresh_from_db()
 
         self.assertTrue(cv.thumbnail_url.endswith('.webp'))
-        response = self.client.get(reverse('cv-v2-thumbnail', kwargs={'public_id': cv.public_id}))
+        response = self.client.get(reverse('cv-thumbnail', kwargs={'public_id': cv.public_id}))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'image/webp')
         self.assertEqual(b''.join(response.streaming_content), b'webp-preview')
@@ -1522,7 +1517,7 @@ class CvV2ApiTests(APITestCase):
         self.client.force_authenticate(self.other_candidate)
         self.assertEqual(
             self.client.get(
-                reverse('cv-v2-thumbnail', kwargs={'public_id': cv.public_id})
+                reverse('cv-thumbnail', kwargs={'public_id': cv.public_id})
             ).status_code,
             404,
         )

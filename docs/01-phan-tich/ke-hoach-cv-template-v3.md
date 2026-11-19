@@ -23,7 +23,7 @@ Kết quả rà soát code trên nhánh `dev` (commit `658c4073`):
 | H5 | Chọn vị trí chỉ đổi chữ mẫu, mọi vị trí cùng một cấu trúc | `CvSampleContent` và `CvContentBlueprint` chỉ có `content_json`; blueprint hard-code 4 nhóm (tóm tắt, kinh nghiệm, học vấn, kỹ năng); không có khái niệm section/trường riêng theo vị trí |
 | H6 | Quản trị template sơ sài, rối, không dùng được | `widgets/admin-cv-catalogue/ui/AdminCvCatalogue.jsx` (332 dòng) là 6 tab bảng thô (template, nội dung mẫu, blueprint, ngôn ngữ, danh mục & màu, hình nền); không có wizard, không có preview, không thấy độ phủ nội dung theo vị trí, không quản lý CV ứng viên |
 | H7 | Khung CV không đa dạng, thông tin cá nhân luôn nằm trên cùng | `entities/cv/cv/ui/CvDocumentPreview.jsx` dòng 138 dựng cứng `<header>` họ tên + liên hệ ở trang 1 phía trên mọi region (trừ `header_two_column_v1`). Chỉ có 3 renderer ở `apps/cv_templates/domain/renderers.py`. `nameplate`, `contact`, `avatar` đã là section marker trong registry nhưng renderer không cho đặt tự do |
-| H8 | Upload CV chưa điền vào mẫu đã chọn một cách tin cậy | Pipeline đã có (`POST /api/v2/cvs/imports/` → `process_cv_import_job` → `structure_cv_text`) nhưng: gọi thẳng REST provider, không qua runtime `ai_core` (không quota, không `AiInvocation`, không kill switch); gửi nguyên văn bản có PII sang AI; không có độ tin cậy theo trường; mở thẳng editor, không có bước rà soát |
+| H8 | Upload CV chưa điền vào mẫu đã chọn một cách tin cậy | Pipeline đã có (`POST /api/candidate/cvs/imports/` → `process_cv_import_job` → `structure_cv_text`) nhưng: gọi thẳng REST provider, không qua runtime `ai_core` (không quota, không `AiInvocation`, không kill switch); gửi nguyên văn bản có PII sang AI; không có độ tin cậy theo trường; mở thẳng editor, không có bước rà soát |
 | H9 | PDF có thể lệch với preview | Preview dùng React (`CvDocumentPreview`), PDF dùng Django template + WeasyPrint (`apps/cvs/services/pdf_renderer.py`, `apps/cvs/templates/pdf`). Mỗi layout phải viết hai lần |
 
 Những thứ **giữ lại** vì đã tốt: document canonical 3 JSON (`content_json`, `layout_json`, `style_json`), `compose_cv_document` là pipeline duy nhất, `CvTemplateVersion` bất biến sau khi publish, `CvDraft` autosave với `lock_version`, upload quarantine/claim, throttle `cv_import`, chọn màu CV.
@@ -107,7 +107,7 @@ Vì được xóa dữ liệu cũ (D10), làm sạch luôn thay vì giữ dual-r
   (mã BCP 47, không đổi sang mã ngắn để tránh chuyển đổi dữ liệu và API không
   cần thiết). `CATALOG_LANGUAGES` giữ path kho mẫu, nhãn và hậu tố trường song
   ngữ; frontend mirror ở `entities/cv/cv-template/model/cv-languages.js`.
-- Gỡ bảng `sitecontent.Locale`, API `/api/site/locales/`, `/api/site/admin/locales/`
+- Gỡ bảng `sitecontent.Locale`, API `/api/public/site/locales/`, `/api/admin/site/locales/`
   và mọi FK `locale_ref` (kể cả ở `JobCategoryLocalization`, vốn chỉ phục vụ kho
   CV). `JobCategoryLocalization.Locale` còn `vi-VN`/`en-US`.
 
@@ -359,9 +359,9 @@ Viết lại `use-cv-source.js` thành:
 
 | Nguồn | Hành động khi bấm Tạo CV | Đích |
 | --- | --- | --- |
-| Mẫu gợi ý | `POST /api/v2/cvs/` với `{template, language, theme_color, source: sample, position, band}` | `/cvs/:id/edit?mode=create` |
-| CV cũ | `POST /api/v2/cvs/` với `{…, source: copy, source_cv}` (nội dung copy sang CV mới, CV cũ không đổi) | như trên |
-| Trống | `POST /api/v2/cvs/` với `{…, source: blank}` | như trên |
+| Mẫu gợi ý | `POST /api/candidate/cvs/` với `{template, language, theme_color, source: sample, position, band}` | `/cvs/:id/edit?mode=create` |
+| CV cũ | `POST /api/candidate/cvs/` với `{…, source: copy, source_cv}` (nội dung copy sang CV mới, CV cũ không đổi) | như trên |
+| Trống | `POST /api/candidate/cvs/` với `{…, source: blank}` | như trên |
 | Upload | mục 8 | `/cvs/:id/import-review` |
 
 - Chưa đăng nhập: mở hộp đăng nhập; sau khi đăng nhập quay lại đúng URL (query string giữ toàn bộ lựa chọn) và tự bấm Tạo CV một lần.
@@ -384,13 +384,13 @@ Viết lại `use-cv-source.js` thành:
 ```text
 Chọn file ─► kiểm tra client (đuôi, MIME, ≤5 MB)
          ─► (lần đầu) hộp đồng ý xử lý AI ─► Bấm Tạo CV
-         ─► POST /api/v2/cvs/imports/  (multipart, Idempotency-Key)   ← 202 + job id
+         ─► POST /api/candidate/cvs/imports/  (multipart, Idempotency-Key)   ← 202 + job id
          ─► Worker: quarantine/ClamAV → trích text → che PII → AI → hợp nhất → compose theo template đã chọn
          ─► job = awaiting_review ─► /cvs/:id/import-review
          ─► Ứng viên rà soát/sửa ─► Xác nhận ─► /cvs/:id/edit
 ```
 
-Tiến trình hiển thị theo bước thật từ job: `Đang tải lên (x%)` → `Kiểm tra an toàn` → `Đọc nội dung` → `Phân tích bằng AI` → `Điền vào mẫu`. Poll `GET /api/v2/cvs/imports/:job/` với backoff 1 s → 2 s → 3 s, dừng khi tab ẩn (`document.visibilityState`), tối đa 90 s rồi chuyển sang "Chúng tôi sẽ thông báo khi xong" (thông báo trong notification center).
+Tiến trình hiển thị theo bước thật từ job: `Đang tải lên (x%)` → `Kiểm tra an toàn` → `Đọc nội dung` → `Phân tích bằng AI` → `Điền vào mẫu`. Poll `GET /api/candidate/cvs/imports/:job/` với backoff 1 s → 2 s → 3 s, dừng khi tab ẩn (`document.visibilityState`), tối đa 90 s rồi chuyển sang "Chúng tôi sẽ thông báo khi xong" (thông báo trong notification center).
 
 ### 8.2 Che PII trước khi gửi AI (D6)
 
@@ -513,7 +513,7 @@ Cập nhật `apps/accounts/constants/admin_permissions.py`, `admin_departments.
 
 Xóa: `cv-sample-contents/` public, `cv-position-preview/`, endpoint recoverable draft, `admin/cv-template-localizations/`, `admin/cv-content-blueprints/`.
 
-### 10.2 Admin (`/api/v2/admin/`)
+### 10.2 Admin (`/api/admin/`)
 
 | Path | Hành động |
 | --- | --- |

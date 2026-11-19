@@ -2,7 +2,7 @@ import api from '@/shared/api/client'
 
 // API cổng quản trị Mẫu CV (CVT-4). Thư viện, vị trí, trường riêng, nội dung mẫu
 // dùng chung một khuôn CRUD; các thao tác đặc thù là hàm riêng bên dưới.
-const BASE = '/v2/admin'
+const BASE = '/admin'
 const results = (data) => (Array.isArray(data) ? data : data?.results || [])
 const read = async (path, params) => (await api.get(`${BASE}${path}`, { params })).data
 const write = async (method, path, body = {}) => (await api[method](`${BASE}${path}`, body)).data

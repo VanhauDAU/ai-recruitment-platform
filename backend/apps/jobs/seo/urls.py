@@ -11,8 +11,6 @@ urlpatterns = [
         name='seo-job-location',
     ),
     path('viec-lam/<slug:slug>', JobDetailSeoShellView.as_view(), name='seo-job-detail'),
-    path('jobs', JobListSeoShellView.as_view(), name='seo-job-list-legacy'),
-    path('jobs/<slug:slug>', JobDetailSeoShellView.as_view(), name='seo-job-detail-legacy'),
     path(
         'brand/<slug:company_slug>/tuyen-dung/<slug:slug>',
         JobDetailSeoShellView.as_view(),

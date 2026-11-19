@@ -2,7 +2,7 @@ import api from '@/shared/api/client'
 import { normalizeAnnouncementFeed } from '../model/announcement.contract'
 
 export async function getActiveAnnouncements(params, { signal } = {}) {
-  const { data } = await api.get('/site/announcements/active/', {
+  const { data } = await api.get('/public/site/announcements/active/', {
     params: {
       surface: params.surface,
       path: params.path,
@@ -28,15 +28,15 @@ export async function getActiveAnnouncements(params, { signal } = {}) {
 }
 
 export async function setAnnouncementState(publicId, payload) {
-  const { data } = await api.put(`/site/announcements/${publicId}/state/`, payload)
+  const { data } = await api.put(`/shared/site/announcements/${publicId}/state/`, payload)
   return data
 }
 
 export async function sendAnnouncementEvents(events) {
   if (!events.length) return
-  await api.post('/site/announcements/events/', { events })
+  await api.post('/public/site/announcements/events/', { events })
 }
 
 export async function reportAnnouncementRuntimeEvent(payload) {
-  await api.post('/site/announcements/runtime-events/', payload)
+  await api.post('/public/site/announcements/runtime-events/', payload)
 }
