@@ -3,6 +3,7 @@ from rest_framework.routers import SimpleRouter
 
 from ..views.admin_companies import AdminCompanyViewSet
 from ..views.admin_company_reports import AdminCompanyReportViewSet
+from ..views.admin_content_changes import AdminCompanyContentChangeViewSet
 from ..views.admin_domain_claims import AdminCompanyDomainClaimViewSet
 from ..views.admin_join_requests import AdminCompanyJoinRequestViewSet
 from ..views.admin_verification import (
@@ -20,6 +21,11 @@ router.register(
     'companies',
     AdminCompanyViewSet,
     basename='admin-company',
+)
+router.register(
+    'company-content-changes',
+    AdminCompanyContentChangeViewSet,
+    basename='admin-company-content-change',
 )
 router.register(
     'company-join-requests',

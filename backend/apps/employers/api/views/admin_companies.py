@@ -15,21 +15,27 @@ from ...selectors import (
     company_page_policy_hold,
     company_page_queryset,
 )
-from ...services import admin_assign_company_owner, set_company_page_policy_hold
+from ...services import (
+    admin_assign_company_owner,
+    set_company_content_review,
+    set_company_page_policy_hold,
+)
 from ..serializers import (
+    AdminCompanyContentReviewSerializer,
     AdminCompanyDetailSerializer,
     AdminCompanyListSerializer,
     AdminCompanyPolicyHoldSerializer,
     AdminCompanyRecruiterSerializer,
 )
 
-PUBLIC_PAGE_ACTIONS = {'public_page', 'policy_hold'}
+PUBLIC_PAGE_ACTIONS = {'public_page', 'policy_hold', 'content_review'}
 PUBLIC_PAGE_RESPONSE = inline_serializer(
     'AdminCompanyPublicPage',
     fields={
         'public_path': serializers.CharField(),
         'is_indexable': serializers.BooleanField(),
         'policy_hold': serializers.JSONField(allow_null=True),
+        'content_review_required': serializers.BooleanField(),
         'profile': serializers.JSONField(),
     },
 )
@@ -40,6 +46,7 @@ def _public_page_payload(company, request):
         'public_path': company.public_page_path,
         'is_indexable': company.is_indexable,
         'policy_hold': company_page_policy_hold(company),
+        'content_review_required': company.content_review_required,
         # Built even while on hold: moderators review exactly what was hidden.
         'profile': build_public_company_profile(company, request=request),
     }
@@ -148,4 +155,21 @@ class AdminCompanyViewSet(viewsets.ReadOnlyModelViewSet):
             reason=serializer.validated_data['reason'],
         )
         # Reload: the hold flips both the flag and the indexability annotation.
+        return Response(_public_page_payload(self.get_object(), request))
+
+    @extend_schema(
+        summary='Bật hoặc tắt duyệt trước nội dung trang công ty',
+        request=AdminCompanyContentReviewSerializer,
+        responses={200: PUBLIC_PAGE_RESPONSE},
+    )
+    @action(detail=True, methods=['post'], url_path='content-review')
+    def content_review(self, request, public_id=None):
+        serializer = AdminCompanyContentReviewSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        set_company_content_review(
+            self.get_object(),
+            actor=request.user,
+            required=serializer.validated_data['action'] == 'require',
+            reason=serializer.validated_data['reason'],
+        )
         return Response(_public_page_payload(self.get_object(), request))

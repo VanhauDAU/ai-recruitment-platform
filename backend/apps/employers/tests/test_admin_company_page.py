@@ -68,7 +68,7 @@ class AdminCompanyPublicPageTests(APITestCase):
         self.assertEqual(response.status_code, 200, response.data)
         self.assertSetEqual(
             set(response.data),
-            {'public_path', 'is_indexable', 'policy_hold', 'profile'},
+            {'public_path', 'is_indexable', 'policy_hold', 'content_review_required', 'profile'},
         )
         self.assertEqual(response.data['public_path'], f'/cong-ty/{self.company.slug}')
         self.assertIs(response.data['is_indexable'], True)

@@ -3,10 +3,14 @@ export {
   decideAdminCompanyJoinRequest,
   getAdminCompanies,
   getAdminCompany,
+  getAdminCompanyContentChanges,
   getAdminCompanyJoinRequests,
   getAdminCompanyPublicPage,
   getAdminCompanyRecruiters,
   getAdminCompanySummary,
+  markAdminCompanyContentChangesReviewed,
+  revertAdminCompanyContentChange,
+  setAdminCompanyContentReview,
   setAdminCompanyPolicyHold,
 } from './api/admin-company.api'
 export { adminCompanyKeys } from './api/admin-company.keys'

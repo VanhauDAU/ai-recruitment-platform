@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Hậu kiểm nội dung trang công ty](#hậu-kiểm-nội-dung-trang-công-ty-2026-11-19) | 🟨 Xong trên nhánh `feat/company-content-post-moderation`, chưa mở PR |
 | [Tối ưu và chuẩn hóa test/CI](#tối-ưu-và-chuẩn-hóa-testci-2026-11-19) | 🟨 PR #256, #257, #258, GĐ4 nhánh `docs/test-standards` — chờ gộp |
 | [Tái cấu trúc backend (ADR-0022, GĐ0–GĐ6)](#tái-cấu-trúc-backend-adr-0022-2026-11-19) | ✅ Gộp vào `dev` (#248–#255, 19/11); sau khi pull chạy `scripts/reset_local_db.sh` trước khi start backend |
 | [Tổ chức lại cấu trúc thư mục frontend](#tổ-chức-lại-cấu-trúc-thư-mục-frontend-2026-11-19) | ✅ Gộp vào `dev` (#247) |
@@ -32,6 +33,20 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Hậu kiểm nội dung trang công ty (2026-11-19)
+
+Quyết định: ER-D65 đến ER-D68, [ADR-0017](02-tong-quan/adr-0017-company-page.md)
+quyết định 3 (sửa). Nội dung trang công ty chuyển từ duyệt trước sang đăng ngay
+rồi hậu kiểm; duyệt trước chỉ còn cho thay đổi pháp lý, form hồ sơ và công ty bị
+quản trị viên bật duyệt trước.
+
+| Hạng mục | Nội dung | Trạng thái |
+| --- | --- | --- |
+| Backend | `CompanyContentChange` + `Company.content_review_required` (migration `0004`); `POST company/page/content/` đăng ngay, ảnh tải vào `content_change`, bỏ key vừa đăng khỏi yêu cầu đang mở; API admin `company-content-changes/` (danh sách, `mark-reviewed/`, `revert/`) và `companies/{id}/content-review/`; thông báo `company_content_reverted` | ✅ Xong trên nhánh |
+| Sửa lỗi kèm | Form hồ sơ không còn xoá nội dung trang đang chờ duyệt trong cùng yêu cầu; hàng đợi "Yêu cầu cập nhật công ty" chỉ đếm yêu cầu chờ quản trị viên | ✅ Xong trên nhánh |
+| Frontend NTD | Thẻ nội dung "Lưu" (đăng ngay) hoặc "Gửi duyệt" khi bị bật duyệt trước; chỉ khoá khối còn trong yêu cầu đang thẩm định | ✅ Xong trên nhánh |
+| Frontend admin | Tab "Thay đổi nội dung" ở Công ty (đếm chưa xem, so sánh trước/sau, đánh dấu đã xem hàng loạt, hoàn tác kèm lý do), tab cùng tên trong chi tiết công ty, công tắc "Bật/Tắt duyệt trước" ở tab Trang công khai | ✅ Xong trên nhánh |
 
 ## Tối ưu và chuẩn hóa test/CI (2026-11-19)
 
@@ -1032,7 +1047,7 @@ Quyết định: [ADR-0017](02-tong-quan/adr-0017-company-page.md), ER-D58 đế
 | CP-3 | Theo dõi công ty (idempotent, `follower_count` qua `F()`), trang `/tai-khoan/cong-ty-dang-theo-doi` | ✅ Xong trên nhánh, chưa gộp |
 | CP-4 | Báo cáo thông tin sai, hàng chờ admin "Báo cáo công ty" (`company_report.*`), xử lý kèm tạm ẩn trang | ✅ Xong trên nhánh, chưa gộp |
 | CP-5 | Chính sách quyền ở tầng models, uỷ quyền biên tập, bố cục áp dụng ngay (khoá lạc quan), tin ghim; workspace `/tuyendung/app/company-page` có xem trước | ✅ Xong trên nhánh, chưa gộp |
-| CP-6 | Khẩu hiệu, văn hoá, video, mạng xã hội, phúc lợi dạng thẻ, văn phòng qua `CompanyUpdateRequest` (gộp theo khối), tab "Nội dung", độ hoàn thiện | ✅ Xong trên nhánh, chưa gộp |
+| CP-6 | Khẩu hiệu, văn hoá, video, mạng xã hội, phúc lợi dạng thẻ, văn phòng qua `CompanyUpdateRequest` (gộp theo khối), tab "Nội dung", độ hoàn thiện (từ 19/11 đăng ngay và hậu kiểm, xem [Hậu kiểm nội dung trang công ty](#hậu-kiểm-nội-dung-trang-công-ty-2026-11-19)) | ✅ Xong trên nhánh, chưa gộp |
 | CP-7 | Nguồn digest email thứ ba "công ty đang theo dõi", tuỳ chọn `followed_company_jobs` | ✅ Xong trên nhánh, chưa gộp |
 
 ## Làm lại Template CV (CVT-v3, 2026-11-13)

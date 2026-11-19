@@ -30,6 +30,7 @@ import {
   getAdminCompanyRecruiters,
   recruiterVerificationMeta,
 } from '@/entities/company/admin-company'
+import { CompanyContentChangeQueue } from '@/features/admin/company/review-company-content-changes'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath } from '@/shared/config/portals'
 import { sanitizeHtml } from '@/shared/lib/sanitize-html'
@@ -43,7 +44,9 @@ import RecruiterStatusTag from './RecruiterStatusTag'
 import '../admin-company-directory.css'
 
 const EMPTY_PAGE = { count: 0, results: [] }
-const TAB_KEYS = new Set(['overview', 'recruiters', 'verification', 'updates', 'join-requests', 'jobs', 'public-page'])
+const TAB_KEYS = new Set([
+  'overview', 'recruiters', 'verification', 'updates', 'content-changes', 'join-requests', 'jobs', 'public-page',
+])
 
 function formatDate(value) {
   if (!value) return '—'
@@ -570,6 +573,15 @@ export default function AdminCompanyDetail({ publicId }) {
           >
             Xem yêu cầu cập nhật của công ty
           </Link>
+        </CompanyPanel>
+      ),
+    },
+    {
+      key: 'content-changes',
+      label: 'Thay đổi nội dung',
+      children: (
+        <CompanyPanel title="Thay đổi nội dung trang công ty">
+          <CompanyContentChangeQueue companyPublicId={company.public_id} />
         </CompanyPanel>
       ),
     },

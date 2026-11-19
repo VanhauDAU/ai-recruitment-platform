@@ -12,6 +12,7 @@ from ...models import CompanyImage
 from ...selectors import (
     company_changes_require_update_request,
     requester_editable_company_update_request,
+    uploadable_content_change,
 )
 from ...services import delete_company_gallery_image, remove_company_image, save_company_image
 from ..exceptions import UploadSessionRequiredResponse
@@ -45,6 +46,19 @@ def _media_update_request(request, company):
     return update_request
 
 
+def _media_content_change(request, company, kind):
+    """The page content change this upload belongs to, when the client names one."""
+    public_id = (request.data.get('content_change') or '').strip()
+    if not public_id:
+        return None
+    change = uploadable_content_change(
+        company=company, actor=request.user, public_id=public_id, kind=kind
+    )
+    if change is None:
+        raise ValidationError({'content_change': 'Thay đổi nội dung này không còn nhận ảnh.'})
+    return change
+
+
 def _media_response(request, company, update_request):
     if update_request is not None:
         return Response(
@@ -74,6 +88,10 @@ class CompanyImageUploadView(APIView):
                 ),
                 'upload_session': serializers.CharField(required=False),
                 'update_request': serializers.CharField(required=False),
+                'content_change': serializers.CharField(
+                    required=False,
+                    help_text='Thay đổi nội dung trang đã báo trước ảnh này (đăng ngay, hậu kiểm)',
+                ),
             },
         ),
         responses={200: CompanySerializer},
@@ -96,11 +114,13 @@ class CompanyImageUploadView(APIView):
                 raise ValidationError({'file': 'Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.'})
 
         company = require_company_media_editor(request.user).company
+        content_change = _media_content_change(request, company, self.kind)
         company, update_request = save_company_image(
             user=request.user,
             company=company,
             kind=self.kind,
-            update_request=_media_update_request(request, company),
+            update_request=None if content_change else _media_update_request(request, company),
+            content_change=content_change,
             upload=upload,
             upload_session_public_id=upload_session_public_id,
         )

@@ -46,3 +46,26 @@ export function decideAdminCompanyJoinRequest(publicId, decision) {
 export function assignAdminCompanyOwner(publicId, { recruiter, reason }) {
   return data(client.post(`/admin/companies/${publicId}/assign-owner/`, { recruiter, reason }))
 }
+
+/** Nội dung trang công ty đã đăng, chờ hậu kiểm; `status` mặc định `unreviewed` (`all` để xem hết). */
+export function getAdminCompanyContentChanges(params = {}, { signal } = {}) {
+  return data(client.get('/admin/company-content-changes/', { params, signal }))
+}
+
+/** Đánh dấu đã xem; trả `{ count }`. */
+export function markAdminCompanyContentChangesReviewed(publicIds) {
+  return data(client.post('/admin/company-content-changes/mark-reviewed/', { public_ids: publicIds }))
+}
+
+/** Hoàn tác một thay đổi chưa xem; `requireReview` bật luôn duyệt trước cho công ty. */
+export function revertAdminCompanyContentChange(publicId, { reason, requireReview = false }) {
+  return data(client.post(`/admin/company-content-changes/${publicId}/revert/`, {
+    reason,
+    require_review: requireReview,
+  }))
+}
+
+/** `action` là `require` (bật duyệt trước nội dung) hoặc `release`; response cùng dạng với public-page. */
+export function setAdminCompanyContentReview(publicId, { action, reason }) {
+  return data(client.post(`/admin/companies/${publicId}/content-review/`, { action, reason }))
+}

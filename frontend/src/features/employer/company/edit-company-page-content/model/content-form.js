@@ -19,10 +19,13 @@ export function contentValue(contentForm, key) {
   return pending && Object.hasOwn(pending, key) ? pending[key] : contentForm?.published?.[key]
 }
 
-/** Trạng thái và ghi chú duyệt dùng chung cho mọi thẻ. */
+/** Nội dung lưu là đăng ngay (hậu kiểm), trừ khi quản trị viên bật duyệt trước cho công ty. */
+export const isDirectPublish = (contentForm) => contentForm?.review_mode === 'direct'
+
+/** Trạng thái, ghi chú duyệt và cách lưu dùng chung cho mọi thẻ. */
 export function cardStatus(page, card) {
   const form = page.content_form
-  return { status: form.section_status?.[card], reviewNote: form.request?.review_note }
+  return { status: form.section_status?.[card], reviewNote: form.request?.review_note, direct: isDirectPublish(form) }
 }
 
 /** Chỉ giữ các khoá có giá trị khác giá trị khởi tạo. */
@@ -57,7 +60,7 @@ export function contentFieldErrors(data, path = []) {
 /** Phân loại lỗi khi gửi nội dung để thẻ biết hiển thị gì và có cần tải lại workspace. */
 export function contentSubmitOutcome(error) {
   if (error?.mediaFailed) {
-    return { kind: 'media', message: 'Đã gửi nội dung nhưng chưa tải được ảnh. Vui lòng chọn lại ảnh và gửi lại.' }
+    return { kind: 'media', message: 'Đã lưu nội dung nhưng chưa tải được ảnh. Vui lòng chọn lại ảnh và lưu lại.' }
   }
   const { status, data } = error?.response || {}
   if (status === 409 && data?.code === 'COMPANY_UPDATE_IN_REVIEW') {
@@ -67,5 +70,5 @@ export function contentSubmitOutcome(error) {
     return { kind: 'forbidden', message: getApiErrorMessage(error, 'Bạn không còn quyền chỉnh sửa nội dung trang công ty.') }
   }
   if (status === 400) return { kind: 'invalid', fields: contentFieldErrors(data) }
-  return { kind: 'failed', message: getApiErrorMessage(error, 'Không thể gửi nội dung trang công ty.') }
+  return { kind: 'failed', message: getApiErrorMessage(error, 'Không thể lưu nội dung trang công ty.') }
 }

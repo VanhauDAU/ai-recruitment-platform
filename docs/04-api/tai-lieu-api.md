@@ -103,7 +103,7 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | DELETE | `/api/employer/company/images/{id}/` | Xóa ảnh giới thiệu (owner hoặc người biên tập trang còn hiệu lực) |
 | GET | `/api/employer/company/page/` | Workspace trang công ty (ADR-0017): `{company, permissions, registry, layout, pinned_jobs, content, stats}`. Mọi recruiter đã liên kết công ty đọc được; chưa liên kết trả `404`. `permissions` do server tính tại thời điểm request. Xem [chi tiết](#workspace-trang-công-ty-của-nhà-tuyển-dụng). |
 | PATCH | `/api/employer/company/page/layout/` | Cần `can_edit_layout`. Body `{lock_version, section_order?, hidden_sections?, accent?, pinned_job_public_ids?}`; áp dụng ngay lên trang công khai và trả lại payload workspace. `409 COMPANY_PAGE_LAYOUT_STALE` kèm `layout` hiện tại khi `lock_version` cũ; `403 COMPANY_PAGE_EDIT_FORBIDDEN`; `400` theo field. Throttle `company_page_layout` 60/giờ theo tài khoản. |
-| POST | `/api/employer/company/page/content/` | Cần `can_edit_content`. Body `{changes: {…}}` chỉ gồm `headline, description, culture, employee_benefits, video_url, social_links, benefits, offices, logo_pending, cover_pending, gallery_pending, gallery_deletions`; gộp vào yêu cầu cập nhật đang mở của chính người gửi (tạo mới nếu chưa có) và trả payload workspace. `409 COMPANY_UPDATE_IN_REVIEW` khi yêu cầu đang thẩm định; `403 COMPANY_PAGE_EDIT_FORBIDDEN`; `400` theo field. Throttle `company_page_content` 30/giờ theo tài khoản. Xem [chi tiết](#nội-dung-trang-qua-kiểm-duyệt). |
+| POST | `/api/employer/company/page/content/` | Cần `can_edit_content`. Body `{changes: {…}}` chỉ gồm `headline, description, culture, employee_benefits, video_url, social_links, benefits, offices, logo_pending, cover_pending, gallery_pending, gallery_deletions`. Mặc định đăng ngay và ghi một thay đổi chờ hậu kiểm; khi công ty bị bật duyệt trước (`content_form.review_mode = review`) thì gộp vào yêu cầu cập nhật đang mở của chính người gửi. Trả payload workspace kèm `content_change` (mã để tải ảnh đã báo trước; `null` khi vào yêu cầu chờ duyệt). `409 COMPANY_UPDATE_IN_REVIEW` khi khối đó đang nằm trong yêu cầu đang thẩm định; `403 COMPANY_PAGE_EDIT_FORBIDDEN`; `400` theo field. Throttle `company_page_content` 30/giờ theo tài khoản. Xem [chi tiết](#nội-dung-trang-qua-kiểm-duyệt). |
 | GET | `/api/employer/company/page/pinnable-jobs/?q=` | Cần `can_edit_layout`. `{results: [{public_id, title, slug, published_at}]}`: tối đa 20 tin đang công khai của công ty, mới nhất trước; `q` khớp tiêu đề không dấu. Chỉ có siêu dữ liệu công khai. |
 | GET/POST | `/api/employer/company/page/editors/` | Cần `can_manage_editors`. GET `{results: [row]}`; POST `{member_id}` trả `201` row của member. `400 {code, detail}` với `EDITOR_NOT_VERIFIED`, `EDITOR_ALREADY_GRANTED`, `EDITOR_IS_OWNER`; member lạ trả `404`. POST/DELETE dùng throttle `company_page_editors` 20/giờ. |
 | DELETE | `/api/employer/company/page/editors/{grant_public_id}/` | Cần `can_manage_editors`. Thu hồi grant đang hiệu lực, trả row của member với `grant: null`; grant lạ hoặc đã thu hồi trả `404`. |
@@ -113,7 +113,11 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET/POST | `/api/employer/company/update-requests/?scope=mine\|company` | Mọi employer đã liên kết công ty có thể tạo yêu cầu riêng, tối đa một active request trên mỗi `(company, requester)`; nhiều member được gửi song song. Recruiter UI chỉ gọi `scope=mine`, không hiển thị lịch sử công ty. Response có `current_revision_public_id`, `allowed_actions`, `submitted_at`, base/lock version; mỗi submit/resubmit tạo revision bất biến. `in_review` read-only; diff rỗng bị từ chối và field không sửa không được tự thêm vào `changes`. Các field nội dung trang (`headline, culture, video_url, social_links, benefits, offices`) cần `can_edit_content` của trang công ty, thiếu trả `403 COMPANY_PAGE_EDIT_FORBIDDEN`; field cũ vẫn mở cho mọi member (ER-D05). |
 | POST | `/api/employer/company/update-requests/{public_id}/{withdraw\|cancel}/` | Rút/hủy trước review bằng `lock_version`; requester được withdraw, company owner được cancel. Backend ghi append-only event và recheck quyền/status dưới lock. |
 | GET/POST | `/api/admin/company-update-requests/{public_id}/` · `start-review/` · `review/` | Admin mở exact request, nhận review bằng exact revision/lock rồi mới ra quyết định cuối `approved\|changes_requested\|rejected`. Duyệt từng document không tự quyết định toàn request. Apply so conflict theo field (cả `benefits`, `offices`) và không partial apply. Payload có `previews` cạnh `media_previews`: `previews.benefits: [{name, note}]`, `previews.offices: [{label, address, province_name, is_headquarters}]` (chỉ có key đang được đề xuất); `current_values.benefits`/`current_values.offices` dùng cùng shape. |
-| GET | `/api/admin/companies/{public_id}/public-page/` | Trả `{public_path, is_indexable, policy_hold: {active, reason, actor_name, at}, profile}`; `profile` là đúng DTO của `GET /api/public/companies/{slug}/` và vẫn được dựng khi trang đang bị tạm ẩn. |
+| GET | `/api/admin/company-content-changes/?status=unreviewed\|reviewed\|reverted\|all&company=&q=&page=` | Hậu kiểm nội dung trang công ty, mới nhất trước; mặc định `unreviewed`, bỏ lần lưu chỉ báo ảnh mà chưa tải. Mỗi dòng `{public_id, status, company: {public_id, name, public_path, content_review_required}, actor_email, sections, changed_fields: [{field, label, kind: text\|html\|image\|images\|list, before, after}], created_at, reviewed_by_email, reviewed_at, review_note}`; `before/after` đã đổi sang URL ảnh và tên phúc lợi/tỉnh. |
+| POST | `/api/admin/company-content-changes/mark-reviewed/` | Body `{public_ids: [..]}` (1–100); đóng các thay đổi `unreviewed`, xoá tệp ảnh chúng đã thay, trả `{count}`. |
+| POST | `/api/admin/company-content-changes/{public_id}/revert/` | Body `{reason, require_review?}` (`reason` 10–500 ký tự). Khôi phục giá trị trước (kể cả ảnh, ảnh thư viện đã xoá), thông báo `company_content_reverted` cho người sửa; `400 {detail, fields}` khi đã có thay đổi mới hơn ở cùng trường. `require_review=true` bật luôn duyệt trước cho công ty. |
+| POST | `/api/admin/companies/{public_id}/content-review/` | Body `{action: require\|release, reason}`; bật/tắt `content_review_required`, ghi `CompanyPageEvent` và audit; trả cùng payload với `public-page/`. |
+| GET | `/api/admin/companies/{public_id}/public-page/` | Trả `{public_path, is_indexable, policy_hold: {active, reason, actor_name, at}, content_review_required, profile}`; `profile` là đúng DTO của `GET /api/public/companies/{slug}/` và vẫn được dựng khi trang đang bị tạm ẩn. |
 | POST | `/api/admin/companies/{public_id}/policy-hold/` | Body `{action: apply\|release, reason}` với `reason` 10–500 ký tự; trả cùng payload với `public-page/`. Lặp lại quyết định đang có hiệu lực trả `400`. Mỗi lần ghi `CompanyPageEvent` và nhật ký quản trị, không đổi `Company.updated_at`. |
 | GET | `/api/admin/company-reports/?status=&reason=&company=&q=&ordering=&page=` | Hàng chờ báo cáo trang công ty, phân trang chuẩn. `company` là `public_id` công ty; `q` tìm theo mã báo cáo, mã/tên công ty (không dấu), email người báo cáo, nội dung và ghi chú kết luận. `ordering` chỉ nhận whitelist `company_name\|reason\|detail\|reporter_email\|status\|created_at` (thêm `-` để giảm dần), giá trị khác trả `400`. Không có endpoint summary; đếm hàng chờ bằng `?status=pending&page_size=1`. |
 | POST | `/api/admin/company-reports/{public_id}/resolve/` | Body `{status: upheld\|dismissed, note, apply_hold}`; `note` bắt buộc, tối đa 1000 ký tự. `apply_hold=true` chỉ hợp lệ với `upheld`, tạm ẩn trang trong cùng transaction với `note` làm lý do và bỏ qua nếu trang đã bị ẩn. Chỉ báo cáo `pending` được kết luận. Trả row đã cập nhật; ghi nhật ký `resolve_company_report`. Không ảnh hưởng huy hiệu xác thực của recruiter. |
@@ -287,6 +291,7 @@ ngay. Workspace `GET /api/employer/company/page/` có thêm:
 ```json
 {
   "content_form": {
+    "review_mode": "direct",
     "published": {"headline": "", "description": "<p>…</p>", "culture": "", "employee_benefits": "", "video_url": "",
                   "social_links": {"facebook": "", "linkedin": "", "youtube": "", "tiktok": "", "instagram": ""},
                   "benefits": [{"benefit_id": 7, "note": ""}],
@@ -300,6 +305,8 @@ ngay. Workspace `GET /api/employer/company/page/` có thêm:
 }
 ```
 
+- `review_mode`: `direct` (mặc định, lưu là đăng ngay và hậu kiểm) hoặc
+  `review` (quản trị viên bật duyệt trước cho công ty, lưu là gửi duyệt).
 - `pending` và `request` là `null` khi người gọi không có yêu cầu đang mở;
   yêu cầu của member khác không hiện ở đây. `pending` chỉ gồm key nội dung
   trang của yêu cầu, cùng shape với `published`; ảnh đang chờ trả URL xem trước
@@ -315,7 +322,16 @@ ngay. Workspace `GET /api/employer/company/page/` có thêm:
 - `registry.social_networks: [{key, label, placeholder}]` và `registry.limits`
   thêm `benefits: 8, offices: 10, gallery: 10, headline: 160`.
 
-`POST /api/employer/company/page/content/` gộp `changes` vào yêu cầu đang mở:
+`POST /api/employer/company/page/content/` khi `review_mode = direct` (mặc định)
+ghi thẳng các key khác giá trị đang công khai lên công ty và tạo
+`CompanyContentChange` (`changes` mới, `previous` bị thay). Cờ `*_pending` ghi
+vào `pending_media` của thay đổi; gửi ảnh lên `logo/`, `cover/`, `images/` kèm
+`content_change=<mã>` trong 30 phút để ảnh lên trang và nhập vào thay đổi đó.
+Key vừa đăng bị bỏ khỏi yêu cầu cập nhật đang mở của chính người gửi (rút yêu
+cầu nếu không còn gì); key nằm trong yêu cầu đang thẩm định vẫn bị khoá (`409`).
+Không có key nào khác giá trị công khai và không có ảnh báo trước thì `400 {changes}`.
+
+Khi `review_mode = review`, endpoint gộp `changes` vào yêu cầu đang mở:
 key gửi lên ghi đè key cũ, key không gửi giữ nguyên (kể cả thay đổi pháp lý
 gửi từ form hồ sơ), và key gửi đúng bằng giá trị đang công khai bị bỏ khỏi
 yêu cầu. Gộp xong mà không còn gì thì yêu cầu đang mở được rút (`withdrawn`);
