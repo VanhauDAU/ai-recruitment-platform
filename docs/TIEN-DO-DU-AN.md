@@ -7,7 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Tổ chức lại sidebar quản trị](#tổ-chức-lại-sidebar-quản-trị-2026-11-20) | 🟨 Xong trên nhánh `feat/admin-sidebar-ia`, chờ gộp PR |
+| [Tổ chức lại sidebar quản trị](#tổ-chức-lại-sidebar-quản-trị-2026-11-20) | 🟨 PR #270 (nhánh `feat/admin-sidebar-ia`), chờ gộp |
 | [Song ngữ vi/en cho 3 cổng (ADR-0023)](#song-ngữ-vien-cho-3-cổng-adr-0023-2026-11-19) | 🟨 GĐ0 đã gộp (#262); GĐ1 (cổng NTD) trên nhánh `feat/i18n-employer`; GĐ2–4 chưa làm |
 | [Chuẩn hóa tiêu đề trang 3 cổng](#chuẩn-hóa-tiêu-đề-trang-3-cổng-2026-11-19) | 🟨 PR #261 (nhánh `feat/page-titles`), chờ gộp |
 | [Hậu kiểm nội dung trang công ty](#hậu-kiểm-nội-dung-trang-công-ty-2026-11-19) | ✅ Gộp vào `dev` (#260) |
