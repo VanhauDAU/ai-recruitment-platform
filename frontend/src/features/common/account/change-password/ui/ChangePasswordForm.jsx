@@ -12,22 +12,23 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { setTokens } from '@/shared/api/token-store'
 import { message } from '@/shared/lib/toast'
 import { changeCurrentPassword, getPasswordSetupRequirements } from '../api/change-password.api'
+import { m } from '@/shared/config/i18n'
 
 const PROVIDER_LABELS = { google: 'Google', facebook: 'Facebook', linkedin: 'LinkedIn' }
 
 const PASSWORD_CHECKS = [
-  { label: 'Từ 8 đến 25 ký tự', test: (value) => value.length >= 8 && value.length <= 25 },
-  { label: 'Có chữ in hoa và chữ thường', test: (value) => /[a-z]/.test(value) && /[A-Z]/.test(value) },
-  { label: 'Có ít nhất 1 số', test: (value) => /\d/.test(value) },
+  { label: m.account_password_check_length(), test: (value) => value.length >= 8 && value.length <= 25 },
+  { label: m.account_password_check_case(), test: (value) => /[a-z]/.test(value) && /[A-Z]/.test(value) },
+  { label: m.account_password_check_digit(), test: (value) => /\d/.test(value) },
 ]
 
 function validateNewPassword(_, value) {
   if (!value) return Promise.resolve()
   if (value.length < 8 || value.length > 25) {
-    return Promise.reject(new Error('Mật khẩu phải từ 8 đến 25 ký tự'))
+    return Promise.reject(new Error(m.account_password_error_length()))
   }
   if (!/[a-z]/.test(value) || !/[A-Z]/.test(value) || !/\d/.test(value)) {
-    return Promise.reject(new Error('Mật khẩu phải bao gồm chữ hoa, chữ thường và ký tự số'))
+    return Promise.reject(new Error(m.account_password_error_complexity()))
   }
   return Promise.resolve()
 }
@@ -35,10 +36,10 @@ function validateNewPassword(_, value) {
 function PasswordStrengthGuide({ value }) {
   const passed = PASSWORD_CHECKS.filter((check) => check.test(value)).length
   const label = passed === PASSWORD_CHECKS.length
-    ? 'Đạt yêu cầu cơ bản'
+    ? m.account_password_strength_ok()
     : passed >= 2
-      ? 'Gần đạt yêu cầu'
-      : 'Chưa đạt yêu cầu'
+      ? m.account_password_strength_almost()
+      : m.account_password_strength_weak()
   const color = passed === PASSWORD_CHECKS.length ? 'bg-emerald-500' : passed >= 2 ? 'bg-amber-400' : 'bg-red-400'
 
   return (
@@ -50,7 +51,7 @@ function PasswordStrengthGuide({ value }) {
         </div>
         <span className="text-[11px] font-semibold text-slate-400">{passed}/{PASSWORD_CHECKS.length}</span>
       </div>
-      <div className="mt-2.5 flex gap-1.5" aria-label={`Độ mạnh mật khẩu: ${passed} trên ${PASSWORD_CHECKS.length}`}>
+      <div className="mt-2.5 flex gap-1.5" aria-label={m.account_password_strength_aria({ passed, total: PASSWORD_CHECKS.length })}>
         {PASSWORD_CHECKS.map((check, index) => (
           <span key={check.label} className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${index < passed ? color : 'bg-slate-100'}`} />
         ))}
@@ -103,7 +104,7 @@ export default function ChangePasswordForm({
   })
   const needsReauth = reauthFromError !== null || requirements.data?.requires_reauth === true
   const reauthProvider = requirements.data?.reauth_provider || reauthFromError || null
-  const providerLabel = PROVIDER_LABELS[reauthProvider] || 'mạng xã hội'
+  const providerLabel = PROVIDER_LABELS[reauthProvider] || m.account_password_social_fallback()
   const reauthMinutes = Math.max(
     1,
     Math.round((requirements.data?.reauth_max_age_seconds || 300) / 60),
@@ -114,7 +115,7 @@ export default function ChangePasswordForm({
       // Thay access token trong memory; backend đã xoay refresh cookie và `sid`.
       if (result.tokens) setTokens(result.tokens)
       if (result.user) setCurrentUser(result.user)
-      message.success(result.detail || 'Cập nhật mật khẩu thành công.')
+      message.success(result.detail || m.account_password_updated())
       form.resetFields()
       onSuccess?.(result)
       if (successRedirect) navigate(successRedirect, { replace: true })
@@ -130,7 +131,7 @@ export default function ChangePasswordForm({
           .map(([name, errors]) => ({ name, errors: Array.isArray(errors) ? errors.map(String) : [String(errors)] }))
         : []
       if (fields.length) form.setFields(fields)
-      else message.error(getApiErrorMessage(error, 'Không thể cập nhật mật khẩu.'))
+      else message.error(getApiErrorMessage(error, m.account_password_update_failed()))
     },
   })
 
@@ -153,16 +154,16 @@ export default function ChangePasswordForm({
           type="warning"
           showIcon
           className="!mb-5 rounded-xl border-amber-200 bg-amber-50/70"
-          title={`Xác thực lại với ${providerLabel} để tạo mật khẩu`}
+          title={m.account_password_reauth_title({ provider: providerLabel })}
           description={
             reauthProvider
-              ? `Tài khoản này đăng nhập bằng ${providerLabel} và chưa có mật khẩu, nên không có mật khẩu hiện tại để đối chiếu. Hãy xác thực lại với ${providerLabel} trong vòng ${reauthMinutes} phút trước khi đặt mật khẩu mới — bạn sẽ được đưa về đúng trang này.`
-              : 'Tài khoản này chưa có mật khẩu và cũng chưa liên kết tài khoản mạng xã hội nào. Hãy dùng chức năng “Quên mật khẩu” để đặt mật khẩu qua email.'
+              ? m.account_password_reauth_desc({ provider: providerLabel, minutes: reauthMinutes })
+              : m.account_password_no_social_desc()
           }
           action={
             reauthProvider && onReauth ? (
               <Button type="primary" onClick={() => onReauth(reauthProvider)} className="!rounded-lg !bg-amber-600 hover:!bg-amber-700 !border-amber-600">
-                Xác thực với {providerLabel}
+                {m.account_password_reauth_button({ provider: providerLabel })}
               </Button>
             ) : null
           }
@@ -173,8 +174,8 @@ export default function ChangePasswordForm({
           type="info"
           showIcon
           className="!mb-5 rounded-xl border-sky-200 bg-sky-50/70"
-          title="Tài khoản chưa có mật khẩu đăng nhập"
-          description="Hãy tạo mật khẩu để tăng cường bảo vệ tài khoản và có thể đăng nhập trực tiếp bằng email."
+          title={m.account_password_no_password_title()}
+          description={m.account_password_no_password_desc()}
         />
       )}
       <Form
@@ -187,9 +188,9 @@ export default function ChangePasswordForm({
         className="p-0 [&_.ant-form-item]:!mb-4 [&_.ant-form-item-label]:!pb-1.5 [&_.ant-form-item-label>label]:!text-sm [&_.ant-form-item-label>label]:!font-medium [&_.ant-form-item-label>label]:!text-slate-700"
       >
         {showEmail && (
-          <Form.Item label="Email đăng nhập">
+          <Form.Item label={m.account_password_login_email()}>
             <Input
-              aria-label="Email đăng nhập"
+              aria-label={m.account_password_login_email()}
               autoComplete="username"
               value={user?.email || ''}
               readOnly
@@ -203,17 +204,17 @@ export default function ChangePasswordForm({
             name="current_password"
             label={(
               <span>
-                Mật khẩu hiện tại
+                {m.account_password_current()}
                 <span className="mr-1 font-bold text-red-500"> *</span>
               </span>
             )}
-            rules={[{ required: true, message: 'Nhập mật khẩu hiện tại' }]}
+            rules={[{ required: true, message: m.account_password_current_required() }]}
           >
             <Input.Password
-              aria-label="Mật khẩu hiện tại"
+              aria-label={m.account_password_current()}
               size="middle"
               autoComplete="current-password"
-              placeholder="Nhập mật khẩu hiện tại"
+              placeholder={m.account_password_current_required()}
               prefix={<LockOutlined className="mr-1.5 text-slate-400" />}
               className="!h-10 !rounded-lg"
             />
@@ -224,21 +225,21 @@ export default function ChangePasswordForm({
             name="password"
             label={(
               <span>
-                Mật khẩu mới
+                {m.account_password_new()}
                 <span className="mr-1 font-bold text-red-500"> *</span>
               </span>
             )}
             rules={[
-              { required: true, message: 'Nhập mật khẩu mới' },
+              { required: true, message: m.account_password_new_required() },
               { validator: validateNewPassword },
             ]}
           >
             <Input.Password
-              aria-label="Mật khẩu mới"
+              aria-label={m.account_password_new()}
               size="middle"
               autoComplete="new-password"
               prefix={<LockOutlined className="mr-1.5 text-slate-400" />}
-              placeholder="Nhập mật khẩu mới"
+              placeholder={m.account_password_new_required()}
               className="!h-10 !rounded-lg"
               onFocus={() => setPasswordFocused(true)}
               onBlur={() => setPasswordFocused(false)}
@@ -250,31 +251,31 @@ export default function ChangePasswordForm({
           name="confirm_password"
           label={(
             <span>
-              Nhập lại mật khẩu mới
+              {m.account_password_confirm()}
               <span className="mr-1 font-bold text-red-500"> *</span>
             </span>
           )}
           dependencies={['password']}
           rules={[
-            { required: true, message: 'Nhập lại mật khẩu mới' },
+            { required: true, message: m.account_password_confirm() },
             ({ getFieldValue }) => ({
               validator: (_, value) => !value || value === getFieldValue('password')
                 ? Promise.resolve()
-                : Promise.reject(new Error('Mật khẩu nhập lại không khớp')),
+                : Promise.reject(new Error(m.account_password_mismatch())),
             }),
           ]}
         >
           <Input.Password
-            aria-label="Nhập lại mật khẩu mới"
+            aria-label={m.account_password_confirm()}
             size="middle"
             autoComplete="new-password"
-            placeholder="Nhập lại mật khẩu mới"
+            placeholder={m.account_password_confirm()}
             prefix={<LockOutlined className="mr-1.5 text-slate-400" />}
             className="!h-10 !rounded-lg"
           />
         </Form.Item>
         <Form.Item name="logout_all_sessions" valuePropName="checked" className="!mb-6">
-          <Checkbox className="text-sm text-slate-700">Đăng xuất khỏi các thiết bị khác</Checkbox>
+          <Checkbox className="text-sm text-slate-700">{m.account_password_logout_others()}</Checkbox>
         </Form.Item>
         <div className="mt-6 flex items-center gap-3">
           <Button
@@ -285,7 +286,7 @@ export default function ChangePasswordForm({
             disabled={needsReauth}
             className="!h-10 min-w-28 !rounded-lg !bg-emerald-600 font-semibold text-white shadow-sm hover:!bg-emerald-700 !border-emerald-600"
           >
-            {hasPassword ? 'Cập nhật' : 'Tạo mật khẩu'}
+            {hasPassword ? m.account_password_submit_update() : m.account_password_submit_create()}
           </Button>
           <Button
             htmlType="button"
@@ -293,7 +294,7 @@ export default function ChangePasswordForm({
             onClick={() => form.resetFields()}
             className="!h-10 min-w-24 !rounded-lg border-slate-300 font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-800"
           >
-            Hủy
+            {m.account_password_cancel()}
           </Button>
         </div>
       </Form>

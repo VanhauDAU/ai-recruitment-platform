@@ -1,10 +1,11 @@
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { m } from '@/shared/config/i18n'
 
 export const CONTENT_STATUS = {
-  published: ['green', 'Đã công khai'],
-  pending: ['gold', 'Chờ duyệt'],
-  changes_requested: ['orange', 'Cần bổ sung'],
-  empty: ['default', 'Chưa có'],
+  published: ['green', m.employer_company_content_status_published()],
+  pending: ['gold', m.employer_company_content_status_pending()],
+  changes_requested: ['orange', m.employer_company_content_status_changes_requested()],
+  empty: ['default', m.employer_company_content_status_empty()],
 }
 
 // Mục của thước đo hoàn thiện → thẻ nội dung chứa trường đó.
@@ -60,15 +61,15 @@ export function contentFieldErrors(data, path = []) {
 /** Phân loại lỗi khi gửi nội dung để thẻ biết hiển thị gì và có cần tải lại workspace. */
 export function contentSubmitOutcome(error) {
   if (error?.mediaFailed) {
-    return { kind: 'media', message: 'Đã lưu nội dung nhưng chưa tải được ảnh. Vui lòng chọn lại ảnh và lưu lại.' }
+    return { kind: 'media', message: m.employer_company_content_media_failed() }
   }
   const { status, data } = error?.response || {}
   if (status === 409 && data?.code === 'COMPANY_UPDATE_IN_REVIEW') {
-    return { kind: 'in_review', message: data.detail || 'Yêu cầu đang được thẩm định nên chưa thể chỉnh sửa.' }
+    return { kind: 'in_review', message: data.detail || m.employer_company_content_in_review() }
   }
   if (status === 403) {
-    return { kind: 'forbidden', message: getApiErrorMessage(error, 'Bạn không còn quyền chỉnh sửa nội dung trang công ty.') }
+    return { kind: 'forbidden', message: getApiErrorMessage(error, m.employer_company_content_forbidden()) }
   }
   if (status === 400) return { kind: 'invalid', fields: contentFieldErrors(data) }
-  return { kind: 'failed', message: getApiErrorMessage(error, 'Không thể lưu nội dung trang công ty.') }
+  return { kind: 'failed', message: getApiErrorMessage(error, m.employer_company_content_save_failed()) }
 }

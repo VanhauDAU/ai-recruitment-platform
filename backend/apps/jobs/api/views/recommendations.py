@@ -1,6 +1,7 @@
 """Candidate-facing recommendation HTTP endpoints."""
 
 from django.http import Http404
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema
 from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied
@@ -179,7 +180,7 @@ class CvJobRecommendationView(APIView):
             raise Http404 from error
         except RecommendationConsentRequired as error:
             raise PermissionDenied(
-                'Bạn cần đồng ý nhận gợi ý việc làm trước khi hệ thống đọc dữ liệu CV.'
+                _('Bạn cần đồng ý nhận gợi ý việc làm trước khi hệ thống đọc dữ liệu CV.')
             ) from error
         return Response(_match_payload(payload, request))
 

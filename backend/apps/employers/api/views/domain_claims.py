@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.exceptions import NotFound
@@ -68,7 +69,7 @@ class CompanyDomainClaimListCreateView(_DomainClaimThrottledView):
     def get(self, request):
         recruiter = existing_recruiter_profile(request.user)
         if recruiter is None or recruiter.company_id is None:
-            raise NotFound('Bạn chưa liên kết với công ty nào.')
+            raise NotFound(_('Bạn chưa liên kết với công ty nào.'))
         claims = company_domain_claims_queryset(company=recruiter.company)
         return Response(CompanyDomainClaimSerializer(claims, many=True).data)
 

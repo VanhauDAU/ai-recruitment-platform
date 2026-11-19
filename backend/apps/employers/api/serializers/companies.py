@@ -2,6 +2,7 @@ import re
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import URLValidator
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 
 from common.html.plain_text import html_plain_text
@@ -128,15 +129,16 @@ class CompanySerializer(serializers.ModelSerializer):
         invalid = set(value) - set(choices.values)
         if invalid:
             raise serializers.ValidationError(
-                f'Giá trị {label} không hợp lệ: {", ".join(sorted(invalid))}'
+                _('Giá trị %(label)s không hợp lệ: %(values)s')
+                % {'label': label, 'values': ', '.join(sorted(invalid))}
             )
         return value
 
     def validate_markets(self, value):
-        return self._validate_enum_list(value, Company.Market, 'thị trường')
+        return self._validate_enum_list(value, Company.Market, _('thị trường'))
 
     def validate_target_customers(self, value):
-        return self._validate_enum_list(value, Company.TargetCustomer, 'khách hàng mục tiêu')
+        return self._validate_enum_list(value, Company.TargetCustomer, _('khách hàng mục tiêu'))
 
     def validate_tax_code(self, value):
         try:
@@ -147,13 +149,13 @@ class CompanySerializer(serializers.ModelSerializer):
     def validate_company_name(self, value):
         value = (value or '').strip()
         if not value:
-            raise serializers.ValidationError('Tên đăng ký kinh doanh là bắt buộc.')
+            raise serializers.ValidationError(_('Tên đăng ký kinh doanh là bắt buộc.'))
         return value
 
     def validate_phone(self, value):
         value = (value or '').strip()
         if not re.fullmatch(r'\+?[0-9 .()\-]{8,20}', value):
-            raise serializers.ValidationError('Số điện thoại không hợp lệ.')
+            raise serializers.ValidationError(_('Số điện thoại không hợp lệ.'))
         return value
 
     def validate_website_url(self, value):
@@ -162,7 +164,7 @@ class CompanySerializer(serializers.ModelSerializer):
             try:
                 URLValidator(schemes=['http', 'https'])(value)
             except DjangoValidationError as error:
-                raise serializers.ValidationError('URL website không hợp lệ.') from error
+                raise serializers.ValidationError(_('URL website không hợp lệ.')) from error
         return value
 
     def _validate_rich_text(self, value, *, required, label):
@@ -172,10 +174,10 @@ class CompanySerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(str(error)) from error
 
     def validate_description(self, value):
-        return self._validate_rich_text(value, required=True, label='Mô tả công ty')
+        return self._validate_rich_text(value, required=True, label=_('Mô tả công ty'))
 
     def validate_employee_benefits(self, value):
-        return self._validate_rich_text(value, required=False, label='Phúc lợi nhân viên')
+        return self._validate_rich_text(value, required=False, label=_('Phúc lợi nhân viên'))
 
     def validate(self, attrs):
         instance = self.instance
@@ -184,7 +186,9 @@ class CompanySerializer(serializers.ModelSerializer):
         if industries is not None and primary_industry not in industries:
             raise serializers.ValidationError(
                 {
-                    'primary_industry': 'Lĩnh vực chính phải nằm trong các lĩnh vực hoạt động đã chọn.'
+                    'primary_industry': _(
+                        'Lĩnh vực chính phải nằm trong các lĩnh vực hoạt động đã chọn.'
+                    )
                 }
             )
 
@@ -192,7 +196,7 @@ class CompanySerializer(serializers.ModelSerializer):
         has_no_website = attrs.get('has_no_website', getattr(instance, 'has_no_website', False))
         if not website_url and not has_no_website:
             raise serializers.ValidationError(
-                {'website_url': 'Nhập URL website hoặc tick "Tôi không có website".'}
+                {'website_url': _('Nhập URL website hoặc tick "Tôi không có website".')}
             )
 
         company_name = attrs.get('company_name', getattr(instance, 'company_name', ''))
@@ -206,12 +210,12 @@ class CompanySerializer(serializers.ModelSerializer):
             'trade_name_same_as_registered' in attrs and not (attrs.get('trade_name') or '').strip()
         ):
             raise serializers.ValidationError(
-                {'trade_name': 'Nhập tên thương mại hoặc chọn trùng tên đăng ký kinh doanh.'}
+                {'trade_name': _('Nhập tên thương mại hoặc chọn trùng tên đăng ký kinh doanh.')}
             )
 
         if attrs.get('logo_pending') is False and not attrs.get('has_no_logo'):
             raise serializers.ValidationError(
-                {'has_no_logo': 'Tải logo hoặc chọn "Tôi không có logo".'}
+                {'has_no_logo': _('Tải logo hoặc chọn "Tôi không có logo".')}
             )
 
         return attrs

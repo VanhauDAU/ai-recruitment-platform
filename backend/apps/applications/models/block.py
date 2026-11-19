@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
+from django.utils.translation import gettext_lazy
 
 from common.db.public_id import generate_public_id
 
@@ -16,10 +17,10 @@ class CandidateBlock(models.Model):
     """
 
     class Reason(models.TextChoices):
-        SPAM = 'spam', 'Ứng tuyển hàng loạt, không phù hợp'
-        INAPPROPRIATE = 'inappropriate', 'Hành vi không phù hợp'
-        FAKE_PROFILE = 'fake_profile', 'Hồ sơ giả mạo'
-        OTHER = 'other', 'Lý do khác'
+        SPAM = 'spam', gettext_lazy('Ứng tuyển hàng loạt, không phù hợp')
+        INAPPROPRIATE = 'inappropriate', gettext_lazy('Hành vi không phù hợp')
+        FAKE_PROFILE = 'fake_profile', gettext_lazy('Hồ sơ giả mạo')
+        OTHER = 'other', gettext_lazy('Lý do khác')
 
     # Mass-apply signal: a candidate applying to this many of one company's
     # jobs within the window is suggested for blocking (match score will

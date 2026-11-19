@@ -1,6 +1,7 @@
 """Admin review workflow for staged company-profile changes."""
 
 from django.http import Http404
+from django.utils.translation import gettext
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -69,7 +70,7 @@ class AdminCompanyUpdateRequestViewSet(viewsets.ReadOnlyModelViewSet):
         update_request = self.get_object()
         if update_request.status != CompanyUpdateRequest.Status.IN_REVIEW:
             raise ValidationError(
-                {'detail': 'Phải nhận thẩm định yêu cầu trước khi xử lý giấy tờ.'}
+                {'detail': gettext('Phải nhận thẩm định yêu cầu trước khi xử lý giấy tờ.')}
             )
         document = update_request.documents.filter(
             public_id=document_public_id,
@@ -129,7 +130,7 @@ class AdminCompanyUpdateRequestViewSet(viewsets.ReadOnlyModelViewSet):
         update_request = self.get_object()
         if update_request.status != CompanyUpdateRequest.Status.IN_REVIEW:
             raise ValidationError(
-                {'detail': 'Phải nhận thẩm định yêu cầu trước khi ra quyết định.'}
+                {'detail': gettext('Phải nhận thẩm định yêu cầu trước khi ra quyết định.')}
             )
         try:
             update_request = apply_update_request(

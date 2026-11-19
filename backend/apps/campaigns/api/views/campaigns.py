@@ -43,7 +43,7 @@ class EmployerWorkspaceReadMixin:
     def employer_workspace_readiness(self):
         readiness = getattr(self, '_employer_workspace_readiness', None)
         if readiness is None:
-            _, readiness = ensure_recruiter_job_workspace(self.request.user)
+            _recruiter, readiness = ensure_recruiter_job_workspace(self.request.user)
             self._employer_workspace_readiness = readiness
         return readiness
 

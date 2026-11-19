@@ -1,5 +1,6 @@
 """Administrator account directory: list, detail, summary and profile edits."""
 
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import OpenApiTypes, extend_schema, extend_schema_view
 from rest_framework import mixins, viewsets
 from rest_framework.decorators import action
@@ -36,23 +37,23 @@ def _validated_account_params(query_params):
     params = query_params.copy()
     scope = params.get('scope', '').strip()
     if scope and scope not in {'users', 'recruiters'}:
-        raise ValidationError({'scope': 'Phạm vi tài khoản không hợp lệ.'})
+        raise ValidationError({'scope': _('Phạm vi tài khoản không hợp lệ.')})
     role = params.get('role', '').strip()
     if role and role not in User.Role.values:
-        raise ValidationError({'role': 'Vai trò tài khoản không hợp lệ.'})
+        raise ValidationError({'role': _('Vai trò tài khoản không hợp lệ.')})
     if scope == 'users' and role == User.Role.EMPLOYER:
-        raise ValidationError({'role': 'Nhà tuyển dụng không thuộc phạm vi người dùng.'})
+        raise ValidationError({'role': _('Nhà tuyển dụng không thuộc phạm vi người dùng.')})
     if scope == 'recruiters' and role and role != User.Role.EMPLOYER:
-        raise ValidationError({'role': 'Phạm vi nhà tuyển dụng chỉ chấp nhận role employer.'})
+        raise ValidationError({'role': _('Phạm vi nhà tuyển dụng chỉ chấp nhận role employer.')})
     statuses = [value.strip() for value in params.get('status', '').split(',') if value.strip()]
     if any(value not in User.Status.values for value in statuses):
-        raise ValidationError({'status': 'Trạng thái tài khoản không hợp lệ.'})
+        raise ValidationError({'status': _('Trạng thái tài khoản không hợp lệ.')})
     company_state = params.get('company_state', '').strip()
     if company_state and company_state not in {'linked', 'missing'}:
-        raise ValidationError({'company_state': 'Trạng thái liên kết công ty không hợp lệ.'})
+        raise ValidationError({'company_state': _('Trạng thái liên kết công ty không hợp lệ.')})
     next_action_value = params.get('next_action', '').strip()
     if next_action_value and not next_action_codes(next_action_value):
-        raise ValidationError({'next_action': 'Việc cần làm không hợp lệ.'})
+        raise ValidationError({'next_action': _('Việc cần làm không hợp lệ.')})
     return params
 
 

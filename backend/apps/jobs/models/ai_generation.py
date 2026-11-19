@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy
 
 from common.db.public_id import generate_public_id
 
@@ -32,35 +33,35 @@ class JobAiGeneration(models.Model):
     """Durable, tenant-owned lifecycle for one AI-assisted job draft."""
 
     class Mode(models.TextChoices):
-        AI_BRIEF = 'ai_brief', 'Brief có hướng dẫn'
-        JD_TEXT = 'jd_text', 'JD có sẵn'
+        AI_BRIEF = 'ai_brief', gettext_lazy('Brief có hướng dẫn')
+        JD_TEXT = 'jd_text', gettext_lazy('JD có sẵn')
 
     class Status(models.TextChoices):
-        QUEUED = 'queued', 'Đang chờ'
-        PROCESSING = 'processing', 'Đang xử lý'
-        COMPLETED = 'completed', 'Hoàn tất'
-        FAILED = 'failed', 'Thất bại'
-        CANCELLED = 'cancelled', 'Đã hủy'
+        QUEUED = 'queued', gettext_lazy('Đang chờ')
+        PROCESSING = 'processing', gettext_lazy('Đang xử lý')
+        COMPLETED = 'completed', gettext_lazy('Hoàn tất')
+        FAILED = 'failed', gettext_lazy('Thất bại')
+        CANCELLED = 'cancelled', gettext_lazy('Đã hủy')
 
     class Phase(models.TextChoices):
-        QUEUED = 'queued', 'Đang chờ'
-        PREPARING_CONTEXT = 'preparing_context', 'Chuẩn bị dữ liệu'
-        GENERATING = 'generating', 'Đang tạo nội dung'
-        VALIDATING = 'validating', 'Đang kiểm tra'
-        COMPLETED = 'completed', 'Hoàn tất'
-        FAILED = 'failed', 'Thất bại'
-        CANCELLED = 'cancelled', 'Đã hủy'
+        QUEUED = 'queued', gettext_lazy('Đang chờ')
+        PREPARING_CONTEXT = 'preparing_context', gettext_lazy('Chuẩn bị dữ liệu')
+        GENERATING = 'generating', gettext_lazy('Đang tạo nội dung')
+        VALIDATING = 'validating', gettext_lazy('Đang kiểm tra')
+        COMPLETED = 'completed', gettext_lazy('Hoàn tất')
+        FAILED = 'failed', gettext_lazy('Thất bại')
+        CANCELLED = 'cancelled', gettext_lazy('Đã hủy')
 
     class Feedback(models.TextChoices):
-        HELPFUL = 'helpful', 'Hữu ích'
-        NOT_HELPFUL = 'not_helpful', 'Chưa hữu ích'
+        HELPFUL = 'helpful', gettext_lazy('Hữu ích')
+        NOT_HELPFUL = 'not_helpful', gettext_lazy('Chưa hữu ích')
 
     class FeedbackReason(models.TextChoices):
-        ACCURACY = 'accuracy', 'Độ chính xác'
-        RELEVANCE = 'relevance', 'Độ liên quan'
-        WRITING_QUALITY = 'writing_quality', 'Chất lượng diễn đạt'
-        TAXONOMY = 'taxonomy', 'Danh mục/kỹ năng'
-        OTHER = 'other', 'Khác'
+        ACCURACY = 'accuracy', gettext_lazy('Độ chính xác')
+        RELEVANCE = 'relevance', gettext_lazy('Độ liên quan')
+        WRITING_QUALITY = 'writing_quality', gettext_lazy('Chất lượng diễn đạt')
+        TAXONOMY = 'taxonomy', gettext_lazy('Danh mục/kỹ năng')
+        OTHER = 'other', gettext_lazy('Khác')
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     owner = models.ForeignKey(

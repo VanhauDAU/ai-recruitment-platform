@@ -26,14 +26,15 @@ import {
 } from '../model/business-document-set'
 import { EmployerBusinessDocumentCard } from './EmployerBusinessDocumentCard'
 import EmployerVerificationLifecycleAlert from './EmployerVerificationLifecycleAlert'
+import { m } from '@/shared/config/i18n'
 
 const UPLOAD_GUIDE_URL = 'https://drive.google.com/file/d/1yYXQMXUjW7_vF3dlpsQd0EBo8WinH9K-/view'
 
 const DOCUMENT_STATUS = {
-  pending: { color: 'gold', label: 'Đang xử lý' },
-  changes_requested: { color: 'orange', label: 'Có file cần bổ sung' },
-  approved: { color: 'green', label: 'Đã duyệt' },
-  rejected: { color: 'red', label: 'Có file bị từ chối' },
+  pending: { color: 'gold', label: m.employer_account_docs_status_pending() },
+  changes_requested: { color: 'orange', label: m.employer_account_docs_set_changes_requested() },
+  approved: { color: 'green', label: m.employer_account_docs_status_approved() },
+  rejected: { color: 'red', label: m.employer_account_docs_set_rejected() },
 }
 
 export default function EmployerBusinessLicenseForm() {
@@ -166,7 +167,7 @@ export default function EmployerBusinessLicenseForm() {
       await refreshDashboard()
     },
     onError: (error) => {
-      message.error(getApiErrorMessage(error, 'Không thể lưu giấy tờ. Vui lòng thử lại.'))
+      message.error(getApiErrorMessage(error, m.employer_account_docs_save_failed()))
     },
   })
 
@@ -183,7 +184,7 @@ export default function EmployerBusinessLicenseForm() {
     },
     onError: (error, { previewWindow }) => {
       previewWindow.close()
-      message.error(getApiErrorMessage(error, 'Không thể mở tệp đã nộp. Vui lòng thử lại.'))
+      message.error(getApiErrorMessage(error, m.employer_account_docs_open_failed()))
     },
   })
 
@@ -230,15 +231,15 @@ export default function EmployerBusinessLicenseForm() {
     && hasRequiredFiles
     && !documentMutation.isPending
   const saveHint = resubmissionLocked
-    ? 'Hồ sơ đã đạt giới hạn từ chối cuối và đang khóa nộp lại'
+    ? m.employer_account_docs_hint_locked()
     : !companyLinked
-    ? 'Cần cập nhật thông tin công ty trước khi lưu'
+    ? m.employer_account_docs_hint_company()
     : !hasRequiredFiles
       ? preservingCurrentMethod && requiredCorrectionDocuments.length
-        ? 'Thay toàn bộ giấy tờ đang bị yêu cầu bổ sung hoặc từ chối trước khi nộp lại'
+        ? m.employer_account_docs_hint_replace_all()
         : method === 'business_registration'
-          ? 'Chọn giấy đăng ký doanh nghiệp để lưu'
-          : 'Chọn đủ giấy ủy quyền và giấy tờ định danh để lưu'
+          ? m.employer_account_docs_hint_business()
+          : m.employer_account_docs_hint_authorization()
       : undefined
 
   function startEditing() {
@@ -277,7 +278,7 @@ export default function EmployerBusinessLicenseForm() {
   function openDocumentInNewTab(document) {
     const previewWindow = window.open('', '_blank')
     if (!previewWindow) {
-      message.error('Trình duyệt đã chặn cửa sổ xem tệp. Hãy cho phép pop-up rồi thử lại.')
+      message.error(m.employer_account_docs_popup_blocked())
       return
     }
     previewWindow.opener = null
@@ -295,63 +296,63 @@ export default function EmployerBusinessLicenseForm() {
           className="mb-5"
           showIcon
           type="error"
-          title="Hồ sơ đang bị khóa nộp lại"
-          description={`Hồ sơ đã nhận ${verificationCase.final_rejection_count || 3}/${verificationCase.rejection_limit || 3} quyết định từ chối cuối. Bạn vẫn có thể xem giấy tờ và lý do gần nhất; hãy liên hệ bộ phận hỗ trợ để gửi khiếu nại hoặc đề nghị xem xét mở khóa.`}
+          title={m.employer_account_docs_locked_title()}
+          description={m.employer_account_docs_locked_desc({ count: verificationCase.final_rejection_count || 3, limit: verificationCase.rejection_limit || 3 })}
         />
       )}
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <h2 className="text-base font-semibold text-slate-800">Thông tin Giấy đăng ký doanh nghiệp</h2>
+        <h2 className="text-base font-semibold text-slate-800">{m.employer_account_docs_heading()}</h2>
         <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto sm:justify-end">
           <Tag color={savedStatusMeta?.color || 'default'} className="!m-0 !rounded-full !border-0 !px-3">
-            {savedStatusMeta?.label || 'Chưa cập nhật'}
+            {savedStatusMeta?.label || m.employer_account_docs_not_updated()}
           </Tag>
           {savedStatus && !editingDocuments && (
             <Button
-              aria-label="Chỉnh sửa giấy tờ"
+              aria-label={m.employer_account_docs_edit_aria()}
               icon={<EditOutlined />}
               onClick={startEditing}
               disabled={resubmissionLocked}
               className="!border-emerald-500 !text-emerald-600 hover:!border-emerald-600 hover:!text-emerald-700"
             >
-              Chỉnh sửa
+              {m.employer_account_docs_edit()}
             </Button>
           )}
         </div>
       </div>
-      <p className="mt-6 text-sm text-slate-700">Vui lòng lựa chọn phương thức đăng tải, xem hướng dẫn đăng tải <a href={UPLOAD_GUIDE_URL} target="_blank" rel="noreferrer" className="font-medium text-emerald-600 hover:text-emerald-700">Tại đây</a></p>
+      <p className="mt-6 text-sm text-slate-700">{m.employer_account_docs_choose_method()}<a href={UPLOAD_GUIDE_URL} target="_blank" rel="noreferrer" className="font-medium text-emerald-600 hover:text-emerald-700">{m.employer_account_docs_guide_link()}</a></p>
 
       {!showDocumentForm && <Radio.Group value={savedDocuments.method} disabled className="!mt-6 !grid !gap-0">
-        <Radio value="business_registration" className="!my-3 !mr-0 !text-sm !font-semibold !text-slate-800">Giấy đăng ký doanh nghiệp hoặc Giấy tờ tương đương khác</Radio>
+        <Radio value="business_registration" className="!my-3 !mr-0 !text-sm !font-semibold !text-slate-800">{m.employer_account_docs_business_or_equivalent()}</Radio>
         {savedDocuments.method === 'business_registration' && (
           <div className="mb-4">
             <EmployerBusinessDocumentCard
-              label="Giấy đăng ký doanh nghiệp hoặc Giấy tờ tương đương khác"
+              label={m.employer_account_docs_business_or_equivalent()}
               variant="business"
               savedDocument={savedDocuments.documents[0]}
-              submittedFileLabel="Giấy đăng ký doanh nghiệp"
+              submittedFileLabel={m.employer_account_docs_business_registration()}
               onViewDocument={openDocumentInNewTab}
               viewingDocument={documentPreviewMutation.isPending}
             />
           </div>
         )}
 
-        <Radio value="authorization_and_id" className="!my-3 !mr-0 !text-sm !font-semibold !text-slate-800">Giấy ủy quyền và Giấy tờ định danh</Radio>
+        <Radio value="authorization_and_id" className="!my-3 !mr-0 !text-sm !font-semibold !text-slate-800">{m.employer_account_docs_authorization_and_id()}</Radio>
         {savedDocuments.method === 'authorization_and_id' && (
           <div className="mb-4 mt-1 grid gap-5">
             <EmployerBusinessDocumentCard
-              label="Giấy ủy quyền"
+              label={m.employer_account_docs_authorization_letter()}
               variant="authorization"
               showTemplate
               savedDocuments={savedDocuments.documents.filter((document) => document.doc_type === 'authorization_letter')}
-              submittedFileLabel="Giấy ủy quyền"
+              submittedFileLabel={m.employer_account_docs_authorization_letter()}
               onViewDocument={openDocumentInNewTab}
               viewingDocument={documentPreviewMutation.isPending}
             />
             <EmployerBusinessDocumentCard
-              label="Giấy tờ định danh (CCCD/ Hộ chiếu)"
+              label={m.employer_account_docs_identity_document_full()}
               variant="identity"
               savedDocuments={savedDocuments.documents.filter((document) => document.doc_type === 'identity_document')}
-              submittedFileLabel="Giấy tờ định danh"
+              submittedFileLabel={m.employer_account_docs_identity_document()}
               onViewDocument={openDocumentInNewTab}
               viewingDocument={documentPreviewMutation.isPending}
             />
@@ -361,18 +362,18 @@ export default function EmployerBusinessLicenseForm() {
       }
 
       {showDocumentForm && <Radio.Group value={method} onChange={(event) => setMethod(event.target.value)} className="!mt-6 !grid !gap-0">
-        <Radio value="business_registration" className="!my-3 !mr-0 !text-sm !font-semibold !text-slate-800">Giấy đăng ký doanh nghiệp hoặc Giấy tờ tương đương khác</Radio>
+        <Radio value="business_registration" className="!my-3 !mr-0 !text-sm !font-semibold !text-slate-800">{m.employer_account_docs_business_or_equivalent()}</Radio>
         {method === 'business_registration' && (
           <div className="mb-4">
             <EmployerBusinessDocumentCard
-              label="Giấy đăng ký doanh nghiệp hoặc Giấy tờ tương đương khác"
+              label={m.employer_account_docs_business_or_equivalent()}
               files={businessFiles}
               onFilesChange={setBusinessFiles}
               variant="business"
-              noticeDocument="Giấy đăng ký doanh nghiệp"
+              noticeDocument={m.employer_account_docs_business_registration()}
               disabled={documentMutation.isPending}
               savedDocument={preservingCurrentMethod ? savedDocuments.documents[0] : null}
-              submittedFileLabel="Giấy đăng ký doanh nghiệp"
+              submittedFileLabel={m.employer_account_docs_business_registration()}
               onViewDocument={openDocumentInNewTab}
               viewingDocument={documentPreviewMutation.isPending}
               editing={preservingCurrentMethod}
@@ -383,21 +384,21 @@ export default function EmployerBusinessLicenseForm() {
           </div>
         )}
 
-        <Radio value="authorization_and_id" className="!my-3 !mr-0 !text-sm !font-semibold !text-slate-800">Giấy ủy quyền và Giấy tờ định danh</Radio>
+        <Radio value="authorization_and_id" className="!my-3 !mr-0 !text-sm !font-semibold !text-slate-800">{m.employer_account_docs_authorization_and_id()}</Radio>
         {method === 'authorization_and_id' && (
           <div className="mb-4 mt-1 grid gap-5">
             <EmployerBusinessDocumentCard
-              label="Giấy ủy quyền"
+              label={m.employer_account_docs_authorization_letter()}
               files={authorizationFiles}
               onFilesChange={setAuthorizationFiles}
               variant="authorization"
-              noticeDocument="Giấy ủy quyền"
+              noticeDocument={m.employer_account_docs_authorization_letter()}
               showTemplate
               disabled={documentMutation.isPending}
               savedDocuments={preservingCurrentMethod
                 ? savedDocuments.documents.filter((document) => document.doc_type === 'authorization_letter')
                 : []}
-              submittedFileLabel="Giấy ủy quyền"
+              submittedFileLabel={m.employer_account_docs_authorization_letter()}
               onViewDocument={openDocumentInNewTab}
               viewingDocument={documentPreviewMutation.isPending}
               editing={preservingCurrentMethod}
@@ -406,7 +407,7 @@ export default function EmployerBusinessLicenseForm() {
               uploadState={uploadState}
             />
             <EmployerBusinessDocumentCard
-              label="Giấy tờ định danh (CCCD/ Hộ chiếu)"
+              label={m.employer_account_docs_identity_document_full()}
               files={identityFiles}
               onFilesChange={setIdentityFiles}
               variant="identity"
@@ -414,7 +415,7 @@ export default function EmployerBusinessLicenseForm() {
               savedDocuments={preservingCurrentMethod
                 ? savedDocuments.documents.filter((document) => document.doc_type === 'identity_document')
                 : []}
-              submittedFileLabel="Giấy tờ định danh"
+              submittedFileLabel={m.employer_account_docs_identity_document()}
               onViewDocument={openDocumentInNewTab}
               viewingDocument={documentPreviewMutation.isPending}
               editing={preservingCurrentMethod}
@@ -429,7 +430,7 @@ export default function EmployerBusinessLicenseForm() {
       }
 
       {showDocumentForm && <div className="mt-5 flex flex-col gap-2 sm:items-end">
-        {editingDocuments && <Button disabled={documentMutation.isPending} onClick={cancelEditing} className="w-full !shadow-none sm:!min-w-[100px] sm:w-auto">Hủy</Button>}
+        {editingDocuments && <Button disabled={documentMutation.isPending} onClick={cancelEditing} className="w-full !shadow-none sm:!min-w-[100px] sm:w-auto">{m.employer_account_docs_cancel()}</Button>}
         <Button
           type="primary"
           size="large"
@@ -439,22 +440,22 @@ export default function EmployerBusinessLicenseForm() {
           className="w-full !shadow-none sm:!min-w-[100px] sm:w-auto"
           onClick={saveDocuments}
         >
-          Lưu
+          {m.employer_account_docs_save()}
         </Button>
-        {!companyLinked && <p className="text-left text-xs leading-5 text-slate-500 sm:text-right">Bạn cần <Link to={`${EMPLOYER_COMPANY_SETTINGS_URL}?update=true`} className="font-medium text-emerald-600 hover:text-emerald-700">cập nhật thông tin công ty</Link> trước khi có thể lưu giấy tờ.</p>}
+        {!companyLinked && <p className="text-left text-xs leading-5 text-slate-500 sm:text-right">{m.employer_account_docs_need_company_before()}<Link to={`${EMPLOYER_COMPANY_SETTINGS_URL}?update=true`} className="font-medium text-emerald-600 hover:text-emerald-700">{m.employer_account_docs_need_company_link()}</Link>{m.employer_account_docs_need_company_after()}</p>}
       </div>
       }
       <Modal
         centered
         destroyOnHidden
         open={submissionConfirmed}
-        title="Thông báo"
-        okText="Đã hiểu"
+        title={m.employer_account_docs_modal_title()}
+        okText={m.employer_account_docs_modal_ok()}
         onOk={() => setSubmissionConfirmed(false)}
         onCancel={() => setSubmissionConfirmed(false)}
       >
         <p className="text-sm leading-6 text-slate-600">
-          {siteName} đã nhận được bộ giấy tờ xác thực của bạn và sẽ kiểm duyệt trong 24 giờ (trừ thứ bảy, chủ nhật, ngày nghỉ lễ, tết theo quy định).
+          {m.employer_account_docs_submitted_notice({ siteName })}
         </p>
       </Modal>
     </div>

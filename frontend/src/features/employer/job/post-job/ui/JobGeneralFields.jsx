@@ -7,12 +7,13 @@ import {
 } from '@/entities/job/job'
 import { capitalizeTitleWords } from '../model/job-form-values'
 import JobSpecializationCascader from './JobSpecializationCascader'
+import { m } from '@/shared/config/i18n'
 
 const toOptions = (labels) => Object.entries(labels).map(([value, label]) => ({ value, label }))
 const CREATE_EMPLOYMENT_TYPES = ['full_time', 'part_time', 'seasonal', 'work_from_home', 'internship', 'other']
 const INCOME_LABEL_OPTIONS = [
-  { value: 'income', label: 'Thu nhập' },
-  { value: 'income_at_kpi', label: 'Thu nhập khi đạt 100% KPI' },
+  { value: 'income', label: m.employer_job_form_income() },
+  { value: 'income_at_kpi', label: m.employer_job_form_income_at_kpi() },
 ]
 const formatAmount = (value) => (value === null || value === undefined || value === '' ? '' : `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.'))
 const parseAmount = (value) => (value || '').replace(/\./g, '')
@@ -31,27 +32,27 @@ export default function JobGeneralFields({ form, categories }) {
     <>
       <Form.Item
         name="title"
-        label="Tiêu đề tin"
+        label={m.employer_job_progress_title()}
         normalize={capitalizeTitleWords}
-        rules={[{ required: true, whitespace: true, message: 'Nhập tiêu đề tin tuyển dụng.' }]}
+        rules={[{ required: true, whitespace: true, message: m.employer_job_form_title_required() }]}
       >
         <Input
           showCount
           maxLength={255}
-          placeholder="Ví dụ: Kỹ sư Backend Java - Thu nhập đến 35 triệu"
+          placeholder={m.employer_job_form_title_placeholder()}
         />
       </Form.Item>
       <Form.Item
         name={['category_assignments', 0, 'category']}
-        label="Vị trí chuyên môn"
-        rules={[{ required: true, message: 'Chọn vị trí chuyên môn.' }]}
+        label={m.employer_job_progress_category()}
+        rules={[{ required: true, message: m.employer_job_form_category_required() }]}
       >
         <JobSpecializationCascader
           categories={categories}
-          placeholder="Chọn Nhóm nghề / Nghề / Vị trí chuyên môn"
+          placeholder={m.employer_job_form_category_placeholder()}
         />
       </Form.Item>
-      <Form.Item name="domain_category_ids" label="Kiến thức chuyên ngành">
+      <Form.Item name="domain_category_ids" label={m.employer_job_form_domains()}>
         <Select
           mode="multiple"
           allowClear
@@ -59,18 +60,18 @@ export default function JobGeneralFields({ form, categories }) {
           optionFilterProp="label"
           maxTagCount="responsive"
           options={domainOptions}
-          placeholder="Có thể chọn nhiều chuyên ngành"
+          placeholder={m.employer_job_form_domains_placeholder()}
         />
       </Form.Item>
-      <Form.Item name="position_level" label="Cấp bậc" rules={[{ required: true, message: 'Chọn cấp bậc.' }]}>
-        <Select options={toOptions(POSITION_LEVEL_LABELS)} placeholder="-- Chọn cấp bậc --" />
+      <Form.Item name="position_level" label={m.employer_job_progress_level()} rules={[{ required: true, message: m.employer_job_form_level_required() }]}>
+        <Select options={toOptions(POSITION_LEVEL_LABELS)} placeholder={m.employer_job_form_level_placeholder()} />
       </Form.Item>
       <div className="grid gap-x-4 md:grid-cols-2">
-        <Form.Item name="employment_type" label="Loại công việc" rules={[{ required: true, message: 'Chọn loại công việc.' }]}>
-          <Select options={CREATE_EMPLOYMENT_TYPES.map((value) => ({ value, label: EMPLOYMENT_TYPE_LABELS[value] }))} placeholder="-- Chọn loại công việc --" />
+        <Form.Item name="employment_type" label={m.employer_job_progress_employment_type()} rules={[{ required: true, message: m.employer_job_form_employment_type_required() }]}>
+          <Select options={CREATE_EMPLOYMENT_TYPES.map((value) => ({ value, label: EMPLOYMENT_TYPE_LABELS[value] }))} placeholder={m.employer_job_form_employment_type_placeholder()} />
         </Form.Item>
-        <Form.Item name="work_types" label="Hình thức làm việc" rules={[{ required: true, message: 'Chọn ít nhất một hình thức làm việc.' }]}>
-          <Select mode="multiple" maxTagCount={1} className="post-job-oneline-select" options={toOptions(WORK_TYPE_LABELS)} placeholder="Có thể chọn nhiều hình thức" />
+        <Form.Item name="work_types" label={m.employer_job_progress_work_type()} rules={[{ required: true, message: m.employer_job_form_work_types_required() }]}>
+          <Select mode="multiple" maxTagCount={1} className="post-job-oneline-select" options={toOptions(WORK_TYPE_LABELS)} placeholder={m.employer_job_form_work_types_placeholder()} />
         </Form.Item>
       </div>
       <Form.Item name="salary_type" hidden><Input /></Form.Item>
@@ -78,7 +79,7 @@ export default function JobGeneralFields({ form, categories }) {
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <Form.Item name="income_display_type" noStyle>
             <Select
-              aria-label="Cách hiển thị thu nhập"
+              aria-label={m.employer_job_form_income_display_aria()}
               className="w-[230px]"
               size="small"
               options={INCOME_LABEL_OPTIONS}
@@ -86,7 +87,7 @@ export default function JobGeneralFields({ form, categories }) {
           </Form.Item>
           <Form.Item name="currency" noStyle>
             <Select
-              aria-label="Đơn vị tiền tệ"
+              aria-label={m.employer_job_form_currency_aria()}
               className="w-[112px]"
               size="small"
               options={SALARY_CURRENCY_OPTIONS}
@@ -102,7 +103,7 @@ export default function JobGeneralFields({ form, categories }) {
               }
             }}
           >
-            Thỏa thuận
+            {m.employer_job_form_negotiable()}
           </Checkbox>
         </div>
         {salaryType !== 'negotiable' && (
@@ -110,8 +111,8 @@ export default function JobGeneralFields({ form, categories }) {
             {showsSalaryMinimum && (
               <Form.Item
                 name="salary_min"
-                label={salaryType === 'fixed' ? 'Mức thu nhập' : incomeDisplayType === 'income_at_kpi' ? 'Từ mức thu nhập' : 'Từ mức'}
-                rules={salaryType === 'range' ? [] : [{ required: true, message: 'Nhập mức lương.' }]}
+                label={salaryType === 'fixed' ? m.employer_job_form_salary_fixed() : incomeDisplayType === 'income_at_kpi' ? m.employer_job_form_salary_from_income() : m.employer_job_form_salary_from()}
+                rules={salaryType === 'range' ? [] : [{ required: true, message: m.employer_job_form_salary_required() }]}
               >
                 <InputNumber min={0} step={currency === 'VND' ? 1_000_000 : 100} className="!w-[210px]" suffix={currency} formatter={formatAmount} parser={parseAmount} placeholder={currency === 'VND' ? '10.000.000' : '1,000'} />
               </Form.Item>
@@ -119,18 +120,18 @@ export default function JobGeneralFields({ form, categories }) {
             {showsSalaryMaximum && (
               <Form.Item
                 name="salary_max"
-                label="Đến mức"
+                label={m.employer_job_form_salary_to()}
                 dependencies={['salary_min']}
                 rules={[
-                  ...(salaryType === 'range' ? [] : [{ required: true, message: 'Nhập mức lương tối đa.' }]),
+                  ...(salaryType === 'range' ? [] : [{ required: true, message: m.employer_job_form_salary_max_required() }]),
                   ({ getFieldValue }) => ({
                     validator(_, value) {
                       const minimum = getFieldValue('salary_min')
                       if (salaryType === 'range' && minimum == null && value == null) {
-                        return Promise.reject(new Error('Nhập ít nhất một mức lương.'))
+                        return Promise.reject(new Error(m.employer_job_form_salary_any_required()))
                       }
                       if (salaryType !== 'range' || value == null || minimum == null || value >= minimum) return Promise.resolve()
-                      return Promise.reject(new Error('Mức tối đa phải lớn hơn hoặc bằng mức tối thiểu.'))
+                      return Promise.reject(new Error(m.employer_job_form_salary_max_too_low()))
                     },
                   }),
                 ]}

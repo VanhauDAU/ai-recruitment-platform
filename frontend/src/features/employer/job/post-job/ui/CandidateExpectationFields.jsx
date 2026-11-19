@@ -9,14 +9,15 @@ import {
   jobKeys,
 } from '@/entities/job/job'
 import { message } from '@/shared/lib/toast'
+import { m } from '@/shared/config/i18n'
 
 const toOptions = (labels) => Object.entries(labels).map(([value, label]) => ({ value, label }))
 const PROFICIENCY_OPTIONS = [
-  { value: 'basic', label: 'Cơ bản' },
-  { value: 'conversational', label: 'Giao tiếp' },
-  { value: 'working', label: 'Sử dụng trong công việc' },
-  { value: 'professional', label: 'Thành thạo' },
-  { value: 'native', label: 'Bản ngữ' },
+  { value: 'basic', label: m.employer_job_preview_proficiency_basic() },
+  { value: 'conversational', label: m.employer_job_preview_proficiency_conversational() },
+  { value: 'working', label: m.employer_job_preview_proficiency_working() },
+  { value: 'professional', label: m.employer_job_preview_proficiency_professional() },
+  { value: 'native', label: m.employer_job_preview_proficiency_native() },
 ]
 
 function SkillMultiSelect({ value = [], onChange, options, placeholder, onCreateSkill, disabledSkillIds = [] }) {
@@ -43,7 +44,7 @@ function SkillMultiSelect({ value = [], onChange, options, placeholder, onCreate
       if (!value.includes(skill.id)) onChange([...value, skill.id])
       setSearchValue('')
     } catch {
-      message.error('Không thể thêm kỹ năng. Vui lòng thử lại.')
+      message.error(m.employer_job_form_add_skill_failed())
     } finally {
       setCreating(false)
     }
@@ -67,7 +68,7 @@ function SkillMultiSelect({ value = [], onChange, options, placeholder, onCreate
           {normalizedSearch && !hasExactMatch && !searchQuery.isFetching && (
             <div className="border-t border-slate-100 p-1.5" onMouseDown={(event) => event.preventDefault()}>
               <Button type="text" size="small" className="!w-full !justify-start !text-emerald-600" loading={creating} onClick={addSkill}>
-                + Thêm kỹ năng “{normalizedSearch}”
+                {m.employer_job_form_add_skill({ name: normalizedSearch })}
               </Button>
             </div>
           )}
@@ -88,70 +89,70 @@ export default function CandidateExpectationFields({ form, skills, languages, on
   return (
     <>
       <div className="grid gap-x-4 md:grid-cols-2">
-        <Form.Item name="education_level" label="Học vấn tối thiểu" rules={[{ required: true, message: 'Chọn yêu cầu học vấn.' }]}>
-          <Select options={toOptions(EDUCATION_LEVEL_LABELS)} placeholder="-- Chọn học vấn --" />
+        <Form.Item name="education_level" label={m.employer_job_form_education()} rules={[{ required: true, message: m.employer_job_form_education_required() }]}>
+          <Select options={toOptions(EDUCATION_LEVEL_LABELS)} placeholder={m.employer_job_form_education_placeholder()} />
         </Form.Item>
-        <Form.Item name="experience_years" label="Số năm kinh nghiệm" rules={[{ required: true, message: 'Chọn kinh nghiệm.' }]}>
-          <Select options={toOptions(EXPERIENCE_YEARS_LABELS)} placeholder="-- Chọn kinh nghiệm --" />
+        <Form.Item name="experience_years" label={m.employer_job_form_experience()} rules={[{ required: true, message: m.employer_job_form_experience_required() }]}>
+          <Select options={toOptions(EXPERIENCE_YEARS_LABELS)} placeholder={m.employer_job_form_experience_placeholder()} />
         </Form.Item>
       </div>
       <div className="grid gap-x-4 md:grid-cols-3">
-        <Form.Item name="gender_requirement" label="Giới tính">
+        <Form.Item name="gender_requirement" label={m.employer_job_preview_gender()}>
           <Select options={[
-            { value: 'any', label: 'Không yêu cầu' },
-            { value: 'male', label: 'Nam' },
-            { value: 'female', label: 'Nữ' },
-          ]} placeholder="-- Chọn giới tính --" />
+            { value: 'any', label: m.employer_job_preview_gender_any() },
+            { value: 'male', label: m.employer_job_preview_gender_male() },
+            { value: 'female', label: m.employer_job_preview_gender_female() },
+          ]} placeholder={m.employer_job_form_gender_placeholder()} />
         </Form.Item>
-        <Form.Item name="age_min" label="Độ tuổi từ" rules={[{ type: 'number', min: 15, max: 100, message: 'Nhập tuổi từ 15 đến 100.' }]}> 
-          <InputNumber min={15} max={100} className="!w-full" placeholder="Ví dụ: 18" />
+        <Form.Item name="age_min" label={m.employer_job_form_age_min()} rules={[{ type: 'number', min: 15, max: 100, message: m.employer_job_form_age_range_error() }]}> 
+          <InputNumber min={15} max={100} className="!w-full" placeholder={m.employer_job_form_age_min_placeholder()} />
         </Form.Item>
         <Form.Item
           name="age_max"
-          label="Đến tuổi"
+          label={m.employer_job_form_age_max()}
           dependencies={['age_min']}
           rules={[
-            { type: 'number', min: 15, max: 100, message: 'Nhập tuổi từ 15 đến 100.' },
+            { type: 'number', min: 15, max: 100, message: m.employer_job_form_age_range_error() },
             ({ getFieldValue }) => ({
               validator(_, value) {
                 const minimum = getFieldValue('age_min')
                 if (value == null || minimum == null || value >= minimum) return Promise.resolve()
-                return Promise.reject(new Error('Tuổi tối đa không được nhỏ hơn tuổi tối thiểu.'))
+                return Promise.reject(new Error(m.employer_job_form_age_max_error()))
               },
             }),
           ]}
         >
-          <InputNumber min={15} max={100} className="!w-full" placeholder="Ví dụ: 35" />
+          <InputNumber min={15} max={100} className="!w-full" placeholder={m.employer_job_form_age_max_placeholder()} />
         </Form.Item>
       </div>
       <div className="grid gap-x-4 md:grid-cols-2">
-        <Form.Item name="required_skill_ids" label="Kỹ năng cần có">
-          <SkillMultiSelect options={skillOptions} placeholder="Chọn hoặc nhập kỹ năng bắt buộc" onCreateSkill={onCreateSkill} />
+        <Form.Item name="required_skill_ids" label={m.employer_job_form_required_skills()}>
+          <SkillMultiSelect options={skillOptions} placeholder={m.employer_job_form_required_skills_placeholder()} onCreateSkill={onCreateSkill} />
         </Form.Item>
-        <Form.Item name="preferred_skill_ids" label="Kỹ năng nên có">
-          <SkillMultiSelect options={preferredSkillOptions} placeholder="Chọn hoặc nhập kỹ năng ưu tiên" onCreateSkill={onCreateSkill} disabledSkillIds={requiredSkillIds} />
+        <Form.Item name="preferred_skill_ids" label={m.employer_job_form_preferred_skills()}>
+          <SkillMultiSelect options={preferredSkillOptions} placeholder={m.employer_job_form_preferred_skills_placeholder()} onCreateSkill={onCreateSkill} disabledSkillIds={requiredSkillIds} />
         </Form.Item>
       </div>
 
-      <div className="mb-2 text-sm font-semibold text-slate-700">Ngoại ngữ</div>
+      <div className="mb-2 text-sm font-semibold text-slate-700">{m.employer_job_form_languages()}</div>
       <Form.List name="language_requirements">
         {(fields, { add, remove }) => (
           <div className="space-y-3">
             {fields.map((field, index) => (
               <div key={field.key} className="border-t border-slate-200 pt-3">
                 <div className="grid gap-x-3 md:grid-cols-[1fr_1fr_auto]">
-                  <Form.Item name={[field.name, 'language']} label={`Ngoại ngữ ${index + 1}`} rules={[{ required: true, message: 'Chọn ngoại ngữ.' }]}> 
-                    <Select showSearch optionFilterProp="label" options={languages.map((item) => ({ value: item.id, label: item.name }))} placeholder="-- Chọn ngoại ngữ --" />
+                  <Form.Item name={[field.name, 'language']} label={m.employer_job_form_language_n({ index: index + 1 })} rules={[{ required: true, message: m.employer_job_form_language_required() }]}> 
+                    <Select showSearch optionFilterProp="label" options={languages.map((item) => ({ value: item.id, label: item.name }))} placeholder={m.employer_job_form_language_placeholder()} />
                   </Form.Item>
-                  <Form.Item name={[field.name, 'proficiency_level']} label="Trình độ/Chứng chỉ ngoại ngữ">
-                    <Select allowClear options={PROFICIENCY_OPTIONS} placeholder="-- Chọn trình độ/chứng chỉ --" />
+                  <Form.Item name={[field.name, 'proficiency_level']} label={m.employer_job_form_proficiency()}>
+                    <Select allowClear options={PROFICIENCY_OPTIONS} placeholder={m.employer_job_form_proficiency_placeholder()} />
                   </Form.Item>
-                  <Button className="self-center md:mt-2" danger type="text" icon={<DeleteOutlined />} aria-label={`Xóa ngoại ngữ ${index + 1}`} onClick={() => remove(field.name)} />
+                  <Button className="self-center md:mt-2" danger type="text" icon={<DeleteOutlined />} aria-label={m.employer_job_form_remove_language({ index: index + 1 })} onClick={() => remove(field.name)} />
                 </div>
               </div>
             ))}
             <Button type="dashed" icon={<PlusOutlined />} onClick={() => add({ sort_order: fields.length })}>
-              Thêm ngoại ngữ
+              {m.employer_job_form_add_language()}
             </Button>
           </div>
         )}

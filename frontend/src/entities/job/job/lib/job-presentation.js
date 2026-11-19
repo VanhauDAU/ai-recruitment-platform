@@ -1,3 +1,5 @@
+import { m } from '@/shared/config/i18n'
+
 export const JOB_LOGO_TINTS = [
   ['#e6f0ff', '#2563eb'],
   ['#eafaf1', '#16a34a'],
@@ -19,11 +21,11 @@ export function resolveJobPresentation(job = {}) {
 
   const sponsored = job.tier === 'featured' || job.tier === 'top'
   const labels = []
-  if (sponsored) labels.push({ code: 'sponsored', text: 'Tài trợ', tone: 'sponsored' })
+  if (sponsored) labels.push({ code: 'sponsored', text: m.job_label_sponsored(), tone: 'sponsored' })
   if (job.is_hot) labels.push({ code: 'hot', text: 'HOT', tone: 'danger' })
-  if (job.is_urgent) labels.push({ code: 'urgent', text: 'GẤP', tone: 'warning' })
+  if (job.is_urgent) labels.push({ code: 'urgent', text: m.job_label_urgent(), tone: 'warning' })
   if (job.has_flash_badge) {
-    labels.push({ code: 'fast_response', text: 'Phản hồi nhanh', tone: 'success' })
+    labels.push({ code: 'fast_response', text: m.job_label_fast_response(), tone: 'success' })
   }
   return {
     sponsored,

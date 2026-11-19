@@ -6,6 +6,8 @@ from http import HTTPStatus
 
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from rest_framework.exceptions import APIException, ValidationError
 
 from apps.accounts.services import (
@@ -16,6 +18,7 @@ from apps.accounts.services import (
 )
 from apps.employers.models import EmployerNotification
 from apps.employers.services import emit_employer_event
+from common.i18n import recipient_language
 
 from ..models import Job, JobModerationEvent
 from ..models.querysets import job_visibility_issues
@@ -26,7 +29,7 @@ REVIEW_OPERATION = 'job.moderation.mutate'
 
 class JobModerationStale(APIException):
     status_code = HTTPStatus.CONFLICT
-    default_detail = 'Tin đã thay đổi sau khi bạn mở bản xem trước. Vui lòng tải lại.'
+    default_detail = gettext_lazy('Tin đã thay đổi sau khi bạn mở bản xem trước. Vui lòng tải lại.')
     default_code = 'job_moderation_stale'
 
 
@@ -162,16 +165,16 @@ def hide_job_visibility(
     )
     _verify_review_token(job, review_token)
     if job.status != Job.Status.ACTIVE:
-        raise ValidationError('Chỉ có thể tạm ẩn tin đang tuyển.')
+        raise ValidationError(_('Chỉ có thể tạm ẩn tin đang tuyển.'))
     if job.moderation_hold:
-        raise ValidationError('Tin đã bị tạm ẩn.')
+        raise ValidationError(_('Tin đã bị tạm ẩn.'))
     if hold not in Job.ModerationHold.values or not hold:
-        raise ValidationError({'hold': 'Loại tạm giữ không hợp lệ.'})
+        raise ValidationError({'hold': _('Loại tạm giữ không hợp lệ.')})
     if source_report is not None and source_report.job_id != job.id:
-        raise ValidationError({'source_report': 'Báo cáo không thuộc tin này.'})
+        raise ValidationError({'source_report': _('Báo cáo không thuộc tin này.')})
     note = note.strip()
     if not note:
-        raise ValidationError({'note': 'Nhập căn cứ tạm ẩn tin.'})
+        raise ValidationError({'note': _('Nhập căn cứ tạm ẩn tin.')})
 
     fingerprint = job_content_fingerprint(job)
     previous_hold = job.moderation_hold
@@ -206,7 +209,7 @@ def apply_confirmed_report_hold(*, job, actor, report, note):
         .get(pk=job.pk)
     )
     if report.job_id != job.pk:
-        raise ValidationError({'report': 'Báo cáo không thuộc tin này.'})
+        raise ValidationError({'report': _('Báo cáo không thuộc tin này.')})
     if job.status != Job.Status.ACTIVE:
         return job
     if job.moderation_hold == Job.ModerationHold.CONFIRMED_VIOLATION:
@@ -240,10 +243,10 @@ def restore_job_visibility(*, job, user, note, review_token):
     )
     _verify_review_token(job, review_token)
     if not job.moderation_hold:
-        raise ValidationError('Tin không bị moderation hold.')
+        raise ValidationError(_('Tin không bị moderation hold.'))
     note = note.strip()
     if not note:
-        raise ValidationError({'note': 'Nhập lý do khôi phục hiển thị.'})
+        raise ValidationError({'note': _('Nhập lý do khôi phục hiển thị.')})
 
     fingerprint = job_content_fingerprint(job)
     previous_hold = job.moderation_hold
@@ -288,16 +291,16 @@ def request_job_changes(*, job, user, reason_code, note, review_token, source_re
     )
     _verify_review_token(job, review_token)
     if not _changes_can_be_requested(job):
-        raise ValidationError('Không thể yêu cầu chỉnh sửa tin ở trạng thái hiện tại.')
+        raise ValidationError(_('Không thể yêu cầu chỉnh sửa tin ở trạng thái hiện tại.'))
     if reason_code not in JobModerationEvent.FIXABLE_REASONS:
         raise ValidationError(
-            {'reason_code': 'Chỉ yêu cầu chỉnh sửa với lý do nhà tuyển dụng sửa được.'}
+            {'reason_code': _('Chỉ yêu cầu chỉnh sửa với lý do nhà tuyển dụng sửa được.')}
         )
     if source_report is not None and source_report.job_id != job.id:
-        raise ValidationError({'source_report': 'Báo cáo không thuộc tin này.'})
+        raise ValidationError({'source_report': _('Báo cáo không thuộc tin này.')})
     note = note.strip()
     if not note:
-        raise ValidationError({'note': 'Nêu rõ nội dung cần chỉnh sửa.'})
+        raise ValidationError({'note': _('Nêu rõ nội dung cần chỉnh sửa.')})
 
     fingerprint = job_content_fingerprint(job)
     previous_hold = job.moderation_hold
@@ -325,15 +328,18 @@ def request_job_changes(*, job, user, reason_code, note, review_token, source_re
         to_hold=Job.ModerationHold.CHANGES_REQUESTED,
         source_report=source_report,
     )
+    # The stored notification is read by the recruiter, in their language.
+    with recipient_language(job.posted_by):
+        message = _('Tin "%(title)s" đang tạm ẩn: %(reason)s. Hãy chỉnh sửa rồi gửi duyệt lại.') % {
+            'title': job.title,
+            'reason': JobModerationEvent.Reason(reason_code).label,
+        }
     emit_employer_event(
         recipient=job.posted_by,
         actor=user,
         event_type=EmployerNotification.EventType.JOB_CHANGES_REQUESTED,
         dedupe_key=f'job-changes-requested:{job.public_id}:{fingerprint[:16]}',
-        message=(
-            f'Tin "{job.title}" đang tạm ẩn: '
-            f'{JobModerationEvent.Reason(reason_code).label}. Hãy chỉnh sửa rồi gửi duyệt lại.'
-        ),
+        message=message,
         subject_public_id=job.public_id,
         action_path=f'/tuyendung/app/jobs/{job.public_id}',
     )
@@ -345,14 +351,14 @@ def resubmit_job_for_review(job, user):
     """The owner sends a job it fixed back to the administrators' review queue."""
     job = Job.objects.select_for_update(of=('self',)).get(pk=job.pk)
     if job.posted_by_id != user.id:
-        raise ValidationError('Bạn không có quyền gửi duyệt lại tin này.')
+        raise ValidationError(_('Bạn không có quyền gửi duyệt lại tin này.'))
     if job.moderation_hold != Job.ModerationHold.CHANGES_REQUESTED:
-        raise ValidationError('Tin này không ở trạng thái cần chỉnh sửa.')
+        raise ValidationError(_('Tin này không ở trạng thái cần chỉnh sửa.'))
     if job.moderation_resubmitted_at is not None:
-        raise ValidationError('Tin đã được gửi duyệt lại, vui lòng chờ quản trị viên.')
+        raise ValidationError(_('Tin đã được gửi duyệt lại, vui lòng chờ quản trị viên.'))
     if job.moderation_content_digest and job.moderation_content_digest == job_content_digest(job):
         raise ValidationError(
-            'Bạn chưa sửa nội dung nào. Hãy chỉnh sửa tin trước khi gửi duyệt lại.'
+            _('Bạn chưa sửa nội dung nào. Hãy chỉnh sửa tin trước khi gửi duyệt lại.')
         )
     job.moderation_resubmitted_at = timezone.now()
     job.save(update_fields=['moderation_resubmitted_at', 'updated_at'])

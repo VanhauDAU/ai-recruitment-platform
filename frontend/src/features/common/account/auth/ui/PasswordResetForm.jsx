@@ -9,6 +9,7 @@ import { passwordValidationRule } from './password-validation'
 import AuthLogo from './AuthLogo'
 import { AuthFormStyles } from './LoginForm'
 import PasswordRequirements from './PasswordRequirements'
+import { m } from '@/shared/config/i18n'
 
 const LOGIN_URL_BY_ROLE = {
   employer: EMPLOYER_LOGIN_URL,
@@ -20,7 +21,7 @@ const loginUrlFor = (role) => LOGIN_URL_BY_ROLE[role] || MAIN_LOGIN_URL
 export default function PasswordResetForm({
   portal,
   requestPath = '/forgot-password',
-  invalidActionLabel = 'Gửi lại liên kết',
+  invalidActionLabel = m.account_reset_resend_link(),
 }) {
   const [params] = useSearchParams()
   const navigate = useNavigate()
@@ -53,7 +54,7 @@ export default function PasswordResetForm({
       setDone(loginUrlFor(res.role))
     } catch (err) {
       const data = err.response?.data
-      setError(data?.password?.[0] || getApiErrorMessage(err, 'Đặt lại mật khẩu thất bại, vui lòng thử lại.'))
+      setError(data?.password?.[0] || getApiErrorMessage(err, m.account_reset_failed()))
     } finally {
       setLoading(false)
     }
@@ -69,18 +70,18 @@ export default function PasswordResetForm({
         <AuthFormStyles />
         <div className="login-card">
           <CheckCircleFilled className="text-5xl" style={{ color: 'var(--brand-primary)' }} />
-          <h2 className="mt-4 text-xl font-bold text-gray-900 dark:text-white">Đã đổi mật khẩu</h2>
+          <h2 className="mt-4 text-xl font-bold text-gray-900 dark:text-white">{m.account_reset_done_title()}</h2>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
             {isAdminReset
-              ? 'Mật khẩu mới đã sẵn sàng. Đăng nhập lại cổng quản trị để tiếp tục.'
-              : 'Mật khẩu mới đã sẵn sàng. Các thiết bị đang đăng nhập trước đó sẽ bị đăng xuất.'}
+              ? m.account_reset_done_admin()
+              : m.account_reset_done_default()}
           </p>
           <button
             type="button"
             onClick={() => (done.startsWith('http') ? window.location.assign(done) : navigate(done))}
             className="submit-btn mt-6 w-full cursor-pointer rounded-full px-6 py-3.5 text-base font-bold text-white"
           >
-            Đăng nhập ngay
+            {m.account_reset_login_now()}
           </button>
         </div>
       </div>
@@ -93,9 +94,9 @@ export default function PasswordResetForm({
         <AuthFormStyles />
         <div className="login-card">
           <CloseCircleFilled className="text-5xl text-red-500" />
-          <h2 className="mt-4 text-xl font-bold text-gray-900 dark:text-white">Liên kết không còn hiệu lực</h2>
+          <h2 className="mt-4 text-xl font-bold text-gray-900 dark:text-white">{m.account_reset_invalid_title()}</h2>
           <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-gray-600 dark:text-gray-300">
-            Liên kết đặt lại mật khẩu đã hết hạn, đã được sử dụng, hoặc tài khoản hiện không còn hoạt động.
+            {m.account_reset_invalid_desc()}
           </p>
           <Link to={requestPath} className="mt-6 inline-block">
             <span className="submit-btn inline-block cursor-pointer rounded-full px-8 py-3 text-base font-bold text-white">
@@ -115,10 +116,10 @@ export default function PasswordResetForm({
           ? <SafetyCertificateOutlined className="mb-3 text-4xl text-[var(--brand-primary)]" />
           : <AuthLogo className="mb-3" />}
         <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-          {isAdminReset ? 'Đặt lại mật khẩu quản trị' : 'Tạo mật khẩu mới'}
+          {isAdminReset ? m.account_reset_title_admin() : m.account_reset_title()}
         </h2>
         <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
-          Cho tài khoản <strong className="text-gray-700 dark:text-gray-300">{account.email}</strong>
+          {m.account_reset_for_account()}<strong className="text-gray-700 dark:text-gray-300">{account.email}</strong>
         </p>
       </div>
 
@@ -130,8 +131,8 @@ export default function PasswordResetForm({
         <div className="login-field">
           <Form.Item
             name="password"
-            label={<span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Mật khẩu mới</span>}
-            rules={[{ required: true, message: 'Vui lòng nhập mật khẩu' }, { validator: passwordValidationRule }]}
+            label={<span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{m.account_password_new()}</span>}
+            rules={[{ required: true, message: m.account_auth_password_required() }, { validator: passwordValidationRule }]}
           >
             <Input.Password
               size="large"
@@ -139,7 +140,7 @@ export default function PasswordResetForm({
               autoFocus
               onChange={(event) => setPassword(event.target.value)}
               prefix={<LockOutlined className="text-[var(--brand-primary)]" />}
-              placeholder="Nhập mật khẩu mới"
+              placeholder={m.account_password_new_required()}
               className="!h-11 !rounded-full !text-base"
             />
           </Form.Item>
@@ -150,13 +151,13 @@ export default function PasswordResetForm({
           <Form.Item
             name="confirm"
             dependencies={['password']}
-            label={<span className="text-sm font-semibold text-gray-700 dark:text-gray-300">Nhập lại mật khẩu</span>}
+            label={<span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{m.account_auth_confirm_password()}</span>}
             rules={[
-              { required: true, message: 'Vui lòng nhập lại mật khẩu' },
+              { required: true, message: m.account_auth_confirm_password_required() },
               ({ getFieldValue }) => ({
                 validator: (_, value) => (!value || getFieldValue('password') === value
                   ? Promise.resolve()
-                  : Promise.reject(new Error('Mật khẩu nhập lại không khớp'))),
+                  : Promise.reject(new Error(m.account_password_mismatch()))),
               }),
             ]}
           >
@@ -164,7 +165,7 @@ export default function PasswordResetForm({
               size="large"
               autoComplete="new-password"
               prefix={<LockOutlined className="text-[var(--brand-primary)]" />}
-              placeholder="Nhập lại mật khẩu mới"
+              placeholder={m.account_password_confirm()}
               className="!h-11 !rounded-full !text-base"
             />
           </Form.Item>
@@ -176,7 +177,7 @@ export default function PasswordResetForm({
             disabled={loading}
             className="submit-btn w-full cursor-pointer rounded-full px-6 py-3.5 text-base font-bold text-white disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {loading ? 'Đang cập nhật...' : 'Đặt lại mật khẩu'}
+            {loading ? m.account_reset_submitting() : m.account_reset_submit()}
           </button>
         </div>
       </Form>

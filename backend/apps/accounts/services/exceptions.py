@@ -1,16 +1,17 @@
 from http import HTTPStatus
 
+from django.utils.translation import gettext as _
 from rest_framework.exceptions import APIException, PermissionDenied
 
 from common.errors import DomainError
 
 
 class AdminPermissionDenied(PermissionDenied):
-    def __init__(self, message='Bạn không có quyền thực hiện hành động này.'):
+    def __init__(self, message=None):
         super().__init__(
             detail={
                 'code': 'admin_permission_denied',
-                'message': message,
+                'message': message or _('Bạn không có quyền thực hiện hành động này.'),
             }
         )
 
@@ -19,13 +20,12 @@ class AdminResourceChanged(APIException):
     status_code = HTTPStatus.CONFLICT
     default_code = 'admin_resource_changed'
 
-    def __init__(
-        self, message='Dữ liệu đã thay đổi. Vui lòng xem lại tác động trước khi tiếp tục.'
-    ):
+    def __init__(self, message=None):
         super().__init__(
             detail={
                 'code': 'admin_resource_changed',
-                'message': message,
+                'message': message
+                or _('Dữ liệu đã thay đổi. Vui lòng xem lại tác động trước khi tiếp tục.'),
             }
         )
 
@@ -37,7 +37,9 @@ class VerificationCooldown(DomainError):
     code = 'verification_cooldown'
 
     def __init__(self, retry_after):
-        super().__init__(f'Vui lòng chờ {retry_after}s trước khi gửi lại.')
+        super().__init__(
+            _('Vui lòng chờ %(seconds)ss trước khi gửi lại.') % {'seconds': retry_after}
+        )
         self.retry_after = retry_after
 
     def payload(self):
@@ -51,7 +53,7 @@ class OAuthReauthRequired(DomainError):
     code = 'reauth_required'
 
     def __init__(self, provider):
-        super().__init__('Hãy xác thực lại bằng mạng xã hội trước khi tạo mật khẩu.')
+        super().__init__(_('Hãy xác thực lại bằng mạng xã hội trước khi tạo mật khẩu.'))
         self.provider = provider
 
     def payload(self):

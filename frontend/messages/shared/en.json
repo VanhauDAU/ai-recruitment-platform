@@ -1,0 +1,568 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "job_work_type_onsite": "Onsite",
+  "job_work_type_remote": "Remote",
+  "job_work_type_hybrid": "Hybrid",
+  "job_employment_full_time": "Full-time",
+  "job_employment_part_time": "Part-time",
+  "job_employment_contract": "Contract",
+  "job_employment_seasonal": "Seasonal",
+  "job_employment_work_from_home": "Work from home (general labor)",
+  "job_employment_internship": "Internship",
+  "job_employment_other": "Other",
+  "job_not_required": "Not required",
+  "job_experience_under_1": "Under 1 year",
+  "job_experience_years": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} year",
+        "countPlural=other": "{count} years"
+      }
+    }
+  ],
+  "job_experience_over_5": "Over 5 years",
+  "job_level_employee": "Staff",
+  "job_level_team_lead": "Team lead",
+  "job_level_manager": "Manager / Deputy manager",
+  "job_level_supervisor": "Supervisor",
+  "job_level_branch_manager": "Branch manager",
+  "job_level_vice_director": "Deputy director",
+  "job_level_director": "Director",
+  "job_level_intern": "Intern",
+  "job_education_middle_school": "Lower secondary school",
+  "job_education_high_school": "High school",
+  "job_education_intermediate": "Vocational certificate",
+  "job_education_college": "Associate degree",
+  "job_education_university": "Bachelor's degree",
+  "job_education_postgraduate": "Postgraduate degree",
+  "job_salary_range_under": "Under {amount} million",
+  "job_salary_range_between": "{min} - {max} million",
+  "job_salary_range_over": "Over {amount} million",
+  "job_salary_negotiable": "Negotiable",
+  "job_salary_unit_million": "million",
+  "job_salary_from": "From {amount}",
+  "job_salary_up_to": "Up to {amount}",
+  "job_salary_at_kpi": "At 100% KPI",
+  "job_education_not_required": "No degree required",
+  "job_education_min": "{level} or higher",
+  "job_deadline_expired": "Expired",
+  "job_deadline_today": "Closes today",
+  "job_deadline_days_left": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} day left",
+        "countPlural=other": "{count} days left"
+      }
+    }
+  ],
+  "job_posted_today": "Posted today",
+  "job_posted_days_ago": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "Posted {count} day ago",
+        "countPlural=other": "Posted {count} days ago"
+      }
+    }
+  ],
+  "job_posted_weeks_ago": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "Posted {count} week ago",
+        "countPlural=other": "Posted {count} weeks ago"
+      }
+    }
+  ],
+  "job_posted_months_ago": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "Posted {count} month ago",
+        "countPlural=other": "Posted {count} months ago"
+      }
+    }
+  ],
+  "job_label_sponsored": "Sponsored",
+  "job_label_urgent": "URGENT",
+  "job_label_fast_response": "Fast response",
+  "job_weekday_mon": "Mon",
+  "job_weekday_tue": "Tue",
+  "job_weekday_wed": "Wed",
+  "job_weekday_thu": "Thu",
+  "job_weekday_fri": "Fri",
+  "job_weekday_sat": "Sat",
+  "job_weekday_sun": "Sun",
+  "job_schedule_next_day": " (next day)",
+  "job_schedule_work_type": "Work type: {type}",
+  "job_verified_employer": "Verified employer",
+  "job_verified_employer_criteria": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "Verified employer, view {count} criterion",
+        "countPlural=other": "Verified employer, view {count} criteria"
+      }
+    }
+  ],
+  "job_verified_employer_short": "Verified employer",
+  "job_verified_badge_employer": "This employer",
+  "job_verified_badge_met_all": "meets all of the following:",
+  "job_saved_tooltip_title": "Job saved!",
+  "job_saved_tooltip_view": "To view your",
+  "job_saved_tooltip_list": "saved jobs",
+  "job_saved_tooltip_go_to": ", go to:",
+  "job_saved_tooltip_path": "Menu => Jobs => Saved jobs",
+  "job_category_picker_label": "Job categories",
+  "job_category_picker_all": "All industries",
+  "job_category_picker_selected_count": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} industry filter selected",
+        "countPlural=other": "{count} industry filters selected"
+      }
+    }
+  ],
+  "job_category_picker_clear_all": "Clear all industries",
+  "job_category_picker_selected": "Selected industries",
+  "job_category_picker_fallback": "Category #{id}",
+  "job_category_picker_remove": "Remove {label}",
+  "job_category_picker_title": "Select a job category, occupation or specialization",
+  "job_category_picker_search": "Search industries",
+  "job_category_picker_search_placeholder": "Enter a keyword",
+  "job_category_picker_groups_heading": "JOB CATEGORIES",
+  "job_category_picker_select_group": "Select job category {name}",
+  "job_category_picker_open_group": "Open job category {name}",
+  "job_category_picker_empty": "No matching industries found.",
+  "job_category_picker_jobs_heading": "OCCUPATION",
+  "job_category_picker_positions_heading": "SPECIALIZATION",
+  "job_category_picker_select_job": "Select occupation {name}",
+  "job_category_picker_select_position": "Select specialization {name}",
+  "job_category_picker_clear": "Clear all",
+  "job_category_picker_apply": "Apply industries",
+  "job_field_work_type": "Work type",
+  "job_field_employment_type": "Employment type",
+  "job_field_level": "Level",
+  "job_field_education": "Education",
+  "job_field_vacancies": "Openings",
+  "job_vacancies_count": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} person",
+        "countPlural=other": "{count} people"
+      }
+    }
+  ],
+  "job_section_reasons": "Why apply",
+  "job_section_description": "Job description",
+  "job_section_requirements": "Requirements",
+  "job_section_benefits": "Benefits",
+  "job_section_locations": "Work location",
+  "job_section_schedule": "Working hours",
+  "job_action_apply": "Apply",
+  "application_status_new": "New",
+  "application_status_viewed": "Viewed",
+  "application_status_shortlisted": "Shortlisted",
+  "application_status_interviewed": "Interview",
+  "application_status_accepted": "Hired",
+  "application_status_rejected": "Rejected",
+  "application_status_withdrawn": "Withdrawn by candidate",
+  "application_candidate_filter_submitted": "Received",
+  "application_candidate_filter_rejected": "Not selected",
+  "application_candidate_filter_withdrawn": "Withdrawn",
+  "application_candidate_status_submitted": "Application submitted",
+  "application_candidate_status_viewed": "Employer viewed your application",
+  "application_candidate_status_shortlisted": "Shortlisted",
+  "application_candidate_status_interviewed": "Invited to interview",
+  "application_candidate_status_withdrawn": "You withdrew your application",
+  "application_review_strong_yes": "Strong hire",
+  "application_review_yes": "Hire",
+  "application_review_no": "No hire",
+  "application_review_strong_no": "Strong no hire",
+  "application_block_spam": "Mass applying, not relevant",
+  "application_block_inappropriate": "Inappropriate behavior",
+  "application_block_fake_profile": "Fake profile",
+  "application_block_other": "Other reason",
+  "campaign_status_draft": "Draft",
+  "campaign_status_scheduled": "Scheduled",
+  "campaign_status_active": "Running",
+  "campaign_status_paused": "Paused",
+  "campaign_status_completed": "Completed",
+  "campaign_status_cancelled": "Cancelled",
+  "campaign_status_ended": "Ended",
+  "campaign_status_all": "All",
+  "campaign_scope_all": "All action items",
+  "campaign_scope_needs_review": "New applications to review",
+  "campaign_scope_active_jobs": "Has live job postings",
+  "campaign_scope_expired_jobs": "Has expired job postings",
+  "campaign_ordering_status": "By status",
+  "campaign_ordering_activity": "Recent activity",
+  "campaign_ordering_newest": "Newest",
+  "campaign_ordering_oldest": "Oldest",
+  "campaign_ordering_name": "Name A–Z",
+  "campaign_budget_company": "Paid by company",
+  "campaign_budget_personal": "Paid personally",
+  "campaign_channel_facebook_page": "Facebook Page",
+  "campaign_channel_facebook_group": "Facebook group",
+  "campaign_channel_website": "Company website",
+  "campaign_channel_qr_offline": "Flyer / QR",
+  "campaign_channel_other": "Other channel",
+  "employer_profile_badge_email_domain": "Company domain email verified",
+  "employer_profile_badge_phone": "Phone number verified",
+  "employer_profile_badge_business_doc": "Legal and authorization documents approved",
+  "employer_profile_badge_account_age": "Account meets the minimum age",
+  "employer_profile_badge_no_reports": "No admin-confirmed policy violations",
+  "employer_profile_business_enterprise": "Enterprise",
+  "employer_profile_business_household": "Household business",
+  "employer_profile_company_size": "{range} employees",
+  "employer_profile_market_domestic": "Domestic",
+  "employer_profile_market_asia": "Asia",
+  "employer_profile_market_europe": "Europe",
+  "employer_profile_market_africa": "Africa",
+  "employer_profile_market_america": "Americas",
+  "employer_profile_market_australia": "Oceania",
+  "employer_profile_role_owner": "Company creator",
+  "employer_profile_role_member": "Member",
+  "employer_profile_gender_male": "Male",
+  "employer_profile_gender_female": "Female",
+  "employer_profile_gender_other": "Other",
+  "employer_profile_domain_dns_pending": "Awaiting DNS verification",
+  "employer_profile_domain_manual_review": "Awaiting manual review",
+  "employer_profile_domain_verified": "Verified",
+  "employer_profile_domain_grace": "DNS record needs restoring",
+  "employer_profile_domain_revoked": "Revoked",
+  "employer_profile_domain_expired": "Expired",
+  "employer_profile_domain_rejected": "Rejected",
+  "employer_profile_domain_reverify": "Needs re-verification",
+  "employer_profile_domain_unverified": "Not verified",
+  "employer_profile_action_complete_onboarding": "Complete registration",
+  "employer_profile_action_verify_phone": "Verify phone number",
+  "employer_profile_action_link_company": "Link a company",
+  "employer_profile_action_upload_business_document": "Upload business documents",
+  "employer_profile_action_upload_candidate_dpa": "Upload data processing agreement",
+  "employer_profile_action_accept_dpa": "Accept DPA",
+  "employer_profile_action_accept_current_dpa": "Accept current DPA",
+  "employer_profile_action_open_verification": "View verification status",
+  "employer_profile_action_contact_support": "Contact support",
+  "employer_profile_readiness_invalid": "Unable to verify access from the current data.",
+  "employer_profile_readiness_reload_required": "Reload your verification status before viewing candidate data.",
+  "employer_profile_readiness_verify_required": "Complete verification to use the recruiting workspace.",
+  "employer_profile_gate_job_workspace": "Recruiting workspace isn't ready",
+  "employer_profile_gate_candidate_data": "Candidate data is protected",
+  "employer_profile_gate_checking": "Checking access",
+  "employer_profile_gate_retry": "Check again",
+  "employer_profile_gate_error_title": "Unable to check access",
+  "employer_profile_gate_error_description": "Sensitive data and related actions are temporarily locked. Please try again.",
+  "employer_profile_gate_default_title": "Access isn't ready",
+  "session_logout_revoke_uncertain": "Signed out on this device; we couldn't confirm the session was revoked on the server.",
+  "session_expired": "Your session has expired. Please sign in again.",
+  "session_permission_changed": "Your access just changed. We're updating your session.",
+  "company_fallback_name": "Company",
+  "company_gallery_view_photo": "View photo",
+  "company_hero_industries": "Industries",
+  "company_hero_open_jobs": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} open job",
+        "countPlural=other": "{count} open jobs"
+      }
+    }
+  ],
+  "company_hero_no_open_jobs": "No open jobs yet",
+  "company_hero_followers": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} follower",
+        "countPlural=other": "{count} followers"
+      }
+    }
+  ],
+  "company_headquarters": "Headquarters",
+  "company_link_copied": "Company link copied.",
+  "company_video_play": "Play {title} on {provider}",
+  "location_filter_selected_locations": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} location selected",
+        "countPlural=other": "{count} locations selected"
+      }
+    }
+  ],
+  "location_filter_all": "All",
+  "location_filter_ward_count": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} ward",
+        "countPlural=other": "{count} wards"
+      }
+    }
+  ],
+  "location_filter_province_placeholder": "Search province/city",
+  "location_filter_provinces": "Province/City",
+  "location_filter_ward_placeholder": "Search ward",
+  "location_filter_pick_province": "Select a province/city to see its wards",
+  "location_filter_clear_all": "Clear all",
+  "location_filter_selected_count": "{count} selected",
+  "location_filter_apply": "Apply",
+  "location_filter_placeholder": "Location",
+  "location_filter_clear_label": "Clear selected locations",
+  "location_filter_clear_title": "Clear locations",
+  "api_error_invalid_credentials": "Incorrect email or password. Please try again.",
+  "api_error_duration_seconds": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} second",
+        "countPlural=other": "{count} seconds"
+      }
+    }
+  ],
+  "api_error_duration_minutes": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} minute",
+        "countPlural=other": "{count} minutes"
+      }
+    }
+  ],
+  "api_error_duration_hours": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} hour",
+        "countPlural=other": "{count} hours"
+      }
+    }
+  ],
+  "api_error_duration_days": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} day",
+        "countPlural=other": "{count} days"
+      }
+    }
+  ],
+  "api_error_duration_hours_minutes": "{hours} hr {minutes} min",
+  "api_error_duration_days_hours": "{days} d {hours} hr",
+  "api_error_generic": "Something went wrong. Please try again.",
+  "api_error_network": "Can't reach the server. Check that the backend is running and try again.",
+  "api_error_server": "The system is having trouble. Please try again in a few minutes.",
+  "api_error_rate_limited_wait": "Too many attempts. Please try again in {duration}.",
+  "api_error_rate_limited": "Too many attempts. Please try again later.",
+  "api_error_oauth_access_denied": "You cancelled sign-in with the provider. Please try again.",
+  "api_error_oauth_provider_not_configured": "This sign-in method isn't configured yet.",
+  "api_error_oauth_provider_not_allowed": "This portal doesn't support the selected sign-in method.",
+  "api_error_oauth_portal_not_supported": "This portal doesn't support social sign-in.",
+  "api_error_oauth_unknown_provider": "Invalid sign-in method.",
+  "api_error_oauth_invalid_state": "The sign-in session expired or is invalid. Please try again.",
+  "api_error_oauth_exchange_failed": "Couldn't connect to the sign-in provider. Please try again.",
+  "api_error_oauth_profile_failed": "Couldn't read your account details from the provider. Please try again.",
+  "api_error_oauth_no_email": "Your social account didn't share an email. Use another account or sign up with email.",
+  "api_error_oauth_wrong_portal": "This account doesn't belong to this portal. The email is registered under a different role.",
+  "api_error_oauth_inactive": "This account is locked or deactivated.",
+  "api_error_oauth_invalid_code": "Invalid sign-in code. Please try again.",
+  "api_error_oauth_complete_failed": "Couldn't complete sign-in. Please try again.",
+  "api_error_oauth_failed": "Social sign-in failed. Please try again.",
+  "ui_banner_previous": "Previous banner",
+  "ui_banner_next": "Next banner",
+  "ui_banner_go_to": "Go to banner {index}",
+  "ui_chat_demo_recruiter_1": "Hi! Our AI just matched your profile to the Frontend Developer role.",
+  "ui_chat_demo_candidate_1": "Thanks, I'm very interested in this role!",
+  "ui_chat_demo_recruiter_2": "Great. Could we schedule an interview this week?",
+  "ui_chat_demo_candidate_2": "Sure, I'm available anytime. Thank you!",
+  "ui_chat_demo_status": "Recruiter is online",
+  "ui_help_tip_label": "Explanation",
+  "ui_notification_unread": "Unread",
+  "ui_page_loading": "Loading data...",
+  "ui_share_link_copied": "Link copied.",
+  "ui_share_copy_manually": "You can copy the link from the address bar.",
+  "ui_share_facebook": "Share on Facebook",
+  "ui_share_twitter": "Share on Twitter",
+  "ui_share_linkedin": "Share on LinkedIn",
+  "ui_share_copy_link": "Copy link",
+  "ui_theme_to_light": "Switch to light mode",
+  "ui_theme_to_dark": "Switch to dark mode",
+  "ui_csv_yes": "Yes",
+  "ui_csv_no": "No",
+  "title_not_found": "Page not found",
+  "title_employer_suffix": "{name} for Employers",
+  "title_admin_suffix": "{name} Admin",
+  "ui_rich_insert_product_link": "Insert product link",
+  "ui_rich_quick_links": "Quick links",
+  "ui_rich_table_options": "Table insert options",
+  "ui_rich_table_size": "Table size",
+  "ui_rich_table_rows": "Rows",
+  "ui_rich_table_cols": "Columns",
+  "ui_rich_table_header_row": "First row is a header",
+  "ui_rich_table_hint": "You can add or remove rows and columns after inserting.",
+  "ui_rich_insert_custom_table": "Insert custom table",
+  "ui_rich_link_jobs": "Find jobs",
+  "ui_rich_link_cv_templates": "CV templates",
+  "ui_rich_link_help": "Help",
+  "ui_rich_link_prompt": "Link URL",
+  "ui_rich_toolbar": "Text formatting tools",
+  "ui_rich_undo": "Undo",
+  "ui_rich_redo": "Redo",
+  "ui_rich_bold": "Bold",
+  "ui_rich_italic": "Italic",
+  "ui_rich_underline": "Underline",
+  "ui_rich_paragraph": "Normal text",
+  "ui_rich_heading_2": "Heading 2",
+  "ui_rich_heading_3": "Heading 3",
+  "ui_rich_blockquote": "Quote",
+  "ui_rich_link": "Link",
+  "ui_rich_bullet_list": "Bulleted list",
+  "ui_rich_ordered_list": "Numbered list",
+  "ui_rich_outdent": "Decrease indent",
+  "ui_rich_indent": "Increase indent",
+  "ui_rich_insert_image": "Insert image",
+  "ui_rich_image_toolbar": "Selected image options",
+  "ui_rich_image_size": "Size",
+  "ui_rich_align_left": "Align left",
+  "ui_rich_align_center": "Align center",
+  "ui_rich_align_right": "Align right",
+  "ui_rich_replace_image": "Replace image",
+  "ui_rich_delete": "Delete",
+  "ui_rich_table_toolbar": "Selected table options",
+  "ui_rich_table": "Table",
+  "ui_rich_add_row_above": "Add row above",
+  "ui_rich_add_row_below": "Add row below",
+  "ui_rich_delete_row": "Delete row",
+  "ui_rich_add_col_left": "Add column left",
+  "ui_rich_add_col_right": "Add column right",
+  "ui_rich_delete_col": "Delete column",
+  "ui_rich_merge_cells": "Merge selected cells",
+  "ui_rich_split_cell": "Split cell",
+  "ui_rich_toggle_header_row": "Toggle header row",
+  "ui_rich_delete_table": "Delete table",
+  "ui_rich_insert_table": "Insert {rows} × {cols} table",
+  "ui_image_upload_hint": "JPG, PNG, GIF, WebP · up to 5 MB · large images are resized to max 1600 px",
+  "ui_image_library_load_failed": "Couldn't load the image library. Please try again.",
+  "ui_image_only_supports": "Supported formats: {hint}.",
+  "ui_image_uploaded": "Image uploaded to the library.",
+  "ui_image_upload_failed": "Couldn't upload the image. Supported formats: {hint}.",
+  "ui_image_search": "Search the image library",
+  "ui_image_search_placeholder": "Search by image name…",
+  "ui_image_retry": "Retry",
+  "ui_image_library": "Image library",
+  "ui_image_no_match": "No matching images found",
+  "ui_image_library_empty": "The image library is empty",
+  "ui_image_drop": "Drag an image here or click to browse",
+  "ui_image_uploading": "Uploading image…",
+  "ui_image_external_info": "You can insert an image directly without uploading it to ProCV.",
+  "ui_image_external_warning": "Only use trusted HTTPS URLs or internal paths. If the source image is removed, it will no longer show in the post.",
+  "ui_image_url": "Image URL",
+  "ui_image_url_invalid": "Enter an HTTPS URL or an internal path starting with /.",
+  "ui_image_alt": "Image description (alt text)",
+  "ui_image_alt_from_url": "Description of the image from URL",
+  "ui_image_alt_placeholder": "Briefly describe the image",
+  "ui_image_insert_into_post": "Insert into post",
+  "ui_image_upload_new": "Upload new image",
+  "ui_image_from_url": "From URL"
+}

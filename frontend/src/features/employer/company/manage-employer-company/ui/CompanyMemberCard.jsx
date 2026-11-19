@@ -15,6 +15,7 @@ import {
 } from '@ant-design/icons'
 import { Avatar, Button, Dropdown, Input, Modal, Tag, Tooltip } from 'antd'
 import { useState } from 'react'
+import { m } from '@/shared/config/i18n'
 import { formatDateTime } from '@/shared/lib/date-time'
 
 const VERIFICATION_COLORS = {
@@ -34,19 +35,19 @@ function initials(name = '') {
 }
 
 const STATS = [
-  ['active_job_count', 'tin đang tuyển', 'green', <RocketOutlined key="i" />],
-  ['unanswered_application_count', 'hồ sơ chờ phản hồi', 'amber', <FileSearchOutlined key="i" />],
-  ['open_campaign_count', 'chiến dịch đang mở', 'blue', <CalendarOutlined key="i" />],
+  ['active_job_count', m.employer_company_member_stat_active_jobs, 'green', <RocketOutlined key="i" />],
+  ['unanswered_application_count', m.employer_company_member_stat_unanswered, 'amber', <FileSearchOutlined key="i" />],
+  ['open_campaign_count', m.employer_company_member_stat_campaigns, 'blue', <CalendarOutlined key="i" />],
 ]
 
 function RecruitingActivity({ member }) {
   const stats = STATS.filter(([field]) => member[field] > 0)
-  if (!stats.length) return <p className="company-member__stats--empty">Chưa có hoạt động tuyển dụng</p>
+  if (!stats.length) return <p className="company-member__stats--empty">{m.employer_company_member_no_activity()}</p>
   return (
     <div className="company-member__stats">
       {stats.map(([field, label, tone, icon]) => (
         <span key={field} className={`company-member__stat company-member__stat--${tone}`}>
-          {icon}<strong>{member[field]}</strong> {label}
+          {icon}<strong>{member[field]}</strong> {label({ count: member[field] })}
         </span>
       ))}
     </div>
@@ -63,8 +64,8 @@ export default function CompanyMemberCard({ member, busy, onTransfer, onToggleEd
   const handover = {
     key: 'handover',
     icon: <SendOutlined />,
-    label: holdsWork ? 'Giao tin tuyển dụng cho người khác' : (
-      <Tooltip title="Người này chưa có tin tuyển dụng nào">Giao tin tuyển dụng cho người khác</Tooltip>
+    label: holdsWork ? m.employer_company_member_handover() : (
+      <Tooltip title={m.employer_company_member_no_jobs()}>{m.employer_company_member_handover()}</Tooltip>
     ),
     disabled: !holdsWork,
   }
@@ -73,14 +74,14 @@ export default function CompanyMemberCard({ member, busy, onTransfer, onToggleEd
     {
       key: 'editor',
       icon: member.page_editor_grant_id ? <StopOutlined /> : <EditOutlined />,
-      label: member.page_editor_grant_id ? 'Thu hồi quyền biên tập trang công ty' : 'Cấp quyền biên tập trang công ty',
+      label: member.page_editor_grant_id ? m.employer_company_member_revoke_editor() : m.employer_company_member_grant_editor(),
       disabled: !member.page_editor_grant_id && !member.can_grant_page_editor,
     },
     {
       key: 'transfer',
       icon: <SwapOutlined />,
-      label: member.can_transfer ? 'Chuyển quyền quản lý công ty' : (
-        <Tooltip title="Chỉ chuyển được cho thành viên đã xác thực tài khoản">Chuyển quyền quản lý công ty</Tooltip>
+      label: member.can_transfer ? m.employer_company_member_transfer() : (
+        <Tooltip title={m.employer_company_member_transfer_verified_only()}>{m.employer_company_member_transfer()}</Tooltip>
       ),
       disabled: !member.can_transfer,
     },
@@ -90,7 +91,7 @@ export default function CompanyMemberCard({ member, busy, onTransfer, onToggleEd
       key: 'remove',
       icon: <DeleteOutlined />,
       danger: true,
-      label: blocked ? <Tooltip title={`Chưa thể gỡ: ${member.removal_blockers.join(', ')}. Giao tin cho người khác trước.`}>Gỡ khỏi công ty</Tooltip> : 'Gỡ khỏi công ty',
+      label: blocked ? <Tooltip title={m.employer_company_member_remove_blocked({ blockers: member.removal_blockers.join(', ') })}>{m.employer_company_member_remove()}</Tooltip> : m.employer_company_member_remove(),
       disabled: blocked,
     },
   ]
@@ -110,15 +111,15 @@ export default function CompanyMemberCard({ member, busy, onTransfer, onToggleEd
       <div className="company-member__body">
         <div className="company-member__head">
           <strong className="company-member__name">{member.display_name}</strong>
-          {member.is_me && <span className="company-member__me">Bạn</span>}
+          {member.is_me && <span className="company-member__me">{m.employer_company_member_me()}</span>}
           <Tag className="company-member__role" color={manager ? 'gold' : 'default'} icon={manager ? <CrownFilled /> : null}>
             {member.role_label}
           </Tag>
           <Tag color={VERIFICATION_COLORS[member.verification_status] || 'default'} icon={<SafetyCertificateOutlined />}>
             {member.verification_label}
           </Tag>
-          {member.page_editor_grant_id && <Tag color="cyan" icon={<EditOutlined />}>Biên tập trang công ty</Tag>}
-          {member.has_compliance_hold && <Tag color="red">Đang bị giữ tuân thủ</Tag>}
+          {member.page_editor_grant_id && <Tag color="cyan" icon={<EditOutlined />}>{m.employer_company_member_editor_tag()}</Tag>}
+          {member.has_compliance_hold && <Tag color="red">{m.employer_company_member_compliance_hold()}</Tag>}
         </div>
         {member.position_title && <p className="company-member__title">{member.position_title}</p>}
         <p className="company-member__contact">
@@ -126,8 +127,8 @@ export default function CompanyMemberCard({ member, busy, onTransfer, onToggleEd
           {member.phone_masked && <span><PhoneOutlined /> {member.phone_masked}</span>}
           {member.joined_at && (
             <span>
-              <CalendarOutlined /> Tham gia {formatDateTime(member.joined_at)}
-              {member.approved_by_name && ` · duyệt bởi ${member.approved_by_name}`}
+              <CalendarOutlined /> {m.employer_company_member_joined({ date: formatDateTime(member.joined_at) })}
+              {member.approved_by_name && ` · ${m.employer_company_member_approved_by({ name: member.approved_by_name })}`}
             </span>
           )}
         </p>
@@ -135,16 +136,16 @@ export default function CompanyMemberCard({ member, busy, onTransfer, onToggleEd
       </div>
       {items.length > 0 && (
         <Dropdown menu={{ items, onClick: onMenu }} trigger={['click']} placement="bottomRight">
-          <Button className="company-member__menu" icon={<MoreOutlined />} loading={busy} aria-label={`Quản lý ${member.display_name}`}>
-            Quản lý
+          <Button className="company-member__menu" icon={<MoreOutlined />} loading={busy} aria-label={m.employer_company_member_manage_label({ name: member.display_name })}>
+            {m.employer_company_member_manage()}
           </Button>
         </Dropdown>
       )}
       <Modal
         open={removing}
-        title={`Gỡ ${member.display_name} khỏi công ty?`}
-        okText="Gỡ khỏi công ty"
-        cancelText="Đóng"
+        title={m.employer_company_member_remove_title({ name: member.display_name })}
+        okText={m.employer_company_member_remove()}
+        cancelText={m.employer_company_close()}
         okButtonProps={{ danger: true, disabled: !reason.trim(), loading: busy }}
         onOk={async () => {
           // The error is already shown; keep the dialog open to retry.
@@ -154,9 +155,9 @@ export default function CompanyMemberCard({ member, busy, onTransfer, onToggleEd
         destroyOnHidden
       >
         <p className="mb-2 text-sm text-slate-600">
-          Thành viên mất quyền truy cập dữ liệu công ty, quyền biên tập trang (nếu có) và phải xác thực lại nếu tham gia công ty khác. Thành viên sẽ nhận thông báo.
+          {m.employer_company_member_remove_description()}
         </p>
-        <Input.TextArea aria-label="Lý do gỡ thành viên" rows={3} value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Ví dụ: đã nghỉ việc tại công ty" />
+        <Input.TextArea aria-label={m.employer_company_member_remove_reason()} rows={3} value={reason} onChange={(event) => setReason(event.target.value)} placeholder={m.employer_company_member_remove_reason_placeholder()} />
       </Modal>
     </article>
   )

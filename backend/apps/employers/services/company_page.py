@@ -2,6 +2,7 @@
 
 from django.db import IntegrityError, transaction
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from rest_framework.exceptions import ValidationError
 
 from apps.accounts.services import record_admin_action
@@ -30,9 +31,9 @@ def set_company_page_policy_hold(company, *, actor, hold, reason):
         raise ValidationError(
             {
                 'detail': (
-                    'Trang công ty đang bị tạm ẩn.'
+                    _('Trang công ty đang bị tạm ẩn.')
                     if hold
-                    else 'Trang công ty hiện không bị tạm ẩn.'
+                    else _('Trang công ty hiện không bị tạm ẩn.')
                 )
             }
         )
@@ -77,7 +78,11 @@ def _replace_pinned_jobs(company, *, actor, public_ids):
         return False
     if len(public_ids) > PINNED_JOB_LIMIT or len(set(public_ids)) != len(public_ids):
         raise ValidationError(
-            {'pinned_job_public_ids': [f'Ghim tối đa {PINNED_JOB_LIMIT} tin, mỗi tin một lần.']}
+            {
+                'pinned_job_public_ids': [
+                    _('Ghim tối đa %(limit)s tin, mỗi tin một lần.') % {'limit': PINNED_JOB_LIMIT}
+                ]
+            }
         )
     # The canonical public predicate, never the recruiter's own tenant scope:
     # a pin may only point at a job any visitor of the page can open.
@@ -89,7 +94,7 @@ def _replace_pinned_jobs(company, *, actor, public_ids):
     }
     if len(jobs) != len(public_ids):
         raise ValidationError(
-            {'pinned_job_public_ids': ['Chỉ ghim được tin đang hiển thị công khai của công ty.']}
+            {'pinned_job_public_ids': [_('Chỉ ghim được tin đang hiển thị công khai của công ty.')]}
         )
     CompanyPinnedJob.objects.filter(company=company).delete()
     CompanyPinnedJob.objects.bulk_create(

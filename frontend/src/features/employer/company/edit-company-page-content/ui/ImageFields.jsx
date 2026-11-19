@@ -1,6 +1,7 @@
 import { DeleteOutlined, UndoOutlined, UploadOutlined } from '@ant-design/icons'
 import { Button, Tag } from 'antd'
 import { useEffect, useMemo, useRef } from 'react'
+import { m } from '@/shared/config/i18n'
 
 const IMAGE_TYPES = 'image/png,image/jpeg,image/webp'
 
@@ -45,11 +46,11 @@ export function ImageField({ value = null, onChange, currentUrl, label, disabled
   return (
     <div className={`company-content-image ${wide ? 'company-content-image--wide' : ''}`}>
       <div className="company-content-image__frame">
-        {src ? <img src={src} alt={value ? `${label} mới chọn` : `${label} hiện tại`} /> : <span>Chưa có ảnh</span>}
+        {src ? <img src={src} alt={value ? m.employer_company_image_alt_new({ label }) : m.employer_company_image_alt_current({ label })} /> : <span>{m.employer_company_image_empty()}</span>}
       </div>
       <div className="company-content-image__actions">
-        <PickButton label={value ? `Chọn ${label.toLowerCase()} khác` : `Chọn ${label.toLowerCase()}`} disabled={disabled} onPick={([file]) => file && onChange(file)} />
-        {value && <Button size="small" type="link" disabled={disabled} onClick={() => onChange(null)}>Bỏ chọn</Button>}
+        <PickButton label={value ? m.employer_company_image_pick_other({ label: label.toLowerCase() }) : m.employer_company_image_pick({ label: label.toLowerCase() })} disabled={disabled} onPick={([file]) => file && onChange(file)} />
+        {value && <Button size="small" type="link" disabled={disabled} onClick={() => onChange(null)}>{m.employer_company_image_clear()}</Button>}
       </div>
     </div>
   )
@@ -70,21 +71,21 @@ export function GalleryField({ value, onChange, published = [], additions = [], 
 
   return (
     <div className="company-content-gallery">
-      <p className="company-content-hint" role="status">Đang dùng {total}/{limit} ảnh.</p>
-      <ul className="company-content-gallery__grid" aria-label="Ảnh thư viện">
+      <p className="company-content-hint" role="status">{m.employer_company_gallery_usage({ total, limit })}</p>
+      <ul className="company-content-gallery__grid" aria-label={m.employer_company_gallery_list()}>
         {published.map((image) => {
           const removed = deletions.includes(image.id)
           return (
             <li key={`published-${image.id}`} className={removed ? 'is-removed' : ''}>
-              <img src={image.image_url} alt={image.caption || `Ảnh thư viện ${image.id}`} />
-              {removed && <Tag color="red">Sẽ xoá</Tag>}
+              <img src={image.image_url} alt={image.caption || m.employer_company_gallery_image_alt({ id: image.id })} />
+              {removed && <Tag color="red">{m.employer_company_gallery_will_delete()}</Tag>}
               <Button
                 size="small"
                 type="text"
                 danger={!removed}
                 disabled={disabled || (removed && total >= limit)}
                 icon={removed ? <UndoOutlined aria-hidden="true" /> : <DeleteOutlined aria-hidden="true" />}
-                aria-label={removed ? `Giữ lại ảnh ${image.id}` : `Xoá ảnh ${image.id}`}
+                aria-label={removed ? m.employer_company_gallery_keep({ id: image.id }) : m.employer_company_gallery_delete({ id: image.id })}
                 onClick={() => toggle(image.id)}
               />
             </li>
@@ -92,28 +93,28 @@ export function GalleryField({ value, onChange, published = [], additions = [], 
         })}
         {additions.map((image, index) => (
           <li key={`pending-${image.image_url}`}>
-            <img src={image.image_url} alt={`Ảnh chờ duyệt ${index + 1}`} />
-            <Tag color="gold">Chờ duyệt</Tag>
+            <img src={image.image_url} alt={m.employer_company_gallery_pending_alt({ index: index + 1 })} />
+            <Tag color="gold">{m.employer_company_content_status_pending()}</Tag>
           </li>
         ))}
         {files.map((file, index) => (
           <li key={`new-${file.name}-${index}`}>
-            {fileUrls[index] ? <img src={fileUrls[index]} alt={`Ảnh mới ${file.name}`} /> : <span>{file.name}</span>}
-            <Tag color="blue">Mới</Tag>
+            {fileUrls[index] ? <img src={fileUrls[index]} alt={m.employer_company_gallery_new_alt({ name: file.name })} /> : <span>{file.name}</span>}
+            <Tag color="blue">{m.employer_company_gallery_new()}</Tag>
             <Button
               size="small"
               type="text"
               danger
               disabled={disabled}
               icon={<DeleteOutlined aria-hidden="true" />}
-              aria-label={`Bỏ ảnh mới ${file.name}`}
+              aria-label={m.employer_company_gallery_remove_new({ name: file.name })}
               onClick={() => onChange({ deletions, files: files.filter((_, item) => item !== index) })}
             />
           </li>
         ))}
       </ul>
       <PickButton
-        label="Thêm ảnh"
+        label={m.employer_company_gallery_add()}
         multiple
         disabled={disabled || total >= limit}
         onPick={(picked) => onChange({ deletions, files: [...files, ...picked.slice(0, Math.max(0, limit - total))] })}

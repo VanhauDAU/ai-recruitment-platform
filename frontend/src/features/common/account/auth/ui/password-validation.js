@@ -1,3 +1,4 @@
+import { m } from '@/shared/config/i18n'
 export function getPasswordRequirements(password = '') {
   return {
     length: password.length >= 8 && password.length <= 25,
@@ -19,10 +20,10 @@ export function passwordValidationRule(_, value) {
 
   const requirements = getPasswordRequirements(value)
   if (!requirements.length) {
-    return Promise.reject(new Error('Mật khẩu phải từ 8 đến 25 ký tự'))
+    return Promise.reject(new Error(m.account_password_error_length()))
   }
   if (!requirements.composition) {
-    return Promise.reject(new Error('Mật khẩu phải bao gồm chữ hoa, chữ thường và ký tự số'))
+    return Promise.reject(new Error(m.account_password_error_complexity()))
   }
   return Promise.resolve()
 }
@@ -32,16 +33,16 @@ export function employerPasswordValidationRule(_, value) {
 
   const requirements = getEmployerPasswordRequirements(value)
   if (!requirements.length) {
-    return Promise.reject(new Error('Mật khẩu phải từ 8 đến 25 ký tự'))
+    return Promise.reject(new Error(m.account_password_error_length()))
   }
   if (!requirements.letterCase) {
-    return Promise.reject(new Error('Mật khẩu phải có chữ in hoa và chữ thường'))
+    return Promise.reject(new Error(m.account_auth_error_case()))
   }
   if (!requirements.number) {
-    return Promise.reject(new Error('Mật khẩu phải có ít nhất 1 chữ số'))
+    return Promise.reject(new Error(m.account_auth_error_digit()))
   }
   if (!requirements.specialCharacter) {
-    return Promise.reject(new Error('Mật khẩu phải có ít nhất 1 ký tự đặc biệt'))
+    return Promise.reject(new Error(m.account_auth_error_special()))
   }
   return Promise.resolve()
 }

@@ -14,11 +14,12 @@ import {
   EMPLOYER_PHONE_VERIFY_URL,
   EMPLOYER_VERIFY_URL,
 } from '@/shared/config/portals'
+import { m } from '@/shared/config/i18n'
 
 const STEPS = [
-  { key: 'phone_verified', label: 'Xác thực số điện thoại', to: EMPLOYER_PHONE_VERIFY_URL },
-  { key: 'company_linked', label: 'Cập nhật thông tin công ty', to: `${EMPLOYER_COMPANY_SETTINGS_URL}?update=true` },
-  { key: 'business_doc_approved', label: 'Xác thực Giấy đăng ký doanh nghiệp', to: EMPLOYER_BUSINESS_LICENSE_URL },
+  { key: 'phone_verified', label: m.employer_account_checklist_phone_title(), to: EMPLOYER_PHONE_VERIFY_URL },
+  { key: 'company_linked', label: m.employer_account_checklist_company_title(), to: `${EMPLOYER_COMPANY_SETTINGS_URL}?update=true` },
+  { key: 'business_doc_approved', label: m.employer_account_level_step_business(), to: EMPLOYER_BUSINESS_LICENSE_URL },
 ]
 
 export default function EmployerAccountVerificationCard() {
@@ -58,23 +59,23 @@ export default function EmployerAccountVerificationCard() {
         verificationCase={verificationCase}
       />
       <h2 className="text-base font-bold text-slate-800">
-        Tài khoản xác thực: <span className="text-emerald-600">Cấp {level.level}/{level.total}</span>
+        {m.employer_account_level_title()} <span className="text-emerald-600">{m.employer_account_level_value({ level: level.level, total: level.total })}</span>
       </h2>
 
       {!verifiedJobQuotaUnlocked && (
         <div className="mt-4 flex items-start gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xl">🌟</span>
           <p className="text-sm leading-6 text-slate-600">
-            Bạn còn tối đa <strong className="text-slate-800">3 tin đăng miễn phí</strong>.{' '}
+            {m.employer_account_level_free_before()}<strong className="text-slate-800">{m.employer_account_level_free_count()}</strong>.{' '}
             {level.level < level.total ? (
               <>
-                Hoàn tất <strong className="text-slate-800">Cấp {nextLevel}/{level.total}</strong> và thỏa thuận DPA để nhận{' '}
-                <strong className="text-emerald-600">quota 100 tin đăng</strong>.
+                {m.employer_account_level_next_before()}<strong className="text-slate-800">{m.employer_account_level_value({ level: nextLevel, total: level.total })}</strong>{m.employer_account_level_next_after()}{' '}
+                <strong className="text-emerald-600">{m.employer_account_level_quota()}</strong>.
               </>
             ) : (
               <>
-                Quota sẽ được mở tự động sau khi thỏa thuận DPA còn hiệu lực:{' '}
-                <strong className="text-emerald-600">quota 100 tin đăng</strong>.
+                {m.employer_account_level_auto_unlock()}{' '}
+                <strong className="text-emerald-600">{m.employer_account_level_quota()}</strong>.
               </>
             )}
           </p>
@@ -82,15 +83,15 @@ export default function EmployerAccountVerificationCard() {
       )}
       {verifiedJobQuotaUnlocked && (
         <p className="mt-4 rounded-lg bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-800">
-          Hồ sơ xác thực đã hoàn tất và tài khoản đạt Cấp 3. Bạn có quota tối đa <strong>100 tin đăng</strong>.
+          {m.employer_account_level_unlocked_before()}<strong>{m.employer_account_level_unlocked_count()}</strong>.
         </p>
       )}
 
-      <p className="mt-4 text-sm text-slate-500">Vui lòng thực hiện các bước xác thực dưới đây:</p>
+      <p className="mt-4 text-sm text-slate-500">{m.employer_account_level_steps_intro()}</p>
 
       <div className="mt-5 flex items-center justify-between text-sm">
-        <strong className="text-base text-slate-800">Xác thực thông tin</strong>
-        <span className="text-slate-500">Hoàn thành <strong className="text-emerald-600">{percent}%</strong></span>
+        <strong className="text-base text-slate-800">{m.employer_account_checklist_title()}</strong>
+        <span className="text-slate-500">{m.employer_account_level_progress()}<strong className="text-emerald-600">{percent}%</strong></span>
       </div>
 
       <div className="mt-4 divide-y divide-slate-100">
@@ -120,7 +121,7 @@ export default function EmployerAccountVerificationCard() {
           to={EMPLOYER_VERIFY_URL}
           className="rounded-md border border-emerald-500 px-4 py-2 text-sm font-medium !text-emerald-600 transition hover:bg-emerald-50"
         >
-          Tìm hiểu thêm
+          {m.employer_account_level_learn_more()}
         </Link>
       </div>
     </div>

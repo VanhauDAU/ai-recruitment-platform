@@ -16,6 +16,7 @@ import {
 } from '@/entities/campaign/campaign'
 import { useEmployerReadiness } from '@/entities/account/employer-profile'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { m } from '@/shared/config/i18n'
 import { employerAppPath } from '@/shared/config/portals'
 import CampaignCandidateSummary from './CampaignCandidates'
 import CampaignJobsSummary from './CampaignJobsSummary'
@@ -26,21 +27,23 @@ const detailPath = (campaign, suffix = '') => employerAppPath(`/campaigns/${camp
 const shortDate = (value) => (value ? dayjs(value).format('DD/MM/YYYY') : '')
 
 function campaignPeriod(campaign) {
-  const start = shortDate(campaign.start_date) || 'Khi kích hoạt'
-  const end = campaign.is_continuous ? 'tuyển liên tục' : shortDate(campaign.target_date) || 'chưa đặt ngày kết thúc'
-  return `${start} đến ${end}`
+  const start = shortDate(campaign.start_date) || m.employer_campaign_list_on_launch()
+  const end = campaign.is_continuous
+    ? m.employer_campaign_list_continuous()
+    : shortDate(campaign.target_date) || m.employer_campaign_list_no_end_date()
+  return m.employer_campaign_list_period({ start, end })
 }
 
 // Mỗi dòng chỉ có một hành động: việc tiếp theo hợp lý nhất cho trạng thái đó.
 function nextAction(campaign, candidateDataAccess) {
   if (CAMPAIGN_SETUP_STATUSES.includes(campaign.status)) {
-    return { label: 'Thiết lập', to: detailPath(campaign, '/setup'), primary: true }
+    return { label: m.employer_campaign_list_action_setup(), to: detailPath(campaign, '/setup'), primary: true }
   }
   const unviewed = campaign.unviewed_count ?? campaign.unviewed_application_count ?? 0
   if (candidateDataAccess && unviewed > 0) {
-    return { label: `Xem ${unviewed} CV mới`, to: detailPath(campaign, '?active_tab=apply_cv'), primary: true }
+    return { label: m.employer_campaign_list_action_view_new_cv({ count: unviewed }), to: detailPath(campaign, '?active_tab=apply_cv'), primary: true }
   }
-  return { label: 'Mở', to: detailPath(campaign) }
+  return { label: m.employer_campaign_list_action_open(), to: detailPath(campaign) }
 }
 
 function CampaignName({ campaign }) {
@@ -70,7 +73,7 @@ function LastActivity({ campaign }) {
   const occurredAt = campaign.last_activity?.occurred_at
   return (
     <div className="cpl-activity">
-      <span>{campaign.last_activity?.label || 'Cập nhật chiến dịch'}</span>
+      <span>{campaign.last_activity?.label || m.employer_campaign_list_activity_fallback()}</span>
       <time>{occurredAt ? dayjs(occurredAt).format('HH:mm DD/MM/YYYY') : '—'}</time>
     </div>
   )
@@ -111,19 +114,19 @@ export default function CampaignList() {
   }
 
   const empty = (
-    <Empty description={status || scope || query ? 'Không có chiến dịch phù hợp bộ lọc' : 'Chưa có chiến dịch nào'} />
+    <Empty description={status || scope || query ? m.employer_campaign_list_empty_filtered() : m.employer_campaign_list_empty()} />
   )
   const columns = [
-    { title: 'Chiến dịch', render: (_, campaign) => <CampaignName campaign={campaign} /> },
-    { title: 'Tin tuyển dụng', width: 280, render: (_, campaign) => <CampaignJobsSummary campaign={campaign} /> },
+    { title: m.employer_campaign_list_col_campaign(), render: (_, campaign) => <CampaignName campaign={campaign} /> },
+    { title: m.employer_campaign_jobs_col_job(), width: 280, render: (_, campaign) => <CampaignJobsSummary campaign={campaign} /> },
     {
-      title: 'Ứng viên',
+      title: m.employer_campaign_cv_col_candidate(),
       width: 180,
       render: (_, campaign) => (
         <CampaignCandidateSummary campaign={campaign} candidateDataAccess={canAccessCandidateData} />
       ),
     },
-    { title: 'Hoạt động gần nhất', width: 190, render: (_, campaign) => <LastActivity campaign={campaign} /> },
+    { title: m.employer_campaign_list_col_last_activity(), width: 190, render: (_, campaign) => <LastActivity campaign={campaign} /> },
     {
       title: '',
       width: 130,
@@ -135,7 +138,7 @@ export default function CampaignList() {
   return (
     <section className="cpl">
       <Card styles={{ body: { padding: 0 } }}>
-        <nav className="cpl-tabs" aria-label="Lọc chiến dịch theo trạng thái">
+        <nav className="cpl-tabs" aria-label={m.employer_campaign_list_status_tabs_aria()}>
           {CAMPAIGN_STATUS_TABS.map((tab) => (
             <button
               key={tab.countKey}
@@ -154,19 +157,19 @@ export default function CampaignList() {
             allowClear
             value={searchValue}
             prefix={<SearchOutlined className="text-slate-400" />}
-            placeholder="Tìm theo tên hoặc mã chiến dịch, nhấn Enter"
+            placeholder={m.employer_campaign_list_search_placeholder()}
             onChange={(event) => setSearchValue(event.target.value)}
             onClear={() => replaceFilters({ q: '' })}
             onPressEnter={() => replaceFilters({ q: searchValue.trim() })}
           />
           <Select
-            aria-label="Lọc nhu cầu xử lý"
+            aria-label={m.employer_campaign_list_scope_aria()}
             value={scope}
             options={CAMPAIGN_SCOPE_OPTIONS}
             onChange={(value) => replaceFilters({ scope: value })}
           />
           <Select
-            aria-label="Sắp xếp chiến dịch"
+            aria-label={m.employer_campaign_list_sort_aria()}
             value={ordering}
             options={CAMPAIGN_ORDERING_OPTIONS}
             onChange={(value) => replaceFilters({ ordering: value })}
@@ -178,8 +181,8 @@ export default function CampaignList() {
         <Alert
           type="error"
           showIcon
-          title={getApiErrorMessage(campaignsQuery.error, 'Không thể tải danh sách chiến dịch.')}
-          action={<Button size="small" danger onClick={() => campaignsQuery.refetch()}>Thử lại</Button>}
+          title={getApiErrorMessage(campaignsQuery.error, m.employer_campaign_list_load_error())}
+          action={<Button size="small" danger onClick={() => campaignsQuery.refetch()}>{m.employer_campaign_retry()}</Button>}
         />
       )}
 

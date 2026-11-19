@@ -2,6 +2,7 @@
 
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.utils.translation import gettext as _
 from django.views import View
 
 from apps.sitecontent.services import resolved_seo_settings, seo_page_title
@@ -44,8 +45,8 @@ class CampaignLandingSeoShellView(View):
         canonical = absolute_url(request, f'/tuyen-dung/{slug}')
         if campaign is None:
             metadata = SeoMetadata(
-                title=seo_page_title('Không tìm thấy trang tuyển dụng', settings),
-                description='Trang tuyển dụng không tồn tại.',
+                title=seo_page_title(_('Không tìm thấy trang tuyển dụng'), settings),
+                description=_('Trang tuyển dụng không tồn tại.'),
                 canonical_url=canonical,
                 site_name=settings['site_name'],
                 robots='noindex, nofollow',
@@ -54,7 +55,9 @@ class CampaignLandingSeoShellView(View):
         state = landing_state(campaign)
         company = campaign.company
         description = truncate_text(
-            campaign.landing_intro or f'{company.company_name} đang tuyển dụng: {campaign.name}.'
+            campaign.landing_intro
+            or _('%(company)s đang tuyển dụng: %(campaign)s.')
+            % {'company': company.company_name, 'campaign': campaign.name}
         )
         image = (
             media_url_from_value(company.cover_image_url, request=request)

@@ -27855,8 +27855,11 @@ components:
     JobAiGenerationCreateLocaleEnum:
       enum:
       - vi-VN
+      - en-US
       type: string
-      description: '* `vi-VN` - vi-VN'
+      description: |-
+        * `vi-VN` - vi-VN
+        * `en-US` - en-US
     JobAiGenerationCreateRequest:
       type: object
       properties:

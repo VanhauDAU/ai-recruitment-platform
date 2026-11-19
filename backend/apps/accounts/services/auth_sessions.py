@@ -14,6 +14,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from rest_framework.exceptions import NotFound
 from rest_framework_simplejwt.exceptions import TokenBackendError, TokenError
 from rest_framework_simplejwt.settings import api_settings
@@ -58,7 +59,7 @@ def _user_agent(request):
 def parse_device_label(user_agent):
     """Nhãn thiết bị gọn cho người dùng, suy từ User-Agent (không cần thư viện ngoài)."""
     if not user_agent:
-        return 'Thiết bị không xác định'
+        return _('Thiết bị không xác định')
     ua = user_agent.lower()
     if 'edg/' in ua or 'edge' in ua:
         browser = 'Edge'
@@ -71,7 +72,7 @@ def parse_device_label(user_agent):
     elif 'safari' in ua:
         browser = 'Safari'
     else:
-        browser = 'Trình duyệt khác'
+        browser = _('Trình duyệt khác')
 
     if 'iphone' in ua or 'ipad' in ua or 'ios' in ua:
         os_name = 'iOS'
@@ -84,9 +85,9 @@ def parse_device_label(user_agent):
     elif 'linux' in ua:
         os_name = 'Linux'
     else:
-        os_name = 'Hệ điều hành khác'
+        os_name = _('Hệ điều hành khác')
 
-    return f'{browser} trên {os_name}'
+    return _('%(browser)s trên %(os)s') % {'browser': browser, 'os': os_name}
 
 
 def _ensure_outstanding(token):
@@ -364,7 +365,7 @@ def revoke_own_session(user, session_id):
     """Đăng xuất một thiết bị của chính tài khoản; phiên lạ hoặc đã hết hạn -> 404."""
     session = active_sessions(user).filter(id=session_id).first()
     if session is None:
-        raise NotFound('Không tìm thấy phiên đăng nhập.')
+        raise NotFound(_('Không tìm thấy phiên đăng nhập.'))
     revoke_session(session)
     record_admin_self_action(user, 'self_session_revoke', {'device_label': session.device_label})
     return session

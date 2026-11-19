@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
@@ -45,7 +46,7 @@ class JobAiBriefSerializer(serializers.Serializer):
 
     def validate_work_types(self, values):
         if len(values) != len(set(values)):
-            raise serializers.ValidationError('Hình thức làm việc không được trùng nhau.')
+            raise serializers.ValidationError(_('Hình thức làm việc không được trùng nhau.'))
         return values
 
 
@@ -55,7 +56,7 @@ class JobAiGenerationCreateSerializer(serializers.Serializer):
         regex=r'^[A-Za-z0-9._:-]{1,64}$',
         max_length=64,
     )
-    locale = serializers.ChoiceField(choices=['vi-VN'], default='vi-VN')
+    locale = serializers.ChoiceField(choices=['vi-VN', 'en-US'], default='vi-VN')
     brief = JobAiBriefSerializer(required=False)
     source_text = serializers.CharField(
         required=False,
@@ -70,11 +71,11 @@ class JobAiGenerationCreateSerializer(serializers.Serializer):
         has_source = 'source_text' in attrs
         if mode == JobAiGeneration.Mode.AI_BRIEF and (not has_brief or has_source):
             raise serializers.ValidationError(
-                {'brief': 'Chế độ brief yêu cầu brief và không nhận source_text.'}
+                {'brief': _('Chế độ brief yêu cầu brief và không nhận source_text.')}
             )
         if mode == JobAiGeneration.Mode.JD_TEXT and (not has_source or has_brief):
             raise serializers.ValidationError(
-                {'source_text': 'Chế độ JD yêu cầu source_text và không nhận brief.'}
+                {'source_text': _('Chế độ JD yêu cầu source_text và không nhận brief.')}
             )
         return attrs
 

@@ -1,6 +1,8 @@
 """Email verification workflows: resend the link, confirm a token, change an unverified email."""
 
 from django.db import transaction
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from rest_framework.exceptions import ValidationError
 
 from ..models import AuthEmailJob, User
@@ -8,13 +10,13 @@ from . import email_verification
 from .exceptions import VerificationCooldown
 from .verification_delivery import queue_verification_email
 
-_EMAIL_CHANGE_LOCKED = 'Tài khoản đã xác thực email; không thể đổi email tại đây.'
+_EMAIL_CHANGE_LOCKED = gettext_lazy('Tài khoản đã xác thực email; không thể đổi email tại đây.')
 
 
 def resend_verification_email(user):
     """Queue a fresh verification link and return the new cooldown in seconds."""
     if user.email_verified:
-        raise ValidationError({'detail': 'Email đã được xác thực.'})
+        raise ValidationError({'detail': _('Email đã được xác thực.')})
     remaining = email_verification.cooldown_remaining(user)
     if remaining > 0:
         raise VerificationCooldown(remaining)
@@ -29,16 +31,18 @@ def confirm_email_verification(token):
 
     identity = email_verification.consume_token(token)
     if not isinstance(identity, dict):
-        raise ValidationError({'detail': 'Liên kết xác thực không hợp lệ hoặc đã hết hạn.'})
+        raise ValidationError({'detail': _('Liên kết xác thực không hợp lệ hoặc đã hết hạn.')})
     user = User.objects.filter(pk=identity.get('user_id'), is_deleted=False).first()
     if user is None:
-        raise ValidationError({'detail': 'Không tìm thấy tài khoản.'})
+        raise ValidationError({'detail': _('Không tìm thấy tài khoản.')})
     if not user.is_active or user.status != User.Status.ACTIVE:
         raise ValidationError(
             {
                 'detail': (
-                    'Tài khoản đang bị hạn chế. Liên kết đã bị vô hiệu hóa; '
-                    'vui lòng liên hệ bộ phận hỗ trợ.'
+                    _(
+                        'Tài khoản đang bị hạn chế. Liên kết đã bị vô hiệu hóa; '
+                        'vui lòng liên hệ bộ phận hỗ trợ.'
+                    )
                 )
             }
         )
@@ -46,8 +50,10 @@ def confirm_email_verification(token):
         raise ValidationError(
             {
                 'detail': (
-                    'Địa chỉ email đã thay đổi sau khi liên kết này được gửi. '
-                    'Vui lòng yêu cầu một email xác thực mới.'
+                    _(
+                        'Địa chỉ email đã thay đổi sau khi liên kết này được gửi. '
+                        'Vui lòng yêu cầu một email xác thực mới.'
+                    )
                 )
             }
         )

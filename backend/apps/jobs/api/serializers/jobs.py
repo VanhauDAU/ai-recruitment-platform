@@ -1,6 +1,7 @@
 """Shared job read/write contract every public and employer job serializer extends."""
 
 from django.utils.html import strip_tags
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
@@ -187,24 +188,24 @@ class JobSerializer(serializers.ModelSerializer):
                 not work_types and not self.allow_incomplete_salary
             ):
                 raise serializers.ValidationError(
-                    {'work_types': 'Chọn ít nhất một hình thức làm việc.'}
+                    {'work_types': _('Chọn ít nhất một hình thức làm việc.')}
                 )
             if len(work_types) != len(set(work_types)) or any(
                 value not in allowed for value in work_types
             ):
                 raise serializers.ValidationError(
-                    {'work_types': 'Danh sách hình thức làm việc không hợp lệ.'}
+                    {'work_types': _('Danh sách hình thức làm việc không hợp lệ.')}
                 )
             attrs['work_type'] = work_types[0] if work_types else ''
         age_min = attrs.get('age_min', getattr(self.instance, 'age_min', None))
         age_max = attrs.get('age_max', getattr(self.instance, 'age_max', None))
         if age_min is not None and not 15 <= age_min <= 100:
-            raise serializers.ValidationError({'age_min': 'Tuổi tối thiểu phải từ 15 đến 100.'})
+            raise serializers.ValidationError({'age_min': _('Tuổi tối thiểu phải từ 15 đến 100.')})
         if age_max is not None and not 15 <= age_max <= 100:
-            raise serializers.ValidationError({'age_max': 'Tuổi tối đa phải từ 15 đến 100.'})
+            raise serializers.ValidationError({'age_max': _('Tuổi tối đa phải từ 15 đến 100.')})
         if age_min is not None and age_max is not None and age_max < age_min:
             raise serializers.ValidationError(
-                {'age_max': 'Tuổi tối đa không được nhỏ hơn tuổi tối thiểu.'}
+                {'age_max': _('Tuổi tối đa không được nhỏ hơn tuổi tối thiểu.')}
             )
 
         salary_type = attrs.get(
@@ -222,14 +223,14 @@ class JobSerializer(serializers.ModelSerializer):
             attrs['salary_type'] = None
             salary_type = None
         elif salary_type is None:
-            salary_errors['salary_type'] = 'Chọn loại lương và nhập đầy đủ mức lương.'
+            salary_errors['salary_type'] = _('Chọn loại lương và nhập đầy đủ mức lương.')
         elif salary_type == Job.SalaryType.NEGOTIABLE and (
             salary_min is not None or salary_max is not None
         ):
-            salary_errors['salary_type'] = 'Lương thỏa thuận không được có mức tối thiểu/tối đa.'
+            salary_errors['salary_type'] = _('Lương thỏa thuận không được có mức tối thiểu/tối đa.')
         elif salary_type == Job.SalaryType.RANGE:
             if salary_min is None and salary_max is None:
-                salary_errors['salary_type'] = 'Nhập ít nhất một mức lương.'
+                salary_errors['salary_type'] = _('Nhập ít nhất một mức lương.')
             elif salary_min is not None and salary_max is None:
                 attrs['salary_type'] = Job.SalaryType.FROM
                 salary_type = Job.SalaryType.FROM
@@ -237,11 +238,13 @@ class JobSerializer(serializers.ModelSerializer):
                 attrs['salary_type'] = Job.SalaryType.UP_TO
                 salary_type = Job.SalaryType.UP_TO
             elif salary_min is not None and salary_max is not None and salary_max < salary_min:
-                salary_errors['salary_max'] = 'Mức lương tối đa không được nhỏ hơn mức tối thiểu.'
+                salary_errors['salary_max'] = _(
+                    'Mức lương tối đa không được nhỏ hơn mức tối thiểu.'
+                )
         elif salary_type in (Job.SalaryType.FIXED, Job.SalaryType.FROM) and salary_min is None:
-            salary_errors['salary_min'] = 'Loại lương này cần mức lương tối thiểu.'
+            salary_errors['salary_min'] = _('Loại lương này cần mức lương tối thiểu.')
         elif salary_type == Job.SalaryType.UP_TO and salary_max is None:
-            salary_errors['salary_max'] = 'Loại lương này cần mức lương tối đa.'
+            salary_errors['salary_max'] = _('Loại lương này cần mức lương tối đa.')
         if salary_errors:
             raise serializers.ValidationError(salary_errors)
 
@@ -253,12 +256,12 @@ class JobSerializer(serializers.ModelSerializer):
             )
             if primary_count > 1:
                 raise serializers.ValidationError(
-                    {'category_assignments': 'Chỉ được chọn một vị trí chuyên môn chính.'}
+                    {'category_assignments': _('Chỉ được chọn một vị trí chuyên môn chính.')}
                 )
             keys = [(item['category'].pk, item['role']) for item in categories]
             if len(keys) != len(set(keys)):
                 raise serializers.ValidationError(
-                    {'category_assignments': 'Danh mục không được chọn trùng.'}
+                    {'category_assignments': _('Danh mục không được chọn trùng.')}
                 )
 
         self._validate_nested_uniqueness(attrs)
@@ -267,7 +270,7 @@ class JobSerializer(serializers.ModelSerializer):
     def validate_application_reasons(self, value):
         normalized = [item.strip() for item in value]
         if len({item.casefold() for item in normalized}) != len(normalized):
-            raise serializers.ValidationError('Các lý do không được trùng nhau.')
+            raise serializers.ValidationError(_('Các lý do không được trùng nhau.'))
         return normalized
 
     def _validate_nested_uniqueness(self, attrs):
@@ -287,7 +290,7 @@ class JobSerializer(serializers.ModelSerializer):
             keys = [key_builder(item) for item in items]
             if len(keys) != len(set(keys)):
                 raise serializers.ValidationError(
-                    {relation: 'Danh sách không được chứa mục trùng.'}
+                    {relation: _('Danh sách không được chứa mục trùng.')}
                 )
 
     @extend_schema_field(serializers.CharField(allow_null=True))

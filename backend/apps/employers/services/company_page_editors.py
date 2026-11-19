@@ -2,6 +2,8 @@
 
 from django.db import IntegrityError, transaction
 from django.utils import timezone
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from rest_framework.exceptions import NotFound, ValidationError
 
 from ..models import CompanyPageEditorGrant, CompanyPageEvent, EmployerNotification
@@ -44,19 +46,21 @@ def grant_company_page_editor(*, company, actor, member_id):
         page_access_recruiters(company.pk).select_related('user').filter(public_id=member_id)
     ).first()
     if member is None:
-        raise NotFound('Không tìm thấy thành viên của công ty.')
+        raise NotFound(_('Không tìm thấy thành viên của công ty.'))
     if is_company_owner(member):
         raise ValidationError(
             {
                 'code': 'EDITOR_IS_OWNER',
-                'detail': 'Quản lý công ty không cần được cấp quyền biên tập.',
+                'detail': _('Quản lý công ty không cần được cấp quyền biên tập.'),
             }
         )
     if not is_page_eligible(member):
         raise ValidationError(
             {
                 'code': 'EDITOR_NOT_VERIFIED',
-                'detail': 'Thành viên cần có xác thực nhà tuyển dụng còn hiệu lực để được cấp quyền.',
+                'detail': _(
+                    'Thành viên cần có xác thực nhà tuyển dụng còn hiệu lực để được cấp quyền.'
+                ),
             }
         )
     try:
@@ -71,7 +75,7 @@ def grant_company_page_editor(*, company, actor, member_id):
         raise ValidationError(
             {
                 'code': 'EDITOR_ALREADY_GRANTED',
-                'detail': 'Thành viên này đã có quyền biên tập trang công ty.',
+                'detail': _('Thành viên này đã có quyền biên tập trang công ty.'),
             }
         ) from error
     _record(grant, actor=actor, event_type=CompanyPageEvent.EventType.EDITOR_GRANTED)
@@ -79,7 +83,7 @@ def grant_company_page_editor(*, company, actor, member_id):
         grant,
         actor=actor,
         event_type=EmployerNotification.EventType.COMPANY_PAGE_EDITOR_GRANTED,
-        message='Bạn có thể chỉnh bố cục và nội dung trang công ty.',
+        message=gettext_lazy('Bạn có thể chỉnh bố cục và nội dung trang công ty.'),
     )
     return grant
 
@@ -110,13 +114,13 @@ def revoke_company_page_editor(*, company, actor, grant_public_id):
     """Withdraw an active grant; returns the grant with its member loaded."""
     grant = _active_grants().filter(company=company, public_id=grant_public_id).first()
     if grant is None:
-        raise NotFound('Không tìm thấy quyền biên tập đang có hiệu lực.')
+        raise NotFound(_('Không tìm thấy quyền biên tập đang có hiệu lực.'))
     _close(grant, actor=actor, reason=REVOKED_BY_OWNER)
     _notify(
         grant,
         actor=actor,
         event_type=EmployerNotification.EventType.COMPANY_PAGE_EDITOR_REVOKED,
-        message='Quản lý công ty đã thu hồi quyền biên tập trang công ty của bạn.',
+        message=gettext_lazy('Quản lý công ty đã thu hồi quyền biên tập trang công ty của bạn.'),
     )
     return grant
 

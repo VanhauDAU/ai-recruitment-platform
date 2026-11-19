@@ -1,6 +1,7 @@
 """Authenticated password setup/change workflow."""
 
 from django.conf import settings
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import permissions, serializers
 from rest_framework.exceptions import ValidationError
@@ -72,7 +73,7 @@ class PasswordChangeView(APIView):
         user = request.user
         session = auth_sessions.current_session(request, user)
         if session is None:
-            raise ValidationError({'detail': 'Cần phiên refresh hiện tại để đổi mật khẩu.'})
+            raise ValidationError({'detail': _('Cần phiên refresh hiện tại để đổi mật khẩu.')})
         if auth_sessions.requires_oauth_reauthentication(user, session):
             raise OAuthReauthRequired(linked_oauth_provider(user))
 
@@ -85,7 +86,7 @@ class PasswordChangeView(APIView):
         )
         response = Response(
             {
-                'detail': 'Cập nhật mật khẩu thành công.',
+                'detail': _('Cập nhật mật khẩu thành công.'),
                 'user': SessionUserSerializer(user, context={'request': request}).data,
                 'tokens': {'access': tokens['access']},
             }

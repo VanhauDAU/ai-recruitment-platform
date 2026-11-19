@@ -5,6 +5,7 @@ that snapshot; the matching service refuses to run if the snapshot moved since.
 """
 
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from apps.accounts.domain.impact_token_rules import create_impact_token
 
@@ -119,12 +120,16 @@ def account_status_impact(
         'effects': effects,
         'requires_manual_resource_review': review_required,
         'restoration_policy': (
-            'Chuyển tài khoản cấm sang tạm khóa, rà soát và gỡ giữ tài nguyên, sau đó mới mở lại.'
+            _(
+                'Chuyển tài khoản cấm sang tạm khóa, rà soát và gỡ giữ tài nguyên, sau đó mới mở lại.'
+            )
             if user.status == User.Status.BANNED
-            else 'Policy hold tạm thời được gỡ khi mở lại; trạng thái nghiệp vụ gốc được giữ nguyên.'
+            else _(
+                'Policy hold tạm thời được gỡ khi mở lại; trạng thái nghiệp vụ gốc được giữ nguyên.'
+            )
         ),
         'blocked_reasons': (
-            ['Cần gỡ giữ tài nguyên bị cấm/khóa cũ trước khi mở lại.'] if review_required else []
+            [_('Cần gỡ giữ tài nguyên bị cấm/khóa cũ trước khi mở lại.')] if review_required else []
         ),
         'can_apply': transition_allowed and not review_required,
         'impact_token': create_impact_token(

@@ -1,15 +1,17 @@
 import dayjs from '@/shared/lib/dayjs'
 import { normalizeRichTextHtml } from '@/shared/lib/rich-text-html'
+import { m } from '@/shared/config/i18n'
 
 export { normalizeRichTextHtml } from '@/shared/lib/rich-text-html'
 
 const hasText = (value) => String(value || '').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim().length > 0
 
-export const DEFAULT_AUTO_REJECTION_EMAIL = `Cảm ơn bạn đã ứng tuyển vị trí {job_title} tại {company_name}.
-
-Sau {auto_reject_weeks} tuần kể từ ngày ứng tuyển, chúng tôi chưa thể phản hồi hồ sơ của bạn. Điều này thường có nghĩa là hồ sơ hiện chưa phù hợp với vị trí này.
-
-Tuy nhiên, thông tin của bạn đã được lưu trong hệ thống của {company_name} và nhà tuyển dụng vẫn có thể liên hệ nếu có vị trí phù hợp hơn sau này.`
+// Mẫu giữ nguyên placeholder {job_title}… để backend thay khi gửi email.
+export const DEFAULT_AUTO_REJECTION_EMAIL = m.employer_job_form_default_rejection_email({
+  job_title: '{job_title}',
+  company_name: '{company_name}',
+  auto_reject_weeks: '{auto_reject_weeks}',
+})
 
 export function capitalizeTitleWords(value) {
   if (typeof value !== 'string') return value
@@ -254,45 +256,45 @@ export function getJobFormProgress(values = {}) {
   const groups = [
     {
       key: 'general',
-      label: 'Thông tin chung',
+      label: m.employer_job_progress_general(),
       items: [
-        { label: 'Tiêu đề tin', done: hasText(values.title), errorFields: ['title'] },
-        { label: 'Vị trí chuyên môn', done: Boolean(primaryCategory), errorFields: ['category_assignments'] },
-        { label: 'Cấp bậc', done: Boolean(values.position_level), errorFields: ['position_level'] },
-        { label: 'Loại công việc', done: Boolean(values.employment_type), errorFields: ['employment_type'] },
-        { label: 'Hình thức làm việc', done: Boolean(values.work_types?.length), errorFields: ['work_types'] },
-        { label: 'Mức lương', done: salaryIsComplete(values), errorFields: ['salary_type', 'salary_min', 'salary_max'] },
+        { label: m.employer_job_progress_title(), done: hasText(values.title), errorFields: ['title'] },
+        { label: m.employer_job_progress_category(), done: Boolean(primaryCategory), errorFields: ['category_assignments'] },
+        { label: m.employer_job_progress_level(), done: Boolean(values.position_level), errorFields: ['position_level'] },
+        { label: m.employer_job_progress_employment_type(), done: Boolean(values.employment_type), errorFields: ['employment_type'] },
+        { label: m.employer_job_progress_work_type(), done: Boolean(values.work_types?.length), errorFields: ['work_types'] },
+        { label: m.employer_job_progress_salary(), done: salaryIsComplete(values), errorFields: ['salary_type', 'salary_min', 'salary_max'] },
       ],
     },
     {
       key: 'description',
-      label: 'Mô tả công việc',
+      label: m.employer_job_progress_description_group(),
       items: [
-        { label: 'Mô tả công việc', done: hasText(values.description), errorFields: ['description'] },
-        { label: 'Yêu cầu ứng viên', done: hasText(values.requirements), errorFields: ['requirements'] },
-        { label: 'Quyền lợi ứng viên', done: hasText(values.benefits), errorFields: ['benefits'] },
-        { label: 'Địa điểm làm việc', done: workplaces.some((item) => Boolean(item.location)), errorFields: ['work_areas'] },
+        { label: m.employer_job_progress_description_group(), done: hasText(values.description), errorFields: ['description'] },
+        { label: m.employer_job_progress_requirements(), done: hasText(values.requirements), errorFields: ['requirements'] },
+        { label: m.employer_job_progress_benefits(), done: hasText(values.benefits), errorFields: ['benefits'] },
+        { label: m.employer_job_progress_workplaces(), done: workplaces.some((item) => Boolean(item.location)), errorFields: ['work_areas'] },
       ],
     },
     {
       key: 'expectations',
-      label: 'Kỳ vọng về ứng viên',
+      label: m.employer_job_progress_expectations(),
       items: [
-        { label: 'Học vấn', done: Boolean(values.education_level), errorFields: ['education_level'] },
-        { label: 'Kinh nghiệm', done: Boolean(values.experience_years), errorFields: ['experience_years'] },
-        { label: 'Độ tuổi', done: values.age_min != null && values.age_max != null, errorFields: ['age_min', 'age_max'] },
-        { label: 'Ngoại ngữ', done: Boolean(values.language_requirements?.some((item) => item.language)), errorFields: ['language_requirements'] },
+        { label: m.employer_job_progress_education(), done: Boolean(values.education_level), errorFields: ['education_level'] },
+        { label: m.employer_job_progress_experience(), done: Boolean(values.experience_years), errorFields: ['experience_years'] },
+        { label: m.employer_job_progress_age(), done: values.age_min != null && values.age_max != null, errorFields: ['age_min', 'age_max'] },
+        { label: m.employer_job_progress_languages(), done: Boolean(values.language_requirements?.some((item) => item.language)), errorFields: ['language_requirements'] },
       ],
     },
     {
       key: 'application',
-      label: 'Thông tin nhận hồ sơ',
+      label: m.employer_job_progress_application(),
       items: [
-        { label: 'Hạn nhận hồ sơ', done: Boolean(values.deadline), errorFields: ['deadline'] },
-        { label: 'Số lượng tuyển', done: Number(values.number_of_vacancies) > 0, errorFields: ['number_of_vacancies'] },
-        { label: 'Người nhận hồ sơ', done: hasText(values.application_contact?.recipient_name), errorFields: ['application_contact.recipient_name'] },
-        { label: 'Số điện thoại', done: hasText(values.application_contact?.phone), errorFields: ['application_contact.phone'] },
-        { label: 'Email nhận hồ sơ', done: Boolean(values.application_contact?.emails?.length), errorFields: ['application_contact.emails'] },
+        { label: m.employer_job_progress_deadline(), done: Boolean(values.deadline), errorFields: ['deadline'] },
+        { label: m.employer_job_progress_vacancies(), done: Number(values.number_of_vacancies) > 0, errorFields: ['number_of_vacancies'] },
+        { label: m.employer_job_progress_recipient(), done: hasText(values.application_contact?.recipient_name), errorFields: ['application_contact.recipient_name'] },
+        { label: m.employer_job_progress_phone(), done: hasText(values.application_contact?.phone), errorFields: ['application_contact.phone'] },
+        { label: m.employer_job_progress_emails(), done: Boolean(values.application_contact?.emails?.length), errorFields: ['application_contact.emails'] },
       ],
     },
   ]

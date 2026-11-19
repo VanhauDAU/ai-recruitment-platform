@@ -2,6 +2,8 @@
 // chỉ phần đã cắt (JPEG vuông) được gửi lên `/auth/avatar/`. Mọi toạ độ tính theo
 // pixel thật của ảnh gốc nên vùng cắt không phụ thuộc kích thước hiển thị.
 
+import { m } from '@/shared/config/i18n'
+
 export const AVATAR_ACCEPT = 'image/jpeg,image/png,image/webp'
 export const AVATAR_MAX_BYTES = 5 * 1024 * 1024
 export const AVATAR_MIN_SIDE = 200
@@ -13,15 +15,15 @@ const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
 
 /** Lỗi về định dạng/dung lượng (kiểm tra trước khi đọc ảnh), hoặc '' nếu hợp lệ. */
 export function validateAvatarFile(file) {
-  if (!AVATAR_ACCEPT.split(',').includes(file?.type)) return 'Chỉ hỗ trợ ảnh JPG, PNG hoặc WebP.'
-  if (file.size > AVATAR_MAX_BYTES) return 'Ảnh đại diện không được vượt quá 5 MB.'
+  if (!AVATAR_ACCEPT.split(',').includes(file?.type)) return m.account_avatar_error_type()
+  if (file.size > AVATAR_MAX_BYTES) return m.account_avatar_error_size()
   return ''
 }
 
 /** Lỗi về kích thước ảnh sau khi đọc được, hoặc '' nếu hợp lệ. */
 export function validateAvatarDimensions(width, height) {
   if (Math.min(width, height) < AVATAR_MIN_SIDE) {
-    return `Ảnh quá nhỏ (${width}×${height} px). Vui lòng chọn ảnh tối thiểu ${AVATAR_MIN_SIDE}×${AVATAR_MIN_SIDE} px.`
+    return m.account_avatar_error_too_small({ width, height, min: AVATAR_MIN_SIDE })
   }
   return ''
 }
@@ -58,7 +60,7 @@ export function loadImageFile(file) {
     image.onload = () => resolve({ url, image, width: image.naturalWidth, height: image.naturalHeight })
     image.onerror = () => {
       URL.revokeObjectURL(url)
-      reject(new Error('Không đọc được ảnh. Tệp có thể bị hỏng.'))
+      reject(new Error(m.account_avatar_error_read()))
     }
     image.src = url
   })
@@ -78,7 +80,7 @@ export function cropToFile(image, crop) {
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
       if (blob) resolve(new File([blob], 'avatar.jpg', { type: 'image/jpeg' }))
-      else reject(new Error('Không tạo được ảnh đã cắt.'))
+      else reject(new Error(m.account_avatar_error_crop()))
     }, 'image/jpeg', 0.9)
   })
 }

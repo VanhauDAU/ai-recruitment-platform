@@ -8,6 +8,7 @@ import {
 } from '@/entities/application/application'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
+import { m } from '@/shared/config/i18n'
 
 /** Private note and rating; mount with `key={public_id}` to reset per application. */
 export default function ApplicationAssessmentSection({ application }) {
@@ -26,32 +27,32 @@ export default function ApplicationAssessmentSection({ application }) {
         { queryKey: applicationKeys.recruiterLists() },
         (page) => replaceApplicationInPage(page, updated),
       )
-      message.success('Đã lưu đánh giá nội bộ.')
+      message.success(m.employer_workspace_app_assessment_saved())
     },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể lưu đánh giá.')),
+    onError: (error) => message.error(getApiErrorMessage(error, m.employer_workspace_app_assessment_save_error())),
   })
 
   return (
     <section className="aw-section space-y-3">
       <div>
-        <h3 className="aw-section__title !mb-1">Đánh giá nội bộ</h3>
-        <p className="text-[11px] leading-5 text-slate-400">Chỉ tài khoản nhà tuyển dụng của bạn nhìn thấy.</p>
+        <h3 className="aw-section__title !mb-1">{m.employer_workspace_app_assessment_title()}</h3>
+        <p className="text-[11px] leading-5 text-slate-400">{m.employer_workspace_app_assessment_hint()}</p>
       </div>
       <div>
-        <p className="mb-1 text-[11px] font-semibold text-slate-500">Mức độ phù hợp</p>
-        <Rate aria-label="Mức độ phù hợp của ứng viên" value={rating || 0} onChange={setRating} />
+        <p className="mb-1 text-[11px] font-semibold text-slate-500">{m.employer_workspace_app_fit()}</p>
+        <Rate aria-label={m.employer_workspace_app_fit_rating()} value={rating || 0} onChange={setRating} />
       </div>
       <Input.TextArea
-        aria-label="Ghi chú nội bộ"
+        aria-label={m.employer_workspace_app_internal_note()}
         value={note}
         rows={4}
         maxLength={5000}
         showCount
-        placeholder="Ghi lại điểm mạnh, điều cần xác minh hoặc bước tiếp theo..."
+        placeholder={m.employer_workspace_app_internal_note_placeholder()}
         onChange={(event) => setNote(event.target.value)}
       />
       <Button block type="primary" loading={saveMutation.isPending} disabled={!dirty} onClick={() => saveMutation.mutate()}>
-        Lưu đánh giá
+        {m.employer_workspace_app_save_assessment()}
       </Button>
     </section>
   )

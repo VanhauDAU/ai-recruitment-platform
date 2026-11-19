@@ -20,13 +20,14 @@ import {
 } from '@/shared/config/portals'
 import { getEmployerVerificationProgress } from '../model/verification-progress'
 import EmployerVerificationLifecycleAlert from './EmployerVerificationLifecycleAlert'
+import { m } from '@/shared/config/i18n'
 
 const STEP_DEFINITIONS = [
-  { key: 'phone_verified', title: 'Xác thực số điện thoại', description: 'Tăng bảo mật và độ tin cậy khi liên hệ ứng viên.', icon: PhoneOutlined, to: EMPLOYER_PHONE_VERIFY_URL },
-  { key: 'company_linked', title: 'Cập nhật thông tin công ty', description: 'Tìm doanh nghiệp đã có hoặc tạo hồ sơ công ty mới.', icon: BankOutlined, to: `${EMPLOYER_COMPANY_SETTINGS_URL}?update=true` },
-  { key: 'business_doc_current', title: 'Nộp giấy tờ chứng minh quyền đại diện', description: 'Tải GPKD hoặc bộ giấy ủy quyền và định danh.', icon: FileProtectOutlined, to: EMPLOYER_BUSINESS_LICENSE_URL },
-  { key: 'candidate_dpa_submitted', title: 'Nộp văn bản xử lý dữ liệu ứng viên', description: 'Đăng tải văn bản cho phép thu thập và sử dụng dữ liệu ứng viên.', icon: FileProtectOutlined, to: EMPLOYER_DATA_PROTECTION_URL },
-  { key: 'dpa_accepted', title: 'Đồng ý Thỏa thuận xử lý DLCN với nền tảng', description: 'Xác nhận vai trò và trách nhiệm bảo vệ dữ liệu trên hệ thống.', icon: SafetyCertificateOutlined, to: EMPLOYER_DATA_PROTECTION_URL },
+  { key: 'phone_verified', title: m.employer_account_checklist_phone_title, actionLabel: m.employer_account_checklist_phone_action(), description: m.employer_account_checklist_phone_desc(), icon: PhoneOutlined, to: EMPLOYER_PHONE_VERIFY_URL },
+  { key: 'company_linked', title: m.employer_account_checklist_company_title, actionLabel: m.employer_account_checklist_company_title(), description: m.employer_account_checklist_company_desc(), icon: BankOutlined, to: `${EMPLOYER_COMPANY_SETTINGS_URL}?update=true` },
+  { key: 'business_doc_current', title: m.employer_account_checklist_business_title, actionLabel: m.employer_account_checklist_business_action(), description: m.employer_account_checklist_business_desc(), icon: FileProtectOutlined, to: EMPLOYER_BUSINESS_LICENSE_URL },
+  { key: 'candidate_dpa_submitted', title: m.employer_account_checklist_candidate_dpa_title, actionLabel: m.employer_account_checklist_candidate_dpa_action(), description: m.employer_account_checklist_candidate_dpa_desc(), icon: FileProtectOutlined, to: EMPLOYER_DATA_PROTECTION_URL },
+  { key: 'dpa_accepted', title: m.employer_account_checklist_dpa_title, actionLabel: m.employer_account_checklist_dpa_action(), description: m.employer_account_checklist_dpa_desc(), icon: SafetyCertificateOutlined, to: EMPLOYER_DATA_PROTECTION_URL },
 ]
 
 export default function EmployerVerificationChecklist({ profile, onContinue }) {
@@ -48,9 +49,8 @@ export default function EmployerVerificationChecklist({ profile, onContinue }) {
   }
 
   function stepAction(step) {
-    if (verification[step.key]) return <span className="text-xs font-bold text-emerald-600">Hoàn tất</span>
-    const actionLabel = step.title.startsWith('Cập nhật') ? step.title : `Cập nhật ${step.title}`
-    return <Button type="text" aria-label={actionLabel} icon={<ArrowRightOutlined />} onClick={() => openStep(step)} />
+    if (verification[step.key]) return <span className="text-xs font-bold text-emerald-600">{m.employer_account_checklist_done()}</span>
+    return <Button type="text" aria-label={step.actionLabel} icon={<ArrowRightOutlined />} onClick={() => openStep(step)} />
   }
 
   return (
@@ -61,10 +61,10 @@ export default function EmployerVerificationChecklist({ profile, onContinue }) {
       />
       <div className="mb-7 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-extrabold text-slate-900">Xác thực thông tin</h2>
-          <p className="mt-1 text-sm text-slate-500">Hoàn thiện dần để tăng độ tin cậy của tài khoản.</p>
+          <h2 className="text-lg font-extrabold text-slate-900">{m.employer_account_checklist_title()}</h2>
+          <p className="mt-1 text-sm text-slate-500">{m.employer_account_checklist_subtitle()}</p>
         </div>
-        <strong className="text-sm text-emerald-600">Hoàn thành {progress.percent}%</strong>
+        <strong className="text-sm text-emerald-600">{m.employer_account_checklist_progress({ percent: progress.percent })}</strong>
       </div>
       <Progress percent={progress.percent} showInfo={false} strokeColor="#00b14f" railColor="#e8edf2" className="!mb-6" />
 
@@ -78,7 +78,7 @@ export default function EmployerVerificationChecklist({ profile, onContinue }) {
                 {done ? <CheckCircleFilled className="text-xl" /> : <Icon className="text-lg" />}
               </span>
               <div className="min-w-0 flex-1">
-                <h3 className={`text-sm font-bold ${done ? 'text-slate-600' : 'text-slate-900'}`}>{step.title.replace('nền tảng', siteName)}</h3>
+                <h3 className={`text-sm font-bold ${done ? 'text-slate-600' : 'text-slate-900'}`}>{step.title({ siteName })}</h3>
                 <p className="mt-1 text-xs leading-5 text-slate-500">{step.description}</p>
               </div>
               <div className="shrink-0">{stepAction(step)}</div>
@@ -88,24 +88,24 @@ export default function EmployerVerificationChecklist({ profile, onContinue }) {
       </div>
 
       <Button type="link" onClick={onContinue} className="!mt-6 !w-full !text-slate-500">
-        Tôi sẽ xác thực thêm sau
+        {m.employer_account_checklist_later()}
       </Button>
 
       <Modal
         open={passwordPromptOpen}
         onCancel={() => setPasswordPromptOpen(false)}
         footer={null}
-        title="Hãy chắc chắn bạn muốn thực hiện hành động này"
+        title={m.employer_account_checklist_prompt_title()}
       >
         <div className="space-y-4 text-sm leading-6 text-slate-600">
-          <p>Nhằm đảm bảo an toàn cho tài khoản, vui lòng nhập mật khẩu tài khoản để xác nhận việc thực hiện hành động này.</p>
-          <p>Tài khoản của bạn chưa có mật khẩu do được đăng ký bằng Google, vui lòng cập nhật mật khẩu trước khi xác thực số điện thoại.</p>
+          <p>{m.employer_account_checklist_prompt_1()}</p>
+          <p>{m.employer_account_checklist_prompt_2()}</p>
           <Button type="primary" block size="large" onClick={() => navigate(EMPLOYER_PASSWORD_SETTINGS_URL)}>
-            Cập nhật mật khẩu tại đây
+            {m.employer_account_checklist_prompt_button()}
           </Button>
           <div className="rounded-xl bg-slate-50 p-4 text-xs leading-5">
-            Mọi thắc mắc xin liên hệ Phòng vận hành dịch vụ để được hỗ trợ:<br />
-            Hotline CSKH: <a href={`tel:${hotline.replace(/[^+\d]/g, '')}`} className="font-bold text-emerald-700">{hotline}</a><br />
+            {m.employer_account_checklist_support_intro()}<br />
+            {m.employer_account_checklist_support_hotline()} <a href={`tel:${hotline.replace(/[^+\d]/g, '')}`} className="font-bold text-emerald-700">{hotline}</a><br />
             Email: <a href={`mailto:${supportEmail}`} className="font-bold text-emerald-700">{supportEmail}</a>
           </div>
         </div>

@@ -1,4 +1,5 @@
 from django.http import HttpResponse
+from django.utils.translation import gettext as _
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.exceptions import ValidationError
@@ -51,7 +52,7 @@ class CampaignReportExportView(CampaignScopedView):
         # Not `format`: DRF reserves that query parameter for renderer selection.
         file_format = request.query_params.get('type', 'xlsx')
         if file_format not in REPORT_CONTENT_TYPES:
-            raise ValidationError({'type': 'Chọn xlsx hoặc pdf.'})
+            raise ValidationError({'type': _('Chọn xlsx hoặc pdf.')})
         campaign = self.campaign()
         content, content_type = campaign_report_file(
             campaign,

@@ -1,6 +1,7 @@
 """Administrator invitation contracts."""
 
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 
 from ...models import (
@@ -57,7 +58,7 @@ class AdminInvitationCreateSerializer(serializers.Serializer):
 
     def validate_full_name(self, value):
         if len(value) < 2:
-            raise serializers.ValidationError('Họ tên cần ít nhất 2 ký tự.')
+            raise serializers.ValidationError(_('Họ tên cần ít nhất 2 ký tự.'))
         return value
 
 
@@ -71,5 +72,7 @@ class AdminInvitationAcceptSerializer(AdminInvitationTokenSerializer):
 
     def validate(self, attrs):
         if attrs['password'] != attrs.pop('password_confirm'):
-            raise serializers.ValidationError({'password_confirm': 'Mật khẩu xác nhận không khớp.'})
+            raise serializers.ValidationError(
+                {'password_confirm': _('Mật khẩu xác nhận không khớp.')}
+            )
         return attrs

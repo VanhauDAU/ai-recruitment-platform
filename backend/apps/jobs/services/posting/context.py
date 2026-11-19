@@ -1,5 +1,7 @@
 """What the employer job form needs to know before the recruiter submits."""
 
+from django.utils.translation import gettext
+
 from apps.employers.services import recruiter_job_publication_state, recruiter_readiness_state
 
 from ...models import Job
@@ -34,9 +36,13 @@ def employer_job_posting_context(user):
             ),
             None,
         )
-        reason = workspace_blocker['message'] if workspace_blocker else 'Workspace chưa sẵn sàng.'
+        reason = (
+            workspace_blocker['message']
+            if workspace_blocker
+            else gettext('Workspace chưa sẵn sàng.')
+        )
     elif not has_company:
-        reason = 'Cập nhật thông tin công ty trước khi đăng tin.'
+        reason = gettext('Cập nhật thông tin công ty trước khi đăng tin.')
     elif publish_blockers:
         reason = publish_blockers[0]['label']
     elif count >= limit:

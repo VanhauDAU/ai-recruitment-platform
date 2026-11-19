@@ -1,9 +1,11 @@
+import { m } from '@/shared/config/i18n'
+
 // Mirrors `Application.Status`: `submitted`/`viewed` are recorded by the
 // system, the recruiter answers with one of APPLICATION_DECISION_STATUSES.
 export const RECRUITER_APPLICATION_STATUSES = [
-  ['submitted', 'Mới'], ['viewed', 'Đã xem'], ['shortlisted', 'Phù hợp'],
-  ['interviewed', 'Phỏng vấn'], ['accepted', 'Trúng tuyển'], ['rejected', 'Không phù hợp'],
-  ['withdrawn', 'Ứng viên đã rút'],
+  ['submitted', m.application_status_new()], ['viewed', m.application_status_viewed()], ['shortlisted', m.application_status_shortlisted()],
+  ['interviewed', m.application_status_interviewed()], ['accepted', m.application_status_accepted()], ['rejected', m.application_status_rejected()],
+  ['withdrawn', m.application_status_withdrawn()],
 ]
 
 export const RECRUITER_APPLICATION_STATUS_LABELS = Object.fromEntries(RECRUITER_APPLICATION_STATUSES)
@@ -25,19 +27,19 @@ export const APPLICATION_STATUS_TONES = {
 
 // Nhãn ngắn cho bộ lọc ở trang "Việc làm đã ứng tuyển"; nhãn dài bên dưới dùng cho mốc tiến trình.
 export const CANDIDATE_APPLICATION_FILTERS = [
-  ['submitted', 'Tiếp nhận'], ['viewed', 'Đã xem'], ['shortlisted', 'Phù hợp'],
-  ['interviewed', 'Phỏng vấn'], ['accepted', 'Trúng tuyển'], ['rejected', 'Chưa phù hợp'],
-  ['withdrawn', 'Đã rút'],
+  ['submitted', m.application_candidate_filter_submitted()], ['viewed', m.application_status_viewed()], ['shortlisted', m.application_status_shortlisted()],
+  ['interviewed', m.application_status_interviewed()], ['accepted', m.application_status_accepted()], ['rejected', m.application_candidate_filter_rejected()],
+  ['withdrawn', m.application_candidate_filter_withdrawn()],
 ]
 
 export const CANDIDATE_APPLICATION_STATUS_LABELS = {
-  submitted: 'Đã nộp hồ sơ',
-  viewed: 'Nhà tuyển dụng đã xem hồ sơ',
-  shortlisted: 'Hồ sơ phù hợp',
-  interviewed: 'Mời phỏng vấn',
-  accepted: 'Trúng tuyển',
-  rejected: 'Chưa phù hợp',
-  withdrawn: 'Bạn đã rút hồ sơ',
+  submitted: m.application_candidate_status_submitted(),
+  viewed: m.application_candidate_status_viewed(),
+  shortlisted: m.application_candidate_status_shortlisted(),
+  interviewed: m.application_candidate_status_interviewed(),
+  accepted: m.application_status_accepted(),
+  rejected: m.application_candidate_filter_rejected(),
+  withdrawn: m.application_candidate_status_withdrawn(),
 }
 
 /** Replace one application inside every cached recruiter list page. */
@@ -53,16 +55,16 @@ export function replaceApplicationInPage(page, application) {
 
 // Mirrors ApplicationReview.Recommendation.
 export const REVIEW_RECOMMENDATIONS = [
-  { value: 'strong_yes', label: 'Rất nên tuyển', tone: 'emerald' },
-  { value: 'yes', label: 'Nên tuyển', tone: 'teal' },
-  { value: 'no', label: 'Chưa nên tuyển', tone: 'amber' },
-  { value: 'strong_no', label: 'Không nên tuyển', tone: 'rose' },
+  { value: 'strong_yes', label: m.application_review_strong_yes(), tone: 'emerald' },
+  { value: 'yes', label: m.application_review_yes(), tone: 'teal' },
+  { value: 'no', label: m.application_review_no(), tone: 'amber' },
+  { value: 'strong_no', label: m.application_review_strong_no(), tone: 'rose' },
 ]
 
 // Mirrors CandidateBlock.Reason.
 export const CANDIDATE_BLOCK_REASONS = [
-  { value: 'spam', label: 'Ứng tuyển hàng loạt, không phù hợp' },
-  { value: 'inappropriate', label: 'Hành vi không phù hợp' },
-  { value: 'fake_profile', label: 'Hồ sơ giả mạo' },
-  { value: 'other', label: 'Lý do khác' },
+  { value: 'spam', label: m.application_block_spam() },
+  { value: 'inappropriate', label: m.application_block_inappropriate() },
+  { value: 'fake_profile', label: m.application_block_fake_profile() },
+  { value: 'other', label: m.application_block_other() },
 ]

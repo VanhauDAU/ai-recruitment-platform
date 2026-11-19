@@ -15,6 +15,7 @@ import {
 } from '@ant-design/icons'
 import { createElement } from 'react'
 import { NOT_FOUND_TITLE } from '@/shared/config/document-title'
+import { m } from '@/shared/config/i18n'
 import { employerAppPath } from '@/shared/config/portals'
 import { resolveEmployerRouteTitle } from '../router/document-title'
 
@@ -29,7 +30,7 @@ function comingSoonLabel(label) {
         className:
           'rounded bg-slate-100 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-slate-400',
       },
-      'Sắp mở',
+      m.employer_workspace_nav_coming_soon(),
     ),
   )
 }
@@ -44,7 +45,7 @@ function countLabel(label, count) {
       'span',
       {
         className: 'rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-600',
-        'aria-label': `${count} CV mới chưa xem`,
+        'aria-label': m.employer_workspace_nav_unread_cv_count({ count }),
       },
       count > 99 ? '99+' : count,
     ),
@@ -61,7 +62,7 @@ function unreadDotLabel(label, hasUnread) {
     label,
     createElement('span', {
       className: 'ml-1.5 inline-block h-2 w-2 rounded-full bg-emerald-500 align-middle',
-      'aria-label': 'Có CV mới chưa xem',
+      'aria-label': m.employer_workspace_nav_has_unread_cv(),
     }),
   )
 }
@@ -74,87 +75,87 @@ export function employerNavItems({ unreadApplications = 0 } = {}) {
     {
       key: employerAppPath('/dashboard'),
       icon: <DashboardOutlined />,
-      label: 'Bảng tin',
-      title: 'Bảng tin',
+      label: m.employer_workspace_title_dashboard(),
+      title: m.employer_workspace_title_dashboard(),
     },
     {
       key: 'coming-insights',
       icon: <BulbOutlined />,
       label: comingSoonLabel('ProCV Insights'),
-      title: 'ProCV Insights — Sắp mở',
+      title: m.employer_workspace_nav_coming_soon_title({ label: 'ProCV Insights' }),
       disabled: true,
     },
     {
       key: 'coming-rewards',
       icon: <GiftOutlined />,
       label: comingSoonLabel('ProCV Rewards'),
-      title: 'ProCV Rewards — Sắp mở',
+      title: m.employer_workspace_nav_coming_soon_title({ label: 'ProCV Rewards' }),
       disabled: true,
     },
     {
       key: 'coming-ai',
       icon: <RobotOutlined />,
-      label: comingSoonLabel('AI đề xuất'),
-      title: 'AI đề xuất — Sắp mở',
+      label: comingSoonLabel(m.employer_workspace_nav_ai_recommendations()),
+      title: m.employer_workspace_nav_coming_soon_title({ label: m.employer_workspace_nav_ai_recommendations() }),
       disabled: true,
     },
     {
       key: 'coming-cv-recommendations',
       icon: <LikeOutlined />,
-      label: comingSoonLabel('CV đề xuất'),
-      title: 'CV đề xuất — Sắp mở',
+      label: comingSoonLabel(m.employer_workspace_nav_cv_recommendations()),
+      title: m.employer_workspace_nav_coming_soon_title({ label: m.employer_workspace_nav_cv_recommendations() }),
       disabled: true,
     },
     { type: 'divider' },
     {
       key: employerAppPath('/campaigns'),
       icon: <ThunderboltOutlined />,
-      label: 'Chiến dịch tuyển dụng',
-      title: 'Chiến dịch tuyển dụng',
+      label: m.employer_workspace_title_campaigns(),
+      title: m.employer_workspace_title_campaigns(),
     },
     {
       key: employerAppPath('/jobs'),
       icon: <FileTextOutlined />,
-      label: 'Tin tuyển dụng',
-      title: 'Tin tuyển dụng',
+      label: m.employer_workspace_title_jobs(),
+      title: m.employer_workspace_title_jobs(),
     },
     {
       key: employerAppPath('/company-page'),
       icon: <LayoutOutlined />,
-      label: 'Trang công ty',
-      title: 'Trang công ty',
+      label: m.employer_workspace_title_company_page(),
+      title: m.employer_workspace_title_company_page(),
     },
     {
       key: CV_MANAGEMENT_MENU_KEY,
       icon: <TeamOutlined />,
-      label: unreadDotLabel('Quản lý CV', unreadApplications > 0),
-      title: 'Quản lý CV',
+      label: unreadDotLabel(m.employer_workspace_nav_cv_management(), unreadApplications > 0),
+      title: m.employer_workspace_nav_cv_management(),
       children: [
         {
           key: employerAppPath('/applications'),
-          label: countLabel('CV ứng tuyển', unreadApplications),
-          title: 'CV ứng tuyển',
+          label: countLabel(m.employer_workspace_title_applications(), unreadApplications),
+          title: m.employer_workspace_title_applications(),
         },
         {
           key: employerAppPath('/talent-pool'),
-          label: 'Kho ứng viên tiềm năng',
-          title: 'Kho ứng viên tiềm năng',
+          label: m.employer_workspace_title_talent_pool(),
+          title: m.employer_workspace_title_talent_pool(),
         },
         {
           key: employerAppPath('/candidate-blocks'),
-          label: 'Danh sách đen',
-          title: 'Danh sách đen',
+          label: m.employer_workspace_title_candidate_blocks(),
+          title: m.employer_workspace_title_candidate_blocks(),
         },
         {
           key: 'coming-cv-labels',
-          label: comingSoonLabel('Quản lý nhãn CV'),
-          title: 'Quản lý nhãn CV — Sắp mở',
+          label: comingSoonLabel(m.employer_workspace_nav_cv_labels()),
+          title: m.employer_workspace_nav_coming_soon_title({ label: m.employer_workspace_nav_cv_labels() }),
           disabled: true,
         },
         {
           key: 'coming-cv-connection-requests',
-          label: comingSoonLabel('Quản lý yêu cầu kết nối CV'),
-          title: 'Quản lý yêu cầu kết nối CV — Sắp mở',
+          label: comingSoonLabel(m.employer_workspace_nav_cv_connection_requests()),
+          title: m.employer_workspace_nav_coming_soon_title({ label: m.employer_workspace_nav_cv_connection_requests() }),
           disabled: true,
         },
       ],
@@ -162,29 +163,29 @@ export function employerNavItems({ unreadApplications = 0 } = {}) {
     {
       key: 'coming-reports',
       icon: <BarChartOutlined />,
-      label: comingSoonLabel('Báo cáo tuyển dụng'),
-      title: 'Báo cáo tuyển dụng — Sắp mở',
+      label: comingSoonLabel(m.employer_workspace_nav_reports()),
+      title: m.employer_workspace_nav_coming_soon_title({ label: m.employer_workspace_nav_reports() }),
       disabled: true,
     },
     { type: 'divider' },
     {
       key: employerAppPath('/activities'),
       icon: <HistoryOutlined />,
-      label: 'Lịch sử hoạt động',
-      title: 'Lịch sử hoạt động',
+      label: m.employer_workspace_title_activities(),
+      title: m.employer_workspace_title_activities(),
     },
     {
       key: employerAppPath('/account/settings/account-info'),
       icon: <SettingOutlined />,
-      label: 'Cài đặt tài khoản',
-      title: 'Cài đặt tài khoản',
+      label: m.employer_workspace_nav_account_settings(),
+      title: m.employer_workspace_nav_account_settings(),
     },
     { type: 'divider' },
     {
       key: employerAppPath('/notifications'),
       icon: <NotificationOutlined />,
-      label: 'Thông báo hệ thống',
-      title: 'Thông báo hệ thống',
+      label: m.employer_workspace_title_notifications(),
+      title: m.employer_workspace_title_notifications(),
     },
   ]
 }
@@ -192,7 +193,7 @@ export function employerNavItems({ unreadApplications = 0 } = {}) {
 // Thanh trên cùng dùng chung nguồn với tiêu đề tab để hai nơi không lệch nhau.
 export function employerRouteTitle(pathname) {
   const title = resolveEmployerRouteTitle(pathname)
-  return title && title !== NOT_FOUND_TITLE ? title : 'Không gian nhà tuyển dụng'
+  return title && title !== NOT_FOUND_TITLE ? title : m.employer_workspace_nav_fallback_title()
 }
 
 export function employerSelectedMenuKey(pathname) {

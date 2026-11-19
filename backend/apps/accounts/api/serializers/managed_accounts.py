@@ -3,6 +3,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 
 from apps.employers.selectors import build_employer_initial_onboarding
@@ -121,7 +122,7 @@ class ManagedAccountSerializer(serializers.ModelSerializer):
                     else {
                         'public_id': None,
                         'status': 'draft',
-                        'status_label': 'Chưa nộp',
+                        'status_label': _('Chưa nộp'),
                         'submitted_at': None,
                         'missing_step_count': 10,
                     }
@@ -278,7 +279,7 @@ class ManagedAccountUpdateSerializer(serializers.Serializer):
 
     def validate_full_name(self, value):
         if len(value) < 2:
-            raise serializers.ValidationError('Họ tên cần ít nhất 2 ký tự.')
+            raise serializers.ValidationError(_('Họ tên cần ít nhất 2 ký tự.'))
         return value
 
 

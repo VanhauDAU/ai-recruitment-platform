@@ -1,10 +1,11 @@
 import { EmployerAccountSettingsShell, EmployerGeneralSettings } from '@/widgets/employer/account-settings'
+import { m } from '@/shared/config/i18n'
 
 export default function EmployerGeneralSettingsPage() {
   return (
     <EmployerAccountSettingsShell
-      title="Cài đặt"
-      description="Quản lý thông báo và các phương thức xác thực bảo mật cho tài khoản tuyển dụng của bạn."
+      title={m.employer_account_settings_nav_general()}
+      description={m.employer_account_page_general_desc()}
     >
       <EmployerGeneralSettings />
     </EmployerAccountSettingsShell>

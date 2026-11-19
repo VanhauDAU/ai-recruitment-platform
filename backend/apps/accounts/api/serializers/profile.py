@@ -2,6 +2,8 @@
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import RegexValidator
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from rest_framework import serializers
 
 from common.storage.media import media_url_from_value
@@ -153,8 +155,8 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
         max_length=255,
         trim_whitespace=True,
         error_messages={
-            'blank': 'Vui lòng nhập họ và tên.',
-            'required': 'Vui lòng nhập họ và tên.',
+            'blank': gettext_lazy('Vui lòng nhập họ và tên.'),
+            'required': gettext_lazy('Vui lòng nhập họ và tên.'),
         },
     )
     phone = serializers.CharField(
@@ -165,7 +167,9 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
         validators=[
             RegexValidator(
                 regex=r'^(0|\+84)\d{9,10}$',
-                message='Số điện thoại không hợp lệ (VD: 0912345678 hoặc +84912345678).',
+                message=gettext_lazy(
+                    'Số điện thoại không hợp lệ (VD: 0912345678 hoặc +84912345678).'
+                ),
             )
         ],
     )
@@ -176,14 +180,14 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 
     def validate_full_name(self, value):
         if len(value.strip()) < 2:
-            raise serializers.ValidationError('Họ và tên cần ít nhất 2 ký tự.')
+            raise serializers.ValidationError(_('Họ và tên cần ít nhất 2 ký tự.'))
         return value.strip()
 
     def validate_phone(self, value):
         user = self.context['request'].user
         if user.is_employer and value != user.phone:
             raise serializers.ValidationError(
-                'Nhà tuyển dụng phải đổi số điện thoại qua luồng xác thực SMS.'
+                _('Nhà tuyển dụng phải đổi số điện thoại qua luồng xác thực SMS.')
             )
         return value
 
@@ -203,7 +207,7 @@ class ChangeEmailSerializer(serializers.Serializer):
         if user.has_usable_password():
             if not user.check_password(attrs.get('current_password') or ''):
                 raise serializers.ValidationError(
-                    {'current_password': 'Mật khẩu hiện tại không đúng.'}
+                    {'current_password': _('Mật khẩu hiện tại không đúng.')}
                 )
         else:
             from ...services import auth_sessions
@@ -214,7 +218,7 @@ class ChangeEmailSerializer(serializers.Serializer):
             if not auth_sessions.is_recent_oauth_reauthentication(session):
                 raise serializers.ValidationError(
                     {
-                        'detail': 'Hãy đăng nhập lại với OAuth trước khi đổi email.',
+                        'detail': _('Hãy đăng nhập lại với OAuth trước khi đổi email.'),
                         'code': 'reauth_required',
                     }
                 )
@@ -224,11 +228,11 @@ class ChangeEmailSerializer(serializers.Serializer):
         value = User.objects.normalize_email(value)
         user = self.context['request'].user
         if value.lower() == user.email.lower():
-            raise serializers.ValidationError('Email mới trùng với email hiện tại.')
+            raise serializers.ValidationError(_('Email mới trùng với email hiện tại.'))
         # Trùng chỉ tính trong cùng role (mô hình tách tài khoản theo cổng), nhưng
         # phải tính cả email đã được một danh tính OAuth cùng cổng sở hữu.
         if User.objects.email_claimed_for_role(value, user.role, exclude_user_id=user.pk):
             raise serializers.ValidationError(
-                'Email này đã được sử dụng cho một tài khoản cùng loại.'
+                _('Email này đã được sử dụng cho một tài khoản cùng loại.')
             )
         return value

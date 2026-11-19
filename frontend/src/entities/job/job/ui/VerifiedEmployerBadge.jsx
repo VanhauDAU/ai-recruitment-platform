@@ -1,12 +1,13 @@
 import { CheckCircleFilled } from '@ant-design/icons'
 import { Tooltip } from 'antd'
+import { m } from '@/shared/config/i18n'
 
 function badgeTitle(criteria) {
-  if (!criteria.length) return 'Nhà tuyển dụng đã xác thực'
+  if (!criteria.length) return m.job_verified_employer()
   return (
     <div className="py-0.5">
       <p className="mb-2 text-[13px] leading-5">
-        <strong>Nhà tuyển dụng</strong> đã đáp ứng đầy đủ:
+        <strong>{m.job_verified_badge_employer()}</strong> {m.job_verified_badge_met_all()}
       </p>
       <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
         {criteria.map((item) => (
@@ -42,9 +43,9 @@ export default function VerifiedEmployerBadge({
     : []
   const hasCriteria = criteria.length > 0
   const ariaLabel = criteria.length
-    ? `Nhà tuyển dụng đã xác thực, xem ${criteria.length} tiêu chí`
-    : 'Nhà tuyển dụng đã xác thực'
-  const label = appearance === 'label' ? 'NTD đã xác thực' : null
+    ? m.job_verified_employer_criteria({ count: criteria.length })
+    : m.job_verified_employer()
+  const label = appearance === 'label' ? m.job_verified_employer_short() : null
 
   return (
     <Tooltip

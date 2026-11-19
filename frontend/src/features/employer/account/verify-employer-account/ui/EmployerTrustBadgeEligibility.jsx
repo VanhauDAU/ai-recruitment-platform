@@ -6,7 +6,7 @@ import {
   getEmployerProfile,
   resolveEmployerBadgeEligibility,
 } from '@/entities/account/employer-profile'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { getIntlLocale, m } from '@/shared/config/i18n'
 
 function eligibleDate(value) {
   if (!value) return ''
@@ -33,8 +33,8 @@ export default function EmployerTrustBadgeEligibility({ profile: suppliedProfile
         className={className}
         type="error"
         showIcon
-        title="Không tải được điều kiện nhận dấu tick"
-        action={<button type="button" onClick={() => profileQuery.refetch()} className="font-semibold text-red-700 underline">Thử lại</button>}
+        title={m.employer_account_badge_load_failed()}
+        action={<button type="button" onClick={() => profileQuery.refetch()} className="font-semibold text-red-700 underline">{m.employer_account_domain_retry()}</button>}
       />
     )
   }
@@ -51,11 +51,11 @@ export default function EmployerTrustBadgeEligibility({ profile: suppliedProfile
           <SafetyCertificateOutlined className="text-lg" />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-base font-bold text-slate-900">Điều kiện nhận dấu tick trên tin tuyển dụng</h2>
+          <h2 className="text-base font-bold text-slate-900">{m.employer_account_badge_title()}</h2>
           <p className="mt-1 text-sm leading-6 text-slate-600">
             {eligibility.verified
-              ? 'Tài khoản đang đáp ứng đầy đủ các tín hiệu uy tín công khai.'
-              : `Đã đạt ${reached}/${total} điều kiện. Dấu tick khác với Cấp tài khoản và quota đăng tin.`}
+              ? m.employer_account_badge_verified()
+              : m.employer_account_badge_progress({ reached, total })}
           </p>
         </div>
       </div>
@@ -76,9 +76,9 @@ export default function EmployerTrustBadgeEligibility({ profile: suppliedProfile
 
       {!eligibility.verified && accountAgeDate && (
         <p className="mt-3 text-xs leading-5 text-slate-600">
-          Tài khoản dự kiến đạt điều kiện tuổi vào <strong>{accountAgeDate}</strong>
+          {m.employer_account_badge_age_before()}<strong>{accountAgeDate}</strong>
           {eligibility.minimum_account_months
-            ? ` (ngưỡng hiện tại: ${eligibility.minimum_account_months} tháng).`
+            ? m.employer_account_badge_age_threshold({ count: eligibility.minimum_account_months })
             : '.'}
         </p>
       )}

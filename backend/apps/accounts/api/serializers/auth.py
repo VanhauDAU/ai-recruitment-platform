@@ -2,6 +2,8 @@
 
 from django.contrib.auth.password_validation import validate_password
 from django.core.validators import RegexValidator
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from rest_framework import serializers
 from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenObtainSerializer
@@ -24,7 +26,7 @@ def password_field():
             validate_password,
             RegexValidator(
                 regex=r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$',
-                message='Mật khẩu phải bao gồm chữ hoa, chữ thường và ký tự số.',
+                message=gettext_lazy('Mật khẩu phải bao gồm chữ hoa, chữ thường và ký tự số.'),
             ),
         ],
     )
@@ -59,7 +61,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         """
         if User.objects.email_claimed_for_role(attrs['email'], attrs['role']):
             raise serializers.ValidationError(
-                {'email': 'Email này đã được sử dụng cho một tài khoản cùng loại.'}
+                {'email': _('Email này đã được sử dụng cho một tài khoản cùng loại.')}
             )
         return attrs
 
@@ -120,10 +122,12 @@ class PasswordChangeSerializer(serializers.Serializer):
         if user.has_usable_password():
             current_password = attrs.get('current_password') or ''
             if not current_password:
-                raise serializers.ValidationError({'current_password': 'Nhập mật khẩu hiện tại.'})
+                raise serializers.ValidationError(
+                    {'current_password': _('Nhập mật khẩu hiện tại.')}
+                )
             if not user.check_password(current_password):
                 raise serializers.ValidationError(
-                    {'current_password': 'Mật khẩu hiện tại không đúng.'}
+                    {'current_password': _('Mật khẩu hiện tại không đúng.')}
                 )
         return attrs
 
@@ -141,7 +145,7 @@ class LoginCredentialsSerializer(TokenObtainSerializer):
 
     default_error_messages = {
         **TokenObtainSerializer.default_error_messages,
-        'no_active_account': 'Email hoặc mật khẩu không đúng. Vui lòng thử lại.',
+        'no_active_account': gettext_lazy('Email hoặc mật khẩu không đúng. Vui lòng thử lại.'),
     }
 
     captcha_token = serializers.CharField(write_only=True)

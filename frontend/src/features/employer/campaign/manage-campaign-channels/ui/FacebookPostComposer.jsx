@@ -5,6 +5,7 @@ import { Link } from 'react-router'
 import { campaignKeys, getSocialConnections, scheduleChannelPost } from '@/entities/campaign/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { EMPLOYER_INTEGRATIONS_URL } from '@/shared/config/portals'
+import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
 import PostImagePicker from './PostImagePicker'
 import SocialPostPreview from './SocialPostPreview'
@@ -17,9 +18,9 @@ function presets(now = dayjs()) {
   const tonight = now.hour(20).minute(0).second(0)
   const tomorrow = now.add(1, 'day')
   return [
-    { label: 'Tối nay 20:00', value: tonight.isAfter(now.add(10, 'minute')) ? tonight : tonight.add(1, 'day') },
-    { label: 'Sáng mai 8:00', value: tomorrow.hour(8).minute(0).second(0) },
-    { label: 'Trưa mai 12:00', value: tomorrow.hour(12).minute(0).second(0) },
+    { label: m.employer_campaign_fb_preset_tonight(), value: tonight.isAfter(now.add(10, 'minute')) ? tonight : tonight.add(1, 'day') },
+    { label: m.employer_campaign_fb_preset_tomorrow_morning(), value: tomorrow.hour(8).minute(0).second(0) },
+    { label: m.employer_campaign_fb_preset_tomorrow_noon(), value: tomorrow.hour(12).minute(0).second(0) },
   ]
 }
 
@@ -51,15 +52,17 @@ export default function FacebookPostComposer({ campaign, channel, defaultMessage
     onSuccess: (_, data) => {
       queryClient.invalidateQueries({ queryKey: campaignKeys.channelPosts(campaign.public_id, channel.public_id) })
       const count = plannedTimes(data).length
-      message.success(data.timing === 'now' ? 'Đã gửi bài, Fanpage sẽ có bài trong khoảng 1 phút.' : `Đã hẹn ${count} bài đăng.`)
+      message.success(data.timing === 'now' ? m.employer_campaign_fb_sent() : m.employer_campaign_fb_scheduled({ count }))
       onClose()
     },
     onError: (error) => {
       queryClient.invalidateQueries({ queryKey: campaignKeys.channelPosts(campaign.public_id, channel.public_id) })
-      message.error(getApiErrorMessage(error, 'Không thể hẹn đăng bài.'))
+      message.error(getApiErrorMessage(error, m.employer_campaign_fb_schedule_error()))
     },
   })
-  const submitLabel = values.timing === 'now' ? 'Đăng ngay' : values.timing === 'series' ? `Hẹn ${times.length} bài` : 'Hẹn đăng'
+  const submitLabel = values.timing === 'now'
+    ? m.employer_campaign_fb_post_now()
+    : values.timing === 'series' ? m.employer_campaign_fb_schedule_count({ count: times.length }) : m.employer_campaign_fb_schedule()
 
   return (
     <Drawer
@@ -67,7 +70,7 @@ export default function FacebookPostComposer({ campaign, channel, defaultMessage
       onClose={onClose}
       destroyOnHidden
       size="min(980px, 100vw)"
-      title="Đăng lên Fanpage"
+      title={m.employer_campaign_fb_title()}
       className="ch-composer"
       extra={(
         <Button type="primary" loading={mutation.isPending} disabled={!connections.length} onClick={() => form.submit()}>
@@ -79,8 +82,8 @@ export default function FacebookPostComposer({ campaign, channel, defaultMessage
         <Alert
           type="info"
           showIcon
-          title="Chưa kết nối Fanpage nào"
-          description={<>Kết nối Fanpage một lần trong <Link to={EMPLOYER_INTEGRATIONS_URL}>Cài đặt tài khoản</Link>, sau đó quay lại đây để đăng.</>}
+          title={m.employer_campaign_fb_no_connection()}
+          description={<>{m.employer_campaign_fb_connect_prefix()}<Link to={EMPLOYER_INTEGRATIONS_URL}>{m.employer_campaign_fb_account_settings()}</Link>{m.employer_campaign_fb_connect_suffix()}</>}
         />
       ) : (
         <div className="ch-composer__grid">
@@ -98,38 +101,38 @@ export default function FacebookPostComposer({ campaign, channel, defaultMessage
             }}
             onFinish={(data) => mutation.mutate(data)}
           >
-            <Form.Item label="Fanpage" name="connection" rules={[{ required: true, message: 'Chọn Fanpage.' }]}>
+            <Form.Item label="Fanpage" name="connection" rules={[{ required: true, message: m.employer_campaign_fb_pick_page() }]}>
               <Select
                 options={connections.map((item) => ({
                   value: item.public_id,
-                  label: item.simulated ? `${item.page_name} (giả lập)` : item.page_name,
+                  label: item.simulated ? m.employer_campaign_fb_simulated({ name: item.page_name }) : item.page_name,
                 }))}
               />
             </Form.Item>
             <Form.Item
-              label="Nội dung"
+              label={m.employer_campaign_fb_content()}
               name="message"
-              extra="Link theo dõi của kênh được gắn vào bài khi đăng."
-              rules={[{ required: true, whitespace: true, message: 'Nhập nội dung bài.' }]}
+              extra={m.employer_campaign_fb_content_extra()}
+              rules={[{ required: true, whitespace: true, message: m.employer_campaign_fb_content_required() }]}
             >
               <Input.TextArea autoSize={{ minRows: 8, maxRows: 16 }} maxLength={5000} showCount />
             </Form.Item>
-            <Form.Item label="Ảnh" name="images">
+            <Form.Item label={m.employer_campaign_fb_images()} name="images">
               <PostImagePicker campaignId={campaign.public_id} channelId={channel.public_id} />
             </Form.Item>
-            <Form.Item label="Thời điểm đăng" name="timing">
+            <Form.Item label={m.employer_campaign_fb_timing()} name="timing">
               <Segmented
                 block
                 options={[
-                  { value: 'now', label: 'Đăng ngay' },
-                  { value: 'later', label: 'Hẹn giờ' },
-                  { value: 'series', label: 'Đăng nhiều lần' },
+                  { value: 'now', label: m.employer_campaign_fb_post_now() },
+                  { value: 'later', label: m.employer_campaign_fb_timing_later() },
+                  { value: 'series', label: m.employer_campaign_fb_timing_series() },
                 ]}
               />
             </Form.Item>
             {values.timing !== 'now' && (
               <>
-                <div className="ch-chips" role="group" aria-label="Chọn nhanh giờ đăng">
+                <div className="ch-chips" role="group" aria-label={m.employer_campaign_fb_quick_times_aria()}>
                   {presets().map((item) => (
                     <button
                       key={item.label}
@@ -141,7 +144,7 @@ export default function FacebookPostComposer({ campaign, channel, defaultMessage
                     </button>
                   ))}
                 </div>
-                <Form.Item label={values.timing === 'series' ? 'Lần đầu' : 'Giờ đăng'} name="scheduled_for" rules={[{ required: true, message: 'Chọn giờ đăng.' }]}>
+                <Form.Item label={values.timing === 'series' ? m.employer_campaign_fb_first_time() : m.employer_campaign_fb_post_time()} name="scheduled_for" rules={[{ required: true, message: m.employer_campaign_fb_post_time_required() }]}>
                   <DatePicker
                     showTime={{ format: 'HH:mm', minuteStep: 5 }}
                     format="HH:mm DD/MM/YYYY"
@@ -154,33 +157,33 @@ export default function FacebookPostComposer({ campaign, channel, defaultMessage
             )}
             {values.timing === 'series' && (
               <Form.Item
-                label="Đăng nhắc lại sau"
+                label={m.employer_campaign_fb_repeat_after()}
                 name="repeats"
-                extra="Nhắc lại giúp bài lên lại bảng tin của người theo dõi chưa kịp thấy lần đầu."
-                rules={[{ required: true, type: 'array', min: 1, message: 'Chọn ít nhất một lần nhắc lại.' }]}
+                extra={m.employer_campaign_fb_repeat_extra()}
+                rules={[{ required: true, type: 'array', min: 1, message: m.employer_campaign_fb_repeat_required() }]}
               >
-                <Checkbox.Group options={REPEATS.map((days) => ({ value: days, label: `${days} ngày` }))} />
+                <Checkbox.Group options={REPEATS.map((days) => ({ value: days, label: m.employer_campaign_fb_days({ count: days }) }))} />
               </Form.Item>
             )}
             {values.timing === 'series' && (
-              <ol className="ch-plan" aria-label="Lịch đăng">
-                {times.map((at, index) => <li key={index}>{at ? when(at) : 'Ngay bây giờ'}</li>)}
+              <ol className="ch-plan" aria-label={m.employer_campaign_fb_plan_aria()}>
+                {times.map((at, index) => <li key={index}>{at ? when(at) : m.employer_campaign_fb_right_now()}</li>)}
               </ol>
             )}
           </Form>
           <aside className="ch-composer__preview">
-            <p className="ch-section-note">Xem trước trên Facebook</p>
+            <p className="ch-section-note">{m.employer_campaign_fb_preview()}</p>
             <SocialPostPreview
               name={page?.page_name || 'Fanpage'}
               avatarUrl={page?.page_picture_url}
-              meta={values.timing === 'now' || !values.scheduled_for ? 'Vừa xong' : when(values.scheduled_for)}
+              meta={values.timing === 'now' || !values.scheduled_for ? m.employer_campaign_fb_just_now() : when(values.scheduled_for)}
               text={values.message || ''}
               images={(values.images || []).map((image) => image.url)}
               link={channel.link}
               linkTitle={campaign.name}
             />
             {campaign.status !== 'active' && (
-              <Alert type="warning" showIcon title="Chiến dịch chưa chạy" description="Bài chỉ được đăng khi chiến dịch đang chạy; tới lúc đó bài đến hạn sẽ đăng ngay." />
+              <Alert type="warning" showIcon title={m.employer_campaign_fb_not_running()} description={m.employer_campaign_fb_not_running_description()} />
             )}
           </aside>
         </div>

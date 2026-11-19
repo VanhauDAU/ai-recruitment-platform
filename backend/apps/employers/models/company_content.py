@@ -7,6 +7,7 @@ update request (``services.company_update_review.apply_update_request``).
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy
 
 from common.db.public_id import generate_public_id
 
@@ -80,9 +81,9 @@ class CompanyContentChange(models.Model):
     """
 
     class Status(models.TextChoices):
-        UNREVIEWED = 'unreviewed', 'Chưa xem'
-        REVIEWED = 'reviewed', 'Đã xem'
-        REVERTED = 'reverted', 'Đã hoàn tác'
+        UNREVIEWED = 'unreviewed', gettext_lazy('Chưa xem')
+        REVIEWED = 'reviewed', gettext_lazy('Đã xem')
+        REVERTED = 'reverted', gettext_lazy('Đã hoàn tác')
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='content_changes')

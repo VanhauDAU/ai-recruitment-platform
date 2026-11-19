@@ -1,5 +1,6 @@
 import { PlayCircleFilled } from '@ant-design/icons'
 import { useState } from 'react'
+import { m } from '@/shared/config/i18n'
 
 const PROVIDER_LABELS = { youtube: 'YouTube', vimeo: 'Vimeo' }
 
@@ -31,7 +32,7 @@ export default function CompanyVideo({ video, title }) {
       type="button"
       className="company-profile-video company-profile-video__facade"
       onClick={() => setPlaying(true)}
-      aria-label={`Phát ${title} trên ${provider}`}
+      aria-label={m.company_video_play({ title, provider })}
     >
       {video.provider === 'youtube' && (
         <img src={`https://i.ytimg.com/vi/${video.video_id}/hqdefault.jpg`} alt="" loading="lazy" decoding="async" />

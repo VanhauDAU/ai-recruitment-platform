@@ -12,6 +12,9 @@ import json
 from datetime import datetime
 from itertools import islice
 
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
+
 SECURITY = 'security'
 ACCOUNT = 'account'
 VERIFICATION = 'verification'
@@ -31,82 +34,86 @@ MAX_LIMIT = 100
 # company unlink also write audit rows, but their own tables are the richer
 # source, so they are left out here to avoid showing the same event twice.
 AUDIT_ACTION_META = {
-    'revoke_account_sessions': (SECURITY, 'Thu hồi phiên đăng nhập', WARNING),
-    'send_account_password_reset': (SECURITY, 'Gửi email đặt lại mật khẩu', NEUTRAL),
-    'resend_account_verification': (SECURITY, 'Gửi lại email xác minh', NEUTRAL),
-    'change_account_email': (SECURITY, 'Đổi email đăng nhập', WARNING),
-    'self_password_change': (SECURITY, 'Đổi mật khẩu', NEUTRAL),
-    'self_session_revoke': (SECURITY, 'Đăng xuất một thiết bị', NEUTRAL),
-    'self_session_revoke_others': (SECURITY, 'Đăng xuất các thiết bị khác', NEUTRAL),
-    'update_account_profile': (ACCOUNT, 'Sửa hồ sơ tài khoản', NEUTRAL),
-    'self_profile_update': (ACCOUNT, 'Cập nhật hồ sơ', NEUTRAL),
-    'reveal_account_sensitive_profile': (ACCOUNT, 'Xem dữ liệu nhạy cảm', WARNING),
+    'revoke_account_sessions': (SECURITY, gettext_lazy('Thu hồi phiên đăng nhập'), WARNING),
+    'send_account_password_reset': (SECURITY, gettext_lazy('Gửi email đặt lại mật khẩu'), NEUTRAL),
+    'resend_account_verification': (SECURITY, gettext_lazy('Gửi lại email xác minh'), NEUTRAL),
+    'change_account_email': (SECURITY, gettext_lazy('Đổi email đăng nhập'), WARNING),
+    'self_password_change': (SECURITY, gettext_lazy('Đổi mật khẩu'), NEUTRAL),
+    'self_session_revoke': (SECURITY, gettext_lazy('Đăng xuất một thiết bị'), NEUTRAL),
+    'self_session_revoke_others': (SECURITY, gettext_lazy('Đăng xuất các thiết bị khác'), NEUTRAL),
+    'update_account_profile': (ACCOUNT, gettext_lazy('Sửa hồ sơ tài khoản'), NEUTRAL),
+    'self_profile_update': (ACCOUNT, gettext_lazy('Cập nhật hồ sơ'), NEUTRAL),
+    'reveal_account_sensitive_profile': (ACCOUNT, gettext_lazy('Xem dữ liệu nhạy cảm'), WARNING),
 }
 USER_TARGET_AUDIT_ACTIONS = frozenset(AUDIT_ACTION_META)
 
 STATUS_KIND_META = {
-    'suspend': ('Tạm khóa tài khoản', DANGER),
-    'ban': ('Cấm tài khoản', DANGER),
-    'begin_reactivation': ('Bắt đầu khôi phục tài khoản', WARNING),
-    'reactivate': ('Mở lại tài khoản', SUCCESS),
-    'release_resource_holds': ('Gỡ giữ tài nguyên', SUCCESS),
+    'suspend': (gettext_lazy('Tạm khóa tài khoản'), DANGER),
+    'ban': (gettext_lazy('Cấm tài khoản'), DANGER),
+    'begin_reactivation': (gettext_lazy('Bắt đầu khôi phục tài khoản'), WARNING),
+    'reactivate': (gettext_lazy('Mở lại tài khoản'), SUCCESS),
+    'release_resource_holds': (gettext_lazy('Gỡ giữ tài nguyên'), SUCCESS),
 }
 ACCOUNT_STATUS_LABELS = {
-    'active': 'Đang hoạt động',
-    'inactive': 'Tạm khóa',
-    'banned': 'Bị cấm',
-    'pending': 'Chờ kích hoạt',
+    'active': gettext_lazy('Đang hoạt động'),
+    'inactive': gettext_lazy('Tạm khóa'),
+    'banned': gettext_lazy('Bị cấm'),
+    'pending': gettext_lazy('Chờ kích hoạt'),
 }
 VIOLATION_CATEGORY_LABELS = {
-    'security': 'Bảo mật',
-    'fraud': 'Gian lận',
-    'policy': 'Vi phạm chính sách',
-    'legal': 'Pháp lý',
-    'other': 'Khác',
+    'security': gettext_lazy('Bảo mật'),
+    'fraud': gettext_lazy('Gian lận'),
+    'policy': gettext_lazy('Vi phạm chính sách'),
+    'legal': gettext_lazy('Pháp lý'),
+    'other': gettext_lazy('Khác'),
 }
 
-PORTAL_LABELS = {'employer': 'cổng NTD', 'candidate': 'cổng ứng viên', 'admin': 'cổng quản trị'}
+PORTAL_LABELS = {
+    'employer': gettext_lazy('cổng NTD'),
+    'candidate': gettext_lazy('cổng ứng viên'),
+    'admin': gettext_lazy('cổng quản trị'),
+}
 AUTH_METHOD_LABELS = {
-    'password': 'Mật khẩu',
-    'oauth': 'Đăng nhập mạng xã hội',
-    'registration': 'Sau khi đăng ký',
+    'password': gettext_lazy('Mật khẩu'),
+    'oauth': gettext_lazy('Đăng nhập mạng xã hội'),
+    'registration': gettext_lazy('Sau khi đăng ký'),
 }
 
 PHONE_EVENT_META = {
-    'verified': ('Xác minh số điện thoại', SUCCESS),
-    'dispatch_failed': ('Gửi mã OTP thất bại', WARNING),
+    'verified': (gettext_lazy('Xác minh số điện thoại'), SUCCESS),
+    'dispatch_failed': (gettext_lazy('Gửi mã OTP thất bại'), WARNING),
 }
 
 VERIFICATION_EVENT_TITLES = {
-    'submitted': 'Nộp hồ sơ xác thực',
-    'review_started': 'Nhận xử lý hồ sơ xác thực',
-    'document_reviewed': 'Xử lý giấy tờ xác thực',
-    'document_replaced': 'Thay giấy tờ xác thực',
-    'changes_requested': 'Yêu cầu bổ sung hồ sơ xác thực',
-    'resubmitted': 'Nộp lại hồ sơ xác thực',
-    'resubmission_unlocked': 'Mở khóa nộp lại hồ sơ',
-    'approved': 'Duyệt hồ sơ xác thực',
-    'rejected': 'Từ chối hồ sơ xác thực',
-    'revoked': 'Thu hồi xác thực',
-    'expired': 'Xác thực hết hiệu lực',
-    'reapproved': 'Duyệt lại hồ sơ xác thực',
-    'hold_applied': 'Áp dụng tạm giữ tuân thủ',
-    'hold_released': 'Gỡ tạm giữ tuân thủ',
-    'sensitive_viewed': 'Xem giấy tờ xác thực',
-    'tax_lookup_refreshed': 'Tra cứu lại mã số thuế',
-    'withdrawn_by_unlink': 'Rút hồ sơ do gỡ liên kết công ty',
+    'submitted': gettext_lazy('Nộp hồ sơ xác thực'),
+    'review_started': gettext_lazy('Nhận xử lý hồ sơ xác thực'),
+    'document_reviewed': gettext_lazy('Xử lý giấy tờ xác thực'),
+    'document_replaced': gettext_lazy('Thay giấy tờ xác thực'),
+    'changes_requested': gettext_lazy('Yêu cầu bổ sung hồ sơ xác thực'),
+    'resubmitted': gettext_lazy('Nộp lại hồ sơ xác thực'),
+    'resubmission_unlocked': gettext_lazy('Mở khóa nộp lại hồ sơ'),
+    'approved': gettext_lazy('Duyệt hồ sơ xác thực'),
+    'rejected': gettext_lazy('Từ chối hồ sơ xác thực'),
+    'revoked': gettext_lazy('Thu hồi xác thực'),
+    'expired': gettext_lazy('Xác thực hết hiệu lực'),
+    'reapproved': gettext_lazy('Duyệt lại hồ sơ xác thực'),
+    'hold_applied': gettext_lazy('Áp dụng tạm giữ tuân thủ'),
+    'hold_released': gettext_lazy('Gỡ tạm giữ tuân thủ'),
+    'sensitive_viewed': gettext_lazy('Xem giấy tờ xác thực'),
+    'tax_lookup_refreshed': gettext_lazy('Tra cứu lại mã số thuế'),
+    'withdrawn_by_unlink': gettext_lazy('Rút hồ sơ do gỡ liên kết công ty'),
 }
 COMPANY_UPDATE_EVENT_TITLES = {
-    'submitted': 'Gửi yêu cầu cập nhật công ty',
-    'resubmitted': 'Gửi lại yêu cầu cập nhật công ty',
-    'revision_created': 'Tạo phiên bản cập nhật công ty',
-    'review_started': 'Bắt đầu thẩm định cập nhật công ty',
-    'document_reviewed': 'Xử lý giấy tờ cập nhật công ty',
-    'changes_requested': 'Yêu cầu chỉnh sửa cập nhật công ty',
-    'approved': 'Duyệt cập nhật công ty',
-    'rejected': 'Từ chối cập nhật công ty',
-    'withdrawn': 'Rút yêu cầu cập nhật công ty',
-    'cancelled': 'Hủy yêu cầu cập nhật công ty',
+    'submitted': gettext_lazy('Gửi yêu cầu cập nhật công ty'),
+    'resubmitted': gettext_lazy('Gửi lại yêu cầu cập nhật công ty'),
+    'revision_created': gettext_lazy('Tạo phiên bản cập nhật công ty'),
+    'review_started': gettext_lazy('Bắt đầu thẩm định cập nhật công ty'),
+    'document_reviewed': gettext_lazy('Xử lý giấy tờ cập nhật công ty'),
+    'changes_requested': gettext_lazy('Yêu cầu chỉnh sửa cập nhật công ty'),
+    'approved': gettext_lazy('Duyệt cập nhật công ty'),
+    'rejected': gettext_lazy('Từ chối cập nhật công ty'),
+    'withdrawn': gettext_lazy('Rút yêu cầu cập nhật công ty'),
+    'cancelled': gettext_lazy('Hủy yêu cầu cập nhật công ty'),
 }
 
 _VERIFICATION_TONES = {
@@ -128,9 +135,9 @@ _COMPANY_UPDATE_TONES = {
 }
 _COMPANY_LINK_TONES = {'admin_unlinked': WARNING, 'member_removed': WARNING}
 DECISION_LABELS = {
-    'approved': 'Đạt',
-    'changes_requested': 'Cần bổ sung',
-    'rejected': 'Từ chối',
+    'approved': gettext_lazy('Đạt'),
+    'changes_requested': gettext_lazy('Cần bổ sung'),
+    'rejected': gettext_lazy('Từ chối'),
 }
 
 # Recruiter feed events already shown by a richer source are skipped.
@@ -173,7 +180,7 @@ _EMPLOYER_ACTIVITY_TONES = {
 
 
 def audit_meta(action):
-    return AUDIT_ACTION_META.get(action, (ACCOUNT, 'Thao tác quản trị', NEUTRAL))
+    return AUDIT_ACTION_META.get(action, (ACCOUNT, _('Thao tác quản trị'), NEUTRAL))
 
 
 def verification_tone(event_type):

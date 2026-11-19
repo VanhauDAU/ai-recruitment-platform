@@ -13,9 +13,14 @@ import { message } from '@/shared/lib/toast'
 import HelpTip from '@/shared/ui/HelpTip'
 import { money } from '../lib/channel-kinds'
 import { CHANNEL_METRIC_HELP as HELP } from '../lib/metric-help'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { getIntlLocale, m } from '@/shared/config/i18n'
 
-const KINDS = ['Chạy quảng cáo', 'In ấn tờ rơi', 'Phí đăng tin', 'Thuê người đăng']
+const KINDS = [
+  m.employer_campaign_costs_kind_ads(),
+  m.employer_campaign_costs_kind_flyers(),
+  m.employer_campaign_costs_kind_posting_fee(),
+  m.employer_campaign_costs_kind_poster(),
+]
 const AMOUNTS = [500_000, 1_000_000, 2_000_000, 5_000_000]
 const thousands = (value) => `${value ?? ''}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
 
@@ -37,16 +42,16 @@ export default function ChannelCostsPanel({ campaign, channel, editable }) {
       note: (values.note || '').trim(),
     }),
     onSuccess: (_, values) => {
-      message.success(`Đã ghi ${money(values.amount)} cho kênh này.`)
+      message.success(m.employer_campaign_costs_recorded({ amount: money(values.amount) }))
       form.resetFields()
       refresh()
     },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể ghi khoản chi.')),
+    onError: (error) => message.error(getApiErrorMessage(error, m.employer_campaign_costs_add_error())),
   })
   const remove = useMutation({
     mutationFn: (costId) => deleteCampaignChannelCost(campaign.public_id, channel.public_id, costId),
     onSuccess: refresh,
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể xóa khoản chi.')),
+    onError: (error) => message.error(getApiErrorMessage(error, m.employer_campaign_costs_delete_error())),
   })
   const spent = Number(channel.cost || 0)
   const perApplication = channel.applications ? spent / channel.applications : null
@@ -56,16 +61,15 @@ export default function ChannelCostsPanel({ campaign, channel, editable }) {
   return (
     <div className="ch-costs">
       <p className="ch-section-note">
-        Ghi lại tiền bạn đã trả để quảng bá qua kênh này, ví dụ chạy quảng cáo hay in tờ rơi.
-        ProCV không thu khoản nào, chỉ dùng số này để tính chi phí cho mỗi hồ sơ và so sánh các kênh.
+        {m.employer_campaign_costs_note()}
       </p>
 
       <dl className="ch-costs__sum">
-        <div><dt>Đã chi cho kênh</dt><dd>{money(spent)}</dd></div>
-        <div><dt>Chi phí mỗi hồ sơ<HelpTip label="Giải thích chi phí mỗi hồ sơ">{HELP.costPerApplication}</HelpTip></dt><dd>{perApplication == null ? 'Chưa có hồ sơ' : money(Math.round(perApplication))}</dd></div>
+        <div><dt>{m.employer_campaign_costs_spent()}</dt><dd>{money(spent)}</dd></div>
+        <div><dt>{m.employer_campaign_costs_per_application()}<HelpTip label={m.employer_campaign_costs_per_application_help_label()}>{HELP.costPerApplication}</HelpTip></dt><dd>{perApplication == null ? m.employer_campaign_costs_no_applications() : money(Math.round(perApplication))}</dd></div>
         <div>
-          <dt>Phần ngân sách chiến dịch<HelpTip label="Giải thích phần ngân sách">{HELP.budgetShare}</HelpTip></dt>
-          <dd>{budgetShare == null ? 'Chưa đặt ngân sách' : `${budgetShare.toLocaleString(getIntlLocale(), { maximumFractionDigits: 1 })}%`}</dd>
+          <dt>{m.employer_campaign_costs_budget_share()}<HelpTip label={m.employer_campaign_costs_budget_share_help_label()}>{HELP.budgetShare}</HelpTip></dt>
+          <dd>{budgetShare == null ? m.employer_campaign_costs_no_budget() : `${budgetShare.toLocaleString(getIntlLocale(), { maximumFractionDigits: 1 })}%`}</dd>
         </div>
       </dl>
 
@@ -78,51 +82,51 @@ export default function ChannelCostsPanel({ campaign, channel, editable }) {
           initialValues={{ incurred_on: dayjs() }}
           onFinish={(values) => add.mutate(values)}
         >
-          <h4>Ghi một khoản chi</h4>
-          <Form.Item label="Khoản chi cho việc gì" name="note">
-            <Input maxLength={255} placeholder="Ví dụ: Quảng cáo Facebook tuần 1" />
+          <h4>{m.employer_campaign_costs_form_title()}</h4>
+          <Form.Item label={m.employer_campaign_costs_note_label()} name="note">
+            <Input maxLength={255} placeholder={m.employer_campaign_costs_note_placeholder()} />
           </Form.Item>
-          <div className="ch-chips" role="group" aria-label="Chọn nhanh loại chi">
+          <div className="ch-chips" role="group" aria-label={m.employer_campaign_costs_quick_kind_aria()}>
             {KINDS.map((kind) => (
               <button key={kind} type="button" className="ch-chip" onClick={() => form.setFieldValue('note', kind)}>{kind}</button>
             ))}
           </div>
           <div className="ch-costs__row">
-            <Form.Item label="Số tiền" name="amount" rules={[{ required: true, message: 'Nhập số tiền đã chi.' }]}>
+            <Form.Item label={m.employer_campaign_costs_amount()} name="amount" rules={[{ required: true, message: m.employer_campaign_costs_amount_required() }]}>
               <InputNumber
                 min={1000}
                 step={100_000}
                 className="!w-full"
-                suffix="đ"
+                suffix={m.employer_campaign_currency_suffix()}
                 formatter={thousands}
                 parser={(value) => value.replace(/\D/g, '')}
                 placeholder="1.000.000"
               />
             </Form.Item>
-            <Form.Item label="Ngày chi" name="incurred_on" rules={[{ required: true, message: 'Chọn ngày chi.' }]}>
+            <Form.Item label={m.employer_campaign_costs_date()} name="incurred_on" rules={[{ required: true, message: m.employer_campaign_costs_date_required() }]}>
               <DatePicker format="DD/MM/YYYY" allowClear={false} className="!w-full" disabledDate={(day) => day.isAfter(dayjs(), 'day')} />
             </Form.Item>
           </div>
-          <div className="ch-chips" role="group" aria-label="Chọn nhanh số tiền">
+          <div className="ch-chips" role="group" aria-label={m.employer_campaign_costs_quick_amount_aria()}>
             {AMOUNTS.map((amount) => (
               <button key={amount} type="button" className="ch-chip" onClick={() => form.setFieldValue('amount', amount)}>{money(amount)}</button>
             ))}
           </div>
-          <Button type="primary" htmlType="submit" loading={add.isPending}>Ghi khoản chi</Button>
+          <Button type="primary" htmlType="submit" loading={add.isPending}>{m.employer_campaign_costs_submit()}</Button>
         </Form>
       )}
 
       <section aria-labelledby={`costs-${channel.public_id}`}>
-        <h4 id={`costs-${channel.public_id}`}>Các khoản đã ghi</h4>
+        <h4 id={`costs-${channel.public_id}`}>{m.employer_campaign_costs_list_title()}</h4>
         {costsQuery.isLoading ? <Skeleton active paragraph={{ rows: 2 }} /> : costs.length === 0 ? (
-          <p className="ch-section-note">Chưa có khoản chi nào. Kênh miễn phí thì không cần ghi.</p>
+          <p className="ch-section-note">{m.employer_campaign_costs_empty()}</p>
         ) : (
           <ul className="ch-costs__list">
             {costs.map((cost) => (
               <li key={cost.id}>
                 <div>
                   <strong>{money(cost.amount)}</strong>
-                  <span>{cost.note || 'Không ghi chú'}</span>
+                  <span>{cost.note || m.employer_campaign_costs_no_note()}</span>
                 </div>
                 <time dateTime={cost.incurred_on}>{dayjs(cost.incurred_on).format('DD/MM/YYYY')}</time>
                 {editable && (
@@ -130,7 +134,7 @@ export default function ChannelCostsPanel({ campaign, channel, editable }) {
                     type="text"
                     size="small"
                     icon={<DeleteOutlined aria-hidden />}
-                    aria-label={`Xóa khoản chi ${money(cost.amount)}`}
+                    aria-label={m.employer_campaign_costs_delete_aria({ amount: money(cost.amount) })}
                     loading={remove.isPending && remove.variables === cost.id}
                     onClick={() => remove.mutate(cost.id)}
                   />

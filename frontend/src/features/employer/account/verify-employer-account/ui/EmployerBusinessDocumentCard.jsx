@@ -6,21 +6,22 @@ import {
 import { Alert, Button, Tag } from 'antd'
 import { useState } from 'react'
 import EmployerDocumentUploadBox from './EmployerDocumentUploadBox'
+import { m } from '@/shared/config/i18n'
 
 const AUTHORIZATION_TEMPLATE_URL = 'https://docs.google.com/document/d/1_cQDRuVuibU7XP1YPcsjpSYB8jokcqyR/edit?usp=sharing&ouid=111388583364027655585&rtpof=true&sd=true'
 const ACCEPTED_FILE_TYPES = '.jpeg,.jpg,.png,.pdf'
-const UPLOAD_HINT = 'Dung lượng tối đa 5MB, định dạng: jpeg, jpg, png, pdf'
+const UPLOAD_HINT = m.employer_account_docs_upload_hint()
 const MAX_FILES_PER_DOCUMENT_TYPE = 10
 const DOCUMENT_STATUS = {
-  pending: { color: 'gold', label: 'Đang xử lý' },
-  changes_requested: { color: 'orange', label: 'Cần bổ sung' },
-  approved: { color: 'green', label: 'Đã duyệt' },
-  rejected: { color: 'red', label: 'Từ chối' },
+  pending: { color: 'gold', label: m.employer_account_docs_status_pending() },
+  changes_requested: { color: 'orange', label: m.employer_account_docs_status_changes_requested() },
+  approved: { color: 'green', label: m.employer_account_docs_status_approved() },
+  rejected: { color: 'red', label: m.employer_account_docs_status_rejected() },
 }
 const SAMPLE_IMAGES = {
-  business: { src: '/images/employer/business-registration-sample.jpg', alt: 'Minh họa giấy chứng nhận đăng ký doanh nghiệp' },
-  authorization: { src: '/images/employer/authorization-sample.jpg', alt: 'Minh họa giấy ủy quyền' },
-  identity: { src: '/images/employer/identity-sample.jpg', alt: 'Minh họa căn cước công dân hoặc hộ chiếu' },
+  business: { src: '/images/employer/business-registration-sample.jpg', alt: m.employer_account_docs_sample_business_alt() },
+  authorization: { src: '/images/employer/authorization-sample.jpg', alt: m.employer_account_docs_sample_authorization_alt() },
+  identity: { src: '/images/employer/identity-sample.jpg', alt: m.employer_account_docs_sample_identity_alt() },
 }
 
 function Illustration({ variant }) {
@@ -34,8 +35,8 @@ function UploadNotice({ documentName }) {
     <div className="mt-2 flex gap-2 rounded-lg bg-orange-50 px-3 py-2 text-xs leading-5 text-orange-600">
       <WarningFilled className="mt-0.5 shrink-0" />
       <ul className="list-disc space-y-0.5 pl-3">
-        <li>Các văn bản đăng tải cần đầy đủ các mặt và không có dấu hiệu chỉnh sửa/ che/ cắt thông tin.</li>
-        {documentName && <li>Vui lòng đăng tải {documentName} có thông tin trùng khớp với dữ liệu doanh nghiệp theo Trang thông tin điện tử của Cục Thuế.</li>}
+        <li>{m.employer_account_docs_notice_complete()}</li>
+        {documentName && <li>{m.employer_account_docs_notice_match_before()}{documentName}{m.employer_account_docs_notice_match_after()}</li>}
       </ul>
     </div>
   )
@@ -98,14 +99,14 @@ export function EmployerBusinessDocumentCard({
                       <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
                         <button
                           type="button"
-                          aria-label={`Xem tệp đã nộp: ${displayedFileName}`}
+                          aria-label={m.employer_account_docs_view_submitted_aria({ fileName: displayedFileName })}
                           disabled={viewingDocument}
                           onClick={() => onViewDocument(document)}
                           className="inline-flex min-w-0 max-w-full cursor-pointer items-center gap-2 rounded-md border border-transparent px-2 py-1 text-sm font-medium text-slate-700 transition hover:border-emerald-100 hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 active:bg-emerald-100 disabled:cursor-wait disabled:opacity-60"
                         >
                           <FileTextOutlined className="shrink-0 text-emerald-600" />
                           <span className="truncate">
-                            {viewingDocument ? 'Đang mở tệp...' : displayedFileName}
+                            {viewingDocument ? m.employer_account_docs_opening_file() : displayedFileName}
                           </span>
                         </button>
                         <Tag color={statusMeta.color} className="!m-0 !rounded-full !border-0">
@@ -117,14 +118,14 @@ export function EmployerBusinessDocumentCard({
                           className="mt-2"
                           type={document.status === 'rejected' ? 'error' : 'warning'}
                           showIcon
-                          title={document.review_note || 'Quản trị viên chưa cung cấp lý do.'}
+                          title={document.review_note || m.employer_account_docs_no_review_note()}
                         />
                       )}
                       {editing && (
                         <div className="mt-3">
                           {!replacementExpanded ? (
                             <div className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-slate-50 px-3 py-2">
-                              <span className="text-xs text-slate-500">File này sẽ được giữ nguyên.</span>
+                              <span className="text-xs text-slate-500">{m.employer_account_docs_file_kept()}</span>
                               <Button
                                 size="small"
                                 onClick={() => setExpandedReplacements((current) => ({
@@ -132,7 +133,7 @@ export function EmployerBusinessDocumentCard({
                                   [documentKey]: true,
                                 }))}
                               >
-                                Thay tệp
+                                {m.employer_account_docs_replace_file()}
                               </Button>
                             </div>
                           ) : (
@@ -147,7 +148,7 @@ export function EmployerBusinessDocumentCard({
                                     [documentKey]: false,
                                   }))}
                                 >
-                                  Giữ nguyên file này
+                                  {m.employer_account_docs_keep_file()}
                                 </Button>
                               )}
                               <EmployerDocumentUploadBox
@@ -158,7 +159,7 @@ export function EmployerBusinessDocumentCard({
                                   || replacementFiles[documentKey]
                                   || []
                                 }
-                                label={`Tệp thay thế cho ${displayedFileName}`}
+                                label={m.employer_account_docs_replacement_for({ fileName: displayedFileName })}
                                 maxCount={1}
                                 onFilesChange={(nextFiles) => onReplacementFilesChange(
                                   document,
@@ -179,7 +180,7 @@ export function EmployerBusinessDocumentCard({
                 <div className="mt-4">
                   {!addingFiles && !(files || []).length ? (
                     <Button onClick={() => setAddingFiles(true)}>
-                      Thêm ảnh giấy tờ định danh
+                      {m.employer_account_docs_add_identity_images()}
                     </Button>
                   ) : (
                     <>
@@ -190,18 +191,18 @@ export function EmployerBusinessDocumentCard({
                           className="!mb-1 !px-0"
                           onClick={() => setAddingFiles(false)}
                         >
-                          Không thêm file
+                          {m.employer_account_docs_skip_add_file()}
                         </Button>
                       )}
                       <EmployerDocumentUploadBox
                         accept={ACCEPTED_FILE_TYPES}
-                        label={`Thêm ${label}`}
+                        label={m.employer_account_docs_add_label({ label })}
                         files={files}
                         onFilesChange={onFilesChange}
                         disabled={disabled}
                         maxCount={MAX_FILES_PER_DOCUMENT_TYPE - submittedDocuments.length}
                         multiple
-                        uploadHint={`${UPLOAD_HINT}; tối đa ${MAX_FILES_PER_DOCUMENT_TYPE} tệp`}
+                        uploadHint={m.employer_account_docs_upload_hint_max({ max: MAX_FILES_PER_DOCUMENT_TYPE })}
                         uploadState={uploadState}
                       />
                     </>
@@ -219,9 +220,9 @@ export function EmployerBusinessDocumentCard({
                 disabled={disabled}
                 maxCount={MAX_FILES_PER_DOCUMENT_TYPE}
                 multiple={supportsMultipleFiles}
-                uploadHint={`${UPLOAD_HINT}${supportsMultipleFiles
-                  ? `; tối đa ${MAX_FILES_PER_DOCUMENT_TYPE} tệp`
-                  : ''}`}
+                uploadHint={supportsMultipleFiles
+                  ? m.employer_account_docs_upload_hint_max({ max: MAX_FILES_PER_DOCUMENT_TYPE })
+                  : UPLOAD_HINT}
                 uploadState={uploadState}
               />
               <UploadNotice documentName={noticeDocument} />
@@ -229,9 +230,9 @@ export function EmployerBusinessDocumentCard({
           )}
         </div>
         <aside className="flex flex-col items-center gap-3 text-center">
-          <p className="text-sm font-medium text-slate-800">Minh họa</p>
+          <p className="text-sm font-medium text-slate-800">{m.employer_account_docs_sample()}</p>
           <Illustration variant={variant} />
-          {showTemplate && <a href={AUTHORIZATION_TEMPLATE_URL} target="_blank" rel="noreferrer" className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-emerald-500 px-4 py-2 text-center text-sm font-medium text-emerald-600 transition hover:bg-emerald-50 sm:w-auto"><DownloadOutlined />Tải mẫu giấy ủy quyền</a>}
+          {showTemplate && <a href={AUTHORIZATION_TEMPLATE_URL} target="_blank" rel="noreferrer" className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-emerald-500 px-4 py-2 text-center text-sm font-medium text-emerald-600 transition hover:bg-emerald-50 sm:w-auto"><DownloadOutlined />{m.employer_account_docs_download_authorization_template()}</a>}
         </aside>
       </div>
     </section>

@@ -4,6 +4,7 @@ from calendar import monthrange
 
 from django.db import IntegrityError, transaction
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from apps.accounts.api.permissions import require_admin
 from apps.accounts.services import (
@@ -36,7 +37,7 @@ def domain_claim_admin_impact(claim, *, actor, action, reason):
     """Preview a manual decision; the reason may still be blank (checked on confirm)."""
     reason = (reason or '').strip()
     if action not in {'approve_manual', 'reject_manual', 'revoke'}:
-        raise DomainClaimError('invalid_action', 'Thao tác không hợp lệ.')
+        raise DomainClaimError('invalid_action', _('Thao tác không hợp lệ.'))
     require_admin(actor)
     payload = {'action': action, 'reason': reason, 'status': claim.status, 'domain': claim.domain}
     return {
@@ -63,7 +64,7 @@ def confirm_domain_claim_admin_action(
 ):
     require_admin(actor)
     if not (reason or '').strip():
-        raise DomainClaimError('reason_required', 'Vui lòng nhập lý do xử lý.')
+        raise DomainClaimError('reason_required', _('Vui lòng nhập lý do xử lý.'))
     locked = (
         CompanyDomainClaim.objects.select_for_update()
         .select_related('requested_by')
@@ -86,25 +87,25 @@ def confirm_domain_claim_admin_action(
     except (InvalidImpactToken, StaleImpactToken):
         raise
     if claims['revision'] != locked.lock_version:
-        raise StaleImpactToken('Dữ liệu đã thay đổi. Vui lòng xem lại tác động.')
+        raise StaleImpactToken(_('Dữ liệu đã thay đổi. Vui lòng xem lại tác động.'))
     now = timezone.now()
     if action == 'approve_manual':
         if (
             locked.method != CompanyDomainClaim.Method.ADMIN_MANUAL
             or locked.status != CompanyDomainClaim.Status.PENDING
         ):
-            raise DomainClaimError('invalid_status', 'Yêu cầu không còn chờ duyệt thủ công.')
+            raise DomainClaimError('invalid_status', _('Yêu cầu không còn chờ duyệt thủ công.'))
         try:
             current_requester_domain = verified_email_domain(locked.requested_by)
         except DomainClaimError as error:
             raise DomainClaimError(
                 'email_domain_changed',
-                'Email hiện tại của người yêu cầu không còn là bằng chứng hợp lệ.',
+                _('Email hiện tại của người yêu cầu không còn là bằng chứng hợp lệ.'),
             ) from error
         if current_requester_domain != locked.domain:
             raise DomainClaimError(
                 'email_domain_changed',
-                'Email hiện tại của người yêu cầu không còn khớp tên miền.',
+                _('Email hiện tại của người yêu cầu không còn khớp tên miền.'),
             )
         legal_case = EmployerVerificationCase.objects.filter(
             recruiter__user_id=locked.requested_by_id,
@@ -117,7 +118,7 @@ def confirm_domain_claim_admin_action(
         ):
             raise DomainClaimError(
                 'legal_verification_required',
-                'Hồ sơ pháp lý của người yêu cầu chưa được duyệt.',
+                _('Hồ sơ pháp lý của người yêu cầu chưa được duyệt.'),
             )
         assert_no_active_conflict(locked)
         locked.status = CompanyDomainClaim.Status.VERIFIED
@@ -132,7 +133,7 @@ def confirm_domain_claim_admin_action(
             locked.method != CompanyDomainClaim.Method.ADMIN_MANUAL
             or locked.status != CompanyDomainClaim.Status.PENDING
         ):
-            raise DomainClaimError('invalid_status', 'Yêu cầu không còn chờ duyệt thủ công.')
+            raise DomainClaimError('invalid_status', _('Yêu cầu không còn chờ duyệt thủ công.'))
         locked.status = CompanyDomainClaim.Status.REJECTED
         locked.expires_at = None
         locked.token_hash = ''
@@ -144,14 +145,14 @@ def confirm_domain_claim_admin_action(
             CompanyDomainClaim.Status.GRACE,
         }:
             raise DomainClaimError(
-                'invalid_status', 'Chỉ tên miền đang có hiệu lực mới được thu hồi.'
+                'invalid_status', _('Chỉ tên miền đang có hiệu lực mới được thu hồi.')
             )
         locked.status = CompanyDomainClaim.Status.REVOKED
         locked.next_check_at = None
         locked.grace_expires_at = None
         event_type = CompanyDomainClaimEvent.EventType.REVOKED
     else:
-        raise DomainClaimError('invalid_action', 'Thao tác không hợp lệ.')
+        raise DomainClaimError('invalid_action', _('Thao tác không hợp lệ.'))
     locked.reviewer = actor
     locked.review_reason = reason
     locked.lock_version += 1
@@ -160,7 +161,7 @@ def confirm_domain_claim_admin_action(
     except IntegrityError as error:
         raise DomainClaimError(
             'domain_owned_by_another_company',
-            'Tên miền đã được một công ty khác xác minh.',
+            _('Tên miền đã được một công ty khác xác minh.'),
         ) from error
     record_claim_event(locked, event_type, actor=actor, payload={'reason': reason})
     record_admin_action(

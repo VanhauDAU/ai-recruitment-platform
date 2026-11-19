@@ -6,12 +6,13 @@ import { DownloadApplicationCvButton } from '@/features/employer/candidate/downl
 import { ShareApplicationReviewButton } from '@/features/employer/candidate/share-application-review'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { usePreviewFitZoom } from '@/shared/hooks/use-preview-fit-zoom'
+import { m } from '@/shared/config/i18n'
 import { documentFromVersion } from '../model/application-workspace'
 
 const SOURCE_LABELS = {
-  builder: 'Tạo trên hệ thống',
-  uploaded: 'CV tải lên',
-  imported: 'CV nhập vào',
+  builder: m.employer_workspace_app_cv_source_builder(),
+  uploaded: m.employer_workspace_app_cv_source_uploaded(),
+  imported: m.employer_workspace_app_cv_source_imported(),
 }
 
 export default function ApplicationCvPreview({
@@ -31,7 +32,7 @@ export default function ApplicationCvPreview({
   const cvTitle = snapshot?.submitted_cv_title
     || selectedApplication?.submitted_cv_title
     || selectedApplication?.cv_title
-    || 'CV ứng viên'
+    || m.employer_workspace_app_cv_fallback()
 
   return (
     <section
@@ -42,24 +43,24 @@ export default function ApplicationCvPreview({
       <header className="aw-panel-head">
         <div className="min-w-0">
           <h2 id="application-cv-preview-title" className="aw-panel-title flex items-center gap-2">
-            <FileTextOutlined className="text-slate-400" aria-hidden /> Xem trước CV
+            <FileTextOutlined className="text-slate-400" aria-hidden /> {m.employer_workspace_app_cv_preview()}
           </h2>
           {selectedPublicId && <p className="aw-panel-sub truncate">{cvTitle}</p>}
         </div>
         {previewDocument && <span className="aw-count">{Math.round(previewZoom * 100)}%</span>}
       </header>
       {selectedPublicId && (
-        <div className="aw-actionbar" role="toolbar" aria-label="Thao tác với CV">
+        <div className="aw-actionbar" role="toolbar" aria-label={m.employer_workspace_app_cv_actions()}>
           <DownloadApplicationCvButton publicId={selectedPublicId} candidateName={candidateName} sourceFile={sourceFile} />
           <ShareApplicationReviewButton
             publicId={selectedPublicId}
             candidateName={candidateName}
             jobTitle={selectedApplication?.job_title || ''}
-            disabledReason={sourceFile ? 'CV là tệp ứng viên tải lên nên không thể ẩn thông tin liên hệ để chia sẻ.' : ''}
+            disabledReason={sourceFile ? m.employer_workspace_app_share_disabled_uploaded() : ''}
           />
-          <Tooltip title="Nhắn tin với ứng viên sắp ra mắt">
+          <Tooltip title={m.employer_workspace_app_message_coming_soon()}>
             <span className="aw-actionbar__end">
-              <Button size="small" icon={<MessageOutlined />} disabled>Nhắn tin</Button>
+              <Button size="small" icon={<MessageOutlined />} disabled>{m.employer_workspace_app_message()}</Button>
             </span>
           </Tooltip>
         </div>
@@ -70,7 +71,7 @@ export default function ApplicationCvPreview({
           <div className="flex min-h-96 items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white">
             <Empty
               image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description="Chọn một CV ở cột bên trái để xem bản đã nộp"
+              description={m.employer_workspace_app_select_cv_left()}
             />
           </div>
         )}
@@ -83,9 +84,9 @@ export default function ApplicationCvPreview({
           <Alert
             showIcon
             type="error"
-            message="Không thể tải bản CV đã nộp"
-            description={getApiErrorMessage(error, 'Vui lòng thử lại sau.')}
-            action={<Button size="small" danger onClick={onRetry}>Thử lại</Button>}
+            message={m.employer_workspace_app_cv_load_error()}
+            description={getApiErrorMessage(error, m.employer_workspace_try_again_later())}
+            action={<Button size="small" danger onClick={onRetry}>{m.employer_workspace_retry()}</Button>}
           />
         )}
         {selectedPublicId && !loading && !error && sourceFile && (
@@ -97,7 +98,7 @@ export default function ApplicationCvPreview({
         )}
         {selectedPublicId && !loading && !error && !sourceFile && !previewDocument && (
           <div className="flex min-h-96 items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white">
-            <Empty description="Hồ sơ này chưa có bản xem trước CV" />
+            <Empty description={m.employer_workspace_app_no_cv_preview()} />
           </div>
         )}
         {selectedPublicId && !loading && !error && previewDocument && (
@@ -116,8 +117,8 @@ export default function ApplicationCvPreview({
 
       {(previewDocument || sourceFile) && (
         <footer className="flex items-center justify-between gap-2 border-t border-slate-100 bg-white px-4 py-2.5 text-[11px] text-slate-500">
-          <span>{sourceFile ? 'Tệp CV ứng viên đã nộp' : 'Bản CV tại thời điểm ứng viên nộp'}</span>
-          <span className="aw-source">{sourceFile ? SOURCE_LABELS.uploaded : SOURCE_LABELS[snapshot.submitted_cv_source] || snapshot.submitted_cv_source || 'Nguồn CV'}</span>
+          <span>{sourceFile ? m.employer_workspace_app_cv_uploaded_file() : m.employer_workspace_app_cv_snapshot()}</span>
+          <span className="aw-source">{sourceFile ? SOURCE_LABELS.uploaded : SOURCE_LABELS[snapshot.submitted_cv_source] || snapshot.submitted_cv_source || m.employer_workspace_app_cv_source_fallback()}</span>
         </footer>
       )}
     </section>

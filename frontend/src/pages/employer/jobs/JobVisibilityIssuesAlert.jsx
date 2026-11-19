@@ -2,6 +2,7 @@ import { Alert } from 'antd'
 import { Link } from 'react-router'
 import { employerReadinessAction } from '@/entities/account/employer-profile'
 import { employerAppPath } from '@/shared/config/portals'
+import { m } from '@/shared/config/i18n'
 
 // Holds by an administrator keep their own alert; extending is a header action.
 const SKIPPED_CODES = new Set(['moderation_hold', 'account_hold'])
@@ -9,7 +10,7 @@ const SKIPPED_CODES = new Set(['moderation_hold', 'account_hold'])
 function issueLink(issue, job) {
   if (issue.action === 'extend_deadline') return null
   if (issue.action === 'open_campaign') {
-    return job.campaign ? { label: 'Mở chiến dịch', to: employerAppPath(`/campaigns/${job.campaign}`) } : null
+    return job.campaign ? { label: m.employer_job_visibility_open_campaign(), to: employerAppPath(`/campaigns/${job.campaign}`) } : null
   }
   return employerReadinessAction(issue.action)
 }
@@ -23,7 +24,7 @@ export default function JobVisibilityIssuesAlert({ job }) {
       type="warning"
       showIcon
       data-testid="job-visibility-issues"
-      title="Ứng viên đang không nhìn thấy tin này và không thể nộp hồ sơ"
+      title={m.employer_job_visibility_title()}
       description={(
         <ul className="m-0 list-disc space-y-1 pl-4">
           {issues.map((issue) => {

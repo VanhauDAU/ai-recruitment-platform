@@ -1,8 +1,9 @@
 import { EyeOutlined } from '@ant-design/icons'
 import { Image } from 'antd'
+import { m } from '@/shared/config/i18n'
 
 export default function CompanyGallery({ items, title }) {
-  const preview = { cover: <span><EyeOutlined aria-hidden="true" /> Xem ảnh</span> }
+  const preview = { cover: <span><EyeOutlined aria-hidden="true" /> {m.company_gallery_view_photo()}</span> }
 
   return (
     <Image.PreviewGroup>

@@ -8,6 +8,7 @@ import {
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { triggerBlobDownload } from '@/shared/lib/download-blob'
 import { message } from '@/shared/lib/toast'
+import { m } from '@/shared/config/i18n'
 
 const POLL_INTERVAL_MS = 2_000
 const TIMEOUT_MS = 60_000
@@ -43,8 +44,8 @@ export default function useApplicationCvDownload(publicId, filename, { sourceFil
       const deadline = Date.now() + TIMEOUT_MS
       let job = await requestApplicationCvExport(publicId)
       while (!job.download_url) {
-        if (job.status === 'failed') throw new Error('Không tạo được PDF cho CV này.')
-        if (Date.now() > deadline) throw new Error('Tạo PDF đang lâu hơn dự kiến. Vui lòng thử lại.')
+        if (job.status === 'failed') throw new Error(m.employer_workspace_download_pdf_failed())
+        if (Date.now() > deadline) throw new Error(m.employer_workspace_download_pdf_timeout())
         await wait(POLL_INTERVAL_MS)
         if (run !== runRef.current) return
         job = await getApplicationCvExport(publicId, job.public_id)
@@ -56,7 +57,7 @@ export default function useApplicationCvDownload(publicId, filename, { sourceFil
     } catch (error) {
       if (run !== runRef.current) return
       setState('error')
-      message.error(error.response ? getApiErrorMessage(error, 'Không thể tải CV.') : error.message)
+      message.error(error.response ? getApiErrorMessage(error, m.employer_workspace_download_error()) : error.message)
     }
   }
 

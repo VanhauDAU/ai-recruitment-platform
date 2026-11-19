@@ -8,7 +8,11 @@ back to the administrators.
 
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
+
+from common.i18n import recipient_language
 
 from ..models import (
     Company,
@@ -26,7 +30,9 @@ from .companies import set_company_industries
 from .notifications import emit_employer_event
 from .profiles import get_or_create_recruiter
 
-ALREADY_LINKED_MESSAGE = 'Bạn đã liên kết với một công ty, không thể tạo hoặc đổi công ty khác.'
+ALREADY_LINKED_MESSAGE = gettext_lazy(
+    'Bạn đã liên kết với một công ty, không thể tạo hoặc đổi công ty khác.'
+)
 
 
 def _locked_unlinked_recruiter(user):
@@ -79,7 +85,7 @@ def request_company_join(user, company_public_id):
     recruiter = _locked_unlinked_recruiter(user)
     company = Company.objects.filter(public_id=company_public_id).first()
     if company is None:
-        raise ValidationError({'company': 'Không tìm thấy công ty.'})
+        raise ValidationError({'company': _('Không tìm thấy công ty.')})
     pending = CompanyJoinRequest.objects.filter(
         recruiter=recruiter, status=CompanyJoinRequest.Status.PENDING
     ).first()
@@ -87,17 +93,22 @@ def request_company_join(user, company_public_id):
         if pending.company_id == company.pk:
             return pending
         raise ValidationError(
-            {'detail': 'Bạn đang chờ duyệt ở một công ty khác. Hãy hủy yêu cầu đó trước.'}
+            {'detail': _('Bạn đang chờ duyệt ở một công ty khác. Hãy hủy yêu cầu đó trước.')}
         )
     join_request = CompanyJoinRequest.objects.create(recruiter=recruiter, company=company)
     requester = user.full_name or user.email
     for owner in company_owners(company):
+        with recipient_language(owner.user):
+            message = _('%(requester)s muốn tham gia %(company)s.') % {
+                'requester': requester,
+                'company': company.company_name,
+            }
         emit_employer_event(
             recipient=owner.user,
             actor=user,
             event_type=EmployerNotification.EventType.COMPANY_JOIN_REQUESTED,
             dedupe_key=f'company-join-requested:{join_request.public_id}',
-            message=f'{requester} muốn tham gia {company.company_name}.',
+            message=message,
             subject_public_id=join_request.public_id,
             metadata={'company_public_id': company.public_id},
         )
@@ -110,7 +121,7 @@ def cancel_company_join(user):
         recruiter__user=user, status=CompanyJoinRequest.Status.PENDING
     ).update(status=CompanyJoinRequest.Status.CANCELLED, decided_at=timezone.now())
     if not updated:
-        raise NotFound('Không có yêu cầu tham gia nào đang chờ.')
+        raise NotFound(_('Không có yêu cầu tham gia nào đang chờ.'))
 
 
 def _require_decider(user, company):
@@ -118,7 +129,9 @@ def _require_decider(user, company):
     if getattr(user, 'is_admin_role', False):
         if company_has_eligible_owner(company):
             raise PermissionDenied(
-                'Công ty đã có quản lý công ty đã xác thực, yêu cầu này do quản lý công ty duyệt.'
+                _(
+                    'Công ty đã có quản lý công ty đã xác thực, yêu cầu này do quản lý công ty duyệt.'
+                )
             )
         return
     if company_owners(company).filter(user=user).exists():
@@ -127,9 +140,9 @@ def _require_decider(user, company):
         user=user, company=company, company_role=RecruiterProfile.CompanyRole.OWNER
     ).exists():
         raise PermissionDenied(
-            'Tài khoản của bạn cần được xác thực trước khi duyệt yêu cầu tham gia.'
+            _('Tài khoản của bạn cần được xác thực trước khi duyệt yêu cầu tham gia.')
         )
-    raise PermissionDenied('Chỉ quản lý công ty mới duyệt được yêu cầu tham gia.')
+    raise PermissionDenied(_('Chỉ quản lý công ty mới duyệt được yêu cầu tham gia.'))
 
 
 @transaction.atomic
@@ -142,10 +155,10 @@ def decide_company_join(user, public_id, *, approve):
         .first()
     )
     if join_request is None:
-        raise NotFound('Không tìm thấy yêu cầu tham gia.')
+        raise NotFound(_('Không tìm thấy yêu cầu tham gia.'))
     _require_decider(user, join_request.company)
     if join_request.status != CompanyJoinRequest.Status.PENDING:
-        raise ValidationError({'detail': 'Yêu cầu này đã được xử lý.'})
+        raise ValidationError({'detail': _('Yêu cầu này đã được xử lý.')})
     recruiter = RecruiterProfile.objects.select_for_update().get(pk=join_request.recruiter_id)
     if approve and has_explicit_company_link(recruiter):
         approve = False  # linked elsewhere meanwhile; the request cannot apply
@@ -158,6 +171,15 @@ def decide_company_join(user, public_id, *, approve):
     company = join_request.company
     if approve:
         _link(recruiter, company, RecruiterProfile.CompanyRole.MEMBER)
+    with recipient_language(recruiter.user):
+        message = (
+            _(
+                'Bạn đã được duyệt tham gia %(company)s. '
+                'Bước tiếp theo: nộp giấy tờ để xác thực tài khoản.'
+            )
+            if approve
+            else _('Yêu cầu tham gia %(company)s không được chấp nhận.')
+        ) % {'company': company.company_name}
     emit_employer_event(
         recipient=recruiter.user,
         actor=user,
@@ -167,12 +189,7 @@ def decide_company_join(user, public_id, *, approve):
             else EmployerNotification.EventType.COMPANY_JOIN_REJECTED
         ),
         dedupe_key=f'company-join-decided:{join_request.public_id}',
-        message=(
-            f'Bạn đã được duyệt tham gia {company.company_name}. '
-            'Bước tiếp theo: nộp giấy tờ để xác thực tài khoản.'
-            if approve
-            else f'Yêu cầu tham gia {company.company_name} không được chấp nhận.'
-        ),
+        message=message,
         subject_public_id=join_request.public_id,
         metadata={'company_public_id': company.public_id},
     )
@@ -189,7 +206,7 @@ def _eligible_member(company, recruiter_public_id):
     )
     if target is None:
         raise ValidationError(
-            {'recruiter': 'Chỉ chọn được thành viên của công ty đã được xác thực tài khoản.'}
+            {'recruiter': _('Chỉ chọn được thành viên của công ty đã được xác thực tài khoản.')}
         )
     return target
 
@@ -203,6 +220,10 @@ def _record_owner_change(*, target, company, actor, event_type, reason, previous
         reason=reason,
         impact_snapshot={'previous_owner_recruiter_ids': previous_owner_ids},
     )
+    with recipient_language(target.user):
+        message = _('Bạn đã trở thành quản lý công ty %(company)s.') % {
+            'company': company.company_name
+        }
     emit_employer_event(
         recipient=target.user,
         actor=actor,
@@ -211,7 +232,7 @@ def _record_owner_change(*, target, company, actor, event_type, reason, previous
             f'company-owner:{company.public_id}:{target.public_id}:'
             f'{int(timezone.now().timestamp())}'
         ),
-        message=f'Bạn đã trở thành quản lý công ty {company.company_name}.',
+        message=message,
         subject_public_id=company.public_id,
     )
 
@@ -221,15 +242,15 @@ def transfer_company_ownership(user, recruiter_public_id):
     """The eligible owner hands the company to a verified member and becomes a member."""
     owner = RecruiterProfile.objects.select_for_update().filter(user=user).first()
     if owner is None or owner.company_id is None:
-        raise PermissionDenied('Bạn chưa liên kết với công ty nào.')
+        raise PermissionDenied(_('Bạn chưa liên kết với công ty nào.'))
     company = owner.company
     if not company_owners(company).filter(pk=owner.pk).exists():
         raise PermissionDenied(
-            'Chỉ quản lý công ty đã xác thực tài khoản mới chuyển được quyền quản lý.'
+            _('Chỉ quản lý công ty đã xác thực tài khoản mới chuyển được quyền quản lý.')
         )
     target = _eligible_member(company, recruiter_public_id)
     if target.pk == owner.pk:
-        raise ValidationError({'recruiter': 'Hãy chọn một thành viên khác.'})
+        raise ValidationError({'recruiter': _('Hãy chọn một thành viên khác.')})
     target.company_role = RecruiterProfile.CompanyRole.OWNER
     target.save(update_fields=['company_role', 'updated_at'])
     owner.company_role = RecruiterProfile.CompanyRole.MEMBER
@@ -252,12 +273,14 @@ def admin_assign_company_owner(admin, company, recruiter_public_id, *, reason):
     if company_has_eligible_owner(company):
         raise ValidationError(
             {
-                'detail': 'Công ty đã có quản lý công ty đã xác thực, người đó tự chuyển quyền nếu cần.'
+                'detail': _(
+                    'Công ty đã có quản lý công ty đã xác thực, người đó tự chuyển quyền nếu cần.'
+                )
             }
         )
     reason = (reason or '').strip()
     if not reason:
-        raise ValidationError({'reason': 'Nhập lý do chỉ định quản lý công ty.'})
+        raise ValidationError({'reason': _('Nhập lý do chỉ định quản lý công ty.')})
     target = _eligible_member(company, recruiter_public_id)
     previous = list(
         RecruiterProfile.objects.select_for_update()

@@ -9,6 +9,8 @@ import logging
 from django.conf import settings
 from django.db import transaction
 from django.template.loader import render_to_string
+from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from apps.accounts.services import is_account_accessible
 from apps.candidates.services import email_brand_context
@@ -17,6 +19,7 @@ from apps.employers.services import emit_employer_event, new_application_email_e
 from apps.jobs.models import JobApplicationContact
 from apps.sitecontent.selectors import get_bool_setting
 from common.email import send_html_email
+from common.i18n import recipient_language
 
 from ..models import Application
 
@@ -36,15 +39,17 @@ def alert_recruiter_of_withdrawal(application):
     recruiter = application.job.posted_by
     if recruiter is None:
         return
-    emit_employer_event(
-        recipient=recruiter,
-        event_type=EmployerNotification.EventType.APPLICATION_WITHDRAWN,
-        dedupe_key=f'application-withdrawn:{application.public_id}',
-        message=f'Một ứng viên đã rút hồ sơ khỏi vị trí {application.job.title}.',
-        subject_public_id=application.public_id,
-        metadata={'application_public_id': application.public_id},
-        action_path=_workspace_path(application),
-    )
+    with recipient_language(recruiter):
+        emit_employer_event(
+            recipient=recruiter,
+            event_type=EmployerNotification.EventType.APPLICATION_WITHDRAWN,
+            dedupe_key=f'application-withdrawn:{application.public_id}',
+            message=_('Một ứng viên đã rút hồ sơ khỏi vị trí %(job)s.')
+            % {'job': application.job.title},
+            subject_public_id=application.public_id,
+            metadata={'application_public_id': application.public_id},
+            action_path=_workspace_path(application),
+        )
 
 
 def alert_recruiter_of_application(application):
@@ -52,15 +57,16 @@ def alert_recruiter_of_application(application):
     recruiter = application.job.posted_by
     if recruiter is None:
         return
-    emit_employer_event(
-        recipient=recruiter,
-        event_type=EmployerNotification.EventType.APPLICATION_RECEIVED,
-        dedupe_key=f'application-received:{application.public_id}',
-        message=f'Có hồ sơ mới cho vị trí {application.job.title}.',
-        subject_public_id=application.public_id,
-        metadata={'application_public_id': application.public_id},
-        action_path=_workspace_path(application),
-    )
+    with recipient_language(recruiter):
+        emit_employer_event(
+            recipient=recruiter,
+            event_type=EmployerNotification.EventType.APPLICATION_RECEIVED,
+            dedupe_key=f'application-received:{application.public_id}',
+            message=_('Có hồ sơ mới cho vị trí %(job)s.') % {'job': application.job.title},
+            subject_public_id=application.public_id,
+            metadata={'application_public_id': application.public_id},
+            action_path=_workspace_path(application),
+        )
     application_id = application.pk
 
     def enqueue():
@@ -101,20 +107,27 @@ def send_new_application_email(application_id):
         and new_application_email_enabled(recruiter)
     ):
         return 0
+    with recipient_language(recruiter):
+        return _send_new_application_email(application)
+
+
+def _send_new_application_email(application):
+    job = application.job
     brand = email_brand_context()
     base = settings.EMPLOYER_FRONTEND_URL.rstrip('/')
     context = {
         'brand': brand,
         'site_name': brand['site_name'],
-        'title': f'Có hồ sơ ứng tuyển mới cho vị trí {job.title}',
+        'title': _('Có hồ sơ ứng tuyển mới cho vị trí %(job)s') % {'job': job.title},
         'job_title': job.title,
         'company_name': job.company.company_name,
         'applied_at': application.applied_at,
+        'applied_at_text': timezone.localtime(application.applied_at).strftime('%H:%M %d/%m/%Y'),
         'application_count': job.application_count,
         'action_url': f'{base}{_workspace_path(application)}',
         'home_url': f'{base}/tuyendung/app/dashboard',
         'header_cta_url': f'{base}/tuyendung/app/applications',
-        'header_cta_label': 'Quản lý CV',
+        'header_cta_label': _('Quản lý CV'),
         'email_settings_url': f'{base}{EMPLOYER_SETTINGS_PATH}',
     }
     sender = settings.EMAIL_FROM_ADDRESS

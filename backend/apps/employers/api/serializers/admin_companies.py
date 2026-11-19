@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 
 from common.storage.media import media_url_from_value
@@ -196,7 +197,7 @@ class AdminCompanyRecruiterSerializer(serializers.ModelSerializer):
             return {
                 'public_id': None,
                 'status': 'none',
-                'status_label': 'Chưa có hồ sơ',
+                'status_label': _('Chưa có hồ sơ'),
                 'verification_method': '',
                 'verification_method_label': '',
                 'submitted_at': None,

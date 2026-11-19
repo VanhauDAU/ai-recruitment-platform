@@ -7,26 +7,41 @@ import { CampaignLifecycleActions } from '@/features/employer/campaign/manage-ca
 import { employerAppPath } from '@/shared/config/portals'
 import HelpTip from '@/shared/ui/HelpTip'
 import './campaign-workspace.css'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { getIntlLocale, m } from '@/shared/config/i18n'
+import { explainLabel } from './campaign-overview-options'
 
 const formatDate = (value) => (value ? dayjs(value).format('DD/MM/YYYY') : '')
-const money = (value) => `${Number(value).toLocaleString(getIntlLocale())} đ`
-
-const FACT_HELP = {
-  'Chỉ tiêu': 'Tổng số lượng tuyển của các tin trong chiến dịch. Sửa số lượng ở từng tin để đổi chỉ tiêu.',
-  'Đã chạy': 'Số ngày chiến dịch thực sự chạy, không tính lúc tạm dừng hay chờ kích hoạt. Dùng để tính tốc độ CV và dự báo.',
-}
+const money = (value) => m.employer_campaign_money({ amount: Number(value).toLocaleString(getIntlLocale()) })
 
 function campaignFacts(campaign) {
-  const end = campaign.is_continuous ? 'tuyển liên tục' : formatDate(campaign.target_date) || 'chưa đặt'
+  const end = campaign.is_continuous
+    ? m.employer_campaign_list_continuous()
+    : formatDate(campaign.target_date) || m.employer_campaign_hero_end_not_set()
   const budget = campaign.budget_max
-    ? `${campaign.budget_min ? `${money(campaign.budget_min)} đến ` : 'tối đa '}${money(campaign.budget_max)}`
-    : 'Chưa đặt'
+    ? campaign.budget_min
+      ? m.employer_campaign_hero_budget_range({ min: money(campaign.budget_min), max: money(campaign.budget_max) })
+      : m.employer_campaign_hero_budget_max({ max: money(campaign.budget_max) })
+    : m.employer_campaign_hero_not_set()
   return [
-    ['Chỉ tiêu', campaign.job_count ? `Cần ${campaign.headcount} người (tổng ${campaign.job_count} tin)` : 'Chưa có tin'],
-    ['Thời gian', `${formatDate(campaign.start_date) || 'Khi kích hoạt'} đến ${end}`],
-    ['Ngân sách', budget],
-    ['Đã chạy', campaign.active_days == null ? 'Chưa kích hoạt' : `${campaign.active_days.toLocaleString(getIntlLocale())} ngày`],
+    [
+      m.employer_campaign_health_target(),
+      campaign.job_count
+        ? m.employer_campaign_hero_headcount({ headcount: campaign.headcount, count: campaign.job_count })
+        : m.employer_campaign_hero_no_jobs(),
+      m.employer_campaign_hero_target_help(),
+    ],
+    [
+      m.employer_campaign_hero_period(),
+      m.employer_campaign_list_period({ start: formatDate(campaign.start_date) || m.employer_campaign_list_on_launch(), end }),
+    ],
+    [m.employer_campaign_health_budget_title(), budget],
+    [
+      m.employer_campaign_hero_run_days(),
+      campaign.active_days == null
+        ? m.employer_campaign_hero_not_launched()
+        : m.employer_campaign_hero_days({ count: campaign.active_days.toLocaleString(getIntlLocale()) }),
+      m.employer_campaign_hero_run_days_help(),
+    ],
   ]
 }
 
@@ -36,7 +51,7 @@ function PrimaryAction({ campaign }) {
     return (
       <Link to={employerAppPath(`/campaigns/${campaign.public_id}/setup`)}>
         <Button type="primary" icon={<SettingOutlined aria-hidden />}>
-          {campaign.status === 'scheduled' ? 'Xem lịch kích hoạt' : 'Tiếp tục thiết lập'}
+          {campaign.status === 'scheduled' ? m.employer_campaign_hero_view_schedule() : m.employer_campaign_hero_continue_setup()}
         </Button>
       </Link>
     )
@@ -44,7 +59,7 @@ function PrimaryAction({ campaign }) {
   if (campaign.status === 'active') {
     return (
       <Link to={`${employerAppPath('/jobs/new')}?campaign=${campaign.public_id}`}>
-        <Button type="primary" icon={<PlusOutlined aria-hidden />}>Đăng thêm tin</Button>
+        <Button type="primary" icon={<PlusOutlined aria-hidden />}>{m.employer_campaign_hero_post_more()}</Button>
       </Link>
     )
   }
@@ -65,7 +80,7 @@ export default function CampaignWorkspaceHero({ campaign, onEdit }) {
             <span className="cw-hero__id">{campaign.public_id}</span>
             {campaign.slug && campaign.status !== 'draft' && campaign.landing_enabled !== false && (
               <a className="cw-hero__landing" href={`/tuyen-dung/${campaign.slug}`} target="_blank" rel="noreferrer">
-                <GlobalOutlined aria-hidden /> Xem trang tuyển dụng
+                <GlobalOutlined aria-hidden /> {m.employer_campaign_hero_view_landing()}
               </a>
             )}
           </div>
@@ -73,14 +88,14 @@ export default function CampaignWorkspaceHero({ campaign, onEdit }) {
         </div>
         <div className="cw-hero__actions">
           <PrimaryAction campaign={campaign} />
-          {!ended && <Button icon={<EditOutlined aria-hidden />} onClick={onEdit}>Sửa thông tin</Button>}
+          {!ended && <Button icon={<EditOutlined aria-hidden />} onClick={onEdit}>{m.employer_campaign_hero_edit()}</Button>}
           <CampaignLifecycleActions campaign={campaign} />
         </div>
       </div>
       <dl className="cw-facts">
-        {campaignFacts(campaign).map(([label, value]) => (
+        {campaignFacts(campaign).map(([label, value, help]) => (
           <div key={label} className="cw-fact">
-            <dt>{label}{FACT_HELP[label] && <HelpTip label={`Giải thích ${label.toLowerCase()}`}>{FACT_HELP[label]}</HelpTip>}</dt>
+            <dt>{label}{help && <HelpTip label={explainLabel(label)}>{help}</HelpTip>}</dt>
             <dd>{value}</dd>
           </div>
         ))}

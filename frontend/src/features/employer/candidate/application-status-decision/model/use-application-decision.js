@@ -11,10 +11,11 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { formatClockTime } from '@/shared/lib/date-time'
 import { message } from '@/shared/lib/toast'
 import useConfirmAction from '@/shared/ui/confirm-action/use-confirm-action'
+import { m } from '@/shared/config/i18n'
 
 const TERMINAL_COPY = {
-  accepted: { title: 'Xác nhận trúng tuyển', confirmText: 'Trúng tuyển', danger: false },
-  rejected: { title: 'Xác nhận không phù hợp', confirmText: 'Không phù hợp', danger: true },
+  accepted: { title: m.employer_workspace_decision_confirm_accept_title(), confirmText: m.employer_workspace_decision_accepted(), danger: false },
+  rejected: { title: m.employer_workspace_decision_confirm_reject_title(), confirmText: m.employer_workspace_decision_rejected(), danger: true },
 }
 
 /**
@@ -39,22 +40,22 @@ export default function useApplicationDecision(application, candidateName) {
     mutationFn: (publicId) => undoApplicationStatusChange(publicId),
     onSuccess: (updated) => {
       sync(updated)
-      message.success('Đã hoàn tác. Ứng viên sẽ không nhận thông báo này.')
+      message.success(m.employer_workspace_decision_undone())
     },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể hoàn tác thay đổi này.')),
+    onError: (error) => message.error(getApiErrorMessage(error, m.employer_workspace_decision_undo_error())),
   })
 
   const decideMutation = useMutation({
     mutationFn: (status) => decideApplicationStatus(publicId, status),
     onSuccess: ({ application: updated, candidate_notice_at: noticeAt }) => {
       sync(updated)
-      message.success(`Đã chuyển hồ sơ sang “${RECRUITER_APPLICATION_STATUS_LABELS[updated.status]}”`, {
-        description: `Ứng viên sẽ nhận thông báo lúc ${formatClockTime(noticeAt)}.`,
-        action: { label: 'Hoàn tác', onClick: () => undoMutation.mutate(updated.public_id) },
+      message.success(m.employer_workspace_decision_moved({ status: RECRUITER_APPLICATION_STATUS_LABELS[updated.status] }), {
+        description: m.employer_workspace_decision_moved_description({ time: formatClockTime(noticeAt) }),
+        action: { label: m.employer_workspace_decision_undo(), onClick: () => undoMutation.mutate(updated.public_id) },
         duration: 10_000,
       })
     },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể cập nhật trạng thái hồ sơ.')),
+    onError: (error) => message.error(getApiErrorMessage(error, m.employer_workspace_decision_update_error())),
   })
 
   function decide(status) {
@@ -65,8 +66,7 @@ export default function useApplicationDecision(application, candidateName) {
     }
     requestConfirmation({
       ...TERMINAL_COPY[status],
-      description: `Hồ sơ của ${candidateName} sẽ chuyển sang “${RECRUITER_APPLICATION_STATUS_LABELS[status]}” và không thể đổi tiếp. `
-        + 'Ứng viên chỉ được thông báo sau ít phút; trong thời gian đó bạn vẫn có thể hoàn tác.',
+      description: m.employer_workspace_decision_confirm_description({ name: candidateName, status: RECRUITER_APPLICATION_STATUS_LABELS[status] }),
       onConfirm: () => decideMutation.mutateAsync(status),
     })
   }

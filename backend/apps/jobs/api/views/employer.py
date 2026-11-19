@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404
+from django.utils.translation import gettext_lazy
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import generics, serializers, status
 from rest_framework.response import Response
@@ -218,7 +219,9 @@ class EmployerJobCloseView(FreshJobDetailMixin, generics.GenericAPIView):
 
 
 class DeadlineSerializer(serializers.Serializer):
-    deadline = serializers.DateField(error_messages={'required': 'Chọn hạn nhận hồ sơ.'})
+    deadline = serializers.DateField(
+        error_messages={'required': gettext_lazy('Chọn hạn nhận hồ sơ.')}
+    )
 
 
 @extend_schema(

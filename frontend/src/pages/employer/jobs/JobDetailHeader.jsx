@@ -25,6 +25,7 @@ import {
   jobDeadlineMeta,
   jobDisplayTitle,
 } from './job-list-presentation'
+import { m } from '@/shared/config/i18n'
 
 function Metric({ label, value, hint, tooltip, accent, onClick, testId }) {
   const Element = onClick ? 'button' : 'div'
@@ -61,7 +62,7 @@ export default function JobDetailHeader({ job, publicId, summary, closing, onClo
     <header className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
       <div className="p-4 sm:p-5">
         <Link to={employerAppPath('/jobs')} className="inline-flex items-center gap-1.5 text-xs font-medium !text-slate-500 hover:!text-emerald-700">
-          <ArrowLeftOutlined aria-hidden /> Tin tuyển dụng
+          <ArrowLeftOutlined aria-hidden /> {m.employer_job_detail_back_to_jobs()}
         </Link>
         <div className="mt-2 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
@@ -73,31 +74,31 @@ export default function JobDetailHeader({ job, publicId, summary, closing, onClo
               <li className="min-w-0">
                 {job.campaign && job.campaign_name ? (
                   <Link
-                    aria-label={`Mở chiến dịch ${job.campaign_name}`}
+                    aria-label={m.employer_job_header_open_campaign({ name: job.campaign_name })}
                     className="inline-flex max-w-72 items-center gap-1.5 font-medium !text-emerald-700 hover:!text-emerald-600"
                     to={employerAppPath(`/campaigns/${job.campaign}?active_tab=job`)}
                   >
                     <ThunderboltOutlined aria-hidden /> <span className="truncate">{job.campaign_name}</span>
                   </Link>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5"><ThunderboltOutlined aria-hidden /> Chưa thuộc chiến dịch</span>
+                  <span className="inline-flex items-center gap-1.5"><ThunderboltOutlined aria-hidden /> {m.employer_job_header_no_campaign()}</span>
                 )}
               </li>
               {location.length > 0 && (
                 <li className="inline-flex items-center gap-1.5"><EnvironmentOutlined aria-hidden /> {location.join(', ')}</li>
               )}
               <li className="inline-flex items-center gap-1.5">
-                <CalendarOutlined aria-hidden /> Hạn {deadline.date || 'chưa đặt'}
+                <CalendarOutlined aria-hidden /> {m.employer_job_header_deadline({ date: deadline.date || m.employer_job_header_deadline_not_set() })}
                 {job.status === 'active' && <span className={`font-medium ${deadline.tone.text}`}>· {deadline.hint}</span>}
               </li>
               {job.status !== 'draft' && (job.first_approved_at || job.published_at) && (
                 <li className="inline-flex items-center gap-1.5">
-                  <ClockCircleOutlined aria-hidden /> Đăng {formatJobDate(job.first_approved_at || job.published_at)}
+                  <ClockCircleOutlined aria-hidden /> {m.employer_job_header_posted({ date: formatJobDate(job.first_approved_at || job.published_at) })}
                 </li>
               )}
               <li>
                 <Typography.Text
-                  copyable={{ text: publicId, tooltips: ['Sao chép mã tin', 'Đã sao chép'] }}
+                  copyable={{ text: publicId, tooltips: [m.employer_job_header_copy_id(), m.employer_job_header_copied()] }}
                   className="font-mono !text-xs !text-slate-400"
                 >
                   #{publicId}
@@ -109,27 +110,27 @@ export default function JobDetailHeader({ job, publicId, summary, closing, onClo
           <div className="flex shrink-0 flex-wrap gap-2 lg:justify-end">
             {publicUrl && (
               <Button className={actionClass} href={publicUrl} target="_blank" rel="noopener noreferrer" icon={<ExportOutlined />}>
-                Xem tin đăng
+                {m.employer_job_cv_view_posting()}
               </Button>
             )}
             {(!held || isJobEditableUnderHold(job)) && job.status !== 'closed' && (
               <Button className={actionClass} icon={<EditOutlined />} onClick={() => navigate(employerAppPath(`/jobs/${publicId}/edit`))}>
-                Chỉnh sửa
+                {m.employer_job_header_edit()}
               </Button>
             )}
             {!held && job.status === 'active' && job.is_expired && canExtendDeadline && (
-              <Button className={actionClass} type="primary" icon={<SyncOutlined />} onClick={() => onDeadlineAction('extend')}>Gia hạn</Button>
+              <Button className={actionClass} type="primary" icon={<SyncOutlined />} onClick={() => onDeadlineAction('extend')}>{m.employer_job_list_extend()}</Button>
             )}
             {!held && job.status === 'closed' && (
-              <Button className={actionClass} type="primary" icon={<SyncOutlined />} onClick={() => onDeadlineAction('reopen')}>Mở lại tin</Button>
+              <Button className={actionClass} type="primary" icon={<SyncOutlined />} onClick={() => onDeadlineAction('reopen')}>{m.employer_job_header_reopen()}</Button>
             )}
             {job.status === 'active' && (
               <Dropdown
                 trigger={['click']}
                 placement="bottomRight"
-                menu={{ items: [{ key: 'close', danger: true, icon: <StopOutlined />, label: 'Ngừng tuyển', onClick: onClose }] }}
+                menu={{ items: [{ key: 'close', danger: true, icon: <StopOutlined />, label: m.employer_job_detail_stop_hiring(), onClick: onClose }] }}
               >
-                <Button aria-label="Thêm thao tác với tin" className="!h-9 !w-9 !rounded-lg" icon={<MoreOutlined />} loading={closing} />
+                <Button aria-label={m.employer_job_header_more_actions()} className="!h-9 !w-9 !rounded-lg" icon={<MoreOutlined />} loading={closing} />
               </Dropdown>
             )}
           </div>
@@ -139,32 +140,32 @@ export default function JobDetailHeader({ job, publicId, summary, closing, onClo
       <div className="job-hairline-grid grid grid-cols-2 border-t border-slate-100 bg-slate-100 sm:grid-cols-4">
         <Metric
           testId="job-metric-views"
-          label="Lượt xem tin"
+          label={m.employer_job_header_views()}
           value={formatCount(job.view_count)}
-          hint={job.impression_count ? `/ ${formatCount(job.impression_count)} hiển thị` : null}
-          tooltip="Số lần ứng viên mở trang chi tiết tin"
+          hint={job.impression_count ? m.employer_job_header_impressions({ count: formatCount(job.impression_count) }) : null}
+          tooltip={m.employer_job_header_views_tooltip()}
         />
         <Metric
           testId="job-metric-total-cvs"
-          label="Ứng viên"
+          label={m.employer_job_header_candidates()}
           value={formatCount(summary.total)}
-          hint={applyRate ? `${applyRate} tỉ lệ nộp` : null}
-          tooltip={applyRate ? 'Tỉ lệ ứng viên nộp hồ sơ trên lượt xem tin' : null}
+          hint={applyRate ? m.employer_job_header_apply_rate({ rate: applyRate }) : null}
+          tooltip={applyRate ? m.employer_job_header_apply_rate_tooltip() : null}
           onClick={() => onSelectFilter('all')}
         />
         <Metric
           testId="job-metric-unviewed-cvs"
-          label="CV chưa xem"
+          label={m.employer_job_header_unviewed()}
           value={formatCount(summary.unviewed)}
           accent={summary.unviewed ? 'text-orange-600' : null}
           onClick={() => onSelectFilter('submitted')}
         />
         <Metric
           testId="job-metric-unanswered-cvs"
-          label="Chưa phản hồi"
+          label={m.employer_job_header_unanswered()}
           value={formatCount(summary.unanswered)}
           accent={summary.unanswered ? 'text-amber-600' : null}
-          tooltip="Hồ sơ ở trạng thái Mới hoặc Đã xem"
+          tooltip={m.employer_job_header_unanswered_tooltip()}
           onClick={() => onSelectFilter('unanswered')}
         />
       </div>

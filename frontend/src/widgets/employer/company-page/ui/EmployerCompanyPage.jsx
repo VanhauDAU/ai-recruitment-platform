@@ -8,6 +8,7 @@ import { CompanyLayoutControls, useCompanyLayoutDraft } from '@/features/employe
 import { CompanyCompletenessMeter, CompanyContentEditor } from '@/features/employer/company/edit-company-page-content'
 import { CompanyPageEditors } from '@/features/employer/company/manage-company-page-editors'
 import { employerAppPath } from '@/shared/config/portals'
+import { m } from '@/shared/config/i18n'
 import CompanyPageHeader from './CompanyPageHeader'
 import CompanyPagePreview from './CompanyPagePreview'
 import '../employer-company-page.css'
@@ -16,7 +17,7 @@ import '../employer-company-page.css'
 const WORKSPACE_TABS = [
   {
     key: 'layout',
-    label: 'Bố cục',
+    label: m.employer_company_tab_layout(),
     visible: () => true,
     render: ({ page, controller }) => (
       <CompanyLayoutControls page={page} controller={controller} readOnlyReason={page.permissions.blockers?.[0]?.message} />
@@ -24,7 +25,7 @@ const WORKSPACE_TABS = [
   },
   {
     key: 'content',
-    label: 'Nội dung',
+    label: m.employer_company_tab_content(),
     visible: (page) => Boolean(page.content_form),
     render: ({ page, focusCard }) => (
       <Suspense fallback={<Skeleton active paragraph={{ rows: 8 }} />}>
@@ -34,7 +35,7 @@ const WORKSPACE_TABS = [
   },
   {
     key: 'editors',
-    label: 'Người biên tập',
+    label: m.employer_company_tab_editors(),
     visible: (page) => Boolean(page.permissions.can_manage_editors),
     render: () => <CompanyPageEditors />,
   },
@@ -71,7 +72,7 @@ function CompanyPageWorkspace({ page }) {
         )}
       />
       <div className="employer-company-page__body">
-        <section className="employer-company-page__panel" aria-label="Tuỳ biến trang công ty">
+        <section className="employer-company-page__panel" aria-label={m.employer_company_workspace_label()}>
           <Tabs
             activeKey={activeTab}
             onChange={setActiveTab}
@@ -81,18 +82,18 @@ function CompanyPageWorkspace({ page }) {
               children: tab.render({ page, controller, focusCard }),
             }))}
             tabBarExtraContent={!xl && (
-              <Button size="small" icon={<EyeOutlined aria-hidden="true" />} onClick={() => setPreviewOpen(true)}>Xem trước</Button>
+              <Button size="small" icon={<EyeOutlined aria-hidden="true" />} onClick={() => setPreviewOpen(true)}>{m.employer_company_preview_title()}</Button>
             )}
           />
         </section>
         {xl && (
-          <aside className="employer-company-page__panel employer-company-page__aside" aria-label="Xem trước trang công ty">
+          <aside className="employer-company-page__panel employer-company-page__aside" aria-label={m.employer_company_preview_page()}>
             <CompanyPagePreview {...previewProps} />
           </aside>
         )}
       </div>
       {!xl && (
-        <Drawer open={previewOpen} onClose={() => setPreviewOpen(false)} size={480} title="Xem trước trang công ty" destroyOnHidden>
+        <Drawer open={previewOpen} onClose={() => setPreviewOpen(false)} size={480} title={m.employer_company_preview_page()} destroyOnHidden>
           <CompanyPagePreview {...previewProps} defaultDevice="mobile" />
         </Drawer>
       )}
@@ -111,7 +112,7 @@ export default function EmployerCompanyPage() {
 
   if (query.isPending) {
     return (
-      <div className="employer-company-page__panel" aria-label="Đang tải trang công ty" aria-busy="true">
+      <div className="employer-company-page__panel" aria-label={m.employer_company_page_loading()} aria-busy="true">
         <Skeleton active paragraph={{ rows: 10 }} />
       </div>
     )
@@ -119,9 +120,9 @@ export default function EmployerCompanyPage() {
   if (query.error?.response?.status === 404) {
     return (
       <div className="employer-company-page__panel">
-        <Empty description="Tài khoản chưa liên kết với công ty nào nên chưa có trang công ty để tuỳ biến.">
+        <Empty description={m.employer_company_page_not_linked()}>
           <Link to={employerAppPath('/account/settings/company')} className="text-sm font-semibold !text-[var(--brand-primary)] hover:underline">
-            Cập nhật thông tin công ty
+            {m.employer_company_update_info()}
           </Link>
         </Empty>
       </div>
@@ -131,8 +132,8 @@ export default function EmployerCompanyPage() {
     return (
       <Result
         status="error"
-        title="Không tải được trang công ty"
-        extra={<Button type="primary" onClick={() => query.refetch()}>Thử lại</Button>}
+        title={m.employer_company_page_load_error()}
+        extra={<Button type="primary" onClick={() => query.refetch()}>{m.employer_company_retry()}</Button>}
       />
     )
   }

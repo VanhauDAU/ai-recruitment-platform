@@ -1,18 +1,19 @@
+import { m, getLocale } from '@/shared/config/i18n'
 export const AI_JOB_MODES = new Set(['ai_brief', 'jd_text'])
 export const TERMINAL_GENERATION_STATUSES = new Set(['completed', 'failed', 'cancelled'])
 
 const PHASE_COPY = {
-  queued: 'Đang xếp hàng',
-  preparing_context: 'Đang chuẩn bị dữ liệu công ty',
-  generating: 'Đang viết nội dung tuyển dụng',
-  validating: 'Đang kiểm tra kết quả',
-  completed: 'Bản nháp AI đã sẵn sàng',
-  failed: 'Chưa thể tạo bản nháp',
-  cancelled: 'Đã hủy yêu cầu',
+  queued: m.employer_job_ai_phase_queued,
+  preparing_context: m.employer_job_ai_phase_preparing,
+  generating: m.employer_job_ai_phase_generating,
+  validating: m.employer_job_ai_phase_validating,
+  completed: m.employer_job_ai_phase_completed,
+  failed: m.employer_job_ai_title_failed,
+  cancelled: m.employer_job_ai_title_cancelled,
 }
 
 export function getGenerationPhaseCopy(phase, status) {
-  return PHASE_COPY[phase] || PHASE_COPY[status] || 'Đang xử lý yêu cầu'
+  return (PHASE_COPY[phase] || PHASE_COPY[status] || m.employer_job_ai_phase_fallback)()
 }
 
 export function isGenerationActive(generation) {
@@ -30,8 +31,8 @@ export function linesToItems(value) {
 export function getGenerationListFieldError(value) {
   const lines = linesToItems(value)
   const rawLines = String(value || '').split('\n').map((item) => item.trim()).filter(Boolean)
-  if (rawLines.length > 10) return 'Tối đa 10 ý, mỗi ý trên một dòng.'
-  if (lines.some((item) => item.length > 120)) return 'Mỗi ý tối đa 120 ký tự.'
+  if (rawLines.length > 10) return m.employer_job_ai_list_too_many()
+  if (lines.some((item) => item.length > 120)) return m.employer_job_ai_list_item_too_long()
   return ''
 }
 
@@ -44,7 +45,7 @@ export function buildGenerationPayload(mode, draft) {
   const common = {
     mode,
     idempotency_key: createGenerationIdempotencyKey(),
-    locale: 'vi-VN',
+    locale: getLocale() === 'en' ? 'en-US' : 'vi-VN',
   }
 
   if (mode === 'jd_text') {

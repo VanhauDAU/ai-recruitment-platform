@@ -2,6 +2,8 @@
 
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
@@ -106,22 +108,23 @@ def validated_cv_selection(candidate, attrs):
         )
     if is_unsaved_builder_baseline(cv, version):
         raise serializers.ValidationError(
-            {'cv_public_id': 'CV chưa được lưu lần nào. Hãy mở CV và bấm Lưu trước khi nộp.'}
+            {'cv_public_id': _('CV chưa được lưu lần nào. Hãy mở CV và bấm Lưu trước khi nộp.')}
         )
     if cv.processing_status in {
         UserCv.ProcessingStatus.QUEUED,
         UserCv.ProcessingStatus.PROCESSING,
     }:
         raise serializers.ValidationError(
-            {'cv_public_id': 'CV đang được phân tích, vui lòng chờ trong giây lát.'}
+            {'cv_public_id': _('CV đang được phân tích, vui lòng chờ trong giây lát.')}
         )
     if issues := application_readiness_issues(cv, version):
         raise serializers.ValidationError(
             {
-                'cv_public_id': (
-                    f'CV chưa đủ thông tin để ứng tuyển: thiếu {", ".join(issues)}. '
+                'cv_public_id': _(
+                    'CV chưa đủ thông tin để ứng tuyển: thiếu %(issues)s. '
                     'Hãy cập nhật CV trước khi nộp.'
                 )
+                % {'issues': ', '.join(issues)}
             }
         )
     return cv, version
@@ -193,7 +196,7 @@ class CandidateApplicationCreateSerializer(serializers.Serializer):
             # The file is sent as is, so these fields are the only contact
             # details the recruiter gets in structured form.
             missing = {
-                field: 'Vui lòng nhập thông tin này để nhà tuyển dụng liên hệ.'
+                field: _('Vui lòng nhập thông tin này để nhà tuyển dụng liên hệ.')
                 for field in ('contact_name', 'contact_email', 'contact_phone')
                 if not attrs[field]
             }
@@ -225,13 +228,13 @@ class CandidateApplicationSerializer(serializers.ModelSerializer):
     actions = serializers.SerializerMethodField()
 
     CANDIDATE_STATUS = {
-        Application.Status.SUBMITTED: 'Đã nộp hồ sơ',
-        Application.Status.VIEWED: 'Nhà tuyển dụng đã xem hồ sơ',
-        Application.Status.SHORTLISTED: 'Hồ sơ phù hợp',
-        Application.Status.INTERVIEWED: 'Mời phỏng vấn',
-        Application.Status.ACCEPTED: 'Trúng tuyển',
-        Application.Status.REJECTED: 'Chưa phù hợp',
-        Application.Status.WITHDRAWN: 'Bạn đã rút hồ sơ',
+        Application.Status.SUBMITTED: gettext_lazy('Đã nộp hồ sơ'),
+        Application.Status.VIEWED: gettext_lazy('Nhà tuyển dụng đã xem hồ sơ'),
+        Application.Status.SHORTLISTED: gettext_lazy('Hồ sơ phù hợp'),
+        Application.Status.INTERVIEWED: gettext_lazy('Mời phỏng vấn'),
+        Application.Status.ACCEPTED: gettext_lazy('Trúng tuyển'),
+        Application.Status.REJECTED: gettext_lazy('Chưa phù hợp'),
+        Application.Status.WITHDRAWN: gettext_lazy('Bạn đã rút hồ sơ'),
     }
 
     def get_company_logo_url(self, obj) -> str | None:
@@ -253,7 +256,7 @@ class CandidateApplicationSerializer(serializers.ModelSerializer):
         return obj.candidate_visible_status(obj.status_history.all())
 
     def get_candidate_status(self, obj) -> str:
-        return self.CANDIDATE_STATUS[self.get_status(obj)]
+        return str(self.CANDIDATE_STATUS[self.get_status(obj)])
 
     @extend_schema_field(
         {
@@ -292,7 +295,7 @@ class CandidateApplicationSerializer(serializers.ModelSerializer):
         statuses = [
             {
                 'status': item.to_status,
-                'label': self.CANDIDATE_STATUS.get(item.to_status, item.to_status),
+                'label': str(self.CANDIDATE_STATUS.get(item.to_status, item.to_status)),
                 'occurred_at': item.created_at,
             }
             for item in obj.status_history.all()
@@ -300,7 +303,7 @@ class CandidateApplicationSerializer(serializers.ModelSerializer):
         reminders = [
             {
                 'status': 'reminder',
-                'label': 'ProCV đã nhắc nhà tuyển dụng phản hồi CV của bạn',
+                'label': _('ProCV đã nhắc nhà tuyển dụng phản hồi CV của bạn'),
                 'occurred_at': item.created_at,
             }
             for item in obj.reminders.all()

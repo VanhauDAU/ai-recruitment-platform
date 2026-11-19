@@ -6,6 +6,7 @@ applied it, so a benefit retired or a rule tightened in between cannot slip in.
 """
 
 from django.db import transaction
+from django.utils.translation import gettext as _
 from rest_framework.exceptions import ValidationError
 
 from apps.employers.domain.page_content import (
@@ -38,38 +39,47 @@ OFFICE_ADDRESS_MAX_LENGTH = 255
 def _plain_text(value, *, max_length, label, required=False):
     """One line of plain text; markup is refused rather than silently dropped."""
     if not isinstance(value, str):
-        raise ValueError(f'{label} không hợp lệ.')
+        raise ValueError(_('%(label)s không hợp lệ.') % {'label': label})
     text = ' '.join(value.split())
     if '<' in text or '>' in text:
-        raise ValueError(f'{label} không được chứa thẻ HTML.')
+        raise ValueError(_('%(label)s không được chứa thẻ HTML.') % {'label': label})
     if required and not text:
-        raise ValueError(f'{label} là bắt buộc.')
+        raise ValueError(_('%(label)s là bắt buộc.') % {'label': label})
     if len(text) > max_length:
-        raise ValueError(f'{label} không được vượt quá {max_length} ký tự.')
+        raise ValueError(
+            _('%(label)s không được vượt quá %(max)s ký tự.') % {'label': label, 'max': max_length}
+        )
     return text
 
 
 def _culture(value):
     if not isinstance(value, str):
-        raise ValueError('Văn hoá công ty không hợp lệ.')
+        raise ValueError(_('Văn hoá công ty không hợp lệ.'))
     sanitized = sanitize_rich_text(value)
     if len(html_plain_text(sanitized)) > CULTURE_MAX_LENGTH:
-        raise ValueError(f'Văn hoá công ty không được vượt quá {CULTURE_MAX_LENGTH} ký tự.')
+        raise ValueError(
+            _('Văn hoá công ty không được vượt quá %(max)s ký tự.') % {'max': CULTURE_MAX_LENGTH}
+        )
     return sanitized
 
 
 def _social_links(value):
     if not isinstance(value, dict):
-        raise ValidationError({'social_links': ['Danh sách mạng xã hội không hợp lệ.']})
+        raise ValidationError({'social_links': [_('Danh sách mạng xã hội không hợp lệ.')]})
     if unknown := sorted(set(value) - set(SOCIAL_NETWORKS_BY_KEY)):
         raise ValidationError(
-            {'social_links': [f'Mạng xã hội không được hỗ trợ: {", ".join(unknown)}.']}
+            {
+                'social_links': [
+                    _('Mạng xã hội không được hỗ trợ: %(networks)s.')
+                    % {'networks': ', '.join(unknown)}
+                ]
+            }
         )
     links, errors = {}, {}
     for network in SOCIAL_NETWORKS:
         url = value.get(network.key) or ''
         if not isinstance(url, str):
-            errors[network.key] = ['Đường dẫn không hợp lệ.']
+            errors[network.key] = [_('Đường dẫn không hợp lệ.')]
         elif url.strip():
             try:
                 links[network.key] = normalize_social_link(network, url)
@@ -82,14 +92,16 @@ def _social_links(value):
 
 def _list_of_dicts(field, value, *, limit, label):
     if not isinstance(value, list) or not all(isinstance(item, dict) for item in value):
-        raise ValidationError({field: [f'Danh sách {label} không hợp lệ.']})
+        raise ValidationError({field: [_('Danh sách %(label)s không hợp lệ.') % {'label': label}]})
     if len(value) > limit:
-        raise ValidationError({field: [f'Tối đa {limit} {label}.']})
+        raise ValidationError(
+            {field: [_('Tối đa %(limit)s %(label)s.') % {'limit': limit, 'label': label}]}
+        )
     return value
 
 
 def _benefits(value):
-    items = _list_of_dicts('benefits', value, limit=BENEFIT_LIMIT, label='phúc lợi')
+    items = _list_of_dicts('benefits', value, limit=BENEFIT_LIMIT, label=_('phúc lợi'))
     ids = [item.get('benefit_id') for item in items]
     active_ids = set(
         Benefit.objects.filter(
@@ -102,14 +114,14 @@ def _benefits(value):
         benefit_id = item.get('benefit_id')
         item_errors = {}
         if not isinstance(benefit_id, int) or benefit_id not in active_ids:
-            item_errors['benefit_id'] = ['Phúc lợi không có trong danh mục.']
+            item_errors['benefit_id'] = [_('Phúc lợi không có trong danh mục.')]
         elif benefit_id in seen:
-            item_errors['benefit_id'] = ['Mỗi phúc lợi chỉ được chọn một lần.']
+            item_errors['benefit_id'] = [_('Mỗi phúc lợi chỉ được chọn một lần.')]
         try:
             note = _plain_text(
                 item.get('note', ''),
                 max_length=BENEFIT_NOTE_MAX_LENGTH,
-                label='Ghi chú',
+                label=_('Ghi chú'),
             )
         except ValueError as error:
             item_errors['note'] = [str(error)]
@@ -124,7 +136,7 @@ def _benefits(value):
 
 
 def _offices(value):
-    items = _list_of_dicts('offices', value, limit=OFFICE_LIMIT, label='văn phòng')
+    items = _list_of_dicts('offices', value, limit=OFFICE_LIMIT, label=_('văn phòng'))
     requested_ids = [item.get('province_id') for item in items]
     province_ids = set(
         Location.objects.filter(
@@ -137,8 +149,8 @@ def _offices(value):
         item_errors = {}
         texts = {}
         for key, max_length, label in (
-            ('label', OFFICE_LABEL_MAX_LENGTH, 'Tên văn phòng'),
-            ('address_line', OFFICE_ADDRESS_MAX_LENGTH, 'Địa chỉ'),
+            ('label', OFFICE_LABEL_MAX_LENGTH, _('Tên văn phòng')),
+            ('address_line', OFFICE_ADDRESS_MAX_LENGTH, _('Địa chỉ')),
         ):
             try:
                 texts[key] = _plain_text(
@@ -151,10 +163,10 @@ def _offices(value):
                 item_errors[key] = [str(error)]
         province_id = item.get('province_id')
         if not isinstance(province_id, int) or province_id not in province_ids:
-            item_errors['province_id'] = ['Chọn tỉnh/thành phố của văn phòng.']
+            item_errors['province_id'] = [_('Chọn tỉnh/thành phố của văn phòng.')]
         is_headquarters = item.get('is_headquarters', False)
         if not isinstance(is_headquarters, bool):
-            item_errors['is_headquarters'] = ['Giá trị trụ sở chính không hợp lệ.']
+            item_errors['is_headquarters'] = [_('Giá trị trụ sở chính không hợp lệ.')]
         if item_errors:
             errors[index] = item_errors
             continue
@@ -162,17 +174,17 @@ def _offices(value):
     if errors:
         raise ValidationError({'offices': errors})
     if sum(office['is_headquarters'] for office in cleaned) > 1:
-        raise ValidationError({'offices': ['Chỉ một văn phòng được đánh dấu là trụ sở chính.']})
+        raise ValidationError({'offices': [_('Chỉ một văn phòng được đánh dấu là trụ sở chính.')]})
     return cleaned
 
 
 def _headline(value):
-    return _plain_text(value, max_length=HEADLINE_MAX_LENGTH, label='Khẩu hiệu')
+    return _plain_text(value, max_length=HEADLINE_MAX_LENGTH, label=_('Khẩu hiệu'))
 
 
 def _video_url(value):
     if not isinstance(value, str):
-        raise ValueError('Đường dẫn video không hợp lệ.')
+        raise ValueError(_('Đường dẫn video không hợp lệ.'))
     return normalize_video_url(value)
 
 

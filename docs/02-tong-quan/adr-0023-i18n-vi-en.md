@@ -78,13 +78,23 @@ phải tiếp tục chạy.
   `django.middleware.locale.LocaleMiddleware` sau `SessionMiddleware`.
   Frontend gửi `Accept-Language` trong mọi request của axios.
 - Chuỗi do dự án viết dùng msgid tiếng Việt, bọc trong `gettext`/`gettext_lazy`
-  khi di trú từng vùng. `locale/en` sẽ dịch chúng sang tiếng Anh.
-- `locale/vi` bổ sung các thông báo DRF mà gói DRF chưa dịch.
-- Docker và CI không có GNU gettext, nên `.mo` được commit cùng `.po`.
-  `common/tests/test_locale_catalogs.py` bắt lỗi quên biên dịch.
-- Email, Celery và thông báo trong ứng dụng render bằng ngôn ngữ của người nhận
-  (`translation.override(user.preferred_language)`) từ giai đoạn di trú cổng
-  tương ứng. Thông báo đã lưu trong DB giữ nguyên.
+  (`ngettext` khi có số đếm; tham số dạng `%(name)s`, không f-string).
+  - Mỗi app có catalog riêng `apps/<app>/locale/en/LC_MESSAGES/django.po`.
+  - `backend/locale/vi` chỉ bổ sung các thông báo DRF mà gói DRF chưa dịch.
+- Docker và CI không có GNU gettext, nên dự án dùng `common/i18n_catalog.py`
+  (Python thuần) thay `makemessages`/`compilemessages`:
+  - `python -m common.i18n_catalog update apps/<app>` trích msgid từ code (nhận
+    cả alias import) và template (`{% translate %}`, `{% blocktranslate trimmed %}`),
+    cập nhật `.po` (giữ bản dịch cũ) rồi biên dịch `.mo`. `.mo` được commit.
+  - `common/tests/test_locale_catalogs.py` chạy `check` cho mọi app: msgid trong
+    code chưa có bản dịch tiếng Anh hoặc `.mo` cũ đều làm test lỗi.
+- Email, Celery và thông báo trong ứng dụng render trong
+  `common.i18n.recipient_language(user)`, theo ngôn ngữ của NGƯỜI NHẬN chứ không
+  theo người thao tác. Thông báo đã lưu trong DB giữ nguyên.
+- Dữ liệu lưu DB hoặc dùng để so sánh không phụ thuộc ngôn ngữ request. Ví dụ:
+  snapshot nội dung tin (dùng để băm khi duyệt lại) luôn ghi bằng `LANGUAGE_CODE`.
+- Prompt AI (sinh tin, nội dung chiến dịch) viết đầu ra theo ngôn ngữ của
+  request; cấu trúc đầu ra không đổi.
 - Danh mục cố định (tỉnh/thành, kỹ năng, ngành nghề, phúc lợi) thêm `name_en`
   và trả tên theo ngôn ngữ của request. Nội dung do người dùng viết (tin, trang
   công ty, CV, blog) không dịch.
@@ -108,9 +118,9 @@ người dùng không chọn English rồi vẫn thấy tiếng Việt.
 
 | GĐ | Phạm vi |
 |---|---|
-| 0 | Nền tảng; 4 trang marketing NTD (PR này) |
-| 1 | Cổng NTD: frontend, chuỗi backend, email, thông báo, prompt AI |
-| 2 | Danh mục `name_en`; entities/shared dùng chung |
+| 0 | Nền tảng; 4 trang marketing NTD (#262) |
+| 1 | Cổng NTD: frontend (cả entities/shared nó dùng, form đăng nhập dùng chung), app `accounts`/`employers`/`jobs`/`campaigns`/`applications`, email, thông báo, prompt AI |
+| 2 | Danh mục `name_en`; entities/shared còn lại |
 | 3 | Cổng ứng viên |
 | 4 | Cổng quản trị; ratchet về 0 |
 

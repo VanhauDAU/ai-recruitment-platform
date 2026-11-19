@@ -2,6 +2,7 @@
 
 from http import HTTPStatus
 
+from django.utils.translation import gettext as _
 from rest_framework.exceptions import APIException
 
 
@@ -11,7 +12,7 @@ class JobAiGenerationUnavailable(APIException):
 
     def __init__(self, code='job_ai_generation_disabled'):
         self.machine_code = code
-        super().__init__({'code': code, 'detail': 'Tạo tin bằng AI hiện chưa khả dụng.'})
+        super().__init__({'code': code, 'detail': _('Tạo tin bằng AI hiện chưa khả dụng.')})
 
 
 class JobAiGenerationQuotaExceeded(APIException):
@@ -23,7 +24,8 @@ class JobAiGenerationQuotaExceeded(APIException):
         super().__init__(
             {
                 'code': 'JOB_AI_DAILY_QUOTA_EXCEEDED',
-                'detail': f'Bạn đã dùng hết {limit} lượt tạo tin bằng AI hôm nay.',
+                'detail': _('Bạn đã dùng hết %(limit)s lượt tạo tin bằng AI hôm nay.')
+                % {'limit': limit},
                 'quota_remaining': 0,
             }
         )
@@ -37,6 +39,6 @@ class JobAiIdempotencyConflict(APIException):
         super().__init__(
             {
                 'code': 'JOB_AI_IDEMPOTENCY_CONFLICT',
-                'detail': 'Idempotency key đã được dùng cho một nội dung khác.',
+                'detail': _('Idempotency key đã được dùng cho một nội dung khác.'),
             }
         )

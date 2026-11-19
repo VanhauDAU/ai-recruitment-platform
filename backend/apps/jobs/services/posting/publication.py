@@ -5,6 +5,7 @@ from datetime import timedelta
 from django.db import transaction
 from django.utils import timezone
 from django.utils.text import slugify
+from django.utils.translation import gettext
 from rest_framework.exceptions import ValidationError
 
 from apps.campaigns.models import CampaignActivity
@@ -85,9 +86,9 @@ def publish_job(job, user, *, accepted_statement_version=''):
     )
     job, _ = _locked_job(job)
     if job.posted_by_id != user.id:
-        raise ValidationError('Bạn không có quyền đăng tin này.')
+        raise ValidationError(gettext('Bạn không có quyền đăng tin này.'))
     if job.status == Job.Status.CLOSED:
-        raise ValidationError('Mở lại tin đã đóng thay vì đăng lại.')
+        raise ValidationError(gettext('Mở lại tin đã đóng thay vì đăng lại.'))
     if job.status == Job.Status.ACTIVE:
         return job
     _ensure_responsibility_accepted(accepted_statement_version)
@@ -139,7 +140,7 @@ def reopen_job(job, user, deadline, *, accepted_statement_version=''):
     )
     job, _ = _locked_job(job)
     if job.posted_by_id != user.id or job.status != Job.Status.CLOSED:
-        raise ValidationError('Chỉ có thể mở lại tin đã đóng của bạn.')
+        raise ValidationError(gettext('Chỉ có thể mở lại tin đã đóng của bạn.'))
     _ensure_responsibility_accepted(accepted_statement_version)
     _ensure_publication_allowed(job, publication_state)
     _validate_job_for_write(job)
@@ -170,7 +171,7 @@ def extend_job_deadline(job, user, deadline, *, requested_visibility_days=None):
     )
     job, _ = _locked_job(job)
     if job.posted_by_id != user.id or job.status != Job.Status.ACTIVE:
-        raise ValidationError('Chỉ có thể gia hạn tin đang tuyển của bạn.')
+        raise ValidationError(gettext('Chỉ có thể gia hạn tin đang tuyển của bạn.'))
     _ensure_publication_allowed(job, publication_state)
     _validate_job_for_write(job)
     _validate_campaign_for_write(job.campaign, recruiter=recruiter)
@@ -180,9 +181,11 @@ def extend_job_deadline(job, user, deadline, *, requested_visibility_days=None):
         deadline is not None and (job.deadline is None or deadline > job.deadline)
     )
     if not deadline_extended and requested_visibility_days is None:
-        raise ValidationError({'deadline': 'Hạn gia hạn phải sau hạn nộp hiện tại.'})
+        raise ValidationError({'deadline': gettext('Hạn gia hạn phải sau hạn nộp hiện tại.')})
     if job.deadline is not None and deadline is not None and deadline < job.deadline:
-        raise ValidationError({'deadline': 'Không thể rút ngắn hạn nhận hồ sơ khi gia hạn.'})
+        raise ValidationError(
+            {'deadline': gettext('Không thể rút ngắn hạn nhận hồ sơ khi gia hạn.')}
+        )
     if deadline_error := job_deadline_error(deadline, today=today):
         raise ValidationError({'deadline': deadline_error})
     if job.deadline is not None and job.deadline < today - timedelta(
@@ -190,10 +193,8 @@ def extend_job_deadline(job, user, deadline, *, requested_visibility_days=None):
     ):
         raise ValidationError(
             {
-                'deadline': (
-                    'Chỉ có thể gia hạn tin hết hạn trong vòng '
-                    f'{EXPIRED_JOB_RENEWAL_GRACE_DAYS} ngày.'
-                )
+                'deadline': gettext('Chỉ có thể gia hạn tin hết hạn trong vòng %(days)s ngày.')
+                % {'days': EXPIRED_JOB_RENEWAL_GRACE_DAYS}
             }
         )
     visibility_end = job.visibility_ends_at
@@ -227,7 +228,7 @@ def close_job(job, user):
     _locked_recruiter(user)
     job, _ = _locked_job(job)
     if job.posted_by_id != user.id or job.status != Job.Status.ACTIVE:
-        raise ValidationError('Chỉ có thể đóng tin đang tuyển của bạn.')
+        raise ValidationError(gettext('Chỉ có thể đóng tin đang tuyển của bạn.'))
     job.status = Job.Status.CLOSED
     job.closed_at = timezone.now()
     job.save(update_fields=['status', 'closed_at', 'updated_at'])

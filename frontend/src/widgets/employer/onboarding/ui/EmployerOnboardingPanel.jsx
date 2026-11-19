@@ -10,6 +10,7 @@ import { getProvinces } from '@/entities/system/location'
 import { useSession } from '@/entities/account/session'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { EMPLOYER_ACCOUNT_VERIFY_URL, EMPLOYER_CONSULTING_NEED_URL } from '@/shared/config/portals'
+import { m } from '@/shared/config/i18n'
 
 const PROFILE_FIELDS = new Set([
   'full_name', 'gender', 'contact_phone', 'work_location',
@@ -56,7 +57,7 @@ export default function EmployerOnboardingPanel() {
       sessionStorage.removeItem('employer_registration_consent')
       queryClient.setQueryData(['employer', 'profile'], profile)
       await refreshSession()
-      message.success('Đã hoàn tất hồ sơ nhà tuyển dụng.')
+      message.success(m.employer_account_onboarding_saved())
     },
     onError: (requestError) => {
       const data = requestError.response?.data
@@ -66,7 +67,7 @@ export default function EmployerOnboardingPanel() {
           .map(([name, errors]) => ({ name, errors: Array.isArray(errors) ? errors.map(String) : [String(errors)] }))
         : []
       if (fields.length) form.setFields(fields)
-      else setError(getApiErrorMessage(requestError, 'Không thể lưu hồ sơ. Vui lòng thử lại.'))
+      else setError(getApiErrorMessage(requestError, m.employer_account_onboarding_save_failed()))
     },
   })
 
@@ -74,7 +75,7 @@ export default function EmployerOnboardingPanel() {
     return <div className="rounded-2xl border border-slate-100 bg-white p-8"><Skeleton active paragraph={{ rows: 8 }} /></div>
   }
   if (profileQuery.isError) {
-    return <Alert type="error" showIcon message="Không tải được hồ sơ nhà tuyển dụng" action={<Button onClick={() => profileQuery.refetch()}>Thử lại</Button>} />
+    return <Alert type="error" showIcon message={m.employer_account_onboarding_load_failed()} action={<Button onClick={() => profileQuery.refetch()}>{m.employer_account_domain_retry()}</Button>} />
   }
   if (profileQuery.data?.onboarding?.registration_completed) {
     return <Navigate to={user?.email_verified ? EMPLOYER_CONSULTING_NEED_URL : EMPLOYER_ACCOUNT_VERIFY_URL} replace />
@@ -91,9 +92,9 @@ export default function EmployerOnboardingPanel() {
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
-      <Tag color="green" className="!m-0 !rounded-full !px-3">Đăng ký bằng Google</Tag>
-      <h1 className="mt-3 text-2xl font-black text-slate-950">Hoàn thiện hồ sơ nhà tuyển dụng</h1>
-      <p className="mb-6 mt-1 text-sm leading-6 text-slate-500">Bổ sung thông tin người liên hệ trước khi khai báo nhu cầu; hồ sơ công ty được chọn hoặc tạo tại bước xác thực riêng.</p>
+      <Tag color="green" className="!m-0 !rounded-full !px-3">{m.employer_account_onboarding_google_tag()}</Tag>
+      <h1 className="mt-3 text-2xl font-black text-slate-950">{m.employer_account_onboarding_title()}</h1>
+      <p className="mb-6 mt-1 text-sm leading-6 text-slate-500">{m.employer_account_onboarding_subtitle()}</p>
       {error && <Alert type="error" message={error} showIcon closable onClose={() => setError('')} className="!mb-5 !rounded-lg" />}
       <Form
         form={form}
@@ -110,7 +111,7 @@ export default function EmployerOnboardingPanel() {
         <EmployerRegistrationFields provinces={provincesQuery.data || []} locationsLoading={provincesQuery.isLoading} />
         <EmployerConsentFields />
         <Button type="primary" htmlType="submit" size="large" block loading={mutation.isPending} className="!mt-6 !h-12 !rounded-lg !font-bold">
-          Lưu và tiếp tục <ArrowRightOutlined />
+          {m.employer_account_onboarding_submit()} <ArrowRightOutlined />
         </Button>
       </Form>
     </section>

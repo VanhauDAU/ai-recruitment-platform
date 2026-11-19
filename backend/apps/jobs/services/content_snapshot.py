@@ -6,6 +6,10 @@ public, so an administrator handling a report can diff the current content
 against that baseline instead of re-reading the whole posting.
 """
 
+from django.conf import settings
+from django.utils import translation
+from django.utils.translation import gettext_lazy
+
 WEEKDAY_LABELS = {
     1: 'Thứ 2',
     2: 'Thứ 3',
@@ -18,31 +22,31 @@ WEEKDAY_LABELS = {
 
 # key, label, kind (text | date | rich | list), sensitive
 SNAPSHOT_FIELDS = (
-    ('title', 'Tiêu đề tin', 'text', False),
-    ('description', 'Mô tả công việc', 'rich', False),
-    ('requirements', 'Yêu cầu ứng viên', 'rich', False),
-    ('benefits', 'Quyền lợi', 'rich', False),
-    ('application_reasons', 'Lý do nên ứng tuyển', 'list', False),
-    ('salary', 'Thu nhập', 'text', False),
-    ('deadline', 'Hạn nhận hồ sơ', 'date', False),
-    ('number_of_vacancies', 'Số lượng tuyển', 'text', False),
-    ('employment_type', 'Loại hợp đồng', 'text', False),
-    ('work_types', 'Hình thức làm việc', 'list', False),
-    ('position_level', 'Cấp bậc', 'text', False),
-    ('experience_years', 'Kinh nghiệm', 'text', False),
-    ('education_level', 'Học vấn', 'text', False),
-    ('gender_requirement', 'Giới tính', 'text', False),
-    ('age_range', 'Độ tuổi', 'text', False),
-    ('categories', 'Chuyên môn', 'list', False),
-    ('skills', 'Kỹ năng', 'list', False),
-    ('job_benefits', 'Quyền lợi chuẩn hóa', 'list', False),
-    ('languages', 'Ngoại ngữ', 'list', False),
-    ('locations', 'Địa điểm làm việc', 'list', False),
-    ('work_schedules', 'Khung giờ làm việc', 'list', False),
-    ('work_schedule_note', 'Ghi chú lịch làm việc', 'text', False),
-    ('contact_recipient', 'Người nhận hồ sơ', 'text', True),
-    ('contact_phone', 'Điện thoại nhận hồ sơ', 'text', True),
-    ('contact_emails', 'Email nhận hồ sơ', 'list', True),
+    ('title', gettext_lazy('Tiêu đề tin'), 'text', False),
+    ('description', gettext_lazy('Mô tả công việc'), 'rich', False),
+    ('requirements', gettext_lazy('Yêu cầu ứng viên'), 'rich', False),
+    ('benefits', gettext_lazy('Quyền lợi'), 'rich', False),
+    ('application_reasons', gettext_lazy('Lý do nên ứng tuyển'), 'list', False),
+    ('salary', gettext_lazy('Thu nhập'), 'text', False),
+    ('deadline', gettext_lazy('Hạn nhận hồ sơ'), 'date', False),
+    ('number_of_vacancies', gettext_lazy('Số lượng tuyển'), 'text', False),
+    ('employment_type', gettext_lazy('Loại hợp đồng'), 'text', False),
+    ('work_types', gettext_lazy('Hình thức làm việc'), 'list', False),
+    ('position_level', gettext_lazy('Cấp bậc'), 'text', False),
+    ('experience_years', gettext_lazy('Kinh nghiệm'), 'text', False),
+    ('education_level', gettext_lazy('Học vấn'), 'text', False),
+    ('gender_requirement', gettext_lazy('Giới tính'), 'text', False),
+    ('age_range', gettext_lazy('Độ tuổi'), 'text', False),
+    ('categories', gettext_lazy('Chuyên môn'), 'list', False),
+    ('skills', gettext_lazy('Kỹ năng'), 'list', False),
+    ('job_benefits', gettext_lazy('Quyền lợi chuẩn hóa'), 'list', False),
+    ('languages', gettext_lazy('Ngoại ngữ'), 'list', False),
+    ('locations', gettext_lazy('Địa điểm làm việc'), 'list', False),
+    ('work_schedules', gettext_lazy('Khung giờ làm việc'), 'list', False),
+    ('work_schedule_note', gettext_lazy('Ghi chú lịch làm việc'), 'text', False),
+    ('contact_recipient', gettext_lazy('Người nhận hồ sơ'), 'text', True),
+    ('contact_phone', gettext_lazy('Điện thoại nhận hồ sơ'), 'text', True),
+    ('contact_emails', gettext_lazy('Email nhận hồ sơ'), 'list', True),
 )
 
 
@@ -133,7 +137,17 @@ def _language_labels(job):
 
 
 def build_job_content_snapshot(job):
-    """Freeze the reviewable content of one job into a comparable payload."""
+    """Freeze the reviewable content of one job into a comparable payload.
+
+    Values are always rendered in the default language: the snapshot is stored
+    and diffed (and digested) later, so a recruiter publishing in English must
+    not make every label look edited for the next reader.
+    """
+    with translation.override(settings.LANGUAGE_CODE):
+        return _snapshot_payload(job)
+
+
+def _snapshot_payload(job):
     contact = getattr(job, 'application_contact', None)
     return {
         'title': _text(job.title),
@@ -183,7 +197,7 @@ def diff_job_snapshots(baseline, current):
         changes.append(
             {
                 'key': key,
-                'label': label,
+                'label': str(label),
                 'kind': kind,
                 'sensitive': sensitive,
                 'before': before,

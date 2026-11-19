@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db.models import Avg, Count
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 
 from apps.cvs.services import asset_map
@@ -113,7 +114,7 @@ def reviewer_payload(link, request):
         'candidate_name': (
             version.content_json.get('personal_info', {}).get('full_name')
             or application.candidate.full_name
-            or 'Ứng viên'
+            or _('Ứng viên')
         ),
         'submitted_cv_title': application.submitted_cv_title,
         'cv': {

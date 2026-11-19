@@ -6,7 +6,7 @@ import {
 } from '@ant-design/icons'
 import { Link } from 'react-router'
 import { employerAppPath } from '@/shared/config/portals'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { getIntlLocale, m } from '@/shared/config/i18n'
 
 const fullDateFormatter = new Intl.DateTimeFormat(getIntlLocale(), {
   weekday: 'long',
@@ -35,14 +35,14 @@ export default function DashboardHeader({
             <span aria-hidden="true" className="h-1 w-1 rounded-full bg-emerald-200/50" />
             <span className="inline-flex items-center gap-1.5">
               <CheckCircleFilled className={employerVerified ? 'text-emerald-300' : 'text-amber-300'} />
-              {employerVerified ? 'Nhà tuyển dụng đã xác thực' : 'Đang hoàn thiện xác thực NTD'}
+              {employerVerified ? m.employer_workspace_dash_employer_verified() : m.employer_workspace_dash_verification_in_progress()}
             </span>
           </div>
           <h1 className="mt-3 text-2xl font-black tracking-[-.025em] text-white sm:text-[32px] sm:leading-tight">
-            Xin chào, {displayName}
+            {m.employer_workspace_dash_greeting({ name: displayName })}
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-200/85">
-            Nắm nhanh hiệu quả tuyển dụng, ưu tiên hồ sơ mới và tiếp tục những việc quan trọng trong hôm nay.
+            {m.employer_workspace_dash_greeting_subtitle()}
           </p>
         </div>
 
@@ -51,26 +51,26 @@ export default function DashboardHeader({
             to={candidateActionTarget}
             className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-white/25 !bg-white/10 px-4 text-sm font-bold !text-white backdrop-blur transition hover:-translate-y-0.5 hover:!bg-white/20"
           >
-            Quản lý hồ sơ <ArrowRightOutlined />
+            {m.employer_workspace_dash_manage_applications()} <ArrowRightOutlined />
           </Link>
           <Link
             to={jobActionTarget}
             className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-white !bg-white px-4 text-sm font-extrabold !text-emerald-700 shadow-lg shadow-emerald-950/15 transition hover:-translate-y-0.5 hover:!bg-emerald-50 hover:!text-emerald-800"
           >
-            <PlusOutlined /> Đăng tin mới
+            <PlusOutlined /> {m.employer_workspace_dash_new_job()}
           </Link>
         </div>
       </div>
 
       <div className="relative mt-6 flex flex-wrap gap-x-6 gap-y-2 border-t border-white/10 pt-4 text-xs text-slate-200/80">
         <Link to={employerAppPath('/jobs')} className="group inline-flex items-center gap-2 !text-inherit hover:!text-white">
-          Tin tuyển dụng <ArrowRightOutlined className="text-[10px] transition group-hover:translate-x-0.5" />
+          {m.employer_workspace_title_jobs()} <ArrowRightOutlined className="text-[10px] transition group-hover:translate-x-0.5" />
         </Link>
         <Link to={employerAppPath('/campaigns')} className="group inline-flex items-center gap-2 !text-inherit hover:!text-white">
-          Chiến dịch tuyển dụng <ArrowRightOutlined className="text-[10px] transition group-hover:translate-x-0.5" />
+          {m.employer_workspace_title_campaigns()} <ArrowRightOutlined className="text-[10px] transition group-hover:translate-x-0.5" />
         </Link>
         <Link to={employerAppPath('/activities')} className="group inline-flex items-center gap-2 !text-inherit hover:!text-white">
-          Lịch sử hoạt động <ArrowRightOutlined className="text-[10px] transition group-hover:translate-x-0.5" />
+          {m.employer_workspace_title_activities()} <ArrowRightOutlined className="text-[10px] transition group-hover:translate-x-0.5" />
         </Link>
       </div>
     </header>

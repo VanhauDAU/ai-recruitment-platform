@@ -7,10 +7,13 @@ from django.db import connection, models, transaction
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
+from django.utils.translation import gettext as _
+from django.utils.translation import ngettext
 
 from apps.employers.services import employer_badge_state_map
 from apps.sitecontent.models import SiteSetting
 from common.email import send_html_email
+from common.i18n import recipient_language
 from common.metrics import record_metric
 from common.outbox import MAX_DELIVERY_ATTEMPTS, is_sending_fresh, stale_sending_before
 
@@ -75,7 +78,7 @@ def _email_context(digest, items):
             if public_id in alerts
         ]
         if item._eligible_suitable_recommendation:
-            source_labels.append('Việc làm phù hợp')
+            source_labels.append(_('Việc làm phù hợp'))
         jobs.append(
             {
                 **job_email_card(
@@ -88,10 +91,23 @@ def _email_context(digest, items):
                 ),
             }
         )
+    site_name = _site_string('site_name', 'ProCV')
     return {
-        'site_name': _site_string('site_name', 'ProCV'),
+        'site_name': site_name,
         'candidate_name': digest.candidate.full_name or digest.candidate.email,
         'jobs': jobs,
+        'intro_text': ngettext(
+            '%(site)s có %(count)s việc làm mới dành cho bạn:',
+            '%(site)s có %(count)s việc làm mới dành cho bạn:',
+            len(jobs),
+        )
+        % {'site': site_name, 'count': len(jobs)},
+        'intro_html': ngettext(
+            'Có %(count)s việc làm mới phù hợp với thông báo bạn đã bật.',
+            'Có %(count)s việc làm mới phù hợp với thông báo bạn đã bật.',
+            len(jobs),
+        )
+        % {'count': len(jobs)},
         'manage_url': (f'{settings.FRONTEND_URL.rstrip("/")}/tai-khoan/cai-dat-thong-bao-viec-lam'),
         'email_settings_url': f'{settings.FRONTEND_URL.rstrip("/")}/tai-khoan/cai-dat-nhan-email',
     }
@@ -236,10 +252,16 @@ def _deliver_candidate_job_digest_locked(digest_id):
                 reason='gate_changed_before_send',
             )
             return CandidateJobDigest.Status.CANCELLED
-        context = _email_context(digest, items)
-        subject = f'{len(items)} việc làm mới dành cho bạn · {context["site_name"]}'
-        text_body = render_to_string('jobs/email/candidate_job_digest.txt', context)
-        html_body = render_to_string('jobs/email/candidate_job_digest.html', context)
+        # The email is read by the candidate, so it follows their language.
+        with recipient_language(candidate):
+            context = _email_context(digest, items)
+            subject = ngettext(
+                '%(count)s việc làm mới dành cho bạn · %(site)s',
+                '%(count)s việc làm mới dành cho bạn · %(site)s',
+                len(items),
+            ) % {'count': len(items), 'site': context['site_name']}
+            text_body = render_to_string('jobs/email/candidate_job_digest.txt', context)
+            html_body = render_to_string('jobs/email/candidate_job_digest.html', context)
 
         # Rendering and badge lookup can be non-trivial. Recheck identity,
         # preferences, publication state and permanent suppression immediately

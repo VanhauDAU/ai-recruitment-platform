@@ -5,6 +5,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from rest_framework.exceptions import ValidationError
 
 from ...models import JobAiGeneration
@@ -35,7 +36,7 @@ def cancel_job_ai_generation(*, generation, user):
 def record_job_ai_feedback(*, generation, user, value, reason=''):
     current = JobAiGeneration.objects.select_for_update().get(pk=generation.pk, owner=user)
     if current.status != JobAiGeneration.Status.COMPLETED:
-        raise ValidationError({'feedback': 'Chỉ có thể đánh giá kết quả đã hoàn tất.'})
+        raise ValidationError({'feedback': _('Chỉ có thể đánh giá kết quả đã hoàn tất.')})
     current.feedback = value
     current.feedback_reason = reason
     current.feedback_at = timezone.now()
@@ -117,13 +118,15 @@ def apply_job_ai_generation_to_draft(*, public_id, job, user):
         JobAiGeneration.objects.select_for_update().filter(public_id=public_id, owner=user).first()
     )
     if generation is None:
-        raise ValidationError({'ai_generation_public_id': 'Kết quả AI không tồn tại.'})
+        raise ValidationError({'ai_generation_public_id': _('Kết quả AI không tồn tại.')})
     if generation.company_id != job.company_id:
-        raise ValidationError({'ai_generation_public_id': 'Kết quả AI không thuộc công ty này.'})
+        raise ValidationError({'ai_generation_public_id': _('Kết quả AI không thuộc công ty này.')})
     if generation.status != JobAiGeneration.Status.COMPLETED or not generation.result:
-        raise ValidationError({'ai_generation_public_id': 'Kết quả AI chưa hoàn tất.'})
+        raise ValidationError({'ai_generation_public_id': _('Kết quả AI chưa hoàn tất.')})
     if generation.applied_job_id and generation.applied_job_id != job.pk:
-        raise ValidationError({'ai_generation_public_id': 'Kết quả AI đã được dùng cho tin khác.'})
+        raise ValidationError(
+            {'ai_generation_public_id': _('Kết quả AI đã được dùng cho tin khác.')}
+        )
     generation.applied_job = job
     generation.applied_at = generation.applied_at or timezone.now()
     generation.applied_diff = _applied_content_diff(job, generation.result)

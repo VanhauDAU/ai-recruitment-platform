@@ -8,6 +8,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import URLValidator
 from django.http import FileResponse, Http404
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema, inline_serializer
 from rest_framework import generics, parsers, serializers, status
 from rest_framework.exceptions import ValidationError
@@ -79,7 +80,7 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         scope = self.request.query_params.get('scope', '')
         if scope not in {'', 'mine'}:
-            raise ValidationError({'scope': 'Phạm vi phải là mine hoặc để trống.'})
+            raise ValidationError({'scope': _('Phạm vi phải là mine hoặc để trống.')})
         recruiter = self.get_recruiter()
         if recruiter is None:
             return CompanyDocument.objects.none()
@@ -127,29 +128,29 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
     def post(self, request, *args, **kwargs):
         doc_type = request.data.get('doc_type')
         if doc_type not in CompanyDocument.DocType.values:
-            raise ValidationError({'doc_type': 'Loại giấy tờ không hợp lệ.'})
+            raise ValidationError({'doc_type': _('Loại giấy tờ không hợp lệ.')})
         upload = request.FILES.get('file')
         upload_session_public_id = (request.data.get('upload_session') or '').strip()
         source_type = request.data.get('source_type', 'file')
         if source_type not in {'file', 'website'}:
-            raise ValidationError({'source_type': 'Nguồn chứng minh không hợp lệ.'})
+            raise ValidationError({'source_type': _('Nguồn chứng minh không hợp lệ.')})
         if source_type == 'website' and doc_type != CompanyDocument.DocType.TRADE_NAME_PROOF:
             raise ValidationError(
-                {'source_type': 'Chỉ chứng minh tên thương mại được dùng Website.'}
+                {'source_type': _('Chỉ chứng minh tên thương mại được dùng Website.')}
             )
         if source_type == 'file' and not upload and not upload_session_public_id:
-            raise ValidationError({'file': 'Vui lòng chọn tệp chứng minh.'})
+            raise ValidationError({'file': _('Vui lòng chọn tệp chứng minh.')})
         if upload and upload_session_public_id:
             raise ValidationError(
-                {'upload_session': 'Không thể gửi đồng thời file thô và upload session.'}
+                {'upload_session': _('Không thể gửi đồng thời file thô và upload session.')}
             )
         if upload and settings.EMPLOYER_UPLOAD_SESSION_REQUIRED:
             raise UploadSessionRequiredResponse()
         if source_type == 'website' and upload:
-            raise ValidationError({'file': 'Không tải tệp khi chọn nguồn Website.'})
+            raise ValidationError({'file': _('Không tải tệp khi chọn nguồn Website.')})
         if source_type == 'website' and upload_session_public_id:
             raise ValidationError(
-                {'upload_session': 'Không dùng upload session khi chọn nguồn Website.'}
+                {'upload_session': _('Không dùng upload session khi chọn nguồn Website.')}
             )
         verification_method = request.data.get('verification_method')
         if (
@@ -157,7 +158,7 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
             and doc_type not in VERIFICATION_METHOD_DOCUMENT_TYPES[verification_method]
         ):
             raise ValidationError(
-                {'verification_method': 'Phương thức xác thực không khớp loại giấy tờ.'}
+                {'verification_method': _('Phương thức xác thực không khớp loại giấy tờ.')}
             )
         recruiter = self.get_recruiter()
         update_request = None
@@ -171,12 +172,14 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
             )
             if update_request is None:
                 raise ValidationError(
-                    {'update_request': 'Không tìm thấy yêu cầu cập nhật đang chờ.'}
+                    {'update_request': _('Không tìm thấy yêu cầu cập nhật đang chờ.')}
                 )
         if verification_method and update_request:
             raise ValidationError(
                 {
-                    'verification_method': 'Không dùng phương thức xác thực cho giấy tờ yêu cầu cập nhật.'
+                    'verification_method': _(
+                        'Không dùng phương thức xác thực cho giấy tờ yêu cầu cập nhật.'
+                    )
                 }
             )
         try:
@@ -184,17 +187,17 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
                 request.data.get('append', False)
             )
         except serializers.ValidationError as error:
-            raise ValidationError({'append': 'Giá trị append không hợp lệ.'}) from error
+            raise ValidationError({'append': _('Giá trị append không hợp lệ.')}) from error
         if append_to_current_set and (
             update_request is not None or doc_type != CompanyDocument.DocType.IDENTITY_DOCUMENT
         ):
             raise ValidationError(
-                {'append': ('Chỉ được thêm nhiều tệp cho giấy tờ định danh của hồ sơ xác thực.')}
+                {'append': (_('Chỉ được thêm nhiều tệp cho giấy tờ định danh của hồ sơ xác thực.'))}
             )
         replace_document_public_id = (request.data.get('replaces') or '').strip()
         if append_to_current_set and replace_document_public_id:
             raise ValidationError(
-                {'replaces': 'Không thể vừa thêm tệp mới vừa thay thế một tệp hiện hành.'}
+                {'replaces': _('Không thể vừa thêm tệp mới vừa thay thế một tệp hiện hành.')}
             )
         if source_type == 'website':
             website_url = (request.data.get('website_url') or '').strip()
@@ -202,7 +205,7 @@ class CompanyDocumentListCreateView(generics.ListCreateAPIView):
                 URLValidator(schemes=['http', 'https'])(website_url)
             except DjangoValidationError as error:
                 raise ValidationError(
-                    {'website_url': 'Nhập URL Website hợp lệ (http hoặc https).'}
+                    {'website_url': _('Nhập URL Website hợp lệ (http hoặc https).')}
                 ) from error
             document = save_company_website_proof(
                 user=request.user,

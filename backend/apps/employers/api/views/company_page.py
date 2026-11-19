@@ -1,5 +1,6 @@
 """Anonymous reads behind the public company page (ADR-0017)."""
 
+from django.utils.translation import gettext_lazy
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import permissions, serializers
@@ -19,7 +20,7 @@ from ...selectors import (
 from ..serializers import PublicCompanyListSerializer
 
 # A held page answers exactly like an unknown one so moderation state never leaks.
-COMPANY_NOT_FOUND = 'Không tìm thấy công ty.'
+COMPANY_NOT_FOUND = gettext_lazy('Không tìm thấy công ty.')
 
 
 def get_visible_company(public_id):

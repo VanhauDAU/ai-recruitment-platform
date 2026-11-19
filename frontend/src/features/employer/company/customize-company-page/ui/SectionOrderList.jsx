@@ -3,6 +3,7 @@ import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from 
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Button, Switch, Tag } from 'antd'
+import { m } from '@/shared/config/i18n'
 
 function SectionRow({ section, hidden, empty, disabled, onToggle, moves, handle, rowRef, style, dragging }) {
   return (
@@ -10,22 +11,22 @@ function SectionRow({ section, hidden, empty, disabled, onToggle, moves, handle,
       {handle}
       <div className="company-section-row__body">
         <span className="company-section-row__title">{section.title}</span>
-        {empty && <Tag>Chưa có nội dung</Tag>}
+        {empty && <Tag>{m.employer_company_section_empty()}</Tag>}
       </div>
       {moves && (
         <>
-          <Button size="small" type="text" icon={<ArrowUpOutlined />} aria-label={`Chuyển ${section.title} lên`} disabled={disabled || !moves.up} onClick={moves.up} />
-          <Button size="small" type="text" icon={<ArrowDownOutlined />} aria-label={`Chuyển ${section.title} xuống`} disabled={disabled || !moves.down} onClick={moves.down} />
+          <Button size="small" type="text" icon={<ArrowUpOutlined />} aria-label={m.employer_company_section_move_up({ title: section.title })} disabled={disabled || !moves.up} onClick={moves.up} />
+          <Button size="small" type="text" icon={<ArrowDownOutlined />} aria-label={m.employer_company_section_move_down({ title: section.title })} disabled={disabled || !moves.down} onClick={moves.down} />
         </>
       )}
       {section.always_on ? (
-        <span className="company-section-row__lock"><LockOutlined aria-hidden="true" /> Luôn hiển thị</span>
+        <span className="company-section-row__lock"><LockOutlined aria-hidden="true" /> {m.employer_company_section_always_on()}</span>
       ) : (
         <Switch
           size="small"
           checked={!hidden}
           disabled={disabled}
-          aria-label={`Hiển thị ${section.title}`}
+          aria-label={m.employer_company_section_show({ title: section.title })}
           onChange={(checked) => onToggle(section.key, checked)}
         />
       )}
@@ -75,14 +76,14 @@ export default function SectionOrderList({ sections, order, hidden, contentKeys,
   return (
     <div className="company-section-groups">
       <div>
-        <h3 className="company-layout-subheading">Cột chính</h3>
+        <h3 className="company-layout-subheading">{m.employer_company_section_main()}</h3>
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={({ active, over }) => { if (over && active.id !== over.id) move(active.id, over.id) }}
         >
           <SortableContext items={main.map((section) => section.key)} strategy={verticalListSortingStrategy}>
-            <ol className="company-section-list" aria-label="Khối cột chính">
+            <ol className="company-section-list" aria-label={m.employer_company_section_main_list()}>
               {main.map((section, index) => (
                 <SortableSectionRow
                   key={section.key}
@@ -99,8 +100,8 @@ export default function SectionOrderList({ sections, order, hidden, contentKeys,
       </div>
       {sidebar.length > 0 && (
         <div>
-          <h3 className="company-layout-subheading">Cột bên (thứ tự cố định)</h3>
-          <ul className="company-section-list" aria-label="Khối cột bên">
+          <h3 className="company-layout-subheading">{m.employer_company_section_sidebar()}</h3>
+          <ul className="company-section-list" aria-label={m.employer_company_section_sidebar_list()}>
             {sidebar.map((section) => <SectionRow key={section.key} {...rowProps(section)} />)}
           </ul>
         </div>

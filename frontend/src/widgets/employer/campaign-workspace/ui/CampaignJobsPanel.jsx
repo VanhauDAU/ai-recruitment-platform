@@ -17,18 +17,18 @@ import {
 import { jobDetailPath } from '@/entities/job/job'
 import { employerAppPath } from '@/shared/config/portals'
 import CampaignPerformanceChart from './CampaignPerformanceChart'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { getIntlLocale, m } from '@/shared/config/i18n'
 
 const JOB_STATUS = {
-  draft: ['Nháp', 'default'],
-  active: ['Đang tuyển', 'green'],
-  closed: ['Ngừng tuyển', 'default'],
+  draft: [m.employer_campaign_jobs_status_draft(), 'default'],
+  active: [m.employer_campaign_jobs_status_active(), 'green'],
+  closed: [m.employer_campaign_jobs_status_closed(), 'default'],
 }
 
 const RANGE_OPTIONS = [
-  { value: 7, label: '7 ngày qua' },
-  { value: 30, label: '30 ngày qua' },
-  { value: 90, label: '90 ngày qua' },
+  { value: 7, label: m.employer_campaign_range_7() },
+  { value: 30, label: m.employer_campaign_range_30() },
+  { value: 90, label: m.employer_campaign_range_90() },
 ]
 
 function numberValue(value) {
@@ -41,9 +41,9 @@ function formatNumber(value) {
 }
 
 function formatDate(value) {
-  if (!value) return 'Không giới hạn'
+  if (!value) return m.employer_campaign_jobs_no_deadline()
   const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? 'Không giới hạn' : date.toLocaleDateString(getIntlLocale())
+  return Number.isNaN(date.getTime()) ? m.employer_campaign_jobs_no_deadline() : date.toLocaleDateString(getIntlLocale())
 }
 
 function formatRate(value) {
@@ -54,18 +54,18 @@ function formatRate(value) {
 function JobStatus({ job, campaignPaused = false }) {
   if (job.status === 'active' && job.visibility_held) {
     return (
-      <Tooltip title="Tin đang bị tạm ẩn. Mở chi tiết tin để xem lý do.">
-        <Tag color="red">Tạm ẩn</Tag>
+      <Tooltip title={m.employer_campaign_jobs_held_tooltip()}>
+        <Tag color="red">{m.employer_campaign_jobs_hidden()}</Tag>
       </Tooltip>
     )
   }
-  if (job.is_expired) return <Tag color="orange">Hết hạn</Tag>
+  if (job.is_expired) return <Tag color="orange">{m.employer_campaign_jobs_expired()}</Tag>
   if (campaignPaused && job.status === 'active') {
     return (
-      <Tooltip title="Tin đang được ẩn vì chiến dịch đã tạm dừng">
+      <Tooltip title={m.employer_campaign_jobs_paused_tooltip()}>
         <Tag color="orange">
-          <span className="sr-only">Đang ẩn theo chiến dịch</span>
-          <span aria-hidden>Tạm ẩn</span>
+          <span className="sr-only">{m.employer_campaign_jobs_hidden_by_campaign()}</span>
+          <span aria-hidden>{m.employer_campaign_jobs_hidden()}</span>
         </Tag>
       </Tooltip>
     )
@@ -90,25 +90,25 @@ function JobActions({
     <div className="flex items-center gap-2">
       <button
         type="button"
-        aria-label={`Xem báo cáo ${job.title || 'tin tuyển dụng'}`}
+        aria-label={m.employer_campaign_jobs_view_report_aria({ title: job.title || m.employer_campaign_jobs_untitled_fallback() })}
         aria-pressed={reportSelected}
         onClick={() => onViewReport(job)}
         className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold shadow-sm transition ${reportSelected ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-300 bg-white text-slate-600 hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-700'}`}
       >
         <LineChartOutlined />
-        {reportSelected ? 'Đang xem' : 'Xem báo cáo'}
+        {reportSelected ? m.employer_campaign_jobs_viewing() : m.employer_campaign_jobs_view_report()}
       </button>
       <Tooltip
         title={
           canViewPublicJob
-            ? 'Xem tin tuyển dụng'
+            ? m.employer_campaign_jobs_view_public()
             : campaignPaused
-              ? 'Chiến dịch đang tắt'
-              : 'Tin chưa công khai'
+              ? m.employer_campaign_paused_title()
+              : m.employer_campaign_jobs_not_public()
         }
       >
         <a
-          aria-label={`Xem tin ${job.title || 'tin tuyển dụng'}`}
+          aria-label={m.employer_campaign_jobs_view_public_aria({ title: job.title || m.employer_campaign_jobs_untitled_fallback() })}
           href={canViewPublicJob ? jobDetailPath(job) : undefined}
           target={canViewPublicJob ? '_blank' : undefined}
           rel={canViewPublicJob ? 'noopener noreferrer' : undefined}
@@ -122,9 +122,9 @@ function JobActions({
         </a>
       </Tooltip>
       {!job.visibility_held && (
-        <Tooltip title="Chỉnh sửa tin">
+        <Tooltip title={m.employer_campaign_jobs_edit()}>
           <Link
-            aria-label={`Chỉnh sửa ${job.title || 'tin tuyển dụng'}`}
+            aria-label={m.employer_campaign_jobs_edit_aria({ title: job.title || m.employer_campaign_jobs_untitled_fallback() })}
             to={employerAppPath(`/jobs/${job.public_id}/edit`)}
             className={actionClassName}
           >
@@ -138,7 +138,7 @@ function JobActions({
 
 function MetricValue({ value, available = true }) {
   if (!available) {
-    return <Tooltip title="Khoảng thời gian này chưa có dữ liệu tracking"><span className="text-slate-400">—</span></Tooltip>
+    return <Tooltip title={m.employer_campaign_jobs_no_tracking()}><span className="text-slate-400">—</span></Tooltip>
   }
   return formatNumber(value)
 }
@@ -150,7 +150,7 @@ function AddJobButton({ publicId }) {
       className="inline-flex h-10 shrink-0 items-center rounded-xl px-4 text-sm font-semibold !text-white shadow-md transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
       style={{ backgroundColor: 'var(--brand-primary)', color: '#fff' }}
     >
-      <PlusOutlined aria-hidden className="mr-2" /> Thêm tin tuyển dụng
+      <PlusOutlined aria-hidden className="mr-2" /> {m.employer_campaign_jobs_add()}
     </Link>
   )
 }
@@ -162,8 +162,8 @@ function PausedCampaignAlert({ campaign }) {
       className="mb-4"
       type="warning"
       showIcon
-      title="Chiến dịch đang tắt"
-      description="Bạn vẫn có thể thêm hoặc chỉnh sửa tin. Các tin đang hoạt động hiện bị ẩn và chỉ công khai trở lại sau khi mở chiến dịch nếu còn hạn."
+      title={m.employer_campaign_paused_title()}
+      description={m.employer_campaign_jobs_paused_description()}
     />
   )
 }
@@ -217,14 +217,14 @@ export default function CampaignJobsPanel({
         <div className="flex justify-end border-b border-slate-200 pb-4"><AddJobButton publicId={publicId} /></div>
         <div className="py-16 text-center">
           <FileSearchOutlined className="text-4xl text-slate-300" />
-          <p className="mt-3 font-semibold text-slate-700">Không thể tải báo cáo tin tuyển dụng</p>
+          <p className="mt-3 font-semibold text-slate-700">{m.employer_campaign_jobs_load_error()}</p>
           <div className="mt-3 flex flex-wrap justify-center gap-3">
             {jobPublicId && (
               <button type="button" className="text-sm font-semibold text-slate-600" onClick={() => setJobPublicId('')}>
-                Xem tất cả tin
+                {m.employer_campaign_jobs_view_all()}
               </button>
             )}
-            <button type="button" className="text-sm font-semibold text-emerald-700" onClick={() => performanceQuery.refetch()}>Thử lại</button>
+            <button type="button" className="text-sm font-semibold text-emerald-700" onClick={() => performanceQuery.refetch()}>{m.employer_campaign_retry()}</button>
           </div>
         </div>
       </div>
@@ -236,7 +236,7 @@ export default function CampaignJobsPanel({
       <div className="px-4 py-5 lg:px-5">
         <PausedCampaignAlert campaign={campaign} />
         <div className="flex justify-end border-b border-slate-200 pb-4"><AddJobButton publicId={publicId} /></div>
-        <Empty className="py-20" image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chiến dịch chưa có tin tuyển dụng" />
+        <Empty className="py-20" image={Empty.PRESENTED_IMAGE_SIMPLE} description={m.employer_campaign_jobs_empty()} />
       </div>
     )
   }
@@ -247,25 +247,25 @@ export default function CampaignJobsPanel({
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4 text-sm text-slate-700">
         <div className="min-w-0">
           <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-            <span className="font-semibold">Báo cáo Tin tuyển dụng:</span>
+            <span className="font-semibold">{m.employer_campaign_jobs_report_label()}</span>
             {selectedJob ? (
               <Link to={employerAppPath(`/jobs/${selectedJob.public_id}`)} className="truncate font-semibold !text-emerald-700 hover:underline">
-                {selectedJob.title || 'Tin nháp chưa đặt tên'}
+                {selectedJob.title || m.employer_campaign_untitled_draft()}
               </Link>
             ) : (
-              <span className="font-semibold text-emerald-700">Tất cả {jobs.length} tin trong chiến dịch</span>
+              <span className="font-semibold text-emerald-700">{m.employer_campaign_jobs_all_in_campaign({ count: jobs.length })}</span>
             )}
           </div>
           <p className="mt-1 text-xs leading-5 text-slate-500">
             {selectedJob
-              ? 'Các chỉ số và biểu đồ đang hiển thị riêng tin đã chọn.'
-              : `Các chỉ số và biểu đồ đang tổng hợp toàn bộ ${jobs.length} tin tuyển dụng.`}
+              ? m.employer_campaign_jobs_scope_selected()
+              : m.employer_campaign_jobs_scope_all({ count: jobs.length })}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {selectedJob && (
             <Button onClick={() => setJobPublicId('')}>
-              Xem báo cáo tổng hợp
+              {m.employer_campaign_jobs_view_summary()}
             </Button>
           )}
           <AddJobButton publicId={publicId} />
@@ -274,11 +274,11 @@ export default function CampaignJobsPanel({
 
       <div className="grid grid-cols-2 gap-3 py-4 lg:grid-cols-5" aria-busy={isReportUpdating}>
         {[
-          ['Lượt hiển thị', performance.summary?.impressions],
-          ['Lượt xem tin', performance.summary?.views],
-          ['Lượt ứng tuyển', performance.summary?.applications],
-          ['Tỷ lệ xem', formatRate(performance.summary?.view_rate)],
-          ['Tỷ lệ ứng tuyển', formatRate(performance.summary?.application_rate)],
+          [m.employer_campaign_metric_impressions(), performance.summary?.impressions],
+          [m.employer_campaign_metric_views(), performance.summary?.views],
+          [m.employer_campaign_metric_applications(), performance.summary?.applications],
+          [m.employer_campaign_metric_view_rate(), formatRate(performance.summary?.view_rate)],
+          [m.employer_campaign_metric_application_rate(), formatRate(performance.summary?.application_rate)],
         ].map(([label, value], index) => (
           <article key={label} className={`rounded-xl border border-slate-100 bg-slate-50 p-3.5 ${index === 4 ? 'col-span-2 lg:col-span-1' : ''}`}>
             <p className="text-xs text-slate-500">{label}</p>
@@ -296,7 +296,7 @@ export default function CampaignJobsPanel({
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap gap-2">
               <Select
-                aria-label="Khoảng thời gian báo cáo"
+                aria-label={m.employer_campaign_jobs_range_aria()}
                 data-testid="campaign-performance-range"
                 value={days}
                 onChange={setDays}
@@ -304,7 +304,7 @@ export default function CampaignJobsPanel({
                 className="w-36"
               />
             </div>
-            <span className="hidden items-center gap-1.5 text-xs text-slate-400 sm:inline-flex"><LineChartOutlined /> Số liệu theo ngày</span>
+            <span className="hidden items-center gap-1.5 text-xs text-slate-400 sm:inline-flex"><LineChartOutlined /> {m.employer_campaign_jobs_daily()}</span>
           </div>
           <div aria-busy={isReportUpdating}>
             {isReportUpdating
@@ -315,14 +315,14 @@ export default function CampaignJobsPanel({
 
         <aside className="self-start rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-4 shadow-sm">
           <p className="text-sm leading-6 text-slate-600">
-            <strong className="text-slate-800">48 giờ</strong> là khoảng thời gian lý tưởng để phản hồi ứng viên. Hãy kiểm tra và trả lời ứng viên ngay!
+            <strong className="text-slate-800">{m.employer_campaign_jobs_48h()}</strong>{m.employer_campaign_jobs_48h_tip()}
           </p>
           {candidateDataAccess && (
             <Link
               to={employerAppPath(`/applications?campaign=${publicId}`)}
               className="mt-4 inline-flex h-9 items-center gap-2 rounded bg-emerald-50 px-3 text-sm font-semibold !text-emerald-700 hover:bg-emerald-100"
             >
-              <FileSearchOutlined /> Kiểm tra CV
+              <FileSearchOutlined /> {m.employer_campaign_jobs_check_cv()}
             </Link>
           )}
         </aside>
@@ -330,18 +330,18 @@ export default function CampaignJobsPanel({
 
       <div className="mt-1 flex flex-col gap-3 rounded-t-2xl border border-slate-200 bg-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-sm font-bold text-slate-800">Hiệu quả theo từng tin</h3>
-          <p className="mt-0.5 text-xs text-slate-400">So sánh tất cả tin trong khoảng thời gian báo cáo, độc lập với phạm vi biểu đồ.</p>
+          <h3 className="text-sm font-bold text-slate-800">{m.employer_campaign_jobs_table_title()}</h3>
+          <p className="mt-0.5 text-xs text-slate-400">{m.employer_campaign_jobs_table_description()}</p>
         </div>
         <Select
-          aria-label="Lọc bảng theo trạng thái"
+          aria-label={m.employer_campaign_jobs_status_filter_aria()}
           value={status}
           onChange={setStatus}
           className="w-full sm:w-40"
           options={[
-            { value: '', label: 'Tất cả trạng thái' },
+            { value: '', label: m.employer_campaign_jobs_all_statuses() },
             ...Object.entries(JOB_STATUS).map(([value, [label]]) => ({ value, label })),
-            { value: 'expired', label: 'Hết hạn' },
+            { value: 'expired', label: m.employer_campaign_jobs_expired() },
           ]}
         />
       </div>
@@ -354,7 +354,7 @@ export default function CampaignJobsPanel({
           scroll={{ x: 1120 }}
           columns={[
             {
-              title: 'Thao tác',
+              title: m.employer_campaign_jobs_col_actions(),
               width: 250,
               render: (_, job) => (
                 <JobActions
@@ -366,32 +366,32 @@ export default function CampaignJobsPanel({
               ),
             },
             {
-              title: 'Tin tuyển dụng',
+              title: m.employer_campaign_jobs_col_job(),
               width: 250,
               render: (_, job) => (
                 <div className="min-w-48">
-                  <Link className="font-semibold !text-emerald-700 hover:underline" to={employerAppPath(`/jobs/${job.public_id}`)}>{job.title || 'Tin nháp chưa đặt tên'}</Link>
-                  <div className="mt-2 flex flex-wrap items-center gap-1.5"><JobStatus job={job} campaignPaused={campaign?.status === 'paused'} /><span className="text-xs text-slate-400">Hạn {formatDate(job.deadline)}</span></div>
+                  <Link className="font-semibold !text-emerald-700 hover:underline" to={employerAppPath(`/jobs/${job.public_id}`)}>{job.title || m.employer_campaign_untitled_draft()}</Link>
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5"><JobStatus job={job} campaignPaused={campaign?.status === 'paused'} /><span className="text-xs text-slate-400">{m.employer_campaign_jobs_deadline({ date: formatDate(job.deadline) })}</span></div>
                 </div>
               ),
             },
             {
-              title: 'Số lần hiển thị',
+              title: m.employer_campaign_jobs_col_impressions(),
               align: 'right',
               render: (_, job) => <MetricValue value={job.impressions} available={job.available} />,
             },
             {
-              title: 'Số lượt xem',
+              title: m.employer_campaign_jobs_col_views(),
               align: 'right',
               render: (_, job) => <MetricValue value={job.views} available={job.available} />,
             },
             {
-              title: <Tooltip title="Số lượt xem / số lần hiển thị × 100"><span>Tỷ lệ xem tin <InfoCircleOutlined /></span></Tooltip>,
+              title: <Tooltip title={m.employer_campaign_jobs_view_rate_formula()}><span>{m.employer_campaign_jobs_col_view_rate()} <InfoCircleOutlined /></span></Tooltip>,
               align: 'right',
               render: (_, job) => <strong className="text-slate-700">{formatRate(job.view_rate)}</strong>,
             },
             {
-              title: 'Số lượt ứng tuyển',
+              title: m.employer_campaign_jobs_col_applications(),
               align: 'right',
               render: (_, job) => (
                 job.available && candidateDataAccess
@@ -400,7 +400,7 @@ export default function CampaignJobsPanel({
               ),
             },
             {
-              title: <Tooltip title="Số lần gửi CV / số lượt xem × 100; có thể lớn hơn 100% khi ứng tuyển lại"><span>Tỷ lệ ứng tuyển <InfoCircleOutlined /></span></Tooltip>,
+              title: <Tooltip title={m.employer_campaign_jobs_application_rate_formula()}><span>{m.employer_campaign_jobs_col_application_rate()} <InfoCircleOutlined /></span></Tooltip>,
               align: 'right',
               render: (_, job) => <strong className="text-slate-700">{formatRate(job.application_rate)}</strong>,
             },
@@ -409,9 +409,9 @@ export default function CampaignJobsPanel({
       </div>
 
       <div className="mt-3 space-y-1 text-xs leading-5 text-slate-500">
-        <p><InfoCircleOutlined className="mr-1.5" />Dữ liệu của phạm vi đã chọn bắt đầu từ {formatDate(performance.data_available_from)}; các ngày trước đó hiển thị “—”, không được coi là 0.</p>
-        <p>Chỉ bao gồm lượt hiển thị và lượt xem của người dùng đã đồng ý Analytics. Số lượt ứng tuyển tính mọi lần gửi CV, bao gồm ứng tuyển lại.</p>
-        <p>Số liệu có thể có độ trễ ngắn và không cập nhật tức thời.</p>
+        <p><InfoCircleOutlined className="mr-1.5" />{m.employer_campaign_jobs_note_data_from({ date: formatDate(performance.data_available_from) })}</p>
+        <p>{m.employer_campaign_jobs_note_analytics()}</p>
+        <p>{m.employer_campaign_jobs_note_delay()}</p>
       </div>
     </div>
   )

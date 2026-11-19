@@ -13,6 +13,7 @@ import hmac
 from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.utils.translation import gettext as _
 
 from apps.employers.domain.phone import canonical_vn_mobile
 
@@ -25,7 +26,7 @@ def normalize_vietnamese_mobile(value):
     """Return canonical +84 mobile form or raise a domain validation error."""
     canonical = canonical_vn_mobile(value)
     if canonical is None:
-        raise ValidationError('Số điện thoại phải là số di động Việt Nam hợp lệ.')
+        raise ValidationError(_('Số điện thoại phải là số di động Việt Nam hợp lệ.'))
     return canonical
 
 

@@ -3,6 +3,7 @@
 Phiên gắn với đúng row user (một cổng) đang đăng nhập; thu hồi luôn scope theo
 `request.user`, không đụng tài khoản cùng email ở cổng khác."""
 
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import permissions, serializers, status
 from rest_framework.response import Response
@@ -87,4 +88,4 @@ class SessionRevokeOthersView(APIView):
     )
     def post(self, request):
         auth_sessions.revoke_other_sessions(request.user, _current_sid(request))
-        return Response({'detail': 'Đã đăng xuất khỏi các thiết bị khác.'})
+        return Response({'detail': _('Đã đăng xuất khỏi các thiết bị khác.')})

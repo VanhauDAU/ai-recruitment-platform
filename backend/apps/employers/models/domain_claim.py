@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy
 
 from common.db.public_id import generate_public_id
 
@@ -24,17 +25,17 @@ class CompanyDomainClaim(models.Model):
 
     class Method(models.TextChoices):
         DNS_TXT = 'dns_txt', 'DNS TXT'
-        ADMIN_MANUAL = 'admin_manual', 'Quản trị duyệt thủ công'
-        LEGACY_INFERRED = 'legacy_inferred', 'Suy luận từ dữ liệu cũ'
+        ADMIN_MANUAL = 'admin_manual', gettext_lazy('Quản trị duyệt thủ công')
+        LEGACY_INFERRED = 'legacy_inferred', gettext_lazy('Suy luận từ dữ liệu cũ')
 
     class Status(models.TextChoices):
-        PENDING = 'pending', 'Chờ xác minh'
-        VERIFIED = 'verified', 'Đã xác minh'
-        GRACE = 'grace', 'Thời gian gia hạn'
-        REJECTED = 'rejected', 'Bị từ chối'
-        REVOKED = 'revoked', 'Đã thu hồi'
-        EXPIRED = 'expired', 'Hết hiệu lực'
-        LEGACY_INFERRED = 'legacy_inferred', 'Chưa xác minh (dữ liệu cũ)'
+        PENDING = 'pending', gettext_lazy('Chờ xác minh')
+        VERIFIED = 'verified', gettext_lazy('Đã xác minh')
+        GRACE = 'grace', gettext_lazy('Thời gian gia hạn')
+        REJECTED = 'rejected', gettext_lazy('Bị từ chối')
+        REVOKED = 'revoked', gettext_lazy('Đã thu hồi')
+        EXPIRED = 'expired', gettext_lazy('Hết hiệu lực')
+        LEGACY_INFERRED = 'legacy_inferred', gettext_lazy('Chưa xác minh (dữ liệu cũ)')
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     company = models.ForeignKey(
@@ -108,17 +109,20 @@ class CompanyDomainClaimEvent(models.Model):
     """Append-only security/audit timeline for a company domain claim."""
 
     class EventType(models.TextChoices):
-        CHALLENGE_CREATED = 'challenge_created', 'Đã tạo challenge'
-        CHALLENGE_ROTATED = 'challenge_rotated', 'Đã đổi challenge'
-        DNS_CHECK_PASSED = 'dns_check_passed', 'DNS hợp lệ'
-        DNS_CHECK_FAILED = 'dns_check_failed', 'DNS chưa hợp lệ'
-        MANUAL_REVIEW_REQUESTED = 'manual_review_requested', 'Đã yêu cầu duyệt thủ công'
-        MANUAL_APPROVED = 'manual_approved', 'Đã duyệt thủ công'
-        MANUAL_REJECTED = 'manual_rejected', 'Đã từ chối thủ công'
-        GRACE_STARTED = 'grace_started', 'Bắt đầu thời gian gia hạn'
-        REVERIFIED = 'reverified', 'Đã xác minh lại'
-        REVOKED = 'revoked', 'Đã thu hồi'
-        EXPIRED = 'expired', 'Đã hết hiệu lực'
+        CHALLENGE_CREATED = 'challenge_created', gettext_lazy('Đã tạo challenge')
+        CHALLENGE_ROTATED = 'challenge_rotated', gettext_lazy('Đã đổi challenge')
+        DNS_CHECK_PASSED = 'dns_check_passed', gettext_lazy('DNS hợp lệ')
+        DNS_CHECK_FAILED = 'dns_check_failed', gettext_lazy('DNS chưa hợp lệ')
+        MANUAL_REVIEW_REQUESTED = (
+            'manual_review_requested',
+            gettext_lazy('Đã yêu cầu duyệt thủ công'),
+        )
+        MANUAL_APPROVED = 'manual_approved', gettext_lazy('Đã duyệt thủ công')
+        MANUAL_REJECTED = 'manual_rejected', gettext_lazy('Đã từ chối thủ công')
+        GRACE_STARTED = 'grace_started', gettext_lazy('Bắt đầu thời gian gia hạn')
+        REVERIFIED = 'reverified', gettext_lazy('Đã xác minh lại')
+        REVOKED = 'revoked', gettext_lazy('Đã thu hồi')
+        EXPIRED = 'expired', gettext_lazy('Đã hết hiệu lực')
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     claim = models.ForeignKey(

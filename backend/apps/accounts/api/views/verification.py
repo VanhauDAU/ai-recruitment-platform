@@ -1,5 +1,6 @@
 """Xác thực email: gửi/xác nhận link, đổi email — workflow ở services/."""
 
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import permissions, serializers
 from rest_framework.response import Response
@@ -36,7 +37,7 @@ class VerificationSendView(APIView):
         retry_after = resend_verification_email(request.user)
         return Response(
             {
-                'detail': 'Email xác thực đang được gửi. Vui lòng kiểm tra hòm thư sau ít phút.',
+                'detail': _('Email xác thực đang được gửi. Vui lòng kiểm tra hòm thư sau ít phút.'),
                 'retry_after': retry_after,
             }
         )
@@ -55,7 +56,7 @@ class VerificationConfirmView(APIView):
 
     def post(self, request):
         confirm_email_verification(request.data.get('token'))
-        return Response({'detail': 'Xác thực email thành công.'})
+        return Response({'detail': _('Xác thực email thành công.')})
 
 
 @extend_schema(

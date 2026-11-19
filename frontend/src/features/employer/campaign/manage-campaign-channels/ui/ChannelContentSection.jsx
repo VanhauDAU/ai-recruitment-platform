@@ -4,13 +4,14 @@ import { Button, Checkbox, Input } from 'antd'
 import { useState } from 'react'
 import { campaignKeys, generateCampaignChannelContent, updateCampaignChannel } from '@/entities/campaign/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
 import { copyText, postText } from '../lib/channel-kinds'
 import SocialPostPreview from './SocialPostPreview'
 
 const FALLBACK_NOTES = {
-  ai_disabled: 'AI đang tắt nên dùng mẫu có sẵn. Hãy đọc lại và sửa cho hợp.',
-  ai_failed: 'AI chưa trả lời được nên dùng mẫu có sẵn. Bạn có thể sửa hoặc soạn lại.',
+  ai_disabled: m.employer_campaign_content_ai_disabled(),
+  ai_failed: m.employer_campaign_content_ai_failed(),
 }
 
 // Nội dung bài của kênh: xem trước, sao chép, soạn bằng AI và ghi nhận đã đăng tay.
@@ -26,15 +27,15 @@ export default function ChannelContentSection({ campaign, channel, editable, onE
     onSuccess: (data) => {
       refresh()
       message[data.fallback_reason ? 'info' : 'success'](
-        FALLBACK_NOTES[data.fallback_reason] || 'AI đã soạn xong. Hãy đọc lại trước khi đăng.',
+        FALLBACK_NOTES[data.fallback_reason] || m.employer_campaign_content_ai_done(),
       )
     },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể soạn nội dung.')),
+    onError: (error) => message.error(getApiErrorMessage(error, m.employer_campaign_content_generate_error())),
   })
   const update = useMutation({
     mutationFn: (payload) => updateCampaignChannel(campaign.public_id, channel.public_id, payload),
     onSuccess: refresh,
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể cập nhật kênh.')),
+    onError: (error) => message.error(getApiErrorMessage(error, m.employer_campaign_content_update_error())),
   })
   const text = postText(channel.rendered_content)
   const manual = channel.kind !== 'facebook_page'
@@ -50,32 +51,32 @@ export default function ChannelContentSection({ campaign, channel, editable, onE
       />
       <div className="ch-content__side">
         <div className="ch-actions">
-          <Button type="primary" icon={<CopyOutlined aria-hidden />} disabled={!text} onClick={() => copyText(text, 'nội dung', message)}>
-            Sao chép bài
+          <Button type="primary" icon={<CopyOutlined aria-hidden />} disabled={!text} onClick={() => copyText(text, m.employer_campaign_content_copy_label(), message)}>
+            {m.employer_campaign_content_copy()}
           </Button>
           {editable && (
             <>
               <Button icon={<RobotOutlined aria-hidden />} loading={generate.isPending} onClick={() => generate.mutate()}>
-                {text ? 'Soạn lại bằng AI' : 'Soạn bằng AI'}
+                {text ? m.employer_campaign_content_regenerate() : m.employer_campaign_content_generate()}
               </Button>
-              <Button icon={<EditOutlined aria-hidden />} onClick={() => onEditContent(channel)}>Sửa tay</Button>
+              <Button icon={<EditOutlined aria-hidden />} onClick={() => onEditContent(channel)}>{m.employer_campaign_content_edit_manually()}</Button>
             </>
           )}
         </div>
         <p className="ch-section-note">
           {channel.content_source === 'ai'
-            ? 'Nội dung do AI soạn từ thông tin công khai của tin tuyển dụng. Đọc lại trước khi đăng.'
-            : 'AI soạn nội dung theo đặc điểm kênh, chỉ dùng thông tin công khai của tin tuyển dụng.'}
+            ? m.employer_campaign_content_source_ai()
+            : m.employer_campaign_content_source_hint()}
         </p>
         {manual && editable && (
           <div className="ch-manual">
             <Checkbox checked={Boolean(channel.posted_at)} onChange={(event) => update.mutate({ posted: event.target.checked })}>
-              Tôi đã đăng bài lên kênh này
+              {m.employer_campaign_content_posted()}
             </Checkbox>
             {channel.posted_at && (
               <Input
                 value={postedUrl}
-                placeholder="Dán link bài đã đăng để mở lại sau (không bắt buộc)"
+                placeholder={m.employer_campaign_content_posted_url_placeholder()}
                 onChange={(event) => setPostedUrl(event.target.value)}
                 onBlur={() => postedUrl !== (channel.posted_url || '') && update.mutate({ posted_url: postedUrl.trim() })}
               />

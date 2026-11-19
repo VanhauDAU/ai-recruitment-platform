@@ -1,24 +1,24 @@
-<!doctype html>
-<html lang="vi">
+{% load i18n %}<!doctype html>
+{% get_current_language as LANGUAGE_CODE %}<html lang="{{ LANGUAGE_CODE }}">
 <body style="margin:0;padding:24px;background:#f4f7f6;font-family:Arial,sans-serif;color:#0f2a24;">
   <table role="presentation" width="100%" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;padding:24px;">
     <tr><td>
-      <p style="margin:0;font-size:13px;color:#047857;font-weight:bold;">Báo cáo tuần</p>
+      <p style="margin:0;font-size:13px;color:#047857;font-weight:bold;">{% translate "Báo cáo tuần" %}</p>
       <h1 style="margin:4px 0 16px;font-size:20px;">{{ campaign.name }}</h1>
-      <p style="margin:0 0 16px;font-size:15px;">Tình trạng: <strong>{{ status_label }}</strong></p>
+      <p style="margin:0 0 16px;font-size:15px;">{% translate "Tình trạng:" %} <strong>{{ status_label }}</strong></p>
       <table role="presentation" width="100%" style="border-collapse:collapse;font-size:14px;">
-        <tr><td style="padding:6px 0;color:#64748b;">Hồ sơ mới trong 7 ngày</td><td style="text-align:right;font-weight:bold;">{{ new_applications }}</td></tr>
-        <tr><td style="padding:6px 0;color:#64748b;">Đã tuyển</td><td style="text-align:right;font-weight:bold;">{{ health.accepted }}/{{ health.headcount }} người</td></tr>
-        <tr><td style="padding:6px 0;color:#64748b;">Dự báo tuyển được</td><td style="text-align:right;font-weight:bold;">{{ health.forecast }} người</td></tr>
-        <tr><td style="padding:6px 0;color:#64748b;">Hồ sơ chờ quá 48 giờ</td><td style="text-align:right;font-weight:bold;{% if backlog_alert %}color:#b45309;{% endif %}">{{ health.response.backlog }}</td></tr>
+        <tr><td style="padding:6px 0;color:#64748b;">{% translate "Hồ sơ mới trong 7 ngày" %}</td><td style="text-align:right;font-weight:bold;">{{ new_applications }}</td></tr>
+        <tr><td style="padding:6px 0;color:#64748b;">{% translate "Đã tuyển" %}</td><td style="text-align:right;font-weight:bold;">{% with target=health.headcount %}{% blocktranslate trimmed with accepted=health.accepted %}{{ accepted }}/{{ target }} người{% endblocktranslate %}{% endwith %}</td></tr>
+        <tr><td style="padding:6px 0;color:#64748b;">{% translate "Dự báo tuyển được" %}</td><td style="text-align:right;font-weight:bold;">{% blocktranslate trimmed with forecast=health.forecast %}{{ forecast }} người{% endblocktranslate %}</td></tr>
+        <tr><td style="padding:6px 0;color:#64748b;">{% translate "Hồ sơ chờ quá 48 giờ" %}</td><td style="text-align:right;font-weight:bold;{% if backlog_alert %}color:#b45309;{% endif %}">{{ health.response.backlog }}</td></tr>
       </table>
-      {% if health.required_velocity %}<p style="margin:16px 0 0;font-size:14px;">Cần khoảng <strong>{{ health.required_velocity }} hồ sơ mỗi ngày</strong> để kịp chỉ tiêu.</p>{% endif %}
+      {% if health.required_velocity %}<p style="margin:16px 0 0;font-size:14px;">{% blocktranslate trimmed with velocity=health.required_velocity %}Cần khoảng <strong>{{ velocity }} hồ sơ mỗi ngày</strong> để kịp chỉ tiêu.{% endblocktranslate %}</p>{% endif %}
       {% if top_channels %}
-      <p style="margin:20px 0 6px;font-size:14px;font-weight:bold;">Kênh mang lại nhiều hồ sơ nhất</p>
-      <ul style="margin:0;padding-left:18px;font-size:14px;">{% for channel in top_channels %}<li>{{ channel.label }}: {{ channel.total }} hồ sơ</li>{% endfor %}</ul>
+      <p style="margin:20px 0 6px;font-size:14px;font-weight:bold;">{% translate "Kênh mang lại nhiều hồ sơ nhất" %}</p>
+      <ul style="margin:0;padding-left:18px;font-size:14px;">{% for channel in top_channels %}<li>{% blocktranslate trimmed with label=channel.label total=channel.total %}{{ label }}: {{ total }} hồ sơ{% endblocktranslate %}</li>{% endfor %}</ul>
       {% endif %}
-      <p style="margin:24px 0 0;"><a href="{{ campaign_url }}" style="display:inline-block;padding:10px 18px;background:#059669;color:#ffffff;border-radius:8px;text-decoration:none;font-weight:bold;">Xem chi tiết chiến dịch</a></p>
-      <p style="margin:24px 0 0;font-size:12px;color:#94a3b8;">Tắt email này trong Cài đặt tài khoản, mục Cài đặt, phần thông báo.</p>
+      <p style="margin:24px 0 0;"><a href="{{ campaign_url }}" style="display:inline-block;padding:10px 18px;background:#059669;color:#ffffff;border-radius:8px;text-decoration:none;font-weight:bold;">{% translate "Xem chi tiết chiến dịch" %}</a></p>
+      <p style="margin:24px 0 0;font-size:12px;color:#94a3b8;">{% translate "Tắt email này trong Cài đặt tài khoản, mục Cài đặt, phần thông báo." %}</p>
     </td></tr>
   </table>
 </body>

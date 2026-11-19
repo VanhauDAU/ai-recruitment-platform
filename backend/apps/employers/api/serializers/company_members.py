@@ -1,3 +1,4 @@
+from django.utils.translation import gettext, gettext_lazy
 from rest_framework import serializers
 
 from common.storage.media import media_url_from_value
@@ -6,15 +7,15 @@ from ...models import EmployerVerificationCase, RecruiterProfile
 from ...services import MEMBER_REMOVAL_BLOCKERS
 
 VERIFICATION_LABELS = {
-    '': 'Chưa nộp hồ sơ xác thực',
-    EmployerVerificationCase.Status.DRAFT: 'Chưa nộp hồ sơ xác thực',
-    EmployerVerificationCase.Status.PENDING: 'Đang chờ duyệt',
-    EmployerVerificationCase.Status.IN_REVIEW: 'Đang được xem xét',
-    EmployerVerificationCase.Status.CHANGES_REQUESTED: 'Cần bổ sung giấy tờ',
-    EmployerVerificationCase.Status.APPROVED: 'Đã xác thực',
-    EmployerVerificationCase.Status.REJECTED: 'Bị từ chối',
-    EmployerVerificationCase.Status.REVOKED: 'Đã bị thu hồi',
-    EmployerVerificationCase.Status.EXPIRED: 'Đã hết hiệu lực',
+    '': gettext_lazy('Chưa nộp hồ sơ xác thực'),
+    EmployerVerificationCase.Status.DRAFT: gettext_lazy('Chưa nộp hồ sơ xác thực'),
+    EmployerVerificationCase.Status.PENDING: gettext_lazy('Đang chờ duyệt'),
+    EmployerVerificationCase.Status.IN_REVIEW: gettext_lazy('Đang được xem xét'),
+    EmployerVerificationCase.Status.CHANGES_REQUESTED: gettext_lazy('Cần bổ sung giấy tờ'),
+    EmployerVerificationCase.Status.APPROVED: gettext_lazy('Đã xác thực'),
+    EmployerVerificationCase.Status.REJECTED: gettext_lazy('Bị từ chối'),
+    EmployerVerificationCase.Status.REVOKED: gettext_lazy('Đã bị thu hồi'),
+    EmployerVerificationCase.Status.EXPIRED: gettext_lazy('Đã hết hiệu lực'),
 }
 
 
@@ -104,14 +105,18 @@ class CompanyMemberSerializer(serializers.ModelSerializer):
         return 'manager' if self._is_manager(obj) else 'member'
 
     def get_role_label(self, obj) -> str:
-        return 'Quản lý công ty' if self._is_manager(obj) else 'Thành viên'
+        return gettext('Quản lý công ty') if self._is_manager(obj) else gettext('Thành viên')
 
     def get_verification_status(self, obj) -> str:
         case = getattr(obj, 'verification_case', None)
         return case.status if case is not None else ''
 
     def get_verification_label(self, obj) -> str:
-        return VERIFICATION_LABELS.get(self.get_verification_status(obj), 'Chưa nộp hồ sơ xác thực')
+        return str(
+            VERIFICATION_LABELS.get(
+                self.get_verification_status(obj), gettext('Chưa nộp hồ sơ xác thực')
+            )
+        )
 
     def get_page_editor_grant_id(self, obj) -> str | None:
         grant = next(iter(obj.active_page_grants), None)
@@ -143,13 +148,13 @@ class CompanyMemberSerializer(serializers.ModelSerializer):
     def get_removal_blockers(self, obj) -> list[str]:
         """Same rules as the removal service, read from the list annotations."""
         if self._is_manager(obj):
-            return ['Hãy chuyển quyền quản lý trước khi rời vai trò này']
+            return [gettext('Hãy chuyển quyền quản lý trước khi rời vai trò này')]
         found = {
             'ACTIVE_JOBS_EXIST': obj.active_job_count,
             'OPEN_CAMPAIGNS_EXIST': obj.open_campaign_count,
             'COMPLIANCE_HOLDS_EXIST': obj.has_compliance_hold,
         }
-        return [MEMBER_REMOVAL_BLOCKERS[code] for code, present in found.items() if present]
+        return [str(MEMBER_REMOVAL_BLOCKERS[code]) for code, present in found.items() if present]
 
 
 class FormerCompanyMemberSerializer(serializers.ModelSerializer):

@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Button, Checkbox, Form, Input, Popover, Select } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { getWards } from '@/entities/system/location'
+import { m } from '@/shared/config/i18n'
 
 const sameId = (left, right) => String(left) === String(right)
 const includesId = (ids, id) => ids.some((item) => sameId(item, id))
@@ -50,7 +51,7 @@ function WardPicker({ open, wards, loading, allWardId, onOpenChange, onApply }) 
       open={open}
       trigger="click"
       placement="bottomLeft"
-      title="Chọn phường/xã"
+      title={m.employer_job_location_choose_ward()}
       onOpenChange={(nextOpen) => {
         if (nextOpen) {
           setSearch('')
@@ -66,13 +67,13 @@ function WardPicker({ open, wards, loading, allWardId, onOpenChange, onApply }) 
             ref={searchInputRef}
             allowClear
             prefix={<SearchOutlined className="text-slate-400" />}
-            placeholder="Tìm kiếm phường/xã"
+            placeholder={m.employer_job_location_search_ward()}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
           <div className="mt-3 max-h-64 overflow-y-auto rounded-lg border border-slate-200">
-            {loading && <p className="p-4 text-sm text-slate-500">Đang tải phường/xã...</p>}
-            {!loading && visibleWards.length === 0 && <p className="p-4 text-sm text-slate-500">Không tìm thấy phường/xã phù hợp.</p>}
+            {loading && <p className="p-4 text-sm text-slate-500">{m.employer_job_location_loading_wards()}</p>}
+            {!loading && visibleWards.length === 0 && <p className="p-4 text-sm text-slate-500">{m.employer_job_location_no_wards()}</p>}
             {!loading && visibleWards.map((ward) => (
               <label key={ward.id} className="flex cursor-pointer items-center gap-3 border-b border-slate-100 px-3 py-2.5 last:border-b-0 hover:bg-emerald-50">
                 <Checkbox checked={includesId(draftIds, ward.id)} onChange={() => toggleWard(ward.id)} />
@@ -81,7 +82,7 @@ function WardPicker({ open, wards, loading, allWardId, onOpenChange, onApply }) 
             ))}
           </div>
           <div className="mt-3 flex justify-end gap-2">
-            <Button size="small" onClick={close}>Hủy</Button>
+            <Button size="small" onClick={close}>{m.employer_job_form_cancel()}</Button>
             <Button
               size="small"
               type="primary"
@@ -91,13 +92,13 @@ function WardPicker({ open, wards, loading, allWardId, onOpenChange, onApply }) 
                 onApply(draftIds)
               }}
             >
-              Áp dụng ({draftIds.length})
+              {m.employer_job_location_apply({ count: draftIds.length })}
             </Button>
           </div>
         </div>
       )}
     >
-      <Button type="dashed" icon={<PlusOutlined />}>Thêm phường/xã</Button>
+      <Button type="dashed" icon={<PlusOutlined />}>{m.employer_job_location_add_ward()}</Button>
     </Popover>
   )
 }
@@ -110,15 +111,15 @@ function WorkplaceRow({ areaIndex, index, wards, loading, onRemove }) {
       <Form.Item
         className="!mb-0"
         name={locationPath}
-        rules={[{ required: true, message: 'Chọn phường/xã.' }]}
+        rules={[{ required: true, message: m.employer_job_location_ward_required() }]}
       >
         <Select
           ref={wardSelectRef}
-          aria-label={`Phường/xã ${index + 1} của khu vực ${areaIndex + 1}`}
+          aria-label={m.employer_job_location_ward_aria({ index: index + 1, area: areaIndex + 1 })}
           showSearch
           optionFilterProp="label"
           loading={loading}
-          placeholder="Chọn phường/xã"
+          placeholder={m.employer_job_location_choose_ward()}
           onOpenChange={(nextOpen) => {
             if (nextOpen) focusAfterOpen(wardSelectRef)
           }}
@@ -132,13 +133,13 @@ function WorkplaceRow({ areaIndex, index, wards, loading, onRemove }) {
         className="!mb-0"
         name={[areaIndex, 'workplaces', index, 'address_detail']}
       >
-        <Input aria-label={`Địa điểm chi tiết ${index + 1} của khu vực ${areaIndex + 1}`} placeholder="Nhập địa điểm chi tiết..." />
+        <Input aria-label={m.employer_job_location_address_aria({ index: index + 1, area: areaIndex + 1 })} placeholder={m.employer_job_location_address_placeholder()} />
       </Form.Item>
       <Button
         className="!absolute right-0 top-0"
         type="text"
         icon={<CloseOutlined />}
-        aria-label={`Xóa phường/xã ${index + 1} của khu vực ${areaIndex + 1}`}
+        aria-label={m.employer_job_location_remove_ward_aria({ index: index + 1, area: areaIndex + 1 })}
         onClick={onRemove}
       />
     </div>
@@ -160,7 +161,7 @@ function WorkArea({ field, index, form, provinces, canRemove, onRemove }) {
   })
   const selectableWards = useMemo(() => (
     provinceId
-      ? [{ id: provinceId, name: 'Tất cả' }, ...(wardsQuery.data || [])]
+      ? [{ id: provinceId, name: m.employer_job_location_all() }, ...(wardsQuery.data || [])]
       : []
   ), [provinceId, wardsQuery.data])
   const selectedWardIds = workplaces
@@ -177,19 +178,19 @@ function WorkArea({ field, index, form, provinces, canRemove, onRemove }) {
     <section className="rounded-lg border border-slate-200 bg-white p-3 sm:p-4">
       <div className="flex flex-wrap items-center gap-3">
         <UpOutlined className="text-xs text-slate-500" />
-        <span className="text-sm font-semibold text-slate-500">Khu vực {index + 1}:</span>
+        <span className="text-sm font-semibold text-slate-500">{m.employer_job_location_area_n({ index: index + 1 })}</span>
         <Form.Item
           className="!mb-0 min-w-[180px] flex-1 sm:max-w-[340px]"
           name={[field.name, 'province_id']}
-          rules={[{ required: true, message: 'Chọn tỉnh/thành phố.' }]}
+          rules={[{ required: true, message: m.employer_job_location_province_required() }]}
         >
           <Select
             ref={provinceSelectRef}
-            aria-label={`Khu vực ${index + 1} - Tỉnh/thành phố`}
+            aria-label={m.employer_job_location_province_aria({ index: index + 1 })}
             showSearch
             optionFilterProp="label"
             options={provinces.map((item) => ({ value: item.id, label: item.name }))}
-            placeholder="Chọn tỉnh/thành phố"
+            placeholder={m.employer_job_location_province_placeholder()}
             onOpenChange={(nextOpen) => {
               if (nextOpen) focusAfterOpen(provinceSelectRef)
             }}
@@ -202,7 +203,7 @@ function WorkArea({ field, index, form, provinces, canRemove, onRemove }) {
           type="text"
           icon={<DeleteOutlined />}
           disabled={!canRemove}
-          aria-label={`Xóa khu vực ${index + 1}`}
+          aria-label={m.employer_job_location_remove_area_aria({ index: index + 1 })}
           onClick={onRemove}
         />
       </div>
@@ -210,7 +211,7 @@ function WorkArea({ field, index, form, provinces, canRemove, onRemove }) {
       <div className="mt-4 space-y-3">
         {!provinceId && (
           <p className="border-t border-slate-100 pt-3 text-sm text-slate-500">
-            Chọn tỉnh/thành phố trước khi thêm phường/xã và địa điểm chi tiết.
+            {m.employer_job_location_province_first()}
           </p>
         )}
         {provinceId && (
@@ -256,7 +257,7 @@ function WorkArea({ field, index, form, provinces, canRemove, onRemove }) {
                   icon={<DeleteOutlined />}
                   onClick={() => form.setFieldValue(['work_areas', field.name, 'workplaces'], [])}
                 >
-                  Xóa tất cả ({selectedWardIds.length})
+                  {m.employer_job_location_clear_all({ count: selectedWardIds.length })}
                 </Button>
               )}
             </div>
@@ -284,7 +285,7 @@ export default function JobLocationFields({ form, provinces }) {
             />
           ))}
           <Button size="small" type="dashed" icon={<PlusOutlined />} onClick={() => add({ workplaces: [] })}>
-            Thêm khu vực làm việc
+            {m.employer_job_location_add_area()}
           </Button>
         </div>
       )}

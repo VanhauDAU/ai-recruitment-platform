@@ -32,7 +32,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import RichTextImageLibrary from './RichTextImageLibrary'
 import { RichTextImage } from './rich-text-image'
 import './rich-text-editor.css'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { getIntlLocale, m } from '@/shared/config/i18n'
 
 function ToolbarButton({ title, active = false, disabled = false, onClick, children }) {
   return (
@@ -60,8 +60,8 @@ function ProductLinkControl({ disabled, links, onInsert }) {
       open={open}
       onOpenChange={(next) => { if (!disabled) setOpen(next) }}
       content={(
-        <div className="flex min-w-48 flex-col gap-1 p-1" aria-label="Chèn liên kết sản phẩm">
-          <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">Liên kết nhanh</p>
+        <div className="flex min-w-48 flex-col gap-1 p-1" aria-label={m.ui_rich_insert_product_link()}>
+          <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">{m.ui_rich_quick_links()}</p>
           {links.map((item) => (
             <Button
               key={item.href}
@@ -81,7 +81,7 @@ function ProductLinkControl({ disabled, links, onInsert }) {
       )}
     >
       <span>
-        <ToolbarButton title="Chèn liên kết sản phẩm" disabled={disabled} onClick={() => setOpen(true)}>
+        <ToolbarButton title={m.ui_rich_insert_product_link()} disabled={disabled} onClick={() => setOpen(true)}>
           <span className="inline-flex items-center gap-0.5 text-xs font-semibold"><LinkOutlined />+</span>
         </ToolbarButton>
       </span>
@@ -101,38 +101,38 @@ function TableInsertControl({ editor, disabled }) {
   }
 
   const content = (
-    <div className="rich-table-insert" aria-label="Tùy chọn chèn bảng">
-      <p className="rich-table-insert__title">Kích thước bảng</p>
+    <div className="rich-table-insert" aria-label={m.ui_rich_table_options()}>
+      <p className="rich-table-insert__title">{m.ui_rich_table_size()}</p>
       <div className="rich-table-insert__fields">
         <div className="rich-table-insert__field">
-          <label htmlFor="rich-table-rows">Số hàng</label>
-          <InputNumber id="rich-table-rows" aria-label="Số hàng" min={1} max={20} precision={0} value={rows} onChange={(value) => setRows(value || 1)} />
+          <label htmlFor="rich-table-rows">{m.ui_rich_table_rows()}</label>
+          <InputNumber id="rich-table-rows" aria-label={m.ui_rich_table_rows()} min={1} max={20} precision={0} value={rows} onChange={(value) => setRows(value || 1)} />
         </div>
         <span aria-hidden="true">×</span>
         <div className="rich-table-insert__field">
-          <label htmlFor="rich-table-cols">Số cột</label>
-          <InputNumber id="rich-table-cols" aria-label="Số cột" min={1} max={20} precision={0} value={cols} onChange={(value) => setCols(value || 1)} />
+          <label htmlFor="rich-table-cols">{m.ui_rich_table_cols()}</label>
+          <InputNumber id="rich-table-cols" aria-label={m.ui_rich_table_cols()} min={1} max={20} precision={0} value={cols} onChange={(value) => setCols(value || 1)} />
         </div>
       </div>
-      <Checkbox checked={withHeaderRow} onChange={(event) => setWithHeaderRow(event.target.checked)}>Hàng đầu là tiêu đề</Checkbox>
-      <Button type="primary" block onClick={insert}>Chèn bảng {rows} × {cols}</Button>
-      <p className="rich-table-insert__hint">Có thể thêm, xóa hàng/cột sau khi chèn.</p>
+      <Checkbox checked={withHeaderRow} onChange={(event) => setWithHeaderRow(event.target.checked)}>{m.ui_rich_table_header_row()}</Checkbox>
+      <Button type="primary" block onClick={insert}>{m.ui_rich_insert_table({ rows, cols })}</Button>
+      <p className="rich-table-insert__hint">{m.ui_rich_table_hint()}</p>
     </div>
   )
 
   return (
     <Popover content={content} trigger="click" placement="bottom" open={open} onOpenChange={(next) => { if (!disabled) setOpen(next) }}>
       <span>
-        <ToolbarButton title="Chèn bảng tùy chỉnh" disabled={disabled} onClick={() => setOpen(true)}><TableOutlined /></ToolbarButton>
+        <ToolbarButton title={m.ui_rich_insert_custom_table()} disabled={disabled} onClick={() => setOpen(true)}><TableOutlined /></ToolbarButton>
       </span>
     </Popover>
   )
 }
 
 const BLOG_PRODUCT_LINKS = [
-  { label: 'Tìm việc', href: '/viec-lam' },
-  { label: 'Mẫu CV', href: '/mau-cv' },
-  { label: 'Trợ giúp', href: '/tro-giup' },
+  { label: m.ui_rich_link_jobs(), href: '/viec-lam' },
+  { label: m.ui_rich_link_cv_templates(), href: '/mau-cv' },
+  { label: m.ui_rich_link_help(), href: '/tro-giup' },
 ]
 
 export default function RichTextEditor({ value = '', onChange, maxLength = 10000, minHeight = 140, placeholder = '', disabled = false, error = false, contentClassName = '', mode = 'basic', onLoadImages, onUploadImage, allowExternalImage = false, acceptedImageTypes, imageUploadHint, linkShortcuts }) {
@@ -195,7 +195,7 @@ export default function RichTextEditor({ value = '', onChange, maxLength = 10000
 
   const setLink = () => {
     const previous = editor.getAttributes('link').href || ''
-    const href = window.prompt('Đường dẫn liên kết', previous)
+    const href = window.prompt(m.ui_rich_link_prompt(), previous)
     if (href === null) return
     if (!href.trim()) editor.chain().focus().extendMarkRange('link').unsetLink().run()
     else editor.chain().focus().extendMarkRange('link').setLink({ href: href.trim(), target: '_blank' }).run()
@@ -234,21 +234,21 @@ export default function RichTextEditor({ value = '', onChange, maxLength = 10000
 
   return (
     <div className={`company-rich-editor ${mode === 'blog' ? 'company-rich-editor--blog' : ''} ${error ? 'company-rich-editor--error' : ''}`}>
-      <div className="company-rich-editor__toolbar" role="toolbar" aria-label="Công cụ định dạng văn bản">
-        <ToolbarButton title="Hoàn tác" disabled={disabled || !editor.can().chain().focus().undo().run()} onClick={() => editor.chain().focus().undo().run()}><UndoOutlined /></ToolbarButton>
-        <ToolbarButton title="Làm lại" disabled={disabled || !editor.can().chain().focus().redo().run()} onClick={() => editor.chain().focus().redo().run()}><RedoOutlined /></ToolbarButton>
+      <div className="company-rich-editor__toolbar" role="toolbar" aria-label={m.ui_rich_toolbar()}>
+        <ToolbarButton title={m.ui_rich_undo()} disabled={disabled || !editor.can().chain().focus().undo().run()} onClick={() => editor.chain().focus().undo().run()}><UndoOutlined /></ToolbarButton>
+        <ToolbarButton title={m.ui_rich_redo()} disabled={disabled || !editor.can().chain().focus().redo().run()} onClick={() => editor.chain().focus().redo().run()}><RedoOutlined /></ToolbarButton>
         <span className="company-rich-editor__divider" />
-        <ToolbarButton title="In đậm" disabled={disabled} active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}><BoldOutlined /></ToolbarButton>
-        <ToolbarButton title="In nghiêng" disabled={disabled} active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}><ItalicOutlined /></ToolbarButton>
-        <ToolbarButton title="Gạch dưới" disabled={disabled} active={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()}><UnderlineOutlined /></ToolbarButton>
+        <ToolbarButton title={m.ui_rich_bold()} disabled={disabled} active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}><BoldOutlined /></ToolbarButton>
+        <ToolbarButton title={m.ui_rich_italic()} disabled={disabled} active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}><ItalicOutlined /></ToolbarButton>
+        <ToolbarButton title={m.ui_rich_underline()} disabled={disabled} active={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()}><UnderlineOutlined /></ToolbarButton>
         {mode === 'blog' && (
           <>
             <span className="company-rich-editor__divider" />
-            <ToolbarButton title="Văn bản thường" disabled={disabled} active={editor.isActive('paragraph')} onClick={() => editor.chain().focus().setParagraph().run()}>P</ToolbarButton>
-            <ToolbarButton title="Tiêu đề cấp 2" disabled={disabled} active={editor.isActive('heading', { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>H2</ToolbarButton>
-            <ToolbarButton title="Tiêu đề cấp 3" disabled={disabled} active={editor.isActive('heading', { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>H3</ToolbarButton>
-            <ToolbarButton title="Trích dẫn" disabled={disabled} active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}><FileTextOutlined /></ToolbarButton>
-            <ToolbarButton title="Liên kết" disabled={disabled} active={editor.isActive('link')} onClick={setLink}><LinkOutlined /></ToolbarButton>
+            <ToolbarButton title={m.ui_rich_paragraph()} disabled={disabled} active={editor.isActive('paragraph')} onClick={() => editor.chain().focus().setParagraph().run()}>P</ToolbarButton>
+            <ToolbarButton title={m.ui_rich_heading_2()} disabled={disabled} active={editor.isActive('heading', { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>H2</ToolbarButton>
+            <ToolbarButton title={m.ui_rich_heading_3()} disabled={disabled} active={editor.isActive('heading', { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>H3</ToolbarButton>
+            <ToolbarButton title={m.ui_rich_blockquote()} disabled={disabled} active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}><FileTextOutlined /></ToolbarButton>
+            <ToolbarButton title={m.ui_rich_link()} disabled={disabled} active={editor.isActive('link')} onClick={setLink}><LinkOutlined /></ToolbarButton>
             {productLinks.length > 0 && (
               <ProductLinkControl
                 disabled={disabled}
@@ -259,49 +259,49 @@ export default function RichTextEditor({ value = '', onChange, maxLength = 10000
           </>
         )}
         <span className="company-rich-editor__divider" />
-        <ToolbarButton title="Danh sách dấu chấm" disabled={disabled} active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}><UnorderedListOutlined /></ToolbarButton>
-        <ToolbarButton title="Danh sách đánh số" disabled={disabled} active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}><OrderedListOutlined /></ToolbarButton>
-        <ToolbarButton title="Giảm cấp danh sách" disabled={disabled || !editor.can().liftListItem('listItem')} onClick={() => editor.chain().focus().liftListItem('listItem').run()}>−</ToolbarButton>
-        <ToolbarButton title="Tăng cấp danh sách" disabled={disabled || !editor.can().sinkListItem('listItem')} onClick={() => editor.chain().focus().sinkListItem('listItem').run()}>+</ToolbarButton>
+        <ToolbarButton title={m.ui_rich_bullet_list()} disabled={disabled} active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}><UnorderedListOutlined /></ToolbarButton>
+        <ToolbarButton title={m.ui_rich_ordered_list()} disabled={disabled} active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}><OrderedListOutlined /></ToolbarButton>
+        <ToolbarButton title={m.ui_rich_outdent()} disabled={disabled || !editor.can().liftListItem('listItem')} onClick={() => editor.chain().focus().liftListItem('listItem').run()}>−</ToolbarButton>
+        <ToolbarButton title={m.ui_rich_indent()} disabled={disabled || !editor.can().sinkListItem('listItem')} onClick={() => editor.chain().focus().sinkListItem('listItem').run()}>+</ToolbarButton>
         {mode === 'blog' && (
           <>
             <span className="company-rich-editor__divider" />
-            <ToolbarButton title="Chèn hình ảnh" disabled={disabled || (!onUploadImage && !allowExternalImage)} onClick={() => setImageLibraryOpen(true)}><FileImageOutlined /></ToolbarButton>
+            <ToolbarButton title={m.ui_rich_insert_image()} disabled={disabled || (!onUploadImage && !allowExternalImage)} onClick={() => setImageLibraryOpen(true)}><FileImageOutlined /></ToolbarButton>
             <TableInsertControl editor={editor} disabled={disabled} />
           </>
         )}
       </div>
       {mode === 'blog' && editor.isActive('image') && (
-        <div className="company-rich-editor__image-toolbar" role="toolbar" aria-label="Tùy chỉnh hình ảnh đang chọn">
-          <span className="company-rich-editor__image-label">Kích thước</span>
+        <div className="company-rich-editor__image-toolbar" role="toolbar" aria-label={m.ui_rich_image_toolbar()}>
+          <span className="company-rich-editor__image-label">{m.ui_rich_image_size()}</span>
           {['25%', '50%', '75%', '100%'].map((width) => (
             <Button key={width} type={imageAttributes.width === width ? 'primary' : 'default'} size="small" onClick={() => updateImage({ width })}>{width}</Button>
           ))}
           <span className="company-rich-editor__divider" />
-          <ToolbarButton title="Căn trái" active={imageAttributes.alignment === 'left'} onClick={() => updateImage({ alignment: 'left' })}><AlignLeftOutlined /></ToolbarButton>
-          <ToolbarButton title="Căn giữa" active={!imageAttributes.alignment || imageAttributes.alignment === 'center'} onClick={() => updateImage({ alignment: 'center' })}><AlignCenterOutlined /></ToolbarButton>
-          <ToolbarButton title="Căn phải" active={imageAttributes.alignment === 'right'} onClick={() => updateImage({ alignment: 'right' })}><AlignRightOutlined /></ToolbarButton>
+          <ToolbarButton title={m.ui_rich_align_left()} active={imageAttributes.alignment === 'left'} onClick={() => updateImage({ alignment: 'left' })}><AlignLeftOutlined /></ToolbarButton>
+          <ToolbarButton title={m.ui_rich_align_center()} active={!imageAttributes.alignment || imageAttributes.alignment === 'center'} onClick={() => updateImage({ alignment: 'center' })}><AlignCenterOutlined /></ToolbarButton>
+          <ToolbarButton title={m.ui_rich_align_right()} active={imageAttributes.alignment === 'right'} onClick={() => updateImage({ alignment: 'right' })}><AlignRightOutlined /></ToolbarButton>
           <span className="company-rich-editor__divider" />
-          <Button size="small" onClick={() => setImageLibraryOpen(true)}>Thay ảnh</Button>
-          <Button size="small" danger icon={<DeleteOutlined />} onClick={() => editor.chain().focus().deleteSelection().run()}>Xóa</Button>
+          <Button size="small" onClick={() => setImageLibraryOpen(true)}>{m.ui_rich_replace_image()}</Button>
+          <Button size="small" danger icon={<DeleteOutlined />} onClick={() => editor.chain().focus().deleteSelection().run()}>{m.ui_rich_delete()}</Button>
         </div>
       )}
       {mode === 'blog' && editor.isActive('table') && !editor.isActive('image') && (
-        <div className="company-rich-editor__table-toolbar" role="toolbar" aria-label="Tùy chỉnh bảng đang chọn">
-          <span className="company-rich-editor__context-label">Bảng</span>
-          <ToolbarButton title="Thêm hàng phía trên" disabled={disabled} onClick={() => editor.chain().focus().addRowBefore().run()}><InsertRowAboveOutlined /></ToolbarButton>
-          <ToolbarButton title="Thêm hàng phía dưới" disabled={disabled} onClick={() => editor.chain().focus().addRowAfter().run()}><InsertRowBelowOutlined /></ToolbarButton>
-          <ToolbarButton title="Xóa hàng hiện tại" disabled={disabled} onClick={() => editor.chain().focus().deleteRow().run()}><DeleteRowOutlined /></ToolbarButton>
+        <div className="company-rich-editor__table-toolbar" role="toolbar" aria-label={m.ui_rich_table_toolbar()}>
+          <span className="company-rich-editor__context-label">{m.ui_rich_table()}</span>
+          <ToolbarButton title={m.ui_rich_add_row_above()} disabled={disabled} onClick={() => editor.chain().focus().addRowBefore().run()}><InsertRowAboveOutlined /></ToolbarButton>
+          <ToolbarButton title={m.ui_rich_add_row_below()} disabled={disabled} onClick={() => editor.chain().focus().addRowAfter().run()}><InsertRowBelowOutlined /></ToolbarButton>
+          <ToolbarButton title={m.ui_rich_delete_row()} disabled={disabled} onClick={() => editor.chain().focus().deleteRow().run()}><DeleteRowOutlined /></ToolbarButton>
           <span className="company-rich-editor__divider" />
-          <ToolbarButton title="Thêm cột bên trái" disabled={disabled} onClick={() => editor.chain().focus().addColumnBefore().run()}><InsertRowLeftOutlined /></ToolbarButton>
-          <ToolbarButton title="Thêm cột bên phải" disabled={disabled} onClick={() => editor.chain().focus().addColumnAfter().run()}><InsertRowRightOutlined /></ToolbarButton>
-          <ToolbarButton title="Xóa cột hiện tại" disabled={disabled} onClick={() => editor.chain().focus().deleteColumn().run()}><DeleteColumnOutlined /></ToolbarButton>
+          <ToolbarButton title={m.ui_rich_add_col_left()} disabled={disabled} onClick={() => editor.chain().focus().addColumnBefore().run()}><InsertRowLeftOutlined /></ToolbarButton>
+          <ToolbarButton title={m.ui_rich_add_col_right()} disabled={disabled} onClick={() => editor.chain().focus().addColumnAfter().run()}><InsertRowRightOutlined /></ToolbarButton>
+          <ToolbarButton title={m.ui_rich_delete_col()} disabled={disabled} onClick={() => editor.chain().focus().deleteColumn().run()}><DeleteColumnOutlined /></ToolbarButton>
           <span className="company-rich-editor__divider" />
-          <ToolbarButton title="Gộp các ô đã chọn" disabled={disabled || !editor.can().chain().focus().mergeCells().run()} onClick={() => editor.chain().focus().mergeCells().run()}><MergeCellsOutlined /></ToolbarButton>
-          <ToolbarButton title="Tách ô hiện tại" disabled={disabled || !editor.can().chain().focus().splitCell().run()} onClick={() => editor.chain().focus().splitCell().run()}><SplitCellsOutlined /></ToolbarButton>
-          <ToolbarButton title="Bật hoặc tắt hàng tiêu đề" disabled={disabled} onClick={() => editor.chain().focus().toggleHeaderRow().run()}>TH</ToolbarButton>
+          <ToolbarButton title={m.ui_rich_merge_cells()} disabled={disabled || !editor.can().chain().focus().mergeCells().run()} onClick={() => editor.chain().focus().mergeCells().run()}><MergeCellsOutlined /></ToolbarButton>
+          <ToolbarButton title={m.ui_rich_split_cell()} disabled={disabled || !editor.can().chain().focus().splitCell().run()} onClick={() => editor.chain().focus().splitCell().run()}><SplitCellsOutlined /></ToolbarButton>
+          <ToolbarButton title={m.ui_rich_toggle_header_row()} disabled={disabled} onClick={() => editor.chain().focus().toggleHeaderRow().run()}>TH</ToolbarButton>
           <span className="company-rich-editor__divider" />
-          <Button size="small" danger icon={<DeleteOutlined />} disabled={disabled} onMouseDown={(event) => event.preventDefault()} onClick={() => editor.chain().focus().deleteTable().run()}>Xóa bảng</Button>
+          <Button size="small" danger icon={<DeleteOutlined />} disabled={disabled} onMouseDown={(event) => event.preventDefault()} onClick={() => editor.chain().focus().deleteTable().run()}>{m.ui_rich_delete_table()}</Button>
         </div>
       )}
       <EditorContent editor={editor} />

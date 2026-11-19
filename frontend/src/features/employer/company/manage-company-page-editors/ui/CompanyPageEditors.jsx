@@ -10,18 +10,18 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 import ConfirmAction from '@/shared/ui/confirm-action/ConfirmAction'
 import './company-page-editors.css'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { getIntlLocale, m } from '@/shared/config/i18n'
 
 function grantedLabel(grant) {
   const date = grant.granted_at ? new Date(grant.granted_at) : null
   const day = date && !Number.isNaN(date.getTime()) ? date.toLocaleDateString(getIntlLocale()) : ''
-  return ['Cấp quyền', day && `ngày ${day}`, grant.granted_by_name && `bởi ${grant.granted_by_name}`]
+  return [m.employer_company_editors_granted(), day && m.employer_company_editors_granted_on({ date: day }), grant.granted_by_name && m.employer_company_editors_granted_by({ name: grant.granted_by_name })]
     .filter(Boolean)
     .join(' ')
 }
 
 // `display_name` có thể rỗng: lùi về email đã che.
-const memberName = (member) => member.display_name || member.email_masked || 'Thành viên'
+const memberName = (member) => member.display_name || member.email_masked || m.employer_company_editors_member_fallback()
 
 /** Danh sách thành viên công ty và quyền biên tập trang công ty; chỉ chủ sở hữu đã xác thực dùng được. */
 export default function CompanyPageEditors() {
@@ -43,14 +43,14 @@ export default function CompanyPageEditors() {
     mutationFn: grantEmployerCompanyPageEditor,
     onSuccess: (member) => {
       replaceMember(member)
-      message.success(`Đã cấp quyền biên tập cho ${memberName(member)}.`)
+      message.success(m.employer_company_editors_grant_done({ name: memberName(member) }))
     },
-    onError: (error) => failed(error, 'Không thể cấp quyền biên tập.'),
+    onError: (error) => failed(error, m.employer_company_editors_grant_failed()),
   })
 
   async function revoke(member) {
     replaceMember(await revokeEmployerCompanyPageEditor(member.grant.public_id))
-    message.success(`Đã thu hồi quyền biên tập của ${memberName(member)}.`)
+    message.success(m.employer_company_editors_revoke_done({ name: memberName(member) }))
   }
 
   if (query.isPending) return <Skeleton active paragraph={{ rows: 4 }} />
@@ -59,19 +59,19 @@ export default function CompanyPageEditors() {
       <Alert
         showIcon
         type="error"
-        title={getApiErrorMessage(query.error, 'Không thể tải danh sách thành viên.')}
-        action={<Button size="small" onClick={() => query.refetch()}>Thử lại</Button>}
+        title={getApiErrorMessage(query.error, m.employer_company_editors_load_error())}
+        action={<Button size="small" onClick={() => query.refetch()}>{m.employer_company_retry()}</Button>}
       />
     )
   }
-  if (query.data.length === 0) return <Empty description="Công ty chưa có thành viên nào." />
+  if (query.data.length === 0) return <Empty description={m.employer_company_editors_empty()} />
 
   return (
     <div>
       <p className="company-editors__hint">
-        Người biên tập được tuỳ biến bố cục và nội dung trang công ty. Chỉ thành viên đã xác thực mới được cấp quyền.
+        {m.employer_company_editors_hint()}
       </p>
-      <ul className="company-editors" aria-label="Thành viên công ty">
+      <ul className="company-editors" aria-label={m.employer_company_members_title()}>
         {query.data.map((member) => {
           const owner = member.company_role === 'owner'
           const name = memberName(member)
@@ -80,11 +80,11 @@ export default function CompanyPageEditors() {
               <div className="company-editors__identity">
                 <p className="company-editors__name">
                   {name}
-                  {owner && <Tag color="gold">Chủ sở hữu</Tag>}
-                  {!owner && !member.eligible && <Tag>Chưa xác thực</Tag>}
+                  {owner && <Tag color="gold">{m.employer_company_owner()}</Tag>}
+                  {!owner && !member.eligible && <Tag>{m.employer_company_unverified()}</Tag>}
                   {member.grant && (
                     <Tag color={member.grant.effective ? 'green' : 'orange'}>
-                      {member.grant.effective ? 'Đang hiệu lực' : 'Tạm mất hiệu lực'}
+                      {member.grant.effective ? m.employer_company_editors_grant_active() : m.employer_company_editors_grant_suspended()}
                     </Tag>
                   )}
                 </p>
@@ -96,13 +96,13 @@ export default function CompanyPageEditors() {
               {!owner && (member.grant ? (
                 <ConfirmAction
                   danger
-                  title="Thu hồi quyền biên tập"
-                  description={`${name} sẽ không còn tuỳ biến được trang công ty.`}
-                  confirmText="Thu hồi"
+                  title={m.employer_company_editors_revoke_title()}
+                  description={m.employer_company_editors_revoke_description({ name })}
+                  confirmText={m.employer_company_editors_revoke()}
                   onConfirm={() => revoke(member)}
-                  onConfirmError={(error) => failed(error, 'Không thể thu hồi quyền biên tập.')}
+                  onConfirmError={(error) => failed(error, m.employer_company_editors_revoke_failed())}
                 >
-                  <Button danger size="small" aria-label={`Thu hồi quyền biên tập của ${name}`}>Thu hồi</Button>
+                  <Button danger size="small" aria-label={m.employer_company_editors_revoke_label({ name })}>{m.employer_company_editors_revoke()}</Button>
                 </ConfirmAction>
               ) : (
                 <Button
@@ -111,10 +111,10 @@ export default function CompanyPageEditors() {
                   ghost
                   disabled={!member.eligible}
                   loading={grant.isPending && grant.variables === member.member_id}
-                  aria-label={`Cấp quyền biên tập cho ${name}`}
+                  aria-label={m.employer_company_editors_grant_label({ name })}
                   onClick={() => grant.mutate(member.member_id)}
                 >
-                  Cấp quyền biên tập
+                  {m.employer_company_editors_grant()}
                 </Button>
               ))}
             </li>

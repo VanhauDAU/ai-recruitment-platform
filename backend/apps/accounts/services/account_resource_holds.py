@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from apps.accounts.domain.impact_token_rules import decode_impact_token
 from apps.accounts.services.exceptions import AdminPermissionDenied
@@ -37,9 +38,9 @@ def confirm_release_account_resource_holds(
     enforcement_evidence = clean_verification_evidence(enforcement_evidence)
     ensure_account_write_allowed(actor, user)
     if not actor.is_superuser:
-        raise AdminPermissionDenied('Gỡ policy hold chỉ dành cho superuser.')
+        raise AdminPermissionDenied(_('Gỡ policy hold chỉ dành cho superuser.'))
     if actor.pk == user.pk:
-        raise ValidationError('Bạn không thể tự gỡ policy hold của tài khoản mình.')
+        raise ValidationError(_('Bạn không thể tự gỡ policy hold của tài khoản mình.'))
 
     with transaction.atomic():
         user = User.objects.select_for_update().get(pk=user.pk)
@@ -49,7 +50,7 @@ def confirm_release_account_resource_holds(
             or user.status != User.Status.INACTIVE
         ):
             raise ValidationError(
-                'Chỉ được gỡ policy hold cho tài khoản nhà tuyển dụng đang tạm khóa.'
+                _('Chỉ được gỡ policy hold cho tài khoản nhà tuyển dụng đang tạm khóa.')
             )
         campaign_ids = list(
             RecruitmentCampaign.objects.select_for_update()
@@ -85,7 +86,7 @@ def confirm_release_account_resource_holds(
             policy_hold__in=releasable_job_holds,
         ).count()
         if not campaign_count and not job_count:
-            raise ValidationError('Tài khoản không còn policy hold cần gỡ.')
+            raise ValidationError(_('Tài khoản không còn policy hold cần gỡ.'))
         released_campaign_ids = list(
             RecruitmentCampaign.objects.filter(
                 pk__in=campaign_ids,

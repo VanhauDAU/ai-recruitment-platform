@@ -109,6 +109,12 @@ app trong `backend/apps/` theo đúng một layout:
 - Endpoint list phải giữ số query phẳng theo số bản ghi — xem
   `apps/<app>/tests/test_query_budget.py`; tăng budget phải kèm giải thích trong PR.
 - API view mới bắt buộc có `@extend_schema`; cổng OpenAPI chặn mọi lỗi/cảnh báo.
+- Chuỗi trả về người dùng bọc `gettext`/`gettext_lazy` (msgid tiếng Việt) rồi
+  chạy `docker compose exec -T backend python -m common.i18n_catalog update apps/<app>`
+  và dịch `msgstr` tiếng Anh; email/thông báo render trong
+  `common.i18n.recipient_language(người_nhận)` (ADR-0023).
+- Pytest trong container phải thêm `--ds=config.settings.test`: container đặt
+  `DJANGO_SETTINGS_MODULE` dev nên ghi đè giá trị trong `pyproject.toml`.
 - Service báo lỗi bằng `ValidationError` hoặc `DomainError` (`common/errors.py`,
   handler ở `common/api/exceptions.py`); view không `try/except` chỉ để đổi kiểu lỗi.
   Cờ query đọc bằng `common.api.params.parse_bool`.

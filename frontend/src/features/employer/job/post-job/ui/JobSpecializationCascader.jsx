@@ -1,6 +1,7 @@
 import { ArrowRightOutlined } from '@ant-design/icons'
 import { Cascader } from 'antd'
 import { useMemo } from 'react'
+import { m } from '@/shared/config/i18n'
 
 function buildTaxonomyOptions(categories) {
   const childrenByParent = new Map()
@@ -31,7 +32,7 @@ function buildTaxonomyOptions(categories) {
 
   return [{
     value: '__all__',
-    label: 'Tất cả nhóm nghề',
+    label: m.employer_job_form_all_job_groups(),
     children: categories
       .filter((category) => category.category_type === 'specialization')
       .map((category) => ({ value: category.id, label: category.name, categoryType: category.category_type })),
@@ -58,7 +59,7 @@ function findOptionPath(options, target, path = []) {
   return []
 }
 
-const PATH_LABELS = ['Nhóm nghề', 'Nghề', 'Chuyên môn']
+const PATH_LABELS = [m.employer_job_form_path_group(), m.employer_job_form_path_occupation(), m.employer_job_form_path_specialization()]
 
 export default function JobSpecializationCascader({ categories, value, onChange, ...props }) {
   const options = useMemo(() => buildTaxonomyOptions(categories), [categories])
@@ -88,7 +89,7 @@ export default function JobSpecializationCascader({ categories, value, onChange,
       />
       {selectedPath.length > 0 && (
         <div className="rounded-lg border border-[var(--brand-primary)]/20 bg-[var(--brand-primary-soft)] px-3 py-2.5">
-          <p className="text-xs font-medium text-slate-600">Cách ứng viên tìm thấy tin tuyển dụng của bạn</p>
+          <p className="text-xs font-medium text-slate-600">{m.employer_job_form_path_hint()}</p>
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             {selectedPath.map((option, index) => {
               const isSpecialization = index === selectedPath.length - 1

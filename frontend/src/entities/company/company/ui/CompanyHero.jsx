@@ -5,7 +5,7 @@ import {
   UsergroupAddOutlined,
 } from '@ant-design/icons'
 import CompanyLogo from './CompanyLogo'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { getIntlLocale, m } from '@/shared/config/i18n'
 
 function HeroStat({ icon, children }) {
   return (
@@ -59,7 +59,7 @@ export default function CompanyHero({ profile, actions, titleAs: Title = 'h1' })
             <p className="mt-1 break-words text-sm font-medium text-gray-600">{identity.legal_name}</p>
           )}
           {industries.length > 0 && (
-            <ul className="company-profile-chips" aria-label="Lĩnh vực hoạt động">
+            <ul className="company-profile-chips" aria-label={m.company_hero_industries()}>
               {industries.map((industry) => (
                 <li key={industry.id ?? industry.slug} className="company-profile-chip">{industry.name}</li>
               ))}
@@ -71,12 +71,12 @@ export default function CompanyHero({ profile, actions, titleAs: Title = 'h1' })
             )}
             <HeroStat icon={<SolutionOutlined />}>
               {jobCount > 0
-                ? `${jobCount.toLocaleString(getIntlLocale())} việc làm đang tuyển`
-                : 'Chưa có việc làm đang tuyển'}
+                ? m.company_hero_open_jobs({ count: jobCount.toLocaleString(getIntlLocale()) })
+                : m.company_hero_no_open_jobs()}
             </HeroStat>
             {followerCount > 0 && (
               <HeroStat icon={<UsergroupAddOutlined />}>
-                {`${followerCount.toLocaleString(getIntlLocale())} người theo dõi`}
+                {m.company_hero_followers({ count: followerCount.toLocaleString(getIntlLocale()) })}
               </HeroStat>
             )}
           </ul>

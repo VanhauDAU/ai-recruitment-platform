@@ -5,6 +5,7 @@ from datetime import timedelta
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from apps.accounts.services.admin_invitation_tokens import (
     InvalidAdminInvitationToken,
@@ -51,7 +52,7 @@ def create_admin_invitation(*, email, full_name, reason, actor):
             .first()
         )
         if existing and existing.status == User.Status.ACTIVE:
-            raise ValidationError({'email': 'Email đã có tài khoản quản trị hoạt động.'})
+            raise ValidationError({'email': _('Email đã có tài khoản quản trị hoạt động.')})
         if existing is None:
             user = User(
                 email=normalized_email,
@@ -70,7 +71,7 @@ def create_admin_invitation(*, email, full_name, reason, actor):
                 user=user,
                 status=AdminInvitation.Status.PENDING,
             ).exists():
-                raise ValidationError({'email': 'Tài khoản đã có lời mời đang chờ xử lý.'})
+                raise ValidationError({'email': _('Tài khoản đã có lời mời đang chờ xử lý.')})
             user.full_name = full_name.strip()
             user.status = User.Status.PENDING
             user.is_active = False
@@ -105,7 +106,7 @@ def create_admin_invitation(*, email, full_name, reason, actor):
 
 def _ensure_superuser_inviter(actor):
     if not actor.is_superuser:
-        raise AdminPermissionDenied('Chỉ superuser được mời và quản lý tài khoản quản trị.')
+        raise AdminPermissionDenied(_('Chỉ superuser được mời và quản lý tài khoản quản trị.'))
 
 
 def _lock_invitation(invitation, actor):
@@ -125,7 +126,7 @@ def resend_admin_invitation(invitation, *, actor):
             AdminInvitation.Status.PENDING,
             AdminInvitation.Status.EXPIRED,
         }:
-            raise ValidationError('Lời mời không còn có thể gửi lại.')
+            raise ValidationError(_('Lời mời không còn có thể gửi lại.'))
         invitation.status = AdminInvitation.Status.PENDING
         invitation.revoked_at = None
         invitation.token_version += 1
@@ -156,7 +157,7 @@ def revoke_admin_invitation(invitation, *, reason, actor):
         actor = User.objects.select_for_update().get(pk=actor.pk)
         invitation = _lock_invitation(invitation, actor)
         if invitation.status != AdminInvitation.Status.PENDING:
-            raise ValidationError('Chỉ lời mời đang chờ mới được thu hồi.')
+            raise ValidationError(_('Chỉ lời mời đang chờ mới được thu hồi.'))
         invitation.status = AdminInvitation.Status.REVOKED
         invitation.reason = reason
         invitation.revoked_at = timezone.now()
@@ -188,11 +189,11 @@ def resolve_admin_invitation(token):
         .first()
     )
     if invitation is None or invitation.token_version != claims['version']:
-        raise InvalidAdminInvitationToken('Liên kết mời không còn hiệu lực.')
+        raise InvalidAdminInvitationToken(_('Liên kết mời không còn hiệu lực.'))
     if invitation.status != AdminInvitation.Status.PENDING:
-        raise InvalidAdminInvitationToken('Lời mời đã được sử dụng hoặc thu hồi.')
+        raise InvalidAdminInvitationToken(_('Lời mời đã được sử dụng hoặc thu hồi.'))
     if invitation.expires_at <= timezone.now():
-        raise InvalidAdminInvitationToken('Liên kết mời đã hết hạn.')
+        raise InvalidAdminInvitationToken(_('Liên kết mời đã hết hạn.'))
     return invitation
 
 
@@ -206,16 +207,16 @@ def accept_admin_invitation(*, token, password):
             .first()
         )
         if invitation is None or invitation.token_version != claims['version']:
-            raise InvalidAdminInvitationToken('Liên kết mời không còn hiệu lực.')
+            raise InvalidAdminInvitationToken(_('Liên kết mời không còn hiệu lực.'))
         if invitation.status != AdminInvitation.Status.PENDING:
-            raise InvalidAdminInvitationToken('Lời mời đã được sử dụng hoặc thu hồi.')
+            raise InvalidAdminInvitationToken(_('Lời mời đã được sử dụng hoặc thu hồi.'))
         if invitation.expires_at <= timezone.now():
             invitation.status = AdminInvitation.Status.EXPIRED
             invitation.save(update_fields=['status', 'updated_at'])
-            raise InvalidAdminInvitationToken('Liên kết mời đã hết hạn.')
+            raise InvalidAdminInvitationToken(_('Liên kết mời đã hết hạn.'))
         user = User.objects.select_for_update().get(pk=invitation.user_id)
         if user.status != User.Status.PENDING:
-            raise InvalidAdminInvitationToken('Tài khoản không còn ở trạng thái chờ.')
+            raise InvalidAdminInvitationToken(_('Tài khoản không còn ở trạng thái chờ.'))
         user.set_password(password)
         user.email_verified = True
         user.status = User.Status.ACTIVE

@@ -3,6 +3,9 @@
 import re
 from decimal import Decimal
 
+from django.utils.translation import gettext as _
+from django.utils.translation import ngettext
+
 from common.db.search import fold_accents
 
 from ..core import Job
@@ -85,7 +88,7 @@ def score_job(job, context):
         title,
         [item.category.name for item in matching_primary_categories],
     ):
-        add_detail('category', 'Đúng vị trí chuyên môn', 38)
+        add_detail('category', _('Đúng vị trí chuyên môn'), 38)
 
     if _contains_term(title, context['position_terms']):
         add_detail('position', context['position_reason'], 24)
@@ -94,19 +97,22 @@ def score_job(job, context):
     matched_skills = sorted(context['skills'] & job_skills)
     if matched_skills:
         add_detail(
-            'skills', f'Khớp {len(matched_skills)} kỹ năng', min(24, len(matched_skills) * 6)
+            'skills',
+            ngettext('Khớp %(count)s kỹ năng', 'Khớp %(count)s kỹ năng', len(matched_skills))
+            % {'count': len(matched_skills)},
+            min(24, len(matched_skills) * 6),
         )
 
     provinces = {item.location.parent_id or item.location_id for item in job.job_locations.all()}
     if provinces & context['province_ids']:
-        add_detail('location', 'Đúng địa điểm mong muốn', 10)
+        add_detail('location', _('Đúng địa điểm mong muốn'), 10)
     elif provinces and context['willing_to_relocate']:
-        add_detail('relocation', 'Phù hợp với lựa chọn sẵn sàng chuyển địa điểm', 3)
+        add_detail('relocation', _('Phù hợp với lựa chọn sẵn sàng chuyển địa điểm'), 3)
 
     candidate_experience = EXPERIENCE_RANK.get(context['experience_level'], 0)
     required_experience = EXPERIENCE_RANK.get(job.experience_years, 0)
     if job.experience_years and candidate_experience >= required_experience:
-        add_detail('experience', 'Kinh nghiệm phù hợp', 6)
+        add_detail('experience', _('Kinh nghiệm phù hợp'), 6)
 
     desired_salary = context['desired_salary']
     if job.salary_type != Job.SalaryType.NEGOTIABLE and job.currency == 'VND' and desired_salary:
@@ -121,7 +127,7 @@ def score_job(job, context):
         if lower <= desired * Decimal('1.25') and (
             upper is None or upper >= desired * Decimal('0.8')
         ):
-            add_detail('salary', 'Mức lương phù hợp', 8)
+            add_detail('salary', _('Mức lương phù hợp'), 8)
 
     # Paid tier is intentionally excluded from compatibility. It is only a
     # deterministic tie-breaker below and can never make an unrelated job fit.
@@ -133,7 +139,7 @@ def presentation_match_reasons(details):
     codes = {item['code'] for item in details}
     reasons = []
     if codes & {'category', 'position'}:
-        reasons.append('Phù hợp với tìm kiếm của bạn')
+        reasons.append(_('Phù hợp với tìm kiếm của bạn'))
     if 'skills' in codes:
-        reasons.append('Phù hợp với kỹ năng của bạn')
+        reasons.append(_('Phù hợp với kỹ năng của bạn'))
     return reasons

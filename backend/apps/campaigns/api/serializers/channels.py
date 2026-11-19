@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 
 from apps.jobs.models import Job
@@ -14,7 +15,7 @@ class ChannelCostSerializer(serializers.ModelSerializer):
 
     def validate_amount(self, value):
         if value < 1:
-            raise serializers.ValidationError('Chi phí phải lớn hơn 0.')
+            raise serializers.ValidationError(_('Chi phí phải lớn hơn 0.'))
         return value
 
 

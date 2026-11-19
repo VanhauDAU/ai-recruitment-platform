@@ -9,9 +9,10 @@ import { AvatarEditorModal, updateProfile } from '@/features/common/account/edit
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { EMPLOYER_PHONE_VERIFY_URL } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
+import { m } from '@/shared/config/i18n'
 
 const PHONE_PATTERN = /^(0|\+84)\d{9,10}$/
-const GENDER_LABELS = { male: 'Nam', female: 'Nữ', other: 'Khác' }
+const GENDER_LABELS = { male: m.employer_account_info_gender_male(), female: m.employer_account_info_gender_female(), other: m.employer_account_need_topic_other() }
 
 export default function EmployerAccountInformation() {
   const { user, setCurrentUser } = useSession()
@@ -34,7 +35,7 @@ export default function EmployerAccountInformation() {
       })
       setCurrentUser(updated)
       form.setFieldsValue({ full_name: updated.full_name, phone: updated.phone })
-      message.success('Đã cập nhật thông tin tài khoản.')
+      message.success(m.employer_account_info_saved())
     } catch (error) {
       const fieldErrors = error?.response?.data
       if (fieldErrors && typeof fieldErrors === 'object' && !Array.isArray(fieldErrors)) {
@@ -44,7 +45,7 @@ export default function EmployerAccountInformation() {
           return
         }
       }
-      message.error(getApiErrorMessage(error, 'Không thể lưu thông tin. Vui lòng thử lại.'))
+      message.error(getApiErrorMessage(error, m.employer_account_info_save_failed()))
     } finally {
       setSaving(false)
     }
@@ -70,8 +71,8 @@ export default function EmployerAccountInformation() {
   return (
     <div className="overflow-hidden rounded-sm border border-slate-200 bg-white">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-4 sm:px-5">
-        <h2 className="text-sm font-bold text-slate-800">Cập nhật thông tin tài khoản</h2>
-        <Button size="small" icon={<DownloadOutlined />} onClick={handleExport} className="!border-emerald-500 !text-emerald-600">Xuất dữ liệu</Button>
+        <h2 className="text-sm font-bold text-slate-800">{m.employer_account_info_title()}</h2>
+        <Button size="small" icon={<DownloadOutlined />} onClick={handleExport} className="!border-emerald-500 !text-emerald-600">{m.employer_account_info_export()}</Button>
       </div>
 
       <div className="p-5 sm:p-6">
@@ -83,20 +84,20 @@ export default function EmployerAccountInformation() {
         >
         <div className="grid gap-x-8 sm:grid-cols-2">
           <div className="mb-5 flex flex-wrap items-center gap-3 sm:col-span-2">
-            <span className="text-sm text-slate-600">Avatar</span>
+            <span className="text-sm text-slate-600">{m.employer_account_info_avatar()}</span>
             <Avatar size={36} src={user?.avatar_url || undefined} className="!bg-slate-100 !text-slate-500">
               {(user?.full_name || user?.email || 'N').trim().charAt(0).toUpperCase()}
             </Avatar>
-            <Button size="small" icon={<CameraOutlined />} onClick={() => setAvatarOpen(true)}>Đổi avatar</Button>
+            <Button size="small" icon={<CameraOutlined />} onClick={() => setAvatarOpen(true)}>{m.employer_account_info_change_avatar()}</Button>
             <AvatarEditorModal open={avatarOpen} onClose={() => setAvatarOpen(false)} />
           </div>
 
-          <Form.Item name="full_name" label="Họ và tên" rules={[{ required: true, whitespace: true, message: 'Vui lòng nhập họ và tên.' }, { min: 2, message: 'Họ và tên cần ít nhất 2 ký tự.' }, { max: 255, message: 'Họ và tên quá dài.' }]}>
-            <Input placeholder="Nhập họ và tên" />
+          <Form.Item name="full_name" label={m.employer_account_info_full_name()} rules={[{ required: true, whitespace: true, message: m.employer_account_info_full_name_required() }, { min: 2, message: m.employer_account_info_full_name_min() }, { max: 255, message: m.employer_account_info_full_name_max() }]}>
+            <Input placeholder={m.employer_account_info_full_name_placeholder()} />
           </Form.Item>
 
-          <Form.Item label="Giới tính">
-            <Select disabled value={profileQuery.data?.gender || undefined} placeholder="Chưa cập nhật" options={Object.entries(GENDER_LABELS).map(([value, label]) => ({ value, label }))} />
+          <Form.Item label={m.employer_account_info_gender()}>
+            <Select disabled value={profileQuery.data?.gender || undefined} placeholder={m.employer_account_docs_not_updated()} options={Object.entries(GENDER_LABELS).map(([value, label]) => ({ value, label }))} />
           </Form.Item>
 
           <Form.Item label="Email">
@@ -107,21 +108,21 @@ export default function EmployerAccountInformation() {
             name="phone"
             label={(
               <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span>Số điện thoại</span>
-                <Button type="link" size="small" onClick={() => setPhoneEditing((value) => !value)} className="!h-auto !p-0 !font-normal !text-emerald-600">{phoneEditing ? 'Khóa' : 'Cập nhật'}</Button>
+                <span>{m.employer_account_info_phone()}</span>
+                <Button type="link" size="small" onClick={() => setPhoneEditing((value) => !value)} className="!h-auto !p-0 !font-normal !text-emerald-600">{phoneEditing ? m.employer_account_info_lock() : m.employer_account_info_update()}</Button>
                 <span className="text-slate-300">|</span>
-                <Link to={EMPLOYER_PHONE_VERIFY_URL} className="text-emerald-600"><LinkOutlined /> Xác thực</Link>
+                <Link to={EMPLOYER_PHONE_VERIFY_URL} className="text-emerald-600"><LinkOutlined /> {m.employer_account_info_verify()}</Link>
               </span>
             )}
-            rules={[{ pattern: PHONE_PATTERN, message: 'Số điện thoại không hợp lệ (VD: 0912345678).' }]}
+            rules={[{ pattern: PHONE_PATTERN, message: m.employer_account_info_phone_invalid() }]}
           >
-            <Input disabled={!phoneEditing} inputMode="tel" placeholder="Nhập số điện thoại" />
+            <Input disabled={!phoneEditing} inputMode="tel" placeholder={m.employer_account_info_phone_placeholder()} />
           </Form.Item>
         </div>
 
         <div className="mt-1 grid gap-2 border-t border-slate-200 pt-4 sm:flex sm:justify-end sm:gap-3">
-          <Button onClick={() => { form.resetFields(); setPhoneEditing(false) }} className="w-full sm:min-w-24 sm:w-auto">Hủy</Button>
-          <Button type="primary" htmlType="submit" loading={saving} className="w-full !bg-[#00b14f] sm:min-w-24 sm:w-auto">Lưu</Button>
+          <Button onClick={() => { form.resetFields(); setPhoneEditing(false) }} className="w-full sm:min-w-24 sm:w-auto">{m.employer_account_docs_cancel()}</Button>
+          <Button type="primary" htmlType="submit" loading={saving} className="w-full !bg-[#00b14f] sm:min-w-24 sm:w-auto">{m.employer_account_docs_save()}</Button>
         </div>
         </Form>
       </div>

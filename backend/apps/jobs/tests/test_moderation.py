@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from django.utils import timezone
+from django.utils import timezone, translation
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.test import APITestCase
@@ -110,6 +110,23 @@ class JobChangesRequestedTests(JobModerationFixture, APITestCase):
         self.assertTrue(hold['editable'])
         self.assertEqual(hold['request_note'], self.NOTE)
         self.assertEqual(self.edit_title('Backend Engineer (Go)').title, 'Backend Engineer (Go)')
+
+    def test_changes_requested_notice_uses_the_recruiter_language(self):
+        self.employer.preferred_language = 'en'
+        self.employer.save(update_fields=['preferred_language', 'updated_at'])
+
+        response = self.decide('request_changes', reason_code='incomplete_content')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        notice = EmployerNotification.objects.get(
+            recipient=self.employer,
+            event_type=EmployerNotification.EventType.JOB_CHANGES_REQUESTED,
+        )
+        self.assertEqual(
+            notice.message,
+            'Job posting "Backend Engineer" is hidden: Incomplete content. '
+            'Please edit it and resubmit it for review.',
+        )
 
     def test_resubmitted_job_waits_for_review_and_is_locked_meanwhile(self):
         self.decide('request_changes', reason_code='misleading_content')
@@ -428,6 +445,19 @@ class JobPublishedContentChangesTests(JobModerationFixture, APITestCase):
         title_change = next(item for item in changes['changes'] if item['key'] == 'title')
         self.assertEqual(title_change['before'], 'Backend Engineer')
         self.assertEqual(title_change['after'], 'Backend Engineer (Senior)')
+
+    def test_snapshot_does_not_depend_on_the_publishing_language(self):
+        self.job.employment_type = Job.EmploymentType.CONTRACT
+        self.job.save(update_fields=['employment_type', 'updated_at'])
+        with translation.override('en'):
+            self.capture_published_baseline()
+        self.client.force_authenticate(self.admin)
+
+        changes = self.client.get(self.detail_url()).data['content_changes']
+
+        self.assertEqual(self.job.approved_snapshot['employment_type'], 'Hợp đồng')
+        self.assertEqual(self.job.approved_snapshot['salary'], 'Thỏa thuận')
+        self.assertEqual(changes['changed_count'], 0)
 
     def test_job_without_a_snapshot_reports_no_baseline_instead_of_a_fake_diff(self):
         self.client.force_authenticate(self.admin)

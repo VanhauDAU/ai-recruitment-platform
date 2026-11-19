@@ -22,13 +22,14 @@ import {
   EMPLOYER_VERIFY_URL,
   employerAppPath,
 } from '@/shared/config/portals'
+import { m } from '@/shared/config/i18n'
 
 const VERIFICATION_STEPS = [
-  { key: 'phone_verified', label: 'Xác thực số điện thoại', to: EMPLOYER_PHONE_VERIFY_URL },
-  { key: 'company_linked', label: 'Cập nhật công ty', to: `${EMPLOYER_COMPANY_SETTINGS_URL}?update=true` },
-  { key: 'business_doc_current', label: 'Nộp giấy tờ đại diện', to: EMPLOYER_BUSINESS_LICENSE_URL },
-  { key: 'candidate_dpa_submitted', label: 'Nộp văn bản DLCN', to: EMPLOYER_DATA_PROTECTION_URL },
-  { key: 'dpa_accepted', label: 'Đồng ý thỏa thuận DPA', to: EMPLOYER_DATA_PROTECTION_URL },
+  { key: 'phone_verified', label: m.employer_workspace_verification_step_phone(), to: EMPLOYER_PHONE_VERIFY_URL },
+  { key: 'company_linked', label: m.employer_workspace_dash_step_company(), to: `${EMPLOYER_COMPANY_SETTINGS_URL}?update=true` },
+  { key: 'business_doc_current', label: m.employer_workspace_dash_step_representative_docs(), to: EMPLOYER_BUSINESS_LICENSE_URL },
+  { key: 'candidate_dpa_submitted', label: m.employer_workspace_dash_step_data_processing_doc(), to: EMPLOYER_DATA_PROTECTION_URL },
+  { key: 'dpa_accepted', label: m.employer_workspace_dash_step_dpa(), to: EMPLOYER_DATA_PROTECTION_URL },
 ]
 
 export function DashboardComplianceNotice({ readiness }) {
@@ -40,11 +41,11 @@ export function DashboardComplianceNotice({ readiness }) {
   const action = employerReadinessAction(blocker?.action)
 
   return (
-    <section className="flex flex-col gap-3 rounded-2xl border border-blue-200/70 bg-blue-50/80 px-4 py-4 sm:flex-row sm:items-center" aria-label="Thông báo quan trọng">
+    <section className="flex flex-col gap-3 rounded-2xl border border-blue-200/70 bg-blue-50/80 px-4 py-4 sm:flex-row sm:items-center" aria-label={m.employer_workspace_dash_important_notice()}>
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm"><InfoCircleOutlined /></span>
       <div className="min-w-0 flex-1">
-        <strong className="text-sm text-slate-800">Dữ liệu ứng viên đang được bảo vệ</strong>
-        <p className="mt-0.5 text-xs leading-5 text-slate-500">{blocker?.message || 'Hoàn tất xác minh để mở quyền truy cập dữ liệu ứng viên.'}</p>
+        <strong className="text-sm text-slate-800">{m.employer_workspace_dash_candidate_data_protected()}</strong>
+        <p className="mt-0.5 text-xs leading-5 text-slate-500">{blocker?.message || m.employer_workspace_dash_candidate_data_default()}</p>
       </div>
       <Link to={action.to} className="inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-xl border border-blue-600 !bg-blue-600 px-4 text-xs font-bold !text-white shadow-sm transition hover:border-blue-700 hover:!bg-blue-700">
         {action.label} <ArrowRightOutlined />
@@ -71,10 +72,10 @@ export function DashboardVerificationJourney({
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-lg text-emerald-600"><LockOutlined /></span>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 id="verification-journey-title" className="text-base font-black text-slate-900">Hoàn thiện workspace tuyển dụng</h2>
-              {completedCount === VERIFICATION_STEPS.length && <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">Đã hoàn tất</span>}
+              <h2 id="verification-journey-title" className="text-base font-black text-slate-900">{m.employer_workspace_dash_journey_title()}</h2>
+              {completedCount === VERIFICATION_STEPS.length && <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">{m.employer_workspace_dash_journey_done()}</span>}
             </div>
-            <p className="mt-1 text-xs text-slate-500">{completedCount}/{VERIFICATION_STEPS.length} bước xác thực · Bảo vệ tài khoản và dữ liệu ứng viên</p>
+            <p className="mt-1 text-xs text-slate-500">{m.employer_workspace_dash_journey_progress({ completed: completedCount, total: VERIFICATION_STEPS.length })}</p>
           </div>
         </div>
         <div className="flex items-center gap-3 sm:min-w-52">
@@ -83,7 +84,7 @@ export function DashboardVerificationJourney({
         </div>
       </div>
 
-      <div className="mt-5 grid gap-2 sm:grid-cols-2 xl:grid-cols-5" aria-label="Các bước xác thực">
+      <div className="mt-5 grid gap-2 sm:grid-cols-2 xl:grid-cols-5" aria-label={m.employer_workspace_dash_journey_steps()}>
         {VERIFICATION_STEPS.map((step, index) => {
           const done = Boolean(verification[step.key])
           const target = step.key === 'phone_verified' && !hasPassword ? EMPLOYER_VERIFY_URL : step.to
@@ -107,11 +108,11 @@ export function DashboardVerificationJourney({
 
       <Link
         to={jobWorkspaceReady ? employerAppPath('/jobs/new') : EMPLOYER_VERIFY_URL}
-        aria-label="Đăng tin tuyển dụng đầu tiên"
+        aria-label={m.employer_workspace_dash_first_job()}
         className="mt-3 flex items-center gap-3 rounded-xl border border-dashed border-slate-300 !bg-slate-50/80 px-3 py-3 text-xs font-bold !text-slate-600 transition hover:border-emerald-300 hover:!bg-emerald-50 hover:!text-emerald-700"
       >
         <RocketOutlined className="text-emerald-600" />
-        <span className="min-w-0 flex-1">Sẵn sàng tuyển dụng? Đăng tin đầu tiên để bắt đầu nhận hồ sơ.</span>
+        <span className="min-w-0 flex-1">{m.employer_workspace_dash_first_job_cta()}</span>
         <ArrowRightOutlined />
       </Link>
     </section>

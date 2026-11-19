@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query'
 import { Button } from 'antd'
 import { downloadCampaignReport } from '@/entities/campaign/campaign'
 import { triggerBlobDownload } from '@/shared/lib/download-blob'
+import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
 
 const FORMATS = [
@@ -16,12 +17,12 @@ export default function CampaignReportExport({ campaign }) {
     mutationFn: (type) => downloadCampaignReport(campaign.public_id, type),
     onSuccess: (blob, type) => triggerBlobDownload(blob, `bao-cao-${campaign.public_id}.${type}`),
     onError: (_, type) => message.error(type === 'pdf'
-      ? 'Chưa tạo được PDF, hãy thử lại sau ít phút.'
-      : 'Chưa tải được báo cáo, hãy thử lại.'),
+      ? m.employer_campaign_export_pdf_error()
+      : m.employer_campaign_export_error()),
   })
 
   return (
-    <div className="flex flex-wrap gap-2" role="group" aria-label="Tải báo cáo chiến dịch">
+    <div className="flex flex-wrap gap-2" role="group" aria-label={m.employer_campaign_export_aria()}>
       {FORMATS.map(({ type, label, icon: Icon }) => (
         <Button
           key={type}
@@ -30,7 +31,7 @@ export default function CampaignReportExport({ campaign }) {
           disabled={mutation.isPending && mutation.variables !== type}
           onClick={() => mutation.mutate(type)}
         >
-          Tải {label}
+          {m.employer_campaign_export_download({ format: label })}
         </Button>
       ))}
     </div>

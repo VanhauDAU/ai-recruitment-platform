@@ -6,6 +6,7 @@ when the administrator confirms.
 
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from rest_framework.exceptions import ValidationError
 
 from apps.accounts.api.permissions import require_admin
@@ -149,12 +150,12 @@ def _prepare_final_decision(
     if decision not in FINAL_DECISIONS:
         workflow_error(
             'VERIFICATION_DECISION_INVALID',
-            'Kết quả xử lý hồ sơ không hợp lệ.',
+            _('Kết quả xử lý hồ sơ không hợp lệ.'),
         )
     if enforce_current_state and case.status != EmployerVerificationCase.Status.IN_REVIEW:
         workflow_error(
             'VERIFICATION_INVALID_TRANSITION',
-            'Quyết định cuối chỉ áp dụng cho hồ sơ đang được review.',
+            _('Quyết định cuối chỉ áp dụng cho hồ sơ đang được review.'),
             current_status=case.status,
             allowed_statuses=[EmployerVerificationCase.Status.IN_REVIEW],
         )
@@ -162,7 +163,7 @@ def _prepare_final_decision(
     if require_reason and decision != EmployerVerificationCase.Status.APPROVED and not reason:
         workflow_error(
             'VERIFICATION_REASON_REQUIRED',
-            'Cần nhập lý do khi yêu cầu bổ sung hoặc từ chối.',
+            _('Cần nhập lý do khi yêu cầu bổ sung hoặc từ chối.'),
         )
     case._state.fields_cache['recruiter'] = scope.recruiter
     if scope.company is not None:
@@ -180,7 +181,7 @@ def _prepare_final_decision(
         missing = [key for key, value in checks.items() if not value and key != 'case_approved']
         workflow_error(
             'VERIFICATION_REQUIREMENTS_INCOMPLETE',
-            'Hồ sơ chưa đủ điều kiện để duyệt.',
+            _('Hồ sơ chưa đủ điều kiện để duyệt.'),
             missing_requirements=missing,
         )
 
@@ -195,12 +196,12 @@ def _prepare_final_decision(
         if enforce_current_state and tax['status'] == 'pending':
             workflow_error(
                 'TAX_LOOKUP_PENDING',
-                'Đang chờ kết quả tra cứu mã số thuế.',
+                _('Đang chờ kết quả tra cứu mã số thuế.'),
             )
         if enforce_current_state and tax['requires_override'] and not effective_override:
             workflow_error(
                 'TAX_OVERRIDE_REQUIRED',
-                'Kết quả tra cứu thuế cần quyền override và lý do.',
+                _('Kết quả tra cứu thuế cần quyền override và lý do.'),
                 tax_status=tax['status'],
             )
         if effective_override:
@@ -208,7 +209,7 @@ def _prepare_final_decision(
             if require_reason and not normalized_override_reason:
                 workflow_error(
                     'TAX_OVERRIDE_REASON_REQUIRED',
-                    'Cần nhập lý do override kết quả tra cứu thuế.',
+                    _('Cần nhập lý do override kết quả tra cứu thuế.'),
                 )
     hold_impact = verification_hold_impact(case, scope=scope)
     snapshot = {
@@ -346,7 +347,7 @@ def confirm_verification_decision(
         normalized_payload={'request': payload, 'snapshot': snapshot},
     )
     if claims['revision'] != case.lock_version:
-        raise StaleImpactToken('Hồ sơ đã thay đổi sau khi xem tác động.')
+        raise StaleImpactToken(_('Hồ sơ đã thay đổi sau khi xem tác động.'))
 
     released_holds = []
     if decision == EmployerVerificationCase.Status.APPROVED:
@@ -453,17 +454,17 @@ def unlock_verification_resubmission(case, *, actor, reason, lock_version):
     if not reason:
         workflow_error(
             'VERIFICATION_REASON_REQUIRED',
-            'Cần nhập lý do mở khóa nộp lại.',
+            _('Cần nhập lý do mở khóa nộp lại.'),
         )
     if case.lock_version != lock_version:
-        raise StaleImpactToken('Hồ sơ đã thay đổi. Vui lòng tải lại.')
+        raise StaleImpactToken(_('Hồ sơ đã thay đổi. Vui lòng tải lại.'))
     if (
         case.status != EmployerVerificationCase.Status.REJECTED
         or case.resubmission_locked_at is None
     ):
         workflow_error(
             'VERIFICATION_INVALID_TRANSITION',
-            'Chỉ hồ sơ bị từ chối và đang khóa nộp lại mới có thể được mở khóa.',
+            _('Chỉ hồ sơ bị từ chối và đang khóa nộp lại mới có thể được mở khóa.'),
             current_status=case.status,
             allowed_statuses=[EmployerVerificationCase.Status.REJECTED],
         )

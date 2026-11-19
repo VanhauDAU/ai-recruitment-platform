@@ -1,4 +1,5 @@
 import { CheckCircleFilled } from '@ant-design/icons'
+import { m } from '@/shared/config/i18n'
 import { completenessCardId } from '../model/content-form'
 import './company-completeness.css'
 
@@ -9,24 +10,24 @@ export default function CompanyCompletenessMeter({ completeness, onOpenItem }) {
   const missing = items.filter((item) => !item.done)
 
   return (
-    <section className="company-completeness" aria-label="Độ hoàn thiện trang công ty">
+    <section className="company-completeness" aria-label={m.employer_company_completeness_label()}>
       <div className="company-completeness__summary">
         <strong>{score}%</strong>
-        <span>hoàn thiện · {items.length - missing.length}/{items.length} mục</span>
+        <span>{m.employer_company_completeness_summary({ done: items.length - missing.length, total: items.length })}</span>
       </div>
-      <div className="company-completeness__bar" role="progressbar" aria-label="Độ hoàn thiện" aria-valuenow={score} aria-valuemin={0} aria-valuemax={100}>
+      <div className="company-completeness__bar" role="progressbar" aria-label={m.employer_company_completeness_bar()} aria-valuenow={score} aria-valuemin={0} aria-valuemax={100}>
         <span style={{ width: `${score}%` }} />
       </div>
       {items.length > 0 && (
         <details className="company-completeness__details">
-          <summary>{missing.length ? `Còn ${missing.length} mục nên bổ sung` : 'Đã đủ mọi mục'}</summary>
+          <summary>{missing.length ? m.employer_company_completeness_missing({ count: missing.length }) : m.employer_company_completeness_all_done()}</summary>
           <ul>
             {items.map((item) => (
               <li key={item.key}>
                 {item.done ? (
                   <span className="company-completeness__done"><CheckCircleFilled aria-hidden="true" /> {item.label}</span>
                 ) : (
-                  <button type="button" onClick={() => onOpenItem(completenessCardId(item.key))}>Bổ sung {item.label.toLowerCase()}</button>
+                  <button type="button" onClick={() => onOpenItem(completenessCardId(item.key))}>{m.employer_company_completeness_add_item({ item: item.label.toLowerCase() })}</button>
                 )}
               </li>
             ))}

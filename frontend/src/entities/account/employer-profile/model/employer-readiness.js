@@ -7,6 +7,7 @@ import {
   EMPLOYER_VERIFY_URL,
   employerMarketingPath,
 } from '@/shared/config/portals'
+import { m } from '@/shared/config/i18n'
 
 export const EMPLOYER_CAPABILITIES = Object.freeze({
   JOB_WORKSPACE: 'job_workspace',
@@ -39,39 +40,39 @@ const MACHINE_VALUE = /^[a-z][a-z0-9_]*$/
 
 const ACTIONS = Object.freeze({
   complete_onboarding: {
-    label: 'Hoàn tất hồ sơ đăng ký',
+    label: m.employer_profile_action_complete_onboarding(),
     to: EMPLOYER_COMPLETE_PROFILE_URL,
   },
   verify_phone: {
-    label: 'Xác thực số điện thoại',
+    label: m.employer_profile_action_verify_phone(),
     to: EMPLOYER_PHONE_VERIFY_URL,
   },
   link_company: {
-    label: 'Liên kết công ty',
+    label: m.employer_profile_action_link_company(),
     to: `${EMPLOYER_COMPANY_SETTINGS_URL}?update=true`,
   },
   upload_business_document: {
-    label: 'Nộp giấy tờ doanh nghiệp',
+    label: m.employer_profile_action_upload_business_document(),
     to: EMPLOYER_BUSINESS_LICENSE_URL,
   },
   upload_candidate_dpa: {
-    label: 'Nộp văn bản xử lý dữ liệu',
+    label: m.employer_profile_action_upload_candidate_dpa(),
     to: EMPLOYER_DATA_PROTECTION_URL,
   },
   accept_dpa: {
-    label: 'Chấp thuận DPA',
+    label: m.employer_profile_action_accept_dpa(),
     to: EMPLOYER_DATA_PROTECTION_URL,
   },
   accept_current_dpa: {
-    label: 'Cập nhật DPA hiện hành',
+    label: m.employer_profile_action_accept_current_dpa(),
     to: EMPLOYER_DATA_PROTECTION_URL,
   },
   open_verification: {
-    label: 'Xem trạng thái xác thực',
+    label: m.employer_profile_action_open_verification(),
     to: EMPLOYER_VERIFY_URL,
   },
   contact_support: {
-    label: 'Liên hệ hỗ trợ',
+    label: m.employer_profile_action_contact_support(),
     to: employerMarketingPath('/lien-he'),
   },
 })
@@ -79,7 +80,7 @@ const ACTIONS = Object.freeze({
 const INVALID_READINESS_BLOCKER = Object.freeze({
   code: 'readiness_contract_invalid',
   capabilities: Object.freeze(Object.values(EMPLOYER_CAPABILITIES)),
-  message: 'Không thể xác minh quyền truy cập từ dữ liệu hiện tại.',
+  message: m.employer_profile_readiness_invalid(),
   action: 'contact_support',
 })
 
@@ -180,7 +181,7 @@ function legacyReadiness(profile) {
           EMPLOYER_CAPABILITIES.CANDIDATE_DATA,
           EMPLOYER_CAPABILITIES.JOB_APPROVAL,
         ],
-        message: 'Cần tải trạng thái xác thực mới trước khi xem dữ liệu ứng viên.',
+        message: m.employer_profile_readiness_reload_required(),
         action: 'open_verification',
       }
     : {
@@ -191,7 +192,7 @@ function legacyReadiness(profile) {
           EMPLOYER_CAPABILITIES.CANDIDATE_DATA,
           EMPLOYER_CAPABILITIES.JOB_APPROVAL,
         ],
-        message: 'Hoàn tất các bước xác thực để sử dụng workspace tuyển dụng.',
+        message: m.employer_profile_readiness_verify_required(),
         action: 'open_verification',
       }
 

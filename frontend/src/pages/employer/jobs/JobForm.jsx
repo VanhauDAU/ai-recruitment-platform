@@ -18,6 +18,7 @@ import { employerAppPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
 import { EmployerJobEditor } from '@/widgets/employer/job-editor'
 import JobVisibilityHoldAlert from './JobVisibilityHoldAlert'
+import { m } from '@/shared/config/i18n'
 
 // The backend refuses publication with machine-readable reasons; show their
 // labels instead of the generic "cannot publish" detail.
@@ -25,7 +26,7 @@ function jobMutationErrorMessage(error, fallback) {
   const data = error?.response?.data
   if (data?.code === 'JOB_PUBLICATION_BLOCKED' && Array.isArray(data.blocked_reasons)) {
     const reasons = data.blocked_reasons.map((item) => item.label).filter(Boolean).join(' ')
-    return reasons ? `Chưa thể đăng tin. ${reasons}` : 'Chưa thể đăng tin.'
+    return reasons ? m.employer_job_edit_publish_blocked_reasons({ reasons }) : m.employer_job_edit_publish_blocked()
   }
   return getApiErrorMessage(error, fallback)
 }
@@ -46,14 +47,14 @@ export default function JobForm() {
     onSuccess: (campaign) => {
       queryClient.setQueryData(campaignKeys.options, (current = []) => [campaign, ...current])
       queryClient.invalidateQueries({ queryKey: campaignKeys.all })
-      message.success('Đã tạo và chọn chiến dịch.')
+      message.success(m.employer_job_edit_campaign_created())
     },
   })
   const draftMutation = useMutation({
     mutationFn: (payload) => saveEmployerJob(payload, publicId),
     onSuccess: (job) => {
       queryClient.invalidateQueries({ queryKey: ['jobs'] })
-      message.success(job.status === 'draft' ? 'Đã lưu nháp.' : 'Đã lưu thay đổi.')
+      message.success(job.status === 'draft' ? m.employer_job_edit_draft_saved() : m.employer_job_edit_changes_saved())
       // Opened from the campaign setup wizard: go back to its job step.
       if (returnToSetup && job.campaign) {
         navigate(employerAppPath(`/campaigns/${job.campaign}/setup?step=jobs`))
@@ -62,7 +63,7 @@ export default function JobForm() {
       navigate(employerAppPath(`/jobs/${job.public_id}/edit`), { replace: true })
     },
     onError: (error) => message.error(
-      getApiErrorMessage(error, 'Không thể lưu bản nháp. Vui lòng kiểm tra thông tin và thử lại.'),
+      getApiErrorMessage(error, m.employer_job_edit_draft_save_failed()),
       { duration: 5000, id: 'post-job-draft-error' },
     ),
   })
@@ -74,13 +75,13 @@ export default function JobForm() {
       queryClient.invalidateQueries({ queryKey: ['jobs'] })
       message.success(
         !publicId || detailQuery.data?.status === 'draft'
-          ? 'Đã đăng tin. Ứng viên có thể xem tin ngay.'
-          : 'Đã cập nhật tin tuyển dụng.',
+          ? m.employer_job_edit_published()
+          : m.employer_job_edit_updated(),
       )
       navigate(employerAppPath(`/jobs/${job.public_id}`))
     },
     onError: (error) => message.error(
-      jobMutationErrorMessage(error, 'Không thể đăng tin. Vui lòng kiểm tra thông tin và thử lại.'),
+      jobMutationErrorMessage(error, m.employer_job_edit_publish_failed()),
       { duration: 5000, id: 'post-job-submit-error' },
     ),
   })
@@ -96,7 +97,7 @@ export default function JobForm() {
   const currentStatus = detailQuery.data?.status
   const isDraft = !publicId || currentStatus === 'draft'
   const requiresNewCredit = !publicId || currentStatus === 'draft'
-  const submitLabel = isDraft ? 'Đăng tin' : 'Lưu và cập nhật'
+  const submitLabel = isDraft ? m.employer_job_form_post() : m.employer_job_form_save_and_update()
   const campaignFromUrl = searchParams.get('campaign')
   const initialValues = useMemo(() => {
     if (detailQuery.data) return detailQuery.data
@@ -118,7 +119,7 @@ export default function JobForm() {
   if (detailQuery.isLoading || postingContextQuery.isLoading) {
     return <Skeleton active paragraph={{ rows: 12 }} />
   }
-  if (detailQuery.isError) return <Alert type="error" showIcon title="Không thể tải tin tuyển dụng." />
+  if (detailQuery.isError) return <Alert type="error" showIcon title={m.employer_job_edit_load_failed()} />
   // The backend refuses edits while a job is held, except for requested changes.
   const hold = detailQuery.data?.visibility_hold
   if (hold && !hold.editable) {
@@ -126,7 +127,7 @@ export default function JobForm() {
       <section className="mx-auto max-w-[1480px] space-y-4">
         <JobVisibilityHoldAlert hold={detailQuery.data.visibility_hold} />
         <Link className="inline-block text-sm font-semibold" to={employerAppPath(`/jobs/${publicId}`)}>
-          Quay lại chi tiết tin
+          {m.employer_job_edit_back_to_detail()}
         </Link>
       </section>
     )
@@ -136,7 +137,7 @@ export default function JobForm() {
       <JobVisibilityHoldAlert hold={hold} />
 
       {(categoriesQuery.isError || campaignsQuery.isError || postingContextQuery.isError) && (
-        <Alert type="warning" showIcon title="Một số danh mục chưa tải được" description="Bạn có thể tải lại trang để lấy đầy đủ vị trí chuyên môn và chiến dịch." />
+        <Alert type="warning" showIcon title={m.employer_job_edit_catalogs_failed()} description={m.employer_job_edit_catalogs_failed_hint()} />
       )}
       <EmployerJobEditor
         initialValues={initialValues}
@@ -152,7 +153,7 @@ export default function JobForm() {
         requiresNewCredit={requiresNewCredit}
         submitLabel={submitLabel}
         submitting={draftMutation.isPending || publishMutation.isPending}
-        errorMessage={mutationError ? jobMutationErrorMessage(mutationError, 'Không thể lưu tin tuyển dụng.') : ''}
+        errorMessage={mutationError ? jobMutationErrorMessage(mutationError, m.employer_job_edit_save_failed()) : ''}
         creatingCampaign={quickCampaignMutation.isPending}
         onCreateCampaign={(name) => quickCampaignMutation.mutateAsync({ name, activate: true })}
         onCreateSkill={(name) => createSkillMutation.mutateAsync(name)}

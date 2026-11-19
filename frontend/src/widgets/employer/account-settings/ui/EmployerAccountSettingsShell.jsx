@@ -20,16 +20,17 @@ import {
   EMPLOYER_PASSWORD_SETTINGS_URL,
   EMPLOYER_RECRUITMENT_DEMAND_URL,
 } from '@/shared/config/portals'
+import { m } from '@/shared/config/i18n'
 
 const ITEMS = [
-  { to: EMPLOYER_PASSWORD_SETTINGS_URL, label: 'Đổi mật khẩu', icon: LockOutlined },
-  { to: EMPLOYER_ACCOUNT_SETTINGS_URL, label: 'Thông tin tài khoản', icon: UserOutlined },
-  { to: EMPLOYER_BUSINESS_LICENSE_URL, label: 'Giấy đăng ký doanh nghiệp', icon: FileProtectOutlined },
-  { to: EMPLOYER_DATA_PROTECTION_URL, label: 'Văn bản xử lý Dữ liệu cá nhân', icon: SafetyCertificateOutlined },
-  { to: EMPLOYER_COMPANY_SETTINGS_URL, label: 'Thông tin công ty', icon: BankOutlined },
-  { to: EMPLOYER_RECRUITMENT_DEMAND_URL, label: 'Nhu cầu tuyển dụng', icon: SolutionOutlined },
-  { to: EMPLOYER_INTEGRATIONS_URL, label: 'Kết nối mạng xã hội', icon: ShareAltOutlined },
-  { to: EMPLOYER_GENERAL_SETTINGS_URL, label: 'Cài đặt', icon: SettingOutlined },
+  { to: EMPLOYER_PASSWORD_SETTINGS_URL, label: m.employer_account_settings_nav_password(), icon: LockOutlined },
+  { to: EMPLOYER_ACCOUNT_SETTINGS_URL, label: m.employer_account_settings_nav_account(), icon: UserOutlined },
+  { to: EMPLOYER_BUSINESS_LICENSE_URL, label: m.employer_account_docs_business_registration(), icon: FileProtectOutlined },
+  { to: EMPLOYER_DATA_PROTECTION_URL, label: m.employer_account_settings_nav_dpa(), icon: SafetyCertificateOutlined },
+  { to: EMPLOYER_COMPANY_SETTINGS_URL, label: m.employer_account_settings_nav_company(), icon: BankOutlined },
+  { to: EMPLOYER_RECRUITMENT_DEMAND_URL, label: m.employer_account_settings_nav_demand(), icon: SolutionOutlined },
+  { to: EMPLOYER_INTEGRATIONS_URL, label: m.employer_account_settings_nav_integrations(), icon: ShareAltOutlined },
+  { to: EMPLOYER_GENERAL_SETTINGS_URL, label: m.employer_account_settings_nav_general(), icon: SettingOutlined },
 ]
 
 export default function EmployerAccountSettingsShell({ title, children, hideHeading = false }) {
@@ -40,14 +41,14 @@ export default function EmployerAccountSettingsShell({ title, children, hideHead
   return (
     <div className="mx-auto max-w-[1256px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
       <div className="grid min-w-0 items-stretch xl:grid-cols-[275px_minmax(0,1fr)]">
-        <nav aria-label="Cài đặt tài khoản nhà tuyển dụng" className="border-b border-slate-200 bg-slate-50/80 p-3 xl:border-b-0 xl:border-r xl:p-2">
+        <nav aria-label={m.employer_account_settings_nav_aria()} className="border-b border-slate-200 bg-slate-50/80 p-3 xl:border-b-0 xl:border-r xl:p-2">
           <div className="xl:hidden">
-            <label htmlFor="employer-settings-section" className="mb-1.5 block text-xs font-semibold text-slate-500">Mục cài đặt</label>
+            <label htmlFor="employer-settings-section" className="mb-1.5 block text-xs font-semibold text-slate-500">{m.employer_account_settings_section()}</label>
             <Select
               id="employer-settings-section"
-              aria-label="Chọn mục cài đặt"
+              aria-label={m.employer_account_settings_choose_section()}
               value={activeItem?.to}
-              placeholder="Chọn mục cài đặt"
+              placeholder={m.employer_account_settings_choose_section()}
               onChange={(value) => navigate(value)}
               options={ITEMS.map((item) => ({ value: item.to || item.label, label: item.label, disabled: item.disabled }))}
               className="w-full"
@@ -59,7 +60,7 @@ export default function EmployerAccountSettingsShell({ title, children, hideHead
               const Icon = item.icon
               if (item.disabled) {
                 return (
-                  <Tooltip key={item.label} title="Chức năng sẽ được mở trong giai đoạn tiếp theo">
+                  <Tooltip key={item.label} title={m.employer_account_settings_coming_soon()}>
                     <span
                       aria-disabled="true"
                       className="flex h-12 cursor-not-allowed items-center gap-3 rounded-sm border-l-2 border-transparent px-3 text-sm font-semibold text-slate-400"

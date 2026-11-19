@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.utils.translation import gettext
 from drf_spectacular.utils import extend_schema, extend_schema_view, inline_serializer
 from rest_framework import generics, parsers, serializers, status
 from rest_framework.exceptions import ValidationError
@@ -30,8 +31,10 @@ def _media_update_request(request, company):
             raise ValidationError(
                 {
                     'update_request': (
-                        'Mọi thay đổi ảnh sau khi nộp hồ sơ công ty phải thuộc một yêu cầu '
-                        'cập nhật chờ duyệt.'
+                        gettext(
+                            'Mọi thay đổi ảnh sau khi nộp hồ sơ công ty phải thuộc một yêu cầu '
+                            'cập nhật chờ duyệt.'
+                        )
                     )
                 }
             )
@@ -42,7 +45,9 @@ def _media_update_request(request, company):
         public_id=update_request_id,
     )
     if update_request is None:
-        raise ValidationError({'update_request': 'Không tìm thấy yêu cầu cập nhật đang chờ.'})
+        raise ValidationError(
+            {'update_request': gettext('Không tìm thấy yêu cầu cập nhật đang chờ.')}
+        )
     return update_request
 
 
@@ -55,7 +60,9 @@ def _media_content_change(request, company, kind):
         company=company, actor=request.user, public_id=public_id, kind=kind
     )
     if change is None:
-        raise ValidationError({'content_change': 'Thay đổi nội dung này không còn nhận ảnh.'})
+        raise ValidationError(
+            {'content_change': gettext('Thay đổi nội dung này không còn nhận ảnh.')}
+        )
     return change
 
 
@@ -101,17 +108,17 @@ class CompanyImageUploadView(APIView):
         upload = request.FILES.get('file')
         upload_session_public_id = (request.data.get('upload_session') or '').strip()
         if not upload and not upload_session_public_id:
-            raise ValidationError({'file': 'Vui lòng chọn ảnh.'})
+            raise ValidationError({'file': gettext('Vui lòng chọn ảnh.')})
         if upload and upload_session_public_id:
             raise ValidationError(
-                {'upload_session': 'Không thể gửi đồng thời file thô và upload session.'}
+                {'upload_session': gettext('Không thể gửi đồng thời file thô và upload session.')}
             )
         if upload and settings.EMPLOYER_UPLOAD_SESSION_REQUIRED:
             raise UploadSessionRequiredResponse()
         if upload:
             extension, _ = validate_image_upload(upload)
             if extension == 'gif':
-                raise ValidationError({'file': 'Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.'})
+                raise ValidationError({'file': gettext('Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.')})
 
         company = require_company_media_editor(request.user).company
         content_change = _media_content_change(request, company, self.kind)
@@ -182,7 +189,9 @@ class CompanyGalleryDeleteView(generics.DestroyAPIView):
             raise ValidationError(
                 {
                     'update_request': (
-                        'Xóa ảnh sau khi nộp hồ sơ công ty phải được gửi trong yêu cầu cập nhật.'
+                        gettext(
+                            'Xóa ảnh sau khi nộp hồ sơ công ty phải được gửi trong yêu cầu cập nhật.'
+                        )
                     )
                 }
             )

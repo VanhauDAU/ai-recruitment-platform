@@ -20,7 +20,7 @@ import { getEmployerJobs, jobKeys } from '@/entities/job/job'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { employerAppPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { getIntlLocale, m } from '@/shared/config/i18n'
 
 const STATUS_COLORS = {
   submitted: 'blue',
@@ -45,11 +45,11 @@ function formatDate(value) {
 }
 
 function CandidateCell({ application }) {
-  const displayName = application.candidate_name || application.candidate_email || 'Ứng viên'
+  const displayName = application.candidate_name || application.candidate_email || m.employer_campaign_cv_candidate_fallback()
   return (
     <div className="flex min-w-52 items-center gap-3">
       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 font-bold text-emerald-700">
-        {displayName.trim().charAt(0).toLocaleUpperCase('vi-VN')}
+        {displayName.trim().charAt(0).toLocaleUpperCase(getIntlLocale())}
       </span>
       <div className="min-w-0">
         <p className="truncate font-semibold text-slate-800">{displayName}</p>
@@ -107,7 +107,7 @@ export default function CampaignApplyCvPanel({ publicId }) {
       URL.revokeObjectURL(url)
     },
     onError: (error) => message.error(
-      getApiErrorMessage(error, 'Không thể xuất danh sách CV.'),
+      getApiErrorMessage(error, m.employer_campaign_cv_export_error()),
     ),
   })
   const pageData = applicationsQuery.data || { count: 0, results: [] }
@@ -132,47 +132,47 @@ export default function CampaignApplyCvPanel({ publicId }) {
     <div>
       <div className="border-b border-slate-200 bg-slate-50 px-4 py-4 lg:px-5">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
-          <span className="shrink-0 text-xs font-bold uppercase tracking-widest text-slate-500">Bộ lọc</span>
+          <span className="shrink-0 text-xs font-bold uppercase tracking-widest text-slate-500">{m.employer_campaign_cv_filters()}</span>
           <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(180px,1.35fr)_180px_190px_160px_180px]">
             <Input
               className="!h-10 !rounded-xl !border-slate-200 !bg-white"
               value={keywordInput}
               allowClear
               prefix={<SearchOutlined className="text-slate-400" />}
-              placeholder="Tìm ứng viên, CV hoặc tin..."
+              placeholder={m.employer_campaign_cv_search_placeholder()}
               onChange={(event) => setKeywordInput(event.target.value)}
               onClear={() => updateFilter(setKeyword)('')}
               onPressEnter={() => updateFilter(setKeyword)(keywordInput.trim())}
             />
             <Select
-              aria-label="Lọc theo tin tuyển dụng"
+              aria-label={m.employer_campaign_cv_filter_job_aria()}
               value={job}
               options={[
-                { value: '', label: 'Tất cả tin tuyển dụng' },
+                { value: '', label: m.employer_campaign_cv_all_jobs() },
                 ...(jobsQuery.data || []).map((item) => ({
                   value: item.public_id,
-                  label: item.title || 'Tin chưa đặt tên',
+                  label: item.title || m.employer_campaign_untitled_job(),
                 })),
               ]}
               onChange={updateFilter(setJob)}
               className="[&_.ant-select-selector]:!rounded-xl"
             />
             <Select
-              aria-label="Lọc phạm vi CV"
+              aria-label={m.employer_campaign_cv_filter_scope_aria()}
               value={scope}
               options={[
-                { value: '', label: 'Hiển thị tất cả hồ sơ' },
-                { value: 'unread', label: 'Hồ sơ chưa xem' },
-                { value: 'unanswered', label: 'Hồ sơ chưa phản hồi' },
+                { value: '', label: m.employer_campaign_cv_scope_all() },
+                { value: 'unread', label: m.employer_campaign_cv_scope_unread() },
+                { value: 'unanswered', label: m.employer_campaign_cv_scope_unanswered() },
               ]}
               onChange={updateFilter(setScope)}
               className="[&_.ant-select-selector]:!rounded-xl"
             />
             <Select
-              aria-label="Lọc trạng thái"
+              aria-label={m.employer_campaign_cv_filter_status_aria()}
               value={status}
               options={[
-                { value: '', label: 'Tất cả trạng thái' },
+                { value: '', label: m.employer_campaign_jobs_all_statuses() },
                 ...RECRUITER_APPLICATION_STATUSES.map(([value, text]) => ({
                   value,
                   label: text,
@@ -182,12 +182,12 @@ export default function CampaignApplyCvPanel({ publicId }) {
               className="[&_.ant-select-selector]:!rounded-xl"
             />
             <Select
-              aria-label="Sắp xếp CV"
+              aria-label={m.employer_campaign_cv_sort_aria()}
               value={ordering}
               options={[
-                { value: 'newest', label: 'Mới nhất' },
-                { value: 'oldest', label: 'Cũ nhất' },
-                { value: 'name', label: 'Tên ứng viên' },
+                { value: 'newest', label: m.employer_campaign_cv_sort_newest() },
+                { value: 'oldest', label: m.employer_campaign_cv_sort_oldest() },
+                { value: 'name', label: m.employer_campaign_cv_sort_name() },
               ]}
               onChange={updateFilter(setOrdering)}
               className="[&_.ant-select-selector]:!rounded-xl"
@@ -198,7 +198,7 @@ export default function CampaignApplyCvPanel({ publicId }) {
             className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl px-3 text-sm font-medium text-slate-500 transition hover:bg-white hover:text-emerald-700"
             onClick={resetFilters}
           >
-            <ReloadOutlined /> Đặt lại
+            <ReloadOutlined /> {m.employer_campaign_cv_reset()}
           </button>
         </div>
       </div>
@@ -206,7 +206,7 @@ export default function CampaignApplyCvPanel({ publicId }) {
       <div className="flex flex-col gap-3 border-b border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between lg:px-5">
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <span className="mr-1 font-semibold text-slate-700">
-            Tìm thấy {pageData.count || 0} hồ sơ ứng tuyển
+            {m.employer_campaign_cv_found({ count: pageData.count || 0 })}
           </span>
           <button
             type="button"
@@ -214,7 +214,7 @@ export default function CampaignApplyCvPanel({ publicId }) {
             className={`rounded-full border px-3 py-1.5 text-slate-600 transition ${scope === 'unread' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-transparent bg-slate-100 hover:bg-slate-200'}`}
             onClick={() => updateFilter(setScope)('unread')}
           >
-            Hồ sơ chưa xem <strong>{report.unviewed_count || 0}</strong>
+            {m.employer_campaign_cv_scope_unread()} <strong>{report.unviewed_count || 0}</strong>
           </button>
           <button
             type="button"
@@ -222,7 +222,7 @@ export default function CampaignApplyCvPanel({ publicId }) {
             className={`rounded-full border px-3 py-1.5 text-slate-600 transition ${scope === 'unanswered' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-transparent bg-slate-100 hover:bg-slate-200'}`}
             onClick={() => updateFilter(setScope)('unanswered')}
           >
-            Hồ sơ chưa phản hồi <strong>{report.unanswered_count || 0}</strong>
+            {m.employer_campaign_cv_scope_unanswered()} <strong>{report.unanswered_count || 0}</strong>
           </button>
         </div>
         <button
@@ -231,7 +231,7 @@ export default function CampaignApplyCvPanel({ publicId }) {
           className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 text-sm font-semibold text-emerald-700 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400"
           onClick={() => exportMutation.mutate()}
         >
-          <DownloadOutlined /> Xuất danh sách CV
+          <DownloadOutlined /> {m.employer_campaign_cv_export()}
         </button>
       </div>
 
@@ -240,15 +240,15 @@ export default function CampaignApplyCvPanel({ publicId }) {
           className="m-4"
           type="error"
           showIcon
-          message="Không thể tải CV ứng tuyển"
-          description={getApiErrorMessage(applicationsQuery.error, 'Vui lòng thử lại sau.')}
+          message={m.employer_campaign_cv_load_error()}
+          description={getApiErrorMessage(applicationsQuery.error, m.employer_campaign_try_again_later())}
           action={(
             <button
               type="button"
               className="font-semibold text-red-700"
               onClick={() => applicationsQuery.refetch()}
             >
-              Thử lại
+              {m.employer_campaign_retry()}
             </button>
           )}
         />
@@ -272,32 +272,32 @@ export default function CampaignApplyCvPanel({ publicId }) {
                 <Empty
                   className="py-16"
                   image={Empty.PRESENTED_IMAGE_SIMPLE}
-                  description={<span className="text-slate-500">Chưa có CV phù hợp</span>}
+                  description={<span className="text-slate-500">{m.employer_campaign_cv_empty()}</span>}
                 />
               ),
             }}
             columns={[
               {
-                title: 'Ứng viên',
+                title: m.employer_campaign_cv_col_candidate(),
                 render: (_, application) => <CandidateCell application={application} />,
               },
               {
-                title: 'Tin tuyển dụng',
+                title: m.employer_campaign_jobs_col_job(),
                 dataIndex: 'job_title',
                 render: (value) => (
                   <span className="block min-w-44 text-slate-700">{value || '—'}</span>
                 ),
               },
               {
-                title: 'CV đã nộp',
+                title: m.employer_campaign_cv_col_submitted_cv(),
                 render: (_, application) => (
                   <span className="block min-w-36 text-slate-700">
-                    {application.submitted_cv_title || application.cv_title || 'CV ứng viên'}
+                    {application.submitted_cv_title || application.cv_title || m.employer_campaign_cv_default_title()}
                   </span>
                 ),
               },
               {
-                title: 'Ngày ứng tuyển',
+                title: m.employer_campaign_cv_col_applied_at(),
                 render: (_, application) => (
                   <span className="whitespace-nowrap text-slate-600">
                     {formatDate(application.applied_at)}
@@ -305,7 +305,7 @@ export default function CampaignApplyCvPanel({ publicId }) {
                 ),
               },
               {
-                title: 'Trạng thái',
+                title: m.employer_campaign_cv_col_status(),
                 render: (_, application) => (
                   <Tag color={STATUS_COLORS[application.status]}>
                     {RECRUITER_APPLICATION_STATUS_LABELS[application.status]
@@ -321,7 +321,7 @@ export default function CampaignApplyCvPanel({ publicId }) {
                     to={employerAppPath(`/applications?campaign=${publicId}&application=${application.public_id}`)}
                     className="inline-flex items-center gap-1 whitespace-nowrap font-semibold !text-emerald-700"
                   >
-                    <EyeOutlined /> Chi tiết
+                    <EyeOutlined /> {m.employer_campaign_cv_details()}
                   </Link>
                 ),
               },

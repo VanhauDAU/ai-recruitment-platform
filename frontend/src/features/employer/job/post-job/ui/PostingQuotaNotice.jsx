@@ -7,6 +7,7 @@ import {
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { employerReadinessAction } from '@/entities/account/employer-profile'
+import { m } from '@/shared/config/i18n'
 
 const NOTICE_TONES = {
   eligible: {
@@ -42,17 +43,17 @@ const BLOCKER_ACTIONS = {
 function noticeContent(postingContext) {
   const remaining = postingContext.publish_remain ?? postingContext.free_publish_remain
   const limit = postingContext.publish_limit ?? postingContext.free_publish_limit
-  const remainingLabel = remaining == null || limit == null ? 'Chưa xác định' : `${remaining}/${limit}`
-  const eligibleDescription = `Còn ${remainingLabel} lượt đăng tin · Tài khoản xác thực Cấp 3.`
+  const remainingLabel = remaining == null || limit == null ? m.employer_job_quota_unknown() : `${remaining}/${limit}`
+  const eligibleDescription = m.employer_job_quota_eligible_description({ remaining: remainingLabel })
 
   const blockers = postingContext.publish_blockers || []
   if (!postingContext.job_postable) {
     if (blockers.length) {
       return {
         state: 'blocked',
-        title: 'Chưa thể đăng tin',
+        title: m.employer_job_quota_blocked_title(),
         badge: null,
-        description: 'Bạn vẫn có thể lưu bản nháp. Tin chỉ đăng được khi xử lý xong:',
+        description: m.employer_job_quota_blocked_with_blockers(),
         blockers,
       }
     }
@@ -62,26 +63,26 @@ function noticeContent(postingContext) {
       badge: null,
       description: postingContext.verified_job_quota_eligible
         ? eligibleDescription
-        : 'Bạn vẫn có thể lưu bản nháp. Hoàn tất xác thực Cấp 3 để mở hạn mức đăng tin.',
+        : m.employer_job_quota_blocked_unverified(),
     }
   }
 
   if (postingContext.verified_job_quota_eligible) {
     return {
       state: 'eligible',
-      title: 'Hạn mức đăng tin',
-      badge: 'Đã mở',
+      title: m.employer_job_quota_title(),
+      badge: m.employer_job_quota_unlocked(),
       description: eligibleDescription,
     }
   }
 
   return {
     state: 'free',
-    title: 'Hạn mức miễn phí',
-    badge: 'Đang sử dụng',
+    title: m.employer_job_quota_free_title(),
+    badge: m.employer_job_quota_in_use(),
     description: postingContext.verified_publish_limit
-      ? `Còn ${remainingLabel} lượt miễn phí. Hoàn tất xác thực Cấp 3 để có ${postingContext.verified_publish_limit} lượt.`
-      : `Còn ${remainingLabel} lượt miễn phí. Hoàn tất xác thực Cấp 3 để mở hạn mức mở rộng.`,
+      ? m.employer_job_quota_free_with_limit({ remaining: remainingLabel, limit: postingContext.verified_publish_limit })
+      : m.employer_job_quota_free_extended({ remaining: remainingLabel }),
   }
 }
 
@@ -97,7 +98,7 @@ export default function PostingQuotaNotice({ postingContext }) {
 
   return (
     <section
-      aria-label="Hạn mức đăng tin"
+      aria-label={m.employer_job_quota_title()}
       data-quota-state={content.state}
       className={`rounded-xl border px-3 py-2.5 shadow-xs sm:px-4 ${tone.container}`}
     >
@@ -144,7 +145,7 @@ export default function PostingQuotaNotice({ postingContext }) {
         {dismissible && (
           <button
             type="button"
-            aria-label="Đóng thông báo quota đăng tin"
+            aria-label={m.employer_job_quota_dismiss()}
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white/80 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1"
             onClick={() => setVisible(false)}
           >

@@ -1,4 +1,5 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import (
     OpenApiParameter,
     extend_schema,
@@ -77,7 +78,7 @@ class PhoneAvailabilityView(APIView):
     def get(self, request):
         phone = (request.query_params.get('phone') or '').strip()
         if not phone:
-            raise ValidationError({'phone': 'Nhập số điện thoại cần kiểm tra.'})
+            raise ValidationError({'phone': _('Nhập số điện thoại cần kiểm tra.')})
         try:
             normalize_vietnamese_mobile(phone)
         except DjangoValidationError as error:
@@ -119,7 +120,7 @@ class SendPhoneOtpView(APIView):
     def post(self, request):
         phone = (request.data.get('phone') or request.user.phone or '').strip()
         if not phone:
-            raise ValidationError({'phone': 'Nhập số điện thoại cần xác thực.'})
+            raise ValidationError({'phone': _('Nhập số điện thoại cần xác thực.')})
         try:
             challenge = start_sms_phone_verification(
                 user=request.user,
@@ -184,9 +185,9 @@ class VerifyPhoneOtpView(APIView):
         challenge_id = (request.data.get('challenge_id') or '').strip()
         code = (request.data.get('code') or '').strip()
         if not challenge_id:
-            raise ValidationError({'challenge_id': 'Thiếu yêu cầu xác thực.'})
+            raise ValidationError({'challenge_id': _('Thiếu yêu cầu xác thực.')})
         if not code:
-            raise ValidationError({'code': 'Nhập mã xác thực.'})
+            raise ValidationError({'code': _('Nhập mã xác thực.')})
         try:
             recruiter = verify_sms_phone_challenge(
                 user=request.user,

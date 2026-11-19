@@ -1,3 +1,5 @@
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from rest_framework import serializers
 
 from common.storage.media import media_public_url
@@ -31,19 +33,33 @@ class SocialConnectionSerializer(serializers.ModelSerializer):
 
 # What a recruiter can do about each failure code (Graph codes are prefixed graph_).
 POST_ERROR_MESSAGES = {
-    'graph_1500': 'Facebook không mở được link trong bài. Link phải là địa chỉ công khai, không phải localhost.',
-    'graph_190': 'Kết nối Fanpage đã hết hạn. Hãy kết nối lại trong Cài đặt tài khoản.',
-    'graph_102': 'Kết nối Fanpage đã hết hạn. Hãy kết nối lại trong Cài đặt tài khoản.',
-    'graph_200': 'Fanpage chưa cho ProCV quyền đăng bài. Hãy kết nối lại và bật quyền đăng bài.',
-    'graph_10': 'Fanpage chưa cho ProCV quyền đăng bài. Hãy kết nối lại và bật quyền đăng bài.',
-    'graph_368': 'Facebook đang tạm chặn đăng bài từ Fanpage này. Hãy thử lại sau.',
-    'graph_100': 'Facebook từ chối nội dung bài. Hãy sửa nội dung rồi đăng lại.',
-    'timeout': 'Facebook không phản hồi kịp. Hệ thống đã thử lại nhiều lần.',
-    'network_error': 'Không kết nối được tới Facebook. Hệ thống đã thử lại nhiều lần.',
-    'campaign_paused': 'Chiến dịch đang tạm dừng nên bài được hoãn.',
-    'campaign_ended': 'Chiến dịch đã kết thúc nên bài bị hủy.',
-    'owner_changed': 'Chiến dịch đã bàn giao cho người khác nên bài bị hủy.',
-    'connection_inactive': 'Fanpage đã ngắt kết nối. Hãy kết nối lại trong Cài đặt tài khoản.',
+    'graph_1500': gettext_lazy(
+        'Facebook không mở được link trong bài. Link phải là địa chỉ công khai, không phải localhost.'
+    ),
+    'graph_190': gettext_lazy(
+        'Kết nối Fanpage đã hết hạn. Hãy kết nối lại trong Cài đặt tài khoản.'
+    ),
+    'graph_102': gettext_lazy(
+        'Kết nối Fanpage đã hết hạn. Hãy kết nối lại trong Cài đặt tài khoản.'
+    ),
+    'graph_200': gettext_lazy(
+        'Fanpage chưa cho ProCV quyền đăng bài. Hãy kết nối lại và bật quyền đăng bài.'
+    ),
+    'graph_10': gettext_lazy(
+        'Fanpage chưa cho ProCV quyền đăng bài. Hãy kết nối lại và bật quyền đăng bài.'
+    ),
+    'graph_368': gettext_lazy('Facebook đang tạm chặn đăng bài từ Fanpage này. Hãy thử lại sau.'),
+    'graph_100': gettext_lazy('Facebook từ chối nội dung bài. Hãy sửa nội dung rồi đăng lại.'),
+    'timeout': gettext_lazy('Facebook không phản hồi kịp. Hệ thống đã thử lại nhiều lần.'),
+    'network_error': gettext_lazy(
+        'Không kết nối được tới Facebook. Hệ thống đã thử lại nhiều lần.'
+    ),
+    'campaign_paused': gettext_lazy('Chiến dịch đang tạm dừng nên bài được hoãn.'),
+    'campaign_ended': gettext_lazy('Chiến dịch đã kết thúc nên bài bị hủy.'),
+    'owner_changed': gettext_lazy('Chiến dịch đã bàn giao cho người khác nên bài bị hủy.'),
+    'connection_inactive': gettext_lazy(
+        'Fanpage đã ngắt kết nối. Hãy kết nối lại trong Cài đặt tài khoản.'
+    ),
 }
 
 
@@ -82,7 +98,10 @@ class ScheduledPostSerializer(serializers.ModelSerializer):
         code = obj.last_error_code
         if not code:
             return ''
-        return POST_ERROR_MESSAGES.get(code, f'Facebook báo lỗi ({code}). Hãy thử đăng lại.')
+        message = POST_ERROR_MESSAGES.get(code)
+        if message is None:
+            return _('Facebook báo lỗi (%(code)s). Hãy thử đăng lại.') % {'code': code}
+        return str(message)
 
 
 class SchedulePostSerializer(serializers.Serializer):

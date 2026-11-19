@@ -11,6 +11,7 @@ from django.conf import settings
 from django.core import signing
 from django.core.cache import cache
 from django.db import transaction
+from django.utils.translation import gettext as _
 from rest_framework.exceptions import ValidationError
 
 from apps.employers.models import RecruiterProfile
@@ -74,7 +75,7 @@ def _pending(user, nonce):
         raise ValidationError(
             {
                 'code': 'SOCIAL_SELECTION_EXPIRED',
-                'detail': 'Phiên chọn Fanpage đã hết hạn. Hãy kết nối lại.',
+                'detail': _('Phiên chọn Fanpage đã hết hạn. Hãy kết nối lại.'),
             }
         )
     return pending
@@ -91,8 +92,8 @@ def pending_pages(user, nonce):
 def select_page(*, user, nonce, page_id):
     page = next((item for item in _pending(user, nonce)['pages'] if item['id'] == page_id), None)
     if page is None:
-        raise ValidationError({'page_id': 'Fanpage không có trong danh sách vừa kết nối.'})
-    connection, _ = SocialAccountConnection.objects.update_or_create(
+        raise ValidationError({'page_id': _('Fanpage không có trong danh sách vừa kết nối.')})
+    connection, _created = SocialAccountConnection.objects.update_or_create(
         owner=RecruiterProfile.objects.get(user=user),
         provider=settings.CAMPAIGN_SOCIAL_PROVIDER,
         page_id=page['id'],
@@ -111,7 +112,7 @@ def select_page(*, user, nonce, page_id):
 @transaction.atomic
 def disconnect_page(*, user, connection):
     if connection.owner.user_id != user.pk:
-        raise ValidationError('Bạn không có quyền với kết nối này.')
+        raise ValidationError(_('Bạn không có quyền với kết nối này.'))
     connection.status = SocialAccountConnection.Status.REVOKED
     connection.token_ciphertext = ''
     connection.save(update_fields=['status', 'token_ciphertext', 'updated_at'])

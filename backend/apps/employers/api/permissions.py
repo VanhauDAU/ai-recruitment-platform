@@ -5,6 +5,7 @@ has always answered with. They only read: a caller without a recruiter profile
 has no company, so there is nothing to create.
 """
 
+from django.utils.translation import gettext as _
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 
 from ..models import RecruiterProfile
@@ -17,7 +18,7 @@ def require_company_recruiter(user):
     """The caller's recruiter profile, linked to a real company (404 otherwise)."""
     recruiter = existing_recruiter_profile(user)
     if recruiter is None or not has_explicit_company_link(recruiter):
-        raise NotFound('Bạn chưa liên kết với công ty nào.')
+        raise NotFound(_('Bạn chưa liên kết với công ty nào.'))
     return recruiter
 
 
@@ -35,8 +36,10 @@ def require_company_media_editor(user):
         raise ValidationError(
             {
                 'detail': (
-                    'Chỉ quản lý công ty hoặc người được cấp quyền biên tập '
-                    'trang công ty được thực hiện thao tác này.'
+                    _(
+                        'Chỉ quản lý công ty hoặc người được cấp quyền biên tập '
+                        'trang công ty được thực hiện thao tác này.'
+                    )
                 )
             }
         )
@@ -51,7 +54,7 @@ def require_company_manager(user):
         or recruiter.company_id is None
         or not company_owners(recruiter.company).filter(pk=recruiter.pk).exists()
     ):
-        raise PermissionDenied('Chỉ quản lý công ty đã xác thực mới quản lý được thành viên.')
+        raise PermissionDenied(_('Chỉ quản lý công ty đã xác thực mới quản lý được thành viên.'))
     return recruiter.company
 
 

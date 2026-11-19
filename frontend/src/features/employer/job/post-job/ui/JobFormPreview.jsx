@@ -24,24 +24,25 @@ import {
 } from '@/entities/job/job'
 import { sanitizeHtml } from '@/shared/lib/sanitize-html'
 import { normalizeRichTextHtml } from '../model/job-form-values'
+import { m } from '@/shared/config/i18n'
 
-const EMPTY_LABEL = 'Chưa cập nhật'
-const GENDER_LABELS = { any: 'Không yêu cầu', male: 'Nam', female: 'Nữ' }
+const EMPTY_LABEL = m.employer_job_preview_empty()
+const GENDER_LABELS = { any: m.employer_job_preview_gender_any(), male: m.employer_job_preview_gender_male(), female: m.employer_job_preview_gender_female() }
 const PROFICIENCY_LABELS = {
-  basic: 'Cơ bản',
-  conversational: 'Giao tiếp',
-  working: 'Sử dụng trong công việc',
-  professional: 'Thành thạo',
-  native: 'Bản ngữ',
+  basic: m.employer_job_preview_proficiency_basic(),
+  conversational: m.employer_job_preview_proficiency_conversational(),
+  working: m.employer_job_preview_proficiency_working(),
+  professional: m.employer_job_preview_proficiency_professional(),
+  native: m.employer_job_preview_proficiency_native(),
 }
 const WEEKDAY_LABELS = {
-  1: 'Thứ 2',
-  2: 'Thứ 3',
-  3: 'Thứ 4',
-  4: 'Thứ 5',
-  5: 'Thứ 6',
-  6: 'Thứ 7',
-  7: 'Chủ nhật',
+  1: m.employer_job_preview_weekday_1(),
+  2: m.employer_job_preview_weekday_2(),
+  3: m.employer_job_preview_weekday_3(),
+  4: m.employer_job_preview_weekday_4(),
+  5: m.employer_job_preview_weekday_5(),
+  6: m.employer_job_preview_weekday_6(),
+  7: m.employer_job_preview_weekday_7(),
 }
 
 function formatDate(value) {
@@ -58,9 +59,9 @@ function formatTime(value) {
 }
 
 function ageLabel(values) {
-  if (values.age_min && values.age_max) return `${values.age_min} - ${values.age_max} tuổi`
-  if (values.age_min) return `Từ ${values.age_min} tuổi`
-  if (values.age_max) return `Đến ${values.age_max} tuổi`
+  if (values.age_min && values.age_max) return m.employer_job_preview_age_range({ min: values.age_min, max: values.age_max })
+  if (values.age_min) return m.employer_job_preview_age_min({ min: values.age_min })
+  if (values.age_max) return m.employer_job_preview_age_max({ max: values.age_max })
   return ''
 }
 
@@ -145,11 +146,11 @@ function JobListCard({ data, full = false }) {
 
           <div className={`mt-3 border-t border-slate-100 pt-2.5 ${full ? 'flex items-center justify-between gap-4' : ''}`}>
             <p className={`min-w-0 truncate text-slate-500 ${full ? 'text-xs' : 'text-[9px]'}`}>
-              {requirementSummary.length ? requirementSummary.join('  |  ') : 'Xem chi tiết yêu cầu công việc'}
+              {requirementSummary.length ? requirementSummary.join('  |  ') : m.employer_job_preview_see_requirements()}
             </p>
             <span className={`shrink-0 items-center gap-3 ${full ? 'flex' : 'mt-2 flex justify-between'}`}>
-              <span className="text-[10px] text-slate-400">Đăng hôm nay</span>
-              <button type="button" aria-label="Lưu tin xem trước" className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 text-xs text-slate-400"><HeartOutlined /></button>
+              <span className="text-[10px] text-slate-400">{m.employer_job_preview_posted_today()}</span>
+              <button type="button" aria-label={m.employer_job_preview_save_job()} className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 text-xs text-slate-400"><HeartOutlined /></button>
             </span>
           </div>
         </div>
@@ -164,15 +165,15 @@ function JobListPreview({ data, full = false }) {
     <div className="rounded-xl bg-slate-100 p-5 sm:p-7">
       <div className="mb-4 flex items-end justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--brand-primary)]">Cơ hội nghề nghiệp</p>
-          <h2 className="mt-1 text-xl font-extrabold text-slate-900">Việc làm mới nhất</h2>
+          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--brand-primary)]">{m.employer_job_preview_career_opportunities()}</p>
+          <h2 className="mt-1 text-xl font-extrabold text-slate-900">{m.employer_job_preview_latest_jobs()}</h2>
         </div>
-        <span className="text-xs text-slate-500">1 việc làm phù hợp</span>
+        <span className="text-xs text-slate-500">{m.employer_job_preview_one_matching_job()}</span>
       </div>
       <div className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
         <aside className="hidden rounded-xl border border-slate-200 bg-white p-4 lg:block">
-          <p className="text-sm font-bold text-slate-800">Lọc việc làm</p>
-          {['Từ khóa', 'Địa điểm', 'Kinh nghiệm', 'Mức lương'].map((label) => (
+          <p className="text-sm font-bold text-slate-800">{m.employer_job_preview_filter_jobs()}</p>
+          {[m.employer_job_preview_filter_keyword(), m.employer_job_preview_filter_location(), m.employer_job_preview_filter_experience(), m.employer_job_preview_filter_salary()].map((label) => (
             <div key={label} className="mt-4">
               <p className="mb-1.5 text-xs text-slate-500">{label}</p>
               <div className="h-9 rounded-md border border-slate-200 bg-slate-50" />
@@ -221,7 +222,7 @@ function LanguageList({ items, compact = false }) {
 }
 
 function WorkplaceList({ groups, compact = false }) {
-  if (!groups.length) return <p className="text-[10px] italic text-slate-400">Địa điểm làm việc sẽ hiển thị tại đây.</p>
+  if (!groups.length) return <p className="text-[10px] italic text-slate-400">{m.employer_job_preview_workplace_placeholder()}</p>
   return (
     <div className={compact ? 'space-y-1.5' : 'space-y-3'}>
       {groups.map((group) => (
@@ -240,7 +241,7 @@ function WorkplaceList({ groups, compact = false }) {
 
 function ScheduleList({ schedules, note, compact = false }) {
   const rows = schedules.map(scheduleLabel).filter(Boolean)
-  if (!rows.length && !note) return <p className="text-[10px] italic text-slate-400">Thời gian làm việc sẽ hiển thị tại đây.</p>
+  if (!rows.length && !note) return <p className="text-[10px] italic text-slate-400">{m.employer_job_preview_schedule_placeholder()}</p>
   return (
     <div className={`text-slate-600 ${compact ? 'text-[10px] leading-4' : 'text-sm leading-6'}`}>
       {rows.length > 0 && <ul className="list-disc pl-5">{rows.map((row) => <li key={row}>{row}</li>)}</ul>}
@@ -251,16 +252,16 @@ function ScheduleList({ schedules, note, compact = false }) {
 
 function DetailContent({ data, compact = false }) {
   const sections = [
-    { title: 'Mô tả công việc', html: data.values.description, placeholder: 'Mô tả công việc sẽ hiển thị tại đây.' },
-    { title: 'Yêu cầu ứng viên', html: data.values.requirements, placeholder: 'Yêu cầu ứng viên sẽ hiển thị tại đây.' },
-    { title: 'Quyền lợi', html: data.values.benefits, placeholder: 'Quyền lợi sẽ hiển thị tại đây.' },
+    { title: m.employer_job_preview_description(), html: data.values.description, placeholder: m.employer_job_preview_description_placeholder() },
+    { title: m.employer_job_preview_requirements(), html: data.values.requirements, placeholder: m.employer_job_preview_requirements_placeholder() },
+    { title: m.employer_job_preview_benefits(), html: data.values.benefits, placeholder: m.employer_job_preview_benefits_placeholder() },
   ]
   return (
     <div className={compact ? 'space-y-4' : 'space-y-6'}>
       <RequirementTags data={data} compact={compact} />
       {(data.values.application_reasons || []).length > 0 && (
         <section>
-          <SectionTitle compact={compact}>Vì sao nên ứng tuyển?</SectionTitle>
+          <SectionTitle compact={compact}>{m.employer_job_preview_why_apply()}</SectionTitle>
           <ul className="mt-2 space-y-1 text-slate-600">
             {data.values.application_reasons.map((reason, index) => (
               <li key={`${reason}-${index}`} className={compact ? 'text-[10px]' : 'text-sm'}>✓ {reason}</li>
@@ -282,22 +283,22 @@ function DetailContent({ data, compact = false }) {
       ))}
       {data.languageItems.length > 0 && (
         <section>
-          <SectionTitle compact={compact}>Yêu cầu ngoại ngữ</SectionTitle>
+          <SectionTitle compact={compact}>{m.employer_job_preview_language_requirements()}</SectionTitle>
           <div className="mt-2"><LanguageList items={data.languageItems} compact={compact} /></div>
         </section>
       )}
       <section>
-        <SectionTitle compact={compact}>Địa điểm làm việc</SectionTitle>
+        <SectionTitle compact={compact}>{m.employer_job_preview_workplaces()}</SectionTitle>
         <div className="mt-2"><WorkplaceList groups={data.workplaceGroups} compact={compact} /></div>
       </section>
       <section>
-        <SectionTitle compact={compact}>Thời gian làm việc</SectionTitle>
+        <SectionTitle compact={compact}>{m.employer_job_preview_working_hours()}</SectionTitle>
         <div className="mt-2"><ScheduleList schedules={data.values.work_schedules || []} note={data.values.work_schedule_note} compact={compact} /></div>
       </section>
       {!compact && (
         <section>
-          <SectionTitle>Cách thức ứng tuyển</SectionTitle>
-          <p className="mt-3 text-sm leading-6 text-slate-600">Ứng viên nộp hồ sơ trực tuyến bằng cách bấm “Ứng tuyển ngay”.</p>
+          <SectionTitle>{m.employer_job_preview_how_to_apply()}</SectionTitle>
+          <p className="mt-3 text-sm leading-6 text-slate-600">{m.employer_job_preview_how_to_apply_body()}</p>
         </section>
       )}
     </div>
@@ -318,12 +319,12 @@ function JobHero({ data, compact = false }) {
           </div>
         </div>
         <div className={`mt-3 grid gap-2 ${compact ? 'grid-cols-1' : 'sm:grid-cols-3'}`}>
-          <Metric compact={compact} icon={<WalletOutlined />} label="Mức lương" value={data.salary} />
-          <Metric compact={compact} icon={<EnvironmentOutlined />} label="Địa điểm" value={data.locationLabel} />
-          <Metric compact={compact} icon={<UserOutlined />} label="Kinh nghiệm" value={data.experienceLabel} />
+          <Metric compact={compact} icon={<WalletOutlined />} label={m.employer_job_preview_filter_salary()} value={data.salary} />
+          <Metric compact={compact} icon={<EnvironmentOutlined />} label={m.employer_job_preview_filter_location()} value={data.locationLabel} />
+          <Metric compact={compact} icon={<UserOutlined />} label={m.employer_job_preview_filter_experience()} value={data.experienceLabel} />
         </div>
-        <p className={`mt-3 flex items-start gap-1.5 text-slate-500 ${compact ? 'text-[9px]' : 'text-xs'}`}><CalendarOutlined className="mt-0.5 text-[var(--brand-primary)]" />Hạn nộp hồ sơ: <strong className="text-slate-700">{deadline}</strong></p>
-        <button type="button" className={`mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--brand-primary)] font-bold text-white ${compact ? 'h-8 text-[10px]' : 'h-11 text-sm'}`}><SafetyCertificateOutlined /> Ứng tuyển ngay</button>
+        <p className={`mt-3 flex items-start gap-1.5 text-slate-500 ${compact ? 'text-[9px]' : 'text-xs'}`}><CalendarOutlined className="mt-0.5 text-[var(--brand-primary)]" />{m.employer_job_preview_deadline()} <strong className="text-slate-700">{deadline}</strong></p>
+        <button type="button" className={`mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--brand-primary)] font-bold text-white ${compact ? 'h-8 text-[10px]' : 'h-11 text-sm'}`}><SafetyCertificateOutlined /> {m.employer_job_preview_apply_now()}</button>
       </div>
     </section>
   )
@@ -331,16 +332,16 @@ function JobHero({ data, compact = false }) {
 
 function GeneralInfo({ data }) {
   const rows = [
-    { icon: <SolutionOutlined />, label: 'Cấp bậc', value: data.positionLabel },
-    { icon: <ReadOutlined />, label: 'Học vấn', value: data.educationLabel },
-    { icon: <TeamOutlined />, label: 'Số lượng tuyển', value: `${data.values.number_of_vacancies || 1} người` },
-    { icon: <EnvironmentOutlined />, label: 'Hình thức làm việc', value: data.workTypeLabel },
-    { icon: <ClockCircleOutlined />, label: 'Loại công việc', value: data.employmentLabel },
-    { icon: <UserOutlined />, label: 'Giới tính', value: data.genderLabel },
+    { icon: <SolutionOutlined />, label: m.employer_job_preview_level(), value: data.positionLabel },
+    { icon: <ReadOutlined />, label: m.employer_job_preview_education(), value: data.educationLabel },
+    { icon: <TeamOutlined />, label: m.employer_job_preview_vacancies(), value: m.employer_job_preview_vacancy_count({ count: Number(data.values.number_of_vacancies) || 1 }) },
+    { icon: <EnvironmentOutlined />, label: m.employer_job_preview_work_type(), value: data.workTypeLabel },
+    { icon: <ClockCircleOutlined />, label: m.employer_job_preview_employment_type(), value: data.employmentLabel },
+    { icon: <UserOutlined />, label: m.employer_job_preview_gender(), value: data.genderLabel },
   ].filter((item) => item.value)
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-base font-extrabold text-slate-800">Thông tin chung</h2>
+      <h2 className="text-base font-extrabold text-slate-800">{m.employer_job_preview_general_info()}</h2>
       <dl className="mt-4 space-y-4">
         {rows.map((item) => (
           <div key={item.label} className="flex gap-3">
@@ -358,7 +359,7 @@ function RelatedCategories({ data }) {
   if (!names.length) return null
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-base font-extrabold text-slate-800">Danh mục nghề liên quan</h2>
+      <h2 className="text-base font-extrabold text-slate-800">{m.employer_job_preview_related_categories()}</h2>
       <div className="mt-3 flex flex-wrap gap-2">{names.map((name) => <Chip key={name} primary>{name}</Chip>)}</div>
     </section>
   )
@@ -370,7 +371,7 @@ function JobDetailPreview({ data, full = false }) {
       <div className="space-y-3">
         <JobHero data={data} compact />
         <section className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-          <SectionTitle compact>Chi tiết tin tuyển dụng</SectionTitle>
+          <SectionTitle compact>{m.employer_job_preview_job_details()}</SectionTitle>
           <div className="mt-3"><DetailContent data={data} compact /></div>
         </section>
       </div>
@@ -381,7 +382,7 @@ function JobDetailPreview({ data, full = false }) {
       <JobHero data={data} />
       <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-          <h2 className="border-l-4 border-[var(--brand-primary)] pl-3 text-lg font-extrabold text-slate-800">Chi tiết tin tuyển dụng</h2>
+          <h2 className="border-l-4 border-[var(--brand-primary)] pl-3 text-lg font-extrabold text-slate-800">{m.employer_job_preview_job_details()}</h2>
           <div className="mt-5"><DetailContent data={data} /></div>
         </section>
         <aside className="space-y-4">
@@ -390,7 +391,7 @@ function JobDetailPreview({ data, full = false }) {
           </section>
           <GeneralInfo data={data} />
           <RelatedCategories data={data} />
-          {data.campaignName && <p className="rounded-xl bg-slate-200/70 px-3 py-2 text-center text-xs text-slate-500">Chiến dịch: {data.campaignName}</p>}
+          {data.campaignName && <p className="rounded-xl bg-slate-200/70 px-3 py-2 text-center text-xs text-slate-500">{m.employer_job_preview_campaign({ name: data.campaignName })}</p>}
         </aside>
       </div>
     </div>
@@ -416,17 +417,17 @@ export default function JobFormPreview({
   const workplaceGroups = (values.work_areas || [])
     .filter((area) => area.province_id)
     .map((area) => ({
-      name: provinceById.get(area.province_id) || 'Khu vực làm việc',
+      name: provinceById.get(area.province_id) || m.employer_job_preview_work_area_fallback(),
       addresses: (area.workplaces || []).map((item) => item.address_detail?.trim()).filter(Boolean),
     }))
   const provinceNames = workplaceGroups.map((item) => item.name)
   const data = {
     values,
-    title: values.title?.trim() || 'Tiêu đề tin tuyển dụng',
-    companyName: companyName || 'Công ty của bạn',
+    title: values.title?.trim() || m.employer_job_preview_title_fallback(),
+    companyName: companyName || m.employer_job_preview_company_fallback(),
     salary: formatSalary(values),
-    locationLabel: provinceNames.join(', ') || 'Địa điểm làm việc',
-    experienceLabel: EXPERIENCE_YEARS_LABELS[values.experience_years] || 'Kinh nghiệm làm việc',
+    locationLabel: provinceNames.join(', ') || m.employer_job_preview_workplaces(),
+    experienceLabel: EXPERIENCE_YEARS_LABELS[values.experience_years] || m.employer_job_preview_experience_fallback(),
     educationLabel: EDUCATION_LEVEL_LABELS[values.education_level],
     positionLabel: POSITION_LEVEL_LABELS[values.position_level],
     employmentLabel: EMPLOYMENT_TYPE_LABELS[values.employment_type],
@@ -442,21 +443,21 @@ export default function JobFormPreview({
     requiredSkillNames: (values.required_skill_ids || []).map((id) => skillById.get(id)).filter(Boolean),
     preferredSkillNames: (values.preferred_skill_ids || []).map((id) => skillById.get(id)).filter(Boolean),
     languageItems: (values.language_requirements || []).filter((item) => item.language).map((item) => ({
-      name: languageById.get(item.language) || 'Ngoại ngữ',
+      name: languageById.get(item.language) || m.employer_job_preview_language_fallback(),
       proficiency: PROFICIENCY_LABELS[item.proficiency_level] || '',
     })),
     workplaceGroups,
   }
 
   return (
-    <aside aria-label="Xem trước tin tuyển dụng" className="post-job-preview-col hidden 2xl:block">
+    <aside aria-label={m.employer_job_preview_aria()} className="post-job-preview-col hidden 2xl:block">
       <div className="flex max-h-full flex-col overflow-hidden rounded-lg border border-slate-200 bg-white">
         <div className="shrink-0 border-b border-slate-200 bg-white p-3">
-          <h2 className="text-sm font-extrabold text-slate-800">Xem trước tin đăng</h2>
+          <h2 className="text-sm font-extrabold text-slate-800">{m.employer_job_preview_heading()}</h2>
           <div className="mt-2">
-            <span className="text-[11px] font-medium text-slate-500">Trên trang:</span>
+            <span className="text-[11px] font-medium text-slate-500">{m.employer_job_preview_on_page()}</span>
             <Radio.Group
-              aria-label="Vị trí hiển thị tin xem trước"
+              aria-label={m.employer_job_preview_placement_aria()}
               className="mt-1.5 flex w-full"
               value={previewPage}
               onChange={(event) => setPreviewPage(event.target.value)}
@@ -465,13 +466,13 @@ export default function JobFormPreview({
                 className="!flex !h-9 !min-w-0 !flex-1 !items-center !justify-center !rounded-l-lg !px-2 !text-center !text-[11px] !font-semibold"
                 value="job-list"
               >
-                Danh sách việc làm
+                {m.employer_job_preview_job_list_page()}
               </Radio.Button>
               <Radio.Button
                 className="!flex !h-9 !min-w-0 !flex-1 !items-center !justify-center !rounded-r-lg !px-2 !text-center !text-[11px] !font-semibold"
                 value="job-detail"
               >
-                Chi tiết tin tuyển dụng
+                {m.employer_job_preview_job_details()}
               </Radio.Button>
             </Radio.Group>
           </div>
@@ -483,7 +484,7 @@ export default function JobFormPreview({
 
         <div className="shrink-0 border-t border-slate-200 bg-white p-3">
           <button type="button" onClick={() => setModalOpen(true)} className="w-full rounded-md border border-[var(--brand-primary)] px-3 py-2 text-xs font-bold text-[var(--brand-primary)] transition hover:bg-[var(--brand-primary-soft)]">
-            Mở bản xem trước đầy đủ
+            {m.employer_job_preview_open_full()}
           </button>
         </div>
       </div>
@@ -492,7 +493,7 @@ export default function JobFormPreview({
         open={modalOpen}
         width={1080}
         footer={null}
-        title={previewPage === 'job-list' ? 'Xem trước trên trang Danh sách việc làm' : 'Xem trước trên trang Chi tiết tin tuyển dụng'}
+        title={previewPage === 'job-list' ? m.employer_job_preview_modal_list() : m.employer_job_preview_modal_detail()}
         styles={{ body: { maxHeight: 'calc(100vh - 150px)', overflowY: 'auto', padding: 0 } }}
         onCancel={() => setModalOpen(false)}
       >

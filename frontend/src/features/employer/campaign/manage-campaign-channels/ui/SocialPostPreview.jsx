@@ -1,5 +1,6 @@
 import { GlobalOutlined, LikeOutlined, MessageOutlined, ShareAltOutlined } from '@ant-design/icons'
 import { useState } from 'react'
+import { m } from '@/shared/config/i18n'
 import { isPublicLink } from '../lib/channel-kinds'
 
 const CLAMP = 320
@@ -14,7 +15,7 @@ export default function SocialPostPreview({ name, avatarUrl, meta, text, link, l
   })()
 
   return (
-    <figure className="ch-post" aria-label="Xem trước bài đăng">
+    <figure className="ch-post" aria-label={m.employer_campaign_preview_aria()}>
       <header className="ch-post__head">
         {avatarUrl
           ? <img className="ch-post__avatar" src={avatarUrl} alt="" />
@@ -29,14 +30,14 @@ export default function SocialPostPreview({ name, avatarUrl, meta, text, link, l
           {shown}
           {long && (
             <button type="button" className="ch-post__more" onClick={() => setExpanded(!expanded)}>
-              {expanded ? 'Thu gọn' : 'Xem thêm'}
+              {expanded ? m.employer_campaign_preview_less() : m.employer_campaign_preview_more()}
             </button>
           )}
         </p>
-      ) : <p className="ch-post__text is-empty">Nội dung bài sẽ hiện ở đây.</p>}
+      ) : <p className="ch-post__text is-empty">{m.employer_campaign_preview_empty()}</p>}
       {images.length > 0 && (
         <div className={`ch-post__media is-${Math.min(images.length, 4)}`}>
-          {images.slice(0, 4).map((url, index) => <img key={url} src={url} alt={`Ảnh ${index + 1} của bài`} />)}
+          {images.slice(0, 4).map((url, index) => <img key={url} src={url} alt={m.employer_campaign_posts_image_alt({ index: index + 1 })} />)}
         </div>
       )}
       {link && images.length === 0 && (isPublicLink(link) ? (
@@ -45,12 +46,12 @@ export default function SocialPostPreview({ name, avatarUrl, meta, text, link, l
           <strong>{linkTitle}</strong>
         </div>
       ) : (
-        <p className="ch-post__note">Link đang là địa chỉ máy cục bộ nên Facebook sẽ hiện dạng chữ, không có thẻ xem trước.</p>
+        <p className="ch-post__note">{m.employer_campaign_preview_local_link()}</p>
       ))}
       <footer className="ch-post__bar" aria-hidden>
-        <span><LikeOutlined /> Thích</span>
-        <span><MessageOutlined /> Bình luận</span>
-        <span><ShareAltOutlined /> Chia sẻ</span>
+        <span><LikeOutlined /> {m.employer_campaign_preview_like()}</span>
+        <span><MessageOutlined /> {m.employer_campaign_preview_comment()}</span>
+        <span><ShareAltOutlined /> {m.employer_campaign_preview_share()}</span>
       </footer>
     </figure>
   )

@@ -20,30 +20,31 @@ from django.db.models import (
 )
 from django.db.models.functions import Coalesce
 from django.utils import timezone
+from django.utils.translation import gettext, gettext_lazy
 
 from common.vietnam_time import vietnam_today
 
 from .core import Job
 
 SALARY_BUCKETS = [
-    ('u10', 'Dưới 10 triệu', None, 10_000_000),
-    ('10-15', '10 - 15 triệu', 10_000_000, 15_000_000),
-    ('15-20', '15 - 20 triệu', 15_000_000, 20_000_000),
-    ('20-25', '20 - 25 triệu', 20_000_000, 25_000_000),
-    ('25-30', '25 - 30 triệu', 25_000_000, 30_000_000),
-    ('30-50', '30 - 50 triệu', 30_000_000, 50_000_000),
-    ('o50', 'Trên 50 triệu', 50_000_000, None),
+    ('u10', gettext_lazy('Dưới 10 triệu'), None, 10_000_000),
+    ('10-15', gettext_lazy('10 - 15 triệu'), 10_000_000, 15_000_000),
+    ('15-20', gettext_lazy('15 - 20 triệu'), 15_000_000, 20_000_000),
+    ('20-25', gettext_lazy('20 - 25 triệu'), 20_000_000, 25_000_000),
+    ('25-30', gettext_lazy('25 - 30 triệu'), 25_000_000, 30_000_000),
+    ('30-50', gettext_lazy('30 - 50 triệu'), 30_000_000, 50_000_000),
+    ('o50', gettext_lazy('Trên 50 triệu'), 50_000_000, None),
 ]
 
 
 class JobState(models.TextChoices):
     """Effective state of a job as candidates experience it."""
 
-    DRAFT = 'draft', 'Nháp'
-    ACTIVE = 'active', 'Đang tuyển'
-    HIDDEN = 'hidden', 'Bị ẩn'
-    EXPIRED = 'expired', 'Hết hạn'
-    CLOSED = 'closed', 'Ngừng tuyển'
+    DRAFT = 'draft', gettext_lazy('Nháp')
+    ACTIVE = 'active', gettext_lazy('Đang tuyển')
+    HIDDEN = 'hidden', gettext_lazy('Bị ẩn')
+    EXPIRED = 'expired', gettext_lazy('Hết hạn')
+    CLOSED = 'closed', gettext_lazy('Ngừng tuyển')
 
 
 _RECRUITER = 'posted_by__recruiter_profile__'
@@ -85,37 +86,37 @@ def _visibility_requirements():
     return (
         (
             'moderation_hold',
-            'Quản trị viên đang tạm ẩn tin để kiểm duyệt.',
+            gettext('Quản trị viên đang tạm ẩn tin để kiểm duyệt.'),
             'contact_support',
             Q(moderation_hold=Job.ModerationHold.NONE),
         ),
         (
             'account_hold',
-            'Tin đang bị tạm giữ theo trạng thái tài khoản.',
+            gettext('Tin đang bị tạm giữ theo trạng thái tài khoản.'),
             'contact_support',
             Q(policy_hold=Job.PolicyHold.NONE),
         ),
         (
             'job_compliance_hold',
-            'Tin đang bị giữ để rà soát tuân thủ.',
+            gettext('Tin đang bị giữ để rà soát tuân thủ.'),
             'contact_support',
             ~_active_hold('EmployerComplianceHoldJob', job_id='pk'),
         ),
         (
             'account_inactive',
-            'Tài khoản đăng tin không còn hoạt động.',
+            gettext('Tài khoản đăng tin không còn hoạt động.'),
             'contact_support',
             Q(posted_by__status='active', posted_by__is_active=True, posted_by__is_deleted=False),
         ),
         (
             'left_company',
-            'Tài khoản đăng tin không còn thuộc công ty của tin.',
+            gettext('Tài khoản đăng tin không còn thuộc công ty của tin.'),
             'contact_support',
             Q(**{f'{_RECRUITER}company_id': F('company_id')}),
         ),
         (
             'verification_required',
-            'Tài khoản chưa được duyệt xác thực cho công ty này.',
+            gettext('Tài khoản chưa được duyệt xác thực cho công ty này.'),
             'open_verification',
             Q(
                 **{
@@ -126,25 +127,25 @@ def _visibility_requirements():
         ),
         (
             'dpa_required',
-            'Thỏa thuận xử lý dữ liệu ứng viên (DPA) chưa ở phiên bản hiện hành.',
+            gettext('Thỏa thuận xử lý dữ liệu ứng viên (DPA) chưa ở phiên bản hiện hành.'),
             'accept_current_dpa',
             _poster_dpa_current(),
         ),
         (
             'account_compliance_hold',
-            'Tài khoản đang bị giữ để rà soát tuân thủ.',
+            gettext('Tài khoản đang bị giữ để rà soát tuân thủ.'),
             'contact_support',
             ~_active_hold('EmployerComplianceHold', recruiter_id=f'{_RECRUITER}pk'),
         ),
         (
             'company_hidden',
-            'Trang công ty đang bị tạm ẩn theo chính sách nội dung.',
+            gettext('Trang công ty đang bị tạm ẩn theo chính sách nội dung.'),
             'contact_support',
             Q(company__content_policy_hold=False),
         ),
         (
             'campaign_unavailable',
-            'Chiến dịch chứa tin đang tạm dừng, đã kết thúc hoặc bị giữ.',
+            gettext('Chiến dịch chứa tin đang tạm dừng, đã kết thúc hoặc bị giữ.'),
             'open_campaign',
             Q(campaign__isnull=True)
             | (
@@ -166,13 +167,13 @@ def _time_requirements(now):
     return (
         (
             'deadline_passed',
-            'Đã quá hạn nộp hồ sơ.',
+            gettext('Đã quá hạn nộp hồ sơ.'),
             'extend_deadline',
             Q(deadline__isnull=True) | Q(deadline__gte=today),
         ),
         (
             'visibility_ended',
-            'Đã hết thời gian hiển thị tin.',
+            gettext('Đã hết thời gian hiển thị tin.'),
             'extend_deadline',
             Q(visibility_starts_at__lte=now, visibility_ends_at__gt=now),
         ),

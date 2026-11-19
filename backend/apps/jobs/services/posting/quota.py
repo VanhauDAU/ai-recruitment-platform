@@ -1,5 +1,7 @@
 """Publication quota: how many jobs a recruiter may make public in total."""
 
+from django.utils.translation import gettext as _
+
 from apps.employers.services import recruiter_job_posting_entitlement
 from apps.sitecontent.selectors import get_int_setting
 
@@ -33,8 +35,8 @@ def _posting_quota(user):
 
 def _quota_exhausted_message(*, verified_level_three, limit):
     if verified_level_three:
-        return f'Bạn đã dùng hết {limit} lượt đăng tin của tài khoản Cấp 3.'
-    return (
-        f'Bạn đã dùng hết {limit} lượt đăng tin miễn phí. '
+        return _('Bạn đã dùng hết %(limit)s lượt đăng tin của tài khoản Cấp 3.') % {'limit': limit}
+    return _(
+        'Bạn đã dùng hết %(limit)s lượt đăng tin miễn phí. '
         'Hoàn tất xác thực hồ sơ và đạt Cấp 3 để có quota 100 tin.'
-    )
+    ) % {'limit': limit}

@@ -8,9 +8,9 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { employerAppPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
 import './launch-campaign.css'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { getIntlLocale, m } from '@/shared/config/i18n'
 
-const formatDate = (value) => (value ? new Date(value).toLocaleDateString(getIntlLocale()) : 'Chưa đặt hạn nộp')
+const formatDate = (value) => (value ? new Date(value).toLocaleDateString(getIntlLocale()) : m.employer_campaign_select_no_deadline())
 const pick = (jobs, action) => new Set(jobs.filter((job) => job.action === action).map((job) => job.public_id))
 
 function JobRow({ job, checked, onToggle, badge, targetDate }) {
@@ -18,15 +18,15 @@ function JobRow({ job, checked, onToggle, badge, targetDate }) {
   const content = (
     <>
       <span className="cl-job__main">
-        <span className="cl-job__title">{job.title || 'Tin chưa đặt tiêu đề'}</span>
+        <span className="cl-job__title">{job.title || m.employer_campaign_select_untitled()}</span>
         <span className="cl-job__meta">
           <span className={`cl-chip cl-chip--${badge.tone}`}>{badge.label}</span>
-          {job.number_of_vacancies ? <span>Tuyển {job.number_of_vacancies} người</span> : null}
-          <span>Hạn nộp {formatDate(job.deadline)}</span>
+          {job.number_of_vacancies ? <span>{m.employer_campaign_select_vacancies({ count: job.number_of_vacancies })}</span> : null}
+          <span>{m.employer_campaign_select_deadline({ date: formatDate(job.deadline) })}</span>
         </span>
         {lateDeadline && (
           <span className="cl-job__warn">
-            <WarningFilled aria-hidden /> Hạn nộp sau ngày kết thúc chiến dịch, cần sửa trước khi kích hoạt.
+            <WarningFilled aria-hidden /> {m.employer_campaign_select_late_deadline()}
           </span>
         )}
       </span>
@@ -35,7 +35,7 @@ function JobRow({ job, checked, onToggle, badge, targetDate }) {
         className="cl-job__edit"
         onClick={(event) => event.stopPropagation()}
       >
-        Sửa tin
+        {m.employer_campaign_launch_edit_job()}
       </Link>
     </>
   )
@@ -92,10 +92,10 @@ export default function CampaignJobSelection({ campaign, overview, onSaved }) {
     }),
     onSuccess: (data) => {
       queryClient.setQueryData(campaignKeys.launch(campaign.public_id), data)
-      message.success('Đã lưu danh sách tin của chiến dịch.')
+      message.success(m.employer_campaign_select_saved())
       onSaved?.(data)
     },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể lưu danh sách tin.')),
+    onError: (error) => message.error(getApiErrorMessage(error, m.employer_campaign_select_save_error())),
   })
   const targetDate = campaign.is_continuous ? null : campaign.target_date
   const chosen = [
@@ -112,9 +112,11 @@ export default function CampaignJobSelection({ campaign, overview, onSaved }) {
       <Link to={`${employerAppPath('/jobs/new')}?campaign=${campaign.public_id}&return=setup`} className="cl-create">
         <span className="cl-create__icon"><FileAddOutlined aria-hidden /></span>
         <span>
-          <span className="cl-create__title">Tạo tin mới cho chiến dịch</span>
+          <span className="cl-create__title">{m.employer_campaign_select_create_title()}</span>
           <span className="cl-create__text">
-            Điền tin rồi bấm <strong>Lưu nháp</strong> (không bấm Đăng tin). Bạn sẽ được đưa về đây để chọn tin.
+            {m.employer_campaign_select_create_prefix()}
+            <strong>{m.employer_campaign_select_save_draft()}</strong>
+            {m.employer_campaign_select_create_suffix()}
           </span>
         </span>
       </Link>
@@ -122,33 +124,33 @@ export default function CampaignJobSelection({ campaign, overview, onSaved }) {
       {!hasAnyJob ? (
         <div className="cl-empty">
           <InboxOutlined aria-hidden className="cl-empty__icon" />
-          <p>Chưa có tin nào để chọn. Tạo tin mới ở trên, hoặc đăng tin trước rồi quay lại gắn vào chiến dịch.</p>
+          <p>{m.employer_campaign_select_empty()}</p>
         </div>
       ) : (
         <>
           <JobGroup
-            title="Tin nháp của chiến dịch"
-            hint="Tin được chọn sẽ đăng công khai khi kích hoạt."
+            title={m.employer_campaign_select_drafts_title()}
+            hint={m.employer_campaign_select_drafts_hint()}
             jobs={overview.draft_jobs}
             selected={publish}
             onToggle={toggle(setPublish)}
-            badge={{ label: 'Nháp', tone: 'draft' }}
+            badge={{ label: m.employer_campaign_jobs_status_draft(), tone: 'draft' }}
             targetDate={targetDate}
           />
           <JobGroup
-            title="Tin bạn đang đăng"
-            hint="Tin chưa thuộc chiến dịch nào đang chạy. Tin được chọn sẽ thuộc chiến dịch này khi kích hoạt."
+            title={m.employer_campaign_select_live_title()}
+            hint={m.employer_campaign_select_live_hint()}
             jobs={overview.attachable_jobs}
             selected={attach}
             onToggle={toggle(setAttach)}
-            badge={{ label: 'Đang hiển thị', tone: 'live' }}
+            badge={{ label: m.employer_campaign_select_live_badge(), tone: 'live' }}
             targetDate={targetDate}
           />
           <JobGroup
-            title="Đã thuộc chiến dịch"
-            hint="Các tin này đang tuyển trong chiến dịch."
+            title={m.employer_campaign_select_attached_title()}
+            hint={m.employer_campaign_select_attached_hint()}
             jobs={overview.campaign_jobs}
-            badge={{ label: 'Đang tuyển', tone: 'live' }}
+            badge={{ label: m.employer_campaign_jobs_status_active(), tone: 'live' }}
           />
         </>
       )}
@@ -156,11 +158,11 @@ export default function CampaignJobSelection({ campaign, overview, onSaved }) {
       <div className="cl-bar">
         <span className={`cl-bar__status${total ? '' : ' is-empty'}`}>
           {total
-            ? `Đã chọn ${total} tin${headcount ? `, tuyển tổng ${headcount} người` : ''}`
-            : 'Chưa chọn tin nào. Chiến dịch cần ít nhất 1 tin.'}
+            ? `${m.employer_campaign_select_total({ count: total })}${headcount ? m.employer_campaign_select_total_headcount({ count: headcount }) : ''}`
+            : m.employer_campaign_select_none()}
         </span>
         <Button type="primary" loading={mutation.isPending} onClick={() => mutation.mutate()}>
-          Lưu và tiếp tục
+          {m.employer_campaign_save_and_continue()}
         </Button>
       </div>
     </div>

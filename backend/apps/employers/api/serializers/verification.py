@@ -2,6 +2,7 @@ import re
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import EmailValidator, URLValidator
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema_field, inline_serializer
 from rest_framework import serializers
 
@@ -185,7 +186,7 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
         )
     )
     def get_requested_by_summary(self, obj):
-        display_name = (obj.requested_by.full_name or '').strip() or 'Thành viên công ty'
+        display_name = (obj.requested_by.full_name or '').strip() or _('Thành viên công ty')
         return {
             'public_id': obj.requested_by.public_id,
             'display_name': display_name,
@@ -249,11 +250,12 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
 
     def validate_changes(self, value):
         if not isinstance(value, dict) or not value:
-            raise serializers.ValidationError('Chưa có thay đổi nào.')
+            raise serializers.ValidationError(_('Chưa có thay đổi nào.'))
         invalid = set(value) - self.allowed_change_fields()
         if invalid:
             raise serializers.ValidationError(
-                f'Trường không được phép cập nhật: {", ".join(sorted(invalid))}'
+                _('Trường không được phép cập nhật: %(fields)s')
+                % {'fields': ', '.join(sorted(invalid))}
             )
         page_access = self.context.get('page_access')
         if PAGE_CONTENT_FIELDS & set(value) and not (
@@ -262,7 +264,7 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
             raise CompanyPageEditForbidden()
         for marker in ('logo_pending', 'cover_pending', 'gallery_pending'):
             if marker in value and value[marker] is not True:
-                raise serializers.ValidationError({marker: 'Trạng thái tải ảnh không hợp lệ.'})
+                raise serializers.ValidationError({marker: _('Trạng thái tải ảnh không hợp lệ.')})
         return value
 
     def allowed_change_fields(self):
@@ -285,12 +287,14 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
         if sensitive:
             if not attrs.get('reason', '').strip():
                 raise serializers.ValidationError(
-                    {'reason': 'Nhập lý do khi thay đổi Mã số thuế hoặc Tên công ty.'}
+                    {'reason': _('Nhập lý do khi thay đổi Mã số thuế hoặc Tên công ty.')}
                 )
             if not attrs.get('proof_type'):
                 raise serializers.ValidationError(
                     {
-                        'proof_type': 'Chọn loại giấy tờ chứng minh khi thay đổi Mã số thuế hoặc Tên công ty.'
+                        'proof_type': _(
+                            'Chọn loại giấy tờ chứng minh khi thay đổi Mã số thuế hoặc Tên công ty.'
+                        )
                     }
                 )
         attrs['changes'] = self._validate_company_changes(attrs['changes'])
@@ -302,40 +306,42 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
         company = self.context.get('company')
         cleaned = dict(changes)
         required_text = {
-            'company_name': 'Tên đăng ký kinh doanh',
+            'company_name': _('Tên đăng ký kinh doanh'),
             'email': 'Email',
-            'phone': 'Số điện thoại',
-            'address': 'Địa chỉ',
-            'company_size': 'Quy mô công ty',
+            'phone': _('Số điện thoại'),
+            'address': _('Địa chỉ'),
+            'company_size': _('Quy mô công ty'),
         }
         for field, label in required_text.items():
             if field in cleaned and not str(cleaned[field] or '').strip():
-                raise serializers.ValidationError({field: f'{label} là bắt buộc.'})
+                raise serializers.ValidationError(
+                    {field: _('%(label)s là bắt buộc.') % {'label': label}}
+                )
 
         if (
             'business_type' in cleaned
             and cleaned['business_type'] not in Company.BusinessType.values
         ):
             raise serializers.ValidationError(
-                {'business_type': 'Loại hình kinh doanh không hợp lệ.'}
+                {'business_type': _('Loại hình kinh doanh không hợp lệ.')}
             )
         if 'company_size' in cleaned and cleaned['company_size'] not in Company.Size.values:
-            raise serializers.ValidationError({'company_size': 'Quy mô công ty không hợp lệ.'})
+            raise serializers.ValidationError({'company_size': _('Quy mô công ty không hợp lệ.')})
         if 'email' in cleaned:
             try:
                 EmailValidator()(cleaned['email'])
             except DjangoValidationError as error:
                 raise serializers.ValidationError(
-                    {'email': 'Email công ty không hợp lệ.'}
+                    {'email': _('Email công ty không hợp lệ.')}
                 ) from error
         if 'phone' in cleaned and not re.fullmatch(r'\+?[0-9 .()\-]{8,20}', cleaned['phone']):
-            raise serializers.ValidationError({'phone': 'Số điện thoại không hợp lệ.'})
+            raise serializers.ValidationError({'phone': _('Số điện thoại không hợp lệ.')})
         if cleaned.get('website_url'):
             try:
                 URLValidator(schemes=['http', 'https'])(cleaned['website_url'])
             except DjangoValidationError as error:
                 raise serializers.ValidationError(
-                    {'website_url': 'URL website không hợp lệ.'}
+                    {'website_url': _('URL website không hợp lệ.')}
                 ) from error
 
         if 'tax_code' in cleaned:
@@ -345,8 +351,8 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({'tax_code': str(error)}) from error
 
         for field, required, label in (
-            ('description', True, 'Mô tả công ty'),
-            ('employee_benefits', False, 'Phúc lợi nhân viên'),
+            ('description', True, _('Mô tả công ty')),
+            ('employee_benefits', False, _('Phúc lợi nhân viên')),
         ):
             if field not in cleaned:
                 continue
@@ -364,12 +370,14 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
         if 'markets' in cleaned:
             invalid = set(cleaned['markets']) - set(Company.Market.values)
             if invalid:
-                raise serializers.ValidationError({'markets': 'Thị trường hoạt động không hợp lệ.'})
+                raise serializers.ValidationError(
+                    {'markets': _('Thị trường hoạt động không hợp lệ.')}
+                )
         if 'target_customers' in cleaned:
             invalid = set(cleaned['target_customers']) - set(Company.TargetCustomer.values)
             if invalid:
                 raise serializers.ValidationError(
-                    {'target_customers': 'Khách hàng mục tiêu không hợp lệ.'}
+                    {'target_customers': _('Khách hàng mục tiêu không hợp lệ.')}
                 )
 
         if 'industries' in cleaned or 'primary_industry' in cleaned:
@@ -379,7 +387,7 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
             )
             if not isinstance(industry_ids, list):
                 raise serializers.ValidationError(
-                    {'industries': 'Danh sách lĩnh vực không hợp lệ.'}
+                    {'industries': _('Danh sách lĩnh vực không hợp lệ.')}
                 )
             primary_id = cleaned.get(
                 'primary_industry',
@@ -393,14 +401,14 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
                 Industry.objects.filter(id__in=industry_ids).values_list('id', flat=True)
             )
             if len(found_ids) != len(set(industry_ids)):
-                raise serializers.ValidationError({'industries': 'Có lĩnh vực không tồn tại.'})
+                raise serializers.ValidationError({'industries': _('Có lĩnh vực không tồn tại.')})
             if not found_ids:
                 raise serializers.ValidationError(
-                    {'industries': 'Chọn ít nhất một lĩnh vực hoạt động.'}
+                    {'industries': _('Chọn ít nhất một lĩnh vực hoạt động.')}
                 )
             if primary_id not in found_ids:
                 raise serializers.ValidationError(
-                    {'primary_industry': 'Lĩnh vực chính phải nằm trong các lĩnh vực đã chọn.'}
+                    {'primary_industry': _('Lĩnh vực chính phải nằm trong các lĩnh vực đã chọn.')}
                 )
 
         if 'gallery_deletions' in cleaned:
@@ -409,21 +417,21 @@ class CompanyUpdateRequestSerializer(serializers.ModelSerializer):
                 not isinstance(image_id, int) for image_id in deletion_ids
             ):
                 raise serializers.ValidationError(
-                    {'gallery_deletions': 'Danh sách ảnh cần xóa không hợp lệ.'}
+                    {'gallery_deletions': _('Danh sách ảnh cần xóa không hợp lệ.')}
                 )
             existing_ids = set(
                 company.images.filter(id__in=deletion_ids).values_list('id', flat=True)
             )
             if len(existing_ids) != len(set(deletion_ids)):
                 raise serializers.ValidationError(
-                    {'gallery_deletions': 'Có ảnh không thuộc công ty hiện tại.'}
+                    {'gallery_deletions': _('Có ảnh không thuộc công ty hiện tại.')}
                 )
 
         website = cleaned.get('website_url', getattr(company, 'website_url', ''))
         has_no_website = cleaned.get('has_no_website', getattr(company, 'has_no_website', False))
         if {'website_url', 'has_no_website'} & set(cleaned) and not website and not has_no_website:
             raise serializers.ValidationError(
-                {'website_url': 'Nhập URL website hoặc chọn "Tôi không có website".'}
+                {'website_url': _('Nhập URL website hoặc chọn "Tôi không có website".')}
             )
 
         name = cleaned.get('company_name', getattr(company, 'company_name', ''))

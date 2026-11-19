@@ -1,9 +1,11 @@
+import { m } from '@/shared/config/i18n'
+
 const FORMULA_PREFIX = /^[\t\r\n =+\-@]/
 
 function normalizeCsvValue(value) {
   if (value == null) return ''
   if (value instanceof Date) return value.toISOString()
-  if (typeof value === 'boolean') return value ? 'Có' : 'Không'
+  if (typeof value === 'boolean') return value ? m.ui_csv_yes() : m.ui_csv_no()
   if (Array.isArray(value)) return value.join(' | ')
   if (typeof value === 'object') return JSON.stringify(value)
   return String(value)

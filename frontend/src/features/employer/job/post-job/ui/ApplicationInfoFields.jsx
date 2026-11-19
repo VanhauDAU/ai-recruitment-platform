@@ -1,6 +1,7 @@
 import { Button, DatePicker, Form, Input, InputNumber, Modal, Select } from 'antd'
 import dayjs from '@/shared/lib/dayjs'
 import { useState } from 'react'
+import { m } from '@/shared/config/i18n'
 
 const FALLBACK_MAX_DEADLINE_DAYS = 90
 
@@ -22,11 +23,11 @@ export default function ApplicationInfoFields({
   function validateDeadline(_, deadline) {
     if (!deadline) return Promise.resolve()
     if (deadline.isBefore(today, 'day')) {
-      return Promise.reject(new Error('Hạn nhận hồ sơ phải từ hôm nay trở đi.'))
+      return Promise.reject(new Error(m.employer_job_form_deadline_past()))
     }
     if (deadline.isAfter(latestDeadline, 'day')) {
       return Promise.reject(
-        new Error(`Hạn nhận hồ sơ không được quá ${normalizedMaxDays} ngày kể từ hôm nay.`),
+        new Error(m.employer_job_form_deadline_too_far({ days: normalizedMaxDays })),
       )
     }
     return Promise.resolve()
@@ -44,10 +45,10 @@ export default function ApplicationInfoFields({
       <div className="grid gap-x-4 md:grid-cols-2">
         <Form.Item
           name="deadline"
-          label="Hạn nhận hồ sơ"
-          extra={`Chọn đến ${latestDeadline.format('DD/MM/YYYY')} (tối đa ${normalizedMaxDays} ngày).`}
+          label={m.employer_job_form_deadline()}
+          extra={m.employer_job_form_deadline_extra({ date: latestDeadline.format('DD/MM/YYYY'), days: normalizedMaxDays })}
           rules={[
-            { required: true, message: 'Chọn hạn nhận hồ sơ.' },
+            { required: true, message: m.employer_job_form_deadline_required() },
             { validator: validateDeadline },
           ]}
         >
@@ -57,74 +58,74 @@ export default function ApplicationInfoFields({
               date.isBefore(today, 'day') || date.isAfter(latestDeadline, 'day')
             )}
             format="DD/MM/YYYY"
-            placeholder="-- Chọn hạn nhận hồ sơ --"
+            placeholder={m.employer_job_form_deadline_placeholder()}
           />
         </Form.Item>
-        <Form.Item name="number_of_vacancies" label="Số lượng tuyển" rules={[{ required: true, type: 'number', min: 1, message: 'Số lượng tuyển phải từ 1.' }]}>
-          <InputNumber min={1} className="!w-full" placeholder="Nhập số lượng tuyển" />
+        <Form.Item name="number_of_vacancies" label={m.employer_job_form_vacancies()} rules={[{ required: true, type: 'number', min: 1, message: m.employer_job_form_vacancies_error() }]}>
+          <InputNumber min={1} className="!w-full" placeholder={m.employer_job_form_vacancies_placeholder()} />
         </Form.Item>
       </div>
-      <Form.Item name="campaign" label="Chiến dịch tuyển dụng">
+      <Form.Item name="campaign" label={m.employer_job_form_campaign()}>
         <Select
           allowClear
           showSearch
           optionFilterProp="label"
           options={campaigns.map((item) => ({ value: item.public_id, label: item.name }))}
-          placeholder="Không gắn chiến dịch"
+          placeholder={m.employer_job_form_campaign_placeholder()}
         />
       </Form.Item>
       <Button type="link" className="!mb-4 !px-0" onClick={() => setQuickCreateOpen(true)}>
-        Tạo nhanh chiến dịch mới
+        {m.employer_job_form_quick_campaign_link()}
       </Button>
       <Modal
         destroyOnHidden
         open={quickCreateOpen}
-        title="Tạo nhanh chiến dịch"
-        okText="Tạo và chọn"
-        cancelText="Hủy"
+        title={m.employer_job_form_quick_campaign_title()}
+        okText={m.employer_job_form_quick_campaign_ok()}
+        cancelText={m.employer_job_form_cancel()}
         confirmLoading={creatingCampaign}
         onCancel={() => setQuickCreateOpen(false)}
         onOk={() => quickCreateForm.submit()}
       >
         <Form form={quickCreateForm} layout="vertical" onFinish={createQuickCampaign}>
-          <Form.Item name="name" label="Tên chiến dịch" rules={[{ required: true, whitespace: true, message: 'Nhập tên chiến dịch.' }]}>
-            <Input autoFocus maxLength={255} placeholder="Ví dụ: Tuyển đội ngũ kỹ thuật quý III" />
+          <Form.Item name="name" label={m.employer_job_form_campaign_name()} rules={[{ required: true, whitespace: true, message: m.employer_job_form_campaign_name_required() }]}>
+            <Input autoFocus maxLength={255} placeholder={m.employer_job_form_campaign_name_placeholder()} />
           </Form.Item>
         </Form>
       </Modal>
       <div className="border-t border-slate-200 pt-4">
-        <h3 className="text-sm font-extrabold text-slate-800">Người nhận hồ sơ</h3>
+        <h3 className="text-sm font-extrabold text-slate-800">{m.employer_job_form_recipient()}</h3>
         <div className="mt-3 grid gap-x-4 md:grid-cols-2">
-          <Form.Item name={['application_contact', 'recipient_name']} label="Họ và tên người nhận" rules={[{ required: true, whitespace: true, message: 'Nhập họ tên người nhận.' }]}>
-            <Input maxLength={255} placeholder="Ví dụ: Nguyễn Văn An" />
+          <Form.Item name={['application_contact', 'recipient_name']} label={m.employer_job_form_recipient_name()} rules={[{ required: true, whitespace: true, message: m.employer_job_form_recipient_name_required() }]}>
+            <Input maxLength={255} placeholder={m.employer_job_form_recipient_name_placeholder()} />
           </Form.Item>
           <Form.Item
             name={['application_contact', 'phone']}
-            label="Số điện thoại"
+            label={m.employer_job_form_phone()}
             rules={[
-              { required: true, whitespace: true, message: 'Nhập số điện thoại người nhận.' },
-              { pattern: /^[+\d][\d\s().-]{7,29}$/, message: 'Số điện thoại chưa đúng định dạng.' },
+              { required: true, whitespace: true, message: m.employer_job_form_phone_required() },
+              { pattern: /^[+\d][\d\s().-]{7,29}$/, message: m.employer_job_form_phone_invalid() },
             ]}
           >
-            <Input maxLength={30} placeholder="Ví dụ: 0912 345 678" />
+            <Input maxLength={30} placeholder={m.employer_job_form_phone_placeholder()} />
           </Form.Item>
         </div>
         <Form.Item
           className="!mb-0"
           name={['application_contact', 'emails']}
-          label="Email nhận hồ sơ (tối đa 5 email)"
+          label={m.employer_job_form_emails()}
           rules={[
-            { required: true, type: 'array', min: 1, message: 'Nhập ít nhất một email nhận hồ sơ.' },
+            { required: true, type: 'array', min: 1, message: m.employer_job_form_emails_required() },
             {
               validator(_, emails = []) {
-                if (emails.length > 5) return Promise.reject(new Error('Chỉ được nhập tối đa 5 email.'))
+                if (emails.length > 5) return Promise.reject(new Error(m.employer_job_form_emails_too_many()))
                 const valid = emails.every((email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-                return valid ? Promise.resolve() : Promise.reject(new Error('Có email chưa đúng định dạng.'))
+                return valid ? Promise.resolve() : Promise.reject(new Error(m.employer_job_form_emails_invalid()))
               },
             },
           ]}
         >
-          <Select mode="tags" tokenSeparators={[',', ' ']} maxCount={5} placeholder="Nhập email rồi nhấn Enter" open={false} />
+          <Select mode="tags" tokenSeparators={[',', ' ']} maxCount={5} placeholder={m.employer_job_form_emails_placeholder()} open={false} />
         </Form.Item>
       </div>
     </>

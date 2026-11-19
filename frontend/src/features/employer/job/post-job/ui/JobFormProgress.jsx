@@ -1,4 +1,5 @@
 import { CheckOutlined, ExclamationOutlined } from '@ant-design/icons'
+import { m } from '@/shared/config/i18n'
 
 function itemHasError(item, invalidFieldNames) {
   return item.errorFields?.some((fieldName) => (
@@ -12,9 +13,9 @@ export default function JobFormProgress({ sections, activeSection, openSections,
   const percent = total ? Math.round((completed / total) * 100) : 0
 
   return (
-    <nav aria-label="Tiến độ tạo tin" className="rounded-lg border border-slate-200 bg-white p-4">
+    <nav aria-label={m.employer_job_form_progress_aria()} className="rounded-lg border border-slate-200 bg-white p-4">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-sm font-extrabold text-slate-900">Nội dung tin</span>
+        <span className="text-sm font-extrabold text-slate-900">{m.employer_job_form_progress_title()}</span>
         <span className="text-xs font-bold text-[var(--brand-primary)]">{percent}%</span>
       </div>
       <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100">
@@ -48,7 +49,7 @@ export default function JobFormProgress({ sections, activeSection, openSections,
                       return (
                       <span key={item.label} className={`flex min-w-0 items-center gap-2 text-[11px] leading-4 ${itemInvalid ? 'text-red-600' : 'text-slate-400'}`}>
                         <span
-                          aria-label={itemInvalid ? `${item.label} có lỗi` : undefined}
+                          aria-label={itemInvalid ? m.employer_job_form_item_invalid({ label: item.label }) : undefined}
                           className={`flex h-2.5 w-2.5 shrink-0 items-center justify-center rounded-full ${itemInvalid ? 'bg-red-50 text-[8px] text-red-600' : item.done ? 'bg-[var(--brand-primary)]' : 'border border-slate-300'}`}
                         >
                           {itemInvalid && <ExclamationOutlined />}

@@ -1,25 +1,26 @@
-import { getIntlLocale } from '@/shared/config/i18n'
+import { getIntlLocale, m } from '@/shared/config/i18n'
+
 const STATUS_PRESENTATION = {
-  pending: { color: 'processing', label: 'Chờ xác minh DNS' },
-  dns_pending: { color: 'processing', label: 'Chờ xác minh DNS' },
-  manual_review: { color: 'warning', label: 'Đang chờ duyệt thủ công' },
-  pending_manual_review: { color: 'warning', label: 'Đang chờ duyệt thủ công' },
-  verified: { color: 'success', label: 'Đã xác minh' },
-  grace: { color: 'warning', label: 'Cần khôi phục bản ghi DNS' },
-  grace_period: { color: 'warning', label: 'Cần khôi phục bản ghi DNS' },
-  revoked: { color: 'error', label: 'Đã thu hồi' },
-  expired: { color: 'default', label: 'Đã hết hạn' },
-  rejected: { color: 'error', label: 'Không được duyệt' },
-  legacy_inferred: { color: 'warning', label: 'Cần xác minh lại' },
+  pending: { color: 'processing', label: m.employer_profile_domain_dns_pending() },
+  dns_pending: { color: 'processing', label: m.employer_profile_domain_dns_pending() },
+  manual_review: { color: 'warning', label: m.employer_profile_domain_manual_review() },
+  pending_manual_review: { color: 'warning', label: m.employer_profile_domain_manual_review() },
+  verified: { color: 'success', label: m.employer_profile_domain_verified() },
+  grace: { color: 'warning', label: m.employer_profile_domain_grace() },
+  grace_period: { color: 'warning', label: m.employer_profile_domain_grace() },
+  revoked: { color: 'error', label: m.employer_profile_domain_revoked() },
+  expired: { color: 'default', label: m.employer_profile_domain_expired() },
+  rejected: { color: 'error', label: m.employer_profile_domain_rejected() },
+  legacy_inferred: { color: 'warning', label: m.employer_profile_domain_reverify() },
 }
 
 export function domainClaimStatusPresentation(value) {
   const claim = typeof value === 'object' ? value : null
   const status = claim?.status || value
   if (claim?.method === 'admin_manual' && status === 'pending') {
-    return { color: 'warning', label: 'Đang chờ duyệt thủ công' }
+    return { color: 'warning', label: m.employer_profile_domain_manual_review() }
   }
-  return STATUS_PRESENTATION[status] || { color: 'default', label: status || 'Chưa xác minh' }
+  return STATUS_PRESENTATION[status] || { color: 'default', label: status || m.employer_profile_domain_unverified() }
 }
 
 export function domainClaimAllows(claim, action) {

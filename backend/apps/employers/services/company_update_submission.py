@@ -7,6 +7,7 @@ editor can save one block at a time.
 
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from rest_framework.exceptions import ValidationError
 
 from common.storage.media import delete_local_media_url
@@ -145,7 +146,7 @@ def submit_company_update_request(
         if not changes:
             if active_request is None:
                 raise ValidationError(
-                    {'changes': ['Chưa có thay đổi nào so với trang đang công khai.']}
+                    {'changes': [_('Chưa có thay đổi nào so với trang đang công khai.')]}
                 )
             _withdraw_emptied_request(active_request, requester)
             return None, False

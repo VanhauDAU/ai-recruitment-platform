@@ -1,0 +1,241 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: procv\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Đã nộp hồ sơ"
+msgstr "Application submitted"
+
+msgid "Nhà tuyển dụng đã xem hồ sơ"
+msgstr "The employer viewed your application"
+
+msgid "Hồ sơ phù hợp"
+msgstr "Application shortlisted"
+
+msgid "Mời phỏng vấn"
+msgstr "Invited to interview"
+
+msgid "Trúng tuyển"
+msgstr "Hired"
+
+msgid "Chưa phù hợp"
+msgstr "Not a fit this time"
+
+msgid "Bạn đã rút hồ sơ"
+msgstr "You withdrew your application"
+
+msgid "CV chưa được lưu lần nào. Hãy mở CV và bấm Lưu trước khi nộp."
+msgstr "This CV has never been saved. Open the CV and click Save before applying."
+
+msgid "CV đang được phân tích, vui lòng chờ trong giây lát."
+msgstr "The CV is being analysed. Please wait a moment."
+
+msgid "Vui lòng nhập thông tin này để nhà tuyển dụng liên hệ."
+msgstr "Please enter this information so the employer can contact you."
+
+msgid "ProCV đã nhắc nhà tuyển dụng phản hồi CV của bạn"
+msgstr "ProCV reminded the employer to respond to your CV"
+
+msgid "CV chưa đủ thông tin để ứng tuyển: thiếu %(issues)s. Hãy cập nhật CV trước khi nộp."
+msgstr "Your CV is missing information needed to apply: %(issues)s. Please update your CV before applying."
+
+msgid "Ứng viên"
+msgstr "Candidate"
+
+msgid "Không thể gửi thêm hồ sơ ứng tuyển vào lúc này."
+msgstr "You cannot submit more applications right now."
+
+msgid "CV này là tệp tải lên, hãy tải tệp gốc."
+msgstr "This CV is an uploaded file. Please download the original file."
+
+msgid "Tin tuyển dụng"
+msgstr "Job posting"
+
+msgid "CV đã nộp"
+msgstr "Submitted CV"
+
+msgid "Trạng thái"
+msgstr "Status"
+
+msgid "Ngày ứng tuyển"
+msgstr "Applied on"
+
+msgid "Mới"
+msgstr "New"
+
+msgid "Đã xem"
+msgstr "Viewed"
+
+msgid "Phù hợp"
+msgstr "Shortlisted"
+
+msgid "Phỏng vấn"
+msgstr "Interview"
+
+msgid "Không phù hợp"
+msgstr "Not a fit"
+
+msgid "Đã rút"
+msgstr "Withdrawn"
+
+msgid "Ứng tuyển hàng loạt, không phù hợp"
+msgstr "Mass applying to unsuitable jobs"
+
+msgid "Hành vi không phù hợp"
+msgstr "Inappropriate behaviour"
+
+msgid "Hồ sơ giả mạo"
+msgstr "Fake profile"
+
+msgid "Lý do khác"
+msgstr "Other reason"
+
+msgid "Hệ thống tự nhắc"
+msgstr "Automatic system reminder"
+
+msgid "Ứng viên yêu cầu nhắc"
+msgstr "Requested by the candidate"
+
+msgid "Rất nên tuyển"
+msgstr "Strongly recommend hiring"
+
+msgid "Nên tuyển"
+msgstr "Recommend hiring"
+
+msgid "Chưa nên tuyển"
+msgstr "Do not recommend yet"
+
+msgid "Không nên tuyển"
+msgstr "Do not recommend hiring"
+
+msgid "Tin tuyển dụng này hiện không nhận hồ sơ."
+msgstr "This job posting is not accepting applications right now."
+
+msgid "Hồ sơ của bạn đang được nhà tuyển dụng xử lý nên chưa thể nộp lại."
+msgstr "The employer is reviewing your application, so you cannot apply again yet."
+
+msgid "Bạn đã dùng hết 2 lượt ứng tuyển lại cho công việc này."
+msgstr "You have used both of your re-applications for this job."
+
+msgid "Vui lòng chờ đủ 5 phút kể từ lần ứng tuyển gần nhất trước khi ứng tuyển lại."
+msgstr "Please wait 5 minutes after your last application before applying again."
+
+msgid "Bạn đã ứng tuyển tin này. Muốn nộp CV khác, hãy rút hồ sơ rồi ứng tuyển lại."
+msgstr "You have already applied for this job posting. To submit a different CV, withdraw your application and apply again."
+
+msgid "Hồ sơ đã có kết quả nên không thể rút."
+msgstr "This application already has a result, so it cannot be withdrawn."
+
+msgid "Ứng viên rút hồ sơ trước khi nhận kết quả."
+msgstr "The candidate withdrew the application before receiving the result."
+
+msgid "%(count)s hồ sơ ứng tuyển vị trí %(job)s sẽ tự động chuyển sang “Không phù hợp” trong vòng 3 ngày nếu bạn chưa đưa ra quyết định."
+msgid_plural "%(count)s hồ sơ ứng tuyển vị trí %(job)s sẽ tự động chuyển sang “Không phù hợp” trong vòng 3 ngày nếu bạn chưa đưa ra quyết định."
+msgstr[0] "%(count)s application for %(job)s will automatically move to “Not a fit” within 3 days if you have not made a decision."
+msgstr[1] "%(count)s applications for %(job)s will automatically move to “Not a fit” within 3 days if you have not made a decision."
+
+msgid "Nhắc xử lý hồ sơ ứng tuyển — %(job)s"
+msgstr "Reminder to review applications — %(job)s"
+
+msgid "%(body)s\n\nXem hồ sơ: %(url)s"
+msgstr "%(body)s\n\nView applications: %(url)s"
+
+msgid "Tự động chuyển sang Không phù hợp do quá hạn xử lý."
+msgstr "Automatically moved to Not a fit because the review deadline passed."
+
+msgid "Kết quả ứng tuyển vị trí %(job)s"
+msgstr "Your application result for %(job)s"
+
+msgid "Xem hồ sơ ứng tuyển"
+msgstr "View applications"
+
+msgid "Bạn không thể ứng tuyển vào tin này lúc này."
+msgstr "You cannot apply for this job posting right now."
+
+msgid "Ứng viên này đã ở trong danh sách chặn của công ty."
+msgstr "This candidate is already on the company block list."
+
+msgid "Chiến dịch của hồ sơ vừa thay đổi. Vui lòng tải lại."
+msgstr "The recruitment campaign of this application has just changed. Please reload."
+
+msgid "Quản lý CV"
+msgstr "Manage CVs"
+
+msgid "Có hồ sơ ứng tuyển mới cho vị trí %(job)s"
+msgstr "New application for %(job)s"
+
+msgid "Một ứng viên đã rút hồ sơ khỏi vị trí %(job)s."
+msgstr "A candidate withdrew their application for %(job)s."
+
+msgid "Có hồ sơ mới cho vị trí %(job)s."
+msgstr "There is a new application for %(job)s."
+
+msgid "Không thể nhắc nhà tuyển dụng cho hồ sơ này nữa."
+msgstr "You can no longer remind the employer about this application."
+
+msgid "Bạn có thể nhắc nhà tuyển dụng từ %(time)s."
+msgstr "You can remind the employer from %(time)s."
+
+msgid "Ứng viên đang chờ bạn phản hồi hồ sơ vị trí %(job)s."
+msgstr "A candidate is waiting for your response to their application for %(job)s."
+
+msgid "%(count)s hồ sơ vị trí %(job)s đang chờ bạn phản hồi."
+msgstr "%(count)s applications for %(job)s are waiting for your response."
+
+msgid "CV này là tệp ứng viên tải lên nên không thể ẩn thông tin liên hệ để chia sẻ."
+msgstr "This CV is a file uploaded by the candidate, so contact details cannot be hidden for sharing."
+
+msgid "%(reviewer)s đã gửi đánh giá \"%(recommendation)s\" cho hồ sơ %(candidate)s — %(job)s."
+msgstr "%(reviewer)s submitted a \"%(recommendation)s\" review for %(candidate)s — %(job)s."
+
+msgid "Ứng viên đang bị hạn chế tài khoản. Chỉ được chuyển hồ sơ sang trạng thái Không phù hợp."
+msgstr "The candidate account is restricted. The application can only be moved to Not a fit."
+
+msgid "Công ty đã chặn ứng viên."
+msgstr "The company blocked the candidate."
+
+msgid "Không có thay đổi nào của bạn có thể hoàn tác."
+msgstr "None of your changes can be undone."
+
+msgid "Ứng viên đã nhận thông báo về thay đổi này nên không thể hoàn tác."
+msgstr "The candidate has already been notified of this change, so it cannot be undone."
+
+msgid "Không thể chuyển hồ sơ từ \"%(from)s\" sang \"%(to)s\"."
+msgstr "Cannot move the application from \"%(from)s\" to \"%(to)s\"."
+
+msgid "Ứng viên đã có trong kho của bạn."
+msgstr "This candidate is already in your talent pool."
+
+msgid "Bạn đã mời ứng viên này ứng tuyển tin này."
+msgstr "You have already invited this candidate to apply for this job posting."
+
+msgid "Bạn có hồ sơ ứng tuyển mới"
+msgstr "You have a new application"
+
+msgid "Phản hồi sớm giúp bạn giữ chân ứng viên tốt và tránh hồ sơ bị tự động chuyển sang \"Không phù hợp\" khi quá hạn."
+msgstr "Responding early helps you keep strong candidates and prevents applications from automatically moving to \"Not a fit\" when the deadline passes."
+
+msgid "Xem hồ sơ"
+msgstr "View application"
+
+msgid "Xin chào nhà tuyển dụng <strong>%(company)s</strong>,"
+msgstr "Hello <strong>%(company)s</strong> hiring team,"
+
+msgid "Vị trí <strong>%(job)s</strong> vừa nhận thêm một hồ sơ lúc %(time)s. Tin này hiện có %(total)s hồ sơ."
+msgstr "<strong>%(job)s</strong> received a new application at %(time)s. This job posting now has %(total)s application(s)."
+
+msgid "Xin chào nhà tuyển dụng %(company)s,"
+msgstr "Hello %(company)s hiring team,"
+
+msgid "Vị trí %(job)s vừa nhận thêm một hồ sơ lúc %(time)s. Tin này hiện có %(total)s hồ sơ."
+msgstr "%(job)s received a new application at %(time)s. This job posting now has %(total)s application(s)."
+
+msgid "Xem hồ sơ: %(url)s"
+msgstr "View application: %(url)s"
+
+msgid "Quản lý email & thông báo: %(url)s"
+msgstr "Manage emails & notifications: %(url)s"

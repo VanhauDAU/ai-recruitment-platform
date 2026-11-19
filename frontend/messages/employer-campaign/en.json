@@ -1,0 +1,1178 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "employer_campaign_money": "{amount} VND",
+  "employer_campaign_explain": "About {label}",
+  "employer_campaign_retry": "Retry",
+  "employer_campaign_try_again_later": "Please try again later.",
+  "employer_campaign_health_status_achieved": "Target met",
+  "employer_campaign_health_status_on_track": "On track",
+  "employer_campaign_health_status_at_risk": "At risk",
+  "employer_campaign_health_status_off_track": "Off track",
+  "employer_campaign_health_status_insufficient_data": "Not enough data",
+  "employer_campaign_health_status_no_target": "No target",
+  "employer_campaign_funnel_applied": "Applied",
+  "employer_campaign_funnel_viewed": "Viewed",
+  "employer_campaign_funnel_shortlisted": "Shortlisted",
+  "employer_campaign_funnel_interviewed": "Interviewed",
+  "employer_campaign_funnel_accepted": "Hired",
+  "employer_campaign_health_deadline_next_30_days": "in the next 30 days",
+  "employer_campaign_health_deadline_before": "by {date}",
+  "employer_campaign_health_summary_no_target": "Add job postings to the campaign to set a target (the total openings across its jobs).",
+  "employer_campaign_health_summary_insufficient": "A meaningful forecast needs at least 3 days of running and 5 applications.",
+  "employer_campaign_health_summary_achieved": "Hired {accepted}/{headcount}.",
+  "employer_campaign_health_summary_forecast": "Forecast: about {forecast}/{headcount} hires {deadline}.",
+  "employer_campaign_health_alert_forecast_title": "Forecast is below target",
+  "employer_campaign_health_alert_forecast_slow": "Applications are arriving slower than needed to meet the target.",
+  "employer_campaign_health_alert_forecast_text": "About {required} CVs per day are needed; currently {current}.",
+  "employer_campaign_health_action_add_channel": "Add channel",
+  "employer_campaign_health_alert_backlog_title": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} application waiting over 48 hours",
+        "countPlural=other": "{count} applications waiting over 48 hours"
+      }
+    }
+  ],
+  "employer_campaign_health_alert_backlog_text": "Candidates who wait too long often accept offers elsewhere.",
+  "employer_campaign_health_action_view_cv": "View CVs",
+  "employer_campaign_health_alert_silent_title": "Channels posted but no CVs yet",
+  "employer_campaign_health_alert_silent_item": [
+    {
+      "declarations": [
+        "input clicks",
+        "input label",
+        "local clicksPlural = clicks: plural"
+      ],
+      "selectors": [
+        "clicksPlural"
+      ],
+      "match": {
+        "clicksPlural=one": "{label} ({clicks} click)",
+        "clicksPlural=other": "{label} ({clicks} clicks)"
+      }
+    }
+  ],
+  "employer_campaign_health_action_view_channels": "View channels",
+  "employer_campaign_health_alert_budget_title": "Spending ahead of schedule",
+  "employer_campaign_health_alert_budget_text": "{used}% of the budget used, {ratio}× faster than time elapsed.",
+  "employer_campaign_health_action_view_costs": "View costs",
+  "employer_campaign_health_forecast": "Forecast",
+  "employer_campaign_health_target": "Target",
+  "employer_campaign_health_chart_empty": "The chart appears after 2 days of tracking.",
+  "employer_campaign_health_chart_aria": "Forecast and hires over {days} days, target {headcount}",
+  "employer_campaign_health_load_error": "Couldn't load campaign health",
+  "employer_campaign_health_eyebrow": "Campaign health",
+  "employer_campaign_health_status_help_label": "About health status",
+  "employer_campaign_health_status_help": "On track: the forecast meets the target. At risk: the forecast is between 70% and the target. Off track: below 70%. An assessment needs at least 3 days of running and 5 applications.",
+  "employer_campaign_health_pace_prefix": "To meet the target you need about ",
+  "employer_campaign_health_per_day": "{value} CVs/day",
+  "employer_campaign_health_pace_suffix": "; the last 7 days averaged {value} CVs/day.",
+  "employer_campaign_health_hired_help_label": "About hires",
+  "employer_campaign_health_hired_help": "Hired applications against the target (the total openings across jobs).",
+  "employer_campaign_health_alerts_title": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} item needs attention",
+        "countPlural=other": "{count} items need attention"
+      }
+    }
+  ],
+  "employer_campaign_health_velocity_label": "CVs per day (7 days)",
+  "employer_campaign_health_velocity_hint": "Whole campaign: {value}",
+  "employer_campaign_health_velocity_help": "Average new applications per day over the last 7 days. Whole campaign is the average since launch, excluding paused days.",
+  "employer_campaign_health_time_to_view_label": "Time to first view",
+  "employer_campaign_health_hours": "{hours} h",
+  "employer_campaign_health_time_to_view_hint": "Median, last 30 days",
+  "employer_campaign_health_time_to_view_help": "Time from when a candidate applies to when you open the application. Median means half of applications were opened faster than this.",
+  "employer_campaign_health_viewed_48h_label": "Viewed within 48 hours",
+  "employer_campaign_health_viewed_48h_hint": "Of applications submitted over 48 hours ago",
+  "employer_campaign_health_viewed_48h_help": "Of applications submitted more than 48 hours ago, the share you opened within the first 48 hours. Fast responses help keep candidates engaged.",
+  "employer_campaign_health_backlog_label": "Waiting over 48 hours",
+  "employer_campaign_health_backlog_hint": "Unopened applications",
+  "employer_campaign_health_backlog_help": "Applications still marked Submitted and unopened after more than 48 hours. You'll get an alert at 5 or more.",
+  "employer_campaign_health_funnel_title": "Hiring funnel",
+  "employer_campaign_health_funnel_help_label": "About the funnel",
+  "employer_campaign_health_funnel_help": "Applications that reached each stage, including those later rejected. Percentages are of all applications, so you can see where most drop off.",
+  "employer_campaign_health_funnel_description": "Applications that reached each stage, based on current applications.",
+  "employer_campaign_health_budget_title": "Budget",
+  "employer_campaign_health_budget_help_label": "About burn rate",
+  "employer_campaign_health_budget_help": "Burn rate = % of budget used ÷ % of campaign time elapsed. 1 means spending is on plan; above 1.2 means spending is too fast, and you'll get an alert.",
+  "employer_campaign_health_budget_description": "Costs are entered per channel in the Channels & sources tab.",
+  "employer_campaign_health_budget_used": "{used}% of the budget used",
+  "employer_campaign_health_budget_burn": ", spending {ratio}× faster than time elapsed",
+  "employer_campaign_health_budget_empty": "Set a maximum budget in \"Edit details\" to track spending. {spent} recorded so far.",
+  "employer_campaign_health_trend_title": "Daily forecast",
+  "employer_campaign_health_trend_description": "Snapshot taken once a day; the dashed line is the target.",
+  "employer_campaign_health_formula_summary": "How the forecast works",
+  "employer_campaign_health_formula_text": "Forecast = hired + in-progress applications × stage hire rate + CVs per day × days left × hire rate.",
+  "employer_campaign_health_formula_pipeline": "In progress: {fresh} new, {shortlisted} shortlisted, {interviewed} interviewing.",
+  "employer_campaign_health_formula_rates": "Stage rates: new {fresh}%, shortlisted {shortlisted}%, interviewing {interviewed}%",
+  "employer_campaign_health_formula_rates_default": " (stages with fewer than 20 completed applications use the default rate)",
+  "employer_campaign_health_formula_hire_rate": "Hire rate {rate}%, smoothed so campaigns with few applications aren't overestimated.",
+  "employer_campaign_health_formula_days_left": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} day left",
+        "countPlural=other": "{count} days left"
+      }
+    }
+  ],
+  "employer_campaign_health_formula_continuous": " (continuous hiring: next 30 days)",
+  "employer_campaign_health_formula_thresholds": ". At risk when the forecast is below target; off track when below 70% of target.",
+  "employer_campaign_jobs_status_draft": "Draft",
+  "employer_campaign_jobs_status_active": "Hiring",
+  "employer_campaign_jobs_status_closed": "Closed",
+  "employer_campaign_range_7": "Last 7 days",
+  "employer_campaign_range_30": "Last 30 days",
+  "employer_campaign_range_90": "Last 90 days",
+  "employer_campaign_jobs_no_deadline": "No deadline",
+  "employer_campaign_jobs_held_tooltip": "This job is temporarily hidden. Open the job details to see why.",
+  "employer_campaign_jobs_hidden": "Hidden",
+  "employer_campaign_jobs_expired": "Expired",
+  "employer_campaign_jobs_paused_tooltip": "This job is hidden because the campaign is paused",
+  "employer_campaign_jobs_hidden_by_campaign": "Hidden with the campaign",
+  "employer_campaign_jobs_untitled_fallback": "job posting",
+  "employer_campaign_jobs_view_report_aria": "View report for {title}",
+  "employer_campaign_jobs_viewing": "Viewing",
+  "employer_campaign_jobs_view_report": "View report",
+  "employer_campaign_jobs_view_public": "View job posting",
+  "employer_campaign_paused_title": "Campaign is paused",
+  "employer_campaign_jobs_not_public": "Job isn't public yet",
+  "employer_campaign_jobs_view_public_aria": "View job {title}",
+  "employer_campaign_jobs_edit": "Edit job",
+  "employer_campaign_jobs_edit_aria": "Edit {title}",
+  "employer_campaign_jobs_no_tracking": "No tracking data for this period yet",
+  "employer_campaign_jobs_add": "Add job posting",
+  "employer_campaign_jobs_paused_description": "You can still add or edit jobs. Active jobs are hidden for now and go live again when you resume the campaign, if they haven't expired.",
+  "employer_campaign_jobs_load_error": "Couldn't load the job report",
+  "employer_campaign_jobs_view_all": "View all jobs",
+  "employer_campaign_jobs_empty": "This campaign has no job postings yet",
+  "employer_campaign_jobs_report_label": "Job report:",
+  "employer_campaign_untitled_draft": "Untitled draft",
+  "employer_campaign_jobs_all_in_campaign": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "All {count} job in the campaign",
+        "countPlural=other": "All {count} jobs in the campaign"
+      }
+    }
+  ],
+  "employer_campaign_jobs_scope_selected": "Metrics and charts show the selected job only.",
+  "employer_campaign_jobs_scope_all": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "Metrics and charts combine all {count} job posting.",
+        "countPlural=other": "Metrics and charts combine all {count} job postings."
+      }
+    }
+  ],
+  "employer_campaign_jobs_view_summary": "View combined report",
+  "employer_campaign_metric_impressions": "Impressions",
+  "employer_campaign_metric_views": "Job views",
+  "employer_campaign_metric_applications": "Applications",
+  "employer_campaign_metric_view_rate": "View rate",
+  "employer_campaign_metric_application_rate": "Application rate",
+  "employer_campaign_jobs_range_aria": "Report period",
+  "employer_campaign_jobs_daily": "Daily data",
+  "employer_campaign_jobs_48h": "48 hours",
+  "employer_campaign_jobs_48h_tip": " is the ideal window to respond to candidates. Review and reply to them now!",
+  "employer_campaign_jobs_check_cv": "Review CVs",
+  "employer_campaign_jobs_table_title": "Performance by job",
+  "employer_campaign_jobs_table_description": "Compare all jobs over the report period, independent of the chart scope.",
+  "employer_campaign_jobs_status_filter_aria": "Filter table by status",
+  "employer_campaign_jobs_all_statuses": "All statuses",
+  "employer_campaign_jobs_col_actions": "Actions",
+  "employer_campaign_jobs_col_job": "Job posting",
+  "employer_campaign_jobs_deadline": "Deadline {date}",
+  "employer_campaign_jobs_col_impressions": "Impressions",
+  "employer_campaign_jobs_col_views": "Views",
+  "employer_campaign_jobs_view_rate_formula": "Views / impressions × 100",
+  "employer_campaign_jobs_col_view_rate": "View rate",
+  "employer_campaign_jobs_col_applications": "Applications",
+  "employer_campaign_jobs_application_rate_formula": "CV submissions / views × 100; can exceed 100% with repeat applications",
+  "employer_campaign_jobs_col_application_rate": "Application rate",
+  "employer_campaign_jobs_note_data_from": "Data for the selected scope starts on {date}; earlier days show “—”, not 0.",
+  "employer_campaign_jobs_note_analytics": "Impressions and views only include users who consented to Analytics. Applications count every CV submission, including repeat applications.",
+  "employer_campaign_jobs_note_delay": "Data may lag slightly and doesn't update in real time.",
+  "employer_campaign_stage_submitted": "New",
+  "employer_campaign_stage_rejected": "Rejected",
+  "employer_campaign_perf_impressions": "Impressions",
+  "employer_campaign_perf_impressions_help": "How often the campaign's jobs appeared in listings, search results or recommendations on ProCV.",
+  "employer_campaign_perf_views": "Job views",
+  "employer_campaign_perf_views_help": "How often candidates opened the job details page.",
+  "employer_campaign_perf_applications": "Applications",
+  "employer_campaign_perf_applications_help": "Applications submitted to the jobs in the selected period.",
+  "employer_campaign_perf_view_rate_help": "Job views ÷ impressions. Shows whether the title and salary are compelling enough to click.",
+  "employer_campaign_perf_application_rate_help": "Applications ÷ job views. Shows whether the job description convinces readers to apply.",
+  "employer_campaign_overview_unviewed_cv": "New unviewed CVs",
+  "employer_campaign_overview_unviewed_cv_helper": "Open the list and screen",
+  "employer_campaign_overview_expired_jobs": "Expired jobs",
+  "employer_campaign_overview_expired_jobs_helper": "Review and extend if needed",
+  "employer_campaign_overview_job_draft": "Drafts",
+  "employer_campaign_overview_unique_candidates": "Unique candidates",
+  "employer_campaign_overview_unique_candidates_hint": "Across the campaign",
+  "employer_campaign_overview_unique_candidates_help": "Distinct people who applied. Someone who applied to two jobs in the campaign still counts as one.",
+  "employer_campaign_overview_applications": "Applications",
+  "employer_campaign_overview_applications_hint": "Latest application per job",
+  "employer_campaign_overview_applications_help": "Candidate–job pairs. Applying to two jobs counts as two applications; reapplying to the same job counts only the latest.",
+  "employer_campaign_overview_new_unviewed": "New / unviewed",
+  "employer_campaign_overview_new_unviewed_hint": "Needs attention first",
+  "employer_campaign_overview_active_jobs": "Active jobs",
+  "employer_campaign_jobs_in_campaign": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} job in the campaign",
+        "countPlural=other": "{count} jobs in the campaign"
+      }
+    }
+  ],
+  "employer_campaign_overview_hired": "Hired candidates",
+  "employer_campaign_overview_hired_hint": "Unique candidates hired",
+  "employer_campaign_overview_hired_help": "Distinct people with an application marked Hired in the campaign.",
+  "employer_campaign_overview_performance_title": "Job performance",
+  "employer_campaign_overview_performance_description": "Impressions, views and applications over the selected period.",
+  "employer_campaign_overview_range_aria": "Performance period",
+  "employer_campaign_overview_performance_error": "Couldn't load performance data",
+  "employer_campaign_overview_privacy_note": "Engagement data is aggregated anonymously and only recorded when viewers consent to Analytics.",
+  "employer_campaign_overview_todo_title": "To-do",
+  "employer_campaign_overview_todo_description": "Items to prioritize today.",
+  "employer_campaign_overview_all_good": "All caught up",
+  "employer_campaign_overview_all_good_description": "No new CVs or expired jobs to handle.",
+  "employer_campaign_overview_distribution_title": "Application status breakdown",
+  "employer_campaign_overview_distribution_description": "Latest status of each candidate–job pair — not a conversion rate.",
+  "employer_campaign_overview_distribution_aria": "Status breakdown of {count} applications",
+  "employer_campaign_overview_distribution_empty": "No applications to break down yet",
+  "employer_campaign_overview_job_status_title": "Job status",
+  "employer_campaign_currency_suffix": "VND",
+  "employer_campaign_info_submit": "Save details",
+  "employer_campaign_info_created": "Draft campaign created.",
+  "employer_campaign_info_saved": "Campaign details saved.",
+  "employer_campaign_info_save_error": "Couldn't save campaign details.",
+  "employer_campaign_info_name": "Campaign name",
+  "employer_campaign_info_name_required": "Enter a campaign name.",
+  "employer_campaign_info_name_placeholder": "e.g. December marketing team hiring",
+  "employer_campaign_info_timeline": "Timeline",
+  "employer_campaign_info_has_end_date": "Has an end date",
+  "employer_campaign_info_continuous": "Continuous hiring",
+  "employer_campaign_info_continuous_hint": "The campaign runs until you complete it. It doesn't end automatically.",
+  "employer_campaign_info_end_date_hint": "After the end date, the campaign completes automatically and its jobs stop accepting applications.",
+  "employer_campaign_info_start_date": "Start date",
+  "employer_campaign_info_start_locked": "Can't be changed because the campaign has started.",
+  "employer_campaign_info_start_empty_hint": "Leave blank to start when you launch.",
+  "employer_campaign_info_pick_date": "Select date",
+  "employer_campaign_info_end_date": "End date",
+  "employer_campaign_info_run_days": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "About {count} day of running.",
+        "countPlural=other": "About {count} days of running."
+      }
+    }
+  ],
+  "employer_campaign_info_end_date_required": "Select an end date or turn on continuous hiring.",
+  "employer_campaign_info_end_after_start": "The end date must be after the start date.",
+  "employer_campaign_info_budget": "Budget",
+  "employer_campaign_info_optional": "optional",
+  "employer_campaign_info_budget_min": "Minimum",
+  "employer_campaign_info_budget_max": "Maximum",
+  "employer_campaign_info_budget_max_invalid": "Can't be less than the minimum.",
+  "employer_campaign_info_budget_source": "Source",
+  "employer_campaign_info_landing": "Public careers page",
+  "employer_campaign_info_landing_hint": "Channel links send candidates to this page, which introduces the campaign, the company and its open jobs.",
+  "employer_campaign_info_landing_enabled": "Make the campaign careers page public",
+  "employer_campaign_info_landing_intro": "Introduction",
+  "employer_campaign_info_landing_intro_placeholder": "Why candidates should join this hiring round",
+  "employer_campaign_info_notes": "Internal notes",
+  "employer_campaign_info_notes_placeholder": "Hiring context and specific requirements for this round",
+  "employer_campaign_cv_candidate_fallback": "Candidate",
+  "employer_campaign_cv_export_error": "Couldn't export the CV list.",
+  "employer_campaign_cv_filters": "Filters",
+  "employer_campaign_cv_search_placeholder": "Search candidates, CVs or jobs...",
+  "employer_campaign_cv_filter_job_aria": "Filter by job posting",
+  "employer_campaign_cv_all_jobs": "All job postings",
+  "employer_campaign_untitled_job": "Untitled job",
+  "employer_campaign_cv_filter_scope_aria": "Filter CV scope",
+  "employer_campaign_cv_scope_all": "Show all applications",
+  "employer_campaign_cv_scope_unread": "Unviewed applications",
+  "employer_campaign_cv_scope_unanswered": "Unanswered applications",
+  "employer_campaign_cv_filter_status_aria": "Filter by status",
+  "employer_campaign_cv_sort_aria": "Sort CVs",
+  "employer_campaign_cv_sort_newest": "Newest",
+  "employer_campaign_cv_sort_oldest": "Oldest",
+  "employer_campaign_cv_sort_name": "Candidate name",
+  "employer_campaign_cv_reset": "Reset",
+  "employer_campaign_cv_found": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} application found",
+        "countPlural=other": "{count} applications found"
+      }
+    }
+  ],
+  "employer_campaign_cv_export": "Export CV list",
+  "employer_campaign_cv_load_error": "Couldn't load applications",
+  "employer_campaign_cv_empty": "No matching CVs",
+  "employer_campaign_cv_col_candidate": "Candidate",
+  "employer_campaign_cv_col_submitted_cv": "Submitted CV",
+  "employer_campaign_cv_default_title": "Candidate CV",
+  "employer_campaign_cv_col_applied_at": "Applied on",
+  "employer_campaign_cv_col_status": "Status",
+  "employer_campaign_cv_details": "Details",
+  "employer_campaign_fb_preset_tonight": "Tonight 20:00",
+  "employer_campaign_fb_preset_tomorrow_morning": "Tomorrow 8:00",
+  "employer_campaign_fb_preset_tomorrow_noon": "Tomorrow 12:00",
+  "employer_campaign_fb_sent": "Post sent. It will appear on your Fanpage in about a minute.",
+  "employer_campaign_fb_scheduled": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} post scheduled.",
+        "countPlural=other": "{count} posts scheduled."
+      }
+    }
+  ],
+  "employer_campaign_fb_schedule_error": "Couldn't schedule the post.",
+  "employer_campaign_fb_post_now": "Post now",
+  "employer_campaign_fb_schedule_count": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "Schedule {count} post",
+        "countPlural=other": "Schedule {count} posts"
+      }
+    }
+  ],
+  "employer_campaign_fb_schedule": "Schedule",
+  "employer_campaign_fb_title": "Post to Fanpage",
+  "employer_campaign_fb_no_connection": "No Fanpage connected",
+  "employer_campaign_fb_connect_prefix": "Connect a Fanpage once in ",
+  "employer_campaign_fb_account_settings": "Account settings",
+  "employer_campaign_fb_connect_suffix": ", then come back here to post.",
+  "employer_campaign_fb_pick_page": "Select a Fanpage.",
+  "employer_campaign_fb_simulated": "{name} (simulated)",
+  "employer_campaign_fb_content": "Content",
+  "employer_campaign_fb_content_extra": "The channel's tracking link is added to the post when it's published.",
+  "employer_campaign_fb_content_required": "Enter the post content.",
+  "employer_campaign_fb_images": "Images",
+  "employer_campaign_fb_timing": "Publish time",
+  "employer_campaign_fb_timing_later": "Schedule",
+  "employer_campaign_fb_timing_series": "Post multiple times",
+  "employer_campaign_fb_quick_times_aria": "Quick time options",
+  "employer_campaign_fb_first_time": "First post",
+  "employer_campaign_fb_post_time": "Post time",
+  "employer_campaign_fb_post_time_required": "Select a post time.",
+  "employer_campaign_fb_repeat_after": "Repost after",
+  "employer_campaign_fb_repeat_extra": "Reposting puts the post back in the feed of followers who missed it the first time.",
+  "employer_campaign_fb_repeat_required": "Select at least one repost.",
+  "employer_campaign_fb_days": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} day",
+        "countPlural=other": "{count} days"
+      }
+    }
+  ],
+  "employer_campaign_fb_plan_aria": "Posting schedule",
+  "employer_campaign_fb_right_now": "Right now",
+  "employer_campaign_fb_preview": "Facebook preview",
+  "employer_campaign_fb_just_now": "Just now",
+  "employer_campaign_fb_not_running": "Campaign isn't running",
+  "employer_campaign_fb_not_running_description": "Posts are only published while the campaign is running; any due posts go out as soon as it starts.",
+  "employer_campaign_activity_job_pending": "Pending review",
+  "employer_campaign_activity_job_rejected": "Rejected",
+  "employer_campaign_activity_reason_policy_hold": "Held due to account status",
+  "employer_campaign_activity_reason_review_completed": "Account resource review completed",
+  "employer_campaign_activity_unknown_day": "Unknown date",
+  "employer_campaign_activity_unknown_time": "Unknown time",
+  "employer_campaign_activity_initial": "Created",
+  "employer_campaign_activity_unknown": "Unknown",
+  "employer_campaign_activity_job_fallback": "Job posting",
+  "employer_campaign_activity_application_fallback": "Candidate application",
+  "employer_campaign_activity_group_all": "All",
+  "employer_campaign_activity_group_campaign": "Campaign",
+  "employer_campaign_activity_group_job": "Job postings",
+  "employer_campaign_activity_group_application": "Candidates",
+  "employer_campaign_activity_system": "System",
+  "employer_campaign_activity_move_aria": "Status changed from {from} to {to}",
+  "employer_campaign_activity_status": "Status",
+  "employer_campaign_activity_new_deadline": "New deadline",
+  "employer_campaign_activity_by": "by {actor}",
+  "employer_campaign_activity_fallback": "Campaign activity",
+  "employer_campaign_activity_title": "Activity history",
+  "employer_campaign_activity_filter_aria": "Filter activity group",
+  "employer_campaign_activity_load_error": "Couldn't load activity history",
+  "employer_campaign_activity_loading": "Loading activity history",
+  "employer_campaign_activity_count": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} activity",
+        "countPlural=other": "{count} activities"
+      }
+    }
+  ],
+  "employer_campaign_activity_empty": "No matching activity",
+  "employer_campaign_lifecycle_complete_title": "Complete campaign",
+  "employer_campaign_lifecycle_complete_ok": "Complete",
+  "employer_campaign_lifecycle_complete_description": "Active jobs in the campaign will be closed. A completed campaign can't be reopened.",
+  "employer_campaign_lifecycle_complete_success": "Campaign completed and jobs closed.",
+  "employer_campaign_lifecycle_cancel_title": "Cancel campaign",
+  "employer_campaign_lifecycle_cancel_description": "The campaign stops permanently; its active jobs will be closed.",
+  "employer_campaign_lifecycle_cancel_success": "Campaign cancelled.",
+  "employer_campaign_lifecycle_unschedule_title": "Cancel scheduled launch",
+  "employer_campaign_lifecycle_unschedule_ok": "Cancel schedule",
+  "employer_campaign_lifecycle_unschedule_description": "The campaign goes back to draft and won't start automatically on the start date.",
+  "employer_campaign_lifecycle_unschedule_success": "Schedule cancelled; the campaign is back to draft.",
+  "employer_campaign_lifecycle_resumed": "Campaign resumed.",
+  "employer_campaign_lifecycle_paused": "Campaign paused and its public jobs hidden.",
+  "employer_campaign_lifecycle_status_error": "Couldn't change the campaign status.",
+  "employer_campaign_lifecycle_pause": "Pause campaign",
+  "employer_campaign_lifecycle_resume": "Resume campaign",
+  "employer_campaign_lifecycle_more": "More actions",
+  "employer_campaign_close": "Close",
+  "employer_campaign_cancel": "Cancel",
+  "employer_campaign_lifecycle_pause_title": "Pause recruitment campaign",
+  "employer_campaign_lifecycle_pause_ok": "Confirm pause",
+  "employer_campaign_lifecycle_pause_impact": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} public job will be hidden",
+        "countPlural=other": "{count} public jobs will be hidden"
+      }
+    }
+  ],
+  "employer_campaign_lifecycle_pause_impact_description": "Job statuses don't change. Jobs that haven't expired go live again when you resume the campaign.",
+  "employer_campaign_lifecycle_code_prefix": "Enter code ",
+  "employer_campaign_lifecycle_code_suffix": " to confirm",
+  "employer_campaign_step_goal": "Details",
+  "employer_campaign_step_jobs": "Job postings",
+  "employer_campaign_step_channels": "Distribution channels",
+  "employer_campaign_step_launch": "Launch",
+  "employer_campaign_steps_until": "Until {date}",
+  "employer_campaign_steps_budget": ", max budget {amount}",
+  "employer_campaign_steps_to_publish": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} job to publish",
+        "countPlural=other": "{count} jobs to publish"
+      }
+    }
+  ],
+  "employer_campaign_steps_to_attach": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} job to add",
+        "countPlural=other": "{count} jobs to add"
+      }
+    }
+  ],
+  "employer_campaign_steps_already": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} job running",
+        "countPlural=other": "{count} jobs running"
+      }
+    }
+  ],
+  "employer_campaign_steps_headcount": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "hiring {count} person",
+        "countPlural=other": "hiring {count} people"
+      }
+    }
+  ],
+  "employer_campaign_steps_no_end_date": "No end date selected",
+  "employer_campaign_steps_no_jobs": "No jobs selected",
+  "employer_campaign_steps_channels": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} channel with a tracking link",
+        "countPlural=other": "{count} channels with tracking links"
+      }
+    }
+  ],
+  "employer_campaign_steps_channels_optional": "Optional, you can add them later",
+  "employer_campaign_steps_failing": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} requirement not met",
+        "countPlural=other": "{count} requirements not met"
+      }
+    }
+  ],
+  "employer_campaign_launch_ready": "Ready to launch",
+  "employer_campaign_steps_check_after_jobs": "Checked after you select jobs",
+  "employer_campaign_launch_fix_in_step": "Fix in {step}",
+  "employer_campaign_launch_account_requirements": "View account requirements",
+  "employer_campaign_launch_scheduled_success": "Scheduled. The campaign will start automatically on {date}.",
+  "employer_campaign_launch_success": "Campaign launched. Jobs have been published.",
+  "employer_campaign_launch_error": "Couldn't launch the campaign.",
+  "employer_campaign_launch_blocked_todo": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} item to finish before launching.",
+        "countPlural=other": "{count} items to finish before launching."
+      }
+    }
+  ],
+  "employer_campaign_launch_blocked_commit": "Check the commitment box to launch.",
+  "employer_campaign_launch_effect_publish": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "publish {count} draft job",
+        "countPlural=other": "publish {count} draft jobs"
+      }
+    }
+  ],
+  "employer_campaign_launch_effect_attach": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "add {count} live job to the campaign",
+        "countPlural=other": "add {count} live jobs to the campaign"
+      }
+    }
+  ],
+  "employer_campaign_launch_last_error": "The last automatic launch failed.",
+  "employer_campaign_launch_check_below": "Review the items below.",
+  "employer_campaign_launch_todo_title": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} item left before launch",
+        "countPlural=other": "{count} items left before launch"
+      }
+    }
+  ],
+  "employer_campaign_launch_all_met": "All requirements met.",
+  "employer_campaign_launch_all_met_description": "Choose how to launch and confirm the commitment below.",
+  "employer_campaign_launch_edit_job": "Edit job",
+  "employer_campaign_launch_passed": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} requirement met",
+        "countPlural=other": "{count} requirements met"
+      }
+    }
+  ],
+  "employer_campaign_launch_modes": "Launch options",
+  "employer_campaign_launch_now": "Launch now",
+  "employer_campaign_launch_now_text": "The campaign starts today; jobs are published and accept applications right away.",
+  "employer_campaign_launch_schedule_on": "Schedule for {date}",
+  "employer_campaign_launch_schedule": "Schedule",
+  "employer_campaign_launch_schedule_text": "The campaign launches automatically on the start date and you'll be notified.",
+  "employer_campaign_launch_schedule_disabled": "Requires a start date after today. Set it in the Details step.",
+  "employer_campaign_launch_effects": "On launch, the system will {effects}.",
+  "employer_campaign_launch_and": " and ",
+  "employer_campaign_launch_commitment": "I take responsibility for the content of the job postings in this campaign.",
+  "employer_campaign_launch_ready_schedule": "Ready to schedule.",
+  "employer_campaign_launch_ready_now": "Ready to launch.",
+  "employer_campaign_launch_schedule_button": "Schedule launch",
+  "employer_campaign_launch_button": "Launch campaign",
+  "employer_campaign_copied": "Copied {label}.",
+  "employer_campaign_copy_blocked": "Your browser blocked copying. Select the text and copy it manually.",
+  "employer_campaign_help_clicks": "Distinct people who clicked the channel's tracking link. Each person counts once per day; automatic opens by Facebook or Zalo to build link previews aren't counted.",
+  "employer_campaign_help_applications": "Applications credited to the channel: the candidate visited through the channel's link within 30 days before applying.",
+  "employer_campaign_help_apply_rate": "Applications ÷ clickers. For example, 5% means 5 out of every 100 people who clicked the link applied.",
+  "employer_campaign_help_hires": "Applications from the channel that were moved to Hired.",
+  "employer_campaign_help_spent": "Total costs you recorded in the channel's Costs section, such as ads or printed flyers. ProCV doesn't charge for any of these.",
+  "employer_campaign_help_cost_per_application": "Spend ÷ applications. The average cost of getting one application from this channel; lower is better.",
+  "employer_campaign_help_cost_per_hire": "Spend ÷ hires. The average cost of hiring one person through this channel.",
+  "employer_campaign_help_budget_share": "Channel spend ÷ the campaign's maximum budget.",
+  "employer_campaign_costs_kind_ads": "Paid ads",
+  "employer_campaign_costs_kind_flyers": "Printed flyers",
+  "employer_campaign_costs_kind_posting_fee": "Posting fee",
+  "employer_campaign_costs_kind_poster": "Hired poster",
+  "employer_campaign_costs_recorded": "Recorded {amount} for this channel.",
+  "employer_campaign_costs_add_error": "Couldn't record the cost.",
+  "employer_campaign_costs_delete_error": "Couldn't delete the cost.",
+  "employer_campaign_costs_note": "Record what you paid to promote through this channel, such as ads or printed flyers. ProCV doesn't charge anything; these figures are only used to calculate cost per application and compare channels.",
+  "employer_campaign_costs_spent": "Spent on channel",
+  "employer_campaign_costs_per_application": "Cost per application",
+  "employer_campaign_costs_per_application_help_label": "About cost per application",
+  "employer_campaign_costs_no_applications": "No applications yet",
+  "employer_campaign_costs_budget_share": "Share of campaign budget",
+  "employer_campaign_costs_budget_share_help_label": "About budget share",
+  "employer_campaign_costs_no_budget": "No budget set",
+  "employer_campaign_costs_form_title": "Record a cost",
+  "employer_campaign_costs_note_label": "What was it for",
+  "employer_campaign_costs_note_placeholder": "e.g. Facebook ads, week 1",
+  "employer_campaign_costs_quick_kind_aria": "Quick cost types",
+  "employer_campaign_costs_amount": "Amount",
+  "employer_campaign_costs_amount_required": "Enter the amount spent.",
+  "employer_campaign_costs_date": "Date",
+  "employer_campaign_costs_date_required": "Select the date.",
+  "employer_campaign_costs_quick_amount_aria": "Quick amounts",
+  "employer_campaign_costs_submit": "Record cost",
+  "employer_campaign_costs_list_title": "Recorded costs",
+  "employer_campaign_costs_empty": "No costs yet. Free channels don't need any.",
+  "employer_campaign_costs_no_note": "No note",
+  "employer_campaign_costs_delete_aria": "Delete cost {amount}",
+  "employer_campaign_select_no_deadline": "No deadline set",
+  "employer_campaign_select_untitled": "Untitled job",
+  "employer_campaign_select_vacancies": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "Hiring {count} person",
+        "countPlural=other": "Hiring {count} people"
+      }
+    }
+  ],
+  "employer_campaign_select_deadline": "Deadline {date}",
+  "employer_campaign_select_late_deadline": "The deadline is after the campaign end date; fix it before launching.",
+  "employer_campaign_select_saved": "Campaign job list saved.",
+  "employer_campaign_select_save_error": "Couldn't save the job list.",
+  "employer_campaign_select_create_title": "Create a new job for the campaign",
+  "employer_campaign_select_create_prefix": "Fill in the job, then click ",
+  "employer_campaign_select_save_draft": "Save draft",
+  "employer_campaign_select_create_suffix": " (not Post job). You'll be brought back here to select it.",
+  "employer_campaign_select_empty": "No jobs to select yet. Create a new job above, or post a job first and then come back to add it to the campaign.",
+  "employer_campaign_select_drafts_title": "Campaign drafts",
+  "employer_campaign_select_drafts_hint": "Selected jobs are published when the campaign launches.",
+  "employer_campaign_select_live_title": "Your live jobs",
+  "employer_campaign_select_live_hint": "Jobs not in any running campaign. Selected jobs join this campaign when it launches.",
+  "employer_campaign_select_live_badge": "Live",
+  "employer_campaign_select_attached_title": "Already in the campaign",
+  "employer_campaign_select_attached_hint": "These jobs are hiring in the campaign.",
+  "employer_campaign_select_total": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} job selected",
+        "countPlural=other": "{count} jobs selected"
+      }
+    }
+  ],
+  "employer_campaign_select_total_headcount": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": ", hiring {count} person in total",
+        "countPlural=other": ", hiring {count} people in total"
+      }
+    }
+  ],
+  "employer_campaign_select_none": "No jobs selected. A campaign needs at least 1 job.",
+  "employer_campaign_save_and_continue": "Save and continue",
+  "employer_campaign_list_on_launch": "On launch",
+  "employer_campaign_list_continuous": "continuous hiring",
+  "employer_campaign_list_no_end_date": "no end date",
+  "employer_campaign_list_period": "{start} to {end}",
+  "employer_campaign_list_action_setup": "Set up",
+  "employer_campaign_list_action_view_new_cv": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "View {count} new CV",
+        "countPlural=other": "View {count} new CVs"
+      }
+    }
+  ],
+  "employer_campaign_list_action_open": "Open",
+  "employer_campaign_list_activity_fallback": "Campaign update",
+  "employer_campaign_list_empty_filtered": "No campaigns match your filters",
+  "employer_campaign_list_empty": "No campaigns yet",
+  "employer_campaign_list_col_campaign": "Campaign",
+  "employer_campaign_list_col_last_activity": "Last activity",
+  "employer_campaign_list_status_tabs_aria": "Filter campaigns by status",
+  "employer_campaign_list_search_placeholder": "Search by campaign name or code, press Enter",
+  "employer_campaign_list_scope_aria": "Filter by action needed",
+  "employer_campaign_list_sort_aria": "Sort campaigns",
+  "employer_campaign_list_load_error": "Couldn't load campaigns.",
+  "employer_campaign_channel_hint_facebook_page": "ProCV posts for you",
+  "employer_campaign_channel_hint_facebook_group": "Post manually with ready-made content",
+  "employer_campaign_channel_hint_qr_offline": "Print the QR code on flyers",
+  "employer_campaign_add_channel_kind_aria": "Channel type",
+  "employer_campaign_add_channel_success": "Channel added. Its tracking link is ready.",
+  "employer_campaign_add_channel_error": "Couldn't add the channel.",
+  "employer_campaign_add_channel_title": "Add distribution channel",
+  "employer_campaign_add_channel_where": "Where will you post?",
+  "employer_campaign_add_channel_kind_required": "Select a channel type.",
+  "employer_campaign_add_channel_label": "Label",
+  "employer_campaign_add_channel_label_extra": "e.g. Hanoi IT group. Each place you post is its own channel so you can compare performance.",
+  "employer_campaign_add_channel_label_required": "Enter a channel name.",
+  "employer_campaign_add_channel_target": "Link goes to",
+  "employer_campaign_add_channel_target_landing": "Campaign careers page",
+  "employer_campaign_add_channel_target_job": "A specific job",
+  "employer_campaign_add_channel_job": "Job",
+  "employer_campaign_add_channel_job_required": "Select a job.",
+  "employer_campaign_add_channel_job_placeholder": "Select a job in the campaign",
+  "employer_campaign_channel_deleted": "Channel \"{label}\" deleted.",
+  "employer_campaign_channel_delete_error": "Couldn't delete the channel.",
+  "employer_campaign_channel_tab_content": "Post content",
+  "employer_campaign_channel_tab_facebook": "Fanpage posts",
+  "employer_campaign_channel_tab_link": "Link & QR",
+  "employer_campaign_channel_tab_costs": "Costs",
+  "employer_campaign_channel_posted_suffix": ", posted",
+  "employer_campaign_channel_not_posted_suffix": ", not posted",
+  "employer_campaign_channel_edit_content": "Edit content",
+  "employer_campaign_channel_delete": "Delete channel",
+  "employer_campaign_channel_delete_confirm": "Delete channel \"{label}\"?",
+  "employer_campaign_channel_delete_confirm_content": "The tracking link will stop working. Applications already received keep this channel type as their source.",
+  "employer_campaign_channel_keep": "Keep",
+  "employer_campaign_channel_actions_aria": "Actions for channel {label}",
+  "employer_campaign_channel_clickers": "Link clickers",
+  "employer_campaign_channel_clickers_help_label": "About link clickers",
+  "employer_campaign_channel_applications": "Applications",
+  "employer_campaign_channel_applications_help_label": "About applications",
+  "employer_campaign_channel_applications_help": "{applications} The small number below is the apply rate: {rate}",
+  "employer_campaign_channel_rate_of_clickers": "{rate} of clickers",
+  "employer_campaign_channel_hires_help_label": "About hires",
+  "employer_campaign_channel_spent": "Spent",
+  "employer_campaign_channel_spent_help_label": "About spend",
+  "employer_campaign_report_load_error": "Couldn't load the channel report.",
+  "employer_campaign_report_source": "Source",
+  "employer_campaign_report_clickers": "Clickers",
+  "employer_campaign_report_clickers_help_label": "About clickers",
+  "employer_campaign_report_applications": "Applications",
+  "employer_campaign_report_applications_help_label": "About applications",
+  "employer_campaign_report_apply_rate": "Apply rate",
+  "employer_campaign_report_apply_rate_help_label": "About apply rate",
+  "employer_campaign_report_cost_per_application": "Cost / application",
+  "employer_campaign_report_cost_per_application_help_label": "About cost per application",
+  "employer_campaign_report_cost_per_hire": "Cost / hire",
+  "employer_campaign_report_cost_per_hire_help_label": "About cost per hire",
+  "employer_campaign_report_no_link": "Not via a tracking link",
+  "employer_campaign_report_organic_help_label": "About organic sources",
+  "employer_campaign_report_organic_help": "Applications from candidates who found the job on ProCV, were recommended, or were invited from the talent pool. There's no link, so clicks can't be counted and there's no cost.",
+  "employer_campaign_report_total": "Total",
+  "employer_campaign_report_budget_share": " ({percent} of budget)",
+  "employer_campaign_hero_target_help": "Total openings across the campaign's jobs. Change the openings on each job to change the target.",
+  "employer_campaign_hero_run_days": "Days running",
+  "employer_campaign_hero_run_days_help": "Days the campaign actually ran, excluding paused time and time waiting to launch. Used for CV velocity and the forecast.",
+  "employer_campaign_hero_end_not_set": "not set",
+  "employer_campaign_hero_budget_range": "{min} to {max}",
+  "employer_campaign_hero_budget_max": "up to {max}",
+  "employer_campaign_hero_not_set": "Not set",
+  "employer_campaign_hero_headcount": [
+    {
+      "declarations": [
+        "input count",
+        "input headcount",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{headcount} needed ({count} job total)",
+        "countPlural=other": "{headcount} needed ({count} jobs total)"
+      }
+    }
+  ],
+  "employer_campaign_hero_no_jobs": "No jobs yet",
+  "employer_campaign_hero_period": "Timeline",
+  "employer_campaign_hero_not_launched": "Not launched",
+  "employer_campaign_hero_days": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} day",
+        "countPlural=other": "{count} days"
+      }
+    }
+  ],
+  "employer_campaign_hero_view_schedule": "View launch schedule",
+  "employer_campaign_hero_continue_setup": "Continue setup",
+  "employer_campaign_hero_post_more": "Post another job",
+  "employer_campaign_hero_view_landing": "View careers page",
+  "employer_campaign_hero_edit": "Edit details",
+  "employer_campaign_posts_published_at": "Posted at {time}",
+  "employer_campaign_posts_deleted_at": "Removed at {time}",
+  "employer_campaign_posts_scheduled_for": "Scheduled for {time}",
+  "employer_campaign_posts_update_error": "Couldn't update the post.",
+  "employer_campaign_posts_retried": "Post requeued; it will go out in about a minute.",
+  "employer_campaign_posts_intro": "ProCV posts to your connected Fanpage at the scheduled time, holds posts while the campaign is paused, and removes them when the campaign ends.",
+  "employer_campaign_posts_create": "Create post",
+  "employer_campaign_posts_empty": "No posts yet. Create your first post to publish now or schedule it.",
+  "employer_campaign_posts_timeline_aria": "Fanpage posts",
+  "employer_campaign_posts_on_page": " on {page}",
+  "employer_campaign_posts_image_alt": "Post image {index}",
+  "employer_campaign_posts_open_on_facebook": "Open on Facebook",
+  "employer_campaign_posts_repost": "Repost",
+  "employer_campaign_posts_cancel": "Cancel post",
+  "employer_campaign_chart_views": "Views",
+  "employer_campaign_chart_label": "Chart of impressions, views and applications",
+  "employer_campaign_chart_point": "View data for {date}: {values}",
+  "employer_campaign_chart_no_data": "No recruitment performance data yet.",
+  "employer_campaign_chart_summary_range": [
+    {
+      "declarations": [
+        "input count",
+        "input from",
+        "input to",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} day of data from {from} to {to}.",
+        "countPlural=other": "{count} days of data from {from} to {to}."
+      }
+    }
+  ],
+  "employer_campaign_chart_summary_latest": "The latest day had {impressions} impressions, {views} views and {applications} applications.",
+  "employer_campaign_chart_empty": "Data collection hasn't started yet",
+  "employer_campaign_chart_empty_caption": "No recruitment performance data for this period.",
+  "employer_campaign_chart_legend_aria": "Chart legend",
+  "employer_campaign_chart_hint": "Hover, tap or use Tab to see each day",
+  "employer_campaign_content_ai_disabled": "AI is turned off, so a template was used. Review and adjust it as needed.",
+  "employer_campaign_content_ai_failed": "AI didn't respond, so a template was used. You can edit it or try again.",
+  "employer_campaign_content_ai_done": "AI draft ready. Review it before posting.",
+  "employer_campaign_content_generate_error": "Couldn't generate content.",
+  "employer_campaign_content_update_error": "Couldn't update the channel.",
+  "employer_campaign_content_copy_label": "content",
+  "employer_campaign_content_copy": "Copy post",
+  "employer_campaign_content_regenerate": "Regenerate with AI",
+  "employer_campaign_content_generate": "Write with AI",
+  "employer_campaign_content_edit_manually": "Edit manually",
+  "employer_campaign_content_source_ai": "AI wrote this from the job posting's public information. Review it before posting.",
+  "employer_campaign_content_source_hint": "AI tailors content to the channel, using only the job posting's public information.",
+  "employer_campaign_content_posted": "I've posted to this channel",
+  "employer_campaign_content_posted_url_placeholder": "Paste the post link to open it later (optional)",
+  "employer_campaign_tab_overview": "Overview",
+  "employer_campaign_tab_health": "Health",
+  "employer_campaign_tab_apply_cv": "Applications",
+  "employer_campaign_tab_job": "Job postings",
+  "employer_campaign_tab_channels": "Channels & sources",
+  "employer_campaign_workspace_load_error": "Couldn't load campaign details",
+  "employer_campaign_workspace_report_error": "Some summary metrics couldn't be loaded.",
+  "employer_campaign_workspace_select_aria": "Select campaign section",
+  "employer_campaign_workspace_tabs_aria": "Campaign sections",
+  "employer_campaign_workspace_edit_title": "Edit campaign details",
+  "employer_campaign_setup_goal_title": "Campaign details",
+  "employer_campaign_setup_goal_intro": "How long the campaign runs and how much budget it uses. Position, level and openings are set on each job.",
+  "employer_campaign_setup_channels_intro": "Each place you post is a channel with its own link and QR code, so you know which ones bring in applications. You can add channels after launch.",
+  "employer_campaign_setup_jobs_intro": "Each job is one position with its own level and openings. The campaign target is the total openings across its jobs.",
+  "employer_campaign_setup_launch_intro": "Do a final check, then launch now or on a schedule.",
+  "employer_campaign_setup_load_error": "Couldn't load the campaign.",
+  "employer_campaign_setup_back_to_list": "Back to campaigns",
+  "employer_campaign_setup_back_to_campaign": "Back to campaign",
+  "employer_campaign_setup_kicker_new": "New campaign",
+  "employer_campaign_setup_kicker": "Campaign setup",
+  "employer_campaign_setup_title_new": "Create recruitment campaign",
+  "employer_campaign_setup_not_in_setup": "This campaign has already started and is no longer in setup.",
+  "employer_campaign_setup_open_campaign": "Open campaign",
+  "employer_campaign_setup_create_and_continue": "Create and continue",
+  "employer_campaign_setup_continue": "Continue",
+  "employer_campaign_setup_rail_aria": "Campaign setup steps",
+  "employer_campaign_board_load_error": "Couldn't load channels.",
+  "employer_campaign_board_note": "Each place you post is a channel with its own link, so you know which ones bring in applications.",
+  "employer_campaign_board_empty_title": "No channels yet",
+  "employer_campaign_board_empty": "Add a Fanpage, Facebook group, LinkedIn, Zalo or flyers with a QR code. ProCV drafts content for each channel.",
+  "employer_campaign_board_add_first": "Add your first channel",
+  "employer_campaign_board_list_aria": "Channel list",
+  "employer_campaign_board_item_stats": "{clicks} clickers, {applications} applications",
+  "employer_campaign_board_posted": "Posted",
+  "employer_campaign_board_not_posted": "Not posted",
+  "employer_campaign_link_note": "Use this exact link when posting to {label}. Candidates who arrive through it are credited to the channel, even if they apply a few days later.",
+  "employer_campaign_link_copy": "Copy",
+  "employer_campaign_link_target_job": "Goes to the job \"{title}\".",
+  "employer_campaign_link_target_landing": "Goes to the campaign careers page.",
+  "employer_campaign_link_download_qr": "Download QR code",
+  "employer_campaign_content_modal_saved": "Content saved.",
+  "employer_campaign_content_modal_save_error": "Couldn't save the content.",
+  "employer_campaign_content_modal_title": "Post content: {label}",
+  "employer_campaign_content_modal_ok": "Save content",
+  "employer_campaign_content_modal_headline": "Headline",
+  "employer_campaign_content_modal_body_extra": "Keep {token} where the application link should go.",
+  "employer_campaign_content_modal_cta": "Call to action",
+  "employer_campaign_images_upload_error": "Couldn't upload the image. Try a different one.",
+  "employer_campaign_images_attached_aria": "Attached images",
+  "employer_campaign_images_alt": "Image {index}",
+  "employer_campaign_images_remove_aria": "Remove image {index}",
+  "employer_campaign_images_too_large": "\"{name}\" is larger than 5 MB.",
+  "employer_campaign_images_uploading": "Uploading...",
+  "employer_campaign_images_upload": "Upload image",
+  "employer_campaign_images_use": "Use {label}",
+  "employer_campaign_images_note": "Up to {max} JPG, PNG or WebP images, each under 5 MB. ProCV removes location data from images before posting.",
+  "employer_campaign_preview_aria": "Post preview",
+  "employer_campaign_preview_less": "See less",
+  "employer_campaign_preview_more": "See more",
+  "employer_campaign_preview_empty": "Your post content will appear here.",
+  "employer_campaign_preview_local_link": "This is a local address, so Facebook will show it as plain text without a link preview.",
+  "employer_campaign_preview_like": "Like",
+  "employer_campaign_preview_comment": "Comment",
+  "employer_campaign_preview_share": "Share",
+  "employer_campaign_export_pdf_error": "Couldn't create the PDF. Try again in a few minutes.",
+  "employer_campaign_export_error": "Couldn't download the report. Please try again.",
+  "employer_campaign_export_aria": "Download campaign report",
+  "employer_campaign_export_download": "Download {format}",
+  "employer_campaign_candidates_initials_fallback": "C",
+  "employer_campaign_candidates_none": "No candidates yet",
+  "employer_campaign_candidates_count": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} candidate",
+        "countPlural=other": "{count} candidates"
+      }
+    }
+  ],
+  "employer_campaign_candidates_extra": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} more candidate",
+        "countPlural=other": "{count} more candidates"
+      }
+    }
+  ],
+  "employer_campaign_candidates_applications": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} application",
+        "countPlural=other": "{count} applications"
+      }
+    }
+  ],
+  "employer_campaign_candidates_unviewed": "{count} unviewed",
+  "employer_campaign_jobs_summary_total": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "{count} job posting",
+        "countPlural=other": "{count} job postings"
+      }
+    }
+  ],
+  "employer_campaign_jobs_summary_headcount_tooltip": "Total openings across the campaign's jobs",
+  "employer_campaign_jobs_summary_headcount": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "Hiring {count} person",
+        "countPlural=other": "Hiring {count} people"
+      }
+    }
+  ],
+  "employer_campaign_channels_report_title": "Performance by source",
+  "employer_campaign_channels_report_intro": "An application is credited to a channel when the candidate visited through that channel's link within 30 days before applying. Candidates who haven't accepted analytics cookies are only counted if they apply during that same visit."
+}

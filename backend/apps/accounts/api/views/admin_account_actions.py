@@ -4,6 +4,7 @@ The preview returns an impact token bound to the current state; the confirm call
 must echo it back so an admin never acts on numbers that changed meanwhile.
 """
 
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import OpenApiTypes, extend_schema, inline_serializer
 from rest_framework import serializers
 from rest_framework.decorators import action
@@ -121,7 +122,7 @@ class AccountEnforcementActionsMixin:
             user=user,
         )
         if not request.user.is_superuser:
-            raise AdminPermissionDenied('Gỡ policy hold chỉ dành cho superuser.')
+            raise AdminPermissionDenied(_('Gỡ policy hold chỉ dành cho superuser.'))
         return Response(account_resource_hold_impact(user, **serializer.validated_data))
 
     @extend_schema(
@@ -233,7 +234,7 @@ class AccountEnforcementActionsMixin:
             actor=request.user,
             **serializer.validated_data,
         )
-        return Response({'detail': 'Đã xếp lịch gửi email đặt lại mật khẩu.'})
+        return Response({'detail': _('Đã xếp lịch gửi email đặt lại mật khẩu.')})
 
     @extend_schema(
         summary='Gửi lại email xác minh cho tài khoản',
@@ -247,7 +248,7 @@ class AccountEnforcementActionsMixin:
             kind=AuthEmailJob.Kind.VERIFICATION,
             actor=request.user,
         )
-        return Response({'detail': 'Đã xếp lịch gửi email xác minh.'})
+        return Response({'detail': _('Đã xếp lịch gửi email xác minh.')})
 
     @extend_schema(
         request=EmployerCompanyUnlinkImpactSerializer,

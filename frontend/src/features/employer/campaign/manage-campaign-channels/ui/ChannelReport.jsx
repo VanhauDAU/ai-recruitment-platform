@@ -5,10 +5,10 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import HelpTip from '@/shared/ui/HelpTip'
 import { CHANNEL_METRIC_HELP as HELP } from '../lib/metric-help'
 import './channel-board.css'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { getIntlLocale, m } from '@/shared/config/i18n'
 
 const number = (value) => (value == null ? '—' : Number(value).toLocaleString(getIntlLocale()))
-const money = (value) => (value == null ? '—' : `${Number(value).toLocaleString(getIntlLocale())} đ`)
+const money = (value) => (value == null ? '—' : m.employer_campaign_money({ amount: Number(value).toLocaleString(getIntlLocale()) }))
 const percent = (value) => (value == null ? '—' : `${value.toLocaleString(getIntlLocale())}%`)
 
 // So sánh hiệu quả từng kênh và các nguồn tự nhiên trên ProCV.
@@ -20,7 +20,7 @@ export default function ChannelReport({ campaignId }) {
 
   if (reportQuery.isLoading) return <Skeleton active paragraph={{ rows: 4 }} />
   if (reportQuery.isError) {
-    return <Alert type="error" showIcon title={getApiErrorMessage(reportQuery.error, 'Không thể tải báo cáo kênh.')} />
+    return <Alert type="error" showIcon title={getApiErrorMessage(reportQuery.error, m.employer_campaign_report_load_error())} />
   }
   const { rows, totals } = reportQuery.data
 
@@ -29,14 +29,14 @@ export default function ChannelReport({ campaignId }) {
       <table className="ch-report">
         <thead>
           <tr>
-            <th scope="col">Nguồn</th>
-            <th scope="col">Người bấm<HelpTip label="Giải thích người bấm">{HELP.clicks}</HelpTip></th>
-            <th scope="col">Hồ sơ<HelpTip label="Giải thích hồ sơ">{HELP.applications}</HelpTip></th>
-            <th scope="col">Tỷ lệ nộp<HelpTip label="Giải thích tỷ lệ nộp">{HELP.applyRate}</HelpTip></th>
-            <th scope="col">Trúng tuyển<HelpTip label="Giải thích trúng tuyển">{HELP.hires}</HelpTip></th>
-            <th scope="col">Đã chi<HelpTip label="Giải thích đã chi">{HELP.spent}</HelpTip></th>
-            <th scope="col">Chi phí / hồ sơ<HelpTip label="Giải thích chi phí / hồ sơ">{HELP.costPerApplication}</HelpTip></th>
-            <th scope="col">Chi phí / trúng tuyển<HelpTip label="Giải thích chi phí / trúng tuyển">{HELP.costPerHire}</HelpTip></th>
+            <th scope="col">{m.employer_campaign_report_source()}</th>
+            <th scope="col">{m.employer_campaign_report_clickers()}<HelpTip label={m.employer_campaign_report_clickers_help_label()}>{HELP.clicks}</HelpTip></th>
+            <th scope="col">{m.employer_campaign_report_applications()}<HelpTip label={m.employer_campaign_report_applications_help_label()}>{HELP.applications}</HelpTip></th>
+            <th scope="col">{m.employer_campaign_report_apply_rate()}<HelpTip label={m.employer_campaign_report_apply_rate_help_label()}>{HELP.applyRate}</HelpTip></th>
+            <th scope="col">{m.employer_campaign_funnel_accepted()}<HelpTip label={m.employer_campaign_channel_hires_help_label()}>{HELP.hires}</HelpTip></th>
+            <th scope="col">{m.employer_campaign_channel_spent()}<HelpTip label={m.employer_campaign_channel_spent_help_label()}>{HELP.spent}</HelpTip></th>
+            <th scope="col">{m.employer_campaign_report_cost_per_application()}<HelpTip label={m.employer_campaign_report_cost_per_application_help_label()}>{HELP.costPerApplication}</HelpTip></th>
+            <th scope="col">{m.employer_campaign_report_cost_per_hire()}<HelpTip label={m.employer_campaign_report_cost_per_hire_help_label()}>{HELP.costPerHire}</HelpTip></th>
           </tr>
         </thead>
         <tbody>
@@ -47,8 +47,8 @@ export default function ChannelReport({ campaignId }) {
                   {row.label}
                   {row.kind === 'organic' && (
                     <small>
-                      Không qua link theo dõi
-                      <HelpTip label="Giải thích nguồn tự nhiên">Hồ sơ ứng viên tự tìm thấy trên ProCV, được gợi ý hoặc được mời từ kho ứng viên. Không có link nên không đếm được người bấm và không có chi phí.</HelpTip>
+                      {m.employer_campaign_report_no_link()}
+                      <HelpTip label={m.employer_campaign_report_organic_help_label()}>{m.employer_campaign_report_organic_help()}</HelpTip>
                     </small>
                   )}
                 </span>
@@ -65,14 +65,14 @@ export default function ChannelReport({ campaignId }) {
         </tbody>
         <tfoot>
           <tr>
-            <td>Tổng</td>
+            <td>{m.employer_campaign_report_total()}</td>
             <td />
             <td>{number(totals.applications)}</td>
             <td />
             <td>{number(totals.hires)}</td>
             <td>
               {money(totals.cost)}
-              {totals.budget_used_percent != null && ` (${percent(totals.budget_used_percent)} ngân sách)`}
+              {totals.budget_used_percent != null && m.employer_campaign_report_budget_share({ percent: percent(totals.budget_used_percent) })}
             </td>
             <td>{money(totals.cost_per_application)}</td>
             <td>{money(totals.cost_per_hire)}</td>

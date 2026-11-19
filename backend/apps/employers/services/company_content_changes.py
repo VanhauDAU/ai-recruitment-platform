@@ -9,6 +9,8 @@ the change is reviewed, so a revert can put them back.
 
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from rest_framework.exceptions import ValidationError
 
 from apps.accounts.services import record_admin_action
@@ -43,18 +45,18 @@ MEDIA_MARKERS = {'logo_pending': 'logo', 'cover_pending': 'cover', 'gallery_pend
 MEDIA_FIELDS = {'logo': 'logo_url', 'cover': 'cover_image_url'}
 COLUMN_FIELDS = ('headline', 'description', 'culture', 'employee_benefits', 'video_url')
 FIELD_LABELS = {
-    'headline': 'Khẩu hiệu',
-    'description': 'Giới thiệu',
-    'culture': 'Văn hoá',
-    'employee_benefits': 'Phúc lợi',
-    'benefits': 'Phúc lợi',
+    'headline': gettext_lazy('Khẩu hiệu'),
+    'description': gettext_lazy('Giới thiệu'),
+    'culture': gettext_lazy('Văn hoá'),
+    'employee_benefits': gettext_lazy('Phúc lợi'),
+    'benefits': gettext_lazy('Phúc lợi'),
     'video_url': 'Video',
-    'social_links': 'Mạng xã hội',
-    'offices': 'Văn phòng',
+    'social_links': gettext_lazy('Mạng xã hội'),
+    'offices': gettext_lazy('Văn phòng'),
     'logo_url': 'Logo',
-    'cover_image_url': 'Ảnh bìa',
-    'gallery_additions': 'Ảnh thư viện mới',
-    'gallery_deletions': 'Ảnh thư viện đã xoá',
+    'cover_image_url': gettext_lazy('Ảnh bìa'),
+    'gallery_additions': gettext_lazy('Ảnh thư viện mới'),
+    'gallery_deletions': gettext_lazy('Ảnh thư viện đã xoá'),
 }
 # Request keys a publish of each key supersedes in the editor's own open request.
 SUPERSEDED_REQUEST_KEYS = {
@@ -174,7 +176,7 @@ def publish_company_page_content(*, company_id, actor, validate):
         if not _is_published(company, field, value)
     }
     if not changes and not media:
-        raise ValidationError({'changes': ['Chưa có thay đổi nào so với trang đang công khai.']})
+        raise ValidationError({'changes': [_('Chưa có thay đổi nào so với trang đang công khai.')]})
     previous = _apply(company, changes) if changes else {}
     change = CompanyContentChange.objects.create(
         company=company,
@@ -200,12 +202,15 @@ def publish_content_change_image(change, *, company, kind, path):
     company = Company.objects.select_for_update().get(pk=company.pk)
     change = CompanyContentChange.objects.select_for_update().get(pk=change.pk)
     if change.status != CompanyContentChange.Status.UNREVIEWED or kind not in change.pending_media:
-        raise ValidationError({'content_change': 'Thay đổi nội dung này không còn nhận ảnh.'})
+        raise ValidationError({'content_change': _('Thay đổi nội dung này không còn nhận ảnh.')})
     changes, previous = dict(change.changes), dict(change.previous)
     if kind == 'gallery':
         if company.images.count() >= GALLERY_LIMIT:
             raise ValidationError(
-                {'file': f'Thư viện công ty chỉ được có tối đa {GALLERY_LIMIT} ảnh.'}
+                {
+                    'file': _('Thư viện công ty chỉ được có tối đa %(limit)s ảnh.')
+                    % {'limit': GALLERY_LIMIT}
+                }
             )
         last = company.images.order_by('-sort_order').values_list('sort_order', flat=True).first()
         image = CompanyImage.objects.create(
@@ -328,7 +333,8 @@ def _restore(company, change):
             raise ValidationError(
                 {
                     'detail': (
-                        f'Không thể khôi phục ảnh đã xoá: thư viện sẽ vượt quá {GALLERY_LIMIT} ảnh.'
+                        _('Không thể khôi phục ảnh đã xoá: thư viện sẽ vượt quá %(limit)s ảnh.')
+                        % {'limit': GALLERY_LIMIT}
                     )
                 }
             )
@@ -350,23 +356,28 @@ def revert_company_content_change(*, actor, public_id, reason, require_review=Fa
     """Undo one unreviewed change, tell its editor why, optionally require review."""
     found = CompanyContentChange.objects.filter(public_id=public_id).only('company_id').first()
     if found is None:
-        raise ValidationError({'detail': 'Không tìm thấy thay đổi nội dung.'})
+        raise ValidationError({'detail': _('Không tìm thấy thay đổi nội dung.')})
     company = Company.objects.select_for_update().get(pk=found.company_id)
     change = CompanyContentChange.objects.select_for_update().get(pk=found.pk)
     if change.status != CompanyContentChange.Status.UNREVIEWED:
-        raise ValidationError({'detail': 'Chỉ hoàn tác được thay đổi chưa xem.'})
+        raise ValidationError({'detail': _('Chỉ hoàn tác được thay đổi chưa xem.')})
     if change.pending_media and not change.changes:
-        raise ValidationError({'detail': 'Thay đổi này chưa có nội dung để hoàn tác.'})
+        raise ValidationError({'detail': _('Thay đổi này chưa có nội dung để hoàn tác.')})
     conflicts = [
         field
         for field, value in change.changes.items()
         if not _still_published(company, field, value)
     ]
     if conflicts:
-        labels = ', '.join(dict.fromkeys(FIELD_LABELS.get(field, field) for field in conflicts))
+        labels = ', '.join(
+            dict.fromkeys(str(FIELD_LABELS.get(field, field)) for field in conflicts)
+        )
         raise ValidationError(
             {
-                'detail': f'Đã có thay đổi mới hơn ở: {labels}. Hoàn tác thay đổi mới hơn trước.',
+                'detail': _(
+                    'Đã có thay đổi mới hơn ở: %(labels)s. Hoàn tác thay đổi mới hơn trước.'
+                )
+                % {'labels': labels},
                 'fields': conflicts,
             }
         )
@@ -429,9 +440,9 @@ def set_company_content_review(company, *, actor, required, reason):
         raise ValidationError(
             {
                 'detail': (
-                    'Công ty đang được duyệt trước nội dung.'
+                    _('Công ty đang được duyệt trước nội dung.')
                     if required
-                    else 'Công ty hiện không bị duyệt trước nội dung.'
+                    else _('Công ty hiện không bị duyệt trước nội dung.')
                 )
             }
         )

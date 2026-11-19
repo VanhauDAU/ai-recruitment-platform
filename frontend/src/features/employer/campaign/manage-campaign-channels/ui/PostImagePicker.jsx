@@ -4,6 +4,7 @@ import { Upload } from 'antd'
 import { useRef } from 'react'
 import { campaignKeys, getChannelPostImageChoices, uploadChannelPostImage } from '@/entities/campaign/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
 
 export const MAX_POST_IMAGES = 4
@@ -18,7 +19,7 @@ export default function PostImagePicker({ campaignId, channelId, value = [], onC
   })
   const upload = useMutation({
     mutationFn: (file) => uploadChannelPostImage(campaignId, channelId, file),
-    onError: (error) => message.error(getApiErrorMessage(error, 'Chưa tải được ảnh, hãy thử ảnh khác.')),
+    onError: (error) => message.error(getApiErrorMessage(error, m.employer_campaign_images_upload_error())),
   })
   // Nhiều ảnh tải song song: mỗi ảnh xong phải nối vào danh sách mới nhất, không phải bản lúc bắt đầu.
   const latest = useRef(value)
@@ -37,13 +38,13 @@ export default function PostImagePicker({ campaignId, channelId, value = [], onC
   return (
     <div className="ch-images">
       {value.length > 0 && (
-        <ul className="ch-images__grid" aria-label="Ảnh đính kèm">
+        <ul className="ch-images__grid" aria-label={m.employer_campaign_images_attached_aria()}>
           {value.map((image, index) => (
             <li key={image.path}>
-              <img src={image.url} alt={`Ảnh ${index + 1}`} />
+              <img src={image.url} alt={m.employer_campaign_images_alt({ index: index + 1 })} />
               <button
                 type="button"
-                aria-label={`Bỏ ảnh ${index + 1}`}
+                aria-label={m.employer_campaign_images_remove_aria({ index: index + 1 })}
                 onClick={() => onChange(value.filter((item) => item.path !== image.path))}
               >
                 <CloseOutlined aria-hidden />
@@ -60,7 +61,7 @@ export default function PostImagePicker({ campaignId, channelId, value = [], onC
           disabled={full || upload.isPending}
           beforeUpload={(file) => {
             if (file.size > MAX_BYTES) {
-              message.error(`"${file.name}" lớn hơn 5 MB.`)
+              message.error(m.employer_campaign_images_too_large({ name: file.name }))
               return Upload.LIST_IGNORE
             }
             return true
@@ -73,17 +74,17 @@ export default function PostImagePicker({ campaignId, channelId, value = [], onC
           }}
         >
           <button type="button" className="ch-chip" disabled={full || upload.isPending}>
-            <PlusOutlined aria-hidden /> {upload.isPending ? 'Đang tải ảnh...' : 'Tải ảnh lên'}
+            <PlusOutlined aria-hidden /> {upload.isPending ? m.employer_campaign_images_uploading() : m.employer_campaign_images_upload()}
           </button>
         </Upload>
         {companyImages.map((item) => (
           <button key={item.path} type="button" className="ch-chip" disabled={full} onClick={() => add(item)}>
-            <PictureOutlined aria-hidden /> Dùng {item.label.toLowerCase()}
+            <PictureOutlined aria-hidden /> {m.employer_campaign_images_use({ label: item.label.toLowerCase() })}
           </button>
         ))}
       </div>
       <p className="ch-section-note">
-        Tối đa {MAX_POST_IMAGES} ảnh JPG, PNG hoặc WebP, mỗi ảnh dưới 5 MB. ProCV xóa thông tin vị trí trong ảnh trước khi đăng.
+        {m.employer_campaign_images_note({ max: MAX_POST_IMAGES })}
       </p>
     </div>
   )

@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from apps.accounts.domain.impact_token_rules import decode_impact_token
 from apps.accounts.services.exceptions import AdminPermissionDenied
@@ -43,22 +44,26 @@ def _status_transition_kind(before, after):
 def ensure_account_status_change_allowed(actor, user, status):
     ensure_account_write_allowed(actor, user)
     if actor.pk == user.pk:
-        raise ValidationError('Bạn không thể tự thay đổi trạng thái tài khoản của mình.')
+        raise ValidationError(_('Bạn không thể tự thay đổi trạng thái tài khoản của mình.'))
     if user.is_deleted:
-        raise ValidationError('Tài khoản đã bị xóa không thuộc workflow trạng thái này.')
+        raise ValidationError(_('Tài khoản đã bị xóa không thuộc workflow trạng thái này.'))
     if user.status == User.Status.PENDING:
-        raise ValidationError('Tài khoản đang chờ kích hoạt phải được xử lý qua workflow lời mời.')
+        raise ValidationError(
+            _('Tài khoản đang chờ kích hoạt phải được xử lý qua workflow lời mời.')
+        )
     allowed = {
         User.Status.ACTIVE: {User.Status.INACTIVE, User.Status.BANNED},
         User.Status.INACTIVE: {User.Status.ACTIVE, User.Status.BANNED},
         User.Status.BANNED: {User.Status.INACTIVE},
     }
     if status not in allowed.get(user.status, set()):
-        raise ValidationError({'status': 'Không thể chuyển trực tiếp giữa hai trạng thái đã chọn.'})
+        raise ValidationError(
+            {'status': _('Không thể chuyển trực tiếp giữa hai trạng thái đã chọn.')}
+        )
     if status == User.Status.BANNED or user.status == User.Status.BANNED:
         if not actor.is_superuser:
             raise AdminPermissionDenied(
-                'Cấm hoặc bắt đầu khôi phục tài khoản bị cấm chỉ dành cho superuser.'
+                _('Cấm hoặc bắt đầu khôi phục tài khoản bị cấm chỉ dành cho superuser.')
             )
 
 
@@ -83,7 +88,7 @@ def confirm_account_status(
     if status == User.Status.BANNED and (
         violation_category not in AccountStatusTransition.ViolationCategory.values
     ):
-        raise ValidationError({'violation_category': 'Chọn nhóm vi phạm khi cấm tài khoản.'})
+        raise ValidationError({'violation_category': _('Chọn nhóm vi phạm khi cấm tài khoản.')})
 
     with transaction.atomic():
         user = User.objects.select_for_update().get(pk=user.pk)
@@ -132,7 +137,7 @@ def confirm_account_status(
                 is_deleted=False,
             ).exclude(pk=user.pk)
             if not remaining.exists():
-                raise ValidationError('Không thể khóa superuser hoạt động cuối cùng.')
+                raise ValidationError(_('Không thể khóa superuser hoạt động cuối cùng.'))
         before = user.status
         kind = _status_transition_kind(before, status)
 
@@ -151,7 +156,7 @@ def confirm_account_status(
                 ).exists()
             ):
                 raise ValidationError(
-                    'Cần rà soát và gỡ policy hold của tài nguyên trước khi mở lại tài khoản.'
+                    _('Cần rà soát và gỡ policy hold của tài nguyên trước khi mở lại tài khoản.')
                 )
 
         now = timezone.now()

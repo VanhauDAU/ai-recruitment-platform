@@ -1,5 +1,6 @@
 """Serializer cho luồng báo cáo tin tuyển dụng."""
 
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 
 from ...models import JobReport, JobReportResolutionEvent
@@ -13,7 +14,7 @@ class JobReportCreateSerializer(serializers.Serializer):
     def validate(self, attrs):
         if attrs.get('reason') == JobReport.Reason.OTHER and not attrs.get('detail', '').strip():
             raise serializers.ValidationError(
-                {'detail': 'Vui lòng mô tả cụ thể khi chọn "Lý do khác".'}
+                {'detail': _('Vui lòng mô tả cụ thể khi chọn "Lý do khác".')}
             )
         return attrs
 
@@ -115,7 +116,7 @@ class AdminJobReportQuerySerializer(serializers.Serializer):
         created_to = attrs.get('created_to')
         if created_from and created_to and created_from > created_to:
             raise serializers.ValidationError(
-                {'created_to': 'Ngày kết thúc phải từ ngày bắt đầu trở đi.'}
+                {'created_to': _('Ngày kết thúc phải từ ngày bắt đầu trở đi.')}
             )
         return attrs
 
@@ -126,7 +127,7 @@ class AdminJobReportResolveSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         if attrs.get('status') == JobReport.Status.UPHELD and not attrs.get('note', '').strip():
-            raise serializers.ValidationError({'note': 'Nhập căn cứ xác nhận vi phạm.'})
+            raise serializers.ValidationError({'note': _('Nhập căn cứ xác nhận vi phạm.')})
         return attrs
 
 

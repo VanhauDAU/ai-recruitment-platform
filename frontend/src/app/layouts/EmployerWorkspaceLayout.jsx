@@ -33,6 +33,8 @@ import {
   EMPLOYER_ACCOUNT_SETTINGS_URL,
   employerAppPath,
 } from '@/shared/config/portals'
+import { LanguageSwitcher } from '@/features/common/preferences/switch-language'
+import { m } from '@/shared/config/i18n'
 import EmployerAccountVerificationPopover from './EmployerAccountVerificationPopover'
 import useUnreadApplicationCount from './use-unread-application-count'
 import {
@@ -61,7 +63,7 @@ function TopbarAction({ icon, label, prominent = false, to }) {
     return <Link to={to} className="rounded-full transition hover:opacity-90">{content}</Link>
   }
   return (
-    <Tooltip title={`${label} — chức năng sẽ được mở trong giai đoạn tiếp theo`}>
+    <Tooltip title={m.employer_workspace_topbar_coming_tooltip({ label })}>
       <span
         aria-disabled="true"
         className={`hidden h-8 cursor-not-allowed items-center gap-1.5 rounded-full border px-3 text-xs font-bold lg:inline-flex ${prominent ? 'border-emerald-500/45 bg-emerald-500/15 text-emerald-300' : 'border-white/10 bg-white/10 text-slate-200'}`}
@@ -138,15 +140,15 @@ export default function EmployerWorkspaceLayout() {
   // Opened from the sidebar (no job/campaign) the page is a top-level inbox
   // and shows no back button.
   const applicationBackLabel = applicationJobId
-    ? 'Quay lại chi tiết tin tuyển dụng'
-    : 'Quay lại chiến dịch tuyển dụng'
+    ? m.employer_workspace_back_to_job_detail()
+    : m.employer_workspace_back_to_campaign()
   const sidebarCollapsed = collapsed && (isMobileViewport || !isSidebarHovered)
   const isCompactSidebar = sidebarCollapsed && !isMobileViewport
   const accountMenu = {
     items: [
-      { key: 'settings', label: 'Cài đặt tài khoản', icon: <SettingOutlined /> },
+      { key: 'settings', label: m.employer_workspace_nav_account_settings(), icon: <SettingOutlined /> },
       { type: 'divider' },
-      { key: 'logout', label: 'Đăng xuất', icon: <LogoutOutlined />, danger: true },
+      { key: 'logout', label: m.employer_workspace_sign_out(), icon: <LogoutOutlined />, danger: true },
     ],
     onClick: ({ key }) => {
       if (key === 'settings') navigate(EMPLOYER_ACCOUNT_SETTINGS_URL)
@@ -171,7 +173,7 @@ export default function EmployerWorkspaceLayout() {
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <Button
             type="text"
-            aria-label={collapsed ? 'Mở menu quản trị' : 'Thu gọn menu quản trị'}
+            aria-label={collapsed ? m.employer_workspace_expand_menu() : m.employer_workspace_collapse_menu()}
             aria-pressed={!collapsed}
             icon={<MenuOutlined />}
             onClick={() => setCollapsed((current) => !current)}
@@ -187,13 +189,14 @@ export default function EmployerWorkspaceLayout() {
         </div>
 
         <div className="flex items-center gap-2">
-          <TopbarAction icon={<BarChartOutlined />} label="Khảo sát thị trường" prominent />
-          <TopbarAction icon={<FileTextOutlined />} label="Đăng tin" to={employerAppPath('/jobs/new')} />
-          <TopbarAction icon={<SearchOutlined />} label="Tìm CV" />
+          <TopbarAction icon={<BarChartOutlined />} label={m.employer_workspace_topbar_market_survey()} prominent />
+          <TopbarAction icon={<FileTextOutlined />} label={m.employer_workspace_topbar_post_job()} to={employerAppPath('/jobs/new')} />
+          <TopbarAction icon={<SearchOutlined />} label={m.employer_workspace_topbar_search_cv()} />
           <TopbarAction icon={<MessageOutlined />} label="Connect" />
+          <LanguageSwitcher className="!border-white/20 !text-white/80 hover:!text-white" />
           <EmployerNotificationBell />
           <Dropdown menu={accountMenu} trigger={['click']} placement="bottomRight">
-            <button type="button" className="flex cursor-pointer items-center gap-2 rounded-full border-0 bg-white/10 p-1 pr-2 text-white transition hover:bg-white/15" aria-label="Mở menu tài khoản">
+            <button type="button" className="flex cursor-pointer items-center gap-2 rounded-full border-0 bg-white/10 p-1 pr-2 text-white transition hover:bg-white/15" aria-label={m.employer_workspace_open_account_menu()}>
               <Avatar size={28} src={user?.avatar_url || undefined} className="!bg-slate-100 !font-bold !text-slate-700">{initials}</Avatar>
               <span className="hidden max-w-28 truncate text-xs font-bold xl:block">{user?.full_name || user?.email}</span>
             </button>
@@ -211,7 +214,7 @@ export default function EmployerWorkspaceLayout() {
         employerReadinessReady={!isChecking && !isAccessError}
         legacy={showComplianceNotice ? (
           <div className="z-20 flex min-h-8 shrink-0 items-center justify-center bg-[#df4037] px-4 py-1 text-center text-[10px] font-bold leading-4 text-white sm:text-xs">
-            <span className="hidden sm:inline">[QUAN TRỌNG] {candidateBlocker?.message || 'Dữ liệu ứng viên đang được bảo vệ.'} </span>
+            <span className="hidden sm:inline">{m.employer_workspace_compliance_important()} {candidateBlocker?.message || m.employer_workspace_compliance_default()} </span>
             <Link to={complianceAction.to} className="text-white underline decoration-white/60 underline-offset-2 hover:text-white">{complianceAction.label}</Link>
           </div>
         ) : null}
@@ -221,7 +224,7 @@ export default function EmployerWorkspaceLayout() {
         {isMobileViewport && !sidebarCollapsed && (
           <button
             type="button"
-            aria-label="Đóng menu quản trị"
+            aria-label={m.employer_workspace_close_menu()}
             onClick={() => setCollapsed(true)}
             className="absolute inset-y-0 right-0 z-30 cursor-default bg-slate-950/45 backdrop-blur-[1px]"
             style={{ left: EMPLOYER_SIDEBAR_WIDTH }}
@@ -245,8 +248,8 @@ export default function EmployerWorkspaceLayout() {
             <div className={`shrink-0 border-b border-slate-100 ${isCompactSidebar ? 'px-2 py-3' : 'px-4 py-4'}`}>
               {isCompactSidebar ? (
                 <div className="flex flex-col items-center gap-3">
-                  <Tooltip title="Thông tin tài khoản" placement="right">
-                    <Link to={EMPLOYER_ACCOUNT_SETTINGS_URL} aria-label="Thông tin tài khoản">
+                  <Tooltip title={m.employer_workspace_title_account_info()} placement="right">
+                    <Link to={EMPLOYER_ACCOUNT_SETTINGS_URL} aria-label={m.employer_workspace_title_account_info()}>
                       <Avatar size={34} src={user?.avatar_url || undefined} className="!bg-slate-100 !font-bold !text-slate-500">{initials}</Avatar>
                     </Link>
                   </Tooltip>
@@ -254,24 +257,24 @@ export default function EmployerWorkspaceLayout() {
               ) : (
                 <>
                   <div className="flex items-start gap-3">
-                    <Link to={EMPLOYER_ACCOUNT_SETTINGS_URL} aria-label="Thông tin tài khoản" className="flex min-w-0 flex-1 items-start gap-3 rounded-xl outline-none transition hover:bg-emerald-50 focus-visible:ring-2 focus-visible:ring-emerald-500">
+                    <Link to={EMPLOYER_ACCOUNT_SETTINGS_URL} aria-label={m.employer_workspace_title_account_info()} className="flex min-w-0 flex-1 items-start gap-3 rounded-xl outline-none transition hover:bg-emerald-50 focus-visible:ring-2 focus-visible:ring-emerald-500">
                       <Avatar size={42} src={user?.avatar_url || undefined} className="!bg-slate-100 !font-bold !text-slate-500">{initials}</Avatar>
                     <div className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-extrabold text-slate-800 transition hover:text-emerald-600">{user?.full_name || 'Nhà tuyển dụng'}</span>
+                      <span className="block truncate text-sm font-extrabold text-slate-800 transition hover:text-emerald-600">{user?.full_name || m.employer_workspace_employer_fallback_name()}</span>
                       <span className="mt-0.5 block text-[11px] font-semibold text-slate-500">Employer</span>
-                      <span className="mt-1 block truncate text-[10px] text-slate-400">Mã NTD: {profile.public_id || user?.public_id || '—'}</span>
+                      <span className="mt-1 block truncate text-[10px] text-slate-400">{m.employer_workspace_employer_code({ code: profile.public_id || user?.public_id || '—' })}</span>
                     </div>
                     </Link>
                   </div>
                   <span className="mt-1 flex items-center gap-1 text-[10px] text-slate-500">
-                    Tài khoản xác thực: <strong className="text-emerald-600">Cấp {accountVerificationLevel.level}/{accountVerificationLevel.total}</strong>
+                    {m.employer_workspace_verification_level_label()} <strong className="text-emerald-600">{m.employer_workspace_verification_level({ level: accountVerificationLevel.level, total: accountVerificationLevel.total })}</strong>
                     <Popover
                       trigger={['hover', 'focus']}
                       placement="rightTop"
                       styles={{ container: { padding: 12 } }}
                       content={<EmployerAccountVerificationPopover verification={effectiveVerification} level={accountVerificationLevel} />}
                     >
-                      <button type="button" aria-label="Xem chi tiết cấp xác thực tài khoản" className="inline-flex cursor-help text-slate-400 transition hover:text-slate-600"><QuestionCircleFilled /></button>
+                      <button type="button" aria-label={m.employer_workspace_verification_details_button()} className="inline-flex cursor-help text-slate-400 transition hover:text-slate-600"><QuestionCircleFilled /></button>
                     </Popover>
                   </span>
                 </>
@@ -291,8 +294,8 @@ export default function EmployerWorkspaceLayout() {
             </div>
 
             <div className="shrink-0 border-t border-slate-100 p-2">
-              <Tooltip title={isCompactSidebar ? 'Hộp thư hỗ trợ — Sắp mở' : null} placement="right">
-                <div aria-disabled="true" className={`flex cursor-not-allowed items-center rounded-lg py-2.5 text-xs font-semibold text-slate-500 ${isCompactSidebar ? 'justify-center px-0' : 'gap-3 px-3'}`}><CustomerServiceOutlined className={`${isCompactSidebar ? 'text-xl' : 'text-base'} text-emerald-600`} /> {!isCompactSidebar && <>Hộp thư hỗ trợ <span className="ml-auto text-[9px] text-slate-400">Sắp mở</span></>}</div>
+              <Tooltip title={isCompactSidebar ? m.employer_workspace_nav_coming_soon_title({ label: m.employer_workspace_support_inbox() }) : null} placement="right">
+                <div aria-disabled="true" className={`flex cursor-not-allowed items-center rounded-lg py-2.5 text-xs font-semibold text-slate-500 ${isCompactSidebar ? 'justify-center px-0' : 'gap-3 px-3'}`}><CustomerServiceOutlined className={`${isCompactSidebar ? 'text-xl' : 'text-base'} text-emerald-600`} /> {!isCompactSidebar && <>{m.employer_workspace_support_inbox()} <span className="ml-auto text-[9px] text-slate-400">{m.employer_workspace_nav_coming_soon()}</span></>}</div>
               </Tooltip>
             </div>
           </div>
@@ -305,7 +308,7 @@ export default function EmployerWorkspaceLayout() {
                 <Button
                   size="small"
                   icon={<ArrowLeftOutlined />}
-                  aria-label={isApplicationWorkspace ? applicationBackLabel : 'Quay lại'}
+                  aria-label={isApplicationWorkspace ? applicationBackLabel : m.employer_workspace_back()}
                   title={isApplicationWorkspace ? applicationBackLabel : undefined}
                   onClick={isCampaignDetail
                     ? () => navigate(employerAppPath('/campaigns'))
@@ -314,12 +317,12 @@ export default function EmployerWorkspaceLayout() {
                       : goBackFromForm}
                   className="!inline-flex !items-center !gap-1.5 !rounded-lg !border !border-slate-300 !bg-white !px-3 !py-1 !text-xs !font-semibold !text-slate-700 shadow-2xs transition hover:!border-slate-400 hover:!bg-slate-50 hover:!text-slate-900"
                 >
-                  Quay lại
+                  {m.employer_workspace_back()}
                 </Button>
               )}
               {isCampaignDetail ? (
                 <strong className="min-w-0 truncate text-sm font-bold text-slate-800 sm:text-base">
-                  Chi tiết chiến dịch
+                  {m.employer_workspace_campaign_detail_heading()}
                 </strong>
               ) : (
                 <strong className="min-w-0 truncate text-sm text-slate-700">{employerRouteTitle(pathname)}</strong>
@@ -332,7 +335,7 @@ export default function EmployerWorkspaceLayout() {
                   icon={<PlusOutlined aria-hidden />}
                   className="!h-9 !rounded-xl !border-0 !bg-gradient-to-r !from-emerald-600 !to-teal-600 !px-3.5 !font-semibold !shadow-md transition-all duration-200 hover:!-translate-y-0.5 hover:!from-emerald-500 hover:!to-teal-500 hover:!shadow-lg active:!translate-y-0"
                 >
-                  Thêm chiến dịch mới
+                  {m.employer_workspace_add_campaign()}
                 </Button>
               </Link>
             )}

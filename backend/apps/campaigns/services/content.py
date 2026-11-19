@@ -6,7 +6,9 @@ is a ``{link}`` placeholder replaced by the channel's tracked URL.
 """
 
 from django.conf import settings
-from django.utils import timezone
+from django.utils import timezone, translation
+from django.utils.translation import gettext as _
+from django.utils.translation import ngettext
 
 from apps.ai_core.models import AiInvocation
 from apps.ai_core.services import AiGenerationError, generate_structured
@@ -18,7 +20,7 @@ from .channels import save_generated_content
 from .tracking import channel_link
 
 USE_CASE = 'campaign_channel_post'
-PROMPT_VERSION = 'campaign-post-v1'
+PROMPT_VERSION = 'campaign-post-v2'
 SCHEMA_VERSION = 'campaign-post-v1'
 LINK_PLACEHOLDER = '{link}'
 DAILY_QUOTA = 20
@@ -32,11 +34,9 @@ RESPONSE_SCHEMA = {
     },
     'required': ['headline', 'body', 'hashtags', 'call_to_action'],
 }
-SYSTEM_INSTRUCTION = (
-    'Bạn là chuyên viên tuyển dụng viết bài đăng tuyển ngắn gọn, trung thực bằng tiếng Việt. '
-    'Chỉ dùng thông tin được cung cấp, không bịa quyền lợi, mức lương hay yêu cầu. '
-    f'Chèn đúng chuỗi {LINK_PLACEHOLDER} ở chỗ đặt link ứng tuyển.'
-)
+# Content is written in the language of the request (ADR-0023); the prompt itself
+# stays in Vietnamese and only names the output language.
+OUTPUT_LANGUAGES = {'vi': 'tiếng Việt', 'en': 'tiếng Anh'}
 CHANNEL_STYLE = {
     CampaignChannel.Kind.FACEBOOK_PAGE: 'bài Facebook thân thiện, tối đa 1500 ký tự, có vài emoji',
     CampaignChannel.Kind.FACEBOOK_GROUP: 'bài đăng nhóm Facebook ngắn gọn, đi thẳng vào vị trí và quyền lợi',
@@ -73,13 +73,29 @@ def _job_facts(job):
     )
 
 
-def _prompt(channel, jobs):
+def output_language():
+    """Language code the post is written in: the active request language, else ``vi``."""
+    code = (translation.get_language() or settings.LANGUAGE_CODE).split('-')[0]
+    return code if code in OUTPUT_LANGUAGES else 'vi'
+
+
+def system_instruction(language):
+    return (
+        'Bạn là chuyên viên tuyển dụng viết bài đăng tuyển ngắn gọn, trung thực bằng '
+        f'{OUTPUT_LANGUAGES[language]}. '
+        'Chỉ dùng thông tin được cung cấp, không bịa quyền lợi, mức lương hay yêu cầu. '
+        f'Chèn đúng chuỗi {LINK_PLACEHOLDER} ở chỗ đặt link ứng tuyển.'
+    )
+
+
+def _prompt(channel, jobs, language):
     company = channel.campaign.company.company_name if channel.campaign.company else ''
     facts = '\n'.join(_job_facts(job) for job in jobs) or '- (chưa có tin)'
     return (
         f'Viết {CHANNEL_STYLE[channel.kind]} cho đợt tuyển dụng "{channel.campaign.name}" '
         f'của {company or "công ty"}.\nCác vị trí:\n{facts}\n'
-        'Trả về headline, body, tối đa 5 hashtags không dấu, call_to_action.'
+        'Trả về headline, body, tối đa 5 hashtags không dấu, call_to_action'
+        f', viết toàn bộ bằng {OUTPUT_LANGUAGES[language]}.'
     )
 
 
@@ -91,20 +107,30 @@ def _validate(result):
 def template_content(channel, jobs=None):
     """Fixed wording used when AI is off, over quota or fails."""
     jobs = jobs if jobs is not None else _channel_jobs(channel)
-    company = channel.campaign.company.company_name if channel.campaign.company else 'Chúng tôi'
-    lines = [f'• {job.title} ({job.number_of_vacancies} người, {salary_text(job)})' for job in jobs]
+    company = channel.campaign.company.company_name if channel.campaign.company else _('Chúng tôi')
+    lines = [
+        ngettext(
+            '• %(title)s (%(count)s người, %(salary)s)',
+            '• %(title)s (%(count)s người, %(salary)s)',
+            job.number_of_vacancies,
+        )
+        % {'title': job.title, 'count': job.number_of_vacancies, 'salary': salary_text(job)}
+        for job in jobs
+    ]
+    link = {'link': LINK_PLACEHOLDER}
     return {
-        'headline': f'{company} đang tuyển dụng: {channel.campaign.name}',
+        'headline': _('%(company)s đang tuyển dụng: %(campaign)s')
+        % {'company': company, 'campaign': channel.campaign.name},
         'body': '\n'.join(
             [
-                f'{company} đang tìm đồng đội cho các vị trí:',
+                _('%(company)s đang tìm đồng đội cho các vị trí:') % {'company': company},
                 *lines,
                 '',
-                f'Ứng tuyển tại: {LINK_PLACEHOLDER}',
+                _('Ứng tuyển tại: %(link)s') % link,
             ]
         ),
-        'hashtags': ['tuyendung', 'vieclam'],
-        'call_to_action': f'Ứng tuyển ngay: {LINK_PLACEHOLDER}',
+        'hashtags': [_('tuyendung'), _('vieclam')],
+        'call_to_action': _('Ứng tuyển ngay: %(link)s') % link,
     }
 
 
@@ -135,14 +161,15 @@ def generate_channel_content(*, channel, user):
     if _quota_left(user) <= 0:
         raise ContentQuotaExceeded
 
+    language = output_language()
     try:
         result = generate_structured(
             use_case=USE_CASE,
-            prompt=_prompt(channel, jobs),
+            prompt=_prompt(channel, jobs, language),
             response_schema=RESPONSE_SCHEMA,
             prompt_version=PROMPT_VERSION,
             schema_version=SCHEMA_VERSION,
-            system_instruction=SYSTEM_INSTRUCTION,
+            system_instruction=system_instruction(language),
             result_validator=_validate,
             correlation_key=f'user:{user.pk}',
         )

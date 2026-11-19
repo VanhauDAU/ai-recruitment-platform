@@ -7,7 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Song ngữ vi/en cho 3 cổng (ADR-0023)](#song-ngữ-vien-cho-3-cổng-adr-0023-2026-11-19) | 🟨 GĐ0 (nền tảng + marketing NTD) trên nhánh `feat/i18n-foundation`; GĐ1–4 chưa làm |
+| [Song ngữ vi/en cho 3 cổng (ADR-0023)](#song-ngữ-vien-cho-3-cổng-adr-0023-2026-11-19) | 🟨 GĐ0 đã gộp (#262); GĐ1 (cổng NTD) trên nhánh `feat/i18n-employer`; GĐ2–4 chưa làm |
 | [Chuẩn hóa tiêu đề trang 3 cổng](#chuẩn-hóa-tiêu-đề-trang-3-cổng-2026-11-19) | 🟨 PR #261 (nhánh `feat/page-titles`), chờ gộp |
 | [Hậu kiểm nội dung trang công ty](#hậu-kiểm-nội-dung-trang-công-ty-2026-11-19) | ✅ Gộp vào `dev` (#260) |
 | [Làm lại trang nhà tuyển dụng của admin](#làm-lại-trang-nhà-tuyển-dụng-của-admin-2026-11-19) | 🟨 PR #263 (nhánh `feat/admin-recruiter-workspace`), chờ gộp |
@@ -44,16 +44,23 @@ Lý do: một số NTD là người nước ngoài. Quyết định và lộ tr�
 
 | GĐ | Phạm vi | Trạng thái |
 |---|---|---|
-| 0 | Nền tảng FE (Paraglide; antd/dayjs/Intl theo locale; `Accept-Language`; bộ chọn lưu vào tài khoản; `check:i18n` + ratchet); backend (`LocaleMiddleware`, `preferred_language`, catalog vi bổ sung cho DRF); chuyển 4 trang marketing NTD khỏi i18next | 🟨 Nhánh `feat/i18n-foundation` |
-| 1 | Cổng NTD: chuỗi FE, thông báo backend, email/thông báo theo ngôn ngữ người nhận, prompt AI theo locale | ⬜ |
+| 0 | Nền tảng FE (Paraglide; antd/dayjs/Intl theo locale; `Accept-Language`; bộ chọn lưu vào tài khoản; `check:i18n` + ratchet); backend (`LocaleMiddleware`, `preferred_language`, catalog vi bổ sung cho DRF); chuyển 4 trang marketing NTD khỏi i18next | ✅ Gộp vào `dev` (#262) |
+| 1 | Cổng NTD: 3.029 khóa FE (công ty, tin, chiến dịch, tài khoản/đăng nhập dùng chung, khung workspace, entities/shared NTD dùng, trang pháp lý); backend 1.511 msgid ở `accounts`/`employers`/`jobs`/`campaigns`/`applications`; email + thông báo theo ngôn ngữ người nhận; prompt AI sinh tin/nội dung chiến dịch theo ngôn ngữ; bộ chọn ngôn ngữ ở workspace, đăng nhập, thiết lập; công cụ catalog Python thuần `common/i18n_catalog.py` | 🟨 Nhánh `feat/i18n-employer` |
 | 2 | Danh mục `name_en` (tỉnh/thành, kỹ năng, ngành nghề, phúc lợi); entities và shared | ⬜ |
 | 3 | Cổng ứng viên | ⬜ |
 | 4 | Cổng quản trị; ratchet về 0 | ⬜ |
 
-Số đo lúc bắt đầu:
-- 8.793 dòng tiếng Việt viết cứng trong `frontend/src` (`scripts/i18n-baseline.json`).
-- Bundle khởi tạo 322,4 → 326,3 KiB, gồm runtime Paraglide khoảng 1,4 KiB và
-  locale vi_VN của antd khoảng 2,2 KiB.
+Số đo:
+- Dòng tiếng Việt viết cứng trong `frontend/src` (`scripts/i18n-baseline.json`):
+  8.793 lúc bắt đầu → 5.575 sau GĐ1. `features/employer`, `widgets/employer`,
+  `pages/employer` đã về 0.
+- Bundle khởi tạo:
+  - GĐ0: 322,4 → 326,3 KiB (runtime Paraglide khoảng 1,4 KiB, locale vi_VN của
+    antd khoảng 2,2 KiB).
+  - GĐ1: 332,2 KiB vì 204 chuỗi của form đăng nhập/phiên/lỗi API nằm sẵn trong
+    shell. Trần nâng lên 334 KiB.
+- Pytest trong container phải chạy với `--ds=config.settings.test`. Thiếu tham
+  số này, 38 test lỗi giả vì URL R2 (đã sửa trong `scripts/check_all.sh`).
 
 ## Chuẩn hóa tiêu đề trang 3 cổng (2026-11-19)
 

@@ -2,6 +2,7 @@
 
 from django.conf import settings
 from django.db.models import Q
+from django.utils.translation import gettext_lazy
 
 from apps.employers.domain.company_email import email_domain
 from apps.jobs.models import JobReport
@@ -20,9 +21,9 @@ INVALIDATING_CASE_STATUSES = frozenset(
 )
 
 INITIAL_ONBOARDING_STEP_LABELS = {
-    'registration_completed': 'Hồ sơ đăng ký',
-    'email_verified': 'Xác minh email',
-    'consulting_need_completed': 'Nhu cầu tuyển dụng',
+    'registration_completed': gettext_lazy('Hồ sơ đăng ký'),
+    'email_verified': gettext_lazy('Xác minh email'),
+    'consulting_need_completed': gettext_lazy('Nhu cầu tuyển dụng'),
 }
 
 
@@ -45,7 +46,7 @@ def build_employer_initial_onboarding(recruiter, *, has_recruitment_need=None):
         'completed': not missing_steps,
         'steps': steps,
         'missing_steps': missing_steps,
-        'missing_step_labels': [INITIAL_ONBOARDING_STEP_LABELS[key] for key in missing_steps],
+        'missing_step_labels': [str(INITIAL_ONBOARDING_STEP_LABELS[key]) for key in missing_steps],
     }
 
 

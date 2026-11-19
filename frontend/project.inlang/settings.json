@@ -12,7 +12,13 @@
     "pathPattern": [
       "./messages/common/{locale}.json",
       "./messages/employer/{locale}.json",
-      "./messages/admin/{locale}.json"
+      "./messages/admin/{locale}.json",
+      "./messages/employer-company/{locale}.json",
+      "./messages/employer-job/{locale}.json",
+      "./messages/employer-campaign/{locale}.json",
+      "./messages/employer-account/{locale}.json",
+      "./messages/employer-workspace/{locale}.json",
+      "./messages/shared/{locale}.json"
     ]
   }
 }

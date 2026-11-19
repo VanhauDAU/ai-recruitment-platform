@@ -2,6 +2,7 @@ import csv
 
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django.utils.translation import gettext as _
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import generics
@@ -84,12 +85,12 @@ class EmployerApplicationExportView(APIView):
         writer = csv.writer(response)
         writer.writerow(
             [
-                'Ứng viên',
+                _('Ứng viên'),
                 'Email',
-                'Tin tuyển dụng',
-                'CV đã nộp',
-                'Trạng thái',
-                'Ngày ứng tuyển',
+                _('Tin tuyển dụng'),
+                _('CV đã nộp'),
+                _('Trạng thái'),
+                _('Ngày ứng tuyển'),
             ]
         )
         for application in queryset.iterator(chunk_size=200):

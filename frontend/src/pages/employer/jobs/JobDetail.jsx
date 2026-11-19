@@ -43,6 +43,7 @@ import {
 } from './job-detail-presentation'
 import { formatCount, jobDisplayTitle } from './job-list-presentation'
 import './employer-jobs.css'
+import { m } from '@/shared/config/i18n'
 
 const FALLBACK_DEADLINE_POLICY = {
   default_deadline_days: 30,
@@ -50,25 +51,25 @@ const FALLBACK_DEADLINE_POLICY = {
   max_public_lifetime_days: 90,
 }
 const TAB_META = {
-  apply_cv: { icon: <TeamOutlined />, label: 'CV ứng tuyển', short: 'Ứng tuyển' },
-  viewed_job: { icon: <EyeOutlined />, label: 'Ứng viên đã xem tin', short: 'Lượt xem' },
-  job: { icon: <FileTextOutlined />, label: 'Thông tin tuyển dụng', short: 'Thông tin' },
-  cv_label: { icon: <TagsOutlined />, label: 'Nhãn', short: 'Nhãn' },
+  apply_cv: { icon: <TeamOutlined />, label: m.employer_job_detail_tab_cv(), short: m.employer_job_detail_tab_cv_short() },
+  viewed_job: { icon: <EyeOutlined />, label: m.employer_job_detail_tab_viewed(), short: m.employer_job_detail_tab_viewed_short() },
+  job: { icon: <FileTextOutlined />, label: m.employer_job_detail_tab_job(), short: m.employer_job_detail_tab_job_short() },
+  cv_label: { icon: <TagsOutlined />, label: m.employer_job_detail_tab_labels(), short: m.employer_job_detail_tab_labels() },
 }
 
 function LabelsPanel() {
   return (
     <div className="flex flex-col items-center px-4 py-12 text-center">
       <span className="flex h-12 w-12 items-center justify-center rounded-full bg-violet-50 text-xl text-violet-600"><TagsOutlined /></span>
-      <h2 className="mt-3 text-base font-bold text-slate-800">Nhãn CV sắp ra mắt</h2>
-      <p className="mt-1 max-w-sm text-sm text-slate-500">Bạn sẽ gắn nhãn và lọc ứng viên theo nhãn ngay tại đây.</p>
+      <h2 className="mt-3 text-base font-bold text-slate-800">{m.employer_job_detail_labels_coming()}</h2>
+      <p className="mt-1 max-w-sm text-sm text-slate-500">{m.employer_job_detail_labels_coming_hint()}</p>
     </div>
   )
 }
 
 function JobDetailSkeleton() {
   return (
-    <section className="space-y-4 pb-4 pt-3" aria-label="Đang tải tin tuyển dụng">
+    <section className="space-y-4 pb-4 pt-3" aria-label={m.employer_job_detail_loading_aria()}>
       <div className="rounded-xl border border-slate-200 bg-white p-5">
         <Skeleton active title={{ width: '45%' }} paragraph={{ rows: 2, width: ['70%', '40%'] }} />
       </div>
@@ -114,17 +115,17 @@ export default function JobDetail() {
     mutationFn: closeEmployerJob,
     onSuccess: () => {
       invalidate()
-      message.success('Đã ngừng tuyển vị trí này.')
+      message.success(m.employer_job_detail_closed())
     },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể ngừng tuyển.')),
+    onError: (error) => message.error(getApiErrorMessage(error, m.employer_job_detail_close_failed())),
   })
   const resubmitMutation = useMutation({
     mutationFn: () => resubmitEmployerJob(publicId),
     onSuccess: () => {
       invalidate()
-      message.success('Đã gửi tin cho quản trị viên duyệt lại.')
+      message.success(m.employer_job_detail_resubmitted())
     },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể gửi duyệt lại tin.')),
+    onError: (error) => message.error(getApiErrorMessage(error, m.employer_job_detail_resubmit_failed())),
   })
   const deadlineMutation = useMutation({
     mutationFn: ({ action, deadline, acceptedStatementVersion }) => (
@@ -136,10 +137,10 @@ export default function JobDetail() {
       invalidate()
       setDeadlineAction(null)
       setNewDeadline(null)
-      message.success('Đã cập nhật hạn nhận hồ sơ.')
+      message.success(m.employer_job_detail_deadline_updated())
     },
     onError: (error) => message.error(
-      getApiErrorMessage(error, 'Không thể cập nhật hạn nhận hồ sơ.'),
+      getApiErrorMessage(error, m.employer_job_detail_deadline_update_failed()),
       { id: 'job-deadline-action-error' },
     ),
   })
@@ -152,18 +153,18 @@ export default function JobDetail() {
 
   function submitDeadlineAction() {
     if (!newDeadline) {
-      message.error('Chọn hạn nhận hồ sơ.')
+      message.error(m.employer_job_form_deadline_required())
       return
     }
     const deadlineExtended = !jobQuery.data?.deadline
       || newDeadline.isAfter(dayjs(jobQuery.data.deadline), 'day')
     if (deadlineAction === 'extend' && !deadlineExtended) {
-      message.error('Hạn gia hạn phải sau hạn nhận hồ sơ hiện tại.')
+      message.error(m.employer_job_detail_extend_too_early())
       return
     }
     const commitment = postingContextQuery.data?.responsibility_statement
     if (deadlineAction === 'reopen' && !(commitment && commitmentAccepted)) {
-      message.error('Xác nhận cam kết trước khi mở lại tin.')
+      message.error(m.employer_job_detail_reopen_commitment_required())
       return
     }
     deadlineMutation.mutate({
@@ -191,15 +192,15 @@ export default function JobDetail() {
     return (
       <section className="space-y-3 pb-4 pt-3">
         <Link to={employerAppPath('/jobs')} className="inline-flex items-center gap-1.5 text-xs font-medium !text-slate-500 hover:!text-emerald-700">
-          <ArrowLeftOutlined aria-hidden /> Tin tuyển dụng
+          <ArrowLeftOutlined aria-hidden /> {m.employer_job_detail_back_to_jobs()}
         </Link>
         <Alert
           type="error"
           showIcon
           title={notFound
-            ? 'Không tìm thấy tin tuyển dụng này trong tài khoản của bạn.'
-            : `Không thể tải tin tuyển dụng. ${getApiErrorMessage(jobQuery.error, 'Vui lòng thử lại sau.')}`}
-          action={notFound ? null : <Button size="small" danger onClick={() => jobQuery.refetch()}>Thử lại</Button>}
+            ? m.employer_job_detail_not_found()
+            : m.employer_job_detail_load_failed({ reason: getApiErrorMessage(jobQuery.error, m.employer_job_detail_try_later()) })}
+          action={notFound ? null : <Button size="small" danger onClick={() => jobQuery.refetch()}>{m.employer_job_detail_retry()}</Button>}
         />
       </section>
     )
@@ -243,18 +244,18 @@ export default function JobDetail() {
         onDeadlineAction={openDeadlineAction}
         onSelectFilter={selectCvFilter}
         onClose={() => requestConfirmation({
-          cancelText: 'Đóng',
-          confirmText: 'Ngừng tuyển',
+          cancelText: m.employer_job_detail_close(),
+          confirmText: m.employer_job_detail_stop_hiring(),
           danger: true,
           description: (
             <>
-              Bạn có chắc muốn ngừng tuyển vị trí <strong>{jobDisplayTitle(job)}</strong> không?
+              {m.employer_job_detail_stop_hiring_before()}<strong>{jobDisplayTitle(job)}</strong>{m.employer_job_detail_stop_hiring_after()}
               <br />
-              Tin sẽ ngừng hiển thị với ứng viên.
+              {m.employer_job_detail_stop_hiring_note()}
             </>
           ),
           onConfirm: () => closeMutation.mutateAsync(publicId),
-          title: 'Ngừng tuyển',
+          title: m.employer_job_detail_stop_hiring(),
         })}
       />
 
@@ -269,7 +270,7 @@ export default function JobDetail() {
         <div className="border-b border-slate-100 p-2 sm:hidden">
           <Segmented
             block
-            aria-label="Chọn nội dung quản lý tin"
+            aria-label={m.employer_job_detail_tabs_aria()}
             value={activeTab}
             onChange={selectTab}
             options={JOB_DETAIL_TABS.map((key) => ({

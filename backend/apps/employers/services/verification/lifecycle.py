@@ -2,6 +2,7 @@
 
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext
 
 from apps.accounts.api.permissions import require_admin
 from apps.accounts.services import (
@@ -42,12 +43,12 @@ def _prepare_lifecycle_action(case, *, actor, action, reason, scope=None, requir
     if action not in LIFECYCLE_ACTIONS:
         workflow_error(
             'VERIFICATION_LIFECYCLE_ACTION_INVALID',
-            'Thao tác vòng đời xác thực không hợp lệ.',
+            gettext('Thao tác vòng đời xác thực không hợp lệ.'),
         )
     if case.status != EmployerVerificationCase.Status.APPROVED:
         workflow_error(
             'VERIFICATION_INVALID_TRANSITION',
-            'Chỉ hồ sơ đã duyệt mới có thể bị thu hồi hoặc hết hiệu lực.',
+            gettext('Chỉ hồ sơ đã duyệt mới có thể bị thu hồi hoặc hết hiệu lực.'),
             current_status=case.status,
             allowed_statuses=[EmployerVerificationCase.Status.APPROVED],
         )
@@ -55,7 +56,7 @@ def _prepare_lifecycle_action(case, *, actor, action, reason, scope=None, requir
     if require_reason and not reason:
         workflow_error(
             'VERIFICATION_REASON_REQUIRED',
-            'Cần nhập lý do cho thay đổi hiệu lực xác thực.',
+            gettext('Cần nhập lý do cho thay đổi hiệu lực xác thực.'),
         )
     _, jobs, campaigns, _ = resource_rows(case, scope=scope)
     campaign_count = len(campaigns)
@@ -127,7 +128,7 @@ def confirm_verification_lifecycle_action(
         normalized_payload={'request': payload, 'snapshot': snapshot},
     )
     if claims['revision'] != case.lock_version:
-        raise StaleImpactToken('Hồ sơ đã thay đổi sau khi xem tác động.')
+        raise StaleImpactToken(gettext('Hồ sơ đã thay đổi sau khi xem tác động.'))
 
     hold_reason = {
         EmployerVerificationCase.Status.REVOKED: (

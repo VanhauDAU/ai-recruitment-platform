@@ -4,11 +4,12 @@ import { Alert, Avatar, Button, Input, Pagination, Result, Skeleton, Tag } from 
 import { useState } from 'react'
 import { getEmployerCompanyList, joinEmployerCompany } from '@/entities/account/employer-profile'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
 
 function formatCompanySize(size) {
-  if (!size) return 'Quy mô chưa cập nhật'
-  return `${size} nhân viên`
+  if (!size) return m.employer_company_size_unknown()
+  return m.employer_company_size_employees({ size })
 }
 
 export default function CompanySearchPanel({ onLinked, onCreateInstead }) {
@@ -23,10 +24,10 @@ export default function CompanySearchPanel({ onLinked, onCreateInstead }) {
   const joinMutation = useMutation({
     mutationFn: joinEmployerCompany,
     onSuccess: async () => {
-      message.success('Đã gửi yêu cầu tham gia. Quản lý công ty sẽ duyệt yêu cầu của bạn.')
+      message.success(m.employer_company_join_sent())
       await onLinked()
     },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể gửi yêu cầu tham gia công ty.')),
+    onError: (error) => message.error(getApiErrorMessage(error, m.employer_company_join_send_failed())),
   })
 
   function search() {
@@ -51,16 +52,16 @@ export default function CompanySearchPanel({ onLinked, onCreateInstead }) {
             onChange={(event) => setInput(event.target.value)}
             onPressEnter={search}
             prefix={<SearchOutlined />}
-            placeholder="Nhập tên công ty hoặc MST"
-            aria-label="Tìm công ty"
+            placeholder={m.employer_company_search_placeholder()}
+            aria-label={m.employer_company_search_label()}
           />
-          <Button type="primary" size="large" onClick={search}>Tìm kiếm</Button>
+          <Button type="primary" size="large" onClick={search}>{m.employer_company_search()}</Button>
         </div>
         <Alert
           className="company-search-box__notice"
           type="info"
           showIcon
-          title={<span><strong>Lưu ý!</strong> Hãy chọn đúng hồ sơ doanh nghiệp. Nếu tạo mới, vui lòng sử dụng <strong>Tên công ty</strong> trùng khớp với dữ liệu doanh nghiệp theo Trang thông tin điện tử của Cục Thuế.</span>}
+          title={<span><strong>{m.employer_company_search_note_label()}</strong> {m.employer_company_search_note_body()} <strong>{m.employer_company_search_note_name()}</strong> {m.employer_company_search_note_tail()}</span>}
         />
       </div>
 
@@ -68,15 +69,15 @@ export default function CompanySearchPanel({ onLinked, onCreateInstead }) {
       {companiesQuery.isError && (
         <Result
           status="error"
-          title="Không tải được danh sách công ty"
-          subTitle={getApiErrorMessage(companiesQuery.error, 'Vui lòng thử lại sau.')}
-          extra={<Button icon={<ReloadOutlined />} onClick={() => companiesQuery.refetch()}>Thử lại</Button>}
+          title={m.employer_company_search_load_error()}
+          subTitle={getApiErrorMessage(companiesQuery.error, m.employer_company_try_later())}
+          extra={<Button icon={<ReloadOutlined />} onClick={() => companiesQuery.refetch()}>{m.employer_company_retry()}</Button>}
         />
       )}
       {!companiesQuery.isLoading && !companiesQuery.isError && results.length === 0 && (
-        <Result status="info" title="Không tìm thấy công ty phù hợp" subTitle="Bạn có thể kiểm tra lại từ khóa hoặc tạo hồ sơ công ty mới." extra={<Button type="primary" onClick={onCreateInstead}>Tạo công ty mới</Button>} />
+        <Result status="info" title={m.employer_company_search_empty()} subTitle={m.employer_company_search_empty_hint()} extra={<Button type="primary" onClick={onCreateInstead}>{m.employer_company_flow_create_title()}</Button>} />
       )}
-      {!companiesQuery.isLoading && !companiesQuery.isError && results.length > 0 && <h2 id="company-search-title" className="company-catalog-title">{query ? 'Kết quả tìm kiếm' : 'Công ty mới tạo'}</h2>}
+      {!companiesQuery.isLoading && !companiesQuery.isError && results.length > 0 && <h2 id="company-search-title" className="company-catalog-title">{query ? m.employer_company_search_results() : m.employer_company_search_recent()}</h2>}
       <div className="company-catalog-grid" aria-busy={companiesQuery.isFetching}>
         {results.map((company) => {
           const industrySummary = (company.industries_detail || []).map((item) => item.name).join(' · ')
@@ -87,15 +88,15 @@ export default function CompanySearchPanel({ onLinked, onCreateInstead }) {
                 <div className="company-catalog-card__title-row">
                   <h3 title={company.company_name}>{company.company_name}</h3>
                 </div>
-                <p className="company-catalog-card__tax">MST: {company.tax_code || 'chưa cập nhật'}</p>
+                <p className="company-catalog-card__tax">{m.employer_company_tax_code_value({ code: company.tax_code || m.employer_company_not_updated() })}</p>
                 <p className="company-catalog-card__details">
-                  <span title={company.address || ''}>{company.address || 'Địa chỉ chưa cập nhật'}</span>
+                  <span title={company.address || ''}>{company.address || m.employer_company_address_unknown()}</span>
                   <span aria-hidden="true">|</span>
                   <span>{formatCompanySize(company.company_size)}</span>
                 </p>
                 <div className="company-catalog-card__industries" title={industrySummary || undefined}>{(company.industries_detail || []).map((item) => <Tag key={item.id}>{item.name}</Tag>)}</div>
               </div>
-              <Button size="small" loading={joinMutation.isPending} onClick={() => selectCompany(company)} className="company-catalog-card__action">Chọn</Button>
+              <Button size="small" loading={joinMutation.isPending} onClick={() => selectCompany(company)} className="company-catalog-card__action">{m.employer_company_select()}</Button>
             </article>
           )
         })}

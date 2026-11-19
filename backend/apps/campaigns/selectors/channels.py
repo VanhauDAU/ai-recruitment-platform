@@ -2,15 +2,16 @@
 
 from django.db.models import Count, IntegerField, OuterRef, Q, Subquery, Sum
 from django.db.models.functions import Coalesce
+from django.utils.translation import gettext_lazy
 
 from apps.applications.models import Application
 
 from ..models import CampaignChannel, CampaignChannelClickDaily, CampaignChannelCost
 
 ORGANIC_SOURCES = (
-    (Application.Source.INVITED, 'Mời từ kho ứng viên'),
-    (Application.Source.RECOMMENDED, 'Gợi ý của ProCV'),
-    (Application.Source.APPLIED, 'Tự tìm thấy trên ProCV'),
+    (Application.Source.INVITED, gettext_lazy('Mời từ kho ứng viên')),
+    (Application.Source.RECOMMENDED, gettext_lazy('Gợi ý của ProCV')),
+    (Application.Source.APPLIED, gettext_lazy('Tự tìm thấy trên ProCV')),
 )
 
 
@@ -87,7 +88,7 @@ def campaign_channel_report(campaign):
         rows.append(
             {
                 'key': f'organic:{source}',
-                'label': label,
+                'label': str(label),
                 'kind': 'organic',
                 'clicks': None,
                 'unique_clicks': None,

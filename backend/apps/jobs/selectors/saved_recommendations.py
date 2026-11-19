@@ -3,6 +3,8 @@
 import re
 
 from django.db.models import Prefetch, Q
+from django.utils.translation import gettext as _
+from django.utils.translation import ngettext
 
 from common.db.search import fold_accents, search_q
 
@@ -248,10 +250,10 @@ def _score_pair(candidate, source):
     shared_skills = candidate['skill_ids'] & source['skill_ids']
 
     if has_primary_match:
-        _add_detail(details, 'primary_category', 'Cùng vị trí chuyên môn', 36)
+        _add_detail(details, 'primary_category', _('Cùng vị trí chuyên môn'), 36)
 
     if has_title_anchor:
-        _add_detail(details, 'title', 'Tiêu đề có chuyên môn tương tự', 22)
+        _add_detail(details, 'title', _('Tiêu đề có chuyên môn tương tự'), 22)
 
     # Skills, secondary categories and operational attributes are supporting only.
     # A result first needs an anchor in the primary taxonomy tree or a strong
@@ -261,14 +263,22 @@ def _score_pair(candidate, source):
 
     if shared_skills:
         points = min(24, len(shared_skills) * 6)
-        _add_detail(details, 'skills', f'Cùng {len(shared_skills)} kỹ năng', points)
+        _add_detail(
+            details,
+            'skills',
+            ngettext('Cùng %(count)s kỹ năng', 'Cùng %(count)s kỹ năng', len(shared_skills))
+            % {'count': len(shared_skills)},
+            points,
+        )
 
     if not has_primary_match and (has_primary_group_match or supporting_category_match):
-        label = 'Cùng nhóm ngành chính' if has_primary_group_match else 'Cùng lĩnh vực chuyên môn'
+        label = (
+            _('Cùng nhóm ngành chính') if has_primary_group_match else _('Cùng lĩnh vực chuyên môn')
+        )
         _add_detail(details, 'category', label, 12)
 
     if candidate['province_ids'] & source['province_ids']:
-        _add_detail(details, 'province', 'Cùng tỉnh/thành làm việc', 10)
+        _add_detail(details, 'province', _('Cùng tỉnh/thành làm việc'), 10)
 
     candidate_experience = candidate['experience_years']
     source_experience = source['experience_years']
@@ -277,15 +287,15 @@ def _score_pair(candidate, source):
             EXPERIENCE_RANK.get(candidate_experience, 0) - EXPERIENCE_RANK.get(source_experience, 0)
         )
         if distance == 0:
-            _add_detail(details, 'experience', 'Yêu cầu kinh nghiệm tương đương', 6)
+            _add_detail(details, 'experience', _('Yêu cầu kinh nghiệm tương đương'), 6)
         elif distance == 1:
-            _add_detail(details, 'experience', 'Yêu cầu kinh nghiệm gần tương đương', 3)
+            _add_detail(details, 'experience', _('Yêu cầu kinh nghiệm gần tương đương'), 3)
 
     if candidate['work_types'] & source['work_types']:
-        _add_detail(details, 'work_type', 'Cùng hình thức làm việc', 5)
+        _add_detail(details, 'work_type', _('Cùng hình thức làm việc'), 5)
 
     if candidate['employment_type'] and candidate['employment_type'] == source['employment_type']:
-        _add_detail(details, 'employment_type', 'Cùng loại hình công việc', 5)
+        _add_detail(details, 'employment_type', _('Cùng loại hình công việc'), 5)
 
     return min(sum(detail['points'] for detail in details), 100), details
 

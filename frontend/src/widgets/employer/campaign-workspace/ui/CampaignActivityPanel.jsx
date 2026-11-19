@@ -6,19 +6,25 @@ import { RECRUITER_APPLICATION_STATUS_LABELS } from '@/entities/application/appl
 import { CAMPAIGN_STATUS_LABELS, campaignKeys, getCampaignActivities } from '@/entities/campaign/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { employerAppPath } from '@/shared/config/portals'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { getIntlLocale, m } from '@/shared/config/i18n'
 
 const REPORT_TIME_ZONE = 'Asia/Ho_Chi_Minh'
 
 const STATUS_LABELS = {
   campaign: CAMPAIGN_STATUS_LABELS,
-  job: { draft: 'Nháp', pending: 'Chờ duyệt', active: 'Đang tuyển', closed: 'Ngừng tuyển', rejected: 'Từ chối' },
+  job: {
+    draft: m.employer_campaign_jobs_status_draft(),
+    pending: m.employer_campaign_activity_job_pending(),
+    active: m.employer_campaign_jobs_status_active(),
+    closed: m.employer_campaign_jobs_status_closed(),
+    rejected: m.employer_campaign_activity_job_rejected(),
+  },
   application: RECRUITER_APPLICATION_STATUS_LABELS,
 }
 
 const REASON_LABELS = {
-  account_status_policy_hold: 'Tạm giữ theo trạng thái tài khoản',
-  account_resource_review_completed: 'Đã hoàn tất rà soát tài nguyên tài khoản',
+  account_status_policy_hold: m.employer_campaign_activity_reason_policy_hold(),
+  account_resource_review_completed: m.employer_campaign_activity_reason_review_completed(),
 }
 
 const dayFormatter = new Intl.DateTimeFormat(getIntlLocale(), {
@@ -52,14 +58,14 @@ function dateKey(value) {
 
 function formatDay(value) {
   const date = parseDate(value)
-  if (!date) return 'Không rõ ngày'
+  if (!date) return m.employer_campaign_activity_unknown_day()
   const label = dayFormatter.format(date)
-  return label.charAt(0).toLocaleUpperCase('vi-VN') + label.slice(1)
+  return label.charAt(0).toLocaleUpperCase(getIntlLocale()) + label.slice(1)
 }
 
 function formatTime(value) {
   const date = parseDate(value)
-  return date ? timeFormatter.format(date) : 'Không rõ giờ'
+  return date ? timeFormatter.format(date) : m.employer_campaign_activity_unknown_time()
 }
 
 function formatDate(value) {
@@ -78,7 +84,7 @@ function groupByDay(activities) {
 }
 
 function statusLabel(group, value, { initial = false } = {}) {
-  if (!value) return initial ? 'Khởi tạo' : 'Không xác định'
+  if (!value) return initial ? m.employer_campaign_activity_initial() : m.employer_campaign_activity_unknown()
   return STATUS_LABELS[group]?.[value] || value
 }
 
@@ -87,15 +93,15 @@ function readableReason(value) {
   if (REASON_LABELS[value]) return REASON_LABELS[value]
   if (!value.includes('_')) return value
   const text = value.replaceAll('_', ' ')
-  return text.charAt(0).toLocaleUpperCase('vi-VN') + text.slice(1)
+  return text.charAt(0).toLocaleUpperCase(getIntlLocale()) + text.slice(1)
 }
 
 function activityText(activity) {
   const metadata = activity.metadata || {}
-  if (activity.group === 'job') return metadata.title || 'Tin tuyển dụng'
+  if (activity.group === 'job') return metadata.title || m.employer_campaign_activity_job_fallback()
   if (activity.group === 'application') {
     return [metadata.candidate_name, metadata.job_title].filter(Boolean).join(', ')
-      || 'Hồ sơ ứng viên'
+      || m.employer_campaign_activity_application_fallback()
   }
   return metadata.label || metadata.name || ''
 }
@@ -112,17 +118,17 @@ function activityLink(publicId, activity) {
 }
 
 const GROUPS = [
-  { value: '', label: 'Tất cả' },
-  { value: 'campaign', label: 'Chiến dịch' },
-  { value: 'job', label: 'Tin tuyển dụng' },
-  { value: 'application', label: 'Ứng viên' },
+  { value: '', label: m.employer_campaign_activity_group_all() },
+  { value: 'campaign', label: m.employer_campaign_activity_group_campaign() },
+  { value: 'job', label: m.employer_campaign_activity_group_job() },
+  { value: 'application', label: m.employer_campaign_activity_group_application() },
 ]
 
 // Dòng phụ ngắn: đổi trạng thái, hạn mới, lý do và người thực hiện.
 function ActivityDetails({ activity }) {
   const metadata = activity.metadata || {}
   const reason = readableReason(metadata.reason)
-  const actor = typeof activity.actor_name === 'string' && activity.actor_name.trim() ? activity.actor_name.trim() : 'Hệ thống'
+  const actor = typeof activity.actor_name === 'string' && activity.actor_name.trim() ? activity.actor_name.trim() : m.employer_campaign_activity_system()
   const moved = metadata.from_status !== undefined || metadata.to_status !== undefined
   const from = statusLabel(activity.group, metadata.from_status, { initial: true })
   const to = statusLabel(activity.group, metadata.to_status)
@@ -130,14 +136,14 @@ function ActivityDetails({ activity }) {
   return (
     <p className="cwa-item__meta">
       {moved && (
-        <span className="cwa-move" aria-label={`Chuyển trạng thái từ ${from} sang ${to}`}>
+        <span className="cwa-move" aria-label={m.employer_campaign_activity_move_aria({ from, to })}>
           {from} <span aria-hidden>→</span> <strong>{to}</strong>
         </span>
       )}
-      {metadata.status && !moved && <span>Trạng thái <strong>{statusLabel(activity.group, metadata.status)}</strong></span>}
-      {metadata.deadline && <span>Hạn mới <strong>{formatDate(metadata.deadline)}</strong></span>}
+      {metadata.status && !moved && <span>{m.employer_campaign_activity_status()} <strong>{statusLabel(activity.group, metadata.status)}</strong></span>}
+      {metadata.deadline && <span>{m.employer_campaign_activity_new_deadline()} <strong>{formatDate(metadata.deadline)}</strong></span>}
       {reason && <span className="cwa-reason">{reason}</span>}
-      <span>bởi {actor}</span>
+      <span>{m.employer_campaign_activity_by({ actor })}</span>
     </p>
   )
 }
@@ -152,7 +158,7 @@ function ActivityItem({ activity, publicId }) {
       <span className="cwa-item__dot" aria-hidden />
       <div className="cwa-item__body">
         <p className="cwa-item__title">
-          <strong>{activity.event_label || activity.event_type || 'Hoạt động chiến dịch'}</strong>
+          <strong>{activity.event_label || activity.event_type || m.employer_campaign_activity_fallback()}</strong>
           {description && (link
             ? <Link to={link} className="cwa-item__subject">{description}</Link>
             : <span className="cwa-item__subject">{description}</span>)}
@@ -177,8 +183,8 @@ export default function CampaignActivityPanel({ publicId }) {
   return (
     <div className="cwa">
       <div className="cwa-head">
-        <h2 className="cw-section-title">Lịch sử hoạt động</h2>
-        <div className="cwa-filter" role="group" aria-label="Lọc nhóm hoạt động">
+        <h2 className="cw-section-title">{m.employer_campaign_activity_title()}</h2>
+        <div className="cwa-filter" role="group" aria-label={m.employer_campaign_activity_filter_aria()}>
           {GROUPS.map((item) => (
             <button
               key={item.value}
@@ -200,19 +206,19 @@ export default function CampaignActivityPanel({ publicId }) {
         <Alert
           type="error"
           showIcon
-          message="Không thể tải lịch sử hoạt động"
-          description={getApiErrorMessage(query.error, 'Vui lòng thử lại sau.')}
-          action={<Button size="small" danger onClick={() => query.refetch()}>Thử lại</Button>}
+          message={m.employer_campaign_activity_load_error()}
+          description={getApiErrorMessage(query.error, m.employer_campaign_try_again_later())}
+          action={<Button size="small" danger onClick={() => query.refetch()}>{m.employer_campaign_retry()}</Button>}
         />
       ) : query.isLoading ? (
-        <div aria-label="Đang tải lịch sử hoạt động"><Skeleton active paragraph={{ rows: 6 }} /></div>
+        <div aria-label={m.employer_campaign_activity_loading()}><Skeleton active paragraph={{ rows: 6 }} /></div>
       ) : dayGroups.length ? (
         <>
           {dayGroups.map((day) => (
             <section key={day.key} className="cwa-day" data-testid={`activity-day-${day.key}`}>
               <h3 className="cwa-day__label">
                 {formatDay(day.occurredAt)}
-                <span>{day.activities.length} hoạt động</span>
+                <span>{m.employer_campaign_activity_count({ count: day.activities.length })}</span>
               </h3>
               <ol className="cwa-list">
                 {day.activities.map((activity) => (
@@ -228,7 +234,7 @@ export default function CampaignActivityPanel({ publicId }) {
           )}
         </>
       ) : (
-        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có hoạt động phù hợp" />
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={m.employer_campaign_activity_empty()} />
       )}
     </div>
   )

@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 
 from apps.campaigns.models import CampaignActivity, RecruitmentCampaign
@@ -104,7 +105,7 @@ class RecruitmentCampaignSerializer(serializers.ModelSerializer):
         event_type = getattr(obj, 'last_activity_type', None) or 'campaign_updated'
         label = dict(CampaignActivity.EventType.choices).get(
             event_type,
-            'Cập nhật chiến dịch',
+            _('Cập nhật chiến dịch'),
         )
         return {
             'event_type': event_type,
@@ -135,12 +136,12 @@ class RecruitmentCampaignSerializer(serializers.ModelSerializer):
         start_date, target_date = current('start_date'), current('target_date')
         if start_date and target_date and target_date < start_date:
             raise serializers.ValidationError(
-                {'target_date': 'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.'}
+                {'target_date': _('Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.')}
             )
         budget_min, budget_max = current('budget_min'), current('budget_max')
         if budget_min is not None and budget_max is not None and budget_max < budget_min:
             raise serializers.ValidationError(
-                {'budget_max': 'Ngân sách tối đa không được nhỏ hơn tối thiểu.'}
+                {'budget_max': _('Ngân sách tối đa không được nhỏ hơn tối thiểu.')}
             )
         if current('is_continuous') and 'target_date' not in attrs and target_date:
             attrs['target_date'] = None
@@ -179,11 +180,11 @@ class CampaignActivitySerializer(serializers.ModelSerializer):
 
     def get_actor_name(self, obj) -> str:
         if obj.actor is None:
-            return 'Hệ thống'
+            return _('Hệ thống')
         if obj.group == CampaignActivity.Group.APPLICATION and not self.context.get(
             'candidate_data_access', False
         ):
-            return 'Người dùng'
+            return _('Người dùng')
         return obj.actor.full_name or obj.actor.email
 
     def get_subject_public_id(self, obj) -> str:

@@ -11,6 +11,7 @@ from urllib.parse import parse_qs, urlsplit
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import URLValidator
+from django.utils.translation import gettext as _
 
 URL_MAX_LENGTH = 500
 HEADLINE_MAX_LENGTH = 160
@@ -67,9 +68,14 @@ def normalize_social_link(network, value):
     url = value.strip()
     parts = _split_url(url, schemes=('https',))
     if parts is None or not _on_host((parts.hostname or '').lower(), network.hosts):
-        raise ValueError(f'Nhập đường dẫn https tới trang {network.label} của công ty.')
+        raise ValueError(
+            _('Nhập đường dẫn https tới trang %(network)s của công ty.')
+            % {'network': network.label}
+        )
     if parts.path.strip('/') == '':
-        raise ValueError(f'Đường dẫn {network.label} phải trỏ tới trang của công ty.')
+        raise ValueError(
+            _('Đường dẫn %(network)s phải trỏ tới trang của công ty.') % {'network': network.label}
+        )
     return url
 
 
@@ -108,7 +114,7 @@ def normalize_video_url(value):
         return ''
     parsed = parse_video_url(value)
     if parsed is None:
-        raise ValueError('Chỉ nhận đường dẫn video YouTube hoặc Vimeo.')
+        raise ValueError(_('Chỉ nhận đường dẫn video YouTube hoặc Vimeo.'))
     provider, video_id = parsed
     if provider == 'youtube':
         return f'https://www.youtube.com/watch?v={video_id}'

@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { changeLocale } from '@/shared/config/i18n'
+import { changeLocale, m } from '@/shared/config/i18n'
 import { adminPath, employerAppPath, getCurrentPortal } from '@/shared/config/portals'
 import { getCurrentSessionUser, logoutAllDevices, logoutCurrentPortal } from '../api/session.api'
 import SessionContext from './session-context'
@@ -67,7 +67,7 @@ export default function SessionProvider({ children }) {
     navigate(loginPathForCurrentPortal(), {
       replace: true,
       state: serverRevokeUncertain
-        ? { authWarning: 'Đã đăng xuất trên thiết bị này; chưa thể xác nhận thu hồi phiên trên máy chủ.' }
+        ? { authWarning: m.session_logout_revoke_uncertain() }
         : undefined,
     })
   }, [clearSessionState, navigate])
@@ -137,7 +137,7 @@ export default function SessionProvider({ children }) {
   useEffect(() => subscribeToSessionExpired(() => {
     if (!loggedInRef.current) return
     clearSessionState()
-    message.warning('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.')
+    message.warning(m.session_expired())
     navigate(loginPathForCurrentPortal(), { replace: true })
   }), [clearSessionState, navigate])
 
@@ -148,7 +148,7 @@ export default function SessionProvider({ children }) {
       || now - permissionDeniedAt.current < PERMISSION_DENIED_COOLDOWN_MS
     ) return
     permissionDeniedAt.current = now
-    message.warning('Quyền truy cập vừa thay đổi. Hệ thống đang cập nhật phiên của bạn.')
+    message.warning(m.session_permission_changed())
     refreshSession().catch(() => {})
   }), [refreshSession])
 

@@ -2,6 +2,7 @@
 
 from functools import partial
 
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers, status
 from rest_framework.exceptions import ValidationError
@@ -48,11 +49,11 @@ class AccountTokenRefreshView(TokenRefreshView):
         portal = request.data.get('portal') or request.headers.get('X-Auth-Portal')
         is_session_probe = request.headers.get('X-Session-Probe') == '1'
         if portal not in VALID_PORTALS:
-            raise ValidationError({'portal': 'Cổng đăng nhập không hợp lệ.'})
+            raise ValidationError({'portal': _('Cổng đăng nhập không hợp lệ.')})
         refresh = refresh_from_request(request, portal=portal)
         if not refresh:
             response = Response(
-                None if is_session_probe else {'detail': 'Không tìm thấy phiên làm mới.'},
+                None if is_session_probe else {'detail': _('Không tìm thấy phiên làm mới.')},
                 status=(
                     status.HTTP_204_NO_CONTENT if is_session_probe else status.HTTP_401_UNAUTHORIZED
                 ),
@@ -67,7 +68,7 @@ class AccountTokenRefreshView(TokenRefreshView):
                 (
                     None
                     if is_session_probe
-                    else {'detail': 'Phiên làm mới không hợp lệ hoặc đã hết hạn.'}
+                    else {'detail': _('Phiên làm mới không hợp lệ hoặc đã hết hạn.')}
                 ),
                 status=(
                     status.HTTP_204_NO_CONTENT if is_session_probe else status.HTTP_401_UNAUTHORIZED

@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy
 
 from common.db.public_id import generate_public_id
 
@@ -11,22 +12,22 @@ class JobAlert(models.Model):
     """A candidate-owned, deterministic subscription to newly published jobs."""
 
     class KeywordScope(models.TextChoices):
-        TITLE = 'title', 'Tên việc làm'
-        COMPANY = 'company', 'Tên công ty'
-        BOTH = 'both', 'Tên việc làm hoặc công ty'
+        TITLE = 'title', gettext_lazy('Tên việc làm')
+        COMPANY = 'company', gettext_lazy('Tên công ty')
+        BOTH = 'both', gettext_lazy('Tên việc làm hoặc công ty')
 
     class SalaryBucket(models.TextChoices):
-        UNDER_10 = 'u10', 'Dưới 10 triệu'
-        FROM_10_TO_15 = '10-15', '10 - 15 triệu'
-        FROM_15_TO_20 = '15-20', '15 - 20 triệu'
-        FROM_20_TO_25 = '20-25', '20 - 25 triệu'
-        FROM_25_TO_30 = '25-30', '25 - 30 triệu'
-        FROM_30_TO_50 = '30-50', '30 - 50 triệu'
-        OVER_50 = 'o50', 'Trên 50 triệu'
+        UNDER_10 = 'u10', gettext_lazy('Dưới 10 triệu')
+        FROM_10_TO_15 = '10-15', gettext_lazy('10 - 15 triệu')
+        FROM_15_TO_20 = '15-20', gettext_lazy('15 - 20 triệu')
+        FROM_20_TO_25 = '20-25', gettext_lazy('20 - 25 triệu')
+        FROM_25_TO_30 = '25-30', gettext_lazy('25 - 30 triệu')
+        FROM_30_TO_50 = '30-50', gettext_lazy('30 - 50 triệu')
+        OVER_50 = 'o50', gettext_lazy('Trên 50 triệu')
 
     class Frequency(models.TextChoices):
-        DAILY = 'daily', 'Hằng ngày'
-        WEEKLY = 'weekly', 'Hằng tuần'
+        DAILY = 'daily', gettext_lazy('Hằng ngày')
+        WEEKLY = 'weekly', gettext_lazy('Hằng tuần')
 
     candidate = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -204,13 +205,13 @@ class CandidateJobDigest(models.Model):
     """Persisted, retryable email outbox consolidating all due candidate sources."""
 
     class Status(models.TextChoices):
-        PENDING = 'pending', 'Chờ gửi'
-        SENDING = 'sending', 'Đang gửi'
-        SENT = 'sent', 'Đã gửi'
-        EMPTY = 'empty', 'Không có việc làm mới'
-        SKIPPED = 'skipped', 'Bỏ qua theo cài đặt'
-        FAILED = 'failed', 'Gửi thất bại'
-        CANCELLED = 'cancelled', 'Đã hủy'
+        PENDING = 'pending', gettext_lazy('Chờ gửi')
+        SENDING = 'sending', gettext_lazy('Đang gửi')
+        SENT = 'sent', gettext_lazy('Đã gửi')
+        EMPTY = 'empty', gettext_lazy('Không có việc làm mới')
+        SKIPPED = 'skipped', gettext_lazy('Bỏ qua theo cài đặt')
+        FAILED = 'failed', gettext_lazy('Gửi thất bại')
+        CANCELLED = 'cancelled', gettext_lazy('Đã hủy')
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     message_id = models.CharField(max_length=255, unique=True, editable=False)
@@ -265,9 +266,9 @@ class CandidateJobDigestItem(models.Model):
     """One publication claimed for a candidate across strict and suitable flows."""
 
     class SourceKind(models.TextChoices):
-        CONFIGURED_ALERT = 'configured_alert', 'Thông báo đã cài đặt'
-        SUITABLE_RECOMMENDATION = 'suitable_recommendation', 'Việc làm phù hợp'
-        FOLLOWED_COMPANY = 'followed_company', 'Công ty đang theo dõi'
+        CONFIGURED_ALERT = 'configured_alert', gettext_lazy('Thông báo đã cài đặt')
+        SUITABLE_RECOMMENDATION = 'suitable_recommendation', gettext_lazy('Việc làm phù hợp')
+        FOLLOWED_COMPANY = 'followed_company', gettext_lazy('Công ty đang theo dõi')
 
     digest = models.ForeignKey(
         CandidateJobDigest,

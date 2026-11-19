@@ -7,6 +7,7 @@ import hashlib
 import json
 
 from django.core import signing
+from django.utils.translation import gettext as _
 
 IMPACT_TOKEN_MAX_AGE = 600
 IMPACT_TOKEN_SALT = 'admin-access-impact'
@@ -65,9 +66,9 @@ def decode_impact_token(
     try:
         claims = signer.unsign_object(token, max_age=max_age)
     except signing.SignatureExpired as error:
-        raise StaleImpactToken('Impact preview đã hết hạn.') from error
+        raise StaleImpactToken(_('Impact preview đã hết hạn.')) from error
     except (signing.BadSignature, TypeError, ValueError) as error:
-        raise InvalidImpactToken('Impact token không hợp lệ.') from error
+        raise InvalidImpactToken(_('Impact token không hợp lệ.')) from error
 
     expected = {
         'operation': operation,
@@ -75,7 +76,7 @@ def decode_impact_token(
         'payload_hash': impact_payload_hash(normalized_payload),
     }
     if any(claims.get(key) != value for key, value in expected.items()):
-        raise StaleImpactToken('Impact preview không còn khớp với thao tác.')
+        raise StaleImpactToken(_('Impact preview không còn khớp với thao tác.'))
     if not isinstance(claims.get('revision'), int):
-        raise InvalidImpactToken('Impact token không hợp lệ.')
+        raise InvalidImpactToken(_('Impact token không hợp lệ.'))
     return claims

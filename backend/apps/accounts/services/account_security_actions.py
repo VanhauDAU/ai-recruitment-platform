@@ -2,6 +2,7 @@
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.utils.translation import gettext as _
 
 from apps.accounts.domain.impact_token_rules import decode_impact_token
 
@@ -64,11 +65,13 @@ def queue_account_security_email(user, *, kind, actor, reason=None):
         user = User.objects.select_for_update().get(pk=user.pk)
         ensure_account_write_allowed(actor, user)
         if kind == AuthEmailJob.Kind.VERIFICATION and user.email_verified:
-            raise ValidationError('Email của tài khoản đã được xác minh.')
+            raise ValidationError(_('Email của tài khoản đã được xác minh.'))
         if kind == AuthEmailJob.Kind.PASSWORD_RESET and not is_reset_eligible(user):
             raise ValidationError(
-                'Chỉ có thể gửi liên kết đặt lại mật khẩu cho tài khoản đang hoạt động. '
-                'Hãy mở khóa tài khoản trước.'
+                _(
+                    'Chỉ có thể gửi liên kết đặt lại mật khẩu cho tài khoản đang hoạt động. '
+                    'Hãy mở khóa tài khoản trước.'
+                )
             )
         job = queue_auth_email(kind, user)
         record_admin_action(

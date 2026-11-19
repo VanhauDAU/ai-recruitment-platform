@@ -18,6 +18,7 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 import ConfirmAction from '@/shared/ui/confirm-action/ConfirmAction'
 import DomainClaimDnsValue from './DomainClaimDnsValue'
+import { m } from '@/shared/config/i18n'
 
 function withoutChallengeSecret(claim) {
   if (!claim) return claim
@@ -37,16 +38,16 @@ function DomainClaimCard({ claim, challenge, busy, onVerify, onRotate, onManualR
   async function copy(value, label) {
     try {
       await navigator.clipboard.writeText(value)
-      message.success(`Đã sao chép ${label}.`)
+      message.success(m.employer_account_domain_copied({ label }))
     } catch {
-      message.error(`Không thể sao chép ${label}.`)
+      message.error(m.employer_account_domain_copy_failed({ label }))
     }
   }
 
   async function submitManualReview() {
     const normalizedReason = reason.trim()
     if (normalizedReason.length < 10) {
-      message.error('Vui lòng mô tả lý do ít nhất 10 ký tự.')
+      message.error(m.employer_account_domain_reason_too_short())
       return
     }
     await onManualReview(claim, normalizedReason)
@@ -63,9 +64,9 @@ function DomainClaimCard({ claim, challenge, busy, onVerify, onRotate, onManualR
             <span className="break-all">{claim.domain}</span>
           </p>
           <p className="mt-1 text-xs text-slate-500">
-            Phương thức: {claim.method === 'admin_manual'
-              ? 'Quản trị viên duyệt'
-              : claim.method === 'legacy_inferred' ? 'Dữ liệu cũ — chưa phải bằng chứng' : 'DNS TXT'}
+            {m.employer_account_domain_method_label()} {claim.method === 'admin_manual'
+              ? m.employer_account_domain_method_admin()
+              : claim.method === 'legacy_inferred' ? m.employer_account_domain_method_legacy() : 'DNS TXT'}
           </p>
         </div>
         <Tag color={status.color} className="w-fit shrink-0">{status.label}</Tag>
@@ -75,8 +76,8 @@ function DomainClaimCard({ claim, challenge, busy, onVerify, onRotate, onManualR
         <div className="mt-4 flex items-start gap-2 rounded-lg bg-emerald-50 px-3 py-2.5 text-sm leading-5 text-emerald-800">
           <CheckCircleOutlined className="mt-0.5 shrink-0" />
           <span>
-            Domain đang được công nhận cho công ty.
-            {claim.next_check_at && ` Hệ thống kiểm tra lại vào ${formatDomainClaimDate(claim.next_check_at)}.`}
+            {m.employer_account_domain_verified_notice()}
+            {claim.next_check_at && m.employer_account_domain_next_check({ date: formatDomainClaimDate(claim.next_check_at) })}
           </span>
         </div>
       )}
@@ -84,22 +85,22 @@ function DomainClaimCard({ claim, challenge, busy, onVerify, onRotate, onManualR
       {claim.method === 'dns_txt' && claim.txt_name && claim.status !== 'verified' && (
         <div className="mt-4 space-y-3 rounded-lg border border-emerald-100 bg-emerald-50/60 p-3 sm:p-4">
           <p className="text-sm leading-6 text-slate-700">
-            Thêm bản ghi <strong>TXT</strong> dưới đây tại nhà cung cấp DNS. Việc kiểm tra có thể cần vài phút sau khi DNS cập nhật.
+            {m.employer_account_domain_txt_intro_before()}<strong>TXT</strong>{m.employer_account_domain_txt_intro_after()}
           </p>
-          <DomainClaimDnsValue label="Tên bản ghi" value={claim.txt_name} onCopy={copy} />
+          <DomainClaimDnsValue label={m.employer_account_domain_record_name()} value={claim.txt_name} onCopy={copy} />
           {txtValue ? (
-            <DomainClaimDnsValue label="Giá trị TXT" value={txtValue} onCopy={copy} />
+            <DomainClaimDnsValue label={m.employer_account_domain_txt_value()} value={txtValue} onCopy={copy} />
           ) : (
             <Alert
               type="info"
               showIcon
-              title="Giá trị TXT chỉ hiển thị một lần"
-              description="Nếu bạn chưa lưu giá trị cũ, hãy tạo lại mã xác minh. Mã cũ sẽ mất hiệu lực."
+              title={m.employer_account_domain_txt_once_title()}
+              description={m.employer_account_domain_txt_once_desc()}
             />
           )}
           {claim.challenge_expires_at && (
             <p className="text-xs text-slate-500">
-              Mã hết hạn: {formatDomainClaimDate(claim.challenge_expires_at)}
+              {m.employer_account_domain_code_expires()} {formatDomainClaimDate(claim.challenge_expires_at)}
             </p>
           )}
         </div>
@@ -110,8 +111,8 @@ function DomainClaimCard({ claim, challenge, busy, onVerify, onRotate, onManualR
           className="mt-4"
           type="warning"
           showIcon
-          title="Bản ghi DNS không còn hợp lệ"
-          description={`Hãy khôi phục trước ${formatDomainClaimDate(claim.grace_expires_at)} để tránh bị thu hồi xác minh.`}
+          title={m.employer_account_domain_grace_title()}
+          description={m.employer_account_domain_grace_desc({ date: formatDomainClaimDate(claim.grace_expires_at) })}
         />
       )}
 
@@ -120,36 +121,36 @@ function DomainClaimCard({ claim, challenge, busy, onVerify, onRotate, onManualR
           <Button
             type="primary"
             icon={<SafetyCertificateOutlined />}
-            aria-label="Kiểm tra DNS"
+            aria-label={m.employer_account_domain_check_dns()}
             loading={busy}
             onClick={() => onVerify(claim)}
             className="w-full sm:w-auto"
           >
-            Kiểm tra DNS
+            {m.employer_account_domain_check_dns()}
           </Button>
         )}
         {canRotate && (
           <ConfirmAction
-            title="Tạo lại mã xác minh domain"
-            description="Mã TXT hiện tại sẽ mất hiệu lực ngay. Bạn cần cập nhật DNS bằng mã mới trước khi kiểm tra lại."
-            confirmText="Tạo mã mới"
-            cancelText="Đóng"
+            title={m.employer_account_domain_rotate_title()}
+            description={m.employer_account_domain_rotate_desc()}
+            confirmText={m.employer_account_domain_rotate_confirm()}
+            cancelText={m.employer_account_domain_close()}
             onConfirm={() => onRotate(claim)}
-            onConfirmError={(error) => message.error(getApiErrorMessage(error, 'Không thể tạo lại mã.'))}
+            onConfirmError={(error) => message.error(getApiErrorMessage(error, m.employer_account_domain_rotate_failed()))}
           >
             <Button
               icon={<ReloadOutlined />}
-              aria-label="Tạo lại mã TXT"
+              aria-label={m.employer_account_domain_rotate_txt()}
               disabled={busy}
               className="w-full sm:w-auto"
             >
-              Tạo lại mã TXT
+              {m.employer_account_domain_rotate_txt()}
             </Button>
           </ConfirmAction>
         )}
         {canRequestManual && !manualOpen && (
           <Button disabled={busy} onClick={() => setManualOpen(true)} className="w-full sm:w-auto">
-            Yêu cầu duyệt thủ công
+            {m.employer_account_domain_request_manual()}
           </Button>
         )}
       </div>
@@ -157,7 +158,7 @@ function DomainClaimCard({ claim, challenge, busy, onVerify, onRotate, onManualR
       {manualOpen && (
         <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 sm:p-4">
           <label htmlFor={`domain-manual-reason-${claim.public_id}`} className="text-sm font-semibold text-slate-800">
-            Lý do không thể xác minh bằng DNS
+            {m.employer_account_domain_manual_reason_label()}
           </label>
           <Input.TextArea
             id={`domain-manual-reason-${claim.public_id}`}
@@ -166,12 +167,12 @@ function DomainClaimCard({ claim, challenge, busy, onVerify, onRotate, onManualR
             maxLength={1000}
             showCount
             autoSize={{ minRows: 3, maxRows: 6 }}
-            placeholder="Ví dụ: Domain do tập đoàn quản lý tập trung, bộ phận tuyển dụng không có quyền cập nhật DNS..."
+            placeholder={m.employer_account_domain_manual_reason_placeholder()}
             onChange={(event) => setReason(event.target.value)}
           />
           <div className="mt-3 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button disabled={busy} onClick={() => { setManualOpen(false); setReason('') }}>Đóng</Button>
-            <Button type="primary" loading={busy} onClick={submitManualReview}>Gửi yêu cầu</Button>
+            <Button disabled={busy} onClick={() => { setManualOpen(false); setReason('') }}>{m.employer_account_domain_close()}</Button>
+            <Button type="primary" loading={busy} onClick={submitManualReview}>{m.employer_account_domain_send_request()}</Button>
           </div>
         </div>
       )}
@@ -212,26 +213,26 @@ export default function EmployerCompanyDomainVerification({ className = '', comp
       message.success(successMessage)
       await queryClient.invalidateQueries({ queryKey: employerProfileKeys.profile })
     },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể cập nhật xác minh domain.')),
+    onError: (error) => message.error(getApiErrorMessage(error, m.employer_account_domain_update_failed())),
   })
   const createMutation = useMutation({
     mutationFn: createEmployerCompanyDomainClaim,
-    ...mutationOptions('Đã tạo mã xác minh domain.'),
+    ...mutationOptions(m.employer_account_domain_created()),
   })
   const verifyMutation = useMutation({
     mutationFn: (claim) => verifyEmployerCompanyDomainClaim(claim.public_id),
-    ...mutationOptions('Đã kiểm tra trạng thái DNS.'),
+    ...mutationOptions(m.employer_account_domain_checked()),
   })
   const rotateMutation = useMutation({
     mutationFn: (claim) => rotateEmployerCompanyDomainClaim(claim.public_id, claim.lock_version),
-    ...mutationOptions('Đã tạo mã TXT mới.'),
+    ...mutationOptions(m.employer_account_domain_rotated()),
   })
   const manualMutation = useMutation({
     mutationFn: ({ claim, reason }) => requestEmployerCompanyDomainManualReview(
       claim.public_id,
       { lockVersion: claim.lock_version, reason },
     ),
-    ...mutationOptions('Đã gửi yêu cầu duyệt thủ công.'),
+    ...mutationOptions(m.employer_account_domain_manual_sent()),
   })
   const busy = createMutation.isPending
     || verifyMutation.isPending
@@ -245,10 +246,10 @@ export default function EmployerCompanyDomainVerification({ className = '', comp
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h2 className="flex items-center gap-2 text-base font-bold text-slate-900">
-            <GlobalOutlined className="text-emerald-600" /> Xác minh tên miền công ty
+            <GlobalOutlined className="text-emerald-600" /> {m.employer_account_domain_title()}
           </h2>
           <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">
-            Domain được lấy từ email công việc đã xác thực của bạn. Xác minh DNS giúp ứng viên nhận biết đúng doanh nghiệp đứng sau tin tuyển dụng.
+            {m.employer_account_domain_subtitle()}
           </p>
         </div>
         {canCreateClaim && (
@@ -259,21 +260,21 @@ export default function EmployerCompanyDomainVerification({ className = '', comp
             onClick={() => createMutation.mutate()}
             className="w-full shrink-0 sm:w-auto"
           >
-            Tạo mã xác minh
+            {m.employer_account_domain_create_code()}
           </Button>
         )}
       </div>
 
       {profileQuery.isError && companyLinked == null && (
-        <Alert className="mt-5" type="error" showIcon title="Không tải được thông tin công ty" />
+        <Alert className="mt-5" type="error" showIcon title={m.employer_account_domain_company_load_failed()} />
       )}
       {!profileQuery.isLoading && !hasCompany && (
         <Alert
           className="mt-5"
           type="info"
           showIcon
-          title="Hãy liên kết công ty trước khi xác minh domain"
-          description="Domain chỉ có thể được cấp cho công ty mà tài khoản của bạn đang đại diện."
+          title={m.employer_account_domain_no_company_title()}
+          description={m.employer_account_domain_no_company_desc()}
         />
       )}
       {hasCompany && claimsQuery.isLoading && <Skeleton className="mt-5" active paragraph={{ rows: 4 }} />}
@@ -282,9 +283,9 @@ export default function EmployerCompanyDomainVerification({ className = '', comp
           className="mt-5"
           type="error"
           showIcon
-          title="Không tải được trạng thái xác minh domain"
-          description="Các thao tác đang được khóa để tránh cập nhật trên dữ liệu cũ."
-          action={<Button onClick={() => claimsQuery.refetch()}>Thử lại</Button>}
+          title={m.employer_account_domain_claims_load_failed()}
+          description={m.employer_account_domain_claims_locked()}
+          action={<Button onClick={() => claimsQuery.refetch()}>{m.employer_account_domain_retry()}</Button>}
         />
       )}
       {claimsQuery.isSuccess && claims.length === 0 && (
@@ -292,8 +293,8 @@ export default function EmployerCompanyDomainVerification({ className = '', comp
           className="mt-5"
           type="info"
           showIcon
-          title="Tên miền công ty chưa được xác minh"
-          description="Hãy tạo mã và nhờ bộ phận quản trị tên miền thêm bản ghi TXT vào DNS."
+          title={m.employer_account_domain_empty_title()}
+          description={m.employer_account_domain_empty_desc()}
         />
       )}
       {claimsQuery.isSuccess && claims.length > 0 && (

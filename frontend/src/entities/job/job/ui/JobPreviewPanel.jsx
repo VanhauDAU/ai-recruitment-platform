@@ -5,6 +5,7 @@ import {
   SafetyCertificateOutlined,
 } from '@ant-design/icons'
 import { useState } from 'react'
+import { m } from '@/shared/config/i18n'
 import {
   EDUCATION_LEVEL_LABELS,
   EMPLOYMENT_TYPE_LABELS,
@@ -52,19 +53,19 @@ export default function JobPreviewPanel({
   const locationLabel = formatLocations(job)
   const deadlineLabel = formatDeadline(job.deadline)
   const highlights = [
-    { label: 'Hình thức', value: (job.work_types?.length ? job.work_types : [job.work_type]).filter(Boolean).map((value) => WORK_TYPE_LABELS[value] || value).join(', ') },
-    { label: 'Loại công việc', value: EMPLOYMENT_TYPE_LABELS[job.employment_type] },
-    { label: 'Cấp bậc', value: POSITION_LEVEL_LABELS[job.position_level] },
-    { label: 'Học vấn', value: EDUCATION_LEVEL_LABELS[job.education_level] },
-    { label: 'Số lượng tuyển', value: job.number_of_vacancies ? `${job.number_of_vacancies} người` : null },
+    { label: m.job_field_work_type(), value: (job.work_types?.length ? job.work_types : [job.work_type]).filter(Boolean).map((value) => WORK_TYPE_LABELS[value] || value).join(', ') },
+    { label: m.job_field_employment_type(), value: EMPLOYMENT_TYPE_LABELS[job.employment_type] },
+    { label: m.job_field_level(), value: POSITION_LEVEL_LABELS[job.position_level] },
+    { label: m.job_field_education(), value: EDUCATION_LEVEL_LABELS[job.education_level] },
+    { label: m.job_field_vacancies(), value: job.number_of_vacancies ? m.job_vacancies_count({ count: job.number_of_vacancies }) : null },
   ].filter((item) => item.value)
   const sections = [
-    { title: 'Lý do nên ứng tuyển', lines: job.application_reasons || [] },
-    { title: 'Mô tả công việc', lines: jobContentLines(job.description || job.short_description) },
-    { title: 'Yêu cầu ứng viên', lines: jobContentLines(job.requirements) },
-    { title: 'Quyền lợi', lines: previewBenefitLines(job) },
-    { title: 'Địa điểm làm việc', lines: previewLocationLines(job) },
-    { title: 'Thời gian làm việc', lines: previewScheduleLines(job) },
+    { title: m.job_section_reasons(), lines: job.application_reasons || [] },
+    { title: m.job_section_description(), lines: jobContentLines(job.description || job.short_description) },
+    { title: m.job_section_requirements(), lines: jobContentLines(job.requirements) },
+    { title: m.job_section_benefits(), lines: previewBenefitLines(job) },
+    { title: m.job_section_locations(), lines: previewLocationLines(job) },
+    { title: m.job_section_schedule(), lines: previewScheduleLines(job) },
   ].filter((section) => section.lines.length > 0)
 
   function handleScroll(e) {
@@ -166,7 +167,7 @@ export default function JobPreviewPanel({
           onClick={onApply}
           className="h-10 flex-1 cursor-pointer rounded-md border border-[var(--brand-primary)] bg-white text-sm font-semibold text-[var(--brand-primary)] transition hover:bg-green-50"
         >
-          Ứng tuyển
+          {m.job_action_apply()}
         </button>
         <button
           type="button"
@@ -174,7 +175,7 @@ export default function JobPreviewPanel({
           className="inline-flex h-10 flex-[2] cursor-pointer items-center justify-center gap-2 rounded-md bg-[var(--brand-primary)] text-sm font-semibold text-white transition hover:bg-[#009944]"
         >
           <EyeOutlined className="text-xs" />
-          Xem chi tiết
+          {m.common_show_details()}
         </button>
       </div>
     </div>

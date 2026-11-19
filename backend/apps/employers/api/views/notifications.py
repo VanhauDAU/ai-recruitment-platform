@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema, extend_schema_view, inline_serializer
 from rest_framework import generics, serializers
 from rest_framework.exceptions import NotFound
@@ -97,7 +98,7 @@ class EmployerNotificationReadView(APIView):
     def post(self, request, public_id):
         notification = mark_employer_notification_read(request.user, public_id)
         if notification is None:
-            raise NotFound('Không tìm thấy thông báo.')
+            raise NotFound(_('Không tìm thấy thông báo.'))
         return Response(EmployerNotificationSerializer(notification).data)
 
 

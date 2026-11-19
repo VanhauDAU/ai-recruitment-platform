@@ -8,7 +8,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { getIntlLocale, m } from '@/shared/config/i18n'
 
 const axisDateFormatter = new Intl.DateTimeFormat(getIntlLocale(), { day: '2-digit', month: '2-digit' })
 const fullDateFormatter = new Intl.DateTimeFormat(getIntlLocale(), { weekday: 'long', day: '2-digit', month: '2-digit' })
@@ -24,7 +24,7 @@ function ActivityTooltip({ active, payload }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white px-3.5 py-3 shadow-xl">
       <p className="text-[11px] capitalize text-slate-400">{fullDateFormatter.format(parseDate(item.date))}</p>
-      <p className="mt-1 text-xs text-slate-600"><strong className="text-base text-slate-900">{numberFormatter.format(item.count)}</strong> hồ sơ mới</p>
+      <p className="mt-1 text-xs text-slate-600"><strong className="text-base text-slate-900">{numberFormatter.format(item.count)}</strong> {m.employer_workspace_dash_new_applications_unit({ count: item.count })}</p>
     </div>
   )
 }
@@ -42,19 +42,19 @@ export default function ApplicationActivityCard({ activity = [] }) {
           <div className="flex items-center gap-2">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600"><RiseOutlined /></span>
             <div>
-              <h2 id="activity-title" className="text-lg font-black text-slate-900">Xu hướng hồ sơ ứng tuyển</h2>
-              <p className="mt-0.5 text-xs text-slate-500">Dữ liệu 7 ngày gần nhất</p>
+              <h2 id="activity-title" className="text-lg font-black text-slate-900">{m.employer_workspace_dash_activity_title()}</h2>
+              <p className="mt-0.5 text-xs text-slate-500">{m.employer_workspace_dash_activity_description()}</p>
             </div>
           </div>
         </div>
         <div className="flex items-center gap-5 sm:text-right">
-          <div><span className="block text-[10px] font-bold uppercase tracking-wide text-slate-400">Tuần này</span><strong className="mt-0.5 block text-lg font-black text-slate-900">{numberFormatter.format(weeklyTotal)}</strong></div>
+          <div><span className="block text-[10px] font-bold uppercase tracking-wide text-slate-400">{m.employer_workspace_dash_this_week()}</span><strong className="mt-0.5 block text-lg font-black text-slate-900">{numberFormatter.format(weeklyTotal)}</strong></div>
           <div className="h-8 w-px bg-slate-200" />
-          <div><span className="block text-[10px] font-bold uppercase tracking-wide text-slate-400">Trung bình/ngày</span><strong className="mt-0.5 block text-lg font-black text-slate-900">{numberFormatter.format(average)}</strong></div>
+          <div><span className="block text-[10px] font-bold uppercase tracking-wide text-slate-400">{m.employer_workspace_dash_daily_average()}</span><strong className="mt-0.5 block text-lg font-black text-slate-900">{numberFormatter.format(average)}</strong></div>
         </div>
       </div>
 
-      <div className="h-[285px] w-full px-1 pb-1 pt-3 sm:px-3" role="img" aria-label={`Biểu đồ đường cong hồ sơ ứng tuyển 7 ngày, tổng ${weeklyTotal} hồ sơ`}>
+      <div className="h-[285px] w-full px-1 pb-1 pt-3 sm:px-3" role="img" aria-label={m.employer_workspace_dash_activity_chart({ count: weeklyTotal })}>
         <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{ width: 760, height: 270 }}>
           <AreaChart data={chartData} margin={{ top: 12, right: 12, left: -22, bottom: 4 }}>
             <defs>
@@ -98,9 +98,9 @@ export default function ApplicationActivityCard({ activity = [] }) {
       </div>
 
       <div className="grid grid-cols-3 border-t border-slate-100 bg-slate-50/60">
-        <ChartStat label="Cao nhất/ngày" value={peak} />
-        <ChartStat label="Tổng 7 ngày" value={weeklyTotal} />
-        <ChartStat label="Ngày có hồ sơ" value={activity.filter((item) => item.count > 0).length} suffix={`/ ${activity.length || 7}`} />
+        <ChartStat label={m.employer_workspace_dash_daily_peak()} value={peak} />
+        <ChartStat label={m.employer_workspace_dash_seven_day_total()} value={weeklyTotal} />
+        <ChartStat label={m.employer_workspace_dash_days_with_applications()} value={activity.filter((item) => item.count > 0).length} suffix={`/ ${activity.length || 7}`} />
       </div>
     </section>
   )

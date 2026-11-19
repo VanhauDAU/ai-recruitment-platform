@@ -14,11 +14,12 @@ import {
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 import './social-connections.css'
+import { m } from '@/shared/config/i18n'
 
 const CALLBACK_ERRORS = {
-  denied: 'Bạn chưa cấp quyền cho ProCV trên Facebook nên chưa kết nối được.',
-  expired: 'Phiên kết nối đã hết hạn hoặc không hợp lệ. Hãy bấm kết nối lại.',
-  provider: 'Facebook chưa trả lời được. Thử lại sau ít phút.',
+  denied: m.employer_account_social_error_denied(),
+  expired: m.employer_account_social_error_expired(),
+  provider: m.employer_account_social_error_provider(),
 }
 const STATUS_COLORS = { connected: 'green', expired: 'orange' }
 
@@ -34,28 +35,28 @@ function PagePicker({ nonce, onDone }) {
     mutationFn: () => selectFacebookPage(nonce, pageId),
     onSuccess: (connection) => {
       queryClient.invalidateQueries({ queryKey: campaignKeys.socialConnections })
-      message.success(`Đã kết nối Fanpage "${connection.page_name}".`)
+      message.success(m.employer_account_social_page_connected({ name: connection.page_name }))
       onDone()
     },
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể lưu Fanpage.')),
+    onError: (error) => message.error(getApiErrorMessage(error, m.employer_account_social_page_save_failed())),
   })
   const pages = pagesQuery.data || []
 
   return (
     <Modal
       open
-      title="Chọn Fanpage để đăng bài tuyển dụng"
-      okText="Kết nối Fanpage"
-      cancelText="Hủy"
+      title={m.employer_account_social_picker_title()}
+      okText={m.employer_account_social_picker_ok()}
+      cancelText={m.employer_account_docs_cancel()}
       okButtonProps={{ disabled: !pageId }}
       confirmLoading={mutation.isPending}
       onCancel={onDone}
       onOk={() => mutation.mutate()}
     >
       {pagesQuery.isLoading && <Skeleton active paragraph={{ rows: 3 }} />}
-      {pagesQuery.isError && <Alert type="error" showIcon title={getApiErrorMessage(pagesQuery.error, 'Phiên chọn Fanpage đã hết hạn.')} />}
+      {pagesQuery.isError && <Alert type="error" showIcon title={getApiErrorMessage(pagesQuery.error, m.employer_account_social_picker_expired())} />}
       {pagesQuery.isSuccess && pages.length === 0 && (
-        <Empty description="Tài khoản Facebook này chưa quản lý Fanpage nào, hoặc bạn chưa chọn Fanpage khi cấp quyền." />
+        <Empty description={m.employer_account_social_picker_empty()} />
       )}
       <Radio.Group value={pageId} onChange={(event) => setPageId(event.target.value)} className="sc-pages">
         {pages.map((page) => (
@@ -82,12 +83,12 @@ export default function SocialConnectionsPanel() {
   const connect = useMutation({
     mutationFn: startFacebookConnect,
     onSuccess: (url) => window.location.assign(url),
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể bắt đầu kết nối Facebook.')),
+    onError: (error) => message.error(getApiErrorMessage(error, m.employer_account_social_connect_failed())),
   })
   const disconnect = useMutation({
     mutationFn: disconnectSocialConnection,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: campaignKeys.socialConnections }),
-    onError: (error) => message.error(getApiErrorMessage(error, 'Không thể ngắt kết nối.')),
+    onError: (error) => message.error(getApiErrorMessage(error, m.employer_account_social_disconnect_failed())),
   })
   const clearCallback = () => setSearchParams({}, { replace: true })
   const connections = connectionsQuery.data || []
@@ -95,14 +96,12 @@ export default function SocialConnectionsPanel() {
   return (
     <div className="sc-panel">
       <p className="sc-intro">
-        Kết nối Fanpage của công ty để kênh "Fanpage Facebook" trong chiến dịch tự đăng bài đúng giờ hẹn.
-        Bài được gỡ khỏi Fanpage khi chiến dịch hoàn tất hoặc bị hủy. ProCV chỉ lưu quyền đăng của Fanpage
-        bạn chọn, đã mã hóa.
+        {m.employer_account_social_intro()}
       </p>
       {callbackError && <Alert type="warning" showIcon closable title={callbackError} onClose={clearCallback} />}
       <List
         loading={connectionsQuery.isLoading}
-        locale={{ emptyText: <Empty description="Chưa kết nối Fanpage nào" /> }}
+        locale={{ emptyText: <Empty description={m.employer_account_social_empty()} /> }}
         dataSource={connections}
         renderItem={(connection) => (
           <List.Item
@@ -112,15 +111,15 @@ export default function SocialConnectionsPanel() {
                 size="small"
                 danger
                 onClick={() => modal.confirm({
-                  title: `Ngắt kết nối "${connection.page_name}"?`,
-                  content: 'Các bài đang hẹn giờ trên Fanpage này sẽ bị hủy. Bài đã đăng vẫn giữ trên Fanpage.',
-                  okText: 'Ngắt kết nối',
+                  title: m.employer_account_social_disconnect_title({ name: connection.page_name }),
+                  content: m.employer_account_social_disconnect_desc(),
+                  okText: m.employer_account_social_disconnect(),
                   okButtonProps: { danger: true },
-                  cancelText: 'Hủy',
+                  cancelText: m.employer_account_docs_cancel(),
                   onOk: () => disconnect.mutateAsync(connection.public_id),
                 })}
               >
-                Ngắt kết nối
+                {m.employer_account_social_disconnect()}
               </Button>,
             ]}
           >
@@ -130,7 +129,7 @@ export default function SocialConnectionsPanel() {
               description={(
                 <span className="sc-tags">
                   <Tag color={STATUS_COLORS[connection.status]}>{connection.status_label}</Tag>
-                  {connection.simulated && <Tag>Chế độ giả lập, không đăng lên Facebook thật</Tag>}
+                  {connection.simulated && <Tag>{m.employer_account_social_simulated()}</Tag>}
                 </span>
               )}
             />
@@ -138,7 +137,7 @@ export default function SocialConnectionsPanel() {
         )}
       />
       <Button type="primary" icon={<FacebookFilled />} loading={connect.isPending} onClick={() => connect.mutate()}>
-        {connections.length ? 'Kết nối thêm Fanpage' : 'Kết nối Fanpage Facebook'}
+        {connections.length ? m.employer_account_social_connect_more() : m.employer_account_social_connect()}
       </Button>
       {nonce && <PagePicker nonce={nonce} onDone={clearCallback} />}
     </div>

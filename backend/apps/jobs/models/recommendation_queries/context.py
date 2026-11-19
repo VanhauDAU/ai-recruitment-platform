@@ -5,6 +5,8 @@ Dữ liệu CV chỉ được đọc sau khi kiểm tra đồng ý gợi ý vi�
 
 import re
 
+from django.utils.translation import gettext as _
+
 from apps.candidates.models import CandidateConsent, CandidateJobPreference, CandidateProfile
 from apps.cvs.models import UserCv
 
@@ -144,7 +146,7 @@ def cv_context(user, public_id):
         'position_labels': position_labels,
         'position_terms': position_terms,
         'position_query_labels': [headline, *position_labels],
-        'position_reason': 'Khớp vị trí trên CV',
+        'position_reason': _('Khớp vị trí trên CV'),
         'focus_keyword': focus_keyword,
         **_preference_values(preference),
         # Số năm kinh nghiệm tính từ chính CV (cùng enum với JD) được ưu tiên như
@@ -175,7 +177,7 @@ def candidate_context(preference):
         'position_labels': position_labels,
         'position_terms': {normalize_term(label) for label in position_labels if label},
         'position_query_labels': position_labels,
-        'position_reason': 'Khớp vị trí bạn quan tâm',
+        'position_reason': _('Khớp vị trí bạn quan tâm'),
         'focus_keyword': focus_keyword,
         **_preference_values(preference),
     }

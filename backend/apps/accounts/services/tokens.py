@@ -5,6 +5,7 @@ from datetime import UTC, datetime, timedelta
 from django.conf import settings
 from django.contrib.auth.models import update_last_login
 from django.db import transaction
+from django.utils.translation import gettext as _
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.settings import api_settings
@@ -31,9 +32,9 @@ def issue_tokens(user, request=None, *, auth_method='password'):
     with transaction.atomic():
         user = User.objects.select_for_update().get(pk=user.pk)
         if not is_account_accessible(user):
-            raise AuthenticationFailed('Tài khoản không còn khả dụng.')
+            raise AuthenticationFailed(_('Tài khoản không còn khả dụng.'))
         if user.auth_revision != expected_revision:
-            raise AuthenticationFailed('Thông tin xác thực đã thay đổi. Vui lòng đăng nhập lại.')
+            raise AuthenticationFailed(_('Thông tin xác thực đã thay đổi. Vui lòng đăng nhập lại.'))
         update_last_login(None, user)
         refresh = build_refresh_token(user)
         # Tạo phiên thiết bị và gắn claim `sid` TRƯỚC khi serialize access/refresh.
@@ -71,12 +72,12 @@ def refresh_session_tokens(raw_refresh, *, portal, rotate):
         raise
     user = User.objects.filter(pk=refresh.get(api_settings.USER_ID_CLAIM)).first()
     if not is_account_accessible(user):
-        raise InvalidToken({'detail': 'Tài khoản không còn khả dụng.'})
+        raise InvalidToken({'detail': _('Tài khoản không còn khả dụng.')})
     if portal and portal_for_user(user) != portal:
-        raise InvalidToken({'detail': 'Refresh token không thuộc cổng này.'})
+        raise InvalidToken({'detail': _('Refresh token không thuộc cổng này.')})
     auth_revision = refresh.get(auth_sessions.AUTH_REVISION_CLAIM, 1)
     if auth_revision != user.auth_revision:
-        raise InvalidToken({'detail': 'Phiên đăng nhập đã bị thu hồi.'})
+        raise InvalidToken({'detail': _('Phiên đăng nhập đã bị thu hồi.')})
     old_jti = refresh.get(api_settings.JTI_CLAIM)
     with transaction.atomic():
         session = auth_sessions.locked_refresh_session(
@@ -97,7 +98,7 @@ def refresh_session_tokens(raw_refresh, *, portal, rotate):
         # Thu hồi PHẢI nằm ngoài atomic ở trên, nếu không exception bên dưới
         # sẽ rollback luôn chính việc thu hồi.
         auth_sessions.revoke_reused_refresh(raw_refresh)
-        raise InvalidToken({'detail': 'Phiên đăng nhập đã hết hạn hoặc bị thu hồi.'})
+        raise InvalidToken({'detail': _('Phiên đăng nhập đã hết hạn hoặc bị thu hồi.')})
 
     if user.is_admin_role and data.get('access'):
         access = AccessToken(data['access'])

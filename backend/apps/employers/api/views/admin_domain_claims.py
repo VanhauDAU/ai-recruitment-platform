@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -122,7 +123,7 @@ class AdminCompanyDomainClaimViewSet(viewsets.ReadOnlyModelViewSet):
         action_name = request.data.get('decision', 'approve_manual')
         if action_name not in {'approve_manual', 'reject_manual'}:
             return Response(
-                {'decision': ['Quyết định phải là approve_manual hoặc reject_manual.']},
+                {'decision': [_('Quyết định phải là approve_manual hoặc reject_manual.')]},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return self._impact(request, action_name=action_name)

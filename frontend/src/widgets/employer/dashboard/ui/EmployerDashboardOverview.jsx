@@ -12,6 +12,7 @@ import {
 import { useSession } from '@/entities/account/session'
 import { EmployerVerificationLifecycleAlert } from '@/features/employer/account/verify-employer-account'
 import { employerAppPath } from '@/shared/config/portals'
+import { m } from '@/shared/config/i18n'
 import ApplicationActivityCard from './ApplicationActivityCard'
 import DashboardHeader from './DashboardHeader'
 import DashboardSidebar from './DashboardSidebar'
@@ -42,9 +43,9 @@ export default function EmployerDashboardOverview() {
       <Alert
         type="error"
         showIcon
-        title="Không thể tải dashboard nhà tuyển dụng."
-        description="Vui lòng kiểm tra kết nối và thử lại."
-        action={<Button icon={<ReloadOutlined />} onClick={() => dashboardQuery.refetch()}>Thử lại</Button>}
+        title={m.employer_workspace_dash_load_error()}
+        description={m.employer_workspace_check_connection()}
+        action={<Button icon={<ReloadOutlined />} onClick={() => dashboardQuery.refetch()}>{m.employer_workspace_retry()}</Button>}
       />
     )
   }
@@ -53,7 +54,7 @@ export default function EmployerDashboardOverview() {
   const account = data.account || {}
   const verification = account.verification || {}
   const summary = data.summary || {}
-  const displayName = user?.full_name || user?.email || 'Nhà tuyển dụng'
+  const displayName = user?.full_name || user?.email || m.employer_workspace_employer_fallback_name()
   const candidateBlocker = employerReadinessBlockersFor(
     readiness,
     EMPLOYER_CAPABILITIES.CANDIDATE_DATA,

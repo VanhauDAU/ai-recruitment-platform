@@ -6,14 +6,15 @@ import {
   TrophyOutlined,
 } from '@ant-design/icons'
 import { formatClockTime } from '@/shared/lib/date-time'
+import { m } from '@/shared/config/i18n'
 import useApplicationDecision from '../model/use-application-decision'
 import './application-decision.css'
 
 const DECISIONS = [
-  { status: 'shortlisted', label: 'Phù hợp', Icon: LikeOutlined },
-  { status: 'interviewed', label: 'Phỏng vấn', Icon: TeamOutlined },
-  { status: 'accepted', label: 'Trúng tuyển', Icon: TrophyOutlined },
-  { status: 'rejected', label: 'Không phù hợp', Icon: CloseCircleOutlined },
+  { status: 'shortlisted', label: m.employer_workspace_decision_shortlisted(), Icon: LikeOutlined },
+  { status: 'interviewed', label: m.employer_workspace_decision_interviewed(), Icon: TeamOutlined },
+  { status: 'accepted', label: m.employer_workspace_decision_accepted(), Icon: TrophyOutlined },
+  { status: 'rejected', label: m.employer_workspace_decision_rejected(), Icon: CloseCircleOutlined },
 ]
 
 /**
@@ -30,7 +31,7 @@ export default function ApplicationDecisionBar({ application, candidateName, pen
 
   return (
     <div className="ad-bar">
-      <div className="ad-bar__grid" role="group" aria-label="Quyết định cho hồ sơ">
+      <div className="ad-bar__grid" role="group" aria-label={m.employer_workspace_decision_group()}>
         {DECISIONS.map(({ status, label, Icon }) => {
           const current = application?.status === status
           return (
@@ -52,14 +53,14 @@ export default function ApplicationDecisionBar({ application, candidateName, pen
         <div className="ad-pending" role="status">
           <ClockCircleOutlined aria-hidden />
           <span>
-            Ứng viên sẽ được báo lúc <strong>{formatClockTime(pendingNotice.deliver_at)}</strong>
+            {m.employer_workspace_decision_notice_at()} <strong>{formatClockTime(pendingNotice.deliver_at)}</strong>
           </span>
           <button type="button" className="ad-pending__undo" disabled={undoing} onClick={undo}>
-            Hoàn tác
+            {m.employer_workspace_decision_undo()}
           </button>
         </div>
       )}
-      {final && !pendingNotice && <p className="ad-bar__hint">Hồ sơ đã có kết quả cuối cùng.</p>}
+      {final && !pendingNotice && <p className="ad-bar__hint">{m.employer_workspace_decision_final()}</p>}
       {confirmationModal}
     </div>
   )

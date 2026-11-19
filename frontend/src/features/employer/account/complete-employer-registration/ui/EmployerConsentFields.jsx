@@ -2,6 +2,7 @@ import { Checkbox, Form } from 'antd'
 import { Link } from 'react-router'
 import { useSiteSettings } from '@/entities/system/site-settings'
 import { employerMarketingPath } from '@/shared/config/portals'
+import { m } from '@/shared/config/i18n'
 
 export default function EmployerConsentFields({ compact = false }) {
   const { siteName } = useSiteSettings()
@@ -9,7 +10,7 @@ export default function EmployerConsentFields({ compact = false }) {
     <div className={compact ? 'space-y-3' : 'space-y-3 rounded-xl border border-emerald-100 bg-emerald-50/45 p-4'}>
       {!compact && (
         <p className="text-sm leading-6 text-slate-600">
-          Để cung cấp dịch vụ tuyển dụng, {siteName} cần xử lý thông tin tài khoản và doanh nghiệp theo các chính sách dưới đây.
+          {m.employer_account_consent_intro({ siteName })}
         </p>
       )}
       <Form.Item
@@ -20,15 +21,15 @@ export default function EmployerConsentFields({ compact = false }) {
         rules={[{
           validator: (_, value) => value
             ? Promise.resolve()
-            : Promise.reject(new Error('Bạn cần đồng ý với điều khoản bắt buộc')),
+            : Promise.reject(new Error(m.employer_account_consent_required())),
         }]}
       >
         <Checkbox className="!items-start">
           <span className="text-sm leading-6 text-slate-700">
-            Tôi đã đọc và đồng ý với{' '}
-            <Link target="_blank" to={employerMarketingPath('/dieu-khoan-dich-vu')} className="font-semibold !text-emerald-700 hover:underline">Điều khoản dịch vụ</Link>
-            {' '}và{' '}
-            <Link target="_blank" to={employerMarketingPath('/chinh-sach-quyen-rieng')} className="font-semibold !text-emerald-700 hover:underline">Chính sách quyền riêng tư</Link>.
+            {m.employer_account_consent_terms_before()}{' '}
+            <Link target="_blank" to={employerMarketingPath('/dieu-khoan-dich-vu')} className="font-semibold !text-emerald-700 hover:underline">{m.employer_account_consent_terms_link()}</Link>
+            {' '}{m.employer_account_consent_and()}{' '}
+            <Link target="_blank" to={employerMarketingPath('/chinh-sach-quyen-rieng')} className="font-semibold !text-emerald-700 hover:underline">{m.employer_account_consent_privacy_link()}</Link>.
             <span className="ml-1 text-red-500" aria-hidden="true">*</span>
           </span>
         </Checkbox>
@@ -36,7 +37,7 @@ export default function EmployerConsentFields({ compact = false }) {
       <Form.Item name="marketing_opt_in" valuePropName="checked" className="!mb-0">
         <Checkbox className="!items-start">
           <span className="text-sm leading-6 text-slate-600">
-            Tôi muốn nhận tư vấn về cách tối ưu tin đăng và các giải pháp tuyển dụng phù hợp. Có thể thay đổi lựa chọn này sau.
+            {m.employer_account_consent_marketing()}
           </span>
         </Checkbox>
       </Form.Item>

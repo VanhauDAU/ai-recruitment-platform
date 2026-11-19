@@ -1,6 +1,7 @@
 """Recruiter side of company update requests: submit, list, withdraw or cancel before review."""
 
 from django.http import Http404
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework import generics, status
 from rest_framework.exceptions import ValidationError
@@ -17,7 +18,7 @@ from ...services import (
     close_company_update_before_review,
     submit_validated_company_update,
 )
-from ..exceptions import COMPANY_UPDATE_IN_REVIEW, CompanyUpdateConflictResponse
+from ..exceptions import CompanyUpdateConflictResponse, company_update_in_review
 from ..permissions import require_company_recruiter
 from ..serializers import CompanyUpdateRequestCloseSerializer, CompanyUpdateRequestSerializer
 
@@ -59,7 +60,7 @@ class CompanyUpdateRequestListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         scope = self.request.query_params.get('scope', 'company')
         if scope not in {'mine', 'company'}:
-            raise ValidationError({'scope': 'Phạm vi phải là mine hoặc company.'})
+            raise ValidationError({'scope': _('Phạm vi phải là mine hoặc company.')})
         return company_update_requests_queryset(
             company=self.get_recruiter().company,
             requester=self.request.user if scope == 'mine' else None,
@@ -100,7 +101,7 @@ class CompanyUpdateRequestListCreateView(generics.ListCreateAPIView):
                 validate=validate,
             )
         except CompanyUpdateInReview as error:
-            raise ValidationError(COMPANY_UPDATE_IN_REVIEW) from error
+            raise ValidationError(company_update_in_review()) from error
         except CompanyUpdateConflict as error:
             raise CompanyUpdateConflictResponse(error.fields) from error
         return Response(

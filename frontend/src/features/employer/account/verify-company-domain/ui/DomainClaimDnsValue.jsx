@@ -1,5 +1,6 @@
 import { CopyOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
+import { m } from '@/shared/config/i18n'
 
 export default function DomainClaimDnsValue({ label, value, onCopy }) {
   return (
@@ -11,7 +12,7 @@ export default function DomainClaimDnsValue({ label, value, onCopy }) {
           type="text"
           size="small"
           icon={<CopyOutlined />}
-          aria-label={`Sao chép ${label.toLowerCase()}`}
+          aria-label={m.employer_account_domain_copy_aria({ label: label.toLowerCase() })}
           onClick={() => onCopy(value, label.toLowerCase())}
         />
       </div>

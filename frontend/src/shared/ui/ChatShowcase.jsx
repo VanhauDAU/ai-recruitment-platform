@@ -1,11 +1,12 @@
 import { UserOutlined } from '@ant-design/icons'
 import { useEffect, useRef, useState } from 'react'
+import { m } from '@/shared/config/i18n'
 
 const DEFAULT_MESSAGES = [
-  { from: 'recruiter', text: 'Chào bạn! AI vừa gợi ý hồ sơ của bạn cho vị trí Frontend Developer.' },
-  { from: 'candidate', text: 'Dạ, em rất quan tâm vị trí này ạ!' },
-  { from: 'recruiter', text: 'Tuyệt vời. Mình mời bạn phỏng vấn tuần này nhé?' },
-  { from: 'candidate', text: 'Vâng, em luôn sẵn sàng. Cảm ơn anh ạ!' },
+  { from: 'recruiter', text: m.ui_chat_demo_recruiter_1() },
+  { from: 'candidate', text: m.ui_chat_demo_candidate_1() },
+  { from: 'recruiter', text: m.ui_chat_demo_recruiter_2() },
+  { from: 'candidate', text: m.ui_chat_demo_candidate_2() },
 ]
 
 const TYPING_MS = 950
@@ -19,7 +20,7 @@ export default function ChatShowcase({
   messages = DEFAULT_MESSAGES,
   avatarInitials = 'MA',
   headerName = 'Minh Anh',
-  headerStatus = 'Nhà tuyển dụng đang hoạt động',
+  headerStatus = m.ui_chat_demo_status(),
   matchPercentage,
   dark = true,
 }) {
@@ -116,8 +117,8 @@ export default function ChatShowcase({
 
         {/* Messages */}
         <div className="flex h-[250px] flex-col justify-end gap-2.5 px-4 py-4 overflow-hidden">
-          {messages.slice(0, count).map((m, i) => (
-            <Bubble key={`${i}-${m.from}`} from={m.from} text={m.text} dark={dark} />
+          {messages.slice(0, count).map((item, i) => (
+            <Bubble key={`${i}-${item.from}`} from={item.from} text={item.text} dark={dark} />
           ))}
           {typingSide && <TypingBubble side={typingSide} dark={dark} />}
         </div>

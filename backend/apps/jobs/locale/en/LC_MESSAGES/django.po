@@ -1,0 +1,1128 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: procv\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Hình thức làm việc không được trùng nhau."
+msgstr "Work arrangements must not be duplicated."
+
+msgid "Chế độ brief yêu cầu brief và không nhận source_text."
+msgstr "Brief mode requires a brief and does not accept source_text."
+
+msgid "Chế độ JD yêu cầu source_text và không nhận brief."
+msgstr "JD mode requires source_text and does not accept a brief."
+
+msgid "Vui lòng nhập từ khóa việc làm."
+msgstr "Please enter a job keyword."
+
+msgid "Không được chọn trùng ngành nghề."
+msgstr "Job categories must not be selected twice."
+
+msgid "Trạng thái chỉ được thay đổi sau khi tạo thông báo."
+msgstr "The status can only be changed after the job alert is created."
+
+msgid "Địa điểm này không phải tỉnh/thành."
+msgstr "This location is not a province or city."
+
+msgid "Địa điểm này không phải phường/xã."
+msgstr "This location is not a ward or commune."
+
+msgid "Cần chọn tỉnh/thành trước khi chọn phường/xã."
+msgstr "Select a province or city before selecting a ward or commune."
+
+msgid "Phường/xã không thuộc tỉnh/thành đã chọn."
+msgstr "The ward or commune does not belong to the selected province or city."
+
+msgid "Chiến dịch không thuộc tài khoản này."
+msgstr "This recruitment campaign does not belong to this account."
+
+msgid "Không thể thêm tin tuyển dụng vào chiến dịch đã hủy hoặc hoàn tất."
+msgstr "Job postings cannot be added to a cancelled or completed recruitment campaign."
+
+msgid "Chỉ được nhập tối đa 5 email nhận hồ sơ."
+msgstr "You can enter at most 5 application emails."
+
+msgid "Email nhận hồ sơ không được trùng nhau."
+msgstr "Application emails must not be duplicated."
+
+msgid "Chỉ liên kết kết quả AI khi tạo tin mới."
+msgstr "An AI result can only be linked when creating a new job posting."
+
+msgid "Nhập nội dung email thông báo cho ứng viên."
+msgstr "Enter the email message for candidates."
+
+msgid "Chọn loại lương và nhập đầy đủ mức lương."
+msgstr "Select a salary type and enter the full salary."
+
+msgid "Các lý do không được trùng nhau."
+msgstr "Reasons must not be duplicated."
+
+msgid "Tuổi tối thiểu phải từ 15 đến 100."
+msgstr "The minimum age must be between 15 and 100."
+
+msgid "Tuổi tối đa phải từ 15 đến 100."
+msgstr "The maximum age must be between 15 and 100."
+
+msgid "Tuổi tối đa không được nhỏ hơn tuổi tối thiểu."
+msgstr "The maximum age cannot be lower than the minimum age."
+
+msgid "Lương thỏa thuận không được có mức tối thiểu/tối đa."
+msgstr "A negotiable salary cannot have a minimum or maximum amount."
+
+msgid "Chọn ít nhất một hình thức làm việc."
+msgstr "Select at least one work arrangement."
+
+msgid "Danh sách hình thức làm việc không hợp lệ."
+msgstr "The list of work arrangements is invalid."
+
+msgid "Chỉ được chọn một vị trí chuyên môn chính."
+msgstr "Only one primary specialization can be selected."
+
+msgid "Danh mục không được chọn trùng."
+msgstr "Categories must not be selected twice."
+
+msgid "Danh sách không được chứa mục trùng."
+msgstr "The list must not contain duplicate items."
+
+msgid "Nhập ít nhất một mức lương."
+msgstr "Enter at least one salary amount."
+
+msgid "Loại lương này cần mức lương tối thiểu."
+msgstr "This salary type requires a minimum salary."
+
+msgid "Loại lương này cần mức lương tối đa."
+msgstr "This salary type requires a maximum salary."
+
+msgid "Mức lương tối đa không được nhỏ hơn mức tối thiểu."
+msgstr "The maximum salary cannot be lower than the minimum salary."
+
+msgid "Chọn lý do xử lý."
+msgstr "Select a reason for this action."
+
+msgid "Nhập ghi chú xử lý."
+msgstr "Enter a note for this action."
+
+msgid "Không yêu cầu kinh nghiệm"
+msgstr "No experience required"
+
+msgid "Không yêu cầu bằng cấp"
+msgstr "No degree required"
+
+msgid "Tuổi %(min)s - %(max)s"
+msgstr "Age %(min)s - %(max)s"
+
+msgid "Giới tính: %(gender)s"
+msgstr "Gender: %(gender)s"
+
+msgid "%(years)s kinh nghiệm"
+msgstr "%(years)s of experience"
+
+msgid "Từ %(age)s tuổi trở lên"
+msgstr "Aged %(age)s or older"
+
+msgid "Từ %(level)s trở lên"
+msgstr "%(level)s or higher"
+
+msgid "Đến %(age)s tuổi"
+msgstr "Up to %(age)s years old"
+
+msgid "Danh sách mã tin tuyển dụng không hợp lệ."
+msgstr "The list of job posting IDs is invalid."
+
+msgid "Chỉ được loại tối đa %(count)s tin."
+msgstr "You can exclude at most %(count)s job postings."
+
+msgid "Vui lòng mô tả cụ thể khi chọn \"Lý do khác\"."
+msgstr "Please describe the issue when choosing \"Other reason\"."
+
+msgid "Ngày kết thúc phải từ ngày bắt đầu trở đi."
+msgstr "The end date must be on or after the start date."
+
+msgid "Nhập căn cứ xác nhận vi phạm."
+msgstr "Enter the grounds for confirming the violation."
+
+msgid "Địa điểm làm việc phải là tỉnh/thành hoặc phường/xã hợp lệ."
+msgstr "The work location must be a valid province/city or ward/commune."
+
+msgid "Địa điểm đã ngừng hoạt động."
+msgstr "This location is no longer active."
+
+msgid "Một khung giờ phải có đủ ngày bắt đầu, ngày kết thúc và giờ bắt đầu."
+msgstr "A schedule slot needs a start day, an end day and a start time."
+
+msgid "Cần nhập khung ngày/giờ hoặc ghi chú lịch làm việc."
+msgstr "Enter a day/time slot or a work schedule note."
+
+msgid "Quyền lợi đã ngừng hoạt động."
+msgstr "This benefit is no longer active."
+
+msgid "Ngoại ngữ đã ngừng hoạt động."
+msgstr "This language is no longer active."
+
+msgid "Cần từ 1 đến tối đa 5 email nhận hồ sơ."
+msgstr "Enter between 1 and 5 application emails."
+
+msgid "Danh mục đã ngừng hoạt động."
+msgstr "This category is no longer active."
+
+msgid "Loại danh mục không phù hợp với vai trò đã chọn."
+msgstr "The category type does not match the selected role."
+
+msgid "Giờ kết thúc phải sau giờ bắt đầu."
+msgstr "The end time must be after the start time."
+
+msgid "Chọn hạn nhận hồ sơ."
+msgstr "Select an application deadline."
+
+msgid "Bạn cần đồng ý nhận gợi ý việc làm trước khi hệ thống đọc dữ liệu CV."
+msgstr "You need to consent to job recommendations before the system can read your CV data."
+
+msgid "Brief có hướng dẫn"
+msgstr "Guided brief"
+
+msgid "JD có sẵn"
+msgstr "Existing JD"
+
+msgid "Đang chờ"
+msgstr "Queued"
+
+msgid "Đang xử lý"
+msgstr "Processing"
+
+msgid "Hoàn tất"
+msgstr "Completed"
+
+msgid "Thất bại"
+msgstr "Failed"
+
+msgid "Đã hủy"
+msgstr "Cancelled"
+
+msgid "Chuẩn bị dữ liệu"
+msgstr "Preparing data"
+
+msgid "Đang tạo nội dung"
+msgstr "Generating content"
+
+msgid "Đang kiểm tra"
+msgstr "Validating"
+
+msgid "Hữu ích"
+msgstr "Helpful"
+
+msgid "Chưa hữu ích"
+msgstr "Not helpful"
+
+msgid "Độ chính xác"
+msgstr "Accuracy"
+
+msgid "Độ liên quan"
+msgstr "Relevance"
+
+msgid "Chất lượng diễn đạt"
+msgstr "Writing quality"
+
+msgid "Danh mục/kỹ năng"
+msgstr "Categories/skills"
+
+msgid "Khác"
+msgstr "Other"
+
+msgid "Tên việc làm"
+msgstr "Job title"
+
+msgid "Tên công ty"
+msgstr "Company name"
+
+msgid "Tên việc làm hoặc công ty"
+msgstr "Job title or company name"
+
+msgid "Dưới 10 triệu"
+msgstr "Under 10 million"
+
+msgid "10 - 15 triệu"
+msgstr "10 - 15 million"
+
+msgid "15 - 20 triệu"
+msgstr "15 - 20 million"
+
+msgid "20 - 25 triệu"
+msgstr "20 - 25 million"
+
+msgid "25 - 30 triệu"
+msgstr "25 - 30 million"
+
+msgid "30 - 50 triệu"
+msgstr "30 - 50 million"
+
+msgid "Trên 50 triệu"
+msgstr "Over 50 million"
+
+msgid "Hằng ngày"
+msgstr "Daily"
+
+msgid "Hằng tuần"
+msgstr "Weekly"
+
+msgid "Chờ gửi"
+msgstr "Pending"
+
+msgid "Đang gửi"
+msgstr "Sending"
+
+msgid "Đã gửi"
+msgstr "Sent"
+
+msgid "Không có việc làm mới"
+msgstr "No new jobs"
+
+msgid "Bỏ qua theo cài đặt"
+msgstr "Skipped by settings"
+
+msgid "Gửi thất bại"
+msgstr "Delivery failed"
+
+msgid "Thông báo đã cài đặt"
+msgstr "Saved job alert"
+
+msgid "Việc làm phù hợp"
+msgstr "Suitable jobs"
+
+msgid "Công ty đang theo dõi"
+msgstr "Followed company"
+
+msgid "Phụ cấp"
+msgstr "Allowances"
+
+msgid "Hỗ trợ thiết bị làm việc"
+msgstr "Work equipment support"
+
+msgid "Phúc lợi"
+msgstr "Welfare"
+
+msgid "Nhóm nghề"
+msgstr "Occupation group"
+
+msgid "Kiến thức chuyên ngành"
+msgstr "Domain knowledge"
+
+msgid "Vị trí chuyên môn"
+msgstr "Specialization"
+
+msgid "Tiếng Việt"
+msgstr "Vietnamese"
+
+msgid "Tiếng Anh"
+msgstr "English"
+
+msgid "Lý do nên ứng tuyển phải là một danh sách."
+msgstr "Reasons to apply must be a list."
+
+msgid "Chỉ được nhập tối đa 3 lý do nên ứng tuyển."
+msgstr "You can enter at most 3 reasons to apply."
+
+msgid "Các lý do nên ứng tuyển không được trùng nhau."
+msgstr "Reasons to apply must not be duplicated."
+
+msgid "2 tuần"
+msgstr "2 weeks"
+
+msgid "3 tuần"
+msgstr "3 weeks"
+
+msgid "4 tuần"
+msgstr "4 weeks"
+
+msgid "6 tuần"
+msgstr "6 weeks"
+
+msgid "8 tuần"
+msgstr "8 weeks"
+
+msgid "Hợp đồng"
+msgstr "Contract"
+
+msgid "Thời vụ"
+msgstr "Seasonal"
+
+msgid "Làm tại nhà (việc làm phổ thông)"
+msgstr "Work from home (general labor)"
+
+msgid "Không yêu cầu"
+msgstr "Not required"
+
+msgid "Dưới 1 năm"
+msgstr "Under 1 year"
+
+msgid "1 năm"
+msgstr "1 year"
+
+msgid "2 năm"
+msgstr "2 years"
+
+msgid "3 năm"
+msgstr "3 years"
+
+msgid "4 năm"
+msgstr "4 years"
+
+msgid "5 năm"
+msgstr "5 years"
+
+msgid "Trên 5 năm"
+msgstr "Over 5 years"
+
+msgid "Nhân viên"
+msgstr "Staff"
+
+msgid "Trưởng nhóm"
+msgstr "Team lead"
+
+msgid "Trưởng/Phó phòng"
+msgstr "Head/Deputy head of department"
+
+msgid "Quản lý / Giám sát"
+msgstr "Manager / Supervisor"
+
+msgid "Trưởng chi nhánh"
+msgstr "Branch manager"
+
+msgid "Phó giám đốc"
+msgstr "Deputy director"
+
+msgid "Giám đốc"
+msgstr "Director"
+
+msgid "Thực tập sinh"
+msgstr "Intern"
+
+msgid "Trung học cơ sở (Cấp 2)"
+msgstr "Lower secondary school"
+
+msgid "Trung học phổ thông (Cấp 3)"
+msgstr "High school"
+
+msgid "Trung cấp"
+msgstr "Vocational diploma"
+
+msgid "Cao đẳng"
+msgstr "College"
+
+msgid "Đại học"
+msgstr "Bachelor's degree"
+
+msgid "Cao học"
+msgstr "Postgraduate"
+
+msgid "Nam"
+msgstr "Male"
+
+msgid "Nữ"
+msgstr "Female"
+
+msgid "Thỏa thuận"
+msgstr "Negotiable"
+
+msgid "Khoảng lương"
+msgstr "Salary range"
+
+msgid "Mức cố định"
+msgstr "Fixed amount"
+
+msgid "Từ mức"
+msgstr "Starting from"
+
+msgid "Đến mức"
+msgstr "Up to"
+
+msgid "Thu nhập"
+msgstr "Income"
+
+msgid "Thu nhập khi đạt 100% KPI"
+msgstr "Income at 100% KPI"
+
+msgid "Nháp"
+msgstr "Draft"
+
+msgid "Đang tuyển"
+msgstr "Hiring"
+
+msgid "Đã đóng"
+msgstr "Closed"
+
+msgid "Không giữ"
+msgstr "Not held"
+
+msgid "Tạm giữ do khóa tài khoản"
+msgstr "Held because the account is locked"
+
+msgid "Giữ để rà soát sau cấm"
+msgstr "Held for review after a ban"
+
+msgid "Giữ do trạng thái khóa cũ"
+msgstr "Held due to a legacy lock"
+
+msgid "Tạm ẩn để rà soát nội dung"
+msgstr "Hidden for content review"
+
+msgid "Tạm ẩn do vi phạm đã xác nhận"
+msgstr "Hidden for a confirmed violation"
+
+msgid "Tạm ẩn, cần chỉnh sửa theo yêu cầu"
+msgstr "Hidden, changes requested"
+
+msgid "Tin thường"
+msgstr "Standard posting"
+
+msgid "Tin nổi bật"
+msgstr "Featured posting"
+
+msgid "Tin TOP"
+msgstr "TOP posting"
+
+msgid "Mỗi lý do phải có từ 1 đến 160 ký tự."
+msgstr "Each reason must be between 1 and 160 characters."
+
+msgid "Vị trí chuyên môn chính"
+msgstr "Primary specialization"
+
+msgid "Trang chủ"
+msgstr "Homepage"
+
+msgid "Danh sách việc làm"
+msgstr "Job listing"
+
+msgid "Nhà tuyển dụng"
+msgstr "Employer"
+
+msgid "Quản trị viên"
+msgstr "Administrator"
+
+msgid "Hệ thống"
+msgstr "System"
+
+msgid "Cơ bản"
+msgstr "Basic"
+
+msgid "Giao tiếp"
+msgstr "Conversational"
+
+msgid "Làm việc"
+msgstr "Working proficiency"
+
+msgid "Thành thạo"
+msgstr "Professional"
+
+msgid "Bản ngữ"
+msgstr "Native"
+
+msgid "Duyệt tin (lịch sử)"
+msgstr "Approve posting (legacy)"
+
+msgid "Từ chối tin (lịch sử)"
+msgstr "Reject posting (legacy)"
+
+msgid "Tạm ẩn tin"
+msgstr "Hide posting"
+
+msgid "Khôi phục hiển thị"
+msgstr "Restore visibility"
+
+msgid "Yêu cầu chỉnh sửa"
+msgstr "Request changes"
+
+msgid "Nhà tuyển dụng gửi duyệt lại"
+msgstr "Employer resubmitted for review"
+
+msgid "Nội dung chưa đầy đủ"
+msgstr "Incomplete content"
+
+msgid "Nội dung gây hiểu nhầm"
+msgstr "Misleading content"
+
+msgid "Nội dung bị cấm"
+msgstr "Prohibited content"
+
+msgid "Có dấu hiệu lừa đảo"
+msgstr "Signs of fraud"
+
+msgid "Tin trùng lặp"
+msgstr "Duplicate posting"
+
+msgid "Báo cáo vi phạm đã xác nhận"
+msgstr "Confirmed violation report"
+
+msgid "Lý do khác"
+msgstr "Other reason"
+
+msgid "Bị ẩn"
+msgstr "Hidden"
+
+msgid "Hết hạn"
+msgstr "Expired"
+
+msgid "Ngừng tuyển"
+msgstr "No longer hiring"
+
+msgid "Quản trị viên đang tạm ẩn tin để kiểm duyệt."
+msgstr "An administrator has hidden this posting for review."
+
+msgid "Tin đang bị tạm giữ theo trạng thái tài khoản."
+msgstr "This posting is on hold because of the account status."
+
+msgid "Tin đang bị giữ để rà soát tuân thủ."
+msgstr "This posting is on hold for a compliance review."
+
+msgid "Tài khoản đăng tin không còn hoạt động."
+msgstr "The posting account is no longer active."
+
+msgid "Tài khoản đăng tin không còn thuộc công ty của tin."
+msgstr "The posting account no longer belongs to the posting's company."
+
+msgid "Tài khoản chưa được duyệt xác thực cho công ty này."
+msgstr "The account has not passed verification for this company."
+
+msgid "Thỏa thuận xử lý dữ liệu ứng viên (DPA) chưa ở phiên bản hiện hành."
+msgstr "The candidate data processing agreement (DPA) is not the current version."
+
+msgid "Tài khoản đang bị giữ để rà soát tuân thủ."
+msgstr "The account is on hold for a compliance review."
+
+msgid "Trang công ty đang bị tạm ẩn theo chính sách nội dung."
+msgstr "The company page is hidden under the content policy."
+
+msgid "Chiến dịch chứa tin đang tạm dừng, đã kết thúc hoặc bị giữ."
+msgstr "The recruitment campaign containing this posting is paused, ended or on hold."
+
+msgid "Đã quá hạn nộp hồ sơ."
+msgstr "The application deadline has passed."
+
+msgid "Đã hết thời gian hiển thị tin."
+msgstr "The posting's display period has ended."
+
+msgid "Khớp vị trí trên CV"
+msgstr "Matches the position on your CV"
+
+msgid "Khớp vị trí bạn quan tâm"
+msgstr "Matches a position you are interested in"
+
+msgid "Đúng vị trí chuyên môn"
+msgstr "Matches the specialization"
+
+msgid "Đúng địa điểm mong muốn"
+msgstr "In your preferred location"
+
+msgid "Kinh nghiệm phù hợp"
+msgstr "Suitable experience"
+
+msgid "Phù hợp với tìm kiếm của bạn"
+msgstr "Matches your search"
+
+msgid "Phù hợp với kỹ năng của bạn"
+msgstr "Matches your skills"
+
+msgid "Khớp %(count)s kỹ năng"
+msgid_plural "Khớp %(count)s kỹ năng"
+msgstr[0] "Matches %(count)s skill"
+msgstr[1] "Matches %(count)s skills"
+
+msgid "Phù hợp với lựa chọn sẵn sàng chuyển địa điểm"
+msgstr "Fits your willingness to relocate"
+
+msgid "Mức lương phù hợp"
+msgstr "Suitable salary"
+
+msgid "Công ty không có thật"
+msgstr "The company does not exist"
+
+msgid "Lừa đảo, thu phí ứng viên"
+msgstr "Scam or charging candidates fees"
+
+msgid "Thông tin tin đăng sai sự thật"
+msgstr "The posting contains false information"
+
+msgid "Tin đã tuyển xong nhưng chưa gỡ"
+msgstr "The position is filled but the posting is still up"
+
+msgid "Chờ xử lý"
+msgstr "Pending"
+
+msgid "Xác nhận vi phạm"
+msgstr "Violation confirmed"
+
+msgid "Bác bỏ"
+msgstr "Dismissed"
+
+msgid "Ứng viên"
+msgstr "Candidate"
+
+msgid "Tài trợ"
+msgstr "Sponsored"
+
+msgid "GẤP"
+msgstr "URGENT"
+
+msgid "Phản hồi nhanh"
+msgstr "Fast response"
+
+msgid "Cùng vị trí chuyên môn"
+msgstr "Same specialization"
+
+msgid "Tiêu đề có chuyên môn tương tự"
+msgstr "Similar title specialization"
+
+msgid "Cùng nhóm ngành chính"
+msgstr "Same primary occupation group"
+
+msgid "Cùng lĩnh vực chuyên môn"
+msgstr "Same field of expertise"
+
+msgid "Cùng tỉnh/thành làm việc"
+msgstr "Same work province/city"
+
+msgid "Cùng hình thức làm việc"
+msgstr "Same work arrangement"
+
+msgid "Cùng loại hình công việc"
+msgstr "Same employment type"
+
+msgid "Cùng %(count)s kỹ năng"
+msgid_plural "Cùng %(count)s kỹ năng"
+msgstr[0] "%(count)s shared skill"
+msgstr[1] "%(count)s shared skills"
+
+msgid "Yêu cầu kinh nghiệm tương đương"
+msgstr "Equivalent experience requirement"
+
+msgid "Yêu cầu kinh nghiệm gần tương đương"
+msgstr "Similar experience requirement"
+
+msgid "Tạo tin bằng AI hiện chưa khả dụng."
+msgstr "AI job posting generation is currently unavailable."
+
+msgid "Idempotency key đã được dùng cho một nội dung khác."
+msgstr "This idempotency key has already been used for different content."
+
+msgid "Bạn đã dùng hết %(limit)s lượt tạo tin bằng AI hôm nay."
+msgstr "You have used all %(limit)s AI job posting generations for today."
+
+msgid "Chỉ có thể đánh giá kết quả đã hoàn tất."
+msgstr "Only completed results can be rated."
+
+msgid "Kết quả AI không tồn tại."
+msgstr "The AI result does not exist."
+
+msgid "Kết quả AI không thuộc công ty này."
+msgstr "The AI result does not belong to this company."
+
+msgid "Kết quả AI chưa hoàn tất."
+msgstr "The AI result is not complete yet."
+
+msgid "Kết quả AI đã được dùng cho tin khác."
+msgstr "The AI result has already been used for another job posting."
+
+msgid "JD không còn nội dung sau khi loại thông tin liên hệ."
+msgstr "The JD has no content left after contact details were removed."
+
+msgid "Nhập vị trí cần tuyển."
+msgstr "Enter the position you are hiring for."
+
+msgid "Hãy xác thực email tài khoản trước khi bật thông báo việc làm."
+msgstr "Verify your account email before turning on job alerts."
+
+msgid "Bạn đã có một thông báo việc làm với cùng tiêu chí."
+msgstr "You already have a job alert with the same criteria."
+
+msgid "Thông báo việc làm không còn tồn tại."
+msgstr "This job alert no longer exists."
+
+msgid "Ngành nghề đã chọn không còn hoạt động."
+msgstr "The selected job category is no longer active."
+
+msgid "Bạn chỉ có thể tạo tối đa %(limit)s thông báo việc làm."
+msgstr "You can create at most %(limit)s job alerts."
+
+msgid "Tiêu đề tin"
+msgstr "Posting title"
+
+msgid "Mô tả công việc"
+msgstr "Job description"
+
+msgid "Yêu cầu ứng viên"
+msgstr "Candidate requirements"
+
+msgid "Quyền lợi"
+msgstr "Benefits"
+
+msgid "Lý do nên ứng tuyển"
+msgstr "Reasons to apply"
+
+msgid "Hạn nhận hồ sơ"
+msgstr "Application deadline"
+
+msgid "Số lượng tuyển"
+msgstr "Number of openings"
+
+msgid "Loại hợp đồng"
+msgstr "Contract type"
+
+msgid "Hình thức làm việc"
+msgstr "Work arrangement"
+
+msgid "Cấp bậc"
+msgstr "Level"
+
+msgid "Kinh nghiệm"
+msgstr "Experience"
+
+msgid "Học vấn"
+msgstr "Education"
+
+msgid "Giới tính"
+msgstr "Gender"
+
+msgid "Độ tuổi"
+msgstr "Age range"
+
+msgid "Chuyên môn"
+msgstr "Specialization"
+
+msgid "Kỹ năng"
+msgstr "Skills"
+
+msgid "Quyền lợi chuẩn hóa"
+msgstr "Standard benefits"
+
+msgid "Ngoại ngữ"
+msgstr "Languages"
+
+msgid "Địa điểm làm việc"
+msgstr "Work locations"
+
+msgid "Khung giờ làm việc"
+msgstr "Working hours"
+
+msgid "Ghi chú lịch làm việc"
+msgstr "Work schedule note"
+
+msgid "Người nhận hồ sơ"
+msgstr "Application recipient"
+
+msgid "Điện thoại nhận hồ sơ"
+msgstr "Application phone"
+
+msgid "Email nhận hồ sơ"
+msgstr "Application emails"
+
+msgid "%(site)s có %(count)s việc làm mới dành cho bạn:"
+msgid_plural "%(site)s có %(count)s việc làm mới dành cho bạn:"
+msgstr[0] "%(site)s has %(count)s new job for you:"
+msgstr[1] "%(site)s has %(count)s new jobs for you:"
+
+msgid "Có %(count)s việc làm mới phù hợp với thông báo bạn đã bật."
+msgid_plural "Có %(count)s việc làm mới phù hợp với thông báo bạn đã bật."
+msgstr[0] "There is %(count)s new job matching the alerts you turned on."
+msgstr[1] "There are %(count)s new jobs matching the alerts you turned on."
+
+msgid "%(count)s việc làm mới dành cho bạn · %(site)s"
+msgid_plural "%(count)s việc làm mới dành cho bạn · %(site)s"
+msgstr[0] "%(count)s new job for you · %(site)s"
+msgstr[1] "%(count)s new jobs for you · %(site)s"
+
+msgid "Từ %(amount)s"
+msgstr "From %(amount)s"
+
+msgid "Đến %(amount)s"
+msgstr "Up to %(amount)s"
+
+msgid "Nhà tuyển dụng đã xác thực"
+msgstr "Verified employer"
+
+msgid "%(amount)s triệu"
+msgstr "%(amount)s million"
+
+msgid "Nổi bật"
+msgstr "Featured"
+
+msgid "Chọn thời gian hiển thị tin."
+msgstr "Select how long the posting is displayed."
+
+msgid "Thời gian hiển thị phải từ 1 đến %(days)s ngày."
+msgstr "The display period must be between 1 and %(days)s days."
+
+msgid "Thời gian hiển thị mới phải dài hơn hiện tại."
+msgstr "The new display period must be longer than the current one."
+
+msgid "Tin đã thay đổi sau khi bạn mở bản xem trước. Vui lòng tải lại."
+msgstr "The posting changed after you opened the preview. Please reload."
+
+msgid "Chỉ có thể tạm ẩn tin đang tuyển."
+msgstr "Only postings that are hiring can be hidden."
+
+msgid "Tin đã bị tạm ẩn."
+msgstr "The posting is already hidden."
+
+msgid "Tin không bị moderation hold."
+msgstr "The posting is not under a moderation hold."
+
+msgid "Không thể yêu cầu chỉnh sửa tin ở trạng thái hiện tại."
+msgstr "Changes cannot be requested for the posting in its current state."
+
+msgid "Tin \"%(title)s\" đang tạm ẩn: %(reason)s. Hãy chỉnh sửa rồi gửi duyệt lại."
+msgstr "Job posting \"%(title)s\" is hidden: %(reason)s. Please edit it and resubmit it for review."
+
+msgid "Bạn không có quyền gửi duyệt lại tin này."
+msgstr "You do not have permission to resubmit this posting for review."
+
+msgid "Tin này không ở trạng thái cần chỉnh sửa."
+msgstr "This posting has no requested changes."
+
+msgid "Tin đã được gửi duyệt lại, vui lòng chờ quản trị viên."
+msgstr "The posting has already been resubmitted. Please wait for an administrator."
+
+msgid "Bạn chưa sửa nội dung nào. Hãy chỉnh sửa tin trước khi gửi duyệt lại."
+msgstr "You have not changed anything yet. Edit the posting before resubmitting it for review."
+
+msgid "Loại tạm giữ không hợp lệ."
+msgstr "Invalid hold type."
+
+msgid "Báo cáo không thuộc tin này."
+msgstr "The report does not belong to this posting."
+
+msgid "Nhập căn cứ tạm ẩn tin."
+msgstr "Enter the grounds for hiding the posting."
+
+msgid "Nhập lý do khôi phục hiển thị."
+msgstr "Enter the reason for restoring visibility."
+
+msgid "Chỉ yêu cầu chỉnh sửa với lý do nhà tuyển dụng sửa được."
+msgstr "Only request changes for reasons the employer can fix."
+
+msgid "Nêu rõ nội dung cần chỉnh sửa."
+msgstr "Describe what needs to be changed."
+
+msgid "Workspace chưa sẵn sàng."
+msgstr "The workspace is not ready yet."
+
+msgid "Cập nhật thông tin công ty trước khi đăng tin."
+msgstr "Update your company information before posting a job."
+
+msgid "%(title)s (bản sao)"
+msgstr "%(title)s (copy)"
+
+msgid "Bạn không có quyền chỉnh sửa tin này."
+msgstr "You do not have permission to edit this posting."
+
+msgid "Bạn không có quyền dùng tin này."
+msgstr "You do not have permission to use this posting."
+
+msgid "Bạn không có quyền sao chép tin này."
+msgstr "You do not have permission to duplicate this posting."
+
+msgid "Dùng thao tác gia hạn để thay đổi thời gian hiển thị của tin đã đăng."
+msgstr "Use the extend action to change the display period of a published posting."
+
+msgid "Tin đang thuộc một chiến dịch khác còn chạy."
+msgstr "The posting belongs to another recruitment campaign that is still running."
+
+msgid "Hạn nhận hồ sơ của tin sau ngày kết thúc chiến dịch."
+msgstr "The posting's application deadline is after the recruitment campaign's end date."
+
+msgid "Không thể sao chép khi tin hoặc chiến dịch đang bị tạm giữ."
+msgstr "The posting cannot be duplicated while it or its recruitment campaign is on hold."
+
+msgid "Chỉ có thể xóa tin nháp của bạn."
+msgstr "You can only delete your own draft postings."
+
+msgid "Không thể xóa tin đã từng được đăng."
+msgstr "A posting that has been published cannot be deleted."
+
+msgid "Chiến dịch của tin vừa thay đổi. Vui lòng tải lại."
+msgstr "The posting's recruitment campaign has just changed. Please reload."
+
+msgid "Chiến dịch vừa thay đổi. Vui lòng tải lại."
+msgstr "The recruitment campaign has just changed. Please reload."
+
+msgid "Bạn không có quyền dùng chiến dịch này."
+msgstr "You do not have permission to use this recruitment campaign."
+
+msgid "Chiến dịch đang bị policy hold."
+msgstr "The recruitment campaign is under a policy hold."
+
+msgid "Chiến dịch này không còn nhận tin tuyển dụng."
+msgstr "This recruitment campaign no longer accepts job postings."
+
+msgid "Tin tuyển dụng đang bị tạm ẩn nên chưa thể thay đổi."
+msgstr "The job posting is hidden, so it cannot be changed yet."
+
+msgid "Bạn không có quyền đăng tin này."
+msgstr "You do not have permission to publish this posting."
+
+msgid "Mở lại tin đã đóng thay vì đăng lại."
+msgstr "Reopen the closed posting instead of publishing it again."
+
+msgid "Chỉ có thể mở lại tin đã đóng của bạn."
+msgstr "You can only reopen your own closed postings."
+
+msgid "Chỉ có thể gia hạn tin đang tuyển của bạn."
+msgstr "You can only extend your own postings that are hiring."
+
+msgid "Chỉ có thể đóng tin đang tuyển của bạn."
+msgstr "You can only close your own postings that are hiring."
+
+msgid "Hạn gia hạn phải sau hạn nộp hiện tại."
+msgstr "The new deadline must be after the current application deadline."
+
+msgid "Không thể rút ngắn hạn nhận hồ sơ khi gia hạn."
+msgstr "The application deadline cannot be shortened when extending."
+
+msgid "Chỉ có thể gia hạn tin hết hạn trong vòng %(days)s ngày."
+msgstr "Expired postings can only be extended within %(days)s days."
+
+msgid "Bạn đã dùng hết %(limit)s lượt đăng tin miễn phí. Hoàn tất xác thực hồ sơ và đạt Cấp 3 để có quota 100 tin."
+msgstr "You have used all %(limit)s free job postings. Complete your verification and reach Level 3 to get a quota of 100 postings."
+
+msgid "Bạn đã dùng hết %(limit)s lượt đăng tin của tài khoản Cấp 3."
+msgstr "You have used all %(limit)s job postings of your Level 3 account."
+
+msgid "Tôi cam kết nội dung tin tuyển dụng là đúng sự thật, tuân thủ pháp luật và quy định đăng tin của ProCV, đồng thời chịu trách nhiệm về tin đã đăng và mọi chỉnh sửa sau đó."
+msgstr "I confirm that the content of this job posting is truthful and complies with the law and ProCV's posting rules, and I take responsibility for the published posting and every later edit."
+
+msgid "Hạn nhận hồ sơ phải từ hôm nay trở đi."
+msgstr "The application deadline must be today or later."
+
+msgid "Nhập tiêu đề tin tuyển dụng."
+msgstr "Enter the job posting title."
+
+msgid "Nhập mô tả công việc."
+msgstr "Enter the job description."
+
+msgid "Nhập yêu cầu ứng viên."
+msgstr "Enter the candidate requirements."
+
+msgid "Nhập quyền lợi ứng viên."
+msgstr "Enter the candidate benefits."
+
+msgid "Chọn cấp bậc."
+msgstr "Select a level."
+
+msgid "Chọn loại công việc."
+msgstr "Select an employment type."
+
+msgid "Chọn yêu cầu học vấn."
+msgstr "Select an education requirement."
+
+msgid "Chọn yêu cầu kinh nghiệm."
+msgstr "Select an experience requirement."
+
+msgid "Số lượng tuyển phải từ 1 trở lên."
+msgstr "The number of openings must be at least 1."
+
+msgid "Thêm ít nhất một địa điểm làm việc."
+msgstr "Add at least one work location."
+
+msgid "Chọn một vị trí chuyên môn chính."
+msgstr "Select a primary specialization."
+
+msgid "Nhập thông tin người nhận hồ sơ."
+msgstr "Enter the application recipient details."
+
+msgid "Hạn nhận hồ sơ không được quá %(days)s ngày kể từ hôm nay."
+msgstr "The application deadline cannot be more than %(days)s days from today."
+
+msgid "Nhập họ tên người nhận hồ sơ."
+msgstr "Enter the full name of the application recipient."
+
+msgid "Nhập số điện thoại người nhận hồ sơ."
+msgstr "Enter the phone number of the application recipient."
+
+msgid "Nhập ít nhất một email nhận hồ sơ."
+msgstr "Enter at least one application email."
+
+msgid "Tin đã hết vòng đời hiển thị. Cần một lượt đăng mới để tiếp tục."
+msgstr "The posting's display lifetime has ended. A new posting is needed to continue."
+
+msgid "Hạn nhận hồ sơ vượt thời gian công khai của tin. Vui lòng dùng quyền gia hạn tin trước."
+msgstr "The application deadline goes beyond the posting's public period. Please extend the posting first."
+
+msgid "Hạn gia hạn không được sau ngày kết thúc chiến dịch."
+msgstr "The new deadline cannot be after the recruitment campaign's end date."
+
+msgid "Chiến dịch hiện không hoạt động."
+msgstr "The recruitment campaign is currently inactive."
+
+msgid "Chưa thể đăng tin."
+msgstr "The posting cannot be published yet."
+
+msgid "Xác nhận cam kết chịu trách nhiệm về nội dung tin trước khi đăng."
+msgstr "Confirm your responsibility commitment for the posting's content before publishing."
+
+msgid "Tổng thời gian công khai của tin không được quá %(days)s ngày. Hãy nhân bản tin để đăng một lượt mới."
+msgstr "A posting cannot be public for more than %(days)s days in total. Duplicate the posting to publish a new one."
+
+msgid "Trạng thái kết luận không hợp lệ."
+msgstr "Invalid resolution status."
+
+msgid "Báo cáo này đã được xử lý."
+msgstr "This report has already been handled."
+
+msgid "Chỉ báo cáo đã xác nhận vi phạm mới có thể được gỡ."
+msgstr "Only reports with a confirmed violation can be reverted."
+
+msgid "Bạn đã báo cáo tin tuyển dụng này rồi."
+msgstr "You have already reported this job posting."
+
+msgid "Nhập lý do gỡ kết luận vi phạm."
+msgstr "Enter the reason for reverting the violation decision."
+
+msgid "Việc làm mới dành cho bạn"
+msgstr "New jobs for you"
+
+msgid "Theo:"
+msgstr "Matched by:"
+
+msgid "Từ công ty bạn theo dõi:"
+msgstr "From a company you follow:"
+
+msgid "Xem việc làm"
+msgstr "View job"
+
+msgid "Quản lý thông báo việc làm"
+msgstr "Manage job alerts"
+
+msgid "Xin chào <strong>%(candidate_name)s</strong>,"
+msgstr "Hello <strong>%(candidate_name)s</strong>,"
+
+msgid "Bạn có thể thay đổi lựa chọn tại <a href=\"%(email_settings_url)s\" style=\"color:#4b5563\">cài đặt nhận email</a>."
+msgstr "You can change your choices in <a href=\"%(email_settings_url)s\" style=\"color:#4b5563\">email settings</a>."
+
+msgid "Địa điểm:"
+msgstr "Location:"
+
+msgid "Mức lương:"
+msgstr "Salary:"
+
+msgid "Nhãn:"
+msgstr "Labels:"
+
+msgid "Nguồn:"
+msgstr "Source:"
+
+msgid "Xem việc làm:"
+msgstr "View job:"
+
+msgid "Quản lý thông báo việc làm:"
+msgstr "Manage job alerts:"
+
+msgid "Cài đặt nhận email:"
+msgstr "Email settings:"
+
+msgid "Xin chào %(candidate_name)s,"
+msgstr "Hello %(candidate_name)s,"
+
+msgid "Đây là email tự động từ %(site_name)s."
+msgstr "This is an automated email from %(site_name)s."

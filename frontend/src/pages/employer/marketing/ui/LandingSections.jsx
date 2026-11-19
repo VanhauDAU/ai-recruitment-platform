@@ -81,7 +81,7 @@ export function AiFeatureSection() {
             <div><p className="text-xs font-bold uppercase tracking-wide text-slate-400">AI candidate match</p><p className="mt-1 font-bold">Senior Product Designer</p></div>
             <span className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-xl font-black text-emerald-600">92%</span>
           </div>
-          {[['Kinh nghiệm phù hợp', '96%'], ['Kỹ năng chuyên môn', '90%'], ['Ngành nghề liên quan', '86%']].map(([label, value]) => (
+          {[[m.marketing_landing_ai_match_experience(), '96%'], [m.marketing_landing_ai_match_skills(), '90%'], [m.marketing_landing_ai_match_industry(), '86%']].map(([label, value]) => (
             <div key={label} className="mt-4 rounded-xl border border-white/10 bg-white/5 p-4">
               <div className="flex justify-between text-sm"><span className="text-white/70">{label}</span><strong>{value}</strong></div>
               <div className="mt-3 h-1.5 rounded-full bg-white/10"><div className="h-full rounded-full bg-emerald-400" style={{ width: value }} /></div>

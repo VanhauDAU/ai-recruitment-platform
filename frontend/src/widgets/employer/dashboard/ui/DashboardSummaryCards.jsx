@@ -4,44 +4,44 @@ import {
   InboxOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { getIntlLocale, m } from '@/shared/config/i18n'
 
 const CARD_DEFINITIONS = [
   {
     key: 'jobs_active',
-    label: 'Tin đang tuyển',
+    label: m.employer_workspace_dash_active_jobs(),
     icon: FileSearchOutlined,
     iconClass: 'bg-emerald-50 text-emerald-600 ring-emerald-100',
     accent: 'from-emerald-500 to-teal-500',
     caption: (summary) => (summary.jobs_hidden
-      ? `${summary.jobs_hidden} tin đang bị ẩn với ứng viên`
-      : `${summary.jobs_draft || 0} bản nháp chưa đăng`),
+      ? m.employer_workspace_dash_hidden_jobs({ count: summary.jobs_hidden })
+      : m.employer_workspace_dash_unpublished_drafts({ count: summary.jobs_draft || 0 })),
   },
   {
     key: 'applications_total',
-    label: 'Tổng hồ sơ',
+    label: m.employer_workspace_dash_total_applications(),
     icon: TeamOutlined,
     iconClass: 'bg-blue-50 text-blue-600 ring-blue-100',
     accent: 'from-blue-500 to-indigo-500',
-    caption: (summary) => `${summary.applications_new || 0} hồ sơ mới cần xem`,
+    caption: (summary) => m.employer_workspace_dash_new_applications_to_review({ count: summary.applications_new || 0 }),
   },
   {
     key: 'applications_new',
-    label: 'Hồ sơ mới',
+    label: m.employer_workspace_dash_new_applications_label(),
     icon: InboxOutlined,
     iconClass: 'bg-amber-50 text-amber-600 ring-amber-100',
     accent: 'from-amber-400 to-orange-500',
-    caption: (summary) => `${summary.applications_shortlisted || 0} phù hợp · ${summary.applications_interviewed || 0} phỏng vấn`,
+    caption: (summary) => m.employer_workspace_dash_shortlisted_interviewed({ shortlisted: summary.applications_shortlisted || 0, interviewed: summary.applications_interviewed || 0 }),
   },
   {
     key: 'job_views',
-    label: 'Lượt xem tin',
+    label: m.employer_workspace_dash_job_views(),
     icon: EyeOutlined,
     iconClass: 'bg-violet-50 text-violet-600 ring-violet-100',
     accent: 'from-violet-500 to-fuchsia-500',
     caption: (summary) => {
       const rate = summary.job_views ? Math.round(((summary.applications_total || 0) / summary.job_views) * 1000) / 10 : 0
-      return `${rate}% chuyển đổi thành hồ sơ`
+      return m.employer_workspace_dash_conversion_rate({ rate })
     },
   },
 ]
@@ -50,7 +50,7 @@ const numberFormatter = new Intl.NumberFormat(getIntlLocale())
 
 export default function DashboardSummaryCards({ summary = {} }) {
   return (
-    <section aria-label="Số liệu tuyển dụng" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <section aria-label={m.employer_workspace_dash_metrics()} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {CARD_DEFINITIONS.map((card) => {
         const Icon = card.icon
         return (

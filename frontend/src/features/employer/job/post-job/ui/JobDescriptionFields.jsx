@@ -4,6 +4,7 @@ import { useState } from 'react'
 import RichTextEditor from '@/shared/ui/rich-text/RichTextEditor'
 import JobLocationFields from './JobLocationFields'
 import JobScheduleFields from './JobScheduleFields'
+import { m } from '@/shared/config/i18n'
 
 const contentRule = (message) => ({
   validator(_, value) {
@@ -21,9 +22,9 @@ export default function JobDescriptionFields({ form, provinces, benefits }) {
   const selectedBenefitIds = Form.useWatch('benefit_ids', form) || []
   const [showAdditionalBenefits, setShowAdditionalBenefits] = useState(selectedBenefitIds.length > 0)
   const benefitGroups = [
-    { key: 'allowance', label: 'Phụ cấp' },
-    { key: 'equipment', label: 'Hỗ trợ thiết bị làm việc' },
-    { key: 'welfare', label: 'Phúc lợi' },
+    { key: 'allowance', label: m.employer_job_form_benefit_allowance() },
+    { key: 'equipment', label: m.employer_job_form_benefit_equipment() },
+    { key: 'welfare', label: m.employer_job_form_benefit_welfare() },
   ].map((group) => ({
     ...group,
     options: benefits
@@ -41,33 +42,33 @@ export default function JobDescriptionFields({ form, provinces, benefits }) {
     <>
       <Form.Item
         name="description"
-        label="Mô tả công việc"
+        label={m.employer_job_preview_description()}
         validateTrigger="onChange"
-        rules={[contentRule('Nhập mô tả công việc.')]}
+        rules={[contentRule(m.employer_job_form_description_required())]}
       >
-        <RichTextEditor contentClassName="post-job-rich-editor__content" minHeight={230} placeholder="Trách nhiệm chính, mục tiêu công việc và phạm vi phụ trách" />
+        <RichTextEditor contentClassName="post-job-rich-editor__content" minHeight={230} placeholder={m.employer_job_form_description_placeholder()} />
       </Form.Item>
       <Form.Item
         name="requirements"
-        label="Yêu cầu ứng viên"
+        label={m.employer_job_preview_requirements()}
         validateTrigger="onChange"
-        rules={[contentRule('Nhập yêu cầu ứng viên.')]}
+        rules={[contentRule(m.employer_job_form_requirements_required())]}
       >
-        <RichTextEditor contentClassName="post-job-rich-editor__content" minHeight={230} placeholder="Kinh nghiệm, kiến thức và năng lực cần có" />
+        <RichTextEditor contentClassName="post-job-rich-editor__content" minHeight={230} placeholder={m.employer_job_form_requirements_placeholder()} />
       </Form.Item>
       <Form.Item
         name="benefits"
-        label="Quyền lợi"
+        label={m.employer_job_preview_benefits()}
         validateTrigger="onChange"
-        rules={[contentRule('Nhập quyền lợi dành cho ứng viên.')]}
+        rules={[contentRule(m.employer_job_form_benefits_required())]}
       >
-        <RichTextEditor contentClassName="post-job-rich-editor__content" minHeight={230} placeholder="Thu nhập, chế độ, phúc lợi và cơ hội phát triển" />
+        <RichTextEditor contentClassName="post-job-rich-editor__content" minHeight={230} placeholder={m.employer_job_form_benefits_placeholder()} />
       </Form.Item>
       <div className="mb-6 rounded-xl border border-emerald-100 bg-emerald-50/50 p-4 sm:p-5">
         <div>
-          <h3 className="font-semibold text-slate-800">3 lý do nên ứng tuyển</h3>
+          <h3 className="font-semibold text-slate-800">{m.employer_job_form_reasons_title()}</h3>
           <p className="mt-1 text-sm leading-6 text-slate-600">
-            Tóm tắt tối đa ba điểm khác biệt quan trọng. Đây là nội dung cơ bản, không thuộc gói trả phí.
+            {m.employer_job_form_reasons_hint()}
           </p>
         </div>
         <Form.List name="application_reasons">
@@ -79,14 +80,14 @@ export default function JobDescriptionFields({ form, provinces, benefits }) {
                     {...field}
                     className="!mb-0 min-w-0 flex-1"
                     rules={[
-                      { required: true, whitespace: true, message: 'Nhập lý do hoặc xóa dòng này.' },
-                      { max: 160, message: 'Mỗi lý do tối đa 160 ký tự.' },
+                      { required: true, whitespace: true, message: m.employer_job_form_reason_required() },
+                      { max: 160, message: m.employer_job_form_reason_too_long() },
                     ]}
                   >
-                    <Input maxLength={160} showCount placeholder={`Lý do ${index + 1}`} />
+                    <Input maxLength={160} showCount placeholder={m.employer_job_form_reason_n({ index: index + 1 })} />
                   </Form.Item>
                   <Button
-                    aria-label={`Xóa lý do ${index + 1}`}
+                    aria-label={m.employer_job_form_remove_reason({ index: index + 1 })}
                     type="text"
                     danger
                     icon={<DeleteOutlined />}
@@ -95,14 +96,14 @@ export default function JobDescriptionFields({ form, provinces, benefits }) {
                 </div>
               ))}
               <Button
-                aria-label={`Thêm lý do (${fields.length}/3)`}
+                aria-label={m.employer_job_form_add_reason({ count: fields.length })}
                 type="dashed"
                 className="!w-full sm:!w-auto"
                 icon={<PlusOutlined />}
                 disabled={fields.length >= 3}
                 onClick={() => add('')}
               >
-                Thêm lý do ({fields.length}/3)
+                {m.employer_job_form_add_reason({ count: fields.length })}
               </Button>
             </div>
           )}
@@ -111,8 +112,8 @@ export default function JobDescriptionFields({ form, provinces, benefits }) {
       <div className="mb-6 rounded-xl border border-emerald-200 bg-white p-4 sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <div className="font-semibold text-slate-800">Quyền lợi bổ sung</div>
-            <p className="mt-1 text-sm text-slate-700">Thông tin giúp tin tuyển dụng của bạn cạnh tranh hơn so với đối thủ. Quyền lợi hấp dẫn có thể <strong>tăng tỷ lệ ứng tuyển lên đến 30%.</strong></p>
+            <div className="font-semibold text-slate-800">{m.employer_job_form_extra_benefits()}</div>
+            <p className="mt-1 text-sm text-slate-700">{m.employer_job_form_extra_benefits_hint()} <strong>{m.employer_job_form_extra_benefits_highlight()}</strong></p>
           </div>
           <Button
             type="link"
@@ -120,7 +121,7 @@ export default function JobDescriptionFields({ form, provinces, benefits }) {
             icon={showAdditionalBenefits ? <MinusCircleFilled /> : <DownOutlined />}
             onClick={() => setShowAdditionalBenefits((current) => !current)}
           >
-            <span>{showAdditionalBenefits ? 'Thu gọn' : 'Thêm thông tin'}</span>
+            <span>{showAdditionalBenefits ? m.employer_job_form_collapse() : m.employer_job_form_add_info()}</span>
             <span className="ml-1 inline-flex min-w-5 items-center justify-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-xs font-semibold text-emerald-600">
               {selectedBenefitIds.length}
             </span>
@@ -160,7 +161,7 @@ export default function JobDescriptionFields({ form, provinces, benefits }) {
           </div>
         )}
       </div>
-      <div className="mb-2 text-sm font-semibold text-slate-700">Khu vực làm việc <span className="text-red-500">*</span></div>
+      <div className="mb-2 text-sm font-semibold text-slate-700">{m.employer_job_form_work_area()} <span className="text-red-500">*</span></div>
       <JobLocationFields form={form} provinces={provinces} />
       <JobScheduleFields />
     </>

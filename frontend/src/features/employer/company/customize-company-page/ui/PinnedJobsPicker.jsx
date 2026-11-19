@@ -5,11 +5,11 @@ import { Button, Input, Skeleton } from 'antd'
 import { useState } from 'react'
 import { employerCompanyPageKeys, getEmployerPinnableJobs } from '@/entities/company/employer-company-page'
 import useDebouncedValue from '@/shared/hooks/use-debounced-value'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { getIntlLocale, m } from '@/shared/config/i18n'
 
 function publishedLabel(job) {
   const date = job.published_at ? new Date(job.published_at) : null
-  return date && !Number.isNaN(date.getTime()) ? `Đăng ngày ${date.toLocaleDateString(getIntlLocale())}` : ''
+  return date && !Number.isNaN(date.getTime()) ? m.employer_company_pinned_published({ date: date.toLocaleDateString(getIntlLocale()) }) : ''
 }
 
 /**
@@ -34,21 +34,21 @@ export default function PinnedJobsPicker({ jobs, max, disabled = false, onChange
   return (
     <div className="company-pinned-jobs">
       <p className="company-layout-hint">
-        Tin ghim luôn đứng đầu danh sách việc làm trên trang công ty. Đã ghim {jobs.length}/{max} tin.
+        {m.employer_company_pinned_hint({ count: jobs.length, max })}
       </p>
       {jobs.length > 0 && (
-        <ol className="company-section-list" aria-label="Tin đang ghim">
+        <ol className="company-section-list" aria-label={m.employer_company_pinned_list()}>
           {jobs.map((job, index) => (
             <li key={job.public_id} className="company-section-row">
               <span className="company-section-row__title company-section-row__body">{job.title}</span>
-              <Button size="small" type="text" icon={<ArrowUpOutlined />} aria-label={`Chuyển ${job.title} lên`} disabled={disabled || index === 0} onClick={() => onChange(arrayMove(ids, index, index - 1))} />
-              <Button size="small" type="text" icon={<ArrowDownOutlined />} aria-label={`Chuyển ${job.title} xuống`} disabled={disabled || index === jobs.length - 1} onClick={() => onChange(arrayMove(ids, index, index + 1))} />
-              <Button size="small" type="text" danger icon={<DeleteOutlined />} aria-label={`Bỏ ghim ${job.title}`} disabled={disabled} onClick={() => onChange(ids.filter((id) => id !== job.public_id))} />
+              <Button size="small" type="text" icon={<ArrowUpOutlined />} aria-label={m.employer_company_section_move_up({ title: job.title })} disabled={disabled || index === 0} onClick={() => onChange(arrayMove(ids, index, index - 1))} />
+              <Button size="small" type="text" icon={<ArrowDownOutlined />} aria-label={m.employer_company_section_move_down({ title: job.title })} disabled={disabled || index === jobs.length - 1} onClick={() => onChange(arrayMove(ids, index, index + 1))} />
+              <Button size="small" type="text" danger icon={<DeleteOutlined />} aria-label={m.employer_company_pinned_unpin({ title: job.title })} disabled={disabled} onClick={() => onChange(ids.filter((id) => id !== job.public_id))} />
             </li>
           ))}
         </ol>
       )}
-      {full && <p className="company-layout-hint">Đã ghim tối đa {max} tin. Bỏ ghim một tin để chọn tin khác.</p>}
+      {full && <p className="company-layout-hint">{m.employer_company_pinned_full({ max })}</p>}
 
       {searching && !disabled ? (
         <div className="company-pinned-search">
@@ -56,8 +56,8 @@ export default function PinnedJobsPicker({ jobs, max, disabled = false, onChange
             allowClear
             autoFocus
             prefix={<SearchOutlined aria-hidden="true" />}
-            placeholder="Tìm theo tên tin đang hiển thị"
-            aria-label="Tìm tin tuyển dụng để ghim"
+            placeholder={m.employer_company_pinned_search_placeholder()}
+            aria-label={m.employer_company_pinned_search_label()}
             maxLength={120}
             value={keyword}
             onChange={(event) => setKeyword(event.target.value)}
@@ -65,15 +65,15 @@ export default function PinnedJobsPicker({ jobs, max, disabled = false, onChange
           {query.isPending && <Skeleton active title={false} paragraph={{ rows: 2 }} />}
           {query.isError && (
             <p className="company-layout-hint" role="alert">
-              Chưa thể tải danh sách tin.{' '}
-              <Button type="link" size="small" onClick={() => query.refetch()}>Thử lại</Button>
+              {m.employer_company_pinned_load_error()}{' '}
+              <Button type="link" size="small" onClick={() => query.refetch()}>{m.employer_company_retry()}</Button>
             </p>
           )}
           {query.isSuccess && results.length === 0 && (
-            <p className="company-layout-hint">Không có tin đang hiển thị phù hợp.</p>
+            <p className="company-layout-hint">{m.employer_company_pinned_empty()}</p>
           )}
           {results.length > 0 && (
-            <ul className="company-section-list" aria-label="Tin có thể ghim">
+            <ul className="company-section-list" aria-label={m.employer_company_pinned_results()}>
               {results.map((job) => {
                 const pinned = ids.includes(job.public_id)
                 return (
@@ -82,18 +82,18 @@ export default function PinnedJobsPicker({ jobs, max, disabled = false, onChange
                       <span className="company-section-row__title">{job.title}</span>
                       <span className="company-layout-hint">{publishedLabel(job)}</span>
                     </div>
-                    <Button size="small" disabled={pinned || full} aria-label={`Ghim ${job.title}`} onClick={() => onPick(job)}>
-                      {pinned ? 'Đã ghim' : 'Ghim'}
+                    <Button size="small" disabled={pinned || full} aria-label={m.employer_company_pinned_pin_label({ title: job.title })} onClick={() => onPick(job)}>
+                      {pinned ? m.employer_company_pinned_done() : m.employer_company_pinned_pin()}
                     </Button>
                   </li>
                 )
               })}
             </ul>
           )}
-          <Button type="link" size="small" onClick={() => setSearching(false)}>Đóng tìm kiếm</Button>
+          <Button type="link" size="small" onClick={() => setSearching(false)}>{m.employer_company_pinned_close_search()}</Button>
         </div>
       ) : (
-        <Button icon={<PlusOutlined aria-hidden="true" />} disabled={disabled || full} onClick={() => setSearching(true)}>Thêm tin ghim</Button>
+        <Button icon={<PlusOutlined aria-hidden="true" />} disabled={disabled || full} onClick={() => setSearching(true)}>{m.employer_company_pinned_add()}</Button>
       )}
     </div>
   )
