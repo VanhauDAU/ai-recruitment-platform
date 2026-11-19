@@ -23,7 +23,7 @@ class JobCategorySerializer(serializers.ModelSerializer):
         model = JobCategory
         fields = ['id', 'name', 'slug', 'description', 'logo_url', 'parent', 'category_type']
 
-    def get_logo_url(self, obj):
+    def get_logo_url(self, obj) -> str | None:
         return media_url_from_value(obj.logo_url, request=self.context.get('request'))
 
 
@@ -110,10 +110,10 @@ class JobLocationSerializer(serializers.ModelSerializer):
     def validate_address_detail(self, address_detail):
         return address_detail.strip()
 
-    def get_province_id(self, obj):
+    def get_province_id(self, obj) -> int:
         return obj.location.parent_id or obj.location_id
 
-    def get_province_name(self, obj):
+    def get_province_name(self, obj) -> str:
         return obj.location.parent.name if obj.location.parent else obj.location.name
 
 

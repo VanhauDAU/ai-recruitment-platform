@@ -100,30 +100,6 @@ class PhoneChallengeResponse(APIException):
             self.detail['retry_after_seconds'] = int(error.retry_after_seconds)
 
 
-class EmployerUploadSessionResponse(APIException):
-    """Preserve safe shared-upload codes at an employer business boundary."""
-
-    default_code = 'UPLOAD_INVALID_STATE'
-
-    def __init__(self, error):
-        self.status_code = {
-            'RESOURCE_NOT_FOUND': status.HTTP_404_NOT_FOUND,
-            'UPLOAD_PIPELINE_DISABLED': status.HTTP_503_SERVICE_UNAVAILABLE,
-            'UPLOAD_EXPIRED': status.HTTP_409_CONFLICT,
-            'UPLOAD_NOT_CLEAN': status.HTTP_409_CONFLICT,
-            'UPLOAD_PURPOSE_MISMATCH': status.HTTP_409_CONFLICT,
-            'UPLOAD_ALREADY_SUBMITTED': status.HTTP_409_CONFLICT,
-        }.get(error.code, status.HTTP_400_BAD_REQUEST)
-        super().__init__(
-            detail={
-                'code': error.code,
-                'message': error.message,
-                'retryable': error.retryable,
-            },
-            code=error.code,
-        )
-
-
 class CompanyPageEditForbidden(PermissionDenied):
     """The page policy closes this action; ``permissions.blockers`` says why."""
 

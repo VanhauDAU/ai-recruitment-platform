@@ -1,11 +1,11 @@
-from django.db import transaction
 from django.shortcuts import get_object_or_404
-from rest_framework import generics, status
+from drf_spectacular.utils import OpenApiTypes, extend_schema, extend_schema_view, inline_serializer
+from rest_framework import generics, serializers, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import AdminPortalPermission
-from common.api.pagination import StandardPagination
 
 from ...models import PinnedPost, PostCategory, Tag
 from ...selectors import (
@@ -19,9 +19,11 @@ from ...selectors import (
 from ...services import (
     archive_post,
     create_post,
+    delete_tag,
     discard_draft,
     merge_tags,
     publish_post,
+    reorder_by_public_id,
     restore_post,
     return_post,
     save_post_draft,
@@ -50,9 +52,22 @@ def _post(request, public_id):
     )
 
 
+_REORDER_BODY = inline_serializer(
+    'BlogReorder', {'public_ids': serializers.ListField(child=serializers.CharField())}
+)
+
+
+@extend_schema_view(
+    get=extend_schema(summary='Admin: danh sách bài viết'),
+    post=extend_schema(
+        summary='Admin: tạo bài viết nháp',
+        request=AdminPostWriteSerializer,
+        responses={201: AdminPostDetailSerializer},
+    ),
+)
+@extend_schema(tags=['blog-admin'])
 class AdminPostListCreateView(generics.ListCreateAPIView):
     permission_classes = [AdminPortalPermission]
-    pagination_class = StandardPagination
 
     def get_queryset(self):
         return admin_posts_queryset(
@@ -86,6 +101,11 @@ class AdminPostListCreateView(generics.ListCreateAPIView):
         )
 
 
+@extend_schema(
+    summary='Admin: số bài viết theo trạng thái',
+    responses={200: OpenApiTypes.OBJECT},
+    tags=['blog-admin'],
+)
 class AdminPostSummaryView(APIView):
     permission_classes = [AdminPortalPermission]
 
@@ -93,6 +113,11 @@ class AdminPostSummaryView(APIView):
         return Response(admin_post_summary())
 
 
+@extend_schema(
+    summary='Admin: chi tiết bài viết',
+    responses={200: AdminPostDetailSerializer},
+    tags=['blog-admin'],
+)
 class AdminPostDetailView(APIView):
     permission_classes = [AdminPortalPermission]
 
@@ -101,6 +126,12 @@ class AdminPostDetailView(APIView):
         return Response(AdminPostDetailSerializer(post, context=_serializer_context(request)).data)
 
 
+@extend_schema(
+    summary='Admin: autosave bản nháp của bài viết',
+    request=AdminPostWriteSerializer,
+    responses={200: AdminPostDetailSerializer},
+    tags=['blog-admin'],
+)
 class AdminPostDraftView(APIView):
     permission_classes = [AdminPortalPermission]
 
@@ -114,10 +145,7 @@ class AdminPostDraftView(APIView):
         serializer.is_valid(raise_exception=True)
         data = dict(serializer.validated_data)
         if 'base_revision' not in data:
-            return Response(
-                {'base_revision': ['Trường này là bắt buộc khi autosave.']},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            raise ValidationError({'base_revision': ['Trường này là bắt buộc khi autosave.']})
         revision = data.pop('base_revision')
         tags = data.pop('tags', None)
         save_post_draft(
@@ -131,6 +159,12 @@ class AdminPostDraftView(APIView):
         return Response(AdminPostDetailSerializer(post, context=_serializer_context(request)).data)
 
 
+@extend_schema(
+    summary='Admin: chuyển trạng thái biên tập của bài viết',
+    request=AdminPostActionSerializer,
+    responses={200: AdminPostDetailSerializer},
+    tags=['blog-admin'],
+)
 class AdminPostActionView(APIView):
     permission_classes = [AdminPortalPermission]
     action = None
@@ -158,30 +192,37 @@ class AdminPostActionView(APIView):
         return Response(AdminPostDetailSerializer(post, context=_serializer_context(request)).data)
 
 
+@extend_schema(summary='Admin: gửi bài viết chờ duyệt')
 class AdminPostSubmitView(AdminPostActionView):
     action = 'submit'
 
 
+@extend_schema(summary='Admin: trả bài viết về nháp kèm ghi chú')
 class AdminPostReturnView(AdminPostActionView):
     action = 'return'
 
 
+@extend_schema(summary='Admin: xuất bản bài viết')
 class AdminPostPublishView(AdminPostActionView):
     action = 'publish'
 
 
+@extend_schema(summary='Admin: gỡ bài viết')
 class AdminPostArchiveView(AdminPostActionView):
     action = 'archive'
 
 
+@extend_schema(summary='Admin: khôi phục bài viết đã gỡ')
 class AdminPostRestoreView(AdminPostActionView):
     action = 'restore'
 
 
+@extend_schema(summary='Admin: bỏ bản nháp đang sửa')
 class AdminPostDiscardDraftView(AdminPostActionView):
     action = 'discard-draft'
 
 
+@extend_schema(tags=['blog-admin'])
 class AdminCategoryListCreateView(generics.ListCreateAPIView):
     permission_classes = [AdminPortalPermission]
     pagination_class = None
@@ -189,6 +230,7 @@ class AdminCategoryListCreateView(generics.ListCreateAPIView):
     queryset = admin_categories_queryset()
 
 
+@extend_schema(tags=['blog-admin'])
 class AdminCategoryDetailView(generics.RetrieveUpdateAPIView):
     permission_classes = [AdminPortalPermission]
     serializer_class = AdminPostCategorySerializer
@@ -197,6 +239,7 @@ class AdminCategoryDetailView(generics.RetrieveUpdateAPIView):
     lookup_url_kwarg = 'public_id'
 
 
+@extend_schema(tags=['blog-admin'])
 class AdminTagListCreateView(generics.ListCreateAPIView):
     permission_classes = [AdminPortalPermission]
     pagination_class = None
@@ -206,6 +249,7 @@ class AdminTagListCreateView(generics.ListCreateAPIView):
         return admin_tags_queryset(self.request.query_params)
 
 
+@extend_schema(tags=['blog-admin'])
 class AdminTagDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [AdminPortalPermission]
     serializer_class = AdminTagSerializer
@@ -214,13 +258,15 @@ class AdminTagDetailView(generics.RetrieveUpdateDestroyAPIView):
     lookup_url_kwarg = 'public_id'
 
     def perform_destroy(self, instance):
-        if instance.posts.exists() or instance.working_copies.exists():
-            from rest_framework.exceptions import ValidationError
-
-            raise ValidationError({'detail': 'Không thể xóa thẻ đang được sử dụng.'})
-        instance.delete()
+        delete_tag(instance)
 
 
+@extend_schema(
+    summary='Admin: gộp thẻ vào một thẻ khác',
+    request=AdminTagMergeSerializer,
+    responses={200: AdminTagSerializer},
+    tags=['blog-admin'],
+)
 class AdminTagMergeView(APIView):
     permission_classes = [AdminPortalPermission]
 
@@ -237,6 +283,7 @@ class AdminTagMergeView(APIView):
         return Response(AdminTagSerializer(target).data)
 
 
+@extend_schema(tags=['blog-admin'])
 class AdminPinListCreateView(generics.ListCreateAPIView):
     permission_classes = [AdminPortalPermission]
     pagination_class = None
@@ -244,40 +291,35 @@ class AdminPinListCreateView(generics.ListCreateAPIView):
     queryset = admin_pins_queryset()
 
 
+@extend_schema(tags=['blog-admin'])
 class AdminPinDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [AdminPortalPermission]
     serializer_class = AdminPinnedPostSerializer
-    queryset = PinnedPost.objects.select_related('post')
+    queryset = admin_pins_queryset()
     lookup_field = 'public_id'
     lookup_url_kwarg = 'public_id'
 
 
+@extend_schema(
+    summary='Admin: sắp xếp lại theo danh sách public ID',
+    request=_REORDER_BODY,
+    responses={200: _REORDER_BODY},
+    tags=['blog-admin'],
+)
 class AdminReorderView(APIView):
     permission_classes = [AdminPortalPermission]
     model = None
 
     def post(self, request):
-        public_ids = request.data.get('public_ids')
-        if not isinstance(public_ids, list) or not public_ids:
-            return Response(
-                {'public_ids': ['Gửi danh sách public ID theo thứ tự mong muốn.']}, status=400
-            )
-        items = {
-            item.public_id: item for item in self.model.objects.filter(public_id__in=public_ids)
-        }
-        if set(items) != set(public_ids):
-            return Response(
-                {'public_ids': ['Danh sách chứa tài nguyên không tồn tại.']}, status=400
-            )
-        with transaction.atomic():
-            for order, public_id in enumerate(public_ids, start=1):
-                self.model.objects.filter(pk=items[public_id].pk).update(order=order)
+        public_ids = reorder_by_public_id(self.model, request.data.get('public_ids'))
         return Response({'public_ids': public_ids})
 
 
+@extend_schema(summary='Admin: sắp xếp danh mục')
 class AdminCategoryReorderView(AdminReorderView):
     model = PostCategory
 
 
+@extend_schema(summary='Admin: sắp xếp bài ghim')
 class AdminPinReorderView(AdminReorderView):
     model = PinnedPost

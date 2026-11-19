@@ -92,7 +92,7 @@ class JobAiGenerationFixture:
 
 
 class JobAiGenerationApiTests(JobAiGenerationFixture, APITestCase):
-    @patch('apps.jobs.api.views.ai_generation.generate_job_post.delay')
+    @patch('apps.jobs.tasks.ai_generation.generate_job_post.delay')
     def test_create_redacts_contact_pii_and_dispatches_once(self, delay):
         self.client.force_authenticate(self.user)
         payload = {
@@ -106,11 +106,12 @@ class JobAiGenerationApiTests(JobAiGenerationFixture, APITestCase):
             ),
         }
 
-        response = self.client.post(
-            reverse('employer-job-ai-generation-create'),
-            payload,
-            format='json',
-        )
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(
+                reverse('employer-job-ai-generation-create'),
+                payload,
+                format='json',
+            )
 
         self.assertEqual(response.status_code, 202, response.data)
         self.assertEqual(
@@ -126,14 +127,15 @@ class JobAiGenerationApiTests(JobAiGenerationFixture, APITestCase):
         self.assertIn('[url removed]', source)
         delay.assert_called_once_with(generation.pk)
 
-    @patch('apps.jobs.api.views.ai_generation.generate_job_post.delay')
+    @patch('apps.jobs.tasks.ai_generation.generate_job_post.delay')
     def test_idempotent_replay_returns_same_generation_without_second_dispatch(self, delay):
         self.client.force_authenticate(self.user)
         url = reverse('employer-job-ai-generation-create')
         payload = self.brief_payload()
 
-        first = self.client.post(url, payload, format='json')
-        second = self.client.post(url, payload, format='json')
+        with self.captureOnCommitCallbacks(execute=True):
+            first = self.client.post(url, payload, format='json')
+            second = self.client.post(url, payload, format='json')
 
         self.assertEqual(first.status_code, 202, first.data)
         self.assertEqual(second.status_code, 202, second.data)
@@ -141,7 +143,7 @@ class JobAiGenerationApiTests(JobAiGenerationFixture, APITestCase):
         self.assertEqual(JobAiGeneration.objects.count(), 1)
         delay.assert_called_once()
 
-    @patch('apps.jobs.api.views.ai_generation.generate_job_post.delay')
+    @patch('apps.jobs.tasks.ai_generation.generate_job_post.delay')
     def test_idempotency_key_cannot_be_reused_for_different_content(self, delay):
         self.client.force_authenticate(self.user)
         url = reverse('employer-job-ai-generation-create')
@@ -503,6 +505,8 @@ class JobAiGenerationServiceTests(JobAiGenerationFixture, APITestCase):
         self.assertNotIn('gender_requirement', RESPONSE_SCHEMA['properties'])
 
 
+# The worker is not under test here; committed rows would otherwise run it eagerly.
+@patch('apps.jobs.tasks.ai_generation.generate_job_post.delay')
 class JobAiGenerationConcurrencyTests(TransactionTestCase):
     reset_sequences = True
 
@@ -543,7 +547,7 @@ class JobAiGenerationConcurrencyTests(TransactionTestCase):
         finally:
             connections.close_all()
 
-    def test_concurrent_daily_quota_allows_exactly_one_generation(self):
+    def test_concurrent_daily_quota_allows_exactly_one_generation(self, _delay):
         barrier = Barrier(2)
         with ThreadPoolExecutor(max_workers=2) as executor:
             futures = [
@@ -555,7 +559,7 @@ class JobAiGenerationConcurrencyTests(TransactionTestCase):
         self.assertEqual(sorted(result[0] for result in results), ['ok', 'quota'])
         self.assertEqual(JobAiGeneration.objects.filter(owner=self.user).count(), 1)
 
-    def test_concurrent_idempotent_requests_share_one_row_and_one_quota(self):
+    def test_concurrent_idempotent_requests_share_one_row_and_one_quota(self, _delay):
         enable_job_ai(daily_limit=10)
         barrier = Barrier(2)
         with ThreadPoolExecutor(max_workers=2) as executor:

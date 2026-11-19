@@ -6,14 +6,19 @@ from django.conf import settings
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.utils.html import escape
+from rest_framework.exceptions import ValidationError as DRFValidationError
 
 from apps.accounts.services.token_cache import atomic_pop
 
+from ..models import AuthEmailJob, User
 from .mailing import frontend_link, send_html_email, site_setting
+from .refresh_cookies import PORTAL_ROLE_BY_NAME
+from .tokens import revoke_refresh_tokens
 
 _TOKEN_PREFIX = 'password_reset:token:'
 _LATEST_PREFIX = 'password_reset:latest:'
 _COOLDOWN_PREFIX = 'password_reset:cooldown:'
+_INVALID_LINK = 'Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.'
 
 
 def _token_key(token):
@@ -81,6 +86,89 @@ def is_reset_eligible(user):
     """
 
     return not user.is_deleted and user.status == user.Status.ACTIVE and user.is_active
+
+
+def request_password_reset(email, portal):
+    """Queue a reset link for the portal account of ``email``, if one is eligible.
+
+    Silent on every branch: the endpoint answers identically whether or not the
+    address is registered, so callers must not derive anything from it.
+    """
+    # Import lazily: task delivery imports account services to render email.
+    from ..tasks import queue_auth_email
+
+    # Đúng tài khoản của cổng: một email có thể có tài khoản ứng viên và NTD
+    # riêng, mỗi bên mật khẩu riêng.
+    user = User.objects.filter(
+        email__iexact=email,
+        role=PORTAL_ROLE_BY_NAME[portal],
+        is_deleted=False,
+        status=User.Status.ACTIVE,
+    ).first()
+
+    # Cooldown im lặng: phản hồi phải giống hệt nhau dù email có tồn tại hay
+    # không, nếu không attacker vẫn phân biệt được qua status code/thời gian.
+    # Token được sinh trong worker (lúc gửi thật), xem tasks._send.
+    if user and cooldown_remaining(user) == 0:
+        start_cooldown(user)
+        queue_auth_email(
+            AuthEmailJob.Kind.PASSWORD_RESET,
+            user,
+            context={
+                'email': user.email,
+                'auth_revision': user.auth_revision,
+            },
+        )
+
+
+def _reset_token_user(token, portal=None, *, consume=False):
+    """Resolve a reset token without allowing an admin token on another portal."""
+
+    identity = consume_token(token) if consume else peek_token(token)
+    if not isinstance(identity, dict):
+        return None
+    user = User.objects.filter(
+        pk=identity.get('user_id'),
+        is_deleted=False,
+    ).first()
+    expected_role = PORTAL_ROLE_BY_NAME.get(portal) if portal else None
+    if (
+        user is None
+        or not is_reset_eligible(user)
+        or User.objects.normalize_email(user.email) != identity.get('email')
+        or user.auth_revision != identity.get('auth_revision')
+        or (expected_role is not None and user.role != expected_role)
+        # Admin reset links are issued only by the authenticated admin-account
+        # workflow and always carry this explicit portal binding.
+        or (user.is_admin_role and portal != 'admin')
+    ):
+        return None
+    return user
+
+
+def validate_reset_token(token, portal=None):
+    """Return the account a reset link belongs to without consuming the link."""
+    user = _reset_token_user(token, portal)
+    if user is None:
+        raise DRFValidationError({'detail': _INVALID_LINK})
+    return user
+
+
+def reset_password(token, password, portal=None):
+    """Consume a reset link, set the new password and sign out every session."""
+    user = _reset_token_user(token, portal, consume=True)
+    if user is None:
+        raise DRFValidationError({'detail': _INVALID_LINK})
+
+    user.set_password(password)
+    fields = ['password', 'updated_at']
+    # Nhận được mail ở địa chỉ này = đã chứng minh quyền sở hữu hòm thư.
+    if not user.email_verified:
+        user.email_verified = True
+        fields.append('email_verified')
+    user.save(update_fields=fields)
+    revoke_refresh_tokens(user)
+    return user
 
 
 def send_password_reset_email(user, *, expected_email=None, expected_auth_revision=None):

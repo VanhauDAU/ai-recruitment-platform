@@ -11,11 +11,25 @@ from .account_management import (
     accounts_queryset,
     invitation_queryset,
 )
+from .account_resources import (
+    account_applications_queryset,
+    account_campaigns_queryset,
+    account_consents_queryset,
+    account_cvs_queryset,
+    account_jobs_queryset,
+    account_recruitment_needs_queryset,
+)
 from .admin_audit import audit_logs_queryset, current_audit_revision
-from .users import accessible_users_queryset, get_accessible_user, linked_oauth_provider
+from .users import auth_session_history, linked_oauth_provider
 
 __all__ = [
-    'accessible_users_queryset',
+    'account_applications_queryset',
+    'account_campaigns_queryset',
+    'account_consents_queryset',
+    'account_cvs_queryset',
+    'account_jobs_queryset',
+    'account_recruitment_needs_queryset',
+    'auth_session_history',
     'account_activity_queryset',
     'account_email_change_impact',
     'account_revoke_sessions_impact',
@@ -26,7 +40,6 @@ __all__ = [
     'accounts_queryset',
     'audit_logs_queryset',
     'current_audit_revision',
-    'get_accessible_user',
     'invitation_queryset',
     'linked_oauth_provider',
 ]

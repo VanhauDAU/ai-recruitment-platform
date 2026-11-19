@@ -78,7 +78,7 @@ class AdminJobReportSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
-    def get_brand_slug(self, obj):
+    def get_brand_slug(self, obj) -> str | None:
         return obj.job.company.slug if obj.job.company.has_brand_page else None
 
 

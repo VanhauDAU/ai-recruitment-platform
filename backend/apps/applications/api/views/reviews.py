@@ -2,6 +2,7 @@
 
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import permissions, serializers, status
 from rest_framework.exceptions import ValidationError
@@ -79,7 +80,12 @@ class RecruiterReviewLinkListCreateView(APIView):
         )
 
 
-@extend_schema(tags=['applications-v2'], summary='Thu hồi link mời đánh giá', request=None)
+@extend_schema(
+    tags=['applications-v2'],
+    summary='Thu hồi link mời đánh giá',
+    request=None,
+    responses={200: ReviewLinkSerializer},
+)
 class RecruiterReviewLinkRevokeView(APIView):
     permission_classes = [IsEmployer]
 
@@ -127,7 +133,10 @@ class PublicApplicationReviewView(APIView):
     throttle_classes = [ClientIPScopedRateThrottle]
     throttle_scope = 'application_review'
 
-    @extend_schema(summary='Người được mời xem hồ sơ đã ẩn thông tin liên hệ')
+    @extend_schema(
+        summary='Người được mời xem hồ sơ đã ẩn thông tin liên hệ',
+        responses={200: OpenApiTypes.OBJECT},
+    )
     def get(self, request, token):
         try:
             link = open_review_link(token, request=request)

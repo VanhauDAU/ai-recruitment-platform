@@ -1,66 +1,31 @@
 from django.conf import settings
-from django.core.files.base import File
-from django.db import transaction
-from django.db.models import Max
-from drf_spectacular.utils import extend_schema, inline_serializer
+from drf_spectacular.utils import extend_schema, extend_schema_view, inline_serializer
 from rest_framework import generics, parsers, serializers, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import IsEmployer
-from apps.employers.domain.page_content import GALLERY_LIMIT
-from apps.uploads.services import UploadServiceError, claim_clean_upload
-from common.db.public_id import generate_public_id
-from common.storage.media import delete_local_media_url, save_image_upload, validate_image_upload
-from common.storage.r2 import private_media_storage
+from common.storage.media import validate_image_upload
 
-from ...models import CompanyImage, CompanyMediaUpload, CompanyUpdateRequest, RecruiterProfile
-from ...models.page_access import resolve_company_page_access
-from ...services import (
-    REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
-    EmployerUploadStructureError,
-    lock_company_update_request,
-    snapshot_company_update_request,
-    validate_employer_upload_structure,
+from ...models import CompanyImage
+from ...selectors import (
+    company_changes_require_update_request,
+    requester_editable_company_update_request,
 )
-from ..exceptions import EmployerUploadSessionResponse, UploadSessionRequiredResponse
+from ...services import delete_company_gallery_image, remove_company_image, save_company_image
+from ..exceptions import UploadSessionRequiredResponse
+from ..permissions import require_company_media_editor
 from ..serializers import CompanyImageSerializer, CompanySerializer
-from .onboarding import _require_company
-
-EMPLOYER_MEDIA_PURPOSE = 'employer_company_update'
-EMPLOYER_MEDIA_CLAIM_SCOPE = 'employer_company_media'
 
 
-def _require_media_editor(user):
-    """The owner (ER-D05), or a member the page policy lets edit content now."""
-    recruiter = _require_company(user)
-    if (
-        recruiter.company_role != RecruiterProfile.CompanyRole.OWNER
-        and not resolve_company_page_access(recruiter).can_edit_content
-    ):
-        raise ValidationError(
-            {
-                'detail': (
-                    'Chỉ quản lý công ty hoặc người được cấp quyền biên tập '
-                    'trang công ty được thực hiện thao tác này.'
-                )
-            }
-        )
-    return recruiter
-
-
-def _approval_is_required(company):
-    """Initial onboarding may upload media directly; later edits need a request."""
-    return company.recruiter_verification_cases.exists() or company.update_requests.exists()
-
-
-def _get_update_request(request, company):
+def _media_update_request(request, company):
+    """The update request named by the client; required once approval applies."""
     update_request_id = request.data.get('update_request') or request.query_params.get(
         'update_request'
     )
     if not update_request_id:
-        if _approval_is_required(company):
+        if company_changes_require_update_request(company):
             raise ValidationError(
                 {
                     'update_request': (
@@ -70,60 +35,25 @@ def _get_update_request(request, company):
                 }
             )
         return None
-    update_request = CompanyUpdateRequest.objects.filter(
-        public_id=update_request_id,
+    update_request = requester_editable_company_update_request(
         company=company,
-        requested_by=request.user,
-        status__in=REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
-    ).first()
+        requester=request.user,
+        public_id=update_request_id,
+    )
     if update_request is None:
         raise ValidationError({'update_request': 'Không tìm thấy yêu cầu cập nhật đang chờ.'})
     return update_request
 
 
-def _save_scanned_image_derivative(*, request, company, update_request, kind, public_id):
-    try:
-        asset = claim_clean_upload(
-            owner=request.user,
-            public_id=public_id,
-            expected_purpose=EMPLOYER_MEDIA_PURPOSE,
-            claim_scope=EMPLOYER_MEDIA_CLAIM_SCOPE,
-            claim_reference=generate_public_id('cma'),
+def _media_response(request, company, update_request):
+    if update_request is not None:
+        return Response(
+            {
+                'update_request': update_request.public_id,
+                'lock_version': update_request.lock_version,
+            }
         )
-    except UploadServiceError as error:
-        raise EmployerUploadSessionResponse(error) from error
-
-    if asset.size_bytes > settings.IMAGE_UPLOAD_MAX_SIZE:
-        raise ValidationError({'upload_session': 'Ảnh phải nhỏ hơn 5 MB.'})
-    if asset.content_type not in {'image/jpeg', 'image/png', 'image/webp'}:
-        raise ValidationError({'upload_session': 'Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.'})
-    try:
-        validate_employer_upload_structure(asset)
-    except EmployerUploadStructureError as error:
-        raise ValidationError(
-            {'upload_session': 'Nội dung ảnh bị lỗi hoặc không đúng định dạng khai báo.'}
-        ) from error
-
-    with private_media_storage().open(asset.storage_key, 'rb') as stored_file:
-        upload = File(stored_file, name=asset.original_filename)
-        upload.content_type = asset.content_type
-        saved = save_image_upload(
-            upload,
-            f'employers/{company.public_id}/{kind}s',
-            request=request,
-            max_dimensions=(2400, 1600),
-        )
-
-    CompanyMediaUpload.objects.create(
-        public_id=asset.claim_reference,
-        company=company,
-        uploaded_by=request.user,
-        update_request=update_request,
-        upload_asset=asset,
-        kind=kind,
-        public_path=saved['path'],
-    )
-    return saved
+    return Response(CompanySerializer(company, context={'request': request}).data)
 
 
 class CompanyImageUploadView(APIView):
@@ -165,110 +95,16 @@ class CompanyImageUploadView(APIView):
             if extension == 'gif':
                 raise ValidationError({'file': 'Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.'})
 
-        company = _require_media_editor(request.user).company
-        update_request = _get_update_request(request, company)
-        if (
-            self.kind == 'gallery'
-            and not update_request
-            and company.images.count() >= GALLERY_LIMIT
-        ):
-            return Response(
-                {'file': f'Thư viện công ty chỉ được có tối đa {GALLERY_LIMIT} ảnh.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        saved = None
-        try:
-            with transaction.atomic():
-                if upload_session_public_id:
-                    saved = _save_scanned_image_derivative(
-                        request=request,
-                        company=company,
-                        update_request=update_request,
-                        kind=self.kind,
-                        public_id=upload_session_public_id,
-                    )
-                else:
-                    saved = save_image_upload(
-                        upload,
-                        f'employers/{company.public_id}/{self.kind}s',
-                        request=request,
-                        max_dimensions=(2400, 1600),
-                    )
-
-                if update_request is not None:
-                    company, update_request = lock_company_update_request(
-                        company_id=company.pk,
-                        update_request_id=update_request.pk,
-                    )
-                    if update_request.status not in REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES:
-                        raise ValidationError(
-                            {'update_request': 'Yêu cầu cập nhật này vừa được xử lý.'}
-                        )
-                    changes = dict(update_request.changes)
-                    replaced_path = ''
-                    if self.kind == 'gallery':
-                        additions = list(changes.get('gallery_additions', []))
-                        deletions = set(changes.get('gallery_deletions', []))
-                        final_count = (
-                            company.images.exclude(id__in=deletions).count() + len(additions) + 1
-                        )
-                        if final_count > GALLERY_LIMIT:
-                            raise ValidationError(
-                                {
-                                    'file': f'Thư viện công ty chỉ được có tối đa {GALLERY_LIMIT} ảnh.'
-                                }
-                            )
-                        additions.append(saved['path'])
-                        changes['gallery_additions'] = additions
-                        changes.pop('gallery_pending', None)
-                    elif self.kind == 'logo':
-                        replaced_path = changes.get('logo_url', '')
-                        changes['logo_url'] = saved['path']
-                        changes['has_no_logo'] = False
-                        changes.pop('logo_pending', None)
-                    else:
-                        replaced_path = changes.get('cover_image_url', '')
-                        changes['cover_image_url'] = saved['path']
-                        changes.pop('cover_pending', None)
-                    update_request.changes = changes
-                    update_request.save(update_fields=['changes', 'updated_at'])
-                    snapshot_company_update_request(
-                        update_request,
-                        actor=request.user,
-                    )
-                    if replaced_path:
-                        transaction.on_commit(lambda: delete_local_media_url(replaced_path))
-                elif self.kind == 'gallery':
-                    last_order = company.images.aggregate(value=Max('sort_order'))['value']
-                    CompanyImage.objects.create(
-                        company=company,
-                        image_url=saved['path'],
-                        sort_order=(last_order + 1) if last_order is not None else 0,
-                    )
-                else:
-                    field = 'logo_url' if self.kind == 'logo' else 'cover_image_url'
-                    delete_local_media_url(getattr(company, field))
-                    # Lưu key của storage thay vì URL tuyệt đối phụ thuộc localhost/domain.
-                    setattr(company, field, saved['path'])
-                    update_fields = [field, 'updated_at']
-                    if self.kind == 'logo':
-                        company.has_no_logo = False
-                        update_fields.append('has_no_logo')
-                    company.save(update_fields=update_fields)
-        except Exception:
-            if saved:
-                delete_local_media_url(saved['path'])
-            raise
-
-        if update_request is not None:
-            return Response(
-                {
-                    'update_request': update_request.public_id,
-                    'lock_version': update_request.lock_version,
-                }
-            )
-        return Response(CompanySerializer(company, context={'request': request}).data)
+        company = require_company_media_editor(request.user).company
+        company, update_request = save_company_image(
+            user=request.user,
+            company=company,
+            kind=self.kind,
+            update_request=_media_update_request(request, company),
+            upload=upload,
+            upload_session_public_id=upload_session_public_id,
+        )
+        return _media_response(request, company, update_request)
 
     @extend_schema(
         summary='Xóa logo hoặc ảnh bìa công ty',
@@ -279,48 +115,14 @@ class CompanyImageUploadView(APIView):
     def delete(self, request):
         if self.kind == 'gallery':
             return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-        company = _require_media_editor(request.user).company
-        update_request = _get_update_request(request, company)
-        field = 'logo_url' if self.kind == 'logo' else 'cover_image_url'
-        if update_request is not None:
-            with transaction.atomic():
-                company, update_request = lock_company_update_request(
-                    company_id=company.pk,
-                    update_request_id=update_request.pk,
-                )
-                if update_request.status not in REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES:
-                    raise ValidationError(
-                        {'update_request': 'Yêu cầu cập nhật này vừa được xử lý.'}
-                    )
-                changes = dict(update_request.changes)
-                staged_path = changes.pop(field, '')
-                changes.pop(f'{self.kind}_pending', None)
-                if self.kind == 'logo':
-                    changes['has_no_logo'] = True
-                else:
-                    changes['cover_image_url'] = ''
-                update_request.changes = changes
-                update_request.save(update_fields=['changes', 'updated_at'])
-                snapshot_company_update_request(
-                    update_request,
-                    actor=request.user,
-                )
-                if staged_path:
-                    transaction.on_commit(lambda: delete_local_media_url(staged_path))
-            return Response(
-                {
-                    'update_request': update_request.public_id,
-                    'lock_version': update_request.lock_version,
-                }
-            )
-        delete_local_media_url(getattr(company, field))
-        setattr(company, field, '')
-        update_fields = [field, 'updated_at']
-        if self.kind == 'logo':
-            company.has_no_logo = True
-            update_fields.append('has_no_logo')
-        company.save(update_fields=update_fields)
-        return Response(CompanySerializer(company, context={'request': request}).data)
+        company = require_company_media_editor(request.user).company
+        company, update_request = remove_company_image(
+            user=request.user,
+            company=company,
+            kind=self.kind,
+            update_request=_media_update_request(request, company),
+        )
+        return _media_response(request, company, update_request)
 
 
 class CompanyLogoUploadView(CompanyImageUploadView):
@@ -339,16 +141,24 @@ class CompanyGalleryUploadView(CompanyImageUploadView):
         return super().delete(request)
 
 
+@extend_schema_view(
+    delete=extend_schema(
+        summary='Xóa ảnh khỏi thư viện công ty trước khi nộp hồ sơ công ty',
+        responses={204: None},
+        tags=['employer'],
+    )
+)
 class CompanyGalleryDeleteView(generics.DestroyAPIView):
     serializer_class = CompanyImageSerializer
     permission_classes = [IsEmployer]
 
     def get_queryset(self):
-        return CompanyImage.objects.filter(company=_require_media_editor(self.request.user).company)
+        return CompanyImage.objects.filter(
+            company=require_company_media_editor(self.request.user).company
+        )
 
     def perform_destroy(self, instance):
-        company = instance.company
-        if _approval_is_required(company):
+        if company_changes_require_update_request(instance.company):
             raise ValidationError(
                 {
                     'update_request': (
@@ -356,5 +166,4 @@ class CompanyGalleryDeleteView(generics.DestroyAPIView):
                     )
                 }
             )
-        delete_local_media_url(instance.image_url)
-        instance.delete()
+        delete_company_gallery_image(instance)

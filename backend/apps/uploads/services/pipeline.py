@@ -823,6 +823,17 @@ def request_scan_retry(*, owner, public_id):
         return session
 
 
+def enqueue_upload_scan(session_id):
+    """Ask a worker to scan now; periodic reconciliation retries if the broker is down."""
+    # Import lazily: the scan task imports this service module.
+    from ..tasks import scan_upload_session
+
+    try:
+        scan_upload_session.delay(session_id)
+    except Exception:  # noqa: BLE001 - periodic reconciliation owns broker recovery
+        logger.warning('Unable to enqueue owner upload scan.')
+
+
 def cancel_upload_session(*, owner, public_id):
     now = timezone.now()
     with transaction.atomic():

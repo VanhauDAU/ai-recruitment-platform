@@ -1,4 +1,6 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.cv_templates.domain.renderers import layout_registry
@@ -15,7 +17,6 @@ from ...models import (
     CvSampleContent,
     CvSampleGeneration,
     CvTemplate,
-    CvTemplateCategoryLink,
     CvTemplateVersion,
     ExperienceBand,
 )
@@ -36,7 +37,7 @@ class CvTemplateVersionAdminSerializer(serializers.ModelSerializer):
             'created_at',
         ]
 
-    def get_sections(self, obj):
+    def get_sections(self, obj) -> list[dict]:
         return [
             {
                 'section_key': section.section_definition.section_key,
@@ -47,7 +48,7 @@ class CvTemplateVersionAdminSerializer(serializers.ModelSerializer):
             for section in sorted(obj.sections.all(), key=lambda item: item.default_order)
         ]
 
-    def get_published_by_name(self, obj):
+    def get_published_by_name(self, obj) -> str:
         user = obj.published_by
         return (getattr(user, 'full_name', '') or user.email) if user else ''
 
@@ -99,7 +100,7 @@ class CvTemplateAdminSerializer(serializers.ModelSerializer):
     def _links(self, obj):
         return sorted(obj.color_links.all(), key=lambda link: link.sort_order)
 
-    def get_colors(self, obj):
+    def get_colors(self, obj) -> list[dict]:
         return [
             {
                 'public_id': link.color.public_id,
@@ -110,36 +111,11 @@ class CvTemplateAdminSerializer(serializers.ModelSerializer):
             for link in self._links(obj)
         ]
 
-    def get_thumbnail_url(self, obj):
+    def get_thumbnail_url(self, obj) -> str:
         link = next((link for link in self._links(obj) if link.is_default), None)
         if link is None or not link.thumbnail_url:
             return ''
         return media_url_from_value(link.thumbnail_url, request=self.context.get('request'))
-
-    def _save_categories(self, template, categories):
-        if categories is None:
-            return
-        template.category_links.exclude(category__in=categories).delete()
-        existing = set(template.category_links.values_list('category_id', flat=True))
-        CvTemplateCategoryLink.objects.bulk_create(
-            [
-                CvTemplateCategoryLink(template=template, category=category)
-                for category in categories
-                if category.pk not in existing
-            ]
-        )
-
-    def create(self, validated_data):
-        categories = validated_data.pop('categories', None)
-        template = super().create(validated_data)
-        self._save_categories(template, categories)
-        return template
-
-    def update(self, instance, validated_data):
-        categories = validated_data.pop('categories', None)
-        template = super().update(instance, validated_data)
-        self._save_categories(template, categories)
-        return template
 
 
 class TemplateVersionConfigSerializer(serializers.Serializer):
@@ -226,7 +202,7 @@ class CvBackgroundAdminSerializer(serializers.ModelSerializer):
             'updated_at',
         ]
 
-    def get_url(self, obj):
+    def get_url(self, obj) -> str:
         from django.urls import reverse
 
         path = reverse('cv-v2-asset-content', kwargs={'asset_public_id': obj.public_id})
@@ -234,6 +210,7 @@ class CvBackgroundAdminSerializer(serializers.ModelSerializer):
         return request.build_absolute_uri(path) if request else path
 
 
+@extend_schema_field(OpenApiTypes.STR)
 class PositionProfileField(serializers.SlugRelatedField):
     """Nhận và trả mã `JobCategory` thay cho khóa nội bộ của `CvPositionProfile`."""
 

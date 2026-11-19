@@ -77,7 +77,7 @@ class JobChangesRequestedTests(JobModerationFixture, APITestCase):
     def edit_title(self, title):
         serializer = EmployerJobWriteSerializer(self.job, data={'title': title}, partial=True)
         serializer.is_valid(raise_exception=True)
-        return update_employer_job(serializer, self.employer)
+        return update_employer_job(self.job, self.employer, serializer.validated_data)
 
     def employer_hold(self):
         self.client.force_authenticate(self.employer)

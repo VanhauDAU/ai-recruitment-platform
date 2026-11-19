@@ -1,6 +1,8 @@
 """Public endpoints: tracked-link redirect, landing page data and its SEO shell."""
 
 from django.http import Http404
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle
@@ -36,6 +38,11 @@ class LandingThrottle(AnonRateThrottle):
     rate = '120/min'
 
 
+@extend_schema(
+    tags=['campaigns'],
+    summary='Dữ liệu trang landing chiến dịch',
+    responses=OpenApiTypes.OBJECT,
+)
 class CampaignLandingView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = []

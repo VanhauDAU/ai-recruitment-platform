@@ -209,13 +209,6 @@ def delete_stale_snapshot(key):
     public_media_storage().delete(key)
 
 
-def enqueue_template_snapshots(template):
-    for link_id in template.color_links.values_list('pk', flat=True):
-        transaction.on_commit(
-            lambda link_id=link_id: generate_template_color_snapshot.delay(link_id)
-        )
-
-
 @shared_task
 def regenerate_all_template_snapshots():
     for link_id in (

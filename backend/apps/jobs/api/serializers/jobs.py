@@ -1,4 +1,5 @@
-from django.db import transaction
+from datetime import date
+
 from django.utils.html import strip_tags
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
@@ -11,14 +12,8 @@ from common.storage.media import media_url_from_value
 from ...models import (
     Benefit,
     Job,
-    JobApplicationContact,
-    JobApplicationEmail,
-    JobBenefit,
     JobCategoryAssignment,
-    JobLanguageRequirement,
-    JobLocation,
     JobSkill,
-    JobWorkSchedule,
 )
 from ...models.querysets import JobState, job_visibility_issues
 from ...selectors.employer import (
@@ -114,15 +109,6 @@ class JobSerializer(serializers.ModelSerializer):
         max_length=3,
         required=False,
     )
-
-    NESTED_RELATIONS = {
-        'job_skills': (JobSkill, 'job_skills'),
-        'category_assignments': (JobCategoryAssignment, 'category_assignments'),
-        'job_locations': (JobLocation, 'job_locations'),
-        'work_schedules': (JobWorkSchedule, 'work_schedules'),
-        'job_benefits': (JobBenefit, 'job_benefits'),
-        'language_requirements': (JobLanguageRequirement, 'language_requirements'),
-    }
 
     class Meta:
         model = Job
@@ -326,38 +312,13 @@ class JobSerializer(serializers.ModelSerializer):
                     {relation: 'Danh sách không được chứa mục trùng.'}
                 )
 
-    @transaction.atomic
-    def create(self, validated_data):
-        nested = self._pop_nested(validated_data)
-        job = Job.objects.create(**validated_data)
-        self._replace_nested(job, nested)
-        return job
-
-    @transaction.atomic
-    def update(self, instance, validated_data):
-        nested = self._pop_nested(validated_data, missing=None)
-        job = super().update(instance, validated_data)
-        self._replace_nested(job, nested)
-        return job
-
-    def _pop_nested(self, validated_data, missing=()):
-        return {field: validated_data.pop(field, missing) for field in self.NESTED_RELATIONS}
-
-    def _replace_nested(self, job, nested):
-        for field, values in nested.items():
-            if values is None:
-                continue
-            model, related_name = self.NESTED_RELATIONS[field]
-            getattr(job, related_name).all().delete()
-            model.objects.bulk_create([model(job=job, **item) for item in values])
-
     @extend_schema_field(serializers.CharField(allow_null=True))
     def get_company_slug(self, obj):
         # A held company page answers 404, so no job surface may link to it.
         company = obj.company
         return None if company.content_policy_hold else company.slug
 
-    def get_company_logo_url(self, obj):
+    def get_company_logo_url(self, obj) -> str | None:
         return media_url_from_value(obj.company.logo_url, request=self.context.get('request'))
 
     def _badge_payload(self, obj):
@@ -375,11 +336,11 @@ class JobSerializer(serializers.ModelSerializer):
             return cached[key]
         return self._badge_payload(obj)['verified']
 
-    def get_brand_slug(self, obj):
+    def get_brand_slug(self, obj) -> str | None:
         company = obj.company
         return company.slug if company.has_brand_page else None
 
-    def get_company_cover_url(self, obj):
+    def get_company_cover_url(self, obj) -> str | None:
         return media_url_from_value(
             obj.company.cover_image_url, request=self.context.get('request')
         )
@@ -395,11 +356,11 @@ class JobSerializer(serializers.ModelSerializer):
             None,
         )
 
-    def get_category(self, obj):
+    def get_category(self, obj) -> int | None:
         assignment = self._primary_assignment(obj)
         return assignment.category_id if assignment else None
 
-    def get_locations_detail(self, obj):
+    def get_locations_detail(self, obj) -> list[dict]:
         provinces = []
         seen = set()
         for item in obj.job_locations.all():
@@ -410,16 +371,16 @@ class JobSerializer(serializers.ModelSerializer):
             provinces.append({'id': province.pk, 'name': province.name, 'level': 'province'})
         return provinces
 
-    def get_short_description(self, obj):
+    def get_short_description(self, obj) -> str:
         return strip_tags(obj.description).strip()[:240]
 
-    def get_is_salary_visible(self, obj):
+    def get_is_salary_visible(self, obj) -> bool:
         return obj.salary_type != Job.SalaryType.NEGOTIABLE
 
-    def get_application_deadline(self, obj):
+    def get_application_deadline(self, obj) -> date | None:
         return obj.deadline
 
-    def get_presentation(self, obj):
+    def get_presentation(self, obj) -> dict:
         return job_presentation(obj)
 
 
@@ -594,32 +555,32 @@ class JobDetailSerializer(JobSerializer):
     def get_company_verification(self, obj):
         return self._badge_payload(obj)
 
-    def get_category_name(self, obj):
+    def get_category_name(self, obj) -> str:
         assignment = self._primary_assignment(obj)
         return assignment.category.name if assignment else ''
 
-    def get_company_description(self, obj):
+    def get_company_description(self, obj) -> str:
         return rich_text_plain_text(obj.company.description)
 
-    def get_company_industries(self, obj):
+    def get_company_industries(self, obj) -> list[str]:
         return [industry.name for industry in obj.company.industries.all()]
 
     @staticmethod
     def _category_summary(category):
         return {'id': category.pk, 'name': category.name, 'slug': category.slug}
 
-    def get_primary_specialization(self, obj):
+    def get_primary_specialization(self, obj) -> dict | None:
         assignment = self._primary_assignment(obj)
         return self._category_summary(assignment.category) if assignment else None
 
-    def get_domain_knowledge(self, obj):
+    def get_domain_knowledge(self, obj) -> list[dict]:
         return [
             self._category_summary(item.category)
             for item in obj.category_assignments.all()
             if item.role == JobCategoryAssignment.Role.DOMAIN_KNOWLEDGE
         ]
 
-    def get_workplace_groups(self, obj):
+    def get_workplace_groups(self, obj) -> list[dict]:
         """Địa điểm làm việc nhóm theo tỉnh/thành: mỗi nhóm gồm các dòng địa chỉ phường/xã."""
         groups = {}
         for item in obj.job_locations.all():
@@ -644,7 +605,7 @@ class JobDetailSerializer(JobSerializer):
             )
         return list(groups.values())
 
-    def get_requirement_tags(self, obj):
+    def get_requirement_tags(self, obj) -> list[str]:
         tags = []
         if obj.experience_years == Job.ExperienceYears.NONE:
             tags.append('Không yêu cầu kinh nghiệm')
@@ -665,20 +626,20 @@ class JobDetailSerializer(JobSerializer):
         # Kỹ năng không nằm ở hàng tag tóm tắt nữa: đã có khối riêng dưới "Yêu cầu ứng viên".
         return tags
 
-    def get_benefit_tags(self, obj):
+    def get_benefit_tags(self, obj) -> list[str]:
         return [item.benefit.name for item in obj.job_benefits.all()]
 
     @staticmethod
     def _skill_names(obj, importance):
         return [item.skill.name for item in obj.job_skills.all() if item.importance == importance]
 
-    def get_required_skills(self, obj):
+    def get_required_skills(self, obj) -> list[str]:
         return self._skill_names(obj, JobSkill.Importance.REQUIRED)
 
-    def get_preferred_skills(self, obj):
+    def get_preferred_skills(self, obj) -> list[str]:
         return self._skill_names(obj, JobSkill.Importance.PREFERRED)
 
-    def get_benefit_groups(self, obj):
+    def get_benefit_groups(self, obj) -> list[dict]:
         """Quyền lợi đã chọn, gom theo danh mục và giữ thứ tự khai báo của Benefit.Category."""
         names_by_category = {}
         for item in obj.job_benefits.all():
@@ -837,33 +798,6 @@ class EmployerJobWriteSerializer(EmployerJobVisibilityHoldMixin, JobSerializer):
             )
         return campaign
 
-    @transaction.atomic
-    def create(self, validated_data):
-        self._ai_generation_public_id = validated_data.pop('ai_generation_public_id', '')
-        contact = validated_data.pop('application_contact', None)
-        job = super().create(validated_data)
-        self._replace_contact(job, contact)
-        return job
-
-    @transaction.atomic
-    def update(self, instance, validated_data):
-        marker = object()
-        contact = validated_data.pop('application_contact', marker)
-        job = super().update(instance, validated_data)
-        if contact is not marker:
-            self._replace_contact(job, contact)
-        return job
-
-    def _replace_contact(self, job, contact_data):
-        JobApplicationContact.objects.filter(job=job).delete()
-        if not contact_data:
-            return
-        emails = contact_data.pop('emails')
-        contact = JobApplicationContact.objects.create(job=job, **contact_data)
-        JobApplicationEmail.objects.bulk_create(
-            [JobApplicationEmail(contact=contact, **item) for item in emails]
-        )
-
 
 class EmployerJobApplicationSummarySerializer(serializers.Serializer):
     total = serializers.IntegerField()
@@ -966,7 +900,7 @@ class EmployerJobListSerializer(EmployerJobVisibilityHoldMixin, PublicJobListSer
         list_serializer_class = serializers.ListSerializer
         read_only_fields = fields
 
-    def get_candidate_previews(self, obj):
+    def get_candidate_previews(self, obj) -> list[dict]:
         return [
             {
                 **preview,

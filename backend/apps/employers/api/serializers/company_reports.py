@@ -90,7 +90,7 @@ class AdminCompanyReportSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
-    def get_company(self, obj):
+    def get_company(self, obj) -> dict:
         company = obj.company
         return {
             'public_id': company.public_id,
@@ -100,7 +100,7 @@ class AdminCompanyReportSerializer(serializers.ModelSerializer):
             'content_policy_hold': company.content_policy_hold,
         }
 
-    def get_section_title(self, obj):
+    def get_section_title(self, obj) -> str:
         return SECTION_TITLES.get(obj.section_key, '')
 
 

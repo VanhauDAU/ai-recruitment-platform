@@ -10,14 +10,10 @@ from common.storage.media import media_url_from_value
 from ...models import User
 from ...services import login_guard
 from ...services.access import is_account_accessible
+from ...services.refresh_cookies import PORTAL_ROLE_BY_NAME
 
-# Role của tài khoản tương ứng mỗi cổng — dùng để resolve đúng tài khoản khi
-# đăng nhập/đăng ký/quên mật khẩu (một email có thể có nhiều tài khoản khác cổng).
-PORTAL_ROLE_BY_NAME = {
-    'main': User.Role.CANDIDATE,
-    'employer': User.Role.EMPLOYER,
-    'admin': User.Role.ADMIN,
-}
+# Role tự đăng ký được; tài khoản admin chỉ tạo qua lời mời.
+SELF_SERVICE_ROLES = (User.Role.CANDIDATE, User.Role.EMPLOYER)
 
 
 def password_field():
@@ -45,7 +41,7 @@ def admin_access_payload(user):
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = password_field()
-    role = serializers.ChoiceField(choices=[User.Role.CANDIDATE, User.Role.EMPLOYER])
+    role = serializers.ChoiceField(choices=SELF_SERVICE_ROLES)
     captcha_token = serializers.CharField(write_only=True)
 
     class Meta:
@@ -68,10 +64,6 @@ class RegisterSerializer(serializers.ModelSerializer):
             )
         return attrs
 
-    def create(self, validated_data):
-        validated_data.pop('captcha_token', None)
-        return User.objects.create_user(**validated_data)
-
 
 class RegisterEmailAvailabilitySerializer(serializers.Serializer):
     """Normalize the email before the debounced registration pre-check.
@@ -82,7 +74,7 @@ class RegisterEmailAvailabilitySerializer(serializers.Serializer):
 
     email = serializers.EmailField()
     role = serializers.ChoiceField(
-        choices=[User.Role.CANDIDATE, User.Role.EMPLOYER],
+        choices=SELF_SERVICE_ROLES,
         required=False,
         default=User.Role.CANDIDATE,
     )
@@ -126,10 +118,10 @@ class SessionUserSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
-    def get_avatar_url(self, obj):
+    def get_avatar_url(self, obj) -> str:
         return media_url_from_value(obj.avatar_url, request=self.context.get('request'))
 
-    def get_job_preferences_configured(self, obj):
+    def get_job_preferences_configured(self, obj) -> bool:
         if not obj.is_candidate:
             return False
         try:
@@ -139,10 +131,10 @@ class SessionUserSerializer(serializers.ModelSerializer):
             # introduced; the candidate endpoint will create the profile once.
             return False
 
-    def get_has_usable_password(self, obj):
+    def get_has_usable_password(self, obj) -> bool:
         return obj.has_usable_password()
 
-    def get_employer_onboarding_required(self, obj):
+    def get_employer_onboarding_required(self, obj) -> bool:
         return self.get_employer_onboarding_step(obj) != 'complete' if obj.is_employer else False
 
     def _employer_profile(self, obj):
@@ -187,7 +179,7 @@ class SessionUserSerializer(serializers.ModelSerializer):
                 )
         return cached[obj.pk]
 
-    def get_employer_onboarding_step(self, obj):
+    def get_employer_onboarding_step(self, obj) -> str | None:
         if not obj.is_employer:
             return None
         recruiter = self._employer_profile(obj)
@@ -218,7 +210,7 @@ class SessionUserSerializer(serializers.ModelSerializer):
             return False
         return self._employer_readiness(obj)['job_workspace_ready']
 
-    def get_admin_access(self, obj):
+    def get_admin_access(self, obj) -> dict | None:
         return admin_access_payload(obj)
 
 

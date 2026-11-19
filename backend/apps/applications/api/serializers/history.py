@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.candidates.models import CandidateNotification
@@ -45,6 +46,7 @@ class ApplicationStatusHistorySerializer(serializers.ModelSerializer):
             return 'undone'
         return 'scheduled'
 
+    @extend_schema_field(CandidateNoticeSerializer(allow_null=True))
     def get_candidate_notice(self, obj):
         state = self._notice_state(obj)
         if state is None:
@@ -58,7 +60,7 @@ class ApplicationStatusHistorySerializer(serializers.ModelSerializer):
             }
         ).data
 
-    def get_can_undo(self, obj):
+    def get_can_undo(self, obj) -> bool:
         # Mirrors undo_latest_status_change's guards so the button never lies.
         return bool(
             obj.pk == self.context.get('undoable_history_id')

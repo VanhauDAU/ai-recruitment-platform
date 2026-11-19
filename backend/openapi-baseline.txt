@@ -1,4 +1,0 @@
-# Số lỗi/cảnh báo unique của drf-spectacular còn tồn tại (ADR-0022) — chỉ được giảm.
-# Kiểm bằng scripts/check_openapi_schema.sh; mục tiêu GĐ3: 0 / 0.
-errors=70
-warnings=340

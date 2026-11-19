@@ -15,6 +15,7 @@ from django.utils import timezone
 from apps.accounts.models import User
 from apps.accounts.services import record_admin_action
 from apps.privacy.domain import VIEWER_SIGNING_SALT
+from common.api.exceptions import DomainError
 from common.metrics import record_metric
 from common.vietnam_time import vietnam_now, vietnam_today
 
@@ -28,17 +29,38 @@ from ..models import (
 HEX_COLOR_RE = re.compile(r'^#[0-9A-Fa-f]{6}$')
 
 
-class StaleAnnouncementRevision(Exception):
+class StaleAnnouncementRevision(DomainError):
+    status_code = 409
+    code = 'announcement_revision_stale'
+
     def __init__(self, current_revision_token):
         self.current_revision_token = current_revision_token
         super().__init__('Announcement revision token is stale.')
 
+    def payload(self):
+        return {
+            'code': self.code,
+            'detail': 'Thông báo đã được thay đổi. Hãy tải lại và kiểm tra trước khi tiếp tục.',
+            'current_revision_token': self.current_revision_token,
+        }
 
-class StaleAnnouncementState(Exception):
+
+class StaleAnnouncementState(DomainError):
+    status_code = 409
+    code = 'announcement_state_stale'
+
     def __init__(self, *, current_revision, current_dismissal_version):
         self.current_revision = current_revision
         self.current_dismissal_version = current_dismissal_version
         super().__init__('Announcement state contract is stale.')
+
+    def payload(self):
+        return {
+            'code': self.code,
+            'detail': 'Thông báo đã thay đổi. Hãy tải lại feed trước khi thao tác.',
+            'current_revision': self.current_revision,
+            'current_dismissal_version': self.current_dismissal_version,
+        }
 
 
 REVISION_COPY_FIELDS = (
@@ -653,6 +675,34 @@ def _increment_announcement_metric(*, revision, surface, event):
     AnnouncementDailyMetric.objects.filter(pk=metric.pk).update(
         **{field: F(field) + 1 for field in fields}
     )
+
+
+def attach_published_revisions(events):
+    """Keep events that target a published revision shown on that surface.
+
+    Each kept event gains ``revision_object``; the rest are counted as invalid.
+    """
+    public_ids = {event['public_id'] for event in events}
+    revisions = AnnouncementRevision.objects.filter(
+        announcement__public_id__in=public_ids,
+        published_at__isnull=False,
+    ).select_related('announcement')
+    revisions_by_key = {
+        (revision.announcement.public_id, revision.number): revision for revision in revisions
+    }
+    valid_events = []
+    for event in events:
+        revision = revisions_by_key.get((event['public_id'], event['revision']))
+        if revision is None or event['surface'] not in revision.surfaces:
+            record_metric(
+                'announcement_analytics',
+                event=event['event'],
+                reason='invalid_event',
+                surface=event['surface'],
+            )
+            continue
+        valid_events.append({**event, 'revision_object': revision})
+    return valid_events
 
 
 def record_consented_announcement_events(request, events):

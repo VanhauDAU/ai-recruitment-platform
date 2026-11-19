@@ -278,10 +278,10 @@ class AdminVerificationDocumentSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
-    def get_duplicate_company_count(self, obj):
+    def get_duplicate_company_count(self, obj) -> int:
         return getattr(obj, 'duplicate_company_count', 0)
 
-    def get_source_url(self, obj):
+    def get_source_url(self, obj) -> str | None:
         if obj.file_url.startswith(('http://', 'https://')):
             return obj.file_url
         return None
@@ -352,16 +352,16 @@ class AdminVerificationCaseListSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
-    def get_phone_verified(self, obj):
+    def get_phone_verified(self, obj) -> bool:
         return obj.recruiter.has_verified_phone
 
-    def get_rejection_limit(self, obj):
+    def get_rejection_limit(self, obj) -> int:
         return 3
 
-    def get_resubmission_locked(self, obj):
+    def get_resubmission_locked(self, obj) -> bool:
         return obj.resubmission_locked_at is not None
 
-    def get_company(self, obj):
+    def get_company(self, obj) -> dict | None:
         if obj.company_id is None:
             return None
         return {
@@ -375,7 +375,7 @@ class AdminVerificationCaseListSerializer(serializers.ModelSerializer):
             ),
         }
 
-    def get_missing_steps(self, obj):
+    def get_missing_steps(self, obj) -> list[str]:
         checks = verification_checks(obj)
         return [key for key, value in checks.items() if not value and key != 'case_approved']
 
@@ -409,10 +409,10 @@ class AdminVerificationCaseDetailSerializer(AdminVerificationCaseListSerializer)
             'tax_lookup_evidence',
         ]
 
-    def get_checks(self, obj):
+    def get_checks(self, obj) -> dict[str, bool]:
         return verification_checks(obj)
 
-    def get_recruiter(self, obj):
+    def get_recruiter(self, obj) -> dict:
         recruiter = obj.recruiter
         return {
             'position_title': recruiter.position_title,
@@ -431,7 +431,7 @@ class AdminVerificationCaseDetailSerializer(AdminVerificationCaseListSerializer)
             'dpa_accepted_at': recruiter.dpa_accepted_at,
         }
 
-    def get_tax_lookup_evidence(self, obj):
+    def get_tax_lookup_evidence(self, obj) -> dict | None:
         evidence = _latest_revision_evidence(obj)
         if evidence is None:
             return None
@@ -837,14 +837,14 @@ class AdminCompanyUpdateRequestSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
-    def get_company(self, obj):
+    def get_company(self, obj) -> dict:
         return {
             'public_id': obj.company.public_id,
             'name': obj.company.company_name,
             'tax_code': obj.company.tax_code or '',
         }
 
-    def get_current_values(self, obj):
+    def get_current_values(self, obj) -> dict:
         company = obj.company
         assignments = list(company.company_industries.all())
         primary_assignment = next((item for item in assignments if item.is_primary), None)
@@ -872,7 +872,7 @@ class AdminCompanyUpdateRequestSerializer(serializers.ModelSerializer):
                 values[field] = getattr(company, field)
         return values
 
-    def get_industry_labels(self, obj):
+    def get_industry_labels(self, obj) -> dict[str, str]:
         industry_ids = {item.industry_id for item in obj.company.company_industries.all()}
         industry_ids.update(obj.changes.get('industries') or [])
         if obj.changes.get('primary_industry'):
@@ -883,7 +883,7 @@ class AdminCompanyUpdateRequestSerializer(serializers.ModelSerializer):
             for industry_id in industry_ids
         }
 
-    def get_media_previews(self, obj):
+    def get_media_previews(self, obj) -> dict:
         changes = obj.changes or {}
         request = self.context.get('request')
         previews = {
@@ -919,7 +919,7 @@ class AdminCompanyUpdateRequestSerializer(serializers.ModelSerializer):
             rows.update(load(company_ids))
         return rows[obj.company_id]
 
-    def get_previews(self, obj):
+    def get_previews(self, obj) -> dict:
         """Proposed benefits and offices with names an admin can read."""
         changes = obj.changes or {}
         previews = {}
@@ -938,7 +938,7 @@ class AdminCompanyUpdateRequestSerializer(serializers.ModelSerializer):
             previews['offices'] = _office_previews(changes['offices'], provinces)
         return previews
 
-    def get_tax_lookup_evidence(self, obj):
+    def get_tax_lookup_evidence(self, obj) -> dict | None:
         evidence = _latest_revision_evidence(obj)
         if evidence is None:
             return None

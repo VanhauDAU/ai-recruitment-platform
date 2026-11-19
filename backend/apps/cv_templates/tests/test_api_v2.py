@@ -421,7 +421,7 @@ class TemplateCatalogV2Tests(TestCase):
         # Checklist xuất bản có test riêng (test_admin_portal); ở đây chỉ kiểm hợp đồng
         # publish → snapshot.
         with (
-            patch('apps.cv_templates.api.views.admin.publish_checklist', return_value=[]),
+            patch('apps.cv_templates.services.publishing.publish_checklist', return_value=[]),
             patch(
                 'apps.cv_templates.tasks.template_assets.generate_template_color_snapshot.delay'
             ) as enqueue,

@@ -1,12 +1,13 @@
 """Public service boundary for shared upload infrastructure."""
 
-from .errors import UploadServiceError
+from .errors import UploadServiceError, upload_error
 from .pipeline import (
     ScanOutcome,
     cancel_upload_session,
     claim_clean_upload,
     cleanup_upload_objects,
     create_upload_session,
+    enqueue_upload_scan,
     expire_stale_upload_sessions,
     place_upload_legal_hold,
     process_upload_scan,
@@ -46,6 +47,7 @@ __all__ = [
     'classify_legacy_storage_key',
     'cleanup_upload_objects',
     'create_upload_session',
+    'enqueue_upload_scan',
     'expire_stale_upload_sessions',
     'get_upload_scanner',
     'place_upload_legal_hold',
@@ -55,5 +57,6 @@ __all__ = [
     'release_claimed_upload',
     'request_scan_retry',
     'store_quarantined_upload',
+    'upload_error',
     'upload_scanner_readiness',
 ]

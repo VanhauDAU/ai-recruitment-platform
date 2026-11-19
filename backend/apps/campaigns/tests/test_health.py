@@ -7,6 +7,7 @@ from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
+from rest_framework.exceptions import ValidationError
 from rest_framework.test import APIClient
 
 from apps.applications.models import Application
@@ -16,10 +17,22 @@ from apps.cvs.services import create_initial_document
 from apps.employers.models import EmployerNotification, EmployerNotificationPreference
 from apps.jobs.models import Job
 from apps.jobs.tests import test_posting_workflows
+from common.pdf.browser import PdfRenderingError
 from common.vietnam_time import VIETNAM_TZ, vietnam_today
 
 from ..models import CampaignChannel, CampaignChannelCost, CampaignHealthSnapshot
-from ..services import campaign_health, send_weekly_reports, snapshot_campaign
+from ..selectors import (
+    campaign_channel_report,
+    campaign_health_history,
+    daily_applications,
+    report_jobs,
+)
+from ..services import (
+    campaign_health,
+    campaign_report_file,
+    send_weekly_reports,
+    snapshot_campaign,
+)
 
 S = Application.Status
 NOW = timezone.now()
@@ -240,4 +253,47 @@ class CampaignHealthApiTests(HealthFixtures, TestCase):
         self.assertIn('Báo cáo chiến dịch: Tuyển kỹ thuật', html)
         self.assertNotIn(
             'http://', html.split('<body>')[1].split('</body>')[0].replace('xmlns', '')
+        )
+
+
+class CampaignReportServiceTests(HealthFixtures, TestCase):
+    def report_reads(self):
+        return {
+            'channels': campaign_channel_report(self.campaign),
+            'daily': daily_applications(self.campaign),
+            'jobs': report_jobs(self.campaign),
+        }
+
+    def test_history_is_oldest_first_and_capped(self):
+        today = vietnam_today()
+        for offset in range(3):
+            CampaignHealthSnapshot.objects.create(
+                campaign=self.campaign,
+                date=today - timedelta(days=offset),
+                status=CampaignHealthSnapshot.Status.ON_TRACK,
+                metrics={'forecast': offset, 'headcount': 3},
+            )
+
+        history = campaign_health_history(self.campaign, days=2)
+
+        self.assertEqual([row['date'] for row in history], [today - timedelta(days=1), today])
+        self.assertEqual(history[-1]['forecast'], 0)
+        self.assertIsNone(history[-1]['accepted'])
+
+    def test_pdf_failure_is_a_validation_error_for_the_recruiter(self):
+        with patch(
+            'apps.campaigns.services.report_export.render_html_pdf',
+            side_effect=PdfRenderingError('chromium down'),
+        ):
+            with self.assertRaises(ValidationError) as caught:
+                campaign_report_file(self.campaign, 'pdf', **self.report_reads())
+
+        self.assertIn('PDF', str(caught.exception.detail['detail']))
+
+    def test_xlsx_report_carries_its_content_type(self):
+        content, content_type = campaign_report_file(self.campaign, 'xlsx', **self.report_reads())
+
+        self.assertTrue(content.startswith(b'PK'))
+        self.assertEqual(
+            content_type, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )

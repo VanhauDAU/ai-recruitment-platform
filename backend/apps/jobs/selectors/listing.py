@@ -48,6 +48,11 @@ def job_detail_queryset():
     )
 
 
+def public_jobs_queryset():
+    """Jobs candidates can act on now (save, report), without extra relations."""
+    return Job.objects.filter(publicly_available_job_filter())
+
+
 def active_job_detail_queryset():
     """Return active jobs with every relation required by the detail serializer."""
     return _with_detail_relations(Job.objects.filter(publicly_available_job_filter()))

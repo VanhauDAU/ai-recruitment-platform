@@ -10,7 +10,6 @@ from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from common.api.pagination import StandardPagination
 from common.api.throttling import ClientIPScopedRateThrottle
 from common.metrics import record_metric
 
@@ -129,7 +128,6 @@ class PublicCategoryListView(PublicKnowledgebaseMixin, generics.ListAPIView):
 )
 class PublicArticleListView(PublicKnowledgebaseMixin, generics.ListAPIView):
     serializer_class = PublicArticleListSerializer
-    pagination_class = StandardPagination
 
     def get_queryset(self):
         query = PublicArticleQuerySerializer(data=self.request.query_params)

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from django.db import transaction
+from django.utils import timezone
 
 from common.metrics import record_metric
 
@@ -230,3 +231,32 @@ def emit_employer_event(
         status=('created' if notification_created and activity_created else 'deduplicated'),
     )
     return notification, activity
+
+
+def update_employer_notification_preference(user, changes):
+    """Store the optional email switches; important decisions are always emailed."""
+    preference, _ = EmployerNotificationPreference.objects.update_or_create(
+        recipient=user, defaults=dict(changes)
+    )
+    return preference
+
+
+@transaction.atomic
+def mark_employer_notification_read(user, public_id):
+    """Mark one of the user's notifications read once; ``None`` if it is not theirs."""
+    notification = (
+        EmployerNotification.objects.select_for_update()
+        .filter(recipient=user, public_id=public_id)
+        .first()
+    )
+    if notification is not None and notification.read_at is None:
+        notification.read_at = timezone.now()
+        notification.save(update_fields=['read_at'])
+    return notification
+
+
+def mark_all_employer_notifications_read(user):
+    """Mark every unread notification read; returns how many changed."""
+    return EmployerNotification.objects.filter(recipient=user, read_at__isnull=True).update(
+        read_at=timezone.now()
+    )

@@ -1,8 +1,12 @@
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
+from rest_framework.exceptions import ValidationError as ApiValidationError
 
 from ..models import CvSampleContent, CvTemplate, CvTemplateVersion
+from .snapshots import enqueue_all_template_snapshots, enqueue_template_snapshots
+from .template_config import publish_checklist
+from .template_preview import test_pdf_passed
 
 
 @transaction.atomic
@@ -32,6 +36,21 @@ def publish_template_version(*, template, version, actor=None):
 
 
 @transaction.atomic
+def publish_checked_template_version(*, template, version, actor=None):
+    """Xuất bản từ wizard admin: chỉ khi đạt checklist; ảnh catalogue sinh lại sau commit."""
+    failing = [
+        item['key']
+        for item in publish_checklist(template, version, test_pdf_ok=test_pdf_passed(version))
+        if not item['ok']
+    ]
+    if failing:
+        raise ApiValidationError({'checklist': failing})
+    version = publish_template_version(template=template, version=version, actor=actor)
+    enqueue_template_snapshots(template)
+    return version
+
+
+@transaction.atomic
 def retire_template_version(*, template, version):
     template = CvTemplate.objects.select_for_update().get(pk=template.pk)
     version = CvTemplateVersion.objects.select_for_update().get(pk=version.pk, template=template)
@@ -52,7 +71,8 @@ def publish_sample(sample, *, actor=None):
     """Xuất bản bản nháp hoặc bản AI chờ duyệt; bản đang xuất bản cùng tổ hợp được lưu trữ.
 
     Mỗi (vị trí, ngôn ngữ, nhóm kinh nghiệm) chỉ có một nội dung xuất bản (ràng
-    buộc DB). Người xuất bản được ghi là người duyệt.
+    buộc DB). Người xuất bản được ghi là người duyệt. Ảnh catalogue được sinh lại
+    sau khi commit.
     """
     sample = CvSampleContent.objects.select_for_update().get(pk=sample.pk)
     if sample.status not in {CvSampleContent.Status.DRAFT, CvSampleContent.Status.IN_REVIEW}:
@@ -74,6 +94,7 @@ def publish_sample(sample, *, actor=None):
     sample.save(
         update_fields=['status', 'published_at', 'reviewed_by', 'reviewed_at', 'updated_at']
     )
+    enqueue_all_template_snapshots()
     return sample
 
 

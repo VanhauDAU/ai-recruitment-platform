@@ -1,4 +1,26 @@
-class UploadServiceError(RuntimeError):
+from http import HTTPStatus
+
+from common.api.exceptions import DomainError
+
+# Mã lỗi không có ở đây là lỗi dữ liệu đầu vào -> 400.
+_HTTP_STATUS = {
+    'RESOURCE_NOT_FOUND': HTTPStatus.NOT_FOUND,
+    'UPLOAD_PURPOSE_FORBIDDEN': HTTPStatus.FORBIDDEN,
+    'UPLOAD_PIPELINE_DISABLED': HTTPStatus.SERVICE_UNAVAILABLE,
+    'UPLOAD_STORAGE_FAILED': HTTPStatus.SERVICE_UNAVAILABLE,
+    'UPLOAD_TOO_LARGE': HTTPStatus.REQUEST_ENTITY_TOO_LARGE,
+    'UPLOAD_SESSION_QUOTA_EXCEEDED': HTTPStatus.TOO_MANY_REQUESTS,
+    'UPLOAD_BYTE_QUOTA_EXCEEDED': HTTPStatus.TOO_MANY_REQUESTS,
+    'UPLOAD_BUSY': HTTPStatus.CONFLICT,
+    'UPLOAD_EXPIRED': HTTPStatus.CONFLICT,
+    'UPLOAD_INVALID_STATE': HTTPStatus.CONFLICT,
+    'UPLOAD_NOT_CLEAN': HTTPStatus.CONFLICT,
+    'UPLOAD_SCAN_FAILED': HTTPStatus.CONFLICT,
+    'UPLOAD_ALREADY_SUBMITTED': HTTPStatus.CONFLICT,
+}
+
+
+class UploadServiceError(DomainError):
     """Machine-readable domain error whose message is safe for an API response."""
 
     def __init__(self, code, message, *, retryable=False):
@@ -6,6 +28,13 @@ class UploadServiceError(RuntimeError):
         self.message = message
         self.retryable = retryable
         super().__init__(code)
+
+    @property
+    def status_code(self):
+        return _HTTP_STATUS.get(self.code, HTTPStatus.BAD_REQUEST)
+
+    def payload(self):
+        return {'code': self.code, 'message': self.message, 'retryable': self.retryable}
 
 
 def upload_error(code, *, retryable=False):

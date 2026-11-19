@@ -132,7 +132,7 @@ class TemplateWizardApiTests(TestCase):
         self.assertEqual(blocked.data['checklist'], ['test_pdf'])
 
         finish_test_pdf('a' * 32, CvTemplateVersion.objects.get(pk=version_id), b'%PDF-test')
-        with patch('apps.cv_templates.api.views.admin.enqueue_template_snapshots'):
+        with patch('apps.cv_templates.services.publishing.enqueue_template_snapshots'):
             published = self.client.post(
                 f'/api/v2/admin/cv-templates/{public_id}/versions/{version_id}/publish/'
             )

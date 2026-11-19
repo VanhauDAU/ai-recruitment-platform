@@ -7,7 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Tái cấu trúc backend (ADR-0022, GĐ0–GĐ6)](#tái-cấu-trúc-backend-adr-0022-2026-11-19) | 🟨 GĐ0 PR #248, GĐ1 PR #249, GĐ2 trên nhánh `refactor/backend-gd2-boundaries`; GĐ3–GĐ6 chưa làm |
+| [Tái cấu trúc backend (ADR-0022, GĐ0–GĐ6)](#tái-cấu-trúc-backend-adr-0022-2026-11-19) | 🟨 GĐ0 #248, GĐ1 #249, GĐ2 #251, GĐ3 trên nhánh `refactor/backend-gd3-api`; GĐ4–GĐ6 chưa làm |
 | [Tổ chức lại cấu trúc thư mục frontend](#tổ-chức-lại-cấu-trúc-thư-mục-frontend-2026-11-19) | ✅ Gộp vào `dev` (#247) |
 | [Mô hình hóa yêu cầu cho báo cáo (mục 3.2)](#mô-hình-hóa-yêu-cầu-cho-báo-cáo-mục-32-2026-11-18) | ✅ Nguồn sơ đồ trong `docs/01-phan-tich/mo-hinh-hoa-yeu-cau/` |
 | [Nâng cấp chiến dịch tuyển dụng (4 GĐ)](#nâng-cấp-chiến-dịch-tuyển-dụng-2026-11-18) | ✅ Cả 4 GĐ và đợt làm lại giao diện kênh, Fanpage, chi phí, lịch sử hoạt động đã gộp (#235–#237, #239–#242); sơ đồ phân tích nhóm chiến dịch trên nhánh `docs/campaign-diagrams` |
@@ -43,8 +43,8 @@ GĐ một PR về `dev`.
 | --- | --- | --- |
 | 0 | ADR-0022; sửa cổng ranh giới feature frontend sau #247; cổng import chéo app/module gốc (`check_backend_imports.py`, baseline 148 mục); cổng OpenAPI (baseline 70 lỗi / 340 cảnh báo); tách `requirements-dev.txt`, pin `gunicorn`/`redis`; bắt buộc `DJANGO_SETTINGS_MODULE` | 🟨 PR #248 |
 | 1 | Bố cục chuẩn: 30 module gốc app về đúng tầng (thêm tầng `domain/`), URL tách theo cổng vào `api/urls/<cổng>.py`, view SEO vào `seo/`, `signals/` + `tasks/` thành package, code trong `__init__` ra module riêng, `common/` chia `api/http/storage/html/pdf/files/db`; baseline import 148 → 33 | 🟨 PR #249 |
-| 2 | Model + máy trạng thái + API chiến dịch sang `campaigns` (3 migration chỉ đổi state, ContentType chuyển theo); `cv_templates` thành engine tài liệu CV (schema, composition, in PDF), engine Chromium vào `common/pdf/`; bỏ lazy export của accounts; gỡ route trùng `/api/v2/cvs/backgrounds/`; import chéo app 33 → 0, gỡ baseline | 🟨 Nhánh `refactor/backend-gd2-boundaries` (xếp trên GĐ1) |
-| 3 | Exception handler, nghiệp vụ ra khỏi view/serializer, phân trang, `@extend_schema` đủ | ⬜ |
+| 2 | Model + máy trạng thái + API chiến dịch sang `campaigns` (3 migration chỉ đổi state, ContentType chuyển theo); `cv_templates` thành engine tài liệu CV (schema, composition, in PDF), engine Chromium vào `common/pdf/`; bỏ lazy export của accounts; gỡ route trùng `/api/v2/cvs/backgrounds/`; import chéo app 33 → 0, gỡ baseline | 🟨 PR #251 |
+| 3 | Exception handler chung + `DomainError` (gỡ `_call`, `_run_mutation`…); ORM/transaction/`.delay()` ra khỏi view và `create/update` của serializer ở 4 cụm app; GET không còn tạo hồ sơ NTD; `@extend_schema` cho mọi view, OpenAPI từ 70 lỗi/340 cảnh báo về **0/0** (cổng siết không baseline); `parse_bool`/`parse_int` dùng chung; Browsable API chỉ khi DEBUG | 🟨 Nhánh `refactor/backend-gd3-api` (xếp trên GĐ2) |
 | 4 | URL theo cổng `/api/{auth,public,candidate,employer,admin}/` (kèm frontend) | ⬜ |
 | 5 | Tách file > 500 dòng, gộp code trùng, gỡ legacy và lệnh chạy một lần | ⬜ |
 | 6 | Baseline migration mới, lệnh `seed_all` | ⬜ |

@@ -11,6 +11,7 @@ from .admin_verification import (
     admin_verification_cases_queryset,
     admin_verification_summary,
 )
+from .catalogs import industries_in_use, industry_labels
 from .companies import (
     attach_active_public_job_counts,
     featured_public_companies,
@@ -49,12 +50,20 @@ from .company_reports import (
     ADMIN_COMPANY_REPORT_ORDERING_FIELDS,
     admin_company_reports_queryset,
 )
+from .company_update_requests import (
+    admin_company_update_requests_queryset,
+    company_changes_require_update_request,
+    company_update_request_for_company,
+    company_update_requests_queryset,
+    requester_editable_company_update_request,
+)
 from .documents import (
     can_access_employer_document_content,
     employer_document_content_queryset,
     employer_document_metadata_queryset,
 )
 from .domain_claims import (
+    admin_domain_claim_summary,
     admin_domain_claims_queryset,
     company_domain_claims_queryset,
     domain_claim_allowed_actions,
@@ -62,6 +71,7 @@ from .domain_claims import (
 )
 from .notifications import (
     employer_activity_queryset,
+    employer_notification_preference,
     employer_notification_queryset,
     employer_unread_notification_count,
 )
@@ -69,6 +79,7 @@ from .onboarding import (
     build_employer_initial_onboarding,
     build_employer_onboarding_steps,
 )
+from .profiles import existing_recruiter_profile
 from .readiness import (
     DpaStatus,
     build_employer_readiness,
@@ -76,7 +87,11 @@ from .readiness import (
     employer_readiness_queryset,
     evaluate_employer_readiness,
 )
-from .recruitment_needs import first_recruitment_need
+from .recruitment_needs import (
+    first_recruitment_need,
+    recruiter_recruitment_need,
+    recruiter_recruitment_needs,
+)
 from .rollout import employer_rollout_counters
 
 __all__ = [
@@ -137,4 +152,16 @@ __all__ = [
     'employer_readiness_queryset',
     'evaluate_employer_readiness',
     'employer_rollout_counters',
+    'existing_recruiter_profile',
+    'industries_in_use',
+    'industry_labels',
+    'admin_company_update_requests_queryset',
+    'company_changes_require_update_request',
+    'company_update_request_for_company',
+    'company_update_requests_queryset',
+    'requester_editable_company_update_request',
+    'admin_domain_claim_summary',
+    'employer_notification_preference',
+    'recruiter_recruitment_need',
+    'recruiter_recruitment_needs',
 ]

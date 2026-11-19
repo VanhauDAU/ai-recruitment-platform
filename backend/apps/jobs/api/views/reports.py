@@ -10,9 +10,8 @@ from rest_framework.views import APIView
 from apps.accounts.api.permissions import AdminPortalPermission, IsCandidate
 from common.api.throttling import ClientIPScopedRateThrottle
 
-from ...models import Job, JobReport
-from ...selectors import job_report_queryset
-from ...selectors.listing import publicly_available_job_filter
+from ...models import JobReport
+from ...selectors import job_report_queryset, public_jobs_queryset
 from ...services import resolve_job_report, reverse_job_report, submit_job_report
 from ..serializers import (
     AdminJobReportQuerySerializer,
@@ -40,10 +39,7 @@ class JobReportCreateView(APIView):
     throttle_scope = 'job_report'
 
     def post(self, request, public_id):
-        job = get_object_or_404(
-            Job.objects.filter(publicly_available_job_filter()),
-            public_id=public_id,
-        )
+        job = get_object_or_404(public_jobs_queryset(), public_id=public_id)
         serializer = JobReportCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         report = submit_job_report(

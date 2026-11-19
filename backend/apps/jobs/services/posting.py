@@ -23,16 +23,12 @@ from ..models import (
     Job,
     JobApplicationContact,
     JobApplicationEmail,
-    JobBenefit,
     JobCategoryAssignment,
-    JobLanguageRequirement,
-    JobLocation,
-    JobSkill,
     JobStatusHistory,
-    JobWorkSchedule,
 )
 from .ai_generation import apply_job_ai_generation_to_draft
 from .content_snapshot import build_job_content_snapshot
+from .job_records import JOB_RELATIONS, create_job_record, update_job_record
 from .lifecycle import (
     extend_job_visibility,
     initialize_job_visibility,
@@ -530,45 +526,34 @@ def employer_job_posting_context(user):
 
 
 @transaction.atomic
-def save_job_draft(serializer, user):
-    """Persist a partial job form; drafts never consume a publication credit."""
+def save_job_draft(user, data):
+    """Create a job from the (possibly partial) form as a draft.
+
+    Drafts never consume a publication credit. ``data`` is the validated job
+    form; its ``ai_generation_public_id`` links the AI result the form started from.
+    """
     recruiter = _locked_recruiter(user)
-    if serializer.instance is None:
-        requested_campaign = serializer.validated_data.get('campaign')
-        locked_campaigns = _lock_campaigns(
-            requested_campaign.pk if requested_campaign is not None else None
-        )
-        locked_campaign = _locked_requested_campaign(requested_campaign, locked_campaigns)
-        _validate_campaign_for_write(locked_campaign, recruiter=recruiter)
-        if requested_campaign is not None:
-            serializer.validated_data['campaign'] = locked_campaign
-        job = serializer.save(posted_by=user, company=recruiter.company, status=Job.Status.DRAFT)
-        generation_public_id = getattr(serializer, '_ai_generation_public_id', '')
-        if generation_public_id:
-            apply_job_ai_generation_to_draft(
-                public_id=generation_public_id,
-                job=job,
-                user=user,
-            )
-        _record_job_assignment(job, previous_campaign=None, user=user)
-        _record_status(job, from_status='', to_status=Job.Status.DRAFT, user=user)
-        return job
-    requested_campaign = serializer.validated_data.get('campaign', serializer.instance.campaign)
-    job, locked_campaigns = _locked_job(
-        serializer.instance,
-        extra_campaign_ids=(requested_campaign.pk if requested_campaign is not None else None,),
+    data = dict(data)
+    generation_public_id = data.pop('ai_generation_public_id', '')
+    requested_campaign = data.get('campaign')
+    locked_campaigns = _lock_campaigns(
+        requested_campaign.pk if requested_campaign is not None else None
     )
-    serializer.instance = job
-    if job.posted_by_id != user.id:
-        raise ValidationError('Bạn không có quyền lưu nháp tin này.')
-    _validate_job_for_write(job)
-    previous_campaign = locked_campaigns.get(job.campaign_id)
-    locked_requested_campaign = _locked_requested_campaign(requested_campaign, locked_campaigns)
-    _validate_campaign_for_write(locked_requested_campaign, recruiter=recruiter)
-    if 'campaign' in serializer.validated_data:
-        serializer.validated_data['campaign'] = locked_requested_campaign
-    job = serializer.save()
-    _record_job_assignment(job, previous_campaign=previous_campaign, user=user)
+    locked_campaign = _locked_requested_campaign(requested_campaign, locked_campaigns)
+    _validate_campaign_for_write(locked_campaign, recruiter=recruiter)
+    if requested_campaign is not None:
+        data['campaign'] = locked_campaign
+    job = create_job_record(
+        {**data, 'posted_by': user, 'company': recruiter.company, 'status': Job.Status.DRAFT}
+    )
+    if generation_public_id:
+        apply_job_ai_generation_to_draft(
+            public_id=generation_public_id,
+            job=job,
+            user=user,
+        )
+    _record_job_assignment(job, previous_campaign=None, user=user)
+    _record_status(job, from_status='', to_status=Job.Status.DRAFT, user=user)
     return job
 
 
@@ -640,27 +625,30 @@ def publish_operator_imported_job(job, *, user):
 
 
 @transaction.atomic
-def update_employer_job(serializer, user):
-    """Persist an employer's existing job through the domain mutation boundary."""
+def update_employer_job(job, user, data):
+    """Persist validated form ``data`` on an employer's existing job (draft or not)."""
     recruiter = _locked_recruiter(user)
-    requested_campaign = serializer.validated_data.get('campaign', serializer.instance.campaign)
-    serializer.instance, locked_campaigns = _locked_job(
-        serializer.instance,
+    data = dict(data)
+    # Only a new job links an AI result; the form validation refuses it on edit.
+    data.pop('ai_generation_public_id', None)
+    requested_campaign = data.get('campaign', job.campaign)
+    job, locked_campaigns = _locked_job(
+        job,
         extra_campaign_ids=(requested_campaign.pk if requested_campaign is not None else None,),
     )
-    if serializer.instance.posted_by_id != user.id:
+    if job.posted_by_id != user.id:
         raise ValidationError('Bạn không có quyền chỉnh sửa tin này.')
-    _validate_job_for_write(serializer.instance, allow_requested_changes=True)
-    previous_campaign = locked_campaigns.get(serializer.instance.campaign_id)
+    _validate_job_for_write(job, allow_requested_changes=True)
+    previous_campaign = locked_campaigns.get(job.campaign_id)
     locked_requested_campaign = _locked_requested_campaign(requested_campaign, locked_campaigns)
     _validate_campaign_for_write(locked_requested_campaign, recruiter=recruiter)
-    if 'campaign' in serializer.validated_data:
-        serializer.validated_data['campaign'] = locked_requested_campaign
-    requested_visibility_days = serializer.validated_data.get('requested_visibility_days')
+    if 'campaign' in data:
+        data['campaign'] = locked_requested_campaign
+    requested_visibility_days = data.get('requested_visibility_days')
     if (
-        serializer.instance.first_approved_at is not None
+        job.first_approved_at is not None
         and requested_visibility_days is not None
-        and requested_visibility_days != serializer.instance.requested_visibility_days
+        and requested_visibility_days != job.requested_visibility_days
     ):
         raise ValidationError(
             {
@@ -669,7 +657,7 @@ def update_employer_job(serializer, user):
                 )
             }
         )
-    job = serializer.save()
+    job = update_job_record(job, data)
     _record_job_assignment(job, previous_campaign=previous_campaign, user=user)
     return job
 
@@ -875,14 +863,7 @@ def duplicate_job(job, user):
     duplicate.title = f'{job.title} (bản sao)'
     duplicate.save()
     _record_job_assignment(duplicate, previous_campaign=None, user=user)
-    for model, relation in (
-        (JobCategoryAssignment, 'category_assignments'),
-        (JobLocation, 'job_locations'),
-        (JobSkill, 'job_skills'),
-        (JobWorkSchedule, 'work_schedules'),
-        (JobBenefit, 'job_benefits'),
-        (JobLanguageRequirement, 'language_requirements'),
-    ):
+    for relation, model in JOB_RELATIONS.items():
         model.objects.bulk_create(
             [
                 model(

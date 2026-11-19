@@ -1580,3 +1580,30 @@ __all__ = [
     'verification_decision_impact',
     'verification_lifecycle_impact',
 ]
+
+
+def record_verification_document_access(document, *, actor, intent):
+    """Audit an administrator opening private proof (``intent``: preview/download).
+
+    Reading proof is itself a sensitive event, so this GET path writes on purpose.
+    """
+    EmployerVerificationEvent.objects.create(
+        verification_case=document.verification_case,
+        actor=actor,
+        event_type=EmployerVerificationEvent.EventType.SENSITIVE_VIEWED,
+        payload={
+            'document_public_id': document.public_id,
+            'document_file_name': document.file_name,
+            'document_type': document.doc_type,
+            'document_type_label': document.get_doc_type_display(),
+            'action': intent,
+            'audit_version': 2,
+        },
+    )
+    record_admin_action(
+        actor=actor,
+        action=f'{intent}_employer_verification_document',
+        target_type='employer_verification_document',
+        target_public_id=document.public_id,
+        payload={'case_public_id': document.verification_case.public_id},
+    )

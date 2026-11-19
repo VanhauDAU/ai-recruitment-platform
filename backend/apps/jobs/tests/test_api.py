@@ -21,7 +21,7 @@ from ..api.serializers import (
     JobDetailSerializer,
 )
 from ..models import Benefit, Job, JobCategory, JobEngagementDaily, Language
-from ..services import RESPONSIBILITY_STATEMENT_VERSION
+from ..services import RESPONSIBILITY_STATEMENT_VERSION, create_job_record
 from .helpers import open_visibility_window
 
 
@@ -989,7 +989,9 @@ class EmployerJobSerializerTests(APITestCase):
         serializer = EmployerJobWriteSerializer(data=self.payload())
 
         self.assertTrue(serializer.is_valid(), serializer.errors)
-        job = serializer.save(posted_by=self.user, company=self.company)
+        job = create_job_record(
+            {**serializer.validated_data, 'posted_by': self.user, 'company': self.company}
+        )
 
         self.assertEqual(job.employment_type, Job.EmploymentType.WORK_FROM_HOME)
         self.assertEqual(job.work_types, [Job.WorkType.ONSITE, Job.WorkType.HYBRID])
@@ -1016,7 +1018,9 @@ class EmployerJobSerializerTests(APITestCase):
         serializer = EmployerJobWriteSerializer(data=payload)
 
         self.assertTrue(serializer.is_valid(), serializer.errors)
-        job = serializer.save(posted_by=self.user, company=self.company)
+        job = create_job_record(
+            {**serializer.validated_data, 'posted_by': self.user, 'company': self.company}
+        )
         detail = EmployerJobWriteSerializer(job).data
 
         self.assertTrue(detail['auto_reject_stale_applications'])
@@ -1055,7 +1059,9 @@ class EmployerJobSerializerTests(APITestCase):
         )
 
         self.assertTrue(serializer.is_valid(), serializer.errors)
-        job = serializer.save(posted_by=self.user, company=self.company)
+        job = create_job_record(
+            {**serializer.validated_data, 'posted_by': self.user, 'company': self.company}
+        )
 
         self.assertIsNone(job.salary_type)
         self.assertEqual(job.income_display_type, Job.IncomeDisplayType.INCOME_AT_KPI)
@@ -1170,7 +1176,9 @@ class EmployerJobSerializerTests(APITestCase):
                 serializer = EmployerJobWriteSerializer(data=payload)
 
                 self.assertTrue(serializer.is_valid(), serializer.errors)
-                job = serializer.save(posted_by=self.user, company=self.company)
+                job = create_job_record(
+                    {**serializer.validated_data, 'posted_by': self.user, 'company': self.company}
+                )
                 self.assertEqual(job.salary_type, expected_type)
                 self.assertEqual(job.salary_min, salary_min)
                 self.assertEqual(job.salary_max, salary_max)
@@ -1223,7 +1231,9 @@ class EmployerJobSerializerTests(APITestCase):
     def test_public_detail_does_not_expose_application_contact(self):
         serializer = EmployerJobWriteSerializer(data=self.payload())
         self.assertTrue(serializer.is_valid(), serializer.errors)
-        job = serializer.save(posted_by=self.user, company=self.company)
+        job = create_job_record(
+            {**serializer.validated_data, 'posted_by': self.user, 'company': self.company}
+        )
 
         data = JobDetailSerializer(job).data
 
@@ -1282,7 +1292,9 @@ class EmployerJobSerializerTests(APITestCase):
         ]
         serializer = EmployerJobWriteSerializer(data=payload)
         self.assertTrue(serializer.is_valid(), serializer.errors)
-        job = serializer.save(posted_by=self.user, company=self.company)
+        job = create_job_record(
+            {**serializer.validated_data, 'posted_by': self.user, 'company': self.company}
+        )
 
         data = JobDetailSerializer(job).data
 

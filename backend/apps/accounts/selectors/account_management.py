@@ -26,6 +26,7 @@ from apps.employers.models import (
     RecruitmentNeed,
 )
 from apps.jobs.models import Job
+from common.api.params import parse_bool
 
 from ..models import (
     AdminAccessAuditLog,
@@ -136,17 +137,11 @@ def accounts_queryset(actor, *, params=None):
     if params.get('status'):
         statuses = [value.strip() for value in params['status'].split(',') if value.strip()]
         queryset = queryset.filter(status__in=statuses)
-    email_verified = params.get('email_verified', '').lower()
-    if email_verified in {'true', 'false'}:
-        queryset = queryset.filter(email_verified=email_verified == 'true')
-    session_filter = params.get('has_active_session', '').lower()
-    if session_filter in {'true', 'false'}:
+    if (email_verified := parse_bool(params.get('email_verified'))) is not None:
+        queryset = queryset.filter(email_verified=email_verified)
+    if (has_session := parse_bool(params.get('has_active_session'))) is not None:
         queryset = queryset.filter(
-            **(
-                {'active_session_count__gt': 0}
-                if session_filter == 'true'
-                else {'active_session_count': 0}
-            )
+            **({'active_session_count__gt': 0} if has_session else {'active_session_count': 0})
         )
     if params.get('company'):
         queryset = queryset.filter(recruiter_profile__company__public_id=params['company'])

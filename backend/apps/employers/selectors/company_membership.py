@@ -2,6 +2,8 @@
 
 from django.db.models import Exists, OuterRef
 
+from common.api.params import parse_bool
+
 from ..models import CompanyJoinRequest, RecruiterProfile
 from ..models.representation import eligible_owners_queryset
 
@@ -52,7 +54,7 @@ def admin_company_join_requests_queryset(params=None):
         queryset = queryset.filter(status=status)
     if params.get('company'):
         queryset = queryset.filter(company__public_id=params['company'])
-    if params.get('awaiting_admin') in {'1', 'true'}:
+    if parse_bool(params.get('awaiting_admin')):
         queryset = queryset.filter(has_eligible_owner=False)
     return queryset
 

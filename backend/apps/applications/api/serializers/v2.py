@@ -23,9 +23,10 @@ class RecruiterApplicationSnapshotSerializer(serializers.ModelSerializer):
     cv = serializers.SerializerMethodField()
     preferred_location_names = serializers.SerializerMethodField()
 
-    def get_preferred_location_names(self, obj):
+    def get_preferred_location_names(self, obj) -> list[str]:
         return [location.name for location in obj.preferred_locations.all()]
 
+    @extend_schema_field(CvVersionSerializer)
     def get_cv(self, obj):
         request = self.context.get('request')
         subject = request.user.public_id if request is not None else ''
@@ -68,7 +69,7 @@ class RecruiterCvExportSerializer(serializers.Serializer):
     completed_at = serializers.DateTimeField(allow_null=True)
     failed_at = serializers.DateTimeField(allow_null=True)
 
-    def get_download_url(self, obj):
+    def get_download_url(self, obj) -> str | None:
         if not self.context.get('download_ready'):
             return None
         url = reverse(
@@ -242,25 +243,25 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
         Application.Status.WITHDRAWN: 'Bạn đã rút hồ sơ',
     }
 
-    def get_company_logo_url(self, obj):
+    def get_company_logo_url(self, obj) -> str | None:
         return media_url_from_value(obj.job.company.logo_url, request=self.context.get('request'))
 
-    def get_cv_public_id(self, obj):
+    def get_cv_public_id(self, obj) -> str | None:
         return obj.cv.public_id if obj.cv_id else None
 
-    def get_preferred_location_ids(self, obj):
+    def get_preferred_location_ids(self, obj) -> list[int]:
         return [location.pk for location in obj.preferred_locations.all()]
 
-    def get_preferred_location_names(self, obj):
+    def get_preferred_location_names(self, obj) -> list[str]:
         return [location.name for location in obj.preferred_locations.all()]
 
-    def get_status(self, obj):
+    def get_status(self, obj) -> str:
         """The status the candidate has been told, not the live one: a decision
         stays private during the recruiter's undo window (the history prefetch
         only holds published rows)."""
         return obj.candidate_visible_status(obj.status_history.all())
 
-    def get_candidate_status(self, obj):
+    def get_candidate_status(self, obj) -> str:
         return self.CANDIDATE_STATUS[self.get_status(obj)]
 
     @extend_schema_field(
@@ -292,7 +293,7 @@ class CandidateApplicationV2Serializer(serializers.ModelSerializer):
             'remind_available_at': remind_at,
         }
 
-    def get_timeline(self, obj):
+    def get_timeline(self, obj) -> list[dict]:
         """Mốc mới nhất đứng đầu — trang 'Việc làm đã ứng tuyển' đọc từ trên xuống theo thời gian lùi.
 
         Mỗi lần ProCV nhắc nhà tuyển dụng cũng là một mốc của hồ sơ.

@@ -258,6 +258,13 @@ def recruiter_reviews_queryset(application):
     )
 
 
+def recruiter_is_company_owner(recruiter):
+    """Owners see and lift every block of the company, not only their own."""
+    return RecruiterProfile.objects.filter(
+        user=recruiter, company__isnull=False, company_role=RecruiterProfile.CompanyRole.OWNER
+    ).exists()
+
+
 def recruiter_candidate_blocks_queryset(recruiter):
     """Blocks in force for the recruiter's company, or their own when unlinked."""
     company_id = (

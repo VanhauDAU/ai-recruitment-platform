@@ -1,3 +1,4 @@
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 
@@ -8,6 +9,7 @@ from ...services import create_skill
 from ..serializers import SkillCreateSerializer, SkillGroupSerializer, SkillSerializer
 
 
+@extend_schema(summary='Nhóm kỹ năng đang hoạt động', tags=['skills'])
 class SkillGroupListView(generics.ListAPIView):
     serializer_class = SkillGroupSerializer
     permission_classes = [permissions.AllowAny]
@@ -15,6 +17,21 @@ class SkillGroupListView(generics.ListAPIView):
     queryset = active_skill_groups_queryset()
 
 
+@extend_schema_view(
+    get=extend_schema(
+        summary='Tra cứu kỹ năng (tối đa 100 kết quả)',
+        parameters=[
+            OpenApiParameter('group', int, description='Lọc theo id nhóm kỹ năng'),
+            OpenApiParameter('search', str, description='Tìm theo tên'),
+        ],
+    ),
+    post=extend_schema(
+        summary='NTD thêm kỹ năng mới (trả kỹ năng sẵn có nếu trùng tên)',
+        request=SkillCreateSerializer,
+        responses={200: SkillSerializer, 201: SkillSerializer},
+    ),
+)
+@extend_schema(tags=['skills'])
 class SkillListView(generics.ListCreateAPIView):
     serializer_class = SkillSerializer
     pagination_class = None

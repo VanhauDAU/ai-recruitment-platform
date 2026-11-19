@@ -22,6 +22,7 @@ from ..models.representation import (
     eligible_owners_queryset,
     eligible_representatives_queryset,
 )
+from .companies import set_company_industries
 from .notifications import emit_employer_event
 from .profiles import get_or_create_recruiter
 
@@ -43,13 +44,22 @@ def _link(recruiter, company, role):
 
 
 @transaction.atomic
-def create_company_for_recruiter(user, serializer):
-    """The recruiter creating a company becomes its owner at once."""
+def create_company_for_recruiter(user, validated_data):
+    """The recruiter creating a company becomes its owner at once.
+
+    ``validated_data`` is the company form; ``logo_pending`` only tells the
+    form a logo upload follows, so it is not stored.
+    """
     recruiter = _locked_unlinked_recruiter(user)
     CompanyJoinRequest.objects.filter(
         recruiter=recruiter, status=CompanyJoinRequest.Status.PENDING
     ).update(status=CompanyJoinRequest.Status.CANCELLED, decided_at=timezone.now())
-    company = serializer.save(created_by=user)
+    values = dict(validated_data)
+    industries = values.pop('industries')
+    primary_industry = values.pop('primary_industry')
+    values.pop('logo_pending', None)
+    company = Company.objects.create(created_by=user, **values)
+    set_company_industries(company, industries, primary_industry)
     _link(recruiter, company, RecruiterProfile.CompanyRole.OWNER)
     return company
 

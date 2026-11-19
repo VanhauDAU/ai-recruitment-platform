@@ -21,7 +21,8 @@ from apps.sitecontent.models import SiteSetting
 from apps.skills.models import Skill
 
 from ..models import MatchAnalysis, MatchDocument
-from ..services import recover_stale_analyses
+from ..selectors import owner_cv_for_matching, public_job_for_profile
+from ..services import recover_stale_analyses, request_analysis
 
 CV_DATA = {
     'headline': 'Frontend Developer',
@@ -120,6 +121,19 @@ class MatchingApiTests(MatchingApiBase):
         self.assertEqual(result['skills']['matched'][0]['name'], 'ReactJS')
         self.assertEqual(detail.data['overall_score'], result['overall']['score'])
         self.assertEqual(MatchDocument.objects.filter(status='ready').count(), 2)
+
+    def test_request_queues_the_task_once_after_commit(self):
+        cv = owner_cv_for_matching(self.candidate, self.cv_ids[0])
+        job = public_job_for_profile(self.job.slug)
+        with patch('apps.matching.tasks.run_analysis.delay') as delay:
+            with self.captureOnCommitCallbacks(execute=True):
+                analysis = request_analysis(user=self.candidate, job=job, cv=cv)
+                delay.assert_not_called()
+            with self.captureOnCommitCallbacks(execute=True):
+                again = request_analysis(user=self.candidate, job=job, cv=cv)
+
+        self.assertEqual(again.pk, analysis.pk)
+        delay.assert_called_once_with(analysis.pk)
 
     def test_same_pair_is_served_from_cache(self):  # TC-06
         first = self.request()

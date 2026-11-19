@@ -1,6 +1,7 @@
 from django.db.models import Case, CharField, Count, F, IntegerField, TextField, Value, When
 from django.db.models.functions import Coalesce, Length, NullIf, Trim
 
+from common.api.params import parse_bool
 from common.db.search import search_q
 
 from ..models import BlogMediaAsset, PinnedPost, Post, PostCategory, Tag
@@ -176,8 +177,8 @@ def admin_tags_queryset(params=None):
     )
     if query := (params.get('q') or '').strip():
         queryset = queryset.filter(search_q('name', query) | search_q('slug', query))
-    if active := params.get('is_active'):
-        queryset = queryset.filter(is_active=active.lower() == 'true')
+    if (active := parse_bool(params.get('is_active'))) is not None:
+        queryset = queryset.filter(is_active=active)
     return queryset.order_by('name')
 
 

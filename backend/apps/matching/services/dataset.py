@@ -35,7 +35,7 @@ def export_skills(catalog=None):
 
 
 def export_jobs(jobs):
-    """`jobs` nạp sẵn quan hệ bằng selector `jobs_for_profile`."""
+    """`jobs` nạp sẵn quan hệ bằng `models.jobs_for_profile`."""
     for job in jobs:
         row = {'job_public_id': job.public_id, 'slug': job.slug}
         try:

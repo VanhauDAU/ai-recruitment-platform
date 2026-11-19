@@ -37,12 +37,12 @@ class AnalysisSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
-    def get_cv(self, analysis):
+    def get_cv(self, analysis) -> dict:
         cv = analysis.cv_version.cv
         return {'public_id': cv.public_id, 'title': cv.title}
 
-    def get_result(self, analysis):
+    def get_result(self, analysis) -> dict | None:
         return analysis.result_json if analysis.status == MatchAnalysis.Status.SUCCEEDED else None
 
-    def get_cached(self, analysis):
+    def get_cached(self, analysis) -> bool:
         return bool(self.context.get('cached'))

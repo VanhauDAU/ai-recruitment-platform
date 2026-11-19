@@ -5,7 +5,13 @@ import re
 from django.conf import settings
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import FileResponse, Http404
-from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema, inline_serializer
+from drf_spectacular.utils import (
+    OpenApiParameter,
+    OpenApiTypes,
+    extend_schema,
+    extend_schema_view,
+    inline_serializer,
+)
 from rest_framework import generics, parsers, permissions, serializers, status
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
@@ -13,23 +19,25 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import IsCandidate
-from apps.applications.models import Application
-from apps.cv_templates.models import CvTemplate
+from apps.cv_templates.selectors import preview_template
 from apps.cv_templates.services import (
     CvCompositionError,
     PositionContentUnavailable,
     compose_cv_document,
 )
-from apps.employers.services import ensure_recruiter_candidate_data_access
 from apps.uploads.services import UploadServiceError
 from common.metrics import record_metric
 from common.storage.r2 import private_media_storage
 
-from ...models import CvAsset, CvDraft, CvExport, CvImportJob, CvSharedLink, CvVersion, UserCv
+from ...models import CvAsset, CvImportJob, CvVersion, UserCv
 from ...selectors import (
     candidate_cv_by_public_id,
     candidate_cv_versions_queryset,
     candidate_cvs_queryset,
+    current_draft_lock_version,
+    cv_draft,
+    cv_exports_queryset,
+    cv_shared_links_queryset,
 )
 from ...services import (
     CvCreateInProgress,
@@ -48,6 +56,7 @@ from ...services import (
     create_avatar_asset_from_session,
     create_shared_link,
     create_v2_cv_once,
+    current_thumbnail_ready,
     duplicate_cv,
     export_download_ready,
     import_v2_cv,
@@ -58,6 +67,7 @@ from ...services import (
     permanently_delete_cv,
     queue_cv_import,
     queue_cv_import_from_session,
+    readable_asset,
     request_current_cv_thumbnail,
     request_cv_export,
     resolve_shared_link,
@@ -70,7 +80,6 @@ from ...services import (
     update_draft,
     validate_import_upload,
 )
-from ...services.assets import resolve_asset_token
 from ..exceptions import (
     CandidateCvRejectedResponse,
     CandidateUploadSessionRequiredResponse,
@@ -110,11 +119,10 @@ def expected_lock_version(request):
 
 def draft_conflict_response(cv):
     record_metric('cv_autosave_conflict')
-    current_lock = CvDraft.objects.filter(cv=cv).values_list('lock_version', flat=True).first()
     return Response(
         {
             'detail': 'Draft has changed in another session.',
-            'current_lock_version': current_lock,
+            'current_lock_version': current_draft_lock_version(cv),
         },
         status=status.HTTP_409_CONFLICT,
     )
@@ -130,15 +138,20 @@ class CandidateV2CvMixin:
             raise Http404 from error
 
 
+@extend_schema_view(
+    get=extend_schema(summary='Danh sách CV của ứng viên'),
+    post=extend_schema(
+        summary='Tạo CV mới (Idempotency-Key tùy chọn)',
+        request=CvV2CreateSerializer,
+        responses={200: CvV2Serializer, 201: CvV2Serializer, 409: OpenApiTypes.OBJECT},
+    ),
+)
+@extend_schema(tags=['cvs-v2'])
 class CvV2ListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsCandidate]
 
     def get_queryset(self):
-        return candidate_cvs_queryset(self.request.user).select_related(
-            'current_template_version',
-            'latest_version',
-            'published_version',
-        )
+        return candidate_cvs_queryset(self.request.user)
 
     def get_serializer_class(self):
         return CvV2CreateSerializer if self.request.method == 'POST' else CvV2Serializer
@@ -386,8 +399,7 @@ class CvV2SharedLinkListCreateView(CandidateV2CvMixin, APIView):
         tags=['cvs-v2'],
     )
     def get(self, request, public_id):
-        cv = self.get_cv()
-        links = CvSharedLink.objects.filter(cv=cv).select_related('version').order_by('-created_at')
+        links = cv_shared_links_queryset(self.get_cv())
         return Response(CvSharedLinkSerializer(links, many=True).data)
 
     @extend_schema(
@@ -489,10 +501,7 @@ class CvV2ExportListCreateView(CandidateV2CvMixin, APIView):
         tags=['cvs-v2'],
     )
     def get(self, request, public_id):
-        cv = self.get_cv()
-        exports = (
-            CvExport.objects.filter(cv=cv).select_related('cv', 'version').order_by('-created_at')
-        )
+        exports = cv_exports_queryset(self.get_cv())
         return Response(CvExportSerializer(exports, many=True, context={'request': request}).data)
 
     @extend_schema(
@@ -652,8 +661,6 @@ class CvV2ThumbnailView(CandidateV2CvMixin, APIView):
     )
     def get(self, request, public_id):
         cv = self.get_cv()
-        from ...services import current_thumbnail_ready
-
         if not current_thumbnail_ready(cv):
             raise Http404
         return FileResponse(
@@ -681,8 +688,6 @@ class CvV2ThumbnailView(CandidateV2CvMixin, APIView):
             cv = request_current_cv_thumbnail(cv=self.get_cv(), actor=request.user)
         except (ValueError, CvVersion.DoesNotExist) as error:
             raise Http404 from error
-        from ...services import current_thumbnail_ready
-
         ready = current_thumbnail_ready(cv)
         payload = CvV2Serializer(cv, context={'request': request}).data
         return Response(
@@ -698,11 +703,9 @@ class CvV2DraftView(CandidateV2CvMixin, APIView):
         summary='Đọc bản nháp đang soạn', responses={200: CvDraftSerializer}, tags=['cvs-v2']
     )
     def get(self, request, public_id):
-        cv = self.get_cv()
-        try:
-            draft = CvDraft.objects.select_related('base_version').get(cv=cv)
-        except CvDraft.DoesNotExist as error:
-            raise Http404 from error
+        draft = cv_draft(self.get_cv())
+        if draft is None:
+            raise Http404
         return Response(
             CvDraftSerializer(draft, context={'request': request}).data,
             headers={'ETag': f'"lock-version-{draft.lock_version}"'},
@@ -730,9 +733,6 @@ class CvV2DraftView(CandidateV2CvMixin, APIView):
             )
         except StaleDraftError:
             return draft_conflict_response(cv)
-        except DjangoValidationError as error:
-            detail = error.message_dict if hasattr(error, 'message_dict') else error.messages
-            raise ValidationError(detail) from error
         except CvLifecyclePolicyError as error:
             raise ValidationError({'detail': str(error)}) from error
         return Response(
@@ -812,35 +812,20 @@ class CvV2TemplatePreviewView(CandidateV2CvMixin, APIView):
             raise ValidationError({'template_public_id': 'This query parameter is required.'})
         if theme_color and re.fullmatch(r'#[0-9A-F]{6}', theme_color) is None:
             raise ValidationError({'theme_color': 'Use a six-digit hex color.'})
-        try:
-            template = (
-                CvTemplate.objects.select_related(
-                    'current_published_version',
-                )
-                .prefetch_related(
-                    'current_published_version__sections__section_definition',
-                )
-                .get(public_id=template_public_id)
-            )
-        except CvTemplate.DoesNotExist as error:
-            raise Http404 from error
-        if (
-            theme_color
-            and not template.color_links.filter(
-                color__hex_code__iexact=theme_color,
-                color__is_active=True,
-            ).exists()
-        ):
+        template = preview_template(template_public_id)
+        if template is None:
+            raise Http404
+        if theme_color and not template.offers_color(theme_color):
             raise ValidationError({'theme_color': 'Color is not available for this template.'})
+        draft = cv_draft(cv)
+        if draft is None:
+            raise Http404
         try:
-            draft = CvDraft.objects.get(cv=cv)
             document = compose_cv_document(
                 template=template,
                 content_json=draft.content_json,
                 theme_color=theme_color or None,
             )
-        except CvDraft.DoesNotExist as error:
-            raise Http404 from error
         except (CvCompositionError, DjangoValidationError) as error:
             raise ValidationError({'template_public_id': str(error)}) from error
         version = template.current_published_version
@@ -903,35 +888,12 @@ class CvV2AssetContentView(APIView):
         tags=['cvs-v2'],
     )
     def get(self, request, asset_public_id):
-        token = request.query_params.get('token')
         try:
-            if token:
-                asset, token_context = resolve_asset_token(token, include_context=True)
-                if asset.public_id != asset_public_id:
-                    raise CvAsset.DoesNotExist
-                audience = token_context.get('audience')
-                if audience:
-                    if audience != 'recruiter_application':
-                        raise CvAsset.DoesNotExist
-                    if (
-                        not request.user.is_authenticated
-                        or not request.user.is_employer
-                        or token_context.get('subject') != request.user.public_id
-                    ):
-                        raise CvAsset.DoesNotExist
-                    ensure_recruiter_candidate_data_access(request.user)
-                    if not Application.objects.filter(
-                        public_id=token_context.get('resource'),
-                        job__posted_by=request.user,
-                        submitted_cv_version__public_id=token_context.get('version'),
-                    ).exists():
-                        raise CvAsset.DoesNotExist
-            else:
-                asset = CvAsset.objects.get(public_id=asset_public_id, is_active=True)
-                if asset.kind != CvAsset.Kind.BACKGROUND and (
-                    not request.user.is_authenticated or asset.owner_id != request.user.pk
-                ):
-                    raise CvAsset.DoesNotExist
+            asset = readable_asset(
+                asset_public_id=asset_public_id,
+                token=request.query_params.get('token'),
+                user=request.user,
+            )
         except CvAsset.DoesNotExist as error:
             raise Http404 from error
         try:
@@ -996,9 +958,6 @@ class CvV2SaveVersionView(CandidateV2CvMixin, APIView):
             )
         except StaleDraftError:
             return draft_conflict_response(cv)
-        except DjangoValidationError as error:
-            detail = error.message_dict if hasattr(error, 'message_dict') else error.messages
-            raise ValidationError(detail) from error
         except CvLifecyclePolicyError as error:
             raise ValidationError({'detail': str(error)}) from error
         return Response(CvVersionSerializer(version).data, status=status.HTTP_201_CREATED)
@@ -1008,6 +967,7 @@ class CvV2PublishView(CvV2SaveVersionView):
     publish = True
 
 
+@extend_schema(summary='Lịch sử version bất biến của CV', tags=['cvs-v2'])
 class CvV2VersionListView(CandidateV2CvMixin, generics.ListAPIView):
     model = UserCv
     serializer_class = CvVersionSummarySerializer
@@ -1017,6 +977,7 @@ class CvV2VersionListView(CandidateV2CvMixin, generics.ListAPIView):
         return candidate_cv_versions_queryset(self.request.user, self.kwargs['public_id'])
 
 
+@extend_schema(summary='Chi tiết một version của CV', tags=['cvs-v2'])
 class CvV2VersionDetailView(CandidateV2CvMixin, generics.RetrieveAPIView):
     model = UserCv
     serializer_class = CvVersionSerializer

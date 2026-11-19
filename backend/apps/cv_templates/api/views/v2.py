@@ -1,12 +1,8 @@
 """Public V2 Template Catalog endpoints with a deliberately compact card contract."""
 
-import json
-from copy import deepcopy
 from hashlib import sha256
 from time import monotonic
 
-from django.core.cache import cache
-from django.core.exceptions import ValidationError as DjangoValidationError
 from django.http import Http404
 from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework import generics, permissions
@@ -15,16 +11,9 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.cv_templates.models.content_schema import empty_content
-from apps.cv_templates.services.composition import (
-    CvCompositionError,
-    compose_cv_document,
-    finalize_preview_document,
-)
-from apps.cv_templates.services.demo_identity import with_demo_identity
 from apps.cvs.api.serializers import CvAssetSerializer
-from apps.cvs.models import CvAsset
 from apps.jobs.models import JobCategory
+from common.api.params import parse_bool
 from common.metrics import record_metric
 
 from ...models import (
@@ -35,9 +24,11 @@ from ...models import (
     ExperienceBand,
 )
 from ...selectors import (
+    active_backgrounds_queryset,
     active_cv_categories_queryset,
     active_cv_position_options_queryset,
     active_position_profile,
+    preview_template,
     published_sample_contents_queryset,
     published_template_detail_queryset,
     published_template_queryset,
@@ -45,6 +36,8 @@ from ...selectors import (
 )
 from ...services import (
     PositionContentUnavailable,
+    blank_position_content,
+    compose_position_preview,
     position_details_section,
     resolve_position_content,
 )
@@ -86,9 +79,6 @@ def revalidated_response(request, data, etag=None):
 
 
 class PublicCatalogCacheMixin:
-    # Thời gian giữ document xem trước trong cache máy chủ (Redis).
-    cache_seconds = 300
-
     def cached_response(self, data):
         return revalidated_response(self.request, data)
 
@@ -98,15 +88,17 @@ class CatalogPagination(PageNumberPagination):
     page_size = 24
 
 
-def _optional_flag(request, name):
-    value = request.query_params.get(name, '').strip().lower()
-    if value in ('1', 'true'):
-        return True
-    if value in ('0', 'false'):
-        return False
-    return None
-
-
+@extend_schema(
+    summary='Danh sách mẫu CV trong catalogue công khai',
+    parameters=[
+        OpenApiParameter('locale', str, enum=CvLanguage.values),
+        OpenApiParameter('has_photo', bool),
+        OpenApiParameter('columns', int, enum=[1, 2]),
+        OpenApiParameter('category', str, description='Slug danh mục, cách nhau bằng dấu phẩy'),
+        OpenApiParameter('tag', str, description='Slug tính năng, cách nhau bằng dấu phẩy'),
+    ],
+    tags=['cv-templates'],
+)
 class CvTemplateCatalogListView(PublicCatalogCacheMixin, generics.ListAPIView):
     serializer_class = CvTemplateCardSerializer
     permission_classes = [permissions.AllowAny]
@@ -116,7 +108,7 @@ class CvTemplateCatalogListView(PublicCatalogCacheMixin, generics.ListAPIView):
         columns = self.request.query_params.get('columns', '').strip()
         return published_template_queryset(
             locale=requested_locale(self.request),
-            has_photo=_optional_flag(self.request, 'has_photo'),
+            has_photo=parse_bool(self.request.query_params.get('has_photo')),
             columns=int(columns) if columns in ('1', '2') else None,
             category=self.request.query_params.get('category'),
             tag=self.request.query_params.get('tag'),
@@ -161,6 +153,11 @@ class CvTemplateRelatedListView(CvTemplateCatalogDetailView):
         )
 
 
+@extend_schema(
+    summary='Danh mục mẫu CV đang bật',
+    parameters=[OpenApiParameter('type', str, description='Loại danh mục')],
+    tags=['cv-templates'],
+)
 class CvCategoryCatalogListView(PublicCatalogCacheMixin, generics.ListAPIView):
     serializer_class = CvCategorySerializer
     permission_classes = [permissions.AllowAny]
@@ -173,6 +170,14 @@ class CvCategoryCatalogListView(PublicCatalogCacheMixin, generics.ListAPIView):
         return self.cached_response(self.get_serializer(self.get_queryset(), many=True).data)
 
 
+@extend_schema(
+    summary='Nội dung mẫu theo vị trí cho thư viện mẫu của editor',
+    parameters=[
+        OpenApiParameter('locale', str, enum=CvLanguage.values),
+        OpenApiParameter('experience_band', str, enum=ExperienceBand.values),
+    ],
+    tags=['cv-templates'],
+)
 class CvSampleContentCatalogListView(PublicCatalogCacheMixin, generics.ListAPIView):
     serializer_class = CvSampleContentCardSerializer
     permission_classes = [permissions.AllowAny]
@@ -188,6 +193,14 @@ class CvSampleContentCatalogListView(PublicCatalogCacheMixin, generics.ListAPIVi
         return self.cached_response(self.get_serializer(self.get_queryset(), many=True).data)
 
 
+@extend_schema(
+    summary='Vị trí công việc chọn được khi tạo CV',
+    parameters=[
+        OpenApiParameter('q', str),
+        OpenApiParameter('locale', str, enum=CvLanguage.values),
+    ],
+    tags=['cv-templates'],
+)
 class CvPositionOptionListView(PublicCatalogCacheMixin, generics.ListAPIView):
     serializer_class = CvPositionOptionSerializer
     permission_classes = [permissions.AllowAny]
@@ -251,16 +264,7 @@ class CvPositionPreviewView(PublicCatalogCacheMixin, APIView):
             raise ValidationError({'position_public_id': 'This query parameter is required.'})
 
         if source == 'blank':
-            resolved = {
-                'position_public_id': None,
-                'name_vi': '',
-                'locale': locale,
-                'experience_band': experience_band,
-                'source': 'blank',
-                'sample_content_public_id': None,
-                'schema_version': 1,
-                'content_json': empty_content(locale),
-            }
+            resolved = blank_position_content(locale=locale, experience_band=experience_band)
         else:
             try:
                 position = active_cv_position_options_queryset(locale=locale).get(
@@ -282,95 +286,26 @@ class CvPositionPreviewView(PublicCatalogCacheMixin, APIView):
         if not template_public_id:
             return self.cached_response(resolved)
 
-        try:
-            template = (
-                CvTemplate.objects.select_related(
-                    'current_published_version',
-                )
-                .prefetch_related(
-                    'current_published_version__sections__section_definition',
-                )
-                .get(public_id=template_public_id)
-            )
-        except CvTemplate.DoesNotExist as error:
-            raise Http404 from error
-
-        if (
-            theme_color
-            and not template.color_links.filter(
-                color__hex_code__iexact=theme_color,
-                color__is_active=True,
-            ).exists()
-        ):
+        template = preview_template(template_public_id)
+        if template is None:
+            raise Http404
+        if theme_color and not template.offers_color(theme_color):
             raise ValidationError({'theme_color': 'Color is not available for this template.'})
 
-        content_digest = sha256(
-            json.dumps(
-                resolved['content_json'],
-                ensure_ascii=False,
-                sort_keys=True,
-                separators=(',', ':'),
-            ).encode('utf-8')
-        ).hexdigest()
-        version = template.current_published_version
-        cache_key = ':'.join(
-            [
-                'cv-position-preview-v2',
-                str(version.pk if version else 'missing'),
-                locale,
-                public_id or 'blank',
-                experience_band,
-                content_digest,
-            ]
-        )
-        base_document = cache.get(cache_key)
-        cache_hit = base_document is not None
-        if base_document is None:
-            try:
-                base_document = compose_cv_document(
-                    template=template,
-                    content_json=resolved['content_json'],
-                )
-            except (CvCompositionError, DjangoValidationError) as error:
-                raise ValidationError({'template_public_id': str(error)}) from error
-            cache.set(cache_key, base_document, timeout=self.cache_seconds)
-
-        preview = deepcopy(base_document)
-        if source == 'sample' and not request.user.is_authenticated:
-            # Khách xem mẫu giống ảnh catalogue; người đăng nhập thấy danh tính của mình.
-            preview['content_json'] = with_demo_identity(preview['content_json'], locale)
-        document = finalize_preview_document(
-            preview,
+        data, cache_hit = compose_position_preview(
+            template=template,
+            resolved=resolved,
+            locale=locale,
+            experience_band=experience_band,
+            theme_color=theme_color,
             actor=request.user,
-            theme_color=theme_color or None,
+            # Khách xem mẫu giống ảnh catalogue; người đăng nhập thấy danh tính của mình.
+            demo_identity=source == 'sample' and not request.user.is_authenticated,
         )
-        revision = sha256(
-            json.dumps(
-                {
-                    'document': document,
-                    'renderer_key': version.renderer_key,
-                    'renderer_version': version.renderer_version,
-                },
-                ensure_ascii=False,
-                sort_keys=True,
-                separators=(',', ':'),
-            ).encode('utf-8')
-        ).hexdigest()
-        data = {
-            **resolved,
-            'document': document,
-            'renderer': {
-                'key': version.renderer_key,
-                'version': version.renderer_version,
-                'schema_version': version.schema_version,
-                'capabilities': version.capabilities,
-            },
-            'revision': revision,
-        }
         if request.user.is_authenticated:
             response = Response(data, headers={'Cache-Control': 'private, no-store'})
         else:
-            response = revalidated_response(request, data, etag=revision)
+            response = revalidated_response(request, data, etag=data['revision'])
         record_metric('cv_preview_cache_hit', int(cache_hit), source=source, locale=locale)
         record_metric(
             'cv_preview_latency_ms',
@@ -394,9 +329,8 @@ class CvBackgroundCatalogListView(APIView):
         tags=['cvs-v2'],
     )
     def get(self, request):
-        assets = CvAsset.objects.filter(
-            kind=CvAsset.Kind.BACKGROUND,
-            owner__isnull=True,
-            is_active=True,
-        ).order_by('created_at')
-        return Response(CvAssetSerializer(assets, many=True, context={'request': request}).data)
+        return Response(
+            CvAssetSerializer(
+                active_backgrounds_queryset(), many=True, context={'request': request}
+            ).data
+        )

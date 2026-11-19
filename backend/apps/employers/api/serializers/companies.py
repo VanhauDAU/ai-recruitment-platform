@@ -12,11 +12,7 @@ from ...models import (
     CompanyImage,
     Industry,
 )
-from ...services import (
-    normalize_company_rich_text,
-    normalize_company_tax_code,
-    set_company_industries,
-)
+from ...services import normalize_company_rich_text, normalize_company_tax_code
 
 
 class IndustrySerializer(serializers.ModelSerializer):
@@ -32,7 +28,7 @@ class CompanyImageSerializer(serializers.ModelSerializer):
         model = CompanyImage
         fields = ['id', 'image_url', 'caption', 'sort_order']
 
-    def get_image_url(self, obj):
+    def get_image_url(self, obj) -> str:
         return media_url_from_value(obj.image_url, request=self.context.get('request'))
 
 
@@ -107,7 +103,7 @@ class CompanySerializer(serializers.ModelSerializer):
             'description': {'required': True},
         }
 
-    def get_industries_detail(self, obj):
+    def get_industries_detail(self, obj) -> list[dict]:
         return [
             {
                 'id': item.industry.id,
@@ -118,14 +114,14 @@ class CompanySerializer(serializers.ModelSerializer):
             for item in obj.company_industries.select_related('industry')
         ]
 
-    def get_primary_industry_id(self, obj):
+    def get_primary_industry_id(self, obj) -> int | None:
         primary = next((item for item in obj.company_industries.all() if item.is_primary), None)
         return primary.industry_id if primary else None
 
-    def get_logo_url(self, obj):
+    def get_logo_url(self, obj) -> str:
         return media_url_from_value(obj.logo_url, request=self.context.get('request'))
 
-    def get_cover_image_url(self, obj):
+    def get_cover_image_url(self, obj) -> str:
         return media_url_from_value(obj.cover_image_url, request=self.context.get('request'))
 
     def _validate_enum_list(self, value, choices, label):
@@ -220,14 +216,6 @@ class CompanySerializer(serializers.ModelSerializer):
 
         return attrs
 
-    def create(self, validated_data):
-        industries = validated_data.pop('industries')
-        primary_industry = validated_data.pop('primary_industry')
-        validated_data.pop('logo_pending', None)
-        company = Company.objects.create(**validated_data)
-        set_company_industries(company, industries, primary_industry)
-        return company
-
 
 class CompanySearchSerializer(serializers.ModelSerializer):
     """Kết quả tìm công ty có sẵn (thẻ 1 luồng onboarding): tên, MST, địa chỉ,
@@ -249,7 +237,7 @@ class CompanySearchSerializer(serializers.ModelSerializer):
             'industries_detail',
         ]
 
-    def get_logo_url(self, obj):
+    def get_logo_url(self, obj) -> str:
         return media_url_from_value(obj.logo_url, request=self.context.get('request'))
 
 
@@ -284,12 +272,12 @@ class PublicCompanyListSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
-    def get_logo_url(self, obj):
+    def get_logo_url(self, obj) -> str:
         return media_url_from_value(obj.logo_url, request=self.context.get('request'))
 
-    def get_cover_image_url(self, obj):
+    def get_cover_image_url(self, obj) -> str:
         return media_url_from_value(obj.cover_image_url, request=self.context.get('request'))
 
-    def get_description_excerpt(self, obj):
+    def get_description_excerpt(self, obj) -> str:
         plain_text = ' '.join(rich_text_plain_text(obj.description).split())
         return plain_text[: self.DESCRIPTION_EXCERPT_LENGTH]

@@ -374,6 +374,10 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticated',),
     'DEFAULT_PAGINATION_CLASS': 'common.api.pagination.StandardPagination',
+    'EXCEPTION_HANDLER': 'common.api.exceptions.api_exception_handler',
+    # Browsable API chỉ cho dev: production trả JSON, không lộ form HTML của DRF.
+    'DEFAULT_RENDERER_CLASSES': ('rest_framework.renderers.JSONRenderer',)
+    + (('rest_framework.renderers.BrowsableAPIRenderer',) if DEBUG else ()),
     'PAGE_SIZE': 20,
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     # Phòng thủ lớp hai cho các throttle chưa dùng ClientIPScopedRateThrottle:
@@ -464,8 +468,56 @@ SPECTACULAR_SETTINGS = {
     },
     # Đặt tên enum tường minh để tránh trùng tên tự sinh (status/level dùng ở nhiều bảng)
     'ENUM_NAME_OVERRIDES': {
+        # Va chạm tên enum giữa các app (ADR-0022 GĐ3): đặt tên theo nghĩa thay cho hash.
+        'CompanyDocumentStatusEnum': 'apps.employers.models.verification.CompanyDocument.Status',
+        'CompanyUpdateRequestStatusEnum': 'apps.employers.models.verification.CompanyUpdateRequest.Status',
+        'EmployerVerificationCaseStatusEnum': 'apps.employers.models.verification.EmployerVerificationCase.Status',
+        'EmployerVerificationMethodEnum': 'apps.employers.models.verification.EmployerVerificationCase.VerificationMethod',
+        'CompanyJoinRequestStatusEnum': 'apps.employers.models.membership.CompanyJoinRequest.Status',
+        'CompanyDomainClaimStatusEnum': 'apps.employers.models.domain_claim.CompanyDomainClaim.Status',
+        'CompanyReportReasonEnum': 'apps.employers.models.company_report.CompanyReport.Reason',
+        'EmployerNotificationEventTypeEnum': 'apps.employers.models.notifications.EmployerNotification.EventType',
+        'RecruitmentNeedPositionLevelEnum': 'apps.employers.models.choices.PositionLevel',
+        'UserCvSourceEnum': 'apps.cvs.models.cv.UserCv.Source',
+        'CvCategoryTypeEnum': 'apps.cv_templates.models.template.CvCategory.CategoryType',
+        'ExperienceBandEnum': 'apps.cv_templates.models.experience.ExperienceBand',
+        'ReportResolutionEnum': [('upheld', 'upheld'), ('dismissed', 'dismissed')],
+        'VerificationReviewDecisionEnum': [
+            ('approved', 'approved'),
+            ('changes_requested', 'changes_requested'),
+            ('rejected', 'rejected'),
+        ],
+        'VerificationLifecycleActionEnum': [('revoked', 'revoked'), ('expired', 'expired')],
+        'TaxNameComparisonEnum': [
+            ('match', 'match'),
+            ('mismatch', 'mismatch'),
+            ('pending', 'pending'),
+            ('unavailable', 'unavailable'),
+            ('stale_input', 'stale_input'),
+        ],
+        'CapabilityBlockedEnum': [('blocked', 'blocked')],
+        'CapabilityRecomputeEnum': [
+            ('eligible_after_recompute', 'eligible_after_recompute'),
+            ('blocked', 'blocked'),
+        ],
+        'CapabilityUnchangedEnum': [('unchanged', 'unchanged')],
+        'LocaleEnum': 'apps.jobs.models.core.JobCategoryLocalization.Locale',
         'JobStatusEnum': 'apps.jobs.models.Job.Status',
         'ApplicationStatusEnum': 'apps.applications.models.Application.Status',
+        'ApplicationSourceEnum': 'apps.applications.models.Application.Source',
+        'CandidateBlockReasonEnum': 'apps.applications.models.CandidateBlock.Reason',
+        'JobPositionLevelEnum': 'apps.jobs.models.Job.PositionLevel',
+        # work_type và work_types (danh sách) dùng chung một tập lựa chọn.
+        'JobWorkTypeEnum': 'apps.jobs.models.Job.WorkType',
+        'JobCategoryTypeEnum': 'apps.jobs.models.JobCategory.CategoryType',
+        'JobAiGenerationModeEnum': 'apps.jobs.models.JobAiGeneration.Mode',
+        'JobAiGenerationStatusEnum': 'apps.jobs.models.JobAiGeneration.Status',
+        'JobAiFeedbackReasonEnum': 'apps.jobs.models.JobAiGeneration.FeedbackReason',
+        'JobReportReasonEnum': 'apps.jobs.models.JobReport.Reason',
+        # Báo cáo tin và báo cáo công ty cùng tập pending/upheld/dismissed.
+        'ReportStatusEnum': 'apps.jobs.models.JobReport.Status',
+        'CampaignStatusEnum': 'apps.campaigns.models.RecruitmentCampaign.Status',
+        'CampaignChannelKindEnum': 'apps.campaigns.models.CampaignChannel.Kind',
         # CvSkill.Level và JobSkill.MinLevel cùng tập beginner/intermediate/advanced -> 1 enum chung
         'SkillLevelEnum': 'apps.jobs.models.JobSkill.MinLevel',
         'LocationLevelEnum': 'apps.locations.models.Location.Level',
@@ -481,6 +533,29 @@ SPECTACULAR_SETTINGS = {
         ),
         'AnnouncementRuntimeReasonEnum': (
             'apps.sitecontent.api.serializers.announcements.ANNOUNCEMENT_RUNTIME_REASONS'
+        ),
+        'UserRoleEnum': 'apps.accounts.models.User.Role',
+        'SelfServiceRoleEnum': 'apps.accounts.api.serializers.auth.SELF_SERVICE_ROLES',
+        # Tên cổng đăng nhập (key của dict) — main | employer | admin.
+        'AuthPortalEnum': 'apps.accounts.services.refresh_cookies.PORTAL_ROLE_BY_NAME',
+        'AccountStatusEnum': 'apps.accounts.models.User.Status',
+        'ManagedAccountStatusEnum': (
+            'apps.accounts.api.serializers.account_management.MANAGED_ACCOUNT_STATUSES'
+        ),
+        'BlogPostStatusEnum': 'apps.blog.models.Post.Status',
+        'KnowledgeArticleTypeEnum': 'apps.knowledgebase.models.KnowledgeArticle.ArticleType',
+        'KnowledgeArticleLifecycleStateEnum': (
+            'apps.knowledgebase.models.KnowledgeArticle.LifecycleState'
+        ),
+        'AnnouncementThemeModeEnum': 'apps.sitecontent.models.AnnouncementRevision.ThemeMode',
+        'AnnouncementBackgroundFitEnum': (
+            'apps.sitecontent.models.AnnouncementRevision.BackgroundFit'
+        ),
+        'AnnouncementBackgroundPositionEnum': (
+            'apps.sitecontent.models.AnnouncementRevision.BackgroundPosition'
+        ),
+        'AnnouncementBackgroundOverlayEnum': (
+            'apps.sitecontent.models.AnnouncementRevision.BackgroundOverlay'
         ),
     },
     'TAGS': [

@@ -9,9 +9,11 @@ from datetime import timedelta
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.utils import timezone
+from rest_framework.exceptions import NotFound
 
 from apps.candidates.models import CandidateNotification
 from apps.candidates.services import emit_candidate_notification
+from common.api.exceptions import DomainError
 
 from ..models import TalentPoolEntry, TalentPoolInvitation
 
@@ -19,8 +21,9 @@ CANDIDATE_POOL_PATH = '/tai-khoan/kho-ung-vien-tiem-nang'
 MAX_TAGS = 5
 
 
-class TalentPoolConflict(ValueError):
-    pass
+class TalentPoolConflict(DomainError):
+    def payload(self):
+        return {'detail': str(self)}
 
 
 def _clean_tags(tags):
@@ -80,7 +83,7 @@ def withdraw_from_talent_pool(*, candidate, entry_public_id):
         withdrawn_at__isnull=True,
     ).first()
     if entry is None:
-        raise TalentPoolEntry.DoesNotExist
+        raise NotFound
     entry.withdrawn_at = timezone.now()
     entry.save(update_fields=['withdrawn_at'])
     return entry

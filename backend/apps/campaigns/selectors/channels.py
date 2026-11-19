@@ -116,3 +116,7 @@ def campaign_channel_report(campaign):
             else None,
         },
     }
+
+
+def channel_costs_queryset(channel):
+    return CampaignChannelCost.objects.filter(channel=channel)

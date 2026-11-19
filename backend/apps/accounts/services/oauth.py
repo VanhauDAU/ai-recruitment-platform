@@ -16,6 +16,7 @@ import requests
 from django.conf import settings
 from django.core.cache import cache
 from django.db import transaction
+from rest_framework.exceptions import ValidationError
 
 from apps.accounts.models import SocialAccount, User
 from apps.accounts.services.access import is_account_accessible
@@ -137,6 +138,25 @@ def pop_one_time_code(code):
     return atomic_pop(f'{_CODE_PREFIX}{code}')
 
 
+def redeem_one_time_code(code):
+    """Return the account a one-time code was issued for, consuming the code."""
+    identity = pop_one_time_code(code)
+    user = (
+        User.objects.filter(pk=identity.get('user_id'), is_active=True).first()
+        if isinstance(identity, dict)
+        else None
+    )
+    if (
+        user is None
+        or identity.get('auth_revision') != user.auth_revision
+        or identity.get('email') != User.objects.normalize_email(user.email)
+    ):
+        raise ValidationError(
+            {'detail': 'Mã đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.'}
+        )
+    return user
+
+
 # ---- Nói chuyện với provider ----
 
 
@@ -227,6 +247,19 @@ def fetch_profile(provider, access_token):
 
 
 # ---- Tạo / liên kết user ----
+
+
+def complete_provider_login(provider, code, redirect_uri, portal):
+    """Exchange the provider code, resolve the portal account, return a one-time code."""
+    # Import lazily: task delivery imports account services to render email.
+    from ..tasks import queue_welcome_email
+
+    token = exchange_code(provider, code, redirect_uri)
+    profile = fetch_profile(provider, token)
+    user, created = resolve_user(provider, profile, portal, include_created=True)
+    if created:
+        queue_welcome_email(user, context={'registration_method': provider})
+    return create_one_time_code(user)
 
 
 def resolve_user(provider, profile, portal, *, include_created=False):

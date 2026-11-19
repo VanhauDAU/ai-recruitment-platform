@@ -1,4 +1,4 @@
-import logging
+"""Owner-scoped upload sessions; ``UploadServiceError`` maps to its HTTP status centrally."""
 
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -15,60 +15,13 @@ from apps.uploads.api.serializers import (
 )
 from apps.uploads.selectors import owned_upload_session
 from apps.uploads.services import (
-    UploadServiceError,
     cancel_upload_session,
     create_upload_session,
+    enqueue_upload_scan,
     request_scan_retry,
     store_quarantined_upload,
+    upload_error,
 )
-from apps.uploads.tasks import scan_upload_session
-
-logger = logging.getLogger(__name__)
-
-ERROR_STATUS = {
-    'RESOURCE_NOT_FOUND': status.HTTP_404_NOT_FOUND,
-    'UPLOAD_PURPOSE_FORBIDDEN': status.HTTP_403_FORBIDDEN,
-    'UPLOAD_PIPELINE_DISABLED': status.HTTP_503_SERVICE_UNAVAILABLE,
-    'UPLOAD_STORAGE_FAILED': status.HTTP_503_SERVICE_UNAVAILABLE,
-    'UPLOAD_TOO_LARGE': status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-    'UPLOAD_SESSION_QUOTA_EXCEEDED': status.HTTP_429_TOO_MANY_REQUESTS,
-    'UPLOAD_BYTE_QUOTA_EXCEEDED': status.HTTP_429_TOO_MANY_REQUESTS,
-    'UPLOAD_BUSY': status.HTTP_409_CONFLICT,
-    'UPLOAD_EXPIRED': status.HTTP_409_CONFLICT,
-    'UPLOAD_INVALID_STATE': status.HTTP_409_CONFLICT,
-    'UPLOAD_NOT_CLEAN': status.HTTP_409_CONFLICT,
-    'UPLOAD_SCAN_FAILED': status.HTTP_409_CONFLICT,
-    'UPLOAD_ALREADY_SUBMITTED': status.HTTP_409_CONFLICT,
-}
-
-
-def _error_response(error):
-    return Response(
-        {
-            'code': error.code,
-            'message': error.message,
-            'retryable': error.retryable,
-        },
-        status=ERROR_STATUS.get(error.code, status.HTTP_400_BAD_REQUEST),
-    )
-
-
-def _missing_response():
-    return Response(
-        {
-            'code': 'RESOURCE_NOT_FOUND',
-            'message': 'Không tìm thấy upload session.',
-            'retryable': False,
-        },
-        status=status.HTTP_404_NOT_FOUND,
-    )
-
-
-def _enqueue_scan(session_id):
-    try:
-        scan_upload_session.delay(session_id)
-    except Exception:  # noqa: BLE001 - periodic reconciliation owns broker recovery
-        logger.warning('Unable to enqueue owner upload scan.')
 
 
 class UploadSessionCreateView(APIView):
@@ -92,16 +45,13 @@ class UploadSessionCreateView(APIView):
     def post(self, request):
         serializer = UploadSessionCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        try:
-            session = create_upload_session(
-                owner=request.user,
-                purpose=serializer.validated_data['purpose'],
-                original_filename=serializer.validated_data['original_filename'],
-                content_type=serializer.validated_data['content_type'],
-                expected_size_bytes=serializer.validated_data['size_bytes'],
-            )
-        except UploadServiceError as error:
-            return _error_response(error)
+        session = create_upload_session(
+            owner=request.user,
+            purpose=serializer.validated_data['purpose'],
+            original_filename=serializer.validated_data['original_filename'],
+            content_type=serializer.validated_data['content_type'],
+            expected_size_bytes=serializer.validated_data['size_bytes'],
+        )
         return Response(UploadSessionSerializer(session).data, status=status.HTTP_201_CREATED)
 
 
@@ -117,7 +67,7 @@ class UploadSessionDetailView(APIView):
     def get(self, request, public_id):
         session = owned_upload_session(owner=request.user, public_id=public_id)
         if session is None:
-            return _missing_response()
+            raise upload_error('RESOURCE_NOT_FOUND')
         return Response(UploadSessionSerializer(session).data)
 
 
@@ -142,15 +92,12 @@ class UploadSessionContentView(APIView):
     def post(self, request, public_id):
         serializer = UploadContentSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        try:
-            session = store_quarantined_upload(
-                owner=request.user,
-                public_id=public_id,
-                upload=serializer.validated_data['file'],
-            )
-        except UploadServiceError as error:
-            return _error_response(error)
-        _enqueue_scan(session.pk)
+        session = store_quarantined_upload(
+            owner=request.user,
+            public_id=public_id,
+            upload=serializer.validated_data['file'],
+        )
+        enqueue_upload_scan(session.pk)
         refreshed = owned_upload_session(owner=request.user, public_id=public_id) or session
         return Response(UploadSessionSerializer(refreshed).data)
 
@@ -170,10 +117,7 @@ class UploadSessionCancelView(APIView):
         tags=['uploads'],
     )
     def post(self, request, public_id):
-        try:
-            session = cancel_upload_session(owner=request.user, public_id=public_id)
-        except UploadServiceError as error:
-            return _error_response(error)
+        session = cancel_upload_session(owner=request.user, public_id=public_id)
         return Response(UploadSessionSerializer(session).data)
 
 
@@ -192,10 +136,7 @@ class UploadSessionRetryView(APIView):
         tags=['uploads'],
     )
     def post(self, request, public_id):
-        try:
-            session = request_scan_retry(owner=request.user, public_id=public_id)
-        except UploadServiceError as error:
-            return _error_response(error)
-        _enqueue_scan(session.pk)
+        session = request_scan_retry(owner=request.user, public_id=public_id)
+        enqueue_upload_scan(session.pk)
         refreshed = owned_upload_session(owner=request.user, public_id=public_id) or session
         return Response(UploadSessionSerializer(refreshed).data)

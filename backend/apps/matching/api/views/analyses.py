@@ -1,6 +1,3 @@
-import logging
-
-from django.db import transaction
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.exceptions import NotFound
@@ -18,17 +15,7 @@ from ...selectors import (
     recent_owner_analyses,
 )
 from ...services import MatchingRequestError, ensure_enabled, request_analysis
-from ...tasks import run_analysis
 from ..serializers import AnalysisErrorSerializer, AnalysisRequestSerializer, AnalysisSerializer
-
-logger = logging.getLogger(__name__)
-
-
-def _dispatch(analysis_id):
-    try:
-        run_analysis.delay(analysis_id)
-    except Exception:  # noqa: BLE001 - vòng phục hồi sẽ gửi lại hàng chờ
-        logger.exception('Không thể gửi phân tích %s.', analysis_id)
 
 
 class AnalysisListCreateView(APIView):
@@ -76,9 +63,7 @@ class AnalysisListCreateView(APIView):
         cv = owner_cv_for_matching(request.user, serializer.validated_data['cv'])
         if cv is None:
             raise MatchingRequestError('cv_not_owned')
-        analysis, needs_run = request_analysis(user=request.user, job=job, cv=cv)
-        if needs_run:
-            transaction.on_commit(lambda: _dispatch(analysis.pk))
+        analysis = request_analysis(user=request.user, job=job, cv=cv)
         done = analysis.status == MatchAnalysis.Status.SUCCEEDED
         data = AnalysisSerializer(analysis, context={'cached': done}).data
         return Response(data, status=status.HTTP_200_OK if done else status.HTTP_202_ACCEPTED)

@@ -46,14 +46,14 @@ class AdminJobApplicationSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
-    def get_candidate_name(self, obj):
+    def get_candidate_name(self, obj) -> str:
         return obj.candidate.full_name or obj.contact_name or obj.candidate.email
 
-    def get_candidate_account_restricted(self, obj):
+    def get_candidate_account_restricted(self, obj) -> bool:
         candidate = obj.candidate
         return bool(candidate.status != 'active' or not candidate.is_active or candidate.is_deleted)
 
-    def get_preferred_locations(self, obj):
+    def get_preferred_locations(self, obj) -> list[dict]:
         return [
             {'code': location.code, 'name': location.name}
             for location in obj.preferred_locations.all()

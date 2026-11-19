@@ -1,16 +1,21 @@
-from django.db import transaction
-from django.utils import timezone
-from rest_framework import generics
+from drf_spectacular.utils import extend_schema, extend_schema_view, inline_serializer
+from rest_framework import generics, serializers
+from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import IsEmployer
 
-from ...models import EmployerNotification, EmployerNotificationPreference
 from ...selectors import (
     employer_activity_queryset,
+    employer_notification_preference,
     employer_notification_queryset,
     employer_unread_notification_count,
+)
+from ...services import (
+    mark_all_employer_notifications_read,
+    mark_employer_notification_read,
+    update_employer_notification_preference,
 )
 from ..serializers import (
     EmployerActivitySerializer,
@@ -32,22 +37,32 @@ def _preference_payload(preference):
     }
 
 
+@extend_schema(tags=['employer'])
 class EmployerNotificationPreferenceView(APIView):
     permission_classes = [IsEmployer]
 
+    @extend_schema(
+        summary='Cài đặt email thông báo của nhà tuyển dụng',
+        responses={200: EmployerNotificationPreferenceSerializer},
+    )
     def get(self, request):
-        preference = EmployerNotificationPreference.objects.filter(recipient=request.user).first()
-        return Response(_preference_payload(preference))
+        return Response(_preference_payload(employer_notification_preference(request.user)))
 
+    @extend_schema(
+        summary='Bật/tắt các email thông báo không bắt buộc',
+        request=EmployerNotificationPreferenceSerializer,
+        responses={200: EmployerNotificationPreferenceSerializer},
+    )
     def patch(self, request):
         serializer = EmployerNotificationPreferenceSerializer(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        preference, _ = EmployerNotificationPreference.objects.update_or_create(
-            recipient=request.user, defaults=dict(serializer.validated_data)
+        preference = update_employer_notification_preference(
+            request.user, serializer.validated_data
         )
         return Response(_preference_payload(preference))
 
 
+@extend_schema_view(get=extend_schema(summary='Thông báo của nhà tuyển dụng', tags=['employer']))
 class EmployerNotificationListView(generics.ListAPIView):
     permission_classes = [IsEmployer]
     serializer_class = EmployerNotificationSerializer
@@ -59,6 +74,13 @@ class EmployerNotificationListView(generics.ListAPIView):
 class EmployerNotificationUnreadCountView(APIView):
     permission_classes = [IsEmployer]
 
+    @extend_schema(
+        summary='Số thông báo chưa đọc',
+        responses=inline_serializer(
+            'EmployerNotificationUnreadCount', fields={'count': serializers.IntegerField()}
+        ),
+        tags=['employer'],
+    )
     def get(self, request):
         return Response({'count': employer_unread_notification_count(request.user)})
 
@@ -66,32 +88,35 @@ class EmployerNotificationUnreadCountView(APIView):
 class EmployerNotificationReadView(APIView):
     permission_classes = [IsEmployer]
 
-    @transaction.atomic
+    @extend_schema(
+        summary='Đánh dấu một thông báo đã đọc',
+        request=None,
+        responses={200: EmployerNotificationSerializer},
+        tags=['employer'],
+    )
     def post(self, request, public_id):
-        notification = (
-            EmployerNotification.objects.select_for_update()
-            .filter(recipient=request.user, public_id=public_id)
-            .first()
-        )
+        notification = mark_employer_notification_read(request.user, public_id)
         if notification is None:
-            return Response({'detail': 'Không tìm thấy thông báo.'}, status=404)
-        if notification.read_at is None:
-            notification.read_at = timezone.now()
-            notification.save(update_fields=['read_at'])
+            raise NotFound('Không tìm thấy thông báo.')
         return Response(EmployerNotificationSerializer(notification).data)
 
 
 class EmployerNotificationReadAllView(APIView):
     permission_classes = [IsEmployer]
 
+    @extend_schema(
+        summary='Đánh dấu mọi thông báo đã đọc',
+        request=None,
+        responses=inline_serializer(
+            'EmployerNotificationReadAll', fields={'updated': serializers.IntegerField()}
+        ),
+        tags=['employer'],
+    )
     def post(self, request):
-        updated = EmployerNotification.objects.filter(
-            recipient=request.user,
-            read_at__isnull=True,
-        ).update(read_at=timezone.now())
-        return Response({'updated': updated})
+        return Response({'updated': mark_all_employer_notifications_read(request.user)})
 
 
+@extend_schema_view(get=extend_schema(summary='Nhật ký hoạt động của tôi', tags=['employer']))
 class EmployerActivityListView(generics.ListAPIView):
     permission_classes = [IsEmployer]
     serializer_class = EmployerActivitySerializer

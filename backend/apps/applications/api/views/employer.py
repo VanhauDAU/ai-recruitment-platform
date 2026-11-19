@@ -2,6 +2,7 @@ import csv
 
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import generics
 from rest_framework.exceptions import ValidationError
@@ -40,6 +41,7 @@ def _csv_cell(value):
     return f"'{text}" if text.startswith(('=', '+', '-', '@')) else text
 
 
+@extend_schema(tags=['applications-v2'], summary='Hồ sơ ứng tuyển vào các tin của NTD')
 class EmployerApplicationListView(generics.ListAPIView):
     serializer_class = ApplicationSerializer
     permission_classes = [IsEmployer]
@@ -57,6 +59,11 @@ class EmployerApplicationListView(generics.ListAPIView):
         )
 
 
+@extend_schema(
+    tags=['applications-v2'],
+    summary='Xuất danh sách hồ sơ ứng tuyển ra CSV',
+    responses={(200, 'text/csv'): OpenApiTypes.BINARY},
+)
 class EmployerApplicationExportView(APIView):
     permission_classes = [IsEmployer]
 
@@ -176,6 +183,7 @@ class EmployerApplicationDecisionUndoView(APIView):
         return Response(_workspace_row(request, application))
 
 
+@extend_schema(tags=['applications-v2'], summary='Các lần nộp trước của ứng viên vào cùng tin')
 class EmployerApplicationSubmissionsView(generics.ListAPIView):
     """Earlier submissions of the same candidate to the same job, read-only."""
 
@@ -189,6 +197,7 @@ class EmployerApplicationSubmissionsView(generics.ListAPIView):
         )
 
 
+@extend_schema(tags=['applications-v2'], summary='Lịch sử trạng thái của hồ sơ')
 class EmployerApplicationHistoryView(generics.ListAPIView):
     permission_classes = [IsEmployer]
     serializer_class = ApplicationStatusHistorySerializer

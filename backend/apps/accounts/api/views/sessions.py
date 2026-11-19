@@ -9,9 +9,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from ...models import AuthSession
-from ...services import auth_sessions, record_admin_self_action
-
-HISTORY_LIMIT = 50
+from ...selectors import auth_session_history
+from ...services import auth_sessions
 
 
 class AuthSessionSerializer(serializers.ModelSerializer):
@@ -30,7 +29,7 @@ class AuthSessionSerializer(serializers.ModelSerializer):
             'current',
         ]
 
-    def get_current(self, obj):
+    def get_current(self, obj) -> bool:
         return str(obj.id) == self.context.get('current_sid')
 
 
@@ -51,7 +50,7 @@ class SessionListView(APIView):
         # `?scope=history` trả thêm phiên đã thu hồi/hết hạn cho màn hình nhật ký
         # đăng nhập — chỉ có dữ liệu từ khi AuthSession được đưa vào.
         if request.query_params.get('scope') == 'history':
-            sessions = AuthSession.objects.filter(user=request.user)[:HISTORY_LIMIT]
+            sessions = auth_session_history(request.user)
         else:
             sessions = auth_sessions.active_sessions(request.user)
         data = AuthSessionSerializer(
@@ -71,16 +70,7 @@ class SessionRevokeView(APIView):
         tags=['auth'],
     )
     def delete(self, request, session_id):
-        session = auth_sessions.active_sessions(request.user).filter(id=session_id).first()
-        if session is None:
-            return Response(
-                {'detail': 'Không tìm thấy phiên đăng nhập.'},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-        auth_sessions.revoke_session(session)
-        record_admin_self_action(
-            request.user, 'self_session_revoke', {'device_label': session.device_label}
-        )
+        auth_sessions.revoke_own_session(request.user, session_id)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -96,13 +86,5 @@ class SessionRevokeOthersView(APIView):
         tags=['auth'],
     )
     def post(self, request):
-        sessions = auth_sessions.active_sessions(request.user)
-        sid = _current_sid(request)
-        if sid:
-            sessions = sessions.exclude(id=sid)
-        revoked = 0
-        for session in sessions:
-            auth_sessions.revoke_session(session)
-            revoked += 1
-        record_admin_self_action(request.user, 'self_session_revoke_others', {'revoked': revoked})
+        auth_sessions.revoke_other_sessions(request.user, _current_sid(request))
         return Response({'detail': 'Đã đăng xuất khỏi các thiết bị khác.'})
