@@ -1,12 +1,15 @@
 import { LinkOutlined } from '@ant-design/icons'
-import { Descriptions, Empty, Typography } from 'antd'
+import { Empty, Typography } from 'antd'
 import { sanitizeHtml } from '@/shared/lib/sanitize-html'
-import { displayProfileValue, isProfileValueEmpty } from '../model/profile-value'
+import { displayProfileValue, isProfileValueEmpty, isScalarProfileField } from '../model/profile-value'
 
 const LINK_FIELDS = new Set(['website_url', 'portfolio_url', 'github_url', 'linkedin_url'])
 
 function FieldValue({ field, value }) {
-  if (LINK_FIELDS.has(field) && !isProfileValueEmpty(value)) {
+  if (isProfileValueEmpty(value)) {
+    return <span className="account-fields__empty">{displayProfileValue(field, value)}</span>
+  }
+  if (LINK_FIELDS.has(field)) {
     return (
       <a
         className="account-profile__link"
@@ -22,32 +25,38 @@ function FieldValue({ field, value }) {
   return displayProfileValue(field, value)
 }
 
+/** Label-above-value grid; columns follow the available width instead of a fixed table. */
 export function ProfileFieldGrid({ data, labels }) {
-  const entries = Object.entries(labels).filter(([key]) => {
-    const value = data?.[key]
-    return value !== undefined && (Array.isArray(value) || typeof value !== 'object')
-  })
-  if (!entries.length) return <Empty description="Chưa có dữ liệu" />
+  const entries = Object.entries(labels).filter(([key]) => isScalarProfileField(data?.[key]))
+  if (!entries.length) return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có dữ liệu" />
   return (
-    <Descriptions
-      bordered
-      size="small"
-      className="account-profile__grid"
-      column={{ xs: 1, md: 2 }}
-    >
+    <dl className="account-fields">
       {entries.map(([key, label]) => (
-        <Descriptions.Item key={key} label={label}>
-          <FieldValue field={key} value={data[key]} />
-        </Descriptions.Item>
+        <div key={key} className="account-fields__item">
+          <dt>{label}</dt>
+          <dd><FieldValue field={key} value={data[key]} /></dd>
+        </div>
       ))}
-    </Descriptions>
+    </dl>
+  )
+}
+
+/** A titled group of fields inside a panel; `title` stays a heading so the panel reads as an outline. */
+export function ProfileFieldSection({ title, extra, children }) {
+  return (
+    <section className="account-section">
+      <div className="account-section__heading">
+        <h3>{title}</h3>
+        {extra}
+      </div>
+      {children}
+    </section>
   )
 }
 
 export function ProfileRichTextBlock({ label, html }) {
   return (
-    <section className="account-profile__richtext">
-      <h4>{label}</h4>
+    <ProfileFieldSection title={label}>
       {isProfileValueEmpty(html) ? (
         <Typography.Text type="secondary">Chưa cập nhật</Typography.Text>
       ) : (
@@ -56,6 +65,6 @@ export function ProfileRichTextBlock({ label, html }) {
           dangerouslySetInnerHTML={{ __html: sanitizeHtml(html) }}
         />
       )}
-    </section>
+    </ProfileFieldSection>
   )
 }

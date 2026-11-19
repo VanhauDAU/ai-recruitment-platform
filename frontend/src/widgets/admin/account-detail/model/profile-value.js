@@ -6,6 +6,15 @@ export const isProfileValueEmpty = (value) => (
   || (Array.isArray(value) && value.length === 0)
 )
 
+// Nested objects (company, job_preference) have their own panels; arrays render as a list.
+export const isScalarProfileField = (value) => (
+  value !== undefined && (Array.isArray(value) || typeof value !== 'object')
+)
+
+export const hasProfileFields = (data, labels) => (
+  Object.keys(labels).some((key) => isScalarProfileField(data?.[key]))
+)
+
 export function displayProfileValue(field, value) {
   if (isProfileValueEmpty(value)) return 'Chưa cập nhật'
   if (typeof value === 'boolean') return value ? 'Có' : 'Không'

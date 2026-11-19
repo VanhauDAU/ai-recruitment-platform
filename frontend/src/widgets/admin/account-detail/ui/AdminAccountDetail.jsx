@@ -2,6 +2,7 @@ import {
   ArrowLeftOutlined,
   EditOutlined,
   MailOutlined,
+  PhoneOutlined,
   SafetyCertificateOutlined,
   UserOutlined,
 } from '@ant-design/icons'
@@ -10,7 +11,6 @@ import {
   Alert,
   Avatar,
   Button,
-  Card,
   Descriptions,
   Skeleton,
   Space,
@@ -47,9 +47,11 @@ import {
 } from '@/features/admin/account/recover-account-identity'
 import { SendAccountPasswordResetButton } from '@/features/admin/account/send-account-password-reset'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { m } from '@/shared/config/i18n'
 import { adminPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
 import AccountProfilePanel from './AccountProfilePanel'
+import DetailPanel from './DetailPanel'
 import EmployerOverview from './EmployerOverview'
 import '../admin-account-detail.css'
 import { resolveActiveAdminAccountTab } from '../model/tab-state'
@@ -65,6 +67,25 @@ const STATUS_META = {
   pending: { label: 'Chờ kích hoạt', color: 'gold' },
   inactive: { label: 'Tạm khóa', color: 'orange' },
   banned: { label: 'Đã cấm', color: 'red' },
+}
+
+const EMPLOYER_STATS = [
+  { key: 'recruitment_needs', label: m.admin_recruiter_count_needs },
+  { key: 'jobs', label: m.admin_recruiter_count_jobs },
+  { key: 'campaigns', label: m.admin_recruiter_count_campaigns },
+  { key: 'verification_documents', label: m.admin_recruiter_count_documents },
+]
+
+function EmployerStats({ account }) {
+  const counts = account.section_counts || {}
+  return (
+    <dl className="account-detail-stats" aria-label={m.admin_recruiter_stats_label()}>
+      {EMPLOYER_STATS.map(({ key, label }) => (
+        <div key={key}><dt>{label()}</dt><dd>{counts[key] ?? 0}</dd></div>
+      ))}
+      <div><dt>{m.admin_recruiter_open_sessions()}</dt><dd>{account.active_session_count ?? 0}</dd></div>
+    </dl>
+  )
 }
 
 function StatusTag({ value, role = false }) {
@@ -85,22 +106,20 @@ function ResourceTable({ publicId, resource, columns, rowKey = 'public_id' }) {
     return <Alert showIcon type="error" title="Không thể tải dữ liệu" description={getApiErrorMessage(query.error)} />
   }
   return (
-    <div className="overflow-x-auto">
-      <Table
-        rowKey={rowKey}
-        loading={query.isLoading}
-        dataSource={query.data?.results || []}
-        columns={columns}
-        scroll={{ x: 900 }}
-        pagination={{
-          current: page,
-          pageSize: 20,
-          total: query.data?.count || 0,
-          showSizeChanger: false,
-          onChange: setPage,
-        }}
-      />
-    </div>
+    <Table
+      rowKey={rowKey}
+      loading={query.isLoading}
+      dataSource={query.data?.results || []}
+      columns={columns}
+      scroll={{ x: 900 }}
+      pagination={{
+        current: page,
+        pageSize: 20,
+        total: query.data?.count || 0,
+        showSizeChanger: false,
+        onChange: setPage,
+      }}
+    />
   )
 }
 
@@ -142,7 +161,7 @@ function SecurityPanel({
     }
   }
   return (
-    <div className="space-y-5">
+    <div className="account-detail-stack">
       <IdentityRecoveryGuide
         account={account}
         emailCompleted={recoveryProgress.emailCompleted}
@@ -174,7 +193,7 @@ function SecurityPanel({
           />
         ) : null}
       />
-      <Card title="Xác thực & quyền truy cập">
+      <DetailPanel title="Xác thực & quyền truy cập">
         <Descriptions bordered size="small" column={{ xs: 1, md: 2 }}>
           <Descriptions.Item label="Email">
             <Tag color={account.email_verified ? 'green' : 'orange'}>
@@ -218,8 +237,8 @@ function SecurityPanel({
             />
           </div>
         </div>
-      </Card>
-      <Card title="Danh sách phiên">
+      </DetailPanel>
+      <DetailPanel title="Danh sách phiên">
         <Table
           rowKey="id"
           loading={sessions.isLoading}
@@ -243,7 +262,7 @@ function SecurityPanel({
             },
           ]}
         />
-      </Card>
+      </DetailPanel>
     </div>
   )
 }
@@ -252,7 +271,7 @@ function Overview({ account }) {
   const verification = account.context?.verification
   return (
     <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
-      <Card title="Thông tin tài khoản">
+      <DetailPanel title="Thông tin tài khoản">
         <Descriptions bordered size="small" column={1}>
           <Descriptions.Item label="Họ và tên">{account.full_name || 'Chưa cập nhật'}</Descriptions.Item>
           <Descriptions.Item label="Email">{account.email}</Descriptions.Item>
@@ -274,8 +293,8 @@ function Overview({ account }) {
             <Typography.Text copyable code>{account.public_id}</Typography.Text>
           </Descriptions.Item>
         </Descriptions>
-      </Card>
-      <Card title="Hoạt động và dữ liệu liên quan">
+      </DetailPanel>
+      <DetailPanel title="Hoạt động và dữ liệu liên quan">
         <div className="account-detail-counts">
           <div><span>Đăng nhập gần nhất</span><strong>{formatAdminDate(account.last_login)}</strong></div>
           <div><span>Phiên hoạt động</span><strong>{account.active_session_count}</strong></div>
@@ -296,7 +315,7 @@ function Overview({ account }) {
               </div>
             ))}
         </div>
-      </Card>
+      </DetailPanel>
     </div>
   )
 }
@@ -309,7 +328,7 @@ function CandidateTabs({ publicId, profilePanel, security, activity }) {
     {
       key: 'cvs',
       label: 'CV',
-      children: <ResourceTable publicId={publicId} resource="cvs" columns={[
+      children: <DetailPanel><ResourceTable publicId={publicId} resource="cvs" columns={[
         { title: 'Tiêu đề', dataIndex: 'title' },
         { title: 'Nguồn', dataIndex: 'source_label' },
         { title: 'Template', dataIndex: 'template_name', render: (value) => value || 'Không áp dụng' },
@@ -319,12 +338,12 @@ function CandidateTabs({ publicId, profilePanel, security, activity }) {
         { title: 'Mặc định', dataIndex: 'is_default', render: (value) => value ? 'Có' : 'Không' },
         { title: 'Cập nhật', dataIndex: 'updated_at', render: (value) => formatAdminDate(value) },
       ]}
-      />,
+      /></DetailPanel>,
     },
     {
       key: 'applications',
       label: 'Đơn ứng tuyển',
-      children: <ResourceTable publicId={publicId} resource="applications" columns={[
+      children: <DetailPanel><ResourceTable publicId={publicId} resource="applications" columns={[
         { title: 'Tin tuyển dụng', dataIndex: 'job_title' },
         { title: 'Công ty', dataIndex: 'company_name' },
         { title: 'CV đã nộp', dataIndex: 'submitted_cv_title' },
@@ -332,18 +351,18 @@ function CandidateTabs({ publicId, profilePanel, security, activity }) {
         { title: 'Nguồn', dataIndex: 'source_label' },
         { title: 'Ngày ứng tuyển', dataIndex: 'applied_at', render: (value) => formatAdminDate(value) },
       ]}
-      />,
+      /></DetailPanel>,
     },
     {
       key: 'consents',
       label: 'Consent & quyền riêng tư',
-      children: <ResourceTable publicId={publicId} resource="consents" rowKey="consent_type" columns={[
+      children: <DetailPanel><ResourceTable publicId={publicId} resource="consents" rowKey="consent_type" columns={[
         { title: 'Mục đích', dataIndex: 'consent_type_label' },
         { title: 'Quyết định', dataIndex: 'decision_label' },
         { title: 'Phiên bản chính sách', dataIndex: 'policy_version' },
         { title: 'Quyết định lúc', dataIndex: 'decided_at', render: (value) => formatAdminDate(value) },
       ]}
-      />,
+      /></DetailPanel>,
     },
     { key: 'security', label: 'Bảo mật', children: security },
     { key: 'activity', label: 'Hoạt động', children: activity },
@@ -352,61 +371,64 @@ function CandidateTabs({ publicId, profilePanel, security, activity }) {
 
 function EmployerRecruitment({ publicId }) {
   return (
-    <Tabs
-      items={[
-        {
-          key: 'needs',
-          label: 'Nhu cầu tuyển dụng',
-          children: <ResourceTable publicId={publicId} resource="recruitment-needs" columns={[
-            { title: 'Chuyên môn', dataIndex: 'position_category_name' },
-            { title: 'Cấp bậc', dataIndex: 'position_level_label' },
-            { title: 'Số lượng', dataIndex: 'headcount' },
-            { title: 'Nguồn ngân sách', dataIndex: 'budget_source_label' },
-            { title: 'Trạng thái', dataIndex: 'is_active', render: (value) => value ? 'Đang tuyển' : 'Ngừng tuyển' },
-          ]}
-          />,
-        },
-        {
-          key: 'jobs',
-          label: 'Tin tuyển dụng',
-          children: <ResourceTable publicId={publicId} resource="jobs" columns={[
-            { title: 'Tiêu đề', dataIndex: 'title' },
-            { title: 'Chiến dịch', dataIndex: 'campaign_name', render: (value) => value || 'Không thuộc chiến dịch' },
-            { title: 'Trạng thái', dataIndex: 'status_label' },
-            {
-              title: 'Policy hold',
-              dataIndex: 'policy_hold_label',
-              render: (value, row) => row.policy_hold
-                ? <Tag color="orange">{value}</Tag>
-                : <Tag>Không giữ</Tag>,
-            },
-            { title: 'Hồ sơ nhận được', dataIndex: 'application_count' },
-            { title: 'Hạn nộp', dataIndex: 'deadline' },
-            { title: 'Cập nhật', dataIndex: 'updated_at', render: (value) => formatAdminDate(value) },
-          ]}
-          />,
-        },
-        {
-          key: 'campaigns',
-          label: 'Chiến dịch',
-          children: <ResourceTable publicId={publicId} resource="campaigns" columns={[
-            { title: 'Tên chiến dịch', dataIndex: 'name' },
-            { title: 'Trạng thái', dataIndex: 'status_label' },
-            {
-              title: 'Policy hold',
-              dataIndex: 'policy_hold_label',
-              render: (value, row) => row.policy_hold
-                ? <Tag color="orange">{value}</Tag>
-                : <Tag>Không giữ</Tag>,
-            },
-            { title: 'Tin tuyển dụng', dataIndex: 'job_count' },
-            { title: 'Hồ sơ nhận được', dataIndex: 'application_count' },
-            { title: 'Cập nhật', dataIndex: 'updated_at', render: (value) => formatAdminDate(value) },
-          ]}
-          />,
-        },
-      ]}
-    />
+    <DetailPanel className="account-detail-subtabs">
+      <Tabs
+        size="small"
+        items={[
+          {
+            key: 'needs',
+            label: 'Nhu cầu tuyển dụng',
+            children: <ResourceTable publicId={publicId} resource="recruitment-needs" columns={[
+              { title: 'Chuyên môn', dataIndex: 'position_category_name' },
+              { title: 'Cấp bậc', dataIndex: 'position_level_label' },
+              { title: 'Số lượng', dataIndex: 'headcount' },
+              { title: 'Nguồn ngân sách', dataIndex: 'budget_source_label' },
+              { title: 'Trạng thái', dataIndex: 'is_active', render: (value) => value ? 'Đang tuyển' : 'Ngừng tuyển' },
+            ]}
+            />,
+          },
+          {
+            key: 'jobs',
+            label: 'Tin tuyển dụng',
+            children: <ResourceTable publicId={publicId} resource="jobs" columns={[
+              { title: 'Tiêu đề', dataIndex: 'title' },
+              { title: 'Chiến dịch', dataIndex: 'campaign_name', render: (value) => value || 'Không thuộc chiến dịch' },
+              { title: 'Trạng thái', dataIndex: 'status_label' },
+              {
+                title: 'Policy hold',
+                dataIndex: 'policy_hold_label',
+                render: (value, row) => row.policy_hold
+                  ? <Tag color="orange">{value}</Tag>
+                  : <Tag>Không giữ</Tag>,
+              },
+              { title: 'Hồ sơ nhận được', dataIndex: 'application_count' },
+              { title: 'Hạn nộp', dataIndex: 'deadline' },
+              { title: 'Cập nhật', dataIndex: 'updated_at', render: (value) => formatAdminDate(value) },
+            ]}
+            />,
+          },
+          {
+            key: 'campaigns',
+            label: 'Chiến dịch',
+            children: <ResourceTable publicId={publicId} resource="campaigns" columns={[
+              { title: 'Tên chiến dịch', dataIndex: 'name' },
+              { title: 'Trạng thái', dataIndex: 'status_label' },
+              {
+                title: 'Policy hold',
+                dataIndex: 'policy_hold_label',
+                render: (value, row) => row.policy_hold
+                  ? <Tag color="orange">{value}</Tag>
+                  : <Tag>Không giữ</Tag>,
+              },
+              { title: 'Tin tuyển dụng', dataIndex: 'job_count' },
+              { title: 'Hồ sơ nhận được', dataIndex: 'application_count' },
+              { title: 'Cập nhật', dataIndex: 'updated_at', render: (value) => formatAdminDate(value) },
+            ]}
+            />,
+          },
+        ]}
+      />
+    </DetailPanel>
   )
 }
 
@@ -455,7 +477,7 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
     />
   )
   const companyPanel = account && (
-    <>
+    <div className="account-detail-stack">
       <AccountProfilePanel
         publicId={publicId}
         account={account}
@@ -466,7 +488,7 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
         company={account.context?.company}
         companyRole={account.context?.company_role}
       />
-    </>
+    </div>
   )
   const security = account && (
     <SecurityPanel
@@ -475,7 +497,7 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
       isSuperuser={isSuperuser}
     />
   )
-  const activity = <AccountActivityTimeline publicId={publicId} />
+  const activity = <DetailPanel><AccountActivityTimeline publicId={publicId} /></DetailPanel>
   const openTab = (tab, params = {}) => {
     const next = new URLSearchParams(searchParams)
     if (tab === 'overview') next.delete('tab')
@@ -573,7 +595,7 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
     validActiveTab,
   ])
 
-  if (query.isLoading) return <Card><Skeleton active paragraph={{ rows: 12 }} /></Card>
+  if (query.isLoading) return <DetailPanel><Skeleton avatar active paragraph={{ rows: 10 }} /></DetailPanel>
   if (query.isError || !account) {
     return (
       <Alert
@@ -597,14 +619,14 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
       >
         {backLabel}
       </Button>
-      <section className="account-detail-hero">
-        <div className="account-detail-hero__identity">
-          <Avatar size={48} src={account.avatar_url || undefined} icon={<UserOutlined />} />
-          <div className="min-w-0">
+      <section className="admin-panel account-detail-hero">
+        <div className="account-detail-hero__main">
+          <Avatar size={56} src={account.avatar_url || undefined} icon={<UserOutlined />} />
+          <div className="account-detail-hero__identity">
             <h1 className="account-detail-hero__name">{account.full_name || 'Chưa cập nhật họ tên'}</h1>
             <p className="account-detail-hero__contact">
-              <span>{account.email}</span>
-              {account.phone && <span>{account.phone}</span>}
+              <span><MailOutlined aria-hidden="true" />{account.email}</span>
+              {account.phone && <span><PhoneOutlined aria-hidden="true" />{account.phone}</span>}
             </p>
             <Space wrap size={[6, 6]} className="account-detail-hero__tags">
               <StatusTag role value={account.role} />
@@ -622,20 +644,22 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
               )}
             </Space>
           </div>
+          <Button
+            className="account-detail-hero__edit"
+            icon={<EditOutlined />}
+            onClick={async () => {
+              try {
+                const profile = await getAdminAccountProfile(publicId)
+                setEditState(profile)
+              } catch (error) {
+                message.error(getApiErrorMessage(error))
+              }
+            }}
+          >
+            Sửa hồ sơ
+          </Button>
         </div>
-        <Button
-          icon={<EditOutlined />}
-          onClick={async () => {
-            try {
-              const profile = await getAdminAccountProfile(publicId)
-              setEditState(profile)
-            } catch (error) {
-              message.error(getApiErrorMessage(error))
-            }
-          }}
-        >
-          Sửa hồ sơ
-        </Button>
+        {account.role === 'employer' && <EmployerStats account={account} />}
       </section>
       {nextAction && nextAction.tone !== 'none' && (
         <div className={`account-detail-next account-detail-next--${nextAction.tone}`} role="status">
@@ -647,14 +671,13 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
           )}
         </div>
       )}
-      <section className="admin-panel account-detail-tabs">
-        <Tabs
-          activeKey={validActiveTab}
-          items={currentTabs}
-          onChange={(tab) => openTab(tab)}
-          tabBarGutter={22}
-        />
-      </section>
+      <Tabs
+        className="account-detail-tabs"
+        activeKey={validActiveTab}
+        items={currentTabs}
+        onChange={(tab) => openTab(tab)}
+        tabBarGutter={24}
+      />
       <AdminAccountProfileModal
         account={account}
         profile={editState}
