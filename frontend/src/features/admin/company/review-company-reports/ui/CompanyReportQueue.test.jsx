@@ -173,7 +173,8 @@ describe('CompanyReportQueue', () => {
     await waitFor(() => expect(lastParams()).toEqual({ status: 'pending', ordering: '-created_at', page: 1 }))
     expect(screen.getByTestId('location')).toHaveTextContent(ROUTE)
     expect(screen.getByTestId('location')).not.toHaveTextContent('?')
-  })
+    // Five URL round trips through antd filters: ~7s on a CI runner under coverage.
+  }, 10_000)
 
   it('sorts every data column on the server in both directions', async () => {
     renderQueue(`${ROUTE}?page=3`)
