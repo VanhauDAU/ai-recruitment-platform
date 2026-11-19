@@ -11,11 +11,11 @@ from rest_framework.test import APITestCase
 
 from apps.accounts.services import issue_tokens
 from apps.cv_templates.tests.factories import make_published_template
-from apps.cvs.services import create_v2_cv
+from apps.cvs.services import create_user_cv
 from apps.employers.models import Company
-from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.employers.tests.factories import make_employer_ready
 from apps.jobs.models import Job
-from apps.jobs.tests.helpers import open_visibility_window
+from apps.jobs.tests.factories import open_visibility_window
 
 from ..services import create_application_record
 
@@ -50,7 +50,7 @@ class CandidateApplicationListQueryBudgetTests(APITestCase):
                 status=Job.Status.ACTIVE,
                 **open_visibility_window(),
             )
-            cv = create_v2_cv(actor=self.candidate, title=f'CV {index}', template=template)
+            cv = create_user_cv(actor=self.candidate, title=f'CV {index}', template=template)
             create_application_record(candidate=self.candidate, job=job, cv=cv)
         tokens = issue_tokens(self.candidate)
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {tokens["access"]}')
@@ -94,7 +94,7 @@ class RecruiterApplicationListQueryBudgetTests(APITestCase):
                 role='candidate',
                 email_verified=True,
             )
-            cv = create_v2_cv(actor=candidate, title=f'CV {index}', template=self.template)
+            cv = create_user_cv(actor=candidate, title=f'CV {index}', template=self.template)
             create_application_record(candidate=candidate, job=self.job, cv=cv)
 
     def count_list_queries(self):

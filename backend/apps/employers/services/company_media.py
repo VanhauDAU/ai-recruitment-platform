@@ -18,9 +18,9 @@ from common.storage.media import delete_local_media_url, save_image_upload
 from common.storage.r2 import private_media_storage
 
 from ..models import CompanyImage, CompanyMediaUpload
-from ..models.verification import REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES
-from .companies import snapshot_company_update_request
+from ..models.company_update import REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES
 from .company_update_locks import lock_company_update_request
+from .company_update_revisions import snapshot_company_update_request
 from .upload_validation import (
     EmployerUploadSessionRejected,
     EmployerUploadStructureError,

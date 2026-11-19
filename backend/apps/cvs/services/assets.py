@@ -1,4 +1,5 @@
 import json
+import logging
 from hashlib import sha256
 from io import BytesIO
 
@@ -22,6 +23,8 @@ from .upload_claims import (
 
 ASSET_TOKEN_MAX_AGE = 300
 ASSET_TOKEN_SALT = 'cv-asset-content-v1'
+
+logger = logging.getLogger(__name__)
 
 
 def _encode_avatar(upload):
@@ -111,8 +114,11 @@ def create_avatar_asset_from_session(*, actor, upload_session_public_id):
         if storage_key:
             try:
                 private_media_storage().delete(storage_key)
-            except Exception:  # noqa: BLE001 - storage reconciliation owns orphan cleanup
-                pass
+            except Exception:  # noqa: BLE001 - the original error must surface, not the cleanup's
+                # Storage reconciliation removes the orphan later; the log says which one.
+                logger.warning(
+                    'Could not delete orphaned CV avatar %s.', storage_key, exc_info=True
+                )
         raise
 
 

@@ -3,11 +3,11 @@ pending request, a status per block and the completeness score."""
 
 from apps.employers.domain.page_content import SOCIAL_NETWORKS
 from apps.locations.models import Location
-from common.html.rich_text import rich_text_plain_text
+from common.html.plain_text import html_plain_text
 from common.storage.media import media_url_from_value
 
 from ..models import CompanyUpdateRequest, RecruiterProfile
-from ..models.verification import (
+from ..models.company_update import (
     ACTIVE_COMPANY_UPDATE_STATUSES,
     REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
     company_update_allowed_actions,
@@ -142,7 +142,7 @@ def _request_summary(update_request, recruiter):
 
 
 def _has_text(value):
-    return bool(rich_text_plain_text(value))
+    return bool(html_plain_text(value))
 
 
 def _published_blocks(company, published):

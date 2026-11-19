@@ -9,19 +9,11 @@ from django.db.models import Count, Min, Q, Sum
 from django.utils import timezone
 
 from apps.ai_core.models import AiInvocation, AiUsageDaily
-from apps.sitecontent.models import SiteSetting
+from apps.sitecontent.selectors import get_settings_map
 from common.vietnam_time import vietnam_day_start, vietnam_today
 
+from ..domain import JOB_AI_POLICY_KEYS, resolve_job_ai_policy
 from ..models import JobAiGeneration
-
-POLICY_KEYS = (
-    'ai_job_generation_enabled',
-    'ai_job_generation_model',
-    'ai_job_generation_daily_limit',
-    'ai_job_generation_rollout_percent',
-    'ai_job_generation_company_allowlist',
-    'ai_job_generation_model_allowlist',
-)
 
 
 def _sum(field):
@@ -78,66 +70,21 @@ def job_ai_usage_overview(*, days):
     }
 
 
-def _as_bool(value, default=False):
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, str):
-        return value.strip().lower() in {'1', 'true', 'yes', 'on'}
-    return default
-
-
-def _as_int(value, default=0):
-    try:
-        return int(value)
-    except (TypeError, ValueError):
-        return default
-
-
-def _as_string_list(value):
-    if isinstance(value, list):
-        return [str(item).strip() for item in value if str(item).strip()]
-    if isinstance(value, str):
-        return [item.strip() for item in value.split(',') if item.strip()]
-    return []
-
-
 def job_ai_admin_policy_overview():
-    values = dict(SiteSetting.objects.filter(key__in=POLICY_KEYS).values_list('key', 'value'))
-    env_model = str(getattr(settings, 'AI_JOB_GENERATION_MODEL', 'gemini-3.5-flash-lite')).strip()
-    env_models = _as_string_list(
-        getattr(settings, 'AI_JOB_GENERATION_MODEL_ALLOWLIST', (env_model,))
-    ) or [env_model]
-    site_models = _as_string_list(values.get('ai_job_generation_model_allowlist'))
-    allowed_models = [model for model in env_models if not site_models or model in site_models]
-    requested_model = str(values.get('ai_job_generation_model') or env_model).strip()
-    effective_model = requested_model if requested_model in allowed_models else ''
-    env_daily_limit = max(
-        _as_int(getattr(settings, 'AI_JOB_GENERATION_DAILY_LIMIT', 10), 10),
-        0,
-    )
-    daily_limit = min(
-        env_daily_limit,
-        max(_as_int(values.get('ai_job_generation_daily_limit'), env_daily_limit), 0),
-    )
-    rollout_percent = min(
-        max(_as_int(values.get('ai_job_generation_rollout_percent'), 0), 0),
-        100,
-    )
-    company_allowlist = _as_string_list(values.get('ai_job_generation_company_allowlist'))
-    hard_switch_enabled = getattr(settings, 'AI_RUNTIME_ENABLED', False) is True
-    soft_switch_enabled = _as_bool(values.get('ai_job_generation_enabled'), False)
+    policy = resolve_job_ai_policy(get_settings_map(JOB_AI_POLICY_KEYS))
     return {
-        'enabled': hard_switch_enabled and soft_switch_enabled and bool(effective_model),
-        'hard_switch_enabled': hard_switch_enabled,
-        'soft_switch_enabled': soft_switch_enabled,
+        'enabled': policy.enabled,
+        'hard_switch_enabled': policy.hard_switch_enabled,
+        'soft_switch_enabled': policy.soft_switch_enabled,
         'provider': 'gemini',
-        'provider_backend': str(getattr(settings, 'AI_PROVIDER_BACKEND', 'gemini_developer')),
-        'model': effective_model or requested_model,
-        'model_allowed': bool(effective_model),
-        'allowed_models': allowed_models,
-        'daily_limit': daily_limit,
-        'rollout_percent': rollout_percent,
-        'company_allowlist_count': len(set(company_allowlist)),
+        'provider_backend': settings.AI_PROVIDER_BACKEND,
+        'model': policy.model or policy.requested_model,
+        'model_allowed': bool(policy.model),
+        'allowed_models': list(policy.allowed_models),
+        'daily_limit': policy.daily_limit,
+        'rollout_percent': policy.rollout_percent,
+        # Chỉ trả số lượng: dashboard không được lộ mã công ty đang thử nghiệm.
+        'company_allowlist_count': len(policy.company_allowlist),
     }
 
 

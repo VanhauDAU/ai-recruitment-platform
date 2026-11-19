@@ -12,12 +12,12 @@ from rest_framework.exceptions import ValidationError
 from common.storage.media import delete_local_media_url
 
 from ..models import Company, CompanyDocument, CompanyUpdateEvent, CompanyUpdateRequest
-from ..models.verification import ACTIVE_COMPANY_UPDATE_STATUSES
-from .companies import (
-    UPDATABLE_COMPANY_FIELDS,
+from ..models.company_update import ACTIVE_COMPANY_UPDATE_STATUSES
+from .companies import UPDATABLE_COMPANY_FIELDS
+from .company_update_review import close_company_update_before_review
+from .company_update_revisions import (
     CompanyUpdateConflict,
     capture_company_update_base_values,
-    close_company_update_before_review,
     company_update_field_value,
     snapshot_company_update_request,
 )

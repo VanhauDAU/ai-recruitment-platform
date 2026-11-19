@@ -1,0 +1,1233 @@
+[
+  {
+    "key": "site_name",
+    "label": "Tên site",
+    "group": "general",
+    "value_type": "text",
+    "value": "ProCV",
+    "is_public": true,
+    "description": "Tên thương hiệu hiển thị ở header, footer và các màn đăng nhập/đăng ký.",
+    "options": {}
+  },
+  {
+    "key": "site_tagline",
+    "label": "Slogan",
+    "group": "general",
+    "value_type": "text",
+    "value": "Nền tảng việc làm & AI Career Coach",
+    "is_public": true,
+    "description": "Câu slogan ngắn hiển thị kèm tên site.",
+    "options": {}
+  },
+  {
+    "key": "brand_logo_url",
+    "label": "Logo đầy đủ",
+    "group": "general",
+    "value_type": "image",
+    "value": "/images/logo/logo-full.png",
+    "is_public": true,
+    "description": "Logo dạng ngang/wordmark dùng ở header.",
+    "options": {}
+  },
+  {
+    "key": "brand_logo_mark_url",
+    "label": "Logo biểu tượng",
+    "group": "general",
+    "value_type": "image",
+    "value": "/images/logo/logo-mark.png",
+    "is_public": true,
+    "description": "Logo vuông/icon dùng ở màn đăng nhập hoặc nơi thiếu diện tích.",
+    "options": {}
+  },
+  {
+    "key": "brand_favicon_url",
+    "label": "Favicon",
+    "group": "general",
+    "value_type": "image",
+    "value": "/favicon-32.png",
+    "is_public": true,
+    "description": "Icon cho tab trình duyệt. Ảnh upload sẽ tự resize xuống tối đa 256x256 để tránh nặng trang.",
+    "options": {}
+  },
+  {
+    "key": "brand_primary_color",
+    "label": "Màu thương hiệu chính",
+    "group": "general",
+    "value_type": "color",
+    "value": "#00b14f",
+    "is_public": true,
+    "description": "Mã màu hex dùng làm biến --brand-primary cho giao diện.",
+    "options": {}
+  },
+  {
+    "key": "maintenance_mode",
+    "label": "Chế độ bảo trì",
+    "group": "general",
+    "value_type": "boolean",
+    "value": false,
+    "is_public": true,
+    "description": "Bật để hiển thị thông báo bảo trì thay cho nội dung site.",
+    "options": {}
+  },
+  {
+    "key": "maintenance_message",
+    "label": "Thông báo bảo trì",
+    "group": "general",
+    "value_type": "textarea",
+    "value": "Hệ thống đang bảo trì, vui lòng quay lại sau.",
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "home_show_banner",
+    "label": "Hiện carousel banner",
+    "group": "homepage",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "home_show_stats",
+    "label": "Hiện khối thống kê",
+    "group": "homepage",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "home_show_categories",
+    "label": "Hiện ngành nghề nổi bật",
+    "group": "homepage",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "home_show_featured_jobs",
+    "label": "Hiện việc làm nổi bật",
+    "group": "homepage",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "home_featured_jobs_count",
+    "label": "Số việc làm nổi bật",
+    "group": "homepage",
+    "value_type": "number",
+    "value": 12,
+    "is_public": true,
+    "description": "Số tin hiển thị ở khối việc làm nổi bật trang chủ.",
+    "options": {}
+  },
+  {
+    "key": "home_show_cv_templates",
+    "label": "Hiện khối mẫu CV",
+    "group": "homepage",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "home_show_popular_searches",
+    "label": "Hiện cụm link SEO",
+    "group": "homepage",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "Khối \"Tra cứu phổ biến\" cuối trang chủ (dữ liệu từ Cụm link).",
+    "options": {}
+  },
+  {
+    "key": "seo_default_title",
+    "label": "Tiêu đề mặc định",
+    "group": "seo",
+    "value_type": "text",
+    "value": "ProCV - Việc làm & Tạo CV cùng AI",
+    "is_public": true,
+    "description": "Thẻ <title> mặc định khi trang không tự đặt.",
+    "options": {}
+  },
+  {
+    "key": "seo_default_description",
+    "label": "Mô tả mặc định",
+    "group": "seo",
+    "value_type": "textarea",
+    "value": "ProCV - Nền tảng tìm việc làm, tạo CV chuyên nghiệp và phát triển sự nghiệp cùng AI.",
+    "is_public": true,
+    "description": "Thẻ meta description mặc định.",
+    "options": {}
+  },
+  {
+    "key": "seo_default_keywords",
+    "label": "Từ khoá mặc định",
+    "group": "seo",
+    "value_type": "text",
+    "value": "việc làm, tuyển dụng, tạo cv, ai",
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "seo_og_image",
+    "label": "Ảnh OG mặc định",
+    "group": "seo",
+    "value_type": "image",
+    "value": "",
+    "is_public": true,
+    "description": "Ảnh hiển thị khi chia sẻ link lên mạng xã hội.",
+    "options": {}
+  },
+  {
+    "key": "seo_robots_index",
+    "label": "Cho phép index",
+    "group": "seo",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "Tắt để chặn công cụ tìm kiếm index toàn site (robots noindex).",
+    "options": {}
+  },
+  {
+    "key": "seo_google_analytics_id",
+    "label": "Google Analytics ID",
+    "group": "seo",
+    "value_type": "text",
+    "value": "",
+    "is_public": true,
+    "description": "VD: G-XXXXXXXXXX. Để trống nếu chưa dùng.",
+    "options": {}
+  },
+  {
+    "key": "seo_google_site_verification",
+    "label": "Google Search Console verification",
+    "group": "seo",
+    "value_type": "text",
+    "value": "",
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "candidate_allow_registration",
+    "label": "Cho phép đăng ký ứng viên",
+    "group": "candidate",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "candidate_require_email_verification",
+    "label": "Bắt buộc xác thực email",
+    "group": "candidate",
+    "value_type": "boolean",
+    "value": false,
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "candidate_max_cvs",
+    "label": "Số CV tối đa mỗi người",
+    "group": "candidate",
+    "value_type": "number",
+    "value": 6,
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "candidate_max_applications_per_day",
+    "label": "Giới hạn ứng tuyển mỗi ngày",
+    "group": "candidate",
+    "value_type": "number",
+    "value": 20,
+    "is_public": false,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "candidate_allow_avatar_upload",
+    "label": "Cho phép upload avatar",
+    "group": "candidate",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "candidate_profile_completion_required",
+    "label": "Bắt buộc hoàn thiện hồ sơ để ứng tuyển",
+    "group": "candidate",
+    "value_type": "boolean",
+    "value": false,
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "employer_allow_registration",
+    "label": "Cho phép đăng ký NTD",
+    "group": "employer",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "employer_require_approval",
+    "label": "Duyệt tài khoản NTD trước khi hoạt động",
+    "group": "employer",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": false,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "employer_require_company_info",
+    "label": "Bắt buộc thông tin công ty",
+    "group": "employer",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": false,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "employer_max_active_jobs",
+    "label": "Số tin đang đăng tối đa",
+    "group": "employer",
+    "value_type": "number",
+    "value": 10,
+    "is_public": false,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "employer_free_job_quota",
+    "label": "Lượt đăng tin miễn phí khi chưa đủ xác thực",
+    "group": "employer",
+    "value_type": "number",
+    "value": 3,
+    "is_public": false,
+    "description": "Quota đăng tin trọn đời cho tài khoản chưa hoàn tất xác thực hồ sơ hoặc chưa đạt Cấp 3. Đóng hoặc hết hạn tin không hoàn lượt.",
+    "options": {}
+  },
+  {
+    "key": "employer_verified_level_three_job_quota",
+    "label": "Lượt đăng tin sau xác thực Cấp 3",
+    "group": "employer",
+    "value_type": "number",
+    "value": 100,
+    "is_public": false,
+    "description": "Quota đăng tin trọn đời khi hồ sơ xác thực của chính tài khoản đã hoàn tất và tài khoản đạt Cấp 3. Những tin miễn phí đã dùng được tính trong quota này.",
+    "options": {}
+  },
+  {
+    "key": "employer_badge_min_account_months",
+    "label": "Tuổi tài khoản tối thiểu để tin có dấu tick (tháng)",
+    "group": "employer",
+    "value_type": "number",
+    "value": 6,
+    "is_public": false,
+    "description": "Một trong năm điều kiện gắn dấu tick \"đã xác thực\" lên tin tuyển dụng. Giá trị là số tháng lịch nguyên từ 1 đến 60.",
+    "options": {
+      "integer": true,
+      "min": 1,
+      "max": 60,
+      "step": 1
+    }
+  },
+  {
+    "key": "employer_allow_logo_upload",
+    "label": "Cho phép upload logo công ty",
+    "group": "employer",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "employer_stats",
+    "label": "Số liệu trang NTD",
+    "group": "employer",
+    "value_type": "json",
+    "value": [
+      {
+        "value": "60.000+",
+        "label_vi": "việc làm đã đăng tuyển",
+        "label_en": "jobs posted"
+      },
+      {
+        "value": "10.000+",
+        "label_vi": "hồ sơ ứng viên trên nền tảng",
+        "label_en": "candidate profiles"
+      },
+      {
+        "value": "80%",
+        "label_vi": "độ chính xác AI gợi ý ứng viên",
+        "label_en": "AI matching accuracy"
+      },
+      {
+        "value": "34",
+        "label_vi": "tỉnh/thành có dữ liệu tuyển dụng",
+        "label_en": "provinces covered"
+      },
+      {
+        "value": "24/7",
+        "label_vi": "hệ thống nhận hồ sơ trực tuyến",
+        "label_en": "online application intake"
+      },
+      {
+        "value": "5 phút",
+        "label_vi": "để đăng một tin tuyển dụng",
+        "label_en": "to post a job"
+      }
+    ],
+    "is_public": true,
+    "description": "Khối số liệu trên trang chủ NTD. Mỗi mục gồm value, label_vi, label_en.",
+    "options": {}
+  },
+  {
+    "key": "employer_partners",
+    "label": "Khách hàng tiêu biểu (trang NTD)",
+    "group": "employer",
+    "value_type": "json",
+    "value": [],
+    "is_public": true,
+    "description": "Danh sách logo khách hàng: [{\"name\": \"...\", \"logo_url\": \"...\"}]. Để trống sẽ ẩn khối này.",
+    "options": {}
+  },
+  {
+    "key": "employer_hotline_north",
+    "label": "Hotline tư vấn miền Bắc",
+    "group": "employer",
+    "value_type": "text",
+    "value": "",
+    "is_public": true,
+    "description": "Để trống sẽ dùng hotline chung ở nhóm Liên hệ.",
+    "options": {}
+  },
+  {
+    "key": "employer_hotline_south",
+    "label": "Hotline tư vấn miền Nam",
+    "group": "employer",
+    "value_type": "text",
+    "value": "",
+    "is_public": true,
+    "description": "Để trống sẽ dùng hotline chung ở nhóm Liên hệ.",
+    "options": {}
+  },
+  {
+    "key": "job_expiry_days",
+    "label": "Số ngày hết hạn tin",
+    "group": "jobs",
+    "value_type": "number",
+    "value": 30,
+    "is_public": false,
+    "description": "Tin tự chuyển hết hạn sau số ngày này kể từ khi đăng.",
+    "options": {}
+  },
+  {
+    "key": "jobs_per_page",
+    "label": "Số tin mỗi trang",
+    "group": "jobs",
+    "value_type": "number",
+    "value": 20,
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "job_allow_salary_negotiable",
+    "label": "Cho phép lương thoả thuận",
+    "group": "jobs",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "job_require_salary_range",
+    "label": "Bắt buộc khoảng lương",
+    "group": "jobs",
+    "value_type": "boolean",
+    "value": false,
+    "is_public": false,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "job_allow_urgent_tag",
+    "label": "Cho phép tag tuyển gấp",
+    "group": "jobs",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "cv_allow_pdf_export",
+    "label": "Cho phép xuất PDF",
+    "group": "cv",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "cv_default_template",
+    "label": "Mẫu CV mặc định",
+    "group": "cv",
+    "value_type": "select",
+    "value": "modern",
+    "is_public": true,
+    "description": "",
+    "options": {
+      "choices": [
+        {
+          "value": "modern",
+          "label": "Modern"
+        },
+        {
+          "value": "classic",
+          "label": "Classic"
+        },
+        {
+          "value": "minimal",
+          "label": "Minimal"
+        }
+      ]
+    }
+  },
+  {
+    "key": "cv_allow_public_share",
+    "label": "Cho phép chia sẻ CV công khai",
+    "group": "cv",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "cv_watermark_enabled",
+    "label": "Đóng watermark bản miễn phí",
+    "group": "cv",
+    "value_type": "boolean",
+    "value": false,
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "cv_ai_review_free_limit",
+    "label": "Lượt AI review miễn phí",
+    "group": "cv",
+    "value_type": "number",
+    "value": 3,
+    "is_public": false,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "email_notifications_enabled",
+    "label": "Bật gửi email",
+    "group": "email",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": false,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "email_from_name",
+    "label": "Tên người gửi",
+    "group": "email",
+    "value_type": "text",
+    "value": "ProCV",
+    "is_public": false,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "email_smtp_configured",
+    "label": "Mật khẩu SMTP",
+    "group": "email",
+    "value_type": "env",
+    "value": "",
+    "is_public": false,
+    "description": "Cấu hình qua biến môi trường, không lưu trong DB.",
+    "options": {
+      "env_var": "EMAIL_HOST_PASSWORD"
+    }
+  },
+  {
+    "key": "email_notify_new_application",
+    "label": "Báo NTD khi có ứng tuyển mới",
+    "group": "email",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": false,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "email_notify_job_approved",
+    "label": "Báo NTD khi tin được duyệt",
+    "group": "email",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": false,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "email_welcome_enabled",
+    "label": "Email chào mừng khi đăng ký",
+    "group": "email",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": false,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "email_footer_text",
+    "label": "Chân email",
+    "group": "email",
+    "value_type": "textarea",
+    "value": "ProCV - Nền tảng việc làm & AI Career Coach",
+    "is_public": false,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "payment_enabled",
+    "label": "Bật thanh toán/gói dịch vụ",
+    "group": "payment",
+    "value_type": "boolean",
+    "value": false,
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "payment_currency",
+    "label": "Tiền tệ",
+    "group": "payment",
+    "value_type": "select",
+    "value": "VND",
+    "is_public": true,
+    "description": "",
+    "options": {
+      "choices": [
+        {
+          "value": "VND",
+          "label": "VND"
+        },
+        {
+          "value": "USD",
+          "label": "USD"
+        }
+      ]
+    }
+  },
+  {
+    "key": "payment_vnpay_enabled",
+    "label": "Bật VNPay",
+    "group": "payment",
+    "value_type": "boolean",
+    "value": false,
+    "is_public": false,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "payment_vnpay_configured",
+    "label": "Khoá VNPay",
+    "group": "payment",
+    "value_type": "env",
+    "value": "",
+    "is_public": false,
+    "description": "Cấu hình qua biến môi trường.",
+    "options": {
+      "env_var": "VNPAY_HASH_SECRET"
+    }
+  },
+  {
+    "key": "payment_momo_enabled",
+    "label": "Bật MoMo",
+    "group": "payment",
+    "value_type": "boolean",
+    "value": false,
+    "is_public": false,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "payment_bank_transfer_info",
+    "label": "Thông tin chuyển khoản",
+    "group": "payment",
+    "value_type": "textarea",
+    "value": "",
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "payment_trial_days",
+    "label": "Số ngày dùng thử",
+    "group": "payment",
+    "value_type": "number",
+    "value": 7,
+    "is_public": false,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "security_min_password_length",
+    "label": "Độ dài mật khẩu tối thiểu",
+    "group": "security",
+    "value_type": "number",
+    "value": 8,
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "security_require_strong_password",
+    "label": "Bắt buộc mật khẩu mạnh",
+    "group": "security",
+    "value_type": "boolean",
+    "value": false,
+    "is_public": true,
+    "description": "Yêu cầu chữ hoa, chữ thường, số.",
+    "options": {}
+  },
+  {
+    "key": "security_max_login_attempts",
+    "label": "Số lần đăng nhập sai tối đa",
+    "group": "security",
+    "value_type": "number",
+    "value": 5,
+    "is_public": false,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "security_lockout_minutes",
+    "label": "Số phút khoá tạm",
+    "group": "security",
+    "value_type": "number",
+    "value": 15,
+    "is_public": false,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "security_session_timeout_minutes",
+    "label": "Số phút hết hạn phiên",
+    "group": "security",
+    "value_type": "number",
+    "value": 60,
+    "is_public": false,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "security_recaptcha_enabled",
+    "label": "Bật reCAPTCHA",
+    "group": "security",
+    "value_type": "boolean",
+    "value": false,
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "security_recaptcha_site_key",
+    "label": "reCAPTCHA site key",
+    "group": "security",
+    "value_type": "text",
+    "value": "",
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "upload_max_image_size_mb",
+    "label": "Ảnh tối đa (MB)",
+    "group": "upload",
+    "value_type": "number",
+    "value": 5,
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "upload_avatar_max_size_mb",
+    "label": "Avatar tối đa (MB)",
+    "group": "upload",
+    "value_type": "number",
+    "value": 2,
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "upload_max_cv_size_mb",
+    "label": "File CV tối đa (MB)",
+    "group": "upload",
+    "value_type": "number",
+    "value": 10,
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "upload_allowed_image_types",
+    "label": "Định dạng ảnh cho phép",
+    "group": "upload",
+    "value_type": "json",
+    "value": [
+      "jpg",
+      "png",
+      "webp",
+      "gif"
+    ],
+    "is_public": true,
+    "description": "Danh sách đuôi file, dạng JSON array.",
+    "options": {}
+  },
+  {
+    "key": "upload_allowed_cv_types",
+    "label": "Định dạng CV cho phép",
+    "group": "upload",
+    "value_type": "json",
+    "value": [
+      "pdf",
+      "doc",
+      "docx"
+    ],
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "footer_logo_url",
+    "label": "Logo riêng cho footer",
+    "group": "footer",
+    "value_type": "image",
+    "value": "",
+    "is_public": true,
+    "description": "Để trống để tự dùng Logo đầy đủ ở nhóm Cài đặt chung.",
+    "options": {}
+  },
+  {
+    "key": "footer_description",
+    "label": "Mô tả ngắn ở footer",
+    "group": "footer",
+    "value_type": "textarea",
+    "value": "ProCV - Nền tảng việc làm và phát triển sự nghiệp cùng AI dành cho người Việt.",
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "footer_copyright",
+    "label": "Dòng bản quyền",
+    "group": "footer",
+    "value_type": "text",
+    "value": "© {year} {site_name}. All rights reserved.",
+    "is_public": true,
+    "description": "Có thể dùng {year} và {site_name}; hệ thống sẽ tự thay bằng năm hiện tại và tên site.",
+    "options": {}
+  },
+  {
+    "key": "footer_show_link_groups",
+    "label": "Hiện menu điều hướng",
+    "group": "footer",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "Nội dung menu quản lý tại Cụm link, placement \"Menu điều hướng footer\".",
+    "options": {}
+  },
+  {
+    "key": "footer_show_contact",
+    "label": "Hiện thông tin liên hệ",
+    "group": "footer",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "footer_show_apps",
+    "label": "Hiện liên kết tải ứng dụng",
+    "group": "footer",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "footer_show_socials",
+    "label": "Hiện mạng xã hội",
+    "group": "footer",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "footer_company_name",
+    "label": "Tên pháp lý doanh nghiệp",
+    "group": "footer",
+    "value_type": "text",
+    "value": "",
+    "is_public": true,
+    "description": "Để trống nếu chưa có pháp nhân hoặc không muốn hiển thị.",
+    "options": {}
+  },
+  {
+    "key": "footer_business_license",
+    "label": "Thông tin giấy phép / mã số thuế",
+    "group": "footer",
+    "value_type": "textarea",
+    "value": "",
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "footer_app_store_url",
+    "label": "Link tải trên App Store",
+    "group": "footer",
+    "value_type": "url",
+    "value": "",
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "footer_google_play_url",
+    "label": "Link tải trên Google Play",
+    "group": "footer",
+    "value_type": "url",
+    "value": "",
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "footer_qr_code_url",
+    "label": "Mã QR",
+    "group": "footer",
+    "value_type": "image",
+    "value": "",
+    "is_public": true,
+    "description": "QR tải ứng dụng hoặc dẫn về website. Để trống để ẩn.",
+    "options": {}
+  },
+  {
+    "key": "footer_qr_label",
+    "label": "Nhãn dưới mã QR",
+    "group": "footer",
+    "value_type": "text",
+    "value": "",
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "footer_facebook_url",
+    "label": "Facebook",
+    "group": "footer",
+    "value_type": "url",
+    "value": "",
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "footer_linkedin_url",
+    "label": "LinkedIn",
+    "group": "footer",
+    "value_type": "url",
+    "value": "",
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "footer_youtube_url",
+    "label": "YouTube",
+    "group": "footer",
+    "value_type": "url",
+    "value": "",
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "footer_tiktok_url",
+    "label": "TikTok",
+    "group": "footer",
+    "value_type": "url",
+    "value": "",
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "hotline",
+    "label": "Hotline hỗ trợ",
+    "group": "contact",
+    "value_type": "text",
+    "value": "1900 1234",
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "support_email",
+    "label": "Email hỗ trợ",
+    "group": "contact",
+    "value_type": "email",
+    "value": "support@aicareercoach.vn",
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "contact_address",
+    "label": "Địa chỉ",
+    "group": "contact",
+    "value_type": "textarea",
+    "value": "",
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "contact_working_hours",
+    "label": "Giờ làm việc",
+    "group": "contact",
+    "value_type": "text",
+    "value": "8:00 - 17:30, Thứ 2 - Thứ 6",
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "contact_zalo_url",
+    "label": "Zalo",
+    "group": "contact",
+    "value_type": "url",
+    "value": "",
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "contact_messenger_url",
+    "label": "Facebook Messenger",
+    "group": "contact",
+    "value_type": "url",
+    "value": "",
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "contact_map_embed_url",
+    "label": "Google Maps embed",
+    "group": "contact",
+    "value_type": "url",
+    "value": "",
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "ai_enabled",
+    "label": "Bật tính năng AI",
+    "group": "ai",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "ai_provider",
+    "label": "Nhà cung cấp",
+    "group": "ai",
+    "value_type": "select",
+    "value": "gemini",
+    "is_public": false,
+    "description": "",
+    "options": {
+      "choices": [
+        {
+          "value": "gemini",
+          "label": "Google Gemini"
+        },
+        {
+          "value": "openai",
+          "label": "OpenAI"
+        },
+        {
+          "value": "anthropic",
+          "label": "Anthropic Claude"
+        }
+      ]
+    }
+  },
+  {
+    "key": "ai_model",
+    "label": "Model",
+    "group": "ai",
+    "value_type": "text",
+    "value": "gemini-2.0-flash",
+    "is_public": false,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "ai_api_key_configured",
+    "label": "API key",
+    "group": "ai",
+    "value_type": "env",
+    "value": "",
+    "is_public": false,
+    "description": "Cấu hình qua biến môi trường, không lưu trong DB.",
+    "options": {
+      "env_var": "GEMINI_API_KEY"
+    }
+  },
+  {
+    "key": "ai_cv_review_enabled",
+    "label": "AI chấm/review CV",
+    "group": "ai",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "ai_job_match_enabled",
+    "label": "AI xem độ phù hợp CV với tin",
+    "group": "ai",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "Nút \"Xem độ phù hợp\" trên trang chi tiết tin; tắt thì API trả 403.",
+    "options": {}
+  },
+  {
+    "key": "ai_daily_request_limit",
+    "label": "Giới hạn request AI/ngày/người",
+    "group": "ai",
+    "value_type": "number",
+    "value": 50,
+    "is_public": false,
+    "description": "",
+    "options": {}
+  },
+  {
+    "key": "ai_job_generation_enabled",
+    "label": "Bật AI tạo tin tuyển dụng",
+    "group": "ai",
+    "value_type": "boolean",
+    "value": false,
+    "is_public": true,
+    "description": "Soft switch theo use case; hard switch AI_RUNTIME_ENABLED luôn có quyền ưu tiên.",
+    "options": {}
+  },
+  {
+    "key": "ai_job_generation_model",
+    "label": "Model tạo tin tuyển dụng",
+    "group": "ai",
+    "value_type": "select",
+    "value": "gemini-3.5-flash-lite",
+    "is_public": false,
+    "description": "Chỉ chọn model có trong cả allowlist môi trường và allowlist bên dưới.",
+    "options": {
+      "choices": [
+        {
+          "value": "gemini-3.5-flash-lite",
+          "label": "Gemini 3.5 Flash Lite"
+        }
+      ]
+    }
+  },
+  {
+    "key": "ai_job_generation_model_allowlist",
+    "label": "Model allowlist cho tạo tin",
+    "group": "ai",
+    "value_type": "json",
+    "value": [
+      "gemini-3.5-flash-lite"
+    ],
+    "is_public": false,
+    "description": "Chỉ được thu hẹp allowlist cấu hình qua môi trường, không thể mở rộng nó.",
+    "options": {}
+  },
+  {
+    "key": "ai_job_generation_daily_limit",
+    "label": "Lượt tạo tin/ngày/nhà tuyển dụng",
+    "group": "ai",
+    "value_type": "number",
+    "value": 10,
+    "is_public": false,
+    "description": "Internal retry không tạo thêm lượt quota.",
+    "options": {}
+  },
+  {
+    "key": "ai_job_generation_rollout_percent",
+    "label": "Tỷ lệ rollout tạo tin AI (%)",
+    "group": "ai",
+    "value_type": "number",
+    "value": 0,
+    "is_public": false,
+    "description": "Phân bucket ổn định theo công ty; allowlist luôn được xét trước tỷ lệ.",
+    "options": {}
+  },
+  {
+    "key": "ai_job_generation_company_allowlist",
+    "label": "Công ty allowlist tạo tin AI",
+    "group": "ai",
+    "value_type": "json",
+    "value": [],
+    "is_public": false,
+    "description": "Danh sách public ID công ty được pilot trước rollout phần trăm.",
+    "options": {}
+  }
+]

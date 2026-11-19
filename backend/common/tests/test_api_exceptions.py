@@ -2,7 +2,8 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.test import SimpleTestCase
 from rest_framework.exceptions import NotFound
 
-from common.api.exceptions import DomainError, api_exception_handler
+from common.api.exceptions import api_exception_handler
+from common.errors import DomainError
 
 
 class Conflict(DomainError):

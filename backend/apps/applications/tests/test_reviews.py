@@ -11,11 +11,11 @@ from rest_framework.test import APIClient, APITestCase
 from apps.accounts.services import issue_tokens
 from apps.cv_templates.tests.factories import fill_cv_for_application, make_published_template
 from apps.cvs.models import CvAccessLog
-from apps.cvs.services import create_application_snapshot, create_v2_cv
+from apps.cvs.services import create_application_snapshot, create_user_cv
 from apps.employers.models import Company, EmployerNotification
-from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.employers.tests.factories import make_employer_ready
 from apps.jobs.models import Job
-from apps.jobs.tests.helpers import open_visibility_window
+from apps.jobs.tests.factories import open_visibility_window
 
 from ..models import Application, ApplicationReviewLink
 from ..services import deidentified_content
@@ -49,7 +49,7 @@ class ApplicationReviewLinkTests(APITestCase):
             **open_visibility_window(),
         )
         template, _version = make_published_template('Review template')
-        cv = create_v2_cv(actor=self.candidate, title='Review CV', template=template)
+        cv = create_user_cv(actor=self.candidate, title='Review CV', template=template)
         fill_cv_for_application(cv, self.candidate, full_name='Trần Bình', email='binh@example.com')
         self.application = Application.objects.create(
             candidate=self.candidate,

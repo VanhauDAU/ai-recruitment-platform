@@ -22,7 +22,7 @@ from ..views import (
     VerificationConfirmView,
     VerificationSendView,
 )
-from ..views.account_management import (
+from ..views.admin_invitations import (
     AdminInvitationAcceptView,
     AdminInvitationValidateView,
 )

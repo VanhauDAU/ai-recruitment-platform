@@ -31,7 +31,7 @@ from ..models import (
     RecruiterProfile,
     RecruitmentNeed,
 )
-from ..models.verification import REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES
+from ..models.company_update import REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES
 from .company_membership import company_owners
 from .company_page_editors import revoke_page_editor_grants_on_unlink
 from .notifications import emit_employer_event

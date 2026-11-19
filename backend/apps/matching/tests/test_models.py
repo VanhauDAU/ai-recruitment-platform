@@ -6,10 +6,10 @@ from django.test import TestCase
 from pgvector.django import CosineDistance
 
 from apps.cv_templates.tests.factories import make_published_template
-from apps.cvs.services import create_v2_cv
+from apps.cvs.services import create_user_cv
 from apps.employers.models import Company
 from apps.jobs.models import Job
-from apps.jobs.tests.helpers import open_visibility_window
+from apps.jobs.tests.factories import open_visibility_window
 
 from ..models import EMBEDDING_DIMENSIONS, MatchAnalysis, MatchChunk, MatchDocument
 
@@ -47,7 +47,7 @@ class MatchingModelTests(TestCase):
             **open_visibility_window(),
         )
         template, _version = make_published_template('Match template')
-        cv = create_v2_cv(actor=cls.candidate, title='Match CV', template=template)
+        cv = create_user_cv(actor=cls.candidate, title='Match CV', template=template)
         cls.cv_version = cv.latest_version
 
     def cv_document(self, **overrides):

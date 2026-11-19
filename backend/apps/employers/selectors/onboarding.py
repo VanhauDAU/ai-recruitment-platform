@@ -178,9 +178,7 @@ def build_employer_onboarding_steps(recruiter, *, badge_eligibility=None):
         ]
     )
     steps['verification_completed'] = (
-        case_approved
-        if getattr(settings, 'REQUIRE_APPROVED_EMPLOYER_VERIFICATION', False)
-        else legacy_completed
+        case_approved if settings.REQUIRE_APPROVED_EMPLOYER_VERIFICATION else legacy_completed
     )
     steps['completed'] = steps['verification_completed'] and steps['first_job_posted']
     return steps

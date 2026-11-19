@@ -18,8 +18,8 @@ from apps.uploads.services import (
     process_upload_scan,
     store_quarantined_upload,
 )
+from apps.uploads.tests.factories import PDF_BYTES, TemporaryUploadStorageMixin, pdf_upload
 from apps.uploads.tests.fakes import FakeUploadScanner
-from apps.uploads.tests.helpers import PDF_BYTES, TemporaryUploadStorageMixin, pdf_upload
 
 
 class BlockingCleanScanner:
@@ -115,7 +115,7 @@ class UploadScanConcurrencyTests(TemporaryUploadStorageMixin, TransactionTestCas
             finally:
                 close_old_connections()
 
-        with patch('apps.uploads.services.pipeline._cleanup_terminal_upload', return_value=0):
+        with patch('apps.uploads.services.scanning.cleanup_terminal_upload', return_value=0):
             with ThreadPoolExecutor(max_workers=1) as executor:
                 stale_future = executor.submit(stale_scan)
                 self.assertTrue(started.wait(timeout=5))

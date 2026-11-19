@@ -7,12 +7,12 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 
 from apps.applications.models import Application
-from apps.applications.tests import test_candidate_api as test_api_v2
+from apps.applications.tests import test_candidate_api
 from apps.campaigns.models import RecruitmentCampaign
 from apps.cvs.models import UserCv
 from apps.cvs.services import create_initial_document
 from apps.jobs.models import Job
-from apps.jobs.tests import test_posting_workflows
+from apps.jobs.tests.factories import JobPostingFixture
 from common.vietnam_time import vietnam_today
 
 from ..models import CampaignChannel, CampaignChannelClickDaily
@@ -24,15 +24,10 @@ SHELL = '<!doctype html><html lang="en"><head><title data-seo-default>Old</title
 BROWSER = 'Mozilla/5.0 (X11; Linux x86_64) Chrome/130'
 
 
-class ChannelTestMixin:
-    # Borrow fixtures through the module so pytest does not collect those classes again.
-    setUp_jobs = test_posting_workflows.JobPostingWorkflowTests.setUp
-    make_publishable_job = test_posting_workflows.JobPostingWorkflowTests.make_publishable_job
-    make_active_job = test_posting_workflows.JobPostingWorkflowTests.make_active_job
-
+class ChannelTestMixin(JobPostingFixture):
     def setUp(self):
         cache.clear()
-        self.setUp_jobs()
+        super().setUp()
         self.client = APIClient()
         self.client.force_authenticate(self.user)
         self.campaign = RecruitmentCampaign.objects.create(
@@ -267,8 +262,8 @@ class CampaignLandingTests(ChannelTestMixin, TestCase):
 
 
 class ApplyAttributionTests(TestCase):
-    setUp_application = test_api_v2.CandidateApplicationTests.setUp
-    apply_payload = test_api_v2.CandidateApplicationTests.apply_payload
+    setUp_application = test_candidate_api.CandidateApplicationTests.setUp
+    apply_payload = test_candidate_api.CandidateApplicationTests.apply_payload
 
     def setUp(self):
         self.setUp_application()

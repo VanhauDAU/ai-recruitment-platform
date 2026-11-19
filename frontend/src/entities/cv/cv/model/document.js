@@ -1,11 +1,10 @@
 import { getSectionDefinition, getSectionDisplayName, SECTION_REGISTRY } from './section-registry'
 
 const BASIC_EDITOR_SECTION_KEYS = Object.freeze(['summary', 'experience', 'skills'])
-// Font chọn được trong editor (đóng gói OFL, cv-fonts.css). Tên font cũ vẫn hợp
-// lệ cho tài liệu tạo trước CVT-2 và được hiển thị bằng font đóng gói gần nhất.
+// Font chọn được trong editor (đóng gói OFL, cv-fonts.css) — khớp CV_FONT_FAMILIES
+// của backend (cv_templates/models/content_schema.py).
 export const CV_FONT_FAMILIES = Object.freeze(['Inter', 'Roboto', 'Be Vietnam Pro', 'Lora'])
-const LEGACY_FONT_FAMILIES = Object.freeze({ Arial: 'Inter', Calibri: 'Be Vietnam Pro', 'Source Sans Pro': 'Be Vietnam Pro' })
-const ALLOWED_FONTS = new Set([...CV_FONT_FAMILIES, ...Object.keys(LEGACY_FONT_FAMILIES)])
+const ALLOWED_FONTS = new Set(CV_FONT_FAMILIES)
 const HEX_COLOR = /^#[0-9A-Fa-f]{6}$/
 const YEAR_MONTH = /^\d{4}-(0[1-9]|1[0-2])$/
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -63,7 +62,7 @@ function newSection(content, sectionKey) {
 }
 
 export function getCvFontStack(fontFamily) {
-  return CV_FONT_STACKS[LEGACY_FONT_FAMILIES[fontFamily] || fontFamily] || CV_FONT_STACKS.Inter
+  return CV_FONT_STACKS[fontFamily] || CV_FONT_STACKS.Inter
 }
 
 export function changeContentLocale(content, locale) {

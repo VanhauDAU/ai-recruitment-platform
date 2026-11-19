@@ -14,10 +14,7 @@ Covers the failure modes the expand/backfill/contract split (applications
 * safety guard — a mismatched deterministic snapshot is refused, not mislinked.
 """
 
-from io import StringIO
-
 from django.contrib.auth import get_user_model
-from django.core.management import call_command
 from django.db import connection, transaction
 from django.db.migrations.executor import MigrationExecutor
 from django.test import TransactionTestCase
@@ -209,21 +206,6 @@ class ApplicationSnapshotMigrationTests(TransactionTestCase):
         self.assertEqual(snapshot.version_number, 2)
         self.assertEqual(self._count_deterministic_snapshots(app_pk), 1)
 
-    def test_repair_is_idempotent_when_run_twice(self):
-        self._migrate(BEFORE)
-        app_pk, cv = self._seed_legacy_application()
-        self._migrate(EXPAND)  # columns exist, nullable, snapshot still missing
-
-        out = StringIO()
-        call_command('cv_snapshot_preflight', '--repair', stdout=out)
-        self.assertEqual(self._count_deterministic_snapshots(app_pk), 1)
-        self._assert_backfilled(app_pk, cv)
-
-        # Second repair must be a no-op — no duplicate, still consistent.
-        call_command('cv_snapshot_preflight', '--repair', stdout=StringIO())
-        self.assertEqual(self._count_deterministic_snapshots(app_pk), 1)
-        self._assert_backfilled(app_pk, cv)
-
     def test_mismatched_snapshot_is_refused(self):
         self._migrate(BEFORE)
         app_pk, cv = self._seed_legacy_application(suffix='a')
@@ -272,7 +254,7 @@ class CollapseConsideringStatusMigrationTests(TransactionTestCase):
 
     def test_considering_rows_become_viewed_and_no_op_history_is_dropped(self):
         from apps.cv_templates.tests.factories import make_published_template
-        from apps.cvs.services import create_application_snapshot, create_v2_cv
+        from apps.cvs.services import create_application_snapshot, create_user_cv
         from apps.employers.models import Company
         from apps.jobs.models import Job
 
@@ -284,7 +266,7 @@ class CollapseConsideringStatusMigrationTests(TransactionTestCase):
         company = Company.objects.create(company_name='Mig Co', created_by=owner)
         job = Job.objects.create(posted_by=owner, company=company, title='Mig', description='d')
         template, _version = make_published_template('Mig template')
-        cv = create_v2_cv(actor=candidate, title='Mig CV', template=template)
+        cv = create_user_cv(actor=candidate, title='Mig CV', template=template)
         with transaction.atomic():
             snapshot = create_application_snapshot(cv, candidate)
 

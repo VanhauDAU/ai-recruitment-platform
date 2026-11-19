@@ -10,7 +10,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from apps.jobs.models import Job
-from apps.jobs.tests.helpers import open_visibility_window
+from apps.jobs.tests.factories import open_visibility_window
 from common.api.throttling import ClientIPScopedRateThrottle
 
 from ..models import (
@@ -21,7 +21,7 @@ from ..models import (
     Industry,
     RecruiterProfile,
 )
-from .readiness_helpers import current_dpa_fields
+from .factories import current_dpa_fields
 
 
 class PublicCompanyListApiTests(APITestCase):

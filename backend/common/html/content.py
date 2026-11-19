@@ -5,7 +5,7 @@ remain responsible for any stricter source policy and required editorial
 metadata such as meaningful alt text.
 """
 
-from html import escape, unescape
+from html import escape
 from html.parser import HTMLParser
 from urllib.parse import urlparse
 
@@ -136,37 +136,6 @@ class _ContentHtmlSanitizer(HTMLParser):
             self.output.append(escape(data))
 
 
-class _ContentPlainTextParser(HTMLParser):
-    BLOCK_TAGS = {
-        'blockquote',
-        'br',
-        'figcaption',
-        'h2',
-        'h3',
-        'h4',
-        'li',
-        'p',
-        'pre',
-        'table',
-        'tr',
-    }
-
-    def __init__(self):
-        super().__init__(convert_charrefs=True)
-        self.parts = []
-
-    def handle_starttag(self, tag, attrs):
-        if tag.lower() in self.BLOCK_TAGS and self.parts:
-            self.parts.append('\n')
-
-    def handle_endtag(self, tag):
-        if tag.lower() in self.BLOCK_TAGS:
-            self.parts.append('\n')
-
-    def handle_data(self, data):
-        self.parts.append(data)
-
-
 def sanitize_content_html(value, *, allow_http=False, url_normalizer=None):
     parser = _ContentHtmlSanitizer(
         allow_http=allow_http,
@@ -175,11 +144,3 @@ def sanitize_content_html(value, *, allow_http=False, url_normalizer=None):
     parser.feed(value or '')
     parser.close()
     return ''.join(parser.output).strip()
-
-
-def content_html_plain_text(value):
-    parser = _ContentPlainTextParser()
-    parser.feed(value or '')
-    parser.close()
-    lines = [' '.join(line.split()) for line in unescape(''.join(parser.parts)).splitlines()]
-    return '\n'.join(line for line in lines if line).strip()

@@ -3,37 +3,12 @@ from datetime import timedelta
 from django.conf import settings
 from rest_framework.exceptions import ValidationError
 
-DEFAULT_VISIBILITY_DAYS = 30
 MAX_VISIBILITY_DAYS = 90
 
 
 def job_lifecycle_policy():
-    maximum_days = min(
-        MAX_VISIBILITY_DAYS,
-        max(
-            1,
-            int(
-                getattr(
-                    settings,
-                    'JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS',
-                    MAX_VISIBILITY_DAYS,
-                )
-            ),
-        ),
-    )
-    default_days = min(
-        max(
-            1,
-            int(
-                getattr(
-                    settings,
-                    'JOB_POSTING_DEFAULT_DEADLINE_DAYS',
-                    DEFAULT_VISIBILITY_DAYS,
-                )
-            ),
-        ),
-        maximum_days,
-    )
+    maximum_days = min(MAX_VISIBILITY_DAYS, max(1, settings.JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS))
+    default_days = min(max(1, settings.JOB_POSTING_DEFAULT_DEADLINE_DAYS), maximum_days)
     return {
         'default_visibility_days': default_days,
         'max_visibility_days': maximum_days,

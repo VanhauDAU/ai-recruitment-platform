@@ -59,7 +59,7 @@
 | --- | --- | --- |
 | ER-D11 | Upload mới quarantine, ClamAV, fail closed, explicit submit | Upload session + scan worker |
 | ER-D12 | File hợp lệ giữ 24 tháng; malicious xóa sớm sau evidence; legal hold ngoại lệ | Retention command và legal-hold guard |
-| ER-D13 | File hiện có là `legacy_trusted`, không background scan | Không bịa scan evidence |
+| ER-D13 | File hiện có là `legacy_trusted`, không background scan | Không bịa scan evidence. Đã gỡ 11/2026 (chưa có dữ liệu production): mọi `UploadAsset` sinh từ verdict clean |
 | ER-D22 | Phone cũ giữ nguyên, không legacy label/deadline/hold | Không phone backfill |
 | ER-D23 | Account mới và lần đổi/reverify dùng SMS thật | Provider-neutral adapter |
 | ER-D24 | DPA mới lưu version/hash/actor/time/IP/session append-only | Evidence table, không chỉ timestamp |

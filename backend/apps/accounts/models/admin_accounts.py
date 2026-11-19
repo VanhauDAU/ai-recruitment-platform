@@ -28,13 +28,13 @@ class AdminAccessAuditLog(models.Model):
         ordering = ['-created_at', '-id']
         indexes = [models.Index(fields=['created_at'], name='admin_audit_created_idx')]
 
+    def __str__(self):
+        return f'{self.action}:{self.target_type}:{self.target_public_id}'
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('alog')
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f'{self.action}:{self.target_type}:{self.target_public_id}'
 
 
 class AdminInvitation(models.Model):
@@ -78,10 +78,10 @@ class AdminInvitation(models.Model):
             models.Index(fields=['invited_by', 'status'], name='admin_invite_actor_status_idx'),
         ]
 
+    def __str__(self):
+        return f'{self.user.email}:{self.status}'
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('ainv')
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f'{self.user.email}:{self.status}'

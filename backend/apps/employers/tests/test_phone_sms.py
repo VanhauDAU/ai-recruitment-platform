@@ -109,7 +109,6 @@ class SmsChallengeLifecycleTests(TestCase):
     def test_challenge_persists_no_plaintext_phone_or_otp(self):
         challenge = self._challenge()
 
-        self.assertEqual(challenge.phone, '')
         self.assertNotIn('0912345678', challenge.destination_ciphertext)
         self.assertNotIn('+84912345678', challenge.destination_ciphertext)
         self.assertTrue(challenge.otp_ciphertext)
@@ -171,7 +170,9 @@ class SmsChallengeLifecycleTests(TestCase):
     def test_enqueue_passes_only_public_challenge_id_to_celery(self):
         challenge = self._challenge()
 
-        with patch('apps.employers.services.phone_challenges.current_app.send_task') as send_task:
+        with patch(
+            'apps.employers.services.phone_challenges.challenges.current_app.send_task'
+        ) as send_task:
             with self.captureOnCommitCallbacks(execute=True):
                 enqueue_sms_phone_challenge(challenge)
 
@@ -308,7 +309,6 @@ class SmsChallengeLifecycleTests(TestCase):
 
         self.assertEqual(purge_expired_sms_challenge_payloads(limit=1), 1)
         challenge.refresh_from_db()
-        self.assertEqual(challenge.phone, '')
         self.assertEqual(challenge.phone_fingerprint, '')
         self.assertEqual(challenge.destination_ciphertext, '')
         self.assertEqual(challenge.otp_ciphertext, '')
@@ -350,9 +350,12 @@ class SmsLiveWorkflowApiTests(APITestCase):
     def _start(self, phone='0912345678'):
         with (
             patch(
-                'apps.employers.services.phone_challenges.secrets.randbelow', return_value=123456
+                'apps.employers.services.phone_challenges.challenges.secrets.randbelow',
+                return_value=123456,
             ),
-            patch('apps.employers.services.phone_challenges.current_app.send_task') as send_task,
+            patch(
+                'apps.employers.services.phone_challenges.challenges.current_app.send_task'
+            ) as send_task,
             self.captureOnCommitCallbacks(execute=True),
         ):
             response = self.client.post(
@@ -476,7 +479,7 @@ class SmsLiveWorkflowApiTests(APITestCase):
         response = self.client.get(reverse('employer-phone-challenge', args=[challenge.public_id]))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_disabled_sms_fails_closed_without_creating_legacy_email_otp(self):
+    def test_disabled_sms_fails_closed_without_creating_a_challenge(self):
         with override_settings(EMPLOYER_SMS_OTP_ENABLED=False):
             response = self.client.post(
                 reverse('employer-phone-send-otp'),
@@ -490,7 +493,7 @@ class SmsLiveWorkflowApiTests(APITestCase):
 
     def test_resend_cooldown_and_verify_attempt_budget_are_enforced(self):
         challenge = self._start()
-        with patch('apps.employers.services.phone_challenges.current_app.send_task'):
+        with patch('apps.employers.services.phone_challenges.challenges.current_app.send_task'):
             resend = self.client.post(
                 reverse('employer-phone-send-otp'),
                 {'phone': '0912345678', 'password': 'Password@123'},

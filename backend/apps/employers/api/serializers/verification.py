@@ -8,7 +8,7 @@ from rest_framework import serializers
 from common.storage.media import media_url_from_value
 
 from ...models import Company, CompanyDocument, CompanyUpdateRequest, Industry, RecruiterProfile
-from ...models.verification import company_update_allowed_actions
+from ...models.company_update import company_update_allowed_actions
 from ...selectors import can_access_employer_document_content
 from ...services import (
     PAGE_CONTENT_FIELDS,

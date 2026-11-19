@@ -14,9 +14,9 @@ from apps.candidates.services import release_due_candidate_notifications
 from apps.cvs.models import CvVersion, UserCv
 from apps.cvs.services import create_initial_document
 from apps.employers.models import Company
-from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.employers.tests.factories import make_employer_ready
 from apps.jobs.models import Job
-from apps.jobs.tests.helpers import open_visibility_window
+from apps.jobs.tests.factories import open_visibility_window
 
 from ..models import Application, ApplicationStatusHistory
 from ..services import (

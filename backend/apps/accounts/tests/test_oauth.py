@@ -12,7 +12,7 @@ from rest_framework.test import APITestCase
 from apps.accounts.services import oauth
 
 from ..models import AuthEmailJob, SocialAccount, User
-from .helpers import GOOGLE_PROFILE
+from .factories import GOOGLE_PROFILE
 
 
 @override_settings(

@@ -2,7 +2,6 @@
 
 import html
 import logging
-from datetime import timedelta
 
 from celery import shared_task
 from django.conf import settings
@@ -12,12 +11,11 @@ from django.utils import timezone
 
 from apps.sitecontent.selectors import get_string_setting
 from common.email import send_html_email
+from common.outbox import MAX_DELIVERY_ATTEMPTS, is_sending_fresh, stale_sending_before
 
 from ..models import EmployerVerificationNotification
 
 logger = logging.getLogger(__name__)
-MAX_ATTEMPTS = 4
-STALE_SENDING_AFTER = timedelta(minutes=5)
 
 
 def _send(job):
@@ -61,7 +59,7 @@ def _send(job):
     )
 
 
-@shared_task(bind=True, max_retries=MAX_ATTEMPTS - 1)
+@shared_task(bind=True, max_retries=MAX_DELIVERY_ATTEMPTS - 1)
 def deliver_employer_verification_notification(self, job_id):
     now = timezone.now()
     with transaction.atomic():
@@ -73,10 +71,8 @@ def deliver_employer_verification_notification(self, job_id):
         )
         if job is None or job.status == EmployerVerificationNotification.Status.SENT:
             return
-        if (
-            job.status == EmployerVerificationNotification.Status.SENDING
-            and job.started_at
-            and now - job.started_at < STALE_SENDING_AFTER
+        if job.status == EmployerVerificationNotification.Status.SENDING and is_sending_fresh(
+            job.started_at, now
         ):
             return
         job.status = EmployerVerificationNotification.Status.SENDING
@@ -87,7 +83,7 @@ def deliver_employer_verification_notification(self, job_id):
     try:
         _send(job)
     except Exception as error:  # noqa: BLE001 - persisted outbox is the fallback
-        exhausted = job.attempts >= MAX_ATTEMPTS
+        exhausted = job.attempts >= MAX_DELIVERY_ATTEMPTS
         EmployerVerificationNotification.objects.filter(pk=job.pk).update(
             status=(
                 EmployerVerificationNotification.Status.FAILED
@@ -110,7 +106,7 @@ def deliver_employer_verification_notification(self, job_id):
 
 @shared_task
 def dispatch_pending_employer_verification_notifications():
-    stale_before = timezone.now() - STALE_SENDING_AFTER
+    stale_before = stale_sending_before(timezone.now())
     job_ids = EmployerVerificationNotification.objects.filter(
         Q(status=EmployerVerificationNotification.Status.PENDING)
         | Q(

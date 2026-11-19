@@ -1,40 +1,37 @@
-from apps.cvs.api.serializers.cvs import (
-    CvApplySampleSerializer,
-    CvAssetSerializer,
-    CvAssetUploadSerializer,
+from .assets import CvAssetSerializer, CvAssetUploadSerializer
+from .cvs import (
     CvCreateSerializer,
-    CvDraftSerializer,
-    CvDraftWriteSerializer,
     CvDuplicateSerializer,
-    CvExportCreateSerializer,
-    CvExportSerializer,
-    CvImportSerializer,
     CvMetadataUpdateSerializer,
     CvSerializer,
-    CvSharedLinkCreateSerializer,
-    CvSharedLinkSerializer,
-    CvTemplateSwitchSerializer,
-    CvVersionSerializer,
-    CvVersionSummarySerializer,
-    SharedCvVersionSerializer,
 )
+from .drafts import (
+    CvApplySampleSerializer,
+    CvDraftSerializer,
+    CvDraftWriteSerializer,
+    CvTemplateSwitchSerializer,
+)
+from .exports import CvExportCreateSerializer, CvExportSerializer
+from .imports import CvImportSerializer
+from .shares import CvSharedLinkCreateSerializer, CvSharedLinkSerializer
+from .versions import CvVersionSerializer, CvVersionSummarySerializer, SharedCvVersionSerializer
 
 __all__ = [
     'CvApplySampleSerializer',
     'CvAssetSerializer',
     'CvAssetUploadSerializer',
+    'CvCreateSerializer',
     'CvDraftSerializer',
     'CvDraftWriteSerializer',
+    'CvDuplicateSerializer',
     'CvExportCreateSerializer',
     'CvExportSerializer',
-    'CvSharedLinkCreateSerializer',
-    'CvSharedLinkSerializer',
-    'CvTemplateSwitchSerializer',
-    'CvCreateSerializer',
-    'CvDuplicateSerializer',
     'CvImportSerializer',
     'CvMetadataUpdateSerializer',
     'CvSerializer',
+    'CvSharedLinkCreateSerializer',
+    'CvSharedLinkSerializer',
+    'CvTemplateSwitchSerializer',
     'CvVersionSerializer',
     'CvVersionSummarySerializer',
     'SharedCvVersionSerializer',

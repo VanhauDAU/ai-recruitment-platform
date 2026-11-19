@@ -1,10 +1,6 @@
 from django.urls import path
 
-from apps.cvs.api.views.cvs import (
-    CvAssetContentView,
-    CvSharedLinkPublicView,
-    CvSharedSourceFileView,
-)
+from ..views import CvAssetContentView, CvSharedLinkPublicView, CvSharedSourceFileView
 
 urlpatterns = [
     path(

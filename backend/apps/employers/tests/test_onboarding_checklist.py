@@ -7,7 +7,7 @@ from apps.accounts.models import User
 
 from ..models import Company, EmployerVerificationCase
 from ..selectors.onboarding import build_employer_onboarding_steps
-from .readiness_helpers import make_employer_ready
+from .factories import make_employer_ready
 
 
 class VerificationChecklistInvalidationTests(APITestCase):

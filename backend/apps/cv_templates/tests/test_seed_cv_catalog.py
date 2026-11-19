@@ -7,8 +7,8 @@ from django.test import TestCase
 
 from apps.jobs.models import JobCategory, JobCategoryLocalization
 
-from ..management.commands.seed_cv_catalog import SKILLS_FIRST_PRESET
 from ..models import CATALOG_LANGUAGES, CvPositionProfile, CvSampleContent, ExperienceBand
+from ..seed_data.sample_contents import SKILLS_FIRST_PRESET
 
 
 class SeedCvCatalogTests(TestCase):

@@ -29,7 +29,6 @@ PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
 # Test files must never land in a developer's real media roots. Each run gets
 # its own temporary tree; the roots stay distinct and non-nested like production.
 _TEST_MEDIA_BASE = Path(tempfile.mkdtemp(prefix='procv-test-media-'))
-LEGACY_MEDIA_ROOT = _TEST_MEDIA_BASE / 'legacy-media'
 PUBLIC_MEDIA_ROOT = _TEST_MEDIA_BASE / 'public-media'
 MEDIA_ROOT = PUBLIC_MEDIA_ROOT
 PRIVATE_MEDIA_ROOT = _TEST_MEDIA_BASE / 'private-media'

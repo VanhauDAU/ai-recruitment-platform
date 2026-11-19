@@ -9,7 +9,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from apps.accounts.tests.helpers import make_admin
+from apps.accounts.tests.factories import make_admin
 
 from ..models import (
     Company,
@@ -19,7 +19,7 @@ from ..models import (
     RecruiterProfile,
 )
 from ..services import company_owners, request_company_join
-from .readiness_helpers import make_verified_representative
+from .factories import make_verified_representative
 
 User = get_user_model()
 

@@ -129,6 +129,16 @@ class RecruitmentCampaign(models.Model):
         ]
         ordering = ['-created_at']
 
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('camp')
+        if not self.slug:
+            self.slug = self.build_slug()
+        super().save(*args, **kwargs)
+
     @property
     def is_terminal(self):
         return self.status in self.TERMINAL_STATUSES
@@ -142,16 +152,6 @@ class RecruitmentCampaign(models.Model):
 
     def build_slug(self):
         return f'{slugify(self.name)[:200]}-{self.public_id}'.strip('-').replace('_', '-')
-
-    def save(self, *args, **kwargs):
-        if not self.public_id:
-            self.public_id = generate_public_id('camp')
-        if not self.slug:
-            self.slug = self.build_slug()
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
 
 
 class CampaignActivityManager(models.Manager):

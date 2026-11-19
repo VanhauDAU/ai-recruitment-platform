@@ -1,6 +1,5 @@
 """SEO shell and sitemap of the public company page."""
 
-import json
 import re
 
 from django.core.cache import cache
@@ -10,27 +9,14 @@ from django.urls import resolve, reverse
 from apps.sitecontent.models import SiteSetting
 
 from ..models import Company, Industry
-from .company_page_helpers import (
+from .cases import SHELL, structured_data
+from .factories import (
     add_recruiter,
     hold_company,
     make_company,
     make_employer,
     publish_job,
 )
-
-SHELL = (
-    '<!doctype html><html lang="en"><head><title data-seo-default>Old</title>'
-    '</head><body><div id="root"></div></body></html>'
-)
-JSON_LD_PATTERN = re.compile(
-    r'<script data-seo-managed="server" type="application/ld\+json">(.*?)</script>',
-    re.DOTALL,
-)
-
-
-def _structured_data(html):
-    payload = json.loads(JSON_LD_PATTERN.search(html).group(1))
-    return {item['@type']: item for item in payload['@graph']}
 
 
 @override_settings(FRONTEND_SHELL_HTML=SHELL)
@@ -173,7 +159,7 @@ class CompanySeoShellTests(TestCase):
         html = self.shell(company).content.decode()
 
         self.assertEqual(
-            _structured_data(html)['Organization'],
+            structured_data(html)['Organization'],
             {
                 '@type': 'Organization',
                 '@context': 'https://schema.org',
@@ -197,7 +183,7 @@ class CompanySeoShellTests(TestCase):
     def test_sparse_organization_omits_every_optional_property(self):
         company = make_company(self.creator, name='Công ty Sơ Sài')
 
-        organization = _structured_data(self.shell(company).content.decode())['Organization']
+        organization = structured_data(self.shell(company).content.decode())['Organization']
 
         self.assertEqual(
             organization,
@@ -212,7 +198,7 @@ class CompanySeoShellTests(TestCase):
     def test_breadcrumb_structured_data_leads_back_to_the_directory(self):
         company = self._indexable_company()
 
-        breadcrumb = _structured_data(self.shell(company).content.decode())['BreadcrumbList']
+        breadcrumb = structured_data(self.shell(company).content.decode())['BreadcrumbList']
 
         self.assertEqual(
             [
@@ -237,7 +223,7 @@ class CompanySeoShellTests(TestCase):
 
         html = self.shell(company).content.decode()
 
-        self.assertNotIn('address', _structured_data(html)['Organization'])
+        self.assertNotIn('address', structured_data(html)['Organization'])
         self.assertNotIn(home_address, html)
 
     def test_company_name_cannot_break_out_of_the_head(self):
@@ -249,7 +235,7 @@ class CompanySeoShellTests(TestCase):
         self.assertNotIn('<script>alert(1)', html)
         self.assertNotIn('</script><script>', html)
         self.assertEqual(html.count('<script'), 1)
-        self.assertEqual(_structured_data(html)['Organization']['name'], hostile_name)
+        self.assertEqual(structured_data(html)['Organization']['name'], hostile_name)
 
     def test_sitemap_lists_only_indexable_companies_with_lastmod(self):
         indexable = self._indexable_company()

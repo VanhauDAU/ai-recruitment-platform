@@ -9,8 +9,9 @@ from django.db.models import Exists, F, OuterRef, Q
 from apps.accounts.models import User
 
 from .compliance import EmployerComplianceHold
+from .evidence import CompanyDocument
 from .membership import RecruiterProfile
-from .verification import CompanyDocument, EmployerVerificationCase
+from .verification import EmployerVerificationCase
 
 
 def eligible_representatives_queryset():

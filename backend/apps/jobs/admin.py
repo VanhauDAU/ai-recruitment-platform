@@ -32,7 +32,7 @@ class JobCategoryAdminForm(forms.ModelForm):
 
     class Meta:
         model = JobCategory
-        fields = '__all__'
+        fields = ['name', 'slug', 'description', 'parent', 'category_type', 'status', 'logo_url']
 
 
 class JobCategoryLocalizationInlineFormSet(BaseInlineFormSet):

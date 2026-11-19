@@ -10,11 +10,11 @@ from rest_framework.test import APITestCase
 from apps.accounts.services import issue_tokens
 from apps.candidates.models import CandidateNotification
 from apps.cv_templates.tests.factories import fill_cv_for_application, make_published_template
-from apps.cvs.services import create_v2_cv
+from apps.cvs.services import create_user_cv
 from apps.employers.models import Company
-from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.employers.tests.factories import make_employer_ready
 from apps.jobs.models import Job, JobCategory, JobCategoryAssignment
-from apps.jobs.tests.helpers import open_visibility_window
+from apps.jobs.tests.factories import open_visibility_window
 
 from ..models import CandidateBlock, TalentPoolEntry
 from ..services import create_application_record, purge_lapsed_talent_pool_entries
@@ -63,7 +63,7 @@ class TalentPoolTests(APITestCase):
         self.new_job = job('Senior Backend Developer', backend)
         self.unrelated_job = job('Kế toán tổng hợp', accounting)
         template, _version = make_published_template('Pool template')
-        cv = create_v2_cv(actor=self.candidate, title='Pool CV', template=template)
+        cv = create_user_cv(actor=self.candidate, title='Pool CV', template=template)
         fill_cv_for_application(cv, self.candidate)
         self.application = create_application_record(
             candidate=self.candidate, job=self.old_job, cv=cv

@@ -10,7 +10,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
-from apps.accounts.tests.helpers import make_admin
+from apps.accounts.tests.factories import make_admin
 from apps.knowledgebase.models import KnowledgeArticle, KnowledgeArticleRevision, KnowledgeCategory
 
 
@@ -240,7 +240,7 @@ class KnowledgeAdminApiTests(APITestCase):
             {'total': 25, 'published': 21, 'in_review': 2, 'overdue': 3},
         )
 
-    @patch('apps.knowledgebase.api.views.admin.record_metric')
+    @patch('apps.knowledgebase.api.views.admin_shared.record_metric')
     def test_admin_requests_emit_pii_free_status_and_latency_metrics(self, metric):
         self.client.force_authenticate(self.admin)
 

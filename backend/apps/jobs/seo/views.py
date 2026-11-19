@@ -5,7 +5,7 @@ from django.views import View
 from apps.jobs.models import Job
 from apps.jobs.selectors.seo import job_sitemap_rows, seo_job_by_slug, seo_location_by_slug
 from apps.sitecontent.services import resolved_seo_settings
-from common.html.rich_text import rich_text_plain_text
+from common.html.plain_text import html_plain_text
 from common.seo import (
     SeoMetadata,
     absolute_url,
@@ -119,7 +119,7 @@ def _job_posting(request, job, canonical_url):
         '@context': 'https://schema.org',
         '@type': 'JobPosting',
         'title': job.title,
-        'description': rich_text_plain_text(job.description),
+        'description': html_plain_text(job.description),
         'identifier': {
             '@type': 'PropertyValue',
             'name': company.company_name,
@@ -230,7 +230,7 @@ class JobDetailSeoShellView(View):
 
         canonical_path = f'/viec-lam/{job.slug}'
         canonical_url = absolute_url(request, canonical_path)
-        plain_description = rich_text_plain_text(job.description)
+        plain_description = html_plain_text(job.description)
         description = truncate_text(
             f'Tuyển {job.title} tại {job.company.company_name}. {plain_description}'
         )

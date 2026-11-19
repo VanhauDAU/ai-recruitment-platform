@@ -1,0 +1,284 @@
+"""Public job contracts: search cards, the home-page preview and the detail page."""
+
+from drf_spectacular.utils import extend_schema_field
+from rest_framework import serializers
+
+from common.html.plain_text import html_plain_text
+
+from ...models import Benefit, Job, JobCategoryAssignment, JobSkill
+from .jobs import JobListSkillSerializer, JobSerializer, JobVerificationSerializer
+from .supporting import (
+    PublicJobBenefitSerializer,
+    PublicJobLanguageRequirementSerializer,
+    PublicJobLocationSerializer,
+    PublicJobWorkScheduleSerializer,
+)
+
+
+class PublicJobListSerializer(JobSerializer):
+    """Compact contract for public search, related jobs, and saved-job cards."""
+
+    job_skills = JobListSkillSerializer(many=True, read_only=True)
+
+    class Meta(JobSerializer.Meta):
+        fields = [
+            'public_id',
+            'slug',
+            'title',
+            'company_name',
+            'company_slug',
+            'company_logo_url',
+            'brand_slug',
+            'company_verified',
+            'category',
+            'locations_detail',
+            'job_skills',
+            'work_type',
+            'work_types',
+            'employment_type',
+            'education_level',
+            'experience_years',
+            'position_level',
+            'age_min',
+            'age_max',
+            'salary_type',
+            'salary_min',
+            'salary_max',
+            'income_display_type',
+            'currency',
+            'tier',
+            'is_hot',
+            'is_urgent',
+            'has_flash_badge',
+            'presentation',
+            'first_approved_at',
+            'published_at',
+            'created_at',
+        ]
+        read_only_fields = fields
+
+
+class PublicJobPreviewSerializer(PublicJobListSerializer):
+    """Extra fields for the intentional hover preview on the home page only."""
+
+    job_locations = PublicJobLocationSerializer(many=True, read_only=True)
+    work_schedules = PublicJobWorkScheduleSerializer(many=True, read_only=True)
+    job_benefits = PublicJobBenefitSerializer(many=True, read_only=True)
+
+    class Meta(PublicJobListSerializer.Meta):
+        fields = PublicJobListSerializer.Meta.fields + [
+            'short_description',
+            'description',
+            'requirements',
+            'benefits',
+            'application_reasons',
+            'work_schedule_note',
+            'job_locations',
+            'work_schedules',
+            'job_benefits',
+            'number_of_vacancies',
+            'deadline',
+            'visibility_ends_at',
+        ]
+
+
+class JobDetailSerializer(JobSerializer):
+    """Extended public detail without internal application-recipient data.
+
+    Ngoài dữ liệu thô (nested) dùng cho form employer, serializer này trả thêm
+    view-model đã nhóm sẵn cho màn chi tiết ứng viên (tag tóm tắt, địa điểm
+    nhóm theo tỉnh/thành, chuyên môn chính/kiến thức chuyên ngành) để frontend
+    không phải tự suy luận từ dữ liệu thô.
+    """
+
+    category_name = serializers.SerializerMethodField()
+    # Legacy HTTP name paired with ``company_verified``; payload is recruiter-scoped.
+    company_verification = serializers.SerializerMethodField()
+    company_size = serializers.CharField(source='company.company_size', read_only=True)
+    company_address = serializers.CharField(source='company.public_headquarters', read_only=True)
+    company_description = serializers.SerializerMethodField()
+    company_website_url = serializers.CharField(source='company.website_url', read_only=True)
+    company_industries = serializers.SerializerMethodField()
+    primary_specialization = serializers.SerializerMethodField()
+    domain_knowledge = serializers.SerializerMethodField()
+    workplace_groups = serializers.SerializerMethodField()
+    requirement_tags = serializers.SerializerMethodField()
+    benefit_tags = serializers.SerializerMethodField()
+    required_skills = serializers.SerializerMethodField()
+    preferred_skills = serializers.SerializerMethodField()
+    benefit_groups = serializers.SerializerMethodField()
+    job_locations = PublicJobLocationSerializer(many=True, read_only=True)
+    work_schedules = PublicJobWorkScheduleSerializer(many=True, read_only=True)
+    language_requirements = PublicJobLanguageRequirementSerializer(many=True, read_only=True)
+    # A stopped job stays readable but shows "Hết hạn ứng tuyển" instead of apply.
+    accepting_applications = serializers.BooleanField(read_only=True, default=True)
+    stopped_at = serializers.DateTimeField(read_only=True)
+
+    class Meta(JobSerializer.Meta):
+        model = Job
+        fields = [
+            'public_id',
+            'slug',
+            'title',
+            'accepting_applications',
+            'stopped_at',
+            'company_name',
+            'company_slug',
+            'company_logo_url',
+            'company_cover_url',
+            'brand_slug',
+            'company_verified',
+            'company_verification',
+            'category',
+            'category_name',
+            'locations_detail',
+            'description',
+            'requirements',
+            'benefits',
+            'application_reasons',
+            'work_schedule_note',
+            'work_type',
+            'work_types',
+            'employment_type',
+            'education_level',
+            'experience_years',
+            'position_level',
+            'gender_requirement',
+            'age_min',
+            'age_max',
+            'number_of_vacancies',
+            'salary_type',
+            'salary_min',
+            'salary_max',
+            'income_display_type',
+            'currency',
+            'deadline',
+            'first_approved_at',
+            'visibility_ends_at',
+            'view_count',
+            'is_hot',
+            'is_urgent',
+            'presentation',
+            'job_locations',
+            'work_schedules',
+            'language_requirements',
+            'published_at',
+            'created_at',
+            'company_size',
+            'company_address',
+            'company_description',
+            'company_website_url',
+            'company_industries',
+            'primary_specialization',
+            'domain_knowledge',
+            'workplace_groups',
+            'requirement_tags',
+            'benefit_tags',
+            'required_skills',
+            'preferred_skills',
+            'benefit_groups',
+        ]
+        read_only_fields = fields
+
+    @extend_schema_field(JobVerificationSerializer)
+    def get_company_verification(self, obj):
+        return self._badge_payload(obj)
+
+    def get_category_name(self, obj) -> str:
+        assignment = self._primary_assignment(obj)
+        return assignment.category.name if assignment else ''
+
+    def get_company_description(self, obj) -> str:
+        return html_plain_text(obj.company.description)
+
+    def get_company_industries(self, obj) -> list[str]:
+        return [industry.name for industry in obj.company.industries.all()]
+
+    @staticmethod
+    def _category_summary(category):
+        return {'id': category.pk, 'name': category.name, 'slug': category.slug}
+
+    def get_primary_specialization(self, obj) -> dict | None:
+        assignment = self._primary_assignment(obj)
+        return self._category_summary(assignment.category) if assignment else None
+
+    def get_domain_knowledge(self, obj) -> list[dict]:
+        return [
+            self._category_summary(item.category)
+            for item in obj.category_assignments.all()
+            if item.role == JobCategoryAssignment.Role.DOMAIN_KNOWLEDGE
+        ]
+
+    def get_workplace_groups(self, obj) -> list[dict]:
+        """Địa điểm làm việc nhóm theo tỉnh/thành: mỗi nhóm gồm các dòng địa chỉ phường/xã."""
+        groups = {}
+        for item in obj.job_locations.all():
+            province = item.location.parent or item.location
+            group = groups.setdefault(
+                province.pk,
+                {
+                    'province_id': province.pk,
+                    'province_name': province.name,
+                    'addresses': [],
+                },
+            )
+            ward_name = item.location.name if item.location.parent_id else ''
+            display = ', '.join(part for part in [item.address_detail, ward_name] if part)
+            group['addresses'].append(
+                {
+                    'ward_id': item.location_id if item.location.parent_id else None,
+                    'ward_name': ward_name,
+                    'address_detail': item.address_detail,
+                    'display': display or province.name,
+                }
+            )
+        return list(groups.values())
+
+    def get_requirement_tags(self, obj) -> list[str]:
+        tags = []
+        if obj.experience_years == Job.ExperienceYears.NONE:
+            tags.append('Không yêu cầu kinh nghiệm')
+        elif obj.experience_years:
+            tags.append(f'{obj.get_experience_years_display()} kinh nghiệm')
+        if obj.age_min and obj.age_max:
+            tags.append(f'Tuổi {obj.age_min} - {obj.age_max}')
+        elif obj.age_min:
+            tags.append(f'Từ {obj.age_min} tuổi trở lên')
+        elif obj.age_max:
+            tags.append(f'Đến {obj.age_max} tuổi')
+        if obj.education_level == Job.EducationLevel.NONE:
+            tags.append('Không yêu cầu bằng cấp')
+        elif obj.education_level:
+            tags.append(f'Từ {obj.get_education_level_display()} trở lên')
+        if obj.gender_requirement and obj.gender_requirement != Job.GenderRequirement.ANY:
+            tags.append(f'Giới tính: {obj.get_gender_requirement_display()}')
+        # Kỹ năng không nằm ở hàng tag tóm tắt nữa: đã có khối riêng dưới "Yêu cầu ứng viên".
+        return tags
+
+    def get_benefit_tags(self, obj) -> list[str]:
+        return [item.benefit.name for item in obj.job_benefits.all()]
+
+    @staticmethod
+    def _skill_names(obj, importance):
+        return [item.skill.name for item in obj.job_skills.all() if item.importance == importance]
+
+    def get_required_skills(self, obj) -> list[str]:
+        return self._skill_names(obj, JobSkill.Importance.REQUIRED)
+
+    def get_preferred_skills(self, obj) -> list[str]:
+        return self._skill_names(obj, JobSkill.Importance.PREFERRED)
+
+    def get_benefit_groups(self, obj) -> list[dict]:
+        """Quyền lợi đã chọn, gom theo danh mục và giữ thứ tự khai báo của Benefit.Category."""
+        names_by_category = {}
+        for item in obj.job_benefits.all():
+            names_by_category.setdefault(item.benefit.category, []).append(item.benefit.name)
+        return [
+            {
+                'category': category.value,
+                'category_label': category.label,
+                'items': names_by_category[category.value],
+            }
+            for category in Benefit.Category
+            if names_by_category.get(category.value)
+        ]

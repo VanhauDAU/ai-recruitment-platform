@@ -28,3 +28,6 @@ class JobApplicationEmail(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['contact', 'email'], name='uq_job_contact_email')
         ]
+
+    def __str__(self):
+        return self.email

@@ -50,7 +50,6 @@ def storage_boundary_configuration_errors(
     r2_quarantine_enabled,
     r2_buckets,
     r2_credential_pairs=(),
-    legacy_root=None,
 ):
     """Return boundary errors for deployment validation and tests."""
     roots = {
@@ -66,18 +65,6 @@ def storage_boundary_configuration_errors(
             second = roots[second_name]
             if first == second or first in second.parents or second in first.parents:
                 errors.append(f'{first_name} và {second_name} phải tách biệt, không lồng nhau.')
-
-    if legacy_root is not None:
-        legacy = Path(legacy_root).resolve(strict=False)
-        for active_name, active_root in roots.items():
-            if (
-                legacy == active_root
-                or legacy in active_root.parents
-                or active_root in legacy.parents
-            ):
-                errors.append(
-                    f'LEGACY_MEDIA_ROOT và {active_name} phải tách biệt, không lồng nhau.'
-                )
 
     buckets = tuple(r2_buckets)
     if r2_enabled and not r2_quarantine_enabled:

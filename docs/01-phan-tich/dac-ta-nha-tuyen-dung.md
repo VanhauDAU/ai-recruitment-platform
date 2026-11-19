@@ -199,9 +199,6 @@ draft → pending → in_review ─┬─► approved ─┬─► revoked ─�
   nhưng không ban tài khoản. Reject/changes-requested một tài liệu không tính
   lượt. Mở khóa cần `employer_verification.resubmission_unlock`, lý do và
   `lock_version`; lịch sử và số đếm giữ nguyên.
-- Hồ sơ auto-approved lịch sử mang `decision_source`
-  `legacy_auto|legacy_unknown` (command `classify_legacy_employer_verifications`),
-  không bị reset hay hold tự động.
 
 **Quyền admin** (`/api/admin/employer-verifications/`):
 `employer_verification.view`, `.review`, `.revoke`, `.tax_override`,
@@ -220,8 +217,6 @@ có giấy tờ hiện hành vừa nộp lại đang chờ.
   tạo/sửa nháp vẫn mở. Company không bị ảnh hưởng.
 - Reapprove chỉ gỡ hold nguồn `verification`; re-consent DPA chỉ gỡ hold nguồn
   `dpa`. Không gỡ moderation/account hold khác (ER-D20).
-- Áp hold cho dữ liệu hiện hữu luôn dry-run, ops review rồi mới apply
-  (`rollout_employer_dpa_compliance`).
 
 ### 5.4 Cấp tài khoản và dấu tick
 
@@ -309,8 +304,8 @@ uploading → quarantined → scanning → clean | rejected | error (retry → s
   và chỉ báo thành công khi mọi attach xong. Raw upload chỉ được dùng khi backend
   trả đúng `UPLOAD_PIPELINE_DISABLED`; lỗi scanner/reject/timeout không fallback.
 - Retention (ER-D12): tệp clean giữ tối thiểu 730 ngày sau khi release, trừ
-  legal hold; tệp độc hại xóa sớm sau khi lưu kết quả. Tệp có từ trước pipeline
-  là `legacy_trusted`, không bị gắn kết quả scan giả (ER-D13).
+  legal hold; tệp độc hại xóa sớm sau khi lưu kết quả. Mọi `UploadAsset` đều
+  sinh từ verdict clean; không có đường đăng ký tệp cũ bỏ qua quét.
 - Storage tách public/private/quarantine; private và quarantine không có `.url()`
   công khai (ER-D30). Flag: `UPLOAD_QUARANTINE_ENABLED`,
   `EMPLOYER_UPLOAD_SESSION_REQUIRED`, `CANDIDATE_UPLOAD_SESSION_REQUIRED`;
@@ -431,8 +426,8 @@ trả chuỗi rỗng, kể cả ở `company_address` của chi tiết tin.
   mới bật `EMPLOYER_UPLOAD_SESSION_REQUIRED` và
   `CANDIDATE_UPLOAD_SESSION_REQUIRED`. QA local từng bị chặn vì Vite local
   không có reCAPTCHA site key.
-- **Kích hoạt và soak (ER-8)**: chạy `audit_employer_workflow_rollout --strict`
-  ở staging/production, bật flag theo thứ tự, theo dõi soak rồi mới mở PR dọn
+- **Kích hoạt và soak (ER-8)**: chạy `check_upload_scanner_readiness` và
+  `check_employer_sms_readiness --require-enabled` ở staging/production, bật flag theo thứ tự, theo dõi soak rồi mới mở PR dọn
   compatibility (`verification_completed`, status `pending` của update request,
   fallback `UPLOAD_PIPELINE_DISABLED`). Rollout hold dữ liệu thật chỉ chạy sau
   dry-run và ops duyệt.

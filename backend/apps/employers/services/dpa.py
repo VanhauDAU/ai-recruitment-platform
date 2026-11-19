@@ -19,7 +19,6 @@ from .compliance import (
     release_dpa_holds,
 )
 from .profiles import get_or_create_recruiter
-from .verification import reconcile_recruiter_verification
 
 
 class DpaPolicyError(ValueError):
@@ -151,7 +150,7 @@ def accept_recruiter_dpa(
             .values_list('id', flat=True)
             .first()
         )
-    acceptance, created = EmployerDpaAcceptance.objects.get_or_create(
+    acceptance, _ = EmployerDpaAcceptance.objects.get_or_create(
         recruiter=recruiter,
         policy_version=policy['policy_version'],
         document_sha256=policy['document_sha256'],
@@ -193,6 +192,4 @@ def accept_recruiter_dpa(
         actor=user,
         reason=f'DPA re-consent {acceptance.policy_version}',
     )
-    if created:
-        reconcile_recruiter_verification(recruiter, source='dpa_accepted')
     return recruiter

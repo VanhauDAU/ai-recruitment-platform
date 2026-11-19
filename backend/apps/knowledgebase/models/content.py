@@ -36,13 +36,13 @@ class KnowledgeCategory(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return self.name
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('kbc')
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
 
 
 class KnowledgeArticle(models.Model):
@@ -120,13 +120,13 @@ class KnowledgeArticle(models.Model):
             models.Index(fields=['review_due_at'], name='kb_article_review_idx'),
         ]
 
+    def __str__(self):
+        return f'{self.category.slug}/{self.slug}'
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('kba')
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f'{self.category.slug}/{self.slug}'
 
 
 class KnowledgeArticleRevision(models.Model):
@@ -205,13 +205,13 @@ class KnowledgeArticleRevision(models.Model):
             models.Index(fields=['status', '-updated_at'], name='kb_revision_status_idx'),
         ]
 
+    def __str__(self):
+        return f'{self.article.public_id}:r{self.number}'
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('kbr')
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f'{self.article.public_id}:r{self.number}'
 
 
 class KnowledgeMediaAsset(models.Model):
@@ -236,10 +236,10 @@ class KnowledgeMediaAsset(models.Model):
         ordering = ['-created_at', '-id']
         indexes = [models.Index(fields=['-created_at'], name='kb_media_created_idx')]
 
+    def __str__(self):
+        return self.original_name
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('kbm')
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.original_name

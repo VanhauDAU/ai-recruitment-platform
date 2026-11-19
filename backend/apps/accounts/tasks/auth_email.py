@@ -1,12 +1,13 @@
 """Transactional-outbox tasks for security-sensitive authentication emails."""
 
 import logging
-from datetime import timedelta
 
 from celery import shared_task
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
+
+from common.outbox import MAX_DELIVERY_ATTEMPTS, is_sending_fresh, stale_sending_before
 
 from ..models import AuthEmailJob
 from ..services import (
@@ -17,8 +18,6 @@ from ..services import (
 )
 
 logger = logging.getLogger(__name__)
-MAX_DELIVERY_ATTEMPTS = 4
-STALE_SENDING_AFTER = timedelta(minutes=5)
 
 
 def queue_auth_email(kind, user, context=None, *, unique=False):
@@ -137,11 +136,7 @@ def deliver_auth_email_job(self, job_id):
             AuthEmailJob.Status.CANCELLED,
         }:
             return
-        if (
-            job.status == AuthEmailJob.Status.SENDING
-            and job.started_at
-            and now - job.started_at < STALE_SENDING_AFTER
-        ):
+        if job.status == AuthEmailJob.Status.SENDING and is_sending_fresh(job.started_at, now):
             return
         job.status = AuthEmailJob.Status.SENDING
         job.started_at = now
@@ -170,7 +165,7 @@ def deliver_auth_email_job(self, job_id):
 
 @shared_task
 def dispatch_pending_auth_email_jobs():
-    stale_before = timezone.now() - STALE_SENDING_AFTER
+    stale_before = stale_sending_before(timezone.now())
     jobs = AuthEmailJob.objects.filter(
         Q(status=AuthEmailJob.Status.PENDING)
         | Q(status=AuthEmailJob.Status.SENDING, started_at__lt=stale_before)

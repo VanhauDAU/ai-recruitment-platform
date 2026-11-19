@@ -35,7 +35,7 @@ from ..services import (
     save_company_website_proof,
     submit_validated_company_update,
 )
-from .test_api import PDF_BYTES, PNG_BYTES, make_employer
+from .factories import PDF_BYTES, PNG_BYTES, make_recruiter
 
 TEST_MEDIA_ROOT = tempfile.mkdtemp()
 
@@ -46,7 +46,7 @@ def _png(name='logo.png'):
 
 class _CompanyOwnerTestCase(TestCase):
     def setUp(self):
-        self.user, self.recruiter = make_employer('owner-services@example.com')
+        self.user, self.recruiter = make_recruiter('owner-services@example.com')
         self.company = Company.objects.create(
             company_name='Acme Services', tax_code='0109876543', created_by=self.user
         )
@@ -157,7 +157,7 @@ class CompanyDocumentServiceTests(_CompanyOwnerTestCase):
         self.assertEqual(second.doc_type, CompanyDocument.DocType.TRADE_NAME_PROOF)
 
     def test_website_proof_rejects_someone_elses_request(self):
-        other_user, other = make_employer('other-services@example.com')
+        other_user, other = make_recruiter('other-services@example.com')
         other.company = self.company
         other.save(update_fields=['company', 'updated_at'])
         update_request = CompanyUpdateRequest.objects.create(
@@ -199,7 +199,7 @@ class CompanyDocumentServiceTests(_CompanyOwnerTestCase):
 
 class CompanyCreationServiceTests(TestCase):
     def test_creator_owns_the_new_company_with_its_industries(self):
-        user, recruiter = make_employer('creator-services@example.com')
+        user, recruiter = make_recruiter('creator-services@example.com')
         primary = Industry.objects.create(name='Dịch vụ thử nghiệm A')
         secondary = Industry.objects.create(name='Dịch vụ thử nghiệm B')
 
@@ -244,8 +244,8 @@ class CompanyUpdateSubmissionServiceTests(_CompanyOwnerTestCase):
 
 class NotificationServiceTests(TestCase):
     def test_read_is_scoped_to_the_recipient_and_keeps_the_first_read_time(self):
-        user, _ = make_employer('notified-services@example.com')
-        other, _ = make_employer('stranger-services@example.com')
+        user, _ = make_recruiter('notified-services@example.com')
+        other, _ = make_recruiter('stranger-services@example.com')
         notification, _ = emit_employer_event(
             recipient=user,
             event_type=EmployerNotification.EventType.VERIFICATION_APPROVED,
@@ -265,7 +265,7 @@ class RecruitmentNeedServiceTests(TestCase):
     def test_need_counts_as_completed_when_created(self):
         from apps.jobs.models import JobCategory
 
-        _, recruiter = make_employer('need-services@example.com')
+        _, recruiter = make_recruiter('need-services@example.com')
         category = JobCategory.objects.create(
             name='Lập trình viên',
             slug='lap-trinh-vien-services',

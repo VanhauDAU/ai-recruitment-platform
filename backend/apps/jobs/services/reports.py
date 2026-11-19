@@ -4,14 +4,10 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
+from apps.employers.services import TRUST_REPORT_REASONS
+
 from ..models import JobReport, JobReportResolutionEvent
 from .moderation import apply_confirmed_report_hold
-
-TRUST_REPORT_REASONS = {
-    JobReport.Reason.FAKE_COMPANY,
-    JobReport.Reason.SCAM,
-    JobReport.Reason.WRONG_INFO,
-}
 
 
 def submit_job_report(*, job, reporter, reason, detail=''):

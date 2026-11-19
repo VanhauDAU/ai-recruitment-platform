@@ -13,7 +13,7 @@ from rest_framework.exceptions import NotFound
 
 from apps.candidates.models import CandidateNotification
 from apps.candidates.services import emit_candidate_notification
-from common.api.exceptions import DomainError
+from common.errors import DomainError
 
 from ..models import TalentPoolEntry, TalentPoolInvitation
 

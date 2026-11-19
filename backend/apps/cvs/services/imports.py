@@ -8,8 +8,10 @@ from django.core.files.storage import default_storage
 from django.db import transaction
 from django.utils import timezone
 
+from common.files.signatures import SIGNATURE_WINDOW_BYTES, has_pdf_header
+
 from ..models import CvImportJob, UserCv
-from .lifecycle import create_v2_cv
+from .lifecycle import create_user_cv
 from .upload_claims import (
     CV_SOURCE_CLAIM_SCOPE,
     claim_candidate_upload,
@@ -28,11 +30,9 @@ def validate_import_upload(upload):
         raise InvalidCvImport('Tệp CV không được vượt quá 5 MB.')
     extension = upload.name.rsplit('.', 1)[-1].lower() if '.' in upload.name else ''
     upload.seek(0)
-    signature = upload.read(1024)
+    signature = upload.read(SIGNATURE_WINDOW_BYTES)
     upload.seek(0)
-    # ISO 32000 readers accept the PDF header within the first 1024 bytes.
-    # Some document generators prepend a BOM or transport whitespace.
-    if extension == 'pdf' and b'%PDF-' in signature:
+    if extension == 'pdf' and has_pdf_header(signature):
         return extension
     if extension == 'docx' and signature.startswith(b'PK'):
         try:
@@ -74,7 +74,7 @@ def queue_cv_import(
     )
     try:
         with transaction.atomic():
-            cv = create_v2_cv(
+            cv = create_user_cv(
                 actor=actor,
                 title=title or upload.name,
                 template=template,
@@ -104,9 +104,7 @@ def queue_cv_import(
                 idempotency_key=key,
                 file_checksum_sha256=checksum,
                 source_expires_at=timezone.now()
-                + timedelta(
-                    days=getattr(settings, 'CV_IMPORT_SOURCE_RETENTION_DAYS', 30),
-                ),
+                + timedelta(days=settings.CV_IMPORT_SOURCE_RETENTION_DAYS),
             )
             from apps.cvs.tasks.imports import process_cv_import_job
 
@@ -140,7 +138,7 @@ def queue_cv_import_from_session(
     if existing:
         return existing.cv, existing, False
 
-    cv = create_v2_cv(
+    cv = create_user_cv(
         actor=actor,
         title=title or 'CV đã tải lên',
         template=template,
@@ -180,8 +178,7 @@ def queue_cv_import_from_session(
         user=actor,
         idempotency_key=key,
         file_checksum_sha256=asset.checksum_sha256,
-        source_expires_at=timezone.now()
-        + timedelta(days=getattr(settings, 'CV_IMPORT_SOURCE_RETENTION_DAYS', 30)),
+        source_expires_at=timezone.now() + timedelta(days=settings.CV_IMPORT_SOURCE_RETENTION_DAYS),
     )
     from apps.cvs.tasks.imports import process_cv_import_job
 

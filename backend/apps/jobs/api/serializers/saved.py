@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from ...models import Job, SavedJob
 from ...selectors import public_jobs_queryset
-from .jobs import PublicJobListSerializer
+from .public_jobs import PublicJobListSerializer
 
 
 class SavedJobSerializer(serializers.ModelSerializer):

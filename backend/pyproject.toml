@@ -4,17 +4,13 @@ line-length = 100
 extend-exclude = ["*/migrations/*", "venv", "media"]
 
 [tool.ruff.lint]
-# Bắt đầu nới tay: lỗi thật (E,F), import (I), modern hóa (UP), bug tiềm ẩn (B),
-# rule riêng cho Django (DJ). Siết thêm sau khi kiến trúc ổn định (AR-P2+).
+# Lỗi thật (E,F), import (I), modern hóa (UP), bug tiềm ẩn (B), rule Django (DJ).
 select = ["E", "F", "I", "UP", "B", "DJ"]
 ignore = [
   # Django settings dùng star import theo convention (base -> development/production/test)
   "F403", "F405",
   # Cho phép line dài trong comment/URL — format lo phần code
   "E501",
-  # TODO(AR-P2): bật lại khi tách models/ package — các rule này đòi sửa model
-  # hàng loạt (thứ tự thân class, __str__, null trên CharField, fields="__all__").
-  "DJ001", "DJ007", "DJ008", "DJ012",
 ]
 
 [tool.ruff.lint.isort]

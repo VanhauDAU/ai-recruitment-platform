@@ -9,7 +9,6 @@ from .admin_companies import (
 from .admin_verification import (
     AdminVerificationCaseDetailSerializer,
     AdminVerificationCaseListSerializer,
-    AdminVerificationDecisionSerializer,
     AdminVerificationDocumentReviewSerializer,
 )
 from .companies import (
@@ -72,7 +71,6 @@ __all__ = [
     'CompanyReportCreateSerializer',
     'AdminVerificationCaseDetailSerializer',
     'AdminVerificationCaseListSerializer',
-    'AdminVerificationDecisionSerializer',
     'AdminVerificationDocumentReviewSerializer',
     'CompanyImageSerializer',
     'AdminCompanyDomainClaimSerializer',

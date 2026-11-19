@@ -11,7 +11,7 @@ from rest_framework.throttling import ScopedRateThrottle
 
 from apps.accounts.models import User
 from apps.accounts.services import issue_tokens
-from apps.accounts.tests.helpers import make_admin
+from apps.accounts.tests.factories import make_admin
 
 from ..models import Company, CompanyDomainClaim, CompanyDomainClaimEvent, RecruiterProfile
 from ..selectors import effective_company_domain_claims
@@ -79,7 +79,9 @@ class CompanyDomainClaimApiTests(APITestCase):
         authenticate(self.client, self.user)
 
     def test_create_derives_domain_and_only_returns_plaintext_once(self):
-        with patch('apps.employers.services.domain_claims._offline_tld_extract', return_value=True):
+        with patch(
+            'apps.employers.services.domain_claims.domains._offline_tld_extract', return_value=True
+        ):
             response = self.client.post(
                 reverse('employer-company-domain-claims'), {}, format='json'
             )
@@ -110,17 +112,23 @@ class CompanyDomainClaimApiTests(APITestCase):
         self.user.email = 'owner@gmail.com'
         self.user.email_verified = True
         self.user.save(update_fields=['email', 'email_verified'])
-        with patch('apps.employers.services.domain_claims._offline_tld_extract', return_value=True):
+        with patch(
+            'apps.employers.services.domain_claims.domains._offline_tld_extract', return_value=True
+        ):
             response = self.client.post(
                 reverse('employer-company-domain-claims'), {}, format='json'
             )
         self.assertEqual(response.data['code'], 'public_email_domain')
 
     def test_verify_uses_hash_and_exact_dns_txt(self):
-        with patch('apps.employers.services.domain_claims._offline_tld_extract', return_value=True):
+        with patch(
+            'apps.employers.services.domain_claims.domains._offline_tld_extract', return_value=True
+        ):
             claim, txt_value = create_domain_claim(recruiter=self.recruiter)
         value = txt_value
-        with patch('apps.employers.services.domain_claims._dns_txt_values', return_value={value}):
+        with patch(
+            'apps.employers.services.domain_claims.claims.dns_txt_values', return_value={value}
+        ):
             response = self.client.post(
                 reverse(
                     'employer-company-domain-claim-verify',
@@ -134,7 +142,9 @@ class CompanyDomainClaimApiTests(APITestCase):
         self.assertNotIn('txt_value', response.data)
 
     def test_rotate_rechecks_current_email_domain_and_lock_version(self):
-        with patch('apps.employers.services.domain_claims._offline_tld_extract', return_value=True):
+        with patch(
+            'apps.employers.services.domain_claims.domains._offline_tld_extract', return_value=True
+        ):
             claim, _ = create_domain_claim(recruiter=self.recruiter)
             self.user.email = 'owner@other.vn'
             self.user.save(update_fields=['email'])
@@ -157,7 +167,7 @@ class CompanyDomainClaimApiTests(APITestCase):
         with (
             patch.dict(ScopedRateThrottle.THROTTLE_RATES, rates),
             patch(
-                'apps.employers.services.domain_claims._offline_tld_extract',
+                'apps.employers.services.domain_claims.domains._offline_tld_extract',
                 return_value=True,
             ),
         ):
@@ -174,7 +184,9 @@ class CompanyDomainClaimApiTests(APITestCase):
 
 class CompanyDomainClaimPolicyTests(APITestCase):
     def test_idna_is_exact_ascii_and_rejects_wildcard(self):
-        with patch('apps.employers.services.domain_claims._offline_tld_extract', return_value=True):
+        with patch(
+            'apps.employers.services.domain_claims.domains._offline_tld_extract', return_value=True
+        ):
             self.assertEqual(normalize_company_domain(' BÜCHER.vn. '), 'xn--bcher-kva.vn')
             with self.assertRaises(DomainClaimError):
                 normalize_company_domain('*.acme.vn')
@@ -182,7 +194,9 @@ class CompanyDomainClaimPolicyTests(APITestCase):
     def test_pending_claims_do_not_reserve_domain_but_active_claim_is_unique(self):
         _, recruiter_a, _ = make_linked_employer('owner-a@acme.vn')
         _, recruiter_b, _ = make_linked_employer('owner-b@acme.vn')
-        with patch('apps.employers.services.domain_claims._offline_tld_extract', return_value=True):
+        with patch(
+            'apps.employers.services.domain_claims.domains._offline_tld_extract', return_value=True
+        ):
             claim_a, value_a = create_domain_claim(recruiter=recruiter_a)
             claim_b, value_b = create_domain_claim(recruiter=recruiter_b)
         self.assertEqual(CompanyDomainClaim.objects.filter(domain='acme.vn').count(), 2)
@@ -204,7 +218,9 @@ class CompanyDomainClaimPolicyTests(APITestCase):
 
     def test_recheck_enters_grace_then_revokes_after_seven_days(self):
         _, recruiter, _ = make_linked_employer()
-        with patch('apps.employers.services.domain_claims._offline_tld_extract', return_value=True):
+        with patch(
+            'apps.employers.services.domain_claims.domains._offline_tld_extract', return_value=True
+        ):
             claim, value = create_domain_claim(recruiter=recruiter)
         verified = verify_domain_claim(
             claim_public_id=claim.public_id,
@@ -238,7 +254,9 @@ class CompanyDomainClaimPolicyTests(APITestCase):
 
     def test_event_is_append_only(self):
         _, recruiter, _ = make_linked_employer()
-        with patch('apps.employers.services.domain_claims._offline_tld_extract', return_value=True):
+        with patch(
+            'apps.employers.services.domain_claims.domains._offline_tld_extract', return_value=True
+        ):
             claim, _ = create_domain_claim(recruiter=recruiter)
         event = claim.events.first()
         event.payload = {'changed': True}
@@ -253,7 +271,9 @@ class CompanyDomainClaimPolicyTests(APITestCase):
 
     def test_challenge_expiry_is_persisted_before_error(self):
         _, recruiter, _ = make_linked_employer()
-        with patch('apps.employers.services.domain_claims._offline_tld_extract', return_value=True):
+        with patch(
+            'apps.employers.services.domain_claims.domains._offline_tld_extract', return_value=True
+        ):
             claim, value = create_domain_claim(recruiter=recruiter)
         claim.challenge_expires_at = timezone.now() - timedelta(seconds=1)
         claim.save(update_fields=['challenge_expires_at'])
@@ -291,7 +311,9 @@ class CompanyDomainClaimManualReviewTests(APITestCase):
         self.admin = make_admin('domain-admin@example.com')
 
     def _manual_claim(self):
-        with patch('apps.employers.services.domain_claims._offline_tld_extract', return_value=True):
+        with patch(
+            'apps.employers.services.domain_claims.domains._offline_tld_extract', return_value=True
+        ):
             claim, _ = create_domain_claim(recruiter=self.recruiter)
         claim.method = CompanyDomainClaim.Method.ADMIN_MANUAL
         claim.manual_review_requested_at = timezone.now()
@@ -316,7 +338,7 @@ class CompanyDomainClaimManualReviewTests(APITestCase):
             )
         self.assertEqual(error.exception.code, 'legal_verification_required')
 
-    @patch('apps.employers.services.domain_claims.verification_checks')
+    @patch('apps.employers.services.domain_claims.review.verification_checks')
     def test_manual_approval_expires_after_twelve_calendar_months(self, checks):
         checks.return_value = {
             'case_approved': True,

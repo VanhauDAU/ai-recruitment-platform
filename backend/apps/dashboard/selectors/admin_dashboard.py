@@ -28,6 +28,7 @@ from apps.ai_core.models import AiUsageDaily
 from apps.applications.models import Application
 from apps.blog.models import Post, PostWorkingCopy
 from apps.employers.models import (
+    ACTIVE_COMPANY_UPDATE_STATUSES,
     CompanyDomainClaim,
     CompanyReport,
     CompanyUpdateRequest,
@@ -39,7 +40,6 @@ from apps.employers.selectors import (
     admin_verification_summary,
     pending_join_requests_awaiting_admin,
 )
-from apps.employers.services import ACTIVE_COMPANY_UPDATE_STATUSES
 from apps.jobs.models import (
     Job,
     JobCategory,

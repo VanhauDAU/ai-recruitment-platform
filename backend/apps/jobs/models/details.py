@@ -1,6 +1,7 @@
 from django.db import models
 
-from .core import Job, JobCategory
+from .categories import JobCategory
+from .core import Job
 
 
 class JobCategoryAssignment(models.Model):
@@ -31,6 +32,9 @@ class JobCategoryAssignment(models.Model):
         ]
         indexes = [models.Index(fields=['category', 'role', 'job'])]
 
+    def __str__(self):
+        return f'{self.job_id}: {self.category_id} ({self.role})'
+
 
 class JobLocation(models.Model):
     """A workplace address; new writes require a ward, legacy province links are preserved."""
@@ -54,6 +58,9 @@ class JobLocation(models.Model):
             ),
         ]
         indexes = [models.Index(fields=['location', 'job'])]
+
+    def __str__(self):
+        return f'{self.job_id}: {self.location_id}'
 
 
 class JobWorkSchedule(models.Model):
@@ -82,3 +89,6 @@ class JobWorkSchedule(models.Model):
                 name='chk_job_schedule_weekday_to',
             ),
         ]
+
+    def __str__(self):
+        return f'{self.job_id}: {self.weekday_from}-{self.weekday_to}'

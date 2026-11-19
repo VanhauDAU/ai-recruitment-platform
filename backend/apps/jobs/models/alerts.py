@@ -3,7 +3,8 @@ from django.db import models
 
 from common.db.public_id import generate_public_id
 
-from .core import Job, JobCategory
+from .categories import JobCategory
+from .core import Job
 
 
 class JobAlert(models.Model):
@@ -110,13 +111,13 @@ class JobAlert(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'{self.candidate_id}:{self.keyword}'
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('jal')
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f'{self.candidate_id}:{self.keyword}'
 
 
 class JobAlertCategory(models.Model):
@@ -141,6 +142,9 @@ class JobAlertCategory(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'{self.alert_id}: {self.category_id}'
+
 
 class CandidateJobDigestSchedule(models.Model):
     """Cursor and cadence for the separate profile/CV recommendation digest."""
@@ -162,6 +166,9 @@ class CandidateJobDigestSchedule(models.Model):
                 name='job_digest_suitable_due_idx',
             ),
         ]
+
+    def __str__(self):
+        return f'{self.candidate_id}'
 
 
 class CandidateFollowedCompanyDigestSchedule(models.Model):
@@ -188,6 +195,9 @@ class CandidateFollowedCompanyDigestSchedule(models.Model):
                 name='job_digest_followed_due_idx',
             ),
         ]
+
+    def __str__(self):
+        return f'{self.candidate_id}'
 
 
 class CandidateJobDigest(models.Model):
@@ -239,6 +249,9 @@ class CandidateJobDigest(models.Model):
                 name='job_digest_status_time_idx',
             ),
         ]
+
+    def __str__(self):
+        return self.public_id
 
     def save(self, *args, **kwargs):
         if not self.public_id:
@@ -300,6 +313,9 @@ class CandidateJobDigestItem(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'{self.digest_id}: {self.job_id}'
+
 
 class CandidateJobEmailReceipt(models.Model):
     """Ninety-day successful-delivery audit linked to the originating digest."""
@@ -334,6 +350,9 @@ class CandidateJobEmailReceipt(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'{self.candidate_id}: {self.job_id}'
+
 
 class CandidateJobEmailSuppression(models.Model):
     """Minimal permanent ledger preventing a job from ever being emailed twice."""
@@ -353,3 +372,6 @@ class CandidateJobEmailSuppression(models.Model):
                 name='uq_candidate_job_email_suppression',
             ),
         ]
+
+    def __str__(self):
+        return f'{self.candidate_id}: {self.job_id}'

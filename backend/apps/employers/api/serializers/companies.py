@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import URLValidator
 from rest_framework import serializers
 
-from common.html.rich_text import rich_text_plain_text
+from common.html.plain_text import html_plain_text
 from common.storage.media import media_url_from_value
 
 from ...models import (
@@ -279,5 +279,5 @@ class PublicCompanyListSerializer(serializers.ModelSerializer):
         return media_url_from_value(obj.cover_image_url, request=self.context.get('request'))
 
     def get_description_excerpt(self, obj) -> str:
-        plain_text = ' '.join(rich_text_plain_text(obj.description).split())
+        plain_text = ' '.join(html_plain_text(obj.description).split())
         return plain_text[: self.DESCRIPTION_EXCERPT_LENGTH]

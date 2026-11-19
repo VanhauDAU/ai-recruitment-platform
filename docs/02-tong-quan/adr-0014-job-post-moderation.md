@@ -62,7 +62,8 @@ nên nhà tuyển dụng không có cách tự sửa. Lý do kiểm duyệt nay 
 
 - Migration chuyển mọi tin `pending` và `rejected` về `draft`, ghi một dòng
   lịch sử trạng thái có ghi chú chuyển đổi.
-- Lệnh `publish_converted_pending_jobs` đăng lại các tin từng ở `pending`
+- Lệnh một lần `publish_converted_pending_jobs` (đã gỡ khi dọn backend GĐ5,
+  vì chưa có dữ liệu production cần chuyển) đăng lại các tin từng ở `pending`
   qua đúng luồng đăng tin, nên chỉ tin đạt điều kiện ở mục 3 mới công khai.
   Tin không đạt vẫn là bản nháp để nhà tuyển dụng tự xử lý. Các tin này được
   gửi duyệt trước khi có cam kết ở mục 2 nên công khai mà không có bản ghi

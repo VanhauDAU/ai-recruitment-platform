@@ -79,13 +79,13 @@ class Announcement(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return self.internal_name
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('ann')
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.internal_name
 
 
 class AnnouncementRevision(models.Model):
@@ -287,6 +287,9 @@ class AnnouncementRevision(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'{self.announcement.public_id}:r{self.number}'
+
     def clean(self):
         errors = {}
         if not self.message_vi.strip():
@@ -305,9 +308,6 @@ class AnnouncementRevision(models.Model):
             errors['snooze_seconds'] = 'Chỉ cấu hình thời lượng cho chế độ snooze.'
         if errors:
             raise ValidationError(errors)
-
-    def __str__(self):
-        return f'{self.announcement.public_id}:r{self.number}'
 
 
 class AnnouncementUserState(models.Model):
@@ -349,6 +349,9 @@ class AnnouncementUserState(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'{self.announcement_id}@v{self.dismissal_version} for user {self.user_id}'
+
 
 class AnnouncementDailyMetric(models.Model):
     announcement_revision = models.ForeignKey(
@@ -379,3 +382,6 @@ class AnnouncementDailyMetric(models.Model):
                 name='site_ann_metric_date_idx',
             ),
         ]
+
+    def __str__(self):
+        return f'{self.announcement_revision_id} {self.date} {self.surface}'

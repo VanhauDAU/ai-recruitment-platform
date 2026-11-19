@@ -13,11 +13,11 @@ from apps.accounts.models import User
 from apps.applications.models import Application
 from apps.cvs.models import CvVersion, UserCv
 from apps.employers.models import Company, CompanyPinnedJob
-from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.employers.tests.factories import make_employer_ready
 from apps.skills.models import Skill
 
 from ..models import Job, JobCategory, JobCategoryAssignment, JobSkill, SavedJob
-from .helpers import open_visibility_window
+from .factories import open_visibility_window
 
 # 1 COUNT (pagination) + 1 SELECT jobs + 3 prefetch (categories, locations,
 # skills). select_related company nằm trong SELECT chính.

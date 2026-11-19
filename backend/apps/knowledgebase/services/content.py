@@ -5,7 +5,8 @@ from urllib.parse import urlparse
 from django.conf import settings
 from django.core.exceptions import ValidationError
 
-from common.html.content import content_html_plain_text, sanitize_content_html
+from common.html.content import sanitize_content_html
+from common.html.plain_text import html_plain_text
 from common.storage.media import media_storage_path
 
 
@@ -69,7 +70,7 @@ def normalize_revision_content(*, title, body, source_reference):
         body,
         url_normalizer=_canonicalize_media_url,
     )
-    plain_text = content_html_plain_text(sanitized_body)
+    plain_text = html_plain_text(sanitized_body)
     if not plain_text:
         raise ValidationError({'body': 'Nội dung không được để trống.'})
     _validate_images(sanitized_body)

@@ -10,12 +10,12 @@ from rest_framework.test import APITestCase
 
 from apps.candidates.models import CandidateNotification
 from apps.cv_templates.tests.factories import make_published_template
-from apps.cvs.services import create_v2_cv, permanently_delete_cv, upload_cv
-from apps.cvs.tests.fixtures import cv_pdf_upload, pdf_bytes
+from apps.cvs.services import create_user_cv, permanently_delete_cv, upload_cv
+from apps.cvs.tests.factories import cv_pdf_upload, pdf_bytes
 from apps.employers.models import Company
-from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.employers.tests.factories import make_employer_ready
 from apps.jobs.models import Job
-from apps.jobs.tests.helpers import open_visibility_window
+from apps.jobs.tests.factories import open_visibility_window
 from common.storage.r2 import private_media_storage
 
 from ..models import Application
@@ -169,7 +169,7 @@ class UploadedCvApplicationTests(APITestCase):
 
     def test_never_saved_builder_cv_cannot_be_submitted(self):
         template, _version = make_published_template('Builder template')
-        builder = create_v2_cv(actor=self.candidate, title='Online CV', template=template)
+        builder = create_user_cv(actor=self.candidate, title='Online CV', template=template)
 
         never_saved = self.apply(cv=builder)
 

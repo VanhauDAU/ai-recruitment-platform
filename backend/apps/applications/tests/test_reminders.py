@@ -7,7 +7,7 @@ from rest_framework.test import APIClient
 
 from apps.employers.models import EmployerNotification
 from apps.jobs.models import Job
-from apps.jobs.tests.helpers import open_visibility_window
+from apps.jobs.tests.factories import open_visibility_window
 
 from ..models import Application, ApplicationReminder, ApplicationStatusHistory
 from ..services import (

@@ -92,7 +92,6 @@ from .recruitment_needs import (
     recruiter_recruitment_need,
     recruiter_recruitment_needs,
 )
-from .rollout import employer_rollout_counters
 
 __all__ = [
     'company_members_queryset',
@@ -151,7 +150,6 @@ __all__ = [
     'current_dpa_status',
     'employer_readiness_queryset',
     'evaluate_employer_readiness',
-    'employer_rollout_counters',
     'existing_recruiter_profile',
     'industries_in_use',
     'industry_labels',

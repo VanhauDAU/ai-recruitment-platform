@@ -79,6 +79,9 @@ class MatchAnalysis(models.Model):
             models.Index(fields=['user', 'job', '-created_at'], name='idx_match_analysis_user_job'),
         ]
 
+    def __str__(self):
+        return self.public_id
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('ma')

@@ -129,14 +129,7 @@ nhắc nhu cầu công việc). Nghiệp vụ và quản trị nội dung xem
 [`quan-tri-thong-bao-da-cong.md`](../05-huong-dan/quan-tri-thong-bao-da-cong.md)
 và [`dai-thong-bao-da-cong.md`](../08-frontend/dai-thong-bao-da-cong.md).
 
-Lệnh chỉ đọc trước khi mở một surface:
-
-```bash
-python manage.py announcement_rollout_preflight --require-live-surface candidate --json
-```
-
-`status=error` chặn rollout; báo cáo liệt kê surface bật, nhóm rotation và
-critical đang live thiếu `ends_at`. Mở surface theo thứ tự admin → employer
+Mở surface theo thứ tự admin → employer
 marketing → employer workspace → candidate, bật cả hai lớp cho từng surface.
 
 Rollback:
@@ -178,7 +171,6 @@ Lệnh:
 | --- | --- |
 | `seed_cv_templates [--snapshots]` | Seed mẫu CV, phiên bản publish, taxonomy, màu (idempotent). `--snapshots` xếp hàng render thumbnail, cần worker có PDF engine. |
 | `seed_cv_catalog` | Seed taxonomy, màu và nội dung mẫu theo vị trí (idempotent). |
-| `cv_snapshot_preflight [--repair]` | Kiểm tra application thiếu snapshot CV. Mặc định chỉ đọc; `--repair` backfill idempotent. |
 
 Rollback: rollback web/frontend về release trước; không reverse migration. Nếu
 render/provider lỗi, dừng worker import/snapshot; draft, version cũ và asset
@@ -217,11 +209,8 @@ DPA xem [`employer-dpa-evidence-rollout.md`](./employer-dpa-evidence-rollout.md)
 
 | Lệnh | Mục đích |
 | --- | --- |
-| `audit_employer_workflow_rollout [--strict] [--probe-scanner] [--json]` | Báo cáo readiness chỉ đọc, không PII: cờ, cấu hình SMS, DPA policy, route queue, beat schedule (scan upload, dọn session, SMS recovery/purge, thông báo xác thực, retention event), retention và schema. `--strict` biến cờ chưa bật và scanner chưa probe thành blocker. |
 | `check_upload_scanner_readiness [--json]` | Probe scanner, không lộ endpoint/version. |
 | `check_employer_sms_readiness [--require-enabled]` | Kiểm cấu hình SMS, không gửi tin. |
-| `rollout_employer_dpa_compliance --phase ... --rollout-id ... [--apply] [--batch-size] [--cursor]` | Ân hạn DPA hoặc áp hold DPA hết hạn; dry-run mặc định, `--rollout-id` bất biến. |
-| `classify_legacy_employer_verifications [--apply] [--batch-size] [--case-cursor] [--company-cursor]` | Phân loại cohort xác thực legacy; dry-run mặc định. |
 
 ### Rollback
 
@@ -230,9 +219,10 @@ DPA xem [`employer-dpa-evidence-rollout.md`](./employer-dpa-evidence-rollout.md)
   không chuyển file sang `clean` thủ công.
 - SMS lỗi: `EMPLOYER_SMS_OTP_ENABLED=False`; challenge mới fail-closed, không
   bật lại OTP email legacy.
-- DPA: dừng batch; chỉ gỡ đúng hold DPA theo quy trình duyệt, không gỡ hold
+- DPA: chỉ gỡ đúng hold DPA theo quy trình duyệt, không gỡ hold
   xác thực/tài khoản/kiểm duyệt.
-- Sau rollback code chạy lại `audit_employer_workflow_rollout`.
+- Sau rollback code chạy lại `check_upload_scanner_readiness` và
+  `check_employer_sms_readiness`.
 
 ### Giám sát
 

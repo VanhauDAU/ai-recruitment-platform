@@ -1,0 +1,42 @@
+[
+  {
+    "placement": "home_hero",
+    "title": "Lập trình viên & Kỹ sư AI",
+    "eyebrow": "TUYỂN DỤNG GẤP",
+    "subtitle": "Mức lương hấp dẫn, môi trường năng động, cơ hội thăng tiến nhanh.",
+    "theme": "blue",
+    "cta_label": "Xem việc làm IT",
+    "cta_url": "/viec-lam?search=IT",
+    "order": 1
+  },
+  {
+    "placement": "home_hero",
+    "title": "Tạo CV chuyên nghiệp cùng AI",
+    "eyebrow": "MIỄN PHÍ",
+    "subtitle": "Chỉ mất 5 phút để có CV ấn tượng, sẵn sàng ứng tuyển.",
+    "theme": "orange",
+    "cta_label": "",
+    "cta_url": "",
+    "order": 2
+  },
+  {
+    "placement": "job_empty",
+    "title": "Tạo CV chuẩn ATS miễn phí — ứng tuyển ngay khi có việc phù hợp",
+    "eyebrow": "GỢI Ý CHO BẠN",
+    "subtitle": "CV đẹp giúp bạn nổi bật với nhà tuyển dụng. Chỉ mất 5 phút để hoàn thành.",
+    "theme": "green",
+    "cta_label": "Tạo CV ngay",
+    "cta_url": "/mau-cv",
+    "order": 1
+  },
+  {
+    "placement": "job_list_inline",
+    "title": "Việc làm tuyển gấp từ các doanh nghiệp hàng đầu",
+    "eyebrow": "PROCV GỢI Ý",
+    "subtitle": "Tin cần tuyển gấp thường được nhà tuyển dụng phản hồi nhanh hơn. Đừng bỏ lỡ!",
+    "theme": "green",
+    "cta_label": "Khám phá ngay",
+    "cta_url": "/viec-lam?sort=urgent",
+    "order": 1
+  }
+]

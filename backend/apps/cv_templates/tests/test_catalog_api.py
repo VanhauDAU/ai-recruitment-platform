@@ -6,8 +6,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.accounts.models import User
-from apps.accounts.tests.helpers import make_admin
-from apps.cv_templates.management.commands.seed_cv_catalog import build_sample_content
+from apps.accounts.tests.factories import make_admin
 from apps.cv_templates.models import (
     CvCategory,
     CvColor,
@@ -22,6 +21,7 @@ from apps.cv_templates.models import (
     localized_field,
 )
 from apps.cv_templates.models.content_schema import empty_content, empty_layout, empty_style
+from apps.cv_templates.seed_data.sample_contents import build_sample_content
 from apps.cv_templates.services.demo_identity import DEMO_IDENTITY
 from apps.jobs.models import JobCategory, JobCategoryLocalization
 

@@ -223,13 +223,14 @@ def employer_badge_state_map(badge_keys):
         state['policy_verified'] = invariants_hold and all(
             state[key] for key, _, _ in BADGE_CRITERIA
         )
-        mode = getattr(settings, 'EMPLOYER_BADGE_POLICY_MODE', 'shadow').strip().lower()
         state['verified'] = (
-            state['policy_verified'] if mode == 'enforce' else state['legacy_verified']
+            state['policy_verified']
+            if settings.EMPLOYER_BADGE_POLICY_MODE == 'enforce'
+            else state['legacy_verified']
         )
         states[key] = state
 
-    if getattr(settings, 'EMPLOYER_BADGE_POLICY_MODE', 'shadow') == 'shadow':
+    if settings.EMPLOYER_BADGE_POLICY_MODE == 'shadow':
         cohorts = {}
         for state in states.values():
             cohort = (state['legacy_verified'], state['policy_verified'])

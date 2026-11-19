@@ -12,8 +12,8 @@ uploading -> quarantined -> scanning -> clean | rejected | error | expired
 ```
 
 - Only a `clean` session has a private `UploadAsset`.
-- Existing objects may be registered only as `legacy_trusted`; that path does
-  no storage read and never creates scan evidence.
+- An `UploadAsset` only ever comes from a clean verdict; there is no path that
+  registers pre-existing objects without a scan.
 - `rejected`, `error`, `scanning`, `quarantined` and `expired` are never
   attachable or downloadable.
 - Quarantine and private storage never expose `.url()`.

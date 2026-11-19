@@ -192,12 +192,12 @@ CP-3, CP-4, CP-5 độc lập với nhau.
 
 ## 6. Ràng buộc đã kiểm chứng trong code
 
-- `Company.updated_at` là khoá chống ghi đè của yêu cầu cập nhật (`api/views/verification.py:449`): bố cục, bộ đếm theo dõi và tạm ẩn phải ghi bằng `.update()`/bảng riêng, không `save()` Company.
+- `Company.updated_at` là khoá chống ghi đè của yêu cầu cập nhật (`CompanyUpdateRequestListCreateView` trong `employers/api/views/company_update_requests.py`): bố cục, bộ đếm theo dõi và tạm ẩn phải ghi bằng `.update()`/bảng riêng, không `save()` Company.
 - Mỗi người chỉ có một yêu cầu đang mở và `in_review` thì khoá: sửa nội dung theo từng khối phải gộp ở server; khi đang thẩm định hiển thị khoá "Đang thẩm định".
 - Owner trong test và seed chưa xác thực: seed cần tạo hồ sơ xác thực đã duyệt để có công ty index được và để thử workspace.
 - Job DTO chưa có slug công ty; `tim-kiem` phải là slug dành riêng.
 - `jobs/api/serializers/jobs.py:492` trả địa chỉ thô của công ty, kể cả hộ kinh doanh, trong khi danh bạ đã ẩn. CP-0 thống nhất qua một helper; lưu ý việc này đổi hiển thị địa chỉ ở trang chi tiết tin của hộ kinh doanh.
-- Ứng viên không có thông báo trong ứng dụng; kênh duy nhất là digest email (`jobs/services/digests.py`).
+- Ứng viên không có thông báo trong ứng dụng; kênh duy nhất là digest email (`jobs/services/digests/`).
 
 ## 7. Kiểm chứng
 

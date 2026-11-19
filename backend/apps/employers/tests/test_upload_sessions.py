@@ -15,8 +15,8 @@ from apps.uploads.services import (
     process_upload_scan,
     store_quarantined_upload,
 )
+from apps.uploads.tests.factories import TemporaryUploadStorageMixin, pdf_upload
 from apps.uploads.tests.fakes import FakeUploadScanner
-from apps.uploads.tests.helpers import TemporaryUploadStorageMixin, pdf_upload
 
 from ..models import (
     Company,

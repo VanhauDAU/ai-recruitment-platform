@@ -12,8 +12,9 @@ from .alerts import (
     JobAlertCategory,
 )
 from .benefits import Benefit, JobBenefit
+from .categories import JobCategory, JobCategoryLocalization
 from .contacts import JobApplicationContact, JobApplicationEmail
-from .core import Job, JobCategory, JobCategoryLocalization
+from .core import Job
 from .details import JobCategoryAssignment, JobLocation, JobWorkSchedule
 from .engagement import JobEngagementDaily
 from .hidden import CandidateHiddenJob

@@ -118,6 +118,9 @@ class EmployerComplianceHold(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'{self.public_id}:{self.source}:{self.status}'
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('ech')
@@ -148,6 +151,9 @@ class EmployerComplianceHoldCampaign(models.Model):
             models.Index(fields=['campaign', 'hold'], name='emp_hold_campaign_idx'),
         ]
 
+    def __str__(self):
+        return f'{self.hold_id}:campaign:{self.campaign_id}'
+
 
 class EmployerComplianceHoldJob(models.Model):
     hold = models.ForeignKey(
@@ -172,3 +178,6 @@ class EmployerComplianceHoldJob(models.Model):
         indexes = [
             models.Index(fields=['job', 'hold'], name='emp_hold_job_idx'),
         ]
+
+    def __str__(self):
+        return f'{self.hold_id}:job:{self.job_id}'

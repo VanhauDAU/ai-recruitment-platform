@@ -9,7 +9,7 @@ from rest_framework.test import APITestCase
 from apps.accounts.models import User
 from apps.campaigns.models import RecruitmentCampaign
 from apps.jobs.models import Job
-from apps.jobs.tests.helpers import open_visibility_window
+from apps.jobs.tests.factories import open_visibility_window
 
 from ..models import (
     Company,
@@ -20,7 +20,7 @@ from ..models import (
 )
 from ..selectors import admin_verification_cases_queryset
 from ..services import verification_decision_impact, verification_lifecycle_impact
-from .readiness_helpers import make_employer_ready
+from .factories import make_employer_ready
 
 # Measured on PostgreSQL. These are total-query ceilings as well as flatness
 # regressions; changing one requires explaining the additional query owner.

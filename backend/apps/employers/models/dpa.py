@@ -56,10 +56,10 @@ class EmployerDpaAcceptance(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'{self.recruiter_id}:{self.policy_version}:{self.public_id}'
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('dpa')
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f'{self.recruiter_id}:{self.policy_version}:{self.public_id}'

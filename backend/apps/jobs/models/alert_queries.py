@@ -5,7 +5,7 @@ from django.db.models import Exists, F, OuterRef, Q
 from common.db.search import search_q
 
 from .alerts import CandidateJobDigestItem, CandidateJobEmailSuppression, JobAlert
-from .core import JobCategory
+from .categories import JobCategory
 from .querysets import active_jobs_queryset, filter_alert_salary_bucket_queryset
 
 

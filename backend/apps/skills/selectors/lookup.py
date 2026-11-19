@@ -5,6 +5,8 @@ from operator import or_
 
 from django.db.models import Q
 
+from common.api.params import parse_int
+
 from ..models import Skill, SkillGroup
 
 LOOKUP_CAP = 100
@@ -17,7 +19,10 @@ def active_skill_groups_queryset():
 def skill_lookup_queryset(params):
     queryset = Skill.objects.filter(is_active=True).select_related('group')
     if group := params.get('group'):
-        queryset = queryset.filter(group_id=group)
+        # A malformed id matches no group (as in the locations lookup) instead of
+        # reaching the ORM and failing with a 500.
+        group_id = parse_int(group)
+        queryset = queryset.filter(group_id=group_id) if group_id is not None else queryset.none()
     if search := params.get('search'):
         queryset = queryset.filter(name__icontains=search)
     return queryset[:LOOKUP_CAP]

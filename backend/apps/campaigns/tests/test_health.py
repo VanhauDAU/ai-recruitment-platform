@@ -16,7 +16,7 @@ from apps.cvs.models import UserCv
 from apps.cvs.services import create_initial_document
 from apps.employers.models import EmployerNotification, EmployerNotificationPreference
 from apps.jobs.models import Job
-from apps.jobs.tests import test_posting_workflows
+from apps.jobs.tests.factories import JobPostingFixture
 from common.pdf.browser import PdfRenderingError
 from common.vietnam_time import VIETNAM_TZ, vietnam_today
 
@@ -38,13 +38,9 @@ S = Application.Status
 NOW = timezone.now()
 
 
-class HealthFixtures:
-    setUp_jobs = test_posting_workflows.JobPostingWorkflowTests.setUp
-    make_active_job = test_posting_workflows.JobPostingWorkflowTests.make_active_job
-    make_publishable_job = test_posting_workflows.JobPostingWorkflowTests.make_publishable_job
-
+class HealthFixtures(JobPostingFixture):
     def setUp(self):
-        self.setUp_jobs()
+        super().setUp()
         self.client = APIClient()
         self.client.force_authenticate(self.user)
         self.campaign = RecruitmentCampaign.objects.create(

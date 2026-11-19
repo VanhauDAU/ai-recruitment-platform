@@ -23,3 +23,6 @@ class ApplicationReminder(models.Model):
         indexes = [
             models.Index(fields=['application', 'source'], name='app_reminder_source_idx'),
         ]
+
+    def __str__(self):
+        return f'{self.application_id}: {self.source}'

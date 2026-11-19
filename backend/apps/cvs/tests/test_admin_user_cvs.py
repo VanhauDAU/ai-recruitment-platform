@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.test import RequestFactory, TestCase
 from rest_framework.test import APIClient
 
-from apps.accounts.tests.helpers import make_admin
+from apps.accounts.tests.factories import make_admin
 
 from ..models import CvAccessLog, CvSharedLink, UserCv
 from ..services.sharing import (

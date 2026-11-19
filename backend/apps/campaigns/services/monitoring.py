@@ -20,13 +20,12 @@ from common.email import send_html_email
 from common.vietnam_time import vietnam_now, vietnam_today
 
 from ..models import CampaignChannel, CampaignHealthSnapshot, CampaignReportDelivery
-from .health import BACKLOG_ALERT, campaign_health
+from .health import BACKLOG_ALERT, HEALTH_STATUS_LABELS, campaign_health
 
 logger = logging.getLogger(__name__)
 REMIND_EVERY = timedelta(days=7)
 REPORT_HOUR = 8
 MONITORED = (RecruitmentCampaign.Status.ACTIVE, RecruitmentCampaign.Status.PAUSED)
-STATUS_LABELS = dict(CampaignHealthSnapshot.Status.choices)
 
 
 def _alert_message(rule, campaign, health):
@@ -112,7 +111,7 @@ def weekly_report_context(campaign, health, *, now):
     return {
         'campaign': campaign,
         'health': health,
-        'status_label': STATUS_LABELS.get(health['status'], ''),
+        'status_label': HEALTH_STATUS_LABELS.get(health['status'], ''),
         'new_applications': Application.objects.filter(
             job__campaign=campaign, is_current=True, applied_at__gte=week_ago
         ).count(),

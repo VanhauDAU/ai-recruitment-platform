@@ -105,8 +105,8 @@ app trong `backend/apps/` theo đúng một layout:
 - Endpoint list phải giữ số query phẳng theo số bản ghi — xem
   `apps/<app>/tests/test_query_budget.py`; tăng budget phải kèm giải thích trong PR.
 - API view mới bắt buộc có `@extend_schema`; cổng OpenAPI chặn mọi lỗi/cảnh báo.
-- Service báo lỗi bằng `ValidationError` hoặc `DomainError`
-  (`common/api/exceptions.py`); view không `try/except` chỉ để đổi kiểu lỗi.
+- Service báo lỗi bằng `ValidationError` hoặc `DomainError` (`common/errors.py`,
+  handler ở `common/api/exceptions.py`); view không `try/except` chỉ để đổi kiểu lỗi.
   Cờ query đọc bằng `common.api.params.parse_bool`.
 
 ### Kiểm tra trước khi bàn giao (backend)

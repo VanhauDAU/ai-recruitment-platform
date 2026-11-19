@@ -1,8 +1,9 @@
 from django.urls import include, path
 from rest_framework.routers import SimpleRouter
 
-from ..views.account_management import AdminAccountViewSet, AdminInvitationViewSet
+from ..views.admin_accounts import AdminAccountViewSet
 from ..views.admin_audit import AdminAuditLogViewSet
+from ..views.admin_invitations import AdminInvitationViewSet
 
 router = SimpleRouter()
 router.register('audit-logs', AdminAuditLogViewSet, basename='admin-audit-log')

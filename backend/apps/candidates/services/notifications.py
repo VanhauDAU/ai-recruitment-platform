@@ -20,6 +20,7 @@ from apps.accounts.services import is_account_accessible
 from apps.sitecontent.selectors import get_bool_setting
 from common.email import send_html_email
 from common.metrics import record_metric
+from common.outbox import MAX_DELIVERY_ATTEMPTS, is_sending_fresh, stale_sending_before
 
 from ..models import CandidateNotification
 from .notification_emails import APPLIED_JOBS_PATH, render_notification_email
@@ -27,8 +28,6 @@ from .notification_events import EVENTS, render_text, switch_enabled
 
 logger = logging.getLogger(__name__)
 
-MAX_EMAIL_ATTEMPTS = 4
-STALE_SENDING_AFTER = timedelta(minutes=5)
 SAFE_METADATA_KEYS = {'application_public_id', 'job_public_id'}
 
 Status = CandidateNotification.EmailStatus
@@ -146,7 +145,7 @@ def pending_candidate_notification_email_ids(*, now=None, limit=100):
         CandidateNotification.objects.filter(delivered_at__isnull=False)
         .filter(
             Q(email_status=Status.PENDING)
-            | Q(email_status=Status.SENDING, email_started_at__lt=now - STALE_SENDING_AFTER)
+            | Q(email_status=Status.SENDING, email_started_at__lt=stale_sending_before(now))
         )
         .order_by('delivered_at', 'pk')
         .values_list('pk', flat=True)[:limit]
@@ -190,10 +189,8 @@ def deliver_candidate_notification_email(notification_id):
             Status.FAILED,
         }:
             return None
-        if (
-            notification.email_status == Status.SENDING
-            and notification.email_started_at
-            and now - notification.email_started_at < STALE_SENDING_AFTER
+        if notification.email_status == Status.SENDING and is_sending_fresh(
+            notification.email_started_at, now
         ):
             return None
         skip_reason = _email_skip_reason(notification)
@@ -219,7 +216,9 @@ def deliver_candidate_notification_email(notification_id):
         )
     except Exception as error:  # noqa: BLE001 - the outbox row owns the retry state
         status = (
-            Status.FAILED if notification.email_attempts >= MAX_EMAIL_ATTEMPTS else Status.PENDING
+            Status.FAILED
+            if notification.email_attempts >= MAX_DELIVERY_ATTEMPTS
+            else Status.PENDING
         )
         CandidateNotification.objects.filter(pk=notification.pk).update(
             email_status=status, email_last_error=str(error)[:2000]

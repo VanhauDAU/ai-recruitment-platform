@@ -110,7 +110,7 @@ def extract_cv_text(source, file_type):
         text = clean_document_text(_read_text(source, file_type)).strip()
     except CvDocumentRejected:
         raise
-    except Exception as error:
+    except Exception as error:  # noqa: BLE001 - PDF/DOCX parsers raise arbitrary types on bad input
         raise CvDocumentRejected('text_extraction_failed') from error
     finally:
         if hasattr(source, 'seek'):

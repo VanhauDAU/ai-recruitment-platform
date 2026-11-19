@@ -69,6 +69,9 @@ class JobModerationEvent(models.Model):
             models.Index(fields=['job', '-created_at'], name='job_moderation_event_idx'),
         ]
 
+    def __str__(self):
+        return self.public_id
+
     def save(self, *args, **kwargs):
         if self.pk and type(self).objects.filter(pk=self.pk).exists():
             raise ValueError('JobModerationEvent là lịch sử bất biến.')

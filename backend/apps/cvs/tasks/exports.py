@@ -81,9 +81,9 @@ def render_cv_export_job(export_id: int) -> None:
     """Render a queued immutable version and atomically record its private artifact."""
     with transaction.atomic():
         export = (
-            # ``version.template_version`` is nullable for legacy rows. Lock
-            # the job row only; PostgreSQL rejects FOR UPDATE on that nullable
-            # outer-join side.
+            # ``version.template_version`` is nullable (an uploaded CV has no
+            # template). Lock the job row only; PostgreSQL rejects FOR UPDATE on
+            # that nullable outer-join side.
             CvExport.objects.select_for_update(of=('self',))
             .select_related('cv', 'version__template_version')
             .filter(pk=export_id)

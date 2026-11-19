@@ -12,7 +12,7 @@ from apps.uploads.services import (
     process_upload_scan,
     store_quarantined_upload,
 )
-from apps.uploads.tests.helpers import (
+from apps.uploads.tests.factories import (
     PDF_BYTES,
     TemporaryUploadStorageMixin,
     docx_bytes,

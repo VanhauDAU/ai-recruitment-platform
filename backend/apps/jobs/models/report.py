@@ -75,6 +75,9 @@ class JobReport(models.Model):
         ]
         ordering = ['-created_at']
 
+    def __str__(self):
+        return f'{self.public_id} - {self.job_id} - {self.status}'
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('jrep')
@@ -87,9 +90,6 @@ class JobReport(models.Model):
 
     def delete(self, *args, **kwargs):
         raise ValueError('JobReport là bằng chứng kiểm duyệt cần được lưu giữ.')
-
-    def __str__(self):
-        return f'{self.public_id} - {self.job_id} - {self.status}'
 
 
 class JobReportResolutionEvent(models.Model):
@@ -122,6 +122,9 @@ class JobReportResolutionEvent(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'{self.report_id}: {self.from_status} -> {self.to_status}'
+
     def save(self, *args, **kwargs):
         if self.pk and type(self).objects.filter(pk=self.pk).exists():
             raise ValueError('JobReportResolutionEvent là lịch sử bất biến.')
@@ -131,6 +134,3 @@ class JobReportResolutionEvent(models.Model):
 
     def delete(self, *args, **kwargs):
         raise ValueError('JobReportResolutionEvent là lịch sử bất biến.')
-
-    def __str__(self):
-        return f'{self.report_id}: {self.from_status} -> {self.to_status}'

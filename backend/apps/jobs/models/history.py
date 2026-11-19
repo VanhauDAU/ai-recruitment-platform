@@ -21,3 +21,6 @@ class JobStatusHistory(models.Model):
     class Meta:
         ordering = ['-created_at', '-id']
         indexes = [models.Index(fields=['job', '-created_at'], name='job_status_history_idx')]
+
+    def __str__(self):
+        return f'{self.job_id}: {self.from_status} → {self.to_status}'

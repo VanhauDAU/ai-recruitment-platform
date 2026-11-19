@@ -5,8 +5,8 @@ here: a template version never stores a component, CSS or executable code, so th
 seed is pure configuration over ``renderers.py`` and ``section_registry.py``.
 """
 
-# Palette shared by every template. The first five entries intentionally match
-# ``seed_cv_catalog.DEFAULT_COLORS`` so both commands converge on one row set.
+# Palette shared by every template. ``seed_cv_catalog`` seeds the first five
+# (``sample_contents.DEFAULT_COLORS``), so both commands converge on one row set.
 PALETTE = (
     ('Xanh thương hiệu', 'brand-green', '#00A66A'),
     ('Than chì', 'charcoal', '#1F2937'),

@@ -12,10 +12,8 @@ from rest_framework.exceptions import ValidationError
 
 from common.pdf.browser import PdfRenderingError, render_html_pdf
 
-from ..models import CampaignHealthSnapshot
-from .health import campaign_health
+from .health import HEALTH_STATUS_LABELS, campaign_health
 
-STATUS_LABELS = dict(CampaignHealthSnapshot.Status.choices)
 STAGE_LABELS = {
     'applied': 'Ứng tuyển',
     'viewed': 'Đã xem',
@@ -72,7 +70,7 @@ def _overview_rows(report):
         ('Chiến dịch', campaign.name),
         ('Mã', campaign.public_id),
         ('Thời gian', report['period']),
-        ('Tình trạng', STATUS_LABELS.get(health['status'], '')),
+        ('Tình trạng', HEALTH_STATUS_LABELS.get(health['status'], '')),
         ('Chỉ tiêu (người)', health['headcount']),
         ('Đã tuyển (người)', health['accepted']),
         ('Dự báo tuyển được (người)', health['forecast']),

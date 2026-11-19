@@ -2,7 +2,7 @@
 
 from django.core import signing
 
-from common.api.exceptions import DomainError
+from common.errors import DomainError
 
 TOKEN_SALT = 'admin-account-invitation'
 

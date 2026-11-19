@@ -3,13 +3,13 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from apps.accounts.tests.helpers import make_admin
+from apps.accounts.tests.factories import make_admin
 from apps.cv_templates.tests.factories import make_published_template
-from apps.cvs.services import create_v2_cv
+from apps.cvs.services import create_user_cv
 from apps.employers.models import Company
-from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.employers.tests.factories import make_employer_ready
 from apps.jobs.models import Job
-from apps.jobs.tests.helpers import open_visibility_window
+from apps.jobs.tests.factories import open_visibility_window
 
 from ..services import create_application_record
 
@@ -45,7 +45,7 @@ class AdminJobApplicationListTests(APITestCase):
                 full_name=f'Ứng viên {index}',
                 email_verified=True,
             )
-            cv = create_v2_cv(actor=candidate, title=f'CV Platform {index}', template=template)
+            cv = create_user_cv(actor=candidate, title=f'CV Platform {index}', template=template)
             self.applications.append(
                 create_application_record(
                     candidate=candidate,

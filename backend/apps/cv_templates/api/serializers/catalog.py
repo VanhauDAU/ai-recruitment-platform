@@ -1,4 +1,4 @@
-"""Public, renderer-safe serializer contracts for the V2 template catalogue."""
+"""Public, renderer-safe serializer contracts for the template catalogue."""
 
 from rest_framework import serializers
 

@@ -13,7 +13,6 @@ from apps.uploads.models import (
     UploadScanAttemptStatus,
     UploadSession,
     UploadState,
-    UploadTrustStatus,
 )
 from apps.uploads.services import (
     UploadServiceError,
@@ -25,13 +24,11 @@ from apps.uploads.services import (
     place_upload_legal_hold,
     process_upload_scan,
     purge_expired_upload_evidence,
-    register_legacy_trusted_asset,
     release_claimed_upload,
     request_scan_retry,
     store_quarantined_upload,
 )
-from apps.uploads.tests.fakes import FakeUploadScanner, TimeoutUploadScanner
-from apps.uploads.tests.helpers import (
+from apps.uploads.tests.factories import (
     EICAR_PDF_BYTES,
     PDF_BYTES,
     TemporaryUploadStorageMixin,
@@ -41,6 +38,7 @@ from apps.uploads.tests.helpers import (
     pdf_upload,
     zip_symlink_info,
 )
+from apps.uploads.tests.fakes import FakeUploadScanner, TimeoutUploadScanner
 
 
 class UploadPipelineTests(TemporaryUploadStorageMixin, TestCase):
@@ -78,7 +76,6 @@ class UploadPipelineTests(TemporaryUploadStorageMixin, TestCase):
         asset = UploadAsset.objects.get(source_session=session)
         self.assertEqual(outcome.state, UploadState.CLEAN)
         self.assertEqual(session.state, UploadState.CLEAN)
-        self.assertEqual(asset.trust_status, UploadTrustStatus.CLEAN)
         self.assertIsNone(asset.claimed_at)
         self.assertFalse(storages['quarantine'].exists(quarantine_key))
         self.assertTrue(storages['private_media'].exists(asset.storage_key))
@@ -110,7 +107,7 @@ class UploadPipelineTests(TemporaryUploadStorageMixin, TestCase):
     def test_timeout_fails_closed_then_owner_can_retry_within_attempt_budget(self):
         session = self.create_and_store()
 
-        with self.assertLogs('apps.uploads.services.pipeline', level='WARNING') as logs:
+        with self.assertLogs('apps.uploads.services.scanning', level='WARNING') as logs:
             failed = process_upload_scan(session.pk, scanner=TimeoutUploadScanner())
         session.refresh_from_db()
         self.assertEqual(failed.state, UploadState.ERROR)
@@ -290,8 +287,8 @@ class UploadPipelineTests(TemporaryUploadStorageMixin, TestCase):
         )
 
         with (
-            patch('apps.uploads.services.pipeline.private_media_storage') as storage_factory,
-            self.assertLogs('apps.uploads.services.pipeline', level='WARNING'),
+            patch('apps.uploads.services.retention.private_media_storage') as storage_factory,
+            self.assertLogs('apps.uploads.services.retention', level='WARNING'),
         ):
             storage_factory.return_value.delete.side_effect = OSError('provider detail')
             self.assertEqual(expire_stale_upload_sessions(), 1)
@@ -329,8 +326,8 @@ class UploadPipelineTests(TemporaryUploadStorageMixin, TestCase):
         )
 
         with (
-            patch('apps.uploads.services.pipeline.quarantine_storage') as storage_factory,
-            self.assertLogs('apps.uploads.services.pipeline', level='WARNING'),
+            patch('apps.uploads.services.retention.quarantine_storage') as storage_factory,
+            self.assertLogs('apps.uploads.services.retention', level='WARNING'),
         ):
             storage_factory.return_value.delete.side_effect = OSError('provider detail')
             self.assertEqual(expire_stale_upload_sessions(), 1)
@@ -401,26 +398,6 @@ class UploadPipelineTests(TemporaryUploadStorageMixin, TestCase):
         self.assertEqual(cancelled.state, UploadState.EXPIRED)
         self.assertEqual(repeated.state, UploadState.EXPIRED)
         self.assertFalse(storages['quarantine'].exists(key))
-
-    def test_legacy_registration_records_no_fake_scan_evidence(self):
-        requested_retention = timezone.now() + timedelta(days=1)
-        asset = register_legacy_trusted_asset(
-            owner=self.owner,
-            purpose='employer_verification',
-            original_filename='legacy-license.pdf',
-            content_type='application/pdf',
-            size_bytes=123,
-            storage_key='employers/legacy/license.pdf',
-            claim_scope='verification_document',
-            claim_reference='doc_legacy',
-            retained_until=requested_retention,
-        )
-
-        self.assertEqual(asset.trust_status, UploadTrustStatus.LEGACY_TRUSTED)
-        self.assertEqual(asset.checksum_sha256, '')
-        self.assertIsNone(asset.source_session)
-        self.assertEqual(UploadScanAttempt.objects.count(), 0)
-        self.assertGreaterEqual(asset.retained_until, requested_retention + timedelta(days=728))
 
     def test_terminal_evidence_purges_only_after_bytes_are_gone_and_deadline_passes(self):
         session = self.create_and_store(EICAR_PDF_BYTES)

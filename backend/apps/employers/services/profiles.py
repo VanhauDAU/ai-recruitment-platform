@@ -111,7 +111,7 @@ def get_or_create_recruiter(user):
 
 def _legacy_verification_completed(readiness):
     completed = readiness['job_workspace_ready']
-    if getattr(settings, 'REQUIRE_APPROVED_EMPLOYER_VERIFICATION', False):
+    if settings.REQUIRE_APPROVED_EMPLOYER_VERIFICATION:
         completed = completed and readiness['verification_approved']
     return completed
 

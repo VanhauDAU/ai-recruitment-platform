@@ -15,7 +15,7 @@ from apps.employers.domain.page_registry import (
     resolve_section_order,
 )
 from apps.jobs.models import Job, JobLocation
-from common.html.rich_text import rich_text_plain_text
+from common.html.plain_text import html_plain_text
 from common.seo import SITEMAP_URL_LIMIT
 from common.storage.media import media_url_from_value
 
@@ -103,7 +103,7 @@ def public_company_website_url(company):
 
 
 def _rich_text(value):
-    return {'body_html': value} if rich_text_plain_text(value) else None
+    return {'body_html': value} if html_plain_text(value) else None
 
 
 def _gallery(company, request):

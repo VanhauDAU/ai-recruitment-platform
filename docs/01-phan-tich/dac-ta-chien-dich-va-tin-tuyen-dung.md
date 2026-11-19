@@ -8,8 +8,8 @@ quản trị viên. Quyết định nền: [ADR-0014](../02-tong-quan/adr-0014-j
 [ADR-0015](../02-tong-quan/adr-0015-remove-commercial-services.md) (gỡ dịch vụ
 thương mại). Giao diện admin: [admin-job-management.md](../08-frontend/admin-job-management.md).
 
-Code chính: `backend/apps/jobs/services/posting.py`, `services/moderation.py`,
-`services/reports.py`, `models/core.py`, `models/querysets.py`;
+Code chính: `backend/apps/jobs/services/posting/`, `services/moderation.py`,
+`services/reports.py`, `models/core.py`, `models/categories.py`, `models/querysets.py`;
 `backend/apps/campaigns/services/campaigns.py`, `selectors/campaigns.py`, `models/campaign.py`;
 `backend/apps/applications/services/`.
 
@@ -316,14 +316,13 @@ draft ── đăng ──> active ── đóng ──> closed
 
 Mỗi lần đưa tin lên công khai (đăng nháp, mở lại) recruiter phải gửi
 `responsibility_statement_version` trùng phiên bản hiện hành
-(`RESPONSIBILITY_STATEMENT_VERSION` trong `posting.py`); sai hoặc thiếu trả
+(`RESPONSIBILITY_STATEMENT_VERSION` trong `posting/rules.py`); sai hoặc thiếu trả
 `JOB_RESPONSIBILITY_REQUIRED`. Nội dung và phiên bản được trả trong
 `posting-context.responsibility_statement`. Tin lưu
 `responsibility_accepted_at` và `responsibility_statement_version`. Đổi nội dung
 cam kết thì phải đổi phiên bản.
 
-Tin công khai trước ADR-0014 hoặc được đăng lại bằng lệnh
-`publish_converted_pending_jobs` không có bản ghi cam kết; admin thấy nhãn
+Tin công khai trước ADR-0014 không có bản ghi cam kết; admin thấy nhãn
 tương ứng.
 
 ### Blocker công khai
