@@ -34,7 +34,7 @@ import useJobLocationData from './model/use-job-location-data'
 import useJobSidebarData from './model/use-job-sidebar-data'
 import { formatLocationGroups, locationDisplayName } from './lib/job-list-params'
 import { relatedCategoryChips, relatedSearchTerms } from './lib/related-terms'
-import { buildJobListTitle } from './lib/job-list-title'
+import { buildJobListTitle } from './lib/job-page-title'
 import { buildJobAlertPrefill } from './lib/job-alert-prefill'
 import './ui/job-list.css'
 
@@ -208,9 +208,8 @@ export default function JobList() {
   const updateLabel = `[Update ${new Date().toLocaleDateString('vi-VN')}]`
   const pageTitle = buildJobListTitle({
     count: formatNumber(count),
-    contextLabel,
+    contextLabel: searchLabel || catName || (locationSummary ? `tại ${locationSummary}` : ''),
     loading,
-    updateLabel,
   })
 
   useDocumentMetadata(

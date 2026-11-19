@@ -4,7 +4,7 @@ from django.conf import settings as django_settings
 from django.http import HttpResponse
 from django.views import View
 
-from apps.sitecontent.services import resolved_seo_settings
+from apps.sitecontent.services import resolved_seo_settings, seo_page_title
 from common.seo import (
     SeoMetadata,
     absolute_url,
@@ -20,7 +20,7 @@ STATIC_PAGE_METADATA = {
         'Tìm việc làm, tạo CV chuyên nghiệp và phát triển sự nghiệp cùng AI.',
     ),
     '/cong-ty': (
-        'Danh sách công ty',
+        'Danh sách công ty đang tuyển dụng',
         'Khám phá danh sách công ty, tìm hiểu doanh nghiệp và các cơ hội việc làm đang tuyển dụng.',
     ),
     '/chinh-sach-cookie': (
@@ -39,10 +39,6 @@ STATIC_PAGE_METADATA = {
         'Dịch vụ tuyển dụng',
         'Các dịch vụ tuyển dụng giúp doanh nghiệp tiếp cận và quản lý ứng viên hiệu quả.',
     ),
-    '/tuyendung/bao-gia': (
-        'Bảng giá dịch vụ tuyển dụng',
-        'Tham khảo các lựa chọn dịch vụ tuyển dụng phù hợp với nhu cầu doanh nghiệp.',
-    ),
     '/tuyendung/lien-he': (
         'Liên hệ tư vấn tuyển dụng',
         'Liên hệ ProCV để được tư vấn giải pháp tuyển dụng phù hợp.',
@@ -58,10 +54,10 @@ STATIC_PAGE_METADATA = {
 }
 
 
-def _title(label, settings):
-    if not label:
+def _title(path, label, settings):
+    if path == '/':
         return settings['seo_default_title']
-    return f'{label} | {settings["site_name"]}'
+    return seo_page_title(label, settings, employer=path.startswith('/tuyendung'))
 
 
 def _metadata(
@@ -79,7 +75,7 @@ def _metadata(
         'index, follow' if settings['seo_robots_index'] else 'noindex, nofollow'
     )
     return SeoMetadata(
-        title=_title(title, settings),
+        title=_title(canonical_path, title, settings),
         description=description or settings['seo_default_description'],
         canonical_url=absolute_url(request, canonical_path),
         site_name=settings['site_name'],
@@ -205,7 +201,6 @@ class StaticSitemapView(View):
             '/tuyendung',
             '/tuyendung/gioi-thieu',
             '/tuyendung/dich-vu',
-            '/tuyendung/bao-gia',
             '/tuyendung/lien-he',
             '/tuyendung/dieu-khoan-dich-vu',
             '/tuyendung/chinh-sach-quyen-rieng',

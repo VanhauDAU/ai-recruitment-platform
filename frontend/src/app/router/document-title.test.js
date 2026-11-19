@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { adminPath, employerAppPath } from '@/shared/config/portals'
+import { adminPath, employerAppPath, employerMarketingPath } from '@/shared/config/portals'
 import { resolveEmployerRouteTitle, resolveRouteTitle } from './document-title'
 
 describe('resolveEmployerRouteTitle', () => {
@@ -15,11 +15,23 @@ describe('resolveEmployerRouteTitle', () => {
   })
 
   it('titles campaign and application workspace routes consistently', () => {
-    expect(resolveEmployerRouteTitle(employerAppPath('/campaigns'))).toBe('Quản lý chiến dịch tuyển dụng')
+    expect(resolveEmployerRouteTitle(employerAppPath('/campaigns'))).toBe('Chiến dịch tuyển dụng')
     expect(resolveEmployerRouteTitle(employerAppPath('/campaigns/campaign_123'))).toBe('Chi tiết chiến dịch tuyển dụng')
     expect(resolveEmployerRouteTitle(employerAppPath('/campaigns/campaign_123/setup'))).toBe('Thiết lập chiến dịch tuyển dụng')
     expect(resolveEmployerRouteTitle(employerAppPath('/campaigns/new'))).toBe('Tạo chiến dịch tuyển dụng')
-    expect(resolveEmployerRouteTitle(employerAppPath('/applications'))).toBe('Quản lý CV ứng tuyển')
+    expect(resolveEmployerRouteTitle(employerAppPath('/applications'))).toBe('CV ứng tuyển')
+  })
+
+  it('titles workspace pages that used to fall through to the missing-page title', () => {
+    expect(resolveEmployerRouteTitle(employerAppPath('/notifications'))).toBe('Thông báo hệ thống')
+    expect(resolveEmployerRouteTitle(employerAppPath('/activities'))).toBe('Lịch sử hoạt động')
+    expect(resolveEmployerRouteTitle(employerAppPath('/company-page'))).toBe('Trang công ty')
+    expect(resolveEmployerRouteTitle(employerMarketingPath('/danh-gia-ho-so/tok_123'))).toBe('Đánh giá hồ sơ ứng viên')
+  })
+
+  it('leaves marketing titles to the localized layout and 404s unknown marketing paths', () => {
+    expect(resolveEmployerRouteTitle(employerMarketingPath('/dich-vu'))).toBe('')
+    expect(resolveEmployerRouteTitle(employerMarketingPath('/bao-gia'))).toBe('Trang không tồn tại')
   })
 })
 
@@ -28,7 +40,8 @@ describe('admin route titles', () => {
     window.history.replaceState({}, '', adminPath('/job-moderation'))
     expect(resolveRouteTitle(adminPath('/job-moderation'))).toBe('Quản lý tin tuyển dụng')
     expect(resolveRouteTitle(adminPath('/job-moderation/job_123'))).toBe('Chi tiết tin tuyển dụng')
-    expect(resolveRouteTitle(adminPath('/account'))).toBe('Cài đặt tài khoản')
+    expect(resolveRouteTitle(adminPath('/account'))).toBe('Tài khoản của tôi')
+    expect(resolveRouteTitle(adminPath('/companies'))).toBe('Quản lý công ty')
     expect(resolveRouteTitle(adminPath('/company-reports'))).toBe('Báo cáo công ty')
   })
 
@@ -43,7 +56,7 @@ describe('admin route titles', () => {
 describe('candidate route titles', () => {
   it('uses the dedicated title for the public company directory', () => {
     window.history.replaceState({}, '', '/cong-ty')
-    expect(resolveRouteTitle('/cong-ty')).toBe('Danh sách công ty')
+    expect(resolveRouteTitle('/cong-ty')).toBe('Danh sách công ty đang tuyển dụng')
     expect(resolveRouteTitle('/cong-ty/tim-kiem')).toBe('Tìm kiếm công ty')
   })
 
@@ -62,5 +75,11 @@ describe('candidate route titles', () => {
   it('uses the dedicated title for the public job comparison route', () => {
     window.history.replaceState({}, '', '/so-sanh-viec-lam')
     expect(resolveRouteTitle('/so-sanh-viec-lam')).toBe('So sánh việc làm')
+  })
+
+  it('titles the CV upload and campaign landing routes instead of treating them as missing', () => {
+    window.history.replaceState({}, '', '/tai-cv-len')
+    expect(resolveRouteTitle('/tai-cv-len')).toBe('Tải CV lên')
+    expect(resolveRouteTitle('/tuyen-dung/tuyen-frontend-q4')).toBe('Trang tuyển dụng')
   })
 })

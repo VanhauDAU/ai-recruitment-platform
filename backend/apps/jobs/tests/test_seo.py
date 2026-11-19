@@ -59,6 +59,10 @@ class JobSeoTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn(f'http://testserver/viec-lam/{self.job.slug}', html)
+        self.assertIn(
+            '<title data-seo-managed="server">Tuyển Kỹ sư Backend - Công ty SEO | ProCV</title>',
+            html,
+        )
         self.assertIn('"@type":"JobPosting"', html)
         self.assertIn('"employmentType":"FULL_TIME"', html)
         self.assertIn('"minValue":20000000.0', html)

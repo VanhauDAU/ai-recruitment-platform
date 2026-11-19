@@ -4,6 +4,7 @@ import {
   COMPANY_SEARCH_PATH,
   isCompanyDetailPath,
 } from '@/entities/company/company'
+import { NOT_FOUND_TITLE } from '@/shared/config/document-title'
 import {
   adminPath,
   employerAppPath,
@@ -12,35 +13,41 @@ import {
 } from '@/shared/config/portals'
 import { ADMIN_ROUTES } from './admin/admin-routes.config'
 
+// Quy ước ở mục "Tiêu đề trang" của frontend/ARCHITECTURE.md: "<nội dung trang> | <thương hiệu cổng>".
+// Đây là tiêu đề mặc định theo route; trang có dữ liệu động (tin, công ty, bài viết…)
+// tự đăng ký tiêu đề cụ thể qua useDocumentMetadata.
 const EXACT_MAIN_TITLES = new Map([
   ['/', 'Trang chủ'],
-  [COMPANY_DIRECTORY_PATH, 'Danh sách công ty'],
+  [COMPANY_DIRECTORY_PATH, 'Danh sách công ty đang tuyển dụng'],
   [COMPANY_SEARCH_PATH, 'Tìm kiếm công ty'],
-  ['/viec-lam', 'Việc làm'],
+  ['/viec-lam', 'Tuyển dụng việc làm mới nhất'],
+  ['/jobs', 'Tuyển dụng việc làm mới nhất'],
   ['/so-sanh-viec-lam', 'So sánh việc làm'],
   ['/viec-lam-da-luu', 'Việc làm đã lưu'],
-  ['/jobs', 'Việc làm'],
+  ['/tai-cv-len', 'Tải CV lên'],
   ['/chinh-sach-cookie', 'Chính sách cookie'],
   ['/tai-khoan/xac-thuc-email', 'Xác thực email'],
-  ['/onboard-user', 'Cá nhân hóa việc làm'],
-  ['/login', 'Đăng nhập'],
-  ['/sign-up', 'Đăng ký tài khoản'],
-  ['/register', 'Đăng ký tài khoản'],
+  ['/onboard-user', 'Cá nhân hóa gợi ý việc làm'],
+  ['/login', 'Đăng nhập tài khoản ứng viên'],
+  ['/sign-up', 'Đăng ký tài khoản ứng viên'],
+  ['/register', 'Đăng ký tài khoản ứng viên'],
   ['/forgot-password', 'Quên mật khẩu'],
   ['/reset-password', 'Đặt lại mật khẩu'],
-  ['/tro-giup', 'Trung tâm trợ giúp'],
+  ['/blog', 'Cẩm nang nghề nghiệp'],
+  ['/tro-giup', 'Câu hỏi thường gặp - Trung tâm trợ giúp'],
   ['/oauth/callback', 'Đang xác thực tài khoản'],
 ])
 
+// Trang marketing tự đặt tiêu đề theo ngôn ngữ đang chọn (EmployerMarketingLayout,
+// khóa `meta.*` trong locale employer); route chỉ cần nhận diện để không báo 404.
+const EMPLOYER_MARKETING_PATHS = new Set(
+  ['', '/gioi-thieu', '/dich-vu', '/lien-he', '/dieu-khoan-dich-vu', '/chinh-sach-quyen-rieng']
+    .map((segment) => employerMarketingPath(segment)),
+)
+
 const EXACT_EMPLOYER_TITLES = new Map([
-  [employerMarketingPath(''), 'Trang chủ nhà tuyển dụng'],
-  [employerMarketingPath('/gioi-thieu'), 'Giới thiệu'],
-  [employerMarketingPath('/dich-vu'), 'Dịch vụ tuyển dụng'],
-  [employerMarketingPath('/lien-he'), 'Liên hệ'],
-  [employerMarketingPath('/dieu-khoan-dich-vu'), 'Điều khoản dịch vụ'],
-  [employerMarketingPath('/chinh-sach-quyen-rieng'), 'Chính sách quyền riêng tư'],
   [employerAppPath('/login'), 'Đăng nhập nhà tuyển dụng'],
-  [employerAppPath('/register'), 'Đăng ký nhà tuyển dụng'],
+  [employerAppPath('/register'), 'Đăng ký tài khoản nhà tuyển dụng'],
   [employerAppPath('/forgot-password'), 'Quên mật khẩu'],
   [employerAppPath('/reset-password'), 'Đặt lại mật khẩu'],
   [employerAppPath('/account/verify'), 'Xác thực email'],
@@ -59,12 +66,27 @@ const EXACT_EMPLOYER_TITLES = new Map([
   [employerAppPath('/account/settings/integrations'), 'Kết nối mạng xã hội'],
   [employerAppPath('/oauth/callback'), 'Đang xác thực tài khoản'],
   [employerAppPath('/dashboard'), 'Bảng tin'],
-  [employerAppPath('/campaigns'), 'Quản lý chiến dịch tuyển dụng'],
+  [employerAppPath('/notifications'), 'Thông báo hệ thống'],
+  [employerAppPath('/activities'), 'Lịch sử hoạt động'],
+  [employerAppPath('/company-page'), 'Trang công ty'],
+  [employerAppPath('/campaigns'), 'Chiến dịch tuyển dụng'],
+  [employerAppPath('/campaigns/new'), 'Tạo chiến dịch tuyển dụng'],
   [employerAppPath('/jobs'), 'Tin tuyển dụng'],
-  [employerAppPath('/applications'), 'Quản lý CV ứng tuyển'],
+  [employerAppPath('/jobs/new'), 'Đăng tin tuyển dụng'],
+  [employerAppPath('/applications'), 'CV ứng tuyển'],
   [employerAppPath('/candidate-blocks'), 'Danh sách đen'],
   [employerAppPath('/talent-pool'), 'Kho ứng viên tiềm năng'],
 ])
+
+// Thứ tự quan trọng: mẫu cụ thể (…/edit, …/setup) đứng trước mẫu chi tiết.
+const DYNAMIC_EMPLOYER_TITLES = [
+  [new RegExp(`^${employerAppPath('/jobs/')}[^/]+/edit$`), 'Chỉnh sửa tin tuyển dụng'],
+  [new RegExp(`^${employerAppPath('/jobs/')}[^/]+$`), 'Chi tiết tin tuyển dụng'],
+  [new RegExp(`^${employerAppPath('/campaigns/')}[^/]+/setup$`), 'Thiết lập chiến dịch tuyển dụng'],
+  [new RegExp(`^${employerAppPath('/campaigns/')}[^/]+$`), 'Chi tiết chiến dịch tuyển dụng'],
+  // Link mời đánh giá: không đưa tên ứng viên vào tiêu đề (lịch sử trình duyệt, chia sẻ tab).
+  [new RegExp(`^${employerMarketingPath('/danh-gia-ho-so/')}[^/]+$`), 'Đánh giá hồ sơ ứng viên'],
+]
 
 const EXACT_ADMIN_TITLES = new Map([
   [adminPath('/login'), 'Đăng nhập quản trị'],
@@ -80,6 +102,12 @@ function normalizePath(pathname) {
   return pathname.replace(/\/+$/, '')
 }
 
+function cvTitle(pathname) {
+  if (pathname.endsWith('/edit')) return 'Chỉnh sửa CV'
+  if (pathname.endsWith('/view')) return 'Xem CV'
+  return NOT_FOUND_TITLE
+}
+
 function mainTitle(pathname) {
   const exact = EXACT_MAIN_TITLES.get(pathname)
   if (exact) return exact
@@ -87,18 +115,15 @@ function mainTitle(pathname) {
   const accountItem = findActiveAccountItem(pathname)
   if (accountItem) return accountItem.label
   if (isCompanyDetailPath(pathname)) return 'Hồ sơ công ty'
-  if (pathname === '/tai-khoan') return 'Quản lý tài khoản'
-  if (pathname === '/cvs' || pathname.startsWith('/cvs/')) {
-    if (pathname.endsWith('/edit')) return 'Chỉnh sửa CV'
-    if (pathname.endsWith('/view')) return 'Xem CV'
-    return 'CV của tôi'
-  }
+  if (pathname.startsWith('/cvs/')) return cvTitle(pathname)
   if (pathname.startsWith('/save-cv-success/')) return 'Lưu CV thành công'
-  if (pathname.startsWith('/viec-lam/tai/') || pathname.startsWith('/jobs/tai/')) return 'Việc làm theo địa điểm'
-  if (pathname.startsWith('/viec-lam/') || pathname.startsWith('/jobs/') || pathname.startsWith('/brand/')) return 'Chi tiết việc làm'
-  if (pathname === '/blog') return 'Cẩm nang nghề nghiệp'
+  if (pathname.startsWith('/viec-lam/tai/')) return 'Tuyển dụng việc làm theo địa điểm'
+  if (pathname.startsWith('/viec-lam/') || pathname.startsWith('/jobs/') || pathname.startsWith('/brand/')) {
+    return 'Chi tiết việc làm'
+  }
+  if (pathname.startsWith('/tuyen-dung/')) return 'Trang tuyển dụng'
   if (pathname.startsWith('/blog/danh-muc/')) return 'Danh mục cẩm nang nghề nghiệp'
-  if (pathname.startsWith('/blog/')) return 'Bài viết nghề nghiệp'
+  if (pathname.startsWith('/blog/')) return 'Bài viết cẩm nang nghề nghiệp'
   if (pathname.startsWith('/tro-giup/')) {
     return pathname.split('/').filter(Boolean).length >= 3
       ? 'Nội dung trợ giúp'
@@ -106,31 +131,18 @@ function mainTitle(pathname) {
   }
   if (pathname.startsWith('/mau-cv') || pathname.startsWith('/cv-templates')) {
     if (pathname.includes('/chi-tiet/') || pathname.match(/^\/cv-templates\/[^/]+$/)) return 'Chi tiết mẫu CV'
-    return 'Mẫu CV chuyên nghiệp'
+    return 'Mẫu CV xin việc chuyên nghiệp'
   }
   if (pathname.startsWith('/cv/share/')) return 'CV được chia sẻ'
-  return 'Trang không tồn tại'
+  return NOT_FOUND_TITLE
 }
 
 export function resolveEmployerRouteTitle(pathname) {
+  if (EMPLOYER_MARKETING_PATHS.has(pathname)) return ''
   const exact = EXACT_EMPLOYER_TITLES.get(pathname)
   if (exact) return exact
-
-  if (pathname === employerAppPath('/jobs/new')) return 'Đăng tin tuyển dụng'
-  if (pathname.match(new RegExp(`^${employerAppPath('/jobs/')}[^/]+/edit$`))) return 'Chỉnh sửa tin tuyển dụng'
-  if (pathname.match(new RegExp(`^${employerAppPath('/jobs/')}[^/]+$`))) return 'Chi tiết tin tuyển dụng'
-  if (pathname === employerAppPath('/campaigns/new')) return 'Tạo chiến dịch tuyển dụng'
-  if (pathname.match(new RegExp(`^${employerAppPath('/campaigns/')}[^/]+/setup$`))) return 'Thiết lập chiến dịch tuyển dụng'
-  if (pathname.match(new RegExp(`^${employerAppPath('/campaigns/')}[^/]+$`))) return 'Chi tiết chiến dịch tuyển dụng'
-  if (pathname.startsWith(employerAppPath('/account/settings/'))) return 'Cài đặt tài khoản'
-
-  // Các URL app không được rơi về title marketing chung; mỗi trang workspace
-  // phải có nhãn nghiệp vụ riêng hoặc hiển thị trạng thái không tồn tại.
-  if (pathname === employerAppPath('') || pathname.startsWith(`${employerAppPath('')}/`)) {
-    return 'Trang không tồn tại'
-  }
-  if (pathname.startsWith(employerMarketingPath('/'))) return 'Cổng nhà tuyển dụng'
-  return 'Trang không tồn tại'
+  const dynamic = DYNAMIC_EMPLOYER_TITLES.find(([pattern]) => pattern.test(pathname))
+  return dynamic ? dynamic[1] : NOT_FOUND_TITLE
 }
 
 function adminTitle(pathname) {
@@ -146,9 +158,7 @@ function adminTitle(pathname) {
         segment.startsWith(':') || segment === pathSegments[index]
       ))
   })
-  if (dynamicRoute) return dynamicRoute.title
-
-  return 'Trang không tồn tại'
+  return dynamicRoute ? dynamicRoute.title : NOT_FOUND_TITLE
 }
 
 export function resolveRouteTitle(pathname) {

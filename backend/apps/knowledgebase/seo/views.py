@@ -8,7 +8,7 @@ from apps.knowledgebase.selectors.seo import (
     seo_knowledge_article_by_slugs,
     seo_knowledge_category_by_slug,
 )
-from apps.sitecontent.services import resolved_seo_settings
+from apps.sitecontent.services import resolved_seo_settings, seo_page_title
 from common.seo import (
     SeoMetadata,
     absolute_url,
@@ -36,7 +36,7 @@ def _metadata(
         and site['seo_robots_index']
     )
     return SeoMetadata(
-        title=f'{title} | {site["site_name"]}',
+        title=seo_page_title(title, site),
         description=description or site['seo_default_description'],
         canonical_url=absolute_url(request, canonical_path),
         site_name=site['site_name'],
@@ -112,7 +112,7 @@ class KnowledgeHomeSeoShellView(View):
             request,
             _metadata(
                 request,
-                title='Trung tâm trợ giúp',
+                title='Câu hỏi thường gặp - Trung tâm trợ giúp',
                 description=('Câu hỏi thường gặp và hướng dẫn sử dụng ProCV dành cho ứng viên.'),
                 canonical_path='/tro-giup',
                 robots=_browser_robots(request),
@@ -132,7 +132,7 @@ class KnowledgeCategorySeoShellView(View):
             request,
             _metadata(
                 request,
-                title=category.seo_title or category.name,
+                title=category.seo_title or f'{category.name} - Trung tâm trợ giúp',
                 description=category.seo_description or category.description,
                 canonical_path=f'/tro-giup/{category.slug}',
                 robots=_browser_robots(request),

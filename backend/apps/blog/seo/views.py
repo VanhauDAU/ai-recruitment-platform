@@ -3,7 +3,7 @@
 from django.views import View
 
 from apps.blog.selectors.seo import blog_sitemap_rows, seo_category_by_slug, seo_post_by_slug
-from apps.sitecontent.services import resolved_seo_settings
+from apps.sitecontent.services import resolved_seo_settings, seo_page_title
 from common.html.plain_text import html_plain_text
 from common.seo import (
     SeoMetadata,
@@ -14,10 +14,6 @@ from common.seo import (
     xml_response,
 )
 from common.storage.media import media_url_from_value
-
-
-def _title(label, settings):
-    return f'{label} | {settings["site_name"]}'
 
 
 def _metadata(
@@ -34,7 +30,7 @@ def _metadata(
     settings = resolved_seo_settings()
     allow_index = settings['seo_robots_index']
     return SeoMetadata(
-        title=_title(title, settings),
+        title=seo_page_title(title, settings),
         description=description or settings['seo_default_description'],
         canonical_url=absolute_url(request, canonical_path),
         site_name=settings['site_name'],
@@ -123,7 +119,7 @@ class BlogCategorySeoShellView(View):
             request,
             _metadata(
                 request,
-                title=category.seo_title or category.name,
+                title=category.seo_title or f'{category.name} - Cẩm nang nghề nghiệp',
                 description=category.description,
                 canonical_path=f'/blog/danh-muc/{category.slug}',
             ),
@@ -139,7 +135,7 @@ class BlogDetailSeoShellView(View):
                 request,
                 _metadata(
                     request,
-                    title='Bài viết không tồn tại',
+                    title='Không tìm thấy bài viết',
                     description='Bài viết không tồn tại hoặc đã được gỡ.',
                     canonical_path=canonical_path,
                     robots='noindex, nofollow',

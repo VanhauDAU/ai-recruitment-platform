@@ -243,7 +243,10 @@ class CampaignLandingTests(ChannelTestMixin, TestCase):
         self.assertEqual(open_page.data['state'], 'open')
         self.assertEqual(open_page.data['company']['name'], self.company.company_name)
         self.assertEqual(open_shell.status_code, 200)
-        self.assertIn('Tuyển kỹ thuật quý 1', open_shell.content.decode())
+        self.assertIn(
+            f'Tuyển kỹ thuật quý 1 - {self.company.company_name} | ProCV</title>',
+            open_shell.content.decode(),
+        )
         self.assertEqual(draft_page.status_code, 404)
         self.assertEqual(ended_page.data['state'], 'ended')
         self.assertEqual(ended_shell.status_code, 410)

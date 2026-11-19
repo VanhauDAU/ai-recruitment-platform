@@ -16,7 +16,7 @@ export default function CompanyList() {
   const [featuredRequestKey] = useState(createFeaturedRequestKey)
 
   useDocumentMetadata({
-    title: 'Danh sách công ty',
+    title: 'Danh sách công ty đang tuyển dụng',
     description: 'Khám phá danh sách công ty, tìm hiểu doanh nghiệp và các cơ hội việc làm đang tuyển dụng.',
     canonicalPath: COMPANY_DIRECTORY_PATH,
   })

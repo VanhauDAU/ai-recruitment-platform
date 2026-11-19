@@ -70,7 +70,7 @@ export default function BlogDetail() {
             mainEntityOfPage: new URL(canonicalPath, window.location.origin).href,
           },
         }
-      : null,
+      : (notFound ? { title: 'Không tìm thấy bài viết', robots: 'noindex, nofollow' } : null),
   )
 
   const handleToc = useCallback((items) => setToc(items), [])

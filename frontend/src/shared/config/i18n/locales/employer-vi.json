@@ -1,4 +1,12 @@
 {
+  "meta": {
+    "landing": "Đăng tin tuyển dụng, tìm ứng viên hiệu quả",
+    "about": "Giới thiệu nền tảng tuyển dụng",
+    "services": "Dịch vụ tuyển dụng",
+    "contact": "Liên hệ tư vấn tuyển dụng",
+    "terms": "Điều khoản dịch vụ nhà tuyển dụng",
+    "privacy": "Chính sách quyền riêng tư"
+  },
   "nav": {
     "home": "Trang chủ",
     "about": "Giới thiệu",
@@ -98,7 +106,6 @@
     "workingHours": "Giờ làm việc"
   },
   "about": {
-    "metaTitle": "Giới thiệu nền tảng tuyển dụng",
     "heroEyebrow": "Về chúng tôi",
     "heroTitle": "Kết nối đúng người, đúng việc bằng công nghệ AI",
     "heroSubtitle": "Chúng tôi xây dựng nền tảng tuyển dụng thông minh giúp doanh nghiệp Việt tìm được nhân sự phù hợp nhanh hơn, chính xác hơn và tiết kiệm hơn.",
@@ -123,7 +130,6 @@
     "statsTitle": "Nền tảng qua những con số"
   },
   "contact": {
-    "metaTitle": "Liên hệ tư vấn tuyển dụng",
     "heroEyebrow": "Liên hệ",
     "heroTitle": "Trò chuyện với đội ngũ tư vấn tuyển dụng",
     "heroSubtitle": "Liên hệ trực tiếp qua hotline, email hoặc kênh chat — chúng tôi phản hồi trong giờ làm việc.",

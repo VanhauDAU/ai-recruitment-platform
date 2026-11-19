@@ -47,7 +47,7 @@ describe('route metadata', () => {
     expect(canonicalPathForRoute('/cong-ty/')).toBe('/cong-ty')
     expect(resolveRouteMetadata({ pathname: '/cong-ty', portal: 'main', settings }))
       .toEqual(expect.objectContaining({
-        title: 'Danh sách công ty',
+        title: 'Danh sách công ty đang tuyển dụng',
         description: 'Khám phá danh sách công ty, tìm hiểu doanh nghiệp và các cơ hội việc làm đang tuyển dụng.',
         canonicalPath: '/cong-ty',
         robots: 'index, follow',

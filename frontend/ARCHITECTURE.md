@@ -166,6 +166,28 @@ cho lý do ngoại lệ. Không tạo bridge/re-export tạm thời để né ru
    URL contract hiện có hoặc bổ sung test redirect/404 khi contract mới.
 5. Chạy `npm run lint`, `npm run check:architecture`, unit tests và E2E phù hợp.
 
+## Tiêu đề trang
+
+Mọi `<title>` có dạng `<nội dung trang> | <thương hiệu cổng>`, thương hiệu sinh
+từ `site_name` (`portalSiteTitle`): `ProCV` (ứng viên), `ProCV cho Nhà tuyển
+dụng`, `Quản trị ProCV`. Riêng trang chủ dùng nguyên `seo_default_title`.
+
+- Tiêu đề mặc định theo route ở `src/app/router/document-title.js`; route mới
+  phải có mục ở đây, không thì tab hiện "Trang không tồn tại" và route bị
+  `noindex`. Thanh trên cùng của workspace NTD đọc cùng nguồn này.
+- Trang có dữ liệu động tự đăng ký qua `useDocumentMetadata`: tin
+  `Tuyển <vị trí> - <công ty>`, công ty `<tên> tuyển dụng`, danh sách việc làm
+  `Tuyển dụng <N> việc làm <ngữ cảnh> mới nhất` (không đưa ngày vào tiêu đề),
+  danh mục `<tên> - <mục cha>`; `seo_title` admin nhập thắng mặc định.
+- Tiêu đề khớp nội dung người dùng thấy: theo H1 hoặc nhãn menu của trang; trạng
+  thái lỗi dùng đúng câu đang hiển thị (`Không tìm thấy công ty`…) kèm `noindex`.
+- Ngăn cấp dùng ` - `, chỉ một ` | ` trước thương hiệu. Không đưa dữ liệu cá
+  nhân (tên ứng viên) vào tiêu đề.
+- Trang marketing NTD lấy tiêu đề theo ngôn ngữ từ khóa `meta.*` của locale
+  employer (`EmployerMarketingLayout`).
+- Route công khai có SEO shell ở backend (`apps/*/seo/views.py`, helper
+  `seo_page_title`) phải ra cùng tiêu đề với frontend.
+
 ## Đo bundle và lazy route
 
 - Production build sinh Vite manifest tại `dist/.vite/manifest.json`.

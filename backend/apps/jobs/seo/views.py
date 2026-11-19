@@ -4,7 +4,7 @@ from django.views import View
 
 from apps.jobs.models import Job
 from apps.jobs.selectors.seo import job_sitemap_rows, seo_job_by_slug, seo_location_by_slug
-from apps.sitecontent.services import resolved_seo_settings
+from apps.sitecontent.services import resolved_seo_settings, seo_page_title
 from common.html.plain_text import html_plain_text
 from common.seo import (
     SeoMetadata,
@@ -28,10 +28,6 @@ EMPLOYMENT_TYPE_SCHEMA = {
 }
 
 
-def _title(label, settings):
-    return f'{label} | {settings["site_name"]}'
-
-
 def _metadata(
     request,
     *,
@@ -45,7 +41,7 @@ def _metadata(
     settings = resolved_seo_settings()
     allow_index = settings['seo_robots_index']
     return SeoMetadata(
-        title=_title(title, settings),
+        title=seo_page_title(title, settings),
         description=description or settings['seo_default_description'],
         canonical_url=absolute_url(request, canonical_path),
         site_name=settings['site_name'],
@@ -173,9 +169,16 @@ def _breadcrumb(request, job, canonical_url):
     }
 
 
+def _job_title(job):
+    """Khớp `buildJobDetailTitle` của frontend: "Tuyển <vị trí> - <công ty>"."""
+    position = job.title.strip()
+    heading = position if position.lower().startswith('tuyển ') else f'Tuyển {position}'
+    return f'{heading} - {job.company.company_name}'
+
+
 class JobListSeoShellView(View):
     def get(self, request, location_slug=None):
-        title = 'Việc làm mới nhất'
+        title = 'Tuyển dụng việc làm mới nhất'
         description = (
             'Tìm kiếm việc làm mới nhất, lọc theo ngành nghề, địa điểm và kinh nghiệm trên ProCV.'
         )
@@ -195,7 +198,7 @@ class JobListSeoShellView(View):
                     ),
                     status=404,
                 )
-            title = f'Việc làm tại {location.name}'
+            title = f'Tuyển dụng việc làm tại {location.name} mới nhất'
             description = (
                 f'Tìm việc làm mới nhất tại {location.name}, cập nhật từ các nhà tuyển dụng.'
             )
@@ -220,7 +223,7 @@ class JobDetailSeoShellView(View):
                 request,
                 _metadata(
                     request,
-                    title='Việc làm không tồn tại',
+                    title='Không tìm thấy tin tuyển dụng',
                     description='Tin tuyển dụng không tồn tại hoặc đã hết hạn.',
                     canonical_path=canonical_path,
                     robots='noindex, nofollow',
@@ -243,7 +246,7 @@ class JobDetailSeoShellView(View):
             request,
             _metadata(
                 request,
-                title=f'Tuyển {job.title}',
+                title=_job_title(job),
                 description=description,
                 canonical_path=canonical_path,
                 image=logo,

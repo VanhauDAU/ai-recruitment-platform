@@ -28,3 +28,11 @@ def resolved_seo_settings():
     values = {**SEO_SETTING_DEFAULTS, **stored}
     cache.set(SEO_SETTINGS_CACHE_KEY, values, 60 * 60)
     return values
+
+
+def seo_page_title(label, settings, *, employer=False):
+    """Khớp `formatDocumentTitle` của frontend: "<Trang> | <Thương hiệu cổng>"."""
+    brand = settings['site_name']
+    if employer:
+        brand = f'{brand} cho Nhà tuyển dụng'
+    return f'{label} | {brand}' if label else brand

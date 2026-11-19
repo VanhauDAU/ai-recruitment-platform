@@ -37,7 +37,8 @@ function TemplateWorkspace({ template, colors, locale, basePath, selection, upda
   })
   const localeLabel = cvLanguage(locale).inlineLabel
   useDocumentMetadata({
-    title: heading,
+    // Trang gốc dùng tiêu đề SEO admin nhập; biến thể chọn mẫu theo vị trí giữ đúng H1.
+    title: (!hasQuery && template.seo_title) || heading,
     description: template.seo_description || template.description || `Xem trước và tạo CV ${localeLabel} với mẫu ${template.display_name} chuyên nghiệp.`,
     // Mọi biến thể lựa chọn trỏ về trang mẫu gốc; trang có query không lập chỉ mục.
     canonicalPath: `${basePath}/chi-tiet/${template.slug}`,

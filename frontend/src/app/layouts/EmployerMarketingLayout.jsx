@@ -14,6 +14,16 @@ import { AnnouncementStrip } from '@/widgets/common/announcement-strip'
 import { employerAppPath, employerMarketingPath, HOME_BY_ROLE } from '@/shared/config/portals'
 import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
 
+// Tiêu đề tab theo ngôn ngữ đang chọn; route-metadata giữ bản tiếng Việt làm mặc định.
+const META_TITLE_KEY_BY_PATH = {
+  [employerMarketingPath('')]: 'landing',
+  [employerMarketingPath('/gioi-thieu')]: 'about',
+  [employerMarketingPath('/dich-vu')]: 'services',
+  [employerMarketingPath('/lien-he')]: 'contact',
+  [employerMarketingPath('/dieu-khoan-dich-vu')]: 'terms',
+  [employerMarketingPath('/chinh-sach-quyen-rieng')]: 'privacy',
+}
+
 const NAV_ITEMS = [
   { key: 'home', to: employerMarketingPath(''), end: true },
   { key: 'about', to: employerMarketingPath('/gioi-thieu') },
@@ -47,10 +57,11 @@ function NavLinks({ className, onNavigate }) {
 export default function EmployerMarketingLayout() {
   const { i18n, t } = useTranslation('employer')
   const language = i18n.resolvedLanguage || i18n.language || 'vi'
-  useDocumentMetadata({ language })
+  const { pathname } = useLocation()
+  const metaTitleKey = META_TITLE_KEY_BY_PATH[pathname.replace(/\/+$/, '')]
+  useDocumentMetadata(metaTitleKey ? { language, title: t(`meta.${metaTitleKey}`) } : { language })
   const { isAuthenticated, user } = useSession()
   const { settings } = useSiteSettings()
-  const { pathname } = useLocation()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
 
