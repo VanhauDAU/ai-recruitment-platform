@@ -1,4 +1,4 @@
-"""Administrator account list/detail contracts, sessions and activity log."""
+"""Administrator account list/detail contracts, sessions and activity timeline."""
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count
@@ -9,8 +9,8 @@ from apps.employers.selectors import build_employer_initial_onboarding
 from apps.employers.services import verification_checks
 from common.storage.media import media_url_from_value
 
+from ...domain import account_activity as activity_rules
 from ...models import (
-    AdminAccessAuditLog,
     AdminInvitation,
     AuthSession,
     User,
@@ -76,10 +76,14 @@ class ManagedAccountSerializer(serializers.ModelSerializer):
                 'job_search_status': profile.job_search_status,
             }
         if obj.is_employer:
+            next_action = {
+                'code': getattr(obj, 'recruiter_next_action', None),
+                'company_update_public_id': getattr(obj, 'pending_company_update_public_id', None),
+            }
             try:
                 recruiter = obj.recruiter_profile
             except ObjectDoesNotExist:
-                return {'kind': 'employer'}
+                return {'kind': 'employer', 'next_action': next_action}
             company = recruiter.company
             verification = getattr(recruiter, 'verification_case', None)
             checks = verification_checks(verification) if verification else {}
@@ -98,6 +102,7 @@ class ManagedAccountSerializer(serializers.ModelSerializer):
                 # explicit initial_onboarding object yet.
                 'onboarding_completed': initial_onboarding['completed'],
                 'phone_verified': recruiter.has_verified_phone,
+                'next_action': next_action,
                 'verification': (
                     {
                         'public_id': verification.public_id,
@@ -182,10 +187,7 @@ class ManagedAccountDetailSerializer(ManagedAccountSerializer):
         return payload.get('admin')
 
     def get_section_counts(self, obj) -> dict:
-        counts = {
-            'active_sessions': obj.active_session_count,
-            'activity': AdminAccessAuditLog.objects.filter(target_public_id=obj.public_id).count(),
-        }
+        counts = {'active_sessions': obj.active_session_count}
         if obj.is_candidate:
             counts.update(
                 cvs=obj.cvs.filter(is_deleted=False).count(),
@@ -296,19 +298,39 @@ class ManagedSessionSerializer(serializers.ModelSerializer):
         ]
 
 
-class AccountActivitySerializer(serializers.ModelSerializer):
-    actor_email = serializers.CharField(source='actor.email', default='', read_only=True)
+class AccountActivityActorSerializer(serializers.Serializer):
+    type = serializers.ChoiceField(choices=['admin', 'self', 'member', 'system'])
+    label = serializers.CharField()
 
-    class Meta:
-        model = AdminAccessAuditLog
-        fields = [
-            'public_id',
-            'action',
-            'source',
-            'actor_email',
-            'actor_identifier',
-            'target_type',
-            'target_public_id',
-            'payload',
-            'created_at',
-        ]
+
+class AccountActivityDetailSerializer(serializers.Serializer):
+    label = serializers.CharField()
+    value = serializers.CharField()
+    type = serializers.ChoiceField(choices=['text', 'datetime'])
+
+
+class AccountActivityEntrySerializer(serializers.Serializer):
+    id = serializers.CharField()
+    category = serializers.ChoiceField(choices=list(activity_rules.CATEGORIES))
+    event = serializers.CharField()
+    title = serializers.CharField()
+    summary = serializers.CharField(allow_blank=True)
+    tone = serializers.ChoiceField(choices=['neutral', 'success', 'warning', 'danger'])
+    actor = AccountActivityActorSerializer()
+    occurred_at = serializers.DateTimeField()
+    details = AccountActivityDetailSerializer(many=True)
+
+
+class AccountActivityCountsSerializer(serializers.Serializer):
+    all = serializers.IntegerField()
+    security = serializers.IntegerField()
+    account = serializers.IntegerField()
+    verification = serializers.IntegerField()
+    company = serializers.IntegerField()
+    recruitment = serializers.IntegerField()
+
+
+class AccountActivityPageSerializer(serializers.Serializer):
+    results = AccountActivityEntrySerializer(many=True)
+    next_cursor = serializers.CharField(allow_null=True)
+    category_counts = AccountActivityCountsSerializer(required=False)

@@ -298,6 +298,34 @@ class EmployerVerificationLifecycleTests(VerificationStateMachineTestCase):
 class EmployerVerificationImpactTokenTests(VerificationStateMachineTestCase):
     """A confirmation is refused when what its preview hashed has changed."""
 
+    def test_previews_allow_blank_reason_but_confirms_require_it(self):
+        """The dialog previews on open; the reason is still enforced on confirm."""
+        self.client.force_authenticate(self.reviewer)
+
+        def post(name, payload):
+            return self.client.post(
+                reverse(
+                    f'admin-employer-verification-{name}',
+                    kwargs={'public_id': self.case.public_id},
+                ),
+                payload,
+                format='json',
+            )
+
+        decision = {'decision': EmployerVerificationCase.Status.REJECTED, 'reason': ''}
+        impact = post('decision-impact', decision)
+        self.assertEqual(impact.status_code, status.HTTP_200_OK, impact.data)
+        blank = post('decision', {**decision, 'impact_token': impact.data['impact_token']})
+        self.assertEqual(blank.status_code, status.HTTP_400_BAD_REQUEST, blank.data)
+
+        self._approve()
+        impact = post('revoke-impact', {'reason': ''})
+        self.assertEqual(impact.status_code, status.HTTP_200_OK, impact.data)
+        blank = post('revoke', {'reason': '', 'impact_token': impact.data['impact_token']})
+        self.assertEqual(blank.status_code, status.HTTP_400_BAD_REQUEST, blank.data)
+        self.case.refresh_from_db()
+        self.assertEqual(self.case.status, EmployerVerificationCase.Status.APPROVED)
+
     def test_same_count_job_replacement_stales_lifecycle_snapshot(self):
         self._approve()
         self.client.force_authenticate(self.reviewer)

@@ -320,6 +320,21 @@ class CompanyDomainClaimManualReviewTests(APITestCase):
         claim.save()
         return claim
 
+    def test_manual_review_preview_allows_blank_reason_but_confirm_requires_it(self):
+        claim = self._manual_claim()
+        impact = domain_claim_admin_impact(
+            claim, actor=self.admin, action='reject_manual', reason=''
+        )
+        with self.assertRaises(DomainClaimError) as error:
+            confirm_domain_claim_admin_action(
+                claim,
+                actor=self.admin,
+                action='reject_manual',
+                reason='  ',
+                impact_token=impact['impact_token'],
+            )
+        self.assertEqual(error.exception.code, 'reason_required')
+
     def test_manual_approval_requires_current_approved_legal_documents(self):
         claim = self._manual_claim()
         impact = domain_claim_admin_impact(

@@ -33,9 +33,8 @@ def _add_months(value, count):
 
 
 def domain_claim_admin_impact(claim, *, actor, action, reason):
+    """Preview a manual decision; the reason may still be blank (checked on confirm)."""
     reason = (reason or '').strip()
-    if not reason:
-        raise DomainClaimError('reason_required', 'Vui lòng nhập lý do xử lý.')
     if action not in {'approve_manual', 'reject_manual', 'revoke'}:
         raise DomainClaimError('invalid_action', 'Thao tác không hợp lệ.')
     require_admin(actor)
@@ -63,6 +62,8 @@ def confirm_domain_claim_admin_action(
     impact_token,
 ):
     require_admin(actor)
+    if not (reason or '').strip():
+        raise DomainClaimError('reason_required', 'Vui lòng nhập lý do xử lý.')
     locked = (
         CompanyDomainClaim.objects.select_for_update()
         .select_related('requested_by')

@@ -1,11 +1,13 @@
 """Read-only sub-collections shown on the admin account detail page."""
 
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from ...domain import account_activity as activity_rules
 from ...selectors import (
-    account_activity_queryset,
+    account_activity_counts,
+    account_activity_timeline,
     account_applications_queryset,
     account_campaigns_queryset,
     account_consents_queryset,
@@ -23,7 +25,7 @@ from ..serializers.admin_account_resources import (
     AdminRecruitmentNeedSerializer,
 )
 from ..serializers.managed_accounts import (
-    AccountActivitySerializer,
+    AccountActivityPageSerializer,
     ManagedSessionSerializer,
 )
 
@@ -96,11 +98,28 @@ class AccountResourceActionsMixin:
 
     @extend_schema(
         summary='Nhật ký hoạt động của tài khoản',
-        responses={200: AccountActivitySerializer(many=True)},
+        description=(
+            'Gộp đăng nhập, thao tác quản trị, đổi trạng thái, xác thực, công ty và tuyển '
+            'dụng; mới nhất trước, phân trang bằng con trỏ `before`. `category_counts` '
+            'chỉ có ở trang đầu.'
+        ),
+        parameters=[
+            OpenApiParameter('category', str, enum=list(activity_rules.CATEGORIES)),
+            OpenApiParameter('before', str, description='`next_cursor` của trang trước.'),
+            OpenApiParameter('limit', int, description='Mặc định 30, tối đa 100.'),
+        ],
+        responses={200: AccountActivityPageSerializer},
     )
     @action(detail=True, methods=['get'])
     def activity(self, request, public_id=None):
-        queryset = account_activity_queryset(self.get_object())
-        page = self.paginate_queryset(queryset)
-        serializer = AccountActivitySerializer(page, many=True)
-        return self.get_paginated_response(serializer.data)
+        user = self.get_object()
+        cursor = activity_rules.decode_cursor(request.query_params.get('before'))
+        payload = account_activity_timeline(
+            user,
+            category=activity_rules.parse_category(request.query_params.get('category')),
+            cursor=cursor,
+            limit=activity_rules.parse_limit(request.query_params.get('limit')),
+        )
+        if cursor is None:
+            payload['category_counts'] = account_activity_counts(user)
+        return Response(payload)

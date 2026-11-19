@@ -42,6 +42,7 @@ from ..serializers.account_actions import (
     EmployerCompanyUnlinkConfirmSerializer,
     EmployerCompanyUnlinkImpactResponseSerializer,
     EmployerCompanyUnlinkImpactSerializer,
+    ReasonPreviewSerializer,
     ReasonSerializer,
     RevokeSessionsSerializer,
 )
@@ -142,12 +143,12 @@ class AccountEnforcementActionsMixin:
 
     @extend_schema(
         summary='Preview tác động thu hồi phiên đăng nhập',
-        request=ReasonSerializer,
+        request=ReasonPreviewSerializer,
         responses={200: OpenApiTypes.OBJECT},
     )
     @action(detail=True, methods=['post'], url_path='revoke-sessions-impact')
     def revoke_sessions_impact(self, request, public_id=None):
-        serializer = ReasonSerializer(data=request.data)
+        serializer = ReasonPreviewSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = self.get_object()
         ensure_account_write_allowed(

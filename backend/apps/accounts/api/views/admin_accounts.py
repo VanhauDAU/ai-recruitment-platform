@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from apps.accounts.api.permissions import AdminPortalPermission
 from common.api.params import parse_bool
 
+from ...domain.recruiter_next_action import next_action_codes
 from ...models import User
 from ...selectors import (
     account_summary,
@@ -49,6 +50,9 @@ def _validated_account_params(query_params):
     company_state = params.get('company_state', '').strip()
     if company_state and company_state not in {'linked', 'missing'}:
         raise ValidationError({'company_state': 'Trạng thái liên kết công ty không hợp lệ.'})
+    next_action_value = params.get('next_action', '').strip()
+    if next_action_value and not next_action_codes(next_action_value):
+        raise ValidationError({'next_action': 'Việc cần làm không hợp lệ.'})
     return params
 
 

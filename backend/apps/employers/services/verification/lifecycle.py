@@ -36,7 +36,7 @@ LIFECYCLE_ACTIONS = frozenset(
 )
 
 
-def _prepare_lifecycle_action(case, *, actor, action, reason, scope=None):
+def _prepare_lifecycle_action(case, *, actor, action, reason, scope=None, require_reason=True):
     require_admin(actor)
     scope = scope or verification_snapshot_scope(case)
     if action not in LIFECYCLE_ACTIONS:
@@ -52,7 +52,7 @@ def _prepare_lifecycle_action(case, *, actor, action, reason, scope=None):
             allowed_statuses=[EmployerVerificationCase.Status.APPROVED],
         )
     reason = reason.strip()
-    if not reason:
+    if require_reason and not reason:
         workflow_error(
             'VERIFICATION_REASON_REQUIRED',
             'Cần nhập lý do cho thay đổi hiệu lực xác thực.',
@@ -89,6 +89,7 @@ def verification_lifecycle_impact(case, *, actor, action, reason):
         actor=actor,
         action=action,
         reason=reason,
+        require_reason=False,
     )
     return {
         **{key: value for key, value in snapshot.items() if key != 'integrity_fingerprint'},

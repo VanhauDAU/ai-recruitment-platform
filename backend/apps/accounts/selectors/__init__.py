@@ -1,7 +1,7 @@
 """Read models for the accounts domain."""
 
+from .account_activity import account_activity_counts, account_activity_timeline
 from .account_directory import (
-    account_activity_queryset,
     account_sessions_queryset,
     account_summary,
     accounts_queryset,
@@ -32,7 +32,8 @@ __all__ = [
     'account_jobs_queryset',
     'account_recruitment_needs_queryset',
     'auth_session_history',
-    'account_activity_queryset',
+    'account_activity_counts',
+    'account_activity_timeline',
     'account_email_change_impact',
     'account_revoke_sessions_impact',
     'account_resource_hold_impact',
