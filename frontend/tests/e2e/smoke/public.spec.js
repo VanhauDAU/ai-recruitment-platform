@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { mockPublicApi } from './helpers'
+import { chooseSelectOption, mockPublicApi } from './helpers'
 
 test('public smoke: home and jobs routes load', async ({ page }, testInfo) => {
   await mockPublicApi(page)
@@ -728,10 +728,12 @@ test('public smoke: company page report submits a reason with its section and ex
   await dialog.getByRole('button', { name: 'Gửi báo cáo' }).click()
   await expect(dialog.getByText('Chọn lý do báo cáo.')).toBeVisible()
   await dialog.getByRole('radio', { name: 'Mạo danh doanh nghiệp khác' }).check()
-  await dialog.getByRole('combobox', { name: 'Phần thông tin liên quan' }).click()
+  const section = dialog.getByRole('combobox', { name: 'Phần thông tin liên quan' })
+  await section.click()
   const sectionOptions = page.locator('.ant-select-item-option-content')
+  await expect(sectionOptions.filter({ hasText: 'Thông tin chung' })).toBeVisible()
   await expect(sectionOptions.filter({ hasText: 'Chia sẻ công ty' })).toHaveCount(0)
-  await sectionOptions.filter({ hasText: 'Thông tin chung' }).click()
+  await chooseSelectOption(page, section, 'Thông tin chung')
   await dialog.getByRole('textbox', { name: 'Mô tả chi tiết' }).fill('Trang dùng tên và logo của doanh nghiệp khác.')
   await expectNoHorizontalOverflow(page)
   await dialog.getByRole('button', { name: 'Gửi báo cáo' }).click()

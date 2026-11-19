@@ -58,6 +58,14 @@ function renderPage(initialEntry = '/tuyendung/app/campaigns') {
   )
 }
 
+function findRowNow(publicId) {
+  const row = document.querySelector(`tr[data-row-key="${publicId}"]`)
+  if (!row) throw new Error(`Không thấy dòng chiến dịch ${publicId}`)
+  return row
+}
+
+const findRow = (publicId) => waitFor(() => findRowNow(publicId))
+
 describe('CampaignList', () => {
   beforeEach(() => {
     readinessState.canAccessCandidateData = true
@@ -91,15 +99,19 @@ describe('CampaignList', () => {
   it('shows one next action per campaign and the derived headcount', async () => {
     renderPage()
 
-    expect((await screen.findAllByText('2 tin tuyển dụng')).length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Cần tuyển 4 người').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('01/12/2026 đến 31/12/2026').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Khi kích hoạt đến tuyển liên tục').length).toBeGreaterThan(0)
-    expect(screen.getAllByRole('link', { name: 'Xem 3 CV mới' })[0])
+    // Scope queries to a table row: role queries over the whole antd Table
+    // compute an accessible name for every node and dominate the test time.
+    const live = within(await findRow('camp_live'))
+    const draft = within(findRowNow('camp_draft'))
+    expect(live.getByText('2 tin tuyển dụng')).toBeInTheDocument()
+    expect(live.getByText('Cần tuyển 4 người')).toBeInTheDocument()
+    expect(live.getByText('01/12/2026 đến 31/12/2026')).toBeInTheDocument()
+    expect(draft.getByText('Khi kích hoạt đến tuyển liên tục')).toBeInTheDocument()
+    expect(live.getByRole('link', { name: 'Xem 3 CV mới' }))
       .toHaveAttribute('href', '/tuyendung/app/campaigns/camp_live?active_tab=apply_cv')
-    expect(screen.getAllByRole('link', { name: 'Thiết lập' })[0])
+    expect(draft.getByRole('link', { name: 'Thiết lập' }))
       .toHaveAttribute('href', '/tuyendung/app/campaigns/camp_draft/setup')
-    expect(screen.getAllByRole('link', { name: 'Tuyển Frontend' })[0])
+    expect(live.getByRole('link', { name: 'Tuyển Frontend' }))
       .toHaveAttribute('href', '/tuyendung/app/campaigns/camp_live')
   })
 
@@ -107,10 +119,11 @@ describe('CampaignList', () => {
     readinessState.canAccessCandidateData = false
     renderPage()
 
-    expect((await screen.findAllByText('3 ứng viên')).length).toBeGreaterThan(0)
-    expect(screen.queryByTitle('Nguyễn Minh Anh')).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Xem 3 CV mới' })).not.toBeInTheDocument()
-    expect(screen.getAllByRole('link', { name: 'Mở' })[0])
+    const live = within(await findRow('camp_live'))
+    expect(live.getByText('3 ứng viên')).toBeInTheDocument()
+    expect(live.queryByTitle('Nguyễn Minh Anh')).not.toBeInTheDocument()
+    expect(live.queryByRole('link', { name: 'Xem 3 CV mới' })).not.toBeInTheDocument()
+    expect(live.getByRole('link', { name: 'Mở' }))
       .toHaveAttribute('href', '/tuyendung/app/campaigns/camp_live')
   })
 })

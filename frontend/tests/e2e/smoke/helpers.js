@@ -118,3 +118,16 @@ export async function selectTab(page, name) {
     await expect(tab).toHaveAttribute('aria-selected', 'true', { timeout: 1_000 })
   }).toPass()
 }
+
+// Same failure mode for Ant Design selects: the option click can land while the
+// dropdown is still animating, leaving the field empty. Retry until the select
+// itself displays the chosen option instead of trusting the click.
+export async function chooseSelectOption(page, combobox, optionText) {
+  const select = combobox.locator('xpath=ancestor::div[contains(concat(" ", @class, " "), " ant-select ")][1]')
+  const option = page.locator('.ant-select-dropdown:visible .ant-select-item-option', { hasText: optionText })
+  await expect(async () => {
+    if (!(await option.isVisible())) await combobox.click()
+    await option.click({ timeout: 2_000 })
+    await expect(select).toContainText(optionText, { timeout: 1_000 })
+  }).toPass()
+}

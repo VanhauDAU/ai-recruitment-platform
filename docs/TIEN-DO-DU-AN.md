@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Tối ưu và chuẩn hóa test/CI](#tối-ưu-và-chuẩn-hóa-testci-2026-11-19) | 🟨 GĐ0 đang làm trên nhánh `fix/ci-unblock` |
 | [Tái cấu trúc backend (ADR-0022, GĐ0–GĐ6)](#tái-cấu-trúc-backend-adr-0022-2026-11-19) | ✅ Gộp vào `dev` (#248–#255, 19/11); sau khi pull chạy `scripts/reset_local_db.sh` trước khi start backend |
 | [Tổ chức lại cấu trúc thư mục frontend](#tổ-chức-lại-cấu-trúc-thư-mục-frontend-2026-11-19) | ✅ Gộp vào `dev` (#247) |
 | [Mô hình hóa yêu cầu cho báo cáo (mục 3.2)](#mô-hình-hóa-yêu-cầu-cho-báo-cáo-mục-32-2026-11-18) | ✅ Nguồn sơ đồ trong `docs/01-phan-tich/mo-hinh-hoa-yeu-cau/` |
@@ -31,6 +32,20 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Tối ưu và chuẩn hóa test/CI (2026-11-19)
+
+CI mỗi PR mất 12–18 phút và đỏ ở gần một nửa số lần chạy (17/40 run gần nhất của
+mỗi workflow). Mục tiêu: wall-clock mỗi PR ≤ 8 phút, mỗi job ≤ 5 phút, CI xanh ổn
+định, có chuẩn thời gian và chất lượng test được CI kiểm. Mỗi GĐ một PR về `dev`.
+
+| GĐ | Nội dung | Trạng thái |
+| --- | --- | --- |
+| GĐ0 | Gỡ chặn: test chậm/flaky (CampaignList, báo cáo công ty), watchdog faulthandler làm sập worker pytest, timeout job backend 50 → 15 phút | 🟨 Nhánh `fix/ci-unblock` |
+| GĐ1 | DB test dựng một lần rồi clone theo worker xdist (setup ~90s/worker) | ⬜ |
+| GĐ2 | Viết lại migration test | ➖ Bỏ — GĐ6 tái cấu trúc backend đã reset baseline và gỡ test migration lịch sử |
+| GĐ3 | Frontend: cache Playwright, tag `@responsive` (luồng chung chỉ desktop), unit test logic chạy môi trường node | ⬜ |
+| GĐ4 | Chuẩn kiểm thử + `scripts/check_test_budgets.py` kiểm ngân sách thời gian trên CI | ⬜ |
 
 ## Tái cấu trúc backend (ADR-0022, 2026-11-19)
 
