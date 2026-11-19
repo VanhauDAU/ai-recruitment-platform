@@ -24,9 +24,11 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import {
   adminAccountKeys,
   adminTierLabel,
+  NextActionLabel,
+  recruiterNextAction,
   formatAdminDate,
+  AccountActivityTimeline,
   getAdminAccount,
-  getAdminAccountActivity,
   getAdminAccountProfile,
   getAdminAccountResource,
   getAdminAccountSessions,
@@ -48,6 +50,7 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
 import AccountProfilePanel from './AccountProfilePanel'
+import EmployerOverview from './EmployerOverview'
 import '../admin-account-detail.css'
 import { resolveActiveAdminAccountTab } from '../model/tab-state'
 
@@ -245,57 +248,6 @@ function SecurityPanel({
   )
 }
 
-function ActivityPanel({ publicId }) {
-  const [page, setPage] = useState(1)
-  const query = useQuery({
-    queryKey: adminAccountKeys.activity(publicId, page),
-    queryFn: ({ signal }) => getAdminAccountActivity(publicId, page, { signal }),
-  })
-  return (
-    <Table
-      rowKey="public_id"
-      loading={query.isLoading}
-      dataSource={query.data?.results || []}
-      scroll={{ x: 800 }}
-      pagination={{
-        current: page,
-        pageSize: 20,
-        total: query.data?.count || 0,
-        showSizeChanger: false,
-        onChange: setPage,
-      }}
-      columns={[
-        { title: 'Thời gian', dataIndex: 'created_at', render: (value) => formatAdminDate(value) },
-        {
-          title: 'Hành động',
-          dataIndex: 'action',
-          render: (value) => ({
-            update_account_profile: 'Cập nhật hồ sơ',
-            change_account_status: 'Thay đổi trạng thái tài khoản',
-            revoke_account_sessions: 'Thu hồi phiên đăng nhập',
-            reveal_account_sensitive_profile: 'Xem dữ liệu nhạy cảm',
-            view_employer_verification_document: 'Xem giấy tờ xác thực',
-          })[value] || 'Thao tác quản trị',
-        },
-        {
-          title: 'Người thực hiện',
-          key: 'actor',
-          render: (_, row) => row.actor_email || row.actor_identifier || 'Hệ thống',
-        },
-        {
-          title: 'Đối tượng',
-          dataIndex: 'target_type',
-          render: (value) => ({
-            user: 'Tài khoản',
-            employer_verification: 'Hồ sơ xác thực NTD',
-            employer_verification_document: 'Giấy tờ xác thực',
-          })[value] || 'Dữ liệu quản trị',
-        },
-      ]}
-    />
-  )
-}
-
 function Overview({ account }) {
   const verification = account.context?.verification
   return (
@@ -332,7 +284,6 @@ function Overview({ account }) {
             .map(([key, value]) => (
               <div key={key}>
                 <span>{({
-                  activity: 'Sự kiện audit',
                   cvs: 'CV',
                   applications: 'Đơn ứng tuyển',
                   consents: 'Quyết định consent',
@@ -524,7 +475,16 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
       isSuperuser={isSuperuser}
     />
   )
-  const activity = <ActivityPanel publicId={publicId} />
+  const activity = <AccountActivityTimeline publicId={publicId} />
+  const openTab = (tab, params = {}) => {
+    const next = new URLSearchParams(searchParams)
+    if (tab === 'overview') next.delete('tab')
+    else next.set('tab', tab)
+    if (tab !== 'verification') next.delete('company_update')
+    if (tab !== 'activity') next.delete('activity_category')
+    Object.entries(params).forEach(([key, value]) => next.set(key, value))
+    setSearchParams(next)
+  }
   const tabs = (() => {
     if (!account) return []
     if (account.role === 'candidate') {
@@ -532,9 +492,18 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
     }
     if (account.role === 'employer') {
       return [
-        { key: 'overview', label: 'Tổng quan' },
-        { key: 'profile', label: 'Hồ sơ NTD', children: profilePanel },
-        { key: 'company', label: 'Công ty', children: companyPanel },
+        {
+          key: 'overview',
+          label: 'Tổng quan',
+          // The hero already has "Sửa hồ sơ", so the overview profile has no edit button.
+          children: (
+            <EmployerOverview
+              account={account}
+              profilePanel={<AccountProfilePanel publicId={publicId} account={account} />}
+              onOpenTab={openTab}
+            />
+          ),
+        },
         {
           key: 'verification',
           label: 'Xác thực',
@@ -547,13 +516,14 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
             />
           ),
         },
+        { key: 'company', label: 'Công ty', children: companyPanel },
         {
           key: 'recruitment',
-          label: 'Hoạt động tuyển dụng',
+          label: 'Tuyển dụng',
           children: <EmployerRecruitment publicId={publicId} />,
         },
         { key: 'security', label: 'Bảo mật', children: security },
-        { key: 'activity', label: 'Nhật ký hoạt động', children: activity },
+        { key: 'activity', label: 'Nhật ký', children: activity },
       ]
     }
     return [
@@ -563,8 +533,9 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
     ]
   })()
   const currentTabs = account ? tabs.map((item) => (
-    item.key === 'overview' ? { ...item, children: <Overview account={account} /> } : item
+    item.key === 'overview' && !item.children ? { ...item, children: <Overview account={account} /> } : item
   )) : tabs
+  const nextAction = account?.role === 'employer' ? recruiterNextAction(account) : null
   const validActiveTab = resolveActiveAdminAccountTab(currentTabs, activeTab)
   const canonicalScope = account?.role === 'employer' ? 'recruiters' : 'accounts'
   const currentScope = routeScope === 'recruiters' ? 'recruiters' : 'accounts'
@@ -616,21 +587,26 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
   }
 
   return (
-    <div className="space-y-5">
-      <Button icon={<ArrowLeftOutlined />} onClick={() => navigate(backTarget)}>
+    <div className="account-detail">
+      <Button
+        className="account-detail__back"
+        icon={<ArrowLeftOutlined />}
+        onClick={() => navigate(backTarget)}
+        size="small"
+        type="text"
+      >
         {backLabel}
       </Button>
       <section className="account-detail-hero">
         <div className="account-detail-hero__identity">
-          <Avatar size={72} src={account.avatar_url || undefined} icon={<UserOutlined />} />
+          <Avatar size={48} src={account.avatar_url || undefined} icon={<UserOutlined />} />
           <div className="min-w-0">
-            <Typography.Title level={2} ellipsis className="!mb-1 !text-2xl">
-              {account.full_name || 'Chưa cập nhật họ tên'}
-            </Typography.Title>
-            <Typography.Text type="secondary" ellipsis className="!block">
-              {account.email}
-            </Typography.Text>
-            <Space wrap className="mt-3">
+            <h1 className="account-detail-hero__name">{account.full_name || 'Chưa cập nhật họ tên'}</h1>
+            <p className="account-detail-hero__contact">
+              <span>{account.email}</span>
+              {account.phone && <span>{account.phone}</span>}
+            </p>
+            <Space wrap size={[6, 6]} className="account-detail-hero__tags">
               <StatusTag role value={account.role} />
               {account.role === 'admin' && (
                 <Tag color={account.admin_access?.is_superuser ? 'gold' : 'default'}>
@@ -661,17 +637,21 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
           Sửa hồ sơ
         </Button>
       </section>
+      {nextAction && nextAction.tone !== 'none' && (
+        <div className={`account-detail-next account-detail-next--${nextAction.tone}`} role="status">
+          <NextActionLabel action={nextAction} prefix="Việc cần làm: " />
+          {nextAction.cta && validActiveTab !== nextAction.cta.tab && (
+            <Button size="small" type="primary" onClick={() => openTab(nextAction.cta.tab, nextAction.cta.params)}>
+              {nextAction.cta.label}
+            </Button>
+          )}
+        </div>
+      )}
       <section className="admin-panel account-detail-tabs">
         <Tabs
           activeKey={validActiveTab}
           items={currentTabs}
-          onChange={(tab) => {
-            const next = new URLSearchParams(searchParams)
-            if (tab === 'overview') next.delete('tab')
-            else next.set('tab', tab)
-            if (tab !== 'verification') next.delete('company_update')
-            setSearchParams(next)
-          }}
+          onChange={(tab) => openTab(tab)}
           tabBarGutter={22}
         />
       </section>

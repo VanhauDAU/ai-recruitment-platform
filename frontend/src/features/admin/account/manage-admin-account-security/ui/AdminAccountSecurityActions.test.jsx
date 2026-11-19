@@ -15,9 +15,6 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@/entities/account/admin-account', () => ({
-  AccountVerificationSummary: ({ account }) => (
-    <div>{`Đối chiếu: ${account.full_name} · ${account.email} · ${account.public_id}`}</div>
-  ),
   adminAccountKeys: { all: ['admin-accounts'] },
   changeAccountStatus: mocks.changeAccountStatus,
   getAccountResourceHoldImpact: mocks.getAccountResourceHoldImpact,
@@ -62,9 +59,12 @@ describe('AdminAccountSecurityActions', () => {
     mocks.changeAccountStatus.mockResolvedValue({})
   })
 
-  it('shows explicit actions and requires evidence before banning', async () => {
+  it('previews the ban as the dialog opens and confirms in one click', async () => {
     mocks.getAccountStatusImpact.mockResolvedValue({
+      before: { status: 'active' },
+      after: { status: 'banned' },
       active_session_count: 2,
+      sessions_will_be_revoked: true,
       effects: {
         campaigns: [{ status: 'active', policy_hold: '', count: 1 }],
         jobs: [{ status: 'active', policy_hold: '', count: 3 }],
@@ -79,57 +79,65 @@ describe('AdminAccountSecurityActions', () => {
 
     expect(screen.getByRole('button', { name: /Tạm khóa tài khoản/ })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /Cấm tài khoản/ }))
-    expect(screen.getByText(
-      'Đối chiếu: Nguyễn Minh Anh · minhanh@example.com · usr-status-1',
-    )).toBeInTheDocument()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Xem tác động trước' }))
-    expect(await screen.findByText('Chọn nhóm vi phạm.')).toBeInTheDocument()
-    expect(mocks.getAccountStatusImpact).not.toHaveBeenCalled()
-    await waitFor(() => {
-      expect(
-        within(screen.getByRole('dialog')).getByRole(
-          'button',
-          { name: /Xem tác động trước/ },
-        ),
-      ).toBeEnabled()
-    })
-
-    fireEvent.mouseDown(screen.getByLabelText('Nhóm vi phạm'))
-    fireEvent.click(await screen.findByText('Vi phạm chính sách'))
-    fireEvent.change(screen.getByLabelText('Lý do xử lý'), {
-      target: { value: 'Cấm tài khoản do vi phạm quy định nền tảng.' },
-    })
-    fireEvent.change(screen.getByLabelText('Bằng chứng xác minh / xử lý'), {
-      target: { value: 'Ticket SEC-123 đã được đối chiếu bởi bộ phận an toàn.' },
-    })
-    fireEvent.click(
-      within(screen.getByRole('dialog')).getByRole(
-        'button',
-        { name: /Xem tác động trước/ },
-      ),
-    )
-
     expect(await screen.findByText('Khôi phục nhiều bước.')).toBeInTheDocument()
     expect(mocks.getAccountStatusImpact).toHaveBeenCalledWith('usr-status-1', {
       status: 'banned',
-      reason: 'Cấm tài khoản do vi phạm quy định nền tảng.',
-      enforcement_evidence: 'Ticket SEC-123 đã được đối chiếu bởi bộ phận an toàn.',
-      violation_category: 'policy',
+      reason: '',
+      enforcement_evidence: '',
+      violation_category: '',
     })
+    expect(screen.getByText('Đang hoạt động → Đã cấm')).toBeInTheDocument()
+    const dialog = screen.getByRole('dialog')
 
-    fireEvent.click(
-      within(screen.getByRole('dialog')).getByRole('button', { name: /Cấm tài khoản/ }),
-    )
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cấm tài khoản' }))
+    expect(await screen.findByText('Chọn nhóm vi phạm.')).toBeInTheDocument()
+    expect(mocks.changeAccountStatus).not.toHaveBeenCalled()
+
+    fireEvent.mouseDown(screen.getByLabelText('Nhóm vi phạm'))
+    fireEvent.click(await screen.findByText('Vi phạm chính sách'))
+    fireEvent.click(screen.getByText('Giả mạo doanh nghiệp'))
+    fireEvent.change(screen.getByLabelText('Bằng chứng xử lý'), {
+      target: { value: 'Ticket SEC-123 đã được đối chiếu bởi bộ phận an toàn.' },
+    })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cấm tài khoản' }))
+
     await waitFor(() => {
       expect(mocks.changeAccountStatus).toHaveBeenCalledWith(
         'usr-status-1',
-        expect.objectContaining({
+        {
           status: 'banned',
+          reason: 'Giả mạo doanh nghiệp',
+          enforcement_evidence: 'Ticket SEC-123 đã được đối chiếu bởi bộ phận an toàn.',
           violation_category: 'policy',
-        }),
+        },
         'impact-ban',
       )
+    })
+    expect(mocks.getAccountStatusImpact).toHaveBeenLastCalledWith(
+      'usr-status-1',
+      expect.objectContaining({ reason: 'Giả mạo doanh nghiệp', violation_category: 'policy' }),
+    )
+    expect(mocks.message.success).toHaveBeenCalled()
+  })
+
+  it('stops for a second look when the impact changed after it was shown', async () => {
+    mocks.getAccountSessionsImpact
+      .mockResolvedValueOnce({ active_session_count: 1, can_apply: true, impact_token: 'first' })
+      .mockResolvedValue({ active_session_count: 3, can_apply: true, impact_token: 'second' })
+    mocks.revokeAccountSessions.mockResolvedValue({})
+    renderActions()
+
+    fireEvent.click(screen.getByRole('button', { name: /Thu hồi mọi phiên/ }))
+    expect(await screen.findByText('1')).toBeInTheDocument()
+    fireEvent.click(screen.getByText('Nghi lộ mật khẩu'))
+    const submit = within(screen.getByRole('dialog')).getByRole('button', { name: 'Thu hồi phiên' })
+    fireEvent.click(submit)
+
+    expect(await screen.findByText('Tác động vừa thay đổi. Kiểm tra lại rồi xác nhận.')).toBeInTheDocument()
+    expect(mocks.revokeAccountSessions).not.toHaveBeenCalled()
+    fireEvent.click(submit)
+    await waitFor(() => {
+      expect(mocks.revokeAccountSessions).toHaveBeenCalledWith('usr-status-1', 'Nghi lộ mật khẩu', 'second')
     })
   })
 

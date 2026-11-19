@@ -5,7 +5,7 @@ import {
   RightOutlined,
 } from '@ant-design/icons'
 import { Link } from 'react-router'
-import { formatAge } from '@/entities/dashboard/admin-dashboard'
+import { formatElapsed } from '@/shared/lib/date-time'
 import { formatNumber } from '../model/dashboard-model'
 
 function QueueRow({ item, now }) {
@@ -24,7 +24,7 @@ function QueueRow({ item, now }) {
           <span className="admin-home-queue__age-text">
             {item.overdue > 0
               ? <><ExclamationCircleFilled aria-hidden="true" /> {formatNumber(item.overdue)} quá hạn</>
-              : <><ClockCircleOutlined aria-hidden="true" /> {item.oldest_at ? `Chờ lâu nhất ${formatAge(item.oldest_at, now)}` : 'Vừa gửi'}</>}
+              : <><ClockCircleOutlined aria-hidden="true" /> {item.oldest_at ? `Chờ lâu nhất ${formatElapsed(item.oldest_at, now)}` : 'Vừa gửi'}</>}
           </span>
           <span
             className="admin-home-queue__meter"

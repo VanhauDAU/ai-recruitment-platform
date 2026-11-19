@@ -2,8 +2,9 @@ import { BellOutlined, CheckCircleFilled, ExclamationCircleFilled } from '@ant-d
 import { Badge, Button, Popover } from 'antd'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
+import { formatElapsed } from '@/shared/lib/date-time'
 import { adminPath } from '@/shared/config/portals'
-import { buildQueues, formatAge } from '@/entities/dashboard/admin-dashboard'
+import { buildQueues } from '@/entities/dashboard/admin-dashboard'
 import './admin-queue-bell.css'
 import { getIntlLocale } from '@/shared/config/i18n'
 
@@ -38,7 +39,7 @@ export default function AdminQueueBell({ summary }) {
                   <span className="admin-bell__item-meta">
                     {item.overdue > 0
                       ? <><ExclamationCircleFilled aria-hidden="true" /> {formatNumber(item.overdue)} quá hạn</>
-                      : item.oldest_at && `Chờ lâu nhất ${formatAge(item.oldest_at, now)}`}
+                      : item.oldest_at && `Chờ lâu nhất ${formatElapsed(item.oldest_at, now)}`}
                   </span>
                 </span>
                 <strong>{formatNumber(item.count)}</strong>

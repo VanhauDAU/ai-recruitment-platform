@@ -10,9 +10,27 @@ from ...models import (
 MANAGED_ACCOUNT_STATUSES = (User.Status.ACTIVE, User.Status.INACTIVE, User.Status.BANNED)
 
 
+def _strict_reason():
+    return serializers.CharField(max_length=500, trim_whitespace=True)
+
+
+def _preview_reason():
+    """Previews run as the dialog opens, before a reason is typed.
+
+    The reason is part of the signed impact payload, so a blank-reason token can
+    never confirm a different reason; every confirm serializer re-declares the
+    strict field.
+    """
+    return serializers.CharField(
+        max_length=500, trim_whitespace=True, allow_blank=True, required=False, default=''
+    )
+
+
 class AccountStatusImpactSerializer(serializers.Serializer):
+    strict_audit = False
+
     status = serializers.ChoiceField(choices=MANAGED_ACCOUNT_STATUSES)
-    reason = serializers.CharField(max_length=500, trim_whitespace=True)
+    reason = _preview_reason()
     enforcement_evidence = serializers.CharField(
         min_length=20,
         max_length=500,
@@ -29,6 +47,8 @@ class AccountStatusImpactSerializer(serializers.Serializer):
     )
 
     def validate(self, attrs):
+        if not self.strict_audit:
+            return attrs
         target = self.context.get('target')
         requires_enforcement = attrs['status'] == User.Status.BANNED or (
             target is not None and target.status == User.Status.BANNED
@@ -49,19 +69,26 @@ class AccountStatusImpactSerializer(serializers.Serializer):
 
 
 class AccountStatusChangeSerializer(AccountStatusImpactSerializer):
+    strict_audit = True
+
+    reason = _strict_reason()
     impact_token = serializers.CharField(trim_whitespace=True)
 
 
 class AccountResourceHoldImpactSerializer(serializers.Serializer):
-    reason = serializers.CharField(max_length=500, trim_whitespace=True)
+    reason = _preview_reason()
+    enforcement_evidence = serializers.CharField(
+        max_length=500, trim_whitespace=True, allow_blank=True, required=False, default=''
+    )
+
+
+class AccountResourceHoldChangeSerializer(AccountResourceHoldImpactSerializer):
+    reason = _strict_reason()
     enforcement_evidence = serializers.CharField(
         min_length=20,
         max_length=500,
         trim_whitespace=True,
     )
-
-
-class AccountResourceHoldChangeSerializer(AccountResourceHoldImpactSerializer):
     impact_token = serializers.CharField(trim_whitespace=True)
 
 
@@ -93,18 +120,22 @@ class AccountResourceHoldImpactResponseSerializer(serializers.Serializer):
 
 
 class ReasonSerializer(serializers.Serializer):
-    reason = serializers.CharField(max_length=500, trim_whitespace=True)
+    reason = _strict_reason()
+
+
+class ReasonPreviewSerializer(serializers.Serializer):
+    reason = _preview_reason()
 
 
 class RevokeSessionsSerializer(ReasonSerializer):
     impact_token = serializers.CharField(trim_whitespace=True)
 
 
-class EmployerCompanyUnlinkImpactSerializer(ReasonSerializer):
+class EmployerCompanyUnlinkImpactSerializer(ReasonPreviewSerializer):
     pass
 
 
-class EmployerCompanyUnlinkConfirmSerializer(EmployerCompanyUnlinkImpactSerializer):
+class EmployerCompanyUnlinkConfirmSerializer(ReasonSerializer):
     impact_token = serializers.CharField(trim_whitespace=True)
 
 
@@ -130,6 +161,7 @@ class AccountRecoverySerializer(ReasonSerializer):
 
 
 class AccountEmailImpactSerializer(AccountRecoverySerializer):
+    reason = _preview_reason()
     email = serializers.EmailField()
 
     def validate_email(self, value):
@@ -147,4 +179,5 @@ class AccountEmailImpactSerializer(AccountRecoverySerializer):
 
 
 class AccountEmailChangeSerializer(AccountEmailImpactSerializer):
+    reason = _strict_reason()
     impact_token = serializers.CharField(trim_whitespace=True)

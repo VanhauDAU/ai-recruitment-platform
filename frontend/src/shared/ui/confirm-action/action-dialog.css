@@ -1,0 +1,195 @@
+/* Shared processing dialog (ActionDialog, ReasonField, ImpactFacts).
+   Loaded only by admin feature chunks, never by the initial bundle. */
+.action-dialog .ant-modal-container {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 14px;
+}
+.action-dialog .ant-modal-header {
+  margin: 0;
+  padding: 18px 52px 0 20px;
+}
+.action-dialog .ant-modal-close {
+  top: 14px;
+  inset-inline-end: 14px;
+}
+.action-dialog__title {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #0f172a;
+  text-wrap: balance;
+}
+.action-dialog__target {
+  margin: 2px 0 0;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  color: #64748b;
+  overflow-wrap: anywhere;
+}
+.action-dialog__body {
+  display: grid;
+  gap: 14px;
+  max-height: min(68vh, 640px);
+  padding: 16px 20px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.action-dialog__body .ant-form-item {
+  margin-bottom: 0;
+}
+.action-dialog__lead {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #475569;
+}
+.action-dialog__fields {
+  display: grid;
+  gap: 14px;
+}
+.action-dialog__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+.action-dialog__hint {
+  margin-inline-end: auto;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+/* Reason field: preset chips above an editable textarea. */
+.reason-field__presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.reason-field__preset {
+  min-height: 30px;
+  padding: 4px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #fff;
+  color: #334155;
+  font: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.3;
+  text-align: start;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s, color 0.15s;
+  touch-action: manipulation;
+}
+.reason-field__preset:hover {
+  border-color: var(--admin-primary, #00b14f);
+  color: var(--admin-primary-hover, #008f40);
+}
+.reason-field__preset[aria-pressed='true'] {
+  border-color: var(--admin-primary, #00b14f);
+  background: var(--admin-primary-soft, #e6f8ee);
+  color: var(--admin-primary-hover, #008f40);
+}
+.reason-field__preset:focus-visible {
+  outline: 2px solid var(--admin-primary, #00b14f);
+  outline-offset: 2px;
+}
+
+/* Impact: one-line facts, then blockers and an optional disclosure. */
+.impact-facts {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+.impact-facts__heading {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #334155;
+}
+.impact-facts__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px 16px;
+  margin: 0;
+}
+.impact-facts__item {
+  min-width: 0;
+}
+.impact-facts__item dt {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+.impact-facts__item dd {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.impact-facts__item--warning dd { color: #b77900; }
+.impact-facts__item--danger dd { color: #d03b3b; }
+.impact-facts__item--success dd { color: #0a8a0a; }
+.impact-facts__notes {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8125rem;
+  color: #475569;
+}
+.impact-facts details summary {
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--admin-primary-hover, #008f40);
+}
+.impact-facts details[open] summary {
+  margin-bottom: 8px;
+}
+
+@media (max-width: 639px) {
+  .action-dialog-root .ant-modal-wrap {
+    display: flex;
+    align-items: flex-end;
+  }
+  .action-dialog.ant-modal {
+    width: 100% !important;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    top: 0;
+  }
+  .action-dialog .ant-modal-container {
+    display: flex;
+    flex-direction: column;
+    max-height: 92dvh;
+    border-radius: 16px 16px 0 0;
+  }
+  .action-dialog__body {
+    max-height: none;
+    flex: 1;
+  }
+  .action-dialog__footer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+  .action-dialog__hint {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reason-field__preset { transition: none; }
+}

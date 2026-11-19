@@ -1,0 +1,204 @@
+/* Account activity timeline (admin detail page, overview, quick view). Lazy. */
+.activity-timeline {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.activity-timeline__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.activity-timeline__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 4px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #fff;
+  color: #334155;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s, color 0.15s;
+  touch-action: manipulation;
+}
+.activity-timeline__chip:hover { border-color: #94a3b8; }
+.activity-timeline__chip[aria-pressed='true'] {
+  border-color: var(--admin-primary, #00b14f);
+  background: var(--admin-primary-soft, #e6f8ee);
+  color: var(--admin-primary-hover, #008f40);
+}
+.activity-timeline__chip:focus-visible {
+  outline: 2px solid var(--admin-primary, #00b14f);
+  outline-offset: 2px;
+}
+.activity-timeline__count {
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.activity-timeline__chip[aria-pressed='true'] .activity-timeline__count {
+  background: #fff;
+  color: var(--admin-primary-hover, #008f40);
+}
+
+.activity-day {
+  display: grid;
+  gap: 4px;
+}
+.activity-day__label {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  padding: 6px 0;
+  background: var(--admin-surface, #fff);
+  color: #0f172a;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+.activity-day__label span {
+  color: #94a3b8;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.activity-day__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.activity-entry {
+  position: relative;
+  display: grid;
+  grid-template-columns: 44px 28px minmax(0, 1fr);
+  gap: 10px;
+  padding: 8px 0;
+}
+/* Connector between dots of the same day. */
+.activity-entry:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 38px;
+  bottom: -8px;
+  left: 67px;
+  width: 1px;
+  background: #e2e8f0;
+}
+.activity-entry__time {
+  padding-top: 5px;
+  color: #475569;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.activity-entry__dot {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 13px;
+}
+.activity-entry__dot--security { background: #eef4fc; color: #2a78d6; }
+.activity-entry__dot--verification { background: var(--admin-primary-soft, #e6f8ee); color: #0a8a0a; }
+.activity-entry__dot--company { background: #f5f3ff; color: #6d28d9; }
+.activity-entry__dot--recruitment { background: #fff7e6; color: #b77900; }
+.activity-entry--danger .activity-entry__dot { background: #fdf0f0; color: #d03b3b; }
+
+.activity-entry__main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.activity-entry__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+}
+.activity-entry__head strong {
+  color: #0f172a;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.activity-entry--danger .activity-entry__head strong { color: #b42318; }
+.activity-entry--warning .activity-entry__head strong { color: #8a5a00; }
+.activity-entry__category {
+  color: #94a3b8;
+  font-size: 0.75rem;
+}
+.activity-entry__summary {
+  margin: 0;
+  color: #475569;
+  font-size: 0.8125rem;
+  overflow-wrap: anywhere;
+}
+.activity-entry__actor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 0;
+  color: #64748b;
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+}
+.activity-entry__badge {
+  padding: 0 6px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: #475569;
+  font-weight: 600;
+}
+.activity-entry__badge--admin { background: #eef4fc; color: #1d5fae; }
+.activity-entry__badge--self { background: var(--admin-primary-soft, #e6f8ee); color: #08702f; }
+.activity-entry__details summary {
+  width: fit-content;
+  margin-top: 2px;
+  color: var(--admin-primary-hover, #008f40);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.activity-entry__details dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 2px 12px;
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #f8fafc;
+  font-size: 0.75rem;
+}
+.activity-entry__details dl div { display: contents; }
+.activity-entry__details dt { color: #64748b; }
+.activity-entry__details dd { margin: 0; color: #0f172a; overflow-wrap: anywhere; }
+
+.activity-timeline--compact { gap: 8px; }
+.activity-timeline--compact .activity-day__label { position: static; padding: 0; font-size: 0.8125rem; }
+
+@media (max-width: 479px) {
+  .activity-entry { grid-template-columns: 40px 24px minmax(0, 1fr); gap: 8px; }
+  .activity-entry__dot { width: 24px; height: 24px; font-size: 11px; }
+  .activity-entry:not(:last-child)::after { left: 59px; top: 34px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .activity-timeline__chip { transition: none; }
+}

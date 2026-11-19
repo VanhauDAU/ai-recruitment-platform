@@ -125,6 +125,33 @@ describe('AdminAccountManagement overview', () => {
     expect(screen.getByLabelText('Tổng quan nhà tuyển dụng')).toBeInTheDocument()
   })
 
+  it('turns a segment tile into the matching server filter and switches to the list', async () => {
+    accountApi.getAdminAccountSummary.mockResolvedValue({
+      scope: 'recruiters',
+      totals: { total: 40, restricted: 3 },
+      companyless: 5,
+      next_actions: { admin_queue: 7, verification_overdue: 2, awaiting_resubmission: 4 },
+      verification: { pending: 6 },
+    })
+    renderWidget({ scope: 'recruiters', initialEntry: '/?tab=verification&page_size=40' })
+
+    const tile = (await screen.findByText('Cần admin duyệt')).closest('button')
+    await waitFor(() => expect(tile).toHaveTextContent('7'))
+    tile.click()
+
+    await waitFor(() => expect(accountApi.getAdminAccounts).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scope: 'recruiters',
+        next_action: 'admin_queue',
+        ordering: 'next_action',
+        page_size: 40,
+      }),
+      expect.anything(),
+    ))
+    expect(screen.getByRole('tab', { name: /Danh sách NTD/ })).toHaveAttribute('aria-selected', 'true')
+    expect(tile).toHaveAttribute('aria-pressed', 'true')
+  })
+
   it('opens the whole recruiter workspace to a regular admin', async () => {
     renderWidget({ isSuperuser: false, scope: 'recruiters' })
 

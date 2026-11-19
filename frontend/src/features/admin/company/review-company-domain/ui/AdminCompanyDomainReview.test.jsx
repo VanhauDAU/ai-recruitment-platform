@@ -85,19 +85,20 @@ describe('AdminCompanyDomainReview', () => {
     })
   })
 
-  it('requires a signed impact preview before applying manual approval', async () => {
+  it('previews the signed impact on open and applies manual approval in one click', async () => {
     renderReview()
 
     await userEvent.click(await screen.findByRole('button', { name: /Duyệt thủ công/ }))
+    await waitFor(() => expect(api.impact).toHaveBeenCalledWith('dmc_1', 'approve_manual', ''))
+    expect(await screen.findByText('Trạng thái hiện tại')).toBeInTheDocument()
     await userEvent.type(screen.getByLabelText('Lý do quyết định'), 'Đã đối chiếu hồ sơ pháp lý hợp lệ.')
-    await userEvent.click(screen.getByRole('button', { name: 'Xem tác động' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Duyệt domain' }))
 
-    await waitFor(() => expect(api.impact).toHaveBeenCalledWith(
+    await waitFor(() => expect(api.impact).toHaveBeenLastCalledWith(
       'dmc_1',
       'approve_manual',
       'Đã đối chiếu hồ sơ pháp lý hợp lệ.',
     ))
-    await userEvent.click(await screen.findByRole('button', { name: 'Xác nhận duyệt' }))
 
     await waitFor(() => expect(api.decide).toHaveBeenCalledWith('dmc_1', {
       action: 'approve_manual',

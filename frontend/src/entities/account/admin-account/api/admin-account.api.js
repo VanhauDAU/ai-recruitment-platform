@@ -43,11 +43,12 @@ export function getAdminAccountSessions(publicId, { signal } = {}) {
   return data(client.get(`/admin/accounts/${publicId}/sessions/`, { signal }))
 }
 
-export function getAdminAccountActivity(publicId, page = 1, { signal } = {}) {
-  return data(client.get(`/admin/accounts/${publicId}/activity/`, {
-    params: { page },
-    signal,
-  }))
+/** Merged activity timeline, newest first; `before` is the previous page's `next_cursor`. */
+export function getAdminAccountActivity(publicId, { before, category, limit } = {}, { signal } = {}) {
+  const params = Object.fromEntries(
+    Object.entries({ before, category, limit }).filter(([, value]) => value),
+  )
+  return data(client.get(`/admin/accounts/${publicId}/activity/`, { params, signal }))
 }
 
 export function getAccountStatusImpact(publicId, payload) {

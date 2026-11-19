@@ -10,6 +10,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Song ngữ vi/en cho 3 cổng (ADR-0023)](#song-ngữ-vien-cho-3-cổng-adr-0023-2026-11-19) | 🟨 GĐ0 (nền tảng + marketing NTD) trên nhánh `feat/i18n-foundation`; GĐ1–4 chưa làm |
 | [Chuẩn hóa tiêu đề trang 3 cổng](#chuẩn-hóa-tiêu-đề-trang-3-cổng-2026-11-19) | 🟨 PR #261 (nhánh `feat/page-titles`), chờ gộp |
 | [Hậu kiểm nội dung trang công ty](#hậu-kiểm-nội-dung-trang-công-ty-2026-11-19) | ✅ Gộp vào `dev` (#260) |
+| [Làm lại trang nhà tuyển dụng của admin](#làm-lại-trang-nhà-tuyển-dụng-của-admin-2026-11-19) | 🟨 PR #263 (nhánh `feat/admin-recruiter-workspace`), chờ gộp |
 | [Tối ưu và chuẩn hóa test/CI](#tối-ưu-và-chuẩn-hóa-testci-2026-11-19) | 🟨 PR #256, #257, #258, GĐ4 nhánh `docs/test-standards` — chờ gộp |
 | [Tái cấu trúc backend (ADR-0022, GĐ0–GĐ6)](#tái-cấu-trúc-backend-adr-0022-2026-11-19) | ✅ Gộp vào `dev` (#248–#255, 19/11); sau khi pull chạy `scripts/reset_local_db.sh` trước khi start backend |
 | [Tổ chức lại cấu trúc thư mục frontend](#tổ-chức-lại-cấu-trúc-thư-mục-frontend-2026-11-19) | ✅ Gộp vào `dev` (#247) |
@@ -87,6 +88,20 @@ quản trị viên bật duyệt trước.
 | Sửa lỗi kèm | Form hồ sơ không còn xoá nội dung trang đang chờ duyệt trong cùng yêu cầu; hàng đợi "Yêu cầu cập nhật công ty" chỉ đếm yêu cầu chờ quản trị viên | ✅ Xong trên nhánh |
 | Frontend NTD | Thẻ nội dung "Lưu" (đăng ngay) hoặc "Gửi duyệt" khi bị bật duyệt trước; chỉ khoá khối còn trong yêu cầu đang thẩm định | ✅ Xong trên nhánh |
 | Frontend admin | Tab "Thay đổi nội dung" ở Công ty (đếm chưa xem, so sánh trước/sau, đánh dấu đã xem hàng loạt, hoàn tác kèm lý do), tab cùng tên trong chi tiết công ty, công tắc "Bật/Tắt duyệt trước" ở tab Trang công khai | ✅ Xong trên nhánh |
+## Làm lại trang nhà tuyển dụng của admin (2026-11-19)
+
+Mục tiêu: khi số NTD lớn, admin xử lý nhanh và ít bước; giao diện gọn, đồng bộ
+dashboard admin; nhật ký hoạt động chia theo nhóm và ngày. Một PR, nhánh
+`feat/admin-recruiter-workspace`.
+
+| Phần | Nội dung |
+| --- | --- |
+| Việc cần làm | Backend tính một `next_action` cho mỗi NTD bằng SQL (quá hạn 72 giờ → chờ duyệt xác thực → cập nhật công ty → bị hạn chế → chờ NTD bổ sung → chưa liên kết công ty → chưa thiết lập → chưa nộp); lọc `next_action`/`admin_queue`, sắp xếp `ordering=next_action`, đếm trong `summary.next_actions` cùng một quy tắc |
+| Danh sách | 6 ô phân khúc kiểu dashboard (bấm = lọc, số khớp danh sách); bảng gọn còn NTD · Việc cần làm (có nút đi thẳng) · Xác thực · Công ty · Tài khoản; tìm theo tên công ty (không dấu), MST, SĐT; 20/40/60 dòng/trang; xem nhanh có việc cần làm, tóm tắt, 5 hoạt động gần đây và nút ‹ › chuyển NTD |
+| Chi tiết | Hero gọn + dải "Việc cần làm" có CTA; 6 tab (Tổng quan gộp Hồ sơ NTD, Xác thực, Công ty, Tuyển dụng, Bảo mật, Nhật ký); `?tab=profile` cũ chuyển về Tổng quan |
+| Nhật ký | `GET /admin/accounts/:id/activity/` gộp đăng nhập, thao tác admin, đổi trạng thái, xác thực, SĐT, liên kết/cập nhật công ty, hoạt động tuyển dụng; phân trang con trỏ; nhóm Bảo mật/Tài khoản/Xác thực/Công ty/Tuyển dụng có số đếm; giao diện chia theo ngày ("Hôm nay", "Hôm qua", thứ + ngày), giờ HH:mm, người thực hiện, chi tiết thu gọn. Thêm index `admin_audit_target_time_idx`, bỏ phép OR trên JSON |
+| Popup | Mẫu chung `ActionDialog` + `ReasonField` (lý do mẫu) + `ImpactFacts` + `useImpactConfirmation`: tác động tự tải khi mở, xác nhận một click; backend cho preview lý do trống, confirm vẫn bắt buộc lý do (lý do nằm trong token). Áp dụng cho khóa/cấm/thu hồi phiên, quyết định xác thực, vòng đời xác thực, giấy tờ, cập nhật công ty, gỡ liên kết, domain, đặt lại mật khẩu, đổi email |
+| Luồng duyệt | Duyệt giấy tờ đạt = 1 click (không popup); sau quyết định có "Hồ sơ tiếp theo (còn N)" đi thẳng tới ca cũ nhất kế tiếp — từ ~6+3N click và quay lại danh sách còn ~5+N |
 
 ## Tối ưu và chuẩn hóa test/CI (2026-11-19)
 

@@ -4,4 +4,4 @@ export {
   getAdminDashboard,
   getAdminQueueSummary,
 } from './api/admin-dashboard.api'
-export { QUEUE_CONFIG, buildQueues, formatAge } from './model/queues'
+export { QUEUE_CONFIG, buildQueues } from './model/queues'

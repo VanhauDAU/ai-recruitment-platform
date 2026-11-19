@@ -51,13 +51,6 @@ export const QUEUE_CONFIG = {
 
 const QUEUE_ORDER = Object.keys(QUEUE_CONFIG)
 
-export function formatAge(from, now = Date.now()) {
-  const hours = Math.max(0, (now - new Date(from).getTime()) / 36e5)
-  if (hours < 1) return 'dưới 1 giờ'
-  if (hours < 24) return `${Math.floor(hours)} giờ`
-  return `${Math.floor(hours / 24)} ngày`
-}
-
 /**
  * Pending queues sorted by urgency: overdue first, then by how much of the
  * SLA the oldest item has used. Empty queues are returned apart so the UI

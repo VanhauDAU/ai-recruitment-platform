@@ -44,9 +44,14 @@ class AdminVerificationDecisionPreviewSerializer(serializers.Serializer):
         allow_blank=True,
     )
 
+    # The preview runs as the dialog opens, before a reason is typed; the
+    # reason is signed into the token and required again on confirm.
+    require_reason = False
+
     def validate(self, attrs):
         if (
-            attrs['decision'] != EmployerVerificationCase.Status.APPROVED
+            self.require_reason
+            and attrs['decision'] != EmployerVerificationCase.Status.APPROVED
             and not attrs.get('reason', '').strip()
         ):
             raise serializers.ValidationError(
@@ -56,21 +61,24 @@ class AdminVerificationDecisionPreviewSerializer(serializers.Serializer):
 
 
 class AdminVerificationDecisionConfirmationSerializer(AdminVerificationDecisionPreviewSerializer):
+    require_reason = True
     impact_token = serializers.CharField()
 
 
 class AdminVerificationLifecyclePreviewSerializer(serializers.Serializer):
+    # Preview may run before a reason is typed; the confirm requires it.
+    reason = serializers.CharField(max_length=2000, allow_blank=True, required=False, default='')
+
+
+class AdminVerificationLifecycleConfirmationSerializer(AdminVerificationLifecyclePreviewSerializer):
     reason = serializers.CharField(max_length=2000)
+    impact_token = serializers.CharField()
 
     def validate_reason(self, value):
         value = value.strip()
         if not value:
             raise serializers.ValidationError('Nhập lý do thay đổi hiệu lực xác thực.')
         return value
-
-
-class AdminVerificationLifecycleConfirmationSerializer(AdminVerificationLifecyclePreviewSerializer):
-    impact_token = serializers.CharField()
 
 
 class AdminVerificationResubmissionUnlockSerializer(serializers.Serializer):

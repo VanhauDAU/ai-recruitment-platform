@@ -67,6 +67,36 @@ describe('VerificationDocumentBoard', () => {
     expect(onDecision).toHaveBeenCalledWith(documents[0], 'approved')
   })
 
+  it('approves a pending document in one click and shows it saving', async () => {
+    const user = userEvent.setup()
+    const onDecision = vi.fn()
+    const { rerender } = render(
+      <VerificationDocumentBoard
+        documents={documents}
+        selectedDocumentId="doc_pending"
+        canReview
+        onSelect={vi.fn()}
+        onDecision={onDecision}
+      />,
+    )
+
+    expect(screen.queryByRole('button', { name: 'Duyệt Giấy ủy quyền' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Duyệt Giấy phép kinh doanh' }))
+    expect(onDecision).toHaveBeenCalledWith(documents[0], 'approved')
+
+    rerender(
+      <VerificationDocumentBoard
+        documents={documents}
+        selectedDocumentId="doc_pending"
+        canReview
+        savingDocumentId="doc_pending"
+        onSelect={vi.fn()}
+        onDecision={onDecision}
+      />,
+    )
+    expect(screen.getByText('Đang lưu…')).toBeInTheDocument()
+  })
+
   it('does not expose status controls to a view-only actor', () => {
     render(
       <VerificationDocumentBoard
@@ -81,5 +111,6 @@ describe('VerificationDocumentBoard', () => {
     expect(screen.queryByRole('button', {
       name: 'Đổi trạng thái Giấy phép kinh doanh',
     })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Duyệt Giấy phép kinh doanh' })).not.toBeInTheDocument()
   })
 })

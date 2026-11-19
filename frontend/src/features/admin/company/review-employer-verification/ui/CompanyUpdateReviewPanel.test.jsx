@@ -18,6 +18,8 @@ vi.mock('@/entities/company/admin-employer-verification', () => ({
   adminEmployerVerificationKeys: {
     companyUpdate: (publicId) => ['admin-employer-verifications', 'company-update', publicId],
   },
+  COMPANY_UPDATE_REASONS: {},
+  DOCUMENT_REVIEW_REASONS: {},
   ...api,
 }))
 

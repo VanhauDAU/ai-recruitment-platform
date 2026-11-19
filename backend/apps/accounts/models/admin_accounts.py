@@ -26,7 +26,14 @@ class AdminAccessAuditLog(models.Model):
 
     class Meta:
         ordering = ['-created_at', '-id']
-        indexes = [models.Index(fields=['created_at'], name='admin_audit_created_idx')]
+        indexes = [
+            models.Index(fields=['created_at'], name='admin_audit_created_idx'),
+            # Per-account timeline: target_type='user' AND target_public_id=… newest first.
+            models.Index(
+                fields=['target_type', 'target_public_id', '-created_at'],
+                name='admin_audit_target_time_idx',
+            ),
+        ]
 
     def __str__(self):
         return f'{self.action}:{self.target_type}:{self.target_public_id}'

@@ -136,7 +136,14 @@ def _prepare_final_decision(
     tax_override_reason='',
     scope=None,
     enforce_current_state=True,
+    require_reason=True,
 ):
+    """Validate a final decision; previews pass ``require_reason=False``.
+
+    A preview may run before the admin has typed a reason so the impact shows
+    as soon as the dialog opens. The reason is part of the signed payload, so
+    the confirm always re-checks it and a blank-reason token cannot be reused.
+    """
     require_admin(actor)
     scope = scope or verification_snapshot_scope(case)
     if decision not in FINAL_DECISIONS:
@@ -152,7 +159,7 @@ def _prepare_final_decision(
             allowed_statuses=[EmployerVerificationCase.Status.IN_REVIEW],
         )
     reason = reason.strip()
-    if decision != EmployerVerificationCase.Status.APPROVED and not reason:
+    if require_reason and decision != EmployerVerificationCase.Status.APPROVED and not reason:
         workflow_error(
             'VERIFICATION_REASON_REQUIRED',
             'Cần nhập lý do khi yêu cầu bổ sung hoặc từ chối.',
@@ -198,7 +205,7 @@ def _prepare_final_decision(
             )
         if effective_override:
             require_admin(actor)
-            if not normalized_override_reason:
+            if require_reason and not normalized_override_reason:
                 workflow_error(
                     'TAX_OVERRIDE_REASON_REQUIRED',
                     'Cần nhập lý do override kết quả tra cứu thuế.',
@@ -277,6 +284,7 @@ def verification_decision_impact(
         reason=reason,
         tax_override=tax_override,
         tax_override_reason=tax_override_reason,
+        require_reason=False,
     )
     return {
         **{key: value for key, value in snapshot.items() if key != 'integrity_fingerprint'},

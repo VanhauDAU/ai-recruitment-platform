@@ -171,7 +171,7 @@ test('admin account management: filters, table actions and quick detail are resp
   await expect(page.getByPlaceholder('Tìm theo tên, email hoặc mã tài khoản')).toBeVisible()
   await expect(page.getByText('Nguyễn Minh Anh')).toBeVisible()
   await expect(page.getByRole('tab', { name: /Chờ xác thực NTD/ })).toHaveCount(0)
-  await page.getByRole('button', { name: 'Xem nhanh' }).click()
+  await page.getByRole('button', { name: 'Xem nhanh', exact: true }).click()
   const quickDrawer = page.getByLabel('Thông tin tài khoản')
   await expect(quickDrawer).toBeVisible()
   await expect(quickDrawer.getByText('Frontend Developer')).toBeVisible()
@@ -210,6 +210,105 @@ test('admin account management: filters, table actions and quick detail are resp
   await expect(page.getByText('company.vn', { exact: true })).toBeVisible()
   await expect(page.getByText('Công ty Domain')).toBeVisible()
   await expect(page.getByRole('button', { name: /Duyệt thủ công/ })).toBeVisible()
+  await expect(page.locator('html')).toHaveJSProperty(
+    'scrollWidth',
+    await page.locator('html').evaluate((element) => element.clientWidth),
+  )
+})
+
+const RECRUITER_ROWS = [
+  {
+    public_id: 'usr_overdue',
+    email: 'overdue@company.vn',
+    full_name: 'Trần Quá Hạn',
+    role: 'employer',
+    status: 'active',
+    email_verified: true,
+    active_session_count: 1,
+    last_activity_at: '2026-11-18T08:00:00Z',
+    date_joined: '2026-10-01T08:00:00Z',
+    context: {
+      kind: 'employer',
+      position_title: 'Trưởng phòng nhân sự',
+      company_role_label: 'Quản lý công ty',
+      phone_verified: true,
+      company: { public_id: 'com_1', name: 'Công ty Cổ phần Ánh Dương', tax_code: '***5678' },
+      verification: {
+        public_id: 'evc_1', status: 'pending', status_label: 'Chờ duyệt',
+        submitted_at: '2026-11-10T08:00:00Z', missing_step_count: 1,
+      },
+      next_action: { code: 'verification_overdue', company_update_public_id: null },
+    },
+  },
+  {
+    public_id: 'usr_waiting',
+    email: 'waiting@company.vn',
+    full_name: 'Lê Chờ Bổ Sung',
+    role: 'employer',
+    status: 'active',
+    email_verified: true,
+    active_session_count: 0,
+    last_activity_at: null,
+    date_joined: '2026-09-01T08:00:00Z',
+    context: {
+      kind: 'employer',
+      company: null,
+      verification: { public_id: null, status: 'draft', status_label: 'Chưa nộp', missing_step_count: 10 },
+      next_action: { code: 'awaiting_company', company_update_public_id: null },
+    },
+  },
+]
+
+test('admin recruiter workspace: segments, next action and quick view', { tag: '@responsive' }, async ({ page }) => {
+  const listRequests = []
+  await page.route(API_ROUTE, async (route) => {
+    const requestUrl = new URL(route.request().url())
+    const path = requestUrl.pathname
+    if (path === '/api/admin/accounts/') listRequests.push(Object.fromEntries(requestUrl.searchParams))
+    const body = path === '/api/auth/refresh/'
+      ? { access: 'e2e-access' }
+      : path === '/api/auth/me/'
+        ? { public_id: 'usr_root', email: 'root@example.com', role: 'admin', status: 'active', admin_access: { is_superuser: true } }
+        : path === '/api/admin/accounts/summary/'
+          ? {
+              scope: 'recruiters',
+              totals: { total: 2, active: 2, restricted: 0, unverified: 0 },
+              companyless: 1,
+              next_actions: { admin_queue: 1, verification_overdue: 1, awaiting_resubmission: 0 },
+              verification: { pending: 1, overdue: 1 },
+            }
+          : path === '/api/admin/accounts/'
+            ? { count: RECRUITER_ROWS.length, next: null, previous: null, results: RECRUITER_ROWS }
+            : path.endsWith('/activity/')
+              ? { results: [], next_cursor: null, category_counts: { all: 0 } }
+              : path === '/api/admin/company-domain-claims/summary/'
+                ? { total: 0, manual_pending: 0 }
+                : {}
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
+  })
+
+  await page.goto('/admin/app/recruiters')
+  const segments = page.getByRole('region', { name: 'Tổng quan nhà tuyển dụng' })
+  await expect(segments).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByPlaceholder('Tìm tên, email, công ty, MST hoặc số điện thoại…')).toBeVisible()
+  const queueTile = segments.getByRole('button', { name: /Cần admin duyệt/ })
+  await expect(queueTile).toContainText('1')
+  await queueTile.click()
+  await expect(page).toHaveURL(/next_action=admin_queue/)
+  await expect(queueTile).toHaveAttribute('aria-pressed', 'true')
+  expect(listRequests.at(-1)).toMatchObject({ next_action: 'admin_queue', ordering: 'next_action' })
+
+  const cta = page.getByRole('link', { name: 'Duyệt xác thực' }).first()
+  await expect(cta).toHaveAttribute('href', '/admin/app/recruiters/usr_overdue?tab=verification')
+  await expect(page.getByText('Hồ sơ quá hạn 72 giờ').first()).toBeVisible()
+
+  await page.getByRole('button', { name: 'Xem nhanh Trần Quá Hạn' }).click()
+  const drawer = page.getByLabel('Thông tin tài khoản')
+  await expect(drawer.getByText('Công ty Cổ phần Ánh Dương · MST ***5678')).toBeVisible()
+  await drawer.getByRole('button', { name: 'Nhà tuyển dụng tiếp theo' }).click()
+  await expect(drawer.getByText('Lê Chờ Bổ Sung')).toBeVisible()
+  await page.keyboard.press('Escape')
+
   await expect(page.locator('html')).toHaveJSProperty(
     'scrollWidth',
     await page.locator('html').evaluate((element) => element.clientWidth),
@@ -389,7 +488,7 @@ test('superuser recovers email, then sends password reset', { tag: '@responsive'
   await expect.poll(async () => {
     const box = await emailDialog.boundingBox()
     return box.width
-  }).toBeGreaterThan(Math.min(700, viewport.width * 0.85))
+  }).toBeGreaterThan(Math.min(600, viewport.width * 0.85))
   const emailDialogBox = await emailDialog.boundingBox()
   expect(emailDialogBox.width).toBeLessThanOrEqual(viewport.width - 24)
   await emailDialog.getByLabel('Email đăng nhập mới').fill('NEW-IDENTITY@Example.com')
@@ -399,10 +498,10 @@ test('superuser recovers email, then sends password reset', { tag: '@responsive'
   await emailDialog.getByLabel('Bằng chứng xác minh').fill(
     'Đã gọi lại số trên hồ sơ pháp lý và đối chiếu giấy tờ.',
   )
-  await emailDialog.getByRole('button', { name: 'Xem tác động' }).click()
-  await expect(emailDialog.getByText('old-identity@example.com').last()).toBeVisible()
+  // The impact previews by itself once email + evidence are filled in.
   await expect(emailDialog.getByText('new-identity@example.com')).toBeVisible()
-  await emailDialog.getByRole('button', { name: 'Xác nhận thực hiện' }).click()
+  await expect(emailDialog.getByText('Phiên bị đăng xuất')).toBeVisible()
+  await emailDialog.getByRole('button', { name: 'Đổi email' }).click()
   await expect(emailDialog).toBeHidden()
   await expect(page.getByText('new-identity@example.com', { exact: true })).toBeVisible()
   await expect(page.getByText('Tiếp theo: gửi link đặt lại mật khẩu'))
@@ -422,18 +521,21 @@ test('superuser recovers email, then sends password reset', { tag: '@responsive'
   await resetDialog.getByLabel('Lý do gửi liên kết').fill(
     'Đã hoàn tất đổi email theo runbook',
   )
-  await resetDialog.getByRole('button', { name: 'Xác nhận gửi' }).click()
+  await resetDialog.getByRole('button', { name: 'Gửi email đặt lại' }).click()
   await expect(resetDialog).toBeHidden()
   await expect(page.getByText('Đã gửi link — đang chờ người dùng'))
     .toBeVisible()
 
+  // Preview on input, re-preview with the reason on submit, then confirm.
   expect(calls.map((call) => call.path)).toEqual([
+    '/api/admin/accounts/usr_recovery/email-impact/',
     '/api/admin/accounts/usr_recovery/email-impact/',
     '/api/admin/accounts/usr_recovery/change-email/',
     '/api/admin/accounts/usr_recovery/send-password-reset/',
   ])
-  expect(calls[0].payload.email).toBe('new-identity@example.com')
-  expect(calls[1].payload.impact_token).toBe('email-impact-token')
+  expect(calls[0].payload).toMatchObject({ email: 'new-identity@example.com', reason: '' })
+  expect(calls[1].payload.reason).toBe('Người dùng mất quyền truy cập danh tính cũ')
+  expect(calls[2].payload.impact_token).toBe('email-impact-token')
 })
 
 test('admin employer detail: company media and compact verification comparison render', { tag: '@responsive' }, async ({ page }) => {
@@ -672,6 +774,45 @@ test('admin employer detail: company media and compact verification comparison r
       body = verificationCase
     }
     else if (path === '/api/admin/employer-verifications/evc_1/') body = verificationCase
+    else if (path === '/api/admin/employer-verifications/') {
+      body = {
+        count: 1,
+        next: null,
+        previous: null,
+        results: [{ public_id: 'evc_next', user_public_id: 'usr_next', status: 'pending' }],
+      }
+    } else if (path === '/api/admin/accounts/usr_employer/activity/') {
+      const category = new URL(route.request().url()).searchParams.get('category') || ''
+      const entries = [
+        {
+          id: 'auth:1',
+          category: 'security',
+          event: 'login',
+          title: 'Đăng nhập cổng NTD',
+          summary: 'Mật khẩu · Chrome trên macOS',
+          tone: 'neutral',
+          actor: { type: 'self', label: 'Chính tài khoản' },
+          occurred_at: new Date().toISOString(),
+          details: [{ label: 'Địa chỉ IP', value: '203.0.113.5', type: 'text' }],
+        },
+        {
+          id: 'vevt:1',
+          category: 'verification',
+          event: 'submitted',
+          title: 'Nộp hồ sơ xác thực',
+          summary: '',
+          tone: 'neutral',
+          actor: { type: 'self', label: 'Chính tài khoản' },
+          occurred_at: '2026-07-26T09:00:00Z',
+          details: [],
+        },
+      ]
+      body = {
+        results: entries.filter((entry) => !category || entry.category === category),
+        next_cursor: null,
+        category_counts: { all: 2, security: 1, account: 0, verification: 1, company: 0, recruitment: 0 },
+      }
+    }
     else if (path === '/api/admin/company-update-requests/cur_1/') body = companyUpdate
     else if (path === '/api/admin/company-update-requests/') {
       body = { count: 1, next: null, previous: null, results: [companyUpdate] }
@@ -707,7 +848,7 @@ test('admin employer detail: company media and compact verification comparison r
   await expect(page.getByRole('region', { name: 'Bảng trạng thái giấy tờ' })).toBeVisible()
   await expect(page.getByRole('region', { name: 'Đã duyệt, 3 giấy tờ' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Xem Giấy đăng ký doanh nghiệp' })).toBeVisible()
-  await expect(page.getByText('Duyệt từng giấy tờ trước, sau đó ra một quyết định chung cho hồ sơ.')).toBeVisible()
+  await expect(page.getByText('Duyệt từng giấy tờ, rồi ra một quyết định chung cho hồ sơ.')).toBeVisible()
   await expect(page.locator('.verification-review-workspace')).toBeVisible()
   await expect(page.locator('.verification-review-main')).toBeVisible()
   await expect(page.locator('.verification-review-rail')).toBeVisible()
@@ -731,12 +872,12 @@ test('admin employer detail: company media and compact verification comparison r
   await expect(page.getByRole('button', { name: 'Duyệt hồ sơ' })).toHaveCSS('white-space', 'nowrap')
 
   await page.getByRole('button', { name: 'Duyệt hồ sơ' }).click()
-  const finalDecisionDialog = page.getByRole('dialog', { name: 'Duyệt hồ sơ' })
-  await finalDecisionDialog.getByRole('button', { name: 'Kiểm tra trước khi duyệt' }).click()
-  await expect(finalDecisionDialog.getByText(/chỉ áp dụng cho nhà tuyển dụng/))
-    .toBeVisible()
-  await finalDecisionDialog.getByRole('button', { name: 'Xác nhận duyệt hồ sơ' }).click()
+  const finalDecisionDialog = page.getByRole('dialog', { name: /Duyệt hồ sơ/ })
+  // The impact loads as the dialog opens; one click confirms.
+  await expect(finalDecisionDialog.getByText(/Chỉ áp dụng cho nhà tuyển dụng này/)).toBeVisible()
+  await finalDecisionDialog.getByRole('button', { name: 'Duyệt hồ sơ' }).click()
   await expect(page.getByText('Hồ sơ đang có hiệu lực')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Hồ sơ tiếp theo (còn 1)' })).toBeVisible()
   await expect(page.getByRole('button', { name: /Xem chi tiết và đối chiếu/ })).toBeVisible()
   await expect(page.getByText('FPT Digital')).toHaveCount(0)
 
@@ -749,6 +890,18 @@ test('admin employer detail: company media and compact verification comparison r
   await expect(tradeNameRow.getByText('FPT Software')).toBeVisible()
   await expect(tradeNameRow.getByText('FPT Digital')).toBeVisible()
   await expect(dialog.getByRole('img', { name: 'Ảnh thư viện thêm mới 1' })).toBeVisible()
+  await page.keyboard.press('Escape')
+
+  // Activity: grouped by day, clock times, filterable by category.
+  await page.goto('/admin/app/recruiters/usr_employer?tab=activity')
+  const timeline = page.getByRole('region', { name: 'Nhật ký hoạt động' })
+  await expect(timeline.getByText('Hôm nay')).toBeVisible()
+  await expect(timeline.getByText('Đăng nhập cổng NTD')).toBeVisible()
+  await expect(timeline.locator('.activity-entry__time').first()).toHaveText(/^\d{2}:\d{2}$/)
+  await timeline.getByRole('button', { name: /^Xác thực/ }).click()
+  await expect(page).toHaveURL(/activity_category=verification/)
+  await expect(timeline.getByText('Nộp hồ sơ xác thực')).toBeVisible()
+  await expect(timeline.getByText('Đăng nhập cổng NTD')).toHaveCount(0)
   await expect(page.locator('html')).toHaveJSProperty(
     'scrollWidth',
     await page.locator('html').evaluate((element) => element.clientWidth),

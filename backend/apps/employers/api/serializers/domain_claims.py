@@ -155,7 +155,10 @@ class AdminCompanyDomainClaimSummarySerializer(serializers.Serializer):
 
 
 class AdminDomainClaimImpactSerializer(serializers.Serializer):
-    reason = serializers.CharField(max_length=2000, trim_whitespace=True)
+    # Preview may run before a reason is typed; the confirm requires it.
+    reason = serializers.CharField(
+        max_length=2000, trim_whitespace=True, allow_blank=True, required=False, default=''
+    )
     decision = serializers.ChoiceField(
         choices=['approve_manual', 'reject_manual'],
         required=False,
@@ -163,12 +166,13 @@ class AdminDomainClaimImpactSerializer(serializers.Serializer):
 
 
 class AdminDomainClaimConfirmationSerializer(AdminDomainClaimImpactSerializer):
+    reason = serializers.CharField(max_length=2000, trim_whitespace=True)
     impact_token = serializers.CharField(trim_whitespace=True)
 
 
 class AdminDomainClaimImpactResponseSerializer(serializers.Serializer):
     action = serializers.CharField()
-    reason = serializers.CharField()
+    reason = serializers.CharField(allow_blank=True)
     status = serializers.CharField()
     domain = serializers.CharField()
     public_id = serializers.CharField()

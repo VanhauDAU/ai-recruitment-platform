@@ -49,7 +49,7 @@ describe('Identity recovery actions', () => {
     mocks.changeAccountEmail.mockResolvedValue({})
   })
 
-  it('validates, previews and confirms an email recovery', async () => {
+  it('previews once email and evidence are filled, then confirms in one click', async () => {
     const onSuccess = vi.fn()
     mocks.getAccountEmailImpact.mockResolvedValue({
       before: { email: 'old@example.com' },
@@ -73,56 +73,48 @@ describe('Identity recovery actions', () => {
     )
 
     fireEvent.click(screen.getByRole('button', { name: /Đổi email đăng nhập/i }))
-    expect(screen.getByRole('dialog', { name: 'Khôi phục email đăng nhập' }))
-      .toHaveStyle({ maxWidth: 'calc(100vw - 24px)' })
-    expect(screen.getByText(
-      'Đối chiếu: Nguyễn Thu Linh · old@example.com · usr-1',
-    )).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Xem tác động' }))
-    expect(await screen.findByText('Nhập email đăng nhập mới.')).toBeInTheDocument()
-    expect(mocks.getAccountEmailImpact).not.toHaveBeenCalled()
+    expect(screen.getByText('Đối chiếu: Nguyễn Thu Linh · old@example.com · usr-1')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Đổi email' })).toBeDisabled()
 
     fireEvent.change(screen.getByLabelText('Email đăng nhập mới'), {
       target: { value: 'NEW@Example.com' },
     })
     fillAuditFields()
-    fireEvent.click(screen.getByRole('button', { name: 'Xem tác động' }))
-
-    expect(await screen.findByText('old@example.com')).toBeInTheDocument()
+    expect(await screen.findByText('new@example.com')).toBeInTheDocument()
     expect(mocks.getAccountEmailImpact).toHaveBeenCalledWith('usr-1', {
       email: 'new@example.com',
-      reason: 'Người dùng mất quyền truy cập danh tính cũ',
+      reason: '',
       verification_evidence: 'Đã gọi lại số trên hồ sơ pháp lý và đối chiếu giấy tờ.',
     })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Xác nhận thực hiện' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Đổi email' }))
     await waitFor(() => {
       expect(mocks.changeAccountEmail).toHaveBeenCalledWith(
         'usr-1',
-        expect.objectContaining({ email: 'new@example.com' }),
+        {
+          email: 'new@example.com',
+          reason: 'Người dùng mất quyền truy cập danh tính cũ',
+          verification_evidence: 'Đã gọi lại số trên hồ sơ pháp lý và đối chiếu giấy tờ.',
+        },
         'impact-email',
       )
     })
-    expect(onSuccess).toHaveBeenCalledWith({})
+    expect(onSuccess).toHaveBeenCalled()
   })
 
-  it('rejects short verification evidence before requesting a preview', async () => {
+  it('does not preview or allow confirm while the evidence is too short', async () => {
     renderWithQuery(<ChangeAccountEmailButton publicId="usr-validation" />)
 
     fireEvent.click(screen.getByRole('button', { name: /Đổi email đăng nhập/i }))
     fireEvent.change(screen.getByLabelText('Email đăng nhập mới'), {
       target: { value: 'new@example.com' },
     })
-    fireEvent.change(screen.getByLabelText('Lý do khôi phục'), {
-      target: { value: 'Cần khôi phục tài khoản' },
-    })
     fireEvent.change(screen.getByLabelText('Bằng chứng xác minh'), {
       target: { value: 'Quá ngắn' },
     })
-    fireEvent.click(screen.getByRole('button', { name: 'Xem tác động' }))
 
-    expect(await screen.findByText('Bằng chứng xác minh cần có ít nhất 20 ký tự.'))
-      .toBeInTheDocument()
+    expect(await screen.findByText('Cần ít nhất 20 ký tự.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Đổi email' })).toBeDisabled()
     expect(mocks.getAccountEmailImpact).not.toHaveBeenCalled()
   })
 
@@ -144,13 +136,11 @@ describe('Identity recovery actions', () => {
       target: { value: 'new@example.com' },
     })
     fillAuditFields()
-    fireEvent.click(screen.getByRole('button', { name: 'Xem tác động' }))
-    await screen.findByText('Phiên bị thu hồi')
-    fireEvent.click(screen.getByRole('button', { name: 'Xác nhận thực hiện' }))
+    await screen.findByText('Phiên bị đăng xuất')
+    fireEvent.click(screen.getByRole('button', { name: 'Đổi email' }))
 
-    await waitFor(() => {
-      expect(mocks.getAccountEmailImpact).toHaveBeenCalledTimes(2)
-    })
+    expect(await screen.findByText('Tác động vừa thay đổi. Kiểm tra lại rồi xác nhận.')).toBeInTheDocument()
+    expect(mocks.getAccountEmailImpact).toHaveBeenCalledTimes(3)
     expect(mocks.changeAccountEmail).toHaveBeenCalledTimes(1)
   })
 })

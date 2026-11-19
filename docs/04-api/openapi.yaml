@@ -253,22 +253,32 @@ paths:
           description: ''
   /api/admin/accounts/{public_id}/activity/:
     get:
-      operationId: admin_accounts_activity_list
-      description: Paginated per-account resources; relies on the host viewset's ``_paginated``.
+      operationId: admin_accounts_activity_retrieve
+      description: Gộp đăng nhập, thao tác quản trị, đổi trạng thái, xác thực, công
+        ty và tuyển dụng; mới nhất trước, phân trang bằng con trỏ `before`. `category_counts`
+        chỉ có ở trang đầu.
       summary: Nhật ký hoạt động của tài khoản
       parameters:
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
+      - in: query
+        name: before
+        schema:
+          type: string
+        description: '`next_cursor` của trang trước.'
+      - in: query
+        name: category
+        schema:
+          type: string
+          enum:
+          - account
+          - company
+          - recruitment
+          - security
+          - verification
+      - in: query
+        name: limit
         schema:
           type: integer
-      - name: page_size
-        required: false
-        in: query
-        description: Number of results to return per page.
-        schema:
-          type: integer
+        description: Mặc định 30, tối đa 100.
       - in: path
         name: public_id
         schema:
@@ -283,7 +293,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedAccountActivityList'
+                $ref: '#/components/schemas/AccountActivityPage'
           description: ''
   /api/admin/accounts/{public_id}/applications/:
     get:
@@ -445,7 +455,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/EmployerCompanyUnlinkImpactRequest'
-        required: true
       security:
       - jwtAuth: []
       responses:
@@ -752,7 +761,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/AccountResourceHoldImpactRequest'
-        required: true
       security:
       - jwtAuth: []
       responses:
@@ -813,14 +821,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ReasonRequest'
+              $ref: '#/components/schemas/ReasonPreviewRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/ReasonRequest'
+              $ref: '#/components/schemas/ReasonPreviewRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ReasonRequest'
-        required: true
+              $ref: '#/components/schemas/ReasonPreviewRequest'
       security:
       - jwtAuth: []
       responses:
@@ -4947,7 +4954,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/AdminVerificationLifecyclePreviewRequest'
-        required: true
       security:
       - jwtAuth: []
       responses:
@@ -5121,7 +5127,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/AdminVerificationLifecyclePreviewRequest'
-        required: true
       security:
       - jwtAuth: []
       responses:
@@ -14868,43 +14873,134 @@ components:
           type: string
       required:
       - detail
-    AccountActivity:
+    AccountActivityActor:
       type: object
       properties:
-        public_id:
+        type:
+          $ref: '#/components/schemas/AccountActivityActorTypeEnum'
+        label:
           type: string
-          readOnly: true
-        action:
+      required:
+      - label
+      - type
+    AccountActivityActorTypeEnum:
+      enum:
+      - admin
+      - self
+      - member
+      - system
+      type: string
+      description: |-
+        * `admin` - admin
+        * `self` - self
+        * `member` - member
+        * `system` - system
+    AccountActivityCounts:
+      type: object
+      properties:
+        all:
+          type: integer
+        security:
+          type: integer
+        account:
+          type: integer
+        verification:
+          type: integer
+        company:
+          type: integer
+        recruitment:
+          type: integer
+      required:
+      - account
+      - all
+      - company
+      - recruitment
+      - security
+      - verification
+    AccountActivityDetail:
+      type: object
+      properties:
+        label:
           type: string
-          maxLength: 64
-        source:
+        value:
           type: string
-          maxLength: 20
-        actor_email:
+        type:
+          $ref: '#/components/schemas/AccountActivityDetailTypeEnum'
+      required:
+      - label
+      - type
+      - value
+    AccountActivityDetailTypeEnum:
+      enum:
+      - text
+      - datetime
+      type: string
+      description: |-
+        * `text` - text
+        * `datetime` - datetime
+    AccountActivityEntry:
+      type: object
+      properties:
+        id:
           type: string
-          readOnly: true
-          default: ''
-        actor_identifier:
+        category:
+          $ref: '#/components/schemas/AccountActivityEntryCategoryEnum'
+        event:
           type: string
-          maxLength: 255
-        target_type:
+        title:
           type: string
-          maxLength: 32
-        target_public_id:
+        summary:
           type: string
-          maxLength: 64
-        payload: {}
-        created_at:
+        tone:
+          $ref: '#/components/schemas/ToneEnum'
+        actor:
+          $ref: '#/components/schemas/AccountActivityActor'
+        occurred_at:
           type: string
           format: date-time
-          readOnly: true
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountActivityDetail'
       required:
-      - action
-      - actor_email
-      - created_at
-      - public_id
-      - source
-      - target_type
+      - actor
+      - category
+      - details
+      - event
+      - id
+      - occurred_at
+      - summary
+      - title
+      - tone
+    AccountActivityEntryCategoryEnum:
+      enum:
+      - security
+      - account
+      - verification
+      - company
+      - recruitment
+      type: string
+      description: |-
+        * `security` - security
+        * `account` - account
+        * `verification` - verification
+        * `company` - company
+        * `recruitment` - recruitment
+    AccountActivityPage:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountActivityEntry'
+        next_cursor:
+          type: string
+          nullable: true
+        category_counts:
+          $ref: '#/components/schemas/AccountActivityCounts'
+      required:
+      - next_cursor
+      - results
     AccountEmailChangeRequest:
       type: object
       properties:
@@ -14933,7 +15029,7 @@ components:
       properties:
         reason:
           type: string
-          minLength: 1
+          default: ''
           maxLength: 500
         verification_evidence:
           type: string
@@ -14945,7 +15041,6 @@ components:
           minLength: 1
       required:
       - email
-      - reason
       - verification_evidence
     AccountResourceHoldChangeRequest:
       type: object
@@ -14970,15 +15065,12 @@ components:
       properties:
         reason:
           type: string
-          minLength: 1
+          default: ''
           maxLength: 500
         enforcement_evidence:
           type: string
-          minLength: 20
+          default: ''
           maxLength: 500
-      required:
-      - enforcement_evidence
-      - reason
     AccountResourceHoldImpactResponse:
       type: object
       properties:
@@ -15060,7 +15152,7 @@ components:
           $ref: '#/components/schemas/ManagedAccountStatusEnum'
         reason:
           type: string
-          minLength: 1
+          default: ''
           maxLength: 500
         enforcement_evidence:
           type: string
@@ -15073,7 +15165,6 @@ components:
           - $ref: '#/components/schemas/ViolationCategoryEnum'
           - $ref: '#/components/schemas/BlankEnum'
       required:
-      - reason
       - status
     AccountStatusImpactResponse:
       type: object
@@ -19810,10 +19901,8 @@ components:
       properties:
         reason:
           type: string
-          minLength: 1
+          default: ''
           maxLength: 2000
-      required:
-      - reason
     AdminVerificationLifecycleResources:
       type: object
       properties:
@@ -25529,10 +25618,8 @@ components:
       properties:
         reason:
           type: string
-          minLength: 1
+          default: ''
           maxLength: 500
-      required:
-      - reason
     EmployerCompanyUnlinkImpactResponse:
       type: object
       properties:
@@ -29961,29 +30048,6 @@ components:
       required:
       - cv
       - version
-    PaginatedAccountActivityList:
-      type: object
-      required:
-      - count
-      - results
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=4
-        previous:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=2
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/AccountActivity'
     PaginatedAdminAnnouncementListList:
       type: object
       required:
@@ -33310,6 +33374,13 @@ components:
         * `duplicate_posting` - Tin trùng lặp
         * `confirmed_report` - Báo cáo vi phạm đã xác nhận
         * `other` - Lý do khác
+    ReasonPreviewRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          default: ''
+          maxLength: 500
     ReasonRequest:
       type: object
       properties:
@@ -35700,6 +35771,18 @@ components:
           type: string
       required:
       - access
+    ToneEnum:
+      enum:
+      - neutral
+      - success
+      - warning
+      - danger
+      type: string
+      description: |-
+        * `neutral` - neutral
+        * `success` - success
+        * `warning` - warning
+        * `danger` - danger
     UploadContentRequest:
       type: object
       properties:

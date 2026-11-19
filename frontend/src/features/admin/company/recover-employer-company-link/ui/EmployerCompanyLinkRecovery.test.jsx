@@ -39,7 +39,7 @@ describe('EmployerCompanyLinkRecovery', () => {
     toast.message.success.mockReset()
   })
 
-  it('requires impact preview and only confirms a clean link', async () => {
+  it('shows the impact on open and confirms a clean link in one click', async () => {
     api.getEmployerCompanyUnlinkImpact.mockResolvedValue({
       can_apply: true,
       blockers: [],
@@ -52,12 +52,11 @@ describe('EmployerCompanyLinkRecovery', () => {
     renderRecovery()
 
     await user.click(screen.getByRole('button', { name: /Gỡ liên kết$/ }))
-    await user.type(screen.getByLabelText('Lý do xử lý'), 'Nhà tuyển dụng chọn nhầm công ty')
-    await user.click(screen.getByRole('button', { name: 'Xem tác động' }))
     const dialog = await screen.findByRole('dialog')
-    expect(await within(dialog).findByText('Liên kết đủ điều kiện gỡ an toàn')).toBeInTheDocument()
-    expect(within(dialog).getByText('Giấy tờ xác thực chưa duyệt')).toBeInTheDocument()
-    await user.click(within(dialog).getByRole('button', { name: 'Xác nhận gỡ liên kết' }))
+    expect(await within(dialog).findByText('Tự rút: Giấy tờ xác thực chưa duyệt')).toBeInTheDocument()
+    expect(api.getEmployerCompanyUnlinkImpact).toHaveBeenCalledWith('usr_employer', '')
+    await user.type(screen.getByLabelText('Lý do xử lý'), 'Nhà tuyển dụng chọn nhầm công ty')
+    await user.click(within(dialog).getByRole('button', { name: 'Gỡ liên kết' }))
 
     await waitFor(() => {
       expect(api.unlinkEmployerCompany).toHaveBeenCalledWith(
@@ -68,7 +67,7 @@ describe('EmployerCompanyLinkRecovery', () => {
     })
   })
 
-  it('shows what blocks the unlink with the step to undo it, and never offers confirm', async () => {
+  it('shows what blocks the unlink with the step to undo it and disables confirm', async () => {
     api.getEmployerCompanyUnlinkImpact.mockResolvedValue({
       can_apply: false,
       blockers: ['ACTIVE_JOBS_EXIST'],
@@ -80,12 +79,10 @@ describe('EmployerCompanyLinkRecovery', () => {
     renderRecovery()
 
     await user.click(screen.getByRole('button', { name: /Gỡ liên kết$/ }))
-    await user.type(screen.getByLabelText('Lý do xử lý'), 'Nhà tuyển dụng chọn nhầm công ty')
-    await user.click(screen.getByRole('button', { name: 'Xem tác động' }))
 
     const dialog = await screen.findByRole('dialog')
     expect(await within(dialog).findByText('Còn tin đang tuyển: đóng các tin trước')).toBeInTheDocument()
-    expect(within(dialog).queryByRole('button', { name: 'Xác nhận gỡ liên kết' })).not.toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: 'Gỡ liên kết' })).toBeDisabled()
     expect(api.unlinkEmployerCompany).not.toHaveBeenCalled()
   })
 })

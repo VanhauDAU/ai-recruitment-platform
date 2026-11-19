@@ -226,10 +226,9 @@ def _withdraw_unapproved_evidence(user, verification_case, company, *, actor, ev
 
 
 def company_unlink_impact(user, *, actor, reason):
+    """Preview the unlink; the reason may still be blank (checked on confirm)."""
     require_admin(actor)
     normalized_reason = (reason or '').strip()
-    if not normalized_reason:
-        raise CompanyUnlinkError('COMPANY_UNLINK_REASON_REQUIRED', 'Nhập lý do gỡ liên kết.')
     user, recruiter, verification_case, company = _identity(user, lock=False)
     snapshot = _clean_snapshot(user, recruiter, verification_case, company)
     can_apply = not snapshot['blockers']

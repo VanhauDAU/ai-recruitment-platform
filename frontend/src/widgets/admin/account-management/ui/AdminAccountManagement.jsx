@@ -1,6 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Badge, Form, Tabs } from 'antd'
-import dayjs from '@/shared/lib/dayjs'
 import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import {
@@ -25,109 +24,27 @@ import AccountOverview from './AccountOverview'
 import AccountQuickDrawer from './AccountQuickDrawer'
 import AccountTable from './AccountTable'
 import InvitationPanel from './InvitationPanel'
+import RecruiterSegments from './RecruiterSegments'
 import VerificationQueuePanel from './VerificationQueuePanel'
+import {
+  ACCOUNT_QUERY_KEYS,
+  DEFAULT_FILTERS,
+  filtersFromQuery,
+  INVITATION_QUERY_KEYS,
+  PAGE_SIZES,
+  pageSizeFromQuery,
+  queryParams,
+  SIMPLE_FILTER_KEYS,
+  VERIFICATION_QUERY_KEYS,
+} from '../model/account-query'
+import { activeRecruiterSegment, applyRecruiterSegment } from '../model/recruiter-segments'
 import '../admin-account-management.css'
 
 const EMPTY_PAGE = { count: 0, results: [] }
 const EMPTY_METRICS = { total: 0, active: 0, restricted: 0, unverified: 0 }
-const DEFAULT_FILTERS = {
-  q: '',
-  status: '',
-  email_verified: '',
-  has_active_session: '',
-  company: '',
-  company_state: '',
-  verification_status: '',
-  ordering: '-date_joined',
-  created_range: [],
-  last_login_range: [],
-}
-const SIMPLE_FILTER_KEYS = [
-  'q',
-  'status',
-  'email_verified',
-  'has_active_session',
-  'company',
-  'company_state',
-  'verification_status',
-  'ordering',
-]
-const ACCOUNT_QUERY_KEYS = [
-  ...SIMPLE_FILTER_KEYS,
-  'created_from',
-  'created_to',
-  'last_login_from',
-  'last_login_to',
-  'page',
-]
-const INVITATION_QUERY_KEYS = [
-  'invite_q',
-  'invite_status',
-  'invite_by',
-  'invite_page',
-  'invite_ordering',
-]
-const VERIFICATION_QUERY_KEYS = [
-  'verify_q',
-  'verify_status',
-  'verify_document',
-  'verify_phone',
-  'verify_age',
-  'verify_from',
-  'verify_to',
-  'verify_page',
-  'verify_ordering',
-]
 
 function QueueTabLabel({ children, count }) {
   return <span>{children}<Badge className="ml-2" count={count || 0} overflowCount={999} /></span>
-}
-
-function rangeFromQuery(searchParams, fromKey, toKey) {
-  const from = searchParams.get(fromKey)
-  const to = searchParams.get(toKey)
-  return from && to ? [dayjs(from), dayjs(to)] : []
-}
-
-function filtersFromQuery(searchParams) {
-  return {
-    ...DEFAULT_FILTERS,
-    ...Object.fromEntries(
-      SIMPLE_FILTER_KEYS.map((key) => [
-        key,
-        searchParams.get(key) || DEFAULT_FILTERS[key],
-      ]),
-    ),
-    created_range: rangeFromQuery(searchParams, 'created_from', 'created_to'),
-    last_login_range: rangeFromQuery(searchParams, 'last_login_from', 'last_login_to'),
-  }
-}
-
-function queryParams(scope, tab, filters, search, page) {
-  const params = {
-    scope,
-    page,
-    q: search,
-    status: filters.status,
-    email_verified: filters.email_verified,
-    has_active_session: filters.has_active_session,
-    company: filters.company.trim(),
-    company_state: filters.company_state,
-    verification_status: filters.verification_status,
-    ordering: filters.ordering,
-  }
-  if (scope === 'users' && ['candidate', 'admin'].includes(tab)) params.role = tab
-  if (filters.created_range?.length === 2) {
-    params.created_from = filters.created_range[0].format('YYYY-MM-DD')
-    params.created_to = filters.created_range[1].format('YYYY-MM-DD')
-  }
-  if (filters.last_login_range?.length === 2) {
-    params.last_login_from = filters.last_login_range[0].format('YYYY-MM-DD')
-    params.last_login_to = filters.last_login_range[1].format('YYYY-MM-DD')
-  }
-  return Object.fromEntries(
-    Object.entries(params).filter(([, value]) => value !== '' && value != null),
-  )
 }
 
 export default function AdminAccountManagement({ scope = 'accounts' }) {
@@ -157,13 +74,14 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
 
   const [filters, setFilters] = useState(() => filtersFromQuery(searchParams))
   const page = Number(searchParams.get('page') || 1)
+  const pageSize = pageSizeFromQuery(searchParams)
   const [selectedAccount, setSelectedAccount] = useState(null)
   const [editingAccount, setEditingAccount] = useState(null)
   const [saving, setSaving] = useState(false)
   const deferredSearch = useDeferredValue(filters.q.trim())
   const params = useMemo(
-    () => queryParams(apiScope, activeTab, filters, deferredSearch, page),
-    [activeTab, apiScope, deferredSearch, filters, page],
+    () => queryParams(apiScope, activeTab, filters, deferredSearch, page, pageSize),
+    [activeTab, apiScope, deferredSearch, filters, page, pageSize],
   )
   const summaryParams = useMemo(() => ({ scope: apiScope }), [apiScope])
   const summaryQuery = useQuery({
@@ -186,11 +104,9 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
 
   const summary = summaryQuery.data || {}
   const accounts = accountsQuery.data || EMPTY_PAGE
-  const metrics = recruiterScope
+  const metrics = activeTab === 'all'
     ? summary.totals || EMPTY_METRICS
-    : activeTab === 'all'
-      ? summary.totals || EMPTY_METRICS
-      : summary.by_role?.[activeTab] || EMPTY_METRICS
+    : summary.by_role?.[activeTab] || EMPTY_METRICS
 
   useEffect(() => {
     const defaultTab = accountTabs[0]
@@ -267,6 +183,35 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
     syncQuery(activeTab, next, 1)
   }
 
+  // Segment tiles sit above the tabs, so picking one always shows the list.
+  const selectSegment = (key) => {
+    const next = applyRecruiterSegment(filters, key)
+    setFilters(next)
+    syncQuery(accountTabs[0], next, 1)
+  }
+
+  const changePageSize = (size) => {
+    const next = new URLSearchParams(searchParams)
+    if (size === PAGE_SIZES[0]) next.delete('page_size')
+    else next.set('page_size', String(size))
+    next.delete('page')
+    setSearchParams(next)
+  }
+
+  const listOrigin = {
+    origin: {
+      pathname: location.pathname,
+      search: location.search,
+      label: recruiterScope ? 'Danh sách nhà tuyển dụng' : 'Danh sách người dùng',
+    },
+  }
+  const stepQuickView = (offset) => {
+    const rows = accounts.results
+    const index = rows.findIndex((row) => row.public_id === selectedAccount?.public_id)
+    const next = rows[(index + offset + rows.length) % rows.length]
+    if (next) setSelectedAccount(next)
+  }
+
   const applyOverviewFilter = (kind) => {
     const next = {
       ...filters,
@@ -277,7 +222,6 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
     if (kind === 'active') next.status = 'active'
     if (kind === 'restricted') next.status = 'inactive,banned'
     if (kind === 'unverified') next.email_verified = 'false'
-    if (kind === 'companyless') next.company_state = 'missing'
     changeFilters(next)
   }
 
@@ -285,13 +229,7 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
     const recruiter = recruiterScope || account.role === 'employer'
     const base = recruiter ? '/recruiters' : '/accounts'
     navigate(`${adminPath(`${base}/${account.public_id}`)}${tab ? `?tab=${tab}` : ''}`, {
-      state: {
-        origin: {
-          pathname: location.pathname,
-          search: location.search,
-          label: recruiter ? 'Danh sách nhà tuyển dụng' : 'Danh sách người dùng',
-        },
-      },
+      state: listOrigin,
     })
   }
 
@@ -348,6 +286,9 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
         ordering={filters.ordering}
         recruiterOnly={recruiterScope}
         onPageChange={(nextPage) => syncQuery(activeTab, filters, nextPage)}
+        pageSize={pageSize}
+        onPageSizeChange={recruiterScope ? changePageSize : undefined}
+        originState={listOrigin}
         onOrderingChange={(ordering) => changeFilters({ ...filters, ordering })}
         onQuickView={setSelectedAccount}
         onOpenDetail={openDetail}
@@ -417,10 +358,17 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
 
   return (
     <div className="min-w-0 space-y-5">
-      {activeTab !== 'invitations' && (
+      {recruiterScope && (
+        <RecruiterSegments
+          active={activeTab === accountTabs[0] ? activeRecruiterSegment(filters) : ''}
+          loading={summaryQuery.isLoading}
+          onSelect={selectSegment}
+          summary={summary}
+        />
+      )}
+      {!recruiterScope && activeTab !== 'invitations' && (
         <AccountOverview
           metrics={metrics}
-          recruiterSummary={recruiterScope ? summary : null}
           pendingInvitations={pendingInvitations}
           canInvite={canManageAdmins}
           onApplyFilter={applyOverviewFilter}
@@ -442,6 +390,9 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
         open={Boolean(selectedAccount)}
         onClose={() => setSelectedAccount(null)}
         onOpenDetail={openDetail}
+        onStep={recruiterScope && accounts.results.length > 1 ? stepQuickView : undefined}
+        originState={listOrigin}
+        recruiterScope={recruiterScope}
       />
       <AccountEditModal
         account={editingAccount}

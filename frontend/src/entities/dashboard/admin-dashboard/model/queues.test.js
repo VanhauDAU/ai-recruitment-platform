@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildQueues, formatAge } from './queues'
+import { buildQueues } from './queues'
 
 const NOW = Date.parse('2026-11-16T10:00:00Z')
 const hoursAgo = (hours) => new Date(NOW - hours * 36e5).toISOString()
@@ -22,11 +22,5 @@ describe('admin queue model', () => {
     expect(result.cleared.map((item) => item.key)).toEqual(['blog_reviews'])
     expect(result).toMatchObject({ total: 7, overdue: 1 })
     expect(result.pending[0].to).toBe('/admin/app/job-moderation?tab=reports')
-  })
-
-  it('formats waiting time', () => {
-    expect(formatAge(hoursAgo(0.5), NOW)).toBe('dưới 1 giờ')
-    expect(formatAge(hoursAgo(5), NOW)).toBe('5 giờ')
-    expect(formatAge(hoursAgo(50), NOW)).toBe('2 ngày')
   })
 })

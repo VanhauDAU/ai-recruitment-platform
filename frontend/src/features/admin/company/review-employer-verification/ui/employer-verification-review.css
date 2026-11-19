@@ -23,6 +23,24 @@
   border-top: 3px solid var(--admin-primary);
 }
 
+.verification-next-case {
+  align-items: center;
+  background: var(--admin-primary-soft, #e6f8ee);
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+}
+
+.verification-next-case__done {
+  color: #0a8a0a;
+  font-weight: 600;
+}
+
 .verification-rejection-meter {
   align-items: center;
   background: #fff7ed;
@@ -546,8 +564,8 @@
   cursor: pointer;
   display: grid;
   gap: 4px;
-  min-height: 100px;
-  padding: 12px 58px 12px 12px;
+  min-height: 84px;
+  padding: 12px 58px 10px 12px;
   text-align: left;
   width: 100%;
 }
@@ -563,6 +581,11 @@
 .verification-board-card__content strong { color: #0f172a; font-size: 13px; }
 .verification-board-card__content span { color: #475569; font-size: 12px; }
 .verification-board-card__content small { color: #94a3b8; font-size: 11px; }
+
+.verification-board-card__approve.ant-btn {
+  border-radius: 0 0 8px 8px;
+  min-height: 32px;
+}
 
 .verification-board-card__content .verification-board-card__warning {
   color: #b91c1c;
@@ -1061,10 +1084,6 @@
   .verification-final-actions .ant-btn,
   .company-update-review-summary > .ant-btn {
     min-height: 44px;
-  }
-
-  .verification-final-modal {
-    max-width: calc(100vw - 24px);
   }
 
   .company-update-review-summary {

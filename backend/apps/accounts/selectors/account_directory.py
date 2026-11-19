@@ -1,16 +1,21 @@
-"""Administrator account directory: list, summary, sessions, activity and invitations."""
+"""Administrator account directory: list, summary, sessions and invitations."""
 
+import re
 from datetime import timedelta
 
 from django.db.models import (
     BooleanField,
     Case,
+    CharField,
     Count,
     Exists,
+    F,
+    IntegerField,
     Max,
     OuterRef,
     Prefetch,
     Q,
+    Subquery,
     Value,
     When,
 )
@@ -23,9 +28,10 @@ from apps.employers.models import (
     RecruitmentNeed,
 )
 from common.api.params import parse_bool
+from common.db.search import search_q
 
+from ..domain import recruiter_next_action as next_action
 from ..models import (
-    AdminAccessAuditLog,
     AdminInvitation,
     AuthSession,
     User,
@@ -61,6 +67,120 @@ def _with_recruiter_initial_onboarding(queryset):
     )
 
 
+# Company update requests an admin still has to review (changes_requested waits
+# on the recruiter, so it is not admin work).
+ADMIN_COMPANY_UPDATE_STATUSES = (
+    CompanyUpdateRequest.Status.PENDING,
+    CompanyUpdateRequest.Status.SUBMITTED,
+    CompanyUpdateRequest.Status.IN_REVIEW,
+)
+_ACTIONABLE_CASE_STATUSES = (
+    EmployerVerificationCase.Status.PENDING,
+    EmployerVerificationCase.Status.IN_REVIEW,
+)
+_RESUBMISSION_CASE_STATUSES = (
+    EmployerVerificationCase.Status.CHANGES_REQUESTED,
+    EmployerVerificationCase.Status.REJECTED,
+)
+
+
+def _with_recruiter_next_action(queryset):
+    """Annotate ``recruiter_next_action`` + ``recruiter_next_action_rank`` in SQL.
+
+    Needs ``recruiter_initial_onboarding_completed``. Codes and ranks are owned
+    by ``accounts.domain.recruiter_next_action``; the list filter, sorter and
+    the summary tiles all read this one annotation so their numbers agree.
+    """
+    case = 'recruiter_profile__verification_case'
+    actionable = Q(**{f'{case}__status__in': _ACTIONABLE_CASE_STATUSES}) | Q(
+        _has_pending_document=True
+    )
+    overdue_before = timezone.now() - timedelta(hours=next_action.VERIFICATION_OVERDUE_HOURS)
+    return (
+        queryset.annotate(
+            _has_pending_document=Exists(
+                CompanyDocument.objects.filter(
+                    verification_case__recruiter__user_id=OuterRef('pk'),
+                    is_current=True,
+                    status=CompanyDocument.Status.PENDING,
+                )
+            ),
+            pending_company_update_public_id=Subquery(
+                CompanyUpdateRequest.objects.filter(
+                    requested_by_id=OuterRef('pk'),
+                    status__in=ADMIN_COMPANY_UPDATE_STATUSES,
+                )
+                .order_by('submitted_at', 'id')
+                .values('public_id')[:1]
+            ),
+        )
+        .annotate(
+            recruiter_next_action=Case(
+                When(~Q(role=User.Role.EMPLOYER), then=Value(next_action.NONE)),
+                When(
+                    actionable & Q(**{f'{case}__submitted_at__lt': overdue_before}),
+                    then=Value(next_action.VERIFICATION_OVERDUE),
+                ),
+                When(actionable, then=Value(next_action.VERIFICATION_REVIEW)),
+                When(
+                    pending_company_update_public_id__isnull=False,
+                    then=Value(next_action.COMPANY_UPDATE_REVIEW),
+                ),
+                When(
+                    status__in=[User.Status.INACTIVE, User.Status.BANNED],
+                    then=Value(next_action.ACCOUNT_RESTRICTED),
+                ),
+                When(
+                    **{f'{case}__status__in': _RESUBMISSION_CASE_STATUSES},
+                    then=Value(next_action.AWAITING_RESUBMISSION),
+                ),
+                When(
+                    Q(recruiter_profile__isnull=True) | Q(recruiter_profile__company__isnull=True),
+                    then=Value(next_action.AWAITING_COMPANY),
+                ),
+                When(
+                    recruiter_initial_onboarding_completed=False,
+                    then=Value(next_action.AWAITING_ONBOARDING),
+                ),
+                When(
+                    Q(**{f'{case}__isnull': True})
+                    | Q(**{f'{case}__status': EmployerVerificationCase.Status.DRAFT}),
+                    then=Value(next_action.AWAITING_SUBMISSION),
+                ),
+                default=Value(next_action.NONE),
+                output_field=CharField(),
+            )
+        )
+        .annotate(
+            recruiter_next_action_rank=Case(
+                *(
+                    When(recruiter_next_action=code, then=Value(rank))
+                    for code, rank in next_action.NEXT_ACTION_RANKS.items()
+                ),
+                output_field=IntegerField(),
+            )
+        )
+    )
+
+
+def _recruiter_search(query):
+    """Name/email/id plus company name (accent-insensitive), tax code and phone."""
+    condition = (
+        Q(email__icontains=query)
+        | Q(full_name__icontains=query)
+        | Q(public_id__icontains=query)
+        | search_q('recruiter_profile__company__company_name', query)
+    )
+    digits = re.sub(r'\D', '', query)
+    if len(digits) >= 4:
+        condition |= Q(recruiter_profile__company__tax_code__icontains=digits)
+    if len(digits) >= 6:
+        # Match the national part so 09xx…, 84 9xx… and +84 9xx… all hit.
+        tail = digits[-9:]
+        condition |= Q(phone__contains=tail) | Q(recruiter_profile__contact_phone__contains=tail)
+    return condition
+
+
 def _account_visibility(actor):
     """Superuser thấy mọi tài khoản; admin thường chỉ thấy ứng viên và NTD."""
 
@@ -71,13 +191,22 @@ def _account_visibility(actor):
 
 def accounts_queryset(actor, *, params=None):
     params = params or {}
-    queryset = (
-        _with_recruiter_initial_onboarding(
-            User.objects.filter(is_deleted=False).filter(_account_visibility(actor))
+    scope = params.get('scope', '').strip()
+    queryset = _with_recruiter_initial_onboarding(
+        User.objects.filter(is_deleted=False).filter(_account_visibility(actor))
+    )
+    if scope != ACCOUNT_SCOPE_USERS:
+        queryset = _with_recruiter_next_action(queryset)
+    if scope != ACCOUNT_SCOPE_RECRUITERS:
+        queryset = queryset.select_related(
+            'candidate_profile', 'candidate_profile__job_preference'
+        ).prefetch_related(
+            'social_accounts',
+            'candidate_profile__job_preference__desired_specializations__job_category',
+            'candidate_profile__job_preference__preferred_provinces__location',
         )
-        .select_related(
-            'candidate_profile',
-            'candidate_profile__job_preference',
+    queryset = (
+        queryset.select_related(
             'recruiter_profile__company',
             'recruiter_profile__verification_case',
             'recruiter_profile__work_location',
@@ -90,9 +219,6 @@ def accounts_queryset(actor, *, params=None):
                 ),
                 to_attr='account_admin_invitations',
             ),
-            'social_accounts',
-            'candidate_profile__job_preference__desired_specializations__job_category',
-            'candidate_profile__job_preference__preferred_provinces__location',
             'recruiter_profile__company__company_industries__industry',
             Prefetch(
                 'recruiter_profile__verification_case__documents',
@@ -118,19 +244,24 @@ def accounts_queryset(actor, *, params=None):
         )
         .distinct()
     )
-    scope = params.get('scope', '').strip()
     if scope == ACCOUNT_SCOPE_USERS:
         queryset = queryset.filter(role__in=[User.Role.CANDIDATE, User.Role.ADMIN])
     elif scope == ACCOUNT_SCOPE_RECRUITERS:
         queryset = queryset.filter(role=User.Role.EMPLOYER)
 
     query = params.get('q', '').strip()
-    if query:
+    if query and scope == ACCOUNT_SCOPE_RECRUITERS:
+        queryset = queryset.filter(_recruiter_search(query))
+    elif query:
         queryset = queryset.filter(
             Q(email__icontains=query)
             | Q(full_name__icontains=query)
             | Q(public_id__icontains=query)
         )
+    if scope != ACCOUNT_SCOPE_USERS and (
+        codes := next_action.next_action_codes(params.get('next_action'))
+    ):
+        queryset = queryset.filter(recruiter_next_action__in=codes)
     if params.get('role'):
         queryset = queryset.filter(role=params['role'])
     if params.get('status'):
@@ -193,10 +324,14 @@ def accounts_queryset(actor, *, params=None):
     }
     # Accept the old ordering key during the admin-client rollout, but never
     # read the legacy timestamp as a source of truth.
-    ordering = {
-        'recruiter_profile__onboarding_completed_at': ('recruiter_initial_onboarding_completed'),
-        '-recruiter_profile__onboarding_completed_at': ('-recruiter_initial_onboarding_completed'),
-    }.get(ordering, ordering)
+    if scope != ACCOUNT_SCOPE_USERS and ordering in {'next_action', '-next_action'}:
+        # Most urgent first, then the longest-waiting submission.
+        rank = F('recruiter_next_action_rank')
+        return queryset.order_by(
+            rank.desc() if ordering.startswith('-') else rank.asc(),
+            F('recruiter_profile__verification_case__submitted_at').asc(nulls_last=True),
+            '-id',
+        )
     return queryset.order_by(ordering if ordering in allowed else '-date_joined', '-id')
 
 
@@ -246,8 +381,23 @@ def account_summary(actor, *, scope=''):
             documents__is_current=True,
             documents__status=CompanyDocument.Status.PENDING,
         )
+        queue = _with_recruiter_next_action(recruiters).aggregate(
+            admin_queue=Count(
+                'id',
+                filter=Q(recruiter_next_action__in=next_action.ADMIN_QUEUE_CODES),
+                distinct=True,
+            ),
+            **{
+                code: Count('id', filter=Q(recruiter_next_action=code), distinct=True)
+                for code in (
+                    next_action.VERIFICATION_OVERDUE,
+                    next_action.AWAITING_RESUBMISSION,
+                )
+            },
+        )
         return {
             'scope': ACCOUNT_SCOPE_RECRUITERS,
+            'next_actions': queue,
             'totals': _status_summary(recruiters),
             'linked_company': recruiters.filter(recruiter_profile__company__isnull=False).count(),
             'companyless': recruiters.filter(
@@ -301,12 +451,6 @@ def account_summary(actor, *, scope=''):
 
 def account_sessions_queryset(user):
     return AuthSession.objects.filter(user=user).order_by('-last_seen_at')[:50]
-
-
-def account_activity_queryset(user):
-    return AdminAccessAuditLog.objects.filter(
-        Q(target_public_id=user.public_id) | Q(payload__user_public_id=user.public_id)
-    ).select_related('actor')
 
 
 def invitation_queryset(*, params=None):

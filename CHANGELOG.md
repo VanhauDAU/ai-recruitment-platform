@@ -8,6 +8,24 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-19
 
+#### Changed — Admin: trang nhà tuyển dụng, nhật ký và popup xử lý
+
+- **API**: `GET /api/admin/accounts/?scope=recruiters` thêm `context.next_action`,
+  tham số `next_action` (mã hoặc `admin_queue`), `ordering=next_action`, tìm
+  theo tên công ty/MST/SĐT; summary NTD thêm `next_actions`.
+- **API (đổi shape)**: `GET /api/admin/accounts/:id/activity/` trả timeline
+  gộp nhiều nguồn `{results, next_cursor, category_counts}` với
+  `?category=&before=&limit=`; bỏ `section_counts.activity` ở chi tiết tài
+  khoản.
+- **API**: các endpoint `*-impact` của tài khoản, xác thực NTD, gỡ liên kết công
+  ty và domain nhận `reason` trống để xem trước; confirm vẫn bắt buộc lý do
+  (xác nhận domain nay tự kiểm tra lý do).
+- Danh sách NTD: ô phân khúc kiểu dashboard, cột "Việc cần làm", 20/40/60
+  dòng/trang, xem nhanh có chuyển NTD. Chi tiết NTD: hero gọn, dải việc cần
+  làm, gộp "Hồ sơ NTD" vào "Tổng quan", nhật ký chia theo nhóm và ngày.
+- Popup xử lý dùng chung `ActionDialog`/`ReasonField`/`ImpactFacts`: tác động
+  tự tải, lý do mẫu, xác nhận một click; duyệt giấy tờ đạt không cần popup;
+  sau quyết định xác thực có "Hồ sơ tiếp theo".
 #### Changed — Tiêu đề trang chuẩn hóa trên 3 cổng
 
 - `<title>` theo dạng `<nội dung trang> | <thương hiệu cổng>`: `ProCV`,
