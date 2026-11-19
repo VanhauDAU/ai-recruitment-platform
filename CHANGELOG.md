@@ -6,6 +6,20 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-11-20
+
+#### Changed — Admin: giao diện chi tiết nhà tuyển dụng
+
+- Hero có dải số liệu (nhu cầu, tin, chiến dịch, giấy tờ, phiên đang mở); tab
+  nằm trên nền trang, nội dung mỗi tab trong panel riêng thay vì card lồng card.
+- "Tổng quan" chia hai cột: hồ sơ NTD bên trái, tóm tắt dạng danh sách và hoạt
+  động gần đây bên phải; mobile xếp tóm tắt lên đầu.
+- Trường hồ sơ và công ty hiển thị nhãn trên giá trị theo lưới tự co (thay bảng
+  viền 4 cột), chia nhóm "Thông tin cá nhân" và "Đăng ký và điều khoản"; nút
+  hiện dữ liệu nhạy cảm nằm ở đầu panel.
+- Sửa: bảng giấy tờ ở tab Xác thực tràn khỏi khung trên mobile; xóa CSS chi
+  tiết cũ trùng tên lớp trong widget danh sách tài khoản.
+
 ### 2026-11-19
 
 #### Changed — Admin: trang nhà tuyển dụng, nhật ký và popup xử lý

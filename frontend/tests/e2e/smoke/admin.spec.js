@@ -489,8 +489,10 @@ test('superuser recovers email, then sends password reset', { tag: '@responsive'
     const box = await emailDialog.boundingBox()
     return box.width
   }).toBeGreaterThan(Math.min(600, viewport.width * 0.85))
-  const emailDialogBox = await emailDialog.boundingBox()
-  expect(emailDialogBox.width).toBeLessThanOrEqual(viewport.width - 24)
+  // ActionDialog is a full-width bottom sheet under 640px and 640px wide above;
+  // wait for the open animation to settle instead of measuring a scaled frame.
+  await expect.poll(async () => Math.round((await emailDialog.boundingBox()).width))
+    .toBe(Math.min(640, viewport.width))
   await emailDialog.getByLabel('Email đăng nhập mới').fill('NEW-IDENTITY@Example.com')
   await emailDialog.getByLabel('Lý do khôi phục').fill(
     'Người dùng mất quyền truy cập danh tính cũ',
@@ -821,6 +823,15 @@ test('admin employer detail: company media and compact verification comparison r
     }
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })
+
+  await page.goto('/admin/app/recruiters/usr_employer')
+  await expect(page.getByLabel('Số liệu nhà tuyển dụng')).toBeVisible()
+  await expect(page.getByLabel('Tóm tắt nhà tuyển dụng')).toContainText('FPT Software')
+  await expect(page.getByRole('heading', { name: 'Hồ sơ nhà tuyển dụng' })).toBeVisible()
+  await expect(page.locator('html')).toHaveJSProperty(
+    'scrollWidth',
+    await page.locator('html').evaluate((element) => element.clientWidth),
+  )
 
   await page.goto('/admin/app/accounts/usr_employer?tab=company')
 
