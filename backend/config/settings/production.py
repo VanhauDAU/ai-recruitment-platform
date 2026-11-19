@@ -9,12 +9,12 @@ from urllib.parse import urlparse
 from cryptography.fernet import Fernet
 from django.core.exceptions import ImproperlyConfigured
 
-from apps.uploads.configuration import upload_scanning_configuration_errors
-from common.private_storage import storage_boundary_configuration_errors
+from apps.uploads.domain.configuration import upload_scanning_configuration_errors
+from common.storage.private import storage_boundary_configuration_errors
 from config.env import config
 
 from .base import *
-from .base import _DEFAULT_SECRET_KEY
+from .components.core import _DEFAULT_SECRET_KEY
 
 _errors: list[str] = []
 
@@ -191,7 +191,6 @@ _errors.extend(
         public_root=PUBLIC_MEDIA_ROOT,
         private_root=PRIVATE_MEDIA_ROOT,
         quarantine_root=UPLOAD_QUARANTINE_ROOT,
-        legacy_root=LEGACY_MEDIA_ROOT,
         r2_enabled=R2_ENABLED,
         r2_quarantine_enabled=R2_QUARANTINE_ENABLED,
         r2_buckets=(R2_PUBLIC_BUCKET, R2_PRIVATE_BUCKET, R2_QUARANTINE_BUCKET),

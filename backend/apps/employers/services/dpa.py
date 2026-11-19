@@ -7,6 +7,7 @@ from hashlib import sha256
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext
 
 from apps.accounts.models import AuthSession
 
@@ -19,7 +20,6 @@ from .compliance import (
     release_dpa_holds,
 )
 from .profiles import get_or_create_recruiter
-from .verification import reconcile_recruiter_verification
 
 
 class DpaPolicyError(ValueError):
@@ -48,7 +48,7 @@ def current_dpa_policy():
         or any(character not in '0123456789abcdef' for character in document_sha256)
         or not document_url
     ):
-        raise DpaPolicyUnavailable('DPA hiện hành chưa được cấu hình đầy đủ.')
+        raise DpaPolicyUnavailable(gettext('DPA hiện hành chưa được cấu hình đầy đủ.'))
     return {
         'policy_version': version,
         'document_sha256': document_sha256,
@@ -72,7 +72,7 @@ def start_recruiter_dpa_grace(recruiter, *, rollout_id, started_at=None):
 
     rollout_id = rollout_id.strip()
     if not rollout_id or len(rollout_id) > 64:
-        raise DpaGraceConflict('rollout_id phải có 1–64 ký tự.')
+        raise DpaGraceConflict(gettext('rollout_id phải có 1–64 ký tự.'))
     current_dpa_policy()
     scope = lock_or_create_verification_identity(recruiter)
     recruiter = scope.recruiter
@@ -81,7 +81,7 @@ def start_recruiter_dpa_grace(recruiter, *, rollout_id, started_at=None):
         return recruiter, False
     if recruiter.dpa_grace_expires_at:
         if recruiter.dpa_grace_rollout_id != rollout_id:
-            raise DpaGraceConflict('Recruiter đã thuộc một DPA grace rollout khác.')
+            raise DpaGraceConflict(gettext('Recruiter đã thuộc một DPA grace rollout khác.'))
         return recruiter, False
     started_at = started_at or timezone.now()
     recruiter.dpa_grace_started_at = started_at
@@ -134,7 +134,9 @@ def accept_recruiter_dpa(
         expected_policy_version != policy['policy_version']
         or expected_document_sha256 != policy['document_sha256']
     ):
-        raise DpaPolicyChanged('DPA đã thay đổi. Vui lòng tải lại và đọc phiên bản mới nhất.')
+        raise DpaPolicyChanged(
+            gettext('DPA đã thay đổi. Vui lòng tải lại và đọc phiên bản mới nhất.')
+        )
 
     recruiter = get_or_create_recruiter(user)
     base_scope = lock_or_create_verification_identity(recruiter)
@@ -151,7 +153,7 @@ def accept_recruiter_dpa(
             .values_list('id', flat=True)
             .first()
         )
-    acceptance, created = EmployerDpaAcceptance.objects.get_or_create(
+    acceptance, _ = EmployerDpaAcceptance.objects.get_or_create(
         recruiter=recruiter,
         policy_version=policy['policy_version'],
         document_sha256=policy['document_sha256'],
@@ -193,6 +195,4 @@ def accept_recruiter_dpa(
         actor=user,
         reason=f'DPA re-consent {acceptance.policy_version}',
     )
-    if created:
-        reconcile_recruiter_verification(recruiter, source='dpa_accepted')
     return recruiter

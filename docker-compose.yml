@@ -4,11 +4,12 @@
 # CELERY_BROKER_URL phải override TƯỜNG MINH: settings chỉ fallback về REDIS_URL
 # khi biến này vắng mặt, mà .env lại set sẵn 127.0.0.1 -> worker không thấy broker.
 x-service-hosts: &service-hosts
+  # Image mặc định production (backend/Dockerfile); compose là môi trường dev.
+  DJANGO_SETTINGS_MODULE: config.settings.development
   DB_HOST: db
   DB_PORT: 5432
   REDIS_URL: redis://redis:6379/1
   CELERY_BROKER_URL: redis://redis:6379/1
-  LEGACY_MEDIA_ROOT: /app/legacy-media
   PUBLIC_MEDIA_ROOT: /app/public-media
   PRIVATE_MEDIA_ROOT: /app/private-media
   UPLOAD_QUARANTINE_ROOT: /app/quarantine
@@ -32,11 +33,12 @@ x-backend-image: &backend-image
   build:
     context: ./backend
     target: runtime
+    args:
+      INSTALL_DEV: 'true'
 
 services:
   # Named volumes are initially owned by root, while Django deliberately runs
-  # as appuser. Initialise only the active isolated roots. The retained legacy
-  # volume is mounted read-only by application services for copy/verification.
+  # as appuser, so the isolated media roots are chowned once before startup.
   media-init:
     <<: *backend-image
     user: '0:0'
@@ -111,7 +113,6 @@ services:
       FRONTEND_SHELL_URL: http://frontend:5173/
     volumes:
       - ./backend:/app
-      - backend_media:/app/legacy-media:ro
       - backend_public_media:/app/public-media
       - backend_private_media:/app/private-media
       - backend_quarantine:/app/quarantine
@@ -146,7 +147,6 @@ services:
       <<: *service-hosts
     volumes:
       - ./backend:/app
-      - backend_media:/app/legacy-media:ro
       - backend_public_media:/app/public-media
       - backend_private_media:/app/private-media
       - backend_quarantine:/app/quarantine
@@ -253,8 +253,6 @@ services:
 
 volumes:
   pgdata:
-  # Existing shared media is retained as read-only migration/rollback input.
-  backend_media:
   backend_public_media:
   backend_private_media:
   backend_quarantine:

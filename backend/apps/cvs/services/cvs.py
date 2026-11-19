@@ -1,5 +1,6 @@
 """Write workflows for candidate-owned CVs."""
 
+import logging
 from copy import deepcopy
 from io import BytesIO
 from uuid import uuid4
@@ -7,8 +8,8 @@ from uuid import uuid4
 from django.core.files.storage import default_storage
 from django.db import transaction
 
-from common.office_preview import DOCX_CONTENT_TYPE, render_office_document_preview
-from common.r2_storage import private_media_storage
+from common.files.office_preview import DOCX_CONTENT_TYPE, render_office_document_preview
+from common.storage.r2 import private_media_storage
 
 from ..models import CvAccessLog, CvExport, CvSharedLink, CvVersion, UserCv
 from .cv_document import read_cv_document
@@ -26,6 +27,8 @@ from .versions import create_initial_document, create_version
 
 ALLOWED_UPLOAD_TYPES = {'pdf', 'docx'}
 
+logger = logging.getLogger(__name__)
+
 
 class UnsupportedCvUpload(ValueError):
     """Raised when an upload is not a supported CV document."""
@@ -35,10 +38,10 @@ def _delete_storage_keys(keys):
     for key in {key for key in keys if key}:
         try:
             default_storage.delete(key)
-        except Exception:
+        except Exception:  # noqa: BLE001 - any storage backend error; the DB delete must win
             # Database deletion is authoritative. A storage retry/retention job
             # can clean an unavailable object store without retaining the CV.
-            pass
+            logger.warning('Could not delete CV file %s after deleting the CV.', key, exc_info=True)
 
 
 @transaction.atomic
@@ -116,8 +119,8 @@ def upload_cv(user, upload, title='', *, source=UserCv.Source.UPLOADED):
         raise
 
 
-def import_v2_cv(actor, upload, title=''):
-    """Create an uploaded CV through the explicit V2 import contract."""
+def import_uploaded_cv(actor, upload, title=''):
+    """Create an uploaded CV through the explicit import contract (source `imported`)."""
     return upload_cv(actor, upload, title, source=UserCv.Source.IMPORTED)
 
 
@@ -149,7 +152,7 @@ def open_snapshot_source_pdf(version):
 
 
 @transaction.atomic
-def import_v2_cv_from_session(*, actor, upload_session_public_id, title=''):
+def import_uploaded_cv_from_session(*, actor, upload_session_public_id, title=''):
     """Create an uploaded CV from a scanner-approved private object."""
     ensure_cv_quota(actor)
     cv = UserCv.objects.create(

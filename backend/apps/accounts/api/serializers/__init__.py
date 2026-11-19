@@ -1,17 +1,14 @@
 from .auth import (
-    PORTAL_ROLE_BY_NAME,
-    ChangeEmailSerializer,
     LoginCredentialsSerializer,
     PasswordChangeSerializer,
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
-    ProfileUpdateSerializer,
     RegisterEmailAvailabilitySerializer,
     RegisterSerializer,
     RoleTokenObtainPairSerializer,
-    SessionUserSerializer,
     password_field,
 )
+from .profile import ChangeEmailSerializer, ProfileUpdateSerializer, SessionUserSerializer
 
 __all__ = [
     'ChangeEmailSerializer',
@@ -25,5 +22,4 @@ __all__ = [
     'RoleTokenObtainPairSerializer',
     'SessionUserSerializer',
     'password_field',
-    'PORTAL_ROLE_BY_NAME',
 ]

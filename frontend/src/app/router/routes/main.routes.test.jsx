@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { CANDIDATE_MENU, findActiveAccountItem } from '@/entities/account'
+import { CANDIDATE_MENU, findActiveAccountItem } from '@/entities/account/account'
 import AuthGuard from '../guards/AuthGuard'
 import RoleGuard from '../guards/RoleGuard'
 import { CandidateAccountLayout, FollowedCompaniesPage } from '../lazy/main.pages'

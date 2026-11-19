@@ -1,20 +1,18 @@
 """Auth lõi: đăng ký, đăng nhập, thông tin tài khoản, avatar."""
 
-from drf_spectacular.utils import extend_schema, inline_serializer
+from drf_spectacular.utils import extend_schema, extend_schema_view, inline_serializer
 from rest_framework import generics, parsers, permissions, serializers, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from common.media_storage import delete_local_media_url, save_image_upload
-from common.throttling import ClientIPScopedRateThrottle
+from common.api.throttling import ClientIPScopedRateThrottle
 
 from ...models import User
-from ...services import (
-    queue_verification_email,
-    record_admin_self_action,
-    verify_request_captcha,
-)
+from ...services import verify_request_captcha
+from ...services.profile import remove_avatar, replace_avatar, update_own_profile
 from ...services.refresh_cookies import set_refresh_cookie
+from ...services.registration import register_account
 from ...services.tokens import issue_tokens
 from ..serializers import (
     LoginCredentialsSerializer,
@@ -25,8 +23,18 @@ from ..serializers import (
 )
 
 
+@extend_schema(
+    summary='Đăng ký tài khoản ứng viên hoặc NTD',
+    request=RegisterSerializer,
+    responses={
+        201: inline_serializer(
+            'RegisterResult',
+            fields={'user': SessionUserSerializer(), 'access': serializers.CharField()},
+        )
+    },
+    tags=['auth'],
+)
 class RegisterView(generics.CreateAPIView):
-    queryset = User.objects.all()
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
     throttle_classes = [ClientIPScopedRateThrottle]
@@ -38,8 +46,9 @@ class RegisterView(generics.CreateAPIView):
         verify_request_captcha(request, 'register')
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        queue_verification_email(user)
+        data = dict(serializer.validated_data)
+        data.pop('captcha_token', None)
+        user = register_account(**data)
         tokens = issue_tokens(user, request, auth_method='registration')
         response = Response(
             {
@@ -109,6 +118,15 @@ class LoginView(APIView):
         return set_refresh_cookie(response, tokens['refresh'], user=user)
 
 
+@extend_schema_view(
+    get=extend_schema(summary='Thông tin tài khoản đang đăng nhập'),
+    patch=extend_schema(
+        summary='Cập nhật họ tên và số điện thoại',
+        request=ProfileUpdateSerializer,
+        responses={200: SessionUserSerializer},
+    ),
+)
+@extend_schema(responses={200: SessionUserSerializer}, tags=['auth'])
 class MeView(generics.RetrieveUpdateAPIView):
     """GET: thông tin tài khoản hiện tại. PATCH: cập nhật họ tên + SĐT.
 
@@ -127,18 +145,10 @@ class MeView(generics.RetrieveUpdateAPIView):
     def update(self, request, *args, **kwargs):
         serializer = self.get_serializer(self.get_object(), data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-        record_admin_self_action(
-            request.user, 'self_profile_update', {'fields': sorted(serializer.validated_data)}
-        )
+        update_own_profile(request.user, serializer.validated_data)
         return Response(
             SessionUserSerializer(request.user, context=self.get_serializer_context()).data
         )
-
-
-# Ảnh đại diện đã được cắt vuông phía client; giới hạn này chặn file gửi thẳng
-# qua API quá lớn (ảnh vẫn được hiển thị tối đa vài trăm px).
-AVATAR_MAX_DIMENSIONS = (1024, 1024)
 
 
 class AvatarUploadView(APIView):
@@ -159,23 +169,8 @@ class AvatarUploadView(APIView):
     def post(self, request):
         upload = request.FILES.get('file')
         if not upload:
-            return Response({'file': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        user = request.user
-        old_url = user.avatar_url
-        saved = save_image_upload(
-            upload,
-            f'users/avatars/{user.public_id}',
-            request=request,
-            max_dimensions=AVATAR_MAX_DIMENSIONS,
-        )
-
-        # Database chỉ lưu storage key; serializer sẽ resolve URL theo domain/CDN
-        # hiện tại khi trả API.
-        user.avatar_url = saved['path']
-        user.save(update_fields=['avatar_url', 'updated_at'])
-        delete_local_media_url(old_url)
-
+            raise ValidationError({'file': 'This field is required.'})
+        user = replace_avatar(request.user, upload)
         return Response(SessionUserSerializer(user, context={'request': request}).data)
 
     @extend_schema(
@@ -185,10 +180,5 @@ class AvatarUploadView(APIView):
         tags=['auth'],
     )
     def delete(self, request):
-        user = request.user
-        old_url = user.avatar_url
-        if old_url:
-            user.avatar_url = ''
-            user.save(update_fields=['avatar_url', 'updated_at'])
-            delete_local_media_url(old_url)
+        user = remove_avatar(request.user)
         return Response(SessionUserSerializer(user, context={'request': request}).data)

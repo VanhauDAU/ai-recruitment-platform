@@ -9,16 +9,16 @@ from django.db import transaction
 from django.db.models import Max
 from django.utils import timezone
 
-from common.r2_storage import private_media_storage
-
-from ..models import CvDraft, CvVersion, UserCv
-from ..schemas import (
+from apps.cv_templates.models import (
     empty_content,
     empty_layout,
     empty_style,
     validate_cv_document,
     validate_template_layout_capabilities,
 )
+from common.storage.r2 import private_media_storage
+
+from ..models import CvDraft, CvVersion, UserCv
 from .assets import validate_document_assets
 from .matching_profile import sync_matching_profile
 

@@ -6,8 +6,8 @@ from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
+from apps.cv_templates.models.content_schema import empty_content
 from apps.cvs.models import UserCv
-from apps.cvs.schemas import empty_content
 from apps.jobs.models import Job, JobCategory, JobCategoryLocalization
 
 from ..models import CvPositionField, CvPositionProfile, CvSampleContent
@@ -161,10 +161,10 @@ class PositionContentTests(TestCase):
     def test_public_details_endpoint_returns_the_localized_skeleton(self):
         client = APIClient()
         english = client.get(
-            '/api/v2/cv-position-details/',
+            '/api/public/cv-position-details/',
             {'position_public_id': self.sales.public_id, 'locale': 'en-US'},
         )
-        unknown = client.get('/api/v2/cv-position-details/', {'position_public_id': 'missing'})
+        unknown = client.get('/api/public/cv-position-details/', {'position_public_id': 'missing'})
 
         self.assertEqual(english.status_code, 200)
         section = english.data['section']
@@ -187,7 +187,7 @@ class CvTargetPositionTests(TestCase):
         self.client.force_authenticate(self.user)
 
     def test_candidate_sets_and_clears_target_position_and_level(self):
-        url = f'/api/v2/cvs/{self.cv.public_id}/'
+        url = f'/api/candidate/cvs/{self.cv.public_id}/'
         response = self.client.patch(
             url,
             {
@@ -206,7 +206,7 @@ class CvTargetPositionTests(TestCase):
         self.assertEqual(cleared.data['position_level'], Job.PositionLevel.TEAM_LEAD)
 
     def test_unknown_position_or_level_is_rejected(self):
-        url = f'/api/v2/cvs/{self.cv.public_id}/'
+        url = f'/api/candidate/cvs/{self.cv.public_id}/'
         self.assertEqual(
             self.client.patch(url, {'position_public_id': 'missing'}, format='json').status_code,
             400,
@@ -233,7 +233,7 @@ class AdminPositionApiTests(TestCase):
         )
 
     def test_profile_keywords_and_preset_are_validated(self):
-        url = f'/api/v2/admin/cv-positions/{self.profile.public_id}/'
+        url = f'/api/admin/cv-positions/{self.profile.public_id}/'
         ok = self.client.patch(url, {'keywords': ['Đàm phán', 'CRM']}, format='json')
         bad = self.client.patch(
             url, {'section_preset': [{'section_key': 'unknown'}]}, format='json'
@@ -252,15 +252,15 @@ class AdminPositionApiTests(TestCase):
             'label_en': 'Revenue',
             'field_type': 'text',
         }
-        created = self.client.post('/api/v2/admin/cv-position-fields/', payload, format='json')
-        duplicate = self.client.post('/api/v2/admin/cv-position-fields/', payload, format='json')
+        created = self.client.post('/api/admin/cv-position-fields/', payload, format='json')
+        duplicate = self.client.post('/api/admin/cv-position-fields/', payload, format='json')
         no_options = self.client.post(
-            '/api/v2/admin/cv-position-fields/',
+            '/api/admin/cv-position-fields/',
             {**payload, 'key': 'segment', 'field_type': 'select'},
             format='json',
         )
         listed = self.client.get(
-            '/api/v2/admin/cv-position-fields/', {'position': self.position.public_id}
+            '/api/admin/cv-position-fields/', {'position': self.position.public_id}
         )
 
         self.assertEqual(created.status_code, 201, created.data)
@@ -288,7 +288,7 @@ class AdminPositionApiTests(TestCase):
             status=CvSampleContent.Status.IN_REVIEW,
         )
 
-        response = self.client.get('/api/v2/admin/cv-positions/coverage/')
+        response = self.client.get('/api/admin/cv-positions/coverage/')
 
         coverage = response.data['results'][0]['coverage']
         self.assertEqual(coverage['vi-VN']['mid'], 'published')
@@ -304,11 +304,11 @@ class AdminPositionApiTests(TestCase):
             content_json=empty_content('vi-VN'),
             status=CvSampleContent.Status.PUBLISHED,
         )
-        exported = self.client.get('/api/v2/admin/cv-positions/export/').data
+        exported = self.client.get('/api/admin/cv-positions/export/').data
         exported['positions'][0]['keywords'] = ['Mới']
         exported['positions'][0]['fields'][0]['label_vi'] = 'Kênh bán'
 
-        imported = self.client.post('/api/v2/admin/cv-positions/import/', exported, format='json')
+        imported = self.client.post('/api/admin/cv-positions/import/', exported, format='json')
 
         self.assertEqual(imported.status_code, 201, imported.data)
         self.assertEqual(imported.data, {'positions': 1, 'samples': 1})
@@ -327,7 +327,7 @@ class AdminPositionApiTests(TestCase):
             ],
         }
 
-        response = self.client.post('/api/v2/admin/cv-positions/import/', payload, format='json')
+        response = self.client.post('/api/admin/cv-positions/import/', payload, format='json')
 
         self.assertEqual(response.status_code, 400)
         self.profile.refresh_from_db()
@@ -335,4 +335,4 @@ class AdminPositionApiTests(TestCase):
 
     def test_position_endpoints_require_admin(self):
         self.client.force_authenticate(None)
-        self.assertIn(self.client.get('/api/v2/admin/cv-positions/').status_code, {401, 403})
+        self.assertIn(self.client.get('/api/admin/cv-positions/').status_code, {401, 403})

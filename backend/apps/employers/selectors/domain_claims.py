@@ -1,4 +1,4 @@
-from django.db.models import Q
+from django.db.models import Count, Min, Q
 from django.utils import timezone
 
 from ..models import CompanyDomainClaim
@@ -36,6 +36,36 @@ def admin_domain_claims_queryset(*, params=None):
             | Q(requested_by__email__icontains=search)
         )
     return queryset.order_by('-manual_review_requested_at', '-updated_at', '-id')
+
+
+def admin_domain_claim_summary():
+    """Queue counters for the admin domain-claim dashboard, in one aggregate."""
+    pending = CompanyDomainClaim.Status.PENDING
+    manual = CompanyDomainClaim.Method.ADMIN_MANUAL
+    attention_statuses = [
+        CompanyDomainClaim.Status.REJECTED,
+        CompanyDomainClaim.Status.REVOKED,
+        CompanyDomainClaim.Status.EXPIRED,
+        CompanyDomainClaim.Status.LEGACY_INFERRED,
+    ]
+    return CompanyDomainClaim.objects.aggregate(
+        total=Count('id'),
+        manual_pending=Count(
+            'id',
+            filter=Q(status=pending, method=manual, manual_review_requested_at__isnull=False),
+        ),
+        dns_pending=Count(
+            'id',
+            filter=Q(status=pending, method=CompanyDomainClaim.Method.DNS_TXT),
+        ),
+        verified=Count('id', filter=Q(status=CompanyDomainClaim.Status.VERIFIED)),
+        grace=Count('id', filter=Q(status=CompanyDomainClaim.Status.GRACE)),
+        needs_attention=Count('id', filter=Q(status__in=attention_statuses)),
+        oldest_manual_pending_at=Min(
+            'manual_review_requested_at',
+            filter=Q(status=pending, method=manual),
+        ),
+    )
 
 
 def domain_claim_allowed_actions(claim):

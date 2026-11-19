@@ -1,8 +1,8 @@
 import { ArrowRightOutlined, ThunderboltFilled } from '@ant-design/icons'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { companyInitial, formatNumber as fmt, getJobs, jobDetailPath } from '@/entities/job'
-import { JobImpressionBoundary } from '@/features/track-job-engagement'
+import { companyInitial, formatNumber as fmt, getJobs, jobDetailPath } from '@/entities/job/job'
+import { JobImpressionBoundary } from '@/features/main/job/track-job-engagement'
 import { useCountUp } from '@/shared/hooks/use-count-up'
 import { legacyAsset } from '@/shared/config/assets'
 

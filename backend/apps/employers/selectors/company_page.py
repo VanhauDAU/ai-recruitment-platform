@@ -4,15 +4,10 @@ from urllib.parse import urlsplit
 
 from django.db.models import Count, Exists, OuterRef, Prefetch, Q
 from django.db.models.functions import Coalesce, Length, Trim
+from django.utils.translation import gettext as _
 
-from apps.jobs.models import Job, JobLocation
-from common.media_storage import media_url_from_value
-from common.rich_text import rich_text_plain_text
-from common.seo import SITEMAP_URL_LIMIT
-
-from ..models import Company, CompanyBenefit, CompanyIndustry, CompanyOffice, CompanyPageEvent
-from ..page_content import SOCIAL_NETWORKS, video_embed
-from ..page_registry import (
+from apps.employers.domain.page_content import SOCIAL_NETWORKS, video_embed
+from apps.employers.domain.page_registry import (
     ACCENT_PALETTE,
     DEFAULT_ACCENT_KEY,
     MAIN_SECTION_KEYS,
@@ -20,6 +15,12 @@ from ..page_registry import (
     SIDEBAR_SECTIONS,
     resolve_section_order,
 )
+from apps.jobs.models import Job, JobLocation
+from common.html.plain_text import html_plain_text
+from common.seo import SITEMAP_URL_LIMIT
+from common.storage.media import media_url_from_value
+
+from ..models import Company, CompanyBenefit, CompanyIndustry, CompanyOffice, CompanyPageEvent
 from .companies import legally_represented_companies_queryset
 
 
@@ -103,7 +104,7 @@ def public_company_website_url(company):
 
 
 def _rich_text(value):
-    return {'body_html': value} if rich_text_plain_text(value) else None
+    return {'body_html': value} if html_plain_text(value) else None
 
 
 def _gallery(company, request):
@@ -139,7 +140,7 @@ def public_company_offices(company):
         return offices
     return [
         {
-            'label': 'Trụ sở chính',
+            'label': _('Trụ sở chính'),
             'address': company.public_headquarters,
             'province_name': '',
             'is_headquarters': True,
@@ -178,15 +179,15 @@ def _benefits(company):
 
 def _facts(company, industries, website_url):
     facts = [
-        {'key': 'company_size', 'label': 'Quy mô', 'value': company.get_company_size_display()},
+        {'key': 'company_size', 'label': _('Quy mô'), 'value': company.get_company_size_display()},
         {
             'key': 'industries',
-            'label': 'Lĩnh vực',
+            'label': _('Lĩnh vực'),
             'value': ', '.join(item['name'] for item in industries),
         },
         {
             'key': 'founded_year',
-            'label': 'Năm thành lập',
+            'label': _('Năm thành lập'),
             'value': str(company.founded_year or ''),
         },
         {
@@ -246,7 +247,7 @@ def _blocks(definitions, content, *, hidden=()):
             {
                 'key': definition.key,
                 'type': definition.type,
-                'title': definition.title,
+                'title': str(definition.title),
                 **(payload or {}),
             }
         )

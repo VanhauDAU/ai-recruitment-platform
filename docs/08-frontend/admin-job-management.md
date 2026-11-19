@@ -11,8 +11,8 @@ có thao tác duyệt/từ chối. Quy tắc nghiệp vụ đầy đủ ở
 
 | Route | Page | Quyền |
 | --- | --- | --- |
-| `/admin/app/job-moderation` | `pages/admin/app/JobModeration.jsx` | `job_moderation.view` |
-| `/admin/app/job-moderation/:publicId` | `pages/admin/app/JobModerationDetail.jsx` | `job_moderation.view` |
+| `/admin/app/job-moderation` | `pages/admin/jobs/JobModeration.jsx` | `job_moderation.view` |
+| `/admin/app/job-moderation/:publicId` | `pages/admin/jobs/JobModerationDetail.jsx` | `job_moderation.view` |
 
 Route đăng ký ở `app/router/admin/admin-routes.config.js`, loader lazy ở
 `app/router/lazy/admin.pages.jsx`. Mục menu "Quản lý tin tuyển dụng".
@@ -34,11 +34,11 @@ sơ nhà tuyển dụng chỉ hiện khi admin có một trong các quyền
 ## Kiến trúc
 
 ```text
-pages/admin/app/JobModeration*.jsx
-  -> widgets/admin-job-management      (AdminJobManagement, AdminJobDetail)
-      -> features/enforce-job-visibility (JobVisibilityActions)
-      -> features/review-job-reports     (JobReportQueue, JobReportDecisionModal)
-      -> entities/admin-job, entities/job-report, entities/admin-access
+pages/admin/jobs/JobModeration*.jsx
+  -> widgets/admin/job-management      (AdminJobManagement, AdminJobDetail)
+      -> features/admin/job/enforce-job-visibility (JobVisibilityActions)
+      -> features/admin/job/review-job-reports     (JobReportQueue, JobReportDecisionModal)
+      -> entities/job/admin-job, entities/job/job-report, entities/account/admin-access
       -> shared/ui/admin
 ```
 
@@ -137,13 +137,13 @@ ngược lại là "Nội dung".
 
 | Endpoint | Mục đích |
 | --- | --- |
-| `GET /api/jobs/admin/moderation/` | Danh sách (`q`, `scope`, `status`, `has_reports`, `company`, `employer`, `tier`, `policy_hold`, `moderation_hold`, khoảng `submitted_*`/`deadline_*`, `ordering`). |
-| `GET /api/jobs/admin/moderation/summary/` | `total`, `draft`, `active`, `expired`, `closed`, `held`, `pending_reports`. |
-| `GET /api/jobs/admin/moderation/{public_id}/` | Chi tiết, `review_token`, `state_actions`, `blocked_reasons`, `content_changes`, báo cáo, lịch sử. |
-| `POST /api/jobs/admin/moderation/{public_id}/decisions/` | `action=hide|restore`. |
-| `GET /api/jobs/admin/reports/` | Hàng chờ báo cáo. |
-| `POST /api/jobs/admin/reports/{public_id}/resolve/` | `status=upheld|dismissed` kèm `note`. |
-| `POST /api/jobs/admin/reports/{public_id}/reverse/` | Gỡ kết luận `upheld`, `note` bắt buộc. |
+| `GET /api/admin/jobs/moderation/` | Danh sách (`q`, `scope`, `status`, `has_reports`, `company`, `employer`, `tier`, `policy_hold`, `moderation_hold`, khoảng `submitted_*`/`deadline_*`, `ordering`). |
+| `GET /api/admin/jobs/moderation/summary/` | `total`, `draft`, `active`, `expired`, `closed`, `held`, `pending_reports`. |
+| `GET /api/admin/jobs/moderation/{public_id}/` | Chi tiết, `review_token`, `state_actions`, `blocked_reasons`, `content_changes`, báo cáo, lịch sử. |
+| `POST /api/admin/jobs/moderation/{public_id}/decisions/` | `action=hide|restore`. |
+| `GET /api/admin/jobs/reports/` | Hàng chờ báo cáo. |
+| `POST /api/admin/jobs/reports/{public_id}/resolve/` | `status=upheld|dismissed` kèm `note`. |
+| `POST /api/admin/jobs/reports/{public_id}/reverse/` | Gỡ kết luận `upheld`, `note` bắt buộc. |
 
 ## UI và responsive
 

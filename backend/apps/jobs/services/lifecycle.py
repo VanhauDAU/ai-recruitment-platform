@@ -1,39 +1,15 @@
 from datetime import timedelta
 
 from django.conf import settings
+from django.utils.translation import gettext as _
 from rest_framework.exceptions import ValidationError
 
-DEFAULT_VISIBILITY_DAYS = 30
 MAX_VISIBILITY_DAYS = 90
 
 
 def job_lifecycle_policy():
-    maximum_days = min(
-        MAX_VISIBILITY_DAYS,
-        max(
-            1,
-            int(
-                getattr(
-                    settings,
-                    'JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS',
-                    MAX_VISIBILITY_DAYS,
-                )
-            ),
-        ),
-    )
-    default_days = min(
-        max(
-            1,
-            int(
-                getattr(
-                    settings,
-                    'JOB_POSTING_DEFAULT_DEADLINE_DAYS',
-                    DEFAULT_VISIBILITY_DAYS,
-                )
-            ),
-        ),
-        maximum_days,
-    )
+    maximum_days = min(MAX_VISIBILITY_DAYS, max(1, settings.JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS))
+    default_days = min(max(1, settings.JOB_POSTING_DEFAULT_DEADLINE_DAYS), maximum_days)
     return {
         'default_visibility_days': default_days,
         'max_visibility_days': maximum_days,
@@ -44,9 +20,11 @@ def job_lifecycle_policy():
 def visibility_days_error(value):
     policy = job_lifecycle_policy()
     if value is None:
-        return 'Chọn thời gian hiển thị tin.'
+        return _('Chọn thời gian hiển thị tin.')
     if not 1 <= value <= policy['max_visibility_days']:
-        return f'Thời gian hiển thị phải từ 1 đến {policy["max_visibility_days"]} ngày.'
+        return _('Thời gian hiển thị phải từ 1 đến %(days)s ngày.') % {
+            'days': policy['max_visibility_days']
+        }
     return ''
 
 
@@ -76,7 +54,7 @@ def extend_job_visibility(job, *, requested_visibility_days):
         raise ValidationError({'requested_visibility_days': error})
     if requested_visibility_days <= job.requested_visibility_days:
         raise ValidationError(
-            {'requested_visibility_days': 'Thời gian hiển thị mới phải dài hơn hiện tại.'}
+            {'requested_visibility_days': _('Thời gian hiển thị mới phải dài hơn hiện tại.')}
         )
 
     job.requested_visibility_days = requested_visibility_days

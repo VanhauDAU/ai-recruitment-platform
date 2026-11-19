@@ -37,15 +37,15 @@ describe('upload session API', () => {
       public_id: 'ups_clean',
       ready_for_submit: true,
     })
-    expect(post).toHaveBeenNthCalledWith(1, '/uploads/sessions/', {
+    expect(post).toHaveBeenNthCalledWith(1, '/shared/uploads/sessions/', {
       purpose: 'employer_verification',
       original_filename: 'proof.pdf',
       content_type: 'application/pdf',
       size_bytes: file.size,
     })
-    expect(post.mock.calls[1][0]).toBe('/uploads/sessions/ups_clean/content/')
+    expect(post.mock.calls[1][0]).toBe('/shared/uploads/sessions/ups_clean/content/')
     expect(post.mock.calls[1][1]).toBeInstanceOf(FormData)
-    expect(get).toHaveBeenCalledWith('/uploads/sessions/ups_clean/')
+    expect(get).toHaveBeenCalledWith('/shared/uploads/sessions/ups_clean/')
     expect(onStateChange).toHaveBeenLastCalledWith(expect.objectContaining({ state: 'clean' }))
   })
 

@@ -9,6 +9,7 @@ selectors and services, which may not import each other, share one decision.
 from dataclasses import dataclass
 
 from django.db.models import Exists, OuterRef, Q
+from django.utils.translation import gettext_lazy
 
 from .company_page import CompanyPageEditorGrant
 from .compliance import EmployerComplianceHold
@@ -18,12 +19,18 @@ from .representation import eligible_representatives_queryset
 
 BLOCKER_MESSAGES = {
     'OWNER_NOT_VERIFIED': (
-        'Quản lý công ty chưa có xác thực nhà tuyển dụng còn hiệu lực '
-        'nên trang công ty chưa thể tuỳ biến.'
+        gettext_lazy(
+            'Quản lý công ty chưa có xác thực nhà tuyển dụng còn hiệu lực '
+            'nên trang công ty chưa thể tuỳ biến.'
+        )
     ),
-    'NOT_VERIFIED': 'Bạn cần hoàn tất xác thực nhà tuyển dụng để tuỳ biến trang công ty.',
-    'COMPLIANCE_HOLD': 'Tài khoản của bạn đang bị hạn chế tuân thủ nên chưa thể tuỳ biến trang công ty.',
-    'NO_GRANT': 'Bạn chưa được quản lý công ty cấp quyền biên tập trang công ty.',
+    'NOT_VERIFIED': gettext_lazy(
+        'Bạn cần hoàn tất xác thực nhà tuyển dụng để tuỳ biến trang công ty.'
+    ),
+    'COMPLIANCE_HOLD': gettext_lazy(
+        'Tài khoản của bạn đang bị hạn chế tuân thủ nên chưa thể tuỳ biến trang công ty.'
+    ),
+    'NO_GRANT': gettext_lazy('Bạn chưa được quản lý công ty cấp quyền biên tập trang công ty.'),
 }
 
 
@@ -93,7 +100,7 @@ def resolve_company_page_access(recruiter):
         can_edit_content=can_edit,
         can_manage_editors=can_manage_editors,
         blockers=tuple(
-            {'code': code, 'message': BLOCKER_MESSAGES[code]}
+            {'code': code, 'message': str(BLOCKER_MESSAGES[code])}
             for code, applies in reasons.items()
             if applies
         ),

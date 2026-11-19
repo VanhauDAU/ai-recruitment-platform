@@ -1,5 +1,5 @@
 import { Outlet } from 'react-router'
-import { BrandLogo } from '@/entities/site-settings'
+import { BrandLogo } from '@/entities/system/site-settings'
 import { legacyAsset } from '@/shared/config/assets'
 
 const BG_IMAGE = legacyAsset('onboarding/bg-step-1.png')

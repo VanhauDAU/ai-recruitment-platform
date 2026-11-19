@@ -1,28 +1,16 @@
-from django.db import transaction
+"""Shared job read/write contract every public and employer job serializer extends."""
+
 from django.utils.html import strip_tags
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from apps.employers.models import DpaStatus, RecruitmentCampaign
-from common.media_storage import media_url_from_value
-from common.rich_text import rich_text_plain_text
+from common.storage.media import media_url_from_value
 
 from ...models import (
-    Benefit,
     Job,
-    JobApplicationContact,
-    JobApplicationEmail,
-    JobBenefit,
     JobCategoryAssignment,
-    JobLanguageRequirement,
-    JobLocation,
     JobSkill,
-    JobWorkSchedule,
-)
-from ...models.querysets import JobState, job_visibility_issues
-from ...selectors.employer import (
-    employer_job_application_summary,
-    employer_job_visibility_hold,
 )
 from ...selectors.presentation import job_presentation
 from ...selectors.verification_badge import (
@@ -30,20 +18,13 @@ from ...selectors.verification_badge import (
     badge_criteria_payload,
     prime_badge_cache,
 )
-from ...services import job_deadline_error
 from .supporting import (
-    JobApplicationContactSerializer,
-    JobApplicationEmailSerializer,
     JobBenefitSerializer,
     JobCategoryAssignmentSerializer,
     JobLanguageRequirementSerializer,
     JobLocationSerializer,
     JobSkillSerializer,
     JobWorkScheduleSerializer,
-    PublicJobBenefitSerializer,
-    PublicJobLanguageRequirementSerializer,
-    PublicJobLocationSerializer,
-    PublicJobWorkScheduleSerializer,
 )
 
 
@@ -100,28 +81,16 @@ class JobSerializer(serializers.ModelSerializer):
     company_verified = serializers.SerializerMethodField()
     brand_slug = serializers.SerializerMethodField()
     company_cover_url = serializers.SerializerMethodField()
-    # Read-only compatibility fields for the current candidate frontend. They are
-    # derived from normalized data and no longer create duplicate database columns.
+    # Flat summaries derived from the nested rows, for cards that do not need them.
     category = serializers.SerializerMethodField()
     locations_detail = serializers.SerializerMethodField()
     short_description = serializers.SerializerMethodField()
-    is_salary_visible = serializers.SerializerMethodField()
-    application_deadline = serializers.SerializerMethodField()
     presentation = serializers.SerializerMethodField()
     application_reasons = serializers.ListField(
         child=serializers.CharField(max_length=160, allow_blank=False, trim_whitespace=True),
         max_length=3,
         required=False,
     )
-
-    NESTED_RELATIONS = {
-        'job_skills': (JobSkill, 'job_skills'),
-        'category_assignments': (JobCategoryAssignment, 'category_assignments'),
-        'job_locations': (JobLocation, 'job_locations'),
-        'work_schedules': (JobWorkSchedule, 'work_schedules'),
-        'job_benefits': (JobBenefit, 'job_benefits'),
-        'language_requirements': (JobLanguageRequirement, 'language_requirements'),
-    }
 
     class Meta:
         model = Job
@@ -159,9 +128,7 @@ class JobSerializer(serializers.ModelSerializer):
             'salary_max',
             'income_display_type',
             'currency',
-            'is_salary_visible',
             'deadline',
-            'application_deadline',
             'requested_visibility_days',
             'first_approved_at',
             'visibility_starts_at',
@@ -193,7 +160,6 @@ class JobSerializer(serializers.ModelSerializer):
             'category',
             'locations_detail',
             'short_description',
-            'is_salary_visible',
             'company_cover_url',
             'brand_slug',
             'company_verified',
@@ -222,24 +188,24 @@ class JobSerializer(serializers.ModelSerializer):
                 not work_types and not self.allow_incomplete_salary
             ):
                 raise serializers.ValidationError(
-                    {'work_types': 'Chọn ít nhất một hình thức làm việc.'}
+                    {'work_types': _('Chọn ít nhất một hình thức làm việc.')}
                 )
             if len(work_types) != len(set(work_types)) or any(
                 value not in allowed for value in work_types
             ):
                 raise serializers.ValidationError(
-                    {'work_types': 'Danh sách hình thức làm việc không hợp lệ.'}
+                    {'work_types': _('Danh sách hình thức làm việc không hợp lệ.')}
                 )
             attrs['work_type'] = work_types[0] if work_types else ''
         age_min = attrs.get('age_min', getattr(self.instance, 'age_min', None))
         age_max = attrs.get('age_max', getattr(self.instance, 'age_max', None))
         if age_min is not None and not 15 <= age_min <= 100:
-            raise serializers.ValidationError({'age_min': 'Tuổi tối thiểu phải từ 15 đến 100.'})
+            raise serializers.ValidationError({'age_min': _('Tuổi tối thiểu phải từ 15 đến 100.')})
         if age_max is not None and not 15 <= age_max <= 100:
-            raise serializers.ValidationError({'age_max': 'Tuổi tối đa phải từ 15 đến 100.'})
+            raise serializers.ValidationError({'age_max': _('Tuổi tối đa phải từ 15 đến 100.')})
         if age_min is not None and age_max is not None and age_max < age_min:
             raise serializers.ValidationError(
-                {'age_max': 'Tuổi tối đa không được nhỏ hơn tuổi tối thiểu.'}
+                {'age_max': _('Tuổi tối đa không được nhỏ hơn tuổi tối thiểu.')}
             )
 
         salary_type = attrs.get(
@@ -257,14 +223,14 @@ class JobSerializer(serializers.ModelSerializer):
             attrs['salary_type'] = None
             salary_type = None
         elif salary_type is None:
-            salary_errors['salary_type'] = 'Chọn loại lương và nhập đầy đủ mức lương.'
+            salary_errors['salary_type'] = _('Chọn loại lương và nhập đầy đủ mức lương.')
         elif salary_type == Job.SalaryType.NEGOTIABLE and (
             salary_min is not None or salary_max is not None
         ):
-            salary_errors['salary_type'] = 'Lương thỏa thuận không được có mức tối thiểu/tối đa.'
+            salary_errors['salary_type'] = _('Lương thỏa thuận không được có mức tối thiểu/tối đa.')
         elif salary_type == Job.SalaryType.RANGE:
             if salary_min is None and salary_max is None:
-                salary_errors['salary_type'] = 'Nhập ít nhất một mức lương.'
+                salary_errors['salary_type'] = _('Nhập ít nhất một mức lương.')
             elif salary_min is not None and salary_max is None:
                 attrs['salary_type'] = Job.SalaryType.FROM
                 salary_type = Job.SalaryType.FROM
@@ -272,11 +238,13 @@ class JobSerializer(serializers.ModelSerializer):
                 attrs['salary_type'] = Job.SalaryType.UP_TO
                 salary_type = Job.SalaryType.UP_TO
             elif salary_min is not None and salary_max is not None and salary_max < salary_min:
-                salary_errors['salary_max'] = 'Mức lương tối đa không được nhỏ hơn mức tối thiểu.'
+                salary_errors['salary_max'] = _(
+                    'Mức lương tối đa không được nhỏ hơn mức tối thiểu.'
+                )
         elif salary_type in (Job.SalaryType.FIXED, Job.SalaryType.FROM) and salary_min is None:
-            salary_errors['salary_min'] = 'Loại lương này cần mức lương tối thiểu.'
+            salary_errors['salary_min'] = _('Loại lương này cần mức lương tối thiểu.')
         elif salary_type == Job.SalaryType.UP_TO and salary_max is None:
-            salary_errors['salary_max'] = 'Loại lương này cần mức lương tối đa.'
+            salary_errors['salary_max'] = _('Loại lương này cần mức lương tối đa.')
         if salary_errors:
             raise serializers.ValidationError(salary_errors)
 
@@ -288,12 +256,12 @@ class JobSerializer(serializers.ModelSerializer):
             )
             if primary_count > 1:
                 raise serializers.ValidationError(
-                    {'category_assignments': 'Chỉ được chọn một vị trí chuyên môn chính.'}
+                    {'category_assignments': _('Chỉ được chọn một vị trí chuyên môn chính.')}
                 )
             keys = [(item['category'].pk, item['role']) for item in categories]
             if len(keys) != len(set(keys)):
                 raise serializers.ValidationError(
-                    {'category_assignments': 'Danh mục không được chọn trùng.'}
+                    {'category_assignments': _('Danh mục không được chọn trùng.')}
                 )
 
         self._validate_nested_uniqueness(attrs)
@@ -302,7 +270,7 @@ class JobSerializer(serializers.ModelSerializer):
     def validate_application_reasons(self, value):
         normalized = [item.strip() for item in value]
         if len({item.casefold() for item in normalized}) != len(normalized):
-            raise serializers.ValidationError('Các lý do không được trùng nhau.')
+            raise serializers.ValidationError(_('Các lý do không được trùng nhau.'))
         return normalized
 
     def _validate_nested_uniqueness(self, attrs):
@@ -322,33 +290,8 @@ class JobSerializer(serializers.ModelSerializer):
             keys = [key_builder(item) for item in items]
             if len(keys) != len(set(keys)):
                 raise serializers.ValidationError(
-                    {relation: 'Danh sách không được chứa mục trùng.'}
+                    {relation: _('Danh sách không được chứa mục trùng.')}
                 )
-
-    @transaction.atomic
-    def create(self, validated_data):
-        nested = self._pop_nested(validated_data)
-        job = Job.objects.create(**validated_data)
-        self._replace_nested(job, nested)
-        return job
-
-    @transaction.atomic
-    def update(self, instance, validated_data):
-        nested = self._pop_nested(validated_data, missing=None)
-        job = super().update(instance, validated_data)
-        self._replace_nested(job, nested)
-        return job
-
-    def _pop_nested(self, validated_data, missing=()):
-        return {field: validated_data.pop(field, missing) for field in self.NESTED_RELATIONS}
-
-    def _replace_nested(self, job, nested):
-        for field, values in nested.items():
-            if values is None:
-                continue
-            model, related_name = self.NESTED_RELATIONS[field]
-            getattr(job, related_name).all().delete()
-            model.objects.bulk_create([model(job=job, **item) for item in values])
 
     @extend_schema_field(serializers.CharField(allow_null=True))
     def get_company_slug(self, obj):
@@ -356,7 +299,7 @@ class JobSerializer(serializers.ModelSerializer):
         company = obj.company
         return None if company.content_policy_hold else company.slug
 
-    def get_company_logo_url(self, obj):
+    def get_company_logo_url(self, obj) -> str | None:
         return media_url_from_value(obj.company.logo_url, request=self.context.get('request'))
 
     def _badge_payload(self, obj):
@@ -374,11 +317,11 @@ class JobSerializer(serializers.ModelSerializer):
             return cached[key]
         return self._badge_payload(obj)['verified']
 
-    def get_brand_slug(self, obj):
+    def get_brand_slug(self, obj) -> str | None:
         company = obj.company
         return company.slug if company.has_brand_page else None
 
-    def get_company_cover_url(self, obj):
+    def get_company_cover_url(self, obj) -> str | None:
         return media_url_from_value(
             obj.company.cover_image_url, request=self.context.get('request')
         )
@@ -394,11 +337,11 @@ class JobSerializer(serializers.ModelSerializer):
             None,
         )
 
-    def get_category(self, obj):
+    def get_category(self, obj) -> int | None:
         assignment = self._primary_assignment(obj)
         return assignment.category_id if assignment else None
 
-    def get_locations_detail(self, obj):
+    def get_locations_detail(self, obj) -> list[dict]:
         provinces = []
         seen = set()
         for item in obj.job_locations.all():
@@ -409,635 +352,8 @@ class JobSerializer(serializers.ModelSerializer):
             provinces.append({'id': province.pk, 'name': province.name, 'level': 'province'})
         return provinces
 
-    def get_short_description(self, obj):
+    def get_short_description(self, obj) -> str:
         return strip_tags(obj.description).strip()[:240]
 
-    def get_is_salary_visible(self, obj):
-        return obj.salary_type != Job.SalaryType.NEGOTIABLE
-
-    def get_application_deadline(self, obj):
-        return obj.deadline
-
-    def get_presentation(self, obj):
+    def get_presentation(self, obj) -> dict:
         return job_presentation(obj)
-
-
-class PublicJobListSerializer(JobSerializer):
-    """Compact contract for public search, related jobs, and saved-job cards."""
-
-    job_skills = JobListSkillSerializer(many=True, read_only=True)
-
-    class Meta(JobSerializer.Meta):
-        fields = [
-            'public_id',
-            'slug',
-            'title',
-            'company_name',
-            'company_slug',
-            'company_logo_url',
-            'brand_slug',
-            'company_verified',
-            'category',
-            'locations_detail',
-            'job_skills',
-            'work_type',
-            'work_types',
-            'employment_type',
-            'education_level',
-            'experience_years',
-            'position_level',
-            'age_min',
-            'age_max',
-            'salary_type',
-            'salary_min',
-            'salary_max',
-            'income_display_type',
-            'currency',
-            'tier',
-            'is_hot',
-            'is_urgent',
-            'has_flash_badge',
-            'presentation',
-            'first_approved_at',
-            'published_at',
-            'created_at',
-        ]
-        read_only_fields = fields
-
-
-class PublicJobPreviewSerializer(PublicJobListSerializer):
-    """Extra fields for the intentional hover preview on the home page only."""
-
-    job_locations = PublicJobLocationSerializer(many=True, read_only=True)
-    work_schedules = PublicJobWorkScheduleSerializer(many=True, read_only=True)
-    job_benefits = PublicJobBenefitSerializer(many=True, read_only=True)
-
-    class Meta(PublicJobListSerializer.Meta):
-        fields = PublicJobListSerializer.Meta.fields + [
-            'short_description',
-            'description',
-            'requirements',
-            'benefits',
-            'application_reasons',
-            'work_schedule_note',
-            'job_locations',
-            'work_schedules',
-            'job_benefits',
-            'number_of_vacancies',
-            'deadline',
-            'application_deadline',
-            'visibility_ends_at',
-        ]
-
-
-class JobDetailSerializer(JobSerializer):
-    """Extended public detail without internal application-recipient data.
-
-    Ngoài dữ liệu thô (nested) dùng cho form employer, serializer này trả thêm
-    view-model đã nhóm sẵn cho màn chi tiết ứng viên (tag tóm tắt, địa điểm
-    nhóm theo tỉnh/thành, chuyên môn chính/kiến thức chuyên ngành) để frontend
-    không phải tự suy luận từ dữ liệu thô.
-    """
-
-    category_name = serializers.SerializerMethodField()
-    # Legacy HTTP name paired with ``company_verified``; payload is recruiter-scoped.
-    company_verification = serializers.SerializerMethodField()
-    company_size = serializers.CharField(source='company.company_size', read_only=True)
-    company_address = serializers.CharField(source='company.public_headquarters', read_only=True)
-    company_description = serializers.SerializerMethodField()
-    company_website_url = serializers.CharField(source='company.website_url', read_only=True)
-    company_industries = serializers.SerializerMethodField()
-    primary_specialization = serializers.SerializerMethodField()
-    domain_knowledge = serializers.SerializerMethodField()
-    workplace_groups = serializers.SerializerMethodField()
-    requirement_tags = serializers.SerializerMethodField()
-    benefit_tags = serializers.SerializerMethodField()
-    required_skills = serializers.SerializerMethodField()
-    preferred_skills = serializers.SerializerMethodField()
-    benefit_groups = serializers.SerializerMethodField()
-    job_locations = PublicJobLocationSerializer(many=True, read_only=True)
-    work_schedules = PublicJobWorkScheduleSerializer(many=True, read_only=True)
-    language_requirements = PublicJobLanguageRequirementSerializer(many=True, read_only=True)
-    # A stopped job stays readable but shows "Hết hạn ứng tuyển" instead of apply.
-    accepting_applications = serializers.BooleanField(read_only=True, default=True)
-    stopped_at = serializers.DateTimeField(read_only=True)
-
-    class Meta(JobSerializer.Meta):
-        model = Job
-        fields = [
-            'public_id',
-            'slug',
-            'title',
-            'accepting_applications',
-            'stopped_at',
-            'company_name',
-            'company_slug',
-            'company_logo_url',
-            'company_cover_url',
-            'brand_slug',
-            'company_verified',
-            'company_verification',
-            'category',
-            'category_name',
-            'locations_detail',
-            'description',
-            'requirements',
-            'benefits',
-            'application_reasons',
-            'work_schedule_note',
-            'work_type',
-            'work_types',
-            'employment_type',
-            'education_level',
-            'experience_years',
-            'position_level',
-            'gender_requirement',
-            'age_min',
-            'age_max',
-            'number_of_vacancies',
-            'salary_type',
-            'salary_min',
-            'salary_max',
-            'income_display_type',
-            'currency',
-            'deadline',
-            'application_deadline',
-            'first_approved_at',
-            'visibility_ends_at',
-            'view_count',
-            'is_hot',
-            'is_urgent',
-            'presentation',
-            'job_locations',
-            'work_schedules',
-            'language_requirements',
-            'published_at',
-            'created_at',
-            'company_size',
-            'company_address',
-            'company_description',
-            'company_website_url',
-            'company_industries',
-            'primary_specialization',
-            'domain_knowledge',
-            'workplace_groups',
-            'requirement_tags',
-            'benefit_tags',
-            'required_skills',
-            'preferred_skills',
-            'benefit_groups',
-        ]
-        read_only_fields = fields
-
-    @extend_schema_field(JobVerificationSerializer)
-    def get_company_verification(self, obj):
-        return self._badge_payload(obj)
-
-    def get_category_name(self, obj):
-        assignment = self._primary_assignment(obj)
-        return assignment.category.name if assignment else ''
-
-    def get_company_description(self, obj):
-        return rich_text_plain_text(obj.company.description)
-
-    def get_company_industries(self, obj):
-        return [industry.name for industry in obj.company.industries.all()]
-
-    @staticmethod
-    def _category_summary(category):
-        return {'id': category.pk, 'name': category.name, 'slug': category.slug}
-
-    def get_primary_specialization(self, obj):
-        assignment = self._primary_assignment(obj)
-        return self._category_summary(assignment.category) if assignment else None
-
-    def get_domain_knowledge(self, obj):
-        return [
-            self._category_summary(item.category)
-            for item in obj.category_assignments.all()
-            if item.role == JobCategoryAssignment.Role.DOMAIN_KNOWLEDGE
-        ]
-
-    def get_workplace_groups(self, obj):
-        """Địa điểm làm việc nhóm theo tỉnh/thành: mỗi nhóm gồm các dòng địa chỉ phường/xã."""
-        groups = {}
-        for item in obj.job_locations.all():
-            province = item.location.parent or item.location
-            group = groups.setdefault(
-                province.pk,
-                {
-                    'province_id': province.pk,
-                    'province_name': province.name,
-                    'addresses': [],
-                },
-            )
-            ward_name = item.location.name if item.location.parent_id else ''
-            display = ', '.join(part for part in [item.address_detail, ward_name] if part)
-            group['addresses'].append(
-                {
-                    'ward_id': item.location_id if item.location.parent_id else None,
-                    'ward_name': ward_name,
-                    'address_detail': item.address_detail,
-                    'display': display or province.name,
-                }
-            )
-        return list(groups.values())
-
-    def get_requirement_tags(self, obj):
-        tags = []
-        if obj.experience_years == Job.ExperienceYears.NONE:
-            tags.append('Không yêu cầu kinh nghiệm')
-        elif obj.experience_years:
-            tags.append(f'{obj.get_experience_years_display()} kinh nghiệm')
-        if obj.age_min and obj.age_max:
-            tags.append(f'Tuổi {obj.age_min} - {obj.age_max}')
-        elif obj.age_min:
-            tags.append(f'Từ {obj.age_min} tuổi trở lên')
-        elif obj.age_max:
-            tags.append(f'Đến {obj.age_max} tuổi')
-        if obj.education_level == Job.EducationLevel.NONE:
-            tags.append('Không yêu cầu bằng cấp')
-        elif obj.education_level:
-            tags.append(f'Từ {obj.get_education_level_display()} trở lên')
-        if obj.gender_requirement and obj.gender_requirement != Job.GenderRequirement.ANY:
-            tags.append(f'Giới tính: {obj.get_gender_requirement_display()}')
-        # Kỹ năng không nằm ở hàng tag tóm tắt nữa: đã có khối riêng dưới "Yêu cầu ứng viên".
-        return tags
-
-    def get_benefit_tags(self, obj):
-        return [item.benefit.name for item in obj.job_benefits.all()]
-
-    @staticmethod
-    def _skill_names(obj, importance):
-        return [item.skill.name for item in obj.job_skills.all() if item.importance == importance]
-
-    def get_required_skills(self, obj):
-        return self._skill_names(obj, JobSkill.Importance.REQUIRED)
-
-    def get_preferred_skills(self, obj):
-        return self._skill_names(obj, JobSkill.Importance.PREFERRED)
-
-    def get_benefit_groups(self, obj):
-        """Quyền lợi đã chọn, gom theo danh mục và giữ thứ tự khai báo của Benefit.Category."""
-        names_by_category = {}
-        for item in obj.job_benefits.all():
-            names_by_category.setdefault(item.benefit.category, []).append(item.benefit.name)
-        return [
-            {
-                'category': category.value,
-                'category_label': category.label,
-                'items': names_by_category[category.value],
-            }
-            for category in Benefit.Category
-            if names_by_category.get(category.value)
-        ]
-
-
-class EmployerJobVisibilityHoldSerializer(serializers.Serializer):
-    kind = serializers.ChoiceField(choices=('moderation', 'account'))
-    code = serializers.CharField()
-    label = serializers.CharField()
-    held_at = serializers.DateTimeField(allow_null=True)
-    reason_code = serializers.CharField(allow_blank=True)
-    reason_label = serializers.CharField(allow_blank=True)
-    # Changes requested: the owner edits, then resubmits for review.
-    editable = serializers.BooleanField()
-    resubmitted_at = serializers.DateTimeField(allow_null=True)
-    request_note = serializers.CharField(allow_blank=True)
-
-
-class EmployerJobVisibilityIssueSerializer(serializers.Serializer):
-    code = serializers.CharField()
-    label = serializers.CharField()
-    action = serializers.CharField()
-
-
-class EmployerJobVisibilityHoldMixin(serializers.Serializer):
-    """Tell the owner when, and why, candidates cannot see one of their jobs.
-
-    ``visibility_hold`` details an administrator or account hold, the only
-    holds that also freeze editing; ``visibility_issues`` lists every reason.
-    """
-
-    effective_state = serializers.SerializerMethodField()
-    visibility_issues = serializers.SerializerMethodField()
-    visibility_hold = serializers.SerializerMethodField()
-
-    @extend_schema_field(serializers.ChoiceField(choices=JobState.choices))
-    def get_effective_state(self, obj):
-        job_visibility_issues(obj)  # loads the state when the queryset did not
-        return obj.effective_state
-
-    @extend_schema_field(EmployerJobVisibilityIssueSerializer(many=True))
-    def get_visibility_issues(self, obj):
-        return EmployerJobVisibilityIssueSerializer(job_visibility_issues(obj), many=True).data
-
-    @extend_schema_field(EmployerJobVisibilityHoldSerializer(allow_null=True))
-    def get_visibility_hold(self, obj):
-        hold = employer_job_visibility_hold(obj)
-        return EmployerJobVisibilityHoldSerializer(hold).data if hold else None
-
-
-class EmployerJobWriteSerializer(EmployerJobVisibilityHoldMixin, JobSerializer):
-    """Create/update DTO for the employer job form; never used for public reads."""
-
-    application_contact = JobApplicationContactSerializer(required=False, allow_null=True)
-    campaign = serializers.SlugRelatedField(
-        slug_field='public_id',
-        queryset=RecruitmentCampaign.objects.all(),
-        required=False,
-        allow_null=True,
-    )
-    campaign_name = serializers.CharField(source='campaign.name', read_only=True)
-    is_expired = serializers.BooleanField(read_only=True)
-    ai_generation_public_id = serializers.CharField(
-        write_only=True,
-        required=False,
-        max_length=50,
-    )
-    application_deadline = serializers.DateField(
-        source='deadline',
-        required=False,
-        allow_null=True,
-    )
-
-    class Meta(JobSerializer.Meta):
-        fields = JobSerializer.Meta.fields + [
-            'application_contact',
-            'campaign',
-            'campaign_name',
-            'is_expired',
-            'effective_state',
-            'visibility_issues',
-            'visibility_hold',
-            'ai_generation_public_id',
-            'auto_reject_stale_applications',
-            'auto_reject_after_days',
-            'auto_rejection_email_body',
-            'submitted_at',
-            'approved_at',
-        ]
-        read_only_fields = JobSerializer.Meta.read_only_fields + [
-            'submitted_at',
-            'approved_at',
-        ]
-
-    def validate(self, attrs):
-        legacy_deadline = self.initial_data.get('deadline')
-        application_deadline = self.initial_data.get('application_deadline')
-        if (
-            legacy_deadline is not None
-            and application_deadline is not None
-            and legacy_deadline != application_deadline
-        ):
-            raise serializers.ValidationError(
-                {'application_deadline': 'Hạn nhận hồ sơ không khớp trường deadline cũ.'}
-            )
-        attrs = super().validate(attrs)
-        if self.instance is not None and attrs.get('ai_generation_public_id'):
-            raise serializers.ValidationError(
-                {'ai_generation_public_id': 'Chỉ liên kết kết quả AI khi tạo tin mới.'}
-            )
-        enabled = attrs.get(
-            'auto_reject_stale_applications',
-            getattr(self.instance, 'auto_reject_stale_applications', True),
-        )
-        email_body = attrs.get(
-            'auto_rejection_email_body',
-            getattr(
-                self.instance,
-                'auto_rejection_email_body',
-                Job.DEFAULT_AUTO_REJECTION_EMAIL,
-            ),
-        )
-        if enabled and not email_body.strip():
-            raise serializers.ValidationError(
-                {'auto_rejection_email_body': 'Nhập nội dung email thông báo cho ứng viên.'}
-            )
-        return attrs
-
-    def validate_deadline(self, deadline):
-        if deadline_error := job_deadline_error(deadline, required=False):
-            raise serializers.ValidationError(deadline_error)
-        return deadline
-
-    def validate_application_deadline(self, deadline):
-        return self.validate_deadline(deadline)
-
-    def validate_campaign(self, campaign):
-        if campaign is None:
-            return campaign
-        request = self.context.get('request')
-        if request is None or campaign.owner.user_id != request.user.id:
-            raise serializers.ValidationError('Chiến dịch không thuộc tài khoản này.')
-        if campaign.is_terminal:
-            raise serializers.ValidationError(
-                'Không thể thêm tin tuyển dụng vào chiến dịch đã hủy hoặc hoàn tất.'
-            )
-        return campaign
-
-    @transaction.atomic
-    def create(self, validated_data):
-        self._ai_generation_public_id = validated_data.pop('ai_generation_public_id', '')
-        contact = validated_data.pop('application_contact', None)
-        job = super().create(validated_data)
-        self._replace_contact(job, contact)
-        return job
-
-    @transaction.atomic
-    def update(self, instance, validated_data):
-        marker = object()
-        contact = validated_data.pop('application_contact', marker)
-        job = super().update(instance, validated_data)
-        if contact is not marker:
-            self._replace_contact(job, contact)
-        return job
-
-    def _replace_contact(self, job, contact_data):
-        JobApplicationContact.objects.filter(job=job).delete()
-        if not contact_data:
-            return
-        emails = contact_data.pop('emails')
-        contact = JobApplicationContact.objects.create(job=job, **contact_data)
-        JobApplicationEmail.objects.bulk_create(
-            [JobApplicationEmail(contact=contact, **item) for item in emails]
-        )
-
-
-class EmployerJobApplicationSummarySerializer(serializers.Serializer):
-    total = serializers.IntegerField()
-    unviewed = serializers.IntegerField()
-    unanswered = serializers.IntegerField()
-    by_status = serializers.DictField(child=serializers.IntegerField())
-
-
-class EmployerJobDetailSerializer(EmployerJobWriteSerializer):
-    """Employer form read DTO, including private application recipients.
-
-    Also carries the aggregates of the job workspace header: the engagement
-    funnel and the applications per recruiter status. Neither identifies a
-    candidate, so they stay readable while candidate-data access is blocked.
-    """
-
-    impression_count = serializers.IntegerField(read_only=True)
-    application_summary = serializers.SerializerMethodField()
-
-    class Meta(EmployerJobWriteSerializer.Meta):
-        fields = EmployerJobWriteSerializer.Meta.fields + [
-            'impression_count',
-            'application_summary',
-        ]
-
-    @extend_schema_field(EmployerJobApplicationSummarySerializer)
-    def get_application_summary(self, obj):
-        return employer_job_application_summary(obj)
-
-
-class DraftJobApplicationContactSerializer(JobApplicationContactSerializer):
-    recipient_name = serializers.CharField(required=False, allow_blank=True, default='')
-    phone = serializers.CharField(required=False, allow_blank=True, default='')
-    emails = JobApplicationEmailSerializer(many=True, required=False, default=list)
-
-    def validate_emails(self, emails):
-        if len(emails) > 5:
-            raise serializers.ValidationError('Chỉ được nhập tối đa 5 email nhận hồ sơ.')
-        normalized = [item['email'].strip().lower() for item in emails]
-        if len(normalized) != len(set(normalized)):
-            raise serializers.ValidationError('Email nhận hồ sơ không được trùng nhau.')
-        return emails
-
-
-class EmployerJobDraftSerializer(EmployerJobWriteSerializer):
-    """Partial draft contract; final validation happens only at publication time."""
-
-    allow_incomplete_salary = True
-    application_contact = DraftJobApplicationContactSerializer(required=False, allow_null=True)
-
-    class Meta(EmployerJobWriteSerializer.Meta):
-        extra_kwargs = {
-            'title': {'required': False, 'allow_blank': True},
-            'description': {'required': False, 'allow_blank': True},
-        }
-
-
-class EmployerJobListSerializer(EmployerJobVisibilityHoldMixin, PublicJobListSerializer):
-    """Compact management-table DTO; rich job content stays on the detail API."""
-
-    campaign = serializers.CharField(source='campaign.public_id', read_only=True, allow_null=True)
-    campaign_name = serializers.CharField(source='campaign.name', read_only=True, allow_null=True)
-    is_expired = serializers.BooleanField(read_only=True)
-    candidate_count = serializers.IntegerField(read_only=True, default=0)
-    unviewed_application_count = serializers.IntegerField(read_only=True, default=0)
-    candidate_previews = serializers.SerializerMethodField()
-
-    class Meta(PublicJobListSerializer.Meta):
-        fields = [
-            'public_id',
-            'title',
-            'company_name',
-            'locations_detail',
-            'employment_type',
-            'deadline',
-            'application_deadline',
-            'requested_visibility_days',
-            'first_approved_at',
-            'visibility_starts_at',
-            'visibility_ends_at',
-            'is_visibility_expired',
-            'status',
-            'is_expired',
-            'effective_state',
-            'visibility_issues',
-            'visibility_hold',
-            'campaign',
-            'campaign_name',
-            'application_count',
-            'candidate_count',
-            'unviewed_application_count',
-            'candidate_previews',
-            'view_count',
-            'published_at',
-            'submitted_at',
-            'approved_at',
-            'created_at',
-            'updated_at',
-        ]
-        list_serializer_class = serializers.ListSerializer
-        read_only_fields = fields
-
-    def get_candidate_previews(self, obj):
-        return [
-            {
-                **preview,
-                'avatar_url': media_url_from_value(
-                    preview['avatar_url'],
-                    request=self.context.get('request'),
-                ),
-            }
-            for preview in getattr(obj, 'candidate_previews', [])
-        ]
-
-
-class JobResponsibilityAcknowledgementSerializer(serializers.Serializer):
-    """Sent with every request that makes a job public (publish, reopen)."""
-
-    responsibility_statement_version = serializers.CharField(
-        required=False,
-        allow_blank=True,
-        default='',
-        max_length=20,
-    )
-
-
-class JobResponsibilityStatementSerializer(serializers.Serializer):
-    version = serializers.CharField()
-    text = serializers.CharField()
-
-
-class EmployerPostingBlockerSerializer(serializers.Serializer):
-    code = serializers.CharField()
-    capabilities = serializers.ListField(
-        child=serializers.ChoiceField(
-            choices=('job_workspace', 'verification', 'candidate_data', 'job_approval')
-        )
-    )
-    message = serializers.CharField()
-    action = serializers.CharField()
-
-
-class EmployerJobLifecyclePolicySerializer(serializers.Serializer):
-    default_visibility_days = serializers.IntegerField(min_value=1)
-    max_visibility_days = serializers.IntegerField(min_value=1)
-    timezone = serializers.CharField()
-
-
-class EmployerPublishBlockerSerializer(serializers.Serializer):
-    code = serializers.CharField()
-    label = serializers.CharField()
-
-
-class EmployerJobPostingContextSerializer(serializers.Serializer):
-    default_deadline_days = serializers.IntegerField(min_value=1)
-    max_deadline_days = serializers.IntegerField(min_value=1)
-    max_public_lifetime_days = serializers.IntegerField(min_value=1)
-    lifecycle_policy = EmployerJobLifecyclePolicySerializer()
-    responsibility_statement = JobResponsibilityStatementSerializer()
-    verification_completed = serializers.BooleanField()
-    admin_approved = serializers.BooleanField()
-    account_level = serializers.IntegerField(min_value=0)
-    verified_job_quota_eligible = serializers.BooleanField()
-    job_workspace_ready = serializers.BooleanField()
-    candidate_data_access = serializers.BooleanField()
-    dpa_status = serializers.ChoiceField(
-        choices=[(status.value, status.value) for status in DpaStatus]
-    )
-    blockers = EmployerPostingBlockerSerializer(many=True)
-    published_jobs_count = serializers.IntegerField(min_value=0)
-    publish_blockers = EmployerPublishBlockerSerializer(many=True)
-    publish_limit = serializers.IntegerField(min_value=0)
-    publish_remain = serializers.IntegerField(min_value=0)
-    verified_publish_limit = serializers.IntegerField(min_value=0)
-    free_publish_limit = serializers.IntegerField(min_value=0)
-    free_publish_remain = serializers.IntegerField(min_value=0)
-    job_postable = serializers.BooleanField()
-    block_reason = serializers.CharField(allow_blank=True)

@@ -7,12 +7,12 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 
 from apps.applications.models import Application
-from apps.applications.tests import test_api_v2
+from apps.applications.tests import test_candidate_api
+from apps.campaigns.models import RecruitmentCampaign
 from apps.cvs.models import UserCv
 from apps.cvs.services import create_initial_document
-from apps.employers.models import RecruitmentCampaign
 from apps.jobs.models import Job
-from apps.jobs.tests import test_posting_workflows
+from apps.jobs.tests.factories import JobPostingFixture
 from common.vietnam_time import vietnam_today
 
 from ..models import CampaignChannel, CampaignChannelClickDaily
@@ -24,15 +24,10 @@ SHELL = '<!doctype html><html lang="en"><head><title data-seo-default>Old</title
 BROWSER = 'Mozilla/5.0 (X11; Linux x86_64) Chrome/130'
 
 
-class ChannelTestMixin:
-    # Borrow fixtures through the module so pytest does not collect those classes again.
-    setUp_jobs = test_posting_workflows.JobPostingWorkflowTests.setUp
-    make_publishable_job = test_posting_workflows.JobPostingWorkflowTests.make_publishable_job
-    make_active_job = test_posting_workflows.JobPostingWorkflowTests.make_active_job
-
+class ChannelTestMixin(JobPostingFixture):
     def setUp(self):
         cache.clear()
-        self.setUp_jobs()
+        super().setUp()
         self.client = APIClient()
         self.client.force_authenticate(self.user)
         self.campaign = RecruitmentCampaign.objects.create(
@@ -248,7 +243,10 @@ class CampaignLandingTests(ChannelTestMixin, TestCase):
         self.assertEqual(open_page.data['state'], 'open')
         self.assertEqual(open_page.data['company']['name'], self.company.company_name)
         self.assertEqual(open_shell.status_code, 200)
-        self.assertIn('Tuyển kỹ thuật quý 1', open_shell.content.decode())
+        self.assertIn(
+            f'Tuyển kỹ thuật quý 1 - {self.company.company_name} | ProCV</title>',
+            open_shell.content.decode(),
+        )
         self.assertEqual(draft_page.status_code, 404)
         self.assertEqual(ended_page.data['state'], 'ended')
         self.assertEqual(ended_shell.status_code, 410)
@@ -267,8 +265,8 @@ class CampaignLandingTests(ChannelTestMixin, TestCase):
 
 
 class ApplyAttributionTests(TestCase):
-    setUp_application = test_api_v2.CandidateApplicationV2Tests.setUp
-    apply_payload = test_api_v2.CandidateApplicationV2Tests.apply_payload
+    setUp_application = test_candidate_api.CandidateApplicationTests.setUp
+    apply_payload = test_candidate_api.CandidateApplicationTests.apply_payload
 
     def setUp(self):
         self.setUp_application()
@@ -288,7 +286,7 @@ class ApplyAttributionTests(TestCase):
         self.client.force_authenticate(self.candidate)
 
         response = self.client.post(
-            reverse('candidate-application-list-create-v2'),
+            reverse('candidate-application-list-create'),
             self.apply_payload(campaign_ref=sign_ref(self.channel.code)),
             format='json',
         )
@@ -302,7 +300,7 @@ class ApplyAttributionTests(TestCase):
         self.client.force_authenticate(self.candidate)
 
         response = self.client.post(
-            reverse('candidate-application-list-create-v2'),
+            reverse('candidate-application-list-create'),
             self.apply_payload(campaign_ref='forged:value'),
             format='json',
         )

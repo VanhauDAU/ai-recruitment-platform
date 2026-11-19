@@ -1,8 +1,10 @@
 from django.shortcuts import get_object_or_404
+from django.utils.translation import gettext_lazy
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import generics, serializers, status
 from rest_framework.response import Response
 
-from apps.accounts.permissions import IsEmployer
+from apps.accounts.api.permissions import IsEmployer
 from apps.employers.services import ensure_recruiter_job_workspace
 
 from ...selectors import (
@@ -51,6 +53,16 @@ class EmployerJobWorkspaceReadMixin:
         return readiness
 
 
+@extend_schema_view(
+    list=extend_schema(summary='Tin tuyển dụng của NTD (kèm status_counts khi phân trang)'),
+    create=extend_schema(
+        summary='Tạo tin: đăng ngay, hoặc lưu nháp với ?as=draft',
+        parameters=[OpenApiParameter('as', str, enum=['draft'])],
+        request=EmployerJobWriteSerializer,
+        responses={201: EmployerJobDetailSerializer},
+    ),
+)
+@extend_schema(tags=['jobs'])
 class EmployerJobListCreateView(EmployerJobWorkspaceReadMixin, generics.ListCreateAPIView):
     permission_classes = [IsEmployer]
 
@@ -97,7 +109,7 @@ class EmployerJobListCreateView(EmployerJobWorkspaceReadMixin, generics.ListCrea
         serializer_class = EmployerJobDraftSerializer if is_draft else EmployerJobWriteSerializer
         serializer = serializer_class(data=request.data, context=self.get_serializer_context())
         serializer.is_valid(raise_exception=True)
-        job = save_job_draft(serializer, request.user)
+        job = save_job_draft(request.user, serializer.validated_data)
         if not is_draft:
             job = publish_job(
                 job,
@@ -109,6 +121,12 @@ class EmployerJobListCreateView(EmployerJobWorkspaceReadMixin, generics.ListCrea
         return Response(data, status=status.HTTP_201_CREATED)
 
 
+@extend_schema_view(
+    update=extend_schema(responses=EmployerJobDetailSerializer),
+    partial_update=extend_schema(responses=EmployerJobDetailSerializer),
+    destroy=extend_schema(summary='Xóa tin nháp'),
+)
+@extend_schema(tags=['jobs'])
 class EmployerJobDetailView(EmployerJobWorkspaceReadMixin, generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsEmployer]
     lookup_field = 'public_id'
@@ -139,7 +157,7 @@ class EmployerJobDetailView(EmployerJobWorkspaceReadMixin, generics.RetrieveUpda
             context=self.get_serializer_context(),
         )
         serializer.is_valid(raise_exception=True)
-        update_employer_job(serializer, request.user)
+        update_employer_job(job, request.user, serializer.validated_data)
         job = employer_job_detail_queryset(request.user).get(pk=job.pk)
         data = EmployerJobDetailSerializer(job, context=self.get_serializer_context()).data
         return Response(data)
@@ -150,6 +168,7 @@ class EmployerJobDetailView(EmployerJobWorkspaceReadMixin, generics.RetrieveUpda
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+@extend_schema(tags=['jobs'], summary='Hạn mức, cam kết và điều kiện đăng tin của NTD')
 class EmployerJobPostingContextView(generics.GenericAPIView):
     permission_classes = [IsEmployer]
     serializer_class = EmployerJobPostingContextSerializer
@@ -166,6 +185,12 @@ class FreshJobDetailMixin:
         return EmployerJobDetailSerializer(job, context=self.get_serializer_context()).data
 
 
+@extend_schema(
+    tags=['jobs'],
+    summary='Đăng tin nháp',
+    request=JobResponsibilityAcknowledgementSerializer,
+    responses=EmployerJobDetailSerializer,
+)
 class EmployerJobSubmitView(FreshJobDetailMixin, generics.GenericAPIView):
     permission_classes = [IsEmployer]
 
@@ -179,6 +204,9 @@ class EmployerJobSubmitView(FreshJobDetailMixin, generics.GenericAPIView):
         return Response(self.fresh_detail(job))
 
 
+@extend_schema(
+    tags=['jobs'], summary='Ngừng tuyển', request=None, responses=EmployerJobDetailSerializer
+)
 class EmployerJobCloseView(FreshJobDetailMixin, generics.GenericAPIView):
     permission_classes = [IsEmployer]
 
@@ -191,34 +219,23 @@ class EmployerJobCloseView(FreshJobDetailMixin, generics.GenericAPIView):
 
 
 class DeadlineSerializer(serializers.Serializer):
-    deadline = serializers.DateField(required=False)
-    application_deadline = serializers.DateField(required=False)
-
-    def validate(self, attrs):
-        legacy_deadline = attrs.get('deadline')
-        application_deadline = attrs.get('application_deadline')
-        if (
-            legacy_deadline is not None
-            and application_deadline is not None
-            and legacy_deadline != application_deadline
-        ):
-            raise serializers.ValidationError(
-                {'application_deadline': 'Hạn nhận hồ sơ không khớp trường deadline cũ.'}
-            )
-        attrs['deadline'] = application_deadline or legacy_deadline
-        if attrs['deadline'] is None:
-            raise serializers.ValidationError('Chọn hạn nhận hồ sơ.')
-        return attrs
+    deadline = serializers.DateField(
+        error_messages={'required': gettext_lazy('Chọn hạn nhận hồ sơ.')}
+    )
 
 
+@extend_schema(
+    tags=['jobs'],
+    summary='Mở lại tin đã ngừng tuyển với hạn nhận hồ sơ mới',
+    request=DeadlineSerializer,
+    responses=EmployerJobDetailSerializer,
+)
 class EmployerJobReopenView(FreshJobDetailMixin, generics.GenericAPIView):
     permission_classes = [IsEmployer]
 
     def post(self, request, public_id):
         serializer = DeadlineSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        if serializer.validated_data['deadline'] is None:
-            raise serializers.ValidationError({'application_deadline': 'Chọn hạn nhận hồ sơ.'})
         job = reopen_job(
             get_object_or_404(employer_job_detail_queryset(request.user), public_id=public_id),
             request.user,
@@ -228,6 +245,12 @@ class EmployerJobReopenView(FreshJobDetailMixin, generics.GenericAPIView):
         return Response(self.fresh_detail(job))
 
 
+@extend_schema(
+    tags=['jobs'],
+    summary='Gia hạn nhận hồ sơ',
+    request=DeadlineSerializer,
+    responses=EmployerJobDetailSerializer,
+)
 class EmployerJobExtendView(FreshJobDetailMixin, generics.GenericAPIView):
     permission_classes = [IsEmployer]
 
@@ -242,6 +265,12 @@ class EmployerJobExtendView(FreshJobDetailMixin, generics.GenericAPIView):
         return Response(self.fresh_detail(job))
 
 
+@extend_schema(
+    tags=['jobs'],
+    summary='Gửi lại tin đã sửa theo yêu cầu kiểm duyệt',
+    request=None,
+    responses=EmployerJobDetailSerializer,
+)
 class EmployerJobResubmitView(FreshJobDetailMixin, generics.GenericAPIView):
     """Send a job fixed after a change request back to the review queue."""
 
@@ -255,6 +284,12 @@ class EmployerJobResubmitView(FreshJobDetailMixin, generics.GenericAPIView):
         return Response(self.fresh_detail(job))
 
 
+@extend_schema(
+    tags=['jobs'],
+    summary='Sao chép tin thành bản nháp',
+    request=None,
+    responses={201: EmployerJobDetailSerializer},
+)
 class EmployerJobDuplicateView(generics.GenericAPIView):
     permission_classes = [IsEmployer]
 

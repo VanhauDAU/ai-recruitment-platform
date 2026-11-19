@@ -6,6 +6,7 @@ agent, kept only in Redis until the end of the Vietnam day.
 """
 
 import hashlib
+import logging
 import re
 import secrets
 from datetime import timedelta
@@ -15,12 +16,15 @@ from django.core import signing
 from django.core.cache import cache
 from django.db import transaction
 from django.db.models import F
+from redis.exceptions import RedisError
 
-from apps.employers.models import RecruitmentCampaign
-from common.client_ip import client_ip
+from apps.campaigns.models import RecruitmentCampaign
+from common.http.client_ip import client_ip
 from common.vietnam_time import vietnam_day_start, vietnam_now, vietnam_today
 
 from ..models import CampaignChannel, CampaignChannelClickDaily
+
+logger = logging.getLogger(__name__)
 
 REF_SALT = 'campaign-ref'
 REF_MAX_AGE = timedelta(days=30)
@@ -89,7 +93,9 @@ def _is_first_click_today(request, channel):
             f'{salt}|{client_ip(request)}|{request.headers.get("User-Agent", "")}'.encode()
         ).hexdigest()
         return cache.add(f'camp-click:{channel.pk}:{visitor}', 1, max(seconds_left, 60))
-    except Exception:  # noqa: BLE001 - Redis down: raw clicks still count, uniques do not
+    except RedisError:
+        # Redis down: raw clicks still count, uniques do not.
+        logger.warning('Redis unavailable for campaign unique-click dedupe.')
         return False
 
 

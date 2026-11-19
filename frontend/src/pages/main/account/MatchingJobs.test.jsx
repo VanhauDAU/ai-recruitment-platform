@@ -10,7 +10,7 @@ const mocks = vi.hoisted(() => ({
   toggleSaved: vi.fn(),
 }))
 
-vi.mock('@/entities/job', () => ({
+vi.mock('@/entities/job/job', () => ({
   formatLocations: (job) => job.location,
   formatSalary: (job) => job.salary,
   jobCardToneClass: () => 'border-slate-200 bg-white',
@@ -25,11 +25,11 @@ vi.mock('@/entities/job', () => ({
   VerifiedEmployerBadge: ({ verified }) => verified ? <span>Nhà tuyển dụng đã xác thực</span> : null,
 }))
 
-vi.mock('@/entities/session', () => ({
+vi.mock('@/entities/account/session', () => ({
   useSession: () => ({ isAuthenticated: true, user: { role: 'candidate', job_preferences_configured: true } }),
 }))
 
-vi.mock('@/features/hide-job-recommendation', () => ({
+vi.mock('@/features/main/job/hide-job-recommendation', () => ({
   useHideJobRecommendation: () => ({
     hiddenIds: new Set(),
     pendingIds: new Set(),
@@ -37,11 +37,11 @@ vi.mock('@/features/hide-job-recommendation', () => ({
   }),
 }))
 
-vi.mock('@/features/saved-jobs', () => ({
+vi.mock('@/features/main/job/saved-jobs', () => ({
   useSavedJob: () => [false, mocks.toggleSaved, false],
 }))
 
-vi.mock('@/features/track-job-engagement', () => ({
+vi.mock('@/features/main/job/track-job-engagement', () => ({
   JobImpressionBoundary: ({ children }) => children,
 }))
 

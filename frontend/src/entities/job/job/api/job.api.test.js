@@ -1,0 +1,213 @@
+// @vitest-environment node
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+  closeEmployerJob,
+  deleteEmployerJob,
+  duplicateEmployerJob,
+  getCandidateJobRecommendations,
+  extendEmployerJob,
+  getCvJobRecommendations,
+  getEmployerJob,
+  getEmployerJobPage,
+  getEmployerJobs,
+  getHomepageBestJobs,
+  getInlineJobRecommendations,
+  getJobBenefits,
+  getJobLanguages,
+  getJobPostingContext,
+  getSkills,
+  publishEmployerJob,
+  recordJobImpressions,
+  reopenEmployerJob,
+  saveEmployerJob,
+} from './job.api'
+
+const { get, patch, post, remove } = vi.hoisted(() => ({
+  get: vi.fn(),
+  patch: vi.fn(),
+  post: vi.fn(),
+  remove: vi.fn(),
+}))
+vi.mock('@/shared/api/client', () => ({ default: { delete: remove, get, patch, post } }))
+
+describe('CV job recommendations API', () => {
+  beforeEach(() => {
+    get.mockReset()
+    patch.mockReset()
+    post.mockReset()
+    remove.mockReset()
+  })
+
+  it('scopes matching to the saved CV public id', async () => {
+    get.mockResolvedValue({ data: { strategy: 'profile-rule-v1', results: [] } })
+
+    await expect(getCvJobRecommendations('cv_1')).resolves.toMatchObject({ strategy: 'profile-rule-v1' })
+    expect(get).toHaveBeenCalledWith('/candidate/jobs/recommendations/by-cv/cv_1/')
+  })
+
+  it('loads the paginated candidate-wide matching feed', async () => {
+    get.mockResolvedValue({
+      data: {
+        strategy: 'candidate-profile-rule-v1',
+        pagination: { page: 2, total: 12 },
+        results: [],
+      },
+    })
+
+    await expect(
+      getCandidateJobRecommendations({ page: 2, page_size: 10 }),
+    ).resolves.toMatchObject({
+      strategy: 'candidate-profile-rule-v1',
+      pagination: { page: 2, total: 12 },
+    })
+    expect(get).toHaveBeenCalledWith('/candidate/jobs/recommendations/for-me/', {
+      params: { page: 2, page_size: 10 },
+    })
+  })
+
+  it('loads a separate inline lane without changing canonical job-list pagination', async () => {
+    get.mockResolvedValue({
+      data: { status: 'ready', after_result_index: 4, results: [{ public_id: 'job_extra' }] },
+    })
+
+    await expect(getInlineJobRecommendations({
+      page: 3,
+      ranking_seed: 'session_seed',
+      excludedJobIds: ['job_1', 'job_2'],
+    })).resolves.toMatchObject({ results: [{ public_id: 'job_extra' }] })
+    expect(get).toHaveBeenCalledWith('/candidate/jobs/recommendations/inline/', {
+      params: {
+        page: 3,
+        ranking_seed: 'session_seed',
+        excluded: 'job_1,job_2',
+      },
+    })
+  })
+
+  it('loads the dedicated homepage Best Jobs surface', async () => {
+    const params = new URLSearchParams('page=1&rotation_seed=home_seed')
+    get.mockResolvedValue({ data: { count: 12, results: [] } })
+
+    await expect(getHomepageBestJobs(params)).resolves.toEqual({ count: 12, results: [] })
+    expect(get).toHaveBeenCalledWith('/public/jobs/best/', { params })
+  })
+
+  it('uses owner-scoped job workflow endpoints and persists draft data before publishing it', async () => {
+    get
+      .mockResolvedValueOnce({ data: { results: [{ public_id: 'job_1' }] } })
+      .mockResolvedValueOnce({ data: { public_id: 'job_1' } })
+      .mockResolvedValueOnce({ data: { job_postable: true } })
+    post
+      .mockResolvedValueOnce({ data: { public_id: 'job_draft' } })
+      .mockResolvedValueOnce({ data: { public_id: 'job_active' } })
+      .mockResolvedValueOnce({ data: { public_id: 'job_published' } })
+      .mockResolvedValueOnce({ data: { public_id: 'job_closed' } })
+      .mockResolvedValueOnce({ data: { public_id: 'job_reopened' } })
+      .mockResolvedValueOnce({ data: { public_id: 'job_extended' } })
+      .mockResolvedValueOnce({ data: { public_id: 'job_copy' } })
+    patch
+      .mockResolvedValueOnce({ data: { public_id: 'job_1' } })
+      .mockResolvedValueOnce({ data: { public_id: 'job_active' } })
+
+    await expect(getEmployerJobs({ status: 'draft' })).resolves.toEqual([{ public_id: 'job_1' }])
+    await expect(getEmployerJob('job_1')).resolves.toEqual({ public_id: 'job_1' })
+    await expect(getJobPostingContext()).resolves.toEqual({ job_postable: true })
+    await expect(saveEmployerJob({ title: 'Nháp' })).resolves.toEqual({ public_id: 'job_draft' })
+    await expect(saveEmployerJob({ title: 'Sửa' }, 'job_1')).resolves.toEqual({ public_id: 'job_1' })
+    await expect(publishEmployerJob({ title: 'Mới' }, undefined, '2026-11'))
+      .resolves.toEqual({ public_id: 'job_active' })
+    await expect(publishEmployerJob({ title: 'Đã sửa' }, 'job_1', '2026-11'))
+      .resolves.toEqual({ public_id: 'job_published' })
+    await expect(closeEmployerJob('job_1')).resolves.toEqual({ public_id: 'job_closed' })
+    await expect(reopenEmployerJob('job_1', '2026-08-01', '2026-11'))
+      .resolves.toEqual({ public_id: 'job_reopened' })
+    await expect(extendEmployerJob('job_1', '2026-08-08')).resolves.toEqual({ public_id: 'job_extended' })
+    await expect(duplicateEmployerJob('job_1')).resolves.toEqual({ public_id: 'job_copy' })
+
+    expect(get).toHaveBeenNthCalledWith(1, '/employer/jobs/', { params: { status: 'draft' } })
+    expect(get).toHaveBeenNthCalledWith(2, '/employer/jobs/job_1/')
+    expect(get).toHaveBeenNthCalledWith(3, '/employer/jobs/posting-context/')
+    expect(post).toHaveBeenNthCalledWith(1, '/employer/jobs/?as=draft', { title: 'Nháp' })
+    expect(patch).toHaveBeenNthCalledWith(1, '/employer/jobs/job_1/', { title: 'Sửa' })
+    expect(post).toHaveBeenNthCalledWith(2, '/employer/jobs/', {
+      title: 'Mới',
+      responsibility_statement_version: '2026-11',
+    })
+    expect(patch).toHaveBeenNthCalledWith(2, '/employer/jobs/job_1/', { title: 'Đã sửa' })
+    expect(post).toHaveBeenNthCalledWith(3, '/employer/jobs/job_1/submit/', {
+      responsibility_statement_version: '2026-11',
+    })
+    expect(post).toHaveBeenNthCalledWith(4, '/employer/jobs/job_1/close/')
+    expect(post).toHaveBeenNthCalledWith(5, '/employer/jobs/job_1/reopen/', {
+      deadline: '2026-08-01',
+      responsibility_statement_version: '2026-11',
+    })
+    expect(post).toHaveBeenNthCalledWith(6, '/employer/jobs/job_1/extend/', { deadline: '2026-08-08' })
+    expect(post).toHaveBeenNthCalledWith(7, '/employer/jobs/job_1/duplicate/')
+  })
+
+  it('preserves employer pagination metadata and normalizes a legacy list response', async () => {
+    const page = {
+      count: 42,
+      next: '/api/employer/jobs/?page=2',
+      previous: null,
+      results: [{ public_id: 'job_1', candidate_count: 3 }],
+    }
+    get
+      .mockResolvedValueOnce({ data: page })
+      .mockResolvedValueOnce({ data: [{ public_id: 'job_legacy' }] })
+
+    await expect(getEmployerJobPage({ page: 1, status: 'active' })).resolves.toEqual(page)
+    await expect(getEmployerJobPage({ q: 'frontend' })).resolves.toEqual({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [{ public_id: 'job_legacy' }],
+    })
+
+    expect(get).toHaveBeenNthCalledWith(1, '/employer/jobs/', {
+      params: { page: 1, status: 'active' },
+    })
+    expect(get).toHaveBeenNthCalledWith(2, '/employer/jobs/', {
+      params: { q: 'frontend' },
+    })
+  })
+
+  it('deletes only the requested employer draft and returns its public id', async () => {
+    remove.mockResolvedValue({ status: 204 })
+
+    await expect(deleteEmployerJob('job_draft')).resolves.toBe('job_draft')
+
+    expect(remove).toHaveBeenCalledOnce()
+    expect(remove).toHaveBeenCalledWith('/employer/jobs/job_draft/')
+  })
+
+  it('loads the normalized catalogues used by the complete manual form', async () => {
+    get
+      .mockResolvedValueOnce({ data: { results: [{ id: 1, name: 'Bảo hiểm' }] } })
+      .mockResolvedValueOnce({ data: [{ id: 2, name: 'Tiếng Anh' }] })
+      .mockResolvedValueOnce({ data: { results: [{ id: 3, name: 'React' }] } })
+
+    await expect(getJobBenefits()).resolves.toEqual([{ id: 1, name: 'Bảo hiểm' }])
+    await expect(getJobLanguages()).resolves.toEqual([{ id: 2, name: 'Tiếng Anh' }])
+    await expect(getSkills()).resolves.toEqual([{ id: 3, name: 'React' }])
+
+    expect(get).toHaveBeenNthCalledWith(1, '/public/jobs/benefits/')
+    expect(get).toHaveBeenNthCalledWith(2, '/public/jobs/languages/')
+    expect(get).toHaveBeenNthCalledWith(3, '/public/skills/')
+  })
+
+  it('sends viewable job impressions as one credentialed batch', async () => {
+    post.mockResolvedValue({ data: { results: [{ slug: 'backend-engineer', counted: true }] } })
+
+    await expect(recordJobImpressions(['backend-engineer'])).resolves.toEqual({
+      results: [{ slug: 'backend-engineer', counted: true }],
+    })
+
+    expect(post).toHaveBeenCalledWith(
+      '/public/jobs/impressions/',
+      { slugs: ['backend-engineer'] },
+      { withCredentials: true },
+    )
+  })
+})

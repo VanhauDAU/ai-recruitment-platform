@@ -1,6 +1,6 @@
 import { ArrowRightOutlined } from '@ant-design/icons'
 import { Link } from 'react-router'
-import { blogPostPath, formatBlogDate } from '@/entities/blog'
+import { blogPostPath, formatBlogDate } from '@/entities/content/blog'
 
 export function PostThumb({ post, className = '' }) {
   return (

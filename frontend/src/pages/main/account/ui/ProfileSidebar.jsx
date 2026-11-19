@@ -6,11 +6,11 @@ import { useQuery } from '@tanstack/react-query'
 import { Avatar } from 'antd'
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { getMyCvs } from '@/entities/cv'
-import { useSession } from '@/entities/session'
-import { AvatarEditorModal } from '@/features/edit-profile'
-import { RecruiterSearchListModal } from '@/features/update-recruiter-visibility'
-import { DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/site-settings'
+import { getMyCvs } from '@/entities/cv/cv'
+import { useSession } from '@/entities/account/session'
+import { AvatarEditorModal } from '@/features/common/account/edit-profile'
+import { RecruiterSearchListModal } from '@/features/main/cv/update-recruiter-visibility'
+import { DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/system/site-settings'
 
 // Cột phải của layout tài khoản (theo ảnh mẫu): thẻ chào + trạng thái tìm việc,
 // gợi ý việc làm, cho phép NTD tìm hồ sơ và banner app.

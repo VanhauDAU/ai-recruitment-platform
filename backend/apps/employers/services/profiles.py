@@ -3,6 +3,7 @@
 from http import HTTPStatus
 
 from django.conf import settings
+from django.utils.translation import gettext, gettext_lazy
 from rest_framework.exceptions import APIException
 
 from apps.accounts.models import User
@@ -16,16 +17,20 @@ from ..models.readiness import (
 
 JOB_PUBLICATION_VERIFICATION_BLOCKER = {
     'code': 'verification_required',
-    'label': 'Nhà tuyển dụng chưa được duyệt xác thực.',
+    'label': gettext_lazy('Nhà tuyển dụng chưa được duyệt xác thực.'),
 }
 JOB_PUBLICATION_DPA_BLOCKER = {
     'code': 'dpa_outdated',
-    'label': 'Nhà tuyển dụng chưa có chấp thuận DPA còn hiệu lực.',
+    'label': gettext_lazy('Nhà tuyển dụng chưa có chấp thuận DPA còn hiệu lực.'),
 }
 JOB_PUBLICATION_COMPLIANCE_HOLD_BLOCKER = {
     'code': 'compliance_hold_active',
-    'label': 'Nhà tuyển dụng đang có một giới hạn tuân thủ còn hiệu lực.',
+    'label': gettext_lazy('Nhà tuyển dụng đang có một giới hạn tuân thủ còn hiệu lực.'),
 }
+
+
+def _blocker_payload(blocker):
+    return {'code': blocker['code'], 'label': str(blocker['label'])}
 
 
 class EmployerCapabilityBlocked(APIException):
@@ -58,7 +63,9 @@ class EmployerWorkspaceBlocked(EmployerCapabilityBlocked):
     def __init__(self, readiness):
         super().__init__(
             code='EMPLOYER_WORKSPACE_BLOCKED',
-            message='Hoàn tất các điều kiện workspace trước khi thay đổi dữ liệu tuyển dụng.',
+            message=gettext(
+                'Hoàn tất các điều kiện workspace trước khi thay đổi dữ liệu tuyển dụng.'
+            ),
             readiness=readiness,
         )
 
@@ -69,7 +76,7 @@ class CandidateDataBlocked(EmployerCapabilityBlocked):
     def __init__(self, readiness):
         super().__init__(
             code='CANDIDATE_DATA_BLOCKED',
-            message='Tài khoản chưa đủ điều kiện truy cập dữ liệu ứng viên.',
+            message=gettext('Tài khoản chưa đủ điều kiện truy cập dữ liệu ứng viên.'),
             readiness=readiness,
         )
 
@@ -111,7 +118,7 @@ def get_or_create_recruiter(user):
 
 def _legacy_verification_completed(readiness):
     completed = readiness['job_workspace_ready']
-    if getattr(settings, 'REQUIRE_APPROVED_EMPLOYER_VERIFICATION', False):
+    if settings.REQUIRE_APPROVED_EMPLOYER_VERIFICATION:
         completed = completed and readiness['verification_approved']
     return completed
 
@@ -218,11 +225,11 @@ def recruiter_job_publication_state(user, *, company_id, lock=False):
     compliance_hold_active = readiness['compliance_hold_active']
     blockers = []
     if not verification_approved:
-        blockers.append(dict(JOB_PUBLICATION_VERIFICATION_BLOCKER))
+        blockers.append(_blocker_payload(JOB_PUBLICATION_VERIFICATION_BLOCKER))
     if not dpa_current:
-        blockers.append(dict(JOB_PUBLICATION_DPA_BLOCKER))
+        blockers.append(_blocker_payload(JOB_PUBLICATION_DPA_BLOCKER))
     if compliance_hold_active:
-        blockers.append(dict(JOB_PUBLICATION_COMPLIANCE_HOLD_BLOCKER))
+        blockers.append(_blocker_payload(JOB_PUBLICATION_COMPLIANCE_HOLD_BLOCKER))
 
     return {
         'verification_approved': verification_approved,

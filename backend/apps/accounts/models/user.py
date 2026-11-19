@@ -4,9 +4,9 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models.functions import Lower
-from django.utils import timezone
+from django.utils import timezone, translation
 
-from common.public_id import generate_public_id
+from common.db.public_id import generate_public_id
 
 
 class UserManager(BaseUserManager):
@@ -42,10 +42,18 @@ class UserManager(BaseUserManager):
         if not email:
             raise ValueError('Email is required')
         email = self.normalize_email(email)
+        # Tài khoản mới lấy ngôn ngữ giao diện đang dùng lúc đăng ký (Accept-Language),
+        # để NTD nước ngoài chọn English rồi đăng ký không bị trả về tiếng Việt.
+        extra_fields.setdefault('preferred_language', self._active_language())
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
+
+    def _active_language(self):
+        code = (translation.get_language() or '').split('-')[0]
+        languages = self.model.Language
+        return code if code in languages.values else languages.VI
 
     def create_superuser(self, email, password=None, **extra_fields):
         extra_fields.setdefault('role', User.Role.ADMIN)
@@ -86,6 +94,10 @@ class User(AbstractUser):
         BANNED = 'banned', 'Banned'
         PENDING = 'pending', 'Pending'
 
+    class Language(models.TextChoices):
+        VI = 'vi', 'Tiếng Việt'
+        EN = 'en', 'English'
+
     class Provider(models.TextChoices):
         LOCAL = 'local', 'Local'
         GOOGLE = 'google', 'Google'
@@ -108,6 +120,10 @@ class User(AbstractUser):
     avatar_url = models.TextField(blank=True)
     status = models.CharField(max_length=50, choices=Status.choices, default=Status.ACTIVE)
     email_verified = models.BooleanField(default=False)
+    # Ngôn ngữ giao diện, email và thông báo của tài khoản (mỗi cổng một tài khoản).
+    preferred_language = models.CharField(
+        max_length=8, choices=Language.choices, default=Language.VI
+    )
     # Monotonic security boundary for every issued session or pre-auth artifact.
     # Recovery actions bump this value so work already in flight cannot create a
     # usable token after the account identity has changed.

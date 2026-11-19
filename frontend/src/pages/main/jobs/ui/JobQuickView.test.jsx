@@ -13,21 +13,21 @@ vi.mock('react-router', async (importOriginal) => ({
   useNavigate: () => mocks.navigate,
 }))
 
-vi.mock('@/entities/job', async (importOriginal) => ({
+vi.mock('@/entities/job/job', async (importOriginal) => ({
   ...await importOriginal(),
   getJobDetail: mocks.getJobDetail,
 }))
 
-vi.mock('@/features/compare-jobs', () => ({
+vi.mock('@/features/main/job/compare-jobs', () => ({
   JobCompareButton: () => null,
 }))
 
-vi.mock('@/features/saved-jobs', () => ({
+vi.mock('@/features/main/job/saved-jobs', () => ({
   SavedJobTooltipContent: () => null,
   useSavedJob: () => [false, vi.fn(), false],
 }))
 
-vi.mock('@/features/track-job-engagement', () => ({
+vi.mock('@/features/main/job/track-job-engagement', () => ({
   useJobView: vi.fn(),
 }))
 

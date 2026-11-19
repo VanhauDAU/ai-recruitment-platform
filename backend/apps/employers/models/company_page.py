@@ -2,10 +2,11 @@
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy
 
-from common.public_id import generate_public_id
+from apps.employers.domain.page_registry import DEFAULT_ACCENT_KEY
+from common.db.public_id import generate_public_id
 
-from ..page_registry import DEFAULT_ACCENT_KEY
 from .company import Company
 from .membership import RecruiterProfile
 
@@ -22,12 +23,20 @@ class CompanyPageEvent(models.Model):
     """Append-only trail of page changes that take effect without a review queue."""
 
     class EventType(models.TextChoices):
-        POLICY_HOLD_APPLIED = 'policy_hold_applied', 'Đã tạm ẩn trang'
-        POLICY_HOLD_RELEASED = 'policy_hold_released', 'Đã gỡ tạm ẩn trang'
-        LAYOUT_UPDATED = 'layout_updated', 'Đã đổi bố cục trang'
-        PINNED_JOBS_UPDATED = 'pinned_jobs_updated', 'Đã đổi tin ghim'
-        EDITOR_GRANTED = 'editor_granted', 'Đã cấp quyền biên tập'
-        EDITOR_REVOKED = 'editor_revoked', 'Đã thu hồi quyền biên tập'
+        POLICY_HOLD_APPLIED = 'policy_hold_applied', gettext_lazy('Đã tạm ẩn trang')
+        POLICY_HOLD_RELEASED = 'policy_hold_released', gettext_lazy('Đã gỡ tạm ẩn trang')
+        LAYOUT_UPDATED = 'layout_updated', gettext_lazy('Đã đổi bố cục trang')
+        PINNED_JOBS_UPDATED = 'pinned_jobs_updated', gettext_lazy('Đã đổi tin ghim')
+        EDITOR_GRANTED = 'editor_granted', gettext_lazy('Đã cấp quyền biên tập')
+        EDITOR_REVOKED = 'editor_revoked', gettext_lazy('Đã thu hồi quyền biên tập')
+        CONTENT_REVIEW_REQUIRED = (
+            'content_review_required',
+            gettext_lazy('Đã bật duyệt trước nội dung'),
+        )
+        CONTENT_REVIEW_RELEASED = (
+            'content_review_released',
+            gettext_lazy('Đã tắt duyệt trước nội dung'),
+        )
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     company = models.ForeignKey(
@@ -55,6 +64,9 @@ class CompanyPageEvent(models.Model):
                 name='emp_co_page_event_idx',
             ),
         ]
+
+    def __str__(self):
+        return f'{self.public_id}:{self.event_type}'
 
     def save(self, *args, **kwargs):
         if self.pk:
@@ -166,10 +178,10 @@ class CompanyPageEditorGrant(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'{self.public_id}: {self.recruiter_id} @ {self.company_id}'
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('cpg')
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f'{self.public_id}: {self.recruiter_id} @ {self.company_id}'

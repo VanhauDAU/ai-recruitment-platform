@@ -1,15 +1,14 @@
-from django.db.models import Count, Min, Q
-from drf_spectacular.utils import OpenApiParameter, extend_schema
+from django.utils.translation import gettext as _
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from apps.accounts.permissions import AdminPortalPermission
+from apps.accounts.api.permissions import AdminPortalPermission
 from apps.accounts.services import InvalidImpactToken, StaleImpactToken
-from common.pagination import StandardPagination
 
 from ...models import CompanyDomainClaim
-from ...selectors import admin_domain_claims_queryset
+from ...selectors import admin_domain_claim_summary, admin_domain_claims_queryset
 from ...services import (
     DomainClaimError,
     confirm_domain_claim_admin_action,
@@ -44,9 +43,14 @@ def _admin_error_response(error):
     return Response({'code': error.code, 'detail': error.detail}, status=response_status)
 
 
+@extend_schema_view(
+    retrieve=extend_schema(
+        responses={200: AdminCompanyDomainClaimDetailSerializer},
+        tags=['admin-employer-domain-verification'],
+    )
+)
 class AdminCompanyDomainClaimViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [AdminPortalPermission]
-    pagination_class = StandardPagination
     lookup_field = 'public_id'
     serializer_class = AdminCompanyDomainClaimSerializer
 
@@ -79,41 +83,7 @@ class AdminCompanyDomainClaimViewSet(viewsets.ReadOnlyModelViewSet):
         tags=['admin-employer-domain-verification'],
     )
     def summary(self, request):
-        attention_statuses = [
-            CompanyDomainClaim.Status.REJECTED,
-            CompanyDomainClaim.Status.REVOKED,
-            CompanyDomainClaim.Status.EXPIRED,
-            CompanyDomainClaim.Status.LEGACY_INFERRED,
-        ]
-        data = CompanyDomainClaim.objects.aggregate(
-            total=Count('id'),
-            manual_pending=Count(
-                'id',
-                filter=Q(
-                    status=CompanyDomainClaim.Status.PENDING,
-                    method=CompanyDomainClaim.Method.ADMIN_MANUAL,
-                    manual_review_requested_at__isnull=False,
-                ),
-            ),
-            dns_pending=Count(
-                'id',
-                filter=Q(
-                    status=CompanyDomainClaim.Status.PENDING,
-                    method=CompanyDomainClaim.Method.DNS_TXT,
-                ),
-            ),
-            verified=Count('id', filter=Q(status=CompanyDomainClaim.Status.VERIFIED)),
-            grace=Count('id', filter=Q(status=CompanyDomainClaim.Status.GRACE)),
-            needs_attention=Count('id', filter=Q(status__in=attention_statuses)),
-            oldest_manual_pending_at=Min(
-                'manual_review_requested_at',
-                filter=Q(
-                    status=CompanyDomainClaim.Status.PENDING,
-                    method=CompanyDomainClaim.Method.ADMIN_MANUAL,
-                ),
-            ),
-        )
-        return Response(AdminCompanyDomainClaimSummarySerializer(data).data)
+        return Response(AdminCompanyDomainClaimSummarySerializer(admin_domain_claim_summary()).data)
 
     def _impact(self, request, *, action_name):
         serializer = AdminDomainClaimImpactSerializer(data=request.data)
@@ -153,7 +123,7 @@ class AdminCompanyDomainClaimViewSet(viewsets.ReadOnlyModelViewSet):
         action_name = request.data.get('decision', 'approve_manual')
         if action_name not in {'approve_manual', 'reject_manual'}:
             return Response(
-                {'decision': ['Quyết định phải là approve_manual hoặc reject_manual.']},
+                {'decision': [_('Quyết định phải là approve_manual hoặc reject_manual.')]},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return self._impact(request, action_name=action_name)

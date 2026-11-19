@@ -77,7 +77,8 @@ class CandidateJobPreference(models.Model):
         on_delete=models.CASCADE,
         related_name='job_preference',
     )
-    desired_position_other = models.CharField(max_length=255, null=True, blank=True)
+    # NULL = no custom position; the API contract exposes it as a nullable field.
+    desired_position_other = models.CharField(max_length=255, null=True, blank=True)  # noqa: DJ001
     desired_salary_vnd = models.PositiveBigIntegerField(null=True, blank=True)
     experience_level = models.CharField(max_length=20, choices=ExperienceLevel.choices, blank=True)
     # Null biểu thị người dùng chưa trả lời; False là đã trả lời không sẵn sàng.
@@ -124,6 +125,9 @@ class CandidateDesiredSpecialization(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'{self.job_preference_id}:{self.job_category_id}'
+
 
 class CandidateDesiredPositionOther(models.Model):
     """Một vị trí tự nhập, không tạo thêm bản ghi trong taxonomy JobCategory."""
@@ -145,6 +149,9 @@ class CandidateDesiredPositionOther(models.Model):
                 name='candidate_pref_position_other_unique',
             ),
         ]
+
+    def __str__(self):
+        return self.name
 
 
 class CandidatePreferredProvince(models.Model):
@@ -172,6 +179,9 @@ class CandidatePreferredProvince(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'{self.job_preference_id}:{self.location_id}'
+
 
 class CandidatePreferredSkill(models.Model):
     """Kỹ năng taxonomy ứng viên chủ động chọn cho nhu cầu tìm việc."""
@@ -197,6 +207,9 @@ class CandidatePreferredSkill(models.Model):
                 name='candidate_pref_skill_unique',
             ),
         ]
+
+    def __str__(self):
+        return f'{self.job_preference_id}:{self.skill_id}'
 
 
 class CandidateConsent(models.Model):
@@ -230,6 +243,9 @@ class CandidateConsent(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'{self.consent_type}={self.decision}'
+
 
 class CandidateConsentEvent(models.Model):
     """Immutable audit trail for a candidate privacy decision."""
@@ -256,3 +272,6 @@ class CandidateConsentEvent(models.Model):
                 name='candidate_consent_event_lookup',
             ),
         ]
+
+    def __str__(self):
+        return f'{self.consent_type}={self.decision} ({self.source})'

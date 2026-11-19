@@ -1,17 +1,12 @@
 """Public HTTP views grouped by employers use case."""
 
-from .campaigns import (
-    RecruitmentCampaignActivityView,
-    RecruitmentCampaignDetailView,
-    RecruitmentCampaignJobPerformanceView,
-    RecruitmentCampaignListCreateView,
-    RecruitmentCampaignOptionsView,
-    RecruitmentCampaignPauseImpactView,
-    RecruitmentCampaignReportView,
-    RecruitmentCampaignStatusView,
-)
 from .catalogs import AllIndustryListView, CompanyCatalogView, IndustryListView
 from .companies import CompanySearchView, CreateCompanyView, MyCompanyView, PublicCompanyListView
+from .company_documents import (
+    CompanyDocumentContentView,
+    CompanyDocumentListCreateView,
+    CompanyDocumentUploadPreviewView,
+)
 from .company_follows import CompanyFollowView, FollowedCompanyListView
 from .company_page import (
     PublicCompanyDetailView,
@@ -27,6 +22,10 @@ from .company_page_workspace import (
     CompanyPageWorkspaceView,
 )
 from .company_reports import CompanyReportCreateView
+from .company_update_requests import (
+    CompanyUpdateRequestLifecycleView,
+    CompanyUpdateRequestListCreateView,
+)
 from .domain_claims import (
     CompanyDomainClaimListCreateView,
     CompanyDomainClaimManualReviewView,
@@ -70,13 +69,6 @@ from .recruitment_need import (
     RecruitmentNeedDetailView,
     RecruitmentNeedListCreateView,
     RecruitmentNeedView,
-)
-from .verification import (
-    CompanyDocumentContentView,
-    CompanyDocumentListCreateView,
-    CompanyDocumentUploadPreviewView,
-    CompanyUpdateRequestLifecycleView,
-    CompanyUpdateRequestListCreateView,
 )
 
 __all__ = [
@@ -131,14 +123,6 @@ __all__ = [
     'PhoneAvailabilityView',
     'PhoneChallengeView',
     'RecruiterMeView',
-    'RecruitmentCampaignDetailView',
-    'RecruitmentCampaignActivityView',
-    'RecruitmentCampaignListCreateView',
-    'RecruitmentCampaignJobPerformanceView',
-    'RecruitmentCampaignOptionsView',
-    'RecruitmentCampaignPauseImpactView',
-    'RecruitmentCampaignReportView',
-    'RecruitmentCampaignStatusView',
     'RecruitmentNeedView',
     'RecruitmentNeedListCreateView',
     'RecruitmentNeedDetailView',

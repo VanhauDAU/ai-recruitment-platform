@@ -9,7 +9,8 @@ nguồn chi tiết; file này là checklist bắt buộc khi làm việc trong r
 app → pages → widgets → features → entities → shared
 ```
 
-- Chỉ import xuống layer thấp hơn. `features` không import feature khác.
+- Chỉ import xuống layer thấp hơn. `features` không import feature khác, kể cả
+  cùng cổng và module.
 - Import feature/entity/widget qua public `index.js`; không deep-import nội bộ
   slice khác.
 - `shared` được import theo segment cụ thể, ví dụ `@/shared/api/client`.
@@ -20,14 +21,19 @@ app → pages → widgets → features → entities → shared
 
 ## Chọn nơi đặt code
 
-| Nhu cầu                                        | Vị trí                                     |
-| ---------------------------------------------- | ------------------------------------------ |
-| Route-level composition theo portal            | `frontend/src/pages/{main,employer,admin}` |
-| Provider, router, guard, layout, lazy registry | `frontend/src/app`                         |
-| Hành động/workflow người dùng                  | `frontend/src/features/<action>`           |
-| Domain model, API hoặc UI domain tái sử dụng   | `frontend/src/entities/<domain>`           |
-| Khối UI lớn ghép nhiều domain                  | `frontend/src/widgets/<name>`              |
-| UI nguyên tử hoặc hạ tầng không biết domain    | `frontend/src/shared`                      |
+| Nhu cầu                                        | Vị trí                                                |
+| ---------------------------------------------- | ----------------------------------------------------- |
+| Route-level composition theo portal            | `frontend/src/pages/<cổng>/<mục>`                     |
+| Provider, router, guard, layout, lazy registry | `frontend/src/app`                                    |
+| Hành động/workflow người dùng                  | `frontend/src/features/<cổng>/<module>/<action>`      |
+| Domain model, API hoặc UI domain tái sử dụng   | `frontend/src/entities/<domain>/<entity>`             |
+| Khối UI lớn ghép nhiều domain                  | `frontend/src/widgets/<cổng>/<name>`                  |
+| UI nguyên tử hoặc hạ tầng không biết domain    | `frontend/src/shared`                                 |
+
+`<cổng>` là `main`, `employer`, `admin` hoặc `common` (chỉ khi từ hai cổng trở
+lên dùng); `<module>` là danh từ nghiệp vụ đã có (`job`, `cv`, `campaign`…).
+Page/widget chỉ dùng feature/widget cùng cổng hoặc `common`. Chi tiết ở mục
+"Tổ chức thư mục trong từng layer" của `frontend/ARCHITECTURE.md`.
 
 Không tạo `utils` chung không có owner. Component chỉ dùng một page/feature phải
 đặt gần owner thay vì đưa vào `shared`.
@@ -71,28 +77,47 @@ npm run build
 npm run test:e2e:smoke
 ```
 
+Viết test và chọn lệnh chạy theo [tiêu chuẩn kiểm thử](docs/05-huong-dan/tieu-chuan-kiem-thu.md):
+ngân sách thời gian được CI kiểm, test viết nhanh trên antd, tag `@responsive` cho
+E2E. Khi đang sửa, chạy `npm run test:related <file>` thay vì cả bộ.
+
 Không bỏ qua lỗi kiến trúc bằng alias sâu, shim vô thời hạn hoặc whitelist mới
 nếu chưa có ADR và lý do cụ thể. Cập nhật `frontend/ARCHITECTURE.md` khi thêm
 quy tắc, portal hoặc mô hình ownership có tác động lâu dài.
 
-## Backend (ADR-0010)
+## Backend (ADR-0022)
 
-Mọi Django app trong `backend/apps/` theo đúng một layout:
+Nguồn chi tiết: `docs/02-tong-quan/adr-0022-backend-structure.md`. Mọi Django
+app trong `backend/apps/` theo đúng một layout:
 
 ```text
-<app>/api/{views,serializers}/ · models/ · services/ · selectors/ · tasks/ · tests/ · urls.py
+<app>/api/{urls,views,serializers}/ · seo/ · models/ · domain/ · selectors/ · services/ · tasks/ · signals/ · tests/
 ```
 
-- Chiều phụ thuộc: `api → services/selectors → models`; `tasks → services`.
-  Enforce bằng `import-linter` (`backend/pyproject.toml`) — vi phạm fail CI.
+- Chiều phụ thuộc: `api → services/selectors → models → domain` (`domain/`: định
+  nghĩa thuần không ORM mà models cũng dùng);
+  `tasks | signals.receivers → services`. Không đặt module nghiệp vụ ở gốc app
+  hay code trong `__init__.py` ngoài re-export.
 - `services/` (ghi) và `selectors/` (đọc) KHÔNG import máy móc HTTP của DRF
   (serializers/views/generics/viewsets/response). Được phép:
   `rest_framework.exceptions`, `rest_framework_simplejwt`.
-- Cross-app: chỉ import model của app khác hoặc hàm được re-export ở
-  `<app>/services/__init__.py`; không deep-import nội bộ.
+- Cross-app: chỉ import cấp package `apps.X.{models,domain,services,selectors,signals}`,
+  `apps.accounts.api.permissions`, và từ tầng `api` thì thêm
+  `apps.X.api.serializers` (serializer lồng); không deep-import module nội bộ.
+  Thao tác thuần trên một bản ghi đặt ở method/manager của model để tránh vòng
+  giữa các package services. `common/` không biết domain, không import `apps`.
 - Endpoint list phải giữ số query phẳng theo số bản ghi — xem
-  `tests/test_query_budget.py`; tăng budget phải kèm giải thích trong PR.
-- API: miền CV dùng tiền tố `/api/v2/`; app khác `/api/<app>/`. Không còn v1.
+  `apps/<app>/tests/test_query_budget.py`; tăng budget phải kèm giải thích trong PR.
+- API view mới bắt buộc có `@extend_schema`; cổng OpenAPI chặn mọi lỗi/cảnh báo.
+- Chuỗi trả về người dùng bọc `gettext`/`gettext_lazy` (msgid tiếng Việt) rồi
+  chạy `docker compose exec -T backend python -m common.i18n_catalog update apps/<app>`
+  và dịch `msgstr` tiếng Anh; email/thông báo render trong
+  `common.i18n.recipient_language(người_nhận)` (ADR-0023).
+- Pytest trong container phải thêm `--ds=config.settings.test`: container đặt
+  `DJANGO_SETTINGS_MODULE` dev nên ghi đè giá trị trong `pyproject.toml`.
+- Service báo lỗi bằng `ValidationError` hoặc `DomainError` (`common/errors.py`,
+  handler ở `common/api/exceptions.py`); view không `try/except` chỉ để đổi kiểu lỗi.
+  Cờ query đọc bằng `common.api.params.parse_bool`.
 
 ### Kiểm tra trước khi bàn giao (backend)
 
@@ -100,7 +125,10 @@ Mọi Django app trong `backend/apps/` theo đúng một layout:
 cd backend
 ruff check . && ruff format --check .
 lint-imports
+bash ../scripts/check_backend_layering.sh
+python ../scripts/check_backend_imports.py
 python manage.py makemigrations --check --dry-run
+bash ../scripts/check_openapi_schema.sh
 pytest --cov --cov-fail-under=84
 ```
 

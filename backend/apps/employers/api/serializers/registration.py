@@ -1,4 +1,6 @@
 from django.core.validators import RegexValidator
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from rest_framework import serializers
 
 from apps.accounts.api.serializers import password_field
@@ -9,7 +11,7 @@ from ...models import RecruiterProfile
 
 phone_validator = RegexValidator(
     regex=r'^(0|\+84)\d{9,10}$',
-    message='Số điện thoại không hợp lệ (VD: 0912345678 hoặc +84912345678).',
+    message=gettext_lazy('Số điện thoại không hợp lệ (VD: 0912345678 hoặc +84912345678).'),
 )
 
 
@@ -25,7 +27,7 @@ class EmployerRegistrationProfileSerializer(serializers.Serializer):
 
     def validate_full_name(self, value):
         if len(value) < 2:
-            raise serializers.ValidationError('Họ và tên cần ít nhất 2 ký tự.')
+            raise serializers.ValidationError(_('Họ và tên cần ít nhất 2 ký tự.'))
         return value
 
     def validate_contact_phone(self, value):
@@ -34,7 +36,7 @@ class EmployerRegistrationProfileSerializer(serializers.Serializer):
     def validate_terms_accepted(self, value):
         if value is not True:
             raise serializers.ValidationError(
-                'Bạn cần đồng ý Điều khoản dịch vụ và Chính sách quyền riêng tư.'
+                _('Bạn cần đồng ý Điều khoản dịch vụ và Chính sách quyền riêng tư.')
             )
         return value
 
@@ -50,6 +52,6 @@ class EmployerRegisterSerializer(EmployerRegistrationProfileSerializer):
         value = User.objects.normalize_email(value)
         if User.objects.email_claimed_for_role(value, User.Role.EMPLOYER):
             raise serializers.ValidationError(
-                'Email này đã được sử dụng cho một tài khoản nhà tuyển dụng.'
+                _('Email này đã được sử dụng cho một tài khoản nhà tuyển dụng.')
             )
         return value

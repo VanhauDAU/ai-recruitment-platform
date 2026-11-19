@@ -1,4 +1,4 @@
-"""Trường riêng theo vị trí và job sinh nội dung mẫu bằng AI (CVT-3).
+"""Cấu hình CV theo vị trí chuyên môn: profile của vị trí và trường riêng (CVT-3).
 
 Trường riêng do admin định nghĩa cho từng `CvPositionProfile` (ví dụ GitHub cho
 lập trình viên, doanh số cho nhân viên kinh doanh). Khi dựng CV, định nghĩa được
@@ -6,19 +6,86 @@ chụp vào section `position_details` của document (nhãn, kiểu, lựa ch�
 hay xóa trường ở đây không làm hỏng CV đã tạo.
 """
 
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 
-from common.public_id import generate_public_id
+from common.db.public_id import generate_public_id
 
-from .experience import ExperienceBand
-from .language import CvLanguage, catalog_language, localized_field
-from .template import CvPositionProfile, CvSampleContent
+from ..domain.section_registry import get_section_contract
+from .language import catalog_language, localized_field
 
 FIELD_KEY_RE = r'^[a-z][a-z0-9_]{0,49}$'
 MAX_FIELD_OPTIONS = 30
+
+
+class CvPositionProfile(models.Model):
+    """Cấu hình CV cho một vị trí chuyên môn.
+
+    Gắn 1-1 với `JobCategory(category_type=specialization)` — cùng taxonomy với
+    tin tuyển dụng, nên tên, slug và bản dịch của vị trí lấy từ `JobCategory`
+    thay vì lưu lặp ở đây. Vị trí chỉ xuất hiện ở ô chọn của trang mẫu CV khi có
+    profile đang bật.
+    """
+
+    public_id = models.CharField(max_length=50, unique=True, editable=False)
+    job_category = models.OneToOneField(
+        'jobs.JobCategory',
+        on_delete=models.CASCADE,
+        related_name='cv_position_profile',
+    )
+    # Thứ tự và trạng thái bật của section khi dựng CV từ nội dung mẫu của vị
+    # trí, ví dụ [{"section_key": "skills", "enabled": true}, ...]. Rỗng = giữ
+    # nguyên thứ tự của nội dung mẫu.
+    section_preset = models.JSONField(default=list, blank=True)
+    # Từ khóa kỹ năng gợi ý của vị trí (dùng cho prompt sinh nội dung mẫu và đối
+    # chiếu vị trí khi trích xuất CV tải lên).
+    keywords = models.JSONField(default=list, blank=True)
+    is_active = models.BooleanField(default=True)
+    sort_order = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    MAX_KEYWORDS = 30
+
+    class Meta:
+        ordering = ['sort_order', 'pk']
+
+    def __str__(self):
+        return self.job_category.name
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('cvpos')
+        super().save(*args, **kwargs)
+
+    def clean(self):
+        # Nạp lười: jobs.models gián tiếp nạp cv_templates.models lúc khởi động.
+        from apps.jobs.models import JobCategory
+
+        if self.job_category.category_type != JobCategory.CategoryType.SPECIALIZATION:
+            raise ValidationError({'job_category': 'Chỉ gắn với vị trí chuyên môn.'})
+        if not isinstance(self.section_preset, list):
+            raise ValidationError({'section_preset': 'Phải là danh sách.'})
+        keys = []
+        for entry in self.section_preset:
+            key = entry.get('section_key') if isinstance(entry, dict) else None
+            if not get_section_contract(key) or not isinstance(entry.get('enabled', True), bool):
+                raise ValidationError({'section_preset': f'Section không hợp lệ: {entry!r}.'})
+            keys.append(key)
+        if len(keys) != len(set(keys)):
+            raise ValidationError({'section_preset': 'Section bị lặp.'})
+        if (
+            not isinstance(self.keywords, list)
+            or len(self.keywords) > self.MAX_KEYWORDS
+            or any(
+                not isinstance(word, str) or not 0 < len(word.strip()) <= 60
+                for word in self.keywords
+            )
+        ):
+            raise ValidationError(
+                {'keywords': f'Tối đa {self.MAX_KEYWORDS} từ khóa, mỗi từ khóa 1–60 ký tự.'}
+            )
 
 
 class CvPositionField(models.Model):
@@ -67,6 +134,14 @@ class CvPositionField(models.Model):
             models.UniqueConstraint(fields=['profile', 'key'], name='uq_cv_position_field_key'),
         ]
 
+    def __str__(self):
+        return f'{self.profile}: {self.key}'
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('cvfld')
+        super().save(*args, **kwargs)
+
     def clean(self):
         errors = {}
         if self.field_type in self.CHOICE_TYPES:
@@ -101,71 +176,3 @@ class CvPositionField(models.Model):
     def option_labels(self, locale):
         code = catalog_language(locale).field_suffix
         return [option[code] for option in self.options]
-
-    def save(self, *args, **kwargs):
-        if not self.public_id:
-            self.public_id = generate_public_id('cvfld')
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f'{self.profile}: {self.key}'
-
-
-class CvSampleGeneration(models.Model):
-    """Một lượt sinh nội dung mẫu bằng AI cho (vị trí, ngôn ngữ, nhóm kinh nghiệm).
-
-    Các lượt cùng một yêu cầu của admin chung `batch_id`. Kết quả là một
-    `CvSampleContent` ở trạng thái chờ duyệt; lượt lỗi chỉ lưu mã lỗi đã chuẩn
-    hóa, không lưu prompt hay phản hồi của provider.
-    """
-
-    class Status(models.TextChoices):
-        QUEUED = 'queued', 'Đang chờ'
-        PROCESSING = 'processing', 'Đang sinh'
-        COMPLETED = 'completed', 'Hoàn tất'
-        FAILED = 'failed', 'Lỗi'
-
-    public_id = models.CharField(max_length=50, unique=True, editable=False)
-    batch_id = models.CharField(max_length=50, db_index=True)
-    position_profile = models.ForeignKey(
-        CvPositionProfile, on_delete=models.CASCADE, related_name='sample_generations'
-    )
-    locale = models.CharField(max_length=16, choices=CvLanguage.choices)
-    experience_band = models.CharField(max_length=20, choices=ExperienceBand.choices)
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.QUEUED)
-    failure_code = models.CharField(max_length=64, blank=True)
-    sample = models.ForeignKey(
-        CvSampleContent,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='generations',
-    )
-    invocation = models.ForeignKey(
-        'ai_core.AiInvocation',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='cv_sample_generations',
-    )
-    requested_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='requested_cv_sample_generations',
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    finished_at = models.DateTimeField(null=True, blank=True)
-
-    class Meta:
-        ordering = ['-created_at', '-pk']
-        indexes = [
-            models.Index(fields=['status', 'created_at'], name='idx_cv_sample_gen_status'),
-        ]
-
-    def save(self, *args, **kwargs):
-        if not self.public_id:
-            self.public_id = generate_public_id('cvgen')
-        super().save(*args, **kwargs)

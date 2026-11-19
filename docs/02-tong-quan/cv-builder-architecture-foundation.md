@@ -18,7 +18,7 @@ Mỗi `CvVersion` và `CvDraft` lưu đúng ba JSON tách biệt:
   không hỗ trợ — ID phải tồn tại, không trùng, không đồng thời nằm trong region).
 - `style_json`: màu (`theme_color`), font, tỷ lệ và override presentation an toàn.
 
-`schema_version = 1`. Validator backend (`apps/cvs/schemas.py`) giới hạn kích
+`schema_version = 1`. Validator backend (`apps/cv_templates/models/content_schema.py`) giới hạn kích
 thước, section key, ID trùng, region/layout, font/màu và rich text; HTML tùy ý
 bị từ chối. Rich text có hai dạng cùng hợp lệ:
 
@@ -27,7 +27,7 @@ bị từ chối. Rich text có hai dạng cùng hợp lệ:
   `text` phải bằng chuỗi nối `runs[].text`. Mark cho phép: `bold`, `italic`,
   `underline`, `font_family`, `font_size_pt` (8–32) và màu hex.
 
-Section key là registry template-agnostic (`apps/cv_templates/section_registry.py`,
+Section key là registry template-agnostic (`apps/cv_templates/domain/section_registry.py`,
 mirror vào `CvSectionDefinition`), gồm các section nội dung (`personal_info`,
 `summary`, `experience`, `skills`, `activities`, `references`, `interests`…) và
 ba marker `nameplate`, `contact`, `avatar` lấy dữ liệu từ `personal_info`.
@@ -48,8 +48,8 @@ renderer. Create, đổi mẫu, apply sample, position preview, import và snaps
 - `CvTemplate` giữ identity/catalogue. `CvTemplateVersion` lưu `renderer_key`,
   `renderer_version`, schema/default layout/style, `capabilities`,
   `content_contract`. Component không lưu trong DB: `renderer_key` là khóa trong
-  registry layout `apps/cv_templates/layouts.json` (bản sao giống hệt ở
-  `frontend/src/entities/cv/model/cv-layouts.json`, có test so khớp). Mỗi layout
+  registry layout `apps/cv_templates/domain/layouts.json` (bản sao giống hệt ở
+  `frontend/src/entities/cv/cv/model/cv-layouts.json`, có test so khớp). Mỗi layout
   khai báo các vùng theo hàng (`row`, `width`, `tone` plain/tint/band, `arrange`
   stack/inline), `avatar`, `variant` (standard/timeline/compact) và giới hạn kéo
   độ rộng cột. Tám layout: `single_column_v1`, `single_column_photo_v1`,
@@ -93,7 +93,7 @@ CvTemplate ──< CvTemplateColorLink    >── CvColor
 - Ngôn ngữ CV là enum `CvLanguage` (`vi-VN`, `en-US`) ở
   `apps/cv_templates/models/language.py`, kèm `CATALOG_LANGUAGES` (path kho mẫu,
   nhãn, hậu tố trường song ngữ); frontend mirror ở
-  `entities/cv-template/model/cv-languages.js`. Tên/mô tả/SEO của template là
+  `entities/cv/cv-template/model/cv-languages.js`. Tên/mô tả/SEO của template là
   các trường `*_vi`/`*_en` trên `CvTemplate` (CVT-1a gộp `CvTemplateLocalization`
   và gỡ bảng `sitecontent.Locale`). Kho `/mau-cv-tieng-nhat`,
   `/mau-cv-tieng-trung`, `/mau-cv/ngon-ngu/:locale` redirect 301 về `/mau-cv`.
@@ -127,7 +127,7 @@ CvTemplate ──< CvTemplateColorLink    >── CvColor
   hiển thị và validate, sửa trường ở admin không làm hỏng CV cũ. Section đứng sau
   kỹ năng nếu `section_preset` không nhắc tới. Editor có panel "Hồ sơ ứng tuyển"
   để chọn vị trí mục tiêu và cấp bậc mong muốn (không in lên CV); đổi vị trí thì
-  khung `position_details` đổi theo (`GET /api/v2/cv-position-details/`), giữ giá
+  khung `position_details` đổi theo (`GET /api/public/cv-position-details/`), giữ giá
   trị các trường cùng khóa. Thêm section `portfolio`, `publications`; document
   vẫn `schema_version 1` vì mọi thay đổi là bổ sung tùy chọn.
 - Matching (CVT-3) mở rộng `matching_profile`: `education_level` là bậc
@@ -141,7 +141,7 @@ CvTemplate ──< CvTemplateColorLink    >── CvColor
 
 ## 5. API V2
 
-CV của ứng viên (`/api/v2/cvs/`, owner-only):
+CV của ứng viên (`/api/candidate/cvs/`, owner-only):
 
 | Route | Hành vi |
 | --- | --- |
@@ -163,7 +163,7 @@ CV của ứng viên (`/api/v2/cvs/`, owner-only):
 `If-Match: "lock-version-N"`; lock lệch trả `409` kèm `current_lock_version`,
 client tải lại thay vì ghi đè.
 
-Catalogue public (cache control/ETag): `GET /api/v2/cv-templates/` (card gọn,
+Catalogue public (cache control/ETag): `GET /api/public/cv-templates/` (card gọn,
 không trả layout/style/renderer config, lọc `locale`/`category`/`tag`),
 `/cv-templates/{slug}/`, `/cv-templates/{slug}/related/`, `/cv-categories/`,
 `/cv-backgrounds/`, `/cv-position-options/`, `/cv-position-preview/`,
@@ -171,17 +171,17 @@ không trả layout/style/renderer config, lọc `locale`/`category`/`tag`),
 
 Ứng tuyển và recruiter:
 
-- `GET|POST /api/v2/applications/`: POST bắt buộc CV và `version_public_id` cùng
+- `GET|POST /api/candidate/applications/`: POST bắt buộc CV và `version_public_id` cùng
   aggregate; service copy đúng version đó thành `application_snapshot`, không
   đổi con trỏ draft/latest/published và không tự chọn latest hay draft.
-- `GET /api/v2/recruiter/applications/{id}/cv/`: trả `submitted_cv_version`, chỉ
+- `GET /api/employer/applications/{id}/cv/`: trả `submitted_cv_version`, chỉ
   cho recruiter đã đăng tin (`job.posted_by`).
-- `GET /api/jobs/recommendations/by-cv/{cv_public_id}/`: xếp hạng tin active theo
+- `GET /api/candidate/jobs/recommendations/by-cv/{cv_public_id}/`: xếp hạng tin active theo
   CV của chính ứng viên bằng rule giải thích được (điểm, lý do, keyword).
 - `GET|PATCH /api/candidate/recruiter-visibility/`: bật cần xác nhận tường minh;
   mỗi quyết định cập nhật `CandidateConsent` và append `CandidateConsentEvent`.
 
-Quản trị (`/api/v2/admin/`, kiểm quyền `AdminPortalPermission`, mọi
+Quản trị (`/api/admin/`, kiểm quyền `AdminPortalPermission`, mọi
 admin): `cv-templates` (kèm action tạo draft version từ version hiện
 hành, publish, retire, regenerate snapshot; nhận các trường song ngữ),
 `cv-categories`, `cv-colors`, `cv-backgrounds`, `cv-sample-contents` (nhận
@@ -195,8 +195,8 @@ workflow nằm ở feature `edit-cv-draft`:
 
 ```text
 pages/main/cvs/CvEditor
-  → features/edit-cv-draft
-    → entities/cv, entities/cv-template, entities/locale
+  → features/common/cv/edit-cv-draft
+    → entities/cv/cv, entities/cv/cv-template, entities/locale
       → shared
 ```
 
@@ -253,7 +253,7 @@ response shared/recruiter; PDF worker đọc storage nội bộ.
 
 ## 8. Import PDF/DOCX
 
-- `POST /api/v2/cvs/imports/` (tùy chọn template/language/màu) trả `202`, tạo
+- `POST /api/candidate/cvs/imports/` (tùy chọn template/language/màu) trả `202`, tạo
   `CvImportJob` bền vững, idempotent theo `Idempotency-Key` của ứng viên; throttle
   `cv_import` 10/giờ.
 - Chỉ nhận PDF/DOCX có signature thật, tối đa 5 MB; PDF tối đa 20 trang; PDF scan
@@ -287,7 +287,7 @@ response shared/recruiter; PDF worker đọc storage nội bộ.
   revision/phiên bản snapshot; worker idempotent, ghi asset mới trước rồi swap
   pointer trong transaction, chỉ xóa asset cũ sau commit.
 - Nội dung mẫu không chứa danh tính. Ảnh catalogue và preview cho khách chưa đăng
-  nhập thêm danh tính minh họa lúc hiển thị (`apps/cv_templates/demo_identity.py`,
+  nhập thêm danh tính minh họa lúc hiển thị (`apps/cv_templates/services/demo_identity.py`,
   ảnh catalogue kèm ảnh đại diện bóng người); người đăng nhập thấy danh tính của
   chính họ. Danh tính minh họa không bao giờ ghi vào DB.
 

@@ -5,17 +5,15 @@ from urllib.parse import urlencode
 from django.shortcuts import redirect
 from django.urls import reverse
 from drf_spectacular.utils import extend_schema, inline_serializer
-from rest_framework import permissions, serializers, status
+from rest_framework import permissions, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from common.throttling import ClientIPScopedRateThrottle
+from apps.accounts.services import oauth
+from common.api.throttling import ClientIPScopedRateThrottle
 
-from ... import oauth
-from ...models import User
 from ...services.refresh_cookies import set_refresh_cookie
 from ...services.tokens import issue_tokens
-from ...tasks import queue_welcome_email
 from ..serializers import SessionUserSerializer
 
 
@@ -74,16 +72,11 @@ class OAuthCallbackView(APIView):
             redirect_uri = request.build_absolute_uri(
                 reverse('auth-oauth-callback', args=[provider])
             )
-            token = oauth.exchange_code(provider, code, redirect_uri)
-            profile = oauth.fetch_profile(provider, token)
-            user, created = oauth.resolve_user(provider, profile, portal, include_created=True)
+            one_time_code = oauth.complete_provider_login(provider, code, redirect_uri, portal)
         except oauth.OAuthError as exc:
             return _oauth_error_redirect(portal, exc.code)
 
-        if created:
-            queue_welcome_email(user, context={'registration_method': provider})
-
-        params = {'code': oauth.create_one_time_code(user)}
+        params = {'code': one_time_code}
         if state_data.get('next'):
             params['next'] = state_data['next']
         return redirect(f'{oauth.frontend_callback_url(portal)}?{urlencode(params)}')
@@ -106,21 +99,7 @@ class OAuthCompleteView(APIView):
     throttle_scope = 'oauth'
 
     def post(self, request):
-        identity = oauth.pop_one_time_code(request.data.get('code'))
-        user = (
-            User.objects.filter(pk=identity.get('user_id'), is_active=True).first()
-            if isinstance(identity, dict)
-            else None
-        )
-        if (
-            user is None
-            or identity.get('auth_revision') != user.auth_revision
-            or identity.get('email') != User.objects.normalize_email(user.email)
-        ):
-            return Response(
-                {'detail': 'Mã đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        user = oauth.redeem_one_time_code(request.data.get('code'))
         # Social providers have completed their own identity verification.
         user_data = SessionUserSerializer(user, context={'request': request}).data
         tokens = issue_tokens(user, request, auth_method='oauth')

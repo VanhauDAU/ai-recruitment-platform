@@ -1,3 +1,4 @@
+from django.utils.translation import gettext
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
@@ -105,7 +106,7 @@ class RecruiterProfileSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [f for f in fields if f != 'position_title']
 
-    def get_work_location(self, obj):
+    def get_work_location(self, obj) -> dict | None:
         if obj.work_location_id is None:
             return None
         return {
@@ -114,7 +115,7 @@ class RecruiterProfileSerializer(serializers.ModelSerializer):
             'level': obj.work_location.level,
         }
 
-    def get_onboarding(self, obj):
+    def get_onboarding(self, obj) -> dict:
         """Các mốc đăng ký, bảo mật và kích hoạt — luôn suy từ dữ liệu nguồn."""
         return self._onboarding(obj)
 
@@ -195,13 +196,13 @@ class RecruiterProfileSerializer(serializers.ModelSerializer):
             'verified_job_quota_eligible': entitlement['verified_job_quota_eligible'],
         }
 
-    def get_verification_case(self, obj):
+    def get_verification_case(self, obj) -> dict:
         case = getattr(obj, 'verification_case', None)
         if case is None:
             return {
                 'public_id': None,
                 'status': 'draft',
-                'status_label': 'Chưa nộp',
+                'status_label': gettext('Chưa nộp'),
                 'decision_reason': '',
                 'revision': 1,
                 'submitted_at': None,

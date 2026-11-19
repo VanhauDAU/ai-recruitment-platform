@@ -4,8 +4,9 @@ Emails are read outside the app, so every URL here is absolute.
 """
 
 from django.conf import settings
+from django.utils.translation import gettext as _
 
-from common.media_storage import media_url_from_value
+from common.storage.media import media_url_from_value
 from common.vietnam_time import vietnam_today
 
 from ..models import Job
@@ -27,19 +28,19 @@ def job_url(job):
 
 def salary_text(job):
     if job.salary_type == Job.SalaryType.NEGOTIABLE:
-        return 'Thỏa thuận'
+        return _('Thỏa thuận')
 
     def amount(value):
         if value is None:
             return ''
         if job.currency == Job.Currency.VND:
-            return f'{int(value / 1_000_000)} triệu'
+            return _('%(amount)s triệu') % {'amount': int(value / 1_000_000)}
         return f'{int(value):,} {job.currency}'
 
     if job.salary_type == Job.SalaryType.FROM:
-        return f'Từ {amount(job.salary_min)}'
+        return _('Từ %(amount)s') % {'amount': amount(job.salary_min)}
     if job.salary_type == Job.SalaryType.UP_TO:
-        return f'Đến {amount(job.salary_max)}'
+        return _('Đến %(amount)s') % {'amount': amount(job.salary_max)}
     if job.salary_min == job.salary_max:
         return amount(job.salary_min or job.salary_max)
     return f'{amount(job.salary_min)} - {amount(job.salary_max)}'.strip(' -')
@@ -59,15 +60,15 @@ def _badges(job, verified_employer):
     if job.tier == Job.Tier.TOP:
         badges.append('TOP')
     elif job.tier == Job.Tier.FEATURED:
-        badges.append('Nổi bật')
+        badges.append(_('Nổi bật'))
     if job.is_hot:
         badges.append('HOT')
     if job.is_urgent:
-        badges.append('GẤP')
+        badges.append(_('GẤP'))
     if job.has_flash_badge:
-        badges.append('Phản hồi nhanh')
+        badges.append(_('Phản hồi nhanh'))
     if verified_employer:
-        badges.append('Nhà tuyển dụng đã xác thực')
+        badges.append(_('Nhà tuyển dụng đã xác thực'))
     return badges
 
 

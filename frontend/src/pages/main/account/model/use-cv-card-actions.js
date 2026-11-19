@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { createCvSharedLink, deleteCv, duplicateCv, renameCv, setDefaultCv } from '@/entities/cv'
+import { createCvSharedLink, deleteCv, duplicateCv, renameCv, setDefaultCv } from '@/entities/cv/cv'
 import { message } from '@/shared/lib/toast'
 
 // Sở hữu state hiển thị (tên, CV chính) và toàn bộ hành động của một thẻ CV.

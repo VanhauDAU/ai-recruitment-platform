@@ -11,6 +11,7 @@ from django.db.models import (
     Value,
 )
 from django.db.models.functions import Coalesce
+from django.utils.translation import gettext as _
 
 from apps.applications.models import Application
 
@@ -131,7 +132,7 @@ def attach_job_candidate_previews(jobs, *, limit=4):
             {
                 'application_public_id': row['public_id'],
                 'public_id': row['candidate__public_id'],
-                'full_name': row['candidate__full_name'] or 'Ứng viên',
+                'full_name': row['candidate__full_name'] or _('Ứng viên'),
                 'avatar_url': row['candidate__avatar_url'],
                 'cv_title': row['submitted_cv_title'],
                 'status': row['status'],

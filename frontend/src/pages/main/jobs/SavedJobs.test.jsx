@@ -28,11 +28,11 @@ const mocks = vi.hoisted(() => ({
   },
 }))
 
-vi.mock('@/entities/session', () => ({
+vi.mock('@/entities/account/session', () => ({
   useSession: () => mocks.session,
 }))
 
-vi.mock('@/features/saved-jobs', () => ({
+vi.mock('@/features/main/job/saved-jobs', () => ({
   useSavedJobs: () => ({
     ...mocks.savedJobs,
     reload: mocks.reloadSaved,

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { getLocationsByIds, getWards } from '@/entities/location'
+import { getLocationsByIds, getWards } from '@/entities/system/location'
 import { shortLocationName } from '../lib/job-list-params'
 
 function groupSelectedLocations(selectedLocations, details, provinces) {

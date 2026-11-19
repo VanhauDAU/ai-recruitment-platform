@@ -3,22 +3,24 @@
 from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from rest_framework.exceptions import ValidationError
 
 from apps.accounts.models import User
 
 from .profiles import get_or_create_recruiter
-from .verification import reconcile_recruiter_verification
 
 
 @transaction.atomic
 def complete_registration_profile(user, validated_data):
     if not user.is_employer:
-        raise ValidationError({'detail': 'Chỉ tài khoản nhà tuyển dụng được cập nhật hồ sơ này.'})
+        raise ValidationError(
+            {'detail': _('Chỉ tài khoản nhà tuyển dụng được cập nhật hồ sơ này.')}
+        )
 
     recruiter = get_or_create_recruiter(user)
     if recruiter.registration_completed_at is not None:
-        raise ValidationError({'detail': 'Thông tin đăng ký nhà tuyển dụng đã được hoàn tất.'})
+        raise ValidationError({'detail': _('Thông tin đăng ký nhà tuyển dụng đã được hoàn tất.')})
 
     now = timezone.now()
     location = validated_data['work_location']
@@ -37,7 +39,6 @@ def complete_registration_profile(user, validated_data):
     recruiter.marketing_opt_in = validated_data.get('marketing_opt_in', False)
     recruiter.marketing_decided_at = now
     recruiter.save()
-    reconcile_recruiter_verification(recruiter, source='registration_completed')
     return recruiter
 
 
@@ -65,6 +66,6 @@ def register_employer(validated_data):
         # mới đụng uniq_users_email_role_lower. Đây vẫn là lỗi nhập liệu của
         # người dùng, không phải sự cố hệ thống.
         raise ValidationError(
-            {'email': 'Email này đã được sử dụng cho một tài khoản nhà tuyển dụng.'}
+            {'email': _('Email này đã được sử dụng cho một tài khoản nhà tuyển dụng.')}
         ) from error
     return user, recruiter

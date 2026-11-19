@@ -30,9 +30,9 @@ loading/empty/error (có nút thử lại)/404 riêng.
 
 - `FloatingActions`: "Các câu hỏi thường gặp" → `/tro-giup`; "Hướng dẫn tìm
   việc an toàn" → `/tro-giup/tim-viec-an-toan`
-  (`widgets/floating-actions/knowledgebase-support-links.js`);
+  (`widgets/main/floating-actions/knowledgebase-support-links.js`);
 - header: "Hướng dẫn viết CV" → `/tro-giup/cv-va-mau-cv`
-  (`widgets/main-header/header-navigation-config.jsx`, cờ
+  (`widgets/main/header/header-navigation-config.jsx`, cờ
   `requiresKnowledgebase`).
 
 ### 1.1. Trang danh sách
@@ -115,7 +115,7 @@ mỗi chuyên mục, đã đối chiếu route/component thật. Migration dùng
 ### 3.1. Sanitize và ảnh
 
 `normalize_revision_content` (service) sanitize body bằng
-`common/content_html.py` trước khi ghi, rồi sinh `body_plain_text` và
+`common/html/content.py` trước khi ghi, rồi sinh `body_plain_text` và
 `content_hash` (SHA-256 của title + body đã sanitize) từ chính kết quả đó.
 Allowlist gồm `h2`–`h4`, đoạn văn, nhấn mạnh, danh sách, blockquote, code/pre,
 bảng, figure/caption, liên kết và ảnh; `h1` thuộc page. Liên kết chỉ nhận đường
@@ -124,7 +124,7 @@ dẫn nội bộ `/…`, `https`, `mailto`, `tel`.
 Ảnh có thể là media nội bộ, đường dẫn `/…` hoặc URL HTTPS không chứa
 credentials; không bắt buộc upload trước. Mọi ảnh phải có `alt`, trừ ảnh đánh
 dấu `data-decorative="true"`. Upload vào media library (tùy chọn) đi qua
-`common.media_storage.save_image_upload`, thư mục `knowledgebase/content`, chỉ
+`common.storage.media.save_image_upload`, thư mục `knowledgebase/content`, chỉ
 JPEG/PNG/WebP, tối đa 5 MB, resize trong 1600×1600; vượt dung lượng trả `413`.
 
 Frontend sanitize lần nữa bằng `@/shared/lib/sanitize-html` trong renderer
@@ -150,7 +150,7 @@ department `content-cv`: staff có `view` + `manage`; manager có cả bốn. H�
 chưa bắt buộc người duyệt khác người viết. Backend là nguồn kiểm quyền cuối;
 UI chỉ ẩn/disable action.
 
-Quy tắc chuyển trạng thái (`services/workflow.py`):
+Quy tắc chuyển trạng thái (`services/articles.py`):
 
 - Submit chỉ từ `DRAFT`; approve/reject chỉ từ `IN_REVIEW`. `APPROVED` và
   `REJECTED` bất biến; muốn sửa phải tạo revision mới (clone từ revision đang
@@ -181,7 +181,7 @@ Mọi mutation ghi audit qua `apps.accounts.services.record_admin_action`
 
 ## 5. API
 
-Tiền tố `/api/knowledgebase/`. Chi tiết field nằm trong
+Tiền tố `/api/public/knowledgebase/`. Chi tiết field nằm trong
 [`openapi.yaml`](../04-api/openapi.yaml).
 
 **Public** (`AllowAny`, throttle `knowledgebase_public` 120/phút theo client IP):
@@ -236,9 +236,9 @@ whitelist trả `400`.
 Widget `admin-knowledgebase-management` ghép các feature
 `edit-knowledge-revision`, `review-knowledge-revision`,
 `publish-knowledge-article`, `manage-knowledge-categories` trên
-`entities/knowledgebase`: bảng bài filter/sort/pagination server-side (URL là
+`entities/content/knowledgebase`: bảng bài filter/sort/pagination server-side (URL là
 nguồn chuẩn, reorder kéo thả trong một category), drawer chuyên mục, editor
-`shared/ui/RichTextEditor` lưu tường minh (không autosave, cảnh báo rời trang,
+`shared/ui/rich-text/RichTextEditor` lưu tường minh (không autosave, cảnh báo rời trang,
 giữ bản nhập tạm trong `localStorage` khi lưu lỗi), modal **Tạo revision mới**
 cho bài đã publish, diff plain text khi review, lịch sử revision và audit.
 
@@ -252,7 +252,7 @@ cho bài đã publish, diff plain text khi review, lịch sử revision và audi
 Public site settings trả `knowledgebase_public_enabled` và
 `knowledgebase_search_index_enabled` (tính sẵn) để frontend không cần env riêng.
 
-Backend phục vụ SEO shell cho `/tro-giup`, category và detail (`urls_seo.py`):
+Backend phục vụ SEO shell cho `/tro-giup`, category và detail (`apps/knowledgebase/seo/urls.py`):
 canonical tuyệt đối, Open Graph, `BreadcrumbList`, 404 HTTP thật kèm noindex, và
 sitemap `/sitemaps/knowledgebase.xml`. Mặc định `noindex, nofollow` cho tới khi
 bật index. Không dùng schema `FAQPage`.

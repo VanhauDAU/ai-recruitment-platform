@@ -9,7 +9,11 @@ const MANIFEST_PATH = path.join(DIST_DIR, '.vite/manifest.json')
 // (CI measured 320.3 KiB). `npm audit fix` on 2026-11-13 then patched
 // DOMPurify, Vite, undici and follow-redirects; CI measured 326.9 KiB with no
 // application code change, so the cap follows with a 1.6 KiB margin.
-const INITIAL_JS_GZIP_BUDGET = 328.5 * 1024
+// 2026-11-20 (ADR-0023 GĐ1): the shell now renders its 204 initial messages
+// (sign-in form, session notices, API error mapping) through Paraglide, and
+// each message ships its vi and en text. CI-equivalent build measured
+// 332.2 KiB; the cap follows with a 1.8 KiB margin.
+const INITIAL_JS_GZIP_BUDGET = 334 * 1024
 // Shared account-setting styles now ship with the initial shell. The same
 // 2026-11-13 toolchain update moved the measured CSS from under 38.0 to
 // 38.1 KiB; keep a 0.4 KiB allowance while retaining a real cap.

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { getCandidateJobPreferences } from '@/entities/candidate-preferences'
-import { getJobs } from '@/entities/job'
-import { useSession } from '@/entities/session'
+import { getCandidateJobPreferences } from '@/entities/job/candidate-preferences'
+import { getJobs } from '@/entities/job/job'
+import { useSession } from '@/entities/account/session'
 import { SUGGESTION_LIMIT, buildInterestedJobTiers } from '../lib/interested-jobs-tiers'
 
 // Gom đủ SUGGESTION_LIMIT việc gợi ý bằng cách gọi lần lượt các tầng nới lỏng

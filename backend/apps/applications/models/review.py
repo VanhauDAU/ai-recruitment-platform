@@ -1,8 +1,9 @@
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
+from django.utils.translation import gettext_lazy
 
-from common.public_id import generate_public_id
+from common.db.public_id import generate_public_id
 
 
 class ApplicationReviewLink(models.Model):
@@ -34,6 +35,9 @@ class ApplicationReviewLink(models.Model):
             models.Index(fields=['application', '-created_at'], name='app_review_link_app_idx'),
         ]
 
+    def __str__(self):
+        return self.public_id
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('arl')
@@ -44,10 +48,10 @@ class ApplicationReview(models.Model):
     """The scorecard a reviewer submits through one link (editable until expiry)."""
 
     class Recommendation(models.TextChoices):
-        STRONG_YES = 'strong_yes', 'Rất nên tuyển'
-        YES = 'yes', 'Nên tuyển'
-        NO = 'no', 'Chưa nên tuyển'
-        STRONG_NO = 'strong_no', 'Không nên tuyển'
+        STRONG_YES = 'strong_yes', gettext_lazy('Rất nên tuyển')
+        YES = 'yes', gettext_lazy('Nên tuyển')
+        NO = 'no', gettext_lazy('Chưa nên tuyển')
+        STRONG_NO = 'strong_no', gettext_lazy('Không nên tuyển')
 
     link = models.OneToOneField(
         ApplicationReviewLink, on_delete=models.CASCADE, related_name='review'
@@ -69,3 +73,6 @@ class ApplicationReview(models.Model):
                 name='chk_application_review_rating',
             ),
         ]
+
+    def __str__(self):
+        return f'{self.application_id}: {self.recommendation}'

@@ -7,4 +7,4 @@ class MatchingConfig(AppConfig):
     verbose_name = 'Đối sánh ngữ nghĩa CV–JD'
 
     def ready(self):
-        from . import signals  # noqa: F401
+        from .signals import receivers  # noqa: F401

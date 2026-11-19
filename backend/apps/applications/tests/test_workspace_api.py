@@ -14,16 +14,16 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
-from apps.accounts.services.tokens import issue_tokens
+from apps.accounts.services import issue_tokens
 from apps.candidates.models import CandidateNotification
 from apps.candidates.services import release_due_candidate_notifications
 from apps.cv_templates.tests.factories import fill_cv_for_application, make_published_template
 from apps.cvs.models import CvAccessLog, CvExport, UserCv
-from apps.cvs.services import create_application_snapshot, create_v2_cv, save_draft_as_version
+from apps.cvs.services import create_application_snapshot, create_user_cv, save_draft_as_version
 from apps.employers.models import Company
-from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.employers.tests.factories import make_employer_ready
 from apps.jobs.models import Job
-from apps.jobs.tests.helpers import open_visibility_window
+from apps.jobs.tests.factories import open_visibility_window
 
 from ..models import Application
 
@@ -69,7 +69,7 @@ class RecruiterWorkspaceApiTests(APITestCase):
             **open_visibility_window(),
         )
         template, _version = make_published_template('Workspace template')
-        self.cv = create_v2_cv(actor=self.candidate, title='Workspace CV', template=template)
+        self.cv = create_user_cv(actor=self.candidate, title='Workspace CV', template=template)
         fill_cv_for_application(self.cv, self.candidate)
         snapshot = create_application_snapshot(self.cv, self.candidate)
         self.application = Application.objects.create(
@@ -92,11 +92,11 @@ class RecruiterWorkspaceApiTests(APITestCase):
 
     def decide(self, status):
         return self.client.post(
-            self.url('recruiter-application-decision-v2'), {'status': status}, format='json'
+            self.url('recruiter-application-decision'), {'status': status}, format='json'
         )
 
     def test_list_exposes_only_legal_decisions(self):
-        response = self.client.get(reverse('recruiter-application-list-v2'))
+        response = self.client.get(reverse('recruiter-application-list'))
 
         self.assertEqual(response.status_code, 200, response.data)
         row = response.data['results'][0]
@@ -109,7 +109,7 @@ class RecruiterWorkspaceApiTests(APITestCase):
         self.assertEqual(response.status_code, 200, response.data)
         self.assertEqual(response.data['application']['status'], Status.SHORTLISTED)
         self.assertIsNotNone(response.data['candidate_notice_at'])
-        history = self.client.get(self.url('recruiter-application-history-v2')).data['results']
+        history = self.client.get(self.url('recruiter-application-history')).data['results']
         latest = history[-1]
         self.assertEqual(latest['candidate_notice']['state'], 'scheduled')
         self.assertTrue(latest['can_undo'])
@@ -125,22 +125,22 @@ class RecruiterWorkspaceApiTests(APITestCase):
     def test_undo_reverts_until_the_candidate_is_told(self):
         self.decide(Status.REJECTED)
 
-        undone = self.client.post(self.url('recruiter-application-decision-undo-v2'))
+        undone = self.client.post(self.url('recruiter-application-decision-undo'))
         self.assertEqual(undone.status_code, 200, undone.data)
         self.assertEqual(undone.data['status'], Status.SUBMITTED)
-        history = self.client.get(self.url('recruiter-application-history-v2')).data['results']
+        history = self.client.get(self.url('recruiter-application-history')).data['results']
         self.assertEqual(history[-1]['candidate_notice']['state'], 'undone')
         self.assertIsNotNone(history[-1]['reverted_at'])
 
         self.decide(Status.REJECTED)
         release_due_candidate_notifications(now=timezone.now() + timedelta(minutes=6))
-        refused = self.client.post(self.url('recruiter-application-decision-undo-v2'))
+        refused = self.client.post(self.url('recruiter-application-decision-undo'))
         self.assertEqual(refused.status_code, 409)
         self.assertEqual(refused.data['code'], 'STATUS_UNDO_UNAVAILABLE')
 
     def test_assessment_patch_ignores_status(self):
         response = self.client.patch(
-            self.url('recruiter-application-assessment-v2'),
+            self.url('recruiter-application-assessment'),
             {'employer_note': 'Strong SQL', 'employer_rating': 5, 'status': Status.ACCEPTED},
             format='json',
         )
@@ -153,17 +153,17 @@ class RecruiterWorkspaceApiTests(APITestCase):
         self.decide(Status.INTERVIEWED)
         self.login(self.candidate)
 
-        before = self.client.get(reverse('candidate-application-list-create-v2')).data['results']
+        before = self.client.get(reverse('candidate-application-list-create')).data['results']
         self.assertEqual(before[0]['status'], Status.SUBMITTED)
         self.assertEqual([item['status'] for item in before[0]['timeline']], [Status.SUBMITTED])
 
         release_due_candidate_notifications(now=timezone.now() + timedelta(minutes=6))
-        after = self.client.get(reverse('candidate-application-list-create-v2')).data['results']
+        after = self.client.get(reverse('candidate-application-list-create')).data['results']
         self.assertEqual(after[0]['status'], Status.INTERVIEWED)
         self.assertEqual(after[0]['candidate_status'], 'Mời phỏng vấn')
 
     def test_snapshot_read_is_audited_and_marks_viewed(self):
-        response = self.client.get(self.url('recruiter-application-snapshot-v2'))
+        response = self.client.get(self.url('recruiter-application-snapshot'))
 
         self.assertEqual(response.status_code, 200, response.data)
         log = CvAccessLog.objects.get()
@@ -179,7 +179,7 @@ class RecruiterWorkspaceApiTests(APITestCase):
         self.candidate.save(update_fields=['status', 'updated_at'])
         Application.objects.filter(pk=self.application.pk).update(status=Status.SHORTLISTED)
 
-        response = self.client.get(self.url('recruiter-application-snapshot-v2'))
+        response = self.client.get(self.url('recruiter-application-snapshot'))
 
         self.assertEqual(response.status_code, 200, response.data)
 
@@ -195,17 +195,17 @@ class RecruiterWorkspaceApiTests(APITestCase):
 
     def test_cv_export_is_reused_audited_and_notifies_candidate_once(self):
         with patch('apps.cvs.services.exports._dispatch_after_commit'):
-            created = self.client.post(self.url('recruiter-application-cv-export-v2'))
+            created = self.client.post(self.url('recruiter-application-cv-export'))
         self.assertEqual(created.status_code, 201, created.data)
         self.assertIsNone(created.data['download_url'])
         export = CvExport.objects.get(public_id=created.data['public_id'])
         self.assertIsNone(export.cv_id)
         self._complete(export)
 
-        reused = self.client.post(self.url('recruiter-application-cv-export-v2'))
+        reused = self.client.post(self.url('recruiter-application-cv-export'))
         self.assertEqual(reused.status_code, 200, reused.data)
         self.assertTrue(reused.data['download_url'].endswith('/download/'))
-        download_url = self.url('recruiter-application-cv-export-download-v2', export.public_id)
+        download_url = self.url('recruiter-application-cv-export-download', export.public_id)
         for _ in range(2):
             download = self.client.get(download_url)
             self.assertEqual(download.status_code, 200)
@@ -223,17 +223,17 @@ class RecruiterWorkspaceApiTests(APITestCase):
 
     def test_cv_export_is_private_to_the_job_poster_and_survives_cv_deletion(self):
         with patch('apps.cvs.services.exports._dispatch_after_commit'):
-            created = self.client.post(self.url('recruiter-application-cv-export-v2'))
+            created = self.client.post(self.url('recruiter-application-cv-export'))
         export = CvExport.objects.get(public_id=created.data['public_id'])
         self._complete(export)
 
         self.login(self.outsider)
         self.assertEqual(
-            self.client.post(self.url('recruiter-application-cv-export-v2')).status_code, 404
+            self.client.post(self.url('recruiter-application-cv-export')).status_code, 404
         )
         self.assertEqual(
             self.client.get(
-                self.url('recruiter-application-cv-export-download-v2', export.public_id)
+                self.url('recruiter-application-cv-export-download', export.public_id)
             ).status_code,
             404,
         )
@@ -241,7 +241,7 @@ class RecruiterWorkspaceApiTests(APITestCase):
         UserCv.objects.filter(pk=self.cv.pk).update(is_deleted=True)
         self.login(self.employer)
         detail = self.client.get(
-            self.url('recruiter-application-cv-export-detail-v2', export.public_id)
+            self.url('recruiter-application-cv-export-detail', export.public_id)
         )
         self.assertEqual(detail.status_code, 200, detail.data)
         self.assertEqual(detail.data['status'], CvExport.Status.COMPLETED)
@@ -269,13 +269,13 @@ class CandidateApplyReadinessTests(APITestCase):
             **open_visibility_window(),
         )
         template, _version = make_published_template('Ready template')
-        self.cv = create_v2_cv(actor=self.candidate, title='Blank CV', template=template)
+        self.cv = create_user_cv(actor=self.candidate, title='Blank CV', template=template)
         tokens = issue_tokens(self.candidate, auth_method='password')
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
 
     def apply(self):
         return self.client.post(
-            reverse('candidate-application-list-create-v2'),
+            reverse('candidate-application-list-create'),
             {
                 'job_public_id': self.job.public_id,
                 'cv_public_id': self.cv.public_id,

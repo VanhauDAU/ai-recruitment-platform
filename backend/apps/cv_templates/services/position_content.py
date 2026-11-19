@@ -11,11 +11,11 @@ from copy import deepcopy
 
 from django.db.models import Q
 
+from apps.cv_templates.domain.content_tokens import materialize_tokens
+from apps.cv_templates.domain.section_registry import blank_section, get_section_contract
 from apps.jobs.models import JobCategory, JobCategoryLocalization
 
-from ..content_tokens import _materialize_tokens
 from ..models import EXPERIENCE_BAND_ORDER, CvPositionProfile, CvSampleContent
-from ..section_registry import blank_section, get_section_contract
 from .position_fields import SECTION_KEY as POSITION_DETAILS_KEY
 from .position_fields import apply_position_details
 
@@ -118,7 +118,7 @@ def resolve_position_content(*, position, locale, experience_band, lock=False):
     content = deepcopy(sample.content_json)
     is_generic = sample.position_profile_id is None
     if is_generic:
-        content = _materialize_tokens(content, _localized_name(position, locale))
+        content = materialize_tokens(content, _localized_name(position, locale))
     content = apply_position_details(content, profile, locale)
     content = _apply_section_preset(content, profile.section_preset)
     return {

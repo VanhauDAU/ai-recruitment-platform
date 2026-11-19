@@ -1,8 +1,9 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
-import { getJobDetail, getJobs, jobDetailPath, jobKeys } from '@/entities/job'
-import { useJobView } from '@/features/track-job-engagement'
+import { getJobDetail, getJobs, jobDetailPath, jobKeys } from '@/entities/job/job'
+import { useJobView } from '@/features/main/job/track-job-engagement'
 import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
+import { buildJobDetailTitle } from '../lib/job-page-title'
 
 const RELATED_PAGE_SIZE = 4
 
@@ -32,13 +33,15 @@ export default function useJobDetailPageData({ slug, companySlug, navigate }) {
   useDocumentMetadata(
     job
       ? {
-          title: `Tuyển ${job.title}`,
+          title: buildJobDetailTitle({ title: job.title, companyName: job.company_name }),
           description: `Tuyển ${job.title} tại ${job.company_name}. ${plainText(job.short_description || job.description)}`,
           canonicalPath: jobDetailPath(job),
           imageUrl: job.company_logo_url,
           pageType: 'website',
         }
-      : null,
+      : jobQuery.isError
+        ? { title: 'Không tìm thấy tin tuyển dụng', robots: 'noindex, nofollow' }
+        : null,
   )
 
   useEffect(() => {

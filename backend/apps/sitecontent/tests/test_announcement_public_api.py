@@ -11,7 +11,7 @@ from apps.accounts.models import User
 
 from ..models import AnnouncementRevision
 from ..services import create_announcement, publish_announcement
-from .announcement_helpers import revision_payload
+from .factories import revision_payload
 
 
 class ActiveAnnouncementApiTests(APITestCase):
@@ -179,7 +179,7 @@ class ActiveAnnouncementApiTests(APITestCase):
     @override_settings(
         ANNOUNCEMENT_REMOTE_ENABLED_SURFACES=('employer_marketing',),
     )
-    @patch('apps.sitecontent.api.views.announcements.record_metric')
+    @patch('apps.sitecontent.api.views.announcements_reader.record_metric')
     def test_runtime_kill_switch_is_per_surface_and_fail_closed(self, record_metric):
         self.publish(
             internal_name='Candidate disabled',
@@ -211,9 +211,9 @@ class ActiveAnnouncementApiTests(APITestCase):
             )
         )
 
-    @patch('apps.sitecontent.api.views.announcements.record_metric')
+    @patch('apps.sitecontent.api.views.announcements_reader.record_metric')
     @patch(
-        'apps.sitecontent.api.views.announcements.active_announcements_for_request',
+        'apps.sitecontent.api.views.announcements_reader.active_announcements_for_request',
         side_effect=RuntimeError('injected feed failure'),
     )
     def test_feed_failure_records_operational_metric_and_propagates(
@@ -237,7 +237,7 @@ class ActiveAnnouncementApiTests(APITestCase):
 
 
 class AnnouncementRuntimeEventApiTests(APITestCase):
-    @patch('apps.sitecontent.api.views.announcements.record_metric')
+    @patch('apps.sitecontent.api.views.announcements_reader.record_metric')
     def test_runtime_event_is_pii_free_and_best_effort(self, record_metric):
         response = self.client.post(
             reverse('site-announcement-runtime-events'),

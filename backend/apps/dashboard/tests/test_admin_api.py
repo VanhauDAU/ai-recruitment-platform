@@ -8,14 +8,14 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
-from apps.accounts.tests.helpers import make_admin
+from apps.accounts.tests.factories import make_admin
 from apps.applications.models import Application
 from apps.cvs.models import UserCv
 from apps.cvs.services import create_initial_document
 from apps.employers.models import Company
-from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.employers.tests.factories import make_employer_ready
 from apps.jobs.models import Job, JobCategory, JobCategoryAssignment, JobReport
-from apps.jobs.tests.helpers import open_visibility_window
+from apps.jobs.tests.factories import open_visibility_window
 
 
 class AdminDashboardApiTests(APITestCase):

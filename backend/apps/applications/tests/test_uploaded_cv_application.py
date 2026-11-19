@@ -10,13 +10,13 @@ from rest_framework.test import APITestCase
 
 from apps.candidates.models import CandidateNotification
 from apps.cv_templates.tests.factories import make_published_template
-from apps.cvs.services import create_v2_cv, permanently_delete_cv, upload_cv
-from apps.cvs.tests.fixtures import cv_pdf_upload, pdf_bytes
+from apps.cvs.services import create_user_cv, permanently_delete_cv, upload_cv
+from apps.cvs.tests.factories import cv_pdf_upload, pdf_bytes
 from apps.employers.models import Company
-from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.employers.tests.factories import make_employer_ready
 from apps.jobs.models import Job
-from apps.jobs.tests.helpers import open_visibility_window
-from common.r2_storage import private_media_storage
+from apps.jobs.tests.factories import open_visibility_window
+from common.storage.r2 import private_media_storage
 
 from ..models import Application
 
@@ -71,12 +71,12 @@ class UploadedCvApplicationTests(APITestCase):
             **overrides,
         }
         return self.client.post(
-            reverse('candidate-application-list-create-v2'), payload, format='json'
+            reverse('candidate-application-list-create'), payload, format='json'
         )
 
     def cv_file(self, application, **params):
         return self.client.get(
-            reverse('recruiter-application-cv-file-v2', args=[application.public_id]), params
+            reverse('recruiter-application-cv-file', args=[application.public_id]), params
         )
 
     def submitted(self):
@@ -87,7 +87,7 @@ class UploadedCvApplicationTests(APITestCase):
         )
 
     def listed(self, cv):
-        data = self.client.get(reverse('cv-v2-list-create')).data
+        data = self.client.get(reverse('cv-list-create')).data
         rows = data['results'] if isinstance(data, dict) else data
         return next(item for item in rows if item['public_id'] == cv.public_id)
 
@@ -105,7 +105,7 @@ class UploadedCvApplicationTests(APITestCase):
 
         self.client.force_authenticate(self.employer)
         page = self.client.get(
-            reverse('recruiter-application-snapshot-v2', args=[application.public_id])
+            reverse('recruiter-application-snapshot', args=[application.public_id])
         )
         inline = self.cv_file(application)
         with self.captureOnCommitCallbacks(execute=True):
@@ -156,10 +156,10 @@ class UploadedCvApplicationTests(APITestCase):
         self.client.force_authenticate(self.employer)
 
         export = self.client.post(
-            reverse('recruiter-application-cv-export-v2', args=[application.public_id])
+            reverse('recruiter-application-cv-export', args=[application.public_id])
         )
         link = self.client.post(
-            reverse('recruiter-application-review-links-v2', args=[application.public_id]),
+            reverse('recruiter-application-review-links', args=[application.public_id]),
             {'reviewer_name': 'Trưởng nhóm'},
             format='json',
         )
@@ -169,7 +169,7 @@ class UploadedCvApplicationTests(APITestCase):
 
     def test_never_saved_builder_cv_cannot_be_submitted(self):
         template, _version = make_published_template('Builder template')
-        builder = create_v2_cv(actor=self.candidate, title='Online CV', template=template)
+        builder = create_user_cv(actor=self.candidate, title='Online CV', template=template)
 
         never_saved = self.apply(cv=builder)
 

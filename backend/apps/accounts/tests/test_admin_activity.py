@@ -8,7 +8,7 @@ from rest_framework.test import APIClient
 
 from apps.accounts.models import AdminAccessAuditLog, User
 from apps.accounts.services import record_admin_self_action
-from apps.accounts.tests.helpers import make_admin
+from apps.accounts.tests.factories import make_admin
 
 
 class AdminAuditLogApiTests(TestCase):

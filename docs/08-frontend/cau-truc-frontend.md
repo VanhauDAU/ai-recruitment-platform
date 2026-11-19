@@ -8,8 +8,8 @@ lặp lại các quy tắc đó.
 ## Stack
 
 React 19 + Vite 8, React Router 8, Ant Design 6 (theme qua `ConfigProvider`),
-Tailwind CSS 4, TanStack Query 5, axios (chỉ trong `shared/api`), i18next cho cổng
-marketing nhà tuyển dụng. Unit test bằng Vitest, E2E smoke bằng Playwright ở ba
+Tailwind CSS 4, TanStack Query 5, axios (chỉ trong `shared/api`), Paraglide JS cho song ngữ
+vi/en (ADR-0023). Unit test bằng Vitest, E2E smoke bằng Playwright ở ba
 viewport (desktop, tablet, mobile).
 
 ## Ba cổng
@@ -26,16 +26,34 @@ cổng và trang chủ theo role. Dev chạy cùng host; production có thể t�
 ## Cấu trúc `src`
 
 ```text
-app/       composition root: AppProviders, AppRouter, layouts, guards, lazy page registry
-pages/     page theo cổng (main, employer, admin); chỉ ghép UI và đọc route params
-widgets/   khối UI lớn của một cổng hoặc layout
-features/  hành động và workflow của người dùng; không import feature khác
-entities/  model, API và UI theo domain
-shared/    api client, config, hooks, lib, ui không biết domain
+src/
+├── app/                 # Khởi tạo ứng dụng: providers, router, guard, layout, lazy registry
+├── pages/               # Trang theo cổng và mục; chỉ ghép UI và đọc route params
+│   ├── main/            #   Ứng viên, khách: home, jobs, companies, cvs, account, auth…
+│   ├── employer/        #   NTD: marketing, auth, dashboard, jobs, candidates, campaigns…
+│   └── admin/           #   Quản trị: dashboard, accounts, companies, jobs, cvs, blog…
+├── widgets/             # Khối giao diện lớn của một cổng hoặc layout
+│   └── <cổng>/<widget>/ #   main · employer · admin · common
+├── features/            # Hành động và workflow của người dùng
+│   ├── main/            #   job · application · cv · company · account
+│   ├── employer/        #   account · company · job · candidate · campaign · marketing
+│   ├── admin/           #   account · company · job · content · system
+│   └── common/          #   account · cv · privacy (dùng ở từ hai cổng trở lên)
+│       └── <module>/<slice>/
+│           ├── index.js #     Public API của slice
+│           ├── ui/      #     Component
+│           ├── model/   #     Hook, state, logic
+│           ├── api/     #     Gọi backend
+│           └── lib/     #     Hàm thuần hỗ trợ
+├── entities/            # Model, API và UI theo domain
+│   └── <domain>/        #   account · job · company · cv · application · campaign ·
+│       └── <entity>/    #   content · notification · dashboard · system
+└── shared/              # Hạ tầng không biết nghiệp vụ: api, config, hooks, lib, ui
 ```
 
 Chiều phụ thuộc `app → pages → widgets → features → entities → shared` được
-`npm run check:architecture` kiểm tra tự động.
+`npm run check:architecture` kiểm tra tự động, cùng với cách ly cổng: trang và
+widget của một cổng chỉ dùng feature/widget của cổng đó hoặc `common`.
 
 ## Routing và phiên đăng nhập
 

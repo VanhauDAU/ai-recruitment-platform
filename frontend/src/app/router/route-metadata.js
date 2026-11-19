@@ -2,8 +2,9 @@ import {
   COMPANY_DIRECTORY_PATH,
   COMPANY_SEARCH_PATH,
   isCompanyDetailPath,
-} from '@/entities/company'
+} from '@/entities/company/company'
 import { employerAppPath, employerMarketingPath } from '@/shared/config/portals'
+import { NOT_FOUND_TITLE } from '@/shared/config/document-title'
 import { resolveRouteTitle } from './document-title'
 
 const MAIN_PUBLIC_EXACT_PATHS = new Set([
@@ -72,6 +73,7 @@ export function isIndexableRoute(pathname, portal) {
     || normalized.startsWith('/viec-lam/')
     || normalized.startsWith('/jobs/')
     || normalized.startsWith('/brand/')
+    || normalized.startsWith('/tuyen-dung/')
     || normalized.startsWith('/blog/')
     || normalized.startsWith('/mau-cv')
     || normalized.startsWith('/cv-templates')
@@ -88,7 +90,7 @@ export function resolveRouteMetadata({ pathname, portal, settings }) {
   ) && settings.knowledgebase_public_enabled === true
     && settings.knowledgebase_search_index_enabled === true
   const indexable = (isIndexableRoute(normalized, portal) || knowledgebaseIndexable)
-    && title !== 'Trang không tồn tại'
+    && title !== NOT_FOUND_TITLE
 
   return {
     title,

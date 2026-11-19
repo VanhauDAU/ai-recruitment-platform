@@ -2,7 +2,8 @@
 
 from django.db.models import Exists, OuterRef, Q
 
-from apps.jobs.selectors import job_similarity_scores
+from apps.jobs.models import Job
+from apps.jobs.selectors import job_similarity_scores, publicly_available_job_filter
 
 from ..models import Application, CandidateBlock, TalentPoolEntry, TalentPoolInvitation
 
@@ -25,6 +26,14 @@ def recruiter_talent_pool_queryset(recruiter, *, q='', tag=''):
     if tag:
         queryset = queryset.filter(tags__contains=[tag])
     return queryset
+
+
+def recruiter_talent_pool_jobs_queryset(recruiter, *, public_only=False):
+    """Jobs the recruiter posted: match suggestions to any, invite only to public ones."""
+    jobs = Job.objects.select_related('company').filter(posted_by=recruiter)
+    if public_only:
+        jobs = jobs.filter(publicly_available_job_filter())
+    return jobs
 
 
 def candidate_talent_pool_queryset(candidate):

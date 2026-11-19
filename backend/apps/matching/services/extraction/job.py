@@ -13,7 +13,7 @@ Hai loại câu không thành chunk:
 import re
 
 from apps.jobs.models import Job
-from common.content_html import content_html_plain_text
+from common.html.plain_text import html_plain_text
 
 from ..skills import TRAIT_GROUP
 from .profile import MAX_JOB_CHUNKS, MIN_JOB_TEXT_CHARS, ExtractionError, make_chunks
@@ -102,9 +102,9 @@ def _provinces(job):
 
 
 def job_profile(job):
-    """`job` cần nạp sẵn kỹ năng, ngoại ngữ, địa điểm (selector `jobs_for_profile`)."""
-    description = content_html_plain_text(job.description)
-    requirements = content_html_plain_text(job.requirements)
+    """`job` cần nạp sẵn kỹ năng, ngoại ngữ, địa điểm (`models.jobs_for_profile`)."""
+    description = html_plain_text(job.description)
+    requirements = html_plain_text(job.requirements)
     text = '\n'.join(part for part in (job.title, description, requirements) if part)
     if len(text) < MIN_JOB_TEXT_CHARS:
         raise ExtractionError('job_text_too_short')

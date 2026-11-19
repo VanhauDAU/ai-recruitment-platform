@@ -14,42 +14,103 @@ def health_check(request):
     return JsonResponse({'status': 'ok'})
 
 
+def portal(*routes):
+    """Một cổng API: mỗi phần tử là (tiền tố tài nguyên, module urls/<cổng>.py của app)."""
+    return [path(prefix, include(module)) for prefix, module in routes]
+
+
+# URL API theo cổng (ADR-0022): /api/{auth,public,candidate,employer,admin,shared}/.
+# Trong một cổng, include có route bắt-tất-cả (`<slug>/`, `<str:public_id>/`) đứng
+# sau include cùng tiền tố có route cố định.
+api_portal_patterns = [
+    path('auth/', include('apps.accounts.api.urls.auth')),
+    path(
+        'public/',
+        include(
+            portal(
+                ('jobs/', 'apps.jobs.api.urls.public'),
+                ('companies/', 'apps.employers.api.urls.public'),
+                ('campaigns/', 'apps.campaigns.api.urls.public'),
+                ('cvs/', 'apps.cvs.api.urls.public'),
+                ('', 'apps.cv_templates.api.urls.public'),
+                ('', 'apps.applications.api.urls.public'),
+                ('blog/', 'apps.blog.api.urls.public'),
+                ('knowledgebase/', 'apps.knowledgebase.api.urls.public'),
+                ('site/', 'apps.sitecontent.api.urls.public'),
+                ('locations/', 'apps.locations.api.urls.public'),
+                ('skills/', 'apps.skills.api.urls.public'),
+                ('privacy/', 'apps.privacy.api.urls.public'),
+            )
+        ),
+    ),
+    path(
+        'candidate/',
+        include(
+            portal(
+                ('', 'apps.candidates.api.urls.candidate'),
+                ('', 'apps.employers.api.urls.candidate'),
+                ('', 'apps.applications.api.urls.candidate'),
+                ('cvs/', 'apps.cvs.api.urls.candidate'),
+                ('jobs/', 'apps.jobs.api.urls.candidate'),
+                ('matching/', 'apps.matching.api.urls.candidate'),
+            )
+        ),
+    ),
+    path(
+        'employer/',
+        include(
+            portal(
+                ('', 'apps.employers.api.urls.employer'),
+                ('', 'apps.campaigns.api.urls.employer'),
+                ('', 'apps.applications.api.urls.employer'),
+                ('jobs/', 'apps.jobs.api.urls.employer'),
+                ('dashboard/', 'apps.dashboard.api.urls.employer'),
+            )
+        ),
+    ),
+    path(
+        'admin/',
+        include(
+            portal(
+                ('', 'apps.accounts.api.urls.admin'),
+                ('', 'apps.employers.api.urls.admin'),
+                ('', 'apps.cvs.api.urls.admin'),
+                ('', 'apps.cv_templates.api.urls.admin'),
+                ('', 'apps.applications.api.urls.admin'),
+                ('jobs/', 'apps.jobs.api.urls.admin'),
+                ('ai/', 'apps.jobs.api.urls.admin_ai'),
+                ('dashboard/', 'apps.dashboard.api.urls.admin'),
+                ('site/', 'apps.sitecontent.api.urls.admin'),
+                ('blog/', 'apps.blog.api.urls.admin'),
+                ('knowledgebase/', 'apps.knowledgebase.api.urls.admin'),
+            )
+        ),
+    ),
+    path(
+        'shared/',
+        include(
+            portal(
+                ('uploads/', 'apps.uploads.api.urls.shared'),
+                ('site/', 'apps.sitecontent.api.urls.shared'),
+            )
+        ),
+    ),
+]
+
+
 urlpatterns = [
     # Search-visible HTML shell routes live outside /api by design. Order keeps
     # their explicit public paths ahead of API and Django-admin composition.
-    path('', include('apps.jobs.urls_seo')),
-    path('', include('apps.blog.urls_seo')),
-    path('', include('apps.knowledgebase.urls_seo')),
-    path('', include('apps.cv_templates.urls_seo')),
-    path('', include('apps.sitecontent.urls_seo')),
+    path('', include('apps.jobs.seo.urls')),
+    path('', include('apps.blog.seo.urls')),
+    path('', include('apps.knowledgebase.seo.urls')),
+    path('', include('apps.cv_templates.seo.urls')),
+    path('', include('apps.sitecontent.seo.urls')),
     # After sitecontent: /cong-ty and /cong-ty/tim-kiem must keep resolving there.
-    path('', include('apps.employers.urls_seo')),
-    path('', include('apps.campaigns.urls_seo')),
+    path('', include('apps.employers.seo.urls')),
+    path('', include('apps.campaigns.seo.urls')),
     path('api/health/', health_check, name='health-check'),
-    path('api/auth/', include('apps.accounts.urls')),
-    path('api/admin/', include('apps.accounts.urls_admin')),
-    path('api/admin/', include('apps.employers.urls_admin')),
-    path('api/candidate/', include('apps.candidates.urls')),
-    path('api/candidate/', include('apps.employers.urls_candidate')),
-    path('api/companies/', include('apps.employers.urls_public')),
-    path('api/employer/', include('apps.employers.urls')),
-    path('api/employer/', include('apps.campaigns.urls')),
-    path('api/campaigns/', include('apps.campaigns.urls_public')),
-    path('api/v2/cvs/', include('apps.cvs.urls_v2')),
-    path('api/v2/', include('apps.cvs.urls_admin')),
-    path('api/v2/', include('apps.cv_templates.urls_v2')),
-    path('api/jobs/', include('apps.jobs.urls')),
-    path('api/ai/', include('apps.jobs.urls_ai')),
-    path('api/matching/', include('apps.matching.urls')),
-    path('api/dashboard/', include('apps.dashboard.urls')),
-    path('api/v2/', include('apps.applications.urls_v2')),
-    path('api/locations/', include('apps.locations.urls')),
-    path('api/skills/', include('apps.skills.urls')),
-    path('api/site/', include('apps.sitecontent.urls')),
-    path('api/blog/', include('apps.blog.urls')),
-    path('api/privacy/', include('apps.privacy.urls')),
-    path('api/knowledgebase/', include('apps.knowledgebase.urls')),
-    path('api/uploads/', include('apps.uploads.urls')),
+    path('api/', include(api_portal_patterns)),
 ]
 
 if settings.DJANGO_ADMIN_ENABLED:

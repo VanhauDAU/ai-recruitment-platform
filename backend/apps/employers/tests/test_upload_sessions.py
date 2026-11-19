@@ -8,15 +8,15 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
-from apps.accounts.services.tokens import issue_tokens
+from apps.accounts.services import issue_tokens
 from apps.uploads.models import UploadAsset
 from apps.uploads.services import (
     create_upload_session,
     process_upload_scan,
     store_quarantined_upload,
 )
+from apps.uploads.tests.factories import TemporaryUploadStorageMixin, pdf_upload
 from apps.uploads.tests.fakes import FakeUploadScanner
-from apps.uploads.tests.helpers import TemporaryUploadStorageMixin, pdf_upload
 
 from ..models import (
     Company,

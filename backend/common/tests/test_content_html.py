@@ -1,10 +1,7 @@
 from django.test import SimpleTestCase
 
-from common.content_html import (
-    content_html_plain_text,
-    safe_content_url,
-    sanitize_content_html,
-)
+from common.html.content import safe_content_url, sanitize_content_html
+from common.html.plain_text import html_plain_text
 
 
 class ContentHtmlTests(SimpleTestCase):
@@ -30,7 +27,7 @@ class ContentHtmlTests(SimpleTestCase):
 
     def test_plain_text_preserves_readable_block_boundaries(self):
         self.assertEqual(
-            content_html_plain_text('<h2>Bước một</h2><p>Làm việc A.</p><p>Làm việc B.</p>'),
+            html_plain_text('<h2>Bước một</h2><p>Làm việc A.</p><p>Làm việc B.</p>'),
             'Bước một\nLàm việc A.\nLàm việc B.',
         )
 

@@ -9,15 +9,15 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.ai_core.services import AiGenerationError
-from apps.cvs.schemas import empty_content
+from apps.cv_templates.models import empty_content
 
 from ..models import CvSampleContent, CvSampleGeneration
-from ..services.sample_generation import (
-    _validate_generated,
+from ..services.sample_generation import execute_sample_generation
+from ..services.sample_prompt import (
     build_prompt,
     contains_personal_data,
-    execute_sample_generation,
     generated_content,
+    validate_generated,
 )
 from .test_positions import SALES_OPTIONS, make_position
 
@@ -103,7 +103,7 @@ class SampleGenerationContentTests(TestCase):
             with self.subTest(text=text):
                 self.assertTrue(contains_personal_data(ai_response(summary=text)))
                 with self.assertRaises(AiGenerationError):
-                    _validate_generated(ai_response(summary=text))
+                    validate_generated(ai_response(summary=text))
         self.assertFalse(contains_personal_data(ai_response()))
 
 
@@ -133,9 +133,7 @@ class SampleGenerationFlowTests(TestCase):
             'experience_bands': ['junior', 'mid'],
             **overrides,
         }
-        return self.client.post(
-            '/api/v2/admin/cv-sample-contents/generate/', payload, format='json'
-        )
+        return self.client.post('/api/admin/cv-sample-contents/generate/', payload, format='json')
 
     @override_settings(AI_RUNTIME_ENABLED=False)
     def test_generation_is_refused_while_the_ai_runtime_is_off(self):
@@ -148,7 +146,9 @@ class SampleGenerationFlowTests(TestCase):
     @override_settings(**AI_READY)
     def test_batch_queues_one_generation_per_combination_after_commit(self):
         with (
-            patch('apps.cv_templates.tasks.generate_cv_sample_content.delay') as delay,
+            patch(
+                'apps.cv_templates.tasks.template_assets.generate_cv_sample_content.delay'
+            ) as delay,
             self.captureOnCommitCallbacks(execute=True),
         ):
             response = self.request()
@@ -157,7 +157,7 @@ class SampleGenerationFlowTests(TestCase):
         self.assertEqual(len(response.data['generations']), 4)
         self.assertEqual(delay.call_count, 4)
         listed = self.client.get(
-            '/api/v2/admin/cv-sample-generations/', {'batch': response.data['batch_id']}
+            '/api/admin/cv-sample-generations/', {'batch': response.data['batch_id']}
         )
         self.assertEqual({row['status'] for row in listed.data}, {'queued'})
 
@@ -196,7 +196,9 @@ class SampleGenerationFlowTests(TestCase):
         generation = self.generation()
         result = SimpleNamespace(data=ai_response(), invocation_id=None)
 
-        with patch('apps.ai_core.services.generate_structured', return_value=result) as call:
+        with patch(
+            'apps.cv_templates.services.sample_generation.generate_structured', return_value=result
+        ) as call:
             sample = execute_sample_generation(generation.pk)
 
         self.assertEqual(call.call_args.kwargs['use_case'], 'cv_sample_content')
@@ -214,7 +216,7 @@ class SampleGenerationFlowTests(TestCase):
         samples_before = CvSampleContent.objects.count()
 
         with patch(
-            'apps.ai_core.services.generate_structured',
+            'apps.cv_templates.services.sample_generation.generate_structured',
             side_effect=AiGenerationError('personal_data_detected'),
         ):
             self.assertIsNone(execute_sample_generation(generation.pk))
@@ -242,7 +244,7 @@ class SampleGenerationFlowTests(TestCase):
             status=CvSampleContent.Status.PUBLISHED,
             **fields,
         )
-        url = f'/api/v2/admin/cv-sample-contents/{live.public_id}/'
+        url = f'/api/admin/cv-sample-contents/{live.public_id}/'
 
         saved = self.client.patch(
             url,
@@ -281,9 +283,9 @@ class SampleGenerationFlowTests(TestCase):
             origin=CvSampleContent.Origin.AI,
         )
 
-        with patch('apps.cv_templates.api.views.admin.regenerate_all_template_snapshots'):
+        with patch('apps.cv_templates.tasks.template_assets.regenerate_all_template_snapshots'):
             response = self.client.post(
-                f'/api/v2/admin/cv-sample-contents/{reviewed.public_id}/publish/'
+                f'/api/admin/cv-sample-contents/{reviewed.public_id}/publish/'
             )
 
         self.assertEqual(response.status_code, 200, response.data)

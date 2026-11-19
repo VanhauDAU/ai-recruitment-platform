@@ -1,0 +1,851 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: procv\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Tài khoản không còn khả dụng."
+msgstr "This account is no longer available."
+
+msgid "Thông tin xác thực đã thay đổi. Vui lòng đăng nhập lại."
+msgstr "Your credentials have changed. Please sign in again."
+
+msgid "Phiên đăng nhập đã hết hạn hoặc bị thu hồi."
+msgstr "Your session has expired or been revoked."
+
+msgid "Bằng chứng xác minh cần có ít nhất 20 ký tự."
+msgstr "Verification evidence must be at least 20 characters."
+
+msgid "Bằng chứng xác minh không được vượt quá 500 ký tự."
+msgstr "Verification evidence must not exceed 500 characters."
+
+msgid "Email mới trùng với email hiện tại."
+msgstr "The new email is the same as the current email."
+
+msgid "Email này đã thuộc một tài khoản cùng loại."
+msgstr "This email already belongs to an account of the same type."
+
+msgid "Bằng chứng xử lý cần mô tả cụ thể và có ít nhất 20 ký tự."
+msgstr "Enforcement evidence must be specific and at least 20 characters."
+
+msgid "Chọn nhóm vi phạm khi cấm tài khoản."
+msgstr "Select a violation category when banning an account."
+
+msgid "Họ tên cần ít nhất 2 ký tự."
+msgstr "Full name must be at least 2 characters."
+
+msgid "Mật khẩu xác nhận không khớp."
+msgstr "The password confirmation does not match."
+
+msgid "Email hoặc mật khẩu không đúng. Vui lòng thử lại."
+msgstr "Incorrect email or password. Please try again."
+
+msgid "Email này đã được sử dụng cho một tài khoản cùng loại."
+msgstr "This email is already used by an account of the same type."
+
+msgid "Mật khẩu phải bao gồm chữ hoa, chữ thường và ký tự số."
+msgstr "Password must contain uppercase letters, lowercase letters and digits."
+
+msgid "Nhập mật khẩu hiện tại."
+msgstr "Enter your current password."
+
+msgid "Mật khẩu hiện tại không đúng."
+msgstr "The current password is incorrect."
+
+msgid "Chưa nộp"
+msgstr "Not submitted"
+
+msgid "Vui lòng nhập họ và tên."
+msgstr "Please enter your full name."
+
+msgid "Họ và tên cần ít nhất 2 ký tự."
+msgstr "Full name must be at least 2 characters."
+
+msgid "Nhà tuyển dụng phải đổi số điện thoại qua luồng xác thực SMS."
+msgstr "Employers must change their phone number through the SMS verification flow."
+
+msgid "Số điện thoại không hợp lệ (VD: 0912345678 hoặc +84912345678)."
+msgstr "Invalid phone number (e.g. 0912345678 or +84912345678)."
+
+msgid "Hãy đăng nhập lại với OAuth trước khi đổi email."
+msgstr "Please sign in again with OAuth before changing your email."
+
+msgid "Gỡ policy hold chỉ dành cho superuser."
+msgstr "Only a superuser can release policy holds."
+
+msgid "Đã xếp lịch gửi email đặt lại mật khẩu."
+msgstr "The password reset email has been scheduled."
+
+msgid "Đã xếp lịch gửi email xác minh."
+msgstr "The verification email has been scheduled."
+
+msgid "Phạm vi tài khoản không hợp lệ."
+msgstr "Invalid account scope."
+
+msgid "Vai trò tài khoản không hợp lệ."
+msgstr "Invalid account role."
+
+msgid "Nhà tuyển dụng không thuộc phạm vi người dùng."
+msgstr "Employers are not within the user scope."
+
+msgid "Phạm vi nhà tuyển dụng chỉ chấp nhận role employer."
+msgstr "The employer scope only accepts the employer role."
+
+msgid "Trạng thái tài khoản không hợp lệ."
+msgstr "Invalid account status."
+
+msgid "Trạng thái liên kết công ty không hợp lệ."
+msgstr "Invalid company link status."
+
+msgid "Việc cần làm không hợp lệ."
+msgstr "Invalid next action."
+
+msgid "Tài khoản quản trị đã được kích hoạt."
+msgstr "The administrator account has been activated."
+
+msgid "Đã đăng xuất."
+msgstr "Signed out."
+
+msgid "Đã đăng xuất khỏi tất cả thiết bị."
+msgstr "Signed out of all devices."
+
+msgid "Cổng đăng nhập không hợp lệ."
+msgstr "Invalid sign-in portal."
+
+msgid "Cập nhật mật khẩu thành công."
+msgstr "Password updated successfully."
+
+msgid "Cần phiên refresh hiện tại để đổi mật khẩu."
+msgstr "The current refresh session is required to change your password."
+
+msgid "Nếu email này đã đăng ký tài khoản, chúng tôi đã gửi liên kết đặt lại mật khẩu. Vui lòng kiểm tra hòm thư (kể cả mục Spam)."
+msgstr "If this email is registered, we have sent a password reset link. Please check your inbox (including the Spam folder)."
+
+msgid "Đặt lại mật khẩu thành công."
+msgstr "Password reset successfully."
+
+msgid "Đã đăng xuất khỏi các thiết bị khác."
+msgstr "Signed out of other devices."
+
+msgid "Không tìm thấy phiên làm mới."
+msgstr "Refresh session not found."
+
+msgid "Phiên làm mới không hợp lệ hoặc đã hết hạn."
+msgstr "The refresh session is invalid or has expired."
+
+msgid "Email xác thực đang được gửi. Vui lòng kiểm tra hòm thư sau ít phút."
+msgstr "The verification email is being sent. Please check your inbox in a few minutes."
+
+msgid "Xác thực email thành công."
+msgstr "Email verified successfully."
+
+msgid "Đang hoạt động"
+msgstr "Active"
+
+msgid "Tạm khóa"
+msgstr "Suspended"
+
+msgid "Bị cấm"
+msgstr "Banned"
+
+msgid "Chờ kích hoạt"
+msgstr "Pending activation"
+
+msgid "Bảo mật"
+msgstr "Security"
+
+msgid "Gian lận"
+msgstr "Fraud"
+
+msgid "Vi phạm chính sách"
+msgstr "Policy violation"
+
+msgid "Pháp lý"
+msgstr "Legal"
+
+msgid "Khác"
+msgstr "Other"
+
+msgid "cổng NTD"
+msgstr "employer portal"
+
+msgid "cổng ứng viên"
+msgstr "candidate portal"
+
+msgid "cổng quản trị"
+msgstr "admin portal"
+
+msgid "Mật khẩu"
+msgstr "Password"
+
+msgid "Đăng nhập mạng xã hội"
+msgstr "Social sign-in"
+
+msgid "Sau khi đăng ký"
+msgstr "After registration"
+
+msgid "Nộp hồ sơ xác thực"
+msgstr "Verification application submitted"
+
+msgid "Nhận xử lý hồ sơ xác thực"
+msgstr "Verification application taken for review"
+
+msgid "Xử lý giấy tờ xác thực"
+msgstr "Verification document reviewed"
+
+msgid "Thay giấy tờ xác thực"
+msgstr "Verification document replaced"
+
+msgid "Yêu cầu bổ sung hồ sơ xác thực"
+msgstr "Additional verification information requested"
+
+msgid "Nộp lại hồ sơ xác thực"
+msgstr "Verification application resubmitted"
+
+msgid "Mở khóa nộp lại hồ sơ"
+msgstr "Resubmission unlocked"
+
+msgid "Duyệt hồ sơ xác thực"
+msgstr "Verification application approved"
+
+msgid "Từ chối hồ sơ xác thực"
+msgstr "Verification application rejected"
+
+msgid "Thu hồi xác thực"
+msgstr "Verification revoked"
+
+msgid "Xác thực hết hiệu lực"
+msgstr "Verification expired"
+
+msgid "Duyệt lại hồ sơ xác thực"
+msgstr "Verification application re-approved"
+
+msgid "Áp dụng tạm giữ tuân thủ"
+msgstr "Compliance hold applied"
+
+msgid "Gỡ tạm giữ tuân thủ"
+msgstr "Compliance hold released"
+
+msgid "Xem giấy tờ xác thực"
+msgstr "Verification document viewed"
+
+msgid "Tra cứu lại mã số thuế"
+msgstr "Tax code lookup refreshed"
+
+msgid "Rút hồ sơ do gỡ liên kết công ty"
+msgstr "Application withdrawn after company unlink"
+
+msgid "Gửi yêu cầu cập nhật công ty"
+msgstr "Company update request submitted"
+
+msgid "Gửi lại yêu cầu cập nhật công ty"
+msgstr "Company update request resubmitted"
+
+msgid "Tạo phiên bản cập nhật công ty"
+msgstr "Company update revision created"
+
+msgid "Bắt đầu thẩm định cập nhật công ty"
+msgstr "Company update review started"
+
+msgid "Xử lý giấy tờ cập nhật công ty"
+msgstr "Company update document reviewed"
+
+msgid "Yêu cầu chỉnh sửa cập nhật công ty"
+msgstr "Company update changes requested"
+
+msgid "Duyệt cập nhật công ty"
+msgstr "Company update approved"
+
+msgid "Từ chối cập nhật công ty"
+msgstr "Company update rejected"
+
+msgid "Rút yêu cầu cập nhật công ty"
+msgstr "Company update request withdrawn"
+
+msgid "Hủy yêu cầu cập nhật công ty"
+msgstr "Company update request cancelled"
+
+msgid "Đạt"
+msgstr "Passed"
+
+msgid "Cần bổ sung"
+msgstr "Needs more information"
+
+msgid "Từ chối"
+msgstr "Rejected"
+
+msgid "Thu hồi phiên đăng nhập"
+msgstr "Sessions revoked"
+
+msgid "Gửi email đặt lại mật khẩu"
+msgstr "Password reset email sent"
+
+msgid "Gửi lại email xác minh"
+msgstr "Verification email resent"
+
+msgid "Đổi email đăng nhập"
+msgstr "Sign-in email changed"
+
+msgid "Đổi mật khẩu"
+msgstr "Password changed"
+
+msgid "Đăng xuất một thiết bị"
+msgstr "Signed out of a device"
+
+msgid "Đăng xuất các thiết bị khác"
+msgstr "Signed out of other devices"
+
+msgid "Sửa hồ sơ tài khoản"
+msgstr "Account profile edited"
+
+msgid "Cập nhật hồ sơ"
+msgstr "Profile updated"
+
+msgid "Xem dữ liệu nhạy cảm"
+msgstr "Sensitive data viewed"
+
+msgid "Tạm khóa tài khoản"
+msgstr "Account suspended"
+
+msgid "Cấm tài khoản"
+msgstr "Account banned"
+
+msgid "Bắt đầu khôi phục tài khoản"
+msgstr "Account reactivation started"
+
+msgid "Mở lại tài khoản"
+msgstr "Account reactivated"
+
+msgid "Gỡ giữ tài nguyên"
+msgstr "Resource holds released"
+
+msgid "Xác minh số điện thoại"
+msgstr "Phone number verified"
+
+msgid "Gửi mã OTP thất bại"
+msgstr "OTP delivery failed"
+
+msgid "Thao tác quản trị"
+msgstr "Admin action"
+
+msgid "Impact preview không còn khớp với thao tác."
+msgstr "The impact preview no longer matches this action."
+
+msgid "Impact token không hợp lệ."
+msgstr "Invalid impact token."
+
+msgid "Impact preview đã hết hạn."
+msgstr "The impact preview has expired."
+
+msgid "Hệ thống"
+msgstr "System"
+
+msgid "Chính tài khoản"
+msgstr "Account owner"
+
+msgid "Đổi trạng thái tài khoản"
+msgstr "Account status changed"
+
+msgid "Đăng nhập %(portal)s"
+msgstr "Signed in to the %(portal)s"
+
+msgid "Thiết bị"
+msgstr "Device"
+
+msgid "Địa chỉ IP"
+msgstr "IP address"
+
+msgid "Phương thức"
+msgstr "Method"
+
+msgid "Đã đăng xuất lúc"
+msgstr "Signed out at"
+
+msgid "Lý do"
+msgstr "Reason"
+
+msgid "Số trường đã sửa"
+msgstr "Fields changed"
+
+msgid "Phiên bị thu hồi"
+msgstr "Sessions revoked"
+
+msgid "Email cũ"
+msgstr "Previous email"
+
+msgid "Email mới"
+msgstr "New email"
+
+msgid "Trạng thái"
+msgstr "Status"
+
+msgid "Nhóm vi phạm"
+msgstr "Violation category"
+
+msgid "Giấy tờ"
+msgstr "Document"
+
+msgid "Công ty"
+msgstr "Company"
+
+msgid "Phiên bản"
+msgstr "Revision"
+
+msgid "Chuyển tài khoản cấm sang tạm khóa, rà soát và gỡ giữ tài nguyên, sau đó mới mở lại."
+msgstr "Move the banned account to suspended, review and release resource holds, then reactivate it."
+
+msgid "Policy hold tạm thời được gỡ khi mở lại; trạng thái nghiệp vụ gốc được giữ nguyên."
+msgstr "Temporary policy holds are released on reactivation; the original business status is kept."
+
+msgid "Cần gỡ giữ tài nguyên bị cấm/khóa cũ trước khi mở lại."
+msgstr "Resource holds from the earlier ban/suspension must be released before reactivation."
+
+msgid "Tài khoản đang bị hạn chế. Không thể thay đổi dữ liệu cho đến khi được mở lại."
+msgstr "This account is restricted. Data cannot be changed until it is reactivated."
+
+msgid "Bạn không thể tự khôi phục danh tính tài khoản của mình."
+msgstr "You cannot recover the identity of your own account."
+
+msgid "Tài khoản đã bị xóa và không thuộc luồng khôi phục này."
+msgstr "The account has been deleted and is not eligible for this recovery flow."
+
+msgid "Tài khoản đang chờ kích hoạt phải được xử lý qua quy trình lời mời."
+msgstr "Accounts pending activation must be handled through the invitation process."
+
+msgid "Bạn không thể tự gỡ policy hold của tài khoản mình."
+msgstr "You cannot release policy holds on your own account."
+
+msgid "Chỉ được gỡ policy hold cho tài khoản nhà tuyển dụng đang tạm khóa."
+msgstr "Policy holds can only be released for suspended employer accounts."
+
+msgid "Tài khoản không còn policy hold cần gỡ."
+msgstr "This account has no policy holds to release."
+
+msgid "Email của tài khoản đã được xác minh."
+msgstr "The account email is already verified."
+
+msgid "Chỉ có thể gửi liên kết đặt lại mật khẩu cho tài khoản đang hoạt động. Hãy mở khóa tài khoản trước."
+msgstr "Password reset links can only be sent to active accounts. Reactivate the account first."
+
+msgid "Bạn không thể tự thay đổi trạng thái tài khoản của mình."
+msgstr "You cannot change the status of your own account."
+
+msgid "Tài khoản đã bị xóa không thuộc workflow trạng thái này."
+msgstr "Deleted accounts are not part of this status workflow."
+
+msgid "Tài khoản đang chờ kích hoạt phải được xử lý qua workflow lời mời."
+msgstr "Accounts pending activation must be handled through the invitation workflow."
+
+msgid "Không thể chuyển trực tiếp giữa hai trạng thái đã chọn."
+msgstr "Cannot move directly between the two selected statuses."
+
+msgid "Cấm hoặc bắt đầu khôi phục tài khoản bị cấm chỉ dành cho superuser."
+msgstr "Only a superuser can ban an account or start reactivating a banned account."
+
+msgid "Không thể khóa superuser hoạt động cuối cùng."
+msgstr "Cannot suspend the last active superuser."
+
+msgid "Cần rà soát và gỡ policy hold của tài nguyên trước khi mở lại tài khoản."
+msgstr "Resource policy holds must be reviewed and released before reactivating the account."
+
+msgid "Dữ liệu tài khoản đã thay đổi."
+msgstr "The account data has changed."
+
+msgid "Chỉ superuser được thay đổi tài khoản quản trị."
+msgstr "Only a superuser can change administrator accounts."
+
+msgid "Vui lòng nhập lý do thao tác."
+msgstr "Please enter a reason for this action."
+
+msgid "Lý do không được vượt quá 500 ký tự."
+msgstr "The reason must not exceed 500 characters."
+
+msgid "Bằng chứng xác minh cần mô tả cụ thể và có ít nhất 20 ký tự."
+msgstr "Verification evidence must be specific and at least 20 characters."
+
+msgid "Liên kết có hiệu lực trong 72 giờ và chỉ dùng được một lần."
+msgstr "This link is valid for 72 hours and can only be used once."
+
+msgid "Lời mời tham gia hệ thống quản trị %(site_name)s"
+msgstr "Invitation to join the %(site_name)s admin console"
+
+msgid "<strong>%(inviter)s</strong> đã mời bạn tham gia hệ thống quản trị."
+msgstr "<strong>%(inviter)s</strong> has invited you to join the admin console."
+
+msgid "Hoàn tất tài khoản"
+msgstr "Complete your account"
+
+msgid "Xin chào <strong>%(name)s</strong>,"
+msgstr "Hello <strong>%(name)s</strong>,"
+
+msgid "Hoàn tất tài khoản tại: %(link)s"
+msgstr "Complete your account at: %(link)s"
+
+msgid "%(inviter)s đã mời bạn tham gia hệ thống quản trị %(site_name)s."
+msgstr "%(inviter)s has invited you to join the %(site_name)s admin console."
+
+msgid "Xin chào %(name)s,"
+msgstr "Hello %(name)s,"
+
+msgid "Liên kết mời không hợp lệ."
+msgstr "Invalid invitation link."
+
+msgid "Chỉ superuser được mời và quản lý tài khoản quản trị."
+msgstr "Only a superuser can invite and manage administrator accounts."
+
+msgid "Liên kết mời không còn hiệu lực."
+msgstr "This invitation link is no longer valid."
+
+msgid "Lời mời đã được sử dụng hoặc thu hồi."
+msgstr "This invitation has already been used or revoked."
+
+msgid "Liên kết mời đã hết hạn."
+msgstr "This invitation link has expired."
+
+msgid "Lời mời không còn có thể gửi lại."
+msgstr "This invitation can no longer be resent."
+
+msgid "Chỉ lời mời đang chờ mới được thu hồi."
+msgstr "Only pending invitations can be revoked."
+
+msgid "Tài khoản không còn ở trạng thái chờ."
+msgstr "The account is no longer pending."
+
+msgid "Email đã có tài khoản quản trị hoạt động."
+msgstr "This email already has an active administrator account."
+
+msgid "Tài khoản đã có lời mời đang chờ xử lý."
+msgstr "This account already has a pending invitation."
+
+msgid "Thiết bị không xác định"
+msgstr "Unknown device"
+
+msgid "%(browser)s trên %(os)s"
+msgstr "%(browser)s on %(os)s"
+
+msgid "Không tìm thấy phiên đăng nhập."
+msgstr "Sign-in session not found."
+
+msgid "Trình duyệt khác"
+msgstr "Other browser"
+
+msgid "Hệ điều hành khác"
+msgstr "Other operating system"
+
+msgid "Vui lòng xác thực captcha."
+msgstr "Please complete the captcha."
+
+msgid "Xác thực captcha thất bại."
+msgstr "Captcha verification failed."
+
+msgid "Captcha không hợp lệ cho hành động này."
+msgstr "The captcha is not valid for this action."
+
+msgid "Xác thực captcha thất bại (độ tin cậy thấp)."
+msgstr "Captcha verification failed (low confidence score)."
+
+msgid "Không thể xác thực captcha, vui lòng thử lại."
+msgstr "Could not verify the captcha, please try again."
+
+msgid "Ứng viên"
+msgstr "Candidate"
+
+msgid "Thay đổi được thực hiện bởi quản trị viên theo yêu cầu hỗ trợ đã xác minh."
+msgstr "This change was made by an administrator following a verified support request."
+
+msgid "không xác định"
+msgstr "unknown"
+
+msgid "Xác thực tài khoản Nhà tuyển dụng tại %(site_name)s"
+msgstr "Verify your employer account at %(site_name)s"
+
+msgid "Kính gửi Quý khách hàng <strong>%(name)s</strong> — Mã NTD <strong>%(code)s</strong>,"
+msgstr "Dear <strong>%(name)s</strong> — Employer ID <strong>%(code)s</strong>,"
+
+msgid "Cảm ơn Quý khách đã tin tưởng lựa chọn %(site_name)s đồng hành trong quá trình tuyển dụng. Tài khoản Nhà tuyển dụng đã được đăng ký thành công với email <a href=\"mailto:%(email)s\" style=\"color:#00a854\">%(email)s</a>."
+msgstr "Thank you for choosing %(site_name)s as your recruitment partner. Your employer account has been registered successfully with the email <a href=\"mailto:%(email)s\" style=\"color:#00a854\">%(email)s</a>."
+
+msgid "Không chia sẻ mật khẩu hoặc liên kết xác thực với bất kỳ ai. %(site_name)s không yêu cầu chuyển khoản vào tài khoản cá nhân."
+msgstr "Never share your password or verification link with anyone. %(site_name)s will never ask you to transfer money to a personal account."
+
+msgid "Liên kết có hiệu lực trong <strong>%(hours)s giờ</strong>. Nếu Quý khách không thực hiện đăng ký này, vui lòng bỏ qua email và liên hệ bộ phận hỗ trợ."
+msgstr "This link is valid for <strong>%(hours)s hours</strong>. If you did not make this registration, please ignore this email and contact our support team."
+
+msgid "Xác thực địa chỉ email của bạn tại %(site_name)s"
+msgstr "Verify your email address at %(site_name)s"
+
+msgid "Cảm ơn bạn đã đăng ký tài khoản tại %(site_name)s. Nhấn nút bên dưới để xác thực địa chỉ email."
+msgstr "Thank you for creating an account at %(site_name)s. Click the button below to verify your email address."
+
+msgid "Quản trị"
+msgstr "Admin"
+
+msgid "Nhà tuyển dụng"
+msgstr "Employer"
+
+msgid "Email đăng nhập tài khoản %(portal)s %(site_name)s vừa được thay đổi"
+msgstr "The sign-in email of your %(portal)s account at %(site_name)s has been changed"
+
+msgid "Email đăng nhập của tài khoản <strong>%(portal)s</strong> tại %(site_name)s vừa được đổi từ <strong>%(old_email)s</strong> sang <strong>%(new_email)s</strong>."
+msgstr "The sign-in email of your <strong>%(portal)s</strong> account at %(site_name)s has been changed from <strong>%(old_email)s</strong> to <strong>%(new_email)s</strong>."
+
+msgid "Nếu bạn <strong>không</strong> yêu cầu thay đổi này, tài khoản của bạn có thể đã bị xâm phạm. Vui lòng liên hệ ngay %(support)s để được trợ giúp."
+msgstr "If you did <strong>not</strong> request this change, your account may have been compromised. Please contact %(support)s immediately for help."
+
+msgid "được cập nhật"
+msgstr "updated"
+
+msgid "Trạng thái tài khoản %(portal)s %(site_name)s vừa thay đổi"
+msgstr "The status of your %(portal)s account at %(site_name)s has changed"
+
+msgid "Tài khoản <strong>%(recipient)s</strong> tại %(site_name)s vừa <strong>%(status)s</strong> bởi quản trị viên."
+msgstr "The account <strong>%(recipient)s</strong> at %(site_name)s has been <strong>%(status)s</strong> by an administrator."
+
+msgid "Trạng thái trước: %(before)s · trạng thái mới: %(after)s."
+msgstr "Previous status: %(before)s · new status: %(after)s."
+
+msgid "Hotline trên website"
+msgstr "Hotline on our website"
+
+msgid "Cổng Nhà tuyển dụng"
+msgstr "Employer portal"
+
+msgid "Để tăng tính bảo mật, Quý khách vui lòng nhấn nút xác thực dưới đây."
+msgstr "For your security, please click the verification button below."
+
+msgid "Xác thực tài khoản"
+msgstr "Verify account"
+
+msgid "Lưu ý bảo mật"
+msgstr "Security notice"
+
+msgid "Liên kết có hiệu lực trong %(hours)s giờ. Nếu bạn không tạo tài khoản tại %(site_name)s, vui lòng bỏ qua email này."
+msgstr "This link is valid for %(hours)s hours. If you did not create an account at %(site_name)s, please ignore this email."
+
+msgid "Xác thực email của bạn"
+msgstr "Verify your email"
+
+msgid "Xác thực email"
+msgstr "Verify email"
+
+msgid "Hoặc mở liên kết:"
+msgstr "Or open this link:"
+
+msgid "bộ phận hỗ trợ"
+msgstr "our support team"
+
+msgid "Nếu bạn KHÔNG yêu cầu thay đổi này, tài khoản của bạn có thể đã bị xâm phạm — hãy liên hệ ngay %(support)s."
+msgstr "If you did NOT request this change, your account may have been compromised — contact %(support)s immediately."
+
+msgid "Email đăng nhập vừa được thay đổi"
+msgstr "Your sign-in email has been changed"
+
+msgid "Nếu cần hỗ trợ, vui lòng liên hệ %(support)s."
+msgstr "If you need help, please contact %(support)s."
+
+msgid "Trạng thái tài khoản vừa thay đổi"
+msgstr "Your account status has changed"
+
+msgid "Cần hỗ trợ: %(contact)s"
+msgstr "Need help: %(contact)s"
+
+msgid "Vui lòng xác thực địa chỉ email của bạn bằng cách mở liên kết dưới đây:"
+msgstr "Please verify your email address by opening the link below:"
+
+msgid "Liên kết có hiệu lực trong %(hours)s giờ."
+msgstr "This link is valid for %(hours)s hours."
+
+msgid "được mở lại"
+msgstr "reactivated"
+
+msgid "bị tạm khóa"
+msgstr "suspended"
+
+msgid "bị cấm"
+msgstr "banned"
+
+msgid "Thời điểm thao tác: %(occurred_at)s."
+msgstr "Time of action: %(occurred_at)s."
+
+msgid "Liên kết có hiệu lực trong %(hours)s giờ. Không chia sẻ mật khẩu hoặc liên kết xác thực với người khác."
+msgstr "This link is valid for %(hours)s hours. Do not share your password or verification link with anyone."
+
+msgid "Hỗ trợ: %(contact)s"
+msgstr "Support: %(contact)s"
+
+msgid "Xin chào,"
+msgstr "Hello,"
+
+msgid "Email đăng nhập của tài khoản %(portal)s tại %(site_name)s vừa được đổi từ %(old_email)s sang %(new_email)s."
+msgstr "The sign-in email of your %(portal)s account at %(site_name)s has been changed from %(old_email)s to %(new_email)s."
+
+msgid "Để bảo vệ tài khoản, vui lòng xác thực tại: %(link)s"
+msgstr "To protect your account, please verify it at: %(link)s"
+
+msgid "Tài khoản %(recipient)s tại %(site_name)s vừa %(status)s bởi quản trị viên."
+msgstr "The account %(recipient)s at %(site_name)s has been %(status)s by an administrator."
+
+msgid "Tài khoản Nhà tuyển dụng của bạn đã được đăng ký thành công với email %(email)s."
+msgstr "Your employer account has been registered successfully with the email %(email)s."
+
+msgid "Kính gửi %(name)s - Mã NTD %(code)s,"
+msgstr "Dear %(name)s - Employer ID %(code)s,"
+
+msgid "Hãy xác thực lại bằng mạng xã hội trước khi tạo mật khẩu."
+msgstr "Please re-authenticate with your social account before creating a password."
+
+msgid "Vui lòng chờ %(seconds)ss trước khi gửi lại."
+msgstr "Please wait %(seconds)ss before resending."
+
+msgid "Bạn không có quyền thực hiện hành động này."
+msgstr "You do not have permission to perform this action."
+
+msgid "Dữ liệu đã thay đổi. Vui lòng xem lại tác động trước khi tiếp tục."
+msgstr "The data has changed. Please review the impact again before continuing."
+
+msgid "Địa điểm làm việc không tồn tại."
+msgstr "The work location does not exist."
+
+msgid "Mã đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng thử lại."
+msgstr "The sign-in code is invalid or has expired. Please try again."
+
+msgid "Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn."
+msgstr "The password reset link is invalid or has expired."
+
+msgid "Liên kết có hiệu lực trong %(minutes)s phút và chỉ dùng được một lần."
+msgstr "This link is valid for %(minutes)s minutes and can only be used once."
+
+msgid "Đặt lại mật khẩu tài khoản %(portal)s %(site_name)s"
+msgstr "Reset the password of your %(portal)s account at %(site_name)s"
+
+msgid "Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này."
+msgstr "If you did not request a password reset, please ignore this email."
+
+msgid "Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản %(portal)s <strong>%(email)s</strong>."
+msgstr "We received a request to reset the password of the %(portal)s account <strong>%(email)s</strong>."
+
+msgid "Không thể gửi liên kết đặt lại mật khẩu cho tài khoản không hoạt động."
+msgstr "Cannot send a password reset link to an inactive account."
+
+msgid "Tạo mật khẩu mới"
+msgstr "Create a new password"
+
+msgid "Đặt lại mật khẩu tài khoản %(portal)s"
+msgstr "Reset your %(portal)s account password"
+
+msgid "Mở liên kết dưới đây để tạo mật khẩu mới:"
+msgstr "Open the link below to create a new password:"
+
+msgid "Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản %(email)s."
+msgstr "We received a request to reset the password of the account %(email)s."
+
+msgid "Refresh token không thuộc cổng này."
+msgstr "This refresh token does not belong to this portal."
+
+msgid "Phiên đăng nhập đã bị thu hồi."
+msgstr "This sign-in session has been revoked."
+
+msgid "Tài khoản đã xác thực email; không thể đổi email tại đây."
+msgstr "This account has a verified email; the email cannot be changed here."
+
+msgid "Email đã được xác thực."
+msgstr "Email is already verified."
+
+msgid "Liên kết xác thực không hợp lệ hoặc đã hết hạn."
+msgstr "The verification link is invalid or has expired."
+
+msgid "Không tìm thấy tài khoản."
+msgstr "Account not found."
+
+msgid "Tài khoản đang bị hạn chế. Liên kết đã bị vô hiệu hóa; vui lòng liên hệ bộ phận hỗ trợ."
+msgstr "This account is restricted. The link has been disabled; please contact support."
+
+msgid "Địa chỉ email đã thay đổi sau khi liên kết này được gửi. Vui lòng yêu cầu một email xác thực mới."
+msgstr "The email address changed after this link was sent. Please request a new verification email."
+
+msgid "Hoàn thiện thông tin tìm việc"
+msgstr "Complete your job-seeking profile"
+
+msgid "Tài khoản Nhà tuyển dụng của Quý khách đã được đăng ký thành công."
+msgstr "Your employer account has been registered successfully."
+
+msgid "Quý khách có thể tiếp tục hoàn thiện hồ sơ, khai báo nhu cầu tuyển dụng và các bước xác thực tài khoản."
+msgstr "You can now complete your profile, declare your hiring needs and go through the account verification steps."
+
+msgid "Chào mừng bạn đến với %(site_name)s"
+msgstr "Welcome to %(site_name)s"
+
+msgid "Cảm ơn bạn đã tạo tài khoản tại %(site_name)s. Hãy bắt đầu bằng cách hoàn thiện thông tin để có trải nghiệm phù hợp hơn."
+msgstr "Thank you for creating an account at %(site_name)s. Start by completing your profile for a more relevant experience."
+
+msgid "Nếu bạn không tạo tài khoản này, hãy bỏ qua email hoặc liên hệ %(support)s."
+msgstr "If you did not create this account, please ignore this email or contact %(support)s."
+
+msgid "Google đã xác thực địa chỉ email cho tài khoản này."
+msgstr "Google has verified the email address for this account."
+
+msgid "Địa chỉ email của tài khoản đã được xác thực thành công."
+msgstr "Your account email address has been verified successfully."
+
+msgid "Chúc mừng %(name)s đã có tài khoản dành cho nhà tuyển dụng"
+msgstr "Congratulations %(name)s on your new employer account"
+
+msgid "bộ phận hỗ trợ trên website"
+msgstr "our support team on the website"
+
+msgid "Cảm ơn Quý khách đã tin tưởng và lựa chọn %(site_name)s đồng hành trong quá trình tuyển dụng."
+msgstr "Thank you for trusting and choosing %(site_name)s as your recruitment partner."
+
+msgid "Đây là email tự động từ dịch vụ %(site_name)s. Vui lòng không trả lời email này."
+msgstr "This is an automated email from %(site_name)s. Please do not reply to this email."
+
+msgid "Liên hệ hỗ trợ: %(support)s."
+msgstr "Contact support: %(support)s."
+
+msgid "Chào mừng bạn!"
+msgstr "Welcome!"
+
+msgid "Đây là email tự động từ %(site_name)s, vui lòng không trả lời email này."
+msgstr "This is an automated email from %(site_name)s, please do not reply to this email."
+
+msgid "Tiếp tục thiết lập tài khoản"
+msgstr "Continue setting up your account"
+
+msgid "Trong trường hợp cần hỗ trợ thêm thông tin, Quý khách vui lòng liên hệ:"
+msgstr "If you need any further assistance, please contact us:"
+
+msgid "Trân trọng,"
+msgstr "Best regards,"
+
+msgid "Bạn nhận được email này vì vừa tạo tài khoản."
+msgstr "You received this email because you just created an account."
+
+msgid "Hotline CSKH:"
+msgstr "Customer support hotline:"
+
+msgid "Email CSKH:"
+msgstr "Customer support email:"
+
+msgid "Zalo CSKH:"
+msgstr "Customer support Zalo:"
+
+msgid "Mở Zalo"
+msgstr "Open Zalo"
+
+msgid "Đội ngũ %(site_name)s"
+msgstr "The %(site_name)s team"
+
+msgid "bộ phận hỗ trợ của chúng tôi"
+msgstr "our support team"
+
+msgid "Chào mừng bạn đến với %(site_name)s."
+msgstr "Welcome to %(site_name)s."
+
+msgid "Tiếp tục thiết lập tài khoản: %(link)s"
+msgstr "Continue setting up your account: %(link)s"
+
+msgid "Kính gửi Quý khách hàng %(name)s - Mã NTD %(code)s,"
+msgstr "Dear %(name)s - Employer ID %(code)s,"

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Drawer, Result, Skeleton, Tag } from 'antd'
 import { Link, useParams } from 'react-router'
-import { BLOG_ROOT, BlogPostContent, blogCategoryPath, formatBlogDate, getBlogCategories, getBlogPost } from '@/entities/blog'
-import { settingText, useSiteSettings } from '@/entities/site-settings'
+import { BLOG_ROOT, BlogPostContent, blogCategoryPath, formatBlogDate, getBlogCategories, getBlogPost } from '@/entities/content/blog'
+import { settingText, useSiteSettings } from '@/entities/system/site-settings'
 import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
 import { BlogCategoryNav } from './ui/BlogCategoryBar'
 import BlogBenefits from './ui/BlogBenefits'
@@ -70,7 +70,7 @@ export default function BlogDetail() {
             mainEntityOfPage: new URL(canonicalPath, window.location.origin).href,
           },
         }
-      : null,
+      : (notFound ? { title: 'Không tìm thấy bài viết', robots: 'noindex, nofollow' } : null),
   )
 
   const handleToc = useCallback((items) => setToc(items), [])

@@ -60,17 +60,17 @@ khác dùng `/api/<app>/`.
 | --- | --- |
 | `accounts` | User theo role, đăng nhập/đăng ký, social login, JWT + `AuthSession`, outbox email xác thực, hai cấp quản trị, lời mời admin, trạng thái tài khoản (`/api/auth/`, `/api/admin/`) |
 | `candidates` | Hồ sơ ứng viên, onboarding, nhu cầu công việc, consent, cài đặt email (`/api/candidate/`) |
-| `employers` | Công ty, recruiter, xác thực doanh nghiệp, DPA, OTP SMS, chiến dịch tuyển dụng, compliance hold, domain claim, thông báo NTD, API công ty công khai (`/api/employer/`, `/api/companies/`) |
-| `jobs` | Tin tuyển dụng và vòng đời, tìm kiếm, tin đã lưu/ẩn, báo cáo tin và tạm ẩn, gợi ý việc làm, digest email, AI tạo tin (`/api/jobs/`, `/api/ai/`) |
+| `employers` | Công ty, recruiter, xác thực doanh nghiệp, DPA, OTP SMS, chiến dịch tuyển dụng, compliance hold, domain claim, thông báo NTD, API công ty công khai (`/api/employer/`, `/api/public/companies/`) |
+| `jobs` | Tin tuyển dụng và vòng đời, tìm kiếm, tin đã lưu/ẩn, báo cáo tin và tạm ẩn, gợi ý việc làm, digest email, AI tạo tin (`/api/public/jobs/`, `/api/ai/`) |
 | `applications` | Hồ sơ ứng tuyển, snapshot CV, lịch sử trạng thái, tự động từ chối (`/api/v2/`) |
-| `cvs` | CV của ứng viên, draft/version, import, export PDF, chia sẻ, điểm hoàn thiện (`/api/v2/cvs/`) |
+| `cvs` | CV của ứng viên, draft/version, import, export PDF, chia sẻ, điểm hoàn thiện (`/api/candidate/cvs/`) |
 | `cv_templates` | Catalogue mẫu CV, phiên bản, taxonomy, thumbnail (`/api/v2/`) |
 | `ai_core` | Runtime AI trung lập provider, invocation log, usage, retention |
-| `uploads` | Upload session, quarantine, quét ClamAV, claim file sạch (`/api/uploads/`) |
-| `privacy` | Cookie consent và định danh người xem ẩn danh (`/api/privacy/`) |
-| `sitecontent` | Site settings, thông báo đa cổng, SEO shell/sitemap, media (`/api/site/`) |
-| `knowledgebase` | Trung tâm trợ giúp FAQ/hướng dẫn có revision (`/api/knowledgebase/`) |
-| `blog` | Cẩm nang nghề nghiệp (`/api/blog/`) |
+| `uploads` | Upload session, quarantine, quét ClamAV, claim file sạch (`/api/shared/uploads/`) |
+| `privacy` | Cookie consent và định danh người xem ẩn danh (`/api/public/privacy/`) |
+| `sitecontent` | Site settings, thông báo đa cổng, SEO shell/sitemap, media (`/api/public/site/`) |
+| `knowledgebase` | Trung tâm trợ giúp FAQ/hướng dẫn có revision (`/api/public/knowledgebase/`) |
+| `blog` | Cẩm nang nghề nghiệp (`/api/public/blog/`) |
 | `dashboard` | Số liệu tổng quan cho admin (`/api/dashboard/`) |
 | `skills`, `locations` | Danh mục kỹ năng, tỉnh/thành (kèm sáp nhập tỉnh) |
 

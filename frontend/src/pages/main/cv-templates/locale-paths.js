@@ -1,4 +1,4 @@
-import { CV_LANGUAGES } from '@/entities/cv-template'
+import { CV_LANGUAGES } from '@/entities/cv/cv-template'
 
 // Đường dẫn kho mẫu CV theo ngôn ngữ (tiếng Việt, tiếng Anh). Path Nhật/Trung
 // và /mau-cv/ngon-ngu/:locale cũ được redirect ở router và SEO shell backend.

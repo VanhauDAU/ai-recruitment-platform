@@ -1,4 +1,4 @@
-import { EmailNotificationSettingsForm } from '@/features/configure-email-notifications'
+import { EmailNotificationSettingsForm } from '@/features/main/account/configure-email-notifications'
 
 export default function EmailNotificationSettings() {
   return (

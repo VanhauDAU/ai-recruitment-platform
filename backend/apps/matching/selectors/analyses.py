@@ -16,7 +16,3 @@ def owner_analysis(user, public_id):
 def recent_owner_analyses(user, job):
     """Các lần phân tích gần nhất của người dùng cho một tin, mới nhất trước."""
     return list(_owner_queryset(user).filter(job=job).order_by('-created_at')[:RECENT_LIMIT])
-
-
-def analysis_for_run(analysis_id):
-    return MatchAnalysis.objects.select_related('cv_version__cv').filter(pk=analysis_id).first()

@@ -2,9 +2,10 @@ from django.conf import settings
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from django.utils.text import slugify
+from django.utils.translation import gettext_lazy
 
+from common.db.public_id import generate_public_id
 from common.db.search import fold_accents
-from common.public_id import generate_public_id
 
 # Path segments owned by static routes under /cong-ty/; a company slug equal to
 # one of them would be unreachable at /cong-ty/<slug>.
@@ -22,13 +23,13 @@ class Industry(models.Model):
         verbose_name_plural = 'industries'
         ordering = ['name']
 
+    def __str__(self):
+        return self.name
+
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
 
 
 class Company(models.Model):
@@ -37,27 +38,27 @@ class Company(models.Model):
     """
 
     class BusinessType(models.TextChoices):
-        ENTERPRISE = 'enterprise', 'Doanh nghiệp'
-        HOUSEHOLD = 'household', 'Hộ kinh doanh'
+        ENTERPRISE = 'enterprise', gettext_lazy('Doanh nghiệp')
+        HOUSEHOLD = 'household', gettext_lazy('Hộ kinh doanh')
 
     class Size(models.TextChoices):
-        S1_9 = '1-9', '1 - 9 nhân viên'
-        S10_24 = '10-24', '10 - 24 nhân viên'
-        S25_99 = '25-99', '25 - 99 nhân viên'
-        S100_499 = '100-499', '100 - 499 nhân viên'
-        S500_1000 = '500-1000', '500 - 1000 nhân viên'
-        S1000_PLUS = '1000+', '1000+ nhân viên'
-        S3000_PLUS = '3000+', '3000+ nhân viên'
-        S5000_PLUS = '5000+', '5000+ nhân viên'
-        S10000_PLUS = '10000+', '10000+ nhân viên'
+        S1_9 = '1-9', gettext_lazy('1 - 9 nhân viên')
+        S10_24 = '10-24', gettext_lazy('10 - 24 nhân viên')
+        S25_99 = '25-99', gettext_lazy('25 - 99 nhân viên')
+        S100_499 = '100-499', gettext_lazy('100 - 499 nhân viên')
+        S500_1000 = '500-1000', gettext_lazy('500 - 1000 nhân viên')
+        S1000_PLUS = '1000+', gettext_lazy('1000+ nhân viên')
+        S3000_PLUS = '3000+', gettext_lazy('3000+ nhân viên')
+        S5000_PLUS = '5000+', gettext_lazy('5000+ nhân viên')
+        S10000_PLUS = '10000+', gettext_lazy('10000+ nhân viên')
 
     class Market(models.TextChoices):
-        DOMESTIC = 'domestic', 'Nội địa'
-        ASIA = 'asia', 'Châu Á'
-        EUROPE = 'europe', 'Châu Âu'
-        AFRICA = 'africa', 'Châu Phi'
-        AMERICA = 'america', 'Châu Mỹ'
-        AUSTRALIA = 'australia', 'Châu Úc'
+        DOMESTIC = 'domestic', gettext_lazy('Nội địa')
+        ASIA = 'asia', gettext_lazy('Châu Á')
+        EUROPE = 'europe', gettext_lazy('Châu Âu')
+        AFRICA = 'africa', gettext_lazy('Châu Phi')
+        AMERICA = 'america', gettext_lazy('Châu Mỹ')
+        AUSTRALIA = 'australia', gettext_lazy('Châu Úc')
 
     class TargetCustomer(models.TextChoices):
         B2B = 'b2b', 'B2B'
@@ -71,7 +72,8 @@ class Company(models.Model):
     )
     # Với hộ kinh doanh là MST người đại diện. Chuỗi rỗng được chuẩn hoá về
     # NULL ở save(); API chỉ nhận mã 10 hoặc 13 chữ số.
-    tax_code = models.CharField(max_length=100, null=True, blank=True)
+    # NULL = chưa khai MST: API trả null và truy vấn lọc theo tax_code__isnull.
+    tax_code = models.CharField(max_length=100, null=True, blank=True)  # noqa: DJ001
     company_name = models.CharField(max_length=255)
     trade_name = models.CharField(max_length=255, blank=True)
     # Materialized accent/case-folded names keep public substring search on a
@@ -113,6 +115,10 @@ class Company(models.Model):
     # Moderation switch for the public page. Write it with QuerySet.update()
     # only: save() moves updated_at, the optimistic-lock base of update requests.
     content_policy_hold = models.BooleanField(default=False, db_index=True)
+    # Page content of a company publishes at once and is reviewed afterwards;
+    # an administrator turns this on to send it back through update requests.
+    # Same write rule as the hold.
+    content_review_required = models.BooleanField(default=False)
     # Number of CompanyFollow rows. Same rule as the hold: QuerySet.update()
     # with F() only, in the transaction that adds or removes the follow row.
     follower_count = models.PositiveIntegerField(default=0)
@@ -137,6 +143,9 @@ class Company(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return self.company_name
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('co')
@@ -160,9 +169,6 @@ class Company(models.Model):
                 update_fields.add('trade_name_search')
             kwargs['update_fields'] = update_fields
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.company_name
 
     @property
     def display_name(self):
@@ -231,8 +237,8 @@ class CompanyMediaUpload(models.Model):
 
     class Kind(models.TextChoices):
         LOGO = 'logo', 'Logo'
-        COVER = 'cover', 'Ảnh bìa'
-        GALLERY = 'gallery', 'Ảnh giới thiệu'
+        COVER = 'cover', gettext_lazy('Ảnh bìa')
+        GALLERY = 'gallery', gettext_lazy('Ảnh giới thiệu')
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     company = models.ForeignKey(
@@ -275,6 +281,9 @@ class CompanyMediaUpload(models.Model):
                 name='emp_media_company_kind_idx',
             ),
         ]
+
+    def __str__(self):
+        return f'{self.public_id}:{self.kind}'
 
     def save(self, *args, **kwargs):
         if not self.public_id:

@@ -2,7 +2,7 @@ from django.utils.text import slugify
 from rest_framework import serializers
 
 from apps.jobs.models import JobCategory
-from common.media_storage import media_url_from_value
+from common.storage.media import media_url_from_value
 
 from ...models import PinnedPost, Post, PostCategory, PostStatusHistory, Tag
 from ...services import sanitize_blog_html
@@ -104,14 +104,14 @@ class AdminPostListSerializer(serializers.ModelSerializer):
             'updated_at',
         ]
 
-    def get_category(self, obj):
+    def get_category(self, obj) -> dict:
         return {
             'public_id': obj.category.public_id,
             'name': obj.category.name,
             'slug': obj.category.slug,
         }
 
-    def get_author(self, obj):
+    def get_author(self, obj) -> dict | None:
         if not obj.author_id:
             return None
         return {
@@ -120,20 +120,20 @@ class AdminPostListSerializer(serializers.ModelSerializer):
             'email': obj.author.email,
         }
 
-    def get_thumbnail_url(self, obj):
+    def get_thumbnail_url(self, obj) -> str:
         source = getattr(obj, 'working_copy', None) or obj
         return media_url_from_value(source.thumbnail_url, request=self.context.get('request'))
 
-    def get_editorial_state(self, obj):
+    def get_editorial_state(self, obj) -> str:
         return editorial_state(obj)
 
-    def get_editorial_state_label(self, obj):
+    def get_editorial_state_label(self, obj) -> str:
         return STATE_LABELS[editorial_state(obj)]
 
-    def get_completeness(self, obj):
+    def get_completeness(self, obj) -> dict:
         return completion_data(getattr(obj, 'working_copy', None) or obj)
 
-    def get_allowed_actions(self, obj):
+    def get_allowed_actions(self, obj) -> list[str]:
         state = editorial_state(obj)
         if state == 'archived':
             return ['view', 'restore']
@@ -161,7 +161,7 @@ class AdminPostHistorySerializer(serializers.ModelSerializer):
             'created_at',
         ]
 
-    def get_actor_name(self, obj):
+    def get_actor_name(self, obj) -> str:
         return obj.actor.full_name or obj.actor.email if obj.actor else 'Hệ thống'
 
 
@@ -179,12 +179,12 @@ class AdminPostDetailSerializer(AdminPostListSerializer):
             'created_at',
         ]
 
-    def get_published_version(self, obj):
+    def get_published_version(self, obj) -> dict | None:
         if obj.status != Post.Status.PUBLISHED:
             return None
         return version_data(obj, self.context.get('request'))
 
-    def get_editable_version(self, obj):
+    def get_editable_version(self, obj) -> dict:
         source = getattr(obj, 'working_copy', None) or obj
         return version_data(source, self.context.get('request'))
 
@@ -277,7 +277,7 @@ class AdminTagSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['public_id', 'post_count', 'working_copy_count', 'usage_count']
 
-    def get_usage_count(self, obj):
+    def get_usage_count(self, obj) -> int:
         return getattr(obj, 'post_count', 0) + getattr(obj, 'working_copy_count', 0)
 
     def validate_name(self, value):

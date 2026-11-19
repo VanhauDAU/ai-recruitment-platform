@@ -6,7 +6,7 @@ from django.core.files import File
 
 from apps.uploads.models import UploadAsset
 from apps.uploads.services import claim_clean_upload, release_claimed_upload
-from common.r2_storage import private_media_storage
+from common.storage.r2 import private_media_storage
 
 CANDIDATE_UPLOAD_PURPOSE = 'candidate_cv'
 CV_SOURCE_CLAIM_SCOPE = 'candidate_cv_source'

@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
-import { COMPANY_DIRECTORY_PATH } from '@/entities/company'
+import { COMPANY_DIRECTORY_PATH } from '@/entities/company/company'
 import FeaturedEmployers from './FeaturedEmployers'
 
 const EMPLOYERS = [

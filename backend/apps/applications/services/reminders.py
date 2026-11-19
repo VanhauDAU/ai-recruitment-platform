@@ -12,11 +12,13 @@ from django.db import transaction
 from django.db.models import Exists, F, Func, IntegerField, OuterRef, Q, Subquery
 from django.db.models.functions import Coalesce
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from apps.accounts.services import lock_account_for_write
 from apps.employers.models import EmployerNotification, RecruiterProfile
 from apps.employers.services import company_owners, emit_employer_event
 from apps.jobs.models import Job, publicly_available_job_filter
+from common.i18n import recipient_language
 
 from ..models import Application, ApplicationReminder
 from .applications import ApplicationNotAllowed, _locked_current_application
@@ -82,21 +84,23 @@ def reminder_recipients(job):
 
 def _notify(job, applications, *, reminder_ids):
     count = len(applications)
-    message = (
-        f'Ứng viên đang chờ bạn phản hồi hồ sơ vị trí {job.title}.'
-        if count == 1
-        else f'{count} hồ sơ vị trí {job.title} đang chờ bạn phản hồi.'
-    )
     for recipient in reminder_recipients(job):
-        emit_employer_event(
-            recipient=recipient,
-            event_type=EmployerNotification.EventType.APPLICATION_AWAITING_REPLY,
-            dedupe_key=f'application-awaiting-reply:{min(reminder_ids)}:{max(reminder_ids)}',
-            message=message,
-            subject_public_id=applications[0].public_id if count == 1 else job.public_id,
-            metadata={'application_public_id': applications[0].public_id} if count == 1 else {},
-            action_path=f'{APPLICATIONS_PATH}?job={job.public_id}',
-        )
+        with recipient_language(recipient):
+            message = (
+                _('Ứng viên đang chờ bạn phản hồi hồ sơ vị trí %(job)s.') % {'job': job.title}
+                if count == 1
+                else _('%(count)s hồ sơ vị trí %(job)s đang chờ bạn phản hồi.')
+                % {'count': count, 'job': job.title}
+            )
+            emit_employer_event(
+                recipient=recipient,
+                event_type=EmployerNotification.EventType.APPLICATION_AWAITING_REPLY,
+                dedupe_key=f'application-awaiting-reply:{min(reminder_ids)}:{max(reminder_ids)}',
+                message=message,
+                subject_public_id=applications[0].public_id if count == 1 else job.public_id,
+                metadata={'application_public_id': applications[0].public_id} if count == 1 else {},
+                action_path=f'{APPLICATIONS_PATH}?job={job.public_id}',
+            )
 
 
 @transaction.atomic
@@ -106,10 +110,11 @@ def request_recruiter_reminder(*, candidate, public_id):
     application = _locked_current_application(candidate, public_id)
     available_at = candidate_reminder_available_at(application)
     if available_at is None:
-        raise ApplicationNotAllowed('Không thể nhắc nhà tuyển dụng cho hồ sơ này nữa.')
+        raise ApplicationNotAllowed(_('Không thể nhắc nhà tuyển dụng cho hồ sơ này nữa.'))
     if available_at > timezone.now():
         raise ApplicationNotAllowed(
-            f'Bạn có thể nhắc nhà tuyển dụng từ {timezone.localtime(available_at):%H:%M %d/%m/%Y}.'
+            _('Bạn có thể nhắc nhà tuyển dụng từ %(time)s.')
+            % {'time': f'{timezone.localtime(available_at):%H:%M %d/%m/%Y}'}
         )
     reminder = ApplicationReminder.objects.create(
         application=application, source=ApplicationReminder.Source.CANDIDATE
@@ -174,7 +179,7 @@ def send_unanswered_application_reminders(*, now=None, batch_size=500):
                 _notify(
                     applications[0].job,
                     [application for application, _ in to_notify],
-                    reminder_ids=[reminder.pk for _, reminder in to_notify],
+                    reminder_ids=[reminder.pk for _item, reminder in to_notify],
                 )
     return len(due)
 

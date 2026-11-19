@@ -7,18 +7,17 @@ from datetime import timedelta
 
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext_lazy
 from rest_framework.exceptions import APIException
 
-from apps.employers.models import CampaignActivity, EmployerNotification, RecruitmentCampaign
-from apps.employers.services import (
-    apply_system_campaign_status,
-    emit_employer_event,
-    ensure_recruiter_job_workspace,
-    record_campaign_activity,
-)
+from apps.campaigns.models import CampaignActivity, RecruitmentCampaign
+from apps.employers.models import EmployerNotification
+from apps.employers.services import emit_employer_event, ensure_recruiter_job_workspace
+from common.i18n import recipient_language
 from common.vietnam_time import vietnam_today
 
 from ..models import CampaignLaunchPlan
+from .campaigns import apply_system_campaign_status
 from .launch import execute_launch
 
 logger = logging.getLogger(__name__)
@@ -30,16 +29,19 @@ def _campaign_path(campaign):
     return f'/tuyendung/app/campaigns/{campaign.public_id}'
 
 
-def _notify(campaign, event_type, dedupe_key, message):
-    emit_employer_event(
-        recipient=campaign.owner.user,
-        event_type=event_type,
-        dedupe_key=dedupe_key,
-        message=message,
-        subject_public_id=campaign.public_id,
-        metadata={'campaign_public_id': campaign.public_id},
-        action_path=_campaign_path(campaign),
-    )
+def _notify(campaign, event_type, dedupe_key, message, **params):
+    """``message`` is a lazy msgid, rendered in the owner's language with ``params``."""
+    recipient = campaign.owner.user
+    with recipient_language(recipient):
+        emit_employer_event(
+            recipient=recipient,
+            event_type=event_type,
+            dedupe_key=dedupe_key,
+            message=str(message) % {'campaign': campaign.name, **params},
+            subject_public_id=campaign.public_id,
+            metadata={'campaign_public_id': campaign.public_id},
+            action_path=_campaign_path(campaign),
+        )
 
 
 def _error_payload(error):
@@ -71,7 +73,7 @@ def _activate(campaign_id, today):
             campaign,
             EmployerNotification.EventType.CAMPAIGN_ACTIVATED,
             f'campaign-activated:{campaign.public_id}',
-            f'Chiến dịch "{campaign.name}" đã bắt đầu chạy theo lịch.',
+            gettext_lazy('Chiến dịch "%(campaign)s" đã bắt đầu chạy theo lịch.'),
         )
     return True
 
@@ -87,14 +89,14 @@ def _record_activation_failure(campaign_id, error):
     fingerprint = hashlib.sha256(
         json.dumps(payload, sort_keys=True, ensure_ascii=False).encode()
     ).hexdigest()[:16]
-    plan, _ = CampaignLaunchPlan.objects.get_or_create(campaign=campaign)
+    plan, _created = CampaignLaunchPlan.objects.get_or_create(campaign=campaign)
     is_new_error = plan.last_error.get('fingerprint') != fingerprint
     plan.last_error = {'fingerprint': fingerprint, 'error': payload}
     plan.last_error_at = timezone.now()
     plan.save(update_fields=['last_error', 'last_error_at', 'updated_at'])
     if not is_new_error:
         return
-    record_campaign_activity(
+    CampaignActivity.objects.record(
         campaign=campaign,
         event_type=CampaignActivity.EventType.CAMPAIGN_ACTIVATION_FAILED,
         group=CampaignActivity.Group.CAMPAIGN,
@@ -104,7 +106,9 @@ def _record_activation_failure(campaign_id, error):
         campaign,
         EmployerNotification.EventType.CAMPAIGN_ACTIVATION_FAILED,
         f'campaign-activation-failed:{campaign.public_id}:{fingerprint}',
-        f'Chiến dịch "{campaign.name}" chưa chạy được theo lịch. Mở chiến dịch để xem cần sửa gì.',
+        gettext_lazy(
+            'Chiến dịch "%(campaign)s" chưa chạy được theo lịch. Mở chiến dịch để xem cần sửa gì.'
+        ),
     )
 
 
@@ -126,7 +130,10 @@ def _complete(campaign_id):
         campaign,
         EmployerNotification.EventType.CAMPAIGN_AUTO_COMPLETED,
         f'campaign-auto-completed:{campaign.public_id}',
-        f'Chiến dịch "{campaign.name}" đã qua ngày kết thúc nên tự hoàn tất; các tin đã ngừng tuyển.',
+        gettext_lazy(
+            'Chiến dịch "%(campaign)s" đã qua ngày kết thúc nên tự hoàn tất; '
+            'các tin đã ngừng tuyển.'
+        ),
     )
     return True
 
@@ -163,10 +170,10 @@ def run_campaign_schedule(*, today=None):
                 campaign,
                 EmployerNotification.EventType.CAMPAIGN_ENDING_SOON,
                 f'campaign-ending-soon:{campaign.public_id}:{campaign.target_date.isoformat()}',
-                (
-                    f'Chiến dịch "{campaign.name}" kết thúc ngày '
-                    f'{campaign.target_date:%d/%m/%Y}. Gia hạn nếu cần tuyển tiếp.'
+                gettext_lazy(
+                    'Chiến dịch "%(campaign)s" kết thúc ngày %(date)s. Gia hạn nếu cần tuyển tiếp.'
                 ),
+                date=f'{campaign.target_date:%d/%m/%Y}',
             )
         result['ending_soon'] += 1
     if any(result.values()):

@@ -15,13 +15,13 @@ class SkillGroup(models.Model):
     class Meta:
         ordering = ['name']
 
+    def __str__(self):
+        return self.name
+
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
 
 
 class Skill(models.Model):
@@ -55,11 +55,11 @@ class Skill(models.Model):
     class Meta:
         ordering = ['group__name', 'name']
 
+    def __str__(self):
+        return f'{self.name} ({self.group.name})' if self.group else self.name
+
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
         self.normalized_name = self.name.strip().lower()
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f'{self.name} ({self.group.name})' if self.group else self.name

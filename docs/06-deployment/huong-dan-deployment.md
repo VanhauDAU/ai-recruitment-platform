@@ -21,10 +21,8 @@ Chưa triển khai — sẽ làm sau khi các module chính (CV, jobs, applicati
 - Database tiếp tục chỉ lưu **storage key**, không lưu filesystem path,
   credential hoặc signed URL. `MEDIA_PUBLIC_BASE_URL` chỉ áp dụng cho public
   media; không được dùng để tạo URL private.
-- `LEGACY_MEDIA_ROOT` là nguồn copy/checksum read-only của layout cũ, không phải
-  active storage và không được Django/Vite/nginx phục vụ. Làm theo
-  [ER-3 storage-boundary runbook](employer-upload-storage-boundary-runbook.md)
-  trước khi chuyển traffic.
+- Làm theo [ER-3 storage-boundary runbook](employer-upload-storage-boundary-runbook.md)
+  trước khi bật upload session ở môi trường mới.
 - Nếu self-host bằng Nginx, chỉ mount và serve public volume:
 
 ```nginx

@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // `client.js` chưa từng có test: mọi suite khác đều mock nguyên module này, nên
@@ -18,7 +19,8 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('axios', () => ({
   default: {
-    create: () => {
+    create: (config) => {
+      mocks.createConfig = config
       mocks.instance.interceptors = {
         request: {
           use: (onFulfilled, onRejected) =>
@@ -63,6 +65,10 @@ describe('HTTP client interceptor', () => {
     mocks.notifyPermissionDenied.mockClear()
   })
 
+  it('sends the interface language so the backend localizes its messages', () => {
+    expect(mocks.createConfig.headers).toEqual({ 'Accept-Language': 'vi' })
+  })
+
   it('refreshes once and replays the original request on a 401', async () => {
     mocks.post.mockResolvedValue({ data: { access: 'renewed' } })
     mocks.instance.mockResolvedValue({ data: 'ok' })
@@ -80,7 +86,7 @@ describe('HTTP client interceptor', () => {
     await Promise.all([
       onResponseError(unauthorized('/employer/me/')),
       onResponseError(unauthorized('/employer/company/')),
-      onResponseError(unauthorized('/jobs/')),
+      onResponseError(unauthorized('/public/jobs/')),
     ])
 
     expect(mocks.post).toHaveBeenCalledTimes(1)

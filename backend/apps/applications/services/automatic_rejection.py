@@ -8,9 +8,12 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
+from django.utils.translation import gettext as _
+from django.utils.translation import ngettext
 
 from apps.jobs.models import Job, JobApplicationContact
 from common.email import send_html_email
+from common.i18n import recipient_language
 
 from ..models import Application, ApplicationStatusHistory
 from .status import (
@@ -98,21 +101,24 @@ def send_due_application_reminders(*, now=None, batch_size=200):
             recipients = []
         recipients = list(dict.fromkeys(recipients or [job.posted_by.email]))
         count = len(applications)
-        body = (
-            f'{count} hồ sơ ứng tuyển vị trí {job.title} sẽ tự động chuyển sang “Không phù hợp” '
-            f'trong vòng 3 ngày nếu bạn chưa đưa ra quyết định.'
-        )
         action_url = (
             f'{settings.EMPLOYER_FRONTEND_URL.rstrip("/")}/tuyendung/app/applications'
             f'?job={job.public_id}'
         )
+        # Contact addresses may not be accounts; the job's poster sets the language.
+        with recipient_language(job.posted_by):
+            body = ngettext(
+                '%(count)s hồ sơ ứng tuyển vị trí %(job)s sẽ tự động chuyển sang “Không phù hợp” '
+                'trong vòng 3 ngày nếu bạn chưa đưa ra quyết định.',
+                '%(count)s hồ sơ ứng tuyển vị trí %(job)s sẽ tự động chuyển sang “Không phù hợp” '
+                'trong vòng 3 ngày nếu bạn chưa đưa ra quyết định.',
+                count,
+            ) % {'count': count, 'job': job.title}
+            subject = _('Nhắc xử lý hồ sơ ứng tuyển — %(job)s') % {'job': job.title}
+            text = _('%(body)s\n\nXem hồ sơ: %(url)s') % {'body': body, 'url': action_url}
+            html = _email_html(body, action_url=action_url, action_label=_('Xem hồ sơ ứng tuyển'))
         for recipient in recipients:
-            send_html_email(
-                subject=f'Nhắc xử lý hồ sơ ứng tuyển — {job.title}',
-                text=f'{body}\n\nXem hồ sơ: {action_url}',
-                html=_email_html(body, action_url=action_url, action_label='Xem hồ sơ ứng tuyển'),
-                to=recipient,
-            )
+            send_html_email(subject=subject, text=text, html=html, to=recipient)
         application_ids = [application.pk for application in applications]
         Application.objects.filter(
             pk__in=application_ids,
@@ -139,7 +145,7 @@ def reject_due_applications(*, now=None, batch_size=200):
         with transaction.atomic():
             application = (
                 Application.objects.select_for_update(of=('self',))
-                .select_related('candidate', 'job', 'job__company')
+                .select_related('candidate', 'job', 'job__company', 'job__posted_by')
                 .get(pk=application_id)
             )
             if (
@@ -162,11 +168,14 @@ def reject_due_applications(*, now=None, batch_size=200):
                     'updated_at',
                 ]
             )
+            # The recruiter reads this history note, so it is in their language.
+            with recipient_language(application.job.posted_by):
+                note = _('Tự động chuyển sang Không phù hợp do quá hạn xử lý.')
             history = ApplicationStatusHistory.objects.create(
                 application=application,
                 from_status=previous_status,
                 to_status=Application.Status.REJECTED,
-                note='Tự động chuyển sang Không phù hợp do quá hạn xử lý.',
+                note=note,
             )
             # The in-app notice waits out the same undo window as the email;
             # the per-job email below stays the only email for this path.
@@ -196,8 +205,10 @@ def send_due_auto_rejection_emails(*, now=None, batch_size=200):
     for application in applications:
         body = _render_candidate_body(application)
         recipient = application.contact_email or application.candidate.email
+        with recipient_language(application.candidate):
+            subject = _('Kết quả ứng tuyển vị trí %(job)s') % {'job': application.job.title}
         send_html_email(
-            subject=f'Kết quả ứng tuyển vị trí {application.job.title}',
+            subject=subject,
             text=body,
             html=_email_html(body),
             to=recipient,

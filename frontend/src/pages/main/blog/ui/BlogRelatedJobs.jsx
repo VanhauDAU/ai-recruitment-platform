@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { EnvironmentOutlined } from '@ant-design/icons'
 import { Link, useNavigate } from 'react-router'
-import { companyInitial, formatLocations, formatSalary, getJobs, jobCardToneClass, JOB_LOGO_TINTS, jobDetailPath, JobPresentationLabels, JobPreviewPanel, stripCompanyPrefix } from '@/entities/job'
-import { JobImpressionBoundary } from '@/features/track-job-engagement'
+import { companyInitial, formatLocations, formatSalary, getJobs, jobCardToneClass, JOB_LOGO_TINTS, jobDetailPath, JobPresentationLabels, JobPreviewPanel, stripCompanyPrefix } from '@/entities/job/job'
+import { JobImpressionBoundary } from '@/features/main/job/track-job-engagement'
 
 // Khối "Danh sách việc làm ..." trong bài, lấy theo danh mục nghề liên quan.
 export default function BlogRelatedJobs({ jobCategory }) {

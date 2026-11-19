@@ -1,4 +1,4 @@
-"""Pure state and trust invariants for the shared upload pipeline."""
+"""Pure lifecycle-state invariants for the shared upload pipeline."""
 
 from django.db import models
 
@@ -11,11 +11,6 @@ class UploadState(models.TextChoices):
     REJECTED = 'rejected', 'Rejected'
     ERROR = 'error', 'Error'
     EXPIRED = 'expired', 'Expired'
-
-
-class UploadTrustStatus(models.TextChoices):
-    CLEAN = 'clean', 'Clean'
-    LEGACY_TRUSTED = 'legacy_trusted', 'Legacy trusted'
 
 
 class UploadScanAttemptStatus(models.TextChoices):
@@ -53,11 +48,3 @@ def ensure_upload_transition(current: str, target: str) -> None:
         return
     if target not in ALLOWED_UPLOAD_TRANSITIONS.get(current, frozenset()):
         raise UploadStateError(f'Invalid upload transition: {current} -> {target}.')
-
-
-def upload_trust_is_attachable(trust_status: str) -> bool:
-    """Only an observed clean verdict or explicit legacy classification is attachable."""
-    return trust_status in {
-        UploadTrustStatus.CLEAN,
-        UploadTrustStatus.LEGACY_TRUSTED,
-    }

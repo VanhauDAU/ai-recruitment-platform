@@ -1,14 +1,16 @@
 from django.db import models
+from django.utils.translation import gettext_lazy
 
-from .core import Job, JobCategory
+from .categories import JobCategory
+from .core import Job
 
 
 class JobCategoryAssignment(models.Model):
     """One primary specialization and optional domain knowledge tags."""
 
     class Role(models.TextChoices):
-        PRIMARY_SPECIALIZATION = 'primary_specialization', 'Vị trí chuyên môn chính'
-        DOMAIN_KNOWLEDGE = 'domain_knowledge', 'Kiến thức chuyên ngành'
+        PRIMARY_SPECIALIZATION = 'primary_specialization', gettext_lazy('Vị trí chuyên môn chính')
+        DOMAIN_KNOWLEDGE = 'domain_knowledge', gettext_lazy('Kiến thức chuyên ngành')
 
     job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='category_assignments')
     category = models.ForeignKey(
@@ -30,6 +32,9 @@ class JobCategoryAssignment(models.Model):
             ),
         ]
         indexes = [models.Index(fields=['category', 'role', 'job'])]
+
+    def __str__(self):
+        return f'{self.job_id}: {self.category_id} ({self.role})'
 
 
 class JobLocation(models.Model):
@@ -54,6 +59,9 @@ class JobLocation(models.Model):
             ),
         ]
         indexes = [models.Index(fields=['location', 'job'])]
+
+    def __str__(self):
+        return f'{self.job_id}: {self.location_id}'
 
 
 class JobWorkSchedule(models.Model):
@@ -82,3 +90,6 @@ class JobWorkSchedule(models.Model):
                 name='chk_job_schedule_weekday_to',
             ),
         ]
+
+    def __str__(self):
+        return f'{self.job_id}: {self.weekday_from}-{self.weekday_to}'

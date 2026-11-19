@@ -3,7 +3,7 @@
 // và editor nên PDF khớp tuyệt đối với những gì ứng viên thấy.
 import { createRoot } from 'react-dom/client'
 import { flushSync } from 'react-dom'
-import { CvDocumentPreview } from '@/entities/cv'
+import { CvDocumentPreview } from '@/entities/cv/cv'
 import '../../index.css'
 import './cv-print.css'
 

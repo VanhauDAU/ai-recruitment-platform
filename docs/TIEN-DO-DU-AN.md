@@ -7,6 +7,13 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Song ngữ vi/en cho 3 cổng (ADR-0023)](#song-ngữ-vien-cho-3-cổng-adr-0023-2026-11-19) | 🟨 GĐ0 đã gộp (#262); GĐ1 (cổng NTD) trên nhánh `feat/i18n-employer`; GĐ2–4 chưa làm |
+| [Chuẩn hóa tiêu đề trang 3 cổng](#chuẩn-hóa-tiêu-đề-trang-3-cổng-2026-11-19) | 🟨 PR #261 (nhánh `feat/page-titles`), chờ gộp |
+| [Hậu kiểm nội dung trang công ty](#hậu-kiểm-nội-dung-trang-công-ty-2026-11-19) | ✅ Gộp vào `dev` (#260) |
+| [Làm lại trang nhà tuyển dụng của admin](#làm-lại-trang-nhà-tuyển-dụng-của-admin-2026-11-19) | ✅ Gộp vào `dev` (#263); làm gọn giao diện chi tiết ở PR #266 (nhánh `feat/admin-recruiter-detail-ui`), chờ gộp |
+| [Tối ưu và chuẩn hóa test/CI](#tối-ưu-và-chuẩn-hóa-testci-2026-11-19) | 🟨 PR #256, #257, #258, GĐ4 nhánh `docs/test-standards` — chờ gộp |
+| [Tái cấu trúc backend (ADR-0022, GĐ0–GĐ6)](#tái-cấu-trúc-backend-adr-0022-2026-11-19) | ✅ Gộp vào `dev` (#248–#255, 19/11); sau khi pull chạy `scripts/reset_local_db.sh` trước khi start backend |
+| [Tổ chức lại cấu trúc thư mục frontend](#tổ-chức-lại-cấu-trúc-thư-mục-frontend-2026-11-19) | ✅ Gộp vào `dev` (#247) |
 | [Mô hình hóa yêu cầu cho báo cáo (mục 3.2)](#mô-hình-hóa-yêu-cầu-cho-báo-cáo-mục-32-2026-11-18) | ✅ Nguồn sơ đồ trong `docs/01-phan-tich/mo-hinh-hoa-yeu-cau/` |
 | [Nâng cấp chiến dịch tuyển dụng (4 GĐ)](#nâng-cấp-chiến-dịch-tuyển-dụng-2026-11-18) | ✅ Cả 4 GĐ và đợt làm lại giao diện kênh, Fanpage, chi phí, lịch sử hoạt động đã gộp (#235–#237, #239–#242); sơ đồ phân tích nhóm chiến dịch trên nhánh `docs/campaign-diagrams` |
 | [Ứng tuyển bằng CV tải lên và form ứng tuyển mới](#ứng-tuyển-bằng-cv-tải-lên-và-form-ứng-tuyển-mới-2026-11-18) | ✅ Gộp vào `dev` (#234) |
@@ -29,6 +36,140 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Song ngữ vi/en cho 3 cổng (ADR-0023, 2026-11-19)
+
+Lý do: một số NTD là người nước ngoài. Quyết định và lộ trình nằm ở
+[ADR-0023](02-tong-quan/adr-0023-i18n-vi-en.md).
+
+| GĐ | Phạm vi | Trạng thái |
+|---|---|---|
+| 0 | Nền tảng FE (Paraglide; antd/dayjs/Intl theo locale; `Accept-Language`; bộ chọn lưu vào tài khoản; `check:i18n` + ratchet); backend (`LocaleMiddleware`, `preferred_language`, catalog vi bổ sung cho DRF); chuyển 4 trang marketing NTD khỏi i18next | ✅ Gộp vào `dev` (#262) |
+| 1 | Cổng NTD: 3.029 khóa FE (công ty, tin, chiến dịch, tài khoản/đăng nhập dùng chung, khung workspace, entities/shared NTD dùng, trang pháp lý); backend 1.511 msgid ở `accounts`/`employers`/`jobs`/`campaigns`/`applications`; email + thông báo theo ngôn ngữ người nhận; prompt AI sinh tin/nội dung chiến dịch theo ngôn ngữ; bộ chọn ngôn ngữ ở workspace, đăng nhập, thiết lập; công cụ catalog Python thuần `common/i18n_catalog.py` | 🟨 Nhánh `feat/i18n-employer` |
+| 2 | Danh mục `name_en` (tỉnh/thành, kỹ năng, ngành nghề, phúc lợi); entities và shared | ⬜ |
+| 3 | Cổng ứng viên | ⬜ |
+| 4 | Cổng quản trị; ratchet về 0 | ⬜ |
+
+Số đo:
+- Dòng tiếng Việt viết cứng trong `frontend/src` (`scripts/i18n-baseline.json`):
+  8.793 lúc bắt đầu → 5.575 sau GĐ1. `features/employer`, `widgets/employer`,
+  `pages/employer` đã về 0.
+- Bundle khởi tạo:
+  - GĐ0: 322,4 → 326,3 KiB (runtime Paraglide khoảng 1,4 KiB, locale vi_VN của
+    antd khoảng 2,2 KiB).
+  - GĐ1: 332,2 KiB vì 204 chuỗi của form đăng nhập/phiên/lỗi API nằm sẵn trong
+    shell. Trần nâng lên 334 KiB.
+- Pytest trong container phải chạy với `--ds=config.settings.test`. Thiếu tham
+  số này, 38 test lỗi giả vì URL R2 (đã sửa trong `scripts/check_all.sh`).
+
+## Chuẩn hóa tiêu đề trang 3 cổng (2026-11-19)
+
+Rà toàn bộ route của 3 cổng, đối chiếu `<title>` với H1/nhãn menu; quy ước ở
+mục "Tiêu đề trang" của `frontend/ARCHITECTURE.md`.
+
+- Thương hiệu theo cổng: `| ProCV`, `| ProCV cho Nhà tuyển dụng` (cả SEO shell
+  marketing NTD), `| Quản trị ProCV`; sinh từ `site_name`.
+- Sửa route bị gán nhầm "Trang không tồn tại" (và `noindex`): `/tai-cv-len`,
+  `/tuyen-dung/:slug`, NTD `/notifications`, `/activities`, `/company-page`,
+  link đánh giá hồ sơ.
+- Tiêu đề SEO kiểu trang tuyển dụng lớn: tin `Tuyển <vị trí> - <công ty>`,
+  danh sách việc làm bỏ nhãn ngày, danh mục mẫu CV khớp H1 có năm, danh mục
+  blog/trợ giúp kèm mục cha, chiến dịch `<tên> - <công ty>`; frontend và SEO
+  shell backend ra cùng chuỗi.
+- Trạng thái lỗi dùng đúng câu đang hiển thị; tiêu đề trang marketing NTD theo
+  ngôn ngữ (vi/en); tiêu đề quản trị khớp H1.
+- Thanh trên cùng workspace NTD dùng chung resolver với tiêu đề tab (trước đây
+  hiện "Không gian nhà tuyển dụng" ở trang đăng/sửa tin).
+- Gỡ `/tuyendung/bao-gia` khỏi SEO shell và sitemap (SPA không có trang này).
+
+## Hậu kiểm nội dung trang công ty (2026-11-19)
+
+Quyết định: ER-D65 đến ER-D68, [ADR-0017](02-tong-quan/adr-0017-company-page.md)
+quyết định 3 (sửa). Nội dung trang công ty chuyển từ duyệt trước sang đăng ngay
+rồi hậu kiểm; duyệt trước chỉ còn cho thay đổi pháp lý, form hồ sơ và công ty bị
+quản trị viên bật duyệt trước.
+
+| Hạng mục | Nội dung | Trạng thái |
+| --- | --- | --- |
+| Backend | `CompanyContentChange` + `Company.content_review_required` (migration `0004`); `POST company/page/content/` đăng ngay, ảnh tải vào `content_change`, bỏ key vừa đăng khỏi yêu cầu đang mở; API admin `company-content-changes/` (danh sách, `mark-reviewed/`, `revert/`) và `companies/{id}/content-review/`; thông báo `company_content_reverted` | ✅ Xong trên nhánh |
+| Sửa lỗi kèm | Form hồ sơ không còn xoá nội dung trang đang chờ duyệt trong cùng yêu cầu; hàng đợi "Yêu cầu cập nhật công ty" chỉ đếm yêu cầu chờ quản trị viên | ✅ Xong trên nhánh |
+| Frontend NTD | Thẻ nội dung "Lưu" (đăng ngay) hoặc "Gửi duyệt" khi bị bật duyệt trước; chỉ khoá khối còn trong yêu cầu đang thẩm định | ✅ Xong trên nhánh |
+| Frontend admin | Tab "Thay đổi nội dung" ở Công ty (đếm chưa xem, so sánh trước/sau, đánh dấu đã xem hàng loạt, hoàn tác kèm lý do), tab cùng tên trong chi tiết công ty, công tắc "Bật/Tắt duyệt trước" ở tab Trang công khai | ✅ Xong trên nhánh |
+## Làm lại trang nhà tuyển dụng của admin (2026-11-19)
+
+Mục tiêu: khi số NTD lớn, admin xử lý nhanh và ít bước; giao diện gọn, đồng bộ
+dashboard admin; nhật ký hoạt động chia theo nhóm và ngày. Một PR, nhánh
+`feat/admin-recruiter-workspace`.
+
+| Phần | Nội dung |
+| --- | --- |
+| Việc cần làm | Backend tính một `next_action` cho mỗi NTD bằng SQL (quá hạn 72 giờ → chờ duyệt xác thực → cập nhật công ty → bị hạn chế → chờ NTD bổ sung → chưa liên kết công ty → chưa thiết lập → chưa nộp); lọc `next_action`/`admin_queue`, sắp xếp `ordering=next_action`, đếm trong `summary.next_actions` cùng một quy tắc |
+| Danh sách | 6 ô phân khúc kiểu dashboard (bấm = lọc, số khớp danh sách); bảng gọn còn NTD · Việc cần làm (có nút đi thẳng) · Xác thực · Công ty · Tài khoản; tìm theo tên công ty (không dấu), MST, SĐT; 20/40/60 dòng/trang; xem nhanh có việc cần làm, tóm tắt, 5 hoạt động gần đây và nút ‹ › chuyển NTD |
+| Chi tiết | Hero gọn + dải "Việc cần làm" có CTA; 6 tab (Tổng quan gộp Hồ sơ NTD, Xác thực, Công ty, Tuyển dụng, Bảo mật, Nhật ký); `?tab=profile` cũ chuyển về Tổng quan |
+| Nhật ký | `GET /admin/accounts/:id/activity/` gộp đăng nhập, thao tác admin, đổi trạng thái, xác thực, SĐT, liên kết/cập nhật công ty, hoạt động tuyển dụng; phân trang con trỏ; nhóm Bảo mật/Tài khoản/Xác thực/Công ty/Tuyển dụng có số đếm; giao diện chia theo ngày ("Hôm nay", "Hôm qua", thứ + ngày), giờ HH:mm, người thực hiện, chi tiết thu gọn. Thêm index `admin_audit_target_time_idx`, bỏ phép OR trên JSON |
+| Popup | Mẫu chung `ActionDialog` + `ReasonField` (lý do mẫu) + `ImpactFacts` + `useImpactConfirmation`: tác động tự tải khi mở, xác nhận một click; backend cho preview lý do trống, confirm vẫn bắt buộc lý do (lý do nằm trong token). Áp dụng cho khóa/cấm/thu hồi phiên, quyết định xác thực, vòng đời xác thực, giấy tờ, cập nhật công ty, gỡ liên kết, domain, đặt lại mật khẩu, đổi email |
+| Luồng duyệt | Duyệt giấy tờ đạt = 1 click (không popup); sau quyết định có "Hồ sơ tiếp theo (còn N)" đi thẳng tới ca cũ nhất kế tiếp — từ ~6+3N click và quay lại danh sách còn ~5+N |
+| Giao diện chi tiết (20/11) | Hero kèm dải số liệu; tab trên nền trang, nội dung trong panel; Tổng quan hai cột (hồ sơ · tóm tắt + hoạt động); trường hiển thị nhãn trên giá trị theo lưới tự co, chia nhóm; sửa bảng giấy tờ tràn trên mobile. PR #266 |
+
+## Tối ưu và chuẩn hóa test/CI (2026-11-19)
+
+CI mỗi PR mất 12–18 phút và đỏ ở gần một nửa số lần chạy (17/40 run gần nhất của
+mỗi workflow). Mục tiêu: wall-clock mỗi PR ≤ 8 phút, mỗi job ≤ 5 phút, CI xanh ổn
+định, có chuẩn thời gian và chất lượng test được CI kiểm. Mỗi GĐ một PR về `dev`.
+
+| GĐ | Nội dung | Trạng thái |
+| --- | --- | --- |
+| GĐ0 | Gỡ chặn: test chậm/flaky (CampaignList, báo cáo công ty), watchdog faulthandler làm sập worker pytest, timeout job backend 50 → 15 phút | 🟨 PR #256 |
+| GĐ1 | DB test dựng một lần rồi clone theo worker xdist (`backend/conftest.py`): setup ~90s/worker trên CI → một lần migrate không coverage; cục bộ lần chạy sau setup 29s → 0,4s, full suite ~45s | 🟨 PR #257 |
+| GĐ2 | Viết lại migration test | ➖ Bỏ — GĐ6 tái cấu trúc backend đã reset baseline và gỡ test migration lịch sử |
+| GĐ3 | Frontend: E2E chạy trong image Playwright theo phiên bản lockfile (bỏ bước cài 16s–7,5 phút); tag `@responsive` cho 71/102 test, tablet/mobile chỉ chạy test có tag (330 → 266 lượt); 105 file test thuần logic chạy môi trường node; sửa các file test chậm nhất (AdminCompanyWorkspace 7,6s → 0,16s, hook onboarding 7,3s → 25ms); unit 4 → 5 shard; script `test:related`, `test:changed` | 🟨 PR #258 |
+| GĐ4 | [Tiêu chuẩn kiểm thử](05-huong-dan/tieu-chuan-kiem-thu.md) + `scripts/check_test_budgets.mjs` (JUnit → cảnh báo vượt ngưỡng mềm, fail khi vượt ngưỡng cứng) chạy ở backend-checks, coverage, e2e-smoke-shard. Cổng này bắt được danh sách tin admin chậm do PostgreSQL JIT (348 → 42ms/request) → tắt JIT ở kết nối Django | 🟨 PR #259 |
+
+## Tái cấu trúc backend (ADR-0022, 2026-11-19)
+
+Rà soát toàn bộ `backend/` (18 app, ~140 nghìn dòng): khung ADR-0010 bị lệch,
+luật không còn được CI kiểm. Quyết định ở
+[ADR-0022](02-tong-quan/adr-0022-backend-structure.md); làm qua 7 giai đoạn, mỗi
+GĐ một PR về `dev`. Cả 7 GĐ cùng bản sửa E2E chiến dịch (#250) đã gộp vào `dev` ngày 19/11/2026.
+
+| GĐ | Nội dung | Trạng thái |
+| --- | --- | --- |
+| 0 | ADR-0022; sửa cổng ranh giới feature frontend sau #247; cổng import chéo app/module gốc (`check_backend_imports.py`, baseline 148 mục); cổng OpenAPI (baseline 70 lỗi / 340 cảnh báo); tách `requirements-dev.txt`, pin `gunicorn`/`redis`; bắt buộc `DJANGO_SETTINGS_MODULE` | ✅ #248 |
+| 1 | Bố cục chuẩn: 30 module gốc app về đúng tầng (thêm tầng `domain/`), URL tách theo cổng vào `api/urls/<cổng>.py`, view SEO vào `seo/`, `signals/` + `tasks/` thành package, code trong `__init__` ra module riêng, `common/` chia `api/http/storage/html/pdf/files/db`; baseline import 148 → 33 | ✅ #249 |
+| 2 | Model + máy trạng thái + API chiến dịch sang `campaigns` (3 migration chỉ đổi state, ContentType chuyển theo); `cv_templates` thành engine tài liệu CV (schema, composition, in PDF), engine Chromium vào `common/pdf/`; bỏ lazy export của accounts; gỡ route trùng `/api/candidate/cvs/backgrounds/`; import chéo app 33 → 0, gỡ baseline | ✅ #251 |
+| 3 | Exception handler chung + `DomainError` (gỡ `_call`, `_run_mutation`…); ORM/transaction/`.delay()` ra khỏi view và `create/update` của serializer ở 4 cụm app; GET không còn tạo hồ sơ NTD; `@extend_schema` cho mọi view, OpenAPI từ 70 lỗi/340 cảnh báo về **0/0** (cổng siết không baseline); `parse_bool`/`parse_int` dùng chung; Browsable API chỉ khi DEBUG | ✅ #252 |
+| 4 | API theo cổng `/api/{auth,public,candidate,employer,admin,shared}/` (237 route đổi, bảng [url-map](04-api/url-map-2026-11.md)), bỏ `/api/v2/` và tên `v2` ở module/lớp/route, router `SimpleRouter`, gỡ route SEO legacy `/jobs`; frontend: 51 API client + mock unit/E2E | ✅ #253 |
+| 5 | Không còn module production > 500 dòng: settings tách 8 component (giá trị không đổi), `verification`/`digests`/`pipeline`/`ai_generation`/`account_management`/`posting`… thành package; gộp trùng: `common/outbox.py`, `common/errors.py`, một bộ HTML→text, một bảng chữ ký file, chính sách AI một nguồn (`jobs/domain/ai_policy.py`); sửa 2 chỗ lấy IP client giả mạo được (captcha, audit CV); gỡ chuỗi legacy media, 9 lệnh chạy một lần, kênh OTP email cũ, font CV cũ; bật ruff DJ001/007/008/012; thêm test privacy/skills/locations, tách file test > 1000 dòng | ✅ #254 |
+| 6 | 274 migration → baseline `0001_initial` (+`0002_initial` khi FK vòng) và `00xx_reference_data` nạp JSON qua `common/db/reference_data.py`; schema mới khớp schema cũ (trừ 4 cột mồ côi của `employers_company` đã dọn và bảng chiến dịch sang `campaigns_*`); gỡ 8 test migration và job CI `backend-migration-tests`; `scripts/reset_local_db.sh` (pg_dump → migrate → seed) | ✅ #255 |
+
+GĐ1 chỉ di chuyển code; bảo đảm không đổi hành vi bằng: ảnh chụp bảng URL
+(887 route, 679 đường dẫn mẫu resolve ra cùng view) trước/sau, routing queue
+của 50 Celery task và lịch beat giống hệt, schema OpenAPI khớp từng byte, và
+toàn bộ test. Tên module/lớp `v2` để GĐ4 đổi cùng URL.
+
+GĐ0 sửa một lỗi cấu hình: `config/__init__.py` nạp `config/celery.py`, file này
+đặt mặc định `config.settings.development`, nên gunicorn production thiếu
+`DJANGO_SETTINGS_MODULE` sẽ âm thầm chạy settings development. Nay thiếu biến là
+dừng ngay; image Docker mặc định production, compose dev khai development.
+
+## Tổ chức lại cấu trúc thư mục frontend (2026-11-19)
+
+Mọi layer của `frontend/src` dùng chung một bộ tên cổng và nghiệp vụ, thay cho
+các danh sách phẳng (76 feature, 40 widget, 32 entity, 33 trang admin chung một thư mục).
+Quy tắc ở mục "Tổ chức thư mục trong từng layer" của `frontend/ARCHITECTURE.md`.
+
+- `features/<cổng>/<module>/<slice>`: 4 cổng (`main`, `employer`, `admin`,
+  `common`), 19 module.
+- `widgets/<cổng>/<widget>`: bỏ tiền tố cổng bị lặp trong tên.
+- `entities/<domain>/<entity>`: 10 domain.
+- `pages/<cổng>/<mục>`: bỏ cấp `app` của admin và NTD; trang admin chia
+  thành 10 mục.
+- `shared/ui`: gom các cụm `rich-text`, `confirm-action`, `toast`.
+- `frontend/MASCOT.md` chuyển sang `docs/08-frontend/mascot.md`.
+- Gate kiến trúc mới: `no-cross-portal-slice` (trang/widget không dùng feature
+  của cổng khác), các rule chéo slice dùng capture group, kiểm tra cấu trúc thư
+  mục nhóm, kèm negative fixture.
+- Không đổi URL, API, storage key hay guard.
 
 ## Mô hình hóa yêu cầu cho báo cáo (mục 3.2) (2026-11-18)
 
@@ -189,6 +330,13 @@ GĐ1 đã làm:
     use case (20, thêm tác nhân Bộ lập lịch, Facebook, Ứng viên), 5 sơ đồ tuần
     tự và 5 sơ đồ hoạt động (thiết lập và kích hoạt, vòng đời, phân phối đa
     kênh, đăng Fanpage, sức khỏe và báo cáo).
+- Giải thích chỉ số (nhánh `feat/campaign-metric-help`): `shared/ui/HelpTip`
+  (icon ? có tooltip, bấm được bằng bàn phím) ở bảng so sánh nguồn, chi tiết
+  kênh, chi phí, tab Sức khỏe, Tổng quan và đầu trang chiến dịch.
+- Ảnh trong bài Fanpage (#245): tải tối đa 4 ảnh
+  hoặc dùng ảnh bìa/logo công ty; ảnh mã hóa lại, bỏ EXIF; đăng bằng
+  `/photos` (chưa công khai) + `/feed` với `attached_media`, chạy được ở máy cục
+  bộ vì gửi thẳng tệp. Migration `campaigns.0005` (thêm `images`).
 - Còn mở: chưa xem bằng mắt trên trình duyệt (đã có test API và test giao diện);
   `openapi.yaml` được sinh lại nên kéo theo phần lệch tích tụ từ các tính năng
   trước.
@@ -207,7 +355,7 @@ luồng cho ProCV.
   có `db_default` vì migration cũ tạo version bằng model lịch sử) nên ứng viên
   xóa CV thì NTD vẫn đọc được; xóa bản chụp thì tệp bị dọn theo.
 - Nộp CV tải lên bắt buộc họ tên, email, số điện thoại (điền sẵn từ tài khoản).
-- NTD: `GET /api/v2/recruiter/applications/<id>/cv/file/` trả PDF (DOCX được
+- NTD: `GET /api/employer/applications/<id>/cv/file/` trả PDF (DOCX được
   đổi sang PDF), `?download=1` để tải và báo ứng viên như tải bản dựng. Khung
   xem trước hiện đúng tệp đó. Với CV dạng tệp: không tạo bản dựng PDF, không tạo
   link mời người ngoài đánh giá (không ẩn danh được thông tin trong tệp).
@@ -235,7 +383,7 @@ luồng cho ProCV.
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| `GET /api/dashboard/admin/?period=7\|30\|90`: hàng chờ, KPI so kỳ trước, xu hướng, phễu, an toàn, ngành nghề, AI | 🟨 Xong trên nhánh `feat/admin-dashboard` |
+| `GET /api/admin/dashboard/?period=7\|30\|90`: hàng chờ, KPI so kỳ trước, xu hướng, phễu, an toàn, ngành nghề, AI | 🟨 Xong trên nhánh `feat/admin-dashboard` |
 | Trang chủ quản trị: khối "Cần xử lý" xếp theo hạn xử lý, KPI, biểu đồ, panel sức khỏe nền tảng | 🟨 Xong trên nhánh `feat/admin-dashboard` |
 | Sidebar sáng đồng bộ dashboard: badge mọi hàng chờ (đỏ khi quá hạn), cụm tài khoản + đăng xuất ở đáy, bỏ ô tìm chức năng | 🟨 Xong trên nhánh `feat/admin-dashboard` |
 | Header: breadcrumb, nút Tạo mới, chuông hàng chờ, trợ giúp (sắp ra mắt), menu tài khoản | 🟨 Xong trên nhánh `feat/admin-dashboard` |
@@ -250,7 +398,7 @@ luồng cho ProCV.
 - Phễu ứng tuyển tính theo giai đoạn đã đến (`viewed_at`, `shortlisted_at`...)
   của hồ sơ nộp trong kỳ; "tin chưa có hồ sơ" dùng `EXISTS` trên hồ sơ hiện hành.
 - CSS riêng nằm trong chunk lazy của trang (không tăng CSS khởi tạo).
-- Badge sidebar và chuông header đọc chung `GET /api/dashboard/admin/queues/`
+- Badge sidebar và chuông header đọc chung `GET /api/admin/dashboard/queues/`
   (thay ba request summary riêng của layout); lời mời quản trị vẫn lấy từ
   summary tài khoản vì chỉ superuser thấy.
 - Kiểm tra: pytest `apps/dashboard` 10 passed; vitest widget/entity; smoke E2E
@@ -277,7 +425,7 @@ luồng cho ProCV.
   thực email qua link/mã, đăng nhập Google, đặt lại mật khẩu, đổi email).
 - Kiểm tra: pytest avatar 5 passed, vitest edit-profile + trang tài khoản 25
   passed, E2E smoke avatar 3 viewport passed, CSS ban đầu 37,9/38,5 KiB.
-- Modal nằm ở `features/edit-profile` (`AvatarEditorModal`), được widget
+- Modal nằm ở `features/common/account/edit-profile` (`AvatarEditorModal`), được widget
   `employer-account-settings` và `admin-account-settings` dùng lại; hai widget
   có test mở modal.
 
@@ -334,7 +482,7 @@ Quyết định nghiệp vụ đã chốt với user ngày 16/11:
 - `give_back_hidden_time` (`apps/jobs/models/visibility.py`) cộng lại thời gian bị ẩn khi gỡ: khóa tài khoản (`policy_held_at`), giữ để kiểm tra tuân thủ (`applied_at`, chỉ khi recruiter không còn lệnh giữ nào khác) và ẩn trang công ty (lần `POLICY_HOLD_APPLIED` gần nhất). Các lần ẩn mà NTD tự khắc phục được (hạn nộp, DPA, hồ sơ chưa đủ) không được bù.
 - `eligible_owners_queryset()` = người đại diện đủ điều kiện, có vai trò owner, không bị giữ để kiểm tra tuân thủ. Duyệt tham gia, hàng đợi admin, danh sách thành viên và chỉ định owner đều dùng định nghĩa này.
 - Cảnh báo nộp hàng loạt tính theo công ty. Nhắc NTD gửi theo thứ tự: người đăng tin → owner đủ điều kiện → mọi NTD còn hoạt động của công ty.
-- `GET /api/v2/applications/rules/` trả về: số lần nộp tối đa, thời gian chờ nộp lại, mốc ứng viên được nhắc, các lựa chọn thời hạn tự từ chối, số ngày cảnh báo và số ngày ân hạn email. Frontend không còn chép tay các con số này. Form đăng tin ghi rõ thời hạn "tính từ ngày ứng viên nộp".
+- `GET /api/public/applications/rules/` trả về: số lần nộp tối đa, thời gian chờ nộp lại, mốc ứng viên được nhắc, các lựa chọn thời hạn tự từ chối, số ngày cảnh báo và số ngày ân hạn email. Frontend không còn chép tay các con số này. Form đăng tin ghi rõ thời hạn "tính từ ngày ứng viên nộp".
 - Đã chốt là thiết kế, không sửa: hồ sơ trên tin của đồng nghiệp bị từ chối do chặn ứng viên thì không hoàn tác được; gỡ chặn xong thì ứng viên nộp lại.
 
 </details>
@@ -681,7 +829,7 @@ loại tiêu chí khỏi điểm, kết quả tất định, có golden test và
 <details><summary>Ghi chú tuần 3</summary>
 
 - Luồng: `encoder` → `documents` → `scoring/` (công thức `hybrid-v1`) →
-  `explain` → `analyses`; API `/api/matching/analyses/`, task ở queue
+  `explain` → `analyses`; API `/api/candidate/matching/analyses/`, task ở queue
   `ai-matching` do service `ml-worker` chạy (Dockerfile target `ml`, torch CPU;
   image web không có torch). Mô hình zero-shot lưu ở
   `ml/models/multilingual-e5-base/zs-v1` bằng `ml/scripts/export_model.py`.
@@ -732,7 +880,7 @@ loại tiêu chí khỏi điểm, kết quả tất định, có golden test và
 
 <details><summary>Ghi chú tuần 4</summary>
 
-- Feature `features/analyze-job-fit`: thẻ "Xem độ phù hợp" (mascot vẫy tay, viền
+- Feature `features/main/application/analyze-job-fit`: thẻ "Xem độ phù hợp" (mascot vẫy tay, viền
   chuyển màu) ở cột phải trang chi tiết tin, dưới thông tin công ty (từ 1024 px);
   dưới 1024 px thẻ nằm ngay dưới thông tin chính của tin, cạnh nút ứng tuyển; hộp thoại
   chọn CV → màn hình "AI đang phân tích CV" (tờ CV có tia quét, trạng thái lấy
@@ -742,7 +890,7 @@ loại tiêu chí khỏi điểm, kết quả tất định, có golden test và
   thì hiện kết quả lần trước của tin; lỗi (CV scan, quá lượt) có câu hướng dẫn.
 - Hộp thoại tải trễ, CSS riêng ngoài CSS khởi tạo (đo: JS khởi tạo 320,8/328,5
   KiB, CSS 38,0/38,5 KiB). Chuyển động tắt theo "giảm chuyển động".
-- `CvChoice` chuyển xuống `entities/cv`. Trang lưu CV thành công bỏ "x% phù hợp"
+- `CvChoice` chuyển xuống `entities/cv/cv`. Trang lưu CV thành công bỏ "x% phù hợp"
   của đối sánh theo luật, chỉ giữ nhãn (hết hai con số mâu thuẫn).
 - Kiểm thử: 13 unit test của feature, E2E `job-fit.spec.js` (TC-01 luồng chính,
   TC-06 xem lại kết quả, TC-08 khách không mở được, TC-15 không tràn ngang ở
@@ -792,10 +940,10 @@ loại tiêu chí khỏi điểm, kết quả tất định, có golden test và
   tắt nên mọi upload bị 409; local đã đưa về `False` (bật lại phải kèm
   `UPLOAD_QUARANTINE_ENABLED=True` + ClamAV). CV tải lên hiện trống vì mọi màn
   hình dựng từ `content_json` rỗng.
-- Xem tệp gốc: `GET /api/v2/cvs/<id>/source/` (chủ CV) và
-  `GET /api/v2/cvs/shares/<token>/source/` (link chia sẻ, không ghi thêm lượt
+- Xem tệp gốc: `GET /api/candidate/cvs/<id>/source/` (chủ CV) và
+  `GET /api/public/cvs/shares/<token>/source/` (link chia sẻ, không ghi thêm lượt
   truy cập); DOCX đổi sang PDF bằng LibreOffice. Hàm đổi chuyển từ `employers`
-  sang `common/office_preview.py`. Trang xem và link chia sẻ của CV tải lên hiện
+  sang `common/files/office_preview.py`. Trang xem và link chia sẻ của CV tải lên hiện
   tệp gốc (ẩn thanh công cụ PDF); thẻ CV tải lên là biểu tượng thư mục, không
   có nút sửa.
 - Tiêu chuẩn upload + nhận dạng CV (`apps/cvs/services/cv_document.py`, dùng
@@ -887,7 +1035,7 @@ Lộ trình 6 giai đoạn của workspace `/tuyendung/app/applications`; mỗi 
 <details><summary>Ghi chú chi tiết</summary>
 
 - Danh sách: tab Tất cả/Đang tuyển/Nháp/Hết hạn/Đã đóng đọc `status_counts`
-  của `GET /api/jobs/mine/` (một aggregate, đếm theo cùng `q`); tìm kiếm debounce
+  của `GET /api/employer/jobs/` (một aggregate, đếm theo cùng `q`); tìm kiếm debounce
   400 ms, giữ `status|q|page` trên URL. Mỗi tin hiện số ứng viên, badge "N mới"
   dẫn tới `/applications?job=…&scope=unread`, lượt xem + tỉ lệ ứng tuyển, hạn
   nộp có đếm ngược, màu cảnh báo và thanh thời gian đã trôi. Từ 1280px dòng là
@@ -900,7 +1048,7 @@ Lộ trình 6 giai đoạn của workspace `/tuyendung/app/applications`; mỗi 
   `Segmented` thay cho Select chọn tab.
 - Tab CV trước đây tải trang đầu (20 CV) rồi tự tính số liệu, nên sai khi tin
   có nhiều hồ sơ. Nay số liệu lấy từ `application_summary` của chi tiết tin và
-  danh sách gọi `/api/v2/recruiter/applications/?job=…&latest=1` có phân trang,
+  danh sách gọi `/api/employer/applications/?job=…&latest=1` có phân trang,
   sắp xếp, tìm kiếm, lọc phía server; gỡ `getRecruiterApplications` không còn
   nơi dùng. Tab "Ứng viên đã xem tin" thành phễu Hiển thị → Xem → Ứng tuyển.
 - `Application.UNANSWERED_STATUSES` là định nghĩa duy nhất cho "chưa phản hồi"
@@ -956,13 +1104,13 @@ Quyết định: [ADR-0017](02-tong-quan/adr-0017-company-page.md), ER-D58 đế
 
 | Giai đoạn | Nội dung | Trạng thái |
 | --- | --- | --- |
-| CP-0 | Nền móng: predicate người đại diện chuyển xuống `employers/models/representation.py`; `GET /api/jobs/?company=<public_id>` (0 query phát sinh) và `company_slug` trên DTO tin; slug `tim-kiem` dành riêng; `Company.public_headquarters` dùng chung cho danh bạ và chi tiết tin (hộ kinh doanh không lộ địa chỉ); frontend chuyển `CompanyLogo` + helper tên công ty vào `entities/company`, `RichContent` và `ShareButtons` vào `shared/ui` | ✅ Xong trên nhánh, chưa gộp |
-| CP-1 | `GET /api/companies/<slug>/` dạng khối có kiểu (một builder), công ty tương tự, facets tỉnh/thành; admin tạm ẩn trang (`company_page.moderate`, 404 thật, loại khỏi danh bạ/sitemap/gợi ý); SEO shell `/cong-ty/<slug>` + `Organization`/`BreadcrumbList`, `sitemaps/companies.xml`; seed tạo owner đã xác thực | ✅ Xong trên nhánh, chưa gộp |
+| CP-0 | Nền móng: predicate người đại diện chuyển xuống `employers/models/representation.py`; `GET /api/public/jobs/?company=<public_id>` (0 query phát sinh) và `company_slug` trên DTO tin; slug `tim-kiem` dành riêng; `Company.public_headquarters` dùng chung cho danh bạ và chi tiết tin (hộ kinh doanh không lộ địa chỉ); frontend chuyển `CompanyLogo` + helper tên công ty vào `entities/company/company`, `RichContent` và `ShareButtons` vào `shared/ui` | ✅ Xong trên nhánh, chưa gộp |
+| CP-1 | `GET /api/public/companies/<slug>/` dạng khối có kiểu (một builder), công ty tương tự, facets tỉnh/thành; admin tạm ẩn trang (`company_page.moderate`, 404 thật, loại khỏi danh bạ/sitemap/gợi ý); SEO shell `/cong-ty/<slug>` + `Organization`/`BreadcrumbList`, `sitemaps/companies.xml`; seed tạo owner đã xác thực | ✅ Xong trên nhánh, chưa gộp |
 | CP-2 | Trang `/cong-ty/:slug` (Tổng quan / Việc làm qua URL, lọc từ khoá + tỉnh), thay mọi liên kết công ty theo tên bằng slug, tab admin "Trang công khai" | ✅ Xong trên nhánh, chưa gộp |
 | CP-3 | Theo dõi công ty (idempotent, `follower_count` qua `F()`), trang `/tai-khoan/cong-ty-dang-theo-doi` | ✅ Xong trên nhánh, chưa gộp |
 | CP-4 | Báo cáo thông tin sai, hàng chờ admin "Báo cáo công ty" (`company_report.*`), xử lý kèm tạm ẩn trang | ✅ Xong trên nhánh, chưa gộp |
 | CP-5 | Chính sách quyền ở tầng models, uỷ quyền biên tập, bố cục áp dụng ngay (khoá lạc quan), tin ghim; workspace `/tuyendung/app/company-page` có xem trước | ✅ Xong trên nhánh, chưa gộp |
-| CP-6 | Khẩu hiệu, văn hoá, video, mạng xã hội, phúc lợi dạng thẻ, văn phòng qua `CompanyUpdateRequest` (gộp theo khối), tab "Nội dung", độ hoàn thiện | ✅ Xong trên nhánh, chưa gộp |
+| CP-6 | Khẩu hiệu, văn hoá, video, mạng xã hội, phúc lợi dạng thẻ, văn phòng qua `CompanyUpdateRequest` (gộp theo khối), tab "Nội dung", độ hoàn thiện (từ 19/11 đăng ngay và hậu kiểm, xem [Hậu kiểm nội dung trang công ty](#hậu-kiểm-nội-dung-trang-công-ty-2026-11-19)) | ✅ Xong trên nhánh, chưa gộp |
 | CP-7 | Nguồn digest email thứ ba "công ty đang theo dõi", tuỳ chọn `followed_company_jobs` | ✅ Xong trên nhánh, chưa gộp |
 
 ## Làm lại Template CV (CVT-v3, 2026-11-13)
@@ -972,14 +1120,14 @@ Kế hoạch: [`ke-hoach-cv-template-v3.md`](01-phan-tich/ke-hoach-cv-template-v
 
 | Giai đoạn | Nội dung | Trạng thái |
 | --- | --- | --- |
-| CVT-0 | Sửa preview kẹt khi mở trang chi tiết mẫu; bỏ "Khôi phục bản chưa lưu" (UI + `GET /api/v2/cvs/latest-recoverable-draft/`); đồng bộ H1/breadcrumb/`<title>` và query `nguon`, `vi-tri`, `ngon-ngu`, `mau`; chỉ còn tiếng Việt/Anh (`SUPPORTED_LOCALE_CODES`, redirect 301 kho Nhật/Trung) | ✅ Gộp vào `dev` (PR #176, 2026-11-13). pytest 1155 passed (87,48%), vitest 1196/1198 (2 test nhà tuyển dụng timeout khi chạy song song, chạy riêng pass), E2E smoke 257 passed + 1 flaky (announcement strip mobile, chạy lại 3/3 pass) |
+| CVT-0 | Sửa preview kẹt khi mở trang chi tiết mẫu; bỏ "Khôi phục bản chưa lưu" (UI + `GET /api/candidate/cvs/latest-recoverable-draft/`); đồng bộ H1/breadcrumb/`<title>` và query `nguon`, `vi-tri`, `ngon-ngu`, `mau`; chỉ còn tiếng Việt/Anh (`SUPPORTED_LOCALE_CODES`, redirect 301 kho Nhật/Trung) | ✅ Gộp vào `dev` (PR #176, 2026-11-13). pytest 1155 passed (87,48%), vitest 1196/1198 (2 test nhà tuyển dụng timeout khi chạy song song, chạy riêng pass), E2E smoke 257 passed + 1 flaky (announcement strip mobile, chạy lại 3/3 pass) |
 | CVT-1a | Ngôn ngữ CV thành enum `CvLanguage`; tên/mô tả/SEO mẫu thành trường `*_vi`/`*_en` (data migration giữ dữ liệu); gỡ `sitecontent.Locale`, API locale, `locale_ref`, tab admin "Ngôn ngữ", entity FE `locale`; xóa dữ liệu tiếng Nhật/Trung | ✅ Gộp vào `dev` (PR #178 frontend, #179 backend + docs, 2026-11-14). pytest 1151 passed (87,48%), vitest 1198/1198, E2E smoke 258 passed |
 | CVT-1b | `CvPositionProfile` (1-1 vị trí chuyên môn, `section_preset`), `ExperienceBand`, nội dung mẫu theo vị trí × ngôn ngữ × nhóm kinh nghiệm, bỏ `CvContentBlueprint` (data migration giữ nội dung), resolver ưu tiên đúng nhóm kinh nghiệm, seed mới; gỡ tab/menu Blueprint và menu "Ngôn ngữ" sót từ CVT-1a | ✅ Gộp (PR #180, 2026-11-14). pytest 1155 passed (87,60%), vitest 1198/1198, E2E smoke 258 passed |
 | CVT-1c | `UserCv.experience_years` (enum JD, tính từ mục kinh nghiệm) dùng cho gợi ý việc làm; gỡ cột legacy của `UserCv`/`CvTemplate`, adapter V1, `theme_color`/`color_variants` trên card, `sample_content_public_id` khi tạo CV và endpoint chi tiết nội dung mẫu | ✅ Gộp (PR #181, 2026-11-14) |
 | CVT-2 | Registry 8 layout dùng chung BE/FE (`layouts.json`, test so khớp); một renderer chung theo hàng/vùng (tone plain/tint/band, xếp dọc/ngang, biến thể timeline/compact), bỏ header cứng — tên/liên hệ/ảnh là section đặt theo vùng; PDF và ảnh catalogue in bằng Chromium (Playwright) từ trang `cv-print.html` của frontend, chặn mọi request ngoài origin; 4 font OFL tự host (Inter, Roboto, Be Vietnam Pro, Lora), font cũ map sang font mới; seed publish version mới cho 10 mẫu; migration đổi khóa layout cũ; danh tính minh họa chỉ cho ảnh catalogue và khách chưa đăng nhập | ✅ Gộp (PR #182, 2026-11-14). Thiết kế 8 layout đã duyệt. pytest 1161 passed (87,63%), vitest 1203/1203, E2E smoke 267 passed |
 | CVT-3 | Trường riêng theo vị trí (`CvPositionField`, section `position_details` chụp định nghĩa vào CV), từ khóa vị trí; section `portfolio`, `publications`; matching: `education_level` từ `degree_level`, `position_level` chọn trong panel "Hồ sơ ứng tuyển" của editor, `CvSkill` đồng bộ theo taxonomy kỹ năng; sinh nội dung mẫu bằng AI qua runtime `ai_core` (queue `ai-generation`, ≤ 16 tổ hợp, chặn dữ liệu cá nhân, trạng thái chờ duyệt); một bản xuất bản mỗi tổ hợp; API admin vị trí/trường riêng/độ phủ/import-export JSON; seed trường riêng cho 9 vị trí | 🟨 Xong code trên nhánh `feat/cvt-3-positions` |
 | CVT-4 | Cổng quản trị Mẫu CV: tổng quan, danh sách mẫu (kéo thả thứ tự, nhân bản, ẩn/hiện), **trang chỉnh sửa một màn hình** thay wizard 6 bước (thiết lập trái, xem trước phải, tự lưu, bản nháp tạo tự động; tạo mẫu chỉ cần tên VI/EN + bố cục, backend xếp sẵn mục theo `section_plans` và gán bảng màu khởi đầu), hộp xuất bản có checklist + PDF thử; vị trí & nội dung gợi ý (ma trận kinh nghiệm × ngôn ngữ, hàng đợi duyệt AI); thư viện; CV ứng viên có audit. Sửa: preview admin giật (vòng lặp thanh cuộn ↔ tỉ lệ thu phóng), lỗi "locale, experience_band must make a unique set" khi lưu nội dung gợi ý, lỗi "≤ 90" khi lưu độ rộng cột; kho mẫu công khai đổi sang `Cache-Control: public, no-cache` + ETag/304 (ẩn/xuất bản có hiệu lực ngay), ảnh mẫu cũ xóa trễ 30 phút và frontend thay ảnh lỗi bằng khung minh họa | 🟨 Xong code trên nhánh `feat/cvt-4-admin-portal` |
-| CVT-5 | Trang chi tiết mẫu: lựa chọn (nguồn, vị trí, kinh nghiệm, ngôn ngữ, màu) có một nguồn sự thật là query string; `useCvSource` dùng TanStack Query (preview cũ giữ khi tải bản mới, màu áp phía client); vị trí mặc định không ghi lên URL, trang có query `noindex`; chưa đăng nhập → đăng nhập ngay tại trang rồi tự tạo CV một lần; `POST /api/v2/cvs/` nhận `Idempotency-Key`; mobile có thanh "Tạo CV" cố định + bottom sheet (nút nổi tự nâng qua `--page-bottom-bar-height`); kho mẫu `useInfiniteQuery` 24 mẫu/trang, lọc có ảnh / một-hai cột | 🟨 Xong code trên nhánh `feat/cvt-5-template-detail` |
+| CVT-5 | Trang chi tiết mẫu: lựa chọn (nguồn, vị trí, kinh nghiệm, ngôn ngữ, màu) có một nguồn sự thật là query string; `useCvSource` dùng TanStack Query (preview cũ giữ khi tải bản mới, màu áp phía client); vị trí mặc định không ghi lên URL, trang có query `noindex`; chưa đăng nhập → đăng nhập ngay tại trang rồi tự tạo CV một lần; `POST /api/candidate/cvs/` nhận `Idempotency-Key`; mobile có thanh "Tạo CV" cố định + bottom sheet (nút nổi tự nâng qua `--page-bottom-bar-height`); kho mẫu `useInfiniteQuery` 24 mẫu/trang, lọc có ảnh / một-hai cột | 🟨 Xong code trên nhánh `feat/cvt-5-template-detail` |
 | CVT-6…CVT-7 | Upload, hoàn thiện | ⬜ Planned |
 
 ## Gỡ xác thực hai bước (ADR-0016, 2026-11-13)
@@ -1070,7 +1218,7 @@ Decision log:
 Code đã hoàn tất cho ER-0 đến ER-8. Còn lại là việc kích hoạt: upload strict
 mode và Chrome QA (ER-3), DPA cần bản pháp lý chính xác, SMS cần gateway
 production, staging và soak (ER-8). Lệnh kiểm tra chỉ đọc:
-`audit_employer_workflow_rollout`.
+`check_upload_scanner_readiness`, `check_employer_sms_readiness`.
 
 | Phase | Nội dung | Trạng thái |
 | --- | --- | --- |
@@ -1147,4 +1295,4 @@ Sản phẩm:
 
 - Cảnh báo domain công ty ở `Register.jsx` hứa giới hạn mua hoặc đăng tin không
   tồn tại.
-- `POST /api/jobs/mine/` bị chặn ở bước đăng vẫn giữ bản nháp vừa tạo.
+- `POST /api/employer/jobs/` bị chặn ở bước đăng vẫn giữ bản nháp vừa tạo.

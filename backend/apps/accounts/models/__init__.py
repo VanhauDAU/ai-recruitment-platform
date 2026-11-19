@@ -1,7 +1,7 @@
 """Public model API for the accounts Django app."""
 
 from .admin_accounts import AdminAccessAuditLog, AdminInvitation
-from .status import AccountStatusTransition
+from .status import AccountStatusTransition, account_status_resource_snapshot
 from .user import AuthEmailJob, AuthSession, SocialAccount, User, UserManager
 
 __all__ = [
@@ -13,4 +13,5 @@ __all__ = [
     'SocialAccount',
     'User',
     'UserManager',
+    'account_status_resource_snapshot',
 ]

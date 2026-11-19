@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.db import models
 
-from common.public_id import generate_public_id
+from common.db.public_id import generate_public_id
 
 from .documents import MatchDocument
 
@@ -78,6 +78,9 @@ class MatchAnalysis(models.Model):
         indexes = [
             models.Index(fields=['user', 'job', '-created_at'], name='idx_match_analysis_user_job'),
         ]
+
+    def __str__(self):
+        return self.public_id
 
     def save(self, *args, **kwargs):
         if not self.public_id:

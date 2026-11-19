@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 async function mockPublicSettings(page) {
-  await page.route('**/api/site/settings/', async (route) => {
+  await page.route('**/api/public/site/settings/', async (route) => {
     await route.fulfill({ contentType: 'application/json', body: '{}' })
   })
 }

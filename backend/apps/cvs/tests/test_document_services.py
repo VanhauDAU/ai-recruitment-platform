@@ -9,16 +9,13 @@ from apps.cv_templates.models import (
     CvTemplate,
     CvTemplateSection,
     CvTemplateVersion,
-)
-from apps.cv_templates.services import publish_template_version
-from apps.cvs.models import CvVersion, ImmutableCvVersionError, UserCv
-from apps.cvs.schemas import (
     empty_content,
     empty_layout,
     empty_style,
     validate_cv_document,
 )
-from apps.cvs.services.composition import compose_cv_document
+from apps.cv_templates.services import compose_cv_document, publish_template_version
+from apps.cvs.models import CvVersion, ImmutableCvVersionError, UserCv
 from apps.cvs.services.versions import (
     StaleDraftError,
     create_application_snapshot,

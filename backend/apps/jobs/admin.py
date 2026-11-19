@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from django.forms.models import BaseInlineFormSet
 from django.utils.html import format_html
 
-from common.media_storage import delete_local_media_url, media_url_from_value, save_image_upload
+from common.storage.media import delete_local_media_url, media_url_from_value, save_image_upload
 
 from .models import (
     Benefit,
@@ -32,7 +32,7 @@ class JobCategoryAdminForm(forms.ModelForm):
 
     class Meta:
         model = JobCategory
-        fields = '__all__'
+        fields = ['name', 'slug', 'description', 'parent', 'category_type', 'status', 'logo_url']
 
 
 class JobCategoryLocalizationInlineFormSet(BaseInlineFormSet):

@@ -1,5 +1,6 @@
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { useEffect, useState } from 'react'
+import { m } from '@/shared/config/i18n'
 
 const AUTO_SLIDE_MS = 5000
 
@@ -38,14 +39,14 @@ export default function BannerCarousel({ slides }) {
         <>
           <button
             onClick={() => go(-1)}
-            aria-label="Banner trước"
+            aria-label={m.ui_banner_previous()}
             className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white flex items-center justify-center cursor-pointer shadow transition"
           >
             <LeftOutlined className="text-gray-700 text-xs" />
           </button>
           <button
             onClick={() => go(1)}
-            aria-label="Banner tiếp theo"
+            aria-label={m.ui_banner_next()}
             className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 hover:bg-white flex items-center justify-center cursor-pointer shadow transition"
           >
             <RightOutlined className="text-gray-700 text-xs" />
@@ -55,7 +56,7 @@ export default function BannerCarousel({ slides }) {
               <button
                 key={i}
                 onClick={() => setIndex(i)}
-                aria-label={`Chuyển đến banner ${i + 1}`}
+                aria-label={m.ui_banner_go_to({ index: i + 1 })}
                 className={`h-1.5 rounded-full cursor-pointer transition-all ${
                   i === index ? 'w-5 bg-white' : 'w-1.5 bg-white/50 hover:bg-white/70'
                 }`}

@@ -1,19 +1,13 @@
-"""Read queries that enforce the account-access policy."""
+"""Read queries about a user's sign-in identities and device sessions."""
 
-from ..models import SocialAccount, User
+from ..models import AuthSession, SocialAccount, User
 
-
-def accessible_users_queryset():
-    """Users that are allowed to authenticate and use protected APIs."""
-    return User.objects.filter(
-        is_active=True,
-        is_deleted=False,
-        status=User.Status.ACTIVE,
-    )
+SESSION_HISTORY_LIMIT = 50
 
 
-def get_accessible_user(user_id):
-    return accessible_users_queryset().filter(pk=user_id).first()
+def auth_session_history(user):
+    """Newest device sessions of one account, revoked or expired ones included."""
+    return AuthSession.objects.filter(user=user)[:SESSION_HISTORY_LIMIT]
 
 
 def linked_oauth_provider(user):

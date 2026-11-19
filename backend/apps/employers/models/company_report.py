@@ -2,8 +2,9 @@
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy
 
-from common.public_id import generate_public_id
+from common.db.public_id import generate_public_id
 
 from .company import Company
 
@@ -16,16 +17,19 @@ class CompanyReport(models.Model):
     """
 
     class Reason(models.TextChoices):
-        WRONG_INFO = 'wrong_info', 'Thông tin công ty sai sự thật'
-        IMPERSONATION = 'impersonation', 'Mạo danh doanh nghiệp khác'
-        INAPPROPRIATE_CONTENT = 'inappropriate_content', 'Nội dung hoặc hình ảnh không phù hợp'
-        SCAM = 'scam', 'Dấu hiệu lừa đảo'
-        OTHER = 'other', 'Lý do khác'
+        WRONG_INFO = 'wrong_info', gettext_lazy('Thông tin công ty sai sự thật')
+        IMPERSONATION = 'impersonation', gettext_lazy('Mạo danh doanh nghiệp khác')
+        INAPPROPRIATE_CONTENT = (
+            'inappropriate_content',
+            gettext_lazy('Nội dung hoặc hình ảnh không phù hợp'),
+        )
+        SCAM = 'scam', gettext_lazy('Dấu hiệu lừa đảo')
+        OTHER = 'other', gettext_lazy('Lý do khác')
 
     class Status(models.TextChoices):
-        PENDING = 'pending', 'Chờ xử lý'
-        UPHELD = 'upheld', 'Xác nhận vi phạm'
-        DISMISSED = 'dismissed', 'Bác bỏ'
+        PENDING = 'pending', gettext_lazy('Chờ xử lý')
+        UPHELD = 'upheld', gettext_lazy('Xác nhận vi phạm')
+        DISMISSED = 'dismissed', gettext_lazy('Bác bỏ')
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     company = models.ForeignKey(Company, on_delete=models.PROTECT, related_name='reports')
@@ -74,6 +78,9 @@ class CompanyReport(models.Model):
         ]
         ordering = ['-created_at']
 
+    def __str__(self):
+        return f'{self.public_id} - {self.company_id} - {self.status}'
+
     def save(self, *args, **kwargs):
         if self._state.adding:
             self.public_id = generate_public_id('crp')
@@ -85,9 +92,6 @@ class CompanyReport(models.Model):
 
     def delete(self, *args, **kwargs):
         raise ValueError('CompanyReport là bằng chứng kiểm duyệt cần được lưu giữ.')
-
-    def __str__(self):
-        return f'{self.public_id} - {self.company_id} - {self.status}'
 
 
 class CompanyReportResolutionEvent(models.Model):
@@ -120,6 +124,9 @@ class CompanyReportResolutionEvent(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'{self.report_id}: {self.from_status} -> {self.to_status}'
+
     def save(self, *args, **kwargs):
         if self.pk and type(self).objects.filter(pk=self.pk).exists():
             raise ValueError('CompanyReportResolutionEvent là lịch sử bất biến.')
@@ -129,6 +136,3 @@ class CompanyReportResolutionEvent(models.Model):
 
     def delete(self, *args, **kwargs):
         raise ValueError('CompanyReportResolutionEvent là lịch sử bất biến.')
-
-    def __str__(self):
-        return f'{self.report_id}: {self.from_status} -> {self.to_status}'

@@ -1,6 +1,7 @@
 """Recruiter PDF of an application's immutable CV snapshot: rendered export or submitted file."""
 
 from django.http import FileResponse, Http404
+from django.utils.translation import gettext as _
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -8,7 +9,8 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsEmployer
+from apps.accounts.api.permissions import IsEmployer
+from apps.applications.api.serializers.applications import RecruiterCvExportSerializer
 from apps.cvs.services import (
     CvExportPermissionError,
     CvExportUnavailableError,
@@ -17,12 +19,12 @@ from apps.cvs.services import (
     request_application_snapshot_export,
 )
 from apps.employers.services import ensure_recruiter_candidate_data_access
-from common.r2_storage import private_media_storage
+from common.api.params import parse_bool
+from common.storage.r2 import private_media_storage
 
 from ...models import Application
 from ...selectors import recruiter_application_snapshot_queryset
 from ...services import open_application_cv_file, record_application_cv_download
-from ..serializers.v2 import RecruiterCvExportSerializer
 
 
 def _snapshot_application(request, public_id):
@@ -55,7 +57,7 @@ def _payload(request, application, export):
 
 
 @extend_schema(
-    tags=['applications-v2'],
+    tags=['applications'],
     summary='NTD yêu cầu PDF của CV đã nộp (tạo mới hoặc dùng lại bản đã render)',
     request=None,
     responses={200: RecruiterCvExportSerializer, 201: RecruiterCvExportSerializer},
@@ -67,7 +69,7 @@ class RecruiterApplicationCvExportView(APIView):
         application = _snapshot_application(request, public_id)
         if application.submitted_cv_version.source_file_key:
             # Rendering the empty structured document would hand over a blank PDF.
-            raise ValidationError({'detail': 'CV này là tệp tải lên, hãy tải tệp gốc.'})
+            raise ValidationError({'detail': _('CV này là tệp tải lên, hãy tải tệp gốc.')})
         try:
             export, reused = request_application_snapshot_export(
                 version=application.submitted_cv_version, actor=request.user
@@ -81,7 +83,7 @@ class RecruiterApplicationCvExportView(APIView):
 
 
 @extend_schema(
-    tags=['applications-v2'],
+    tags=['applications'],
     summary='Trạng thái PDF của CV đã nộp',
     responses={200: RecruiterCvExportSerializer},
 )
@@ -96,7 +98,7 @@ class RecruiterApplicationCvExportDetailView(APIView):
 
 
 @extend_schema(
-    tags=['applications-v2'],
+    tags=['applications'],
     summary='Tải PDF CV đã nộp; ứng viên được báo một lần cho mỗi hồ sơ',
     responses={(200, 'application/pdf'): OpenApiTypes.BINARY},
 )
@@ -124,7 +126,7 @@ def _download_name(application):
 
 
 @extend_schema(
-    tags=['applications-v2'],
+    tags=['applications'],
     summary='Tệp CV ứng viên đã tải lên khi nộp (PDF); ?download=1 để tải về',
     responses={(200, 'application/pdf'): OpenApiTypes.BINARY},
 )
@@ -136,7 +138,7 @@ class RecruiterApplicationCvFileView(APIView):
         stream = open_application_cv_file(application)
         if stream is None:
             raise Http404
-        download = request.query_params.get('download') == '1'
+        download = parse_bool(request.query_params.get('download'), False)
         if download:
             # Reading inline is already logged when the snapshot is opened.
             record_application_cv_download(application, actor=request.user, request=request)

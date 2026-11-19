@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.utils import timezone
 from django.utils.html import format_html
 
-from common.media_storage import delete_local_media_url, media_url_from_value, save_image_upload
+from common.storage.media import delete_local_media_url, media_url_from_value, save_image_upload
 
 from .models import PinnedPost, Post, PostCategory, Tag
 
@@ -34,7 +34,21 @@ class PostAdminForm(forms.ModelForm):
 
     class Meta:
         model = Post
-        fields = '__all__'
+        fields = [
+            'title',
+            'slug',
+            'category',
+            'summary',
+            'status',
+            'thumbnail_url',
+            'content',
+            'related_job_category',
+            'tags',
+            'seo_title',
+            'seo_description',
+            'author',
+            'published_at',
+        ]
         widgets = {
             'content': forms.Textarea(
                 attrs={'rows': 24, 'style': 'font-family: monospace; width: 100%;'}

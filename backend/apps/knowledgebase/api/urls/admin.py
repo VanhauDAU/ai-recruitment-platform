@@ -1,0 +1,103 @@
+from django.urls import path
+
+from ..views import (
+    AdminArticleArchiveView,
+    AdminArticleDetailView,
+    AdminArticleListCreateView,
+    AdminArticlePublishView,
+    AdminArticleReorderView,
+    AdminArticleRestoreView,
+    AdminArticleSummaryView,
+    AdminCategoryActivateView,
+    AdminCategoryDeactivateView,
+    AdminCategoryDetailView,
+    AdminCategoryListCreateView,
+    AdminCategoryReorderView,
+    AdminMediaListCreateView,
+    AdminRevisionApproveView,
+    AdminRevisionDetailView,
+    AdminRevisionListCreateView,
+    AdminRevisionRejectView,
+    AdminRevisionSubmitView,
+)
+
+urlpatterns = [
+    path('categories/', AdminCategoryListCreateView.as_view(), name='kb-admin-category-list'),
+    path(
+        'categories/reorder/',
+        AdminCategoryReorderView.as_view(),
+        name='kb-admin-category-reorder',
+    ),
+    path(
+        'categories/<str:public_id>/',
+        AdminCategoryDetailView.as_view(),
+        name='kb-admin-category-detail',
+    ),
+    path(
+        'categories/<str:public_id>/activate/',
+        AdminCategoryActivateView.as_view(),
+        name='kb-admin-category-activate',
+    ),
+    path(
+        'categories/<str:public_id>/deactivate/',
+        AdminCategoryDeactivateView.as_view(),
+        name='kb-admin-category-deactivate',
+    ),
+    path('articles/', AdminArticleListCreateView.as_view(), name='kb-admin-article-list'),
+    path(
+        'articles/summary/',
+        AdminArticleSummaryView.as_view(),
+        name='kb-admin-article-summary',
+    ),
+    path(
+        'articles/reorder/',
+        AdminArticleReorderView.as_view(),
+        name='kb-admin-article-reorder',
+    ),
+    path(
+        'articles/<str:public_id>/',
+        AdminArticleDetailView.as_view(),
+        name='kb-admin-article-detail',
+    ),
+    path(
+        'articles/<str:public_id>/revisions/',
+        AdminRevisionListCreateView.as_view(),
+        name='kb-admin-revision-list',
+    ),
+    path(
+        'articles/<str:public_id>/revisions/<int:number>/',
+        AdminRevisionDetailView.as_view(),
+        name='kb-admin-revision-detail',
+    ),
+    path(
+        'articles/<str:public_id>/revisions/<int:number>/submit/',
+        AdminRevisionSubmitView.as_view(),
+        name='kb-admin-revision-submit',
+    ),
+    path(
+        'articles/<str:public_id>/revisions/<int:number>/approve/',
+        AdminRevisionApproveView.as_view(),
+        name='kb-admin-revision-approve',
+    ),
+    path(
+        'articles/<str:public_id>/revisions/<int:number>/reject/',
+        AdminRevisionRejectView.as_view(),
+        name='kb-admin-revision-reject',
+    ),
+    path(
+        'articles/<str:public_id>/publish/',
+        AdminArticlePublishView.as_view(),
+        name='kb-admin-article-publish',
+    ),
+    path(
+        'articles/<str:public_id>/archive/',
+        AdminArticleArchiveView.as_view(),
+        name='kb-admin-article-archive',
+    ),
+    path(
+        'articles/<str:public_id>/restore/',
+        AdminArticleRestoreView.as_view(),
+        name='kb-admin-article-restore',
+    ),
+    path('media/', AdminMediaListCreateView.as_view(), name='kb-admin-media-list'),
+]

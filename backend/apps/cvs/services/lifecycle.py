@@ -1,4 +1,4 @@
-"""V2 CV lifecycle workflows built on top of the version/draft foundation."""
+"""CV lifecycle workflows built on top of the version/draft foundation."""
 
 from copy import deepcopy
 
@@ -12,17 +12,17 @@ from apps.cv_templates.models import (
     DEFAULT_EXPERIENCE_BAND,
     CvSampleContent,
     CvTemplate,
+    empty_content,
 )
-from apps.cv_templates.services import resolve_position_content
-
-from ..models import CvDraft, CvVersion, UserCv
-from ..schemas import empty_content
-from .composition import (
+from apps.cv_templates.services import (
     CvCompositionError,
     compose_cv_document,
     layout_for_content,
     overlay_actor_identity,
+    resolve_position_content,
 )
+
+from ..models import CvDraft, CvVersion, UserCv
 from .quota import ensure_cv_quota
 from .versions import create_version, document_hash
 
@@ -52,7 +52,7 @@ def _content_for_create(position, language, experience_band):
 
 
 @transaction.atomic
-def create_v2_cv(
+def create_user_cv(
     *,
     actor,
     title,
@@ -304,7 +304,8 @@ def apply_sample_to_draft(
     merged['sections'] = [*markers, *sample_sections]
     layout = layout_for_content(cv.current_template_version, merged)
     style = deepcopy(draft.style_json)
-    from ..schemas import validate_cv_document, validate_template_layout_capabilities
+    from apps.cv_templates.models import validate_cv_document, validate_template_layout_capabilities
+
     from .assets import validate_document_assets
 
     validate_cv_document(
@@ -341,14 +342,14 @@ def apply_sample_to_draft(
     return draft
 
 
-def create_v2_cv_once(*, actor, idempotency_key='', **fields):
-    """`create_v2_cv` an toàn khi gửi lại: trả `(cv, replayed)`.
+def create_user_cv_once(*, actor, idempotency_key='', **fields):
+    """`create_user_cv` an toàn khi gửi lại: trả `(cv, replayed)`.
 
     Khóa gắn với người dùng nên không ai đoán khóa để lấy CV của người khác.
     """
     key = (idempotency_key or '').strip()[:100]
     if not key:
-        return create_v2_cv(actor=actor, **fields), False
+        return create_user_cv(actor=actor, **fields), False
     cache_key = f'cv-create:{actor.pk}:{key}'
     existing = cache.get(cache_key)
     if existing and existing != _CREATE_PENDING:
@@ -359,7 +360,7 @@ def create_v2_cv_once(*, actor, idempotency_key='', **fields):
     if not cache.add(cache_key, _CREATE_PENDING, CREATE_IDEMPOTENCY_TTL_SECONDS):
         raise CvCreateInProgress('A CV with this Idempotency-Key is being created.')
     try:
-        cv = create_v2_cv(actor=actor, **fields)
+        cv = create_user_cv(actor=actor, **fields)
     except Exception:
         cache.delete(cache_key)
         raise

@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { jobKeys } from '@/entities/job'
+import { jobKeys } from '@/entities/job/job'
 import OnboardUser from './OnboardUser'
 
 const mocks = vi.hoisted(() => ({
@@ -11,18 +11,18 @@ const mocks = vi.hoisted(() => ({
   setCurrentUser: vi.fn(),
 }))
 
-vi.mock('@/entities/candidate-preferences', () => ({
+vi.mock('@/entities/job/candidate-preferences', () => ({
   getCandidateJobPreferences: mocks.getCandidateJobPreferences,
 }))
 
-vi.mock('@/entities/session', () => ({
+vi.mock('@/entities/account/session', () => ({
   useSession: () => ({
     setCurrentUser: mocks.setCurrentUser,
     user: { public_id: 'candidate_1', job_preferences_configured: false },
   }),
 }))
 
-vi.mock('@/widgets/onboarding-interview', () => ({
+vi.mock('@/widgets/main/onboarding-interview', () => ({
   OnboardingChat: ({ onSaved }) => (
     <button
       type="button"

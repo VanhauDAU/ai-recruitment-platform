@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { Alert, Empty, Result, Skeleton } from 'antd'
-import dayjs from 'dayjs'
+import dayjs from '@/shared/lib/dayjs'
 import { Link, useParams } from 'react-router'
-import { useLoginPrompt } from '@/features/auth'
-import { campaignKeys, getPublicCampaign } from '@/entities/campaign'
-import { getJobs } from '@/entities/job'
-import { useSession } from '@/entities/session'
+import { useLoginPrompt } from '@/features/common/account/auth'
+import { campaignKeys, getPublicCampaign } from '@/entities/campaign/campaign'
+import { getJobs } from '@/entities/job/job'
+import { useSession } from '@/entities/account/session'
 import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
 import JobCard from './ui/JobCard'
 import JobCardSkeleton from './ui/JobCardSkeleton'
@@ -41,9 +41,13 @@ export default function CampaignLanding() {
     enabled: Boolean(campaign),
   })
   useDocumentMetadata({
-    title: campaign ? `${campaign.name} | ${campaign.company.name}` : 'Trang tuyển dụng',
+    title: campaign
+      ? `${campaign.name} - ${campaign.company.name}`
+      : (campaignQuery.isError ? 'Không tìm thấy trang tuyển dụng' : 'Trang tuyển dụng'),
     description: campaign?.intro || (campaign ? `${campaign.company.name} đang tuyển dụng: ${campaign.name}.` : ''),
     canonicalPath: `/tuyen-dung/${slug}`,
+    // Khớp SEO shell: chỉ chiến dịch đang mở được lập chỉ mục.
+    ...(isOpen ? {} : { robots: 'noindex, nofollow' }),
   })
 
   if (campaignQuery.isLoading) return <Skeleton active className="cpg-page cpg-page--loading" paragraph={{ rows: 8 }} />

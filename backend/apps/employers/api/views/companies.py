@@ -1,12 +1,14 @@
 import random
 
+from django.utils.translation import gettext as _
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import generics, permissions
 from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import CursorPagination, PageNumberPagination
 from rest_framework.response import Response
 
-from apps.accounts.permissions import IsEmployer
-from common.throttling import ClientIPScopedRateThrottle
+from apps.accounts.api.permissions import IsEmployer
+from common.api.throttling import ClientIPScopedRateThrottle
 
 from ...selectors import (
     attach_active_public_job_counts,
@@ -15,10 +17,13 @@ from ...selectors import (
     search_companies,
 )
 from ...services import create_company_for_recruiter
+from ..permissions import require_company_recruiter
 from ..serializers import CompanySearchSerializer, CompanySerializer, PublicCompanyListSerializer
-from .onboarding import _require_company
+
+QUERY_PARAMETER = OpenApiParameter('q', str, OpenApiParameter.QUERY, required=False)
 
 
+@extend_schema_view(get=extend_schema(summary='Công ty tôi đang liên kết', tags=['employer']))
 class MyCompanyView(generics.RetrieveAPIView):
     """Công ty của tôi — chỉ đọc; thay đổi thông tin đi qua update-requests."""
 
@@ -26,9 +31,12 @@ class MyCompanyView(generics.RetrieveAPIView):
     permission_classes = [IsEmployer]
 
     def get_object(self):
-        return _require_company(self.request.user).company
+        return require_company_recruiter(self.request.user).company
 
 
+@extend_schema_view(
+    post=extend_schema(summary='Tạo hồ sơ công ty mới và trở thành owner', tags=['employer'])
+)
 class CreateCompanyView(generics.CreateAPIView):
     """Tạo hồ sơ công ty mới (thẻ 2) — có hiệu lực ngay, người tạo là owner."""
 
@@ -36,9 +44,18 @@ class CreateCompanyView(generics.CreateAPIView):
     permission_classes = [IsEmployer]
 
     def perform_create(self, serializer):
-        create_company_for_recruiter(self.request.user, serializer)
+        serializer.instance = create_company_for_recruiter(
+            self.request.user, serializer.validated_data
+        )
 
 
+@extend_schema_view(
+    get=extend_schema(
+        summary='Tìm công ty có sẵn theo tên, tên thương mại hoặc MST',
+        parameters=[QUERY_PARAMETER],
+        tags=['employer'],
+    )
+)
 class CompanySearchView(generics.ListAPIView):
     """Tìm công ty có sẵn (thẻ 1) theo tên, tên thương mại hoặc MST."""
 
@@ -79,6 +96,12 @@ class PublicCompanyCursorPagination(CursorPagination):
         return Response(payload)
 
 
+@extend_schema_view(
+    get=extend_schema(
+        summary='Danh bạ công ty công khai: nổi bật, hoặc tìm theo q (cursor)',
+        parameters=[QUERY_PARAMETER],
+    )
+)
 class PublicCompanyListView(generics.ListAPIView):
     """Public featured companies by default; cursor search when ``q`` is set."""
 
@@ -96,7 +119,7 @@ class PublicCompanyListView(generics.ListAPIView):
             return self._validated_public_company_query
         query = (self.request.query_params.get('q') or '').strip()
         if len(query) > self.MAX_QUERY_LENGTH:
-            raise ValidationError({'q': 'Từ khóa tìm kiếm không được vượt quá 120 ký tự.'})
+            raise ValidationError({'q': _('Từ khóa tìm kiếm không được vượt quá 120 ký tự.')})
         self._validated_public_company_query = query
         return query
 

@@ -11,7 +11,7 @@ from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.test import APITestCase
 
-from apps.accounts.tests.helpers import make_admin
+from apps.accounts.tests.factories import make_admin
 from apps.employers.models import (
     Company,
     CompanyDocument,
@@ -19,12 +19,12 @@ from apps.employers.models import (
     EmployerVerificationCase,
     RecruiterProfile,
 )
-from apps.employers.tests.readiness_helpers import current_dpa_fields
+from apps.employers.tests.factories import current_dpa_fields
 
 from ..models import Job, JobReport, JobReportResolutionEvent
 from ..selectors.verification_badge import job_badge_criteria
 from ..services import resolve_job_report, submit_job_report
-from .helpers import open_visibility_window
+from .factories import open_visibility_window
 
 
 def _employer_job(suffix):

@@ -2,7 +2,7 @@ from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import AdminPortalPermission, IsEmployer
+from apps.accounts.api.permissions import AdminPortalPermission, IsEmployer
 from apps.employers.services import get_or_create_recruiter
 
 from ...selectors import (

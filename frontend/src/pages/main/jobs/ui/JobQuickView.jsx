@@ -2,7 +2,7 @@ import { CloseOutlined, HeartFilled, HeartOutlined, RightOutlined } from '@ant-d
 import { Skeleton, Tooltip } from 'antd'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { jobCompanyPath } from '@/entities/company'
+import { jobCompanyPath } from '@/entities/company/company'
 import {
   EDUCATION_LEVEL_LABELS,
   EMPLOYMENT_TYPE_LABELS,
@@ -16,12 +16,13 @@ import {
   jobDetailPath,
   SavedJobTooltipContent,
   VerifiedEmployerBadge,
-} from '@/entities/job'
-import { JobCompareButton } from '@/features/compare-jobs'
-import { useSavedJob } from '@/features/saved-jobs'
-import { useJobView } from '@/features/track-job-engagement'
+} from '@/entities/job/job'
+import { JobCompareButton } from '@/features/main/job/compare-jobs'
+import { useSavedJob } from '@/features/main/job/saved-jobs'
+import { useJobView } from '@/features/main/job/track-job-engagement'
 import { normalizeRichTextHtml } from '@/shared/lib/rich-text-html'
 import { sanitizeHtml } from '@/shared/lib/sanitize-html'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 // Khối nội dung văn bản (mô tả/yêu cầu/quyền lợi...) — chỉ render khi có dữ liệu.
 function Section({ title, text }) {
@@ -87,7 +88,7 @@ export default function JobQuickView({ job, onClose, isAuthenticated = true, onR
     ['Hình thức', WORK_TYPE_LABELS[d.work_type]],
     ['Loại hình', EMPLOYMENT_TYPE_LABELS[d.employment_type]],
     ['Số lượng', d.number_of_vacancies ? `${d.number_of_vacancies} người` : null],
-    ['Hạn nộp', d.deadline ? new Date(d.deadline).toLocaleDateString('vi-VN') : null],
+    ['Hạn nộp', d.deadline ? new Date(d.deadline).toLocaleDateString(getIntlLocale()) : null],
   ].filter(([, v]) => v)
 
   function handleSave() {

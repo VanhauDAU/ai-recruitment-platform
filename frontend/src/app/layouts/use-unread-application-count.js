@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { applicationKeys, getRecruiterApplicationPage } from '@/entities/application'
+import { applicationKeys, getRecruiterApplicationPage } from '@/entities/application/application'
 
 /**
  * CVs no one has opened yet, across all of the recruiter's jobs. A one-row

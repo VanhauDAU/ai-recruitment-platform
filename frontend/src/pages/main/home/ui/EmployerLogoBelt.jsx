@@ -1,4 +1,4 @@
-import { companyDetailPath } from '@/entities/company'
+import { companyDetailPath } from '@/entities/company/company'
 import { logoUrlFor } from '../lib/logo-url'
 
 const BUBBLE_LAYOUT = [

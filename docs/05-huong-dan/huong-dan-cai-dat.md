@@ -53,7 +53,7 @@ Không dùng `config.settings.production` cho local: module này dừng ngay n�
 cd backend
 python3.11 -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt  # runtime + ruff/import-linter/pytest
 cp .env.example .env
 python manage.py migrate
 
@@ -158,6 +158,25 @@ pytest --cov --cov-fail-under=84
 Toàn repo: `./scripts/check_all.sh`. Khi container backend Docker đang chạy, script
 tự chạy Django/pytest trong container để không nối nhầm PostgreSQL trên host.
 
+## Baseline migration và reset database local
+
+Ngày 19/11/2026 (ADR-0022, GĐ6) mọi migration được gộp thành baseline mới: mỗi
+app có `0001_initial` (vài app có thêm `0002_initial` do FK vòng giữa các app) và
+`00xx_reference_data` nạp dữ liệu tham chiếu từ `migrations/reference_data.json`
+(section CV, ngành nghề, phúc lợi, ngôn ngữ, bài trợ giúp, cấu hình site mặc định)
+qua `common/db/reference_data.py`. Database tạo trước mốc này có lịch sử migration
+cũ, không áp baseline được — phải dựng lại:
+
+```bash
+./scripts/reset_local_db.sh          # pg_dump → drop/create → migrate → seed dữ liệu nền
+./scripts/reset_local_db.sh --demo   # thêm tin tuyển dụng demo và seed blog
+docker compose exec backend python manage.py createsuperuser
+```
+
+Script tự bật `db`/`redis`, sao lưu vào `../ai-recruitment-platform-backups/`,
+dừng rồi bật lại các service đang dùng database. Chạy script **trước** khi khởi
+động `backend` trên code mới: container `backend` tự `migrate` khi start.
+
 ## Quy tắc migration: Expand → Backfill → Contract
 
 Thay đổi schema nguy hiểm (đổi NOT NULL, thêm FK bắt buộc, backfill dữ liệu) tách
@@ -169,10 +188,8 @@ thành ba migration:
 
 Cách tách này cho các deferred FK trigger event được commit giữa các bước, tránh
 lỗi PostgreSQL `cannot ALTER TABLE ... because it has pending trigger events` trên
-database có dữ liệu cũ. Mẫu tham chiếu:
-`backend/apps/applications/migrations/0004_application_snapshot_expand.py` →
-`0005_application_snapshot_backfill.py` → `0006_application_snapshot_contract.py`,
-kèm test nâng cấp `backend/apps/applications/tests/test_migrations.py`.
+database có dữ liệu cũ. Migration như vậy kèm một test nâng cấp dùng
+`MigrationExecutor` (migrate về trước, tạo dữ liệu cũ, migrate tới, kiểm tra).
 
 Container `backend` của Docker Compose chạy `manage.py migrate` mỗi lần khởi động
 với code của nhánh đang checkout. Sao lưu database local trước khi viết một

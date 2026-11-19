@@ -1,4 +1,5 @@
-from common.content_html import content_html_plain_text, sanitize_content_html
+from common.html.content import sanitize_content_html
+from common.html.plain_text import html_plain_text
 
 
 def sanitize_blog_html(value):
@@ -6,4 +7,4 @@ def sanitize_blog_html(value):
 
 
 def blog_html_plain_text(value):
-    return ' '.join(content_html_plain_text(value).split())
+    return ' '.join(html_plain_text(value).split())

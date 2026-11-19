@@ -16,7 +16,7 @@ from rest_framework.test import APITestCase
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from common.security import AuthCookieOriginMiddleware
+from common.http.security import AuthCookieOriginMiddleware
 
 from ..models import AuthSession, User
 from ..services.refresh_cookies import cookie_name
@@ -256,20 +256,25 @@ class RefreshTokenReuseTests(APITestCase):
 class AuthCookieOriginCoverageTests(APITestCase):
     """E2 — mọi view phát cookie refresh phải nằm trong danh sách chặn CSRF."""
 
-    def _cookie_minting_routes(self):
-        for pattern in get_resolver().url_patterns:
-            for route in getattr(pattern, 'url_patterns', []):
-                view_class = getattr(route.callback, 'cls', None) or getattr(
-                    route.callback, 'view_class', None
-                )
-                if view_class is None:
-                    continue
-                try:
-                    source = inspect.getsource(view_class)
-                except (OSError, TypeError):
-                    continue
-                if 'set_refresh_cookie' in source:
-                    yield view_class.__name__, f'/{pattern.pattern}{route.pattern}'
+    def _cookie_minting_routes(self, patterns=None, prefix='/'):
+        # Recursive: portal routers nest includes (``api/employer/`` → app urls),
+        # so a fixed two-level walk silently misses views.
+        for pattern in get_resolver().url_patterns if patterns is None else patterns:
+            path = f'{prefix}{pattern.pattern}'
+            if hasattr(pattern, 'url_patterns'):
+                yield from self._cookie_minting_routes(pattern.url_patterns, path)
+                continue
+            view_class = getattr(pattern.callback, 'cls', None) or getattr(
+                pattern.callback, 'view_class', None
+            )
+            if view_class is None:
+                continue
+            try:
+                source = inspect.getsource(view_class)
+            except (OSError, TypeError):
+                continue
+            if 'set_refresh_cookie' in source:
+                yield view_class.__name__, path
 
     def test_the_canary_actually_discovers_the_cookie_minting_views(self):
         """Nếu cách dò hỏng, test dưới sẽ xanh giả. Neo lại bằng các view đã biết."""

@@ -17,9 +17,10 @@ import {
   passwordValidationRule,
   register,
   SocialLoginButtons,
-} from '@/features/auth'
-import { useSiteSettings } from '@/entities/site-settings'
-import { useSession } from '@/entities/session'
+} from '@/features/common/account/auth'
+import { useSiteSettings } from '@/entities/system/site-settings'
+import { useSession } from '@/entities/account/session'
+import { m } from '@/shared/config/i18n'
 
 export default function Register() {
   const { siteName } = useSiteSettings()
@@ -179,7 +180,7 @@ export default function Register() {
       {mode === 'social' ? (
         <>
           <div className="reg-field mb-3">
-            <SocialLoginButtons portal="main" action="Đăng ký" />
+            <SocialLoginButtons portal="main" action={m.account_social_action_register()} />
           </div>
 
           <div className="reg-field flex items-center gap-3 mb-3">

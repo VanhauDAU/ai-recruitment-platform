@@ -5,7 +5,7 @@ from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 
-from common.public_id import generate_public_id
+from common.db.public_id import generate_public_id
 
 RETENTION = timedelta(days=365)
 
@@ -52,6 +52,9 @@ class TalentPoolEntry(models.Model):
             models.Index(fields=['recruiter', '-created_at'], name='talent_pool_recruiter_idx')
         ]
 
+    def __str__(self):
+        return self.public_id
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('tpe')
@@ -79,3 +82,6 @@ class TalentPoolInvitation(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['entry', 'job'], name='uniq_talent_pool_invitation'),
         ]
+
+    def __str__(self):
+        return f'{self.entry_id} → {self.job_id}'

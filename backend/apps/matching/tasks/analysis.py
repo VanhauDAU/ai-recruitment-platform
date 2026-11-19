@@ -14,7 +14,7 @@ from celery.signals import worker_process_init
 
 from apps.cvs.models import CvVersion
 
-from ..selectors import analysis_for_run, jobs_for_profile
+from ..models import analysis_for_run, jobs_for_profile
 from ..services import (
     SkillCatalog,
     ensure_cv_document,

@@ -1,7 +1,7 @@
 from django.test import SimpleTestCase
 
-from ..api.views.settings import _validate_value
 from ..models import SiteSetting
+from ..services.site_settings import _validate_value
 
 
 class NumericSiteSettingValidationTests(SimpleTestCase):

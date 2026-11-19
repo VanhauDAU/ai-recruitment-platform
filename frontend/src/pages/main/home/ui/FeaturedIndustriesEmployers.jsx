@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router'
-import { companyKeys, getPublicCompanies } from '@/entities/company'
-import { getJobStats, jobKeys } from '@/entities/job'
+import { companyKeys, getPublicCompanies } from '@/entities/company/company'
+import { getJobStats, jobKeys } from '@/entities/job/job'
 import FeaturedEmployers from './FeaturedEmployers'
 import FeaturedIndustries from './FeaturedIndustries'
 

@@ -137,7 +137,7 @@ mật khẩu để chiếm tài khoản.
 - Nút "Xác thực với &lt;Provider&gt;" gọi `startOAuthReauth(provider)` — dùng lại
   luồng `/auth/oauth/<provider>/start/` với `next` là đường dẫn trang hiện tại,
   nên người dùng quay về đúng trang đổi mật khẩu thay vì bị đá về `/login`.
-- Cả hai cổng dùng chung `features/change-password`; page truyền `onReauth` vì
+- Cả hai cổng dùng chung `features/common/account/change-password`; page truyền `onReauth` vì
   cổng sở hữu URL OAuth và đường quay lại.
 
 ## Lên production

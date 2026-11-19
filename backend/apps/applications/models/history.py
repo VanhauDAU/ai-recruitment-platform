@@ -35,8 +35,6 @@ class ApplicationStatusHistory(models.Model):
 
     NOTIFICATION_KEY_PREFIX = NOTIFICATION_KEY_PREFIX
 
-    objects = ApplicationStatusHistoryQuerySet.as_manager()
-
     application = models.ForeignKey(
         'applications.Application', on_delete=models.CASCADE, related_name='status_history'
     )
@@ -51,11 +49,16 @@ class ApplicationStatusHistory(models.Model):
     reverted_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    objects = ApplicationStatusHistoryQuerySet.as_manager()
+
     class Meta:
         ordering = ['created_at', 'id']
         indexes = [
             models.Index(fields=['application', 'created_at'], name='app_status_history_idx')
         ]
+
+    def __str__(self):
+        return f'{self.application_id}: {self.from_status} → {self.to_status}'
 
     @property
     def notification_key(self):

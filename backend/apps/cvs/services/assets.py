@@ -1,4 +1,5 @@
 import json
+import logging
 from hashlib import sha256
 from io import BytesIO
 
@@ -9,9 +10,10 @@ from django.urls import reverse
 from PIL import Image, ImageOps
 from rest_framework.exceptions import ValidationError
 
-from common.public_id import generate_public_id
-from common.r2_storage import private_media_storage, public_media_storage
+from common.db.public_id import generate_public_id
+from common.storage.r2 import private_media_storage
 
+from ..domain import CV_IMAGE_FORMATS, MAX_CV_IMAGE_BYTES
 from ..models import CvAsset, CvVersion
 from .upload_claims import (
     CV_AVATAR_CLAIM_SCOPE,
@@ -19,18 +21,14 @@ from .upload_claims import (
     open_clean_candidate_upload,
 )
 
-MAX_AVATAR_BYTES = 5 * 1024 * 1024
 ASSET_TOKEN_MAX_AGE = 300
 ASSET_TOKEN_SALT = 'cv-asset-content-v1'
-ALLOWED_AVATAR_FORMATS = {
-    'JPEG': ('jpg', 'image/jpeg'),
-    'PNG': ('png', 'image/png'),
-    'WEBP': ('webp', 'image/webp'),
-}
+
+logger = logging.getLogger(__name__)
 
 
 def _encode_avatar(upload):
-    if upload.size > MAX_AVATAR_BYTES:
+    if upload.size > MAX_CV_IMAGE_BYTES:
         raise ValidationError({'file': 'Image must be 5 MB or smaller.'})
     try:
         upload.seek(0)
@@ -43,9 +41,9 @@ def _encode_avatar(upload):
         image.load()
     except (OSError, ValueError) as error:
         raise ValidationError({'file': 'Invalid image file.'}) from error
-    if detected_format not in ALLOWED_AVATAR_FORMATS:
+    if detected_format not in CV_IMAGE_FORMATS:
         raise ValidationError({'file': 'Only JPEG, PNG, or WebP images are supported.'})
-    extension, content_type = ALLOWED_AVATAR_FORMATS[detected_format]
+    extension, content_type = CV_IMAGE_FORMATS[detected_format]
     image.thumbnail((512, 512), Image.Resampling.LANCZOS)
     if detected_format == 'JPEG' and image.mode not in {'RGB', 'L'}:
         image = image.convert('RGB')
@@ -116,54 +114,12 @@ def create_avatar_asset_from_session(*, actor, upload_session_public_id):
         if storage_key:
             try:
                 private_media_storage().delete(storage_key)
-            except Exception:  # noqa: BLE001 - storage reconciliation owns orphan cleanup
-                pass
+            except Exception:  # noqa: BLE001 - the original error must surface, not the cleanup's
+                # Storage reconciliation removes the orphan later; the log says which one.
+                logger.warning(
+                    'Could not delete orphaned CV avatar %s.', storage_key, exc_info=True
+                )
         raise
-
-
-def create_background_asset(*, upload, title='', is_active=True):
-    if upload.size > MAX_AVATAR_BYTES:
-        raise ValidationError({'file': 'Image must be 5 MB or smaller.'})
-    try:
-        upload.seek(0)
-        image = Image.open(upload)
-        detected_format = image.format
-        image.verify()
-        upload.seek(0)
-        image = Image.open(upload)
-        image = ImageOps.exif_transpose(image)
-        image.load()
-    except (OSError, ValueError) as error:
-        raise ValidationError({'file': 'Invalid image file.'}) from error
-    if detected_format not in ALLOWED_AVATAR_FORMATS:
-        raise ValidationError({'file': 'Only JPEG, PNG, or WebP images are supported.'})
-    extension, content_type = ALLOWED_AVATAR_FORMATS[detected_format]
-    image.thumbnail((2480, 3508), Image.Resampling.LANCZOS)
-    if detected_format == 'JPEG' and image.mode not in {'RGB', 'L'}:
-        image = image.convert('RGB')
-    buffer = BytesIO()
-    image.save(buffer, format=detected_format, optimize=True)
-    payload = buffer.getvalue()
-    checksum = sha256(payload).hexdigest()
-    storage_key = public_media_storage().save(
-        f'cvs/backgrounds/{checksum}.{extension}',
-        ContentFile(payload),
-    )
-    asset = CvAsset(
-        owner=None,
-        kind=CvAsset.Kind.BACKGROUND,
-        title=title.strip(),
-        storage_key=storage_key,
-        content_type=content_type,
-        size_bytes=len(payload),
-        width=image.width,
-        height=image.height,
-        checksum_sha256=checksum,
-        is_active=is_active,
-    )
-    asset.full_clean()
-    asset.save()
-    return asset
 
 
 def document_asset_ids(content_json, style_json):
@@ -246,6 +202,47 @@ def resolve_asset_token(token, *, include_context=False):
     return asset
 
 
+def readable_asset(*, asset_public_id, token, user):
+    """Asset người xem được tải: theo token ký, hoặc ảnh nền / avatar của chính mình.
+
+    Token gắn đối tượng nhận `recruiter_application` chỉ hợp lệ với đúng NTD đã
+    nhận hồ sơ ứng tuyển chứa phiên bản CV đó. Mọi trường hợp bị từ chối đều là
+    `CvAsset.DoesNotExist`, để không lộ asset có tồn tại hay không.
+    """
+    if not token:
+        asset = CvAsset.objects.get(public_id=asset_public_id, is_active=True)
+        if asset.kind != CvAsset.Kind.BACKGROUND and (
+            not user.is_authenticated or asset.owner_id != user.pk
+        ):
+            raise CvAsset.DoesNotExist
+        return asset
+    asset, token_context = resolve_asset_token(token, include_context=True)
+    if asset.public_id != asset_public_id:
+        raise CvAsset.DoesNotExist
+    audience = token_context.get('audience')
+    if not audience:
+        return asset
+    if audience != 'recruiter_application':
+        raise CvAsset.DoesNotExist
+    if (
+        not user.is_authenticated
+        or not user.is_employer
+        or token_context.get('subject') != user.public_id
+    ):
+        raise CvAsset.DoesNotExist
+    from apps.applications.models import Application
+    from apps.employers.services import ensure_recruiter_candidate_data_access
+
+    ensure_recruiter_candidate_data_access(user)
+    if not Application.objects.filter(
+        public_id=token_context.get('resource'),
+        job__posted_by=user,
+        submitted_cv_version__public_id=token_context.get('version'),
+    ).exists():
+        raise CvAsset.DoesNotExist
+    return asset
+
+
 def asset_map(
     *,
     content_json,
@@ -262,7 +259,7 @@ def asset_map(
     for asset in assets:
         if asset.kind == CvAsset.Kind.AVATAR and owner is not None and asset.owner_id != owner.pk:
             continue
-        path = reverse('cv-v2-asset-content', kwargs={'asset_public_id': asset.public_id})
+        path = reverse('cv-asset-content', kwargs={'asset_public_id': asset.public_id})
         if signed:
             token_context = token_context or {}
             path = f'{path}?token={sign_asset(asset, version, **token_context)}'

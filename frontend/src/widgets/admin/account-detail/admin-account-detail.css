@@ -1,0 +1,621 @@
+/* Admin account / recruiter detail. Surfaces reuse `.admin-panel` from the admin
+ * layout; this file only adds the page structure and the field typography. */
+
+.account-detail {
+  display: grid;
+  gap: 14px;
+  /* One shrinkable column: wide tab content (document board, tables) must
+   * scroll inside its own panel instead of widening the page. */
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+}
+
+.account-detail__back.ant-btn {
+  justify-self: start;
+  padding-inline: 4px;
+  color: var(--admin-text-muted);
+}
+
+/* Vertical rhythm for tab content: one gap, no stray margins from children. */
+.account-detail-stack {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.account-detail-stack > * {
+  margin-block: 0;
+}
+
+.account-detail-panel .admin-panel__header {
+  padding-block: 12px;
+}
+
+.account-detail-panel .admin-panel__title {
+  font-size: 15px;
+}
+
+.account-detail-panel .admin-panel__description {
+  font-size: 12px;
+}
+
+/* ---- Hero ----------------------------------------------------------- */
+
+.account-detail-hero__main {
+  align-items: flex-start;
+  display: flex;
+  gap: 14px;
+  padding: 16px 18px;
+}
+
+.account-detail-hero__main > .ant-avatar {
+  flex: 0 0 auto;
+}
+
+.account-detail-hero__identity {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 4px;
+  min-width: 0;
+}
+
+.account-detail-hero__name {
+  margin: 0;
+  overflow: hidden;
+  color: var(--admin-text);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-detail-hero__contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0;
+  color: var(--admin-text-muted);
+  font-size: 13px;
+}
+
+.account-detail-hero__contact span {
+  align-items: center;
+  display: inline-flex;
+  gap: 6px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.account-detail-hero__tags {
+  margin-top: 4px;
+}
+
+.account-detail-hero__tags .ant-tag {
+  margin-inline-end: 0;
+}
+
+.account-detail-hero__edit.ant-btn {
+  flex: 0 0 auto;
+}
+
+/* Key figures under the identity, separated by hairlines like a stat bar. */
+.account-detail-stats {
+  border-top: 1px solid var(--admin-border);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  margin: 0;
+}
+
+.account-detail-stats > div {
+  border-inline-start: 1px solid var(--admin-border);
+  min-width: 0;
+  padding: 10px 18px;
+}
+
+.account-detail-stats > div:first-child {
+  border-inline-start: 0;
+}
+
+.account-detail-stats dt {
+  color: var(--admin-text-muted);
+  font-size: 12px;
+}
+
+.account-detail-stats dd {
+  margin: 2px 0 0;
+  color: var(--admin-text);
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+/* One-line "what to do next" under the hero, coloured by urgency. */
+.account-detail-next {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid var(--admin-border);
+  border-inline-start-width: 3px;
+  border-radius: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  justify-content: space-between;
+  padding: 8px 12px;
+}
+
+.account-detail-next--critical {
+  background: var(--admin-critical-soft);
+  border-inline-start-color: var(--admin-critical);
+}
+
+.account-detail-next--warning {
+  background: var(--admin-warning-soft);
+  border-inline-start-color: var(--admin-warning);
+}
+
+.account-detail-next--info {
+  border-inline-start-color: var(--admin-info);
+}
+
+/* ---- Tabs: page-level navigation on the canvas, content in panels ---- */
+
+.account-detail-tabs {
+  min-width: 0;
+}
+
+.account-detail-tabs > .ant-tabs-nav {
+  margin-bottom: 14px;
+}
+
+.account-detail-tabs > .ant-tabs-nav::before {
+  border-bottom-color: var(--admin-border);
+}
+
+.account-detail-tabs .ant-tabs-tab {
+  font-weight: 600;
+}
+
+.account-detail-tabs .ant-tabs-content,
+.account-detail-tabs .ant-tabs-tabpane {
+  min-width: 0;
+}
+
+.account-detail-subtabs .admin-panel__body {
+  padding-top: 4px;
+}
+
+/* Cards rendered by the verification review inside this page. */
+.account-detail-card {
+  border-color: var(--admin-border);
+  box-shadow: none;
+}
+
+/* ---- Employer overview: profile left, summary + activity in the rail - */
+
+.recruiter-overview {
+  display: grid;
+  gap: 16px;
+  grid-template-areas:
+    'summary'
+    'profile'
+    'activity';
+  min-width: 0;
+}
+
+.recruiter-overview__summary { grid-area: summary; }
+.recruiter-overview__activity { grid-area: activity; }
+.recruiter-overview__profile { grid-area: profile; min-width: 0; }
+
+@media (min-width: 1100px) {
+  .recruiter-overview {
+    align-items: start;
+    grid-template-areas:
+      'profile summary'
+      'profile activity';
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
+    grid-template-rows: auto 1fr;
+  }
+}
+
+.recruiter-facts {
+  display: grid;
+  margin: 0;
+}
+
+.recruiter-fact {
+  align-items: baseline;
+  border-top: 1px solid #f1f5f9;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(96px, 40%) minmax(0, 1fr);
+  min-width: 0;
+  padding: 8px 0;
+}
+
+.recruiter-fact:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.recruiter-fact:last-child {
+  padding-bottom: 0;
+}
+
+.recruiter-fact dt {
+  color: var(--admin-text-muted);
+  font-size: 12px;
+}
+
+.recruiter-fact dd {
+  margin: 0;
+  color: var(--admin-text);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.recruiter-fact dd .ant-tag {
+  margin-inline-end: 6px;
+}
+
+.recruiter-fact dd .ant-badge-status-text {
+  color: var(--admin-text);
+  font-size: 13px;
+}
+
+.recruiter-fact__hint {
+  color: var(--admin-text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ---- Profile fields --------------------------------------------------- */
+
+.account-section + .account-section,
+.account-onboarding + .account-section {
+  border-top: 1px solid #f1f5f9;
+  margin-top: 16px;
+  padding-top: 16px;
+}
+
+.account-section__heading {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.account-section__heading h3 {
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.account-section__heading .ant-tag {
+  margin: 0;
+}
+
+/* Label above value; columns follow the panel width so long labels never wrap
+ * into a squeezed table cell. */
+.account-fields {
+  display: grid;
+  gap: 14px 24px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  margin: 0;
+}
+
+.account-fields__item {
+  min-width: 0;
+}
+
+.account-fields__item dt {
+  color: var(--admin-text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.account-fields__item dd {
+  margin: 2px 0 0;
+  color: var(--admin-text);
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.account-fields__empty {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.account-onboarding {
+  align-items: flex-start;
+  background: #f8fafc;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  padding: 10px 12px;
+}
+
+.account-onboarding__label {
+  color: var(--admin-text);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 22px;
+  min-width: 140px;
+}
+
+/* URL dài phải xuống dòng chứ không được nowrap, nếu không card tràn ngang trên mobile. */
+.account-profile__link {
+  align-items: baseline;
+  display: inline-flex;
+  gap: 6px;
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ---- Generic account overview (candidate/admin) --------------------- */
+
+.account-detail-counts {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.account-detail-counts div {
+  background: #f8fafc;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.account-detail-counts span,
+.account-detail-counts strong {
+  display: block;
+}
+
+.account-detail-counts span {
+  color: var(--admin-text-muted);
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.account-detail-counts strong {
+  color: var(--admin-text);
+  font-size: 16px;
+}
+
+/* ---- Company ---------------------------------------------------------- */
+
+.account-profile__richtext-body {
+  background: #f8fafc;
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  color: var(--admin-text);
+  font-size: 13px;
+  line-height: 1.6;
+  max-height: 340px;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  padding: 12px 14px;
+}
+
+.account-profile__richtext-body > :first-child { margin-top: 0; }
+.account-profile__richtext-body > :last-child { margin-bottom: 0; }
+.account-profile__richtext-body p { margin: 0 0 8px; }
+/* Preflight của Tailwind bỏ marker của ul/ol nên phải trả lại trong khối rich-text. */
+.account-profile__richtext-body ul,
+.account-profile__richtext-body ol { margin: 0 0 8px; padding-left: 22px; }
+.account-profile__richtext-body ul { list-style: disc; }
+.account-profile__richtext-body ol { list-style: decimal; }
+.account-profile__richtext-body li { margin-bottom: 4px; }
+
+.account-profile__richtext-body img {
+  border-radius: 8px;
+  max-width: 100%;
+}
+
+.account-profile__richtext-body table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.account-profile__richtext-body td,
+.account-profile__richtext-body th {
+  border: 1px solid var(--admin-border);
+  padding: 6px 8px;
+}
+
+.account-company-visual {
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.account-company-visual + .account-section {
+  border-top: 0;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.account-company-visual__cover {
+  background: #f1f5f9;
+  height: clamp(140px, 22vw, 240px);
+}
+
+.account-company-visual__cover .ant-image,
+.account-company-visual__cover .ant-image-img {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.account-company-visual__placeholder {
+  align-items: center;
+  color: #94a3b8;
+  display: flex;
+  flex-direction: column;
+  font-size: 32px;
+  gap: 8px;
+  height: 100%;
+  justify-content: center;
+}
+
+.account-company-visual__placeholder span {
+  font-size: 13px;
+}
+
+.account-company-visual__identity {
+  align-items: center;
+  background: #fff;
+  display: flex;
+  gap: 14px;
+  padding: 12px 16px;
+}
+
+.account-company-visual__identity .ant-typography {
+  margin: 0;
+}
+
+.account-company-visual__identity h3.ant-typography {
+  font-size: 17px;
+}
+
+.account-company-visual__logo {
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  color: #94a3b8;
+  display: flex;
+  flex: 0 0 64px;
+  font-size: 26px;
+  height: 64px;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.account-company-visual__logo .ant-image,
+.account-company-visual__logo .ant-image-img {
+  height: 100%;
+  object-fit: contain;
+  width: 100%;
+}
+
+.account-company-gallery {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+}
+
+.account-company-gallery figure {
+  border: 1px solid var(--admin-border);
+  border-radius: 10px;
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.account-company-gallery .ant-image {
+  aspect-ratio: 3 / 2;
+  display: block;
+  width: 100%;
+}
+
+.account-company-gallery .ant-image-img {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.account-company-gallery figcaption {
+  color: #475569;
+  font-size: 12px;
+  overflow: hidden;
+  padding: 7px 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- Mobile ----------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  .account-detail-hero__main {
+    flex-wrap: wrap;
+    padding: 14px;
+  }
+
+  .account-detail-hero__identity {
+    flex-basis: calc(100% - 70px);
+  }
+
+  .account-detail-hero__name {
+    white-space: normal;
+  }
+
+  .account-detail-hero__edit.ant-btn {
+    min-height: 44px;
+    width: 100%;
+  }
+
+  .account-detail-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .account-detail-stats > div {
+    border-inline-start: 0;
+    border-top: 1px solid var(--admin-border);
+    padding: 10px 14px;
+  }
+
+  .account-detail-stats > div:nth-child(even) {
+    border-inline-start: 1px solid var(--admin-border);
+  }
+
+  .account-detail-stats > div:nth-child(-n + 2) {
+    border-top: 0;
+  }
+
+  .account-detail-panel .admin-panel__header {
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    padding-inline: 14px;
+  }
+
+  .account-detail-panel .admin-panel__body {
+    padding: 14px;
+  }
+
+  .account-detail-counts {
+    grid-template-columns: 1fr;
+  }
+
+  .account-profile__richtext-body {
+    max-height: 260px;
+  }
+
+  .account-company-visual__identity {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .account-company-visual__logo {
+    flex-basis: 56px;
+    height: 56px;
+  }
+
+  .account-company-gallery {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

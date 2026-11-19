@@ -16,23 +16,34 @@ Hai ràng buộc có sẵn định hình lời giải:
 - `Company` không có vòng đời xác thực (ER-D52). Tư cách đại diện chỉ suy từ
   `EmployerVerificationCase` của từng nhà tuyển dụng.
 - Mọi thay đổi hồ sơ công ty đi qua `CompanyUpdateRequest` chờ quản trị viên
-  duyệt, và `Company.updated_at` là mốc chống ghi đè của luồng đó.
+  duyệt, và `Company.updated_at` là mốc chống ghi đè của luồng đó (nội dung
+  trang tách khỏi luồng này từ ER-D65, xem quyết định 3).
 
 ## Quyết định
 
 1. **Một route, một read model.** Trang công ty nằm tại `/cong-ty/:slug`, đọc
-   từ `GET /api/companies/<slug>/`. Response là danh sách khối có kiểu
+   từ `GET /api/public/companies/<slug>/`. Response là danh sách khối có kiểu
    (`sections[].type`) do một builder duy nhất ở backend sinh ra; frontend không
    suy luận từ tên cột của `Company`. Xem trước của nhà tuyển dụng và của quản
    trị viên dùng lại đúng builder đó.
-2. **Tin của công ty lọc theo mã, không theo tên.** `GET /api/jobs/` nhận
+2. **Tin của công ty lọc theo mã, không theo tên.** `GET /api/public/jobs/` nhận
    `company=<company_public_id>`; DTO tin trả `company_slug` để mọi liên kết
    công ty trỏ về trang chi tiết.
-3. **Kiểm duyệt lai.** Nội dung (chữ, ảnh, video, liên kết, văn phòng) đi qua
-   `CompanyUpdateRequest`. Bố cục (bật/tắt khối, thứ tự, màu nhấn, tin ghim)
-   áp dụng ngay vì không đưa nội dung mới lên trang; bố cục lưu ở bảng riêng để
-   không chạm `Company.updated_at`, và mỗi thay đổi ghi vào nhật ký
-   chỉ-ghi-thêm.
+3. **Nội dung đăng ngay, hậu kiểm theo rủi ro** (sửa ngày 19/11/2026, ER-D65;
+   bản đầu là kiểm duyệt trước mọi nội dung qua `CompanyUpdateRequest`).
+   Người biên tập lưu một khối nội dung (chữ, ảnh, video, liên kết, văn phòng)
+   là khối đó lên trang ngay; mỗi lần lưu để lại một `CompanyContentChange`
+   gồm giá trị mới và giá trị bị thay để quản trị viên xem lại theo lô, đánh
+   dấu đã xem hoặc hoàn tác kèm lý do gửi cho người sửa. Tệp ảnh bị thay giữ
+   tới khi thay đổi được xem để hoàn tác khôi phục được. Quản trị viên bật
+   `Company.content_review_required` cho công ty vi phạm thì nội dung của công
+   ty đó quay về luồng `CompanyUpdateRequest` chờ duyệt như bản đầu. Thay đổi
+   pháp lý (MST, tên đăng ký) và form hồ sơ công ty vẫn duyệt trước. Lý do: người
+   biên tập đã là owner/member qua xác thực NTD, tin tuyển dụng (rủi ro cao hơn)
+   cũng đã hậu kiểm, còn duyệt trước làm việc của quản trị viên tăng theo số
+   lần sửa nhân số người biên tập. Bố cục (bật/tắt khối, thứ tự, màu nhấn, tin
+   ghim) áp dụng ngay như trước; bố cục lưu ở bảng riêng để không chạm
+   `Company.updated_at`, và mỗi thay đổi ghi vào nhật ký chỉ-ghi-thêm.
 4. **Quyền biên tập là chính sách suy ra, không phải vai trò mới.** Người biên
    tập là owner đủ điều kiện đại diện, hoặc member đủ điều kiện đại diện được
    owner cấp quyền. Điều kiện đại diện dùng chung một predicate ở tầng models
@@ -54,7 +65,7 @@ Không hiển thị huy hiệu xác thực cấp công ty và không có gói tr
 
 ## Hệ quả
 
-- Chi tiết tin (`GET /api/jobs/<slug>/`) không còn trả địa chỉ của hộ kinh
+- Chi tiết tin (`GET /api/public/jobs/<slug>/`) không còn trả địa chỉ của hộ kinh
   doanh trong `company_address`.
 - Luật cũ của hồ sơ công ty giữ nguyên: mọi member vẫn gửi được yêu cầu sửa các
   trường đã có (ER-D05). Quyền biên tập chỉ ràng buộc bố cục và các trường nội

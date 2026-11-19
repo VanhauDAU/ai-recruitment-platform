@@ -1,0 +1,58 @@
+import { GlobalOutlined, LikeOutlined, MessageOutlined, ShareAltOutlined } from '@ant-design/icons'
+import { useState } from 'react'
+import { m } from '@/shared/config/i18n'
+import { isPublicLink } from '../lib/channel-kinds'
+
+const CLAMP = 320
+
+// Bản xem trước theo khung một bài mạng xã hội: tên trang, giờ, nội dung, thẻ link.
+export default function SocialPostPreview({ name, avatarUrl, meta, text, link, linkTitle, images = [] }) {
+  const [expanded, setExpanded] = useState(false)
+  const long = text.length > CLAMP
+  const shown = long && !expanded ? `${text.slice(0, CLAMP).trimEnd()}…` : text
+  const host = (() => {
+    try { return new URL(link).host } catch { return '' }
+  })()
+
+  return (
+    <figure className="ch-post" aria-label={m.employer_campaign_preview_aria()}>
+      <header className="ch-post__head">
+        {avatarUrl
+          ? <img className="ch-post__avatar" src={avatarUrl} alt="" />
+          : <span className="ch-post__avatar is-letter" aria-hidden>{(name || 'P').slice(0, 1)}</span>}
+        <div>
+          <strong>{name}</strong>
+          <span className="ch-post__meta">{meta} <GlobalOutlined aria-hidden /></span>
+        </div>
+      </header>
+      {text ? (
+        <p className="ch-post__text">
+          {shown}
+          {long && (
+            <button type="button" className="ch-post__more" onClick={() => setExpanded(!expanded)}>
+              {expanded ? m.employer_campaign_preview_less() : m.employer_campaign_preview_more()}
+            </button>
+          )}
+        </p>
+      ) : <p className="ch-post__text is-empty">{m.employer_campaign_preview_empty()}</p>}
+      {images.length > 0 && (
+        <div className={`ch-post__media is-${Math.min(images.length, 4)}`}>
+          {images.slice(0, 4).map((url, index) => <img key={url} src={url} alt={m.employer_campaign_posts_image_alt({ index: index + 1 })} />)}
+        </div>
+      )}
+      {link && images.length === 0 && (isPublicLink(link) ? (
+        <div className="ch-post__card">
+          <span>{host}</span>
+          <strong>{linkTitle}</strong>
+        </div>
+      ) : (
+        <p className="ch-post__note">{m.employer_campaign_preview_local_link()}</p>
+      ))}
+      <footer className="ch-post__bar" aria-hidden>
+        <span><LikeOutlined /> {m.employer_campaign_preview_like()}</span>
+        <span><MessageOutlined /> {m.employer_campaign_preview_comment()}</span>
+        <span><ShareAltOutlined /> {m.employer_campaign_preview_share()}</span>
+      </footer>
+    </figure>
+  )
+}

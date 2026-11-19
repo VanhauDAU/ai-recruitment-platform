@@ -6,7 +6,6 @@ from .ai_generation import (
     create_job_ai_generation,
     execute_job_ai_generation,
     fail_job_ai_generation,
-    job_ai_policy,
     job_ai_quota_remaining,
     purge_job_ai_generation_content,
     record_job_ai_feedback,
@@ -41,6 +40,7 @@ from .engagement import (
     record_consented_job_view,
     set_viewer_cookie,
 )
+from .job_records import create_job_record, update_job_record
 from .lifecycle import (
     initialize_job_visibility,
     job_lifecycle_policy,
@@ -75,6 +75,7 @@ from .posting import (
 )
 from .recommendations import hide_recommended_job, restore_recommended_job
 from .reports import resolve_job_report, reverse_job_report, submit_job_report
+from .saved_jobs import save_job_for_candidate
 
 __all__ = [
     'absolute_url',
@@ -91,6 +92,7 @@ __all__ = [
     'close_job',
     'claim_due_candidate_job_digest_candidates',
     'create_job_alert',
+    'create_job_record',
     'create_job_ai_generation',
     'build_job_content_snapshot',
     'create_job_review_token',
@@ -116,7 +118,6 @@ __all__ = [
     'resubmit_job_for_review',
     'hide_recommended_job',
     'job_moderation_state',
-    'job_ai_policy',
     'job_ai_quota_remaining',
     'job_published_content_changes',
     'JobModerationStale',
@@ -137,9 +138,11 @@ __all__ = [
     'reverse_job_report',
     'submit_job_report',
     'save_job_draft',
+    'save_job_for_candidate',
     'sanitize_generation_input',
     'sanitize_source_text',
     'set_viewer_cookie',
     'update_employer_job',
     'update_job_alert',
+    'update_job_record',
 ]

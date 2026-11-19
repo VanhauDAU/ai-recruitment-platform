@@ -5,7 +5,7 @@ import { expect, test } from '@playwright/test'
 // nên kiểm tra ở đây chính là kiểm tra PDF. Mỗi layout trong registry phải dựng
 // đúng tỉ lệ cột, đặt tên/liên hệ/ảnh vào vùng của template, không tràn ngang và
 // ngắt trang không cắt đôi một mục.
-const LAYOUTS = JSON.parse(readFileSync(new URL('../../../src/entities/cv/model/cv-layouts.json', import.meta.url), 'utf8'))
+const LAYOUTS = JSON.parse(readFileSync(new URL('../../../src/entities/cv/cv/model/cv-layouts.json', import.meta.url), 'utf8'))
 const AVATAR = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><rect width="120" height="120" fill="#94a3b8"/></svg>')}`
 
 const paragraph = (text) => ({ format: 'rich_text_v1', content: [{ type: 'paragraph', text }] })
@@ -75,7 +75,7 @@ test.beforeEach(async ({ page }, testInfo) => {
 })
 
 for (const key of Object.keys(LAYOUTS)) {
-  test(`cv print: ${key} places identity and columns as registered`, async ({ page }) => {
+  test(`cv print: ${key} places identity and columns as registered`, { tag: '@responsive' }, async ({ page }) => {
     const { pages, identityRegion } = await renderPrint(page, key, 1)
     expect(pages).toBe(1)
 
@@ -109,7 +109,7 @@ for (const key of Object.keys(LAYOUTS)) {
   })
 }
 
-test('cv print: long content breaks between items, never through one', async ({ page }) => {
+test('cv print: long content breaks between items, never through one', { tag: '@responsive' }, async ({ page }) => {
   for (const key of Object.keys(LAYOUTS)) {
     const { pages } = await renderPrint(page, key, 9)
     expect(pages, key).toBeGreaterThan(1)

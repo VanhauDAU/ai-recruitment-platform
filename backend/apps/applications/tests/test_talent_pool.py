@@ -7,14 +7,14 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
-from apps.accounts.services.tokens import issue_tokens
+from apps.accounts.services import issue_tokens
 from apps.candidates.models import CandidateNotification
 from apps.cv_templates.tests.factories import fill_cv_for_application, make_published_template
-from apps.cvs.services import create_v2_cv
+from apps.cvs.services import create_user_cv
 from apps.employers.models import Company
-from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.employers.tests.factories import make_employer_ready
 from apps.jobs.models import Job, JobCategory, JobCategoryAssignment
-from apps.jobs.tests.helpers import open_visibility_window
+from apps.jobs.tests.factories import open_visibility_window
 
 from ..models import CandidateBlock, TalentPoolEntry
 from ..services import create_application_record, purge_lapsed_talent_pool_entries
@@ -63,7 +63,7 @@ class TalentPoolTests(APITestCase):
         self.new_job = job('Senior Backend Developer', backend)
         self.unrelated_job = job('Kế toán tổng hợp', accounting)
         template, _version = make_published_template('Pool template')
-        cv = create_v2_cv(actor=self.candidate, title='Pool CV', template=template)
+        cv = create_user_cv(actor=self.candidate, title='Pool CV', template=template)
         fill_cv_for_application(cv, self.candidate)
         self.application = create_application_record(
             candidate=self.candidate, job=self.old_job, cv=cv
@@ -76,7 +76,7 @@ class TalentPoolTests(APITestCase):
     def save_to_pool(self, **extra):
         self.login(self.employer)
         return self.client.post(
-            reverse('recruiter-talent-pool-v2'),
+            reverse('recruiter-talent-pool'),
             {
                 'application_public_id': self.application.public_id,
                 'note': 'Tiềm năng',
@@ -93,32 +93,34 @@ class TalentPoolTests(APITestCase):
         self.assertEqual(response.data['tags'], ['Python', 'SQL'])
         notice = CandidateNotification.objects.get(event_type=Event.TALENT_POOL_SAVED)
         self.assertEqual(notice.action_path, '/tai-khoan/kho-ung-vien-tiem-nang')
-        self.assertEqual(self.save_to_pool().status_code, 400)
-        row = self.client.get(reverse('recruiter-application-list-v2')).data['results'][0]
+        duplicate = self.save_to_pool()
+        self.assertEqual(duplicate.status_code, 400)
+        self.assertEqual(duplicate.json(), {'detail': 'Ứng viên đã có trong kho của bạn.'})
+        row = self.client.get(reverse('recruiter-application-list')).data['results'][0]
         self.assertTrue(row['in_talent_pool'])
 
     def test_suggestions_rank_by_the_job_applied_to_and_invites_once(self):
         entry_id = self.save_to_pool().data['public_id']
 
         related = self.client.get(
-            reverse('recruiter-talent-suggestions-v2'), {'job': self.new_job.public_id}
+            reverse('recruiter-talent-suggestions'), {'job': self.new_job.public_id}
         )
         unrelated = self.client.get(
-            reverse('recruiter-talent-suggestions-v2'), {'job': self.unrelated_job.public_id}
+            reverse('recruiter-talent-suggestions'), {'job': self.unrelated_job.public_id}
         )
         self.assertEqual(len(related.data), 1, related.data)
         self.assertIn('Cùng vị trí chuyên môn', related.data[0]['reasons'])
         self.assertFalse(related.data[0]['already_invited'])
         self.assertEqual(unrelated.data, [])
 
-        invite_url = reverse('recruiter-talent-pool-invite-v2', args=[entry_id])
+        invite_url = reverse('recruiter-talent-pool-invite', args=[entry_id])
         payload = {'job_public_id': self.new_job.public_id}
         self.assertEqual(self.client.post(invite_url, payload, format='json').status_code, 204)
         self.assertEqual(self.client.post(invite_url, payload, format='json').status_code, 400)
         invite = CandidateNotification.objects.get(event_type=Event.JOB_INVITATION)
         self.assertEqual(invite.action_path, f'/viec-lam/{self.new_job.slug}')
         again = self.client.get(
-            reverse('recruiter-talent-suggestions-v2'), {'job': self.new_job.public_id}
+            reverse('recruiter-talent-suggestions'), {'job': self.new_job.public_id}
         )
         self.assertTrue(again.data[0]['already_invited'])
 
@@ -132,7 +134,7 @@ class TalentPoolTests(APITestCase):
         )
 
         response = self.client.get(
-            reverse('recruiter-talent-suggestions-v2'), {'job': self.new_job.public_id}
+            reverse('recruiter-talent-suggestions'), {'job': self.new_job.public_id}
         )
 
         self.assertEqual(response.data, [])
@@ -141,15 +143,17 @@ class TalentPoolTests(APITestCase):
         self.save_to_pool()
         self.login(self.candidate)
 
-        listing = self.client.get(reverse('candidate-talent-pools-v2'))
+        listing = self.client.get(reverse('candidate-talent-pools'))
         self.assertEqual(listing.data['results'][0]['company_name'], 'Pool Co')
         entry_id = listing.data['results'][0]['public_id']
-        withdraw = self.client.post(reverse('candidate-talent-pool-withdraw-v2', args=[entry_id]))
+        withdraw = self.client.post(reverse('candidate-talent-pool-withdraw', args=[entry_id]))
 
         self.assertEqual(withdraw.status_code, 204)
-        self.assertEqual(self.client.get(reverse('candidate-talent-pools-v2')).data['results'], [])
+        self.assertEqual(self.client.get(reverse('candidate-talent-pools')).data['results'], [])
+        again = self.client.post(reverse('candidate-talent-pool-withdraw', args=[entry_id]))
+        self.assertEqual(again.status_code, 404)
         self.login(self.employer)
-        self.assertEqual(self.client.get(reverse('recruiter-talent-pool-v2')).data['results'], [])
+        self.assertEqual(self.client.get(reverse('recruiter-talent-pool')).data['results'], [])
 
     def test_lapsed_entries_are_purged(self):
         self.save_to_pool()

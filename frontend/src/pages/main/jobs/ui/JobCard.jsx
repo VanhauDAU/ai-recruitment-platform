@@ -2,7 +2,7 @@ import { HeartFilled, HeartOutlined } from '@ant-design/icons'
 import { Tooltip } from 'antd'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { companyDetailPath } from '@/entities/company'
+import { companyDetailPath } from '@/entities/company/company'
 import {
   EDUCATION_LEVEL_LABELS,
   EMPLOYMENT_TYPE_LABELS,
@@ -20,17 +20,18 @@ import {
   resolveJobPresentation,
   SavedJobTooltipContent,
   VerifiedEmployerBadge,
-} from '@/entities/job'
-import { JobCompareButton } from '@/features/compare-jobs'
-import { useSavedJob } from '@/features/saved-jobs'
-import { useJobImpression } from '@/features/track-job-engagement'
+} from '@/entities/job/job'
+import { JobCompareButton } from '@/features/main/job/compare-jobs'
+import { useSavedJob } from '@/features/main/job/saved-jobs'
+import { useJobImpression } from '@/features/main/job/track-job-engagement'
 import './job-card.css'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 function savedLabel(value) {
   const savedAt = new Date(value)
   if (!value || Number.isNaN(savedAt.getTime())) return null
-  const date = savedAt.toLocaleDateString('vi-VN')
-  const time = savedAt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+  const date = savedAt.toLocaleDateString(getIntlLocale())
+  const time = savedAt.toLocaleTimeString(getIntlLocale(), { hour: '2-digit', minute: '2-digit' })
   return `Đã lưu ${date} - ${time}`
 }
 

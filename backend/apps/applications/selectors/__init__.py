@@ -9,11 +9,13 @@ from .applications import (
     recruiter_application_history_queryset,
     recruiter_application_snapshot_queryset,
     recruiter_candidate_blocks_queryset,
+    recruiter_is_company_owner,
     recruiter_review_links_queryset,
     recruiter_reviews_queryset,
 )
 from .talent_pool import (
     candidate_talent_pool_queryset,
+    recruiter_talent_pool_jobs_queryset,
     recruiter_talent_pool_queryset,
     talent_suggestions_for_job,
 )
@@ -21,6 +23,7 @@ from .talent_pool import (
 __all__ = [
     'previous_submissions_queryset',
     'candidate_talent_pool_queryset',
+    'recruiter_talent_pool_jobs_queryset',
     'recruiter_talent_pool_queryset',
     'talent_suggestions_for_job',
     'admin_job_applications_queryset',
@@ -30,6 +33,7 @@ __all__ = [
     'recruiter_application_history_queryset',
     'recruiter_application_snapshot_queryset',
     'recruiter_candidate_blocks_queryset',
+    'recruiter_is_company_owner',
     'recruiter_review_links_queryset',
     'recruiter_reviews_queryset',
 ]

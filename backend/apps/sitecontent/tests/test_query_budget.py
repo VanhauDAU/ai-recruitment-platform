@@ -16,7 +16,7 @@ from ..services import (
     create_announcement_revision,
     publish_announcement,
 )
-from .announcement_helpers import revision_payload
+from .factories import revision_payload
 
 LINK_GROUP_LIST_QUERY_BUDGET = 4
 ACTIVE_ANNOUNCEMENT_FEED_QUERY_BUDGET = 1

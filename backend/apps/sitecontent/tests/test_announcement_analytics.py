@@ -12,7 +12,7 @@ from rest_framework import status
 from rest_framework.test import APIRequestFactory, APITestCase
 
 from apps.accounts.models import User
-from apps.accounts.tests.helpers import make_admin
+from apps.accounts.tests.factories import make_admin
 
 from ..models import (
     AnnouncementDailyMetric,
@@ -24,7 +24,7 @@ from ..services import (
     publish_announcement,
     record_consented_announcement_events,
 )
-from .announcement_helpers import revision_payload
+from .factories import revision_payload
 
 
 class AnnouncementStateApiTests(APITestCase):
@@ -193,7 +193,9 @@ class AnnouncementAnalyticsApiTests(APITestCase):
         self.assertFalse(AnnouncementDailyMetric.objects.exists())
         self.assertNotIn('procv_viewer_id', response.cookies)
 
-    @patch('apps.sitecontent.services.announcements._claim_unique_event', return_value=True)
+    @patch(
+        'apps.sitecontent.services.announcement_analytics._claim_unique_event', return_value=True
+    )
     def test_consented_batch_increments_daily_metrics_and_sets_viewer_cookie(self, _claim):
         self.grant_analytics_consent()
 
@@ -210,7 +212,9 @@ class AnnouncementAnalyticsApiTests(APITestCase):
         self.assertEqual(metric.clicks, 1)
         self.assertEqual(metric.unique_clicks, 1)
 
-    @patch('apps.sitecontent.services.announcements._claim_unique_event', return_value=False)
+    @patch(
+        'apps.sitecontent.services.announcement_analytics._claim_unique_event', return_value=False
+    )
     def test_duplicate_events_do_not_increment_metrics(self, _claim):
         self.grant_analytics_consent()
 
@@ -219,7 +223,9 @@ class AnnouncementAnalyticsApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
         self.assertFalse(AnnouncementDailyMetric.objects.exists())
 
-    @patch('apps.sitecontent.services.announcements._claim_unique_event', return_value=None)
+    @patch(
+        'apps.sitecontent.services.announcement_analytics._claim_unique_event', return_value=None
+    )
     def test_redis_failure_drops_metrics_without_failing_request(self, _claim):
         self.grant_analytics_consent()
 
@@ -228,7 +234,9 @@ class AnnouncementAnalyticsApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
         self.assertFalse(AnnouncementDailyMetric.objects.exists())
 
-    @patch('apps.sitecontent.services.announcements._claim_unique_event', return_value=None)
+    @patch(
+        'apps.sitecontent.services.announcement_analytics._claim_unique_event', return_value=None
+    )
     def test_redis_failure_in_throttle_fails_open_for_best_effort_events(self, _claim):
         self.grant_analytics_consent()
 
@@ -257,7 +265,9 @@ class AnnouncementAnalyticsApiTests(APITestCase):
             )
         )
 
-    @patch('apps.sitecontent.services.announcements._claim_unique_event', return_value=True)
+    @patch(
+        'apps.sitecontent.services.announcement_analytics._claim_unique_event', return_value=True
+    )
     def test_invalid_revision_or_surface_is_ignored(self, claim):
         self.grant_analytics_consent()
         payload = {
@@ -372,13 +382,15 @@ class AnnouncementMetricConcurrencyTests(TransactionTestCase):
         )
         self.revision_id = announcement.active_revision_id
 
-    @patch('apps.sitecontent.services.announcements._claim_unique_event', return_value=True)
+    @patch(
+        'apps.sitecontent.services.announcement_analytics._claim_unique_event', return_value=True
+    )
     def test_concurrent_first_writes_preserve_both_increments(self, _claim):
         def record():
             close_old_connections()
             try:
                 revision = AnnouncementRevision.objects.get(pk=self.revision_id)
-                request = APIRequestFactory().post('/api/site/announcements/events/')
+                request = APIRequestFactory().post('/api/public/site/announcements/events/')
                 request.user = AnonymousUser()
                 record_consented_announcement_events(
                     request,

@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import { blogCategoryPath } from '@/entities/blog'
+import { blogCategoryPath } from '@/entities/content/blog'
 import BlogCard from './BlogCard'
 import { SectionHeading } from './FeaturedPosts'
 

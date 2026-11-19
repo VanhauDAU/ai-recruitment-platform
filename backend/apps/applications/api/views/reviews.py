@@ -2,15 +2,16 @@
 
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import permissions, serializers, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsEmployer
+from apps.accounts.api.permissions import IsEmployer
 from apps.employers.services import ensure_recruiter_candidate_data_access
-from common.throttling import ClientIPScopedRateThrottle
+from common.api.throttling import ClientIPScopedRateThrottle
 
 from ...selectors import (
     employer_application_queryset,
@@ -41,7 +42,7 @@ def _application(request, public_id):
     return get_object_or_404(employer_application_queryset(request.user), public_id=public_id)
 
 
-@extend_schema(tags=['applications-v2'])
+@extend_schema(tags=['applications'])
 class RecruiterReviewLinkListCreateView(APIView):
     permission_classes = [IsEmployer]
 
@@ -79,7 +80,12 @@ class RecruiterReviewLinkListCreateView(APIView):
         )
 
 
-@extend_schema(tags=['applications-v2'], summary='Thu hồi link mời đánh giá', request=None)
+@extend_schema(
+    tags=['applications'],
+    summary='Thu hồi link mời đánh giá',
+    request=None,
+    responses={200: ReviewLinkSerializer},
+)
 class RecruiterReviewLinkRevokeView(APIView):
     permission_classes = [IsEmployer]
 
@@ -93,7 +99,7 @@ class RecruiterReviewLinkRevokeView(APIView):
 
 
 @extend_schema(
-    tags=['applications-v2'],
+    tags=['applications'],
     summary='Phiếu đánh giá của người được mời và tổng hợp',
     responses={
         200: inline_serializer(
@@ -118,7 +124,7 @@ class RecruiterApplicationReviewListView(APIView):
         )
 
 
-@extend_schema(tags=['applications-v2'])
+@extend_schema(tags=['applications'])
 class PublicApplicationReviewView(APIView):
     """Bearer endpoint for invited reviewers; bad, expired and revoked links all 404."""
 
@@ -127,7 +133,10 @@ class PublicApplicationReviewView(APIView):
     throttle_classes = [ClientIPScopedRateThrottle]
     throttle_scope = 'application_review'
 
-    @extend_schema(summary='Người được mời xem hồ sơ đã ẩn thông tin liên hệ')
+    @extend_schema(
+        summary='Người được mời xem hồ sơ đã ẩn thông tin liên hệ',
+        responses={200: OpenApiTypes.OBJECT},
+    )
     def get(self, request, token):
         try:
             link = open_review_link(token, request=request)

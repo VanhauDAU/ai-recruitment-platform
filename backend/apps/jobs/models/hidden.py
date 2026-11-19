@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy
 
 from .core import Job
 
@@ -8,9 +9,9 @@ class CandidateHiddenJob(models.Model):
     """A job explicitly dismissed from one candidate's personalized surfaces."""
 
     class Source(models.TextChoices):
-        MATCHING = 'matching', 'Việc làm phù hợp'
-        HOMEPAGE = 'homepage', 'Trang chủ'
-        INLINE = 'inline', 'Danh sách việc làm'
+        MATCHING = 'matching', gettext_lazy('Việc làm phù hợp')
+        HOMEPAGE = 'homepage', gettext_lazy('Trang chủ')
+        INLINE = 'inline', gettext_lazy('Danh sách việc làm')
 
     candidate = models.ForeignKey(
         settings.AUTH_USER_MODEL,

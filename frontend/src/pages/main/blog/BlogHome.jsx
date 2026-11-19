@@ -2,8 +2,8 @@ import { Fragment, useEffect, useState } from 'react'
 import { DownOutlined, LoadingOutlined } from '@ant-design/icons'
 import { Empty, Skeleton } from 'antd'
 import { Link, useSearchParams } from 'react-router'
-import { getBanners, settingText, useSiteSettings } from '@/entities/site-settings'
-import { BLOG_ROOT, getBlogCategories, getBlogHome, getBlogPosts } from '@/entities/blog'
+import { getBanners, settingText, useSiteSettings } from '@/entities/system/site-settings'
+import { BLOG_ROOT, getBlogCategories, getBlogHome, getBlogPosts } from '@/entities/content/blog'
 import { legacyAsset } from '@/shared/config/assets'
 import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
 import BlogCard from './ui/BlogCard'
@@ -74,7 +74,7 @@ export default function BlogHome() {
   useDocumentMetadata(
     tagSlug
       ? {
-          title: `Thẻ: ${tagSlug} — ${pageTitle}`,
+          title: `Bài viết gắn thẻ “${tagSlug}” - ${pageTitle}`,
           description: `Các bài viết cẩm nang gắn thẻ ${tagSlug}.`,
           canonicalPath: `${BLOG_ROOT}?tag=${encodeURIComponent(tagSlug)}`,
         }

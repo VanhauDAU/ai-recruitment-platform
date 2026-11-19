@@ -5,10 +5,11 @@ from django.db.models import Count, Q
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from django.utils.html import strip_tags
+from django.utils.translation import gettext as _
 
 from apps.accounts.models import User
 from apps.employers.models import Company
-from common.media_storage import media_url_from_value
+from common.storage.media import media_url_from_value
 
 from ..models import Job, JobCategory
 from .listing import SALARY_BUCKETS, filter_salary_bucket, publicly_available_job_filter
@@ -75,10 +76,10 @@ def _salary_demand(active_jobs):
     for key, name, _lower, _upper in SALARY_BUCKETS:
         count = filter_salary_bucket(active_jobs, key).count()
         if count:
-            demand.append({'name': name, 'count': count})
+            demand.append({'name': str(name), 'count': count})
     negotiable_count = active_jobs.filter(salary_type=Job.SalaryType.NEGOTIABLE).count()
     if negotiable_count:
-        demand.append({'name': 'Thỏa thuận', 'count': negotiable_count})
+        demand.append({'name': _('Thỏa thuận'), 'count': negotiable_count})
     return demand[:6]
 
 

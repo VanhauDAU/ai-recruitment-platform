@@ -31,12 +31,21 @@ export default defineConfig({
     baseURL: playwrightBaseUrl,
     trace: 'on-first-retry',
   },
+  // Desktop runs every test. Tablet and mobile run only tests tagged
+  // `@responsive` — anything that asserts layout, overflow, touch or a
+  // viewport-specific branch. A business flow without such an assertion
+  // proves nothing more on a narrower screen; tag a test as soon as it checks
+  // how the page fits (see docs/05-huong-dan/tieu-chuan-kiem-thu.md).
   projects: [
     { name: 'desktop-chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'tablet-chromium', use: { viewport: { width: 834, height: 1112 }, hasTouch: true } },
+    {
+      name: 'tablet-chromium',
+      grep: /@responsive/,
+      use: { viewport: { width: 834, height: 1112 }, hasTouch: true },
+    },
     // Use a Chromium-native mobile profile. iPhone 13 is a WebKit device;
     // forcing it onto Chromium produces a mismatched layout/visual viewport.
-    { name: 'mobile-chromium', use: { ...devices['Pixel 5'] } },
+    { name: 'mobile-chromium', grep: /@responsive/, use: { ...devices['Pixel 5'] } },
   ],
   webServer: {
     command: webServerCommand,

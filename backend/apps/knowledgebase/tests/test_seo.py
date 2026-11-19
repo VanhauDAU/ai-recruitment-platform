@@ -5,7 +5,7 @@ from django.urls import reverse
 from apps.knowledgebase.models import KnowledgeArticle
 from apps.knowledgebase.services import create_article
 
-from .base import PublishedKnowledgeMixin
+from .factories import PublishedKnowledgeMixin
 
 SHELL = (
     '<!doctype html><html lang="en"><head><title data-seo-default>Old</title>'

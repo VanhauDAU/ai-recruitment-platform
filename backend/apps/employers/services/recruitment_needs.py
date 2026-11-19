@@ -4,7 +4,6 @@ from django.db import transaction
 from django.utils import timezone
 
 from ..models import RecruiterProfile, RecruitmentNeed
-from .verification import reconcile_recruiter_verification
 
 
 class InitialRecruitmentNeedAlreadyExists(ValueError):
@@ -21,5 +20,11 @@ def create_initial_recruitment_need(*, recruiter, validated_data):
     values = dict(validated_data)
     values['completed_at'] = timezone.now()
     need = RecruitmentNeed.objects.create(recruiter=locked_recruiter, **values)
-    reconcile_recruiter_verification(locked_recruiter, source='recruitment_need_completed')
+    return need
+
+
+def create_recruitment_need(*, recruiter, validated_data):
+    """Add another need after onboarding; it counts as completed at once."""
+    values = {**validated_data, 'completed_at': timezone.now()}
+    need = RecruitmentNeed.objects.create(recruiter=recruiter, **values)
     return need

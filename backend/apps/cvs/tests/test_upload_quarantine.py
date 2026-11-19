@@ -10,21 +10,20 @@ from django.utils import timezone
 from PIL import Image
 from rest_framework.test import APITestCase
 
-from apps.cv_templates.models import CvTemplate, CvTemplateVersion
+from apps.cv_templates.models import CvTemplate, CvTemplateVersion, empty_layout, empty_style
+from apps.cvs.tasks.imports import purge_expired_cv_import_sources
 from apps.uploads.models import UploadAsset, UploadState
 from apps.uploads.services import (
     create_upload_session,
     process_upload_scan,
     store_quarantined_upload,
 )
+from apps.uploads.tests.factories import TemporaryUploadStorageMixin
 from apps.uploads.tests.fakes import FakeUploadScanner
-from apps.uploads.tests.helpers import TemporaryUploadStorageMixin
 
 from ..models import CvAsset, CvImportJob, UserCv
-from ..schemas import empty_layout, empty_style
 from ..services.upload_claims import CV_AVATAR_CLAIM_SCOPE, CV_SOURCE_CLAIM_SCOPE
-from ..tasks import purge_expired_cv_import_sources
-from .fixtures import pdf_bytes
+from .factories import pdf_bytes
 
 
 class CandidateCvUploadQuarantineTests(TemporaryUploadStorageMixin, APITestCase):
@@ -66,7 +65,7 @@ class CandidateCvUploadQuarantineTests(TemporaryUploadStorageMixin, APITestCase)
         session = self.create_clean_session(upload)
 
         response = self.client.post(
-            reverse('cv-v2-import'),
+            reverse('cv-import'),
             {'upload_session': session.public_id, 'title': 'CV an toàn'},
             format='multipart',
         )
@@ -111,13 +110,13 @@ class CandidateCvUploadQuarantineTests(TemporaryUploadStorageMixin, APITestCase)
 
         with self.captureOnCommitCallbacks(execute=False):
             first = self.client.post(
-                reverse('cv-v2-import'),
+                reverse('cv-import'),
                 payload,
                 format='multipart',
                 HTTP_IDEMPOTENCY_KEY='clean-template-import',
             )
             second = self.client.post(
-                reverse('cv-v2-import'),
+                reverse('cv-import'),
                 payload,
                 format='multipart',
                 HTTP_IDEMPOTENCY_KEY='clean-template-import',
@@ -139,7 +138,7 @@ class CandidateCvUploadQuarantineTests(TemporaryUploadStorageMixin, APITestCase)
             expected_size_bytes=20,
         )
         pending_response = self.client.post(
-            reverse('cv-v2-import'),
+            reverse('cv-import'),
             {'upload_session': pending.public_id},
             format='multipart',
         )
@@ -155,7 +154,7 @@ class CandidateCvUploadQuarantineTests(TemporaryUploadStorageMixin, APITestCase)
             expected_size_bytes=20,
         )
         foreign_response = self.client.post(
-            reverse('cv-v2-import'),
+            reverse('cv-import'),
             {'upload_session': foreign.public_id},
             format='multipart',
         )
@@ -165,10 +164,10 @@ class CandidateCvUploadQuarantineTests(TemporaryUploadStorageMixin, APITestCase)
         raw = SimpleUploadedFile('legacy.pdf', b'%PDF-1.7\nlegacy', content_type='application/pdf')
         with (
             override_settings(CANDIDATE_UPLOAD_SESSION_REQUIRED=True),
-            patch('apps.cvs.api.views.v2.validate_import_upload') as validate_raw,
+            patch('apps.cvs.api.views.imports.validate_import_upload') as validate_raw,
         ):
             raw_response = self.client.post(
-                reverse('cv-v2-import'),
+                reverse('cv-import'),
                 {'file': raw},
                 format='multipart',
             )
@@ -184,7 +183,7 @@ class CandidateCvUploadQuarantineTests(TemporaryUploadStorageMixin, APITestCase)
         )
 
         response = self.client.post(
-            reverse('cv-v2-asset-upload'),
+            reverse('cv-asset-upload'),
             {'upload_session': session.public_id},
             format='multipart',
         )
@@ -207,7 +206,7 @@ class CandidateCvUploadQuarantineTests(TemporaryUploadStorageMixin, APITestCase)
         )
 
         response = self.client.post(
-            reverse('cv-v2-asset-upload'),
+            reverse('cv-asset-upload'),
             {'upload_session': session.public_id},
             format='multipart',
         )
@@ -222,14 +221,14 @@ class CandidateCvUploadQuarantineTests(TemporaryUploadStorageMixin, APITestCase)
             SimpleUploadedFile('retained.pdf', pdf_bytes(), content_type='application/pdf')
         )
         imported = self.client.post(
-            reverse('cv-v2-import'),
+            reverse('cv-import'),
             {'upload_session': session.public_id},
             format='multipart',
         )
         source = UploadAsset.objects.get(source_session=session)
 
         deleted = self.client.delete(
-            reverse('cv-v2-detail', kwargs={'public_id': imported.data['public_id']})
+            reverse('cv-detail', kwargs={'public_id': imported.data['public_id']})
         )
 
         self.assertEqual(deleted.status_code, 204)
@@ -244,7 +243,7 @@ class CandidateCvUploadQuarantineTests(TemporaryUploadStorageMixin, APITestCase)
             SimpleUploadedFile('expiring.pdf', pdf_bytes(), content_type='application/pdf')
         )
         imported = self.client.post(
-            reverse('cv-v2-import'),
+            reverse('cv-import'),
             {'upload_session': session.public_id},
             format='multipart',
         )

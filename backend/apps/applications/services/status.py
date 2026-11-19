@@ -12,17 +12,17 @@ from http import HTTPStatus
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from rest_framework.exceptions import APIException
 
 from apps.accounts.services import is_account_accessible
+from apps.campaigns.models import CampaignActivity
 from apps.candidates.models import CandidateNotification
 from apps.candidates.services import (
     cancel_candidate_notification,
     emit_candidate_notification,
     restore_superseded_candidate_notification,
 )
-from apps.employers.models import CampaignActivity
-from apps.employers.services import record_campaign_activity
 
 from ..models import Application, ApplicationStatusHistory
 from .locking import lock_recruiter_application
@@ -122,7 +122,7 @@ def notify_candidate_of_status(application, history, *, deliver_after, send_emai
 def _record_status_activity(application, *, actor, from_status, to_status):
     if not application.job.campaign_id:
         return
-    record_campaign_activity(
+    CampaignActivity.objects.record(
         campaign=application.job.campaign,
         event_type=CampaignActivity.EventType.APPLICATION_STATUS_CHANGED,
         group=CampaignActivity.Group.APPLICATION,
@@ -153,15 +153,15 @@ def change_application_status(application, *, changed_by, status):
     now = timezone.now()
     if status not in available_status_decisions(application, now=now):
         if not is_account_accessible(application.candidate):
-            message = (
+            message = _(
                 'Ứng viên đang bị hạn chế tài khoản. '
                 'Chỉ được chuyển hồ sơ sang trạng thái Không phù hợp.'
             )
         else:
-            message = (
-                f'Không thể chuyển hồ sơ từ "{Status(application.status).label}" '
-                f'sang "{Status(status).label}".'
-            )
+            message = _('Không thể chuyển hồ sơ từ "%(from)s" sang "%(to)s".') % {
+                'from': Status(application.status).label,
+                'to': Status(status).label,
+            }
         raise InvalidApplicationStatusTransition(message)
 
     previous_status = application.status
@@ -227,7 +227,7 @@ def reject_blocked_application(application, *, blocked_by):
         from_status=previous_status,
         to_status=Status.REJECTED,
         changed_by=blocked_by,
-        note='Công ty đã chặn ứng viên.',
+        note=_('Công ty đã chặn ứng viên.'),
     )
     notify_candidate_of_status(
         application,
@@ -265,12 +265,12 @@ def undo_latest_status_change(application, *, changed_by):
     application = lock_recruiter_application(application, changed_by=changed_by)
     history = undoable_status_history(application, user=changed_by)
     if history is None:
-        raise StatusChangeNotUndoable('Không có thay đổi nào của bạn có thể hoàn tác.')
+        raise StatusChangeNotUndoable(_('Không có thay đổi nào của bạn có thể hoàn tác.'))
     if not cancel_candidate_notification(
         recipient_id=application.candidate_id, dedupe_key=history.notification_key
     ):
         raise StatusChangeNotUndoable(
-            'Ứng viên đã nhận thông báo về thay đổi này nên không thể hoàn tác.'
+            _('Ứng viên đã nhận thông báo về thay đổi này nên không thể hoàn tác.')
         )
 
     now = timezone.now()

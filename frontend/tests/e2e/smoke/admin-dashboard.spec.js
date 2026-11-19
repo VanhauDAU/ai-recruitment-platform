@@ -77,14 +77,14 @@ function dashboard(days) {
   }
 }
 
-test('admin dashboard: urgent queues first, period filter and no horizontal overflow', async ({ page }, testInfo) => {
+test('admin dashboard: urgent queues first, period filter and no horizontal overflow', { tag: '@responsive' }, async ({ page }, testInfo) => {
   const pageErrors = []
   const requestedPeriods = []
   page.on('pageerror', (error) => pageErrors.push(error.message))
   await page.route(API_ROUTE, async (route) => {
     const url = new URL(route.request().url())
     const path = url.pathname
-    if (path === '/api/dashboard/admin/queues/') {
+    if (path === '/api/admin/dashboard/queues/') {
       const { generated_at: generatedAt, queues } = dashboard(30)
       await route.fulfill({
         contentType: 'application/json',
@@ -92,7 +92,7 @@ test('admin dashboard: urgent queues first, period filter and no horizontal over
       })
       return
     }
-    if (path === '/api/dashboard/admin/') {
+    if (path === '/api/admin/dashboard/') {
       const period = Number(url.searchParams.get('period'))
       requestedPeriods.push(period)
       await route.fulfill({ contentType: 'application/json', body: JSON.stringify(dashboard(period)) })
@@ -102,9 +102,9 @@ test('admin dashboard: urgent queues first, period filter and no horizontal over
       ? { access: 'e2e-access' }
       : path === '/api/auth/me/'
         ? adminUser
-        : path === '/api/site/announcements/active/'
+        : path === '/api/public/site/announcements/active/'
           ? { remote_enabled: false, items: [], next_transition_at: null }
-          : path === '/api/privacy/consent/'
+          : path === '/api/public/privacy/consent/'
             ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
             : {}
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })

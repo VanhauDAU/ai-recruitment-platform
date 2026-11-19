@@ -1,9 +1,10 @@
 import re
 
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 
 from ...models import CandidateHiddenJob
-from .jobs import PublicJobListSerializer
+from .public_jobs import PublicJobListSerializer
 
 RANKING_SEED_PATTERN = re.compile(r'^[A-Za-z0-9_-]{1,64}$')
 PUBLIC_ID_PATTERN = re.compile(r'^[A-Za-z0-9_-]{1,50}$')
@@ -106,14 +107,17 @@ class InlineJobRecommendationQuerySerializer(serializers.Serializer):
             public_id = raw_id.strip()
             if not public_id or not PUBLIC_ID_PATTERN.fullmatch(public_id):
                 raise serializers.ValidationError(
-                    {'excluded': 'Danh sách mã tin tuyển dụng không hợp lệ.'}
+                    {'excluded': _('Danh sách mã tin tuyển dụng không hợp lệ.')}
                 )
             if public_id not in seen:
                 seen.add(public_id)
                 public_ids.append(public_id)
         if len(public_ids) > MAX_INLINE_EXCLUDED_JOBS:
             raise serializers.ValidationError(
-                {'excluded': f'Chỉ được loại tối đa {MAX_INLINE_EXCLUDED_JOBS} tin.'}
+                {
+                    'excluded': _('Chỉ được loại tối đa %(count)s tin.')
+                    % {'count': MAX_INLINE_EXCLUDED_JOBS}
+                }
             )
         attrs['excluded_public_ids'] = public_ids
         return attrs

@@ -1,0 +1,190 @@
+import api from '@/shared/api/client'
+import { fetchAllPages } from '@/shared/api/pagination'
+import { cachedRequest, dedupeRequest, invalidateRequestCache } from '@/shared/api/request-deduplication'
+
+const CATALOG_CACHE_TTL = 5 * 60 * 1000
+const STATS_CACHE_TTL = 60 * 1000
+
+export async function getJobs(params = {}) {
+  const { data } = await api.get('/public/jobs/', { params })
+  return data
+}
+
+export async function getHomepageBestJobs(params = {}) {
+  const { data } = await api.get('/public/jobs/best/', { params })
+  return data
+}
+
+export async function getCvJobRecommendations(publicId) {
+  const { data } = await api.get(`/candidate/jobs/recommendations/by-cv/${publicId}/`)
+  return data
+}
+
+export async function getCandidateJobRecommendations(params = {}) {
+  const { data } = await api.get('/candidate/jobs/recommendations/for-me/', { params })
+  return data
+}
+
+export async function getInlineJobRecommendations({ excludedJobIds = [], ...params } = {}) {
+  const { data } = await api.get('/candidate/jobs/recommendations/inline/', {
+    params: {
+      ...params,
+      excluded: excludedJobIds.join(','),
+    },
+  })
+  return data
+}
+
+export async function getJobDetail(slug) {
+  return dedupeRequest(`job-detail:${slug}`, async () => {
+    const { data } = await api.get(`/public/jobs/${slug}/`)
+    return data
+  })
+}
+
+export async function recordJobView(slug) {
+  const { data } = await api.post(`/public/jobs/${slug}/views/`, null, { withCredentials: true })
+  return data
+}
+
+export async function recordJobImpressions(slugs) {
+  const { data } = await api.post('/public/jobs/impressions/', { slugs }, { withCredentials: true })
+  return data
+}
+
+export async function getJobCategories(params = {}) {
+  const cacheKey = `job-categories:${JSON.stringify(params)}`
+  return cachedRequest(cacheKey, CATALOG_CACHE_TTL, () => fetchAllPages('/public/jobs/categories/', { all: '1', ...params }))
+}
+
+export async function getJobBenefits() {
+  return cachedRequest('job-benefits', CATALOG_CACHE_TTL, async () => {
+    const { data } = await api.get('/public/jobs/benefits/')
+    return data.results || data
+  })
+}
+
+export async function getJobLanguages() {
+  return cachedRequest('job-languages', CATALOG_CACHE_TTL, async () => {
+    const { data } = await api.get('/public/jobs/languages/')
+    return data.results || data
+  })
+}
+
+export async function getSkills(params = {}) {
+  if (Object.keys(params).length) {
+    const { data } = await api.get('/public/skills/', { params })
+    return data.results || data
+  }
+
+  return cachedRequest('skills', CATALOG_CACHE_TTL, async () => {
+    const { data } = await api.get('/public/skills/')
+    return data.results || data
+  })
+}
+
+export async function createSkill(name) {
+  const { data } = await api.post('/public/skills/', { name })
+  invalidateRequestCache('skills')
+  return data
+}
+
+export async function getJobStats() {
+  return cachedRequest('job-stats', STATS_CACHE_TTL, async () => {
+    const { data } = await api.get('/public/jobs/stats/')
+    return data
+  })
+}
+
+export async function getIndustries() {
+  return cachedRequest('industries', CATALOG_CACHE_TTL, async () => {
+    const { data } = await api.get('/employer/industries/')
+    return data
+  })
+}
+
+export async function getJobSuggestions(q, searchBy = 'title') {
+  const params = { q }
+  if (searchBy === 'company') params.search_by = 'company'
+  const { data } = await api.get('/public/jobs/suggest/', { params })
+  return data.suggestions || []
+}
+
+export async function getEmployerJobPage(params = {}) {
+  const { data } = await api.get('/employer/jobs/', { params })
+  return Array.isArray(data)
+    ? { count: data.length, next: null, previous: null, results: data }
+    : data
+}
+
+export async function getEmployerJobs(params = {}) {
+  const page = await getEmployerJobPage(params)
+  return page.results || []
+}
+
+export async function getEmployerJob(publicId) {
+  const { data } = await api.get(`/employer/jobs/${publicId}/`)
+  return data
+}
+
+export async function getJobPostingContext() {
+  const { data } = await api.get('/employer/jobs/posting-context/')
+  return data
+}
+
+export async function saveEmployerJob(payload, publicId) {
+  if (publicId) {
+    const { data } = await api.patch(`/employer/jobs/${publicId}/`, payload)
+    return data
+  }
+  const { data } = await api.post('/employer/jobs/?as=draft', payload)
+  return data
+}
+
+// The backend only makes a job public when the request names the commitment
+// version the recruiter accepted (see `responsibility_statement` in the
+// posting context). Saving an already public job needs no acknowledgement.
+export async function publishEmployerJob(payload, publicId, acceptedStatementVersion) {
+  const acknowledgement = { responsibility_statement_version: acceptedStatementVersion }
+  if (publicId) {
+    await api.patch(`/employer/jobs/${publicId}/`, payload)
+    const { data } = await api.post(`/employer/jobs/${publicId}/submit/`, acknowledgement)
+    return data
+  }
+  const { data } = await api.post('/employer/jobs/', { ...payload, ...acknowledgement })
+  return data
+}
+
+export async function closeEmployerJob(publicId) {
+  const { data } = await api.post(`/employer/jobs/${publicId}/close/`)
+  return data
+}
+
+export async function reopenEmployerJob(publicId, deadline, acceptedStatementVersion) {
+  const { data } = await api.post(`/employer/jobs/${publicId}/reopen/`, {
+    deadline,
+    responsibility_statement_version: acceptedStatementVersion,
+  })
+  return data
+}
+
+export async function extendEmployerJob(publicId, deadline) {
+  const { data } = await api.post(`/employer/jobs/${publicId}/extend/`, { deadline })
+  return data
+}
+
+/** Send a job fixed after a moderation change request back for review. */
+export async function resubmitEmployerJob(publicId) {
+  const { data } = await api.post(`/employer/jobs/${publicId}/resubmit/`)
+  return data
+}
+
+export async function duplicateEmployerJob(publicId) {
+  const { data } = await api.post(`/employer/jobs/${publicId}/duplicate/`)
+  return data
+}
+
+export async function deleteEmployerJob(publicId) {
+  await api.delete(`/employer/jobs/${publicId}/`)
+  return publicId
+}

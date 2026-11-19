@@ -2,13 +2,13 @@
 
 from django.conf import settings
 from django.db.models import Q
+from django.utils.translation import gettext_lazy
 
+from apps.employers.domain.company_email import email_domain
 from apps.jobs.models import JobReport
-from common.company_email import email_domain
 
 from ..models import CompanyDocument, DpaStatus, EmployerVerificationCase
-from ..models.readiness import current_dpa_status
-from .company_status import has_explicit_company_link
+from ..models.readiness import current_dpa_status, has_explicit_company_link
 from .domain_claims import effective_company_domain_claims
 
 INVALIDATING_CASE_STATUSES = frozenset(
@@ -21,9 +21,9 @@ INVALIDATING_CASE_STATUSES = frozenset(
 )
 
 INITIAL_ONBOARDING_STEP_LABELS = {
-    'registration_completed': 'Hồ sơ đăng ký',
-    'email_verified': 'Xác minh email',
-    'consulting_need_completed': 'Nhu cầu tuyển dụng',
+    'registration_completed': gettext_lazy('Hồ sơ đăng ký'),
+    'email_verified': gettext_lazy('Xác minh email'),
+    'consulting_need_completed': gettext_lazy('Nhu cầu tuyển dụng'),
 }
 
 
@@ -46,7 +46,7 @@ def build_employer_initial_onboarding(recruiter, *, has_recruitment_need=None):
         'completed': not missing_steps,
         'steps': steps,
         'missing_steps': missing_steps,
-        'missing_step_labels': [INITIAL_ONBOARDING_STEP_LABELS[key] for key in missing_steps],
+        'missing_step_labels': [str(INITIAL_ONBOARDING_STEP_LABELS[key]) for key in missing_steps],
     }
 
 
@@ -179,9 +179,7 @@ def build_employer_onboarding_steps(recruiter, *, badge_eligibility=None):
         ]
     )
     steps['verification_completed'] = (
-        case_approved
-        if getattr(settings, 'REQUIRE_APPROVED_EMPLOYER_VERIFICATION', False)
-        else legacy_completed
+        case_approved if settings.REQUIRE_APPROVED_EMPLOYER_VERIFICATION else legacy_completed
     )
     steps['completed'] = steps['verification_completed'] and steps['first_job_posted']
     return steps

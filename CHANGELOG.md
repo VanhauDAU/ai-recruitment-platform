@@ -6,7 +6,166 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-11-20
+
+#### Changed — Admin: giao diện chi tiết nhà tuyển dụng
+
+- Hero có dải số liệu (nhu cầu, tin, chiến dịch, giấy tờ, phiên đang mở); tab
+  nằm trên nền trang, nội dung mỗi tab trong panel riêng thay vì card lồng card.
+- "Tổng quan" chia hai cột: hồ sơ NTD bên trái, tóm tắt dạng danh sách và hoạt
+  động gần đây bên phải; mobile xếp tóm tắt lên đầu.
+- Trường hồ sơ và công ty hiển thị nhãn trên giá trị theo lưới tự co (thay bảng
+  viền 4 cột), chia nhóm "Thông tin cá nhân" và "Đăng ký và điều khoản"; nút
+  hiện dữ liệu nhạy cảm nằm ở đầu panel.
+- Sửa: bảng giấy tờ ở tab Xác thực tràn khỏi khung trên mobile; xóa CSS chi
+  tiết cũ trùng tên lớp trong widget danh sách tài khoản.
+
 ### 2026-11-19
+
+#### Changed — Admin: trang nhà tuyển dụng, nhật ký và popup xử lý
+
+- **API**: `GET /api/admin/accounts/?scope=recruiters` thêm `context.next_action`,
+  tham số `next_action` (mã hoặc `admin_queue`), `ordering=next_action`, tìm
+  theo tên công ty/MST/SĐT; summary NTD thêm `next_actions`.
+- **API (đổi shape)**: `GET /api/admin/accounts/:id/activity/` trả timeline
+  gộp nhiều nguồn `{results, next_cursor, category_counts}` với
+  `?category=&before=&limit=`; bỏ `section_counts.activity` ở chi tiết tài
+  khoản.
+- **API**: các endpoint `*-impact` của tài khoản, xác thực NTD, gỡ liên kết công
+  ty và domain nhận `reason` trống để xem trước; confirm vẫn bắt buộc lý do
+  (xác nhận domain nay tự kiểm tra lý do).
+- Danh sách NTD: ô phân khúc kiểu dashboard, cột "Việc cần làm", 20/40/60
+  dòng/trang, xem nhanh có chuyển NTD. Chi tiết NTD: hero gọn, dải việc cần
+  làm, gộp "Hồ sơ NTD" vào "Tổng quan", nhật ký chia theo nhóm và ngày.
+- Popup xử lý dùng chung `ActionDialog`/`ReasonField`/`ImpactFacts`: tác động
+  tự tải, lý do mẫu, xác nhận một click; duyệt giấy tờ đạt không cần popup;
+  sau quyết định xác thực có "Hồ sơ tiếp theo".
+#### Changed — Tiêu đề trang chuẩn hóa trên 3 cổng
+
+- `<title>` theo dạng `<nội dung trang> | <thương hiệu cổng>`: `ProCV`,
+  `ProCV cho Nhà tuyển dụng`, `Quản trị ProCV`; SEO shell backend dùng chung
+  helper `seo_page_title` và ra cùng chuỗi với frontend.
+- Tin tuyển dụng `Tuyển <vị trí> - <công ty>`; danh sách việc làm
+  `Tuyển dụng <N> việc làm <ngữ cảnh> mới nhất`; danh mục mẫu CV, blog, trợ giúp
+  khớp H1; chiến dịch `<tên> - <công ty>`.
+- Sửa các route bị gán "Trang không tồn tại"/`noindex` (`/tai-cv-len`,
+  `/tuyen-dung/:slug`, thông báo, lịch sử hoạt động, trang công ty của NTD);
+  thanh trên cùng NTD dùng cùng nguồn tiêu đề.
+- Gỡ `/tuyendung/bao-gia` khỏi SEO shell và sitemap.
+
+#### Changed — Nội dung trang công ty đăng ngay, hậu kiểm (ER-D65–ER-D68)
+
+- Người biên tập lưu một khối ở tab "Nội dung" là khối đó lên trang ngay; mỗi
+  lần lưu ghi `CompanyContentChange` (giá trị mới và giá trị bị thay). Migration
+  `employers/0004` thêm bảng này và `Company.content_review_required`.
+- Quản trị viên hậu kiểm ở tab "Thay đổi nội dung" (Công ty): so sánh trước/sau,
+  đánh dấu đã xem hàng loạt, hoàn tác kèm lý do (người sửa nhận thông báo), bật
+  "duyệt trước" cho công ty vi phạm để nội dung quay về yêu cầu cập nhật.
+- Thay đổi pháp lý và form hồ sơ công ty vẫn duyệt trước như cũ.
+- **Sửa lỗi**: gửi form hồ sơ công ty không còn xoá nội dung trang đang chờ duyệt
+  trong cùng yêu cầu; hàng đợi "Yêu cầu cập nhật công ty" không còn đếm yêu cầu
+  đang chờ NTD chỉnh sửa.
+
+#### Changed — Backend: baseline migration (ADR-0022, GĐ6) — **phải reset DB local**
+
+- 274 migration gộp thành baseline: `0001_initial` mỗi app (thêm `0002_initial`
+  khi FK vòng giữa app) và `00xx_reference_data` nạp dữ liệu tham chiếu từ
+  `migrations/reference_data.json`. Extension `unaccent`, `pg_trgm`, `vector`
+  khai báo trong baseline.
+- Schema mới khớp schema cũ; dọn 4 cột mồ côi của `employers_company` (còn sót
+  từ migration chỉ đổi state); bảng chiến dịch đổi tên thành `campaigns_*`.
+- Gỡ 8 test nâng cấp migration và job CI `backend-migration-tests`.
+- DB local tạo trước mốc này phải dựng lại: `./scripts/reset_local_db.sh [--demo]`.
+
+#### Changed — Backend: dọn chất lượng (ADR-0022, GĐ5)
+
+- Không còn module production nào trên 500 dòng; settings tách thành
+  `config/settings/components/` (giá trị không đổi).
+- Gộp code trùng: `common/outbox.py`, `common/errors.py` (`DomainError`), một
+  bộ chuyển HTML→text, một bảng chữ ký file, chính sách AI tạo tin một nguồn.
+- **Bảo mật**: captcha và nhật ký truy cập CV lấy IP client qua
+  `common.http.client_ip` (trước đây tin `X-Forwarded-For`/`REMOTE_ADDR`).
+- Gỡ legacy: chuỗi `legacy-media`, 9 lệnh chạy một lần, kênh OTP email cũ, nguồn
+  quyết định `legacy_*`, font CV cũ (Arial/Calibri/Source Sans Pro); bỏ trường API
+  không dùng `application_deadline`, `is_salary_visible`, `preferred_location_id`.
+- `GET /api/public/skills/?group=abc` trả `[]` thay vì 500; ảnh GIF89a được nhận.
+- Bật rule Django của ruff; thêm test privacy/skills/locations, tách file test lớn.
+
+#### Changed — API theo cổng (ADR-0022, GĐ4) — **thay đổi phá vỡ**
+
+- Mọi endpoint chuyển sang `/api/{auth,public,candidate,employer,admin,shared}/`;
+  bỏ `/api/v2/`. Ví dụ `/api/jobs/mine/` → `/api/employer/jobs/`,
+  `/api/v2/cvs/` → `/api/candidate/cvs/`, `/api/blog/admin/` → `/api/admin/blog/`.
+  Bảng đầy đủ: `docs/04-api/url-map-2026-11.md`. Không giữ alias cũ.
+- Frontend đổi cùng lúc (API client, mock unit test và E2E).
+- Gỡ API-root của DRF router và route SEO legacy `/jobs`, `/jobs/<slug>`.
+- Bỏ tên `v2` ở module, lớp, tên route và tag OpenAPI.
+
+#### Changed — Backend: tầng API (ADR-0022, GĐ3)
+
+- Lỗi đi qua exception handler chung: Django `ValidationError` thành 400
+  (`{field: [..]}` hoặc `{"detail": [..]}` — lỗi chung trước đây có nơi trả mảng
+  JSON), lỗi nghiệp vụ là `DomainError` giữ nguyên payload. Gỡ các helper đổi
+  lỗi trong view (`_call`, `_run_mutation`, `_validation_detail`).
+- ORM, transaction, ghi file và `.delay()` chuyển từ view/serializer vào
+  services/selectors ở mọi app; các GET của NTD không còn tạo `RecruiterProfile`.
+- OpenAPI: mọi view có `@extend_schema`, tên enum trùng có override — từ 70 lỗi /
+  340 cảnh báo về 0/0; `docs/04-api/openapi.yaml` sinh lại.
+- `common/api/params.py` (`parse_bool`, `parse_int`) thay ~10 cách parse cờ; bỏ
+  khai báo phân trang thừa; Browsable API chỉ bật khi `DEBUG`.
+
+#### Changed — Backend: ranh giới domain (ADR-0022, GĐ2)
+
+- `RecruitmentCampaign`, `CampaignActivity`, máy trạng thái, selectors, API và
+  signal `campaign_status_changed` chuyển từ `employers` sang `campaigns`. Ba
+  migration chỉ đổi state (không SQL), bảng giữ tên `employers_*`, ContentType
+  chuyển theo. Ghi hoạt động và thời gian chạy thành API của model
+  (`CampaignActivity.objects.record`, `RecruitmentCampaign.active_seconds`).
+- `cv_templates` thành engine tài liệu CV: schema nội dung, ghép document và in
+  PDF; engine Chromium dùng chung chuyển vào `common/pdf/browser.py`. `cvs` gọi
+  services của `cv_templates`, chiều ngược lại chỉ đọc model `CvAsset`.
+- Gỡ route trùng `/api/v2/cvs/backgrounds/` (frontend dùng `/api/v2/cv-backgrounds/`).
+- Import chéo app chỉ qua package công khai; `check_backend_imports.py` không
+  còn baseline — mọi vi phạm làm fail CI.
+
+#### Changed — Backend: bố cục app chuẩn (ADR-0022, GĐ1)
+
+- Module gốc app về đúng tầng: `accounts/{permissions,authentication,schema}` →
+  `api/`, `oauth`, `exceptions`, token mời → `services/`; registry CV, trang
+  công ty, cấu hình upload, salt ký → tầng mới `domain/`.
+- URL tách theo cổng: `<app>/api/urls/{public,candidate,employer,admin,auth,shared}.py`;
+  HTML SEO và link `/r/<code>` → `<app>/seo/`. Đường dẫn không đổi.
+- `signals/` (khai báo + `receivers.py`), `tasks/` là package ở mọi app; task CV
+  tách `exports`/`imports` (tên task Celery đổi theo module, queue giữ nguyên).
+- `common/` chia subpackage `api/`, `http/`, `storage/`, `html/`, `pdf/`,
+  `files/`, `db/`; `company_email`, `phone` về employers, `atomic_pop` về
+  accounts; `common` không còn import `apps`.
+
+#### Changed — Backend: cổng kiểm tra cấu trúc (ADR-0022, GĐ0)
+
+- ADR-0022 thay ADR-0010: bố cục app, luật import chéo app, URL theo cổng, lộ
+  trình 7 giai đoạn.
+- CI và `check_all.sh` thêm `check_backend_imports.py` (import chéo app, module
+  gốc app, code trong `__init__.py`) và `check_openapi_schema.sh` (schema khớp
+  `docs/04-api/openapi.yaml`, số cảnh báo không tăng); cả hai dùng baseline chỉ
+  được giảm.
+- Công cụ lint/test tách sang `requirements-dev.txt`, không còn trong image
+  production; pin `gunicorn` và `redis`.
+- Gunicorn/Celery/ASGI bắt buộc có `DJANGO_SETTINGS_MODULE`; image Docker mặc
+  định production, compose dev đặt development.
+
+#### Added — Giải thích chỉ số chiến dịch
+
+- Icon "?" cạnh các chỉ số dễ nhầm (chi phí / hồ sơ, chi phí / trúng tuyển, tỷ
+  lệ nộp, người bấm, ứng viên duy nhất và hồ sơ, tỷ lệ xem, thời gian tới lúc
+  xem, tốc độ chi, chỉ tiêu, số ngày đã chạy...): rê chuột hoặc focus bằng bàn
+  phím để đọc cách tính.
+
+#### Added — Ảnh trong bài đăng Fanpage
+
+- Ngăn soạn bài Fanpage cho tải tối đa 4 ảnh hoặc dùng nhanh ảnh bìa, logo
+  công ty; bản xem trước hiện lưới ảnh như Facebook. Ảnh được mã hóa lại (bỏ
+  thông tin vị trí) trước khi lưu và đăng.
 
 #### Changed — Chiến dịch: giao diện kênh, đăng Fanpage và lịch sử hoạt động
 
@@ -1072,7 +1231,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Seed idempotent đúng bảy chuyên mục đã chốt và bốn permission
   `knowledgebase.view/manage/review/publish`; role `content-cv` staff được biên
   tập, manager được duyệt/phát hành.
-- Tách sanitizer HTML giàu nội dung dùng chung sang `common/content_html.py`,
+- Tách sanitizer HTML giàu nội dung dùng chung sang `common/html/content.py`,
   chặn active content, credential và URL scheme nguy hiểm; blog chuyển sang
   helper chung mà vẫn giữ policy URL tương thích.
 - Targeted backend test, migration drift check, Ruff, import-linter và backend
@@ -1796,7 +1955,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 #### Added — Social login (OAuth Google / Facebook / LinkedIn)
 
 - Đăng nhập mạng xã hội theo **OAuth Authorization Code Flow qua backend callback**: ứng viên dùng Google/Facebook/LinkedIn, nhà tuyển dụng chỉ Google, admin không có. App chạy được ngay cả khi chưa cấu hình credential — nút social chỉ báo "chưa cấu hình" khi bấm.
-- Backend: model `SocialAccount` (`user`, `provider`, `provider_user_id`, `email`, `raw_profile`, unique `(provider, provider_user_id)`); `User.Provider` thêm `facebook`/`linkedin`. Service `apps/accounts/oauth.py`: build authorize URL, `state` chống CSRF lưu Redis TTL 10 phút (one-shot), đổi code lấy token, đọc + chuẩn hoá profile (OIDC cho Google/LinkedIn, Graph cho Facebook), `one_time_code` Redis TTL 60s.
+- Backend: model `SocialAccount` (`user`, `provider`, `provider_user_id`, `email`, `raw_profile`, unique `(provider, provider_user_id)`); `User.Provider` thêm `facebook`/`linkedin`. Service `apps/accounts/services/oauth.py`: build authorize URL, `state` chống CSRF lưu Redis TTL 10 phút (one-shot), đổi code lấy token, đọc + chuẩn hoá profile (OIDC cho Google/LinkedIn, Graph cho Facebook), `one_time_code` Redis TTL 60s.
 - Endpoints mới: `GET /api/auth/oauth/<provider>/start/?portal&next` (redirect sang provider), `GET /api/auth/oauth/<provider>/callback/` (verify state → tạo/liên kết user → redirect frontend kèm code), `POST /api/auth/oauth/complete/` (đổi one_time_code lấy `{user, access, refresh}`, throttle 10/min).
 - Luật tài khoản: có `SocialAccount` → đăng nhập luôn; email trùng **cùng vai trò** → tự liên kết (đánh dấu `email_verified=True`, giữ mật khẩu cũ); email trùng **khác vai trò** → chặn "Tài khoản không thuộc cổng này"; user mới → vai trò theo cổng, `email_verified=True`, mật khẩu unusable. Tham số `next` chỉ nhận path nội bộ (chặn absolute/`//`).
 - Frontend: component chung `SocialLoginButtons` (full-page redirect sang start URL, `next` = trang hiện tại trừ trang auth), trang `OAuthCallback` dùng chung 2 cổng (`/oauth/callback`, `/tuyendung/app/oauth/callback`; guard chống StrictMode gọi effect 2 lần vì code one-shot), lưu token đúng portal key, lỗi → quay về trang login của cổng kèm `?oauth_error=` hiển thị trong Alert (map mã lỗi → tiếng Việt ở `errorMessage.js`). Login/Register cổng NTD thêm nút Google + divider.

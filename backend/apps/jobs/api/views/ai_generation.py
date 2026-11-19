@@ -1,5 +1,3 @@
-import logging
-
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -7,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsEmployer
+from apps.accounts.api.permissions import IsEmployer
 
 from ...selectors import employer_job_ai_generation_queryset
 from ...services import (
@@ -15,7 +13,6 @@ from ...services import (
     create_job_ai_generation,
     record_job_ai_feedback,
 )
-from ...tasks.ai_generation import generate_job_post
 from ..serializers import (
     JobAiGenerationCreateResponseSerializer,
     JobAiGenerationCreateSerializer,
@@ -24,8 +21,6 @@ from ..serializers import (
     JobAiGenerationFeedbackSerializer,
     JobAiGenerationSerializer,
 )
-
-logger = logging.getLogger(__name__)
 
 
 class EmployerJobAiGenerationCreateView(APIView):
@@ -48,18 +43,10 @@ class EmployerJobAiGenerationCreateView(APIView):
     def post(self, request):
         serializer = JobAiGenerationCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        generation, created, quota_remaining = create_job_ai_generation(
+        generation, _, quota_remaining = create_job_ai_generation(
             user=request.user,
             validated_data=serializer.validated_data,
         )
-        if created:
-            try:
-                generate_job_post.delay(generation.pk)
-            except Exception:  # noqa: BLE001 - stale-queued recovery will redispatch safely
-                logger.exception(
-                    'Không thể dispatch job AI generation %s.',
-                    generation.public_id,
-                )
         return Response(
             {
                 'public_id': generation.public_id,

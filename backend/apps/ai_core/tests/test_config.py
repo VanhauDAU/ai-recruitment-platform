@@ -40,7 +40,7 @@ class AiRuntimeConfigTests(SimpleTestCase):
 
     def test_developer_mode_requires_api_key(self):
         with self.assertRaises(AiGenerationError) as caught:
-            AiRuntimeConfig(enabled=True, gemini_api_key='').validate()
+            AiRuntimeConfig(enabled=True, model='gemini-test', gemini_api_key='').validate()
 
         self.assertEqual(caught.exception.code, 'provider_not_configured')
 
@@ -48,6 +48,7 @@ class AiRuntimeConfigTests(SimpleTestCase):
         config = AiRuntimeConfig(
             enabled=True,
             provider_backend='vertex',
+            model='gemini-test',
             google_cloud_project='',
             google_cloud_location='global',
         )
@@ -62,3 +63,9 @@ class AiRuntimeConfigTests(SimpleTestCase):
             AiRuntimeConfig(enabled=True, provider_backend='other').validate()
 
         self.assertEqual(caught.exception.code, 'unsupported_provider_backend')
+
+    def test_model_comes_only_from_settings(self):
+        with self.assertRaises(AiGenerationError) as caught:
+            AiRuntimeConfig(enabled=True, gemini_api_key='secret-key').validate()
+
+        self.assertEqual(caught.exception.code, 'model_not_configured')

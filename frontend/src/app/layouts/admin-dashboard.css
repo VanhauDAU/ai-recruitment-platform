@@ -14,6 +14,15 @@
   --admin-sidebar-text: #475569;
   --admin-sidebar-hover: #f1f5f9;
   --admin-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  /* Status colors shared by the dashboard and every admin workspace. */
+  --admin-critical: #d03b3b;
+  --admin-critical-soft: #fdf0f0;
+  --admin-warning: #b77900;
+  --admin-warning-soft: #fff7e6;
+  --admin-good: #0a8a0a;
+  --admin-info: #2a78d6;
+  --admin-info-soft: #eef4fc;
+  --admin-radius-card: 13px;
   background: var(--admin-canvas);
   color: var(--admin-text);
   min-height: 100dvh;

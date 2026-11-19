@@ -9,7 +9,7 @@ const lifecycle = vi.hoisted(() => ({
   unmounts: [],
 }))
 
-vi.mock('@/features/edit-cv-draft', async () => {
+vi.mock('@/features/common/cv/edit-cv-draft', async () => {
   const React = await import('react')
   return {
     CvDraftEditor: ({ publicId }) => {

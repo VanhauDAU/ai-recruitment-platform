@@ -10,9 +10,10 @@ from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 from rest_framework.test import APIClient
 
-from apps.employers.models import EmployerNotification, RecruitmentCampaign
-from apps.employers.tests.readiness_helpers import make_employer_ready
-from apps.jobs.tests import test_posting_workflows
+from apps.campaigns.models import RecruitmentCampaign
+from apps.employers.models import EmployerNotification
+from apps.employers.tests.factories import make_employer_ready
+from apps.jobs.tests.factories import JobPostingFixture
 from common.vietnam_time import vietnam_today
 
 from ..models import CampaignChannel, ScheduledSocialPost, SocialAccountConnection
@@ -24,12 +25,10 @@ Status = RecruitmentCampaign.Status
 Post = ScheduledSocialPost
 
 
-class SocialFixtures:
-    setUp_jobs = test_posting_workflows.JobPostingWorkflowTests.setUp
-
+class SocialFixtures(JobPostingFixture):
     def setUp(self):
         cache.clear()
-        self.setUp_jobs()
+        super().setUp()
         self.client = APIClient()
         self.client.force_authenticate(self.user)
         self.campaign = RecruitmentCampaign.objects.create(
@@ -320,3 +319,129 @@ class PostErrorMessageTests(TestCase):
         self.assertIn('kết nối lại', message('graph_190'))
         self.assertEqual(message('graph_999'), 'Facebook báo lỗi (graph_999). Hãy thử đăng lại.')
         self.assertEqual(message(''), '')
+
+
+def image_upload(name='anh.png', size=(3000, 1500), mode='RGB', fmt='PNG'):
+    from io import BytesIO
+
+    from django.core.files.uploadedfile import SimpleUploadedFile
+    from PIL import Image
+
+    buffer = BytesIO()
+    Image.new(mode, size, (12, 120, 90)).save(buffer, format=fmt)
+    return SimpleUploadedFile(name, buffer.getvalue(), content_type=f'image/{fmt.lower()}')
+
+
+class PostImageTests(SocialFixtures, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.connection = self.connect_page()
+        self.url = reverse(
+            'employer-campaign-channel-post-images',
+            kwargs={'public_id': self.campaign.public_id, 'channel_id': self.channel.public_id},
+        )
+
+    def test_uploads_are_re_encoded_resized_and_kept_under_the_campaign(self):
+        from PIL import Image
+
+        from common.storage.r2 import public_media_storage
+
+        response = self.client.post(self.url, {'file': image_upload()}, format='multipart')
+
+        self.assertEqual(response.status_code, 201, response.data)
+        path = response.data['path']
+        self.assertTrue(path.startswith(f'campaigns/{self.campaign.public_id}/social/'))
+        self.assertTrue(path.endswith('.jpg'))
+        with public_media_storage().open(path, 'rb') as stored, Image.open(stored) as image:
+            self.assertEqual(max(image.size), 2048)
+            self.assertNotIn('exif', image.info)
+
+    def test_rejects_files_that_are_not_images(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        fake = SimpleUploadedFile('a.png', b'%PDF-1.7 not an image', content_type='image/png')
+        response = self.client.post(self.url, {'file': fake}, format='multipart')
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_a_post_carries_its_own_images_and_publishes_them(self):
+        uploaded = self.client.post(self.url, {'file': image_upload()}, format='multipart').data
+        posts_url = reverse(
+            'employer-campaign-channel-posts',
+            kwargs={'public_id': self.campaign.public_id, 'channel_id': self.channel.public_id},
+        )
+
+        foreign = self.client.post(
+            posts_url,
+            {'connection': self.connection.public_id, 'images': ['campaigns/other/social/x.jpg']},
+            format='json',
+        )
+        created = self.client.post(
+            posts_url,
+            {'connection': self.connection.public_id, 'images': [uploaded['path']]},
+            format='json',
+        )
+
+        self.assertEqual(foreign.status_code, 400)
+        self.assertEqual(created.status_code, 201, created.data)
+        self.assertEqual(len(created.data['images']), 1)
+        post = Post.objects.get(public_id=created.data['public_id'])
+        self.assertEqual(publish_post(post.pk), Post.Status.PUBLISHED)
+        post.refresh_from_db()
+        stored = cache.get(f'fake-social-post:{post.external_post_id}')
+        self.assertEqual(len(stored['images']), 1)
+
+    def test_company_cover_is_offered_and_accepted(self):
+        from common.storage.r2 import public_media_storage
+
+        path = public_media_storage().save(
+            f'employers/{self.company.public_id}/covers/cover.jpg',
+            image_upload(fmt='JPEG', size=(100, 50)),
+        )
+        self.company.cover_image_url = path
+        self.company.save(update_fields=['cover_image_url'])
+
+        offered = self.client.get(self.url).data['company_images']
+        post = schedule_post(
+            channel=self.channel, user=self.user, connection=self.connection, images=[path]
+        )
+
+        self.assertEqual([item['kind'] for item in offered], ['cover'])
+        self.assertEqual(post.images, [path])
+
+
+@override_settings(FACEBOOK_APP_ID='app', FACEBOOK_APP_SECRET='secret')
+class FacebookPhotoPublishTests(TestCase):
+    def test_photos_are_uploaded_unpublished_then_attached_to_one_post(self):
+        import json as jsonlib
+
+        session = MagicMock()
+
+        def reply(payload):
+            response = MagicMock(status_code=200)
+            response.json.return_value = payload
+            return response
+
+        session.request.side_effect = [
+            reply({'id': 'photo_1'}),
+            reply({'id': 'photo_2'}),
+            reply({'id': 'page_post'}),
+            reply({'permalink_url': 'https://fb.com/p'}),
+        ]
+
+        FacebookPageProvider(session=session).publish(
+            page_id='page_1',
+            page_token='t',
+            message='Tuyển gấp',
+            link='https://procv.vn/r/a',
+            images=[('a.jpg', b'1'), ('b.jpg', b'2')],
+        )
+
+        calls = session.request.call_args_list
+        self.assertEqual(calls[0].args[1], 'https://graph.facebook.com/v21.0/page_1/photos')
+        self.assertEqual(calls[0].kwargs['data'], {'published': 'false'})
+        self.assertEqual(calls[0].kwargs['files'], {'source': ('a.jpg', b'1')})
+        feed = calls[2].kwargs['data']
+        self.assertEqual(feed['message'], 'Tuyển gấp\n\nhttps://procv.vn/r/a')
+        self.assertNotIn('link', feed)
+        self.assertEqual(jsonlib.loads(feed['attached_media[1]']), {'media_fbid': 'photo_2'})

@@ -70,13 +70,13 @@ class ApplicationSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
-    def get_candidate_account_restricted(self, obj):
+    def get_candidate_account_restricted(self, obj) -> bool:
         return not is_account_accessible(obj.candidate)
 
-    def get_available_decisions(self, obj):
+    def get_available_decisions(self, obj) -> list[str]:
         return available_status_decisions(obj)
 
-    def get_mass_apply_signal(self, obj):
+    def get_mass_apply_signal(self, obj) -> dict | None:
         """Suggest blocking a candidate who sprays applications across jobs."""
         jobs = getattr(obj, 'recent_jobs_applied', 0) or 0
         if jobs < CandidateBlock.MASS_APPLY_MIN_JOBS or getattr(obj, 'candidate_blocked', False):

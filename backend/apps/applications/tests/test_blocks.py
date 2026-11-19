@@ -4,13 +4,13 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
-from apps.accounts.services.tokens import issue_tokens
+from apps.accounts.services import issue_tokens
 from apps.cv_templates.tests.factories import fill_cv_for_application, make_published_template
-from apps.cvs.services import create_v2_cv
+from apps.cvs.services import create_user_cv
 from apps.employers.models import Company, RecruiterProfile
-from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.employers.tests.factories import make_employer_ready
 from apps.jobs.models import Job
-from apps.jobs.tests.helpers import open_visibility_window
+from apps.jobs.tests.factories import open_visibility_window
 
 from ..models import Application, CandidateBlock
 from ..services import create_application_record
@@ -57,7 +57,7 @@ class CandidateBlockTests(APITestCase):
             **open_visibility_window(),
         )
         template, _version = make_published_template('Block template')
-        self.cv = create_v2_cv(actor=self.candidate, title='Block CV', template=template)
+        self.cv = create_user_cv(actor=self.candidate, title='Block CV', template=template)
         fill_cv_for_application(self.cv, self.candidate)
         self.application = create_application_record(
             candidate=self.candidate, job=self.jobs[0], cv=self.cv
@@ -70,7 +70,7 @@ class CandidateBlockTests(APITestCase):
     def block(self, **payload):
         self.login(self.employer)
         return self.client.post(
-            reverse('recruiter-candidate-blocks-v2'),
+            reverse('recruiter-candidate-blocks'),
             {'application_public_id': self.application.public_id, 'reason': 'spam', **payload},
             format='json',
         )
@@ -78,7 +78,7 @@ class CandidateBlockTests(APITestCase):
     def apply(self, job):
         self.login(self.candidate)
         return self.client.post(
-            reverse('candidate-application-list-create-v2'),
+            reverse('candidate-application-list-create'),
             {
                 'job_public_id': job.public_id,
                 'cv_public_id': self.cv.public_id,
@@ -163,14 +163,12 @@ class CandidateBlockTests(APITestCase):
             reason='spam',
         )
         self.login(self.employer)
-        listing = self.client.get(reverse('recruiter-candidate-blocks-v2'))
+        listing = self.client.get(reverse('recruiter-candidate-blocks'))
         row = listing.data['results'][0]
         self.assertEqual(row['public_id'], block.public_id)
         self.assertTrue(row['can_lift'])
 
-        lift = self.client.post(
-            reverse('recruiter-candidate-block-lift-v2', args=[block.public_id])
-        )
+        lift = self.client.post(reverse('recruiter-candidate-block-lift', args=[block.public_id]))
 
         self.assertEqual(lift.status_code, 200, lift.data)
 
@@ -184,10 +182,8 @@ class CandidateBlockTests(APITestCase):
         )
         self.login(colleague)
 
-        row = self.client.get(reverse('recruiter-candidate-blocks-v2')).data['results'][0]
-        lift = self.client.post(
-            reverse('recruiter-candidate-block-lift-v2', args=[block.public_id])
-        )
+        row = self.client.get(reverse('recruiter-candidate-blocks')).data['results'][0]
+        lift = self.client.post(reverse('recruiter-candidate-block-lift', args=[block.public_id]))
 
         self.assertFalse(row['can_lift'])
         self.assertEqual(lift.status_code, 404)
@@ -198,21 +194,25 @@ class CandidateBlockTests(APITestCase):
         self.application.refresh_from_db()
         self.assertEqual(self.application.status, Status.REJECTED)
         self.assertIsNotNone(CandidateBlock.objects.get().expires_at)
-        listing = self.client.get(reverse('recruiter-candidate-blocks-v2'))
+        listing = self.client.get(reverse('recruiter-candidate-blocks'))
         self.assertEqual(listing.data['results'][0]['candidate_email'], self.candidate.email)
 
         lift = self.client.post(
-            reverse('recruiter-candidate-block-lift-v2', args=[response.data['public_id']])
+            reverse('recruiter-candidate-block-lift', args=[response.data['public_id']])
         )
         self.assertEqual(lift.status_code, 200)
         self.assertEqual(self.apply(self.jobs[1]).status_code, 201)
 
     def test_double_block_and_foreign_application_are_refused(self):
         self.block()
-        self.assertEqual(self.block().status_code, 400)
+        again = self.block()
+        self.assertEqual(again.status_code, 400)
+        self.assertEqual(
+            again.json(), {'detail': 'Ứng viên này đã ở trong danh sách chặn của công ty.'}
+        )
         self.login(self.outsider)
         response = self.client.post(
-            reverse('recruiter-candidate-blocks-v2'),
+            reverse('recruiter-candidate-blocks'),
             {'application_public_id': self.application.public_id, 'reason': 'spam'},
             format='json',
         )
@@ -223,11 +223,11 @@ class CandidateBlockTests(APITestCase):
             create_application_record(candidate=self.candidate, job=job, cv=self.cv)
         self.login(self.employer)
 
-        row = self.client.get(reverse('recruiter-application-list-v2')).data['results'][0]
+        row = self.client.get(reverse('recruiter-application-list')).data['results'][0]
         self.assertEqual(row['mass_apply_signal'], {'jobs': 5, 'window_days': 14})
         self.assertFalse(row['candidate_blocked'])
 
         self.block()
-        row = self.client.get(reverse('recruiter-application-list-v2')).data['results'][0]
+        row = self.client.get(reverse('recruiter-application-list')).data['results'][0]
         self.assertTrue(row['candidate_blocked'])
         self.assertIsNone(row['mass_apply_signal'])

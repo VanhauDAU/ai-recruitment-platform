@@ -17,11 +17,11 @@ nhầm lẫn trong client, log và tài liệu API.
 Danh bạ công ty công khai dùng prefix theo tài nguyên:
 
 ```text
-GET /api/companies/
+GET /api/public/companies/
 ```
 
-Prefix `/api/companies/` là ngoại lệ có chủ đích so với quy ước `/api/<app>/`
-của ADR-0010: app `employers` tiếp tục sở hữu model và read model, còn HTTP
+Prefix `/api/public/companies/` là ngoại lệ có chủ đích so với quy ước `/api/<app>/`
+của ADR-0010 (nay là ADR-0022): app `employers` tiếp tục sở hữu model và read model, còn HTTP
 namespace phân biệt rõ catalogue công khai với cổng employer riêng tư.
 
 Endpoint cho phép truy cập anonymous và có hai chế độ trên cùng một URL:
@@ -92,7 +92,7 @@ thoại, người tạo hoặc danh tính recruiter.
 - Serializer public tách khỏi serializer onboarding/admin để việc thêm field nội
   bộ sau này không vô tình mở rộng contract công khai.
 - Selector vẫn nằm trong `apps.employers/selectors`; view chỉ compose selector,
-  pagination và serializer theo ADR-0010.
+  pagination và serializer theo ADR-0010 (nay là ADR-0022).
 - Predicate visibility của tin vẫn thuộc app `jobs`. Cross-app consumer gọi
   `Job.publicly_available_queryset()` qua public model API; không deep-import
   hoặc sao chép `status=active` thành một predicate yếu hơn.

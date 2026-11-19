@@ -1,6 +1,7 @@
 from datetime import datetime, time
 
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from common.vietnam_time import VIETNAM_TZ
 
@@ -56,19 +57,19 @@ def job_presentation(job):
         labels.append(
             {
                 'code': 'sponsored',
-                'text': 'Tài trợ',
+                'text': _('Tài trợ'),
                 'tone': 'sponsored',
             }
         )
     if job.is_hot:
         labels.append({'code': 'hot', 'text': 'HOT', 'tone': 'danger'})
     if job.is_urgent:
-        labels.append({'code': 'urgent', 'text': 'GẤP', 'tone': 'warning'})
+        labels.append({'code': 'urgent', 'text': _('GẤP'), 'tone': 'warning'})
     if job.has_flash_badge:
         labels.append(
             {
                 'code': 'fast_response',
-                'text': 'Phản hồi nhanh',
+                'text': _('Phản hồi nhanh'),
                 'tone': 'success',
             }
         )

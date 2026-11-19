@@ -1,9 +1,15 @@
+from .campaign import (
+    CampaignActivity,
+    RecruitmentCampaign,
+)
 from .channels import CampaignChannel, CampaignChannelClickDaily, CampaignChannelCost
 from .health import CampaignHealthSnapshot, CampaignReportDelivery
 from .launch import CampaignLaunchJob, CampaignLaunchPlan
 from .social import ScheduledSocialPost, SocialAccountConnection
 
 __all__ = [
+    'CampaignActivity',
+    'RecruitmentCampaign',
     'CampaignChannel',
     'CampaignChannelClickDaily',
     'CampaignChannelCost',

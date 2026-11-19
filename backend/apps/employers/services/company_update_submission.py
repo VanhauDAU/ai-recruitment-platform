@@ -7,17 +7,19 @@ editor can save one block at a time.
 
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from rest_framework.exceptions import ValidationError
 
-from common.media_storage import delete_local_media_url
+from common.storage.media import delete_local_media_url
 
 from ..models import Company, CompanyDocument, CompanyUpdateEvent, CompanyUpdateRequest
-from ..models.verification import ACTIVE_COMPANY_UPDATE_STATUSES
-from .companies import (
-    UPDATABLE_COMPANY_FIELDS,
+from ..models.company_update import ACTIVE_COMPANY_UPDATE_STATUSES
+from .companies import UPDATABLE_COMPANY_FIELDS
+from .company_page_content import PAGE_CONTENT_FIELDS
+from .company_update_review import close_company_update_before_review
+from .company_update_revisions import (
     CompanyUpdateConflict,
     capture_company_update_base_values,
-    close_company_update_before_review,
     company_update_field_value,
     snapshot_company_update_request,
 )
@@ -81,10 +83,20 @@ def _merged_changes(company, active_request, incoming):
 
 
 def _replaced_changes(company, active_request, changes):
-    """Changes and base values when the profile form replaces the open request."""
+    """Changes and base values when the profile form replaces the open request.
+
+    The profile form owns its own fields only: page content the page workspace
+    put in the same request stays unless the form sends that key itself.
+    """
     staged_paths_to_delete = []
+    kept_base = {}
     if active_request is not None:
         previous = active_request.changes
+        for field in PAGE_CONTENT_FIELDS & set(previous) - set(changes):
+            changes[field] = previous[field]
+            # Kept keys keep the base they were sent against, like a merge.
+            if field in (active_request.base_values or {}):
+                kept_base[field] = active_request.base_values[field]
         if 'logo_url' in previous and not changes.get('has_no_logo'):
             changes['logo_url'] = previous['logo_url']
         elif 'logo_url' in previous:
@@ -93,7 +105,8 @@ def _replaced_changes(company, active_request, changes):
             changes['cover_image_url'] = previous['cover_image_url']
         if 'gallery_additions' in previous:
             changes['gallery_additions'] = previous['gallery_additions']
-    return changes, capture_company_update_base_values(company, changes), staged_paths_to_delete
+    base_values = {**capture_company_update_base_values(company, changes), **kept_base}
+    return changes, base_values, staged_paths_to_delete
 
 
 def _withdraw_emptied_request(active_request, requester):
@@ -133,7 +146,7 @@ def submit_company_update_request(
         if not changes:
             if active_request is None:
                 raise ValidationError(
-                    {'changes': ['Chưa có thay đổi nào so với trang đang công khai.']}
+                    {'changes': [_('Chưa có thay đổi nào so với trang đang công khai.')]}
                 )
             _withdraw_emptied_request(active_request, requester)
             return None, False
@@ -219,3 +232,30 @@ def submit_company_update_request(
             # preserves manual review for malformed legacy company data.
             pass
     return update_request, active_request is None
+
+
+@transaction.atomic
+def submit_validated_company_update(*, company_id, requester, validate, merge=False):
+    """Lock the target, validate against what is locked, then submit.
+
+    ``validate(company, active_request)`` returns the validated data. It runs
+    under the lock because the form validates against the caller's open
+    request, which a concurrent submission must not change in between. For the
+    profile form an optional ``base_company_updated_at`` guards against a
+    company edited since the form was loaded; a merge keeps only ``changes``.
+    Returns ``(request, created)`` like ``submit_company_update_request``.
+    """
+    company, active_request = lock_company_update_target(
+        company_id=company_id,
+        requester=requester,
+    )
+    data = dict(validate(company, active_request))
+    expected_base_updated_at = None if merge else data.pop('base_company_updated_at', None)
+    return submit_company_update_request(
+        company=company,
+        active_request=active_request,
+        requester=requester,
+        data=data,
+        expected_base_updated_at=expected_base_updated_at,
+        merge=merge,
+    )

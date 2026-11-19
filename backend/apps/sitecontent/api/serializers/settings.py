@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from common.media_storage import media_url_from_value
+from common.storage.media import media_url_from_value
 from config.env import config
 
 from ...models import Banner, Feedback, LinkGroup, SiteSetting
@@ -62,7 +62,7 @@ class LinkGroupSerializer(serializers.ModelSerializer):
         model = LinkGroup
         fields = ['key', 'title', 'placement', 'source', 'items']
 
-    def get_items(self, obj):
+    def get_items(self, obj) -> list:
         return resolve_link_group_items(obj)
 
 
@@ -82,7 +82,7 @@ class BannerSerializer(serializers.ModelSerializer):
             'cta_url',
         ]
 
-    def get_image_url(self, obj):
+    def get_image_url(self, obj) -> str:
         return media_url_from_value(obj.image_url, request=self.context.get('request'))
 
 

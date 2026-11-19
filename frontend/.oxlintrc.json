@@ -26,6 +26,26 @@
         "skipBlankLines": true,
         "skipComments": true
       }
+    ],
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "dayjs",
+            "message": "Import dayjs từ '@/shared/lib/dayjs' để dùng đúng locale giao diện."
+          }
+        ],
+        "patterns": [
+          {
+            "group": [
+              "**/paraglide/*",
+              "**/paraglide"
+            ],
+            "message": "Import m/getLocale từ '@/shared/config/i18n'; module đó khởi tạo locale trước khi dùng."
+          }
+        ]
+      }
     ]
   },
   "overrides": [
@@ -38,6 +58,21 @@
       "rules": {
         "max-lines": "off"
       }
+    },
+    {
+      "files": [
+        "src/shared/lib/dayjs.js",
+        "src/shared/config/i18n/index.js",
+        "**/*.test.js",
+        "**/*.test.jsx",
+        "tests/**"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
     }
+  ],
+  "ignorePatterns": [
+    "src/shared/config/i18n/paraglide/**"
   ]
 }

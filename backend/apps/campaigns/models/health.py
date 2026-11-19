@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.translation import gettext_lazy
 
 
 class CampaignHealthSnapshot(models.Model):
@@ -9,15 +10,15 @@ class CampaignHealthSnapshot(models.Model):
     """
 
     class Status(models.TextChoices):
-        ACHIEVED = 'achieved', 'Đã đủ chỉ tiêu'
-        ON_TRACK = 'on_track', 'Đúng tiến độ'
-        AT_RISK = 'at_risk', 'Có nguy cơ chậm'
-        OFF_TRACK = 'off_track', 'Đang chậm'
-        INSUFFICIENT_DATA = 'insufficient_data', 'Chưa đủ dữ liệu'
-        NO_TARGET = 'no_target', 'Chưa có chỉ tiêu'
+        ACHIEVED = 'achieved', gettext_lazy('Đã đủ chỉ tiêu')
+        ON_TRACK = 'on_track', gettext_lazy('Đúng tiến độ')
+        AT_RISK = 'at_risk', gettext_lazy('Có nguy cơ chậm')
+        OFF_TRACK = 'off_track', gettext_lazy('Đang chậm')
+        INSUFFICIENT_DATA = 'insufficient_data', gettext_lazy('Chưa đủ dữ liệu')
+        NO_TARGET = 'no_target', gettext_lazy('Chưa có chỉ tiêu')
 
     campaign = models.ForeignKey(
-        'employers.RecruitmentCampaign', on_delete=models.CASCADE, related_name='health_snapshots'
+        'campaigns.RecruitmentCampaign', on_delete=models.CASCADE, related_name='health_snapshots'
     )
     date = models.DateField()
     status = models.CharField(max_length=20, choices=Status.choices)
@@ -39,7 +40,7 @@ class CampaignReportDelivery(models.Model):
     """One weekly report email per campaign and week, so reruns never send twice."""
 
     campaign = models.ForeignKey(
-        'employers.RecruitmentCampaign', on_delete=models.CASCADE, related_name='report_deliveries'
+        'campaigns.RecruitmentCampaign', on_delete=models.CASCADE, related_name='report_deliveries'
     )
     week_start = models.DateField()
     sent_at = models.DateTimeField(auto_now_add=True)

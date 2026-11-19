@@ -10,9 +10,6 @@ const listSlices = (layer) =>
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
-const entitySlices = listSlices('entities')
-const featureSlices = listSlices('features')
-const widgetSlices = listSlices('widgets')
 const pagePortals = listSlices('pages')
 
 module.exports = {
@@ -64,43 +61,54 @@ module.exports = {
       comment: 'consumers must use an entity public API (its index.js)',
       severity: 'error',
       from: { path: '^src/(app|pages|widgets|features)/' },
-      to: { path: '^src/entities/[^/]+/(?!index\\.js$)' },
+      to: { path: '^src/entities/[^/]+/[^/]+/(?!index\\.js$)' },
     },
     {
       name: 'no-deep-import-features',
       comment: 'app, pages and widgets must use a feature public API',
       severity: 'error',
       from: { path: '^src/(app|pages|widgets)/' },
-      to: { path: '^src/features/[^/]+/(?!index\\.js$)' },
+      to: { path: '^src/features/[^/]+/[^/]+/[^/]+/(?!index\\.js$)' },
     },
     {
       name: 'no-deep-import-widgets',
       comment: 'app and pages must use a widget public API (its index.js)',
       severity: 'error',
       from: { path: '^src/(app|pages)/' },
-      to: { path: '^src/widgets/[^/]+/(?!index\\.js$)' },
+      to: { path: '^src/widgets/[^/]+/[^/]+/(?!index\\.js$)' },
     },
-    ...entitySlices.map((slice) => ({
-      name: `no-cross-entity-import-${slice}`,
-      comment: `entities/${slice} may not depend on another entity`,
+    // entities: src/entities/<domain>/<entity>.
+    {
+      name: 'no-cross-entity-import',
+      comment: 'an entity may not depend on another entity, even in the same domain group',
       severity: 'error',
-      from: { path: `^src/entities/${escapeRegExp(slice)}/` },
-      to: { path: `^src/entities/(?!${escapeRegExp(slice)}/)` },
-    })),
-    ...featureSlices.map((slice) => ({
-      name: `no-cross-feature-import-${slice}`,
-      comment: `features/${slice} may not depend on another feature`,
+      from: { path: '^src/entities/([^/]+/[^/]+)/' },
+      to: { path: '^src/entities/', pathNot: '^src/entities/$1/' },
+    },
+    // features: src/features/<cổng|common>/<module>/<slice>;
+    // widgets:  src/widgets/<cổng|common>/<slice>.
+    // $1 là slice nguồn (dependency-cruiser thay capture group của from.path).
+    {
+      name: 'no-cross-feature-import',
+      comment: 'a feature may not depend on another feature, even in the same portal/module',
       severity: 'error',
-      from: { path: `^src/features/${escapeRegExp(slice)}/` },
-      to: { path: `^src/features/(?!${escapeRegExp(slice)}/)` },
-    })),
-    ...widgetSlices.map((slice) => ({
-      name: `no-cross-widget-import-${slice}`,
-      comment: `widgets/${slice} may not depend on another widget`,
+      from: { path: '^src/features/([^/]+/[^/]+/[^/]+)/' },
+      to: { path: '^src/features/', pathNot: '^src/features/$1/' },
+    },
+    {
+      name: 'no-cross-widget-import',
+      comment: 'a widget may not depend on another widget, even in the same portal group',
       severity: 'error',
-      from: { path: `^src/widgets/${escapeRegExp(slice)}/` },
-      to: { path: `^src/widgets/(?!${escapeRegExp(slice)}/)` },
-    })),
+      from: { path: '^src/widgets/([^/]+/[^/]+)/' },
+      to: { path: '^src/widgets/', pathNot: '^src/widgets/$1/' },
+    },
+    {
+      name: 'no-cross-portal-slice',
+      comment: 'pages and widgets may only use features/widgets of their own portal or common',
+      severity: 'error',
+      from: { path: '^src/(?:pages|widgets)/([^/]+)/' },
+      to: { path: '^src/(?:features|widgets)/(?!$1/|common/)[^/]+/' },
+    },
     ...pagePortals.flatMap((portal) => {
       const otherPortals = pagePortals
         .filter((candidate) => candidate !== portal)

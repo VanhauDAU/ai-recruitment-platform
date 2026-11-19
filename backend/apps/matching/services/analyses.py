@@ -2,8 +2,8 @@
 
 1. `request_analysis` (web): kiểm tra cờ `ai_job_match_enabled`, tính khóa cache
    (phiên bản CV, tin, hash nội dung tin, phiên bản mô hình, phiên bản công thức).
-   Trùng khóa và đã có kết quả thì trả ngay; chưa có thì tạo hàng `queued` để
-   task `run_analysis` xử lý.
+   Trùng khóa và đã có kết quả thì trả ngay; chưa có thì tạo hàng `queued` và
+   xếp task `run_analysis` sau khi commit.
 2. `execute_analysis` (ml-worker): lấy quyền xử lý hàng, tạo/dùng lại tài liệu
    và vector của CV, tin, chấm điểm, giải thích, lưu kết quả.
 3. `recover_stale_analyses` (beat mỗi 60 giây): gửi lại hàng chờ quá lâu, đưa
@@ -73,7 +73,7 @@ def ensure_enabled():
 
 @transaction.atomic
 def request_analysis(*, user, job, cv):
-    """(analysis, needs_run): `needs_run` khi phải gửi task tính toán.
+    """Phân tích cho cặp (CV, tin); hàng mới hoặc vừa đặt lại được xếp task sau commit.
 
     `job` nạp bằng selector `public_job_for_profile`, `cv` bằng `owner_cv_for_matching`.
     """
@@ -92,14 +92,27 @@ def request_analysis(*, user, job, cv):
         scoring_version=SCORING_VERSION,
         defaults={'user': user},
     )
-    if created:
-        return analysis, True
-    if analysis.status == MatchAnalysis.Status.FAILED:
+    if not created and analysis.status == MatchAnalysis.Status.FAILED:
         # Lỗi tạm (worker chết, quá hạn) có thể qua ở lần sau; lỗi do nội dung
         # (CV scan) sẽ thất bại lại ngay với cùng mã.
         _reset(analysis)
-        return analysis, True
-    return analysis, False
+        created = True
+    if created:
+        _dispatch_after_commit(analysis.pk)
+    return analysis
+
+
+def _dispatch_after_commit(analysis_id):
+    def dispatch():
+        # Import tại chỗ: tasks phụ thuộc services, không theo chiều ngược lại.
+        from ..tasks import run_analysis
+
+        try:
+            run_analysis.delay(analysis_id)
+        except Exception:  # noqa: BLE001 - vòng phục hồi sẽ gửi lại hàng chờ
+            logger.exception('Không thể gửi phân tích %s.', analysis_id)
+
+    transaction.on_commit(dispatch)
 
 
 def _reset(analysis):

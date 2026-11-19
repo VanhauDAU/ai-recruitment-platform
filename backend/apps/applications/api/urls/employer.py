@@ -1,0 +1,139 @@
+from django.urls import path
+
+from apps.applications.api.views.applications import RecruiterApplicationSnapshotView
+
+from ..views.blocks import RecruiterCandidateBlockLiftView, RecruiterCandidateBlockListCreateView
+from ..views.cv_exports import (
+    RecruiterApplicationCvExportDetailView,
+    RecruiterApplicationCvExportDownloadView,
+    RecruiterApplicationCvExportView,
+    RecruiterApplicationCvFileView,
+)
+from ..views.employer import (
+    EmployerApplicationAssessmentView,
+    EmployerApplicationDecisionUndoView,
+    EmployerApplicationDecisionView,
+    EmployerApplicationExportView,
+    EmployerApplicationHistoryView,
+    EmployerApplicationListView,
+    EmployerApplicationSubmissionsView,
+)
+from ..views.reviews import (
+    RecruiterApplicationReviewListView,
+    RecruiterReviewLinkListCreateView,
+    RecruiterReviewLinkRevokeView,
+)
+from ..views.talent_pool import (
+    RecruiterTalentPoolEntryView,
+    RecruiterTalentPoolInviteView,
+    RecruiterTalentPoolListCreateView,
+    RecruiterTalentSuggestionView,
+)
+
+urlpatterns = [
+    path(
+        'applications/',
+        EmployerApplicationListView.as_view(),
+        name='recruiter-application-list',
+    ),
+    path(
+        'candidate-blocks/',
+        RecruiterCandidateBlockListCreateView.as_view(),
+        name='recruiter-candidate-blocks',
+    ),
+    path(
+        'candidate-blocks/<str:public_id>/lift/',
+        RecruiterCandidateBlockLiftView.as_view(),
+        name='recruiter-candidate-block-lift',
+    ),
+    path(
+        'talent-pool/',
+        RecruiterTalentPoolListCreateView.as_view(),
+        name='recruiter-talent-pool',
+    ),
+    path(
+        'talent-pool/suggestions/',
+        RecruiterTalentSuggestionView.as_view(),
+        name='recruiter-talent-suggestions',
+    ),
+    path(
+        'talent-pool/<str:public_id>/',
+        RecruiterTalentPoolEntryView.as_view(),
+        name='recruiter-talent-pool-entry',
+    ),
+    path(
+        'talent-pool/<str:public_id>/invite/',
+        RecruiterTalentPoolInviteView.as_view(),
+        name='recruiter-talent-pool-invite',
+    ),
+    path(
+        'applications/export/',
+        EmployerApplicationExportView.as_view(),
+        name='recruiter-application-export',
+    ),
+    path(
+        'applications/<str:public_id>/',
+        EmployerApplicationAssessmentView.as_view(),
+        name='recruiter-application-assessment',
+    ),
+    path(
+        'applications/<str:public_id>/status/',
+        EmployerApplicationDecisionView.as_view(),
+        name='recruiter-application-decision',
+    ),
+    path(
+        'applications/<str:public_id>/status/undo/',
+        EmployerApplicationDecisionUndoView.as_view(),
+        name='recruiter-application-decision-undo',
+    ),
+    path(
+        'applications/<str:public_id>/cv/',
+        RecruiterApplicationSnapshotView.as_view(),
+        name='recruiter-application-snapshot',
+    ),
+    path(
+        'applications/<str:public_id>/cv/file/',
+        RecruiterApplicationCvFileView.as_view(),
+        name='recruiter-application-cv-file',
+    ),
+    path(
+        'applications/<str:public_id>/cv/exports/',
+        RecruiterApplicationCvExportView.as_view(),
+        name='recruiter-application-cv-export',
+    ),
+    path(
+        'applications/<str:public_id>/cv/exports/<str:export_public_id>/',
+        RecruiterApplicationCvExportDetailView.as_view(),
+        name='recruiter-application-cv-export-detail',
+    ),
+    path(
+        'applications/<str:public_id>/cv/exports/<str:export_public_id>/download/',
+        RecruiterApplicationCvExportDownloadView.as_view(),
+        name='recruiter-application-cv-export-download',
+    ),
+    path(
+        'applications/<str:public_id>/review-links/',
+        RecruiterReviewLinkListCreateView.as_view(),
+        name='recruiter-application-review-links',
+    ),
+    path(
+        'applications/<str:public_id>/review-links/<str:link_public_id>/revoke/',
+        RecruiterReviewLinkRevokeView.as_view(),
+        name='recruiter-application-review-link-revoke',
+    ),
+    path(
+        'applications/<str:public_id>/reviews/',
+        RecruiterApplicationReviewListView.as_view(),
+        name='recruiter-application-reviews',
+    ),
+    path(
+        'applications/<str:public_id>/submissions/',
+        EmployerApplicationSubmissionsView.as_view(),
+        name='recruiter-application-submissions',
+    ),
+    path(
+        'applications/<str:public_id>/history/',
+        EmployerApplicationHistoryView.as_view(),
+        name='recruiter-application-history',
+    ),
+]

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { formatNumber as fmt } from '@/entities/job'
+import { formatNumber as fmt } from '@/entities/job/job'
 import { DEMAND_COLORS, LINE_COLOR } from '../lib/market-stats-palette'
 
 export function GrowthChart({ data, animate }) {

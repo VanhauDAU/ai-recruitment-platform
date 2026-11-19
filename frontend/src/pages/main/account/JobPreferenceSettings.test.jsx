@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { jobKeys } from '@/entities/job'
+import { jobKeys } from '@/entities/job/job'
 import JobPreferenceSettings from './JobPreferenceSettings'
 
 const mocks = vi.hoisted(() => ({
@@ -12,23 +12,23 @@ const mocks = vi.hoisted(() => ({
   user: { public_id: 'candidate_1', job_preferences_configured: true },
 }))
 
-vi.mock('@/entities/candidate-preferences', () => ({
+vi.mock('@/entities/job/candidate-preferences', () => ({
   getCandidateJobPreferences: mocks.getCandidateJobPreferences,
 }))
-vi.mock('@/entities/candidate-profile', () => ({
+vi.mock('@/entities/account/candidate-profile', () => ({
   getCandidateProfile: mocks.getCandidateProfile,
   updateCandidateProfile: vi.fn(),
 }))
-vi.mock('@/entities/session', () => ({
+vi.mock('@/entities/account/session', () => ({
   useSession: () => ({
     user: mocks.user,
     setCurrentUser: mocks.setCurrentUser,
   }),
 }))
-vi.mock('@/entities/site-settings', () => ({
+vi.mock('@/entities/system/site-settings', () => ({
   BrandLogo: () => <span>ProCV</span>,
 }))
-vi.mock('@/features/configure-job-preferences', () => ({
+vi.mock('@/features/main/job/configure-job-preferences', () => ({
   JobPreferencesForm: ({ onSaved }) => (
     <button
       type="button"

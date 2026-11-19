@@ -1,4 +1,4 @@
-import { EMPLOYER_CAPABILITIES } from '@/entities/employer-profile'
+import { EMPLOYER_CAPABILITIES } from '@/entities/account/employer-profile'
 import EmployerCapabilityGuard from './EmployerCapabilityGuard'
 
 export default function JobWorkspaceGuard() {

@@ -1,11 +1,11 @@
 """Administrator queue of company page reports."""
 
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import mixins, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from apps.accounts.permissions import AdminPortalPermission
-from common.pagination import StandardPagination
+from apps.accounts.api.permissions import AdminPortalPermission
 
 from ...selectors import admin_company_reports_queryset
 from ...services import resolve_company_report, reverse_company_report
@@ -17,9 +17,14 @@ from ..serializers import (
 )
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary='Hàng đợi báo cáo trang công ty',
+        parameters=[AdminCompanyReportQuerySerializer],
+    )
+)
 class AdminCompanyReportViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     permission_classes = [AdminPortalPermission]
-    pagination_class = StandardPagination
     serializer_class = AdminCompanyReportSerializer
     lookup_field = 'public_id'
 
@@ -34,6 +39,11 @@ class AdminCompanyReportViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         # Reload: the decision adds a history event and may flip the page hold.
         return Response(self.get_serializer(self.get_object()).data)
 
+    @extend_schema(
+        summary='Kết luận một báo cáo trang công ty',
+        request=AdminCompanyReportResolveSerializer,
+        responses={200: AdminCompanyReportSerializer},
+    )
     @action(detail=True, methods=['post'])
     def resolve(self, request, public_id=None):
         serializer = AdminCompanyReportResolveSerializer(data=request.data)
@@ -45,6 +55,11 @@ class AdminCompanyReportViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
         )
         return self._reloaded_row()
 
+    @extend_schema(
+        summary='Đảo ngược kết luận báo cáo trang công ty',
+        request=AdminCompanyReportReverseSerializer,
+        responses={200: AdminCompanyReportSerializer},
+    )
     @action(detail=True, methods=['post'])
     def reverse(self, request, public_id=None):
         serializer = AdminCompanyReportReverseSerializer(data=request.data)

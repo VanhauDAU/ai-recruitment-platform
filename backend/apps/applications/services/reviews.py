@@ -12,11 +12,13 @@ from hashlib import sha256
 
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from apps.cvs.models import CvAccessLog
 from apps.cvs.services import record_application_snapshot_access
 from apps.employers.models import EmployerNotification
 from apps.employers.services import emit_employer_event
+from common.i18n import recipient_language
 
 from ..models import ApplicationReview, ApplicationReviewLink
 
@@ -46,7 +48,7 @@ def create_review_link(application, *, actor, reviewer_name, message='', expires
     # stripped from a file the candidate uploaded.
     if application.submitted_cv_version.source_file_key:
         raise ReviewNotShareable(
-            'CV này là tệp ứng viên tải lên nên không thể ẩn thông tin liên hệ để chia sẻ.'
+            _('CV này là tệp ứng viên tải lên nên không thể ẩn thông tin liên hệ để chia sẻ.')
         )
     raw_token = secrets.token_urlsafe(32)
     link = ApplicationReviewLink.objects.create(
@@ -142,20 +144,26 @@ def submit_review(raw_token, *, recommendation, rating=None, strengths='', conce
     recruiter = link.application.job.posted_by
     if created and recruiter is not None:
         candidate = link.application.candidate
-        emit_employer_event(
-            recipient=recruiter,
-            event_type=EmployerNotification.EventType.APPLICATION_REVIEW_SUBMITTED,
-            dedupe_key=f'application-review:{link.public_id}',
-            message=(
-                f'{link.reviewer_name} đã gửi đánh giá '
-                f'"{ApplicationReview.Recommendation(recommendation).label}" cho hồ sơ '
-                f'{candidate.full_name or candidate.email} — {link.application.job.title}.'
-            ),
-            subject_public_id=link.application.public_id,
-            metadata={'application_public_id': link.application.public_id},
-            action_path=(
-                f'/tuyendung/app/applications?job={link.application.job.public_id}'
-                f'&application={link.application.public_id}'
-            ),
-        )
+        with recipient_language(recruiter):
+            emit_employer_event(
+                recipient=recruiter,
+                event_type=EmployerNotification.EventType.APPLICATION_REVIEW_SUBMITTED,
+                dedupe_key=f'application-review:{link.public_id}',
+                message=_(
+                    '%(reviewer)s đã gửi đánh giá "%(recommendation)s" cho hồ sơ '
+                    '%(candidate)s — %(job)s.'
+                )
+                % {
+                    'reviewer': link.reviewer_name,
+                    'recommendation': ApplicationReview.Recommendation(recommendation).label,
+                    'candidate': candidate.full_name or candidate.email,
+                    'job': link.application.job.title,
+                },
+                subject_public_id=link.application.public_id,
+                metadata={'application_public_id': link.application.public_id},
+                action_path=(
+                    f'/tuyendung/app/applications?job={link.application.job.public_id}'
+                    f'&application={link.application.public_id}'
+                ),
+            )
     return review

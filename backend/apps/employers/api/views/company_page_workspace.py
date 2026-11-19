@@ -1,13 +1,15 @@
 """Employer workspace of the public company page (ADR-0017)."""
 
-from django.db import transaction
+from django.utils.translation import gettext as _
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsEmployer
+from apps.accounts.api.permissions import IsEmployer
 
 from ...models.page_access import resolve_company_page_access
 from ...selectors import (
@@ -20,20 +22,22 @@ from ...services import (
     CompanyPageLayoutStale,
     CompanyUpdateInReview,
     grant_company_page_editor,
-    lock_company_update_target,
+    publish_company_page_content,
     revoke_company_page_editor,
-    submit_company_update_request,
+    submit_validated_company_update,
     update_company_page_layout,
 )
-from ..exceptions import COMPANY_UPDATE_IN_REVIEW, CompanyPageEditForbidden
+from ..exceptions import CompanyPageEditForbidden, company_update_in_review
+from ..permissions import require_company_recruiter
 from ..serializers import (
     CompanyPageContentSerializer,
     CompanyPageEditorGrantSerializer,
     CompanyPageLayoutSerializer,
 )
-from .onboarding import _require_company
 
 PINNABLE_JOB_QUERY_MAX_LENGTH = 120
+# The workspace and its rows are read models assembled by selectors.
+WORKSPACE_RESPONSE = {200: OpenApiTypes.OBJECT}
 
 
 class CompanyPageWorkspaceAPIView(APIView):
@@ -50,7 +54,7 @@ class CompanyPageWorkspaceAPIView(APIView):
 
     def initial(self, request, *args, **kwargs):
         super().initial(request, *args, **kwargs)
-        self.recruiter = _require_company(request.user)
+        self.recruiter = require_company_recruiter(request.user)
         self.access = resolve_company_page_access(self.recruiter)
         if self.required_capability and not getattr(self.access, self.required_capability):
             raise CompanyPageEditForbidden()
@@ -64,6 +68,11 @@ class CompanyPageWorkspaceAPIView(APIView):
 
 
 class CompanyPageWorkspaceView(CompanyPageWorkspaceAPIView):
+    @extend_schema(
+        summary='Workspace trang công ty: bố cục, nội dung và quyền của tôi',
+        responses=WORKSPACE_RESPONSE,
+        tags=['employer'],
+    )
     def get(self, request):
         return self.workspace()
 
@@ -72,6 +81,12 @@ class CompanyPageLayoutView(CompanyPageWorkspaceAPIView):
     throttle_scope = 'company_page_layout'
     required_capability = 'can_edit_layout'
 
+    @extend_schema(
+        summary='Đổi bố cục trang công ty',
+        request=CompanyPageLayoutSerializer,
+        responses={**WORKSPACE_RESPONSE, 409: OpenApiTypes.OBJECT},
+        tags=['employer'],
+    )
     def patch(self, request):
         serializer = CompanyPageLayoutSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -87,7 +102,9 @@ class CompanyPageLayoutView(CompanyPageWorkspaceAPIView):
             return Response(
                 {
                     'code': 'COMPANY_PAGE_LAYOUT_STALE',
-                    'detail': 'Bố cục đã được thay đổi ở nơi khác. Vui lòng tải lại rồi thử lại.',
+                    'detail': _(
+                        'Bố cục đã được thay đổi ở nơi khác. Vui lòng tải lại rồi thử lại.'
+                    ),
                     'layout': current_company_page_layout(self.recruiter.company_id),
                 },
                 status=status.HTTP_409_CONFLICT,
@@ -98,6 +115,12 @@ class CompanyPageLayoutView(CompanyPageWorkspaceAPIView):
 class CompanyPagePinnableJobsView(CompanyPageWorkspaceAPIView):
     required_capability = 'can_edit_layout'
 
+    @extend_schema(
+        summary='Tin tuyển dụng có thể ghim lên trang công ty',
+        parameters=[OpenApiParameter('q', str, OpenApiParameter.QUERY, required=False)],
+        responses=WORKSPACE_RESPONSE,
+        tags=['employer'],
+    )
     def get(self, request):
         query = (request.query_params.get('q') or '').strip()[:PINNABLE_JOB_QUERY_MAX_LENGTH]
         return Response({'results': pinnable_company_jobs(self.recruiter.company_id, query=query)})
@@ -107,9 +130,20 @@ class CompanyPageEditorListView(CompanyPageWorkspaceAPIView):
     throttle_scope = 'company_page_editors'
     required_capability = 'can_manage_editors'
 
+    @extend_schema(
+        summary='Thành viên và quyền biên tập trang công ty',
+        responses=WORKSPACE_RESPONSE,
+        tags=['employer'],
+    )
     def get(self, request):
         return Response({'results': company_page_editor_rows(self.recruiter.company_id)})
 
+    @extend_schema(
+        summary='Cấp quyền biên tập trang công ty cho thành viên',
+        request=CompanyPageEditorGrantSerializer,
+        responses={201: OpenApiTypes.OBJECT},
+        tags=['employer'],
+    )
     def post(self, request):
         serializer = CompanyPageEditorGrantSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -128,6 +162,12 @@ class CompanyPageEditorDetailView(CompanyPageWorkspaceAPIView):
     throttle_scope = 'company_page_editors'
     required_capability = 'can_manage_editors'
 
+    @extend_schema(
+        summary='Thu hồi quyền biên tập trang công ty',
+        request=None,
+        responses=WORKSPACE_RESPONSE,
+        tags=['employer'],
+    )
     def delete(self, request, grant_public_id):
         grant = revoke_company_page_editor(
             company=self.recruiter.company,
@@ -138,20 +178,24 @@ class CompanyPageEditorDetailView(CompanyPageWorkspaceAPIView):
 
 
 class CompanyPageContentView(CompanyPageWorkspaceAPIView):
-    """Page content goes through moderation: it merges into the caller's request."""
+    """Page content publishes at once and is reviewed afterwards, unless an
+    administrator requires review first: then it merges into the caller's request."""
 
     throttle_scope = 'company_page_content'
     required_capability = 'can_edit_content'
 
+    @extend_schema(
+        summary='Lưu nội dung trang công ty (đăng ngay hoặc gửi duyệt nếu công ty bị duyệt trước)',
+        description=(
+            'Trả workspace kèm `content_change`: mã thay đổi vừa đăng để tải ảnh đã báo '
+            'trước bằng cờ `*_pending`; `null` khi nội dung vào yêu cầu cập nhật chờ duyệt.'
+        ),
+        request=CompanyPageContentSerializer,
+        responses={**WORKSPACE_RESPONSE, 409: OpenApiTypes.OBJECT},
+        tags=['employer'],
+    )
     def post(self, request):
-        with transaction.atomic():
-            try:
-                company, active_request = lock_company_update_target(
-                    company_id=self.recruiter.company_id,
-                    requester=request.user,
-                )
-            except CompanyUpdateInReview:
-                return Response(COMPANY_UPDATE_IN_REVIEW, status=status.HTTP_409_CONFLICT)
+        def validate(company, active_request):
             serializer = CompanyPageContentSerializer(
                 data=request.data,
                 context={
@@ -162,11 +206,28 @@ class CompanyPageContentView(CompanyPageWorkspaceAPIView):
                 },
             )
             serializer.is_valid(raise_exception=True)
-            submit_company_update_request(
-                company=company,
-                active_request=active_request,
-                requester=request.user,
-                data=serializer.validated_data,
-                merge=True,
-            )
-        return self.workspace()
+            return serializer.validated_data
+
+        change = None
+        try:
+            if self.recruiter.company.content_review_required:
+                submit_validated_company_update(
+                    company_id=self.recruiter.company_id,
+                    requester=request.user,
+                    validate=validate,
+                    merge=True,
+                )
+            else:
+                change = publish_company_page_content(
+                    company_id=self.recruiter.company_id,
+                    actor=request.user,
+                    validate=validate,
+                )
+        except CompanyUpdateInReview:
+            return Response(company_update_in_review(), status=status.HTTP_409_CONFLICT)
+        return Response(
+            {
+                **company_page_workspace(self.recruiter, self.access, request=request),
+                'content_change': change.public_id if change else None,
+            }
+        )

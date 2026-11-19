@@ -1,20 +1,11 @@
 """Public service boundary for shared upload infrastructure."""
 
-from .errors import UploadServiceError
-from .pipeline import (
-    ScanOutcome,
-    cancel_upload_session,
-    claim_clean_upload,
+from .claims import claim_clean_upload, place_upload_legal_hold, release_claimed_upload
+from .errors import UploadServiceError, upload_error
+from .retention import (
     cleanup_upload_objects,
-    create_upload_session,
     expire_stale_upload_sessions,
-    place_upload_legal_hold,
-    process_upload_scan,
     purge_expired_upload_evidence,
-    register_legacy_trusted_asset,
-    release_claimed_upload,
-    request_scan_retry,
-    store_quarantined_upload,
 )
 from .scanners import (
     ClamAVStreamScanner,
@@ -28,7 +19,14 @@ from .scanners import (
     get_upload_scanner,
     upload_scanner_readiness,
 )
-from .storage_layout import classify_legacy_storage_key
+from .scanning import ScanOutcome, process_upload_scan
+from .sessions import (
+    cancel_upload_session,
+    create_upload_session,
+    enqueue_upload_scan,
+    request_scan_retry,
+    store_quarantined_upload,
+)
 
 __all__ = [
     'ClamAVStreamScanner',
@@ -43,17 +41,17 @@ __all__ = [
     'UploadServiceError',
     'cancel_upload_session',
     'claim_clean_upload',
-    'classify_legacy_storage_key',
     'cleanup_upload_objects',
     'create_upload_session',
+    'enqueue_upload_scan',
     'expire_stale_upload_sessions',
     'get_upload_scanner',
     'place_upload_legal_hold',
     'process_upload_scan',
     'purge_expired_upload_evidence',
-    'register_legacy_trusted_asset',
     'release_claimed_upload',
     'request_scan_retry',
     'store_quarantined_upload',
+    'upload_error',
     'upload_scanner_readiness',
 ]

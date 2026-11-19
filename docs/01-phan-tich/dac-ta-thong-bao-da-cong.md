@@ -9,7 +9,8 @@ cổng. Dải hợp nhất hai nguồn:
    CTA, animation, dismiss, theme màu/ảnh nền và số liệu hiệu quả.
 
 Backend do app `apps.sitecontent` sở hữu (`models/announcements.py`,
-`services/announcements.py`, `services/announcement_media.py`,
+`services/announcement_{content,lifecycle,user_state,analytics}.py`,
+`services/announcement_media.py`,
 `selectors/announcements.py`). Tài liệu liên quan:
 
 - runtime frontend (ownership slice, priority resolver, rollout flag build-time,
@@ -138,10 +139,10 @@ dismiss/còn snooze ở `dismissal_version` hiện tại. Feed trả
 `normalize_theme_and_background` xóa field không dùng theo mode, nên dữ liệu
 lưu luôn nhất quán. Client không bao giờ gửi chuỗi CSS hay gradient tự do. Token
 màu của preset/kind thuộc code frontend
-(`entities/announcement/model/announcement.presentation.js`), dùng chung cho
+(`entities/content/announcement/model/announcement.presentation.js`), dùng chung cho
 strip runtime và preview admin.
 
-Upload ảnh nền: `POST /api/site/admin/announcements/backgrounds/`
+Upload ảnh nền: `POST /api/admin/site/announcements/backgrounds/`
 (`announcement.manage`), lưu vào `site/announcements/backgrounds/`. Chỉ JPEG,
 PNG, WebP (không SVG/GIF), ≤1 MB, rộng 640–2400 px, cao 24–120 px; khuyến nghị
 khoảng 980×31 đến 1920×48. Trả `path`, `url`, `width`, `height`. Public feed trả
@@ -154,7 +155,7 @@ Chi tiết render ở tài liệu runtime frontend.
 
 ## 7. API
 
-Tiền tố `/api/site/`.
+Tiền tố `/api/public/site/`.
 
 | Method | Endpoint | Quyền | Ghi chú |
 | --- | --- | --- | --- |
@@ -222,15 +223,7 @@ Có hai cờ độc lập:
 Frontend chỉ nhận remote item khi `remote_enabled === true`; system message về
 xác thực/tuân thủ và banner fallback vẫn chạy khi remote tắt hoặc lỗi.
 
-Trước khi bật một surface, chạy preflight read-only:
-
-```bash
-python manage.py announcement_rollout_preflight --require-live-surface candidate --json
-```
-
-Lệnh fail khi kill switch chứa surface không hợp lệ, có announcement published
-thiếu active revision, critical thiếu `ends_at`, hoặc surface yêu cầu không có
-item live. Thứ tự bật và ngưỡng dừng nằm ở
+Thứ tự bật và ngưỡng dừng nằm ở
 [vận hành và kill switch](../06-deployment/van-hanh-va-kill-switch.md).
 
 Rollback ưu tiên tắt kill switch hoặc quay code; không reverse migration, không

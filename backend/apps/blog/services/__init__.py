@@ -10,18 +10,21 @@ from .editorial import (
     save_post_draft,
     submit_post,
 )
-from .media import upload_blog_media
+from .media import upload_blog_media, upload_blog_thumbnail
+from .ordering import reorder_by_public_id
 from .publishing import record_post_view
-from .tags import merge_tags
+from .tags import delete_tag, merge_tags
 
 __all__ = [
     'BlogResourceChanged',
     'archive_post',
     'blog_html_plain_text',
     'create_post',
+    'delete_tag',
     'discard_draft',
     'publish_post',
     'record_post_view',
+    'reorder_by_public_id',
     'merge_tags',
     'restore_post',
     'return_post',
@@ -29,4 +32,5 @@ __all__ = [
     'save_post_draft',
     'submit_post',
     'upload_blog_media',
+    'upload_blog_thumbnail',
 ]

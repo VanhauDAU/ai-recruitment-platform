@@ -2,9 +2,10 @@
 
 from http import HTTPStatus
 
+from django.utils.translation import gettext as _
 from rest_framework.exceptions import APIException
 
-from apps.employers.models import RecruitmentCampaign
+from apps.campaigns.models import RecruitmentCampaign
 from apps.employers.services import ensure_recruiter_candidate_data_access
 from apps.jobs.models import Job
 
@@ -19,7 +20,7 @@ class RecruitmentResourceChanged(APIException):
         super().__init__(
             detail={
                 'code': self.default_code,
-                'message': 'Chiến dịch của hồ sơ vừa thay đổi. Vui lòng tải lại.',
+                'message': _('Chiến dịch của hồ sơ vừa thay đổi. Vui lòng tải lại.'),
                 'action': 'reload',
             },
             code=self.default_code,

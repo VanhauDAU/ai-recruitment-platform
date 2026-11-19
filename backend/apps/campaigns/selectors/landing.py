@@ -1,6 +1,6 @@
 """Public landing page of a campaign: what candidates may see, and in which state."""
 
-from apps.employers.models import RecruitmentCampaign
+from apps.campaigns.models import RecruitmentCampaign
 
 Status = RecruitmentCampaign.Status
 LANDING_STATES = {

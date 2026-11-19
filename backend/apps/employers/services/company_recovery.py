@@ -7,16 +7,20 @@ import json
 
 from django.db import transaction
 from django.db.models import Q
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
+from apps.accounts.api.permissions import require_admin
 from apps.accounts.models import User
-from apps.accounts.permissions import require_admin
 from apps.accounts.services import (
     StaleImpactToken,
     create_impact_token,
     decode_impact_token,
     record_admin_action,
 )
+from apps.campaigns.models import RecruitmentCampaign
 from apps.jobs.models import Job
+from common.i18n import recipient_language
 
 from ..models import (
     Company,
@@ -28,10 +32,9 @@ from ..models import (
     EmployerVerificationCase,
     EmployerVerificationEvent,
     RecruiterProfile,
-    RecruitmentCampaign,
     RecruitmentNeed,
 )
-from ..models.verification import REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES
+from ..models.company_update import REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES
 from .company_membership import company_owners
 from .company_page_editors import revoke_page_editor_grants_on_unlink
 from .notifications import emit_employer_event
@@ -62,7 +65,7 @@ def _locked_identity(user):
     if recruiter is None or recruiter.company_id is None:
         raise CompanyUnlinkError(
             'COMPANY_LINK_NOT_FOUND',
-            'Nhà tuyển dụng hiện không liên kết với công ty nào.',
+            _('Nhà tuyển dụng hiện không liên kết với công ty nào.'),
         )
     verification_case = (
         EmployerVerificationCase.objects.select_for_update(of=('self',))
@@ -83,7 +86,7 @@ def _identity(user, *, lock):
     if recruiter is None or recruiter.company_id is None:
         raise CompanyUnlinkError(
             'COMPANY_LINK_NOT_FOUND',
-            'Nhà tuyển dụng hiện không liên kết với công ty nào.',
+            _('Nhà tuyển dụng hiện không liên kết với công ty nào.'),
         )
     verification_case = EmployerVerificationCase.objects.filter(recruiter=recruiter).first()
     return user, recruiter, verification_case, recruiter.company
@@ -226,10 +229,9 @@ def _withdraw_unapproved_evidence(user, verification_case, company, *, actor, ev
 
 
 def company_unlink_impact(user, *, actor, reason):
+    """Preview the unlink; the reason may still be blank (checked on confirm)."""
     require_admin(actor)
     normalized_reason = (reason or '').strip()
-    if not normalized_reason:
-        raise CompanyUnlinkError('COMPANY_UNLINK_REASON_REQUIRED', 'Nhập lý do gỡ liên kết.')
     user, recruiter, verification_case, company = _identity(user, lock=False)
     snapshot = _clean_snapshot(user, recruiter, verification_case, company)
     can_apply = not snapshot['blockers']
@@ -264,7 +266,7 @@ def confirm_company_unlink(user, *, actor, reason, impact_token):
     require_admin(actor)
     normalized_reason = (reason or '').strip()
     if not normalized_reason:
-        raise CompanyUnlinkError('COMPANY_UNLINK_REASON_REQUIRED', 'Nhập lý do gỡ liên kết.')
+        raise CompanyUnlinkError('COMPANY_UNLINK_REASON_REQUIRED', _('Nhập lý do gỡ liên kết.'))
     user, recruiter, verification_case, company = _identity(user, lock=True)
     snapshot = _clean_snapshot(user, recruiter, verification_case, company)
     claims = decode_impact_token(
@@ -274,11 +276,11 @@ def confirm_company_unlink(user, *, actor, reason, impact_token):
         normalized_payload={'reason': normalized_reason, 'snapshot': snapshot},
     )
     if claims['revision'] != snapshot['integrity_revision']:
-        raise StaleImpactToken('Liên kết công ty đã thay đổi sau khi xem tác động.')
+        raise StaleImpactToken(_('Liên kết công ty đã thay đổi sau khi xem tác động.'))
     if snapshot['blockers']:
         raise CompanyUnlinkError(
             'COMPANY_LINK_NOT_CLEAN',
-            'Liên kết đang có dữ liệu đã có hiệu lực với công ty; xử lý các mục chặn trước.',
+            _('Liên kết đang có dữ liệu đã có hiệu lực với công ty; xử lý các mục chặn trước.'),
             blockers=snapshot['blockers'],
         )
 
@@ -300,7 +302,7 @@ def confirm_company_unlink(user, *, actor, reason, impact_token):
         actor=actor,
         event_type=EmployerNotification.EventType.COMPANY_LINK_REMOVED,
         dedupe_key=f'company-link-event:{event.public_id}',
-        message='Quản trị viên đã gỡ liên kết công ty theo yêu cầu hỗ trợ.',
+        message=gettext_lazy('Quản trị viên đã gỡ liên kết công ty theo yêu cầu hỗ trợ.'),
         subject_public_id=company.public_id,
         metadata={
             'company_public_id': company.public_id,
@@ -331,9 +333,9 @@ def confirm_company_unlink(user, *, actor, reason, impact_token):
 # verification does not block: it proved representation of this company only
 # and is withdrawn with the link.
 MEMBER_REMOVAL_BLOCKERS = {
-    'ACTIVE_JOBS_EXIST': 'Còn tin đang tuyển',
-    'OPEN_CAMPAIGNS_EXIST': 'Còn chiến dịch tuyển dụng đang mở',
-    'COMPLIANCE_HOLDS_EXIST': 'Đang bị giữ để kiểm tra tuân thủ',
+    'ACTIVE_JOBS_EXIST': gettext_lazy('Còn tin đang tuyển'),
+    'OPEN_CAMPAIGNS_EXIST': gettext_lazy('Còn chiến dịch tuyển dụng đang mở'),
+    'COMPLIANCE_HOLDS_EXIST': gettext_lazy('Đang bị giữ để kiểm tra tuân thủ'),
 }
 
 
@@ -343,7 +345,7 @@ def remove_company_member(manager_user, member_public_id, *, reason):
     reason = (reason or '').strip()
     if not reason:
         raise CompanyUnlinkError(
-            'COMPANY_MEMBER_REMOVAL_REASON_REQUIRED', 'Nhập lý do gỡ thành viên.'
+            'COMPANY_MEMBER_REMOVAL_REASON_REQUIRED', _('Nhập lý do gỡ thành viên.')
         )
     manager = RecruiterProfile.objects.select_related('company').filter(user=manager_user).first()
     if (
@@ -352,7 +354,7 @@ def remove_company_member(manager_user, member_public_id, *, reason):
         or not company_owners(manager.company).filter(pk=manager.pk).exists()
     ):
         raise CompanyUnlinkError(
-            'COMPANY_MANAGER_REQUIRED', 'Chỉ quản lý công ty đã xác thực mới gỡ được thành viên.'
+            'COMPANY_MANAGER_REQUIRED', _('Chỉ quản lý công ty đã xác thực mới gỡ được thành viên.')
         )
     target = (
         RecruiterProfile.objects.select_related('user')
@@ -360,11 +362,11 @@ def remove_company_member(manager_user, member_public_id, *, reason):
         .first()
     )
     if target is None:
-        raise CompanyUnlinkError('COMPANY_MEMBER_NOT_FOUND', 'Không tìm thấy thành viên này.')
+        raise CompanyUnlinkError('COMPANY_MEMBER_NOT_FOUND', _('Không tìm thấy thành viên này.'))
     if target.company_role == RecruiterProfile.CompanyRole.OWNER:
         raise CompanyUnlinkError(
             'COMPANY_MANAGER_NOT_REMOVABLE',
-            'Không thể gỡ quản lý công ty. Hãy chuyển quyền quản lý trước.',
+            _('Không thể gỡ quản lý công ty. Hãy chuyển quyền quản lý trước.'),
         )
     user, recruiter, verification_case, company = _identity(target.user, lock=True)
     snapshot = _clean_snapshot(user, recruiter, verification_case, company)
@@ -372,9 +374,12 @@ def remove_company_member(manager_user, member_public_id, *, reason):
     if blockers:
         raise CompanyUnlinkError(
             'COMPANY_MEMBER_NOT_REMOVABLE',
-            'Chưa thể gỡ: '
-            + ', '.join(MEMBER_REMOVAL_BLOCKERS[code].lower() for code in blockers)
-            + '.',
+            _('Chưa thể gỡ: %(blockers)s.')
+            % {
+                'blockers': ', '.join(
+                    str(MEMBER_REMOVAL_BLOCKERS[code]).lower() for code in blockers
+                )
+            },
             blockers=blockers,
         )
     event = EmployerCompanyLinkEvent.objects.create(
@@ -389,12 +394,16 @@ def remove_company_member(manager_user, member_public_id, *, reason):
             if key not in {'integrity_revision', 'recruiter_updated_at', 'company_updated_at'}
         },
     )
+    with recipient_language(user):
+        message = _('Quản lý công ty đã gỡ bạn khỏi %(company)s.') % {
+            'company': company.company_name
+        }
     emit_employer_event(
         recipient=user,
         actor=manager_user,
         event_type=EmployerNotification.EventType.COMPANY_LINK_REMOVED,
         dedupe_key=f'company-link-event:{event.public_id}',
-        message=f'Quản lý công ty đã gỡ bạn khỏi {company.company_name}.',
+        message=message,
         subject_public_id=company.public_id,
         metadata={'company_public_id': company.public_id, 'event_public_id': event.public_id},
     )

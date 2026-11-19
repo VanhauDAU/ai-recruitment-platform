@@ -9,18 +9,19 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.applications.services import ApplicationNotAllowed, create_application_record
+from apps.campaigns.models import RecruitmentCampaign
+from apps.campaigns.selectors import campaign_list_queryset
 from apps.cv_templates.tests.factories import fill_cv_for_application, make_published_template
-from apps.cvs.services import create_v2_cv
+from apps.cvs.services import create_user_cv
 from apps.dashboard.selectors import build_employer_dashboard
-from apps.employers.models import Company, RecruitmentCampaign
-from apps.employers.selectors import campaign_list_queryset
-from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.employers.models import Company
+from apps.employers.tests.factories import make_employer_ready
 from common.vietnam_time import vietnam_day_start, vietnam_today
 
 from ..models import Job, JobState, publicly_available_job_filter
 from ..models.querysets import job_visibility_issues
 from ..selectors import admin_job_management_summary, employer_job_status_counts
-from .helpers import open_visibility_window
+from .factories import open_visibility_window
 
 # 18:30 UTC on 15/11 is already 01:30 on 16/11 in Vietnam.
 VIETNAM_EARLY_MORNING = datetime(2026, 11, 15, 18, 30, tzinfo=UTC)
@@ -146,7 +147,7 @@ class ApplicationRequiresCandidateDataAccessTests(TestCase):
             **open_visibility_window(),
         )
         template, _version = make_published_template('State template')
-        self.cv = create_v2_cv(actor=self.candidate, title='State CV', template=template)
+        self.cv = create_user_cv(actor=self.candidate, title='State CV', template=template)
         fill_cv_for_application(self.cv, self.candidate)
 
     def test_job_stops_taking_applications_once_the_employer_loses_the_dpa(self):

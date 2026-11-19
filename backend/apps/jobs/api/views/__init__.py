@@ -19,6 +19,7 @@ from .employer import (
     EmployerJobResubmitView,
     EmployerJobSubmitView,
 )
+from .engagement import JobImpressionBatchCreateView, JobViewCreateView
 from .moderation import (
     AdminJobDecisionView,
     AdminJobModerationDetailView,
@@ -26,19 +27,15 @@ from .moderation import (
     AdminJobModerationSummaryView,
 )
 from .public import (
-    CandidateJobRecommendationView,
-    CvJobRecommendationView,
     HomepageBestJobListView,
     JobDetailView,
-    JobImpressionBatchCreateView,
     JobListView,
     JobStatsView,
     JobSuggestView,
-    JobViewCreateView,
-    SavedJobDestroyView,
-    SavedJobListCreateView,
 )
 from .recommendations import (
+    CandidateJobRecommendationView,
+    CvJobRecommendationView,
     HiddenJobCreateView,
     HiddenJobDestroyView,
     InlineJobRecommendationView,
@@ -50,6 +47,7 @@ from .reports import (
     AdminJobReportReverseView,
     JobReportCreateView,
 )
+from .saved import SavedJobDestroyView, SavedJobListCreateView
 
 __all__ = [
     'BenefitListView',

@@ -10,15 +10,15 @@ schema, lifecycle và API canonical nằm tại
 
 ```text
 app/layouts
-  → widgets/announcement-strip
-    → entities/announcement
-    → entities/session
+  → widgets/common/announcement-strip
+    → entities/content/announcement
+    → entities/account/session
     → shared/api + shared/config
 ```
 
-- `entities/announcement` sở hữu endpoint active feed, query key theo phiên,
+- `entities/content/announcement` sở hữu endpoint active feed, query key theo phiên,
   normalize DTO, locale fallback phòng thủ và allowlist contract.
-- `widgets/announcement-strip` sở hữu system reminder, priority resolver,
+- `widgets/common/announcement-strip` sở hữu system reminder, priority resolver,
   rotation, animation, accessibility, trạng thái dismiss tạm thời và rollout.
 - Layout chỉ truyền `surface`, `path`, locale/verification path và dữ liệu hồ sơ
   NTD đã có. Layout không xếp priority hoặc tự hiểu payload remote.
@@ -27,13 +27,13 @@ app/layouts
 Các module chính:
 
 ```text
-frontend/src/entities/announcement/
+frontend/src/entities/content/announcement/
   api/announcement.api.js
   api/announcement.keys.js
   model/announcement.contract.js
   model/announcement.presentation.js
 
-frontend/src/widgets/announcement-strip/
+frontend/src/widgets/common/announcement-strip/
   model/announcement-rollout.js
   model/priority-resolver.js
   model/system-announcements.js

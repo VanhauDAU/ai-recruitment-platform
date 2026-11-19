@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { API_ROUTE } from './helpers'
 
-test('admin blog: list is responsive, public links open a new tab and article slug is server-owned', async ({ page }) => {
+test('admin blog: list is responsive, public links open a new tab and article slug is server-owned', { tag: '@responsive' }, async ({ page }) => {
   const adminTags = [
     { public_id: 'ptag_sales', name: 'Sales', slug: 'sales', is_active: true, post_count: 2, working_copy_count: 0, usage_count: 2 },
     { public_id: 'ptag_business', name: 'Nhân viên kinh doanh', slug: 'nhan-vien-kinh-doanh', is_active: true, post_count: 1, working_copy_count: 0, usage_count: 1 },
@@ -87,7 +87,7 @@ test('admin blog: list is responsive, public links open a new tab and article sl
     let body = {}
     if (path === '/api/auth/refresh/') body = { access: 'e2e-access' }
     else if (path === '/api/auth/me/') body = adminUser
-    else if (path === '/api/blog/admin/posts/summary/') {
+    else if (path === '/api/admin/blog/posts/summary/') {
       body = {
         all: 2,
         draft: post.editorial_state === 'draft' ? 1 : 0,
@@ -97,7 +97,7 @@ test('admin blog: list is responsive, public links open a new tab and article sl
         published_with_pending: 0,
         archived: [post, publishedPost].filter((item) => item.editorial_state === 'archived').length,
       }
-    } else if (path === '/api/blog/admin/posts/') {
+    } else if (path === '/api/admin/blog/posts/') {
       const ordering = url.searchParams.get('ordering') || '-updated_at'
       const descending = ordering.startsWith('-')
       const field = ordering.replace(/^-/, '')
@@ -124,7 +124,7 @@ test('admin blog: list is responsive, public links open a new tab and article sl
       })
       postOrderings.push(ordering)
       body = { count: 2, next: null, previous: null, results }
-    } else if (['/api/blog/admin/posts/ps_sales/archive/', '/api/blog/admin/posts/ps_interview/archive/'].includes(path)) {
+    } else if (['/api/admin/blog/posts/ps_sales/archive/', '/api/admin/blog/posts/ps_interview/archive/'].includes(path)) {
       const payload = route.request().postDataJSON()
       expect(payload.note).toBe('Nội dung cần rà soát lại')
       const targetPost = path.includes('ps_sales') ? post : publishedPost
@@ -135,23 +135,23 @@ test('admin blog: list is responsive, public links open a new tab and article sl
         updated_at: '2026-07-27T09:00:00Z',
       })
       body = targetPost
-    } else if (path === '/api/blog/admin/posts/ps_sales/') {
+    } else if (path === '/api/admin/blog/posts/ps_sales/') {
       body = postDetail
-    } else if (path === '/api/blog/admin/categories/reorder/') {
+    } else if (path === '/api/admin/blog/categories/reorder/') {
       const ids = route.request().postDataJSON().public_ids
       adminCategories.sort((left, right) => ids.indexOf(left.public_id) - ids.indexOf(right.public_id))
       adminCategories.forEach((category, index) => { category.order = index + 1 })
       body = { public_ids: ids }
       await new Promise((resolve) => setTimeout(resolve, 250))
-    } else if (path === '/api/blog/admin/categories/') {
+    } else if (path === '/api/admin/blog/categories/') {
       body = adminCategories
-    } else if (path === '/api/blog/admin/tags/') {
+    } else if (path === '/api/admin/blog/tags/') {
       if (route.request().method() === 'POST') {
         const created = { public_id: 'ptag_career_sales', name: 'Nghề Sales', slug: 'nghe-sales', is_active: true, post_count: 0, working_copy_count: 0, usage_count: 0 }
         adminTags.push(created)
         body = created
       } else body = adminTags
-    } else if (path === '/api/blog/admin/uploads/') {
+    } else if (path === '/api/admin/blog/uploads/') {
       const mediaItem = {
           public_id: 'pmedia_sales',
           url: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect width="400" height="300" fill="%23dcfce7"/%3E%3C/svg%3E',
@@ -164,13 +164,13 @@ test('admin blog: list is responsive, public links open a new tab and article sl
       body = route.request().method() === 'POST'
         ? { ...mediaItem, public_id: 'pmedia_new', original_name: 'anh-moi.png', content_type: 'image/png' }
         : { count: 1, next: null, previous: null, results: [mediaItem] }
-    } else if (path === '/api/blog/admin/pins/reorder/') {
+    } else if (path === '/api/admin/blog/pins/reorder/') {
       const ids = route.request().postDataJSON().public_ids
       adminPins.sort((left, right) => ids.indexOf(left.public_id) - ids.indexOf(right.public_id))
       adminPins.forEach((pin, index) => { pin.order = index + 1 })
       body = { public_ids: ids }
       await new Promise((resolve) => setTimeout(resolve, 250))
-    } else if (path === '/api/blog/admin/pins/') {
+    } else if (path === '/api/admin/blog/pins/') {
       if (route.request().method() === 'POST') {
         const payload = route.request().postDataJSON()
         const created = {
@@ -185,8 +185,8 @@ test('admin blog: list is responsive, public links open a new tab and article sl
         adminPins.push(created)
         body = created
       } else body = adminPins
-    } else if (path === '/api/jobs/categories/') body = []
-    else if (path === '/api/privacy/consent/') {
+    } else if (path === '/api/public/jobs/categories/') body = []
+    else if (path === '/api/public/privacy/consent/') {
       body = { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
     }
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })

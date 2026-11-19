@@ -7,7 +7,7 @@ from rest_framework.test import APIClient
 
 from apps.employers.models import EmployerNotification
 from apps.jobs.models import Job
-from apps.jobs.tests.helpers import open_visibility_window
+from apps.jobs.tests.factories import open_visibility_window
 
 from ..models import Application, ApplicationReminder, ApplicationStatusHistory
 from ..services import (
@@ -66,9 +66,9 @@ class RecruiterReminderTests(TestCase):
         self.age(4)
         client = APIClient()
         client.force_authenticate(self.candidate)
-        listed = client.get(reverse('candidate-application-list-create-v2')).data['results'][0]
+        listed = client.get(reverse('candidate-application-list-create')).data['results'][0]
         reminded = client.post(
-            reverse('candidate-application-remind-v2', args=[self.application.public_id])
+            reverse('candidate-application-remind', args=[self.application.public_id])
         )
 
         self.assertTrue(listed['actions']['remind'])
@@ -106,7 +106,7 @@ class RecruiterReminderTests(TestCase):
         )
         client = APIClient()
         client.force_authenticate(self.candidate)
-        listed = client.get(reverse('candidate-application-list-create-v2')).data['results'][0]
+        listed = client.get(reverse('candidate-application-list-create')).data['results'][0]
 
         self.assertIsNotNone(listed['job_stopped_at'])
         self.assertFalse(listed['actions']['remind'])
@@ -166,7 +166,7 @@ class RecruiterReminderTests(TestCase):
         )
 
     def test_rules_endpoint_serves_the_enforced_limits(self):
-        response = APIClient().get(reverse('application-rules-v2'))
+        response = APIClient().get(reverse('application-rules'))
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['max_submissions_per_job'], 3)

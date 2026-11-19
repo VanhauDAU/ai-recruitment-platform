@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => ({
   createCvPdfExport: vi.fn(), downloadCvPdf: vi.fn(), getCvPdfExport: vi.fn(), retryCvPdfExport: vi.fn(),
 }))
 
-vi.mock('@/entities/cv', () => ({
+vi.mock('@/entities/cv/cv', () => ({
   getCv: mocks.getCv,
   getCvVersion: mocks.getCvVersion,
   CvDocumentPreview: ({ document, rendererKey }) => <article className="cv-document-preview__page" data-testid="saved-version-document">{rendererKey}:{document.content_json.personal_info.full_name}</article>,
@@ -23,18 +23,18 @@ vi.mock('@/entities/cv', () => ({
   retryCvPdfExport: mocks.retryCvPdfExport,
 }))
 vi.mock('html-to-image', () => ({ toBlob: mocks.toBlob }))
-vi.mock('@/entities/candidate-preferences', () => ({
+vi.mock('@/entities/job/candidate-preferences', () => ({
   RECRUITER_VISIBILITY_QUERY_KEY: ['candidate', 'recruiter-visibility'],
   getRecruiterVisibility: mocks.getRecruiterVisibility,
   updateRecruiterVisibility: mocks.updateRecruiterVisibility,
 }))
-vi.mock('@/entities/job', () => ({
+vi.mock('@/entities/job/job', () => ({
   getCvJobRecommendations: mocks.getCvJobRecommendations,
   formatLocations: (job) => job.location,
   formatSalary: (job) => job.salary,
   jobDetailPath: (job) => `/viec-lam/${job.slug}`,
 }))
-vi.mock('@/features/track-job-engagement', () => ({
+vi.mock('@/features/main/job/track-job-engagement', () => ({
   JobImpressionBoundary: ({ children }) => children,
 }))
 
@@ -55,7 +55,7 @@ describe('CV save success page', () => {
   beforeEach(() => {
     Object.values(mocks).forEach((mock) => mock.mockReset())
     mocks.getCv.mockResolvedValue({
-      title: 'Marketing', thumbnail_url: '/api/v2/cvs/cv_1/thumbnail/', thumbnail_status: 'ready', latest_version_public_id: 'cvv_2',
+      title: 'Marketing', thumbnail_url: '/api/candidate/cvs/cv_1/thumbnail/', thumbnail_status: 'ready', latest_version_public_id: 'cvv_2',
     })
     mocks.getCvVersion.mockResolvedValue(savedVersion)
     mocks.toBlob.mockResolvedValue(new Blob(['png'], { type: 'image/png' }))

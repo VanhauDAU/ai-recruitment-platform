@@ -79,7 +79,7 @@ async function mockBlogApi(page, allowedActions, editorialState = 'draft', { isS
     let body = {}
     if (path === '/api/auth/refresh/') body = { access: 'e2e-access' }
     else if (path === '/api/auth/me/') body = user
-    else if (path === '/api/blog/admin/posts/summary/') {
+    else if (path === '/api/admin/blog/posts/summary/') {
       body = {
         all: 1,
         draft: currentEditorialState === 'draft' ? 1 : 0,
@@ -89,9 +89,9 @@ async function mockBlogApi(page, allowedActions, editorialState = 'draft', { isS
         published_with_pending: currentEditorialState === 'published_with_pending' ? 1 : 0,
         archived: currentEditorialState === 'archived' ? 1 : 0,
       }
-    } else if (path === '/api/blog/admin/posts/') {
+    } else if (path === '/api/admin/blog/posts/') {
       body = { count: 1, next: null, previous: null, results: [post] }
-    } else if (path === '/api/blog/admin/posts/ps_other/restore/') {
+    } else if (path === '/api/admin/blog/posts/ps_other/restore/') {
       currentEditorialState = 'draft'
       Object.assign(post, {
         editorial_state: 'draft',
@@ -105,10 +105,10 @@ async function mockBlogApi(page, allowedActions, editorialState = 'draft', { isS
         edit_revision: detail.editable_version.edit_revision + 1,
       })
       body = detail
-    } else if (path === '/api/blog/admin/posts/ps_other/') body = detail
-    else if (path === '/api/blog/admin/categories/') body = [category]
-    else if (path === '/api/blog/admin/tags/' || path === '/api/jobs/categories/') body = []
-    else if (path === '/api/privacy/consent/') {
+    } else if (path === '/api/admin/blog/posts/ps_other/') body = detail
+    else if (path === '/api/admin/blog/categories/') body = [category]
+    else if (path === '/api/admin/blog/tags/' || path === '/api/public/jobs/categories/') body = []
+    else if (path === '/api/public/privacy/consent/') {
       body = { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
     }
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })

@@ -5,7 +5,7 @@ import PermissionGuard from './PermissionGuard'
 
 const { useSession } = vi.hoisted(() => ({ useSession: vi.fn() }))
 
-vi.mock('@/entities/session', () => ({ useSession }))
+vi.mock('@/entities/account/session', () => ({ useSession }))
 
 const route = {
   segment: '/settings',

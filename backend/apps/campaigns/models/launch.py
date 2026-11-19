@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy
 
 
 class CampaignLaunchPlan(models.Model):
@@ -11,7 +12,7 @@ class CampaignLaunchPlan(models.Model):
     """
 
     campaign = models.OneToOneField(
-        'employers.RecruitmentCampaign',
+        'campaigns.RecruitmentCampaign',
         on_delete=models.CASCADE,
         related_name='launch_plan',
     )
@@ -37,8 +38,8 @@ class CampaignLaunchJob(models.Model):
     """One job the launch will publish (a campaign draft) or attach (already public)."""
 
     class Action(models.TextChoices):
-        PUBLISH = 'publish', 'Đăng tin nháp'
-        ATTACH = 'attach', 'Gắn tin đang hiển thị'
+        PUBLISH = 'publish', gettext_lazy('Đăng tin nháp')
+        ATTACH = 'attach', gettext_lazy('Gắn tin đang hiển thị')
 
     plan = models.ForeignKey(CampaignLaunchPlan, on_delete=models.CASCADE, related_name='jobs')
     job = models.ForeignKey(

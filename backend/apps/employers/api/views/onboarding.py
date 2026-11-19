@@ -1,16 +1,21 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
-from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
+from django.utils.translation import gettext as _
+from drf_spectacular.utils import (
+    OpenApiParameter,
+    extend_schema,
+    extend_schema_view,
+    inline_serializer,
+)
 from rest_framework import generics, serializers, status
-from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsEmployer
-from common.client_ip import client_ip
-from common.throttling import ClientIPScopedRateThrottle
+from apps.accounts.api.permissions import IsEmployer
+from common.api.throttling import ClientIPScopedRateThrottle
+from common.http.client_ip import client_ip
 
-from ...selectors import has_explicit_company_link
 from ...services import (
     DpaPolicyChanged,
     DpaPolicyUnavailable,
@@ -34,13 +39,11 @@ from ..serializers import (
 )
 
 
-def _require_company(user):
-    recruiter = get_or_create_recruiter(user)
-    if not has_explicit_company_link(recruiter):
-        raise NotFound('Bạn chưa liên kết với công ty nào.')
-    return recruiter
-
-
+@extend_schema_view(
+    get=extend_schema(summary='Hồ sơ nhà tuyển dụng của tôi', tags=['employer']),
+    put=extend_schema(summary='Cập nhật chức danh của tôi', tags=['employer']),
+    patch=extend_schema(summary='Cập nhật chức danh của tôi', tags=['employer']),
+)
 class RecruiterMeView(generics.RetrieveUpdateAPIView):
     """Hồ sơ nhà tuyển dụng của tôi + trạng thái onboarding 5 bước."""
 
@@ -48,6 +51,8 @@ class RecruiterMeView(generics.RetrieveUpdateAPIView):
     permission_classes = [IsEmployer]
 
     def get_object(self):
+        # A GET still creates the profile: the response is the profile itself,
+        # including its public_id, so there is nothing to answer without one.
         return get_or_create_recruiter(self.request.user)
 
 
@@ -73,7 +78,7 @@ class PhoneAvailabilityView(APIView):
     def get(self, request):
         phone = (request.query_params.get('phone') or '').strip()
         if not phone:
-            raise ValidationError({'phone': 'Nhập số điện thoại cần kiểm tra.'})
+            raise ValidationError({'phone': _('Nhập số điện thoại cần kiểm tra.')})
         try:
             normalize_vietnamese_mobile(phone)
         except DjangoValidationError as error:
@@ -115,7 +120,7 @@ class SendPhoneOtpView(APIView):
     def post(self, request):
         phone = (request.data.get('phone') or request.user.phone or '').strip()
         if not phone:
-            raise ValidationError({'phone': 'Nhập số điện thoại cần xác thực.'})
+            raise ValidationError({'phone': _('Nhập số điện thoại cần xác thực.')})
         try:
             challenge = start_sms_phone_verification(
                 user=request.user,
@@ -180,9 +185,9 @@ class VerifyPhoneOtpView(APIView):
         challenge_id = (request.data.get('challenge_id') or '').strip()
         code = (request.data.get('code') or '').strip()
         if not challenge_id:
-            raise ValidationError({'challenge_id': 'Thiếu yêu cầu xác thực.'})
+            raise ValidationError({'challenge_id': _('Thiếu yêu cầu xác thực.')})
         if not code:
-            raise ValidationError({'code': 'Nhập mã xác thực.'})
+            raise ValidationError({'code': _('Nhập mã xác thực.')})
         try:
             recruiter = verify_sms_phone_challenge(
                 user=request.user,

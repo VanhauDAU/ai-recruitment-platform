@@ -8,41 +8,88 @@ from io import BytesIO
 
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
+from rest_framework.exceptions import ValidationError
 
-from ..models import CampaignHealthSnapshot
+from common.pdf.browser import PdfRenderingError, render_html_pdf
 
-STATUS_LABELS = dict(CampaignHealthSnapshot.Status.choices)
+from .health import HEALTH_STATUS_LABELS, campaign_health
+
 STAGE_LABELS = {
-    'applied': 'Ứng tuyển',
-    'viewed': 'Đã xem',
-    'shortlisted': 'Phù hợp',
-    'interviewed': 'Phỏng vấn',
-    'accepted': 'Trúng tuyển',
+    'applied': gettext_lazy('Ứng tuyển'),
+    'viewed': gettext_lazy('Đã xem'),
+    'shortlisted': gettext_lazy('Phù hợp'),
+    'interviewed': gettext_lazy('Phỏng vấn'),
+    'accepted': gettext_lazy('Trúng tuyển'),
 }
-JOB_STATUS = {'draft': 'Nháp', 'active': 'Đang tuyển', 'closed': 'Ngừng tuyển'}
+JOB_STATUS = {
+    'draft': gettext_lazy('Nháp'),
+    'active': gettext_lazy('Đang tuyển'),
+    'closed': gettext_lazy('Ngừng tuyển'),
+}
+REPORT_CONTENT_TYPES = {
+    'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'pdf': 'application/pdf',
+}
+
+
+def _period(campaign):
+    start = campaign.start_date.strftime('%d/%m/%Y') if campaign.start_date else _('khi kích hoạt')
+    if campaign.is_continuous:
+        return _('Từ %(start)s, tuyển liên tục') % {'start': start}
+    end = campaign.target_date.strftime('%d/%m/%Y') if campaign.target_date else _('chưa đặt')
+    return _('Từ %(start)s đến %(end)s') % {'start': start, 'end': end}
+
+
+def campaign_report_file(campaign, file_format, *, channels, daily, jobs):
+    """(content, content_type) of the report; ``file_format`` is ``xlsx`` or ``pdf``.
+
+    ``channels``, ``daily`` and ``jobs`` come from the campaign selectors
+    (``campaign_channel_report``, ``daily_applications``, ``report_jobs``).
+    """
+    report = {
+        'campaign': campaign,
+        'period': _period(campaign),
+        'active_days': round(campaign.active_seconds() / 86400, 1),
+        'health': campaign_health(campaign),
+        'channels': channels,
+        'daily': daily,
+        'jobs': jobs,
+    }
+    if file_format == 'pdf':
+        try:
+            content = build_pdf(report)
+        except PdfRenderingError as error:
+            raise ValidationError(
+                {'detail': _('Chưa tạo được PDF, hãy thử lại sau ít phút.')}
+            ) from error
+    else:
+        content = build_xlsx(report)
+    return content, REPORT_CONTENT_TYPES[file_format]
 
 
 def _overview_rows(report):
     campaign, health = report['campaign'], report['health']
     budget = health['budget']
     return [
-        ('Chiến dịch', campaign.name),
-        ('Mã', campaign.public_id),
-        ('Thời gian', report['period']),
-        ('Tình trạng', STATUS_LABELS.get(health['status'], '')),
-        ('Chỉ tiêu (người)', health['headcount']),
-        ('Đã tuyển (người)', health['accepted']),
-        ('Dự báo tuyển được (người)', health['forecast']),
-        ('Hồ sơ cần mỗi ngày để kịp', health['required_velocity']),
-        ('Tổng hồ sơ', health['applications']),
-        ('Hồ sơ mỗi ngày (7 ngày gần nhất)', health['velocity_7d']),
-        ('Thời gian xem hồ sơ (trung vị, giờ)', health['response']['median_hours_to_view']),
-        ('Hồ sơ được xem trong 48 giờ (%)', health['response']['viewed_within_48h_percent']),
-        ('Hồ sơ chờ quá 48 giờ', health['response']['backlog']),
-        ('Đã chi (VNĐ)', budget['spent']),
-        ('Ngân sách tối đa (VNĐ)', budget['budget_max']),
-        ('Ngân sách đã dùng (%)', budget['used_percent']),
-        ('Xuất lúc', timezone.localtime().strftime('%H:%M %d/%m/%Y')),
+        (_('Chiến dịch'), campaign.name),
+        (_('Mã'), campaign.public_id),
+        (_('Thời gian'), report['period']),
+        (_('Tình trạng'), str(HEALTH_STATUS_LABELS.get(health['status'], ''))),
+        (_('Chỉ tiêu (người)'), health['headcount']),
+        (_('Đã tuyển (người)'), health['accepted']),
+        (_('Dự báo tuyển được (người)'), health['forecast']),
+        (_('Hồ sơ cần mỗi ngày để kịp'), health['required_velocity']),
+        (_('Tổng hồ sơ'), health['applications']),
+        (_('Hồ sơ mỗi ngày (7 ngày gần nhất)'), health['velocity_7d']),
+        (_('Thời gian xem hồ sơ (trung vị, giờ)'), health['response']['median_hours_to_view']),
+        (_('Hồ sơ được xem trong 48 giờ (%)'), health['response']['viewed_within_48h_percent']),
+        (_('Hồ sơ chờ quá 48 giờ'), health['response']['backlog']),
+        (_('Đã chi (VNĐ)'), budget['spent']),
+        (_('Ngân sách tối đa (VNĐ)'), budget['budget_max']),
+        (_('Ngân sách đã dùng (%)'), budget['used_percent']),
+        (_('Xuất lúc'), timezone.localtime().strftime('%H:%M %d/%m/%Y')),
     ]
 
 
@@ -66,26 +113,26 @@ def build_xlsx(report):
             width = max(len(str(cell.value or '')) for cell in column)
             worksheet.column_dimensions[column[0].column_letter].width = min(max(width + 2, 10), 60)
 
-    sheet('Tổng quan', None, _overview_rows(report), first=True)
+    sheet(_('Tổng quan'), None, _overview_rows(report), first=True)
     sheet(
-        'Phễu',
-        ['Bước', 'Số hồ sơ', '% so với ứng tuyển'],
+        _('Phễu'),
+        [_('Bước'), _('Số hồ sơ'), _('% so với ứng tuyển')],
         [
-            (STAGE_LABELS[row['stage']], row['count'], row['percent_of_applications'])
+            (str(STAGE_LABELS[row['stage']]), row['count'], row['percent_of_applications'])
             for row in report['health']['funnel']
         ],
     )
     sheet(
-        'Nguồn và chi phí',
+        _('Nguồn và chi phí'),
         [
-            'Nguồn',
-            'Người bấm',
-            'Hồ sơ',
-            'Tỷ lệ nộp (%)',
-            'Trúng tuyển',
-            'Đã chi',
-            'Chi phí/hồ sơ',
-            'Chi phí/trúng tuyển',
+            _('Nguồn'),
+            _('Người bấm'),
+            _('Hồ sơ'),
+            _('Tỷ lệ nộp (%)'),
+            _('Trúng tuyển'),
+            _('Đã chi'),
+            _('Chi phí/hồ sơ'),
+            _('Chi phí/trúng tuyển'),
         ],
         [
             (
@@ -102,17 +149,17 @@ def build_xlsx(report):
         ],
     )
     sheet(
-        'Theo ngày',
-        ['Ngày', 'Hồ sơ'],
+        _('Theo ngày'),
+        [_('Ngày'), _('Hồ sơ')],
         [(row['date'].strftime('%d/%m/%Y'), row['applications']) for row in report['daily']],
     )
     sheet(
-        'Tin tuyển dụng',
-        ['Tin', 'Trạng thái', 'Cần tuyển', 'Hạn nộp', 'Hồ sơ', 'Trúng tuyển'],
+        _('Tin tuyển dụng'),
+        [_('Tin'), _('Trạng thái'), _('Cần tuyển'), _('Hạn nộp'), _('Hồ sơ'), _('Trúng tuyển')],
         [
             (
                 job['title'],
-                JOB_STATUS.get(job['status'], job['status']),
+                str(JOB_STATUS.get(job['status'], job['status'])),
                 job['number_of_vacancies'],
                 job['deadline'].strftime('%d/%m/%Y') if job['deadline'] else '',
                 job['current_applications'],
@@ -145,8 +192,6 @@ def _daily_bars(daily):
 
 
 def build_pdf(report):
-    from apps.cvs.services.pdf_renderer import render_html_pdf
-
     html = render_to_string(
         'campaigns/report.html',
         {

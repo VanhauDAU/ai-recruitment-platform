@@ -34,6 +34,7 @@ jobs:
       deploy: ${{ steps.areas.outputs.deploy }}
       audit: ${{ steps.areas.outputs.frontend_audit }}
       changed_count: ${{ steps.areas.outputs.changed_count }}
+      playwright: ${{ steps.playwright.outputs.version }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -50,6 +51,18 @@ jobs:
         run: |
           set -o pipefail
           bash scripts/ci_changed_areas.sh | tee -a "$GITHUB_OUTPUT"
+
+      # E2E runs inside the official Playwright image of the locked version.
+      # Installing Chromium with --with-deps on the hosted runner took 16s on
+      # a good day and 3.5–7.5 minutes when the apt mirror crawled, which made
+      # it the slowest step of the whole workflow.
+      - name: Resolve locked Playwright version
+        id: playwright
+        shell: bash
+        run: |
+          version="$(jq -r '.packages["node_modules/@playwright/test"].version // empty' frontend/package-lock.json)"
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          echo "version=$version" | tee -a "$GITHUB_OUTPUT"
 
       - name: Publish change summary
         env:
@@ -196,13 +209,15 @@ jobs:
     needs: changes
     if: ${{ needs.changes.result == 'success' && needs.changes.outputs.frontend == 'true' && !cancelled() }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     strategy:
       # Let every shard finish so one failure still yields complete diagnostics.
       fail-fast: false
       matrix:
         # Keep UNIT_TEST_SHARDS in the `coverage` job equal to this list's length.
-        shard: [1, 2, 3, 4]
+        # Vitest splits by file, not duration, so four shards ranged from 3 to
+        # 6 minutes; a fifth keeps the slowest one inside the 5-minute budget.
+        shard: [1, 2, 3, 4, 5]
     defaults:
       run:
         working-directory: frontend
@@ -235,7 +250,7 @@ jobs:
           # A single shard only sees part of the suite, so the ratchet in
           # vite.config.js cannot be evaluated here. Thresholds are zeroed for
           # the shard and enforced once on the merged report by `coverage`.
-          timeout --signal=TERM --kill-after=30s 17m \
+          timeout --signal=TERM --kill-after=30s 8m \
             npm run test:coverage -- \
               --maxWorkers=1 \
               --shard="${SHARD}/${SHARD_TOTAL}" \
@@ -311,7 +326,7 @@ jobs:
         id: coverage_tests
         shell: bash
         env:
-          UNIT_TEST_SHARDS: 4
+          UNIT_TEST_SHARDS: 5
         run: |
           set -o pipefail
           ls -l .vitest-reports
@@ -324,6 +339,9 @@ jobs:
             --reporter=junit \
             --outputFile.junit=vitest-results.xml \
             2>&1 | tee coverage.log
+
+      - name: Test time budget (docs/05-huong-dan/tieu-chuan-kiem-thu.md)
+        run: node ../scripts/check_test_budgets.mjs --suite frontend-unit vitest-results.xml
 
       - name: Verify coverage ratchet on merged report
         run: |
@@ -413,7 +431,12 @@ jobs:
     needs: changes
     if: ${{ needs.changes.result == 'success' && needs.changes.outputs.frontend == 'true' && !cancelled() }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Browsers and their system libraries come with the image; the tag tracks
+    # the locked @playwright/test version, so a dependency bump moves both.
+    container:
+      image: mcr.microsoft.com/playwright:v${{ needs.changes.outputs.playwright }}-noble
+      options: --user 1001
+    timeout-minutes: 12
     strategy:
       fail-fast: false
       matrix:
@@ -449,9 +472,6 @@ jobs:
       - name: Install dependencies
         run: npm ci --prefer-offline --no-audit
 
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
-
       - name: Run portal smoke tests (${{ matrix.project }})
         id: e2e
         shell: bash
@@ -462,12 +482,16 @@ jobs:
           set -o pipefail
           # Keep traces from every failing attempt, including a first attempt
           # that later passes on its single retry (see playwright.config.js).
-          timeout --signal=TERM --kill-after=30s 17m \
+          timeout --signal=TERM --kill-after=30s 9m \
             npm run test:e2e:smoke -- \
               --project="$PROJECT" \
               --reporter=line,junit \
               --trace=retain-on-failure \
             2>&1 | tee e2e.log
+
+      - name: Test time budget (docs/05-huong-dan/tieu-chuan-kiem-thu.md)
+        if: ${{ steps.e2e.outcome == 'success' }}
+        run: node ../scripts/check_test_budgets.mjs --suite e2e test-results/e2e-results.xml
 
       - name: Publish E2E summary
         if: ${{ always() }}
@@ -475,56 +499,7 @@ jobs:
           JOB_STATUS: ${{ job.status }}
           STARTED_AT: ${{ steps.timer.outputs.epoch }}
           PROJECT: ${{ matrix.project }}
-        run: |
-          python3 - <<'PY'
-          import os
-          import time
-          import xml.etree.ElementTree as ET
-          from pathlib import Path
-
-          metrics = {key: 'n/a' for key in ('tests', 'failures', 'errors', 'skipped', 'time')}
-          report_path = Path('test-results/e2e-results.xml')
-          if report_path.exists():
-              try:
-                  root = ET.parse(report_path).getroot()
-                  for key in metrics:
-                      metrics[key] = root.attrib.get(key, 'n/a')
-              except (OSError, ET.ParseError):
-                  pass
-
-          started_at = int(os.environ.get('STARTED_AT') or time.time())
-          elapsed = max(0, int(time.time()) - started_at)
-          summary = Path(os.environ['GITHUB_STEP_SUMMARY'])
-          with summary.open('a') as stream:
-              stream.write(f"## Frontend E2E smoke — {os.environ.get('PROJECT', 'unknown')}\n\n")
-              stream.write('| Metric | Value |\n| --- | --- |\n')
-              stream.write(f"| Result | {os.environ.get('JOB_STATUS', 'unknown')} |\n")
-              stream.write(f"| Tests | {metrics['tests']} |\n")
-              stream.write(f"| Failures / errors / skipped | {metrics['failures']} / {metrics['errors']} / {metrics['skipped']} |\n")
-              stream.write(f"| Playwright duration | {metrics['time']}s |\n")
-              stream.write(f'| Measured checks elapsed | {elapsed}s |\n')
-
-          # A test that only passed on its retry is not a clean pass. List it
-          # in the summary and raise a warning annotation on the pull request.
-          import re
-          flaky = []
-          log_path = Path('e2e.log')
-          if log_path.exists():
-              lines = re.sub(r'\x1b\[[0-9;]*m', '', log_path.read_text(errors='replace')).splitlines()
-              for index, line in enumerate(lines):
-                  if re.match(r'^\s+\d+ flaky\s*$', line):
-                      for entry in lines[index + 1:]:
-                          if not re.match(r'^\s+\[', entry):
-                              break
-                          flaky.append(entry.strip())
-          with summary.open('a') as stream:
-              stream.write(f'| Flaky (passed on retry) | {len(flaky)} |\n')
-              for entry in flaky:
-                  stream.write(f'\n- `{entry}`')
-              stream.write('\n')
-          for entry in flaky:
-              print(f'::warning title=Flaky E2E test (passed on retry)::{entry}')
-          PY
+        run: node scripts/report-e2e-summary.mjs test-results/e2e-results.xml e2e.log
 
       - name: Upload Playwright diagnostics
         if: ${{ always() && steps.e2e.outcome != 'success' }}

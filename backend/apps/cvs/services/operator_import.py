@@ -14,12 +14,11 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import transaction
 
 from apps.cv_templates.models import CvLanguage, CvTemplate
+from apps.cv_templates.services import compose_cv_document, print_payload, render_document_pdf
 
 from ..models import CvVersion, UserCv
-from .composition import compose_cv_document
 from .cvs import upload_cv
-from .lifecycle import CvLifecyclePolicyError, create_v2_cv
-from .pdf_renderer import print_payload, render_document_pdf
+from .lifecycle import CvLifecyclePolicyError, create_user_cv
 from .versions import create_version
 
 SYNTHETIC_EMAIL_DOMAIN = 'synthetic.procv.test'
@@ -201,7 +200,7 @@ def _import_one(item, template):
     if existing is not None:
         return 'skipped', owner, existing
     headline = str(data.get('headline') or '').strip()
-    cv = create_v2_cv(
+    cv = create_user_cv(
         actor=owner,
         title=f'{code} {headline}'.strip()[:255],
         template=template,

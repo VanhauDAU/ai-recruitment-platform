@@ -1,0 +1,1631 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: procv\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Yêu cầu đang được thẩm định và không thể chỉnh sửa."
+msgstr "This request is under review and can no longer be edited."
+
+msgid "Bản xem trước DOC/DOCX chỉ khả dụng sau khi tệp đã được quét an toàn. Vui lòng tải tệp lên khi luồng quét được bật."
+msgstr "DOC/DOCX previews are available only after the file has passed a security scan. Please upload the file once scanning is enabled."
+
+msgid "Tệp phải hoàn tất upload session và quét an toàn trước khi gửi."
+msgstr "The file must complete an upload session and pass a security scan before it can be submitted."
+
+msgid "DPA đã thay đổi. Vui lòng tải lại và đọc phiên bản mới nhất."
+msgstr "The DPA has changed. Please reload and read the latest version."
+
+msgid "DPA hiện hành chưa sẵn sàng. Vui lòng thử lại sau."
+msgstr "The current DPA is not available yet. Please try again later."
+
+msgid "Thông tin công ty đã thay đổi ở các trường đang được yêu cầu cập nhật. Vui lòng tải lại và tạo revision mới."
+msgstr "Company details have changed in fields covered by this update request. Please reload and create a new revision."
+
+msgid "Bạn chưa có quyền thực hiện thao tác này trên trang công ty."
+msgstr "You do not have permission to perform this action on the company page."
+
+msgid "Bạn chưa liên kết với công ty nào."
+msgstr "You are not linked to any company yet."
+
+msgid "Chỉ quản lý công ty đã xác thực mới quản lý được thành viên."
+msgstr "Only a verified company manager can manage members."
+
+msgid "Chỉ quản lý công ty hoặc người được cấp quyền biên tập trang công ty được thực hiện thao tác này."
+msgstr "Only the company manager or someone granted company page editing rights can perform this action."
+
+msgid "Chưa có hồ sơ"
+msgstr "No verification case yet"
+
+msgid "Khẩu hiệu"
+msgstr "Tagline"
+
+msgid "Ảnh bìa"
+msgstr "Cover image"
+
+msgid "Giới thiệu"
+msgstr "About"
+
+msgid "Phúc lợi"
+msgstr "Benefits"
+
+msgid "Phúc lợi (mô tả)"
+msgstr "Benefits (description)"
+
+msgid "Văn hoá"
+msgstr "Culture"
+
+msgid "Ảnh thư viện mới"
+msgstr "New gallery images"
+
+msgid "Ảnh thư viện đã xoá"
+msgstr "Deleted gallery images"
+
+msgid "Mạng xã hội"
+msgstr "Social media"
+
+msgid "Văn phòng"
+msgstr "Offices"
+
+msgid "Trụ sở chính: %(office)s"
+msgstr "Headquarters: %(office)s"
+
+msgid "Nhập lý do thay đổi hiệu lực xác thực."
+msgstr "Enter a reason for changing the verification status."
+
+msgid "Nhập lý do mở khóa nộp lại."
+msgstr "Enter a reason for unlocking resubmission."
+
+msgid "Nhập lý do khi yêu cầu bổ sung hoặc từ chối."
+msgstr "Enter a reason when requesting changes or rejecting."
+
+msgid "Nhập lý do khi yêu cầu chỉnh sửa hoặc từ chối."
+msgstr "Enter a reason when requesting changes or rejecting."
+
+msgid "thị trường"
+msgstr "market"
+
+msgid "khách hàng mục tiêu"
+msgstr "target customer"
+
+msgid "Tên đăng ký kinh doanh là bắt buộc."
+msgstr "Registered business name is required."
+
+msgid "Số điện thoại không hợp lệ."
+msgstr "Invalid phone number."
+
+msgid "Mô tả công ty"
+msgstr "Company description"
+
+msgid "Phúc lợi nhân viên"
+msgstr "Employee benefits"
+
+msgid "Giá trị %(label)s không hợp lệ: %(values)s"
+msgstr "Invalid %(label)s value: %(values)s"
+
+msgid "Lĩnh vực chính phải nằm trong các lĩnh vực hoạt động đã chọn."
+msgstr "The primary industry must be one of the selected industries."
+
+msgid "Nhập URL website hoặc tick \"Tôi không có website\"."
+msgstr "Enter a website URL or tick \"I don't have a website\"."
+
+msgid "Tải logo hoặc chọn \"Tôi không có logo\"."
+msgstr "Upload a logo or choose \"I don't have a logo\"."
+
+msgid "URL website không hợp lệ."
+msgstr "Invalid website URL."
+
+msgid "Nhập tên thương mại hoặc chọn trùng tên đăng ký kinh doanh."
+msgstr "Enter a trade name or choose to use the registered business name."
+
+msgid "Chưa nộp hồ sơ xác thực"
+msgstr "Verification not submitted"
+
+msgid "Đang chờ duyệt"
+msgstr "Pending review"
+
+msgid "Đang được xem xét"
+msgstr "Under review"
+
+msgid "Cần bổ sung giấy tờ"
+msgstr "Documents required"
+
+msgid "Đã xác thực"
+msgstr "Verified"
+
+msgid "Bị từ chối"
+msgstr "Rejected"
+
+msgid "Đã bị thu hồi"
+msgstr "Revoked"
+
+msgid "Đã hết hiệu lực"
+msgstr "Expired"
+
+msgid "Quản lý công ty"
+msgstr "Company manager"
+
+msgid "Thành viên"
+msgstr "Member"
+
+msgid "Hãy chuyển quyền quản lý trước khi rời vai trò này"
+msgstr "Transfer the manager role before leaving it"
+
+msgid "Thứ tự phải gồm đúng một lần mỗi khối của vùng nội dung chính."
+msgstr "The order must contain each main content block exactly once."
+
+msgid "Màu nhấn không có trong bảng màu của trang công ty."
+msgstr "This accent colour is not in the company page palette."
+
+msgid "Khối không tồn tại: %(keys)s."
+msgstr "Unknown blocks: %(keys)s."
+
+msgid "Không thể ẩn khối luôn hiển thị: %(keys)s."
+msgstr "Always-visible blocks cannot be hidden: %(keys)s."
+
+msgid "Vui lòng mô tả cụ thể ít nhất 10 ký tự khi chọn \"Lý do khác\"."
+msgstr "Please describe the issue in at least 10 characters when choosing \"Other reason\"."
+
+msgid "Quản trị viên"
+msgstr "Administrator"
+
+msgid "Hệ thống"
+msgstr "System"
+
+msgid "Bạn"
+msgstr "You"
+
+msgid "Chưa nộp"
+msgstr "Not submitted"
+
+msgid "Số lượng cần tuyển phải từ 1 đến 10.000."
+msgstr "The number of hires must be between 1 and 10,000."
+
+msgid "Chỉ được chọn một nhu cầu tư vấn."
+msgstr "Only one consulting need can be selected."
+
+msgid "Chọn thời gian cần tuyển xong hoặc chọn Tuyển liên tục."
+msgstr "Choose a target hiring date or select Continuous hiring."
+
+msgid "Thời gian cần tuyển xong không được ở trong quá khứ."
+msgstr "The target hiring date cannot be in the past."
+
+msgid "Ngân sách tối thiểu là 1.000.000đ."
+msgstr "The minimum budget is 1,000,000 VND."
+
+msgid "Nhập đủ khoảng ngân sách từ và đến."
+msgstr "Enter both ends of the budget range."
+
+msgid "Ngân sách tối đa phải lớn hơn hoặc bằng ngân sách tối thiểu."
+msgstr "The maximum budget must be greater than or equal to the minimum budget."
+
+msgid "Số điện thoại không hợp lệ (VD: 0912345678 hoặc +84912345678)."
+msgstr "Invalid phone number (e.g. 0912345678 or +84912345678)."
+
+msgid "Họ và tên cần ít nhất 2 ký tự."
+msgstr "Full name must be at least 2 characters."
+
+msgid "Bạn cần đồng ý Điều khoản dịch vụ và Chính sách quyền riêng tư."
+msgstr "You must agree to the Terms of Service and the Privacy Policy."
+
+msgid "Email này đã được sử dụng cho một tài khoản nhà tuyển dụng."
+msgstr "This email is already used by an employer account."
+
+msgid "Thành viên công ty"
+msgstr "Company member"
+
+msgid "Tên đăng ký kinh doanh"
+msgstr "Registered business name"
+
+msgid "Số điện thoại"
+msgstr "Phone number"
+
+msgid "Địa chỉ"
+msgstr "Address"
+
+msgid "Quy mô công ty"
+msgstr "Company size"
+
+msgid "Chưa có thay đổi nào."
+msgstr "No changes yet."
+
+msgid "Trường không được phép cập nhật: %(fields)s"
+msgstr "Fields that cannot be updated: %(fields)s"
+
+msgid "Loại hình kinh doanh không hợp lệ."
+msgstr "Invalid business type."
+
+msgid "Quy mô công ty không hợp lệ."
+msgstr "Invalid company size."
+
+msgid "Nhập URL website hoặc chọn \"Tôi không có website\"."
+msgstr "Enter a website URL or choose \"I don't have a website\"."
+
+msgid "Trạng thái tải ảnh không hợp lệ."
+msgstr "Invalid image upload state."
+
+msgid "Nhập lý do khi thay đổi Mã số thuế hoặc Tên công ty."
+msgstr "Enter a reason when changing the tax code or company name."
+
+msgid "Chọn loại giấy tờ chứng minh khi thay đổi Mã số thuế hoặc Tên công ty."
+msgstr "Choose a proof document type when changing the tax code or company name."
+
+msgid "Thị trường hoạt động không hợp lệ."
+msgstr "Invalid markets of operation."
+
+msgid "Khách hàng mục tiêu không hợp lệ."
+msgstr "Invalid target customers."
+
+msgid "Danh sách lĩnh vực không hợp lệ."
+msgstr "Invalid industry list."
+
+msgid "Có lĩnh vực không tồn tại."
+msgstr "Some industries do not exist."
+
+msgid "Chọn ít nhất một lĩnh vực hoạt động."
+msgstr "Choose at least one industry."
+
+msgid "Lĩnh vực chính phải nằm trong các lĩnh vực đã chọn."
+msgstr "The primary industry must be one of the selected industries."
+
+msgid "Danh sách ảnh cần xóa không hợp lệ."
+msgstr "Invalid list of images to delete."
+
+msgid "Có ảnh không thuộc công ty hiện tại."
+msgstr "Some images do not belong to the current company."
+
+msgid "%(label)s là bắt buộc."
+msgstr "%(label)s is required."
+
+msgid "Email công ty không hợp lệ."
+msgstr "Invalid company email."
+
+msgid "Quyết định phải là approve_manual hoặc reject_manual."
+msgstr "The decision must be approve_manual or reject_manual."
+
+msgid "Chỉ chấp nhận approve hoặc reject."
+msgstr "Only approve or reject is accepted."
+
+msgid "Phải nhận thẩm định yêu cầu trước khi xử lý giấy tờ."
+msgstr "Claim the request for review before processing documents."
+
+msgid "Phải nhận thẩm định yêu cầu trước khi ra quyết định."
+msgstr "Claim the request for review before making a decision."
+
+msgid "Từ khóa tìm kiếm không được vượt quá 120 ký tự."
+msgstr "The search keyword cannot exceed 120 characters."
+
+msgid "Phạm vi phải là mine hoặc để trống."
+msgstr "The scope must be mine or left empty."
+
+msgid "Loại giấy tờ không hợp lệ."
+msgstr "Invalid document type."
+
+msgid "Nguồn chứng minh không hợp lệ."
+msgstr "Invalid proof source."
+
+msgid "Chỉ chứng minh tên thương mại được dùng Website."
+msgstr "Only trade name proof may use a website."
+
+msgid "Vui lòng chọn tệp chứng minh."
+msgstr "Please choose a proof file."
+
+msgid "Không thể gửi đồng thời file thô và upload session."
+msgstr "A raw file and an upload session cannot be sent together."
+
+msgid "Không tải tệp khi chọn nguồn Website."
+msgstr "Do not upload a file when the source is Website."
+
+msgid "Không dùng upload session khi chọn nguồn Website."
+msgstr "Do not use an upload session when the source is Website."
+
+msgid "Phương thức xác thực không khớp loại giấy tờ."
+msgstr "The verification method does not match the document type."
+
+msgid "Không dùng phương thức xác thực cho giấy tờ yêu cầu cập nhật."
+msgstr "Do not set a verification method for update request documents."
+
+msgid "Chỉ được thêm nhiều tệp cho giấy tờ định danh của hồ sơ xác thực."
+msgstr "Multiple files can only be added to the identity document of a verification case."
+
+msgid "Không thể vừa thêm tệp mới vừa thay thế một tệp hiện hành."
+msgstr "You cannot add a new file and replace an existing file at the same time."
+
+msgid "Không tìm thấy yêu cầu cập nhật đang chờ."
+msgstr "No pending update request was found."
+
+msgid "Giá trị append không hợp lệ."
+msgstr "Invalid append value."
+
+msgid "Nhập URL Website hợp lệ (http hoặc https)."
+msgstr "Enter a valid website URL (http or https)."
+
+msgid "Không tìm thấy công ty."
+msgstr "Company not found."
+
+msgid "Bố cục đã được thay đổi ở nơi khác. Vui lòng tải lại rồi thử lại."
+msgstr "The layout was changed elsewhere. Please reload and try again."
+
+msgid "Phạm vi phải là mine hoặc company."
+msgstr "The scope must be mine or company."
+
+msgid "Thay đổi nội dung này không còn nhận ảnh."
+msgstr "This content change no longer accepts images."
+
+msgid "Mọi thay đổi ảnh sau khi nộp hồ sơ công ty phải thuộc một yêu cầu cập nhật chờ duyệt."
+msgstr "After the company profile is submitted, every image change must belong to a pending update request."
+
+msgid "Vui lòng chọn ảnh."
+msgstr "Please choose an image."
+
+msgid "Xóa ảnh sau khi nộp hồ sơ công ty phải được gửi trong yêu cầu cập nhật."
+msgstr "After the company profile is submitted, image deletions must be sent in an update request."
+
+msgid "Chỉ chấp nhận ảnh JPG, PNG hoặc WebP."
+msgstr "Only JPG, PNG or WebP images are accepted."
+
+msgid "Tham gia công ty không yêu cầu hoặc nhận giấy tờ chứng minh. Giấy tờ chỉ được nộp khi xác thực hoặc yêu cầu cập nhật công ty."
+msgstr "Joining a company does not require or accept proof documents. Documents are submitted only for verification or company update requests."
+
+msgid "Không tìm thấy thông báo."
+msgstr "Notification not found."
+
+msgid "Nhập số điện thoại cần kiểm tra."
+msgstr "Enter the phone number to check."
+
+msgid "Nhập số điện thoại cần xác thực."
+msgstr "Enter the phone number to verify."
+
+msgid "Thiếu yêu cầu xác thực."
+msgstr "Missing verification request."
+
+msgid "Nhập mã xác thực."
+msgstr "Enter the verification code."
+
+msgid "Vui lòng xác thực email trước khi khai báo nhu cầu tuyển dụng."
+msgstr "Please verify your email before declaring your hiring needs."
+
+msgid "Vui lòng hoàn tất hồ sơ nhà tuyển dụng trước."
+msgstr "Please complete your employer profile first."
+
+msgid "Bạn đã hoàn tất khai báo nhu cầu tuyển dụng."
+msgstr "You have already completed your hiring needs."
+
+msgid "Không tìm thấy nhu cầu tuyển dụng."
+msgstr "Hiring need not found."
+
+msgid "Chỉ nhận đường dẫn video YouTube hoặc Vimeo."
+msgstr "Only YouTube or Vimeo video links are accepted."
+
+msgid "Nhập đường dẫn https tới trang %(network)s của công ty."
+msgstr "Enter an https link to the company's %(network)s page."
+
+msgid "Đường dẫn %(network)s phải trỏ tới trang của công ty."
+msgstr "The %(network)s link must point to the company's page."
+
+msgid "Xanh ProCV"
+msgstr "ProCV green"
+
+msgid "Xanh đại dương"
+msgstr "Ocean blue"
+
+msgid "Chàm"
+msgstr "Indigo"
+
+msgid "Tím"
+msgstr "Violet"
+
+msgid "Đỏ hồng"
+msgstr "Rose"
+
+msgid "Cam"
+msgstr "Orange"
+
+msgid "Xanh ngọc"
+msgstr "Teal"
+
+msgid "Xám đá"
+msgstr "Slate"
+
+msgid "Giới thiệu công ty"
+msgstr "About the company"
+
+msgid "Việc làm đang tuyển"
+msgstr "Open positions"
+
+msgid "Văn hoá công ty"
+msgstr "Company culture"
+
+msgid "Hình ảnh công ty"
+msgstr "Company photos"
+
+msgid "Video giới thiệu"
+msgstr "Introduction video"
+
+msgid "Thông tin chung"
+msgstr "General information"
+
+msgid "Địa điểm"
+msgstr "Locations"
+
+msgid "Chia sẻ công ty"
+msgstr "Share company"
+
+msgid "Công ty cùng lĩnh vực"
+msgstr "Companies in the same industry"
+
+msgid "Nhân viên"
+msgstr "Employee"
+
+msgid "Trưởng nhóm"
+msgstr "Team lead"
+
+msgid "Trưởng / Phó phòng"
+msgstr "Head / Deputy head of department"
+
+msgid "Quản lý / Giám sát"
+msgstr "Manager / Supervisor"
+
+msgid "Trưởng chi nhánh"
+msgstr "Branch manager"
+
+msgid "Phó giám đốc"
+msgstr "Deputy director"
+
+msgid "Giám đốc"
+msgstr "Director"
+
+msgid "Thực tập sinh"
+msgstr "Intern"
+
+msgid "Công ty"
+msgstr "Company"
+
+msgid "Cá nhân"
+msgstr "Personal"
+
+msgid "Doanh nghiệp"
+msgstr "Enterprise"
+
+msgid "Hộ kinh doanh"
+msgstr "Household business"
+
+msgid "1 - 9 nhân viên"
+msgstr "1 - 9 employees"
+
+msgid "10 - 24 nhân viên"
+msgstr "10 - 24 employees"
+
+msgid "25 - 99 nhân viên"
+msgstr "25 - 99 employees"
+
+msgid "100 - 499 nhân viên"
+msgstr "100 - 499 employees"
+
+msgid "500 - 1000 nhân viên"
+msgstr "500 - 1000 employees"
+
+msgid "1000+ nhân viên"
+msgstr "1000+ employees"
+
+msgid "3000+ nhân viên"
+msgstr "3000+ employees"
+
+msgid "5000+ nhân viên"
+msgstr "5000+ employees"
+
+msgid "10000+ nhân viên"
+msgstr "10000+ employees"
+
+msgid "Nội địa"
+msgstr "Domestic"
+
+msgid "Châu Á"
+msgstr "Asia"
+
+msgid "Châu Âu"
+msgstr "Europe"
+
+msgid "Châu Phi"
+msgstr "Africa"
+
+msgid "Châu Mỹ"
+msgstr "Americas"
+
+msgid "Châu Úc"
+msgstr "Oceania"
+
+msgid "Ảnh giới thiệu"
+msgstr "Introduction image"
+
+msgid "Chưa xem"
+msgstr "Unreviewed"
+
+msgid "Đã xem"
+msgstr "Reviewed"
+
+msgid "Đã hoàn tác"
+msgstr "Reverted"
+
+msgid "Đã tạm ẩn trang"
+msgstr "Page suspended"
+
+msgid "Đã gỡ tạm ẩn trang"
+msgstr "Page suspension lifted"
+
+msgid "Đã đổi bố cục trang"
+msgstr "Page layout changed"
+
+msgid "Đã đổi tin ghim"
+msgstr "Pinned jobs changed"
+
+msgid "Đã cấp quyền biên tập"
+msgstr "Editing rights granted"
+
+msgid "Đã thu hồi quyền biên tập"
+msgstr "Editing rights revoked"
+
+msgid "Đã bật duyệt trước nội dung"
+msgstr "Content pre-review enabled"
+
+msgid "Đã tắt duyệt trước nội dung"
+msgstr "Content pre-review disabled"
+
+msgid "Thông tin công ty sai sự thật"
+msgstr "False company information"
+
+msgid "Mạo danh doanh nghiệp khác"
+msgstr "Impersonating another business"
+
+msgid "Nội dung hoặc hình ảnh không phù hợp"
+msgstr "Inappropriate content or images"
+
+msgid "Dấu hiệu lừa đảo"
+msgstr "Signs of fraud"
+
+msgid "Lý do khác"
+msgstr "Other reason"
+
+msgid "Chờ xử lý"
+msgstr "Pending"
+
+msgid "Xác nhận vi phạm"
+msgstr "Violation confirmed"
+
+msgid "Bác bỏ"
+msgstr "Dismissed"
+
+msgid "Giấy đăng ký doanh nghiệp hoặc tương đương"
+msgstr "Business registration certificate or equivalent"
+
+msgid "Giấy ủy quyền + giấy tờ định danh"
+msgstr "Authorization letter + identity document"
+
+msgid "Chờ duyệt"
+msgstr "Pending review"
+
+msgid "Đã gửi"
+msgstr "Submitted"
+
+msgid "Đang thẩm định"
+msgstr "Under review"
+
+msgid "Cần chỉnh sửa"
+msgstr "Changes requested"
+
+msgid "Đã duyệt"
+msgstr "Approved"
+
+msgid "Từ chối"
+msgstr "Rejected"
+
+msgid "Đã rút"
+msgstr "Withdrawn"
+
+msgid "Đã hủy"
+msgstr "Cancelled"
+
+msgid "Đã gửi lại"
+msgstr "Resubmitted"
+
+msgid "Đã tạo phiên bản"
+msgstr "Revision created"
+
+msgid "Bắt đầu thẩm định"
+msgstr "Review started"
+
+msgid "Đã xử lý giấy tờ"
+msgstr "Documents processed"
+
+msgid "Yêu cầu chỉnh sửa"
+msgstr "Changes requested"
+
+msgid "Đã từ chối"
+msgstr "Rejected"
+
+msgid "Xác thực nhà tuyển dụng"
+msgstr "Employer verification"
+
+msgid "Thỏa thuận xử lý dữ liệu"
+msgstr "Data processing agreement"
+
+msgid "Xác thực bị thu hồi"
+msgstr "Verification revoked"
+
+msgid "Xác thực hết hiệu lực"
+msgstr "Verification expired"
+
+msgid "DPA không còn hiện hành"
+msgstr "DPA no longer current"
+
+msgid "DPA quá hạn"
+msgstr "DPA overdue"
+
+msgid "Đang áp dụng"
+msgstr "Active"
+
+msgid "Đã gỡ"
+msgstr "Lifted"
+
+msgid "Quản trị duyệt thủ công"
+msgstr "Manual admin review"
+
+msgid "Suy luận từ dữ liệu cũ"
+msgstr "Inferred from legacy data"
+
+msgid "Chờ xác minh"
+msgstr "Pending verification"
+
+msgid "Đã xác minh"
+msgstr "Verified"
+
+msgid "Thời gian gia hạn"
+msgstr "Grace period"
+
+msgid "Đã thu hồi"
+msgstr "Revoked"
+
+msgid "Hết hiệu lực"
+msgstr "Expired"
+
+msgid "Chưa xác minh (dữ liệu cũ)"
+msgstr "Unverified (legacy data)"
+
+msgid "Đã tạo challenge"
+msgstr "Challenge created"
+
+msgid "Đã đổi challenge"
+msgstr "Challenge rotated"
+
+msgid "DNS hợp lệ"
+msgstr "DNS valid"
+
+msgid "DNS chưa hợp lệ"
+msgstr "DNS not valid yet"
+
+msgid "Đã yêu cầu duyệt thủ công"
+msgstr "Manual review requested"
+
+msgid "Đã duyệt thủ công"
+msgstr "Manually approved"
+
+msgid "Đã từ chối thủ công"
+msgstr "Manually rejected"
+
+msgid "Bắt đầu thời gian gia hạn"
+msgstr "Grace period started"
+
+msgid "Đã xác minh lại"
+msgstr "Re-verified"
+
+msgid "Đang tra cứu"
+msgstr "Looking up"
+
+msgid "Đã tìm thấy"
+msgstr "Found"
+
+msgid "Không tìm thấy"
+msgstr "Not found"
+
+msgid "Nguồn không khả dụng"
+msgstr "Source unavailable"
+
+msgid "Phản hồi không hợp lệ"
+msgstr "Invalid response"
+
+msgid "Giấy đăng ký doanh nghiệp"
+msgstr "Business registration certificate"
+
+msgid "Chứng minh tên thương mại"
+msgstr "Trade name proof"
+
+msgid "Giấy ủy quyền"
+msgstr "Authorization letter"
+
+msgid "Giấy tờ định danh (CCCD/hộ chiếu)"
+msgstr "Identity document (ID card/passport)"
+
+msgid "Thỏa thuận xử lý dữ liệu cá nhân"
+msgstr "Personal data processing agreement"
+
+msgid "Cần bổ sung"
+msgstr "Changes required"
+
+msgid "Nữ"
+msgstr "Female"
+
+msgid "Khác"
+msgstr "Other"
+
+msgid "Admin gỡ liên kết công ty"
+msgstr "Company unlinked by admin"
+
+msgid "Chuyển quyền quản lý công ty"
+msgstr "Company manager role transferred"
+
+msgid "Admin chỉ định quản lý công ty"
+msgstr "Company manager appointed by admin"
+
+msgid "Quản lý công ty gỡ thành viên"
+msgstr "Member removed by company manager"
+
+msgid "Giao tin tuyển dụng cho thành viên khác"
+msgstr "Job postings handed over to another member"
+
+msgid "Hồ sơ xác thực đã được duyệt"
+msgstr "Verification approved"
+
+msgid "Hồ sơ xác thực cần bổ sung"
+msgstr "Verification needs more information"
+
+msgid "Hồ sơ xác thực bị từ chối"
+msgstr "Verification rejected"
+
+msgid "Xác thực đã bị thu hồi"
+msgstr "Verification revoked"
+
+msgid "Xác thực đã hết hiệu lực"
+msgstr "Verification expired"
+
+msgid "Giấy tờ xác thực cần bổ sung"
+msgstr "Verification documents need changes"
+
+msgid "Giấy tờ xác thực bị từ chối"
+msgstr "Verification documents rejected"
+
+msgid "Liên kết công ty đã được gỡ"
+msgstr "Company link removed"
+
+msgid "Bạn được cấp quyền biên tập trang công ty"
+msgstr "You have been granted company page editing rights"
+
+msgid "Quyền biên tập trang công ty đã bị thu hồi"
+msgstr "Company page editing rights revoked"
+
+msgid "Nội dung trang công ty đã bị hoàn tác"
+msgstr "Company page content reverted"
+
+msgid "Có hồ sơ ứng tuyển mới"
+msgstr "New application received"
+
+msgid "Ứng viên đã rút hồ sơ"
+msgstr "Candidate withdrew an application"
+
+msgid "Hồ sơ đang chờ phản hồi"
+msgstr "Application awaiting your reply"
+
+msgid "Tin tuyển dụng cần chỉnh sửa"
+msgstr "Job posting needs changes"
+
+msgid "Có yêu cầu tham gia công ty"
+msgstr "New request to join the company"
+
+msgid "Yêu cầu tham gia công ty đã được duyệt"
+msgstr "Company join request approved"
+
+msgid "Yêu cầu tham gia công ty bị từ chối"
+msgstr "Company join request rejected"
+
+msgid "Quyền quản lý công ty đã thay đổi"
+msgstr "Company manager changed"
+
+msgid "Tin tuyển dụng được giao lại"
+msgstr "Job postings reassigned to you"
+
+msgid "Có đánh giá mới cho hồ sơ ứng viên"
+msgstr "New review for a candidate application"
+
+msgid "Chiến dịch đã được kích hoạt theo lịch"
+msgstr "Recruitment campaign activated on schedule"
+
+msgid "Chiến dịch chưa kích hoạt được theo lịch"
+msgstr "Recruitment campaign could not be activated on schedule"
+
+msgid "Chiến dịch sắp đến ngày kết thúc"
+msgstr "Recruitment campaign ending soon"
+
+msgid "Chiến dịch đã tự kết thúc"
+msgstr "Recruitment campaign ended automatically"
+
+msgid "Bài đăng Fanpage không thành công"
+msgstr "Facebook Page post failed"
+
+msgid "Chưa gỡ được bài khỏi Fanpage"
+msgstr "Could not remove the post from the Facebook Page"
+
+msgid "Chiến dịch cần chú ý"
+msgstr "Recruitment campaign needs attention"
+
+msgid "Kết nối Fanpage đã hết hạn"
+msgstr "Facebook Page connection expired"
+
+msgid "Quản lý công ty chưa có xác thực nhà tuyển dụng còn hiệu lực nên trang công ty chưa thể tuỳ biến."
+msgstr "The company manager does not have an active employer verification, so the company page cannot be customized yet."
+
+msgid "Bạn cần hoàn tất xác thực nhà tuyển dụng để tuỳ biến trang công ty."
+msgstr "You need to complete employer verification to customize the company page."
+
+msgid "Tài khoản của bạn đang bị hạn chế tuân thủ nên chưa thể tuỳ biến trang công ty."
+msgstr "Your account is under a compliance restriction, so you cannot customize the company page yet."
+
+msgid "Bạn chưa được quản lý công ty cấp quyền biên tập trang công ty."
+msgstr "The company manager has not granted you company page editing rights."
+
+msgid "Hoàn tất hồ sơ đăng ký, xác minh email và nhu cầu tuyển dụng."
+msgstr "Complete your registration profile, email verification and hiring needs."
+
+msgid "Xác minh số điện thoại trước khi sử dụng workspace."
+msgstr "Verify your phone number before using the workspace."
+
+msgid "Liên kết một công ty trước khi sử dụng workspace."
+msgstr "Link a company before using the workspace."
+
+msgid "Nộp giấy tờ đại diện doanh nghiệp còn hiệu lực."
+msgstr "Submit a valid business representation document."
+
+msgid "Nộp thỏa thuận xử lý dữ liệu ứng viên."
+msgstr "Submit the candidate data processing agreement."
+
+msgid "Chưa có chấp thuận DPA."
+msgstr "No DPA acceptance yet."
+
+msgid "Chấp thuận DPA cũ chưa có phiên bản bằng chứng."
+msgstr "The legacy DPA acceptance has no evidence version."
+
+msgid "Chấp thuận DPA không còn là phiên bản hiện hành."
+msgstr "The DPA acceptance is no longer the current version."
+
+msgid "DPA đang trong thời gian gia hạn cập nhật."
+msgstr "The DPA is in its update grace period."
+
+msgid "Tài khoản đang bị giữ do DPA quá hạn."
+msgstr "The account is on hold because the DPA is overdue."
+
+msgid "Không xác định được trạng thái DPA."
+msgstr "The DPA status could not be determined."
+
+msgid "Không xác định được trạng thái tài khoản."
+msgstr "The account status could not be determined."
+
+msgid "Hồ sơ đại diện doanh nghiệp chưa được duyệt."
+msgstr "The business representation case has not been approved."
+
+msgid "Tài khoản đang có một giới hạn tuân thủ còn hiệu lực."
+msgstr "The account has an active compliance restriction."
+
+msgid "Tài khoản đang bị hạn chế."
+msgstr "The account is restricted."
+
+msgid "Tôi muốn được đăng tin miễn phí"
+msgstr "I want to post jobs for free"
+
+msgid "Tôi muốn tìm hiểu thêm về các gói dịch vụ"
+msgstr "I want to learn more about service packages"
+
+msgid "Tôi muốn biết thêm về các chương trình ưu đãi"
+msgstr "I want to know more about promotions"
+
+msgid "Đang xử lý"
+msgstr "Processing"
+
+msgid "Quyết định quản trị tường minh"
+msgstr "Explicit admin decision"
+
+msgid "Đã nộp"
+msgstr "Submitted"
+
+msgid "Bắt đầu xử lý"
+msgstr "Processing started"
+
+msgid "Đã thay giấy tờ"
+msgstr "Document replaced"
+
+msgid "Yêu cầu bổ sung"
+msgstr "Changes requested"
+
+msgid "Đã nộp lại"
+msgstr "Resubmitted"
+
+msgid "Đã mở khóa nộp lại"
+msgstr "Resubmission unlocked"
+
+msgid "Đã duyệt lại"
+msgstr "Re-approved"
+
+msgid "Đã áp dụng compliance hold"
+msgstr "Compliance hold applied"
+
+msgid "Đã gỡ compliance hold"
+msgstr "Compliance hold lifted"
+
+msgid "Đã xem dữ liệu nhạy cảm"
+msgstr "Sensitive data viewed"
+
+msgid "Đã tra cứu lại mã số thuế"
+msgstr "Tax code looked up again"
+
+msgid "Đã rút do gỡ liên kết công ty"
+msgstr "Withdrawn after company unlink"
+
+msgid "Chờ gửi"
+msgstr "Queued"
+
+msgid "Đang gửi"
+msgstr "Sending"
+
+msgid "Gửi thất bại"
+msgstr "Send failed"
+
+msgid "Trụ sở chính"
+msgstr "Headquarters"
+
+msgid "Quy mô"
+msgstr "Size"
+
+msgid "Lĩnh vực"
+msgstr "Industry"
+
+msgid "Năm thành lập"
+msgstr "Year founded"
+
+msgid "Hồ sơ đăng ký"
+msgstr "Registration profile"
+
+msgid "Xác minh email"
+msgstr "Email verification"
+
+msgid "Nhu cầu tuyển dụng"
+msgstr "Hiring needs"
+
+msgid "Mã số thuế phải gồm đúng 10 hoặc 13 chữ số."
+msgstr "The tax code must have exactly 10 or 13 digits."
+
+msgid "%(label)s không hợp lệ."
+msgstr "%(label)s is invalid."
+
+msgid "%(label)s phải có ít nhất %(min)s ký tự."
+msgstr "%(label)s must be at least %(min)s characters."
+
+msgid "%(label)s không được vượt quá 10.000 ký tự."
+msgstr "%(label)s cannot exceed 10,000 characters."
+
+msgid "Không tìm thấy thay đổi nội dung."
+msgstr "Content change not found."
+
+msgid "Chỉ hoàn tác được thay đổi chưa xem."
+msgstr "Only unreviewed changes can be reverted."
+
+msgid "Thay đổi này chưa có nội dung để hoàn tác."
+msgstr "This change has no content to revert."
+
+msgid "Chưa có thay đổi nào so với trang đang công khai."
+msgstr "No changes compared with the published page."
+
+msgid "Đã có thay đổi mới hơn ở: %(labels)s. Hoàn tác thay đổi mới hơn trước."
+msgstr "Newer changes exist in: %(labels)s. Revert the newer changes first."
+
+msgid "Công ty đang được duyệt trước nội dung."
+msgstr "The company is already under content pre-review."
+
+msgid "Công ty hiện không bị duyệt trước nội dung."
+msgstr "The company is not under content pre-review."
+
+msgid "Thư viện công ty chỉ được có tối đa %(limit)s ảnh."
+msgstr "The company gallery can have at most %(limit)s images."
+
+msgid "Không thể khôi phục ảnh đã xoá: thư viện sẽ vượt quá %(limit)s ảnh."
+msgstr "Cannot restore deleted images: the gallery would exceed %(limit)s images."
+
+msgid "PDF, DOC hoặc DOCX"
+msgstr "PDF, DOC or DOCX"
+
+msgid "JPG, PNG hoặc PDF"
+msgstr "JPG, PNG or PDF"
+
+msgid "PDF hoặc DOCX"
+msgstr "PDF or DOCX"
+
+msgid "Giấy tờ phải nhỏ hơn 5 MB."
+msgstr "Documents must be smaller than 5 MB."
+
+msgid "Chỉ chấp nhận tệp %(allowed)s hợp lệ."
+msgstr "Only valid %(allowed)s files are accepted."
+
+msgid "Chỉ chấp nhận tệp %(allowed)s đã quét an toàn."
+msgstr "Only %(allowed)s files that passed a security scan are accepted."
+
+msgid "Nội dung tệp bị lỗi hoặc không đúng định dạng khai báo."
+msgstr "The file content is corrupted or does not match its declared format."
+
+msgid "Không xác định được chủ sở hữu của giấy tờ."
+msgstr "The document owner could not be determined."
+
+msgid "Không tìm thấy tệp hiện hành cần thay thế."
+msgstr "The current file to replace was not found."
+
+msgid "Mỗi loại giấy tờ được tải tối đa 10 tệp."
+msgstr "Each document type allows at most 10 files."
+
+msgid "Chỉ quản lý công ty đã xác thực mới giao lại được tin tuyển dụng."
+msgstr "Only a verified company manager can reassign job postings."
+
+msgid "Không tìm thấy người đang giữ tin tuyển dụng."
+msgstr "The person currently holding the job postings was not found."
+
+msgid "Bạn được giao %(jobs)s tin tuyển dụng và %(campaigns)s chiến dịch của %(giver)s, kèm toàn bộ hồ sơ ứng tuyển."
+msgstr "You have been assigned %(jobs)s job posting(s) and %(campaigns)s recruitment campaign(s) from %(giver)s, along with all their applications."
+
+msgid "Chỉ giao được cho thành viên của công ty đã xác thực tài khoản."
+msgstr "Job postings can only be assigned to a company member with a verified account."
+
+msgid "Hãy chọn một thành viên khác."
+msgstr "Please choose a different member."
+
+msgid "Người này không còn tin tuyển dụng nào tại công ty."
+msgstr "This person no longer holds any job postings at the company."
+
+msgid "Quản lý công ty đã giao tin tuyển dụng của bạn cho %(target)s."
+msgstr "The company manager has reassigned your job postings to %(target)s."
+
+msgid "Yêu cầu cập nhật này vừa được xử lý."
+msgstr "This update request has just been processed."
+
+msgid "Ảnh phải nhỏ hơn 5 MB."
+msgstr "Images must be smaller than 5 MB."
+
+msgid "Nội dung ảnh bị lỗi hoặc không đúng định dạng khai báo."
+msgstr "The image content is corrupted or does not match its declared format."
+
+msgid "Bạn đã liên kết với một công ty, không thể tạo hoặc đổi công ty khác."
+msgstr "You are already linked to a company and cannot create or switch to another company."
+
+msgid "Chỉ quản lý công ty mới duyệt được yêu cầu tham gia."
+msgstr "Only the company manager can review join requests."
+
+msgid "Không có yêu cầu tham gia nào đang chờ."
+msgstr "There is no pending join request."
+
+msgid "Tài khoản của bạn cần được xác thực trước khi duyệt yêu cầu tham gia."
+msgstr "Your account must be verified before reviewing join requests."
+
+msgid "Không tìm thấy yêu cầu tham gia."
+msgstr "Join request not found."
+
+msgid "Bạn đã trở thành quản lý công ty %(company)s."
+msgstr "You are now the company manager of %(company)s."
+
+msgid "Chỉ quản lý công ty đã xác thực tài khoản mới chuyển được quyền quản lý."
+msgstr "Only a company manager with a verified account can transfer the manager role."
+
+msgid "Bạn đang chờ duyệt ở một công ty khác. Hãy hủy yêu cầu đó trước."
+msgstr "You have a pending request at another company. Cancel that request first."
+
+msgid "%(requester)s muốn tham gia %(company)s."
+msgstr "%(requester)s wants to join %(company)s."
+
+msgid "Công ty đã có quản lý công ty đã xác thực, yêu cầu này do quản lý công ty duyệt."
+msgstr "The company already has a verified company manager, who reviews this request."
+
+msgid "Yêu cầu này đã được xử lý."
+msgstr "This request has already been processed."
+
+msgid "Bạn đã được duyệt tham gia %(company)s. Bước tiếp theo: nộp giấy tờ để xác thực tài khoản."
+msgstr "Your request to join %(company)s has been approved. Next step: submit documents to verify your account."
+
+msgid "Yêu cầu tham gia %(company)s không được chấp nhận."
+msgstr "Your request to join %(company)s was not accepted."
+
+msgid "Chỉ chọn được thành viên của công ty đã được xác thực tài khoản."
+msgstr "Only members of the company with a verified account can be selected."
+
+msgid "Công ty đã có quản lý công ty đã xác thực, người đó tự chuyển quyền nếu cần."
+msgstr "The company already has a verified company manager, who can transfer the role if needed."
+
+msgid "Nhập lý do chỉ định quản lý công ty."
+msgstr "Enter a reason for appointing the company manager."
+
+msgid "Trang công ty đang bị tạm ẩn."
+msgstr "The company page is already suspended."
+
+msgid "Trang công ty hiện không bị tạm ẩn."
+msgstr "The company page is not suspended."
+
+msgid "Chỉ ghim được tin đang hiển thị công khai của công ty."
+msgstr "Only the company's publicly visible job postings can be pinned."
+
+msgid "Ghim tối đa %(limit)s tin, mỗi tin một lần."
+msgstr "Pin at most %(limit)s job postings, each only once."
+
+msgid "Văn hoá công ty không hợp lệ."
+msgstr "Invalid company culture."
+
+msgid "phúc lợi"
+msgstr "benefits"
+
+msgid "văn phòng"
+msgstr "offices"
+
+msgid "Đường dẫn video không hợp lệ."
+msgstr "Invalid video link."
+
+msgid "%(label)s không được chứa thẻ HTML."
+msgstr "%(label)s cannot contain HTML tags."
+
+msgid "%(label)s không được vượt quá %(max)s ký tự."
+msgstr "%(label)s cannot exceed %(max)s characters."
+
+msgid "Văn hoá công ty không được vượt quá %(max)s ký tự."
+msgstr "Company culture cannot exceed %(max)s characters."
+
+msgid "Đường dẫn không hợp lệ."
+msgstr "Invalid link."
+
+msgid "Phúc lợi không có trong danh mục."
+msgstr "This benefit is not in the catalog."
+
+msgid "Tên văn phòng"
+msgstr "Office name"
+
+msgid "Chọn tỉnh/thành phố của văn phòng."
+msgstr "Choose the office's province/city."
+
+msgid "Giá trị trụ sở chính không hợp lệ."
+msgstr "Invalid headquarters value."
+
+msgid "Danh sách mạng xã hội không hợp lệ."
+msgstr "Invalid social media list."
+
+msgid "Mỗi phúc lợi chỉ được chọn một lần."
+msgstr "Each benefit can be selected only once."
+
+msgid "Ghi chú"
+msgstr "Note"
+
+msgid "Chỉ một văn phòng được đánh dấu là trụ sở chính."
+msgstr "Only one office can be marked as headquarters."
+
+msgid "Mạng xã hội không được hỗ trợ: %(networks)s."
+msgstr "Unsupported social networks: %(networks)s."
+
+msgid "Danh sách %(label)s không hợp lệ."
+msgstr "Invalid %(label)s list."
+
+msgid "Tối đa %(limit)s %(label)s."
+msgstr "At most %(limit)s %(label)s."
+
+msgid "Không tìm thấy thành viên của công ty."
+msgstr "Company member not found."
+
+msgid "Bạn có thể chỉnh bố cục và nội dung trang công ty."
+msgstr "You can now edit the layout and content of the company page."
+
+msgid "Không tìm thấy quyền biên tập đang có hiệu lực."
+msgstr "No active editing grant was found."
+
+msgid "Quản lý công ty đã thu hồi quyền biên tập trang công ty của bạn."
+msgstr "The company manager has revoked your company page editing rights."
+
+msgid "Quản lý công ty không cần được cấp quyền biên tập."
+msgstr "The company manager does not need editing rights."
+
+msgid "Thành viên cần có xác thực nhà tuyển dụng còn hiệu lực để được cấp quyền."
+msgstr "The member needs an active employer verification to be granted editing rights."
+
+msgid "Thành viên này đã có quyền biên tập trang công ty."
+msgstr "This member already has company page editing rights."
+
+msgid "Còn tin đang tuyển"
+msgstr "Active job postings remain"
+
+msgid "Còn chiến dịch tuyển dụng đang mở"
+msgstr "Open recruitment campaigns remain"
+
+msgid "Đang bị giữ để kiểm tra tuân thủ"
+msgstr "On hold for compliance review"
+
+msgid "Nhà tuyển dụng hiện không liên kết với công ty nào."
+msgstr "The employer is not currently linked to any company."
+
+msgid "Nhập lý do gỡ liên kết."
+msgstr "Enter a reason for unlinking."
+
+msgid "Liên kết công ty đã thay đổi sau khi xem tác động."
+msgstr "The company link changed after the impact was reviewed."
+
+msgid "Liên kết đang có dữ liệu đã có hiệu lực với công ty; xử lý các mục chặn trước."
+msgstr "The link has data already in effect with the company; resolve the blocking items first."
+
+msgid "Quản trị viên đã gỡ liên kết công ty theo yêu cầu hỗ trợ."
+msgstr "An administrator removed your company link following a support request."
+
+msgid "Nhập lý do gỡ thành viên."
+msgstr "Enter a reason for removing the member."
+
+msgid "Chỉ quản lý công ty đã xác thực mới gỡ được thành viên."
+msgstr "Only a verified company manager can remove members."
+
+msgid "Không tìm thấy thành viên này."
+msgstr "Member not found."
+
+msgid "Không thể gỡ quản lý công ty. Hãy chuyển quyền quản lý trước."
+msgstr "The company manager cannot be removed. Transfer the manager role first."
+
+msgid "Quản lý công ty đã gỡ bạn khỏi %(company)s."
+msgstr "The company manager has removed you from %(company)s."
+
+msgid "Chưa thể gỡ: %(blockers)s."
+msgstr "Cannot remove yet: %(blockers)s."
+
+msgid "Trạng thái kết luận không hợp lệ."
+msgstr "Invalid resolution status."
+
+msgid "Chỉ tạm ẩn trang khi xác nhận vi phạm."
+msgstr "The page can only be suspended when a violation is confirmed."
+
+msgid "Báo cáo này đã được xử lý."
+msgstr "This report has already been resolved."
+
+msgid "Báo cáo này chưa có kết luận để mở lại."
+msgstr "This report has no resolution to reopen."
+
+msgid "Bạn đã có một báo cáo đang chờ xử lý cho công ty này."
+msgstr "You already have a pending report for this company."
+
+msgid "Người báo cáo đã có một báo cáo khác đang chờ xử lý cho công ty này."
+msgstr "The reporter already has another pending report for this company."
+
+msgid "Yêu cầu cập nhật không còn thuộc công ty đã khóa."
+msgstr "The update request no longer belongs to the locked company."
+
+msgid "Yêu cầu đã thay đổi. Vui lòng tải lại."
+msgstr "The request has changed. Please reload."
+
+msgid "Yêu cầu đã được chỉnh sửa. Vui lòng tải lại trước khi duyệt."
+msgstr "The request has been edited. Please reload before approving."
+
+msgid "Chỉ yêu cầu đã gửi mới được nhận thẩm định."
+msgstr "Only submitted requests can be claimed for review."
+
+msgid "Yêu cầu chưa đủ dữ liệu để bắt đầu thẩm định."
+msgstr "The request does not have enough data to start the review."
+
+msgid "Yêu cầu đã vào thẩm định hoặc đã kết thúc."
+msgstr "The request is already under review or has ended."
+
+msgid "Kết quả xử lý yêu cầu không hợp lệ."
+msgstr "Invalid request decision."
+
+msgid "Giấy tờ không còn thuộc yêu cầu cập nhật này."
+msgstr "The document no longer belongs to this update request."
+
+msgid "Yêu cầu cập nhật này đã được xử lý."
+msgstr "This update request has already been processed."
+
+msgid "Đây không còn là phiên bản giấy tờ hiện tại."
+msgstr "This is no longer the current document version."
+
+msgid "Kết quả duyệt giấy tờ không hợp lệ."
+msgstr "Invalid document review decision."
+
+msgid "Chỉ người tạo yêu cầu mới được rút yêu cầu."
+msgstr "Only the requester can withdraw the request."
+
+msgid "Thao tác không hợp lệ."
+msgstr "Invalid action."
+
+msgid "Yêu cầu còn tệp hình ảnh chưa tải lên thành công."
+msgstr "The request still has images that were not uploaded successfully."
+
+msgid "Chỉ quản lý công ty mới được hủy yêu cầu."
+msgstr "Only the company manager can cancel the request."
+
+msgid "Nhập lý do hủy yêu cầu."
+msgstr "Enter a reason for cancelling the request."
+
+msgid "Yêu cầu nhạy cảm chưa có đủ giấy tờ chứng minh đã được duyệt."
+msgstr "The sensitive request does not have enough approved proof documents."
+
+msgid "Thông tin công ty đã thay đổi ở các trường đang được yêu cầu cập nhật."
+msgstr "Company details have changed in fields covered by this update request."
+
+msgid "Yêu cầu chưa có revision hiện hành. Vui lòng tải lại."
+msgstr "The request has no current revision. Please reload."
+
+msgid "Phiên yêu cầu đã thay đổi. Vui lòng tải lại."
+msgstr "The request session has changed. Please reload."
+
+msgid "Hồ sơ không còn tồn tại."
+msgstr "The case no longer exists."
+
+msgid "Chủ thể hồ sơ đã thay đổi. Vui lòng tải lại."
+msgstr "The case subject has changed. Please reload."
+
+msgid "Lý do hold không hợp lệ."
+msgstr "Invalid hold reason."
+
+msgid "Nguồn xác thực đã có một hold đang hoạt động."
+msgstr "The verification source already has an active hold."
+
+msgid "DPA rollout_id không hợp lệ."
+msgstr "Invalid DPA rollout_id."
+
+msgid "Nguồn DPA đã có một hold khác đang hoạt động."
+msgstr "The DPA source already has another active hold."
+
+msgid "Cần nhập lý do gỡ compliance hold."
+msgstr "Enter a reason for lifting the compliance hold."
+
+msgid "Cần nhập lý do gỡ DPA hold."
+msgstr "Enter a reason for lifting the DPA hold."
+
+msgid "Tên miền này đã được xác minh."
+msgstr "This domain has already been verified."
+
+msgid "Không tìm thấy yêu cầu xác minh tên miền."
+msgstr "Domain verification request not found."
+
+msgid "Tên miền đã được một công ty khác xác minh. Vui lòng yêu cầu quản trị hỗ trợ."
+msgstr "This domain has been verified by another company. Please ask an administrator for help."
+
+msgid "Email hiện tại không còn khớp tên miền."
+msgstr "The current email no longer matches the domain."
+
+msgid "Yêu cầu này không thể kiểm tra DNS."
+msgstr "This request cannot run a DNS check."
+
+msgid "Dữ liệu đã thay đổi. Vui lòng tải lại."
+msgstr "The data has changed. Please reload."
+
+msgid "Không thể đổi challenge ở trạng thái hiện tại."
+msgstr "The challenge cannot be rotated in its current status."
+
+msgid "Vui lòng nêu lý do cần duyệt thủ công."
+msgstr "Please state why manual review is needed."
+
+msgid "Không thể yêu cầu duyệt ở trạng thái hiện tại."
+msgstr "Review cannot be requested in the current status."
+
+msgid "Challenge đã hết hạn. Hãy tạo mã mới."
+msgstr "The challenge has expired. Create a new code."
+
+msgid "Chưa tìm thấy bản ghi TXT hợp lệ."
+msgstr "No valid TXT record was found yet."
+
+msgid "Tên miền đã được một công ty khác xác minh."
+msgstr "This domain has been verified by another company."
+
+msgid "Tên miền không hợp lệ."
+msgstr "Invalid domain."
+
+msgid "Tên miền phải có hậu tố công khai hợp lệ."
+msgstr "The domain must have a valid public suffix."
+
+msgid "Không thể xác minh tên miền của dịch vụ email công cộng."
+msgstr "Domains of public email services cannot be verified."
+
+msgid "Hãy xác thực email công việc trước khi xác minh tên miền."
+msgstr "Verify your work email before verifying the domain."
+
+msgid "Email hiện tại không hợp lệ."
+msgstr "The current email is invalid."
+
+msgid "Dịch vụ kiểm tra hậu tố tên miền chưa sẵn sàng."
+msgstr "The domain suffix check service is not available yet."
+
+msgid "Dịch vụ kiểm tra DNS chưa sẵn sàng."
+msgstr "The DNS check service is not available yet."
+
+msgid "Vui lòng nhập lý do xử lý."
+msgstr "Please enter a reason."
+
+msgid "Dữ liệu đã thay đổi. Vui lòng xem lại tác động."
+msgstr "The data has changed. Please review the impact again."
+
+msgid "Yêu cầu không còn chờ duyệt thủ công."
+msgstr "The request is no longer awaiting manual review."
+
+msgid "Email hiện tại của người yêu cầu không còn khớp tên miền."
+msgstr "The requester's current email no longer matches the domain."
+
+msgid "Hồ sơ pháp lý của người yêu cầu chưa được duyệt."
+msgstr "The requester's legal verification has not been approved."
+
+msgid "Email hiện tại của người yêu cầu không còn là bằng chứng hợp lệ."
+msgstr "The requester's current email is no longer valid evidence."
+
+msgid "Chỉ tên miền đang có hiệu lực mới được thu hồi."
+msgstr "Only an active domain can be revoked."
+
+msgid "DPA hiện hành chưa được cấu hình đầy đủ."
+msgstr "The current DPA is not fully configured."
+
+msgid "rollout_id phải có 1–64 ký tự."
+msgstr "rollout_id must be 1–64 characters."
+
+msgid "Recruiter đã thuộc một DPA grace rollout khác."
+msgstr "The recruiter already belongs to another DPA grace rollout."
+
+msgid "Xác thực SMS hiện chưa sẵn sàng. Vui lòng thử lại sau."
+msgstr "SMS verification is not available yet. Please try again later."
+
+msgid "Tài khoản chưa có mật khẩu. Hãy tạo mật khẩu trước khi xác thực số điện thoại."
+msgstr "The account has no password. Create a password before verifying your phone number."
+
+msgid "Mật khẩu không đúng."
+msgstr "Incorrect password."
+
+msgid "Vui lòng chờ trước khi gửi lại mã."
+msgstr "Please wait before requesting a new code."
+
+msgid "Không tìm thấy yêu cầu xác thực."
+msgstr "Verification request not found."
+
+msgid "Mã này đã bị thay thế."
+msgstr "This code has been replaced."
+
+msgid "Mã này đã được sử dụng."
+msgstr "This code has already been used."
+
+msgid "Mã đã hết hạn."
+msgstr "The code has expired."
+
+msgid "Tin nhắn chưa được gửi thành công."
+msgstr "The message was not sent successfully."
+
+msgid "Mã đã hết lượt xác thực."
+msgstr "The code has no verification attempts left."
+
+msgid "Không thể dùng số điện thoại này cho tài khoản."
+msgstr "This phone number cannot be used for the account."
+
+msgid "Mục đích xác minh số điện thoại không hợp lệ."
+msgstr "Invalid phone verification purpose."
+
+msgid "Mã xác thực không đúng."
+msgstr "Incorrect verification code."
+
+msgid "Số điện thoại phải là số di động Việt Nam hợp lệ."
+msgstr "The phone number must be a valid Vietnamese mobile number."
+
+msgid "Nhà tuyển dụng chưa được duyệt xác thực."
+msgstr "The employer's verification has not been approved."
+
+msgid "Nhà tuyển dụng chưa có chấp thuận DPA còn hiệu lực."
+msgstr "The employer does not have a current DPA acceptance."
+
+msgid "Nhà tuyển dụng đang có một giới hạn tuân thủ còn hiệu lực."
+msgstr "The employer has an active compliance restriction."
+
+msgid "Hoàn tất các điều kiện workspace trước khi thay đổi dữ liệu tuyển dụng."
+msgstr "Complete the workspace requirements before changing recruitment data."
+
+msgid "Tài khoản chưa đủ điều kiện truy cập dữ liệu ứng viên."
+msgstr "The account is not eligible to access candidate data."
+
+msgid "Chỉ tài khoản nhà tuyển dụng được cập nhật hồ sơ này."
+msgstr "Only employer accounts can update this profile."
+
+msgid "Thông tin đăng ký nhà tuyển dụng đã được hoàn tất."
+msgstr "Employer registration details have already been completed."
+
+msgid "Đã xác thực email tên miền công ty"
+msgstr "Company domain email verified"
+
+msgid "Đã xác thực số điện thoại"
+msgstr "Phone number verified"
+
+msgid "Hồ sơ pháp lý và quyền đại diện đã được duyệt"
+msgstr "Legal documents and representation approved"
+
+msgid "Tài khoản nhà tuyển dụng đã đạt tuổi tối thiểu"
+msgstr "Employer account has reached the minimum age"
+
+msgid "Chưa có tin đăng vi phạm được quản trị viên xác nhận"
+msgstr "No job posting violations confirmed by an administrator"
+
+msgid "Không thể tự chuyển hồ sơ xác thực sang công ty khác."
+msgstr "A verification case cannot be moved to another company."
+
+msgid "Kết quả xử lý hồ sơ không hợp lệ."
+msgstr "Invalid case decision."
+
+msgid "Quyết định cuối chỉ áp dụng cho hồ sơ đang được review."
+msgstr "A final decision only applies to cases under review."
+
+msgid "Cần nhập lý do khi yêu cầu bổ sung hoặc từ chối."
+msgstr "Enter a reason when requesting changes or rejecting."
+
+msgid "Hồ sơ chưa đủ điều kiện để duyệt."
+msgstr "The case is not eligible for approval."
+
+msgid "Hồ sơ đã thay đổi sau khi xem tác động."
+msgstr "The case changed after the impact was reviewed."
+
+msgid "Cần nhập lý do mở khóa nộp lại."
+msgstr "Enter a reason for unlocking resubmission."
+
+msgid "Hồ sơ đã thay đổi. Vui lòng tải lại."
+msgstr "The case has changed. Please reload."
+
+msgid "Chỉ hồ sơ bị từ chối và đang khóa nộp lại mới có thể được mở khóa."
+msgstr "Only rejected cases locked for resubmission can be unlocked."
+
+msgid "Đang chờ kết quả tra cứu mã số thuế."
+msgstr "Waiting for the tax code lookup result."
+
+msgid "Kết quả tra cứu thuế cần quyền override và lý do."
+msgstr "Overriding the tax lookup result requires override permission and a reason."
+
+msgid "Cần nhập lý do override kết quả tra cứu thuế."
+msgstr "Enter a reason for overriding the tax lookup result."
+
+msgid "Hồ sơ đã hết lượt nộp lại. Vui lòng gửi khiếu nại để được quản trị viên xem xét."
+msgstr "The case has no resubmissions left. Please file an appeal for an administrator to review."
+
+msgid "Giấy tờ không còn thuộc hồ sơ xác thực."
+msgstr "The document no longer belongs to the verification case."
+
+msgid "Giấy tờ không thuộc nhà tuyển dụng hoặc công ty của hồ sơ."
+msgstr "The document does not belong to the case's employer or company."
+
+msgid "Chỉ hồ sơ đang chờ mới có thể bắt đầu xử lý."
+msgstr "Only pending cases can start processing."
+
+msgid "Giấy tờ không thuộc hồ sơ xác thực."
+msgstr "The document does not belong to the verification case."
+
+msgid "Giấy tờ đã thay đổi. Vui lòng tải lại."
+msgstr "The document has changed. Please reload."
+
+msgid "Chỉ được xử lý giấy tờ khi hồ sơ đang được review."
+msgstr "Documents can only be processed while the case is under review."
+
+msgid "Kết quả xử lý giấy tờ không hợp lệ."
+msgstr "Invalid document decision."
+
+msgid "Thao tác vòng đời xác thực không hợp lệ."
+msgstr "Invalid verification lifecycle action."
+
+msgid "Chỉ hồ sơ đã duyệt mới có thể bị thu hồi hoặc hết hiệu lực."
+msgstr "Only approved verifications can be revoked or expired."
+
+msgid "Cần nhập lý do cho thay đổi hiệu lực xác thực."
+msgstr "Enter a reason for changing the verification status."
+
+msgid "Trạng thái xác thực đã thay đổi"
+msgstr "Verification status changed"
+
+msgid "Bạn đã có thể gửi tin tuyển dụng sang kiểm duyệt và sử dụng các workflow được phép để xử lý hồ sơ ứng viên."
+msgstr "You can now submit job postings for moderation and use the permitted workflows to process candidate applications."
+
+msgid "Đăng nhập để xem đúng bước cần hoàn thiện hoặc nộp lại."
+msgstr "Sign in to see exactly which step to complete or resubmit."
+
+msgid "%(title)s. %(reason)s %(unlocked)s Xem chi tiết: %(url)s"
+msgstr "%(title)s. %(reason)s %(unlocked)s View details: %(url)s"
+
+msgid "Mở trang xác thực"
+msgstr "Open the verification page"

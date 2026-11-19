@@ -7,6 +7,11 @@ from .ai_admin import (
 )
 from .ai_generation import employer_job_ai_generation_queryset, job_ai_admin_overview
 from .alerts import candidate_job_alerts
+from .catalogs import (
+    active_benefits_queryset,
+    active_job_categories_queryset,
+    active_languages_queryset,
+)
 from .employer import (
     attach_job_candidate_previews,
     employer_job_application_summary,
@@ -15,7 +20,12 @@ from .employer import (
     employer_job_status_counts,
     employer_job_visibility_hold,
 )
-from .listing import build_job_list_queryset
+from .listing import (
+    active_jobs_queryset,
+    build_job_list_queryset,
+    public_jobs_queryset,
+    publicly_available_job_filter,
+)
 from .moderation import (
     admin_job_detail_queryset,
     admin_job_management_queryset,
@@ -23,6 +33,7 @@ from .moderation import (
 )
 from .recommendations import recommend_inline_jobs_for_candidate
 from .reports import ADMIN_JOB_REPORT_ORDERING_FIELDS, job_report_queryset
+from .saved import candidate_saved_job_rows, candidate_saved_jobs_queryset
 from .saved_recommendations import (
     job_similarity_scores,
     recommend_jobs_from_saved,
@@ -36,6 +47,14 @@ from .verification_badge import (
 )
 
 __all__ = [
+    'active_jobs_queryset',
+    'active_benefits_queryset',
+    'active_job_categories_queryset',
+    'active_languages_queryset',
+    'candidate_saved_job_rows',
+    'candidate_saved_jobs_queryset',
+    'public_jobs_queryset',
+    'publicly_available_job_filter',
     'job_ai_admin_policy_overview',
     'job_ai_queue_overview',
     'job_ai_usage_overview',

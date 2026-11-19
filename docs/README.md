@@ -41,6 +41,8 @@ tại; lịch sử kế hoạch và bằng chứng triển khai nằm trong git 
 | [adr-0016-remove-two-factor-auth.md](02-tong-quan/adr-0016-remove-two-factor-auth.md) | Gỡ xác thực hai bước (2FA/MFA) ở cả ba cổng |
 | [adr-0017-company-page.md](02-tong-quan/adr-0017-company-page.md) | Trang công ty công khai và quyền biên tập trang |
 | [adr-0018-remove-admin-rbac.md](02-tong-quan/adr-0018-remove-admin-rbac.md) | Gỡ phòng ban, chức danh, nhân viên quản trị; còn superuser và admin |
+| [adr-0022-backend-structure.md](02-tong-quan/adr-0022-backend-structure.md) | Cấu trúc backend: bố cục app, tầng `domain/`, luật import chéo app, URL theo cổng |
+| [uploads-quarantine.md](02-tong-quan/uploads-quarantine.md) | Lõi upload cách ly: vòng đời phiên, quét malware, bằng chứng |
 | [employer-remediation-decision-log.md](02-tong-quan/employer-remediation-decision-log.md) | Biên bản quyết định của đợt hardening cổng nhà tuyển dụng |
 | [chatbot-local-decision-log.md](02-tong-quan/chatbot-local-decision-log.md) | Biên bản quyết định cho chatbot ứng viên chạy local |
 | [employer-flow-security-audit-2026-08.md](02-tong-quan/employer-flow-security-audit-2026-08.md) | Audit luồng và bảo mật nhà tuyển dụng (2026-08) |
@@ -71,6 +73,7 @@ tại; lịch sử kế hoạch và bằng chứng triển khai nằm trong git 
 | [social-login.md](05-huong-dan/social-login.md) | Cấu hình đăng nhập Google, Facebook, LinkedIn |
 | [quan-tri-thong-bao-da-cong.md](05-huong-dan/quan-tri-thong-bao-da-cong.md) | Thao tác quản trị thông báo đa cổng |
 | [quy-trinh-pull-request.md](05-huong-dan/quy-trinh-pull-request.md) | Nhánh, commit, PR và cổng kiểm tra |
+| [tieu-chuan-kiem-thu.md](05-huong-dan/tieu-chuan-kiem-thu.md) | Chuẩn test: tầng đặt test, ngân sách thời gian, chống flaky, lệnh chạy nhanh |
 
 ## 06-deployment
 

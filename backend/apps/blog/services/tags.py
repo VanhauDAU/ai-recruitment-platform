@@ -39,3 +39,9 @@ def merge_tags(*, source, target, actor):
         },
     )
     return target
+
+
+def delete_tag(tag):
+    if tag.posts.exists() or tag.working_copies.exists():
+        raise ValidationError({'detail': 'Không thể xóa thẻ đang được sử dụng.'})
+    tag.delete()

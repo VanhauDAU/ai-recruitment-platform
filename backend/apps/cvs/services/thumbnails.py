@@ -33,7 +33,7 @@ def schedule_cv_thumbnail(version):
 
     def dispatch():
         try:
-            from ..tasks import generate_cv_thumbnail
+            from apps.cvs.tasks.exports import generate_cv_thumbnail
 
             generate_cv_thumbnail.delay(version_id)
         except Exception:  # noqa: BLE001 - owner can request the idempotent job again

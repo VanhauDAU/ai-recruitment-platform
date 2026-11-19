@@ -2,10 +2,10 @@
 
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from rest_framework.exceptions import ValidationError
 
-from apps.employers.models import CampaignActivity, RecruitmentCampaign
-from apps.employers.services import record_campaign_activity
+from apps.campaigns.models import CampaignActivity, RecruitmentCampaign
 
 from ..models import CampaignChannel, CampaignChannelCost
 
@@ -18,16 +18,16 @@ def _owned_campaign(campaign, user, *, lock=False):
         queryset = queryset.select_for_update(of=('self',))
     campaign = queryset.first()
     if campaign is None:
-        raise ValidationError('Bạn không có quyền với chiến dịch này.')
+        raise ValidationError(_('Bạn không có quyền với chiến dịch này.'))
     return campaign
 
 
 def _validate_target(campaign, target, job):
     if target == CampaignChannel.Target.JOB:
         if job is None:
-            raise ValidationError({'job': 'Chọn tin mà link sẽ dẫn tới.'})
+            raise ValidationError({'job': _('Chọn tin mà link sẽ dẫn tới.')})
         if job.campaign_id != campaign.pk:
-            raise ValidationError({'job': 'Tin này không thuộc chiến dịch.'})
+            raise ValidationError({'job': _('Tin này không thuộc chiến dịch.')})
         return job
     return None
 
@@ -47,10 +47,10 @@ def _clean_content(content):
 def create_channel(*, campaign, user, kind, label, target=CampaignChannel.Target.LANDING, job=None):
     campaign = _owned_campaign(campaign, user, lock=True)
     if campaign.is_terminal:
-        raise ValidationError({'detail': 'Chiến dịch đã kết thúc, không thêm kênh được.'})
+        raise ValidationError({'detail': _('Chiến dịch đã kết thúc, không thêm kênh được.')})
     label = label.strip()
     if CampaignChannel.objects.filter(campaign=campaign, label__iexact=label).exists():
-        raise ValidationError({'label': 'Chiến dịch đã có kênh cùng tên.'})
+        raise ValidationError({'label': _('Chiến dịch đã có kênh cùng tên.')})
     channel = CampaignChannel.objects.create(
         campaign=campaign,
         kind=kind,
@@ -59,7 +59,7 @@ def create_channel(*, campaign, user, kind, label, target=CampaignChannel.Target
         job=_validate_target(campaign, target, job),
         created_by=user,
     )
-    record_campaign_activity(
+    CampaignActivity.objects.record(
         campaign=campaign,
         event_type=CampaignActivity.EventType.CHANNEL_ADDED,
         group=CampaignActivity.Group.CAMPAIGN,
@@ -78,7 +78,7 @@ def update_channel(*, channel, user, **data):
         label = data['label'].strip()
         clash = CampaignChannel.objects.filter(campaign=channel.campaign, label__iexact=label)
         if clash.exclude(pk=channel.pk).exists():
-            raise ValidationError({'label': 'Chiến dịch đã có kênh cùng tên.'})
+            raise ValidationError({'label': _('Chiến dịch đã có kênh cùng tên.')})
         channel.label = label
     if 'target' in data or 'job' in data:
         target = data.get('target', channel.target)
@@ -94,7 +94,7 @@ def update_channel(*, channel, user, **data):
         channel.posted_at = (channel.posted_at or timezone.now()) if data['posted'] else None
     channel.save()
     if newly_posted:
-        record_campaign_activity(
+        CampaignActivity.objects.record(
             campaign=channel.campaign,
             event_type=CampaignActivity.EventType.CHANNEL_POSTED,
             group=CampaignActivity.Group.CAMPAIGN,

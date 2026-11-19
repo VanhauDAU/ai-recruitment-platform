@@ -3,8 +3,9 @@ import string
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy
 
-from common.public_id import generate_public_id
+from common.db.public_id import generate_public_id
 
 CODE_ALPHABET = string.ascii_letters + string.digits
 CODE_LENGTH = 8
@@ -23,29 +24,29 @@ class CampaignChannel(models.Model):
     """
 
     class Kind(models.TextChoices):
-        FACEBOOK_PAGE = 'facebook_page', 'Fanpage Facebook'
-        FACEBOOK_GROUP = 'facebook_group', 'Nhóm Facebook'
+        FACEBOOK_PAGE = 'facebook_page', gettext_lazy('Fanpage Facebook')
+        FACEBOOK_GROUP = 'facebook_group', gettext_lazy('Nhóm Facebook')
         LINKEDIN = 'linkedin', 'LinkedIn'
         ZALO = 'zalo', 'Zalo'
         TIKTOK = 'tiktok', 'TikTok'
         EMAIL = 'email', 'Email'
-        WEBSITE = 'website', 'Website công ty'
-        QR_OFFLINE = 'qr_offline', 'Tờ rơi / QR'
-        OTHER = 'other', 'Kênh khác'
+        WEBSITE = 'website', gettext_lazy('Website công ty')
+        QR_OFFLINE = 'qr_offline', gettext_lazy('Tờ rơi / QR')
+        OTHER = 'other', gettext_lazy('Kênh khác')
 
     class Target(models.TextChoices):
-        LANDING = 'landing', 'Trang tuyển dụng của chiến dịch'
-        JOB = 'job', 'Một tin tuyển dụng'
+        LANDING = 'landing', gettext_lazy('Trang tuyển dụng của chiến dịch')
+        JOB = 'job', gettext_lazy('Một tin tuyển dụng')
 
     class ContentSource(models.TextChoices):
-        NONE = '', 'Chưa có'
-        AI = 'ai', 'AI soạn'
-        TEMPLATE = 'template', 'Mẫu có sẵn'
-        MANUAL = 'manual', 'Tự soạn'
+        NONE = '', gettext_lazy('Chưa có')
+        AI = 'ai', gettext_lazy('AI soạn')
+        TEMPLATE = 'template', gettext_lazy('Mẫu có sẵn')
+        MANUAL = 'manual', gettext_lazy('Tự soạn')
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     campaign = models.ForeignKey(
-        'employers.RecruitmentCampaign', on_delete=models.CASCADE, related_name='channels'
+        'campaigns.RecruitmentCampaign', on_delete=models.CASCADE, related_name='channels'
     )
     kind = models.CharField(max_length=20, choices=Kind.choices)
     label = models.CharField(max_length=120)
@@ -80,13 +81,13 @@ class CampaignChannel(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'{self.campaign_id}:{self.label}'
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('chn')
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f'{self.campaign_id}:{self.label}'
 
 
 class CampaignChannelCost(models.Model):

@@ -5,7 +5,7 @@ import RoleGuard from './RoleGuard'
 
 const { useSession } = vi.hoisted(() => ({ useSession: vi.fn() }))
 
-vi.mock('@/entities/session', () => ({ useSession }))
+vi.mock('@/entities/account/session', () => ({ useSession }))
 
 describe('RoleGuard', () => {
   beforeEach(() => useSession.mockReset())

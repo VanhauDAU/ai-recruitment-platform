@@ -1,6 +1,3 @@
-import importlib
-
-from django.apps import apps as django_apps
 from django.db import IntegrityError, transaction
 from django.test import TestCase
 
@@ -28,23 +25,10 @@ class KnowledgebaseFoundationTests(TestCase):
             ],
         )
 
-    def test_verified_content_is_public_in_every_seeded_category_and_idempotent(self):
-        seeded_slugs = {
-            item['slug']
-            for item in importlib.import_module(
-                'apps.knowledgebase.migrations.0003_seed_verified_help_content'
-            ).ARTICLES
-        }
-        migration = importlib.import_module(
-            'apps.knowledgebase.migrations.0003_seed_verified_help_content'
-        )
-        before = KnowledgeArticle.objects.filter(slug__in=seeded_slugs).count()
+    def test_reference_help_content_is_public_in_every_category(self):
+        articles = KnowledgeArticle.objects.all()
 
-        migration.seed_verified_help_content(django_apps, None)
-
-        articles = KnowledgeArticle.objects.filter(slug__in=seeded_slugs)
-        self.assertEqual(before, 7)
-        self.assertEqual(articles.count(), before)
+        self.assertEqual(articles.count(), 7)
         self.assertEqual(articles.values('category_id').distinct().count(), 7)
         self.assertFalse(articles.filter(published_revision__isnull=True).exists())
         self.assertFalse(

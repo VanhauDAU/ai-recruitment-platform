@@ -5,10 +5,10 @@ from django.urls import reverse
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import AdminAccessAuditLog, User
-from apps.accounts.tests.helpers import make_admin
+from apps.accounts.tests.factories import make_admin
 
 from ..models import Company, CompanyPageEvent, Industry
-from .company_page_helpers import add_recruiter, make_company, make_employer
+from .factories import add_recruiter, make_company, make_employer
 
 HOLD_REASON = 'Nội dung giới thiệu vi phạm quy định cộng đồng.'
 RELEASE_REASON = 'Doanh nghiệp đã chỉnh sửa nội dung theo yêu cầu.'
@@ -68,7 +68,7 @@ class AdminCompanyPublicPageTests(APITestCase):
         self.assertEqual(response.status_code, 200, response.data)
         self.assertSetEqual(
             set(response.data),
-            {'public_path', 'is_indexable', 'policy_hold', 'profile'},
+            {'public_path', 'is_indexable', 'policy_hold', 'content_review_required', 'profile'},
         )
         self.assertEqual(response.data['public_path'], f'/cong-ty/{self.company.slug}')
         self.assertIs(response.data['is_indexable'], True)

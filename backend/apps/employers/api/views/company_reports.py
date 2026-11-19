@@ -1,11 +1,12 @@
 """Candidates reporting wrong information on a company page (ADR-0017)."""
 
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsCandidate
+from apps.accounts.api.permissions import IsCandidate
 
 from ...services import submit_company_report
 from ..serializers import CompanyReportCreatedSerializer, CompanyReportCreateSerializer
@@ -19,6 +20,11 @@ class CompanyReportCreateView(APIView):
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = 'company_report'
 
+    @extend_schema(
+        summary='Báo cáo thông tin sai trên trang công ty',
+        request=CompanyReportCreateSerializer,
+        responses={201: CompanyReportCreatedSerializer},
+    )
     def post(self, request, public_id):
         company = get_visible_company(public_id)
         serializer = CompanyReportCreateSerializer(data=request.data)

@@ -1,4 +1,4 @@
-"""Thao tác danh mục template của cổng admin (CVT-4): tạo, bản nháp, nhân bản,
+"""Thao tác danh mục template của cổng admin (CVT-4): tạo, sửa, bản nháp, nhân bản,
 sắp xếp, ẩn/hiện."""
 
 from django.core.exceptions import ValidationError
@@ -107,6 +107,40 @@ def create_draft_version(template, *, renderer_key=None, actor=None):
             [region['id'] for region in version.default_layout_json['regions']],
         )
     return version
+
+
+def set_template_categories(template, categories):
+    """Đồng bộ danh mục của template; `None` nghĩa là không đổi."""
+    if categories is None:
+        return
+    template.category_links.exclude(category__in=categories).delete()
+    existing = set(template.category_links.values_list('category_id', flat=True))
+    CvTemplateCategoryLink.objects.bulk_create(
+        [
+            CvTemplateCategoryLink(template=template, category=category)
+            for category in categories
+            if category.pk not in existing
+        ]
+    )
+
+
+@transaction.atomic
+def create_template(*, categories=None, renderer_key='', actor=None, **fields):
+    """Tạo mẫu; có `renderer_key` thì mẫu có ngay bản nháp đủ section và màu."""
+    template = CvTemplate.objects.create(**fields)
+    set_template_categories(template, categories)
+    if renderer_key:
+        start_template(template, renderer_key=renderer_key, actor=actor)
+    return template
+
+
+@transaction.atomic
+def update_template(template, *, categories=None, **fields):
+    for name, value in fields.items():
+        setattr(template, name, value)
+    template.save()
+    set_template_categories(template, categories)
+    return template
 
 
 @transaction.atomic

@@ -1,0 +1,475 @@
+[
+{
+ "model": "sitecontent.sitesetting",
+ "pk": 1,
+ "fields": {
+  "key": "footer_logo_url",
+  "label": "Logo riêng cho footer",
+  "group": "footer",
+  "value": "",
+  "value_type": "image",
+  "options": {},
+  "order": 10,
+  "description": "Để trống để tự dùng Logo đầy đủ ở nhóm Cài đặt chung.",
+  "is_public": true,
+  "updated_at": "2026-11-19T01:33:41.755Z"
+ }
+},
+{
+ "model": "sitecontent.sitesetting",
+ "pk": 2,
+ "fields": {
+  "key": "footer_show_contact",
+  "label": "Hiện thông tin liên hệ",
+  "group": "footer",
+  "value": true,
+  "value_type": "boolean",
+  "options": {},
+  "order": 11,
+  "description": "",
+  "is_public": true,
+  "updated_at": "2026-11-19T01:33:41.755Z"
+ }
+},
+{
+ "model": "sitecontent.sitesetting",
+ "pk": 3,
+ "fields": {
+  "key": "footer_show_apps",
+  "label": "Hiện liên kết tải ứng dụng",
+  "group": "footer",
+  "value": true,
+  "value_type": "boolean",
+  "options": {},
+  "order": 12,
+  "description": "",
+  "is_public": true,
+  "updated_at": "2026-11-19T01:33:41.756Z"
+ }
+},
+{
+ "model": "sitecontent.sitesetting",
+ "pk": 4,
+ "fields": {
+  "key": "footer_show_socials",
+  "label": "Hiện mạng xã hội",
+  "group": "footer",
+  "value": true,
+  "value_type": "boolean",
+  "options": {},
+  "order": 13,
+  "description": "",
+  "is_public": true,
+  "updated_at": "2026-11-19T01:33:41.756Z"
+ }
+},
+{
+ "model": "sitecontent.sitesetting",
+ "pk": 5,
+ "fields": {
+  "key": "footer_company_name",
+  "label": "Tên pháp lý doanh nghiệp",
+  "group": "footer",
+  "value": "",
+  "value_type": "text",
+  "options": {},
+  "order": 14,
+  "description": "Để trống nếu chưa có pháp nhân hoặc không muốn hiển thị.",
+  "is_public": true,
+  "updated_at": "2026-11-19T01:33:41.756Z"
+ }
+},
+{
+ "model": "sitecontent.sitesetting",
+ "pk": 6,
+ "fields": {
+  "key": "footer_business_license",
+  "label": "Thông tin giấy phép / mã số thuế",
+  "group": "footer",
+  "value": "",
+  "value_type": "textarea",
+  "options": {},
+  "order": 15,
+  "description": "",
+  "is_public": true,
+  "updated_at": "2026-11-19T01:33:41.757Z"
+ }
+},
+{
+ "model": "sitecontent.sitesetting",
+ "pk": 7,
+ "fields": {
+  "key": "footer_app_store_url",
+  "label": "Link tải trên App Store",
+  "group": "footer",
+  "value": "",
+  "value_type": "url",
+  "options": {},
+  "order": 16,
+  "description": "",
+  "is_public": true,
+  "updated_at": "2026-11-19T01:33:41.757Z"
+ }
+},
+{
+ "model": "sitecontent.sitesetting",
+ "pk": 8,
+ "fields": {
+  "key": "footer_google_play_url",
+  "label": "Link tải trên Google Play",
+  "group": "footer",
+  "value": "",
+  "value_type": "url",
+  "options": {},
+  "order": 17,
+  "description": "",
+  "is_public": true,
+  "updated_at": "2026-11-19T01:33:41.757Z"
+ }
+},
+{
+ "model": "sitecontent.sitesetting",
+ "pk": 9,
+ "fields": {
+  "key": "footer_qr_code_url",
+  "label": "Mã QR",
+  "group": "footer",
+  "value": "",
+  "value_type": "image",
+  "options": {},
+  "order": 18,
+  "description": "QR tải ứng dụng hoặc dẫn về website. Để trống để ẩn.",
+  "is_public": true,
+  "updated_at": "2026-11-19T01:33:41.758Z"
+ }
+},
+{
+ "model": "sitecontent.sitesetting",
+ "pk": 10,
+ "fields": {
+  "key": "footer_qr_label",
+  "label": "Nhãn dưới mã QR",
+  "group": "footer",
+  "value": "",
+  "value_type": "text",
+  "options": {},
+  "order": 19,
+  "description": "",
+  "is_public": true,
+  "updated_at": "2026-11-19T01:33:41.758Z"
+ }
+},
+{
+ "model": "sitecontent.sitesetting",
+ "pk": 11,
+ "fields": {
+  "key": "cv_builder_wysiwyg_enabled",
+  "label": "Bật trình chỉnh sửa CV WYSIWYG",
+  "group": "cv",
+  "value": true,
+  "value_type": "boolean",
+  "options": {},
+  "order": 20,
+  "description": "Editor CV mặc định; tắt để rollback tạm thời về editor form cũ.",
+  "is_public": true,
+  "updated_at": "2026-11-19T01:34:03.071Z"
+ }
+},
+{
+ "model": "sitecontent.sitesetting",
+ "pk": 12,
+ "fields": {
+  "key": "ai_job_generation_enabled",
+  "label": "Bật AI tạo tin tuyển dụng",
+  "group": "ai",
+  "value": false,
+  "value_type": "boolean",
+  "options": {},
+  "order": 9,
+  "description": "Soft switch theo use case; hard switch AI_RUNTIME_ENABLED luôn có quyền ưu tiên.",
+  "is_public": true,
+  "updated_at": "2026-11-19T01:34:04.548Z"
+ }
+},
+{
+ "model": "sitecontent.sitesetting",
+ "pk": 13,
+ "fields": {
+  "key": "ai_job_generation_model",
+  "label": "Model tạo tin tuyển dụng",
+  "group": "ai",
+  "value": "gemini-3.5-flash-lite",
+  "value_type": "select",
+  "options": {
+   "choices": [
+    {
+     "label": "Gemini 3.5 Flash Lite",
+     "value": "gemini-3.5-flash-lite"
+    }
+   ]
+  },
+  "order": 10,
+  "description": "Chỉ chọn model có trong cả allowlist môi trường và allowlist runtime.",
+  "is_public": false,
+  "updated_at": "2026-11-19T01:34:04.548Z"
+ }
+},
+{
+ "model": "sitecontent.sitesetting",
+ "pk": 14,
+ "fields": {
+  "key": "ai_job_generation_model_allowlist",
+  "label": "Model allowlist cho tạo tin",
+  "group": "ai",
+  "value": [
+   "gemini-3.5-flash-lite"
+  ],
+  "value_type": "json",
+  "options": {},
+  "order": 11,
+  "description": "Chỉ được thu hẹp allowlist cấu hình qua môi trường.",
+  "is_public": false,
+  "updated_at": "2026-11-19T01:34:04.549Z"
+ }
+},
+{
+ "model": "sitecontent.sitesetting",
+ "pk": 15,
+ "fields": {
+  "key": "ai_job_generation_daily_limit",
+  "label": "Lượt tạo tin/ngày/nhà tuyển dụng",
+  "group": "ai",
+  "value": 10,
+  "value_type": "number",
+  "options": {},
+  "order": 12,
+  "description": "Internal retry không tạo thêm lượt quota.",
+  "is_public": false,
+  "updated_at": "2026-11-19T01:34:04.549Z"
+ }
+},
+{
+ "model": "sitecontent.sitesetting",
+ "pk": 16,
+ "fields": {
+  "key": "ai_job_generation_rollout_percent",
+  "label": "Tỷ lệ rollout tạo tin AI (%)",
+  "group": "ai",
+  "value": 0,
+  "value_type": "number",
+  "options": {},
+  "order": 13,
+  "description": "Phân bucket ổn định theo công ty; allowlist luôn được xét trước tỷ lệ.",
+  "is_public": false,
+  "updated_at": "2026-11-19T01:34:04.549Z"
+ }
+},
+{
+ "model": "sitecontent.sitesetting",
+ "pk": 17,
+ "fields": {
+  "key": "ai_job_generation_company_allowlist",
+  "label": "Công ty allowlist tạo tin AI",
+  "group": "ai",
+  "value": [],
+  "value_type": "json",
+  "options": {},
+  "order": 14,
+  "description": "Danh sách public ID công ty được pilot trước rollout phần trăm.",
+  "is_public": false,
+  "updated_at": "2026-11-19T01:34:04.550Z"
+ }
+},
+{
+ "model": "sitecontent.sitesetting",
+ "pk": 18,
+ "fields": {
+  "key": "employer_badge_min_account_months",
+  "label": "Tuổi tài khoản tối thiểu để tin có dấu tick (tháng)",
+  "group": "employer",
+  "value": 6,
+  "value_type": "number",
+  "options": {
+   "max": 60,
+   "min": 1,
+   "step": 1,
+   "integer": true
+  },
+  "order": 0,
+  "description": "Một trong năm điều kiện gắn dấu tick xác thực lên tin tuyển dụng.",
+  "is_public": false,
+  "updated_at": "2026-11-19T01:34:04.591Z"
+ }
+},
+{
+ "model": "sitecontent.linkgroup",
+ "pk": 1,
+ "fields": {
+  "key": "footer-about",
+  "title": "Về ProCV",
+  "placement": "footer_nav",
+  "source": "manual",
+  "limit": 16,
+  "order": 1,
+  "is_active": true
+ }
+},
+{
+ "model": "sitecontent.linkgroup",
+ "pk": 2,
+ "fields": {
+  "key": "footer-career",
+  "title": "Hồ sơ & Sự nghiệp",
+  "placement": "footer_nav",
+  "source": "manual",
+  "limit": 16,
+  "order": 2,
+  "is_active": true
+ }
+},
+{
+ "model": "sitecontent.linkgroup",
+ "pk": 3,
+ "fields": {
+  "key": "footer-employer",
+  "title": "Dành cho nhà tuyển dụng",
+  "placement": "footer_nav",
+  "source": "manual",
+  "limit": 16,
+  "order": 3,
+  "is_active": true
+ }
+},
+{
+ "model": "sitecontent.linkitem",
+ "pk": 1,
+ "fields": {
+  "group": 1,
+  "label": "Giới thiệu",
+  "url": "",
+  "order": 0,
+  "is_active": true
+ }
+},
+{
+ "model": "sitecontent.linkitem",
+ "pk": 2,
+ "fields": {
+  "group": 1,
+  "label": "Góc báo chí",
+  "url": "",
+  "order": 1,
+  "is_active": true
+ }
+},
+{
+ "model": "sitecontent.linkitem",
+ "pk": 3,
+ "fields": {
+  "group": 1,
+  "label": "Tuyển dụng",
+  "url": "",
+  "order": 2,
+  "is_active": true
+ }
+},
+{
+ "model": "sitecontent.linkitem",
+ "pk": 4,
+ "fields": {
+  "group": 1,
+  "label": "Liên hệ",
+  "url": "",
+  "order": 3,
+  "is_active": true
+ }
+},
+{
+ "model": "sitecontent.linkitem",
+ "pk": 5,
+ "fields": {
+  "group": 2,
+  "label": "Tìm việc làm",
+  "url": "/viec-lam",
+  "order": 0,
+  "is_active": true
+ }
+},
+{
+ "model": "sitecontent.linkitem",
+ "pk": 6,
+ "fields": {
+  "group": 2,
+  "label": "Việc làm đã lưu",
+  "url": "/viec-lam-da-luu",
+  "order": 1,
+  "is_active": true
+ }
+},
+{
+ "model": "sitecontent.linkitem",
+ "pk": 7,
+ "fields": {
+  "group": 2,
+  "label": "Tạo CV chuyên nghiệp",
+  "url": "",
+  "order": 2,
+  "is_active": true
+ }
+},
+{
+ "model": "sitecontent.linkitem",
+ "pk": 8,
+ "fields": {
+  "group": 2,
+  "label": "Review CV bằng AI",
+  "url": "",
+  "order": 3,
+  "is_active": true
+ }
+},
+{
+ "model": "sitecontent.linkitem",
+ "pk": 9,
+ "fields": {
+  "group": 3,
+  "label": "Đăng tin tuyển dụng",
+  "url": "/tuyendung",
+  "order": 0,
+  "is_active": true
+ }
+},
+{
+ "model": "sitecontent.linkitem",
+ "pk": 10,
+ "fields": {
+  "group": 3,
+  "label": "Giải pháp tuyển dụng",
+  "url": "/tuyendung/dich-vu",
+  "order": 1,
+  "is_active": true
+ }
+},
+{
+ "model": "sitecontent.linkitem",
+ "pk": 11,
+ "fields": {
+  "group": 3,
+  "label": "Bảng giá dịch vụ",
+  "url": "/tuyendung/bao-gia",
+  "order": 2,
+  "is_active": true
+ }
+},
+{
+ "model": "sitecontent.linkitem",
+ "pk": 12,
+ "fields": {
+  "group": 3,
+  "label": "Đăng nhập nhà tuyển dụng",
+  "url": "/tuyendung/app/login",
+  "order": 3,
+  "is_active": true
+ }
+}
+]

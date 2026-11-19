@@ -1,12 +1,11 @@
-from .admin import (
+from .admin_library import (
     CvBackgroundAdminSerializer,
     CvCategoryAdminSerializer,
     CvColorAdminSerializer,
-    CvSampleContentAdminSerializer,
-    CvTemplateAdminSerializer,
-    CvTemplateVersionAdminSerializer,
 )
-from .v2 import (
+from .admin_samples import CvSampleContentAdminSerializer
+from .admin_templates import CvTemplateAdminSerializer, CvTemplateVersionAdminSerializer
+from .catalog import (
     CvCategorySerializer,
     CvPositionOptionSerializer,
     CvSampleContentCardSerializer,

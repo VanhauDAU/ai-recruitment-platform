@@ -1,6 +1,7 @@
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 
-from common.media_storage import media_url_from_value
+from common.storage.media import media_url_from_value
 
 from ...models import Company, RecruiterProfile
 from ...selectors import build_employer_initial_onboarding
@@ -45,13 +46,13 @@ class AdminCompanyListSerializer(serializers.ModelSerializer):
             'updated_at',
         ]
 
-    def get_tax_code(self, obj):
+    def get_tax_code(self, obj) -> str:
         return obj.tax_code or ''
 
-    def get_logo_url(self, obj):
+    def get_logo_url(self, obj) -> str:
         return media_url_from_value(obj.logo_url, request=self.context.get('request'))
 
-    def get_owners(self, obj):
+    def get_owners(self, obj) -> list[dict]:
         return [
             {
                 'public_id': owner.public_id,
@@ -62,7 +63,7 @@ class AdminCompanyListSerializer(serializers.ModelSerializer):
             for owner in getattr(obj, 'admin_directory_owners', [])
         ]
 
-    def get_recruiter_verification_summary(self, obj):
+    def get_recruiter_verification_summary(self, obj) -> dict[str, int]:
         return {
             'none': obj.unsubmitted_recruiter_count,
             'draft': obj.draft_recruiter_count,
@@ -101,13 +102,13 @@ class AdminCompanyDetailSerializer(AdminCompanyListSerializer):
             'created_by',
         ]
 
-    def get_email(self, obj):
+    def get_email(self, obj) -> str:
         return obj.email
 
-    def get_phone(self, obj):
+    def get_phone(self, obj) -> str:
         return obj.phone
 
-    def get_industries(self, obj):
+    def get_industries(self, obj) -> list[dict]:
         return [
             {
                 'id': item.industry_id,
@@ -118,14 +119,14 @@ class AdminCompanyDetailSerializer(AdminCompanyListSerializer):
             for item in obj.company_industries.all()
         ]
 
-    def get_created_by(self, obj):
+    def get_created_by(self, obj) -> dict:
         return {
             'public_id': obj.created_by.public_id,
             'full_name': obj.created_by.full_name,
             'email': obj.created_by.email,
         }
 
-    def get_images(self, obj):
+    def get_images(self, obj) -> list[dict]:
         return [
             {
                 'id': image.id,
@@ -167,7 +168,7 @@ class AdminCompanyRecruiterSerializer(serializers.ModelSerializer):
             'updated_at',
         ]
 
-    def get_account(self, obj):
+    def get_account(self, obj) -> dict:
         return {
             'public_id': obj.user.public_id,
             'full_name': obj.user.full_name,
@@ -181,22 +182,22 @@ class AdminCompanyRecruiterSerializer(serializers.ModelSerializer):
             'is_deleted': obj.user.is_deleted,
         }
 
-    def get_contact_phone(self, obj):
+    def get_contact_phone(self, obj) -> str:
         return obj.verified_phone or obj.contact_phone or ''
 
-    def get_initial_onboarding(self, obj):
+    def get_initial_onboarding(self, obj) -> dict:
         return build_employer_initial_onboarding(
             obj,
             has_recruitment_need=getattr(obj, '_has_recruitment_need', False),
         )
 
-    def get_verification(self, obj):
+    def get_verification(self, obj) -> dict:
         case = getattr(obj, 'verification_case', None)
         if case is None:
             return {
                 'public_id': None,
                 'status': 'none',
-                'status_label': 'Chưa có hồ sơ',
+                'status_label': _('Chưa có hồ sơ'),
                 'verification_method': '',
                 'verification_method_label': '',
                 'submitted_at': None,

@@ -1,8 +1,8 @@
 import { useParams, useSearchParams } from 'react-router'
-import { parseCompanyDetailQuery, usePublicCompany } from '@/entities/company'
-import { useSiteSettings } from '@/entities/site-settings'
+import { parseCompanyDetailQuery, usePublicCompany } from '@/entities/company/company'
+import { useSiteSettings } from '@/entities/system/site-settings'
 import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
-import { PublicCompanyProfile } from '@/widgets/public-company-profile'
+import { PublicCompanyProfile } from '@/widgets/main/public-company-profile'
 import { companyDetailMetadata } from './company-detail-metadata'
 
 export default function CompanyDetail() {

@@ -1,14 +1,40 @@
 import io
+from http import HTTPStatus
 
 from PIL import Image
 from pypdf import PdfReader
+from rest_framework.exceptions import APIException
 
-from common.file_signatures import pdf_header_offset
-from common.r2_storage import private_media_storage
+from common.files.signatures import pdf_header_offset
+from common.storage.r2 import private_media_storage
 
 
 class EmployerUploadStructureError(ValueError):
     """A malware-clean object is still invalid for the employer parser boundary."""
+
+
+class EmployerUploadSessionRejected(APIException):
+    """Preserve safe shared-upload codes at an employer business boundary."""
+
+    default_code = 'UPLOAD_INVALID_STATE'
+
+    def __init__(self, error):
+        self.status_code = {
+            'RESOURCE_NOT_FOUND': HTTPStatus.NOT_FOUND,
+            'UPLOAD_PIPELINE_DISABLED': HTTPStatus.SERVICE_UNAVAILABLE,
+            'UPLOAD_EXPIRED': HTTPStatus.CONFLICT,
+            'UPLOAD_NOT_CLEAN': HTTPStatus.CONFLICT,
+            'UPLOAD_PURPOSE_MISMATCH': HTTPStatus.CONFLICT,
+            'UPLOAD_ALREADY_SUBMITTED': HTTPStatus.CONFLICT,
+        }.get(error.code, HTTPStatus.BAD_REQUEST)
+        super().__init__(
+            detail={
+                'code': error.code,
+                'message': error.message,
+                'retryable': error.retryable,
+            },
+            code=error.code,
+        )
 
 
 def _validate_pdf(storage_key):

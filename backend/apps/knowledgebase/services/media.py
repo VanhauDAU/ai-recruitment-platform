@@ -1,6 +1,9 @@
+from http import HTTPStatus
+
 from django.core.exceptions import ValidationError
 
-from common.media_storage import delete_local_media_url, save_image_upload
+from common.errors import DomainError
+from common.storage.media import delete_local_media_url, save_image_upload
 
 from ..models import KnowledgeMediaAsset
 
@@ -8,8 +11,12 @@ ALLOWED_KNOWLEDGE_IMAGE_TYPES = {'image/jpeg', 'image/png', 'image/webp'}
 MAX_KNOWLEDGE_IMAGE_BYTES = 5 * 1024 * 1024
 
 
-class KnowledgeMediaTooLarge(Exception):
-    pass
+class KnowledgeMediaTooLarge(DomainError):
+    status_code = HTTPStatus.REQUEST_ENTITY_TOO_LARGE
+    code = 'knowledge_media_too_large'
+
+    def payload(self):
+        return {'file': [str(self)]}
 
 
 def upload_knowledge_media(*, upload, actor, default_alt_text='', request=None):

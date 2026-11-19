@@ -3,15 +3,15 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 
 from apps.accounts.models import User
-from apps.accounts.tests.helpers import make_admin
+from apps.accounts.tests.factories import make_admin
 from apps.sitecontent.models import SiteSetting
 
 
 @override_settings(
     AI_RUNTIME_ENABLED=True,
     AI_PROVIDER_BACKEND='gemini_developer',
-    AI_JOB_GENERATION_MODEL='gemini-3.5-flash-lite',
-    AI_JOB_GENERATION_MODEL_ALLOWLIST=('gemini-3.5-flash-lite',),
+    AI_JOB_GENERATION_MODEL='gemini-test',
+    AI_JOB_GENERATION_MODEL_ALLOWLIST=('gemini-test',),
     GEMINI_API_KEY='dashboard-test-secret',
 )
 class AdminAiOverviewTests(TestCase):
@@ -27,6 +27,25 @@ class AdminAiOverviewTests(TestCase):
                 'group': SiteSetting.Group.AI,
                 'value': True,
                 'value_type': SiteSetting.ValueType.BOOLEAN,
+            },
+        )
+        # Seed data names the production model; pin the admin choice to the test model.
+        SiteSetting.objects.update_or_create(
+            key='ai_job_generation_model',
+            defaults={
+                'label': 'AI model',
+                'group': SiteSetting.Group.AI,
+                'value': 'gemini-test',
+                'value_type': SiteSetting.ValueType.TEXT,
+            },
+        )
+        SiteSetting.objects.update_or_create(
+            key='ai_job_generation_model_allowlist',
+            defaults={
+                'label': 'AI model allowlist',
+                'group': SiteSetting.Group.AI,
+                'value': ['gemini-test'],
+                'value_type': SiteSetting.ValueType.JSON,
             },
         )
         SiteSetting.objects.update_or_create(

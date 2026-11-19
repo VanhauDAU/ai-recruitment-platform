@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.exceptions import NotFound
@@ -5,10 +6,10 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsEmployer
-from common.throttling import ClientIPScopedRateThrottle, SuffixedScopedRateThrottleMixin
+from apps.accounts.api.permissions import IsEmployer
+from common.api.throttling import ClientIPScopedRateThrottle, SuffixedScopedRateThrottleMixin
 
-from ...selectors import company_domain_claims_queryset
+from ...selectors import company_domain_claims_queryset, existing_recruiter_profile
 from ...services import (
     DomainClaimError,
     create_domain_claim,
@@ -33,10 +34,6 @@ def _domain_error_response(error):
         else status.HTTP_400_BAD_REQUEST
     )
     return Response({'code': error.code, 'detail': error.detail}, status=response_status)
-
-
-def _recruiter(user):
-    return get_or_create_recruiter(user)
 
 
 class _DomainClaimAccountThrottle(SuffixedScopedRateThrottleMixin, ScopedRateThrottle):
@@ -70,9 +67,9 @@ class CompanyDomainClaimListCreateView(_DomainClaimThrottledView):
         tags=['employer-domain-verification'],
     )
     def get(self, request):
-        recruiter = _recruiter(request.user)
-        if recruiter.company_id is None:
-            raise NotFound('Bạn chưa liên kết với công ty nào.')
+        recruiter = existing_recruiter_profile(request.user)
+        if recruiter is None or recruiter.company_id is None:
+            raise NotFound(_('Bạn chưa liên kết với công ty nào.'))
         claims = company_domain_claims_queryset(company=recruiter.company)
         return Response(CompanyDomainClaimSerializer(claims, many=True).data)
 
@@ -84,7 +81,7 @@ class CompanyDomainClaimListCreateView(_DomainClaimThrottledView):
     )
     def post(self, request):
         try:
-            claim, txt_value = create_domain_claim(recruiter=_recruiter(request.user))
+            claim, txt_value = create_domain_claim(recruiter=get_or_create_recruiter(request.user))
         except DomainClaimError as error:
             return _domain_error_response(error)
         return Response(
@@ -106,7 +103,7 @@ class CompanyDomainClaimVerifyView(_DomainClaimThrottledView):
         try:
             claim = verify_domain_claim(
                 claim_public_id=public_id,
-                recruiter=_recruiter(request.user),
+                recruiter=get_or_create_recruiter(request.user),
             )
         except DomainClaimError as error:
             return _domain_error_response(error)
@@ -128,7 +125,7 @@ class CompanyDomainClaimRotateView(_DomainClaimThrottledView):
         try:
             claim, txt_value = rotate_domain_claim(
                 claim_public_id=public_id,
-                recruiter=_recruiter(request.user),
+                recruiter=get_or_create_recruiter(request.user),
                 lock_version=serializer.validated_data['lock_version'],
             )
         except DomainClaimError as error:
@@ -151,7 +148,7 @@ class CompanyDomainClaimManualReviewView(_DomainClaimThrottledView):
         try:
             claim = request_manual_domain_review(
                 claim_public_id=public_id,
-                recruiter=_recruiter(request.user),
+                recruiter=get_or_create_recruiter(request.user),
                 **serializer.validated_data,
             )
         except DomainClaimError as error:

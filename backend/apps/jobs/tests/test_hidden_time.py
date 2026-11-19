@@ -7,13 +7,13 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.utils import timezone
 
-from apps.accounts.tests.helpers import make_admin
+from apps.accounts.tests.factories import make_admin
 from apps.employers.models import Company
 from apps.employers.services import set_company_page_policy_hold
-from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.employers.tests.factories import make_employer_ready
 
 from ..models import Job, give_back_hidden_time
-from .helpers import open_visibility_window
+from .factories import open_visibility_window
 
 
 class HiddenTimeTests(TestCase):

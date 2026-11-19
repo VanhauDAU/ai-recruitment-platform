@@ -104,9 +104,9 @@ async function routeAdminApi(page) {
         email_verified: true,
         admin_access: { is_superuser: false },
       }
-    } else if (path === '/api/site/admin/announcements/' && request.method() === 'GET') {
+    } else if (path === '/api/admin/site/announcements/' && request.method() === 'GET') {
       body = { count: 1, next: null, previous: null, results: [listItem(detail)] }
-    } else if (path === '/api/site/admin/announcements/' && request.method() === 'POST') {
+    } else if (path === '/api/admin/site/announcements/' && request.method() === 'POST') {
       const payload = request.postDataJSON()
       detail = announcementDetail({
         internal_name: payload.internal_name,
@@ -115,7 +115,7 @@ async function routeAdminApi(page) {
       status = 201
       body = detail
     } else if (
-      path === `/api/site/admin/announcements/${detail.public_id}/metrics/`
+      path === `/api/admin/site/announcements/${detail.public_id}/metrics/`
     ) {
       body = {
         public_id: detail.public_id,
@@ -143,7 +143,7 @@ async function routeAdminApi(page) {
           dismiss_rate: 4,
         }],
       }
-    } else if (path === `/api/site/admin/announcements/${detail.public_id}/`) {
+    } else if (path === `/api/admin/site/announcements/${detail.public_id}/`) {
       body = detail
     } else if (path.endsWith('/publish/')) {
       const payload = request.postDataJSON()
@@ -187,7 +187,7 @@ async function routeAdminApi(page) {
         }
         body = detail
       }
-    } else if (path === '/api/privacy/consent/') {
+    } else if (path === '/api/public/privacy/consent/') {
       body = { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
     } else if (path.endsWith('/summary/')) {
       body = { totals: {}, queues: {}, verification: {} }
@@ -201,7 +201,7 @@ async function routeAdminApi(page) {
   })
 }
 
-test('announcement admin: create, publish and stale conflict stay responsive', async ({ page }) => {
+test('announcement admin: create, publish and stale conflict stay responsive', { tag: '@responsive' }, async ({ page }) => {
   const pageErrors = []
   page.on('pageerror', (error) => pageErrors.push(error.message))
   await routeAdminApi(page)

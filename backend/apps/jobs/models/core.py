@@ -5,118 +5,37 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 
-from common.public_id import generate_public_id
+from common.db.public_id import generate_public_id
 from common.vietnam_time import vietnam_day_start, vietnam_today
 
 
 def validate_application_reasons(value):
     if not isinstance(value, list):
-        raise ValidationError('Lý do nên ứng tuyển phải là một danh sách.')
+        raise ValidationError(_('Lý do nên ứng tuyển phải là một danh sách.'))
     if len(value) > 3:
-        raise ValidationError('Chỉ được nhập tối đa 3 lý do nên ứng tuyển.')
+        raise ValidationError(_('Chỉ được nhập tối đa 3 lý do nên ứng tuyển.'))
     normalized = []
     for item in value:
         text = item.strip() if isinstance(item, str) else ''
         if not text or len(text) > 160:
-            raise ValidationError('Mỗi lý do phải có từ 1 đến 160 ký tự.')
+            raise ValidationError(_('Mỗi lý do phải có từ 1 đến 160 ký tự.'))
         normalized.append(text.casefold())
     if len(normalized) != len(set(normalized)):
-        raise ValidationError('Các lý do nên ứng tuyển không được trùng nhau.')
-
-
-class JobCategory(models.Model):
-    """Industry/field taxonomy for filtering jobs (DB doc section 2.10)."""
-
-    class CategoryType(models.TextChoices):
-        OCCUPATION_GROUP = 'occupation_group', 'Nhóm nghề'
-        DOMAIN = 'domain', 'Kiến thức chuyên ngành'
-        SPECIALIZATION = 'specialization', 'Vị trí chuyên môn'
-
-    class Status(models.TextChoices):
-        ACTIVE = 'active', 'Active'
-        INACTIVE = 'inactive', 'Inactive'
-
-    public_id = models.CharField(max_length=50, unique=True, editable=False)
-    name = models.CharField(max_length=255)
-    slug = models.SlugField(max_length=255, unique=True, blank=True)
-    description = models.TextField(blank=True)
-    logo_url = models.TextField(
-        blank=True,
-        help_text='Storage key nội bộ hoặc URL ngoài; API tự resolve storage key thành URL public.',
-    )
-    parent = models.ForeignKey(
-        'self', on_delete=models.SET_NULL, null=True, blank=True, related_name='children'
-    )
-    category_type = models.CharField(
-        max_length=30,
-        choices=CategoryType.choices,
-        default=CategoryType.SPECIALIZATION,
-    )
-    status = models.CharField(max_length=50, choices=Status.choices, default=Status.ACTIVE)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        verbose_name_plural = 'job categories'
-        ordering = ['name']
-
-    def save(self, *args, **kwargs):
-        if not self.public_id:
-            self.public_id = generate_public_id('jobcat')
-        if not self.slug:
-            self.slug = slugify(self.name)
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
-
-
-class JobCategoryLocalization(models.Model):
-    """Admin-managed display/search text for one taxonomy node and locale."""
-
-    class Locale(models.TextChoices):
-        VI = 'vi-VN', 'Tiếng Việt'
-        EN = 'en-US', 'Tiếng Anh'
-
-    category = models.ForeignKey(
-        JobCategory,
-        on_delete=models.CASCADE,
-        related_name='localizations',
-    )
-    locale = models.CharField(max_length=16, choices=Locale.choices)
-    display_name = models.CharField(max_length=255)
-    search_aliases = models.TextField(
-        blank=True, help_text='Các từ khóa tìm kiếm, phân tách bằng dấu phẩy.'
-    )
-    sort_order = models.PositiveIntegerField(default=0)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        indexes = [
-            models.Index(fields=['locale', 'is_active', 'sort_order'], name='idx_jobcatloc_picker'),
-        ]
-        constraints = [
-            models.UniqueConstraint(
-                fields=['category', 'locale'], name='uq_job_category_localization'
-            ),
-        ]
-        ordering = ['locale', 'sort_order', 'display_name', 'category_id']
-
-    def __str__(self):
-        return f'{self.category.name} ({self.locale})'
+        raise ValidationError(_('Các lý do nên ứng tuyển không được trùng nhau.'))
 
 
 class Job(models.Model):
     """A job posting / Job Description (DB doc section 2.12)."""
 
     AUTO_REJECTION_AFTER_DAY_CHOICES = (
-        (14, '2 tuần'),
-        (21, '3 tuần'),
-        (28, '4 tuần'),
-        (42, '6 tuần'),
-        (56, '8 tuần'),
+        (14, gettext_lazy('2 tuần')),
+        (21, gettext_lazy('3 tuần')),
+        (28, gettext_lazy('4 tuần')),
+        (42, gettext_lazy('6 tuần')),
+        (56, gettext_lazy('8 tuần')),
     )
     DEFAULT_AUTO_REJECTION_EMAIL = (
         'Cảm ơn bạn đã ứng tuyển vị trí {job_title} tại {company_name}.\n\n'
@@ -134,79 +53,79 @@ class Job(models.Model):
     class EmploymentType(models.TextChoices):
         FULL_TIME = 'full_time', 'Full-time'
         PART_TIME = 'part_time', 'Part-time'
-        CONTRACT = 'contract', 'Hợp đồng'
-        SEASONAL = 'seasonal', 'Thời vụ'
-        WORK_FROM_HOME = 'work_from_home', 'Làm tại nhà (việc làm phổ thông)'
+        CONTRACT = 'contract', gettext_lazy('Hợp đồng')
+        SEASONAL = 'seasonal', gettext_lazy('Thời vụ')
+        WORK_FROM_HOME = 'work_from_home', gettext_lazy('Làm tại nhà (việc làm phổ thông)')
         INTERNSHIP = 'internship', 'Internship'
         FREELANCE = 'freelance', 'Freelance'
-        OTHER = 'other', 'Khác'
+        OTHER = 'other', gettext_lazy('Khác')
 
     class ExperienceYears(models.TextChoices):
-        NONE = 'none', 'Không yêu cầu'
-        UNDER_1 = 'under_1', 'Dưới 1 năm'
-        ONE = '1', '1 năm'
-        TWO = '2', '2 năm'
-        THREE = '3', '3 năm'
-        FOUR = '4', '4 năm'
-        FIVE = '5', '5 năm'
-        OVER_5 = 'over_5', 'Trên 5 năm'
+        NONE = 'none', gettext_lazy('Không yêu cầu')
+        UNDER_1 = 'under_1', gettext_lazy('Dưới 1 năm')
+        ONE = '1', gettext_lazy('1 năm')
+        TWO = '2', gettext_lazy('2 năm')
+        THREE = '3', gettext_lazy('3 năm')
+        FOUR = '4', gettext_lazy('4 năm')
+        FIVE = '5', gettext_lazy('5 năm')
+        OVER_5 = 'over_5', gettext_lazy('Trên 5 năm')
 
     class PositionLevel(models.TextChoices):
-        EMPLOYEE = 'employee', 'Nhân viên'
-        TEAM_LEAD = 'team_lead', 'Trưởng nhóm'
-        MANAGER = 'manager', 'Trưởng/Phó phòng'
-        SUPERVISOR = 'supervisor', 'Quản lý / Giám sát'
-        BRANCH_MANAGER = 'branch_manager', 'Trưởng chi nhánh'
-        VICE_DIRECTOR = 'vice_director', 'Phó giám đốc'
-        DIRECTOR = 'director', 'Giám đốc'
-        INTERN = 'intern', 'Thực tập sinh'
+        EMPLOYEE = 'employee', gettext_lazy('Nhân viên')
+        TEAM_LEAD = 'team_lead', gettext_lazy('Trưởng nhóm')
+        MANAGER = 'manager', gettext_lazy('Trưởng/Phó phòng')
+        SUPERVISOR = 'supervisor', gettext_lazy('Quản lý / Giám sát')
+        BRANCH_MANAGER = 'branch_manager', gettext_lazy('Trưởng chi nhánh')
+        VICE_DIRECTOR = 'vice_director', gettext_lazy('Phó giám đốc')
+        DIRECTOR = 'director', gettext_lazy('Giám đốc')
+        INTERN = 'intern', gettext_lazy('Thực tập sinh')
 
     class EducationLevel(models.TextChoices):
-        NONE = 'none', 'Không yêu cầu'
-        MIDDLE_SCHOOL = 'middle_school', 'Trung học cơ sở (Cấp 2)'
-        HIGH_SCHOOL = 'high_school', 'Trung học phổ thông (Cấp 3)'
-        INTERMEDIATE = 'intermediate', 'Trung cấp'
-        COLLEGE = 'college', 'Cao đẳng'
-        UNIVERSITY = 'university', 'Đại học'
-        POSTGRADUATE = 'postgraduate', 'Cao học'
+        NONE = 'none', gettext_lazy('Không yêu cầu')
+        MIDDLE_SCHOOL = 'middle_school', gettext_lazy('Trung học cơ sở (Cấp 2)')
+        HIGH_SCHOOL = 'high_school', gettext_lazy('Trung học phổ thông (Cấp 3)')
+        INTERMEDIATE = 'intermediate', gettext_lazy('Trung cấp')
+        COLLEGE = 'college', gettext_lazy('Cao đẳng')
+        UNIVERSITY = 'university', gettext_lazy('Đại học')
+        POSTGRADUATE = 'postgraduate', gettext_lazy('Cao học')
 
     class GenderRequirement(models.TextChoices):
-        ANY = 'any', 'Không yêu cầu'
-        MALE = 'male', 'Nam'
-        FEMALE = 'female', 'Nữ'
+        ANY = 'any', gettext_lazy('Không yêu cầu')
+        MALE = 'male', gettext_lazy('Nam')
+        FEMALE = 'female', gettext_lazy('Nữ')
 
     class SalaryType(models.TextChoices):
-        NEGOTIABLE = 'negotiable', 'Thỏa thuận'
-        RANGE = 'range', 'Khoảng lương'
-        FIXED = 'fixed', 'Mức cố định'
-        FROM = 'from', 'Từ mức'
-        UP_TO = 'up_to', 'Đến mức'
+        NEGOTIABLE = 'negotiable', gettext_lazy('Thỏa thuận')
+        RANGE = 'range', gettext_lazy('Khoảng lương')
+        FIXED = 'fixed', gettext_lazy('Mức cố định')
+        FROM = 'from', gettext_lazy('Từ mức')
+        UP_TO = 'up_to', gettext_lazy('Đến mức')
 
     class IncomeDisplayType(models.TextChoices):
-        INCOME = 'income', 'Thu nhập'
-        INCOME_AT_KPI = 'income_at_kpi', 'Thu nhập khi đạt 100% KPI'
+        INCOME = 'income', gettext_lazy('Thu nhập')
+        INCOME_AT_KPI = 'income_at_kpi', gettext_lazy('Thu nhập khi đạt 100% KPI')
 
     class Currency(models.TextChoices):
         VND = 'VND', 'VND'
         USD = 'USD', 'USD'
 
     class Status(models.TextChoices):
-        DRAFT = 'draft', 'Nháp'
-        ACTIVE = 'active', 'Đang tuyển'
-        CLOSED = 'closed', 'Đã đóng'
+        DRAFT = 'draft', gettext_lazy('Nháp')
+        ACTIVE = 'active', gettext_lazy('Đang tuyển')
+        CLOSED = 'closed', gettext_lazy('Đã đóng')
 
     class PolicyHold(models.TextChoices):
-        NONE = '', 'Không giữ'
-        TEMPORARY_LOCK = 'temporary_lock', 'Tạm giữ do khóa tài khoản'
-        BAN_REVIEW = 'ban_review', 'Giữ để rà soát sau cấm'
-        LEGACY_LOCK = 'legacy_lock', 'Giữ do trạng thái khóa cũ'
+        NONE = '', gettext_lazy('Không giữ')
+        TEMPORARY_LOCK = 'temporary_lock', gettext_lazy('Tạm giữ do khóa tài khoản')
+        BAN_REVIEW = 'ban_review', gettext_lazy('Giữ để rà soát sau cấm')
+        LEGACY_LOCK = 'legacy_lock', gettext_lazy('Giữ do trạng thái khóa cũ')
 
     class ModerationHold(models.TextChoices):
-        NONE = '', 'Không giữ'
-        MANUAL_REVIEW = 'manual_review', 'Tạm ẩn để rà soát nội dung'
-        CONFIRMED_VIOLATION = 'confirmed_violation', 'Tạm ẩn do vi phạm đã xác nhận'
+        NONE = '', gettext_lazy('Không giữ')
+        MANUAL_REVIEW = 'manual_review', gettext_lazy('Tạm ẩn để rà soát nội dung')
+        CONFIRMED_VIOLATION = 'confirmed_violation', gettext_lazy('Tạm ẩn do vi phạm đã xác nhận')
         # Fixable content: the owner may edit, then resubmits for review.
-        CHANGES_REQUESTED = 'changes_requested', 'Tạm ẩn, cần chỉnh sửa theo yêu cầu'
+        CHANGES_REQUESTED = 'changes_requested', gettext_lazy('Tạm ẩn, cần chỉnh sửa theo yêu cầu')
 
     class Tier(models.TextChoices):
         """Hạng hiển thị của tin — quyết định nền card + thứ tự ưu tiên trong danh sách.
@@ -216,9 +135,9 @@ class Job(models.Model):
         single-choice còn nhãn gắn kèm được nhiều cái cùng lúc.
         """
 
-        STANDARD = 'standard', 'Tin thường'
-        FEATURED = 'featured', 'Tin nổi bật'
-        TOP = 'top', 'Tin TOP'
+        STANDARD = 'standard', gettext_lazy('Tin thường')
+        FEATURED = 'featured', gettext_lazy('Tin nổi bật')
+        TOP = 'top', gettext_lazy('Tin TOP')
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     # Tin thuộc về công ty; posted_by là HR cụ thể đã đăng (nhiều HR/công ty).
@@ -227,7 +146,7 @@ class Job(models.Model):
     )
     company = models.ForeignKey('employers.Company', on_delete=models.CASCADE, related_name='jobs')
     campaign = models.ForeignKey(
-        'employers.RecruitmentCampaign',
+        'campaigns.RecruitmentCampaign',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -279,7 +198,9 @@ class Job(models.Model):
     number_of_vacancies = models.PositiveIntegerField(
         null=True, blank=True, help_text='Số lượng cần tuyển; null = không giới hạn'
     )
-    salary_type = models.CharField(
+    # NULL = nhà tuyển dụng chưa chọn hình thức lương (bản nháp), khác hẳn NEGOTIABLE
+    # là đã chọn "thỏa thuận"; API ghi/đọc null nên không đổi sang chuỗi rỗng.
+    salary_type = models.CharField(  # noqa: DJ001
         max_length=20,
         choices=SalaryType.choices,
         default=SalaryType.NEGOTIABLE,
@@ -462,12 +383,8 @@ class Job(models.Model):
             ),
         ]
 
-    @classmethod
-    def publicly_available_queryset(cls, *, at=None):
-        """Expose the canonical candidate-visible queryset across app boundaries."""
-        from .querysets import publicly_available_job_filter
-
-        return cls.objects.filter(publicly_available_job_filter(at=at))
+    def __str__(self):
+        return self.title
 
     def save(self, *args, **kwargs):
         if not self.public_id:
@@ -477,8 +394,12 @@ class Job(models.Model):
             self.slug = f'{base_slug}-{self.public_id}'
         super().save(*args, **kwargs)
 
-    def __str__(self):
-        return self.title
+    @classmethod
+    def publicly_available_queryset(cls, *, at=None):
+        """Expose the canonical candidate-visible queryset across app boundaries."""
+        from .querysets import publicly_available_job_filter
+
+        return cls.objects.filter(publicly_available_job_filter(at=at))
 
     @property
     def is_expired(self):
@@ -521,7 +442,7 @@ class Job(models.Model):
         )
 
     @property
-    def is_visibility_expired(self):
+    def is_visibility_expired(self) -> bool:
         return bool(
             self.status == self.Status.ACTIVE
             and self.visibility_ends_at is not None

@@ -1,12 +1,11 @@
-from drf_spectacular.utils import OpenApiTypes, extend_schema
-from rest_framework import generics, permissions, status
+from drf_spectacular.utils import OpenApiTypes, extend_schema, inline_serializer
+from rest_framework import generics, permissions, serializers, status
+from rest_framework.exceptions import ValidationError
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import AdminPortalPermission
-from common.media_storage import save_image_upload
-from common.pagination import StandardPagination
+from apps.accounts.api.permissions import AdminPortalPermission
 
 from ...selectors import (
     active_categories,
@@ -17,7 +16,7 @@ from ...selectors import (
     published_posts_queryset,
     related_published_posts,
 )
-from ...services import record_post_view, upload_blog_media
+from ...services import record_post_view, upload_blog_media, upload_blog_thumbnail
 from ..serializers import (
     BlogMediaAssetSerializer,
     PinnedPostSerializer,
@@ -27,6 +26,7 @@ from ..serializers import (
 )
 
 
+@extend_schema(summary='Bài viết đã xuất bản', tags=['blog'])
 class PostListView(generics.ListAPIView):
     """Danh sách bài đã xuất bản. Lọc ?category=<slug>&tag=<slug>&q=<text>."""
 
@@ -37,6 +37,7 @@ class PostListView(generics.ListAPIView):
         return published_posts_queryset(self.request.query_params)
 
 
+@extend_schema(summary='Chi tiết bài viết theo slug', tags=['blog'])
 class PostDetailView(generics.RetrieveAPIView):
     """Chi tiết bài viết theo slug; tăng lượt xem mỗi lần mở."""
 
@@ -79,6 +80,7 @@ class BlogHomeView(APIView):
         )
 
 
+@extend_schema(summary='Danh mục bài viết đang bật', tags=['blog'])
 class PostCategoryListView(generics.ListAPIView):
     """Danh mục bài viết đang bật (thanh danh mục ngang)."""
 
@@ -90,6 +92,7 @@ class PostCategoryListView(generics.ListAPIView):
         return active_categories()
 
 
+@extend_schema(summary='Bài ghim ở sidebar blog', tags=['blog'])
 class PinnedPostListView(generics.ListAPIView):
     """Bài ghim khối "Tài liệu hỗ trợ tìm việc" ở sidebar."""
 
@@ -117,7 +120,6 @@ class BlogImageUploadView(generics.ListAPIView):
     permission_classes = [AdminPortalPermission]
     parser_classes = [MultiPartParser, FormParser]
     serializer_class = BlogMediaAssetSerializer
-    pagination_class = StandardPagination
 
     def get_queryset(self):
         return admin_media_queryset(self.request.query_params)
@@ -125,14 +127,27 @@ class BlogImageUploadView(generics.ListAPIView):
     def post(self, request):
         upload = request.FILES.get('file') or request.FILES.get('image')
         if upload is None:
-            return Response(
-                {'detail': 'Thiếu file ảnh (field "file").'}, status=status.HTTP_400_BAD_REQUEST
-            )
+            raise ValidationError({'detail': 'Thiếu file ảnh (field "file").'})
         asset = upload_blog_media(upload=upload, actor=request.user, request=request)
         data = BlogMediaAssetSerializer(asset, context={'request': request}).data
         return Response({**data, 'name': asset.original_name}, status=status.HTTP_201_CREATED)
 
 
+@extend_schema(
+    summary='Tải ảnh đại diện (thumbnail) cho bài viết',
+    request=OpenApiTypes.OBJECT,
+    responses={
+        201: inline_serializer(
+            'BlogThumbnailUpload',
+            {
+                'path': serializers.CharField(),
+                'url': serializers.CharField(),
+                'name': serializers.CharField(),
+            },
+        )
+    },
+    tags=['blog'],
+)
 class BlogThumbnailUploadView(APIView):
     permission_classes = [AdminPortalPermission]
     parser_classes = [MultiPartParser, FormParser]
@@ -140,10 +155,8 @@ class BlogThumbnailUploadView(APIView):
     def post(self, request):
         upload = request.FILES.get('file') or request.FILES.get('image')
         if upload is None:
-            return Response({'detail': 'Thiếu file ảnh (field "file").'}, status=400)
-        saved = save_image_upload(
-            upload, 'blog/thumbnails', request=request, max_dimensions=(1600, 900)
-        )
+            raise ValidationError({'detail': 'Thiếu file ảnh (field "file").'})
+        saved = upload_blog_thumbnail(upload, request=request)
         return Response(
             {'path': saved['path'], 'url': saved['url'], 'name': saved['name']},
             status=status.HTTP_201_CREATED,

@@ -2,8 +2,8 @@ import { SearchOutlined } from '@ant-design/icons'
 import { Button, Input } from 'antd'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { getJobCategories, JobCategoryTreePicker } from '@/entities/job'
-import { LocationFilter } from '@/entities/location'
+import { getJobCategories, JobCategoryTreePicker } from '@/entities/job/job'
+import { LocationFilter } from '@/entities/system/location'
 
 // Thanh tìm kiếm độc lập cho trang chi tiết: giữ người dùng trong ngữ cảnh
 // tìm việc, nhưng không mang theo state/phụ thuộc phức tạp của trang danh sách.

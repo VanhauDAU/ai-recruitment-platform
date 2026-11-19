@@ -2,26 +2,23 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from common.public_id import generate_public_id
+from common.db.public_id import generate_public_id
 
 
 class PhoneOtp(models.Model):
-    """Phone-verification challenge with a legacy email compatibility path.
+    """SMS phone-verification challenge.
 
-    New SMS challenges never persist a plaintext destination or OTP. The
-    encrypted fields only bridge transaction commit to the asynchronous SMS
-    worker and are removed by the retention job. ``phone`` remains solely for
-    challenges created by the live legacy-email endpoints during cutover.
+    A challenge never persists a plaintext destination or OTP. The encrypted
+    fields only bridge transaction commit to the asynchronous SMS worker and are
+    removed by the retention job.
     """
 
     class Purpose(models.TextChoices):
-        LEGACY_EMAIL = 'legacy_email', 'Legacy email compatibility'
         INITIAL_VERIFICATION = 'initial_verification', 'Initial verification'
         PHONE_CHANGE = 'phone_change', 'Phone change'
         REVERIFY = 'reverify', 'Self-service re-verification'
 
     class DispatchStatus(models.TextChoices):
-        LEGACY_EMAIL = 'legacy_email', 'Legacy email compatibility'
         QUEUED = 'queued', 'Queued'
         DISPATCHING = 'dispatching', 'Dispatching'
         RETRY_PENDING = 'retry_pending', 'Retry pending'
@@ -35,18 +32,12 @@ class PhoneOtp(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='phone_otps'
     )
-    purpose = models.CharField(
-        max_length=32,
-        choices=Purpose.choices,
-        default=Purpose.LEGACY_EMAIL,
-    )
+    purpose = models.CharField(max_length=32, choices=Purpose.choices)
     dispatch_status = models.CharField(
         max_length=24,
         choices=DispatchStatus.choices,
-        default=DispatchStatus.LEGACY_EMAIL,
+        default=DispatchStatus.QUEUED,
     )
-    # Legacy-only plaintext field. New SMS challenges keep this empty.
-    phone = models.CharField(max_length=20, blank=True)
     phone_fingerprint = models.CharField(max_length=64, blank=True, db_index=True)
     destination_ciphertext = models.TextField(blank=True)
     otp_ciphertext = models.TextField(blank=True)
@@ -76,13 +67,13 @@ class PhoneOtp(models.Model):
             models.Index(fields=['created_at', 'pii_purged_at'], name='phone_otp_purge_idx'),
         ]
 
+    def __str__(self):
+        return f'{self.public_id}:{self.purpose}:{self.dispatch_status}'
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('poc')
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f'{self.public_id}:{self.purpose}:{self.dispatch_status}'
 
 
 class EmployerPhoneVerificationEvent(models.Model):
@@ -91,7 +82,6 @@ class EmployerPhoneVerificationEvent(models.Model):
     class EventType(models.TextChoices):
         CHALLENGE_CREATED = 'challenge_created', 'Challenge created'
         CHALLENGE_INVALIDATED = 'challenge_invalidated', 'Challenge invalidated'
-        LEGACY_INVALIDATED = 'legacy_invalidated', 'Legacy challenge invalidated'
         DISPATCH_STARTED = 'dispatch_started', 'Dispatch started'
         DISPATCH_SENT = 'dispatch_sent', 'Dispatch sent'
         DISPATCH_RETRY = 'dispatch_retry', 'Dispatch retry scheduled'
@@ -122,12 +112,12 @@ class EmployerPhoneVerificationEvent(models.Model):
             models.Index(fields=['user', '-occurred_at'], name='phone_event_user_time_idx'),
         ]
 
+    def __str__(self):
+        return f'{self.public_id}:{self.event_type}'
+
     def save(self, *args, **kwargs):
         if self.pk and not self._state.adding:
             raise ValidationError('Employer phone verification events are append-only.')
         if not self.public_id:
             self.public_id = generate_public_id('pve')
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f'{self.public_id}:{self.event_type}'

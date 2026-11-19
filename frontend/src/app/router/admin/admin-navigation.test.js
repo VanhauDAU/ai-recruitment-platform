@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createAdminAccess } from '@/entities/admin-access'
+import { createAdminAccess } from '@/entities/account/admin-access'
 import { ADMIN_NAVIGATION } from './admin-navigation.config'
 import {
   buildAdminNavigation,

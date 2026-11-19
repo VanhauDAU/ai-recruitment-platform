@@ -1,5 +1,11 @@
 """Public command API for campaign distribution and lifecycle automation."""
 
+from .campaigns import (
+    apply_system_campaign_status,
+    change_campaign_status,
+    create_campaign,
+    update_campaign,
+)
 from .channels import (
     add_channel_cost,
     create_channel,
@@ -12,7 +18,7 @@ from .health import campaign_health
 from .launch import execute_launch, launch_campaign, save_launch_selection
 from .launch_check import campaign_launch_overview
 from .monitoring import run_health_snapshots, send_weekly_reports, snapshot_campaign
-from .report_export import build_pdf, build_xlsx
+from .report_export import REPORT_CONTENT_TYPES, campaign_report_file
 from .schedule import run_campaign_schedule
 from .social_connections import (
     complete_page_connection,
@@ -21,6 +27,7 @@ from .social_connections import (
     select_page,
     start_page_connection,
 )
+from .social_post_images import company_post_images, save_post_image
 from .social_posts import (
     cancel_post,
     due_post_ids,
@@ -39,8 +46,14 @@ from .tracking import (
 )
 
 __all__ = [
-    'build_pdf',
-    'build_xlsx',
+    'apply_system_campaign_status',
+    'change_campaign_status',
+    'create_campaign',
+    'update_campaign',
+    'company_post_images',
+    'save_post_image',
+    'REPORT_CONTENT_TYPES',
+    'campaign_report_file',
     'campaign_health',
     'run_health_snapshots',
     'send_weekly_reports',

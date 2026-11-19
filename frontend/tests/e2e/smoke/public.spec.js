@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
-import { mockPublicApi } from './helpers'
+import { chooseSelectOption, mockPublicApi } from './helpers'
 
-test('public smoke: home and jobs routes load', async ({ page }, testInfo) => {
+test('public smoke: home and jobs routes load', { tag: '@responsive' }, async ({ page }, testInfo) => {
   await mockPublicApi(page)
   let currentUserRequestCount = 0
   page.on('request', (request) => {
@@ -62,7 +62,7 @@ test('public smoke: home and jobs routes load', async ({ page }, testInfo) => {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
 })
 
-test('public smoke: company directory separates finite featured results from compact infinite search', async ({ page }, testInfo) => {
+test('public smoke: company directory separates finite featured results from compact infinite search', { tag: '@responsive' }, async ({ page }, testInfo) => {
   await mockPublicApi(page)
   let featuredRequests = 0
   let searchRequests = 0
@@ -88,7 +88,7 @@ test('public smoke: company directory separates finite featured results from com
     ...overrides,
   })
 
-  await page.route(/\/api\/companies\/(?:\?.*)?$/, (route) => {
+  await page.route(/\/api\/public\/companies\/(?:\?.*)?$/, (route) => {
     const url = new URL(route.request().url())
     const query = url.searchParams.get('q')
     if (!query) {
@@ -126,7 +126,7 @@ test('public smoke: company directory separates finite featured results from com
         body: JSON.stringify({
           count: 19,
           next: null,
-          previous: 'http://localhost:8000/api/companies/?q=Beta',
+          previous: 'http://localhost:8000/api/public/companies/?q=Beta',
           results: [company('search_page_two', 'Công ty ở trang tìm kiếm thứ hai')],
         }),
       })
@@ -135,7 +135,7 @@ test('public smoke: company directory separates finite featured results from com
       contentType: 'application/json',
       body: JSON.stringify({
         count: 19,
-        next: 'http://localhost:8000/api/companies/?q=Beta&cursor=page-two',
+        next: 'http://localhost:8000/api/public/companies/?q=Beta&cursor=page-two',
         previous: null,
         results: Array.from(
           { length: 18 },
@@ -267,7 +267,7 @@ test('public smoke: company directory separates finite featured results from com
   )).toBe(false)
 })
 
-test('public smoke: featured companies keep platform stats, the company page link and the logo marquee', async ({ page }) => {
+test('public smoke: featured companies keep platform stats, the company page link and the logo marquee', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   const logoDataUri = `data:image/svg+xml,${encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
@@ -284,7 +284,7 @@ test('public smoke: featured companies keep platform stats, the company page lin
     industries_detail: [{ id: 1, name: 'Công nghệ', slug: 'cong-nghe' }],
     active_public_job_count: index === 0 ? 12 : index + 1,
   }))
-  await page.route(/\/api\/companies\/(?:\?.*)?$/, (route) => route.fulfill({
+  await page.route(/\/api\/public\/companies\/(?:\?.*)?$/, (route) => route.fulfill({
     contentType: 'application/json',
     body: JSON.stringify({
       next: null,
@@ -292,7 +292,7 @@ test('public smoke: featured companies keep platform stats, the company page lin
       results: featuredCompanies,
     }),
   }))
-  await page.route(/\/api\/jobs\/stats\/(?:\?.*)?$/, (route) => route.fulfill({
+  await page.route(/\/api\/public\/jobs\/stats\/(?:\?.*)?$/, (route) => route.fulfill({
     contentType: 'application/json',
     body: JSON.stringify({
       candidates: 690_167,
@@ -407,14 +407,14 @@ function companyPageProfile(overrides = {}) {
 async function mockCompanyPage(page, { profile = companyPageProfile(), jobCount = 12, similar = [] } = {}) {
   const jobRequests = []
   const json = (body, status = 200) => ({ status, contentType: 'application/json', body: JSON.stringify(body) })
-  await page.route(/\/api\/companies\/[^/?]+\/(?:\?.*)?$/, (route) => route.fulfill(
+  await page.route(/\/api\/public\/companies\/[^/?]+\/(?:\?.*)?$/, (route) => route.fulfill(
     profile ? json(profile) : json({ detail: 'Không tìm thấy.' }, 404),
   ))
-  await page.route(/\/api\/companies\/[^/?]+\/similar\/(?:\?.*)?$/, (route) => route.fulfill(json({ results: similar })))
-  await page.route(/\/api\/companies\/[^/?]+\/job-facets\/(?:\?.*)?$/, (route) => route.fulfill(json({
+  await page.route(/\/api\/public\/companies\/[^/?]+\/similar\/(?:\?.*)?$/, (route) => route.fulfill(json({ results: similar })))
+  await page.route(/\/api\/public\/companies\/[^/?]+\/job-facets\/(?:\?.*)?$/, (route) => route.fulfill(json({
     locations: [{ id: 1, name: 'Hà Nội', count: 7 }, { id: 2, name: 'Đà Nẵng', count: 5 }],
   })))
-  await page.route(/\/api\/jobs\/\?.*company=/, (route) => {
+  await page.route(/\/api\/public\/jobs\/\?.*company=/, (route) => {
     const query = new URL(route.request().url()).searchParams
     jobRequests.push(Object.fromEntries(query))
     const total = query.get('search') === 'khong-co' ? 0 : jobCount
@@ -447,7 +447,7 @@ async function expectNoHorizontalOverflow(page) {
   )).toBe(false)
 }
 
-test('public smoke: company page renders from a direct URL with overview, jobs and similar companies', async ({ page }, testInfo) => {
+test('public smoke: company page renders from a direct URL with overview, jobs and similar companies', { tag: '@responsive' }, async ({ page }, testInfo) => {
   await mockPublicApi(page)
   // CP-6: phúc lợi dạng thẻ và video nhấp-để-tải; trình phát của nhà cung cấp được mock.
   await page.route(/^https:\/\/(?:i\.ytimg\.com|www\.youtube-nocookie\.com)\//, (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>player</title>' }))
@@ -536,7 +536,7 @@ test('public smoke: company page renders from a direct URL with overview, jobs a
   await expectNoHorizontalOverflow(page)
 })
 
-test('public smoke: company page keeps the jobs tab, keyword and location in the URL', async ({ page }) => {
+test('public smoke: company page keeps the jobs tab, keyword and location in the URL', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   const jobRequests = await mockCompanyPage(page, { jobCount: 25 })
 
@@ -579,7 +579,7 @@ test('public smoke: company page keeps the jobs tab, keyword and location in the
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'index, follow')
 })
 
-test('public smoke: company page stays complete for a sparse company and shows a real 404 state', async ({ page }) => {
+test('public smoke: company page stays complete for a sparse company and shows a real 404 state', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   const sparse = companyPageProfile({
     slug: 'cua-hang-binh-minh',
@@ -647,14 +647,14 @@ async function mockCandidateSession(page) {
   }))
 }
 
-test('public smoke: company page follow asks guests to sign in and toggles for a candidate', async ({ page }, testInfo) => {
+test('public smoke: company page follow asks guests to sign in and toggles for a candidate', { tag: '@responsive' }, async ({ page }, testInfo) => {
   const followRequests = []
   let follow = { following: false, notify_new_jobs: false, follower_count: 12 }
   await mockPublicApi(page)
   await mockCompanyPage(page, {
     profile: companyPageProfile({ stats: { ...companyPageProfile().stats, follower_count: 12 } }),
   })
-  await page.route(/\/api\/companies\/co_ab12\/follow\/$/, (route) => {
+  await page.route(/\/api\/public\/companies\/co_ab12\/follow\/$/, (route) => {
     const request = route.request()
     followRequests.push(`${request.method()} ${request.postData() || ''}`.trim())
     if (request.method() === 'PUT') {
@@ -702,12 +702,12 @@ test('public smoke: company page follow asks guests to sign in and toggles for a
   expect(followRequests).toEqual(['GET', 'PUT {}', 'PUT {"notify_new_jobs":false}', 'DELETE'])
 })
 
-test('public smoke: company page report submits a reason with its section and explains a duplicate', async ({ page }) => {
+test('public smoke: company page report submits a reason with its section and explains a duplicate', { tag: '@responsive' }, async ({ page }) => {
   const reportPayloads = []
   await mockPublicApi(page)
   await mockCandidateSession(page)
   await mockCompanyPage(page)
-  await page.route(/\/api\/companies\/co_ab12\/reports\/$/, (route) => {
+  await page.route(/\/api\/public\/companies\/co_ab12\/reports\/$/, (route) => {
     reportPayloads.push(route.request().postDataJSON())
     return route.fulfill(reportPayloads.length === 1
       ? { status: 201, contentType: 'application/json', body: JSON.stringify({ public_id: 'crp_1', status: 'pending' }) }
@@ -728,10 +728,12 @@ test('public smoke: company page report submits a reason with its section and ex
   await dialog.getByRole('button', { name: 'Gửi báo cáo' }).click()
   await expect(dialog.getByText('Chọn lý do báo cáo.')).toBeVisible()
   await dialog.getByRole('radio', { name: 'Mạo danh doanh nghiệp khác' }).check()
-  await dialog.getByRole('combobox', { name: 'Phần thông tin liên quan' }).click()
+  const section = dialog.getByRole('combobox', { name: 'Phần thông tin liên quan' })
+  await section.click()
   const sectionOptions = page.locator('.ant-select-item-option-content')
+  await expect(sectionOptions.filter({ hasText: 'Thông tin chung' })).toBeVisible()
   await expect(sectionOptions.filter({ hasText: 'Chia sẻ công ty' })).toHaveCount(0)
-  await sectionOptions.filter({ hasText: 'Thông tin chung' }).click()
+  await chooseSelectOption(page, section, 'Thông tin chung')
   await dialog.getByRole('textbox', { name: 'Mô tả chi tiết' }).fill('Trang dùng tên và logo của doanh nghiệp khác.')
   await expectNoHorizontalOverflow(page)
   await dialog.getByRole('button', { name: 'Gửi báo cáo' }).click()
@@ -755,7 +757,7 @@ test('public smoke: reapproval keeps the original posted date on job cards and d
   await mockPublicApi(page)
   const latestApproval = new Date()
   const firstApproval = new Date(latestApproval.getTime() - 2 * 86_400_000)
-  await page.route(/\/api\/jobs\/(?:\?.*)?$/, (route) => route.fulfill({
+  await page.route(/\/api\/public\/jobs\/(?:\?.*)?$/, (route) => route.fulfill({
     contentType: 'application/json',
     body: JSON.stringify({
       count: 1,
@@ -776,7 +778,7 @@ test('public smoke: reapproval keeps the original posted date on job cards and d
       }],
     }),
   }))
-  await page.route(/\/api\/jobs\/backend-engineer-job-reapproved\/$/, (route) => route.fulfill({
+  await page.route(/\/api\/public\/jobs\/backend-engineer-job-reapproved\/$/, (route) => route.fulfill({
     contentType: 'application/json',
     body: JSON.stringify({
       public_id: 'job_reapproved',
@@ -811,7 +813,7 @@ test('public smoke: reapproval keeps the original posted date on job cards and d
   await expect(page.getByText('Đăng hôm nay')).toHaveCount(0)
 })
 
-test('public smoke: tablet header taps open top-level submenus', async ({ page }, testInfo) => {
+test('public smoke: tablet header taps open top-level submenus', { tag: '@responsive' }, async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'tablet-chromium')
   await mockPublicApi(page)
   await page.goto('/')
@@ -826,7 +828,7 @@ test('public smoke: tablet header taps open top-level submenus', async ({ page }
   await expect(page).toHaveURL('/')
 })
 
-test('public smoke: tablet floating actions stay inside the visual viewport', async ({ page }, testInfo) => {
+test('public smoke: tablet floating actions stay inside the visual viewport', { tag: '@responsive' }, async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'tablet-chromium')
   await page.addInitScript(() => {
     const viewport = new EventTarget()
@@ -861,7 +863,7 @@ test('public smoke: tablet floating actions stay inside the visual viewport', as
   ).toBeGreaterThan(initialSupportBottom + 200)
 })
 
-test('public smoke: CV template colors change preview and detail offers the create flow', async ({ page }) => {
+test('public smoke: CV template colors change preview and detail offers the create flow', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   const card = {
     public_id: 'tpl_modern',
@@ -878,21 +880,21 @@ test('public smoke: CV template colors change preview and detail offers the crea
     categories: [{ public_id: 'cat_style', slug: 'modern', name: 'Hiện đại', type: 'style' }],
     tags: [{ public_id: 'cat_ats', slug: 'ats', name: 'Thân thiện ATS', type: 'feature' }],
   }
-  await page.route('http://localhost:8000/api/v2/**', async (route) => {
+  await page.route((url) => url.origin === 'http://localhost:8000' && url.pathname.startsWith('/api/public/cv-'), async (route) => {
     const url = new URL(route.request().url())
     const path = url.pathname
-    const body = path === '/api/v2/cv-templates/'
+    const body = path === '/api/public/cv-templates/'
       ? { count: 1, results: [card] }
-      : path === '/api/v2/cv-templates/modern/'
+      : path === '/api/public/cv-templates/modern/'
         ? { ...card, preview_url: '', renderer: { key: 'single_column_v1', version: '1', schema_version: 1, capabilities: {} }, sections: [] }
-        : path === '/api/v2/cv-templates/modern/related/'
+        : path === '/api/public/cv-templates/modern/related/'
           ? []
-          : path === '/api/v2/cv-position-options/'
+          : path === '/api/public/cv-position-options/'
             ? [
                 { public_id: 'jobcat_customer_service', slug: 'nhan-vien-cskh', name_vi: 'Nhân viên CSKH', display_name: 'Nhân viên CSKH' },
                 { public_id: 'jobcat_frontend', slug: 'frontend-developer', name_vi: 'Frontend Developer', display_name: 'Frontend Developer' },
               ]
-            : path === '/api/v2/cv-position-preview/'
+            : path === '/api/public/cv-position-preview/'
               ? (() => {
                   const locale = url.searchParams.get('locale')
                   const content = {
@@ -931,7 +933,7 @@ test('public smoke: CV template colors change preview and detail offers the crea
                   revision: `revision-${locale}`,
                 }
                 })()
-          : path === '/api/v2/cv-categories/' || path === '/api/v2/cv-sample-contents/'
+          : path === '/api/public/cv-categories/' || path === '/api/public/cv-sample-contents/'
             ? []
             : {}
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
@@ -986,7 +988,7 @@ test('public smoke: CV template colors change preview and detail offers the crea
 
 test('public smoke: a shared CV link renders its immutable version', async ({ page }) => {
   await mockPublicApi(page)
-  await page.route('http://localhost:8000/api/v2/cvs/shares/share-token/', async (route) => {
+  await page.route('http://localhost:8000/api/public/cvs/shares/share-token/', async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({

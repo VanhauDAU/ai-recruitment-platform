@@ -1,7 +1,8 @@
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy
 
-from common.public_id import generate_public_id
+from common.db.public_id import generate_public_id
 
 
 class EmployerComplianceHold(models.Model):
@@ -14,18 +15,18 @@ class EmployerComplianceHold(models.Model):
     """
 
     class Source(models.TextChoices):
-        VERIFICATION = 'verification', 'Xác thực nhà tuyển dụng'
-        DPA = 'dpa', 'Thỏa thuận xử lý dữ liệu'
+        VERIFICATION = 'verification', gettext_lazy('Xác thực nhà tuyển dụng')
+        DPA = 'dpa', gettext_lazy('Thỏa thuận xử lý dữ liệu')
 
     class Reason(models.TextChoices):
-        VERIFICATION_REVOKED = 'verification_revoked', 'Xác thực bị thu hồi'
-        VERIFICATION_EXPIRED = 'verification_expired', 'Xác thực hết hiệu lực'
-        DPA_OUTDATED = 'dpa_outdated', 'DPA không còn hiện hành'
-        DPA_HOLD = 'dpa_hold', 'DPA quá hạn'
+        VERIFICATION_REVOKED = 'verification_revoked', gettext_lazy('Xác thực bị thu hồi')
+        VERIFICATION_EXPIRED = 'verification_expired', gettext_lazy('Xác thực hết hiệu lực')
+        DPA_OUTDATED = 'dpa_outdated', gettext_lazy('DPA không còn hiện hành')
+        DPA_HOLD = 'dpa_hold', gettext_lazy('DPA quá hạn')
 
     class Status(models.TextChoices):
-        ACTIVE = 'active', 'Đang áp dụng'
-        RELEASED = 'released', 'Đã gỡ'
+        ACTIVE = 'active', gettext_lazy('Đang áp dụng')
+        RELEASED = 'released', gettext_lazy('Đã gỡ')
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     recruiter = models.ForeignKey(
@@ -118,6 +119,9 @@ class EmployerComplianceHold(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'{self.public_id}:{self.source}:{self.status}'
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('ech')
@@ -131,7 +135,7 @@ class EmployerComplianceHoldCampaign(models.Model):
         related_name='campaign_links',
     )
     campaign = models.ForeignKey(
-        'employers.RecruitmentCampaign',
+        'campaigns.RecruitmentCampaign',
         on_delete=models.PROTECT,
         related_name='compliance_hold_links',
     )
@@ -147,6 +151,9 @@ class EmployerComplianceHoldCampaign(models.Model):
         indexes = [
             models.Index(fields=['campaign', 'hold'], name='emp_hold_campaign_idx'),
         ]
+
+    def __str__(self):
+        return f'{self.hold_id}:campaign:{self.campaign_id}'
 
 
 class EmployerComplianceHoldJob(models.Model):
@@ -172,3 +179,6 @@ class EmployerComplianceHoldJob(models.Model):
         indexes = [
             models.Index(fields=['job', 'hold'], name='emp_hold_job_idx'),
         ]
+
+    def __str__(self):
+        return f'{self.hold_id}:job:{self.job_id}'

@@ -3,8 +3,8 @@
 from django.core.cache import cache
 
 from ..models import SiteSetting
+from .cache_keys import SEO_SETTINGS_CACHE_KEY
 
-SEO_SETTINGS_CACHE_KEY = 'sitecontent:seo-settings:v1'
 SEO_SETTING_DEFAULTS = {
     'site_name': 'ProCV',
     'brand_logo_url': '/images/logo/logo-full.webp',
@@ -28,3 +28,11 @@ def resolved_seo_settings():
     values = {**SEO_SETTING_DEFAULTS, **stored}
     cache.set(SEO_SETTINGS_CACHE_KEY, values, 60 * 60)
     return values
+
+
+def seo_page_title(label, settings, *, employer=False):
+    """Khớp `formatDocumentTitle` của frontend: "<Trang> | <Thương hiệu cổng>"."""
+    brand = settings['site_name']
+    if employer:
+        brand = f'{brand} cho Nhà tuyển dụng'
+    return f'{label} | {brand}' if label else brand

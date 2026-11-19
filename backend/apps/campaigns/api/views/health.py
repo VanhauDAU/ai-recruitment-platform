@@ -1,42 +1,33 @@
 from django.http import HttpResponse
+from django.utils.translation import gettext as _
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 
-from apps.cvs.services.pdf_renderer import PdfRenderingError
-from apps.employers.services import campaign_active_seconds
-
-from ...models import CampaignHealthSnapshot
-from ...selectors import campaign_channel_report, daily_applications, report_jobs
-from ...services import build_pdf, build_xlsx, campaign_health
+from ...selectors import (
+    campaign_channel_report,
+    campaign_health_history,
+    daily_applications,
+    report_jobs,
+)
+from ...services import REPORT_CONTENT_TYPES, campaign_health, campaign_report_file
 from .channels import CampaignScopedView
 
-HISTORY_DAYS = 60
 
-
+@extend_schema(
+    tags=['campaigns'],
+    summary='Sức khỏe chiến dịch và lịch sử theo ngày',
+    responses={200: OpenApiTypes.OBJECT},
+)
 class CampaignHealthView(CampaignScopedView):
     """Live indicators and forecast, plus the daily snapshots for the trend chart."""
 
     def get(self, request, public_id):
         campaign = self.campaign()
-        history = CampaignHealthSnapshot.objects.filter(campaign=campaign).order_by('-date')[
-            :HISTORY_DAYS
-        ]
         return Response(
-            {
-                'health': campaign_health(campaign),
-                'history': [
-                    {
-                        'date': snapshot.date,
-                        'status': snapshot.status,
-                        'forecast': snapshot.metrics.get('forecast'),
-                        'accepted': snapshot.metrics.get('accepted'),
-                        'applications': snapshot.metrics.get('applications'),
-                        'headcount': snapshot.metrics.get('headcount'),
-                    }
-                    for snapshot in reversed(history)
-                ],
-            }
+            {'health': campaign_health(campaign), 'history': campaign_health_history(campaign)}
         )
 
 
@@ -44,14 +35,14 @@ class ExportThrottle(UserRateThrottle):
     rate = '20/hour'
 
 
-def _period(campaign):
-    start = campaign.start_date.strftime('%d/%m/%Y') if campaign.start_date else 'khi kích hoạt'
-    if campaign.is_continuous:
-        return f'Từ {start}, tuyển liên tục'
-    end = campaign.target_date.strftime('%d/%m/%Y') if campaign.target_date else 'chưa đặt'
-    return f'Từ {start} đến {end}'
-
-
+@extend_schema(
+    tags=['campaigns'],
+    summary='Tải báo cáo chiến dịch (Excel hoặc PDF)',
+    parameters=[OpenApiParameter('type', str, enum=list(REPORT_CONTENT_TYPES))],
+    responses={
+        (200, content_type): OpenApiTypes.BINARY for content_type in REPORT_CONTENT_TYPES.values()
+    },
+)
 class CampaignReportExportView(CampaignScopedView):
     """Excel or PDF report of the campaign; aggregates only, no candidate data."""
 
@@ -60,29 +51,16 @@ class CampaignReportExportView(CampaignScopedView):
     def get(self, request, public_id):
         # Not `format`: DRF reserves that query parameter for renderer selection.
         file_format = request.query_params.get('type', 'xlsx')
-        if file_format not in {'xlsx', 'pdf'}:
-            raise ValidationError({'type': 'Chọn xlsx hoặc pdf.'})
+        if file_format not in REPORT_CONTENT_TYPES:
+            raise ValidationError({'type': _('Chọn xlsx hoặc pdf.')})
         campaign = self.campaign()
-        report = {
-            'campaign': campaign,
-            'period': _period(campaign),
-            'active_days': round(campaign_active_seconds(campaign) / 86400, 1),
-            'health': campaign_health(campaign),
-            'channels': campaign_channel_report(campaign),
-            'daily': daily_applications(campaign),
-            'jobs': report_jobs(campaign),
-        }
-        if file_format == 'pdf':
-            try:
-                content = build_pdf(report)
-            except PdfRenderingError as error:
-                raise ValidationError(
-                    {'detail': 'Chưa tạo được PDF, hãy thử lại sau ít phút.'}
-                ) from error
-            content_type = 'application/pdf'
-        else:
-            content = build_xlsx(report)
-            content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        content, content_type = campaign_report_file(
+            campaign,
+            file_format,
+            channels=campaign_channel_report(campaign),
+            daily=daily_applications(campaign),
+            jobs=report_jobs(campaign),
+        )
         response = HttpResponse(content, content_type=content_type)
         response['Content-Disposition'] = (
             f'attachment; filename="bao-cao-{campaign.public_id}.{file_format}"'

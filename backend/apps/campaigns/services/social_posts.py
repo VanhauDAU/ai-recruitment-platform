@@ -11,18 +11,19 @@ from datetime import timedelta
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from rest_framework.exceptions import ValidationError
 
-from apps.employers.models import (
-    CampaignActivity,
-    EmployerNotification,
-    RecruitmentCampaign,
-)
-from apps.employers.services import emit_employer_event, record_campaign_activity
+from apps.campaigns.models import CampaignActivity, RecruitmentCampaign
+from apps.employers.models import EmployerNotification
+from apps.employers.services import emit_employer_event
+from common.i18n import recipient_language
 
 from ..models import CampaignChannel, ScheduledSocialPost, SocialAccountConnection
 from .content import render_content
 from .social import SocialProviderError, decrypt_token, get_provider
+from .social_post_images import clean_post_images, read_post_images
 from .tracking import channel_link
 
 Post = ScheduledSocialPost
@@ -53,34 +54,35 @@ def _campaign_is_live(campaign):
 
 
 @transaction.atomic
-def schedule_post(*, channel, user, connection, scheduled_for=None, message=''):
+def schedule_post(*, channel, user, connection, scheduled_for=None, message='', images=()):
     campaign = channel.campaign
     if campaign.owner.user_id != user.pk:
-        raise ValidationError('Bạn không có quyền với chiến dịch này.')
+        raise ValidationError(_('Bạn không có quyền với chiến dịch này.'))
     if campaign.is_terminal:
-        raise ValidationError({'detail': 'Chiến dịch đã kết thúc, không đăng thêm được.'})
+        raise ValidationError({'detail': _('Chiến dịch đã kết thúc, không đăng thêm được.')})
     if channel.kind != CampaignChannel.Kind.FACEBOOK_PAGE:
-        raise ValidationError({'detail': 'Chỉ kênh Fanpage Facebook mới đăng tự động được.'})
+        raise ValidationError({'detail': _('Chỉ kênh Fanpage Facebook mới đăng tự động được.')})
     if (
         connection.owner_id != campaign.owner_id
         or connection.status != SocialAccountConnection.Status.CONNECTED
     ):
         raise ValidationError(
-            {'connection': 'Fanpage chưa kết nối hoặc không thuộc tài khoản này.'}
+            {'connection': _('Fanpage chưa kết nối hoặc không thuộc tài khoản này.')}
         )
     now = timezone.now()
     scheduled_for = scheduled_for or now
     if scheduled_for < now - timedelta(minutes=1):
-        raise ValidationError({'scheduled_for': 'Chọn thời điểm từ bây giờ trở đi.'})
+        raise ValidationError({'scheduled_for': _('Chọn thời điểm từ bây giờ trở đi.')})
     message = (message or post_message(channel)).strip()
     if not message:
         raise ValidationError(
-            {'message': 'Kênh chưa có nội dung. Soạn nội dung trước khi hẹn đăng.'}
+            {'message': _('Kênh chưa có nội dung. Soạn nội dung trước khi hẹn đăng.')}
         )
     return Post.objects.create(
         channel=channel,
         connection=connection,
         message=message[:5000],
+        images=clean_post_images(campaign, images),
         link=channel_link(channel),
         scheduled_for=scheduled_for,
     )
@@ -89,9 +91,9 @@ def schedule_post(*, channel, user, connection, scheduled_for=None, message=''):
 @transaction.atomic
 def cancel_post(*, post, user):
     if post.channel.campaign.owner.user_id != user.pk:
-        raise ValidationError('Bạn không có quyền với bài đăng này.')
+        raise ValidationError(_('Bạn không có quyền với bài đăng này.'))
     if post.status not in Post.OPEN_STATUSES:
-        raise ValidationError({'detail': 'Bài đã đăng hoặc đã hủy.'})
+        raise ValidationError({'detail': _('Bài đã đăng hoặc đã hủy.')})
     post.status = Post.Status.CANCELLED
     post.save(update_fields=['status', 'updated_at'])
     return post
@@ -100,11 +102,11 @@ def cancel_post(*, post, user):
 @transaction.atomic
 def reschedule_post(*, post, user, scheduled_for):
     if post.channel.campaign.owner.user_id != user.pk:
-        raise ValidationError('Bạn không có quyền với bài đăng này.')
+        raise ValidationError(_('Bạn không có quyền với bài đăng này.'))
     if post.status not in Post.OPEN_STATUSES:
-        raise ValidationError({'detail': 'Chỉ hẹn lại được bài chưa đăng.'})
+        raise ValidationError({'detail': _('Chỉ hẹn lại được bài chưa đăng.')})
     if scheduled_for < timezone.now() - timedelta(minutes=1):
-        raise ValidationError({'scheduled_for': 'Chọn thời điểm từ bây giờ trở đi.'})
+        raise ValidationError({'scheduled_for': _('Chọn thời điểm từ bây giờ trở đi.')})
     post.scheduled_for = scheduled_for
     post.status = Post.Status.SCHEDULED
     post.next_attempt_at = None
@@ -121,16 +123,19 @@ def reschedule_post(*, post, user, scheduled_for):
     return post
 
 
-def _notify(campaign, event_type, dedupe_key, message):
-    emit_employer_event(
-        recipient=campaign.owner.user,
-        event_type=event_type,
-        dedupe_key=dedupe_key,
-        message=message,
-        subject_public_id=campaign.public_id,
-        metadata={'campaign_public_id': campaign.public_id},
-        action_path=f'/tuyendung/app/campaigns/{campaign.public_id}?active_tab=channels',
-    )
+def _notify(campaign, event_type, dedupe_key, message, **params):
+    """``message`` is a lazy msgid, rendered in the owner's language with ``params``."""
+    recipient = campaign.owner.user
+    with recipient_language(recipient):
+        emit_employer_event(
+            recipient=recipient,
+            event_type=event_type,
+            dedupe_key=dedupe_key,
+            message=str(message) % params,
+            subject_public_id=campaign.public_id,
+            metadata={'campaign_public_id': campaign.public_id},
+            action_path=f'/tuyendung/app/campaigns/{campaign.public_id}?active_tab=channels',
+        )
 
 
 def _claim(post_id):
@@ -176,7 +181,11 @@ def _publish_remote(post):
         if existing:
             return existing
     return provider.publish(
-        page_id=post.connection.page_id, page_token=token, message=post.message, link=post.link
+        page_id=post.connection.page_id,
+        page_token=token,
+        message=post.message,
+        link=post.link,
+        images=read_post_images(post.images),
     )
 
 
@@ -194,7 +203,7 @@ def _mark_published(post, published):
         channel.posted_at = now
         channel.posted_url = channel.posted_url or published.permalink
         channel.save(update_fields=['posted_at', 'posted_url', 'updated_at'])
-    record_campaign_activity(
+    CampaignActivity.objects.record(
         campaign=channel.campaign,
         event_type=CampaignActivity.EventType.SOCIAL_POST_PUBLISHED,
         group=CampaignActivity.Group.CAMPAIGN,
@@ -215,7 +224,10 @@ def _mark_failed(post, error):
             campaign,
             EmployerNotification.EventType.SOCIAL_CONNECTION_EXPIRED,
             f'social-connection-expired:{post.connection.public_id}:{error.code}',
-            f'Kết nối Fanpage "{post.connection.page_name}" đã hết hạn. Hãy kết nối lại để tiếp tục đăng.',
+            gettext_lazy(
+                'Kết nối Fanpage "%(page)s" đã hết hạn. Hãy kết nối lại để tiếp tục đăng.'
+            ),
+            page=post.connection.page_name,
         )
     if error.transient and not error.token_invalid and post.attempts < MAX_ATTEMPTS:
         post.status = Post.Status.SCHEDULED
@@ -226,7 +238,10 @@ def _mark_failed(post, error):
             campaign,
             EmployerNotification.EventType.SOCIAL_POST_FAILED,
             f'social-post-failed:{post.public_id}',
-            f'Chưa đăng được bài của kênh "{post.channel.label}" lên Fanpage. Mở chiến dịch để hẹn lại.',
+            gettext_lazy(
+                'Chưa đăng được bài của kênh "%(channel)s" lên Fanpage. Mở chiến dịch để hẹn lại.'
+            ),
+            channel=post.channel.label,
         )
     post.save(update_fields=['status', 'next_attempt_at', 'last_error_code', 'updated_at'])
 
@@ -269,13 +284,17 @@ def _delete_remote(post):
             campaign,
             EmployerNotification.EventType.SOCIAL_POST_DELETE_FAILED,
             f'social-post-delete-failed:{post.public_id}',
-            f'Chưa gỡ được bài kênh "{post.channel.label}" khỏi Fanpage. Hãy tự xóa bài: {post.permalink}',
+            gettext_lazy(
+                'Chưa gỡ được bài kênh "%(channel)s" khỏi Fanpage. Hãy tự xóa bài: %(permalink)s'
+            ),
+            channel=post.channel.label,
+            permalink=post.permalink,
         )
         return
     post.status = Post.Status.DELETED
     post.deleted_at = timezone.now()
     post.save(update_fields=['status', 'deleted_at', 'updated_at'])
-    record_campaign_activity(
+    CampaignActivity.objects.record(
         campaign=campaign,
         event_type=CampaignActivity.EventType.SOCIAL_POST_DELETED,
         group=CampaignActivity.Group.CAMPAIGN,

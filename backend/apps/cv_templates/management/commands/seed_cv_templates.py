@@ -14,6 +14,13 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import Max
 
+from apps.cv_templates.domain.section_plans import (
+    DEFAULT_ENABLED_SECTIONS,
+    PERSONAL_INFO_SECTIONS,
+    REQUIRED_SECTIONS,
+    SECTION_PLANS,
+)
+from apps.cv_templates.domain.section_registry import section_definition_seed_data
 from apps.cv_templates.models import (
     CATALOG_LANGUAGES,
     CvCategory,
@@ -25,21 +32,9 @@ from apps.cv_templates.models import (
     CvTemplateSection,
     CvTemplateVersion,
 )
-from apps.cv_templates.section_plans import (
-    DEFAULT_ENABLED_SECTIONS,
-    PERSONAL_INFO_SECTIONS,
-    REQUIRED_SECTIONS,
-    SECTION_PLANS,
-)
-from apps.cv_templates.section_registry import section_definition_seed_data
+from apps.cv_templates.seed_data.template_catalog import CATEGORIES, PALETTE, TEMPLATES
 from apps.cv_templates.services import publish_template_version
 from apps.cv_templates.services.template_config import layout_capabilities, layout_regions
-
-from ._cv_template_catalog import (
-    CATEGORIES,
-    PALETTE,
-    TEMPLATES,
-)
 
 
 def _default_style(spec):
@@ -115,7 +110,7 @@ class Command(BaseCommand):
             self._link_colors(template, spec, colors)
 
         if options['snapshots']:
-            from apps.cv_templates.tasks import regenerate_all_template_snapshots
+            from apps.cv_templates.tasks.template_assets import regenerate_all_template_snapshots
 
             transaction.on_commit(regenerate_all_template_snapshots.delay)
 

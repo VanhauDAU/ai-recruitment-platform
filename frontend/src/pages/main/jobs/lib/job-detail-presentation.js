@@ -1,7 +1,8 @@
+import { getIntlLocale } from '@/shared/config/i18n'
 export function formatJobDate(value) {
   if (!value) return null
   const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? null : date.toLocaleDateString('vi-VN')
+  return Number.isNaN(date.getTime()) ? null : date.toLocaleDateString(getIntlLocale())
 }
 
 /** A stopped job stays readable but no longer takes applications. */

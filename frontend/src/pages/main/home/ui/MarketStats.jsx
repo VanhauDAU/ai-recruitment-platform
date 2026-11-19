@@ -2,11 +2,12 @@ import { useQuery } from '@tanstack/react-query'
 import { BarChartOutlined, RiseOutlined } from '@ant-design/icons'
 import { Select, Skeleton } from 'antd'
 import { useMemo, useState } from 'react'
-import { formatNumber as fmt, getJobStats, jobKeys } from '@/entities/job'
+import { formatNumber as fmt, getJobStats, jobKeys } from '@/entities/job/job'
 import { useCountUp } from '@/shared/hooks/use-count-up'
 import { useInViewOnce } from '../model/use-in-view-once'
 import LatestJobsFeed from './LatestJobsFeed'
 import { DemandChart, GrowthChart } from './MarketCharts'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 function StatTile({ value, label, animate }) {
   const display = useCountUp(value, { enabled: animate })
@@ -46,7 +47,7 @@ export default function MarketStats() {
 
   const latest = useMemo(() => stats?.latest_jobs || [], [stats])
 
-  const today = new Date().toLocaleDateString('vi-VN')
+  const today = new Date().toLocaleDateString(getIntlLocale())
   const demandData = useMemo(
     () => (demandType === 'salary' ? stats?.salary_demand || [] : stats?.demand || []),
     [demandType, stats],

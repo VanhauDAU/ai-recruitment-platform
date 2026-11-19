@@ -1,3 +1,5 @@
+import logging
+
 from celery import shared_task
 from django.conf import settings
 from django.db.models import Q
@@ -7,6 +9,8 @@ from common.metrics import record_metric
 
 from ..models import CompanyDomainClaim, CompanyDomainClaimEvent
 from ..services import reconcile_domain_claim
+
+logger = logging.getLogger(__name__)
 
 
 @shared_task
@@ -43,6 +47,7 @@ def reconcile_company_domain_claims():
         try:
             reconcile_domain_claim(claim, now=now)
         except Exception:  # noqa: BLE001 - next periodic batch retries safely
+            logger.exception('Domain claim %s reconciliation failed; retried next batch.', claim_id)
             failures += 1
         else:
             processed += 1

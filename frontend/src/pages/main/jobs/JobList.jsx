@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FilterOutlined } from '@ant-design/icons'
-import { useLoginPrompt } from '@/features/auth'
-import { CreateJobAlertModal } from '@/features/manage-job-alerts'
+import { useLoginPrompt } from '@/features/common/account/auth'
+import { CreateJobAlertModal } from '@/features/main/job/manage-job-alerts'
 import { message } from '@/shared/lib/toast'
-import { useSession } from '@/entities/session'
+import { useSession } from '@/entities/account/session'
 import { useHideOnScroll } from '@/shared/hooks/use-hide-on-scroll'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
@@ -13,7 +13,7 @@ import {
   nodeCheckState,
   selectedLeafSet,
   toggleCategoryIds,
-} from '@/entities/job'
+} from '@/entities/job/job'
 import JobEmptyExtras from './ui/JobEmptyExtras'
 import JobFilterSidebar from './ui/JobFilterSidebar'
 import JobListFooter from './ui/JobListFooter'
@@ -34,9 +34,10 @@ import useJobLocationData from './model/use-job-location-data'
 import useJobSidebarData from './model/use-job-sidebar-data'
 import { formatLocationGroups, locationDisplayName } from './lib/job-list-params'
 import { relatedCategoryChips, relatedSearchTerms } from './lib/related-terms'
-import { buildJobListTitle } from './lib/job-list-title'
+import { buildJobListTitle } from './lib/job-page-title'
 import { buildJobAlertPrefill } from './lib/job-alert-prefill'
 import './ui/job-list.css'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 export default function JobList() {
   const [expandedGroups, setExpandedGroups] = useState({})
@@ -205,12 +206,11 @@ export default function JobList() {
   const contextLabel = searchLabel || catName || locationContext
   const fullContextLabel = searchLabel || catName || fullLocationContext
   const isLocationContext = !searchLabel && !catName && Boolean(locationContext)
-  const updateLabel = `[Update ${new Date().toLocaleDateString('vi-VN')}]`
+  const updateLabel = `[Update ${new Date().toLocaleDateString(getIntlLocale())}]`
   const pageTitle = buildJobListTitle({
     count: formatNumber(count),
-    contextLabel,
+    contextLabel: searchLabel || catName || (locationSummary ? `tại ${locationSummary}` : ''),
     loading,
-    updateLabel,
   })
 
   useDocumentMetadata(

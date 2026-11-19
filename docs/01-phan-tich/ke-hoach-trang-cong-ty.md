@@ -104,7 +104,7 @@ Người không đủ quyền vào được ở chế độ chỉ xem, kèm lý 
 | Tạm ẩn | `Company.content_policy_hold`, `page_updated_at` | Đọc rẻ ở mọi nơi; lý do nằm trong nhật ký |
 | Nhật ký thay đổi tức thì | Bảng `CompanyPageEvent` chỉ-ghi-thêm | Bố cục không qua admin nên cần dấu vết |
 
-**Registry khối** tại `backend/apps/employers/page_registry.py` (cùng kiểu `cv_templates/section_registry.py`), phục vụ qua API, frontend không giữ bản sao:
+**Registry khối** tại `backend/apps/employers/domain/page_registry.py` (cùng kiểu `cv_templates/domain/section_registry.py`), phục vụ qua API, frontend không giữ bản sao:
 
 - Vùng chính, sắp xếp được: `about`, `jobs`, `benefits`, `culture`, `gallery`, `video`.
 - Sidebar, thứ tự cố định: `general_info`, `offices`, `social_links`, `share`, `similar_companies`.
@@ -125,7 +125,7 @@ Một module chính sách duy nhất: `backend/apps/employers/models/page_access
 
 ### 4.3. API
 
-**Công khai** (`/api/companies/`, mở rộng `urls_public.py`):
+**Công khai** (`/api/public/companies/`, mở rộng `apps/employers/api/urls/public.py`):
 
 - `GET <slug>/`: DTO dạng khối có kiểu từ một builder duy nhất `build_public_company_profile(company, overrides=None)` (`selectors/company_page.py`). Frontend chỉ đọc `sections[].type`, không suy từ tên cột.
 - `GET <public_id>/similar/`, `GET <public_id>/job-facets/` (tải lười).
@@ -148,8 +148,8 @@ Tất cả endpoint mới có throttle riêng và test ngân sách query (phẳn
 
 ### 4.4. SEO shell
 
-- `backend/apps/employers/urls_seo.py`: `cong-ty/<slug>` và `sitemaps/companies.xml`, include sau `apps.sitecontent.urls_seo`; thêm `tim-kiem` vào tập slug dành riêng.
-- View theo mẫu `jobs/api/views/seo.py`, dùng `common/seo.py`: title, description, canonical, robots, OG/Twitter, JSON-LD `Organization` (không mã số thuế, địa chỉ chỉ với doanh nghiệp) + `BreadcrumbList`.
+- `backend/apps/employers/seo/urls.py`: `cong-ty/<slug>` và `sitemaps/companies.xml`, include sau `apps.sitecontent.seo.urls`; thêm `tim-kiem` vào tập slug dành riêng.
+- View theo mẫu `jobs/seo/views.py`, dùng `common/seo.py`: title, description, canonical, robots, OG/Twitter, JSON-LD `Organization` (không mã số thuế, địa chỉ chỉ với doanh nghiệp) + `BreadcrumbList`.
 - Slug lạ hoặc bị tạm ẩn: HTTP 404 thật.
 - Repo không còn cấu hình nginx, nên yêu cầu "route nginx" được đáp ứng bằng ghi chú trong tài liệu triển khai.
 
@@ -157,15 +157,15 @@ Tất cả endpoint mới có throttle riêng và test ngân sách query (phẳn
 
 | Slice | Nội dung |
 |---|---|
-| `entities/company` (mở rộng) | API chi tiết/tương tự/facets, keys, `companyDetailPath()`, bộ hiển thị dùng chung `CompanyProfileView` + `CompanySectionRenderer` (cho trang công khai, xem trước NTD và xem trước admin; widget không được import chéo nhau) |
-| `shared/ui` | `RichContent` (tách từ `entities/job/JobRichContent`, luôn qua `sanitizeHtml`), `ShareButtons` (tách từ `JobShareRail`) |
-| `widgets/public-company-profile` (mới) | Trang công khai, tab việc làm, thẻ tin rút gọn, công ty tương tự, CTA di động, skeleton, not-found |
-| `features/follow-company`, `report-company`, `review-company-reports` (mới) | Theo dõi (optimistic + rollback), modal báo cáo, hàng chờ admin |
-| `features/customize-company-page`, `manage-company-page-editors` (mới) | Danh sách khối (`@dnd-kit` đã cài), bảng màu, tin ghim, form nội dung, trạng thái chờ duyệt, thước hoàn thiện, phân quyền |
-| `widgets/employer-company-page` (mới) | Ba tab + xem trước |
-| `entities/employer-company-page`, `entities/company-report` (mới) | API workspace và báo cáo |
+| `entities/company/company` (mở rộng) | API chi tiết/tương tự/facets, keys, `companyDetailPath()`, bộ hiển thị dùng chung `CompanyProfileView` + `CompanySectionRenderer` (cho trang công khai, xem trước NTD và xem trước admin; widget không được import chéo nhau) |
+| `shared/ui` | `RichContent` (tách từ `entities/job/job/JobRichContent`, luôn qua `sanitizeHtml`), `ShareButtons` (tách từ `JobShareRail`) |
+| `widgets/main/public-company-profile` (mới) | Trang công khai, tab việc làm, thẻ tin rút gọn, công ty tương tự, CTA di động, skeleton, not-found |
+| `features/main/company/follow-company`, `report-company`, `review-company-reports` (mới) | Theo dõi (optimistic + rollback), modal báo cáo, hàng chờ admin |
+| `features/employer/company/customize-company-page`, `manage-company-page-editors` (mới) | Danh sách khối (`@dnd-kit` đã cài), bảng màu, tin ghim, form nội dung, trạng thái chờ duyệt, thước hoàn thiện, phân quyền |
+| `widgets/employer/company-page` (mới) | Ba tab + xem trước |
+| `entities/company/employer-company-page`, `entities/company/company-report` (mới) | API workspace và báo cáo |
 
-Trang và route: `pages/main/companies/CompanyDetail.jsx`, `pages/main/account/FollowedCompanies.jsx`, `pages/employer/app/CompanyPage.jsx`; đăng ký qua `app/router/lazy/*.pages.jsx` và `routes/*.routes.jsx`; cập nhật `route-metadata.js`, `document-title.js`, menu NTD, menu tài khoản ứng viên.
+Trang và route: `pages/main/companies/CompanyDetail.jsx`, `pages/main/account/FollowedCompanies.jsx`, `pages/employer/company/CompanyPage.jsx`; đăng ký qua `app/router/lazy/*.pages.jsx` và `routes/*.routes.jsx`; cập nhật `route-metadata.js`, `document-title.js`, menu NTD, menu tài khoản ứng viên.
 
 Thay mọi liên kết theo tên bằng `companyDetailPath`: `CompanyCard`, `SearchCompanyCard`, `TopEmployersSidebar`, `JobDetailSidebar`, `JobQuickView`, `FeaturedEmployers`, `EmployerLogoBelt`.
 
@@ -192,12 +192,12 @@ CP-3, CP-4, CP-5 độc lập với nhau.
 
 ## 6. Ràng buộc đã kiểm chứng trong code
 
-- `Company.updated_at` là khoá chống ghi đè của yêu cầu cập nhật (`api/views/verification.py:449`): bố cục, bộ đếm theo dõi và tạm ẩn phải ghi bằng `.update()`/bảng riêng, không `save()` Company.
+- `Company.updated_at` là khoá chống ghi đè của yêu cầu cập nhật (`CompanyUpdateRequestListCreateView` trong `employers/api/views/company_update_requests.py`): bố cục, bộ đếm theo dõi và tạm ẩn phải ghi bằng `.update()`/bảng riêng, không `save()` Company.
 - Mỗi người chỉ có một yêu cầu đang mở và `in_review` thì khoá: sửa nội dung theo từng khối phải gộp ở server; khi đang thẩm định hiển thị khoá "Đang thẩm định".
 - Owner trong test và seed chưa xác thực: seed cần tạo hồ sơ xác thực đã duyệt để có công ty index được và để thử workspace.
 - Job DTO chưa có slug công ty; `tim-kiem` phải là slug dành riêng.
 - `jobs/api/serializers/jobs.py:492` trả địa chỉ thô của công ty, kể cả hộ kinh doanh, trong khi danh bạ đã ẩn. CP-0 thống nhất qua một helper; lưu ý việc này đổi hiển thị địa chỉ ở trang chi tiết tin của hộ kinh doanh.
-- Ứng viên không có thông báo trong ứng dụng; kênh duy nhất là digest email (`jobs/services/digests.py`).
+- Ứng viên không có thông báo trong ứng dụng; kênh duy nhất là digest email (`jobs/services/digests/`).
 
 ## 7. Kiểm chứng
 

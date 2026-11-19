@@ -4,7 +4,7 @@ from rest_framework import generics, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsCandidate
+from apps.accounts.api.permissions import IsCandidate
 
 from ...selectors import candidate_notification_queryset, candidate_unread_notification_count
 from ...services import mark_all_candidate_notifications_read, mark_candidate_notification_read

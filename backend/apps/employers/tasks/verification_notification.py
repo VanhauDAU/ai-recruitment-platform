@@ -2,22 +2,55 @@
 
 import html
 import logging
-from datetime import timedelta
 
 from celery import shared_task
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from apps.sitecontent.selectors import get_string_setting
 from common.email import send_html_email
+from common.i18n import recipient_language
+from common.outbox import MAX_DELIVERY_ATTEMPTS, is_sending_fresh, stale_sending_before
 
 from ..models import EmployerVerificationNotification
 
 logger = logging.getLogger(__name__)
-MAX_ATTEMPTS = 4
-STALE_SENDING_AFTER = timedelta(minutes=5)
+
+
+def _render(job, site_name):
+    """Subject, text and HTML in the active (recipient's) language."""
+    labels = {
+        'approved': _('Hồ sơ xác thực đã được duyệt'),
+        'changes_requested': _('Hồ sơ xác thực cần bổ sung'),
+        'rejected': _('Hồ sơ xác thực bị từ chối'),
+        'document_changes_requested': _('Giấy tờ xác thực cần bổ sung'),
+        'document_rejected': _('Giấy tờ xác thực bị từ chối'),
+    }
+    title = labels.get(job.event_type) or _('Trạng thái xác thực đã thay đổi')
+    reason = str(job.context.get('reason', '')).strip()
+    action_url = f'{settings.EMPLOYER_FRONTEND_URL.rstrip("/")}/tuyendung/app/employer-verify'
+    unlocked = (
+        _(
+            'Bạn đã có thể gửi tin tuyển dụng sang kiểm duyệt và sử dụng các workflow '
+            'được phép để xử lý hồ sơ ứng viên.'
+        )
+        if job.event_type == 'approved'
+        else _('Đăng nhập để xem đúng bước cần hoàn thiện hoặc nộp lại.')
+    )
+    text = (
+        _('%(title)s. %(reason)s %(unlocked)s Xem chi tiết: %(url)s')
+        % {'title': title, 'reason': reason, 'unlocked': unlocked, 'url': action_url}
+    ).strip()
+    body = (
+        f'<h2>{html.escape(title)}</h2>'
+        f'{f"<p>{html.escape(reason)}</p>" if reason else ""}'
+        f'<p>{html.escape(unlocked)}</p>'
+        f'<p><a href="{html.escape(action_url)}">{html.escape(_("Mở trang xác thực"))}</a></p>'
+    )
+    return f'{title} · {site_name}', text, body
 
 
 def _send(job):
@@ -29,39 +62,19 @@ def _send(job):
         if sender_name
         else settings.EMAIL_FROM_ADDRESS
     )
-    labels = {
-        'approved': 'Hồ sơ xác thực đã được duyệt',
-        'changes_requested': 'Hồ sơ xác thực cần bổ sung',
-        'rejected': 'Hồ sơ xác thực bị từ chối',
-        'document_changes_requested': 'Giấy tờ xác thực cần bổ sung',
-        'document_rejected': 'Giấy tờ xác thực bị từ chối',
-    }
-    title = labels.get(job.event_type, 'Trạng thái xác thực đã thay đổi')
-    reason = str(job.context.get('reason', '')).strip()
-    action_url = f'{settings.EMPLOYER_FRONTEND_URL.rstrip("/")}/tuyendung/app/employer-verify'
-    unlocked = (
-        'Bạn đã có thể gửi tin tuyển dụng sang kiểm duyệt và sử dụng các workflow '
-        'được phép để xử lý hồ sơ ứng viên.'
-        if job.event_type == 'approved'
-        else 'Đăng nhập để xem đúng bước cần hoàn thiện hoặc nộp lại.'
-    )
-    text = f'{title}. {reason} {unlocked} Xem chi tiết: {action_url}'.strip()
+    with recipient_language(job.recipient):
+        subject, text, body = _render(job, site_name)
     send_html_email(
-        subject=f'{title} · {site_name}',
+        subject=subject,
         text=text,
-        html=(
-            f'<h2>{html.escape(title)}</h2>'
-            f'{f"<p>{html.escape(reason)}</p>" if reason else ""}'
-            f'<p>{html.escape(unlocked)}</p>'
-            f'<p><a href="{html.escape(action_url)}">Mở trang xác thực</a></p>'
-        ),
+        html=body,
         to=job.recipient.email,
         from_email=sender,
         reply_to=support_email or None,
     )
 
 
-@shared_task(bind=True, max_retries=MAX_ATTEMPTS - 1)
+@shared_task(bind=True, max_retries=MAX_DELIVERY_ATTEMPTS - 1)
 def deliver_employer_verification_notification(self, job_id):
     now = timezone.now()
     with transaction.atomic():
@@ -73,10 +86,8 @@ def deliver_employer_verification_notification(self, job_id):
         )
         if job is None or job.status == EmployerVerificationNotification.Status.SENT:
             return
-        if (
-            job.status == EmployerVerificationNotification.Status.SENDING
-            and job.started_at
-            and now - job.started_at < STALE_SENDING_AFTER
+        if job.status == EmployerVerificationNotification.Status.SENDING and is_sending_fresh(
+            job.started_at, now
         ):
             return
         job.status = EmployerVerificationNotification.Status.SENDING
@@ -87,7 +98,7 @@ def deliver_employer_verification_notification(self, job_id):
     try:
         _send(job)
     except Exception as error:  # noqa: BLE001 - persisted outbox is the fallback
-        exhausted = job.attempts >= MAX_ATTEMPTS
+        exhausted = job.attempts >= MAX_DELIVERY_ATTEMPTS
         EmployerVerificationNotification.objects.filter(pk=job.pk).update(
             status=(
                 EmployerVerificationNotification.Status.FAILED
@@ -110,7 +121,7 @@ def deliver_employer_verification_notification(self, job_id):
 
 @shared_task
 def dispatch_pending_employer_verification_notifications():
-    stale_before = timezone.now() - STALE_SENDING_AFTER
+    stale_before = stale_sending_before(timezone.now())
     job_ids = EmployerVerificationNotification.objects.filter(
         Q(status=EmployerVerificationNotification.Status.PENDING)
         | Q(

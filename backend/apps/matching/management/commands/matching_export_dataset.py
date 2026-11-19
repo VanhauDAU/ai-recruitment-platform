@@ -11,7 +11,8 @@ from django.core.management.base import BaseCommand, CommandError
 
 from apps.cvs.services import SYNTHETIC_EMAIL_DOMAIN
 
-from ...selectors import cvs_for_profile, jobs_for_profile
+from ...models import jobs_for_profile
+from ...selectors import cvs_for_profile
 from ...services.dataset import export_cvs, export_files, export_jobs, export_skills
 
 

@@ -2,7 +2,7 @@ from django.conf import settings
 from django.db import models
 from django.utils.text import slugify
 
-from common.public_id import generate_public_id
+from common.db.public_id import generate_public_id
 
 from .slug import friendly_post_slug
 
@@ -39,15 +39,15 @@ class PostCategory(models.Model):
         verbose_name = 'Danh mục bài viết'
         verbose_name_plural = 'Danh mục bài viết'
 
+    def __str__(self):
+        return self.name
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('pcat')
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
 
 
 class Tag(models.Model):
@@ -65,15 +65,15 @@ class Tag(models.Model):
         verbose_name = 'Thẻ bài viết'
         verbose_name_plural = 'Thẻ bài viết'
 
+    def __str__(self):
+        return self.name
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('ptag')
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
 
 
 class BlogMediaAsset(models.Model):
@@ -98,13 +98,13 @@ class BlogMediaAsset(models.Model):
         verbose_name_plural = 'Kho ảnh nội dung blog'
         indexes = [models.Index(fields=['-created_at'], name='blog_media_created_idx')]
 
+    def __str__(self):
+        return self.original_name
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('pmedia')
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.original_name
 
 
 class Post(models.Model):
@@ -191,6 +191,9 @@ class Post(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return self.title
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('ps')
@@ -205,9 +208,6 @@ class Post(models.Model):
                 suffix += 1
             self.slug = candidate
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.title
 
 
 class PinnedPost(models.Model):
@@ -299,13 +299,13 @@ class PostWorkingCopy(models.Model):
     class Meta:
         ordering = ['-updated_at']
 
+    def __str__(self):
+        return f'Bản sửa: {self.title}'
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('pwc')
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f'Bản sửa: {self.title}'
 
 
 class PostStatusHistory(models.Model):
@@ -330,6 +330,9 @@ class PostStatusHistory(models.Model):
         indexes = [
             models.Index(fields=['post', '-created_at'], name='blog_history_post_created_idx')
         ]
+
+    def __str__(self):
+        return f'{self.action}: {self.from_status or "-"} -> {self.to_status}'
 
     def save(self, *args, **kwargs):
         if not self.public_id:

@@ -11,7 +11,7 @@ from apps.accounts.models import User
 
 from ..models import Announcement, AnnouncementRevision
 from ..services import normalize_revision_data
-from .announcement_helpers import revision_payload
+from .factories import revision_payload
 
 
 def _png_bytes(width, height, color=(16, 185, 129)):

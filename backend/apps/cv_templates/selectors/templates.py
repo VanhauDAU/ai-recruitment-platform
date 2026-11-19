@@ -2,6 +2,7 @@
 
 from django.db.models import F, Prefetch, Q
 
+from apps.cv_templates.domain.renderers import layout_registry
 from apps.jobs.models import JobCategory, JobCategoryLocalization
 
 from ..models import (
@@ -15,7 +16,6 @@ from ..models import (
     CvTemplateSection,
     localized_field,
 )
-from ..renderers import layout_registry
 
 
 def _slugs(value):
@@ -218,5 +218,15 @@ def active_position_profile(position_public_id):
             is_active=True,
         )
         .prefetch_related('fields')
+        .first()
+    )
+
+
+def preview_template(public_id):
+    """Template kèm phiên bản đang xuất bản và section để ghép document xem trước, hoặc None."""
+    return (
+        CvTemplate.objects.select_related('current_published_version')
+        .prefetch_related('current_published_version__sections__section_definition')
+        .filter(public_id=public_id)
         .first()
     )

@@ -1,0 +1,598 @@
+from copy import deepcopy
+from datetime import timedelta
+from io import BytesIO
+from unittest.mock import Mock, patch
+from urllib.parse import urlsplit
+
+from django.contrib.auth import get_user_model
+from django.db.models.deletion import ProtectedError
+from django.test import TestCase
+from django.urls import reverse
+from django.utils import timezone
+from rest_framework.test import APIClient, APITestCase
+
+from apps.accounts.services import issue_tokens
+from apps.applications.models import Application, ApplicationStatusHistory
+from apps.applications.services import InvalidApplicationStatusTransition, change_application_status
+from apps.campaigns.models import CampaignActivity, RecruitmentCampaign
+from apps.cv_templates.tests.factories import fill_cv_for_application, make_published_template
+from apps.cvs.models import CvAsset, CvVersion
+from apps.cvs.services import (
+    create_application_snapshot,
+    create_user_cv,
+    save_draft_as_version,
+    update_draft,
+)
+from apps.employers.models import Company, EmployerNotification, RecruiterProfile
+from apps.employers.tests.factories import make_employer_ready
+from apps.jobs.models import Job, JobLocation
+from apps.jobs.tests.factories import open_visibility_window
+from apps.locations.models import Location
+
+
+class RecruiterApplicationSnapshotTests(APITestCase):
+    def setUp(self):
+        self.candidate = get_user_model().objects.create_user(
+            email='snapshot-candidate@example.com',
+            password='password',
+            role='candidate',
+            email_verified=True,
+        )
+        self.owner = get_user_model().objects.create_user(
+            email='snapshot-owner@example.com',
+            password='password',
+            role='employer',
+        )
+        self.member = get_user_model().objects.create_user(
+            email='snapshot-member@example.com',
+            password='password',
+            role='employer',
+        )
+        self.outsider = get_user_model().objects.create_user(
+            email='snapshot-outsider@example.com',
+            password='password',
+            role='employer',
+        )
+        self.company = Company.objects.create(
+            company_name='Snapshot Company', created_by=self.owner
+        )
+        self.owner_profile = make_employer_ready(
+            self.owner,
+            company=self.company,
+            candidate_data=True,
+        )
+        RecruiterProfile.objects.create(
+            user=self.member,
+            company=self.company,
+            company_role=RecruiterProfile.CompanyRole.MEMBER,
+        )
+        self.job = Job.objects.create(
+            posted_by=self.owner,
+            company=self.company,
+            title='Snapshot Job',
+            description='Read immutable application snapshots.',
+            status=Job.Status.ACTIVE,
+            **open_visibility_window(),
+        )
+        template, _template_version = make_published_template('Snapshot template')
+        self.cv = create_user_cv(actor=self.candidate, title='Application CV', template=template)
+        self.snapshot = create_application_snapshot(self.cv, self.candidate)
+        self.application = Application.objects.create(
+            candidate=self.candidate,
+            job=self.job,
+            cv=self.cv,
+            submitted_cv_version=self.snapshot,
+            submitted_cv_title=self.cv.title,
+            submitted_cv_source=self.cv.source,
+        )
+
+    def test_job_poster_reads_snapshot_not_a_later_mutable_cv_version(self):
+        draft = self.cv.draft
+        changed_content = draft.content_json
+        changed_content['personal_info']['full_name'] = 'Changed after apply'
+        update_draft(
+            cv=self.cv,
+            actor=self.candidate,
+            content_json=changed_content,
+            layout_json=draft.layout_json,
+            style_json=draft.style_json,
+            expected_lock_version=draft.lock_version,
+        )
+        save_draft_as_version(cv=self.cv, actor=self.candidate, expected_lock_version=1)
+        self.assertEqual(CvVersion.objects.filter(cv=self.cv).count(), 3)
+
+        tokens = issue_tokens(self.owner, auth_method='password')
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
+        response = self.client.get(
+            reverse(
+                'recruiter-application-snapshot',
+                kwargs={'public_id': self.application.public_id},
+            )
+        )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data['cv']['public_id'], self.snapshot.public_id)
+        self.assertEqual(response.data['cv']['content_json']['personal_info']['full_name'], '')
+        self.assertNotIn('cv_data', response.data['cv'])
+
+    def test_job_poster_reads_candidate_snapshot_with_password_session(self):
+        tokens = issue_tokens(self.owner, auth_method='password')
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
+
+        response = self.client.get(
+            reverse(
+                'recruiter-application-snapshot',
+                kwargs={'public_id': self.application.public_id},
+            )
+        )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data['cv']['public_id'], self.snapshot.public_id)
+
+    def test_submitted_snapshot_cannot_be_deleted_while_the_application_exists(self):
+        with self.assertRaises(ProtectedError):
+            self.snapshot.delete()
+
+        self.assertTrue(CvVersion.objects.filter(pk=self.snapshot.pk).exists())
+        self.assertTrue(Application.objects.filter(pk=self.application.pk).exists())
+
+    def test_recruiter_asset_token_is_actor_bound_and_rechecks_live_candidate_access(self):
+        asset = CvAsset.objects.create(
+            owner=self.candidate,
+            kind=CvAsset.Kind.AVATAR,
+            storage_key='cvs/assets/recruiter-bound-avatar.png',
+            content_type='image/png',
+            size_bytes=3,
+            width=1,
+            height=1,
+            checksum_sha256='a' * 64,
+        )
+        content = deepcopy(self.snapshot.content_json)
+        content['personal_info']['avatar_asset_id'] = asset.public_id
+        CvVersion.objects.filter(pk=self.snapshot.pk).update(content_json=content)
+        self.snapshot.refresh_from_db()
+        self.client.credentials()
+        self.client.force_authenticate(self.owner)
+
+        snapshot_response = self.client.get(
+            reverse(
+                'recruiter-application-snapshot',
+                kwargs={'public_id': self.application.public_id},
+            )
+        )
+        asset_url = snapshot_response.data['cv']['assets'][asset.public_id]['url']
+        parsed = urlsplit(asset_url)
+        content_url = f'{parsed.path}?{parsed.query}'
+
+        self.client.force_authenticate(self.member)
+        self.assertEqual(self.client.get(content_url).status_code, 404)
+
+        self.owner_profile.dpa_accepted_at = None
+        self.owner_profile.save(update_fields=['dpa_accepted_at', 'updated_at'])
+        self.client.force_authenticate(self.owner)
+        blocked = self.client.get(content_url)
+        self.assertEqual(blocked.status_code, 403, blocked.data)
+        self.assertEqual(blocked.data['code'], 'CANDIDATE_DATA_BLOCKED')
+
+        self.owner_profile.dpa_accepted_at = timezone.now()
+        self.owner_profile.save(update_fields=['dpa_accepted_at', 'updated_at'])
+        storage = Mock()
+        storage.open.return_value = BytesIO(b'png')
+        with patch('apps.cvs.models.CvAsset.storage', return_value=storage):
+            allowed = self.client.get(content_url)
+        self.assertEqual(allowed.status_code, 200)
+
+    def test_recruiter_outside_the_application_company_receives_404(self):
+        tokens = issue_tokens(self.outsider, auth_method='password')
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
+
+        response = self.client.get(
+            reverse(
+                'recruiter-application-snapshot',
+                kwargs={'public_id': self.application.public_id},
+            )
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_company_member_cannot_read_the_posters_snapshot(self):
+        tokens = issue_tokens(self.member, auth_method='password')
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
+
+        response = self.client.get(
+            reverse(
+                'recruiter-application-snapshot',
+                kwargs={'public_id': self.application.public_id},
+            )
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_candidate_delete_removes_library_cv_but_retains_submitted_snapshot(self):
+        self.client.force_authenticate(self.candidate)
+
+        response = self.client.delete(reverse('cv-detail', kwargs={'public_id': self.cv.public_id}))
+
+        self.assertEqual(response.status_code, 204, response.data)
+        self.assertFalse(type(self.cv).objects.filter(pk=self.cv.pk).exists())
+        self.application.refresh_from_db()
+        self.snapshot.refresh_from_db()
+        self.assertIsNone(self.application.cv_id)
+        self.assertIsNone(self.snapshot.cv_id)
+
+        self.client.force_authenticate(user=None)
+        tokens = issue_tokens(self.owner, auth_method='password')
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
+        snapshot_response = self.client.get(
+            reverse(
+                'recruiter-application-snapshot',
+                kwargs={'public_id': self.application.public_id},
+            ),
+        )
+        self.assertEqual(snapshot_response.status_code, 200, snapshot_response.data)
+        self.assertEqual(snapshot_response.data['cv']['public_id'], self.snapshot.public_id)
+
+
+class CandidateApplicationTests(APITestCase):
+    def setUp(self):
+        self.candidate = get_user_model().objects.create_user(
+            email='apply-candidate@example.com',
+            password='password',
+            role='candidate',
+            email_verified=True,
+            full_name='Apply Candidate',
+            phone='0909000000',
+        )
+        self.other_candidate = get_user_model().objects.create_user(
+            email='other-apply-candidate@example.com',
+            password='password',
+            role='candidate',
+            email_verified=True,
+        )
+        self.employer = get_user_model().objects.create_user(
+            email='apply-employer@example.com',
+            password='password',
+            role='employer',
+        )
+        self.company = Company.objects.create(
+            company_name='Apply Company', created_by=self.employer
+        )
+        make_employer_ready(self.employer, company=self.company, candidate_data=True)
+        self.job = Job.objects.create(
+            posted_by=self.employer,
+            company=self.company,
+            title='Apply Job',
+            description='Candidate selects an immutable CV version.',
+            status=Job.Status.ACTIVE,
+            **open_visibility_window(),
+        )
+        self.preferred_location = Location.objects.create(
+            code='74',
+            level=Location.Level.PROVINCE,
+            name='Bình Dương',
+        )
+        self.second_preferred_location = Location.objects.create(
+            code='48',
+            level=Location.Level.PROVINCE,
+            name='Đà Nẵng',
+        )
+        JobLocation.objects.create(job=self.job, location=self.preferred_location)
+        JobLocation.objects.create(job=self.job, location=self.second_preferred_location)
+        template, _template_version = make_published_template('Snapshot template')
+        self.cv = create_user_cv(actor=self.candidate, title='Selected CV', template=template)
+        fill_cv_for_application(self.cv, self.candidate)
+        self.other_cv = create_user_cv(
+            actor=self.other_candidate, title='Other CV', template=template
+        )
+
+    def apply_payload(self, **overrides):
+        payload = {
+            'job_public_id': self.job.public_id,
+            'cv_public_id': self.cv.public_id,
+            'version_public_id': self.cv.latest_version.public_id,
+            'cover_letter': 'I would like to apply.',
+            'preferred_location_ids': [
+                self.preferred_location.id,
+                self.second_preferred_location.id,
+            ],
+            'allow_ai_analysis': False,
+            'data_processing_consent': True,
+        }
+        payload.update(overrides)
+        return payload
+
+    def test_candidate_submits_explicit_version_without_mutating_cv_pointers(self):
+        selected_version = self.cv.latest_version
+        self.client.force_authenticate(self.candidate)
+
+        response = self.client.post(
+            reverse('candidate-application-list-create'),
+            self.apply_payload(version_public_id=selected_version.public_id),
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 201, response.data)
+        application = Application.objects.get(public_id=response.data['public_id'])
+        self.cv.refresh_from_db()
+        self.assertEqual(application.submitted_cv_version.parent_version_id, selected_version.id)
+        self.assertEqual(
+            application.submitted_cv_version.version_kind,
+            CvVersion.VersionKind.APPLICATION_SNAPSHOT,
+        )
+        self.assertEqual(
+            application.submitted_cv_version.public_id,
+            response.data['submitted_cv_version_public_id'],
+        )
+        self.assertEqual(self.cv.latest_version_id, selected_version.id)
+        self.assertEqual(response.data['cv_public_id'], self.cv.public_id)
+        self.assertEqual(
+            response.data['preferred_location_ids'],
+            [self.preferred_location.id, self.second_preferred_location.id],
+        )
+        self.assertEqual(response.data['preferred_location_names'], ['Bình Dương', 'Đà Nẵng'])
+        self.assertTrue(response.data['data_processing_consent'])
+        self.assertEqual(response.data['contact_name'], 'Apply Candidate')
+        self.assertEqual(response.data['contact_email'], 'apply-candidate@example.com')
+        self.assertEqual(response.data['contact_phone'], '0909000000')
+
+    def test_candidate_cannot_mix_a_cv_with_a_version_from_another_owned_cv(self):
+        other_owned_cv = create_user_cv(
+            actor=self.candidate,
+            title='Another owned CV',
+            template=self.cv.template,
+        )
+        self.client.force_authenticate(self.candidate)
+
+        response = self.client.post(
+            reverse('candidate-application-list-create'),
+            self.apply_payload(version_public_id=other_owned_cv.latest_version.public_id),
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 400, response.data)
+        self.assertIn('version_public_id', response.data)
+        self.assertFalse(
+            Application.objects.filter(candidate=self.candidate, job=self.job).exists()
+        )
+
+    def apply(self, **overrides):
+        return self.client.post(
+            reverse('candidate-application-list-create'),
+            self.apply_payload(**overrides),
+            format='json',
+        )
+
+    def age(self, response, **fields):
+        """Move a submission past the five-minute cooldown, optionally setting fields.
+
+        A ``status`` is recorded as a decision the candidate was already told.
+        """
+        applications = Application.objects.filter(public_id=response.data['public_id'])
+        applications.update(applied_at=timezone.now() - timedelta(minutes=6), **fields)
+        if 'status' in fields:
+            ApplicationStatusHistory.objects.create(
+                application=applications.get(), to_status=fields['status']
+            )
+
+    def test_candidate_resubmits_only_after_a_rejection_or_withdrawal(self):
+        self.client.force_authenticate(self.candidate)
+        forbidden_cv = self.apply(
+            cv_public_id=self.other_cv.public_id,
+            version_public_id=self.other_cv.latest_version.public_id,
+        )
+        first = self.apply()
+        self.age(first)
+        while_unanswered = self.apply()
+        self.age(first, status=Application.Status.INTERVIEWED)
+        while_interviewing = self.apply()
+        self.age(first, status=Application.Status.REJECTED)
+        second = self.apply()
+        too_soon = self.apply()
+
+        self.assertEqual(forbidden_cv.status_code, 400, forbidden_cv.data)
+        self.assertEqual(first.status_code, 201, first.data)
+        self.assertIn('rút hồ sơ rồi ứng tuyển lại', str(while_unanswered.data))
+        self.assertIn('đang được nhà tuyển dụng xử lý', str(while_interviewing.data))
+        self.assertEqual(second.status_code, 201, second.data)
+        self.assertEqual(too_soon.status_code, 400, too_soon.data)
+        current = Application.objects.filter(candidate=self.candidate, job=self.job)
+        self.assertEqual(
+            list(current.filter(is_current=True).values_list('public_id', flat=True)),
+            [second.data['public_id']],
+        )
+        self.job.refresh_from_db()
+        self.assertEqual(self.job.application_count, 1)
+
+        withdrawn = self.client.post(
+            reverse('candidate-application-withdraw', args=[second.data['public_id']])
+        )
+        self.age(second)
+        third = self.apply()
+        self.age(third, status=Application.Status.REJECTED)
+        exhausted = self.apply()
+
+        self.assertEqual(withdrawn.status_code, 200, withdrawn.data)
+        self.assertEqual(withdrawn.data['status'], Application.Status.WITHDRAWN)
+        self.assertEqual(
+            withdrawn.data['actions'],
+            {
+                'withdraw': False,
+                'reapply': True,
+                'remind': False,
+                'remind_available_at': None,
+            },
+        )
+        self.assertEqual(third.status_code, 201, third.data)
+        self.assertEqual(exhausted.status_code, 400, exhausted.data)
+        self.assertIn('hết', str(exhausted.data))
+
+    def test_withdrawal_ends_the_application_and_tells_the_recruiter(self):
+        self.client.force_authenticate(self.candidate)
+        submitted = self.apply()
+        url = reverse('candidate-application-withdraw', args=[submitted.data['public_id']])
+
+        withdrawn = self.client.post(url)
+        again = self.client.post(url)
+
+        self.assertEqual(withdrawn.status_code, 200, withdrawn.data)
+        self.assertEqual(again.status_code, 400, again.data)
+        application = Application.objects.get(public_id=submitted.data['public_id'])
+        self.assertIsNotNone(application.withdrawn_at)
+        self.assertTrue(
+            EmployerNotification.objects.filter(
+                recipient=self.employer,
+                event_type=EmployerNotification.EventType.APPLICATION_WITHDRAWN,
+            ).exists()
+        )
+        with self.assertRaises(InvalidApplicationStatusTransition):
+            change_application_status(
+                application, changed_by=self.employer, status=Application.Status.SHORTLISTED
+            )
+
+    def test_accepted_application_cannot_be_withdrawn(self):
+        self.client.force_authenticate(self.candidate)
+        submitted = self.apply()
+        self.age(submitted, status=Application.Status.ACCEPTED)
+
+        response = self.client.post(
+            reverse('candidate-application-withdraw', args=[submitted.data['public_id']])
+        )
+
+        self.assertEqual(response.status_code, 400, response.data)
+
+    def test_recruiter_sees_the_submission_number_and_earlier_submissions(self):
+        self.client.force_authenticate(self.candidate)
+        first = self.apply()
+        self.client.post(reverse('candidate-application-withdraw', args=[first.data['public_id']]))
+        self.age(first)
+        second = self.apply()
+        make_employer_ready(self.employer, company=self.company, candidate_data=True)
+        self.client.force_authenticate(self.employer)
+
+        listed = self.client.get(reverse('recruiter-application-list'))
+        earlier = self.client.get(
+            reverse('recruiter-application-submissions', args=[second.data['public_id']])
+        )
+
+        self.assertEqual(
+            [(item['public_id'], item['submission_number']) for item in listed.data['results']],
+            [(second.data['public_id'], 2)],
+        )
+        self.assertEqual(earlier.status_code, 200, earlier.data)
+        self.assertEqual(
+            [(item['public_id'], item['status']) for item in earlier.data],
+            [(first.data['public_id'], Application.Status.WITHDRAWN)],
+        )
+
+    def test_another_candidates_application_is_not_found(self):
+        self.client.force_authenticate(self.candidate)
+        submitted = self.apply()
+        self.client.force_authenticate(self.other_candidate)
+
+        response = self.client.post(
+            reverse('candidate-application-withdraw', args=[submitted.data['public_id']])
+        )
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_candidate_must_consent_and_select_a_workplace_offered_by_the_job(self):
+        other_location = Location.objects.create(
+            code='01',
+            level=Location.Level.PROVINCE,
+            name='Hà Nội',
+        )
+        self.client.force_authenticate(self.candidate)
+
+        missing_consent = self.client.post(
+            reverse('candidate-application-list-create'),
+            self.apply_payload(data_processing_consent=False),
+            format='json',
+        )
+        invalid_location = self.client.post(
+            reverse('candidate-application-list-create'),
+            self.apply_payload(preferred_location_ids=[other_location.id]),
+            format='json',
+        )
+
+        self.assertEqual(missing_consent.status_code, 400, missing_consent.data)
+        self.assertIn('data_processing_consent', missing_consent.data)
+        self.assertEqual(invalid_location.status_code, 400, invalid_location.data)
+        self.assertIn('preferred_location_ids', invalid_location.data)
+
+    def test_employer_cannot_use_candidate_submission_endpoint(self):
+        self.client.force_authenticate(self.employer)
+
+        response = self.client.post(
+            reverse('candidate-application-list-create'),
+            self.apply_payload(),
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_recruiter_campaign_list_and_export_use_the_current_submission(self):
+        recruiter = make_employer_ready(
+            self.employer,
+            company=self.company,
+            candidate_data=True,
+        )
+        campaign = RecruitmentCampaign.objects.create(
+            owner=recruiter,
+            company=self.company,
+            name='Application campaign',
+            status=RecruitmentCampaign.Status.ACTIVE,
+        )
+        self.job.campaign = campaign
+        self.job.save(update_fields=['campaign', 'updated_at'])
+        self.client.force_authenticate(self.candidate)
+        first = self.client.post(
+            reverse('candidate-application-list-create'),
+            self.apply_payload(),
+            format='json',
+        )
+        self.age(first, status=Application.Status.REJECTED)
+        second = self.client.post(
+            reverse('candidate-application-list-create'),
+            self.apply_payload(),
+            format='json',
+        )
+
+        self.client.force_authenticate(self.employer)
+        params = {
+            'campaign': campaign.public_id,
+            'q': self.candidate.email,
+        }
+        listed = self.client.get(reverse('recruiter-application-list'), params)
+        exported = self.client.get(reverse('recruiter-application-export'), params)
+
+        self.assertEqual(listed.status_code, 200, listed.data)
+        self.assertEqual(listed.data['count'], 1)
+        self.assertEqual(listed.data['results'][0]['public_id'], second.data['public_id'])
+        self.assertEqual(exported.status_code, 200)
+        self.assertEqual(exported['Content-Type'], 'text/csv; charset=utf-8')
+        self.assertEqual(len(exported.content.decode('utf-8-sig').splitlines()), 2)
+        received_events = CampaignActivity.objects.filter(
+            campaign=campaign,
+            event_type=CampaignActivity.EventType.APPLICATION_RECEIVED,
+        )
+        self.assertEqual(received_events.count(), 2)
+
+
+class RecruiterApplicationRoutesTests(TestCase):
+    """Route employer port từ v1 sang v2 (AR-P3) phải tồn tại và có guard."""
+
+    def test_recruiter_list_requires_authentication(self):
+        response = APIClient().get(reverse('recruiter-application-list'))
+        self.assertEqual(response.status_code, 401)
+
+    def test_recruiter_write_routes_require_authentication(self):
+        client = APIClient()
+        for method, name in (
+            ('patch', 'recruiter-application-assessment'),
+            ('post', 'recruiter-application-decision'),
+            ('post', 'recruiter-application-decision-undo'),
+            ('post', 'recruiter-application-cv-export'),
+        ):
+            with self.subTest(name=name):
+                response = getattr(client, method)(reverse(name, args=['app_x']), {})
+                self.assertEqual(response.status_code, 401)

@@ -1,12 +1,22 @@
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import mixins, viewsets
 
-from common.pagination import StandardPagination
+from apps.accounts.api.permissions import AdminPortalPermission, require_superuser
 
-from ...permissions import AdminPortalPermission, require_superuser
 from ...selectors import audit_logs_queryset
 from ..serializers.admin_audit import AdminAuditLogSerializer
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary='Nhật ký hoạt động quản trị',
+        parameters=[
+            OpenApiParameter('scope', str, enum=['all'], description='all: toàn hệ thống'),
+            OpenApiParameter('action', str),
+            OpenApiParameter('target_type', str),
+        ],
+    )
+)
 class AdminAuditLogViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
     """Nhật ký hoạt động cho trang Cài đặt tài khoản.
 
@@ -16,7 +26,6 @@ class AdminAuditLogViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
 
     permission_classes = [AdminPortalPermission]
     serializer_class = AdminAuditLogSerializer
-    pagination_class = StandardPagination
 
     def get_queryset(self):
         params = self.request.query_params

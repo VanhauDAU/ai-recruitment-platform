@@ -62,7 +62,7 @@ const company = {
   updated_at: '2026-07-02T00:00:00Z',
 }
 
-test('admin company directory: three-level navigation, detail and owner roster', async ({
+test('admin company directory: three-level navigation, detail and owner roster', { tag: '@responsive' }, async ({
   page,
 }, testInfo) => {
   const usesDrawer = testInfo.project.name !== 'desktop-chromium'
@@ -70,7 +70,7 @@ test('admin company directory: three-level navigation, detail and owner roster',
   await page.route(/^http:\/\/(?:localhost|127\.0\.0\.1):(?:5173|8000)\/api\//, async (route) => {
     const requestUrl = new URL(route.request().url())
     const path = requestUrl.pathname
-    if (path === '/api/jobs/admin/moderation/') companyJobsRequest = requestUrl
+    if (path === '/api/admin/jobs/moderation/') companyJobsRequest = requestUrl
     const body = path === '/api/auth/refresh/'
       ? { access: 'e2e-access' }
       : path === '/api/auth/me/'
@@ -111,7 +111,7 @@ test('admin company directory: three-level navigation, detail and owner roster',
                 }
               : path === '/api/admin/company-update-requests/'
                 ? { count: 0, next: null, previous: null, results: [] }
-                : path === '/api/jobs/admin/moderation/'
+                : path === '/api/admin/jobs/moderation/'
                   ? {
                       count: 1,
                       next: null,
@@ -134,7 +134,7 @@ test('admin company directory: three-level navigation, detail and owner roster',
                         updated_at: '2026-08-02T08:00:00Z',
                       }],
                     }
-                : path === '/api/privacy/consent/'
+                : path === '/api/public/privacy/consent/'
                 ? {
                     consent: {
                       necessary: true,

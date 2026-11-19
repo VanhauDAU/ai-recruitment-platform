@@ -1,8 +1,9 @@
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy
 
-from common.phone import same_phone
-from common.public_id import generate_public_id
+from apps.employers.domain.phone import same_phone
+from common.db.public_id import generate_public_id
 
 from .company import Company
 
@@ -24,13 +25,13 @@ class RecruiterProfile(models.Model):
     """
 
     class CompanyRole(models.TextChoices):
-        OWNER = 'owner', 'Quản lý công ty'
-        MEMBER = 'member', 'Thành viên'
+        OWNER = 'owner', gettext_lazy('Quản lý công ty')
+        MEMBER = 'member', gettext_lazy('Thành viên')
 
     class Gender(models.TextChoices):
         MALE = 'male', 'Nam'
-        FEMALE = 'female', 'Nữ'
-        OTHER = 'other', 'Khác'
+        FEMALE = 'female', gettext_lazy('Nữ')
+        OTHER = 'other', gettext_lazy('Khác')
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     user = models.OneToOneField(
@@ -42,7 +43,8 @@ class RecruiterProfile(models.Model):
     company_role = models.CharField(max_length=20, choices=CompanyRole.choices, blank=True)
     position_title = models.CharField(max_length=255, blank=True)
     gender = models.CharField(max_length=10, choices=Gender.choices, blank=True)
-    contact_phone = models.CharField(
+    # NULL = chưa đăng ký: API hồ sơ NTD trả null (schema nullable) cho tới khi khai.
+    contact_phone = models.CharField(  # noqa: DJ001
         max_length=20,
         null=True,
         blank=True,
@@ -62,7 +64,8 @@ class RecruiterProfile(models.Model):
     marketing_decided_at = models.DateTimeField(null=True, blank=True)
     # SĐT đã xác thực OTP; partial unique sinh ra đúng lỗi nghiệp vụ
     # "Đã có nhà tuyển dụng khác xác thực số điện thoại này".
-    verified_phone = models.CharField(max_length=20, null=True, blank=True, default=None)
+    # NULL = chưa xác thực: API hồ sơ NTD trả null (schema nullable).
+    verified_phone = models.CharField(max_length=20, null=True, blank=True, default=None)  # noqa: DJ001
     phone_verified_at = models.DateTimeField(null=True, blank=True)
     dpa_accepted_at = models.DateTimeField(null=True, blank=True)
     dpa_policy_version = models.CharField(max_length=64, blank=True)
@@ -70,9 +73,6 @@ class RecruiterProfile(models.Model):
     dpa_grace_started_at = models.DateTimeField(null=True, blank=True)
     dpa_grace_expires_at = models.DateTimeField(null=True, blank=True)
     dpa_grace_rollout_id = models.CharField(max_length=64, blank=True)
-    # Legacy compatibility only. Completion is derived from registration,
-    # verified email and a RecruitmentNeed; new code must not read/write this.
-    onboarding_completed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -103,6 +103,14 @@ class RecruiterProfile(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'{self.user_id}:{self.company_id or "no-company"}'
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('rec')
+        super().save(*args, **kwargs)
+
     @property
     def has_verified_phone(self):
         """The one rule for "phone verified", used by every screen and gate.
@@ -117,24 +125,22 @@ class RecruiterProfile(models.Model):
             and same_phone(self.user.phone, self.verified_phone)
         )
 
-    def save(self, *args, **kwargs):
-        if not self.public_id:
-            self.public_id = generate_public_id('rec')
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f'{self.user_id}:{self.company_id or "no-company"}'
-
 
 class EmployerCompanyLinkEvent(models.Model):
     """Append-only audit trail for high-risk recruiter/company recovery."""
 
     class EventType(models.TextChoices):
-        ADMIN_UNLINKED = 'admin_unlinked', 'Admin gỡ liên kết công ty'
-        OWNERSHIP_TRANSFERRED = 'ownership_transferred', 'Chuyển quyền quản lý công ty'
-        OWNER_ASSIGNED = 'owner_assigned', 'Admin chỉ định quản lý công ty'
-        MEMBER_REMOVED = 'member_removed', 'Quản lý công ty gỡ thành viên'
-        RESOURCES_HANDED_OVER = 'resources_handed_over', 'Giao tin tuyển dụng cho thành viên khác'
+        ADMIN_UNLINKED = 'admin_unlinked', gettext_lazy('Admin gỡ liên kết công ty')
+        OWNERSHIP_TRANSFERRED = (
+            'ownership_transferred',
+            gettext_lazy('Chuyển quyền quản lý công ty'),
+        )
+        OWNER_ASSIGNED = 'owner_assigned', gettext_lazy('Admin chỉ định quản lý công ty')
+        MEMBER_REMOVED = 'member_removed', gettext_lazy('Quản lý công ty gỡ thành viên')
+        RESOURCES_HANDED_OVER = (
+            'resources_handed_over',
+            gettext_lazy('Giao tin tuyển dụng cho thành viên khác'),
+        )
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     recruiter = models.ForeignKey(
@@ -166,6 +172,9 @@ class EmployerCompanyLinkEvent(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'{self.public_id}:{self.event_type}'
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('ele')
@@ -182,10 +191,10 @@ class CompanyJoinRequest(models.Model):
     """
 
     class Status(models.TextChoices):
-        PENDING = 'pending', 'Chờ duyệt'
-        APPROVED = 'approved', 'Đã duyệt'
-        REJECTED = 'rejected', 'Từ chối'
-        CANCELLED = 'cancelled', 'Đã hủy'
+        PENDING = 'pending', gettext_lazy('Chờ duyệt')
+        APPROVED = 'approved', gettext_lazy('Đã duyệt')
+        REJECTED = 'rejected', gettext_lazy('Từ chối')
+        CANCELLED = 'cancelled', gettext_lazy('Đã hủy')
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     recruiter = models.ForeignKey(
@@ -213,6 +222,9 @@ class CompanyJoinRequest(models.Model):
             ),
         ]
         indexes = [models.Index(fields=['company', 'status'], name='company_join_status_idx')]
+
+    def __str__(self):
+        return f'{self.public_id}:{self.status}'
 
     def save(self, *args, **kwargs):
         if not self.public_id:

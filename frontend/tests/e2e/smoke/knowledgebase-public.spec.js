@@ -52,10 +52,10 @@ const privacyArticle = {
   updated_at: '2026-08-05T08:00:00Z',
 }
 
-test('public knowledgebase: simple browse, detail and hidden-content 404 stay responsive', async ({ page }) => {
+test('public knowledgebase: simple browse, detail and hidden-content 404 stay responsive', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
   await page.route(
-    (url) => url.pathname === '/api/site/settings/',
+    (url) => url.pathname === '/api/public/site/settings/',
     (route) => route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({
@@ -67,15 +67,15 @@ test('public knowledgebase: simple browse, detail and hidden-content 404 stay re
     }),
   )
   await page.route(
-    (url) => url.pathname.startsWith('/api/knowledgebase/'),
+    (url) => url.pathname.startsWith('/api/public/knowledgebase/'),
     async (route) => {
     const url = new URL(route.request().url())
     const path = url.pathname
-    if (path === '/api/knowledgebase/categories/') {
+    if (path === '/api/public/knowledgebase/categories/') {
       await route.fulfill({ contentType: 'application/json', body: JSON.stringify([category, securityCategory]) })
       return
     }
-    if (path === '/api/knowledgebase/articles/') {
+    if (path === '/api/public/knowledgebase/articles/') {
       let items = [loginArticle, resetArticle, privacyArticle]
       const categoryFilter = url.searchParams.get('category')
       const query = url.searchParams.get('q')?.toLocaleLowerCase('vi-VN')
@@ -89,7 +89,7 @@ test('public knowledgebase: simple browse, detail and hidden-content 404 stay re
       })
       return
     }
-    if (path === '/api/knowledgebase/articles/tai-khoan-va-dang-nhap/dat-lai-mat-khau/') {
+    if (path === '/api/public/knowledgebase/articles/tai-khoan-va-dang-nhap/dat-lai-mat-khau/') {
       await route.fulfill({
         contentType: 'application/json',
         body: JSON.stringify({

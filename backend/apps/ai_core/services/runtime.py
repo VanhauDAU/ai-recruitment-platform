@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import time
 from collections.abc import Callable, Mapping
 from contextlib import suppress
@@ -22,6 +23,8 @@ from .contracts import (
 )
 from .providers import GeminiStructuredOutputProvider
 from .usage import record_ai_usage
+
+logger = logging.getLogger(__name__)
 
 
 def _sha256(value: str) -> str:
@@ -147,7 +150,9 @@ def generate_structured(
             invocation_id=invocation.pk,
             correlation_key=correlation_key,
         ) from None
-    except Exception:  # noqa: BLE001 - callers receive no provider/PII-bearing message
+    except Exception as unexpected:  # noqa: BLE001 - callers receive no provider/PII-bearing message
+        # Only the type is logged: the message of a custom provider error may echo the prompt.
+        logger.error('AI provider raised unnormalized %s.', type(unexpected).__name__)
         fallback_latency = int((time.monotonic() - started) * 1000)
         error = AiGenerationError('provider_failed')
         _finalize_failure(invocation, error, fallback_latency)

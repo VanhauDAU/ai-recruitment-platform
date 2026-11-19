@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 
 from ...models import EmployerActivity, EmployerNotification
@@ -20,7 +21,7 @@ class EmployerNotificationSerializer(serializers.ModelSerializer):
             'created_at',
         ]
 
-    def get_is_read(self, obj):
+    def get_is_read(self, obj) -> bool:
         return obj.read_at is not None
 
 
@@ -39,12 +40,12 @@ class EmployerActivitySerializer(serializers.ModelSerializer):
             'occurred_at',
         ]
 
-    def get_actor_name(self, obj):
+    def get_actor_name(self, obj) -> str:
         if obj.actor is None:
-            return 'Hệ thống'
+            return _('Hệ thống')
         if obj.actor_id == obj.recipient_id:
-            return 'Bạn'
-        return 'Quản trị viên'
+            return _('Bạn')
+        return _('Quản trị viên')
 
 
 class EmployerNotificationPreferenceSerializer(serializers.Serializer):

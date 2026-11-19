@@ -36,13 +36,9 @@ def _delete_batches(queryset, *, batch_size):
 @shared_task(name='apps.ai_core.tasks.purge_expired_ai_metadata')
 def purge_expired_ai_metadata(*, batch_size=DEFAULT_BATCH_SIZE):
     """Delete expired invocation and daily aggregate rows in bounded transactions."""
+    # A zero/negative env value would purge everything; fall back to the documented year.
     retention_days = _positive_int(
-        getattr(
-            settings,
-            'AI_INVOCATION_METADATA_RETENTION_DAYS',
-            DEFAULT_RETENTION_DAYS,
-        ),
-        DEFAULT_RETENTION_DAYS,
+        settings.AI_INVOCATION_METADATA_RETENTION_DAYS, DEFAULT_RETENTION_DAYS
     )
     normalized_batch_size = min(
         MAX_BATCH_SIZE,

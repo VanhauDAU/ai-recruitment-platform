@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { getMyCvs } from '@/entities/cv'
+import { getMyCvs } from '@/entities/cv/cv'
 
 // Data hook cho trang Quản lý CV. Dùng chung key ['my-cvs'] để công tắc và
 // popup "Cho phép NTD tìm kiếm" làm mới danh sách ngay sau khi lưu.

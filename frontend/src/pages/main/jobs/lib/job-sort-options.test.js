@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest'
 import { JOB_SORT_OPTIONS } from './job-sort-options'
 

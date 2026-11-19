@@ -15,9 +15,9 @@ import {
 } from '@ant-design/icons'
 import { Avatar, Button, Dropdown, Layout, Popover, Tag } from 'antd'
 import { useNavigate } from 'react-router'
-import { adminTierLabel } from '@/entities/admin-account'
+import { adminTierLabel } from '@/entities/account/admin-account'
 import { adminPath } from '@/shared/config/portals'
-import { AdminQueueBell } from '@/widgets/admin-queue-bell'
+import { AdminQueueBell } from '@/widgets/admin/queue-bell'
 
 const { Header } = Layout
 

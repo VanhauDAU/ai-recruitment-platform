@@ -8,6 +8,7 @@ import {
   notifySessionExpired,
   setTokens,
 } from './token-store'
+import { getLocale } from '@/shared/config/i18n'
 import { getCurrentPortal } from '@/shared/config/portals'
 
 // Fallback localhost CHỈ dành cho dev/test. Build production thiếu
@@ -22,7 +23,13 @@ const baseURL = (() => {
   return 'http://localhost:8000/api'
 })()
 
-const client = axios.create({ baseURL, withCredentials: true })
+// Backend dịch thông báo và nhãn theo Accept-Language (LocaleMiddleware). Đổi
+// ngôn ngữ luôn tải lại trang nên giá trị cố định cho cả phiên.
+const client = axios.create({
+  baseURL,
+  withCredentials: true,
+  headers: { 'Accept-Language': getLocale() },
+})
 
 // Gắn access token của portal hiện tại vào mỗi request.
 client.interceptors.request.use((config) => {
@@ -45,7 +52,10 @@ function refreshAccessToken() {
       .post(
         `${baseURL}/auth/refresh/`,
         { portal: getCurrentPortal() },
-        { withCredentials: true, headers: { 'X-Auth-Portal': getCurrentPortal() } },
+        {
+          withCredentials: true,
+          headers: { 'Accept-Language': getLocale(), 'X-Auth-Portal': getCurrentPortal() },
+        },
       )
       .then(({ data }) => {
         setTokens({ access: data.access })

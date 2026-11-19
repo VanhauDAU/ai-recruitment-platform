@@ -13,7 +13,7 @@ from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from apps.jobs.models import Benefit, Job, JobCategory, JobLocation
-from apps.jobs.tests.helpers import open_visibility_window
+from apps.jobs.tests.factories import open_visibility_window
 from apps.locations.models import Location
 
 from ..models import (
@@ -36,14 +36,14 @@ from ..services import (
     reverse_company_report,
     submit_company_report,
 )
-from .company_page_helpers import (
+from .factories import (
     add_recruiter,
+    current_dpa_fields,
     make_candidate,
     make_company,
     make_employer,
     publish_job,
 )
-from .readiness_helpers import current_dpa_fields
 
 # Authentication is bypassed with force_authenticate: one recruiter lookup plus
 # one recruitment-need SELECT. The count must remain flat as rows are added.

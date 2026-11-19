@@ -5,7 +5,7 @@ import re
 
 import requests
 
-from apps.cvs.schemas import empty_content
+from apps.cv_templates.models import empty_content
 from apps.sitecontent.models import SiteSetting
 from apps.sitecontent.selectors import get_string_setting
 from config.env import config

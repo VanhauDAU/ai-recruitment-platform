@@ -2,8 +2,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { COMPANY_DETAIL_ROUTE, COMPANY_SEARCH_PATH } from '@/entities/company'
-import { DEFAULT_SITE_SETTINGS, SiteSettingsContext } from '@/entities/site-settings'
+import { COMPANY_DETAIL_ROUTE, COMPANY_SEARCH_PATH } from '@/entities/company/company'
+import { DEFAULT_SITE_SETTINGS, SiteSettingsContext } from '@/entities/system/site-settings'
 import { DocumentMetadataContext } from '@/shared/config/document-metadata-context'
 import CompanyDetail from './CompanyDetail'
 import CompanySearch from './CompanySearch'
@@ -11,7 +11,7 @@ import CompanySearch from './CompanySearch'
 const { client } = vi.hoisted(() => ({ client: { get: vi.fn() } }))
 
 vi.mock('@/shared/api/client', () => ({ default: client }))
-vi.mock('@/widgets/public-company-profile', () => ({
+vi.mock('@/widgets/main/public-company-profile', () => ({
   PublicCompanyProfile: (props) => <output data-testid="company-profile">{JSON.stringify(props)}</output>,
 }))
 
@@ -66,7 +66,7 @@ describe('CompanyDetail page', () => {
       robots: 'index, follow',
     }))
     expect(lastMetadata().structuredData['@type']).toBe('BreadcrumbList')
-    expect(client.get).toHaveBeenCalledWith('/companies/fpt-software/', expect.any(Object))
+    expect(client.get).toHaveBeenCalledWith('/public/companies/fpt-software/', expect.any(Object))
   })
 
   it('reads tab and filters from the URL and stops indexing that view', async () => {

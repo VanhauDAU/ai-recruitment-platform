@@ -2,6 +2,8 @@
 
 from django.db.models import Count, Q
 
+from common.api.params import parse_bool
+
 from ..models import CvImportJob, UserCv
 
 FILTERS = {
@@ -22,9 +24,9 @@ def admin_cvs_queryset(params):
     queryset = queryset.filter(
         **{lookup: params[name] for name, lookup in FILTERS.items() if params.get(name)}
     )
-    if params.get('import_failed') == 'true':
+    if parse_bool(params.get('import_failed')):
         queryset = queryset.filter(import_job__status=CvImportJob.Status.FAILED)
-    if params.get('locked') == 'true':
+    if parse_bool(params.get('locked')):
         queryset = queryset.filter(moderation_locked_at__isnull=False)
     if search := params.get('q', '').strip():
         queryset = queryset.filter(Q(public_id__iexact=search) | Q(user__public_id__iexact=search))

@@ -9,7 +9,7 @@ workspace. Lý do của từng quyết định nằm ở
 tài liệu này chỉ dẫn ID khi quy tắc phụ thuộc vào nó.
 
 Owner code: app `apps.employers` (model, service, selector, API
-`/api/employer/*`, `/api/admin/*`, `/api/companies/`), app dùng chung
+`/api/employer/*`, `/api/admin/*`, `/api/public/companies/`), app dùng chung
 `apps.uploads` (upload session) và cổng frontend `/tuyendung/app`.
 
 ## 1. Nguyên tắc nền
@@ -78,7 +78,7 @@ thêm sau quản lý ở `/api/employer/recruitment-needs/`.
 
 ### 2.3 Chống lạm dụng đăng nhập
 
-Throttle theo IP lấy qua `common/client_ip.py` (production bắt buộc
+Throttle theo IP lấy qua `common/http/client_ip.py` (production bắt buộc
 `TRUSTED_PROXY_IPS`); sai mật khẩu quá `LOGIN_BACKOFF_FREE_ATTEMPTS` thì backoff
 gấp đôi, không khóa cứng, bộ đếm tách theo cổng; refresh token dùng lại sau xoay
 vòng thu hồi cả phiên; đăng nhập luôn băm mật khẩu kể cả email không tồn tại.
@@ -199,9 +199,6 @@ draft → pending → in_review ─┬─► approved ─┬─► revoked ─�
   nhưng không ban tài khoản. Reject/changes-requested một tài liệu không tính
   lượt. Mở khóa cần `employer_verification.resubmission_unlock`, lý do và
   `lock_version`; lịch sử và số đếm giữ nguyên.
-- Hồ sơ auto-approved lịch sử mang `decision_source`
-  `legacy_auto|legacy_unknown` (command `classify_legacy_employer_verifications`),
-  không bị reset hay hold tự động.
 
 **Quyền admin** (`/api/admin/employer-verifications/`):
 `employer_verification.view`, `.review`, `.revoke`, `.tax_override`,
@@ -220,8 +217,6 @@ có giấy tờ hiện hành vừa nộp lại đang chờ.
   tạo/sửa nháp vẫn mở. Company không bị ảnh hưởng.
 - Reapprove chỉ gỡ hold nguồn `verification`; re-consent DPA chỉ gỡ hold nguồn
   `dpa`. Không gỡ moderation/account hold khác (ER-D20).
-- Áp hold cho dữ liệu hiện hữu luôn dry-run, ops review rồi mới apply
-  (`rollout_employer_dpa_compliance`).
 
 ### 5.4 Cấp tài khoản và dấu tick
 
@@ -292,7 +287,7 @@ gallery) và CV ứng viên đi qua app `uploads`:
 uploading → quarantined → scanning → clean | rejected | error (retry → scanning) | expired
 ```
 
-- API owner-scoped `/api/uploads/sessions/` (tạo, `content/` ghi byte vào
+- API owner-scoped `/api/shared/uploads/sessions/` (tạo, `content/` ghi byte vào
   quarantine, xem trạng thái, `cancel/`, `retry/`). Object của người khác trả
   `404`; không có endpoint download/claim chung. Purpose khai báo tường minh
   theo role: `employer_verification`, `employer_company_update`, `candidate_cv`.
@@ -309,8 +304,8 @@ uploading → quarantined → scanning → clean | rejected | error (retry → s
   và chỉ báo thành công khi mọi attach xong. Raw upload chỉ được dùng khi backend
   trả đúng `UPLOAD_PIPELINE_DISABLED`; lỗi scanner/reject/timeout không fallback.
 - Retention (ER-D12): tệp clean giữ tối thiểu 730 ngày sau khi release, trừ
-  legal hold; tệp độc hại xóa sớm sau khi lưu kết quả. Tệp có từ trước pipeline
-  là `legacy_trusted`, không bị gắn kết quả scan giả (ER-D13).
+  legal hold; tệp độc hại xóa sớm sau khi lưu kết quả. Mọi `UploadAsset` đều
+  sinh từ verdict clean; không có đường đăng ký tệp cũ bỏ qua quét.
 - Storage tách public/private/quarantine; private và quarantine không có `.url()`
   công khai (ER-D30). Flag: `UPLOAD_QUARANTINE_ENABLED`,
   `EMPLOYER_UPLOAD_SESSION_REQUIRED`, `CANDIDATE_UPLOAD_SESSION_REQUIRED`;
@@ -392,7 +387,7 @@ chạy và PII đã cache bị xóa.
 ## 12. Danh bạ công ty công khai
 
 Theo [ADR-0013](../02-tong-quan/adr-0013-public-companies-api.md):
-`GET /api/companies/` (anonymous) có hai chế độ: không `q` trả tối đa 18 công
+`GET /api/public/companies/` (anonymous) có hai chế độ: không `q` trả tối đa 18 công
 ty nổi bật đã lọc theo recruiter approved, giấy tờ đủ, có logo, ảnh bìa, lĩnh
 vực và tin công khai, xáo thứ tự mỗi lần (`Cache-Control: no-store`); có `q` thì
 tìm không dấu theo tên/tên thương mại trên mọi Company, cursor 18 bản ghi. Không
@@ -431,8 +426,8 @@ trả chuỗi rỗng, kể cả ở `company_address` của chi tiết tin.
   mới bật `EMPLOYER_UPLOAD_SESSION_REQUIRED` và
   `CANDIDATE_UPLOAD_SESSION_REQUIRED`. QA local từng bị chặn vì Vite local
   không có reCAPTCHA site key.
-- **Kích hoạt và soak (ER-8)**: chạy `audit_employer_workflow_rollout --strict`
-  ở staging/production, bật flag theo thứ tự, theo dõi soak rồi mới mở PR dọn
+- **Kích hoạt và soak (ER-8)**: chạy `check_upload_scanner_readiness` và
+  `check_employer_sms_readiness --require-enabled` ở staging/production, bật flag theo thứ tự, theo dõi soak rồi mới mở PR dọn
   compatibility (`verification_completed`, status `pending` của update request,
   fallback `UPLOAD_PIPELINE_DISABLED`). Rollout hold dữ liệu thật chỉ chạy sau
   dry-run và ops duyệt.

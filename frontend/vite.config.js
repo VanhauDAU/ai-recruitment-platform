@@ -1,4 +1,5 @@
 import path from 'node:path'
+import { paraglideVitePlugin } from '@inlang/paraglide-js'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig, loadEnv } from 'vite'
@@ -18,6 +19,16 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [
+      // Biên dịch messages/**/{vi,en}.json thành hàm ES (tree-shake theo từng
+      // chuỗi). Chỉ lưu localStorage rồi về vi: không đọc navigator.language để
+      // người dùng Việt dùng trình duyệt tiếng Anh vẫn mặc định tiếng Việt.
+      paraglideVitePlugin({
+        project: './project.inlang',
+        outdir: './src/shared/config/i18n/paraglide',
+        strategy: ['localStorage', 'baseLocale'],
+        localStorageKey: 'procv_lang',
+        emitReadme: false,
+      }),
       react(),
       tailwindcss(),
       // Audit bundle: `ANALYZE=1 npm run build` sinh dist/stats.html (treemap gzip).
@@ -82,6 +93,10 @@ export default defineConfig(({ mode }) => {
         jsdom: { url: 'http://localhost/' },
       },
       setupFiles: './src/test/setup.js',
+      // CI runs one worker per shard under coverage, 2–3× slower than a laptop.
+      // Its per-test timeout equals the hard budget enforced on the JUnit report
+      // (scripts/check_test_budgets.mjs); locally the 5s default stays strict.
+      testTimeout: isCI ? 10_000 : 5_000,
       css: false,
       exclude: ['tests/e2e/**', 'node_modules/**', 'dist/**'],
       coverage: {

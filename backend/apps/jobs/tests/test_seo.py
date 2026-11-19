@@ -4,10 +4,10 @@ from django.urls import reverse
 
 from apps.accounts.models import User
 from apps.employers.models import Company
-from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.employers.tests.factories import make_employer_ready
 from apps.jobs.models import Job
 
-from .helpers import open_visibility_window
+from .factories import open_visibility_window
 
 SHELL = (
     '<!doctype html><html lang="en"><head><title data-seo-default>Old</title>'
@@ -59,6 +59,10 @@ class JobSeoTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn(f'http://testserver/viec-lam/{self.job.slug}', html)
+        self.assertIn(
+            '<title data-seo-managed="server">Tuyển Kỹ sư Backend - Công ty SEO | ProCV</title>',
+            html,
+        )
         self.assertIn('"@type":"JobPosting"', html)
         self.assertIn('"employmentType":"FULL_TIME"', html)
         self.assertIn('"minValue":20000000.0', html)

@@ -1,6 +1,7 @@
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 
-from ...page_registry import (
+from apps.employers.domain.page_registry import (
     ACCENT_PALETTE,
     HIDEABLE_SECTION_KEYS,
     MAIN_SECTION_KEYS,
@@ -23,21 +24,26 @@ class CompanyPageLayoutSerializer(serializers.Serializer):
     def validate_section_order(self, value):
         if sorted(value) != sorted(MAIN_SECTION_KEYS):
             raise serializers.ValidationError(
-                'Thứ tự phải gồm đúng một lần mỗi khối của vùng nội dung chính.'
+                _('Thứ tự phải gồm đúng một lần mỗi khối của vùng nội dung chính.')
             )
         return value
 
     def validate_accent(self, value):
         if value not in ACCENT_PALETTE:
-            raise serializers.ValidationError('Màu nhấn không có trong bảng màu của trang công ty.')
+            raise serializers.ValidationError(
+                _('Màu nhấn không có trong bảng màu của trang công ty.')
+            )
         return value
 
     def validate_hidden_sections(self, value):
         if unknown := set(value) - set(SECTION_TITLES):
-            raise serializers.ValidationError(f'Khối không tồn tại: {", ".join(sorted(unknown))}.')
+            raise serializers.ValidationError(
+                _('Khối không tồn tại: %(keys)s.') % {'keys': ', '.join(sorted(unknown))}
+            )
         if locked := set(value) - HIDEABLE_SECTION_KEYS:
             raise serializers.ValidationError(
-                f'Không thể ẩn khối luôn hiển thị: {", ".join(sorted(locked))}.'
+                _('Không thể ẩn khối luôn hiển thị: %(keys)s.')
+                % {'keys': ', '.join(sorted(locked))}
             )
         # Registry order without repeats, so equal choices always compare equal.
         return [key for key in SECTION_TITLES if key in value]

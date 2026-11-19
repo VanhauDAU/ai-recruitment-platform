@@ -7,4 +7,4 @@ class SitecontentConfig(AppConfig):
     verbose_name = 'Cấu hình & nội dung site'
 
     def ready(self):
-        from . import signals  # noqa: F401
+        from .signals import receivers  # noqa: F401

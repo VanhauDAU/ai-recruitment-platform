@@ -1,3 +1,4 @@
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
@@ -55,35 +56,35 @@ class JobAlertWriteSerializer(serializers.ModelSerializer):
     def validate_keyword(self, value):
         value = ' '.join(value.split())
         if not value:
-            raise serializers.ValidationError('Vui lòng nhập từ khóa việc làm.')
+            raise serializers.ValidationError(_('Vui lòng nhập từ khóa việc làm.'))
         return value
 
     def validate_category_ids(self, value):
         category_ids = [category.pk for category in value]
         if len(category_ids) != len(set(category_ids)):
-            raise serializers.ValidationError('Không được chọn trùng ngành nghề.')
+            raise serializers.ValidationError(_('Không được chọn trùng ngành nghề.'))
         return value
 
     def validate(self, attrs):
         if self.instance is None and 'is_active' in self.initial_data:
             raise serializers.ValidationError(
-                {'is_active': 'Trạng thái chỉ được thay đổi sau khi tạo thông báo.'}
+                {'is_active': _('Trạng thái chỉ được thay đổi sau khi tạo thông báo.')}
             )
         province = attrs.get('province', getattr(self.instance, 'province', None))
         ward = attrs.get('ward', getattr(self.instance, 'ward', None))
         if province and province.level != Location.Level.PROVINCE:
             raise serializers.ValidationError(
-                {'province_id': 'Địa điểm này không phải tỉnh/thành.'}
+                {'province_id': _('Địa điểm này không phải tỉnh/thành.')}
             )
         if ward and ward.level != Location.Level.WARD:
-            raise serializers.ValidationError({'ward_id': 'Địa điểm này không phải phường/xã.'})
+            raise serializers.ValidationError({'ward_id': _('Địa điểm này không phải phường/xã.')})
         if ward and not province:
             raise serializers.ValidationError(
-                {'province_id': 'Cần chọn tỉnh/thành trước khi chọn phường/xã.'}
+                {'province_id': _('Cần chọn tỉnh/thành trước khi chọn phường/xã.')}
             )
         if ward and province and ward.parent_id != province.pk:
             raise serializers.ValidationError(
-                {'ward_id': 'Phường/xã không thuộc tỉnh/thành đã chọn.'}
+                {'ward_id': _('Phường/xã không thuộc tỉnh/thành đã chọn.')}
             )
         return attrs
 

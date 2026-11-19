@@ -1,0 +1,180 @@
+import { FilterOutlined, SearchOutlined, SortAscendingOutlined } from '@ant-design/icons'
+import { Badge, Button, Drawer, Grid, Input, Popover, Select, Tag, Tooltip } from 'antd'
+import { useState } from 'react'
+import {
+  ADVANCED_KEYS,
+  BOOLEAN_OPTIONS,
+  emptyValueOf,
+  isFilled,
+  labelOf,
+  NEXT_ACTION_FILTER_LABELS,
+  RECRUITER_ORDERING_OPTIONS,
+  rangeText,
+  STATUS_OPTIONS,
+  USER_ORDERING_OPTIONS,
+} from '../model/account-filter-options'
+import AccountAdvancedFilters from './AccountAdvancedFilters'
+import { getIntlLocale } from '@/shared/config/i18n'
+
+export default function AccountFilters({
+  filters,
+  total,
+  loading,
+  recruiterOnly = false,
+  onChange,
+  onClear,
+}) {
+  const [advancedOpen, setAdvancedOpen] = useState(false)
+  // Popover 640px không lọt viewport điện thoại nên dưới `md` dùng drawer đáy.
+  const isCompact = !Grid.useBreakpoint().md
+  const patch = (name, value) => onChange({ ...filters, [name]: value })
+
+  const advancedKeys = recruiterOnly
+    ? ADVANCED_KEYS
+    : ADVANCED_KEYS.filter((key) => ![
+      'company',
+      'company_state',
+      'verification_status',
+    ].includes(key))
+  const advancedCount = advancedKeys.filter((key) => isFilled(filters[key])).length
+  const chips = [
+    ['q', 'Từ khóa', filters.q.trim()],
+    ['status', 'Trạng thái', labelOf(STATUS_OPTIONS, filters.status)],
+    ['email_verified', 'Xác minh email', labelOf(BOOLEAN_OPTIONS, filters.email_verified)],
+    ['has_active_session', 'Phiên hoạt động', labelOf(BOOLEAN_OPTIONS, filters.has_active_session)],
+    ...(recruiterOnly ? [
+      ['next_action', 'Việc cần làm', NEXT_ACTION_FILTER_LABELS[filters.next_action]],
+      ['company', 'Mã công ty', filters.company.trim()],
+      ['company_state', 'Liên kết công ty', {
+        linked: 'Đã liên kết',
+        missing: 'Chưa liên kết',
+      }[filters.company_state]],
+      ['verification_status', 'Xác thực NTD', {
+        none: 'Chưa có hồ sơ',
+        draft: 'Chưa nộp',
+        pending: 'Chờ duyệt',
+        in_review: 'Đang xử lý',
+        changes_requested: 'Cần bổ sung',
+        approved: 'Đã xác thực',
+        rejected: 'Bị từ chối',
+      }[filters.verification_status]],
+    ] : []),
+    ['created_range', 'Ngày tạo', filters.created_range?.length === 2 && rangeText(filters.created_range)],
+    ['last_login_range', 'Đăng nhập', filters.last_login_range?.length === 2 && rangeText(filters.last_login_range)],
+  ].filter(([, , value]) => Boolean(value))
+
+  const advanced = (
+    <AccountAdvancedFilters
+      filters={filters}
+      recruiterOnly={recruiterOnly}
+      onChange={onChange}
+      onDone={() => setAdvancedOpen(false)}
+    />
+  )
+
+  return (
+    <div className="account-filters">
+      <div className="account-filters__controls">
+        <Input
+          allowClear
+          className="account-filters__search"
+          size="large"
+          prefix={<SearchOutlined className="text-slate-400" />}
+          placeholder={recruiterOnly
+            ? 'Tìm tên, email, công ty, MST hoặc số điện thoại…'
+            : 'Tìm theo tên, email hoặc mã tài khoản'}
+          value={filters.q}
+          onChange={(event) => patch('q', event.target.value)}
+        />
+        <Select
+          className="account-filters__status"
+          size="large"
+          value={filters.status}
+          onChange={(value) => patch('status', value)}
+          options={STATUS_OPTIONS}
+        />
+        <Select
+          className="account-filters__ordering"
+          size="large"
+          value={filters.ordering}
+          onChange={(value) => patch('ordering', value)}
+          options={recruiterOnly ? RECRUITER_ORDERING_OPTIONS : USER_ORDERING_OPTIONS}
+          prefix={<SortAscendingOutlined className="text-slate-400" />}
+        />
+        {/* Badge phải bọc ngoài Popover: antd v6 không chuyển tiếp handler của
+            trigger qua Badge nên popover sẽ không mở nếu lồng ngược lại. */}
+        <Badge count={advancedCount} size="small" offset={[-8, 8]}>
+          {isCompact ? (
+            <Button
+              size="large"
+              icon={<FilterOutlined />}
+              className="account-filters__advanced"
+              onClick={() => setAdvancedOpen(true)}
+            >
+              Bộ lọc
+            </Button>
+          ) : (
+            <Popover
+              trigger="click"
+              placement="bottomRight"
+              open={advancedOpen}
+              onOpenChange={setAdvancedOpen}
+              content={advanced}
+              title="Bộ lọc nâng cao"
+            >
+              <Button size="large" icon={<FilterOutlined />} className="account-filters__advanced">
+                Bộ lọc
+              </Button>
+            </Popover>
+          )}
+        </Badge>
+      </div>
+
+      {isCompact && (
+        <Drawer
+          title="Bộ lọc nâng cao"
+          placement="bottom"
+          size="large"
+          open={advancedOpen}
+          onClose={() => setAdvancedOpen(false)}
+          classNames={{ wrapper: 'account-filter-drawer' }}
+        >
+          {advanced}
+        </Drawer>
+      )}
+
+      <div className="account-filters__meta">
+        <span className="account-filters__count">
+          {loading ? 'Đang tải danh sách…' : (
+            <>
+              <strong>{Number(total || 0).toLocaleString(getIntlLocale())}</strong>
+              {recruiterOnly ? ' nhà tuyển dụng' : ' tài khoản'}
+              {chips.length > 0 ? ' khớp bộ lọc' : ' trong phạm vi được xem'}
+            </>
+          )}
+        </span>
+        {chips.length > 0 && (
+          <div className="account-filters__chips">
+            {chips.map(([key, label, value]) => (
+              <Tag
+                key={key}
+                closable
+                className="account-filters__chip"
+                onClose={() => patch(key, emptyValueOf(key))}
+              >
+                <span>{label}:</span>
+                {' '}
+                {value}
+              </Tag>
+            ))}
+            <Tooltip title="Xóa toàn bộ điều kiện lọc">
+              <Button type="link" size="small" onClick={onClear}>
+                Xóa tất cả
+              </Button>
+            </Tooltip>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

@@ -4,17 +4,22 @@ from datetime import timedelta
 
 from django.db import transaction
 from django.utils import timezone
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
+from rest_framework.exceptions import NotFound
 
 from apps.employers.models import RecruiterProfile
+from common.errors import DomainError
 
 from ..models import Application, CandidateBlock
 from .status import change_application_status, reject_blocked_application
 
-BLOCKED_APPLY_MESSAGE = 'Bạn không thể ứng tuyển vào tin này lúc này.'
+BLOCKED_APPLY_MESSAGE = gettext_lazy('Bạn không thể ứng tuyển vào tin này lúc này.')
 
 
-class CandidateAlreadyBlocked(ValueError):
-    pass
+class CandidateAlreadyBlocked(DomainError):
+    def payload(self):
+        return {'detail': str(self)}
 
 
 def is_candidate_blocked(*, company_id, candidate_id):
@@ -51,7 +56,7 @@ def block_candidate(
         company_id=company_id, candidate_id=candidate_id, lifted_at__isnull=True
     ).exclude(CandidateBlock.active_q()).update(lifted_at=timezone.now())
     if is_candidate_blocked(company_id=company_id, candidate_id=candidate_id):
-        raise CandidateAlreadyBlocked('Ứng viên này đã ở trong danh sách chặn của công ty.')
+        raise CandidateAlreadyBlocked(_('Ứng viên này đã ở trong danh sách chặn của công ty.'))
     block = CandidateBlock.objects.create(
         recruiter=recruiter,
         company_id=company_id,
@@ -85,7 +90,7 @@ def lift_candidate_block(*, recruiter, block_public_id):
         block.recruiter_id != recruiter.pk
         and not _can_manage_company_blocks(recruiter, block.company_id)
     ):
-        raise CandidateBlock.DoesNotExist
+        raise NotFound
     block.lifted_at = timezone.now()
     block.save(update_fields=['lifted_at'])
     return block

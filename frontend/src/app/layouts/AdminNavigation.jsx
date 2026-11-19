@@ -15,6 +15,7 @@ import {
 import { Tag, Tooltip } from 'antd'
 import { useEffect, useMemo, useState } from 'react'
 import { findActiveAdminNavigation } from '../router/admin/admin-navigation'
+import { getIntlLocale } from '@/shared/config/i18n'
 
 const ICONS = {
   access: <KeyOutlined />,
@@ -41,7 +42,7 @@ function NavigationCount({ count, urgent = false }) {
   return (
     <span
       className={`admin-nav__count ${urgent ? 'admin-nav__count--urgent' : ''}`}
-      aria-label={`${value.toLocaleString('vi-VN')} mục đang chờ${urgent ? ', có mục quá hạn' : ''}`}
+      aria-label={`${value.toLocaleString(getIntlLocale())} mục đang chờ${urgent ? ', có mục quá hạn' : ''}`}
     >
       {label}
     </span>

@@ -5,12 +5,12 @@ from dataclasses import asdict
 from django.db.models import Prefetch
 from django.db.models.functions import Coalesce
 
+from apps.employers.domain.page_registry import company_page_registry
 from apps.jobs.models import Job
 from common.db.search import search_q
 
 from ..models import CompanyPageEditorGrant
 from ..models.page_access import is_company_owner, is_page_eligible, page_access_recruiters
-from ..page_registry import company_page_registry
 from .company_page import (
     build_public_company_profile,
     company_page_layout,

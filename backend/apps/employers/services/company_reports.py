@@ -2,6 +2,7 @@
 
 from django.db import IntegrityError, transaction
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from rest_framework.exceptions import ValidationError
 
 from apps.accounts.services import record_admin_action
@@ -30,7 +31,7 @@ def submit_company_report(*, company, reporter, reason, section_key='', detail='
             )
     except IntegrityError as error:
         raise ValidationError(
-            {'detail': 'Bạn đã có một báo cáo đang chờ xử lý cho công ty này.'}
+            {'detail': _('Bạn đã có một báo cáo đang chờ xử lý cho công ty này.')}
         ) from error
 
 
@@ -75,12 +76,12 @@ def _hold_page_unless_held(company_id, *, actor, reason):
 def resolve_company_report(*, report, status, actor, note, apply_hold=False):
     """Conclude a pending report; an upheld one may hide the page with it."""
     if status not in RESOLVED_STATUSES:
-        raise ValidationError({'status': 'Trạng thái kết luận không hợp lệ.'})
+        raise ValidationError({'status': _('Trạng thái kết luận không hợp lệ.')})
     if apply_hold and status != CompanyReport.Status.UPHELD:
-        raise ValidationError({'apply_hold': 'Chỉ tạm ẩn trang khi xác nhận vi phạm.'})
+        raise ValidationError({'apply_hold': _('Chỉ tạm ẩn trang khi xác nhận vi phạm.')})
     locked = _lock_report(report)
     if locked.status != CompanyReport.Status.PENDING:
-        raise ValidationError({'detail': 'Báo cáo này đã được xử lý.'})
+        raise ValidationError({'detail': _('Báo cáo này đã được xử lý.')})
 
     _record_transition(locked, to_status=status, note=note, actor=actor)
     hold_applied = apply_hold and _hold_page_unless_held(
@@ -105,7 +106,7 @@ def reverse_company_report(*, report, actor, note):
     locked = _lock_report(report)
     from_status = locked.status
     if from_status not in RESOLVED_STATUSES:
-        raise ValidationError({'detail': 'Báo cáo này chưa có kết luận để mở lại.'})
+        raise ValidationError({'detail': _('Báo cáo này chưa có kết luận để mở lại.')})
 
     try:
         with transaction.atomic():
@@ -115,7 +116,7 @@ def reverse_company_report(*, report, actor, note):
     except IntegrityError as error:
         # The reporter filed a new report after this one was resolved.
         raise ValidationError(
-            {'detail': 'Người báo cáo đã có một báo cáo khác đang chờ xử lý cho công ty này.'}
+            {'detail': _('Người báo cáo đã có một báo cáo khác đang chờ xử lý cho công ty này.')}
         ) from error
     record_admin_action(
         actor=actor,

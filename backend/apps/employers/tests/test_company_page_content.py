@@ -1,4 +1,5 @@
-"""Page content through admin moderation: validation, merge, apply and render."""
+"""Page content of companies an admin sends back to review first: validation,
+merge, apply and render. Direct publishing lives in ``test_company_content_changes``."""
 
 import json
 
@@ -8,6 +9,7 @@ from django.urls import reverse
 from rest_framework.exceptions import ValidationError
 
 from apps.accounts.models import User
+from apps.employers.domain.page_content import normalize_video_url, video_embed
 from apps.jobs.models import Benefit
 from apps.locations.models import Location
 
@@ -18,17 +20,14 @@ from ..models import (
     CompanyUpdateEvent,
     CompanyUpdateRequest,
 )
-from ..page_content import normalize_video_url, video_embed
 from ..services import (
     CompanyUpdateConflict,
     apply_update_request,
     normalize_page_content_changes,
     start_company_update_review,
 )
-from .company_page_helpers import add_recruiter
-from .test_api import PNG_BYTES
-from .test_company_page_seo import SHELL, _structured_data
-from .test_company_page_workspace import MEMBER, CompanyPageWorkspaceTestCase
+from .cases import MEMBER, SHELL, CompanyPageWorkspaceTestCase, structured_data
+from .factories import PNG_BYTES, add_recruiter
 
 LONG_DESCRIPTION = '<p>' + 'Alpha xây dựng sản phẩm phần mềm cho doanh nghiệp. ' * 12 + '</p>'
 CULTURE = '<p>Làm việc <strong>minh bạch</strong>, học hỏi mỗi ngày.</p>'
@@ -230,6 +229,8 @@ class PageContentValidationTests(CompanyPageWorkspaceTestCase):
 class PageContentEndpointTests(CompanyPageWorkspaceTestCase):
     def setUp(self):
         super().setUp()
+        # These cases exercise the review-first path an administrator can turn on.
+        Company.objects.filter(pk=self.company.pk).update(content_review_required=True)
         self.content_url = reverse('employer-company-page-content')
         self.update_requests_url = reverse('employer-company-update-requests')
         self.hanoi = _province('P01', 'Hà Nội')
@@ -300,10 +301,10 @@ class PageContentEndpointTests(CompanyPageWorkspaceTestCase):
             {'headline': 'Kiến tạo tương lai', 'culture': CULTURE},
         )
 
-    def test_profile_form_still_replaces_the_open_request(self):
+    def test_profile_form_replaces_its_fields_but_keeps_page_content(self):
         first = self.client.post(
             self.update_requests_url,
-            {'changes': {'headline': 'Một', 'culture': CULTURE}},
+            {'changes': {'headline': 'Một', 'culture': CULTURE, 'phone': '0901234567'}},
             format='json',
         )
         second = self.client.post(
@@ -313,7 +314,8 @@ class PageContentEndpointTests(CompanyPageWorkspaceTestCase):
         )
 
         self.assertEqual((first.status_code, second.status_code), (201, 200))
-        self.assertEqual(second.data['changes'], {'headline': 'Hai'})
+        # The profile form dropped its phone change; culture from the page stays.
+        self.assertEqual(second.data['changes'], {'headline': 'Hai', 'culture': CULTURE})
 
     def test_merge_keeps_unrelated_keys_and_returns_the_workspace(self):
         first = self.send(headline='Kiến tạo tương lai')
@@ -526,6 +528,8 @@ class PageContentEndpointTests(CompanyPageWorkspaceTestCase):
 class PageContentApprovalTests(CompanyPageWorkspaceTestCase):
     def setUp(self):
         super().setUp()
+        # These cases exercise the review-first path an administrator can turn on.
+        Company.objects.filter(pk=self.company.pk).update(content_review_required=True)
         self.admin = User.objects.create_superuser(
             email='content-approver@example.com', password='x'
         )
@@ -819,7 +823,7 @@ class PublicPageContentTests(CompanyPageWorkspaceTestCase):
         with override_settings(FRONTEND_SHELL_HTML=SHELL):
             html = self.client.get(reverse('seo-company-detail', args=[company.slug]))
         html = html.content.decode()
-        return html, _structured_data(html)
+        return html, structured_data(html)
 
     def test_household_company_never_shows_an_address(self):
         Company.objects.filter(pk=self.company.pk).update(
@@ -884,7 +888,10 @@ class WorkspaceContentFormTests(CompanyPageWorkspaceTestCase):
         data = self.client.get(self.page_url).data
 
         form = data['content_form']
-        self.assertSetEqual(set(form), {'published', 'pending', 'request', 'section_status'})
+        self.assertSetEqual(
+            set(form), {'review_mode', 'published', 'pending', 'request', 'section_status'}
+        )
+        self.assertEqual(form['review_mode'], 'direct')
         self.assertSetEqual(
             set(form['published']),
             {

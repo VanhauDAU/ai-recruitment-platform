@@ -6,4 +6,4 @@ class CvsConfig(AppConfig):
     name = 'apps.cvs'
 
     def ready(self):
-        from . import signals  # noqa: F401
+        from .signals import receivers  # noqa: F401

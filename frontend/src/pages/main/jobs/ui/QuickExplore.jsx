@@ -9,7 +9,7 @@ import {
 } from '@ant-design/icons'
 import { Skeleton } from 'antd'
 import ArrowButton from '@/shared/ui/ArrowButton'
-import { formatNumber } from '@/entities/job'
+import { formatNumber } from '@/entities/job/job'
 
 function ShortcutCard({ icon, img, label, active, onClick }) {
   return (

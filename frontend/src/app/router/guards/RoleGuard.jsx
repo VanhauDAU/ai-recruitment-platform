@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from 'react-router'
-import { useSession } from '@/entities/session'
+import { useSession } from '@/entities/account/session'
 
 // Chỉ quyết định role/portal sau khi AuthGuard đã xác nhận session.
 export default function RoleGuard({ allowedRoles, loginPath = '/login', children }) {

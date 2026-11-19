@@ -1,4 +1,5 @@
 from django.utils.text import Truncator
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from ...models import KnowledgeArticle, KnowledgeCategory
@@ -37,7 +38,7 @@ class PublicArticleListSerializer(serializers.ModelSerializer):
             'updated_at',
         ]
 
-    def get_excerpt(self, obj):
+    def get_excerpt(self, obj) -> str:
         return Truncator(obj.published_revision.body_plain_text).chars(180)
 
 
@@ -78,15 +79,18 @@ class PublicArticleDetailSerializer(PublicArticleListSerializer):
             'next_article',
         ]
 
+    @extend_schema_field(PublicArticleCompactSerializer(many=True))
     def get_related_articles(self, obj):
         return PublicArticleCompactSerializer(
             self.context.get('related_articles', []), many=True
         ).data
 
+    @extend_schema_field(PublicArticleCompactSerializer(allow_null=True))
     def get_previous_article(self, obj):
         article = self.context.get('previous_article')
         return PublicArticleCompactSerializer(article).data if article else None
 
+    @extend_schema_field(PublicArticleCompactSerializer(allow_null=True))
     def get_next_article(self, obj):
         article = self.context.get('next_article')
         return PublicArticleCompactSerializer(article).data if article else None

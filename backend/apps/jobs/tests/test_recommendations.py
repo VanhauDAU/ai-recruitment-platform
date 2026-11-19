@@ -15,11 +15,11 @@ from apps.candidates.models import (
     CandidatePreferredProvince,
     CandidatePreferredSkill,
 )
+from apps.cv_templates.models import empty_content
 from apps.cvs.models import UserCv
-from apps.cvs.schemas import empty_content
 from apps.cvs.services import create_initial_document
 from apps.employers.models import Company
-from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.employers.tests.factories import make_employer_ready
 from apps.locations.models import Location
 from apps.skills.models import Skill
 
@@ -33,7 +33,7 @@ from ..models import (
     SavedJob,
 )
 from ..selectors.recommendations import recommend_new_jobs_for_candidate_email
-from .helpers import open_visibility_window
+from .factories import open_visibility_window
 
 
 class CvJobRecommendationApiTests(APITestCase):
@@ -351,7 +351,9 @@ class CvJobRecommendationApiTests(APITestCase):
     def test_candidate_page_and_suitable_email_do_not_read_any_cv(self):
         from unittest.mock import patch
 
-        with patch('apps.jobs.models.recommendation_queries._candidate_cvs') as candidate_cvs:
+        with patch(
+            'apps.jobs.models.recommendation_queries.context._candidate_cvs'
+        ) as candidate_cvs:
             page_response = self.client.get(reverse('candidate-job-recommendations'))
             email_payload = recommend_new_jobs_for_candidate_email(
                 self.candidate,
@@ -782,7 +784,7 @@ class PersonalizedRecommendationControlsApiTests(APITestCase):
         from unittest.mock import patch
 
         params, _ = self._inline_response_with_status('not_shown')
-        with patch('apps.jobs.models.recommendation_queries._rank_jobs') as rank_jobs:
+        with patch('apps.jobs.models.recommendation_queries.ranking._rank_jobs') as rank_jobs:
             response = self.client.get(reverse('inline-job-recommendations'), params)
 
         self.assertEqual(response.data['status'], 'not_shown')

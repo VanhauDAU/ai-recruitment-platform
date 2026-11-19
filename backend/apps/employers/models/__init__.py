@@ -1,8 +1,8 @@
 """Public model API for the employers Django app."""
 
-from .campaign import CampaignActivity, RecruitmentCampaign
+from .choices import BudgetSource
 from .company import Company, CompanyImage, CompanyIndustry, CompanyMediaUpload, Industry
-from .company_content import CompanyBenefit, CompanyOffice
+from .company_content import CompanyBenefit, CompanyContentChange, CompanyOffice
 from .company_follow import CompanyFollow
 from .company_page import (
     CompanyPageEditorGrant,
@@ -11,6 +11,13 @@ from .company_page import (
     CompanyPinnedJob,
 )
 from .company_report import CompanyReport, CompanyReportResolutionEvent
+from .company_update import (
+    ACTIVE_COMPANY_UPDATE_STATUSES,
+    ADMIN_PENDING_COMPANY_UPDATE_STATUSES,
+    CompanyUpdateEvent,
+    CompanyUpdateRequest,
+    CompanyUpdateRevision,
+)
 from .compliance import (
     EmployerComplianceHold,
     EmployerComplianceHoldCampaign,
@@ -18,6 +25,7 @@ from .compliance import (
 )
 from .domain_claim import CompanyDomainClaim, CompanyDomainClaimEvent
 from .dpa import EmployerDpaAcceptance
+from .evidence import CompanyDocument, CompanyTaxLookupEvidence
 from .membership import CompanyJoinRequest, EmployerCompanyLinkEvent, RecruiterProfile
 from .notifications import (
     EmployerActivity,
@@ -28,20 +36,19 @@ from .otp import EmployerPhoneVerificationEvent, PhoneOtp
 from .readiness import DpaStatus
 from .recruitment_need import RecruitmentNeed
 from .verification import (
-    CompanyDocument,
-    CompanyTaxLookupEvidence,
-    CompanyUpdateEvent,
-    CompanyUpdateRequest,
-    CompanyUpdateRevision,
     EmployerVerificationCase,
     EmployerVerificationEvent,
     EmployerVerificationNotification,
 )
 
 __all__ = [
+    'ACTIVE_COMPANY_UPDATE_STATUSES',
+    'ADMIN_PENDING_COMPANY_UPDATE_STATUSES',
+    'BudgetSource',
     'CompanyJoinRequest',
     'Company',
     'CompanyBenefit',
+    'CompanyContentChange',
     'CompanyOffice',
     'CompanyDocument',
     'CompanyDomainClaim',
@@ -69,7 +76,6 @@ __all__ = [
     'EmployerComplianceHoldJob',
     'EmployerDpaAcceptance',
     'EmployerPhoneVerificationEvent',
-    'CampaignActivity',
     'Industry',
     'PhoneOtp',
     'RecruiterProfile',
@@ -77,6 +83,5 @@ __all__ = [
     'EmployerActivity',
     'EmployerNotification',
     'EmployerNotificationPreference',
-    'RecruitmentCampaign',
     'RecruitmentNeed',
 ]

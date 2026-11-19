@@ -1,17 +1,19 @@
 """The content tab of the page workspace: published values, the caller's
-pending request, a status per block and the completeness score."""
+pending request, a status per block, how saving behaves and the completeness score."""
 
+from django.utils.translation import gettext_lazy
+
+from apps.employers.domain.page_content import SOCIAL_NETWORKS
 from apps.locations.models import Location
-from common.media_storage import media_url_from_value
-from common.rich_text import rich_text_plain_text
+from common.html.plain_text import html_plain_text
+from common.storage.media import media_url_from_value
 
 from ..models import CompanyUpdateRequest, RecruiterProfile
-from ..models.verification import (
+from ..models.company_update import (
     ACTIVE_COMPANY_UPDATE_STATUSES,
     REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
     company_update_allowed_actions,
 )
-from ..page_content import SOCIAL_NETWORKS
 
 TEXT_FIELDS = ('headline', 'description', 'culture', 'employee_benefits', 'video_url')
 MEDIA_MARKERS = ('logo_pending', 'cover_pending', 'gallery_pending')
@@ -37,15 +39,15 @@ SECTION_REQUEST_KEYS = {
 
 COMPLETENESS_ITEMS = (
     ('logo', 'Logo'),
-    ('cover', 'Ảnh bìa'),
-    ('headline', 'Khẩu hiệu'),
-    ('about', 'Giới thiệu công ty'),
-    ('benefits', 'Phúc lợi'),
-    ('culture', 'Văn hoá công ty'),
-    ('gallery', 'Hình ảnh công ty'),
-    ('offices', 'Văn phòng'),
-    ('social_links', 'Mạng xã hội'),
-    ('video', 'Video giới thiệu'),
+    ('cover', gettext_lazy('Ảnh bìa')),
+    ('headline', gettext_lazy('Khẩu hiệu')),
+    ('about', gettext_lazy('Giới thiệu công ty')),
+    ('benefits', gettext_lazy('Phúc lợi')),
+    ('culture', gettext_lazy('Văn hoá công ty')),
+    ('gallery', gettext_lazy('Hình ảnh công ty')),
+    ('offices', gettext_lazy('Văn phòng')),
+    ('social_links', gettext_lazy('Mạng xã hội')),
+    ('video', gettext_lazy('Video giới thiệu')),
 )
 
 
@@ -142,7 +144,7 @@ def _request_summary(update_request, recruiter):
 
 
 def _has_text(value):
-    return bool(rich_text_plain_text(value))
+    return bool(html_plain_text(value))
 
 
 def _published_blocks(company, published):
@@ -193,6 +195,9 @@ def company_page_content_form(company, *, recruiter, request=None):
         for section, keys in SECTION_REQUEST_KEYS.items()
     }
     content_form = {
+        # ``direct``: a save publishes at once and is reviewed afterwards;
+        # ``review``: an administrator requires review first (update request).
+        'review_mode': 'review' if company.content_review_required else 'direct',
         'published': published,
         'pending': _pending(changes, request) if update_request is not None else None,
         'request': (
@@ -200,7 +205,9 @@ def company_page_content_form(company, *, recruiter, request=None):
         ),
         'section_status': section_status,
     }
-    items = [{'key': key, 'label': label, 'done': done[key]} for key, label in COMPLETENESS_ITEMS]
+    items = [
+        {'key': key, 'label': str(label), 'done': done[key]} for key, label in COMPLETENESS_ITEMS
+    ]
     completeness = {
         'score': round(100 * sum(item['done'] for item in items) / len(items)),
         'items': items,

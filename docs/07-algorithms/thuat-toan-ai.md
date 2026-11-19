@@ -7,11 +7,11 @@ lặp lại.
 
 | Năng lực | Kỹ thuật | Code chính | Chi tiết |
 | --- | --- | --- | --- |
-| Import và cấu trúc hóa CV | Trích text + LLM structured JSON, fallback heuristic | `apps/cvs/tasks.py`, `apps/ai_core/services/cv_import.py` | mục 1 |
+| Import và cấu trúc hóa CV | Trích text + LLM structured JSON, fallback heuristic | `apps/cvs/tasks/exports.py`, `apps/ai_core/services/cv_import.py` | mục 1 |
 | Điểm hoàn thiện CV | Rule có trọng số | `apps/cvs/services/completeness.py` | mục 2 |
-| Đối sánh CV/nhu cầu – tin tuyển dụng | Rule-based có trọng số, giải thích được | `apps/jobs/models/recommendation_queries.py` | mục 3, [`candidate-job-recommendations.md`](./candidate-job-recommendations.md) |
+| Đối sánh CV/nhu cầu – tin tuyển dụng | Rule-based có trọng số, giải thích được | `apps/jobs/models/recommendation_queries/` | mục 3, [`candidate-job-recommendations.md`](./candidate-job-recommendations.md) |
 | Tin tương tự tin đã lưu | Similarity pairwise rule-based | `apps/jobs/selectors/saved_recommendations.py` | [`saved-job-recommendations.md`](./saved-job-recommendations.md) |
-| AI tạo tin tuyển dụng | LLM structured output qua `ai_core` | `apps/jobs/services/ai_generation.py` | mục 5, [`ai-job-post-generation.md`](./ai-job-post-generation.md) |
+| AI tạo tin tuyển dụng | LLM structured output qua `ai_core` | `apps/jobs/services/ai_generation/` (chính sách: `apps/jobs/domain/ai_policy.py`) | mục 5, [`ai-job-post-generation.md`](./ai-job-post-generation.md) |
 | Chatbot FAQ ứng viên | Retrieval, không sinh LLM | — | [`chatbot-ung-vien-faq.md`](./chatbot-ung-vien-faq.md) |
 | Đối sánh ngữ nghĩa CV–JD (đang xây) | Bi-encoder đa ngữ fine-tune local, chấm nhiều tiêu chí, vector trong pgvector | `apps/matching` (mới có schema) | mục 7 |
 
@@ -20,7 +20,7 @@ nghĩa ở mục 7 đang được xây.
 
 ## 1. Import và cấu trúc hóa CV
 
-Ứng viên tải PDF/DOCX tại `POST /api/v2/cvs/imports/` (multipart hoặc upload
+Ứng viên tải PDF/DOCX tại `POST /api/candidate/cvs/imports/` (multipart hoặc upload
 session đã scan `clean`; xem [`van-hanh-va-kill-switch.md`](../06-deployment/van-hanh-va-kill-switch.md)).
 Service `queue_cv_import` kiểm tra magic bytes, giới hạn 5 MB, tạo `UserCv`
 và `CvImportJob` (`queued`) với `source_expires_at = now +
@@ -170,7 +170,7 @@ cấu trúc; prompt, schema và policy thuộc app sử dụng (hiện chỉ `jo
 | `model_not_found` | không | 404 |
 | `invalid_provider_request` | không | 4xx khác |
 | `provider_failed` | không | Lỗi không phân loại |
-| `runtime_disabled`, `provider_not_configured`, `unsupported_provider_backend`, `provider_sdk_unavailable` | không | Cấu hình |
+| `runtime_disabled`, `provider_not_configured`, `unsupported_provider_backend` | không | Cấu hình |
 
 Lỗi của `result_validator` cũng tính là một attempt và theo cùng quy tắc retry.
 
@@ -183,7 +183,7 @@ Lỗi của `result_validator` cũng tính là một attempt và theo cùng quy 
 - `AiUsageDaily`: tổng theo ngày × use case × provider × model, cộng nguyên tử
   bằng `F()`; thêm `quota_rejection_count` từ `record_ai_quota_rejection`.
 - Chi phí = token vào/ra × giá trong `AI_MODEL_PRICING_USD` (USD/triệu token).
-- `ai_usage_overview(days≤365)` cấp dữ liệu cho `GET /api/ai/admin/overview/`,
+- `ai_usage_overview(days≤365)` cấp dữ liệu cho `GET /api/admin/ai/overview/`,
   gồm p95 latency chính xác trên invocation.
 - Task `purge_expired_ai_metadata` (hằng ngày) xóa theo lô invocation và
   aggregate cũ hơn `AI_INVOCATION_METADATA_RETENTION_DAYS` (365).
@@ -192,7 +192,7 @@ Lỗi của `result_validator` cũng tính là một attempt và theo cùng quy 
 
 Use case `job_post_generation`, prompt/schema `job-post-v2`. Tóm tắt luồng:
 
-1. NTD gửi `POST /api/jobs/mine/ai-generations/` ở mode `ai_brief` hoặc
+1. NTD gửi `POST /api/employer/jobs/ai-generations/` ở mode `ai_brief` hoặc
    `jd_text` kèm `idempotency_key`. Input được sanitize (loại liên hệ/PII);
    cùng key và cùng hash input trả lại generation cũ, khác hash → 409.
 2. Policy `job_ai_policy(company)`: hard switch env AND soft switch Site
@@ -218,7 +218,7 @@ Hợp đồng output, trường cấm và tiêu chí train model xem
 Use case `cv_sample_content`, prompt `cv-sample-v1`, schema
 `cv-sample-content-v1` (`apps/cv_templates/services/sample_generation.py`).
 
-1. Admin gọi `POST /api/v2/admin/cv-sample-contents/generate/` với vị trí ×
+1. Admin gọi `POST /api/admin/cv-sample-contents/generate/` với vị trí ×
    ngôn ngữ × nhóm kinh nghiệm (≤ 16 tổ hợp, ≤ 16 lượt đang chạy; lượt treo quá
    10 phút bị đánh lỗi `stale`). Runtime phải bật và có credential, nếu không
    trả 503 trước khi tạo gì.
@@ -335,7 +335,7 @@ validation do người chấm. Mức: ≥ 80 Rất phù hợp, 65–79 Phù hợ
 phù hợp, < 50 Chưa phù hợp. Độ tin cậy giảm khi có tiêu chí thiếu dữ liệu hoặc
 số tháng kinh nghiệm chỉ ước lượng từ PDF bố cục đảo.
 
-API `/api/matching/analyses/` (xem [tài liệu API](../04-api/tai-lieu-api.md)),
+API `/api/candidate/matching/analyses/` (xem [tài liệu API](../04-api/tai-lieu-api.md)),
 cờ `ai_job_match_enabled`. Vector tính sẵn khi CV có phiên bản mới hoặc tin
 đang mở được lưu (signal, sau commit). Đo trên máy dev (e5-base, CPU trong
 container): chấm một cặp đã có vector khoảng 10 ms, p95 tổng 25 ms; CV vừa sửa

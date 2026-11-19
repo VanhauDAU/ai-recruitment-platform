@@ -1,15 +1,16 @@
 from django.db import models
 from django.utils.text import slugify
+from django.utils.translation import gettext_lazy
 
 from .core import Job
 
 
 class Benefit(models.Model):
     class Category(models.TextChoices):
-        ALLOWANCE = 'allowance', 'Phụ cấp'
-        EQUIPMENT = 'equipment', 'Hỗ trợ thiết bị làm việc'
-        WELFARE = 'welfare', 'Phúc lợi'
-        OTHER = 'other', 'Khác'
+        ALLOWANCE = 'allowance', gettext_lazy('Phụ cấp')
+        EQUIPMENT = 'equipment', gettext_lazy('Hỗ trợ thiết bị làm việc')
+        WELFARE = 'welfare', gettext_lazy('Phúc lợi')
+        OTHER = 'other', gettext_lazy('Khác')
 
     name = models.CharField(max_length=255, unique=True)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
@@ -22,13 +23,13 @@ class Benefit(models.Model):
     class Meta:
         ordering = ['sort_order', 'name']
 
+    def __str__(self):
+        return self.name
+
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return self.name
 
 
 class JobBenefit(models.Model):
@@ -40,3 +41,6 @@ class JobBenefit(models.Model):
     class Meta:
         ordering = ['sort_order', 'id']
         constraints = [models.UniqueConstraint(fields=['job', 'benefit'], name='uq_job_benefit')]
+
+    def __str__(self):
+        return f'{self.job_id}: {self.benefit_id}'

@@ -16,18 +16,18 @@ from rest_framework.test import APITestCase
 from rest_framework.throttling import ScopedRateThrottle
 
 from apps.accounts.models import AdminAccessAuditLog, User
-from apps.accounts.tests.helpers import make_admin
+from apps.accounts.tests.factories import make_admin
+from apps.employers.domain.page_registry import SECTION_TITLES
 from apps.jobs.models import JobReport
 
 from ..models import Company, CompanyPageEvent, CompanyReport, CompanyReportResolutionEvent
-from ..page_registry import SECTION_TITLES
 from ..services import (
     employer_badge_state_map,
     resolve_company_report,
     reverse_company_report,
     submit_company_report,
 )
-from .company_page_helpers import (
+from .factories import (
     add_recruiter,
     hold_company,
     make_candidate,

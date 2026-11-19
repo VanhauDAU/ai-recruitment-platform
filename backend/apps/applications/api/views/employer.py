@@ -2,13 +2,15 @@ import csv
 
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django.utils.translation import gettext as _
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import generics
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsEmployer
+from apps.accounts.api.permissions import IsEmployer
 from apps.employers.services import ensure_recruiter_candidate_data_access
 
 from ...selectors import (
@@ -40,6 +42,7 @@ def _csv_cell(value):
     return f"'{text}" if text.startswith(('=', '+', '-', '@')) else text
 
 
+@extend_schema(tags=['applications'], summary='Hồ sơ ứng tuyển vào các tin của NTD')
 class EmployerApplicationListView(generics.ListAPIView):
     serializer_class = ApplicationSerializer
     permission_classes = [IsEmployer]
@@ -57,6 +60,11 @@ class EmployerApplicationListView(generics.ListAPIView):
         )
 
 
+@extend_schema(
+    tags=['applications'],
+    summary='Xuất danh sách hồ sơ ứng tuyển ra CSV',
+    responses={(200, 'text/csv'): OpenApiTypes.BINARY},
+)
 class EmployerApplicationExportView(APIView):
     permission_classes = [IsEmployer]
 
@@ -77,12 +85,12 @@ class EmployerApplicationExportView(APIView):
         writer = csv.writer(response)
         writer.writerow(
             [
-                'Ứng viên',
+                _('Ứng viên'),
                 'Email',
-                'Tin tuyển dụng',
-                'CV đã nộp',
-                'Trạng thái',
-                'Ngày ứng tuyển',
+                _('Tin tuyển dụng'),
+                _('CV đã nộp'),
+                _('Trạng thái'),
+                _('Ngày ứng tuyển'),
             ]
         )
         for application in queryset.iterator(chunk_size=200):
@@ -111,7 +119,7 @@ def _workspace_row(request, application):
 
 
 @extend_schema(
-    tags=['applications-v2'],
+    tags=['applications'],
     summary='NTD cập nhật ghi chú và đánh giá nội bộ (không đổi trạng thái)',
     request=ApplicationAssessmentSerializer,
     responses={200: ApplicationSerializer},
@@ -130,7 +138,7 @@ class EmployerApplicationAssessmentView(APIView):
 
 
 @extend_schema(
-    tags=['applications-v2'],
+    tags=['applications'],
     summary='NTD ra quyết định cho hồ sơ; ứng viên được báo sau thời gian chờ hoàn tác',
     request=ApplicationStatusDecisionSerializer,
     responses={200: ApplicationDecisionResultSerializer},
@@ -159,7 +167,7 @@ class EmployerApplicationDecisionView(APIView):
 
 
 @extend_schema(
-    tags=['applications-v2'],
+    tags=['applications'],
     summary='NTD hoàn tác quyết định gần nhất khi ứng viên chưa nhận thông báo',
     request=None,
     responses={
@@ -176,6 +184,7 @@ class EmployerApplicationDecisionUndoView(APIView):
         return Response(_workspace_row(request, application))
 
 
+@extend_schema(tags=['applications'], summary='Các lần nộp trước của ứng viên vào cùng tin')
 class EmployerApplicationSubmissionsView(generics.ListAPIView):
     """Earlier submissions of the same candidate to the same job, read-only."""
 
@@ -189,6 +198,7 @@ class EmployerApplicationSubmissionsView(generics.ListAPIView):
         )
 
 
+@extend_schema(tags=['applications'], summary='Lịch sử trạng thái của hồ sơ')
 class EmployerApplicationHistoryView(generics.ListAPIView):
     permission_classes = [IsEmployer]
     serializer_class = ApplicationStatusHistorySerializer

@@ -9,13 +9,13 @@ from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
-from apps.accounts.services.tokens import issue_tokens
+from apps.accounts.services import issue_tokens
 from apps.cv_templates.tests.factories import make_published_template
-from apps.cvs.services import create_v2_cv
+from apps.cvs.services import create_user_cv
 from apps.employers.models import Company
-from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.employers.tests.factories import make_employer_ready
 from apps.jobs.models import Job
-from apps.jobs.tests.helpers import open_visibility_window
+from apps.jobs.tests.factories import open_visibility_window
 
 from ..services import create_application_record
 
@@ -50,14 +50,14 @@ class CandidateApplicationListQueryBudgetTests(APITestCase):
                 status=Job.Status.ACTIVE,
                 **open_visibility_window(),
             )
-            cv = create_v2_cv(actor=self.candidate, title=f'CV {index}', template=template)
+            cv = create_user_cv(actor=self.candidate, title=f'CV {index}', template=template)
             create_application_record(candidate=self.candidate, job=job, cv=cv)
         tokens = issue_tokens(self.candidate)
         self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {tokens["access"]}')
 
     def test_candidate_application_list_query_count_is_flat(self):
         with self.assertNumQueries(CANDIDATE_APPLICATION_LIST_BUDGET):
-            response = self.client.get(reverse('candidate-application-list-create-v2'))
+            response = self.client.get(reverse('candidate-application-list-create'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data['results']), 3)
 
@@ -94,12 +94,12 @@ class RecruiterApplicationListQueryBudgetTests(APITestCase):
                 role='candidate',
                 email_verified=True,
             )
-            cv = create_v2_cv(actor=candidate, title=f'CV {index}', template=self.template)
+            cv = create_user_cv(actor=candidate, title=f'CV {index}', template=self.template)
             create_application_record(candidate=candidate, job=self.job, cv=cv)
 
     def count_list_queries(self):
         with CaptureQueriesContext(connection) as queries:
-            response = self.client.get(reverse('recruiter-application-list-v2'))
+            response = self.client.get(reverse('recruiter-application-list'))
         self.assertEqual(response.status_code, 200)
         return len(queries)
 

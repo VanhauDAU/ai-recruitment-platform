@@ -12,7 +12,7 @@ from ..models import (
     AnnouncementUserState,
 )
 from ..services import create_announcement
-from .announcement_helpers import revision_payload
+from .factories import revision_payload
 
 
 class AnnouncementModelTests(TestCase):

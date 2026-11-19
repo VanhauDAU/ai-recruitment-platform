@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { CameraOutlined, UserOutlined } from '@ant-design/icons'
 import { Avatar, Button, Form, Input } from 'antd'
-import { AvatarEditorModal, updateProfile } from '@/features/edit-profile'
+import { AvatarEditorModal, updateProfile } from '@/features/common/account/edit-profile'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
-import { useSession } from '@/entities/session'
+import { useSession } from '@/entities/account/session'
 import { message } from '@/shared/lib/toast'
 
 // Số điện thoại VN: 0 hoặc +84 rồi 9-10 chữ số (khớp validate backend).

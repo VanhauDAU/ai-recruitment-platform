@@ -1,11 +1,12 @@
 """Serializers for reporting a company page and for the admin report queue."""
 
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 
-from common.media_storage import media_url_from_value
+from apps.employers.domain.page_registry import SECTION_TITLES
+from common.storage.media import media_url_from_value
 
 from ...models import CompanyReport, CompanyReportResolutionEvent
-from ...page_registry import SECTION_TITLES
 from ...selectors import ADMIN_COMPANY_REPORT_ORDERING_FIELDS
 
 RESOLUTION_NOTE_MAX_LENGTH = 1000
@@ -28,7 +29,7 @@ class CompanyReportCreateSerializer(serializers.Serializer):
             and len(attrs.get('detail', '')) < self.OTHER_DETAIL_MIN_LENGTH
         ):
             raise serializers.ValidationError(
-                {'detail': 'Vui lòng mô tả cụ thể ít nhất 10 ký tự khi chọn "Lý do khác".'}
+                {'detail': _('Vui lòng mô tả cụ thể ít nhất 10 ký tự khi chọn "Lý do khác".')}
             )
         return attrs
 
@@ -90,7 +91,7 @@ class AdminCompanyReportSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = fields
 
-    def get_company(self, obj):
+    def get_company(self, obj) -> dict:
         company = obj.company
         return {
             'public_id': company.public_id,
@@ -100,8 +101,8 @@ class AdminCompanyReportSerializer(serializers.ModelSerializer):
             'content_policy_hold': company.content_policy_hold,
         }
 
-    def get_section_title(self, obj):
-        return SECTION_TITLES.get(obj.section_key, '')
+    def get_section_title(self, obj) -> str:
+        return str(SECTION_TITLES.get(obj.section_key, ''))
 
 
 class AdminCompanyReportQuerySerializer(serializers.Serializer):

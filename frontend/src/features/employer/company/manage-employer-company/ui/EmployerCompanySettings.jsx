@@ -1,0 +1,128 @@
+import { CheckCircleFilled, PlusOutlined, SearchOutlined } from '@ant-design/icons'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Badge, Button, Result, Skeleton, Tabs } from 'antd'
+import { useState } from 'react'
+import { useSearchParams } from 'react-router'
+import {
+  employerProfileKeys,
+  getEmployerCompanyCatalogs,
+  getEmployerIndustries,
+  getCompanyJoinRequests,
+  getEmployerProfile,
+  getMyCompanyJoinRequest,
+} from '@/entities/account/employer-profile'
+import { m } from '@/shared/config/i18n'
+import CompanyForm from './CompanyForm'
+import CompanyMembersPanel from './CompanyMembersPanel'
+import CompanySearchPanel from './CompanySearchPanel'
+import LinkedCompanyPanel from './LinkedCompanyPanel'
+import PendingCompanyJoin from './PendingCompanyJoin'
+import './employer-company-settings.css'
+
+const OPTIONS = [
+  {
+    key: 'search',
+    icon: <SearchOutlined />,
+    title: m.employer_company_flow_search_title(),
+    description: m.employer_company_flow_search_description(),
+  },
+  {
+    key: 'create',
+    icon: <PlusOutlined />,
+    title: m.employer_company_flow_create_title(),
+    description: m.employer_company_flow_create_description(),
+  },
+]
+
+export default function EmployerCompanySettings() {
+  const [activeFlow, setActiveFlow] = useState('search')
+  const queryClient = useQueryClient()
+  const profileQuery = useQuery({ queryKey: ['employer', 'profile'], queryFn: getEmployerProfile })
+  const industriesQuery = useQuery({ queryKey: ['employer', 'industries'], queryFn: getEmployerIndustries, staleTime: 10 * 60 * 1000 })
+  const catalogsQuery = useQuery({ queryKey: ['employer', 'company', 'catalogs'], queryFn: getEmployerCompanyCatalogs, staleTime: 30 * 60 * 1000 })
+  const linked = Boolean(profileQuery.data?.onboarding?.company_linked)
+  const joinRequestQuery = useQuery({
+    queryKey: employerProfileKeys.myCompanyJoinRequest,
+    queryFn: getMyCompanyJoinRequest,
+    enabled: profileQuery.isSuccess && !linked,
+  })
+
+  async function refreshProfile() {
+    await Promise.all([
+      profileQuery.refetch(),
+      queryClient.invalidateQueries({ queryKey: ['employer-dashboard'] }),
+      queryClient.invalidateQueries({ queryKey: ['employer', 'companies'] }),
+      queryClient.invalidateQueries({ queryKey: employerProfileKeys.companyUpdateRequests }),
+      queryClient.invalidateQueries({ queryKey: employerProfileKeys.myCompanyJoinRequest }),
+    ])
+  }
+
+  if (profileQuery.isLoading || industriesQuery.isLoading || catalogsQuery.isLoading) return <Skeleton active paragraph={{ rows: 14 }} />
+  if (profileQuery.isError || industriesQuery.isError || catalogsQuery.isError) {
+    return <Result status="error" title={m.employer_company_settings_load_error()} extra={<Button type="primary" onClick={() => { profileQuery.refetch(); industriesQuery.refetch(); catalogsQuery.refetch() }}>{m.employer_company_retry()}</Button>} />
+  }
+
+  const profile = profileQuery.data || {}
+  const catalogs = catalogsQuery.data || { business_types: [], company_sizes: [], markets: [], target_customers: [] }
+  const industries = industriesQuery.data || []
+  if (profile.onboarding?.company_linked) {
+    const panel = <LinkedCompanyPanel profile={profile} catalogs={catalogs} industries={industries} onRefresh={refreshProfile} />
+    return profile.company_role === 'owner'
+      ? <ManagerCompanyTabs infoPanel={panel} onRefresh={refreshProfile} />
+      : panel
+  }
+  if (joinRequestQuery.isLoading) return <Skeleton active paragraph={{ rows: 4 }} />
+  if (joinRequestQuery.data?.public_id) {
+    return <PendingCompanyJoin joinRequest={joinRequestQuery.data} onChanged={refreshProfile} />
+  }
+
+  return (
+    <div className="employer-company-settings">
+      <div className="company-flow-options" role="tablist" aria-label={m.employer_company_flow_options_label()}>
+        {OPTIONS.map((option) => {
+          const active = option.key === activeFlow
+          return (
+            <button key={option.key} type="button" role="tab" aria-selected={active} className={`company-flow-option ${active ? 'company-flow-option--active' : ''}`} onClick={() => setActiveFlow(option.key)}>
+              <span className="company-flow-option__icon">{option.icon}</span>
+              <span className="min-w-0 flex-1 text-left"><strong>{option.title}</strong><small>{option.description}</small></span>
+              {active && <CheckCircleFilled className="company-flow-option__check" />}
+            </button>
+          )
+        })}
+      </div>
+      <div className="company-flow-content" role="tabpanel">
+        {activeFlow === 'search'
+          ? <CompanySearchPanel onLinked={refreshProfile} onCreateInstead={() => setActiveFlow('create')} />
+          : <CompanyForm catalogs={catalogs} industries={industries} onCompleted={refreshProfile} />}
+      </div>
+    </div>
+  )
+}
+
+/** The company manager works in two tabs: company information, and members. */
+function ManagerCompanyTabs({ infoPanel, onRefresh }) {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeTab = searchParams.get('tab') === 'members' ? 'members' : 'info'
+  const requestsQuery = useQuery({ queryKey: employerProfileKeys.companyJoinRequests, queryFn: getCompanyJoinRequests })
+  const pending = Array.isArray(requestsQuery.data) ? requestsQuery.data.length : 0
+  const changeTab = (tab) => {
+    const next = new URLSearchParams(searchParams)
+    if (tab === 'members') next.set('tab', 'members')
+    else next.delete('tab')
+    setSearchParams(next, { replace: true })
+  }
+  return (
+    <Tabs
+      activeKey={activeTab}
+      onChange={changeTab}
+      items={[
+        { key: 'info', label: m.employer_company_tab_info(), children: infoPanel },
+        {
+          key: 'members',
+          label: <span className="inline-flex items-center gap-2">{m.employer_company_tab_members()} {pending > 0 && <Badge count={pending} size="small" />}</span>,
+          children: <CompanyMembersPanel onRefresh={onRefresh} />,
+        },
+      ]}
+    />
+  )
+}

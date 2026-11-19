@@ -3,8 +3,9 @@ from datetime import timedelta
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
+from django.utils.translation import gettext_lazy
 
-from common.public_id import generate_public_id
+from common.db.public_id import generate_public_id
 
 
 class Application(models.Model):
@@ -22,13 +23,13 @@ class Application(models.Model):
         INVITED = 'invited', 'Invited'
 
     class Status(models.TextChoices):
-        SUBMITTED = 'submitted', 'Mới'
-        VIEWED = 'viewed', 'Đã xem'
-        SHORTLISTED = 'shortlisted', 'Phù hợp'
-        INTERVIEWED = 'interviewed', 'Phỏng vấn'
-        REJECTED = 'rejected', 'Không phù hợp'
-        ACCEPTED = 'accepted', 'Trúng tuyển'
-        WITHDRAWN = 'withdrawn', 'Đã rút'
+        SUBMITTED = 'submitted', gettext_lazy('Mới')
+        VIEWED = 'viewed', gettext_lazy('Đã xem')
+        SHORTLISTED = 'shortlisted', gettext_lazy('Phù hợp')
+        INTERVIEWED = 'interviewed', gettext_lazy('Phỏng vấn')
+        REJECTED = 'rejected', gettext_lazy('Không phù hợp')
+        ACCEPTED = 'accepted', gettext_lazy('Trúng tuyển')
+        WITHDRAWN = 'withdrawn', gettext_lazy('Đã rút')
 
     # Statuses the recruiter has not answered yet. One definition shared by the
     # `scope=unanswered` filter, automatic rejection and every aggregate that
@@ -148,6 +149,14 @@ class Application(models.Model):
             models.Index(fields=['submitted_cv_version'], name='idx_app_submitted_cv_version'),
         ]
 
+    def __str__(self):
+        return f'{self.candidate.email} -> {self.job.title}'
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('app')
+        super().save(*args, **kwargs)
+
     @property
     def auto_reject_due_at(self):
         """When this application is rejected automatically if still unanswered."""
@@ -182,11 +191,3 @@ class Application(models.Model):
         )
         first = history.order_by('created_at', 'id').first()
         return (first.from_status or self.Status.SUBMITTED) if first else self.status
-
-    def save(self, *args, **kwargs):
-        if not self.public_id:
-            self.public_id = generate_public_id('app')
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f'{self.candidate.email} -> {self.job.title}'

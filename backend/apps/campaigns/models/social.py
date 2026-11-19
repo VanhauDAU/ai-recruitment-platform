@@ -1,6 +1,7 @@
 from django.db import models
+from django.utils.translation import gettext_lazy
 
-from common.public_id import generate_public_id
+from common.db.public_id import generate_public_id
 
 
 class SocialAccountConnection(models.Model):
@@ -8,12 +9,12 @@ class SocialAccountConnection(models.Model):
 
     class Provider(models.TextChoices):
         FACEBOOK = 'facebook', 'Facebook'
-        FAKE = 'fake', 'Giả lập'
+        FAKE = 'fake', gettext_lazy('Giả lập')
 
     class Status(models.TextChoices):
-        CONNECTED = 'connected', 'Đang kết nối'
-        EXPIRED = 'expired', 'Hết hạn, cần kết nối lại'
-        REVOKED = 'revoked', 'Đã ngắt kết nối'
+        CONNECTED = 'connected', gettext_lazy('Đang kết nối')
+        EXPIRED = 'expired', gettext_lazy('Hết hạn, cần kết nối lại')
+        REVOKED = 'revoked', gettext_lazy('Đã ngắt kết nối')
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     owner = models.ForeignKey(
@@ -37,27 +38,27 @@ class SocialAccountConnection(models.Model):
             ),
         ]
 
+    def __str__(self):
+        return f'{self.provider}:{self.page_name}'
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('soc')
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f'{self.provider}:{self.page_name}'
 
 
 class ScheduledSocialPost(models.Model):
     """One post of a channel on a connected Page, published by Celery at its time."""
 
     class Status(models.TextChoices):
-        SCHEDULED = 'scheduled', 'Đã hẹn giờ'
-        PUBLISHING = 'publishing', 'Đang đăng'
-        PUBLISHED = 'published', 'Đã đăng'
-        POSTPONED = 'postponed', 'Hoãn do chiến dịch tạm dừng'
-        FAILED = 'failed', 'Đăng không thành công'
-        CANCELLED = 'cancelled', 'Đã hủy'
-        DELETED = 'deleted', 'Đã gỡ khỏi Fanpage'
-        DELETE_FAILED = 'delete_failed', 'Chưa gỡ được khỏi Fanpage'
+        SCHEDULED = 'scheduled', gettext_lazy('Đã hẹn giờ')
+        PUBLISHING = 'publishing', gettext_lazy('Đang đăng')
+        PUBLISHED = 'published', gettext_lazy('Đã đăng')
+        POSTPONED = 'postponed', gettext_lazy('Hoãn do chiến dịch tạm dừng')
+        FAILED = 'failed', gettext_lazy('Đăng không thành công')
+        CANCELLED = 'cancelled', gettext_lazy('Đã hủy')
+        DELETED = 'deleted', gettext_lazy('Đã gỡ khỏi Fanpage')
+        DELETE_FAILED = 'delete_failed', gettext_lazy('Chưa gỡ được khỏi Fanpage')
 
     OPEN_STATUSES = frozenset({Status.SCHEDULED, Status.POSTPONED, Status.FAILED})
 
@@ -70,6 +71,8 @@ class ScheduledSocialPost(models.Model):
     )
     message = models.TextField()
     link = models.URLField(max_length=500)
+    # Public-media storage keys of attached images, in display order.
+    images = models.JSONField(default=list, blank=True)
     scheduled_for = models.DateTimeField()
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.SCHEDULED)
     attempts = models.PositiveSmallIntegerField(default=0)
@@ -88,10 +91,10 @@ class ScheduledSocialPost(models.Model):
             models.Index(fields=['status', 'next_attempt_at'], name='camp_post_due_idx'),
         ]
 
+    def __str__(self):
+        return f'{self.channel_id}:{self.status}'
+
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('post')
         super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f'{self.channel_id}:{self.status}'

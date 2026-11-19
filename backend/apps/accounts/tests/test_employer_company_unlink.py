@@ -205,13 +205,33 @@ class EmployerCompanyUnlinkApiTests(APITestCase):
         self.recruiter.refresh_from_db()
         self.assertEqual(self.recruiter.company_id, self.company.pk)
 
-    def test_reason_is_required_and_other_actor_cannot_reuse_target_state(self):
-        missing = self.client.post(
+    def test_reason_is_required_on_confirm_and_other_actor_cannot_reuse_target_state(self):
+        # The preview runs as the dialog opens, before a reason is typed.
+        blank_preview = self.client.post(
             self.endpoint('company-unlink-impact'),
             {'reason': ''},
             format='json',
         )
+        self.assertEqual(blank_preview.status_code, status.HTTP_200_OK, blank_preview.data)
+        missing = self.client.post(
+            self.endpoint('unlink-company'),
+            {'reason': '', 'impact_token': blank_preview.data['impact_token']},
+            format='json',
+        )
         self.assertEqual(missing.status_code, status.HTTP_400_BAD_REQUEST)
+        # The reason is signed into the token: a blank-reason preview cannot
+        # confirm a reason typed afterwards.
+        reused = self.client.post(
+            self.endpoint('unlink-company'),
+            {
+                'reason': 'Nhà tuyển dụng xác nhận đã chọn nhầm công ty.',
+                'impact_token': blank_preview.data['impact_token'],
+            },
+            format='json',
+        )
+        self.assertEqual(reused.status_code, status.HTTP_409_CONFLICT, reused.data)
+        self.recruiter.refresh_from_db()
+        self.assertEqual(self.recruiter.company_id, self.company.pk)
 
         other = User.objects.create_user(
             email='company-unlink-other@example.com',

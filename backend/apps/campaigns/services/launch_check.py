@@ -1,8 +1,10 @@
 """Read side of the launch: which jobs can join and what still blocks going live."""
 
 from django.db.models import Q
+from django.utils.translation import gettext as _
+from django.utils.translation import ngettext
 
-from apps.employers.models import RecruitmentCampaign
+from apps.campaigns.models import RecruitmentCampaign
 from apps.jobs.models import Job
 from apps.jobs.services import (
     RESPONSIBILITY_STATEMENT_VERSION,
@@ -50,26 +52,26 @@ def campaign_launch_check(campaign, user, *, entries, scheduled=False, today=Non
     items = [
         _item(
             'end_date',
-            'Thời gian: ngày kết thúc hoặc tuyển liên tục',
+            _('Thời gian: ngày kết thúc hoặc tuyển liên tục'),
             campaign.is_continuous or (campaign.target_date and campaign.target_date >= today),
-            'Chọn ngày kết thúc từ hôm nay trở đi, hoặc bật tuyển liên tục ở bước Thông tin.',
+            _('Chọn ngày kết thúc từ hôm nay trở đi, hoặc bật tuyển liên tục ở bước Thông tin.'),
         ),
     ]
     if scheduled:
         items.append(
             _item(
                 'start_date',
-                'Ngày bắt đầu sau hôm nay',
+                _('Ngày bắt đầu sau hôm nay'),
                 campaign.start_date and campaign.start_date > today,
-                'Lên lịch cần ngày bắt đầu sau hôm nay.',
+                _('Lên lịch cần ngày bắt đầu sau hôm nay.'),
             )
         )
     items.append(
         _item(
             'jobs',
-            'Có ít nhất một tin tuyển dụng',
+            _('Có ít nhất một tin tuyển dụng'),
             entries,
-            'Chọn tin nháp để đăng hoặc tin đang hiển thị để gắn vào chiến dịch.',
+            _('Chọn tin nháp để đăng hoặc tin đang hiển thị để gắn vào chiến dịch.'),
         )
     )
     job_problems = []
@@ -77,16 +79,18 @@ def campaign_launch_check(campaign, user, *, entries, scheduled=False, today=Non
         problems = []
         if action == CampaignLaunchJob.Action.PUBLISH:
             if errors := job_publishability_errors(job):
-                problems.append('Tin nháp còn thiếu: ' + ', '.join(sorted(errors)))
+                problems.append(
+                    _('Tin nháp còn thiếu: %(fields)s') % {'fields': ', '.join(sorted(errors))}
+                )
         elif job.status != Job.Status.ACTIVE:
-            problems.append('Tin không còn hiển thị.')
+            problems.append(_('Tin không còn hiển thị.'))
         if (
             not campaign.is_continuous
             and campaign.target_date
             and job.deadline
             and job.deadline > campaign.target_date
         ):
-            problems.append('Hạn nhận hồ sơ sau ngày kết thúc chiến dịch.')
+            problems.append(_('Hạn nhận hồ sơ sau ngày kết thúc chiến dịch.'))
         if problems:
             job_problems.append(
                 {'public_id': job.public_id, 'title': job.title, 'problems': problems}
@@ -94,9 +98,12 @@ def campaign_launch_check(campaign, user, *, entries, scheduled=False, today=Non
     items.append(
         _item(
             'job_content',
-            'Tin đủ nội dung và hạn nộp nằm trong chiến dịch',
+            _('Tin đủ nội dung và hạn nộp nằm trong chiến dịch'),
             not job_problems,
-            f'{len(job_problems)} tin cần sửa.' if job_problems else '',
+            ngettext('%(count)s tin cần sửa.', '%(count)s tin cần sửa.', len(job_problems))
+            % {'count': len(job_problems)}
+            if job_problems
+            else '',
         )
     )
     posting = employer_job_posting_context(user)
@@ -106,7 +113,7 @@ def campaign_launch_check(campaign, user, *, entries, scheduled=False, today=Non
     items.append(
         _item(
             'publication',
-            'Tài khoản đủ điều kiện đăng tin',
+            _('Tài khoản đủ điều kiện đăng tin'),
             not blockers,
             '; '.join(blocker['label'] for blocker in blockers),
         )
@@ -119,9 +126,10 @@ def campaign_launch_check(campaign, user, *, entries, scheduled=False, today=Non
     items.append(
         _item(
             'quota',
-            'Còn lượt đăng tin',
+            _('Còn lượt đăng tin'),
             new_posts <= posting['publish_remain'],
-            f'Cần {new_posts} lượt, còn {posting["publish_remain"]} lượt.',
+            _('Cần %(needed)s lượt, còn %(remain)s lượt.')
+            % {'needed': new_posts, 'remain': posting['publish_remain']},
         )
     )
     return {

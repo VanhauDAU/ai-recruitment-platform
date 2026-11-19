@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getJobs } from '@/entities/job'
+import { getJobs } from '@/entities/job/job'
 import { toApiParams } from '../lib/job-list-params'
 
 export default function useHanoiJobSuggestion(searchParams, provinces, hasSelectedLocation) {

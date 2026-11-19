@@ -7,4 +7,4 @@ class CampaignsConfig(AppConfig):
     verbose_name = 'Phân phối và đo lường chiến dịch'
 
     def ready(self):
-        from . import signals  # noqa: F401
+        from .signals import receivers  # noqa: F401

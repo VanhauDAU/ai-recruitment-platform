@@ -1,0 +1,81 @@
+from django.urls import path
+
+from ..views import (
+    AdminAnnouncementArchiveView,
+    AdminAnnouncementBackgroundUploadView,
+    AdminAnnouncementDetailView,
+    AdminAnnouncementDuplicateView,
+    AdminAnnouncementListCreateView,
+    AdminAnnouncementMetricView,
+    AdminAnnouncementPauseView,
+    AdminAnnouncementPublishView,
+    AdminAnnouncementResetDismissalsView,
+    AdminAnnouncementResumeView,
+    AdminAnnouncementRevisionCreateView,
+    AdminSettingUploadView,
+    AdminSiteSettingView,
+)
+
+urlpatterns = [
+    path(
+        'announcements/',
+        AdminAnnouncementListCreateView.as_view(),
+        name='site-admin-announcements',
+    ),
+    path(
+        'announcements/backgrounds/',
+        AdminAnnouncementBackgroundUploadView.as_view(),
+        name='site-admin-announcement-backgrounds',
+    ),
+    path(
+        'announcements/<str:public_id>/',
+        AdminAnnouncementDetailView.as_view(),
+        name='site-admin-announcement-detail',
+    ),
+    path(
+        'announcements/<str:public_id>/revisions/',
+        AdminAnnouncementRevisionCreateView.as_view(),
+        name='site-admin-announcement-revisions',
+    ),
+    path(
+        'announcements/<str:public_id>/publish/',
+        AdminAnnouncementPublishView.as_view(),
+        name='site-admin-announcement-publish',
+    ),
+    path(
+        'announcements/<str:public_id>/pause/',
+        AdminAnnouncementPauseView.as_view(),
+        name='site-admin-announcement-pause',
+    ),
+    path(
+        'announcements/<str:public_id>/resume/',
+        AdminAnnouncementResumeView.as_view(),
+        name='site-admin-announcement-resume',
+    ),
+    path(
+        'announcements/<str:public_id>/archive/',
+        AdminAnnouncementArchiveView.as_view(),
+        name='site-admin-announcement-archive',
+    ),
+    path(
+        'announcements/<str:public_id>/reset-dismissals/',
+        AdminAnnouncementResetDismissalsView.as_view(),
+        name='site-admin-announcement-reset-dismissals',
+    ),
+    path(
+        'announcements/<str:public_id>/duplicate/',
+        AdminAnnouncementDuplicateView.as_view(),
+        name='site-admin-announcement-duplicate',
+    ),
+    path(
+        'announcements/<str:public_id>/metrics/',
+        AdminAnnouncementMetricView.as_view(),
+        name='site-admin-announcement-metrics',
+    ),
+    path('settings/', AdminSiteSettingView.as_view(), name='site-admin-settings'),
+    path(
+        'settings/upload/',
+        AdminSettingUploadView.as_view(),
+        name='site-admin-settings-upload',
+    ),
+]

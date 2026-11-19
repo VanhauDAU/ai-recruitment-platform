@@ -1,36 +1,25 @@
-import json
 from datetime import timedelta
-from io import StringIO
 
 from django.conf import settings
-from django.core.management import call_command
-from django.core.management.base import CommandError
-from django.db import connection
 from django.test import override_settings
-from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
+from apps.campaigns.models import RecruitmentCampaign
 from apps.jobs.models import Job
-from apps.jobs.tests.helpers import open_visibility_window
+from apps.jobs.tests.factories import open_visibility_window
 
-from ..models import (
-    DpaStatus,
-    EmployerComplianceHold,
-    EmployerComplianceHoldJob,
-    RecruitmentCampaign,
-)
+from ..models import DpaStatus, EmployerComplianceHold, EmployerComplianceHoldJob
 from ..models.readiness import current_dpa_status
 from ..services import (
     DpaPolicyUnavailable,
     accept_recruiter_dpa,
-    apply_expired_dpa_holds_batch,
     apply_expired_recruiter_dpa_hold,
     start_recruiter_dpa_grace,
 )
-from .readiness_helpers import make_employer_ready
+from .factories import make_employer_ready
 
 
 class EmployerDpaGraceHoldTests(APITestCase):
@@ -159,82 +148,6 @@ class EmployerDpaGraceHoldTests(APITestCase):
         self.assertEqual(recruiter.dpa_grace_rollout_id, '')
         self.assertEqual(current_dpa_status(recruiter), DpaStatus.CURRENT)
 
-    def test_rollout_command_is_dry_run_first_and_apply_is_idempotent(self):
-        output = StringIO()
-        call_command(
-            'rollout_employer_dpa_compliance',
-            phase='start-grace',
-            rollout_id='dpa-command-1',
-            stdout=output,
-        )
-        self.recruiter.refresh_from_db()
-        self.assertIsNone(self.recruiter.dpa_grace_expires_at)
-        self.assertEqual(json.loads(output.getvalue())['selected'], 1)
-
-        for _ in range(2):
-            call_command(
-                'rollout_employer_dpa_compliance',
-                phase='start-grace',
-                rollout_id='dpa-command-1',
-                apply=True,
-                stdout=StringIO(),
-            )
-        self.recruiter.refresh_from_db()
-        first_expiry = self.recruiter.dpa_grace_expires_at
-        self.assertIsNotNone(first_expiry)
-        call_command(
-            'rollout_employer_dpa_compliance',
-            phase='start-grace',
-            rollout_id='dpa-command-1',
-            apply=True,
-            stdout=StringIO(),
-        )
-        self.recruiter.refresh_from_db()
-        self.assertEqual(self.recruiter.dpa_grace_expires_at, first_expiry)
-
-    def test_expired_hold_command_is_dry_run_first_and_apply_is_idempotent(self):
-        start_recruiter_dpa_grace(self.recruiter, rollout_id='dpa-command-hold')
-        self.expire_grace()
-        output = StringIO()
-
-        call_command(
-            'rollout_employer_dpa_compliance',
-            phase='expired-holds',
-            rollout_id='dpa-command-hold',
-            stdout=output,
-        )
-
-        self.assertEqual(json.loads(output.getvalue())['selected'], 1)
-        self.assertFalse(EmployerComplianceHold.objects.exists())
-        for _ in range(2):
-            call_command(
-                'rollout_employer_dpa_compliance',
-                phase='expired-holds',
-                rollout_id='dpa-command-hold',
-                apply=True,
-                stdout=StringIO(),
-            )
-        self.assertEqual(
-            EmployerComplianceHold.objects.filter(
-                source=EmployerComplianceHold.Source.DPA,
-                status=EmployerComplianceHold.Status.ACTIVE,
-            ).count(),
-            1,
-        )
-
-    @override_settings(EMPLOYER_DPA_POLICY_VERSION='')
-    def test_rollout_command_fails_closed_when_policy_is_not_configured(self):
-        with self.assertRaisesMessage(
-            CommandError,
-            'DPA hiện hành chưa được cấu hình đầy đủ.',
-        ):
-            call_command(
-                'rollout_employer_dpa_compliance',
-                phase='start-grace',
-                rollout_id='dpa-invalid-policy',
-                stdout=StringIO(),
-            )
-
     @override_settings(EMPLOYER_DPA_POLICY_VERSION='')
     def test_grace_service_fails_closed_when_policy_is_not_configured(self):
         with self.assertRaises(DpaPolicyUnavailable):
@@ -242,69 +155,3 @@ class EmployerDpaGraceHoldTests(APITestCase):
                 self.recruiter,
                 rollout_id='dpa-invalid-policy',
             )
-
-
-class EmployerDpaHoldBatchQueryBudgetTests(APITestCase):
-    def make_expired(self, index):
-        user = User.objects.create_user(
-            email=f'dpa-batch-{index}@example.com',
-            password='Password@123',
-            role=User.Role.EMPLOYER,
-        )
-        recruiter = make_employer_ready(user, candidate_data=True)
-        recruiter.dpa_policy_version = ''
-        recruiter.dpa_document_sha256 = ''
-        recruiter.dpa_grace_started_at = timezone.now() - timedelta(days=31)
-        recruiter.dpa_grace_expires_at = timezone.now() - timedelta(days=1)
-        recruiter.dpa_grace_rollout_id = 'dpa-query-budget'
-        recruiter.save(
-            update_fields=[
-                'dpa_policy_version',
-                'dpa_document_sha256',
-                'dpa_grace_started_at',
-                'dpa_grace_expires_at',
-                'dpa_grace_rollout_id',
-                'updated_at',
-            ]
-        )
-        campaign = RecruitmentCampaign.objects.create(
-            owner=recruiter,
-            company=recruiter.company,
-            name=f'DPA batch {index}',
-            status=RecruitmentCampaign.Status.ACTIVE,
-        )
-        Job.objects.create(
-            posted_by=user,
-            company=recruiter.company,
-            campaign=campaign,
-            title=f'DPA batch job {index}',
-            description='Query budget.',
-            status=Job.Status.ACTIVE,
-            **open_visibility_window(),
-        )
-        return recruiter
-
-    @staticmethod
-    def query_count(callback):
-        with CaptureQueriesContext(connection) as captured:
-            callback()
-        return len(captured)
-
-    def test_batch_queries_are_flat(self):
-        first = self.make_expired(1)
-        baseline = self.query_count(
-            lambda: apply_expired_dpa_holds_batch(
-                [first.pk],
-                rollout_id='dpa-query-budget',
-            )
-        )
-        cohort = [self.make_expired(index) for index in range(2, 22)]
-        expanded = self.query_count(
-            lambda: apply_expired_dpa_holds_batch(
-                [recruiter.pk for recruiter in cohort],
-                rollout_id='dpa-query-budget',
-            )
-        )
-
-        self.assertEqual(expanded, baseline)
-        self.assertLessEqual(expanded, 10)

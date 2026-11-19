@@ -1,4 +1,4 @@
-"""API `/api/matching/analyses/` theo các kịch bản nghiệm thu (kế hoạch mục 10c)."""
+"""API `/api/candidate/matching/analyses/` theo các kịch bản nghiệm thu (kế hoạch mục 10c)."""
 
 from datetime import timedelta
 from unittest.mock import patch
@@ -12,16 +12,17 @@ from rest_framework.throttling import ScopedRateThrottle
 
 from apps.cv_templates.tests.factories import make_published_template
 from apps.cvs.models import CvVersion, UserCv
-from apps.cvs.services import create_v2_cv, create_version, import_cv_documents
+from apps.cvs.services import create_user_cv, create_version, import_cv_documents
 from apps.employers.models import Company
-from apps.employers.tests.readiness_helpers import make_employer_ready
+from apps.employers.tests.factories import make_employer_ready
 from apps.jobs.models import Job, JobSkill
-from apps.jobs.tests.helpers import open_visibility_window
+from apps.jobs.tests.factories import open_visibility_window
 from apps.sitecontent.models import SiteSetting
 from apps.skills.models import Skill
 
 from ..models import MatchAnalysis, MatchDocument
-from ..services import recover_stale_analyses
+from ..selectors import owner_cv_for_matching, public_job_for_profile
+from ..services import recover_stale_analyses, request_analysis
 
 CV_DATA = {
     'headline': 'Frontend Developer',
@@ -121,6 +122,19 @@ class MatchingApiTests(MatchingApiBase):
         self.assertEqual(detail.data['overall_score'], result['overall']['score'])
         self.assertEqual(MatchDocument.objects.filter(status='ready').count(), 2)
 
+    def test_request_queues_the_task_once_after_commit(self):
+        cv = owner_cv_for_matching(self.candidate, self.cv_ids[0])
+        job = public_job_for_profile(self.job.slug)
+        with patch('apps.matching.tasks.run_analysis.delay') as delay:
+            with self.captureOnCommitCallbacks(execute=True):
+                analysis = request_analysis(user=self.candidate, job=job, cv=cv)
+                delay.assert_not_called()
+            with self.captureOnCommitCallbacks(execute=True):
+                again = request_analysis(user=self.candidate, job=job, cv=cv)
+
+        self.assertEqual(again.pk, analysis.pk)
+        delay.assert_called_once_with(analysis.pk)
+
     def test_same_pair_is_served_from_cache(self):  # TC-06
         first = self.request()
         second = self.request()
@@ -154,7 +168,7 @@ class MatchingApiTests(MatchingApiBase):
 
     def test_template_sample_of_a_never_saved_cv_is_not_analysed(self):
         template, _version = make_published_template('Unsaved template')
-        unsaved = create_v2_cv(actor=self.candidate, title='Chưa lưu', template=template)
+        unsaved = create_user_cv(actor=self.candidate, title='Chưa lưu', template=template)
 
         response = self.request(cv=unsaved.public_id)
 

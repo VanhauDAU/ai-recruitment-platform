@@ -92,7 +92,7 @@ Mở rộng whitelist sau phải cập nhật doc + env/setting allowlist + rein
 | Embedding model | **`qwen3-embedding:0.6b` qua Ollama** (local) | Khớp hợp đồng FAQ mục 20 |
 | Lexical fallback | `common.db.search.search_q` | Khi Ollama down hoặc điểm thấp |
 | UI | Dựng widget mới khi mở CB-P2 | Widget `candidate-assistant` cũ đã gỡ 2026-11-14 |
-| Backend app | `apps.chatbot` trong monolith | ADR-0010; không microservice |
+| Backend app | `apps.chatbot` trong monolith | ADR-0022; không microservice |
 | Nguồn kiến thức | Chỉ revision **APPROVED + published** + category active | Re-export từ `knowledgebase.services` |
 | Auth | `AllowAny` + throttle IP | Khách + ứng viên |
 | Transcript | Chỉ memory UI (session panel) | Không bảng chat message |
@@ -136,7 +136,7 @@ Celery: reindex chunk khi publish/rollback/archive FAQ
 
 ## 4. Kiến trúc & ranh giới layer
 
-### 4.1. Backend (ADR-0010)
+### 4.1. Backend (ADR-0022)
 
 ```text
 apps/chatbot/
@@ -179,7 +179,7 @@ trước khi code lệch.
 widgets/candidate-assistant     # UI panel, mascot, progressive text
   → features/ask-candidate-assistant   # send message, map DTO → messages
   → entities/chatbot                   # API client, types, query keys
-  → entities/knowledgebase             # (tuỳ chọn) deep-link helper /tro-giup
+  → entities/content/knowledgebase             # (tuỳ chọn) deep-link helper /tro-giup
 ```
 
 - Widget **không** gọi Axios trực tiếp; qua feature/entity.
