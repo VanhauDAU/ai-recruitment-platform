@@ -12,17 +12,17 @@ from apps.cv_templates.models import (
     DEFAULT_EXPERIENCE_BAND,
     CvSampleContent,
     CvTemplate,
+    empty_content,
 )
-from apps.cv_templates.services import resolve_position_content
-
-from ..models import CvDraft, CvVersion, UserCv
-from ..schemas import empty_content
-from .composition import (
+from apps.cv_templates.services import (
     CvCompositionError,
     compose_cv_document,
     layout_for_content,
     overlay_actor_identity,
+    resolve_position_content,
 )
+
+from ..models import CvDraft, CvVersion, UserCv
 from .quota import ensure_cv_quota
 from .versions import create_version, document_hash
 
@@ -304,7 +304,8 @@ def apply_sample_to_draft(
     merged['sections'] = [*markers, *sample_sections]
     layout = layout_for_content(cv.current_template_version, merged)
     style = deepcopy(draft.style_json)
-    from ..schemas import validate_cv_document, validate_template_layout_capabilities
+    from apps.cv_templates.models import validate_cv_document, validate_template_layout_capabilities
+
     from .assets import validate_document_assets
 
     validate_cv_document(

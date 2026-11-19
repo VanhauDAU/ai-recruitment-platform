@@ -5,7 +5,7 @@ lặp lại ở 4 app (cv_templates, cvs, applications) — mọi test cần m�
 phải dựng nó trước. Gom về đây để đổi contract template chỉ phải sửa một chỗ.
 """
 
-from apps.cvs.schemas import empty_layout, empty_style
+from apps.cv_templates.models.content_schema import empty_layout, empty_style
 
 from ..models import CvTemplate, CvTemplateVersion
 

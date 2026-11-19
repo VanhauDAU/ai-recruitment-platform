@@ -15,7 +15,11 @@ from rest_framework.views import APIView
 from apps.accounts.api.permissions import IsCandidate
 from apps.applications.models import Application
 from apps.cv_templates.models import CvTemplate
-from apps.cv_templates.services import PositionContentUnavailable
+from apps.cv_templates.services import (
+    CvCompositionError,
+    PositionContentUnavailable,
+    compose_cv_document,
+)
 from apps.employers.services import ensure_recruiter_candidate_data_access
 from apps.uploads.services import UploadServiceError
 from common.metrics import record_metric
@@ -66,8 +70,7 @@ from ...services import (
     update_draft,
     validate_import_upload,
 )
-from ...services.assets import cv_asset_storage, resolve_asset_token
-from ...services.composition import CvCompositionError, compose_cv_document
+from ...services.assets import resolve_asset_token
 from ..exceptions import (
     CandidateCvRejectedResponse,
     CandidateUploadSessionRequiredResponse,
@@ -932,28 +935,10 @@ class CvV2AssetContentView(APIView):
         except CvAsset.DoesNotExist as error:
             raise Http404 from error
         try:
-            stream = cv_asset_storage(asset).open(asset.storage_key, 'rb')
+            stream = asset.storage().open(asset.storage_key, 'rb')
         except OSError as error:
             raise Http404 from error
         return FileResponse(stream, content_type=asset.content_type)
-
-
-class CvV2BackgroundListView(APIView):
-    permission_classes = [permissions.AllowAny]
-    authentication_classes = []
-
-    @extend_schema(
-        summary='Danh sách ảnh nền dùng chung',
-        responses={200: CvAssetSerializer(many=True)},
-        tags=['cvs-v2'],
-    )
-    def get(self, request):
-        assets = CvAsset.objects.filter(
-            kind=CvAsset.Kind.BACKGROUND,
-            owner__isnull=True,
-            is_active=True,
-        ).order_by('created_at')
-        return Response(CvAssetSerializer(assets, many=True, context={'request': request}).data)
 
 
 class CvV2ApplySampleView(CandidateV2CvMixin, APIView):

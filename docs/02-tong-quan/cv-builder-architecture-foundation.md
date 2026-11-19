@@ -18,7 +18,7 @@ Mỗi `CvVersion` và `CvDraft` lưu đúng ba JSON tách biệt:
   không hỗ trợ — ID phải tồn tại, không trùng, không đồng thời nằm trong region).
 - `style_json`: màu (`theme_color`), font, tỷ lệ và override presentation an toàn.
 
-`schema_version = 1`. Validator backend (`apps/cvs/schemas.py`) giới hạn kích
+`schema_version = 1`. Validator backend (`apps/cv_templates/models/content_schema.py`) giới hạn kích
 thước, section key, ID trùng, region/layout, font/màu và rich text; HTML tùy ý
 bị từ chối. Rich text có hai dạng cùng hợp lệ:
 

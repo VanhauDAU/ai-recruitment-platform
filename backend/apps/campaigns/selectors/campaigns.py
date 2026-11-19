@@ -17,6 +17,7 @@ from django.db.models import (
 from django.db.models.functions import Coalesce, TruncDate
 
 from apps.applications.models import Application
+from apps.campaigns.models import CampaignActivity, RecruitmentCampaign
 from apps.jobs.models import (
     Job,
     JobEngagementDaily,
@@ -27,8 +28,6 @@ from apps.jobs.models import (
     publicly_available_job_filter,
 )
 from common.vietnam_time import VIETNAM_TZ, vietnam_day_start, vietnam_today
-
-from ..models import CampaignActivity, RecruitmentCampaign
 
 # Default list order: what needs attention first, finished campaigns last.
 STATUS_DISPLAY_ORDER = (

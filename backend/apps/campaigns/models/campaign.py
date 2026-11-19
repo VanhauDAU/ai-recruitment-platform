@@ -1,10 +1,10 @@
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 from django.utils.text import slugify
 
+from apps.employers.models import BudgetSource
 from common.db.public_id import generate_public_id
-
-from .choices import BudgetSource
 
 
 class RecruitmentCampaign(models.Model):
@@ -102,6 +102,8 @@ class RecruitmentCampaign(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        # Chuyển từ app employers (ADR-0022, GĐ2) chỉ ở state; bảng giữ tên cũ.
+        db_table = 'employers_recruitmentcampaign'
         indexes = [
             models.Index(
                 fields=['owner', 'status', '-created_at'], name='emp_camp_owner_status_idx'
@@ -131,6 +133,13 @@ class RecruitmentCampaign(models.Model):
     def is_terminal(self):
         return self.status in self.TERMINAL_STATUSES
 
+    def active_seconds(self, *, now=None):
+        """Seconds the campaign has actually been running, pauses excluded."""
+        seconds = self.active_seconds_accumulated
+        if self.status == self.Status.ACTIVE and self.activated_at:
+            seconds += max(0, int(((now or timezone.now()) - self.activated_at).total_seconds()))
+        return seconds
+
     def build_slug(self):
         return f'{slugify(self.name)[:200]}-{self.public_id}'.strip('-').replace('_', '-')
 
@@ -143,6 +152,37 @@ class RecruitmentCampaign(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class CampaignActivityManager(models.Manager):
+    def record(
+        self,
+        *,
+        campaign,
+        event_type,
+        group,
+        actor=None,
+        subject_public_id='',
+        metadata=None,
+        occurred_at=None,
+    ):
+        """Record one explicit campaign-domain event from a mutation service."""
+        if campaign is None:
+            return None
+        activity = self.create(
+            campaign=campaign,
+            actor=actor,
+            group=group,
+            event_type=event_type,
+            subject_public_id=subject_public_id or '',
+            metadata=metadata or {},
+            occurred_at=occurred_at or timezone.now(),
+        )
+        # Keep create/update/status API responses consistent with a subsequent GET
+        # without adding a read query solely to annotate the just-written event.
+        campaign.last_activity_at = activity.occurred_at
+        campaign.last_activity_type = activity.event_type
+        return activity
 
 
 class CampaignActivity(models.Model):
@@ -202,7 +242,10 @@ class CampaignActivity(models.Model):
     metadata = models.JSONField(default=dict, blank=True)
     occurred_at = models.DateTimeField()
 
+    objects = CampaignActivityManager()
+
     class Meta:
+        db_table = 'employers_campaignactivity'
         ordering = ['-occurred_at', '-id']
         indexes = [
             models.Index(

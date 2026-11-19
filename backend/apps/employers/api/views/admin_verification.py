@@ -19,11 +19,11 @@ from rest_framework.response import Response
 
 from apps.accounts.api.permissions import AdminPortalPermission
 from apps.accounts.services import (
+    AdminResourceChanged,
     InvalidImpactToken,
     StaleImpactToken,
     record_admin_action,
 )
-from apps.accounts.services.exceptions import AdminResourceChanged
 from common.api.pagination import StandardPagination
 from common.files.office_preview import render_office_document_preview
 from common.storage.r2 import private_media_storage

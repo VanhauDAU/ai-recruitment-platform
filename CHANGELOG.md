@@ -8,6 +8,20 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-19
 
+#### Changed — Backend: ranh giới domain (ADR-0022, GĐ2)
+
+- `RecruitmentCampaign`, `CampaignActivity`, máy trạng thái, selectors, API và
+  signal `campaign_status_changed` chuyển từ `employers` sang `campaigns`. Ba
+  migration chỉ đổi state (không SQL), bảng giữ tên `employers_*`, ContentType
+  chuyển theo. Ghi hoạt động và thời gian chạy thành API của model
+  (`CampaignActivity.objects.record`, `RecruitmentCampaign.active_seconds`).
+- `cv_templates` thành engine tài liệu CV: schema nội dung, ghép document và in
+  PDF; engine Chromium dùng chung chuyển vào `common/pdf/browser.py`. `cvs` gọi
+  services của `cv_templates`, chiều ngược lại chỉ đọc model `CvAsset`.
+- Gỡ route trùng `/api/v2/cvs/backgrounds/` (frontend dùng `/api/v2/cv-backgrounds/`).
+- Import chéo app chỉ qua package công khai; `check_backend_imports.py` không
+  còn baseline — mọi vi phạm làm fail CI.
+
 #### Changed — Backend: bố cục app chuẩn (ADR-0022, GĐ1)
 
 - Module gốc app về đúng tầng: `accounts/{permissions,authentication,schema}` →

@@ -8,9 +8,9 @@ from rest_framework.test import APIClient
 
 from apps.applications.models import Application
 from apps.applications.tests import test_api_v2
+from apps.campaigns.models import RecruitmentCampaign
 from apps.cvs.models import UserCv
 from apps.cvs.services import create_initial_document
-from apps.employers.models import RecruitmentCampaign
 from apps.jobs.models import Job
 from apps.jobs.tests import test_posting_workflows
 from common.vietnam_time import vietnam_today

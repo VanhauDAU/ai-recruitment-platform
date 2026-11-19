@@ -7,6 +7,7 @@ from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 from apps.accounts.models import User
+from apps.campaigns.models import RecruitmentCampaign
 from apps.jobs.models import Job, give_back_hidden_time
 from common.db.public_id import generate_public_id
 
@@ -19,7 +20,6 @@ from ..models import (
     EmployerComplianceHoldJob,
     EmployerVerificationCase,
     RecruiterProfile,
-    RecruitmentCampaign,
     RecruitmentNeed,
 )
 

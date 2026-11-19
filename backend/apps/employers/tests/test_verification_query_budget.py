@@ -7,6 +7,7 @@ from django.utils import timezone
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
+from apps.campaigns.models import RecruitmentCampaign
 from apps.jobs.models import Job
 from apps.jobs.tests.helpers import open_visibility_window
 
@@ -16,7 +17,6 @@ from ..models import (
     CompanyTaxLookupEvidence,
     EmployerVerificationCase,
     EmployerVerificationEvent,
-    RecruitmentCampaign,
 )
 from ..selectors import admin_verification_cases_queryset
 from ..services import verification_decision_impact, verification_lifecycle_impact

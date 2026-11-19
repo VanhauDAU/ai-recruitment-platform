@@ -23,6 +23,7 @@ from .settings import (
 )
 
 __all__ = [
+    'get_int_setting',
     'PRIORITY_TIER_BY_KIND',
     'active_announcements_for_request',
     'announcement_audit_events',

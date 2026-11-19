@@ -7,8 +7,8 @@ from rest_framework.test import APIClient
 
 from apps.accounts.models import User
 from apps.accounts.tests.helpers import make_admin
+from apps.cv_templates.models.content_schema import empty_content, empty_layout, empty_style
 from apps.cv_templates.services.demo_identity import DEMO_IDENTITY
-from apps.cvs.schemas import empty_content, empty_layout, empty_style
 from apps.jobs.models import JobCategory, JobCategoryLocalization
 
 from ..management.commands.seed_cv_catalog import build_sample_content

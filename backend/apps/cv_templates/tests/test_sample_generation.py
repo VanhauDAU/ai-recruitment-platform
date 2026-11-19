@@ -9,7 +9,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.ai_core.services import AiGenerationError
-from apps.cvs.schemas import empty_content
+from apps.cv_templates.models.content_schema import empty_content
 
 from ..models import CvSampleContent, CvSampleGeneration
 from ..services.sample_generation import (

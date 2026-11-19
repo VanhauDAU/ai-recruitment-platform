@@ -19,7 +19,12 @@ from uuid import uuid4
 from django.db import transaction
 from django.utils import timezone
 
-from apps.cvs.schemas import empty_content, empty_layout, empty_style, validate_cv_document
+from apps.cv_templates.models.content_schema import (
+    empty_content,
+    empty_layout,
+    empty_style,
+    validate_cv_document,
+)
 from apps.jobs.models import Job, JobCategoryLocalization
 from common.vietnam_time import vietnam_today
 

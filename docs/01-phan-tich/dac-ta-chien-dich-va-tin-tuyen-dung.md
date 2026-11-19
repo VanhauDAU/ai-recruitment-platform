@@ -10,7 +10,7 @@ thương mại). Giao diện admin: [admin-job-management.md](../08-frontend/adm
 
 Code chính: `backend/apps/jobs/services/posting.py`, `services/moderation.py`,
 `services/reports.py`, `models/core.py`, `models/querysets.py`;
-`backend/apps/employers/services/campaigns.py`, `selectors/campaigns.py`;
+`backend/apps/campaigns/services/campaigns.py`, `selectors/campaigns.py`, `models/campaign.py`;
 `backend/apps/applications/services/`.
 
 ## 1. Ranh giới sở hữu
@@ -214,7 +214,7 @@ draft ──launch(now)──> active ⇄ paused
   `cancelled` (NTD bấm, hoặc hệ thống tự kết thúc), mọi tin `active` của nó
   chuyển `closed`, ghi `JobStatusHistory` (`note=campaign_ended`, actor
   `system` khi tự động), rồi áp luật tin ngừng tuyển. Hiệu ứng này chạy qua
-  signal `campaign_status_changed` (`employers/signals/__init__.py` → `jobs/signals/receivers.py`)
+  signal `campaign_status_changed` (`campaigns/signals/__init__.py` → `jobs/signals/receivers.py`)
   để `employers` không import service của `jobs`.
 - **Lịch chạy:** Celery beat `run_campaign_schedule` chạy 5 phút một lần, theo
   ngày giờ Việt Nam, idempotent:
@@ -513,8 +513,8 @@ cáo hoặc phát hiện vi phạm.
 
 | Model (bảng mặc định của Django) | Vai trò |
 | --- | --- |
-| `RecruitmentCampaign` (`employers_recruitmentcampaign`) | Chiến dịch, owner `RecruiterProfile`. |
-| `CampaignActivity` (`employers_campaignactivity`) | Nhật ký hoạt động hiển thị cho recruiter. |
+| `RecruitmentCampaign` (app `campaigns`, bảng `employers_recruitmentcampaign`) | Chiến dịch, owner `RecruiterProfile`. |
+| `CampaignActivity` (app `campaigns`, bảng `employers_campaignactivity`) | Nhật ký hoạt động hiển thị cho recruiter. |
 | `Job` (`jobs_job`) | Tin; `campaign_id` tùy chọn, hold, cửa sổ hiển thị, snapshot, cam kết. |
 | `JobStatusHistory` (`jobs_jobstatushistory`) | Audit chuyển trạng thái tin. |
 | `JobModerationEvent` (`jobs_jobmoderationevent`) | Quyết định tạm ẩn/khôi phục bất biến. |

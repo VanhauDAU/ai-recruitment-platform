@@ -13,7 +13,8 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 
 from apps.applications.models import Application
-from apps.employers.models import EmployerNotification, RecruitmentCampaign
+from apps.campaigns.models import RecruitmentCampaign
+from apps.employers.models import EmployerNotification
 from apps.employers.services import campaign_weekly_report_email_enabled, emit_employer_event
 from common.email import send_html_email
 from common.vietnam_time import vietnam_now, vietnam_today

@@ -9,16 +9,13 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import APIException
 
-from apps.employers.models import CampaignActivity, EmployerNotification, RecruitmentCampaign
-from apps.employers.services import (
-    apply_system_campaign_status,
-    emit_employer_event,
-    ensure_recruiter_job_workspace,
-    record_campaign_activity,
-)
+from apps.campaigns.models import CampaignActivity, RecruitmentCampaign
+from apps.employers.models import EmployerNotification
+from apps.employers.services import emit_employer_event, ensure_recruiter_job_workspace
 from common.vietnam_time import vietnam_today
 
 from ..models import CampaignLaunchPlan
+from .campaigns import apply_system_campaign_status
 from .launch import execute_launch
 
 logger = logging.getLogger(__name__)
@@ -94,7 +91,7 @@ def _record_activation_failure(campaign_id, error):
     plan.save(update_fields=['last_error', 'last_error_at', 'updated_at'])
     if not is_new_error:
         return
-    record_campaign_activity(
+    CampaignActivity.objects.record(
         campaign=campaign,
         event_type=CampaignActivity.EventType.CAMPAIGN_ACTIVATION_FAILED,
         group=CampaignActivity.Group.CAMPAIGN,

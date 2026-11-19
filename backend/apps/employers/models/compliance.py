@@ -131,7 +131,7 @@ class EmployerComplianceHoldCampaign(models.Model):
         related_name='campaign_links',
     )
     campaign = models.ForeignKey(
-        'employers.RecruitmentCampaign',
+        'campaigns.RecruitmentCampaign',
         on_delete=models.PROTECT,
         related_name='compliance_hold_links',
     )

@@ -2,7 +2,6 @@ from django.urls import path
 
 from ..views.v2 import (
     CvV2AssetContentView,
-    CvV2BackgroundListView,
     CvV2SharedLinkPublicView,
     CvV2SharedSourceFileView,
 )
@@ -13,7 +12,6 @@ urlpatterns = [
         CvV2AssetContentView.as_view(),
         name='cv-v2-asset-content',
     ),
-    path('backgrounds/', CvV2BackgroundListView.as_view(), name='cv-v2-background-list'),
     path(
         'shares/<str:token>/', CvV2SharedLinkPublicView.as_view(), name='cv-v2-shared-link-public'
     ),

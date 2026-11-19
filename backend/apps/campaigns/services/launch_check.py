@@ -2,7 +2,7 @@
 
 from django.db.models import Q
 
-from apps.employers.models import RecruitmentCampaign
+from apps.campaigns.models import RecruitmentCampaign
 from apps.jobs.models import Job
 from apps.jobs.services import (
     RESPONSIBILITY_STATEMENT_VERSION,

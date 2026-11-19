@@ -10,8 +10,8 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.ai_core.services import AiCvParseError, structure_cv_text
+from apps.cv_templates.services import compose_cv_document, overlay_actor_identity
 from apps.cvs.models import CvDraft, CvImportJob, UserCv
-from apps.cvs.services.composition import compose_cv_document, overlay_actor_identity
 from apps.cvs.services.cv_document import CvDocumentRejected, read_cv_document
 from apps.cvs.services.versions import create_version
 from common.metrics import record_metric

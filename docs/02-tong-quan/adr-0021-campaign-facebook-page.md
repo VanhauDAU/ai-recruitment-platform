@@ -36,8 +36,8 @@ có quyền `pages_manage_posts`, nên CI và máy dev không có Meta App vẫn
 5. **Đối soát thay cho hook**: trạng thái chiến dịch đổi (dừng, kết thúc, khóa
    tài khoản, bàn giao) không gọi trực tiếp vào code Facebook.
    `reconcile_social_posts` chạy định kỳ và được đánh thức bằng signal
-   `campaign_status_changed` qua `transaction.on_commit`. Nhờ vậy `employers`
-   không phụ thuộc `campaigns`.
+   `campaign_status_changed` qua `transaction.on_commit`. Nhờ vậy máy trạng thái
+   chiến dịch không phụ thuộc code đăng Facebook.
 6. **Bài đăng đi kèm link theo dõi của kênh** (`/r/<code>`), nên hồ sơ đến từ
    Fanpage được ghi nguồn như mọi kênh khác.
 

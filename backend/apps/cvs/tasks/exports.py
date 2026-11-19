@@ -12,8 +12,8 @@ from django.core.files.storage import default_storage
 from django.db import transaction
 from django.utils import timezone
 
+from apps.cv_templates.services import render_cv_version_pdf
 from apps.cvs.models import CvExport, UserCv
-from apps.cvs.services.pdf_renderer import render_cv_version_pdf
 from apps.cvs.services.thumbnails import thumbnail_key_for
 from common.metrics import record_metric
 from common.pdf.raster import first_pdf_page_image

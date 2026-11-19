@@ -8,14 +8,9 @@ from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
 from apps.applications.models import Application
+from apps.campaigns.models import RecruitmentCampaign
 from apps.cvs.models import CvVersion, UserCv
-from apps.employers.models import (
-    Company,
-    DpaStatus,
-    EmployerVerificationCase,
-    RecruiterProfile,
-    RecruitmentCampaign,
-)
+from apps.employers.models import Company, DpaStatus, EmployerVerificationCase, RecruiterProfile
 from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.locations.models import Location
 from apps.skills.models import Skill, SkillGroup

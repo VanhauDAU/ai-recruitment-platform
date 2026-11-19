@@ -35,7 +35,7 @@ urlpatterns = [
     path('api/employer/', include('apps.employers.api.urls.employer')),
     path('api/employer/', include('apps.campaigns.api.urls.employer')),
     path('api/campaigns/', include('apps.campaigns.api.urls.public')),
-    # Public trước: route candidate `<str:public_id>/` sẽ che `backgrounds/`.
+    # Public trước: các route cố định (`shares/`, `assets/`) không bị `<str:public_id>/` che.
     path('api/v2/cvs/', include('apps.cvs.api.urls.public')),
     path('api/v2/cvs/', include('apps.cvs.api.urls.candidate')),
     path('api/v2/', include('apps.cvs.api.urls.admin')),

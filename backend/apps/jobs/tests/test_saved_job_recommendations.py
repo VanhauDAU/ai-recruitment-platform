@@ -6,9 +6,10 @@ from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
 from apps.applications.models import Application
+from apps.campaigns.models import RecruitmentCampaign
 from apps.cvs.models import UserCv
 from apps.cvs.services import create_initial_document
-from apps.employers.models import Company, RecruitmentCampaign
+from apps.employers.models import Company
 from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.locations.models import Location
 from apps.skills.models import Skill

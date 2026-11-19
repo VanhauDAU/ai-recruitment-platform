@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
-from apps.accounts.services.tokens import issue_tokens
+from apps.accounts.services import issue_tokens
 from apps.candidates.models import CandidateNotification
 from apps.cv_templates.tests.factories import fill_cv_for_application, make_published_template
 from apps.cvs.services import create_v2_cv

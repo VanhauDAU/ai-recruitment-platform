@@ -11,7 +11,7 @@ class CampaignLaunchPlan(models.Model):
     """
 
     campaign = models.OneToOneField(
-        'employers.RecruitmentCampaign',
+        'campaigns.RecruitmentCampaign',
         on_delete=models.CASCADE,
         related_name='launch_plan',
     )

@@ -4,11 +4,8 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from apps.employers.models import (
-    CampaignActivity,
-    EmployerNotification,
-    RecruitmentCampaign,
-)
+from apps.campaigns.models import CampaignActivity, RecruitmentCampaign
+from apps.employers.models import EmployerNotification
 from apps.jobs.models import Job
 from apps.jobs.services import RESPONSIBILITY_STATEMENT_VERSION
 from apps.jobs.tests import test_posting_workflows

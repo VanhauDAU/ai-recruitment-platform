@@ -4,12 +4,8 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
-from apps.employers.models import CampaignActivity, RecruitmentCampaign
-from apps.employers.services import (
-    apply_system_campaign_status,
-    ensure_recruiter_job_workspace,
-    record_campaign_activity,
-)
+from apps.campaigns.models import CampaignActivity, RecruitmentCampaign
+from apps.employers.services import ensure_recruiter_job_workspace
 from apps.jobs.models import Job
 from apps.jobs.services import (
     RESPONSIBILITY_STATEMENT_VERSION,
@@ -19,6 +15,7 @@ from apps.jobs.services import (
 from common.vietnam_time import vietnam_today
 
 from ..models import CampaignLaunchJob, CampaignLaunchPlan
+from .campaigns import apply_system_campaign_status
 from .launch_check import (
     LAUNCHABLE_STATUSES,
     attachable_jobs_queryset,
@@ -161,7 +158,7 @@ def launch_campaign(*, campaign, user, mode, accepted_statement_version):
         )
     _ensure_ready(campaign, user, scheduled=True)
     if campaign.status == Status.SCHEDULED:
-        record_campaign_activity(
+        CampaignActivity.objects.record(
             campaign=campaign,
             event_type=CampaignActivity.EventType.CAMPAIGN_SCHEDULED,
             group=CampaignActivity.Group.CAMPAIGN,

@@ -1,5 +1,11 @@
 """Public command API for campaign distribution and lifecycle automation."""
 
+from .campaigns import (
+    apply_system_campaign_status,
+    change_campaign_status,
+    create_campaign,
+    update_campaign,
+)
 from .channels import (
     add_channel_cost,
     create_channel,
@@ -40,6 +46,10 @@ from .tracking import (
 )
 
 __all__ = [
+    'apply_system_campaign_status',
+    'change_campaign_status',
+    'create_campaign',
+    'update_campaign',
     'company_post_images',
     'save_post_image',
     'build_pdf',

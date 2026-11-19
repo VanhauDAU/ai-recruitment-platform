@@ -14,6 +14,7 @@ from django.db.models import (
 from django.db.models.functions import Coalesce
 
 from apps.applications.models import Application
+from apps.campaigns.models import RecruitmentCampaign
 from apps.jobs.models import Job
 
 from ..models import (
@@ -22,7 +23,6 @@ from ..models import (
     EmployerCompanyLinkEvent,
     EmployerComplianceHold,
     RecruiterProfile,
-    RecruitmentCampaign,
 )
 from ..models.representation import eligible_representatives_queryset
 

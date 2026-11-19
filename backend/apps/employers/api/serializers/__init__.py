@@ -12,12 +12,6 @@ from .admin_verification import (
     AdminVerificationDecisionSerializer,
     AdminVerificationDocumentReviewSerializer,
 )
-from .campaigns import (
-    CampaignActivitySerializer,
-    CampaignPerformanceQuerySerializer,
-    CampaignStatusSerializer,
-    RecruitmentCampaignSerializer,
-)
 from .companies import (
     CompanyImageSerializer,
     CompanySearchSerializer,
@@ -100,16 +94,12 @@ __all__ = [
     'CompanyUpdateRequestSerializer',
     'CompanyPageContentSerializer',
     'CompanyUpdateRequestCloseSerializer',
-    'CampaignStatusSerializer',
-    'CampaignActivitySerializer',
-    'CampaignPerformanceQuerySerializer',
     'IndustrySerializer',
     'RecruiterProfileSerializer',
     'EmployerDpaAcceptanceSerializer',
     'EmployerActivitySerializer',
     'EmployerNotificationSerializer',
     'EmployerNotificationPreferenceSerializer',
-    'RecruitmentCampaignSerializer',
     'RecruitmentNeedSerializer',
     'EmployerRegisterSerializer',
     'EmployerRegistrationProfileSerializer',

@@ -6,7 +6,7 @@ from rest_framework.test import APIRequestFactory, APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
 
 from apps.accounts.models import User
-from apps.accounts.services.tokens import issue_tokens
+from apps.accounts.services import issue_tokens
 
 from ..models import EmployerDpaAcceptance, RecruiterProfile
 

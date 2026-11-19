@@ -9,20 +9,13 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.applications.models import Application
+from apps.campaigns.models import CampaignActivity, RecruitmentCampaign
 from apps.cvs.models import UserCv
 from apps.cvs.services import create_initial_document
+from apps.employers.models import Company, DpaStatus, EmployerVerificationCase, RecruiterProfile
+from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.jobs.models import Job, JobCategory, JobEngagementDaily
 from apps.jobs.tests.helpers import open_visibility_window
-
-from ..models import (
-    CampaignActivity,
-    Company,
-    DpaStatus,
-    EmployerVerificationCase,
-    RecruiterProfile,
-    RecruitmentCampaign,
-)
-from .readiness_helpers import make_employer_ready
 
 
 class RecruitmentCampaignApiTests(TestCase):

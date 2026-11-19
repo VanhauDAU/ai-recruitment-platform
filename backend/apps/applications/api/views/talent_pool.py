@@ -9,7 +9,7 @@ from rest_framework.views import APIView
 from apps.accounts.api.permissions import IsCandidate, IsEmployer
 from apps.employers.services import ensure_recruiter_candidate_data_access
 from apps.jobs.models import Job
-from apps.jobs.selectors.listing import publicly_available_job_filter
+from apps.jobs.selectors import publicly_available_job_filter
 
 from ...models import TalentPoolEntry
 from ...selectors import (

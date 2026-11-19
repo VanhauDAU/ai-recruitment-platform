@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
 
-from apps.accounts.services.tokens import issue_tokens
+from apps.accounts.services import issue_tokens
 from apps.jobs.tests.helpers import open_visibility_window
 from apps.sitecontent.models import SiteSetting
 

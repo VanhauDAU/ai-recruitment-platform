@@ -24,7 +24,11 @@ from apps.cv_templates.models import (
     CvTemplate,
     CvTemplateColorLink,
     CvTemplateVersion,
+    empty_content,
+    empty_layout,
+    empty_style,
 )
+from apps.cv_templates.services import compose_cv_document, print_payload
 from apps.cvs.tasks.exports import generate_cv_thumbnail, render_cv_export_job
 from apps.cvs.tasks.imports import ImportProcessingError, process_cv_import_job
 from apps.jobs.models import JobCategory, JobCategoryLocalization
@@ -40,9 +44,6 @@ from ..models import (
     CvVersion,
     UserCv,
 )
-from ..schemas import empty_content, empty_layout, empty_style
-from ..services.composition import compose_cv_document
-from ..services.pdf_renderer import print_payload
 from .fixtures import CV_LINES, cv_pdf_upload, docx_bytes, pdf_bytes
 
 TEST_EXPORT_MEDIA_ROOT = tempfile.mkdtemp()

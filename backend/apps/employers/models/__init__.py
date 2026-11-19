@@ -1,6 +1,6 @@
 """Public model API for the employers Django app."""
 
-from .campaign import CampaignActivity, RecruitmentCampaign
+from .choices import BudgetSource
 from .company import Company, CompanyImage, CompanyIndustry, CompanyMediaUpload, Industry
 from .company_content import CompanyBenefit, CompanyOffice
 from .company_follow import CompanyFollow
@@ -39,6 +39,7 @@ from .verification import (
 )
 
 __all__ = [
+    'BudgetSource',
     'CompanyJoinRequest',
     'Company',
     'CompanyBenefit',
@@ -69,7 +70,6 @@ __all__ = [
     'EmployerComplianceHoldJob',
     'EmployerDpaAcceptance',
     'EmployerPhoneVerificationEvent',
-    'CampaignActivity',
     'Industry',
     'PhoneOtp',
     'RecruiterProfile',
@@ -77,6 +77,5 @@ __all__ = [
     'EmployerActivity',
     'EmployerNotification',
     'EmployerNotificationPreference',
-    'RecruitmentCampaign',
     'RecruitmentNeed',
 ]

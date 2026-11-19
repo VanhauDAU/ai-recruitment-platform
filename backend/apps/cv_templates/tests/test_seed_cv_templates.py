@@ -7,9 +7,9 @@ from django.test import TestCase
 
 from apps.cv_templates.domain.renderers import get_renderer_contract, validate_renderer_contract
 from apps.cv_templates.domain.section_plans import SECTION_PLANS
+from apps.cv_templates.models.content_schema import empty_content
 from apps.cv_templates.seed_data.template_catalog import TEMPLATES
-from apps.cvs.schemas import empty_content
-from apps.cvs.services.composition import compose_cv_document
+from apps.cv_templates.services.composition import compose_cv_document
 
 from ..models import (
     CATALOG_LANGUAGES,

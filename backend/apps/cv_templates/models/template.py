@@ -522,7 +522,11 @@ class CvSampleContent(models.Model):
         ordering = ['locale', 'experience_band', 'title']
 
     def clean(self):
-        from apps.cvs.schemas import empty_layout, empty_style, validate_cv_document
+        from apps.cv_templates.models.content_schema import (
+            empty_layout,
+            empty_style,
+            validate_cv_document,
+        )
 
         content = self.content_json if isinstance(self.content_json, dict) else {}
         section_ids = [

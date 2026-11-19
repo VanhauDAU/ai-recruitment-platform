@@ -18,11 +18,11 @@ from django.utils import timezone
 
 from apps.accounts.domain.impact_token_rules import create_impact_token
 from apps.applications.models import Application
+from apps.campaigns.models import RecruitmentCampaign
 from apps.employers.models import (
     CompanyDocument,
     CompanyUpdateRequest,
     EmployerVerificationCase,
-    RecruitmentCampaign,
     RecruitmentNeed,
 )
 from apps.jobs.models import Job

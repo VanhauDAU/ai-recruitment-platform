@@ -45,14 +45,6 @@ from ..views import (
     PhoneAvailabilityView,
     PhoneChallengeView,
     RecruiterMeView,
-    RecruitmentCampaignActivityView,
-    RecruitmentCampaignDetailView,
-    RecruitmentCampaignJobPerformanceView,
-    RecruitmentCampaignListCreateView,
-    RecruitmentCampaignOptionsView,
-    RecruitmentCampaignPauseImpactView,
-    RecruitmentCampaignReportView,
-    RecruitmentCampaignStatusView,
     RecruitmentNeedDetailView,
     RecruitmentNeedListCreateView,
     RecruitmentNeedView,
@@ -88,42 +80,6 @@ urlpatterns = [
         name='employer-notification-read',
     ),
     path('activities/', EmployerActivityListView.as_view(), name='employer-activity-list'),
-    path('campaigns/', RecruitmentCampaignListCreateView.as_view(), name='employer-campaign-list'),
-    path(
-        'campaigns/options/',
-        RecruitmentCampaignOptionsView.as_view(),
-        name='employer-campaign-options',
-    ),
-    path(
-        'campaigns/<str:public_id>/',
-        RecruitmentCampaignDetailView.as_view(),
-        name='employer-campaign-detail',
-    ),
-    path(
-        'campaigns/<str:public_id>/status/',
-        RecruitmentCampaignStatusView.as_view(),
-        name='employer-campaign-status',
-    ),
-    path(
-        'campaigns/<str:public_id>/pause-impact/',
-        RecruitmentCampaignPauseImpactView.as_view(),
-        name='employer-campaign-pause-impact',
-    ),
-    path(
-        'campaigns/<str:public_id>/activities/',
-        RecruitmentCampaignActivityView.as_view(),
-        name='employer-campaign-activities',
-    ),
-    path(
-        'campaigns/<str:public_id>/report/',
-        RecruitmentCampaignReportView.as_view(),
-        name='employer-campaign-report',
-    ),
-    path(
-        'campaigns/<str:public_id>/job-performance/',
-        RecruitmentCampaignJobPerformanceView.as_view(),
-        name='employer-campaign-job-performance',
-    ),
     path('register/', EmployerRegisterView.as_view(), name='employer-register'),
     path(
         'onboarding/registration/',
@@ -141,7 +97,6 @@ urlpatterns = [
         RecruitmentNeedDetailView.as_view(),
         name='employer-recruitment-need-detail',
     ),
-    # Nhà tuyển dụng + onboarding
     path('me/', RecruiterMeView.as_view(), name='employer-me'),
     path('phone/check/', PhoneAvailabilityView.as_view(), name='employer-phone-check'),
     path('phone/send-otp/', SendPhoneOtpView.as_view(), name='employer-phone-send-otp'),
@@ -152,7 +107,6 @@ urlpatterns = [
     ),
     path('phone/verify/', VerifyPhoneOtpView.as_view(), name='employer-phone-verify'),
     path('dpa/accept/', AcceptDpaView.as_view(), name='employer-dpa-accept'),
-    # Công ty
     path('company/', MyCompanyView.as_view(), name='employer-company'),
     path('company/create/', CreateCompanyView.as_view(), name='employer-company-create'),
     path('company/search/', CompanySearchView.as_view(), name='employer-company-search'),
@@ -271,7 +225,6 @@ urlpatterns = [
         CompanyUpdateRequestLifecycleView.as_view(),
         name='employer-company-update-request-lifecycle',
     ),
-    # Danh mục lĩnh vực
     path('industries/', IndustryListView.as_view(), name='employer-industries'),
     path('industries/all/', AllIndustryListView.as_view(), name='employer-industries-all'),
 ]

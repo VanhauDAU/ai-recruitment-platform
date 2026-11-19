@@ -23,12 +23,11 @@ from apps.accounts.services import (
 from apps.accounts.services.admin_invitation_tokens import create_admin_invitation_token
 from apps.accounts.services.exceptions import AdminPermissionDenied
 from apps.accounts.tests.helpers import make_admin
+from apps.campaigns.models import CampaignActivity, RecruitmentCampaign
 from apps.employers.models import (
-    CampaignActivity,
     Company,
     EmployerVerificationCase,
     RecruiterProfile,
-    RecruitmentCampaign,
     RecruitmentNeed,
 )
 from apps.jobs.models import JobCategory

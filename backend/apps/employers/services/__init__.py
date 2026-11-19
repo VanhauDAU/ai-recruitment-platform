@@ -4,14 +4,6 @@ from ..models.verification import (
     ACTIVE_COMPANY_UPDATE_STATUSES,
     REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
 )
-from .campaigns import (
-    apply_system_campaign_status,
-    campaign_active_seconds,
-    change_campaign_status,
-    create_campaign,
-    record_campaign_activity,
-    update_campaign,
-)
 from .companies import (
     COMPANY_DESCRIPTION_MIN_LENGTH,
     PRE_REVIEW_COMPANY_UPDATE_STATUSES,
@@ -212,11 +204,7 @@ __all__ = [
     'close_company_update_before_review',
     'company_update_conflicting_fields',
     'current_company_update_revision',
-    'apply_system_campaign_status',
-    'campaign_active_seconds',
-    'change_campaign_status',
     'challenge_code_matches',
-    'create_campaign',
     'create_initial_recruitment_need',
     'create_sms_phone_challenge',
     'DomainClaimError',
@@ -238,7 +226,6 @@ __all__ = [
     'get_sms_phone_challenge',
     'confirm_verification_decision',
     'confirm_verification_lifecycle_action',
-    'record_campaign_activity',
     'get_or_create_recruiter',
     'recruiter_has_active_compliance_hold',
     'recruiter_job_publication_state',
@@ -293,7 +280,6 @@ __all__ = [
     'reverse_company_report',
     'submit_company_report',
     'unfollow_company',
-    'update_campaign',
     'verify_sms_phone_challenge',
     'validate_employer_upload_structure',
 ]

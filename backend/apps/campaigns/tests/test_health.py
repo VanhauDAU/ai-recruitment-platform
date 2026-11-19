@@ -10,13 +10,10 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.applications.models import Application
+from apps.campaigns.models import RecruitmentCampaign
 from apps.cvs.models import UserCv
 from apps.cvs.services import create_initial_document
-from apps.employers.models import (
-    EmployerNotification,
-    EmployerNotificationPreference,
-    RecruitmentCampaign,
-)
+from apps.employers.models import EmployerNotification, EmployerNotificationPreference
 from apps.jobs.models import Job
 from apps.jobs.tests import test_posting_workflows
 from common.vietnam_time import VIETNAM_TZ, vietnam_today
@@ -228,7 +225,7 @@ class CampaignHealthApiTests(HealthFixtures, TestCase):
 
     def test_pdf_export_renders_a_self_contained_report(self):
         with patch(
-            'apps.cvs.services.pdf_renderer.render_html_pdf', return_value=b'%PDF-1.7 test'
+            'apps.campaigns.services.report_export.render_html_pdf', return_value=b'%PDF-1.7 test'
         ) as render:
             response = self.client.get(
                 reverse(

@@ -16,7 +16,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import AuthEmailJob, SocialAccount, User
-from apps.accounts.services.tokens import issue_tokens
+from apps.accounts.services import issue_tokens
 from apps.jobs.models import JobCategory
 from apps.locations.models import Location
 from common.storage.r2 import private_media_storage

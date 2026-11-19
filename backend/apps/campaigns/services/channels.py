@@ -4,8 +4,7 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
-from apps.employers.models import CampaignActivity, RecruitmentCampaign
-from apps.employers.services import record_campaign_activity
+from apps.campaigns.models import CampaignActivity, RecruitmentCampaign
 
 from ..models import CampaignChannel, CampaignChannelCost
 
@@ -59,7 +58,7 @@ def create_channel(*, campaign, user, kind, label, target=CampaignChannel.Target
         job=_validate_target(campaign, target, job),
         created_by=user,
     )
-    record_campaign_activity(
+    CampaignActivity.objects.record(
         campaign=campaign,
         event_type=CampaignActivity.EventType.CHANNEL_ADDED,
         group=CampaignActivity.Group.CAMPAIGN,
@@ -94,7 +93,7 @@ def update_channel(*, channel, user, **data):
         channel.posted_at = (channel.posted_at or timezone.now()) if data['posted'] else None
     channel.save()
     if newly_posted:
-        record_campaign_activity(
+        CampaignActivity.objects.record(
             campaign=channel.campaign,
             event_type=CampaignActivity.EventType.CHANNEL_POSTED,
             group=CampaignActivity.Group.CAMPAIGN,

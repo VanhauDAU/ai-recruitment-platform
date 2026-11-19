@@ -19,6 +19,8 @@ from apps.cv_templates.models import (
     CvTemplateColorLink,
     CvTemplateVersion,
 )
+from apps.cv_templates.models.content_schema import empty_content
+from apps.cv_templates.services.composition import compose_cv_document
 from apps.cv_templates.services.demo_identity import with_demo_identity
 from apps.cv_templates.services.sample_generation import (
     execute_sample_generation,
@@ -29,12 +31,11 @@ from apps.cv_templates.services.template_preview import (
     finish_test_pdf,
     preview_document,
 )
-from apps.cvs.schemas import empty_content
-from apps.cvs.services.composition import compose_cv_document
-from apps.cvs.services.pdf_renderer import print_payload, render_document_pdf
 from common.metrics import record_metric
 from common.pdf.raster import first_pdf_page_image
 from common.storage.r2 import public_media_storage
+
+from ..services.printing import print_payload, render_document_pdf
 
 logger = logging.getLogger(__name__)
 SNAPSHOT_RENDERER_VERSION = 'catalogue-snapshot-v2'  # v2: Chromium print page (CVT-2)

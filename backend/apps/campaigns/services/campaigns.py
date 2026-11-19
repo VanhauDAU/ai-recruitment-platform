@@ -3,11 +3,10 @@ from django.db.models import Max
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
-from apps.employers.signals import campaign_status_changed
+from apps.campaigns.models import CampaignActivity, RecruitmentCampaign
+from apps.campaigns.signals import campaign_status_changed
+from apps.employers.services import ensure_recruiter_job_workspace
 from common.vietnam_time import vietnam_today
-
-from ..models import CampaignActivity, RecruitmentCampaign
-from .profiles import ensure_recruiter_job_workspace
 
 
 def _recruiter_for(user):
@@ -23,35 +22,6 @@ def _ensure_campaign_not_held(campaign):
                 'detail': 'Chiến dịch đang bị policy hold.',
             }
         )
-
-
-def record_campaign_activity(
-    *,
-    campaign,
-    event_type,
-    group,
-    actor=None,
-    subject_public_id='',
-    metadata=None,
-    occurred_at=None,
-):
-    """Record one explicit campaign-domain event from a mutation service."""
-    if campaign is None:
-        return None
-    activity = CampaignActivity.objects.create(
-        campaign=campaign,
-        actor=actor,
-        group=group,
-        event_type=event_type,
-        subject_public_id=subject_public_id or '',
-        metadata=metadata or {},
-        occurred_at=occurred_at or timezone.now(),
-    )
-    # Keep create/update/status API responses consistent with a subsequent GET
-    # without adding a read query solely to annotate the just-written event.
-    campaign.last_activity_at = activity.occurred_at
-    campaign.last_activity_type = activity.event_type
-    return activity
 
 
 Status = RecruitmentCampaign.Status
@@ -82,21 +52,13 @@ STATUS_EVENTS = {
 }
 
 
-def campaign_active_seconds(campaign, *, now=None):
-    """Seconds the campaign has actually been running, pauses excluded."""
-    seconds = campaign.active_seconds_accumulated
-    if campaign.status == Status.ACTIVE and campaign.activated_at:
-        seconds += max(0, int(((now or timezone.now()) - campaign.activated_at).total_seconds()))
-    return seconds
-
-
 def _set_status(campaign, status, *, actor, ended_by, metadata=None):
     """Apply one transition with its running-time bookkeeping and side effects."""
     now = timezone.now()
     previous = campaign.status
     update_fields = ['status', 'updated_at']
     if previous == Status.ACTIVE:
-        campaign.active_seconds_accumulated = campaign_active_seconds(campaign, now=now)
+        campaign.active_seconds_accumulated = campaign.active_seconds(now=now)
         update_fields.append('active_seconds_accumulated')
     if status == Status.ACTIVE:
         campaign.first_activated_at = campaign.first_activated_at or now
@@ -119,7 +81,7 @@ def _set_status(campaign, status, *, actor, ended_by, metadata=None):
         )
     else:
         event_type = STATUS_EVENTS[status]
-    record_campaign_activity(
+    CampaignActivity.objects.record(
         campaign=campaign,
         event_type=event_type,
         group=CampaignActivity.Group.CAMPAIGN,
@@ -152,7 +114,7 @@ def create_campaign(*, user, activate=False, **data):
         status=Status.DRAFT,
         **data,
     )
-    record_campaign_activity(
+    CampaignActivity.objects.record(
         campaign=campaign,
         event_type=CampaignActivity.EventType.CAMPAIGN_CREATED,
         group=CampaignActivity.Group.CAMPAIGN,
@@ -213,7 +175,7 @@ def update_campaign(*, campaign, user, **data):
     if 'name' in changed_fields and campaign.first_activated_at is None:
         campaign.slug = campaign.build_slug()
     campaign.save()
-    record_campaign_activity(
+    CampaignActivity.objects.record(
         campaign=campaign,
         event_type=CampaignActivity.EventType.CAMPAIGN_UPDATED,
         group=CampaignActivity.Group.CAMPAIGN,

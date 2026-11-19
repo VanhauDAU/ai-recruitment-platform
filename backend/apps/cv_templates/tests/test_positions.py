@@ -6,8 +6,8 @@ from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
+from apps.cv_templates.models.content_schema import empty_content
 from apps.cvs.models import UserCv
-from apps.cvs.schemas import empty_content
 from apps.jobs.models import Job, JobCategory, JobCategoryLocalization
 
 from ..models import CvPositionField, CvPositionProfile, CvSampleContent

@@ -29,13 +29,6 @@ ALLOWED_AVATAR_FORMATS = {
 }
 
 
-def cv_asset_storage(asset):
-    """CV backgrounds are catalogue assets; candidate avatars remain private."""
-    if asset.kind == CvAsset.Kind.BACKGROUND:
-        return public_media_storage()
-    return private_media_storage()
-
-
 def _encode_avatar(upload):
     if upload.size > MAX_AVATAR_BYTES:
         raise ValidationError({'file': 'Image must be 5 MB or smaller.'})

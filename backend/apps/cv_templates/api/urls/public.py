@@ -1,8 +1,7 @@
 from django.urls import path
 
-from apps.cvs.api.views.v2 import CvV2BackgroundListView
-
 from ..views.v2 import (
+    CvBackgroundCatalogListView,
     CvCategoryCatalogListView,
     CvPositionDetailsView,
     CvPositionOptionListView,
@@ -26,7 +25,7 @@ urlpatterns = [
         name='cv-template-v2-related',
     ),
     path('cv-categories/', CvCategoryCatalogListView.as_view(), name='cv-category-v2-list'),
-    path('cv-backgrounds/', CvV2BackgroundListView.as_view(), name='cv-background-v2-list'),
+    path('cv-backgrounds/', CvBackgroundCatalogListView.as_view(), name='cv-background-v2-list'),
     path(
         'cv-position-options/',
         CvPositionOptionListView.as_view(),

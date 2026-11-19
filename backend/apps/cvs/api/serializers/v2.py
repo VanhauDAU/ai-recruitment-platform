@@ -10,11 +10,11 @@ from apps.cv_templates.models import (
     CvLanguage,
     CvTemplate,
     ExperienceBand,
+    validate_cv_document,
 )
 from apps.jobs.models import Job, JobCategory
 
 from ...models import CvAsset, CvDraft, CvExport, CvImportJob, CvSharedLink, CvVersion, UserCv
-from ...schemas import validate_cv_document
 from ...services.assets import asset_map, sign_asset
 from ...services.completeness import (
     COMPLETION_THRESHOLD,

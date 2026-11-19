@@ -1,5 +1,15 @@
 from django.urls import path
 
+from ..views.campaigns import (
+    RecruitmentCampaignActivityView,
+    RecruitmentCampaignDetailView,
+    RecruitmentCampaignJobPerformanceView,
+    RecruitmentCampaignListCreateView,
+    RecruitmentCampaignOptionsView,
+    RecruitmentCampaignPauseImpactView,
+    RecruitmentCampaignReportView,
+    RecruitmentCampaignStatusView,
+)
 from ..views.channels import (
     CampaignChannelContentView,
     CampaignChannelCostDetailView,
@@ -22,6 +32,42 @@ from ..views.social import (
 )
 
 urlpatterns = [
+    path('campaigns/', RecruitmentCampaignListCreateView.as_view(), name='employer-campaign-list'),
+    path(
+        'campaigns/options/',
+        RecruitmentCampaignOptionsView.as_view(),
+        name='employer-campaign-options',
+    ),
+    path(
+        'campaigns/<str:public_id>/',
+        RecruitmentCampaignDetailView.as_view(),
+        name='employer-campaign-detail',
+    ),
+    path(
+        'campaigns/<str:public_id>/status/',
+        RecruitmentCampaignStatusView.as_view(),
+        name='employer-campaign-status',
+    ),
+    path(
+        'campaigns/<str:public_id>/pause-impact/',
+        RecruitmentCampaignPauseImpactView.as_view(),
+        name='employer-campaign-pause-impact',
+    ),
+    path(
+        'campaigns/<str:public_id>/activities/',
+        RecruitmentCampaignActivityView.as_view(),
+        name='employer-campaign-activities',
+    ),
+    path(
+        'campaigns/<str:public_id>/report/',
+        RecruitmentCampaignReportView.as_view(),
+        name='employer-campaign-report',
+    ),
+    path(
+        'campaigns/<str:public_id>/job-performance/',
+        RecruitmentCampaignJobPerformanceView.as_view(),
+        name='employer-campaign-job-performance',
+    ),
     path(
         'campaigns/<str:public_id>/launch/',
         CampaignLaunchView.as_view(),

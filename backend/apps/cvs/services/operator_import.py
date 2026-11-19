@@ -14,12 +14,11 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import transaction
 
 from apps.cv_templates.models import CvLanguage, CvTemplate
+from apps.cv_templates.services import compose_cv_document, print_payload, render_document_pdf
 
 from ..models import CvVersion, UserCv
-from .composition import compose_cv_document
 from .cvs import upload_cv
 from .lifecycle import CvLifecyclePolicyError, create_v2_cv
-from .pdf_renderer import print_payload, render_document_pdf
 from .versions import create_version
 
 SYNTHETIC_EMAIL_DOMAIN = 'synthetic.procv.test'

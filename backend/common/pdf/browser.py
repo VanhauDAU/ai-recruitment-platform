@@ -1,34 +1,25 @@
-"""Xuất PDF CV bằng Chromium headless và renderer frontend dùng chung (CVT-2).
+"""Chromium headless dùng chung để in PDF (Playwright).
 
-Worker mở trang in `settings.CV_PRINT_URL` (entry `cv-print.html` của frontend,
-dùng đúng `CvDocumentPreview` của preview và editor), đưa document vào trang bằng
-`page.evaluate` rồi in A4 — dữ liệu CV không đi qua mạng và trang in không tự
-tải gì. Trang chỉ được tải tài nguyên cùng origin với trang in và `data:`; mọi
-request khác bị chặn để nội dung CV không thể bị gửi ra ngoài.
+Một Chromium sống trong luồng engine riêng của mỗi process worker. Hai lối vào:
 
-Module độc lập với `CvDraft` và HTTP: chỉ render một version bất biến (hoặc
-document do composer tạo cho snapshot catalogue).
+* ``render_print_page_pdf`` mở một trang in cùng origin, đưa payload vào bằng
+  ``page.evaluate`` rồi in A4 — dùng cho CV (``cv_templates.services.printing``);
+* ``render_html_pdf`` in một HTML tự chứa — dùng cho báo cáo chiến dịch.
+
+Trang chỉ được tải tài nguyên cùng origin với trang in và ``data:``; mọi request
+khác bị chặn để dữ liệu không thể bị gửi ra ngoài.
 """
 
 from __future__ import annotations
 
-import base64
 from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urlsplit
-
-from django.conf import settings
-from django.core.exceptions import ValidationError
-
-from apps.cv_templates.domain.renderers import validate_renderer_contract
-
-from ..models import CvAsset
-from .assets import cv_asset_storage
 
 RENDER_TIMEOUT_MS = 20_000
 
 
 class PdfRenderingError(RuntimeError):
-    """A worker-safe rendering failure that never includes CV content."""
+    """A worker-safe rendering failure that never includes document content."""
 
 
 # Playwright sync API chạy một event loop asyncio trong luồng gọi nó; Django khi
@@ -39,7 +30,7 @@ _engine = {'executor': None, 'playwright': None, 'browser': None}
 
 def _executor():
     if _engine['executor'] is None:
-        _engine['executor'] = ThreadPoolExecutor(max_workers=1, thread_name_prefix='cv-pdf')
+        _engine['executor'] = ThreadPoolExecutor(max_workers=1, thread_name_prefix='pdf-engine')
     return _engine['executor']
 
 
@@ -58,63 +49,12 @@ def _browser():
     return browser
 
 
-def _asset_data_uri(public_id, kind):
-    if not public_id:
-        return ''
-    try:
-        asset = CvAsset.objects.get(public_id=public_id, kind=kind, is_active=True)
-        with cv_asset_storage(asset).open(asset.storage_key, 'rb') as stream:
-            encoded = base64.b64encode(stream.read()).decode('ascii')
-    except (CvAsset.DoesNotExist, OSError):
-        return ''
-    return f'data:{asset.content_type};base64,{encoded}'
-
-
-def print_payload(version):
-    """Payload của trang in: document, khóa layout và ảnh dạng data URI."""
-    template_version = version.template_version
-    if template_version is None:
-        raise PdfRenderingError('The selected CV version has no pinned template renderer.')
-    regions = [
-        region.get('id')
-        for region in version.layout_json.get('regions', [])
-        if isinstance(region, dict)
-    ]
-    try:
-        contract = validate_renderer_contract(
-            template_version.renderer_key, version.schema_version, regions
-        )
-    except ValidationError as error:
-        raise PdfRenderingError(
-            'The selected CV version does not satisfy its renderer contract.'
-        ) from error
-    personal_info = version.content_json.get('personal_info', {})
-    assets = {}
-    for public_id, kind in (
-        (personal_info.get('avatar_asset_id'), CvAsset.Kind.AVATAR),
-        (version.style_json.get('background_asset_id'), CvAsset.Kind.BACKGROUND),
-    ):
-        data_uri = _asset_data_uri(public_id, kind)
-        if data_uri:
-            assets[public_id] = {'url': data_uri}
-    return {
-        'renderer_key': contract.key,
-        'document': {
-            'schema_version': version.schema_version,
-            'content_json': version.content_json,
-            'layout_json': version.layout_json,
-            'style_json': version.style_json,
-        },
-        'assets': assets,
-    }
-
-
 def _same_origin(url, origin):
     parts = urlsplit(url)
     return parts.scheme == 'data' or (parts.scheme, parts.netloc) == origin
 
 
-def _render_in_engine_thread(payload, print_url):
+def _render_in_engine_thread(payload, print_url, entrypoint):
     origin = urlsplit(print_url)[:2]
     try:
         from playwright.sync_api import Error as PlaywrightError
@@ -131,7 +71,7 @@ def _render_in_engine_thread(payload, print_url):
         page = context.new_page()
         page.set_default_timeout(RENDER_TIMEOUT_MS)
         page.goto(print_url, wait_until='load')
-        page.evaluate('payload => window.renderCvPrint(payload)', payload)
+        page.evaluate(f'payload => window.{entrypoint}(payload)', payload)
         pdf = page.pdf(format='A4', print_background=True, prefer_css_page_size=True)
     except PlaywrightError as error:
         raise PdfRenderingError('The PDF rendering engine failed.') from error
@@ -172,17 +112,13 @@ def _render_html_in_engine_thread(html):
 def render_html_pdf(html):
     """Render a self-contained HTML report (no external assets) to A4 PDF bytes.
 
-    Shares the CV engine's Chromium thread; used by campaign report exports.
+    Used by campaign report exports.
     """
     future = _executor().submit(_render_html_in_engine_thread, html)
     return future.result(timeout=RENDER_TIMEOUT_MS / 1000 + 10)
 
 
-def render_document_pdf(payload):
-    future = _executor().submit(_render_in_engine_thread, payload, settings.CV_PRINT_URL)
+def render_print_page_pdf(print_url, payload, *, entrypoint):
+    """Open ``print_url``, hand ``payload`` to ``window.<entrypoint>`` and print A4."""
+    future = _executor().submit(_render_in_engine_thread, payload, print_url, entrypoint)
     return future.result(timeout=RENDER_TIMEOUT_MS / 1000 + 10)
-
-
-def render_cv_version_pdf(version) -> bytes:
-    """Render một version bất biến (hoặc document snapshot) thành PDF A4."""
-    return render_document_pdf(print_payload(version))

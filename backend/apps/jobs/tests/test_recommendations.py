@@ -15,8 +15,8 @@ from apps.candidates.models import (
     CandidatePreferredProvince,
     CandidatePreferredSkill,
 )
+from apps.cv_templates.models import empty_content
 from apps.cvs.models import UserCv
-from apps.cvs.schemas import empty_content
 from apps.cvs.services import create_initial_document
 from apps.employers.models import Company
 from apps.employers.tests.readiness_helpers import make_employer_ready

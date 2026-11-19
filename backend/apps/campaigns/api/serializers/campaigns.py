@@ -1,9 +1,7 @@
 from rest_framework import serializers
 
+from apps.campaigns.models import CampaignActivity, RecruitmentCampaign
 from common.storage.media import media_url_from_value
-
-from ...models import CampaignActivity, RecruitmentCampaign
-from ...services import campaign_active_seconds
 
 
 class RecruitmentCampaignSerializer(serializers.ModelSerializer):
@@ -99,7 +97,7 @@ class RecruitmentCampaignSerializer(serializers.ModelSerializer):
     def get_active_days(self, obj):
         if obj.first_activated_at is None:
             return None
-        return round(campaign_active_seconds(obj) / 86400, 1)
+        return round(obj.active_seconds() / 86400, 1)
 
     def get_last_activity(self, obj):
         occurred_at = getattr(obj, 'last_activity_at', None) or obj.updated_at
