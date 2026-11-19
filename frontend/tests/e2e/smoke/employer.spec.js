@@ -1737,7 +1737,7 @@ test('employer applications: grouped CV workspace is clear across responsive lay
   await expect(page).toHaveURL('/tuyendung/app/jobs/jb_987ecf21d547')
 })
 
-test('employer campaigns: operational list shows compact campaign controls', async ({ page }) => {
+test('employer campaigns: status tabs and one next action per row', async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page, {
     email_verified: true,
@@ -1755,27 +1755,19 @@ test('employer campaigns: operational list shows compact campaign controls', asy
       }),
     })
   })
+  const listRequests = []
   await page.route(/http:\/\/localhost:8000\/api\/employer\/campaigns\/(?:\?.*)?$/, async (route) => {
-    if (route.request().method() === 'POST') {
-      await route.fulfill({
-        contentType: 'application/json',
-        body: JSON.stringify({
-          public_id: 'camp_q3', name: 'Tuyển dụng Quý 3/2026', status: 'active',
-          job_count: 0, candidate_count: 0, application_submission_count: 0,
-          accepted_count: 0,
-        }),
-      })
-      return
-    }
+    listRequests.push(new URL(route.request().url()).searchParams)
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({
         count: 1,
         next: null,
         previous: null,
+        status_counts: { all: 1, active: 1, paused: 0, scheduled: 0, draft: 0, ended: 0 },
         results: [{
           public_id: 'camp_frontend', name: 'Tuyển Frontend', status: 'active',
-          job_count: 1, active_job_count: 1, candidate_count: 1,
+          job_count: 1, active_job_count: 1, headcount: 2, candidate_count: 1,
           candidate_previews: [{
             public_id: 'candidate_frontend', full_name: 'Nguyễn Minh Anh', avatar_url: '',
           }],
@@ -1795,35 +1787,27 @@ test('employer campaigns: operational list shows compact campaign controls', asy
   })
 
   await page.goto('/tuyendung/app/campaigns')
-  await expect(page.getByRole('combobox', { name: 'Lọc trạng thái chiến dịch' })).toBeVisible()
+  const statusTabs = page.getByRole('navigation', { name: 'Lọc chiến dịch theo trạng thái' })
+  await expect(statusTabs.getByRole('button', { name: 'Tất cả 1' })).toHaveAttribute('aria-pressed', 'true')
+  await expect(statusTabs.getByRole('button', { name: 'Nháp 0' })).toBeVisible()
   await expect(page.getByRole('combobox', { name: 'Lọc nhu cầu xử lý' })).toBeVisible()
-  await expect(page.getByText('Tìm thấy').filter({ visible: true })).toContainText('1')
-  await expect(page.getByText('#camp_frontend').filter({ visible: true })).toBeVisible()
-  await expect(page.getByTitle('Nguyễn Minh Anh').filter({ visible: true })).toBeVisible()
-  await expect(page.getByText('Nhận CV ứng tuyển').filter({ visible: true })).toBeVisible()
+  await expect(page.getByRole('combobox', { name: 'Sắp xếp chiến dịch' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Tuyển Frontend' }).filter({ visible: true })).toHaveAttribute('href', '/tuyendung/app/campaigns/camp_frontend')
-  await expect(page.getByText('Xem báo cáo', { exact: true })).toHaveCount(0)
-  await expect(page.getByRole('columnheader', { name: 'Thao tác' })).toHaveCount(0)
-  await expect(page.getByRole('switch', {
-    name: 'Dừng chiến dịch Tuyển Frontend',
-  }).filter({ visible: true })).toBeChecked()
-  const editCampaignAction = page.getByRole('button', { name: 'Sửa chiến dịch' }).filter({ visible: true })
-  if (page.viewportSize().width >= 1024) {
-    const actionReveal = editCampaignAction.locator('..').locator('..')
-    await expect(actionReveal).toHaveCSS('opacity', '0')
-    await page.locator('tr').filter({ hasText: 'Tuyển Frontend' }).hover()
-    await expect(actionReveal).toHaveCSS('opacity', '1')
-  }
-  await expect(editCampaignAction).toBeVisible()
+  await expect(page.getByText('Cần tuyển 2 người').filter({ visible: true })).toBeVisible()
+  await expect(page.getByText('Nhận CV ứng tuyển').filter({ visible: true })).toBeVisible()
+  // Mỗi dòng chỉ một hành động kế tiếp; không còn công tắc, nút hover hay nút sửa tên.
+  await expect(page.getByRole('link', { name: 'Xem 1 CV mới' }).filter({ visible: true })).toHaveAttribute('href', '/tuyendung/app/campaigns/camp_frontend?active_tab=apply_cv')
+  await expect(page.getByRole('switch')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Sửa chiến dịch' })).toHaveCount(0)
   await expectNoHorizontalOverflow(page)
-  await page.getByRole('button', { name: /Thêm chiến dịch mới/ }).click()
-  await page.getByLabel('Tên chiến dịch tuyển dụng').fill('Tuyển dụng Quý 3/2026')
-  await page.getByRole('button', { name: 'Tạo chiến dịch' }).click()
 
-  const activityDialog = page.getByRole('dialog', { name: 'Khởi động chiến dịch: Tuyển dụng Quý 3/2026' })
-  await expect(activityDialog.getByRole('button', { name: 'Xem chiến dịch' })).toBeVisible()
-  await activityDialog.getByRole('button', { name: 'Đăng tin tuyển dụng' }).click()
-  await expect(page).toHaveURL(/\/tuyendung\/app\/jobs\/new\?campaign=camp_q3$/)
+  await statusTabs.getByRole('button', { name: 'Đang chạy 1' }).click()
+  await expect(page).toHaveURL(/status=active/)
+  await expect(statusTabs.getByRole('button', { name: 'Đang chạy 1' })).toHaveAttribute('aria-pressed', 'true')
+  await expect.poll(() => listRequests.at(-1)?.get('status')).toBe('active')
+
+  // Tạo chiến dịch đi qua wizard thiết lập, không còn hộp thoại chỉ nhập tên.
+  await expect(page.getByRole('link', { name: 'Thêm chiến dịch mới' })).toHaveAttribute('href', '/tuyendung/app/campaigns/new')
 })
 
 test('employer campaign detail: TopCV-style workspace is responsive and uses API data', async ({ page }) => {
@@ -1848,7 +1832,7 @@ test('employer campaign detail: TopCV-style workspace is responsive and uses API
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({
-        public_id: 'camp_frontend', name: 'Tuyển Frontend', status: 'active',
+        public_id: 'camp_frontend', name: 'Tuyển Frontend', status: 'active', headcount: 2,
         created_at: '2026-07-01T08:00:00+07:00',
         updated_at: '2026-07-20T10:00:00+07:00',
         job_count: 2, candidate_count: 1, application_submission_count: 2,
@@ -2029,7 +2013,9 @@ test('employer campaign detail: TopCV-style workspace is responsive and uses API
 
   await expect(page.getByRole('main').getByRole('heading', { name: 'Tuyển Frontend' })).toBeVisible()
   await expect(page.getByTestId('campaign-hero')).toContainText('camp_frontend')
-  await expect(page.getByRole('button', { name: 'Sửa chiến dịch' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Sửa thông tin' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Thao tác khác' })).toBeVisible()
+  await expect(page.getByTestId('campaign-hero')).toContainText('Cần 2 người (tổng 2 tin)')
   await expect(page.getByRole('link', { name: 'Đăng thêm tin' })).toHaveAttribute('href', '/tuyendung/app/jobs/new?campaign=camp_frontend')
   await expect(page.getByText('Ứng viên duy nhất', { exact: true })).toBeVisible()
   await expect(page.getByText('Hồ sơ mới / chưa xem')).toBeVisible()
@@ -2118,12 +2104,14 @@ test('employer campaign detail: TopCV-style workspace is responsive and uses API
   await chooseCampaignTab('Lịch sử hoạt động')
   await expect(page).toHaveURL(/active_tab=activity/)
   await expect(page.getByRole('heading', { name: 'Lịch sử hoạt động' })).toBeVisible()
-  await expect(page.getByRole('combobox', { name: 'Lọc nhóm hoạt động' })).toBeVisible()
+  const activityGroups = page.getByRole('group', { name: 'Lọc nhóm hoạt động' })
+  await expect(activityGroups.getByRole('button', { name: 'Tất cả' })).toHaveAttribute('aria-pressed', 'true')
+  await expect(activityGroups.getByRole('button', { name: 'Tin tuyển dụng' })).toBeVisible()
   await expect(
     page.getByTestId('activity-day-2026-07-22').getByText('Nhận CV ứng tuyển', { exact: true }),
   ).toBeVisible()
   await expect(
-    page.getByTestId('activity-day-2026-07-22').getByText('Hệ thống', { exact: true }),
+    page.getByTestId('activity-day-2026-07-22').getByText('bởi Hệ thống', { exact: true }),
   ).toBeVisible()
   await expectNoHorizontalOverflow(page)
 })
