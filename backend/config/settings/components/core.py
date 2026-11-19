@@ -106,6 +106,11 @@ DATABASES = {
         'PASSWORD': config('DB_PASSWORD', default='postgres'),
         'HOST': config('DB_HOST', default='localhost'),
         'PORT': config('DB_PORT', default='5432'),
+        # JIT của PostgreSQL (bật mặc định từ v11) biên dịch các query có biểu
+        # thức CASE/subquery lớn — danh sách tin của admin tốn ~160ms chỉ để
+        # biên dịch dù đọc vài dòng (348ms → 42ms/request khi tắt). Workload
+        # OLTP của Django không có query phân tích dài để JIT bù lại chi phí.
+        'OPTIONS': {'options': '-c jit=off'},
     }
 }
 
