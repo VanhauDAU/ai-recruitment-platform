@@ -9,9 +9,9 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import AdminPortalPermission
+from apps.accounts.api.permissions import AdminPortalPermission
+from common.api.pagination import StandardPagination
 from common.metrics import record_metric
-from common.pagination import StandardPagination
 
 from ...selectors import (
     admin_article_detail_queryset,

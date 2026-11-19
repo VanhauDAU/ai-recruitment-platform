@@ -6,9 +6,9 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsEmployer
-from common.client_ip import client_ip
-from common.throttling import ClientIPScopedRateThrottle
+from apps.accounts.api.permissions import IsEmployer
+from common.api.throttling import ClientIPScopedRateThrottle
+from common.http.client_ip import client_ip
 
 from ...selectors import has_explicit_company_link
 from ...services import (

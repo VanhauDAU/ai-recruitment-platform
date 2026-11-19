@@ -6,7 +6,7 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import AdminPortalPermission
+from apps.accounts.api.permissions import AdminPortalPermission
 from apps.employers.services import recruiter_job_posting_entitlement
 
 from ...models import JobReport

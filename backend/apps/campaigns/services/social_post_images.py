@@ -14,8 +14,8 @@ from django.core.files.base import ContentFile
 from PIL import Image, UnidentifiedImageError
 from rest_framework.exceptions import ValidationError
 
-from common.media_storage import media_public_url, media_storage_path, validate_image_upload
-from common.r2_storage import public_media_storage
+from common.storage.media import media_public_url, media_storage_path, validate_image_upload
+from common.storage.r2 import public_media_storage
 
 from ..models import CampaignChannel
 

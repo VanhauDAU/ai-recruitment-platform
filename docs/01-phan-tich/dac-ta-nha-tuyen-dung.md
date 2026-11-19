@@ -78,7 +78,7 @@ thêm sau quản lý ở `/api/employer/recruitment-needs/`.
 
 ### 2.3 Chống lạm dụng đăng nhập
 
-Throttle theo IP lấy qua `common/client_ip.py` (production bắt buộc
+Throttle theo IP lấy qua `common/http/client_ip.py` (production bắt buộc
 `TRUSTED_PROXY_IPS`); sai mật khẩu quá `LOGIN_BACKOFF_FREE_ATTEMPTS` thì backoff
 gấp đôi, không khóa cứng, bộ đếm tách theo cổng; refresh token dùng lại sau xoay
 vòng thu hồi cả phiên; đăng nhập luôn băm mật khẩu kể cả email không tồn tại.

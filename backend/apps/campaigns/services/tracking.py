@@ -17,7 +17,7 @@ from django.db import transaction
 from django.db.models import F
 
 from apps.employers.models import RecruitmentCampaign
-from common.client_ip import client_ip
+from common.http.client_ip import client_ip
 from common.vietnam_time import vietnam_day_start, vietnam_now, vietnam_today
 
 from ..models import CampaignChannel, CampaignChannelClickDaily

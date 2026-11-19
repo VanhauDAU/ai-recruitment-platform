@@ -148,7 +148,9 @@ class SampleGenerationFlowTests(TestCase):
     @override_settings(**AI_READY)
     def test_batch_queues_one_generation_per_combination_after_commit(self):
         with (
-            patch('apps.cv_templates.tasks.generate_cv_sample_content.delay') as delay,
+            patch(
+                'apps.cv_templates.tasks.template_assets.generate_cv_sample_content.delay'
+            ) as delay,
             self.captureOnCommitCallbacks(execute=True),
         ):
             response = self.request()

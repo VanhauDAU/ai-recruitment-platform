@@ -19,7 +19,7 @@ from rest_framework import status
 from rest_framework.test import APIClient, APIRequestFactory, APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
 
-from common.r2_storage import public_media_storage
+from common.storage.r2 import public_media_storage
 
 from ..models import AuthEmailJob, AuthSession, SocialAccount, User
 from ..services.refresh_cookies import cookie_name

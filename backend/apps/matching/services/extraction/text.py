@@ -3,7 +3,7 @@
 import re
 import unicodedata
 
-from common.content_html import content_html_plain_text
+from common.html.content import content_html_plain_text
 
 # Tỷ lệ chữ cái riêng của tiếng Việt (có dấu, đ) trên tổng chữ cái để coi là tiếng Việt.
 VIETNAMESE_LETTER_RATIO = 0.02

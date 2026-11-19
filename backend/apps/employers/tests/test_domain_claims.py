@@ -59,7 +59,7 @@ def authenticate(client, user):
 @override_settings(
     REST_FRAMEWORK={
         'DEFAULT_AUTHENTICATION_CLASSES': (
-            'apps.accounts.authentication.AccountJWTAuthentication',
+            'apps.accounts.api.authentication.AccountJWTAuthentication',
         ),
         'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticated',),
         'DEFAULT_THROTTLE_RATES': {

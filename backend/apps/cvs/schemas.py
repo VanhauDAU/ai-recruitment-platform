@@ -10,9 +10,9 @@ import re
 
 from django.core.exceptions import ValidationError
 
+from apps.cv_templates.domain.section_registry import get_section_contract
 from apps.cv_templates.models import CvPositionField
 from apps.cv_templates.models.position import FIELD_KEY_RE, MAX_FIELD_OPTIONS
-from apps.cv_templates.section_registry import get_section_contract
 from apps.jobs.models import Job
 
 CANONICAL_SCHEMA_VERSION = 1

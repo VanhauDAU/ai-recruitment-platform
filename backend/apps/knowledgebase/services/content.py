@@ -5,8 +5,8 @@ from urllib.parse import urlparse
 from django.conf import settings
 from django.core.exceptions import ValidationError
 
-from common.content_html import content_html_plain_text, sanitize_content_html
-from common.media_storage import media_storage_path
+from common.html.content import content_html_plain_text, sanitize_content_html
+from common.storage.media import media_storage_path
 
 
 class _KnowledgeImageCollector(HTMLParser):

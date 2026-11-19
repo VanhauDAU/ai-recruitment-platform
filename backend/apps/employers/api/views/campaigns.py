@@ -6,7 +6,7 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsEmployer
+from apps.accounts.api.permissions import IsEmployer
 from common.metrics import record_metric
 
 from ...selectors.campaigns import (

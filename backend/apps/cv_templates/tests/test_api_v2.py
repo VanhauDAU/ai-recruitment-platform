@@ -7,10 +7,10 @@ from rest_framework.test import APIClient
 
 from apps.accounts.models import User
 from apps.accounts.tests.helpers import make_admin
+from apps.cv_templates.services.demo_identity import DEMO_IDENTITY
 from apps.cvs.schemas import empty_content, empty_layout, empty_style
 from apps.jobs.models import JobCategory, JobCategoryLocalization
 
-from ..demo_identity import DEMO_IDENTITY
 from ..management.commands.seed_cv_catalog import build_sample_content
 from ..models import (
     CvCategory,
@@ -422,7 +422,9 @@ class TemplateCatalogV2Tests(TestCase):
         # publish → snapshot.
         with (
             patch('apps.cv_templates.api.views.admin.publish_checklist', return_value=[]),
-            patch('apps.cv_templates.tasks.generate_template_color_snapshot.delay') as enqueue,
+            patch(
+                'apps.cv_templates.tasks.template_assets.generate_template_color_snapshot.delay'
+            ) as enqueue,
         ):
             with self.captureOnCommitCallbacks(execute=True):
                 publish_response = self.client.post(
@@ -466,11 +468,16 @@ class TemplateCatalogV2Tests(TestCase):
         response = self.client.get('/api/v2/admin/cv-templates/')
         self.assertIn(response.status_code, {401, 403})
 
-    @patch('apps.cv_templates.tasks._save_once')
-    @patch('apps.cv_templates.tasks._first_page_png', return_value=b'png')
-    @patch('apps.cv_templates.tasks.render_document_pdf', return_value=b'%PDF-snapshot')
+    @patch('apps.cv_templates.tasks.template_assets._save_once')
+    @patch('apps.cv_templates.tasks.template_assets._first_page_png', return_value=b'png')
+    @patch(
+        'apps.cv_templates.tasks.template_assets.render_document_pdf', return_value=b'%PDF-snapshot'
+    )
     def test_snapshot_task_is_fingerprinted_and_write_then_swap(self, render, _raster, save_once):
-        from apps.cv_templates.tasks import SNAPSHOT_AVATAR_ID, generate_template_color_snapshot
+        from apps.cv_templates.tasks.template_assets import (
+            SNAPSHOT_AVATAR_ID,
+            generate_template_color_snapshot,
+        )
 
         save_once.side_effect = lambda key, payload: key
         link = self.primary.color_links.select_related('color').order_by('pk').first()
@@ -497,12 +504,15 @@ class TemplateCatalogV2Tests(TestCase):
 
     def test_replaced_snapshots_are_deleted_later_and_never_while_still_in_use(self):
         """Hồi quy ảnh vỡ ở kho mẫu: ảnh cũ không bị xóa ngay khi mẫu xuất bản lại."""
-        from apps.cv_templates.tasks import STALE_SNAPSHOT_GRACE_SECONDS, delete_stale_snapshot
+        from apps.cv_templates.tasks.template_assets import (
+            STALE_SNAPSHOT_GRACE_SECONDS,
+            delete_stale_snapshot,
+        )
 
         link = self.primary.color_links.order_by('pk').first()
         link.thumbnail_url = 'cv-templates/snapshots/tpl/old-thumbnail.png'
         link.save(update_fields=['thumbnail_url'])
-        with patch('apps.cv_templates.tasks.public_media_storage') as storage:
+        with patch('apps.cv_templates.tasks.template_assets.public_media_storage') as storage:
             delete_stale_snapshot(link.thumbnail_url)
             delete_stale_snapshot('cv-templates/snapshots/tpl/gone-thumbnail.png')
             delete_stale_snapshot('site/settings/logo.png')

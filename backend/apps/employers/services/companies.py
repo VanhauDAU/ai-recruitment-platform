@@ -7,8 +7,9 @@ from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 from apps.accounts.services import StaleImpactToken, record_admin_action
-from common.media_storage import delete_local_media_url
-from common.rich_text import rich_text_plain_text, sanitize_rich_text
+from apps.employers.domain.page_content import GALLERY_LIMIT
+from common.html.rich_text import rich_text_plain_text, sanitize_rich_text
+from common.storage.media import delete_local_media_url
 
 from ..models import (
     CompanyDocument,
@@ -20,7 +21,6 @@ from ..models import (
     CompanyUpdateRevision,
     Industry,
 )
-from ..page_content import GALLERY_LIMIT
 from .company_page_content import (
     company_benefit_values,
     company_office_values,

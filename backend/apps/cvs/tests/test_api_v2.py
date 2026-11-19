@@ -25,6 +25,8 @@ from apps.cv_templates.models import (
     CvTemplateColorLink,
     CvTemplateVersion,
 )
+from apps.cvs.tasks.exports import generate_cv_thumbnail, render_cv_export_job
+from apps.cvs.tasks.imports import ImportProcessingError, process_cv_import_job
 from apps.jobs.models import JobCategory, JobCategoryLocalization
 from apps.sitecontent.models import SiteSetting
 
@@ -41,12 +43,6 @@ from ..models import (
 from ..schemas import empty_content, empty_layout, empty_style
 from ..services.composition import compose_cv_document
 from ..services.pdf_renderer import print_payload
-from ..tasks import (
-    ImportProcessingError,
-    generate_cv_thumbnail,
-    process_cv_import_job,
-    render_cv_export_job,
-)
 from .fixtures import CV_LINES, cv_pdf_upload, docx_bytes, pdf_bytes
 
 TEST_EXPORT_MEDIA_ROOT = tempfile.mkdtemp()
@@ -505,7 +501,7 @@ class CvV2ApiTests(APITestCase):
             content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         )
 
-    @patch('apps.cvs.tasks.structure_cv_text')
+    @patch('apps.cvs.tasks.imports.structure_cv_text')
     def test_template_import_is_idempotent_and_materializes_editable_canonical_draft(
         self, structure_cv_text
     ):
@@ -516,7 +512,7 @@ class CvV2ApiTests(APITestCase):
             'language': 'vi-VN',
             'theme_color': '#2255AA',
         }
-        with patch('apps.cvs.tasks.process_cv_import_job.delay'):
+        with patch('apps.cvs.tasks.imports.process_cv_import_job.delay'):
             first = self.client.post(
                 reverse('cv-v2-import'),
                 payload,
@@ -580,7 +576,7 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(response.data['file_name'], 'generated-cv.pdf')
 
     def test_failed_import_exposes_safe_code_and_can_retry(self):
-        with patch('apps.cvs.tasks.process_cv_import_job.delay'):
+        with patch('apps.cvs.tasks.imports.process_cv_import_job.delay'):
             queued = self.client.post(
                 reverse('cv-v2-import'),
                 {
@@ -592,7 +588,7 @@ class CvV2ApiTests(APITestCase):
             )
         cv = UserCv.objects.get(public_id=queued.data['public_id'])
         with patch(
-            'apps.cvs.tasks._extract_import_text',
+            'apps.cvs.tasks.imports._extract_import_text',
             side_effect=ImportProcessingError('scanned_pdf_ocr_unavailable'),
         ):
             process_cv_import_job(cv.import_job.pk)
@@ -603,7 +599,7 @@ class CvV2ApiTests(APITestCase):
         self.assertEqual(cv.import_job.failure_code, 'scanned_pdf_ocr_unavailable')
         self.assertNotIn('Nguyen Van Candidate', cv.error_message)
 
-        with patch('apps.cvs.tasks.process_cv_import_job.delay') as enqueue:
+        with patch('apps.cvs.tasks.imports.process_cv_import_job.delay') as enqueue:
             with self.captureOnCommitCallbacks(execute=True):
                 retried = self.client.post(
                     reverse('cv-v2-import-retry', kwargs={'public_id': cv.public_id}),
@@ -1418,7 +1414,8 @@ class CvV2ApiTests(APITestCase):
         draft_before = deepcopy(cv.draft.content_json)
 
         with patch(
-            'apps.cvs.tasks.render_cv_version_pdf', side_effect=RuntimeError('renderer unavailable')
+            'apps.cvs.tasks.exports.render_cv_version_pdf',
+            side_effect=RuntimeError('renderer unavailable'),
         ):
             render_cv_export_job(export.pk)
         export.refresh_from_db()
@@ -1443,7 +1440,8 @@ class CvV2ApiTests(APITestCase):
             created = self.client.post(self.exports_url(cv), format='json')
         export = CvExport.objects.get(public_id=created.data['public_id'])
         with patch(
-            'apps.cvs.tasks.render_cv_version_pdf', return_value=b'%PDF-1.4 rendered version'
+            'apps.cvs.tasks.exports.render_cv_version_pdf',
+            return_value=b'%PDF-1.4 rendered version',
         ) as renderer:
             render_cv_export_job(export.pk)
         export.refresh_from_db()
@@ -1503,8 +1501,8 @@ class CvV2ApiTests(APITestCase):
         self.client.force_authenticate(employer)
         self.assertEqual(self.client.post(self.exports_url(cv), format='json').status_code, 403)
 
-    @patch('apps.cvs.tasks.first_pdf_page_image', return_value=b'webp-preview')
-    @patch('apps.cvs.tasks.render_cv_version_pdf', return_value=b'%PDF-1.4')
+    @patch('apps.cvs.tasks.exports.first_pdf_page_image', return_value=b'webp-preview')
+    @patch('apps.cvs.tasks.exports.render_cv_version_pdf', return_value=b'%PDF-1.4')
     def test_private_thumbnail_is_generated_from_latest_version_and_owner_scoped(
         self, _render, _raster
     ):

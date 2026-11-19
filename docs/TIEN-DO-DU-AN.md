@@ -7,7 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Tái cấu trúc backend (ADR-0022, GĐ0–GĐ6)](#tái-cấu-trúc-backend-adr-0022-2026-11-19) | 🟨 GĐ0 (cổng kiểm tra, ADR) trên nhánh `refactor/backend-gd0-gates`; GĐ1–GĐ6 chưa làm |
+| [Tái cấu trúc backend (ADR-0022, GĐ0–GĐ6)](#tái-cấu-trúc-backend-adr-0022-2026-11-19) | 🟨 GĐ0 PR #248; GĐ1 trên nhánh `refactor/backend-gd1-layout`; GĐ2–GĐ6 chưa làm |
 | [Tổ chức lại cấu trúc thư mục frontend](#tổ-chức-lại-cấu-trúc-thư-mục-frontend-2026-11-19) | ✅ Gộp vào `dev` (#247) |
 | [Mô hình hóa yêu cầu cho báo cáo (mục 3.2)](#mô-hình-hóa-yêu-cầu-cho-báo-cáo-mục-32-2026-11-18) | ✅ Nguồn sơ đồ trong `docs/01-phan-tich/mo-hinh-hoa-yeu-cau/` |
 | [Nâng cấp chiến dịch tuyển dụng (4 GĐ)](#nâng-cấp-chiến-dịch-tuyển-dụng-2026-11-18) | ✅ Cả 4 GĐ và đợt làm lại giao diện kênh, Fanpage, chi phí, lịch sử hoạt động đã gộp (#235–#237, #239–#242); sơ đồ phân tích nhóm chiến dịch trên nhánh `docs/campaign-diagrams` |
@@ -41,13 +41,18 @@ GĐ một PR về `dev`.
 
 | GĐ | Nội dung | Trạng thái |
 | --- | --- | --- |
-| 0 | ADR-0022; cổng import chéo app/module gốc (`check_backend_imports.py`, baseline 148 mục); cổng OpenAPI (baseline 70 lỗi / 340 cảnh báo); tách `requirements-dev.txt`, pin `gunicorn`/`redis`; bắt buộc `DJANGO_SETTINGS_MODULE` | 🟨 Nhánh `refactor/backend-gd0-gates` |
-| 1 | Bố cục chuẩn từng app (`api/urls/`, `seo/`, `tasks/`, `signals/`), tổ chức lại `common/` | ⬜ |
+| 0 | ADR-0022; sửa cổng ranh giới feature frontend sau #247; cổng import chéo app/module gốc (`check_backend_imports.py`, baseline 148 mục); cổng OpenAPI (baseline 70 lỗi / 340 cảnh báo); tách `requirements-dev.txt`, pin `gunicorn`/`redis`; bắt buộc `DJANGO_SETTINGS_MODULE` | 🟨 PR #248 |
+| 1 | Bố cục chuẩn: 30 module gốc app về đúng tầng (thêm tầng `domain/`), URL tách theo cổng vào `api/urls/<cổng>.py`, view SEO vào `seo/`, `signals/` + `tasks/` thành package, code trong `__init__` ra module riêng, `common/` chia `api/http/storage/html/pdf/files/db`; baseline import 148 → 33 | 🟨 Nhánh `refactor/backend-gd1-layout` (xếp trên GĐ0) |
 | 2 | Chuyển model chiến dịch sang `campaigns`, phá vòng `cvs ↔ cv_templates`, baseline import về 0 | ⬜ |
 | 3 | Exception handler, nghiệp vụ ra khỏi view/serializer, phân trang, `@extend_schema` đủ | ⬜ |
 | 4 | URL theo cổng `/api/{auth,public,candidate,employer,admin}/` (kèm frontend) | ⬜ |
 | 5 | Tách file > 500 dòng, gộp code trùng, gỡ legacy và lệnh chạy một lần | ⬜ |
 | 6 | Baseline migration mới, lệnh `seed_all` | ⬜ |
+
+GĐ1 chỉ di chuyển code; bảo đảm không đổi hành vi bằng: ảnh chụp bảng URL
+(887 route, 679 đường dẫn mẫu resolve ra cùng view) trước/sau, routing queue
+của 50 Celery task và lịch beat giống hệt, schema OpenAPI khớp từng byte, và
+toàn bộ test. Tên module/lớp `v2` để GĐ4 đổi cùng URL.
 
 GĐ0 sửa một lỗi cấu hình: `config/__init__.py` nạp `config/celery.py`, file này
 đặt mặc định `config.settings.development`, nên gunicorn production thiếu
@@ -845,7 +850,7 @@ loại tiêu chí khỏi điểm, kết quả tất định, có golden test và
 - Xem tệp gốc: `GET /api/v2/cvs/<id>/source/` (chủ CV) và
   `GET /api/v2/cvs/shares/<token>/source/` (link chia sẻ, không ghi thêm lượt
   truy cập); DOCX đổi sang PDF bằng LibreOffice. Hàm đổi chuyển từ `employers`
-  sang `common/office_preview.py`. Trang xem và link chia sẻ của CV tải lên hiện
+  sang `common/files/office_preview.py`. Trang xem và link chia sẻ của CV tải lên hiện
   tệp gốc (ẩn thanh công cụ PDF); thẻ CV tải lên là biểu tượng thư mục, không
   có nút sửa.
 - Tiêu chuẩn upload + nhận dạng CV (`apps/cvs/services/cv_document.py`, dùng

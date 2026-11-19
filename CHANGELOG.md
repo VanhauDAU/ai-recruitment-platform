@@ -8,6 +8,19 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-19
 
+#### Changed — Backend: bố cục app chuẩn (ADR-0022, GĐ1)
+
+- Module gốc app về đúng tầng: `accounts/{permissions,authentication,schema}` →
+  `api/`, `oauth`, `exceptions`, token mời → `services/`; registry CV, trang
+  công ty, cấu hình upload, salt ký → tầng mới `domain/`.
+- URL tách theo cổng: `<app>/api/urls/{public,candidate,employer,admin,auth,shared}.py`;
+  HTML SEO và link `/r/<code>` → `<app>/seo/`. Đường dẫn không đổi.
+- `signals/` (khai báo + `receivers.py`), `tasks/` là package ở mọi app; task CV
+  tách `exports`/`imports` (tên task Celery đổi theo module, queue giữ nguyên).
+- `common/` chia subpackage `api/`, `http/`, `storage/`, `html/`, `pdf/`,
+  `files/`, `db/`; `company_email`, `phone` về employers, `atomic_pop` về
+  accounts; `common` không còn import `apps`.
+
 #### Changed — Backend: cổng kiểm tra cấu trúc (ADR-0022, GĐ0)
 
 - ADR-0022 thay ADR-0010: bố cục app, luật import chéo app, URL theo cổng, lộ
@@ -1098,7 +1111,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Seed idempotent đúng bảy chuyên mục đã chốt và bốn permission
   `knowledgebase.view/manage/review/publish`; role `content-cv` staff được biên
   tập, manager được duyệt/phát hành.
-- Tách sanitizer HTML giàu nội dung dùng chung sang `common/content_html.py`,
+- Tách sanitizer HTML giàu nội dung dùng chung sang `common/html/content.py`,
   chặn active content, credential và URL scheme nguy hiểm; blog chuyển sang
   helper chung mà vẫn giữ policy URL tương thích.
 - Targeted backend test, migration drift check, Ruff, import-linter và backend
@@ -1822,7 +1835,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 #### Added — Social login (OAuth Google / Facebook / LinkedIn)
 
 - Đăng nhập mạng xã hội theo **OAuth Authorization Code Flow qua backend callback**: ứng viên dùng Google/Facebook/LinkedIn, nhà tuyển dụng chỉ Google, admin không có. App chạy được ngay cả khi chưa cấu hình credential — nút social chỉ báo "chưa cấu hình" khi bấm.
-- Backend: model `SocialAccount` (`user`, `provider`, `provider_user_id`, `email`, `raw_profile`, unique `(provider, provider_user_id)`); `User.Provider` thêm `facebook`/`linkedin`. Service `apps/accounts/oauth.py`: build authorize URL, `state` chống CSRF lưu Redis TTL 10 phút (one-shot), đổi code lấy token, đọc + chuẩn hoá profile (OIDC cho Google/LinkedIn, Graph cho Facebook), `one_time_code` Redis TTL 60s.
+- Backend: model `SocialAccount` (`user`, `provider`, `provider_user_id`, `email`, `raw_profile`, unique `(provider, provider_user_id)`); `User.Provider` thêm `facebook`/`linkedin`. Service `apps/accounts/services/oauth.py`: build authorize URL, `state` chống CSRF lưu Redis TTL 10 phút (one-shot), đổi code lấy token, đọc + chuẩn hoá profile (OIDC cho Google/LinkedIn, Graph cho Facebook), `one_time_code` Redis TTL 60s.
 - Endpoints mới: `GET /api/auth/oauth/<provider>/start/?portal&next` (redirect sang provider), `GET /api/auth/oauth/<provider>/callback/` (verify state → tạo/liên kết user → redirect frontend kèm code), `POST /api/auth/oauth/complete/` (đổi one_time_code lấy `{user, access, refresh}`, throttle 10/min).
 - Luật tài khoản: có `SocialAccount` → đăng nhập luôn; email trùng **cùng vai trò** → tự liên kết (đánh dấu `email_verified=True`, giữ mật khẩu cũ); email trùng **khác vai trò** → chặn "Tài khoản không thuộc cổng này"; user mới → vai trò theo cổng, `email_verified=True`, mật khẩu unusable. Tham số `next` chỉ nhận path nội bộ (chặn absolute/`//`).
 - Frontend: component chung `SocialLoginButtons` (full-page redirect sang start URL, `next` = trang hiện tại trừ trang auth), trang `OAuthCallback` dùng chung 2 cổng (`/oauth/callback`, `/tuyendung/app/oauth/callback`; guard chống StrictMode gọi effect 2 lần vì code one-shot), lưu token đúng portal key, lỗi → quay về trang login của cổng kèm `?oauth_error=` hiển thị trong Alert (map mã lỗi → tiếng Việt ở `errorMessage.js`). Login/Register cổng NTD thêm nút Google + divider.

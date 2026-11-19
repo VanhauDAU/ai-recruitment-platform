@@ -3,8 +3,8 @@
 from django.core.cache import cache
 
 from ..models import SiteSetting
+from .cache_keys import SEO_SETTINGS_CACHE_KEY
 
-SEO_SETTINGS_CACHE_KEY = 'sitecontent:seo-settings:v1'
 SEO_SETTING_DEFAULTS = {
     'site_name': 'ProCV',
     'brand_logo_url': '/images/logo/logo-full.webp',

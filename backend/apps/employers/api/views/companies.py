@@ -5,8 +5,8 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import CursorPagination, PageNumberPagination
 from rest_framework.response import Response
 
-from apps.accounts.permissions import IsEmployer
-from common.throttling import ClientIPScopedRateThrottle
+from apps.accounts.api.permissions import IsEmployer
+from common.api.throttling import ClientIPScopedRateThrottle
 
 from ...selectors import (
     attach_active_public_job_counts,

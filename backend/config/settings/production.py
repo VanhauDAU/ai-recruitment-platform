@@ -9,8 +9,8 @@ from urllib.parse import urlparse
 from cryptography.fernet import Fernet
 from django.core.exceptions import ImproperlyConfigured
 
-from apps.uploads.configuration import upload_scanning_configuration_errors
-from common.private_storage import storage_boundary_configuration_errors
+from apps.uploads.domain.configuration import upload_scanning_configuration_errors
+from common.storage.private import storage_boundary_configuration_errors
 from config.env import config
 
 from .base import *

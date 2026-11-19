@@ -14,11 +14,11 @@ from uuid import uuid4
 from django.core.cache import cache
 from django.db import transaction
 
+from apps.cv_templates.services.demo_identity import with_demo_identity
 from apps.cvs.schemas import empty_content
 from apps.cvs.services.composition import compose_cv_document
 from apps.jobs.models import JobCategory
 
-from ..demo_identity import with_demo_identity
 from .position_content import resolve_position_content
 
 TEST_PDF_TTL_SECONDS = 15 * 60
@@ -75,7 +75,7 @@ def request_test_pdf(version, options):
     cache.set(_job_key(token), {'status': 'pending'}, TEST_PDF_TTL_SECONDS)
 
     def dispatch():
-        from ..tasks import render_template_test_pdf
+        from apps.cv_templates.tasks.template_assets import render_template_test_pdf
 
         render_template_test_pdf.delay(token, version.pk, options)
 

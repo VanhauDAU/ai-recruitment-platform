@@ -34,13 +34,9 @@ name = "common không import từ apps"
 type = "forbidden"
 source_modules = ["common"]
 forbidden_modules = ["apps"]
-ignore_imports = [
-    # Lazy import có chủ ý trong r2_storage (chú thích tại chỗ)
-    "common.r2_storage -> apps.cvs.models",
-]
 
 [[tool.importlinter.contracts]]
-name = "layer trong mỗi app: api -> services/selectors -> models"
+name = "layer trong mỗi app: api -> services/selectors -> models -> domain"
 type = "layers"
 containers = [
     "apps.accounts", "apps.ai_core", "apps.applications", "apps.blog", "apps.campaigns",
@@ -53,6 +49,7 @@ layers = [
     "(api)",
     "(services) | (selectors)",
     "(models)",
+    "(domain)",
 ]
 exhaustive = false
 

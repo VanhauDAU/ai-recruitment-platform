@@ -31,7 +31,7 @@ from apps.jobs.models import (
 )
 from apps.locations.models import Location
 from apps.skills.models import Skill
-from common.r2_storage import public_media_storage
+from common.storage.r2 import public_media_storage
 
 User = get_user_model()
 DEMO_DOMAIN = '@demo.local'

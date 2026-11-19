@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsEmployer
+from apps.accounts.api.permissions import IsEmployer
 
 from ...selectors import employer_job_ai_generation_queryset
 from ...services import (

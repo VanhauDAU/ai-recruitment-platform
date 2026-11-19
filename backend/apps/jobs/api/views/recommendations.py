@@ -6,7 +6,7 @@ from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsCandidate
+from apps.accounts.api.permissions import IsCandidate
 
 from ...models import Job
 from ...selectors import recommend_inline_jobs_for_candidate, recommend_jobs_from_saved

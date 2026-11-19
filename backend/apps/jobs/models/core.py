@@ -6,7 +6,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
 
-from common.public_id import generate_public_id
+from common.db.public_id import generate_public_id
 from common.vietnam_time import vietnam_day_start, vietnam_today
 
 

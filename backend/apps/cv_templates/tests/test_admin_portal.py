@@ -7,9 +7,9 @@ from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
 from apps.accounts.tests.helpers import make_admin
+from apps.cv_templates.domain.section_registry import section_definition_seed_data
 
 from ..models import CvCategory, CvColor, CvSectionDefinition, CvTemplate, CvTemplateVersion
-from ..section_registry import section_definition_seed_data
 from ..services.template_preview import finish_test_pdf
 
 LOCMEM = {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}}
@@ -237,7 +237,9 @@ class TemplateWizardApiTests(TestCase):
         self.configure(public_id, version_id, sections=SECTIONS)
 
         with (
-            patch('apps.cv_templates.tasks.render_template_test_pdf.delay') as delay,
+            patch(
+                'apps.cv_templates.tasks.template_assets.render_template_test_pdf.delay'
+            ) as delay,
             self.captureOnCommitCallbacks(execute=True),
         ):
             queued = self.client.post(
@@ -251,9 +253,12 @@ class TemplateWizardApiTests(TestCase):
             {'status': 'pending'},
         )
 
-        from apps.cv_templates.tasks import render_template_test_pdf
+        from apps.cv_templates.tasks.template_assets import render_template_test_pdf
 
-        with patch('apps.cv_templates.tasks.render_document_pdf', return_value=b'%PDF-1.7 ok'):
+        with patch(
+            'apps.cv_templates.tasks.template_assets.render_document_pdf',
+            return_value=b'%PDF-1.7 ok',
+        ):
             render_template_test_pdf(*delay.call_args.args)
         download = self.client.get(f'/api/v2/admin/cv-templates/test-pdf/{token}/', {'download': 1})
 

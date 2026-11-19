@@ -41,7 +41,7 @@ thêm.
    `CampaignActivity` và máy trạng thái ở lại `employers`. Chiều phụ thuộc là
    `campaigns → employers/jobs`.
 7. **Hiệu ứng chéo app đi qua signal.** `employers.signals.campaign_status_changed`
-   được gửi trong cùng giao dịch, sau khi lưu trạng thái. `jobs/signals.py` đóng
+   được gửi trong cùng giao dịch, sau khi lưu trạng thái. `jobs/signals/receivers.py` đóng
    tin. Nhờ vậy `employers.services` không import `jobs.services`; contract
    layers của import-linter cấm đường vòng
    `jobs.selectors → employers.services → jobs.services`.

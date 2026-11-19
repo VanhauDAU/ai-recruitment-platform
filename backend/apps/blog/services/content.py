@@ -1,4 +1,4 @@
-from common.content_html import content_html_plain_text, sanitize_content_html
+from common.html.content import content_html_plain_text, sanitize_content_html
 
 
 def sanitize_blog_html(value):

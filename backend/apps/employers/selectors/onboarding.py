@@ -3,12 +3,11 @@
 from django.conf import settings
 from django.db.models import Q
 
+from apps.employers.domain.company_email import email_domain
 from apps.jobs.models import JobReport
-from common.company_email import email_domain
 
 from ..models import CompanyDocument, DpaStatus, EmployerVerificationCase
-from ..models.readiness import current_dpa_status
-from .company_status import has_explicit_company_link
+from ..models.readiness import current_dpa_status, has_explicit_company_link
 from .domain_claims import effective_company_domain_claims
 
 INVALIDATING_CASE_STATUSES = frozenset(

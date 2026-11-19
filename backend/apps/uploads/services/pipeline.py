@@ -21,7 +21,7 @@ from django.db import transaction
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
 
-from apps.uploads.configuration import PURPOSE_ROLE_CAPABILITIES
+from apps.uploads.domain.configuration import PURPOSE_ROLE_CAPABILITIES
 from apps.uploads.models import (
     UploadAsset,
     UploadScanAttempt,
@@ -32,10 +32,10 @@ from apps.uploads.models import (
     ensure_upload_transition,
     upload_trust_is_attachable,
 )
-from common.file_signatures import SIGNATURE_WINDOW_BYTES, has_pdf_header
+from common.db.public_id import generate_public_id
+from common.files.signatures import SIGNATURE_WINDOW_BYTES, has_pdf_header
 from common.metrics import record_metric
-from common.public_id import generate_public_id
-from common.r2_storage import private_media_storage, quarantine_storage
+from common.storage.r2 import private_media_storage, quarantine_storage
 
 from .errors import UploadServiceError, upload_error
 from .scanners import ScannerError, ScannerResult, ScannerVerdict, get_upload_scanner

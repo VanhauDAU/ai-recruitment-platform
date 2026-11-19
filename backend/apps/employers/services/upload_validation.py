@@ -3,8 +3,8 @@ import io
 from PIL import Image
 from pypdf import PdfReader
 
-from common.file_signatures import pdf_header_offset
-from common.r2_storage import private_media_storage
+from common.files.signatures import pdf_header_offset
+from common.storage.r2 import private_media_storage
 
 
 class EmployerUploadStructureError(ValueError):

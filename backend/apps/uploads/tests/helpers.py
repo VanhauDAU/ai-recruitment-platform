@@ -15,15 +15,15 @@ def local_upload_storages(root):
     root = Path(root)
     return {
         'default': {
-            'BACKEND': 'common.private_storage.PrivateFileSystemStorage',
+            'BACKEND': 'common.storage.private.PrivateFileSystemStorage',
             'OPTIONS': {'location': root / 'private', 'base_url': None},
         },
         'private_media': {
-            'BACKEND': 'common.private_storage.PrivateFileSystemStorage',
+            'BACKEND': 'common.storage.private.PrivateFileSystemStorage',
             'OPTIONS': {'location': root / 'private', 'base_url': None},
         },
         'quarantine': {
-            'BACKEND': 'common.private_storage.QuarantineFileSystemStorage',
+            'BACKEND': 'common.storage.private.QuarantineFileSystemStorage',
             'OPTIONS': {'location': root / 'quarantine', 'base_url': None},
         },
         'public_media': {

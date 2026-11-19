@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsEmployer
+from apps.accounts.api.permissions import IsEmployer
 from apps.employers.services import ensure_recruiter_job_workspace
 
 from ...models import ScheduledSocialPost, SocialAccountConnection

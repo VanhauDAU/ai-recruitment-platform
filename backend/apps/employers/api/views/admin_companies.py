@@ -2,8 +2,8 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from apps.accounts.permissions import AdminPortalPermission
-from common.pagination import StandardPagination
+from apps.accounts.api.permissions import AdminPortalPermission
+from common.api.pagination import StandardPagination
 
 from ...selectors import (
     admin_companies_queryset,

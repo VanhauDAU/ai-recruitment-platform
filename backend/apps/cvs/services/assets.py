@@ -9,8 +9,8 @@ from django.urls import reverse
 from PIL import Image, ImageOps
 from rest_framework.exceptions import ValidationError
 
-from common.public_id import generate_public_id
-from common.r2_storage import private_media_storage, public_media_storage
+from common.db.public_id import generate_public_id
+from common.storage.r2 import private_media_storage, public_media_storage
 
 from ..models import CvAsset, CvVersion
 from .upload_claims import (
@@ -27,6 +27,13 @@ ALLOWED_AVATAR_FORMATS = {
     'PNG': ('png', 'image/png'),
     'WEBP': ('webp', 'image/webp'),
 }
+
+
+def cv_asset_storage(asset):
+    """CV backgrounds are catalogue assets; candidate avatars remain private."""
+    if asset.kind == CvAsset.Kind.BACKGROUND:
+        return public_media_storage()
+    return private_media_storage()
 
 
 def _encode_avatar(upload):

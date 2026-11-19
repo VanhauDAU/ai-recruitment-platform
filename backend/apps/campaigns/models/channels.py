@@ -4,7 +4,7 @@ import string
 from django.conf import settings
 from django.db import models
 
-from common.public_id import generate_public_id
+from common.db.public_id import generate_public_id
 
 CODE_ALPHABET = string.ascii_letters + string.digits
 CODE_LENGTH = 8

@@ -8,12 +8,7 @@ applied it, so a benefit retired or a rule tightened in between cannot slip in.
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
 
-from apps.jobs.models import Benefit
-from apps.locations.models import Location
-from common.rich_text import rich_text_plain_text, sanitize_rich_text
-
-from ..models import CompanyBenefit, CompanyOffice
-from ..page_content import (
+from apps.employers.domain.page_content import (
     BENEFIT_LIMIT,
     HEADLINE_MAX_LENGTH,
     OFFICE_LIMIT,
@@ -22,6 +17,11 @@ from ..page_content import (
     normalize_social_link,
     normalize_video_url,
 )
+from apps.jobs.models import Benefit
+from apps.locations.models import Location
+from common.html.rich_text import rich_text_plain_text, sanitize_rich_text
+
+from ..models import CompanyBenefit, CompanyOffice
 
 # Content only an effective page editor may submit; the older profile fields
 # stay open to every member (ER-D05).

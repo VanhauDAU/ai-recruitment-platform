@@ -6,7 +6,7 @@ Rows here only change when an admin approves a company update request
 
 from django.db import models
 
-from common.public_id import generate_public_id
+from common.db.public_id import generate_public_id
 
 from .company import Company
 

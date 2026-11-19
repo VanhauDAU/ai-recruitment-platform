@@ -9,7 +9,8 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from .. import oauth
+from apps.accounts.services import oauth
+
 from ..models import AuthEmailJob, SocialAccount, User
 from .helpers import GOOGLE_PROFILE
 

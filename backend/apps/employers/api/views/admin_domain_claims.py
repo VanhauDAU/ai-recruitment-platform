@@ -4,9 +4,9 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from apps.accounts.permissions import AdminPortalPermission
+from apps.accounts.api.permissions import AdminPortalPermission
 from apps.accounts.services import InvalidImpactToken, StaleImpactToken
-from common.pagination import StandardPagination
+from common.api.pagination import StandardPagination
 
 from ...models import CompanyDomainClaim
 from ...selectors import admin_domain_claims_queryset

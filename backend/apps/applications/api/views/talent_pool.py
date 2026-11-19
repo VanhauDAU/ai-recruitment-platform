@@ -6,7 +6,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsCandidate, IsEmployer
+from apps.accounts.api.permissions import IsCandidate, IsEmployer
 from apps.employers.services import ensure_recruiter_candidate_data_access
 from apps.jobs.models import Job
 from apps.jobs.selectors.listing import publicly_available_job_filter

@@ -17,16 +17,16 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from apps.accounts.exceptions import AdminResourceChanged
-from apps.accounts.permissions import AdminPortalPermission
+from apps.accounts.api.permissions import AdminPortalPermission
 from apps.accounts.services import (
     InvalidImpactToken,
     StaleImpactToken,
     record_admin_action,
 )
-from common.office_preview import render_office_document_preview
-from common.pagination import StandardPagination
-from common.r2_storage import private_media_storage
+from apps.accounts.services.exceptions import AdminResourceChanged
+from common.api.pagination import StandardPagination
+from common.files.office_preview import render_office_document_preview
+from common.storage.r2 import private_media_storage
 
 from ...models import (
     CompanyTaxLookupEvidence,

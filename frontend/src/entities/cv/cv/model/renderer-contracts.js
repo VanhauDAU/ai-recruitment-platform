@@ -1,7 +1,7 @@
 import layouts from './cv-layouts.json'
 import { getOrderedItems } from './layout'
 
-// Registry layout dùng chung với backend (backend/apps/cv_templates/layouts.json;
+// Registry layout dùng chung với backend (backend/apps/cv_templates/domain/layouts.json;
 // cv-layouts.test.js giữ hai bản giống nhau). Mọi layout render bằng một renderer
 // chung nên thêm layout chỉ cần thêm dữ liệu, không thêm component.
 export const DEFAULT_LAYOUT_KEY = 'single_column_v1'

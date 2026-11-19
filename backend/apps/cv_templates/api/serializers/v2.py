@@ -3,7 +3,7 @@
 from rest_framework import serializers
 
 from apps.jobs.models import JobCategory
-from common.media_storage import media_url_from_value
+from common.storage.media import media_url_from_value
 
 from ...models import CvCategory, CvSampleContent, CvTemplate
 

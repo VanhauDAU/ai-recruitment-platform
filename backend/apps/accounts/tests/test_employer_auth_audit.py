@@ -16,7 +16,7 @@ from rest_framework.test import APITestCase
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from common.security import AuthCookieOriginMiddleware
+from common.http.security import AuthCookieOriginMiddleware
 
 from ..models import AuthSession, User
 from ..services.refresh_cookies import cookie_name

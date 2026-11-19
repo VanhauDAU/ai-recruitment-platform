@@ -2,7 +2,7 @@
 
 from django.db import models
 
-from common.public_id import generate_public_id
+from common.db.public_id import generate_public_id
 
 from .user import User
 

@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import generics, serializers, status
 from rest_framework.response import Response
 
-from apps.accounts.permissions import IsEmployer
+from apps.accounts.api.permissions import IsEmployer
 from apps.employers.services import ensure_recruiter_job_workspace
 
 from ...selectors import (

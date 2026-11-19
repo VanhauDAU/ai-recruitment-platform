@@ -8,6 +8,13 @@ Phiên bản đã xuất bản là bất biến; muốn đổi thì tạo bản 
 from django.core.exceptions import ValidationError
 from django.db import transaction
 
+from apps.cv_templates.domain.renderers import get_renderer_contract
+from apps.cv_templates.domain.section_plans import (
+    DEFAULT_ENABLED_SECTIONS,
+    PERSONAL_INFO_SECTIONS,
+    REQUIRED_SECTIONS,
+    SECTION_PLANS,
+)
 from apps.cvs.schemas import CV_FONT_FAMILIES, HEX_COLOR_RE, empty_layout, empty_style
 
 from ..models import (
@@ -16,13 +23,6 @@ from ..models import (
     CvTemplateColorLink,
     CvTemplateSection,
     CvTemplateVersion,
-)
-from ..renderers import get_renderer_contract
-from ..section_plans import (
-    DEFAULT_ENABLED_SECTIONS,
-    PERSONAL_INFO_SECTIONS,
-    REQUIRED_SECTIONS,
-    SECTION_PLANS,
 )
 
 IDENTITY_SECTIONS = ('nameplate', 'contact')

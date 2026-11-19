@@ -214,7 +214,7 @@ draft ──launch(now)──> active ⇄ paused
   `cancelled` (NTD bấm, hoặc hệ thống tự kết thúc), mọi tin `active` của nó
   chuyển `closed`, ghi `JobStatusHistory` (`note=campaign_ended`, actor
   `system` khi tự động), rồi áp luật tin ngừng tuyển. Hiệu ứng này chạy qua
-  signal `campaign_status_changed` (`employers/signals.py` → `jobs/signals.py`)
+  signal `campaign_status_changed` (`employers/signals/__init__.py` → `jobs/signals/receivers.py`)
   để `employers` không import service của `jobs`.
 - **Lịch chạy:** Celery beat `run_campaign_schedule` chạy 5 phút một lần, theo
   ngày giờ Việt Nam, idempotent:

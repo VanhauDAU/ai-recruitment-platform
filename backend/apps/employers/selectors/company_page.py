@@ -5,14 +5,8 @@ from urllib.parse import urlsplit
 from django.db.models import Count, Exists, OuterRef, Prefetch, Q
 from django.db.models.functions import Coalesce, Length, Trim
 
-from apps.jobs.models import Job, JobLocation
-from common.media_storage import media_url_from_value
-from common.rich_text import rich_text_plain_text
-from common.seo import SITEMAP_URL_LIMIT
-
-from ..models import Company, CompanyBenefit, CompanyIndustry, CompanyOffice, CompanyPageEvent
-from ..page_content import SOCIAL_NETWORKS, video_embed
-from ..page_registry import (
+from apps.employers.domain.page_content import SOCIAL_NETWORKS, video_embed
+from apps.employers.domain.page_registry import (
     ACCENT_PALETTE,
     DEFAULT_ACCENT_KEY,
     MAIN_SECTION_KEYS,
@@ -20,6 +14,12 @@ from ..page_registry import (
     SIDEBAR_SECTIONS,
     resolve_section_order,
 )
+from apps.jobs.models import Job, JobLocation
+from common.html.rich_text import rich_text_plain_text
+from common.seo import SITEMAP_URL_LIMIT
+from common.storage.media import media_url_from_value
+
+from ..models import Company, CompanyBenefit, CompanyIndustry, CompanyOffice, CompanyPageEvent
 from .companies import legally_represented_companies_queryset
 
 

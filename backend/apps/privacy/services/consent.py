@@ -3,7 +3,7 @@
 from django.conf import settings
 from django.core import signing
 
-from ..constants import CONSENT_SIGNING_SALT
+from apps.privacy.domain.signing import CONSENT_SIGNING_SALT
 
 OPTIONAL_CATEGORIES = ('preferences', 'analytics', 'marketing')
 

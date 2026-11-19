@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from ...page_registry import (
+from apps.employers.domain.page_registry import (
     ACCENT_PALETTE,
     HIDEABLE_SECTION_KEYS,
     MAIN_SECTION_KEYS,

@@ -6,8 +6,8 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from apps.accounts.permissions import AdminPortalPermission
-from common.pagination import StandardPagination
+from apps.accounts.api.permissions import AdminPortalPermission
+from common.api.pagination import StandardPagination
 
 from ...selectors import admin_cvs_queryset
 from ...services import admin_cv_content, lock_cv, unlock_cv

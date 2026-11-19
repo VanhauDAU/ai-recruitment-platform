@@ -35,12 +35,13 @@ Luật của ADR-0010 đúng nhưng không đủ cụ thể (không nói URL, si
 apps/<app>/
   apps.py · admin.py · checks.py (chỉ Django system check, nếu có)
   api/
-    urls/{public,candidate,employer,admin}.py   # chỉ những cổng app phục vụ
+    urls/<cổng>.py         # public | candidate | employer | admin | auth | shared — chỉ cổng app phục vụ
     views/<cổng>.py        # tách thành views/<cổng>/<resource>.py khi > 400 dòng
     serializers/           # cùng quy tắc với views
     permissions.py         # permission riêng của app, nếu có
   seo/{urls.py,views.py}   # HTML shell + sitemap cho bot, không thuộc /api
   models/                  # model + QuerySet/Manager; __init__ re-export
+  domain/                  # định nghĩa thuần (không ORM, không I/O): registry, hằng số, luật
   selectors/               # ĐỌC: truy vấn, read model, chống N+1
   services/                # GHI: đổi state, transaction, tích hợp ngoài, exception nghiệp vụ
   tasks/                   # Celery: chỉ điều phối, gọi services
@@ -50,6 +51,16 @@ apps/<app>/
   migrations/ · tests/
 ```
 
+- `domain/` chứa thứ mà `models/` cũng cần (registry section/layout CV, registry
+  trang công ty, chuẩn hóa số điện thoại, salt ký…). Nó không import ORM hay
+  tầng nào khác của app, nên mọi tầng đều dùng được.
+- Hàm dựng QuerySet dùng chung cho cả `services/` và `selectors/` (ví dụ
+  `jobs/models/recommendation_queries.py`) đặt trong `models/`: hai tầng đó độc
+  lập với nhau, không được import lẫn nhau.
+- `urls/<cổng>.py` phân theo người dùng của endpoint: `auth` (chỉ accounts:
+  đăng nhập, phiên, hồ sơ tài khoản), `shared` (cần đăng nhập, dùng ở nhiều cổng
+  — ví dụ uploads), còn lại theo bốn cổng. Endpoint `AllowAny` nằm trong luồng
+  của một cổng (đăng ký NTD) thuộc cổng đó.
 - Không có module nghiệp vụ ở gốc app ngoài danh sách trên. Không đặt code trong
   `__init__.py` ngoài re-export.
 - App CRUD thuần nhỏ (locations, skills) được bỏ `services/`/`selectors/` khi
@@ -62,7 +73,7 @@ apps/<app>/
 Trong một app:
 
 ```text
-api → services | selectors → models
+api → services | selectors → models → domain
 tasks | signals.receivers → services
 ```
 
@@ -125,7 +136,7 @@ Một phiên bản API duy nhất, không tiền tố version:
 
 | Luật | Công cụ |
 | --- | --- |
-| layer trong app, `common` ↛ `apps` | `lint-imports` (`backend/pyproject.toml`) |
+| layer trong app (`api → services/selectors → models → domain`), `common` ↛ `apps` | `lint-imports` (`backend/pyproject.toml`) |
 | services/selectors/tasks/signals không dùng DRF HTTP | `scripts/check_backend_layering.sh` |
 | import chéo app, module gốc app | `scripts/check_backend_imports.py` |
 | schema OpenAPI hợp lệ, khớp `docs/04-api/openapi.yaml` | `scripts/check_openapi_schema.sh` |
@@ -141,7 +152,7 @@ phạm mới làm fail CI, vi phạm cũ phải giảm dần và baseline bị x
 | GĐ | Nội dung |
 | --- | --- |
 | 0 | ADR này, cổng kiểm tra import/OpenAPI, tách `requirements-dev.txt`, settings an toàn |
-| 1 | Chuẩn hóa bố cục từng app và `common/` (chỉ di chuyển) |
+| 1 | Chuẩn hóa bố cục từng app và `common/` (chỉ di chuyển); tên module/lớp `v2` đổi ở GĐ4 cùng URL |
 | 2 | Ranh giới domain: chuyển model chiến dịch sang `campaigns`, phá vòng `cvs ↔ cv_templates`, baseline import về 0 |
 | 3 | Tầng API: exception handler, nghiệp vụ ra khỏi view/serializer, phân trang, `@extend_schema` |
 | 4 | URL theo cổng (backend + frontend cùng PR) |

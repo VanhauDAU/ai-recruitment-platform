@@ -8,7 +8,7 @@ from django.utils.html import strip_tags
 
 from apps.accounts.models import User
 from apps.employers.models import Company
-from common.media_storage import media_url_from_value
+from common.storage.media import media_url_from_value
 
 from ..models import Job, JobCategory
 from .listing import SALARY_BUCKETS, filter_salary_bucket, publicly_available_job_filter

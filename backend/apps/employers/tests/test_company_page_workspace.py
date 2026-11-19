@@ -12,6 +12,7 @@ from rest_framework.test import APITestCase
 from rest_framework.throttling import ScopedRateThrottle
 
 from apps.accounts.models import User
+from apps.employers.domain.page_registry import ACCENT_PALETTE, MAIN_SECTION_KEYS
 from apps.jobs.models import Job
 
 from ..models import (
@@ -30,7 +31,6 @@ from ..models import (
     RecruiterProfile,
 )
 from ..models.page_access import resolve_company_page_access
-from ..page_registry import ACCENT_PALETTE, MAIN_SECTION_KEYS
 from ..services import company_unlink_impact, confirm_company_unlink
 from .company_page_helpers import (
     add_recruiter,

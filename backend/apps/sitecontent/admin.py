@@ -3,7 +3,7 @@ import json
 from django import forms
 from django.contrib import admin
 
-from common.media_storage import delete_local_media_url, save_image_upload
+from common.storage.media import delete_local_media_url, save_image_upload
 
 from .models import Banner, Feedback, LinkGroup, LinkItem, SiteSetting
 

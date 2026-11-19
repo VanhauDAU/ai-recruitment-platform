@@ -5,8 +5,8 @@ from rest_framework import generics, parsers, permissions, serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from common.media_storage import delete_local_media_url, save_image_upload
-from common.throttling import ClientIPScopedRateThrottle
+from common.api.throttling import ClientIPScopedRateThrottle
+from common.storage.media import delete_local_media_url, save_image_upload
 
 from ...models import User
 from ...services import (

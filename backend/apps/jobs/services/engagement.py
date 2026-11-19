@@ -9,7 +9,7 @@ from django.core.cache import cache
 from django.db import transaction
 from django.db.models import F
 
-from apps.privacy.constants import VIEWER_SIGNING_SALT
+from apps.privacy.domain.signing import VIEWER_SIGNING_SALT
 from common.metrics import record_metric
 from common.vietnam_time import vietnam_today
 

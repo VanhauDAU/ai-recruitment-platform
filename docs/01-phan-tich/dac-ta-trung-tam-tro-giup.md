@@ -115,7 +115,7 @@ mỗi chuyên mục, đã đối chiếu route/component thật. Migration dùng
 ### 3.1. Sanitize và ảnh
 
 `normalize_revision_content` (service) sanitize body bằng
-`common/content_html.py` trước khi ghi, rồi sinh `body_plain_text` và
+`common/html/content.py` trước khi ghi, rồi sinh `body_plain_text` và
 `content_hash` (SHA-256 của title + body đã sanitize) từ chính kết quả đó.
 Allowlist gồm `h2`–`h4`, đoạn văn, nhấn mạnh, danh sách, blockquote, code/pre,
 bảng, figure/caption, liên kết và ảnh; `h1` thuộc page. Liên kết chỉ nhận đường
@@ -124,7 +124,7 @@ dẫn nội bộ `/…`, `https`, `mailto`, `tel`.
 Ảnh có thể là media nội bộ, đường dẫn `/…` hoặc URL HTTPS không chứa
 credentials; không bắt buộc upload trước. Mọi ảnh phải có `alt`, trừ ảnh đánh
 dấu `data-decorative="true"`. Upload vào media library (tùy chọn) đi qua
-`common.media_storage.save_image_upload`, thư mục `knowledgebase/content`, chỉ
+`common.storage.media.save_image_upload`, thư mục `knowledgebase/content`, chỉ
 JPEG/PNG/WebP, tối đa 5 MB, resize trong 1600×1600; vượt dung lượng trả `413`.
 
 Frontend sanitize lần nữa bằng `@/shared/lib/sanitize-html` trong renderer
@@ -252,7 +252,7 @@ cho bài đã publish, diff plain text khi review, lịch sử revision và audi
 Public site settings trả `knowledgebase_public_enabled` và
 `knowledgebase_search_index_enabled` (tính sẵn) để frontend không cần env riêng.
 
-Backend phục vụ SEO shell cho `/tro-giup`, category và detail (`urls_seo.py`):
+Backend phục vụ SEO shell cho `/tro-giup`, category và detail (`apps/knowledgebase/seo/urls.py`):
 canonical tuyệt đối, Open Graph, `BreadcrumbList`, 404 HTTP thật kèm noindex, và
 sitemap `/sitemaps/knowledgebase.xml`. Mặc định `noindex, nofollow` cho tới khi
 bật index. Không dùng schema `FAQPage`.

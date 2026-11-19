@@ -11,6 +11,7 @@ from PIL import Image
 from rest_framework.test import APITestCase
 
 from apps.cv_templates.models import CvTemplate, CvTemplateVersion
+from apps.cvs.tasks.imports import purge_expired_cv_import_sources
 from apps.uploads.models import UploadAsset, UploadState
 from apps.uploads.services import (
     create_upload_session,
@@ -23,7 +24,6 @@ from apps.uploads.tests.helpers import TemporaryUploadStorageMixin
 from ..models import CvAsset, CvImportJob, UserCv
 from ..schemas import empty_layout, empty_style
 from ..services.upload_claims import CV_AVATAR_CLAIM_SCOPE, CV_SOURCE_CLAIM_SCOPE
-from ..tasks import purge_expired_cv_import_sources
 from .fixtures import pdf_bytes
 
 

@@ -5,10 +5,10 @@ from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 from apps.accounts.services import record_admin_action
+from apps.employers.domain.page_registry import PINNED_JOB_LIMIT, resolve_section_order
 from apps.jobs.models import Job, give_back_hidden_time
 
 from ..models import Company, CompanyPageEvent, CompanyPageSettings, CompanyPinnedJob
-from ..page_registry import PINNED_JOB_LIMIT, resolve_section_order
 
 LAYOUT_FIELDS = ('section_order', 'hidden_sections', 'accent')
 

@@ -7,8 +7,8 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import AdminPortalPermission, IsCandidate
-from common.throttling import ClientIPScopedRateThrottle
+from apps.accounts.api.permissions import AdminPortalPermission, IsCandidate
+from common.api.throttling import ClientIPScopedRateThrottle
 
 from ...models import Job, JobReport
 from ...selectors import job_report_queryset

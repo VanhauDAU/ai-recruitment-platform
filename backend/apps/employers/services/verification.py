@@ -11,7 +11,7 @@ from django.db.models import Q
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
-from apps.accounts.permissions import require_admin
+from apps.accounts.api.permissions import require_admin
 from apps.accounts.services import (
     InvalidImpactToken,
     StaleImpactToken,

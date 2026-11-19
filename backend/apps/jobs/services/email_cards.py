@@ -5,7 +5,7 @@ Emails are read outside the app, so every URL here is absolute.
 
 from django.conf import settings
 
-from common.media_storage import media_url_from_value
+from common.storage.media import media_url_from_value
 from common.vietnam_time import vietnam_today
 
 from ..models import Job

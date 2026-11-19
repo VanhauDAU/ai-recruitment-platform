@@ -14,9 +14,9 @@ from ..models.readiness import (
     current_dpa_status,
     employer_readiness_queryset,
     evaluate_employer_readiness,
+    has_explicit_company_link,
     missing_employer_readiness,
 )
-from .company_status import has_explicit_company_link
 from .onboarding import build_employer_onboarding_steps
 
 __all__ = [

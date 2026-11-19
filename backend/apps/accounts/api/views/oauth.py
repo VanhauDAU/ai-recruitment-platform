@@ -9,9 +9,9 @@ from rest_framework import permissions, serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from common.throttling import ClientIPScopedRateThrottle
+from apps.accounts.services import oauth
+from common.api.throttling import ClientIPScopedRateThrottle
 
-from ... import oauth
 from ...models import User
 from ...services.refresh_cookies import set_refresh_cookie
 from ...services.tokens import issue_tokens

@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase
 
-from common.file_signatures import SIGNATURE_WINDOW_BYTES, has_pdf_header
+from common.files.signatures import SIGNATURE_WINDOW_BYTES, has_pdf_header
 
 
 class PdfHeaderTests(SimpleTestCase):

@@ -11,10 +11,10 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import AdminPortalPermission
+from apps.accounts.api.permissions import AdminPortalPermission
 from apps.privacy.services import load_consent
+from common.api.pagination import StandardPagination
 from common.metrics import record_metric
-from common.pagination import StandardPagination
 from common.vietnam_time import vietnam_today
 
 from ...models import Announcement, AnnouncementRevision

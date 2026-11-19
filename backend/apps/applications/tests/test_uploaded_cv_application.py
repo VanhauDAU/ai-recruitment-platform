@@ -16,7 +16,7 @@ from apps.employers.models import Company
 from apps.employers.tests.readiness_helpers import make_employer_ready
 from apps.jobs.models import Job
 from apps.jobs.tests.helpers import open_visibility_window
-from common.r2_storage import private_media_storage
+from common.storage.r2 import private_media_storage
 
 from ..models import Application
 

@@ -49,6 +49,7 @@ apps/jobs/
   api/serializers/       # validate input, định hình output
   seo/                   # HTML shell và sitemap ngoài /api
   models/                # model, choices, QuerySet/Manager
+  domain/                # định nghĩa thuần (registry, hằng số) mà models cũng dùng
   selectors/             # đọc: truy vấn, read model, chống N+1
   services/              # ghi: transaction, tích hợp ngoài, exception nghiệp vụ
   tasks/                 # Celery: chỉ gọi services

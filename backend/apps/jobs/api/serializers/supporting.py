@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from apps.locations.models import Location
-from common.media_storage import media_url_from_value
+from common.storage.media import media_url_from_value
 
 from ...models import (
     JobApplicationContact,

@@ -350,7 +350,7 @@ def request_sample_generations(*, actor, profiles, locales, bands):
     ]
 
     def dispatch():
-        from ..tasks import generate_cv_sample_content
+        from apps.cv_templates.tasks.template_assets import generate_cv_sample_content
 
         for generation in generations:
             generate_cv_sample_content.delay(generation.pk)

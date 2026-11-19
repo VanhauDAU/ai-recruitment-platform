@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from common.media_storage import media_public_url
+from common.storage.media import media_public_url
 
 from ...models import ScheduledSocialPost, SocialAccountConnection
 

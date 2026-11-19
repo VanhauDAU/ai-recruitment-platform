@@ -8,7 +8,7 @@ from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
-from apps.accounts.permissions import require_admin
+from apps.accounts.api.permissions import require_admin
 from apps.accounts.services import (
     InvalidImpactToken,
     StaleImpactToken,
@@ -16,7 +16,7 @@ from apps.accounts.services import (
     decode_impact_token,
     record_admin_action,
 )
-from common.company_email import PUBLIC_EMAIL_DOMAINS
+from apps.employers.domain.company_email import PUBLIC_EMAIL_DOMAINS
 
 from ..models import (
     CompanyDomainClaim,

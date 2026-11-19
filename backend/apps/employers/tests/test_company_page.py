@@ -7,11 +7,16 @@ from django.test import SimpleTestCase
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
+from apps.employers.domain.page_registry import (
+    ACCENT_PALETTE,
+    DEFAULT_ACCENT_KEY,
+    MAIN_SECTIONS,
+    SIDEBAR_SECTIONS,
+)
 from apps.jobs.models import Job, JobLocation
 from apps.locations.models import Location
 
 from ..models import Company, CompanyImage, CompanyIndustry, Industry
-from ..page_registry import ACCENT_PALETTE, DEFAULT_ACCENT_KEY, MAIN_SECTIONS, SIDEBAR_SECTIONS
 from .company_page_helpers import (
     add_recruiter,
     hold_company,

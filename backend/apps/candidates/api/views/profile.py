@@ -3,7 +3,7 @@ from rest_framework import generics, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsCandidate
+from apps.accounts.api.permissions import IsCandidate
 
 from ...models import CandidateConsent
 from ...selectors import candidate_job_preference_for_user, candidate_profile_for_user

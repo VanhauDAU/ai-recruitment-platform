@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from common.media_storage import media_url_from_value
+from common.storage.media import media_url_from_value
 
 from ...models import CampaignActivity, RecruitmentCampaign
 from ...services import campaign_active_seconds

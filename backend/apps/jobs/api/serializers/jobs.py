@@ -4,8 +4,8 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.employers.models import DpaStatus, RecruitmentCampaign
-from common.media_storage import media_url_from_value
-from common.rich_text import rich_text_plain_text
+from common.html.rich_text import rich_text_plain_text
+from common.storage.media import media_url_from_value
 
 from ...models import (
     Benefit,

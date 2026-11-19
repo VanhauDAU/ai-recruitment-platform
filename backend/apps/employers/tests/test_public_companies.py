@@ -11,7 +11,7 @@ from rest_framework.test import APITestCase
 
 from apps.jobs.models import Job
 from apps.jobs.tests.helpers import open_visibility_window
-from common.throttling import ClientIPScopedRateThrottle
+from common.api.throttling import ClientIPScopedRateThrottle
 
 from ..models import (
     Company,

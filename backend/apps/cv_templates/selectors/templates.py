@@ -2,6 +2,7 @@
 
 from django.db.models import F, Prefetch, Q
 
+from apps.cv_templates.domain.renderers import layout_registry
 from apps.jobs.models import JobCategory, JobCategoryLocalization
 
 from ..models import (
@@ -15,7 +16,6 @@ from ..models import (
     CvTemplateSection,
     localized_field,
 )
-from ..renderers import layout_registry
 
 
 def _slugs(value):

@@ -5,7 +5,7 @@ from rest_framework import serializers
 
 from apps.employers.selectors import build_employer_initial_onboarding
 from apps.employers.services import verification_checks
-from common.media_storage import media_url_from_value
+from common.storage.media import media_url_from_value
 
 from ...models import (
     AdminAccessAuditLog,

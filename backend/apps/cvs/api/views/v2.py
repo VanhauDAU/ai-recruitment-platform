@@ -12,14 +12,14 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import IsCandidate
+from apps.accounts.api.permissions import IsCandidate
 from apps.applications.models import Application
 from apps.cv_templates.models import CvTemplate
 from apps.cv_templates.services import PositionContentUnavailable
 from apps.employers.services import ensure_recruiter_candidate_data_access
 from apps.uploads.services import UploadServiceError
 from common.metrics import record_metric
-from common.r2_storage import cv_asset_storage, private_media_storage
+from common.storage.r2 import private_media_storage
 
 from ...models import CvAsset, CvDraft, CvExport, CvImportJob, CvSharedLink, CvVersion, UserCv
 from ...selectors import (
@@ -66,7 +66,7 @@ from ...services import (
     update_draft,
     validate_import_upload,
 )
-from ...services.assets import resolve_asset_token
+from ...services.assets import cv_asset_storage, resolve_asset_token
 from ...services.composition import CvCompositionError, compose_cv_document
 from ..exceptions import (
     CandidateCvRejectedResponse,

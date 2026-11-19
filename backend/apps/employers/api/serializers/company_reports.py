@@ -2,10 +2,10 @@
 
 from rest_framework import serializers
 
-from common.media_storage import media_url_from_value
+from apps.employers.domain.page_registry import SECTION_TITLES
+from common.storage.media import media_url_from_value
 
 from ...models import CompanyReport, CompanyReportResolutionEvent
-from ...page_registry import SECTION_TITLES
 from ...selectors import ADMIN_COMPANY_REPORT_ORDERING_FIELDS
 
 RESOLUTION_NOTE_MAX_LENGTH = 1000

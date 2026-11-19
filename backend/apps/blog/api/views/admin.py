@@ -4,8 +4,8 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.accounts.permissions import AdminPortalPermission
-from common.pagination import StandardPagination
+from apps.accounts.api.permissions import AdminPortalPermission
+from common.api.pagination import StandardPagination
 
 from ...models import PinnedPost, PostCategory, Tag
 from ...selectors import (

@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.core.checks import Error, register
 
-from .configuration import upload_scanning_configuration_errors
+from apps.uploads.domain.configuration import upload_scanning_configuration_errors
 
 
 @register()

@@ -10,9 +10,9 @@ from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from common.api.pagination import StandardPagination
+from common.api.throttling import ClientIPScopedRateThrottle
 from common.metrics import record_metric
-from common.pagination import StandardPagination
-from common.throttling import ClientIPScopedRateThrottle
 
 from ...selectors import (
     public_article_by_slugs,

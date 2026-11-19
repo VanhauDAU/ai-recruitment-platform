@@ -13,7 +13,7 @@ Hai loại câu không thành chunk:
 import re
 
 from apps.jobs.models import Job
-from common.content_html import content_html_plain_text
+from common.html.content import content_html_plain_text
 
 from ..skills import TRAIT_GROUP
 from .profile import MAX_JOB_CHUNKS, MIN_JOB_TEXT_CHARS, ExtractionError, make_chunks

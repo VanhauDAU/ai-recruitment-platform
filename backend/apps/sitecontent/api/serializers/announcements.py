@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from common.media_storage import media_url_from_value
+from common.storage.media import media_url_from_value
 
 from ...models import Announcement, AnnouncementRevision
 from ...selectors import PRIORITY_TIER_BY_KIND, presentation_status

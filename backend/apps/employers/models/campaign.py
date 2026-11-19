@@ -2,7 +2,7 @@ from django.conf import settings
 from django.db import models
 from django.utils.text import slugify
 
-from common.public_id import generate_public_id
+from common.db.public_id import generate_public_id
 
 from .choices import BudgetSource
 

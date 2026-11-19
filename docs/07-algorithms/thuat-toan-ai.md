@@ -7,7 +7,7 @@ lặp lại.
 
 | Năng lực | Kỹ thuật | Code chính | Chi tiết |
 | --- | --- | --- | --- |
-| Import và cấu trúc hóa CV | Trích text + LLM structured JSON, fallback heuristic | `apps/cvs/tasks.py`, `apps/ai_core/services/cv_import.py` | mục 1 |
+| Import và cấu trúc hóa CV | Trích text + LLM structured JSON, fallback heuristic | `apps/cvs/tasks/exports.py`, `apps/ai_core/services/cv_import.py` | mục 1 |
 | Điểm hoàn thiện CV | Rule có trọng số | `apps/cvs/services/completeness.py` | mục 2 |
 | Đối sánh CV/nhu cầu – tin tuyển dụng | Rule-based có trọng số, giải thích được | `apps/jobs/models/recommendation_queries.py` | mục 3, [`candidate-job-recommendations.md`](./candidate-job-recommendations.md) |
 | Tin tương tự tin đã lưu | Similarity pairwise rule-based | `apps/jobs/selectors/saved_recommendations.py` | [`saved-job-recommendations.md`](./saved-job-recommendations.md) |

@@ -12,11 +12,11 @@ from rest_framework import status
 from rest_framework.test import APITransactionTestCase
 
 from apps.accounts.models import User
-from common.r2_storage import public_media_storage
+from apps.sitecontent.services import PUBLIC_SETTINGS_CACHE_KEY
+from common.storage.r2 import public_media_storage
 
 from ..api.serializers import AdminSiteSettingSerializer
 from ..models import SiteSetting
-from ..signals import PUBLIC_SETTINGS_CACHE_KEY
 
 PNG_BYTES = (
     b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01'
