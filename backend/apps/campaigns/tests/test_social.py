@@ -20,8 +20,10 @@ from common.vietnam_time import vietnam_today
 from ..domain.social_networks import NETWORKS
 from ..models import CampaignChannel, ScheduledSocialPost, SocialAccountConnection
 from ..services import publish_post, reconcile_social_posts, schedule_post
-from ..services.social import SocialProviderError, decrypt_token
+from ..services.social import PostImage, SocialProviderError, decrypt_token
 from ..services.social.facebook import FacebookPageProvider
+from ..services.social.instagram import InstagramProvider
+from ..services.social_post_images import _fit_ratio
 
 Status = RecruitmentCampaign.Status
 Post = ScheduledSocialPost
@@ -498,7 +500,10 @@ class FacebookPhotoPublishTests(TestCase):
             token='t',
             message='Tuyển gấp',
             link='https://procv.vn/r/a',
-            images=[('a.jpg', b'1'), ('b.jpg', b'2')],
+            images=[
+                PostImage('a.jpg', b'1', 'https://cdn/a.jpg'),
+                PostImage('b.jpg', b'2', 'https://cdn/b.jpg'),
+            ],
         )
 
         calls = session.request.call_args_list
@@ -509,3 +514,212 @@ class FacebookPhotoPublishTests(TestCase):
         self.assertEqual(feed['message'], 'Tuyển gấp\n\nhttps://procv.vn/r/a')
         self.assertNotIn('link', feed)
         self.assertEqual(jsonlib.loads(feed['attached_media[1]']), {'media_fbid': 'photo_2'})
+
+
+class InstagramPostingTests(SocialFixtures, TestCase):
+    def setUp(self):
+        super().setUp()
+        self.channel = CampaignChannel.objects.create(
+            campaign=self.campaign,
+            kind=CampaignChannel.Kind.INSTAGRAM,
+            label='Instagram công ty',
+            content={'headline': 'Tuyển gấp', 'body': 'Ứng tuyển: {link}'},
+        )
+        query = self.authorize('instagram')
+        redirected = self.client.get(
+            reverse('employer-social-callback', kwargs={'network': 'instagram'}),
+            {'code': query['code'][0], 'state': query['state'][0]},
+        )
+        nonce = parse_qs(urlparse(redirected['Location']).query)['social_select'][0]
+        selected = self.client.post(
+            reverse('employer-social-pending', kwargs={'network': 'instagram', 'nonce': nonce}),
+            {'account_id': 'fake-instagram-1'},
+            format='json',
+        )
+        self.connection = SocialAccountConnection.objects.get(public_id=selected.data['public_id'])
+
+    def test_a_post_needs_an_image_and_a_facebook_page_connection_does_not_fit(self):
+        facebook_page = self.connect_page()
+
+        with self.assertRaises(ValidationError) as missing:
+            schedule_post(channel=self.channel, user=self.user, connection=self.connection)
+        with self.assertRaises(ValidationError):
+            schedule_post(channel=self.channel, user=self.user, connection=facebook_page)
+
+        self.assertIn('Instagram cần ít nhất một ảnh', str(missing.exception.detail['images']))
+
+    def test_images_are_sent_as_padded_jpeg_copies_kept_under_the_campaign(self):
+        from common.storage.r2 import public_media_storage
+
+        url = reverse(
+            'employer-campaign-channel-post-images',
+            kwargs={'public_id': self.campaign.public_id, 'channel_id': self.channel.public_id},
+        )
+        cover = self.client.post(
+            url, {'file': image_upload(size=(3000, 1000))}, format='multipart'
+        ).data
+        post = schedule_post(
+            channel=self.channel, user=self.user, connection=self.connection, images=[cover['path']]
+        )
+
+        self.assertEqual(publish_post(post.pk), Post.Status.PUBLISHED)
+        post.refresh_from_db()
+        sent = cache.get(f'fake-social-post:{post.external_post_id}')['images']
+        fitted = f'campaigns/{self.campaign.public_id}/social/fit/{sent[0]}'
+        self.assertTrue(sent[0].endswith('.jpg'))
+        self.assertTrue(public_media_storage().exists(fitted))
+        self.assertEqual(post.images, [cover['path']])
+
+
+class ImageFitTests(TestCase):
+    def test_images_outside_the_ratio_get_white_padding_and_become_rgb(self):
+        from PIL import Image
+
+        wide = _fit_ratio(Image.new('RGB', (3000, 1000), 'red'), (0.8, 1.91))
+        tall = _fit_ratio(Image.new('RGBA', (400, 1000), (0, 0, 0, 0)), (0.8, 1.91))
+        square = _fit_ratio(Image.new('RGB', (800, 800), 'red'), (0.8, 1.91))
+
+        self.assertEqual(wide.width, 1440)
+        self.assertAlmostEqual(wide.width / wide.height, 1.91, places=2)
+        self.assertEqual(wide.getpixel((0, 0)), (255, 255, 255))
+        self.assertEqual(tall.mode, 'RGB')
+        self.assertEqual(tall.size, (800, 1000))
+        self.assertEqual(tall.getpixel((400, 500)), (255, 255, 255))
+        self.assertEqual(square.size, (800, 800))
+
+
+@override_settings(FACEBOOK_APP_ID='app', FACEBOOK_APP_SECRET='secret')
+class InstagramProviderTests(TestCase):
+    def reply(self, payload, status=200):
+        response = MagicMock(status_code=status)
+        response.json.return_value = payload
+        return response
+
+    def provider(self, *replies):
+        session = MagicMock()
+        session.request.side_effect = [self.reply(payload) for payload in replies]
+        self.sleep = MagicMock()
+        return InstagramProvider(session=session, sleep=self.sleep), session
+
+    def test_lists_only_pages_with_a_linked_instagram_account(self):
+        provider, _ = self.provider(
+            {
+                'data': [
+                    {
+                        'id': 'page_1',
+                        'name': 'Propos',
+                        'access_token': 'page-token',
+                        'instagram_business_account': {
+                            'id': 'ig_1',
+                            'username': 'propos.vn',
+                            'profile_picture_url': 'https://cdn/p.jpg',
+                        },
+                    },
+                    {'id': 'page_2', 'name': 'Không có IG', 'access_token': 't'},
+                ]
+            }
+        )
+
+        accounts = provider.list_accounts('user-token')
+
+        self.assertEqual(
+            [(a.account_id, a.name, a.token) for a in accounts],
+            [('ig_1', '@propos.vn', 'page-token')],
+        )
+
+    def test_one_image_is_a_container_then_published_with_the_link_in_the_caption(self):
+        provider, session = self.provider(
+            {'id': 'container_1'},
+            {'status_code': 'IN_PROGRESS'},
+            {'status_code': 'FINISHED'},
+            {'id': 'media_1'},
+            {'permalink': 'https://instagram.com/p/1'},
+        )
+
+        published = provider.publish(
+            account_id='ig_1',
+            token='t',
+            message='Tuyển gấp',
+            link='https://procv.vn/r/a',
+            images=[PostImage('a.jpg', b'1', 'https://cdn/a.jpg')],
+        )
+
+        calls = session.request.call_args_list
+        self.assertEqual(calls[0].args[1], 'https://graph.facebook.com/v21.0/ig_1/media')
+        self.assertEqual(
+            calls[0].kwargs['data'],
+            {'image_url': 'https://cdn/a.jpg', 'caption': 'Tuyển gấp\n\nhttps://procv.vn/r/a'},
+        )
+        self.assertEqual(calls[3].kwargs['data'], {'creation_id': 'container_1'})
+        self.assertIn('appsecret_proof', calls[3].kwargs['params'])
+        self.sleep.assert_called_once()
+        self.assertEqual(
+            (published.post_id, published.permalink), ('media_1', 'https://instagram.com/p/1')
+        )
+
+    def test_several_images_become_one_carousel(self):
+        provider, session = self.provider(
+            {'id': 'child_1'},
+            {'status_code': 'FINISHED'},
+            {'id': 'child_2'},
+            {'status_code': 'FINISHED'},
+            {'id': 'carousel'},
+            {'status_code': 'FINISHED'},
+            {'id': 'media_1'},
+            {'permalink': ''},
+        )
+
+        provider.publish(
+            account_id='ig_1',
+            token='t',
+            message='Ứng tuyển: https://procv.vn/r/a',
+            link='https://procv.vn/r/a',
+            images=[
+                PostImage('a.jpg', b'1', 'https://cdn/a.jpg'),
+                PostImage('b.jpg', b'2', 'https://cdn/b.jpg'),
+            ],
+        )
+
+        posts = [c.kwargs['data'] for c in session.request.call_args_list if c.args[0] == 'POST']
+        self.assertEqual(posts[0], {'image_url': 'https://cdn/a.jpg', 'is_carousel_item': 'true'})
+        self.assertEqual(
+            posts[2],
+            {
+                'media_type': 'CAROUSEL',
+                'children': 'child_1,child_2',
+                'caption': 'Ứng tuyển: https://procv.vn/r/a',
+            },
+        )
+        self.assertEqual(posts[3], {'creation_id': 'carousel'})
+
+    def test_container_failures_and_the_daily_limit_are_classified(self):
+        failed, _ = self.provider({'id': 'c'}, {'status_code': 'ERROR'})
+        slow, _ = self.provider({'id': 'c'}, *[{'status_code': 'IN_PROGRESS'}] * 5)
+        limited, _ = self.provider({'error': {'code': 9}})
+        image = [PostImage('a.jpg', b'1', 'https://cdn/a.jpg')]
+
+        outcomes = []
+        for provider in (failed, slow, limited):
+            with self.assertRaises(SocialProviderError) as raised:
+                provider.publish(account_id='ig', token='t', message='m', link='', images=image)
+            outcomes.append((raised.exception.code, raised.exception.transient))
+        with self.assertRaises(SocialProviderError) as no_image:
+            failed.publish(account_id='ig', token='t', message='m', link='', images=[])
+
+        self.assertEqual(
+            outcomes,
+            [
+                ('ig_container_error', False),
+                ('ig_container_pending', True),
+                ('graph_9', True),
+            ],
+        )
+        self.assertEqual(no_image.exception.code, 'image_required')
+
+    def test_delete_removes_the_media_and_tolerates_one_already_gone(self):
+        provider, session = self.provider({'success': True}, {'error': {'code': 100}})
+
+        provider.delete(post_id='media_1', token='t')
+        provider.delete(post_id='media_2', token='t')
+
+        self.assertEqual(session.request.call_args_list[0].args[:2][0], 'DELETE')

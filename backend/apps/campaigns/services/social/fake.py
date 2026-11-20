@@ -39,7 +39,7 @@ class FakeProvider:
         post_id = f'{account_id}_{secrets.token_hex(6)}'
         cache.set(
             f'fake-social-post:{post_id}',
-            {'message': message, 'link': link, 'images': [name for name, _ in images]},
+            {'message': message, 'link': link, 'images': [image.name for image in images]},
             86400,
         )
         return PublishedPost(post_id=post_id, permalink=f'https://example.com/{post_id}')

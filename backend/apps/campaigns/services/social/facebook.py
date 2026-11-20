@@ -1,21 +1,12 @@
-"""Facebook Graph API adapter (Pages): OAuth, list pages, publish, find and delete posts."""
+"""Facebook Graph API adapter (Pages): list pages, publish, find and delete posts."""
 
-import hashlib
-import hmac
 import ipaddress
 import json
-from urllib.parse import urlencode, urlsplit
-
-import requests
-from django.conf import settings
+from urllib.parse import urlsplit
 
 from ...domain.social_networks import FACEBOOK_PAGE
-from .base import PublishedPost, SocialAccount, SocialProviderError
-
-SCOPES = 'pages_show_list,pages_manage_posts,pages_read_engagement'
-TOKEN_ERROR_CODES = {190, 102}
-PERMANENT_ERROR_CODES = {10, 200, 368, 100}
-TRANSIENT_ERROR_CODES = {1, 2, 4, 17, 32, 341, 613}
+from .base import PublishedPost, SocialAccount
+from .meta_graph import MetaGraphProvider
 
 
 def is_public_url(url):
@@ -37,87 +28,9 @@ def is_public_url(url):
     return address.is_global
 
 
-class FacebookPageProvider:
+class FacebookPageProvider(MetaGraphProvider):
     network = FACEBOOK_PAGE
-    simulated = False
-
-    def __init__(self, session=None):
-        self.session = session or requests.Session()
-        self.version = settings.FACEBOOK_GRAPH_API_VERSION
-        self.timeout = settings.CAMPAIGN_SOCIAL_HTTP_TIMEOUT_SECONDS
-        self.redirect_uri = settings.FACEBOOK_OAUTH_REDIRECT_URI
-
-    def _url(self, path):
-        return f'https://graph.facebook.com/{self.version}/{path.lstrip("/")}'
-
-    def _proof(self, token):
-        return hmac.new(
-            settings.FACEBOOK_APP_SECRET.encode(), token.encode(), hashlib.sha256
-        ).hexdigest()
-
-    def _call(self, method, path, *, token=None, params=None, data=None, files=None):
-        params = dict(params or {})
-        if token:
-            params.update(access_token=token, appsecret_proof=self._proof(token))
-        try:
-            response = self.session.request(
-                method,
-                self._url(path),
-                params=params,
-                data=data,
-                files=files,
-                timeout=self.timeout,
-            )
-        except requests.Timeout as error:
-            raise SocialProviderError('timeout', transient=True) from error
-        except requests.RequestException as error:
-            raise SocialProviderError('network_error', transient=True) from error
-        try:
-            payload = response.json()
-        except ValueError:
-            payload = {}
-        if response.status_code >= 500:
-            raise SocialProviderError(f'http_{response.status_code}', transient=True)
-        error = payload.get('error') if isinstance(payload, dict) else None
-        if error or response.status_code >= 400:
-            code = int((error or {}).get('code') or 0)
-            raise SocialProviderError(
-                f'graph_{code or response.status_code}',
-                transient=code in TRANSIENT_ERROR_CODES,
-                token_invalid=code in TOKEN_ERROR_CODES,
-            )
-        return payload
-
-    def authorize_url(self, state):
-        query = urlencode(
-            {
-                'client_id': settings.FACEBOOK_APP_ID,
-                'redirect_uri': self.redirect_uri,
-                'state': state,
-                'scope': SCOPES,
-                'response_type': 'code',
-            }
-        )
-        return f'https://www.facebook.com/{self.version}/dialog/oauth?{query}'
-
-    def exchange_code(self, code):
-        """Authorization code to a long-lived user token."""
-        app = {'client_id': settings.FACEBOOK_APP_ID, 'client_secret': settings.FACEBOOK_APP_SECRET}
-        short = self._call(
-            'GET',
-            'oauth/access_token',
-            params={**app, 'redirect_uri': self.redirect_uri, 'code': code},
-        )
-        long_lived = self._call(
-            'GET',
-            'oauth/access_token',
-            params={
-                **app,
-                'grant_type': 'fb_exchange_token',
-                'fb_exchange_token': short['access_token'],
-            },
-        )
-        return long_lived['access_token']
+    scopes = 'pages_show_list,pages_manage_posts,pages_read_engagement'
 
     def list_accounts(self, user_token):
         payload = self._call(
@@ -142,13 +55,13 @@ class FacebookPageProvider:
         if images:
             # Photos are uploaded unpublished, then attached to one feed post.
             # Graph ignores ``link`` next to attached media, so it stays in the text.
-            for index, (name, content) in enumerate(images):
+            for index, image in enumerate(images):
                 photo = self._call(
                     'POST',
                     f'{account_id}/photos',
                     token=token,
                     data={'published': 'false'},
-                    files={'source': (name, content)},
+                    files={'source': (image.name, image.content)},
                 )
                 data[f'attached_media[{index}]'] = json.dumps({'media_fbid': photo['id']})
             if link and link not in message:
@@ -176,9 +89,4 @@ class FacebookPageProvider:
         return None
 
     def delete(self, *, post_id, token):
-        try:
-            self._call('DELETE', post_id, token=token)
-        except SocialProviderError as error:
-            if error.code in {'graph_100', 'http_404'}:
-                return  # already gone
-            raise
+        self._delete_object(post_id, token)

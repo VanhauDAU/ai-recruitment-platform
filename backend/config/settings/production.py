@@ -244,15 +244,17 @@ if not AUTH_REFRESH_COOKIE_SECURE:
 if AUTH_REFRESH_COOKIE_SAMESITE not in {'Lax', 'Strict'}:
     _errors.append('Refresh cookie production phải dùng SameSite=Lax hoặc Strict.')
 
-_unknown_networks = set(CAMPAIGN_SOCIAL_LIVE_NETWORKS) - {'facebook_page'}
+_unknown_networks = set(CAMPAIGN_SOCIAL_LIVE_NETWORKS) - {'facebook_page', 'instagram'}
 if _unknown_networks:
     _errors.append(
         'CAMPAIGN_SOCIAL_LIVE_NETWORKS có mạng không hỗ trợ: '
         + ', '.join(sorted(_unknown_networks))
     )
-if 'facebook_page' in CAMPAIGN_SOCIAL_LIVE_NETWORKS:
+# Fanpage và Instagram cùng đăng nhập qua Meta App của FACEBOOK_APP_ID.
+if {'facebook_page', 'instagram'} & set(CAMPAIGN_SOCIAL_LIVE_NETWORKS):
     if not (FACEBOOK_APP_ID and FACEBOOK_APP_SECRET):
         _errors.append('FACEBOOK_APP_ID và FACEBOOK_APP_SECRET là bắt buộc khi đăng Facebook.')
+if 'facebook_page' in CAMPAIGN_SOCIAL_LIVE_NETWORKS:
     if not FACEBOOK_OAUTH_REDIRECT_URI.startswith('https://'):
         _errors.append('FACEBOOK_OAUTH_REDIRECT_URI production phải dùng HTTPS.')
 if CAMPAIGN_SOCIAL_LIVE_NETWORKS:

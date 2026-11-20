@@ -6,7 +6,8 @@ A provider serves one network and exposes:
 - ``simulated``: True for the in-process fake;
 - ``authorize_url(state)`` and ``exchange_code(code)`` for OAuth;
 - ``list_accounts(user_token)``: the accounts the user may post as;
-- ``publish(account_id=, token=, message=, link=, images=)``;
+- ``publish(account_id=, token=, message=, link=, images=)``, ``images`` being
+  ``PostImage`` items (bytes for upload, public URL for networks that fetch);
 - ``find_recent_post(account_id=, token=, link=)``: a post already carrying
   ``link``, so a retry after a timeout does not post twice;
 - ``delete(post_id=, token=)``, only called when the network supports it.
@@ -41,3 +42,10 @@ class SocialAccount:
 class PublishedPost:
     post_id: str
     permalink: str
+
+
+@dataclass(frozen=True)
+class PostImage:
+    name: str
+    content: bytes
+    url: str

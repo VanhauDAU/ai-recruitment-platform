@@ -13,7 +13,8 @@ import { message } from '@/shared/lib/toast'
 import { useCampaignChannels } from '../model/use-campaign-channels'
 
 const HINTS = {
-  facebook_page: m.employer_campaign_channel_hint_facebook_page(),
+  facebook_page: m.employer_campaign_channel_hint_auto_post(),
+  instagram: m.employer_campaign_channel_hint_auto_post(),
   facebook_group: m.employer_campaign_channel_hint_facebook_group(),
   qr_offline: m.employer_campaign_channel_hint_qr_offline(),
 }
