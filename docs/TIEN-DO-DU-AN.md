@@ -388,6 +388,15 @@ GĐ1 đã làm:
   lên Fanpage" (mở ngăn chọn trang, ảnh, giờ đăng) và lịch sử bài ngay dưới;
   kênh khác có "Sao chép bài" và ô đánh dấu đã đăng. Tab kênh còn Bài đăng ·
   Link & QR · Chi phí; bỏ mục "Sửa nội dung" trùng ở menu kênh.
+- Làm gọn tab Bài đăng (nhánh `feat/campaign-post-composer`): tab chỉ còn một
+  dòng hướng dẫn, nút **Soạn bài** và danh sách bài (Fanpage: thẻ bài có nhãn
+  trạng thái màu, giờ, ảnh thu nhỏ, tóm tắt 2 dòng; kênh đăng tay: thẻ bài đang
+  dùng với Sao chép · Sửa · Đã đăng). Mọi bước soạn dồn vào ngăn **Soạn bài**
+  dùng chung cho mọi kênh: chip tin ngắn (tiêu đề dài tự trượt, tắt khi giảm
+  chuyển động), ô chọn link dẫn tới, ô nội dung chứa link thật kèm nút **Chèn
+  link** (chèn đúng chỗ con trỏ, chưa đặt thì cuối bài) và Soạn bằng AI, xem
+  trước; Fanpage thêm trang, ảnh, giờ đăng; kênh khác "Lưu và sao chép". Bỏ hộp
+  Sửa tay với chuỗi `{link}`.
 - Giải thích chỉ số (nhánh `feat/campaign-metric-help`): `shared/ui/HelpTip`
   (icon ? có tooltip, bấm được bằng bàn phím) ở bảng so sánh nguồn, chi tiết
   kênh, chi phí, tab Sức khỏe, Tổng quan và đầu trang chiến dịch.

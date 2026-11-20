@@ -15,7 +15,7 @@ import { getIntlLocale, m } from '@/shared/config/i18n'
 
 const rate = (part, whole) => (whole ? `${((part * 100) / whole).toLocaleString(getIntlLocale(), { maximumFractionDigits: 1 })}%` : '—')
 
-export default function ChannelDetail({ campaign, channel, editable, onEditContent }) {
+export default function ChannelDetail({ campaign, channel, editable }) {
   const queryClient = useQueryClient()
   const { modal } = App.useApp()
   const remove = useMutation({
@@ -28,7 +28,7 @@ export default function ChannelDetail({ campaign, channel, editable, onEditConte
     onError: (error) => message.error(getApiErrorMessage(error, m.employer_campaign_channel_delete_error())),
   })
   const sections = [
-    { key: 'post', label: m.employer_campaign_channel_tab_content(), children: <ChannelPostSection campaign={campaign} channel={channel} editable={editable} onEditContent={onEditContent} /> },
+    { key: 'post', label: m.employer_campaign_channel_tab_content(), children: <ChannelPostSection campaign={campaign} channel={channel} editable={editable} /> },
     { key: 'link', label: m.employer_campaign_channel_tab_link(), children: <ChannelLinkSection channel={channel} /> },
     { key: 'costs', label: m.employer_campaign_channel_tab_costs(), children: <ChannelCostsPanel campaign={campaign} channel={channel} editable={editable} /> },
   ]
