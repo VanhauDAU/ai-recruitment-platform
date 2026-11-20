@@ -15,7 +15,9 @@ STEP="${1:-all}"
 step() { printf '\n==> %s (%s)\n' "$1" "$(date '+%H:%M')"; }
 
 if [[ "$STEP" == all ]]; then
-  step "Ngoại ngữ cho CV huấn luyện"
+  step "Ngoại ngữ, hoạt động, giải thưởng, sở thích cho CV huấn luyện (Ollama)"
+  # Hai lượt: lượt sau thử lại CV bị bỏ qua ở lượt đầu.
+  $PY ml/scripts/enrich_cvs.py --train | tail -1
   $PY ml/scripts/enrich_cvs.py --train | tail -1
   step "Cổng chất lượng"
   $PY ml/scripts/quality_gate.py | head -4

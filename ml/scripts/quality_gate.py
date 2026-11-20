@@ -12,7 +12,8 @@ loại khỏi dữ liệu huấn luyện (không sửa tay):
 - phần chữ nhắc tên ít nhất một nửa số kỹ năng script đã chọn;
 - CV "vị trí gần" không chứa quá nửa kỹ năng cần có của tin neo (không thì thực
   chất là CV khớp, nhãn yếu sai);
-- không gần trùng một CV khác của cùng tin neo (Jaccard từ ≥ 0,6).
+- không gần trùng một CV khác của cùng tin neo (Jaccard từ ≥ 0,6);
+- đã được bổ sung mục ngoại ngữ và các mục phụ (`enrich_cvs.py --train`).
 
 Kết quả: `ml/data/cv/train/gate.json` ({mã CV: [lý do bị loại]}, rỗng là qua) và
 `ml/reports/train_cv_gate.md`. Kèm `ml/labeling/train_cv_review.md`: 40 CV chọn
@@ -49,6 +50,8 @@ def months_of(data):
 
 def problems_of(data, facts, job):
     found = []
+    if 'languages' not in data:
+        found.append('chưa bổ sung ngoại ngữ và mục phụ')
     if has_foreign_script(data):
         found.append('chữ ngoài hệ Latin')
     if has_runaway_text(data):

@@ -12,9 +12,9 @@ Chạy từ thư mục gốc của repo, sau `generate_cvs.py`:
 
 CV đã có trường `languages` được bỏ qua, nên chạy lại an toàn.
 
-`--train` bổ sung cho kho CV huấn luyện (`generate_cvs.py --train`): chỉ thêm mục
-ngoại ngữ (do script quyết định, không gọi mô hình). Hoạt động, giải thưởng, sở
-thích không ảnh hưởng tới đối sánh nên kho huấn luyện không cần.
+`--train` bổ sung cho kho CV huấn luyện (`generate_cvs.py --train`) theo đúng cách
+và đúng tỷ lệ như kho CV của tập vàng, để mô hình được huấn luyện trên CV đầy đủ như
+CV nó sẽ gặp lúc đánh giá và lúc chạy.
 """
 
 import argparse
@@ -148,7 +148,7 @@ def localized(languages, cv_language):
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument('--model', default='qwen2.5:7b')
-    parser.add_argument('--train', action='store_true', help='Kho CV huấn luyện: chỉ thêm ngoại ngữ.')
+    parser.add_argument('--train', action='store_true', help='Bổ sung cho kho CV huấn luyện.')
     options = parser.parse_args()
 
     jobs = {job['code']: job for job in load_jobs()}
@@ -164,19 +164,21 @@ def main():
         rng = random.Random(f'enrich-{code}')
         languages = languages_for(facts, jobs[facts['anchor_job']], rng)
         data['languages'] = localized(languages, facts['language'])
-        if options.train:
-            data.update(activities=[], awards=[], interests=[])
-        else:
-            seed = rng.randint(1, 10**6)
-            for attempt in range(3):
+        seed = rng.randint(1, 10**6)
+        for attempt in range(3):
+            try:
                 extra = optional_sections(facts, options.model, seed + attempt)
-                if not has_foreign_script(extra) and not has_runaway_text(extra):
-                    break
-            else:
-                raise RuntimeError(f'{code}: mục phụ vẫn lẫn chữ lạ hoặc lời thoại sau 3 lần sinh.')
-            data['activities'] = extra['activities'] if rng.random() < 0.6 else []
-            data['awards'] = extra['awards'] if rng.random() < 0.35 else []
-            data['interests'] = extra['interests'] if rng.random() < 0.7 else []
+            except (OSError, ValueError, KeyError):
+                continue
+            if not has_foreign_script(extra) and not has_runaway_text(extra):
+                break
+        else:
+            # Một CV hỏng không dừng cả đợt chạy dài; chạy lại sẽ thử lại CV này.
+            print(f'{code} BỎ QUA: mục phụ vẫn lẫn chữ lạ hoặc lời thoại sau 3 lần sinh.', flush=True)
+            continue
+        data['activities'] = extra['activities'] if rng.random() < 0.6 else []
+        data['awards'] = extra['awards'] if rng.random() < 0.35 else []
+        data['interests'] = extra['interests'] if rng.random() < 0.7 else []
         path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding='utf-8')
         facts['languages'] = languages
         manifest_path.write_text(
