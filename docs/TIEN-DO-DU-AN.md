@@ -794,6 +794,8 @@ làm gợi ý" theo ngữ nghĩa, và nhà tuyển dụng xếp hạng hồ sơ 
   | TF-IDF | 0,281 | 0,422 |
   | BM25 | 0,386 | 0,491 |
   | Luật `profile-rule-v2` | 0,692 | 0,881 |
+  | Bi-encoder `e5-small` gốc, cosine toàn văn | 0,431 | 0,524 |
+  | Bi-encoder `paraphrase-multilingual-MiniLM-L12-v2` gốc, cosine toàn văn | 0,583 | 0,554 |
   | Bi-encoder `e5-base-zs-v1`, cosine toàn văn | 0,545 | 0,607 |
   | `hybrid-v1` | 0,625 | 0,690 |
 
@@ -807,6 +809,12 @@ làm gợi ý" theo ngữ nghĩa, và nhà tuyển dụng xếp hạng hồ sơ 
   bất kể CV có đúng nghề hay không, nên cặp nhãn 0–1 lên tới 58–72 điểm. Đây là
   bằng chứng cho "trần theo mức liên quan" của `hybrid-v2` (GĐ 5). Với 5 tin,
   khoảng tin cậy rất rộng nên chưa kết luận về thứ hạng giữa các phương án.
+- Đã tải bằng `ml/scripts/fetch_public.py` (nguồn và mã commit ở
+  `ml/data/public/SOURCES.md`): VietJobs (48.092 tin, kèm `LICENSE` MIT của kho
+  GitHub), resume-job-description-fit, mô hình gốc của cross-encoder
+  (`cross-encoder/mmarco-mMiniLMv2-L12-H384-v1`) và hai bi-encoder so sánh.
+- Còn lại của GĐ 1: mở rộng tập vàng lên 30 tin (đã đề xuất 15 tin: JD-05, 07, 08,
+  10, 16, 18, 27, 30, 39, 40, 56, 62, 69, 71, 73; chờ duyệt rồi ghép cặp, gán nhãn).
 - Dời sang GĐ 5: cho `calibrate.py` đọc kết quả của `matching_evaluate` thay vì tự
   chép lại luật, làm cùng lúc với lần hiệu chuẩn lại.
 - Bỏ ngưỡng "P@3 ≥ 0,70" của bản 2: tập test cũ chỉ có 13 cặp nhãn ≥ 3 nên trần

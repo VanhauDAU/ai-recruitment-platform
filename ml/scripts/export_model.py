@@ -28,6 +28,7 @@ def main():
     parser.add_argument('--name', default='multilingual-e5-base')
     parser.add_argument('--version', default='zs-v1')
     parser.add_argument('--model-version', default='e5-base-zs-v1', help='Giá trị MATCHING_MODEL_VERSION.')
+    parser.add_argument('--no-prefix', action='store_true', help='Mô hình không thuộc họ E5.')
     options = parser.parse_args()
 
     from sentence_transformers import SentenceTransformer
@@ -42,7 +43,7 @@ def main():
         'training': 'zero-shot (chưa fine-tune)',
         'dimensions': model.get_sentence_embedding_dimension(),
         'max_seq_length': model.max_seq_length,
-        'prefixes': {'job': 'query: ', 'cv': 'passage: '},
+        'prefixes': {'job': '', 'cv': ''} if options.no_prefix else {'job': 'query: ', 'cv': 'passage: '},
         'exported_on': date.today().isoformat(),
     }
     (target / 'model_card.json').write_text(json.dumps(card, ensure_ascii=False, indent=2), encoding='utf-8')

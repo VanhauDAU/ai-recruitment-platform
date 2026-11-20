@@ -17,6 +17,7 @@ Giấy phép (kiểm tra 19/11/2026):
 import argparse
 import urllib.request
 from datetime import date
+from pathlib import Path
 
 from huggingface_hub import HfApi, snapshot_download
 from paths import PUBLIC_DIR
@@ -43,6 +44,8 @@ MODELS = [
     'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2',
 ]
 SOURCES = PUBLIC_DIR / 'SOURCES.md'
+# Kho mô hình thường kèm bản ONNX, OpenVINO, TensorFlow…; chỉ cần bản PyTorch.
+OTHER_FORMATS = ['onnx/*', 'openvino/*', '*.onnx', '*.h5', '*.ot', '*.msgpack', 'tf_model*', 'rust_model*']
 
 
 def fetch_license(urls, target):
@@ -56,10 +59,14 @@ def fetch_license(urls, target):
     return None
 
 
-def record(lines):
+def recorded(name):
+    return SOURCES.exists() and f'| {name} |' in SOURCES.read_text(encoding='utf-8')
+
+
+def record(line):
     header = '# Nguồn dữ liệu và mô hình công khai\n\n| Tên | Nguồn | Mã commit | Ngày tải | Giấy phép |\n| --- | --- | --- | --- | --- |\n'
     existing = SOURCES.read_text(encoding='utf-8') if SOURCES.exists() else header
-    SOURCES.write_text(existing + ''.join(lines), encoding='utf-8')
+    SOURCES.write_text(existing + line, encoding='utf-8')
 
 
 def main():
@@ -67,33 +74,38 @@ def main():
     parser.add_argument('--only', choices=['datasets', 'models'])
     options = parser.parse_args()
     PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
-    api, today, lines = HfApi(), date.today().isoformat(), []
+    api, today = HfApi(), date.today().isoformat()
 
     if options.only in (None, 'datasets'):
         for name, source in DATASETS.items():
-            target = PUBLIC_DIR / name
-            if target.exists():
+            if recorded(name):
                 print(f'{name}: đã có, bỏ qua')
                 continue
+            target = PUBLIC_DIR / name
             revision = api.dataset_info(source['repo']).sha
             snapshot_download(source['repo'], repo_type='dataset', revision=revision, local_dir=target)
             note = source['license']
             if source['license_urls'] and fetch_license(source['license_urls'], target / 'LICENSE') is None:
                 note += ' (chưa tải được tệp LICENSE)'
-            lines.append(f'| {name} | https://huggingface.co/datasets/{source["repo"]} | `{revision}` | {today} | {note} |\n')
+            record(f'| {name} | https://huggingface.co/datasets/{source["repo"]} | `{revision}` | {today} | {note} |\n')
             print(f'{name}: đã tải vào {target}')
 
     if options.only in (None, 'models'):
         for repo in MODELS:
+            if recorded(repo):
+                print(f'{repo}: đã có, bỏ qua')
+                continue
             info = api.model_info(repo)
-            snapshot_download(repo, revision=info.sha)
+            files = {sibling.rfilename for sibling in info.siblings}
+            # Có `model.safetensors` thì không cần bản `pytorch_model.bin` cùng nội dung.
+            skipped = OTHER_FORMATS + (['pytorch_model.bin'] if 'model.safetensors' in files else [])
+            # Tải nhánh chính (không ghim mã commit) để bộ nhớ đệm có `refs/main`,
+            # nhờ đó nạp được mô hình theo tên khi ngoại tuyến; mã commit lấy từ thư mục tải về.
+            revision = Path(snapshot_download(repo, ignore_patterns=skipped)).name
             license_name = (info.card_data or {}).get('license', 'xem thẻ mô hình')
-            lines.append(f'| {repo} | https://huggingface.co/{repo} | `{info.sha}` | {today} | {license_name} |\n')
-            print(f'{repo}: đã có trong bộ nhớ đệm')
-
-    if lines:
-        record(lines)
-        print(f'Đã ghi nguồn vào {SOURCES}')
+            record(f'| {repo} | https://huggingface.co/{repo} | `{revision}` | {today} | {license_name} |\n')
+            print(f'{repo}: đã tải vào bộ nhớ đệm')
+    print(f'Nguồn và phiên bản: {SOURCES}')
 
 
 if __name__ == '__main__':
