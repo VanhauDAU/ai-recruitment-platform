@@ -307,7 +307,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   dịch tạm dừng, tự gỡ khi chiến dịch hoàn tất hoặc bị hủy; lỗi tạm thời được
   thử lại, token hết hạn thì báo NTD.
 - `CAMPAIGN_SOCIAL_PROVIDER=fake` chạy toàn bộ luồng không cần Meta; hướng dẫn
-  tạo Meta App ở `docs/06-deployment/facebook-page-integration.md`.
+  tạo Meta App ở `docs/06-deployment/social-integrations.md`.
 
 #### Added — Chiến dịch: phân phối đa kênh và ghi nhận nguồn (GĐ2)
 

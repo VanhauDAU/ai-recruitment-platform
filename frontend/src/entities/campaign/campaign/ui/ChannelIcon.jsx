@@ -23,11 +23,28 @@ const KINDS = {
   other: { icon: ShareAltOutlined, color: '#64748b' },
 }
 
+const SIZES = {
+  md: { width: 36, height: 36, borderRadius: 10, fontSize: 18 },
+  lg: { width: 44, height: 44, borderRadius: 12, fontSize: 22 },
+}
+
+// Style nội tuyến: entity có thể nằm trong chunk khởi tạo, không thêm CSS toàn cục.
 export default function ChannelIcon({ kind, size = 'md' }) {
   const meta = KINDS[kind] || KINDS.other
   const Icon = meta.icon
   return (
-    <span className={`ch-icon is-${size}`} style={{ '--ch-brand': meta.color }} aria-hidden>
+    <span
+      style={{
+        display: 'inline-flex',
+        flexShrink: 0,
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: `color-mix(in srgb, ${meta.color} 12%, #fff)`,
+        color: meta.color,
+        ...SIZES[size],
+      }}
+      aria-hidden
+    >
       <Icon />
     </span>
   )

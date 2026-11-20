@@ -7,28 +7,42 @@ from common.storage.media import media_public_url
 from ...models import ScheduledSocialPost, SocialAccountConnection
 
 
+class SocialCapabilitiesSerializer(serializers.Serializer):
+    max_chars = serializers.IntegerField()
+    max_images = serializers.IntegerField()
+    requires_image = serializers.BooleanField()
+    supports_delete = serializers.BooleanField()
+
+
+class SocialNetworkSerializer(serializers.Serializer):
+    key = serializers.CharField()
+    platform = serializers.CharField()
+    label = serializers.CharField()
+    channel_kind = serializers.CharField()
+    capabilities = SocialCapabilitiesSerializer()
+    simulated = serializers.BooleanField()
+
+
 class SocialConnectionSerializer(serializers.ModelSerializer):
     status_label = serializers.CharField(source='get_status_display', read_only=True)
-    simulated = serializers.SerializerMethodField()
+    network_label = serializers.CharField(source='get_network_display', read_only=True)
 
     class Meta:
         model = SocialAccountConnection
         fields = [
             'public_id',
-            'provider',
+            'network',
+            'network_label',
             'simulated',
-            'page_id',
-            'page_name',
-            'page_picture_url',
+            'account_id',
+            'account_name',
+            'account_picture_url',
             'status',
             'status_label',
             'last_error_code',
             'connected_at',
         ]
         read_only_fields = fields
-
-    def get_simulated(self, obj) -> bool:
-        return obj.provider == SocialAccountConnection.Provider.FAKE
 
 
 # What a recruiter can do about each failure code (Graph codes are prefixed graph_).
@@ -50,23 +64,29 @@ POST_ERROR_MESSAGES = {
     ),
     'graph_368': gettext_lazy('Facebook đang tạm chặn đăng bài từ Fanpage này. Hãy thử lại sau.'),
     'graph_100': gettext_lazy('Facebook từ chối nội dung bài. Hãy sửa nội dung rồi đăng lại.'),
-    'timeout': gettext_lazy('Facebook không phản hồi kịp. Hệ thống đã thử lại nhiều lần.'),
+    'timeout': gettext_lazy('Mạng xã hội không phản hồi kịp. Hệ thống đã thử lại nhiều lần.'),
     'network_error': gettext_lazy(
-        'Không kết nối được tới Facebook. Hệ thống đã thử lại nhiều lần.'
+        'Không kết nối được tới mạng xã hội. Hệ thống đã thử lại nhiều lần.'
+    ),
+    'delete_unsupported': gettext_lazy(
+        'Mạng xã hội này không cho gỡ bài tự động. Hãy mở bài và tự xóa.'
     ),
     'campaign_paused': gettext_lazy('Chiến dịch đang tạm dừng nên bài được hoãn.'),
     'campaign_ended': gettext_lazy('Chiến dịch đã kết thúc nên bài bị hủy.'),
     'owner_changed': gettext_lazy('Chiến dịch đã bàn giao cho người khác nên bài bị hủy.'),
     'connection_inactive': gettext_lazy(
-        'Fanpage đã ngắt kết nối. Hãy kết nối lại trong Cài đặt tài khoản.'
+        'Tài khoản đã ngắt kết nối. Hãy kết nối lại trong Cài đặt tài khoản.'
     ),
 }
 
 
 class ScheduledPostSerializer(serializers.ModelSerializer):
     status_label = serializers.CharField(source='get_status_display', read_only=True)
-    page_name = serializers.CharField(source='connection.page_name', read_only=True)
-    page_picture_url = serializers.CharField(source='connection.page_picture_url', read_only=True)
+    network = serializers.CharField(source='connection.network', read_only=True)
+    account_name = serializers.CharField(source='connection.account_name', read_only=True)
+    account_picture_url = serializers.CharField(
+        source='connection.account_picture_url', read_only=True
+    )
     error_message = serializers.SerializerMethodField()
     images = serializers.SerializerMethodField()
 
@@ -74,8 +94,9 @@ class ScheduledPostSerializer(serializers.ModelSerializer):
         model = ScheduledSocialPost
         fields = [
             'public_id',
-            'page_name',
-            'page_picture_url',
+            'network',
+            'account_name',
+            'account_picture_url',
             'message',
             'images',
             'scheduled_for',
@@ -100,7 +121,10 @@ class ScheduledPostSerializer(serializers.ModelSerializer):
             return ''
         message = POST_ERROR_MESSAGES.get(code)
         if message is None:
-            return _('Facebook báo lỗi (%(code)s). Hãy thử đăng lại.') % {'code': code}
+            return _('%(network)s báo lỗi (%(code)s). Hãy thử đăng lại.') % {
+                'network': obj.connection.spec.platform,
+                'code': code,
+            }
         return str(message)
 
 
@@ -119,5 +143,5 @@ class ReschedulePostSerializer(serializers.Serializer):
     scheduled_for = serializers.DateTimeField()
 
 
-class SelectPageSerializer(serializers.Serializer):
-    page_id = serializers.CharField(max_length=64)
+class SelectAccountSerializer(serializers.Serializer):
+    account_id = serializers.CharField(max_length=64)

@@ -110,10 +110,19 @@ REQUIRE_APPROVED_EMPLOYER_VERIFICATION = config(
     cast=bool,
 )
 
-# Đăng bài chiến dịch lên Facebook Page của NTD (GĐ3). ``fake`` chạy toàn bộ luồng
-# OAuth/đăng/gỡ mà không gọi Meta, dùng cho dev và CI. Xem
-# docs/06-deployment/facebook-page-integration.md.
-CAMPAIGN_SOCIAL_PROVIDER = config('CAMPAIGN_SOCIAL_PROVIDER', default='fake')
+# Chiến dịch tự đăng bài lên mạng xã hội của NTD (ADR-0025). Mạng có trong
+# CAMPAIGN_SOCIAL_LIVE_NETWORKS gọi API thật; mạng còn lại dùng provider giả lập,
+# chạy trọn luồng kết nối/đăng/gỡ mà không gọi ra ngoài (dev, CI, demo). Xem
+# docs/06-deployment/social-integrations.md. CAMPAIGN_SOCIAL_PROVIDER=facebook là
+# cách bật cũ, tương đương CAMPAIGN_SOCIAL_LIVE_NETWORKS=facebook_page.
+_legacy_live_networks = (
+    'facebook_page' if config('CAMPAIGN_SOCIAL_PROVIDER', default='fake') == 'facebook' else ''
+)
+CAMPAIGN_SOCIAL_LIVE_NETWORKS = [
+    network.strip()
+    for network in config('CAMPAIGN_SOCIAL_LIVE_NETWORKS', default=_legacy_live_networks).split(',')
+    if network.strip()
+]
 FACEBOOK_APP_ID = config('FACEBOOK_APP_ID', default='')
 FACEBOOK_APP_SECRET = config('FACEBOOK_APP_SECRET', default='')
 FACEBOOK_GRAPH_API_VERSION = config('FACEBOOK_GRAPH_API_VERSION', default='v21.0')

@@ -1,7 +1,7 @@
-"""Images attached to a Facebook Page post: uploads, the company cover and logo.
+"""Images attached to a social post: uploads, the company cover and logo.
 
 Uploads are re-encoded (metadata such as GPS is dropped, the long side capped)
-and stored in public media, since the post is public on Facebook anyway. A post
+and stored in public media, since the post is public on the network anyway. A post
 may only reference images uploaded for its own campaign or the company's
 current cover and logo.
 """
@@ -19,9 +19,8 @@ from rest_framework.exceptions import ValidationError
 from common.storage.media import media_public_url, media_storage_path, validate_image_upload
 from common.storage.r2 import public_media_storage
 
-from ..models import CampaignChannel
+from ..domain.social_networks import network_for_channel_kind
 
-MAX_POST_IMAGES = 4
 MAX_SIDE = 2048
 
 
@@ -35,8 +34,8 @@ def _ensure_postable(channel, user):
         raise ValidationError(_('Bạn không có quyền với chiến dịch này.'))
     if campaign.is_terminal:
         raise ValidationError({'detail': _('Chiến dịch đã kết thúc, không đăng thêm được.')})
-    if channel.kind != CampaignChannel.Kind.FACEBOOK_PAGE:
-        raise ValidationError({'detail': _('Chỉ kênh Fanpage Facebook mới đăng tự động được.')})
+    if network_for_channel_kind(channel.kind) is None:
+        raise ValidationError({'detail': _('Kênh này không tự đăng bài được.')})
 
 
 def save_post_image(*, channel, user, upload):
@@ -82,7 +81,7 @@ def company_post_images(campaign):
     return choices
 
 
-def clean_post_images(campaign, images):
+def clean_post_images(campaign, images, *, max_images):
     """Keep only images this campaign may post, in order, without duplicates."""
     allowed_company = {item['path'] for item in company_post_images(campaign)}
     cleaned = []
@@ -96,15 +95,15 @@ def clean_post_images(campaign, images):
         if not public_media_storage().exists(path):
             raise ValidationError({'images': _('Ảnh đã bị xóa, hãy tải lại.')})
         cleaned.append(path)
-    if len(cleaned) > MAX_POST_IMAGES:
+    if len(cleaned) > max_images:
         raise ValidationError(
             {
                 'images': ngettext(
                     'Mỗi bài tối đa %(count)s ảnh.',
                     'Mỗi bài tối đa %(count)s ảnh.',
-                    MAX_POST_IMAGES,
+                    max_images,
                 )
-                % {'count': MAX_POST_IMAGES}
+                % {'count': max_images}
             }
         )
     return cleaned

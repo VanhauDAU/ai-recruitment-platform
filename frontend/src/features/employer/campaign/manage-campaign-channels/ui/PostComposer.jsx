@@ -92,20 +92,20 @@ function plannedTimes({ timing, scheduled_for: at, repeats = [] }) {
   return [first, ...repeats.map((days) => (first || dayjs()).add(days, 'day'))]
 }
 
-// Phần riêng của Fanpage: trang, ảnh, đăng ngay / hẹn giờ / đăng nhiều lần.
-function FacebookFields({ campaign, channel, values, form, times, connections }) {
+// Phần riêng của kênh tự đăng: tài khoản, ảnh, đăng ngay / hẹn giờ / đăng nhiều lần.
+function SocialAccountFields({ campaign, channel, network, values, form, times, connections }) {
   return (
     <>
-      <Form.Item label="Fanpage" name="connection" rules={[{ required: true, message: m.employer_campaign_fb_pick_page() }]}>
+      <Form.Item label={network.label} name="connection" rules={[{ required: true, message: m.employer_campaign_fb_pick_page({ network: network.label }) }]}>
         <Select
           options={connections.map((item) => ({
             value: item.public_id,
-            label: item.simulated ? m.employer_campaign_fb_simulated({ name: item.page_name }) : item.page_name,
+            label: item.simulated ? m.employer_campaign_fb_simulated({ name: item.account_name }) : item.account_name,
           }))}
         />
       </Form.Item>
       <Form.Item label={m.employer_campaign_fb_images()} name="images">
-        <PostImagePicker campaignId={campaign.public_id} channelId={channel.public_id} />
+        <PostImagePicker campaignId={campaign.public_id} channelId={channel.public_id} max={network.capabilities.max_images} />
       </Form.Item>
       <Form.Item label={m.employer_campaign_fb_timing()} name="timing">
         <Segmented
@@ -162,18 +162,19 @@ function FacebookFields({ campaign, channel, values, form, times, connections })
 }
 
 // Soạn một bài của kênh trong một ngăn: tin trong bài, link dẫn tới, nội dung (AI hoặc
-// tự viết) và xem trước. Fanpage đăng ngay/hẹn giờ; kênh khác lưu rồi sao chép để tự đăng.
-export default function PostComposer({ campaign, channel, open, onClose }) {
+// tự viết) và xem trước. Kênh có mạng tự đăng (``network``) đăng ngay/hẹn giờ; kênh khác
+// lưu rồi sao chép để tự đăng.
+export default function PostComposer({ campaign, channel, network, open, onClose }) {
   const [form] = Form.useForm()
   const queryClient = useQueryClient()
   const values = Form.useWatch([], form) || {}
   const caret = useRef(null)
-  const facebookPage = channel.kind === 'facebook_page'
+  const autoPost = Boolean(network)
   const initialText = postText(channel.rendered_content)
   // Tin/link mà nội dung hiện tại được soạn theo; đổi khác thì link trong bài đã cũ.
   const [draftedFor, setDraftedFor] = useState({ jobs: channel.jobs, target: channel.target })
-  const connectionsQuery = useQuery({ queryKey: campaignKeys.socialConnections, queryFn: getSocialConnections, enabled: open && facebookPage })
-  const connections = (connectionsQuery.data || []).filter((item) => item.status === 'connected')
+  const connectionsQuery = useQuery({ queryKey: campaignKeys.socialConnections, queryFn: getSocialConnections, enabled: open && autoPost })
+  const connections = (connectionsQuery.data || []).filter((item) => item.status === 'connected' && item.network === network?.key)
   const page = connections.find((item) => item.public_id === values.connection) || connections[0]
   const jobOptions = channel.links
     .filter((link) => link.key !== 'landing' && link.key !== 'company')
@@ -218,13 +219,13 @@ export default function PostComposer({ campaign, channel, open, onClose }) {
   })
   const submit = useMutation({
     mutationFn: async (data) => {
-      // Lưu tin, link và nội dung vào kênh trước, để link của bài Fanpage và bản nháp khớp.
+      // Lưu tin, link và nội dung vào kênh trước, để link của bài tự đăng và bản nháp khớp.
       await updateCampaignChannel(campaign.public_id, channel.public_id, {
         jobs: data.jobs || [],
         target: data.target,
         ...(data.message !== initialText && { content: { body: data.message } }),
       })
-      if (!facebookPage) return
+      if (!autoPost) return
       for (const at of plannedTimes(data)) {
         await scheduleChannelPost(campaign.public_id, channel.public_id, {
           connection: data.connection,
@@ -237,8 +238,8 @@ export default function PostComposer({ campaign, channel, open, onClose }) {
     onSuccess: (_, data) => {
       refresh()
       queryClient.invalidateQueries({ queryKey: campaignKeys.channelPosts(campaign.public_id, channel.public_id) })
-      if (facebookPage) {
-        message.success(data.timing === 'now' ? m.employer_campaign_fb_sent() : m.employer_campaign_fb_scheduled({ count: plannedTimes(data).length }))
+      if (autoPost) {
+        message.success(data.timing === 'now' ? m.employer_campaign_fb_sent({ network: network.platform }) : m.employer_campaign_fb_scheduled({ count: plannedTimes(data).length }))
       } else {
         copyText(data.message, m.employer_campaign_content_copy_label(), message)
       }
@@ -250,12 +251,12 @@ export default function PostComposer({ campaign, channel, open, onClose }) {
     },
   })
 
-  const loadingPages = facebookPage && connectionsQuery.isLoading
-  const noPage = facebookPage && !connectionsQuery.isLoading && !connections.length
+  const loadingPages = autoPost && connectionsQuery.isLoading
+  const noPage = autoPost && !connectionsQuery.isLoading && !connections.length
   let submitLabel = m.employer_campaign_composer_save_copy()
-  if (facebookPage && values.timing === 'now') submitLabel = m.employer_campaign_fb_post_now()
-  else if (facebookPage && values.timing === 'series') submitLabel = m.employer_campaign_fb_schedule_count({ count: times.length })
-  else if (facebookPage) submitLabel = m.employer_campaign_fb_schedule()
+  if (autoPost && values.timing === 'now') submitLabel = m.employer_campaign_fb_post_now()
+  else if (autoPost && values.timing === 'series') submitLabel = m.employer_campaign_fb_schedule_count({ count: times.length })
+  else if (autoPost) submitLabel = m.employer_campaign_fb_schedule()
 
   return (
     <Drawer
@@ -268,7 +269,7 @@ export default function PostComposer({ campaign, channel, open, onClose }) {
       extra={(
         <Button
           type="primary"
-          icon={facebookPage ? null : <CopyOutlined aria-hidden />}
+          icon={autoPost ? null : <CopyOutlined aria-hidden />}
           loading={submit.isPending}
           disabled={noPage || loadingPages}
           onClick={() => form.submit()}
@@ -281,8 +282,8 @@ export default function PostComposer({ campaign, channel, open, onClose }) {
         <Alert
           type="info"
           showIcon
-          title={m.employer_campaign_fb_no_connection()}
-          description={<>{m.employer_campaign_fb_connect_prefix()}<Link to={EMPLOYER_INTEGRATIONS_URL}>{m.employer_campaign_fb_account_settings()}</Link>{m.employer_campaign_fb_connect_suffix()}</>}
+          title={m.employer_campaign_fb_no_connection({ network: network?.label })}
+          description={<>{m.employer_campaign_fb_connect_prefix({ network: network?.label })}<Link to={EMPLOYER_INTEGRATIONS_URL}>{m.employer_campaign_fb_account_settings()}</Link>{m.employer_campaign_fb_connect_suffix()}</>}
         />
       ) : (
         <div className="ch-composer__grid">
@@ -338,26 +339,26 @@ export default function PostComposer({ campaign, channel, open, onClose }) {
               <Input.TextArea
                 id="post-message"
                 autoSize={{ minRows: 7, maxRows: 14 }}
-                maxLength={facebookPage ? 5000 : 3000}
+                maxLength={network?.capabilities.max_chars ?? 3000}
                 showCount
                 placeholder={m.employer_campaign_composer_message_placeholder()}
                 onSelect={(event) => { caret.current = [event.target.selectionStart, event.target.selectionEnd] }}
               />
             </Form.Item>
-            {facebookPage && <FacebookFields campaign={campaign} channel={channel} values={values} form={form} times={times} connections={connections} />}
+            {autoPost && <SocialAccountFields campaign={campaign} channel={channel} network={network} values={values} form={form} times={times} connections={connections} />}
           </Form>
           <aside className="ch-composer__preview">
-            <p className="ch-section-note">{m.employer_campaign_fb_preview()}</p>
+            <p className="ch-section-note">{autoPost ? m.employer_campaign_fb_preview({ network: network.platform }) : m.employer_campaign_preview_manual()}</p>
             <SocialPostPreview
-              name={facebookPage ? page?.page_name || 'Fanpage' : channel.label}
-              avatarUrl={facebookPage ? page?.page_picture_url : undefined}
-              meta={!facebookPage ? channel.kind_label : values.timing === 'now' || !values.scheduled_for ? m.employer_campaign_fb_just_now() : when(values.scheduled_for)}
+              name={autoPost ? page?.account_name || network.label : channel.label}
+              avatarUrl={autoPost ? page?.account_picture_url : undefined}
+              meta={!autoPost ? channel.kind_label : values.timing === 'now' || !values.scheduled_for ? m.employer_campaign_fb_just_now() : when(values.scheduled_for)}
               text={values.message || ''}
               images={(values.images || []).map((image) => image.url)}
               link={channel.kind.startsWith('facebook') ? channel.link : ''}
               linkTitle={campaign.name}
             />
-            {facebookPage && campaign.status !== 'active' && (
+            {autoPost && campaign.status !== 'active' && (
               <Alert type="warning" showIcon title={m.employer_campaign_fb_not_running()} description={m.employer_campaign_fb_not_running_description()} />
             )}
           </aside>

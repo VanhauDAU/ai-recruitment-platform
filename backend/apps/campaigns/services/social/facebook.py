@@ -9,7 +9,8 @@ from urllib.parse import urlencode, urlsplit
 import requests
 from django.conf import settings
 
-from .base import PublishedPost, SocialPage, SocialProviderError
+from ...domain.social_networks import FACEBOOK_PAGE
+from .base import PublishedPost, SocialAccount, SocialProviderError
 
 SCOPES = 'pages_show_list,pages_manage_posts,pages_read_engagement'
 TOKEN_ERROR_CODES = {190, 102}
@@ -37,12 +38,14 @@ def is_public_url(url):
 
 
 class FacebookPageProvider:
-    name = 'facebook'
+    network = FACEBOOK_PAGE
+    simulated = False
 
     def __init__(self, session=None):
         self.session = session or requests.Session()
         self.version = settings.FACEBOOK_GRAPH_API_VERSION
         self.timeout = settings.CAMPAIGN_SOCIAL_HTTP_TIMEOUT_SECONDS
+        self.redirect_uri = settings.FACEBOOK_OAUTH_REDIRECT_URI
 
     def _url(self, path):
         return f'https://graph.facebook.com/{self.version}/{path.lstrip("/")}'
@@ -89,7 +92,7 @@ class FacebookPageProvider:
         query = urlencode(
             {
                 'client_id': settings.FACEBOOK_APP_ID,
-                'redirect_uri': settings.FACEBOOK_OAUTH_REDIRECT_URI,
+                'redirect_uri': self.redirect_uri,
                 'state': state,
                 'scope': SCOPES,
                 'response_type': 'code',
@@ -103,7 +106,7 @@ class FacebookPageProvider:
         short = self._call(
             'GET',
             'oauth/access_token',
-            params={**app, 'redirect_uri': settings.FACEBOOK_OAUTH_REDIRECT_URI, 'code': code},
+            params={**app, 'redirect_uri': self.redirect_uri, 'code': code},
         )
         long_lived = self._call(
             'GET',
@@ -116,7 +119,7 @@ class FacebookPageProvider:
         )
         return long_lived['access_token']
 
-    def list_pages(self, user_token):
+    def list_accounts(self, user_token):
         payload = self._call(
             'GET',
             'me/accounts',
@@ -124,8 +127,8 @@ class FacebookPageProvider:
             params={'fields': 'id,name,access_token,picture{url}', 'limit': 50},
         )
         return [
-            SocialPage(
-                page_id=str(page['id']),
+            SocialAccount(
+                account_id=str(page['id']),
                 name=page.get('name', '')[:255],
                 picture_url=((page.get('picture') or {}).get('data') or {}).get('url', ''),
                 token=page['access_token'],
@@ -134,7 +137,7 @@ class FacebookPageProvider:
             if page.get('access_token')
         ]
 
-    def publish(self, *, page_id, page_token, message, link, images=()):
+    def publish(self, *, account_id, token, message, link, images=()):
         data = {'message': message}
         if images:
             # Photos are uploaded unpublished, then attached to one feed post.
@@ -142,8 +145,8 @@ class FacebookPageProvider:
             for index, (name, content) in enumerate(images):
                 photo = self._call(
                     'POST',
-                    f'{page_id}/photos',
-                    token=page_token,
+                    f'{account_id}/photos',
+                    token=token,
                     data={'published': 'false'},
                     files={'source': (name, content)},
                 )
@@ -154,17 +157,17 @@ class FacebookPageProvider:
             data['link'] = link  # Facebook renders a preview card for it
         elif link and link not in message:
             data['message'] = f'{message}\n\n{link}'
-        created = self._call('POST', f'{page_id}/feed', token=page_token, data=data)
+        created = self._call('POST', f'{account_id}/feed', token=token, data=data)
         post_id = created['id']
-        details = self._call('GET', post_id, token=page_token, params={'fields': 'permalink_url'})
+        details = self._call('GET', post_id, token=token, params={'fields': 'permalink_url'})
         return PublishedPost(post_id=post_id, permalink=details.get('permalink_url', ''))
 
-    def find_recent_post(self, *, page_id, page_token, link):
+    def find_recent_post(self, *, account_id, token, link):
         """Post already carrying ``link`` (a publish that timed out may have succeeded)."""
         payload = self._call(
             'GET',
-            f'{page_id}/published_posts',
-            token=page_token,
+            f'{account_id}/published_posts',
+            token=token,
             params={'fields': 'id,message,permalink_url', 'limit': 10},
         )
         for post in payload.get('data', []):
@@ -172,9 +175,9 @@ class FacebookPageProvider:
                 return PublishedPost(post_id=post['id'], permalink=post.get('permalink_url', ''))
         return None
 
-    def delete(self, *, post_id, page_token):
+    def delete(self, *, post_id, token):
         try:
-            self._call('DELETE', post_id, token=page_token)
+            self._call('DELETE', post_id, token=token)
         except SocialProviderError as error:
             if error.code in {'graph_100', 'http_404'}:
                 return  # already gone

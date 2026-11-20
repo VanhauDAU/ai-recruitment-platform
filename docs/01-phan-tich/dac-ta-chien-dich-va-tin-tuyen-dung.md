@@ -198,7 +198,7 @@ thêm kênh sau khi chiến dịch chạy cũng được.
 - **Đăng thành công**: kênh tự đánh dấu "Đã đăng" (kèm link bài) và ghi
   `CampaignActivity`.
 - **Môi trường**: `CAMPAIGN_SOCIAL_PROVIDER=fake` chạy toàn bộ luồng không cần
-  Meta. Đăng thật theo `docs/06-deployment/facebook-page-integration.md`.
+  Meta. Đăng thật theo `docs/06-deployment/social-integrations.md`.
 
 ### Trạng thái chiến dịch
 

@@ -1,13 +1,13 @@
 import { CopyOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Button, Checkbox, Input } from 'antd'
+import { Button, Checkbox, Input, Skeleton } from 'antd'
 import { useState } from 'react'
-import { campaignKeys, updateCampaignChannel } from '@/entities/campaign/campaign'
+import { campaignKeys, networkForKind, updateCampaignChannel, useSocialNetworks } from '@/entities/campaign/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
 import { copyText, postText, summary } from '../lib/channel-kinds'
-import ChannelFacebookPosts from './ChannelFacebookPosts'
+import ChannelSocialPosts from './ChannelSocialPosts'
 import PostComposer from './PostComposer'
 
 const TARGET_LABELS = {
@@ -61,17 +61,20 @@ function ManualPost({ campaign, channel, editable, text, onEdit }) {
 }
 
 // Tab Bài đăng: một nút soạn bài và danh sách bài. Mọi bước soạn nằm trong ngăn
-// PostComposer, nên tab chỉ hiện kết quả: bài trên Fanpage hoặc bài đang dùng.
+// PostComposer, nên tab chỉ hiện kết quả: bài tự đăng hoặc bài đang dùng để đăng tay.
 export default function ChannelPostSection({ campaign, channel, editable }) {
   const [composing, setComposing] = useState(false)
-  const facebookPage = channel.kind === 'facebook_page'
+  const networksQuery = useSocialNetworks()
+  const network = networkForKind(networksQuery.data, channel.kind)
   const text = postText(channel.rendered_content)
+
+  if (networksQuery.isLoading) return <Skeleton active paragraph={{ rows: 3 }} />
 
   return (
     <div className="ch-posts">
       <div className="ch-posts__bar">
         <p className="ch-section-note">
-          {facebookPage ? m.employer_campaign_posts_intro() : m.employer_campaign_post_manual_note({ kind: channel.kind_label })}
+          {network ? m.employer_campaign_posts_intro({ network: network.label }) : m.employer_campaign_post_manual_note({ kind: channel.kind_label })}
         </p>
         {editable && (
           <Button type="primary" icon={<PlusOutlined aria-hidden />} onClick={() => setComposing(true)}>
@@ -80,15 +83,15 @@ export default function ChannelPostSection({ campaign, channel, editable }) {
         )}
       </div>
 
-      {facebookPage ? (
-        <ChannelFacebookPosts campaign={campaign} channel={channel} editable={editable} />
+      {network ? (
+        <ChannelSocialPosts campaign={campaign} channel={channel} network={network} editable={editable} />
       ) : text ? (
         <ManualPost campaign={campaign} channel={channel} editable={editable} text={text} onEdit={() => setComposing(true)} />
       ) : (
         <p className="ch-section-note">{m.employer_campaign_post_empty()}</p>
       )}
 
-      {editable && <PostComposer campaign={campaign} channel={channel} open={composing} onClose={() => setComposing(false)} />}
+      {editable && <PostComposer campaign={campaign} channel={channel} network={network} open={composing} onClose={() => setComposing(false)} />}
     </div>
   )
 }

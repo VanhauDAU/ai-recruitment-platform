@@ -7,12 +7,12 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
 
-export const MAX_POST_IMAGES = 4
 const MAX_BYTES = 5 * 1024 * 1024
 const ACCEPT = 'image/jpeg,image/png,image/webp,image/gif'
 
-// Ảnh đính kèm bài Fanpage: tải từ máy hoặc dùng ảnh bìa, logo công ty. value = [{path, url}].
-export default function PostImagePicker({ campaignId, channelId, value = [], onChange }) {
+// Ảnh đính kèm bài tự đăng: tải từ máy hoặc dùng ảnh bìa, logo công ty. value = [{path, url}].
+// ``max`` là số ảnh tối đa mỗi bài của mạng.
+export default function PostImagePicker({ campaignId, channelId, max, value = [], onChange }) {
   const choicesQuery = useQuery({
     queryKey: campaignKeys.postImageChoices(campaignId, channelId),
     queryFn: () => getChannelPostImageChoices(campaignId, channelId),
@@ -24,10 +24,10 @@ export default function PostImagePicker({ campaignId, channelId, value = [], onC
   // Nhiều ảnh tải song song: mỗi ảnh xong phải nối vào danh sách mới nhất, không phải bản lúc bắt đầu.
   const latest = useRef(value)
   latest.current = value
-  const full = value.length >= MAX_POST_IMAGES
+  const full = value.length >= max
   const add = (image) => {
     const current = latest.current
-    if (current.length >= MAX_POST_IMAGES || current.some((item) => item.path === image.path)) return
+    if (current.length >= max || current.some((item) => item.path === image.path)) return
     latest.current = [...current, { path: image.path, url: image.url }]
     onChange(latest.current)
   }
@@ -84,7 +84,7 @@ export default function PostImagePicker({ campaignId, channelId, value = [], onC
         ))}
       </div>
       <p className="ch-section-note">
-        {m.employer_campaign_images_note({ max: MAX_POST_IMAGES })}
+        {m.employer_campaign_images_note({ max })}
       </p>
     </div>
   )

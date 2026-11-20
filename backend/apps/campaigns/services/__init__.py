@@ -21,11 +21,11 @@ from .monitoring import run_health_snapshots, send_weekly_reports, snapshot_camp
 from .report_export import REPORT_CONTENT_TYPES, campaign_report_file
 from .schedule import run_campaign_schedule
 from .social_connections import (
-    complete_page_connection,
-    disconnect_page,
-    pending_pages,
-    select_page,
-    start_page_connection,
+    complete_connection,
+    disconnect_account,
+    pending_accounts,
+    select_account,
+    start_connection,
 )
 from .social_post_images import company_post_images, save_post_image
 from .social_posts import (
@@ -62,17 +62,17 @@ __all__ = [
     'send_weekly_reports',
     'snapshot_campaign',
     'cancel_post',
-    'complete_page_connection',
-    'disconnect_page',
+    'complete_connection',
+    'disconnect_account',
     'due_post_ids',
-    'pending_pages',
+    'pending_accounts',
     'post_message',
     'publish_post',
     'reconcile_social_posts',
     'reschedule_post',
     'schedule_post',
-    'select_page',
-    'start_page_connection',
+    'select_account',
+    'start_connection',
     'ContentQuotaExceeded',
     'add_channel_cost',
     'campaign_launch_overview',

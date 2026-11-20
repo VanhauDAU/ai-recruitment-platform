@@ -24,6 +24,8 @@ const STATUS = {
   deleted: { icon: CheckCircleFilled, tone: 'slate' },
 }
 const OPEN = ['scheduled', 'postponed', 'failed']
+// Bài còn trên mạng: đã đăng, hoặc chờ NTD tự gỡ khi mạng không gỡ được.
+const OPEN_LINK = ['published', 'delete_failed']
 const when = (value) => dayjs(value).format('HH:mm DD/MM/YYYY')
 
 function postTime(post) {
@@ -32,8 +34,8 @@ function postTime(post) {
   return m.employer_campaign_posts_scheduled_for({ time: when(post.scheduled_for) })
 }
 
-// Bài trên Fanpage của kênh: mới nhất trước, lỗi kèm cách xử lý, đăng lại hoặc hủy.
-export default function ChannelFacebookPosts({ campaign, channel, editable }) {
+// Bài tự đăng của kênh: mới nhất trước, lỗi kèm cách xử lý, đăng lại hoặc hủy.
+export default function ChannelSocialPosts({ campaign, channel, network, editable }) {
   const queryClient = useQueryClient()
   const key = campaignKeys.channelPosts(campaign.public_id, channel.public_id)
   const postsQuery = useQuery({
@@ -57,9 +59,9 @@ export default function ChannelFacebookPosts({ campaign, channel, editable }) {
   return (
     <div className="ch-fb">
       {postsQuery.isLoading ? <Skeleton active paragraph={{ rows: 2 }} /> : posts.length === 0 ? (
-        <p className="ch-section-note">{m.employer_campaign_posts_empty()}</p>
+        <p className="ch-section-note">{m.employer_campaign_posts_empty({ network: network.label })}</p>
       ) : (
-        <ol className="ch-postcards" aria-label={m.employer_campaign_posts_timeline_aria()}>
+        <ol className="ch-postcards" aria-label={m.employer_campaign_posts_timeline_aria({ network: network.label })}>
           {posts.map((post) => {
             const meta = STATUS[post.status] || STATUS.scheduled
             const Icon = meta.icon
@@ -72,7 +74,7 @@ export default function ChannelFacebookPosts({ campaign, channel, editable }) {
                     {post.status_label}
                   </span>
                   <span className="ch-postcard__when">{postTime(post)}</span>
-                  {post.page_name && <span className="ch-postcard__page">{post.page_name}</span>}
+                  {post.account_name && <span className="ch-postcard__page">{post.account_name}</span>}
                 </div>
                 <div className="ch-postcard__body">
                   {cover && (
@@ -84,10 +86,10 @@ export default function ChannelFacebookPosts({ campaign, channel, editable }) {
                   <p className="ch-postcard__text">{summary(post.message)}</p>
                 </div>
                 {post.error_message && <p className="ch-postcard__error">{post.error_message}</p>}
-                {(post.permalink && post.status === 'published') || (editable && OPEN.includes(post.status)) ? (
+                {(post.permalink && OPEN_LINK.includes(post.status)) || (editable && OPEN.includes(post.status)) ? (
                   <div className="ch-postcard__actions">
-                    {post.permalink && post.status === 'published' && (
-                      <a href={post.permalink} target="_blank" rel="noreferrer">{m.employer_campaign_posts_open_on_facebook()}</a>
+                    {post.permalink && OPEN_LINK.includes(post.status) && (
+                      <a href={post.permalink} target="_blank" rel="noreferrer">{m.employer_campaign_posts_open_on_facebook({ network: network.platform })}</a>
                     )}
                     {editable && ['postponed', 'failed'].includes(post.status) && (
                       <Button size="small" loading={retry.isPending && retry.variables === post.public_id} onClick={() => retry.mutate(post.public_id)}>
