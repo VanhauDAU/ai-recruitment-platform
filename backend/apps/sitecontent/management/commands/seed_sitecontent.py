@@ -6,19 +6,22 @@ from django.core.management.base import BaseCommand
 from apps.sitecontent.models import Banner, LinkGroup, LinkItem, SiteSetting
 
 # Cấu hình mẫu để trang chạy ngay; admin chỉnh/thêm sau qua trang quản trị.
-# Seed idempotent: đồng bộ metadata (label/group/type/options/order/is_public)
-# nhưng KHÔNG ghi đè value admin đã chỉnh. Dữ liệu nằm trong seed_data/*.json;
+# Seed idempotent: đồng bộ metadata (label/group/section/type/options/order/
+# description/help/is_public) nhưng KHÔNG ghi đè value admin đã chỉnh. Gỡ key
+# thì xoá consumer, xoá khỏi settings.json và thêm data migration xoá row. Dữ liệu nằm trong seed_data/*.json;
 # thứ tự bản ghi trong settings.json quyết định `order` trong từng nhóm.
 SEED_DATA_DIR = Path(__file__).resolve().parents[2] / 'seed_data'
 
-# Logo cũ không còn trong frontend/public (2 ảnh gốc nặng 957KB/376KB đã bị
-# xoá) — DB nào còn trỏ vào là ảnh vỡ, nên seed ép về giá trị mặc định mới.
+# Logo cũ không còn trong frontend/public (ảnh gốc nặng và bản .png đã đổi sang
+# .webp) — DB nào còn trỏ vào là ảnh vỡ, nên seed ép về giá trị mặc định mới.
 LEGACY_BRAND_VALUES = {
     '',
     '/images/logo/aicareer-logo.svg',
     '/favicon.svg',
     '/images/logo/logo_proCV_2000_2000.png',
     '/images/logo/logo_proCV_2000_600.png',
+    '/images/logo/logo-full.png',
+    '/images/logo/logo-mark.png',
 }
 BRAND_ASSET_KEYS = {'brand_logo_url', 'brand_logo_mark_url', 'brand_favicon_url'}
 
@@ -54,10 +57,12 @@ class Command(BaseCommand):
             metadata = {
                 'label': row['label'],
                 'group': group,
+                'section': row['section'],
                 'value_type': row['value_type'],
                 'options': row['options'],
                 'order': order_in_group[group],
                 'description': row['description'],
+                'help': row['help'],
                 'is_public': row['is_public'],
             }
             setting, created = SiteSetting.objects.get_or_create(

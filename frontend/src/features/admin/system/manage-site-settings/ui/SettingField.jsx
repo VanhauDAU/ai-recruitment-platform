@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Button, ColorPicker, Input, InputNumber, Select, Switch, Tag, Upload } from 'antd'
+import { Button, ColorPicker, Input, InputNumber, Select, Switch, Upload } from 'antd'
 import { UploadOutlined } from '@ant-design/icons'
 
 function ColorInput({ value, onChange }) {
@@ -116,12 +116,6 @@ export default function SettingField({ setting, value, onChange, pendingFile, on
       return <Input.TextArea value={value} onChange={(e) => onChange(e.target.value)} autoSize={{ minRows: 2, maxRows: 6 }} />
     case 'json':
       return <JsonInput value={value} onChange={onChange} />
-    case 'env':
-      return setting.env_configured ? (
-        <Tag color="green">Đã cấu hình qua .env ({setting.options?.env_var})</Tag>
-      ) : (
-        <Tag color="orange">Chưa cấu hình — thêm {setting.options?.env_var} vào .env backend</Tag>
-      )
     default: // text, email, url
       return <Input value={value} onChange={(e) => onChange(e.target.value)} />
   }

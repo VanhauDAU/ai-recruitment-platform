@@ -35,8 +35,10 @@ describe('AdminSettings', () => {
     Object.values(mocks).forEach((mock) => mock.mockReset())
     mocks.getAdminSettings.mockResolvedValue({
       groups: [{
-        key: 'general',
-        label: 'Chung',
+        key: 'brand',
+        label: 'Thương hiệu',
+        area: 'content',
+        area_label: 'Giao diện & nội dung',
         settings: [{
           key: 'brand_primary_color',
           label: 'Màu chủ đạo',

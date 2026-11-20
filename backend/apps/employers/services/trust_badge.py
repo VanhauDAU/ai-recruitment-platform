@@ -14,7 +14,7 @@ from django.utils.translation import gettext_lazy
 from apps.accounts.models import User
 from apps.accounts.services import is_account_accessible
 from apps.jobs.models import JobReport
-from apps.sitecontent.models import SiteSetting
+from apps.sitecontent.selectors import get_setting
 from common.metrics import record_metric
 
 from ..models import (
@@ -62,11 +62,7 @@ BADGE_CRITERIA = (
 
 
 def _minimum_account_months():
-    value = (
-        SiteSetting.objects.filter(key=MINIMUM_ACCOUNT_MONTHS_SETTING)
-        .values_list('value', flat=True)
-        .first()
-    )
+    value = get_setting(MINIMUM_ACCOUNT_MONTHS_SETTING)
     if (
         isinstance(value, bool)
         or not isinstance(value, int)

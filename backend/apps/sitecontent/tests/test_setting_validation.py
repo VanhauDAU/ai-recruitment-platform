@@ -21,3 +21,50 @@ class NumericSiteSettingValidationTests(SimpleTestCase):
                 normalized, error = _validate_value(self.setting, value)
                 self.assertIsNone(normalized)
                 self.assertTrue(error)
+
+
+class TypedSiteSettingValidationTests(SimpleTestCase):
+    def _setting(self, value_type, **options):
+        return SiteSetting(key='k', value_type=value_type, options=options)
+
+    def _error(self, setting, value):
+        return _validate_value(setting, value)[1]
+
+    def test_url_accepts_http_and_site_paths_and_blank(self):
+        setting = self._setting(SiteSetting.ValueType.URL)
+        for value in ('https://procv.vn/chinh-sach', '/chinh-sach-cookie', ''):
+            with self.subTest(value=value):
+                self.assertIsNone(self._error(setting, value))
+        for value in ('javascript:alert(1)', 'procv.vn', 'ftp://x.vn/a'):
+            with self.subTest(value=value):
+                self.assertTrue(self._error(setting, value))
+
+    def test_email_and_max_length(self):
+        email = self._setting(SiteSetting.ValueType.EMAIL)
+        self.assertIsNone(self._error(email, 'hotro@procv.vn'))
+        self.assertTrue(self._error(email, 'hotro@'))
+        text = self._setting(SiteSetting.ValueType.TEXT, max_length=5)
+        self.assertIsNone(self._error(text, '12345'))
+        self.assertEqual(self._error(text, '123456'), 'Tối đa 5 ký tự.')
+
+    def test_json_schema_for_object_lists(self):
+        setting = self._setting(
+            SiteSetting.ValueType.JSON,
+            schema={'item': 'object', 'fields': ['value', 'label_vi'], 'required': ['value']},
+        )
+        self.assertIsNone(self._error(setting, [{'value': '10+', 'label_vi': 'tin'}]))
+        self.assertIsNone(self._error(setting, []))
+        for value in (
+            {'value': '1'},
+            ['x'],
+            [{'label_vi': 'thiếu value'}],
+            [{'value': '1', 'x': 1}],
+        ):
+            with self.subTest(value=value):
+                self.assertTrue(self._error(setting, value))
+
+    def test_json_schema_for_string_lists_and_free_json(self):
+        strings = self._setting(SiteSetting.ValueType.JSON, schema={'item': 'string'})
+        self.assertIsNone(self._error(strings, ['gemini-3.5-flash-lite']))
+        self.assertTrue(self._error(strings, ['', 'x']))
+        self.assertIsNone(self._error(self._setting(SiteSetting.ValueType.JSON), {'free': 1}))

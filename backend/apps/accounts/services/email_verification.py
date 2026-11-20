@@ -8,10 +8,11 @@ from django.utils.html import escape
 from django.utils.translation import gettext as _
 
 from apps.accounts.services.token_cache import atomic_pop
+from apps.sitecontent.selectors import get_string_setting
 from common.i18n import recipient_language
 
 from ..models import User
-from .mailing import frontend_link, send_html_email, site_setting
+from .mailing import frontend_link, send_html_email
 
 _TOKEN_PREFIX = 'email_verify:token:'
 _COOLDOWN_PREFIX = 'email_verify:cooldown:'
@@ -67,13 +68,13 @@ def send_verification_email(user):
 
 
 def _employer_verification(user, link):
-    site_name = site_setting('site_name', 'ProCV')
+    site_name = get_string_setting('site_name', 'ProCV')
     hours = settings.EMAIL_VERIFICATION_TTL // 3600
     name = user.full_name or user.email
     recruiter = getattr(user, 'recruiter_profile', None)
     recruiter_code = recruiter.public_id if recruiter else user.public_id
-    support_email = site_setting('support_email', '')
-    hotline = site_setting('hotline', '')
+    support_email = get_string_setting('support_email', '')
+    hotline = get_string_setting('hotline', '')
     values = {
         'site_name': site_name,
         'name': name,
@@ -151,7 +152,7 @@ def _employer_verification(user, link):
 
 
 def _candidate_verification(user, link):
-    site_name = site_setting('site_name', 'ProCV')
+    site_name = get_string_setting('site_name', 'ProCV')
     hours = settings.EMAIL_VERIFICATION_TTL // 3600
     name = user.full_name or user.email
     values = {'site_name': site_name, 'name': name, 'link': link, 'hours': hours}
@@ -213,8 +214,8 @@ def send_email_changed_notice(
 
 
 def _email_changed_notice(user, old_email, new_email, admin_initiated):
-    site_name = site_setting('site_name', 'ProCV')
-    support_email = site_setting('support_email', '')
+    site_name = get_string_setting('site_name', 'ProCV')
+    support_email = get_string_setting('support_email', '')
     values = {
         'portal': _portal_label(user),
         'site_name': site_name,
@@ -282,8 +283,8 @@ def send_account_status_notice(
 
 
 def _account_status_notice(user, recipient, before_status, after_status, occurred_at):
-    site_name = site_setting('site_name', 'ProCV')
-    support_email = site_setting('support_email', '')
+    site_name = get_string_setting('site_name', 'ProCV')
+    support_email = get_string_setting('support_email', '')
     unknown = _('không xác định')
     status_label = {
         User.Status.ACTIVE: _('được mở lại'),

@@ -6786,8 +6786,8 @@ paths:
   /api/admin/site/settings/:
     get:
       operationId: admin_site_settings_retrieve
-      description: 'GET: toàn bộ cấu hình gộp theo 15 nhóm. PATCH: cập nhật hàng loạt
-        value.'
+      description: 'GET: cấu hình gộp theo nhóm (kèm khu trên thanh bên). PATCH: cập
+        nhật hàng loạt value.'
       summary: 'Admin: đọc toàn bộ site settings'
       tags:
       - site-admin
@@ -6803,8 +6803,8 @@ paths:
           description: ''
     patch:
       operationId: admin_site_settings_partial_update
-      description: 'GET: toàn bộ cấu hình gộp theo 15 nhóm. PATCH: cập nhật hàng loạt
-        value.'
+      description: 'GET: cấu hình gộp theo nhóm (kèm khu trên thanh bên). PATCH: cập
+        nhật hàng loạt value.'
       summary: 'Admin: cập nhật site settings'
       tags:
       - site-admin
@@ -6849,6 +6849,24 @@ paths:
             schema:
               type: object
               additionalProperties: {}
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/admin/site/system-parameters/:
+    get:
+      operationId: admin_site_system_parameters_retrieve
+      description: Giá trị tiến trình đang áp dụng cho các thông số không sửa qua
+        admin; không trả secret.
+      summary: 'Admin: thông số hệ thống chỉ đọc (.env/code)'
+      tags:
+      - site-admin
       security:
       - jwtAuth: []
       responses:

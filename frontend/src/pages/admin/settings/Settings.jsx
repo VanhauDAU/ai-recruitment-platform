@@ -10,6 +10,12 @@ import { AdminDataActions, AdminPageHeader, AdminPanel } from '@/shared/ui/admin
 import useConfirmAction from '@/shared/ui/confirm-action/use-confirm-action'
 
 const isEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b)
+// Nhóm cũ (trước khi gom nhóm theo ADR-0026) để link/bookmark cũ vẫn mở đúng chỗ.
+const LEGACY_GROUPS = { general: 'brand', candidate: 'cv', security: 'operations', upload: 'operations', payment: 'operations' }
+const requestedGroup = (searchParams) => {
+  const group = searchParams.get('group') || ''
+  return LEGACY_GROUPS[group] || group
+}
 
 function SettingsPageHeader() {
   return (
@@ -31,7 +37,7 @@ export default function AdminSettings() {
   const [values, setValues] = useState({})
   const [initial, setInitial] = useState({})
   const [pendingImageFiles, setPendingImageFiles] = useState({})
-  const [activeGroup, setActiveGroup] = useState(() => searchParams.get('group') || 'general')
+  const [activeGroup, setActiveGroup] = useState(() => requestedGroup(searchParams))
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
@@ -62,10 +68,9 @@ export default function AdminSettings() {
   }, [loadSettings])
 
   useEffect(() => {
-    const requested = searchParams.get('group') || 'general'
-    if (groups?.some((group) => group.key === requested)) {
-      setActiveGroup(requested)
-    }
+    if (!groups?.length) return
+    const requested = requestedGroup(searchParams)
+    setActiveGroup(groups.some((group) => group.key === requested) ? requested : groups[0].key)
   }, [groups, searchParams])
 
   const dirtyKeys = useMemo(
@@ -82,7 +87,7 @@ export default function AdminSettings() {
   const handleSave = async (group) => {
     const changed = Object.fromEntries(
       group.settings
-        .filter((s) => s.value_type !== 'env' && dirtyKeys.includes(s.key))
+        .filter((s) => dirtyKeys.includes(s.key))
         .map((s) => [s.key, values[s.key]])
     )
     setSaving(true)
@@ -141,7 +146,7 @@ export default function AdminSettings() {
     const commitGroup = () => {
       setActiveGroup(key)
       const next = new URLSearchParams(searchParams)
-      if (key === 'general') next.delete('group')
+      if (key === groups[0]?.key) next.delete('group')
       else next.set('group', key)
       setSearchParams(next)
     }

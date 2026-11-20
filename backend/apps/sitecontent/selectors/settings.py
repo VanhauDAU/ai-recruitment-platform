@@ -1,20 +1,62 @@
 """Read site-managed configuration through a small public selector."""
 
+import json
+from functools import lru_cache
+from pathlib import Path
+
+from django.core.cache import cache
+from django.db import connection
+
 from common.api.params import parse_bool
 from common.vietnam_time import vietnam_today
 
 from ..models import SiteSetting
 
+SETTINGS_CACHE_KEY = 'sitecontent:settings:all:v1'
+SETTINGS_CACHE_TIMEOUT = 60 * 60
+SEED_SETTINGS_PATH = Path(__file__).resolve().parents[1] / 'seed_data' / 'settings.json'
+
+
+@lru_cache(maxsize=1)
+def setting_registry():
+    """``{key: seed row}`` from ``seed_data/settings.json``: the one source of defaults."""
+    rows = json.loads(SEED_SETTINGS_PATH.read_text(encoding='utf-8'))
+    return {row['key']: row for row in rows}
+
+
+def _stored_values():
+    """Every stored ``{key: value}``.
+
+    Outside a transaction the committed map is cached and receivers drop it
+    after each commit. Inside one, read the database so uncommitted changes of
+    the same transaction are visible and never leak into the shared cache.
+    """
+    if connection.in_atomic_block:
+        return dict(SiteSetting.objects.values_list('key', 'value'))
+    values = cache.get(SETTINGS_CACHE_KEY)
+    if values is None:
+        values = dict(SiteSetting.objects.values_list('key', 'value'))
+        cache.set(SETTINGS_CACHE_KEY, values, SETTINGS_CACHE_TIMEOUT)
+    return values
+
+
+def get_setting(key):
+    """Stored value of ``key``; the seed default when no row exists, else ``None``."""
+    values = _stored_values()
+    if key in values:
+        return values[key]
+    row = setting_registry().get(key)
+    return row['value'] if row else None
+
 
 def get_string_setting(key, default=''):
-    setting = SiteSetting.objects.filter(key=key).only('value').first()
-    value = setting.value if setting else None
-    return value if isinstance(value, str) and value.strip() else default
+    """Trimmed non-blank string value; ``default`` when blank or not a string."""
+    value = get_setting(key)
+    return value.strip() if isinstance(value, str) and value.strip() else default
 
 
 def get_int_setting(key, default=0):
-    setting = SiteSetting.objects.filter(key=key).only('value').first()
-    value = setting.value if setting else default
+    value = get_setting(key)
     try:
         return int(value)
     except (TypeError, ValueError):
@@ -23,7 +65,7 @@ def get_int_setting(key, default=0):
 
 def get_bool_setting(key, default=False):
     """Read an admin switch; malformed values fail closed (False)."""
-    value = SiteSetting.objects.filter(key=key).values_list('value', flat=True).first()
+    value = get_setting(key)
     if value is None:
         return default
     if isinstance(value, int) and not isinstance(value, bool):
@@ -32,8 +74,9 @@ def get_bool_setting(key, default=False):
 
 
 def get_settings_map(keys):
-    """Read several settings in one query; missing keys are absent."""
-    return dict(SiteSetting.objects.filter(key__in=keys).values_list('key', 'value'))
+    """``{key: value}`` for ``keys``; keys with neither a row nor a seed default are absent."""
+    values = {key: get_setting(key) for key in keys}
+    return {key: value for key, value in values.items() if value is not None}
 
 
 _BRANDING_KEYS = (
@@ -98,8 +141,12 @@ def email_branding():
 
 
 def site_settings_by_group():
-    """Every setting grouped by ``SiteSetting.Group``, in the admin display order."""
+    """Non-empty ``SiteSetting.Group`` buckets in admin display order, with their area."""
     by_group = {}
     for setting in SiteSetting.objects.order_by('group', 'order', 'key'):
         by_group.setdefault(setting.group, []).append(setting)
-    return [(key, label, by_group.get(key, [])) for key, label in SiteSetting.Group.choices]
+    return [
+        (group, SiteSetting.GROUP_AREAS[group], by_group[group])
+        for group in SiteSetting.Group
+        if group in by_group
+    ]
