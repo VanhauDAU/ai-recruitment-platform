@@ -12,6 +12,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import ngettext
 
 from apps.jobs.models import Job, JobApplicationContact
+from apps.sitecontent.selectors import business_emails_enabled, email_sender
 from common.email import send_html_email
 from common.i18n import recipient_language
 
@@ -117,8 +118,12 @@ def send_due_application_reminders(*, now=None, batch_size=200):
             subject = _('Nhắc xử lý hồ sơ ứng tuyển — %(job)s') % {'job': job.title}
             text = _('%(body)s\n\nXem hồ sơ: %(url)s') % {'body': body, 'url': action_url}
             html = _email_html(body, action_url=action_url, action_label=_('Xem hồ sơ ứng tuyển'))
-        for recipient in recipients:
-            send_html_email(subject=subject, text=text, html=html, to=recipient)
+        # Admin tắt email nghiệp vụ thì vẫn đánh dấu đã nhắc để không gửi bù hàng loạt khi bật lại.
+        if business_emails_enabled():
+            for recipient in recipients:
+                send_html_email(
+                    subject=subject, text=text, html=html, to=recipient, **email_sender()
+                )
         application_ids = [application.pk for application in applications]
         Application.objects.filter(
             pk__in=application_ids,
@@ -207,12 +212,14 @@ def send_due_auto_rejection_emails(*, now=None, batch_size=200):
         recipient = application.contact_email or application.candidate.email
         with recipient_language(application.candidate):
             subject = _('Kết quả ứng tuyển vị trí %(job)s') % {'job': application.job.title}
-        send_html_email(
-            subject=subject,
-            text=body,
-            html=_email_html(body),
-            to=recipient,
-        )
+        if business_emails_enabled():
+            send_html_email(
+                subject=subject,
+                text=body,
+                html=_email_html(body),
+                to=recipient,
+                **email_sender(),
+            )
         updated = Application.objects.filter(
             pk=application.pk,
             status=Application.Status.REJECTED,

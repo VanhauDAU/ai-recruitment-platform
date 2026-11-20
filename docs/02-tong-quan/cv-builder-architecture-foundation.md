@@ -259,10 +259,10 @@ response shared/recruiter; PDF worker đọc storage nội bộ.
 - Chỉ nhận PDF/DOCX có signature thật, tối đa 5 MB; PDF tối đa 20 trang; PDF scan
   chưa OCR trả failure code riêng.
 - Worker trích text (`pypdf`/`python-docx`) rồi gọi `structure_cv_text`
-  (`apps/ai_core/services/cv_import.py`). Hàm này gọi thẳng REST của Gemini, OpenAI
-  hoặc Anthropic theo site setting `ai_provider`/`ai_model`, không qua runtime
-  `ai_core` (không bị `AI_RUNTIME_ENABLED` chặn, không ghi `AiInvocation`, không
-  quota), và fallback heuristic khi thiếu API key hoặc provider lỗi. Sau đó map/
+  (`apps/ai_core/services/cv_import.py`). Hàm này gọi `generate_structured` của runtime
+  `ai_core` (model `AI_CV_IMPORT_MODEL`, chịu `AI_RUNTIME_ENABLED`, ghi `AiInvocation`)
+  và đọc CV bằng quy tắc khi admin tắt `ai_enabled` hoặc AI không khả dụng do cấu hình;
+  lỗi của nhà cung cấp sau khi runtime đã thử lại trả `ai_provider_failed`. Sau đó map/
   validate canonical, compose bằng đúng template version và tạo version `imported`.
 - Raw text và response provider không persist/log; UI chỉ nhận failure code đã
   allowlist. Identity parse được được giữ, chỉ điền field còn trống.

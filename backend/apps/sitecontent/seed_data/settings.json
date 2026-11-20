@@ -1007,8 +1007,8 @@
     "value_type": "boolean",
     "value": true,
     "is_public": false,
-    "description": "Công tắc chung cho email thông báo gửi ứng viên và nhà tuyển dụng.",
-    "help": "Hiện chặn: thông báo trạng thái ứng tuyển, email báo hồ sơ mới cho nhà tuyển dụng và email gợi ý việc làm. Email bảo mật (xác thực, đặt lại mật khẩu, lời mời) luôn được gửi.",
+    "description": "Công tắc chung cho email nghiệp vụ gửi ứng viên và nhà tuyển dụng.",
+    "help": "Khi tắt sẽ ngừng: thông báo trạng thái ứng tuyển, báo hồ sơ mới cho nhà tuyển dụng, email gợi ý việc làm, nhắc và kết quả tự động từ chối, báo cáo tuần chiến dịch. Vẫn gửi: email xác thực, đặt lại mật khẩu, lời mời quản trị, kết quả xác thực nhà tuyển dụng. Email bị bỏ qua lúc tắt sẽ không gửi bù khi bật lại.",
     "options": {
       "applies_to": [
         "Email"
@@ -1041,13 +1041,12 @@
     "value_type": "boolean",
     "value": true,
     "is_public": false,
-    "description": "Chưa có hiệu lực: chưa có code áp dụng giá trị này (đang được nối vào hệ thống).",
-    "help": "Gửi email chào mừng sau khi người dùng xác thực email.",
+    "description": "Gửi email chào mừng sau khi người dùng xác thực email.",
+    "help": "Áp dụng cho tài khoản ứng viên và nhà tuyển dụng, cả đăng ký bằng email lẫn mạng xã hội.",
     "options": {
       "applies_to": [
         "Email"
-      ],
-      "pending": true
+      ]
     }
   },
   {
@@ -1058,8 +1057,8 @@
     "value_type": "text",
     "value": "ProCV",
     "is_public": false,
-    "description": "Tên người gửi hiển thị trong hộp thư.",
-    "help": "Địa chỉ gửi lấy từ cấu hình máy chủ (.env). Để trống thì dùng tên site.",
+    "description": "Tên người gửi hiển thị trong hộp thư, áp cho mọi email hệ thống.",
+    "help": "Địa chỉ gửi lấy từ cấu hình máy chủ (EMAIL_FROM_ADDRESS). Để trống thì dùng tên site. Người nhận bấm trả lời sẽ gửi về Email hỗ trợ.",
     "options": {
       "applies_to": [
         "Email"
@@ -1075,8 +1074,8 @@
     "value_type": "textarea",
     "value": "ProCV - Nền tảng việc làm & AI Career Coach",
     "is_public": false,
-    "description": "Đoạn chân email; để trống dùng mô tả footer.",
-    "help": "",
+    "description": "Đoạn chân email thông báo gửi ứng viên và nhà tuyển dụng; để trống dùng mô tả footer.",
+    "help": "Email xác thực, đặt lại mật khẩu và chào mừng có phần chân riêng.",
     "options": {
       "applies_to": [
         "Email"
@@ -1085,68 +1084,114 @@
     }
   },
   {
+    "key": "job_alert_enabled",
+    "label": "Bật email gợi ý việc làm",
+    "group": "email",
+    "section": "Gợi ý việc làm qua email",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": false,
+    "description": "Email định kỳ gửi ứng viên: thông báo việc làm đã tạo, việc làm phù hợp, việc mới của công ty đang theo dõi.",
+    "help": "Cần cả công tắc email nghiệp vụ đang bật. Ứng viên vẫn tự chọn loại email muốn nhận.",
+    "options": {
+      "applies_to": [
+        "Email"
+      ],
+      "depends_on": "email_notifications_enabled"
+    }
+  },
+  {
+    "key": "job_alert_delivery_hour",
+    "label": "Giờ gửi email gợi ý việc làm",
+    "group": "email",
+    "section": "Gợi ý việc làm qua email",
+    "value_type": "number",
+    "value": 8,
+    "is_public": false,
+    "description": "Giờ trong ngày (giờ Việt Nam) gửi email gợi ý việc làm hằng ngày/hằng tuần.",
+    "help": "Áp cho lịch gửi kế tiếp của từng thông báo việc làm. Nên chọn giờ hành chính để email không bị bỏ qua.",
+    "options": {
+      "applies_to": [
+        "Email"
+      ],
+      "integer": true,
+      "min": 0,
+      "max": 23,
+      "depends_on": "job_alert_enabled"
+    }
+  },
+  {
+    "key": "job_alert_max_jobs",
+    "label": "Số việc làm tối đa mỗi email",
+    "group": "email",
+    "section": "Gợi ý việc làm qua email",
+    "value_type": "number",
+    "value": 10,
+    "is_public": false,
+    "description": "Số tin tối đa trong một email gợi ý việc làm.",
+    "help": "Email quá dài dễ bị lọc thư rác; 5–10 tin là vừa.",
+    "options": {
+      "applies_to": [
+        "Email"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 20,
+      "depends_on": "job_alert_enabled"
+    }
+  },
+  {
+    "key": "job_alert_limit_per_candidate",
+    "label": "Số thông báo việc làm mỗi ứng viên",
+    "group": "email",
+    "section": "Gợi ý việc làm qua email",
+    "value_type": "number",
+    "value": 5,
+    "is_public": true,
+    "description": "Số thông báo việc làm (bộ lọc đã lưu) tối đa mỗi ứng viên được tạo.",
+    "help": "Giảm giá trị không xoá thông báo đã có, chỉ chặn tạo thêm.",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 20
+    }
+  },
+  {
+    "key": "recruiter_reminders_enabled",
+    "label": "Nhắc nhà tuyển dụng hồ sơ chưa phản hồi",
+    "group": "email",
+    "section": "Nhắc nhà tuyển dụng",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": false,
+    "description": "Tự động nhắc nhà tuyển dụng khi hồ sơ ứng tuyển chưa được phản hồi sau 3 và 7 ngày.",
+    "help": "Gửi thông báo trong cổng nhà tuyển dụng. Nút \"Nhắc nhà tuyển dụng\" của ứng viên không phụ thuộc công tắc này.",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng"
+      ]
+    }
+  },
+  {
     "key": "ai_enabled",
-    "label": "Bật tính năng AI",
+    "label": "Bật AI sinh nội dung",
     "group": "ai",
     "section": "Công tắc chung",
     "value_type": "boolean",
     "value": true,
     "is_public": true,
-    "description": "Bật/tắt AI trích xuất CV khi ứng viên tải CV lên.",
-    "help": "Khi tắt, hệ thống vẫn đọc CV bằng bộ trích xuất quy tắc (không gọi AI). Không ảnh hưởng đối sánh CV–JD và AI viết tin tuyển dụng.",
+    "description": "Công tắc chung cho AI trích xuất CV, AI viết tin tuyển dụng và AI viết bài chiến dịch.",
+    "help": "Chỉ có hiệu lực khi máy chủ bật AI (AI_RUNTIME_ENABLED) và có credential. Khi tắt: CV tải lên được đọc bằng bộ trích xuất quy tắc, tạo tin và viết bài chiến dịch dùng mẫu có sẵn. Không ảnh hưởng đối sánh CV–JD (mô hình nội bộ).",
     "options": {
       "applies_to": [
-        "Tải CV lên"
-      ]
-    }
-  },
-  {
-    "key": "ai_provider",
-    "label": "Nhà cung cấp",
-    "group": "ai",
-    "section": "Công tắc chung",
-    "value_type": "select",
-    "value": "gemini",
-    "is_public": false,
-    "description": "Nhà cung cấp AI dùng để trích xuất CV.",
-    "help": "Chỉ áp dụng cho trích xuất CV; API key tương ứng phải có trong .env.",
-    "options": {
-      "choices": [
-        {
-          "value": "gemini",
-          "label": "Google Gemini"
-        },
-        {
-          "value": "openai",
-          "label": "OpenAI"
-        },
-        {
-          "value": "anthropic",
-          "label": "Anthropic Claude"
-        }
+        "Tải CV lên",
+        "Đăng tin",
+        "Chiến dịch"
       ],
-      "applies_to": [
-        "Tải CV lên"
-      ],
-      "depends_on": "ai_enabled"
-    }
-  },
-  {
-    "key": "ai_model",
-    "label": "Model",
-    "group": "ai",
-    "section": "Công tắc chung",
-    "value_type": "text",
-    "value": "gemini-2.0-flash",
-    "is_public": false,
-    "description": "Tên model dùng để trích xuất CV.",
-    "help": "",
-    "options": {
-      "applies_to": [
-        "Tải CV lên"
-      ],
-      "depends_on": "ai_enabled",
-      "max_length": 100
+      "risky": "off"
     }
   },
   {
@@ -1222,14 +1267,8 @@
     "value": "gemini-3.5-flash-lite",
     "is_public": false,
     "description": "Chỉ chọn model có trong cả allowlist môi trường và allowlist bên dưới.",
-    "help": "",
+    "help": "Danh sách lấy từ AI_JOB_GENERATION_MODEL_ALLOWLIST của máy chủ.",
     "options": {
-      "choices": [
-        {
-          "value": "gemini-3.5-flash-lite",
-          "label": "Gemini 3.5 Flash Lite"
-        }
-      ],
       "depends_on": "ai_job_generation_enabled"
     }
   },
@@ -1302,6 +1341,43 @@
       "schema": {
         "item": "string"
       }
+    }
+  },
+  {
+    "key": "ai_campaign_content_enabled",
+    "label": "Cho AI viết bài chiến dịch",
+    "group": "ai",
+    "section": "AI viết bài chiến dịch",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": false,
+    "description": "Nhà tuyển dụng dùng AI soạn bài đăng cho các kênh của chiến dịch.",
+    "help": "Khi tắt, bài đăng được soạn từ mẫu có sẵn.",
+    "options": {
+      "applies_to": [
+        "Chiến dịch"
+      ],
+      "depends_on": "ai_enabled"
+    }
+  },
+  {
+    "key": "ai_campaign_daily_quota",
+    "label": "Lượt AI viết bài mỗi ngày (mỗi nhà tuyển dụng)",
+    "group": "ai",
+    "section": "AI viết bài chiến dịch",
+    "value_type": "number",
+    "value": 20,
+    "is_public": false,
+    "description": "Số lần một nhà tuyển dụng được dùng AI viết bài trong một ngày.",
+    "help": "Hết lượt thì phải chờ sang ngày; dùng để kiểm soát chi phí AI.",
+    "options": {
+      "applies_to": [
+        "Chiến dịch"
+      ],
+      "integer": true,
+      "min": 0,
+      "max": 200,
+      "depends_on": "ai_campaign_content_enabled"
     }
   },
   {

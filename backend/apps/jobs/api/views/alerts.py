@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 from apps.accounts.api.permissions import IsCandidate
 
 from ...selectors import candidate_job_alerts
-from ...services import JOB_ALERT_LIMIT, create_job_alert, delete_job_alert, update_job_alert
+from ...services import create_job_alert, delete_job_alert, job_alert_limit, update_job_alert
 from ..serializers import (
     JobAlertCreateSerializer,
     JobAlertListResponseSerializer,
@@ -35,11 +35,12 @@ class CandidateJobAlertListCreateView(APIView):
     )
     def get(self, request):
         alerts = list(candidate_job_alerts(request.user))
+        limit = job_alert_limit()
         return Response(
             {
                 'results': JobAlertReadSerializer(alerts, many=True).data,
-                'limit': JOB_ALERT_LIMIT,
-                'remaining': max(JOB_ALERT_LIMIT - len(alerts), 0),
+                'limit': limit,
+                'remaining': max(limit - len(alerts), 0),
             }
         )
 

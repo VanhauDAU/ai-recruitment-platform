@@ -140,7 +140,9 @@ def email_branding():
         'site_name': site_name,
         'tagline': _text(values, 'site_tagline'),
         'logo_path': _text(values, 'brand_logo_url'),
-        'primary_color': _text(values, 'brand_primary_color', '#1FA65A'),
+        'primary_color': _text(
+            values, 'brand_primary_color', setting_registry()['brand_primary_color']['value']
+        ),
         'from_name': _text(values, 'email_from_name', site_name),
         'footer_text': _text(values, 'email_footer_text') or _text(values, 'footer_description'),
         'support_email': _text(values, 'support_email'),
@@ -155,6 +157,35 @@ def email_branding():
             if show_socials and _text(values, key)
         ],
     }
+
+
+def email_brand_color():
+    """Màu chính của email: ``brand_primary_color`` (đã kiểm tra là #rrggbb khi lưu)."""
+    return email_branding()['primary_color']
+
+
+def email_sender():
+    """``from_email`` and ``reply_to`` for every product email (send_html_email kwargs).
+
+    Display name from ``email_from_name`` (falls back to the site name), address
+    from the server config; replies go to ``support_email``.
+    """
+    brand = email_branding()
+    address = django_settings.EMAIL_FROM_ADDRESS
+    return {
+        'from_email': f'{brand["from_name"]} <{address}>' if brand['from_name'] else address,
+        'reply_to': brand['support_email'] or None,
+    }
+
+
+def business_emails_enabled():
+    """Công tắc chung ``email_notifications_enabled`` cho email nghiệp vụ.
+
+    Áp cho thông báo ứng viên, hồ sơ mới, gợi ý việc làm, nhắc/kết quả tự động từ
+    chối và báo cáo tuần chiến dịch. Không áp cho email bảo mật/tài khoản (xác
+    thực, đặt lại mật khẩu, lời mời, kết quả xác thực nhà tuyển dụng).
+    """
+    return get_bool_setting('email_notifications_enabled', True)
 
 
 def site_settings_by_group():

@@ -19,13 +19,9 @@ BACKEND_DIR = Path(__file__).resolve().parents[3]
 FRONTEND_SRC = BACKEND_DIR.parent / 'frontend' / 'src'
 FRONTEND_PUBLIC = BACKEND_DIR.parent / 'frontend' / 'public'
 
-# Key đã lên lịch nối vào code ở giai đoạn sau của kế hoạch
-# docs/01-phan-tich/ke-hoach-cau-hinh-he-thong.md (GĐ4). Seed đánh dấu
-# chúng bằng options.pending và mô tả "Chưa có hiệu lực"; danh sách chỉ được
-# thu hẹp — key mới phải có consumer ngay khi thêm vào seed.
-PENDING_CONSUMERS = {
-    'email_welcome_enabled',
-}
+# Key được phép chưa có code đọc (seed đánh dấu options.pending, mô tả "Chưa có
+# hiệu lực"). Đã nối hết ở GĐ4; key mới phải có consumer ngay khi thêm vào seed.
+PENDING_CONSUMERS = set()
 
 _BACKEND_READ = re.compile(r"get_(?:string_|int_|bool_)?setting\(\s*['\"]([a-z0-9_]+)['\"]")
 _FRONTEND_READ = re.compile(r"useSiteSetting\(\s*['\"]([a-z0-9_]+)['\"]")
@@ -90,11 +86,13 @@ class SettingsContractTests(SimpleTestCase):
         self.assertEqual(sorted(read - set(self.registry)), [])
 
     def test_removed_keys_never_come_back(self):
-        migration = importlib.import_module(
-            'apps.sitecontent.migrations.0004_settings_contract_data'
-        )
+        removed = set()
+        for path in (BACKEND_DIR / 'apps' / 'sitecontent' / 'migrations').glob('0*.py'):
+            module = importlib.import_module(f'apps.sitecontent.migrations.{path.stem}')
+            removed.update(getattr(module, 'REMOVED_KEYS', ()))
 
-        self.assertEqual(sorted(set(migration.REMOVED_KEYS) & set(self.registry)), [])
+        self.assertIn('ai_provider', removed)
+        self.assertEqual(sorted(removed & set(self.registry)), [])
 
     def test_metadata_builds_the_admin_page(self):
         groups = set(SiteSetting.Group.values)

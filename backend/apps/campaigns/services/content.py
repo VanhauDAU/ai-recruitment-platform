@@ -16,6 +16,7 @@ from django.utils.translation import ngettext
 from apps.ai_core.models import AiInvocation
 from apps.ai_core.services import AiGenerationError, generate_structured
 from apps.jobs.services import salary_text, sanitize_source_text
+from apps.sitecontent.selectors import get_bool_setting, get_int_setting
 
 from ..models import CampaignChannel
 from .channels import save_generated_content
@@ -26,7 +27,6 @@ PROMPT_VERSION = 'campaign-post-v2'
 SCHEMA_VERSION = 'campaign-post-v1'
 LINK_PLACEHOLDER = '{link}'
 JOB_LINK_PATTERN = re.compile(r'\{link:([A-Za-z0-9_]+)\}')
-DAILY_QUOTA = 20
 RESPONSE_SCHEMA = {
     'type': 'object',
     'properties': {
@@ -166,7 +166,7 @@ def _quota_left(user):
     used = AiInvocation.objects.filter(
         use_case=USE_CASE, correlation_key=f'user:{user.pk}', created_at__gte=start
     ).count()
-    return DAILY_QUOTA - used
+    return get_int_setting('ai_campaign_daily_quota', 20) - used
 
 
 def render_content(channel):
@@ -187,10 +187,19 @@ def render_content(channel):
     }
 
 
+def ai_campaign_content_enabled():
+    """Máy chủ bật runtime AI VÀ admin bật AI chung lẫn AI viết bài chiến dịch."""
+    return (
+        settings.AI_RUNTIME_ENABLED is True
+        and get_bool_setting('ai_enabled', True)
+        and get_bool_setting('ai_campaign_content_enabled', True)
+    )
+
+
 def generate_channel_content(*, channel, user):
     """Draft content for ``channel``'s post; returns ``(channel, fallback_reason)``."""
     jobs = post_jobs(channel)
-    if not settings.AI_RUNTIME_ENABLED:
+    if not ai_campaign_content_enabled():
         return save_generated_content(
             channel, template_content(channel, jobs), 'template'
         ), 'ai_disabled'

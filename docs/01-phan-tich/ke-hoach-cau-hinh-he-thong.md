@@ -24,6 +24,16 @@
 > - **Favicon trong SEO shell server không làm;** trình duyệt áp favicon sau khi tải trang.
 > - **Đồng bộ giới hạn upload phía frontend dời lại:** phải sửa chuỗi "5MB" trong i18n ở
 >   nhiều vùng.
+>
+> Điều chỉnh khi làm GĐ4:
+> - **Email kết quả xác thực nhà tuyển dụng không theo công tắc email nghiệp vụ.** Đây là
+>   email về trạng thái tài khoản, xếp cùng nhóm email bảo mật.
+> - **`email_footer_text` chỉ áp cho email thông báo** (ứng viên, nhà tuyển dụng). Email
+>   xác thực, chào mừng, đặt lại mật khẩu có phần chân riêng; nội dung đã ghi trong "?".
+> - **`ai_enabled` không chặn sinh mẫu CV của admin**, vì đây là công cụ nội bộ, không
+>   phải tính năng người dùng.
+> - **Hạn mức AI viết bài chiến dịch không có trần env** vì trước đây chỉ là hằng số
+>   trong code; admin chỉnh trong khoảng 0–200.
 
 ## Context
 

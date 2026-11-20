@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
 from apps.accounts.services import is_account_accessible
+from apps.sitecontent.selectors import get_int_setting
 from common.metrics import record_metric
 
 from ...models import (
@@ -27,11 +28,11 @@ from .eligibility import (
 )
 from .scheduling import PREPARATION_CLAIM_LEASE
 
-MAX_DIGEST_JOBS = 10
 MAX_MATCHES_PER_SOURCE = 50
 
 
 def _round_robin_sources(source_queues):
+    max_jobs = max(get_int_setting('job_alert_max_jobs', 10), 1)
     selected = []
     selected_by_publication = {}
     queues = deque(queue for queue in source_queues if queue)
@@ -50,7 +51,7 @@ def _round_robin_sources(source_queues):
                 'includes_suitable_recommendation'
             ]
             selected_item['includes_followed_company'] |= item['includes_followed_company']
-        elif len(selected) < MAX_DIGEST_JOBS:
+        elif len(selected) < max_jobs:
             selected.append(item)
             selected_by_publication[publication_key] = item
         if queue:

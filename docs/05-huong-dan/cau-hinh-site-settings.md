@@ -23,6 +23,15 @@ của app `sitecontent`. Hợp đồng của kho cấu hình nằm ở
   chính sách cookie, điều khoản NTD, DPA (kèm mã băm), và phiên bản đồng ý của ứng
   viên đổi cùng lần triển khai sửa văn bản, nên không chỉnh qua trang cấu hình. Đường
   dẫn tới trang văn bản thì là setting (nhóm Pháp lý & đồng ý).
+- **Email:** mọi email lấy tên người gửi, địa chỉ trả lời và màu chính từ cấu hình
+  (`email_sender()`, `email_brand_color()`). Công tắc `email_notifications_enabled` chỉ
+  chặn email nghiệp vụ, không chặn email bảo mật/tài khoản; email bị bỏ qua lúc tắt
+  không được gửi bù.
+- **AI:** `ai_enabled` là công tắc chung cho AI sinh nội dung (import CV, viết tin,
+  viết bài chiến dịch), luôn nằm dưới `AI_RUNTIME_ENABLED`. Import CV dùng chung runtime
+  với tạo tin (model `AI_CV_IMPORT_MODEL`); AI không khả dụng thì đọc CV bằng quy tắc.
+  Danh sách model tạo tin lấy từ `AI_JOB_GENERATION_MODEL_ALLOWLIST`
+  (`SiteSetting.SERVER_CHOICES`).
 - **Công tắc tính năng chỉ thu hẹp được máy chủ:** Trung tâm trợ giúp và nơi hiện
   thông báo đa cổng có hiệu lực = cờ `.env` VÀ công tắc admin.
 - **Secret và giới hạn hạ tầng nằm ở `.env`.** Mật khẩu, timeout phiên, rate limit, dung
@@ -99,6 +108,7 @@ của app `sitecontent`. Hợp đồng của kho cấu hình nằm ở
 
 Cột "Mặc định" là giá trị trong seed. Dấu ✓ nghĩa là key được trả qua API công khai.
 Nhóm chưa có key sẽ được bổ sung ở các giai đoạn sau của kế hoạch.
+
 
 
 
@@ -208,17 +218,20 @@ Nhóm chưa có key sẽ được bổ sung ở các giai đoạn sau của kế
 |---|---|---|---|---|---|
 | Chung | `email_notifications_enabled` | Bật gửi email | boolean | true |  |
 | Loại email | `email_notify_new_application` | Báo NTD khi có ứng tuyển mới | boolean | true |  |
-| Loại email | `email_welcome_enabled` _(chưa có hiệu lực)_ | Email chào mừng khi đăng ký | boolean | true |  |
+| Loại email | `email_welcome_enabled` | Email chào mừng khi đăng ký | boolean | true |  |
 | Nhận diện email | `email_from_name` | Tên người gửi | text | "ProCV" |  |
 | Nhận diện email | `email_footer_text` | Chân email | textarea | "ProCV - Nền tảng việc làm & AI Caree… |  |
+| Gợi ý việc làm qua email | `job_alert_enabled` | Bật email gợi ý việc làm | boolean | true |  |
+| Gợi ý việc làm qua email | `job_alert_delivery_hour` | Giờ gửi email gợi ý việc làm | number | 8 |  |
+| Gợi ý việc làm qua email | `job_alert_max_jobs` | Số việc làm tối đa mỗi email | number | 10 |  |
+| Gợi ý việc làm qua email | `job_alert_limit_per_candidate` | Số thông báo việc làm mỗi ứng viên | number | 5 | ✓ |
+| Nhắc nhà tuyển dụng | `recruiter_reminders_enabled` | Nhắc nhà tuyển dụng hồ sơ chưa phản hồi | boolean | true |  |
 
 ### AI (`ai`)
 
 | Section | Key | Tên | Kiểu | Mặc định | Public |
 |---|---|---|---|---|---|
-| Công tắc chung | `ai_enabled` | Bật tính năng AI | boolean | true | ✓ |
-| Công tắc chung | `ai_provider` | Nhà cung cấp | select | "gemini" |  |
-| Công tắc chung | `ai_model` | Model | text | "gemini-2.0-flash" |  |
+| Công tắc chung | `ai_enabled` | Bật AI sinh nội dung | boolean | true | ✓ |
 | Đối sánh CV–JD (mô hình nội bộ) | `ai_job_match_enabled` | AI xem độ phù hợp CV với tin | boolean | true | ✓ |
 | Đối sánh CV–JD (mô hình nội bộ) | `ai_job_recommendation_semantic_enabled` | AI gợi ý việc làm theo nội dung CV | boolean | true |  |
 | Đối sánh CV–JD (mô hình nội bộ) | `ai_data_policy_url` | Chính sách xử lý dữ liệu bằng AI | url | "" | ✓ |
@@ -228,6 +241,8 @@ Nhóm chưa có key sẽ được bổ sung ở các giai đoạn sau của kế
 | AI viết tin tuyển dụng | `ai_job_generation_daily_limit` | Lượt tạo tin/ngày/nhà tuyển dụng | number | 10 |  |
 | AI viết tin tuyển dụng | `ai_job_generation_rollout_percent` | Tỷ lệ rollout tạo tin AI (%) | number | 0 |  |
 | AI viết tin tuyển dụng | `ai_job_generation_company_allowlist` | Công ty allowlist tạo tin AI | json | [] |  |
+| AI viết bài chiến dịch | `ai_campaign_content_enabled` | Cho AI viết bài chiến dịch | boolean | true |  |
+| AI viết bài chiến dịch | `ai_campaign_daily_quota` | Lượt AI viết bài mỗi ngày (mỗi nhà tuyển dụng) | number | 20 |  |
 
 ### Pháp lý & đồng ý (`legal`)
 

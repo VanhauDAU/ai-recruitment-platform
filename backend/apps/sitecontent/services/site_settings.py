@@ -118,7 +118,7 @@ def _json_error(value, options):
 def _validate_value(setting, value):
     """Kiểm tra value theo value_type + options; trả về (value đã chuẩn hoá, lỗi hoặc None)."""
     vt = SiteSetting.ValueType
-    options = setting.options if isinstance(setting.options, dict) else {}
+    options = setting.resolved_options()
     if setting.value_type == vt.BOOLEAN:
         error = None if isinstance(value, bool) else 'Giá trị phải là true/false.'
     elif setting.value_type == vt.NUMBER:

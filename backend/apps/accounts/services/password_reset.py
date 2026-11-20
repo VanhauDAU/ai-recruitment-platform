@@ -11,7 +11,7 @@ from django.utils.translation import gettext_lazy
 from rest_framework.exceptions import ValidationError as DRFValidationError
 
 from apps.accounts.services.token_cache import atomic_pop
-from apps.sitecontent.selectors import get_string_setting
+from apps.sitecontent.selectors import email_brand_color, get_string_setting
 from common.i18n import recipient_language
 
 from ..models import AuthEmailJob, User
@@ -221,7 +221,7 @@ def _password_reset_content(user, recipient, link):
     portal_label = (
         _('Quản trị') if is_admin else _('Nhà tuyển dụng') if is_employer else _('Ứng viên')
     )
-    accent_color = '#0369a1' if is_admin else '#00b14f'
+    accent_color = '#0369a1' if is_admin else email_brand_color()
     values = {
         'portal': portal_label,
         'site_name': site_name,

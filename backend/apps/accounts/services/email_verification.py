@@ -8,7 +8,7 @@ from django.utils.html import escape
 from django.utils.translation import gettext as _
 
 from apps.accounts.services.token_cache import atomic_pop
-from apps.sitecontent.selectors import get_string_setting
+from apps.sitecontent.selectors import email_brand_color, get_string_setting
 from common.i18n import recipient_language
 
 from ..models import User
@@ -68,6 +68,7 @@ def send_verification_email(user):
 
 
 def _employer_verification(user, link):
+    brand_color = email_brand_color()
     site_name = get_string_setting('site_name', 'ProCV')
     hours = settings.EMAIL_VERIFICATION_TTL // 3600
     name = user.full_name or user.email
@@ -138,7 +139,7 @@ def _employer_verification(user, link):
               <p style="margin-top:0">{greeting}</p>
               <p>{intro}</p>
               <p>{_('Để tăng tính bảo mật, Quý khách vui lòng nhấn nút xác thực dưới đây.')}</p>
-              <p style="text-align:center;margin:26px 0 30px"><a href="{link}" style="background:#00b14f;color:#fff;text-decoration:none;padding:13px 34px;border-radius:8px;font-size:17px;font-weight:700;display:inline-block">{_('Xác thực tài khoản')}</a></p>
+              <p style="text-align:center;margin:26px 0 30px"><a href="{link}" style="background:{brand_color};color:#fff;text-decoration:none;padding:13px 34px;border-radius:8px;font-size:17px;font-weight:700;display:inline-block">{_('Xác thực tài khoản')}</a></p>
               <div style="background:#f4f6f8;padding:22px 24px;border-radius:6px;color:#52525b">
                 <p style="margin-top:0"><strong>{_('Lưu ý bảo mật')}</strong></p>
                 <p>{security}</p>
@@ -152,6 +153,7 @@ def _employer_verification(user, link):
 
 
 def _candidate_verification(user, link):
+    brand_color = email_brand_color()
     site_name = get_string_setting('site_name', 'ProCV')
     hours = settings.EMAIL_VERIFICATION_TTL // 3600
     name = user.full_name or user.email
@@ -176,10 +178,10 @@ def _candidate_verification(user, link):
         % html_values
     )
     html = f'''<div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;color:#111">
-          <h2 style="color:#00b14f">{_('Xác thực email của bạn')}</h2>
+          <h2 style="color:{brand_color}">{_('Xác thực email của bạn')}</h2>
           <p>{_('Xin chào <strong>%(name)s</strong>,') % html_values}</p>
           <p>{intro}</p>
-          <p style="text-align:center;margin:28px 0"><a href="{link}" style="background:#00b14f;color:#fff;text-decoration:none;padding:12px 28px;border-radius:9999px;font-weight:bold;display:inline-block">{_('Xác thực email')}</a></p>
+          <p style="text-align:center;margin:28px 0"><a href="{link}" style="background:{brand_color};color:#fff;text-decoration:none;padding:12px 28px;border-radius:9999px;font-weight:bold;display:inline-block">{_('Xác thực email')}</a></p>
           <p style="font-size:13px;color:#666">{_('Hoặc mở liên kết:')} <br>{link}</p>
           <p style="font-size:12px;color:#999">{_('Liên kết có hiệu lực trong %(hours)s giờ.') % values}</p>
         </div>'''

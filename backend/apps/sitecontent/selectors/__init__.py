@@ -16,7 +16,10 @@ from .announcements import (
 from .banners import active_banners
 from .links import resolve_link_group_items, resolved_link_groups
 from .settings import (
+    business_emails_enabled,
+    email_brand_color,
     email_branding,
+    email_sender,
     get_bool_setting,
     get_int_setting,
     get_setting,
@@ -36,7 +39,10 @@ __all__ = [
     'announcement_metrics',
     'admin_announcement_detail_queryset',
     'admin_announcements_queryset',
+    'business_emails_enabled',
+    'email_brand_color',
     'email_branding',
+    'email_sender',
     'get_bool_setting',
     'get_int_setting',
     'get_setting',

@@ -19,6 +19,7 @@ from apps.candidates.models import (
 from apps.employers.models import Company
 from apps.employers.tests.factories import make_employer_ready
 from apps.locations.models import Location
+from apps.sitecontent.models import SiteSetting
 
 from ..api.serializers.alerts import JobAlertCreateSerializer
 from ..api.views.alerts import CandidateJobAlertListCreateView
@@ -60,11 +61,23 @@ class JobAlertContractSchemaTests(SimpleTestCase):
         self.assertNotIn('is_active', components['JobAlertCreateRequest']['properties'])
 
 
-class JobAlertCadenceTests(SimpleTestCase):
+class JobAlertCadenceTests(TestCase):
     timezone = ZoneInfo('Asia/Ho_Chi_Minh')
 
     def _next_local(self, value, frequency):
         return next_job_alert_run(value, frequency).astimezone(self.timezone)
+
+    def test_delivery_hour_follows_the_admin_setting(self):
+        SiteSetting.objects.update_or_create(
+            key='job_alert_delivery_hour',
+            defaults={'value': 18, 'value_type': SiteSetting.ValueType.NUMBER},
+        )
+        noon = datetime(2026, 8, 11, 12, 0, tzinfo=self.timezone)
+
+        self.assertEqual(
+            self._next_local(noon, JobAlert.Frequency.DAILY),
+            datetime(2026, 8, 11, 18, 0, tzinfo=self.timezone),
+        )
 
     def test_daily_uses_next_exact_0800_vietnam_boundary(self):
         before = datetime(2026, 8, 11, 7, 59, tzinfo=self.timezone)
@@ -303,7 +316,8 @@ class CandidateJobAlertApiTests(APITestCase):
         self.assertEqual(five_response.status_code, 200)
         self.assertEqual(len(five_response.data['results']), 5)
         self.assertEqual(len(five_alert_queries), len(one_alert_queries))
-        self.assertLessEqual(len(five_alert_queries), 3)
+        # 3 + 1: đọc hạn mức thông báo việc làm từ cấu hình (ADR-0026).
+        self.assertLessEqual(len(five_alert_queries), 4)
 
     def test_limit_and_foreign_detail_use_stable_contract(self):
         for index in range(5):

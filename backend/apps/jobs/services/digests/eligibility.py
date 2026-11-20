@@ -6,11 +6,12 @@ from apps.candidates.models import (
     CandidateJobPreference,
     CandidateProfile,
 )
-from apps.sitecontent.selectors import get_bool_setting
+from apps.sitecontent.selectors import business_emails_enabled, get_bool_setting
 
 
 def site_email_enabled():
-    return get_bool_setting('email_notifications_enabled', True)
+    """Email nghiệp vụ đang bật VÀ admin bật email gợi ý việc làm."""
+    return business_emails_enabled() and get_bool_setting('job_alert_enabled', True)
 
 
 def candidate_email_settings(user):
