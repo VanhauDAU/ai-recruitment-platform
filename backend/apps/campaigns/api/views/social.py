@@ -2,7 +2,7 @@ import logging
 from urllib.parse import urlencode
 
 from django.conf import settings
-from django.http import HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext as _
 from django.views import View
@@ -18,6 +18,7 @@ from rest_framework.views import APIView
 from apps.accounts.api.permissions import IsEmployer
 from apps.employers.services import ensure_recruiter_job_workspace
 
+from ...domain.social_networks import FACEBOOK_PAGE, NETWORKS
 from ...selectors import (
     active_social_connections_queryset,
     channel_posts_queryset,
@@ -26,22 +27,23 @@ from ...selectors import (
 from ...services import (
     cancel_post,
     company_post_images,
-    complete_page_connection,
-    disconnect_page,
-    pending_pages,
+    complete_connection,
+    disconnect_account,
+    pending_accounts,
     reschedule_post,
     save_post_image,
     schedule_post,
-    select_page,
-    start_page_connection,
+    select_account,
+    start_connection,
 )
-from ...services.social import SocialProviderError
+from ...services.social import SocialProviderError, is_live
 from ..serializers.social import (
     ReschedulePostSerializer,
     ScheduledPostSerializer,
     SchedulePostSerializer,
-    SelectPageSerializer,
+    SelectAccountSerializer,
     SocialConnectionSerializer,
+    SocialNetworkSerializer,
 )
 from .channels import CampaignScopedView
 
@@ -55,62 +57,98 @@ def integrations_url(**query):
     return f'{base}?{urlencode(query)}' if query else base
 
 
+def _network(network):
+    if network not in NETWORKS:
+        raise Http404
+    return network
+
+
 @extend_schema(
     tags=['campaigns'],
-    summary='Bắt đầu kết nối Fanpage (trả URL đăng nhập Facebook)',
+    summary='Các mạng xã hội kết nối được và giới hạn bài đăng của từng mạng',
+    responses=SocialNetworkSerializer(many=True),
+)
+class SocialNetworkListView(APIView):
+    permission_classes = [IsEmployer]
+
+    def get(self, request):
+        networks = [
+            {
+                'key': network.key,
+                'platform': network.platform,
+                'label': network.label,
+                'channel_kind': network.channel_kind,
+                'capabilities': vars(network.capabilities),
+                'simulated': not is_live(network.key),
+            }
+            for network in NETWORKS.values()
+        ]
+        return Response(SocialNetworkSerializer(networks, many=True).data)
+
+
+@extend_schema(
+    tags=['campaigns'],
+    summary='Bắt đầu kết nối tài khoản mạng xã hội (trả URL đăng nhập của mạng)',
     request=None,
     responses=inline_serializer('SocialConnectStart', {'url': serializers.URLField()}),
 )
 class SocialConnectStartView(APIView):
     permission_classes = [IsEmployer]
 
-    def post(self, request):
+    def post(self, request, network):
         ensure_recruiter_job_workspace(request.user)
-        return Response({'url': start_page_connection(request.user)})
+        return Response({'url': start_connection(request.user, _network(network))})
 
 
-class FacebookCallbackView(View):
-    """Browser redirect from Facebook; the signed state identifies the recruiter."""
+class SocialCallbackView(View):
+    """Browser redirect from the network; the signed state identifies the recruiter."""
 
-    def get(self, request):
+    def get(self, request, network=FACEBOOK_PAGE):  # legacy route passes no network
+        network = _network(network)
         code, state = request.GET.get('code'), request.GET.get('state', '')
         if not code:
-            return HttpResponseRedirect(integrations_url(fb_error='denied'))
+            return HttpResponseRedirect(integrations_url(network=network, social_error='denied'))
         try:
-            nonce = complete_page_connection(code=code, state=state)
+            nonce = complete_connection(network=network, code=code, state=state)
         except ValidationError:
-            return HttpResponseRedirect(integrations_url(fb_error='expired'))
+            return HttpResponseRedirect(integrations_url(network=network, social_error='expired'))
         except SocialProviderError as error:
-            logger.warning('facebook_connect_failed', extra={'code': error.code})
-            return HttpResponseRedirect(integrations_url(fb_error='provider'))
-        return HttpResponseRedirect(integrations_url(fb_select=nonce))
+            logger.warning('social_connect_failed', extra={'network': network, 'code': error.code})
+            return HttpResponseRedirect(integrations_url(network=network, social_error='provider'))
+        return HttpResponseRedirect(integrations_url(network=network, social_select=nonce))
 
 
 @extend_schema(tags=['campaigns'])
-class SocialPendingPagesView(APIView):
+class SocialPendingAccountsView(APIView):
     permission_classes = [IsEmployer]
 
     @extend_schema(
-        summary='Các Fanpage chờ chọn sau khi đăng nhập Facebook', responses=OpenApiTypes.OBJECT
+        summary='Các tài khoản chờ chọn sau khi đăng nhập mạng xã hội',
+        responses=OpenApiTypes.OBJECT,
     )
-    def get(self, request, nonce):
-        return Response(pending_pages(request.user, nonce))
+    def get(self, request, network, nonce):
+        return Response(pending_accounts(request.user, _network(network), nonce))
 
     @extend_schema(
-        summary='Chọn Fanpage để kết nối',
-        request=SelectPageSerializer,
+        summary='Chọn tài khoản để kết nối',
+        request=SelectAccountSerializer,
         responses={201: SocialConnectionSerializer},
     )
-    def post(self, request, nonce):
-        serializer = SelectPageSerializer(data=request.data)
+    def post(self, request, network, nonce):
+        serializer = SelectAccountSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        connection = select_page(user=request.user, nonce=nonce, **serializer.validated_data)
+        connection = select_account(
+            user=request.user,
+            network=_network(network),
+            nonce=nonce,
+            **serializer.validated_data,
+        )
         return Response(SocialConnectionSerializer(connection).data, status=status.HTTP_201_CREATED)
 
 
 @extend_schema(
     tags=['campaigns'],
-    summary='Các Fanpage đã kết nối',
+    summary='Các tài khoản mạng xã hội đã kết nối',
     responses=SocialConnectionSerializer(many=True),
 )
 class SocialConnectionListView(APIView):
@@ -121,7 +159,9 @@ class SocialConnectionListView(APIView):
         return Response(SocialConnectionSerializer(connections, many=True).data)
 
 
-@extend_schema(tags=['campaigns'], summary='Ngắt kết nối Fanpage', responses={204: None})
+@extend_schema(
+    tags=['campaigns'], summary='Ngắt kết nối tài khoản mạng xã hội', responses={204: None}
+)
 class SocialConnectionDetailView(APIView):
     permission_classes = [IsEmployer]
 
@@ -129,15 +169,13 @@ class SocialConnectionDetailView(APIView):
         connection = get_object_or_404(
             recruiter_social_connections_queryset(request.user), public_id=connection_id
         )
-        disconnect_page(user=request.user, connection=connection)
+        disconnect_account(user=request.user, connection=connection)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 @extend_schema(tags=['campaigns'])
 class ChannelPostListView(CampaignScopedView):
-    @extend_schema(
-        summary='Bài đăng Fanpage của kênh', responses=ScheduledPostSerializer(many=True)
-    )
+    @extend_schema(summary='Bài tự đăng của kênh', responses=ScheduledPostSerializer(many=True))
     def get(self, request, public_id, channel_id):
         posts = channel_posts_queryset(self.channel())
         return Response(
@@ -145,7 +183,7 @@ class ChannelPostListView(CampaignScopedView):
         )
 
     @extend_schema(
-        summary='Lên lịch một bài đăng Fanpage',
+        summary='Lên lịch một bài tự đăng',
         request=SchedulePostSerializer,
         responses={201: ScheduledPostSerializer},
     )
@@ -190,7 +228,7 @@ class PostImageThrottle(UserRateThrottle):
 
 @extend_schema(tags=['campaigns'])
 class ChannelPostImageView(CampaignScopedView):
-    """Upload an image for a Fanpage post, or list the company's ready-made images."""
+    """Upload an image for a social post, or list the company's ready-made images."""
 
     parser_classes = [MultiPartParser]
 
@@ -202,7 +240,7 @@ class ChannelPostImageView(CampaignScopedView):
         return Response({'company_images': company_post_images(self.campaign())})
 
     @extend_schema(
-        summary='Tải ảnh cho bài đăng Fanpage',
+        summary='Tải ảnh cho bài tự đăng',
         request={
             'multipart/form-data': inline_serializer(
                 'ChannelPostImageUpload', {'file': serializers.ImageField()}

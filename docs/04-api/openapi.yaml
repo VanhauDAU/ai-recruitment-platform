@@ -10271,7 +10271,7 @@ paths:
   /api/employer/campaigns/{public_id}/channels/{channel_id}/post-images/:
     get:
       operationId: employer_campaigns_channels_post_images_retrieve
-      description: Upload an image for a Fanpage post, or list the company's ready-made
+      description: Upload an image for a social post, or list the company's ready-made
         images.
       summary: Ảnh có sẵn của công ty
       parameters:
@@ -10299,9 +10299,9 @@ paths:
           description: ''
     post:
       operationId: employer_campaigns_channels_post_images_create
-      description: Upload an image for a Fanpage post, or list the company's ready-made
+      description: Upload an image for a social post, or list the company's ready-made
         images.
-      summary: Tải ảnh cho bài đăng Fanpage
+      summary: Tải ảnh cho bài tự đăng
       parameters:
       - in: path
         name: channel_id
@@ -10334,7 +10334,7 @@ paths:
   /api/employer/campaigns/{public_id}/channels/{channel_id}/posts/:
     get:
       operationId: employer_campaigns_channels_posts_list
-      summary: Bài đăng Fanpage của kênh
+      summary: Bài tự đăng của kênh
       parameters:
       - in: path
         name: channel_id
@@ -10361,7 +10361,7 @@ paths:
           description: ''
     post:
       operationId: employer_campaigns_channels_posts_create
-      summary: Lên lịch một bài đăng Fanpage
+      summary: Lên lịch một bài tự đăng
       parameters:
       - in: path
         name: channel_id
@@ -12805,44 +12805,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/SessionUser'
           description: ''
-  /api/employer/social/connections/:
-    get:
-      operationId: employer_social_connections_list
-      summary: Các Fanpage đã kết nối
-      tags:
-      - campaigns
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SocialConnection'
-          description: ''
-  /api/employer/social/connections/{connection_id}/:
-    delete:
-      operationId: employer_social_connections_destroy
-      summary: Ngắt kết nối Fanpage
+  /api/employer/social/{network}/authorize/:
+    post:
+      operationId: employer_social_authorize_create
+      summary: Bắt đầu kết nối tài khoản mạng xã hội (trả URL đăng nhập của mạng)
       parameters:
       - in: path
-        name: connection_id
+        name: network
         schema:
           type: string
         required: true
-      tags:
-      - campaigns
-      security:
-      - jwtAuth: []
-      responses:
-        '204':
-          description: No response body
-  /api/employer/social/facebook/authorize/:
-    post:
-      operationId: employer_social_facebook_authorize_create
-      summary: Bắt đầu kết nối Fanpage (trả URL đăng nhập Facebook)
       tags:
       - campaigns
       security:
@@ -12854,11 +12826,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/SocialConnectStart'
           description: ''
-  /api/employer/social/facebook/pending/{nonce}/:
+  /api/employer/social/{network}/pending/{nonce}/:
     get:
-      operationId: employer_social_facebook_pending_retrieve
-      summary: Các Fanpage chờ chọn sau khi đăng nhập Facebook
+      operationId: employer_social_pending_retrieve
+      summary: Các tài khoản chờ chọn sau khi đăng nhập mạng xã hội
       parameters:
+      - in: path
+        name: network
+        schema:
+          type: string
+        required: true
       - in: path
         name: nonce
         schema:
@@ -12877,9 +12854,14 @@ paths:
                 additionalProperties: {}
           description: ''
     post:
-      operationId: employer_social_facebook_pending_create
-      summary: Chọn Fanpage để kết nối
+      operationId: employer_social_pending_create
+      summary: Chọn tài khoản để kết nối
       parameters:
+      - in: path
+        name: network
+        schema:
+          type: string
+        required: true
       - in: path
         name: nonce
         schema:
@@ -12891,13 +12873,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SelectPageRequest'
+              $ref: '#/components/schemas/SelectAccountRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/SelectPageRequest'
+              $ref: '#/components/schemas/SelectAccountRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/SelectPageRequest'
+              $ref: '#/components/schemas/SelectAccountRequest'
         required: true
       security:
       - jwtAuth: []
@@ -12907,6 +12889,57 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SocialConnection'
+          description: ''
+  /api/employer/social/connections/:
+    get:
+      operationId: employer_social_connections_list
+      summary: Các tài khoản mạng xã hội đã kết nối
+      tags:
+      - campaigns
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SocialConnection'
+          description: ''
+  /api/employer/social/connections/{connection_id}/:
+    delete:
+      operationId: employer_social_connections_destroy
+      summary: Ngắt kết nối tài khoản mạng xã hội
+      parameters:
+      - in: path
+        name: connection_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - campaigns
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/employer/social/networks/:
+    get:
+      operationId: employer_social_networks_list
+      summary: Các mạng xã hội kết nối được và giới hạn bài đăng của từng mạng
+      tags:
+      - campaigns
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SocialNetwork'
           description: ''
   /api/employer/talent-pool/:
     get:
@@ -21563,8 +21596,8 @@ components:
         * `campaign_cancelled` - Hủy chiến dịch
         * `channel_added` - Thêm kênh phân phối
         * `channel_posted` - Đã đăng lên kênh
-        * `social_post_published` - Đã đăng lên Fanpage
-        * `social_post_deleted` - Đã gỡ bài khỏi Fanpage
+        * `social_post_published` - Đã tự đăng bài
+        * `social_post_deleted` - Đã tự gỡ bài
         * `job_added` - Thêm tin tuyển dụng
         * `job_removed` - Gỡ tin tuyển dụng
         * `job_updated` - Cập nhật tin tuyển dụng
@@ -29912,6 +29945,11 @@ components:
         * `manual_review` - Tạm ẩn để rà soát nội dung
         * `confirmed_violation` - Tạm ẩn do vi phạm đã xác nhận
         * `changes_requested` - Tạm ẩn, cần chỉnh sửa theo yêu cầu
+    NetworkEnum:
+      enum:
+      - facebook_page
+      type: string
+      description: '* `facebook_page` - Fanpage Facebook'
     NullEnum:
       enum:
       - null
@@ -32449,14 +32487,6 @@ components:
       description: |-
         * `business_registration` - Giấy đăng ký doanh nghiệp hoặc tương đương
         * `authorization_and_id` - Giấy ủy quyền + giấy tờ định danh
-    ProviderEnum:
-      enum:
-      - facebook
-      - fake
-      type: string
-      description: |-
-        * `facebook` - Facebook
-        * `fake` - Giả lập
     ProviderStatusEnum:
       enum:
       - pending
@@ -35006,10 +35036,13 @@ components:
         public_id:
           type: string
           readOnly: true
-        page_name:
+        network:
           type: string
           readOnly: true
-        page_picture_url:
+        account_name:
+          type: string
+          readOnly: true
+        account_picture_url:
           type: string
           readOnly: true
         message:
@@ -35055,14 +35088,15 @@ components:
           readOnly: true
           nullable: true
       required:
+      - account_name
+      - account_picture_url
       - attempts
       - deleted_at
       - error_message
       - images
       - last_error_code
       - message
-      - page_name
-      - page_picture_url
+      - network
       - permalink
       - public_id
       - published_at
@@ -35087,8 +35121,8 @@ components:
         * `postponed` - Hoãn do chiến dịch tạm dừng
         * `failed` - Đăng không thành công
         * `cancelled` - Đã hủy
-        * `deleted` - Đã gỡ khỏi Fanpage
-        * `delete_failed` - Chưa gỡ được khỏi Fanpage
+        * `deleted` - Đã gỡ bài
+        * `delete_failed` - Cần tự gỡ bài
     SectionKeyEnum:
       enum:
       - about
@@ -35115,15 +35149,15 @@ components:
         * `social_links` - social_links
         * `share` - share
         * `similar_companies` - similar_companies
-    SelectPageRequest:
+    SelectAccountRequest:
       type: object
       properties:
-        page_id:
+        account_id:
           type: string
           minLength: 1
           maxLength: 64
       required:
-      - page_id
+      - account_id
     SelfServiceRoleEnum:
       enum:
       - candidate
@@ -35362,6 +35396,22 @@ components:
         * `beginner` - Beginner
         * `intermediate` - Intermediate
         * `advanced` - Advanced
+    SocialCapabilities:
+      type: object
+      properties:
+        max_chars:
+          type: integer
+        max_images:
+          type: integer
+        requires_image:
+          type: boolean
+        supports_delete:
+          type: boolean
+      required:
+      - max_chars
+      - max_images
+      - requires_image
+      - supports_delete
     SocialConnectStart:
       type: object
       properties:
@@ -35376,20 +35426,23 @@ components:
         public_id:
           type: string
           readOnly: true
-        provider:
+        network:
           allOf:
-          - $ref: '#/components/schemas/ProviderEnum'
+          - $ref: '#/components/schemas/NetworkEnum'
+          readOnly: true
+        network_label:
+          type: string
           readOnly: true
         simulated:
           type: boolean
           readOnly: true
-        page_id:
+        account_id:
           type: string
           readOnly: true
-        page_name:
+        account_name:
           type: string
           readOnly: true
-        page_picture_url:
+        account_picture_url:
           type: string
           format: uri
           readOnly: true
@@ -35408,12 +35461,13 @@ components:
           format: date-time
           readOnly: true
       required:
+      - account_id
+      - account_name
+      - account_picture_url
       - connected_at
       - last_error_code
-      - page_id
-      - page_name
-      - page_picture_url
-      - provider
+      - network
+      - network_label
       - public_id
       - simulated
       - status
@@ -35428,6 +35482,28 @@ components:
         * `connected` - Đang kết nối
         * `expired` - Hết hạn, cần kết nối lại
         * `revoked` - Đã ngắt kết nối
+    SocialNetwork:
+      type: object
+      properties:
+        key:
+          type: string
+        platform:
+          type: string
+        label:
+          type: string
+        channel_kind:
+          type: string
+        capabilities:
+          $ref: '#/components/schemas/SocialCapabilities'
+        simulated:
+          type: boolean
+      required:
+      - capabilities
+      - channel_kind
+      - key
+      - label
+      - platform
+      - simulated
     SourceTypeEnum:
       enum:
       - file

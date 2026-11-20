@@ -1,4 +1,16 @@
-"""Provider contract for posting campaign content to a social page."""
+"""Provider contract for posting campaign content to a social network.
+
+A provider serves one network and exposes:
+
+- ``network``: the key in ``domain.social_networks.NETWORKS``;
+- ``simulated``: True for the in-process fake;
+- ``authorize_url(state)`` and ``exchange_code(code)`` for OAuth;
+- ``list_accounts(user_token)``: the accounts the user may post as;
+- ``publish(account_id=, token=, message=, link=, images=)``;
+- ``find_recent_post(account_id=, token=, link=)``: a post already carrying
+  ``link``, so a retry after a timeout does not post twice;
+- ``delete(post_id=, token=)``, only called when the network supports it.
+"""
 
 from dataclasses import dataclass
 
@@ -7,7 +19,7 @@ class SocialProviderError(Exception):
     """A provider failure with a log-safe code.
 
     ``transient`` errors are retried with backoff; ``token_invalid`` marks the
-    page connection expired so the recruiter reconnects.
+    connection expired so the recruiter reconnects.
     """
 
     def __init__(self, code, *, transient=False, token_invalid=False):
@@ -18,8 +30,8 @@ class SocialProviderError(Exception):
 
 
 @dataclass(frozen=True)
-class SocialPage:
-    page_id: str
+class SocialAccount:
+    account_id: str
     name: str
     picture_url: str
     token: str

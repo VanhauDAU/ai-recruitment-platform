@@ -45,7 +45,7 @@ có quyền `pages_manage_posts`, nên CI và máy dev không có Meta App vẫn
 
 - Demo và CI không cần Meta App. Đăng thật cần app ở Development mode và người
   bấm kết nối phải có vai trò trong app (xem
-  `docs/06-deployment/facebook-page-integration.md`).
+  `docs/06-deployment/social-integrations.md`).
 - Thêm mạng xã hội khác chỉ cần một provider mới cùng hợp đồng.
 - Bài đã đăng không bị gỡ khi chiến dịch tạm dừng (quyết định 18/11). Link trong
   bài dẫn tới trang tuyển dụng ở trạng thái tạm dừng.

@@ -4,12 +4,13 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { message } from '@/shared/lib/toast'
-import ChannelFacebookPosts from './ChannelFacebookPosts'
+import ChannelSocialPosts from './ChannelSocialPosts'
 import ChannelPostSection from './ChannelPostSection'
 
 const mocks = vi.hoisted(() => ({
   getChannelPosts: vi.fn(),
   getSocialConnections: vi.fn(),
+  useSocialNetworks: vi.fn(),
   scheduleChannelPost: vi.fn(),
   cancelChannelPost: vi.fn(),
   rescheduleChannelPost: vi.fn(),
@@ -31,24 +32,34 @@ const channel = {
   rendered_content: { headline: 'Tuyển gấp' },
 }
 const campaign = { public_id: 'camp_1', name: 'Tuyển kỹ thuật', status: 'active' }
+const facebook = {
+  key: 'facebook_page',
+  platform: 'Facebook',
+  label: 'Fanpage Facebook',
+  channel_kind: 'facebook_page',
+  capabilities: { max_chars: 5000, max_images: 4, requires_image: false, supports_delete: true },
+  simulated: true,
+}
+const connected = [{ public_id: 'soc_1', network: 'facebook_page', account_name: 'Fanpage ProCV', status: 'connected' }]
 
 function renderWith(Component) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
-        <Component campaign={campaign} channel={channel} editable />
+        <Component campaign={campaign} channel={channel} network={facebook} editable />
       </MemoryRouter>
     </QueryClientProvider>,
   )
 }
-const renderPosts = () => renderWith(ChannelFacebookPosts)
+const renderPosts = () => renderWith(ChannelSocialPosts)
 const renderComposer = () => renderWith(ChannelPostSection)
 
-describe('ChannelFacebookPosts', () => {
+describe('ChannelSocialPosts', () => {
   beforeEach(() => {
     Object.values(mocks).forEach((mock) => mock.mockReset())
     mocks.getChannelPostImageChoices.mockResolvedValue({ company_images: [] })
+    mocks.useSocialNetworks.mockReturnValue({ data: [facebook], isLoading: false })
     mocks.updateCampaignChannel.mockResolvedValue(channel)
     vi.spyOn(message, 'success').mockImplementation(() => {})
   })
@@ -56,13 +67,15 @@ describe('ChannelFacebookPosts', () => {
   it('lists posts with readable errors and retries a failed one', async () => {
     const user = userEvent.setup()
     mocks.getChannelPosts.mockResolvedValue([
-      { public_id: 'post_1', status: 'published', status_label: 'Đã đăng', published_at: '2026-11-18T03:00:00Z', page_name: 'Fanpage ProCV', permalink: 'https://fb.com/p/1' },
-      { public_id: 'post_2', status: 'failed', status_label: 'Đăng không thành công', scheduled_for: '2026-11-18T05:00:00Z', page_name: 'Fanpage ProCV', error_message: 'Facebook không mở được link trong bài.' },
+      { public_id: 'post_1', status: 'published', status_label: 'Đã đăng', published_at: '2026-11-18T03:00:00Z', account_name: 'Fanpage ProCV', permalink: 'https://fb.com/p/1' },
+      { public_id: 'post_2', status: 'failed', status_label: 'Đăng không thành công', scheduled_for: '2026-11-18T05:00:00Z', account_name: 'Fanpage ProCV', error_message: 'Facebook không mở được link trong bài.' },
+      { public_id: 'post_3', status: 'delete_failed', status_label: 'Cần tự gỡ bài', published_at: '2026-11-17T03:00:00Z', account_name: 'Fanpage ProCV', permalink: 'https://fb.com/p/3' },
     ])
     mocks.rescheduleChannelPost.mockResolvedValue({})
     renderPosts()
 
-    expect(await screen.findByRole('link', { name: 'Mở bài trên Facebook' })).toHaveAttribute('href', 'https://fb.com/p/1')
+    const links = await screen.findAllByRole('link', { name: 'Mở bài trên Facebook' })
+    expect(links.map((link) => link.getAttribute('href'))).toEqual(['https://fb.com/p/1', 'https://fb.com/p/3'])
     expect(screen.getByText('Facebook không mở được link trong bài.')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Đăng lại' }))
 
@@ -72,7 +85,7 @@ describe('ChannelFacebookPosts', () => {
   it('posts now on a connected page with a live preview', async () => {
     const user = userEvent.setup()
     mocks.getChannelPosts.mockResolvedValue([])
-    mocks.getSocialConnections.mockResolvedValue([{ public_id: 'soc_1', page_name: 'Fanpage ProCV', status: 'connected' }])
+    mocks.getSocialConnections.mockResolvedValue(connected)
     mocks.scheduleChannelPost.mockResolvedValue({})
     renderComposer()
 
@@ -93,7 +106,7 @@ describe('ChannelFacebookPosts', () => {
   it('attaches the company cover to a post and shows it in the preview', async () => {
     const user = userEvent.setup()
     mocks.getChannelPosts.mockResolvedValue([])
-    mocks.getSocialConnections.mockResolvedValue([{ public_id: 'soc_1', page_name: 'Fanpage ProCV', status: 'connected' }])
+    mocks.getSocialConnections.mockResolvedValue(connected)
     mocks.getChannelPostImageChoices.mockResolvedValue({
       company_images: [{ kind: 'cover', label: 'Ảnh bìa công ty', path: 'employers/cmp/covers/a.jpg', url: 'http://localhost:8000/media/employers/cmp/covers/a.jpg' }],
     })
@@ -115,7 +128,7 @@ describe('ChannelFacebookPosts', () => {
   it('schedules a series of posts', async () => {
     const user = userEvent.setup()
     mocks.getChannelPosts.mockResolvedValue([])
-    mocks.getSocialConnections.mockResolvedValue([{ public_id: 'soc_1', page_name: 'Fanpage ProCV', status: 'connected' }])
+    mocks.getSocialConnections.mockResolvedValue(connected)
     mocks.scheduleChannelPost.mockResolvedValue({})
     renderComposer()
 

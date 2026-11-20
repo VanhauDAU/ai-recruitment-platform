@@ -151,18 +151,23 @@ export async function getSocialConnections() {
   return data
 }
 
-export async function startFacebookConnect() {
-  const { data } = await api.post('/employer/social/facebook/authorize/')
-  return data.url
-}
-
-export async function getPendingFacebookPages(nonce) {
-  const { data } = await api.get(`/employer/social/facebook/pending/${nonce}/`)
+export async function getSocialNetworks() {
+  const { data } = await api.get('/employer/social/networks/')
   return data
 }
 
-export async function selectFacebookPage(nonce, pageId) {
-  const { data } = await api.post(`/employer/social/facebook/pending/${nonce}/`, { page_id: pageId })
+export async function startSocialConnect(network) {
+  const { data } = await api.post(`/employer/social/${network}/authorize/`)
+  return data.url
+}
+
+export async function getPendingSocialAccounts(network, nonce) {
+  const { data } = await api.get(`/employer/social/${network}/pending/${nonce}/`)
+  return data
+}
+
+export async function selectSocialAccount(network, nonce, accountId) {
+  const { data } = await api.post(`/employer/social/${network}/pending/${nonce}/`, { account_id: accountId })
   return data
 }
 

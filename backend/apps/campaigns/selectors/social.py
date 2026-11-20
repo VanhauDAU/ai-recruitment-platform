@@ -1,4 +1,4 @@
-"""Fanpage connections and scheduled posts, scoped to the recruiter."""
+"""Social connections and scheduled posts, scoped to the recruiter."""
 
 from ..models import ScheduledSocialPost, SocialAccountConnection
 

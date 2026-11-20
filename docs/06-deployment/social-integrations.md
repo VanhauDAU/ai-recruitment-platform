@@ -1,17 +1,27 @@
-# Đăng bài chiến dịch lên Facebook Page
+# Tự đăng bài chiến dịch lên mạng xã hội
 
-Kênh "Fanpage Facebook" của chiến dịch có thể tự đăng bài lên Fanpage của nhà
-tuyển dụng (NTD) đúng giờ hẹn và tự gỡ bài khi chiến dịch kết thúc. Thiết kế ở
-[ADR-0021](../02-tong-quan/adr-0021-campaign-facebook-page.md).
+Kênh chiến dịch có mạng tự đăng (hiện là "Fanpage Facebook") đăng bài lên tài
+khoản mạng xã hội của nhà tuyển dụng (NTD) đúng giờ hẹn, rồi tự gỡ bài khi
+chiến dịch kết thúc. Thiết kế nằm ở
+[ADR-0021](../02-tong-quan/adr-0021-campaign-facebook-page.md) và
+[ADR-0025](../02-tong-quan/adr-0025-campaign-social-networks.md).
 
-## Hai chế độ
+## Thật hay giả lập, đặt theo từng mạng
 
-| `CAMPAIGN_SOCIAL_PROVIDER` | Dùng khi | Hành vi |
+`CAMPAIGN_SOCIAL_LIVE_NETWORKS` liệt kê các mạng gọi API thật, cách nhau dấu
+phẩy. Mạng không có trong danh sách chạy bằng provider giả lập.
+
+| Mạng (`key`) | Khi giả lập | Khi thật |
 | --- | --- | --- |
-| `fake` (mặc định) | Dev, CI, demo không có Meta App | Kết nối trả một Fanpage giả lập; "đăng" và "gỡ" chỉ ghi vào cache. Giao diện gắn nhãn "Chế độ giả lập". |
-| `facebook` | Đăng thật | Gọi Graph API của Meta với quyền `pages_show_list`, `pages_manage_posts`, `pages_read_engagement`. |
+| `facebook_page` | Kết nối trả một Fanpage giả lập; "đăng" và "gỡ" chỉ ghi vào cache. Giao diện gắn nhãn "Giả lập". | Gọi Graph API của Meta với quyền `pages_show_list`, `pages_manage_posts`, `pages_read_engagement`. Hướng dẫn tạo app ở mục dưới. |
 
-## Tạo Meta App để đăng thật (Development mode)
+`CAMPAIGN_SOCIAL_PROVIDER=facebook` là cách bật cũ, được hiểu là
+`CAMPAIGN_SOCIAL_LIVE_NETWORKS=facebook_page`. Test luôn chạy giả lập, bất kể
+`.env` đặt gì.
+
+## Fanpage Facebook
+
+### Tạo Meta App để đăng thật (Development mode)
 
 Giao diện Meta (11/2026) dùng "trường hợp sử dụng" thay cho chọn loại app. App
 dùng cho đăng nhập bằng Facebook **không thêm được** quyền Trang, nên cần một app
@@ -37,7 +47,7 @@ riêng cho việc đăng Fanpage.
 5. **Lấy khóa.** **App settings → Basic** cho **App ID** và **App secret**.
 6. **Điền `backend/.env`:**
    ```env
-   CAMPAIGN_SOCIAL_PROVIDER=facebook
+   CAMPAIGN_SOCIAL_LIVE_NETWORKS=facebook_page
    FACEBOOK_APP_ID=<App ID>
    FACEBOOK_APP_SECRET=<App secret>
    CAMPAIGN_SOCIAL_TOKEN_ENCRYPTION_KEY=<Fernet key riêng>
@@ -47,15 +57,16 @@ riêng cho việc đăng Fanpage.
    Key này không được trùng `SECRET_KEY`, khóa JWT hay khóa SMS. Production sẽ
    từ chối khởi động nếu thiếu hoặc trùng.
 7. Restart `backend`, `worker`, `beat`.
-8. **Thử.** Vào **Cài đặt tài khoản → Kết nối mạng xã hội**, bấm "Kết nối Fanpage
-   Facebook", đồng ý trên Facebook, rồi chọn Fanpage. Sau đó vào một chiến dịch
-   đang chạy, thêm kênh "Fanpage Facebook", soạn nội dung, bấm "Hẹn đăng" và chọn
-   "Đăng ngay". Beat sẽ đăng trong vòng 1 phút.
+8. **Thử.** Vào **Cài đặt tài khoản → Kết nối mạng xã hội**, ở thẻ "Fanpage
+   Facebook" bấm "Kết nối Fanpage Facebook", đồng ý trên Facebook, rồi chọn
+   Fanpage. Sau đó vào một chiến dịch đang chạy, thêm kênh "Fanpage Facebook",
+   soạn nội dung, bấm "Hẹn đăng" và chọn "Đăng ngay". Beat sẽ đăng trong vòng 1
+   phút.
 
 Muốn người ngoài danh sách vai trò dùng được thì app phải qua **App Review** và
 chuyển sang Live mode. Việc này nằm ngoài phạm vi đồ án.
 
-## Ảnh trong bài
+### Ảnh trong bài
 
 Bài có ảnh được đăng hai bước: từng ảnh tải lên `/{page}/photos` với
 `published=false` (gửi thẳng tệp nên chạy được cả ở máy cục bộ), rồi một bài
@@ -63,7 +74,7 @@ Bài có ảnh được đăng hai bước: từng ảnh tải lên `/{page}/pho
 ảnh, nên link theo dõi luôn nằm trong nội dung. Ảnh chỉ được lấy từ ảnh đã tải
 lên cho chính chiến dịch hoặc ảnh bìa, logo hiện tại của công ty.
 
-## Link trong bài khi chạy ở máy cục bộ
+### Link trong bài khi chạy ở máy cục bộ
 
 Facebook tự đọc link đính kèm để dựng thẻ xem trước; link `localhost` hay IP nội
 bộ thì Graph trả lỗi 1500 ("URL không hợp lệ") và bài không đăng được. Provider
@@ -72,11 +83,11 @@ cuối nội dung bài (nếu nội dung chưa có), bài vẫn đăng được 
 xem trước. Muốn thấy thẻ xem trước khi demo, đặt `FRONTEND_URL` thành một địa
 chỉ công khai (ví dụ đường hầm HTTPS) để link theo dõi của kênh là link công khai.
 
-## Vận hành
+## Vận hành (chung cho mọi mạng)
 
 - **Token**:
-  - chỉ lưu Page token của Fanpage được chọn, mã hóa Fernet
-    (`SocialAccountConnection.token_ciphertext`);
+  - chỉ lưu token của tài khoản được chọn (với Facebook là Page token), mã hóa
+    Fernet (`SocialAccountConnection.token_ciphertext`);
   - user token chỉ dùng trong lúc đổi mã OAuth, không lưu;
   - mọi lệnh gọi Graph API kèm `appsecret_proof`.
 - **Task** (queue `default`):
@@ -89,13 +100,15 @@ chỉ công khai (ví dụ đường hầm HTTPS) để link theo dõi của kê
 - **Lỗi khi đăng**:
   - lỗi tạm thời (mạng, timeout, 5xx, mã 1/2/4/17/32/341/613): thử lại sau 1, 5,
     15, 60 phút; quá 5 lần thì báo lỗi;
-  - trước khi đăng lại, hệ thống tìm bài cùng link trên Fanpage để không đăng
+  - trước khi đăng lại, hệ thống tìm bài cùng link trên tài khoản để không đăng
     trùng nếu lần trước thực ra đã thành công;
   - token hỏng (mã 190/102): kết nối chuyển "Hết hạn" và NTD được báo để kết nối
     lại.
-- **Không gỡ được bài** khi kết thúc chiến dịch: bài chuyển `delete_failed` và
-  NTD nhận thông báo kèm link để tự xóa.
-- **Bàn giao chiến dịch** sang NTD khác: bài chưa đăng trên Fanpage của chủ cũ
+- **Không gỡ được bài** khi kết thúc chiến dịch: bài chuyển `delete_failed` ("Cần
+  tự gỡ bài") và NTD nhận thông báo kèm link để tự xóa. Mạng mà API không có
+  thao tác gỡ bài (`supports_delete=False`) luôn đi đường này, với mã
+  `delete_unsupported`.
+- **Bàn giao chiến dịch** sang NTD khác: bài chưa đăng trên tài khoản của chủ cũ
   bị hủy (`owner_changed`).
 - **Ghim phiên bản Graph API** bằng `FACEBOOK_GRAPH_API_VERSION`; nâng phiên bản
   trước khi Meta ngừng hỗ trợ.

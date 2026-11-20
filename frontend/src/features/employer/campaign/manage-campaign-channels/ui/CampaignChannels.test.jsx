@@ -9,6 +9,7 @@ import CampaignChannelBoard from './CampaignChannelBoard'
 import ChannelReport from './ChannelReport'
 
 const mocks = vi.hoisted(() => ({
+  useSocialNetworks: vi.fn(),
   getCampaignChannels: vi.fn(),
   generateCampaignChannelContent: vi.fn(),
   updateCampaignChannel: vi.fn(),
@@ -19,6 +20,14 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@/entities/campaign/campaign', async (importOriginal) => ({ ...(await importOriginal()), ...mocks }))
+const facebook = {
+  key: 'facebook_page',
+  platform: 'Facebook',
+  label: 'Fanpage Facebook',
+  channel_kind: 'facebook_page',
+  capabilities: { max_chars: 5000, max_images: 4, requires_image: false, supports_delete: true },
+  simulated: true,
+}
 
 const campaign = { public_id: 'camp_1', status: 'active' }
 const channel = {
@@ -58,6 +67,7 @@ function renderWithClient(component) {
 describe('campaign channels', () => {
   beforeEach(() => {
     Object.values(mocks).forEach((mock) => mock.mockReset())
+    mocks.useSocialNetworks.mockReturnValue({ data: [facebook], isLoading: false })
     vi.spyOn(message, 'success').mockImplementation(() => {})
     vi.spyOn(message, 'info').mockImplementation(() => {})
   })
@@ -129,7 +139,7 @@ describe('campaign channels', () => {
     mocks.getChannelPosts.mockResolvedValue([])
     renderWithClient(<MemoryRouter><CampaignChannelBoard campaign={campaign} /></MemoryRouter>)
 
-    expect(await screen.findByText('Chưa có bài nào trên Fanpage.')).toBeInTheDocument()
+    expect(await screen.findByText('Chưa có bài nào trên Fanpage Facebook.')).toBeInTheDocument()
     expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Bài đăng', 'Link & QR', 'Chi phí'])
     expect(screen.getByRole('button', { name: 'Soạn bài' })).toBeEnabled()
     expect(screen.queryByRole('button', { name: /Sao chép bài/ })).not.toBeInTheDocument()
