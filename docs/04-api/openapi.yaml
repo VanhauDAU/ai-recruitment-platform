@@ -6832,6 +6832,29 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
+  /api/admin/site/settings/{key}/history/:
+    get:
+      operationId: admin_site_settings_history_retrieve
+      description: 20 lần đổi gần nhất của một key (từ audit log), mới nhất trước.
+      summary: 'Admin: lịch sử thay đổi một site setting'
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - site-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
   /api/admin/site/settings/upload/:
     post:
       operationId: admin_site_settings_upload_create

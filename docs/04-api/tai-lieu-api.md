@@ -725,6 +725,7 @@ Mã lỗi ổn định gồm `JOB_AI_DAILY_QUOTA_EXCEEDED` (429),
 | GET | `/api/public/site/link-groups/?placement=footer_nav` | Các cột menu điều hướng footer, public |
 | GET | `/api/public/site/banners/?placement=home_hero` | Banner đang bật theo order, public |
 | GET | `/api/admin/site/settings/` | **Superuser**: cấu hình gộp theo nhóm có key `{groups: [{key, label, area, area_label, settings: [...]}]}`; mỗi setting kèm `section`, `value_type`, `options`, `description`, `help`, `default_value`, `order`, `is_public` để frontend tự render form và nút "?" (ADR-0026) |
+| GET | `/api/admin/site/settings/{key}/history/` | **Superuser**: 20 lần đổi gần nhất của một key (audit `site_setting_update`) `{results: [{id, created_at, actor, before, after}]}` |
 | GET | `/api/admin/site/system-parameters/` | **Superuser**: thông số chỉ đọc lấy từ `.env`/code `{groups: [{key, label, items: [{key, label, value, source, help}]}]}`; secret chỉ báo đã/chưa cấu hình |
 | PATCH | `/api/admin/site/settings/` | **Superuser**: bulk update, body `{"values": {key: value}}` (multipart thêm `files[key]` cho ảnh), validate theo `value_type` + `options` (boolean, number min/max/integer, color hex, select, max_length, URL http(s) hoặc `/...`, email, JSON `schema`) → `{"updated": [...], "errors": {...}, "values", "display_values"}`; mỗi thay đổi ghi audit `site_setting_update` |
 | POST | `/api/admin/site/settings/upload/` | Đã ngưng dùng, trả `410`; ảnh gửi kèm PATCH ở trên |

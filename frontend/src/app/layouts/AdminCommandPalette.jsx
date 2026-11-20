@@ -25,7 +25,7 @@ function useSettingsDestinations(enabled) {
     key: `settings-${group.key}`,
     label: group.label,
     breadcrumb: [m.admin_nav_settings(), group.label],
-    href: adminPath(group.key === 'general' ? '/settings' : `/settings?group=${group.key}`),
+    href: adminPath(`/settings?group=${group.key}`),
   })), [settings.data])
 }
 

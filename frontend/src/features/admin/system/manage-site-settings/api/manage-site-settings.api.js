@@ -24,3 +24,13 @@ export async function updateAdminSettings(values, files = {}) {
 
   return patchAdminSettings({ values })
 }
+
+export async function getSettingHistory(key) {
+  const { data } = await api.get(`/admin/site/settings/${encodeURIComponent(key)}/history/`)
+  return data.results
+}
+
+export async function getSystemParameters() {
+  const { data } = await api.get('/admin/site/system-parameters/')
+  return data.groups
+}

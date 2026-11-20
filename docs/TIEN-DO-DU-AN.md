@@ -7,7 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Làm lại trang Cấu hình hệ thống (ADR-0026)](#làm-lại-trang-cấu-hình-hệ-thống-adr-0026-2026-11-21) | 🟨 GĐ1 hợp đồng cấu hình trên nhánh `feat/settings-contract`; GĐ2–5 chưa làm |
+| [Làm lại trang Cấu hình hệ thống (ADR-0026)](#làm-lại-trang-cấu-hình-hệ-thống-adr-0026-2026-11-21) | 🟨 GĐ1 đã gộp (#294, sửa CI #295); GĐ2 giao diện mới trên nhánh `feat/settings-ui`; GĐ3–5 chưa làm |
 | [Chốt luồng FAQ/hướng dẫn và blog: Nháp → Xuất bản (ADR-0024)](#chốt-luồng-nội-dung-nháp--xuất-bản-adr-0024-2026-11-20) | ✅ Gộp vào `dev` (#272) |
 | [Tổ chức lại sidebar quản trị](#tổ-chức-lại-sidebar-quản-trị-2026-11-20) | ✅ Gộp vào `dev` (#270); gỡ khối "Hàng chờ quản trị" ở trang Người dùng: PR #271, chờ gộp |
 | [Song ngữ vi/en cho 3 cổng (ADR-0023)](#song-ngữ-vien-cho-3-cổng-adr-0023-2026-11-19) | 🟨 GĐ0 (#262), GĐ1 cổng NTD (#267) đã gộp; chặn mất dữ liệu khi đổi ngôn ngữ trên nhánh `fix/language-switch-unsaved-guard`; GĐ2–4 chưa làm |
@@ -50,8 +50,8 @@ ghi ngược với code.
 
 | GĐ | Nội dung | Trạng thái |
 | --- | --- | --- |
-| 1 | Hợp đồng cấu hình (xem bên dưới) | 🟨 Nhánh `feat/settings-contract` |
-| 2 | Giao diện mới: thanh bên 3 khu, tìm kiếm, nút "?", lưu chung, xác nhận thao tác nguy hiểm, lịch sử thay đổi, bảng thông số | ⬜ |
+| 1 | Hợp đồng cấu hình (xem bên dưới) | ✅ #294, #295 |
+| 2 | Giao diện mới: thanh bên 3 khu, tìm kiếm, nút "?", lưu chung, xác nhận thao tác nguy hiểm, lịch sử thay đổi, bảng thông số | 🟨 Nhánh `feat/settings-ui` |
 | 3 | Nối bảo trì, công tắc đăng ký, khối trang chủ; sửa logo/SEO/màu/footer; bộ Pháp lý & đồng ý (link đang trỏ topcv.vn); bộ Tính năng | ⬜ |
 | 4 | Email (phạm vi công tắc, chào mừng, branding chung), AI hợp nhất theo runtime, job alert, AI chiến dịch | ⬜ |
 | 5 | Xác thực & uy tín NTD, Ứng tuyển & SLA, hạn tin, chia sẻ CV, lưu trữ dữ liệu, OAuth theo cổng | ⬜ |
