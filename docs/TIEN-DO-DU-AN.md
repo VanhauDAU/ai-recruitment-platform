@@ -407,9 +407,9 @@ GĐ1 đã làm:
 - Còn mở: chưa xem bằng mắt trên trình duyệt (đã có test API và test giao diện);
   `openapi.yaml` được sinh lại nên kéo theo phần lệch tích tụ từ các tính năng
   trước.
-- Khung tự đăng nhiều mạng xã hội (ADR-0025, nhánh `feat/social-networks-core`,
-  PR1/5). Bốn mạng sẽ thêm, mỗi mạng một PR: Instagram Business, Threads,
-  LinkedIn, Zalo OA. PR này chưa thêm mạng nào.
+- Khung tự đăng nhiều mạng xã hội (ADR-0025, #286). Ba mạng thêm sau, mỗi mạng
+  một PR: Instagram doanh nghiệp, Threads, LinkedIn. Zalo OA đã bỏ ngày 21/11.
+  PR này chưa thêm mạng nào.
   - Mạng khai báo ở `campaigns/domain/social_networks.py` kèm giới hạn: số ký
     tự, số ảnh, có bắt buộc ảnh không, có gỡ bài được không.
   - Migration campaigns 0004–0006 (thêm cột, chép dữ liệu, đổi cột; tách ba bước
@@ -424,7 +424,7 @@ GĐ1 đã làm:
   - Trang Kết nối mạng xã hội thành lưới thẻ, mỗi mạng một thẻ. Ngăn soạn bài
     lấy giới hạn ký tự và số ảnh từ API. `ChannelIcon` chuyển xuống entity
     campaign.
-- Instagram doanh nghiệp (nhánh `feat/social-instagram`, PR2/5).
+- Instagram doanh nghiệp (#287).
   - Kết nối qua Facebook Login, dùng chung Meta App; chỉ hiện các Fanpage đã
     liên kết Instagram.
   - Đăng bài một ảnh hoặc carousel (tối đa 10 ảnh); ảnh là bắt buộc.
@@ -439,7 +439,7 @@ GĐ1 đã làm:
     - thiếu quyền `business_management`;
     - "Đăng ngay" phải chờ lượt quét 60 giây; nay đăng khi commit và hiện
       "Đang đăng".
-- Threads (nhánh `feat/social-threads`, PR3/5).
+- Threads (#289).
   - Kết nối qua Threads Login, App ID/secret riêng.
   - Bài chữ có thẻ xem trước link; bài một ảnh hoặc carousel; tối đa 500 ký
     tự, tính cả link.
@@ -451,7 +451,7 @@ GĐ1 đã làm:
     chừng.
   - Còn mở: chưa thử thật. Cần Threads App ID/secret, khai Redirect Callback
     URL và thêm người thử nghiệm Threads.
-- LinkedIn (nhánh `feat/social-linkedin`, PR4/5, nối tiếp Threads).
+- LinkedIn (#290).
   - Đăng lên trang cá nhân qua Share on LinkedIn và Posts API; bài chữ, một
     ảnh hoặc nhiều ảnh; tối đa 3.000 ký tự, tính cả link; ký tự đặc biệt được
     escape.
@@ -463,6 +463,13 @@ GĐ1 đã làm:
   - Mạng chưa kết nối thì kênh quay về chép để đăng tay (áp dụng cho mọi mạng).
   - Migration campaigns 0009.
   - Còn mở: chưa thử thật; chưa làm Trang công ty (cần LinkedIn duyệt).
+- Kết thúc đợt tự đăng (21/11): bốn mạng là Fanpage, Instagram, Threads và
+  LinkedIn. Bỏ Zalo OA; kênh `zalo` vẫn đăng tay.
+  - Đã đăng thật: Fanpage và Instagram.
+  - Threads (`@levanhau122`) và LinkedIn đã kết nối thật nhưng chưa đăng bài
+    thật. Threads chỉ nhận redirect HTTPS (xem #292); LinkedIn nhận
+    `http://localhost`.
+  - Chưa thử gỡ bài Instagram trên tài khoản thật.
 - Hộp "Thêm kênh phân phối" chia hai nhóm (nhánh `feat/campaign-add-channel-groups`).
   - **ProCV tự đăng:** danh sách mạng lấy từ API; mỗi ô có trạng thái "Đã kết
     nối · tài khoản" hoặc "Chưa kết nối". Chọn mạng chưa kết nối thì hiện một

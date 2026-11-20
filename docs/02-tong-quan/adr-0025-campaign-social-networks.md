@@ -17,8 +17,8 @@ Facebook ở nhiều chỗ:
 - giới hạn bài (5.000 ký tự, 4 ảnh) là hằng số rải ở backend và frontend.
 
 NTD muốn tự đăng thêm Instagram Business, Threads, LinkedIn và Zalo Official
-Account. Mỗi mạng có giới hạn và năng lực khác nhau, chẳng hạn Instagram bắt
-buộc có ảnh và API không gỡ được bài.
+Account. Zalo OA sau đó đã bỏ, xem mục "Kết thúc đợt". Mỗi mạng có giới hạn và
+năng lực khác nhau, chẳng hạn Instagram bắt buộc có ảnh.
 
 ## Quyết định
 
@@ -67,11 +67,12 @@ buộc có ảnh và API không gỡ được bài.
 
 ## Hệ quả
 
-- Mỗi mạng mới là một PR riêng (Instagram, Threads, LinkedIn, Zalo OA). PR đó
-  không phải sửa luồng hẹn giờ, thử lại, đối soát hay giao diện chung.
-- Refresh token và PKCE chưa có trong khung, vì Facebook không cần. Mạng đầu
-  tiên cần chúng (Threads, Zalo OA) thêm cột `refresh_ciphertext`,
-  `token_expires_at` và task làm mới token trong PR của mạng đó.
+- Mỗi mạng mới là một PR riêng: Instagram (#287), Threads (#289), LinkedIn
+  (#290). PR đó không phải sửa luồng hẹn giờ, thử lại, đối soát hay giao diện
+  chung.
+- Hạn token và làm mới token chưa có trong khung, vì Facebook không cần. Mạng
+  đầu tiên cần (Threads) thêm `token_expires_at` và task làm mới token trong PR
+  của nó.
 - Thông báo và nhãn hoạt động không còn nhắc "Fanpage" khi không đúng với mọi
   mạng. Mã lỗi `graph_*` vẫn là của Meta.
 - Thêm mạng cần cập nhật danh sách mạng hợp lệ trong `config/settings/production.py`
@@ -99,7 +100,7 @@ buộc có ảnh và API không gỡ được bài.
   `refresh(token)`. Task `refresh_social_tokens` chạy mỗi ngày và làm mới token
   còn dưới 10 ngày. Token bị từ chối hoặc đã quá hạn thì kết nối hết hạn và NTD
   được báo. Threads làm mới bằng chính token dài hạn nên không cần cột
-  `refresh_ciphertext`. PKCE vẫn để dành cho Zalo OA.
+  `refresh_ciphertext`. Không mạng nào hiện có cần PKCE.
 - Giới hạn ký tự tính cả link theo dõi, vì provider tự thêm link vào cuối khi
   nội dung chưa có.
 - Task đăng bài được tới 3 phút, vì mỗi ảnh của carousel phải chờ container
@@ -122,3 +123,14 @@ buộc có ảnh và API không gỡ được bài.
   đoạn, và áp dụng cho mọi mạng.
 - Nhãn thông báo của NTD bỏ chữ "Fanpage"; thêm loại "Kết nối mạng xã hội sắp
   hết hạn" (migration employers 0005).
+
+## Kết thúc đợt (21/11/2026)
+
+- Đợt này dừng ở bốn mạng: Fanpage Facebook, Instagram doanh nghiệp, Threads và
+  trang cá nhân LinkedIn (#286–#290; #288 sửa lỗi phát hiện khi thử thật).
+- **Bỏ Zalo Official Account** theo quyết định của chủ dự án. Code chưa có phần
+  nào cho Zalo nên không phải gỡ gì. Muốn thêm lại thì làm như các mạng khác:
+  thêm một mục mạng, một provider, `Kind` (kênh `zalo` hiện vẫn đăng tay), cùng
+  PKCE và refresh token dùng một lần, nếu API Zalo còn yêu cầu.
+- Kênh `zalo`, `facebook_group` và `tiktok` vẫn là kênh đăng tay: ProCV soạn
+  nội dung để NTD chép và tự đăng.
