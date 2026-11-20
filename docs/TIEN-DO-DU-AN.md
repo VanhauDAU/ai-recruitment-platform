@@ -328,7 +328,7 @@ GĐ1 đã làm:
     token hỏng thì kết nối "Hết hạn" và báo NTD;
   - frontend: trang "Kết nối mạng xã hội" trong Cài đặt tài khoản; khối "Đăng
     tự động lên Fanpage" trong thẻ kênh Fanpage;
-  - hướng dẫn Meta App ở `docs/06-deployment/facebook-page-integration.md`,
+  - hướng dẫn Meta App ở `docs/06-deployment/social-integrations.md`,
     ADR-0021.
   - Chưa thử với Meta App thật; cần user tạo app ở Development mode.
 - GĐ4 đã làm (#241), công thức ở
@@ -407,6 +407,35 @@ GĐ1 đã làm:
 - Còn mở: chưa xem bằng mắt trên trình duyệt (đã có test API và test giao diện);
   `openapi.yaml` được sinh lại nên kéo theo phần lệch tích tụ từ các tính năng
   trước.
+- Khung tự đăng nhiều mạng xã hội (ADR-0025, nhánh `feat/social-networks-core`,
+  PR1/5). Bốn mạng sẽ thêm, mỗi mạng một PR: Instagram Business, Threads,
+  LinkedIn, Zalo OA. PR này chưa thêm mạng nào.
+  - Mạng khai báo ở `campaigns/domain/social_networks.py` kèm giới hạn: số ký
+    tự, số ảnh, có bắt buộc ảnh không, có gỡ bài được không.
+  - Migration campaigns 0004–0006 (thêm cột, chép dữ liệu, đổi cột; tách ba bước
+    vì Postgres không ALTER bảng còn trigger chờ): `provider` thành `network` +
+    `simulated`, các cột `page_*` thành `account_*`; nhãn trạng thái "Đã gỡ bài"
+    và "Cần tự gỡ bài".
+  - `CAMPAIGN_SOCIAL_LIVE_NETWORKS` bật thật hay giả lập theo từng mạng; vẫn
+    hiểu `CAMPAIGN_SOCIAL_PROVIDER=facebook`.
+  - API `/social/<network>/...` cùng `GET /social/networks/`; giữ
+    `/social/facebook/callback/` vì đã khai với Meta.
+  - Mạng không gỡ được bài thì giữ bài và báo NTD tự gỡ (`delete_unsupported`).
+  - Trang Kết nối mạng xã hội thành lưới thẻ, mỗi mạng một thẻ. Ngăn soạn bài
+    lấy giới hạn ký tự và số ảnh từ API. `ChannelIcon` chuyển xuống entity
+    campaign.
+- Instagram doanh nghiệp (nhánh `feat/social-instagram`, PR2/5).
+  - Kết nối qua Facebook Login, dùng chung Meta App; chỉ hiện các Fanpage đã
+    liên kết Instagram.
+  - Đăng bài một ảnh hoặc carousel (tối đa 10 ảnh); ảnh là bắt buộc.
+  - Ảnh lệch tỷ lệ được tạo thành JPEG thêm viền trắng, trong khoảng 4:5 đến
+    1.91:1; khung xem trước hiện đúng như vậy.
+  - Tự gỡ bài khi chiến dịch kết thúc (`instagram_manage_contents`).
+  - Lỗi giới hạn số bài trong 24 giờ (mã 9) được thử lại.
+  - Thêm kênh `instagram` (migration campaigns 0007) và lớp chung
+    `MetaGraphProvider`.
+  - Còn mở: chưa thử đăng thật vì cần tài khoản Instagram chuyên nghiệp liên kết
+    Fanpage và bật use case Instagram trong Meta App.
 
 ## Ứng tuyển bằng CV tải lên và form ứng tuyển mới (2026-11-18)
 

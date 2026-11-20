@@ -24,11 +24,12 @@ from ..views.social import (
     ChannelPostDetailView,
     ChannelPostImageView,
     ChannelPostListView,
-    FacebookCallbackView,
+    SocialCallbackView,
     SocialConnectionDetailView,
     SocialConnectionListView,
     SocialConnectStartView,
-    SocialPendingPagesView,
+    SocialNetworkListView,
+    SocialPendingAccountsView,
 )
 
 urlpatterns = [
@@ -128,20 +129,27 @@ urlpatterns = [
         SocialConnectionDetailView.as_view(),
         name='employer-social-connection-detail',
     ),
-    path(
-        'social/facebook/authorize/',
-        SocialConnectStartView.as_view(),
-        name='employer-social-facebook-authorize',
-    ),
+    path('social/networks/', SocialNetworkListView.as_view(), name='employer-social-networks'),
+    # Redirect URI already registered with Meta; same views as the facebook_page routes.
     path(
         'social/facebook/callback/',
-        FacebookCallbackView.as_view(),
+        SocialCallbackView.as_view(),
         name='employer-social-facebook-callback',
     ),
     path(
-        'social/facebook/pending/<str:nonce>/',
-        SocialPendingPagesView.as_view(),
-        name='employer-social-facebook-pending',
+        'social/<str:network>/authorize/',
+        SocialConnectStartView.as_view(),
+        name='employer-social-authorize',
+    ),
+    path(
+        'social/<str:network>/callback/',
+        SocialCallbackView.as_view(),
+        name='employer-social-callback',
+    ),
+    path(
+        'social/<str:network>/pending/<str:nonce>/',
+        SocialPendingAccountsView.as_view(),
+        name='employer-social-pending',
     ),
     path(
         'campaigns/<str:public_id>/health/',

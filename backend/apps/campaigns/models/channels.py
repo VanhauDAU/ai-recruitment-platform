@@ -31,6 +31,7 @@ class CampaignChannel(models.Model):
     class Kind(models.TextChoices):
         FACEBOOK_PAGE = 'facebook_page', gettext_lazy('Fanpage Facebook')
         FACEBOOK_GROUP = 'facebook_group', gettext_lazy('Nhóm Facebook')
+        INSTAGRAM = 'instagram', 'Instagram'
         LINKEDIN = 'linkedin', 'LinkedIn'
         ZALO = 'zalo', 'Zalo'
         TIKTOK = 'tiktok', 'TikTok'

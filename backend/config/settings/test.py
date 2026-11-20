@@ -65,7 +65,7 @@ CACHES = {
 }
 EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
 # Tests never call Meta, whatever a developer's local .env selects.
-CAMPAIGN_SOCIAL_PROVIDER = 'fake'
+CAMPAIGN_SOCIAL_LIVE_NETWORKS = []
 CELERY_TASK_ALWAYS_EAGER = True
 CELERY_TASK_EAGER_PROPAGATES = True
 UPLOAD_QUARANTINE_ENABLED = True

@@ -1,15 +1,20 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Form, Input, Modal } from 'antd'
 import { useRef } from 'react'
-import { CAMPAIGN_CHANNEL_KINDS, campaignKeys, createCampaignChannel } from '@/entities/campaign/campaign'
+import {
+  CAMPAIGN_CHANNEL_KINDS,
+  campaignKeys,
+  ChannelIcon,
+  createCampaignChannel,
+} from '@/entities/campaign/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
 import { useCampaignChannels } from '../model/use-campaign-channels'
-import ChannelIcon from './ChannelIcon'
 
 const HINTS = {
-  facebook_page: m.employer_campaign_channel_hint_facebook_page(),
+  facebook_page: m.employer_campaign_channel_hint_auto_post(),
+  instagram: m.employer_campaign_channel_hint_auto_post(),
   facebook_group: m.employer_campaign_channel_hint_facebook_group(),
   qr_offline: m.employer_campaign_channel_hint_qr_offline(),
 }

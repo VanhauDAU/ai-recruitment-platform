@@ -1,12 +1,14 @@
-"""Images attached to a Facebook Page post: uploads, the company cover and logo.
+"""Images attached to a social post: uploads, the company cover and logo.
 
 Uploads are re-encoded (metadata such as GPS is dropped, the long side capped)
-and stored in public media, since the post is public on Facebook anyway. A post
+and stored in public media, since the post is public on the network anyway. A post
 may only reference images uploaded for its own campaign or the company's
 current cover and logo.
 """
 
+from hashlib import sha256
 from io import BytesIO
+from math import ceil
 from pathlib import PurePosixPath
 from uuid import uuid4
 
@@ -19,10 +21,11 @@ from rest_framework.exceptions import ValidationError
 from common.storage.media import media_public_url, media_storage_path, validate_image_upload
 from common.storage.r2 import public_media_storage
 
-from ..models import CampaignChannel
+from ..domain.social_networks import network_for_channel_kind
+from .social import PostImage
 
-MAX_POST_IMAGES = 4
 MAX_SIDE = 2048
+MAX_FIT_WIDTH = 1440  # widest image Instagram keeps without rescaling
 
 
 def _prefix(campaign):
@@ -35,8 +38,8 @@ def _ensure_postable(channel, user):
         raise ValidationError(_('Bạn không có quyền với chiến dịch này.'))
     if campaign.is_terminal:
         raise ValidationError({'detail': _('Chiến dịch đã kết thúc, không đăng thêm được.')})
-    if channel.kind != CampaignChannel.Kind.FACEBOOK_PAGE:
-        raise ValidationError({'detail': _('Chỉ kênh Fanpage Facebook mới đăng tự động được.')})
+    if network_for_channel_kind(channel.kind) is None:
+        raise ValidationError({'detail': _('Kênh này không tự đăng bài được.')})
 
 
 def save_post_image(*, channel, user, upload):
@@ -82,7 +85,7 @@ def company_post_images(campaign):
     return choices
 
 
-def clean_post_images(campaign, images):
+def clean_post_images(campaign, images, *, max_images):
     """Keep only images this campaign may post, in order, without duplicates."""
     allowed_company = {item['path'] for item in company_post_images(campaign)}
     cleaned = []
@@ -96,26 +99,74 @@ def clean_post_images(campaign, images):
         if not public_media_storage().exists(path):
             raise ValidationError({'images': _('Ảnh đã bị xóa, hãy tải lại.')})
         cleaned.append(path)
-    if len(cleaned) > MAX_POST_IMAGES:
+    if len(cleaned) > max_images:
         raise ValidationError(
             {
                 'images': ngettext(
                     'Mỗi bài tối đa %(count)s ảnh.',
                     'Mỗi bài tối đa %(count)s ảnh.',
-                    MAX_POST_IMAGES,
+                    max_images,
                 )
-                % {'count': MAX_POST_IMAGES}
+                % {'count': max_images}
             }
         )
     return cleaned
 
 
-def read_post_images(paths):
-    """(filename, bytes) pairs for the provider; a missing file is skipped."""
+def _fit_ratio(image, image_ratio):
+    """Pad ``image`` with white to the nearest allowed width/height ratio, as RGB."""
+    narrowest, widest = image_ratio
+    if image.mode in ('RGBA', 'LA', 'P'):
+        image = image.convert('RGBA')
+        flat = Image.new('RGB', image.size, 'white')
+        flat.paste(image, mask=image.getchannel('A'))
+        image = flat
+    else:
+        image = image.convert('RGB')
+    width, height = image.size
+    if width / height < narrowest:
+        width = ceil(height * narrowest)
+    elif width / height > widest:
+        height = ceil(width / widest)
+    if (width, height) != image.size:
+        canvas = Image.new('RGB', (width, height), 'white')
+        canvas.paste(image, ((width - image.width) // 2, (height - image.height) // 2))
+        image = canvas
+    image.thumbnail((MAX_FIT_WIDTH, MAX_FIT_WIDTH * 2), Image.LANCZOS)
+    return image
+
+
+def _fitted_path(campaign, path, image_ratio):
+    """A JPEG of ``path`` within ``image_ratio``, stored once under the campaign."""
+    digest = sha256(f'{path}:{image_ratio}'.encode()).hexdigest()[:20]
+    fitted = f'{_prefix(campaign)}fit/{digest}.jpg'
     storage = public_media_storage()
-    files = []
-    for path in paths or []:
-        if storage.exists(path):
-            with storage.open(path, 'rb') as stored:
-                files.append((PurePosixPath(path).name, stored.read()))
-    return files
+    if not storage.exists(fitted):
+        with storage.open(path, 'rb') as stored, Image.open(stored) as image:
+            buffer = BytesIO()
+            _fit_ratio(image, image_ratio).save(buffer, format='JPEG', quality=90, optimize=True)
+        storage.save(fitted, ContentFile(buffer.getvalue()))
+    return fitted
+
+
+def read_post_images(post):
+    """The post's images for its network, in order; a missing file is skipped.
+
+    A network with an ``image_ratio`` gets a padded JPEG copy, since it only
+    accepts that format and those proportions.
+    """
+    storage = public_media_storage()
+    image_ratio = post.connection.spec.capabilities.image_ratio
+    images = []
+    for path in post.images or []:
+        if not storage.exists(path):
+            continue
+        if image_ratio:
+            path = _fitted_path(post.channel.campaign, path, image_ratio)
+        with storage.open(path, 'rb') as stored:
+            images.append(
+                PostImage(
+                    name=PurePosixPath(path).name, content=stored.read(), url=media_public_url(path)
+                )
+            )
+    return images
