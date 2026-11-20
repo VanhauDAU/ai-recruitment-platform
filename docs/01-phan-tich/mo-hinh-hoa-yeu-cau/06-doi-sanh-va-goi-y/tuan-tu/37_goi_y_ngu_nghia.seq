@@ -13,10 +13,11 @@ BE --> FE : 200 {strategy: luật, status: ready | preferences_required | consen
 FE --> UV : Danh sách theo luật hoặc hướng dẫn thiết lập
 else CV đã có vector
 BE -> DB : Tìm 100 tin công khai gần nhất theo khoảng cách cosine (tìm chính xác), bỏ tin đã ứng tuyển, đã ẩn
+BE -> DB : Tìm thêm 50 tin gần nhất trong các vị trí mong muốn đã khai (nếu có)
 DB --> BE : Tin kèm khoảng cách, hồ sơ tin
-BE -> DB : Lấy vector chức danh của CV và các tin
-BE -> BE : Điểm = 0,75 · mức liên quan (toàn văn, chức danh) + 0,25 · tỷ lệ kỹ năng trùng (+ tỉnh mong muốn)
-BE -> BE : Bỏ tin dưới 30 điểm, sắp xếp, dựng lý do bằng lời
+BE -> DB : Lấy vector chức danh, vị trí, nơi làm việc, lương, kinh nghiệm của các tin
+BE -> BE : Điểm = 0,75 · mức liên quan (toàn văn, chức danh) + 0,25 · tỷ lệ kỹ năng trùng + điểm cộng theo nhu cầu
+BE -> BE : Bỏ tin dưới 30 điểm (trừ tin đúng vị trí mong muốn), sắp xếp, dựng lý do bằng lời
 alt Còn tin đủ gần
 BE --> FE : 200 {strategy: semantic-v1, results kèm lý do, không kèm điểm}
 FE --> UV : Hiển thị gợi ý; mỗi tin mở được "Xem độ phù hợp" chi tiết

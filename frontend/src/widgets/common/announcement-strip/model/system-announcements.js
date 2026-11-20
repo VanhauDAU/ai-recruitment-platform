@@ -82,7 +82,7 @@ function jobPreferences() {
     priority: 1000,
     icon: ANNOUNCEMENT_ICONS.SPARKLES,
     badge: 'Dành cho bạn',
-    message: 'Hãy chia sẻ nhu cầu công việc để nhận gợi ý việc làm tốt nhất.',
+    message: 'Thêm vị trí, mức lương mong muốn để gợi ý việc làm sát hướng bạn muốn hơn.',
     cta: {
       label: 'Cập nhật nhu cầu',
       url: '/onboard-user',

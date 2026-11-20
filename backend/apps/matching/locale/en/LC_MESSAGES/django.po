@@ -13,11 +13,8 @@ msgstr "Close to the role in your CV"
 msgid "Kinh nghiệm trong CV gần với yêu cầu của tin"
 msgstr "Your CV experience is close to the job requirements"
 
-msgid "Đúng nơi làm việc bạn mong muốn"
-msgstr "In your preferred work location"
+msgid "Trùng kỹ năng: %(names)s"
+msgstr "Shared skills: %(names)s"
 
 msgid "Nội dung CV gần với tin này"
 msgstr "Your CV is close to this job"
-
-msgid "Trùng kỹ năng: %(names)s"
-msgstr "Shared skills: %(names)s"

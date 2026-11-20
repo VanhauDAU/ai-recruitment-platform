@@ -13,10 +13,12 @@ from .ranking import (
     recommendable_jobs,
     rule_scores_for_cv,
 )
-from .scoring import EXPERIENCE_RANK, MIN_RECOMMENDATION_SCORE
+from .scoring import EXPERIENCE_RANK, MIN_RECOMMENDATION_SCORE, normalize_term, salary_fits
 
 __all__ = [
     'EXPERIENCE_RANK',
+    'normalize_term',
+    'salary_fits',
     'MAX_SCORING_CANDIDATES',
     'MIN_RECOMMENDATION_SCORE',
     'RecommendationConsentRequired',

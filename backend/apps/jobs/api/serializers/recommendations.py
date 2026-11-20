@@ -73,6 +73,8 @@ class CandidateJobRecommendationResponseSerializer(serializers.Serializer):
     strategy = serializers.CharField()
     minimum_match_score = serializers.IntegerField()
     preference_configured = serializers.BooleanField()
+    # Gợi ý theo CV (`semantic-v1`) đang bật: lưu một CV là đủ để có gợi ý.
+    cv_recommendations_enabled = serializers.BooleanField()
     needs_setup = serializers.BooleanField()
     consent_required = serializers.BooleanField()
     sources = RecommendationSourcesSerializer()

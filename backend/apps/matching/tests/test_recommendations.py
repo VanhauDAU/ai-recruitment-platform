@@ -9,8 +9,14 @@ from django.urls import reverse
 from django.utils import timezone
 
 from apps.applications.models import Application
-from apps.candidates.models import CandidateConsent
-from apps.jobs.models import CandidateHiddenJob, Job, JobSkill
+from apps.candidates.models import (
+    CandidateConsent,
+    CandidateDesiredPositionOther,
+    CandidateDesiredSpecialization,
+    CandidateJobPreference,
+)
+from apps.jobs.models import CandidateHiddenJob, Job, JobCategory, JobCategoryAssignment, JobSkill
+from apps.jobs.selectors.recommendation_intent import _experience_fits
 from apps.jobs.tests.factories import open_visibility_window
 from apps.sitecontent.models import SiteSetting
 from apps.skills.models import Skill
@@ -132,6 +138,12 @@ class SemanticRecommendationTests(MatchingApiBase):
         self.assertEqual(missing.status_code, 404)
 
     def test_query_count_does_not_grow_with_the_number_of_jobs(self):
+        frontend = JobCategory.objects.create(
+            name='Frontend Developer', category_type=JobCategory.CategoryType.SPECIALIZATION
+        )
+        CandidateDesiredSpecialization.objects.create(
+            job_preference=self.preference(desired_salary_vnd=20_000_000), job_category=frontend
+        )
         with CaptureQueriesContext(connection) as few:
             self.recommendations()
         for index in range(4):
@@ -152,6 +164,73 @@ class SemanticRecommendationTests(MatchingApiBase):
             body = self.recommendations().json()
         self.assertGreaterEqual(len(body['results']), 5)
         self.assertEqual(len(many), len(few))
+
+    def preference(self, **fields):
+        return CandidateJobPreference.objects.create(
+            candidate_profile=self.candidate.candidate_profile, **fields
+        )
+
+    def result_for(self, job):
+        body = self.recommendations().json()
+        self.assertEqual(body['strategy'], 'semantic-v1')
+        return next((item for item in body['results'] if item['slug'] == job.slug), None)
+
+    def test_desired_position_brings_in_jobs_of_the_new_direction(self):
+        # CV frontend, nhưng ứng viên khai muốn làm kế toán thuế: CV kể quá khứ, nhu cầu nói hướng đi.
+        self.assertIsNone(self.result_for(self.unrelated))
+        accounting = JobCategory.objects.create(
+            name='Kế toán thuế', category_type=JobCategory.CategoryType.SPECIALIZATION
+        )
+        JobCategoryAssignment.objects.create(
+            job=self.unrelated,
+            category=accounting,
+            role=JobCategoryAssignment.Role.PRIMARY_SPECIALIZATION,
+        )
+        CandidateDesiredSpecialization.objects.create(
+            job_preference=self.preference(), job_category=accounting
+        )
+
+        result = self.result_for(self.unrelated)
+
+        self.assertIsNotNone(result)
+        self.assertEqual(result['match_reasons'][0], 'Đúng vị trí bạn mong muốn')
+
+    def test_a_typed_position_matches_job_titles(self):
+        CandidateDesiredPositionOther.objects.create(
+            job_preference=self.preference(), name='kế toán thuế'
+        )
+
+        result = self.result_for(self.unrelated)
+
+        self.assertEqual(result['match_reasons'][0], 'Đúng vị trí bạn mong muốn')
+
+    def test_salary_and_experience_add_reasons_without_filtering(self):
+        Job.objects.filter(pk=self.job.pk).update(
+            salary_type=Job.SalaryType.RANGE,
+            currency='VND',
+            salary_min=15_000_000,
+            salary_max=25_000_000,
+        )
+        self.preference(
+            desired_salary_vnd=20_000_000,
+            experience_level=CandidateJobPreference.ExperienceLevel.THREE,
+        )
+        reasons = self.result_for(self.job)['match_reasons']
+
+        self.assertIn('Mức lương hợp mong muốn của bạn', reasons)
+        self.assertIn('Số năm kinh nghiệm vừa với tin', reasons)
+        CandidateJobPreference.objects.update(desired_salary_vnd=90_000_000)
+        # Lương xa mức mong muốn: mất lý do, tin vẫn được gợi ý.
+        self.assertNotIn(
+            'Mức lương hợp mong muốn của bạn', self.result_for(self.job)['match_reasons']
+        )
+
+    def test_experience_bonus_only_for_a_close_band(self):
+        self.assertTrue(_experience_fits('2', '3'))
+        self.assertTrue(_experience_fits('none', 'under_1'))
+        self.assertFalse(_experience_fits('none', 'over_5'))  # người 5+ năm và tin không yêu cầu
+        self.assertFalse(_experience_fits('3', '1'))
+        self.assertFalse(_experience_fits('2', ''))
 
 
 class CurrentDocumentTests(MatchingApiBase):

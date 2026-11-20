@@ -97,6 +97,7 @@ Các field điều phối chính:
   "status": "ready",
   "strategy": "candidate-preference-rule-v2",
   "preference_configured": true,
+  "cv_recommendations_enabled": false,
   "needs_setup": false,
   "consent_required": false,
   "sources": {
@@ -115,6 +116,10 @@ Các field điều phối chính:
   }
 }
 ```
+
+`cv_recommendations_enabled` cho biết gợi ý theo CV (`semantic-v1`, xem
+`thuat-toan-ai.md`) đang bật: khi đó `preferences_required` nghĩa là ứng viên chưa
+có CV đủ dùng lẫn nhu cầu, và giao diện mời lưu CV hoặc khai nhu cầu.
 
 Mỗi job giữ `PublicJobListSerializer` và thêm `match_score`,
 `match_details[{code,label,points}]`, `match_reasons[]`, `is_high_match`.

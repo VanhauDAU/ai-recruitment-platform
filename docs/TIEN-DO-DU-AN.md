@@ -893,8 +893,16 @@ làm gợi ý" theo ngữ nghĩa, và nhà tuyển dụng xếp hạng hồ sơ 
 - Trang "Việc làm phù hợp" và trang lưu CV xếp tin theo chiến lược `semantic-v1`
   (`apps/matching/selectors/recommendations.py`): tìm tin gần vector toàn văn của CV mặc định
   nhất bằng pgvector (tìm chính xác), xếp lại 100 tin gần nhất theo mức liên quan (toàn văn,
-  chức danh), tỷ lệ kỹ năng trùng và tỉnh mong muốn, bỏ tin dưới 30 điểm. Không cần khai
-  nguyện vọng trước: có CV đã lưu là đủ.
+  chức danh) và tỷ lệ kỹ năng trùng, bỏ tin dưới 30 điểm. Không cần khai nguyện vọng trước:
+  có CV đã lưu là đủ.
+- Nhu cầu đã khai lái thứ hạng (`apps/jobs/selectors/recommendation_intent.py`): tin đúng vị
+  trí mong muốn luôn được xét, +0,40 và không bị ngưỡng cắt (người đổi nghề); tỉnh +0,05,
+  lương +0,03, kinh nghiệm vừa +0,03, mỗi điểm cộng kèm lý do. Mức +0,40 chọn bằng mô phỏng
+  đổi nghề trên 100 CV: 34% tin nghề mới trong top 10 (trần 36%), vẫn giữ 23% tin nghề cũ;
+  khai đúng nghề cũ thì NDCG@10 cùng vị trí 0,832 → 0,998. Giao diện bỏ lời "dựa trên mong
+  muốn", trang chủ hiện gợi ý cả khi chưa khai nhu cầu; API thêm `cv_recommendations_enabled`.
+- PR #275 và #278 được gộp vào nhánh trung gian (không vào `dev`); hai commit GĐ 2 và GĐ 4
+  được đưa lại vào `dev` cùng phần nhu cầu trên nhánh `feat/ai-recs-preferences`.
 - Rơi về luật cũ khi cờ `ai_job_recommendation_semantic_enabled` tắt, ứng viên chưa đồng ý
   nhận gợi ý AI, CV chưa có vector, hoặc không tin nào đủ gần. Email gợi ý và tin chèn trong
   danh sách việc làm vẫn theo luật.

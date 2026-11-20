@@ -303,9 +303,16 @@ cho các script ở `ml/`.
 Gợi ý việc làm theo ngữ nghĩa (`semantic-v1`, `apps/matching/selectors/recommendations.py`,
 kế hoạch bản 3 GĐ 4): vector toàn văn của CV mặc định được so với vector toàn văn của mọi tin
 đang công khai mà ứng viên chưa ứng tuyển hay ẩn, bằng khoảng cách cosine của pgvector (tìm
-chính xác, không dùng chỉ mục xấp xỉ). 100 tin gần nhất được xếp lại:
+chính xác, không dùng chỉ mục xấp xỉ). 100 tin gần nhất, cộng 50 tin gần CV nhất trong các vị
+trí ứng viên khai là mong muốn, được xếp lại:
 
-    điểm = 0,75 · mức liên quan + 0,25 · tỷ lệ kỹ năng của tin mà CV có  (+0,05 nếu đúng tỉnh mong muốn)
+    điểm = 0,75 · mức liên quan + 0,25 · tỷ lệ kỹ năng của tin mà CV có + điểm cộng theo nhu cầu
+
+Điểm cộng theo nhu cầu đã khai (`apps/jobs/selectors/recommendation_intent.py`): đúng vị trí
+mong muốn +0,40, đúng tỉnh mong muốn +0,05, lương chạm mức mong muốn +0,03, số năm kinh
+nghiệm đủ và không vượt quá hai bậc so với yêu cầu +0,03. CV kể ứng viên đã làm gì, nhu cầu
+nói ứng viên muốn làm gì tiếp, nên tin đúng vị trí mong muốn không bị ngưỡng cắt và lý do
+"Đúng vị trí bạn mong muốn" đứng đầu. Thứ tự theo điểm chưa chặn ở 100.
 
 Mức liên quan là trung bình điểm toàn văn và điểm chức danh, quy đổi bằng đúng mốc hiệu
 chuẩn của "Xem độ phù hợp". Tin dưới 30 điểm bị bỏ. Kết quả chỉ mang lý do bằng lời ("Trùng
@@ -322,6 +329,18 @@ tính sẵn khi lưu CV và tin; chỉ dùng bản hiện hành (`MatchDocument.
 | `semantic-v1` (e5-base gốc) | 0,650 | 0,975 | 0,780 | 0,430 | 0,830 |
 
 Ngang luật ở việc đưa đúng tin gốc của CV lên đầu, hơn ở việc gợi ý các tin cùng vị trí khác.
+
+Mức cộng vị trí mong muốn chọn bằng mô phỏng trên cùng 100 CV (`--intent-study`):
+
+| Điểm cộng | Khai đúng nghề cũ: MRR tin neo | NDCG@10 cùng vị trí | Đổi nghề: tin nghề mới trong top 10 (trần 36%) | NDCG@10 nghề mới | Tin nghề cũ còn trong top 10 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Không khai | 0,776 | 0,832 | 3% | 0,043 | 25% |
+| +0,20 | 0,826 | 0,961 | 20% | 0,326 | 24% |
+| +0,40 (chọn) | 0,829 | 0,998 | 34% | 0,719 | 23% |
+| +0,50 | 0,829 | 1,000 | 36% | 0,829 | 22% |
+
+Mức +0,40 đưa gần hết tin nghề mới vào 10 gợi ý đầu mà vẫn giữ tin nghề cũ; mức cao hơn bắt
+đầu đẩy tin nghề cũ ra.
 
 Luồng phân tích (`apps/matching/services/`):
 

@@ -7,6 +7,10 @@ Trang "Việc làm phù hợp" và trang lưu CV thành công dùng chiến lư�
 - ứng viên đã đồng ý nhận gợi ý bằng AI (cùng đồng ý với bộ gợi ý theo luật);
 - CV dùng để gợi ý đã có vector (được tính sẵn khi lưu CV), và có ít nhất một tin đủ gần.
 
+Nhu cầu đã khai không bắt buộc nhưng lái thứ hạng (`recommendation_intent`): tin đúng vị
+trí mong muốn luôn được xét và được cộng điểm, cùng điểm cộng nhỏ cho tỉnh, lương, kinh
+nghiệm.
+
 Thiếu một điều kiện thì dùng bộ gợi ý theo luật như trước (`candidate-preference-rule-v2`,
 `profile-rule-v2`), kể cả việc báo "cần thiết lập nhu cầu" hay "cần đồng ý". Email gợi
 ý và tin chèn trong danh sách việc làm vẫn theo luật.
@@ -40,6 +44,7 @@ from ..models.recommendation_queries import (
 from ..models.recommendation_queries import (
     recommend_jobs_for_cv as rule_recommendations_for_cv,
 )
+from .recommendation_intent import preference_intent, ranking_intent
 
 SEMANTIC_FLAG = 'ai_job_recommendation_semantic_enabled'
 
@@ -50,6 +55,7 @@ __all__ = [
     'recommend_jobs_for_candidate',
     'recommend_jobs_for_cv',
     'recommend_new_jobs_for_candidate_email',
+    'ranking_intent',
     'rule_scores_for_cv',
     'semantic_recommendations_enabled',
 ]
@@ -60,14 +66,12 @@ def semantic_recommendations_enabled():
 
 
 def _semantic_ranking(user, cv, preference):
-    """Thứ hạng `semantic-v1` của một CV, hoặc None nếu CV chưa có vector."""
+    """Thứ hạng `semantic-v1` của một CV theo nhu cầu đã khai, hoặc None nếu CV chưa có vector."""
     document = cv_document_for(cv)
     if document is None:
         return None
-    provinces = (
-        [item.location_id for item in preference.preferred_provinces.all()] if preference else []
-    )
-    return rank_jobs_for_cv(document, recommendable_jobs(user), province_ids=provinces)
+    jobs = recommendable_jobs(user)
+    return rank_jobs_for_cv(document, jobs, intent=preference_intent(jobs, preference, cv))
 
 
 def _with_jobs(ranked):
@@ -114,7 +118,10 @@ def recommend_jobs_for_candidate(user, *, page=1, page_size=10):
     """Trang "Việc làm phù hợp": theo CV mặc định của ứng viên, không cần khai nhu cầu trước."""
     context = _semantic_context(user)
     if context is None:
-        return rule_recommendations_for_candidate(user, page=page, page_size=page_size)
+        return {
+            **rule_recommendations_for_candidate(user, page=page, page_size=page_size),
+            'cv_recommendations_enabled': semantic_recommendations_enabled(),
+        }
     cv, profile, preference, ranked = context
     total = len(ranked)
     total_pages = ceil(total / page_size) if total else 0
@@ -124,6 +131,7 @@ def recommend_jobs_for_candidate(user, *, page=1, page_size=10):
         'strategy': SEMANTIC_STRATEGY,
         'minimum_match_score': MIN_SEMANTIC_SCORE,
         'preference_configured': preferences_ready,
+        'cv_recommendations_enabled': True,
         'sources': {'job_preferences': preferences_ready, 'cv': True, 'search_activity': False},
         'source_cv': {'public_id': cv.public_id, 'title': cv.title, 'is_default': cv.is_default},
         'focus_keyword': _focus(cv),

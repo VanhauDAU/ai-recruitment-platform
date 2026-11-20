@@ -90,7 +90,7 @@ describe('MatchingJobs', () => {
 
     expect(await screen.findByText('Fullstack Developer')).toBeInTheDocument()
     expect(screen.getByText('Phù hợp với tìm kiếm của bạn')).toBeInTheDocument()
-    expect(screen.getByText('Những công việc phù hợp nhất với bạn dựa trên mong muốn, kỹ năng và kinh nghiệm.')).toBeInTheDocument()
+    expect(screen.getByText('Những công việc gần nhất với CV và hướng đi bạn mong muốn.')).toBeInTheDocument()
     expect(screen.queryByText('CV: CV Fullstack')).not.toBeInTheDocument()
     expect(screen.queryByText(/% phù hợp|Rất phù hợp/)).not.toBeInTheDocument()
     expect(screen.queryByText('Dữ liệu đang được dùng')).not.toBeInTheDocument()
@@ -118,5 +118,33 @@ describe('MatchingJobs', () => {
       'href',
       '/tai-khoan/cai-dat-goi-y-viec-lam',
     )
+  })
+
+  it('asks for a CV or preferences when recommendations follow the CV', async () => {
+    mocks.getCandidateJobRecommendations.mockResolvedValue({
+      status: 'preferences_required',
+      cv_recommendations_enabled: true,
+      results: [],
+      pagination: { total: 0, total_pages: 0 },
+    })
+
+    renderPage()
+
+    expect(await screen.findByText('Lưu CV hoặc khai nhu cầu công việc')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Quản lý CV' })).toHaveAttribute('href', '/tai-khoan/cv-cua-toi')
+  })
+
+  it('suggests adding preferences when the list comes from the CV alone', async () => {
+    mocks.getCandidateJobRecommendations.mockResolvedValue({
+      status: 'ready',
+      preference_configured: false,
+      cv_recommendations_enabled: true,
+      results: [],
+      pagination: { total: 0, total_pages: 0 },
+    })
+
+    renderPage()
+
+    expect(await screen.findByRole('link', { name: /Thêm nhu cầu để gợi ý sát hơn/ })).toBeInTheDocument()
   })
 })

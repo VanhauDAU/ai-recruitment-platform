@@ -11,13 +11,23 @@ Tập vàng chấm theo chiều tin → CV (mỗi tin 10 CV), nên chiều CV �
   "vị trí gần") đều là gợi ý đúng. Đo precision@5 và NDCG@10.
 - Độ phủ: tỷ lệ CV nhận được ít nhất một gợi ý.
 
+`--intent-study` đo thêm phần nhu cầu đã khai (vị trí mong muốn), với vài mức điểm cộng:
+
+- Khai đúng nghề cũ: mỗi CV khai vị trí nó được viết. Không được làm tụt tin neo.
+- Đổi nghề: mỗi CV khai một vị trí khác (chọn ngẫu nhiên cố định theo mã CV trong các
+  vị trí có từ 3 tin). Đo tỷ lệ tin của nghề mới trong 10 gợi ý đầu, và tỷ lệ tin
+  nghề cũ còn lại (ứng viên vẫn nên thấy vài tin đúng chuyên môn hiện có).
+
 Thứ hạng của hệ thống lấy từ lệnh `matching_evaluate_recommendations` (đúng selector của
 sản phẩm, vector đã tính sẵn trong DB). Kết quả: `ml/reports/recommendations.md`.
 """
 
 import argparse
 import json
+import random
+import shlex
 import subprocess
+from collections import Counter
 from pathlib import Path
 from statistics import mean
 
@@ -29,18 +39,27 @@ from paths import CV_MANIFEST, JD_IMPORT_MAP, REPO_ROOT, REPORTS_DIR
 from rank_bm25 import BM25Okapi
 
 ANCHORED = ('strong', 'partial')
+MANAGE = 'docker compose exec -T backend python manage.py'
+POSITION_BONUSES = (0.10, 0.20, 0.30, 0.40, 0.50)
+MIN_TARGET_JOBS = 3
 
 
-def system_rankings(path=None):
+def _rows(text):
+    return {row['cv']: row for row in map(json.loads, (line for line in text.splitlines() if line.startswith('{')))}
+
+
+def system_rankings(path=None, *, manage=MANAGE, extra=(), intents=None):
     """{mã CV: thứ hạng}; đọc từ tệp JSONL đã xuất nếu có, không thì chạy lệnh trong container."""
     if path is not None:
-        lines = Path(path).read_text(encoding='utf-8').splitlines()
-        return {row['cv']: row for row in map(json.loads, (line for line in lines if line.startswith('{')))}
+        return _rows(Path(path).read_text(encoding='utf-8'))
+    command = [*shlex.split(manage), 'matching_evaluate_recommendations', *extra]
+    if intents is not None:
+        command += ['--intent', '-', '--no-rules']
     result = subprocess.run(
-        ['docker', 'compose', 'exec', '-T', 'backend', 'python', 'manage.py', 'matching_evaluate_recommendations'],
+        command, input=json.dumps(intents) if intents is not None else None,
         capture_output=True, text=True, cwd=REPO_ROOT, check=True,
     )  # fmt: skip
-    return {row['cv']: row for row in map(json.loads, result.stdout.splitlines())}
+    return _rows(result.stdout)
 
 
 def bm25_rankings(codes):
@@ -84,6 +103,74 @@ def measure(rankings, manifest, specialization):
     }
 
 
+def switch_targets(codes, manifest, specialization):
+    """Vị trí "nghề mới" của mỗi CV: khác vị trí CV được viết, có từ 3 tin thật."""
+    counts = Counter(specialization.values())
+    choices = sorted(name for name, count in counts.items() if count >= MIN_TARGET_JOBS)
+    targets = {}
+    for code in codes:
+        options = [name for name in choices if name != manifest[code]['role_written']]
+        targets[code] = random.Random(code).choice(options)
+    return targets
+
+
+def measure_switch(rankings, manifest, specialization, targets):
+    target_share, own_share, ndcg = [], [], []
+    for code, ranking in rankings.items():
+        top = ranking[:10]
+        target_share.append(sum(specialization.get(job) == targets[code] for job in top) / 10)
+        own_share.append(sum(specialization.get(job) == manifest[code]['role_written'] for job in top) / 10)
+        gains = [1 if specialization.get(job) == targets[code] else 0 for job in ranking]
+        ndcg.append(ndcg_at(gains, 10) or 0)
+    counts = Counter(specialization.values())
+    return {
+        'target@10': mean(target_share),
+        'target_ceiling@10': mean(min(counts[targets[code]], 10) / 10 for code in rankings),
+        'own@10': mean(own_share),
+        'target_ndcg@10': mean(ndcg),
+    }
+
+
+def intent_study(options, manifest, specialization, codes, real_jobs, baseline):
+    """Bảng đo nhu cầu đã khai theo từng mức điểm cộng vị trí mong muốn."""
+    own = {code: {'positions': [manifest[code]['role_written']]} for code in codes}
+    targets = switch_targets(codes, manifest, specialization)
+    switch = {code: {'positions': [targets[code]]} for code in codes}
+
+    def ranked(intents, bonus):
+        rows = system_rankings(manage=options.manage, extra=['--position-bonus', str(bonus)], intents=intents)
+        return {code: real_jobs(rows[code]['semantic']) for code in codes}
+
+    results = {'none': {**measure(baseline, manifest, specialization), **measure_switch(baseline, manifest, specialization, targets)}}
+    for bonus in POSITION_BONUSES:
+        results[f'own {bonus:.2f}'] = measure(ranked(own, bonus), manifest, specialization)
+        results[f'switch {bonus:.2f}'] = measure_switch(ranked(switch, bonus), manifest, specialization, targets)
+    lines = [
+        '',
+        '## Nhu cầu đã khai: vị trí mong muốn',
+        '',
+        'Mô phỏng trên cùng 100 CV, chỉ khai vị trí mong muốn. "Đổi nghề": mỗi CV khai một vị '
+        'trí khác vị trí nó được viết. Tạo bằng `evaluate_recommendations.py --intent-study`.',
+        '',
+        '| Điểm cộng vị trí mong muốn | Khai đúng nghề cũ: tin neo hạng 1 | MRR | NDCG@10 cùng vị trí '
+        '| Đổi nghề: tin nghề mới trong top 10 (trần) | NDCG@10 nghề mới | Tin nghề cũ còn trong top 10 |',
+        '| --- | ---: | ---: | ---: | ---: | ---: | ---: |',
+    ]
+    base = results['none']
+    lines.append(
+        f'| Không khai | {number(base["recall@1"])} | {number(base["mrr"])} | {number(base["ndcg@10"])} '
+        f'| {base["target@10"]:.0%} ({base["target_ceiling@10"]:.0%}) | {number(base["target_ndcg@10"])} | {base["own@10"]:.0%} |'
+    )
+    for bonus in POSITION_BONUSES:
+        own_result, switch_result = results[f'own {bonus:.2f}'], results[f'switch {bonus:.2f}']
+        lines.append(
+            f'| +{bonus:.2f} | {number(own_result["recall@1"])} | {number(own_result["mrr"])} '
+            f'| {number(own_result["ndcg@10"])} | {switch_result["target@10"]:.0%} ({switch_result["target_ceiling@10"]:.0%}) '
+            f'| {number(switch_result["target_ndcg@10"])} | {switch_result["own@10"]:.0%} |'
+        )
+    return lines, results
+
+
 def number(value):
     return f'{value:.3f}'.replace('.', ',')
 
@@ -91,11 +178,13 @@ def number(value):
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument('--rankings', help='Tệp JSONL đã xuất bằng matching_evaluate_recommendations.')
+    parser.add_argument('--manage', default=MANAGE, help='Lệnh gọi manage.py (mặc định: container backend).')
+    parser.add_argument('--intent-study', action='store_true', help='Đo thêm phần nhu cầu đã khai.')
     options = parser.parse_args()
     manifest = json.loads(CV_MANIFEST.read_text(encoding='utf-8'))
     codes_by_id = {value['job_public_id']: code for code, value in json.loads(JD_IMPORT_MAP.read_text(encoding='utf-8')).items()}  # fmt: skip
     specialization = {job['code']: job['specialization'] for job in load_jobs()}
-    rows = system_rankings(options.rankings)
+    rows = system_rankings(options.rankings, manage=options.manage)
     codes = sorted(code for code in rows if code in manifest)
 
     def real_jobs(ids):  # chỉ tính 100 tin thật; 31 tin demo của seed bị bỏ khỏi danh sách
@@ -125,6 +214,12 @@ def main():
             f'| {number(result["mrr"])} | {number(result["precision@5"])} | {number(result["ndcg@10"])} '
             f'| {result["coverage"]:.0%} |'
         )
+    if options.intent_study:
+        study_lines, study = intent_study(
+            options, manifest, specialization, codes, real_jobs, methods['`semantic-v1` (e5-base gốc)']
+        )
+        lines += study_lines
+        results['intent_study'] = study
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     (REPORTS_DIR / 'recommendations.md').write_text('\n'.join(lines) + '\n', encoding='utf-8')
     (REPORTS_DIR / 'recommendations.json').write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding='utf-8')

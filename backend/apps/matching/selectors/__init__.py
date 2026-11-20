@@ -9,6 +9,8 @@ from .profiles import (
 )
 from .recommendations import (
     MIN_SEMANTIC_SCORE,
+    Bonus,
+    RankingIntent,
     cv_document_for,
     rank_jobs_for_cv,
     recommendation_cv,
@@ -20,6 +22,8 @@ from .recommendations import (
 __all__ = [
     'MIN_SEMANTIC_SCORE',
     'SEMANTIC_STRATEGY',
+    'Bonus',
+    'RankingIntent',
     'cv_document_for',
     'rank_jobs_for_cv',
     'recommendation_cv',

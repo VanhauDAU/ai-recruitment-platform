@@ -17,8 +17,9 @@ case Chưa có
 case Đã có
 endif
 Hệ thống tìm 100 tin công khai gần nhất theo cosine, bỏ tin đã ứng tuyển hoặc đã ẩn
-Hệ thống tính điểm từ mức liên quan, kỹ năng trùng và tỉnh mong muốn
-Hệ thống bỏ tin dưới 30 điểm và sắp xếp
+Hệ thống thêm các tin gần nhất thuộc vị trí mong muốn đã khai
+Hệ thống tính điểm từ mức liên quan, kỹ năng trùng và điểm cộng theo nhu cầu đã khai
+Hệ thống bỏ tin dưới 30 điểm (trừ tin đúng vị trí mong muốn) và sắp xếp
 if Còn tin đủ gần?
 case Không
   Hệ thống gợi ý theo luật

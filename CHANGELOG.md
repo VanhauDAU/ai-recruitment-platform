@@ -15,6 +15,9 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Cài đặt mới `ai_job_recommendation_semantic_enabled` (mặc định bật).
 - `MatchDocument.is_current` (**migration** `matching.0002`, điền cờ cho dữ liệu cũ).
 - Trang lưu CV hiện lý do gợi ý thay cho thẻ "+điểm".
+- Nhu cầu đã khai lái gợi ý theo ngữ nghĩa: tin đúng vị trí mong muốn luôn được xét và xếp
+  trên (người đổi nghề), điểm cộng nhỏ cho tỉnh, lương, kinh nghiệm, kèm lý do. API gợi ý
+  thêm `cv_recommendations_enabled`; trang chủ hiện gợi ý cả khi chưa khai nhu cầu.
 - `matching_evaluate_recommendations` và `ml/scripts/evaluate_recommendations.py`.
 
 #### Changed — AI đối sánh: trích xuất `extract-v3` (kế hoạch bản 3, GĐ 2)
