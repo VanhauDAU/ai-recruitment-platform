@@ -143,6 +143,49 @@ describe('ChannelSocialPosts', () => {
     expect(times.every(Boolean)).toBe(true)
   })
 
+  it('requires an image on Instagram and shows it above the caption', async () => {
+    const user = userEvent.setup()
+    const instagram = {
+      ...facebook,
+      key: 'instagram',
+      platform: 'Instagram',
+      label: 'Instagram doanh nghiệp',
+      channel_kind: 'instagram',
+      capabilities: { max_chars: 2200, max_images: 10, requires_image: true, supports_delete: true, image_ratio: [0.8, 1.91] },
+    }
+    mocks.useSocialNetworks.mockReturnValue({ data: [facebook, instagram], isLoading: false })
+    mocks.getChannelPosts.mockResolvedValue([])
+    mocks.getSocialConnections.mockResolvedValue([{ public_id: 'soc_ig', network: 'instagram', account_name: '@procv', status: 'connected' }])
+    mocks.getChannelPostImageChoices.mockResolvedValue({
+      company_images: [{ kind: 'cover', label: 'Ảnh bìa công ty', path: 'employers/cmp/covers/a.jpg', url: 'https://cdn/a.jpg' }],
+    })
+    mocks.scheduleChannelPost.mockResolvedValue({})
+    render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <MemoryRouter>
+          <ChannelPostSection campaign={campaign} channel={{ ...channel, kind: 'instagram', kind_label: 'Instagram', label: 'Instagram' }} editable />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    await user.click(await screen.findByRole('button', { name: 'Soạn bài' }))
+    const drawer = await screen.findByRole('dialog')
+    await user.click(await within(drawer).findByRole('button', { name: 'Đăng ngay' }))
+    expect(await within(drawer).findByText('Instagram cần ít nhất một ảnh.')).toBeInTheDocument()
+    expect(mocks.scheduleChannelPost).not.toHaveBeenCalled()
+
+    await user.click(within(drawer).getByRole('button', { name: /Dùng ảnh bìa công ty/ }))
+    const preview = within(drawer).getByLabelText('Xem trước bài đăng')
+    const image = within(preview).getByRole('img', { name: 'Ảnh 1 của bài' })
+    expect(image.compareDocumentPosition(within(preview).getByText('Tuyển gấp')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    await user.click(within(drawer).getByRole('button', { name: 'Đăng ngay' }))
+
+    await waitFor(() => expect(mocks.scheduleChannelPost).toHaveBeenCalledWith('camp_1', 'chn_1', expect.objectContaining({
+      connection: 'soc_ig',
+      images: ['employers/cmp/covers/a.jpg'],
+    })))
+  })
+
   it('points to the integrations page when no page is connected', async () => {
     const user = userEvent.setup()
     mocks.getChannelPosts.mockResolvedValue([])

@@ -424,6 +424,18 @@ GĐ1 đã làm:
   - Trang Kết nối mạng xã hội thành lưới thẻ, mỗi mạng một thẻ. Ngăn soạn bài
     lấy giới hạn ký tự và số ảnh từ API. `ChannelIcon` chuyển xuống entity
     campaign.
+- Instagram doanh nghiệp (nhánh `feat/social-instagram`, PR2/5).
+  - Kết nối qua Facebook Login, dùng chung Meta App; chỉ hiện các Fanpage đã
+    liên kết Instagram.
+  - Đăng bài một ảnh hoặc carousel (tối đa 10 ảnh); ảnh là bắt buộc.
+  - Ảnh lệch tỷ lệ được tạo thành JPEG thêm viền trắng, trong khoảng 4:5 đến
+    1.91:1; khung xem trước hiện đúng như vậy.
+  - Tự gỡ bài khi chiến dịch kết thúc (`instagram_manage_contents`).
+  - Lỗi giới hạn số bài trong 24 giờ (mã 9) được thử lại.
+  - Thêm kênh `instagram` (migration campaigns 0007) và lớp chung
+    `MetaGraphProvider`.
+  - Còn mở: chưa thử đăng thật vì cần tài khoản Instagram chuyên nghiệp liên kết
+    Fanpage và bật use case Instagram trong Meta App.
 
 ## Ứng tuyển bằng CV tải lên và form ứng tuyển mới (2026-11-18)
 

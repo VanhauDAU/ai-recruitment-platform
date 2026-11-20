@@ -68,6 +68,9 @@
 .ch-post__media.is-3 { grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; height: 260px; }
 .ch-post__media.is-3 img:first-child { grid-row: span 2; }
 .ch-post__media.is-4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; height: 300px; }
+.ch-post__media.is-fit { position: relative; display: block; margin-bottom: 10px; container-type: inline-size; }
+.ch-post__media.is-fit img { display: block; height: auto; min-height: calc(100cqw / var(--fit-wide, 99)); max-height: calc(100cqw / var(--fit-narrow, .01)); object-fit: contain; }
+.ch-post__count { position: absolute; top: 8px; right: 8px; padding: 2px 8px; border-radius: 999px; background: rgb(0 0 0 / .6); color: #fff; font-size: 12px; }
 
 .ch-images { display: flex; flex-direction: column; gap: 8px; }
 .ch-images .ch-chips { margin: 0; }

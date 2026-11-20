@@ -104,7 +104,11 @@ function SocialAccountFields({ campaign, channel, network, values, form, times, 
           }))}
         />
       </Form.Item>
-      <Form.Item label={m.employer_campaign_fb_images()} name="images">
+      <Form.Item
+        label={m.employer_campaign_fb_images()}
+        name="images"
+        rules={network.capabilities.requires_image ? [{ required: true, type: 'array', min: 1, message: m.employer_campaign_images_required({ network: network.platform }) }] : []}
+      >
         <PostImagePicker campaignId={campaign.public_id} channelId={channel.public_id} max={network.capabilities.max_images} />
       </Form.Item>
       <Form.Item label={m.employer_campaign_fb_timing()} name="timing">
@@ -356,6 +360,8 @@ export default function PostComposer({ campaign, channel, network, open, onClose
               text={values.message || ''}
               images={(values.images || []).map((image) => image.url)}
               link={channel.kind.startsWith('facebook') ? channel.link : ''}
+              variant={network?.key}
+              imageRatio={network?.capabilities.image_ratio}
               linkTitle={campaign.name}
             />
             {autoPost && campaign.status !== 'active' && (

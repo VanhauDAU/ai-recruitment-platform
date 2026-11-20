@@ -2,7 +2,7 @@
 
 from django.conf import settings
 
-from ...domain.social_networks import FACEBOOK_PAGE, NETWORKS
+from ...domain.social_networks import FACEBOOK_PAGE, INSTAGRAM, NETWORKS
 
 
 def is_live(network):
@@ -23,6 +23,10 @@ def get_provider(network):
         from .fake import FakeProvider
 
         return FakeProvider(network)
+    if network == INSTAGRAM:
+        from .instagram import InstagramProvider
+
+        return InstagramProvider()
     from .facebook import FacebookPageProvider
 
     return FacebookPageProvider()

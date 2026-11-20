@@ -1,6 +1,6 @@
 # Tự đăng bài chiến dịch lên mạng xã hội
 
-Kênh chiến dịch có mạng tự đăng (hiện là "Fanpage Facebook") đăng bài lên tài
+Kênh chiến dịch có mạng tự đăng (Fanpage Facebook, Instagram) đăng bài lên tài
 khoản mạng xã hội của nhà tuyển dụng (NTD) đúng giờ hẹn, rồi tự gỡ bài khi
 chiến dịch kết thúc. Thiết kế nằm ở
 [ADR-0021](../02-tong-quan/adr-0021-campaign-facebook-page.md) và
@@ -14,6 +14,7 @@ phẩy. Mạng không có trong danh sách chạy bằng provider giả lập.
 | Mạng (`key`) | Khi giả lập | Khi thật |
 | --- | --- | --- |
 | `facebook_page` | Kết nối trả một Fanpage giả lập; "đăng" và "gỡ" chỉ ghi vào cache. Giao diện gắn nhãn "Giả lập". | Gọi Graph API của Meta với quyền `pages_show_list`, `pages_manage_posts`, `pages_read_engagement`. Hướng dẫn tạo app ở mục dưới. |
+| `instagram` | Kết nối trả một tài khoản Instagram giả lập; ảnh vẫn được thêm viền thành JPEG như khi đăng thật. | Gọi Instagram Graph API qua Facebook Login với quyền `pages_show_list`, `pages_read_engagement`, `instagram_basic`, `instagram_content_publish`, `instagram_manage_contents`. Xem mục Instagram. |
 
 `CAMPAIGN_SOCIAL_PROVIDER=facebook` là cách bật cũ, được hiểu là
 `CAMPAIGN_SOCIAL_LIVE_NETWORKS=facebook_page`. Test luôn chạy giả lập, bất kể
@@ -82,6 +83,62 @@ chỉ gửi trường `link` khi đó là địa chỉ công khai; ngược lạ
 cuối nội dung bài (nếu nội dung chưa có), bài vẫn đăng được nhưng không có thẻ
 xem trước. Muốn thấy thẻ xem trước khi demo, đặt `FRONTEND_URL` thành một địa
 chỉ công khai (ví dụ đường hầm HTTPS) để link theo dõi của kênh là link công khai.
+
+## Instagram doanh nghiệp
+
+Instagram kết nối qua **Facebook Login**, dùng cùng Meta App với Fanpage
+([ADR-0025](../02-tong-quan/adr-0025-campaign-social-networks.md)). Tài khoản
+Instagram phải là tài khoản chuyên nghiệp (doanh nghiệp hoặc nhà sáng tạo) và
+**đã liên kết với một Fanpage**. Fanpage nào chưa liên kết Instagram sẽ không
+hiện trong danh sách chọn. ProCV lưu Page token của Fanpage đó. Token này không
+hết hạn theo thời gian, nên không cần làm mới.
+
+### Bật Instagram trong Meta App
+
+Tên mục trong giao diện Meta có thể khác đôi chút theo thời điểm.
+
+1. Mở app "ProCV Fanpage", vào **Trường hợp sử dụng → Thêm trường hợp sử
+   dụng**, chọn "Quản lý tin nhắn và nội dung trên Instagram", rồi chọn bản
+   thiết lập **dùng Facebook Login** (không chọn bản đăng nhập bằng Instagram).
+2. Thêm quyền `instagram_basic`, `instagram_content_publish` và
+   `instagram_manage_contents`. Quyền `instagram_manage_contents` dùng để gỡ bài.
+   Với tài khoản bạn sở hữu hoặc quản lý và có vai trò trong app, Standard
+   Access là đủ, không cần App Review.
+3. Trong ứng dụng Instagram, chuyển tài khoản sang tài khoản chuyên nghiệp, rồi
+   liên kết với Fanpage (Meta Business Suite → Cài đặt → Tài khoản Instagram).
+4. **Địa chỉ quay về.** Ở Development mode Meta tự cho phép `http://localhost`.
+   Production khai thêm `https://<miền>/api/employer/social/instagram/callback/`
+   cạnh địa chỉ của Fanpage.
+5. Trong `backend/.env`, thêm `instagram` vào danh sách mạng đăng thật:
+   ```env
+   CAMPAIGN_SOCIAL_LIVE_NETWORKS=facebook_page,instagram
+   ```
+   Restart `backend`, `worker`, `beat`.
+6. **Thử.**
+   - Vào **Cài đặt tài khoản → Kết nối mạng xã hội**, ở thẻ "Instagram doanh
+     nghiệp" bấm kết nối và chọn tài khoản.
+   - Thêm kênh "Instagram" vào một chiến dịch đang chạy, soạn bài có ít nhất
+     một ảnh, rồi đăng.
+
+### Ảnh và nội dung
+
+- **Ảnh là bắt buộc.** Instagram tự tải ảnh qua URL, nên ảnh phải có địa chỉ
+  công khai. Ảnh của ProCV nằm trên R2 công khai, nên chạy được cả ở máy cục bộ.
+- **Định dạng và tỷ lệ.** Instagram chỉ nhận JPEG có tỷ lệ từ 4:5 đến 1.91:1.
+  Lúc đăng, ProCV tạo một bản JPEG thêm viền trắng cho vừa tỷ lệ và rộng tối đa
+  1440 px. Bản này lưu ở `campaigns/<mã>/social/fit/` và được dùng lại ở lần
+  đăng sau; ảnh gốc giữ nguyên. Khung xem trước trong ngăn soạn bài hiện đúng
+  phần viền đó.
+- **Nhiều ảnh** được đăng thành một bài dạng carousel. ProCV cho tối đa 10 ảnh;
+  Instagram cho tối đa 20.
+- **Chú thích** dài tối đa 2.200 ký tự. Link trong chú thích không bấm được,
+  nên link theo dõi được ghi ở cuối nếu nội dung chưa có.
+- **Giới hạn số bài.** Instagram giới hạn số bài đăng qua API trong 24 giờ
+  (tài liệu Meta ghi 50 hoặc 100). Vượt giới hạn thì Graph trả mã 9 và ProCV
+  thử lại theo lịch thử lại thông thường.
+- **Gỡ bài** gọi `DELETE /<media-id>`. Tài liệu Meta ghi thao tác này cần user
+  token, còn ProCV dùng Page token. Nếu Meta từ chối, bài chuyển "Cần tự gỡ
+  bài" và NTD nhận link để tự xóa. Cần kiểm lại khi thử với tài khoản thật.
 
 ## Vận hành (chung cho mọi mạng)
 

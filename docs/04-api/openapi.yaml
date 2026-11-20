@@ -21712,6 +21712,7 @@ components:
       enum:
       - facebook_page
       - facebook_group
+      - instagram
       - linkedin
       - zalo
       - tiktok
@@ -21723,6 +21724,7 @@ components:
       description: |-
         * `facebook_page` - Fanpage Facebook
         * `facebook_group` - Nhóm Facebook
+        * `instagram` - Instagram
         * `linkedin` - LinkedIn
         * `zalo` - Zalo
         * `tiktok` - TikTok
@@ -29948,8 +29950,11 @@ components:
     NetworkEnum:
       enum:
       - facebook_page
+      - instagram
       type: string
-      description: '* `facebook_page` - Fanpage Facebook'
+      description: |-
+        * `facebook_page` - Fanpage Facebook
+        * `instagram` - Instagram doanh nghiệp
     NullEnum:
       enum:
       - null
@@ -35407,7 +35412,14 @@ components:
           type: boolean
         supports_delete:
           type: boolean
+        image_ratio:
+          type: array
+          items:
+            type: number
+            format: double
+          nullable: true
       required:
+      - image_ratio
       - max_chars
       - max_images
       - requires_image

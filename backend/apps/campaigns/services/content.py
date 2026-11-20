@@ -43,6 +43,10 @@ OUTPUT_LANGUAGES = {'vi': 'tiếng Việt', 'en': 'tiếng Anh'}
 CHANNEL_STYLE = {
     CampaignChannel.Kind.FACEBOOK_PAGE: 'bài Facebook thân thiện, tối đa 1500 ký tự, có vài emoji',
     CampaignChannel.Kind.FACEBOOK_GROUP: 'bài đăng nhóm Facebook ngắn gọn, đi thẳng vào vị trí và quyền lợi',
+    CampaignChannel.Kind.INSTAGRAM: (
+        'chú thích Instagram có vài emoji, tối đa 2000 ký tự và 10 hashtag; '
+        'link trong chú thích không bấm được nên ghi rõ link ở cuối'
+    ),
     CampaignChannel.Kind.LINKEDIN: 'bài LinkedIn giọng chuyên nghiệp, không emoji, tối đa 1300 ký tự',
     CampaignChannel.Kind.ZALO: 'tin nhắn Zalo rất ngắn, tối đa 600 ký tự',
     CampaignChannel.Kind.TIKTOK: 'chú thích video TikTok ngắn, tối đa 300 ký tự',

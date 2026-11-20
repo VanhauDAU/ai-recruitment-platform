@@ -205,7 +205,7 @@ def _publish_remote(post):
         token=token,
         message=post.message,
         link=post.link,
-        images=read_post_images(post.images),
+        images=read_post_images(post),
     )
 
 

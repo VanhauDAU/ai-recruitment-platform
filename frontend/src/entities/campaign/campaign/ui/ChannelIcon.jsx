@@ -1,6 +1,7 @@
 import {
   FacebookFilled,
   GlobalOutlined,
+  InstagramFilled,
   LinkedinFilled,
   MailFilled,
   MessageFilled,
@@ -14,6 +15,7 @@ import {
 const KINDS = {
   facebook_page: { icon: FacebookFilled, color: '#1877f2' },
   facebook_group: { icon: TeamOutlined, color: '#1877f2' },
+  instagram: { icon: InstagramFilled, color: '#d62976' },
   linkedin: { icon: LinkedinFilled, color: '#0a66c2' },
   zalo: { icon: MessageFilled, color: '#0068ff' },
   tiktok: { icon: TikTokOutlined, color: '#111827' },

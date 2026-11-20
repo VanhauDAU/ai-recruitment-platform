@@ -76,3 +76,14 @@ buộc có ảnh và API không gỡ được bài.
   mạng. Mã lỗi `graph_*` vẫn là của Meta.
 - Thêm mạng cần cập nhật danh sách mạng hợp lệ trong `config/settings/production.py`
   và mục hướng dẫn trong `docs/06-deployment/social-integrations.md`.
+
+## Bổ sung: Instagram (PR2)
+
+- **Cách kết nối.** Instagram kết nối qua Facebook Login, dùng chung Meta App và
+  lớp `MetaGraphProvider` với Fanpage. Cách này cần tài khoản Instagram liên
+  kết với một Fanpage, nhưng gỡ được bài qua API và Page token không cần làm
+  mới. "Đăng nhập bằng Instagram" không cần Fanpage, nhưng token hết hạn sau
+  60 ngày và không có API gỡ bài, nên không chọn.
+- **`Capabilities.image_ratio`.** Mạng có khoảng tỷ lệ ảnh thì nhận bản JPEG thêm
+  viền trắng, tạo lúc đăng. Mỗi `PostImage` mang cả bytes (Facebook tải tệp
+  lên) lẫn URL công khai (Instagram tự tải về).

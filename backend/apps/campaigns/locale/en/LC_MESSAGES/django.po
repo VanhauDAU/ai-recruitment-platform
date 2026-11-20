@@ -34,23 +34,38 @@ msgstr "Company page"
 msgid "Facebook không mở được link trong bài. Link phải là địa chỉ công khai, không phải localhost."
 msgstr "Facebook could not open the link in the post. The link must be a public address, not localhost."
 
-msgid "Kết nối Fanpage đã hết hạn. Hãy kết nối lại trong Cài đặt tài khoản."
-msgstr "The Facebook Page connection has expired. Reconnect it in Account settings."
+msgid "Kết nối đã hết hạn. Hãy kết nối lại trong Cài đặt tài khoản."
+msgstr "The connection has expired. Reconnect it in Account settings."
 
-msgid "Fanpage chưa cho ProCV quyền đăng bài. Hãy kết nối lại và bật quyền đăng bài."
-msgstr "The Facebook Page has not allowed ProCV to publish posts. Reconnect it and enable the publishing permission."
+msgid "Tài khoản chưa cho ProCV quyền đăng bài. Hãy kết nối lại và bật quyền đăng bài."
+msgstr "The account hasn't given ProCV permission to post. Reconnect and allow posting."
 
-msgid "Facebook đang tạm chặn đăng bài từ Fanpage này. Hãy thử lại sau."
-msgstr "Facebook is temporarily blocking posts from this Page. Please try again later."
+msgid "Mạng xã hội đang tạm chặn đăng bài từ tài khoản này. Hãy thử lại sau."
+msgstr "The social network is temporarily blocking posts from this account. Try again later."
 
-msgid "Facebook từ chối nội dung bài. Hãy sửa nội dung rồi đăng lại."
-msgstr "Facebook rejected the post content. Edit the content and post again."
+msgid "Mạng xã hội từ chối nội dung bài. Hãy sửa nội dung rồi đăng lại."
+msgstr "The social network rejected the post content. Edit it and post again."
 
 msgid "Mạng xã hội không phản hồi kịp. Hệ thống đã thử lại nhiều lần."
 msgstr "The social network did not respond in time. The system retried several times."
 
 msgid "Không kết nối được tới mạng xã hội. Hệ thống đã thử lại nhiều lần."
 msgstr "Could not reach the social network. The system retried several times."
+
+msgid "Tài khoản đã đăng quá số bài Instagram cho phép trong 24 giờ. Hệ thống sẽ thử lại sau."
+msgstr "The account reached Instagram's 24-hour posting limit. The system will retry later."
+
+msgid "Instagram không tải được ảnh của bài. Hãy đổi ảnh rồi đăng lại."
+msgstr "Instagram couldn't download the post's images. Change the images and post again."
+
+msgid "Instagram không xử lý được ảnh của bài. Hãy đổi ảnh rồi đăng lại."
+msgstr "Instagram couldn't process the post's images. Change the images and post again."
+
+msgid "Instagram xử lý ảnh quá lâu. Hệ thống đã thử lại nhiều lần."
+msgstr "Instagram took too long to process the images. The system retried several times."
+
+msgid "Bài Instagram cần ít nhất một ảnh."
+msgstr "An Instagram post needs at least one image."
 
 msgid "Mạng xã hội này không cho gỡ bài tự động. Hãy mở bài và tự xóa."
 msgstr "This social network does not allow automatic removal. Open the post and delete it yourself."
@@ -81,6 +96,9 @@ msgstr "Choose an image."
 
 msgid "Fanpage Facebook"
 msgstr "Facebook Page"
+
+msgid "Instagram doanh nghiệp"
+msgstr "Instagram Business"
 
 msgid "Nháp"
 msgstr "Draft"

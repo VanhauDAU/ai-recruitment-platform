@@ -6,7 +6,9 @@ may only reference images uploaded for its own campaign or the company's
 current cover and logo.
 """
 
+from hashlib import sha256
 from io import BytesIO
+from math import ceil
 from pathlib import PurePosixPath
 from uuid import uuid4
 
@@ -20,8 +22,10 @@ from common.storage.media import media_public_url, media_storage_path, validate_
 from common.storage.r2 import public_media_storage
 
 from ..domain.social_networks import network_for_channel_kind
+from .social import PostImage
 
 MAX_SIDE = 2048
+MAX_FIT_WIDTH = 1440  # widest image Instagram keeps without rescaling
 
 
 def _prefix(campaign):
@@ -109,12 +113,60 @@ def clean_post_images(campaign, images, *, max_images):
     return cleaned
 
 
-def read_post_images(paths):
-    """(filename, bytes) pairs for the provider; a missing file is skipped."""
+def _fit_ratio(image, image_ratio):
+    """Pad ``image`` with white to the nearest allowed width/height ratio, as RGB."""
+    narrowest, widest = image_ratio
+    if image.mode in ('RGBA', 'LA', 'P'):
+        image = image.convert('RGBA')
+        flat = Image.new('RGB', image.size, 'white')
+        flat.paste(image, mask=image.getchannel('A'))
+        image = flat
+    else:
+        image = image.convert('RGB')
+    width, height = image.size
+    if width / height < narrowest:
+        width = ceil(height * narrowest)
+    elif width / height > widest:
+        height = ceil(width / widest)
+    if (width, height) != image.size:
+        canvas = Image.new('RGB', (width, height), 'white')
+        canvas.paste(image, ((width - image.width) // 2, (height - image.height) // 2))
+        image = canvas
+    image.thumbnail((MAX_FIT_WIDTH, MAX_FIT_WIDTH * 2), Image.LANCZOS)
+    return image
+
+
+def _fitted_path(campaign, path, image_ratio):
+    """A JPEG of ``path`` within ``image_ratio``, stored once under the campaign."""
+    digest = sha256(f'{path}:{image_ratio}'.encode()).hexdigest()[:20]
+    fitted = f'{_prefix(campaign)}fit/{digest}.jpg'
     storage = public_media_storage()
-    files = []
-    for path in paths or []:
-        if storage.exists(path):
-            with storage.open(path, 'rb') as stored:
-                files.append((PurePosixPath(path).name, stored.read()))
-    return files
+    if not storage.exists(fitted):
+        with storage.open(path, 'rb') as stored, Image.open(stored) as image:
+            buffer = BytesIO()
+            _fit_ratio(image, image_ratio).save(buffer, format='JPEG', quality=90, optimize=True)
+        storage.save(fitted, ContentFile(buffer.getvalue()))
+    return fitted
+
+
+def read_post_images(post):
+    """The post's images for its network, in order; a missing file is skipped.
+
+    A network with an ``image_ratio`` gets a padded JPEG copy, since it only
+    accepts that format and those proportions.
+    """
+    storage = public_media_storage()
+    image_ratio = post.connection.spec.capabilities.image_ratio
+    images = []
+    for path in post.images or []:
+        if not storage.exists(path):
+            continue
+        if image_ratio:
+            path = _fitted_path(post.channel.campaign, path, image_ratio)
+        with storage.open(path, 'rb') as stored:
+            images.append(
+                PostImage(
+                    name=PurePosixPath(path).name, content=stored.read(), url=media_public_url(path)
+                )
+            )
+    return images

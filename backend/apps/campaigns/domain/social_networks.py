@@ -16,6 +16,9 @@ class Capabilities:
     requires_image: bool = False
     # False: the network's API cannot remove a post, so the recruiter removes it by hand.
     supports_delete: bool = True
+    # (narrowest, widest) width/height the network accepts; images outside are
+    # re-rendered as JPEG with white padding. None: images are sent as they are.
+    image_ratio: tuple[float, float] | None = None
 
 
 @dataclass(frozen=True)
@@ -28,6 +31,7 @@ class SocialNetwork:
 
 
 FACEBOOK_PAGE = 'facebook_page'
+INSTAGRAM = 'instagram'
 
 NETWORKS = {
     FACEBOOK_PAGE: SocialNetwork(
@@ -36,6 +40,17 @@ NETWORKS = {
         label=gettext_lazy('Fanpage Facebook'),
         channel_kind='facebook_page',
         capabilities=Capabilities(max_chars=5000, max_images=4),
+    ),
+    # Instagram professional account linked to a Facebook Page, through Facebook
+    # Login: Page token, carousel up to 20 images, JPEG from 4:5 to 1.91:1.
+    INSTAGRAM: SocialNetwork(
+        key=INSTAGRAM,
+        platform='Instagram',
+        label=gettext_lazy('Instagram doanh nghiệp'),
+        channel_kind='instagram',
+        capabilities=Capabilities(
+            max_chars=2200, max_images=10, requires_image=True, image_ratio=(0.8, 1.91)
+        ),
     ),
 }
 

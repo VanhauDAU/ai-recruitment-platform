@@ -12,6 +12,7 @@ class SocialCapabilitiesSerializer(serializers.Serializer):
     max_images = serializers.IntegerField()
     requires_image = serializers.BooleanField()
     supports_delete = serializers.BooleanField()
+    image_ratio = serializers.ListField(child=serializers.FloatField(), allow_null=True)
 
 
 class SocialNetworkSerializer(serializers.Serializer):
@@ -50,24 +51,33 @@ POST_ERROR_MESSAGES = {
     'graph_1500': gettext_lazy(
         'Facebook không mở được link trong bài. Link phải là địa chỉ công khai, không phải localhost.'
     ),
-    'graph_190': gettext_lazy(
-        'Kết nối Fanpage đã hết hạn. Hãy kết nối lại trong Cài đặt tài khoản.'
-    ),
-    'graph_102': gettext_lazy(
-        'Kết nối Fanpage đã hết hạn. Hãy kết nối lại trong Cài đặt tài khoản.'
-    ),
+    'graph_190': gettext_lazy('Kết nối đã hết hạn. Hãy kết nối lại trong Cài đặt tài khoản.'),
+    'graph_102': gettext_lazy('Kết nối đã hết hạn. Hãy kết nối lại trong Cài đặt tài khoản.'),
     'graph_200': gettext_lazy(
-        'Fanpage chưa cho ProCV quyền đăng bài. Hãy kết nối lại và bật quyền đăng bài.'
+        'Tài khoản chưa cho ProCV quyền đăng bài. Hãy kết nối lại và bật quyền đăng bài.'
     ),
     'graph_10': gettext_lazy(
-        'Fanpage chưa cho ProCV quyền đăng bài. Hãy kết nối lại và bật quyền đăng bài.'
+        'Tài khoản chưa cho ProCV quyền đăng bài. Hãy kết nối lại và bật quyền đăng bài.'
     ),
-    'graph_368': gettext_lazy('Facebook đang tạm chặn đăng bài từ Fanpage này. Hãy thử lại sau.'),
-    'graph_100': gettext_lazy('Facebook từ chối nội dung bài. Hãy sửa nội dung rồi đăng lại.'),
+    'graph_368': gettext_lazy(
+        'Mạng xã hội đang tạm chặn đăng bài từ tài khoản này. Hãy thử lại sau.'
+    ),
+    'graph_100': gettext_lazy('Mạng xã hội từ chối nội dung bài. Hãy sửa nội dung rồi đăng lại.'),
     'timeout': gettext_lazy('Mạng xã hội không phản hồi kịp. Hệ thống đã thử lại nhiều lần.'),
     'network_error': gettext_lazy(
         'Không kết nối được tới mạng xã hội. Hệ thống đã thử lại nhiều lần.'
     ),
+    'graph_9': gettext_lazy(
+        'Tài khoản đã đăng quá số bài Instagram cho phép trong 24 giờ. Hệ thống sẽ thử lại sau.'
+    ),
+    'graph_9004': gettext_lazy('Instagram không tải được ảnh của bài. Hãy đổi ảnh rồi đăng lại.'),
+    'ig_container_error': gettext_lazy(
+        'Instagram không xử lý được ảnh của bài. Hãy đổi ảnh rồi đăng lại.'
+    ),
+    'ig_container_pending': gettext_lazy(
+        'Instagram xử lý ảnh quá lâu. Hệ thống đã thử lại nhiều lần.'
+    ),
+    'image_required': gettext_lazy('Bài Instagram cần ít nhất một ảnh.'),
     'delete_unsupported': gettext_lazy(
         'Mạng xã hội này không cho gỡ bài tự động. Hãy mở bài và tự xóa.'
     ),
