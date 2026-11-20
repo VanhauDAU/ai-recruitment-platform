@@ -83,10 +83,16 @@
 .ch-timeline__images { display: flex; gap: 6px; }
 .ch-timeline__images img { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; }
 
-/* Mục Nội dung bài */
+/* Tab Bài đăng: ba bước chọn tin và link, soạn nội dung, đăng */
+.ch-steps { display: flex; flex-direction: column; gap: 18px; margin: 0; padding: 0; list-style: none; }
+.ch-step { display: flex; min-width: 0; flex-direction: column; gap: 10px; }
+.ch-step + .ch-step { padding-top: 16px; border-top: 1px solid #eef2f0; }
+.ch-step__title { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 14px; font-weight: 700; color: #0f2a24; }
+.ch-step__title span { display: inline-grid; width: 22px; height: 22px; flex: none; place-items: center; border-radius: 999px; background: #ecfdf5; font-size: 12px; color: #047857; }
+.ch-publish { display: flex; flex-direction: column; gap: 10px; }
 .ch-content { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); align-items: start; gap: 18px; }
 .ch-content__side { display: flex; flex-direction: column; gap: 12px; }
-.ch-manual { display: flex; flex-direction: column; gap: 8px; padding-top: 12px; border-top: 1px solid #eef2f0; }
+.ch-manual { display: flex; max-width: 520px; flex-direction: column; gap: 8px; }
 
 /* Mục Link & QR */
 .ch-linkpane { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 18px; }
@@ -110,11 +116,9 @@
 .ch-costs__list strong { font-size: 14px; color: #0f2a24; }
 .ch-costs__list span, .ch-costs__list time { font-size: 12px; color: #64748b; }
 
-/* Mục Đăng Fanpage */
-.ch-fb { display: flex; flex-direction: column; gap: 16px; }
-.ch-fb__intro { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; background: #f0f6ff; }
-.ch-fb__intro .ch-section-note { flex: 1 1 280px; color: #334155; }
-.ch-fb__logo { font-size: 26px; color: #1877f2; }
+/* Bước đăng của kênh Fanpage */
+.ch-fb { display: flex; flex-direction: column; gap: 14px; }
+.ch-fb__history { margin: 0; font-size: 13px; font-weight: 600; color: #334155; }
 .ch-timeline { margin: 0; padding: 0; list-style: none; }
 .ch-timeline__item { position: relative; display: flex; gap: 12px; padding-bottom: 16px; }
 .ch-timeline__item:not(:last-child)::before { content: ''; position: absolute; top: 22px; bottom: 0; left: 9px; width: 2px; background: #eef2f0; }
@@ -182,7 +186,6 @@
 }
 
 /* Bước soạn bài: tin trong bài và nơi link dẫn tới. */
-.ch-post { display: flex; flex-direction: column; gap: 14px; }
 .ch-scope { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 12px 18px; padding: 12px 14px; border: 1px solid #e2e8e5; border-radius: 12px; background: #f8faf9; }
 .ch-scope__row { display: flex; min-width: 0; flex-direction: column; gap: 8px; }
 .ch-scope__row .ch-chips { margin: 0; }
