@@ -2,15 +2,17 @@ import { LogoutOutlined } from '@ant-design/icons'
 import { Button, ConfigProvider } from 'antd'
 import { Outlet } from 'react-router'
 import { useSession } from '@/entities/account/session'
-import { BrandLogo } from '@/entities/system/site-settings'
+import { BrandLogo, DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/system/site-settings'
 import { LanguageSwitcher } from '@/features/common/preferences/switch-language'
 import { m } from '@/shared/config/i18n'
 
 export default function EmployerSetupLayout() {
   const { user, logout } = useSession()
+  const { settings } = useSiteSettings()
+  const brandColor = settingText(settings.brand_primary_color, DEFAULT_SITE_SETTINGS.brand_primary_color)
 
   return (
-    <ConfigProvider theme={{ token: { colorPrimary: '#00b14f', borderRadius: 8 } }}>
+    <ConfigProvider theme={{ token: { colorPrimary: brandColor, borderRadius: 8 } }}>
       <div className="min-h-dvh overflow-x-hidden bg-[#eef1f5] text-slate-900">
         <div className="bg-amber-500 px-4 py-2 text-center text-xs font-semibold text-amber-950 sm:text-sm">
           {m.employer_workspace_setup_notice()}

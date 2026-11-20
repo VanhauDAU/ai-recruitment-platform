@@ -1,4 +1,4 @@
-import { useSiteSetting } from '@/entities/system/site-settings'
+import { useSiteSettings } from '@/entities/system/site-settings'
 import { useCountUp } from '@/shared/hooks/use-count-up'
 import { getIntlLocale, getLocale } from '@/shared/config/i18n'
 
@@ -15,7 +15,8 @@ function AnimatedStatValue({ value }) {
 // Khối số liệu cấu hình qua admin (key employer_stats):
 // [{ value, label_vi, label_en }]
 export default function StatsBand({ title }) {
-  const stats = useSiteSetting('employer_stats', [])
+  // Đọc thẳng: useSiteSetting chỉ trả chuỗi nên mảng sẽ bị thay bằng fallback.
+  const stats = useSiteSettings().settings.employer_stats
   if (!Array.isArray(stats) || stats.length === 0) return null
 
   const lang = getLocale()

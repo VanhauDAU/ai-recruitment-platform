@@ -7,7 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Làm lại trang Cấu hình hệ thống (ADR-0026)](#làm-lại-trang-cấu-hình-hệ-thống-adr-0026-2026-11-21) | 🟨 GĐ1 đã gộp (#294, sửa CI #295); GĐ2 giao diện mới trên nhánh `feat/settings-ui`; GĐ3–5 chưa làm |
+| [Làm lại trang Cấu hình hệ thống (ADR-0026)](#làm-lại-trang-cấu-hình-hệ-thống-adr-0026-2026-11-21) | 🟨 GĐ1 (#294, #295) và GĐ2 (#296) đã gộp; GĐ3 trên nhánh `feat/settings-portals`; GĐ4–5 chưa làm |
 | [Chốt luồng FAQ/hướng dẫn và blog: Nháp → Xuất bản (ADR-0024)](#chốt-luồng-nội-dung-nháp--xuất-bản-adr-0024-2026-11-20) | ✅ Gộp vào `dev` (#272) |
 | [Tổ chức lại sidebar quản trị](#tổ-chức-lại-sidebar-quản-trị-2026-11-20) | ✅ Gộp vào `dev` (#270); gỡ khối "Hàng chờ quản trị" ở trang Người dùng: PR #271, chờ gộp |
 | [Song ngữ vi/en cho 3 cổng (ADR-0023)](#song-ngữ-vien-cho-3-cổng-adr-0023-2026-11-19) | 🟨 GĐ0 (#262), GĐ1 cổng NTD (#267) đã gộp; chặn mất dữ liệu khi đổi ngôn ngữ trên nhánh `fix/language-switch-unsaved-guard`; GĐ2–4 chưa làm |
@@ -51,8 +51,8 @@ ghi ngược với code.
 | GĐ | Nội dung | Trạng thái |
 | --- | --- | --- |
 | 1 | Hợp đồng cấu hình (xem bên dưới) | ✅ #294, #295 |
-| 2 | Giao diện mới: thanh bên 3 khu, tìm kiếm, nút "?", lưu chung, xác nhận thao tác nguy hiểm, lịch sử thay đổi, bảng thông số | 🟨 Nhánh `feat/settings-ui` |
-| 3 | Nối bảo trì, công tắc đăng ký, khối trang chủ; sửa logo/SEO/màu/footer; bộ Pháp lý & đồng ý (link đang trỏ topcv.vn); bộ Tính năng | ⬜ |
+| 2 | Giao diện mới: thanh bên 3 khu, tìm kiếm, nút "?", lưu chung, xác nhận thao tác nguy hiểm, lịch sử thay đổi, bảng thông số | ✅ #296 |
+| 3 | Nối bảo trì, công tắc đăng ký, khối trang chủ; sửa SEO/màu/footer/hotline; link pháp lý (bỏ topcv.vn); công tắc Trung tâm trợ giúp và thông báo đa cổng | 🟨 Nhánh `feat/settings-portals` |
 | 4 | Email (phạm vi công tắc, chào mừng, branding chung), AI hợp nhất theo runtime, job alert, AI chiến dịch | ⬜ |
 | 5 | Xác thực & uy tín NTD, Ứng tuyển & SLA, hạn tin, chia sẻ CV, lưu trữ dữ liệu, OAuth theo cổng | ⬜ |
 
@@ -67,8 +67,9 @@ GĐ1 gồm:
 - API thông số hệ thống chỉ đọc.
 - Test hợp đồng chặn key chết.
 
-Còn 11 key `pending` chờ GĐ3/4 nối vào code: bảo trì, công tắc đăng ký, 6 khối trang
-chủ, email chào mừng.
+GĐ3 nối 10 key `pending`; còn `email_welcome_enabled` chờ GĐ4. Việc dời lại: đồng bộ giới hạn
+upload phía frontend (cần sửa chuỗi "5MB" trong i18n nhiều vùng); file mẫu
+`/documents/topcv-mau-van-ban-thong-bao-dong-y-xu-ly-dlcn.docx` còn tên/nội dung của bên thứ ba.
 
 ## Song ngữ vi/en cho 3 cổng (ADR-0023, 2026-11-19)
 

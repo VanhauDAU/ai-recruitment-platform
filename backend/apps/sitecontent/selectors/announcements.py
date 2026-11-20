@@ -28,6 +28,7 @@ from ..models import (
     AnnouncementRevision,
     AnnouncementUserState,
 )
+from .settings import get_setting
 
 PRIORITY_TIER_BY_KIND = {
     AnnouncementRevision.Kind.CRITICAL: 1,
@@ -43,8 +44,11 @@ PRIORITY_TIER_BY_KIND = {
 
 
 def remote_announcements_enabled(surface):
-    enabled_surfaces = set(settings.ANNOUNCEMENT_REMOTE_ENABLED_SURFACES)
-    return surface in enabled_surfaces
+    """Máy chủ bật bề mặt này (env) VÀ admin không bỏ chọn nó (SiteSetting)."""
+    if surface not in set(settings.ANNOUNCEMENT_REMOTE_ENABLED_SURFACES):
+        return False
+    allowed = get_setting('announcement_surfaces')
+    return not isinstance(allowed, list) or surface in allowed
 
 
 def normalize_request_path(path):

@@ -1,12 +1,15 @@
 """Search-engine shell for the client-rendered help center."""
 
-from django.conf import settings
 from django.views import View
 
 from apps.knowledgebase.selectors.seo import (
     knowledge_sitemap_rows,
     seo_knowledge_article_by_slugs,
     seo_knowledge_category_by_slug,
+)
+from apps.sitecontent.selectors import (
+    knowledgebase_public_enabled,
+    knowledgebase_search_index_enabled,
 )
 from apps.sitecontent.services import resolved_seo_settings, seo_page_title
 from common.seo import (
@@ -30,11 +33,7 @@ def _metadata(
     robots=None,
 ):
     site = resolved_seo_settings()
-    allow_index = (
-        settings.KNOWLEDGEBASE_PUBLIC_ENABLED
-        and settings.KNOWLEDGEBASE_SEARCH_INDEX_ENABLED
-        and site['seo_robots_index']
-    )
+    allow_index = knowledgebase_search_index_enabled() and site['seo_robots_index']
     return SeoMetadata(
         title=seo_page_title(title, site),
         description=description or site['seo_default_description'],
@@ -106,7 +105,7 @@ def _browser_robots(request):
 
 class KnowledgeHomeSeoShellView(View):
     def get(self, request):
-        if not settings.KNOWLEDGEBASE_PUBLIC_ENABLED:
+        if not knowledgebase_public_enabled():
             return _not_found(request, '/tro-giup')
         return render_seo_shell(
             request,
@@ -123,7 +122,7 @@ class KnowledgeHomeSeoShellView(View):
 class KnowledgeCategorySeoShellView(View):
     def get(self, request, category_slug):
         canonical_path = f'/tro-giup/{category_slug}'
-        if not settings.KNOWLEDGEBASE_PUBLIC_ENABLED:
+        if not knowledgebase_public_enabled():
             return _not_found(request, canonical_path)
         category = seo_knowledge_category_by_slug(category_slug)
         if not category:
@@ -143,7 +142,7 @@ class KnowledgeCategorySeoShellView(View):
 class KnowledgeDetailSeoShellView(View):
     def get(self, request, category_slug, article_slug):
         canonical_path = f'/tro-giup/{category_slug}/{article_slug}'
-        if not settings.KNOWLEDGEBASE_PUBLIC_ENABLED:
+        if not knowledgebase_public_enabled():
             return _not_found(request, canonical_path)
         article = seo_knowledge_article_by_slugs(category_slug, article_slug)
         if not article:
@@ -187,11 +186,7 @@ class KnowledgeDetailSeoShellView(View):
 class KnowledgeSitemapView(View):
     def get(self, request):
         site = resolved_seo_settings()
-        if not (
-            settings.KNOWLEDGEBASE_PUBLIC_ENABLED
-            and settings.KNOWLEDGEBASE_SEARCH_INDEX_ENABLED
-            and site['seo_robots_index']
-        ):
+        if not (knowledgebase_search_index_enabled() and site['seo_robots_index']):
             return xml_response(sitemap_urlset(()))
 
         categories, articles = knowledge_sitemap_rows()

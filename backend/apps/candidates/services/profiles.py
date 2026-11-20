@@ -18,11 +18,13 @@ from ..models import (
     CandidateProfile,
 )
 
+# Phiên bản văn bản đồng ý của ứng viên (gợi ý AI, hiển thị hồ sơ cho NTD). Văn bản nằm
+# trong mã nguồn nên phiên bản đổi cùng lần triển khai sửa văn bản.
+CONSENT_POLICY_VERSION = 'v1'
+
 
 @transaction.atomic
-def set_recruiter_visibility(
-    profile, *, enabled, policy_version, source, source_path='', cv_public_id=''
-):
+def set_recruiter_visibility(profile, *, enabled, source, source_path='', cv_public_id=''):
     """Update current consent and append an immutable decision audit event."""
     if (
         cv_public_id
@@ -36,7 +38,6 @@ def set_recruiter_visibility(
         locked_profile,
         CandidateConsent.ConsentType.RECRUITER_VISIBILITY,
         enabled=enabled,
-        policy_version=policy_version,
         source=source,
         source_path=source_path,
         cv_public_id=cv_public_id,
@@ -47,7 +48,7 @@ def set_recruiter_visibility(
 
 
 @transaction.atomic
-def set_ai_recommendation(profile, *, enabled, policy_version, source, source_path=''):
+def set_ai_recommendation(profile, *, enabled, source, source_path=''):
     """Bật/tắt đồng ý gợi ý việc làm bằng AI, độc lập với nhu cầu công việc.
 
     Không đổi `job_preferences_configured`: bật gợi ý không có nghĩa là đã khai nhu cầu.
@@ -57,7 +58,6 @@ def set_ai_recommendation(profile, *, enabled, policy_version, source, source_pa
         locked_profile,
         CandidateConsent.ConsentType.AI_RECOMMENDATION,
         enabled=enabled,
-        policy_version=policy_version,
         source=source,
         source_path=source_path,
     )
@@ -68,12 +68,16 @@ def _record_consent(
     consent_type,
     *,
     enabled,
-    policy_version,
     source,
     source_path='',
     cv_public_id='',
 ):
-    """Ghi quyết định hiện hành và thêm một sự kiện kiểm toán không sửa được."""
+    """Ghi quyết định hiện hành và thêm một sự kiện kiểm toán không sửa được.
+
+    Phiên bản chính sách do server gán (``CONSENT_POLICY_VERSION``), không nhận
+    từ client, để bản ghi đồng ý kiểm chứng được.
+    """
+    policy_version = CONSENT_POLICY_VERSION
     now = timezone.now()
     decision = CandidateConsent.Decision.GRANTED if enabled else CandidateConsent.Decision.DENIED
     consent, _ = CandidateConsent.objects.update_or_create(
@@ -181,7 +185,7 @@ def replace_candidate_job_preferences(profile, validated_data):
             consent_type=consent_type,
             defaults={
                 'decision': decision,
-                'policy_version': 'v1',
+                'policy_version': CONSENT_POLICY_VERSION,
                 'decided_at': now,
             },
         )
@@ -189,7 +193,7 @@ def replace_candidate_job_preferences(profile, validated_data):
             candidate_profile=locked_profile,
             consent_type=consent_type,
             decision=decision,
-            policy_version='v1',
+            policy_version=CONSENT_POLICY_VERSION,
             source='job_preferences',
             decided_at=now,
         )

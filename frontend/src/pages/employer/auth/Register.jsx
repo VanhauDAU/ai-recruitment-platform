@@ -11,6 +11,7 @@ import {
   employerPasswordValidationRule,
   PasswordRequirements,
   registerEmployer,
+  RegistrationClosedNotice,
   SocialLoginButtons,
 } from '@/features/common/account/auth'
 import { EmployerConsentFields, EmployerRegistrationFields } from '@/features/employer/account/complete-employer-registration'
@@ -195,6 +196,15 @@ export default function EmployerRegister() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (settings.employer_allow_registration === false) {
+    return (
+      <div className="w-full">
+        <AuthLogo className="!mx-0 mb-4 !h-12 !w-12 !rounded-xl" />
+        <RegistrationClosedNotice loginPath={employerAppPath('/login')} />
+      </div>
+    )
   }
 
   return (

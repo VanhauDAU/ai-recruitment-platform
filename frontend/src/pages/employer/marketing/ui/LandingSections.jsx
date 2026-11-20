@@ -8,7 +8,7 @@ import {
   SafetyCertificateOutlined,
   TeamOutlined,
 } from '@ant-design/icons'
-import { useSiteSetting } from '@/entities/system/site-settings'
+import { useSiteSettings } from '@/entities/system/site-settings'
 import { getLocale, m } from '@/shared/config/i18n'
 
 const FUNCTION_ITEMS = [
@@ -136,7 +136,7 @@ export function ValuesSection() {
 }
 
 export function PartnersBand() {
-  const partners = useSiteSetting('employer_partners', [])
+  const partners = useSiteSettings().settings.employer_partners
   if (!Array.isArray(partners) || partners.length === 0) return null
   return (
     <section className="border-y border-slate-100 bg-slate-50">

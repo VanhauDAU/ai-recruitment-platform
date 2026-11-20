@@ -10,7 +10,7 @@ import { Button, Modal, Progress } from 'antd'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useSession } from '@/entities/account/session'
-import { settingText, useSiteSettings } from '@/entities/system/site-settings'
+import { DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/system/site-settings'
 import {
   EMPLOYER_BUSINESS_LICENSE_URL,
   EMPLOYER_COMPANY_SETTINGS_URL,
@@ -37,8 +37,8 @@ export default function EmployerVerificationChecklist({ profile, onContinue }) {
   const [passwordPromptOpen, setPasswordPromptOpen] = useState(false)
   const verification = profile?.onboarding || {}
   const progress = getEmployerVerificationProgress(verification)
-  const hotline = settingText(settings.hotline, '1900 1234')
-  const supportEmail = settingText(settings.support_email, 'cskh@procv.vn')
+  const hotline = settingText(settings.hotline, DEFAULT_SITE_SETTINGS.hotline)
+  const supportEmail = settingText(settings.support_email, DEFAULT_SITE_SETTINGS.support_email)
 
   function openStep(step) {
     if (step.key === 'phone_verified' && !user?.has_usable_password) {

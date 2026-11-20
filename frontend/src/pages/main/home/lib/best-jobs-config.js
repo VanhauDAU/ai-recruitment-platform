@@ -1,5 +1,6 @@
 import { SALARY_RANGES } from '@/entities/job/job'
 
+// Mặc định khi chưa có cấu hình; admin đổi bằng SiteSetting home_featured_jobs_count.
 export const BEST_JOBS_PAGE_SIZE = 12
 export const BEST_JOBS_ROTATE_MS = 8000
 export const BEST_JOBS_PREVIEW_DELAY_MS = 500
@@ -82,10 +83,10 @@ export function buildBestJobsChips(dimension, { featuredWards, parents, province
   ]
 }
 
-export function buildBestJobsParams(filters, page, rotationSeed = BEST_JOBS_ROTATION_SEED) {
+export function buildBestJobsParams(filters, page, rotationSeed = BEST_JOBS_ROTATION_SEED, pageSize = BEST_JOBS_PAGE_SIZE) {
   const params = new URLSearchParams({
     page: String(page),
-    page_size: String(BEST_JOBS_PAGE_SIZE),
+    page_size: String(pageSize),
     rotation_seed: rotationSeed,
   })
   if (filters.location) params.append('location', filters.location)

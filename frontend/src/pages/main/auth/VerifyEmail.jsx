@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { changeEmail, confirmVerification, sendVerificationEmail } from '@/features/common/account/auth'
 import { useSession } from '@/entities/account/session'
-import { useSiteSetting, useSiteSettings } from '@/entities/system/site-settings'
+import { DEFAULT_SITE_SETTINGS, useSiteSetting, useSiteSettings } from '@/entities/system/site-settings'
 
 // Trang /tai-khoan/xac-thuc-email: có `?token=` -> xác nhận từ link email;
 // không có token -> màn gửi/gửi lại email xác thực cho tài khoản đang đăng nhập.
@@ -102,8 +102,8 @@ function ConfirmToken({ token, homePath, loginPath, verificationPath, actionLabe
 function RequestVerification({ homePath, loginPath, initiallySent, actionLabel }) {
   const { user, loading, refreshSession } = useSession()
   const { siteName } = useSiteSettings()
-  const hotline = useSiteSetting('hotline', '1900 1234')
-  const supportEmail = useSiteSetting('support_email', 'support@procv.vn')
+  const hotline = useSiteSetting('hotline', DEFAULT_SITE_SETTINGS.hotline)
+  const supportEmail = useSiteSetting('support_email', DEFAULT_SITE_SETTINGS.support_email)
   const navigate = useNavigate()
 
   const [cooldown, setCooldown] = useState(0)

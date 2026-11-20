@@ -676,7 +676,8 @@ class RecruitmentCampaignApiTests(TestCase):
             'employer-campaign-job-performance',
             kwargs={'public_id': campaign.public_id},
         )
-        with self.assertNumQueries(5):
+        # 4 + 1 middleware bảo trì đọc cấu hình (ADR-0026).
+        with self.assertNumQueries(5 + 1):
             response = self.client.get(url, {'days': 7})
 
         self.assertEqual(response.status_code, 200, response.data)
@@ -712,7 +713,7 @@ class RecruitmentCampaignApiTests(TestCase):
         self.assertEqual(response.data['daily'][-1]['views'], 30)
         self.assertEqual(response.data['daily'][-1]['applications'], 7)
 
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(5 + 1):
             selected = self.client.get(url, {'days': 7, 'job': second_job.public_id})
 
         self.assertEqual(selected.status_code, 200, selected.data)
@@ -767,8 +768,8 @@ class RecruitmentCampaignApiTests(TestCase):
         )
         self.client.force_authenticate(self.owner)
 
-        # +1 fixed query for the status tab counts.
-        with self.assertNumQueries(5):
+        # +1 fixed query for the status tab counts; +1 middleware bảo trì (ADR-0026).
+        with self.assertNumQueries(5 + 1):
             response = self.client.get(reverse('employer-campaign-list'))
 
         self.assertEqual(response.status_code, 200)

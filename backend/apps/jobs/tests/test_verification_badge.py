@@ -361,7 +361,8 @@ class JobBadgeApiTests(APITestCase):
                 **open_visibility_window(),
             )
 
-        with self.assertNumQueries(8):
+        # 8 + 1: middleware bảo trì đọc cấu hình (ADR-0026).
+        with self.assertNumQueries(9):
             response = self.client.get(reverse('job-list'))
 
         self.assertEqual(response.status_code, 200)

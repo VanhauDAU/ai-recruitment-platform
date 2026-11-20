@@ -129,6 +129,11 @@ def _validate_value(setting, value):
     elif setting.value_type == vt.SELECT:
         choices = [choice.get('value') for choice in options.get('choices', [])]
         error = None if value in choices else f'Giá trị phải thuộc: {", ".join(map(str, choices))}.'
+    elif setting.value_type == vt.MULTISELECT:
+        choices = [choice.get('value') for choice in options.get('choices', [])]
+        valid = isinstance(value, list) and len(set(value)) == len(value)
+        valid = valid and all(item in choices for item in value)
+        error = None if valid else f'Mỗi lựa chọn phải thuộc: {", ".join(map(str, choices))}.'
     elif setting.value_type == vt.JSON:
         error = _json_error(value, options)
     elif setting.value_type in _STRING_TYPES:

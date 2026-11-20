@@ -58,3 +58,13 @@ class OAuthReauthRequired(DomainError):
 
     def payload(self):
         return {'detail': str(self), 'code': self.code, 'reauth_provider': self.provider}
+
+
+class RegistrationClosed(DomainError):
+    """Quản trị viên đang tạm dừng tạo tài khoản mới cho cổng này."""
+
+    status_code = HTTPStatus.FORBIDDEN
+    code = 'registration_closed'
+
+    def __init__(self):
+        super().__init__(_('Hệ thống đang tạm dừng đăng ký tài khoản mới. Vui lòng quay lại sau.'))

@@ -148,7 +148,8 @@ class CandidateProfileApiTests(TestCase):
         )
         self.assertEqual(saved.status_code, 200, saved.data)
 
-        with self.assertNumQueries(8):
+        # 8 + 1: middleware bảo trì đọc cấu hình (ADR-0026).
+        with self.assertNumQueries(8 + 1):
             response = self.client.get('/api/candidate/job-preferences/')
 
         self.assertEqual(response.status_code, 200)
@@ -464,6 +465,17 @@ class CandidateProfileApiTests(TestCase):
                 (CandidateConsent.Decision.DENIED, 'account_sidebar'),
             ],
         )
+
+    def test_consent_records_the_server_policy_version_not_the_clients(self):
+        response = self.client.patch(
+            '/api/candidate/ai-recommendation/',
+            {'enabled': True, 'source': 'account_sidebar', 'policy_version': 'v999'},
+            format='json',
+        )
+
+        self.assertEqual(response.data['policy_version'], 'v1')
+        event = CandidateConsentEvent.objects.get()
+        self.assertEqual(event.policy_version, 'v1')
 
     def test_ai_recommendation_toggle_rejects_unknown_source_and_non_candidates(self):
         url = '/api/candidate/ai-recommendation/'

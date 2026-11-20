@@ -20,10 +20,10 @@ import { JobImpressionBoundary } from '@/features/main/job/track-job-engagement'
 import { bestJobCardClass, isTopEmployerJob } from '../lib/best-job-card-presentation'
 import { BEST_JOBS_PAGE_SIZE, BEST_JOBS_PREVIEW_DELAY_MS } from '../lib/best-jobs-config'
 
-function LoadingGrid() {
+function LoadingGrid({ count }) {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {Array.from({ length: BEST_JOBS_PAGE_SIZE }).map((_, index) => (
+      {Array.from({ length: count }).map((_, index) => (
         <div key={index} className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
           <Skeleton avatar active paragraph={{ rows: 2 }} />
         </div>
@@ -32,7 +32,7 @@ function LoadingGrid() {
   )
 }
 
-export default function BestJobsResults({ animKey, jobs, loading }) {
+export default function BestJobsResults({ animKey, jobs, loading, pageSize = BEST_JOBS_PAGE_SIZE }) {
   const navigate = useNavigate()
   const { isAuthenticated } = useSession()
   const { promptLogin } = useLoginPrompt()
@@ -77,7 +77,7 @@ export default function BestJobsResults({ animKey, jobs, loading }) {
     )
   }
 
-  if (loading && jobs.length === 0) return <LoadingGrid />
+  if (loading && jobs.length === 0) return <LoadingGrid count={pageSize} />
   if (jobs.length === 0) {
     return <p className="py-10 text-center text-gray-500">Không tìm thấy việc làm phù hợp với bộ lọc.</p>
   }

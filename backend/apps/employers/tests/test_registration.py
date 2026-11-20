@@ -13,6 +13,7 @@ from rest_framework.test import APITestCase
 from apps.accounts.models import AuthEmailJob, SocialAccount, User
 from apps.jobs.models import JobCategory
 from apps.locations.models import Location
+from apps.sitecontent.models import SiteSetting
 
 from ..models import (
     RecruiterProfile,
@@ -49,6 +50,18 @@ class EmployerRegistrationTests(APITestCase):
             'terms_accepted': True,
             'marketing_opt_in': False,
         }
+
+    def test_closed_employer_registration_is_rejected_before_creating_anything(self):
+        SiteSetting.objects.update_or_create(
+            key='employer_allow_registration',
+            defaults={'value': False, 'value_type': SiteSetting.ValueType.BOOLEAN},
+        )
+
+        response = self.client.post(reverse('employer-register'), self.payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.data['code'], 'registration_closed')
+        self.assertFalse(User.objects.filter(email='hr@acme.vn').exists())
 
     def test_email_registration_creates_recruiter_consent_without_auto_linking_company(self):
         response = self.client.post(reverse('employer-register'), self.payload, format='json')

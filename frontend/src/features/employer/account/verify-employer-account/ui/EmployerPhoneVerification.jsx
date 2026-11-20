@@ -16,7 +16,7 @@ import {
   verifyEmployerPhoneOtp,
 } from '@/entities/account/employer-profile'
 import { useSession } from '@/entities/account/session'
-import { settingText, useSiteSettings } from '@/entities/system/site-settings'
+import { DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/system/site-settings'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import {
   EMPLOYER_ACCOUNT_VERIFY_URL,
@@ -88,8 +88,8 @@ export default function EmployerPhoneVerification() {
   })
   const currentChallenge = challengeQuery.data || challenge
   const canVerify = currentChallenge?.can_verify === true
-  const hotline = settingText(settings.hotline, '1900 1234')
-  const supportEmail = settingText(settings.support_email, 'cskh@procv.vn')
+  const hotline = settingText(settings.hotline, DEFAULT_SITE_SETTINGS.hotline)
+  const supportEmail = settingText(settings.support_email, DEFAULT_SITE_SETTINGS.support_email)
   const phoneValue = (Form.useWatch('phone', form) || '').trim()
   const validPhone = isVietnameseMobile(phoneValue)
 

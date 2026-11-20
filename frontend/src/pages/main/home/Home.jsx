@@ -8,6 +8,7 @@ import BannerCarousel from '@/shared/ui/BannerCarousel'
 import BestJobs from './ui/BestJobs'
 import CategoryMenu from './ui/CategoryMenu'
 import CvTemplateShowcase from './ui/CvTemplateShowcase'
+import { BEST_JOBS_PAGE_SIZE } from './lib/best-jobs-config'
 import FeaturedIndustriesEmployers from './ui/FeaturedIndustriesEmployers'
 import FlashBadge from './ui/FlashBadge'
 import HotlineConsultation from './ui/HotlineConsultation'
@@ -72,7 +73,12 @@ function PromoBanner({ banner, navigate }) {
 }
 
 export default function Home() {
-  const { siteName } = useSiteSettings()
+  const { settings, siteName } = useSiteSettings()
+  // Công tắc khối trang chủ (SiteSetting home_*); thiếu khoá thì hiện như mặc định.
+  const show = (key) => settings[key] !== false
+  const featuredJobsCount = Number.isInteger(settings.home_featured_jobs_count)
+    ? settings.home_featured_jobs_count
+    : BEST_JOBS_PAGE_SIZE
   const navigate = useNavigate()
   const [keyword, setKeyword] = useState('')
   const [searchBy, setSearchBy] = useState('title')
@@ -231,29 +237,38 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto px-4 -mt-8 relative z-20">
-        <CategoryMenu categories={categories} banner={<BannerCarousel slides={bannerSlides} />} />
-      </section>
+      {(show('home_show_categories') || show('home_show_banner')) && (
+        <section className="max-w-6xl mx-auto px-4 -mt-8 relative z-20">
+          <CategoryMenu
+            categories={show('home_show_categories') ? categories : []}
+            banner={show('home_show_banner') ? <BannerCarousel slides={bannerSlides} /> : null}
+          />
+        </section>
+      )}
 
-      <section className="max-w-6xl mx-auto px-4 pt-8">
-        <BestJobs categories={categories} />
-      </section>
+      {show('home_show_featured_jobs') && (
+        <section className="max-w-6xl mx-auto px-4 pt-8">
+          <BestJobs categories={categories} pageSize={featuredJobsCount} />
+        </section>
+      )}
 
       <CandidateJobRecommendations variant="home" />
 
-      <section className="pt-8">
-        <div className="bg-white py-8">
-          <div className="max-w-6xl mx-auto px-4">
-            <MarketStats />
+      {show('home_show_stats') && (
+        <section className="pt-8">
+          <div className="bg-white py-8">
+            <div className="max-w-6xl mx-auto px-4">
+              <MarketStats />
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <section className="pt-8">
         <FlashBadge />
       </section>
 
-      <CvTemplateShowcase />
+      {show('home_show_cv_templates') && <CvTemplateShowcase />}
       <FeaturedIndustriesEmployers />
       <HotlineConsultation />
     </div>

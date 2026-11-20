@@ -33,7 +33,10 @@ vi.mock('@/entities/account/employer-profile', () => ({
   getEmployerProfile,
   uploadEmployerDataProcessingAgreement,
 }))
-vi.mock('@/entities/system/site-settings', () => ({ useSiteSettings: () => ({ siteName: 'TopCV' }) }))
+vi.mock('@/entities/system/site-settings', async (importOriginal) => ({
+  ...await importOriginal(),
+  useSiteSettings: () => ({ settings: { employer_dpa_guide_url: '/tro-giup/thoa-thuan-du-lieu' }, siteName: 'TopCV' }),
+}))
 vi.mock('@/shared/lib/toast', () => ({ message }))
 
 function renderForm() {
@@ -91,6 +94,8 @@ describe('EmployerDataProtectionForm', () => {
 
     expect(await screen.findByRole('heading', { name: /giữa Ứng viên - Nhà tuyển dụng/i })).toBeVisible()
     expect(getEmployerCompanyDocuments).toHaveBeenCalledWith({ scope: 'mine' })
+    // Link hướng dẫn lấy từ cấu hình employer_dpa_guide_url (ADR-0026), không trỏ ra site khác.
+    expect(screen.getByRole('link', { name: 'Tại đây' })).toHaveAttribute('href', '/tro-giup/thoa-thuan-du-lieu')
     expect(screen.getByRole('link', { name: 'Tại đây' })).toHaveClass('!text-emerald-600')
     expect(screen.getByText('Tải mẫu văn bản').closest('a')).toHaveAttribute('href', '/documents/topcv-mau-van-ban-thong-bao-dong-y-xu-ly-dlcn.docx')
     expect(screen.getByRole('link', { name: /Tải mẫu văn bản/ })).toHaveClass('!text-emerald-600')

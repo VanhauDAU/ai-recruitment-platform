@@ -13,6 +13,7 @@ from ...selectors import (
     recruiter_visibility_consent,
 )
 from ...services import (
+    CONSENT_POLICY_VERSION,
     replace_candidate_job_preferences,
     set_ai_recommendation,
     set_recruiter_visibility,
@@ -119,7 +120,7 @@ class MyRecruiterVisibilityView(APIView):
         return Response(
             {
                 'enabled': bool(consent and consent.decision == CandidateConsent.Decision.GRANTED),
-                'policy_version': consent.policy_version if consent else 'v1',
+                'policy_version': consent.policy_version if consent else CONSENT_POLICY_VERSION,
                 'decided_at': consent.decided_at if consent else None,
             }
         )
@@ -131,7 +132,6 @@ class MyRecruiterVisibilityView(APIView):
         consent = set_recruiter_visibility(
             candidate_profile_for_user(request.user),
             enabled=data['enabled'],
-            policy_version=data['policy_version'],
             source=data['source'],
             source_path=data.get('source_path', ''),
             cv_public_id=data.get('cv_public_id', ''),
@@ -148,7 +148,7 @@ class MyRecruiterVisibilityView(APIView):
 def _consent_payload(consent):
     return {
         'enabled': bool(consent and consent.decision == CandidateConsent.Decision.GRANTED),
-        'policy_version': consent.policy_version if consent else 'v1',
+        'policy_version': consent.policy_version if consent else CONSENT_POLICY_VERSION,
         'decided_at': consent.decided_at if consent else None,
     }
 
@@ -191,7 +191,6 @@ class MyAiRecommendationView(APIView):
         consent = set_ai_recommendation(
             candidate_profile_for_user(request.user),
             enabled=data['enabled'],
-            policy_version=data['policy_version'],
             source=data['source'],
             source_path=data.get('source_path', ''),
         )
