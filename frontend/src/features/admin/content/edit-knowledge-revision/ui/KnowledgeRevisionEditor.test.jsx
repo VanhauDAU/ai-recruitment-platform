@@ -24,8 +24,6 @@ vi.mock('./KnowledgeEditorFields', async () => {
   }
 })
 
-vi.mock('./NewRevisionModal', () => ({ default: () => null }))
-
 const ARTICLE = {
   public_id: 'kba_login',
   revision_token: 'revision-token-2',

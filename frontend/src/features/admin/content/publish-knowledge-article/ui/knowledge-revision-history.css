@@ -1,0 +1,16 @@
+.knowledge-history { border: 1px solid #e6edf3; border-radius: 16px; }
+.knowledge-history .ant-card-head-title span { align-items: center; display: inline-flex; gap: 8px; }
+.knowledge-diff { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; margin-bottom: 16px; }
+.knowledge-diff > div { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; min-width: 0; padding: 12px; }
+.knowledge-diff span { color: #475569; font-size: 12px; font-weight: 700; }
+.knowledge-diff pre { color: #64748b; font-family: inherit; font-size: 12px; margin: 10px 0 0; max-height: 240px; overflow: auto; white-space: pre-wrap; }
+.knowledge-history__list { display: grid; gap: 8px; list-style: none; margin: 0; max-height: 320px; overflow: auto; padding: 0; }
+.knowledge-history__list li { align-items: flex-start; border: 1px solid #eef2f6; border-radius: 10px; display: grid; gap: 4px 12px; grid-template-columns: 1fr auto; padding: 8px 12px; }
+.knowledge-history__list li > .ant-btn { grid-column: 2; grid-row: 1 / span 2; }
+.knowledge-history__heading { align-items: center; display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.knowledge-history__heading .ant-tag { margin: 0; }
+.knowledge-history__heading small { color: #94a3b8; }
+.knowledge-history__list p { color: #475569; font-size: 12px; margin: 0; }
+@media (max-width: 720px) {
+  .knowledge-diff { grid-template-columns: 1fr; }
+}

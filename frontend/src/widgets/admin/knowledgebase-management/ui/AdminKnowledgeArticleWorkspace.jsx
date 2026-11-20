@@ -1,18 +1,16 @@
 import { ArrowLeftOutlined, BookOutlined } from '@ant-design/icons'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Button, Skeleton, Space, Tag } from 'antd'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import {
-  KNOWLEDGE_LIFECYCLE_STATUS,
-  KNOWLEDGE_REVISION_STATUS,
   adminKnowledgeKeys,
   getAdminKnowledgeArticle,
   getAdminKnowledgeCategories,
+  knowledgeArticleState,
 } from '@/entities/content/knowledgebase'
 import { KnowledgeRevisionEditor } from '@/features/admin/content/edit-knowledge-revision'
-import { KnowledgePublishActions } from '@/features/admin/content/publish-knowledge-article'
-import { KnowledgeRevisionReview } from '@/features/admin/content/review-knowledge-revision'
+import { KnowledgePublishActions, KnowledgeRevisionHistory } from '@/features/admin/content/publish-knowledge-article'
 import { adminPath } from '@/shared/config/portals'
 import useConfirmAction from '@/shared/ui/confirm-action/use-confirm-action'
 import './admin-knowledgebase-management.css'
@@ -22,6 +20,7 @@ export default function AdminKnowledgeArticleWorkspace({ publicId }) {
   const queryClient = useQueryClient()
   const { confirmationModal, requestConfirmation } = useConfirmAction()
   const [dirty, setDirty] = useState(false)
+  const editorRef = useRef(null)
   const articleQuery = useQuery({
     queryKey: adminKnowledgeKeys.article(publicId),
     queryFn: ({ signal }) => getAdminKnowledgeArticle(publicId, { signal }),
@@ -29,8 +28,7 @@ export default function AdminKnowledgeArticleWorkspace({ publicId }) {
   })
   const categoriesQuery = useQuery({ queryKey: adminKnowledgeKeys.categories, queryFn: getAdminKnowledgeCategories })
   const article = articleQuery.data
-  const revisionStatus = KNOWLEDGE_REVISION_STATUS[article?.revisions?.[0]?.status]
-  const lifecycle = KNOWLEDGE_LIFECYCLE_STATUS[article?.lifecycle_state]
+  const stateTags = knowledgeArticleState(article)
   const sync = (saved) => queryClient.setQueryData(adminKnowledgeKeys.article(saved.public_id), saved)
   const goBack = () => {
     if (!dirty) {
@@ -59,29 +57,32 @@ export default function AdminKnowledgeArticleWorkspace({ publicId }) {
           <div className="knowledge-article-workspace__icon"><BookOutlined /></div>
           <div>
             <div className="knowledge-article-workspace__tags">
-              <Tag color={revisionStatus?.color}>{revisionStatus?.label || (publicId ? 'Đang tải' : 'Bài mới')}</Tag>
-              {article && <Tag color={lifecycle?.color}>{lifecycle?.label}</Tag>}
+              {article
+                ? stateTags.map((tag) => <Tag key={tag.label} color={tag.color}>{tag.label}</Tag>)
+                : <Tag>Bài mới</Tag>}
             </div>
             <h1>{article?.title || 'Tạo nội dung trợ giúp mới'}</h1>
-            <p>{article ? `${article.category.name} · revision ${article.revisions?.[0]?.number || 1}` : 'Khởi tạo FAQ hoặc hướng dẫn mới'}</p>
+            <p>{article ? article.category.name : 'Khởi tạo FAQ hoặc hướng dẫn mới'}</p>
           </div>
         </div>
         <Space wrap>
-          <KnowledgePublishActions article={article} onArticleChange={sync} disabled={dirty} />
+          <KnowledgePublishActions
+            article={article}
+            onArticleChange={sync}
+            dirty={dirty}
+            prepare={() => editorRef.current?.saveDraft()}
+          />
         </Space>
       </header>
 
       {article && (
         <section className="knowledge-article-workspace__workflow">
-          <KnowledgeRevisionReview
-            article={article}
-            onArticleChange={sync}
-            disabled={dirty}
-          />
+          <KnowledgeRevisionHistory article={article} onArticleChange={sync} disabled={dirty} />
         </section>
       )}
 
       <KnowledgeRevisionEditor
+        ref={editorRef}
         article={article}
         categories={categoriesQuery.data || []}
         onArticleChange={sync}

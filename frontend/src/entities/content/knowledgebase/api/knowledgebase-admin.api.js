@@ -72,11 +72,10 @@ export function updateAdminKnowledgeRevision(publicId, number, payload) {
   return data(api.patch(`/admin/knowledgebase/articles/${publicId}/revisions/${number}/`, payload))
 }
 
-export function runAdminKnowledgeRevisionAction(publicId, number, action, payload) {
-  return data(api.post(
-    `/admin/knowledgebase/articles/${publicId}/revisions/${number}/${action}/`,
-    payload,
-  ))
+export function discardAdminKnowledgeDraft(publicId, number, revisionToken) {
+  return data(api.post(`/admin/knowledgebase/articles/${publicId}/revisions/${number}/discard/`, {
+    revision_token: revisionToken,
+  }))
 }
 
 export function publishAdminKnowledgeRevision(publicId, payload) {
