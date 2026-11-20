@@ -29,8 +29,10 @@ vi.mock('@/entities/job/candidate-preferences', async (importOriginal) => ({
 }))
 vi.mock('@/shared/lib/toast', () => ({ message: { success: vi.fn(), error: vi.fn() } }))
 
-function renderAccount(path = '/tai-khoan/thong-tin-ca-nhan') {
-  getAiRecommendation.mockResolvedValue({ enabled: false })
+function renderAccount(path = '/tai-khoan/thong-tin-ca-nhan', { aiEnabled = false } = {}) {
+  getAiRecommendation.mockReset()
+  updateAiRecommendation.mockReset()
+  getAiRecommendation.mockResolvedValue({ enabled: aiEnabled })
   updateAiRecommendation.mockImplementation(async ({ enabled }) => ({ enabled }))
   useSession.mockReturnValue({
     user: {
@@ -84,10 +86,33 @@ describe('CandidateAccountLayout', () => {
     expect(toggle).not.toBeChecked()
     fireEvent.click(toggle)
 
+    // Bật phải qua popup đồng ý; chưa xác nhận thì chưa gọi API.
+    expect(await screen.findByText('Xác nhận bật Gợi ý việc làm')).toBeInTheDocument()
+    expect(updateAiRecommendation).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Xác nhận' }))
+
     await waitFor(() => expect(toggle).toBeChecked())
     expect(updateAiRecommendation).toHaveBeenCalledWith(
       expect.objectContaining({ enabled: true, source: 'account_sidebar' }),
     )
+  })
+
+  it('asks before turning recommendations off and keeps them on when cancelled', async () => {
+    renderAccount(undefined, { aiEnabled: true })
+
+    const toggle = screen.getByRole('switch', { name: 'Gợi ý việc làm' })
+    await waitFor(() => expect(toggle).toBeChecked())
+    fireEvent.click(toggle)
+
+    expect(await screen.findByText('Bạn chắc chắn muốn dừng nhận việc làm phù hợp?')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Tiếp tục nhận gợi ý việc làm' }))
+    expect(updateAiRecommendation).not.toHaveBeenCalled()
+    expect(toggle).toBeChecked()
+
+    fireEvent.click(toggle)
+    fireEvent.click(await screen.findByRole('button', { name: 'Tắt tính năng và tự tìm việc' }))
+    await waitFor(() => expect(toggle).not.toBeChecked())
+    expect(updateAiRecommendation).toHaveBeenCalledWith(expect.objectContaining({ enabled: false }))
   })
 
   it('explains the toggle and links the AI data policy', async () => {

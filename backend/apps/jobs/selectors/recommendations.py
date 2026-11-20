@@ -11,12 +11,13 @@ Nhu cầu đã khai không bắt buộc nhưng lái thứ hạng (`recommendatio
 trí mong muốn luôn được xét và được cộng điểm, cùng điểm cộng nhỏ cho tỉnh, lương, kinh
 nghiệm.
 
-Thiếu một điều kiện thì dùng bộ gợi ý theo luật như trước (`candidate-preference-rule-v2`,
+Ứng viên tắt gợi ý bằng AI vẫn thấy danh sách nhưng không đọc CV: theo nhu cầu đã khai,
+hoặc tin mới nhất khi chưa khai (`latest-v1`).
+
+Thiếu một điều kiện khác thì dùng bộ gợi ý theo luật như trước (`candidate-preference-rule-v2`,
 `profile-rule-v2`), kể cả việc báo "cần thiết lập nhu cầu" hay "cần đồng ý". Email gợi
 ý và tin chèn trong danh sách việc làm vẫn theo luật.
 """
-
-from math import ceil
 
 from apps.matching.selectors import (
     MIN_SEMANTIC_SCORE,
@@ -32,8 +33,10 @@ from ..models.recommendation_queries import (
     MIN_RECOMMENDATION_SCORE,
     RecommendationConsentRequired,
     ai_recommendation_allowed,
+    paginate,
     preference_state,
     recommend_inline_jobs_for_candidate,
+    recommend_latest_jobs_for_candidate,
     recommend_new_jobs_for_candidate_email,
     recommendable_jobs,
     rule_scores_for_cv,
@@ -86,11 +89,11 @@ def _focus(cv):
     return str(personal.get('headline') or personal.get('job_title') or cv.title or '').strip()
 
 
-def _semantic_context(user, public_id=None):
+def _semantic_context(user, public_id=None, state=None):
     """(CV, nhu cầu, thứ hạng) khi gợi ý theo ngữ nghĩa được; None khi phải dùng luật."""
     if not semantic_recommendations_enabled():
         return None
-    profile, preference = preference_state(user)
+    profile, preference = state or preference_state(user)
     if not ai_recommendation_allowed(profile):
         return None
     cv = recommendation_cv(user, public_id)
@@ -114,38 +117,51 @@ def recommend_jobs_for_cv(user, public_id, *, limit=6):
     }
 
 
+def _without_ai(user, profile, preference, *, page, page_size):
+    """Danh sách khi ứng viên tắt gợi ý bằng AI: không đọc CV.
+
+    Đã khai nhu cầu thì xếp theo nhu cầu (luật, không đọc CV); chưa khai thì tin mới nhất.
+    """
+    if profile and profile.job_preferences_configured and preference:
+        return rule_recommendations_for_candidate(
+            user, page=page, page_size=page_size, require_consent=False
+        )
+    return recommend_latest_jobs_for_candidate(user, page=page, page_size=page_size)
+
+
 def recommend_jobs_for_candidate(user, *, page=1, page_size=10):
-    """Trang "Việc làm phù hợp": theo CV mặc định của ứng viên, không cần khai nhu cầu trước."""
-    context = _semantic_context(user)
+    """Trang "Việc làm phù hợp": theo CV mặc định của ứng viên, không cần khai nhu cầu trước.
+
+    Ứng viên tắt gợi ý bằng AI vẫn thấy danh sách (`_without_ai`), kèm
+    `ai_recommendation_enabled = false` để giao diện mời bật lại.
+    """
+    profile, preference = preference_state(user)
+    flags = {'cv_recommendations_enabled': semantic_recommendations_enabled()}
+    if not ai_recommendation_allowed(profile):
+        payload = _without_ai(user, profile, preference, page=page, page_size=page_size)
+        return {**payload, **flags, 'ai_recommendation_enabled': False}
+    flags['ai_recommendation_enabled'] = True
+    context = _semantic_context(user, state=(profile, preference))
     if context is None:
         return {
             **rule_recommendations_for_candidate(user, page=page, page_size=page_size),
-            'cv_recommendations_enabled': semantic_recommendations_enabled(),
+            **flags,
         }
     cv, profile, preference, ranked = context
-    total = len(ranked)
-    total_pages = ceil(total / page_size) if total else 0
-    start = (page - 1) * page_size
+    selected, pagination = paginate(ranked, page, page_size)
     preferences_ready = bool(profile and profile.job_preferences_configured and preference)
     return {
+        **flags,
         'strategy': SEMANTIC_STRATEGY,
         'minimum_match_score': MIN_SEMANTIC_SCORE,
         'preference_configured': preferences_ready,
-        'cv_recommendations_enabled': True,
         'sources': {'job_preferences': preferences_ready, 'cv': True, 'search_activity': False},
         'source_cv': {'public_id': cv.public_id, 'title': cv.title, 'is_default': cv.is_default},
         'focus_keyword': _focus(cv),
         'related_positions': [],
-        'results': _with_jobs(ranked[start : start + page_size]),
+        'results': _with_jobs(selected),
         'status': 'ready',
         'needs_setup': False,
         'consent_required': False,
-        'pagination': {
-            'page': page,
-            'page_size': page_size,
-            'total': total,
-            'total_pages': total_pages,
-            'next_page': page + 1 if page < total_pages else None,
-            'previous_page': page - 1 if page > 1 else None,
-        },
+        'pagination': pagination,
     }

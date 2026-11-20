@@ -104,8 +104,21 @@ class SemanticRecommendationTests(MatchingApiBase):
 
         body = self.recommendations().json()
 
-        self.assertNotEqual(body['strategy'], 'semantic-v1')
-        self.assertEqual(body['results'], [])
+        # Chưa khai nhu cầu và tắt AI: tin mới nhất, không đọc CV, không lý do.
+        self.assertEqual(body['strategy'], 'latest-v1')
+        self.assertFalse(body['ai_recommendation_enabled'])
+        self.assertIsNone(body['source_cv'])
+        slugs = [job['slug'] for job in body['results']]
+        self.assertCountEqual(slugs, [self.job.slug, self.unrelated.slug])
+        self.assertTrue(all(job['match_reasons'] == [] for job in body['results']))
+        Application.objects.create(
+            candidate=self.candidate,
+            job=self.job,
+            cv=self.cv,
+            submitted_cv_version=self.cv.latest_version,
+        )
+        slugs = [job['slug'] for job in self.recommendations().json()['results']]
+        self.assertEqual(slugs, [self.unrelated.slug])
 
     def test_applied_and_hidden_jobs_are_never_recommended(self):  # TC-21
         Application.objects.create(

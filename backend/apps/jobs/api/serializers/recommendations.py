@@ -75,6 +75,8 @@ class CandidateJobRecommendationResponseSerializer(serializers.Serializer):
     preference_configured = serializers.BooleanField()
     # Gợi ý theo CV (`semantic-v1`) đang bật: lưu một CV là đủ để có gợi ý.
     cv_recommendations_enabled = serializers.BooleanField()
+    # Ứng viên đang bật gợi ý bằng AI; tắt thì danh sách không đọc CV.
+    ai_recommendation_enabled = serializers.BooleanField()
     needs_setup = serializers.BooleanField()
     consent_required = serializers.BooleanField()
     sources = RecommendationSourcesSerializer()

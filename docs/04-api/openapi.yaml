@@ -22217,6 +22217,8 @@ components:
           type: boolean
         cv_recommendations_enabled:
           type: boolean
+        ai_recommendation_enabled:
+          type: boolean
         needs_setup:
           type: boolean
         consent_required:
@@ -22240,6 +22242,7 @@ components:
         pagination:
           $ref: '#/components/schemas/RecommendationPagination'
       required:
+      - ai_recommendation_enabled
       - consent_required
       - cv_recommendations_enabled
       - focus_keyword

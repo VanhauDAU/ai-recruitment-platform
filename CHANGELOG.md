@@ -8,6 +8,17 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-20
 
+#### Changed — Trang "Việc làm phù hợp" và bật/tắt gợi ý việc làm
+
+- Bật hay tắt "Gợi ý việc làm" đều hỏi lại bằng popup (đồng ý kèm liên kết chính sách AI;
+  tắt thì nói rõ hệ thống ngừng phân tích CV).
+- Tắt gợi ý bằng AI vẫn có danh sách nhưng không đọc CV: xếp theo nhu cầu đã khai, hoặc tin
+  mới nhất khi chưa khai (`latest-v1`); API thêm `ai_recommendation_enabled`, trang hiện
+  khung "Gợi ý việc làm đang tắt" kèm nút bật lại. Khối gợi ý ở trang chủ ẩn khi tắt.
+- Giao diện mới: đầu trang có mascot, "Tìm thấy N việc làm…", thẻ tin có "Vì sao phù hợp?"
+  (chú thích liệt kê lý do), "Ứng tuyển" (mở form ứng tuyển ở trang tin qua `?ung-tuyen=1`),
+  ẩn tin, lưu tin.
+
 #### Added — Công tắc "Gợi ý việc làm" ở thanh bên tài khoản ứng viên
 
 - Bật/tắt đồng ý gợi ý việc làm bằng AI ngay ở thanh bên, độc lập với nhu cầu công việc

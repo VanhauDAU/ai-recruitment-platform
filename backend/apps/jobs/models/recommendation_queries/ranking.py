@@ -156,8 +156,53 @@ def rule_scores_for_cv(cv_id, job_ids):
     }
 
 
-def recommend_jobs_for_candidate(user, *, page=1, page_size=10):
-    """Rank candidate-wide opportunities from explicit job preferences only."""
+def paginate(ranked, page, page_size):
+    """(phần tử của trang, khối `pagination`) cho một danh sách đã xếp."""
+    total = len(ranked)
+    total_pages = ceil(total / page_size) if total else 0
+    start = (page - 1) * page_size
+    return ranked[start : start + page_size], {
+        'page': page,
+        'page_size': page_size,
+        'total': total,
+        'total_pages': total_pages,
+        'next_page': page + 1 if page < total_pages else None,
+        'previous_page': page - 1 if page > 1 else None,
+    }
+
+
+def recommend_latest_jobs_for_candidate(user, *, page=1, page_size=10):
+    """Tin mới nhất ứng viên chưa ứng tuyển hay ẩn: danh sách khi tắt gợi ý và chưa khai nhu cầu.
+
+    Không đọc CV hay nhu cầu, không chấm điểm (`latest-v1`).
+    """
+    jobs = list(recommendable_jobs(user).order_by('-published_at', '-pk')[:MAX_SCORING_CANDIDATES])
+    ranked = [
+        {'job': job, 'match_score': 0, 'match_details': [], 'match_reasons': []} for job in jobs
+    ]
+    selected, pagination = paginate(ranked, page, page_size)
+    return {
+        'strategy': 'latest-v1',
+        'minimum_match_score': 0,
+        'preference_configured': False,
+        'sources': {'job_preferences': False, 'cv': False, 'search_activity': False},
+        'source_cv': None,
+        'focus_keyword': '',
+        'related_positions': [],
+        'results': selected,
+        'status': 'ready',
+        'needs_setup': False,
+        'consent_required': False,
+        'pagination': pagination,
+    }
+
+
+def recommend_jobs_for_candidate(user, *, page=1, page_size=10, require_consent=True):
+    """Rank candidate-wide opportunities from explicit job preferences only.
+
+    `require_consent=False` khi ứng viên tắt gợi ý bằng AI: vẫn xếp theo nhu cầu đã khai
+    (không đọc CV), như danh sách thường thay cho danh sách được phân tích.
+    """
     profile, preference = preference_state(user)
     preferences_ready = bool(profile and profile.job_preferences_configured and preference)
     base = {
@@ -190,7 +235,7 @@ def recommend_jobs_for_candidate(user, *, page=1, page_size=10):
             'consent_required': False,
             'pagination': empty_pagination,
         }
-    if not ai_recommendation_allowed(profile):
+    if require_consent and not ai_recommendation_allowed(profile):
         return {
             **base,
             'status': 'consent_required',
@@ -200,11 +245,7 @@ def recommend_jobs_for_candidate(user, *, page=1, page_size=10):
         }
 
     context = candidate_context(preference)
-    ranked = _rank_jobs(context, user=user)
-    total = len(ranked)
-    total_pages = ceil(total / page_size) if total else 0
-    start = (page - 1) * page_size
-    selected = ranked[start : start + page_size]
+    selected, pagination = paginate(_rank_jobs(context, user=user), page, page_size)
     return {
         **base,
         'status': 'ready',
@@ -215,14 +256,7 @@ def recommend_jobs_for_candidate(user, *, page=1, page_size=10):
         'focus_keyword': context['focus_keyword'],
         'related_positions': _related_positions(context['position_labels']),
         'results': selected,
-        'pagination': {
-            'page': page,
-            'page_size': page_size,
-            'total': total,
-            'total_pages': total_pages,
-            'next_page': page + 1 if page < total_pages else None,
-            'previous_page': page - 1 if page > 1 else None,
-        },
+        'pagination': pagination,
     }
 
 

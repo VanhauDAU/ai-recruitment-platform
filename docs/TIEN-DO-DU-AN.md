@@ -921,6 +921,11 @@ làm gợi ý" theo ngữ nghĩa, và nhà tuyển dụng xếp hạng hồ sơ 
 </details>
 <details><summary>Ghi chú GĐ 4 (bản 3)</summary>
 
+- Trang "Việc làm phù hợp" làm lại theo mẫu (thẻ tin có "Vì sao phù hợp?", "Ứng tuyển", ẩn,
+  lưu). Bật/tắt gợi ý đều qua popup xác nhận. Tắt gợi ý bằng AI vẫn có danh sách không đọc
+  CV (theo nhu cầu đã khai, hoặc `latest-v1` tin mới nhất), kèm khung mời bật lại; khối gợi ý
+  trang chủ ẩn khi tắt.
+
 - Thanh bên tài khoản ứng viên có công tắc "Gợi ý việc làm" (đồng ý `AI_RECOMMENDATION`,
   endpoint riêng `/api/candidate/ai-recommendation/`, không cần khai nhu cầu) và chú thích
   "?" trỏ tới chính sách dữ liệu AI qua cài đặt `ai_data_policy_url`. Trước đây chỉ có nút

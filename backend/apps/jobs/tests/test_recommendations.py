@@ -516,7 +516,7 @@ class CvJobRecommendationApiTests(APITestCase):
         self.assertTrue(response.data['needs_setup'])
         self.assertEqual(response.data['results'], [])
 
-    def test_candidate_page_requires_consent_and_by_cv_endpoint_enforces_it(self):
+    def test_without_consent_the_page_ranks_by_preferences_and_by_cv_is_refused(self):
         consent = CandidateConsent.objects.get(
             candidate_profile=self.profile,
             consent_type=CandidateConsent.ConsentType.AI_RECOMMENDATION,
@@ -529,10 +529,15 @@ class CvJobRecommendationApiTests(APITestCase):
             reverse('cv-job-recommendations', kwargs={'cv_public_id': self.cv.public_id})
         )
 
+        # Tắt gợi ý bằng AI: vẫn có danh sách theo nhu cầu đã khai, không đọc CV.
         self.assertEqual(page_response.status_code, 200)
-        self.assertEqual(page_response.data['status'], 'consent_required')
-        self.assertTrue(page_response.data['consent_required'])
-        self.assertEqual(page_response.data['results'], [])
+        body = page_response.data
+        self.assertEqual(body['status'], 'ready')
+        self.assertFalse(body['ai_recommendation_enabled'])
+        self.assertEqual(body['strategy'], 'candidate-preference-rule-v2')
+        self.assertIsNone(body['source_cv'])
+        self.assertFalse(body['sources']['cv'])
+        self.assertIn(self.matching.slug, [job['slug'] for job in body['results']])
         self.assertEqual(cv_response.status_code, 403)
 
     def test_candidate_page_is_candidate_only(self):
