@@ -213,3 +213,25 @@ class AdminSystemParametersApiTests(APITransactionTestCase):
         response = self.client.get(reverse('site-admin-system-parameters'))
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class AdminSiteSettingHistoryApiTests(APITransactionTestCase):
+    def test_lists_this_keys_changes_newest_first(self):
+        admin = User.objects.create_user(
+            email='root@example.com',
+            password='Password@123',
+            role=User.Role.ADMIN,
+            is_superuser=True,
+        )
+        SiteSetting.objects.create(key='site_name', label='Tên', value='Một')
+        SiteSetting.objects.create(key='hotline', label='Hotline', value='1')
+        self.client.force_authenticate(admin)
+        for values in ({'site_name': 'Hai'}, {'site_name': 'Ba', 'hotline': '2'}):
+            self.client.patch(reverse('site-admin-settings'), {'values': values}, format='json')
+
+        response = self.client.get(reverse('site-admin-setting-history', args=['site_name']))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        changes = [(row['before'], row['after']) for row in response.data['results']]
+        self.assertEqual(changes, [('Hai', 'Ba'), ('Một', 'Hai')])
+        self.assertEqual(response.data['results'][0]['actor'], 'root@example.com')

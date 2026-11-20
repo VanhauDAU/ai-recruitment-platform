@@ -11,6 +11,7 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import AdminPortalPermission
+from apps.accounts.selectors import audit_logs_queryset
 from common.storage.media import media_url_from_value
 
 from ...selectors import active_banners, resolved_link_groups, site_settings_by_group
@@ -117,6 +118,38 @@ class AdminSiteSettingView(APIView):
                 if result.errors and not result.updated
                 else status.HTTP_200_OK
             ),
+        )
+
+
+@extend_schema(
+    summary='Admin: lịch sử thay đổi một site setting',
+    responses={200: OpenApiTypes.OBJECT},
+    tags=['site-admin'],
+)
+class AdminSiteSettingHistoryView(APIView):
+    """20 lần đổi gần nhất của một key (từ audit log), mới nhất trước."""
+
+    permission_classes = [AdminPortalPermission]
+    require_superuser = True
+    HISTORY_LIMIT = 20
+
+    def get(self, request, key):
+        logs = audit_logs_queryset(
+            action='site_setting_update', target_type='site_setting', target_public_id=key
+        )[: self.HISTORY_LIMIT]
+        return Response(
+            {
+                'results': [
+                    {
+                        'id': log.public_id,
+                        'created_at': log.created_at,
+                        'actor': log.actor.email if log.actor else log.actor_identifier,
+                        'before': log.payload.get('before'),
+                        'after': log.payload.get('after'),
+                    }
+                    for log in logs
+                ]
+            }
         )
 
 

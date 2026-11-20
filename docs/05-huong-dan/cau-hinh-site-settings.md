@@ -44,6 +44,34 @@ của app `sitecontent`. Hợp đồng của kho cấu hình nằm ở
   Lệnh đồng bộ metadata nhưng không ghi đè `value` admin đã chỉnh. Ngoại lệ duy nhất là
   đường dẫn logo cũ đã bị xoá khỏi `frontend/public`.
 
+## Trang quản trị
+
+- **Thanh bên:** chia 3 khu (Giao diện & nội dung, Nghiệp vụ tuyển dụng, Tuân thủ &
+  vận hành). Trên mobile, thanh bên thành dải chip cuộn ngang. Link `?group=` của nhóm
+  cũ (`general`, `security`...) vẫn mở đúng nhóm mới.
+- **Tìm kiếm:** lọc theo nhãn, mô tả, section và key trên mọi nhóm.
+- **Mỗi dòng cấu hình:**
+  - nút **"?"** hiện `help`, nơi áp dụng (`options.applies_to`), giá trị mặc định (có
+    nút "Đặt về mặc định"), trạng thái công khai, key, thời điểm cập nhật cuối và
+    lịch sử thay đổi;
+  - nút hoàn tác riêng cho dòng;
+  - ô phụ thuộc (`options.depends_on`) bị khoá khi công tắc cha đang tắt;
+  - key `pending` có thẻ "Chưa có hiệu lực".
+- **Lưu một lần cho mọi nhóm.**
+  - Thay đổi nguy hiểm (`options.risky`: `on` = bật mới nguy hiểm, `off` = tắt mới
+    nguy hiểm) phải xác nhận trước khi lưu, kèm danh sách "trước → sau".
+  - Lỗi hiện ngay dưới từng ô, và trang tự nhảy tới ô lỗi đầu tiên.
+  - Rời trang khi còn thay đổi chưa lưu sẽ bị trình duyệt hỏi lại.
+- **Editor theo `options.schema`:** danh sách object (số liệu, đối tác) thay cho ô
+  JSON; danh sách chuỗi (allowlist) dùng ô nhập dạng thẻ. Ô có `max_length` hiện bộ
+  đếm ký tự.
+- **Xem trước:**
+  - Thương hiệu: logo, nút màu chính, độ tương phản WCAG của chữ trắng.
+  - SEO: kết quả Google.
+  - Chân trang: dòng bản quyền.
+- **Thông tin thêm theo nhóm:** nhóm AI có tổng quan AI runtime; nhóm Vận hành có
+  bảng **Thông số hệ thống** chỉ đọc.
+
 ## Thêm, đổi, gỡ một key
 
 1. **Thêm key:**

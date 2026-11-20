@@ -13,6 +13,7 @@ from ..views import (
     AdminAnnouncementResumeView,
     AdminAnnouncementRevisionCreateView,
     AdminSettingUploadView,
+    AdminSiteSettingHistoryView,
     AdminSiteSettingView,
     AdminSystemParametersView,
 )
@@ -74,6 +75,11 @@ urlpatterns = [
         name='site-admin-announcement-metrics',
     ),
     path('settings/', AdminSiteSettingView.as_view(), name='site-admin-settings'),
+    path(
+        'settings/<slug:key>/history/',
+        AdminSiteSettingHistoryView.as_view(),
+        name='site-admin-setting-history',
+    ),
     path(
         'system-parameters/',
         AdminSystemParametersView.as_view(),

@@ -11,7 +11,7 @@ def current_audit_revision():
     return AdminAccessAuditLog.objects.aggregate(value=Max('id'))['value'] or 0
 
 
-def audit_logs_queryset(*, actor=None, action=None, target_type=None):
+def audit_logs_queryset(*, actor=None, action=None, target_type=None, target_public_id=None):
     """Nhật ký thao tác quản trị.
 
     ``actor=None`` trả toàn hệ thống — chỉ dành cho superuser; view phải tự kiểm
@@ -24,4 +24,6 @@ def audit_logs_queryset(*, actor=None, action=None, target_type=None):
         queryset = queryset.filter(action=action)
     if target_type:
         queryset = queryset.filter(target_type=target_type)
+    if target_public_id:
+        queryset = queryset.filter(target_public_id=target_public_id)
     return queryset

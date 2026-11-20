@@ -8,6 +8,23 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-21
 
+#### Changed — Giao diện mới trang Cấu hình hệ thống (ADR-0026, GĐ2)
+
+- Thanh bên chia 3 khu kèm ô tìm kiếm trên mọi nhóm. Trên mobile, thanh bên thành
+  dải chip cuộn ngang.
+- Nút "?" ở mỗi mục giải thích tác dụng, nơi áp dụng và giá trị mặc định (có nút
+  "Đặt về mặc định"), kèm key và lịch sử thay đổi
+  (`GET /api/admin/site/settings/{key}/history/`).
+- Lưu một lần cho mọi nhóm:
+  - thanh lưu dính đáy màn hình, hoàn tác được từng mục;
+  - hỏi lại trước khi bật bảo trì, tắt đăng ký, tắt index, tắt email;
+  - lỗi hiện ngay dưới mục bị lỗi.
+- Editor dạng danh sách cho số liệu và logo đối tác; ô nhập dạng thẻ cho allowlist;
+  bộ đếm ký tự cho ô có giới hạn độ dài.
+- Xem trước thương hiệu (kèm độ tương phản WCAG), kết quả Google và dòng bản quyền.
+- Bảng Thông số hệ thống chỉ đọc nằm ở nhóm Vận hành.
+- Toàn bộ chuỗi giao diện của trang đã chuyển sang vi/en.
+
 #### Changed — Hợp đồng cấu hình hệ thống (ADR-0026, GĐ1)
 
 - Gỡ 46 site setting không có code nào đọc. Một số trong đó còn ghi giá trị trái với
