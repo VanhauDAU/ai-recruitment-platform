@@ -6,8 +6,6 @@ and their priority. Lower rank = more urgent. Ranks 1-3 wait on an admin,
 the rest wait on the recruiter.
 """
 
-VERIFICATION_OVERDUE_HOURS = 72
-
 VERIFICATION_OVERDUE = 'verification_overdue'
 VERIFICATION_REVIEW = 'verification_review'
 COMPANY_UPDATE_REVIEW = 'company_update_review'

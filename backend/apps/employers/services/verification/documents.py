@@ -20,9 +20,9 @@ from ...models import (
 from ..compliance import lock_verification_identity
 from ..tax_lookup import queue_company_tax_lookup
 from .cases import (
-    MAX_FINAL_REJECTIONS,
     current_document_issue,
     get_or_create_verification_case,
+    max_final_rejections,
     queue_verification_notification,
     workflow_error,
 )
@@ -43,7 +43,7 @@ def record_verification_upload(
                 'Hồ sơ đã hết lượt nộp lại. Vui lòng gửi khiếu nại để được quản trị viên xem xét.'
             ),
             final_rejection_count=case.final_rejection_count,
-            rejection_limit=MAX_FINAL_REJECTIONS,
+            rejection_limit=max_final_rejections(),
         )
     locked_documents = tuple(
         CompanyDocument.objects.select_for_update(of=('self',))

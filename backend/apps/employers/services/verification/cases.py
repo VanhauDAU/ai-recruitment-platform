@@ -2,10 +2,11 @@
 
 import logging
 
-from django.conf import settings
 from django.db import transaction
 from django.utils.translation import gettext
 from rest_framework.exceptions import ValidationError
+
+from apps.sitecontent.selectors import approved_employer_verification_required, get_int_setting
 
 from ...models import (
     CompanyDocument,
@@ -25,7 +26,6 @@ BUSINESS_DOCUMENT_TYPES = frozenset(
         CompanyDocument.DocType.IDENTITY_DOCUMENT,
     }
 )
-MAX_FINAL_REJECTIONS = 3
 
 logger = logging.getLogger(__name__)
 
@@ -211,7 +211,13 @@ def recruiter_is_approved(recruiter):
 
 
 def recruiter_requires_approved_verification():
-    return settings.REQUIRE_APPROVED_EMPLOYER_VERIFICATION
+    """Máy chủ bắt buộc HOẶC admin bật bắt buộc; admin chỉ siết được, không nới (ADR-0026)."""
+    return approved_employer_verification_required()
+
+
+def max_final_rejections():
+    """Số lần bị từ chối cuối cùng trước khi khoá nộp lại hồ sơ xác thực."""
+    return min(max(get_int_setting('employer_verification_max_rejections', 3), 1), 10)
 
 
 def current_document_issue(case, *, documents=None):

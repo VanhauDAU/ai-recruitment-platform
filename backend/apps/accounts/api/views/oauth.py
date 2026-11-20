@@ -34,7 +34,7 @@ class OAuthStartView(APIView):
         portal = request.query_params.get('portal', 'main')
         if portal not in oauth.PORTAL_PROVIDERS:  # admin & giá trị lạ: không có social login
             return _oauth_error_redirect('main', 'portal_not_supported')
-        if provider not in oauth.PORTAL_PROVIDERS[portal]:
+        if provider not in oauth.portal_providers(portal):
             return _oauth_error_redirect(portal, 'provider_not_allowed')
 
         next_path = oauth.safe_next(request.query_params.get('next', ''))

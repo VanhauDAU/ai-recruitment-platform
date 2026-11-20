@@ -47,12 +47,12 @@ def record_admin_action(
 ):
     """Public audit boundary for other domain services."""
 
-    return _audit(
+    return AdminAccessAuditLog.objects.record(
         actor=actor,
-        source=source,
-        actor_identifier=actor_identifier or (actor.email if actor else ''),
         action=action,
         target_type=target_type,
         target_public_id=target_public_id,
-        payload=payload or {},
+        payload=payload,
+        source=source,
+        actor_identifier=actor_identifier,
     )

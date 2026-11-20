@@ -1,5 +1,6 @@
 import { MailOutlined, ThunderboltOutlined } from '@ant-design/icons'
 import { Form, Input, Select, Switch } from 'antd'
+import { useEffect } from 'react'
 import { useApplicationRules } from '@/entities/application/application'
 import { m } from '@/shared/config/i18n'
 
@@ -7,6 +8,13 @@ export default function AutomaticApplicationStatusFields() {
   const form = Form.useFormInstance()
   const enabled = Form.useWatch('auto_reject_stale_applications', form)
   const rules = useApplicationRules()
+  const defaultDays = rules?.auto_reject_default_days
+
+  useEffect(() => {
+    if (defaultDays && form.getFieldValue('auto_reject_after_days') == null) {
+      form.setFieldValue('auto_reject_after_days', defaultDays)
+    }
+  }, [defaultDays, form])
   const days = (value) => (value != null ? m.employer_job_auto_status_days({ count: value }) : m.employer_job_auto_status_few_days())
 
   return (

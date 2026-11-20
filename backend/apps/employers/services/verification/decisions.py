@@ -27,7 +27,7 @@ from ..compliance import (
     release_verification_holds,
 )
 from .cases import (
-    MAX_FINAL_REJECTIONS,
+    max_final_rejections,
     queue_verification_notification,
     verification_can_be_approved,
     workflow_error,
@@ -252,10 +252,10 @@ def _prepare_final_decision(
                 if decision == EmployerVerificationCase.Status.REJECTED
                 else case.final_rejection_count
             ),
-            'limit': MAX_FINAL_REJECTIONS,
+            'limit': max_final_rejections(),
             'will_lock_resubmission': bool(
                 decision == EmployerVerificationCase.Status.REJECTED
-                and case.final_rejection_count + 1 >= MAX_FINAL_REJECTIONS
+                and case.final_rejection_count + 1 >= max_final_rejections()
             ),
         },
         'integrity_fingerprint': integrity_fingerprint(case, scope=scope),
@@ -366,7 +366,7 @@ def confirm_verification_decision(
     case.tax_override_by = actor if payload['tax_override'] else None
     if decision == EmployerVerificationCase.Status.REJECTED:
         case.final_rejection_count += 1
-        if case.final_rejection_count >= MAX_FINAL_REJECTIONS:
+        if case.final_rejection_count >= max_final_rejections():
             case.resubmission_locked_at = timezone.now()
     elif decision == EmployerVerificationCase.Status.APPROVED:
         case.resubmission_locked_at = None

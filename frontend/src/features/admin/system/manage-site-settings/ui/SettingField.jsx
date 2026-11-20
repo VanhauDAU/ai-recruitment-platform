@@ -101,6 +101,22 @@ function JsonField({ setting, value, onChange, disabled }) {
       />
     )
   }
+  if (schema?.item === 'integer') {
+    const toNumbers = (items) => items.map(Number).filter((item) => Number.isInteger(item))
+    return (
+      <Select
+        mode="tags"
+        value={Array.isArray(value) ? value.map(String) : []}
+        onChange={(items) => onChange([...new Set(toNumbers(items))].sort((a, b) => a - b))}
+        open={false}
+        suffixIcon={null}
+        tokenSeparators={[',', ' ']}
+        placeholder={m.admin_settings_tags_placeholder()}
+        disabled={disabled}
+        className="w-full"
+      />
+    )
+  }
   if (schema?.item === 'object') {
     return <SettingListEditor fields={schema.fields || []} value={value} onChange={onChange} disabled={disabled} />
   }

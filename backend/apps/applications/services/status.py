@@ -2,14 +2,12 @@
 
 Pipeline: ``submitted`` and ``viewed`` are facts the system records; the
 recruiter answers with one of ``Application.DECISION_STATUSES``. A decision
-reaches the candidate only after ``CANDIDATE_STATUS_NOTIFICATION_DELAY``; until
+reaches the candidate only after ``candidate_status_notification_delay()``; until
 then the recruiter may undo it and a newer decision replaces the older notice.
 """
 
-from datetime import timedelta
 from http import HTTPStatus
 
-from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -26,11 +24,13 @@ from apps.candidates.services import (
 
 from ..models import Application, ApplicationStatusHistory
 from .locking import lock_recruiter_application
+from .policy import (
+    auto_rejection_email_grace,
+    auto_rejection_min_notice,
+    candidate_status_notification_delay,
+)
 
 Status = Application.Status
-AUTO_REJECTION_EMAIL_GRACE = timedelta(days=3)
-# Least time a recruiter keeps to answer after undoing back to unanswered.
-AUTO_REJECTION_MIN_NOTICE = timedelta(days=3)
 
 STATUS_TIMESTAMP_FIELD = {
     Status.VIEWED: 'viewed_at',
@@ -82,7 +82,7 @@ def _reversible_auto_rejection(application, now):
         application.status == Status.REJECTED
         and application.auto_rejected_at
         and application.auto_rejection_email_sent_at is None
-        and application.auto_rejected_at + AUTO_REJECTION_EMAIL_GRACE > now
+        and application.auto_rejected_at + auto_rejection_email_grace() > now
     )
 
 
@@ -185,7 +185,7 @@ def change_application_status(application, *, changed_by, status):
     notice = notify_candidate_of_status(
         application,
         history,
-        deliver_after=now + settings.CANDIDATE_STATUS_NOTIFICATION_DELAY,
+        deliver_after=now + candidate_status_notification_delay(),
     )
     _record_status_activity(
         application, actor=changed_by, from_status=previous_status, to_status=status
@@ -232,7 +232,7 @@ def reject_blocked_application(application, *, blocked_by):
     notify_candidate_of_status(
         application,
         history,
-        deliver_after=now + settings.CANDIDATE_STATUS_NOTIFICATION_DELAY,
+        deliver_after=now + candidate_status_notification_delay(),
     )
     return application
 
@@ -283,7 +283,7 @@ def undo_latest_status_change(application, *, changed_by):
         # The clock counts from the submission and never restarts; an undo
         # near the deadline still leaves the recruiter a warned window.
         application.auto_reject_due_floor = max(
-            application.auto_reject_due_floor or now, now + AUTO_REJECTION_MIN_NOTICE
+            application.auto_reject_due_floor or now, now + auto_rejection_min_notice()
         )
         application.auto_rejection_reminder_sent_at = None
         changed += ['auto_reject_due_floor', 'auto_rejection_reminder_sent_at']
@@ -298,7 +298,7 @@ def undo_latest_status_change(application, *, changed_by):
         restore_superseded_candidate_notification(
             recipient_id=application.candidate_id,
             dedupe_key=previous.notification_key,
-            deliver_after=now + settings.CANDIDATE_STATUS_NOTIFICATION_DELAY,
+            deliver_after=now + candidate_status_notification_delay(),
         )
     _record_status_activity(
         application, actor=changed_by, from_status=undone_status, to_status=application.status

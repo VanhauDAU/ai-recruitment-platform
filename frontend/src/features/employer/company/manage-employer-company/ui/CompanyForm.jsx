@@ -13,6 +13,7 @@ import {
   uploadEmployerCompanyImage,
   uploadEmployerCompanyLogo,
 } from '@/entities/account/employer-profile'
+import { useSiteSettings } from '@/entities/system/site-settings'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { getUploadStatePresentation } from '@/shared/api/upload-session'
 import { m } from '@/shared/config/i18n'
@@ -62,6 +63,8 @@ function isWebsiteUrl(value) {
 }
 
 export default function CompanyForm({ catalogs, industries, disabled, company = null, pendingRequest = null, canManageMedia = true, onCompleted, onCancel }) {
+  const configuredMinLength = useSiteSettings().settings.company_description_min_length
+  const descriptionMinLength = Number.isInteger(configuredMinLength) ? configuredMinLength : COMPANY_DESCRIPTION_MIN_LENGTH
   const isEdit = Boolean(company)
   const [form] = Form.useForm()
   const queryClient = useQueryClient()
@@ -368,7 +371,7 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
   function validateDescription(_, value) {
     const keepsLegacyDescription = isEdit && value === initialValues.description
     if (keepsLegacyDescription) return Promise.resolve()
-    const error = companyDescriptionValidationError(value)
+    const error = companyDescriptionValidationError(value, descriptionMinLength)
     return error ? Promise.reject(new Error(error)) : Promise.resolve()
   }
 
@@ -578,7 +581,7 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
 
       <section className="company-form-section">
         <h2 className="company-form-section__title">{m.employer_company_form_about_section()}</h2>
-        <Form.Item name="description" label={<RequiredLabel>{m.employer_company_description()}</RequiredLabel>} extra={m.employer_company_form_description_extra({ min: COMPANY_DESCRIPTION_MIN_LENGTH })} rules={[{ validator: validateDescription }]}><EditorField disabled={disabled || saveMutation.isPending} maxLength={10000} placeholder={m.employer_company_form_description_placeholder()} /></Form.Item>
+        <Form.Item name="description" label={<RequiredLabel>{m.employer_company_description()}</RequiredLabel>} extra={m.employer_company_form_description_extra({ min: descriptionMinLength })} rules={[{ validator: validateDescription }]}><EditorField disabled={disabled || saveMutation.isPending} maxLength={10000} placeholder={m.employer_company_form_description_placeholder()} /></Form.Item>
         <Form.Item name="employee_benefits" label={m.employer_company_employee_benefits()}><EditorField disabled={disabled || saveMutation.isPending} maxLength={10000} placeholder={m.employer_company_form_benefits_placeholder()} /></Form.Item>
       </section>
 

@@ -5,6 +5,7 @@ import re
 from django.db import transaction
 from django.utils.translation import gettext as _
 
+from apps.sitecontent.selectors import get_int_setting
 from common.html.plain_text import html_plain_text
 from common.html.rich_text import sanitize_rich_text
 
@@ -37,6 +38,14 @@ SENSITIVE_FIELDS = {'tax_code', 'company_name'}
 COMPANY_DESCRIPTION_MIN_LENGTH = 500
 
 
+def company_description_min_length():
+    """Độ dài tối thiểu mô tả công ty (SiteSetting, frontend đọc cùng key)."""
+    return min(
+        max(get_int_setting('company_description_min_length', COMPANY_DESCRIPTION_MIN_LENGTH), 0),
+        5000,
+    )
+
+
 def normalize_company_tax_code(value):
     """Return the canonical Vietnamese 10/13-digit tax identifier."""
 
@@ -55,10 +64,10 @@ def normalize_company_rich_text(value, *, required, label):
     visible = html_plain_text(sanitized)
     if required and not visible:
         raise ValueError(_('%(label)s là bắt buộc.') % {'label': label})
-    if required and len(visible) < COMPANY_DESCRIPTION_MIN_LENGTH:
+    minimum = company_description_min_length()
+    if required and len(visible) < minimum:
         raise ValueError(
-            _('%(label)s phải có ít nhất %(min)s ký tự.')
-            % {'label': label, 'min': COMPANY_DESCRIPTION_MIN_LENGTH}
+            _('%(label)s phải có ít nhất %(min)s ký tự.') % {'label': label, 'min': minimum}
         )
     if len(visible) > 10_000:
         raise ValueError(_('%(label)s không được vượt quá 10.000 ký tự.') % {'label': label})

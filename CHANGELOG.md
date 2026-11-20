@@ -8,6 +8,30 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-21
 
+#### Changed — Luật tuyển dụng và lưu trữ chỉnh được ở trang cấu hình (ADR-0026, GĐ5)
+
+- **Ứng tuyển & SLA:** admin chỉnh số lần nộp mỗi tin, thời gian chờ nộp lại, thời hạn
+  tự từ chối mặc định cho tin mới, thời gian nhắc trước, khoảng chờ email kết quả, khoảng
+  hoàn tác thông báo, các mốc nhắc nhà tuyển dụng, nút nhắc của ứng viên và hạn link chia
+  sẻ hồ sơ. Giá trị lạ bị kẹp vào khoảng an toàn; form của ứng viên và NTD đọc cùng giá trị.
+- **Tin tuyển dụng:** hạn nhận hồ sơ mặc định/tối đa, thời gian hiển thị, thời gian gia
+  hạn và thời gian chống đếm trùng lượt xem chuyển từ `.env` (`JOB_POSTING_*`,
+  `JOB_VIEW_DEDUP_TTL_SECONDS`) sang cấu hình; trần cứng 90 ngày giữ trong mã nguồn.
+- **Nhà tuyển dụng:**
+  - Công tắc bắt buộc duyệt hồ sơ xác thực (chỉ siết thêm cờ máy chủ).
+  - Chế độ dấu tick (shadow/enforce), số lần bị từ chối trước khi khoá nộp lại, lý do
+    báo cáo làm mất tick, độ dài tối thiểu mô tả công ty (form NTD đọc cùng giá trị).
+  - Một SLA cho hàng chờ xác thực/cập nhật công ty và một SLA cho báo cáo vi phạm, dùng
+    chung ở bảng điều khiển, danh sách tài khoản và hàng chờ xác thực.
+- **Chia sẻ CV:** tắt được; tắt thì mọi link đang có ngừng mở. Link mới có hạn mặc định,
+  không đặt quá hạn tối đa; link cũ không hạn hết hiệu lực khi quá hạn tối đa.
+- **Lưu trữ dữ liệu:** thời gian giữ kho ứng viên, thông báo ứng viên, file nguồn import
+  CV và lịch sử email gợi ý việc làm chỉ rút ngắn được, có mức sàn.
+- **Đăng nhập:** admin tắt bớt Google/Facebook/LinkedIn theo từng cổng (nút và API cùng
+  chặn); hạn lời mời quản trị viên chỉnh được.
+- **Sửa CI:** cổng cấu trúc backend đỏ từ GĐ1/GĐ3 — audit ghi qua
+  `AdminAccessAuditLog.objects.record()`, middleware bảo trì chuyển vào `sitecontent/api/`.
+
 #### Changed — Email, AI và gợi ý việc làm theo cấu hình (ADR-0026, GĐ4)
 
 - **Email:**

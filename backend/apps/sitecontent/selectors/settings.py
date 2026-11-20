@@ -74,9 +74,42 @@ def get_bool_setting(key, default=False):
     return parse_bool(value, False)
 
 
+def retention_days(key, ceiling, minimum=1):
+    """Số ngày lưu trữ admin đặt, chỉ rút ngắn được: kẹp trong [``minimum``, ``ceiling``].
+
+    ``ceiling`` là mức của máy chủ/mã nguồn (giữ lâu nhất được phép).
+    """
+    return min(max(get_int_setting(key, ceiling), minimum), ceiling)
+
+
+def approved_employer_verification_required():
+    """Bắt buộc nhà tuyển dụng được duyệt hồ sơ xác thực trước khi hoạt động.
+
+    Cờ máy chủ ``REQUIRE_APPROVED_EMPLOYER_VERIFICATION`` (production bật) HOẶC công
+    tắc admin: admin chỉ siết thêm được, không tắt yêu cầu máy chủ đặt.
+    """
+    return bool(django_settings.REQUIRE_APPROVED_EMPLOYER_VERIFICATION) or get_bool_setting(
+        'employer_require_approved_verification', False
+    )
+
+
+def moderation_sla_hours():
+    """Hạn xử lý hàng chờ xác thực/cập nhật công ty trước khi bị coi là quá hạn."""
+    return min(max(get_int_setting('moderation_sla_hours', 72), 12), 14 * 24)
+
+
+def report_sla_hours():
+    """Hạn xử lý báo cáo vi phạm và nội dung đã công khai (ảnh hưởng an toàn ứng viên)."""
+    return min(max(get_int_setting('report_sla_hours', 48), 6), 14 * 24)
+
+
 def get_settings_map(keys):
     """``{key: value}`` for ``keys``; keys with neither a row nor a seed default are absent."""
-    values = {key: get_setting(key) for key in keys}
+    stored = _stored_values()
+    registry = setting_registry()
+    values = {
+        key: stored[key] if key in stored else registry.get(key, {}).get('value') for key in keys
+    }
     return {key: value for key, value in values.items() if value is not None}
 
 

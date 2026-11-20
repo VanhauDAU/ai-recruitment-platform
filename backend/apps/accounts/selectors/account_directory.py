@@ -27,6 +27,7 @@ from apps.employers.models import (
     EmployerVerificationCase,
     RecruitmentNeed,
 )
+from apps.sitecontent.selectors import moderation_sla_hours
 from common.api.params import parse_bool
 from common.db.search import search_q
 
@@ -95,7 +96,7 @@ def _with_recruiter_next_action(queryset):
     actionable = Q(**{f'{case}__status__in': _ACTIONABLE_CASE_STATUSES}) | Q(
         _has_pending_document=True
     )
-    overdue_before = timezone.now() - timedelta(hours=next_action.VERIFICATION_OVERDUE_HOURS)
+    overdue_before = timezone.now() - timedelta(hours=moderation_sla_hours())
     return (
         queryset.annotate(
             _has_pending_document=Exists(

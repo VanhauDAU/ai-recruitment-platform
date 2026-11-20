@@ -69,6 +69,30 @@ class OAuthFlowTests(APITestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn('error=provider_not_configured', response.url)
 
+    def test_admin_can_close_a_provider_per_portal(self):
+        from apps.sitecontent.models import SiteSetting
+
+        SiteSetting.objects.update_or_create(
+            key='oauth_providers_candidate',
+            defaults={'value': ['facebook'], 'value_type': SiteSetting.ValueType.JSON},
+        )
+
+        self.assertEqual(oauth.portal_providers('main'), ('facebook',))
+        self.assertEqual(oauth.portal_providers('employer'), ('google',))
+        response = self.client.get(reverse('auth-oauth-start', args=['google']), {'portal': 'main'})
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('error=provider_not_allowed', response.url)
+
+    def test_admin_list_cannot_open_a_provider_the_portal_does_not_support(self):
+        from apps.sitecontent.models import SiteSetting
+
+        SiteSetting.objects.update_or_create(
+            key='oauth_providers_employer',
+            defaults={'value': ['google', 'linkedin'], 'value_type': SiteSetting.ValueType.JSON},
+        )
+
+        self.assertEqual(oauth.portal_providers('employer'), ('google',))
+
     def test_employer_portal_rejects_facebook_and_linkedin(self):
         for provider in ('facebook', 'linkedin'):
             response = self.client.get(

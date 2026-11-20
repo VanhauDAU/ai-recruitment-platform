@@ -7,6 +7,31 @@ from common.db.public_id import generate_public_id
 from .user import User
 
 
+class AdminAccessAuditLogManager(models.Manager):
+    def record(
+        self,
+        *,
+        actor,
+        action,
+        target_type,
+        target_public_id,
+        payload=None,
+        source='api',
+        actor_identifier='',
+    ):
+        """Ghi một dòng nhật ký quản trị; app khác gọi qua đây để khỏi phụ thuộc
+        ``apps.accounts.services`` (tránh vòng import với app được ghi nhật ký)."""
+        return self.create(
+            actor=actor,
+            source=source,
+            actor_identifier=actor_identifier or (actor.email if actor else ''),
+            action=action,
+            target_type=target_type,
+            target_public_id=target_public_id,
+            payload=payload or {},
+        )
+
+
 class AdminAccessAuditLog(models.Model):
     public_id = models.CharField(max_length=64, unique=True, editable=False)
     actor = models.ForeignKey(
@@ -23,6 +48,8 @@ class AdminAccessAuditLog(models.Model):
     target_public_id = models.CharField(max_length=64, blank=True)
     payload = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    objects = AdminAccessAuditLogManager()
 
     class Meta:
         ordering = ['-created_at', '-id']

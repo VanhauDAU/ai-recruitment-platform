@@ -819,6 +819,83 @@
     }
   },
   {
+    "key": "oauth_providers_candidate",
+    "label": "Đăng nhập mạng xã hội (ứng viên)",
+    "group": "accounts",
+    "section": "Đăng nhập mạng xã hội",
+    "value_type": "multiselect",
+    "value": [
+      "google",
+      "facebook",
+      "linkedin"
+    ],
+    "is_public": true,
+    "description": "Nhà cung cấp hiện ở trang đăng nhập/đăng ký ứng viên.",
+    "help": "Chỉ bật được nhà cung cấp máy chủ đã cấu hình khoá (OAUTH_*). Bỏ chọn để ẩn nút và chặn đăng nhập qua nhà cung cấp đó; tài khoản vẫn đăng nhập bằng mật khẩu hoặc đặt lại mật khẩu.",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên"
+      ],
+      "choices": [
+        {
+          "value": "google",
+          "label": "Google"
+        },
+        {
+          "value": "facebook",
+          "label": "Facebook"
+        },
+        {
+          "value": "linkedin",
+          "label": "LinkedIn"
+        }
+      ]
+    }
+  },
+  {
+    "key": "oauth_providers_employer",
+    "label": "Đăng nhập mạng xã hội (nhà tuyển dụng)",
+    "group": "accounts",
+    "section": "Đăng nhập mạng xã hội",
+    "value_type": "multiselect",
+    "value": [
+      "google"
+    ],
+    "is_public": true,
+    "description": "Nhà cung cấp hiện ở trang đăng nhập/đăng ký nhà tuyển dụng.",
+    "help": "Cổng nhà tuyển dụng hiện chỉ hỗ trợ Google.",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng"
+      ],
+      "choices": [
+        {
+          "value": "google",
+          "label": "Google"
+        }
+      ]
+    }
+  },
+  {
+    "key": "admin_invitation_ttl_hours",
+    "label": "Hạn lời mời quản trị viên (giờ)",
+    "group": "accounts",
+    "section": "Quản trị viên",
+    "value_type": "number",
+    "value": 72,
+    "is_public": false,
+    "description": "Link lời mời quản trị viên hết hạn sau số giờ này.",
+    "help": "Lời mời là quyền truy cập quản trị: hạn ngắn an toàn hơn. Áp cho lời mời gửi mới và gửi lại.",
+    "options": {
+      "applies_to": [
+        "Trang quản trị"
+      ],
+      "integer": true,
+      "min": 24,
+      "max": 336
+    }
+  },
+  {
     "key": "employer_free_job_quota",
     "label": "Lượt đăng tin khi chưa đạt Cấp 3",
     "group": "employer",
@@ -965,6 +1042,510 @@
     }
   },
   {
+    "key": "employer_require_approved_verification",
+    "label": "Bắt buộc duyệt hồ sơ xác thực",
+    "group": "employer",
+    "section": "Xác thực & uy tín",
+    "value_type": "boolean",
+    "value": false,
+    "is_public": false,
+    "description": "Nhà tuyển dụng phải được duyệt hồ sơ xác thực trước khi đăng tin và dùng các chức năng tuyển dụng.",
+    "help": "Máy chủ production luôn bắt buộc (REQUIRE_APPROVED_EMPLOYER_VERIFICATION). Công tắc này chỉ siết thêm được ở môi trường máy chủ chưa bắt buộc; không tắt được yêu cầu của máy chủ.",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng"
+      ],
+      "risky": "on"
+    }
+  },
+  {
+    "key": "employer_badge_policy_mode",
+    "label": "Chế độ dấu tick xác thực",
+    "group": "employer",
+    "section": "Xác thực & uy tín",
+    "value_type": "select",
+    "value": "",
+    "is_public": false,
+    "description": "Cách gắn dấu tick \"đã xác thực\" lên tin và trang công ty.",
+    "help": "Theo máy chủ: dùng EMPLOYER_BADGE_POLICY_MODE. Shadow: vẫn hiển thị theo luật cũ, chỉ ghi số liệu so sánh. Enforce: áp luật mới (5 điều kiện), có thể gỡ dấu tick của nhiều công ty cùng lúc; nên xem số liệu shadow trước khi chuyển.",
+    "options": {
+      "applies_to": [
+        "Tin tuyển dụng",
+        "Trang công ty"
+      ],
+      "choices": [
+        {
+          "value": "",
+          "label": "Theo cấu hình máy chủ"
+        },
+        {
+          "value": "shadow",
+          "label": "Shadow (chỉ đo)"
+        },
+        {
+          "value": "enforce",
+          "label": "Enforce (áp dụng)"
+        }
+      ]
+    }
+  },
+  {
+    "key": "employer_verification_max_rejections",
+    "label": "Số lần từ chối tối đa",
+    "group": "employer",
+    "section": "Xác thực & uy tín",
+    "value_type": "number",
+    "value": 3,
+    "is_public": false,
+    "description": "Số lần hồ sơ xác thực bị từ chối cuối cùng trước khi khoá nộp lại.",
+    "help": "Sau mức này nhà tuyển dụng phải liên hệ hỗ trợ để mở khoá.",
+    "options": {
+      "applies_to": [
+        "Xác thực nhà tuyển dụng"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 10
+    }
+  },
+  {
+    "key": "employer_trust_report_reasons",
+    "label": "Lý do báo cáo làm mất dấu tick",
+    "group": "employer",
+    "section": "Xác thực & uy tín",
+    "value_type": "multiselect",
+    "value": [
+      "fake_company",
+      "scam",
+      "wrong_info"
+    ],
+    "is_public": false,
+    "description": "Báo cáo vi phạm đã xác nhận với các lý do này sẽ gỡ dấu tick của nhà tuyển dụng.",
+    "help": "Chỉ báo cáo đã được quản trị viên xác nhận mới tính.",
+    "options": {
+      "applies_to": [
+        "Tin tuyển dụng",
+        "Trang công ty"
+      ],
+      "choices": [
+        {
+          "value": "fake_company",
+          "label": "Công ty không có thật"
+        },
+        {
+          "value": "scam",
+          "label": "Lừa đảo, thu phí ứng viên"
+        },
+        {
+          "value": "wrong_info",
+          "label": "Thông tin tin đăng sai sự thật"
+        },
+        {
+          "value": "duplicate",
+          "label": "Tin trùng lặp"
+        },
+        {
+          "value": "expired",
+          "label": "Tin đã tuyển xong nhưng chưa gỡ"
+        },
+        {
+          "value": "other",
+          "label": "Lý do khác"
+        }
+      ]
+    }
+  },
+  {
+    "key": "company_description_min_length",
+    "label": "Độ dài tối thiểu mô tả công ty",
+    "group": "employer",
+    "section": "Xác thực & uy tín",
+    "value_type": "number",
+    "value": 500,
+    "is_public": true,
+    "description": "Số ký tự tối thiểu của phần giới thiệu công ty.",
+    "help": "Áp ở form công ty của nhà tuyển dụng và khi lưu trên máy chủ; mô tả cũ không bị chặn cho tới khi sửa.",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng"
+      ],
+      "integer": true,
+      "min": 0,
+      "max": 5000
+    }
+  },
+  {
+    "key": "moderation_sla_hours",
+    "label": "Hạn xử lý hồ sơ xác thực (giờ)",
+    "group": "employer",
+    "section": "Hạn xử lý của quản trị viên",
+    "value_type": "number",
+    "value": 72,
+    "is_public": false,
+    "description": "Hồ sơ xác thực, yêu cầu cập nhật và tham gia công ty chờ quá hạn này bị đánh dấu quá hạn.",
+    "help": "Dùng cho bảng điều khiển, hàng chờ xác thực và danh sách nhà tuyển dụng.",
+    "options": {
+      "applies_to": [
+        "Trang quản trị"
+      ],
+      "integer": true,
+      "min": 12,
+      "max": 336
+    }
+  },
+  {
+    "key": "report_sla_hours",
+    "label": "Hạn xử lý báo cáo vi phạm (giờ)",
+    "group": "employer",
+    "section": "Hạn xử lý của quản trị viên",
+    "value_type": "number",
+    "value": 48,
+    "is_public": false,
+    "description": "Báo cáo vi phạm, nội dung trang công ty và tin gửi lại chờ quá hạn này bị đánh dấu quá hạn.",
+    "help": "Nên ngắn hơn hạn xử lý xác thực vì nội dung đã công khai.",
+    "options": {
+      "applies_to": [
+        "Trang quản trị"
+      ],
+      "integer": true,
+      "min": 6,
+      "max": 336
+    }
+  },
+  {
+    "key": "job_default_deadline_days",
+    "label": "Hạn nhận hồ sơ gợi ý (ngày)",
+    "group": "jobs",
+    "section": "Hạn tin",
+    "value_type": "number",
+    "value": 30,
+    "is_public": false,
+    "description": "Hạn nhận hồ sơ điền sẵn khi nhà tuyển dụng tạo tin mới.",
+    "help": "Không vượt quá hạn nhận hồ sơ tối đa.",
+    "options": {
+      "applies_to": [
+        "Đăng tin"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 90
+    }
+  },
+  {
+    "key": "job_max_deadline_days",
+    "label": "Hạn nhận hồ sơ tối đa (ngày)",
+    "group": "jobs",
+    "section": "Hạn tin",
+    "value_type": "number",
+    "value": 90,
+    "is_public": false,
+    "description": "Hạn nhận hồ sơ xa nhất nhà tuyển dụng được chọn, tính từ hôm nay.",
+    "help": "Trần cứng 90 ngày nằm trong mã nguồn.",
+    "options": {
+      "applies_to": [
+        "Đăng tin"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 90
+    }
+  },
+  {
+    "key": "job_max_public_lifetime_days",
+    "label": "Thời gian hiển thị tối đa (ngày)",
+    "group": "jobs",
+    "section": "Hạn tin",
+    "value_type": "number",
+    "value": 90,
+    "is_public": false,
+    "description": "Một tin được hiển thị công khai tối đa bao nhiêu ngày.",
+    "help": "Trần cứng 90 ngày nằm trong mã nguồn.",
+    "options": {
+      "applies_to": [
+        "Đăng tin",
+        "Tìm việc"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 90
+    }
+  },
+  {
+    "key": "job_renewal_grace_days",
+    "label": "Thời gian cho gia hạn tin hết hạn (ngày)",
+    "group": "jobs",
+    "section": "Hạn tin",
+    "value_type": "number",
+    "value": 30,
+    "is_public": false,
+    "description": "Tin hết hạn được đăng lại (gia hạn) trong số ngày này.",
+    "help": "Quá hạn thì phải tạo tin mới.",
+    "options": {
+      "applies_to": [
+        "Đăng tin"
+      ],
+      "integer": true,
+      "min": 0,
+      "max": 90
+    }
+  },
+  {
+    "key": "job_view_dedup_hours",
+    "label": "Gộp lượt xem trùng (giờ)",
+    "group": "jobs",
+    "section": "Thống kê",
+    "value_type": "number",
+    "value": 24,
+    "is_public": false,
+    "description": "Một người xem lại tin trong khoảng này chỉ tính một lượt xem.",
+    "help": "Ảnh hưởng số lượt xem nhà tuyển dụng thấy; khoảng ngắn làm số liệu cao hơn thực tế.",
+    "options": {
+      "applies_to": [
+        "Thống kê tin"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 168
+    }
+  },
+  {
+    "key": "application_max_per_job",
+    "label": "Số lần nộp tối đa mỗi tin",
+    "group": "applications",
+    "section": "Nộp hồ sơ",
+    "value_type": "number",
+    "value": 3,
+    "is_public": true,
+    "description": "Một ứng viên được nộp lại vào cùng một tin tối đa bao nhiêu lần.",
+    "help": "Nộp lại thay thế bản nộp trước; giới hạn để nhà tuyển dụng không bị làm phiền.",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 10
+    }
+  },
+  {
+    "key": "application_reapply_cooldown_minutes",
+    "label": "Thời gian chờ giữa hai lần nộp (phút)",
+    "group": "applications",
+    "section": "Nộp hồ sơ",
+    "value_type": "number",
+    "value": 5,
+    "is_public": false,
+    "description": "Khoảng cách tối thiểu giữa hai lần nộp vào cùng một tin.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên"
+      ],
+      "integer": true,
+      "min": 0,
+      "max": 1440
+    }
+  },
+  {
+    "key": "auto_reject_default_days",
+    "label": "Thời hạn tự từ chối gợi ý",
+    "group": "applications",
+    "section": "Tự động từ chối",
+    "value_type": "select",
+    "value": 21,
+    "is_public": false,
+    "description": "Thời hạn tự chuyển hồ sơ chưa xử lý sang \"Không phù hợp\" điền sẵn cho tin mới.",
+    "help": "Nhà tuyển dụng vẫn đổi được ở từng tin.",
+    "options": {
+      "applies_to": [
+        "Đăng tin"
+      ],
+      "choices": [
+        {
+          "value": 14,
+          "label": "2 tuần"
+        },
+        {
+          "value": 21,
+          "label": "3 tuần"
+        },
+        {
+          "value": 28,
+          "label": "4 tuần"
+        },
+        {
+          "value": 42,
+          "label": "6 tuần"
+        },
+        {
+          "value": 56,
+          "label": "8 tuần"
+        }
+      ]
+    }
+  },
+  {
+    "key": "auto_reject_min_notice_days",
+    "label": "Nhắc trước khi tự từ chối (ngày)",
+    "group": "applications",
+    "section": "Tự động từ chối",
+    "value_type": "number",
+    "value": 3,
+    "is_public": false,
+    "description": "Nhà tuyển dụng được nhắc trước khi hồ sơ bị tự từ chối bao nhiêu ngày.",
+    "help": "Cũng là thời gian tối thiểu còn lại sau khi nhà tuyển dụng hoàn tác về \"chưa xử lý\".",
+    "options": {
+      "applies_to": [
+        "Email",
+        "Cổng nhà tuyển dụng"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 14
+    }
+  },
+  {
+    "key": "auto_reject_email_grace_days",
+    "label": "Chờ trước khi báo ứng viên (ngày)",
+    "group": "applications",
+    "section": "Tự động từ chối",
+    "value_type": "number",
+    "value": 3,
+    "is_public": false,
+    "description": "Sau khi tự từ chối, chờ bao nhiêu ngày mới báo ứng viên (nhà tuyển dụng còn hoàn tác).",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Email",
+        "Cổng ứng viên"
+      ],
+      "integer": true,
+      "min": 0,
+      "max": 14
+    }
+  },
+  {
+    "key": "candidate_status_notify_delay_minutes",
+    "label": "Chờ trước khi báo đổi trạng thái (phút)",
+    "group": "applications",
+    "section": "Thông báo cho ứng viên",
+    "value_type": "number",
+    "value": 5,
+    "is_public": false,
+    "description": "Quyết định của nhà tuyển dụng chỉ báo cho ứng viên sau khoảng này.",
+    "help": "Để nhà tuyển dụng kịp hoàn tác bấm nhầm; nhiều thay đổi liên tiếp gộp thành một thông báo.",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên",
+        "Email"
+      ],
+      "integer": true,
+      "min": 0,
+      "max": 60
+    }
+  },
+  {
+    "key": "recruiter_reminder_days",
+    "label": "Mốc nhắc nhà tuyển dụng (ngày)",
+    "group": "applications",
+    "section": "Nhắc nhà tuyển dụng",
+    "value_type": "json",
+    "value": [
+      3,
+      7
+    ],
+    "is_public": false,
+    "description": "Số ngày (tính từ lúc nộp) hệ thống nhắc nhà tuyển dụng về hồ sơ chưa phản hồi.",
+    "help": "Nhập các số ngày tăng dần, ví dụ 3 và 7. Bật/tắt nhắc ở nhóm Email & thông báo.",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng"
+      ],
+      "schema": {
+        "item": "integer",
+        "min": 1,
+        "max": 60
+      },
+      "depends_on": "recruiter_reminders_enabled"
+    }
+  },
+  {
+    "key": "candidate_reminder_after_days",
+    "label": "Ứng viên được nhắc sau (ngày)",
+    "group": "applications",
+    "section": "Ứng viên nhắc nhà tuyển dụng",
+    "value_type": "number",
+    "value": 3,
+    "is_public": true,
+    "description": "Ứng viên được bấm \"Nhắc nhà tuyển dụng\" sau bao nhiêu ngày kể từ lúc nộp.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 30
+    }
+  },
+  {
+    "key": "candidate_reminder_interval_days",
+    "label": "Khoảng cách giữa hai lần nhắc (ngày)",
+    "group": "applications",
+    "section": "Ứng viên nhắc nhà tuyển dụng",
+    "value_type": "number",
+    "value": 3,
+    "is_public": true,
+    "description": "Khoảng cách tối thiểu giữa hai lần ứng viên nhắc.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 30
+    }
+  },
+  {
+    "key": "candidate_reminder_max",
+    "label": "Số lần nhắc tối đa",
+    "group": "applications",
+    "section": "Ứng viên nhắc nhà tuyển dụng",
+    "value_type": "number",
+    "value": 2,
+    "is_public": true,
+    "description": "Mỗi hồ sơ được ứng viên nhắc tối đa bao nhiêu lần. 0 để tắt nút nhắc.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên"
+      ],
+      "integer": true,
+      "min": 0,
+      "max": 10
+    }
+  },
+  {
+    "key": "review_link_max_days",
+    "label": "Hạn link xem hồ sơ cho đồng nghiệp (ngày)",
+    "group": "applications",
+    "section": "Chia sẻ hồ sơ ứng tuyển",
+    "value_type": "number",
+    "value": 30,
+    "is_public": false,
+    "description": "Link nhà tuyển dụng gửi đồng nghiệp xem hồ sơ (đã che thông tin liên hệ) sống tối đa bao nhiêu ngày.",
+    "help": "Link là quyền xem dữ liệu ứng viên: hạn ngắn an toàn hơn.",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 90
+    }
+  },
+  {
     "key": "candidate_max_cvs",
     "label": "Số CV tối đa mỗi ứng viên",
     "group": "cv",
@@ -997,6 +1578,63 @@
       "applies_to": [
         "Trình tạo CV"
       ]
+    }
+  },
+  {
+    "key": "cv_share_enabled",
+    "label": "Cho phép chia sẻ CV bằng link",
+    "group": "cv",
+    "section": "Chia sẻ CV",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": false,
+    "description": "Ứng viên tạo được link công khai để gửi CV.",
+    "help": "Khi tắt: không tạo được link mới và mọi link đang có ngừng hoạt động (bật lại thì link chưa hết hạn chạy lại).",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên"
+      ],
+      "risky": "off"
+    }
+  },
+  {
+    "key": "cv_share_default_days",
+    "label": "Hạn link chia sẻ mặc định (ngày)",
+    "group": "cv",
+    "section": "Chia sẻ CV",
+    "value_type": "number",
+    "value": 30,
+    "is_public": false,
+    "description": "Link không chọn hạn sẽ hết hạn sau số ngày này.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 3650,
+      "depends_on": "cv_share_enabled"
+    }
+  },
+  {
+    "key": "cv_share_max_days",
+    "label": "Hạn link chia sẻ tối đa (ngày)",
+    "group": "cv",
+    "section": "Chia sẻ CV",
+    "value_type": "number",
+    "value": 180,
+    "is_public": false,
+    "description": "Không link nào sống quá số ngày này, kể cả link tạo trước khi có giới hạn.",
+    "help": "Link cũ không đặt hạn được tính từ ngày tạo.",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 3650,
+      "depends_on": "cv_share_enabled"
     }
   },
   {
@@ -1426,6 +2064,82 @@
       "applies_to": [
         "Xác thực nhà tuyển dụng"
       ]
+    }
+  },
+  {
+    "key": "talent_pool_retention_days",
+    "label": "Lưu ứng viên trong kho (ngày)",
+    "group": "retention",
+    "section": "Thời gian lưu trữ",
+    "value_type": "number",
+    "value": 365,
+    "is_public": false,
+    "description": "Ứng viên được lưu trong kho ứng viên của nhà tuyển dụng tối đa bao nhiêu ngày.",
+    "help": "Chỉ rút ngắn được (tối đa 365 ngày). Áp cho lượt lưu mới; ứng viên luôn tự rút khỏi kho được.",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng"
+      ],
+      "integer": true,
+      "min": 30,
+      "max": 365
+    }
+  },
+  {
+    "key": "candidate_notification_retention_days",
+    "label": "Lưu thông báo của ứng viên (ngày)",
+    "group": "retention",
+    "section": "Thời gian lưu trữ",
+    "value_type": "number",
+    "value": 730,
+    "is_public": false,
+    "description": "Thông báo trong hộp thông báo ứng viên bị xoá sau số ngày này.",
+    "help": "Chỉ rút ngắn được so với mức máy chủ (CANDIDATE_NOTIFICATION_RETENTION_DAYS). Rút ngắn sẽ xoá thông báo cũ ở lần dọn kế tiếp, không hoàn tác.",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên"
+      ],
+      "integer": true,
+      "min": 30,
+      "max": 730
+    }
+  },
+  {
+    "key": "cv_import_source_retention_days",
+    "label": "Lưu tệp CV gốc khi nhập (ngày)",
+    "group": "retention",
+    "section": "Thời gian lưu trữ",
+    "value_type": "number",
+    "value": 30,
+    "is_public": false,
+    "description": "Tệp CV ứng viên tải lên để trích xuất được giữ tối đa bao nhiêu ngày.",
+    "help": "Chỉ rút ngắn được so với mức máy chủ (CV_IMPORT_SOURCE_RETENTION_DAYS).",
+    "options": {
+      "applies_to": [
+        "Tải CV lên"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 30
+    }
+  },
+  {
+    "key": "digest_history_retention_days",
+    "label": "Lưu lịch sử email gợi ý việc làm (ngày)",
+    "group": "retention",
+    "section": "Thời gian lưu trữ",
+    "value_type": "number",
+    "value": 90,
+    "is_public": false,
+    "description": "Lịch sử gửi email gợi ý việc làm bị xoá sau số ngày này.",
+    "help": "Chỉ rút ngắn được (tối đa 90 ngày). Lịch sử dùng để không gửi trùng tin.",
+    "options": {
+      "applies_to": [
+        "Email"
+      ],
+      "integer": true,
+      "min": 7,
+      "max": 90
     }
   },
   {
