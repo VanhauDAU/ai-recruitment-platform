@@ -1,22 +1,30 @@
-title Sơ đồ hoạt động chức năng xem việc làm gợi ý theo đối sánh ngữ nghĩa (dự kiến)
+title Sơ đồ hoạt động chức năng xem việc làm gợi ý theo đối sánh ngữ nghĩa
 Ứng viên mở trang "Việc làm phù hợp"
-Hệ thống kiểm tra đồng ý nhận gợi ý và CV chính
-if Đã đồng ý và có CV đã lưu?
+Hệ thống đọc cờ gợi ý ngữ nghĩa và đồng ý nhận gợi ý AI
+if Cờ bật và đã đồng ý?
 case Không
-  Giao diện hướng dẫn bật quyền hoặc tạo CV
+  Hệ thống gợi ý theo luật
+  Giao diện hiển thị danh sách theo luật hoặc hướng dẫn thiết lập
   stop
 case Có
 endif
-Hệ thống lấy vector của CV chính
+Hệ thống chọn CV mặc định và lấy vector hiện hành của CV
 if CV đã có vector?
 case Chưa có
-  Hệ thống dùng tạm gợi ý theo luật
-  Giao diện hiển thị danh sách gợi ý theo luật
+  Hệ thống gợi ý theo luật
+  Giao diện hiển thị danh sách theo luật
+  stop
 case Đã có
-  Hệ thống tìm K tin công khai gần nhất theo cosine
-  Hệ thống lọc theo nguyện vọng địa điểm
-  Hệ thống chấm lại theo công thức hybrid-v1
-  Hệ thống loại tin đã ứng tuyển hoặc đã ẩn, sắp xếp
-  Giao diện hiển thị tin kèm điểm và kỹ năng khớp
+endif
+Hệ thống tìm 100 tin công khai gần nhất theo cosine, bỏ tin đã ứng tuyển hoặc đã ẩn
+Hệ thống tính điểm từ mức liên quan, kỹ năng trùng và tỉnh mong muốn
+Hệ thống bỏ tin dưới 30 điểm và sắp xếp
+if Còn tin đủ gần?
+case Không
+  Hệ thống gợi ý theo luật
+  Giao diện hiển thị danh sách theo luật
+case Có
+  Hệ thống dựng lý do gợi ý bằng lời
+  Giao diện hiển thị tin kèm lý do, không hiện điểm
   Giao diện cho mở "Xem độ phù hợp" chi tiết từng tin
 endif

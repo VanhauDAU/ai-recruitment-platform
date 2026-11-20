@@ -765,7 +765,7 @@ làm gợi ý" theo ngữ nghĩa, và nhà tuyển dụng xếp hạng hồ sơ 
 | 1 | Đo lường: lệnh `matching_evaluate` (chấm bằng đúng mã sản phẩm), `ml/scripts/evaluate.py`, bảng số trên validation; mở rộng tập vàng lên 30 tin; tải mô hình và dữ liệu công khai | 🟨 PR #274 chờ gộp |
 | 2 | `extract-v3`: PDF hai cột, chức danh CV tải lên, sửa các luật nhận ngày/bằng cấp/kỹ năng, schema `profile_json` | 🟨 Xong trên nhánh `feat/ai-extract-v3`, chờ PR |
 | 3 | Dữ liệu huấn luyện, cổng chất lượng, fine-tune bi-encoder và cross-encoder, ablation | ⬜ |
-| 4 | Việc làm gợi ý theo ngữ nghĩa (pgvector) | ⬜ |
+| 4 | Việc làm gợi ý theo ngữ nghĩa (pgvector) | 🟨 Xong trên nhánh `feat/ai-semantic-recommendations`, chờ PR |
 | 5 | `hybrid-v2`, cross-encoder vào `ml-worker`, `result_json` bản 2 (M2) | ⬜ |
 | 6 | Nhà tuyển dụng xếp hạng hồ sơ ứng tuyển | ⬜ |
 | 7 | Chạy tập test một lần, hiệu năng, nghiệm thu TC-01…30, kappa 30 cặp (M3) | ⬜ |
@@ -886,6 +886,31 @@ làm gợi ý" theo ngữ nghĩa, và nhà tuyển dụng xếp hạng hồ sơ 
 - Còn sót: PDF hệ thống CV-045 (không có mục kinh nghiệm, bố cục bị coi là đảo nên
   số tháng để trống thay vì 0), vài kỹ năng viết khác danh mục, 2 PDF TopCV không
   nhận được chức danh.
+
+</details>
+<details><summary>Ghi chú GĐ 4 (bản 3)</summary>
+
+- Trang "Việc làm phù hợp" và trang lưu CV xếp tin theo chiến lược `semantic-v1`
+  (`apps/matching/selectors/recommendations.py`): tìm tin gần vector toàn văn của CV mặc định
+  nhất bằng pgvector (tìm chính xác), xếp lại 100 tin gần nhất theo mức liên quan (toàn văn,
+  chức danh), tỷ lệ kỹ năng trùng và tỉnh mong muốn, bỏ tin dưới 30 điểm. Không cần khai
+  nguyện vọng trước: có CV đã lưu là đủ.
+- Rơi về luật cũ khi cờ `ai_job_recommendation_semantic_enabled` tắt, ứng viên chưa đồng ý
+  nhận gợi ý AI, CV chưa có vector, hoặc không tin nào đủ gần. Email gợi ý và tin chèn trong
+  danh sách việc làm vẫn theo luật.
+- Kết quả chỉ mang lý do bằng lời; trang lưu CV bỏ các thẻ "+điểm" của luật cũ, hiện lý do.
+- `MatchDocument.is_current` (migration `matching.0002`): bản mới nhất của mỗi nguồn với cùng
+  phiên bản, để tìm kiếm không ra tin trùng hay nội dung lỗi thời. Hằng số phiên bản và mốc
+  hiệu chuẩn chuyển sang `apps/matching/domain/` vì selectors không được import services.
+- Ngưỡng 30 điểm đo trên 100 CV tổng hợp: ở 35 điểm khoảng 10% tin neo của CV khớp mạnh bị
+  cắt và 5% CV không còn gợi ý nào.
+- Đo trên nhãn yếu (`ml/scripts/evaluate_recommendations.py`): `semantic-v1` ngang luật cũ ở
+  việc đưa tin gốc của CV lên đầu (MRR 0,780 so với 0,795), hơn ở gợi ý tin cùng vị trí
+  (NDCG@10 0,830 so với 0,726; BM25 0,538).
+- Kiểm thử TC-18…22 (`apps/matching/tests/test_recommendations.py`), số truy vấn không tăng
+  theo số tin; sơ đồ tuần tự và hoạt động "37_goi_y_ngu_nghia" đã cập nhật theo mã.
+- Thực nghiệm HNSW (chỉ mục xấp xỉ trên 48 nghìn tin VietJobs) chưa làm; với vài nghìn tin,
+  tìm chính xác vẫn đủ nhanh.
 
 </details>
 

@@ -1152,6 +1152,16 @@
     "options": {}
   },
   {
+    "key": "ai_job_recommendation_semantic_enabled",
+    "label": "AI gợi ý việc làm theo nội dung CV",
+    "group": "ai",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": false,
+    "description": "Trang \"Việc làm phù hợp\" và trang lưu CV xếp tin theo độ gần ngữ nghĩa với CV (vector tính sẵn); tắt hoặc CV chưa có vector thì dùng gợi ý theo luật.",
+    "options": {}
+  },
+  {
     "key": "ai_daily_request_limit",
     "label": "Giới hạn request AI/ngày/người",
     "group": "ai",

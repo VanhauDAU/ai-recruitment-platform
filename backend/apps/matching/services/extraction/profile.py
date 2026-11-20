@@ -2,11 +2,11 @@
 
 from apps.cvs.services import months_to_experience_years, scrub_contacts
 
+from ...domain import EXTRACTOR_VERSION
 from .text import word_count
 
-# Đổi khi quy tắc trích xuất đổi: hồ sơ và vector cũ không được dùng lại.
-# Cấu trúc của hồ sơ: `profile.schema.json` (test kiểm mọi hồ sơ trích ra đều hợp lệ).
-EXTRACTOR_VERSION = 'extract-v3'
+__all__ = ['EXTRACTOR_VERSION']  # nơi khác vẫn import từ đây
+
 
 MAX_CV_CHARS = 20_000
 MAX_CV_CHUNKS = 40
