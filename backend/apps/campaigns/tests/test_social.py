@@ -852,6 +852,20 @@ class ThreadsConnectionTests(SocialFixtures, TestCase):
 
 @override_settings(THREADS_APP_ID='threads-app', THREADS_APP_SECRET='threads-secret')
 class ThreadsProviderTests(TestCase):
+    def test_the_registered_https_redirect_is_used_for_login_and_exchange(self):
+        with override_settings(
+            THREADS_OAUTH_REDIRECT_URI='https://localhost:5173/api/employer/social/threads/callback/'
+        ):
+            provider, session = self.provider(
+                {'access_token': 'short'}, {'access_token': 'long', 'expires_in': 10}
+            )
+            login = parse_qs(urlparse(provider.authorize_url('state')).query)
+            provider.exchange_code('code')
+
+        expected = 'https://localhost:5173/api/employer/social/threads/callback/'
+        self.assertEqual(login['redirect_uri'], [expected])
+        self.assertEqual(session.request.call_args_list[0].kwargs['data']['redirect_uri'], expected)
+
     def reply(self, payload, status=200):
         response = MagicMock(status_code=status)
         response.json.return_value = payload
