@@ -1,5 +1,8 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 
 class SiteSetting(models.Model):
@@ -189,10 +192,24 @@ class LinkItem(models.Model):
 class Banner(models.Model):
     """Một slide banner (vd: carousel đầu trang chủ), nội dung nhập qua admin.
 
-    Chưa có kho ảnh nên nền dùng gradient theo `theme` (đủ 3 tông đang có sẵn
-    trên giao diện); khi có ảnh thật, `image_url` sẽ được ưu tiên hơn theme.
-    `placement` để tái dùng model này cho carousel ở trang khác sau này.
+    ``kind`` quyết định cách dựng slide:
+
+    - ``image``: cả slide là ảnh đã thiết kế sẵn (nút nằm trong ảnh), bấm vào
+      đâu cũng mở ``cta_url``; ``title`` chỉ là tên nội bộ dùng làm alt/tooltip.
+    - ``promo``: bố cục chữ + ảnh minh họa tùy chọn trên nền gradient ``theme``.
+    - ``company``: nhà tuyển dụng nổi bật, nội dung lấy từ ``company`` thật.
+    - ``ai``: gợi ý việc làm bằng AI; ứng viên đăng nhập thấy số việc phù hợp,
+      khách thấy nội dung nhập ở đây.
+
+    ``starts_at``/``ends_at`` hẹn giờ chạy; ``placement`` để tái dùng model cho
+    banner ở trang khác.
     """
+
+    class Kind(models.TextChoices):
+        IMAGE = 'image', 'Ảnh + link'
+        PROMO = 'promo', 'Bố cục chữ'
+        COMPANY = 'company', 'Nhà tuyển dụng nổi bật'
+        AI = 'ai', 'Gợi ý việc làm AI'
 
     class Theme(models.TextChoices):
         GREEN = 'green', 'Xanh lá (thương hiệu)'
@@ -214,10 +231,19 @@ class Banner(models.Model):
     placement = models.CharField(
         max_length=30, choices=Placement.choices, default=Placement.HOME_HERO
     )
+    kind = models.CharField(max_length=20, choices=Kind.choices, default=Kind.PROMO)
+    company = models.ForeignKey(
+        'employers.Company',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='+',
+        help_text='Bắt buộc với slide nhà tuyển dụng; với slide ảnh là đích mặc định của link',
+    )
     eyebrow = models.CharField(
         max_length=100, blank=True, help_text='Nhãn nhỏ phía trên tiêu đề, vd: TUYỂN DỤNG GẤP'
     )
-    title = models.CharField(max_length=200)
+    title = models.CharField(max_length=200, blank=True)
     subtitle = models.CharField(max_length=300, blank=True)
     image_url = models.TextField(
         blank=True, help_text='Để trống để dùng nền gradient theo Theme bên dưới'
@@ -235,15 +261,45 @@ class Banner(models.Model):
     cta_secondary_url = models.CharField(max_length=300, blank=True)
     order = models.PositiveSmallIntegerField(default=0)
     is_active = models.BooleanField(default=True)
+    starts_at = models.DateTimeField(null=True, blank=True)
+    ends_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['placement', 'order']
+        ordering = ['placement', 'order', 'id']
         verbose_name = 'Banner'
         verbose_name_plural = 'Banner'
 
     def __str__(self):
-        return self.title
+        return self.title or (self.company.display_name if self.company_id else self.kind)
+
+    def clean(self):
+        errors = {}
+        if self.kind == self.Kind.COMPANY and not self.company_id:
+            errors['company'] = _('Chọn công ty cho slide nhà tuyển dụng.')
+        if self.kind == self.Kind.IMAGE:
+            if not self.image_url:
+                errors['image_url'] = _('Slide ảnh cần ảnh banner.')
+            if not self.cta_url and not self.company_id:
+                errors['cta_url'] = _('Slide ảnh cần link hoặc công ty để mở khi bấm.')
+        if self.kind != self.Kind.COMPANY and not self.title.strip():
+            errors['title'] = _('Nhập tiêu đề banner.')
+        if self.starts_at and self.ends_at and self.ends_at <= self.starts_at:
+            errors['ends_at'] = _('Thời điểm kết thúc phải sau thời điểm bắt đầu.')
+        if errors:
+            raise ValidationError(errors)
+
+    def schedule_state(self, now=None):
+        """``off`` | ``scheduled`` | ``expired`` | ``running`` tại thời điểm ``now``."""
+        if not self.is_active:
+            return 'off'
+        now = now or timezone.now()
+        if self.starts_at and self.starts_at > now:
+            return 'scheduled'
+        if self.ends_at and self.ends_at <= now:
+            return 'expired'
+        return 'running'
 
 
 class Feedback(models.Model):

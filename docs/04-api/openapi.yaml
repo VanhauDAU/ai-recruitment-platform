@@ -6783,6 +6783,156 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
+  /api/admin/site/banners/:
+    get:
+      operationId: admin_site_banners_list
+      summary: 'Admin: danh sách banner theo vị trí'
+      parameters:
+      - in: query
+        name: placement
+        schema:
+          type: string
+          enum:
+          - blog_inline
+          - blog_sidebar
+          - home_hero
+          - job_detail_sidebar
+          - job_empty
+          - job_list_inline
+      tags:
+      - site-banners-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminBanner'
+          description: ''
+    post:
+      operationId: admin_site_banners_create
+      summary: 'Admin: tạo banner'
+      tags:
+      - site-banners-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BannerWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BannerWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BannerWriteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminBanner'
+          description: ''
+  /api/admin/site/banners/{id}/:
+    patch:
+      operationId: admin_site_banners_partial_update
+      summary: 'Admin: sửa banner'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - site-banners-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBannerWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedBannerWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBannerWriteRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminBanner'
+          description: ''
+    delete:
+      operationId: admin_site_banners_destroy
+      summary: 'Admin: xóa banner'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - site-banners-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/admin/site/banners/images/:
+    post:
+      operationId: admin_site_banners_images_create
+      description: Kiểm tra theo vị trí và loại slide (slide ảnh trang chủ cần tỉ
+        lệ 8:3).
+      summary: 'Admin: tải ảnh banner'
+      tags:
+      - site-banners-admin
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BannerImageUploadRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/admin/site/banners/reorder/:
+    post:
+      operationId: admin_site_banners_reorder_create
+      summary: 'Admin: sắp lại thứ tự banner của một vị trí'
+      tags:
+      - site-banners-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BannerReorderRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BannerReorderRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BannerReorderRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/admin/site/settings/:
     get:
       operationId: admin_site_settings_retrieve
@@ -14432,8 +14582,20 @@ paths:
   /api/public/site/banners/:
     get:
       operationId: public_site_banners_list
-      description: Banner đang bật, sắp theo order. Lọc theo ?placement=home_hero.
-      summary: Banner đang bật theo vị trí
+      description: Banner đang bật và trong lịch chạy, sắp theo order. Lọc theo ?placement=home_hero.
+      summary: Banner đang chạy theo vị trí
+      parameters:
+      - in: query
+        name: placement
+        schema:
+          type: string
+          enum:
+          - blog_inline
+          - blog_sidebar
+          - home_hero
+          - job_detail_sidebar
+          - job_empty
+          - job_list_inline
       tags:
       - site
       security:
@@ -15789,6 +15951,88 @@ components:
       - public_id
       - source
       - target_type
+    AdminBanner:
+      type: object
+      description: 'Bản quản trị: thêm đường dẫn ảnh gốc, lịch chạy và trạng thái
+        tính sẵn.'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        kind:
+          $ref: '#/components/schemas/BannerKindEnum'
+        eyebrow:
+          type: string
+          description: 'Nhãn nhỏ phía trên tiêu đề, vd: TUYỂN DỤNG GẤP'
+          maxLength: 100
+        title:
+          type: string
+          maxLength: 200
+        subtitle:
+          type: string
+          maxLength: 300
+        image_url:
+          type: string
+          readOnly: true
+        theme:
+          $ref: '#/components/schemas/BannerThemeEnum'
+        cta_label:
+          type: string
+          description: Để trống nếu banner không có nút bấm
+          maxLength: 100
+        cta_url:
+          type: string
+          maxLength: 300
+        cta_secondary_label:
+          type: string
+          description: Nút thứ hai (vd banner blog có 2 nút)
+          maxLength: 100
+        cta_secondary_url:
+          type: string
+          maxLength: 300
+        company:
+          allOf:
+          - $ref: '#/components/schemas/BannerCompany'
+          readOnly: true
+          nullable: true
+        placement:
+          $ref: '#/components/schemas/BannerPlacementEnum'
+        image_path:
+          type: string
+          readOnly: true
+        order:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        is_active:
+          type: boolean
+        starts_at:
+          type: string
+          format: date-time
+          nullable: true
+        ends_at:
+          type: string
+          format: date-time
+          nullable: true
+        schedule_state:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - company
+      - created_at
+      - id
+      - image_path
+      - image_url
+      - schedule_state
+      - updated_at
     AdminCampaign:
       type: object
       properties:
@@ -21436,6 +21680,8 @@ components:
         id:
           type: integer
           readOnly: true
+        kind:
+          $ref: '#/components/schemas/BannerKindEnum'
         eyebrow:
           type: string
           description: 'Nhãn nhỏ phía trên tiêu đề, vd: TUYỂN DỤNG GẤP'
@@ -21450,7 +21696,7 @@ components:
           type: string
           readOnly: true
         theme:
-          $ref: '#/components/schemas/ThemeEnum'
+          $ref: '#/components/schemas/BannerThemeEnum'
         cta_label:
           type: string
           description: Để trống nếu banner không có nút bấm
@@ -21458,10 +21704,185 @@ components:
         cta_url:
           type: string
           maxLength: 300
+        cta_secondary_label:
+          type: string
+          description: Nút thứ hai (vd banner blog có 2 nút)
+          maxLength: 100
+        cta_secondary_url:
+          type: string
+          maxLength: 300
+        company:
+          allOf:
+          - $ref: '#/components/schemas/BannerCompany'
+          readOnly: true
+          nullable: true
       required:
+      - company
       - id
       - image_url
-      - title
+    BannerCompany:
+      type: object
+      description: Phần công ty công khai mà slide nhà tuyển dụng cần.
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        company_name:
+          type: string
+          readOnly: true
+        trade_name:
+          type: string
+          readOnly: true
+        logo_url:
+          type: string
+          readOnly: true
+        cover_image_url:
+          type: string
+          readOnly: true
+        description_excerpt:
+          type: string
+          readOnly: true
+        headquarters:
+          type: string
+          readOnly: true
+        active_public_job_count:
+          type: integer
+          readOnly: true
+        industries_detail:
+          type: array
+          items:
+            $ref: '#/components/schemas/Industry'
+          readOnly: true
+      required:
+      - active_public_job_count
+      - company_name
+      - cover_image_url
+      - description_excerpt
+      - headquarters
+      - industries_detail
+      - logo_url
+      - public_id
+      - slug
+      - trade_name
+    BannerImageUploadRequest:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+        placement:
+          $ref: '#/components/schemas/BannerPlacementEnum'
+        kind:
+          $ref: '#/components/schemas/BannerKindEnum'
+      required:
+      - file
+      - kind
+      - placement
+    BannerKindEnum:
+      enum:
+      - image
+      - promo
+      - company
+      - ai
+      type: string
+      description: |-
+        * `image` - Ảnh + link
+        * `promo` - Bố cục chữ
+        * `company` - Nhà tuyển dụng nổi bật
+        * `ai` - Gợi ý việc làm AI
+    BannerPlacementEnum:
+      enum:
+      - home_hero
+      - job_detail_sidebar
+      - blog_sidebar
+      - blog_inline
+      - job_empty
+      - job_list_inline
+      type: string
+      description: |-
+        * `home_hero` - Carousel trang chủ
+        * `job_detail_sidebar` - Thẻ ảnh sidebar trang chi tiết việc làm
+        * `blog_sidebar` - Banner sidebar bài viết cẩm nang
+        * `blog_inline` - Banner chèn giữa trang cẩm nang
+        * `job_empty` - Banner trang việc làm khi không có kết quả
+        * `job_list_inline` - Banner chèn giữa danh sách việc làm
+    BannerReorderRequest:
+      type: object
+      properties:
+        placement:
+          $ref: '#/components/schemas/BannerPlacementEnum'
+        ids:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+      required:
+      - ids
+      - placement
+    BannerThemeEnum:
+      enum:
+      - green
+      - blue
+      - orange
+      type: string
+      description: |-
+        * `green` - Xanh lá (thương hiệu)
+        * `blue` - Xanh dương
+        * `orange` - Cam - hồng
+    BannerWriteRequest:
+      type: object
+      description: Dữ liệu ghi; ràng buộc theo loại slide nằm ở ``Banner.clean``.
+      properties:
+        placement:
+          $ref: '#/components/schemas/BannerPlacementEnum'
+        kind:
+          $ref: '#/components/schemas/BannerKindEnum'
+        company:
+          type: string
+          minLength: 1
+          nullable: true
+        eyebrow:
+          type: string
+          maxLength: 100
+        title:
+          type: string
+          maxLength: 200
+        subtitle:
+          type: string
+          maxLength: 300
+        image_url:
+          type: string
+        theme:
+          $ref: '#/components/schemas/BannerThemeEnum'
+        cta_label:
+          type: string
+          maxLength: 100
+        cta_url:
+          type: string
+          maxLength: 300
+        cta_secondary_label:
+          type: string
+          maxLength: 100
+        cta_secondary_url:
+          type: string
+          maxLength: 300
+        is_active:
+          type: boolean
+        starts_at:
+          type: string
+          format: date-time
+          nullable: true
+        ends_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - kind
+      - placement
     Benefit:
       type: object
       properties:
@@ -31540,6 +31961,53 @@ components:
         revision_token:
           type: integer
           minimum: 1
+    PatchedBannerWriteRequest:
+      type: object
+      description: Dữ liệu ghi; ràng buộc theo loại slide nằm ở ``Banner.clean``.
+      properties:
+        placement:
+          $ref: '#/components/schemas/BannerPlacementEnum'
+        kind:
+          $ref: '#/components/schemas/BannerKindEnum'
+        company:
+          type: string
+          minLength: 1
+          nullable: true
+        eyebrow:
+          type: string
+          maxLength: 100
+        title:
+          type: string
+          maxLength: 200
+        subtitle:
+          type: string
+          maxLength: 300
+        image_url:
+          type: string
+        theme:
+          $ref: '#/components/schemas/BannerThemeEnum'
+        cta_label:
+          type: string
+          maxLength: 100
+        cta_url:
+          type: string
+          maxLength: 300
+        cta_secondary_label:
+          type: string
+          maxLength: 100
+        cta_secondary_url:
+          type: string
+          maxLength: 300
+        is_active:
+          type: boolean
+        starts_at:
+          type: string
+          format: date-time
+          nullable: true
+        ends_at:
+          type: string
+          format: date-time
+          nullable: true
     PatchedCampaignChannelRequest:
       type: object
       properties:
@@ -35763,16 +36231,6 @@ components:
           type: string
           minLength: 1
           pattern: ^#[0-9A-Fa-f]{6}$
-    ThemeEnum:
-      enum:
-      - green
-      - blue
-      - orange
-      type: string
-      description: |-
-        * `green` - Xanh lá (thương hiệu)
-        * `blue` - Xanh dương
-        * `orange` - Cam - hồng
     ThemePresetEnum:
       enum:
       - brand

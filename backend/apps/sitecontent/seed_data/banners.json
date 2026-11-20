@@ -1,6 +1,17 @@
 [
   {
     "placement": "home_hero",
+    "kind": "ai",
+    "title": "Tải CV lên – AI gợi ý việc làm hợp với bạn",
+    "eyebrow": "GỢI Ý BẰNG AI",
+    "subtitle": "AI đọc kỹ năng và kinh nghiệm trong CV để tìm tin tuyển dụng phù hợp nhất.",
+    "theme": "green",
+    "cta_label": "Tải CV lên",
+    "cta_url": "/tai-cv-len",
+    "order": 0
+  },
+  {
+    "placement": "home_hero",
     "title": "Lập trình viên & Kỹ sư AI",
     "eyebrow": "TUYỂN DỤNG GẤP",
     "subtitle": "Mức lương hấp dẫn, môi trường năng động, cơ hội thăng tiến nhanh.",
@@ -15,8 +26,8 @@
     "eyebrow": "MIỄN PHÍ",
     "subtitle": "Chỉ mất 5 phút để có CV ấn tượng, sẵn sàng ứng tuyển.",
     "theme": "orange",
-    "cta_label": "",
-    "cta_url": "",
+    "cta_label": "Chọn mẫu CV",
+    "cta_url": "/mau-cv",
     "order": 2
   },
   {

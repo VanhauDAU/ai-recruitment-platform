@@ -308,7 +308,7 @@ Quy tắc chi tiết: [đặc tả trung tâm trợ giúp](../01-phan-tich/dac-t
 | --- | --- |
 | `SiteSetting` | Kho key-value (`value` JSON) theo `group`/`value_type`, cho mọi cấu hình admin sửa không cần deploy. Danh sách key: [cấu hình site settings](../05-huong-dan/cau-hinh-site-settings.md). |
 | `LinkGroup`, `LinkItem` | Cụm link footer (nhập tay hoặc tự sinh từ locations/categories). |
-| `Banner` | Banner theo `placement` (home_hero, job_detail_sidebar, blog_sidebar, blog_inline, job_empty, job_list_inline…), CTA chính/phụ. |
+| `Banner` | Banner theo `placement` (home_hero, job_detail_sidebar, blog_sidebar, blog_inline, job_empty, job_list_inline…), CTA chính/phụ. `kind` (`image` ảnh + link, `promo` bố cục chữ, `company` nhà tuyển dụng nổi bật, `ai` gợi ý việc làm), `company` (FK `employers.Company`, `SET_NULL`), lịch `starts_at`/`ends_at`. API công khai chỉ trả banner đang bật, trong lịch và (với `company`) công ty không bị giữ nội dung. |
 | `Feedback` | Góp ý từ nút nổi; khách được gửi (`user` null), admin xử lý bằng `status`. |
 | `Announcement` | Identity thông báo: `lifecycle_state` draft/published/paused/archived, `active_revision`, `revision_token`, `dismissal_version`. |
 | `AnnouncementRevision` | Nội dung + targeting (surface, audience, role, path prefix), lịch, ưu tiên, dismiss mode, theme; check lịch hợp lệ, `critical` phải có thời điểm kết thúc. |

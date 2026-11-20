@@ -3,8 +3,11 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import BlogSidebar from './BlogSidebar'
 
-vi.mock('@/entities/system/site-settings', () => ({
+vi.mock('@/entities/content/banner', () => ({
   getBanners: vi.fn(() => Promise.resolve([])),
+}))
+
+vi.mock('@/entities/system/site-settings', () => ({
   settingText: (value, fallback) => value || fallback,
   useSiteSettings: () => ({
     settings: { blog_support_docs_title: 'Tài liệu hỗ trợ tìm việc' },

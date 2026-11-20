@@ -14,7 +14,6 @@ from apps.accounts.selectors import audit_logs_queryset
 from common.storage.media import media_url_from_value
 
 from ...selectors import (
-    active_banners,
     knowledgebase_public_enabled,
     knowledgebase_search_index_enabled,
     resolved_link_groups,
@@ -24,7 +23,6 @@ from ...selectors.system_parameters import system_parameters
 from ...services import public_setting_values, submit_feedback, update_site_settings
 from ..serializers import (
     AdminSiteSettingSerializer,
-    BannerSerializer,
     FeedbackSerializer,
     LinkGroupSerializer,
 )
@@ -207,18 +205,6 @@ class LinkGroupListView(generics.ListAPIView):
 
     def get_queryset(self):
         return resolved_link_groups(placement=self.request.query_params.get('placement'))
-
-
-@extend_schema(summary='Banner đang bật theo vị trí', tags=['site'])
-class BannerListView(generics.ListAPIView):
-    """Banner đang bật, sắp theo order. Lọc theo ?placement=home_hero."""
-
-    serializer_class = BannerSerializer
-    permission_classes = [permissions.AllowAny]
-    pagination_class = None
-
-    def get_queryset(self):
-        return active_banners(placement=self.request.query_params.get('placement'))
 
 
 @extend_schema(summary='Gửi góp ý sản phẩm', tags=['site'])

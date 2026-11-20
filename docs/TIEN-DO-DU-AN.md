@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Làm lại carousel banner trang chủ](#làm-lại-carousel-banner-trang-chủ-2026-11-21) | 🟨 Xong trên nhánh `feat/home-hero-banners`, chưa mở PR |
 | [Làm lại trang Cấu hình hệ thống (ADR-0026)](#làm-lại-trang-cấu-hình-hệ-thống-adr-0026-2026-11-21) | 🟨 GĐ1–GĐ4 đã gộp (#294–#298); GĐ5 trên nhánh `feat/settings-recruiting` |
 | [Chốt luồng FAQ/hướng dẫn và blog: Nháp → Xuất bản (ADR-0024)](#chốt-luồng-nội-dung-nháp--xuất-bản-adr-0024-2026-11-20) | ✅ Gộp vào `dev` (#272) |
 | [Tổ chức lại sidebar quản trị](#tổ-chức-lại-sidebar-quản-trị-2026-11-20) | ✅ Gộp vào `dev` (#270); gỡ khối "Hàng chờ quản trị" ở trang Người dùng: PR #271, chờ gộp |
@@ -39,6 +40,22 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Làm lại carousel banner trang chủ (2026-11-21)
+
+Carousel cạnh danh mục nghề trước đây chỉ có slide số liệu viết cứng và banner chữ
+nhập qua Django admin. Nay:
+
+- `Banner` có `kind` (`image`, `promo`, `company`, `ai`), FK công ty và lịch
+  `starts_at`/`ends_at` (migration `sitecontent.0007`).
+- Trang quản trị **Banner quảng bá** (`/admin/app/banners`): lọc theo vị trí, kéo thả
+  hoặc nút lên/xuống để sắp thứ tự, bật/tắt, xem trước bằng đúng slide trang chủ, tải
+  ảnh có kiểm tra tỉ lệ 8:3, ghi audit mọi thao tác.
+- Slide nhà tuyển dụng lấy số tin đang tuyển thật; slide AI hiện số việc hợp CV cho
+  ứng viên (dùng chung query với khối gợi ý, không gọi API thêm).
+- Carousel dừng khi focus, tắt tự chạy khi giảm chuyển động, vuốt trên cảm ứng; mobile
+  hiện carousel khung 2:1 phía trên danh mục (trước đây bị ẩn).
+- Hướng dẫn nội dung: [cau-hinh-site-settings.md](05-huong-dan/cau-hinh-site-settings.md#banner-quảng-bá-trang-quản-trị-adminappbanners).
 
 ## Làm lại trang Cấu hình hệ thống (ADR-0026, 2026-11-21)
 

@@ -4,18 +4,16 @@ import { Skeleton } from 'antd'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { getCandidateJobRecommendations, jobKeys } from '@/entities/job/job'
-import { useSession } from '@/entities/account/session'
 import { useHideJobRecommendation } from '@/features/main/job/hide-job-recommendation'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import { m } from '@/shared/config/i18n'
 import { groupRecommendationJobs } from '../model/recommendation-reasons'
+import { MATCHING_PATH, useHomeRecommendationQuery } from '../model/use-home-recommendation-summary'
 import AccountRecommendations from './AccountRecommendations'
 import CandidateRecommendationCard from './CandidateRecommendationCard'
 
 const ACCOUNT_PAGE_SIZE = 10
-const HOME_PAGE_SIZE = 8
 const HOME_ROTATE_MS = 8000
-const MATCHING_PATH = '/tai-khoan/viec-lam-phu-hop'
 function HomeLoading() {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" aria-label="Đang tải gợi ý việc làm">
@@ -128,28 +126,27 @@ function HomeRecommendations({ data, hiddenIds, hide, pendingIds, query }) {
 }
 
 export default function CandidateJobRecommendations({ variant = 'account' }) {
-  const home = variant === 'home'
-  const { isAuthenticated, user } = useSession()
-  const [page, setPage] = useState(1)
+  return variant === 'home' ? <HomeVariant /> : <AccountVariant />
+}
+
+function HomeVariant() {
   // Trang chủ không chờ ứng viên khai nhu cầu: khi gợi ý theo CV bật, CV đã lưu là đủ.
-  const enabled = !home || Boolean(isAuthenticated && user?.role === 'candidate')
-  const params = useMemo(
-    () => ({ page: home ? 1 : page, page_size: home ? HOME_PAGE_SIZE : ACCOUNT_PAGE_SIZE }),
-    [home, page],
-  )
+  const { enabled, query } = useHomeRecommendationQuery()
+  const hidden = useHideJobRecommendation()
+  if (!enabled) return null
+  return <HomeRecommendations data={query.data} query={query} {...hidden} />
+}
+
+function AccountVariant() {
+  const [page, setPage] = useState(1)
+  const params = useMemo(() => ({ page, page_size: ACCOUNT_PAGE_SIZE }), [page])
   const query = useQuery({
     queryKey: jobKeys.candidateRecommendations(params),
     queryFn: () => getCandidateJobRecommendations(params),
-    enabled,
-    placeholderData: home ? undefined : keepPreviousData,
+    placeholderData: keepPreviousData,
     retry: 1,
   })
   const hidden = useHideJobRecommendation()
-
-  if (home) {
-    if (!enabled) return null
-    return <HomeRecommendations data={query.data} query={query} {...hidden} />
-  }
   return (
     <AccountRecommendations
       data={query.data}
