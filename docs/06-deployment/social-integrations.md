@@ -163,11 +163,18 @@ Meta từ chối, hoặc token đã quá hạn, kết nối chuyển "Hết hạ
    `threads_delete`.
 2. Ở **Cài đặt** của use case Threads, chép **Threads App ID** và **Threads App
    secret** (khác App ID của Facebook).
-3. Khai **Redirect Callback URL** đúng từng ký tự:
-   `<FRONTEND_URL>/api/employer/social/threads/callback/` (máy cục bộ là
-   `http://localhost:5173/api/employer/social/threads/callback/`). Tài liệu
-   Meta không nói rõ có nhận `http://localhost` hay không. Nếu bị từ chối, dùng
-   một đường hầm HTTPS và đặt `FRONTEND_URL` theo đó.
+3. Ở mục **Cài đặt** của use case Threads, ô **Chuyển hướng URL gọi lại**: gõ
+   địa chỉ rồi bấm Tab để nó thành một mục (có dấu ×), sau đó bấm **Lưu**.
+   Threads **chỉ nhận HTTPS**; `http://localhost` bị từ chối với lỗi "Phải
+   dùng HTTPS cho mọi URI chuyển hướng".
+   - Production: `https://<miền>/api/employer/social/threads/callback/`.
+   - Máy cục bộ: khai `https://localhost:5173/api/employer/social/threads/callback/`
+     (Meta nhận địa chỉ này), rồi đặt
+     `THREADS_OAUTH_REDIRECT_URI` bằng đúng địa chỉ đó trong `backend/.env`.
+     Khi Threads chuyển về, trình duyệt báo lỗi vì máy dev không chạy HTTPS.
+     Sửa `https` thành `http` trên thanh địa chỉ rồi bấm Enter, ProCV sẽ hoàn
+     tất kết nối. Có thể làm vậy vì lúc đổi mã, ProCV gửi đúng địa chỉ
+     `https://...` đã khai.
 4. **Người thử nghiệm.** Vào **Vai trò trong ứng dụng → Vai trò → Thêm người →
    Người thử nghiệm Threads**, nhập tài khoản Threads. Chủ tài khoản chấp nhận
    lời mời trong app Threads: **Cài đặt → Tài khoản → Quyền truy cập trang
@@ -208,8 +215,9 @@ tức phải được LinkedIn duyệt Community Management API, nên chưa làm
    using OpenID Connect**. Hai sản phẩm này tự duyệt.
 3. Ở tab **Auth**, mục **Authorized redirect URLs**, thêm
    `<FRONTEND_URL>/api/employer/social/linkedin/callback/`. Tài liệu LinkedIn
-   yêu cầu HTTPS và không nói về `localhost`. Nếu LinkedIn không nhận
-   `http://localhost:5173/...`, dùng một đường hầm HTTPS.
+   yêu cầu HTTPS. Nếu LinkedIn không nhận `http://localhost:5173/...`, làm như
+   Threads: khai `https://localhost:5173/...`, đặt `LINKEDIN_OAUTH_REDIRECT_URI`
+   bằng đúng địa chỉ đó, rồi khi được chuyển về thì sửa `https` thành `http`.
 4. Trong `backend/.env`, thêm `linkedin` vào `CAMPAIGN_SOCIAL_LIVE_NETWORKS`.
    Nếu dùng app riêng, điền thêm `LINKEDIN_SOCIAL_CLIENT_ID` và
    `LINKEDIN_SOCIAL_CLIENT_SECRET`; để trống thì ProCV dùng lại app đăng nhập.

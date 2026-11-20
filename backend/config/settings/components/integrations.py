@@ -134,11 +134,15 @@ FACEBOOK_OAUTH_REDIRECT_URI = config(
 THREADS_APP_ID = config('THREADS_APP_ID', default='')
 THREADS_APP_SECRET = config('THREADS_APP_SECRET', default='')
 THREADS_GRAPH_API_VERSION = config('THREADS_GRAPH_API_VERSION', default='v1.0')
+# Mặc định {FRONTEND_URL}/api/employer/social/threads/callback/. Threads chỉ nhận
+# HTTPS: máy cục bộ khai https://localhost:5173/... (xem social-integrations.md).
+THREADS_OAUTH_REDIRECT_URI = config('THREADS_OAUTH_REDIRECT_URI', default='')
 # LinkedIn: app có sản phẩm "Share on LinkedIn" và "Sign In with LinkedIn using
 # OpenID Connect". Mặc định dùng lại app đăng nhập LinkedIn (OAUTH_LINKEDIN_*).
 LINKEDIN_SOCIAL_CLIENT_ID = config('LINKEDIN_SOCIAL_CLIENT_ID', default='')
 LINKEDIN_SOCIAL_CLIENT_SECRET = config('LINKEDIN_SOCIAL_CLIENT_SECRET', default='')
 LINKEDIN_API_VERSION = config('LINKEDIN_API_VERSION', default='202611')
+LINKEDIN_OAUTH_REDIRECT_URI = config('LINKEDIN_OAUTH_REDIRECT_URI', default='')
 CAMPAIGN_SOCIAL_TOKEN_ENCRYPTION_KEY = config('CAMPAIGN_SOCIAL_TOKEN_ENCRYPTION_KEY', default='')
 CAMPAIGN_SOCIAL_HTTP_TIMEOUT_SECONDS = config(
     'CAMPAIGN_SOCIAL_HTTP_TIMEOUT_SECONDS', default=10.0, cast=float
