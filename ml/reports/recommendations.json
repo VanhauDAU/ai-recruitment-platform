@@ -1,0 +1,35 @@
+{
+  "BM25 (CV → tin)": {
+    "cvs": 100,
+    "anchored_cvs": 80,
+    "recall@1": 0.35,
+    "recall@5": 0.5375,
+    "recall@10": 0.6125,
+    "mrr": 0.4426855692270938,
+    "precision@5": 0.27,
+    "ndcg@10": 0.5379910421504349,
+    "coverage": 1.0
+  },
+  "Luật `profile-rule-v2`": {
+    "cvs": 100,
+    "anchored_cvs": 80,
+    "recall@1": 0.675,
+    "recall@5": 0.95,
+    "recall@10": 0.975,
+    "mrr": 0.7947085084033614,
+    "precision@5": 0.362,
+    "ndcg@10": 0.7261430620227454,
+    "coverage": 1.0
+  },
+  "`semantic-v1` (e5-base gốc)": {
+    "cvs": 100,
+    "anchored_cvs": 80,
+    "recall@1": 0.65,
+    "recall@5": 0.95,
+    "recall@10": 0.975,
+    "mrr": 0.7799918831168832,
+    "precision@5": 0.43,
+    "ndcg@10": 0.8300327466554713,
+    "coverage": 1.0
+  }
+}

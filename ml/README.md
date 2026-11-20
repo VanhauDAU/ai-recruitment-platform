@@ -120,6 +120,9 @@ liệu cần Docker Compose đang chạy; mặc định chỉ chạy thử, thê
     đúng mã đang phục vụ ứng viên. Phần test chỉ chạy một lần ở giai đoạn nghiệm
     thu (`--split test --final`).
 
+11. `scripts/evaluate_recommendations.py`: đo gợi ý việc làm (CV → tin) trên nhãn yếu,
+    so `semantic-v1` với luật `profile-rule-v2` và BM25 → `reports/recommendations.md`.
+
 Các script chạy lại an toàn: bỏ qua phần đã có.
 
 ## Sau khi dựng lại DB local

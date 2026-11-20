@@ -300,6 +300,29 @@ xác trích xuất (PDF bố cục lạ: kỹ năng 98,9%, kinh nghiệm 100%, h
 ngữ 94% trên những gì có in trong tệp) và baseline ở `ml/reports/`. Lệnh `matching_export_dataset` (chỉ đọc) xuất hồ sơ
 cho các script ở `ml/`.
 
+Gợi ý việc làm theo ngữ nghĩa (`semantic-v1`, `apps/matching/selectors/recommendations.py`,
+kế hoạch bản 3 GĐ 4): vector toàn văn của CV mặc định được so với vector toàn văn của mọi tin
+đang công khai mà ứng viên chưa ứng tuyển hay ẩn, bằng khoảng cách cosine của pgvector (tìm
+chính xác, không dùng chỉ mục xấp xỉ). 100 tin gần nhất được xếp lại:
+
+    điểm = 0,75 · mức liên quan + 0,25 · tỷ lệ kỹ năng của tin mà CV có  (+0,05 nếu đúng tỉnh mong muốn)
+
+Mức liên quan là trung bình điểm toàn văn và điểm chức danh, quy đổi bằng đúng mốc hiệu
+chuẩn của "Xem độ phù hợp". Tin dưới 30 điểm bị bỏ. Kết quả chỉ mang lý do bằng lời ("Trùng
+kỹ năng: …", "Vị trí gần với CV của bạn"), không kèm điểm. Không cần nạp mô hình: vector đã
+tính sẵn khi lưu CV và tin; chỉ dùng bản hiện hành (`MatchDocument.is_current`). Cờ tắt, chưa
+đồng ý, CV chưa có vector hoặc không tin nào đủ gần thì dùng bộ gợi ý theo luật.
+
+Đo trên nhãn yếu (100 CV tổng hợp × 100 tin thật, `ml/reports/recommendations.md`):
+
+| Phương án | Tin neo ở hạng 1 | Trong top 10 | MRR | Precision@5 cùng vị trí | NDCG@10 cùng vị trí |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| BM25 | 0,350 | 0,613 | 0,443 | 0,270 | 0,538 |
+| Luật `profile-rule-v2` | 0,675 | 0,975 | 0,795 | 0,362 | 0,726 |
+| `semantic-v1` (e5-base gốc) | 0,650 | 0,975 | 0,780 | 0,430 | 0,830 |
+
+Ngang luật ở việc đưa đúng tin gốc của CV lên đầu, hơn ở việc gợi ý các tin cùng vị trí khác.
+
 Luồng phân tích (`apps/matching/services/`):
 
 | Bước | Tệp | Việc |

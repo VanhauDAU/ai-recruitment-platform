@@ -8,6 +8,15 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-20
 
+#### Added — Việc làm gợi ý theo ngữ nghĩa (kế hoạch bản 3, GĐ 4)
+
+- "Việc làm phù hợp" và trang lưu CV xếp tin theo độ gần ngữ nghĩa với CV (`semantic-v1`,
+  pgvector, vector tính sẵn); rơi về gợi ý theo luật khi chưa có vector hoặc cờ tắt.
+- Cài đặt mới `ai_job_recommendation_semantic_enabled` (mặc định bật).
+- `MatchDocument.is_current` (**migration** `matching.0002`, điền cờ cho dữ liệu cũ).
+- Trang lưu CV hiện lý do gợi ý thay cho thẻ "+điểm".
+- `matching_evaluate_recommendations` và `ml/scripts/evaluate_recommendations.py`.
+
 #### Changed — AI đối sánh: trích xuất `extract-v3` (kế hoạch bản 3, GĐ 2)
 
 - PDF được đọc theo vị trí chữ (`apps/cvs/services/pdf_layout.py`): mẫu CV hai cột
