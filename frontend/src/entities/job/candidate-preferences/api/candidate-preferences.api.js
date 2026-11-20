@@ -22,3 +22,16 @@ export async function updateRecruiterVisibility(payload) {
   const { data } = await api.patch('/candidate/recruiter-visibility/', payload)
   return data
 }
+
+/** Đồng ý gợi ý việc làm bằng AI (công tắc ở thanh bên tài khoản); không đụng nhu cầu công việc. */
+export const AI_RECOMMENDATION_QUERY_KEY = ['candidate', 'ai-recommendation']
+
+export async function getAiRecommendation() {
+  const { data } = await api.get('/candidate/ai-recommendation/')
+  return data
+}
+
+export async function updateAiRecommendation(payload) {
+  const { data } = await api.patch('/candidate/ai-recommendation/', payload)
+  return data
+}
