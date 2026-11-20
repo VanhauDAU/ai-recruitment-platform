@@ -37,7 +37,9 @@ _BAND_MONTHS = {
 MAX_SUBHEADING_WORDS = 5
 _PROTECTED_ATTRIBUTE = re.compile(
     r'(?<!\w)(?:giới tính|độ tuổi|tuổi|ngoại hình|chiều cao|cân nặng|hôn nhân'
-    r'|gender|age|years old|appearance|height|marital)(?!\w)',
+    r'|gender|age|years old|appearance|height|marital)(?!\w)'
+    # Số đo cơ thể ghi thẳng ("nữ cao từ 158cm", "nặng dưới 60 kg").
+    r'|\d{2,3}\s*(?:cm|kg)(?!\w)',
     re.IGNORECASE,
 )
 
@@ -106,17 +108,26 @@ def _provinces(job):
     return list(provinces.values())
 
 
-def job_profile(job):
-    """`job` cần nạp sẵn kỹ năng, ngoại ngữ, địa điểm (`models.jobs_for_profile`)."""
-    description = html_plain_text(job.description)
-    requirements = html_plain_text(job.requirements)
-    text = '\n'.join(part for part in (job.title, description, requirements) if part)
+def job_text_chunks(title, description, requirements):
+    """Chunk của một tin từ văn bản thuần: tên vị trí, từng câu yêu cầu, từng câu mô tả.
+
+    Dùng cho `job_profile` và cho tin nằm ngoài DB (dữ liệu huấn luyện), để văn bản
+    đưa vào mô hình lúc huấn luyện và lúc chạy được dựng bằng cùng một hàm.
+    """
+    text = '\n'.join(part for part in (title, description, requirements) if part)
     if len(text) < MIN_JOB_TEXT_CHARS:
         raise ExtractionError('job_text_too_short')
-
-    entries = [('title', role_title(job.title))]
+    entries = [('title', role_title(title))]
     entries += [('requirement', sentence) for sentence in _job_sentences(requirements)]
     entries += [('description', sentence) for sentence in _job_sentences(description)]
+    return make_chunks(entries, MAX_JOB_CHUNKS, priority=JOB_SECTION_PRIORITY), text
+
+
+def job_profile(job):
+    """`job` cần nạp sẵn kỹ năng, ngoại ngữ, địa điểm (`models.jobs_for_profile`)."""
+    chunks, text = job_text_chunks(
+        job.title, html_plain_text(job.description), html_plain_text(job.requirements)
+    )
     skills = _skills(job)
     band = job.experience_years
     present = {
@@ -125,7 +136,6 @@ def job_profile(job):
         'education': bool(job.education_level),
         'position_level': bool(job.position_level),
     }
-    chunks = make_chunks(entries, MAX_JOB_CHUNKS, priority=JOB_SECTION_PRIORITY)
     # Tên từng kỹ năng được đếm cũng là một chunk: bước chấm so nó với các câu của
     # CV để nhận kỹ năng viết khác tên (khớp ngữ nghĩa). Không tính vào giới hạn.
     chunks += [

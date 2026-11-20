@@ -17,6 +17,9 @@ CV_DIR = DATA_DIR / 'cv'
 CV_INVENTORY = CV_DIR / 'cv_inventory.xlsx'
 SYNTHETIC_CV_DIR = CV_DIR / 'synthetic'
 CV_MANIFEST = SYNTHETIC_CV_DIR / 'manifest.json'
+# Kho CV huấn luyện (`generate_cvs.py --train`), neo vào tin ngoài tập vàng.
+TRAIN_CV_DIR = CV_DIR / 'train'
+TRAIN_CV_MANIFEST = TRAIN_CV_DIR / 'manifest.json'
 CV_PDF_SYSTEM_DIR = CV_DIR / 'pdf' / 'system'
 CV_PDF_TOPCV_DIR = CV_DIR / 'pdf' / 'topcv'
 
@@ -41,3 +44,6 @@ EVAL_DIR = DATA_DIR / 'eval'
 
 # Dữ liệu công khai tải về bằng `fetch_public.py`, kèm `SOURCES.md` (không commit).
 PUBLIC_DIR = DATA_DIR / 'public'
+
+# Bộ ba huấn luyện và tập dev (`build_train_pairs.py`), không commit.
+PAIRS_DIR = DATA_DIR / 'pairs'

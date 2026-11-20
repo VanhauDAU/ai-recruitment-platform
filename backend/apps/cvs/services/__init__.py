@@ -64,7 +64,12 @@ from .matching_profile import (
     months_to_experience_years,
 )
 from .moderation import admin_cv_content, lock_cv, unlock_cv
-from .operator_import import SYNTHETIC_EMAIL_DOMAIN, create_pdf_twins, import_cv_documents
+from .operator_import import (
+    SYNTHETIC_EMAIL_DOMAIN,
+    create_pdf_twins,
+    cv_content_from_generated,
+    import_cv_documents,
+)
 from .recruiter_search import withdraw_cvs_from_recruiter_search
 from .sharing import (
     CvSharePermissionError,
@@ -139,6 +144,7 @@ __all__ = [
     'is_unsaved_builder_baseline',
     'create_version',
     'create_pdf_twins',
+    'cv_content_from_generated',
     'import_cv_documents',
     'update_cv_metadata',
     'update_draft',

@@ -133,6 +133,21 @@ class FactsTests(SimpleTestCase):
             facts.education_level('Trường ĐH Kinh Tế, chuyên ngành Luật'), 'university'
         )
 
+    def test_requirement_kinds(self):
+        cases = {
+            'Thành thạo ReactJS, TypeScript và Redux.': 'skill',
+            'Có kinh nghiệm triển khai CI/CD trên AWS.': 'skill',
+            'Ít nhất 2 năm kinh nghiệm phát triển ReactJS.': 'years',
+            'At least 3 years of experience with Java.': 'years',
+            'Tốt nghiệp Đại học chuyên ngành CNTT.': 'education',
+            "Bachelor's degree in Computer Science.": 'education',
+            'Tiếng Anh giao tiếp tốt, ưu tiên IELTS 6.0.': 'language',
+            'Trung thực, chịu được áp lực công việc.': 'trait',
+        }
+        for text, kind in cases.items():
+            with self.subTest(text=text):
+                self.assertEqual(facts.requirement_kind(text), kind)
+
     def test_degree_keywords_match_whole_words_only(self):
         self.assertEqual(facts.education_level('Master of Science in AI'), 'postgraduate')
         self.assertEqual(

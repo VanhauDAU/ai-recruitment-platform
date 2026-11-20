@@ -11,6 +11,10 @@ Chạy từ thư mục gốc của repo, sau `generate_cvs.py`:
   (giống CV thật), tỷ lệ cố định theo mã CV nên chạy lại cho cùng kết quả.
 
 CV đã có trường `languages` được bỏ qua, nên chạy lại an toàn.
+
+`--train` bổ sung cho kho CV huấn luyện (`generate_cvs.py --train`): chỉ thêm mục
+ngoại ngữ (do script quyết định, không gọi mô hình). Hoạt động, giải thưởng, sở
+thích không ảnh hưởng tới đối sánh nên kho huấn luyện không cần.
 """
 
 import argparse
@@ -18,8 +22,8 @@ import json
 import random
 import urllib.request
 
-from generate_cvs import OLLAMA_URL, OUTPUT_DIR, has_foreign_script, load_jobs
-from paths import CV_MANIFEST
+from generate_cvs import OLLAMA_URL, has_foreign_script, load_jobs
+from paths import CV_MANIFEST, SYNTHETIC_CV_DIR, TRAIN_CV_DIR, TRAIN_CV_MANIFEST
 
 LEVELS = ['Cơ bản', 'Giao tiếp', 'Làm việc', 'Thành thạo', 'Bản ngữ']
 LEVELS_EN = {
@@ -144,29 +148,35 @@ def localized(languages, cv_language):
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument('--model', default='qwen2.5:7b')
+    parser.add_argument('--train', action='store_true', help='Kho CV huấn luyện: chỉ thêm ngoại ngữ.')
     options = parser.parse_args()
 
     jobs = {job['code']: job for job in load_jobs()}
-    manifest_path = CV_MANIFEST
+    output_dir, manifest_path = (
+        (TRAIN_CV_DIR, TRAIN_CV_MANIFEST) if options.train else (SYNTHETIC_CV_DIR, CV_MANIFEST)
+    )
     manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
     for code, facts in manifest.items():
-        path = OUTPUT_DIR / f'{code}.json'
+        path = output_dir / f'{code}.json'
         data = json.loads(path.read_text(encoding='utf-8'))
         if 'languages' in data:
             continue
         rng = random.Random(f'enrich-{code}')
         languages = languages_for(facts, jobs[facts['anchor_job']], rng)
-        seed = rng.randint(1, 10**6)
-        for attempt in range(3):
-            extra = optional_sections(facts, options.model, seed + attempt)
-            if not has_foreign_script(extra) and not has_runaway_text(extra):
-                break
-        else:
-            raise RuntimeError(f'{code}: mục phụ vẫn lẫn chữ lạ hoặc lời thoại sau 3 lần sinh.')
         data['languages'] = localized(languages, facts['language'])
-        data['activities'] = extra['activities'] if rng.random() < 0.6 else []
-        data['awards'] = extra['awards'] if rng.random() < 0.35 else []
-        data['interests'] = extra['interests'] if rng.random() < 0.7 else []
+        if options.train:
+            data.update(activities=[], awards=[], interests=[])
+        else:
+            seed = rng.randint(1, 10**6)
+            for attempt in range(3):
+                extra = optional_sections(facts, options.model, seed + attempt)
+                if not has_foreign_script(extra) and not has_runaway_text(extra):
+                    break
+            else:
+                raise RuntimeError(f'{code}: mục phụ vẫn lẫn chữ lạ hoặc lời thoại sau 3 lần sinh.')
+            data['activities'] = extra['activities'] if rng.random() < 0.6 else []
+            data['awards'] = extra['awards'] if rng.random() < 0.35 else []
+            data['interests'] = extra['interests'] if rng.random() < 0.7 else []
         path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding='utf-8')
         facts['languages'] = languages
         manifest_path.write_text(

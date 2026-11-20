@@ -764,7 +764,7 @@ làm gợi ý" theo ngữ nghĩa, và nhà tuyển dụng xếp hạng hồ sơ 
 | --- | --- | --- |
 | 1 | Đo lường: lệnh `matching_evaluate` (chấm bằng đúng mã sản phẩm), `ml/scripts/evaluate.py`, bảng số trên validation; mở rộng tập vàng lên 30 tin; tải mô hình và dữ liệu công khai | 🟨 PR #274 chờ gộp |
 | 2 | `extract-v3`: PDF hai cột, chức danh CV tải lên, sửa các luật nhận ngày/bằng cấp/kỹ năng, schema `profile_json` | 🟨 Xong trên nhánh `feat/ai-extract-v3`, chờ PR |
-| 3 | Dữ liệu huấn luyện, cổng chất lượng, fine-tune bi-encoder và cross-encoder, ablation | ⬜ |
+| 3 | Dữ liệu huấn luyện, cổng chất lượng, fine-tune bi-encoder và cross-encoder, ablation | 🟨 Đang chạy trên nhánh `feat/ai-training`: sinh dữ liệu (qua đêm), rồi huấn luyện |
 | 4 | Việc làm gợi ý theo ngữ nghĩa (pgvector) | ⬜ |
 | 5 | `hybrid-v2`, cross-encoder vào `ml-worker`, `result_json` bản 2 (M2) | ⬜ |
 | 6 | Nhà tuyển dụng xếp hạng hồ sơ ứng tuyển | ⬜ |
@@ -886,6 +886,37 @@ làm gợi ý" theo ngữ nghĩa, và nhà tuyển dụng xếp hạng hồ sơ 
 - Còn sót: PDF hệ thống CV-045 (không có mục kinh nghiệm, bố cục bị coi là đảo nên
   số tháng để trống thay vì 0), vài kỹ năng viết khác danh mục, 2 PDF TopCV không
   nhận được chức danh.
+
+</details>
+<details><summary>Ghi chú GĐ 3 (bản 3)</summary>
+
+- Kho CV huấn luyện: `generate_cvs.py --train` sinh 560 CV (8 CV cho mỗi tin trong 70
+  tin ngoài tập vàng: 4 khớp mạnh, 2 khớp một phần, 2 vị trí gần; khoảng 30% tiếng
+  Anh) vào `ml/data/cv/train/`. Tin vàng không bao giờ làm tin neo. Mô hình phải ghi
+  tên bằng đúng bậc học script chọn (đợt sinh đầu không ràng buộc nên 53/100 CV lệch).
+  `enrich_cvs.py --train` thêm mục ngoại ngữ.
+- `quality_gate.py`: loại CV có chữ ngoài hệ Latin, ô ngắn bị viết thành đoạn, tên
+  bằng lệch bậc học, ngày tháng lệch số tháng, phần chữ thiếu quá nửa kỹ năng, CV "vị
+  trí gần" chứa quá nửa kỹ năng của tin neo, CV gần trùng; kèm 40 CV ngẫu nhiên ở
+  `ml/labeling/train_cv_review.md` để người làm đồ án đọc kiểm.
+- `build_train_pairs.py`: bộ ba (tin, dương, âm) từ CV huấn luyện (mọi cặp CV khớp
+  mạnh với CV yếu hơn của cùng tin, cặp chức danh), cùng vị trí chuyên môn, VietJobs
+  (1.500) và resume–JD fit (1.000). Văn bản đi qua đúng hàm dựng chunk của backend
+  (`matching_export_dataset texts`, `job_text_chunks`). Chống rò rỉ: 30 tin vàng và 100
+  CV của tập vàng không dùng; tin VietJobs giống một tin vàng bị loại (125 tin ở lần
+  chạy thử). 7 tin neo giữ riêng làm dev để chọn checkpoint.
+- `build_requirement_pairs.py`: 836 câu yêu cầu loại `skill` (luật
+  `facts.requirement_kind`: bậc học, số năm, ngoại ngữ, phẩm chất có tiêu chí riêng
+  hoặc không đo được). Mô hình local viết câu CV đáp ứng (hai ngôn ngữ) và câu "liên
+  quan, chưa đủ"; câu "chưa đủ" không được có từ phủ định hay mở đầu bằng "Hỗ trợ",
+  vì đó là văn phong của máy sinh. Chống học văn phong: ghép chéo (câu đáp ứng của yêu
+  cầu này là âm của yêu cầu khác), âm từ CV thật khác nghề, kiểm tra "chỉ nhìn câu CV".
+- `train.py` (bi-encoder, `CachedMultipleNegativesRankingLoss` hai chiều,
+  `NO_DUPLICATES`, chọn checkpoint theo NDCG@10 của dev) và `train_reranker.py`
+  (cross-encoder `mmarco-mMiniLMv2-L12`, `BinaryCrossEntropyLoss`, Sigmoid) đã chạy thử
+  trên MPS. `run_training.sh` nối các bước theo thứ tự bộ nhớ.
+- Câu yêu cầu của tin ghi số đo cơ thể ("nữ cao từ 158cm") nay cũng bị loại khỏi đối sánh.
+- Chưa làm: biến thể văn bản đọc từ PDF cho dữ liệu huấn luyện (K6).
 
 </details>
 
