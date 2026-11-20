@@ -268,6 +268,16 @@ if 'linkedin' in CAMPAIGN_SOCIAL_LIVE_NETWORKS and not (
     _errors.append(
         'Cần LINKEDIN_SOCIAL_CLIENT_ID/SECRET (hoặc OAUTH_LINKEDIN_*) khi đăng LinkedIn.'
     )
+for _network, _redirect in (
+    ('threads', THREADS_OAUTH_REDIRECT_URI),
+    ('linkedin', LINKEDIN_OAUTH_REDIRECT_URI),
+):
+    if (
+        _network in CAMPAIGN_SOCIAL_LIVE_NETWORKS
+        and _redirect
+        and not _redirect.startswith('https://')
+    ):
+        _errors.append(f'{_network.upper()}_OAUTH_REDIRECT_URI production phải dùng HTTPS.')
 if 'facebook_page' in CAMPAIGN_SOCIAL_LIVE_NETWORKS:
     if not FACEBOOK_OAUTH_REDIRECT_URI.startswith('https://'):
         _errors.append('FACEBOOK_OAUTH_REDIRECT_URI production phải dùng HTTPS.')
