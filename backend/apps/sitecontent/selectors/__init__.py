@@ -13,7 +13,7 @@ from .announcements import (
     remote_announcements_enabled,
     revision_targets_request,
 )
-from .banners import active_banners
+from .banners import active_banners, admin_banners
 from .links import resolve_link_group_items, resolved_link_groups
 from .settings import (
     approved_employer_verification_required,
@@ -40,6 +40,7 @@ __all__ = [
     'PRIORITY_TIER_BY_KIND',
     'active_announcements_for_request',
     'active_banners',
+    'admin_banners',
     'announcement_audit_events',
     'announcement_metrics',
     'admin_announcement_detail_queryset',

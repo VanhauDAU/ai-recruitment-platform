@@ -140,6 +140,13 @@ export const ADMIN_ROUTES = [
     showInNav: true,
   },
   {
+    id: 'banners',
+    segment: '/banners',
+    lazyKey: 'AdminBannersPage',
+    title: 'Banner',
+    showInNav: true,
+  },
+  {
     id: 'accounts',
     segment: '/accounts',
     lazyKey: 'AdminAccountsPage',

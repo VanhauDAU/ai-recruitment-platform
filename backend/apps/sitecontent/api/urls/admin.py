@@ -12,6 +12,10 @@ from ..views import (
     AdminAnnouncementResetDismissalsView,
     AdminAnnouncementResumeView,
     AdminAnnouncementRevisionCreateView,
+    AdminBannerDetailView,
+    AdminBannerImageUploadView,
+    AdminBannerListCreateView,
+    AdminBannerReorderView,
     AdminSettingUploadView,
     AdminSiteSettingHistoryView,
     AdminSiteSettingView,
@@ -19,6 +23,10 @@ from ..views import (
 )
 
 urlpatterns = [
+    path('banners/', AdminBannerListCreateView.as_view(), name='site-admin-banners'),
+    path('banners/reorder/', AdminBannerReorderView.as_view(), name='site-admin-banner-reorder'),
+    path('banners/images/', AdminBannerImageUploadView.as_view(), name='site-admin-banner-images'),
+    path('banners/<int:pk>/', AdminBannerDetailView.as_view(), name='site-admin-banner-detail'),
     path(
         'announcements/',
         AdminAnnouncementListCreateView.as_view(),

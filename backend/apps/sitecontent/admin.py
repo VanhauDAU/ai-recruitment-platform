@@ -55,6 +55,8 @@ class BannerAdminForm(forms.ModelForm):
         model = Banner
         fields = [
             'placement',
+            'kind',
+            'company',
             'eyebrow',
             'title',
             'subtitle',
@@ -66,18 +68,23 @@ class BannerAdminForm(forms.ModelForm):
             'cta_secondary_url',
             'order',
             'is_active',
+            'starts_at',
+            'ends_at',
         ]
 
 
 @admin.register(Banner)
 class BannerAdmin(admin.ModelAdmin):
     form = BannerAdminForm
-    list_display = ['title', 'placement', 'theme', 'order', 'is_active']
-    list_filter = ['placement', 'theme', 'is_active']
+    list_display = ['__str__', 'placement', 'kind', 'order', 'is_active', 'starts_at', 'ends_at']
+    list_filter = ['placement', 'kind', 'is_active']
+    raw_id_fields = ['company']
     list_editable = ['order', 'is_active']
     search_fields = ['title', 'eyebrow']
     fields = [
         'placement',
+        'kind',
+        'company',
         'eyebrow',
         'title',
         'subtitle',
@@ -90,6 +97,8 @@ class BannerAdmin(admin.ModelAdmin):
         'cta_secondary_url',
         'order',
         'is_active',
+        'starts_at',
+        'ends_at',
     ]
 
     def save_model(self, request, obj, form, change):

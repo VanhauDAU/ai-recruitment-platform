@@ -78,6 +78,7 @@ export const ADMIN_NAVIGATION = [
   { key: 'blog', section: 'content', label: m.admin_nav_blog(), iconKey: 'blog', routeRef: 'blog' },
   { key: 'knowledgebase', section: 'content', label: m.admin_nav_knowledgebase(), iconKey: 'help', routeRef: 'knowledgebase' },
   { key: 'announcements', section: 'content', label: m.admin_nav_announcements(), iconKey: 'announcements', routeRef: 'announcements' },
+  { key: 'banners', section: 'content', label: m.admin_nav_banners(), iconKey: 'banners', routeRef: 'banners' },
   // Every CV page shares one in-page tab bar, so the whole /cv area lights this item.
   { key: 'cv-templates', section: 'content', label: m.admin_nav_cv_templates(), iconKey: 'cv', routeRef: 'cvOverview', matchSegment: '/cv' },
   { key: 'admin-accounts', section: 'system', label: m.admin_nav_admins(), iconKey: 'admins', routeRef: 'accounts', query: { tab: 'admin' }, access: { superuser: true } },
