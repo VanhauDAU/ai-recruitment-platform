@@ -38,8 +38,11 @@ from .social_posts import (
     schedule_post,
 )
 from .tracking import (
+    COMPANY_SEGMENT,
     channel_link,
     landing_url,
+    post_jobs,
+    post_link,
     record_click,
     redirect_target,
     resolve_campaign_attribution,
@@ -74,6 +77,9 @@ __all__ = [
     'add_channel_cost',
     'campaign_launch_overview',
     'channel_link',
+    'COMPANY_SEGMENT',
+    'post_jobs',
+    'post_link',
     'create_channel',
     'delete_channel',
     'delete_channel_cost',

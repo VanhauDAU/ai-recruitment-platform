@@ -5,7 +5,7 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
 
-// Sửa tay nội dung bài đăng; {link} được thay bằng link theo dõi của kênh khi sao chép.
+// Sửa tay nội dung bài đăng; {link} và {link:<mã tin>} được thay bằng link theo dõi của kênh.
 export default function ChannelContentModal({ campaignId, channel, onClose }) {
   const [form] = Form.useForm()
   const queryClient = useQueryClient()
@@ -40,7 +40,7 @@ export default function ChannelContentModal({ campaignId, channel, onClose }) {
         <Form.Item label={m.employer_campaign_content_modal_headline()} name="headline">
           <Input maxLength={200} />
         </Form.Item>
-        <Form.Item label={m.employer_campaign_fb_content()} name="body" extra={m.employer_campaign_content_modal_body_extra({ token: '{link}' })}>
+        <Form.Item label={m.employer_campaign_fb_content()} name="body" extra={m.employer_campaign_content_modal_body_extra({ token: '{link}', jobToken: '{link:jb_…}' })}>
           <Input.TextArea rows={8} maxLength={3000} showCount />
         </Form.Item>
         <Form.Item label="Hashtag" name="hashtags">

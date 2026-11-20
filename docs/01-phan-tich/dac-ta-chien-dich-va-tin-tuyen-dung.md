@@ -118,14 +118,25 @@ thêm kênh sau khi chiến dịch chạy cũng được.
 
 - **Kênh** (`CampaignChannel`) là một nơi NTD đăng tuyển: fanpage, nhóm
   Facebook, LinkedIn, Zalo, TikTok, email, website công ty, tờ rơi/QR, khác.
-  - Mỗi kênh có một **link theo dõi** `/r/<code>` (8 ký tự ngẫu nhiên) và mã QR
-    tải được.
-  - Link dẫn tới trang tuyển dụng của chiến dịch hoặc một tin trong chiến dịch.
+  - Kênh không gắn với một tin: một Fanpage đăng được bài cho tin A, rồi bài
+    cho tin B (đổi 20/11/2026).
+  - Mỗi kênh có một mã 8 ký tự ngẫu nhiên, từ đó ra nhiều **link theo dõi**,
+    link nào cũng có mã QR tải được:
+    - `/r/<code>`: trang tuyển dụng của chiến dịch;
+    - `/r/<code>/<mã tin>`: trang một tin của chiến dịch;
+    - `/r/<code>/cong-ty`: trang công ty.
+- **Bài đăng của kênh** (bước soạn bài): NTD chọn tin đưa vào bài (không chọn
+  thì lấy tối đa 5 tin mới nhất đang mở) và link trong bài dẫn tới đâu:
+  - trang chiến dịch: một link chung;
+  - từng tin: mỗi tin một link riêng; bài chỉ có một tin thì link chính dẫn
+    thẳng tới tin;
+  - trang công ty: một link tới trang công ty.
 - **Nội dung đăng**:
   - "Soạn bằng AI" gọi runtime `ai_core` (Gemini, use case
     `campaign_channel_post`), văn phong theo loại kênh, chỉ dùng dữ liệu công
-    khai của tin; link chèn bằng `{link}`;
-  - AI tắt, lỗi hoặc thiếu `{link}` thì dùng mẫu cố định;
+    khai của tin; link chính chèn bằng `{link}`, link riêng của một tin bằng
+    `{link:<mã tin>}`;
+  - AI tắt, lỗi hoặc thiếu chuỗi link nào thì dùng mẫu cố định;
   - tối đa 20 lượt/ngày/người;
   - NTD sửa tay được, sao chép nội dung đã thay sẵn link;
   - đăng tay rồi đánh dấu "Đã đăng" (kèm link bài, không bắt buộc). Đăng tự

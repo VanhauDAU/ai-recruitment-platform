@@ -24,7 +24,7 @@ from ..models import CampaignChannel, ScheduledSocialPost, SocialAccountConnecti
 from .content import render_content
 from .social import SocialProviderError, decrypt_token, get_provider
 from .social_post_images import clean_post_images, read_post_images
-from .tracking import channel_link
+from .tracking import post_link
 
 Post = ScheduledSocialPost
 CampaignStatus = RecruitmentCampaign.Status
@@ -83,7 +83,7 @@ def schedule_post(*, channel, user, connection, scheduled_for=None, message='', 
         connection=connection,
         message=message[:5000],
         images=clean_post_images(campaign, images),
-        link=channel_link(channel),
+        link=post_link(channel),
         scheduled_for=scheduled_for,
     )
 

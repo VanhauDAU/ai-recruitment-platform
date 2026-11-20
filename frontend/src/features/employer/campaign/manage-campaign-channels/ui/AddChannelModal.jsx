@@ -1,8 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Form, Input, Modal, Radio, Select } from 'antd'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Form, Input, Modal } from 'antd'
 import { useRef } from 'react'
 import { CAMPAIGN_CHANNEL_KINDS, campaignKeys, createCampaignChannel } from '@/entities/campaign/campaign'
-import { getEmployerJobs } from '@/entities/job/job'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
@@ -17,11 +16,11 @@ const HINTS = {
 const kindLabel = (kind) => CAMPAIGN_CHANNEL_KINDS.find((item) => item.value === kind)?.label || ''
 const normalize = (label) => label.trim().toLowerCase()
 
-// Tên gợi ý không được trùng kênh đã có (backend bắt tên duy nhất trong chiến dịch):
-// gắn tên tin khi link dẫn tới một tin, còn trùng thì đánh số tiếp.
-function suggestLabel({ kind, target, jobTitle }, takenLabels) {
-  if (!kind) return ''
-  const base = target === 'job' && jobTitle ? `${kindLabel(kind)} – ${jobTitle}` : kindLabel(kind)
+// Tên gợi ý không được trùng kênh đã có (backend bắt tên duy nhất trong chiến dịch),
+// trùng thì đánh số tiếp. Một kênh đăng được nhiều bài cho nhiều tin, nên tên chỉ
+// để phân biệt nơi đăng (ví dụ hai nhóm Facebook khác nhau).
+function suggestLabel(kind, takenLabels) {
+  const base = kindLabel(kind)
   let label = base
   for (let index = 2; takenLabels.has(normalize(label)); index += 1) label = `${base} ${index}`
   return label
@@ -54,15 +53,8 @@ export default function AddChannelModal({ campaign, open, onClose, onCreated }) 
   const [form] = Form.useForm()
   const suggestedLabel = useRef('')
   const queryClient = useQueryClient()
-  const target = Form.useWatch('target', form)
-  const jobsQuery = useQuery({
-    queryKey: ['jobs', 'mine', { campaign: campaign.public_id }],
-    queryFn: () => getEmployerJobs({ campaign: campaign.public_id }),
-    enabled: open,
-  })
   const channelsQuery = useCampaignChannels(open ? campaign.public_id : null)
   const takenLabels = new Set((channelsQuery.data || []).map((channel) => normalize(channel.label)))
-  const jobOptions = (jobsQuery.data || []).map((job) => ({ value: job.public_id, label: job.title }))
   const mutation = useMutation({
     mutationFn: (values) => createCampaignChannel(campaign.public_id, values),
     onSuccess: (channel) => {
@@ -92,14 +84,11 @@ export default function AddChannelModal({ campaign, open, onClose, onCreated }) 
         form={form}
         layout="vertical"
         requiredMark={false}
-        initialValues={{ target: 'landing' }}
         onFinish={(values) => mutation.mutate({ ...values, label: values.label.trim() })}
         onValuesChange={(changed, values) => {
           // Chỉ ghi đè khi tên vẫn là tên đã gợi ý (người dùng chưa tự sửa).
-          if (!('kind' in changed || 'target' in changed || 'job' in changed)) return
-          if (values.label && values.label !== suggestedLabel.current) return
-          const jobTitle = jobOptions.find((option) => option.value === values.job)?.label
-          suggestedLabel.current = suggestLabel({ ...values, jobTitle }, takenLabels)
+          if (!changed.kind || (values.label && values.label !== suggestedLabel.current)) return
+          suggestedLabel.current = suggestLabel(changed.kind, takenLabels)
           form.setFieldValue('label', suggestedLabel.current)
         }}
       >
@@ -121,23 +110,6 @@ export default function AddChannelModal({ campaign, open, onClose, onCreated }) 
         >
           <Input maxLength={120} />
         </Form.Item>
-        <Form.Item label={m.employer_campaign_add_channel_target()} name="target">
-          <Radio.Group
-            options={[
-              { value: 'landing', label: m.employer_campaign_add_channel_target_landing() },
-              { value: 'job', label: m.employer_campaign_add_channel_target_job() },
-            ]}
-          />
-        </Form.Item>
-        {target === 'job' && (
-          <Form.Item label={m.employer_campaign_add_channel_job()} name="job" rules={[{ required: true, message: m.employer_campaign_add_channel_job_required() }]}>
-            <Select
-              loading={jobsQuery.isLoading}
-              options={jobOptions}
-              placeholder={m.employer_campaign_add_channel_job_placeholder()}
-            />
-          </Form.Item>
-        )}
       </Form>
     </Modal>
   )

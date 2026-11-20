@@ -372,6 +372,16 @@ GĐ1 đã làm:
   gợi ý tên không trùng (kèm tên tin khi link dẫn tới một tin, còn trùng thì
   đánh số), chặn tên trùng ngay trên form — trước đây tên tự điền luôn là tên
   loại kênh nên Fanpage thứ hai (cho tin khác) bị backend từ chối.
+- Một kênh đăng nhiều bài, nhiều tin (nhánh `feat/campaign-channel-posts`):
+  - kênh chỉ còn là nơi đăng (bỏ "Link dẫn tới" khi thêm kênh); migration
+    campaigns 0003 đổi `job` thành `jobs` (M2M), kênh cũ trỏ một tin giữ tin
+    đó với link riêng từng tin;
+  - bước soạn bài chọn tin trong bài và link dẫn tới trang chiến dịch, từng tin
+    (mỗi tin một link `/r/<code>/<mã tin>`) hoặc trang công ty
+    (`/r/<code>/cong-ty`); AI và mẫu chèn đủ link từng tin;
+  - tab Link & QR liệt kê mọi link của kênh, chọn link để tạo QR;
+  - link tin/công ty chỉ mở trang đó khi chiến dịch đang chạy và tin thuộc
+    chiến dịch, còn lại về trang tuyển dụng; lượt bấm vẫn tính cho kênh.
 - Giải thích chỉ số (nhánh `feat/campaign-metric-help`): `shared/ui/HelpTip`
   (icon ? có tooltip, bấm được bằng bàn phím) ở bảng so sánh nguồn, chi tiết
   kênh, chi phí, tab Sức khỏe, Tổng quan và đầu trang chiến dịch.
