@@ -42,6 +42,7 @@ tại; lịch sử kế hoạch và bằng chứng triển khai nằm trong git 
 | [adr-0017-company-page.md](02-tong-quan/adr-0017-company-page.md) | Trang công ty công khai và quyền biên tập trang |
 | [adr-0018-remove-admin-rbac.md](02-tong-quan/adr-0018-remove-admin-rbac.md) | Gỡ phòng ban, chức danh, nhân viên quản trị; còn superuser và admin |
 | [adr-0022-backend-structure.md](02-tong-quan/adr-0022-backend-structure.md) | Cấu trúc backend: bố cục app, tầng `domain/`, luật import chéo app, URL theo cổng |
+| [adr-0024-content-publish-without-review.md](02-tong-quan/adr-0024-content-publish-without-review.md) | FAQ/hướng dẫn và blog đi thẳng Nháp → Xuất bản, bỏ bước tự duyệt |
 | [uploads-quarantine.md](02-tong-quan/uploads-quarantine.md) | Lõi upload cách ly: vòng đời phiên, quét malware, bằng chứng |
 | [employer-remediation-decision-log.md](02-tong-quan/employer-remediation-decision-log.md) | Biên bản quyết định của đợt hardening cổng nhà tuyển dụng |
 | [chatbot-local-decision-log.md](02-tong-quan/chatbot-local-decision-log.md) | Biên bản quyết định cho chatbot ứng viên chạy local |

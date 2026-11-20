@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Chốt luồng FAQ/hướng dẫn và blog: Nháp → Xuất bản (ADR-0024)](#chốt-luồng-nội-dung-nháp--xuất-bản-adr-0024-2026-11-20) | 🟨 Nhánh `feat/content-publish-flow`, chưa mở PR |
 | [Tổ chức lại sidebar quản trị](#tổ-chức-lại-sidebar-quản-trị-2026-11-20) | 🟨 PR #270 (nhánh `feat/admin-sidebar-ia`), chờ gộp |
 | [Song ngữ vi/en cho 3 cổng (ADR-0023)](#song-ngữ-vien-cho-3-cổng-adr-0023-2026-11-19) | 🟨 GĐ0 đã gộp (#262); GĐ1 (cổng NTD) trên nhánh `feat/i18n-employer`; GĐ2–4 chưa làm |
 | [Chuẩn hóa tiêu đề trang 3 cổng](#chuẩn-hóa-tiêu-đề-trang-3-cổng-2026-11-19) | 🟨 PR #261 (nhánh `feat/page-titles`), chờ gộp |
@@ -82,6 +83,22 @@ mục "Tiêu đề trang" của `frontend/ARCHITECTURE.md`.
 - Thanh trên cùng workspace NTD dùng chung resolver với tiêu đề tab (trước đây
   hiện "Không gian nhà tuyển dụng" ở trang đăng/sửa tin).
 - Gỡ `/tuyendung/bao-gia` khỏi SEO shell và sitemap (SPA không có trang này).
+
+## Chốt luồng nội dung: Nháp → Xuất bản (ADR-0024, 2026-11-20)
+
+Vấn đề: sau ADR-0018 mọi admin đủ quyền, nên FAQ/hướng dẫn (4 bước gửi duyệt →
+duyệt → xuất bản) và blog (gửi duyệt → xuất bản) chỉ còn là tự duyệt bài của
+chính mình; trạng thái hiển thị sai sau khi xuất bản và có hai hàng chờ giả.
+Quyết định: [ADR-0024](02-tong-quan/adr-0024-content-publish-without-review.md).
+Một PR, nhánh `feat/content-publish-flow`.
+
+| Phần | Nội dung |
+| --- | --- |
+| FAQ/hướng dẫn — backend | Revision chỉ còn `DRAFT`/`PUBLISHED`; publish nhận bản nháp hoặc bản đã xuất bản cũ (rollback); `POST …/revisions/{n}/discard/` hủy nháp; `change_summary` bắt buộc khi xuất bản bản sửa; gỡ `submit/approve/reject`, `review_note`, `submitted_*`, `reviewed_*`. Migration `0003` (chuyển dữ liệu, xóa revision chưa từng công khai không còn dùng) + `0004` (gỡ cột) |
+| FAQ/hướng dẫn — giao diện | Bài đang công khai sửa thẳng, lưu lần đầu tạo bản nháp; nút **Xuất bản** lưu trước rồi xuất bản; **Hủy bản nháp**; thẻ **Phiên bản** (so sánh với bản công khai, công khai lại bản cũ); KPI "Có bản nháp" thay "Chờ duyệt" |
+| Blog | `draft → published → archived`; xuất bản thẳng từ nháp hoặc bản sửa; gỡ `submit/return`, `submitted_at`, trạng thái working copy, quyền `can_publish_post`. Migration `0003` (pending → draft) + `0004` |
+| Hàng chờ | Gỡ `knowledge_reviews`, `blog_reviews` khỏi dashboard, sidebar, chuông; giữ "FAQ quá hạn rà soát" |
+| Kèm theo | Nhãn audit khớp mã backend (gồm mã cũ để đọc lịch sử); bỏ lỗi readiness `safety_content_not_reviewed` |
 
 ## Tổ chức lại sidebar quản trị (2026-11-20)
 

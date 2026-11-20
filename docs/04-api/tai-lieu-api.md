@@ -896,7 +896,7 @@ publish không bị cập nhật tại chỗ: chỉnh nội dung luôn tạo rev
 
 Public API không yêu cầu đăng nhập, dùng throttle `knowledgebase_public`
 120 request/phút theo IP client đã kiểm chứng và chỉ trả article active thuộc
-category active có revision đang publish ở trạng thái approved.
+category active có revision đang công khai (`PUBLISHED`).
 
 | Method | Endpoint | Query | Mục đích |
 | --- | --- | --- | --- |
@@ -904,9 +904,9 @@ category active có revision đang publish ở trạng thái approved.
 | `GET` | `/api/public/knowledgebase/articles/` | `category`, `type=faq\|guide`, `q`, `page`, `page_size<=60` | Browse/search bài public |
 | `GET` | `/api/public/knowledgebase/articles/{category_slug}/{article_slug}/` | — | Revision đang publish, related/trước/sau tối đa 6 bài |
 
-`q` dài 2–120 ký tự và search không dấu theo nhiều token. Draft, rejected,
+`q` dài 2–120 ký tự và search không dấu theo nhiều token. Draft,
 archived, category inactive và slug không tồn tại đều trả cùng `404`; response
-không lộ actor, review note, source reference, revision token hay revision chưa
+không lộ actor, source reference, revision token hay revision chưa
 publish. Public response dùng `Cache-Control: public, max-age=60,
 stale-while-revalidate=300` và ETag; conditional request khớp trả `304`.
 `KNOWLEDGEBASE_PUBLIC_ENABLED=false` làm public API fail-closed `404` nhưng giữ
@@ -925,36 +925,33 @@ URL có `q`, `type` hoặc `page` vẫn noindex. Trước khi bật phải chạ
 `python manage.py check_knowledgebase_readiness --json` theo runbook deployment.
 
 Public/admin request phát metric count/latency theo endpoint, status, loại và
-bucket kết quả/độ dài query. Raw query, title, body, email, source và review note
+bucket kết quả/độ dài query. Raw query, title, body, email và source
 không được ghi vào metric hoặc label.
 
-| Method | Endpoint | Quyền chính | Mục đích |
-| --- | --- | --- | --- |
-| `GET/POST` | `/api/admin/knowledgebase/categories/` | `view/manage` | List/tạo category |
-| `GET/PATCH` | `/api/admin/knowledgebase/categories/{public_id}/` | `view/manage` | Detail/cập nhật category |
-| `POST` | `/api/admin/knowledgebase/categories/reorder/` | `manage` | Sắp xếp toàn bộ category |
-| `POST` | `/api/admin/knowledgebase/categories/{public_id}/activate/` | `publish` | Bật category public |
-| `POST` | `/api/admin/knowledgebase/categories/{public_id}/deactivate/` | `publish` | Tắt category public |
-| `GET/POST` | `/api/admin/knowledgebase/articles/` | `view/manage` | List/filter/tạo article + revision 1 |
-| `GET/PATCH` | `/api/admin/knowledgebase/articles/{public_id}/` | `view/manage` | Detail/audit/cập nhật metadata |
-| `POST` | `/api/admin/knowledgebase/articles/reorder/` | `manage` | Sắp xếp bài trong một category |
-| `GET/POST` | `/api/admin/knowledgebase/articles/{public_id}/revisions/` | `view/manage` | Lịch sử/tạo revision mới |
-| `GET/PATCH` | `/api/admin/knowledgebase/articles/{public_id}/revisions/{number}/` | `view/manage` | Xem/sửa revision nháp |
-| `POST` | `.../revisions/{number}/submit/` | `manage` | Gửi duyệt |
-| `POST` | `.../revisions/{number}/approve/` | `review` | Phê duyệt |
-| `POST` | `.../revisions/{number}/reject/` | `review` | Từ chối, bắt buộc lý do |
-| `POST` | `/api/admin/knowledgebase/articles/{public_id}/publish/` | `publish` | Publish/rollback revision approved chỉ định |
-| `POST` | `/api/admin/knowledgebase/articles/{public_id}/archive/` | `publish` | Ẩn bài nhưng giữ published pointer |
-| `POST` | `/api/admin/knowledgebase/articles/{public_id}/restore/` | `publish` | Khôi phục đúng revision trước đó |
-| `GET/POST` | `/api/admin/knowledgebase/media/` | `view/manage` | Media library/upload ảnh |
+| Method | Endpoint | Mục đích |
+| --- | --- | --- |
+| `GET/POST` | `/api/admin/knowledgebase/categories/` | List/tạo category |
+| `GET/PATCH` | `/api/admin/knowledgebase/categories/{public_id}/` | Detail/cập nhật category |
+| `POST` | `/api/admin/knowledgebase/categories/reorder/` | Sắp xếp toàn bộ category |
+| `POST` | `/api/admin/knowledgebase/categories/{public_id}/activate/` | Bật category public |
+| `POST` | `/api/admin/knowledgebase/categories/{public_id}/deactivate/` | Tắt category public |
+| `GET/POST` | `/api/admin/knowledgebase/articles/` | List/filter/tạo article + revision 1 |
+| `GET/PATCH` | `/api/admin/knowledgebase/articles/{public_id}/` | Detail/audit/cập nhật metadata |
+| `POST` | `/api/admin/knowledgebase/articles/reorder/` | Sắp xếp bài trong một category |
+| `GET/POST` | `/api/admin/knowledgebase/articles/{public_id}/revisions/` | Lịch sử/tạo revision mới |
+| `GET/PATCH` | `/api/admin/knowledgebase/articles/{public_id}/revisions/{number}/` | Xem/sửa revision nháp |
+| `POST` | `.../revisions/{number}/discard/` | Hủy bản nháp của bài đã công khai |
+| `POST` | `/api/admin/knowledgebase/articles/{public_id}/publish/` | Xuất bản bản nháp hoặc công khai lại (rollback) một revision đã xuất bản; sửa bài đã công khai cần `change_summary` |
+| `POST` | `/api/admin/knowledgebase/articles/{public_id}/archive/` | Ẩn bài nhưng giữ published pointer |
+| `POST` | `/api/admin/knowledgebase/articles/{public_id}/restore/` | Khôi phục đúng revision trước đó |
+| `GET/POST` | `/api/admin/knowledgebase/media/` | Media library/upload ảnh |
 
 Mọi PATCH/action gửi `revision_token`; publish gửi thêm `revision_number` và
 không tự chọn revision mới nhất. Token cũ hoặc transition sai trả `409` với
-`code` ổn định. Approved/rejected không sửa tại chỗ. Tạo bản sửa của bài đã
-publish bắt buộc `change_summary`. Category/slug/type khóa sau publish đầu.
-Frontend thu thập `change_summary` trong modal **Tạo revision mới** trước khi
-gọi `POST .../revisions/`; không validate form revision đang ở trạng thái chỉ
-đọc. Response tạo draft mới làm editor mở lại và cho phép tiếp tục sửa tóm tắt.
+`code` ổn định. Revision `PUBLISHED` không sửa tại chỗ. Xuất bản bản sửa của
+bài đã publish bắt buộc `change_summary`. Category/slug/type khóa sau publish
+đầu. Bài đang công khai vẫn sửa trực tiếp trong editor: lần lưu đầu gọi
+`POST .../revisions/` với nội dung đang sửa để mở bản nháp mới (ADR-0024).
 Các object `related_articles`, `previous_article` và `next_article` trong detail
 public có trường `order`; sidebar ghép bài hiện tại với related rồi sắp xếp theo
 `order`, không dùng trạng thái được chọn để thay đổi vị trí.

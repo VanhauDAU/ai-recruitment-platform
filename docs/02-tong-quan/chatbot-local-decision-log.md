@@ -13,7 +13,8 @@
 
 1. Chatbot **không** phụ thuộc cloud LLM (OpenAI / Gemini / Anthropic) cho MVP.
 2. Help Center/FAQ chạy độc lập khi Ollama hoặc chatbot tắt.
-3. Nguồn chuẩn duy nhất cho câu trả lời FAQ: revision **approved + published**.
+3. Nguồn chuẩn duy nhất cho câu trả lời FAQ: revision **đang công khai** (trước
+   ADR-0024 gọi là approved + published).
 4. App chatbot không deep-import nội bộ knowledgebase; chỉ dùng re-export service.
 5. Embedding local đã định hướng: **`qwen3-embedding:0.6b` qua Ollama**, vector
    trên **PostgreSQL/pgvector** (phase KB-AI / CB-P1).
