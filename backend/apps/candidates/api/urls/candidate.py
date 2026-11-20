@@ -5,6 +5,7 @@ from ..views import (
     CandidateNotificationReadAllView,
     CandidateNotificationReadView,
     CandidateNotificationUnreadCountView,
+    MyAiRecommendationView,
     MyCandidateEmailNotificationSettingsView,
     MyCandidateJobPreferencesView,
     MyCandidateProfileView,
@@ -42,6 +43,11 @@ urlpatterns = [
         'notifications/<str:public_id>/read/',
         CandidateNotificationReadView.as_view(),
         name='candidate-notification-read',
+    ),
+    path(
+        'ai-recommendation/',
+        MyAiRecommendationView.as_view(),
+        name='candidate-ai-recommendation',
     ),
     path(
         'recruiter-visibility/',

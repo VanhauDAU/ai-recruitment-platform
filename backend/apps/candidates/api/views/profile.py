@@ -7,16 +7,19 @@ from apps.accounts.api.permissions import IsCandidate
 
 from ...models import CandidateConsent
 from ...selectors import (
+    ai_recommendation_consent,
     candidate_job_preference_for_user,
     candidate_profile_for_user,
     recruiter_visibility_consent,
 )
 from ...services import (
     replace_candidate_job_preferences,
+    set_ai_recommendation,
     set_recruiter_visibility,
     update_candidate_profile,
 )
 from ..serializers import (
+    AiRecommendationConsentSerializer,
     CandidateJobPreferenceSerializer,
     CandidateProfileReadSerializer,
     CandidateProfileUpdateSerializer,
@@ -140,3 +143,56 @@ class MyRecruiterVisibilityView(APIView):
                 'decided_at': consent.decided_at,
             }
         )
+
+
+def _consent_payload(consent):
+    return {
+        'enabled': bool(consent and consent.decision == CandidateConsent.Decision.GRANTED),
+        'policy_version': consent.policy_version if consent else 'v1',
+        'decided_at': consent.decided_at if consent else None,
+    }
+
+
+@extend_schema_view(
+    get=extend_schema(
+        summary='Trạng thái đồng ý nhận gợi ý việc làm bằng AI',
+        responses={
+            200: inline_serializer(
+                'AiRecommendationConsentStatus',
+                {
+                    'enabled': serializers.BooleanField(),
+                    'policy_version': serializers.CharField(),
+                    'decided_at': serializers.DateTimeField(allow_null=True),
+                },
+            )
+        },
+    ),
+    patch=extend_schema(
+        summary='Bật/tắt gợi ý việc làm bằng AI',
+        request=AiRecommendationConsentSerializer,
+        responses={200: OpenApiTypes.OBJECT},
+    ),
+)
+@extend_schema(tags=['candidate'])
+class MyAiRecommendationView(APIView):
+    """Công tắc "Gợi ý việc làm" ở thanh bên tài khoản; độc lập với nhu cầu công việc."""
+
+    permission_classes = [IsCandidate]
+
+    def get(self, request):
+        return Response(
+            _consent_payload(ai_recommendation_consent(candidate_profile_for_user(request.user)))
+        )
+
+    def patch(self, request):
+        serializer = AiRecommendationConsentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        consent = set_ai_recommendation(
+            candidate_profile_for_user(request.user),
+            enabled=data['enabled'],
+            policy_version=data['policy_version'],
+            source=data['source'],
+            source_path=data.get('source_path', ''),
+        )
+        return Response(_consent_payload(consent))

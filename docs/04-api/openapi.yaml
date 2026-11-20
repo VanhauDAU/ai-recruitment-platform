@@ -7579,6 +7579,51 @@ paths:
               schema:
                 $ref: '#/components/schemas/VerifyResend'
           description: ''
+  /api/candidate/ai-recommendation/:
+    get:
+      operationId: candidate_ai_recommendation_retrieve
+      description: Công tắc "Gợi ý việc làm" ở thanh bên tài khoản; độc lập với nhu
+        cầu công việc.
+      summary: Trạng thái đồng ý nhận gợi ý việc làm bằng AI
+      tags:
+      - candidate
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiRecommendationConsentStatus'
+          description: ''
+    patch:
+      operationId: candidate_ai_recommendation_partial_update
+      description: Công tắc "Gợi ý việc làm" ở thanh bên tài khoản; độc lập với nhu
+        cầu công việc.
+      summary: Bật/tắt gợi ý việc làm bằng AI
+      tags:
+      - candidate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAiRecommendationConsentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAiRecommendationConsentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAiRecommendationConsentRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
   /api/candidate/applications/:
     get:
       operationId: candidate_applications_list
@@ -19979,6 +20024,29 @@ components:
       required:
       - company_name
       - tax_code
+    AiRecommendationConsentSourceEnum:
+      enum:
+      - account_sidebar
+      - account_settings
+      type: string
+      description: |-
+        * `account_sidebar` - account_sidebar
+        * `account_settings` - account_settings
+    AiRecommendationConsentStatus:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        policy_version:
+          type: string
+        decided_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - decided_at
+      - enabled
+      - policy_version
     Analysis:
       type: object
       description: Trạng thái và kết quả một lần phân tích; `result` chỉ có khi đã
@@ -31328,6 +31396,21 @@ components:
         is_active:
           type: boolean
           description: Ẩn thẻ khỏi phía ứng viên và form chọn thẻ
+    PatchedAiRecommendationConsentRequest:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        policy_version:
+          type: string
+          minLength: 1
+          default: v1
+          maxLength: 64
+        source:
+          $ref: '#/components/schemas/AiRecommendationConsentSourceEnum'
+        source_path:
+          type: string
+          maxLength: 2048
     PatchedAnnouncementRenameRequest:
       type: object
       properties:

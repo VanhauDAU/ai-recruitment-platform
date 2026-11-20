@@ -92,6 +92,13 @@ class RecruiterVisibilitySerializer(serializers.Serializer):
         return attrs
 
 
+class AiRecommendationConsentSerializer(serializers.Serializer):
+    enabled = serializers.BooleanField()
+    policy_version = serializers.CharField(max_length=64, default='v1')
+    source = serializers.ChoiceField(choices=['account_sidebar', 'account_settings'])
+    source_path = serializers.CharField(max_length=2048, required=False, allow_blank=True)
+
+
 class CandidateJobPreferenceSerializer(serializers.ModelSerializer):
     """Read/write contract shared by onboarding and account preference settings."""
 

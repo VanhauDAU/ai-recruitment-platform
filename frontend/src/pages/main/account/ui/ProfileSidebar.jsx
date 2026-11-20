@@ -2,11 +2,17 @@ import {
   CameraOutlined, CheckCircleFilled,
   QrcodeOutlined, QuestionCircleOutlined, WarningFilled,
 } from '@ant-design/icons'
-import { useQuery } from '@tanstack/react-query'
-import { Avatar } from 'antd'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Avatar, Popover, Switch } from 'antd'
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { getMyCvs } from '@/entities/cv/cv'
+import {
+  AI_RECOMMENDATION_QUERY_KEY, getAiRecommendation, updateAiRecommendation,
+} from '@/entities/job/candidate-preferences'
+import { jobKeys } from '@/entities/job/job'
+import { m } from '@/shared/config/i18n'
+import { message } from '@/shared/lib/toast'
 import { useSession } from '@/entities/account/session'
 import { AvatarEditorModal } from '@/features/common/account/edit-profile'
 import { RecruiterSearchListModal } from '@/features/main/cv/update-recruiter-visibility'
@@ -74,22 +80,55 @@ function GreetingCard() {
   )
 }
 
+// Công tắc đồng ý gợi ý việc làm bằng AI (AI_RECOMMENDATION). Độc lập với nhu cầu
+// công việc: bật ở đây không đánh dấu đã khai nhu cầu.
 function SuggestionToggleRow() {
-  const { user } = useSession()
-  const configured = Boolean(user?.job_preferences_configured)
+  const queryClient = useQueryClient()
+  const { settings, siteName } = useSiteSettings()
+  const policyUrl = settingText(settings.ai_data_policy_url)
+  const consent = useQuery({ queryKey: AI_RECOMMENDATION_QUERY_KEY, queryFn: getAiRecommendation })
+  const toggle = useMutation({
+    mutationFn: (enabled) => updateAiRecommendation({
+      enabled,
+      source: 'account_sidebar',
+      source_path: window.location.pathname,
+    }),
+    onSuccess: (saved) => {
+      queryClient.setQueryData(AI_RECOMMENDATION_QUERY_KEY, saved)
+      queryClient.invalidateQueries({ queryKey: jobKeys.candidateRecommendationsRoot })
+      message.success(saved.enabled ? m.candidate_reco_toggle_on() : m.candidate_reco_toggle_off())
+    },
+    onError: () => message.error(m.candidate_reco_toggle_failed()),
+  })
+  const policy = m.candidate_reco_toggle_policy()
+  const help = (
+    <p className="max-w-64 text-xs leading-5 text-slate-600">
+      {m.candidate_reco_toggle_help({ site: siteName })}{' '}
+      {policyUrl ? (
+        <a href={policyUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-[var(--brand-primary)] hover:underline">
+          {policy}
+        </a>
+      ) : policy}.
+    </p>
+  )
 
   return (
     <div className="flex items-center justify-between gap-3 border-t border-slate-100 px-4 py-3">
       <span className="flex items-center gap-1.5 text-sm font-semibold text-slate-700">
-        Gợi ý việc làm
-        <QuestionCircleOutlined className="text-xs text-slate-400" title="Nhận gợi ý việc làm phù hợp với hồ sơ của bạn" />
+        {m.candidate_reco_toggle_label()}
+        <Popover content={help} trigger={['hover', 'click']} placement="bottom">
+          <button type="button" aria-label={m.candidate_reco_toggle_help_label()} className="cursor-pointer text-xs text-slate-400 hover:text-slate-600">
+            <QuestionCircleOutlined />
+          </button>
+        </Popover>
       </span>
-      <Link
-        to="/tai-khoan/cai-dat-goi-y-viec-lam"
-        className="rounded-full border border-[var(--brand-primary)] px-4 py-1.5 text-sm font-bold text-[var(--brand-primary)] transition-colors duration-200 hover:bg-[var(--brand-primary-soft)]"
-      >
-        {configured ? 'Quản lý' : 'Thiết lập'}
-      </Link>
+      <Switch
+        aria-label={m.candidate_reco_toggle_label()}
+        checked={Boolean(consent.data?.enabled)}
+        disabled={consent.isPending}
+        loading={toggle.isPending}
+        onChange={(enabled) => toggle.mutate(enabled)}
+      />
     </div>
   )
 }

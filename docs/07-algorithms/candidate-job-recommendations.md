@@ -117,6 +117,10 @@ Các field điều phối chính:
 }
 ```
 
+Đồng ý gợi ý bằng AI bật/tắt được ở hai nơi: form nhu cầu công việc (`PUT
+/api/candidate/job-preferences/`) và công tắc ở thanh bên tài khoản (`GET/PATCH
+/api/candidate/ai-recommendation/`, chỉ đổi đồng ý, không tạo nhu cầu).
+
 `cv_recommendations_enabled` cho biết gợi ý theo CV (`semantic-v1`, xem
 `thuat-toan-ai.md`) đang bật: khi đó `preferences_required` nghĩa là ứng viên chưa
 có CV đủ dùng lẫn nhu cầu, và giao diện mời lưu CV hoặc khai nhu cầu.
