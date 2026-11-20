@@ -32,6 +32,7 @@ ml/
     gold_pairs_2.xlsx     phiếu chấm mù của đợt 2 (cặp 151–300)
     gold_pairs_claude_2.xlsx  nhãn đợt 2, kèm nhãn của từng lượt gán
     gold_pairs_2_passes.json  nhãn và lý do của hai lượt gán độc lập, phần phân xử
+    education_key.json    bậc học theo chữ in ở tên bằng của 100 CV (đáp án khi kiểm tra trích xuất PDF)
     audit_pairs.json      30 cặp kiểm chứng cố định (người chấm mù 5 cặp)
     skill_merge.json      gộp kỹ năng trùng nghĩa khi nhập tin
   data/                   KHÔNG commit (.gitignore)
@@ -92,6 +93,7 @@ Tất cả chạy từ thư mục gốc repo bằng `ml/.venv/bin/python`. Các 
 liệu cần Docker Compose đang chạy; mặc định chỉ chạy thử, thêm `--apply` để ghi.
 
 1. `scripts/import_jd.py --apply --create-skills`: áp bảng gộp kỹ năng
+   (thêm `--refresh-skills` sau khi sửa bảng gộp để đồng bộ lại kỹ năng của tin đã nhập)
    (`labeling/skill_merge.json`) rồi nhập tin tuyển dụng. Tin gán vào công ty demo
    không còn trong hệ thống được chia đều cho các công ty demo còn lại.
 2. `scripts/generate_cvs.py`, rồi `scripts/enrich_cvs.py`: sinh CV (cần Ollama).
@@ -105,6 +107,8 @@ liệu cần Docker Compose đang chạy; mặc định chỉ chạy thử, thê
    độc lập của đợt 2 (`labeling/gold_pairs_2_passes.json`) thành
    `labeling/gold_pairs_claude_2.xlsx` và báo cáo đồng thuận.
 7. `scripts/export_profiles.py`, rồi `scripts/check_profiles.py`: kiểm tra trích xuất.
+   Với PDF, đáp án chỉ gồm những gì thật sự in trong tệp (kỹ năng, ngoại ngữ, việc có
+   ngày bắt đầu), và bậc học theo `labeling/education_key.json`.
 8. `scripts/export_model.py`: lưu mô hình cho ml-worker; `scripts/calibrate.py`: đo
    mốc hiệu chuẩn, chép vào `CALIBRATIONS` của backend khi đổi mô hình.
 9. `scripts/fetch_public.py`: tải dữ liệu công khai (VietJobs,

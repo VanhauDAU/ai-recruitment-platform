@@ -13,7 +13,7 @@ from apps.jobs.tests.factories import open_visibility_window
 
 from ..models import EMBEDDING_DIMENSIONS, MatchAnalysis, MatchChunk, MatchDocument
 
-VERSIONS = {'extractor_version': 'extract-v1', 'model_version': 'e5-base-zs'}
+VERSIONS = {'extractor_version': 'extract-v3', 'model_version': 'e5-base-zs'}
 HASH_A = 'a' * 64
 HASH_B = 'b' * 64
 

@@ -7,6 +7,8 @@ file is accepted or rejected for the same reasons everywhere.
 import re
 import unicodedata
 
+from .pdf_layout import page_text
+
 MAX_CV_PAGES = 20
 # A CV rarely exceeds a few pages; reports and theses are far longer.
 MAX_CV_TEXT_CHARS = 30_000
@@ -59,11 +61,23 @@ class CvDocumentRejected(ValueError):
         super().__init__(REJECTION_MESSAGES[code])
 
 
+def _page_chars(page):
+    """`(char, left, top, right, bottom)` of each character, y pointing down, for `page_text`."""
+    textpage = page.get_textpage()
+    height = page.get_height()
+    for index in range(textpage.count_chars()):
+        left, bottom, right, top = textpage.get_charbox(index, loose=True)
+        yield textpage.get_text_range(index, 1), left, height - top, right, height - bottom
+
+
 def _read_pdf_text(source):
     """pypdf checks the password and page count; pypdfium2 reads the text.
 
     pypdf splits Vietnamese words with diacritics ("Ứ ng viên") in about 9% of
     words, pypdfium2 split none across 51 test CVs (`ml/reports/extract_check.md`).
+    pypdfium2 returns text in drawing order, so the lines are put back in reading
+    order from the character positions (`pdf_layout.page_text`): two-column
+    templates otherwise detach section headings from their content.
     """
     import pypdfium2
     from pypdf import PdfReader
@@ -76,7 +90,7 @@ def _read_pdf_text(source):
     source.seek(0)
     document = pypdfium2.PdfDocument(source.read())
     try:
-        return '\n'.join(page.get_textpage().get_text_bounded() for page in document)
+        return '\n'.join(page_text(_page_chars(page)) for page in document)
     finally:
         document.close()
 
