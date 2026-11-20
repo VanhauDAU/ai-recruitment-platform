@@ -151,10 +151,15 @@ Quy tắc nội dung:
 
 - Nên có 3–5 slide; slide đầu tiên tải ảnh ngay, các slide sau tải lười.
 - Tiêu đề dưới 40 ký tự, mô tả dưới 90 ký tự, mỗi slide một nút bắt đầu bằng động từ.
-- Ảnh `image` tỉ lệ 8:3: khuyến nghị 1600×600, tối thiểu 1200×450, tối đa 1,5 MB.
-  Điện thoại hiển thị khung 2:1 nên cắt bớt hai bên: đặt chữ và nút trong khoảng 70% giữa ảnh.
-- Ảnh minh họa `promo` khoảng 4:3, rộng từ 800 px, tối đa 1 MB; chỉ hiện từ máy tính bảng.
+- Ảnh `image` khung 8:3: khuyến nghị 1600×600, tối thiểu 960×360, tối đa 1,5 MB. Sau khi
+  chọn ảnh, trang quản trị mở hộp cắt khóa tỉ lệ để kéo và phóng to căn đúng khung (xuất
+  WebP, không phóng to quá ảnh gốc). Điện thoại hiển thị khung 2:1 nên cắt bớt hai bên:
+  đặt chữ và nút trong khoảng 70% giữa ảnh.
+- Ảnh minh họa `promo` khung 4:3, cũng cắt trước khi tải; chỉ hiện từ máy tính bảng.
 - Slide công ty nên chọn công ty có ảnh bìa và đang có tin; công ty bị giữ nội dung tự ẩn.
+- Tông màu (slide chữ, AI, công ty không có ảnh bìa và banner ở trang việc làm/cẩm nang):
+  8 gradient `green`, `blue`, `orange`, `violet`, `teal`, `rose`, `aurora`, `midnight`, khai
+  báo ở `entities/content/banner` bằng inline style nên không làm tăng CSS khởi tạo.
 - Link trong trang bắt đầu bằng `/`; link ngoài phải là `https://` và mở tab mới.
 
 ### Trang chủ & điều hướng (`homepage`)

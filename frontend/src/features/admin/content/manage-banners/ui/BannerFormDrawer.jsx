@@ -1,10 +1,9 @@
 import { useMutation } from '@tanstack/react-query'
 import { Button, DatePicker, Drawer, Form, Input, Segmented, Switch } from 'antd'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   BANNER_KIND_LABELS,
   BANNER_KINDS,
-  BANNER_THEMES,
   HOME_HERO_PLACEMENT,
   createAdminBanner,
   updateAdminBanner,
@@ -15,12 +14,7 @@ import { message } from '@/shared/lib/toast'
 import { apiFieldErrors, bannerFormValues, bannerPayload, emptyBannerValues, previewBanner } from '../model/banner-form'
 import BannerImageField from './BannerImageField'
 import CompanySelect from './CompanySelect'
-
-const THEME_LABELS = {
-  green: () => m.admin_banner_theme_green(),
-  blue: () => m.admin_banner_theme_blue(),
-  orange: () => m.admin_banner_theme_orange(),
-}
+import ThemePicker from './ThemePicker'
 
 const KIND_HELP = {
   image: () => m.admin_banner_kind_help_image(),
@@ -47,17 +41,18 @@ export default function BannerFormDrawer({ banner, onClose, onSaved, renderPrevi
   const [form] = Form.useForm()
   const editing = Boolean(banner?.id)
   const [company, setCompany] = useState(null)
-  const values = Form.useWatch([], form) || {}
-  const placement = Form.useWatch('placement', form) || banner?.placement
-  const kind = Form.useWatch('kind', form)
+  // Giá trị đầu đưa qua `initialValues` + `key` thay vì setFieldsValue trong effect:
+  // Form nằm trong Drawer nên có thể chưa gắn khi effect chạy, làm `kind` rỗng.
+  const initialValues = useMemo(() => {
+    if (!banner) return {}
+    return editing ? bannerFormValues(banner) : emptyBannerValues(banner.placement)
+  }, [banner, editing])
+  const values = Form.useWatch([], { form, preserve: true }) || {}
+  const placement = values.placement || initialValues.placement
+  const kind = values.kind || initialValues.kind
   const isHero = placement === HOME_HERO_PLACEMENT
 
-  useEffect(() => {
-    if (!banner) return
-    form.resetFields()
-    form.setFieldsValue(editing ? bannerFormValues(banner) : emptyBannerValues(banner.placement))
-    setCompany(banner.company || null)
-  }, [banner, editing, form])
+  useEffect(() => setCompany(banner?.company || null), [banner])
 
   const save = useMutation({
     mutationFn: (formValues) => {
@@ -92,9 +87,10 @@ export default function BannerFormDrawer({ banner, onClose, onSaved, renderPrevi
       )}
     >
       {isHero && renderPreview && <Preview renderPreview={renderPreview} banner={previewBanner(values, company)} />}
-      <Form form={form} layout="vertical" requiredMark={false} onFinish={(formValues) => save.mutate(formValues)}>
+      <Form key={banner?.id ?? `new-${banner?.placement}`} form={form} initialValues={initialValues} layout="vertical" requiredMark={false} onFinish={(formValues) => save.mutate(formValues)}>
         <Form.Item name="placement" hidden><Input /></Form.Item>
         <Form.Item name="image_preview" hidden><Input /></Form.Item>
+        {!isHero && <Form.Item name="kind" hidden><Input /></Form.Item>}
         {isHero && (
           <Form.Item name="kind" label={m.admin_banner_kind()}>
             <Segmented block options={BANNER_KINDS.map((value) => ({ value, label: BANNER_KIND_LABELS[value]() }))} />
@@ -122,7 +118,7 @@ export default function BannerFormDrawer({ banner, onClose, onSaved, renderPrevi
 
         {(kind === 'image' || kind === 'promo' || !isHero) && (
           <Form.Item name="image_path" label={m.admin_banner_image()}>
-            <BannerImageField form={form} placement={placement} kind={kind} hint={imageHint} />
+            <BannerImageField form={form} hint={imageHint} />
           </Form.Item>
         )}
 
@@ -135,7 +131,7 @@ export default function BannerFormDrawer({ banner, onClose, onSaved, renderPrevi
               <Input.TextArea rows={2} maxLength={300} showCount />
             </Form.Item>
             <Form.Item name="theme" label={m.admin_banner_theme()}>
-              <Segmented options={Object.keys(BANNER_THEMES).map((value) => ({ value, label: THEME_LABELS[value]() }))} />
+              <ThemePicker />
             </Form.Item>
           </>
         )}

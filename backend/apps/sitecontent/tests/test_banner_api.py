@@ -150,6 +150,8 @@ class AdminBannerApiTests(APITestCase):
     def test_hero_image_upload_requires_banner_ratio(self):
         self.assertEqual(self.upload(_image(1600, 1200)).status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(self.upload(_image(800, 300)).status_code, status.HTTP_400_BAD_REQUEST)
+        # Banner thiết kế sẵn 1000×360 (tỉ lệ 2,78) vẫn hợp lệ.
+        self.assertEqual(self.upload(_image(1000, 360)).status_code, status.HTTP_201_CREATED)
         # Ảnh minh họa của slide chữ không bị ràng buộc tỉ lệ 8:3.
         self.assertEqual(
             self.upload(_image(800, 600), kind='promo').status_code, status.HTTP_201_CREATED

@@ -1,5 +1,5 @@
 import { EnvironmentOutlined, StarFilled } from '@ant-design/icons'
-import { bannerTheme, normalizePublicUrl } from '@/entities/content/banner'
+import { bannerBackgroundStyle, bannerTheme, normalizePublicUrl } from '@/entities/content/banner'
 import { formatNumber } from '@/entities/job/job'
 import { m } from '@/shared/config/i18n'
 import { MATCHING_JOBS_PATH, companyJobsHref, slideHref } from '../model/slide-links'
@@ -7,7 +7,7 @@ import SlideLink from './SlideLink'
 
 const SLIDE_BOX = 'relative h-full w-full overflow-hidden rounded-md'
 const TEXT_PAD = 'px-4 pt-3 pb-6 sm:px-8 sm:py-4 md:px-12 md:py-6'
-const CTA = 'inline-flex items-center rounded-lg !bg-white px-3 py-1.5 text-sm font-medium transition sm:px-4 sm:py-2'
+const CTA = 'inline-flex items-center rounded-lg !bg-white px-3 py-1.5 text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:px-4 sm:py-2'
 
 function ImageSlide({ banner, eager }) {
   return (
@@ -24,13 +24,13 @@ function ImageSlide({ banner, eager }) {
   )
 }
 
-function SlideText({ eyebrow, title, subtitle, theme, children }) {
+function SlideText({ eyebrow, title, subtitle, children }) {
   return (
     <div className="relative flex h-full min-w-0 flex-1 flex-col justify-center">
-      {eyebrow && <p className={`mb-1 text-xs font-semibold tracking-wide sm:text-sm ${theme.eyebrow}`}>{eyebrow}</p>}
+      {eyebrow && <p className={"mb-1 text-xs font-semibold tracking-wide text-white/80 sm:text-sm"}>{eyebrow}</p>}
       <h3 className="line-clamp-2 text-base font-bold leading-snug sm:text-2xl">{title}</h3>
       {/* Khung 2:1 trên điện thoại chỉ đủ nhãn, tiêu đề và nút; mô tả hiện từ `sm`. */}
-      {subtitle && <p className={`mt-2 hidden max-w-md text-base sm:line-clamp-2 ${theme.text}`}>{subtitle}</p>}
+      {subtitle && <p className={"mt-2 hidden max-w-md text-base text-white/85 sm:line-clamp-2"}>{subtitle}</p>}
       {children && <div className="mt-2.5 flex flex-wrap gap-2 sm:mt-4">{children}</div>}
     </div>
   )
@@ -40,9 +40,9 @@ function PromoSlide({ banner, eager }) {
   const theme = bannerTheme(banner.theme)
   const href = normalizePublicUrl(banner.cta_url || '')
   return (
-    <div className={`${SLIDE_BOX} ${TEXT_PAD} flex items-center gap-6 bg-gradient-to-br text-white ${theme.gradient}`}>
-      <SlideText eyebrow={banner.eyebrow} title={banner.title} subtitle={banner.subtitle} theme={theme}>
-        {banner.cta_label && href && <SlideLink href={href} className={`${CTA} ${theme.button}`}>{banner.cta_label}</SlideLink>}
+    <div className={`${SLIDE_BOX} ${TEXT_PAD} flex items-center gap-6 text-white`} style={bannerBackgroundStyle(banner.theme)}>
+      <SlideText eyebrow={banner.eyebrow} title={banner.title} subtitle={banner.subtitle}>
+        {banner.cta_label && href && <SlideLink href={href} className={CTA} style={{ color: theme.accent }}>{banner.cta_label}</SlideLink>}
       </SlideText>
       {banner.image_url && (
         <img
@@ -64,7 +64,7 @@ function CompanySlide({ banner, eager }) {
   const count = company.active_public_job_count || 0
   const industries = (company.industries_detail || []).slice(0, 2)
   return (
-    <div className={`${SLIDE_BOX} bg-gradient-to-br text-white ${theme.gradient}`}>
+    <div className={`${SLIDE_BOX} text-white`} style={bannerBackgroundStyle(banner.theme)}>
       {company.cover_image_url && (
         <img
           src={company.cover_image_url}
@@ -85,9 +85,8 @@ function CompanySlide({ banner, eager }) {
           eyebrow={banner.eyebrow || m.banner_company_eyebrow()}
           title={banner.title || name}
           subtitle={banner.subtitle || company.description_excerpt}
-          theme={{ eyebrow: 'text-white/80', text: 'text-white/85' }}
         >
-          <SlideLink href={companyJobsHref(company)} className={`${CTA} !text-gray-900 hover:!bg-gray-100`}>
+          <SlideLink href={companyJobsHref(company)} className={CTA} style={{ color: theme.accent }}>
             {count > 0 ? m.banner_company_open_jobs({ count: formatNumber(count) }) : m.banner_company_view_jobs()}
           </SlideLink>
           <SlideLink
@@ -142,11 +141,11 @@ function AiSlide({ banner, personal }) {
   const theme = bannerTheme(banner.theme)
   const content = aiContent(banner, personal)
   return (
-    <div className={`${SLIDE_BOX} ${TEXT_PAD} flex items-center gap-6 bg-gradient-to-br text-white ${theme.gradient}`}>
+    <div className={`${SLIDE_BOX} ${TEXT_PAD} flex items-center gap-6 text-white`} style={bannerBackgroundStyle(banner.theme)}>
       <StarFilled aria-hidden className="pointer-events-none absolute -right-6 -bottom-10 text-[11rem] !text-white/10" />
-      <SlideText eyebrow={banner.eyebrow} title={content.title} subtitle={content.subtitle} theme={theme}>
+      <SlideText eyebrow={banner.eyebrow} title={content.title} subtitle={content.subtitle}>
         {content.cta && content.href && (
-          <SlideLink href={content.href} className={`${CTA} ${theme.button}`}>{content.cta}</SlideLink>
+          <SlideLink href={content.href} className={CTA} style={{ color: theme.accent }}>{content.cta}</SlideLink>
         )}
       </SlideText>
     </div>

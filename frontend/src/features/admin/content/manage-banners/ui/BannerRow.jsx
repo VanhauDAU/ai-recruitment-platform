@@ -2,7 +2,7 @@ import { ArrowDownOutlined, ArrowUpOutlined, DeleteOutlined, EditOutlined, Holde
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Button, Space, Switch, Tag, Tooltip } from 'antd'
-import { BANNER_KIND_LABELS, bannerTheme } from '@/entities/content/banner'
+import { BANNER_KIND_LABELS, bannerBackgroundStyle } from '@/entities/content/banner'
 import { m } from '@/shared/config/i18n'
 import { formatDateTime } from '@/shared/lib/date-time'
 import { SCHEDULE_TAGS } from '../model/banner-form'
@@ -10,7 +10,7 @@ import { SCHEDULE_TAGS } from '../model/banner-form'
 function Thumbnail({ banner }) {
   const image = banner.image_url || banner.company?.cover_image_url
   if (image) return <img src={image} alt="" loading="lazy" className="h-full w-full object-cover" />
-  return <span className={`block h-full w-full bg-gradient-to-br ${bannerTheme(banner.theme).gradient}`} />
+  return <span className="block h-full w-full" style={bannerBackgroundStyle(banner.theme)} />
 }
 
 function scheduleText(banner) {
