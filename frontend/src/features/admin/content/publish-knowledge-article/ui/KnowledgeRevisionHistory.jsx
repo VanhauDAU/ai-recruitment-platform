@@ -59,15 +59,17 @@ export default function KnowledgeRevisionHistory({ article, onArticleChange, dis
           const actor = revision.first_published_by || revision.created_by
           return (
             <li key={revision.number}>
-              <div className="knowledge-history__heading">
-                <strong>r{revision.number}</strong>
-                <Tag color={status?.color}>{status?.label || revision.status}</Tag>
-                <small>
-                  {formatKnowledgeDate(revision.first_published_at || revision.updated_at, { withTime: true })}
-                  {actor?.name ? ` · ${actor.name}` : ''}
-                </small>
+              <div className="knowledge-history__body">
+                <div className="knowledge-history__heading">
+                  <strong>r{revision.number}</strong>
+                  <Tag color={status?.color}>{status?.label || revision.status}</Tag>
+                  <small>
+                    {formatKnowledgeDate(revision.first_published_at || revision.updated_at, { withTime: true })}
+                    {actor?.name ? ` · ${actor.name}` : ''}
+                  </small>
+                </div>
+                {revision.change_summary && <p>{revision.change_summary}</p>}
               </div>
-              {revision.change_summary && <p>{revision.change_summary}</p>}
               {canRepublish && revision.status === 'PUBLISHED' && !live && (
                 <ConfirmAction
                   cancelText="Hủy"
