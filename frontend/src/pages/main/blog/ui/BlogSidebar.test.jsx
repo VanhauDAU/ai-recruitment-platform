@@ -3,7 +3,8 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import BlogSidebar from './BlogSidebar'
 
-vi.mock('@/entities/content/banner', () => ({
+vi.mock('@/entities/content/banner', async (importOriginal) => ({
+  ...(await importOriginal()),
   getBanners: vi.fn(() => Promise.resolve([])),
 }))
 

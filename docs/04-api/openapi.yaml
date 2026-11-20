@@ -21828,11 +21828,21 @@ components:
       - green
       - blue
       - orange
+      - violet
+      - teal
+      - rose
+      - aurora
+      - midnight
       type: string
       description: |-
-        * `green` - Xanh lá (thương hiệu)
-        * `blue` - Xanh dương
-        * `orange` - Cam - hồng
+        * `green` - Xanh thương hiệu
+        * `blue` - Xanh đại dương
+        * `orange` - Hoàng hôn
+        * `violet` - Tím
+        * `teal` - Ngọc lam
+        * `rose` - Hồng đỏ
+        * `aurora` - Cực quang
+        * `midnight` - Đêm
     BannerWriteRequest:
       type: object
       description: Dữ liệu ghi; ràng buộc theo loại slide nằm ở ``Banner.clean``.

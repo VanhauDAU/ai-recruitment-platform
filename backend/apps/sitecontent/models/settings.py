@@ -212,9 +212,14 @@ class Banner(models.Model):
         AI = 'ai', 'Gợi ý việc làm AI'
 
     class Theme(models.TextChoices):
-        GREEN = 'green', 'Xanh lá (thương hiệu)'
-        BLUE = 'blue', 'Xanh dương'
-        ORANGE = 'orange', 'Cam - hồng'
+        GREEN = 'green', 'Xanh thương hiệu'
+        BLUE = 'blue', 'Xanh đại dương'
+        ORANGE = 'orange', 'Hoàng hôn'
+        VIOLET = 'violet', 'Tím'
+        TEAL = 'teal', 'Ngọc lam'
+        ROSE = 'rose', 'Hồng đỏ'
+        AURORA = 'aurora', 'Cực quang'
+        MIDNIGHT = 'midnight', 'Đêm'
 
     class Placement(models.TextChoices):
         HOME_HERO = 'home_hero', 'Carousel trang chủ'

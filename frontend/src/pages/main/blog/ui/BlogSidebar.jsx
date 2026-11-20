@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { ArrowRightOutlined, SearchOutlined } from '@ant-design/icons'
 import { AutoComplete, Button, Select } from 'antd'
 import { Link } from 'react-router'
-import { getBanners } from '@/entities/content/banner'
+import { bannerBackgroundStyle, getBanners } from '@/entities/content/banner'
 import { settingText, useSiteSettings } from '@/entities/system/site-settings'
 import { getJobSuggestions } from '@/entities/job/job'
 import { getProvinces } from '@/entities/system/location'
@@ -143,20 +143,14 @@ function JobSearchCard() {
   )
 }
 
-const GRADIENTS = {
-  green: 'from-emerald-600 via-emerald-500 to-teal-400',
-  blue: 'from-sky-600 via-blue-500 to-indigo-400',
-  orange: 'from-orange-500 via-rose-400 to-pink-400',
-}
-
 function BlogSidebarBanner({ banner }) {
   const background = banner.image_url
     ? { backgroundImage: `url(${banner.image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-    : undefined
+    : bannerBackgroundStyle(banner.theme)
 
   return (
     <section
-      className={`relative overflow-hidden rounded-xl p-5 text-white shadow-sm sm:rounded-2xl sm:p-6 ${banner.image_url ? '' : `bg-gradient-to-br ${GRADIENTS[banner.theme] || GRADIENTS.green}`}`}
+      className="relative overflow-hidden rounded-xl p-5 text-white shadow-sm sm:rounded-2xl sm:p-6"
       style={background}
     >
       {banner.image_url && <div className="absolute inset-0 bg-black/35" />}

@@ -10,9 +10,11 @@ from ..models import Banner
 
 BANNER_DIRECTORY = 'site/banners'
 BANNER_MAX_SIDE = 2400
-# Slide "ảnh + link" của carousel trang chủ: khuyến nghị 1600×600 (8:3).
+# Slide "ảnh + link" của carousel trang chủ: khuyến nghị 1600×600 (8:3). Trang quản trị
+# cắt ảnh về đúng khung trước khi gửi; mức sàn 960×360 nhận được ảnh banner
+# 1000 px phổ biến mà vẫn đủ nét ở khung ~870 px của carousel.
 HERO_IMAGE_MAX_BYTES = 1536 * 1024
-HERO_IMAGE_MIN_SIZE = (1200, 450)
+HERO_IMAGE_MIN_SIZE = (960, 360)
 HERO_IMAGE_RATIO = (2.4, 3.0)
 DEFAULT_MAX_BYTES = 1024 * 1024
 DEFAULT_MIN_SIZE = (400, 200)

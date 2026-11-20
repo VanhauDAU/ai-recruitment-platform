@@ -1,11 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getBanners } from '@/entities/content/banner'
-
-const THEME_CLASS = {
-  green: 'from-emerald-700 to-emerald-500',
-  blue: 'from-sky-700 to-blue-500',
-  orange: 'from-orange-600 to-rose-500',
-}
+import { bannerBackgroundStyle, getBanners } from '@/entities/content/banner'
 
 // Banner do admin cấu hình theo placement (job_empty, job_list_inline...):
 // lấy banner đầu tiên đang bật, cả khối là 1 link nếu có cta_url. Không có
@@ -25,7 +19,7 @@ export default function PlacementBanner({ placement }) {
 
   const external = banner.cta_url?.startsWith('http')
   const content = (
-    <article className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${THEME_CLASS[banner.theme] || THEME_CLASS.green} px-5 py-5 text-white shadow-sm sm:px-7`}>
+    <article className="relative overflow-hidden rounded-2xl px-5 py-5 text-white shadow-sm sm:px-7" style={bannerBackgroundStyle(banner.theme)}>
       {banner.image_url && <img src={banner.image_url} alt="" className="absolute inset-0 h-full w-full object-cover opacity-35" loading="lazy" />}
       <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
         <div>

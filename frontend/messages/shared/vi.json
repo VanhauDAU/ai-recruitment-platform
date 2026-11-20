@@ -360,5 +360,13 @@
   "banner_ai_matches_cta": "Xem việc phù hợp",
   "banner_ai_setup_title": "Thiết lập tiêu chí để nhận gợi ý việc làm",
   "banner_ai_setup_subtitle": "Chọn ngành, nơi làm việc và mức lương mong muốn để AI gợi ý đúng việc cho bạn.",
-  "banner_ai_setup_cta": "Thiết lập ngay"
+  "banner_ai_setup_cta": "Thiết lập ngay",
+  "banner_theme_green": "Xanh thương hiệu",
+  "banner_theme_blue": "Xanh đại dương",
+  "banner_theme_orange": "Hoàng hôn",
+  "banner_theme_violet": "Tím",
+  "banner_theme_teal": "Ngọc lam",
+  "banner_theme_rose": "Hồng đỏ",
+  "banner_theme_aurora": "Cực quang",
+  "banner_theme_midnight": "Đêm"
 }

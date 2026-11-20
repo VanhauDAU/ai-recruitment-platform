@@ -1,11 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getBanners } from '@/entities/content/banner'
-
-const THEME_CLASS = {
-  green: 'from-emerald-700 to-emerald-500',
-  blue: 'from-sky-700 to-blue-500',
-  orange: 'from-orange-600 to-rose-500',
-}
+import { bannerBackgroundStyle, getBanners } from '@/entities/content/banner'
 
 // Banner placement riêng để admin chủ động thêm/xóa/sắp xếp ảnh kèm URL cho sidebar.
 export default function JobSidebarPromos() {
@@ -24,7 +18,7 @@ export default function JobSidebarPromos() {
     <div className="space-y-4">
       {banners.map((banner) => {
         const content = (
-          <article className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${THEME_CLASS[banner.theme] || THEME_CLASS.green} p-4 text-white shadow-sm`}>
+          <article className="relative overflow-hidden rounded-2xl p-4 text-white shadow-sm" style={bannerBackgroundStyle(banner.theme)}>
             {banner.image_url && <img src={banner.image_url} alt="" className="absolute inset-0 h-full w-full object-cover opacity-35" loading="lazy" />}
             <div className="relative">
               {banner.eyebrow && <p className="text-[10px] font-bold tracking-[0.14em] text-white/80">{banner.eyebrow}</p>}
