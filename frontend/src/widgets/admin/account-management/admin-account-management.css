@@ -70,12 +70,6 @@
 
 /* ---- Tổng quan tài khoản -------------------------------------------- */
 
-.account-overview {
-  display: grid;
-  gap: 14px;
-  min-width: 0;
-}
-
 .account-stats {
   display: grid;
   gap: 14px;
@@ -109,12 +103,8 @@
 }
 
 .account-stat__icon {
-  align-self: flex-start;
-}
-
-.account-stat__icon,
-.account-queue__icon {
   align-items: center;
+  align-self: flex-start;
   background: var(--admin-primary-soft);
   border-radius: 12px;
   color: var(--admin-primary);
@@ -127,17 +117,13 @@
 }
 
 /* Icon dùng `line-height: 1` để glyph luôn nằm giữa ô, không đội nhãn xuống dòng. */
-.account-stat__icon .anticon,
-.account-queue__icon .anticon {
+.account-stat__icon .anticon {
   line-height: 1;
 }
 
-.account-stat--green .account-stat__icon,
-.account-queue--green .account-queue__icon { background: #ecfdf5; color: #059669; }
-.account-stat--red .account-stat__icon,
-.account-queue--red .account-queue__icon { background: #fff1f2; color: #e11d48; }
-.account-stat--slate .account-stat__icon,
-.account-queue--slate .account-queue__icon { background: #f1f5f9; color: #475569; }
+.account-stat--green .account-stat__icon { background: #ecfdf5; color: #059669; }
+.account-stat--red .account-stat__icon { background: #fff1f2; color: #e11d48; }
+.account-stat--slate .account-stat__icon { background: #f1f5f9; color: #475569; }
 
 /* Cột nội dung căn hai đầu: nhãn bám mép trên, số và chú thích bám mép dưới,
  * nhờ vậy các thẻ vẫn thẳng hàng khi một nhãn bị xuống dòng. */
@@ -193,96 +179,6 @@
 .account-stat--green .account-stat__meter i { background: #10b981; }
 .account-stat--red .account-stat__meter i { background: #f43f5e; }
 .account-stat--slate .account-stat__meter i { background: #94a3b8; }
-
-.account-queues {
-  background: #fff;
-  border: 1px solid var(--admin-border);
-  border-radius: 15px;
-  box-shadow: var(--admin-shadow);
-  padding: 14px 16px 16px;
-}
-
-.account-queues__title {
-  align-items: baseline;
-  color: #0f172a;
-  display: flex;
-  font-size: 12px;
-  font-weight: 700;
-  gap: 10px;
-  justify-content: space-between;
-  letter-spacing: 0.05em;
-  margin: 0 0 10px;
-  text-transform: uppercase;
-}
-
-.account-queues__title span {
-  color: #64748b;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0;
-  text-transform: none;
-}
-
-.account-queues__grid {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.account-queue {
-  align-items: center;
-  background: #f8fafc;
-  border: 1px solid var(--admin-border);
-  border-radius: 12px;
-  cursor: pointer;
-  display: flex;
-  gap: 12px;
-  padding: 12px 14px;
-  text-align: left;
-  transition: background 0.15s ease, border-color 0.15s ease;
-  width: 100%;
-}
-
-.account-queue:hover {
-  background: #fff;
-  border-color: color-mix(in srgb, var(--admin-primary) 45%, white);
-}
-
-.account-queue:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--admin-primary) 55%, white);
-  outline-offset: 1px;
-}
-
-.account-queue__body {
-  display: grid;
-  flex: 1 1 auto;
-  gap: 2px;
-  min-width: 0;
-}
-
-.account-queue__label {
-  color: #0f172a;
-  font-size: 13px;
-  font-weight: 650;
-  line-height: 1.3;
-}
-
-.account-queue__detail {
-  color: #64748b;
-  font-size: 11px;
-  line-height: 1.35;
-}
-
-.account-queue__value {
-  color: #0f172a;
-  flex: 0 0 auto;
-  font-size: 22px;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
-
-.account-queue--red .account-queue__value { color: #e11d48; }
-.account-queue--slate .account-queue__value { color: #94a3b8; }
 
 .account-management-panel > .ant-tabs > .ant-tabs-nav {
   background: linear-gradient(180deg, #fbfdff, #fff);
@@ -574,7 +470,6 @@
 
 @media (max-width: 1024px) {
   .account-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .account-queues__grid { grid-template-columns: 1fr; }
   .account-filters__controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .account-filters__search,
   .account-filters__controls > .ant-badge { grid-column: 1 / -1; }
@@ -600,7 +495,6 @@
 @media (max-width: 560px) {
   .account-stats { grid-template-columns: 1fr; }
   .account-stat p { min-height: 0; }
-  .account-queues { padding: 12px; }
 }
 
 /* ---- Recruiter workspace (dashboard visual language) ------------------- */
