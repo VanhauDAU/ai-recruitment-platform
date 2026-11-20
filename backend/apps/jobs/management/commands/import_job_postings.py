@@ -31,6 +31,12 @@ class Command(BaseCommand):
             help='Khi ghi thật, tạo kỹ năng chưa có trong danh mục thay vì từ chối dòng.',
         )
 
+        parser.add_argument(
+            '--refresh-skills',
+            action='store_true',
+            help='Đồng bộ lại kỹ năng của tin đã có theo dữ liệu nhập (sau khi sửa danh mục).',
+        )
+
     def handle(self, *args, **options):
         try:
             if options['source'] == '-':
@@ -47,5 +53,6 @@ class Command(BaseCommand):
             rows,
             apply=options['apply'],
             create_missing_skills=options['create_skills'],
+            refresh_skills=options['refresh_skills'],
         )
         self.stdout.write(json.dumps(report, ensure_ascii=False))

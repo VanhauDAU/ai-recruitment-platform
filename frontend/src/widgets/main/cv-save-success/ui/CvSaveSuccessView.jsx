@@ -176,8 +176,8 @@ function VisibilityCard({ publicId }) {
 }
 
 function JobCard({ job }) {
-  // Chỉ nhãn, không hiện phần trăm: điểm số duy nhất ứng viên thấy là của phân
-  // tích "Xem độ phù hợp" trên trang tin, tránh hai con số mâu thuẫn nhau.
+  // Chỉ nhãn và lý do bằng lời, không hiện điểm: con số duy nhất ứng viên thấy là của
+  // phân tích "Xem độ phù hợp" trên trang tin, tránh hai con số mâu thuẫn nhau.
   const compatibility = job.is_high_match ? 'Rất phù hợp' : 'Phù hợp'
   return (
     <JobImpressionBoundary slug={job.slug}>
@@ -196,9 +196,9 @@ function JobCard({ job }) {
           <span className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 font-bold ${job.is_high_match ? 'border-emerald-300 bg-emerald-50 text-[#00b14f]' : 'border-slate-200 bg-slate-50 text-slate-600'}`}>
             <StarFilled /> {compatibility}
           </span>
-          {job.match_details?.map((detail) => (
-            <span key={detail.code} className="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700">
-              {detail.label} +{detail.points}
+          {[...new Set(job.match_reasons || [])].map((reason) => (
+            <span key={reason} className="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700">
+              {reason}
             </span>
           ))}
         </div>

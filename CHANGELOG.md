@@ -8,6 +8,31 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-20
 
+#### Added — Việc làm gợi ý theo ngữ nghĩa (kế hoạch bản 3, GĐ 4)
+
+- "Việc làm phù hợp" và trang lưu CV xếp tin theo độ gần ngữ nghĩa với CV (`semantic-v1`,
+  pgvector, vector tính sẵn); rơi về gợi ý theo luật khi chưa có vector hoặc cờ tắt.
+- Cài đặt mới `ai_job_recommendation_semantic_enabled` (mặc định bật).
+- `MatchDocument.is_current` (**migration** `matching.0002`, điền cờ cho dữ liệu cũ).
+- Trang lưu CV hiện lý do gợi ý thay cho thẻ "+điểm".
+- Nhu cầu đã khai lái gợi ý theo ngữ nghĩa: tin đúng vị trí mong muốn luôn được xét và xếp
+  trên (người đổi nghề), điểm cộng nhỏ cho tỉnh, lương, kinh nghiệm, kèm lý do. API gợi ý
+  thêm `cv_recommendations_enabled`; trang chủ hiện gợi ý cả khi chưa khai nhu cầu.
+- `matching_evaluate_recommendations` và `ml/scripts/evaluate_recommendations.py`.
+
+#### Changed — AI đối sánh: trích xuất `extract-v3` (kế hoạch bản 3, GĐ 2)
+
+- PDF được đọc theo vị trí chữ (`apps/cvs/services/pdf_layout.py`): mẫu CV hai cột
+  không còn để tiêu đề mục rời khỏi nội dung. Áp dụng cho cả bước nhận dạng CV tải lên.
+- Khoảng ngày viết liền, in thành hai dòng, "tháng 9 năm 2021", "T9/2021"; khoảng chỉ
+  ghi năm tính từ giữa năm; từ khóa bằng cấp, ngoại ngữ so theo ranh giới từ.
+- CV tải lên có chức danh (`title`); cấp bậc lấy theo việc gần nhất.
+- Danh mục kỹ năng: công cụ cụ thể tách khỏi khái niệm chung (PyTorch ≠ Deep Learning…);
+  nhóm "Tên vị trí" không được đếm; `import_job_postings --refresh-skills`.
+- `profile_json` có JSON Schema (`services/extraction/profile.schema.json`).
+- `EXTRACTOR_VERSION = 'extract-v3'`: sau khi triển khai chạy
+  `docker compose exec ml-worker python manage.py matching_backfill --inline`.
+
 #### Added — AI đối sánh: đo lường trên tập vàng (kế hoạch bản 3, GĐ 1)
 
 - Lệnh `matching_evaluate` chấm danh sách cặp CV–tin bằng đúng bước trích xuất,

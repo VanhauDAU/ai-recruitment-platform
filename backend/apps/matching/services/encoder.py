@@ -19,17 +19,13 @@ from functools import lru_cache
 import numpy as np
 from django.conf import settings
 
+from ..domain import HASHING_MODEL_VERSION, model_version
 from ..models import EMBEDDING_DIMENSIONS
 
-HASHING_MODEL_VERSION = 'hashing-v1'
+__all__ = ['HashingEncoder', 'SentenceTransformerEncoder', 'get_encoder', 'model_version']
+
+
 _WORD = re.compile(r'[^\W_]+')
-
-
-def model_version():
-    """Phiên bản mô hình đang cấu hình; là một phần của khóa cache (đọc được mà không nạp mô hình)."""
-    if settings.MATCHING_ENCODER_BACKEND == 'hashing':
-        return HASHING_MODEL_VERSION
-    return settings.MATCHING_MODEL_VERSION
 
 
 def _normalize(matrix):

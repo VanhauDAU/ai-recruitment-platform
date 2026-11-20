@@ -1,7 +1,5 @@
 import {
   ArrowRightOutlined,
-  CompassOutlined,
-  InfoCircleOutlined,
   ReloadOutlined,
   SettingOutlined,
 } from '@ant-design/icons'
@@ -13,41 +11,17 @@ import { getCandidateJobRecommendations, jobKeys } from '@/entities/job/job'
 import { useSession } from '@/entities/account/session'
 import { useHideJobRecommendation } from '@/features/main/job/hide-job-recommendation'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
+import { m } from '@/shared/config/i18n'
 import { MascotEmpty } from '@/shared/ui/mascot'
 import { groupRecommendationJobs } from '../model/recommendation-reasons'
 import CandidateRecommendationCard from './CandidateRecommendationCard'
+import SetupState from './SetupState'
 
 const ACCOUNT_PAGE_SIZE = 10
 const HOME_PAGE_SIZE = 8
 const HOME_ROTATE_MS = 8000
 const SETTINGS_PATH = '/tai-khoan/cai-dat-goi-y-viec-lam'
 const MATCHING_PATH = '/tai-khoan/viec-lam-phu-hop'
-
-function SetupState({ consentRequired = false }) {
-  return (
-    <div className="rounded-2xl border border-dashed border-emerald-300 bg-gradient-to-br from-emerald-50 to-white px-5 py-10 text-center">
-      <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-white text-2xl text-[var(--brand-primary)] shadow-sm">
-        {consentRequired ? <InfoCircleOutlined /> : <CompassOutlined />}
-      </span>
-      <h2 className="mt-4 text-lg font-bold text-slate-900">
-        {consentRequired ? 'Bật quyền gợi ý việc làm' : 'Hoàn thiện nhu cầu công việc'}
-      </h2>
-      <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">
-        {consentRequired
-          ? 'Hệ thống chỉ dùng nhu cầu công việc đã lưu sau khi bạn đồng ý. Bạn có thể rút lại quyền này bất cứ lúc nào.'
-          : 'Cập nhật vị trí, kỹ năng, kinh nghiệm, mức lương và địa điểm mong muốn để nhận danh sách dành riêng cho bạn.'}
-      </p>
-      <Link
-        to={SETTINGS_PATH}
-        className="mt-5 inline-flex items-center gap-2 rounded-full bg-[var(--brand-primary)] px-5 py-2.5 text-sm font-bold text-white hover:bg-[var(--brand-primary-hover)]"
-      >
-        <SettingOutlined />
-        Đi tới cài đặt gợi ý
-      </Link>
-    </div>
-  )
-}
-
 function AccountLoading() {
   return (
     <div className="space-y-3" aria-label="Đang tải việc làm phù hợp">
@@ -83,7 +57,7 @@ function AccountRecommendations({ data, hiddenIds, hide, page, pendingIds, query
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-100">Dành riêng cho bạn</p>
           <h1 className="mt-2 text-xl font-extrabold sm:text-2xl">Việc làm phù hợp</h1>
           <p className="mt-2 max-w-xl text-sm leading-6 text-emerald-50">
-            Những công việc phù hợp nhất với bạn dựa trên mong muốn, kỹ năng và kinh nghiệm.
+            {m.candidate_reco_intro()}
           </p>
         </div>
       </header>
@@ -98,17 +72,17 @@ function AccountRecommendations({ data, hiddenIds, hide, page, pendingIds, query
           action={<Button icon={<ReloadOutlined />} onClick={() => query.refetch()}>Thử lại</Button>}
         />
       )}
-      {data?.status === 'preferences_required' && <SetupState />}
+      {data?.status === 'preferences_required' && <SetupState cvEnabled={data.cv_recommendations_enabled} />}
       {data?.status === 'consent_required' && <SetupState consentRequired />}
 
       {data?.status === 'ready' && (
         <>
           <div className="flex items-center justify-between gap-3 px-1">
             <p className="text-sm font-semibold text-slate-700">
-              {data.pagination?.total || 0} cơ hội phù hợp với tiêu chí của bạn
+              {m.candidate_reco_count({ count: data.pagination?.total || 0 })}
             </p>
             <Link to={SETTINGS_PATH} className="inline-flex items-center gap-1 text-xs font-bold text-[var(--brand-primary)] hover:underline">
-              <SettingOutlined /> Cập nhật tiêu chí
+              <SettingOutlined /> {data.preference_configured ? m.candidate_reco_update_preferences() : m.candidate_reco_add_preferences()}
             </Link>
           </div>
 
@@ -130,7 +104,7 @@ function AccountRecommendations({ data, hiddenIds, hide, page, pendingIds, query
                 description={(
                   <>
                     <h2 className="font-bold text-slate-800">Chưa có việc làm đủ phù hợp</h2>
-                    <p className="mt-1 text-sm text-slate-500">Hãy cập nhật thêm tiêu chí hoặc quay lại sau khi có tin tuyển dụng mới.</p>
+                    <p className="mt-1 text-sm text-slate-500">{m.candidate_reco_empty_text()}</p>
                   </>
                 )}
               />
@@ -201,7 +175,7 @@ function HomeRecommendations({ data, hiddenIds, hide, pendingIds, query }) {
         <div>
           <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-emerald-600">Dành riêng cho bạn</p>
           <h2 id="candidate-recommendations-title" className="mt-1 text-xl font-extrabold text-slate-950 sm:text-2xl">Gợi ý việc làm phù hợp</h2>
-          <p className="mt-1 text-sm text-slate-500">Dựa trên nhu cầu công việc bạn đã lưu.</p>
+          <p className="mt-1 text-sm text-slate-500">{m.candidate_reco_home_intro()}</p>
         </div>
         <Link to={MATCHING_PATH} className="inline-flex items-center gap-2 rounded-full border border-emerald-600 px-4 py-2 text-sm font-bold text-emerald-700 transition hover:bg-emerald-50">
           Xem tất cả <ArrowRightOutlined />
@@ -257,11 +231,8 @@ export default function CandidateJobRecommendations({ variant = 'account' }) {
   const home = variant === 'home'
   const { isAuthenticated, user } = useSession()
   const [page, setPage] = useState(1)
-  const enabled = !home || Boolean(
-    isAuthenticated
-    && user?.role === 'candidate'
-    && user?.job_preferences_configured,
-  )
+  // Trang chủ không chờ ứng viên khai nhu cầu: khi gợi ý theo CV bật, CV đã lưu là đủ.
+  const enabled = !home || Boolean(isAuthenticated && user?.role === 'candidate')
   const params = useMemo(
     () => ({ page: home ? 1 : page, page_size: home ? HOME_PAGE_SIZE : ACCOUNT_PAGE_SIZE }),
     [home, page],

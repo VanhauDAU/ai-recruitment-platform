@@ -36,6 +36,7 @@ class ApplySkillMergeTests(TestCase):
                 'aliases_added': 2,
                 'groups_created': 1,
                 'skills_grouped': 2,
+                'aliases_split': 0,
                 'conflicts': [],
             },
         )
@@ -61,6 +62,28 @@ class ApplySkillMergeTests(TestCase):
         self.assertEqual(report['conflicts'], ['Go'])
         self.assertEqual(Skill.objects.get(name='Golang').aliases, [])
         self.assertTrue(Skill.objects.filter(name='Go').exists())
+
+    def test_split_turns_a_too_broad_alias_into_its_own_skill(self):
+        group = SkillGroup.objects.create(name='AI')
+        Skill.objects.create(name='Deep Learning', aliases=['DL', 'PyTorch'], group=group)
+
+        report = apply_skill_merge({'split': {'Deep Learning': ['PyTorch', 'TensorFlow']}})
+
+        self.assertEqual(Skill.objects.get(name='Deep Learning').aliases, ['DL'])
+        self.assertEqual(
+            list(
+                Skill.objects.filter(name__in=['PyTorch', 'TensorFlow']).values_list(
+                    'group__name', flat=True
+                )
+            ),
+            ['AI', 'AI'],
+        )
+        self.assertEqual((report['aliases_split'], report['skills_created']), (1, 2))
+        # Tin ghi "PyTorch" giờ về kỹ năng PyTorch, không về Deep Learning.
+        self.assertEqual(skills_by_names(['PyTorch'])['pytorch'].name, 'PyTorch')
+        self.assertEqual(
+            apply_skill_merge({'split': {'Deep Learning': ['PyTorch']}})['aliases_split'], 0
+        )
 
     def test_command_reads_the_table_from_a_file(self):
         out = StringIO()

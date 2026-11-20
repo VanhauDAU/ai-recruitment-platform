@@ -22147,6 +22147,8 @@ components:
           type: integer
         preference_configured:
           type: boolean
+        cv_recommendations_enabled:
+          type: boolean
         needs_setup:
           type: boolean
         consent_required:
@@ -22171,6 +22173,7 @@ components:
           $ref: '#/components/schemas/RecommendationPagination'
       required:
       - consent_required
+      - cv_recommendations_enabled
       - focus_keyword
       - minimum_match_score
       - needs_setup

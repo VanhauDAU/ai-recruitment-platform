@@ -6,7 +6,11 @@ import unicodedata
 from common.html.plain_text import html_plain_text
 
 # Tỷ lệ chữ cái riêng của tiếng Việt (có dấu, đ) trên tổng chữ cái để coi là tiếng Việt.
-VIETNAMESE_LETTER_RATIO = 0.02
+# Văn bản tiếng Việt có khoảng một phần năm chữ cái mang dấu; CV tiếng Anh chỉ có vài
+# tên riêng tiếng Việt (tên người, tên trường, địa danh).
+VIETNAMESE_LETTER_RATIO = 0.05
+_VIETNAMESE_BASES = frozenset('ăâđêôơư')
+_TONE_MARKS = frozenset('\u0300\u0301\u0303\u0309\u0323')  # huyền, sắc, ngã, hỏi, nặng
 
 BULLET = re.compile(r'^\s*(?:[-–—•*·+▪●○■□✓✔➢►>]+|\d{1,2}[.)])\s*')
 # Hết câu (dấu chấm câu rồi chữ cái) hoặc gạch đầu dòng giữa dòng (" - Managed…").
@@ -58,8 +62,17 @@ _CONNECTORS = frozenset(
 
 
 def _ends_mid_sentence(line):
-    last = line.rsplit(maxsplit=1)[-1].casefold() if line.split() else ''
+    folded = line.casefold()
+    # "… 03/2022 - Hiện tại" là hết dòng ngày, dù "tại" cũng là một từ nối.
+    if folded.endswith('hiện tại'):
+        return False
+    last = folded.rsplit(maxsplit=1)[-1] if folded.split() else ''
     return line.endswith(',') or last in _CONNECTORS
+
+
+# Dòng mở đầu bằng một mốc thời gian ("09/2024", "- 03/2026", "2021") là dòng ngày
+# của một mục, không phải phần tiếp của câu ở dòng trên.
+_DATE_LINE = re.compile(r'\s*[-–—]?\s*(?:\d{1,2}[/.\-])?(?:19|20)\d{2}(?!\d)')
 
 
 def reflow_lines(lines):
@@ -71,7 +84,7 @@ def reflow_lines(lines):
     """
     merged = []
     for line in lines:
-        if merged and not merged[-1].endswith(_SENTENCE_CLOSE):
+        if merged and not merged[-1].endswith(_SENTENCE_CLOSE) and not _DATE_LINE.match(line):
             starts_lower = line[:1].islower() or (line[:1].isdigit() and not BULLET.match(line))
             cut = _ends_mid_sentence(merged[-1]) and not BULLET.match(line)
             if starts_lower or cut:
@@ -81,10 +94,22 @@ def reflow_lines(lines):
     return merged
 
 
+def _is_vietnamese_letter(char):
+    """Chữ cái riêng của tiếng Việt: ă â đ ê ô ơ ư, hoặc nguyên âm mang dấu thanh.
+
+    Chữ có dấu của tiếng khác ("ñ", "ü", chữ Hán, chữ Kana) không tính.
+    """
+    decomposed = unicodedata.normalize('NFD', char.casefold())
+    if decomposed[0] in 'aeiouy' and any(mark in _TONE_MARKS for mark in decomposed[1:]):
+        return True
+    toneless = ''.join(mark for mark in decomposed if mark not in _TONE_MARKS)
+    return unicodedata.normalize('NFC', toneless) in _VIETNAMESE_BASES
+
+
 def detect_language(text):
     """`'vi'`, `'en'` hoặc rỗng nếu không có chữ cái."""
     letters = [char for char in normalize_text(text) if char.isalpha()]
     if not letters:
         return ''
-    vietnamese = sum(1 for char in letters if not char.isascii())
+    vietnamese = sum(1 for char in letters if _is_vietnamese_letter(char))
     return 'vi' if vietnamese / len(letters) >= VIETNAMESE_LETTER_RATIO else 'en'

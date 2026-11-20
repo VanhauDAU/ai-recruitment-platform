@@ -25,6 +25,14 @@ INLINE_RECOMMENDATION_RATE_PERCENT = 40
 INLINE_RECOMMENDATION_POOL_SIZE = 8
 
 
+def recommendable_jobs(user, queryset=None):
+    """Tin được phép gợi ý cho ứng viên: đang công khai, chưa ứng tuyển, chưa ẩn."""
+    queryset = active_jobs_queryset() if queryset is None else queryset
+    return queryset.exclude(
+        Q(applications__candidate=user) | Q(hidden_by_candidates__candidate=user)
+    )
+
+
 def _ranking_candidates(
     context,
     *,
@@ -52,9 +60,7 @@ def _ranking_candidates(
 
     queryset = active_jobs_queryset().filter(signal_filter)
     if user is not None:
-        queryset = queryset.exclude(
-            Q(applications__candidate=user) | Q(hidden_by_candidates__candidate=user)
-        )
+        queryset = recommendable_jobs(user, queryset)
         if exclude_saved:
             queryset = queryset.exclude(saved_by__candidate=user)
         if exclude_emailed:

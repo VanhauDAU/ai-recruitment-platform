@@ -31,7 +31,11 @@ from .moderation import (
     admin_job_management_queryset,
     admin_job_management_summary,
 )
-from .recommendations import recommend_inline_jobs_for_candidate, rule_scores_for_cv
+from .recommendations import (
+    ranking_intent,
+    recommend_inline_jobs_for_candidate,
+    rule_scores_for_cv,
+)
 from .reports import ADMIN_JOB_REPORT_ORDERING_FIELDS, job_report_queryset
 from .saved import candidate_saved_job_rows, candidate_saved_jobs_queryset
 from .saved_recommendations import (
@@ -80,6 +84,7 @@ __all__ = [
     'recommend_inline_jobs_for_candidate',
     'recommend_jobs_from_saved',
     'recruiter_badge_eligibility',
+    'ranking_intent',
     'rule_scores_for_cv',
     'similar_jobs_for_job',
 ]

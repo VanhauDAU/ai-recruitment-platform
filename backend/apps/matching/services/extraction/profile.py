@@ -2,9 +2,11 @@
 
 from apps.cvs.services import months_to_experience_years, scrub_contacts
 
+from ...domain import EXTRACTOR_VERSION
 from .text import word_count
 
-EXTRACTOR_VERSION = 'extract-v2'
+__all__ = ['EXTRACTOR_VERSION']  # nơi khác vẫn import từ đây
+
 
 MAX_CV_CHARS = 20_000
 MAX_CV_CHUNKS = 40
