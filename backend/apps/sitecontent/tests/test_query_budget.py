@@ -18,8 +18,13 @@ from ..services import (
 )
 from .factories import revision_payload
 
-LINK_GROUP_LIST_QUERY_BUDGET = 4
-ACTIVE_ANNOUNCEMENT_FEED_QUERY_BUDGET = 1
+# +1 cho mỗi request vào API cổng ứng viên/NTD/công khai: middleware bảo trì đọc
+# `maintenance_mode` (ADR-0026). Trong TestCase mọi request nằm trong transaction nên
+# selector đọc thẳng DB; ở production đọc từ cache.
+MAINTENANCE_CHECK_QUERIES = 1
+LINK_GROUP_LIST_QUERY_BUDGET = 4 + MAINTENANCE_CHECK_QUERIES
+# +1 đọc `announcement_surfaces` khi máy chủ bật bề mặt đó.
+ACTIVE_ANNOUNCEMENT_FEED_QUERY_BUDGET = 2 + MAINTENANCE_CHECK_QUERIES
 ADMIN_ANNOUNCEMENT_LIST_QUERY_BUDGET = 2
 # Detail cần một query bổ sung, phẳng theo số audit event, để trả read-only
 # revision history và audit history trong cùng workspace AN-P3.
@@ -125,7 +130,7 @@ class AnnouncementQueryBudgetTests(APITestCase):
 
     @override_settings(ANNOUNCEMENT_REMOTE_ENABLED_SURFACES=())
     def test_disabled_remote_feed_short_circuits_without_database_queries(self):
-        with self.assertNumQueries(0):
+        with self.assertNumQueries(MAINTENANCE_CHECK_QUERIES):
             response = self.client.get(
                 reverse('site-announcements-active'),
                 {'surface': 'candidate', 'path': '/'},

@@ -20,20 +20,10 @@ FRONTEND_SRC = BACKEND_DIR.parent / 'frontend' / 'src'
 FRONTEND_PUBLIC = BACKEND_DIR.parent / 'frontend' / 'public'
 
 # Key đã lên lịch nối vào code ở giai đoạn sau của kế hoạch
-# docs/01-phan-tich/ke-hoach-cau-hinh-he-thong.md (GĐ3/GĐ4). Seed đánh dấu
+# docs/01-phan-tich/ke-hoach-cau-hinh-he-thong.md (GĐ4). Seed đánh dấu
 # chúng bằng options.pending và mô tả "Chưa có hiệu lực"; danh sách chỉ được
 # thu hẹp — key mới phải có consumer ngay khi thêm vào seed.
 PENDING_CONSUMERS = {
-    'maintenance_mode',
-    'maintenance_message',
-    'home_show_banner',
-    'home_show_stats',
-    'home_show_categories',
-    'home_show_featured_jobs',
-    'home_featured_jobs_count',
-    'home_show_cv_templates',
-    'candidate_allow_registration',
-    'employer_allow_registration',
     'email_welcome_enabled',
 }
 

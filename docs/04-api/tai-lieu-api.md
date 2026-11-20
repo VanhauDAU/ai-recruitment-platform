@@ -6,6 +6,13 @@ Phạm vi:
 
 Contract field theo từng màn hình: [frontend-response-contracts.md](frontend-response-contracts.md).
 
+
+> **Chế độ bảo trì (ADR-0026).** Khi admin bật `maintenance_mode`, mọi request tới
+> `/api/public/`, `/api/candidate/`, `/api/employer/` và `/api/auth/register/` trả
+> `503 {code: "maintenance", detail}` kèm `Retry-After`. Các trang SEO do server render
+> cũng trả 503. Vẫn chạy bình thường: `/api/admin/`, đăng nhập/làm mới phiên,
+> `/api/public/site/settings/`, `/api/public/privacy/` và `/api/health/`.
+
 ## Tài liệu API tương tác (Swagger / OpenAPI)
 
 Dùng `drf-spectacular` (OpenAPI 3). Chạy backend rồi mở:
@@ -22,7 +29,7 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 
 | Method | Endpoint | Mô tả |
 |---|---|---|
-| POST | `/api/auth/register/` | Đăng ký tài khoản (candidate/employer) |
+| POST | `/api/auth/register/` | Đăng ký tài khoản (candidate/employer). Admin tắt `candidate_allow_registration` / `employer_allow_registration` thì trả `403 {code: registration_closed}`; OAuth tạo tài khoản mới khi đó trả về `?error=registration_closed` |
 | POST | `/api/auth/register/email-availability/` | Kiểm tra email đã được dùng chưa cho UX form đăng ký candidate; body `{email}`, trả `{available}`; public, throttle 12/phút. Đây chỉ là pre-check — endpoint đăng ký vẫn xác thực lại để tránh race condition. |
 | POST | `/api/auth/login/` | Đăng nhập, nhận access/refresh JWT (kèm `portal` để chặn sai vai trò theo cổng) |
 | POST | `/api/auth/refresh/` | Làm mới access token |
@@ -46,11 +53,11 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET | `/api/candidate/notifications/?page=` | Thông báo đã giao của ứng viên, mới nhất trước (`delivered_at`); thông báo đang trong cửa sổ hoàn tác, đã hủy, hoặc thuộc loại ứng viên tắt kênh web (`show_in_inbox=false`) không xuất hiện. Nộp hồ sơ thành công tạo ngay thông báo "Hồ sơ đã được tiếp nhận" kèm email xác nhận có tối đa 5 việc làm tương tự. |
 | GET | `/api/candidate/notifications/unread-count/` | `{count}` thông báo đã giao chưa đọc. |
 | POST | `/api/candidate/notifications/{public_id}/read/`, `/api/candidate/notifications/read-all/` | Đánh dấu một/toàn bộ đã đọc; thông báo của người khác trả `404`. |
-| GET/PATCH | `/api/candidate/recruiter-visibility/` | Đọc/bật-tắt consent để NTD tìm thấy hồ sơ; bật yêu cầu xác nhận và mọi quyết định được audit. |
+| GET/PATCH | `/api/candidate/recruiter-visibility/` | Đọc/bật-tắt consent để NTD tìm thấy hồ sơ; bật yêu cầu xác nhận và mọi quyết định được audit. `policy_version` do server gán, giá trị client gửi lên bị bỏ qua. |
 | GET/PATCH | `/api/employer/me/` | Hồ sơ nhà tuyển dụng của tôi + canonical `job_workspace_ready`, `verification_approved`, `candidate_data_access`, `dpa_status`, `blockers[]`, `account_verification` (Cấp 0–3/quota) và `badge_eligibility` (năm tiêu chí dấu tick tách biệt; chỉ self mới thấy failure/action). Chỉ `position_title` sửa được. |
 | POST | `/api/admin/accounts/{public_id}/company-unlink-impact/` | Xem tác động gỡ company chọn nhầm; reason bắt buộc, chỉ trả signed token khi relation clean |
 | POST | `/api/admin/accounts/{public_id}/unlink-company/` | Confirm bằng exact reason + impact token; stale trả 409, relation đã có dữ liệu bị khóa, company/history không bị xóa |
-| POST | `/api/employer/register/` | Đăng ký employer, tạo atomically user/recruiter/consent, trả JWT và gửi email xác thực. **Không tự tạo hoặc liên kết company**; company chỉ có sau thao tác rõ ràng ở settings |
+| POST | `/api/employer/register/` | Đăng ký employer, tạo atomically user/recruiter/consent, trả JWT và gửi email xác thực. Trả `403 {code: registration_closed}` khi admin tạm dừng đăng ký NTD. **Không tự tạo hoặc liên kết company**; company chỉ có sau thao tác rõ ràng ở settings |
 | POST | `/api/employer/onboarding/registration/` | Hoàn thiện profile bắt buộc cho employer mới qua Google |
 | GET/POST | `/api/employer/consulting-need/` | Đọc hoặc tạo **một lần** nhu cầu tuyển dụng ưu tiên; POST lặp lại trả `400` |
 | GET/POST | `/api/employer/campaigns/` | Danh sách/tạo chiến dịch của chính recruiter. Cả read workspace và mutation yêu cầu `job_workspace_ready=true`. POST nhận `name` và thông tin đợt tuyển (`description`, `start_date`, `target_date`, `is_continuous`, `budget_min`, `budget_max`, `budget_source`); response có `headcount` = tổng số lượng tuyển của các tin trong chiến dịch; chiến dịch tạo ở `draft`, trừ khi gửi `activate=true` (tạo nhanh trong form đăng tin). Filter gồm `status` (một trạng thái, hoặc `ended` = hoàn tất + đã hủy), `q`, `scope=open|needs_review|active_jobs|expired_jobs`; `ordering=status` (mặc định ở giao diện: đang chạy → tạm dừng → đã lên lịch → nháp → hoàn tất → đã hủy) hoặc `activity|newest|oldest|name`. Response phân trang có thêm `status_counts` (số chiến dịch theo từng trạng thái, `ended`, `all`; tôn trọng `q`). |

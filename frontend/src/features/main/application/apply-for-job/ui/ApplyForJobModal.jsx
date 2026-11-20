@@ -3,7 +3,7 @@
 import { DownOutlined, FolderFilled, FormOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
 import { Alert, Button, Checkbox, Input, Modal, Select, Spin } from 'antd'
 import { CvChoice } from '@/entities/cv/cv'
-import { settingText, useSiteSettings } from '@/entities/system/site-settings'
+import { DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/system/site-settings'
 import { INITIAL_VISIBLE_CVS, UPLOAD_CHOICE_ID, useApplyForm } from '../model/use-apply-form'
 import ContactFields from './ContactFields'
 import UploadChoice from './UploadChoice'
@@ -23,7 +23,7 @@ export default function ApplyForJobModal({
   retriesRemaining = null,
 }) {
   const { settings } = useSiteSettings()
-  const supportEmail = settingText(settings.support_email, 'support@procv.vn')
+  const supportEmail = settingText(settings.support_email, DEFAULT_SITE_SETTINGS.support_email)
   const siteName = settingText(settings.site_name, 'ProCV')
   const form = useApplyForm({
     open,

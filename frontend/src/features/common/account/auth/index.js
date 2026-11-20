@@ -9,6 +9,7 @@ export { default as EmailVerificationBanner } from './ui/EmailVerificationBanner
 export { default as LoginForm, AuthFormStyles } from './ui/LoginForm'
 export { default as PasswordRequirements } from './ui/PasswordRequirements'
 export { default as PasswordResetForm } from './ui/PasswordResetForm'
+export { default as RegistrationClosedNotice } from './ui/RegistrationClosedNotice'
 export { default as SocialLoginButtons } from './ui/SocialLoginButtons'
 export * from './ui/password-validation'
 export * from './model/return-url'

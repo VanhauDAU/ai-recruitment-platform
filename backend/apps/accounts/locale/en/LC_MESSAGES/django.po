@@ -697,6 +697,9 @@ msgstr "Dear %(name)s - Employer ID %(code)s,"
 msgid "Hãy xác thực lại bằng mạng xã hội trước khi tạo mật khẩu."
 msgstr "Please re-authenticate with your social account before creating a password."
 
+msgid "Hệ thống đang tạm dừng đăng ký tài khoản mới. Vui lòng quay lại sau."
+msgstr "New sign-ups are paused. Please come back later."
+
 msgid "Vui lòng chờ %(seconds)ss trước khi gửi lại."
 msgstr "Please wait %(seconds)ss before resending."
 

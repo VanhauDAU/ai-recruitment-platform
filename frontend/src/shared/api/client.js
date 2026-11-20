@@ -10,6 +10,7 @@ import {
 } from './token-store'
 import { getLocale } from '@/shared/config/i18n'
 import { getCurrentPortal } from '@/shared/config/portals'
+import { notifyMaintenance } from './maintenance-events'
 
 // Fallback localhost CHỈ dành cho dev/test. Build production thiếu
 // VITE_API_BASE_URL phải fail ngay lúc load — nếu không, app prod sẽ im lặng
@@ -94,6 +95,9 @@ client.interceptors.response.use(
       && error.response?.data?.code === 'admin_permission_denied'
     ) {
       notifyPermissionDenied()
+    }
+    if (error.response?.status === 503 && error.response?.data?.code === 'maintenance') {
+      notifyMaintenance(error.response.data.detail || '')
     }
     return Promise.reject(error)
   },

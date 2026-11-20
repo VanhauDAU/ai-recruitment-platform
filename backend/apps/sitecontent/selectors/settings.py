@@ -4,6 +4,7 @@ import json
 from functools import lru_cache
 from pathlib import Path
 
+from django.conf import settings as django_settings
 from django.core.cache import cache
 from django.db import connection
 
@@ -77,6 +78,22 @@ def get_settings_map(keys):
     """``{key: value}`` for ``keys``; keys with neither a row nor a seed default are absent."""
     values = {key: get_setting(key) for key in keys}
     return {key: value for key, value in values.items() if value is not None}
+
+
+def knowledgebase_public_enabled():
+    """Trung tâm trợ giúp công khai: máy chủ cho phép VÀ admin đang mở."""
+    return bool(django_settings.KNOWLEDGEBASE_PUBLIC_ENABLED) and get_bool_setting(
+        'knowledgebase_public_enabled', True
+    )
+
+
+def knowledgebase_search_index_enabled():
+    """Cho index bài trợ giúp: đang mở công khai, máy chủ cho phép VÀ admin cho phép."""
+    return (
+        knowledgebase_public_enabled()
+        and bool(django_settings.KNOWLEDGEBASE_SEARCH_INDEX_ENABLED)
+        and get_bool_setting('knowledgebase_search_index_enabled', True)
+    )
 
 
 _BRANDING_KEYS = (

@@ -25,5 +25,9 @@
   "common_language_unsaved_title": "Switch language with unsaved changes?",
   "common_language_unsaved_description": "The page reloads to switch language, so any unsaved changes on this page will be lost.",
   "common_language_unsaved_confirm": "Switch anyway",
-  "common_language_unsaved_cancel": "Stay and save"
+  "common_language_unsaved_cancel": "Stay and save",
+  "common_maintenance_title": "We are under maintenance",
+  "common_maintenance_default_message": "We are upgrading the platform. Please come back in a few minutes.",
+  "common_maintenance_contact": "Need urgent help: {contact}",
+  "common_maintenance_retry": "Reload page"
 }

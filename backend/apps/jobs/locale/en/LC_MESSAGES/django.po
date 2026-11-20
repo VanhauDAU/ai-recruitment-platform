@@ -995,8 +995,8 @@ msgstr "The application deadline cannot be shortened when extending."
 msgid "Chỉ có thể gia hạn tin hết hạn trong vòng %(days)s ngày."
 msgstr "Expired postings can only be extended within %(days)s days."
 
-msgid "Bạn đã dùng hết %(limit)s lượt đăng tin miễn phí. Hoàn tất xác thực hồ sơ và đạt Cấp 3 để có quota 100 tin."
-msgstr "You have used all %(limit)s free job postings. Complete your verification and reach Level 3 to get a quota of 100 postings."
+msgid "Bạn đã dùng hết %(limit)s lượt đăng tin miễn phí. Hoàn tất xác thực hồ sơ và đạt Cấp 3 để có quota %(verified_limit)s tin."
+msgstr "You have used all %(limit)s free job posts. Complete account verification and reach Level 3 to get a quota of %(verified_limit)s jobs."
 
 msgid "Bạn đã dùng hết %(limit)s lượt đăng tin của tài khoản Cấp 3."
 msgstr "You have used all %(limit)s job postings of your Level 3 account."
