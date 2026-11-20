@@ -13,6 +13,7 @@ from django.conf import settings
 from common.api.params import parse_bool, parse_int
 
 JOB_AI_POLICY_KEYS = (
+    'ai_enabled',
     'ai_job_generation_enabled',
     'ai_job_generation_model',
     'ai_job_generation_daily_limit',
@@ -67,7 +68,9 @@ def resolve_job_ai_policy(site_values):
     return JobAiPolicy(
         # So ``is True`` để giá trị lạ (chuỗi do override) không vô tình mở kill switch.
         hard_switch_enabled=settings.AI_RUNTIME_ENABLED is True,
-        soft_switch_enabled=parse_bool(site_values.get('ai_job_generation_enabled'), False),
+        # Công tắc riêng của tạo tin VÀ công tắc chung "AI sinh nội dung" (ADR-0026).
+        soft_switch_enabled=parse_bool(site_values.get('ai_job_generation_enabled'), False)
+        and parse_bool(site_values.get('ai_enabled', True), False),
         requested_model=requested_model,
         model=requested_model if requested_model in allowed_models else '',
         allowed_models=allowed_models,

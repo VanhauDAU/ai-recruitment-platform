@@ -12,6 +12,7 @@ from rest_framework.exceptions import NotFound, ValidationError
 
 from apps.accounts.services import lock_account_for_write
 from apps.locations.models import Location
+from apps.sitecontent.selectors import get_int_setting
 from common.db.search import fold_accents
 from common.vietnam_time import VIETNAM_TZ
 
@@ -24,9 +25,7 @@ from ..models import (
 )
 from ..models.alert_queries import category_leaf_coverage_ids
 
-JOB_ALERT_LIMIT = 5
 DELIVERY_TIME_ZONE = VIETNAM_TZ
-DELIVERY_HOUR = 8
 
 CRITERIA_FIELDS = (
     'keyword',
@@ -127,15 +126,24 @@ def _refresh_candidate_alert_fingerprints(candidate):
     JobAlert.objects.bulk_update(changed, ['criteria_fingerprint'])
 
 
+def job_alert_limit():
+    """Số thông báo việc làm tối đa mỗi ứng viên (SiteSetting, tối thiểu 1)."""
+    return max(get_int_setting('job_alert_limit_per_candidate', 5), 1)
+
+
+def _delivery_hour():
+    return min(max(get_int_setting('job_alert_delivery_hour', 8), 0), 23)
+
+
 def next_job_alert_run(now, frequency):
-    """Return the next 08:00 Vietnam delivery boundary as an aware UTC datetime."""
+    """Next delivery boundary (admin-configured hour, Vietnam time) as an aware UTC datetime."""
     local_now = now.astimezone(DELIVERY_TIME_ZONE)
     if frequency == JobAlert.Frequency.WEEKLY:
         days_until_monday = (7 - local_now.weekday()) % 7
         candidate_date = local_now.date() + timedelta(days=days_until_monday)
         candidate = datetime.combine(
             candidate_date,
-            time(hour=DELIVERY_HOUR),
+            time(hour=_delivery_hour()),
             tzinfo=DELIVERY_TIME_ZONE,
         )
         if candidate <= local_now:
@@ -143,7 +151,7 @@ def next_job_alert_run(now, frequency):
     else:
         candidate = datetime.combine(
             local_now.date(),
-            time(hour=DELIVERY_HOUR),
+            time(hour=_delivery_hour()),
             tzinfo=DELIVERY_TIME_ZONE,
         )
         if candidate <= local_now:
@@ -175,12 +183,13 @@ def create_job_alert(user, validated_data):
     if not locked_user.email_verified:
         raise _email_verification_error()
     _refresh_candidate_alert_fingerprints(locked_user)
-    if JobAlert.objects.filter(candidate=locked_user).count() >= JOB_ALERT_LIMIT:
+    limit = job_alert_limit()
+    if JobAlert.objects.filter(candidate=locked_user).count() >= limit:
         raise ValidationError(
             {
                 'code': 'alert_limit_reached',
                 'detail': gettext('Bạn chỉ có thể tạo tối đa %(limit)s thông báo việc làm.')
-                % {'limit': JOB_ALERT_LIMIT},
+                % {'limit': limit},
             }
         )
 

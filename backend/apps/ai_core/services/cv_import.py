@@ -1,13 +1,14 @@
 """Provider-neutral CV text structuring; never logs prompts or candidate PII."""
 
-import json
 import re
 
-import requests
+from django.conf import settings
 
 from apps.cv_templates.models import empty_content
-from apps.sitecontent.selectors import get_bool_setting, get_string_setting
-from config.env import config
+from apps.sitecontent.selectors import get_bool_setting
+
+from .contracts import AiGenerationError
+from .runtime import generate_structured
 
 
 class AiCvParseError(ValueError):
@@ -16,83 +17,93 @@ class AiCvParseError(ValueError):
         super().__init__(code)
 
 
-def _provider_api_key(name):
-    """Read provider secrets through django's python-decouple configuration.
-
-    `python-decouple` resolves values from the backend `.env` file without
-    mutating `os.environ`, so adapters must not read `os.environ` directly.
-    Real process environment variables still take precedence.
-    """
-    return config(name, default='')
-
-
-def _json_from_text(value):
-    value = value.strip()
-    if value.startswith('```'):
-        value = re.sub(r'^```(?:json)?\s*|\s*```$', '', value, flags=re.IGNORECASE)
-    return json.loads(value)
+USE_CASE = 'cv_import_structuring'
+PROMPT_VERSION = 'cv-import-v2'
+SCHEMA_VERSION = 'cv-import-v1'
+# Không thể dùng AI vì cấu hình (tắt, thiếu credential/model): đọc CV bằng quy tắc.
+UNAVAILABLE_CODES = {
+    'runtime_disabled',
+    'provider_not_configured',
+    'model_not_configured',
+    'unsupported_provider_backend',
+}
+_DATED_ITEM = {
+    'type': 'object',
+    'properties': {
+        'start_date': {'type': 'string'},
+        'end_date': {'type': 'string'},
+        'description': {'type': 'string'},
+    },
+}
+RESPONSE_SCHEMA = {
+    'type': 'object',
+    'properties': {
+        'personal_info': {
+            'type': 'object',
+            'properties': {
+                key: {'type': 'string'}
+                for key in ('full_name', 'headline', 'email', 'phone', 'address')
+            }
+            | {'links': {'type': 'array', 'items': {'type': 'string'}}},
+        },
+        'summary': {'type': 'string'},
+        'experiences': {
+            'type': 'array',
+            'items': {
+                **_DATED_ITEM,
+                'properties': {
+                    'role': {'type': 'string'},
+                    'company': {'type': 'string'},
+                    **_DATED_ITEM['properties'],
+                },
+            },
+        },
+        'education': {
+            'type': 'array',
+            'items': {
+                **_DATED_ITEM,
+                'properties': {
+                    'degree': {'type': 'string'},
+                    'institution': {'type': 'string'},
+                    **_DATED_ITEM['properties'],
+                },
+            },
+        },
+        'skills': {'type': 'array', 'items': {'type': 'string'}},
+    },
+    'required': ['personal_info', 'summary', 'experiences', 'education', 'skills'],
+}
 
 
 def _prompt(text, locale):
-    return f"""Extract this CV into JSON only. Do not invent facts.
-Schema: {{"personal_info":{{"full_name":"","headline":"","email":"","phone":"","address":"","links":[]}},"summary":"","experiences":[{{"role":"","company":"","start_date":"YYYY-MM or empty","end_date":"YYYY-MM or empty","description":""}}],"education":[{{"degree":"","institution":"","start_date":"YYYY-MM or empty","end_date":"YYYY-MM or empty","description":""}}],"skills":[""],"projects":[]}}
-Output locale: {locale}. Empty unknown fields. CV text follows:\n{text}"""
+    return (
+        'Extract this CV into the JSON schema. Do not invent facts; leave unknown fields '
+        'empty. Dates use YYYY-MM or empty.\n'
+        f'Output locale: {locale}. CV text follows:\n{text}'
+    )
+
+
+def _cv_import_model():
+    return settings.AI_CV_IMPORT_MODEL or settings.AI_JOB_GENERATION_MODEL
 
 
 def _call_provider(text, locale):
-    provider = get_string_setting('ai_provider', 'gemini')
-    model = get_string_setting('ai_model', 'gemini-2.0-flash')
-    prompt = _prompt(text, locale)
-    if provider == 'gemini':
-        key = _provider_api_key('GEMINI_API_KEY')
-        if not key:
-            return None
-        response = requests.post(
-            f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent',
-            params={'key': key},
-            json={
-                'contents': [{'parts': [{'text': prompt}]}],
-                'generationConfig': {'responseMimeType': 'application/json', 'temperature': 0},
-            },
-            timeout=20,
+    """CV có cấu trúc từ runtime AI dùng chung; ``None`` khi AI không khả dụng do cấu hình."""
+    try:
+        result = generate_structured(
+            use_case=USE_CASE,
+            prompt=_prompt(text, locale),
+            response_schema=RESPONSE_SCHEMA,
+            prompt_version=PROMPT_VERSION,
+            schema_version=SCHEMA_VERSION,
+            result_validator=_validate_payload,
+            model=_cv_import_model(),
         )
-        response.raise_for_status()
-        return _json_from_text(response.json()['candidates'][0]['content']['parts'][0]['text'])
-    if provider == 'openai':
-        key = _provider_api_key('OPENAI_API_KEY')
-        if not key:
+    except AiGenerationError as error:
+        if error.code in UNAVAILABLE_CODES:
             return None
-        response = requests.post(
-            'https://api.openai.com/v1/chat/completions',
-            headers={'Authorization': f'Bearer {key}'},
-            json={
-                'model': model,
-                'messages': [{'role': 'user', 'content': prompt}],
-                'temperature': 0,
-                'response_format': {'type': 'json_object'},
-            },
-            timeout=20,
-        )
-        response.raise_for_status()
-        return _json_from_text(response.json()['choices'][0]['message']['content'])
-    if provider == 'anthropic':
-        key = _provider_api_key('ANTHROPIC_API_KEY')
-        if not key:
-            return None
-        response = requests.post(
-            'https://api.anthropic.com/v1/messages',
-            headers={'x-api-key': key, 'anthropic-version': '2023-06-01'},
-            json={
-                'model': model,
-                'max_tokens': 4096,
-                'temperature': 0,
-                'messages': [{'role': 'user', 'content': prompt}],
-            },
-            timeout=20,
-        )
-        response.raise_for_status()
-        return _json_from_text(response.json()['content'][0]['text'])
-    raise AiCvParseError('unsupported_ai_provider')
+        raise AiCvParseError('ai_provider_failed') from error
+    return result.data
 
 
 def _heuristic(text):
@@ -209,25 +220,12 @@ def _canonical(payload, locale):
 
 
 def structure_cv_text(text, locale):
-    if not get_bool_setting('ai_enabled', True):
-        raise AiCvParseError('ai_disabled')
-    payload = None
-    for attempt in range(2):
-        try:
-            payload = _call_provider(text, locale)
-            if payload is None:
-                payload = _heuristic(text)
-            _validate_payload(payload)
-            break
-        except (
-            KeyError,
-            TypeError,
-            json.JSONDecodeError,
-            requests.RequestException,
-            AiCvParseError,
-        ) as error:
-            if attempt == 1:
-                if isinstance(error, AiCvParseError):
-                    raise
-                raise AiCvParseError('ai_provider_failed') from error
-    return _canonical(payload, locale)
+    """CV text → nội dung CV chuẩn hoá.
+
+    ``ai_enabled`` tắt hoặc AI không khả dụng do cấu hình thì đọc bằng quy tắc;
+    lỗi của nhà cung cấp (sau khi runtime đã thử lại) báo ``ai_provider_failed``.
+    """
+    payload = _call_provider(text, locale) if get_bool_setting('ai_enabled', True) else None
+    if payload is None:
+        payload = _heuristic(text)
+    return _canonical(_validate_payload(payload), locale)

@@ -415,8 +415,8 @@ Chưa có: fine-tune bi-encoder, cross-encoder cho từng yêu cầu, `hybrid-v2
 
 ## Việc còn mở
 
-- Đưa import CV vào runtime `ai_core` để dùng chung hard switch, invocation log
-  và quota; hiện import vẫn dùng adapter REST riêng theo Site Setting.
+- Import CV đã dùng runtime `ai_core` (hard switch, invocation log); còn thiếu quota
+  theo người dùng ngoài throttle `cv_import`.
 - Chưa có trích xuất kỹ năng tự động vào `CvSkill`, OCR cho PDF scan hay đối
   sánh phía nhà tuyển dụng. Hai Site Setting không có code đọc
   (`ai_cv_review_enabled`, `ai_daily_request_limit`) đã được gỡ theo ADR-0026.

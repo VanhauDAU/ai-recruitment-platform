@@ -7,6 +7,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
+from apps.sitecontent.selectors import get_bool_setting
 from common.outbox import MAX_DELIVERY_ATTEMPTS, is_sending_fresh, stale_sending_before
 
 from ..models import AuthEmailJob
@@ -50,8 +51,14 @@ def queue_auth_email(kind, user, context=None, *, unique=False):
 
 
 def queue_welcome_email(user, context=None):
-    """Persist exactly one welcome job for a candidate or employer account."""
+    """Persist exactly one welcome job for a candidate or employer account.
+
+    Admin tắt ``email_welcome_enabled`` thì không tạo job (ADR-0026); email xác
+    thực và bảo mật không phụ thuộc công tắc này.
+    """
     if not (user.is_candidate or user.is_employer):
+        return None
+    if not get_bool_setting('email_welcome_enabled', True):
         return None
     return queue_auth_email(
         AuthEmailJob.Kind.WELCOME,

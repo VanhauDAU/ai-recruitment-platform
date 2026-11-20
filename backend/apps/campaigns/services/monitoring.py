@@ -17,6 +17,7 @@ from apps.applications.models import Application
 from apps.campaigns.models import RecruitmentCampaign
 from apps.employers.models import EmployerNotification
 from apps.employers.services import campaign_weekly_report_email_enabled, emit_employer_event
+from apps.sitecontent.selectors import business_emails_enabled, email_sender
 from common.email import send_html_email
 from common.i18n import recipient_language
 from common.vietnam_time import vietnam_now, vietnam_today
@@ -145,6 +146,7 @@ def _send_weekly_report(campaign, *, now):
             text=render_to_string('campaigns/email/weekly_report.txt', context),
             html=render_to_string('campaigns/email/weekly_report.html', context),
             to=recipient.email,
+            **email_sender(),
         )
 
 
@@ -152,7 +154,7 @@ def send_weekly_reports(*, now=None):
     """From 08:00 every Monday (Vietnam time), one email per running campaign and week."""
     now = now or timezone.now()
     local = vietnam_now(now)
-    if local.weekday() != 0 or local.hour < REPORT_HOUR:
+    if local.weekday() != 0 or local.hour < REPORT_HOUR or not business_emails_enabled():
         return 0
     sent = 0
     campaigns = RecruitmentCampaign.objects.filter(

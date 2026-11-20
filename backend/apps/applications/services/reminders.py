@@ -18,6 +18,7 @@ from apps.accounts.services import lock_account_for_write
 from apps.employers.models import EmployerNotification, RecruiterProfile
 from apps.employers.services import company_owners, emit_employer_event
 from apps.jobs.models import Job, publicly_available_job_filter
+from apps.sitecontent.selectors import get_bool_setting
 from common.i18n import recipient_language
 
 from ..models import Application, ApplicationReminder
@@ -132,6 +133,8 @@ def send_unanswered_application_reminders(*, now=None, batch_size=500):
     Counted from the submission, only while the job still takes applications.
     A milestone right after the candidate's own reminder is recorded silently.
     """
+    if not get_bool_setting('recruiter_reminders_enabled', True):
+        return 0
     now = now or timezone.now()
     due_condition = Q()
     for index, days in enumerate(SYSTEM_REMINDER_DAYS):

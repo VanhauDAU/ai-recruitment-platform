@@ -25,6 +25,9 @@ AI_JOB_GENERATION_MODEL = config(
     'AI_JOB_GENERATION_MODEL',
     default='gemini-3.5-flash-lite',
 ).strip()
+# Model cho trích xuất CV khi tải lên; để trống thì dùng AI_JOB_GENERATION_MODEL.
+# Cùng runtime (AI_PROVIDER_BACKEND, credential, AI_RUNTIME_ENABLED) với tạo tin.
+AI_CV_IMPORT_MODEL = config('AI_CV_IMPORT_MODEL', default='').strip()
 AI_JOB_GENERATION_MODEL_ALLOWLIST = tuple(
     model.strip()
     for model in config(

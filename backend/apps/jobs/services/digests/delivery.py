@@ -11,7 +11,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import ngettext
 
 from apps.employers.services import employer_badge_state_map
-from apps.sitecontent.selectors import get_string_setting
+from apps.sitecontent.selectors import email_brand_color, email_sender, get_string_setting
 from common.email import send_html_email
 from common.i18n import recipient_language
 from common.metrics import record_metric
@@ -94,6 +94,7 @@ def _email_context(digest, items):
     site_name = get_string_setting('site_name', 'ProCV')
     return {
         'site_name': site_name,
+        'brand_color': email_brand_color(),
         'candidate_name': digest.candidate.full_name or digest.candidate.email,
         'jobs': jobs,
         'intro_text': ngettext(
@@ -292,6 +293,7 @@ def _deliver_candidate_job_digest_locked(digest_id):
             html=html_body,
             to=digest.recipient_email,
             headers={'Message-ID': digest.message_id},
+            **email_sender(),
         )
     except Exception as error:  # noqa: BLE001 - persisted outbox owns retry state
         with transaction.atomic():
