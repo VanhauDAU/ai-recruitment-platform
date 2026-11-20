@@ -1,7 +1,7 @@
 import { HeartFilled, HeartOutlined } from '@ant-design/icons'
 import { Button, Result } from 'antd'
-import { useMemo, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { useLoginPrompt } from '@/features/common/account/auth'
 import { AnalyzeJobFit } from '@/features/main/application/analyze-job-fit'
 import { ApplyForJobModal, useJobApplicationStatus } from '@/features/main/application/apply-for-job'
@@ -39,6 +39,8 @@ export default function JobDetail() {
     jobPublicId: job?.public_id,
     enabled: isAuthenticated && user?.role === 'candidate',
   })
+  const [searchParams, setSearchParams] = useSearchParams()
+  const applyRequested = searchParams.get('ung-tuyen') === '1'
 
   function requireCandidate() {
     if (!isAuthenticated) {
@@ -68,6 +70,16 @@ export default function JobDetail() {
     }
     setApplyOpen(true)
   }
+
+  // Nút "Ứng tuyển" ở danh sách gợi ý dẫn tới `?ung-tuyen=1`: mở form một lần khi đã đủ dữ liệu.
+  useEffect(() => {
+    if (!applyRequested || !job || sessionLoading || applicationStatus.isLoading) return
+    setSearchParams((params) => {
+      params.delete('ung-tuyen')
+      return params
+    }, { replace: true })
+    if (isAcceptingApplications(job)) handleApply()
+  }, [applyRequested, job, sessionLoading, applicationStatus.isLoading]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleSave() {
     if (!requireCandidate()) return
