@@ -33,7 +33,6 @@ Status = Application.Status
 
 @override_settings(
     MEDIA_ROOT=MEDIA_ROOT,
-    CANDIDATE_STATUS_NOTIFICATION_DELAY=timedelta(minutes=5),
 )
 class RecruiterWorkspaceApiTests(APITestCase):
     @classmethod

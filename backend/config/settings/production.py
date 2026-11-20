@@ -39,12 +39,6 @@ if set(ALLOWED_HOSTS).issubset({'localhost', '127.0.0.1'}):
     _errors.append('ALLOWED_HOSTS production phải chứa domain hợp lệ.')
 if not RECAPTCHA_SECRET_KEY:
     _errors.append('RECAPTCHA_SECRET_KEY là bắt buộc ở production.')
-if not 1 <= JOB_POSTING_DEFAULT_DEADLINE_DAYS <= JOB_POSTING_MAX_DEADLINE_DAYS:
-    _errors.append('JOB_POSTING_DEFAULT_DEADLINE_DAYS phải từ 1 đến JOB_POSTING_MAX_DEADLINE_DAYS.')
-if JOB_POSTING_MAX_DEADLINE_DAYS > JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS:
-    _errors.append('JOB_POSTING_MAX_DEADLINE_DAYS không được vượt quá vòng đời công khai tối đa.')
-if JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS > 90:
-    _errors.append('JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS không được vượt quá 90 ngày.')
 if EMPLOYER_BADGE_POLICY_MODE not in {'shadow', 'enforce'}:
     _errors.append('EMPLOYER_BADGE_POLICY_MODE phải là shadow hoặc enforce.')
 

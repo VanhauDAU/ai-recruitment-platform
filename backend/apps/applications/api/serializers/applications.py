@@ -8,7 +8,11 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.applications.models import Application
-from apps.applications.services import candidate_reminder_available_at, reapplication_error
+from apps.applications.services import (
+    candidate_reminder_available_at,
+    candidate_reminder_policy,
+    reapplication_error,
+)
 from apps.cvs.api.serializers import CvVersionSerializer
 from apps.cvs.models import CvVersion, UserCv
 from apps.cvs.services import application_readiness_issues, is_unsaved_builder_baseline
@@ -277,7 +281,12 @@ class CandidateApplicationSerializer(serializers.ModelSerializer):
         # possible after the job stopped (an interview may still be running).
         visible = self.get_status(obj)
         recruiting = obj.job.stopped_at is None
-        remind_at = candidate_reminder_available_at(obj, visible_status=visible)
+        # Một danh sách đọc luật nhắc một lần cho mọi dòng (serializer con dùng chung).
+        if not hasattr(self, '_reminder_policy'):
+            self._reminder_policy = candidate_reminder_policy()
+        remind_at = candidate_reminder_available_at(
+            obj, visible_status=visible, policy=self._reminder_policy
+        )
         return {
             'withdraw': obj.is_current and visible not in Application.TERMINAL_STATUSES,
             'reapply': obj.is_current

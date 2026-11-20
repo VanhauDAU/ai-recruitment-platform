@@ -37,11 +37,12 @@ export function companyDescriptionTextLength(value) {
   return (document.body.textContent || '').replace(/\s+/g, ' ').trim().length
 }
 
-export function companyDescriptionValidationError(value) {
+// minLength lấy từ SiteSetting company_description_min_length (backend kiểm cùng giá trị).
+export function companyDescriptionValidationError(value, minLength = COMPANY_DESCRIPTION_MIN_LENGTH) {
   const length = companyDescriptionTextLength(value)
   if (!length) return m.employer_company_description_required()
-  if (length < COMPANY_DESCRIPTION_MIN_LENGTH) {
-    return m.employer_company_description_min_length({ min: COMPANY_DESCRIPTION_MIN_LENGTH, length })
+  if (length < minLength) {
+    return m.employer_company_description_min_length({ min: minLength, length })
   }
   return ''
 }

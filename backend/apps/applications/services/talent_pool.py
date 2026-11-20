@@ -14,9 +14,11 @@ from rest_framework.exceptions import NotFound
 
 from apps.candidates.models import CandidateNotification
 from apps.candidates.services import emit_candidate_notification
+from apps.sitecontent.selectors import retention_days
 from common.errors import DomainError
 
 from ..models import TalentPoolEntry, TalentPoolInvitation
+from ..models.talent_pool import RETENTION_DAYS
 
 CANDIDATE_POOL_PATH = '/tai-khoan/kho-ung-vien-tiem-nang'
 MAX_TAGS = 5
@@ -42,6 +44,10 @@ def add_to_talent_pool(application, *, recruiter, note='', tags=()):
     try:
         with transaction.atomic():
             entry = TalentPoolEntry.objects.create(
+                expires_at=timezone.now()
+                + timedelta(
+                    days=retention_days('talent_pool_retention_days', RETENTION_DAYS, minimum=30)
+                ),
                 recruiter=recruiter,
                 candidate_id=application.candidate_id,
                 source_application=application,

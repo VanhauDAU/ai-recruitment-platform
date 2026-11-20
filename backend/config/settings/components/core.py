@@ -75,7 +75,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # Sau CORS/Locale: phản hồi 503 vẫn có header CORS và thông báo đúng ngôn ngữ.
-    'apps.sitecontent.middleware.MaintenanceModeMiddleware',
+    'apps.sitecontent.api.middleware.MaintenanceModeMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'

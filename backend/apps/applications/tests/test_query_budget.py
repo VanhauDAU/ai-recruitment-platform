@@ -24,7 +24,8 @@ from ..services import create_application_record
 # + 1 prefetch status history for the candidate-visible timeline
 # + 1 prefetch reminders (timeline entries and the remind action).
 # +1: middleware bảo trì đọc cấu hình (ADR-0026).
-CANDIDATE_APPLICATION_LIST_BUDGET = 7 + 1
+# +1: luật nút nhắc nhà tuyển dụng, đọc một lần cho cả trang.
+CANDIDATE_APPLICATION_LIST_BUDGET = 7 + 1 + 1
 
 
 class CandidateApplicationListQueryBudgetTests(APITestCase):

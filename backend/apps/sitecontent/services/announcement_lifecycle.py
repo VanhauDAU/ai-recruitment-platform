@@ -6,7 +6,7 @@ from django.db.models import Max
 from django.utils import timezone
 
 # Import module hẹp: gói accounts.services đọc cấu hình qua sitecontent.selectors.
-from apps.accounts.services.admin_audit import record_admin_action
+from apps.accounts.models import AdminAccessAuditLog
 from common.errors import DomainError
 
 from ..models import (
@@ -77,7 +77,7 @@ def lock_announcement(announcement):
 
 
 def _record_action(*, actor, action, announcement, payload=None):
-    return record_admin_action(
+    return AdminAccessAuditLog.objects.record(
         actor=actor,
         action=action,
         target_type='announcement',

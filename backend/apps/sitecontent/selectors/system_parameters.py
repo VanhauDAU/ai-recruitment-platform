@@ -8,6 +8,8 @@ as configured / not configured.
 
 from django.conf import settings
 
+from apps.jobs.domain import MAX_LISTING_DAYS
+
 
 def _duration(seconds):
     minutes, rest = divmod(int(seconds), 60)
@@ -123,14 +125,11 @@ def system_parameters():
             'label': 'Tin tuyển dụng',
             'items': [
                 _param(
-                    'JOB_POSTING_DEFAULT_DEADLINE_DAYS',
-                    'Hạn nộp hồ sơ gợi ý',
-                    f'{settings.JOB_POSTING_DEFAULT_DEADLINE_DAYS} ngày',
-                ),
-                _param(
-                    'JOB_POSTING_MAX_DEADLINE_DAYS',
-                    'Hạn nộp hồ sơ tối đa',
-                    f'{settings.JOB_POSTING_MAX_DEADLINE_DAYS} ngày',
+                    'MAX_LISTING_DAYS',
+                    'Trần hạn nhận hồ sơ và thời gian hiển thị',
+                    f'{MAX_LISTING_DAYS} ngày',
+                    source='code',
+                    help_text='Các setting nhóm Tin tuyển dụng chỉ chỉnh được trong trần này.',
                 ),
                 _param(
                     'PAGE_SIZE',

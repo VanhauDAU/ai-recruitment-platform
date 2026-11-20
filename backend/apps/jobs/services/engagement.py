@@ -16,6 +16,7 @@ from common.metrics import record_metric
 from common.vietnam_time import vietnam_today
 
 from ..models import Job, JobEngagementDaily
+from .policy import job_view_dedup_seconds
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +75,7 @@ def _claim_first_view(keys):
                 _DEDUPLICATE_VIEW_SCRIPT,
                 len(redis_keys),
                 *redis_keys,
-                settings.JOB_VIEW_DEDUP_TTL_SECONDS,
+                job_view_dedup_seconds(),
             )
         )
     except RedisError:

@@ -82,3 +82,17 @@ class MultiselectValidationTests(SimpleTestCase):
         for value in (['c'], ['a', 'a'], 'a'):
             with self.subTest(value=value):
                 self.assertTrue(_validate_value(setting, value)[1])
+
+
+class IntegerListSettingValidationTests(SimpleTestCase):
+    def test_integer_list_schema_accepts_ints_in_range_only(self):
+        setting = SiteSetting(
+            key='recruiter_reminder_days',
+            value_type=SiteSetting.ValueType.JSON,
+            options={'schema': {'item': 'integer', 'min': 1, 'max': 60}},
+        )
+
+        self.assertIsNone(_validate_value(setting, [3, 7])[1])
+        for value in ([0], [61], ['3'], [True], [2.5], 3):
+            with self.subTest(value=value):
+                self.assertTrue(_validate_value(setting, value)[1])

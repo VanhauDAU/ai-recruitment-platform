@@ -11,7 +11,7 @@ from django.http import HttpResponse, JsonResponse
 from django.utils.html import escape
 from django.utils.translation import gettext as _
 
-from .selectors import get_bool_setting, get_string_setting
+from ..selectors import get_bool_setting, get_string_setting
 
 RETRY_AFTER_SECONDS = 600
 BLOCKED_API_PREFIXES = ('/api/public/', '/api/candidate/', '/api/employer/', '/api/auth/register/')

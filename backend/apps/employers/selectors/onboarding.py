@@ -1,11 +1,11 @@
 """Read model for recruiter onboarding and account-verification progress."""
 
-from django.conf import settings
 from django.db.models import Q
 from django.utils.translation import gettext_lazy
 
 from apps.employers.domain.company_email import email_domain
 from apps.jobs.models import JobReport
+from apps.sitecontent.selectors import approved_employer_verification_required
 
 from ..models import CompanyDocument, DpaStatus, EmployerVerificationCase
 from ..models.readiness import current_dpa_status, has_explicit_company_link
@@ -179,7 +179,7 @@ def build_employer_onboarding_steps(recruiter, *, badge_eligibility=None):
         ]
     )
     steps['verification_completed'] = (
-        case_approved if settings.REQUIRE_APPROVED_EMPLOYER_VERIFICATION else legacy_completed
+        case_approved if approved_employer_verification_required() else legacy_completed
     )
     steps['completed'] = steps['verification_completed'] and steps['first_job_posted']
     return steps

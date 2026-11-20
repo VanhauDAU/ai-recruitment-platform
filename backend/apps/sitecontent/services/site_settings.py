@@ -10,7 +10,7 @@ from django.core.validators import URLValidator, validate_email
 from django.db import transaction
 
 # Import module hẹp: gói accounts.services đọc cấu hình qua sitecontent.selectors.
-from apps.accounts.services.admin_audit import record_admin_action
+from apps.accounts.models import AdminAccessAuditLog
 from common.storage.media import (
     delete_local_media_url,
     media_storage_path,
@@ -92,12 +92,22 @@ def _string_error(value_type, value, options):
 
 
 def _json_error(value, options):
-    """``options.schema``: ``{"item": "string"}`` or ``{"item": "object", "fields", "required"}``."""
+    """``options.schema``: ``{"item": "string"}``, ``{"item": "integer", "min", "max"}``
+    or ``{"item": "object", "fields", "required"}``."""
     schema = options.get('schema')
     if not isinstance(schema, dict):
         return None
     if not isinstance(value, list):
         return 'Giá trị phải là danh sách.'
+    if schema.get('item') == 'integer':
+        low, high = schema.get('min', 0), schema.get('max', 10**6)
+        valid = all(
+            isinstance(item, int) and not isinstance(item, bool) and low <= item <= high
+            for item in value
+        )
+        if not valid:
+            return f'Mỗi phần tử phải là số nguyên từ {low} đến {high}.'
+        return None
     if schema.get('item') == 'string':
         if not all(isinstance(item, str) and item.strip() for item in value):
             return 'Mỗi phần tử phải là chuỗi không rỗng.'
@@ -154,7 +164,7 @@ class SiteSettingsUpdate:
 
 
 def _audit(actor, setting, before):
-    record_admin_action(
+    AdminAccessAuditLog.objects.record(
         actor=actor,
         action='site_setting_update',
         target_type='site_setting',

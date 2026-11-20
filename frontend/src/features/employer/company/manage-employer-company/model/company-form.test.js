@@ -124,4 +124,9 @@ describe('company form model', () => {
     expect(companyDescriptionTextLength(valid)).toBe(COMPANY_DESCRIPTION_MIN_LENGTH)
     expect(companyDescriptionValidationError(valid)).toBe('')
   })
+
+  it('uses the admin-configured minimum when one is given', () => {
+    expect(companyDescriptionValidationError('<p>Mười ký tự!</p>', 10)).toBe('')
+    expect(companyDescriptionValidationError('<p>Ngắn</p>', 10)).toContain('10')
+  })
 })

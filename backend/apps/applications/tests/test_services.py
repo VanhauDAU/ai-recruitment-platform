@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 
 from django.contrib.auth import get_user_model
 from django.db import close_old_connections
-from django.test import TestCase, TransactionTestCase, override_settings
+from django.test import TestCase, TransactionTestCase
 from django.utils import timezone
 
 from apps.campaigns.models import RecruitmentCampaign
@@ -229,7 +229,6 @@ class ApplicationStatusTransitionServiceTests(TestCase):
         self.assertIsNone(application.rejected_at)
 
 
-@override_settings(CANDIDATE_STATUS_NOTIFICATION_DELAY=timedelta(minutes=5))
 class StatusDecisionNotificationTests(TestCase):
     def setUp(self):
         self.candidate, self.employer, self.application = create_status_application('notice')

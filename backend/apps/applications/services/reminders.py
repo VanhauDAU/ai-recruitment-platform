@@ -23,23 +23,24 @@ from common.i18n import recipient_language
 
 from ..models import Application, ApplicationReminder
 from .applications import ApplicationNotAllowed, _locked_current_application
+from .policy import (
+    candidate_reminder_policy,
+    system_reminder_days,
+)
 
 # Days without an answer, counted from the submission, before each system nudge.
-SYSTEM_REMINDER_DAYS = (3, 7)
-CANDIDATE_REMINDER_AFTER = timedelta(days=3)
 # A system nudge right after the candidate's own one would remind twice in a day.
 SYSTEM_REMINDER_SKIP_AFTER_CANDIDATE = timedelta(hours=24)
-CANDIDATE_REMINDER_INTERVAL = timedelta(days=3)
-MAX_CANDIDATE_REMINDERS = 2
 
 APPLICATIONS_PATH = '/tuyendung/app/applications'
 
 
-def candidate_reminder_available_at(application, *, now=None, visible_status=None):
+def candidate_reminder_available_at(application, *, now=None, visible_status=None, policy=None):
     """When the candidate may next ask for a reminder; ``None`` when never again.
 
     Reads the status the candidate has been told, so a decision inside its undo
-    window does not make the button disappear early.
+    window does not make the button disappear early. ``policy`` lets a list
+    read the reminder settings once for every row.
     """
     visible_status = visible_status or application.candidate_visible_status()
     if (
@@ -53,11 +54,12 @@ def candidate_reminder_available_at(application, *, now=None, visible_status=Non
         for item in application.reminders.all()
         if item.source == ApplicationReminder.Source.CANDIDATE
     ]
-    if len(asked) >= MAX_CANDIDATE_REMINDERS:
+    policy = policy or candidate_reminder_policy()
+    if len(asked) >= policy.max_count:
         return None
-    earliest = application.applied_at + CANDIDATE_REMINDER_AFTER
+    earliest = application.applied_at + policy.after
     if asked:
-        earliest = max(earliest, max(asked) + CANDIDATE_REMINDER_INTERVAL)
+        earliest = max(earliest, max(asked) + policy.interval)
     return earliest
 
 
@@ -137,7 +139,7 @@ def send_unanswered_application_reminders(*, now=None, batch_size=500):
         return 0
     now = now or timezone.now()
     due_condition = Q()
-    for index, days in enumerate(SYSTEM_REMINDER_DAYS):
+    for index, days in enumerate(system_reminder_days()):
         due_condition |= Q(system_reminders=index, applied_at__lte=now - timedelta(days=days))
     recruiting = Job.objects.filter(publicly_available_job_filter()).values('pk')
     due = list(

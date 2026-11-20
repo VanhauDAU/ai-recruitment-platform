@@ -130,6 +130,58 @@ class CvSharingApiTests(CvApiTestCase):
             404,
         )
 
+    def _set(self, key, value):
+        from apps.sitecontent.models import SiteSetting
+
+        SiteSetting.objects.update_or_create(key=key, defaults={'value': value})
+
+    def test_admin_share_window_sets_the_default_and_caps_the_expiry(self):
+        self._set('cv_share_default_days', 7)
+        self._set('cv_share_max_days', 10)
+        cv = self.create_cv()
+
+        created = self.client.post(self.shared_links_url(cv), format='json')
+        self.assertEqual(created.status_code, 201, created.data)
+        link = CvSharedLink.objects.get(public_id=created.data['link']['public_id'])
+        self.assertAlmostEqual(
+            (link.expires_at - timezone.now()).total_seconds(),
+            timedelta(days=7).total_seconds(),
+            delta=60,
+        )
+        too_long = self.client.post(
+            self.shared_links_url(cv),
+            {'expires_at': (timezone.now() + timedelta(days=11)).isoformat()},
+            format='json',
+        )
+        self.assertEqual(too_long.status_code, 403)
+
+    def test_old_link_without_expiry_stops_after_the_admin_maximum(self):
+        cv = self.create_cv()
+        created = self.client.post(self.shared_links_url(cv), format='json')
+        public_url = reverse('cv-shared-link-public', kwargs={'token': created.data['token']})
+        CvSharedLink.objects.filter(public_id=created.data['link']['public_id']).update(
+            expires_at=None, created_at=timezone.now() - timedelta(days=40)
+        )
+        self.assertEqual(self.client.get(public_url).status_code, 200)
+
+        self._set('cv_share_max_days', 30)
+
+        self.assertEqual(self.client.get(public_url).status_code, 404)
+
+    def test_turning_sharing_off_blocks_new_and_existing_links(self):
+        cv = self.create_cv()
+        created = self.client.post(self.shared_links_url(cv), format='json')
+        public_url = reverse('cv-shared-link-public', kwargs={'token': created.data['token']})
+
+        self._set('cv_share_enabled', False)
+
+        self.assertEqual(self.client.get(public_url).status_code, 404)
+        self.assertEqual(
+            self.client.post(self.shared_links_url(cv), format='json').status_code, 403
+        )
+        self._set('cv_share_enabled', True)
+        self.assertEqual(self.client.get(public_url).status_code, 200)
+
     def test_owner_view_and_shared_link_management_block_idor(self):
         cv = self.create_cv()
         created = self.client.post(self.shared_links_url(cv), format='json')

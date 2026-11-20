@@ -7,7 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Làm lại trang Cấu hình hệ thống (ADR-0026)](#làm-lại-trang-cấu-hình-hệ-thống-adr-0026-2026-11-21) | 🟨 GĐ1–GĐ3 đã gộp (#294–#297); GĐ4 trên nhánh `feat/settings-email-ai`; GĐ5 chưa làm |
+| [Làm lại trang Cấu hình hệ thống (ADR-0026)](#làm-lại-trang-cấu-hình-hệ-thống-adr-0026-2026-11-21) | 🟨 GĐ1–GĐ4 đã gộp (#294–#298); GĐ5 trên nhánh `feat/settings-recruiting` |
 | [Chốt luồng FAQ/hướng dẫn và blog: Nháp → Xuất bản (ADR-0024)](#chốt-luồng-nội-dung-nháp--xuất-bản-adr-0024-2026-11-20) | ✅ Gộp vào `dev` (#272) |
 | [Tổ chức lại sidebar quản trị](#tổ-chức-lại-sidebar-quản-trị-2026-11-20) | ✅ Gộp vào `dev` (#270); gỡ khối "Hàng chờ quản trị" ở trang Người dùng: PR #271, chờ gộp |
 | [Song ngữ vi/en cho 3 cổng (ADR-0023)](#song-ngữ-vien-cho-3-cổng-adr-0023-2026-11-19) | 🟨 GĐ0 (#262), GĐ1 cổng NTD (#267) đã gộp; chặn mất dữ liệu khi đổi ngôn ngữ trên nhánh `fix/language-switch-unsaved-guard`; GĐ2–4 chưa làm |
@@ -53,8 +53,8 @@ ghi ngược với code.
 | 1 | Hợp đồng cấu hình (xem bên dưới) | ✅ #294, #295 |
 | 2 | Giao diện mới: thanh bên 3 khu, tìm kiếm, nút "?", lưu chung, xác nhận thao tác nguy hiểm, lịch sử thay đổi, bảng thông số | ✅ #296 |
 | 3 | Nối bảo trì, công tắc đăng ký, khối trang chủ; sửa SEO/màu/footer/hotline; link pháp lý (bỏ topcv.vn); công tắc Trung tâm trợ giúp và thông báo đa cổng | ✅ #297 |
-| 4 | Email (phạm vi công tắc, chào mừng, branding chung), AI hợp nhất theo runtime, job alert, AI chiến dịch | 🟨 Nhánh `feat/settings-email-ai` |
-| 5 | Xác thực & uy tín NTD, Ứng tuyển & SLA, hạn tin, chia sẻ CV, lưu trữ dữ liệu, OAuth theo cổng | ⬜ |
+| 4 | Email (phạm vi công tắc, chào mừng, branding chung), AI hợp nhất theo runtime, job alert, AI chiến dịch | ✅ #298 |
+| 5 | Xác thực & uy tín NTD, Ứng tuyển & SLA, hạn tin, chia sẻ CV, lưu trữ dữ liệu, OAuth theo cổng (xem bên dưới) | 🟨 Nhánh `feat/settings-recruiting` |
 
 GĐ1 gồm:
 
@@ -66,6 +66,24 @@ GĐ1 gồm:
 - Ghi audit khi upload ảnh; Django admin chỉ còn quyền xem.
 - API thông số hệ thống chỉ đọc.
 - Test hợp đồng chặn key chết.
+
+GĐ5 thêm 33 key (seed có 118 key) cho các luật trước đây viết cứng hoặc nằm ở `.env`:
+
+- Ứng tuyển: số lần nộp mỗi tin, thời gian chờ nộp lại, các mốc tự từ chối, khoảng
+  hoàn tác thông báo, lịch nhắc nhà tuyển dụng, nút nhắc của ứng viên, hạn link chia sẻ
+  hồ sơ. FE nhận cùng giá trị qua `application_rules()`.
+- Tin tuyển dụng: hạn mặc định/tối đa (trần cứng 90 ngày), thời gian hiển thị, thời
+  gian gia hạn, thời gian chống đếm trùng lượt xem.
+- NTD: bắt buộc duyệt xác thực (chỉ siết thêm cờ máy chủ), chế độ dấu tick, số lần bị từ
+  chối, lý do báo cáo làm mất tick, độ dài mô tả công ty, SLA kiểm duyệt và SLA báo cáo.
+- CV: bật/tắt chia sẻ (tắt thì mọi link ngừng mở), hạn mặc định và tối đa.
+- Lưu trữ: kho ứng viên, thông báo ứng viên, file nguồn import CV, lịch sử email gợi ý
+  (chỉ rút ngắn, có mức sàn).
+- Đăng nhập mạng xã hội theo cổng, hạn lời mời quản trị viên.
+
+Cùng PR sửa cổng cấu trúc backend đã đỏ từ GĐ1/GĐ3 (`check_backend_imports.py`): audit
+ghi qua `AdminAccessAuditLog.objects.record()`, middleware bảo trì chuyển vào
+`sitecontent/api/`.
 
 GĐ3 nối 10 key `pending`, GĐ4 nối `email_welcome_enabled`: không còn key "Chưa có hiệu lực". Việc dời lại: đồng bộ giới hạn
 upload phía frontend (cần sửa chuỗi "5MB" trong i18n nhiều vùng); file mẫu

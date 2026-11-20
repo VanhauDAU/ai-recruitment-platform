@@ -1,6 +1,7 @@
 # Kế hoạch làm lại trang Cấu hình hệ thống (admin)
 
-> Trạng thái: **đã duyệt 21/11/2026**. GĐ1 đang trên nhánh `feat/settings-contract`.
+> Trạng thái: **đã duyệt 21/11/2026**. GĐ1–GĐ4 đã gộp (#294–#298); GĐ5 trên nhánh
+> `feat/settings-recruiting`.
 > Lộ trình 5 giai đoạn, mỗi giai đoạn một PR.
 >
 > Điều chỉnh khi làm GĐ1:
@@ -34,6 +35,25 @@
 >   phải tính năng người dùng.
 > - **Hạn mức AI viết bài chiến dịch không có trần env** vì trước đây chỉ là hằng số
 >   trong code; admin chỉnh trong khoảng 0–200.
+>
+> Điều chỉnh khi làm GĐ5:
+> - **Không có data migration env → DB.** Key mới lấy mặc định từ seed, và mặc định
+>   seed bằng đúng giá trị env/hằng số đang chạy (`JOB_POSTING_*`, hạn xem tin 24 giờ,
+>   các hằng số ứng tuyển). Các biến `JOB_POSTING_*`, `JOB_VIEW_DEDUP_TTL_SECONDS`,
+>   `CANDIDATE_STATUS_NOTIFICATION_DELAY` được gỡ khỏi `.env.example` và mã nguồn.
+> - **`employer_require_approved_verification` chỉ siết được.** Hiệu lực = cờ máy chủ
+>   `REQUIRE_APPROVED_EMPLOYER_VERIFICATION` HOẶC công tắc admin, nên admin không tắt
+>   được yêu cầu mà production đặt.
+> - **Chưa làm modal đếm số công ty mất dấu tick** trước khi chuyển `enforce`. Ô chọn chế
+>   độ được đánh dấu thao tác nguy hiểm, có hỏi lại; số liệu shadow vẫn xem ở log.
+> - **Không thêm `ai_content_retention_days`.** Mức 90 ngày của nội dung AI là quy tắc
+>   bắt buộc ở production, giữ ở `.env`.
+> - **Một SLA kiểm duyệt cho mọi hàng chờ xác thực/cập nhật công ty**
+>   (`moderation_sla_hours`) và một SLA riêng cho báo cáo vi phạm (`report_sla_hours`).
+> - **`FALLBACK_MAX_DEADLINE_DAYS` ở form đăng tin vẫn giữ** làm giá trị dự phòng khi
+>   chưa tải xong posting-context; giá trị bằng trần cứng 90 ngày.
+> - **Hằng số trần và mặc định tự từ chối thuộc app jobs** (`apps.jobs.domain.MAX_LISTING_DAYS`,
+>   `apps.jobs.services.auto_reject_default_days`), để app khác không import module nội bộ.
 
 ## Context
 

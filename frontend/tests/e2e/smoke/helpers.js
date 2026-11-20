@@ -9,6 +9,7 @@ export const APPLICATION_RULES = {
   candidate_reminder_after_days: 3,
   candidate_reminder_interval_days: 3,
   max_candidate_reminders: 2,
+  auto_reject_default_days: 21,
   auto_reject_after_day_choices: [
     { value: 14, label: '2 tuần' },
     { value: 21, label: '3 tuần' },

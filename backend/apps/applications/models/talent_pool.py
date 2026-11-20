@@ -7,11 +7,13 @@ from django.utils import timezone
 
 from common.db.public_id import generate_public_id
 
-RETENTION = timedelta(days=365)
+# Mức giữ lâu nhất; admin chỉ rút ngắn được (SiteSetting talent_pool_retention_days,
+# áp khi service tạo lượt lưu).
+RETENTION_DAYS = 365
 
 
 def _default_expiry():
-    return timezone.now() + RETENTION
+    return timezone.now() + timedelta(days=RETENTION_DAYS)
 
 
 class TalentPoolEntry(models.Model):
