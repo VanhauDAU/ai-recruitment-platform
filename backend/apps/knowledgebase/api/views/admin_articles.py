@@ -1,4 +1,4 @@
-"""Admin endpoints for articles and their editorial revision workflow."""
+"""Admin endpoints for articles and their draft -> publish revision workflow."""
 
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
@@ -14,15 +14,13 @@ from ...selectors import (
     admin_articles_queryset,
 )
 from ...services import (
-    approve_revision,
     archive_article,
     create_article,
     create_revision,
+    discard_draft_revision,
     publish_revision,
-    reject_revision,
     reorder_articles,
     restore_article,
-    submit_revision,
     update_article,
     update_draft_revision,
 )
@@ -35,7 +33,6 @@ from ..serializers import (
     ArticleUpdateSerializer,
     PublishSerializer,
     ReorderSerializer,
-    RevisionActionSerializer,
     RevisionSerializer,
     RevisionWriteSerializer,
     TokenActionSerializer,
@@ -201,44 +198,24 @@ class AdminRevisionDetailView(PrivateNoStoreMixin, APIView):
         return article_response(request, article)
 
 
-class AdminRevisionActionView(PrivateNoStoreMixin, APIView):
+@extend_schema(tags=['knowledgebase-admin'])
+class AdminRevisionDiscardView(PrivateNoStoreMixin, APIView):
     permission_classes = [AdminPortalPermission]
-    action = None
 
     @extend_schema(
-        request=RevisionActionSerializer,
+        request=TokenActionSerializer,
         responses={200: AdminArticleDetailSerializer, **ERROR_RESPONSES},
-        tags=['knowledgebase-admin'],
     )
     def post(self, request, public_id, number):
-        serializer = RevisionActionSerializer(data=request.data)
+        serializer = TokenActionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        operation = {
-            'submit': submit_revision,
-            'approve': approve_revision,
-            'reject': reject_revision,
-        }[self.action]
-        result = operation(
+        article = discard_draft_revision(
             article=article_or_404(public_id),
             revision_number=number,
             actor=request.user,
             expected_revision_token=serializer.validated_data['revision_token'],
-            review_note=serializer.validated_data.get('review_note', ''),
         )
-        article, _revision = result
         return article_response(request, article)
-
-
-class AdminRevisionSubmitView(AdminRevisionActionView):
-    action = 'submit'
-
-
-class AdminRevisionApproveView(AdminRevisionActionView):
-    action = 'approve'
-
-
-class AdminRevisionRejectView(AdminRevisionActionView):
-    action = 'reject'
 
 
 class AdminArticlePublishView(PrivateNoStoreMixin, APIView):

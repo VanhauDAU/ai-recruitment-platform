@@ -10,7 +10,7 @@ PUBLIC_ARTICLE_FILTER = Q(
     lifecycle_state=KnowledgeArticle.LifecycleState.ACTIVE,
     category__is_active=True,
     published_revision__isnull=False,
-    published_revision__status=KnowledgeArticleRevision.Status.APPROVED,
+    published_revision__status=KnowledgeArticleRevision.Status.PUBLISHED,
 )
 
 
@@ -18,7 +18,7 @@ def public_categories_queryset():
     public_articles = Q(
         articles__lifecycle_state=KnowledgeArticle.LifecycleState.ACTIVE,
         articles__published_revision__isnull=False,
-        articles__published_revision__status=KnowledgeArticleRevision.Status.APPROVED,
+        articles__published_revision__status=KnowledgeArticleRevision.Status.PUBLISHED,
     )
     return (
         KnowledgeCategory.objects.filter(is_active=True)

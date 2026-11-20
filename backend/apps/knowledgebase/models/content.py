@@ -132,9 +132,7 @@ class KnowledgeArticle(models.Model):
 class KnowledgeArticleRevision(models.Model):
     class Status(models.TextChoices):
         DRAFT = 'DRAFT', 'Nháp'
-        IN_REVIEW = 'IN_REVIEW', 'Chờ duyệt'
-        APPROVED = 'APPROVED', 'Đã duyệt'
-        REJECTED = 'REJECTED', 'Bị từ chối'
+        PUBLISHED = 'PUBLISHED', 'Đã xuất bản'
 
     public_id = models.CharField(max_length=64, unique=True, editable=False)
     article = models.ForeignKey(
@@ -152,24 +150,9 @@ class KnowledgeArticleRevision(models.Model):
     seo_description = models.CharField(max_length=300, blank=True)
     change_summary = models.CharField(max_length=500, blank=True)
     source_reference = models.CharField(max_length=500)
-    review_note = models.TextField(blank=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         related_name='knowledge_revisions_created',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-    )
-    submitted_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        related_name='knowledge_revisions_submitted',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-    )
-    reviewed_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        related_name='knowledge_revisions_reviewed',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -183,8 +166,6 @@ class KnowledgeArticleRevision(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    submitted_at = models.DateTimeField(null=True, blank=True)
-    reviewed_at = models.DateTimeField(null=True, blank=True)
     first_published_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
@@ -195,7 +176,7 @@ class KnowledgeArticleRevision(models.Model):
             ),
             models.UniqueConstraint(
                 fields=['article'],
-                condition=Q(status__in=['DRAFT', 'IN_REVIEW']),
+                condition=Q(status='DRAFT'),
                 name='uq_kb_revision_open_article',
             ),
             models.CheckConstraint(condition=Q(number__gte=1), name='chk_kb_revision_number'),

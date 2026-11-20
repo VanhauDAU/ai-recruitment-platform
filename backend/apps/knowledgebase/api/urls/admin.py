@@ -14,11 +14,9 @@ from ..views import (
     AdminCategoryListCreateView,
     AdminCategoryReorderView,
     AdminMediaListCreateView,
-    AdminRevisionApproveView,
     AdminRevisionDetailView,
+    AdminRevisionDiscardView,
     AdminRevisionListCreateView,
-    AdminRevisionRejectView,
-    AdminRevisionSubmitView,
 )
 
 urlpatterns = [
@@ -70,19 +68,9 @@ urlpatterns = [
         name='kb-admin-revision-detail',
     ),
     path(
-        'articles/<str:public_id>/revisions/<int:number>/submit/',
-        AdminRevisionSubmitView.as_view(),
-        name='kb-admin-revision-submit',
-    ),
-    path(
-        'articles/<str:public_id>/revisions/<int:number>/approve/',
-        AdminRevisionApproveView.as_view(),
-        name='kb-admin-revision-approve',
-    ),
-    path(
-        'articles/<str:public_id>/revisions/<int:number>/reject/',
-        AdminRevisionRejectView.as_view(),
-        name='kb-admin-revision-reject',
+        'articles/<str:public_id>/revisions/<int:number>/discard/',
+        AdminRevisionDiscardView.as_view(),
+        name='kb-admin-revision-discard',
     ),
     path(
         'articles/<str:public_id>/publish/',

@@ -69,8 +69,7 @@ class CategoryWriteSerializer(serializers.Serializer):
 
 class RevisionSerializer(serializers.ModelSerializer):
     created_by = serializers.SerializerMethodField()
-    submitted_by = serializers.SerializerMethodField()
-    reviewed_by = serializers.SerializerMethodField()
+    first_published_by = serializers.SerializerMethodField()
 
     class Meta:
         model = KnowledgeArticleRevision
@@ -86,14 +85,10 @@ class RevisionSerializer(serializers.ModelSerializer):
             'seo_description',
             'change_summary',
             'source_reference',
-            'review_note',
             'created_by',
-            'submitted_by',
-            'reviewed_by',
+            'first_published_by',
             'created_at',
             'updated_at',
-            'submitted_at',
-            'reviewed_at',
             'first_published_at',
         ]
 
@@ -108,11 +103,8 @@ class RevisionSerializer(serializers.ModelSerializer):
     def get_created_by(self, obj) -> dict | None:
         return self._actor(obj.created_by)
 
-    def get_submitted_by(self, obj) -> dict | None:
-        return self._actor(obj.submitted_by)
-
-    def get_reviewed_by(self, obj) -> dict | None:
-        return self._actor(obj.reviewed_by)
+    def get_first_published_by(self, obj) -> dict | None:
+        return self._actor(obj.first_published_by)
 
 
 def _latest_revision(article):
@@ -168,7 +160,7 @@ class AdminArticleListSerializer(serializers.ModelSerializer):
 class AdminArticleSummarySerializer(serializers.Serializer):
     total = serializers.IntegerField(min_value=0)
     published = serializers.IntegerField(min_value=0)
-    in_review = serializers.IntegerField(min_value=0)
+    drafts = serializers.IntegerField(min_value=0)
     overdue = serializers.IntegerField(min_value=0)
 
 
@@ -273,11 +265,6 @@ class RevisionWriteSerializer(serializers.Serializer):
     seo_title = serializers.CharField(max_length=200, allow_blank=True, required=False)
     seo_description = serializers.CharField(max_length=300, allow_blank=True, required=False)
     revision_token = serializers.IntegerField(min_value=1)
-
-
-class RevisionActionSerializer(serializers.Serializer):
-    revision_token = serializers.IntegerField(min_value=1)
-    review_note = serializers.CharField(allow_blank=True, required=False)
 
 
 class PublishSerializer(serializers.Serializer):
