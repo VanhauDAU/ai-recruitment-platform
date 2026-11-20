@@ -7,8 +7,6 @@ from common.storage.media import delete_local_media_url, media_url_from_value, s
 
 from .models import PinnedPost, Post, PostCategory, Tag
 
-PUBLISH_PERM = 'blog.can_publish_post'
-
 
 @admin.register(PostCategory)
 class PostCategoryAdmin(admin.ModelAdmin):
@@ -55,18 +53,6 @@ class PostAdminForm(forms.ModelForm):
             ),
         }
 
-    def __init__(self, *args, can_publish=True, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Biên tập viên không có quyền xuất bản chỉ được để Nháp/Chờ duyệt.
-        if not can_publish and 'status' in self.fields:
-            allowed = {Post.Status.DRAFT, Post.Status.PENDING}
-            current = self.instance.status if self.instance and self.instance.pk else None
-            self.fields['status'].choices = [
-                (value, label)
-                for value, label in Post.Status.choices
-                if value in allowed or value == current
-            ]
-
 
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
@@ -109,26 +95,8 @@ class PostAdmin(admin.ModelAdmin):
         ),
     )
 
-    def _can_publish(self, request):
-        return request.user.has_perm(PUBLISH_PERM)
-
-    def get_form(self, request, obj=None, **kwargs):
-        FormClass = super().get_form(request, obj, **kwargs)
-        can_publish = self._can_publish(request)
-
-        class BoundForm(FormClass):
-            def __init__(self, *args, **kw):
-                kw['can_publish'] = can_publish
-                super().__init__(*args, **kw)
-
-        return BoundForm
-
     def get_queryset(self, request):
-        qs = super().get_queryset(request).select_related('category', 'author')
-        # Người không có quyền xuất bản chỉ thấy bài của chính mình.
-        if not self._can_publish(request):
-            qs = qs.filter(author=request.user)
-        return qs
+        return super().get_queryset(request).select_related('category', 'author')
 
     def save_model(self, request, obj, form, change):
         if obj.author_id is None:

@@ -6,9 +6,7 @@ from .editorial import (
     discard_draft,
     publish_post,
     restore_post,
-    return_post,
     save_post_draft,
-    submit_post,
 )
 from .media import upload_blog_media, upload_blog_thumbnail
 from .ordering import reorder_by_public_id
@@ -27,10 +25,8 @@ __all__ = [
     'reorder_by_public_id',
     'merge_tags',
     'restore_post',
-    'return_post',
     'sanitize_blog_html',
     'save_post_draft',
-    'submit_post',
     'upload_blog_media',
     'upload_blog_thumbnail',
 ]
