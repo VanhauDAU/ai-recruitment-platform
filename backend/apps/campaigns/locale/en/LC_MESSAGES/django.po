@@ -58,11 +58,11 @@ msgstr "The account reached Instagram's 24-hour posting limit. The system will r
 msgid "Instagram không tải được ảnh của bài. Hãy đổi ảnh rồi đăng lại."
 msgstr "Instagram couldn't download the post's images. Change the images and post again."
 
-msgid "Instagram không xử lý được ảnh của bài. Hãy đổi ảnh rồi đăng lại."
-msgstr "Instagram couldn't process the post's images. Change the images and post again."
+msgid "Mạng xã hội không xử lý được bài hoặc ảnh của bài. Hãy đổi ảnh rồi đăng lại."
+msgstr "The social network couldn't process the post or its images. Change the images and post again."
 
-msgid "Instagram xử lý ảnh quá lâu. Hệ thống đã thử lại nhiều lần."
-msgstr "Instagram took too long to process the images. The system retried several times."
+msgid "Mạng xã hội xử lý bài quá lâu. Hệ thống đã thử lại nhiều lần."
+msgstr "The social network took too long to process the post. The system retried several times."
 
 msgid "Bài Instagram cần ít nhất một ảnh."
 msgstr "An Instagram post needs at least one image."
@@ -99,6 +99,9 @@ msgstr "Facebook Page"
 
 msgid "Instagram doanh nghiệp"
 msgstr "Instagram Business"
+
+msgid "Threads"
+msgstr "Threads"
 
 msgid "Nháp"
 msgstr "Draft"
@@ -626,6 +629,9 @@ msgstr "The account selection session has expired. Connect again."
 msgid "Tài khoản không có trong danh sách vừa kết nối."
 msgstr "This account is not in the list you just connected."
 
+msgid "Kết nối %(network)s \"%(account)s\" đã hết hạn. Hãy kết nối lại để tiếp tục đăng."
+msgstr "The %(network)s connection \"%(account)s\" has expired. Reconnect it to keep posting."
+
 msgid "Ảnh bìa công ty"
 msgstr "Company cover image"
 
@@ -658,9 +664,6 @@ msgstr "Could not remove the post of channel \"%(channel)s\" from %(network)s. P
 msgid "Bạn không có quyền với bài đăng này."
 msgstr "You do not have access to this post."
 
-msgid "Kết nối %(network)s \"%(account)s\" đã hết hạn. Hãy kết nối lại để tiếp tục đăng."
-msgstr "The %(network)s connection \"%(account)s\" has expired. Reconnect it to keep posting."
-
 msgid "Chưa đăng được bài của kênh \"%(channel)s\" lên %(network)s. Mở chiến dịch để hẹn lại."
 msgstr "Could not publish the post of channel \"%(channel)s\" to %(network)s. Open the campaign to reschedule."
 
@@ -679,8 +682,8 @@ msgstr "Only unpublished posts can be rescheduled."
 msgid "%(network)s chưa kết nối hoặc không thuộc tài khoản này."
 msgstr "%(network)s is not connected or does not belong to this account."
 
-msgid "%(network)s nhận tối đa %(count)s ký tự mỗi bài."
-msgstr "%(network)s accepts at most %(count)s characters per post."
+msgid "%(network)s nhận tối đa %(count)s ký tự mỗi bài, tính cả link."
+msgstr "%(network)s accepts at most %(count)s characters per post, including the link."
 
 msgid "%(network)s cần ít nhất một ảnh."
 msgstr "%(network)s needs at least one image."

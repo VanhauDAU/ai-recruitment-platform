@@ -130,6 +130,10 @@ FACEBOOK_OAUTH_REDIRECT_URI = config(
     'FACEBOOK_OAUTH_REDIRECT_URI',
     default=f'{FRONTEND_URL.rstrip("/")}/api/employer/social/facebook/callback/',
 )
+# Threads có App ID/secret riêng trong use case Threads của Meta App.
+THREADS_APP_ID = config('THREADS_APP_ID', default='')
+THREADS_APP_SECRET = config('THREADS_APP_SECRET', default='')
+THREADS_GRAPH_API_VERSION = config('THREADS_GRAPH_API_VERSION', default='v1.0')
 CAMPAIGN_SOCIAL_TOKEN_ENCRYPTION_KEY = config('CAMPAIGN_SOCIAL_TOKEN_ENCRYPTION_KEY', default='')
 CAMPAIGN_SOCIAL_HTTP_TIMEOUT_SECONDS = config(
     'CAMPAIGN_SOCIAL_HTTP_TIMEOUT_SECONDS', default=10.0, cast=float

@@ -94,7 +94,7 @@ describe('ChannelSocialPosts', () => {
     await user.click(await screen.findByRole('button', { name: 'Soạn bài' }))
     const drawer = await screen.findByRole('dialog')
     expect(await within(drawer).findByLabelText('Xem trước bài đăng')).toHaveTextContent('Tuyển gấp')
-    expect(within(drawer).getByText(/Facebook sẽ hiện dạng chữ/)).toBeInTheDocument()
+    expect(within(drawer).getByText(/mạng xã hội sẽ hiện dạng chữ/)).toBeInTheDocument()
     await user.click(within(drawer).getByRole('button', { name: 'Đăng ngay' }))
 
     await waitFor(() => expect(mocks.scheduleChannelPost).toHaveBeenCalledWith('camp_1', 'chn_1', {
@@ -119,7 +119,7 @@ describe('ChannelSocialPosts', () => {
     const drawer = await screen.findByRole('dialog')
     await user.click(await within(drawer).findByRole('button', { name: /Dùng ảnh bìa công ty/ }))
     expect(within(drawer).getByRole('img', { name: 'Ảnh 1 của bài' })).toBeInTheDocument()
-    expect(within(drawer).queryByText(/Facebook sẽ hiện dạng chữ/)).not.toBeInTheDocument()
+    expect(within(drawer).queryByText(/mạng xã hội sẽ hiện dạng chữ/)).not.toBeInTheDocument()
     await user.click(within(drawer).getByRole('button', { name: 'Đăng ngay' }))
 
     await waitFor(() => expect(mocks.scheduleChannelPost).toHaveBeenCalledWith('camp_1', 'chn_1', expect.objectContaining({
@@ -186,6 +186,38 @@ describe('ChannelSocialPosts', () => {
       connection: 'soc_ig',
       images: ['employers/cmp/covers/a.jpg'],
     })))
+  })
+
+  it('limits a Threads post to the length the API reports and previews its link card', async () => {
+    const user = userEvent.setup()
+    const threads = {
+      ...facebook,
+      key: 'threads',
+      platform: 'Threads',
+      label: 'Threads',
+      channel_kind: 'threads',
+      capabilities: { max_chars: 500, max_images: 10, requires_image: false, supports_delete: true, image_ratio: [0.1, 10] },
+    }
+    mocks.useSocialNetworks.mockReturnValue({ data: [facebook, threads], isLoading: false })
+    mocks.getChannelPosts.mockResolvedValue([])
+    mocks.getSocialConnections.mockResolvedValue([{ public_id: 'soc_th', network: 'threads', account_name: '@procv', status: 'connected' }])
+    render(
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <MemoryRouter>
+          <ChannelPostSection
+            campaign={campaign}
+            channel={{ ...channel, kind: 'threads', kind_label: 'Threads', label: 'Threads', link: 'https://procv.vn/r/AbC123xy' }}
+            editable
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    await user.click(await screen.findByRole('button', { name: 'Soạn bài' }))
+    const drawer = await screen.findByRole('dialog')
+
+    expect(await within(drawer).findByRole('textbox', { name: /Nội dung/ })).toHaveAttribute('maxlength', '500')
+    expect(within(within(drawer).getByLabelText('Xem trước bài đăng')).getByText('procv.vn')).toBeInTheDocument()
   })
 
   it('points to the integrations page when no page is connected', async () => {

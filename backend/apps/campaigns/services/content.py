@@ -47,6 +47,9 @@ CHANNEL_STYLE = {
         'chú thích Instagram có vài emoji, tối đa 2000 ký tự và 10 hashtag; '
         'link trong chú thích không bấm được nên ghi rõ link ở cuối'
     ),
+    CampaignChannel.Kind.THREADS: (
+        'bài Threads ngắn, giọng trò chuyện, tối đa 400 ký tự kể cả link, tối đa 2 hashtag'
+    ),
     CampaignChannel.Kind.LINKEDIN: 'bài LinkedIn giọng chuyên nghiệp, không emoji, tối đa 1300 ký tự',
     CampaignChannel.Kind.ZALO: 'tin nhắn Zalo rất ngắn, tối đa 600 ký tự',
     CampaignChannel.Kind.TIKTOK: 'chú thích video TikTok ngắn, tối đa 300 ký tự',

@@ -1,6 +1,6 @@
 # Tự đăng bài chiến dịch lên mạng xã hội
 
-Kênh chiến dịch có mạng tự đăng (Fanpage Facebook, Instagram) đăng bài lên tài
+Kênh chiến dịch có mạng tự đăng (Fanpage Facebook, Instagram, Threads) đăng bài lên tài
 khoản mạng xã hội của nhà tuyển dụng (NTD) đúng giờ hẹn, rồi tự gỡ bài khi
 chiến dịch kết thúc. Thiết kế nằm ở
 [ADR-0021](../02-tong-quan/adr-0021-campaign-facebook-page.md) và
@@ -15,6 +15,7 @@ phẩy. Mạng không có trong danh sách chạy bằng provider giả lập.
 | --- | --- | --- |
 | `facebook_page` | Kết nối trả một Fanpage giả lập; "đăng" và "gỡ" chỉ ghi vào cache. Giao diện gắn nhãn "Giả lập". | Gọi Graph API của Meta với quyền `pages_show_list`, `pages_manage_posts`, `pages_read_engagement`. Hướng dẫn tạo app ở mục dưới. |
 | `instagram` | Kết nối trả một tài khoản Instagram giả lập; ảnh vẫn được thêm viền thành JPEG như khi đăng thật. | Gọi Instagram Graph API qua Facebook Login với quyền `business_management`, `pages_show_list`, `pages_read_engagement`, `instagram_basic`, `instagram_content_publish`, `instagram_manage_contents`. Xem mục Instagram. |
+| `threads` | Kết nối trả một trang cá nhân Threads giả lập có hạn token 60 ngày; tác vụ làm mới token cũng chạy giả lập. | Gọi Threads API (`graph.threads.com`) qua Threads Login với quyền `threads_basic`, `threads_content_publish`, `threads_delete`. Xem mục Threads. |
 
 `CAMPAIGN_SOCIAL_PROVIDER=facebook` là cách bật cũ, được hiểu là
 `CAMPAIGN_SOCIAL_LIVE_NETWORKS=facebook_page`. Test luôn chạy giả lập, bất kể
@@ -145,6 +146,53 @@ Tên mục trong giao diện Meta có thể khác đôi chút theo thời điể
   token, còn ProCV dùng Page token. Nếu Meta từ chối, bài chuyển "Cần tự gỡ
   bài" và NTD nhận link để tự xóa. Cần kiểm lại khi thử với tài khoản thật.
 
+## Threads
+
+Threads dùng **Threads Login** riêng, không qua Facebook Login, và có **App ID
+và secret riêng** nằm trong use case Threads của cùng Meta App. ProCV lưu token
+dài hạn của trang cá nhân Threads (60 ngày) kèm `token_expires_at`. Tác vụ
+`refresh_social_tokens` chạy mỗi ngày và làm mới các token còn dưới 10 ngày. Nếu
+Meta từ chối, hoặc token đã quá hạn, kết nối chuyển "Hết hạn" và NTD được báo
+để kết nối lại.
+
+### Bật Threads trong Meta App
+
+1. Trong app "ProCV Fanpage", mở use case **Truy cập vào API Threads → Tùy
+   chỉnh**. Thêm quyền `threads_basic`, `threads_content_publish` và
+   `threads_delete`.
+2. Ở **Cài đặt** của use case Threads, chép **Threads App ID** và **Threads App
+   secret** (khác App ID của Facebook).
+3. Khai **Redirect Callback URL** đúng từng ký tự:
+   `<FRONTEND_URL>/api/employer/social/threads/callback/` (máy cục bộ là
+   `http://localhost:5173/api/employer/social/threads/callback/`). Tài liệu
+   Meta không nói rõ có nhận `http://localhost` hay không. Nếu bị từ chối, dùng
+   một đường hầm HTTPS và đặt `FRONTEND_URL` theo đó.
+4. **Người thử nghiệm.** Vào **Vai trò trong ứng dụng → Vai trò → Thêm người →
+   Người thử nghiệm Threads**, nhập tài khoản Threads. Chủ tài khoản chấp nhận
+   lời mời trong app Threads: **Cài đặt → Tài khoản → Quyền truy cập trang
+   web**. Chưa qua App Review thì chỉ đăng được cho người thử nghiệm.
+5. Trong `backend/.env`:
+   ```env
+   CAMPAIGN_SOCIAL_LIVE_NETWORKS=facebook_page,instagram,threads
+   THREADS_APP_ID=<Threads App ID>
+   THREADS_APP_SECRET=<Threads App secret>
+   ```
+   Tạo lại `backend`, `worker`, `beat` bằng `docker compose up -d backend worker beat`.
+
+### Bài đăng
+
+- Tối đa **500 ký tự, tính cả link theo dõi**. Link được thêm vào cuối nếu nội
+  dung chưa có. Theo tài liệu Meta, emoji tính theo số byte UTF-8.
+- **Bài chỉ có chữ** gửi kèm `link_attachment` để Threads hiện thẻ xem trước
+  link. Link `localhost` thì không kèm và hiện dạng chữ.
+- **Bài có ảnh:** một ảnh hoặc carousel (ProCV cho tối đa 10, Threads cho tối đa
+  20). Threads tự tải ảnh qua URL công khai (R2). Ảnh được gửi dưới dạng bản
+  JPEG; ảnh nào dài hơn 10:1 được thêm viền.
+- Meta khuyên chờ khoảng 30 giây rồi mới đăng container. ProCV kiểm trạng thái
+  mỗi 3 giây, tối đa khoảng 30 giây. Container chưa xong thì bài được thử lại
+  sau.
+- Giới hạn 250 bài trong 24 giờ và 100 lần gỡ trong 24 giờ.
+
 ## Vận hành (chung cho mọi mạng)
 
 - **Token**:
@@ -156,7 +204,8 @@ Tên mục trong giao diện Meta có thể khác đôi chút theo thời điể
 
   | Task | Lịch | Việc |
   | --- | --- | --- |
-  | `dispatch_due_social_posts` | 60 giây | Gom bài đến hạn của chiến dịch đang chạy, mỗi bài một task `publish_social_post`. |
+  | `dispatch_due_social_posts` | 60 giây | Gom bài đến hạn của chiến dịch đang chạy, mỗi bài một task `publish_social_post`. Bài "Đăng ngay" không chờ lượt này mà được xếp hàng ngay khi lưu. |
+  | `refresh_social_tokens` | 1 ngày | Làm mới token sắp hết hạn (Threads). |
   | `reconcile_social_posts` | 300 giây, và ngay sau khi chiến dịch đổi trạng thái | Chiến dịch kết thúc thì gỡ bài đã đăng và hủy bài chưa đăng. Tạm dừng thì hoãn bài hẹn. Mở lại thì đưa bài hoãn còn hạn về hẹn giờ. Cứu bài kẹt ở "đang đăng" quá 10 phút. |
 
 - **Lỗi khi đăng**:

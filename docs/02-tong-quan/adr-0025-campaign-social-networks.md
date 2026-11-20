@@ -87,3 +87,20 @@ buộc có ảnh và API không gỡ được bài.
 - **`Capabilities.image_ratio`.** Mạng có khoảng tỷ lệ ảnh thì nhận bản JPEG thêm
   viền trắng, tạo lúc đăng. Mỗi `PostImage` mang cả bytes (Facebook tải tệp
   lên) lẫn URL công khai (Instagram tự tải về).
+
+## Bổ sung: Threads (PR3)
+
+- Threads dùng Threads Login, App ID/secret riêng và máy chủ
+  `graph.threads.com`. `ThreadsProvider` vẫn kế thừa `MetaGraphProvider`, chỉ
+  đổi máy chủ, bỏ `appsecret_proof` và đổi tên trường trạng thái container.
+  Phần chờ container chuyển lên lớp chung.
+- Token hết hạn sau 60 ngày nên `SocialAccountConnection` có thêm
+  `token_expires_at`, `SocialNetwork` có `token_days`, provider có
+  `refresh(token)`. Task `refresh_social_tokens` chạy mỗi ngày và làm mới token
+  còn dưới 10 ngày. Token bị từ chối hoặc đã quá hạn thì kết nối hết hạn và NTD
+  được báo. Threads làm mới bằng chính token dài hạn nên không cần cột
+  `refresh_ciphertext`. PKCE vẫn để dành cho Zalo OA.
+- Giới hạn ký tự tính cả link theo dõi, vì provider tự thêm link vào cuối khi
+  nội dung chưa có.
+- Task đăng bài được tới 3 phút, vì mỗi ảnh của carousel phải chờ container
+  riêng; carousel 3 ảnh trên Instagram mất 40 giây.

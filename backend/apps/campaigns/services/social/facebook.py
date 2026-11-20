@@ -1,31 +1,10 @@
 """Facebook Graph API adapter (Pages): list pages, publish, find and delete posts."""
 
-import ipaddress
 import json
-from urllib.parse import urlsplit
 
 from ...domain.social_networks import FACEBOOK_PAGE
 from .base import PublishedPost, SocialAccount
-from .meta_graph import MetaGraphProvider
-
-
-def is_public_url(url):
-    """Whether Facebook's crawler can fetch ``url`` to build a link preview.
-
-    Graph rejects a ``link`` it cannot reach (error 1500), which is every
-    local development address.
-    """
-    parts = urlsplit(url or '')
-    host = (parts.hostname or '').lower()
-    if parts.scheme not in {'http', 'https'} or not host:
-        return False
-    if host == 'localhost' or host.endswith(('.localhost', '.local', '.test', '.internal')):
-        return False
-    try:
-        address = ipaddress.ip_address(host)
-    except ValueError:
-        return '.' in host
-    return address.is_global
+from .meta_graph import MetaGraphProvider, is_public_url
 
 
 class FacebookPageProvider(MetaGraphProvider):

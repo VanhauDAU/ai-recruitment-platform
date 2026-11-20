@@ -28,10 +28,13 @@ class SocialNetwork:
     label: object  # what the recruiter connects, e.g. "Fanpage Facebook"
     channel_kind: str
     capabilities: Capabilities
+    # Days an account token lasts before it must be refreshed; None: no expiry.
+    token_days: int | None = None
 
 
 FACEBOOK_PAGE = 'facebook_page'
 INSTAGRAM = 'instagram'
+THREADS = 'threads'
 
 NETWORKS = {
     FACEBOOK_PAGE: SocialNetwork(
@@ -51,6 +54,16 @@ NETWORKS = {
         capabilities=Capabilities(
             max_chars=2200, max_images=10, requires_image=True, image_ratio=(0.8, 1.91)
         ),
+    ),
+    # Threads profile through Threads Login: 60-day token refreshed daily, text up
+    # to 500 characters, JPEG/PNG up to 10:1 (sent as JPEG), carousel up to 20.
+    THREADS: SocialNetwork(
+        key=THREADS,
+        platform='Threads',
+        label=gettext_lazy('Threads'),
+        channel_kind='threads',
+        capabilities=Capabilities(max_chars=500, max_images=10, image_ratio=(0.1, 10.0)),
+        token_days=60,
     ),
 }
 
