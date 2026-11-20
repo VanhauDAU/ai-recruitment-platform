@@ -23,7 +23,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Ảnh đại diện dùng chung 3 cổng](#ảnh-đại-diện-dùng-chung-3-cổng-2026-11-16) | 🟨 Xong trên nhánh `feat/avatar-editor`, chưa mở PR |
 | [Dọn mâu thuẫn còn lại sau thống nhất luồng](#dọn-mâu-thuẫn-còn-lại-sau-thống-nhất-luồng-2026-11-16) | ✅ Cả 3 GĐ đã gộp (#222, #223, #224); dọn phần còn hở trên nhánh `fix/flow-loose-ends` |
 | [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | ✅ Cả 6 giai đoạn đã gộp (#208–#215); hoàn thiện luồng nhắc NTD và lịch sử nộp trên nhánh `feat/application-reminders` |
-| [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Bản demo đã gộp (#207, #230–#233); kế hoạch bản 3 (20/11): GĐ 1 đo lường đang làm trên nhánh `feat/ai-eval-harness` |
+| [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Bản demo đã gộp (#207, #230–#233); kế hoạch bản 3 (20/11): GĐ 1 đo lường xong trên nhánh `feat/ai-eval-harness`, chờ PR |
 | [CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm](#cv-tải-lên-tệp-gốc-tiêu-chuẩn-upload-giới-hạn-cv-ntd-tìm-kiếm-2026-11-15) | ✅ Gộp vào `dev` (#203) |
 | [Việc làm tốt nhất xếp theo chất lượng tin](#việc-làm-tốt-nhất-xếp-theo-chất-lượng-tin-2026-11-15) | ✅ Gộp vào `dev` (#204) |
 | [Thiết kế lại quản lý tin tuyển dụng của NTD](#thiết-kế-lại-quản-lý-tin-tuyển-dụng-của-ntd-2026-11-15) | ✅ Gộp vào `dev` (nhánh `feat/employer-job-workspace`) |
@@ -762,7 +762,7 @@ làm gợi ý" theo ngữ nghĩa, và nhà tuyển dụng xếp hạng hồ sơ 
 
 | GĐ | Hạng mục | Trạng thái |
 | --- | --- | --- |
-| 1 | Đo lường: lệnh `matching_evaluate` (chấm bằng đúng mã sản phẩm), `ml/scripts/evaluate.py`, bảng số trên validation; mở rộng tập vàng lên 30 tin; tải mô hình và dữ liệu công khai | 🟨 Đang làm trên nhánh `feat/ai-eval-harness` |
+| 1 | Đo lường: lệnh `matching_evaluate` (chấm bằng đúng mã sản phẩm), `ml/scripts/evaluate.py`, bảng số trên validation; mở rộng tập vàng lên 30 tin; tải mô hình và dữ liệu công khai | 🟨 Xong trên nhánh `feat/ai-eval-harness`, chờ PR |
 | 2 | `extract-v3`: PDF hai cột, chức danh CV tải lên, sửa các luật nhận ngày/bằng cấp/kỹ năng, schema `profile_json` | ⬜ |
 | 3 | Dữ liệu huấn luyện, cổng chất lượng, fine-tune bi-encoder và cross-encoder, ablation | ⬜ |
 | 4 | Việc làm gợi ý theo ngữ nghĩa (pgvector) | ⬜ |
@@ -787,34 +787,43 @@ làm gợi ý" theo ngữ nghĩa, và nhà tuyển dụng xếp hạng hồ sơ 
   địa điểm; nhận `--model-path` để thử mô hình khác và `--rule-baseline` để lấy
   điểm của bộ gợi ý theo luật. `ml/scripts/evaluate.py` tính Spearman, NDCG@5,
   khoảng tin cậy bootstrap theo tin, số tin hơn BM25, kappa của mức hiển thị.
-- Bảng số đầu tiên, validation 50 cặp / 5 tin (`ml/reports/eval_validation.md`):
+- Tập vàng mở rộng lên 30 tin / 300 cặp (validation 10 tin, test 20 tin): thêm
+  JD-05, 07, 08, 10, 16, 18, 27, 30, 39, 40, 56, 62, 69, 71, 73, ghép cặp bằng
+  `build_gold_pairs.py --extend`. Mỗi cặp mới do hai lượt Claude độc lập gán theo
+  rubric: trùng 142/150, lệch không quá một mức 150/150, kappa bậc hai 0,979; 8 cặp
+  lệch được phân xử, các tình huống mới thành quy tắc E1–E5 trong
+  `ml/labeling/rubric.md` (`ml/reports/gold_batch2_agreement.md`). Nhãn đợt 2: 0: 48,
+  1: 67, 2: 19, 3: 4, 4: 12. Đây vẫn là nhãn do mô hình ngôn ngữ gán; kiểm chứng
+  của người (30 cặp chấm mù) chưa làm.
+- Bảng số trên validation, 100 cặp / 10 tin (`ml/reports/eval_validation.md`):
 
   | Phương án | Spearman | NDCG@5 |
   | --- | ---: | ---: |
-  | TF-IDF | 0,281 | 0,422 |
-  | BM25 | 0,386 | 0,491 |
-  | Luật `profile-rule-v2` | 0,692 | 0,881 |
-  | Bi-encoder `e5-small` gốc, cosine toàn văn | 0,431 | 0,524 |
-  | Bi-encoder `paraphrase-multilingual-MiniLM-L12-v2` gốc, cosine toàn văn | 0,583 | 0,554 |
-  | Bi-encoder `e5-base-zs-v1`, cosine toàn văn | 0,545 | 0,607 |
-  | `hybrid-v1` | 0,625 | 0,690 |
+  | TF-IDF | 0,278 | 0,640 |
+  | BM25 | 0,216 | 0,679 |
+  | Luật `profile-rule-v2` | 0,628 | 0,874 |
+  | Bi-encoder `e5-small` gốc, cosine toàn văn | 0,457 | 0,702 |
+  | Bi-encoder `paraphrase-multilingual-MiniLM-L12-v2` gốc, cosine toàn văn | 0,530 | 0,663 |
+  | Bi-encoder `e5-base-zs-v1`, cosine toàn văn | 0,550 | 0,758 |
+  | `hybrid-v1` | 0,610 | 0,817 |
 
-  Xếp ngẫu nhiên cho NDCG@5 = 0,444. `hybrid-v1`: kappa mức hiển thị 0,398; 12 cặp
-  khác ngành có trung vị 31 điểm, cao nhất 58, 2 cặp từ 50 điểm trở lên.
-- Điều rút ra: bộ gợi ý theo luật đang hơn `hybrid-v1` trên validation. Với các CV
-  này, điểm của luật chỉ gồm số kỹ năng trùng theo danh mục (6 điểm mỗi kỹ năng),
-  chức danh CV xuất hiện trong tiêu đề tin (24 điểm) và đủ số năm (6 điểm), nên cặp
-  khác ngành gần như 0 điểm (12 cặp nhãn 0: cao nhất 6). `hybrid-v1` cũng có tiêu
-  chí kỹ năng, nhưng cộng thêm học vấn, cấp bậc, ngoại ngữ, là những điểm được cho
-  bất kể CV có đúng nghề hay không, nên cặp nhãn 0–1 lên tới 58–72 điểm. Đây là
-  bằng chứng cho "trần theo mức liên quan" của `hybrid-v2` (GĐ 5). Với 5 tin,
-  khoảng tin cậy rất rộng nên chưa kết luận về thứ hạng giữa các phương án.
+  Xếp ngẫu nhiên cho NDCG@5 = 0,445. `hybrid-v1`: kappa mức hiển thị 0,525; 33 cặp
+  khác ngành có trung vị 28 điểm, cao nhất 58, 5 cặp từ 50 điểm trở lên. Khoảng tin
+  cậy của `hybrid-v1`: Spearman 0,42 đến 0,78, NDCG@5 0,65 đến 0,93.
+- Điều rút ra: bộ gợi ý theo luật ngang hoặc nhỉnh hơn `hybrid-v1` (khoảng tin cậy
+  chồng nhau, chưa kết luận được bên nào hơn). Với các CV này, điểm của luật chỉ
+  gồm số kỹ năng trùng theo danh mục (6 điểm mỗi kỹ năng), chức danh CV xuất hiện
+  trong tiêu đề tin (24 điểm) và đủ số năm (6 điểm), nên cặp khác ngành gần như 0
+  điểm. `hybrid-v1` cũng có tiêu chí kỹ năng, nhưng cộng thêm học vấn, cấp bậc,
+  ngoại ngữ, là những điểm được cho bất kể CV có đúng nghề hay không, nên cặp khác
+  ngành vẫn lên tới 58 điểm. Đây là bằng chứng cho "trần theo mức liên quan" của
+  `hybrid-v2` (GĐ 5). Mọi phương án ngữ nghĩa đều hơn rõ TF-IDF và BM25.
+- Hai tin có trường nhập tay lệch với nội dung (JD-69: kinh nghiệm và học vấn;
+  JD-62: vị trí chuyên môn), ghi trong rubric, chờ sửa trong `jd_input.xlsx`.
 - Đã tải bằng `ml/scripts/fetch_public.py` (nguồn và mã commit ở
   `ml/data/public/SOURCES.md`): VietJobs (48.092 tin, kèm `LICENSE` MIT của kho
   GitHub), resume-job-description-fit, mô hình gốc của cross-encoder
   (`cross-encoder/mmarco-mMiniLMv2-L12-H384-v1`) và hai bi-encoder so sánh.
-- Còn lại của GĐ 1: mở rộng tập vàng lên 30 tin (đã đề xuất 15 tin: JD-05, 07, 08,
-  10, 16, 18, 27, 30, 39, 40, 56, 62, 69, 71, 73; chờ duyệt rồi ghép cặp, gán nhãn).
 - Dời sang GĐ 5: cho `calibrate.py` đọc kết quả của `matching_evaluate` thay vì tự
   chép lại luật, làm cùng lúc với lần hiệu chuẩn lại.
 - Bỏ ngưỡng "P@3 ≥ 0,70" của bản 2: tập test cũ chỉ có 13 cặp nhãn ≥ 3 nên trần

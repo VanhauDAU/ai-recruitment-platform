@@ -1,0 +1,2450 @@
+{
+ "passes": {
+  "A": [
+   {
+    "stt": 151,
+    "jd_id": "JD-05",
+    "cv_id": "CV-031",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Sales Online (nhóm Kinh doanh) so với Thiết kế nội thất; kỹ năng cần có 0/10; dừng ở bước 3 (B6)."
+   },
+   {
+    "stt": 152,
+    "jd_id": "JD-05",
+    "cv_id": "CV-093",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: IT Helpdesk (theo headline, D7), không có mục Kinh nghiệm; kỹ năng cần có 0/10; dừng ở bước 3 (B6)."
+   },
+   {
+    "stt": 153,
+    "jd_id": "JD-05",
+    "cv_id": "CV-094",
+    "label": 0,
+    "confidence": "không chắc",
+    "reason": "Vị trí khác: Graphic Designer/Video Editor (Thiết kế – Media, gần Content) so với Thiết kế nội thất; theo D2 nội thất khác ngành với nhóm Content/Media; kỹ năng cần có 0/10 (không có Photoshop, AutoCAD, SketchUp, V-Ray); phân vân 0/1 vì cùng chữ 'thiết kế' nên chọn mức thấp (B6, D2)."
+   },
+   {
+    "stt": 154,
+    "jd_id": "JD-05",
+    "cv_id": "CV-075",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (Interior Designer theo headline, D7); kỹ năng cần có 4–5/10 (có Photoshop, V-Ray, Bố cục không gian, Vật liệu nội thất, Thiết kế 3D chỉ suy từ render; thiếu AutoCAD, Thiết kế 2D, Ánh sáng và màu sắc, Nguyên lý thẩm mỹ và thiếu cốt lõi SketchUp); kinh nghiệm 0/12 tháng (chỉ có thực tập ở mục dự án, B3); áp dụng C1/D8 → 1."
+   },
+   {
+    "stt": 155,
+    "jd_id": "JD-05",
+    "cv_id": "CV-006",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Backend Developer (CNTT phần mềm) so với Thiết kế nội thất; kỹ năng cần có 0/10; dừng ở bước 3 (B6)."
+   },
+   {
+    "stt": 156,
+    "jd_id": "JD-05",
+    "cv_id": "CV-091",
+    "label": 2,
+    "confidence": "không chắc",
+    "reason": "Vị trí đúng (Thiết kế nội thất); kỹ năng cần có 9/10 (Thiết kế 2D suy từ bản vẽ kỹ thuật AutoCAD theo A4; thiếu Bố cục không gian, không thiếu cốt lõi SketchUp/V-Ray); kinh nghiệm 9/12 tháng, thiếu 25% = thiếu một bậc; học vấn Trung cấp đạt; thiếu 1 kỹ năng không cốt lõi cộng thiếu một bậc kinh nghiệm → C2 cho 2; phân vân 2/3 (B1 coi thiếu 1 kỹ năng vẫn đạt ngưỡng) nên chọn mức thấp."
+   },
+   {
+    "stt": 157,
+    "jd_id": "JD-05",
+    "cv_id": "CV-007",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Backend Developer (CNTT phần mềm) so với Thiết kế nội thất; kỹ năng cần có 0/10; dừng ở bước 3 (B6)."
+   },
+   {
+    "stt": 158,
+    "jd_id": "JD-05",
+    "cv_id": "CV-052",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Content Marketing so với Thiết kế nội thất (D2 áp dụng chiều ngược lại); kỹ năng cần có 0/10 (Canva, dựng video không thuộc yêu cầu); dừng ở bước 3."
+   },
+   {
+    "stt": 159,
+    "jd_id": "JD-05",
+    "cv_id": "CV-051",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Content Marketing (theo headline, không có mục Kinh nghiệm) so với Thiết kế nội thất (D2 chiều ngược lại); kỹ năng cần có 0/10; dừng ở bước 3."
+   },
+   {
+    "stt": 160,
+    "jd_id": "JD-05",
+    "cv_id": "CV-089",
+    "label": 2,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (Thiết kế nội thất); kỹ năng cần có 2/10 (AutoCAD, Thiết kế 2D suy từ bản vẽ kỹ thuật; thiếu cốt lõi SketchUp, V-Ray, Thiết kế 3D và thiếu Photoshop, Bố cục không gian, Vật liệu, Ánh sáng và màu sắc, Nguyên lý thẩm mỹ); kinh nghiệm 50/12 tháng đủ; cấp bậc và học vấn đạt; đúng vị trí nhưng dưới nửa kỹ năng → A2 nền 2, thiếu cốt lõi nên tối đa 2."
+   },
+   {
+    "stt": 161,
+    "jd_id": "JD-08",
+    "cv_id": "CV-062",
+    "label": 2,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (Nhân viên CSKH, 39 tháng; tin không yêu cầu kinh nghiệm); kỹ năng cần có 2/7 sau khi gộp Facebook/Skype/Viber (C4): có Tư vấn (cốt lõi), Làm việc nhóm qua quản lý nhóm 15 người; thiếu Word, Excel, Thuyết phục, Đánh máy, công cụ mạng xã hội; học vấn và cấp bậc đạt; đúng vị trí nhưng dưới nửa kỹ năng → A2 nền 2."
+   },
+   {
+    "stt": 162,
+    "jd_id": "JD-08",
+    "cv_id": "CV-031",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí gần (Sales Online, cùng nghề Sales/Telesales, gần CSKH theo C3); kỹ năng cần có 1/7 (chỉ có Tư vấn; thiếu Làm việc nhóm, Word, Excel, Thuyết phục, Đánh máy, công cụ mạng xã hội); tin không yêu cầu kinh nghiệm; học vấn THPT thấp hơn Trung cấp; vị trí gần mà xa dưới nửa kỹ năng → 1, không trừ xuống 0 (A3)."
+   },
+   {
+    "stt": 163,
+    "jd_id": "JD-08",
+    "cv_id": "CV-057",
+    "label": 2,
+    "confidence": "chắc",
+    "reason": "Vị trí gần (Nhân viên quản lý tài khoản theo headline, D7; làm việc với khách hàng ngân hàng); kỹ năng cần có 4/7 sau khi gộp Facebook/Skype/Viber (C4): Làm việc nhóm, Thuyết phục, Word và Excel suy từ Tin học văn phòng (A4); thiếu Tư vấn (cốt lõi), Đánh máy, công cụ mạng xã hội; tin không yêu cầu kinh nghiệm; học vấn Cao đẳng đạt; vị trí gần, khoảng nửa kỹ năng → 2 (D6 tối đa 2)."
+   },
+   {
+    "stt": 164,
+    "jd_id": "JD-08",
+    "cv_id": "CV-096",
+    "label": 1,
+    "confidence": "không chắc",
+    "reason": "Vị trí gần (Tư vấn tuyển sinh, 19 tháng, dạng tư vấn bán khóa học, gần CSKH theo C3); kỹ năng cần có 2/7 (Tư vấn, Thuyết phục; có thêm thẻ Chăm sóc khách hàng; thiếu Làm việc nhóm, Word, Excel, Đánh máy, công cụ mạng xã hội); tin không yêu cầu kinh nghiệm; vị trí gần mà dưới nửa kỹ năng → 1; phân vân 1/2 vì đủ kỹ năng cốt lõi nên chọn mức thấp."
+   },
+   {
+    "stt": 165,
+    "jd_id": "JD-08",
+    "cv_id": "CV-035",
+    "label": 2,
+    "confidence": "chắc",
+    "reason": "Vị trí gần (Telesales Manager, 46 tháng, có 4 tháng Customer Service; C3); kỹ năng cần có 4/7 sau khi gộp Facebook/Skype/Viber (C4): Excel, Thuyết phục, Làm việc nhóm qua việc đã làm, Tư vấn suy từ telesales và chứng chỉ Customer Service (A4); thiếu Word, Đánh máy, công cụ mạng xã hội; cấp bậc Trưởng nhóm (D3) cao hơn tin 1 bậc nên không trừ (B5); vị trí gần → tối đa 2 (D6)."
+   },
+   {
+    "stt": 166,
+    "jd_id": "JD-08",
+    "cv_id": "CV-087",
+    "label": 2,
+    "confidence": "chắc",
+    "reason": "Vị trí gần (Sales Logistics theo headline, D7; cùng nghề Sales/Telesales, gần CSKH theo C3); kỹ năng cần có 4/7 sau khi gộp Facebook/Skype/Viber (C4): Word và Excel qua chứng chỉ MOS, Tư vấn và Thuyết phục thể hiện qua chăm sóc khách hàng, telesales, đàm phán hợp đồng (A4, không minh chứng trong mục Kinh nghiệm); thiếu Làm việc nhóm, Đánh máy, công cụ mạng xã hội; tin không yêu cầu kinh nghiệm; vị trí gần, khoảng nửa kỹ năng → 2 (D6)."
+   },
+   {
+    "stt": 167,
+    "jd_id": "JD-08",
+    "cv_id": "CV-058",
+    "label": 4,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (Nhân viên CSKH, 76 tháng); kỹ năng cần có 7/7 (đủ cả 9 thẻ: Tư vấn, Làm việc nhóm, Word, Excel, Thuyết phục, Đánh máy, Facebook, Skype, Viber, đều có minh chứng); tin không yêu cầu kinh nghiệm; cấp bậc Nhân viên khớp; học vấn Trung cấp đạt; có tiếng Nhật (ưu tiên) → 4 (B1)."
+   },
+   {
+    "stt": 168,
+    "jd_id": "JD-08",
+    "cv_id": "CV-073",
+    "label": 0,
+    "confidence": "không chắc",
+    "reason": "Vị trí khác nhóm ngành: Lễ tân khách sạn (nhóm Hành chính – Nhân sự – Lễ tân – Thư ký theo B6) so với CSKH; kỹ năng cần có 0/7 (có thẻ Chăm sóc khách hàng, Giao tiếp, xử lý khiếu nại nhưng không trùng thẻ yêu cầu); phân vân 0/1 vì công việc có chăm sóc khách hàng nên chọn mức thấp theo B6."
+   },
+   {
+    "stt": 169,
+    "jd_id": "JD-08",
+    "cv_id": "CV-078",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác, cùng nhóm ngành (Tổ chức sự kiện gắn chiến dịch marketing, xếp nhóm Kinh doanh – Marketing theo B6); kỹ năng cần có 3/7 (Word, Excel, Làm việc nhóm; thiếu Tư vấn cốt lõi, Thuyết phục, Đánh máy, công cụ mạng xã hội); chỉ vài kỹ năng dùng lại được → 1."
+   },
+   {
+    "stt": 170,
+    "jd_id": "JD-08",
+    "cv_id": "CV-053",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác nhóm ngành: Tuyển dụng/Quản lý nhân sự (nhóm Hành chính – Nhân sự theo B6) so với CSKH; kỹ năng cần có 1/7 (chỉ Làm việc nhóm); tiếng Nhật N2 chỉ là ưu tiên; dừng ở bước 3."
+   },
+   {
+    "stt": 171,
+    "jd_id": "JD-16",
+    "cv_id": "CV-024",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác, cùng nhóm CNTT phần mềm (Fullstack Developer dùng ReactJS so với iOS Developer Lead); kỹ năng cần có 1/8 (REST API; thiếu cốt lõi Swift và RxSwift, CocoaPods, JSON, MVVM, Clean Architecture, Design Pattern); kinh nghiệm 17/36 tháng; cấp bậc Nhân viên so với Trưởng nhóm → 1 (B6)."
+   },
+   {
+    "stt": 172,
+    "jd_id": "JD-16",
+    "cv_id": "CV-016",
+    "label": 3,
+    "confidence": "không chắc",
+    "reason": "Vị trí đúng (iOS Developer, khoảng 85 tháng so với yêu cầu 36, có dự án ngân hàng); kỹ năng cần có 7/8 (thiếu RxSwift, không phải cốt lõi; có Swift, CocoaPods, REST API, JSON, MVVM, Clean Architecture, Design Pattern); học vấn đạt; chức danh các công việc đều là iOS Developer (Nhân viên), thấp hơn Trưởng nhóm 1 bậc dù có một dòng dẫn nhóm → cấp bậc chưa khớp nên không đạt 4; phân vân 3/4 nên chọn mức thấp."
+   },
+   {
+    "stt": 173,
+    "jd_id": "JD-16",
+    "cv_id": "CV-006",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác, cùng nhóm CNTT phần mềm (Backend Developer, System Administration, Embedded C); kỹ năng cần có 0/8 (thiếu cốt lõi Swift; Design System không phải Design Pattern); kinh nghiệm 16/36 tháng; cấp bậc thấp hơn tin → 1, không xuống 0 (A3, B6)."
+   },
+   {
+    "stt": 174,
+    "jd_id": "JD-16",
+    "cv_id": "CV-007",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác, cùng nhóm CNTT phần mềm (Backend Developer Java/Embedded C); kỹ năng cần có 0/8 (thiếu cốt lõi Swift); kinh nghiệm 10/36 tháng; cấp bậc thấp hơn tin → 1, không xuống 0 (A3, B6)."
+   },
+   {
+    "stt": 175,
+    "jd_id": "JD-16",
+    "cv_id": "CV-028",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Quản lý kinh doanh online (nhóm Kinh doanh) so với iOS Developer; kỹ năng cần có 0/8; dừng ở bước 3 (B6)."
+   },
+   {
+    "stt": 176,
+    "jd_id": "JD-16",
+    "cv_id": "CV-073",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Lễ tân khách sạn (nhóm Hành chính – Lễ tân) so với iOS Developer; kỹ năng cần có 0/8; dừng ở bước 3 (B6)."
+   },
+   {
+    "stt": 177,
+    "jd_id": "JD-16",
+    "cv_id": "CV-015",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (iOS Developer theo headline, D7); kỹ năng cần có 3/8 (Swift, MVVM, Design Pattern; thiếu RxSwift, CocoaPods, REST API, JSON, Clean Architecture); kinh nghiệm 0/36 tháng (chỉ thực tập ở mục dự án, B3); mới tốt nghiệp so với cấp Trưởng nhóm; dưới nửa kỹ năng và thiếu hẳn kinh nghiệm → C1 nền 1."
+   },
+   {
+    "stt": 178,
+    "jd_id": "JD-16",
+    "cv_id": "CV-014",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác, cùng nhóm CNTT phần mềm (Fullstack Developer web JavaScript/Node.js/ReactJS/Java, 51 tháng, có dẫn nhóm và nghiệp vụ ngân hàng); kỹ năng cần có 0/8 (thiếu cốt lõi Swift và toàn bộ thẻ iOS); chỉ điểm nên có (ngân hàng, sequence diagram) dùng lại được → 1 (B6)."
+   },
+   {
+    "stt": 179,
+    "jd_id": "JD-16",
+    "cv_id": "CV-019",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác, cùng nhóm CNTT phần mềm (Backend Developer, 9/36 tháng); kỹ năng cần có 2/8 (Design Pattern, REST API qua dự án; thiếu cốt lõi Swift, RxSwift, CocoaPods, JSON, MVVM; Clean code không phải Clean Architecture); cấp bậc thấp hơn tin → 1 (B6)."
+   },
+   {
+    "stt": 180,
+    "jd_id": "JD-16",
+    "cv_id": "CV-099",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác, cùng nhóm CNTT phần mềm (Backend Developer theo headline, D7; mới tốt nghiệp, thực tập IT Support/Java/JavaScript); kỹ năng cần có 0/8 (thiếu cốt lõi Swift); kinh nghiệm 0/36 tháng; không xuống 0 vì cùng nhóm ngành (A3, B6) → 1."
+   },
+   {
+    "stt": 181,
+    "jd_id": "JD-30",
+    "cv_id": "CV-039",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Kế toán nội bộ (nhóm Kế toán–Tài chính) so với Trưởng phòng Hành chính Nhân sự (B6); kỹ năng cần có 0/7; mục Kinh nghiệm trống (0/60 tháng); dừng ở bước 3."
+   },
+   {
+    "stt": 182,
+    "jd_id": "JD-30",
+    "cv_id": "CV-057",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: không có mục Kinh nghiệm, headline Nhân viên quản lý tài khoản (nhóm Kinh doanh–CSKH, D7/B6); chỉ có Tin học văn phòng và Giao tiếp dùng lại được; 0/60 tháng; dự án tên 'Tuyển dụng tự do' nhưng nội dung là quản lý tài khoản khách hàng nên không tính là nhân sự."
+   },
+   {
+    "stt": 183,
+    "jd_id": "JD-30",
+    "cv_id": "CV-007",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Backend Developer (CNTT) so với Hành chính Nhân sự (B6); kỹ năng cần có 0/7; 10 tháng kinh nghiệm không liên quan."
+   },
+   {
+    "stt": 184,
+    "jd_id": "JD-30",
+    "cv_id": "CV-035",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Telesales/CSKH (nhóm Kinh doanh, C3/B6) so với Hành chính Nhân sự; có các kỹ năng chung dùng lại được (Lãnh đạo nhóm 20 người, Lập kế hoạch, Excel, phân tích dữ liệu khách hàng) nhưng 46 tháng đều là telesales, không có nghiệp vụ nhân sự/hành chính; áp dụng B6 nên 0."
+   },
+   {
+    "stt": 185,
+    "jd_id": "JD-30",
+    "cv_id": "CV-008",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Fullstack Developer (CNTT) so với Hành chính Nhân sự (B6); kỹ năng cần có 0/7; 33 tháng kinh nghiệm không liên quan."
+   },
+   {
+    "stt": 186,
+    "jd_id": "JD-30",
+    "cv_id": "CV-070",
+    "label": 0,
+    "confidence": "không chắc",
+    "reason": "Vị trí khác: Chuyên viên pháp chế 66 tháng, không thuộc nhóm Hành chính–Nhân sự–Lễ tân–Thư ký theo B6 nên coi là khác ngành; có vài điểm chung (soạn hợp đồng lao động cho 200 nhân viên, đào tạo pháp lý nội bộ, bằng Luật, Tin học văn phòng, Giao tiếp) nên phân vân 0/1, chọn mức thấp; kỹ năng cần có khoảng 2/7, không có kinh nghiệm quản lý đội ngũ."
+   },
+   {
+    "stt": 187,
+    "jd_id": "JD-30",
+    "cv_id": "CV-031",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Sales Online/tư vấn bán hàng (nhóm Kinh doanh, B6); chỉ có Giao tiếp 1/7; 17 tháng không liên quan; học vấn THPT dưới yêu cầu Đại học."
+   },
+   {
+    "stt": 188,
+    "jd_id": "JD-30",
+    "cv_id": "CV-083",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Lái xe/Giao hàng so với Hành chính Nhân sự; kỹ năng cần có 0/7; 37 tháng kinh nghiệm không liên quan."
+   },
+   {
+    "stt": 189,
+    "jd_id": "JD-30",
+    "cv_id": "CV-053",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng nghề nhân sự (Quản lý nhân sự/Tuyển dụng, D7) nhưng thiên về tuyển dụng; kỹ năng cần có 3/7 (có Lãnh đạo nhóm tuyển dụng, Giao tiếp, Xử lý vấn đề; thiếu Microsoft Office, Phân tích dữ liệu, Lập kế hoạch, Quản lý dự án; không có thẻ cốt lõi) nên nền 2 theo A2; 54/60 tháng (thiếu một bậc); cấp hiện tại nhân viên so với Trưởng/Phó phòng; học vấn Cao đẳng dưới Đại học trừ 1 (B4), không xuống 0 (A3)."
+   },
+   {
+    "stt": 190,
+    "jd_id": "JD-30",
+    "cv_id": "CV-055",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (Hành chính văn phòng) nhưng cấp nhân viên so với Trưởng/Phó phòng; kỹ năng cần có 5/7 (thiếu Lãnh đạo, Xử lý tình huống, không phải cốt lõi theo A1); 19/60 tháng, thiếu hơn một nửa nên lệch rõ kinh nghiệm; học vấn ghi Cao đẳng dưới yêu cầu Đại học (B4); thiếu kỹ năng cộng dồn lệch rõ kinh nghiệm và cấp bậc (nặng hơn C2) nên 1."
+   },
+   {
+    "stt": 191,
+    "jd_id": "JD-62",
+    "cv_id": "CV-091",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Thiết kế nội thất so với kỹ sư hệ thống nhúng ô tô (CNTT); kỹ năng cần có 0/4; tiếng Anh chỉ ở mức giao tiếp."
+   },
+   {
+    "stt": 192,
+    "jd_id": "JD-62",
+    "cv_id": "CV-082",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Graphic Designer (Thiết kế–Media) so với kỹ sư hệ thống nhúng (CNTT); kỹ năng cần có 0/4; tiếng Anh Basic."
+   },
+   {
+    "stt": 193,
+    "jd_id": "JD-62",
+    "cv_id": "CV-095",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Cùng nhóm CNTT nhưng khác vị trí: Cloud Engineer (AWS) so với System Engineer nhúng ô tô; kỹ năng cần có 1/4 (có System Architecture; thiếu System Administration, Design System và cốt lõi Embedded C); 41 tháng đủ so với dưới 1 năm; tiếng Anh Conversational dưới mức Thành thạo bắt buộc (A3 trừ 1 nhưng không xuống 0)."
+   },
+   {
+    "stt": 194,
+    "jd_id": "JD-62",
+    "cv_id": "CV-016",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Cùng nhóm CNTT nhưng khác vị trí: iOS Developer; kỹ năng cần có 0/4 (thiếu cốt lõi Embedded C); kinh nghiệm đủ số tháng nhưng khác loại việc; tiếng Anh Basic dưới mức bắt buộc; A3 giữ mức 1."
+   },
+   {
+    "stt": 195,
+    "jd_id": "JD-62",
+    "cv_id": "CV-022",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Cùng nhóm CNTT nhưng khác vị trí: Automation Tester; kỹ năng cần có 0/4 (thiếu cốt lõi Embedded C); kinh nghiệm dài nhưng khác loại việc, không trừ thừa trình độ vì chức danh vẫn cấp nhân viên (B5); tiếng Anh Conversational dưới mức bắt buộc; A3 giữ mức 1."
+   },
+   {
+    "stt": 196,
+    "jd_id": "JD-62",
+    "cv_id": "CV-077",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Cùng nhóm CNTT nhưng khác vị trí: DevOps Engineer; kỹ năng cần có 0/4 (CV không ghi System Administration, không suy từ CI/CD–Bash theo A4; thiếu cốt lõi Embedded C); 49 tháng đủ; tiếng Anh Working proficiency (IELTS 5.5) dưới mức Thành thạo; A3 giữ mức 1."
+   },
+   {
+    "stt": 197,
+    "jd_id": "JD-62",
+    "cv_id": "CV-007",
+    "label": 2,
+    "confidence": "không chắc",
+    "reason": "Chức danh Backend Developer trùng trường Vị trí chuyên môn của tin và có đủ 4/4 kỹ năng cần có kể cả cốt lõi Embedded C (đều có minh chứng); 10 tháng đạt yêu cầu dưới 1 năm; cấp nhân viên khớp; nhưng loại công việc là hệ thống quản lý nội dung web, không phải hệ thống nhúng ô tô như tiêu đề/mô tả tin nên không đạt mức 4, coi mức 3; CV chỉ ghi tiếng Nhật, không ghi tiếng Anh bắt buộc mức Thành thạo nên trừ 1 (A3) còn 2; phân vân 2/3, chọn thấp."
+   },
+   {
+    "stt": 198,
+    "jd_id": "JD-62",
+    "cv_id": "CV-026",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Cùng nhóm CNTT nhưng khác vị trí: Manual Tester; kỹ năng cần có 0/4 (thiếu cốt lõi Embedded C); 30 tháng đủ nhưng khác loại việc; tiếng Anh Thành thạo đạt yêu cầu."
+   },
+   {
+    "stt": 199,
+    "jd_id": "JD-62",
+    "cv_id": "CV-014",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Cùng nhóm CNTT, Fullstack Developer (web ngân hàng) chỉ gần với nhãn Backend của tin, khác hẳn hệ thống nhúng ô tô; kỹ năng cần có 0/4 (thiếu cốt lõi Embedded C); 51 tháng đủ; tiếng Anh Working proficiency (IELTS 6.0) dưới mức Thành thạo; A3 giữ mức 1."
+   },
+   {
+    "stt": 200,
+    "jd_id": "JD-62",
+    "cv_id": "CV-023",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Cùng nhóm CNTT nhưng khác vị trí: Automation Tester; kỹ năng cần có 0/4 (thiếu cốt lõi Embedded C); 46 tháng đủ nhưng khác loại việc; tiếng Anh Working proficiency (IELTS 6.0) dưới mức Thành thạo; A3 giữ mức 1."
+   },
+   {
+    "stt": 201,
+    "jd_id": "JD-07",
+    "cv_id": "CV-043",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Chuyên viên thuế (nhóm Kế toán–Thuế) so với Nhân viên kho đóng gói; kỹ năng cần có 0/1 (thiếu cốt lõi Quản lý kho); 20 tháng không liên quan."
+   },
+   {
+    "stt": 202,
+    "jd_id": "JD-07",
+    "cv_id": "CV-090",
+    "label": 2,
+    "confidence": "chắc",
+    "reason": "Vị trí gần: công nhân sản xuất có làm quản lý tồn kho, sắp xếp vật tư (cùng mảng sản xuất–kho); kỹ năng cần có 1/1 (Quản lý kho, có minh chứng); 23 tháng làm việc so với yêu cầu 12 tháng; cấp nhân viên khớp; học vấn THPT nghề đạt; vị trí gần nên tối đa 2 (D6)."
+   },
+   {
+    "stt": 203,
+    "jd_id": "JD-07",
+    "cv_id": "CV-097",
+    "label": 4,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng: Warehouse Coordinator/Manager/Assistant (D7); kỹ năng cần có 1/1 (Quản lý kho suy ra rõ ràng từ chức danh kho và chứng chỉ Certified Warehouse Manager theo A4, không ghi trong mục Kỹ năng); 20 tháng so với yêu cầu 12 tháng; chức danh hiện tại cấp nhân viên, Manager không ghi cấp tính là Trưởng nhóm (D3) chỉ cao hơn 1 bậc nên không trừ (B5); học vấn Trung cấp đạt."
+   },
+   {
+    "stt": 204,
+    "jd_id": "JD-07",
+    "cv_id": "CV-018",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: React Native/Flutter Developer (CNTT) so với Nhân viên kho; kỹ năng cần có 0/1; 21 tháng không liên quan."
+   },
+   {
+    "stt": 205,
+    "jd_id": "JD-07",
+    "cv_id": "CV-023",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Automation Tester (CNTT) so với Nhân viên kho; kỹ năng cần có 0/1; 46 tháng không liên quan."
+   },
+   {
+    "stt": 206,
+    "jd_id": "JD-07",
+    "cv_id": "CV-083",
+    "label": 2,
+    "confidence": "chắc",
+    "reason": "Vị trí gần: Lái xe/Giao hàng có làm sắp xếp, kiểm kê hàng và quản lý kho (cùng mảng kho vận–giao nhận); kỹ năng cần có 1/1 (Quản lý kho, có minh chứng và chứng chỉ quản lý kho); 37 tháng so với yêu cầu 12 tháng; cấp nhân viên khớp; học vấn Trung cấp đạt; vị trí gần nên tối đa 2 (D6)."
+   },
+   {
+    "stt": 207,
+    "jd_id": "JD-07",
+    "cv_id": "CV-048",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Content Creator (nhóm Marketing–Content) so với Nhân viên kho; kỹ năng cần có 0/1; 22 tháng không liên quan."
+   },
+   {
+    "stt": 208,
+    "jd_id": "JD-07",
+    "cv_id": "CV-098",
+    "label": 4,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng: Nhân viên kho; kỹ năng cần có 1/1 (Quản lý kho là cốt lõi, có minh chứng gồm cả điều phối đóng gói, kiểm kê, xuất nhập); 40 tháng so với yêu cầu 12 tháng; cấp nhân viên khớp; học vấn Trung cấp đạt."
+   },
+   {
+    "stt": 209,
+    "jd_id": "JD-07",
+    "cv_id": "CV-006",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Backend Developer (CNTT) so với Nhân viên kho; kỹ năng cần có 0/1 (thiết kế phần mềm quản lý tồn kho không phải nghiệp vụ kho); 16 tháng không liên quan."
+   },
+   {
+    "stt": 210,
+    "jd_id": "JD-07",
+    "cv_id": "CV-072",
+    "label": 1,
+    "confidence": "không chắc",
+    "reason": "Vị trí khác: Tạp vụ (D7 theo chức danh) so với Nhân viên kho, cùng nhóm lao động phổ thông; kỹ năng cần có 1/1 (Quản lý kho có minh chứng: ghi chép tồn kho, sắp xếp bảo quản hàng, bảng kê Excel); 18 tháng làm tạp vụ, không có tháng nào ở chức danh kho; học vấn THPT đạt; phân vân giữa khác vị trí (1) và vị trí gần (2), chọn thấp."
+   },
+   {
+    "stt": 211,
+    "jd_id": "JD-10",
+    "cv_id": "CV-079",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Fullstack Developer (CNTT) so với Kế toán trưởng; kỹ năng cần có đáp ứng 0/9; 11 tháng kinh nghiệm lập trình, không có kinh nghiệm kế toán; B6 khác nhóm ngành nên 0."
+   },
+   {
+    "stt": 212,
+    "jd_id": "JD-10",
+    "cv_id": "CV-093",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: IT Helpdesk (CNTT) so với Kế toán trưởng; kỹ năng cần có đáp ứng 0/9; 0 tháng kinh nghiệm (mục Kinh nghiệm trống); B6 khác nhóm ngành nên 0."
+   },
+   {
+    "stt": 213,
+    "jd_id": "JD-10",
+    "cv_id": "CV-043",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí gần: Chuyên viên Thuế (cùng nhóm Kế toán–Thuế) so với Kế toán trưởng; kỹ năng đáp ứng 3/9 (Quyết toán thuế, Luật thuế, Microsoft Office qua Excel nâng cao), thiếu cốt lõi Hạch toán kế toán, thiếu Phần mềm kế toán (HTKK không phải phần mềm kế toán) và các kỹ năng mềm; khoảng 20/36 tháng, đều ở cấp nhân viên so với Trưởng/Phó phòng; học vấn Cao đẳng thấp hơn Đại học; D6 tối đa 2, dưới nửa kỹ năng cộng lệch cấp bậc và học vấn nên 1 (A3 không xuống 0)."
+   },
+   {
+    "stt": 214,
+    "jd_id": "JD-10",
+    "cv_id": "CV-069",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác nhưng cùng nhóm ngành: Kiểm toán nội bộ theo headline (D7), mới ra trường ngành Tài chính–Ngân hàng, chỉ có dự án kế toán công nợ; kỹ năng đáp ứng 0/9 (chỉ ghi Kế toán chung, quản lý/đối chiếu công nợ), thiếu toàn bộ cốt lõi; 0/36 tháng kinh nghiệm (B3); cấp bậc lệch xa; B6 cùng nhóm nên 1."
+   },
+   {
+    "stt": 215,
+    "jd_id": "JD-10",
+    "cv_id": "CV-042",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí gần: Kế toán công nợ so với Kế toán trưởng/tổng hợp; kỹ năng đáp ứng 1/9 (Phần mềm kế toán - VAS), thiếu cốt lõi Hạch toán kế toán, Quyết toán thuế, Luật thuế; 14/36 tháng (thiếu trên một nửa), cấp nhân viên so với Trưởng/Phó phòng; học vấn Đại học đạt; dưới nửa kỹ năng và thiếu từ nửa số năm, cộng dồn như C1 nên 1."
+   },
+   {
+    "stt": 216,
+    "jd_id": "JD-10",
+    "cv_id": "CV-055",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Hành chính văn phòng (nhóm Hành chính–Nhân sự) so với Kế toán trưởng; chỉ trùng kỹ năng chung 2/9 (Microsoft Office, Tư duy logic), không có kỹ năng kế toán–thuế nào; 20 tháng hành chính, 0 tháng kế toán; B6 khác nhóm ngành nên 0."
+   },
+   {
+    "stt": 217,
+    "jd_id": "JD-10",
+    "cv_id": "CV-038",
+    "label": 2,
+    "confidence": "không chắc",
+    "reason": "Vị trí đúng (kế toán: báo cáo tài chính, thuế, công nợ); kỹ năng đáp ứng 9/9 (Làm việc nhóm suy từ dẫn nhóm 12 kế toán - A4), không thiếu cốt lõi; 50/36 tháng kế toán nhưng chỉ 5 tháng ở cấp quản lý, chức danh hiện tại Accounting Assistant thấp hơn Trưởng/Phó phòng hai bậc và không có Chứng chỉ Kế toán trưởng bắt buộc; đủ kỹ năng nhưng lệch rõ cấp bậc nên 2; phân vân 2–3 (từng là Manager phòng Tài chính) nên chọn mức thấp."
+   },
+   {
+    "stt": 218,
+    "jd_id": "JD-10",
+    "cv_id": "CV-063",
+    "label": 0,
+    "confidence": "không chắc",
+    "reason": "Vị trí khác: Kiểm toán nội bộ IT (D7 theo headline), nội dung thực chất là rủi ro CNTT và an toàn thông tin; kỹ năng đáp ứng 0/9, không có kỹ năng kế toán–thuế nào; 0/36 tháng kinh nghiệm; phân vân 0–1 vì tên gọi thuộc nhóm Kiểm toán (B6) nhưng chuyên môn là CNTT, chọn mức thấp."
+   },
+   {
+    "stt": 219,
+    "jd_id": "JD-10",
+    "cv_id": "CV-057",
+    "label": 0,
+    "confidence": "không chắc",
+    "reason": "Vị trí khác ngành: Nhân viên Quản lý tài khoản (D7 theo headline), công việc là giao tiếp, thuyết phục khách hàng giao dịch (thiên về kinh doanh/CSKH); chỉ trùng kỹ năng chung 2/9 (Làm việc nhóm, Tin học văn phòng → Microsoft Office), không có kỹ năng kế toán–thuế; 0/36 tháng; học vấn Cao đẳng; phân vân 0–1 vì làm tại ngân hàng (có thể xếp nhóm Tài chính), chọn mức thấp."
+   },
+   {
+    "stt": 220,
+    "jd_id": "JD-10",
+    "cv_id": "CV-039",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí cùng nghề kế toán: Kế toán nội bộ theo headline (D7), mục Kinh nghiệm trống; kỹ năng đáp ứng 2/9 (Làm việc độc lập - không minh chứng, Phần mềm kế toán - Misa), thiếu cốt lõi Hạch toán kế toán, Quyết toán thuế, Luật thuế; 0/36 tháng (B3), cấp bậc lệch xa; C1 dưới nửa kỹ năng và 0 tháng nên 1."
+   },
+   {
+    "stt": 221,
+    "jd_id": "JD-18",
+    "cv_id": "CV-001",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác, cùng nhóm CNTT: Fullstack Developer web (Node.js/ReactJS) so với Mobile Developer Flutter; kỹ năng cần có đáp ứng 0/1 (Flutter/React Native gộp một yêu cầu theo C4), thiếu cốt lõi, ReactJS không tương đương React Native; 9 tháng, tin yêu cầu dưới 1 năm nên không thiếu kinh nghiệm; chỉ dùng lại được REST API nên 1."
+   },
+   {
+    "stt": 222,
+    "jd_id": "JD-18",
+    "cv_id": "CV-018",
+    "label": 4,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng: React Native/Flutter Developer; kỹ năng cần có đáp ứng 1/1 (có cả Flutter lẫn React Native, có minh chứng trong kinh nghiệm); 22 tháng mobile so với yêu cầu dưới 1 năm, đủ; cấp nhân viên khớp, học vấn Đại học đạt; B1 không thiếu kỹ năng nào nên 4."
+   },
+   {
+    "stt": 223,
+    "jd_id": "JD-18",
+    "cv_id": "CV-010",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác, cùng nhóm CNTT: Fullstack Developer (Python, Java, ReactJS, AI) so với Mobile Developer Flutter; kỹ năng cần có đáp ứng 0/1, thiếu cốt lõi Flutter/React Native; hơn 7 năm kinh nghiệm web/AI, không có kinh nghiệm mobile trong mục Kinh nghiệm; chức danh hiện tại Junior nên không xét thừa trình độ (B5); 1."
+   },
+   {
+    "stt": 224,
+    "jd_id": "JD-18",
+    "cv_id": "CV-008",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác, cùng nhóm CNTT: Fullstack Developer web/backend so với Mobile Developer Flutter; kỹ năng cần có đáp ứng 0/1, thiếu cốt lõi Flutter/React Native (chỉ làm API backend cho ứng dụng di động); 34 tháng fullstack, không có kinh nghiệm lập trình mobile; chỉ dùng lại được REST API nên 1."
+   },
+   {
+    "stt": 225,
+    "jd_id": "JD-18",
+    "cv_id": "CV-086",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác, cùng nhóm CNTT: Cloud Engineer thiên về kiến trúc giải pháp và presales so với Mobile Developer Flutter; kỹ năng cần có đáp ứng 0/1, thiếu cốt lõi; 31 tháng cloud, không có kinh nghiệm mobile; B6 cùng nhóm ngành nên 1, không xuống 0 (A3)."
+   },
+   {
+    "stt": 226,
+    "jd_id": "JD-18",
+    "cv_id": "CV-011",
+    "label": 2,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng nghề lập trình di động nhưng khác công nghệ: Android Developer (Kotlin, Jetpack Compose); kỹ năng cần có đáp ứng 0/1, thiếu cốt lõi Flutter/React Native (Kotlin native không tương đương); 34 tháng mobile, đủ so với yêu cầu dưới 1 năm; cấp nhân viên khớp, học vấn Đại học đạt; A2 và trần 2 do thiếu cốt lõi nên 2 (tương tự ví dụ neo Java/Spring cho tin Python)."
+   },
+   {
+    "stt": 227,
+    "jd_id": "JD-18",
+    "cv_id": "CV-062",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Nhân viên CSKH so với Mobile Developer; kỹ năng cần có đáp ứng 0/1; 40 tháng CSKH, không có kinh nghiệm lập trình; B6 khác nhóm ngành nên 0."
+   },
+   {
+    "stt": 228,
+    "jd_id": "JD-18",
+    "cv_id": "CV-019",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác, cùng nhóm CNTT: Backend Developer (STL, Design Pattern, Linux) so với Mobile Developer Flutter; kỹ năng cần có đáp ứng 0/1, thiếu cốt lõi Flutter/React Native; 10 tháng backend, không có kinh nghiệm mobile; 1."
+   },
+   {
+    "stt": 229,
+    "jd_id": "JD-18",
+    "cv_id": "CV-017",
+    "label": 4,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng: Mobile Developer dùng Flutter và React Native; kỹ năng cần có đáp ứng 1/1 (Flutter có minh chứng ở cả hai công việc); 52 tháng mobile so với yêu cầu dưới 1 năm, đủ; chức danh Mobile Developer cấp nhân viên khớp (B5 không thừa trình độ theo chức danh), học vấn Cử nhân đạt; B1 nên 4."
+   },
+   {
+    "stt": 230,
+    "jd_id": "JD-18",
+    "cv_id": "CV-024",
+    "label": 1,
+    "confidence": "không chắc",
+    "reason": "Vị trí theo chức danh là Fullstack Developer (D7), có làm ứng dụng di động và web bằng ReactJS; kỹ năng cần có đáp ứng 0/1, CV không ghi Flutter hay React Native (ReactJS không tính tương đương, không suy đoán thành React Native), thiếu cốt lõi; 18 tháng, đủ so với yêu cầu dưới 1 năm; phân vân 1–2 vì có kinh nghiệm phát triển ứng dụng di động (vị trí gần), chọn mức thấp."
+   },
+   {
+    "stt": 231,
+    "jd_id": "JD-27",
+    "cv_id": "CV-060",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Customer Service (chứng từ xuất khẩu) so với Cloud DevOps Engineer; kỹ năng cần có đáp ứng 0/7; 9 tháng CSKH, 0 tháng DevOps; tiếng Anh Basic dưới mức Làm việc; B6 khác nhóm ngành nên 0."
+   },
+   {
+    "stt": 232,
+    "jd_id": "JD-27",
+    "cv_id": "CV-023",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác, cùng nhóm CNTT: Automation Tester so với DevOps Engineer; kỹ năng cần có đáp ứng 1/7 sau khi gộp thẻ thay thế (C4) - chỉ có CI/CD với Jenkins, thiếu cốt lõi Linux, Cloud, Docker/Kubernetes, Ansible, Terraform; 47 tháng kiểm thử, 0 tháng DevOps; tiếng Anh Working proficiency đạt; chỉ vài kỹ năng dùng lại được nên 1."
+   },
+   {
+    "stt": 233,
+    "jd_id": "JD-27",
+    "cv_id": "CV-076",
+    "label": 2,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng: DevOps Engineer; kỹ năng cần có đáp ứng 0/7 (CV chỉ ghi DevOps chung, C#, jQuery, JavaScript, Jira; không nêu Linux, Cloud, Docker, Kubernetes, công cụ CI/CD, Terraform, Ansible), thiếu cốt lõi; 104/24 tháng, đủ; chức danh hiện tại Junior nên không thừa trình độ, tiếng Anh Thành thạo và học vấn Đại học đạt; A2 đúng vị trí nhưng dưới nửa kỹ năng nên mức nền 2."
+   },
+   {
+    "stt": 234,
+    "jd_id": "JD-27",
+    "cv_id": "CV-074",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng: DevOps Engineer; kỹ năng cần có đáp ứng 3/7 (Docker, Kubernetes, Ansible), thiếu Linux, Cloud (AWS/Azure/GCP), công cụ CI/CD, Terraform - có thiếu cốt lõi; 46/24 tháng, đủ; cấp nhân viên khớp, học vấn Cử nhân đạt; A2 mức nền 2, trừ 1 do tin bắt buộc tiếng Anh mức Làm việc mà CV không ghi ngoại ngữ (A3) nên 1."
+   },
+   {
+    "stt": 235,
+    "jd_id": "JD-27",
+    "cv_id": "CV-095",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí gần/đúng mảng: Cloud Engineer thiên về kiến trúc và presales trên AWS; kỹ năng cần có đáp ứng 3/7 (AWS, Jenkins và Ansible chỉ trong dự án), thiếu Linux, Docker, Kubernetes, Terraform - có thiếu cốt lõi; 42/24 tháng, đủ; học vấn Bachelor đạt; dưới nửa kỹ năng nên tối đa 2 (A2/D6), trừ 1 do tiếng Anh Conversational thấp hơn mức Làm việc bắt buộc (A3) nên 1."
+   },
+   {
+    "stt": 236,
+    "jd_id": "JD-27",
+    "cv_id": "CV-017",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác, cùng nhóm CNTT: Mobile Developer (Flutter) so với DevOps Engineer; kỹ năng cần có đáp ứng 0/7 (chỉ có Git, Firebase, REST API), thiếu toàn bộ cốt lõi; 52 tháng mobile, 0 tháng DevOps; tiếng Anh Conversational dưới mức Làm việc bắt buộc; B6 cùng nhóm ngành nên 1, A3 không xuống 0."
+   },
+   {
+    "stt": 237,
+    "jd_id": "JD-27",
+    "cv_id": "CV-022",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác, cùng nhóm CNTT: Automation Tester (Selenium) so với DevOps Engineer; kỹ năng cần có đáp ứng 0/7, thiếu toàn bộ cốt lõi; 116 tháng kiểm thử, 0 tháng DevOps; tiếng Anh Conversational dưới mức Làm việc bắt buộc; B6 cùng nhóm ngành nên 1, A3 không xuống 0."
+   },
+   {
+    "stt": 238,
+    "jd_id": "JD-27",
+    "cv_id": "CV-083",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Lái xe/Giao hàng so với Cloud DevOps Engineer; kỹ năng cần có đáp ứng 0/7; 38 tháng giao hàng, 0 tháng CNTT; học vấn Trung cấp, không ghi ngoại ngữ; B6 khác nhóm ngành nên 0."
+   },
+   {
+    "stt": 239,
+    "jd_id": "JD-27",
+    "cv_id": "CV-066",
+    "label": 3,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng: DevOps Engineer; kỹ năng cần có đáp ứng 7/7 (đủ cả 13 thẻ, có minh chứng trong kinh nghiệm), không thiếu cốt lõi; 20/24 tháng, thiếu 4 tháng tức dưới một nửa số năm yêu cầu nên là thiếu một bậc kinh nghiệm; cấp nhân viên khớp, tiếng Anh mức Làm việc đạt, học vấn Cử nhân đạt; đủ kỹ năng nhưng thiếu một bậc kinh nghiệm nên 3."
+   },
+   {
+    "stt": 240,
+    "jd_id": "JD-27",
+    "cv_id": "CV-077",
+    "label": 2,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng: DevOps Engineer; kỹ năng cần có đáp ứng 2/7 (CI/CD pipeline tính theo 'equivalent CI/CD platform' - B2; Cloud suy từ chứng chỉ AWS và Google Cloud - A4, không minh chứng), thiếu Linux, Docker, Kubernetes, Terraform, Ansible - có thiếu cốt lõi; 50/24 tháng, đủ; cấp nhân viên khớp, tiếng Anh Working proficiency đạt, học vấn Bachelor đạt; A2 đúng vị trí nhưng dưới nửa kỹ năng nên mức nền 2."
+   },
+   {
+    "stt": 241,
+    "jd_id": "JD-39",
+    "cv_id": "CV-090",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành (công nhân sản xuất, không thuộc CNTT); kỹ năng cần có 0/2 theo nghĩa của tin (Xử lý sự cố là sự cố máy móc, không có Kiến thức IT - thiếu cốt lõi); tin không yêu cầu kinh nghiệm; học vấn THPT < Đại học, tiếng Anh 'Working proficiency' < Thành thạo; B6 khác nhóm ngành -> 0"
+   },
+   {
+    "stt": 242,
+    "jd_id": "JD-39",
+    "cv_id": "CV-100",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (Data Analyst, xếp cùng nhóm CNTT theo B6 nhưng không phải hỗ trợ kỹ thuật); kỹ năng cần có 1/2 (có Kiến thức IT suy từ Python/SQL theo A4; thiếu Troubleshooting - cốt lõi); 101 tháng, tin không yêu cầu kinh nghiệm; tiếng Anh Cơ bản < Thành thạo (bắt buộc) trừ 1 nhưng A3 không đưa CV cùng nhóm ngành xuống 0 -> 1"
+   },
+   {
+    "stt": 243,
+    "jd_id": "JD-39",
+    "cv_id": "CV-026",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác trong cùng nhóm CNTT (Manual Tester, không phải IT Helpdesk/hỗ trợ kỹ thuật); kỹ năng cần có 1/2 (có Kiến thức IT; thiếu Troubleshooting - cốt lõi); 30 tháng kiểm thử, tin không yêu cầu kinh nghiệm; tiếng Anh Thành thạo đạt, học vấn cử nhân CNTT đạt; cùng nhóm ngành khác vị trí -> 1 (đối chiếu ví dụ neo tester)"
+   },
+   {
+    "stt": 244,
+    "jd_id": "JD-39",
+    "cv_id": "CV-059",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành (CSKH bán lẻ, nhóm Kinh doanh-CSKH, không phải CNTT); kỹ năng cần có 0/2 (không có Kiến thức IT, Troubleshooting kỹ thuật chỉ xuất hiện ở hoạt động tình nguyện, không tính theo B3/A4); 34 tháng CSKH; tiếng Anh Conversational < Thành thạo (bắt buộc); B6 khác nhóm ngành -> 0"
+   },
+   {
+    "stt": 245,
+    "jd_id": "JD-39",
+    "cv_id": "CV-022",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác trong cùng nhóm CNTT (Automation Tester); kỹ năng cần có 1/2 (có Kiến thức IT; thiếu Troubleshooting - cốt lõi); 115 tháng kiểm thử, tin không yêu cầu kinh nghiệm; chức danh vẫn bậc nhân viên nên không xét thừa trình độ (B5); tiếng Anh Conversational < Thành thạo trừ 1 nhưng A3 giữ sàn 1 -> 1"
+   },
+   {
+    "stt": 246,
+    "jd_id": "JD-39",
+    "cv_id": "CV-041",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành (kế toán công nợ, nhóm Kế toán-Tài chính); kỹ năng cần có 0/2 (thiếu cả Troubleshooting và Kiến thức IT - cốt lõi); 59 tháng kế toán không liên quan; tiếng Anh TOEIC 550 < Thành thạo; B6 khác nhóm ngành -> 0"
+   },
+   {
+    "stt": 247,
+    "jd_id": "JD-39",
+    "cv_id": "CV-081",
+    "label": 3,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (IT Helpdesk theo headline, D7 vì không có mục Kinh nghiệm); kỹ năng cần có 2/2 (Khắc phục sự cố máy tính = Troubleshooting; Windows/macOS/phần cứng = Kiến thức IT, có minh chứng ở dự án); 0 tháng kinh nghiệm nhưng tin không yêu cầu (nhận fresher); học vấn ĐH CNTT đạt; tiếng Anh Giao tiếp/IELTS 5.5 < Thành thạo (bắt buộc) -> mức 4 trừ 1 theo A3 = 3"
+   },
+   {
+    "stt": 248,
+    "jd_id": "JD-39",
+    "cv_id": "CV-073",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành (lễ tân khách sạn, nhóm Hành chính-Lễ tân); kỹ năng cần có 0/2 (thiếu Troubleshooting và Kiến thức IT - cốt lõi); 11 tháng lễ tân; học vấn Trung cấp Điều dưỡng < Đại học, tiếng Anh Giao tiếp < Thành thạo; B6 khác nhóm ngành -> 0"
+   },
+   {
+    "stt": 249,
+    "jd_id": "JD-39",
+    "cv_id": "CV-093",
+    "label": 4,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (IT Helpdesk theo headline, D7); kỹ năng cần có 2/2 (Troubleshooting, Kiến thức IT - có minh chứng ở dự án hỗ trợ người dùng, khắc phục sự cố mạng); 0 tháng kinh nghiệm nhưng tin không yêu cầu (nhận fresher); cấp bậc nhân viên khớp; học vấn cử nhân CNTT đạt; tiếng Anh Thành thạo đạt -> 4"
+   },
+   {
+    "stt": 250,
+    "jd_id": "JD-39",
+    "cv_id": "CV-095",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác trong cùng nhóm CNTT (Cloud Engineer/kiến trúc giải pháp, không phải hỗ trợ kỹ thuật); kỹ năng cần có 1/2 (có Kiến thức IT; không viết Troubleshooting - cốt lõi); 41 tháng, tin không yêu cầu kinh nghiệm; tiếng Anh Conversational < Thành thạo trừ 1, A3 giữ sàn 1 (kể cả coi là vị trí gần thì 2 trừ 1 cũng = 1) -> 1"
+   },
+   {
+    "stt": 251,
+    "jd_id": "JD-40",
+    "cv_id": "CV-028",
+    "label": 2,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng nghề (quản lý kinh doanh online, khớp vị trí chuyên môn Sales Online của tin); kỹ năng cần có 4/5 (thiếu Quản lý tài chính P&L, không thiếu cốt lõi Quản lý kinh doanh); 99 tháng >= trên 5 năm; cấp bậc Chuyên viên (dẫn nhóm 15 người, chuỗi 3 điểm) lệch rõ so với Giám đốc -> đủ kỹ năng nhưng lệch rõ cấp bậc = 2; học vấn ghi Đại học Kinh tế, không trừ"
+   },
+   {
+    "stt": 252,
+    "jd_id": "JD-40",
+    "cv_id": "CV-030",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng nghề (Sales Online) nhưng bậc nhân viên; kỹ năng cần có 4/5 (thiếu Quản lý tài chính P&L, không thiếu cốt lõi); 17 tháng so với trên 5 năm - thiếu hơn nửa (lệch rõ); cấp bậc nhân viên lệch rõ so với Giám đốc -> nền 2; học vấn Cao đẳng < Đại học trừ 1 -> 1 (A3 không xuống 0)"
+   },
+   {
+    "stt": 253,
+    "jd_id": "JD-40",
+    "cv_id": "CV-012",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành (Android Developer, nhóm CNTT); kỹ năng cần có 0/5 (thiếu toàn bộ, kể cả cốt lõi Quản lý kinh doanh); 8 tháng lập trình không liên quan; B6 khác nhóm ngành -> 0"
+   },
+   {
+    "stt": 254,
+    "jd_id": "JD-40",
+    "cv_id": "CV-088",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác trong cùng nhóm Kinh doanh (nhân viên tư vấn tuyển sinh, không phải quản lý kinh doanh cấp giám đốc); kỹ năng cần có 0/5 (thiếu cốt lõi Quản lý kinh doanh, vận hành chuỗi, P&L, phân tích dữ liệu, tư duy chiến lược); 105 tháng tư vấn/telesales nhưng không phải loại việc quản lý; cấp bậc nhân viên (dẫn nhóm 5 người) lệch rõ; học vấn Cao đẳng < Đại học; A3 giữ sàn 1 -> 1"
+   },
+   {
+    "stt": 255,
+    "jd_id": "JD-40",
+    "cv_id": "CV-031",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Cùng nhóm Kinh doanh, bậc nhân viên Sales Online; kỹ năng cần có 0/5 (thiếu cốt lõi Quản lý kinh doanh); 17 tháng so với trên 5 năm - thiếu hơn nửa; cấp bậc lệch rõ so với Giám đốc; học vấn THPT < Đại học; C1 (dưới nửa kỹ năng và thiếu từ nửa số năm) + A3 giữ sàn 1 -> 1"
+   },
+   {
+    "stt": 256,
+    "jd_id": "JD-40",
+    "cv_id": "CV-033",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Cùng nhóm Kinh doanh nhưng khác vị trí (thực tập sinh Business Development, mới tốt nghiệp); kỹ năng cần có 0/5 (thiếu cốt lõi Quản lý kinh doanh); 0 tháng trong mục Kinh nghiệm so với trên 5 năm; cấp bậc thực tập lệch rõ so với Giám đốc; C1 + A3 giữ sàn 1 -> 1"
+   },
+   {
+    "stt": 257,
+    "jd_id": "JD-40",
+    "cv_id": "CV-036",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Cùng nhóm Kinh doanh (Telesales, C3) nhưng bậc nhân viên; kỹ năng cần có 0/5 (thiếu cốt lõi Quản lý kinh doanh); 13 tháng so với trên 5 năm - thiếu hơn nửa; cấp bậc lệch rõ so với Giám đốc; học vấn Cao đẳng < Đại học; C1 + A3 giữ sàn 1 -> 1"
+   },
+   {
+    "stt": 258,
+    "jd_id": "JD-40",
+    "cv_id": "CV-100",
+    "label": 0,
+    "confidence": "không chắc",
+    "reason": "Vị trí khác ngành (Data Analyst xếp nhóm CNTT/dữ liệu, tin thuộc nhóm Kinh doanh); kỹ năng cần có 1/5 (chỉ có Phân tích dữ liệu/BI; thiếu cốt lõi Quản lý kinh doanh, vận hành chuỗi, P&L, tư duy chiến lược không rõ); 101 tháng phân tích dữ liệu, không có kinh nghiệm quản lý kinh doanh; B6 khác nhóm ngành -> 0; phân vân 0/1 vì có một kỹ năng cần có dùng lại được, chọn mức thấp"
+   },
+   {
+    "stt": 259,
+    "jd_id": "JD-40",
+    "cv_id": "CV-035",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Đúng nghề kinh doanh (Telesales, C3) nhưng bậc Trưởng nhóm (Telesales Manager dẫn 20 người, D3); kỹ năng cần có 2/5 (Phân tích dữ liệu bằng Excel, Quản lý kinh doanh ở mức dẫn nhóm; thiếu Tư duy chiến lược, Quản lý vận hành chuỗi, P&L) - dưới nửa; 46 tháng so với trên 5 năm - thiếu 14 tháng; cấp bậc lệch rõ so với Giám đốc; A2 nền 2 cộng dồn lệch kinh nghiệm/cấp bậc -> 1"
+   },
+   {
+    "stt": 260,
+    "jd_id": "JD-40",
+    "cv_id": "CV-064",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Đúng nghề (Sales Online) nhưng bậc nhân viên; kỹ năng cần có 1/5 (chỉ có phân tích dữ liệu doanh số; thiếu cốt lõi Quản lý kinh doanh, vận hành chuỗi, P&L, tư duy chiến lược); 97 tháng bán hàng online đủ số năm nhưng không phải loại việc quản lý; cấp bậc lệch rõ so với Giám đốc; A2 nền 2 cộng dồn lệch rõ cấp bậc/loại kinh nghiệm (như C1) -> 1"
+   },
+   {
+    "stt": 261,
+    "jd_id": "JD-56",
+    "cv_id": "CV-035",
+    "label": 4,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (Telesales cùng nghề Sales theo C3, tin liệt kê Telesales); kỹ năng cần có được đếm 3/3 (Bán hàng, Telesales, Chăm sóc khách hàng; bỏ Chịu áp lực - phẩm chất cá nhân); 46 tháng >= 1 năm; chức danh Telesales Manager coi là Trưởng nhóm (D3), cao hơn tin 1 bậc nên không trừ (B5); học vấn Đại học >= Trung cấp -> 4"
+   },
+   {
+    "stt": 262,
+    "jd_id": "JD-56",
+    "cv_id": "CV-062",
+    "label": 2,
+    "confidence": "chắc",
+    "reason": "Vị trí gần (Nhân viên CSKH, gần với Sales/Telesales theo C3); kỹ năng cần có được đếm 2/3 (Chăm sóc khách hàng, Bán hàng qua kênh CSKH; thiếu Telesales; bỏ Chịu áp lực); 39 tháng >= 1 năm, tin chấp nhận kinh nghiệm CSKH; cấp bậc và học vấn đạt; D6 vị trí gần tối đa 2 -> 2"
+   },
+   {
+    "stt": 263,
+    "jd_id": "JD-56",
+    "cv_id": "CV-057",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác trong cùng nhóm Kinh doanh-CSKH (Nhân viên quản lý tài khoản theo headline, D7; mới tốt nghiệp); kỹ năng cần có được đếm 0/3 rõ ràng (chỉ có Thuyết phục, Giao tiếp dùng lại được; thiếu Bán hàng - cốt lõi, Telesales, CSKH); 0 tháng trong mục Kinh nghiệm so với 1 năm; học vấn Cao đẳng đạt; C1/D8 + A3 giữ sàn 1 -> 1"
+   },
+   {
+    "stt": 264,
+    "jd_id": "JD-56",
+    "cv_id": "CV-045",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác trong cùng nhóm Kinh doanh-Marketing-Content (Content Marketing Intern theo headline, D7); kỹ năng cần có được đếm 0/3 (thiếu Bán hàng - cốt lõi, Telesales, CSKH); 0 tháng trong mục Kinh nghiệm so với 1 năm; học vấn Đại học đạt; B6 cùng nhóm ngành khác vị trí, A3 giữ sàn 1 -> 1"
+   },
+   {
+    "stt": 265,
+    "jd_id": "JD-56",
+    "cv_id": "CV-054",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành (Lễ tân, nhóm Hành chính-Lễ tân theo B6); kỹ năng cần có được đếm 0/3 (không ghi Bán hàng, Telesales; phục vụ khách tại quầy không đủ rõ để suy ra CSKH theo A4); 22 tháng lễ tân không phải Sales/Telesales/CSKH; học vấn Cao đẳng đạt; B6 khác nhóm ngành -> 0"
+   },
+   {
+    "stt": 266,
+    "jd_id": "JD-56",
+    "cv_id": "CV-096",
+    "label": 4,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (Tư vấn tuyển sinh, trùng vị trí của tin); kỹ năng cần có được đếm 2/3 (Bán hàng suy từ tư vấn tuyển sinh/thu hút học viên/doanh thu theo A4, Chăm sóc khách hàng; thiếu Telesales - không cốt lõi; bỏ Chịu áp lực); 19 tháng >= 1 năm; cấp bậc chuyên viên khớp; học vấn Cao đẳng >= Trung cấp; B1 thiếu tối đa 1 kỹ năng không cốt lõi -> 4"
+   },
+   {
+    "stt": 267,
+    "jd_id": "JD-56",
+    "cv_id": "CV-036",
+    "label": 4,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (Telesales cùng nghề Sales theo C3, tin liệt kê Telesales); kỹ năng cần có được đếm 3/3 (Telesales, Bán hàng qua doanh số gói dịch vụ, CSKH qua xử lý phản hồi 300 khách/tháng; bỏ Chịu áp lực); 13 tháng >= 1 năm; cấp bậc nhân viên khớp; học vấn Cao đẳng >= Trung cấp -> 4"
+   },
+   {
+    "stt": 268,
+    "jd_id": "JD-56",
+    "cv_id": "CV-067",
+    "label": 4,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (Tư vấn tuyển sinh, trùng vị trí của tin, ngành giáo dục); kỹ năng cần có được đếm 3/3 (Bán hàng, Telesales, Chăm sóc khách hàng - có minh chứng; bỏ Chịu áp lực); 21 tháng >= 1 năm; cấp bậc chuyên viên khớp; học vấn đạt -> 4"
+   },
+   {
+    "stt": 269,
+    "jd_id": "JD-56",
+    "cv_id": "CV-088",
+    "label": 4,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (Tư vấn tuyển sinh, trùng vị trí của tin); kỹ năng cần có được đếm 3/3 (Telesales, Bán hàng; CSKH suy từ hỗ trợ học viên đăng ký, giải đáp, duy trì quan hệ theo A4; bỏ Chịu áp lực); 105 tháng >= 1 năm; chức danh vẫn Tư vấn tuyển sinh (dẫn nhóm 5 người, tối đa Trưởng nhóm theo D3) nên không trừ thừa trình độ (B5); học vấn Cao đẳng >= Trung cấp -> 4"
+   },
+   {
+    "stt": 270,
+    "jd_id": "JD-56",
+    "cv_id": "CV-031",
+    "label": 1,
+    "confidence": "không chắc",
+    "reason": "Vị trí đúng nghề (Sales Online, tin liệt kê Online Sales); kỹ năng cần có được đếm 1/3 (có Bán hàng - cốt lõi; thiếu Telesales; CSKH chỉ gợi ý mơ hồ 'duy trì khách hàng' nên không tính theo A4; bỏ Chịu áp lực) - dưới nửa; 17 tháng >= 1 năm; cấp bậc khớp; A2 nền 2, học vấn THPT < Trung cấp trừ 1 -> 1; phân vân vì nếu tính CSKH thì thành 3, chọn mức thấp"
+   },
+   {
+    "stt": 271,
+    "jd_id": "JD-69",
+    "cv_id": "CV-077",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (DevOps Engineer) nhưng cùng nhóm CNTT; kỹ năng cần có 0/5 (chỉ có script tự động hóa/CI-CD dùng lại được, thiếu cốt lõi Manual Testing); 49 tháng nhưng không phải kiểm thử; tiếng Anh 'Working proficiency' thấp hơn mức Thành thạo; A3 không đưa xuống 0, B6."
+   },
+   {
+    "stt": 272,
+    "jd_id": "JD-69",
+    "cv_id": "CV-035",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Khác ngành (Telesales/CSKH so với kiểm thử phần mềm); kỹ năng cần có 0/5; không ghi ngoại ngữ; B6."
+   },
+   {
+    "stt": 273,
+    "jd_id": "JD-69",
+    "cv_id": "CV-021",
+    "label": 2,
+    "confidence": "không chắc",
+    "reason": "Đúng vị trí theo headline Manual Tester (D7); kỹ năng 4/5 (thiếu Automation Testing, không cốt lõi; có Manual Testing, QA/QC, Jira, Agile qua dự án); mục Kinh nghiệm trống = 0 tháng so với 'Dưới 1 năm' → coi là thiếu hẳn kinh nghiệm, đủ kỹ năng nhưng lệch rõ kinh nghiệm → 2 (C2 cũng cho 2); tiếng Anh Thành thạo đạt; B3, D7."
+   },
+   {
+    "stt": 274,
+    "jd_id": "JD-69",
+    "cv_id": "CV-023",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Cùng nghề kiểm thử (Automation Tester) nhưng thiếu kỹ năng cốt lõi Manual Testing (D5); kỹ năng 3/5 (có Automation Testing, QA/QC, Agile; thiếu Manual Testing, Jira) → tối đa 2 (A1); 47 tháng, đủ; tiếng Anh 'Working proficiency' (IELTS 6.0) thấp hơn Thành thạo bắt buộc → trừ 1 (A3)."
+   },
+   {
+    "stt": 275,
+    "jd_id": "JD-69",
+    "cv_id": "CV-022",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Cùng nghề kiểm thử (Automation Tester) nhưng thiếu cốt lõi Manual Testing (D5); kỹ năng 2/5 (Automation Testing, QA/QC suy từ việc đã làm; thiếu Manual Testing, Jira, Agile) → mức nền 2 (A2, A1); 115 tháng, đủ, chức danh vẫn bậc nhân viên nên không trừ thừa trình độ (B5); tiếng Anh 'Conversational' thấp hơn Thành thạo → trừ 1 (A3)."
+   },
+   {
+    "stt": 276,
+    "jd_id": "JD-69",
+    "cv_id": "CV-076",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (DevOps Engineer) cùng nhóm CNTT; kỹ năng 2/5 dùng lại được (Jira, Agile; QA chỉ nhắc thoáng), thiếu cốt lõi Manual Testing; 103 tháng nhưng không phải kiểm thử; tiếng Anh Thành thạo đạt; B6."
+   },
+   {
+    "stt": 277,
+    "jd_id": "JD-69",
+    "cv_id": "CV-016",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (iOS Developer) cùng nhóm CNTT; kỹ năng cần có 0/5, thiếu cốt lõi; kinh nghiệm không phải kiểm thử; tiếng Anh 'Basic' thấp hơn yêu cầu nhưng A3 không đưa CV cùng nhóm ngành xuống 0; B6."
+   },
+   {
+    "stt": 278,
+    "jd_id": "JD-69",
+    "cv_id": "CV-045",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Khác ngành (Content Marketing, sinh viên mới ra trường, không có mục Kinh nghiệm); kỹ năng cần có 0/5; B6."
+   },
+   {
+    "stt": 279,
+    "jd_id": "JD-69",
+    "cv_id": "CV-026",
+    "label": 4,
+    "confidence": "chắc",
+    "reason": "Đúng vị trí (Manual Tester); kỹ năng 5/5 (Automation Testing chỉ liệt kê + chứng chỉ cơ bản, không minh chứng); 30 tháng so với 'Dưới 1 năm' → đủ; cấp bậc nhân viên khớp; tiếng Anh Thành thạo đạt; có ISTQB và dự án quản lý bất động sản. Lưu ý: phần mô tả của tin ghi tối thiểu 4 năm, đã chấm theo trường 'Kinh nghiệm yêu cầu'."
+   },
+   {
+    "stt": 280,
+    "jd_id": "JD-69",
+    "cv_id": "CV-025",
+    "label": 2,
+    "confidence": "không chắc",
+    "reason": "Đúng vị trí (Manual Tester); kỹ năng 3/5 (Manual Testing, Agile, QA/QC suy từ việc đã làm; thiếu Jira và Automation Testing – chỉ có một dòng 'viết script kiểm thử' nên không suy, A4) → mức 3; 20 tháng, đủ; tiếng Anh 'Giao tiếp' thấp hơn Thành thạo bắt buộc → trừ 1 (A3) còn 2; phân vân 3/2 vì script kiểm thử có thể tính là Automation."
+   },
+   {
+    "stt": 281,
+    "jd_id": "JD-71",
+    "cv_id": "CV-063",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Khác vị trí (Kiểm toán nội bộ IT theo headline, D7) nhưng cùng nhóm Kế toán – Kiểm toán (B6); kỹ năng cần có 0/3, thiếu cốt lõi công nợ; không có mục Kinh nghiệm (0 tháng); A3 không đưa xuống 0."
+   },
+   {
+    "stt": 282,
+    "jd_id": "JD-71",
+    "cv_id": "CV-039",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Đúng nghề kế toán theo headline Kế toán nội bộ (D7); kỹ năng 1/3 (có Kế toán qua dự án; thiếu Quản lý công nợ, Đối chiếu công nợ – cốt lõi); mục Kinh nghiệm trống = 0 tháng → vừa dưới nửa kỹ năng vừa thiếu hẳn kinh nghiệm: C1 → 1; học vấn đạt (sinh viên đại học, B4)."
+   },
+   {
+    "stt": 283,
+    "jd_id": "JD-71",
+    "cv_id": "CV-004",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Khác ngành (Data Analyst – phân tích dữ liệu, dù làm tại ngân hàng); kỹ năng cần có 0/3, chỉ có Excel là kỹ năng nên có; không có nghiệp vụ kế toán/công nợ; B6, D7."
+   },
+   {
+    "stt": 284,
+    "jd_id": "JD-71",
+    "cv_id": "CV-040",
+    "label": 2,
+    "confidence": "chắc",
+    "reason": "Đúng nghề kế toán (Accountant/Assistant Accountant); kỹ năng 1/3 (có Kế toán; thiếu Quản lý công nợ và Đối chiếu công nợ – cốt lõi) → dưới một nửa, mức nền 2 (A2) và trần 2 do thiếu cốt lõi (A1); 108 tháng, đủ; chức danh vẫn bậc nhân viên nên không trừ thừa trình độ (B5); học vấn cao đẳng đạt."
+   },
+   {
+    "stt": 285,
+    "jd_id": "JD-71",
+    "cv_id": "CV-044",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Khác vị trí (Kiểm toán viên nội bộ/IT audit) cùng nhóm Kế toán – Kiểm toán (B6); kỹ năng cần có 0/3, chỉ có Excel (nên có) dùng lại được; 44 tháng nhưng không phải kế toán công nợ."
+   },
+   {
+    "stt": 286,
+    "jd_id": "JD-71",
+    "cv_id": "CV-069",
+    "label": 1,
+    "confidence": "không chắc",
+    "reason": "Vị trí theo headline là Chuyên viên Kiểm toán nội bộ (D7, không có mục Kinh nghiệm) → không đúng vị trí, cùng nhóm ngành; kỹ năng 3/3 (Kế toán, Quản lý công nợ, Đối chiếu công nợ qua dự án thực tập + chứng chỉ); 0 tháng trong mục Kinh nghiệm → thiếu hẳn; vị trí gần/khác cộng thêm thiếu hẳn kinh nghiệm → 1; phân vân 2/1 vì nội dung CV toàn kế toán công nợ (D6, B3)."
+   },
+   {
+    "stt": 287,
+    "jd_id": "JD-71",
+    "cv_id": "CV-072",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Khác ngành (Tạp vụ); kỹ năng cần có 0/3, chỉ có Excel theo dõi kho; học vấn THPT thấp hơn Trung cấp; B6."
+   },
+   {
+    "stt": 288,
+    "jd_id": "JD-71",
+    "cv_id": "CV-043",
+    "label": 2,
+    "confidence": "chắc",
+    "reason": "Vị trí gần (Chuyên viên Thuế tại công ty dịch vụ thuế – cùng mảng kế toán, thuế) → tối đa 2 (D6); kỹ năng 3/3 (Đối chiếu công nợ có minh chứng, Quản lý công nợ nêu ở tóm tắt không minh chứng, Kế toán suy từ lập hóa đơn/BCTC – A4); 21 tháng, đủ; học vấn cao đẳng đạt."
+   },
+   {
+    "stt": 289,
+    "jd_id": "JD-71",
+    "cv_id": "CV-013",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Khác ngành (Android Developer – CNTT); kỹ năng cần có 0/3; B6."
+   },
+   {
+    "stt": 290,
+    "jd_id": "JD-71",
+    "cv_id": "CV-042",
+    "label": 4,
+    "confidence": "chắc",
+    "reason": "Đúng vị trí (Kế toán công nợ); kỹ năng 3/3 có minh chứng (Kế toán, Quản lý công nợ, Đối chiếu công nợ); 14 tháng so với 'Dưới 1 năm' → đủ; cấp bậc nhân viên khớp; học vấn đại học kế toán đạt."
+   },
+   {
+    "stt": 291,
+    "jd_id": "JD-73",
+    "cv_id": "CV-038",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Khác vị trí (kế toán: Manager Finance 5 tháng, Accountant, Accounting Assistant) cùng nhóm Kế toán – Kiểm toán (B6); kỹ năng cần có 0/3, thiếu cốt lõi IT Audit (chỉ có quy trình kiểm soát nội bộ tài chính); 50 tháng không phải IT audit; tiếng Anh 'Conversational' thấp hơn yêu cầu nhưng A3 không đưa xuống 0."
+   },
+   {
+    "stt": 292,
+    "jd_id": "JD-73",
+    "cv_id": "CV-023",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Khác vị trí (Automation Tester); tin IT audit thuộc cả mảng CNTT (yêu cầu bằng CNTT/ATTT, vị trí liên quan An ninh mạng, IT) nên coi là cùng nhóm ngành; kỹ năng cần có 0/3, thiếu cốt lõi IT Audit; 47 tháng không liên quan; tiếng Anh thấp hơn yêu cầu, A3 giữ ở 1."
+   },
+   {
+    "stt": 293,
+    "jd_id": "JD-73",
+    "cv_id": "CV-026",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Khác vị trí (Manual Tester), coi là cùng nhóm CNTT với tin IT audit; kỹ năng cần có 0/3, thiếu cốt lõi IT Audit; 30 tháng kiểm thử, không phải kiểm toán; tiếng Anh Thành thạo đạt; cấp bậc nhân viên so với Trưởng/Phó phòng."
+   },
+   {
+    "stt": 294,
+    "jd_id": "JD-73",
+    "cv_id": "CV-020",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Khác vị trí (Manual Tester), coi là cùng nhóm CNTT với tin IT audit; kỹ năng cần có 0/3 (có báo cáo lỗi bảo mật nhưng không phải Information Security/IT Audit); 36 tháng kiểm thử; tiếng Anh 'Giao tiếp' thấp hơn yêu cầu, A3 giữ ở 1."
+   },
+   {
+    "stt": 295,
+    "jd_id": "JD-73",
+    "cv_id": "CV-058",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Khác ngành (Nhân viên CSKH); kỹ năng cần có 0/3; tiếng Anh chỉ Giao tiếp; B6."
+   },
+   {
+    "stt": 296,
+    "jd_id": "JD-73",
+    "cv_id": "CV-056",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Khác ngành (Hành chính – Admin Officer/Office Manager); kỹ năng cần có 0/3; B6."
+   },
+   {
+    "stt": 297,
+    "jd_id": "JD-73",
+    "cv_id": "CV-022",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Khác vị trí (Automation Tester), coi là cùng nhóm CNTT với tin IT audit; kỹ năng cần có 0/3, thiếu cốt lõi IT Audit; 115 tháng kiểm thử không liên quan; tiếng Anh 'Conversational' thấp hơn yêu cầu, A3 giữ ở 1."
+   },
+   {
+    "stt": 298,
+    "jd_id": "JD-73",
+    "cv_id": "CV-044",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Đúng vị trí (Kiểm toán viên nội bộ/IT audit); kỹ năng 2/3 (có IT Audit – cốt lõi, Information Security; thiếu IT Risk Management); 44/60 tháng → thiếu một bậc; cấp bậc nhân viên so với Trưởng/Phó phòng lệch rõ → 2 (C2); tiếng Anh 'Giao tiếp' thấp hơn Thành thạo bắt buộc → trừ 1 còn 1; học vấn ghi cao đẳng thấp hơn Đại học nhưng A3 không đưa xuống 0."
+   },
+   {
+    "stt": 299,
+    "jd_id": "JD-73",
+    "cv_id": "CV-063",
+    "label": 2,
+    "confidence": "chắc",
+    "reason": "Đúng vị trí theo headline Kiểm toán nội bộ IT (D7); kỹ năng 3/3 (IT Audit, IT Risk Management, Information Security qua thực tập + chứng chỉ); mục Kinh nghiệm trống = 0/60 tháng và mới tốt nghiệp so với Trưởng/Phó phòng → đủ kỹ năng nhưng lệch rõ kinh nghiệm và cấp bậc → 2; tiếng Anh Thành thạo đạt; học vấn tính theo bậc đại học ghi trong CV."
+   },
+   {
+    "stt": 300,
+    "jd_id": "JD-73",
+    "cv_id": "CV-037",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Khác vị trí (kế toán: Accounting Coordinator, Financial Assistant) cùng nhóm Kế toán – Kiểm toán (B6); kỹ năng cần có 0/3 (chỉ có kiểm soát nội bộ tài chính, không phải IT Audit); 20 tháng không liên quan; tiếng Anh 'Conversational' thấp hơn yêu cầu, A3 giữ ở 1."
+   }
+  ],
+  "B": [
+   {
+    "stt": 151,
+    "jd_id": "JD-05",
+    "cv_id": "CV-031",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành (Sales Online, B6: Kinh doanh) so với Thiết kế nội thất; kỹ năng cần có 0/10; 17 tháng kinh nghiệm không liên quan; dừng ở bước 3."
+   },
+   {
+    "stt": 152,
+    "jd_id": "JD-05",
+    "cv_id": "CV-093",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành (IT Helpdesk, mới tốt nghiệp, mục Kinh nghiệm trống); kỹ năng cần có 0/10; không có điểm chung với thiết kế nội thất 2D/3D."
+   },
+   {
+    "stt": 153,
+    "jd_id": "JD-05",
+    "cv_id": "CV-094",
+    "label": 0,
+    "confidence": "không chắc",
+    "reason": "Vị trí khác (Graphic Designer/Video Editor – nhóm Thiết kế–Media; theo D2 thiết kế nội thất không cùng nhóm với Content/Media); kỹ năng cần có 0/10 (chỉ có CapCut, Illustrator, After Effects, không ghi Photoshop); 68 tháng nhưng không phải nội thất; phân vân 0/1 nên chọn mức thấp."
+   },
+   {
+    "stt": 154,
+    "jd_id": "JD-05",
+    "cv_id": "CV-075",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng theo headline (Interior Designer, D7) nhưng mục Kinh nghiệm trống: 0/12 tháng (B3, thực tập nằm ở Dự án); kỹ năng cần có khoảng 5/10 (có Photoshop, V-Ray, Bố cục không gian, Vật liệu nội thất, dựng 3D qua render; thiếu SketchUp cốt lõi, AutoCAD, Thiết kế 2D, Ánh sáng màu sắc, Nguyên lý thẩm mỹ); áp dụng D8/C1 → 1."
+   },
+   {
+    "stt": 155,
+    "jd_id": "JD-05",
+    "cv_id": "CV-006",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành (Backend Developer, CNTT phần mềm); kỹ năng cần có 0/10 ('Design System' không phải thiết kế nội thất); dừng ở bước 3."
+   },
+   {
+    "stt": 156,
+    "jd_id": "JD-05",
+    "cv_id": "CV-091",
+    "label": 2,
+    "confidence": "không chắc",
+    "reason": "Vị trí đúng (Thiết kế nội thất); kỹ năng cần có 9/10 (đủ SketchUp, V-Ray, 3D, 2D qua bản vẽ AutoCAD, Photoshop, Vật liệu, Ánh sáng màu sắc, Thẩm mỹ; thiếu Bố cục không gian – không cốt lõi; có thêm gỗ óc chó); 9/12 tháng, thiếu 3 tháng (<1/2) = thiếu một bậc; học vấn Trung cấp đạt; áp dụng C2 theo câu chữ (thiếu 1 kỹ năng + thiếu một bậc) → 2; nếu coi thiếu 1/10 vẫn trong ngưỡng B1 thì là 3 nên ghi không chắc."
+   },
+   {
+    "stt": 157,
+    "jd_id": "JD-05",
+    "cv_id": "CV-007",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành (Backend Developer, CNTT phần mềm); kỹ năng cần có 0/10; 10 tháng kinh nghiệm không liên quan."
+   },
+   {
+    "stt": 158,
+    "jd_id": "JD-05",
+    "cv_id": "CV-052",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành (Content Marketing; D2: nội thất và Content là khác ngành); kỹ năng cần có 0/10 (Canva, dựng video, email marketing không dùng lại được); hơn 9 năm nhưng không liên quan."
+   },
+   {
+    "stt": 159,
+    "jd_id": "JD-05",
+    "cv_id": "CV-051",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành (Content Marketing, mới tốt nghiệp, mục Kinh nghiệm trống; D2); kỹ năng cần có 0/10 (SEO, Web3, Digital Marketing)."
+   },
+   {
+    "stt": 160,
+    "jd_id": "JD-05",
+    "cv_id": "CV-089",
+    "label": 2,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (Thiết kế nội thất); kỹ năng cần có 2/10 (AutoCAD, Thiết kế 2D qua bản vẽ kỹ thuật; thiếu cốt lõi SketchUp, V-Ray, Thiết kế 3D và Photoshop, Bố cục, Vật liệu, Ánh sáng, Thẩm mỹ); 50 tháng so với 12 tháng: đủ; cấp bậc và học vấn đạt; đúng vị trí nhưng dưới nửa kỹ năng → A2 mức nền 2 (thiếu cốt lõi cũng tối đa 2), không áp dụng C1 vì đủ kinh nghiệm."
+   },
+   {
+    "stt": 161,
+    "jd_id": "JD-08",
+    "cv_id": "CV-062",
+    "label": 2,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (Nhân viên CSKH, 40 tháng; tin không yêu cầu kinh nghiệm); kỹ năng cần có đáp ứng 2/7 sau khi gộp Facebook/Skype/Viber (có Tư vấn – cốt lõi, Làm việc nhóm qua việc quản lý nhóm 15 người; thiếu Word, Excel, Thuyết phục, Đánh máy, công cụ mạng xã hội – không thiếu cốt lõi); cấp bậc, học vấn đạt; đúng vị trí nhưng dưới nửa kỹ năng nên áp dụng A2 → 2"
+   },
+   {
+    "stt": 162,
+    "jd_id": "JD-08",
+    "cv_id": "CV-031",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí gần (Sales Online 18 tháng, C3/D6); kỹ năng cần có đáp ứng 1/7 (chỉ có Tư vấn – cốt lõi; thiếu Làm việc nhóm, Word, Excel, Thuyết phục, Đánh máy, công cụ mạng xã hội); kinh nghiệm không yêu cầu; học vấn THPT thấp hơn Trung cấp (trừ, B4); vị trí gần + chỉ vài kỹ năng → 1, A3 không xuống 0"
+   },
+   {
+    "stt": 163,
+    "jd_id": "JD-08",
+    "cv_id": "CV-057",
+    "label": 2,
+    "confidence": "chắc",
+    "reason": "Vị trí gần (headline Nhân viên quản lý tài khoản, chưa có mục Kinh nghiệm – D7); kỹ năng cần có đáp ứng 4/7 (Làm việc nhóm, Word, Excel suy từ Tin học văn phòng – A4, Thuyết phục; thiếu Tư vấn – cốt lõi, Đánh máy, công cụ mạng xã hội); tin không yêu cầu kinh nghiệm; học vấn Cao đẳng đạt; vị trí gần + khoảng nửa kỹ năng, thiếu cốt lõi → tối đa 2 (D6)"
+   },
+   {
+    "stt": 164,
+    "jd_id": "JD-08",
+    "cv_id": "CV-096",
+    "label": 1,
+    "confidence": "không chắc",
+    "reason": "Vị trí gần (Tư vấn tuyển sinh 20 tháng); kỹ năng cần có đáp ứng 2/7 (Tư vấn – cốt lõi, Thuyết phục; thiếu Làm việc nhóm, Word, Excel, Đánh máy, công cụ mạng xã hội); có thêm Chăm sóc khách hàng nhưng không thuộc danh sách thẻ; kinh nghiệm không yêu cầu, học vấn đạt; vị trí gần + dưới nửa kỹ năng → phân vân 1/2, chọn 1"
+   },
+   {
+    "stt": 165,
+    "jd_id": "JD-08",
+    "cv_id": "CV-035",
+    "label": 2,
+    "confidence": "chắc",
+    "reason": "Vị trí gần (Telesales 47 tháng, có 4 tháng chức danh Customer Service Specialist – C3); kỹ năng cần có đáp ứng 3/7 (Làm việc nhóm, Excel, Thuyết phục; thiếu Word, Đánh máy, công cụ mạng xã hội, Tư vấn không ghi rõ); có chứng chỉ Customer Service và xử lý phản hồi khách hàng; hiện là Telesales Manager = Trưởng nhóm (D3), cao hơn 1 bậc nên không trừ (B5); vị trí gần + khoảng nửa kỹ năng → 2 (D6)"
+   },
+   {
+    "stt": 166,
+    "jd_id": "JD-08",
+    "cv_id": "CV-087",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí gần (headline Sales Logistics, mới tốt nghiệp, mục Kinh nghiệm trống – D7); kỹ năng cần có đáp ứng 2/7 (Word, Excel suy từ chứng chỉ MOS – A4; thiếu Tư vấn – cốt lõi, Làm việc nhóm, Thuyết phục, Đánh máy, công cụ mạng xã hội); tin không yêu cầu kinh nghiệm; học vấn đạt; vị trí gần + dưới nửa kỹ năng, thiếu cốt lõi → 1"
+   },
+   {
+    "stt": 167,
+    "jd_id": "JD-08",
+    "cv_id": "CV-058",
+    "label": 4,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (Nhân viên CSKH 77 tháng); kỹ năng cần có đáp ứng 7/7 (đủ cả 9 thẻ: Tư vấn, Làm việc nhóm, Word, Excel, Thuyết phục, Đánh máy, Facebook, Skype, Viber, đều có minh chứng); kinh nghiệm không yêu cầu; cấp bậc Nhân viên khớp (B5 chỉ xét chức danh); học vấn Trung cấp đạt; có tiếng Nhật (ưu tiên) → 4"
+   },
+   {
+    "stt": 168,
+    "jd_id": "JD-08",
+    "cv_id": "CV-073",
+    "label": 0,
+    "confidence": "không chắc",
+    "reason": "Vị trí khác: Lễ tân khách sạn 12 tháng thuộc nhóm Hành chính – Nhân sự – Lễ tân – Thư ký (B6), khác nhóm CSKH; kỹ năng cần có đáp ứng 0/7 (thiếu cả Tư vấn – cốt lõi); CV có thẻ Chăm sóc khách hàng và xử lý khiếu nại nên phân vân 0/1, theo B6 chọn 0"
+   },
+   {
+    "stt": 169,
+    "jd_id": "JD-08",
+    "cv_id": "CV-078",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác nhưng cùng nhóm ngành (Tổ chức sự kiện 18 tháng, làm chiến dịch marketing – nhóm Kinh doanh – Marketing – CSKH, B6); kỹ năng cần có đáp ứng 3/7 (Làm việc nhóm, Word, Excel; thiếu Tư vấn – cốt lõi, Thuyết phục, Đánh máy, công cụ mạng xã hội); kinh nghiệm không yêu cầu; khác vị trí, vài kỹ năng dùng lại được → 1"
+   },
+   {
+    "stt": 170,
+    "jd_id": "JD-08",
+    "cv_id": "CV-053",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Tuyển dụng/Quản lý nhân sự 55 tháng thuộc nhóm Hành chính – Nhân sự (B6); kỹ năng cần có đáp ứng 1/7 (chỉ Làm việc nhóm; thiếu Tư vấn – cốt lõi và các thẻ còn lại); tiếng Nhật N2 chỉ là ưu tiên; khác nhóm ngành → 0"
+   },
+   {
+    "stt": 171,
+    "jd_id": "JD-16",
+    "cv_id": "CV-024",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (Fullstack ReactJS so với iOS), cùng nhóm CNTT; kỹ năng cần có 1/8 (chỉ REST API; thiếu cốt lõi Swift); 17 tháng so với 36; Nhân viên so với Trưởng nhóm; khác vị trí nên dừng ở 1"
+   },
+   {
+    "stt": 172,
+    "jd_id": "JD-16",
+    "cv_id": "CV-016",
+    "label": 3,
+    "confidence": "không chắc",
+    "reason": "Vị trí đúng (iOS Developer); kỹ năng cần có 7/8 (thiếu RxSwift, coi là không cốt lõi; cốt lõi Swift có); 87 tháng so với 36, đủ; học vấn Cao đẳng đạt; chức danh đều là iOS Developer (Nhân viên) thấp hơn Trưởng nhóm một bậc dù có ghi từng dẫn nhóm; phân vân 3–4 nên chọn 3"
+   },
+   {
+    "stt": 173,
+    "jd_id": "JD-16",
+    "cv_id": "CV-006",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (Backend, Embedded C/System Administration), cùng nhóm CNTT; kỹ năng cần có 0/8 (thiếu cốt lõi Swift); 16 tháng so với 36; khác vị trí nên 1 (A3 không xuống 0)"
+   },
+   {
+    "stt": 174,
+    "jd_id": "JD-16",
+    "cv_id": "CV-007",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (Backend Java/Embedded C), cùng nhóm CNTT; kỹ năng cần có 0/8 (thiếu cốt lõi Swift); 10 tháng so với 36; khác vị trí nên 1 (A3)"
+   },
+   {
+    "stt": 175,
+    "jd_id": "JD-16",
+    "cv_id": "CV-028",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Khác ngành (quản lý kinh doanh online so với lập trình iOS); kỹ năng cần có 0/8; không có điểm chung chuyên môn (B6)"
+   },
+   {
+    "stt": 176,
+    "jd_id": "JD-16",
+    "cv_id": "CV-073",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Khác ngành (Lễ tân khách sạn so với lập trình iOS); kỹ năng cần có 0/8; không có điểm chung chuyên môn (B6)"
+   },
+   {
+    "stt": 177,
+    "jd_id": "JD-16",
+    "cv_id": "CV-015",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng theo headline (iOS Developer, D7); kỹ năng cần có 3/8 (Swift, MVVM, Design Pattern; thiếu RxSwift, CocoaPods, REST API, JSON, Clean Architecture; không thiếu cốt lõi); 0 tháng trong mục Kinh nghiệm (chỉ có dự án/thực tập, B3) so với 36; mới tốt nghiệp so với Trưởng nhóm; dưới nửa kỹ năng và thiếu hẳn kinh nghiệm nên C1 = 1"
+   },
+   {
+    "stt": 178,
+    "jd_id": "JD-16",
+    "cv_id": "CV-014",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (Fullstack web JavaScript/Node.js/ReactJS/Java), cùng nhóm CNTT; kỹ năng cần có 0/8 (thiếu cốt lõi Swift); 51 tháng nhưng không phải iOS; chỉ dùng lại được nghiệp vụ ngân hàng (nên có) và sequence diagram; khác vị trí nên 1"
+   },
+   {
+    "stt": 179,
+    "jd_id": "JD-16",
+    "cv_id": "CV-019",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (Backend), cùng nhóm CNTT; kỹ năng cần có 2/8 (Design Pattern, REST API; thiếu cốt lõi Swift); 9 tháng so với 36; khác vị trí nên 1"
+   },
+   {
+    "stt": 180,
+    "jd_id": "JD-16",
+    "cv_id": "CV-099",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác theo headline (Backend, Java/JavaScript framework/IT Support; D7), cùng nhóm CNTT; kỹ năng cần có 0/8 (thiếu cốt lõi Swift); 0 tháng so với 36; khác vị trí nên 1 (A3 không xuống 0)"
+   },
+   {
+    "stt": 181,
+    "jd_id": "JD-30",
+    "cv_id": "CV-039",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Kế toán nội bộ (sinh viên, mục Kinh nghiệm trống) so với Trưởng phòng Hành chính Nhân sự; kỹ năng cần có 0/7; 0 tháng so với 60 tháng; khác nhóm ngành (B6) nên 0."
+   },
+   {
+    "stt": 182,
+    "jd_id": "JD-30",
+    "cv_id": "CV-057",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: mục Kinh nghiệm trống nên lấy headline 'Nhân viên quản lý tài khoản' (D7) thuộc nhóm Kinh doanh – CSKH; chỉ trùng kỹ năng chung Giao tiếp, Tin học văn phòng (2/7); 0 tháng so với 60 tháng; Cao đẳng dưới Đại học; khác nhóm ngành (B6) nên 0."
+   },
+   {
+    "stt": 183,
+    "jd_id": "JD-30",
+    "cv_id": "CV-007",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Backend Developer (CNTT) so với Hành chính Nhân sự; kỹ năng cần có 0/7; 10 tháng CNTT không liên quan; khác nhóm ngành (B6) nên 0."
+   },
+   {
+    "stt": 184,
+    "jd_id": "JD-30",
+    "cv_id": "CV-035",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Telesales Manager thuộc nhóm Kinh doanh (C3, B6) so với Hành chính Nhân sự; có vài kỹ năng mềm chung (Lãnh đạo, Lập kế hoạch, Giao tiếp, Excel) nhưng không có nghiệp vụ hành chính nhân sự; 46 tháng đều là telesales/CSKH; khác nhóm ngành nên 0 và dừng."
+   },
+   {
+    "stt": 185,
+    "jd_id": "JD-30",
+    "cv_id": "CV-008",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Fullstack Developer (CNTT) so với Hành chính Nhân sự; kỹ năng cần có 0/7; 33 tháng lập trình không liên quan; khác nhóm ngành (B6) nên 0."
+   },
+   {
+    "stt": 186,
+    "jd_id": "JD-30",
+    "cv_id": "CV-070",
+    "label": 0,
+    "confidence": "không chắc",
+    "reason": "Vị trí khác: Chuyên viên Pháp chế, không nằm trong nhóm Hành chính – Nhân sự – Lễ tân – Thư ký (B6); có vài điểm chạm nhân sự (soạn hợp đồng lao động, đào tạo pháp lý nội bộ) và kỹ năng chung Tin học văn phòng, Giao tiếp (2/7), thiếu Lãnh đạo, Lập kế hoạch, Quản lý dự án, Phân tích dữ liệu, Xử lý tình huống; 66 tháng nhưng là pháp chế; cấp Nhân viên so với Trưởng phòng; phân vân 0/1 nên chọn 0."
+   },
+   {
+    "stt": 187,
+    "jd_id": "JD-30",
+    "cv_id": "CV-031",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Sales Online/Tư vấn bán hàng (nhóm Kinh doanh) so với Hành chính Nhân sự; chỉ có Giao tiếp (1/7); 17 tháng bán hàng; học vấn THPT dưới Đại học; khác nhóm ngành (B6) nên 0."
+   },
+   {
+    "stt": 188,
+    "jd_id": "JD-30",
+    "cv_id": "CV-083",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Lái xe/Giao hàng so với Hành chính Nhân sự; kỹ năng cần có 0/7; 37 tháng lái xe không liên quan; Trung cấp dưới Đại học; khác ngành nên 0."
+   },
+   {
+    "stt": 189,
+    "jd_id": "JD-30",
+    "cv_id": "CV-053",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng mảng Nhân sự nhưng chỉ chuyên tuyển dụng (Quản lý nhân sự, Tuyển dụng – quản lý tài khoản); kỹ năng cần có 3/7 (có Lãnh đạo, Giao tiếp, Xử lý tình huống; thiếu Microsoft Office, Phân tích dữ liệu, Lập kế hoạch, Quản lý dự án) nên nền 2 theo A2; 54 tháng so với 60 tháng (thiếu một bậc); cấp hiện tại nhân viên so với Trưởng phòng; học vấn Cao đẳng dưới Đại học trừ 1 (B4) nên còn 1."
+   },
+   {
+    "stt": 190,
+    "jd_id": "JD-30",
+    "cv_id": "CV-055",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (Hành chính văn phòng); kỹ năng cần có 5/7 (thiếu Lãnh đạo, Xử lý tình huống, không cốt lõi); 19 tháng so với 60 tháng, thiếu hơn một nửa nên lệch rõ (mức 2); cộng dồn thiếu 2 kỹ năng, cấp Nhân viên so với Trưởng phòng (chưa quản lý đội ngũ) và bằng ghi Cao đẳng dưới Đại học (B4) nên xuống 1 (cộng dồn kiểu C2)."
+   },
+   {
+    "stt": 191,
+    "jd_id": "JD-62",
+    "cv_id": "CV-091",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành (thiết kế nội thất, không thuộc CNTT); kỹ năng cần có 0/4, thiếu cốt lõi Embedded C; 9 tháng kinh nghiệm nhưng không liên quan; khác ngành nên 0 và dừng (B6)."
+   },
+   {
+    "stt": 192,
+    "jd_id": "JD-62",
+    "cv_id": "CV-082",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành (Graphic Designer, nhóm Thiết kế–Media); kỹ năng cần có 0/4; hơn 9 năm kinh nghiệm không liên quan; tiếng Anh Basic; khác ngành nên 0 (B6)."
+   },
+   {
+    "stt": 193,
+    "jd_id": "JD-62",
+    "cv_id": "CV-095",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (Cloud Engineer) nhưng cùng nhóm CNTT; kỹ năng cần có 1/4 (có System Architecture; thiếu System Administration, Design System và cốt lõi Embedded C); khoảng 41 tháng, đủ so với yêu cầu dưới 1 năm; tiếng Anh Conversational thấp hơn mức Thành thạo bắt buộc (trừ 1) nhưng không xuống 0 (A3, B6)."
+   },
+   {
+    "stt": 194,
+    "jd_id": "JD-62",
+    "cv_id": "CV-016",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (iOS Developer), cùng nhóm CNTT; kỹ năng cần có 0/4, thiếu cốt lõi Embedded C (Clean Architecture/Design Pattern không tương đương System Architecture); khoảng 87 tháng, đủ; tiếng Anh Basic dưới mức bắt buộc, không hạ xuống 0 (A3, B6)."
+   },
+   {
+    "stt": 195,
+    "jd_id": "JD-62",
+    "cv_id": "CV-022",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (Automation Tester), cùng nhóm CNTT; kỹ năng cần có 0/4, thiếu cốt lõi Embedded C; khoảng 115 tháng, đủ; tiếng Anh Conversational dưới mức bắt buộc, không hạ xuống 0 (A3, B6)."
+   },
+   {
+    "stt": 196,
+    "jd_id": "JD-62",
+    "cv_id": "CV-077",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (DevOps Engineer), cùng nhóm CNTT; kỹ năng cần có nhiều nhất 1/4 (quản trị hạ tầng gần System Administration nhưng CV không ghi rõ; thiếu System Architecture, Design System, cốt lõi Embedded C); khoảng 49 tháng, đủ; tiếng Anh Working proficiency (IELTS 5.5) dưới mức Thành thạo, không hạ xuống 0 (A3, B6)."
+   },
+   {
+    "stt": 197,
+    "jd_id": "JD-62",
+    "cv_id": "CV-007",
+    "label": 3,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng theo trường Vị trí chuyên môn của tin (Backend Developer) và chức danh trong Kinh nghiệm (D7); kỹ năng cần có 4/4, có cốt lõi Embedded C và System Architecture, đều có minh chứng; 10 tháng, khớp yêu cầu dưới 1 năm; cấp bậc Nhân viên khớp; tiếng Anh bắt buộc mức Thành thạo nhưng CV chỉ ghi tiếng Nhật nên trừ 1 (A3): 4 xuống 3. Lưu ý: CV làm CMS, không có nền automotive."
+   },
+   {
+    "stt": 198,
+    "jd_id": "JD-62",
+    "cv_id": "CV-026",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (Manual Tester), cùng nhóm CNTT; kỹ năng cần có 0/4, thiếu cốt lõi Embedded C; khoảng 30 tháng, đủ; tiếng Anh Thành thạo đạt; cùng nhóm ngành khác vị trí nên 1 (B6)."
+   },
+   {
+    "stt": 199,
+    "jd_id": "JD-62",
+    "cv_id": "CV-014",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí gần nếu theo trường Backend của tin (Fullstack, D1) nhưng khác hẳn mảng nhúng; kỹ năng cần có 0/4 (kiến trúc ứng dụng chỉ nêu chung, không ghi System Architecture; thiếu cốt lõi Embedded C), chỉ Sequence diagram dùng lại được; khoảng 51 tháng, đủ; tiếng Anh Working proficiency (IELTS 6.0) dưới mức Thành thạo, không hạ xuống 0 (A3, D6)."
+   },
+   {
+    "stt": 200,
+    "jd_id": "JD-62",
+    "cv_id": "CV-023",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (Automation Tester), cùng nhóm CNTT; kỹ năng cần có 0/4, thiếu cốt lõi Embedded C; khoảng 46 tháng, đủ; tiếng Anh Working proficiency (IELTS 6.0) dưới mức Thành thạo, không hạ xuống 0 (A3, B6)."
+   },
+   {
+    "stt": 201,
+    "jd_id": "JD-07",
+    "cv_id": "CV-043",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành (Chuyên viên Thuế, nhóm Kế toán–Thuế) so với Nhân viên kho; kỹ năng cần có 0/1 (không có Quản lý kho); dừng ở bước 3."
+   },
+   {
+    "stt": 202,
+    "jd_id": "JD-07",
+    "cv_id": "CV-090",
+    "label": 1,
+    "confidence": "không chắc",
+    "reason": "Vị trí khác (Production Worker/Operator – công nhân sản xuất, cùng nhóm lao động sản xuất–kho vận nhưng khác vị trí); kỹ năng cần có 1/1 (Quản lý kho có minh chứng: quản lý tồn kho, khu lưu trữ; thêm Sắp xếp hàng hóa); 23 tháng đều là sản xuất, không phải kho; THPT đạt; phân vân 1/2 (vị trí gần hay chỉ cùng nhóm) nên chọn mức thấp."
+   },
+   {
+    "stt": 203,
+    "jd_id": "JD-07",
+    "cv_id": "CV-097",
+    "label": 4,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (Warehouse Coordinator/Manager/Assistant = nhân viên kho); kỹ năng cần có 1/1 (Quản lý kho suy ra rõ từ việc đã làm và chứng chỉ Certified Warehouse Manager, A4); 18 tháng so với 12 tháng: đủ; chức danh hiện tại Assistant khớp cấp Nhân viên, Manager không ghi rõ cấp = Trưởng nhóm (D3) chỉ hơn 1 bậc nên không trừ (B5); Trung cấp ≥ THPT."
+   },
+   {
+    "stt": 204,
+    "jd_id": "JD-07",
+    "cv_id": "CV-018",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành (React Native/Flutter Developer, CNTT phần mềm); kỹ năng cần có 0/1; dừng ở bước 3."
+   },
+   {
+    "stt": 205,
+    "jd_id": "JD-07",
+    "cv_id": "CV-023",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành (Automation Tester, CNTT phần mềm); kỹ năng cần có 0/1; dừng ở bước 3."
+   },
+   {
+    "stt": 206,
+    "jd_id": "JD-07",
+    "cv_id": "CV-083",
+    "label": 2,
+    "confidence": "chắc",
+    "reason": "Vị trí gần (Lái xe/Giao hàng – cùng mảng kho vận, có làm sắp xếp, lưu trữ, kiểm kê hàng); kỹ năng cần có 1/1 (Quản lý kho có minh chứng và chứng chỉ quản lý kho); 37 tháng nhưng là giao nhận, không phải nhân viên kho; Trung cấp ≥ THPT; vị trí gần tối đa 2 (D6)."
+   },
+   {
+    "stt": 207,
+    "jd_id": "JD-07",
+    "cv_id": "CV-048",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành (Content Creator, nhóm Marketing–Content); kỹ năng cần có 0/1; dừng ở bước 3."
+   },
+   {
+    "stt": 208,
+    "jd_id": "JD-07",
+    "cv_id": "CV-098",
+    "label": 4,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (Nhân viên Kho); kỹ năng cần có 1/1 (Quản lý kho, có minh chứng ở cả ba nơi làm, có giám sát đóng gói); khoảng 38 tháng so với 12 tháng: đủ; cấp Nhân viên khớp; Trung cấp ≥ THPT."
+   },
+   {
+    "stt": 209,
+    "jd_id": "JD-07",
+    "cv_id": "CV-006",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành (Backend Developer, CNTT phần mềm; việc thiết kế hệ thống quản lý tồn kho là lập trình, không phải làm kho); kỹ năng cần có 0/1."
+   },
+   {
+    "stt": 210,
+    "jd_id": "JD-07",
+    "cv_id": "CV-072",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (Tạp vụ – cùng nhóm lao động phổ thông nhưng khác vị trí, D7 theo chức danh); kỹ năng cần có 1/1 (Quản lý kho có minh chứng: báo cáo tồn kho, bảng kê hàng bằng Excel) nên dùng lại được; 18 tháng đều là tạp vụ; không phải vị trí gần nên dừng ở 1."
+   },
+   {
+    "stt": 211,
+    "jd_id": "JD-10",
+    "cv_id": "CV-079",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Fullstack Developer 11 tháng (CNTT phần mềm, B6); kỹ năng cần có đáp ứng 0/9; không có kế toán, thuế → 0"
+   },
+   {
+    "stt": 212,
+    "jd_id": "JD-10",
+    "cv_id": "CV-093",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: IT Helpdesk mới tốt nghiệp, 0 tháng kinh nghiệm (CNTT, B6); kỹ năng cần có đáp ứng 0/9 → 0"
+   },
+   {
+    "stt": 213,
+    "jd_id": "JD-10",
+    "cv_id": "CV-043",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí gần (Chuyên viên Thuế 21 tháng, cùng mảng kế toán – thuế); kỹ năng cần có đáp ứng 2/9 (Quyết toán thuế, Luật thuế; thiếu Hạch toán kế toán – cốt lõi, Phần mềm kế toán vì chỉ có HTKK, Microsoft Office vì chỉ có Excel, Làm việc độc lập, Làm việc nhóm, Xử lý tình huống, Tư duy logic); kinh nghiệm 21/36 tháng; cấp Nhân viên so với Trưởng/Phó phòng; học vấn Cao đẳng thấp hơn Đại học; không có chứng chỉ Kế toán trưởng → 1 (A3 không xuống 0)"
+   },
+   {
+    "stt": 214,
+    "jd_id": "JD-10",
+    "cv_id": "CV-069",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác nhưng cùng nhóm ngành (headline Kiểm toán nội bộ, mới tốt nghiệp Tài chính – Ngân hàng, mục Kinh nghiệm trống – D7); kỹ năng cần có đáp ứng 0/9 (chỉ có Kế toán chung, Quản lý/Đối chiếu công nợ; thiếu cốt lõi Hạch toán, Quyết toán thuế, Luật thuế); kinh nghiệm 0/36 tháng; cấp bậc lệch rõ; cùng nhóm Kế toán – Kiểm toán nên 1 (A3, B6)"
+   },
+   {
+    "stt": 215,
+    "jd_id": "JD-10",
+    "cv_id": "CV-042",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Đúng nghề kế toán nhưng vị trí Kế toán công nợ 14 tháng; kỹ năng cần có đáp ứng 1/9 (Phần mềm kế toán – VAS; thiếu cốt lõi Hạch toán kế toán ghi rõ, Quyết toán thuế, Luật thuế, cùng Microsoft Office và các kỹ năng mềm); kinh nghiệm 14/36 tháng, thiếu hơn nửa; cấp Nhân viên so với Trưởng/Phó phòng; học vấn Đại học đạt; không có chứng chỉ Kế toán trưởng; áp dụng C1 → 1"
+   },
+   {
+    "stt": 216,
+    "jd_id": "JD-10",
+    "cv_id": "CV-055",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Hành chính văn phòng 20 tháng (nhóm Hành chính – Nhân sự, B6); kỹ năng cần có đáp ứng 2/9 chỉ là công cụ chung/kỹ năng mềm (Microsoft Office, Tư duy logic), thiếu toàn bộ kỹ năng kế toán – thuế cốt lõi; học vấn Cao đẳng thấp hơn Đại học → 0"
+   },
+   {
+    "stt": 217,
+    "jd_id": "JD-10",
+    "cv_id": "CV-038",
+    "label": 2,
+    "confidence": "không chắc",
+    "reason": "Vị trí đúng nghề kế toán tổng hợp (50 tháng: Manager phòng Tài chính 5 tháng, Accountant 10 tháng, hiện Accounting Assistant 35 tháng); kỹ năng cần có đáp ứng 9/9 (Làm việc nhóm suy từ dẫn nhóm 12 người – A4), không thiếu cốt lõi; tổng số tháng 50/36 đủ nhưng kinh nghiệm ở vị trí tương đương chỉ 5 tháng và chức danh hiện tại là trợ lý kế toán, lệch rõ cấp bậc so với Trưởng/Phó phòng; không có chứng chỉ Kế toán trưởng bắt buộc; đủ kỹ năng nhưng lệch rõ cấp bậc → phân vân 2/3, chọn 2"
+   },
+   {
+    "stt": 218,
+    "jd_id": "JD-10",
+    "cv_id": "CV-063",
+    "label": 0,
+    "confidence": "không chắc",
+    "reason": "Vị trí khác: Kiểm toán nội bộ IT (IT Audit, IT Risk, Information Security), mới tốt nghiệp, 0 tháng kinh nghiệm; kỹ năng cần có đáp ứng 0/9, không có kế toán, thuế; nội dung thuộc an toàn thông tin/CNTT hơn là kiểm toán tài chính nên coi là khác nhóm ngành (B6); phân vân 0/1 vì chức danh có chữ Kiểm toán, chọn 0"
+   },
+   {
+    "stt": 219,
+    "jd_id": "JD-10",
+    "cv_id": "CV-057",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: headline Nhân viên quản lý tài khoản (giao tiếp, thuyết phục khách hàng – nhóm Kinh doanh – CSKH, B6), mới tốt nghiệp, 0 tháng kinh nghiệm; kỹ năng cần có đáp ứng 2/9 chỉ là Làm việc nhóm và Microsoft Office (Tin học văn phòng), không có kỹ năng kế toán – thuế nào; học vấn Cao đẳng thấp hơn Đại học → 0"
+   },
+   {
+    "stt": 220,
+    "jd_id": "JD-10",
+    "cv_id": "CV-039",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Đúng nghề kế toán (headline Kế toán nội bộ, sinh viên/mới tốt nghiệp, mục Kinh nghiệm trống – D7); kỹ năng cần có đáp ứng 2/9 (Làm việc độc lập, Phần mềm kế toán – Misa; thiếu cốt lõi Hạch toán kế toán, Quyết toán thuế, Luật thuế); kinh nghiệm 0/36 tháng; cấp bậc lệch rõ; không có chứng chỉ Kế toán trưởng; áp dụng C1 → 1"
+   },
+   {
+    "stt": 221,
+    "jd_id": "JD-18",
+    "cv_id": "CV-001",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (Fullstack web Node.js/ReactJS so với mobile Flutter/React Native), cùng nhóm CNTT; kỹ năng cần có 0/1 sau khi gộp Flutter hoặc React Native (C4), thiếu cốt lõi, ReactJS không tính tương đương React Native; 8 tháng, tin yêu cầu dưới 1 năm; học vấn Đại học đạt; khác vị trí nên 1"
+   },
+   {
+    "stt": 222,
+    "jd_id": "JD-18",
+    "cv_id": "CV-018",
+    "label": 4,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (React Native/Flutter/Mobile Developer); kỹ năng cần có 1/1 sau khi gộp (C4), có cả React Native lẫn Flutter với minh chứng; 21 tháng so với yêu cầu dưới 1 năm, đủ; Đại học đạt; cấp Nhân viên khớp"
+   },
+   {
+    "stt": 223,
+    "jd_id": "JD-18",
+    "cv_id": "CV-010",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (Fullstack web/AI Python, ReactJS, Java), cùng nhóm CNTT; kỹ năng cần có 0/1 (thiếu cốt lõi Flutter/React Native); 93 tháng nhưng không phải mobile; học vấn ghi mức Cao đẳng thấp hơn Đại học; khác vị trí nên 1, A3 không xuống 0"
+   },
+   {
+    "stt": 224,
+    "jd_id": "JD-18",
+    "cv_id": "CV-008",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (Fullstack web; chỉ làm API backend phục vụ ứng dụng di động), cùng nhóm CNTT; kỹ năng cần có 0/1 (thiếu cốt lõi Flutter/React Native); 33 tháng không phải mobile; khác vị trí nên 1"
+   },
+   {
+    "stt": 225,
+    "jd_id": "JD-18",
+    "cv_id": "CV-086",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (Cloud Engineer/presales, kiến trúc đám mây), xếp cùng nhóm CNTT; kỹ năng cần có 0/1 (thiếu cốt lõi Flutter/React Native); 30 tháng không phải lập trình mobile; khác vị trí nên 1 (A3)"
+   },
+   {
+    "stt": 226,
+    "jd_id": "JD-18",
+    "cv_id": "CV-011",
+    "label": 2,
+    "confidence": "chắc",
+    "reason": "Vị trí gần (Android Developer native Kotlin/Jetpack Compose, cùng mảng mobile); kỹ năng cần có 0/1 (thiếu cốt lõi Flutter/React Native, Kotlin không tính tương đương) nhưng có nền tảng mobile, Android Studio, REST API; 33 tháng so với yêu cầu dưới 1 năm, đủ; Đại học đạt; vị trí gần tối đa 2 (D6), đối chiếu ví dụ neo Java cho tin Python"
+   },
+   {
+    "stt": 227,
+    "jd_id": "JD-18",
+    "cv_id": "CV-062",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Khác ngành (Nhân viên CSKH so với lập trình mobile); kỹ năng cần có 0/1; không có điểm chung chuyên môn (B6)"
+   },
+   {
+    "stt": 228,
+    "jd_id": "JD-18",
+    "cv_id": "CV-019",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (Backend, Clean code/STL/Linux), cùng nhóm CNTT; kỹ năng cần có 0/1 (thiếu cốt lõi Flutter/React Native; mobile chỉ nằm ở sở thích); 9 tháng; Đại học đạt; khác vị trí nên 1"
+   },
+   {
+    "stt": 229,
+    "jd_id": "JD-18",
+    "cv_id": "CV-017",
+    "label": 4,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (Mobile Developer dùng Flutter và React Native); kỹ năng cần có 1/1 sau khi gộp (C4), có minh chứng ở cả hai công việc; 51 tháng so với yêu cầu dưới 1 năm, đủ; học vấn đạt; chức danh cấp Nhân viên khớp, không tính thừa trình độ (B5)"
+   },
+   {
+    "stt": 230,
+    "jd_id": "JD-18",
+    "cv_id": "CV-024",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác theo chức danh (Fullstack Developer, D7) dù có làm ứng dụng di động bằng ReactJS; kỹ năng cần có 0/1 (thiếu cốt lõi Flutter/React Native, ReactJS không tính tương đương, không suy từ gợi ý mơ hồ A4); 17 tháng; học vấn ghi mức Cao đẳng thấp hơn Đại học; kể cả coi là vị trí gần thì trừ học vấn vẫn ra 1"
+   },
+   {
+    "stt": 231,
+    "jd_id": "JD-27",
+    "cv_id": "CV-060",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Customer Service chứng từ xuất khẩu (nhóm CSKH) so với Cloud DevOps Engineer; kỹ năng cần có 0/7; 8 tháng không liên quan; tiếng Anh Basic dưới mức Làm việc; khác nhóm ngành (B6) nên 0."
+   },
+   {
+    "stt": 232,
+    "jd_id": "JD-27",
+    "cv_id": "CV-023",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác nhưng cùng nhóm CNTT phần mềm: Automation Tester so với DevOps; sau khi gộp thẻ thay thế (C4) chỉ đáp ứng 1/7 (CI/CD với Jenkins), thiếu Linux, Cloud, Docker, Kubernetes, Terraform, Ansible; 46 tháng nhưng là kiểm thử; tiếng Anh đạt (Working, IELTS 6.0); cùng nhóm ngành khác vị trí nên 1."
+   },
+   {
+    "stt": 233,
+    "jd_id": "JD-27",
+    "cv_id": "CV-076",
+    "label": 2,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (DevOps Engineer, 103 tháng so với 24 tháng yêu cầu); kỹ năng cần có 0/7 sau khi gộp thẻ (C4): CV chỉ ghi C#, jQuery, JavaScript, Jira và 'quy trình DevOps' chung chung, không nêu Linux, Cloud, Docker, Kubernetes, công cụ CI/CD, Terraform, Ansible (không suy từ gợi ý mơ hồ, A4); tiếng Anh Thành thạo đạt; cấp bậc và học vấn khớp; đúng vị trí nhưng dưới nửa kỹ năng nên nền 2 (A2)."
+   },
+   {
+    "stt": 234,
+    "jd_id": "JD-27",
+    "cv_id": "CV-074",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (DevOps Engineer, 45 tháng so với 24 tháng); kỹ năng cần có 3/7 sau khi gộp thẻ (C4): có Docker, Kubernetes (CKA), Ansible; thiếu Cloud AWS/Azure/GCP (cốt lõi theo tiêu đề), công cụ CI/CD, Terraform, Linux không ghi; dưới nửa kỹ năng nên nền 2 (A2); tiếng Anh bắt buộc mức Làm việc nhưng CV không ghi ngoại ngữ nên trừ 1 (A3) còn 1."
+   },
+   {
+    "stt": 235,
+    "jd_id": "JD-27",
+    "cv_id": "CV-095",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng/gần (Cloud Engineer thiên về kiến trúc giải pháp và presales, 41 tháng so với 24 tháng); kỹ năng cần có 3/7 sau khi gộp thẻ (C4): có AWS (2 chứng chỉ), CI/CD Jenkins và Ansible chỉ trong dự án; thiếu Linux, Docker, Kubernetes, Terraform; dưới nửa kỹ năng nên nền 2 (A2, D6); tiếng Anh ghi Conversational thấp hơn mức Làm việc bắt buộc nên trừ 1 (A3) còn 1."
+   },
+   {
+    "stt": 236,
+    "jd_id": "JD-27",
+    "cv_id": "CV-017",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác nhưng cùng nhóm CNTT phần mềm: Mobile/Flutter Developer so với DevOps; kỹ năng cần có 0/7 (chỉ có Git, Firebase); 51 tháng lập trình di động; tiếng Anh Conversational dưới mức yêu cầu nhưng không đưa CV cùng nhóm ngành xuống 0 (A3) nên 1."
+   },
+   {
+    "stt": 237,
+    "jd_id": "JD-27",
+    "cv_id": "CV-022",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác nhưng cùng nhóm CNTT phần mềm: Automation Tester (hơn 9 năm) so với DevOps; kỹ năng cần có 0/7 (Selenium, kiểm thử tự động không thuộc yêu cầu); tiếng Anh Conversational dưới mức yêu cầu nhưng không xuống 0 vì cùng nhóm ngành (A3) nên 1."
+   },
+   {
+    "stt": 238,
+    "jd_id": "JD-27",
+    "cv_id": "CV-083",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Lái xe/Giao hàng so với Cloud DevOps Engineer; kỹ năng cần có 0/7; 37 tháng không liên quan; Trung cấp, không ghi ngoại ngữ; khác ngành nên 0."
+   },
+   {
+    "stt": 239,
+    "jd_id": "JD-27",
+    "cv_id": "CV-066",
+    "label": 3,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (DevOps Engineer); kỹ năng cần có 7/7 sau khi gộp thẻ (13/13 thẻ gốc, có minh chứng trong kinh nghiệm, không thiếu cốt lõi); 19 tháng so với 24 tháng, thiếu 5 tháng (dưới một nửa) nên thiếu một bậc kinh nghiệm; tiếng Anh Làm việc đạt; cấp bậc và học vấn (Cử nhân) khớp; mức 3."
+   },
+   {
+    "stt": 240,
+    "jd_id": "JD-27",
+    "cv_id": "CV-077",
+    "label": 2,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (DevOps Engineer, 49 tháng so với 24 tháng); kỹ năng cần có 3/7 sau khi gộp thẻ (C4): có CI/CD (không nêu công cụ, tính theo 'hoặc tương đương' B2), Cloud suy từ chứng chỉ AWS và Google Cloud (A4), Linux suy từ Bash làm nhiều năm (A4); thiếu Docker, Kubernetes, Terraform, Ansible/Chef/Puppet; tiếng Anh Working đạt; đúng vị trí nhưng dưới nửa kỹ năng nên nền 2 (A2)."
+   },
+   {
+    "stt": 241,
+    "jd_id": "JD-39",
+    "cv_id": "CV-090",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành (công nhân sản xuất); kỹ năng cần có 0/2 theo đúng nghĩa (Xử lý sự cố là sự cố máy móc sản xuất, không có Kiến thức IT); học vấn THPT dưới Đại học; tiếng Anh Working proficiency dưới mức Thành thạo; khác ngành nên 0 (B6)."
+   },
+   {
+    "stt": 242,
+    "jd_id": "JD-39",
+    "cv_id": "CV-100",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (Data Analyst), xếp cùng nhóm CNTT vì làm Python/SQL/Power BI; kỹ năng cần có 0/2 rõ ràng (không có Troubleshooting; Kiến thức IT chỉ suy được một phần); khoảng 101 tháng, tin không yêu cầu kinh nghiệm; tiếng Anh Cơ bản dưới mức Thành thạo bắt buộc, không hạ xuống 0 (A3, B6)."
+   },
+   {
+    "stt": 243,
+    "jd_id": "JD-39",
+    "cv_id": "CV-026",
+    "label": 1,
+    "confidence": "không chắc",
+    "reason": "Vị trí khác (Manual Tester), cùng nhóm CNTT; kỹ năng cần có 1/2 (Kiến thức IT suy từ bằng CNTT và nghề kiểm thử theo A4; không thể hiện Troubleshooting); khoảng 30 tháng, tin không yêu cầu; Đại học và tiếng Anh Thành thạo đạt; phân vân giữa 1 (khác vị trí, B6) và 2 (tin mở cho người nền IT) nên chọn mức thấp."
+   },
+   {
+    "stt": 244,
+    "jd_id": "JD-39",
+    "cv_id": "CV-059",
+    "label": 0,
+    "confidence": "không chắc",
+    "reason": "Vị trí khác nhóm ngành (CSKH thuộc nhóm Kinh doanh–CSKH, tin thuộc CNTT); kỹ năng cần có 0/2 trong Kinh nghiệm (chỉ có hỗ trợ kỹ thuật tình nguyện ở mục Hoạt động, không có nền IT); khoảng 34 tháng CSKH; bằng Marketing; tiếng Anh Conversational dưới mức Thành thạo bắt buộc; phân vân 0/1 vì CSKH có điểm chung với hỗ trợ khách hàng, chọn mức thấp theo B6."
+   },
+   {
+    "stt": 245,
+    "jd_id": "JD-39",
+    "cv_id": "CV-022",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (Automation Tester), cùng nhóm CNTT; kỹ năng cần có 1/2 (Kiến thức IT suy từ bằng CNTT và nghề kiểm thử; không có Troubleshooting); khoảng 115 tháng, tin không yêu cầu; tiếng Anh Conversational dưới mức Thành thạo bắt buộc, không hạ xuống 0 (A3, B6)."
+   },
+   {
+    "stt": 246,
+    "jd_id": "JD-39",
+    "cv_id": "CV-041",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành (kế toán công nợ); kỹ năng cần có 0/2; khoảng 59 tháng kế toán không liên quan; tiếng Anh Working proficiency (TOEIC 550) dưới mức bắt buộc; khác ngành nên 0 (B6)."
+   },
+   {
+    "stt": 247,
+    "jd_id": "JD-39",
+    "cv_id": "CV-081",
+    "label": 3,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (headline IT Helpdesk, mục Kinh nghiệm trống nên theo D7); kỹ năng cần có 2/2 (Khắc phục sự cố máy tính = Troubleshooting; Windows/macOS/phần cứng và bằng CNTT = Kiến thức IT theo A4), không thiếu cốt lõi; 0 tháng nhưng tin không yêu cầu kinh nghiệm; Đại học đạt; tiếng Anh Giao tiếp (IELTS 5.5) dưới mức Thành thạo bắt buộc nên trừ 1 (A3): 4 xuống 3."
+   },
+   {
+    "stt": 248,
+    "jd_id": "JD-39",
+    "cv_id": "CV-073",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành (lễ tân khách sạn, nhóm Hành chính–Lễ tân); kỹ năng cần có 0/2; 11 tháng lễ tân; Trung cấp Điều dưỡng dưới Đại học; tiếng Anh Giao tiếp dưới mức bắt buộc; khác ngành nên 0 (B6)."
+   },
+   {
+    "stt": 249,
+    "jd_id": "JD-39",
+    "cv_id": "CV-093",
+    "label": 4,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (headline IT Helpdesk, D7); kỹ năng cần có 2/2 (Kiến thức IT, Troubleshooting, có minh chứng ở dự án hỗ trợ người dùng); 0 tháng nhưng tin không yêu cầu kinh nghiệm, mở cho người mới; cấp Nhân viên khớp; Cử nhân đạt Đại học; tiếng Anh Thành thạo đạt."
+   },
+   {
+    "stt": 250,
+    "jd_id": "JD-39",
+    "cv_id": "CV-095",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (Cloud Engineer), cùng nhóm CNTT; kỹ năng cần có 1/2 (Kiến thức IT rõ ràng; Troubleshooting không ghi); khoảng 41 tháng, tin không yêu cầu; Đại học đạt; tiếng Anh Conversational dưới mức Thành thạo bắt buộc (trừ 1), dù coi là vị trí gần (tối đa 2, D6) thì vẫn còn 1 (A3)."
+   },
+   {
+    "stt": 251,
+    "jd_id": "JD-40",
+    "cv_id": "CV-028",
+    "label": 2,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng mảng (quản lý kinh doanh online, có quản lý chuỗi 3 điểm bán và đội 15 người); kỹ năng cần có 4/5 (thiếu Quản lý tài chính P&L, không phải cốt lõi); 98 tháng so với trên 60 tháng: đủ; nhưng cấp bậc lệch rõ: chức danh Chuyên viên (dẫn nhóm = Trưởng nhóm theo D3) thấp hơn Giám đốc ít nhất 2 bậc, quy mô 3 điểm so với chuỗi ≥10 điểm → đủ kỹ năng nhưng lệch rõ cấp bậc = 2."
+   },
+   {
+    "stt": 252,
+    "jd_id": "JD-40",
+    "cv_id": "CV-030",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí cùng nghề Sales Online nhưng cấp Nhân viên so với Giám đốc; kỹ năng cần có 4/5 (thiếu P&L); 17 tháng so với trên 60 tháng: thiếu hơn một nửa = lệch rõ, cấp bậc cũng lệch rõ → mức 2; học vấn Cao đẳng thấp hơn Đại học: trừ 1 → 1."
+   },
+   {
+    "stt": 253,
+    "jd_id": "JD-40",
+    "cv_id": "CV-012",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành (Android Developer, CNTT phần mềm) so với Giám đốc thương mại; kỹ năng cần có 0/5; dừng ở bước 3."
+   },
+   {
+    "stt": 254,
+    "jd_id": "JD-40",
+    "cv_id": "CV-088",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí cùng nghề bán hàng (Tư vấn tuyển sinh/telesales giáo dục, C3) nhưng cấp Nhân viên so với Giám đốc; kỹ năng cần có 0/5 (thiếu cả cốt lõi Quản lý kinh doanh, chỉ dẫn nhóm 5 người); 104 tháng đủ số năm nhưng không phải kinh nghiệm quản lý; A2 mức nền 2, trừ 1 vì học vấn Cao đẳng < Đại học và cấp bậc lệch rõ → 1 (A3 không xuống 0)."
+   },
+   {
+    "stt": 255,
+    "jd_id": "JD-40",
+    "cv_id": "CV-031",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí cùng nghề Sales Online nhưng cấp Nhân viên so với Giám đốc; kỹ năng cần có 0/5 (chỉ có Tư vấn, Giao tiếp; Chịu áp lực không đếm); 17 tháng so với trên 60 tháng: thiếu hơn một nửa → C1 mức nền 1; học vấn THPT < Đại học nhưng cùng nhóm ngành nên không xuống 0 (A3)."
+   },
+   {
+    "stt": 256,
+    "jd_id": "JD-40",
+    "cv_id": "CV-033",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí cùng nhóm Kinh doanh (Business Development Intern, mới tốt nghiệp, mục Kinh nghiệm trống); kỹ năng cần có 0/5; 0 tháng so với trên 60 tháng; cấp Thực tập so với Giám đốc → C1 mức nền 1; học vấn Đại học đạt."
+   },
+   {
+    "stt": 257,
+    "jd_id": "JD-40",
+    "cv_id": "CV-036",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí cùng nghề (Telesales = Sales theo C3) nhưng cấp Nhân viên so với Giám đốc; kỹ năng cần có 0/5 (Lập kế hoạch, Đàm phán, Thuyết phục không thuộc danh sách cần có); 13 tháng so với trên 60 tháng: thiếu hơn một nửa → C1 mức nền 1; học vấn Cao đẳng < Đại học nhưng không xuống 0 (A3)."
+   },
+   {
+    "stt": 258,
+    "jd_id": "JD-40",
+    "cv_id": "CV-100",
+    "label": 0,
+    "confidence": "không chắc",
+    "reason": "Vị trí khác ngành (Data Analyst – nhóm dữ liệu/CNTT, không thuộc nhóm Kinh doanh–Marketing theo B6); kỹ năng cần có 1/5 (chỉ có Phân tích dữ liệu, kèm Power BI; thiếu cốt lõi Quản lý kinh doanh, vận hành chuỗi, P&L, Tư duy chiến lược); hơn 10 năm nhưng không phải quản lý kinh doanh; phân vân 0/1 vì có một kỹ năng dùng lại được nên chọn mức thấp."
+   },
+   {
+    "stt": 259,
+    "jd_id": "JD-40",
+    "cv_id": "CV-035",
+    "label": 1,
+    "confidence": "không chắc",
+    "reason": "Vị trí cùng nghề (Telesales Manager dẫn nhóm 20 người = Trưởng nhóm, C3 + D3) so với Giám đốc: thấp hơn 2 bậc, lệch rõ; kỹ năng cần có 2/5 (Phân tích dữ liệu qua Excel/CRM, Quản lý kinh doanh ở mức quản lý đội bán hàng; thiếu Tư duy chiến lược, Quản lý vận hành chuỗi, P&L); 44 tháng so với trên 60 tháng: thiếu một bậc; A2 mức nền 2 cộng dồn lệch rõ cấp bậc và thiếu kinh nghiệm → 1; phân vân 1/2 nên chọn mức thấp."
+   },
+   {
+    "stt": 260,
+    "jd_id": "JD-40",
+    "cv_id": "CV-064",
+    "label": 1,
+    "confidence": "không chắc",
+    "reason": "Vị trí cùng nghề Sales Online nhưng cấp Nhân viên so với Giám đốc (lệch rõ, không có kinh nghiệm quản lý); kỹ năng cần có 1/5 (Phân tích dữ liệu doanh số, minh chứng yếu; thiếu cốt lõi Quản lý kinh doanh, Tư duy chiến lược, vận hành chuỗi, P&L); 95 tháng đủ số năm; A2 mức nền 2 cộng dồn lệch rõ cấp bậc → 1; phân vân 1/2 nên chọn mức thấp."
+   },
+   {
+    "stt": 261,
+    "jd_id": "JD-56",
+    "cv_id": "CV-035",
+    "label": 4,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng nghề (Telesales 47 tháng, C3; tin ghi Telesales là vị trí chuyên môn khác và nhận kinh nghiệm Sales/Telesales/CSKH); kỹ năng cần có đáp ứng 3/3, bỏ Chịu áp lực (Telesales; Bán hàng thể hiện qua doanh số – A4; Chăm sóc khách hàng qua chức danh Customer Service Specialist và chứng chỉ); kinh nghiệm 47/12 tháng đủ; Telesales Manager = Trưởng nhóm (D3), cao hơn 1 bậc nên không trừ (B5); học vấn đạt → 4 (B1)"
+   },
+   {
+    "stt": 262,
+    "jd_id": "JD-56",
+    "cv_id": "CV-062",
+    "label": 2,
+    "confidence": "chắc",
+    "reason": "Vị trí gần (Nhân viên CSKH 40 tháng, C3); kỹ năng cần có đáp ứng 2/3, bỏ Chịu áp lực (Chăm sóc khách hàng; Bán hàng thể hiện qua thúc đẩy bán hàng trên kênh CSKH tăng doanh thu 20% – A4; thiếu Telesales); kinh nghiệm 40/12 tháng đủ, tin nhận kinh nghiệm CSKH; cấp bậc, học vấn đạt; vị trí gần nên tối đa 2 (D6)"
+   },
+   {
+    "stt": 263,
+    "jd_id": "JD-56",
+    "cv_id": "CV-057",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí gần/cùng nhóm ngành (headline Nhân viên quản lý tài khoản, mục Kinh nghiệm trống – D7); kỹ năng cần có đáp ứng 0/3 (không có Bán hàng, Telesales, Chăm sóc khách hàng; chỉ có Thuyết phục, Giao tiếp); kinh nghiệm 0/12 tháng; học vấn đạt; dưới nửa kỹ năng và thiếu hẳn kinh nghiệm → 1 (C1, D6; A3 không xuống 0)"
+   },
+   {
+    "stt": 264,
+    "jd_id": "JD-56",
+    "cv_id": "CV-045",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác nhưng cùng nhóm ngành (headline Content Marketing Intern, mới tốt nghiệp – nhóm Kinh doanh – Marketing – Content, B6); kỹ năng cần có đáp ứng 0/3 (không có Bán hàng, Telesales, Chăm sóc khách hàng); kinh nghiệm 0/12 tháng; cùng nhóm ngành nên 1, không xuống 0 (A3)"
+   },
+   {
+    "stt": 265,
+    "jd_id": "JD-56",
+    "cv_id": "CV-054",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Lễ tân văn phòng 23 tháng (nhóm Hành chính – Nhân sự – Lễ tân, B6); kỹ năng cần có đáp ứng 0/3 (không có Bán hàng, Telesales; phục vụ khách tại quầy chưa phải Chăm sóc khách hàng theo nghĩa của tin); khác nhóm ngành → 0"
+   },
+   {
+    "stt": 266,
+    "jd_id": "JD-56",
+    "cv_id": "CV-096",
+    "label": 3,
+    "confidence": "không chắc",
+    "reason": "Vị trí đúng (Tư vấn tuyển sinh 20 tháng, đúng ngành giáo dục); kỹ năng cần có đáp ứng 2/3, bỏ Chịu áp lực (Chăm sóc khách hàng; Bán hàng chỉ suy từ việc thu hút 300 học viên mới, tăng doanh thu – A4; thiếu Telesales, không cốt lõi); kinh nghiệm 20/12 tháng đủ; cấp bậc, học vấn đạt; theo B1 có thể lên 4 nhưng tỷ lệ chỉ 67% và Bán hàng là suy ra → phân vân 3/4, chọn 3"
+   },
+   {
+    "stt": 267,
+    "jd_id": "JD-56",
+    "cv_id": "CV-036",
+    "label": 4,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng nghề (Telesales Associate 14 tháng, C3; tin ghi Telesales là vị trí chuyên môn khác); kỹ năng cần có đáp ứng 3/3, bỏ Chịu áp lực (Telesales qua chức danh và 50 cuộc gọi/ngày; Bán hàng qua doanh số 5.000 USD/tháng; Chăm sóc khách hàng qua xử lý phản hồi 300 khách/tháng – A4); kinh nghiệm 14/12 tháng đủ; cấp Nhân viên khớp; học vấn đạt → 4"
+   },
+   {
+    "stt": 268,
+    "jd_id": "JD-56",
+    "cv_id": "CV-067",
+    "label": 4,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (Tư vấn tuyển sinh 22 tháng, ngành giáo dục); kỹ năng cần có đáp ứng 3/3, bỏ Chịu áp lực (Bán hàng, Telesales, Chăm sóc khách hàng đều ghi rõ và có minh chứng); kinh nghiệm 22/12 tháng đủ; cấp Nhân viên khớp; học vấn đạt → 4"
+   },
+   {
+    "stt": 269,
+    "jd_id": "JD-56",
+    "cv_id": "CV-088",
+    "label": 4,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (Tư vấn tuyển sinh 106 tháng, ngành giáo dục); kỹ năng cần có đáp ứng 3/3, bỏ Chịu áp lực (Bán hàng, Telesales ghi rõ; Chăm sóc khách hàng thể hiện qua hỗ trợ học viên, giải đáp thắc mắc – A4); kinh nghiệm 106/12 tháng đủ; chức danh vẫn là Tư vấn tuyển sinh (dẫn nhóm 5 người, tối đa Trưởng nhóm) nên không trừ thừa trình độ (B5); học vấn Cao đẳng đạt → 4"
+   },
+   {
+    "stt": 270,
+    "jd_id": "JD-56",
+    "cv_id": "CV-031",
+    "label": 1,
+    "confidence": "không chắc",
+    "reason": "Vị trí đúng nghề (Sales Online 18 tháng, tin ghi Online Sales là vị trí chuyên môn khác); kỹ năng cần có đáp ứng 1/3, bỏ Chịu áp lực (Bán hàng – cốt lõi; thiếu Telesales, Chăm sóc khách hàng không ghi rõ); kinh nghiệm 18/12 tháng đủ; cấp bậc khớp; dưới nửa kỹ năng → A2 nền 2; học vấn THPT thấp hơn Trung cấp trừ 1 (B4) → phân vân 1/2, chọn 1"
+   },
+   {
+    "stt": 271,
+    "jd_id": "JD-69",
+    "cv_id": "CV-077",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (DevOps Engineer), cùng nhóm CNTT; kỹ năng cần có khoảng 1/5 (có viết script và framework kiểm thử tự động; thiếu cốt lõi Manual Testing, thiếu QA/QC, Jira, Agile); 49 tháng không phải kiểm thử; tiếng Anh Working proficiency thấp hơn Thành thạo; khác vị trí nên 1, A3 không xuống 0"
+   },
+   {
+    "stt": 272,
+    "jd_id": "JD-69",
+    "cv_id": "CV-035",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Khác ngành (Telesales so với kiểm thử phần mềm); kỹ năng cần có 0/5; không ghi tiếng Anh; không có điểm chung chuyên môn (B6)"
+   },
+   {
+    "stt": 273,
+    "jd_id": "JD-69",
+    "cv_id": "CV-021",
+    "label": 2,
+    "confidence": "không chắc",
+    "reason": "Vị trí đúng theo headline (Manual Tester, D7); kỹ năng cần có 4/5 (thiếu Automation Testing, không cốt lõi); tiếng Anh Thành thạo đạt; 0 tháng trong mục Kinh nghiệm (chỉ có dự án, B3); tin mâu thuẫn: trường Kinh nghiệm ghi dưới 1 năm nhưng phần yêu cầu ghi tối thiểu 4 năm; theo 4 năm thì đủ kỹ năng nhưng lệch rõ kinh nghiệm = 2, theo dưới 1 năm thì 4; chọn mức thấp"
+   },
+   {
+    "stt": 274,
+    "jd_id": "JD-69",
+    "cv_id": "CV-023",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng nghề tester nhưng là Automation Tester; kỹ năng cần có 3/5 (Automation Testing, QA/QC, Agile; thiếu Jira và cốt lõi Manual Testing, Automation không thay Manual theo D5) nên tối đa 2; 46 tháng; tiếng Anh Working proficiency (IELTS 6.0) thấp hơn mức Thành thạo bắt buộc nên trừ 1 (A3) còn 1"
+   },
+   {
+    "stt": 275,
+    "jd_id": "JD-69",
+    "cv_id": "CV-022",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng nghề tester nhưng là Automation Tester; kỹ năng cần có 1/5 (Automation Testing; thiếu cốt lõi Manual Testing theo D5, thiếu QA/QC, Jira, Agile) nên nền 2 (A2, thiếu cốt lõi tối đa 2); 115 tháng đủ; tiếng Anh Conversational thấp hơn Thành thạo bắt buộc nên trừ 1 (A3) còn 1"
+   },
+   {
+    "stt": 276,
+    "jd_id": "JD-69",
+    "cv_id": "CV-076",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (DevOps Engineer), cùng nhóm CNTT; kỹ năng cần có khoảng 2–3/5 (Jira, Agile, có làm quy trình QA; thiếu cốt lõi Manual Testing và Automation Testing); 103 tháng không phải kiểm thử; tiếng Anh Thành thạo đạt; khác vị trí nên 1"
+   },
+   {
+    "stt": 277,
+    "jd_id": "JD-69",
+    "cv_id": "CV-016",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (iOS Developer), cùng nhóm CNTT; kỹ năng cần có 0/5 (thiếu cốt lõi Manual Testing); 87 tháng không phải kiểm thử; tiếng Anh Basic thấp hơn Thành thạo; khác vị trí nên 1, A3 không xuống 0"
+   },
+   {
+    "stt": 278,
+    "jd_id": "JD-69",
+    "cv_id": "CV-045",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Khác ngành (Content Marketing so với kiểm thử phần mềm); kỹ năng cần có 0/5; không có điểm chung chuyên môn (B6)"
+   },
+   {
+    "stt": 279,
+    "jd_id": "JD-69",
+    "cv_id": "CV-026",
+    "label": 3,
+    "confidence": "không chắc",
+    "reason": "Vị trí đúng (Manual Tester); kỹ năng cần có 5/5 (Automation Testing chỉ liệt kê, không minh chứng), có ISTQB; tiếng Anh Thành thạo đạt; 30 tháng; tin mâu thuẫn: trường Kinh nghiệm ghi dưới 1 năm nhưng phần yêu cầu ghi tối thiểu 4 năm; theo 4 năm thì thiếu 18/48 tháng, chưa tới một nửa = thiếu một bậc = 3, theo dưới 1 năm thì 4; chọn mức thấp"
+   },
+   {
+    "stt": 280,
+    "jd_id": "JD-69",
+    "cv_id": "CV-025",
+    "label": 1,
+    "confidence": "không chắc",
+    "reason": "Vị trí đúng (Manual Tester); kỹ năng cần có 3–4/5 (Manual Testing, Agile, Automation suy từ viết script kiểm thử, QA/QC không ghi rõ; thiếu Jira; không thiếu cốt lõi); 20 tháng; tin mâu thuẫn dưới 1 năm và tối thiểu 4 năm: theo 4 năm thì thiếu 28/48 tháng, lệch rõ = 2; tiếng Anh Giao tiếp thấp hơn Thành thạo bắt buộc nên trừ 1 (A3) còn 1; theo dưới 1 năm thì 2–3; chọn mức thấp"
+   },
+   {
+    "stt": 281,
+    "jd_id": "JD-71",
+    "cv_id": "CV-063",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác nhưng xếp cùng nhóm Kế toán – Kiểm toán (B6): Kiểm toán nội bộ IT, mục Kinh nghiệm trống nên lấy headline (D7); kỹ năng cần có 0/3 (chỉ có IT Audit, IT Risk, Information Security; thiếu cả Kế toán và công nợ cốt lõi); 0 tháng kinh nghiệm; cùng nhóm ngành khác vị trí, không xuống 0 (A3) nên 1."
+   },
+   {
+    "stt": 282,
+    "jd_id": "JD-71",
+    "cv_id": "CV-039",
+    "label": 1,
+    "confidence": "không chắc",
+    "reason": "Vị trí đúng nghề kế toán (Kế toán nội bộ, theo headline vì mục Kinh nghiệm trống, D7); kỹ năng cần có 1/3 (có Kế toán; thiếu Quản lý công nợ và Đối chiếu công nợ là cốt lõi theo tiêu đề); 0 tháng trong mục Kinh nghiệm (việc kế toán chỉ ghi ở Dự án, B3) trong khi tin yêu cầu có kinh nghiệm công nợ (dưới 1 năm); học vấn đạt; dưới nửa kỹ năng và thiếu hẳn kinh nghiệm nên 1 (C1); phân vân 1/2 do cách hiểu 'Dưới 1 năm'."
+   },
+   {
+    "stt": 283,
+    "jd_id": "JD-71",
+    "cv_id": "CV-004",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Data Analyst (phân tích dữ liệu, BI) so với Kế toán công nợ; kỹ năng cần có 0/3, chỉ có Excel là kỹ năng nên có; 67 tháng phân tích dữ liệu không phải kế toán; khác nhóm ngành (B6) nên 0."
+   },
+   {
+    "stt": 284,
+    "jd_id": "JD-71",
+    "cv_id": "CV-040",
+    "label": 2,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng nghề kế toán nhưng là kế toán tổng hợp/báo cáo tài chính, không phải công nợ; kỹ năng cần có 1/3 (có Kế toán; thiếu Quản lý công nợ và Đối chiếu công nợ là cốt lõi); kinh nghiệm khoảng 107 tháng, thừa so với yêu cầu dưới 1 năm; cấp bậc Nhân viên khớp nên không trừ thừa trình độ (B5); học vấn Cao đẳng đạt; đúng nghề nhưng dưới nửa kỹ năng, thiếu cốt lõi nên 2 (A2)."
+   },
+   {
+    "stt": 285,
+    "jd_id": "JD-71",
+    "cv_id": "CV-044",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác nhưng cùng nhóm Kế toán – Kiểm toán: Kiểm toán viên nội bộ/IT audit (43 tháng) so với Kế toán công nợ; kỹ năng cần có 0/3 (không ghi Kế toán, công nợ; chỉ có Excel là kỹ năng nên có); học vấn đạt; cùng nhóm ngành khác vị trí nên 1."
+   },
+   {
+    "stt": 286,
+    "jd_id": "JD-71",
+    "cv_id": "CV-069",
+    "label": 2,
+    "confidence": "chắc",
+    "reason": "Vị trí gần: mục Kinh nghiệm trống nên lấy headline 'Chuyên viên Kiểm toán nội bộ' (D7), cùng mảng kế toán – kiểm toán; kỹ năng cần có 3/3 (Kế toán, Quản lý công nợ, Đối chiếu công nợ có trong dự án và chứng chỉ, không thiếu cốt lõi); 0 tháng trong mục Kinh nghiệm (việc công nợ chỉ ghi ở Dự án, B3); học vấn Cử nhân đạt; vị trí gần tối đa 2 (D6), đủ kỹ năng nhưng thiếu kinh nghiệm nên 2."
+   },
+   {
+    "stt": 287,
+    "jd_id": "JD-71",
+    "cv_id": "CV-072",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Tạp vụ so với Kế toán công nợ; kỹ năng cần có 0/3, chỉ có Excel là kỹ năng nên có; 18 tháng tạp vụ; học vấn THPT dưới Trung cấp; khác ngành nên 0."
+   },
+   {
+    "stt": 288,
+    "jd_id": "JD-71",
+    "cv_id": "CV-043",
+    "label": 2,
+    "confidence": "chắc",
+    "reason": "Vị trí gần: Chuyên viên Thuế (dịch vụ kế toán thuế), cùng mảng kế toán; kỹ năng cần có 3/3 (Đối chiếu công nợ có minh chứng; Quản lý công nợ chỉ nêu ở tóm tắt, không minh chứng; Kế toán suy từ báo cáo tài chính, hóa đơn, bằng kế toán, A4); 20 tháng, đủ so với yêu cầu dưới 1 năm; học vấn Cao đẳng đạt; vị trí gần nên tối đa 2 (D6)."
+   },
+   {
+    "stt": 289,
+    "jd_id": "JD-71",
+    "cv_id": "CV-013",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành: Android Developer (CNTT) so với Kế toán công nợ; kỹ năng cần có 0/3; 17 tháng lập trình không liên quan; khác nhóm ngành (B6) nên 0."
+   },
+   {
+    "stt": 290,
+    "jd_id": "JD-71",
+    "cv_id": "CV-042",
+    "label": 4,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (Kế toán công nợ); kỹ năng cần có 3/3 (Kế toán, Quản lý công nợ, Đối chiếu công nợ, đều có minh chứng trong kinh nghiệm, không thiếu cốt lõi); 13 tháng đúng mảng công nợ, đủ so với yêu cầu dưới 1 năm; cấp Nhân viên khớp; Cử nhân Kế toán vượt mức Trung cấp; mức 4 (B1)."
+   },
+   {
+    "stt": 291,
+    "jd_id": "JD-73",
+    "cv_id": "CV-038",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (kế toán) nhưng cùng nhóm Kế toán–Kiểm toán; kỹ năng cần có 0/3, thiếu cốt lõi IT Audit (chỉ có xây quy trình kiểm toán nội bộ tài chính dùng lại được); khoảng 49 tháng kế toán, không phải kiểm toán IT; tiếng Anh Conversational dưới mức Thành thạo bắt buộc, không hạ xuống 0 (A3, B6)."
+   },
+   {
+    "stt": 292,
+    "jd_id": "JD-73",
+    "cv_id": "CV-023",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (Automation Tester); xếp cùng nhóm ngành vì tin kiểm toán IT ghi thêm mảng An ninh mạng/IT và đòi bằng CNTT; kỹ năng cần có 0/3, thiếu cốt lõi IT Audit; khoảng 46 tháng kiểm thử, không phải kiểm toán; tiếng Anh Working proficiency dưới mức Thành thạo, không hạ xuống 0 (A3, B6)."
+   },
+   {
+    "stt": 293,
+    "jd_id": "JD-73",
+    "cv_id": "CV-026",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (Manual Tester); xếp cùng nhóm ngành vì tin kiểm toán IT thuộc cả mảng IT; kỹ năng cần có 0/3, thiếu cốt lõi IT Audit; khoảng 30 tháng kiểm thử so với 5 năm kiểm toán IT; cấp Nhân viên so với Trưởng/Phó phòng; tiếng Anh Thành thạo đạt; khác vị trí nên 1 (B6)."
+   },
+   {
+    "stt": 294,
+    "jd_id": "JD-73",
+    "cv_id": "CV-020",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (Manual Tester); xếp cùng nhóm ngành vì tin kiểm toán IT thuộc cả mảng IT; kỹ năng cần có 0/3, thiếu cốt lõi IT Audit (chỉ có báo cáo lỗi bảo mật khi kiểm thử dùng lại được); khoảng 36 tháng kiểm thử; tiếng Anh Giao tiếp dưới mức Thành thạo bắt buộc, không hạ xuống 0 (A3, B6)."
+   },
+   {
+    "stt": 295,
+    "jd_id": "JD-73",
+    "cv_id": "CV-058",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành (CSKH, nhóm Kinh doanh–CSKH); kỹ năng cần có 0/3; 76 tháng CSKH không liên quan; Trung cấp dưới Đại học; tiếng Anh Giao tiếp dưới mức bắt buộc; khác ngành nên 0 (B6)."
+   },
+   {
+    "stt": 296,
+    "jd_id": "JD-73",
+    "cv_id": "CV-056",
+    "label": 0,
+    "confidence": "chắc",
+    "reason": "Vị trí khác ngành (hành chính văn phòng, nhóm Hành chính–Nhân sự); kỹ năng cần có 0/3; khoảng 39 tháng hành chính không liên quan; tiếng Anh Working proficiency (IELTS 5.5) dưới mức bắt buộc; khác ngành nên 0 (B6)."
+   },
+   {
+    "stt": 297,
+    "jd_id": "JD-73",
+    "cv_id": "CV-022",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (Automation Tester); xếp cùng nhóm ngành vì tin kiểm toán IT thuộc cả mảng IT; kỹ năng cần có 0/3, thiếu cốt lõi IT Audit; khoảng 115 tháng nhưng là kiểm thử, không phải kiểm toán; tiếng Anh Conversational dưới mức Thành thạo, không hạ xuống 0 (A3, B6)."
+   },
+   {
+    "stt": 298,
+    "jd_id": "JD-73",
+    "cv_id": "CV-044",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí đúng (Kiểm toán viên làm kiểm toán nội bộ và IT audit); kỹ năng cần có 2/3 (có cốt lõi IT Audit và Information Security; thiếu IT Risk Management, không cốt lõi); khoảng 43 tháng so với 60, thiếu dưới một nửa = thiếu một bậc, cộng dồn thành 2 (C2); cấp Nhân viên so với Trưởng/Phó phòng cũng lệch; tiếng Anh Giao tiếp dưới mức Thành thạo bắt buộc nên trừ 1 (A3): còn 1."
+   },
+   {
+    "stt": 299,
+    "jd_id": "JD-73",
+    "cv_id": "CV-063",
+    "label": 1,
+    "confidence": "không chắc",
+    "reason": "Vị trí đúng (headline Kiểm toán nội bộ IT, mục Kinh nghiệm trống nên theo D7); kỹ năng cần có 3/3, có cốt lõi IT Audit; 0 tháng so với 60 và là người mới so với cấp Trưởng/Phó phòng = lệch rõ, nền 2; tiếng Anh Thành thạo đạt; học vấn ghi 'Chứng chỉ kiểm toán viên IT' ở trung tâm, không rõ có phải Đại học, trừ 1 (B4); phân vân 1/2 nên chọn mức thấp."
+   },
+   {
+    "stt": 300,
+    "jd_id": "JD-73",
+    "cv_id": "CV-037",
+    "label": 1,
+    "confidence": "chắc",
+    "reason": "Vị trí khác (kế toán) nhưng cùng nhóm Kế toán–Kiểm toán; kỹ năng cần có 0/3, thiếu cốt lõi IT Audit (chỉ có kiểm soát nội bộ và thủ tục kiểm toán tài chính dùng lại được); khoảng 19 tháng kế toán; tiếng Anh Conversational dưới mức Thành thạo bắt buộc, không hạ xuống 0 (A3, B6)."
+   }
+  ]
+ },
+ "adjudication": [
+  {
+   "stt": 166,
+   "label": 2,
+   "reason": "Vị trí gần (Sales, C3), tin không yêu cầu kinh nghiệm. Word, Excel qua chứng chỉ MOS; Tư vấn và Thuyết phục thể hiện rõ qua việc đã làm ghi ở mục Dự án (chăm sóc khách hàng, đàm phán hợp đồng, telesales tăng doanh số) nên tính theo A4: 4/7, khoảng một nửa → 2."
+  },
+  {
+   "stt": 197,
+   "label": 2,
+   "reason": "Chức danh trùng trường vị trí của tin và đủ 4/4 thẻ kỹ năng, nhưng việc đã làm là hệ thống quản lý nội dung web, không phải hệ thống nhúng ô tô như tiêu đề và mô tả, nên không đạt \"đúng loại công việc\" của mức 4 (E3) → nền 3; tiếng Anh bắt buộc mà CV chỉ ghi tiếng Nhật, trừ 1 (A3) → 2."
+  },
+  {
+   "stt": 202,
+   "label": 2,
+   "reason": "Công nhân sản xuất có làm quản lý tồn kho và khu lưu trữ ở hai công việc: cùng mảng sản xuất – kho và có đúng kỹ năng tin yêu cầu (1/1, có minh chứng) nên là vị trí gần (E4), tối đa 2 (D6) → 2."
+  },
+  {
+   "stt": 266,
+   "label": 4,
+   "reason": "Đúng vị trí Tư vấn tuyển sinh, 19–20/12 tháng, cấp bậc và học vấn đạt; 2/3 kỹ năng được đếm, chỉ thiếu Telesales (không cốt lõi); Bán hàng thể hiện rõ qua việc thu hút học viên và tăng doanh thu (A4). B1: thiếu tối đa 1 kỹ năng không cốt lõi vẫn là mức 4 → 4."
+  },
+  {
+   "stt": 279,
+   "label": 3,
+   "reason": "Đúng vị trí, 5/5 kỹ năng, tiếng Anh đạt, 30 tháng. Tin tự mâu thuẫn: trường ghi dưới 1 năm, phần yêu cầu ghi tối thiểu 4 năm; lấy cách đọc chặt hơn (E1): thiếu 18/48 tháng, chưa tới một nửa = thiếu một bậc → 3."
+  },
+  {
+   "stt": 280,
+   "label": 1,
+   "reason": "Đúng vị trí, 3/5 kỹ năng (thiếu Jira; Automation chỉ có một dòng viết script nên không suy, A4). Theo yêu cầu 4 năm của phần mô tả (E1): 20/48 tháng là lệch rõ → 2; tiếng Anh Giao tiếp thấp hơn mức Thành thạo bắt buộc, trừ 1 (A3) → 1."
+  },
+  {
+   "stt": 286,
+   "label": 2,
+   "reason": "Mục Kinh nghiệm trống nên vị trí theo headline Kiểm toán nội bộ (D7): vị trí gần, tối đa 2 (D6). Đủ 3/3 kỹ năng qua dự án và chứng chỉ; tin chỉ yêu cầu dưới 1 năm. C1 và D8 chỉ cộng dồn khi vừa thiếu kỹ năng vừa thiếu kinh nghiệm, ở đây kỹ năng đủ nên không cộng dồn (E5) → 2."
+  },
+  {
+   "stt": 299,
+   "label": 1,
+   "reason": "Đúng vị trí, 3/3 kỹ năng, tiếng Anh đạt, nhưng 0/60 tháng và mới tốt nghiệp so với cấp Trưởng/Phó phòng: lệch rõ → nền 2. Bằng cấp CV ghi là \"Chứng chỉ kiểm toán viên IT\" ở một trung tâm, không phải bằng đại học tin yêu cầu; bậc học lấy theo chữ ghi ở bằng (E2), trừ 1 (B4) → 1."
+  }
+ ]
+}

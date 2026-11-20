@@ -19,6 +19,9 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   lại được; `ml/scripts/import_jd.py` gọi lệnh này trước khi nhập tin.
 - `ml/scripts/fetch_public.py` tải dữ liệu và mô hình công khai, ghi nguồn và mã
   commit.
+- Tập vàng mở rộng lên 30 tin / 300 cặp (`build_gold_pairs.py --extend`); đợt 2 do
+  hai lượt Claude độc lập gán (kappa 0,979), gộp bằng `merge_gold_passes.py`; rubric
+  thêm quy tắc E1–E5.
 - Nhập tin hàng loạt: khớp tỉnh/thành bất kể tiền tố "Tỉnh"/"Thành phố"; báo cáo
   thêm `publisher_companies`.
 

@@ -1,33 +1,33 @@
 # Kết quả trên tập vàng, phần validation
 
-50 cặp của 5 tin; số cặp theo nhãn 0–4: 12, 22, 7, 7, 2. Nhãn do Claude gán theo `ml/labeling/rubric.md`.
+100 cặp của 10 tin; số cặp theo nhãn 0–4: 33, 42, 14, 8, 3. Nhãn do Claude gán theo `ml/labeling/rubric.md`.
 Khoảng tin cậy 95% là bootstrap lấy mẫu lại theo tin. Tạo bằng `ml/scripts/evaluate.py`.
 
-NDCG@5 khi xếp CV ngẫu nhiên là 0,444: mỗi tin chỉ có 10 CV nên mức sàn cao.
+NDCG@5 khi xếp CV ngẫu nhiên là 0,445: mỗi tin chỉ có 10 CV nên mức sàn cao.
 
 | Phương án | Spearman | Khoảng tin cậy | NDCG@5 | Khoảng tin cậy | Số tin hơn BM25 |
 | --- | ---: | --- | ---: | --- | ---: |
-| TF-IDF | 0,281 | 0,104 đến 0,538 | 0,422 | 0,231 đến 0,625 | 0/5 |
-| BM25 | 0,386 | 0,204 đến 0,733 | 0,491 | 0,227 đến 0,750 | – |
-| Luật `profile-rule-v2` | 0,692 | 0,518 đến 0,792 | 0,881 | 0,822 đến 0,945 | 4/5 |
-| Bi-encoder `e5-base-zs-v1` (cosine toàn văn) | 0,545 | 0,314 đến 0,714 | 0,607 | 0,319 đến 0,864 | 3/5 |
-| hybrid | 0,625 | 0,351 đến 0,847 | 0,690 | 0,424 đến 0,869 | 3/5 |
-| Bi-encoder `e5-small-zs-v1` (cosine toàn văn) | 0,431 | 0,110 đến 0,699 | 0,524 | 0,269 đến 0,758 | 2/5 |
-| Bi-encoder `minilm-l12-zs-v1` (cosine toàn văn) | 0,583 | 0,318 đến 0,785 | 0,554 | 0,297 đến 0,811 | 1/5 |
+| TF-IDF | 0,278 | 0,043 đến 0,539 | 0,640 | 0,447 đến 0,821 | 0/10 |
+| BM25 | 0,216 | -0,123 đến 0,548 | 0,679 | 0,486 đến 0,861 | – |
+| Luật `profile-rule-v2` | 0,628 | 0,479 đến 0,733 | 0,874 | 0,798 đến 0,938 | 6/10 |
+| Bi-encoder `e5-base-zs-v1` (cosine toàn văn) | 0,550 | 0,375 đến 0,720 | 0,758 | 0,577 đến 0,911 | 5/10 |
+| hybrid | 0,610 | 0,423 đến 0,777 | 0,817 | 0,654 đến 0,932 | 6/10 |
+| Bi-encoder `e5-small-zs-v1` (cosine toàn văn) | 0,457 | 0,229 đến 0,683 | 0,702 | 0,519 đến 0,869 | 3/10 |
+| Bi-encoder `minilm-l12-zs-v1` (cosine toàn văn) | 0,530 | 0,325 đến 0,718 | 0,663 | 0,487 đến 0,823 | 1/10 |
 
 ## Thang điểm của `hybrid`
 
-- Kappa bậc hai giữa mức hiển thị và nhãn: 0,398.
-- 12 cặp nhãn 0 (khác ngành): trung vị 31 điểm, cao nhất 58, 2 cặp từ 50 điểm trở lên.
+- Kappa bậc hai giữa mức hiển thị và nhãn: 0,525.
+- 33 cặp nhãn 0 (khác ngành): trung vị 28 điểm, cao nhất 58, 5 cặp từ 50 điểm trở lên.
 
 ## Cặp khác ngôn ngữ (tin và CV một Việt một Anh)
 
 | Phương án | Số cặp | Spearman |
 | --- | ---: | ---: |
-| TF-IDF | 15 | 0,734 |
-| BM25 | 15 | 0,674 |
-| Luật `profile-rule-v2` | 15 | 0,808 |
-| Bi-encoder `e5-base-zs-v1` (cosine toàn văn) | 15 | 0,646 |
-| hybrid | 15 | 0,728 |
-| Bi-encoder `e5-small-zs-v1` (cosine toàn văn) | 15 | 0,507 |
-| Bi-encoder `minilm-l12-zs-v1` (cosine toàn văn) | 15 | 0,624 |
+| TF-IDF | 24 | 0,709 |
+| BM25 | 24 | 0,694 |
+| Luật `profile-rule-v2` | 24 | 0,733 |
+| Bi-encoder `e5-base-zs-v1` (cosine toàn văn) | 24 | 0,656 |
+| hybrid | 24 | 0,706 |
+| Bi-encoder `e5-small-zs-v1` (cosine toàn văn) | 24 | 0,559 |
+| Bi-encoder `minilm-l12-zs-v1` (cosine toàn văn) | 24 | 0,655 |

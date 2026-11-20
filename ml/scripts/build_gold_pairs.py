@@ -1,14 +1,20 @@
-"""Ghép 150 cặp CV–JD cho tập vàng và xuất phiếu chấm (kế hoạch mục 9).
+"""Ghép cặp CV–JD cho tập vàng và xuất phiếu chấm (kế hoạch mục 9; bản 3 mục 3.1).
 
-Mỗi JD trong 15 JD đã chọn lấy 10 CV khác nhau bằng pooling:
+Tập vàng có hai đợt, mỗi đợt 15 JD × 10 CV = 150 cặp, chia 5 JD validation và
+10 JD test. Đợt 1 (18/11) là lệnh mặc định; đợt 2 (20/11, `--extend`) thêm 15 JD
+để tập test đủ lớn, ghi phiếu riêng `gold_pairs_2.xlsx` và nối nguồn ghép cặp vào
+`gold_pool.json`, không đụng tới phiếu và nhãn của đợt 1.
+
+Mỗi JD lấy 10 CV khác nhau bằng pooling:
 4 CV điểm BM25 cao nhất, thêm 4 CV điểm e5 zero-shot cao nhất (chưa có trong
 nhóm), thêm 2 CV ngẫu nhiên; rồi xáo thứ tự. Phiếu chấm không ghi nguồn hay
 điểm hệ thống (chấm mù); nguồn và phép chia validation/test lưu riêng ở
 `ml/data/labels/gold_pool.json`.
 
 Chạy (cần mô hình `intfloat/multilingual-e5-base` đã tải về, chạy trên MPS):
-    ml/.venv/bin/python ml/scripts/build_gold_pairs.py
-Không ghi đè phiếu đã có; thêm --force để tạo lại (mất nhãn đã chấm).
+    ml/.venv/bin/python ml/scripts/build_gold_pairs.py            # đợt 1
+    ml/.venv/bin/python ml/scripts/build_gold_pairs.py --extend   # đợt 2
+Không ghi đè phiếu đã có; đợt 1 thêm --force để tạo lại (mất nhãn đã chấm).
 """
 
 import argparse
@@ -23,12 +29,18 @@ from corpus import load_cvs, load_jds
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font
 from openpyxl.worksheet.datavalidation import DataValidation
-from paths import GOLD_POOL, GOLD_SHEET
+from paths import GOLD_POOL, GOLD_SHEET, GOLD_SHEET_2
 
 GOLD_JDS = (
     'JD-02', 'JD-66', 'JD-11', 'JD-12', 'JD-35', 'JD-36', 'JD-47', 'JD-53',
     'JD-77', 'JD-59', 'JD-60', 'JD-75', 'JD-80', 'JD-89', 'JD-26',
 )  # fmt: skip
+# Đợt 2: tin có CV khớp mạnh neo vào, đủ CV cùng vị trí, 10 tiếng Việt và 5 tiếng Anh.
+EXTENSION_JDS = (
+    'JD-05', 'JD-07', 'JD-08', 'JD-10', 'JD-16', 'JD-18', 'JD-27', 'JD-30',
+    'JD-39', 'JD-40', 'JD-56', 'JD-62', 'JD-69', 'JD-71', 'JD-73',
+)  # fmt: skip
+EXTENSION_SEED = 43
 PER_SOURCE = 4
 RANDOM_PER_JD = 2
 VALIDATION_JDS = 5
@@ -76,13 +88,13 @@ def split(jds, rng):
             return sorted(validation)
 
 
-def write_sheet(jds, cvs, pairs):
+def write_sheet(jds, cvs, pairs, *, path=GOLD_SHEET, first_number=1):
     book = Workbook()
     sheet = book.active
     sheet.title = 'Chấm'
     header = ['stt', 'jd_id', 'jd_title', 'cv_id', 'label', 'confidence', 'reason', 'labeled_at']
     sheet.append(header)
-    for number, (jd_code, cv_code) in enumerate(pairs, start=1):
+    for number, (jd_code, cv_code) in enumerate(pairs, start=first_number):
         sheet.append([number, jd_code, jds[jd_code]['title'], cv_code, None, None, None, None])
     labels = DataValidation(type='whole', operator='between', formula1='0', formula2='4')
     confidence = DataValidation(type='list', formula1='"chắc,không chắc"')
@@ -112,30 +124,23 @@ def write_sheet(jds, cvs, pairs):
     for current in book.worksheets:
         for cell in current[1]:
             cell.font = Font(bold=True)
-    GOLD_SHEET.parent.mkdir(parents=True, exist_ok=True)
-    book.save(GOLD_SHEET)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    book.save(path)
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument('--force', action='store_true')
-    options = parser.parse_args()
-    if GOLD_SHEET.exists() and not options.force:
-        sys.exit(f'{GOLD_SHEET} đã có; thêm --force nếu muốn tạo lại (mất nhãn đã chấm).')
-
-    all_jds = {jd['code']: jd for jd in load_jds()}
-    gold = [all_jds[code] for code in GOLD_JDS]
-    cvs = load_cvs()
+def build(codes, all_jds, cvs, seed):
+    """(các cặp theo thứ tự chấm, nguồn ghép cặp, mã JD validation) cho một đợt."""
+    gold = [all_jds[code] for code in codes]
     bm25 = bm25_scores(gold, cvs)
     e5 = e5_scores(gold, cvs)
-    rng = random.Random(SEED)
+    rng = random.Random(seed)
     validation = split(gold, rng)
 
     pairs, provenance = [], []
     # Chấm theo khối 10 CV của một tin; tin validation trước để có nhãn chỉnh tham số sớm.
-    ordered = sorted(gold, key=lambda jd: (jd['code'] not in validation, GOLD_JDS.index(jd['code'])))
+    ordered = sorted(gold, key=lambda jd: (jd['code'] not in validation, codes.index(jd['code'])))
     for jd in ordered:
-        row = GOLD_JDS.index(jd['code'])
+        row = codes.index(jd['code'])
         for index, source in pool(bm25[row], e5[row], rng):
             cv = cvs[index]
             pairs.append((jd['code'], cv['code']))
@@ -150,24 +155,45 @@ def main():
                     'anchored': cv['anchor_job'] == jd['code'],
                 }
             )
+    return pairs, provenance, validation
 
-    write_sheet(all_jds, {cv['code']: cv for cv in cvs}, pairs)
-    GOLD_POOL.parent.mkdir(parents=True, exist_ok=True)
-    GOLD_POOL.write_text(
-        json.dumps(
-            {'seed': SEED, 'model': MODEL, 'validation_jds': validation, 'pairs': provenance},
-            ensure_ascii=False,
-            indent=2,
-        ),
-        encoding='utf-8',
-    )
+
+def summarize(pairs, provenance, validation, sheet):
     sources = {name: sum(1 for p in provenance if p['source'] == name) for name in ('bm25', 'e5', 'random')}
     overlap = sum(1 for p in provenance if p['source'] == 'bm25' and p['e5_rank'] <= PER_SOURCE)
     print(f'{len(pairs)} cặp, {len({p[1] for p in pairs})} CV khác nhau; nguồn {sources}')
     print(f'Validation: {", ".join(validation)}')
     print(f'CV top-4 của BM25 cũng nằm trong top-4 e5: {overlap}/{sources["bm25"]}')
     print(f'Cặp có CV neo vào chính JD: {sum(p["anchored"] for p in provenance)}')
-    print(f'Đã ghi {GOLD_SHEET} và {GOLD_POOL}')
+    print(f'Đã ghi {sheet} và {GOLD_POOL}')
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument('--force', action='store_true')
+    parser.add_argument('--extend', action='store_true', help='Ghép đợt 2 (15 JD thêm).')
+    options = parser.parse_args()
+    sheet = GOLD_SHEET_2 if options.extend else GOLD_SHEET
+    if sheet.exists() and not (options.force and not options.extend):
+        sys.exit(f'{sheet} đã có; không ghi đè phiếu chấm.')
+
+    all_jds = {jd['code']: jd for jd in load_jds()}
+    cvs = load_cvs()
+    by_code = {cv['code']: cv for cv in cvs}
+    if options.extend:
+        pool_file = json.loads(GOLD_POOL.read_text(encoding='utf-8'))
+        pairs, provenance, validation = build(EXTENSION_JDS, all_jds, cvs, EXTENSION_SEED)
+        write_sheet(all_jds, by_code, pairs, path=sheet, first_number=len(pool_file['pairs']) + 1)
+        pool_file['validation_jds'] = pool_file['validation_jds'] + validation
+        pool_file['pairs'] = pool_file['pairs'] + provenance
+        pool_file['extension'] = {'seed': EXTENSION_SEED, 'jds': list(EXTENSION_JDS)}
+    else:
+        pairs, provenance, validation = build(GOLD_JDS, all_jds, cvs, SEED)
+        write_sheet(all_jds, by_code, pairs)
+        pool_file = {'seed': SEED, 'model': MODEL, 'validation_jds': validation, 'pairs': provenance}
+    GOLD_POOL.parent.mkdir(parents=True, exist_ok=True)
+    GOLD_POOL.write_text(json.dumps(pool_file, ensure_ascii=False, indent=2), encoding='utf-8')
+    summarize(pairs, provenance, validation, sheet)
 
 
 if __name__ == '__main__':

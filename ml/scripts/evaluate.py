@@ -33,10 +33,10 @@ import json
 import subprocess
 
 import numpy as np
-from agreement import CLAUDE_SHEET, labels
+from agreement import labels
 from baseline import bm25_scores, ndcg_at, tfidf_scores
 from corpus import load_cvs, load_jds
-from paths import EVAL_DIR, GOLD_POOL, JD_IMPORT_MAP, REPO_ROOT, REPORTS_DIR
+from paths import EVAL_DIR, GOLD_CLAUDE_SHEETS, GOLD_POOL, JD_IMPORT_MAP, REPO_ROOT, REPORTS_DIR
 from scipy.stats import spearmanr
 from sklearn.metrics import cohen_kappa_score
 
@@ -59,10 +59,11 @@ def gold_pairs(split):
         for pair in json.loads(GOLD_POOL.read_text(encoding='utf-8'))['pairs']
     }
     pairs = []
-    for row in labels(CLAUDE_SHEET).values():
-        info = pool[(row[1], row[3])]
-        if split in ('all', info['split']):
-            pairs.append({'jd': row[1], 'cv': row[3], 'label': int(row[4]), **info})
+    for sheet in GOLD_CLAUDE_SHEETS:  # hai đợt gán nhãn, mỗi đợt 150 cặp
+        for row in labels(sheet).values():
+            info = pool[(row[1], row[3])]
+            if split in ('all', info['split']):
+                pairs.append({'jd': row[1], 'cv': row[3], 'label': int(row[4]), **info})
     return pairs
 
 

@@ -19,7 +19,7 @@ ml/
     corpus.py             nạp JD (Excel) và CV (JSON) thành văn bản, tách token
     extract_check.py      so pypdf và pypdfium2 trên 51 PDF
     baseline.py           TF-IDF và BM25, kiểm tra trên nhãn yếu
-    build_gold_pairs.py   ghép 150 cặp tập vàng (BM25 + e5 + ngẫu nhiên), phiếu chấm
+    build_gold_pairs.py   ghép cặp tập vàng (BM25 + e5 + ngẫu nhiên), phiếu chấm; --extend cho đợt 2
     agreement.py          so nhãn người với nhãn Claude trên các cặp kiểm chứng
     export_profiles.py    xuất profile_json từ hệ thống (lệnh matching_export_dataset)
     check_profiles.py     đối chiếu profile_json với manifest, kiểm tra "không bịa"
@@ -29,6 +29,9 @@ ml/
     rubric.md             thang chấm 0–4 đã chốt
     gold_pairs.xlsx       phiếu chấm 150 cặp (tab Chấm), kèm nội dung JD và CV
     gold_pairs_claude.xlsx  nhãn 150 cặp do Claude gán (annotator = claude)
+    gold_pairs_2.xlsx     phiếu chấm mù của đợt 2 (cặp 151–300)
+    gold_pairs_claude_2.xlsx  nhãn đợt 2, kèm nhãn của từng lượt gán
+    gold_pairs_2_passes.json  nhãn và lý do của hai lượt gán độc lập, phần phân xử
     audit_pairs.json      30 cặp kiểm chứng cố định (người chấm mù 5 cặp)
     skill_merge.json      gộp kỹ năng trùng nghĩa khi nhập tin
   data/                   KHÔNG commit (.gitignore)
@@ -77,6 +80,12 @@ do người làm đồ án chốt), lưu ở `labeling/gold_pairs_claude.xlsx`. 
 lên thì tính thêm kappa). Công cụ chấm trên trình duyệt đã gỡ khi dừng chấm; cần
 chấm thêm thì khôi phục từ lịch sử git (commit `feat(ml): local labeling page`).
 
+Đợt 2 (20/11) thêm 15 tin, nâng tập vàng lên 30 tin / 300 cặp: validation 10 tin,
+test 20 tin (phép chia ở `data/labels/gold_pool.json`). Mỗi cặp mới do hai lượt
+Claude độc lập gán; hai lượt trùng 142/150 cặp, kappa 0,979
+(`reports/gold_batch2_agreement.md`); 8 cặp lệch được phân xử theo các quy tắc
+E1–E5 của rubric. `scripts/evaluate.py` đọc cả hai đợt.
+
 ## Thứ tự chạy
 
 Tất cả chạy từ thư mục gốc repo bằng `ml/.venv/bin/python`. Các script nhập dữ
@@ -90,8 +99,11 @@ liệu cần Docker Compose đang chạy; mặc định chỉ chạy thử, thê
    thống, xuất PDF.
 4. `scripts/smoke_mps.py`: kiểm tra môi trường huấn luyện.
 5. `scripts/extract_check.py`, `scripts/baseline.py`: số liệu thư viện PDF và baseline.
-6. `scripts/build_gold_pairs.py`: phiếu chấm tập vàng (cần mô hình e5 đã tải; không
-   ghi đè phiếu đã có).
+6. `scripts/build_gold_pairs.py`: phiếu chấm tập vàng đợt 1 (cần mô hình e5 đã tải;
+   không ghi đè phiếu đã có). `--extend` ghép đợt 2 (15 tin thêm) vào
+   `labeling/gold_pairs_2.xlsx`. `scripts/merge_gold_passes.py` gộp hai lượt gán nhãn
+   độc lập của đợt 2 (`labeling/gold_pairs_2_passes.json`) thành
+   `labeling/gold_pairs_claude_2.xlsx` và báo cáo đồng thuận.
 7. `scripts/export_profiles.py`, rồi `scripts/check_profiles.py`: kiểm tra trích xuất.
 8. `scripts/export_model.py`: lưu mô hình cho ml-worker; `scripts/calibrate.py`: đo
    mốc hiệu chuẩn, chép vào `CALIBRATIONS` của backend khi đổi mô hình.
