@@ -28,6 +28,8 @@ class SocialAccountConnection(models.Model):
     account_name = models.CharField(max_length=255)
     account_picture_url = models.URLField(max_length=1000, blank=True)
     token_ciphertext = models.TextField()
+    # Set for networks whose token expires; a daily task refreshes it ahead of time.
+    token_expires_at = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.CONNECTED)
     last_error_code = models.CharField(max_length=64, blank=True)
     connected_at = models.DateTimeField(auto_now_add=True)

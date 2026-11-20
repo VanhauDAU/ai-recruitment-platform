@@ -72,11 +72,11 @@ POST_ERROR_MESSAGES = {
         'Tài khoản đã đăng quá số bài Instagram cho phép trong 24 giờ. Hệ thống sẽ thử lại sau.'
     ),
     'graph_9004': gettext_lazy('Instagram không tải được ảnh của bài. Hãy đổi ảnh rồi đăng lại.'),
-    'ig_container_error': gettext_lazy(
-        'Instagram không xử lý được ảnh của bài. Hãy đổi ảnh rồi đăng lại.'
+    'container_error': gettext_lazy(
+        'Mạng xã hội không xử lý được bài hoặc ảnh của bài. Hãy đổi ảnh rồi đăng lại.'
     ),
-    'ig_container_pending': gettext_lazy(
-        'Instagram xử lý ảnh quá lâu. Hệ thống đã thử lại nhiều lần.'
+    'container_pending': gettext_lazy(
+        'Mạng xã hội xử lý bài quá lâu. Hệ thống đã thử lại nhiều lần.'
     ),
     'image_required': gettext_lazy('Bài Instagram cần ít nhất một ảnh.'),
     'delete_unsupported': gettext_lazy(

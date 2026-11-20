@@ -1,13 +1,16 @@
-"""Shared Meta Graph API client for providers that sign in through Facebook Login.
+"""Shared Meta Graph API client for Facebook Pages, Instagram and Threads.
 
-Facebook Pages and Instagram professional accounts use the same OAuth dialog,
-token exchange, ``appsecret_proof`` signing and error codes; each provider adds
-its own scopes, accounts and publishing calls.
+Facebook Pages and Instagram use the Facebook Login dialog, token exchange and
+``appsecret_proof`` signing; Threads has its own host and login but the same
+request shape, error format and media containers. Each provider adds its
+scopes, accounts and publishing calls.
 """
 
 import hashlib
 import hmac
-from urllib.parse import urlencode
+import ipaddress
+import time
+from urllib.parse import urlencode, urlsplit
 
 import requests
 from django.conf import settings
@@ -19,20 +22,49 @@ TOKEN_ERROR_CODES = {190, 102}
 TRANSIENT_ERROR_CODES = {1, 2, 4, 17, 32, 341, 613}
 
 
+def is_public_url(url):
+    """Whether Facebook's crawler can fetch ``url`` to build a link preview.
+
+    Graph rejects a ``link`` it cannot reach (error 1500), which is every
+    local development address.
+    """
+    parts = urlsplit(url or '')
+    host = (parts.hostname or '').lower()
+    if parts.scheme not in {'http', 'https'} or not host:
+        return False
+    if host == 'localhost' or host.endswith(('.localhost', '.local', '.test', '.internal')):
+        return False
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        return '.' in host
+    return address.is_global
+
+
 class MetaGraphProvider:
     network = ''
     simulated = False
     scopes = ''
+    graph_host = 'https://graph.facebook.com'
+    sign_requests = True  # appsecret_proof; the Threads API does not use it
     transient_error_codes = TRANSIENT_ERROR_CODES
+    # Media containers: the field holding their status, and how long to poll it.
+    container_status_field = 'status_code'
+    container_checks = 5
+    container_wait_seconds = 2
 
-    def __init__(self, session=None):
+    def __init__(self, session=None, sleep=time.sleep):
         self.session = session or requests.Session()
-        self.version = settings.FACEBOOK_GRAPH_API_VERSION
+        self.sleep = sleep
+        self.version = self.api_version()
         self.timeout = settings.CAMPAIGN_SOCIAL_HTTP_TIMEOUT_SECONDS
         self.redirect_uri = oauth_redirect_uri(self.network)
 
+    def api_version(self):
+        return settings.FACEBOOK_GRAPH_API_VERSION
+
     def _url(self, path):
-        return f'https://graph.facebook.com/{self.version}/{path.lstrip("/")}'
+        return f'{self.graph_host}/{self.version}/{path.lstrip("/")}'
 
     def _proof(self, token):
         return hmac.new(
@@ -42,7 +74,9 @@ class MetaGraphProvider:
     def _call(self, method, path, *, token=None, params=None, data=None, files=None):
         params = dict(params or {})
         if token:
-            params.update(access_token=token, appsecret_proof=self._proof(token))
+            params['access_token'] = token
+            if self.sign_requests:
+                params['appsecret_proof'] = self._proof(token)
         try:
             response = self.session.request(
                 method,
@@ -102,6 +136,25 @@ class MetaGraphProvider:
             },
         )
         return long_lived['access_token']
+
+    def _wait_until_ready(self, container_id, token):
+        for attempt in range(self.container_checks):
+            status = self._call(
+                'GET', container_id, token=token, params={'fields': self.container_status_field}
+            ).get(self.container_status_field)
+            if status in {'FINISHED', 'PUBLISHED'}:
+                return
+            if status in {'ERROR', 'EXPIRED'}:
+                raise SocialProviderError('container_error')
+            if attempt < self.container_checks - 1:
+                self.sleep(self.container_wait_seconds)
+        raise SocialProviderError('container_pending', transient=True)
+
+    def _container(self, path, token, data):
+        """Create a media container under ``path`` and wait until it can be published."""
+        container_id = self._call('POST', path, token=token, data=data)['id']
+        self._wait_until_ready(container_id, token)
+        return container_id
 
     def _delete_object(self, object_id, token):
         try:

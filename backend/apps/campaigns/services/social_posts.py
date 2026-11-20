@@ -25,6 +25,7 @@ from ..domain.social_networks import network_for_channel_kind
 from ..models import ScheduledSocialPost, SocialAccountConnection
 from .content import render_content
 from .social import SocialProviderError, decrypt_token, get_provider
+from .social_connections import expire_connection
 from .social_post_images import clean_post_images, read_post_images
 from .tracking import post_link
 
@@ -86,10 +87,13 @@ def schedule_post(*, channel, user, connection, scheduled_for=None, message='', 
             {'message': _('Kênh chưa có nội dung. Soạn nội dung trước khi hẹn đăng.')}
         )
     limits = network.capabilities
-    if len(message) > limits.max_chars:
+    link = post_link(channel)
+    # Providers append the tracking link when the text does not carry it.
+    sent_length = len(message) if link in message else len(message) + len(link) + 2
+    if sent_length > limits.max_chars:
         raise ValidationError(
             {
-                'message': _('%(network)s nhận tối đa %(count)s ký tự mỗi bài.')
+                'message': _('%(network)s nhận tối đa %(count)s ký tự mỗi bài, tính cả link.')
                 % {'network': network.platform, 'count': limits.max_chars}
             }
         )
@@ -103,7 +107,7 @@ def schedule_post(*, channel, user, connection, scheduled_for=None, message='', 
         connection=connection,
         message=message,
         images=images,
-        link=post_link(channel),
+        link=link,
         scheduled_for=scheduled_for,
     )
     _publish_if_due(post)
@@ -250,19 +254,7 @@ def _mark_failed(post, error):
     campaign = post.channel.campaign
     post.last_error_code = error.code
     if error.token_invalid:
-        SocialAccountConnection.objects.filter(pk=post.connection_id).update(
-            status=SocialAccountConnection.Status.EXPIRED, last_error_code=error.code
-        )
-        _notify(
-            campaign,
-            EmployerNotification.EventType.SOCIAL_CONNECTION_EXPIRED,
-            f'social-connection-expired:{post.connection.public_id}:{error.code}',
-            gettext_lazy(
-                'Kết nối %(network)s "%(account)s" đã hết hạn. Hãy kết nối lại để tiếp tục đăng.'
-            ),
-            network=post.connection.spec.label,
-            account=post.connection.account_name,
-        )
+        expire_connection(post.connection, error.code)
     if error.transient and not error.token_invalid and post.attempts < MAX_ATTEMPTS:
         post.status = Post.Status.SCHEDULED
         post.next_attempt_at = timezone.now() + RETRY_DELAYS[post.attempts - 1]

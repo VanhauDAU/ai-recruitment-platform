@@ -434,8 +434,23 @@ GĐ1 đã làm:
   - Lỗi giới hạn số bài trong 24 giờ (mã 9) được thử lại.
   - Thêm kênh `instagram` (migration campaigns 0007) và lớp chung
     `MetaGraphProvider`.
-  - Còn mở: chưa thử đăng thật vì cần tài khoản Instagram chuyên nghiệp liên kết
-    Fanpage và bật use case Instagram trong Meta App.
+  - Thử thật 20/11: kết nối `@levanhau122`, đăng carousel 3 ảnh thành công.
+    Phát hiện hai lỗi, đã sửa ở #288:
+    - thiếu quyền `business_management`;
+    - "Đăng ngay" phải chờ lượt quét 60 giây; nay đăng khi commit và hiện
+      "Đang đăng".
+- Threads (nhánh `feat/social-threads`, PR3/5).
+  - Kết nối qua Threads Login, App ID/secret riêng.
+  - Bài chữ có thẻ xem trước link; bài một ảnh hoặc carousel; tối đa 500 ký
+    tự, tính cả link.
+  - Token 60 ngày được làm mới mỗi ngày (`token_expires_at`, task
+    `refresh_social_tokens`). Token hỏng thì kết nối hết hạn và NTD được báo.
+  - Gỡ bài bằng quyền `threads_delete`.
+  - Migration campaigns 0008.
+  - Task đăng bài được tới 3 phút, để carousel nhiều ảnh không bị cắt giữa
+    chừng.
+  - Còn mở: chưa thử thật. Cần Threads App ID/secret, khai Redirect Callback
+    URL và thêm người thử nghiệm Threads.
 
 ## Ứng tuyển bằng CV tải lên và form ứng tuyển mới (2026-11-18)
 

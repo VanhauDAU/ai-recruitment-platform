@@ -359,7 +359,7 @@ export default function PostComposer({ campaign, channel, network, open, onClose
               meta={!autoPost ? channel.kind_label : values.timing === 'now' || !values.scheduled_for ? m.employer_campaign_fb_just_now() : when(values.scheduled_for)}
               text={values.message || ''}
               images={(values.images || []).map((image) => image.url)}
-              link={channel.kind.startsWith('facebook') ? channel.link : ''}
+              link={channel.kind.startsWith('facebook') || channel.kind === 'threads' ? channel.link : ''}
               variant={network?.key}
               imageRatio={network?.capabilities.image_ratio}
               linkTitle={campaign.name}

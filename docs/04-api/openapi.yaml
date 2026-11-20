@@ -21713,6 +21713,7 @@ components:
       - facebook_page
       - facebook_group
       - instagram
+      - threads
       - linkedin
       - zalo
       - tiktok
@@ -21725,6 +21726,7 @@ components:
         * `facebook_page` - Fanpage Facebook
         * `facebook_group` - Nhóm Facebook
         * `instagram` - Instagram
+        * `threads` - Threads
         * `linkedin` - LinkedIn
         * `zalo` - Zalo
         * `tiktok` - TikTok
@@ -29951,10 +29953,12 @@ components:
       enum:
       - facebook_page
       - instagram
+      - threads
       type: string
       description: |-
         * `facebook_page` - Fanpage Facebook
         * `instagram` - Instagram doanh nghiệp
+        * `threads` - Threads
     NullEnum:
       enum:
       - null

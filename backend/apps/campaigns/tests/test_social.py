@@ -19,10 +19,11 @@ from common.vietnam_time import vietnam_today
 
 from ..domain.social_networks import NETWORKS
 from ..models import CampaignChannel, ScheduledSocialPost, SocialAccountConnection
-from ..services import publish_post, reconcile_social_posts, schedule_post
+from ..services import publish_post, reconcile_social_posts, refresh_expiring_tokens, schedule_post
 from ..services.social import PostImage, SocialProviderError, decrypt_token
 from ..services.social.facebook import FacebookPageProvider
 from ..services.social.instagram import InstagramProvider
+from ..services.social.threads import ThreadsProvider
 from ..services.social_post_images import _fit_ratio
 
 Status = RecruitmentCampaign.Status
@@ -754,8 +755,8 @@ class InstagramProviderTests(TestCase):
         self.assertEqual(
             outcomes,
             [
-                ('ig_container_error', False),
-                ('ig_container_pending', True),
+                ('container_error', False),
+                ('container_pending', True),
                 ('graph_9', True),
             ],
         )
@@ -768,3 +769,186 @@ class InstagramProviderTests(TestCase):
         provider.delete(post_id='media_2', token='t')
 
         self.assertEqual(session.request.call_args_list[0].args[:2][0], 'DELETE')
+
+
+class ThreadsConnectionTests(SocialFixtures, TestCase):
+    def connect_threads(self):
+        query = self.authorize('threads')
+        redirected = self.client.get(
+            reverse('employer-social-callback', kwargs={'network': 'threads'}),
+            {'code': query['code'][0], 'state': query['state'][0]},
+        )
+        nonce = parse_qs(urlparse(redirected['Location']).query)['social_select'][0]
+        selected = self.client.post(
+            reverse('employer-social-pending', kwargs={'network': 'threads', 'nonce': nonce}),
+            {'account_id': 'fake-threads-1'},
+            format='json',
+        )
+        return SocialAccountConnection.objects.get(public_id=selected.data['public_id'])
+
+    def test_a_threads_connection_keeps_its_token_expiry(self):
+        connection = self.connect_threads()
+
+        days = (connection.token_expires_at - timezone.now()).days
+        self.assertIn(days, {59, 60})
+
+    def test_tokens_close_to_expiry_are_refreshed_and_refused_ones_expire(self):
+        soon = self.connect_threads()
+        SocialAccountConnection.objects.filter(pk=soon.pk).update(
+            token_expires_at=timezone.now() + timedelta(days=3)
+        )
+        lasting = self.connect_page()
+
+        self.assertEqual(refresh_expiring_tokens(), 1)
+        soon.refresh_from_db()
+        lasting.refresh_from_db()
+        self.assertGreater(soon.token_expires_at, timezone.now() + timedelta(days=50))
+        self.assertIsNone(lasting.token_expires_at)
+
+        SocialAccountConnection.objects.filter(pk=soon.pk).update(
+            token_expires_at=timezone.now() + timedelta(days=3)
+        )
+        refused = MagicMock()
+        refused.refresh.side_effect = SocialProviderError('graph_190', token_invalid=True)
+        with patch('apps.campaigns.services.social_connections.get_provider', return_value=refused):
+            refresh_expiring_tokens()
+
+        soon.refresh_from_db()
+        self.assertEqual(soon.status, SocialAccountConnection.Status.EXPIRED)
+        notice = EmployerNotification.objects.get(
+            event_type=EmployerNotification.EventType.SOCIAL_CONNECTION_EXPIRED
+        )
+        self.assertEqual(notice.action_path, '/tuyendung/app/account/settings/integrations')
+
+    def test_a_transient_refresh_failure_leaves_the_connection_for_the_next_run(self):
+        connection = self.connect_threads()
+        SocialAccountConnection.objects.filter(pk=connection.pk).update(
+            token_expires_at=timezone.now() + timedelta(days=3)
+        )
+        flaky = MagicMock()
+        flaky.refresh.side_effect = SocialProviderError('timeout', transient=True)
+
+        with patch('apps.campaigns.services.social_connections.get_provider', return_value=flaky):
+            refresh_expiring_tokens()
+
+        connection.refresh_from_db()
+        self.assertEqual(connection.status, SocialAccountConnection.Status.CONNECTED)
+
+    def test_threads_text_must_fit_500_characters_with_the_link(self):
+        channel = CampaignChannel.objects.create(
+            campaign=self.campaign, kind=CampaignChannel.Kind.THREADS, label='Threads'
+        )
+        connection = self.connect_threads()
+
+        with self.assertRaises(ValidationError):
+            schedule_post(channel=channel, user=self.user, connection=connection, message='a' * 480)
+        post = schedule_post(
+            channel=channel, user=self.user, connection=connection, message='Tuyển gấp'
+        )
+
+        self.assertEqual(publish_post(post.pk), Post.Status.PUBLISHED)
+
+
+@override_settings(THREADS_APP_ID='threads-app', THREADS_APP_SECRET='threads-secret')
+class ThreadsProviderTests(TestCase):
+    def reply(self, payload, status=200):
+        response = MagicMock(status_code=status)
+        response.json.return_value = payload
+        return response
+
+    def provider(self, *replies):
+        session = MagicMock()
+        session.request.side_effect = [self.reply(payload) for payload in replies]
+        self.sleep = MagicMock()
+        return ThreadsProvider(session=session, sleep=self.sleep), session
+
+    def test_login_and_token_exchange_use_threads_hosts(self):
+        provider, session = self.provider(
+            {'access_token': 'short', 'user_id': '1'},
+            {'access_token': 'long', 'expires_in': 5184000},
+        )
+
+        url = urlparse(provider.authorize_url('state'))
+        grant = provider.exchange_code('code')
+
+        self.assertEqual(url.netloc, 'threads.com')
+        self.assertIn('threads_delete', parse_qs(url.query)['scope'][0])
+        calls = session.request.call_args_list
+        self.assertEqual(calls[0].args[1], 'https://graph.threads.com/oauth/access_token')
+        self.assertEqual(calls[0].kwargs['data']['grant_type'], 'authorization_code')
+        self.assertEqual(calls[1].kwargs['params']['grant_type'], 'th_exchange_token')
+        self.assertEqual(grant.token, 'long')
+        self.assertGreater(grant.expires_at, timezone.now() + timedelta(days=59))
+
+    def test_a_text_post_gets_a_link_card_and_no_appsecret_proof(self):
+        provider, session = self.provider(
+            {'id': 'container'},
+            {'status': 'IN_PROGRESS'},
+            {'status': 'FINISHED'},
+            {'id': 'thread_1'},
+            {'permalink': 'https://threads.com/@procv/post/1'},
+        )
+
+        published = provider.publish(
+            account_id='me_1', token='t', message='Tuyển gấp', link='https://procv.vn/r/a'
+        )
+
+        calls = session.request.call_args_list
+        self.assertEqual(calls[0].args[1], 'https://graph.threads.com/v1.0/me_1/threads')
+        self.assertEqual(
+            calls[0].kwargs['data'],
+            {
+                'media_type': 'TEXT',
+                'text': 'Tuyển gấp\n\nhttps://procv.vn/r/a',
+                'link_attachment': 'https://procv.vn/r/a',
+            },
+        )
+        self.assertNotIn('appsecret_proof', calls[0].kwargs['params'])
+        self.assertEqual(calls[3].kwargs['data'], {'creation_id': 'container'})
+        self.assertEqual(published.permalink, 'https://threads.com/@procv/post/1')
+
+    def test_images_become_an_image_post_or_a_carousel(self):
+        image = PostImage('a.jpg', b'1', 'https://cdn/a.jpg')
+        single, single_session = self.provider(
+            {'id': 'c'}, {'status': 'FINISHED'}, {'id': 't'}, {'permalink': ''}
+        )
+        carousel, carousel_session = self.provider(
+            {'id': 'c1'},
+            {'status': 'FINISHED'},
+            {'id': 'c2'},
+            {'status': 'FINISHED'},
+            {'id': 'parent'},
+            {'status': 'FINISHED'},
+            {'id': 't'},
+            {'permalink': ''},
+        )
+
+        single.publish(
+            account_id='me', token='t', message='m', link='http://localhost/r/a', images=[image]
+        )
+        carousel.publish(account_id='me', token='t', message='m', link='', images=[image, image])
+
+        sent = single_session.request.call_args_list[0].kwargs['data']
+        self.assertEqual(
+            sent,
+            {
+                'media_type': 'IMAGE',
+                'image_url': 'https://cdn/a.jpg',
+                'text': 'm\n\nhttp://localhost/r/a',
+            },
+        )
+        posts = [
+            c.kwargs['data'] for c in carousel_session.request.call_args_list if c.args[0] == 'POST'
+        ]
+        self.assertEqual(posts[2], {'media_type': 'CAROUSEL', 'children': 'c1,c2', 'text': 'm'})
+
+    def test_refresh_returns_a_new_sixty_day_token(self):
+        provider, session = self.provider({'access_token': 'new', 'expires_in': 5184000})
+
+        grant = provider.refresh('old')
+
+        self.assertEqual(
+            session.request.call_args_list[0].args[1],
+            'https://graph.threads.com/refresh_access_token',
+        )
+        self.assertEqual(grant.token, 'new')
