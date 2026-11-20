@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { message } from '@/shared/lib/toast'
 import ChannelFacebookPosts from './ChannelFacebookPosts'
+import ChannelPostSection from './ChannelPostSection'
 
 const mocks = vi.hoisted(() => ({
   getChannelPosts: vi.fn(),
@@ -14,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   rescheduleChannelPost: vi.fn(),
   getChannelPostImageChoices: vi.fn(),
   uploadChannelPostImage: vi.fn(),
+  updateCampaignChannel: vi.fn(),
 }))
 vi.mock('@/entities/campaign/campaign', async (importOriginal) => ({ ...(await importOriginal()), ...mocks }))
 
@@ -24,25 +26,30 @@ const channel = {
   links: [{ key: 'landing', label: 'Trang tuyển dụng của chiến dịch', url: 'http://localhost:5173/r/AbC123xy' }],
   target: 'landing',
   jobs: [],
+  kind_label: 'Fanpage Facebook',
+  label: 'Fanpage',
   rendered_content: { headline: 'Tuyển gấp' },
 }
 const campaign = { public_id: 'camp_1', name: 'Tuyển kỹ thuật', status: 'active' }
 
-function renderPosts(props = {}) {
+function renderWith(Component) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
-        <ChannelFacebookPosts campaign={campaign} channel={channel} editable message="Tuyển gấp" {...props} />
+        <Component campaign={campaign} channel={channel} editable />
       </MemoryRouter>
     </QueryClientProvider>,
   )
 }
+const renderPosts = () => renderWith(ChannelFacebookPosts)
+const renderComposer = () => renderWith(ChannelPostSection)
 
 describe('ChannelFacebookPosts', () => {
   beforeEach(() => {
     Object.values(mocks).forEach((mock) => mock.mockReset())
     mocks.getChannelPostImageChoices.mockResolvedValue({ company_images: [] })
+    mocks.updateCampaignChannel.mockResolvedValue(channel)
     vi.spyOn(message, 'success').mockImplementation(() => {})
   })
 
@@ -67,9 +74,9 @@ describe('ChannelFacebookPosts', () => {
     mocks.getChannelPosts.mockResolvedValue([])
     mocks.getSocialConnections.mockResolvedValue([{ public_id: 'soc_1', page_name: 'Fanpage ProCV', status: 'connected' }])
     mocks.scheduleChannelPost.mockResolvedValue({})
-    renderPosts()
+    renderComposer()
 
-    await user.click(await screen.findByRole('button', { name: 'Đăng lên Fanpage' }))
+    await user.click(await screen.findByRole('button', { name: 'Soạn bài' }))
     const drawer = await screen.findByRole('dialog')
     expect(await within(drawer).findByLabelText('Xem trước bài đăng')).toHaveTextContent('Tuyển gấp')
     expect(within(drawer).getByText(/Facebook sẽ hiện dạng chữ/)).toBeInTheDocument()
@@ -91,9 +98,9 @@ describe('ChannelFacebookPosts', () => {
       company_images: [{ kind: 'cover', label: 'Ảnh bìa công ty', path: 'employers/cmp/covers/a.jpg', url: 'http://localhost:8000/media/employers/cmp/covers/a.jpg' }],
     })
     mocks.scheduleChannelPost.mockResolvedValue({})
-    renderPosts()
+    renderComposer()
 
-    await user.click(await screen.findByRole('button', { name: 'Đăng lên Fanpage' }))
+    await user.click(await screen.findByRole('button', { name: 'Soạn bài' }))
     const drawer = await screen.findByRole('dialog')
     await user.click(await within(drawer).findByRole('button', { name: /Dùng ảnh bìa công ty/ }))
     expect(within(drawer).getByRole('img', { name: 'Ảnh 1 của bài' })).toBeInTheDocument()
@@ -110,9 +117,9 @@ describe('ChannelFacebookPosts', () => {
     mocks.getChannelPosts.mockResolvedValue([])
     mocks.getSocialConnections.mockResolvedValue([{ public_id: 'soc_1', page_name: 'Fanpage ProCV', status: 'connected' }])
     mocks.scheduleChannelPost.mockResolvedValue({})
-    renderPosts()
+    renderComposer()
 
-    await user.click(await screen.findByRole('button', { name: 'Đăng lên Fanpage' }))
+    await user.click(await screen.findByRole('button', { name: 'Soạn bài' }))
     const drawer = await screen.findByRole('dialog')
     await user.click(await within(drawer).findByText('Đăng nhiều lần'))
     await user.click(within(drawer).getByRole('checkbox', { name: '3 ngày' }))
@@ -127,9 +134,9 @@ describe('ChannelFacebookPosts', () => {
     const user = userEvent.setup()
     mocks.getChannelPosts.mockResolvedValue([])
     mocks.getSocialConnections.mockResolvedValue([])
-    renderPosts()
+    renderComposer()
 
-    await user.click(await screen.findByRole('button', { name: 'Đăng lên Fanpage' }))
+    await user.click(await screen.findByRole('button', { name: 'Soạn bài' }))
 
     expect(await screen.findByRole('link', { name: 'Cài đặt tài khoản' }))
       .toHaveAttribute('href', '/tuyendung/app/account/settings/integrations')

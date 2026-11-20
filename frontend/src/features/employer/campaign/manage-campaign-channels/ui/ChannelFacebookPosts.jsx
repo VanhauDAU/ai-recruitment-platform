@@ -3,18 +3,16 @@ import {
   ClockCircleOutlined,
   CloseCircleFilled,
   PauseCircleFilled,
-  SendOutlined,
   SyncOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Skeleton } from 'antd'
 import dayjs from '@/shared/lib/dayjs'
-import { useState } from 'react'
 import { campaignKeys, cancelChannelPost, getChannelPosts, rescheduleChannelPost } from '@/entities/campaign/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
-import FacebookPostComposer from './FacebookPostComposer'
+import { summary } from '../lib/channel-kinds'
 
 const STATUS = {
   scheduled: { icon: ClockCircleOutlined, tone: 'blue' },
@@ -34,11 +32,9 @@ function postTime(post) {
   return m.employer_campaign_posts_scheduled_for({ time: when(post.scheduled_for) })
 }
 
-// Bước đăng của kênh Fanpage: ProCV đăng thay bài đã soạn, kèm lịch sử bài mới nhất
-// trước và lỗi có cách xử lý.
-export default function ChannelFacebookPosts({ campaign, channel, editable, message: postMessage }) {
+// Bài trên Fanpage của kênh: mới nhất trước, lỗi kèm cách xử lý, đăng lại hoặc hủy.
+export default function ChannelFacebookPosts({ campaign, channel, editable }) {
   const queryClient = useQueryClient()
-  const [composing, setComposing] = useState(false)
   const key = campaignKeys.channelPosts(campaign.public_id, channel.public_id)
   const postsQuery = useQuery({
     queryKey: key,
@@ -60,41 +56,36 @@ export default function ChannelFacebookPosts({ campaign, channel, editable, mess
 
   return (
     <div className="ch-fb">
-      <div className="ch-publish">
-        <p className="ch-section-note">{m.employer_campaign_posts_intro()}</p>
-        {editable && (
-          <div className="ch-actions">
-            <Button type="primary" icon={<SendOutlined aria-hidden />} disabled={!postMessage} onClick={() => setComposing(true)}>
-              {m.employer_campaign_fb_title()}
-            </Button>
-          </div>
-        )}
-      </div>
-
-      <h5 className="ch-fb__history">{m.employer_campaign_posts_history()}</h5>
       {postsQuery.isLoading ? <Skeleton active paragraph={{ rows: 2 }} /> : posts.length === 0 ? (
         <p className="ch-section-note">{m.employer_campaign_posts_empty()}</p>
       ) : (
-        <ol className="ch-timeline" aria-label={m.employer_campaign_posts_timeline_aria()}>
+        <ol className="ch-postcards" aria-label={m.employer_campaign_posts_timeline_aria()}>
           {posts.map((post) => {
             const meta = STATUS[post.status] || STATUS.scheduled
             const Icon = meta.icon
+            const [cover, ...more] = post.images || []
             return (
-              <li key={post.public_id} className={`ch-timeline__item is-${meta.tone}`}>
-                <Icon aria-hidden className="ch-timeline__dot" spin={post.status === 'publishing'} />
-                <div className="ch-timeline__body">
-                  <div className="ch-timeline__top">
-                    <strong>{post.status_label}</strong>
-                    <span>{postTime(post)}{post.page_name ? m.employer_campaign_posts_on_page({ page: post.page_name }) : ''}</span>
-                  </div>
-                  <p className="ch-timeline__text">{post.message}</p>
-                  {post.images?.length > 0 && (
-                    <div className="ch-timeline__images">
-                      {post.images.map((url, index) => <img key={url} src={url} alt={m.employer_campaign_posts_image_alt({ index: index + 1 })} />)}
-                    </div>
+              <li key={post.public_id} className="ch-postcard">
+                <div className="ch-postcard__head">
+                  <span className={`ch-status is-${meta.tone}`}>
+                    <Icon aria-hidden spin={post.status === 'publishing'} />
+                    {post.status_label}
+                  </span>
+                  <span className="ch-postcard__when">{postTime(post)}</span>
+                  {post.page_name && <span className="ch-postcard__page">{post.page_name}</span>}
+                </div>
+                <div className="ch-postcard__body">
+                  {cover && (
+                    <span className="ch-postcard__thumb">
+                      <img src={cover} alt={m.employer_campaign_posts_image_alt({ index: 1 })} />
+                      {more.length > 0 && <span aria-hidden>+{more.length}</span>}
+                    </span>
                   )}
-                  {post.error_message && <p className="ch-timeline__error">{post.error_message}</p>}
-                  <div className="ch-timeline__actions">
+                  <p className="ch-postcard__text">{summary(post.message)}</p>
+                </div>
+                {post.error_message && <p className="ch-postcard__error">{post.error_message}</p>}
+                {(post.permalink && post.status === 'published') || (editable && OPEN.includes(post.status)) ? (
+                  <div className="ch-postcard__actions">
                     {post.permalink && post.status === 'published' && (
                       <a href={post.permalink} target="_blank" rel="noreferrer">{m.employer_campaign_posts_open_on_facebook()}</a>
                     )}
@@ -107,20 +98,12 @@ export default function ChannelFacebookPosts({ campaign, channel, editable, mess
                       <Button size="small" type="text" danger onClick={() => cancel.mutate(post.public_id)}>{m.employer_campaign_posts_cancel()}</Button>
                     )}
                   </div>
-                </div>
+                ) : null}
               </li>
             )
           })}
         </ol>
       )}
-
-      <FacebookPostComposer
-        campaign={campaign}
-        channel={channel}
-        defaultMessage={postMessage}
-        open={composing}
-        onClose={() => setComposing(false)}
-      />
     </div>
   )
 }

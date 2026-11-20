@@ -66,6 +66,7 @@ describe('campaign channels', () => {
     const user = userEvent.setup()
     mocks.getCampaignChannels.mockResolvedValue([channel, { ...channel, public_id: 'chn_2', kind: 'linkedin', kind_label: 'LinkedIn', label: 'LinkedIn công ty' }])
     mocks.generateCampaignChannelContent.mockResolvedValue({ ...channel, fallback_reason: 'ai_disabled' })
+    mocks.updateCampaignChannel.mockResolvedValue(channel)
     renderWithClient(<CampaignChannelBoard campaign={campaign} />)
 
     const list = await screen.findByRole('navigation', { name: 'Danh sách kênh' })
@@ -74,9 +75,14 @@ describe('campaign channels', () => {
     expect(screen.getByText('2.000.000 đ')).toBeInTheDocument()
     expect(screen.getByText('20% người bấm')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /Soạn bằng AI/ }))
+    expect(screen.getByText(/Chưa có bài/)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Soạn bài' }))
+    const drawer = await screen.findByRole('dialog')
+    await user.click(within(drawer).getByRole('button', { name: /Soạn bằng AI/ }))
     await waitFor(() => expect(mocks.generateCampaignChannelContent).toHaveBeenCalledWith('camp_1', 'chn_1'))
+    expect(mocks.updateCampaignChannel).toHaveBeenCalledWith('camp_1', 'chn_1', { jobs: [], target: 'landing' })
     expect(message.info).toHaveBeenCalledWith('AI đang tắt nên dùng mẫu có sẵn. Hãy đọc lại và sửa cho hợp.')
+    await user.click(within(drawer).getByRole('button', { name: 'Close' }))
 
     await user.click(screen.getByRole('tab', { name: 'Link & QR' }))
     expect(await screen.findByText('https://procv.vn/r/AbC123xy')).toBeInTheDocument()
@@ -85,43 +91,53 @@ describe('campaign channels', () => {
     expect(await screen.findByRole('heading', { name: 'LinkedIn công ty' })).toBeInTheDocument()
   })
 
-  it('picks the jobs and link type of the post on one channel', async () => {
+  it('writes a post in one drawer: jobs, link type, an inserted link, then save and copy', async () => {
     const user = userEvent.setup()
-    mocks.getCampaignChannels.mockResolvedValue([{ ...channel, content: { body: 'Ứng tuyển {link}' }, rendered_content: { body: 'Ứng tuyển https://procv.vn/r/AbC123xy' } }])
-    mocks.updateCampaignChannel.mockResolvedValue(channel)
+    const drafted = { ...channel, content: { body: 'Ứng tuyển {link}' }, rendered_content: { body: 'Ứng tuyển https://procv.vn/r/AbC123xy' } }
+    mocks.getCampaignChannels.mockResolvedValue([drafted])
+    mocks.updateCampaignChannel.mockResolvedValue(drafted)
     renderWithClient(<CampaignChannelBoard campaign={campaign} />)
 
-    const jobs = await screen.findByRole('group', { name: 'Tin trong bài' })
-    expect(screen.getByText(/bài giới thiệu tối đa 5 tin/)).toBeInTheDocument()
+    expect(await screen.findByText('Ứng tuyển https://procv.vn/r/AbC123xy')).toBeInTheDocument()
+    expect(screen.getByText('Tin mới nhất · Trang chiến dịch')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Sửa' }))
+    const drawer = await screen.findByRole('dialog')
+    const jobs = within(drawer).getByRole('group', { name: 'Tin trong bài' })
     await user.click(within(jobs).getByRole('button', { name: 'Kế toán' }))
-    await waitFor(() => expect(mocks.updateCampaignChannel).toHaveBeenCalledWith('camp_1', 'chn_1', { jobs: ['jb_b'] }))
-    await user.click(screen.getByText('Từng tin'))
-    await waitFor(() => expect(mocks.updateCampaignChannel).toHaveBeenCalledWith('camp_1', 'chn_1', { target: 'job' }))
-    expect(await screen.findByRole('status')).toHaveTextContent('Soạn lại bằng AI')
+    await user.click(within(drawer).getByRole('combobox'))
+    await user.click(await screen.findByTitle('Từng tin'))
+    expect(within(drawer).getByRole('status')).toHaveTextContent('Soạn lại bằng AI')
+
+    await user.click(within(drawer).getByRole('button', { name: /Chèn link/ }))
+    await user.click(await screen.findByRole('menuitem', { name: 'Trang công ty' }))
+    expect(within(drawer).getByRole('textbox')).toHaveValue('Ứng tuyển https://procv.vn/r/AbC123xy https://procv.vn/r/AbC123xy/cong-ty ')
+
+    await user.click(within(drawer).getByRole('button', { name: /Lưu và sao chép/ }))
+    await waitFor(() => expect(mocks.updateCampaignChannel).toHaveBeenCalledWith('camp_1', 'chn_1', {
+      jobs: ['jb_b'],
+      target: 'job',
+      content: { body: 'Ứng tuyển https://procv.vn/r/AbC123xy https://procv.vn/r/AbC123xy/cong-ty ' },
+    }))
 
     await user.click(screen.getByRole('tab', { name: 'Link & QR' }))
     expect(await screen.findByText('https://procv.vn/r/AbC123xy/cong-ty')).toBeInTheDocument()
     expect(screen.getByText('Tin: Kế toán')).toBeInTheDocument()
-    expect(screen.getByText('https://procv.vn/r/AbC123xy/jb_b')).toBeInTheDocument()
   })
 
-  it('walks one post through three steps; a Fanpage publishes from step 3', async () => {
+  it('shows a Fanpage tab as its posts with one compose button', async () => {
     mocks.getCampaignChannels.mockResolvedValue([{ ...channel, kind: 'facebook_page', kind_label: 'Fanpage Facebook', label: 'Fanpage' }])
     mocks.getChannelPosts.mockResolvedValue([])
     renderWithClient(<MemoryRouter><CampaignChannelBoard campaign={campaign} /></MemoryRouter>)
 
-    const steps = await screen.findAllByRole('heading', { level: 4 })
-    expect(steps.map((step) => step.textContent)).toEqual(['1Chọn tin và link', '2Soạn nội dung', '3Đăng bài'])
-    expect(screen.queryByRole('tab', { name: 'Đăng Fanpage' })).not.toBeInTheDocument()
-    expect(screen.getByText('Soạn nội dung ở bước 2 trước khi đăng.')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Đăng lên Fanpage/ })).toBeDisabled()
     expect(await screen.findByText('Chưa có bài nào trên Fanpage.')).toBeInTheDocument()
+    expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Bài đăng', 'Link & QR', 'Chi phí'])
+    expect(screen.getByRole('button', { name: 'Soạn bài' })).toBeEnabled()
     expect(screen.queryByRole('button', { name: /Sao chép bài/ })).not.toBeInTheDocument()
   })
 
   it('marks a manual channel as posted', async () => {
     const user = userEvent.setup()
-    mocks.getCampaignChannels.mockResolvedValue([channel])
+    mocks.getCampaignChannels.mockResolvedValue([{ ...channel, rendered_content: { body: 'Tuyển gấp' } }])
     mocks.updateCampaignChannel.mockResolvedValue({ ...channel, posted_at: '2026-11-18T10:00:00Z' })
     renderWithClient(<CampaignChannelBoard campaign={campaign} />)
 
