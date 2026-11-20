@@ -2,20 +2,18 @@ import {
   CheckCircleFilled,
   ClockCircleOutlined,
   CloseCircleFilled,
-  FacebookFilled,
   PauseCircleFilled,
   SendOutlined,
   SyncOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Empty, Skeleton } from 'antd'
+import { Button, Skeleton } from 'antd'
 import dayjs from '@/shared/lib/dayjs'
 import { useState } from 'react'
 import { campaignKeys, cancelChannelPost, getChannelPosts, rescheduleChannelPost } from '@/entities/campaign/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
-import { postText } from '../lib/channel-kinds'
 import FacebookPostComposer from './FacebookPostComposer'
 
 const STATUS = {
@@ -36,8 +34,9 @@ function postTime(post) {
   return m.employer_campaign_posts_scheduled_for({ time: when(post.scheduled_for) })
 }
 
-// Bài đăng tự động lên Fanpage của kênh: dòng thời gian mới nhất trước, lỗi kèm cách xử lý.
-export default function ChannelFacebookPosts({ campaign, channel, editable }) {
+// Bước đăng của kênh Fanpage: ProCV đăng thay bài đã soạn, kèm lịch sử bài mới nhất
+// trước và lỗi có cách xử lý.
+export default function ChannelFacebookPosts({ campaign, channel, editable, message: postMessage }) {
   const queryClient = useQueryClient()
   const [composing, setComposing] = useState(false)
   const key = campaignKeys.channelPosts(campaign.public_id, channel.public_id)
@@ -58,24 +57,23 @@ export default function ChannelFacebookPosts({ campaign, channel, editable }) {
     onError,
   })
   const posts = (postsQuery.data || []).filter((post) => post.status !== 'cancelled')
-  const text = postText(channel.rendered_content)
 
   return (
     <div className="ch-fb">
-      <div className="ch-fb__intro">
-        <FacebookFilled aria-hidden className="ch-fb__logo" />
-        <p className="ch-section-note">
-          {m.employer_campaign_posts_intro()}
-        </p>
+      <div className="ch-publish">
+        <p className="ch-section-note">{m.employer_campaign_posts_intro()}</p>
         {editable && (
-          <Button type="primary" icon={<SendOutlined aria-hidden />} onClick={() => setComposing(true)}>
-            {m.employer_campaign_posts_create()}
-          </Button>
+          <div className="ch-actions">
+            <Button type="primary" icon={<SendOutlined aria-hidden />} disabled={!postMessage} onClick={() => setComposing(true)}>
+              {m.employer_campaign_fb_title()}
+            </Button>
+          </div>
         )}
       </div>
 
-      {postsQuery.isLoading ? <Skeleton active paragraph={{ rows: 3 }} /> : posts.length === 0 ? (
-        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={m.employer_campaign_posts_empty()} />
+      <h5 className="ch-fb__history">{m.employer_campaign_posts_history()}</h5>
+      {postsQuery.isLoading ? <Skeleton active paragraph={{ rows: 2 }} /> : posts.length === 0 ? (
+        <p className="ch-section-note">{m.employer_campaign_posts_empty()}</p>
       ) : (
         <ol className="ch-timeline" aria-label={m.employer_campaign_posts_timeline_aria()}>
           {posts.map((post) => {
@@ -119,7 +117,7 @@ export default function ChannelFacebookPosts({ campaign, channel, editable }) {
       <FacebookPostComposer
         campaign={campaign}
         channel={channel}
-        defaultMessage={text}
+        defaultMessage={postMessage}
         open={composing}
         onClose={() => setComposing(false)}
       />

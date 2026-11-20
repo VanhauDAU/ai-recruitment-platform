@@ -33,7 +33,7 @@ function renderPosts(props = {}) {
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
-        <ChannelFacebookPosts campaign={campaign} channel={channel} editable {...props} />
+        <ChannelFacebookPosts campaign={campaign} channel={channel} editable message="Tuyển gấp" {...props} />
       </MemoryRouter>
     </QueryClientProvider>,
   )
@@ -69,7 +69,7 @@ describe('ChannelFacebookPosts', () => {
     mocks.scheduleChannelPost.mockResolvedValue({})
     renderPosts()
 
-    await user.click(await screen.findByRole('button', { name: 'Tạo bài đăng' }))
+    await user.click(await screen.findByRole('button', { name: 'Đăng lên Fanpage' }))
     const drawer = await screen.findByRole('dialog')
     expect(await within(drawer).findByLabelText('Xem trước bài đăng')).toHaveTextContent('Tuyển gấp')
     expect(within(drawer).getByText(/Facebook sẽ hiện dạng chữ/)).toBeInTheDocument()
@@ -93,7 +93,7 @@ describe('ChannelFacebookPosts', () => {
     mocks.scheduleChannelPost.mockResolvedValue({})
     renderPosts()
 
-    await user.click(await screen.findByRole('button', { name: 'Tạo bài đăng' }))
+    await user.click(await screen.findByRole('button', { name: 'Đăng lên Fanpage' }))
     const drawer = await screen.findByRole('dialog')
     await user.click(await within(drawer).findByRole('button', { name: /Dùng ảnh bìa công ty/ }))
     expect(within(drawer).getByRole('img', { name: 'Ảnh 1 của bài' })).toBeInTheDocument()
@@ -112,7 +112,7 @@ describe('ChannelFacebookPosts', () => {
     mocks.scheduleChannelPost.mockResolvedValue({})
     renderPosts()
 
-    await user.click(await screen.findByRole('button', { name: 'Tạo bài đăng' }))
+    await user.click(await screen.findByRole('button', { name: 'Đăng lên Fanpage' }))
     const drawer = await screen.findByRole('dialog')
     await user.click(await within(drawer).findByText('Đăng nhiều lần'))
     await user.click(within(drawer).getByRole('checkbox', { name: '3 ngày' }))
@@ -129,7 +129,7 @@ describe('ChannelFacebookPosts', () => {
     mocks.getSocialConnections.mockResolvedValue([])
     renderPosts()
 
-    await user.click(await screen.findByRole('button', { name: 'Tạo bài đăng' }))
+    await user.click(await screen.findByRole('button', { name: 'Đăng lên Fanpage' }))
 
     expect(await screen.findByRole('link', { name: 'Cài đặt tài khoản' }))
       .toHaveAttribute('href', '/tuyendung/app/account/settings/integrations')

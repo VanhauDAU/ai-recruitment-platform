@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { App } from 'antd'
+import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { message } from '@/shared/lib/toast'
 import CampaignChannelBoard from './CampaignChannelBoard'
@@ -14,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   getCampaignChannelReport: vi.fn(),
   getCampaignChannelCosts: vi.fn(),
   addCampaignChannelCost: vi.fn(),
+  getChannelPosts: vi.fn(),
 }))
 
 vi.mock('@/entities/campaign/campaign', async (importOriginal) => ({ ...(await importOriginal()), ...mocks }))
@@ -101,6 +103,20 @@ describe('campaign channels', () => {
     expect(await screen.findByText('https://procv.vn/r/AbC123xy/cong-ty')).toBeInTheDocument()
     expect(screen.getByText('Tin: Kế toán')).toBeInTheDocument()
     expect(screen.getByText('https://procv.vn/r/AbC123xy/jb_b')).toBeInTheDocument()
+  })
+
+  it('walks one post through three steps; a Fanpage publishes from step 3', async () => {
+    mocks.getCampaignChannels.mockResolvedValue([{ ...channel, kind: 'facebook_page', kind_label: 'Fanpage Facebook', label: 'Fanpage' }])
+    mocks.getChannelPosts.mockResolvedValue([])
+    renderWithClient(<MemoryRouter><CampaignChannelBoard campaign={campaign} /></MemoryRouter>)
+
+    const steps = await screen.findAllByRole('heading', { level: 4 })
+    expect(steps.map((step) => step.textContent)).toEqual(['1Chọn tin và link', '2Soạn nội dung', '3Đăng bài'])
+    expect(screen.queryByRole('tab', { name: 'Đăng Fanpage' })).not.toBeInTheDocument()
+    expect(screen.getByText('Soạn nội dung ở bước 2 trước khi đăng.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Đăng lên Fanpage/ })).toBeDisabled()
+    expect(await screen.findByText('Chưa có bài nào trên Fanpage.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Sao chép bài/ })).not.toBeInTheDocument()
   })
 
   it('marks a manual channel as posted', async () => {
