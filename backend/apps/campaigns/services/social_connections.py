@@ -165,8 +165,36 @@ def expire_connection(connection, code):
         )
 
 
+def warn_connection_expiring(connection):
+    """Remind the owner to reconnect a token that cannot be refreshed, once per token."""
+    recipient = connection.owner.user
+    expires_on = timezone.localtime(connection.token_expires_at).strftime('%d/%m/%Y')
+    with recipient_language(recipient):
+        emit_employer_event(
+            recipient=recipient,
+            event_type=EmployerNotification.EventType.SOCIAL_CONNECTION_EXPIRING,
+            dedupe_key=f'social-connection-expiring:{connection.public_id}:{expires_on}',
+            message=str(
+                gettext_lazy(
+                    'Kết nối %(network)s "%(account)s" hết hạn ngày %(date)s. '
+                    'Hãy kết nối lại trước ngày đó để không gián đoạn đăng bài.'
+                )
+            )
+            % {
+                'network': connection.spec.label,
+                'account': connection.account_name,
+                'date': expires_on,
+            },
+            subject_public_id=connection.public_id,
+            action_path=INTEGRATIONS_PATH,
+        )
+
+
 def refresh_expiring_tokens(now=None):
-    """Refresh tokens that expire soon; a refused or lapsed one expires the connection."""
+    """Refresh tokens that expire soon, or remind the owner when the network cannot.
+
+    A refused or lapsed token expires the connection.
+    """
     now = now or timezone.now()
     connections = SocialAccountConnection.objects.select_related('owner__user').filter(
         status=SocialAccountConnection.Status.CONNECTED,
@@ -175,6 +203,12 @@ def refresh_expiring_tokens(now=None):
     )
     refreshed = 0
     for connection in connections:
+        if not connection.spec.token_refreshable:
+            if connection.token_expires_at <= now:
+                expire_connection(connection, 'token_expired')
+            else:
+                warn_connection_expiring(connection)
+            continue
         try:
             grant = get_provider(connection.network).refresh(
                 decrypt_token(connection.token_ciphertext)

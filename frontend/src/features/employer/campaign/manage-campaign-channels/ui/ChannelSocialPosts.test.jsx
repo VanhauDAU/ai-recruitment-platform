@@ -220,15 +220,21 @@ describe('ChannelSocialPosts', () => {
     expect(within(within(drawer).getByLabelText('Xem trước bài đăng')).getByText('procv.vn')).toBeInTheDocument()
   })
 
-  it('points to the integrations page when no page is connected', async () => {
+  it('lets an unconnected network save and copy the post while pointing to the integrations page', async () => {
     const user = userEvent.setup()
     mocks.getChannelPosts.mockResolvedValue([])
     mocks.getSocialConnections.mockResolvedValue([])
+    const writeText = vi.fn().mockResolvedValue()
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
     renderComposer()
 
     await user.click(await screen.findByRole('button', { name: 'Soạn bài' }))
+    const drawer = await screen.findByRole('dialog')
 
-    expect(await screen.findByRole('link', { name: 'Cài đặt tài khoản' }))
+    expect(await within(drawer).findByRole('link', { name: 'Cài đặt tài khoản' }))
       .toHaveAttribute('href', '/tuyendung/app/account/settings/integrations')
+    await user.click(within(drawer).getByRole('button', { name: /Lưu và sao chép/ }))
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith('Tuyển gấp'))
+    expect(mocks.scheduleChannelPost).not.toHaveBeenCalled()
   })
 })

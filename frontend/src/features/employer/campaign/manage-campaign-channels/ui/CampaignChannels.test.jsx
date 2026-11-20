@@ -10,6 +10,7 @@ import ChannelReport from './ChannelReport'
 
 const mocks = vi.hoisted(() => ({
   useSocialNetworks: vi.fn(),
+  getSocialConnections: vi.fn(),
   getCampaignChannels: vi.fn(),
   generateCampaignChannelContent: vi.fn(),
   updateCampaignChannel: vi.fn(),
@@ -137,12 +138,23 @@ describe('campaign channels', () => {
   it('shows a Fanpage tab as its posts with one compose button', async () => {
     mocks.getCampaignChannels.mockResolvedValue([{ ...channel, kind: 'facebook_page', kind_label: 'Fanpage Facebook', label: 'Fanpage' }])
     mocks.getChannelPosts.mockResolvedValue([])
+    mocks.getSocialConnections.mockResolvedValue([{ public_id: 'soc_1', network: 'facebook_page', status: 'connected' }])
     renderWithClient(<MemoryRouter><CampaignChannelBoard campaign={campaign} /></MemoryRouter>)
 
     expect(await screen.findByText('Chưa có bài nào trên Fanpage Facebook.')).toBeInTheDocument()
     expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Bài đăng', 'Link & QR', 'Chi phí'])
     expect(screen.getByRole('button', { name: 'Soạn bài' })).toBeEnabled()
     expect(screen.queryByRole('button', { name: /Sao chép bài/ })).not.toBeInTheDocument()
+  })
+
+  it('keeps copy-and-post for a channel whose network is not connected yet', async () => {
+    mocks.getCampaignChannels.mockResolvedValue([{ ...channel, kind: 'facebook_page', kind_label: 'Fanpage Facebook', label: 'Fanpage', rendered_content: { body: 'Tuyển gấp' } }])
+    mocks.getChannelPosts.mockResolvedValue([])
+    mocks.getSocialConnections.mockResolvedValue([])
+    renderWithClient(<MemoryRouter><CampaignChannelBoard campaign={campaign} /></MemoryRouter>)
+
+    expect(await screen.findByRole('checkbox', { name: 'Tôi đã đăng bài lên kênh này' })).toBeInTheDocument()
+    expect(screen.queryByText('Chưa có bài nào trên Fanpage Facebook.')).not.toBeInTheDocument()
   })
 
   it('marks a manual channel as posted', async () => {

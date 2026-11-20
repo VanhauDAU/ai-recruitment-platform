@@ -1,8 +1,14 @@
 import { CopyOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Checkbox, Input, Skeleton } from 'antd'
 import { useState } from 'react'
-import { campaignKeys, networkForKind, updateCampaignChannel, useSocialNetworks } from '@/entities/campaign/campaign'
+import {
+  campaignKeys,
+  getSocialConnections,
+  networkForKind,
+  updateCampaignChannel,
+  useSocialNetworks,
+} from '@/entities/campaign/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
@@ -66,15 +72,18 @@ export default function ChannelPostSection({ campaign, channel, editable }) {
   const [composing, setComposing] = useState(false)
   const networksQuery = useSocialNetworks()
   const network = networkForKind(networksQuery.data, channel.kind)
+  const connectionsQuery = useQuery({ queryKey: campaignKeys.socialConnections, queryFn: getSocialConnections, enabled: Boolean(network) })
+  // Kênh có mạng tự đăng nhưng chưa nối tài khoản vẫn đăng tay được như trước.
+  const connected = (connectionsQuery.data || []).some((item) => item.network === network?.key && item.status === 'connected')
   const text = postText(channel.rendered_content)
 
-  if (networksQuery.isLoading) return <Skeleton active paragraph={{ rows: 3 }} />
+  if (networksQuery.isLoading || (network && connectionsQuery.isLoading)) return <Skeleton active paragraph={{ rows: 3 }} />
 
   return (
     <div className="ch-posts">
       <div className="ch-posts__bar">
         <p className="ch-section-note">
-          {network ? m.employer_campaign_posts_intro({ network: network.label }) : m.employer_campaign_post_manual_note({ kind: channel.kind_label })}
+          {connected ? m.employer_campaign_posts_intro({ network: network.label }) : m.employer_campaign_post_manual_note({ kind: channel.kind_label })}
         </p>
         {editable && (
           <Button type="primary" icon={<PlusOutlined aria-hidden />} onClick={() => setComposing(true)}>
@@ -83,13 +92,12 @@ export default function ChannelPostSection({ campaign, channel, editable }) {
         )}
       </div>
 
-      {network ? (
-        <ChannelSocialPosts campaign={campaign} channel={channel} network={network} editable={editable} />
-      ) : text ? (
+      {network && <ChannelSocialPosts campaign={campaign} channel={channel} network={network} editable={editable} hideWhenEmpty={!connected} />}
+      {!connected && (text ? (
         <ManualPost campaign={campaign} channel={channel} editable={editable} text={text} onEdit={() => setComposing(true)} />
       ) : (
         <p className="ch-section-note">{m.employer_campaign_post_empty()}</p>
-      )}
+      ))}
 
       {editable && <PostComposer campaign={campaign} channel={channel} network={network} open={composing} onClose={() => setComposing(false)} />}
     </div>

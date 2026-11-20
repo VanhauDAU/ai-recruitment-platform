@@ -244,7 +244,12 @@ if not AUTH_REFRESH_COOKIE_SECURE:
 if AUTH_REFRESH_COOKIE_SAMESITE not in {'Lax', 'Strict'}:
     _errors.append('Refresh cookie production phải dùng SameSite=Lax hoặc Strict.')
 
-_unknown_networks = set(CAMPAIGN_SOCIAL_LIVE_NETWORKS) - {'facebook_page', 'instagram', 'threads'}
+_unknown_networks = set(CAMPAIGN_SOCIAL_LIVE_NETWORKS) - {
+    'facebook_page',
+    'instagram',
+    'threads',
+    'linkedin',
+}
 if _unknown_networks:
     _errors.append(
         'CAMPAIGN_SOCIAL_LIVE_NETWORKS có mạng không hỗ trợ: '
@@ -256,6 +261,13 @@ if {'facebook_page', 'instagram'} & set(CAMPAIGN_SOCIAL_LIVE_NETWORKS):
         _errors.append('FACEBOOK_APP_ID và FACEBOOK_APP_SECRET là bắt buộc khi đăng Facebook.')
 if 'threads' in CAMPAIGN_SOCIAL_LIVE_NETWORKS and not (THREADS_APP_ID and THREADS_APP_SECRET):
     _errors.append('THREADS_APP_ID và THREADS_APP_SECRET là bắt buộc khi đăng Threads.')
+if 'linkedin' in CAMPAIGN_SOCIAL_LIVE_NETWORKS and not (
+    (LINKEDIN_SOCIAL_CLIENT_ID or OAUTH_LINKEDIN_CLIENT_ID)
+    and (LINKEDIN_SOCIAL_CLIENT_SECRET or OAUTH_LINKEDIN_CLIENT_SECRET)
+):
+    _errors.append(
+        'Cần LINKEDIN_SOCIAL_CLIENT_ID/SECRET (hoặc OAUTH_LINKEDIN_*) khi đăng LinkedIn.'
+    )
 if 'facebook_page' in CAMPAIGN_SOCIAL_LIVE_NETWORKS:
     if not FACEBOOK_OAUTH_REDIRECT_URI.startswith('https://'):
         _errors.append('FACEBOOK_OAUTH_REDIRECT_URI production phải dùng HTTPS.')
