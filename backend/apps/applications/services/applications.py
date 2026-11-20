@@ -1,7 +1,5 @@
 """Candidate submission workflow for the applications domain."""
 
-from datetime import timedelta
-
 from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
@@ -19,12 +17,9 @@ from common.i18n import recipient_language
 
 from ..models import Application, ApplicationStatusHistory
 from .blocks import BLOCKED_APPLY_MESSAGE, is_candidate_blocked_for_job
+from .policy import max_applications_per_job, reapply_cooldown
 from .recruiter_alerts import alert_recruiter_of_application, alert_recruiter_of_withdrawal
 from .status import STATUS_TIMESTAMP_FIELD
-
-MAX_APPLICATIONS_PER_JOB = 3
-REAPPLICATION_COOLDOWN = timedelta(minutes=5)
-
 
 JOB_UNAVAILABLE_MESSAGE = gettext_lazy('Tin tuyển dụng này hiện không nhận hồ sơ.')
 
@@ -61,10 +56,10 @@ def reapplication_error(candidate, job, *, now=None):
         if visible in Application.UNANSWERED_STATUSES:
             return _('Bạn đã ứng tuyển tin này. Muốn nộp CV khác, hãy rút hồ sơ rồi ứng tuyển lại.')
         return _('Hồ sơ của bạn đang được nhà tuyển dụng xử lý nên chưa thể nộp lại.')
-    if submissions.count() >= MAX_APPLICATIONS_PER_JOB:
+    if submissions.count() >= max_applications_per_job():
         return _('Bạn đã dùng hết 2 lượt ứng tuyển lại cho công việc này.')
     latest = submissions.order_by('-applied_at').first()
-    if latest and latest.applied_at > now - REAPPLICATION_COOLDOWN:
+    if latest and latest.applied_at > now - reapply_cooldown():
         return _('Vui lòng chờ đủ 5 phút kể từ lần ứng tuyển gần nhất trước khi ứng tuyển lại.')
     return None
 

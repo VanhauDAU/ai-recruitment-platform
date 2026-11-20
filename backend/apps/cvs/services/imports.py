@@ -8,6 +8,7 @@ from django.core.files.storage import default_storage
 from django.db import transaction
 from django.utils import timezone
 
+from apps.sitecontent.selectors import retention_days
 from common.files.signatures import SIGNATURE_WINDOW_BYTES, has_pdf_header
 
 from ..models import CvImportJob, UserCv
@@ -23,6 +24,12 @@ MAX_IMPORT_BYTES = 5 * 1024 * 1024
 
 class InvalidCvImport(ValueError):
     pass
+
+
+def _source_retention_days():
+    return retention_days(
+        'cv_import_source_retention_days', settings.CV_IMPORT_SOURCE_RETENTION_DAYS
+    )
 
 
 def validate_import_upload(upload):
@@ -103,8 +110,7 @@ def queue_cv_import(
                 user=actor,
                 idempotency_key=key,
                 file_checksum_sha256=checksum,
-                source_expires_at=timezone.now()
-                + timedelta(days=settings.CV_IMPORT_SOURCE_RETENTION_DAYS),
+                source_expires_at=timezone.now() + timedelta(days=_source_retention_days()),
             )
             from apps.cvs.tasks.imports import process_cv_import_job
 
@@ -178,7 +184,7 @@ def queue_cv_import_from_session(
         user=actor,
         idempotency_key=key,
         file_checksum_sha256=asset.checksum_sha256,
-        source_expires_at=timezone.now() + timedelta(days=settings.CV_IMPORT_SOURCE_RETENTION_DAYS),
+        source_expires_at=timezone.now() + timedelta(days=_source_retention_days()),
     )
     from apps.cvs.tasks.imports import process_cv_import_job
 

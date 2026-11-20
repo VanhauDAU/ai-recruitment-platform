@@ -99,6 +99,22 @@ class TalentPoolTests(APITestCase):
         row = self.client.get(reverse('recruiter-application-list')).data['results'][0]
         self.assertTrue(row['in_talent_pool'])
 
+    def test_admin_retention_shortens_how_long_a_saved_candidate_is_kept(self):
+        from apps.sitecontent.models import SiteSetting
+
+        SiteSetting.objects.update_or_create(
+            key='talent_pool_retention_days', defaults={'value': 90}
+        )
+
+        self.assertEqual(self.save_to_pool().status_code, 201)
+
+        entry = TalentPoolEntry.objects.get()
+        self.assertAlmostEqual(
+            (entry.expires_at - timezone.now()).total_seconds(),
+            timedelta(days=90).total_seconds(),
+            delta=60,
+        )
+
     def test_suggestions_rank_by_the_job_applied_to_and_invites_once(self):
         entry_id = self.save_to_pool().data['public_id']
 

@@ -21,8 +21,8 @@ from apps.employers.services import emit_employer_event
 from common.i18n import recipient_language
 
 from ..models import ApplicationReview, ApplicationReviewLink
+from .policy import review_link_max_days
 
-MAX_LINK_DAYS = 30
 # Personal details a reviewer does not need to judge competence; hiding them
 # (and the photo) reduces bias and limits the spread of candidate data.
 MASKED_PERSONAL_FIELDS = ('email', 'phone', 'address', 'website', 'links', 'date_of_birth')
@@ -57,7 +57,7 @@ def create_review_link(application, *, actor, reviewer_name, message='', expires
         reviewer_name=reviewer_name.strip(),
         message=message.strip(),
         token_hash=_token_hash(raw_token),
-        expires_at=timezone.now() + timedelta(days=min(expires_in_days, MAX_LINK_DAYS)),
+        expires_at=timezone.now() + timedelta(days=min(expires_in_days, review_link_max_days())),
     )
     return link, raw_token
 

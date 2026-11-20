@@ -34,6 +34,16 @@ của app `sitecontent`. Hợp đồng của kho cấu hình nằm ở
   (`SiteSetting.SERVER_CHOICES`).
 - **Công tắc tính năng chỉ thu hẹp được máy chủ:** Trung tâm trợ giúp và nơi hiện
   thông báo đa cổng có hiệu lực = cờ `.env` VÀ công tắc admin.
+- **Nghiệp vụ tuyển dụng chỉnh trong khung an toàn:**
+  - Giá trị lạ trong DB bị kẹp vào khoảng cho phép thay vì làm hỏng luồng
+    (`apps/applications/services/policy.py`, `apps/jobs/services/policy.py`).
+  - Hạn nhận hồ sơ và thời gian hiển thị tin không vượt trần 90 ngày trong mã nguồn
+    (`apps.jobs.domain.MAX_LISTING_DAYS`).
+  - Thời gian lưu trữ chỉ rút ngắn được, có mức sàn (`retention_days()`).
+  - Bắt buộc duyệt xác thực NTD = cờ `.env` HOẶC công tắc admin: admin chỉ siết thêm.
+  - Đăng nhập mạng xã hội: admin chỉ tắt bớt nhà cung cấp mà cổng đó hỗ trợ.
+  - Tắt chia sẻ CV vô hiệu mọi link đang có; link cũ không đặt hạn cũng hết hiệu lực
+    khi quá hạn tối đa hiện hành.
 - **Secret và giới hạn hạ tầng nằm ở `.env`.** Mật khẩu, timeout phiên, rate limit, dung
   lượng upload... không phải SiteSetting. Trang quản trị hiển thị giá trị đang áp dụng
   ở bảng **Thông số hệ thống** (`GET /api/admin/site/system-parameters/`). Bảng này chỉ
@@ -107,7 +117,7 @@ của app `sitecontent`. Hợp đồng của kho cấu hình nằm ở
 ## Danh mục key
 
 Cột "Mặc định" là giá trị trong seed. Dấu ✓ nghĩa là key được trả qua API công khai.
-Nhóm chưa có key sẽ được bổ sung ở các giai đoạn sau của kế hoạch.
+
 
 
 
@@ -194,6 +204,9 @@ Nhóm chưa có key sẽ được bổ sung ở các giai đoạn sau của kế
 |---|---|---|---|---|---|
 | Đăng ký | `candidate_allow_registration` | Cho phép đăng ký ứng viên | boolean | true | ✓ |
 | Đăng ký | `employer_allow_registration` | Cho phép đăng ký nhà tuyển dụng | boolean | true | ✓ |
+| Đăng nhập mạng xã hội | `oauth_providers_candidate` | Đăng nhập mạng xã hội (ứng viên) | multiselect | ["google", "facebook", "linkedin"] | ✓ |
+| Đăng nhập mạng xã hội | `oauth_providers_employer` | Đăng nhập mạng xã hội (nhà tuyển dụng) | multiselect | ["google"] | ✓ |
+| Quản trị viên | `admin_invitation_ttl_hours` | Hạn lời mời quản trị viên (giờ) | number | 72 |  |
 
 ### Nhà tuyển dụng & xác thực (`employer`)
 
@@ -204,6 +217,39 @@ Nhóm chưa có key sẽ được bổ sung ở các giai đoạn sau của kế
 | Uy tín | `employer_badge_min_account_months` | Tuổi tài khoản tối thiểu cho dấu tick (tháng) | number | 6 |  |
 | Trang giới thiệu nhà tuyển dụng | `employer_stats` | Số liệu trang NTD | json | [{"value": "60.000+", "label_vi": "vi… | ✓ |
 | Trang giới thiệu nhà tuyển dụng | `employer_partners` | Khách hàng tiêu biểu (trang NTD) | json | [] | ✓ |
+| Xác thực & uy tín | `employer_require_approved_verification` | Bắt buộc duyệt hồ sơ xác thực | boolean | false |  |
+| Xác thực & uy tín | `employer_badge_policy_mode` | Chế độ dấu tick xác thực | select | "" |  |
+| Xác thực & uy tín | `employer_verification_max_rejections` | Số lần từ chối tối đa | number | 3 |  |
+| Xác thực & uy tín | `employer_trust_report_reasons` | Lý do báo cáo làm mất dấu tick | multiselect | ["fake_company", "scam", "wrong_info"] |  |
+| Xác thực & uy tín | `company_description_min_length` | Độ dài tối thiểu mô tả công ty | number | 500 | ✓ |
+| Hạn xử lý của quản trị viên | `moderation_sla_hours` | Hạn xử lý hồ sơ xác thực (giờ) | number | 72 |  |
+| Hạn xử lý của quản trị viên | `report_sla_hours` | Hạn xử lý báo cáo vi phạm (giờ) | number | 48 |  |
+
+### Tin tuyển dụng (`jobs`)
+
+| Section | Key | Tên | Kiểu | Mặc định | Public |
+|---|---|---|---|---|---|
+| Hạn tin | `job_default_deadline_days` | Hạn nhận hồ sơ gợi ý (ngày) | number | 30 |  |
+| Hạn tin | `job_max_deadline_days` | Hạn nhận hồ sơ tối đa (ngày) | number | 90 |  |
+| Hạn tin | `job_max_public_lifetime_days` | Thời gian hiển thị tối đa (ngày) | number | 90 |  |
+| Hạn tin | `job_renewal_grace_days` | Thời gian cho gia hạn tin hết hạn (ngày) | number | 30 |  |
+| Thống kê | `job_view_dedup_hours` | Gộp lượt xem trùng (giờ) | number | 24 |  |
+
+### Ứng tuyển & SLA (`applications`)
+
+| Section | Key | Tên | Kiểu | Mặc định | Public |
+|---|---|---|---|---|---|
+| Nộp hồ sơ | `application_max_per_job` | Số lần nộp tối đa mỗi tin | number | 3 | ✓ |
+| Nộp hồ sơ | `application_reapply_cooldown_minutes` | Thời gian chờ giữa hai lần nộp (phút) | number | 5 |  |
+| Tự động từ chối | `auto_reject_default_days` | Thời hạn tự từ chối gợi ý | select | 21 |  |
+| Tự động từ chối | `auto_reject_min_notice_days` | Nhắc trước khi tự từ chối (ngày) | number | 3 |  |
+| Tự động từ chối | `auto_reject_email_grace_days` | Chờ trước khi báo ứng viên (ngày) | number | 3 |  |
+| Thông báo cho ứng viên | `candidate_status_notify_delay_minutes` | Chờ trước khi báo đổi trạng thái (phút) | number | 5 |  |
+| Nhắc nhà tuyển dụng | `recruiter_reminder_days` | Mốc nhắc nhà tuyển dụng (ngày) | json | [3, 7] |  |
+| Ứng viên nhắc nhà tuyển dụng | `candidate_reminder_after_days` | Ứng viên được nhắc sau (ngày) | number | 3 | ✓ |
+| Ứng viên nhắc nhà tuyển dụng | `candidate_reminder_interval_days` | Khoảng cách giữa hai lần nhắc (ngày) | number | 3 | ✓ |
+| Ứng viên nhắc nhà tuyển dụng | `candidate_reminder_max` | Số lần nhắc tối đa | number | 2 | ✓ |
+| Chia sẻ hồ sơ ứng tuyển | `review_link_max_days` | Hạn link xem hồ sơ cho đồng nghiệp (ngày) | number | 30 |  |
 
 ### Hồ sơ & CV (`cv`)
 
@@ -211,6 +257,9 @@ Nhóm chưa có key sẽ được bổ sung ở các giai đoạn sau của kế
 |---|---|---|---|---|---|
 | Hồ sơ | `candidate_max_cvs` | Số CV tối đa mỗi ứng viên | number | 6 | ✓ |
 | Tính năng thử nghiệm | `cv_builder_wysiwyg_enabled` | Trình chỉnh sửa CV trực quan (WYSIWYG) | boolean | true | ✓ |
+| Chia sẻ CV | `cv_share_enabled` | Cho phép chia sẻ CV bằng link | boolean | true |  |
+| Chia sẻ CV | `cv_share_default_days` | Hạn link chia sẻ mặc định (ngày) | number | 30 |  |
+| Chia sẻ CV | `cv_share_max_days` | Hạn link chia sẻ tối đa (ngày) | number | 180 |  |
 
 ### Email & thông báo (`email`)
 
@@ -251,6 +300,15 @@ Nhóm chưa có key sẽ được bổ sung ở các giai đoạn sau của kế
 | Văn bản pháp lý | `legal_terms_url` | Điều khoản sử dụng (ứng viên) | url | "" | ✓ |
 | Văn bản pháp lý | `legal_privacy_url` | Chính sách bảo mật (ứng viên) | url | "" | ✓ |
 | Văn bản pháp lý | `employer_dpa_guide_url` | Hướng dẫn thỏa thuận xử lý dữ liệu ứng viên | url | "" | ✓ |
+
+### Lưu trữ dữ liệu (`retention`)
+
+| Section | Key | Tên | Kiểu | Mặc định | Public |
+|---|---|---|---|---|---|
+| Thời gian lưu trữ | `talent_pool_retention_days` | Lưu ứng viên trong kho (ngày) | number | 365 |  |
+| Thời gian lưu trữ | `candidate_notification_retention_days` | Lưu thông báo của ứng viên (ngày) | number | 730 |  |
+| Thời gian lưu trữ | `cv_import_source_retention_days` | Lưu tệp CV gốc khi nhập (ngày) | number | 30 |  |
+| Thời gian lưu trữ | `digest_history_retention_days` | Lưu lịch sử email gợi ý việc làm (ngày) | number | 90 |  |
 
 ### Tính năng (`features`)
 

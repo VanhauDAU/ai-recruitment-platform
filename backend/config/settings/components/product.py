@@ -25,21 +25,12 @@ ANNOUNCEMENT_REMOTE_ENABLED_SURFACES = tuple(
     if surface.strip()
 )
 
-JOB_VIEW_DEDUP_TTL_SECONDS = config('JOB_VIEW_DEDUP_TTL_SECONDS', default=24 * 60 * 60, cast=int)
 JOB_VIEWER_COOKIE_NAME = config('JOB_VIEWER_COOKIE_NAME', default='procv_viewer_id')
 JOB_VIEWER_COOKIE_MAX_AGE = 365 * 24 * 60 * 60
 JOB_VIEWER_COOKIE_SECURE = IS_PRODUCTION
 JOB_VIEWER_COOKIE_SAMESITE = 'Lax'
 
-# Job deadline policy is exposed by the employer posting-context API so every
-# client uses the same boundaries as the domain service. The default keeps the
-# familiar 30-day suggestion while allowing longer hiring processes up to 90 days.
-JOB_POSTING_DEFAULT_DEADLINE_DAYS = config(
-    'JOB_POSTING_DEFAULT_DEADLINE_DAYS', default=30, cast=int
-)
-JOB_POSTING_MAX_DEADLINE_DAYS = config('JOB_POSTING_MAX_DEADLINE_DAYS', default=90, cast=int)
-JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS = config(
-    'JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS', default=90, cast=int
-)
+# Hạn tin và thời gian khử trùng lượt xem là SiteSetting (nhóm "Tin tuyển dụng",
+# ADR-0026); trần 90 ngày nằm ở apps/jobs/services/policy.py.
 
 EMPLOYER_BADGE_POLICY_MODE = config('EMPLOYER_BADGE_POLICY_MODE', default='shadow').strip().lower()

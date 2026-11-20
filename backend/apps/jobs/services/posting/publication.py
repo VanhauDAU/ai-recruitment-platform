@@ -15,6 +15,7 @@ from common.vietnam_time import vietnam_today
 from ...models import Job, JobStatusHistory
 from ..content_snapshot import build_job_content_snapshot
 from ..lifecycle import extend_job_visibility, initialize_job_visibility
+from ..policy import job_renewal_grace_days
 from .history import _record_status
 from .locking import (
     _locked_job,
@@ -24,7 +25,6 @@ from .locking import (
 )
 from .quota import _posting_quota, _quota_exhausted_message
 from .rules import (
-    EXPIRED_JOB_RENEWAL_GRACE_DAYS,
     RESPONSIBILITY_STATEMENT_VERSION,
     _ensure_public_lifetime,
     _ensure_publication_allowed,
@@ -188,13 +188,11 @@ def extend_job_deadline(job, user, deadline, *, requested_visibility_days=None):
         )
     if deadline_error := job_deadline_error(deadline, today=today):
         raise ValidationError({'deadline': deadline_error})
-    if job.deadline is not None and job.deadline < today - timedelta(
-        days=EXPIRED_JOB_RENEWAL_GRACE_DAYS
-    ):
+    if job.deadline is not None and job.deadline < today - timedelta(days=job_renewal_grace_days()):
         raise ValidationError(
             {
                 'deadline': gettext('Chỉ có thể gia hạn tin hết hạn trong vòng %(days)s ngày.')
-                % {'days': EXPIRED_JOB_RENEWAL_GRACE_DAYS}
+                % {'days': job_renewal_grace_days()}
             }
         )
     visibility_end = job.visibility_ends_at

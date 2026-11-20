@@ -314,4 +314,5 @@ class EmployerReadinessContractTests(APITestCase):
 
         expanded = query_count()
         self.assertEqual(expanded, baseline)
-        self.assertLessEqual(expanded, 12)
+        # +1: công tắc admin `employer_require_approved_verification` (ADR-0026).
+        self.assertLessEqual(expanded, 13)

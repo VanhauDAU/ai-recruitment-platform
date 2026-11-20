@@ -52,7 +52,8 @@ export function createJobFormValues(
     number_of_vacancies: 1,
     ...initialValues,
     auto_reject_stale_applications: initialValues.auto_reject_stale_applications ?? true,
-    auto_reject_after_days: initialValues.auto_reject_after_days ?? 21,
+    // Tin mới để trống; ô chọn điền mặc định admin cấu hình khi luật ứng tuyển tải xong.
+    auto_reject_after_days: initialValues.auto_reject_after_days ?? null,
     auto_rejection_email_body: initialValues.auto_rejection_email_body ?? DEFAULT_AUTO_REJECTION_EMAIL,
     currency: initialValues.currency || 'VND',
     description: normalizeRichTextHtml(initialValues.description),

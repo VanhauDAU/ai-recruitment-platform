@@ -1,7 +1,5 @@
 """Cache Redis, Celery (queue, giới hạn, lịch beat) và thời hạn lưu sự kiện."""
 
-from datetime import timedelta
-
 from config.env import config
 
 from .core import TIME_ZONE
@@ -49,11 +47,6 @@ CELERY_TASK_SOFT_TIME_LIMIT = 50
 EMPLOYER_EVENT_RETENTION_DAYS = config('EMPLOYER_EVENT_RETENTION_DAYS', default=730, cast=int)
 CANDIDATE_NOTIFICATION_RETENTION_DAYS = config(
     'CANDIDATE_NOTIFICATION_RETENTION_DAYS', default=730, cast=int
-)
-# Recruiter decisions reach the candidate only after this window, so the
-# recruiter can undo a mis-click and rapid changes collapse into one notice.
-CANDIDATE_STATUS_NOTIFICATION_DELAY = timedelta(
-    seconds=config('CANDIDATE_STATUS_NOTIFICATION_DELAY_SECONDS', default=300, cast=int)
 )
 EMPLOYER_DOMAIN_DNS_TIMEOUT_SECONDS = config(
     'EMPLOYER_DOMAIN_DNS_TIMEOUT_SECONDS', default=3.0, cast=float

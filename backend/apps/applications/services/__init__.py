@@ -17,6 +17,7 @@ from .blocks import (
     lift_candidate_block,
 )
 from .locking import RecruitmentResourceChanged
+from .policy import candidate_reminder_policy
 from .recruiter_alerts import alert_recruiter_of_application, send_new_application_email
 from .recruiter_cv import (
     open_application_cv_file,
@@ -61,6 +62,7 @@ from .talent_pool import (
 __all__ = [
     'application_rules',
     'candidate_reminder_available_at',
+    'candidate_reminder_policy',
     'request_recruiter_reminder',
     'send_unanswered_application_reminders',
     'alert_recruiter_of_application',

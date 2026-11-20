@@ -17,14 +17,12 @@ from common.email import send_html_email
 from common.i18n import recipient_language
 
 from ..models import Application, ApplicationStatusHistory
+from .policy import auto_rejection_email_grace, auto_rejection_min_notice
 from .status import (
-    AUTO_REJECTION_EMAIL_GRACE,
-    AUTO_REJECTION_MIN_NOTICE,
     notify_candidate_of_status,
 )
 
 # The recruiter is warned this long before; an undo also guarantees it.
-REMINDER_LEAD_TIME = AUTO_REJECTION_MIN_NOTICE
 
 
 def _due_before(moment):
@@ -45,7 +43,9 @@ def _due_before(moment):
 def _age_filter(now, *, reminder=False):
     # Replaced submissions are history; only the current one can go stale.
     if reminder:
-        return Q(is_current=True) & _due_before(now + REMINDER_LEAD_TIME) & ~_due_before(now)
+        return (
+            Q(is_current=True) & _due_before(now + auto_rejection_min_notice()) & ~_due_before(now)
+        )
     return Q(is_current=True) & _due_before(now)
 
 
@@ -187,7 +187,7 @@ def reject_due_applications(*, now=None, batch_size=200):
             notify_candidate_of_status(
                 application,
                 history,
-                deliver_after=now + AUTO_REJECTION_EMAIL_GRACE,
+                deliver_after=now + auto_rejection_email_grace(),
                 send_email=False,
             )
             rejected += 1
@@ -200,7 +200,7 @@ def send_due_auto_rejection_emails(*, now=None, batch_size=200):
     applications = list(
         Application.objects.filter(
             status=Application.Status.REJECTED,
-            auto_rejected_at__lte=now - AUTO_REJECTION_EMAIL_GRACE,
+            auto_rejected_at__lte=now - auto_rejection_email_grace(),
             auto_rejection_email_sent_at__isnull=True,
         )
         .select_related('candidate', 'job', 'job__company')

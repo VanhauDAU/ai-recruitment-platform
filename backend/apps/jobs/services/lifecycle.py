@@ -1,15 +1,14 @@
 from datetime import timedelta
 
-from django.conf import settings
 from django.utils.translation import gettext as _
 from rest_framework.exceptions import ValidationError
 
-MAX_VISIBILITY_DAYS = 90
+from .policy import job_default_deadline_days, job_max_public_lifetime_days
 
 
 def job_lifecycle_policy():
-    maximum_days = min(MAX_VISIBILITY_DAYS, max(1, settings.JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS))
-    default_days = min(max(1, settings.JOB_POSTING_DEFAULT_DEADLINE_DAYS), maximum_days)
+    maximum_days = job_max_public_lifetime_days()
+    default_days = min(job_default_deadline_days(), maximum_days)
     return {
         'default_visibility_days': default_days,
         'max_visibility_days': maximum_days,

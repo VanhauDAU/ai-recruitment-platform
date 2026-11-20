@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import secrets
+from datetime import timedelta
 from hashlib import sha256
 
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
+
+from apps.sitecontent.selectors import get_bool_setting, get_int_setting
 
 from ..models import CvAccessLog, CvSharedLink, CvVersion, UserCv
 from .audit import record_cv_access
@@ -19,6 +22,18 @@ class CvSharePermissionError(ValueError):
 
 class CvShareUnavailableError(ValueError):
     """An absent, expired, revoked, or invalid bearer link must look like 404."""
+
+
+def share_enabled() -> bool:
+    return get_bool_setting('cv_share_enabled', True)
+
+
+def share_max_days() -> int:
+    return min(max(get_int_setting('cv_share_max_days', 180), 1), 3650)
+
+
+def share_default_days() -> int:
+    return min(max(get_int_setting('cv_share_default_days', 30), 1), share_max_days())
 
 
 def token_hash(raw_token: str) -> str:
@@ -61,8 +76,15 @@ def create_shared_link(
         raise CvSharePermissionError('This CV is locked for public sharing.')
     if not actor.email_verified:
         raise CvSharePermissionError('Verify your email before sharing a CV.')
-    if expires_at is not None and expires_at <= timezone.now():
+    if not share_enabled():
+        raise CvSharePermissionError('CV sharing is turned off by the administrator.')
+    now = timezone.now()
+    if expires_at is None:
+        expires_at = now + timedelta(days=share_default_days())
+    if expires_at <= now:
         raise CvSharePermissionError('Shared-link expiry must be in the future.')
+    if expires_at > now + timedelta(days=share_max_days()):
+        raise CvSharePermissionError('Shared-link expiry exceeds the allowed maximum.')
     version = _shareable_version(cv, version_public_id)
     raw_token = secrets.token_urlsafe(32)
     link = CvSharedLink.objects.create(
@@ -120,7 +142,11 @@ def resolve_shared_link(
     """
     if not raw_token or len(raw_token) > 200:
         raise CvShareUnavailableError('Shared link is invalid.')
+    if not share_enabled():
+        raise CvShareUnavailableError('CV sharing is turned off.')
     now = timezone.now()
+    # Link cũ không hạn vẫn bị giới hạn bởi thời gian sống tối đa hiện hành.
+    oldest_open_link = now - timedelta(days=share_max_days())
     link = (
         CvSharedLink.objects.select_for_update(of=('self',))
         .filter(
@@ -129,7 +155,7 @@ def resolve_shared_link(
             cv__moderation_locked_at__isnull=True,
             revoked_at__isnull=True,
         )
-        .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=now))
+        .filter(Q(expires_at__isnull=True, created_at__gt=oldest_open_link) | Q(expires_at__gt=now))
         .first()
     )
     if link is None:

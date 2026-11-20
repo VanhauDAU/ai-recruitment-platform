@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 from rest_framework.exceptions import ValidationError
 
-from apps.employers.services import TRUST_REPORT_REASONS
+from apps.employers.services import trust_report_reasons
 
 from ..models import JobReport, JobReportResolutionEvent
 from .moderation import apply_confirmed_report_hold
@@ -55,7 +55,7 @@ def resolve_job_report(*, report, status, actor, note=''):
     locked.save(
         update_fields=['status', 'resolution_note', 'resolved_at', 'resolved_by', 'updated_at']
     )
-    if status == JobReport.Status.UPHELD and locked.reason in TRUST_REPORT_REASONS:
+    if status == JobReport.Status.UPHELD and locked.reason in trust_report_reasons():
         apply_confirmed_report_hold(
             job=locked.job,
             actor=actor,

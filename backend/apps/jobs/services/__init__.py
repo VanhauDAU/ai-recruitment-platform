@@ -56,6 +56,7 @@ from .moderation import (
     restore_job_visibility,
     resubmit_job_for_review,
 )
+from .policy import auto_reject_default_days
 from .posting import (
     RESPONSIBILITY_STATEMENT_VERSION,
     assign_job_to_campaign,
@@ -78,6 +79,7 @@ from .reports import resolve_job_report, reverse_job_report, submit_job_report
 from .saved_jobs import save_job_for_candidate
 
 __all__ = [
+    'auto_reject_default_days',
     'absolute_url',
     'job_email_card',
     'job_url',

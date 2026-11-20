@@ -19,6 +19,7 @@ from ..models import (
     JobSkill,
     JobWorkSchedule,
 )
+from .policy import auto_reject_default_days
 
 # Form field -> row model; each field is also the reverse accessor on Job.
 JOB_RELATIONS = {
@@ -36,6 +37,8 @@ _UNCHANGED = object()
 def create_job_record(data):
     """Create a job and its nested rows from validated form data."""
     data = dict(data)
+    if data.get('auto_reject_after_days') is None:
+        data['auto_reject_after_days'] = auto_reject_default_days()
     relations = {field: data.pop(field, ()) for field in JOB_RELATIONS}
     contact = data.pop('application_contact', None)
     job = Job.objects.create(**data)

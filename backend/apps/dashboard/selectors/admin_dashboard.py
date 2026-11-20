@@ -51,6 +51,7 @@ from apps.jobs.models import (
 from apps.jobs.selectors import admin_job_management_summary
 from apps.knowledgebase.selectors import admin_article_summary
 from apps.matching.models import MatchAnalysis
+from apps.sitecontent.selectors import moderation_sla_hours, report_sla_hours
 from common.vietnam_time import VIETNAM_TZ, vietnam_day_start, vietnam_today
 
 DASHBOARD_PERIODS = (7, 30, 90)
@@ -58,20 +59,19 @@ DEFAULT_DASHBOARD_PERIOD = 30
 TOP_CATEGORY_LIMIT = 6
 EXPIRING_SOON_DAYS = 7
 STALE_APPLICATION_DAYS = 7
-# Service levels used to flag a queue item as overdue. Verification keeps the
-# 72h SLA already enforced by its own summary; reports affect candidate safety
-# so they get a tighter target.
-QUEUE_SLA_HOURS = {
-    'recruiter_verification': 72,
-    'domain_verification': 72,
-    'company_updates': 72,
-    'company_join_requests': 72,
-    # Page content is already public when it lands here (post-moderation).
-    'company_content_changes': 48,
-    'job_reports': 48,
-    'company_reports': 48,
-    'job_resubmissions': 48,
+# Hàng chờ dùng hạn xử lý kiểm duyệt (``moderation_sla_hours``); hàng chờ còn lại
+# dùng hạn báo cáo (``report_sla_hours``) vì nội dung đã công khai hoặc liên quan
+# an toàn ứng viên. Cả hai chỉnh trong Cấu hình hệ thống (ADR-0026).
+MODERATION_QUEUES = {
+    'recruiter_verification',
+    'domain_verification',
+    'company_updates',
+    'company_join_requests',
 }
+
+
+def _sla_hours(key):
+    return moderation_sla_hours() if key in MODERATION_QUEUES else report_sla_hours()
 
 
 def _window(days):
@@ -104,7 +104,7 @@ def _compare(queryset, field, window, base_filter=None):
 
 
 def _overdue_before(key, now):
-    return now - timedelta(hours=QUEUE_SLA_HOURS[key])
+    return now - timedelta(hours=_sla_hours(key))
 
 
 def _queue(key, queryset, field, now, *, count=None):
@@ -118,7 +118,7 @@ def _queue(key, queryset, field, now, *, count=None):
         'count': data['count'] if count is None else count,
         'overdue': data['overdue'],
         'oldest_at': data['oldest_at'],
-        'sla_hours': QUEUE_SLA_HOURS[key],
+        'sla_hours': _sla_hours(key),
     }
 
 

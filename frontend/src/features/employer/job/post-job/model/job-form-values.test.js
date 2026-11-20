@@ -128,10 +128,10 @@ describe('manual job form values', () => {
     ])
   })
 
-  it('enables stale application handling with a three-week default for new jobs', () => {
+  it('enables stale application handling and leaves the period to the configured default', () => {
     expect(createJobFormValues()).toMatchObject({
       auto_reject_stale_applications: true,
-      auto_reject_after_days: 21,
+      auto_reject_after_days: null,
       auto_rejection_email_body: DEFAULT_AUTO_REJECTION_EMAIL,
     })
     expect(createJobFormValues({ auto_reject_stale_applications: false })).toMatchObject({
