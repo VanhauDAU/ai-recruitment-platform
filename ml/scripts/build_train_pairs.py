@@ -48,8 +48,8 @@ from paths import (
 SEED = 42
 DEV_ANCHORS = 7
 # Dữ liệu công khai chỉ bổ trợ: CV huấn luyện neo vào tin thật vẫn là phần lớn.
-VIETJOBS_ROWS = 1500
-RESUME_FIT_ROWS = 1000
+VIETJOBS_ROWS = 3000
+RESUME_FIT_ROWS = 1500
 K1_PER_ANCHOR = 3
 MAX_CHARS = 2000
 LEAK_JACCARD = 0.5

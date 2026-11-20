@@ -14,12 +14,12 @@ Kết quả: `ml/data/cv/synthetic/CV-xxx.json` và `manifest.json`. Chạy lạ
 qua CV đã có tệp, nên dừng giữa chừng rồi chạy tiếp được.
 
 `--train` sinh kho CV huấn luyện (kế hoạch bản 3, mục 3.2): mỗi tin NGOÀI tập vàng
-được `--per-job` CV (mặc định 8: 4 khớp mạnh, 2 khớp một phần, 2 vị trí gần), lưu ở
-`ml/data/cv/train/TR-xxxx.json`. Tin của tập vàng không bao giờ làm tin neo, để
+được `--per-job` CV (mặc định 8: 4 khớp mạnh, 2 khớp một phần, 2 vị trí gần; tỷ lệ giữ nguyên khi tăng), lưu ở
+`ml/data/cv/train/TR-<tin>-<thứ tự>.json`. Tin của tập vàng không bao giờ làm tin neo, để
 dữ liệu huấn luyện không rò rỉ sang tập đánh giá.
 
     ml/.venv/bin/python ml/scripts/generate_cvs.py --train --limit 2    # thử
-    ml/.venv/bin/python ml/scripts/generate_cvs.py --train              # khoảng 560 CV, chạy qua đêm
+    ml/.venv/bin/python ml/scripts/generate_cvs.py --train --per-job 16 # 1.120 CV, khoảng 16 giờ
 """
 
 import argparse
@@ -233,24 +233,26 @@ def build_plan(jobs, extra, seed):
 
 
 def build_train_plan(jobs, gold_codes, per_job, seed):
-    """Kho huấn luyện: mỗi tin ngoài tập vàng làm tin neo cho `per_job` CV."""
+    """Kho huấn luyện: mỗi tin ngoài tập vàng làm tin neo cho `per_job` CV.
+
+    Mã CV gắn với tin neo và thứ tự trong tin (`TR-05-03` là CV thứ tư của JD-05), nên
+    tăng `per_job` ở lần chạy sau chỉ thêm CV mới, không làm lệch CV đã sinh.
+    """
     rng = random.Random(seed)
     plan = []
-    for job in jobs:
-        if job['code'] in gold_codes:
-            continue
+    for number, job in enumerate(job for job in jobs if job['code'] not in gold_codes):
         for index in range(per_job):
             plan.append(
                 {
+                    'code': f'TR-{job["code"][3:]}-{index:02d}',
                     'cluster': job['group'] or 'Khác',
                     'anchor': job,
                     'level': TRAIN_LEVELS[index % len(TRAIN_LEVELS)],
-                    'band': BAND_PLAN[(len(plan) + index) % len(BAND_PLAN)],
-                    'language': 'en' if rng.random() < 0.3 else 'vi',
+                    'band': BAND_PLAN[(number + index) % len(BAND_PLAN)],
+                    'language': 'en' if random.Random(f'{seed}-{job["code"]}-{index}').random() < 0.3 else 'vi',
                 }
             )
-    for index, item in enumerate(plan):
-        item['code'] = f'TR-{index + 1:04d}'
+    rng.shuffle(plan)  # sinh xen kẽ các tin: dừng giữa chừng vẫn có CV cho mọi nghề
     return plan
 
 
@@ -471,8 +473,10 @@ def main():
         if path.exists():
             continue
         started = time.perf_counter()
+        # Kho huấn luyện: seed theo mã CV, nên thứ tự sinh không đổi kết quả của từng CV.
+        seed = sum(map(ord, item['code'])) * 7919 if options.train else options.seed * 1000 + number
         try:
-            data, facts = generate(item, jobs, options.model, options.seed * 1000 + number, previous)
+            data, facts = generate(item, jobs, options.model, seed, previous)
         except (RuntimeError, OSError, ValueError, KeyError) as error:
             # Một CV hỏng không dừng cả đợt chạy qua đêm; chạy lại sẽ thử lại CV này.
             failed += 1
