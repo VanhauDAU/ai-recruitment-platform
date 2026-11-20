@@ -83,11 +83,36 @@ def _existing(kind, source, digest, model_version):
     )
 
 
+def _make_current(document, source):
+    """Đánh dấu `document` là bản hiện hành của nguồn; bản trước của cùng phiên bản thôi hiện hành."""
+    if document is None or document.is_current:
+        return document
+    try:
+        with transaction.atomic():
+            MatchDocument.objects.filter(
+                kind=document.kind,
+                extractor_version=document.extractor_version,
+                model_version=document.model_version,
+                is_current=True,
+                **source,
+            ).exclude(pk=document.pk).update(is_current=False)
+            MatchDocument.objects.filter(pk=document.pk).update(is_current=True)
+    except IntegrityError:
+        # Một worker khác vừa đánh dấu bản khác của cùng nguồn; giữ bản của nó.
+        document.refresh_from_db(fields=['is_current'])
+        return document
+    document.is_current = True
+    return document
+
+
 def _store(kind, source, digest, build_profile, encoder):
-    """Tạo hàng tài liệu (và chunk kèm vector) nếu chưa có; trả hàng đã có nếu trùng khóa."""
+    """Tạo hàng tài liệu (và chunk kèm vector) nếu chưa có; trả hàng đã có nếu trùng khóa.
+
+    Hàng trả về luôn là bản hiện hành của nguồn (`MatchDocument.is_current`).
+    """
     document = _existing(kind, source, digest, encoder.version)
     if document is not None:
-        return document
+        return _make_current(document, source)
     try:
         profile, error_code = build_profile(), ''
     except (ExtractionError, CvDocumentRejected) as error:
@@ -121,7 +146,7 @@ def _store(kind, source, digest, build_profile, encoder):
     except IntegrityError:
         # Một worker khác vừa tạo cùng tài liệu.
         document = _existing(kind, source, digest, encoder.version)
-    return document
+    return _make_current(document, source)
 
 
 def ensure_cv_document(cv_version, *, encoder, catalog):

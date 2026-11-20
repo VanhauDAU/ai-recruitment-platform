@@ -3,13 +3,14 @@
 Đặt ở ``models`` vì cả selectors (trang gợi ý) lẫn services (email digest) cùng dùng.
 """
 
-from .context import RecommendationConsentRequired
+from .context import RecommendationConsentRequired, ai_recommendation_allowed, preference_state
 from .ranking import (
     MAX_SCORING_CANDIDATES,
     recommend_inline_jobs_for_candidate,
     recommend_jobs_for_candidate,
     recommend_jobs_for_cv,
     recommend_new_jobs_for_candidate_email,
+    recommendable_jobs,
     rule_scores_for_cv,
 )
 from .scoring import EXPERIENCE_RANK, MIN_RECOMMENDATION_SCORE
@@ -19,9 +20,12 @@ __all__ = [
     'MAX_SCORING_CANDIDATES',
     'MIN_RECOMMENDATION_SCORE',
     'RecommendationConsentRequired',
+    'ai_recommendation_allowed',
+    'preference_state',
     'recommend_inline_jobs_for_candidate',
     'recommend_jobs_for_candidate',
     'recommend_jobs_for_cv',
     'recommend_new_jobs_for_candidate_email',
+    'recommendable_jobs',
     'rule_scores_for_cv',
 ]
