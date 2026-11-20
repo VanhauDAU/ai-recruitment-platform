@@ -1,5 +1,6 @@
 import { MailFilled, PhoneFilled } from '@ant-design/icons'
 import { useMemo, useState } from 'react'
+import { settingText, useSiteSettings } from '@/entities/system/site-settings'
 import ChatShowcase from '@/shared/ui/ChatShowcase'
 import { legacyAsset } from '@/shared/config/assets'
 
@@ -11,9 +12,7 @@ const HOTLINE_TABS = [
     label: 'Dành cho Người tìm việc',
     lead: 'Tìm việc khó',
     accent: 'đã có ProCV',
-    phone: '1900 068 889 | Nhánh 2',
     emailLabel: 'Email hỗ trợ Ứng viên:',
-    email: 'hotro@aicareer.vn',
     badge: 'Xin chào',
     message: 'ProCV có thể giúp bạn điều gì?',
     chatData: {
@@ -33,9 +32,7 @@ const HOTLINE_TABS = [
     label: 'Dành cho Nhà tuyển dụng',
     lead: 'Tuyển dụng hiệu quả',
     accent: 'đã có ProCV',
-    phone: '1900 068 889 | Nhánh 1',
     emailLabel: 'Email hỗ trợ Nhà tuyển dụng:',
-    email: 'hotro@aicareer.vn',
     badge: 'Tư vấn ngay',
     message: 'ProCV đồng hành cùng đội ngũ tuyển dụng',
     chatData: {
@@ -52,8 +49,18 @@ const HOTLINE_TABS = [
   },
 ]
 
+const telHref = (phone) => `tel:${phone.replace(/[^+\d]/g, '')}`
+
 export default function HotlineConsultation() {
+  const { settings } = useSiteSettings()
   const [activeKey, setActiveKey] = useState(HOTLINE_TABS[0].key)
+  // Số/email lấy từ cấu hình hệ thống (nhóm Liên hệ), không viết cứng.
+  const hotline = settingText(settings.hotline)
+  const contact = {
+    candidate: hotline,
+    employer: settingText(settings.employer_hotline_north, hotline),
+  }
+  const email = settingText(settings.support_email)
   const active = useMemo(
     () => HOTLINE_TABS.find((tab) => tab.key === activeKey) || HOTLINE_TABS[0],
     [activeKey],
@@ -108,31 +115,31 @@ export default function HotlineConsultation() {
                   {active.lead} <span className="text-[var(--brand-primary)]">{active.accent}</span>
                 </h3>
 
-                <div className="mt-7 flex max-w-lg flex-col gap-3 sm:flex-row sm:items-center">
+                {contact[active.key] && <div className="mt-7 flex max-w-lg flex-col gap-3 sm:flex-row sm:items-center">
                   <a
-                    href="tel:1900068889"
+                    href={telHref(contact[active.key])}
                     className="inline-flex min-h-14 flex-1 items-center justify-center rounded-full bg-[#039b49] px-5 text-base font-extrabold text-white shadow-lg shadow-emerald-700/20 transition hover:bg-[var(--brand-primary-hover)]"
                   >
-                    {active.phone}
+                    {contact[active.key]}
                   </a>
                   <a
-                    href="tel:1900068889"
+                    href={telHref(contact[active.key])}
                     className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-7 text-sm font-extrabold text-[var(--brand-primary)] transition hover:bg-green-50"
                   >
                     <PhoneFilled />
                     GỌI NGAY
                   </a>
-                </div>
+                </div>}
 
-                <div className="mt-6 flex flex-wrap items-center gap-3 text-base font-bold text-gray-500">
+                {email && <div className="mt-6 flex flex-wrap items-center gap-3 text-base font-bold text-gray-500">
                   <span>{active.emailLabel}</span>
                   <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-[var(--brand-primary)]">
                     <MailFilled className="text-sm" />
                   </span>
-                  <a href={`mailto:${active.email}`} className="font-extrabold text-[var(--brand-primary)] hover:underline">
-                    {active.email}
+                  <a href={`mailto:${email}`} className="font-extrabold text-[var(--brand-primary)] hover:underline">
+                    {email}
                   </a>
-                </div>
+                </div>}
               </div>
 
               <div className="hidden md:flex justify-end items-center">

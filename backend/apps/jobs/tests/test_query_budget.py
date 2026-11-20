@@ -19,6 +19,10 @@ from apps.skills.models import Skill
 from ..models import Job, JobCategory, JobCategoryAssignment, JobSkill, SavedJob
 from .factories import open_visibility_window
 
+# +1 cho mỗi request vào API cổng ứng viên/NTD/công khai: middleware bảo trì đọc
+# `maintenance_mode` (ADR-0026). Trong TestCase mọi request nằm trong transaction nên
+# selector đọc thẳng DB; ở production đọc từ cache.
+MAINTENANCE_CHECK_QUERIES = 1
 # 1 COUNT (pagination) + 1 SELECT jobs + 3 prefetch (categories, locations,
 # skills). select_related company nằm trong SELECT chính.
 #
@@ -26,14 +30,14 @@ from .factories import open_visibility_window
 # recruiter + correlated legal/report evidence, và active domain claims. Các
 # query chạy một lần cho cả response nên tổng vẫn phẳng theo số bản ghi.
 BADGE_QUERY_BUDGET = 3
-JOB_LIST_QUERY_BUDGET = 5 + BADGE_QUERY_BUDGET
+JOB_LIST_QUERY_BUDGET = 5 + BADGE_QUERY_BUDGET + MAINTENANCE_CHECK_QUERIES
 # Homepage preview adds two relation prefetches (benefits + schedules).
 HOMEPAGE_BEST_JOB_LIST_QUERY_BUDGET = JOB_LIST_QUERY_BUDGET + 2
 ADMIN_JOB_LIST_QUERY_BUDGET = 2
 # +1 aggregate for the status-tab counts (one query whatever the page size).
-EMPLOYER_JOB_LIST_QUERY_BUDGET = 6
-SAVED_JOB_SIMILARITY_QUERY_BUDGET = 8 + BADGE_QUERY_BUDGET
-SAVED_JOB_FALLBACK_QUERY_BUDGET = 9 + BADGE_QUERY_BUDGET
+EMPLOYER_JOB_LIST_QUERY_BUDGET = 6 + MAINTENANCE_CHECK_QUERIES
+SAVED_JOB_SIMILARITY_QUERY_BUDGET = 8 + BADGE_QUERY_BUDGET + MAINTENANCE_CHECK_QUERIES
+SAVED_JOB_FALLBACK_QUERY_BUDGET = 9 + BADGE_QUERY_BUDGET + MAINTENANCE_CHECK_QUERIES
 
 
 class JobListQueryBudgetTests(APITestCase):

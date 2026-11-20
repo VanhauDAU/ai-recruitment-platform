@@ -22,6 +22,8 @@ from .settings import (
     get_setting,
     get_settings_map,
     get_string_setting,
+    knowledgebase_public_enabled,
+    knowledgebase_search_index_enabled,
     setting_registry,
     site_settings_by_group,
 )
@@ -40,6 +42,8 @@ __all__ = [
     'get_setting',
     'get_settings_map',
     'get_string_setting',
+    'knowledgebase_public_enabled',
+    'knowledgebase_search_index_enabled',
     'normalize_request_path',
     'path_prefix_matches',
     'presentation_status',

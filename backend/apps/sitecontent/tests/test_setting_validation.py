@@ -68,3 +68,17 @@ class TypedSiteSettingValidationTests(SimpleTestCase):
         self.assertIsNone(self._error(strings, ['gemini-3.5-flash-lite']))
         self.assertTrue(self._error(strings, ['', 'x']))
         self.assertIsNone(self._error(self._setting(SiteSetting.ValueType.JSON), {'free': 1}))
+
+
+class MultiselectValidationTests(SimpleTestCase):
+    def test_values_must_be_unique_known_choices(self):
+        setting = SiteSetting(
+            key='k',
+            value_type=SiteSetting.ValueType.MULTISELECT,
+            options={'choices': [{'value': 'a'}, {'value': 'b'}]},
+        )
+        self.assertEqual(_validate_value(setting, ['b', 'a']), (['b', 'a'], None))
+        self.assertEqual(_validate_value(setting, []), ([], None))
+        for value in (['c'], ['a', 'a'], 'a'):
+            with self.subTest(value=value):
+                self.assertTrue(_validate_value(setting, value)[1])

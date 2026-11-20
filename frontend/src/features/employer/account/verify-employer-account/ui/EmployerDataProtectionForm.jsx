@@ -14,7 +14,7 @@ import {
   getEmployerProfile,
   uploadEmployerDataProcessingAgreement,
 } from '@/entities/account/employer-profile'
-import { useSiteSettings } from '@/entities/system/site-settings'
+import { settingText, useSiteSettings } from '@/entities/system/site-settings'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 import CandidateAgreementUploadForm, {
@@ -24,8 +24,6 @@ import { CandidateAgreementDocumentLink } from './CandidateAgreementDocumentLink
 import EmployerVerificationLifecycleAlert from './EmployerVerificationLifecycleAlert'
 import { getIntlLocale, m } from '@/shared/config/i18n'
 
-const CANDIDATE_DPA_GUIDE_URL = 'https://tuyendung.topcv.vn/help/tong-quan/thoa-thuan-xu-ly-du-lieu-ca-nhan-ung-vien/'
-const PLATFORM_DPA_URL = 'https://tuyendung.topcv.vn/data-processing-agreement'
 const CANDIDATE_AGREEMENT_DOCUMENT_NAME = m.employer_account_dpa_document_name()
 const OFFICE_EXTENSION_BY_TYPE = {
   'application/msword': '.doc',
@@ -64,7 +62,8 @@ function documentDownloadName(document, contentType) {
 }
 
 export default function EmployerDataProtectionForm() {
-  const { siteName } = useSiteSettings()
+  const { settings, siteName } = useSiteSettings()
+  const guideUrl = settingText(settings.employer_dpa_guide_url)
   const queryClient = useQueryClient()
   const [files, setFiles] = useState([])
   const [candidateAgreementAccepted, setCandidateAgreementAccepted] = useState(false)
@@ -159,7 +158,8 @@ export default function EmployerDataProtectionForm() {
     && dpaPolicy.policy_version
     && /^[0-9a-f]{64}$/.test(dpaPolicy.document_sha256 || ''),
   )
-  const platformDpaUrl = dpaPolicyAvailable ? dpaPolicy.document_url : PLATFORM_DPA_URL
+  // DPA chính thức do máy chủ cấp (khớp mã băm); chưa cấu hình thì không có link.
+  const platformDpaUrl = dpaPolicyAvailable ? dpaPolicy.document_url : ''
   const currentDpaAccepted = profileQuery.data?.dpa_status
     ? profileQuery.data.dpa_status === 'current'
     : Boolean(verification.dpa_accepted)
@@ -200,7 +200,7 @@ export default function EmployerDataProtectionForm() {
           </div>
         </div>
 
-        <p className="mt-6 text-sm text-slate-500">{m.employer_account_dpa_guide_intro()}<a href={CANDIDATE_DPA_GUIDE_URL} target="_blank" rel="noreferrer" className="font-medium !text-emerald-600 hover:!text-emerald-700">{m.employer_account_docs_guide_link()}</a></p>
+        {guideUrl && <p className="mt-6 text-sm text-slate-500">{m.employer_account_dpa_guide_intro()}<a href={guideUrl} target="_blank" rel="noreferrer" className="font-medium !text-emerald-600 hover:!text-emerald-700">{m.employer_account_docs_guide_link()}</a></p>}
 
         {['rejected', 'changes_requested'].includes(candidateAgreementStatus) && (
           <Alert
@@ -254,7 +254,7 @@ export default function EmployerDataProtectionForm() {
           <StatusTag completed={currentDpaAccepted} completedLabel={m.employer_account_dpa_confirmed()} pendingLabel={m.employer_account_dpa_not_confirmed()} />
         </div>
         <p className="mt-5 text-sm leading-6 text-slate-600">{m.employer_account_dpa_platform_intro({ siteName })}</p>
-        <a href={platformDpaUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-sm font-medium !text-emerald-600 hover:!text-emerald-700">{m.employer_account_dpa_view_full()} <LinkOutlined /></a>
+        {platformDpaUrl && <a href={platformDpaUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-sm font-medium !text-emerald-600 hover:!text-emerald-700">{m.employer_account_dpa_view_full()} <LinkOutlined /></a>}
 
         {dpaStatus === 'grace' && (
           <Alert
@@ -289,7 +289,7 @@ export default function EmployerDataProtectionForm() {
               />
             )}
             <div className="mt-4">
-              <Checkbox disabled={!dpaPolicyAvailable} checked={platformAgreementAccepted} onChange={(event) => setPlatformAgreementAccepted(event.target.checked)} className="!flex !items-start !text-sm !leading-5 !text-slate-600">{m.employer_account_dpa_agree_before()}<a href={platformDpaUrl} target="_blank" rel="noreferrer" className="font-medium !text-emerald-600 hover:!text-emerald-700">{m.employer_account_dpa_agree_link()}</a></Checkbox>
+              <Checkbox disabled={!dpaPolicyAvailable} checked={platformAgreementAccepted} onChange={(event) => setPlatformAgreementAccepted(event.target.checked)} className="!flex !items-start !text-sm !leading-5 !text-slate-600">{m.employer_account_dpa_agree_before()}{platformDpaUrl ? <a href={platformDpaUrl} target="_blank" rel="noreferrer" className="font-medium !text-emerald-600 hover:!text-emerald-700">{m.employer_account_dpa_agree_link()}</a> : m.employer_account_dpa_agree_link()}</Checkbox>
             </div>
             <div className="mt-4 flex justify-stretch sm:justify-end">
               <Button type="primary" size="large" disabled={!dpaPolicyAvailable || !platformAgreementAccepted} loading={acceptMutation.isPending} onClick={() => acceptMutation.mutate(dpaPolicy)} className="w-full !shadow-none sm:!min-w-[112px] sm:w-auto">{m.employer_account_dpa_confirm()}</Button>

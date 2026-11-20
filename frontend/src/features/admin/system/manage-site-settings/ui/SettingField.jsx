@@ -130,6 +130,8 @@ export default function SettingField({ setting, value, onChange, pendingFile, on
       )
     case 'select':
       return <Select value={value} onChange={onChange} options={setting.options?.choices || []} disabled={disabled} status={status} className="min-w-52" />
+    case 'multiselect':
+      return <Select mode="multiple" value={Array.isArray(value) ? value : []} onChange={onChange} options={setting.options?.choices || []} disabled={disabled} status={status} className="w-full" />
     case 'color':
       return <ColorInput value={value} onChange={onChange} disabled={disabled} />
     case 'image':

@@ -1,7 +1,6 @@
 import json
 import re
 
-from django.conf import settings
 from drf_spectacular.utils import OpenApiTypes, extend_schema, extend_schema_view
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import ValidationError
@@ -14,7 +13,13 @@ from apps.accounts.api.permissions import AdminPortalPermission
 from apps.accounts.selectors import audit_logs_queryset
 from common.storage.media import media_url_from_value
 
-from ...selectors import active_banners, resolved_link_groups, site_settings_by_group
+from ...selectors import (
+    active_banners,
+    knowledgebase_public_enabled,
+    knowledgebase_search_index_enabled,
+    resolved_link_groups,
+    site_settings_by_group,
+)
 from ...selectors.system_parameters import system_parameters
 from ...services import public_setting_values, submit_feedback, update_site_settings
 from ..serializers import (
@@ -43,12 +48,10 @@ class SiteSettingListView(APIView):
             key: media_url_from_value(value, request=request) if is_image else value
             for key, (value, is_image) in public_setting_values().items()
         }
-        # Capability vận hành phải theo backend kill switch, không phải một row
-        # SiteSetting mà admin có thể vô tình bật lệch với public API/SEO shell.
-        response_data['knowledgebase_public_enabled'] = bool(settings.KNOWLEDGEBASE_PUBLIC_ENABLED)
-        response_data['knowledgebase_search_index_enabled'] = bool(
-            settings.KNOWLEDGEBASE_PUBLIC_ENABLED and settings.KNOWLEDGEBASE_SEARCH_INDEX_ENABLED
-        )
+        # Capability hiệu lực = kill switch máy chủ VÀ công tắc admin; admin chỉ
+        # thu hẹp được, không bật vượt máy chủ (cùng hàm với public API/SEO shell).
+        response_data['knowledgebase_public_enabled'] = knowledgebase_public_enabled()
+        response_data['knowledgebase_search_index_enabled'] = knowledgebase_search_index_enabled()
         return Response(response_data)
 
 

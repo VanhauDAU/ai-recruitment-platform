@@ -15,7 +15,7 @@ from .admin_invitations import (
     revoke_admin_invitation,
 )
 from .captcha import verify_recaptcha, verify_request_captcha
-from .exceptions import AdminPermissionDenied, AdminResourceChanged
+from .exceptions import AdminPermissionDenied, AdminResourceChanged, RegistrationClosed
 from .impact_tokens import (
     InvalidImpactToken,
     StaleImpactToken,
@@ -24,6 +24,7 @@ from .impact_tokens import (
 )
 from .managed_account_profile import update_account_profile, update_managed_account_profile
 from .refresh_cookies import set_refresh_cookie
+from .registration import ensure_registration_open
 from .tokens import issue_tokens
 from .verification_delivery import (
     queue_verification_email,
@@ -32,6 +33,8 @@ from .verification_delivery import (
 __all__ = [
     'AdminPermissionDenied',
     'AdminResourceChanged',
+    'RegistrationClosed',
+    'ensure_registration_open',
     'set_refresh_cookie',
     'issue_tokens',
     'accept_admin_invitation',

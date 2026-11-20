@@ -2,7 +2,6 @@ import hashlib
 import json
 from time import monotonic
 
-from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import Http404
 from drf_spectacular.utils import extend_schema
@@ -10,6 +9,7 @@ from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.sitecontent.selectors import knowledgebase_public_enabled
 from common.api.throttling import ClientIPScopedRateThrottle
 from common.metrics import record_metric
 
@@ -35,7 +35,7 @@ class PublicKnowledgebaseMixin:
 
     def initial(self, request, *args, **kwargs):
         self._knowledgebase_started_at = monotonic()
-        if not settings.KNOWLEDGEBASE_PUBLIC_ENABLED:
+        if not knowledgebase_public_enabled():
             raise Http404
         return super().initial(request, *args, **kwargs)
 

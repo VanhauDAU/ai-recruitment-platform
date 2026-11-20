@@ -31495,11 +31495,6 @@ components:
       properties:
         enabled:
           type: boolean
-        policy_version:
-          type: string
-          minLength: 1
-          default: v1
-          maxLength: 64
         source:
           $ref: '#/components/schemas/AiRecommendationConsentSourceEnum'
         source_path:
@@ -32111,11 +32106,6 @@ components:
         cv_public_id:
           type: string
           maxLength: 50
-        policy_version:
-          type: string
-          minLength: 1
-          default: v1
-          maxLength: 64
         source:
           $ref: '#/components/schemas/RecruiterVisibilitySourceEnum'
         source_path:

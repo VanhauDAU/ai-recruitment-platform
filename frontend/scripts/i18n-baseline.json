@@ -1,5 +1,5 @@
 {
-  "app": 109,
+  "app": 108,
   "entities": 325,
   "features/admin": 1118,
   "features/common": 221,
@@ -8,7 +8,7 @@
   "pages": 2,
   "pages/admin": 37,
   "pages/employer": 0,
-  "pages/main": 788,
+  "pages/main": 786,
   "shared": 25,
   "src": 0,
   "widgets/admin": 1773,

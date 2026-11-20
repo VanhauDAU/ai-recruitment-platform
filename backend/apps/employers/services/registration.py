@@ -7,6 +7,7 @@ from django.utils.translation import gettext as _
 from rest_framework.exceptions import ValidationError
 
 from apps.accounts.models import User
+from apps.accounts.services import ensure_registration_open
 
 from .profiles import get_or_create_recruiter
 
@@ -43,6 +44,7 @@ def complete_registration_profile(user, validated_data):
 
 
 def register_employer(validated_data):
+    ensure_registration_open(User.Role.EMPLOYER)
     account_data = dict(validated_data)
     email = account_data.pop('email')
     password = account_data.pop('password')

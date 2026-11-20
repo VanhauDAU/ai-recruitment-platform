@@ -25,5 +25,9 @@
   "common_language_unsaved_title": "Đổi ngôn ngữ khi còn thay đổi chưa lưu?",
   "common_language_unsaved_description": "Trang sẽ tải lại để đổi ngôn ngữ, nên các thay đổi chưa lưu trên trang này sẽ bị mất.",
   "common_language_unsaved_confirm": "Vẫn đổi ngôn ngữ",
-  "common_language_unsaved_cancel": "Ở lại để lưu"
+  "common_language_unsaved_cancel": "Ở lại để lưu",
+  "common_maintenance_title": "Hệ thống đang bảo trì",
+  "common_maintenance_default_message": "Chúng tôi đang nâng cấp hệ thống. Vui lòng quay lại sau ít phút.",
+  "common_maintenance_contact": "Cần hỗ trợ gấp: {contact}",
+  "common_maintenance_retry": "Tải lại trang"
 }

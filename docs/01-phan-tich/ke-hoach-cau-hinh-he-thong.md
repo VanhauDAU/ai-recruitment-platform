@@ -12,6 +12,18 @@
 >   lại code chưa ai dùng.
 > - **Seed không có cơ chế prune.** Key bị gỡ được xoá bằng data migration
 >   (`sitecontent.0004`).
+>
+> Điều chỉnh khi làm GĐ3:
+> - **Phiên bản chính sách giữ ở `.env`/mã nguồn, không chuyển vào DB.** Gồm cookie,
+>   điều khoản NTD, DPA kèm mã băm và đồng ý ứng viên. Văn bản nằm trong mã nguồn hoặc
+>   gắn mã băm, nên phiên bản phải đổi cùng lần triển khai sửa văn bản. Cho admin tăng
+>   số mà không đổi văn bản sẽ làm bản ghi đồng ý mất giá trị chứng cứ. Admin chỉ chỉnh
+>   **đường dẫn** văn bản (`legal_terms_url`, `legal_privacy_url`,
+>   `employer_dpa_guide_url`). Không cần `legal_cookie_url` vì đã có trang
+>   `/chinh-sach-cookie` nội bộ.
+> - **Favicon trong SEO shell server không làm;** trình duyệt áp favicon sau khi tải trang.
+> - **Đồng bộ giới hạn upload phía frontend dời lại:** phải sửa chuỗi "5MB" trong i18n ở
+>   nhiều vùng.
 
 ## Context
 

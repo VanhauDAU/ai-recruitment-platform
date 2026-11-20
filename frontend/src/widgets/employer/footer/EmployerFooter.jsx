@@ -63,7 +63,7 @@ export default function EmployerFooter() {
     { label: 'LinkedIn', href: settingText(settings.footer_linkedin_url), icon: <LinkedinFilled /> },
     { label: 'YouTube', href: settingText(settings.footer_youtube_url), icon: <YoutubeFilled /> },
     { label: 'TikTok', href: settingText(settings.footer_tiktok_url), icon: <TikTokOutlined /> },
-  ].filter((item) => item.href), [settings])
+  ].filter((item) => item.href && settings.footer_show_socials !== false), [settings])
 
   return (
     <footer className="border-t border-slate-200 bg-white">
@@ -112,7 +112,7 @@ export default function EmployerFooter() {
           </ul>
         </nav>
 
-        <div>
+        {settings.footer_show_contact !== false && <div>
           <h2 className="mb-4 text-sm font-bold text-slate-900">{m.marketing_footer_contact_title()}</h2>
           <div className="space-y-3">
             {hotlineNorth && (
@@ -128,7 +128,7 @@ export default function EmployerFooter() {
             {email && <ContactRow icon={<MailOutlined />} href={`mailto:${email}`}>{email}</ContactRow>}
             {address && <ContactRow icon={<EnvironmentOutlined />}>{address}</ContactRow>}
           </div>
-        </div>
+        </div>}
       </div>
 
       <div className="border-t border-slate-200 bg-slate-50">

@@ -7,7 +7,7 @@ import BestJobsResults from './BestJobsResults'
 import { BEST_JOBS_DIMENSIONS } from '../lib/best-jobs-config'
 import useBestJobsData from '../model/use-best-jobs-data'
 
-export default function BestJobs({ categories = [] }) {
+export default function BestJobs({ categories = [], pageSize }) {
   const navigate = useNavigate()
   const [showHint, setShowHint] = useState(true)
   const chipStrip = useRef(null)
@@ -32,7 +32,7 @@ export default function BestJobs({ categories = [] }) {
     setPage,
     setPaused,
     toggleFilter,
-  } = useBestJobsData(categories)
+  } = useBestJobsData(categories, pageSize)
 
   function pickDimension(key) {
     changeDimension(key)
@@ -180,7 +180,7 @@ export default function BestJobs({ categories = [] }) {
       )}
 
       {/* ── Job cards grid ── */}
-      <BestJobsResults animKey={animKey} jobs={jobs} loading={loading} />
+      <BestJobsResults animKey={animKey} jobs={jobs} loading={loading} pageSize={pageSize} />
 
       {/* ── Bottom pagination ── */}
       {totalPages > 1 && (

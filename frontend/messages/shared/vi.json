@@ -340,5 +340,9 @@
   "ui_image_alt_placeholder": "Mô tả ngắn nội dung ảnh",
   "ui_image_insert_into_post": "Chèn vào bài viết",
   "ui_image_upload_new": "Tải ảnh mới",
-  "ui_image_from_url": "Từ URL"
+  "ui_image_from_url": "Từ URL",
+  "auth_registration_closed_title": "Tạm dừng đăng ký tài khoản mới",
+  "auth_registration_closed_text": "Hệ thống đang tạm ngưng tạo tài khoản mới. Nếu đã có tài khoản, bạn vẫn đăng nhập bình thường.",
+  "auth_registration_closed_login": "Đăng nhập",
+  "api_error_oauth_registration_closed": "Hệ thống đang tạm dừng đăng ký tài khoản mới. Tài khoản đã có vẫn đăng nhập được."
 }

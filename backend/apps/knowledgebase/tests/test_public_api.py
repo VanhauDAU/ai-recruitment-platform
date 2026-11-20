@@ -233,14 +233,16 @@ class KnowledgebasePublicQueryBudgetTests(PublishedKnowledgeMixin, APITestCase):
         cache.clear()
 
     def test_public_query_counts_are_flat(self):
-        with self.assertNumQueries(1):
+        # +1 query mỗi request: middleware bảo trì và công tắc Trung tâm trợ giúp cùng đọc
+        # một lần map cấu hình (trong TestCase không có cache).
+        with self.assertNumQueries(1 + 2):
             categories = self.client.get(reverse('kb-public-category-list'))
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(2 + 2):
             articles = self.client.get(
                 reverse('kb-public-article-list'),
                 {'q': 'cau hoi ngan sach'},
             )
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(3 + 2):
             detail = self.client.get(
                 reverse(
                     'kb-public-article-detail',

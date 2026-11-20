@@ -21,6 +21,7 @@ from rest_framework.exceptions import ValidationError
 
 from apps.accounts.models import SocialAccount, User
 from apps.accounts.services.access import is_account_accessible
+from apps.accounts.services.registration import registration_open
 from apps.accounts.services.token_cache import atomic_pop
 
 _STATE_PREFIX = 'oauth:state:'
@@ -325,6 +326,8 @@ def resolve_user(provider, profile, portal, *, include_created=False):
                 user.save(update_fields=['email_verified', 'updated_at'])
             return result(user, False)
         else:
+            if not registration_open(role):
+                raise OAuthError('registration_closed')
             user = User.objects.create_user(
                 email=email,
                 password=None,  # password unusable — chỉ đăng nhập qua social

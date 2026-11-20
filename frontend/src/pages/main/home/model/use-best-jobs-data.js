@@ -27,7 +27,7 @@ async function loadFeaturedLocations() {
   return { provinces, featuredWards: wards.slice(0, 15) }
 }
 
-export default function useBestJobsData(categories) {
+export default function useBestJobsData(categories, pageSize = BEST_JOBS_PAGE_SIZE) {
   const [dimension, setDimension] = useState('location')
   const [filters, setFilters] = useState(EMPTY_BEST_JOBS_FILTERS)
   const [page, setPage] = useState(1)
@@ -53,8 +53,8 @@ export default function useBestJobsData(categories) {
   )
 
   const jobsQuery = useQuery({
-    queryKey: jobKeys.homepageBest(buildBestJobsParams(filters, page)),
-    queryFn: () => getHomepageBestJobs(buildBestJobsParams(filters, page)),
+    queryKey: jobKeys.homepageBest(buildBestJobsParams(filters, page, undefined, pageSize)),
+    queryFn: () => getHomepageBestJobs(buildBestJobsParams(filters, page, undefined, pageSize)),
     placeholderData: keepPreviousData,
   })
   const jobsData = jobsQuery.data
@@ -67,7 +67,7 @@ export default function useBestJobsData(categories) {
     if (jobsData) setAnimKey((key) => key + 1)
   }, [jobsData])
 
-  const totalPages = Math.max(1, Math.ceil(count / BEST_JOBS_PAGE_SIZE))
+  const totalPages = Math.max(1, Math.ceil(count / pageSize))
 
   useEffect(() => {
     if (paused || totalPages <= 1) return undefined

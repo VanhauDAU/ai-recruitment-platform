@@ -80,7 +80,6 @@ class RecruiterVisibilitySerializer(serializers.Serializer):
     enabled = serializers.BooleanField()
     confirmed = serializers.BooleanField(default=False, write_only=True)
     cv_public_id = serializers.CharField(max_length=50, required=False, allow_blank=True)
-    policy_version = serializers.CharField(max_length=64, default='v1')
     source = serializers.ChoiceField(choices=['cv_save_success', 'account_settings'])
     source_path = serializers.CharField(max_length=2048, required=False, allow_blank=True)
 
@@ -94,7 +93,6 @@ class RecruiterVisibilitySerializer(serializers.Serializer):
 
 class AiRecommendationConsentSerializer(serializers.Serializer):
     enabled = serializers.BooleanField()
-    policy_version = serializers.CharField(max_length=64, default='v1')
     source = serializers.ChoiceField(choices=['account_sidebar', 'account_settings'])
     source_path = serializers.CharField(max_length=2048, required=False, allow_blank=True)
 

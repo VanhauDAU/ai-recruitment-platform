@@ -113,13 +113,12 @@
     "value_type": "boolean",
     "value": true,
     "is_public": true,
-    "description": "Chưa có hiệu lực: chưa có code áp dụng giá trị này (đang được nối vào hệ thống).",
+    "description": "Carousel banner đầu trang chủ (banner nhập ở mục Banner).",
     "help": "Ẩn/hiện khối tương ứng trên trang chủ cổng ứng viên.",
     "options": {
       "applies_to": [
         "Trang chủ"
-      ],
-      "pending": true
+      ]
     }
   },
   {
@@ -130,13 +129,12 @@
     "value_type": "boolean",
     "value": true,
     "is_public": true,
-    "description": "Chưa có hiệu lực: chưa có code áp dụng giá trị này (đang được nối vào hệ thống).",
+    "description": "Khối thống kê thị trường việc làm trên trang chủ.",
     "help": "Ẩn/hiện khối tương ứng trên trang chủ cổng ứng viên.",
     "options": {
       "applies_to": [
         "Trang chủ"
-      ],
-      "pending": true
+      ]
     }
   },
   {
@@ -147,13 +145,12 @@
     "value_type": "boolean",
     "value": true,
     "is_public": true,
-    "description": "Chưa có hiệu lực: chưa có code áp dụng giá trị này (đang được nối vào hệ thống).",
+    "description": "Menu ngành nghề cạnh carousel đầu trang chủ.",
     "help": "Ẩn/hiện khối tương ứng trên trang chủ cổng ứng viên.",
     "options": {
       "applies_to": [
         "Trang chủ"
-      ],
-      "pending": true
+      ]
     }
   },
   {
@@ -164,13 +161,12 @@
     "value_type": "boolean",
     "value": true,
     "is_public": true,
-    "description": "Chưa có hiệu lực: chưa có code áp dụng giá trị này (đang được nối vào hệ thống).",
+    "description": "Khối \"Việc làm tốt nhất\" trên trang chủ.",
     "help": "Ẩn/hiện khối tương ứng trên trang chủ cổng ứng viên.",
     "options": {
       "applies_to": [
         "Trang chủ"
-      ],
-      "pending": true
+      ]
     }
   },
   {
@@ -181,8 +177,8 @@
     "value_type": "number",
     "value": 12,
     "is_public": true,
-    "description": "Chưa có hiệu lực: chưa có code áp dụng giá trị này (đang được nối vào hệ thống).",
-    "help": "Số tin hiển thị mỗi trang ở khối việc làm tốt nhất trên trang chủ.",
+    "description": "Số tin mỗi trang ở khối \"Việc làm tốt nhất\".",
+    "help": "Nên là bội số của 3 để lưới 3 cột không bị hụt dòng.",
     "options": {
       "applies_to": [
         "Trang chủ"
@@ -191,8 +187,7 @@
       "min": 3,
       "max": 30,
       "step": 3,
-      "depends_on": "home_show_featured_jobs",
-      "pending": true
+      "depends_on": "home_show_featured_jobs"
     }
   },
   {
@@ -203,13 +198,12 @@
     "value_type": "boolean",
     "value": true,
     "is_public": true,
-    "description": "Chưa có hiệu lực: chưa có code áp dụng giá trị này (đang được nối vào hệ thống).",
+    "description": "Khối giới thiệu mẫu CV trên trang chủ.",
     "help": "Ẩn/hiện khối giới thiệu mẫu CV trên trang chủ.",
     "options": {
       "applies_to": [
         "Trang chủ"
-      ],
-      "pending": true
+      ]
     }
   },
   {
@@ -798,14 +792,13 @@
     "value_type": "boolean",
     "value": true,
     "is_public": true,
-    "description": "Chưa có hiệu lực: chưa có code áp dụng giá trị này (đang được nối vào hệ thống).",
+    "description": "Tắt để tạm dừng tạo tài khoản ứng viên mới.",
     "help": "Tắt để tạm dừng tạo tài khoản ứng viên mới (form đăng ký và đăng nhập mạng xã hội lần đầu). Tài khoản đã có vẫn đăng nhập bình thường.",
     "options": {
       "applies_to": [
         "Cổng ứng viên"
       ],
-      "risky": "off",
-      "pending": true
+      "risky": "off"
     }
   },
   {
@@ -816,14 +809,13 @@
     "value_type": "boolean",
     "value": true,
     "is_public": true,
-    "description": "Chưa có hiệu lực: chưa có code áp dụng giá trị này (đang được nối vào hệ thống).",
+    "description": "Tắt để tạm dừng tạo tài khoản nhà tuyển dụng mới.",
     "help": "Tắt để tạm dừng tạo tài khoản nhà tuyển dụng mới. Lời mời do admin gửi không bị ảnh hưởng.",
     "options": {
       "applies_to": [
         "Cổng nhà tuyển dụng"
       ],
-      "risky": "off",
-      "pending": true
+      "risky": "off"
     }
   },
   {
@@ -1313,6 +1305,124 @@
     }
   },
   {
+    "key": "legal_terms_url",
+    "label": "Điều khoản sử dụng (ứng viên)",
+    "group": "legal",
+    "section": "Văn bản pháp lý",
+    "value_type": "url",
+    "value": "",
+    "is_public": true,
+    "description": "Trang điều khoản ứng viên đồng ý khi đăng ký.",
+    "help": "Dán link trang điều khoản của chính nền tảng (vd một bài trong Trung tâm trợ giúp). Để trống thì form đăng ký chỉ hiện chữ, không có link. Trang điều khoản nhà tuyển dụng nằm ở cổng nhà tuyển dụng.",
+    "options": {
+      "applies_to": [
+        "Đăng ký ứng viên"
+      ]
+    }
+  },
+  {
+    "key": "legal_privacy_url",
+    "label": "Chính sách bảo mật (ứng viên)",
+    "group": "legal",
+    "section": "Văn bản pháp lý",
+    "value_type": "url",
+    "value": "",
+    "is_public": true,
+    "description": "Trang chính sách bảo mật ứng viên đồng ý khi đăng ký.",
+    "help": "Để trống thì form đăng ký chỉ hiện chữ, không có link. Chính sách cookie có trang riêng (/chinh-sach-cookie).",
+    "options": {
+      "applies_to": [
+        "Đăng ký ứng viên"
+      ]
+    }
+  },
+  {
+    "key": "employer_dpa_guide_url",
+    "label": "Hướng dẫn thỏa thuận xử lý dữ liệu ứng viên",
+    "group": "legal",
+    "section": "Văn bản pháp lý",
+    "value_type": "url",
+    "value": "",
+    "is_public": true,
+    "description": "Link hướng dẫn ở bước \"Bảo vệ dữ liệu\" khi nhà tuyển dụng xác thực tài khoản.",
+    "help": "Để trống để ẩn link. Bản DPA chính thức (phiên bản, mã băm, đường dẫn) do cấu hình máy chủ quản lý vì gắn với bằng chứng ký; xem ở Vận hành → Thông số hệ thống.",
+    "options": {
+      "applies_to": [
+        "Xác thực nhà tuyển dụng"
+      ]
+    }
+  },
+  {
+    "key": "knowledgebase_public_enabled",
+    "label": "Mở Trung tâm trợ giúp công khai",
+    "group": "features",
+    "section": "Trung tâm trợ giúp",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": false,
+    "description": "Cho phép trang /tro-giup hiển thị công khai.",
+    "help": "Chỉ có hiệu lực khi máy chủ cho phép (KNOWLEDGEBASE_PUBLIC_ENABLED). Tắt ở đây để tạm đóng mà không cần deploy.",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên"
+      ],
+      "risky": "off"
+    }
+  },
+  {
+    "key": "knowledgebase_search_index_enabled",
+    "label": "Cho Google lập chỉ mục Trung tâm trợ giúp",
+    "group": "features",
+    "section": "Trung tâm trợ giúp",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": false,
+    "description": "Đưa bài trợ giúp vào sitemap và cho phép index.",
+    "help": "Chỉ có hiệu lực khi Trung tâm trợ giúp đang mở và máy chủ cho phép (KNOWLEDGEBASE_SEARCH_INDEX_ENABLED).",
+    "options": {
+      "applies_to": [
+        "SEO"
+      ],
+      "depends_on": "knowledgebase_public_enabled"
+    }
+  },
+  {
+    "key": "announcement_surfaces",
+    "label": "Nơi hiển thị thông báo đa cổng",
+    "group": "features",
+    "section": "Thông báo đa cổng",
+    "value_type": "multiselect",
+    "value": [
+      "candidate",
+      "employer_marketing",
+      "employer_workspace",
+      "admin_workspace"
+    ],
+    "is_public": false,
+    "description": "Các cổng được hiện thông báo tạo ở mục Thông báo.",
+    "help": "Chỉ thu hẹp được danh sách máy chủ cho phép (ANNOUNCEMENT_REMOTE_ENABLED_SURFACES). Bỏ chọn một cổng để tạm ẩn mọi thông báo ở cổng đó.",
+    "options": {
+      "choices": [
+        {
+          "value": "candidate",
+          "label": "Cổng ứng viên"
+        },
+        {
+          "value": "employer_marketing",
+          "label": "Trang giới thiệu nhà tuyển dụng"
+        },
+        {
+          "value": "employer_workspace",
+          "label": "Workspace nhà tuyển dụng"
+        },
+        {
+          "value": "admin_workspace",
+          "label": "Trang quản trị"
+        }
+      ]
+    }
+  },
+  {
     "key": "maintenance_mode",
     "label": "Chế độ bảo trì",
     "group": "operations",
@@ -1320,11 +1430,10 @@
     "value_type": "boolean",
     "value": false,
     "is_public": true,
-    "description": "Chưa có hiệu lực: chưa có code áp dụng giá trị này (đang được nối vào hệ thống).",
-    "help": "Khi bật, cổng ứng viên và nhà tuyển dụng hiện màn bảo trì; trang quản trị vẫn dùng được.",
+    "description": "Bật để cổng ứng viên và nhà tuyển dụng hiện màn bảo trì.",
+    "help": "Khi bật: API của cổng ứng viên, nhà tuyển dụng và API công khai trả 503; trang SEO trả 503 để Google hiểu là gián đoạn tạm thời. Trang quản trị, đăng nhập và cấu hình công khai vẫn chạy để tắt lại được. Tác vụ nền (email định kỳ...) vẫn chạy.",
     "options": {
-      "risky": "on",
-      "pending": true
+      "risky": "on"
     }
   },
   {
@@ -1335,12 +1444,11 @@
     "value_type": "textarea",
     "value": "Hệ thống đang bảo trì, vui lòng quay lại sau.",
     "is_public": true,
-    "description": "Chưa có hiệu lực: chưa có code áp dụng giá trị này (đang được nối vào hệ thống).",
+    "description": "Nội dung hiển thị trên màn bảo trì.",
     "help": "Nội dung hiển thị trên màn bảo trì.",
     "options": {
       "depends_on": "maintenance_mode",
-      "max_length": 500,
-      "pending": true
+      "max_length": 500
     }
   }
 ]

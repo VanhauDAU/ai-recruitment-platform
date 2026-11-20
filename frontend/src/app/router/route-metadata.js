@@ -25,8 +25,8 @@ const EMPLOYER_MARKETING_SEGMENTS = [
   '/chinh-sach-quyen-rieng',
 ]
 
+// Trang chủ không có ở đây: dùng seo_default_description admin cấu hình (khớp SEO shell server).
 const ROUTE_DESCRIPTIONS = new Map([
-  ['/', 'Tìm việc làm, tạo CV chuyên nghiệp và phát triển sự nghiệp cùng AI.'],
   [COMPANY_DIRECTORY_PATH, 'Khám phá danh sách công ty, tìm hiểu doanh nghiệp và các cơ hội việc làm đang tuyển dụng.'],
   [COMPANY_SEARCH_PATH, 'Tìm kiếm công ty theo tên và khám phá các vị trí đang tuyển dụng.'],
   ['/viec-lam', 'Tìm kiếm việc làm mới nhất theo ngành nghề, địa điểm và kinh nghiệm.'],
@@ -99,7 +99,8 @@ export function resolveRouteMetadata({ pathname, portal, settings }) {
     robots: settings.seo_robots_index !== false && indexable
       ? 'index, follow'
       : 'noindex, nofollow',
-    imageUrl: settings.seo_og_image,
+    // Không có ảnh chia sẻ riêng thì dùng logo, giống SEO shell của server.
+    imageUrl: settings.seo_og_image || settings.brand_logo_url,
     pageType: 'website',
     googleSiteVerification: settings.seo_google_site_verification,
   }

@@ -67,6 +67,7 @@ class SiteSetting(models.Model):
         NUMBER = 'number', 'Số'
         BOOLEAN = 'boolean', 'Bật/tắt'
         SELECT = 'select', 'Chọn một'
+        MULTISELECT = 'multiselect', 'Chọn nhiều'
         COLOR = 'color', 'Màu'
         IMAGE = 'image', 'Ảnh'
         EMAIL = 'email', 'Email'

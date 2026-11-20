@@ -31,4 +31,10 @@ describe('homepage Best Jobs configuration', () => {
 
     expect(chips[0]).toEqual({ value: null, label: 'Ngẫu nhiên' })
   })
+
+  it('requests the configured number of best jobs per page', () => {
+    const params = buildBestJobsParams({ location: null, salary: null, experience: null, category: null }, 1, 'seed', 18)
+
+    expect(params.get('page_size')).toBe('18')
+  })
 })

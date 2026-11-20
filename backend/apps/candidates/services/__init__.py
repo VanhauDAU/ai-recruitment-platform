@@ -14,6 +14,7 @@ from .notifications import (
     restore_superseded_candidate_notification,
 )
 from .profiles import (
+    CONSENT_POLICY_VERSION,
     replace_candidate_job_preferences,
     set_ai_recommendation,
     set_recruiter_visibility,
@@ -21,6 +22,7 @@ from .profiles import (
 )
 
 __all__ = [
+    'CONSENT_POLICY_VERSION',
     'cancel_candidate_notification',
     'deliver_candidate_notification_email',
     'email_brand_context',

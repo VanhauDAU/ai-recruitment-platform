@@ -99,10 +99,8 @@ EMPLOYER_PASSWORD_RESET_PATH = config(
 EMPLOYER_TERMS_POLICY_VERSION = config('EMPLOYER_TERMS_POLICY_VERSION', default='2026-07-18')
 EMPLOYER_DPA_POLICY_VERSION = config('EMPLOYER_DPA_POLICY_VERSION', default='').strip()
 EMPLOYER_DPA_DOCUMENT_SHA256 = config('EMPLOYER_DPA_DOCUMENT_SHA256', default='').strip().lower()
-EMPLOYER_DPA_DOCUMENT_URL = config(
-    'EMPLOYER_DPA_DOCUMENT_URL',
-    default='https://tuyendung.topcv.vn/data-processing-agreement',
-).strip()
+# Không có mặc định: DPA phải là văn bản của chính nền tảng, khớp mã băm SHA-256.
+EMPLOYER_DPA_DOCUMENT_URL = config('EMPLOYER_DPA_DOCUMENT_URL', default='').strip()
 EMPLOYER_DPA_GRACE_DAYS = config('EMPLOYER_DPA_GRACE_DAYS', default=30, cast=int)
 REQUIRE_APPROVED_EMPLOYER_VERIFICATION = config(
     'REQUIRE_APPROVED_EMPLOYER_VERIFICATION',

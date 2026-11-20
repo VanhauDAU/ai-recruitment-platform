@@ -19,6 +19,12 @@ của app `sitecontent`. Hợp đồng của kho cấu hình nằm ở
   - kiểu, ràng buộc (`options`) và giá trị mặc định.
 
   Khi row chưa có trong DB, `get_setting()` trả giá trị mặc định của seed.
+- **Văn bản pháp lý có phiên bản thì phiên bản nằm ở `.env`/mã nguồn.** Phiên bản
+  chính sách cookie, điều khoản NTD, DPA (kèm mã băm), và phiên bản đồng ý của ứng
+  viên đổi cùng lần triển khai sửa văn bản, nên không chỉnh qua trang cấu hình. Đường
+  dẫn tới trang văn bản thì là setting (nhóm Pháp lý & đồng ý).
+- **Công tắc tính năng chỉ thu hẹp được máy chủ:** Trung tâm trợ giúp và nơi hiện
+  thông báo đa cổng có hiệu lực = cờ `.env` VÀ công tắc admin.
 - **Secret và giới hạn hạ tầng nằm ở `.env`.** Mật khẩu, timeout phiên, rate limit, dung
   lượng upload... không phải SiteSetting. Trang quản trị hiển thị giá trị đang áp dụng
   ở bảng **Thông số hệ thống** (`GET /api/admin/site/system-parameters/`). Bảng này chỉ
@@ -95,6 +101,7 @@ Cột "Mặc định" là giá trị trong seed. Dấu ✓ nghĩa là key đư�
 Nhóm chưa có key sẽ được bổ sung ở các giai đoạn sau của kế hoạch.
 
 
+
 ### Thương hiệu (`brand`)
 
 | Section | Key | Tên | Kiểu | Mặc định | Public |
@@ -110,12 +117,12 @@ Nhóm chưa có key sẽ được bổ sung ở các giai đoạn sau của kế
 
 | Section | Key | Tên | Kiểu | Mặc định | Public |
 |---|---|---|---|---|---|
-| Khối trang chủ | `home_show_banner` _(chưa có hiệu lực)_ | Hiện carousel banner | boolean | true | ✓ |
-| Khối trang chủ | `home_show_stats` _(chưa có hiệu lực)_ | Hiện khối thống kê thị trường | boolean | true | ✓ |
-| Khối trang chủ | `home_show_categories` _(chưa có hiệu lực)_ | Hiện menu ngành nghề | boolean | true | ✓ |
-| Khối trang chủ | `home_show_featured_jobs` _(chưa có hiệu lực)_ | Hiện khối việc làm tốt nhất | boolean | true | ✓ |
-| Khối trang chủ | `home_featured_jobs_count` _(chưa có hiệu lực)_ | Số tin ở khối việc làm tốt nhất | number | 12 | ✓ |
-| Khối trang chủ | `home_show_cv_templates` _(chưa có hiệu lực)_ | Hiện khối mẫu CV | boolean | true | ✓ |
+| Khối trang chủ | `home_show_banner` | Hiện carousel banner | boolean | true | ✓ |
+| Khối trang chủ | `home_show_stats` | Hiện khối thống kê thị trường | boolean | true | ✓ |
+| Khối trang chủ | `home_show_categories` | Hiện menu ngành nghề | boolean | true | ✓ |
+| Khối trang chủ | `home_show_featured_jobs` | Hiện khối việc làm tốt nhất | boolean | true | ✓ |
+| Khối trang chủ | `home_featured_jobs_count` | Số tin ở khối việc làm tốt nhất | number | 12 | ✓ |
+| Khối trang chủ | `home_show_cv_templates` | Hiện khối mẫu CV | boolean | true | ✓ |
 | Điều hướng | `home_show_popular_searches` | Hiện khối Tra cứu phổ biến | boolean | true | ✓ |
 
 ### SEO & chia sẻ (`seo`)
@@ -175,8 +182,8 @@ Nhóm chưa có key sẽ được bổ sung ở các giai đoạn sau của kế
 
 | Section | Key | Tên | Kiểu | Mặc định | Public |
 |---|---|---|---|---|---|
-| Đăng ký | `candidate_allow_registration` _(chưa có hiệu lực)_ | Cho phép đăng ký ứng viên | boolean | true | ✓ |
-| Đăng ký | `employer_allow_registration` _(chưa có hiệu lực)_ | Cho phép đăng ký nhà tuyển dụng | boolean | true | ✓ |
+| Đăng ký | `candidate_allow_registration` | Cho phép đăng ký ứng viên | boolean | true | ✓ |
+| Đăng ký | `employer_allow_registration` | Cho phép đăng ký nhà tuyển dụng | boolean | true | ✓ |
 
 ### Nhà tuyển dụng & xác thực (`employer`)
 
@@ -222,9 +229,25 @@ Nhóm chưa có key sẽ được bổ sung ở các giai đoạn sau của kế
 | AI viết tin tuyển dụng | `ai_job_generation_rollout_percent` | Tỷ lệ rollout tạo tin AI (%) | number | 0 |  |
 | AI viết tin tuyển dụng | `ai_job_generation_company_allowlist` | Công ty allowlist tạo tin AI | json | [] |  |
 
+### Pháp lý & đồng ý (`legal`)
+
+| Section | Key | Tên | Kiểu | Mặc định | Public |
+|---|---|---|---|---|---|
+| Văn bản pháp lý | `legal_terms_url` | Điều khoản sử dụng (ứng viên) | url | "" | ✓ |
+| Văn bản pháp lý | `legal_privacy_url` | Chính sách bảo mật (ứng viên) | url | "" | ✓ |
+| Văn bản pháp lý | `employer_dpa_guide_url` | Hướng dẫn thỏa thuận xử lý dữ liệu ứng viên | url | "" | ✓ |
+
+### Tính năng (`features`)
+
+| Section | Key | Tên | Kiểu | Mặc định | Public |
+|---|---|---|---|---|---|
+| Trung tâm trợ giúp | `knowledgebase_public_enabled` | Mở Trung tâm trợ giúp công khai | boolean | true |  |
+| Trung tâm trợ giúp | `knowledgebase_search_index_enabled` | Cho Google lập chỉ mục Trung tâm trợ giúp | boolean | true |  |
+| Thông báo đa cổng | `announcement_surfaces` | Nơi hiển thị thông báo đa cổng | multiselect | ["candidate", "employer_marketing", "… |  |
+
 ### Vận hành (`operations`)
 
 | Section | Key | Tên | Kiểu | Mặc định | Public |
 |---|---|---|---|---|---|
-| Bảo trì | `maintenance_mode` _(chưa có hiệu lực)_ | Chế độ bảo trì | boolean | false | ✓ |
-| Bảo trì | `maintenance_message` _(chưa có hiệu lực)_ | Thông báo bảo trì | textarea | "Hệ thống đang bảo trì, vui lòng quay… | ✓ |
+| Bảo trì | `maintenance_mode` | Chế độ bảo trì | boolean | false | ✓ |
+| Bảo trì | `maintenance_message` | Thông báo bảo trì | textarea | "Hệ thống đang bảo trì, vui lòng quay… | ✓ |

@@ -8,6 +8,35 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-21
 
+#### Changed — Cấu hình hệ thống chạy thật ở các cổng (ADR-0026, GĐ3)
+
+- **Chế độ bảo trì:**
+  - API cổng ứng viên, nhà tuyển dụng và API công khai trả 503; trang SEO trả 503 kèm noindex.
+  - Frontend hiện màn bảo trì, kể cả khi API mới báo 503 mà bản cấu hình đã tải còn cũ.
+  - Trang quản trị vẫn dùng được.
+- **Tạm dừng đăng ký** ứng viên hoặc nhà tuyển dụng: chặn ở form và ở lần đăng nhập mạng
+  xã hội đầu tiên; trang đăng ký hiện thông báo kèm link đăng nhập.
+- **Trang chủ:** ẩn/hiện từng khối (carousel, ngành nghề, việc làm tốt nhất, thống kê,
+  mẫu CV) và đổi số tin "Việc làm tốt nhất".
+- **Sửa lỗi:** số liệu và logo đối tác ở trang nhà tuyển dụng không bao giờ hiện, vì giá
+  trị mảng bị đọc như chuỗi.
+- **SEO:** trang chủ dùng mô tả admin cấu hình ở cả server lẫn frontend; ảnh chia sẻ đã
+  upload dùng URL `/media/` đúng, khi trống thì dùng logo.
+- **Nhận diện:**
+  - Layout đăng nhập/thiết lập của NTD theo màu thương hiệu.
+  - Footer NTD theo công tắc mạng xã hội và liên hệ.
+  - Khối hotline trang chủ dùng hotline/email trong cấu hình thay số viết cứng.
+  - Các fallback liên hệ dùng chung một nguồn mặc định.
+- **Pháp lý:**
+  - Link điều khoản/bảo mật ở form đăng ký ứng viên và link hướng dẫn DPA chuyển thành
+    cấu hình, không còn trỏ sang topcv.vn.
+  - Bỏ URL DPA mặc định của bên thứ ba.
+  - Phiên bản đồng ý của ứng viên do server gán.
+- **Tính năng:** admin tạm đóng được Trung tâm trợ giúp, việc index và từng nơi hiện
+  thông báo đa cổng, nhưng không mở vượt cấu hình máy chủ. Thêm kiểu cấu hình
+  `multiselect`.
+- **Hạn mức đăng tin:** thông báo hết lượt dùng hạn mức Cấp 3 thật thay số "100".
+
 #### Changed — Giao diện mới trang Cấu hình hệ thống (ADR-0026, GĐ2)
 
 - Thanh bên chia 3 khu kèm ô tìm kiếm trên mọi nhóm. Trên mobile, thanh bên thành
