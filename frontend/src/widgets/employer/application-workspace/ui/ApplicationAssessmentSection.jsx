@@ -9,6 +9,7 @@ import {
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 import { m } from '@/shared/config/i18n'
+import { useUnsavedChanges } from '@/shared/hooks/use-unsaved-changes'
 
 /** Private note and rating; mount with `key={public_id}` to reset per application. */
 export default function ApplicationAssessmentSection({ application }) {
@@ -16,6 +17,7 @@ export default function ApplicationAssessmentSection({ application }) {
   const [note, setNote] = useState(application.employer_note || '')
   const [rating, setRating] = useState(application.employer_rating || null)
   const dirty = note !== (application.employer_note || '') || rating !== (application.employer_rating || null)
+  useUnsavedChanges(dirty)
 
   const saveMutation = useMutation({
     mutationFn: () => updateApplicationAssessment(application.public_id, {

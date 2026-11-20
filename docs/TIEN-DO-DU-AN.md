@@ -9,7 +9,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | --- | --- |
 | [Chốt luồng FAQ/hướng dẫn và blog: Nháp → Xuất bản (ADR-0024)](#chốt-luồng-nội-dung-nháp--xuất-bản-adr-0024-2026-11-20) | ✅ Gộp vào `dev` (#272) |
 | [Tổ chức lại sidebar quản trị](#tổ-chức-lại-sidebar-quản-trị-2026-11-20) | ✅ Gộp vào `dev` (#270); gỡ khối "Hàng chờ quản trị" ở trang Người dùng: PR #271, chờ gộp |
-| [Song ngữ vi/en cho 3 cổng (ADR-0023)](#song-ngữ-vien-cho-3-cổng-adr-0023-2026-11-19) | 🟨 GĐ0 đã gộp (#262); GĐ1 (cổng NTD) trên nhánh `feat/i18n-employer`; GĐ2–4 chưa làm |
+| [Song ngữ vi/en cho 3 cổng (ADR-0023)](#song-ngữ-vien-cho-3-cổng-adr-0023-2026-11-19) | 🟨 GĐ0 (#262), GĐ1 cổng NTD (#267) đã gộp; chặn mất dữ liệu khi đổi ngôn ngữ trên nhánh `fix/language-switch-unsaved-guard`; GĐ2–4 chưa làm |
 | [Chuẩn hóa tiêu đề trang 3 cổng](#chuẩn-hóa-tiêu-đề-trang-3-cổng-2026-11-19) | 🟨 PR #261 (nhánh `feat/page-titles`), chờ gộp |
 | [Hậu kiểm nội dung trang công ty](#hậu-kiểm-nội-dung-trang-công-ty-2026-11-19) | ✅ Gộp vào `dev` (#260) |
 | [Làm lại trang nhà tuyển dụng của admin](#làm-lại-trang-nhà-tuyển-dụng-của-admin-2026-11-19) | ✅ Gộp vào `dev` (#263); làm gọn giao diện chi tiết ở PR #266 (nhánh `feat/admin-recruiter-detail-ui`), chờ gộp |
@@ -47,7 +47,7 @@ Lý do: một số NTD là người nước ngoài. Quyết định và lộ tr�
 | GĐ | Phạm vi | Trạng thái |
 |---|---|---|
 | 0 | Nền tảng FE (Paraglide; antd/dayjs/Intl theo locale; `Accept-Language`; bộ chọn lưu vào tài khoản; `check:i18n` + ratchet); backend (`LocaleMiddleware`, `preferred_language`, catalog vi bổ sung cho DRF); chuyển 4 trang marketing NTD khỏi i18next | ✅ Gộp vào `dev` (#262) |
-| 1 | Cổng NTD: 3.029 khóa FE (công ty, tin, chiến dịch, tài khoản/đăng nhập dùng chung, khung workspace, entities/shared NTD dùng, trang pháp lý); backend 1.511 msgid ở `accounts`/`employers`/`jobs`/`campaigns`/`applications`; email + thông báo theo ngôn ngữ người nhận; prompt AI sinh tin/nội dung chiến dịch theo ngôn ngữ; bộ chọn ngôn ngữ ở workspace, đăng nhập, thiết lập; công cụ catalog Python thuần `common/i18n_catalog.py` | 🟨 Nhánh `feat/i18n-employer` |
+| 1 | Cổng NTD: 3.029 khóa FE (công ty, tin, chiến dịch, tài khoản/đăng nhập dùng chung, khung workspace, entities/shared NTD dùng, trang pháp lý); backend 1.511 msgid ở `accounts`/`employers`/`jobs`/`campaigns`/`applications`; email + thông báo theo ngôn ngữ người nhận; prompt AI sinh tin/nội dung chiến dịch theo ngôn ngữ; bộ chọn ngôn ngữ ở workspace, đăng nhập, thiết lập; công cụ catalog Python thuần `common/i18n_catalog.py` | ✅ Gộp vào `dev` (#267) |
 | 2 | Danh mục `name_en` (tỉnh/thành, kỹ năng, ngành nghề, phúc lợi); entities và shared | ⬜ |
 | 3 | Cổng ứng viên | ⬜ |
 | 4 | Cổng quản trị; ratchet về 0 | ⬜ |
@@ -61,6 +61,11 @@ Số đo:
     antd khoảng 2,2 KiB).
   - GĐ1: 332,2 KiB vì 204 chuỗi của form đăng nhập/phiên/lỗi API nằm sẵn trong
     shell. Trần nâng lên 334 KiB.
+- Đổi ngôn ngữ là tải lại trang, nên các trình soạn cấp trang của NTD (tin,
+  hồ sơ và nội dung/bố cục trang công ty, thông tin chiến dịch, thông tin tài
+  khoản, ghi chú đánh giá hồ sơ) cùng trình soạn CV đăng ký trạng thái "chưa
+  lưu". Bộ chọn ngôn ngữ hỏi trước khi bỏ thay đổi; tải lại hoặc đóng tab có
+  cảnh báo của trình duyệt.
 - Pytest trong container phải chạy với `--ds=config.settings.test`. Thiếu tham
   số này, 38 test lỗi giả vì URL R2 (đã sửa trong `scripts/check_all.sh`).
 

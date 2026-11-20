@@ -1,6 +1,7 @@
 import { Alert, Button, Form, Tag } from 'antd'
 import { useState } from 'react'
 import { m } from '@/shared/config/i18n'
+import { useUnsavedChanges } from '@/shared/hooks/use-unsaved-changes'
 import { message } from '@/shared/lib/toast'
 import { CONTENT_STATUS, contentCardId, contentSubmitOutcome } from '../model/content-form'
 import { useCompanyContentSubmit } from '../model/use-company-content-submit'
@@ -29,6 +30,7 @@ export default function ContentCard({
 }) {
   const [form] = Form.useForm()
   const [dirty, setDirty] = useState(false)
+  useUnsavedChanges(dirty)
   const [cardError, setCardError] = useState('')
   const submit = useCompanyContentSubmit()
   const [statusColor, statusLabel] = CONTENT_STATUS[status] || CONTENT_STATUS.empty

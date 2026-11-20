@@ -7,6 +7,7 @@ import { getEmployerProfile } from '@/entities/account/employer-profile'
 import { useSession } from '@/entities/account/session'
 import { AvatarEditorModal, updateProfile } from '@/features/common/account/edit-profile'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { useUnsavedChanges } from '@/shared/hooks/use-unsaved-changes'
 import { EMPLOYER_PHONE_VERIFY_URL } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
 import { m } from '@/shared/config/i18n'
@@ -20,7 +21,9 @@ export default function EmployerAccountInformation() {
   const [saving, setSaving] = useState(false)
   const [avatarOpen, setAvatarOpen] = useState(false)
   const [phoneEditing, setPhoneEditing] = useState(false)
+  const [dirty, setDirty] = useState(false)
   const [form] = Form.useForm()
+  useUnsavedChanges(dirty)
 
   useEffect(() => {
     form.setFieldsValue({ full_name: user?.full_name || '', phone: user?.phone || '' })
@@ -35,6 +38,7 @@ export default function EmployerAccountInformation() {
       })
       setCurrentUser(updated)
       form.setFieldsValue({ full_name: updated.full_name, phone: updated.phone })
+      setDirty(false)
       message.success(m.employer_account_info_saved())
     } catch (error) {
       const fieldErrors = error?.response?.data
@@ -81,6 +85,7 @@ export default function EmployerAccountInformation() {
           layout="vertical"
           requiredMark={false}
           onFinish={handleSave}
+          onValuesChange={() => setDirty(true)}
         >
         <div className="grid gap-x-8 sm:grid-cols-2">
           <div className="mb-5 flex flex-wrap items-center gap-3 sm:col-span-2">

@@ -16,6 +16,7 @@ import {
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { getUploadStatePresentation } from '@/shared/api/upload-session'
 import { m } from '@/shared/config/i18n'
+import { useUnsavedChanges } from '@/shared/hooks/use-unsaved-changes'
 import { message } from '@/shared/lib/toast'
 import RichTextEditor from '@/shared/ui/rich-text/RichTextEditor'
 import {
@@ -184,6 +185,8 @@ export default function CompanyForm({ catalogs, industries, disabled, company = 
     onError: (error) => message.error(getApiErrorMessage(error, isEdit ? m.employer_company_form_update_failed() : m.employer_company_form_create_failed())),
   })
   const mediaDisabled = disabled || saveMutation.isPending || !canManageMedia
+  // Lưu xong form đóng lại (onCompleted), nên chỉ cần tắt cờ khi đã lưu thành công.
+  useUnsavedChanges(!saveMutation.isSuccess && Boolean(currentFormValues || logoFile || galleryFiles.length))
 
   async function save(values) {
     const {

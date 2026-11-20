@@ -153,6 +153,7 @@ export default function JobForm() {
         requiresNewCredit={requiresNewCredit}
         submitLabel={submitLabel}
         submitting={draftMutation.isPending || publishMutation.isPending}
+        savedAt={draftMutation.isSuccess ? draftMutation.submittedAt : 0}
         errorMessage={mutationError ? jobMutationErrorMessage(mutationError, m.employer_job_edit_save_failed()) : ''}
         creatingCampaign={quickCampaignMutation.isPending}
         onCreateCampaign={(name) => quickCampaignMutation.mutateAsync({ name, activate: true })}
