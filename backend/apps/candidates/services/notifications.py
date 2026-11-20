@@ -17,7 +17,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from apps.accounts.services import is_account_accessible
-from apps.sitecontent.selectors import get_bool_setting
+from apps.sitecontent.selectors import business_emails_enabled
 from common.email import send_html_email
 from common.metrics import record_metric
 from common.outbox import MAX_DELIVERY_ATTEMPTS, is_sending_fresh, stale_sending_before
@@ -160,7 +160,7 @@ def _email_skip_reason(notification):
         return 'email_unverified'
     if not is_account_accessible(recipient):
         return 'account_restricted'
-    if not get_bool_setting('email_notifications_enabled', True):
+    if not business_emails_enabled():
         return 'site_disabled'
     # Re-read at send time: the candidate may have changed it since the event.
     if not switch_enabled(recipient.pk, EVENTS[notification.event_type].email_switch):

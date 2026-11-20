@@ -14,9 +14,9 @@ from .ai_generation import (
     sanitize_source_text,
 )
 from .alerts import (
-    JOB_ALERT_LIMIT,
     create_job_alert,
     delete_job_alert,
+    job_alert_limit,
     next_job_alert_run,
     reset_candidate_job_delivery_cursors,
     update_job_alert,
@@ -82,7 +82,6 @@ __all__ = [
     'job_email_card',
     'job_url',
     'salary_text',
-    'JOB_ALERT_LIMIT',
     'RESPONSIBILITY_STATEMENT_VERSION',
     'apply_job_ai_generation_to_draft',
     'apply_confirmed_report_hold',
@@ -92,6 +91,7 @@ __all__ = [
     'close_job',
     'claim_due_candidate_job_digest_candidates',
     'create_job_alert',
+    'job_alert_limit',
     'create_job_record',
     'create_job_ai_generation',
     'build_job_content_snapshot',

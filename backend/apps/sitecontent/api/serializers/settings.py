@@ -17,6 +17,7 @@ class AdminSiteSettingSerializer(serializers.ModelSerializer):
 
     default_value = serializers.SerializerMethodField()
     display_value = serializers.SerializerMethodField()
+    options = serializers.SerializerMethodField()
 
     class Meta:
         model = SiteSetting
@@ -36,6 +37,9 @@ class AdminSiteSettingSerializer(serializers.ModelSerializer):
             'display_value',
             'updated_at',
         ]
+
+    def get_options(self, obj) -> dict:
+        return obj.resolved_options()
 
     def get_default_value(self, obj):
         """Seed default, for the "Đặt về mặc định" action; ``None`` for keys outside the seed."""

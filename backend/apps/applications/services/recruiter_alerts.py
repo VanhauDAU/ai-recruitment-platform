@@ -17,7 +17,7 @@ from apps.candidates.services import email_brand_context
 from apps.employers.models import EmployerNotification
 from apps.employers.services import emit_employer_event, new_application_email_enabled
 from apps.jobs.models import JobApplicationContact
-from apps.sitecontent.selectors import get_bool_setting
+from apps.sitecontent.selectors import business_emails_enabled, email_sender, get_bool_setting
 from common.email import send_html_email
 from common.i18n import recipient_language
 
@@ -102,7 +102,7 @@ def send_new_application_email(application_id):
     recruiter = job.posted_by
     if not (
         is_account_accessible(recruiter)
-        and get_bool_setting('email_notifications_enabled', True)
+        and business_emails_enabled()
         and get_bool_setting('email_notify_new_application', True)
         and new_application_email_enabled(recruiter)
     ):
@@ -130,8 +130,6 @@ def _send_new_application_email(application):
         'header_cta_label': _('Quản lý CV'),
         'email_settings_url': f'{base}{EMPLOYER_SETTINGS_PATH}',
     }
-    sender = settings.EMAIL_FROM_ADDRESS
-    from_email = f'{brand["from_name"]} <{sender}>' if brand['from_name'] else sender
     text = render_to_string('applications/email/new_application.txt', context)
     html = render_to_string('applications/email/new_application.html', context)
     recipients = _recipients(job)
@@ -141,7 +139,6 @@ def _send_new_application_email(application):
             text=text,
             html=html,
             to=recipient,
-            from_email=from_email,
-            reply_to=brand['support_email'] or None,
+            **email_sender(),
         )
     return len(recipients)

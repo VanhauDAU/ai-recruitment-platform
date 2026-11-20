@@ -7,7 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Làm lại trang Cấu hình hệ thống (ADR-0026)](#làm-lại-trang-cấu-hình-hệ-thống-adr-0026-2026-11-21) | 🟨 GĐ1 (#294, #295) và GĐ2 (#296) đã gộp; GĐ3 trên nhánh `feat/settings-portals`; GĐ4–5 chưa làm |
+| [Làm lại trang Cấu hình hệ thống (ADR-0026)](#làm-lại-trang-cấu-hình-hệ-thống-adr-0026-2026-11-21) | 🟨 GĐ1–GĐ3 đã gộp (#294–#297); GĐ4 trên nhánh `feat/settings-email-ai`; GĐ5 chưa làm |
 | [Chốt luồng FAQ/hướng dẫn và blog: Nháp → Xuất bản (ADR-0024)](#chốt-luồng-nội-dung-nháp--xuất-bản-adr-0024-2026-11-20) | ✅ Gộp vào `dev` (#272) |
 | [Tổ chức lại sidebar quản trị](#tổ-chức-lại-sidebar-quản-trị-2026-11-20) | ✅ Gộp vào `dev` (#270); gỡ khối "Hàng chờ quản trị" ở trang Người dùng: PR #271, chờ gộp |
 | [Song ngữ vi/en cho 3 cổng (ADR-0023)](#song-ngữ-vien-cho-3-cổng-adr-0023-2026-11-19) | 🟨 GĐ0 (#262), GĐ1 cổng NTD (#267) đã gộp; chặn mất dữ liệu khi đổi ngôn ngữ trên nhánh `fix/language-switch-unsaved-guard`; GĐ2–4 chưa làm |
@@ -52,8 +52,8 @@ ghi ngược với code.
 | --- | --- | --- |
 | 1 | Hợp đồng cấu hình (xem bên dưới) | ✅ #294, #295 |
 | 2 | Giao diện mới: thanh bên 3 khu, tìm kiếm, nút "?", lưu chung, xác nhận thao tác nguy hiểm, lịch sử thay đổi, bảng thông số | ✅ #296 |
-| 3 | Nối bảo trì, công tắc đăng ký, khối trang chủ; sửa SEO/màu/footer/hotline; link pháp lý (bỏ topcv.vn); công tắc Trung tâm trợ giúp và thông báo đa cổng | 🟨 Nhánh `feat/settings-portals` |
-| 4 | Email (phạm vi công tắc, chào mừng, branding chung), AI hợp nhất theo runtime, job alert, AI chiến dịch | ⬜ |
+| 3 | Nối bảo trì, công tắc đăng ký, khối trang chủ; sửa SEO/màu/footer/hotline; link pháp lý (bỏ topcv.vn); công tắc Trung tâm trợ giúp và thông báo đa cổng | ✅ #297 |
+| 4 | Email (phạm vi công tắc, chào mừng, branding chung), AI hợp nhất theo runtime, job alert, AI chiến dịch | 🟨 Nhánh `feat/settings-email-ai` |
 | 5 | Xác thực & uy tín NTD, Ứng tuyển & SLA, hạn tin, chia sẻ CV, lưu trữ dữ liệu, OAuth theo cổng | ⬜ |
 
 GĐ1 gồm:
@@ -67,7 +67,7 @@ GĐ1 gồm:
 - API thông số hệ thống chỉ đọc.
 - Test hợp đồng chặn key chết.
 
-GĐ3 nối 10 key `pending`; còn `email_welcome_enabled` chờ GĐ4. Việc dời lại: đồng bộ giới hạn
+GĐ3 nối 10 key `pending`, GĐ4 nối `email_welcome_enabled`: không còn key "Chưa có hiệu lực". Việc dời lại: đồng bộ giới hạn
 upload phía frontend (cần sửa chuỗi "5MB" trong i18n nhiều vùng); file mẫu
 `/documents/topcv-mau-van-ban-thong-bao-dong-y-xu-ly-dlcn.docx` còn tên/nội dung của bên thứ ba.
 
@@ -1650,9 +1650,8 @@ AI lõi của đồ án (phạm vi chốt 2026-11-15, xem
   `recruiter_visibility`).
 - Giai đoạn 2–3: lưu kết quả phân tích CV và đối sánh, trích xuất kỹ năng
   ([thuật toán AI](07-algorithms/thuat-toan-ai.md)).
-- Import CV gọi thẳng REST của Gemini, OpenAI hoặc Anthropic trong
-  `apps/ai_core/services/cv_import.py`, không qua runtime `ai_core`: không bị
-  `AI_RUNTIME_ENABLED` chặn, không ghi `AiInvocation`, không quota.
+- ✅ Import CV đã đi qua runtime `ai_core` (ADR-0026, GĐ4): chịu `AI_RUNTIME_ENABLED`,
+  ghi `AiInvocation`; còn thiếu quota riêng cho import (vẫn dựa vào throttle `cv_import`).
 - Đã gỡ site setting `ai_cv_review_enabled`, `ai_daily_request_limit` vì không có
   chỗ nào đọc (ADR-0026). `ai_job_match_enabled` đang được dùng.
 

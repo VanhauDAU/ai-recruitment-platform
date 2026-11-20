@@ -10,7 +10,7 @@ from django.db.models import Q
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
-from apps.sitecontent.selectors import get_string_setting
+from apps.sitecontent.selectors import email_sender, get_string_setting
 from common.email import send_html_email
 from common.i18n import recipient_language
 from common.outbox import MAX_DELIVERY_ATTEMPTS, is_sending_fresh, stale_sending_before
@@ -55,23 +55,9 @@ def _render(job, site_name):
 
 def _send(job):
     site_name = get_string_setting('site_name', 'ProCV')
-    sender_name = get_string_setting('email_from_name', settings.EMAIL_FROM_NAME)
-    support_email = get_string_setting('support_email', '')
-    sender = (
-        f'{sender_name} <{settings.EMAIL_FROM_ADDRESS}>'
-        if sender_name
-        else settings.EMAIL_FROM_ADDRESS
-    )
     with recipient_language(job.recipient):
         subject, text, body = _render(job, site_name)
-    send_html_email(
-        subject=subject,
-        text=text,
-        html=body,
-        to=job.recipient.email,
-        from_email=sender,
-        reply_to=support_email or None,
-    )
+    send_html_email(subject=subject, text=text, html=body, to=job.recipient.email, **email_sender())
 
 
 @shared_task(bind=True, max_retries=MAX_DELIVERY_ATTEMPTS - 1)

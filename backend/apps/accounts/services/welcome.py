@@ -4,7 +4,7 @@ from django.conf import settings
 from django.utils.html import escape
 from django.utils.translation import gettext as _
 
-from apps.sitecontent.selectors import get_string_setting
+from apps.sitecontent.selectors import email_brand_color, get_string_setting
 from common.i18n import recipient_language
 
 from ..models import User
@@ -12,6 +12,7 @@ from .mailing import frontend_link, send_html_email
 
 
 def _candidate_welcome(user):
+    brand_color = email_brand_color()
     destination = frontend_link('/onboard-user')
     site_name = get_string_setting('site_name', 'ProCV')
     support_email = get_string_setting('support_email', '')
@@ -41,14 +42,14 @@ def _candidate_welcome(user):
         'support': escape(support_email or _('bộ phận hỗ trợ'))
     }
     html = f'''<div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;color:#1f2937;background:#f6f8fa;padding:24px">
-      <div style="background:#00b14f;color:#fff;padding:24px;border-radius:16px 16px 0 0;text-align:center">
+      <div style="background:{brand_color};color:#fff;padding:24px;border-radius:16px 16px 0 0;text-align:center">
         <div style="font-size:24px;font-weight:700">{escape(site_name)}</div>
         <div style="margin-top:8px;font-size:18px;font-weight:700">{_('Chào mừng bạn!')}</div>
       </div>
       <div style="background:#fff;padding:28px;border-radius:0 0 16px 16px">
         <p>{_('Xin chào <strong>%(name)s</strong>,') % html_values}</p>
         <p>{intro}</p>
-        <p style="text-align:center;margin:28px 0"><a href="{destination}" style="background:#00b14f;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:700;display:inline-block">{escape(action)}</a></p>
+        <p style="text-align:center;margin:28px 0"><a href="{destination}" style="background:{brand_color};color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:700;display:inline-block">{escape(action)}</a></p>
         <p style="font-size:13px;color:#6b7280">{ignore}</p>
       </div>
     </div>'''
@@ -56,6 +57,7 @@ def _candidate_welcome(user):
 
 
 def _employer_welcome(user, context):
+    brand_color = email_brand_color()
     site_name = get_string_setting('site_name', 'ProCV')
     support_email = get_string_setting('support_email', 'cskh@procv.vn')
     hotline = get_string_setting('hotline', '')
@@ -134,7 +136,7 @@ def _employer_welcome(user, context):
             <p style="margin-top:0">{greeting}</p>
             <p>{thanks} {registered}</p>
             <p>{escape(verification_note)} {next_steps}</p>
-            <p style="text-align:center;margin:28px 0"><a href="{destination}" style="background:#00b14f;color:#fff;text-decoration:none;padding:13px 30px;border-radius:6px;font-size:16px;font-weight:700;display:inline-block">{_('Tiếp tục thiết lập tài khoản')}</a></p>
+            <p style="text-align:center;margin:28px 0"><a href="{destination}" style="background:{brand_color};color:#fff;text-decoration:none;padding:13px 30px;border-radius:6px;font-size:16px;font-weight:700;display:inline-block">{_('Tiếp tục thiết lập tài khoản')}</a></p>
             <div style="background:#f4f6f8;padding:20px 24px;color:#52525b">
               <p style="margin-top:0">{_('Trong trường hợp cần hỗ trợ thêm thông tin, Quý khách vui lòng liên hệ:')}</p>
               <ul style="margin-bottom:0;padding-left:22px">{hotline_html}{email_html}{zalo_html}</ul>

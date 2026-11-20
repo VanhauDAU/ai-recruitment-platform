@@ -366,6 +366,27 @@ class AutomaticApplicationRejectionTests(TestCase):
             notice.deliver_after, self.application.auto_rejected_at + timedelta(days=3)
         )
 
+    def test_business_email_switch_skips_emails_but_keeps_the_workflow(self):
+        from apps.sitecontent.models import SiteSetting
+
+        SiteSetting.objects.update_or_create(
+            key='email_notifications_enabled',
+            defaults={'value': False, 'value_type': SiteSetting.ValueType.BOOLEAN},
+        )
+        baseline = timezone.now()
+        Application.objects.filter(pk=self.application.pk).update(
+            applied_at=baseline - timedelta(days=18), status_updated_at=baseline
+        )
+
+        for days in (0, 3, 6):
+            process_automatic_application_rejections(now=baseline + timedelta(days=days))
+
+        self.application.refresh_from_db()
+        self.assertEqual(self.application.status, Application.Status.REJECTED)
+        # Đánh dấu đã xử lý để bật lại công tắc không gửi bù hàng loạt.
+        self.assertIsNotNone(self.application.auto_rejection_email_sent_at)
+        self.assertEqual(len(self.mailbox), 0)
+
     @property
     def mailbox(self):
         from django.core import mail

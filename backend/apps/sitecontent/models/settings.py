@@ -113,6 +113,20 @@ class SiteSetting(models.Model):
     def __str__(self):
         return self.key
 
+    # Lựa chọn lấy từ cấu hình máy chủ thay vì seed, để admin không chọn được
+    # giá trị máy chủ không cho phép (key -> tên biến Django settings).
+    SERVER_CHOICES = {'ai_job_generation_model': 'AI_JOB_GENERATION_MODEL_ALLOWLIST'}
+
+    def resolved_options(self):
+        """``options`` kèm ``choices`` lấy từ máy chủ cho key trong ``SERVER_CHOICES``."""
+        options = dict(self.options) if isinstance(self.options, dict) else {}
+        setting_name = self.SERVER_CHOICES.get(self.key)
+        if setting_name:
+            options['choices'] = [
+                {'value': value, 'label': value} for value in getattr(settings, setting_name, ())
+            ]
+        return options
+
 
 class LinkGroup(models.Model):
     """Một cụm link có thứ tự, bật/tắt được (vd: cụm link SEO trên footer).

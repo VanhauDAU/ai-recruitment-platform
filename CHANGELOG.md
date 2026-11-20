@@ -8,6 +8,29 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-21
 
+#### Changed — Email, AI và gợi ý việc làm theo cấu hình (ADR-0026, GĐ4)
+
+- **Email:**
+  - Mọi email hệ thống dùng chung tên người gửi, địa chỉ trả lời (email hỗ trợ) và màu
+    thương hiệu trong cấu hình. Trước đây email gợi ý việc làm, tự động từ chối và báo
+    cáo tuần gửi bằng tên trong `.env`; email xác thực, chào mừng, đặt lại mật khẩu và
+    gợi ý việc làm viết cứng màu `#00b14f`.
+  - Công tắc "email nghiệp vụ" chặn thêm email nhắc/kết quả tự động từ chối và báo cáo
+    tuần chiến dịch. Email bỏ qua khi tắt không gửi bù.
+  - Email chào mừng tắt được.
+- **Email gợi ý việc làm:** công tắc riêng; giờ gửi, số tin mỗi email và số thông báo
+  việc làm mỗi ứng viên chỉnh được. Thêm công tắc nhắc nhà tuyển dụng về hồ sơ chưa
+  phản hồi.
+- **AI:**
+  - Import CV dùng chung runtime AI với tạo tin (`AI_CV_IMPORT_MODEL`): có log
+    invocation, theo `AI_RUNTIME_ENABLED`, không còn gọi thẳng REST của
+    Gemini/OpenAI/Anthropic.
+  - Gỡ `ai_provider`, `ai_model`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`.
+  - `ai_enabled` là công tắc chung cho import CV, viết tin và viết bài chiến dịch. Khi
+    tắt, CV được đọc bằng bộ trích xuất quy tắc thay vì báo lỗi.
+- **AI viết bài chiến dịch:** có công tắc và hạn mức lượt mỗi ngày.
+- **Lựa chọn model tạo tin** lấy từ `AI_JOB_GENERATION_MODEL_ALLOWLIST` của máy chủ.
+
 #### Changed — Cấu hình hệ thống chạy thật ở các cổng (ADR-0026, GĐ3)
 
 - **Chế độ bảo trì:**
