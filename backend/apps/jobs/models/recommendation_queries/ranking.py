@@ -5,6 +5,7 @@ from math import ceil
 
 from django.db.models import Exists, OuterRef, Q
 
+from apps.cvs.models import UserCv
 from common.db.search import search_q
 
 from ..alerts import CandidateJobDigestItem, CandidateJobEmailSuppression
@@ -14,6 +15,7 @@ from .context import (
     ai_recommendation_allowed,
     candidate_context,
     cv_context,
+    cv_signals,
     preference_state,
 )
 from .scoring import MIN_RECOMMENDATION_SCORE, normalize_term, presentation_match_reasons, score_job
@@ -127,6 +129,24 @@ def recommend_jobs_for_cv(user, public_id, *, limit=6):
         'minimum_match_score': MIN_RECOMMENDATION_SCORE,
         'results': selected,
         'related_positions': _related_positions(context['position_labels']),
+    }
+
+
+def rule_scores_for_cv(cv_id, job_ids):
+    """{id tin: điểm `profile-rule-v2`} của một CV với các tin đang công khai cho trước.
+
+    Mốc so sánh cho thực nghiệm đối sánh (`matching_evaluate`). Chỉ dùng tín hiệu
+    của CV, không dùng nhu cầu ứng viên khai, và không qua bước kiểm tra đồng ý vì
+    điểm không hiển thị cho ai.
+    """
+    cv = (
+        UserCv.objects.select_related('position', 'latest_version')
+        .prefetch_related('cv_skills__skill')
+        .get(pk=cv_id)
+    )
+    context = cv_signals(cv, None)
+    return {
+        job.pk: score_job(job, context)[0] for job in active_jobs_queryset().filter(pk__in=job_ids)
     }
 
 

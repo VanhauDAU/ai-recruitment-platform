@@ -23,6 +23,7 @@ CV_PDF_TOPCV_DIR = CV_DIR / 'pdf' / 'topcv'
 # Tập vàng: phiếu chấm (commit) và bản đã nộp, thông tin ghép cặp (không commit).
 LABELING_DIR = ML_DIR / 'labeling'
 GOLD_SHEET = LABELING_DIR / 'gold_pairs.xlsx'
+SKILL_MERGE = LABELING_DIR / 'skill_merge.json'
 LABELS_DIR = DATA_DIR / 'labels'
 GOLD_POOL = LABELS_DIR / 'gold_pool.json'
 
@@ -31,3 +32,9 @@ REPORTS_DIR = ML_DIR / 'reports'
 
 # profile_json xuất từ hệ thống (`export_profiles.py`), không commit.
 PROFILES_DIR = DATA_DIR / 'profiles'
+
+# Điểm từng cặp do `evaluate.py` lưu lại (không commit).
+EVAL_DIR = DATA_DIR / 'eval'
+
+# Dữ liệu công khai tải về bằng `fetch_public.py`, kèm `SOURCES.md` (không commit).
+PUBLIC_DIR = DATA_DIR / 'public'

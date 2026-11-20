@@ -23,7 +23,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Ảnh đại diện dùng chung 3 cổng](#ảnh-đại-diện-dùng-chung-3-cổng-2026-11-16) | 🟨 Xong trên nhánh `feat/avatar-editor`, chưa mở PR |
 | [Dọn mâu thuẫn còn lại sau thống nhất luồng](#dọn-mâu-thuẫn-còn-lại-sau-thống-nhất-luồng-2026-11-16) | ✅ Cả 3 GĐ đã gộp (#222, #223, #224); dọn phần còn hở trên nhánh `fix/flow-loose-ends` |
 | [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | ✅ Cả 6 giai đoạn đã gộp (#208–#215); hoàn thiện luồng nhắc NTD và lịch sử nộp trên nhánh `feat/application-reminders` |
-| [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Tuần 1–4 đã gộp (#207, #230, #231, #232, #233) |
+| [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Bản demo đã gộp (#207, #230–#233); kế hoạch bản 3 (20/11): GĐ 1 đo lường đang làm trên nhánh `feat/ai-eval-harness` |
 | [CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm](#cv-tải-lên-tệp-gốc-tiêu-chuẩn-upload-giới-hạn-cv-ntd-tìm-kiếm-2026-11-15) | ✅ Gộp vào `dev` (#203) |
 | [Việc làm tốt nhất xếp theo chất lượng tin](#việc-làm-tốt-nhất-xếp-theo-chất-lượng-tin-2026-11-15) | ✅ Gộp vào `dev` (#204) |
 | [Thiết kế lại quản lý tin tuyển dụng của NTD](#thiết-kế-lại-quản-lý-tin-tuyển-dụng-của-ntd-2026-11-15) | ✅ Gộp vào `dev` (nhánh `feat/employer-job-workspace`) |
@@ -745,16 +745,74 @@ bản đọc từ PDF), và thêm bộ quy tắc chống bịa dữ liệu, ch�
 kỹ năng khớp và yêu cầu đạt phải có câu trích nguyên văn từ CV, thiếu dữ liệu thì
 loại tiêu chí khỏi điểm, kết quả tất định, có golden test và test nhiễu.
 
+Bản demo (kế hoạch bản 2, đã xong):
+
 | Tuần | Hạng mục | Trạng thái |
 | --- | --- | --- |
 | 1 | Nền tảng: pgvector, schema `apps/matching`, môi trường `ml/`; 100 JD thật, 100 CV tổng hợp, 51 PDF, rubric | ✅ Gộp vào `dev` (#207, #230) |
-| 2 | Trích xuất và chuẩn hóa CV/JD, chọn thư viện PDF, baseline TF-IDF/BM25, ghép cặp tập vàng và phiếu chấm (PR 1) | 🟨 PR #231 chờ gộp; phiếu chấm đã giao |
-| 3 | Encoder, chấm điểm 6 tiêu chí, giải thích, API, task, `ml-worker` (PR 2); gán nhãn tập vàng | ✅ Gộp vào `dev` (#232); tập vàng 150 nhãn do Claude gán, người kiểm tra sơ bộ 5 cặp |
-| 4 | Giao diện "Xem độ phù hợp" (PR 3), bản demo tối thiểu (M1) | 🟨 Xong trên nhánh `feat/ai-matching-ui`, chờ PR |
-| 5 | Đo baseline, `profile-rule-v2` và 4 mô hình zero-shot; sinh thêm CV và cặp huấn luyện | ⬜ |
-| 6 | Fine-tune, ablation, chỉnh ngưỡng và trọng số, chọn mô hình (M2) | ⬜ |
-| 7 | Đo hiệu năng, nghiệm thu TC-01…17, chạy tập test một lần, chấm lại 30 cặp (PR 4, M3) | ⬜ |
-| 8 | Viết báo cáo, diễn tập demo | ⬜ |
+| 2 | Trích xuất và chuẩn hóa CV/JD, chọn thư viện PDF, baseline TF-IDF/BM25, ghép cặp tập vàng và phiếu chấm | ✅ Gộp vào `dev` (#231) |
+| 3 | Encoder, chấm điểm 6 tiêu chí, giải thích, API, task, `ml-worker`; gán nhãn tập vàng | ✅ Gộp vào `dev` (#232); tập vàng 150 nhãn do Claude gán, người kiểm tra sơ bộ 5 cặp |
+| 4 | Giao diện "Xem độ phù hợp", bản demo tối thiểu (M1) | ✅ Gộp vào `dev` (#233) |
+
+Kế hoạch bản 3 (duyệt 19/11, thay các tuần 5–8 của bản 2). Phạm vi mở rộng: mô
+hình hai tầng (bi-encoder fine-tune `e5-base-ft-v1` + cross-encoder `req-ce-v1`
+phán từng yêu cầu của tin), công thức `hybrid-v2`, trích xuất `extract-v3`, "Việc
+làm gợi ý" theo ngữ nghĩa, và nhà tuyển dụng xếp hạng hồ sơ ứng tuyển. Mỗi giai
+đoạn một PR.
+
+| GĐ | Hạng mục | Trạng thái |
+| --- | --- | --- |
+| 1 | Đo lường: lệnh `matching_evaluate` (chấm bằng đúng mã sản phẩm), `ml/scripts/evaluate.py`, bảng số trên validation; mở rộng tập vàng lên 30 tin; tải mô hình và dữ liệu công khai | 🟨 Đang làm trên nhánh `feat/ai-eval-harness` |
+| 2 | `extract-v3`: PDF hai cột, chức danh CV tải lên, sửa các luật nhận ngày/bằng cấp/kỹ năng, schema `profile_json` | ⬜ |
+| 3 | Dữ liệu huấn luyện, cổng chất lượng, fine-tune bi-encoder và cross-encoder, ablation | ⬜ |
+| 4 | Việc làm gợi ý theo ngữ nghĩa (pgvector) | ⬜ |
+| 5 | `hybrid-v2`, cross-encoder vào `ml-worker`, `result_json` bản 2 (M2) | ⬜ |
+| 6 | Nhà tuyển dụng xếp hạng hồ sơ ứng tuyển | ⬜ |
+| 7 | Chạy tập test một lần, hiệu năng, nghiệm thu TC-01…30, kappa 30 cặp (M3) | ⬜ |
+| 8 | Báo cáo, slide, diễn tập demo | ⬜ |
+
+<details><summary>Ghi chú GĐ 1 (bản 3)</summary>
+
+- Ngày 19/11 DB dev được dựng lại từ baseline migration (đại tu backend GĐ6), nên
+  100 tin thật, 100 CV tổng hợp và danh mục kỹ năng mở rộng không còn. Ngày 20/11
+  nhập lại từ `ml/data` bằng đúng các script cũ (sao lưu trước:
+  `ai_career_coach-before-ai-reimport-20261120-131531.dump`): 100 tin, 100 CV, 15
+  bản PDF tải lên, 341 kỹ năng; mã tin mới ở `ml/data/jd/jd_import_map.json`.
+- Để nhập lại được: lệnh `apply_skill_merge` (app `skills`) áp bảng gộp kỹ năng
+  `ml/labeling/skill_merge.json`, trước đây áp tay một lần; `import_jd.py` tự gọi
+  lệnh này khi ghi thật, và tự chia lại tin của công ty demo không còn trong hệ
+  thống; lệnh nhập tin khớp tỉnh/thành bất kể tiền tố "Tỉnh"/"Thành phố".
+- `matching_evaluate` (chạy trong `ml-worker`) chấm danh sách cặp CV–tin bằng đúng
+  bước trích xuất, mã hóa và `score_match` của sản phẩm, không ghi DB, tắt tiêu chí
+  địa điểm; nhận `--model-path` để thử mô hình khác và `--rule-baseline` để lấy
+  điểm của bộ gợi ý theo luật. `ml/scripts/evaluate.py` tính Spearman, NDCG@5,
+  khoảng tin cậy bootstrap theo tin, số tin hơn BM25, kappa của mức hiển thị.
+- Bảng số đầu tiên, validation 50 cặp / 5 tin (`ml/reports/eval_validation.md`):
+
+  | Phương án | Spearman | NDCG@5 |
+  | --- | ---: | ---: |
+  | TF-IDF | 0,281 | 0,422 |
+  | BM25 | 0,386 | 0,491 |
+  | Luật `profile-rule-v2` | 0,692 | 0,881 |
+  | Bi-encoder `e5-base-zs-v1`, cosine toàn văn | 0,545 | 0,607 |
+  | `hybrid-v1` | 0,625 | 0,690 |
+
+  Xếp ngẫu nhiên cho NDCG@5 = 0,444. `hybrid-v1`: kappa mức hiển thị 0,398; 12 cặp
+  khác ngành có trung vị 31 điểm, cao nhất 58, 2 cặp từ 50 điểm trở lên.
+- Điều rút ra: bộ gợi ý theo luật đang hơn `hybrid-v1` trên validation. Với các CV
+  này, điểm của luật chỉ gồm số kỹ năng trùng theo danh mục (6 điểm mỗi kỹ năng),
+  chức danh CV xuất hiện trong tiêu đề tin (24 điểm) và đủ số năm (6 điểm), nên cặp
+  khác ngành gần như 0 điểm (12 cặp nhãn 0: cao nhất 6). `hybrid-v1` cũng có tiêu
+  chí kỹ năng, nhưng cộng thêm học vấn, cấp bậc, ngoại ngữ, là những điểm được cho
+  bất kể CV có đúng nghề hay không, nên cặp nhãn 0–1 lên tới 58–72 điểm. Đây là
+  bằng chứng cho "trần theo mức liên quan" của `hybrid-v2` (GĐ 5). Với 5 tin,
+  khoảng tin cậy rất rộng nên chưa kết luận về thứ hạng giữa các phương án.
+- Dời sang GĐ 5: cho `calibrate.py` đọc kết quả của `matching_evaluate` thay vì tự
+  chép lại luật, làm cùng lúc với lần hiệu chuẩn lại.
+- Bỏ ngưỡng "P@3 ≥ 0,70" của bản 2: tập test cũ chỉ có 13 cặp nhãn ≥ 3 nên trần
+  lý thuyết là 0,43.
+
+</details>
 
 <details><summary>Ghi chú tuần 1</summary>
 

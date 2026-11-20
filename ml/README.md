@@ -82,7 +82,9 @@ chấm thêm thì khôi phục từ lịch sử git (commit `feat(ml): local lab
 Tất cả chạy từ thư mục gốc repo bằng `ml/.venv/bin/python`. Các script nhập dữ
 liệu cần Docker Compose đang chạy; mặc định chỉ chạy thử, thêm `--apply` để ghi.
 
-1. `scripts/import_jd.py --apply --create-skills`: nhập tin tuyển dụng.
+1. `scripts/import_jd.py --apply --create-skills`: áp bảng gộp kỹ năng
+   (`labeling/skill_merge.json`) rồi nhập tin tuyển dụng. Tin gán vào công ty demo
+   không còn trong hệ thống được chia đều cho các công ty demo còn lại.
 2. `scripts/generate_cvs.py`, rồi `scripts/enrich_cvs.py`: sinh CV (cần Ollama).
 3. `scripts/import_cvs.py --apply`, rồi `--pdf-twins --apply`: đưa CV vào hệ
    thống, xuất PDF.
@@ -93,5 +95,20 @@ liệu cần Docker Compose đang chạy; mặc định chỉ chạy thử, thê
 7. `scripts/export_profiles.py`, rồi `scripts/check_profiles.py`: kiểm tra trích xuất.
 8. `scripts/export_model.py`: lưu mô hình cho ml-worker; `scripts/calibrate.py`: đo
    mốc hiệu chuẩn, chép vào `CALIBRATIONS` của backend khi đổi mô hình.
+9. `scripts/fetch_public.py`: tải dữ liệu công khai (VietJobs,
+   resume-job-description-fit) vào `data/public/` và các mô hình gốc; ghi nguồn, mã
+   commit, ngày tải vào `data/public/SOURCES.md`.
+10. `scripts/evaluate.py`: đo các phương án trên tập vàng (TF-IDF, BM25, luật
+    `profile-rule-v2`, bi-encoder, `hybrid`) → `reports/eval_validation.md`. Các dòng
+    của sản phẩm do lệnh `matching_evaluate` chạy trong container `ml-worker`, tức
+    đúng mã đang phục vụ ứng viên. Phần test chỉ chạy một lần ở giai đoạn nghiệm
+    thu (`--split test --final`).
 
 Các script chạy lại an toàn: bỏ qua phần đã có.
+
+## Sau khi dựng lại DB local
+
+`scripts/reset_local_db.sh` xóa mọi tin, CV và kỹ năng đã nhập. Chạy lại bước 1 và
+bước 3 (dữ liệu nguồn vẫn ở `data/`), rồi
+`docker compose exec backend python manage.py matching_backfill` để tính lại vector.
+Mã tin trong hệ thống đổi, nên `data/jd/jd_import_map.json` được ghi lại.

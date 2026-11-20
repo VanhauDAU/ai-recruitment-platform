@@ -209,6 +209,10 @@ def import_job_postings(rows, *, apply=False, create_missing_skills=False):
         'applied': apply,
         'rows': entries,
         'new_skills': new_skills,
+        # Công ty có người đăng đủ điều kiện, để bên gọi biết gán tin vào đâu được.
+        'publisher_companies': sorted(
+            {recruiter.company.company_name for recruiter in lookups.publishers}
+        ),
         'summary': {
             'total': len(entries),
             'imported': statuses['imported'],

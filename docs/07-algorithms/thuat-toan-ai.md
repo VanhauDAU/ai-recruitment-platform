@@ -343,7 +343,28 @@ container): chấm một cặp đã có vector khoảng 10 ms, p95 tổng 25 ms;
 
 Giao diện: thẻ "Xem độ phù hợp" ở cột phải trang chi tiết tin, hộp thoại kết quả (feature `analyze-job-fit`, xem `frontend/ARCHITECTURE.md`).
 
-Chưa có: đánh giá trên tập vàng và fine-tune (tuần 5–6).
+**Đo lường (20/11, kế hoạch bản 3 GĐ 1).** Lệnh `matching_evaluate` chạy trong
+`ml-worker`, chấm các cặp của tập vàng bằng đúng bước trích xuất, mã hóa và
+`score_match` ở trên (không ghi DB, tắt địa điểm); `ml/scripts/evaluate.py` tính
+chỉ số. Trên validation (50 cặp, 5 tin, nhãn do Claude gán):
+
+| Phương án | Spearman | NDCG@5 |
+| --- | ---: | ---: |
+| TF-IDF | 0,281 | 0,422 |
+| BM25 | 0,386 | 0,491 |
+| Luật `profile-rule-v2` (bộ gợi ý hiện có) | 0,692 | 0,881 |
+| Bi-encoder `e5-base-zs-v1`, cosine toàn văn | 0,545 | 0,607 |
+| `hybrid-v1` | 0,625 | 0,690 |
+
+Xếp ngẫu nhiên cho NDCG@5 = 0,444 vì mỗi tin chỉ có 10 CV. Bộ gợi ý theo luật
+đang hơn `hybrid-v1`: điểm của luật chỉ gồm số kỹ năng trùng, chức danh khớp tiêu
+đề tin và số năm, nên cặp khác ngành gần 0 điểm; `hybrid-v1` cộng thêm học vấn,
+cấp bậc, ngoại ngữ bất kể CV có đúng nghề hay không, nên cặp khác ngành vẫn lên
+tới 58 điểm. Khoảng tin cậy còn rất rộng (5 tin). Chi tiết ở
+`ml/reports/eval_validation.md`.
+
+Chưa có: fine-tune bi-encoder, cross-encoder cho từng yêu cầu, `hybrid-v2`
+(kế hoạch bản 3, GĐ 3 và 5).
 
 ## Việc còn mở
 

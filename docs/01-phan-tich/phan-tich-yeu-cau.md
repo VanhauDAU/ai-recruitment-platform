@@ -39,7 +39,7 @@ cột "Gồm" hoặc mục cuối.
 | Khách, Ứng viên | Xem trang công ty | Theo dõi công ty | ✅ |
 | Ứng viên | Quản lý hồ sơ cá nhân và nguyện vọng việc làm | Cho phép NTD tìm thấy hồ sơ, thông báo việc làm | ✅ |
 | Ứng viên | Xem việc làm gợi ý («include» Đối sánh ngữ nghĩa CV–JD) | | ✅ theo luật, ⬜ chuyển sang đối sánh ngữ nghĩa |
-| Ứng viên | Phân tích mức độ phù hợp CV–JD («include» Đối sánh ngữ nghĩa CV–JD) | | ⬜ |
+| Ứng viên | Phân tích mức độ phù hợp CV–JD («include» Đối sánh ngữ nghĩa CV–JD) | | ✅ |
 | Ứng viên | Quản lý CV; Nhập CV từ tệp PDF/DOCX («extend») | Chọn mẫu CV, chia sẻ và tải CV | ✅ |
 | Ứng viên | Ứng tuyển việc làm | Nộp lại sau khi bị từ chối hoặc đã rút | ✅ |
 | Ứng viên | Theo dõi và rút hồ sơ ứng tuyển | Trạng thái đã công bố, rút hồ sơ, nhắc NTD | ✅ |
