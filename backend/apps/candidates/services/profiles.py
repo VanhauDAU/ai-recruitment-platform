@@ -32,16 +32,58 @@ def set_recruiter_visibility(
     ):
         raise ValidationError({'cv_public_id': 'CV không thuộc tài khoản hiện tại.'})
     locked_profile = CandidateProfile.objects.select_for_update().get(pk=profile.pk)
+    consent = _record_consent(
+        locked_profile,
+        CandidateConsent.ConsentType.RECRUITER_VISIBILITY,
+        enabled=enabled,
+        policy_version=policy_version,
+        source=source,
+        source_path=source_path,
+        cv_public_id=cv_public_id,
+    )
+    if not enabled:
+        withdraw_cvs_from_recruiter_search(locked_profile.user)
+    return consent
+
+
+@transaction.atomic
+def set_ai_recommendation(profile, *, enabled, policy_version, source, source_path=''):
+    """Bật/tắt đồng ý gợi ý việc làm bằng AI, độc lập với nhu cầu công việc.
+
+    Không đổi `job_preferences_configured`: bật gợi ý không có nghĩa là đã khai nhu cầu.
+    """
+    locked_profile = CandidateProfile.objects.select_for_update().get(pk=profile.pk)
+    return _record_consent(
+        locked_profile,
+        CandidateConsent.ConsentType.AI_RECOMMENDATION,
+        enabled=enabled,
+        policy_version=policy_version,
+        source=source,
+        source_path=source_path,
+    )
+
+
+def _record_consent(
+    locked_profile,
+    consent_type,
+    *,
+    enabled,
+    policy_version,
+    source,
+    source_path='',
+    cv_public_id='',
+):
+    """Ghi quyết định hiện hành và thêm một sự kiện kiểm toán không sửa được."""
     now = timezone.now()
     decision = CandidateConsent.Decision.GRANTED if enabled else CandidateConsent.Decision.DENIED
     consent, _ = CandidateConsent.objects.update_or_create(
         candidate_profile=locked_profile,
-        consent_type=CandidateConsent.ConsentType.RECRUITER_VISIBILITY,
+        consent_type=consent_type,
         defaults={'decision': decision, 'policy_version': policy_version, 'decided_at': now},
     )
     CandidateConsentEvent.objects.create(
         candidate_profile=locked_profile,
-        consent_type=CandidateConsent.ConsentType.RECRUITER_VISIBILITY,
+        consent_type=consent_type,
         decision=decision,
         policy_version=policy_version,
         source=source,
@@ -49,8 +91,6 @@ def set_recruiter_visibility(
         cv_public_id=cv_public_id,
         decided_at=now,
     )
-    if not enabled:
-        withdraw_cvs_from_recruiter_search(locked_profile.user)
     return consent
 
 

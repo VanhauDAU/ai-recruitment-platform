@@ -15,6 +15,7 @@ from .notifications import (
 )
 from .profiles import (
     replace_candidate_job_preferences,
+    set_ai_recommendation,
     set_recruiter_visibility,
     update_candidate_profile,
 )
@@ -32,6 +33,7 @@ __all__ = [
     'release_due_candidate_notifications',
     'replace_candidate_job_preferences',
     'restore_superseded_candidate_notification',
+    'set_ai_recommendation',
     'set_recruiter_visibility',
     'update_candidate_profile',
 ]

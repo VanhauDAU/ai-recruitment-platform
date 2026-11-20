@@ -890,6 +890,11 @@ làm gợi ý" theo ngữ nghĩa, và nhà tuyển dụng xếp hạng hồ sơ 
 </details>
 <details><summary>Ghi chú GĐ 4 (bản 3)</summary>
 
+- Thanh bên tài khoản ứng viên có công tắc "Gợi ý việc làm" (đồng ý `AI_RECOMMENDATION`,
+  endpoint riêng `/api/candidate/ai-recommendation/`, không cần khai nhu cầu) và chú thích
+  "?" trỏ tới chính sách dữ liệu AI qua cài đặt `ai_data_policy_url`. Trước đây chỉ có nút
+  dẫn sang trang cài đặt, và đồng ý chỉ lưu được qua form nhu cầu (ghi đè toàn bộ).
+
 - Trang "Việc làm phù hợp" và trang lưu CV xếp tin theo chiến lược `semantic-v1`
   (`apps/matching/selectors/recommendations.py`): tìm tin gần vector toàn văn của CV mặc định
   nhất bằng pgvector (tìm chính xác), xếp lại 100 tin gần nhất theo mức liên quan (toàn văn,

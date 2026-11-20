@@ -1152,6 +1152,16 @@
     "options": {}
   },
   {
+    "key": "ai_data_policy_url",
+    "label": "Chính sách xử lý dữ liệu bằng AI",
+    "group": "ai",
+    "value_type": "url",
+    "value": "",
+    "is_public": true,
+    "description": "Đường dẫn văn bản chính sách xử lý dữ liệu bằng AI; chú thích công tắc \"Gợi ý việc làm\" ở tài khoản ứng viên trỏ tới đây. Để trống thì không hiện liên kết.",
+    "options": {}
+  },
+  {
     "key": "ai_job_recommendation_semantic_enabled",
     "label": "AI gợi ý việc làm theo nội dung CV",
     "group": "ai",

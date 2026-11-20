@@ -1,6 +1,9 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getCandidateJobPreferences, getRecruiterVisibility, updateCandidateJobPreferences, updateRecruiterVisibility } from './candidate-preferences.api'
+import {
+  getAiRecommendation, getCandidateJobPreferences, getRecruiterVisibility,
+  updateAiRecommendation, updateCandidateJobPreferences, updateRecruiterVisibility,
+} from './candidate-preferences.api'
 const { get, patch, put } = vi.hoisted(() => ({ get: vi.fn(), patch: vi.fn(), put: vi.fn() }))
 
 vi.mock('@/shared/api/client', () => ({ default: { get, patch, put } }))
@@ -36,5 +39,16 @@ describe('candidate job preferences API', () => {
     await expect(updateRecruiterVisibility(payload)).resolves.toMatchObject({ enabled: true })
     expect(get).toHaveBeenCalledWith('/candidate/recruiter-visibility/')
     expect(patch).toHaveBeenCalledWith('/candidate/recruiter-visibility/', payload)
+  })
+
+  it('reads and toggles the AI recommendation consent on its own endpoint', async () => {
+    get.mockResolvedValue({ data: { enabled: false } })
+    patch.mockResolvedValue({ data: { enabled: true } })
+
+    await expect(getAiRecommendation()).resolves.toEqual({ enabled: false })
+    await expect(updateAiRecommendation({ enabled: true, source: 'account_sidebar' })).resolves.toEqual({ enabled: true })
+
+    expect(get).toHaveBeenCalledWith('/candidate/ai-recommendation/')
+    expect(patch).toHaveBeenCalledWith('/candidate/ai-recommendation/', { enabled: true, source: 'account_sidebar' })
   })
 })

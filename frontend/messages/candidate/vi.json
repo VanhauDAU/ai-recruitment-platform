@@ -13,5 +13,12 @@
   "candidate_reco_update_preferences": "Cập nhật nhu cầu",
   "candidate_reco_add_preferences": "Thêm nhu cầu để gợi ý sát hơn",
   "candidate_reco_empty_text": "Hãy cập nhật CV, nhu cầu công việc hoặc quay lại sau khi có tin tuyển dụng mới.",
-  "candidate_reco_home_intro": "Dựa trên CV và nhu cầu công việc của bạn."
+  "candidate_reco_home_intro": "Dựa trên CV và nhu cầu công việc của bạn.",
+  "candidate_reco_toggle_label": "Gợi ý việc làm",
+  "candidate_reco_toggle_help_label": "Gợi ý việc làm là gì?",
+  "candidate_reco_toggle_help": "{site} sẽ gợi ý các vị trí việc làm phù hợp với thế mạnh và nhu cầu của bạn, dựa trên CV và nhu cầu công việc bạn đã lưu; quá trình phân tích có sử dụng",
+  "candidate_reco_toggle_policy": "công nghệ AI",
+  "candidate_reco_toggle_on": "Đã bật gợi ý việc làm.",
+  "candidate_reco_toggle_off": "Đã tắt gợi ý việc làm.",
+  "candidate_reco_toggle_failed": "Không thể lưu thay đổi lúc này."
 }

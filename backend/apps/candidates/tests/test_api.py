@@ -429,6 +429,52 @@ class CandidateProfileApiTests(TestCase):
         self.assertIn('desired_salary_vnd', response.data)
         self.assertFalse(CandidateConsent.objects.exists())
 
+    def test_ai_recommendation_toggle_is_independent_of_job_preferences(self):
+        url = '/api/candidate/ai-recommendation/'
+        self.assertEqual(self.client.get(url).data['enabled'], False)
+
+        on = self.client.patch(
+            url,
+            {'enabled': True, 'source': 'account_sidebar', 'source_path': '/tai-khoan'},
+            format='json',
+        )
+
+        self.assertEqual(on.status_code, 200, on.data)
+        self.assertTrue(on.data['enabled'])
+        self.assertTrue(self.client.get(url).data['enabled'])
+        consent = CandidateConsent.objects.get(
+            consent_type=CandidateConsent.ConsentType.AI_RECOMMENDATION
+        )
+        self.assertEqual(consent.decision, CandidateConsent.Decision.GRANTED)
+        # Bật gợi ý không tạo nhu cầu và không đánh dấu đã khai nhu cầu.
+        self.assertFalse(CandidateJobPreference.objects.exists())
+        self.user.candidate_profile.refresh_from_db()
+        self.assertFalse(self.user.candidate_profile.job_preferences_configured)
+
+        off = self.client.patch(url, {'enabled': False, 'source': 'account_sidebar'}, format='json')
+
+        self.assertFalse(off.data['enabled'])
+        events = list(
+            CandidateConsentEvent.objects.order_by('pk').values_list('decision', 'source')
+        )
+        self.assertEqual(
+            events,
+            [
+                (CandidateConsent.Decision.GRANTED, 'account_sidebar'),
+                (CandidateConsent.Decision.DENIED, 'account_sidebar'),
+            ],
+        )
+
+    def test_ai_recommendation_toggle_rejects_unknown_source_and_non_candidates(self):
+        url = '/api/candidate/ai-recommendation/'
+        bad = self.client.patch(url, {'enabled': True, 'source': 'email'}, format='json')
+        self.assertEqual(bad.status_code, 400)
+        employer = get_user_model().objects.create_user(
+            email='employer@example.com', password='password', role='employer'
+        )
+        self.client.force_authenticate(employer)
+        self.assertEqual(self.client.get(url).status_code, 403)
+
     def test_recruiter_visibility_requires_confirmation_and_writes_audit_event(self):
         url = '/api/candidate/recruiter-visibility/'
         rejected = self.client.patch(

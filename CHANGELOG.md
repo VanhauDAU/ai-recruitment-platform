@@ -8,6 +8,14 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-20
 
+#### Added — Công tắc "Gợi ý việc làm" ở thanh bên tài khoản ứng viên
+
+- Bật/tắt đồng ý gợi ý việc làm bằng AI ngay ở thanh bên, độc lập với nhu cầu công việc
+  (`GET/PATCH /api/candidate/ai-recommendation/`, ghi `CandidateConsentEvent` nguồn
+  `account_sidebar`; không đánh dấu đã khai nhu cầu).
+- Biểu tượng "?" giải thích chức năng và trỏ tới văn bản chính sách xử lý dữ liệu bằng AI
+  qua cài đặt quản trị mới `ai_data_policy_url` (để trống thì không hiện liên kết).
+
 #### Added — Việc làm gợi ý theo ngữ nghĩa (kế hoạch bản 3, GĐ 4)
 
 - "Việc làm phù hợp" và trang lưu CV xếp tin theo độ gần ngữ nghĩa với CV (`semantic-v1`,
