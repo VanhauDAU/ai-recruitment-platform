@@ -382,6 +382,12 @@ GĐ1 đã làm:
   - tab Link & QR liệt kê mọi link của kênh, chọn link để tạo QR;
   - link tin/công ty chỉ mở trang đó khi chiến dịch đang chạy và tin thuộc
     chiến dịch, còn lại về trang tuyển dụng; lượt bấm vẫn tính cho kênh.
+- Gộp luồng đăng bài (nhánh `feat/campaign-post-flow`): hai tab "Nội dung bài"
+  và "Đăng Fanpage" thành một tab **Bài đăng** theo 3 bước đánh số (Chọn tin và
+  link → Soạn nội dung → Đăng bài). Bước 3 đổi theo kênh: Fanpage có nút "Đăng
+  lên Fanpage" (mở ngăn chọn trang, ảnh, giờ đăng) và lịch sử bài ngay dưới;
+  kênh khác có "Sao chép bài" và ô đánh dấu đã đăng. Tab kênh còn Bài đăng ·
+  Link & QR · Chi phí; bỏ mục "Sửa nội dung" trùng ở menu kênh.
 - Giải thích chỉ số (nhánh `feat/campaign-metric-help`): `shared/ui/HelpTip`
   (icon ? có tooltip, bấm được bằng bàn phím) ở bảng so sánh nguồn, chi tiết
   kênh, chi phí, tab Sức khỏe, Tổng quan và đầu trang chiến dịch.
