@@ -16,6 +16,7 @@ from django.utils.translation import gettext_lazy
 from rest_framework.exceptions import ValidationError
 
 from apps.campaigns.models import CampaignActivity, RecruitmentCampaign
+from apps.campaigns.signals import social_post_due
 from apps.employers.models import EmployerNotification
 from apps.employers.services import emit_employer_event
 from common.i18n import recipient_language
@@ -97,7 +98,7 @@ def schedule_post(*, channel, user, connection, scheduled_for=None, message='', 
         raise ValidationError(
             {'images': _('%(network)s cần ít nhất một ảnh.') % {'network': network.platform}}
         )
-    return Post.objects.create(
+    post = Post.objects.create(
         channel=channel,
         connection=connection,
         message=message,
@@ -105,6 +106,8 @@ def schedule_post(*, channel, user, connection, scheduled_for=None, message='', 
         link=post_link(channel),
         scheduled_for=scheduled_for,
     )
+    _publish_if_due(post)
+    return post
 
 
 @transaction.atomic
@@ -139,7 +142,13 @@ def reschedule_post(*, post, user, scheduled_for):
             'updated_at',
         ]
     )
+    _publish_if_due(post)
     return post
+
+
+def _publish_if_due(post):
+    if post.scheduled_for <= timezone.now():
+        social_post_due.send(sender=Post, post_id=post.pk)
 
 
 def _notify(campaign, event_type, dedupe_key, message, **params):

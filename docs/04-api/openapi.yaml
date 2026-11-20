@@ -35069,6 +35069,11 @@ components:
         status_label:
           type: string
           readOnly: true
+        queued:
+          type: boolean
+          description: 'Due and waiting for the worker: shown as being published,
+            not as scheduled.'
+          readOnly: true
         attempts:
           type: integer
           readOnly: true
@@ -35105,6 +35110,7 @@ components:
       - permalink
       - public_id
       - published_at
+      - queued
       - scheduled_for
       - status
       - status_label

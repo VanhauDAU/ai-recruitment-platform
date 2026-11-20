@@ -362,7 +362,7 @@
   "employer_account_social_picker_title": "Chọn {network} để đăng bài tuyển dụng",
   "employer_account_social_picker_ok": "Kết nối",
   "employer_account_social_picker_expired": "Phiên chọn tài khoản đã hết hạn.",
-  "employer_account_social_picker_empty": "Tài khoản {network} này chưa có trang nào đăng bài được, hoặc bạn chưa chọn trang khi cấp quyền.",
+  "employer_account_social_picker_empty": "Không tìm thấy {network} nào để đăng bài. Khi Facebook hỏi quyền, hãy chọn đủ Trang và các tài khoản liên kết với Trang, rồi kết nối lại.",
   "employer_account_social_connect_failed": "Không thể bắt đầu kết nối.",
   "employer_account_social_disconnect_failed": "Không thể ngắt kết nối.",
   "employer_account_social_intro": "Kết nối tài khoản mạng xã hội của công ty để kênh tương ứng trong chiến dịch tự đăng bài đúng giờ hẹn. Bài được gỡ khi chiến dịch hoàn tất hoặc bị hủy; mạng nào không cho gỡ tự động thì ProCV nhắc bạn tự xóa. ProCV chỉ lưu quyền đăng của tài khoản bạn chọn, đã mã hóa.",

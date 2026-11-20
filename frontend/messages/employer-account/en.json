@@ -362,7 +362,7 @@
   "employer_account_social_picker_title": "Choose a {network} for job posts",
   "employer_account_social_picker_ok": "Connect",
   "employer_account_social_picker_expired": "The account selection session has expired.",
-  "employer_account_social_picker_empty": "This {network} account has no pages you can post to, or you didn't select one when granting permission.",
+  "employer_account_social_picker_empty": "No {network} found to post to. When Facebook asks for access, select the Pages and the accounts linked to them, then connect again.",
   "employer_account_social_connect_failed": "Couldn't start the connection.",
   "employer_account_social_disconnect_failed": "Couldn't disconnect.",
   "employer_account_social_intro": "Connect your company's social accounts so the matching channel in recruitment campaigns publishes posts on schedule. Posts are removed when the campaign ends or is cancelled; where a network doesn't allow automatic removal, ProCV reminds you to delete them. ProCV only stores encrypted posting access for the accounts you choose.",

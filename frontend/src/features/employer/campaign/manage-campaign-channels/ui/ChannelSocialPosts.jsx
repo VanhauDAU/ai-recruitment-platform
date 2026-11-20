@@ -27,6 +27,13 @@ const OPEN = ['scheduled', 'postponed', 'failed']
 // Bài còn trên mạng: đã đăng, hoặc chờ NTD tự gỡ khi mạng không gỡ được.
 const OPEN_LINK = ['published', 'delete_failed']
 const when = (value) => dayjs(value).format('HH:mm DD/MM/YYYY')
+// Bài đã tới giờ, đang chờ worker (``queued``) hiển thị như đang đăng.
+const shownStatus = (post) => (post.queued ? 'publishing' : post.status)
+// Đang đăng thì làm mới nhanh để thấy kết quả; còn bài hẹn giờ thì thưa hơn.
+function refreshEvery(posts = []) {
+  if (posts.some((post) => shownStatus(post) === 'publishing')) return 3_000
+  return posts.some((post) => post.status === 'scheduled') ? 15_000 : false
+}
 
 function postTime(post) {
   if (post.status === 'published') return m.employer_campaign_posts_published_at({ time: when(post.published_at) })
@@ -41,13 +48,13 @@ export default function ChannelSocialPosts({ campaign, channel, network, editabl
   const postsQuery = useQuery({
     queryKey: key,
     queryFn: () => getChannelPosts(campaign.public_id, channel.public_id),
-    refetchInterval: (query) => ((query.state.data || []).some((post) => ['publishing', 'scheduled'].includes(post.status)) ? 15_000 : false),
+    refetchInterval: (query) => refreshEvery(query.state.data),
   })
   const refresh = () => queryClient.invalidateQueries({ queryKey: key })
   const onError = (error) => message.error(getApiErrorMessage(error, m.employer_campaign_posts_update_error()))
   const cancel = useMutation({ mutationFn: (postId) => cancelChannelPost(campaign.public_id, channel.public_id, postId), onSuccess: refresh, onError })
   const retry = useMutation({
-    mutationFn: (postId) => rescheduleChannelPost(campaign.public_id, channel.public_id, postId, dayjs().add(1, 'minute').toISOString()),
+    mutationFn: (postId) => rescheduleChannelPost(campaign.public_id, channel.public_id, postId, dayjs().toISOString()),
     onSuccess: () => {
       message.success(m.employer_campaign_posts_retried())
       refresh()
@@ -63,14 +70,15 @@ export default function ChannelSocialPosts({ campaign, channel, network, editabl
       ) : (
         <ol className="ch-postcards" aria-label={m.employer_campaign_posts_timeline_aria({ network: network.label })}>
           {posts.map((post) => {
-            const meta = STATUS[post.status] || STATUS.scheduled
+            const status = shownStatus(post)
+            const meta = STATUS[status] || STATUS.scheduled
             const Icon = meta.icon
             const [cover, ...more] = post.images || []
             return (
               <li key={post.public_id} className="ch-postcard">
                 <div className="ch-postcard__head">
                   <span className={`ch-status is-${meta.tone}`}>
-                    <Icon aria-hidden spin={post.status === 'publishing'} />
+                    <Icon aria-hidden spin={status === 'publishing'} />
                     {post.status_label}
                   </span>
                   <span className="ch-postcard__when">{postTime(post)}</span>

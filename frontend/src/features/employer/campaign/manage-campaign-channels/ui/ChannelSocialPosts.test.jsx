@@ -80,6 +80,8 @@ describe('ChannelSocialPosts', () => {
     await user.click(screen.getByRole('button', { name: 'Đăng lại' }))
 
     await waitFor(() => expect(mocks.rescheduleChannelPost).toHaveBeenCalledWith('camp_1', 'chn_1', 'post_2', expect.any(String)))
+    // Đăng lại là đăng ngay, không hẹn thêm một phút.
+    expect(Math.abs(Date.parse(mocks.rescheduleChannelPost.mock.calls[0][3]) - Date.now())).toBeLessThan(5_000)
   })
 
   it('posts now on a connected page with a live preview', async () => {
