@@ -180,3 +180,20 @@
 @media (prefers-reduced-motion: reduce) {
   .ch-timeline__dot { animation: none !important; }
 }
+
+/* Bước soạn bài: tin trong bài và nơi link dẫn tới. */
+.ch-post { display: flex; flex-direction: column; gap: 14px; }
+.ch-scope { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 12px 18px; padding: 12px 14px; border: 1px solid #e2e8e5; border-radius: 12px; background: #f8faf9; }
+.ch-scope__row { display: flex; min-width: 0; flex-direction: column; gap: 8px; }
+.ch-scope__row .ch-chips { margin: 0; }
+.ch-scope__row .ch-chip { text-align: left; }
+.ch-scope__targets { display: flex; flex-wrap: wrap; gap: 6px 0; }
+.ch-scope__label { font-size: 13px; font-weight: 600; color: #0f172a; }
+.ch-scope__stale { margin: 0; padding: 6px 10px; border-radius: 8px; background: #fffbeb; font-size: 13px; color: #92400e; }
+.ch-links { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.ch-links li { display: flex; flex-direction: column; gap: 4px; }
+.ch-links__label { font-size: 13px; font-weight: 600; color: #334155; }
+.ch-linkpane__qr-select { max-width: 200px; }
+@media (max-width: 1100px) {
+  .ch-scope { grid-template-columns: 1fr; }
+}

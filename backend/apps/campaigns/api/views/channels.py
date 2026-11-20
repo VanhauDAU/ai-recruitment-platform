@@ -14,6 +14,7 @@ from ...selectors import (
     campaign_channel_report,
     campaign_channels_queryset,
     channel_costs_queryset,
+    open_campaign_jobs,
     owned_campaign_queryset,
 )
 from ...services import (
@@ -46,9 +47,15 @@ class CampaignScopedView(APIView):
             campaign_channels_queryset(self.campaign()), public_id=self.kwargs['channel_id']
         )
 
+    def serializer_context(self, campaign):
+        return {'campaign_jobs': open_campaign_jobs(campaign)}
+
     def channel_response(self, channel, status_code=status.HTTP_200_OK):
         annotated = campaign_channels_queryset(channel.campaign).get(pk=channel.pk)
-        return Response(CampaignChannelSerializer(annotated).data, status=status_code)
+        serializer = CampaignChannelSerializer(
+            annotated, context=self.serializer_context(channel.campaign)
+        )
+        return Response(serializer.data, status=status_code)
 
 
 @extend_schema(tags=['campaigns'])
@@ -57,8 +64,13 @@ class CampaignChannelListView(CampaignScopedView):
         summary='Các kênh phân phối của chiến dịch', responses=CampaignChannelSerializer(many=True)
     )
     def get(self, request, public_id):
-        channels = campaign_channels_queryset(self.campaign())
-        return Response(CampaignChannelSerializer(channels, many=True).data)
+        campaign = self.campaign()
+        serializer = CampaignChannelSerializer(
+            campaign_channels_queryset(campaign),
+            many=True,
+            context=self.serializer_context(campaign),
+        )
+        return Response(serializer.data)
 
     @extend_schema(
         summary='Thêm kênh phân phối',
@@ -95,7 +107,7 @@ class CampaignChannelDetailView(CampaignScopedView):
 
 @extend_schema(
     tags=['campaigns'],
-    summary='Soạn nội dung kênh bằng AI (kèm fallback_reason khi dùng mẫu)',
+    summary='Soạn bài của kênh bằng AI theo tin và loại link đã chọn (kèm fallback_reason)',
     request=None,
     responses=CampaignChannelSerializer,
 )

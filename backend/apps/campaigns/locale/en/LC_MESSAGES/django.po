@@ -25,6 +25,12 @@ msgstr "The maximum budget cannot be lower than the minimum."
 msgid "Chi phí phải lớn hơn 0."
 msgstr "The cost must be greater than 0."
 
+msgid "Trang tuyển dụng của chiến dịch"
+msgstr "Campaign careers page"
+
+msgid "Trang công ty"
+msgstr "Company page"
+
 msgid "Facebook không mở được link trong bài. Link phải là địa chỉ công khai, không phải localhost."
 msgstr "Facebook could not open the link in the post. The link must be a public address, not localhost."
 
@@ -196,11 +202,8 @@ msgstr "Flyer / QR"
 msgid "Kênh khác"
 msgstr "Other channel"
 
-msgid "Trang tuyển dụng của chiến dịch"
-msgstr "Campaign careers page"
-
-msgid "Một tin tuyển dụng"
-msgstr "A single job posting"
+msgid "Link riêng từng tin"
+msgstr "A link for each job"
 
 msgid "Chưa có"
 msgstr "None yet"
@@ -325,25 +328,17 @@ msgstr "The end date cannot be earlier than the application deadline of an open 
 msgid "Bạn không có quyền với chiến dịch này."
 msgstr "You do not have access to this recruitment campaign."
 
+msgid "Có tin không thuộc chiến dịch."
+msgstr "Some jobs do not belong to the campaign."
+
 msgid "Chiến dịch đã kết thúc, không thêm kênh được."
 msgstr "The recruitment campaign has ended, so no channels can be added."
 
 msgid "Chiến dịch đã có kênh cùng tên."
 msgstr "This campaign already has a channel with the same name."
 
-msgid "Chọn tin mà link sẽ dẫn tới."
-msgstr "Choose the job posting the link should lead to."
-
-msgid "Tin này không thuộc chiến dịch."
-msgstr "This job posting does not belong to the campaign."
-
 msgid "Chúng tôi"
 msgstr "We"
-
-msgid "• %(title)s (%(count)s người, %(salary)s)"
-msgid_plural "• %(title)s (%(count)s người, %(salary)s)"
-msgstr[0] "• %(title)s (%(count)s opening, %(salary)s)"
-msgstr[1] "• %(title)s (%(count)s openings, %(salary)s)"
 
 msgid "%(company)s đang tuyển dụng: %(campaign)s"
 msgstr "%(company)s is hiring: %(campaign)s"
@@ -357,8 +352,16 @@ msgstr "jobs"
 msgid "Ứng tuyển ngay: %(link)s"
 msgstr "Apply now: %(link)s"
 
+msgid "• %(title)s (%(count)s người, %(salary)s)"
+msgid_plural "• %(title)s (%(count)s người, %(salary)s)"
+msgstr[0] "• %(title)s (%(count)s opening, %(salary)s)"
+msgstr[1] "• %(title)s (%(count)s openings, %(salary)s)"
+
 msgid "%(company)s đang tìm đồng đội cho các vị trí:"
 msgstr "%(company)s is looking for teammates for these positions:"
+
+msgid "Xem tất cả vị trí: %(link)s"
+msgstr "See all openings: %(link)s"
 
 msgid "Ứng tuyển tại: %(link)s"
 msgstr "Apply here: %(link)s"

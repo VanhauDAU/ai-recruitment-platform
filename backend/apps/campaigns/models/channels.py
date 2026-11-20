@@ -16,11 +16,16 @@ def generate_channel_code():
 
 
 class CampaignChannel(models.Model):
-    """One place a campaign is distributed, with its own tracked short link.
+    """One place a campaign is distributed (a Fanpage, a group...), with tracked links.
 
-    The link ``/r/<code>`` counts clicks and carries a signed reference to the
-    application form, so every application can be credited to the channel that
-    brought the candidate.
+    Every link of the channel shares its ``code``: ``/r/<code>`` opens the campaign
+    landing page, ``/r/<code>/<job public_id>`` one job and ``/r/<code>/cong-ty``
+    the company page. Each click is counted for the channel and carries a signed
+    reference to the application form, so every application is credited to it.
+
+    ``target`` and ``jobs`` describe the post being drafted for the channel: which
+    jobs it advertises and where its links lead. They change from post to post;
+    the channel itself is not tied to one job.
     """
 
     class Kind(models.TextChoices):
@@ -36,7 +41,8 @@ class CampaignChannel(models.Model):
 
     class Target(models.TextChoices):
         LANDING = 'landing', gettext_lazy('Trang tuyển dụng của chiến dịch')
-        JOB = 'job', gettext_lazy('Một tin tuyển dụng')
+        JOB = 'job', gettext_lazy('Link riêng từng tin')
+        COMPANY = 'company', gettext_lazy('Trang công ty')
 
     class ContentSource(models.TextChoices):
         NONE = '', gettext_lazy('Chưa có')
@@ -52,13 +58,8 @@ class CampaignChannel(models.Model):
     label = models.CharField(max_length=120)
     code = models.CharField(max_length=16, unique=True, default=generate_channel_code)
     target = models.CharField(max_length=10, choices=Target.choices, default=Target.LANDING)
-    job = models.ForeignKey(
-        'jobs.Job',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='campaign_channels',
-    )
+    # Jobs the current post advertises; empty means every open job of the campaign.
+    jobs = models.ManyToManyField('jobs.Job', blank=True, related_name='campaign_channels')
     content = models.JSONField(default=dict, blank=True)
     content_source = models.CharField(
         max_length=10, choices=ContentSource.choices, default=ContentSource.NONE, blank=True
@@ -75,10 +76,6 @@ class CampaignChannel(models.Model):
         ordering = ['created_at', 'id']
         constraints = [
             models.UniqueConstraint(fields=['campaign', 'label'], name='camp_channel_label_unique'),
-            models.CheckConstraint(
-                condition=models.Q(target='landing') | models.Q(job__isnull=False),
-                name='camp_channel_job_target',
-            ),
         ]
 
     def __str__(self):

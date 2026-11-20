@@ -52,8 +52,46 @@ def resolve_campaign_attribution(*, job, ref):
     return CampaignChannel.objects.filter(code=code, campaign_id=job.campaign_id).first()
 
 
-def channel_link(channel):
-    return f'{settings.FRONTEND_URL.rstrip("/")}/r/{channel.code}'
+COMPANY_SEGMENT = 'cong-ty'
+
+
+def channel_link(channel, destination=''):
+    """Tracked URL of ``channel``; ``destination`` is a job public_id or ``COMPANY_SEGMENT``."""
+    path = f'/r/{channel.code}/{destination}' if destination else f'/r/{channel.code}'
+    return f'{settings.FRONTEND_URL.rstrip("/")}{path}'
+
+
+MAX_POST_JOBS = 10
+DEFAULT_POST_JOBS = 5
+
+
+def _newest_first(job):
+    return (job.published_at is not None, job.published_at, job.pk)
+
+
+def post_jobs(channel):
+    """Jobs the channel's post advertises: the chosen open ones, else the newest open jobs.
+
+    Reads ``channel.jobs`` through the prefetch of ``campaign_channels_queryset``.
+    """
+    from apps.jobs.models import Job
+
+    chosen = [job for job in channel.jobs.all() if job.status != Job.Status.CLOSED]
+    if chosen:
+        return sorted(chosen, key=_newest_first, reverse=True)[:MAX_POST_JOBS]
+    jobs = Job.objects.filter(campaign_id=channel.campaign_id).exclude(status=Job.Status.CLOSED)
+    return list(jobs.order_by('-published_at', '-pk')[:DEFAULT_POST_JOBS])
+
+
+def post_link(channel, jobs=None):
+    """The post's main link: one job when it advertises only that job, else its target page."""
+    if channel.target == CampaignChannel.Target.COMPANY:
+        return channel_link(channel, COMPANY_SEGMENT)
+    if channel.target == CampaignChannel.Target.JOB:
+        jobs = post_jobs(channel) if jobs is None else jobs
+        if len(jobs) == 1:
+            return channel_link(channel, jobs[0].public_id)
+    return channel_link(channel)
 
 
 def landing_url(campaign):
@@ -68,15 +106,20 @@ def _is_live(campaign):
     )
 
 
-def redirect_target(channel):
-    """Where a click goes: the chosen job while it is public, else the landing page."""
+def redirect_target(channel, destination=''):
+    """Where a click goes: the job or company page while the campaign runs, else the landing page."""
     campaign = channel.campaign
     ref = sign_ref(channel.code)
-    if _is_live(campaign) and channel.target == CampaignChannel.Target.JOB and channel.job:
+    if _is_live(campaign) and destination == COMPANY_SEGMENT and campaign.company:
+        return f'/cong-ty/{campaign.company.slug}?ref={ref}'
+    if _is_live(campaign) and destination:
         from apps.jobs.models import Job, publicly_available_job_filter
 
-        if Job.objects.filter(publicly_available_job_filter(), pk=channel.job_id).exists():
-            return f'/viec-lam/{channel.job.slug}?ref={ref}'
+        job = Job.objects.filter(
+            publicly_available_job_filter(), campaign=campaign, public_id=destination
+        ).first()
+        if job:
+            return f'/viec-lam/{job.slug}?ref={ref}'
     return f'/tuyen-dung/{campaign.slug}?ref={ref}'
 
 
