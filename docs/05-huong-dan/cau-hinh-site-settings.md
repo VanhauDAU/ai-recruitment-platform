@@ -133,6 +133,30 @@ Cột "Mặc định" là giá trị trong seed. Dấu ✓ nghĩa là key đư�
 | Logo & biểu tượng | `brand_favicon_url` | Favicon | image | "/favicon-32.png" | ✓ |
 | Màu sắc | `brand_primary_color` | Màu thương hiệu chính | color | "#00b14f" | ✓ |
 
+### Banner quảng bá (trang quản trị `/admin/app/banners`)
+
+Banner không phải site setting; công tắc `home_show_banner` chỉ ẩn/hiện cả carousel.
+Nội dung nhập ở trang **Banner quảng bá**, chạy xoay vòng theo thứ tự, mỗi banner có
+lịch bắt đầu/kết thúc tùy chọn. Khi không có banner nào đang chạy, trang chủ hiện slide
+số liệu dự phòng.
+
+| Loại slide | Nội dung | Đích khi bấm |
+|---|---|---|
+| Ảnh + link (`image`) | Ảnh thiết kế sẵn (nút nằm trong ảnh), ví dụ banner tuyển dụng thương hiệu, ngày hội việc làm | Link nhập tay; bỏ trống thì mở trang công ty gắn kèm |
+| Gợi ý việc làm AI (`ai`) | Khách: nội dung admin nhập (vd "Tải CV lên – AI gợi ý việc làm hợp với bạn"). Ứng viên: "Có N việc làm hợp với CV của bạn" hoặc lời mời thiết lập tiêu chí | `/tai-cv-len` hoặc `/tai-khoan/viec-lam-phu-hop` |
+| Nhà tuyển dụng nổi bật (`company`) | Ảnh bìa, logo, tên, số tin đang tuyển, trụ sở, ngành lấy từ dữ liệu thật | Tab việc làm và trang công ty |
+| Bố cục chữ (`promo`) | Nhãn nhỏ, tiêu đề, mô tả, nút, ảnh minh họa tùy chọn (sự kiện, công cụ CV) | Link nút |
+
+Quy tắc nội dung:
+
+- Nên có 3–5 slide; slide đầu tiên tải ảnh ngay, các slide sau tải lười.
+- Tiêu đề dưới 40 ký tự, mô tả dưới 90 ký tự, mỗi slide một nút bắt đầu bằng động từ.
+- Ảnh `image` tỉ lệ 8:3: khuyến nghị 1600×600, tối thiểu 1200×450, tối đa 1,5 MB.
+  Điện thoại hiển thị khung 2:1 nên cắt bớt hai bên: đặt chữ và nút trong khoảng 70% giữa ảnh.
+- Ảnh minh họa `promo` khoảng 4:3, rộng từ 800 px, tối đa 1 MB; chỉ hiện từ máy tính bảng.
+- Slide công ty nên chọn công ty có ảnh bìa và đang có tin; công ty bị giữ nội dung tự ẩn.
+- Link trong trang bắt đầu bằng `/`; link ngoài phải là `https://` và mở tab mới.
+
 ### Trang chủ & điều hướng (`homepage`)
 
 | Section | Key | Tên | Kiểu | Mặc định | Public |

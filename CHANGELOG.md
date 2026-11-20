@@ -8,6 +8,16 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-21
 
+#### Added — Carousel banner trang chủ động, nhiều loại slide
+
+- Bốn loại slide: ảnh + link (cả slide là ảnh thiết kế sẵn), nhà tuyển dụng nổi bật (ảnh
+  bìa, logo, số tin đang tuyển thật), gợi ý việc làm AI (ứng viên thấy số việc hợp CV),
+  bố cục chữ. Banner có lịch bắt đầu/kết thúc, xoay vòng theo thứ tự.
+- Trang quản trị **Banner quảng bá** thay cho Django admin: tải ảnh có kiểm tra tỉ lệ,
+  chọn công ty, kéo thả sắp thứ tự, bật/tắt, xem trước, audit.
+- Carousel hiện trên điện thoại (khung 2:1, vuốt để chuyển); dừng khi focus và tôn trọng
+  giảm chuyển động. API công khai trả thêm `kind`, CTA phụ và công ty lồng nhau.
+
 #### Changed — Luật tuyển dụng và lưu trữ chỉnh được ở trang cấu hình (ADR-0026, GĐ5)
 
 - **Ứng tuyển & SLA:** admin chỉnh số lần nộp mỗi tin, thời gian chờ nộp lại, thời hạn

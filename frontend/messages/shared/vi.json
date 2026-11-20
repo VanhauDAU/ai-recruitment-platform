@@ -344,5 +344,21 @@
   "auth_registration_closed_title": "Tạm dừng đăng ký tài khoản mới",
   "auth_registration_closed_text": "Hệ thống đang tạm ngưng tạo tài khoản mới. Nếu đã có tài khoản, bạn vẫn đăng nhập bình thường.",
   "auth_registration_closed_login": "Đăng nhập",
-  "api_error_oauth_registration_closed": "Hệ thống đang tạm dừng đăng ký tài khoản mới. Tài khoản đã có vẫn đăng nhập được."
+  "api_error_oauth_registration_closed": "Hệ thống đang tạm dừng đăng ký tài khoản mới. Tài khoản đã có vẫn đăng nhập được.",
+  "ui_banner_carousel": "Banner nổi bật",
+  "ui_banner_slide": "Banner {index} / {total}",
+  "banner_kind_image": "Ảnh + link",
+  "banner_kind_promo": "Bố cục chữ",
+  "banner_kind_company": "Nhà tuyển dụng nổi bật",
+  "banner_kind_ai": "Gợi ý việc làm AI",
+  "banner_company_eyebrow": "NHÀ TUYỂN DỤNG NỔI BẬT",
+  "banner_company_open_jobs": "Xem {count} việc làm",
+  "banner_company_view_jobs": "Xem việc làm",
+  "banner_company_view": "Xem công ty",
+  "banner_ai_matches_title": "Có {count} việc làm hợp với CV của bạn",
+  "banner_ai_matches_subtitle": "AI so khớp kỹ năng và kinh nghiệm trong CV với từng tin tuyển dụng.",
+  "banner_ai_matches_cta": "Xem việc phù hợp",
+  "banner_ai_setup_title": "Thiết lập tiêu chí để nhận gợi ý việc làm",
+  "banner_ai_setup_subtitle": "Chọn ngành, nơi làm việc và mức lương mong muốn để AI gợi ý đúng việc cho bạn.",
+  "banner_ai_setup_cta": "Thiết lập ngay"
 }
