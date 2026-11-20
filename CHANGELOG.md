@@ -8,6 +8,23 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-20
 
+#### Added — AI đối sánh: đo lường trên tập vàng (kế hoạch bản 3, GĐ 1)
+
+- Lệnh `matching_evaluate` chấm danh sách cặp CV–tin bằng đúng bước trích xuất,
+  mã hóa và `score_match` của sản phẩm, không ghi DB; `--model-path` thử mô hình
+  khác, `--rule-baseline` thêm điểm của bộ gợi ý theo luật `profile-rule-v2`.
+- `ml/scripts/evaluate.py`: Spearman, NDCG@5, khoảng tin cậy bootstrap theo tin, số
+  tin hơn BM25, kappa của mức hiển thị → `ml/reports/eval_validation.md`.
+- Lệnh `apply_skill_merge` áp bảng gộp kỹ năng (alias, nhóm) vào danh mục, chạy
+  lại được; `ml/scripts/import_jd.py` gọi lệnh này trước khi nhập tin.
+- `ml/scripts/fetch_public.py` tải dữ liệu và mô hình công khai, ghi nguồn và mã
+  commit.
+- Tập vàng mở rộng lên 30 tin / 300 cặp (`build_gold_pairs.py --extend`); đợt 2 do
+  hai lượt Claude độc lập gán (kappa 0,979), gộp bằng `merge_gold_passes.py`; rubric
+  thêm quy tắc E1–E5.
+- Nhập tin hàng loạt: khớp tỉnh/thành bất kể tiền tố "Tỉnh"/"Thành phố"; báo cáo
+  thêm `publisher_companies`.
+
 #### Changed — FAQ/hướng dẫn và blog: Nháp → Xuất bản (ADR-0024)
 
 - Bỏ bước gửi duyệt/duyệt/từ chối vốn chỉ còn là tự duyệt sau ADR-0018.

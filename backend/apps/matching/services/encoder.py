@@ -64,17 +64,19 @@ class SentenceTransformerEncoder:
     MAX_SEQ_LENGTH = 512
     BATCH_SIZE = 16
 
-    def __init__(self, path, version):
+    def __init__(self, path, version, *, prefixes=None):
         from sentence_transformers import SentenceTransformer
 
         self.version = version
+        # Mô hình không thuộc họ E5 (dùng khi so sánh trong thực nghiệm) không cần tiền tố.
+        self._prefixes = self.PREFIXES if prefixes is None else prefixes
         self._model = SentenceTransformer(path, device='cpu')
         self._model.max_seq_length = self.MAX_SEQ_LENGTH
 
     def encode(self, texts, *, kind):
         if not texts:
             return np.zeros((0, EMBEDDING_DIMENSIONS), dtype=np.float32)
-        prefix = self.PREFIXES[kind]
+        prefix = self._prefixes[kind]
         vectors = self._model.encode(
             [prefix + text for text in texts],
             batch_size=self.BATCH_SIZE,

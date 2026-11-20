@@ -75,10 +75,17 @@ class JobBulkImportTests(TestCase):
         row.update(overrides)
         return row
 
+    def test_province_matches_whatever_its_administrative_prefix(self):
+        # Sau khi sáp nhập, một tỉnh có thể đổi thành thành phố; tệp nguồn ghi tên cũ.
+        report = import_job_postings([self.row(province='Tỉnh Đà Nẵng')], apply=True)
+
+        self.assertEqual(report['summary']['imported'], 1)
+
     def test_apply_publishes_a_complete_public_job(self):
         report = import_job_postings([self.row()], apply=True)
 
         self.assertEqual(report['summary'], {'total': 1, 'imported': 1, 'skipped': 0, 'errors': 0})
+        self.assertEqual(report['publisher_companies'], [self.company.company_name])
         job = Job.publicly_available_queryset().get(public_id=report['rows'][0]['job_public_id'])
         self.assertEqual((job.posted_by, job.company), (self.employer, self.company))
         self.assertEqual(

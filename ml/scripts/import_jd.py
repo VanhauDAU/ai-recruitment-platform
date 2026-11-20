@@ -8,6 +8,11 @@ Chạy từ thư mục gốc của repo:
 Chạy thử in ra lỗi từng dòng và danh sách kỹ năng chưa có trong danh mục. Chạy lại
 an toàn: tin đã nhập (trùng tiêu đề và mô tả) được bỏ qua. Sau khi ghi thật, bảng
 đối chiếu mã tin → tin trong hệ thống được lưu ở `ml/data/jd/jd_import_map.json`.
+
+Khi ghi thật, bảng gộp kỹ năng `ml/labeling/skill_merge.json` được áp vào danh mục
+trước, để các cách viết khác nhau của một kỹ năng về cùng một bản ghi. Tin gán vào
+một công ty demo không còn trong hệ thống (ví dụ sau khi dựng lại DB) được hệ thống
+chia đều cho các công ty demo đang đăng được tin.
 """
 
 import argparse
@@ -17,7 +22,7 @@ from datetime import date, datetime
 from pathlib import Path
 
 from openpyxl import load_workbook
-from paths import JD_IMPORT_MAP, JD_INPUT, REPO_ROOT
+from paths import JD_IMPORT_MAP, JD_INPUT, REPO_ROOT, SKILL_MERGE
 
 SHEET_NAME = 'JD'
 EXAMPLE_PREFIX = 'VD'
@@ -122,15 +127,11 @@ def source_problems(row):
     return problems
 
 
-def run_import(rows, *, apply, create_skills):
-    command = ['docker', 'compose', 'exec', '-T', 'backend', 'python', 'manage.py', 'import_job_postings', '-']  # fmt: skip
-    if apply:
-        command.append('--apply')
-    if create_skills:
-        command.append('--create-skills')
+def manage(command, payload, *flags):
+    """Chạy một lệnh `manage.py` trong container backend, gửi JSON qua stdin, trả báo cáo JSON."""
     result = subprocess.run(
-        command,
-        input=json.dumps(rows, ensure_ascii=False),
+        ['docker', 'compose', 'exec', '-T', 'backend', 'python', 'manage.py', command, '-', *flags],
+        input=json.dumps(payload, ensure_ascii=False),
         capture_output=True,
         text=True,
         cwd=REPO_ROOT,
@@ -138,10 +139,40 @@ def run_import(rows, *, apply, create_skills):
     )
     if result.returncode != 0:
         raise SystemExit(
-            'Không chạy được lệnh nhập trong container backend (Docker Compose đã bật chưa?):\n'
+            f'Không chạy được lệnh {command} trong container backend (Docker Compose đã bật chưa?):\n'
             + (result.stderr.strip() or result.stdout.strip())
         )
     return json.loads(result.stdout.strip().splitlines()[-1])
+
+
+def run_import(rows, *, apply, create_skills):
+    flags = [flag for flag, on in (('--apply', apply), ('--create-skills', create_skills)) if on]
+    return manage('import_job_postings', rows, *flags)
+
+
+def apply_skill_merge():
+    report = manage('apply_skill_merge', json.loads(SKILL_MERGE.read_text(encoding='utf-8')))
+    print(
+        f'Bảng gộp kỹ năng: thêm {report["skills_created"]} kỹ năng, {report["aliases_added"]} '
+        f'cách viết khác, {report["skills_grouped"]} kỹ năng vào nhóm.'
+    )
+    for name in report['conflicts']:
+        print(f'  ! "{name}" đã là một kỹ năng riêng, chưa gộp được.')
+
+
+def fold(name):
+    return ' '.join(name.split()).casefold()
+
+
+def release_missing_companies(rows):
+    """Bỏ trống công ty demo không còn đăng được tin; trả {tên công ty: số tin}."""
+    available = {fold(name) for name in run_import([], apply=False, create_skills=False)['publisher_companies']}  # fmt: skip
+    released = {}
+    for row in rows:
+        if row['company'] and fold(row['company']) not in available:
+            released[row['company']] = released.get(row['company'], 0) + 1
+            row['company'] = ''
+    return released
 
 
 def print_report(numbered_rows, held_back, report):
@@ -213,8 +244,13 @@ def main():
         number: problems for number, row in numbered_rows if (problems := source_problems(row))
     }
     sendable = [row for number, row in numbered_rows if number not in held_back]
+    if options.apply:
+        apply_skill_merge()
+    released = release_missing_companies(sendable)
     report = run_import(sendable, apply=options.apply, create_skills=options.create_skills)
     print_report(numbered_rows, held_back, report)
+    for company, count in sorted(released.items()):
+        print(f'Công ty demo "{company}" không còn đăng được tin: {count} tin được hệ thống tự chia.')
     if options.apply:
         print(f'Bảng đối chiếu mã tin: {save_map(numbered_rows, report)}')
 

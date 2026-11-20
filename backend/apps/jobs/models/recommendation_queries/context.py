@@ -105,7 +105,11 @@ def cv_context(user, public_id):
     if not ai_recommendation_allowed(profile):
         raise RecommendationConsentRequired
 
-    cv = _candidate_cvs(user).get(public_id=public_id)
+    return cv_signals(_candidate_cvs(user).get(public_id=public_id), preference)
+
+
+def cv_signals(cv, preference):
+    """Tín hiệu đối sánh lấy từ một CV (nạp như `_candidate_cvs`), bổ sung bằng nhu cầu đã khai."""
     content, headline = _cv_content(cv)
     skills, skill_ids = _cv_skills(cv, content)
     desired_categories = list(preference.desired_specializations.all()) if preference else []
