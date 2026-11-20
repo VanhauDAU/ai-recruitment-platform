@@ -11,7 +11,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import ngettext
 
 from apps.employers.services import employer_badge_state_map
-from apps.sitecontent.models import SiteSetting
+from apps.sitecontent.selectors import get_string_setting
 from common.email import send_html_email
 from common.i18n import recipient_language
 from common.metrics import record_metric
@@ -91,7 +91,7 @@ def _email_context(digest, items):
                 ),
             }
         )
-    site_name = _site_string('site_name', 'ProCV')
+    site_name = get_string_setting('site_name', 'ProCV')
     return {
         'site_name': site_name,
         'candidate_name': digest.candidate.full_name or digest.candidate.email,
@@ -111,11 +111,6 @@ def _email_context(digest, items):
         'manage_url': (f'{settings.FRONTEND_URL.rstrip("/")}/tai-khoan/cai-dat-thong-bao-viec-lam'),
         'email_settings_url': f'{settings.FRONTEND_URL.rstrip("/")}/tai-khoan/cai-dat-nhan-email',
     }
-
-
-def _site_string(key, default=''):
-    value = SiteSetting.objects.filter(key=key).values_list('value', flat=True).first()
-    return value.strip() if isinstance(value, str) and value.strip() else default
 
 
 def _rewind_failed_digest_sources(digest):

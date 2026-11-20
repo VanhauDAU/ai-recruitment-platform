@@ -5,7 +5,8 @@ from django.db import transaction
 from django.db.models import Max
 from django.utils import timezone
 
-from apps.accounts.services import record_admin_action
+# Import module hẹp: gói accounts.services đọc cấu hình qua sitecontent.selectors.
+from apps.accounts.services.admin_audit import record_admin_action
 from common.errors import DomainError
 
 from ..models import (

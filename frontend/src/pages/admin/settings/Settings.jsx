@@ -1,24 +1,42 @@
-import { SettingOutlined } from '@ant-design/icons'
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Alert, Button, Skeleton, Tag, Tabs, Typography } from 'antd'
+import { SearchOutlined, SettingOutlined } from '@ant-design/icons'
+import { Alert, Button, Empty, Input, Skeleton } from 'antd'
+import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { useSiteSettings } from '@/entities/system/site-settings'
 import { AiRuntimeOverview } from '@/features/admin/system/manage-ai-runtime'
-import { getAdminSettings, SettingField, updateAdminSettings } from '@/features/admin/system/manage-site-settings'
+import {
+  formatSettingValue,
+  isRiskyChange,
+  matchesQuery,
+  SettingHistoryDrawer,
+  SettingPreviews,
+  SettingRow,
+  SettingsGroupNav,
+  SystemParametersPanel,
+  useSettingsForm,
+} from '@/features/admin/system/manage-site-settings'
+import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
-import { AdminDataActions, AdminPageHeader, AdminPanel } from '@/shared/ui/admin'
+import { AdminPageHeader, AdminPanel } from '@/shared/ui/admin'
 import useConfirmAction from '@/shared/ui/confirm-action/use-confirm-action'
 
-const isEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b)
+// Nhóm cũ (trước khi gom nhóm theo ADR-0026) để link/bookmark cũ vẫn mở đúng chỗ.
+const LEGACY_GROUPS = { general: 'brand', candidate: 'cv', security: 'operations', upload: 'operations', payment: 'operations' }
+
+const sectionsOf = (settings) => settings.reduce((sections, setting) => {
+  const section = sections.find((item) => item.title === setting.section)
+  if (section) section.settings.push(setting)
+  else sections.push({ title: setting.section, settings: [setting] })
+  return sections
+}, [])
 
 function SettingsPageHeader() {
   return (
     <AdminPageHeader
-      eyebrow="Hệ thống"
-      title="Cài đặt hệ thống"
-      description="Quản lý cấu hình vận hành, thương hiệu, bảo mật và các bề mặt sản phẩm từ một nơi."
+      eyebrow={m.admin_settings_eyebrow()}
+      title={m.admin_settings_title()}
+      description={m.admin_settings_description()}
       icon={<SettingOutlined />}
-      actions={<AdminDataActions allowExport={false} />}
     />
   )
 }
@@ -27,136 +45,88 @@ export default function AdminSettings() {
   const [searchParams, setSearchParams] = useSearchParams()
   const { confirmationModal, requestConfirmation } = useConfirmAction()
   const { retry: refreshSiteSettings } = useSiteSettings()
-  const [groups, setGroups] = useState(null)
-  const [values, setValues] = useState({})
-  const [initial, setInitial] = useState({})
-  const [pendingImageFiles, setPendingImageFiles] = useState({})
-  const [activeGroup, setActiveGroup] = useState(() => searchParams.get('group') || 'general')
-  const [saving, setSaving] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [loadError, setLoadError] = useState(false)
+  const form = useSettingsForm()
+  const [query, setQuery] = useState('')
+  const [historyFor, setHistoryFor] = useState(null)
+  const [highlight, setHighlight] = useState(null)
+  const { groups, settingsByKey, values, initial, errors, dirtyKeys } = form
 
-  const loadSettings = useCallback(async () => {
-    setLoading(true)
-    setLoadError(false)
-    try {
-      const response = await getAdminSettings()
-      setGroups(response.groups)
-      const map = Object.fromEntries(
-        response.groups.flatMap((group) => (
-          group.settings.map((setting) => [setting.key, setting.value])
-        )),
-      )
-      setValues(map)
-      setInitial(map)
-    } catch {
-      setLoadError(true)
-      message.error('Không tải được cấu hình.')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+  const requested = LEGACY_GROUPS[searchParams.get('group')] || searchParams.get('group')
+  const activeKey = groups?.some((group) => group.key === requested) ? requested : groups?.[0]?.key
+  const searching = query.trim().length > 0
+
+  const visibleGroups = useMemo(() => (groups || [])
+    .map((group) => ({ ...group, settings: group.settings.filter((setting) => matchesQuery(setting, query)) }))
+    .filter((group) => (searching ? group.settings.length > 0 : group.key === activeKey)), [groups, query, searching, activeKey])
+  const matchCounts = useMemo(() => (searching
+    ? Object.fromEntries(visibleGroups.map((group) => [group.key, group.settings.length]))
+    : null), [visibleGroups, searching])
+  const dirtyGroups = useMemo(() => new Set(dirtyKeys.map((key) => settingsByKey[key]?.group)), [dirtyKeys, settingsByKey])
+  const errorGroups = useMemo(() => new Set(Object.keys(errors).map((key) => settingsByKey[key]?.group)), [errors, settingsByKey])
 
   useEffect(() => {
-    loadSettings()
-  }, [loadSettings])
+    if (!highlight) return undefined
+    document.getElementById(`setting-${highlight}`)?.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
+    const timer = setTimeout(() => setHighlight(null), 1600)
+    return () => clearTimeout(timer)
+  }, [highlight, activeKey])
 
-  useEffect(() => {
-    const requested = searchParams.get('group') || 'general'
-    if (groups?.some((group) => group.key === requested)) {
-      setActiveGroup(requested)
-    }
-  }, [groups, searchParams])
+  const selectGroup = (key) => {
+    setQuery('')
+    const next = new URLSearchParams(searchParams)
+    next.set('group', key)
+    setSearchParams(next)
+  }
+  const focusSetting = (key) => {
+    const group = settingsByKey[key]?.group
+    if (group && group !== activeKey) selectGroup(group)
+    else setQuery('')
+    setHighlight(key)
+  }
 
-  const dirtyKeys = useMemo(
-    () => Array.from(new Set([
-      ...Object.keys(values).filter((k) => !isEqual(values[k], initial[k])),
-      ...Object.keys(pendingImageFiles),
-    ])),
-    [values, initial, pendingImageFiles]
-  )
-
-  const dirtyInGroup = (group) =>
-    group.settings.some((s) => dirtyKeys.includes(s.key))
-
-  const handleSave = async (group) => {
-    const changed = Object.fromEntries(
-      group.settings
-        .filter((s) => s.value_type !== 'env' && dirtyKeys.includes(s.key))
-        .map((s) => [s.key, values[s.key]])
-    )
-    setSaving(true)
+  const submit = async () => {
     try {
-      const groupImageFiles = Object.fromEntries(
-        group.settings
-          .filter((s) => s.value_type === 'image' && pendingImageFiles[s.key])
-          .map((s) => [s.key, pendingImageFiles[s.key]])
-      )
-      const { updated, errors, values: savedValues, display_values: displayValues } = await updateAdminSettings(changed, groupImageFiles)
-      if (Object.keys(errors || {}).length) {
-        message.error(Object.entries(errors).map(([k, e]) => `${k}: ${e}`).join(' · '))
-      }
-      if (updated?.length) {
-        const nextValues = Object.fromEntries(updated.map((k) => [k, savedValues?.[k] ?? values[k]]))
-        setValues((prev) => ({ ...prev, ...nextValues }))
-        setInitial((prev) => ({ ...prev, ...nextValues }))
-        setPendingImageFiles((prev) => {
-          const next = { ...prev }
-          updated.forEach((key) => delete next[key])
-          return next
-        })
-        if (displayValues) {
-          setGroups((prev) => prev.map((item) => ({
-            ...item,
-            settings: item.settings.map((setting) => (
-              displayValues[setting.key] !== undefined
-                ? { ...setting, value: savedValues?.[setting.key] ?? setting.value, display_value: displayValues[setting.key] }
-                : setting
-            )),
-          })))
-        }
-        if (updated.includes('brand_primary_color')) await refreshSiteSettings()
-        message.success('Đã lưu cấu hình.')
+      const result = await form.save()
+      const failed = Object.keys(result.errors)
+      if (result.updated.some((key) => settingsByKey[key]?.is_public)) await refreshSiteSettings()
+      if (failed.length) {
+        message.error(m.admin_settings_save_partial({ count: failed.length }))
+        focusSetting(failed[0])
+      } else if (result.updated.length) {
+        message.success(m.admin_settings_saved())
       }
     } catch {
-      message.error('Lưu thất bại.')
-    } finally {
-      setSaving(false)
+      message.error(m.admin_settings_save_failed())
     }
   }
 
-  const handleRevert = (group) => {
-    setValues((prev) => ({
-      ...prev,
-      ...Object.fromEntries(group.settings.map((s) => [s.key, initial[s.key]])),
-    }))
-    setPendingImageFiles((prev) => {
-      const next = { ...prev }
-      group.settings.forEach((s) => delete next[s.key])
-      return next
+  const handleSave = () => {
+    const risky = dirtyKeys
+      .map((key) => settingsByKey[key])
+      .filter((setting) => isRiskyChange(setting, initial[setting.key], values[setting.key]))
+    if (!risky.length) {
+      submit()
+      return
+    }
+    requestConfirmation({
+      title: m.admin_settings_risky_title(),
+      confirmText: m.admin_settings_save(),
+      cancelText: m.admin_settings_cancel(),
+      danger: true,
+      description: (
+        <>
+          <p>{m.admin_settings_risky_description()}</p>
+          <ul className="settings-risky">
+            {risky.map((setting) => (
+              <li key={setting.key}>
+                <strong>{setting.label}</strong>: {formatSettingValue(setting, initial[setting.key])} → {formatSettingValue(setting, values[setting.key])}
+              </li>
+            ))}
+          </ul>
+        </>
+      ),
+      onConfirm: submit,
     })
-  }
-
-  const handleTabChange = (key) => {
-    const commitGroup = () => {
-      setActiveGroup(key)
-      const next = new URLSearchParams(searchParams)
-      if (key === 'general') next.delete('group')
-      else next.set('group', key)
-      setSearchParams(next)
-    }
-    const current = groups.find((g) => g.key === activeGroup)
-    if (current && dirtyInGroup(current)) {
-      requestConfirmation({
-        title: 'Chuyển nhóm cài đặt',
-        description: 'Nhóm hiện tại có thay đổi chưa lưu. Bạn có muốn chuyển tab? Các thay đổi vẫn được giữ lại.',
-        confirmText: 'Chuyển tab',
-        cancelText: 'Ở lại',
-        onConfirm: commitGroup,
-      })
-    } else {
-      commitGroup()
-    }
   }
 
   if (!groups) {
@@ -164,94 +134,107 @@ export default function AdminSettings() {
       <div className="space-y-5">
         <SettingsPageHeader />
         <AdminPanel>
-          {loadError ? (
+          {form.loadError ? (
             <Alert
-              action={<Button onClick={loadSettings}>Thử lại</Button>}
-              description="Kết nối hoặc quyền truy cập có thể đã thay đổi. Hãy tải lại dữ liệu trước khi chỉnh sửa."
+              action={<Button onClick={form.load}>{m.admin_settings_retry()}</Button>}
+              description={m.admin_settings_load_error_description()}
               showIcon
-              title="Không thể tải cài đặt hệ thống"
+              title={m.admin_settings_load_error_title()}
               type="error"
             />
           ) : (
-            <Skeleton active={loading} paragraph={{ rows: 10 }} />
+            <Skeleton active paragraph={{ rows: 10 }} />
           )}
         </AdminPanel>
       </div>
     )
   }
 
-  const items = groups.map((group) => ({
-    key: group.key,
-    label: (
-      <span>
-        {group.label}
-        {dirtyInGroup(group) && <span className="ml-1 text-orange-500">•</span>}
-      </span>
-    ),
-    children: (
-      <div className="max-w-3xl">
-        {group.key === 'ai' && (
-          <AiRuntimeOverview />
-        )}
-        <div className="divide-y divide-gray-100">
-          {group.settings.map((setting) => (
-            <div key={setting.key} className="flex flex-col gap-2 py-4 sm:flex-row sm:items-start">
-              <div className="sm:w-64 shrink-0">
-                <div className="font-medium text-gray-800">
-                  {setting.label}
-                  {setting.is_public && <Tag className="!ml-2" color="blue">Public</Tag>}
-                </div>
-                {setting.description && (
-                  <div className="mt-0.5 text-xs text-gray-500">{setting.description}</div>
-                )}
-                <div className="mt-0.5 font-mono text-[11px] text-gray-400">{setting.key}</div>
-              </div>
-              <div className="flex-1">
-                <SettingField
-                  setting={setting}
-                  value={values[setting.key]}
-                  onChange={(v) => setValues((prev) => ({ ...prev, [setting.key]: v }))}
-                  pendingFile={pendingImageFiles[setting.key]}
-                  onFileSelected={(file) => setPendingImageFiles((prev) => {
-                    const next = { ...prev }
-                    if (file) next[setting.key] = file
-                    else delete next[setting.key]
-                    return next
-                  })}
-                />
-              </div>
-            </div>
-          ))}
-          {!group.settings.length && (
-            <Typography.Text type="secondary">Nhóm này chưa có cấu hình.</Typography.Text>
-          )}
-        </div>
-        <div className="sticky bottom-0 flex gap-2 border-t border-gray-100 bg-white py-3">
-          <Button type="primary" loading={saving} disabled={!dirtyInGroup(group)} onClick={() => handleSave(group)}>
-            Lưu thay đổi
-          </Button>
-          <Button disabled={!dirtyInGroup(group)} onClick={() => handleRevert(group)}>
-            Hoàn tác
-          </Button>
-        </div>
-      </div>
-    ),
-  }))
+  const renderRow = (setting) => {
+    const parent = settingsByKey[setting.options?.depends_on]
+    const blockedBy = parent?.value_type === 'boolean' && !values[parent.key] ? parent.label : null
+    return (
+      <SettingRow
+        key={setting.key}
+        setting={setting}
+        value={values[setting.key]}
+        file={form.files[setting.key]}
+        dirty={dirtyKeys.includes(setting.key)}
+        error={errors[setting.key]}
+        blockedBy={blockedBy}
+        highlighted={highlight === setting.key}
+        onChange={(value) => form.setValue(setting.key, value)}
+        onFileSelected={(file) => form.setFile(setting.key, file)}
+        onRevert={() => form.revert(setting.key)}
+        onHistory={() => setHistoryFor(setting)}
+      />
+    )
+  }
+  const activeGroup = groups.find((group) => group.key === activeKey)
+  const resultCount = visibleGroups.reduce((sum, group) => sum + group.settings.length, 0)
 
   return (
     <>
       <div className="space-y-5">
         <SettingsPageHeader />
-        <AdminPanel>
-          <Tabs
-            tabPlacement="top"
-            activeKey={activeGroup}
-            onChange={handleTabChange}
-            items={items}
-            className="[&_.ant-tabs-tab]:!py-2"
+        <div className="settings-layout">
+          <SettingsGroupNav
+            groups={groups}
+            activeKey={searching ? null : activeKey}
+            dirtyGroups={dirtyGroups}
+            errorGroups={errorGroups}
+            counts={matchCounts}
+            onSelect={selectGroup}
           />
-        </AdminPanel>
+          <div className="settings-main">
+            <div className="settings-toolbar">
+              <h2 className="settings-toolbar__title">
+                {searching ? m.admin_settings_search_results({ count: resultCount, query: query.trim() }) : activeGroup?.label}
+              </h2>
+              <Input
+                allowClear
+                className="settings-toolbar__search"
+                prefix={<SearchOutlined aria-hidden="true" />}
+                placeholder={m.admin_settings_search_placeholder()}
+                aria-label={m.admin_settings_search_label()}
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+              />
+            </div>
+            {searching && !resultCount && <Empty description={m.admin_settings_search_empty({ query: query.trim() })} />}
+            {!searching && <SettingPreviews group={activeKey} values={values} settingsByKey={settingsByKey} />}
+            {!searching && activeKey === 'ai' && <AiRuntimeOverview />}
+            {visibleGroups.map((group) => sectionsOf(group.settings).map((section) => (
+              <section key={`${group.key}-${section.title}`} className="settings-section">
+                {searching && <p className="settings-section__group">{group.label}</p>}
+                <h3 className="settings-section__title">{section.title}</h3>
+                {section.settings.map(renderRow)}
+              </section>
+            )))}
+            {!searching && activeKey === 'operations' && <SystemParametersPanel />}
+            <div className="settings-savebar">
+              <span className={`settings-savebar__status${dirtyKeys.length ? '' : ' settings-savebar__status--idle'}`} aria-live="polite">
+                {dirtyKeys.length ? m.admin_settings_dirty_count({ count: dirtyKeys.length }) : m.admin_settings_no_changes()}
+              </span>
+              <div className="settings-savebar__actions">
+                <Button disabled={!dirtyKeys.length || form.saving} onClick={form.revertAll}>{m.admin_settings_revert_all()}</Button>
+                <Button type="primary" loading={form.saving} disabled={!dirtyKeys.length} onClick={handleSave}>
+                  {m.admin_settings_save()}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+      <SettingHistoryDrawer
+        setting={historyFor}
+        onClose={() => setHistoryFor(null)}
+        onUseValue={(value) => {
+          form.setValue(historyFor.key, value)
+          focusSetting(historyFor.key)
+          setHistoryFor(null)
+        }}
+      />
       {confirmationModal}
     </>
   )

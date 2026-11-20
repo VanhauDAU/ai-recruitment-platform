@@ -19,7 +19,9 @@ from .announcements_reader import (
 )
 from .settings import (
     AdminSettingUploadView,
+    AdminSiteSettingHistoryView,
     AdminSiteSettingView,
+    AdminSystemParametersView,
     BannerListView,
     FeedbackCreateView,
     LinkGroupListView,
@@ -43,7 +45,9 @@ __all__ = [
     'AdminAnnouncementResumeView',
     'AdminAnnouncementRevisionCreateView',
     'AdminSettingUploadView',
+    'AdminSiteSettingHistoryView',
     'AdminSiteSettingView',
+    'AdminSystemParametersView',
     'BannerListView',
     'FeedbackCreateView',
     'LinkGroupListView',

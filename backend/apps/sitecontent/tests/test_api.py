@@ -1,6 +1,5 @@
 import shutil
 import tempfile
-from unittest.mock import patch
 
 from django.core.cache import cache
 from django.core.files.base import ContentFile
@@ -174,17 +173,65 @@ class SiteSettingImageUploadTests(APITransactionTestCase):
 
 
 class AdminSiteSettingSerializerTests(APITransactionTestCase):
-    @patch('apps.sitecontent.api.serializers.settings.config', return_value='provider-secret')
-    def test_env_badge_uses_decouple_and_never_exposes_secret(self, config):
+    def test_exposes_seed_default_and_help_metadata(self):
         setting = SiteSetting.objects.create(
-            key='ai_api_key_configured',
-            label='API key',
-            value_type=SiteSetting.ValueType.ENV,
-            options={'env_var': 'GEMINI_API_KEY'},
+            key='site_name', label='Tên site', value='Riêng', section='Nhận diện', help='Giải thích'
         )
 
         data = AdminSiteSettingSerializer(setting).data
 
-        self.assertTrue(data['env_configured'])
-        self.assertNotIn('provider-secret', str(data))
-        config.assert_called_once_with('GEMINI_API_KEY', default='')
+        self.assertEqual(data['default_value'], 'ProCV')
+        self.assertEqual((data['section'], data['help']), ('Nhận diện', 'Giải thích'))
+
+
+@override_settings(RECAPTCHA_SECRET_KEY='recaptcha-secret-value', EMAIL_HOST_USER='smtp-user@x.vn')
+class AdminSystemParametersApiTests(APITransactionTestCase):
+    def _client_for(self, **flags):
+        user = User.objects.create_user(
+            email=f'{len(flags)}@example.com',
+            password='Password@123',
+            role=User.Role.ADMIN,
+            **flags,
+        )
+        self.client.force_authenticate(user)
+
+    def test_superuser_reads_effective_values_without_secrets(self):
+        self._client_for(is_superuser=True)
+
+        response = self.client.get(reverse('site-admin-system-parameters'))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        items = {item['key']: item for group in response.data['groups'] for item in group['items']}
+        self.assertEqual(items['RECAPTCHA_SECRET_KEY']['value'], 'Đã cấu hình')
+        self.assertEqual(items['AUTH_PASSWORD_VALIDATORS']['value'], '8 ký tự')
+        self.assertNotIn('recaptcha-secret-value', str(response.data))
+        self.assertNotIn('smtp-user@x.vn', str(response.data))
+
+    def test_regular_admin_is_forbidden(self):
+        self._client_for()
+
+        response = self.client.get(reverse('site-admin-system-parameters'))
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class AdminSiteSettingHistoryApiTests(APITransactionTestCase):
+    def test_lists_this_keys_changes_newest_first(self):
+        admin = User.objects.create_user(
+            email='root@example.com',
+            password='Password@123',
+            role=User.Role.ADMIN,
+            is_superuser=True,
+        )
+        SiteSetting.objects.create(key='site_name', label='Tên', value='Một')
+        SiteSetting.objects.create(key='hotline', label='Hotline', value='1')
+        self.client.force_authenticate(admin)
+        for values in ({'site_name': 'Hai'}, {'site_name': 'Ba', 'hotline': '2'}):
+            self.client.patch(reverse('site-admin-settings'), {'values': values}, format='json')
+
+        response = self.client.get(reverse('site-admin-setting-history', args=['site_name']))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        changes = [(row['before'], row['after']) for row in response.data['results']]
+        self.assertEqual(changes, [('Hai', 'Ba'), ('Một', 'Hai')])
+        self.assertEqual(response.data['results'][0]['actor'], 'root@example.com')

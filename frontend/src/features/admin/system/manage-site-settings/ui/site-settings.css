@@ -1,0 +1,113 @@
+/* Trang Cấu hình hệ thống (ADR-0026). CSS riêng, tải theo route để không tăng CSS khởi tạo. */
+.settings-layout { display: grid; gap: 16px; grid-template-columns: 236px minmax(0, 1fr); align-items: start; }
+.settings-main { display: grid; gap: 14px; min-width: 0; padding-bottom: 72px; }
+
+/* Thanh bên nhóm */
+.settings-nav { background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 13px; padding: 8px; position: sticky; top: calc(var(--admin-topbar-height, 56px) + 12px); }
+.settings-nav__area + .settings-nav__area { border-top: 1px solid var(--admin-border); margin-top: 6px; padding-top: 6px; }
+.settings-nav__area-label { color: var(--admin-text-muted); font-size: 11px; font-weight: 700; letter-spacing: .04em; margin: 6px 8px 4px; text-transform: uppercase; }
+.settings-nav__item { align-items: center; background: none; border: 0; border-radius: 8px; color: var(--admin-text); cursor: pointer; display: flex; font: inherit; font-size: 13px; gap: 8px; padding: 7px 8px; text-align: left; width: 100%; }
+.settings-nav__item:hover { background: var(--admin-primary-soft); }
+.settings-nav__item:focus-visible { outline: 2px solid var(--admin-primary); outline-offset: 1px; }
+.settings-nav__item--active { background: var(--admin-primary-soft); color: var(--admin-primary); font-weight: 600; }
+.settings-nav__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.settings-nav__count { color: var(--admin-text-muted); font-size: 12px; }
+.settings-nav__dot { background: var(--admin-warning, #d97706); border-radius: 50%; flex: none; height: 7px; width: 7px; }
+.settings-nav__dot--error { background: var(--admin-critical, #dc2626); }
+
+/* Tìm kiếm + tiêu đề nhóm */
+.settings-toolbar { align-items: center; display: flex; flex-wrap: wrap; gap: 8px 12px; justify-content: space-between; }
+.settings-toolbar__title { color: var(--admin-text); font-size: 16px; font-weight: 700; margin: 0; }
+.settings-toolbar__search { max-width: 340px; width: 100%; }
+.settings-search-note { color: var(--admin-text-muted); font-size: 13px; margin: 0; }
+
+/* Section và dòng cấu hình */
+.settings-section { background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 13px; padding: 14px 16px; }
+.settings-section__title { color: var(--admin-text); font-size: 14px; font-weight: 700; margin: 0; }
+.settings-section__group { color: var(--admin-text-muted); font-size: 12px; font-weight: 600; margin: 0 0 2px; }
+.settings-section__description { color: var(--admin-text-muted); font-size: 12px; margin: 2px 0 6px; }
+.settings-row { display: grid; gap: 6px 20px; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); padding: 12px 0; scroll-margin-top: 96px; }
+.settings-row--wide { grid-template-columns: 1fr; }
+.settings-row + .settings-row { border-top: 1px solid var(--admin-border); }
+.settings-row--highlight { animation: settings-flash 1.6s ease-out; border-radius: 8px; }
+@keyframes settings-flash { from { background: var(--admin-primary-soft); } to { background: transparent; } }
+.settings-row__label { align-items: center; color: var(--admin-text); display: flex; flex-wrap: wrap; font-size: 13px; font-weight: 600; gap: 2px 6px; }
+.settings-row__label .ant-tag { font-weight: 500; margin: 0; }
+.settings-row__help { color: var(--admin-text-muted) !important; }
+.settings-row__description { color: var(--admin-text-muted); font-size: 12px; line-height: 1.5; margin: 2px 0 0; }
+.settings-row__control { min-width: 0; }
+.settings-row__field { align-items: flex-start; display: flex; gap: 4px; }
+.settings-row__field > :first-child { flex: 1; min-width: 0; }
+.settings-row__field > .ant-switch, .settings-row__field > .ant-input-number { flex: none; }
+.settings-row__hint { color: var(--admin-text-muted); font-size: 12px; margin: 4px 0 0; }
+.settings-row__error { color: var(--admin-critical, #dc2626); font-size: 12px; margin: 4px 0 0; }
+
+/* Nội dung nút "?" */
+.settings-help { display: grid; gap: 10px; max-width: min(360px, calc(100vw - 48px)); }
+.settings-help__text { color: var(--admin-text); font-size: 13px; line-height: 1.55; margin: 0; white-space: pre-line; }
+.settings-help__facts { display: grid; font-size: 12px; gap: 4px 10px; grid-template-columns: auto 1fr; margin: 0; }
+.settings-help__facts dt { color: var(--admin-text-muted); }
+.settings-help__facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.settings-help__facts .ant-tag { margin: 0 4px 4px 0; }
+.settings-help__default { align-items: center; display: flex; flex-wrap: wrap; gap: 4px; }
+
+/* Editor danh sách */
+.settings-list { display: grid; gap: 8px; }
+.settings-list__empty { color: var(--admin-text-muted); font-size: 12px; margin: 0; }
+.settings-list__row { align-items: flex-start; border: 1px solid var(--admin-border); border-radius: 10px; display: flex; gap: 6px; padding: 8px; }
+.settings-list__cells { display: grid; flex: 1; gap: 6px; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); min-width: 0; }
+.settings-list__actions { display: flex; flex: none; }
+
+/* Xem trước */
+.settings-preview { background: var(--admin-canvas, #f8fafc); border: 1px dashed var(--admin-border); border-radius: 13px; padding: 12px 16px; }
+.settings-preview__header { align-items: center; background: #fff; border: 1px solid var(--admin-border); border-radius: 10px; display: flex; gap: 12px; justify-content: space-between; padding: 10px 12px; }
+.settings-preview__header img { max-height: 32px; max-width: 160px; object-fit: contain; }
+.settings-preview__button { border-radius: 8px; color: #fff; font-size: 13px; font-weight: 600; padding: 6px 12px; }
+.settings-preview__tagline, .settings-preview__label { color: var(--admin-text-muted); font-size: 12px; margin: 8px 0 0; }
+.settings-preview__label { margin: 0; }
+.settings-preview__contrast { align-items: center; color: var(--admin-good, #15803d); display: flex; font-size: 12px; gap: 6px; margin: 6px 0 0; }
+.settings-preview__contrast--low { color: var(--admin-warning, #b45309); }
+.settings-preview__serp { display: grid; gap: 2px; }
+.settings-preview__serp-url { color: #4d5156; font-size: 12px; margin: 6px 0 0; }
+.settings-preview__serp-title { color: #1a0dab; font-size: 18px; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.settings-preview__serp-description { color: #4d5156; display: -webkit-box; font-size: 13px; line-height: 1.5; margin: 0; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+
+/* Thông số hệ thống */
+.settings-params + .settings-params { margin-top: 12px; }
+.settings-params__group { color: var(--admin-text); font-size: 13px; font-weight: 700; margin: 8px 0 4px; }
+.settings-params dl { margin: 0; }
+.settings-params__item { align-items: center; border-top: 1px solid var(--admin-border); display: flex; flex-wrap: wrap; font-size: 13px; gap: 4px 12px; justify-content: space-between; padding: 8px 0; }
+.settings-params__item dt { color: var(--admin-text); display: flex; gap: 6px; }
+.settings-params__item dd { align-items: center; display: flex; gap: 8px; margin: 0; }
+.settings-params__item .ant-tag { font-family: ui-monospace, monospace; font-size: 11px; margin: 0; }
+.settings-params__help { color: var(--admin-text-muted); }
+
+/* Lịch sử */
+.settings-history { display: grid; gap: 10px; list-style: none; margin: 0; padding: 0; }
+.settings-history li { border: 1px solid var(--admin-border); border-radius: 10px; display: grid; gap: 6px; padding: 10px 12px; }
+.settings-history__meta { color: var(--admin-text-muted); font-size: 12px; margin: 0; }
+.settings-history dl { display: grid; font-size: 13px; gap: 2px 10px; grid-template-columns: auto 1fr; margin: 0; }
+.settings-history dt { color: var(--admin-text-muted); }
+.settings-history dd { margin: 0; overflow-wrap: anywhere; }
+
+/* Thanh lưu */
+.settings-savebar { align-items: center; background: var(--admin-surface); border: 1px solid var(--admin-border); border-radius: 13px; bottom: 12px; box-shadow: 0 8px 24px rgba(15, 23, 42, .12); display: flex; flex-wrap: wrap; gap: 8px 12px; justify-content: space-between; padding: 10px 14px; position: sticky; z-index: 5; }
+.settings-savebar__status { color: var(--admin-text); font-size: 13px; font-weight: 600; }
+.settings-savebar__status--idle { color: var(--admin-text-muted); font-weight: 400; }
+.settings-savebar__actions { display: flex; gap: 8px; margin-left: auto; }
+.settings-risky { margin: 8px 0 0; padding-left: 18px; text-align: left; }
+.settings-risky li { margin: 2px 0; }
+
+@media (max-width: 991px) {
+  .settings-layout { grid-template-columns: 1fr; }
+  .settings-nav { display: flex; gap: 4px; overflow-x: auto; padding: 6px; position: sticky; top: var(--admin-topbar-height, 56px); z-index: 4; }
+  .settings-nav__area { display: contents; }
+  .settings-nav__area-label { display: none; }
+  .settings-nav__item { flex: none; width: auto; }
+  .settings-nav__label { overflow: visible; }
+  .settings-row { grid-template-columns: 1fr; }
+  .settings-toolbar__search { max-width: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .settings-row--highlight { animation: none; }
+}

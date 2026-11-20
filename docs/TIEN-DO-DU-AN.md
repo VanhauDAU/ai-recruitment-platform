@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Làm lại trang Cấu hình hệ thống (ADR-0026)](#làm-lại-trang-cấu-hình-hệ-thống-adr-0026-2026-11-21) | 🟨 GĐ1 đã gộp (#294, sửa CI #295); GĐ2 giao diện mới trên nhánh `feat/settings-ui`; GĐ3–5 chưa làm |
 | [Chốt luồng FAQ/hướng dẫn và blog: Nháp → Xuất bản (ADR-0024)](#chốt-luồng-nội-dung-nháp--xuất-bản-adr-0024-2026-11-20) | ✅ Gộp vào `dev` (#272) |
 | [Tổ chức lại sidebar quản trị](#tổ-chức-lại-sidebar-quản-trị-2026-11-20) | ✅ Gộp vào `dev` (#270); gỡ khối "Hàng chờ quản trị" ở trang Người dùng: PR #271, chờ gộp |
 | [Song ngữ vi/en cho 3 cổng (ADR-0023)](#song-ngữ-vien-cho-3-cổng-adr-0023-2026-11-19) | 🟨 GĐ0 (#262), GĐ1 cổng NTD (#267) đã gộp; chặn mất dữ liệu khi đổi ngôn ngữ trên nhánh `fix/language-switch-unsaved-guard`; GĐ2–4 chưa làm |
@@ -38,6 +39,36 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Làm lại trang Cấu hình hệ thống (ADR-0026, 2026-11-21)
+
+Kế hoạch: [ke-hoach-cau-hinh-he-thong.md](01-phan-tich/ke-hoach-cau-hinh-he-thong.md).
+Quyết định: [ADR-0026](02-tong-quan/adr-0026-settings-contract.md).
+
+Rà soát 120 key: khoảng 60 key không có code đọc, khoảng 25 key chạy sai, 8 key seed
+ghi ngược với code.
+
+| GĐ | Nội dung | Trạng thái |
+| --- | --- | --- |
+| 1 | Hợp đồng cấu hình (xem bên dưới) | ✅ #294, #295 |
+| 2 | Giao diện mới: thanh bên 3 khu, tìm kiếm, nút "?", lưu chung, xác nhận thao tác nguy hiểm, lịch sử thay đổi, bảng thông số | 🟨 Nhánh `feat/settings-ui` |
+| 3 | Nối bảo trì, công tắc đăng ký, khối trang chủ; sửa logo/SEO/màu/footer; bộ Pháp lý & đồng ý (link đang trỏ topcv.vn); bộ Tính năng | ⬜ |
+| 4 | Email (phạm vi công tắc, chào mừng, branding chung), AI hợp nhất theo runtime, job alert, AI chiến dịch | ⬜ |
+| 5 | Xác thực & uy tín NTD, Ứng tuyển & SLA, hạn tin, chia sẻ CV, lưu trữ dữ liệu, OAuth theo cổng | ⬜ |
+
+GĐ1 gồm:
+
+- Xoá 46 key không có code đọc (migration `sitecontent.0004`).
+- Gom key vào 17 nhóm, chia thành 3 khu.
+- Seed có thêm `section` và `help`; seed là nguồn default duy nhất.
+- Một bộ đọc dùng chung, có cache, thay cho 4 helper trùng nhau.
+- Kiểm tra URL, email, JSON schema và `max_length`.
+- Ghi audit khi upload ảnh; Django admin chỉ còn quyền xem.
+- API thông số hệ thống chỉ đọc.
+- Test hợp đồng chặn key chết.
+
+Còn 11 key `pending` chờ GĐ3/4 nối vào code: bảo trì, công tắc đăng ký, 6 khối trang
+chủ, email chào mừng.
 
 ## Song ngữ vi/en cho 3 cổng (ADR-0023, 2026-11-19)
 
@@ -1621,12 +1652,12 @@ AI lõi của đồ án (phạm vi chốt 2026-11-15, xem
 - Import CV gọi thẳng REST của Gemini, OpenAI hoặc Anthropic trong
   `apps/ai_core/services/cv_import.py`, không qua runtime `ai_core`: không bị
   `AI_RUNTIME_ENABLED` chặn, không ghi `AiInvocation`, không quota.
-- Site setting `ai_cv_review_enabled`, `ai_job_match_enabled`,
-  `ai_daily_request_limit` được seed nhưng không có chỗ nào đọc.
+- Đã gỡ site setting `ai_cv_review_enabled`, `ai_daily_request_limit` vì không có
+  chỗ nào đọc (ADR-0026). `ai_job_match_enabled` đang được dùng.
 
 Dọn phần còn sót của ADR-0014 và ADR-0015:
 
-- Site setting nhóm `payment` và `email_notify_job_approved` không còn consumer.
+- ✅ Đã gỡ site setting nhóm `payment` và `email_notify_job_approved` (ADR-0026).
 - `RecruitmentNeed.consultation_topics` còn lựa chọn `service_packages`.
 
 Kích hoạt và rollout:

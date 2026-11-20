@@ -5,27 +5,61 @@ from django.db import models
 class SiteSetting(models.Model):
     """Kho cấu hình key-value cho toàn dự án (giá trị JSON).
 
-    Nền tảng cho mọi cấu hình admin chỉnh được mà không cần deploy: thông tin
-    liên hệ, feature flag, màu sắc/giao diện, SEO... Giá trị là JSON nên chứa
-    được cả chuỗi, số, danh sách hay object tuỳ `key`.
+    Chỉ chứa cấu hình vận hành admin chỉnh được mà không cần deploy. Mọi key
+    phải có code đọc thật (xem ADR-0026 và test hợp đồng). Secret và giới hạn
+    bảo mật/hạ tầng nằm ở ``.env``; trang quản trị chỉ hiển thị chúng ở dạng
+    chỉ đọc. Metadata mỗi key (nhãn, nhóm, mặc định...) do
+    ``seed_data/settings.json`` quản lý.
     """
 
     class Group(models.TextChoices):
-        GENERAL = 'general', 'Cài đặt chung'
-        HOMEPAGE = 'homepage', 'Giao diện trang chủ'
-        SEO = 'seo', 'SEO'
-        CANDIDATE = 'candidate', 'Tài khoản ứng viên'
-        EMPLOYER = 'employer', 'Nhà tuyển dụng'
-        JOBS = 'jobs', 'Việc làm'
-        CV = 'cv', 'Hồ sơ / CV'
+        # Giao diện & nội dung
+        BRAND = 'brand', 'Thương hiệu'
+        HOMEPAGE = 'homepage', 'Trang chủ & điều hướng'
+        SEO = 'seo', 'SEO & chia sẻ'
+        CONTACT = 'contact', 'Liên hệ & mạng xã hội'
+        FOOTER = 'footer', 'Chân trang'
+        BLOG = 'blog', 'Cẩm nang'
+        # Nghiệp vụ tuyển dụng
+        ACCOUNTS = 'accounts', 'Tài khoản & đăng nhập'
+        EMPLOYER = 'employer', 'Nhà tuyển dụng & xác thực'
+        JOBS = 'jobs', 'Tin tuyển dụng'
+        APPLICATIONS = 'applications', 'Ứng tuyển & SLA'
+        CV = 'cv', 'Hồ sơ & CV'
         EMAIL = 'email', 'Email & thông báo'
-        PAYMENT = 'payment', 'Thanh toán / gói dịch vụ'
-        SECURITY = 'security', 'Bảo mật'
-        UPLOAD = 'upload', 'Upload file / media'
-        FOOTER = 'footer', 'Footer'
-        CONTACT = 'contact', 'Liên hệ / hỗ trợ'
-        AI = 'ai', 'Cài đặt AI'
-        BLOG = 'blog', 'Cẩm nang nghề nghiệp (Blog)'
+        AI = 'ai', 'AI'
+        # Tuân thủ & vận hành
+        LEGAL = 'legal', 'Pháp lý & đồng ý'
+        RETENTION = 'retention', 'Lưu trữ dữ liệu'
+        FEATURES = 'features', 'Tính năng'
+        OPERATIONS = 'operations', 'Vận hành'
+
+    class Area(models.TextChoices):
+        """Khu trên thanh bên trang cấu hình; mỗi nhóm thuộc đúng một khu."""
+
+        CONTENT = 'content', 'Giao diện & nội dung'
+        RECRUITING = 'recruiting', 'Nghiệp vụ tuyển dụng'
+        COMPLIANCE = 'compliance', 'Tuân thủ & vận hành'
+
+    GROUP_AREAS = {
+        Group.BRAND: Area.CONTENT,
+        Group.HOMEPAGE: Area.CONTENT,
+        Group.SEO: Area.CONTENT,
+        Group.CONTACT: Area.CONTENT,
+        Group.FOOTER: Area.CONTENT,
+        Group.BLOG: Area.CONTENT,
+        Group.ACCOUNTS: Area.RECRUITING,
+        Group.EMPLOYER: Area.RECRUITING,
+        Group.JOBS: Area.RECRUITING,
+        Group.APPLICATIONS: Area.RECRUITING,
+        Group.CV: Area.RECRUITING,
+        Group.EMAIL: Area.RECRUITING,
+        Group.AI: Area.RECRUITING,
+        Group.LEGAL: Area.COMPLIANCE,
+        Group.RETENTION: Area.COMPLIANCE,
+        Group.FEATURES: Area.COMPLIANCE,
+        Group.OPERATIONS: Area.COMPLIANCE,
+    }
 
     class ValueType(models.TextChoices):
         TEXT = 'text', 'Chuỗi ngắn'
@@ -38,13 +72,15 @@ class SiteSetting(models.Model):
         EMAIL = 'email', 'Email'
         URL = 'url', 'URL'
         JSON = 'json', 'JSON'
-        ENV = 'env', 'Cấu hình qua .env'
 
     key = models.SlugField(
         max_length=100, unique=True, help_text='Định danh dùng ở code/frontend, vd: site_name'
     )
     label = models.CharField(max_length=200, help_text='Tên hiển thị trong trang quản trị')
-    group = models.CharField(max_length=30, choices=Group.choices, default=Group.GENERAL)
+    group = models.CharField(max_length=30, choices=Group.choices, default=Group.BRAND)
+    section = models.CharField(
+        max_length=100, blank=True, help_text='Tiêu đề khối con trong nhóm, vd: Logo & biểu tượng'
+    )
     value = models.JSONField(default=dict, blank=True)
     value_type = models.CharField(
         max_length=20,
@@ -55,10 +91,16 @@ class SiteSetting(models.Model):
     options = models.JSONField(
         default=dict,
         blank=True,
-        help_text='select: {"choices": [{"value","label"}]}; env: {"env_var": "TÊN_BIẾN"}',
+        help_text=(
+            'number: min/max/integer/step; select: choices; json: schema; '
+            'chung: applies_to, depends_on, risky, max_length'
+        ),
     )
     order = models.PositiveSmallIntegerField(default=0, help_text='Thứ tự hiển thị trong nhóm')
     description = models.CharField(max_length=300, blank=True)
+    help = models.TextField(
+        blank=True, help_text='Giải thích chi tiết hiện trong nút "?" của trang quản trị'
+    )
     is_public = models.BooleanField(default=True, help_text='Cho phép trả về qua API công khai')
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -6,6 +6,50 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-11-21
+
+#### Changed — Giao diện mới trang Cấu hình hệ thống (ADR-0026, GĐ2)
+
+- Thanh bên chia 3 khu kèm ô tìm kiếm trên mọi nhóm. Trên mobile, thanh bên thành
+  dải chip cuộn ngang.
+- Nút "?" ở mỗi mục giải thích tác dụng, nơi áp dụng và giá trị mặc định (có nút
+  "Đặt về mặc định"), kèm key và lịch sử thay đổi
+  (`GET /api/admin/site/settings/{key}/history/`).
+- Lưu một lần cho mọi nhóm:
+  - thanh lưu dính đáy màn hình, hoàn tác được từng mục;
+  - hỏi lại trước khi bật bảo trì, tắt đăng ký, tắt index, tắt email;
+  - lỗi hiện ngay dưới mục bị lỗi.
+- Editor dạng danh sách cho số liệu và logo đối tác; ô nhập dạng thẻ cho allowlist;
+  bộ đếm ký tự cho ô có giới hạn độ dài.
+- Xem trước thương hiệu (kèm độ tương phản WCAG), kết quả Google và dòng bản quyền.
+- Bảng Thông số hệ thống chỉ đọc nằm ở nhóm Vận hành.
+- Toàn bộ chuỗi giao diện của trang đã chuyển sang vi/en.
+
+#### Changed — Hợp đồng cấu hình hệ thống (ADR-0026, GĐ1)
+
+- Gỡ 46 site setting không có code nào đọc. Một số trong đó còn ghi giá trị trái với
+  hệ thống:
+  - toàn bộ nhóm thanh toán, bảo mật, upload, tin tuyển dụng;
+  - phần lớn nhóm CV;
+  - các key `env`.
+- Thông số bảo mật/upload/email/AI runtime thật hiển thị ở API chỉ đọc
+  `GET /api/admin/site/system-parameters/`; secret chỉ báo "đã/chưa cấu hình".
+- Gom key vào 17 nhóm, thuộc 3 khu:
+  - Giao diện & nội dung;
+  - Nghiệp vụ tuyển dụng;
+  - Tuân thủ & vận hành.
+- Mỗi key có `section` và `help` (nội dung nút "?"); API admin trả thêm `default_value`.
+  Link `?group=` của nhóm cũ vẫn mở đúng nhóm.
+- `seed_data/settings.json` là nguồn default duy nhất. Key blog và
+  `cv_builder_wysiwyg_enabled` được đưa vào seed. Logo mặc định đổi sang `.webp`, vì
+  bản `.png` đã bị xoá.
+- Gộp 4 helper đọc setting thành `apps.sitecontent.selectors`. Map cấu hình được cache
+  và xoá sau commit; code trong transaction đọc thẳng DB.
+- Server kiểm tra thêm URL, email, `max_length` và JSON `schema`. Upload ảnh cấu hình
+  có ghi audit. Django admin chỉ còn quyền xem SiteSetting.
+- Test hợp đồng (`test_settings_contract.py`) chặn hai trường hợp: key trong seed không
+  có code đọc, và code đọc key không có trong seed.
+
 ### 2026-11-20
 
 #### Changed — Trang "Việc làm phù hợp" và bật/tắt gợi ý việc làm

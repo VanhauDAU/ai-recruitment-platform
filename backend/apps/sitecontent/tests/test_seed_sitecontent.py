@@ -54,7 +54,7 @@ class SeedSitecontentCommandTests(TestCase):
         self.assertEqual(site_name.value, 'Tên riêng')
         self.assertEqual(
             SiteSetting.objects.get(key='brand_logo_url').value,
-            '/images/logo/logo-full.png',
+            '/images/logo/logo-full.webp',
         )
         about.refresh_from_db()
         self.assertEqual((about.title, about.order), ('Về ProCV', 1))
@@ -64,12 +64,10 @@ class SeedSitecontentCommandTests(TestCase):
     def test_settings_are_ordered_by_position_within_their_group(self):
         _seed()
 
-        general_keys = [
-            row['key'] for row in load_seed_data('settings') if row['group'] == 'general'
-        ]
+        brand_keys = [row['key'] for row in load_seed_data('settings') if row['group'] == 'brand']
         ordered = list(
-            SiteSetting.objects.filter(key__in=general_keys)
+            SiteSetting.objects.filter(key__in=brand_keys)
             .order_by('order')
             .values_list('key', flat=True)
         )
-        self.assertEqual(ordered, general_keys)
+        self.assertEqual(ordered, brand_keys)

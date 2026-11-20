@@ -11,9 +11,11 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import AdminPortalPermission
+from apps.accounts.selectors import audit_logs_queryset
 from common.storage.media import media_url_from_value
 
 from ...selectors import active_banners, resolved_link_groups, site_settings_by_group
+from ...selectors.system_parameters import system_parameters
 from ...services import public_setting_values, submit_feedback, update_site_settings
 from ..serializers import (
     AdminSiteSettingSerializer,
@@ -58,7 +60,7 @@ class SiteSettingListView(APIView):
     request=OpenApiTypes.OBJECT, responses={200: OpenApiTypes.OBJECT}, tags=['site-admin']
 )
 class AdminSiteSettingView(APIView):
-    """GET: toàn bộ cấu hình gộp theo 15 nhóm. PATCH: cập nhật hàng loạt value."""
+    """GET: cấu hình gộp theo nhóm (kèm khu trên thanh bên). PATCH: cập nhật hàng loạt value."""
 
     permission_classes = [AdminPortalPermission]
     require_superuser = True
@@ -67,15 +69,17 @@ class AdminSiteSettingView(APIView):
     def get(self, request):
         groups = [
             {
-                'key': key,
-                'label': label,
+                'key': group.value,
+                'label': group.label,
+                'area': area.value,
+                'area_label': area.label,
                 'settings': AdminSiteSettingSerializer(
                     group_settings,
                     many=True,
                     context={'request': request},
                 ).data,
             }
-            for key, label, group_settings in site_settings_by_group()
+            for group, area, group_settings in site_settings_by_group()
         ]
         return Response({'groups': groups})
 
@@ -115,6 +119,53 @@ class AdminSiteSettingView(APIView):
                 else status.HTTP_200_OK
             ),
         )
+
+
+@extend_schema(
+    summary='Admin: lịch sử thay đổi một site setting',
+    responses={200: OpenApiTypes.OBJECT},
+    tags=['site-admin'],
+)
+class AdminSiteSettingHistoryView(APIView):
+    """20 lần đổi gần nhất của một key (từ audit log), mới nhất trước."""
+
+    permission_classes = [AdminPortalPermission]
+    require_superuser = True
+    HISTORY_LIMIT = 20
+
+    def get(self, request, key):
+        logs = audit_logs_queryset(
+            action='site_setting_update', target_type='site_setting', target_public_id=key
+        )[: self.HISTORY_LIMIT]
+        return Response(
+            {
+                'results': [
+                    {
+                        'id': log.public_id,
+                        'created_at': log.created_at,
+                        'actor': log.actor.email if log.actor else log.actor_identifier,
+                        'before': log.payload.get('before'),
+                        'after': log.payload.get('after'),
+                    }
+                    for log in logs
+                ]
+            }
+        )
+
+
+@extend_schema(
+    summary='Admin: thông số hệ thống chỉ đọc (.env/code)',
+    responses={200: OpenApiTypes.OBJECT},
+    tags=['site-admin'],
+)
+class AdminSystemParametersView(APIView):
+    """Giá trị tiến trình đang áp dụng cho các thông số không sửa qua admin; không trả secret."""
+
+    permission_classes = [AdminPortalPermission]
+    require_superuser = True
+
+    def get(self, request):
+        return Response({'groups': system_parameters()})
 
 
 @extend_schema(
