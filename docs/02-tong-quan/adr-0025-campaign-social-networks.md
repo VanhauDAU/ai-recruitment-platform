@@ -104,3 +104,21 @@ buộc có ảnh và API không gỡ được bài.
   nội dung chưa có.
 - Task đăng bài được tới 3 phút, vì mỗi ảnh của carousel phải chờ container
   riêng; carousel 3 ảnh trên Instagram mất 40 giây.
+
+## Bổ sung: LinkedIn (PR4)
+
+- Đăng lên trang cá nhân qua "Share on LinkedIn" (`w_member_social`), kèm
+  OpenID Connect (`openid profile`) để lấy `sub` làm person id. Dùng Posts API
+  bản mới (`/rest/posts`, ghim phiên bản ở `LINKEDIN_API_VERSION`).
+  `LinkedInProvider` không kế thừa lớp Meta.
+- `SocialNetwork.token_refreshable=False`: token 60 ngày không làm mới được.
+  Task `refresh_social_tokens` gửi `SOCIAL_CONNECTION_EXPIRING` một lần cho mỗi
+  token, rồi đánh dấu hết hạn khi tới hạn.
+- Không liệt kê được bài của thành viên, nên `find_recent_post` luôn trả
+  `None`. Lệnh tạo bài bị quá thời gian chờ báo `post_result_unknown` (không tự
+  thử lại), để tránh đăng trùng.
+- Mạng có tự đăng nhưng NTD chưa kết nối thì kênh quay về chép để đăng tay.
+  Trước đây kênh bị chặn. Đổi để kênh LinkedIn đăng tay hiện có không bị gián
+  đoạn, và áp dụng cho mọi mạng.
+- Nhãn thông báo của NTD bỏ chữ "Fanpage"; thêm loại "Kết nối mạng xã hội sắp
+  hết hạn" (migration employers 0005).

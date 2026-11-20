@@ -28,13 +28,16 @@ class SocialNetwork:
     label: object  # what the recruiter connects, e.g. "Fanpage Facebook"
     channel_kind: str
     capabilities: Capabilities
-    # Days an account token lasts before it must be refreshed; None: no expiry.
+    # Days an account token lasts; None: no expiry. Without ``token_refreshable``
+    # the recruiter is reminded to reconnect before it lapses.
     token_days: int | None = None
+    token_refreshable: bool = True
 
 
 FACEBOOK_PAGE = 'facebook_page'
 INSTAGRAM = 'instagram'
 THREADS = 'threads'
+LINKEDIN = 'linkedin'
 
 NETWORKS = {
     FACEBOOK_PAGE: SocialNetwork(
@@ -64,6 +67,18 @@ NETWORKS = {
         channel_kind='threads',
         capabilities=Capabilities(max_chars=500, max_images=10, image_ratio=(0.1, 10.0)),
         token_days=60,
+    ),
+    # LinkedIn member profile through "Share on LinkedIn" (w_member_social): 60-day
+    # token that self-serve apps cannot refresh, posts up to 3000 characters,
+    # 2-20 images per multi-image post (sent as JPEG).
+    LINKEDIN: SocialNetwork(
+        key=LINKEDIN,
+        platform='LinkedIn',
+        label=gettext_lazy('Trang cá nhân LinkedIn'),
+        channel_kind='linkedin',
+        capabilities=Capabilities(max_chars=3000, max_images=10, image_ratio=(0.1, 10.0)),
+        token_days=60,
+        token_refreshable=False,
     ),
 }
 

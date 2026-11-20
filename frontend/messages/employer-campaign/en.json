@@ -414,7 +414,7 @@
   "employer_campaign_fb_no_connection": "No {network} connected",
   "employer_campaign_fb_connect_prefix": "Connect a {network} once in ",
   "employer_campaign_fb_account_settings": "Account settings",
-  "employer_campaign_fb_connect_suffix": ", then come back here to post.",
+  "employer_campaign_fb_connect_suffix": " so ProCV can post for you. Until then, the post is saved and copied for you to post yourself.",
   "employer_campaign_fb_pick_page": "Select a {network}.",
   "employer_campaign_fb_simulated": "{name} (simulated)",
   "employer_campaign_fb_content": "Content",

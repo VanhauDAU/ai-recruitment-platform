@@ -79,6 +79,17 @@ POST_ERROR_MESSAGES = {
         'Mạng xã hội xử lý bài quá lâu. Hệ thống đã thử lại nhiều lần.'
     ),
     'image_required': gettext_lazy('Bài Instagram cần ít nhất một ảnh.'),
+    'post_result_unknown': gettext_lazy(
+        'Mạng xã hội không phản hồi khi tạo bài nên không rõ bài đã lên chưa. '
+        'Hãy xem trang cá nhân trước khi đăng lại để tránh trùng bài.'
+    ),
+    'linkedin_401': gettext_lazy(
+        'Kết nối LinkedIn đã hết hạn. Hãy kết nối lại trong Cài đặt tài khoản.'
+    ),
+    'linkedin_403': gettext_lazy(
+        'LinkedIn chưa cho ProCV quyền đăng bài. Hãy kết nối lại và đồng ý quyền đăng bài.'
+    ),
+    'linkedin_429': gettext_lazy('Tài khoản đã đăng quá số bài LinkedIn cho phép trong ngày.'),
     'delete_unsupported': gettext_lazy(
         'Mạng xã hội này không cho gỡ bài tự động. Hãy mở bài và tự xóa.'
     ),

@@ -23,6 +23,7 @@ from ..services import publish_post, reconcile_social_posts, refresh_expiring_to
 from ..services.social import PostImage, SocialProviderError, decrypt_token
 from ..services.social.facebook import FacebookPageProvider
 from ..services.social.instagram import InstagramProvider
+from ..services.social.linkedin import LinkedInProvider, little_text
 from ..services.social.threads import ThreadsProvider
 from ..services.social_post_images import _fit_ratio
 
@@ -952,3 +953,172 @@ class ThreadsProviderTests(TestCase):
             'https://graph.threads.com/refresh_access_token',
         )
         self.assertEqual(grant.token, 'new')
+
+
+class LinkedInConnectionTests(SocialFixtures, TestCase):
+    def connect_linkedin(self):
+        query = self.authorize('linkedin')
+        redirected = self.client.get(
+            reverse('employer-social-callback', kwargs={'network': 'linkedin'}),
+            {'code': query['code'][0], 'state': query['state'][0]},
+        )
+        nonce = parse_qs(urlparse(redirected['Location']).query)['social_select'][0]
+        selected = self.client.post(
+            reverse('employer-social-pending', kwargs={'network': 'linkedin', 'nonce': nonce}),
+            {'account_id': 'fake-linkedin-1'},
+            format='json',
+        )
+        return SocialAccountConnection.objects.get(public_id=selected.data['public_id'])
+
+    def test_a_token_that_cannot_be_refreshed_is_flagged_once_then_expires(self):
+        connection = self.connect_linkedin()
+        SocialAccountConnection.objects.filter(pk=connection.pk).update(
+            token_expires_at=timezone.now() + timedelta(days=5)
+        )
+        events = EmployerNotification.objects.filter(
+            event_type=EmployerNotification.EventType.SOCIAL_CONNECTION_EXPIRING
+        )
+
+        refresh_expiring_tokens()
+        refresh_expiring_tokens()
+        connection.refresh_from_db()
+        self.assertEqual(connection.status, SocialAccountConnection.Status.CONNECTED)
+        self.assertEqual(events.count(), 1)
+
+        refresh_expiring_tokens(now=timezone.now() + timedelta(days=6))
+
+        connection.refresh_from_db()
+        self.assertEqual(
+            (connection.status, connection.last_error_code),
+            (SocialAccountConnection.Status.EXPIRED, 'token_expired'),
+        )
+
+    def test_a_manual_linkedin_channel_now_posts_through_the_connection(self):
+        channel = CampaignChannel.objects.create(
+            campaign=self.campaign, kind=CampaignChannel.Kind.LINKEDIN, label='LinkedIn'
+        )
+        post = schedule_post(
+            channel=channel,
+            user=self.user,
+            connection=self.connect_linkedin(),
+            message='Tuyển kỹ sư (Python)',
+        )
+
+        self.assertEqual(publish_post(post.pk), Post.Status.PUBLISHED)
+
+
+@override_settings(
+    LINKEDIN_SOCIAL_CLIENT_ID='',
+    LINKEDIN_SOCIAL_CLIENT_SECRET='',
+    OAUTH_LINKEDIN_CLIENT_ID='login-app',
+    OAUTH_LINKEDIN_CLIENT_SECRET='login-secret',
+)
+class LinkedInProviderTests(TestCase):
+    def reply(self, status=200, payload=None, headers=None):
+        response = MagicMock(status_code=status, headers=headers or {})
+        response.json.return_value = payload or {}
+        return response
+
+    def provider(self, *replies):
+        session = MagicMock()
+        session.request.side_effect = list(replies)
+        return LinkedInProvider(session=session), session
+
+    def test_reserved_characters_are_escaped_for_the_little_text_format(self):
+        self.assertEqual(little_text('Lương (net) #it @procv'), 'Lương \\(net\\) \\#it \\@procv')
+
+    def test_login_falls_back_to_the_sign_in_app_and_reads_the_member(self):
+        provider, session = self.provider(
+            self.reply(payload={'access_token': 'tok', 'expires_in': 5184000}),
+            self.reply(payload={'sub': 'abc123', 'name': 'Lê Văn Hậu', 'picture': 'https://p'}),
+        )
+
+        query = parse_qs(urlparse(provider.authorize_url('state')).query)
+        accounts = provider.list_accounts(provider.exchange_code('code'))
+
+        self.assertEqual(query['client_id'], ['login-app'])
+        self.assertEqual(query['scope'], ['openid profile w_member_social'])
+        self.assertEqual(
+            session.request.call_args_list[0].kwargs['data']['client_secret'], 'login-secret'
+        )
+        self.assertEqual([(a.account_id, a.name) for a in accounts], [('abc123', 'Lê Văn Hậu')])
+        self.assertGreater(accounts[0].expires_at, timezone.now() + timedelta(days=59))
+
+    def test_images_are_uploaded_then_attached_to_a_versioned_post(self):
+        image = PostImage('a.jpg', b'bytes', 'https://cdn/a.jpg')
+        upload = {'value': {'uploadUrl': 'https://upload/1', 'image': 'urn:li:image:1'}}
+        provider, session = self.provider(
+            self.reply(payload=upload),
+            self.reply(201),
+            self.reply(
+                payload={'value': {'uploadUrl': 'https://upload/2', 'image': 'urn:li:image:2'}}
+            ),
+            self.reply(201),
+            self.reply(201, headers={'x-restli-id': 'urn:li:share:9'}),
+        )
+
+        published = provider.publish(
+            account_id='abc',
+            token='tok',
+            message='Tuyển gấp',
+            link='https://procv.vn/r/a',
+            images=[image, image],
+        )
+
+        calls = session.request.call_args_list
+        self.assertEqual(
+            calls[0].kwargs['json'], {'initializeUploadRequest': {'owner': 'urn:li:person:abc'}}
+        )
+        self.assertEqual(
+            (calls[1].args[0], calls[1].args[1], calls[1].kwargs['data']),
+            ('PUT', 'https://upload/1', b'bytes'),
+        )
+        post = calls[4]
+        self.assertEqual(post.args[1], 'https://api.linkedin.com/rest/posts')
+        self.assertEqual(post.kwargs['headers']['Linkedin-Version'], '202611')
+        self.assertEqual(post.kwargs['headers']['Authorization'], 'Bearer tok')
+        self.assertEqual(post.kwargs['json']['commentary'], 'Tuyển gấp\n\nhttps://procv.vn/r/a')
+        self.assertEqual(
+            post.kwargs['json']['content'],
+            {'multiImage': {'images': [{'id': 'urn:li:image:1'}, {'id': 'urn:li:image:2'}]}},
+        )
+        self.assertEqual(
+            published.permalink, 'https://www.linkedin.com/feed/update/urn:li:share:9/'
+        )
+
+    def test_errors_are_classified_and_a_lost_create_is_not_retried(self):
+        outcomes = []
+        for response in (self.reply(401), self.reply(429), self.reply(503), self.reply(422)):
+            provider, _ = self.provider(response)
+            with self.assertRaises(SocialProviderError) as raised:
+                provider.publish(account_id='a', token='t', message='m', link='')
+            error = raised.exception
+            outcomes.append((error.code, error.transient, error.token_invalid))
+        provider, session = self.provider()
+        session.request.side_effect = requests.Timeout()
+        with self.assertRaises(SocialProviderError) as lost:
+            provider.publish(account_id='a', token='t', message='m', link='')
+
+        self.assertEqual(
+            outcomes,
+            [
+                ('linkedin_401', False, True),
+                ('linkedin_429', True, False),
+                ('linkedin_503', True, False),
+                ('linkedin_422', False, False),
+            ],
+        )
+        self.assertEqual(
+            (lost.exception.code, lost.exception.transient), ('post_result_unknown', False)
+        )
+
+    def test_delete_encodes_the_post_urn_and_tolerates_a_missing_post(self):
+        provider, session = self.provider(self.reply(204), self.reply(404))
+
+        provider.delete(post_id='urn:li:share:9', token='t')
+        provider.delete(post_id='urn:li:share:10', token='t')
+
+        self.assertEqual(
+            session.request.call_args_list[0].args[1],
+            'https://api.linkedin.com/rest/posts/urn%3Ali%3Ashare%3A9',
+        )

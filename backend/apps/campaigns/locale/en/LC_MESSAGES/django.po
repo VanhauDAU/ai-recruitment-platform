@@ -67,6 +67,18 @@ msgstr "The social network took too long to process the post. The system retried
 msgid "Bài Instagram cần ít nhất một ảnh."
 msgstr "An Instagram post needs at least one image."
 
+msgid "Mạng xã hội không phản hồi khi tạo bài nên không rõ bài đã lên chưa. Hãy xem trang cá nhân trước khi đăng lại để tránh trùng bài."
+msgstr "The social network didn't respond while creating the post, so it's unclear whether it went live. Check the profile before posting again to avoid a duplicate."
+
+msgid "Kết nối LinkedIn đã hết hạn. Hãy kết nối lại trong Cài đặt tài khoản."
+msgstr "The LinkedIn connection has expired. Reconnect it in Account settings."
+
+msgid "LinkedIn chưa cho ProCV quyền đăng bài. Hãy kết nối lại và đồng ý quyền đăng bài."
+msgstr "LinkedIn hasn't given ProCV permission to post. Reconnect and allow posting."
+
+msgid "Tài khoản đã đăng quá số bài LinkedIn cho phép trong ngày."
+msgstr "The account reached LinkedIn's daily posting limit."
+
 msgid "Mạng xã hội này không cho gỡ bài tự động. Hãy mở bài và tự xóa."
 msgstr "This social network does not allow automatic removal. Open the post and delete it yourself."
 
@@ -102,6 +114,9 @@ msgstr "Instagram Business"
 
 msgid "Threads"
 msgstr "Threads"
+
+msgid "Trang cá nhân LinkedIn"
+msgstr "LinkedIn profile"
 
 msgid "Nháp"
 msgstr "Draft"
@@ -631,6 +646,9 @@ msgstr "This account is not in the list you just connected."
 
 msgid "Kết nối %(network)s \"%(account)s\" đã hết hạn. Hãy kết nối lại để tiếp tục đăng."
 msgstr "The %(network)s connection \"%(account)s\" has expired. Reconnect it to keep posting."
+
+msgid "Kết nối %(network)s \"%(account)s\" hết hạn ngày %(date)s. Hãy kết nối lại trước ngày đó để không gián đoạn đăng bài."
+msgstr "The %(network)s connection \"%(account)s\" expires on %(date)s. Reconnect before then to keep posting."
 
 msgid "Ảnh bìa công ty"
 msgstr "Company cover image"

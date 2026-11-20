@@ -1,6 +1,6 @@
 # Tự đăng bài chiến dịch lên mạng xã hội
 
-Kênh chiến dịch có mạng tự đăng (Fanpage Facebook, Instagram, Threads) đăng bài lên tài
+Kênh chiến dịch có mạng tự đăng (Fanpage Facebook, Instagram, Threads, LinkedIn) đăng bài lên tài
 khoản mạng xã hội của nhà tuyển dụng (NTD) đúng giờ hẹn, rồi tự gỡ bài khi
 chiến dịch kết thúc. Thiết kế nằm ở
 [ADR-0021](../02-tong-quan/adr-0021-campaign-facebook-page.md) và
@@ -16,6 +16,7 @@ phẩy. Mạng không có trong danh sách chạy bằng provider giả lập.
 | `facebook_page` | Kết nối trả một Fanpage giả lập; "đăng" và "gỡ" chỉ ghi vào cache. Giao diện gắn nhãn "Giả lập". | Gọi Graph API của Meta với quyền `pages_show_list`, `pages_manage_posts`, `pages_read_engagement`. Hướng dẫn tạo app ở mục dưới. |
 | `instagram` | Kết nối trả một tài khoản Instagram giả lập; ảnh vẫn được thêm viền thành JPEG như khi đăng thật. | Gọi Instagram Graph API qua Facebook Login với quyền `business_management`, `pages_show_list`, `pages_read_engagement`, `instagram_basic`, `instagram_content_publish`, `instagram_manage_contents`. Xem mục Instagram. |
 | `threads` | Kết nối trả một trang cá nhân Threads giả lập có hạn token 60 ngày; tác vụ làm mới token cũng chạy giả lập. | Gọi Threads API (`graph.threads.com`) qua Threads Login với quyền `threads_basic`, `threads_content_publish`, `threads_delete`. Xem mục Threads. |
+| `linkedin` | Kết nối trả một trang cá nhân LinkedIn giả lập có hạn token 60 ngày; gần hết hạn thì nhắc kết nối lại. | Gọi Posts API (`api.linkedin.com/rest`) với quyền `openid`, `profile`, `w_member_social`. Xem mục LinkedIn. |
 
 `CAMPAIGN_SOCIAL_PROVIDER=facebook` là cách bật cũ, được hiểu là
 `CAMPAIGN_SOCIAL_LIVE_NETWORKS=facebook_page`. Test luôn chạy giả lập, bất kể
@@ -193,6 +194,49 @@ Meta từ chối, hoặc token đã quá hạn, kết nối chuyển "Hết hạ
   sau.
 - Giới hạn 250 bài trong 24 giờ và 100 lần gỡ trong 24 giờ.
 
+## LinkedIn
+
+ProCV đăng lên **trang cá nhân** LinkedIn của NTD qua sản phẩm tự đăng ký
+"Share on LinkedIn". Đăng lên Trang công ty cần quyền `w_organization_social`,
+tức phải được LinkedIn duyệt Community Management API, nên chưa làm.
+
+### Bật LinkedIn
+
+1. Vào <https://www.linkedin.com/developers/apps>. Có thể dùng lại app đăng
+   nhập LinkedIn của ProCV (`OAUTH_LINKEDIN_*`) hoặc tạo app riêng.
+2. Ở tab **Products**, thêm **Share on LinkedIn** và **Sign In with LinkedIn
+   using OpenID Connect**. Hai sản phẩm này tự duyệt.
+3. Ở tab **Auth**, mục **Authorized redirect URLs**, thêm
+   `<FRONTEND_URL>/api/employer/social/linkedin/callback/`. Tài liệu LinkedIn
+   yêu cầu HTTPS và không nói về `localhost`. Nếu LinkedIn không nhận
+   `http://localhost:5173/...`, dùng một đường hầm HTTPS.
+4. Trong `backend/.env`, thêm `linkedin` vào `CAMPAIGN_SOCIAL_LIVE_NETWORKS`.
+   Nếu dùng app riêng, điền thêm `LINKEDIN_SOCIAL_CLIENT_ID` và
+   `LINKEDIN_SOCIAL_CLIENT_SECRET`; để trống thì ProCV dùng lại app đăng nhập.
+   Phiên bản API đặt ở `LINKEDIN_API_VERSION` (mặc định `202611`); nâng phiên
+   bản trước khi LinkedIn ngừng hỗ trợ.
+
+### Lưu ý
+
+- **Token 60 ngày, không làm mới được** với app tự đăng ký. Từ 10 ngày trước
+  khi hết hạn, NTD nhận thông báo "Kết nối mạng xã hội sắp hết hạn" (một lần
+  cho mỗi token). Đến hạn, kết nối chuyển "Hết hạn". Kết nối lại sẽ có token
+  mới.
+- **Nội dung** dài tối đa 3.000 ký tự, tính cả link. Trường `commentary` dùng
+  định dạng "little text" của LinkedIn, nên ProCV thêm dấu `\` trước các ký tự
+  `\ | { } @ [ ] ( ) < > # * _ ~`. Hashtag vì vậy hiện dạng chữ, không thành
+  link hashtag.
+- **Ảnh** được tải lên qua Images API (gửi dạng JPEG) rồi gắn vào bài. Hai ảnh
+  trở lên thành bài nhiều ảnh (LinkedIn cho 2 đến 20 ảnh).
+- **Không kiểm được bài trùng.** App tự đăng ký không đọc được bài của thành
+  viên, vì việc đó cần `r_member_social`. Nếu lệnh tạo bài bị quá thời gian
+  chờ, bài chuyển "Đăng không thành công" với lời nhắc xem trang cá nhân trước
+  khi đăng lại. Hệ thống không tự thử lại trong trường hợp này.
+- **Gỡ bài** gọi `DELETE /rest/posts/{urn}`.
+- **Kênh LinkedIn đăng tay vẫn dùng được.** Chưa kết nối tài khoản thì ngăn
+  soạn bài lưu và sao chép như trước, kèm lời nhắc kết nối để ProCV tự đăng.
+  Quy tắc này áp dụng cho mọi mạng.
+
 ## Vận hành (chung cho mọi mạng)
 
 - **Token**:
@@ -205,7 +249,7 @@ Meta từ chối, hoặc token đã quá hạn, kết nối chuyển "Hết hạ
   | Task | Lịch | Việc |
   | --- | --- | --- |
   | `dispatch_due_social_posts` | 60 giây | Gom bài đến hạn của chiến dịch đang chạy, mỗi bài một task `publish_social_post`. Bài "Đăng ngay" không chờ lượt này mà được xếp hàng ngay khi lưu. |
-  | `refresh_social_tokens` | 1 ngày | Làm mới token sắp hết hạn (Threads). |
+  | `refresh_social_tokens` | 1 ngày | Làm mới token sắp hết hạn (Threads); với mạng không làm mới được (LinkedIn) thì nhắc NTD kết nối lại, và đến hạn thì đánh dấu hết hạn. |
   | `reconcile_social_posts` | 300 giây, và ngay sau khi chiến dịch đổi trạng thái | Chiến dịch kết thúc thì gỡ bài đã đăng và hủy bài chưa đăng. Tạm dừng thì hoãn bài hẹn. Mở lại thì đưa bài hoãn còn hạn về hẹn giờ. Cứu bài kẹt ở "đang đăng" quá 10 phút. |
 
 - **Lỗi khi đăng**:

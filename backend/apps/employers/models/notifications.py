@@ -104,15 +104,19 @@ class EmployerNotification(models.Model):
             'campaign_auto_completed',
             gettext_lazy('Chiến dịch đã tự kết thúc'),
         )
-        SOCIAL_POST_FAILED = 'social_post_failed', gettext_lazy('Bài đăng Fanpage không thành công')
+        SOCIAL_POST_FAILED = 'social_post_failed', gettext_lazy('Tự đăng bài không thành công')
         SOCIAL_POST_DELETE_FAILED = (
             'social_post_delete_failed',
-            gettext_lazy('Chưa gỡ được bài khỏi Fanpage'),
+            gettext_lazy('Cần tự gỡ bài trên mạng xã hội'),
         )
         CAMPAIGN_HEALTH_ALERT = 'campaign_health_alert', gettext_lazy('Chiến dịch cần chú ý')
         SOCIAL_CONNECTION_EXPIRED = (
             'social_connection_expired',
-            gettext_lazy('Kết nối Fanpage đã hết hạn'),
+            gettext_lazy('Kết nối mạng xã hội đã hết hạn'),
+        )
+        SOCIAL_CONNECTION_EXPIRING = (
+            'social_connection_expiring',
+            gettext_lazy('Kết nối mạng xã hội sắp hết hạn'),
         )
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)

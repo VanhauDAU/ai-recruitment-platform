@@ -173,6 +173,7 @@ _EMPLOYER_ACTIVITY_TONES = {
     'social_post_failed': DANGER,
     'social_post_delete_failed': DANGER,
     'social_connection_expired': WARNING,
+    'social_connection_expiring': WARNING,
     'campaign_health_alert': WARNING,
     'company_join_approved': SUCCESS,
     'company_page_editor_granted': SUCCESS,

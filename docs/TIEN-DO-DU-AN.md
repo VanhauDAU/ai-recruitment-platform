@@ -451,6 +451,18 @@ GĐ1 đã làm:
     chừng.
   - Còn mở: chưa thử thật. Cần Threads App ID/secret, khai Redirect Callback
     URL và thêm người thử nghiệm Threads.
+- LinkedIn (nhánh `feat/social-linkedin`, PR4/5, nối tiếp Threads).
+  - Đăng lên trang cá nhân qua Share on LinkedIn và Posts API; bài chữ, một
+    ảnh hoặc nhiều ảnh; tối đa 3.000 ký tự, tính cả link; ký tự đặc biệt được
+    escape.
+  - Token 60 ngày không làm mới được: nhắc kết nối lại trước 10 ngày (thông
+    báo mới "sắp hết hạn", migration employers 0005), đến hạn thì đánh dấu hết
+    hạn.
+  - Lệnh tạo bài quá thời gian chờ thì không tự thử lại, vì không kiểm được
+    bài trùng.
+  - Mạng chưa kết nối thì kênh quay về chép để đăng tay (áp dụng cho mọi mạng).
+  - Migration campaigns 0009.
+  - Còn mở: chưa thử thật; chưa làm Trang công ty (cần LinkedIn duyệt).
 
 ## Ứng tuyển bằng CV tải lên và form ứng tuyển mới (2026-11-18)
 
