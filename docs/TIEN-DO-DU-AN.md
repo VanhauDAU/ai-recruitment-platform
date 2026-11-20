@@ -465,10 +465,18 @@ GĐ1 đã làm:
   - Còn mở: chưa thử thật; chưa làm Trang công ty (cần LinkedIn duyệt).
 - Kết thúc đợt tự đăng (21/11): bốn mạng là Fanpage, Instagram, Threads và
   LinkedIn. Bỏ Zalo OA; kênh `zalo` vẫn đăng tay.
-  - Đã thử thật: Fanpage và Instagram.
-  - Chưa thử thật: Threads và LinkedIn, vì cần khai app và redirect URL; có thể
-    phải dùng đường hầm HTTPS.
+  - Đã đăng thật: Fanpage và Instagram.
+  - Threads (`@levanhau122`) và LinkedIn đã kết nối thật nhưng chưa đăng bài
+    thật. Threads chỉ nhận redirect HTTPS (xem #292); LinkedIn nhận
+    `http://localhost`.
   - Chưa thử gỡ bài Instagram trên tài khoản thật.
+- Hộp "Thêm kênh phân phối" chia hai nhóm (nhánh `feat/campaign-add-channel-groups`).
+  - **ProCV tự đăng:** danh sách mạng lấy từ API; mỗi ô có trạng thái "Đã kết
+    nối · tài khoản" hoặc "Chưa kết nối". Chọn mạng chưa kết nối thì hiện một
+    dòng nhắc kèm "Kết nối ngay".
+  - **Bạn tự đăng:** ô gọn, kèm gợi ý ngắn cho từng nơi đăng.
+  - Bỏ nhãn "Bạn sẽ đăng ở đâu?".
+  - Mobile: nhóm tự đăng một cột, nhóm đăng tay hai cột, chữ được xuống dòng.
 
 ## Ứng tuyển bằng CV tải lên và form ứng tuyển mới (2026-11-18)
 
