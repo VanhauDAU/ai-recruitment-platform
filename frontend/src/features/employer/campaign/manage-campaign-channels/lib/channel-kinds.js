@@ -7,6 +7,9 @@ export function postText(content = {}) {
   return [content.headline, content.body, content.call_to_action, tags].filter(Boolean).join('\n\n')
 }
 
+// Một đoạn liền để đọc lướt bài trong thẻ: gộp xuống dòng và khoảng trắng.
+export const summary = (text = '') => text.replace(/\s+/g, ' ').trim()
+
 export async function copyText(text, label, message) {
   try {
     await navigator.clipboard.writeText(text)
