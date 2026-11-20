@@ -368,6 +368,10 @@ GĐ1 đã làm:
     use case (20, thêm tác nhân Bộ lập lịch, Facebook, Ứng viên), 5 sơ đồ tuần
     tự và 5 sơ đồ hoạt động (thiết lập và kích hoạt, vòng đời, phân phối đa
     kênh, đăng Fanpage, sức khỏe và báo cáo).
+- Thêm lại cùng loại kênh (nhánh `fix/campaign-channel-reuse`): hộp Thêm kênh
+  gợi ý tên không trùng (kèm tên tin khi link dẫn tới một tin, còn trùng thì
+  đánh số), chặn tên trùng ngay trên form — trước đây tên tự điền luôn là tên
+  loại kênh nên Fanpage thứ hai (cho tin khác) bị backend từ chối.
 - Giải thích chỉ số (nhánh `feat/campaign-metric-help`): `shared/ui/HelpTip`
   (icon ? có tooltip, bấm được bằng bàn phím) ở bảng so sánh nguồn, chi tiết
   kênh, chi phí, tab Sức khỏe, Tổng quan và đầu trang chiến dịch.

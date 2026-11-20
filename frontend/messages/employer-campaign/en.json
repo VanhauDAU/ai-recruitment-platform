@@ -880,6 +880,7 @@
   "employer_campaign_add_channel_label": "Label",
   "employer_campaign_add_channel_label_extra": "e.g. Hanoi IT group. Each place you post is its own channel so you can compare performance.",
   "employer_campaign_add_channel_label_required": "Enter a channel name.",
+  "employer_campaign_add_channel_label_taken": "This campaign already has a channel with this name. Pick another, e.g. add the job title.",
   "employer_campaign_add_channel_target": "Link goes to",
   "employer_campaign_add_channel_target_landing": "Campaign careers page",
   "employer_campaign_add_channel_target_job": "A specific job",

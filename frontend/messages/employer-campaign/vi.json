@@ -473,6 +473,7 @@
   "employer_campaign_add_channel_label": "Tên để phân biệt",
   "employer_campaign_add_channel_label_extra": "Ví dụ: Nhóm IT Hà Nội. Mỗi nơi đăng là một kênh riêng để so sánh hiệu quả.",
   "employer_campaign_add_channel_label_required": "Nhập tên kênh.",
+  "employer_campaign_add_channel_label_taken": "Chiến dịch đã có kênh cùng tên. Đặt tên khác, ví dụ kèm tên tin.",
   "employer_campaign_add_channel_target": "Link dẫn tới",
   "employer_campaign_add_channel_target_landing": "Trang tuyển dụng của chiến dịch",
   "employer_campaign_add_channel_target_job": "Một tin cụ thể",
