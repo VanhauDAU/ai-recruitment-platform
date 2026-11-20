@@ -25,7 +25,14 @@ const channel = {
   kind_label: 'Nhóm Facebook',
   label: 'Nhóm IT Hà Nội',
   link: 'https://procv.vn/r/AbC123xy',
+  links: [
+    { key: 'landing', label: 'Trang tuyển dụng của chiến dịch', url: 'https://procv.vn/r/AbC123xy' },
+    { key: 'company', label: 'Trang công ty', url: 'https://procv.vn/r/AbC123xy/cong-ty' },
+    { key: 'jb_a', label: 'Kỹ sư Backend', url: 'https://procv.vn/r/AbC123xy/jb_a' },
+    { key: 'jb_b', label: 'Kế toán', url: 'https://procv.vn/r/AbC123xy/jb_b' },
+  ],
   target: 'landing',
+  jobs: [],
   content: {},
   rendered_content: {},
   posted_at: null,
@@ -74,6 +81,26 @@ describe('campaign channels', () => {
 
     await user.click(within(list).getByRole('button', { name: /LinkedIn công ty/ }))
     expect(await screen.findByRole('heading', { name: 'LinkedIn công ty' })).toBeInTheDocument()
+  })
+
+  it('picks the jobs and link type of the post on one channel', async () => {
+    const user = userEvent.setup()
+    mocks.getCampaignChannels.mockResolvedValue([{ ...channel, content: { body: 'Ứng tuyển {link}' }, rendered_content: { body: 'Ứng tuyển https://procv.vn/r/AbC123xy' } }])
+    mocks.updateCampaignChannel.mockResolvedValue(channel)
+    renderWithClient(<CampaignChannelBoard campaign={campaign} />)
+
+    const jobs = await screen.findByRole('group', { name: 'Tin trong bài' })
+    expect(screen.getByText(/bài giới thiệu tối đa 5 tin/)).toBeInTheDocument()
+    await user.click(within(jobs).getByRole('button', { name: 'Kế toán' }))
+    await waitFor(() => expect(mocks.updateCampaignChannel).toHaveBeenCalledWith('camp_1', 'chn_1', { jobs: ['jb_b'] }))
+    await user.click(screen.getByText('Từng tin'))
+    await waitFor(() => expect(mocks.updateCampaignChannel).toHaveBeenCalledWith('camp_1', 'chn_1', { target: 'job' }))
+    expect(await screen.findByRole('status')).toHaveTextContent('Soạn lại bằng AI')
+
+    await user.click(screen.getByRole('tab', { name: 'Link & QR' }))
+    expect(await screen.findByText('https://procv.vn/r/AbC123xy/cong-ty')).toBeInTheDocument()
+    expect(screen.getByText('Tin: Kế toán')).toBeInTheDocument()
+    expect(screen.getByText('https://procv.vn/r/AbC123xy/jb_b')).toBeInTheDocument()
   })
 
   it('marks a manual channel as posted', async () => {

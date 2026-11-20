@@ -5,6 +5,7 @@ from django.db.models.functions import Coalesce
 from django.utils.translation import gettext_lazy
 
 from apps.applications.models import Application
+from apps.jobs.models import Job
 
 from ..models import CampaignChannel, CampaignChannelClickDaily, CampaignChannelCost
 
@@ -34,7 +35,7 @@ def campaign_channels_queryset(campaign):
 
     return (
         CampaignChannel.objects.filter(campaign=campaign)
-        .select_related('job')
+        .prefetch_related('jobs')
         .annotate(
             clicks=_sum_subquery(CampaignChannelClickDaily, 'click_count'),
             unique_clicks=_sum_subquery(CampaignChannelClickDaily, 'unique_click_count'),
@@ -43,6 +44,16 @@ def campaign_channels_queryset(campaign):
             hire_count=application_count(status=Application.Status.ACCEPTED),
             cost=_sum_subquery(CampaignChannelCost, 'amount'),
         )
+    )
+
+
+def open_campaign_jobs(campaign):
+    """Jobs of the campaign a post can still advertise, newest first."""
+    return list(
+        Job.objects.filter(campaign=campaign)
+        .exclude(status=Job.Status.CLOSED)
+        .only('public_id', 'title')
+        .order_by('-published_at', '-pk')
     )
 
 

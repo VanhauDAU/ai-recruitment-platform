@@ -10153,7 +10153,7 @@ paths:
   /api/employer/campaigns/{public_id}/channels/{channel_id}/content/:
     post:
       operationId: employer_campaigns_channels_content_create
-      summary: Soạn nội dung kênh bằng AI (kèm fallback_reason khi dùng mẫu)
+      summary: Soạn bài của kênh bằng AI theo tin và loại link đã chọn (kèm fallback_reason)
       parameters:
       - in: path
         name: channel_id
@@ -21589,15 +21589,20 @@ components:
           maxLength: 120
         target:
           $ref: '#/components/schemas/TargetEnum'
-        job:
-          type: string
-          nullable: true
-        job_title:
-          type: string
-          readOnly: true
-          default: ''
+        jobs:
+          type: array
+          items:
+            type: string
         link:
           type: string
+          readOnly: true
+        links:
+          type: array
+          items: {}
+          description: |-
+            Every tracked link of the channel: landing, company page, then one per open job.
+
+            The view passes the campaign's open jobs as ``context['campaign_jobs']``.
           readOnly: true
         content: {}
         content_source:
@@ -21649,11 +21654,11 @@ components:
       - cost
       - created_at
       - hires
-      - job_title
       - kind
       - kind_label
       - label
       - link
+      - links
       - posted_at
       - public_id
       - rendered_content
@@ -21667,12 +21672,6 @@ components:
           type: string
           minLength: 1
           maxLength: 120
-        target:
-          $ref: '#/components/schemas/TargetEnum'
-        job:
-          type: string
-          minLength: 1
-          nullable: true
       required:
       - kind
       - label
@@ -31465,10 +31464,11 @@ components:
           maxLength: 120
         target:
           $ref: '#/components/schemas/TargetEnum'
-        job:
-          type: string
-          minLength: 1
-          nullable: true
+        jobs:
+          type: array
+          items:
+            type: string
+            minLength: 1
         content: {}
         posted:
           type: boolean
@@ -35565,10 +35565,12 @@ components:
       enum:
       - landing
       - job
+      - company
       type: string
       description: |-
         * `landing` - Trang tuyển dụng của chiến dịch
-        * `job` - Một tin tuyển dụng
+        * `job` - Link riêng từng tin
+        * `company` - Trang công ty
     TaxNameComparisonEnum:
       enum:
       - match

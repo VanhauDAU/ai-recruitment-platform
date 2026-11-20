@@ -44,8 +44,9 @@ HTTP 404 thật của trang công ty.
 Chiến dịch tuyển dụng (2026-11-18) thêm hai route nữa phải về Django:
 - `/tuyen-dung/<slug>`: vỏ SEO trang tuyển dụng của chiến dịch. Trả 404 khi
   không công khai, 410 khi chiến dịch đã kết thúc.
-- `/r/<code>`: link theo dõi của kênh. Django đếm lượt bấm rồi trả 302 về trang
-  tuyển dụng hoặc tin, kèm `?ref=` có ký.
+- `/r/<code>` và `/r/<code>/<mã tin hoặc cong-ty>`: link theo dõi của kênh.
+  Django đếm lượt bấm rồi trả 302 về trang tuyển dụng, tin hoặc trang công ty,
+  kèm `?ref=` có ký.
 
-Khi dev, Vite proxy `/r/<code>` xuống backend; `/tuyen-dung/<slug>` do SPA hiển
+Khi dev, Vite proxy hai dạng `/r/...` này xuống backend; `/tuyen-dung/<slug>` do SPA hiển
 thị.

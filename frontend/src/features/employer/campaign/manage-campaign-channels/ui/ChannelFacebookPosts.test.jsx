@@ -21,6 +21,9 @@ const channel = {
   public_id: 'chn_1',
   kind: 'facebook_page',
   link: 'http://localhost:5173/r/AbC123xy',
+  links: [{ key: 'landing', label: 'Trang tuyển dụng của chiến dịch', url: 'http://localhost:5173/r/AbC123xy' }],
+  target: 'landing',
+  jobs: [],
   rendered_content: { headline: 'Tuyển gấp' },
 }
 const campaign = { public_id: 'camp_1', name: 'Tuyển kỹ thuật', status: 'active' }
