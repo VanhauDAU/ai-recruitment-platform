@@ -1,10 +1,6 @@
-import {
-  ArrowRightOutlined,
-  ReloadOutlined,
-  SettingOutlined,
-} from '@ant-design/icons'
+import { ArrowRightOutlined } from '@ant-design/icons'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { Alert, Button, Pagination, Skeleton } from 'antd'
+import { Skeleton } from 'antd'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { getCandidateJobRecommendations, jobKeys } from '@/entities/job/job'
@@ -12,28 +8,14 @@ import { useSession } from '@/entities/account/session'
 import { useHideJobRecommendation } from '@/features/main/job/hide-job-recommendation'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import { m } from '@/shared/config/i18n'
-import { MascotEmpty } from '@/shared/ui/mascot'
 import { groupRecommendationJobs } from '../model/recommendation-reasons'
+import AccountRecommendations from './AccountRecommendations'
 import CandidateRecommendationCard from './CandidateRecommendationCard'
-import SetupState from './SetupState'
 
 const ACCOUNT_PAGE_SIZE = 10
 const HOME_PAGE_SIZE = 8
 const HOME_ROTATE_MS = 8000
-const SETTINGS_PATH = '/tai-khoan/cai-dat-goi-y-viec-lam'
 const MATCHING_PATH = '/tai-khoan/viec-lam-phu-hop'
-function AccountLoading() {
-  return (
-    <div className="space-y-3" aria-label="Đang tải việc làm phù hợp">
-      {[0, 1, 2].map((item) => (
-        <div key={item} className="rounded-2xl border border-slate-200 bg-white p-5">
-          <Skeleton active avatar paragraph={{ rows: 3 }} />
-        </div>
-      ))}
-    </div>
-  )
-}
-
 function HomeLoading() {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" aria-label="Đang tải gợi ý việc làm">
@@ -43,88 +25,6 @@ function HomeLoading() {
         </div>
       ))}
     </div>
-  )
-}
-
-function AccountRecommendations({ data, hiddenIds, hide, page, pendingIds, query, setPage }) {
-  const jobs = (data?.results || []).filter((job) => !hiddenIds.has(job.public_id))
-
-  return (
-    <section className="space-y-4">
-      <header className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#063f32] via-[#087c55] to-[#0fba6b] px-5 py-6 text-white shadow-sm sm:px-6">
-        <div className="absolute -right-12 -top-16 h-44 w-44 rounded-full border-[24px] border-white/10" />
-        <div className="relative">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-100">Dành riêng cho bạn</p>
-          <h1 className="mt-2 text-xl font-extrabold sm:text-2xl">Việc làm phù hợp</h1>
-          <p className="mt-2 max-w-xl text-sm leading-6 text-emerald-50">
-            {m.candidate_reco_intro()}
-          </p>
-        </div>
-      </header>
-
-      {query.isPending && <AccountLoading />}
-      {query.isError && (
-        <Alert
-          showIcon
-          type="error"
-          title="Không thể tải việc làm phù hợp"
-          description="Kết nối chưa ổn định. Vui lòng thử lại."
-          action={<Button icon={<ReloadOutlined />} onClick={() => query.refetch()}>Thử lại</Button>}
-        />
-      )}
-      {data?.status === 'preferences_required' && <SetupState cvEnabled={data.cv_recommendations_enabled} />}
-      {data?.status === 'consent_required' && <SetupState consentRequired />}
-
-      {data?.status === 'ready' && (
-        <>
-          <div className="flex items-center justify-between gap-3 px-1">
-            <p className="text-sm font-semibold text-slate-700">
-              {m.candidate_reco_count({ count: data.pagination?.total || 0 })}
-            </p>
-            <Link to={SETTINGS_PATH} className="inline-flex items-center gap-1 text-xs font-bold text-[var(--brand-primary)] hover:underline">
-              <SettingOutlined /> {data.preference_configured ? m.candidate_reco_update_preferences() : m.candidate_reco_add_preferences()}
-            </Link>
-          </div>
-
-          {jobs.length ? (
-            <div className="space-y-3">
-              {jobs.map((job) => (
-                <CandidateRecommendationCard
-                  key={job.public_id}
-                  job={job}
-                  hidePending={pendingIds.has(job.public_id)}
-                  onHide={(selected) => hide(selected, 'matching')}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-slate-200 bg-white px-5 py-10">
-              <MascotEmpty
-                scene="profileCheck"
-                description={(
-                  <>
-                    <h2 className="font-bold text-slate-800">Chưa có việc làm đủ phù hợp</h2>
-                    <p className="mt-1 text-sm text-slate-500">{m.candidate_reco_empty_text()}</p>
-                  </>
-                )}
-              />
-            </div>
-          )}
-
-          {(data.pagination?.total_pages || 0) > 1 && (
-            <div className="flex justify-center rounded-2xl border border-slate-200 bg-white py-4">
-              <Pagination
-                current={page}
-                pageSize={ACCOUNT_PAGE_SIZE}
-                total={data.pagination.total}
-                showSizeChanger={false}
-                onChange={setPage}
-              />
-            </div>
-          )}
-        </>
-      )}
-    </section>
   )
 }
 
@@ -158,7 +58,8 @@ function HomeRecommendations({ data, hiddenIds, hide, pendingIds, query }) {
       </section>
     )
   }
-  if (query.isError || data?.status !== 'ready' || groups.length === 0) return null
+  // Trang chủ chỉ hiện gợi ý thật: ứng viên tắt gợi ý bằng AI thì ẩn khối này.
+  if (query.isError || data?.status !== 'ready' || data.ai_recommendation_enabled === false || groups.length === 0) return null
 
   return (
     <section
@@ -195,7 +96,6 @@ function HomeRecommendations({ data, hiddenIds, hide, pendingIds, query }) {
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {group.map((job) => (
                   <CandidateRecommendationCard
-                    compact
                     key={job.public_id}
                     job={job}
                     hidePending={pendingIds.has(job.public_id)}

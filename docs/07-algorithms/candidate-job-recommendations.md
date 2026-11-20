@@ -121,6 +121,11 @@ Các field điều phối chính:
 /api/candidate/job-preferences/`) và công tắc ở thanh bên tài khoản (`GET/PATCH
 /api/candidate/ai-recommendation/`, chỉ đổi đồng ý, không tạo nhu cầu).
 
+`ai_recommendation_enabled = false` khi ứng viên tắt gợi ý bằng AI: danh sách vẫn trả
+về nhưng không đọc CV, xếp theo nhu cầu đã khai (`candidate-preference-rule-v2`, bỏ qua
+kiểm tra đồng ý) hoặc tin mới nhất chưa ứng tuyển/ẩn khi chưa khai (`latest-v1`, không lý
+do). Endpoint theo CV (`by-cv`), email gợi ý và tin chèn vẫn yêu cầu đồng ý.
+
 `cv_recommendations_enabled` cho biết gợi ý theo CV (`semantic-v1`, xem
 `thuat-toan-ai.md`) đang bật: khi đó `preferences_required` nghĩa là ứng viên chưa
 có CV đủ dùng lẫn nhu cầu, và giao diện mời lưu CV hoặc khai nhu cầu.

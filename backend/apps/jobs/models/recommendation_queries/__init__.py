@@ -6,9 +6,11 @@
 from .context import RecommendationConsentRequired, ai_recommendation_allowed, preference_state
 from .ranking import (
     MAX_SCORING_CANDIDATES,
+    paginate,
     recommend_inline_jobs_for_candidate,
     recommend_jobs_for_candidate,
     recommend_jobs_for_cv,
+    recommend_latest_jobs_for_candidate,
     recommend_new_jobs_for_candidate_email,
     recommendable_jobs,
     rule_scores_for_cv,
@@ -26,7 +28,9 @@ __all__ = [
     'preference_state',
     'recommend_inline_jobs_for_candidate',
     'recommend_jobs_for_candidate',
+    'paginate',
     'recommend_jobs_for_cv',
+    'recommend_latest_jobs_for_candidate',
     'recommend_new_jobs_for_candidate_email',
     'recommendable_jobs',
     'rule_scores_for_cv',

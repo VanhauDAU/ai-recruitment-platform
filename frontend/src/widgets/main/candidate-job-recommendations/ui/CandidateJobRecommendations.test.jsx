@@ -94,4 +94,19 @@ describe('CandidateJobRecommendations home surface', () => {
     )
     expect(screen.getAllByRole('button', { name: 'Ẩn tin tuyển dụng này' })).toHaveLength(8)
   })
+
+  it('hides the home block while AI recommendations are turned off', async () => {
+    mocks.getRecommendations.mockResolvedValue({
+      status: 'ready',
+      strategy: 'latest-v1',
+      ai_recommendation_enabled: false,
+      results: [{ public_id: 'job_1', slug: 'job-1', title: 'Job 1', company_name: 'ProCV', match_reasons: [] }],
+    })
+
+    renderHome()
+
+    // Hết trạng thái đang tải thì khối biến mất hẳn, không hiện tin mới nhất như gợi ý.
+    await vi.waitFor(() => expect(screen.queryByRole('heading', { name: 'Gợi ý việc làm phù hợp' })).not.toBeInTheDocument())
+    expect(screen.queryByText('Job 1')).not.toBeInTheDocument()
+  })
 })
