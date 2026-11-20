@@ -1,12 +1,14 @@
 """In-process stand-in for a network so the whole flow runs in dev, CI and demos."""
 
 import secrets
+from datetime import timedelta
 from urllib.parse import urlencode
 
 from django.core.cache import cache
+from django.utils import timezone
 
 from ...domain.social_networks import NETWORKS
-from .base import PublishedPost, SocialAccount
+from .base import PublishedPost, SocialAccount, TokenGrant
 
 
 class FakeProvider:
@@ -25,6 +27,10 @@ class FakeProvider:
     def exchange_code(self, code):
         return 'fake-user-token'
 
+    def _expires_at(self):
+        days = self.spec.token_days
+        return timezone.now() + timedelta(days=days) if days else None
+
     def list_accounts(self, user_token):
         return [
             SocialAccount(
@@ -32,8 +38,12 @@ class FakeProvider:
                 name=f'{self.spec.label} thử nghiệm (giả lập)',
                 picture_url='',
                 token='fake-account-token',
+                expires_at=self._expires_at(),
             )
         ]
+
+    def refresh(self, token):
+        return TokenGrant(token=token, expires_at=self._expires_at())
 
     def publish(self, *, account_id, token, message, link, images=()):
         post_id = f'{account_id}_{secrets.token_hex(6)}'

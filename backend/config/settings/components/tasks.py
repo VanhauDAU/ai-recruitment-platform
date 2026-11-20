@@ -162,6 +162,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'apps.campaigns.tasks.reconcile_social_posts',
         'schedule': 300.0,
     },
+    'refresh-social-tokens': {
+        'task': 'apps.campaigns.tasks.refresh_social_tokens',
+        'schedule': 86400.0,
+    },
     'snapshot-campaign-health': {
         'task': 'apps.campaigns.tasks.snapshot_campaign_health',
         'schedule': 3600.0,

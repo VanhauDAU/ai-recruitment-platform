@@ -850,17 +850,20 @@ msgstr "Recruitment campaign ending soon"
 msgid "Chiến dịch đã tự kết thúc"
 msgstr "Recruitment campaign ended automatically"
 
-msgid "Bài đăng Fanpage không thành công"
-msgstr "Facebook Page post failed"
+msgid "Tự đăng bài không thành công"
+msgstr "Automatic post failed"
 
-msgid "Chưa gỡ được bài khỏi Fanpage"
-msgstr "Could not remove the post from the Facebook Page"
+msgid "Cần tự gỡ bài trên mạng xã hội"
+msgstr "Remove the social post manually"
 
 msgid "Chiến dịch cần chú ý"
 msgstr "Recruitment campaign needs attention"
 
-msgid "Kết nối Fanpage đã hết hạn"
-msgstr "Facebook Page connection expired"
+msgid "Kết nối mạng xã hội đã hết hạn"
+msgstr "Social connection expired"
+
+msgid "Kết nối mạng xã hội sắp hết hạn"
+msgstr "Social connection expiring soon"
 
 msgid "Quản lý công ty chưa có xác thực nhà tuyển dụng còn hiệu lực nên trang công ty chưa thể tuỳ biến."
 msgstr "The company manager does not have an active employer verification, so the company page cannot be customized yet."

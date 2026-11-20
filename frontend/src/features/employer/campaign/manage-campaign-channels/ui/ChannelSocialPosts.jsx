@@ -42,7 +42,8 @@ function postTime(post) {
 }
 
 // Bài tự đăng của kênh: mới nhất trước, lỗi kèm cách xử lý, đăng lại hoặc hủy.
-export default function ChannelSocialPosts({ campaign, channel, network, editable }) {
+// ``hideWhenEmpty``: kênh chưa nối tài khoản chỉ hiện lịch sử khi đã có bài.
+export default function ChannelSocialPosts({ campaign, channel, network, editable, hideWhenEmpty = false }) {
   const queryClient = useQueryClient()
   const key = campaignKeys.channelPosts(campaign.public_id, channel.public_id)
   const postsQuery = useQuery({
@@ -62,6 +63,7 @@ export default function ChannelSocialPosts({ campaign, channel, network, editabl
     onError,
   })
   const posts = (postsQuery.data || []).filter((post) => post.status !== 'cancelled')
+  if (hideWhenEmpty && !postsQuery.isLoading && posts.length === 0) return null
 
   return (
     <div className="ch-fb">

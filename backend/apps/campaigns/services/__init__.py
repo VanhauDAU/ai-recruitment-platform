@@ -24,6 +24,7 @@ from .social_connections import (
     complete_connection,
     disconnect_account,
     pending_accounts,
+    refresh_expiring_tokens,
     select_account,
     start_connection,
 )
@@ -66,6 +67,7 @@ __all__ = [
     'disconnect_account',
     'due_post_ids',
     'pending_accounts',
+    'refresh_expiring_tokens',
     'post_message',
     'publish_post',
     'reconcile_social_posts',

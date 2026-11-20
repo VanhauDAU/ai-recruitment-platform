@@ -21713,6 +21713,7 @@ components:
       - facebook_page
       - facebook_group
       - instagram
+      - threads
       - linkedin
       - zalo
       - tiktok
@@ -21725,6 +21726,7 @@ components:
         * `facebook_page` - Fanpage Facebook
         * `facebook_group` - Nhóm Facebook
         * `instagram` - Instagram
+        * `threads` - Threads
         * `linkedin` - LinkedIn
         * `zalo` - Zalo
         * `tiktok` - TikTok
@@ -26936,6 +26938,7 @@ components:
       - social_post_delete_failed
       - campaign_health_alert
       - social_connection_expired
+      - social_connection_expiring
       type: string
       description: |-
         * `verification_approved` - Hồ sơ xác thực đã được duyệt
@@ -26963,10 +26966,11 @@ components:
         * `campaign_activation_failed` - Chiến dịch chưa kích hoạt được theo lịch
         * `campaign_ending_soon` - Chiến dịch sắp đến ngày kết thúc
         * `campaign_auto_completed` - Chiến dịch đã tự kết thúc
-        * `social_post_failed` - Bài đăng Fanpage không thành công
-        * `social_post_delete_failed` - Chưa gỡ được bài khỏi Fanpage
+        * `social_post_failed` - Tự đăng bài không thành công
+        * `social_post_delete_failed` - Cần tự gỡ bài trên mạng xã hội
         * `campaign_health_alert` - Chiến dịch cần chú ý
-        * `social_connection_expired` - Kết nối Fanpage đã hết hạn
+        * `social_connection_expired` - Kết nối mạng xã hội đã hết hạn
+        * `social_connection_expiring` - Kết nối mạng xã hội sắp hết hạn
     EmployerNotificationPreference:
       type: object
       properties:
@@ -29951,10 +29955,14 @@ components:
       enum:
       - facebook_page
       - instagram
+      - threads
+      - linkedin
       type: string
       description: |-
         * `facebook_page` - Fanpage Facebook
         * `instagram` - Instagram doanh nghiệp
+        * `threads` - Threads
+        * `linkedin` - Trang cá nhân LinkedIn
     NullEnum:
       enum:
       - null

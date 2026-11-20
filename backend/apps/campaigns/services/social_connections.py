@@ -5,18 +5,29 @@ identified by a signed ``state`` holding the network and a one-time nonce kept
 10 minutes in the cache. Only the chosen account's token is stored, encrypted.
 """
 
+import logging
 import secrets
+from datetime import timedelta
 
 from django.core import signing
 from django.core.cache import cache
 from django.db import transaction
+from django.utils import timezone
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from rest_framework.exceptions import ValidationError
 
-from apps.employers.models import RecruiterProfile
+from apps.employers.models import EmployerNotification, RecruiterProfile
+from apps.employers.services import emit_employer_event
+from common.i18n import recipient_language
 
 from ..models import ScheduledSocialPost, SocialAccountConnection
-from .social import encrypt_token, get_provider
+from .social import SocialProviderError, decrypt_token, encrypt_token, get_provider
+
+logger = logging.getLogger(__name__)
+INTEGRATIONS_PATH = '/tuyendung/app/account/settings/integrations'
+# Refresh a token this long before it expires; the daily task gets several tries.
+REFRESH_AHEAD = timedelta(days=10)
 
 STATE_SALT = 'campaign-social-oauth'
 OAUTH_TTL = 600
@@ -65,6 +76,7 @@ def complete_connection(*, network, code, state):
                     'name': account.name,
                     'picture_url': account.picture_url,
                     'token': encrypt_token(account.token),
+                    'expires_at': account.expires_at,
                 }
                 for account in accounts
             ],
@@ -108,6 +120,7 @@ def select_account(*, user, network, nonce, account_id):
             'account_name': account['name'],
             'account_picture_url': account['picture_url'],
             'token_ciphertext': account['token'],
+            'token_expires_at': account.get('expires_at'),
             'status': SocialAccountConnection.Status.CONNECTED,
             'last_error_code': '',
         },
@@ -127,3 +140,90 @@ def disconnect_account(*, user, connection):
         connection=connection, status__in=ScheduledSocialPost.OPEN_STATUSES
     ).update(status=ScheduledSocialPost.Status.CANCELLED, last_error_code='disconnected')
     return connection
+
+
+def expire_connection(connection, code):
+    """Mark ``connection`` expired and ask its owner to reconnect."""
+    SocialAccountConnection.objects.filter(pk=connection.pk).update(
+        status=SocialAccountConnection.Status.EXPIRED, last_error_code=code
+    )
+    recipient = connection.owner.user
+    with recipient_language(recipient):
+        emit_employer_event(
+            recipient=recipient,
+            event_type=EmployerNotification.EventType.SOCIAL_CONNECTION_EXPIRED,
+            dedupe_key=f'social-connection-expired:{connection.public_id}:{code}',
+            message=str(
+                gettext_lazy(
+                    'Kết nối %(network)s "%(account)s" đã hết hạn. '
+                    'Hãy kết nối lại để tiếp tục đăng.'
+                )
+            )
+            % {'network': connection.spec.label, 'account': connection.account_name},
+            subject_public_id=connection.public_id,
+            action_path=INTEGRATIONS_PATH,
+        )
+
+
+def warn_connection_expiring(connection):
+    """Remind the owner to reconnect a token that cannot be refreshed, once per token."""
+    recipient = connection.owner.user
+    expires_on = timezone.localtime(connection.token_expires_at).strftime('%d/%m/%Y')
+    with recipient_language(recipient):
+        emit_employer_event(
+            recipient=recipient,
+            event_type=EmployerNotification.EventType.SOCIAL_CONNECTION_EXPIRING,
+            dedupe_key=f'social-connection-expiring:{connection.public_id}:{expires_on}',
+            message=str(
+                gettext_lazy(
+                    'Kết nối %(network)s "%(account)s" hết hạn ngày %(date)s. '
+                    'Hãy kết nối lại trước ngày đó để không gián đoạn đăng bài.'
+                )
+            )
+            % {
+                'network': connection.spec.label,
+                'account': connection.account_name,
+                'date': expires_on,
+            },
+            subject_public_id=connection.public_id,
+            action_path=INTEGRATIONS_PATH,
+        )
+
+
+def refresh_expiring_tokens(now=None):
+    """Refresh tokens that expire soon, or remind the owner when the network cannot.
+
+    A refused or lapsed token expires the connection.
+    """
+    now = now or timezone.now()
+    connections = SocialAccountConnection.objects.select_related('owner__user').filter(
+        status=SocialAccountConnection.Status.CONNECTED,
+        token_expires_at__isnull=False,
+        token_expires_at__lte=now + REFRESH_AHEAD,
+    )
+    refreshed = 0
+    for connection in connections:
+        if not connection.spec.token_refreshable:
+            if connection.token_expires_at <= now:
+                expire_connection(connection, 'token_expired')
+            else:
+                warn_connection_expiring(connection)
+            continue
+        try:
+            grant = get_provider(connection.network).refresh(
+                decrypt_token(connection.token_ciphertext)
+            )
+        except SocialProviderError as error:
+            if error.token_invalid or connection.token_expires_at <= now:
+                expire_connection(connection, error.code)
+            else:
+                logger.warning(
+                    'social_token_refresh_failed',
+                    extra={'network': connection.network, 'code': error.code},
+                )
+            continue
+        SocialAccountConnection.objects.filter(pk=connection.pk).update(
+            token_ciphertext=encrypt_token(grant.token), token_expires_at=grant.expires_at
+        )
+        refreshed += 1
+    return refreshed

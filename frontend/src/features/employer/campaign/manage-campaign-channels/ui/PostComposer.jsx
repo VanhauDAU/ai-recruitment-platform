@@ -173,12 +173,15 @@ export default function PostComposer({ campaign, channel, network, open, onClose
   const queryClient = useQueryClient()
   const values = Form.useWatch([], form) || {}
   const caret = useRef(null)
-  const autoPost = Boolean(network)
   const initialText = postText(channel.rendered_content)
   // Tin/link mà nội dung hiện tại được soạn theo; đổi khác thì link trong bài đã cũ.
   const [draftedFor, setDraftedFor] = useState({ jobs: channel.jobs, target: channel.target })
-  const connectionsQuery = useQuery({ queryKey: campaignKeys.socialConnections, queryFn: getSocialConnections, enabled: open && autoPost })
+  const connectionsQuery = useQuery({ queryKey: campaignKeys.socialConnections, queryFn: getSocialConnections, enabled: open && Boolean(network) })
   const connections = (connectionsQuery.data || []).filter((item) => item.status === 'connected' && item.network === network?.key)
+  // Chưa kết nối tài khoản của mạng thì soạn để chép và tự đăng, như kênh đăng tay.
+  const autoPost = connections.length > 0
+  const loadingPages = Boolean(network) && connectionsQuery.isLoading
+  const notConnected = Boolean(network) && !connectionsQuery.isLoading && !autoPost
   const page = connections.find((item) => item.public_id === values.connection) || connections[0]
   const jobOptions = channel.links
     .filter((link) => link.key !== 'landing' && link.key !== 'company')
@@ -255,8 +258,6 @@ export default function PostComposer({ campaign, channel, network, open, onClose
     },
   })
 
-  const loadingPages = autoPost && connectionsQuery.isLoading
-  const noPage = autoPost && !connectionsQuery.isLoading && !connections.length
   let submitLabel = m.employer_campaign_composer_save_copy()
   if (autoPost && values.timing === 'now') submitLabel = m.employer_campaign_fb_post_now()
   else if (autoPost && values.timing === 'series') submitLabel = m.employer_campaign_fb_schedule_count({ count: times.length })
@@ -275,100 +276,104 @@ export default function PostComposer({ campaign, channel, network, open, onClose
           type="primary"
           icon={autoPost ? null : <CopyOutlined aria-hidden />}
           loading={submit.isPending}
-          disabled={noPage || loadingPages}
+          disabled={loadingPages}
           onClick={() => form.submit()}
         >
           {submitLabel}
         </Button>
       )}
     >
-      {loadingPages ? <Skeleton active paragraph={{ rows: 6 }} /> : noPage ? (
-        <Alert
-          type="info"
-          showIcon
-          title={m.employer_campaign_fb_no_connection({ network: network?.label })}
-          description={<>{m.employer_campaign_fb_connect_prefix({ network: network?.label })}<Link to={EMPLOYER_INTEGRATIONS_URL}>{m.employer_campaign_fb_account_settings()}</Link>{m.employer_campaign_fb_connect_suffix()}</>}
-        />
-      ) : (
-        <div className="ch-composer__grid">
-          <Form
-            form={form}
-            layout="vertical"
-            requiredMark={false}
-            initialValues={{
-              jobs: channel.jobs,
-              target: channel.target,
-              message: initialText,
-              connection: connections[0]?.public_id,
-              timing: 'now',
-              scheduled_for: presets()[0].value,
-              repeats: [7],
-              images: [],
-            }}
-            onFinish={(data) => submit.mutate(data)}
-          >
-            <div className="ch-composer__scope">
-              <Form.Item label={m.employer_campaign_post_jobs()} name="jobs">
-                <JobChips options={jobOptions} />
-              </Form.Item>
-              <Form.Item label={m.employer_campaign_post_target()} name="target" extra={TARGETS.find((item) => item.value === values.target)?.hint()}>
-                <Select options={TARGETS.map((item) => ({ value: item.value, label: item.label() }))} />
-              </Form.Item>
-            </div>
-            <div className="ch-composer__label">
-              <label htmlFor="post-message">{m.employer_campaign_fb_content()}</label>
-              <span className="ch-composer__tools">
-                <Dropdown
-                  trigger={['click']}
-                  rootClassName="ch-linkmenu"
-                  menu={{
-                    items: channel.links.map((link) => ({ key: link.key, label: <span title={linkLabel(link)}>{linkLabel(link)}</span> })),
-                    onClick: ({ key }) => insertLink(channel.links.find((link) => link.key === key)),
-                  }}
-                >
-                  <Button size="small" icon={<LinkOutlined aria-hidden />}>{m.employer_campaign_composer_insert_link()}</Button>
-                </Dropdown>
-                <Button size="small" icon={<RobotOutlined aria-hidden />} loading={generate.isPending} onClick={() => generate.mutate()}>
-                  {values.message ? m.employer_campaign_content_regenerate() : m.employer_campaign_content_generate()}
-                </Button>
-              </span>
-            </div>
-            {stale && <p className="ch-scope__stale" role="status">{m.employer_campaign_post_regenerate_hint()}</p>}
-            <Form.Item
-              name="message"
-              className="ch-composer__message"
-              extra={m.employer_campaign_composer_message_hint()}
-              rules={[{ required: true, whitespace: true, message: m.employer_campaign_fb_content_required() }]}
-            >
-              <Input.TextArea
-                id="post-message"
-                autoSize={{ minRows: 7, maxRows: 14 }}
-                maxLength={network?.capabilities.max_chars ?? 3000}
-                showCount
-                placeholder={m.employer_campaign_composer_message_placeholder()}
-                onSelect={(event) => { caret.current = [event.target.selectionStart, event.target.selectionEnd] }}
-              />
-            </Form.Item>
-            {autoPost && <SocialAccountFields campaign={campaign} channel={channel} network={network} values={values} form={form} times={times} connections={connections} />}
-          </Form>
-          <aside className="ch-composer__preview">
-            <p className="ch-section-note">{autoPost ? m.employer_campaign_fb_preview({ network: network.platform }) : m.employer_campaign_preview_manual()}</p>
-            <SocialPostPreview
-              name={autoPost ? page?.account_name || network.label : channel.label}
-              avatarUrl={autoPost ? page?.account_picture_url : undefined}
-              meta={!autoPost ? channel.kind_label : values.timing === 'now' || !values.scheduled_for ? m.employer_campaign_fb_just_now() : when(values.scheduled_for)}
-              text={values.message || ''}
-              images={(values.images || []).map((image) => image.url)}
-              link={channel.kind.startsWith('facebook') ? channel.link : ''}
-              variant={network?.key}
-              imageRatio={network?.capabilities.image_ratio}
-              linkTitle={campaign.name}
+      {loadingPages ? <Skeleton active paragraph={{ rows: 6 }} /> : (
+        <>
+          {notConnected && (
+            <Alert
+              type="info"
+              showIcon
+              style={{ marginBottom: 16 }}
+              title={m.employer_campaign_fb_no_connection({ network: network.label })}
+              description={<>{m.employer_campaign_fb_connect_prefix({ network: network.label })}<Link to={EMPLOYER_INTEGRATIONS_URL}>{m.employer_campaign_fb_account_settings()}</Link>{m.employer_campaign_fb_connect_suffix()}</>}
             />
-            {autoPost && campaign.status !== 'active' && (
-              <Alert type="warning" showIcon title={m.employer_campaign_fb_not_running()} description={m.employer_campaign_fb_not_running_description()} />
-            )}
-          </aside>
-        </div>
+          )}
+          <div className="ch-composer__grid">
+            <Form
+              form={form}
+              layout="vertical"
+              requiredMark={false}
+              initialValues={{
+                jobs: channel.jobs,
+                target: channel.target,
+                message: initialText,
+                connection: connections[0]?.public_id,
+                timing: 'now',
+                scheduled_for: presets()[0].value,
+                repeats: [7],
+                images: [],
+              }}
+              onFinish={(data) => submit.mutate(data)}
+            >
+              <div className="ch-composer__scope">
+                <Form.Item label={m.employer_campaign_post_jobs()} name="jobs">
+                  <JobChips options={jobOptions} />
+                </Form.Item>
+                <Form.Item label={m.employer_campaign_post_target()} name="target" extra={TARGETS.find((item) => item.value === values.target)?.hint()}>
+                  <Select options={TARGETS.map((item) => ({ value: item.value, label: item.label() }))} />
+                </Form.Item>
+              </div>
+              <div className="ch-composer__label">
+                <label htmlFor="post-message">{m.employer_campaign_fb_content()}</label>
+                <span className="ch-composer__tools">
+                  <Dropdown
+                    trigger={['click']}
+                    rootClassName="ch-linkmenu"
+                    menu={{
+                      items: channel.links.map((link) => ({ key: link.key, label: <span title={linkLabel(link)}>{linkLabel(link)}</span> })),
+                      onClick: ({ key }) => insertLink(channel.links.find((link) => link.key === key)),
+                    }}
+                  >
+                    <Button size="small" icon={<LinkOutlined aria-hidden />}>{m.employer_campaign_composer_insert_link()}</Button>
+                  </Dropdown>
+                  <Button size="small" icon={<RobotOutlined aria-hidden />} loading={generate.isPending} onClick={() => generate.mutate()}>
+                    {values.message ? m.employer_campaign_content_regenerate() : m.employer_campaign_content_generate()}
+                  </Button>
+                </span>
+              </div>
+              {stale && <p className="ch-scope__stale" role="status">{m.employer_campaign_post_regenerate_hint()}</p>}
+              <Form.Item
+                name="message"
+                className="ch-composer__message"
+                extra={m.employer_campaign_composer_message_hint()}
+                rules={[{ required: true, whitespace: true, message: m.employer_campaign_fb_content_required() }]}
+              >
+                <Input.TextArea
+                  id="post-message"
+                  autoSize={{ minRows: 7, maxRows: 14 }}
+                  maxLength={network?.capabilities.max_chars ?? 3000}
+                  showCount
+                  placeholder={m.employer_campaign_composer_message_placeholder()}
+                  onSelect={(event) => { caret.current = [event.target.selectionStart, event.target.selectionEnd] }}
+                />
+              </Form.Item>
+              {autoPost && <SocialAccountFields campaign={campaign} channel={channel} network={network} values={values} form={form} times={times} connections={connections} />}
+            </Form>
+            <aside className="ch-composer__preview">
+              <p className="ch-section-note">{autoPost ? m.employer_campaign_fb_preview({ network: network.platform }) : m.employer_campaign_preview_manual()}</p>
+              <SocialPostPreview
+                name={autoPost ? page?.account_name || network.label : channel.label}
+                avatarUrl={autoPost ? page?.account_picture_url : undefined}
+                meta={!autoPost ? channel.kind_label : values.timing === 'now' || !values.scheduled_for ? m.employer_campaign_fb_just_now() : when(values.scheduled_for)}
+                text={values.message || ''}
+                images={(values.images || []).map((image) => image.url)}
+                link={channel.kind.startsWith('facebook') || channel.kind === 'threads' ? channel.link : ''}
+                variant={network?.key}
+                imageRatio={network?.capabilities.image_ratio}
+                linkTitle={campaign.name}
+              />
+              {autoPost && campaign.status !== 'active' && (
+                <Alert type="warning" showIcon title={m.employer_campaign_fb_not_running()} description={m.employer_campaign_fb_not_running_description()} />
+              )}
+            </aside>
+          </div>
+        </>
       )}
     </Drawer>
   )
