@@ -10,6 +10,8 @@ CATALOG_ROWS = [
     (5, 'Cẩn thận', [], 'Phẩm chất cá nhân'),
     (6, 'Power Query', [], ''),
     (7, 'C#', [], ''),
+    (8, 'CI/CD', [], ''),
+    (9, 'Fullstack', [], 'Tên vị trí'),
 ]
 
 
@@ -36,6 +38,11 @@ class SkillCatalogTests(SimpleTestCase):
 
     def test_personal_traits_are_kept_but_not_counted(self):
         self.assertFalse(catalog().resolve('Cẩn thận').counted)
+
+    def test_position_names_are_kept_but_not_counted(self):
+        # "Fullstack" là nghề, không phải kỹ năng: đúng nghề đã đo bằng phép so chức danh.
+        self.assertFalse(catalog().resolve('Fullstack').counted)
+        self.assertTrue(catalog().resolve('ReactJS').counted)
         self.assertTrue(catalog().resolve('Java').counted)
 
 

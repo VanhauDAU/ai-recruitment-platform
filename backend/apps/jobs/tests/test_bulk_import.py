@@ -75,6 +75,31 @@ class JobBulkImportTests(TestCase):
         row.update(overrides)
         return row
 
+    def test_refresh_skills_resyncs_an_existing_job_after_a_catalogue_change(self):
+        broad = Skill.objects.create(name='Deep Learning', aliases=['PyTorch'])
+        row = self.row(required_skills=['PyTorch'], preferred_skills=['Python 3'])
+        first = import_job_postings([row], apply=True, create_missing_skills=True)
+        job = Job.objects.get(public_id=first['rows'][0]['job_public_id'])
+        self.assertEqual(
+            set(job.job_skills.values_list('skill__name', flat=True)), {'Deep Learning', 'Python'}
+        )
+
+        # Danh mục được sửa: "PyTorch" thành kỹ năng riêng.
+        broad.aliases = []
+        broad.save()
+        Skill.objects.create(name='PyTorch')
+        untouched = import_job_postings([row], apply=True)
+        refreshed = import_job_postings([row], apply=True, refresh_skills=True)
+
+        self.assertNotIn('skills_changed', untouched['rows'][0])
+        self.assertEqual(
+            (refreshed['rows'][0]['status'], refreshed['rows'][0]['skills_changed']), ('skipped', 2)
+        )
+        self.assertEqual(
+            dict(job.job_skills.values_list('skill__name', 'importance')),
+            {'PyTorch': 'required', 'Python': 'preferred'},
+        )
+
     def test_province_matches_whatever_its_administrative_prefix(self):
         # Sau khi sáp nhập, một tỉnh có thể đổi thành thành phố; tệp nguồn ghi tên cũ.
         report = import_job_postings([self.row(province='Tỉnh Đà Nẵng')], apply=True)

@@ -21,12 +21,13 @@ from datetime import date
 import unicodedata
 
 from corpus import cv_text
-from extract_check import read_pdfium
+from extract_check import read_in_reading_order
 from paths import (
     CV_MANIFEST,
     CV_PDF_SYSTEM_DIR,
     CV_PDF_TOPCV_DIR,
     JD_IMPORT_MAP,
+    LABELING_DIR,
     PROFILES_DIR,
     REPORTS_DIR,
     SYNTHETIC_CV_DIR,
@@ -40,7 +41,16 @@ LANGUAGE_CODES = {
     'Tiếng Pháp': 'fr',
     'Tiếng Việt': 'vi',
 }
+LANGUAGE_NAMES = {
+    'en': ('Tiếng Anh', 'English'),
+    'vi': ('Tiếng Việt', 'Vietnamese'),
+    'ja': ('Tiếng Nhật', 'Japanese'),
+    'zh': ('Tiếng Trung', 'Chinese', 'Mandarin'),
+    'ko': ('Tiếng Hàn', 'Korean'),
+    'fr': ('Tiếng Pháp', 'French'),
+}
 MONTH_TOLERANCE = 3
+EDUCATION_KEY = json.loads((LABELING_DIR / 'education_key.json').read_text(encoding='utf-8'))['levels']
 
 
 def squash(text):
@@ -63,18 +73,29 @@ def month_index(value):
     return year * 12 + month - 1
 
 
+MONTH_ABBREVIATIONS = ('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec')
+
+
+def date_is_printed(value, source):
+    """Mốc `YYYY-MM` có in trong tài liệu dưới một trong các cách ghi mẫu CV dùng."""
+    year, month = value.split('-')
+    spellings = (f'{month} {year}', f'{year} {month}', f'{MONTH_ABBREVIATIONS[int(month) - 1]} {year}')
+    return any(spelling in source for spelling in spellings)
+
+
 def printed_months(data, source):
     """Số tháng kinh nghiệm của các việc thật sự in trong tài liệu.
 
     Bản PDF TopCV bị rơi việc đang làm (không có ngày kết thúc) khi tạo trên
-    TopCV, nên đáp án của PDF chỉ tính các công ty có tên trong tệp.
+    TopCV, nên đáp án của PDF chỉ tính các việc có ngày bắt đầu in trong tệp.
+    (Tên công ty không dùng được: hai việc có thể cùng một công ty.)
     """
     today = date.today()
     now = today.year * 12 + today.month - 1
     ranges = sorted(
         (month_index(job['start_date']), month_index(job['end_date']) if job.get('end_date') else now)
         for job in data.get('experience', [])
-        if job.get('start_date') and squash(job['company']) in source
+        if job.get('start_date') and date_is_printed(job['start_date'], source)
     )
     total, current = 0, None
     for start, end in ranges:
@@ -102,26 +123,39 @@ def canonical(name):
 def compare(code, profile, manifest, pdf=None):
     facts = manifest[code]
     data = json.loads((SYNTHETIC_CV_DIR / f'{code}.json').read_text(encoding='utf-8'))
-    source = squash(cv_text(data) if pdf is None else read_pdfium(pdf))
+    source = squash(cv_text(data) if pdf is None else read_in_reading_order(pdf))
     expected_months = facts['experience_months'] if pdf is None else printed_months(data, source)
-    expected = {canonical(name) for name in facts['skills']}
+    # PDF: chỉ tính kỹ năng và ngoại ngữ thật sự in trong tệp (mẫu CV có thể bỏ cả mục).
+    printed = lambda name: pdf is None or squash(name) in source  # noqa: E731
+    expected = {canonical(name) for name in facts['skills'] if printed(name)}
     found = {canonical(skill['name']) for skill in profile['skills']}
     declared = {canonical(skill['name']) for skill in profile['skills'] if skill['source'] == 'declared'}
     listed = {canonical(skill['name']) for skill in profile['skills'] if skill['source'] == 'listed'}
     evidences = [skill['evidence'] for skill in profile['skills'] if skill['evidence']]
     evidences += [item['evidence'] for item in profile['languages'] if item.get('evidence')]
     months = profile['experience']['months']
+    # CV builder có trường bậc học do người dùng chọn; PDF chỉ có chữ in trên trang.
+    education = facts['education_level'] if pdf is None else EDUCATION_KEY[code]
+    # Mẫu CV có thể chỉ in tên trường mà bỏ tên bằng: khi đó không có gì để đọc bậc học.
+    if pdf is not None and squash((data.get('education') or {}).get('degree', '')) not in source:
+        education = None
     languages = {LANGUAGE_CODES.get(item['language'], '?') for item in facts.get('languages', [])}
+    if pdf is not None:  # mẫu CV in tên ngôn ngữ theo tiếng của mẫu, không theo cách manifest ghi
+        languages = {code for code in languages if any(squash(name) in source for name in LANGUAGE_NAMES.get(code, ()))}
     return {
         'code': code,
         'skill_recall': len(expected & found) / len(expected) if expected else None,
+        'skills': (len(expected & found), len(expected), len(facts['skills']) - len(expected)),
+        'skills_missed': sorted(expected - found),
+        'title': (profile.get('title', ''), data.get('headline', '')),
+        'title_ok': squash(profile.get('title', '')) == squash(data.get('headline', '')),
         'declared_extra': sorted(declared - expected),
         'listed_extra': sorted(listed - expected),
         'months_ok': months is not None and abs(months - expected_months) <= MONTH_TOLERANCE,
         'months': (months, expected_months),
         'basis': profile['experience'].get('basis', ''),
-        'education_ok': profile['education']['level'] == facts['education_level'],
-        'education': (profile['education']['level'], facts['education_level']),
+        'education_ok': education is None or profile['education']['level'] == education,
+        'education': (profile['education']['level'], education),
         'languages_ok': {item['code'] for item in profile['languages']} == languages,
         'unsupported': [text for text in evidences if squash(text) not in source],
         'missing': profile['quality']['missing'],
@@ -132,12 +166,14 @@ def summary(name, rows):
     def share(key):
         return sum(1 for row in rows if row[key]) / len(rows)
 
-    recall = [row['skill_recall'] for row in rows if row['skill_recall'] is not None]
+    found, expected, not_printed = (sum(row['skills'][index] for row in rows) for index in range(3))
     unsupported = sum(len(row['unsupported']) for row in rows)
     return (
-        f'| {name} | {len(rows)} | {statistics.mean(recall):.1%} '
+        f'| {name} | {len(rows)} | {found / expected:.1%} ({found}/{expected}) | {not_printed} '
         f'| {sum(len(row["declared_extra"]) for row in rows)} | {share("months_ok"):.0%} '
-        f'| {share("education_ok"):.0%} | {share("languages_ok"):.0%} | {unsupported} |'
+        f'| {share("education_ok"):.0%} | {share("languages_ok"):.0%} '
+        f'| {sum(row["title_ok"] for row in rows)}/{len(rows)} (có {sum(bool(row["title"][0]) for row in rows)}) '
+        f'| {unsupported} |'
     )
 
 
@@ -199,18 +235,30 @@ def main():
         'Đối chiếu `profile_json` với nhãn của `manifest.json` và nội dung JSON gốc.',
         f'Số tháng kinh nghiệm tính là đúng khi lệch ≤ {MONTH_TOLERANCE} tháng; với PDF, đáp án là',
         'số tháng của các việc thật sự in trong tệp (PDF TopCV bị rơi việc đang làm khi tạo).',
-        'Học vấn so với `degree_level` của manifest; một số CV tổng hợp ghi bằng cấp mâu thuẫn',
-        'với trường này (vd. "Bachelor of Science" nhưng `degree_level = college`), bộ trích xuất',
-        'đọc theo chữ trên CV nên bị tính là lệch.',
+        'Học vấn: CV builder so với trường bậc học của CV; PDF so với bậc học theo đúng chữ in ở',
+        'tên bằng (`ml/labeling/education_key.json`), vì trường `degree_level` của CV tổng hợp lệch',
+        'với tên bằng ở 53/100 CV. Hai CV có tên bằng không nói rõ bậc không tính vào tỷ lệ.',
         '"Bằng chứng không có trong CV" phải bằng 0 (quy tắc không bịa).',
         'Tạo bằng `ml/scripts/check_profiles.py`.',
         '',
-        '| Nguồn | Số CV | Recall kỹ năng | Kỹ năng khai báo ngoài manifest | Kinh nghiệm đúng | Học vấn đúng | Ngôn ngữ đúng | Bằng chứng không có trong CV |',
-        '| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |',
+        'Kỹ năng và ngoại ngữ của PDF chỉ tính những mục thật sự in trong tệp: mẫu TopCV bỏ hẳn mục',
+        'kỹ năng hoặc ngoại ngữ ở một số CV (cột "Kỹ năng không in trong tệp").',
+        '',
+        'Chức danh: số CV có chức danh trùng đúng headline của CV gốc; trong ngoặc là số CV có chức danh',
+        '(chức danh khác headline thường là chức danh của việc gần nhất).',
+        '',
+        '| Nguồn | Số CV | Recall kỹ năng | Kỹ năng không in trong tệp | Kỹ năng khai báo ngoài manifest | Kinh nghiệm đúng | Học vấn đúng | Ngôn ngữ đúng | Chức danh | Bằng chứng không có trong CV |',
+        '| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |',
     ]
     lines += [summary(name, rows) for name, rows in results.items()]
     for name, rows in results.items():
-        wrong = [row for row in rows if not (row['months_ok'] and row['education_ok'] and row['languages_ok']) or row['unsupported']]
+        wrong = [
+            row
+            for row in rows
+            if not (row['months_ok'] and row['education_ok'] and row['languages_ok'])
+            or row['unsupported']
+            or row['skills_missed']
+        ]
         if not wrong:
             continue
         lines += ['', f'## Lệch ở {name} ({len(wrong)} CV)', '']
@@ -222,6 +270,8 @@ def main():
                 notes.append(f'học vấn {row["education"][0] or "—"} (đúng {row["education"][1]})')
             if not row['languages_ok']:
                 notes.append('ngôn ngữ lệch')
+            if row['skills_missed']:
+                notes.append('sót kỹ năng: ' + ', '.join(row['skills_missed']))
             if row['unsupported']:
                 notes.append(f'{len(row["unsupported"])} bằng chứng không khớp CV gốc')
             lines.append(f'- `{row["code"]}`: ' + '; '.join(notes))

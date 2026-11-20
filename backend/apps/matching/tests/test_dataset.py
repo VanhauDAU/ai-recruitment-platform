@@ -13,6 +13,7 @@ from apps.skills.models import Skill, SkillGroup
 from ..models import jobs_for_profile
 from ..services.extraction import EXTRACTOR_VERSION, ExtractionError, job_profile
 from ..services.extraction.job import role_title
+from .profile_schema import schema_errors
 
 REQUIREMENTS = (
     '<p>Yêu cầu ứng viên:</p><ul>'
@@ -71,6 +72,9 @@ class JobProfileTests(TestCase):
             [(skill['name'], skill['importance'], skill['counted']) for skill in profile['skills']],
             [('ReactJS', 'required', True), ('Cẩn thận', 'preferred', False)],
         )
+
+    def test_profile_follows_the_published_schema(self):
+        self.assertEqual(schema_errors(self.profile()), [])
 
     def test_requirement_chunks_skip_subheadings_and_protected_attributes(self):
         requirements = [

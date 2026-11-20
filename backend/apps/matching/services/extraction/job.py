@@ -15,7 +15,7 @@ import re
 from apps.jobs.models import Job
 from common.html.plain_text import html_plain_text
 
-from ..skills import TRAIT_GROUP
+from ..skills import UNCOUNTED_GROUPS
 from .profile import MAX_JOB_CHUNKS, MIN_JOB_TEXT_CHARS, ExtractionError, make_chunks
 from .text import detect_language, normalize_text, split_sentences
 
@@ -56,10 +56,15 @@ def role_title(title):
 
 
 def _is_subheading(line):
-    """ "Kinh nghiệm:", "Required Skills", "Education & Background"; không phải "Thành thạo Excel"."""
+    """ "Kinh nghiệm:", "Required Skills", "Education & Background"; không phải "Thành thạo Excel".
+
+    Dòng liệt kê ("ReactJS, TypeScript, Redux") cũng viết hoa từng từ nhưng là nội
+    dung yêu cầu, nên dòng có dấu phẩy hay chấm phẩy không phải tiêu đề.
+    """
     words = [word for word in line.split() if any(char.isalpha() for char in word)]
     title_case = 0 < len(words) <= MAX_SUBHEADING_WORDS and all(word[0].isupper() for word in words)
-    return line.endswith(':') or (title_case and not line.endswith('.'))
+    listing = ',' in line or ';' in line
+    return line.endswith(':') or (title_case and not listing and not line.endswith('.'))
 
 
 def _job_sentences(text):
@@ -81,7 +86,7 @@ def _skills(job):
             'skill_id': row.skill_id,
             'name': row.skill.name,
             'group': row.skill.group.name if row.skill.group else '',
-            'counted': not (row.skill.group and row.skill.group.name == TRAIT_GROUP),
+            'counted': not (row.skill.group and row.skill.group.name in UNCOUNTED_GROUPS),
             'source': 'job',
             'evidence': '',
             'importance': row.importance,

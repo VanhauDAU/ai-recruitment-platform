@@ -269,19 +269,21 @@ lộ trình ở [tiến độ dự án](../TIEN-DO-DU-AN.md#đối-sánh-ngữ-n
   (`ml/requirements.txt`, `ml/scripts/smoke_mps.py`); mô hình nền là
   `intfloat/multilingual-e5-base`.
 
-Trích xuất hồ sơ (`apps/matching/services/extraction/`, phiên bản `extract-v2`):
+Trích xuất hồ sơ (`apps/matching/services/extraction/`, phiên bản `extract-v3`):
 CV builder, CV tải lên và tin tuyển dụng đều thành `profile_json` gồm kỹ năng,
 kinh nghiệm, học vấn, cấp bậc, ngoại ngữ, địa điểm và các chunk (đoạn văn để
-tính vector).
+tính vector). Cấu trúc của `profile_json` được mô tả bằng JSON Schema ở
+`services/extraction/profile.schema.json`; test kiểm mọi hồ sơ trích ra đều hợp lệ.
 
 | Tệp | Việc |
 | --- | --- |
-| `text.py` | NFC, tách câu, nối dòng PDF bị ngắt, nhận diện ngôn ngữ (tỷ lệ chữ có dấu) |
-| `facts.py` | Khoảng ngày (03/2021, 2021-03, Sep 2021, "Hiện tại"), bậc học (từ chỉ bằng cấp trước tên trường), cấp bậc (chỉ từ khóa chức danh rõ nghĩa), mức ngoại ngữ (từ chỉ mức, IELTS/TOEIC/JLPT…) |
+| `cvs/services/pdf_layout.py` | Thứ tự đọc của trang PDF dựng lại từ tọa độ ký tự: khe dọc giữa hai cột, dòng chạy ngang chia dải, cột ngày ghép vào dòng cùng hàng |
+| `text.py` | NFC, tách câu, nối dòng PDF bị ngắt (không nối dòng bắt đầu bằng ngày), nhận diện ngôn ngữ (tỷ lệ chữ cái riêng của tiếng Việt) |
+| `facts.py` | Khoảng ngày (03/2021, 2021-03, Sep 2021, T9/2021, "tháng 9 năm 2021", "Hiện tại", khoảng in thành hai dòng, khoảng chỉ ghi năm tính từ giữa năm), bậc học (từ chỉ bằng cấp trước tên trường, so theo ranh giới từ), cấp bậc (chỉ từ khóa chức danh rõ nghĩa), từ chỉ nghề để nhận chức danh, mức ngoại ngữ (từ chỉ mức, IELTS/TOEIC/JLPT…) |
 | `cv_builder.py` | Đọc trường có cấu trúc của `content_json`; số tháng và bậc học dùng chung hàm với trường matching của CV |
-| `cv_upload.py` | Chia mục theo dòng tiêu đề, nhận ra bố cục PDF bị đảo, tính số tháng theo bốn trường hợp (`experience.basis`) |
+| `cv_upload.py` | Chia mục theo dòng tiêu đề, nhận ra bố cục PDF bị đảo, tính số tháng theo bốn trường hợp (`experience.basis`), chức danh (`title`) từ đầu trang hoặc các việc, cấp bậc theo việc gần nhất |
 | `job.py` | Trường có cấu trúc của tin; chunk là tên vị trí (tiêu đề đã bỏ lương, địa điểm, giới tính), từng câu yêu cầu, mô tả, tên kỹ năng |
-| `services/skills.py` | Khớp tên và alias của danh mục kỹ năng, nguồn `declared`/`listed`/`text`/`job` |
+| `services/skills.py` | Khớp tên và alias của danh mục kỹ năng, nguồn `declared`/`listed`/`text`/`job`; nhóm "Phẩm chất cá nhân" và "Tên vị trí" không được đếm |
 
 Quy tắc chống bịa dữ liệu:
 
@@ -293,8 +295,9 @@ Quy tắc chống bịa dữ liệu:
 - Chunk bỏ email và số điện thoại; câu yêu cầu của tin về giới tính, tuổi, ngoại
   hình, hôn nhân không được đối sánh.
 
-Đọc chữ PDF bằng `pypdfium2`; số liệu đo thư viện, độ chính xác trích xuất và
-baseline ở `ml/reports/`. Lệnh `matching_export_dataset` (chỉ đọc) xuất hồ sơ
+Đọc chữ PDF bằng `pypdfium2` rồi sắp lại theo vị trí; số liệu đo thư viện, độ chính
+xác trích xuất (PDF bố cục lạ: kỹ năng 98,9%, kinh nghiệm 100%, học vấn 97%, ngoại
+ngữ 94% trên những gì có in trong tệp) và baseline ở `ml/reports/`. Lệnh `matching_export_dataset` (chỉ đọc) xuất hồ sơ
 cho các script ở `ml/`.
 
 Luồng phân tích (`apps/matching/services/`):

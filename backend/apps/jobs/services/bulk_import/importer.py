@@ -64,6 +64,39 @@ def _job_skills(resolved, *, create_missing_skills):
     return list(selected.values())
 
 
+def _refresh_job_skills(job, resolved, *, create_missing_skills):
+    """Đưa kỹ năng của tin đã có về đúng danh sách của dòng nhập; trả số thay đổi.
+
+    Dùng sau khi sửa danh mục kỹ năng (tách alias, gộp tên): tin nhập trước đó vẫn
+    trỏ vào kỹ năng theo danh mục cũ.
+    """
+    wanted = dict(
+        (skill.pk, importance)
+        for skill, importance in _job_skills(resolved, create_missing_skills=create_missing_skills)
+    )
+    current = {row.skill_id: row for row in job.job_skills.all()}
+    removed = [row.pk for skill_id, row in current.items() if skill_id not in wanted]
+    JobSkill.objects.filter(pk__in=removed).delete()
+    added = [
+        JobSkill(job=job, skill_id=skill_id, importance=importance)
+        for skill_id, importance in wanted.items()
+        if skill_id not in current
+    ]
+    JobSkill.objects.bulk_create(added)
+    changed = [
+        row
+        for skill_id, row in current.items()
+        if wanted.get(skill_id, row.importance) != row.importance
+    ]
+    for row in changed:
+        row.importance = wanted[row.skill_id]
+    JobSkill.objects.bulk_update(changed, ['importance'])
+    if removed or added or changed:
+        # Kỹ năng thuộc hồ sơ đối sánh của tin: lưu lại tin để hồ sơ và vector được tính lại.
+        job.save(update_fields=['updated_at'])
+    return len(removed) + len(added) + len(changed)
+
+
 def _create_job(resolved, *, create_missing_skills):
     recruiter = resolved['recruiter']
     user = recruiter.user
@@ -151,8 +184,11 @@ def _validation_messages(detail):
     return [str(detail)]
 
 
-def import_job_postings(rows, *, apply=False, create_missing_skills=False):
+def import_job_postings(rows, *, apply=False, create_missing_skills=False, refresh_skills=False):
     """Nhập danh sách tin; trả báo cáo từng dòng.
+
+    `refresh_skills=True` còn đồng bộ lại kỹ năng của các tin đã có theo dòng nhập
+    (số thay đổi ở `skills_changed` của từng dòng).
 
     `apply=False` chạy thử rồi hoàn tác mọi thay đổi. Khi chạy thử, kỹ năng chưa
     có trong danh mục luôn được tạo tạm để kiểm tra trọn dòng; khi ghi thật chúng
@@ -194,6 +230,10 @@ def import_job_postings(rows, *, apply=False, create_missing_skills=False):
                         entry.update(
                             status='skipped', job_public_id=existing.public_id, slug=existing.slug
                         )
+                        if refresh_skills:
+                            entry['skills_changed'] = _refresh_job_skills(
+                                existing, resolved, create_missing_skills=allow_new_skills
+                            )
                         continue
                     job = _create_job(resolved, create_missing_skills=allow_new_skills)
                     entry.update(status='imported', job_public_id=job.public_id, slug=job.slug)
