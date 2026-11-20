@@ -1,0 +1,137 @@
+{
+  "BM25 (CV → tin)": {
+    "cvs": 100,
+    "anchored_cvs": 80,
+    "recall@1": 0.35,
+    "recall@5": 0.5375,
+    "recall@10": 0.6125,
+    "mrr": 0.4426855692270938,
+    "precision@5": 0.27,
+    "ndcg@10": 0.5379910421504349,
+    "coverage": 1.0
+  },
+  "Luật `profile-rule-v2`": {
+    "cvs": 100,
+    "anchored_cvs": 80,
+    "recall@1": 0.675,
+    "recall@5": 0.95,
+    "recall@10": 0.975,
+    "mrr": 0.7947085084033614,
+    "precision@5": 0.362,
+    "ndcg@10": 0.7261430620227454,
+    "coverage": 1.0
+  },
+  "`semantic-v1` (e5-base gốc)": {
+    "cvs": 100,
+    "anchored_cvs": 80,
+    "recall@1": 0.65,
+    "recall@5": 0.95,
+    "recall@10": 0.975,
+    "mrr": 0.7756020021645021,
+    "precision@5": 0.43,
+    "ndcg@10": 0.83206701043177,
+    "coverage": 1.0
+  },
+  "intent_study": {
+    "none": {
+      "cvs": 100,
+      "anchored_cvs": 80,
+      "recall@1": 0.65,
+      "recall@5": 0.95,
+      "recall@10": 0.975,
+      "mrr": 0.7756020021645021,
+      "precision@5": 0.43,
+      "ndcg@10": 0.83206701043177,
+      "coverage": 1.0,
+      "target@10": 0.026,
+      "target_ceiling@10": 0.357,
+      "own@10": 0.247,
+      "target_ndcg@10": 0.0434602968397935
+    },
+    "own 0.10": {
+      "cvs": 100,
+      "anchored_cvs": 80,
+      "recall@1": 0.6875,
+      "recall@5": 0.975,
+      "recall@10": 0.975,
+      "mrr": 0.8226102941176471,
+      "precision@5": 0.494,
+      "ndcg@10": 0.9149873289410547,
+      "coverage": 1.0
+    },
+    "switch 0.10": {
+      "target@10": 0.08700000000000001,
+      "target_ceiling@10": 0.357,
+      "own@10": 0.245,
+      "target_ndcg@10": 0.1368285484830679
+    },
+    "own 0.20": {
+      "cvs": 100,
+      "anchored_cvs": 80,
+      "recall@1": 0.6875,
+      "recall@5": 0.9875,
+      "recall@10": 1,
+      "mrr": 0.8259375,
+      "precision@5": 0.528,
+      "ndcg@10": 0.9612232037312556,
+      "coverage": 1.0
+    },
+    "switch 0.20": {
+      "target@10": 0.196,
+      "target_ceiling@10": 0.357,
+      "own@10": 0.243,
+      "target_ndcg@10": 0.32583188117056705
+    },
+    "own 0.30": {
+      "cvs": 100,
+      "anchored_cvs": 80,
+      "recall@1": 0.6875,
+      "recall@5": 1,
+      "recall@10": 1,
+      "mrr": 0.8291666666666667,
+      "precision@5": 0.558,
+      "ndcg@10": 0.983976039378313,
+      "coverage": 1.0
+    },
+    "switch 0.30": {
+      "target@10": 0.287,
+      "target_ceiling@10": 0.357,
+      "own@10": 0.23500000000000001,
+      "target_ndcg@10": 0.534730155492781
+    },
+    "own 0.40": {
+      "cvs": 100,
+      "anchored_cvs": 80,
+      "recall@1": 0.6875,
+      "recall@5": 1,
+      "recall@10": 1,
+      "mrr": 0.8291666666666667,
+      "precision@5": 0.5700000000000001,
+      "ndcg@10": 0.9982337118757347,
+      "coverage": 1.0
+    },
+    "switch 0.40": {
+      "target@10": 0.34199999999999997,
+      "target_ceiling@10": 0.357,
+      "own@10": 0.227,
+      "target_ndcg@10": 0.7192134802488465
+    },
+    "own 0.50": {
+      "cvs": 100,
+      "anchored_cvs": 80,
+      "recall@1": 0.6875,
+      "recall@5": 1,
+      "recall@10": 1,
+      "mrr": 0.8291666666666667,
+      "precision@5": 0.576,
+      "ndcg@10": 0.9997256318399308,
+      "coverage": 1.0
+    },
+    "switch 0.50": {
+      "target@10": 0.356,
+      "target_ceiling@10": 0.357,
+      "own@10": 0.224,
+      "target_ndcg@10": 0.8290771364169272
+    }
+  }
+}

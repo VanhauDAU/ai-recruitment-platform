@@ -45,6 +45,10 @@ class MatchDocument(models.Model):
     extractor_version = models.CharField(max_length=32)
     model_version = models.CharField(max_length=64)
     status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING)
+    # Bản mới nhất của nguồn này với cùng phiên bản trích xuất và mô hình. Bản cũ (CV/tin
+    # đã đổi nội dung) vẫn được giữ cho các phân tích đã lưu, nhưng tìm kiếm theo vector
+    # chỉ dùng bản hiện hành để không ra tin trùng hay nội dung lỗi thời.
+    is_current = models.BooleanField(default=False, db_default=False)
     error_code = models.CharField(max_length=80, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -67,6 +71,24 @@ class MatchDocument(models.Model):
                 fields=['job', 'content_hash', 'extractor_version', 'model_version'],
                 condition=models.Q(kind='job'),
                 name='uq_match_document_job',
+            ),
+            models.UniqueConstraint(
+                fields=['cv_version', 'extractor_version', 'model_version'],
+                condition=models.Q(kind='cv', is_current=True),
+                name='uq_match_document_cv_current',
+            ),
+            models.UniqueConstraint(
+                fields=['job', 'extractor_version', 'model_version'],
+                condition=models.Q(kind='job', is_current=True),
+                name='uq_match_document_job_current',
+            ),
+        ]
+        indexes = [
+            # Tìm việc theo vector quét các tin hiện hành, sẵn sàng của một phiên bản mô hình.
+            models.Index(
+                fields=['kind', 'model_version', 'extractor_version'],
+                condition=models.Q(is_current=True, status='ready'),
+                name='idx_match_document_current',
             ),
         ]
 

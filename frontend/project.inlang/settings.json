@@ -18,7 +18,8 @@
       "./messages/employer-campaign/{locale}.json",
       "./messages/employer-account/{locale}.json",
       "./messages/employer-workspace/{locale}.json",
-      "./messages/shared/{locale}.json"
+      "./messages/shared/{locale}.json",
+      "./messages/candidate/{locale}.json"
     ]
   }
 }

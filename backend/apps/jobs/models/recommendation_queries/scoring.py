@@ -71,6 +71,23 @@ def _has_semantic_token_overlap(text, labels):
     return any(title_tokens & tokens(label) for label in labels)
 
 
+def salary_fits(job, desired_salary):
+    """Khoảng lương VND của tin chạm mức mong muốn (80%–125%); tin thỏa thuận thì không."""
+    if job.salary_type == Job.SalaryType.NEGOTIABLE or job.currency != 'VND' or not desired_salary:
+        return False
+    desired = Decimal(desired_salary)
+    if job.salary_type == Job.SalaryType.FROM:
+        lower, upper = job.salary_min or Decimal('0'), None
+    elif job.salary_type == Job.SalaryType.UP_TO:
+        lower, upper = Decimal('0'), job.salary_max
+    else:
+        lower = job.salary_min or job.salary_max or Decimal('0')
+        upper = job.salary_max or job.salary_min
+    return lower <= desired * Decimal('1.25') and (
+        upper is None or upper >= desired * Decimal('0.8')
+    )
+
+
 def score_job(job, context):
     details = []
 
@@ -114,20 +131,8 @@ def score_job(job, context):
     if job.experience_years and candidate_experience >= required_experience:
         add_detail('experience', _('Kinh nghiệm phù hợp'), 6)
 
-    desired_salary = context['desired_salary']
-    if job.salary_type != Job.SalaryType.NEGOTIABLE and job.currency == 'VND' and desired_salary:
-        desired = Decimal(desired_salary)
-        if job.salary_type == Job.SalaryType.FROM:
-            lower, upper = job.salary_min or Decimal('0'), None
-        elif job.salary_type == Job.SalaryType.UP_TO:
-            lower, upper = Decimal('0'), job.salary_max
-        else:
-            lower = job.salary_min or job.salary_max or Decimal('0')
-            upper = job.salary_max or job.salary_min
-        if lower <= desired * Decimal('1.25') and (
-            upper is None or upper >= desired * Decimal('0.8')
-        ):
-            add_detail('salary', _('Mức lương phù hợp'), 8)
+    if salary_fits(job, context['desired_salary']):
+        add_detail('salary', _('Mức lương phù hợp'), 8)
 
     # Paid tier is intentionally excluded from compatibility. It is only a
     # deterministic tie-breaker below and can never make an unrelated job fit.

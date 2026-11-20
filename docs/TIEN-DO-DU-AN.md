@@ -762,10 +762,10 @@ làm gợi ý" theo ngữ nghĩa, và nhà tuyển dụng xếp hạng hồ sơ 
 
 | GĐ | Hạng mục | Trạng thái |
 | --- | --- | --- |
-| 1 | Đo lường: lệnh `matching_evaluate` (chấm bằng đúng mã sản phẩm), `ml/scripts/evaluate.py`, bảng số trên validation; mở rộng tập vàng lên 30 tin; tải mô hình và dữ liệu công khai | 🟨 PR #274 chờ gộp |
-| 2 | `extract-v3`: PDF hai cột, chức danh CV tải lên, sửa các luật nhận ngày/bằng cấp/kỹ năng, schema `profile_json` | 🟨 Xong trên nhánh `feat/ai-extract-v3`, chờ PR |
+| 1 | Đo lường: lệnh `matching_evaluate` (chấm bằng đúng mã sản phẩm), `ml/scripts/evaluate.py`, bảng số trên validation; mở rộng tập vàng lên 30 tin; tải mô hình và dữ liệu công khai | ✅ Đã gộp `dev` (PR #274) |
+| 2 | `extract-v3`: PDF hai cột, chức danh CV tải lên, sửa các luật nhận ngày/bằng cấp/kỹ năng, schema `profile_json` | ✅ Đã gộp `dev` (PR #279) |
 | 3 | Dữ liệu huấn luyện, cổng chất lượng, fine-tune bi-encoder và cross-encoder, ablation | 🟨 Đang chạy trên nhánh `feat/ai-training`: sinh dữ liệu (qua đêm), rồi huấn luyện |
-| 4 | Việc làm gợi ý theo ngữ nghĩa (pgvector) | ⬜ |
+| 4 | Việc làm gợi ý theo ngữ nghĩa (pgvector), nhu cầu đã khai lái thứ hạng | ✅ Đã gộp `dev` (PR #279) |
 | 5 | `hybrid-v2`, cross-encoder vào `ml-worker`, `result_json` bản 2 (M2) | ⬜ |
 | 6 | Nhà tuyển dụng xếp hạng hồ sơ ứng tuyển | ⬜ |
 | 7 | Chạy tập test một lần, hiệu năng, nghiệm thu TC-01…30, kappa 30 cặp (M3) | ⬜ |
@@ -917,6 +917,39 @@ làm gợi ý" theo ngữ nghĩa, và nhà tuyển dụng xếp hạng hồ sơ 
   trên MPS. `run_training.sh` nối các bước theo thứ tự bộ nhớ.
 - Câu yêu cầu của tin ghi số đo cơ thể ("nữ cao từ 158cm") nay cũng bị loại khỏi đối sánh.
 - Chưa làm: biến thể văn bản đọc từ PDF cho dữ liệu huấn luyện (K6).
+
+</details>
+<details><summary>Ghi chú GĐ 4 (bản 3)</summary>
+
+- Trang "Việc làm phù hợp" và trang lưu CV xếp tin theo chiến lược `semantic-v1`
+  (`apps/matching/selectors/recommendations.py`): tìm tin gần vector toàn văn của CV mặc định
+  nhất bằng pgvector (tìm chính xác), xếp lại 100 tin gần nhất theo mức liên quan (toàn văn,
+  chức danh) và tỷ lệ kỹ năng trùng, bỏ tin dưới 30 điểm. Không cần khai nguyện vọng trước:
+  có CV đã lưu là đủ.
+- Nhu cầu đã khai lái thứ hạng (`apps/jobs/selectors/recommendation_intent.py`): tin đúng vị
+  trí mong muốn luôn được xét, +0,40 và không bị ngưỡng cắt (người đổi nghề); tỉnh +0,05,
+  lương +0,03, kinh nghiệm vừa +0,03, mỗi điểm cộng kèm lý do. Mức +0,40 chọn bằng mô phỏng
+  đổi nghề trên 100 CV: 34% tin nghề mới trong top 10 (trần 36%), vẫn giữ 23% tin nghề cũ;
+  khai đúng nghề cũ thì NDCG@10 cùng vị trí 0,832 → 0,998. Giao diện bỏ lời "dựa trên mong
+  muốn", trang chủ hiện gợi ý cả khi chưa khai nhu cầu; API thêm `cv_recommendations_enabled`.
+- PR #275 và #278 được gộp vào nhánh trung gian (không vào `dev`); hai commit GĐ 2 và GĐ 4
+  được đưa lại vào `dev` cùng phần nhu cầu trên nhánh `feat/ai-recs-preferences`.
+- Rơi về luật cũ khi cờ `ai_job_recommendation_semantic_enabled` tắt, ứng viên chưa đồng ý
+  nhận gợi ý AI, CV chưa có vector, hoặc không tin nào đủ gần. Email gợi ý và tin chèn trong
+  danh sách việc làm vẫn theo luật.
+- Kết quả chỉ mang lý do bằng lời; trang lưu CV bỏ các thẻ "+điểm" của luật cũ, hiện lý do.
+- `MatchDocument.is_current` (migration `matching.0002`): bản mới nhất của mỗi nguồn với cùng
+  phiên bản, để tìm kiếm không ra tin trùng hay nội dung lỗi thời. Hằng số phiên bản và mốc
+  hiệu chuẩn chuyển sang `apps/matching/domain/` vì selectors không được import services.
+- Ngưỡng 30 điểm đo trên 100 CV tổng hợp: ở 35 điểm khoảng 10% tin neo của CV khớp mạnh bị
+  cắt và 5% CV không còn gợi ý nào.
+- Đo trên nhãn yếu (`ml/scripts/evaluate_recommendations.py`): `semantic-v1` ngang luật cũ ở
+  việc đưa tin gốc của CV lên đầu (MRR 0,780 so với 0,795), hơn ở gợi ý tin cùng vị trí
+  (NDCG@10 0,830 so với 0,726; BM25 0,538).
+- Kiểm thử TC-18…22 (`apps/matching/tests/test_recommendations.py`), số truy vấn không tăng
+  theo số tin; sơ đồ tuần tự và hoạt động "37_goi_y_ngu_nghia" đã cập nhật theo mã.
+- Thực nghiệm HNSW (chỉ mục xấp xỉ trên 48 nghìn tin VietJobs) chưa làm; với vài nghìn tin,
+  tìm chính xác vẫn đủ nhanh.
 
 </details>
 
