@@ -167,6 +167,43 @@ class SocialPostingTests(SocialFixtures, TestCase):
             self.campaign.activities.filter(event_type='social_post_published').exists()
         )
 
+    def test_posting_now_publishes_on_commit_without_waiting_for_the_beat(self):
+        url = reverse(
+            'employer-campaign-channel-posts',
+            kwargs={'public_id': self.campaign.public_id, 'channel_id': self.channel.public_id},
+        )
+        later = (timezone.now() + timedelta(hours=1)).isoformat()
+
+        with self.captureOnCommitCallbacks(execute=True):
+            now = self.client.post(url, {'connection': self.connection.public_id}, format='json')
+        with self.captureOnCommitCallbacks(execute=True) as scheduled:
+            future = self.client.post(
+                url,
+                {'connection': self.connection.public_id, 'scheduled_for': later},
+                format='json',
+            )
+
+        self.assertEqual(
+            Post.objects.get(public_id=now.data['public_id']).status, Post.Status.PUBLISHED
+        )
+        self.assertEqual(
+            Post.objects.get(public_id=future.data['public_id']).status, Post.Status.SCHEDULED
+        )
+        self.assertEqual(scheduled, [])
+
+    def test_a_due_post_waiting_for_the_worker_reads_as_publishing(self):
+        from ..api.serializers.social import ScheduledPostSerializer
+
+        due = self.schedule()
+        later = self.schedule(scheduled_for=timezone.now() + timedelta(hours=1))
+
+        data = ScheduledPostSerializer([due, later], many=True).data
+
+        self.assertEqual(
+            [(item['queued'], item['status_label']) for item in data],
+            [(True, 'Đang đăng'), (False, 'Đã hẹn giờ')],
+        )
+
     def test_only_channels_of_the_connection_network_and_future_times_are_accepted(self):
         other = CampaignChannel.objects.create(campaign=self.campaign, kind='zalo', label='Zalo')
 
@@ -600,6 +637,14 @@ class InstagramProviderTests(TestCase):
         session.request.side_effect = [self.reply(payload) for payload in replies]
         self.sleep = MagicMock()
         return InstagramProvider(session=session, sleep=self.sleep), session
+
+    def test_consent_asks_for_business_assets_so_linked_accounts_come_back(self):
+        provider, _ = self.provider()
+
+        scope = parse_qs(urlparse(provider.authorize_url('state')).query)['scope'][0]
+
+        self.assertIn('business_management', scope.split(','))
+        self.assertIn('instagram_content_publish', scope.split(','))
 
     def test_lists_only_pages_with_a_linked_instagram_account(self):
         provider, _ = self.provider(

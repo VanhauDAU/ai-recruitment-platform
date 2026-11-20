@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from rest_framework import serializers
@@ -91,7 +92,8 @@ POST_ERROR_MESSAGES = {
 
 
 class ScheduledPostSerializer(serializers.ModelSerializer):
-    status_label = serializers.CharField(source='get_status_display', read_only=True)
+    status_label = serializers.SerializerMethodField()
+    queued = serializers.SerializerMethodField()
     network = serializers.CharField(source='connection.network', read_only=True)
     account_name = serializers.CharField(source='connection.account_name', read_only=True)
     account_picture_url = serializers.CharField(
@@ -112,6 +114,7 @@ class ScheduledPostSerializer(serializers.ModelSerializer):
             'scheduled_for',
             'status',
             'status_label',
+            'queued',
             'attempts',
             'last_error_code',
             'error_message',
@@ -120,6 +123,20 @@ class ScheduledPostSerializer(serializers.ModelSerializer):
             'deleted_at',
         ]
         read_only_fields = fields
+
+    def get_queued(self, obj) -> bool:
+        """Due and waiting for the worker: shown as being published, not as scheduled."""
+        now = timezone.now()
+        return (
+            obj.status == ScheduledSocialPost.Status.SCHEDULED
+            and obj.scheduled_for <= now
+            and (obj.next_attempt_at is None or obj.next_attempt_at <= now)
+        )
+
+    def get_status_label(self, obj) -> str:
+        if self.get_queued(obj):
+            return str(ScheduledSocialPost.Status.PUBLISHING.label)
+        return obj.get_status_display()
 
     def get_images(self, obj) -> list[str]:
         request = self.context.get('request')

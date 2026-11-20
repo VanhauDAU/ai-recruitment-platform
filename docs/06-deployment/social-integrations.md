@@ -14,7 +14,7 @@ phẩy. Mạng không có trong danh sách chạy bằng provider giả lập.
 | Mạng (`key`) | Khi giả lập | Khi thật |
 | --- | --- | --- |
 | `facebook_page` | Kết nối trả một Fanpage giả lập; "đăng" và "gỡ" chỉ ghi vào cache. Giao diện gắn nhãn "Giả lập". | Gọi Graph API của Meta với quyền `pages_show_list`, `pages_manage_posts`, `pages_read_engagement`. Hướng dẫn tạo app ở mục dưới. |
-| `instagram` | Kết nối trả một tài khoản Instagram giả lập; ảnh vẫn được thêm viền thành JPEG như khi đăng thật. | Gọi Instagram Graph API qua Facebook Login với quyền `pages_show_list`, `pages_read_engagement`, `instagram_basic`, `instagram_content_publish`, `instagram_manage_contents`. Xem mục Instagram. |
+| `instagram` | Kết nối trả một tài khoản Instagram giả lập; ảnh vẫn được thêm viền thành JPEG như khi đăng thật. | Gọi Instagram Graph API qua Facebook Login với quyền `business_management`, `pages_show_list`, `pages_read_engagement`, `instagram_basic`, `instagram_content_publish`, `instagram_manage_contents`. Xem mục Instagram. |
 
 `CAMPAIGN_SOCIAL_PROVIDER=facebook` là cách bật cũ, được hiểu là
 `CAMPAIGN_SOCIAL_LIVE_NETWORKS=facebook_page`. Test luôn chạy giả lập, bất kể
@@ -100,8 +100,13 @@ Tên mục trong giao diện Meta có thể khác đôi chút theo thời điể
 1. Mở app "ProCV Fanpage", vào **Trường hợp sử dụng → Thêm trường hợp sử
    dụng**, chọn "Quản lý tin nhắn và nội dung trên Instagram", rồi chọn bản
    thiết lập **dùng Facebook Login** (không chọn bản đăng nhập bằng Instagram).
-2. Thêm quyền `instagram_basic`, `instagram_content_publish` và
-   `instagram_manage_contents`. Quyền `instagram_manage_contents` dùng để gỡ bài.
+2. Ở mục **Thiết lập API bằng thông tin đăng nhập trên Facebook**, bấm "Add
+   required content permissions" (thêm `instagram_basic`,
+   `instagram_content_publish`, `pages_read_engagement`, `business_management`,
+   `pages_show_list`), rồi ở **Quyền và tính năng** thêm
+   `instagram_manage_contents` để gỡ bài. Thiếu `business_management` thì Trang
+   thuộc danh mục doanh nghiệp trả về không kèm tài khoản Instagram, và danh
+   sách chọn sẽ rỗng.
    Với tài khoản bạn sở hữu hoặc quản lý và có vai trò trong app, Standard
    Access là đủ, không cần App Review.
 3. Trong ứng dụng Instagram, chuyển tài khoản sang tài khoản chuyên nghiệp, rồi
