@@ -18,8 +18,10 @@ import statistics
 import unicodedata
 import warnings
 
+import sys
+
 import pypdfium2 as pdfium
-from paths import CV_MANIFEST, CV_PDF_SYSTEM_DIR, CV_PDF_TOPCV_DIR, REPORTS_DIR, SYNTHETIC_CV_DIR
+from paths import CV_MANIFEST, CV_PDF_SYSTEM_DIR, CV_PDF_TOPCV_DIR, REPO_ROOT, REPORTS_DIR, SYNTHETIC_CV_DIR
 from pypdf import PdfReader
 
 WORD = re.compile(r'[^\W\d_]+')
@@ -33,6 +35,25 @@ def read_pdfium(path):
     document = pdfium.PdfDocument(path)
     try:
         return '\n'.join(page.get_textpage().get_text_bounded() for page in document)
+    finally:
+        document.close()
+
+
+def read_in_reading_order(path):
+    """Chữ của PDF theo thứ tự đọc, như hệ thống đọc CV tải lên (`cvs/services/pdf_layout.py`)."""
+    # Module thuần Python, không phụ thuộc Django, nên nạp thẳng từ thư mục của nó.
+    sys.path.insert(0, str(REPO_ROOT / 'backend' / 'apps' / 'cvs' / 'services'))
+    from pdf_layout import page_text
+
+    def chars(page):
+        textpage, height = page.get_textpage(), page.get_height()
+        for index in range(textpage.count_chars()):
+            left, bottom, right, top = textpage.get_charbox(index, loose=True)
+            yield textpage.get_text_range(index, 1), left, height - top, right, height - bottom
+
+    document = pdfium.PdfDocument(path)
+    try:
+        return '\n'.join(page_text(chars(page)) for page in document)
     finally:
         document.close()
 

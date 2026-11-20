@@ -4,8 +4,10 @@ Kỹ năng chỉ được nhận khi tên hoặc alias xuất hiện nguyên vă
 luôn kèm câu chứa nó làm bằng chứng: bộ nhận diện không suy ra kỹ năng mà CV
 không viết (kế hoạch mục 6b). Khớp ngữ nghĩa bằng vector thêm ở bước chấm điểm.
 
-Kỹ năng thuộc nhóm "Phẩm chất cá nhân" vẫn được nhận nhưng `counted = False`:
-rubric và công thức chấm không đếm nhóm này.
+Kỹ năng thuộc nhóm "Phẩm chất cá nhân" và nhóm "Tên vị trí" vẫn được nhận nhưng
+`counted = False`. Rubric và công thức chấm không đếm phẩm chất cá nhân; còn tên
+vị trí ("Fullstack", "Kế toán") là nghề chứ không phải kỹ năng, CV không liệt kê
+nó ở mục kỹ năng, và việc đúng nghề đã được đo bằng phép so chức danh.
 """
 
 import re
@@ -15,6 +17,8 @@ from dataclasses import dataclass
 from apps.skills.selectors import active_skill_terms
 
 TRAIT_GROUP = 'Phẩm chất cá nhân'
+POSITION_GROUP = 'Tên vị trí'
+UNCOUNTED_GROUPS = (TRAIT_GROUP, POSITION_GROUP)
 # Tên rất ngắn ("AI", "C#") dễ trùng chữ thường trong câu, nên phải đúng hoa thường.
 CASE_SENSITIVE_MAX_CHARS = 2
 # Ký tự được xem là một phần của tên công nghệ: không cắt "C#" khỏi "C#.NET",
@@ -36,7 +40,7 @@ class CatalogSkill:
 
     @property
     def counted(self):
-        return self.group != TRAIT_GROUP
+        return self.group not in UNCOUNTED_GROUPS
 
 
 def _alternation(terms, flags):

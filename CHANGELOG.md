@@ -8,6 +8,19 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-20
 
+#### Changed — AI đối sánh: trích xuất `extract-v3` (kế hoạch bản 3, GĐ 2)
+
+- PDF được đọc theo vị trí chữ (`apps/cvs/services/pdf_layout.py`): mẫu CV hai cột
+  không còn để tiêu đề mục rời khỏi nội dung. Áp dụng cho cả bước nhận dạng CV tải lên.
+- Khoảng ngày viết liền, in thành hai dòng, "tháng 9 năm 2021", "T9/2021"; khoảng chỉ
+  ghi năm tính từ giữa năm; từ khóa bằng cấp, ngoại ngữ so theo ranh giới từ.
+- CV tải lên có chức danh (`title`); cấp bậc lấy theo việc gần nhất.
+- Danh mục kỹ năng: công cụ cụ thể tách khỏi khái niệm chung (PyTorch ≠ Deep Learning…);
+  nhóm "Tên vị trí" không được đếm; `import_job_postings --refresh-skills`.
+- `profile_json` có JSON Schema (`services/extraction/profile.schema.json`).
+- `EXTRACTOR_VERSION = 'extract-v3'`: sau khi triển khai chạy
+  `docker compose exec ml-worker python manage.py matching_backfill --inline`.
+
 #### Added — AI đối sánh: đo lường trên tập vàng (kế hoạch bản 3, GĐ 1)
 
 - Lệnh `matching_evaluate` chấm danh sách cặp CV–tin bằng đúng bước trích xuất,

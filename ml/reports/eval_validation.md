@@ -11,14 +11,14 @@ NDCG@5 khi xếp CV ngẫu nhiên là 0,445: mỗi tin chỉ có 10 CV nên mứ
 | BM25 | 0,216 | -0,123 đến 0,548 | 0,679 | 0,486 đến 0,861 | – |
 | Luật `profile-rule-v2` | 0,628 | 0,479 đến 0,733 | 0,874 | 0,798 đến 0,938 | 6/10 |
 | Bi-encoder `e5-base-zs-v1` (cosine toàn văn) | 0,550 | 0,375 đến 0,720 | 0,758 | 0,577 đến 0,911 | 5/10 |
-| hybrid | 0,610 | 0,423 đến 0,777 | 0,817 | 0,654 đến 0,932 | 6/10 |
+| hybrid | 0,603 | 0,406 đến 0,779 | 0,815 | 0,646 đến 0,932 | 6/10 |
 | Bi-encoder `e5-small-zs-v1` (cosine toàn văn) | 0,457 | 0,229 đến 0,683 | 0,702 | 0,519 đến 0,869 | 3/10 |
 | Bi-encoder `minilm-l12-zs-v1` (cosine toàn văn) | 0,530 | 0,325 đến 0,718 | 0,663 | 0,487 đến 0,823 | 1/10 |
 
 ## Thang điểm của `hybrid`
 
-- Kappa bậc hai giữa mức hiển thị và nhãn: 0,525.
-- 33 cặp nhãn 0 (khác ngành): trung vị 28 điểm, cao nhất 58, 5 cặp từ 50 điểm trở lên.
+- Kappa bậc hai giữa mức hiển thị và nhãn: 0,511.
+- 33 cặp nhãn 0 (khác ngành): trung vị 28 điểm, cao nhất 65, 6 cặp từ 50 điểm trở lên.
 
 ## Cặp khác ngôn ngữ (tin và CV một Việt một Anh)
 
@@ -28,6 +28,6 @@ NDCG@5 khi xếp CV ngẫu nhiên là 0,445: mỗi tin chỉ có 10 CV nên mứ
 | BM25 | 24 | 0,694 |
 | Luật `profile-rule-v2` | 24 | 0,733 |
 | Bi-encoder `e5-base-zs-v1` (cosine toàn văn) | 24 | 0,656 |
-| hybrid | 24 | 0,706 |
+| hybrid | 24 | 0,704 |
 | Bi-encoder `e5-small-zs-v1` (cosine toàn văn) | 24 | 0,559 |
 | Bi-encoder `minilm-l12-zs-v1` (cosine toàn văn) | 24 | 0,655 |
