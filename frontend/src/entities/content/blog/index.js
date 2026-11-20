@@ -1,5 +1,6 @@
 export * from './api/blog-admin.api'
 export * from './api/blog.api'
 export * from './lib/blog-paths'
+export { blogStateColor } from './lib/blog-editorial-state'
 export { processBlogContent } from './lib/blog-content'
 export { default as BlogPostContent } from './ui/BlogPostContent'

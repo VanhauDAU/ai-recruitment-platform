@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test('knowledgebase admin: explicit save, review and publish workflow', { tag: '@responsive' }, async ({ page }) => {
+test('knowledgebase admin: explicit save, publish, edit and discard a draft', { tag: '@responsive' }, async ({ page }) => {
   const pageErrors = []
   page.on('pageerror', (error) => pageErrors.push(error.message))
   const category = {
@@ -42,7 +42,6 @@ test('knowledgebase admin: explicit save, review and publish workflow', { tag: '
       seo_description: '',
       change_summary: '',
       source_reference: '/forgot-password',
-      review_note: '',
       created_by: { public_id: 'usr_editor', name: 'Biên tập viên' },
       created_at: '2026-08-05T07:00:00Z',
       updated_at: '2026-08-05T07:00:00Z',
@@ -90,18 +89,11 @@ test('knowledgebase admin: explicit save, review and publish workflow', { tag: '
       article.revision_token += 1
       article.latest_revision.updated_at = article.revisions[0].updated_at
       body = responseArticle()
-    } else if (path === '/api/admin/knowledgebase/articles/kba_reset/revisions/1/submit/') {
-      article.revisions[0].status = 'IN_REVIEW'
-      article.latest_revision.status = 'IN_REVIEW'
-      article.revision_token += 1
-      body = responseArticle()
-    } else if (path === '/api/admin/knowledgebase/articles/kba_reset/revisions/1/approve/') {
-      article.revisions[0].status = 'APPROVED'
-      article.latest_revision.status = 'APPROVED'
-      article.revision_token += 1
-      body = responseArticle()
     } else if (path === '/api/admin/knowledgebase/articles/kba_reset/publish/') {
-      article.published_revision_number = 1
+      const { revision_number: number } = route.request().postDataJSON()
+      article.revisions.find((item) => item.number === number).status = 'PUBLISHED'
+      article.latest_revision.status = 'PUBLISHED'
+      article.published_revision_number = number
       article.first_published_at = '2026-08-05T09:00:00Z'
       article.current_published_at = article.first_published_at
       article.review_due_at = route.request().postDataJSON().review_due_at
@@ -123,12 +115,18 @@ test('knowledgebase admin: explicit save, review and publish workflow', { tag: '
         change_summary: payload.change_summary,
         seo_title: payload.seo_title,
         seo_description: payload.seo_description,
-        review_note: '',
-        created_at: '2026-08-05T10:00:00Z',
+          created_at: '2026-08-05T10:00:00Z',
         updated_at: '2026-08-05T10:00:00Z',
       }
       article.revisions.unshift(revision)
+      article.title = payload.title
       article.latest_revision = { number: 2, status: 'DRAFT', updated_at: revision.updated_at }
+      article.revision_token += 1
+      body = responseArticle()
+    } else if (path === '/api/admin/knowledgebase/articles/kba_reset/revisions/2/discard/') {
+      article.revisions = article.revisions.filter((item) => item.number !== 2)
+      article.title = article.revisions[0].title
+      article.latest_revision = { number: 1, status: 'PUBLISHED', updated_at: article.revisions[0].updated_at }
       article.revision_token += 1
       body = responseArticle()
     }
@@ -145,12 +143,9 @@ test('knowledgebase admin: explicit save, review and publish workflow', { tag: '
 
   await page.getByRole('button', { name: 'Làm thế nào để đặt lại mật khẩu?', exact: true }).click()
   await expect(page).toHaveURL('/admin/app/knowledgebase/kba_reset')
-  await expect(page.getByText('Bước tiếp theo', { exact: true })).toBeVisible()
-  const submitButton = page.getByRole('button', { name: /Gửi duyệt/ })
-  await expect(submitButton).toBeVisible()
-  const submitButtonBox = await submitButton.boundingBox()
-  expect(submitButtonBox.width).toBeLessThan(180)
-  expect(submitButtonBox.height).toBeLessThanOrEqual(32)
+  await expect(page.getByText('Chưa xuất bản', { exact: true })).toBeVisible()
+  const publishButton = page.getByRole('button', { name: /Xuất bản r1/ })
+  await expect(publishButton).toBeVisible()
   const title = page.getByLabel('Câu hỏi')
   await expect(title).toHaveValue('Làm thế nào để đặt lại mật khẩu?')
   const [workflowTop, editorTop] = await Promise.all([
@@ -193,51 +188,29 @@ test('knowledgebase admin: explicit save, review and publish workflow', { tag: '
   await expect(page.getByRole('heading', { name: 'Tôi đặt lại mật khẩu như thế nào?' })).toBeVisible()
   await dismissToast()
 
-  await submitButton.scrollIntoViewIfNeeded()
-  if (page.viewportSize().width < 600) {
-    const geometry = await submitButton.evaluate((element) => {
-      const rect = element.getBoundingClientRect()
-      const covering = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2)
-      return {
-        covering: covering?.textContent?.trim(),
-        position: getComputedStyle(document.querySelector('.knowledge-editor__sticky')).position,
-        rect: { bottom: rect.bottom, top: rect.top },
-        scrollY: window.scrollY,
-      }
-    })
-    expect(geometry.covering).toContain('Gửi duyệt')
-  }
-  await clickWorkflow(submitButton)
-  await clickWorkflow(page.getByRole('dialog').getByRole('button', { name: 'Gửi duyệt', exact: true }))
-  await expect(page.getByText('Đã gửi revision đi duyệt.')).toBeVisible()
-  await expect(page.getByRole('dialog')).toHaveCount(0)
-  await dismissToast()
-  await clickWorkflow(page.getByRole('button', { name: /Duyệt revision/ }))
-  await clickWorkflow(page.getByRole('dialog').getByRole('button', { name: 'Duyệt', exact: true }))
-  await expect(page.getByText('Đã duyệt revision.')).toBeVisible()
-  await expect(page.getByRole('dialog')).toHaveCount(0)
-  await dismissToast()
-
-  await clickWorkflow(page.getByRole('button', { name: /Xuất bản r1/ }))
+  await clickWorkflow(publishButton)
+  await expect(page.getByRole('dialog', { name: 'Xuất bản bản nháp r1' })).toContainText('hiển thị công khai ngay')
   await clickWorkflow(page.getByRole('dialog').getByRole('button', { name: 'Xuất bản ngay' }))
   await expect(page.getByText('Đã xuất bản nội dung lên trung tâm trợ giúp.')).toBeVisible()
+  await expect(page.getByText('Đang công khai r1', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: /Xuất bản r1/ })).toHaveCount(0)
   await dismissToast()
 
-  const createRevisionButton = page.getByRole('button', { name: 'Tạo revision mới' })
-  await expect(createRevisionButton).toBeVisible()
-  await clickWorkflow(createRevisionButton)
-  const revisionDialog = page.getByRole('dialog', { name: 'Tạo revision mới' })
-  const createRevisionConfirm = revisionDialog.getByRole('button', { name: 'Tạo revision' })
-  await expect(createRevisionConfirm).toBeDisabled()
-  await revisionDialog.getByLabel(/Tóm tắt thay đổi/).fill('Bổ sung bước xác minh và ảnh minh họa.')
-  await expect(createRevisionConfirm).toBeEnabled()
-  await clickWorkflow(createRevisionConfirm)
+  // Bài đang công khai vẫn sửa thẳng: lưu lần đầu mở bản nháp r2, bản r1 giữ nguyên.
+  await expect(page.getByRole('button', { name: 'Tạo revision mới' })).toHaveCount(0)
+  await title.fill('Đặt lại mật khẩu ProCV')
+  await expect(page.getByRole('button', { name: /Lưu & xuất bản/ })).toBeVisible()
+  await page.getByLabel('Tóm tắt thay đổi', { exact: true }).fill('Bổ sung bước xác minh và ảnh minh họa.')
+  await clickWorkflow(page.getByRole('button', { name: /Lưu bản nháp/ }))
+  await expect(page.getByText(/Đã tạo bản nháp mới/)).toBeVisible()
+  await expect(page.getByText('Bản nháp r2', { exact: true })).toBeVisible()
+  await expect(page.getByText('Đang công khai r1', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Xuất bản r2/ })).toBeVisible()
+  await dismissToast()
 
-  await expect(page.getByText('Đã tạo revision mới để biên tập.')).toBeVisible()
-  await expect(revisionDialog).toHaveCount(0)
-  const changeSummary = page.getByLabel('Tóm tắt thay đổi', { exact: true })
-  await expect(changeSummary).toBeEnabled()
-  await expect(changeSummary).toHaveValue('Bổ sung bước xác minh và ảnh minh họa.')
-  await expect(page.getByRole('button', { name: /Gửi duyệt/ })).toBeVisible()
+  await clickWorkflow(page.getByRole('button', { name: /Hủy bản nháp/ }))
+  await clickWorkflow(page.getByRole('dialog', { name: 'Hủy bản nháp' }).getByRole('button', { name: 'Hủy bản nháp' }))
+  await expect(page.getByText('Đã hủy bản nháp. Bài giữ nguyên bản đang công khai.')).toBeVisible()
+  await expect(page.getByText('Bản nháp r2', { exact: true })).toHaveCount(0)
+  await expect(title).toHaveValue('Tôi đặt lại mật khẩu như thế nào?')
 })

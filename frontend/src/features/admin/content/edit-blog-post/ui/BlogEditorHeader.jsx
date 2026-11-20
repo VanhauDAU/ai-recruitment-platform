@@ -8,7 +8,7 @@ import {
   SendOutlined,
 } from '@ant-design/icons'
 import { Button, Tag } from 'antd'
-import { stateColor } from '../model/editor-options'
+import { blogStateColor } from '@/entities/content/blog'
 
 const SAVE_STATE_COPY = {
   dirty: { color: 'gold', icon: <EditOutlined />, label: 'Có thay đổi chưa lưu' },
@@ -27,11 +27,9 @@ export default function BlogEditorHeader({
   onPreview,
   onPublish,
   onSave,
-  onSubmit,
   post,
   saveLoading,
   saveState,
-  submitLabel,
   title,
 }) {
   const saveStatus = SAVE_STATE_COPY[saveState] || SAVE_STATE_COPY.saved
@@ -44,7 +42,7 @@ export default function BlogEditorHeader({
             <p className="text-xs font-medium text-slate-500">Cẩm nang nghề nghiệp / {isNew ? 'Bài viết mới' : 'Biên tập'}</p>
             <div className="mt-1 flex min-w-0 flex-wrap items-center gap-2">
               <h1 className="max-w-full truncate text-lg font-bold text-slate-900 sm:text-xl">{title || 'Bài viết chưa đặt tên'}</h1>
-              {post && <Tag color={stateColor(post.editorial_state)}>{post.editorial_state_label}</Tag>}
+              {post && <Tag color={blogStateColor(post.editorial_state)}>{post.editorial_state_label}</Tag>}
               {!isNew && !canEdit && <Tag>Chỉ xem nội dung</Tag>}
               {(isNew || canEdit) && <Tag color={saveStatus.color} icon={saveStatus.icon}>{isNew ? 'Chưa tạo bản nháp' : saveStatus.label}</Tag>}
             </div>
@@ -55,8 +53,7 @@ export default function BlogEditorHeader({
           <Button className="min-h-11" icon={<EyeOutlined />} onClick={onPreview}>Xem trước</Button>
           {!isNew && canEdit && <Button className="min-h-11" loading={saveLoading} onClick={onSave}>Lưu ngay</Button>}
           {isNew && <Button className="col-span-2 min-h-11 sm:col-span-1" type="primary" loading={createLoading} onClick={onCreate}>Tạo bản nháp</Button>}
-          {allowedActions.includes('submit') && <Button className="col-span-2 min-h-11 sm:col-span-1" type="primary" icon={<SendOutlined />} onClick={onSubmit}>{submitLabel}</Button>}
-          {allowedActions.includes('publish') && <Button className="col-span-2 min-h-11 sm:col-span-1" type="primary" onClick={onPublish}>Xuất bản</Button>}
+          {allowedActions.includes('publish') && <Button className="col-span-2 min-h-11 sm:col-span-1" type="primary" icon={<SendOutlined />} onClick={onPublish}>Xuất bản</Button>}
         </div>
       </div>
     </header>

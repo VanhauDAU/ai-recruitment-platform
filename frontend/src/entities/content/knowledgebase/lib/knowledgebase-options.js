@@ -5,10 +5,27 @@ export const KNOWLEDGE_ARTICLE_TYPES = [
 ]
 
 export const KNOWLEDGE_REVISION_STATUS = {
-  DRAFT: { label: 'Bản nháp', color: 'default' },
-  IN_REVIEW: { label: 'Chờ duyệt', color: 'processing' },
-  APPROVED: { label: 'Đã duyệt', color: 'success' },
-  REJECTED: { label: 'Cần chỉnh sửa', color: 'error' },
+  DRAFT: { label: 'Bản nháp', color: 'processing' },
+  PUBLISHED: { label: 'Đã xuất bản', color: 'success' },
+}
+
+/** Nhãn trạng thái của một dòng bài viết: bản nháp đè lên bài đang công khai đọc là "Có bản nháp". */
+export function knowledgeLatestStatus({ latest_revision: latest, published_revision_number: publishedNumber } = {}) {
+  if (!latest) return null
+  if (latest.status === 'DRAFT' && publishedNumber) return { label: 'Có bản nháp', color: 'processing' }
+  return KNOWLEDGE_REVISION_STATUS[latest.status] || null
+}
+
+/** Trạng thái bài trong workspace: công khai bản nào, có bản nháp nào đang chờ xuất bản. */
+export function knowledgeArticleState(article) {
+  if (!article) return []
+  const draft = article.revisions?.find((item) => item.status === 'DRAFT')
+  const tags = []
+  if (article.lifecycle_state === 'ARCHIVED') tags.push({ label: 'Đã lưu trữ', color: 'default' })
+  else if (article.published_revision_number) tags.push({ label: `Đang công khai r${article.published_revision_number}`, color: 'success' })
+  else tags.push({ label: 'Chưa xuất bản', color: 'default' })
+  if (draft) tags.push({ label: `Bản nháp r${draft.number}`, color: 'processing' })
+  return tags
 }
 
 export const KNOWLEDGE_LIFECYCLE_STATUS = {

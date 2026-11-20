@@ -52,9 +52,9 @@ describe('blog admin API', () => {
   it('creates without a client-controlled slug and posts explicit workflow actions', async () => {
     const payload = { title: 'Nhân viên Sales là gì?', category_public_id: 'pcat_1' }
     await createAdminBlogPost(payload)
-    await runAdminBlogAction('ps_123', 'submit', {})
+    await runAdminBlogAction('ps_123', 'publish', {})
     expect(post).toHaveBeenNthCalledWith(1, '/admin/blog/posts/', payload)
-    expect(post).toHaveBeenNthCalledWith(2, '/admin/blog/posts/ps_123/submit/', {})
+    expect(post).toHaveBeenNthCalledWith(2, '/admin/blog/posts/ps_123/publish/', {})
   })
 
   it('merges a source tag into an explicit target', async () => {

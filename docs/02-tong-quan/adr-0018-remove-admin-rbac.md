@@ -62,4 +62,6 @@ dùng chung toàn hệ thống), impact token cho thao tác tài khoản nguy hi
 - Audit log cũ (`assign_membership`, `set_role_permissions`,
   `create_department`…) được giữ làm lịch sử; frontend vẫn hiển thị nhãn.
 - Không còn phân tách quyền giữa người soạn và người duyệt (blog, trợ giúp,
-  mẫu CV); quy trình trạng thái nội dung vẫn giữ, mọi thao tác có audit.
+  mẫu CV); quy trình trạng thái nội dung vẫn giữ, mọi thao tác có audit. Blog và
+  trợ giúp sau đó bỏ hẳn bước tự duyệt
+  ([ADR-0024](./adr-0024-content-publish-without-review.md)).

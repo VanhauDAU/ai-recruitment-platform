@@ -78,7 +78,6 @@ MANAGER_CODENAMES = [
     'change_post',
     'delete_post',
     'view_post',
-    'can_publish_post',
     'add_postcategory',
     'change_postcategory',
     'delete_postcategory',

@@ -73,8 +73,8 @@ class BlogAdminApiTests(APITestCase):
             thumbnail_url='blog/thumbnail.webp',
             seo_title='SEO title',
             seo_description='SEO description',
-            status=Post.Status.PENDING,
-            submitted_at=timezone.now(),
+            status=Post.Status.PUBLISHED,
+            published_at=timezone.now(),
             view_count=90,
         )
         self.client.force_authenticate(self.publisher)
@@ -131,34 +131,16 @@ class BlogAdminApiTests(APITestCase):
             {'summary': 'Đã phối hợp sửa bài của đồng nghiệp', 'base_revision': 1},
             format='json',
         )
-        submitted_other = self.client.post(
-            reverse('blog-admin-post-submit', args=[other.public_id]),
-            {},
-            format='json',
-        )
         self.assertEqual(saved_other.status_code, 200, saved_other.data)
-        self.assertEqual(submitted_other.status_code, 200, submitted_other.data)
-        self.assertEqual(submitted_other.data['editorial_state'], 'pending')
-        self.assertIn('edit', submitted_other.data['allowed_actions'])
-        self.assertIn('submit', submitted_other.data['allowed_actions'])
-
-        pending_revision = submitted_other.data['editable_version']['edit_revision']
-        edited_while_pending = self.client.patch(
-            reverse('blog-admin-post-draft', args=[other.public_id]),
-            {
-                'summary': 'Tiếp tục sửa sau khi đã gửi duyệt',
-                'base_revision': pending_revision,
-            },
-            format='json',
-        )
-        resent = self.client.post(
-            reverse('blog-admin-post-submit', args=[other.public_id]),
+        self.assertIn('publish', saved_other.data['allowed_actions'])
+        published_other = self.client.post(
+            reverse('blog-admin-post-publish', args=[other.public_id]),
             {},
             format='json',
         )
-        self.assertEqual(edited_while_pending.status_code, 200, edited_while_pending.data)
-        self.assertEqual(resent.status_code, 200, resent.data)
-        self.assertEqual(resent.data['editorial_state'], 'pending')
+        self.assertEqual(published_other.status_code, 200, published_other.data)
+        self.assertEqual(published_other.data['editorial_state'], 'published')
+        self.assertNotIn('publish', published_other.data['allowed_actions'])
 
         url = reverse('blog-admin-post-draft', args=[created.data['public_id']])
         saved = self.client.patch(
@@ -177,7 +159,7 @@ class BlogAdminApiTests(APITestCase):
         self.assertEqual(stale.status_code, 409, stale.data)
         self.assertEqual(stale.data['code'], 'blog_resource_changed')
 
-    def test_published_revision_stays_private_until_publisher_approves(self):
+    def test_edit_of_a_published_post_stays_private_until_it_is_published(self):
         post = Post.objects.create(
             title='Tiêu đề đang hiển thị',
             category=self.category,
@@ -192,7 +174,7 @@ class BlogAdminApiTests(APITestCase):
         revised = self.client.patch(
             draft_url,
             {
-                'title': 'Tiêu đề mới chưa duyệt',
+                'title': 'Tiêu đề mới chưa xuất bản',
                 'summary': 'Sapo mới',
                 'content': '<p>Nội dung mới</p>',
                 'base_revision': 1,
@@ -205,28 +187,14 @@ class BlogAdminApiTests(APITestCase):
         public_before = self.client.get(reverse('blog-post-detail', args=[post.slug]))
         self.assertEqual(public_before.data['title'], 'Tiêu đề đang hiển thị')
 
-        submitted = self.client.post(reverse('blog-admin-post-submit', args=[post.public_id]), {})
-        self.assertEqual(submitted.status_code, 200, submitted.data)
+        self.assertEqual(revised.data['editorial_state'], 'published_with_draft')
+        self.assertIn('publish', revised.data['allowed_actions'])
 
-        edited_pending_copy = self.client.patch(
-            draft_url,
-            {
-                'title': 'Tiêu đề mới nhất sau khi gửi duyệt',
-                'base_revision': submitted.data['editable_version']['edit_revision'],
-            },
-            format='json',
-        )
-        self.assertEqual(edited_pending_copy.status_code, 200, edited_pending_copy.data)
-        resubmitted = self.client.post(reverse('blog-admin-post-submit', args=[post.public_id]), {})
-        self.assertEqual(resubmitted.status_code, 200, resubmitted.data)
-        self.assertEqual(resubmitted.data['editorial_state'], 'published_with_pending')
-
-        self.client.force_authenticate(self.publisher)
         published = self.client.post(reverse('blog-admin-post-publish', args=[post.public_id]), {})
         self.assertEqual(published.status_code, 200, published.data)
 
         public_after = self.client.get(reverse('blog-post-detail', args=[post.slug]))
-        self.assertEqual(public_after.data['title'], 'Tiêu đề mới nhất sau khi gửi duyệt')
+        self.assertEqual(public_after.data['title'], 'Tiêu đề mới chưa xuất bản')
         self.assertFalse(PostWorkingCopy.objects.filter(post=post).exists())
 
     def test_first_published_autosave_inherits_the_current_post_revision(self):
@@ -287,15 +255,14 @@ class BlogAdminApiTests(APITestCase):
         self.assertEqual(saved.status_code, 200, saved.data)
         self.assertEqual(saved.data['editable_version']['edit_revision'], 6)
 
-        submitted = self.client.post(
-            reverse('blog-admin-post-submit', args=[post.public_id]),
-            {},
+        saved_again = self.client.patch(
+            draft_url,
+            {'summary': 'Bản sửa sẵn sàng xuất bản', 'base_revision': 6},
             format='json',
         )
-        self.assertEqual(submitted.status_code, 200, submitted.data)
-        self.assertEqual(submitted.data['editable_version']['edit_revision'], 7)
+        self.assertEqual(saved_again.status_code, 200, saved_again.data)
+        self.assertEqual(saved_again.data['editable_version']['edit_revision'], 7)
 
-        self.client.force_authenticate(self.publisher)
         published = self.client.post(
             reverse('blog-admin-post-publish', args=[post.public_id]),
             {},
@@ -394,7 +361,7 @@ class BlogAdminApiTests(APITestCase):
         )
         self.assertEqual(restored.status_code, 200, restored.data)
         self.assertEqual(restored.data['editorial_state'], 'draft')
-        self.assertIn('submit', restored.data['allowed_actions'])
+        self.assertIn('publish', restored.data['allowed_actions'])
 
     def test_quick_create_normalizes_tag_and_rejects_duplicates(self):
         self.client.force_authenticate(self.editor)

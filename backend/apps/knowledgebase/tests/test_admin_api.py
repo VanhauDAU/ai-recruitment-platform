@@ -37,38 +37,42 @@ class KnowledgeAdminApiTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
         return response
 
-    def test_admin_can_run_draft_review_publish_archive_restore_workflow(self):
+    def test_admin_can_run_draft_publish_discard_archive_restore_workflow(self):
         created = self._create_article()
         public_id = created.data['public_id']
         token = created.data['revision_token']
         self.assertIn('private', created['Cache-Control'])
 
-        submitted = self.client.post(
-            reverse('kb-admin-revision-submit', args=[public_id, 1]),
-            {'revision_token': token},
-            format='json',
-        )
-        self.assertEqual(submitted.status_code, 200, submitted.data)
-        approved = self.client.post(
-            reverse('kb-admin-revision-approve', args=[public_id, 1]),
-            {'revision_token': submitted.data['revision_token']},
-            format='json',
-        )
-        self.assertEqual(approved.status_code, 200, approved.data)
         published = self.client.post(
             reverse('kb-admin-article-publish', args=[public_id]),
-            {
-                'revision_number': 1,
-                'revision_token': approved.data['revision_token'],
-            },
+            {'revision_number': 1, 'revision_token': token},
             format='json',
         )
         self.assertEqual(published.status_code, 200, published.data)
         self.assertEqual(published.data['published_revision_number'], 1)
+        self.assertEqual(published.data['revisions'][0]['status'], 'PUBLISHED')
+
+        drafted = self.client.post(
+            reverse('kb-admin-revision-list', args=[public_id]),
+            {
+                'revision_token': published.data['revision_token'],
+                'body': '<h2>Các bước</h2><p>Mở trang đăng nhập bằng email.</p>',
+            },
+            format='json',
+        )
+        self.assertEqual(drafted.status_code, status.HTTP_201_CREATED, drafted.data)
+        self.assertEqual(drafted.data['revisions'][0]['status'], 'DRAFT')
+        discarded = self.client.post(
+            reverse('kb-admin-revision-discard', args=[public_id, 2]),
+            {'revision_token': drafted.data['revision_token']},
+            format='json',
+        )
+        self.assertEqual(discarded.status_code, 200, discarded.data)
+        self.assertEqual([item['number'] for item in discarded.data['revisions']], [1])
 
         archived = self.client.post(
             reverse('kb-admin-article-archive', args=[public_id]),
-            {'revision_token': published.data['revision_token']},
+            {'revision_token': discarded.data['revision_token']},
             format='json',
         )
         self.assertEqual(archived.status_code, 200, archived.data)
@@ -102,20 +106,26 @@ class KnowledgeAdminApiTests(APITestCase):
             '<h2>Các bước</h2><p>Mở trang đăng nhập.</p>',
         )
 
-    def test_reject_requires_review_note(self):
+    def test_publishing_an_edit_of_a_public_article_requires_change_summary(self):
         created = self._create_article()
-        submitted = self.client.post(
-            reverse('kb-admin-revision-submit', args=[created.data['public_id'], 1]),
-            {'revision_token': created.data['revision_token']},
+        public_id = created.data['public_id']
+        published = self.client.post(
+            reverse('kb-admin-article-publish', args=[public_id]),
+            {'revision_number': 1, 'revision_token': created.data['revision_token']},
+            format='json',
+        )
+        drafted = self.client.post(
+            reverse('kb-admin-revision-list', args=[public_id]),
+            {'revision_token': published.data['revision_token']},
             format='json',
         )
         response = self.client.post(
-            reverse('kb-admin-revision-reject', args=[created.data['public_id'], 1]),
-            {'revision_token': submitted.data['revision_token']},
+            reverse('kb-admin-article-publish', args=[public_id]),
+            {'revision_number': 2, 'revision_token': drafted.data['revision_token']},
             format='json',
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.data)
-        self.assertIn('review_note', response.data)
+        self.assertIn('change_summary', response.data)
 
     def test_non_admin_cannot_read_admin_api(self):
         candidate = User.objects.create_user(
@@ -151,7 +161,7 @@ class KnowledgeAdminApiTests(APITestCase):
             order=901,
         )
         records = [
-            (category_z, 'ACTIVE', KnowledgeArticleRevision.Status.IN_REVIEW, 'Z'),
+            (category_z, 'ACTIVE', KnowledgeArticleRevision.Status.PUBLISHED, 'Z'),
             (category_a, 'ARCHIVED', KnowledgeArticleRevision.Status.DRAFT, 'A'),
         ]
         for category, lifecycle, revision_status, suffix in records:
@@ -190,7 +200,7 @@ class KnowledgeAdminApiTests(APITestCase):
         self.assertEqual(status_sorted.status_code, 200, status_sorted.data)
         self.assertEqual(
             [row['latest_revision']['status'] for row in status_sorted.data['results']],
-            ['IN_REVIEW', 'DRAFT'],
+            ['PUBLISHED', 'DRAFT'],
         )
 
     def test_summary_aggregates_the_complete_filtered_result_not_one_page(self):
@@ -203,10 +213,8 @@ class KnowledgeAdminApiTests(APITestCase):
                 review_due_at=(timezone.now() - timedelta(days=1)) if index < 3 else None,
             )
             revision_status = (
-                KnowledgeArticleRevision.Status.APPROVED
+                KnowledgeArticleRevision.Status.PUBLISHED
                 if index < 21
-                else KnowledgeArticleRevision.Status.IN_REVIEW
-                if index < 23
                 else KnowledgeArticleRevision.Status.DRAFT
             )
             revision = KnowledgeArticleRevision.objects.create(
@@ -237,7 +245,7 @@ class KnowledgeAdminApiTests(APITestCase):
         self.assertEqual(summary.status_code, 200, summary.data)
         self.assertEqual(
             summary.data,
-            {'total': 25, 'published': 21, 'in_review': 2, 'overdue': 3},
+            {'total': 25, 'published': 21, 'drafts': 4, 'overdue': 3},
         )
 
     @patch('apps.knowledgebase.api.views.admin_shared.record_metric')
@@ -284,7 +292,7 @@ class KnowledgeAdminApiTests(APITestCase):
         created = self._create_article()
         article = KnowledgeArticle.objects.get(public_id=created.data['public_id'])
         revision = article.revisions.get(number=1)
-        revision.status = KnowledgeArticleRevision.Status.APPROVED
+        revision.status = KnowledgeArticleRevision.Status.PUBLISHED
         revision.save(update_fields=['status'])
         article.published_revision = revision
         article.first_published_at = timezone.now()

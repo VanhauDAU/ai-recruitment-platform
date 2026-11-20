@@ -34,8 +34,7 @@ function dashboard(days) {
       { key: 'job_reports', count: 3, overdue: 1, oldest_at: hoursAgo(60), sla_hours: 48 },
       { key: 'company_reports', count: 0, overdue: 0, oldest_at: null, sla_hours: 48 },
       { key: 'job_resubmissions', count: 1, overdue: 0, oldest_at: hoursAgo(2), sla_hours: 48 },
-      { key: 'blog_reviews', count: 0, overdue: 0, oldest_at: null, sla_hours: 72 },
-      { key: 'knowledge_reviews', count: 1, overdue: 0, oldest_at: hoursAgo(20), sla_hours: 72 },
+      { key: 'company_content_changes', count: 1, overdue: 0, oldest_at: hoursAgo(20), sla_hours: 48 },
     ],
     kpis: {
       candidates: { current: 284, previous: 231 },
@@ -119,7 +118,7 @@ test('admin dashboard: urgent queues first, period filter and no horizontal over
   await expect(rows.first()).toContainText('Báo cáo tin tuyển dụng')
   await expect(rows.first()).toContainText('1 quá hạn')
   await expect(rows.first().getByRole('link')).toHaveAttribute('href', '/admin/app/job-moderation?tab=reports')
-  await expect(queue).toContainText('Đã xử lý hết: Xác minh tên miền thủ công, Báo cáo công ty, Bài viết chờ duyệt')
+  await expect(queue).toContainText('Đã xử lý hết: Xác minh tên miền thủ công, Báo cáo công ty')
 
   await expect(page.getByText('Mới trong kỳ, 30 ngày trước chưa có')).toBeVisible()
 

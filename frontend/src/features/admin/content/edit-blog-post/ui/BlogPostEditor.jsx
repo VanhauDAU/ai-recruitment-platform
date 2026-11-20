@@ -165,7 +165,7 @@ export default function BlogPostEditor({ publicId }) {
   })
 
   const startAction = async (name) => {
-    if (['submit', 'publish'].includes(name)) {
+    if (name === 'publish') {
       try {
         await form.validateFields()
       } catch (error) {
@@ -177,7 +177,7 @@ export default function BlogPostEditor({ publicId }) {
     if (!saveMutation.isPending) setAction(name)
   }
   const confirmAction = () => {
-    if (['return', 'archive'].includes(action) && !actionNote.trim()) {
+    if (action === 'archive' && !actionNote.trim()) {
       message.error('Vui lòng nhập lý do.')
       return
     }
@@ -216,11 +216,9 @@ export default function BlogPostEditor({ publicId }) {
         onPreview={() => setPreviewOpen(true)}
         onPublish={() => startAction('publish')}
         onSave={() => saveNow({ notifyValidation: true })}
-        onSubmit={() => startAction('submit')}
         post={post}
         saveLoading={saveMutation.isPending}
         saveState={saveState}
-        submitLabel={getActionCopy('submit', post?.editorial_state)[2]}
         title={values.title}
       />
 
@@ -261,7 +259,7 @@ export default function BlogPostEditor({ publicId }) {
 
       <Modal open={Boolean(action)} title={activeActionCopy?.[0] || ''} okText={activeActionCopy?.[2] || 'Xác nhận'} okButtonProps={{ danger: ['archive', 'discard-draft'].includes(action) }} confirmLoading={actionMutation.isPending} onCancel={() => { setAction(null); setActionNote('') }} onOk={confirmAction}>
         <p className="mb-4 text-sm text-slate-600">{activeActionCopy?.[1]}</p>
-        {['return', 'archive'].includes(action) && <Input.TextArea value={actionNote} onChange={(event) => setActionNote(event.target.value)} rows={4} maxLength={1000} showCount placeholder="Nhập lý do" />}
+        {action === 'archive' && <Input.TextArea value={actionNote} onChange={(event) => setActionNote(event.target.value)} rows={4} maxLength={1000} showCount placeholder="Nhập lý do" />}
       </Modal>
     </section>
   )

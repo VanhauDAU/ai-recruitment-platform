@@ -13,13 +13,11 @@ const category = {
 }
 
 function createPost(allowedActions, editorialState = 'draft') {
-  const pending = editorialState.includes('pending')
   const stateLabels = {
     archived: 'Đã gỡ',
     draft: 'Nháp',
-    pending: 'Chờ duyệt',
     published: 'Đã xuất bản',
-    published_with_pending: 'Đã đăng · bản sửa chờ duyệt',
+    published_with_draft: 'Đã đăng · có bản sửa nháp',
   }
   const post = {
     public_id: 'ps_other',
@@ -51,8 +49,6 @@ function createPost(allowedActions, editorialState = 'draft') {
         related_job_category: null,
         seo_title: '',
         seo_description: '',
-        status: editorialState,
-        submitted_at: pending ? '2026-07-27T09:00:00Z' : null,
         edit_revision: 1,
         updated_at: post.updated_at,
       },
@@ -83,10 +79,8 @@ async function mockBlogApi(page, allowedActions, editorialState = 'draft', { isS
       body = {
         all: 1,
         draft: currentEditorialState === 'draft' ? 1 : 0,
-        pending: currentEditorialState === 'pending' ? 1 : 0,
         published: 0,
-        published_with_draft: 0,
-        published_with_pending: currentEditorialState === 'published_with_pending' ? 1 : 0,
+        published_with_draft: currentEditorialState === 'published_with_draft' ? 1 : 0,
         archived: currentEditorialState === 'archived' ? 1 : 0,
       }
     } else if (path === '/api/admin/blog/posts/') {
@@ -96,12 +90,10 @@ async function mockBlogApi(page, allowedActions, editorialState = 'draft', { isS
       Object.assign(post, {
         editorial_state: 'draft',
         editorial_state_label: 'Nháp',
-        allowed_actions: ['edit', 'submit', 'discard_draft'],
+        allowed_actions: ['edit', 'publish', 'archive', 'discard_draft'],
       })
       Object.assign(detail, post)
       Object.assign(detail.editable_version, {
-        status: 'draft',
-        submitted_at: null,
         edit_revision: detail.editable_version.edit_revision + 1,
       })
       body = detail
@@ -118,8 +110,8 @@ async function mockBlogApi(page, allowedActions, editorialState = 'draft', { isS
 test('admin blog: an admin can edit another employee article', async ({ page }) => {
   await mockBlogApi(
     page,
-    ['edit', 'submit', 'return', 'publish', 'archive'],
-    'pending',
+    ['edit', 'publish', 'archive', 'discard_draft'],
+    'published_with_draft',
   )
 
   await page.goto('/admin/app/blog')
@@ -130,9 +122,10 @@ test('admin blog: an admin can edit another employee article', async ({ page }) 
   await expect(page.getByLabel('Tiêu đề bài viết')).toBeEnabled()
   await expect(page.getByRole('button', { name: 'Lưu ngay' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Văn bản thường' })).toBeEnabled()
-  await page.getByRole('button', { name: 'Gửi duyệt lại' }).click()
-  await expect(page.getByRole('dialog', { name: 'Gửi duyệt lại' })).toContainText(
-    'Các thay đổi mới nhất sẽ được cập nhật trong hàng chờ duyệt',
+  await expect(page.getByRole('button', { name: /Gửi duyệt/ })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Xuất bản' }).click()
+  await expect(page.getByRole('dialog', { name: 'Xuất bản bản sửa' })).toContainText(
+    'Bản sửa sẽ thay thế nội dung đang hiển thị cho ứng viên ngay lập tức.',
   )
 })
 
@@ -169,7 +162,7 @@ for (const access of [
     await expect(restoreButton).toBeEnabled()
     await restoreButton.click()
     const dialog = page.getByRole('dialog', { name: 'Khôi phục về nháp' })
-    await expect(dialog).toContainText('Bài cần được gửi duyệt lại trước khi hiển thị.')
+    await expect(dialog).toContainText('Bài trở về nháp; xuất bản lại khi sẵn sàng.')
     await dialog.getByRole('button', { name: 'Khôi phục', exact: true }).click()
     await expect(page.getByText('Khôi phục thành công.')).toBeVisible()
     await expect(page.getByLabel('Tiêu đề bài viết')).toBeEnabled()

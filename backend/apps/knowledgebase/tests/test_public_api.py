@@ -34,13 +34,13 @@ class KnowledgebasePublicApiTests(PublishedKnowledgeMixin, APITestCase):
             KnowledgeArticle.objects.filter(
                 lifecycle_state=KnowledgeArticle.LifecycleState.ACTIVE,
                 category__is_active=True,
-                published_revision__status='APPROVED',
+                published_revision__status='PUBLISHED',
             ).values_list('public_id', flat=True)
         )
         cls.seeded_category_count = KnowledgeArticle.objects.filter(
             lifecycle_state=KnowledgeArticle.LifecycleState.ACTIVE,
             category=cls.category,
-            published_revision__status='APPROVED',
+            published_revision__status='PUBLISHED',
         ).count()
         cls.public_article = cls.publish_article()
         cls.guide = cls.publish_article(
@@ -78,7 +78,7 @@ class KnowledgebasePublicApiTests(PublishedKnowledgeMixin, APITestCase):
     def setUp(self):
         cache.clear()
 
-    def test_public_list_exposes_only_published_approved_content_without_internal_fields(self):
+    def test_public_list_exposes_only_published_content_without_internal_fields(self):
         response = self.client.get(reverse('kb-public-article-list'))
 
         self.assertEqual(response.status_code, 200, response.data)
@@ -89,9 +89,7 @@ class KnowledgebasePublicApiTests(PublishedKnowledgeMixin, APITestCase):
         )
         forbidden = {
             'created_by',
-            'submitted_by',
-            'reviewed_by',
-            'review_note',
+            'first_published_by',
             'source_reference',
             'revision_token',
             'revisions',

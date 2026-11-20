@@ -8,7 +8,6 @@ import {
   PlusOutlined,
   RollbackOutlined,
   SearchOutlined,
-  SendOutlined,
 } from '@ant-design/icons'
 import {
   DndContext,
@@ -47,6 +46,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router'
 import {
   adminBlogKeys,
   blogPostPath,
+  blogStateColor,
   createAdminBlogCategory,
   createAdminBlogPin,
   deleteAdminBlogPin,
@@ -68,44 +68,21 @@ import { getIntlLocale } from '@/shared/config/i18n'
 
 const STATUS_OPTIONS = [
   ['draft', 'Nháp'],
-  ['pending', 'Chờ duyệt'],
   ['published', 'Đã xuất bản'],
   ['published_with_draft', 'Có bản sửa nháp'],
-  ['published_with_pending', 'Bản sửa chờ duyệt'],
   ['archived', 'Đã gỡ'],
 ].map(([value, label]) => ({ value, label }))
 
 const POST_STATUS_ACTIONS = [
   {
-    action: 'submit',
-    label: 'Gửi duyệt',
-    targetLabel: 'Chờ duyệt',
-    description: 'Chuyển bản nháp sang hàng chờ duyệt.',
-    confirmTitle: 'Gửi bài viết để duyệt?',
-    confirmText: 'Gửi duyệt',
-    icon: SendOutlined,
-    tone: 'amber',
-  },
-  {
     action: 'publish',
     label: 'Xuất bản',
     targetLabel: 'Đã xuất bản',
-    description: 'Hiển thị bài viết cho ứng viên.',
+    description: 'Hiển thị bản nháp (hoặc bản sửa) cho ứng viên ngay.',
     confirmTitle: 'Xuất bản bài viết?',
     confirmText: 'Xuất bản',
     icon: CheckCircleOutlined,
     tone: 'emerald',
-  },
-  {
-    action: 'return',
-    label: 'Trả về nháp',
-    targetLabel: 'Nháp',
-    description: 'Trả bài chờ duyệt về cho người viết chỉnh sửa.',
-    confirmTitle: 'Trả bài viết về nháp?',
-    confirmText: 'Trả về nháp',
-    icon: RollbackOutlined,
-    tone: 'blue',
-    noteRequired: true,
   },
   {
     action: 'archive',
@@ -132,21 +109,12 @@ const POST_STATUS_ACTIONS = [
 ]
 
 const POST_ACTION_SUCCESS_PREFIX = {
-  submit: 'Đã gửi duyệt',
   publish: 'Đã xuất bản',
-  return: 'Đã trả về nháp',
   archive: 'Đã ẩn',
   restore: 'Đã khôi phục',
 }
 
-const PUBLIC_EDITORIAL_STATES = new Set(['published', 'published_with_draft', 'published_with_pending'])
-
-function statusColor(state) {
-  if (state === 'published') return 'green'
-  if (state.includes('pending')) return 'gold'
-  if (state === 'archived') return 'red'
-  return 'blue'
-}
+const PUBLIC_EDITORIAL_STATES = new Set(['published', 'published_with_draft'])
 
 function useRefresh() {
   const client = useQueryClient()
@@ -244,7 +212,7 @@ function PostList() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [q, setQ] = useState('')
-  // The status filter lives in the URL so the sidebar queue can open "pending".
+  // The status filter lives in the URL so links can open a filtered list.
   const [searchParams, setSearchParams] = useSearchParams()
   const status = STATUS_OPTIONS.some((item) => item.value === searchParams.get('status'))
     ? searchParams.get('status')
@@ -348,7 +316,7 @@ function PostList() {
     },
     { title: 'Danh mục', dataIndex: ['category', 'name'], width: 180, ...sortable('category'), render: (value) => value || 'Chưa phân loại' },
     { title: 'Tác giả', dataIndex: ['author', 'name'], width: 180, ...sortable('author'), render: (value) => value || 'Không xác định' },
-    { title: 'Trạng thái', width: 190, ...sortable('editorial_state'), render: (_, row) => <Tag color={statusColor(row.editorial_state)}>{row.editorial_state_label}</Tag> },
+    { title: 'Trạng thái', width: 190, ...sortable('editorial_state'), render: (_, row) => <Tag color={blogStateColor(row.editorial_state)}>{row.editorial_state_label}</Tag> },
     { title: 'Hoàn thiện', width: 130, ...sortable('completeness'), render: (_, row) => <Progress percent={row.completeness.score} size="small" /> },
     { title: 'Lượt xem', dataIndex: 'view_count', width: 110, ...sortable('view_count'), render: (value) => Number(value || 0).toLocaleString(getIntlLocale()) },
     {
@@ -543,7 +511,7 @@ function PostList() {
                       {row.title}
                     </AdminPostLink>
                     <PublicPostUrl post={row} />
-                    <Tag className="mt-2" color={statusColor(row.editorial_state)}>{row.editorial_state_label}</Tag>
+                    <Tag className="mt-2" color={blogStateColor(row.editorial_state)}>{row.editorial_state_label}</Tag>
                   </div>
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-500">
@@ -584,7 +552,7 @@ function PostList() {
                 {pendingAction.posts.length > 1 ? `${pendingAction.posts.length} bài viết đã chọn` : pendingAction.posts[0].title}
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-                <Tag color={pendingAction.posts.length === 1 ? statusColor(pendingAction.posts[0].editorial_state) : 'blue'}>
+                <Tag color={pendingAction.posts.length === 1 ? blogStateColor(pendingAction.posts[0].editorial_state) : 'blue'}>
                   {pendingAction.posts.length === 1 ? pendingAction.posts[0].editorial_state_label : 'Nhiều trạng thái'}
                 </Tag>
                 <span aria-hidden="true" className="text-slate-400">→</span>
@@ -607,7 +575,7 @@ function PostList() {
                   rows={4}
                   maxLength={1000}
                   showCount
-                  placeholder={pendingAction.action.action === 'archive' ? 'Ví dụ: Nội dung đã lỗi thời hoặc cần rà soát lại' : 'Nhập lý do để người viết biết cần chỉnh sửa gì'}
+                  placeholder="Ví dụ: Nội dung đã lỗi thời hoặc cần rà soát lại"
                 />
               </div>
             )}

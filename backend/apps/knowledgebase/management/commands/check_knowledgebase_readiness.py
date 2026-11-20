@@ -119,8 +119,6 @@ def build_readiness_report():
             _issue(issues, 'missing_seo_description', article.public_id, article.category.slug)
         if article.review_due_at and article.review_due_at <= now:
             _issue(issues, 'review_overdue', article.public_id, article.category.slug)
-        if article.category.slug == 'tim-viec-an-toan' and not revision.reviewed_at:
-            _issue(issues, 'safety_content_not_reviewed', article.public_id, article.category.slug)
 
         parser = _ContentReferenceParser()
         parser.feed(revision.body)

@@ -1,8 +1,9 @@
 const EMPTY_BODY = '<p></p>'
 
+/** Editor luôn hiện bản nháp đang mở; chưa có nháp thì hiện bản mới nhất làm điểm xuất phát cho nháp mới. */
 export function revisionToEditorValues(article) {
-  const revision = article?.revisions?.find((item) => item.status === 'DRAFT')
-    || article?.revisions?.[0]
+  const draft = article?.revisions?.find((item) => item.status === 'DRAFT')
+  const revision = draft || article?.revisions?.[0]
   if (!revision) return null
   return {
     category_public_id: article.category?.public_id,
@@ -12,7 +13,7 @@ export function revisionToEditorValues(article) {
     title: revision.title,
     body: revision.body || EMPTY_BODY,
     source_reference: revision.source_reference,
-    change_summary: revision.change_summary,
+    change_summary: draft ? draft.change_summary : '',
     seo_title: revision.seo_title,
     seo_description: revision.seo_description,
   }

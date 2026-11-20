@@ -1,7 +1,6 @@
-import { FileAddOutlined } from '@ant-design/icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Alert, Button, Drawer, Form } from 'antd'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useImperativeHandle, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import {
   KnowledgeArticleContent,
@@ -23,7 +22,6 @@ import {
   revisionToEditorValues,
 } from '../model/editor-model'
 import KnowledgeEditorFields from './KnowledgeEditorFields'
-import NewRevisionModal from './NewRevisionModal'
 import './knowledge-revision-editor.css'
 import { getIntlLocale } from '@/shared/config/i18n'
 
@@ -31,20 +29,23 @@ function isSameField(left, right) {
   return String(left ?? '') === String(right ?? '')
 }
 
+/**
+ * Soạn nội dung FAQ/hướng dẫn. Bài đang công khai vẫn sửa trực tiếp: lần lưu đầu
+ * tạo bản nháp mới, bản công khai giữ nguyên tới khi xuất bản (ADR-0024).
+ * `ref.saveDraft()` cho widget lưu trước khi mở hộp thoại xuất bản.
+ */
 export default function KnowledgeRevisionEditor({
   article,
   categories,
   onArticleChange,
   onDirtyChange,
+  ref,
 }) {
   const [form] = Form.useForm()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { confirmationModal, requestConfirmation } = useConfirmAction()
   const [previewOpen, setPreviewOpen] = useState(false)
-  const [revisionDialogOpen, setRevisionDialogOpen] = useState(false)
-  const [revisionSummary, setRevisionSummary] = useState('')
-  const [revisionSummaryTouched, setRevisionSummaryTouched] = useState(false)
   const [dirty, setDirty] = useState(false)
   const [conflict, setConflict] = useState(false)
   const initialized = useRef('')
@@ -54,13 +55,12 @@ export default function KnowledgeRevisionEditor({
   const storageKey = draftStorageKey(publicId)
   const watched = Form.useWatch([], form) || {}
   const draftRevision = article?.revisions?.find((item) => item.status === 'DRAFT')
-  const latestRevision = article?.revisions?.[0]
-  const canEdit = !article || Boolean(draftRevision)
+  const canEdit = !article || article.lifecycle_state !== 'ARCHIVED'
   const completion = editorCompletion(watched)
 
   useEffect(() => {
     const identity = article
-      ? `${article.public_id}:${article.revision_token}:${draftRevision?.number || 'readonly'}`
+      ? `${article.public_id}:${article.revision_token}:${draftRevision?.number || 'next'}`
       : `new:${categories?.[0]?.public_id || 'none'}`
     if (initialized.current === identity) return
     const values = article
@@ -164,7 +164,7 @@ export default function KnowledgeRevisionEditor({
           revision_token: current.revision_token,
         })
       }
-      return updateAdminKnowledgeRevision(article.public_id, draftRevision.number, {
+      const content = {
         title: values.title,
         body: values.body,
         source_reference: values.source_reference,
@@ -172,11 +172,16 @@ export default function KnowledgeRevisionEditor({
         seo_title: values.seo_title || '',
         seo_description: values.seo_description || '',
         revision_token: current.revision_token,
-      })
+      }
+      return draftRevision
+        ? updateAdminKnowledgeRevision(article.public_id, draftRevision.number, content)
+        : createAdminKnowledgeRevision(article.public_id, content)
     },
     onSuccess: (saved) => {
       syncArticle(saved)
-      message.success(article ? 'Đã lưu bản nháp.' : 'Đã tạo bài viết mới.')
+      if (!article) message.success('Đã tạo bài viết mới.')
+      else if (draftRevision) message.success('Đã lưu bản nháp.')
+      else message.success('Đã tạo bản nháp mới. Bản đang công khai chưa thay đổi cho tới khi xuất bản.')
       if (!article) navigate(adminPath(`/knowledgebase/${saved.public_id}`), { replace: true })
     },
     onError: (error) => {
@@ -185,50 +190,16 @@ export default function KnowledgeRevisionEditor({
     },
   })
 
-  const revisionMutation = useMutation({
-    mutationFn: (values) => createAdminKnowledgeRevision(article.public_id, {
-      title: values.title,
-      body: values.body,
-      source_reference: values.source_reference,
-      change_summary: values.change_summary || '',
-      seo_title: values.seo_title || '',
-      seo_description: values.seo_description || '',
-      revision_token: article.revision_token,
-    }),
-    onSuccess: (saved) => {
-      syncArticle(saved)
-      setRevisionDialogOpen(false)
-      setRevisionSummary('')
-      setRevisionSummaryTouched(false)
-      message.success('Đã tạo revision mới để biên tập.')
-    },
-    onError: (error) => message.error(knowledgeErrorMessage(error, 'Không thể tạo revision mới.')),
-  })
-
-  const save = async () => {
+  const saveDraft = async () => {
+    if (!dirty) return article
     try {
-      saveMutation.mutate(await form.validateFields())
-    } catch {
-      message.error('Vui lòng hoàn thiện các trường bắt buộc.')
+      return await saveMutation.mutateAsync(await form.validateFields())
+    } catch (error) {
+      if (error?.errorFields) message.error('Vui lòng hoàn thiện các trường bắt buộc.')
+      return null
     }
   }
-  const openRevisionDialog = () => {
-    setRevisionSummary('')
-    setRevisionSummaryTouched(false)
-    setRevisionDialogOpen(true)
-  }
-  const createRevision = () => {
-    const summary = revisionSummary.trim()
-    setRevisionSummaryTouched(true)
-    if (article?.first_published_at && !summary) {
-      message.error('Nhập tóm tắt thay đổi trước khi tạo revision.')
-      return
-    }
-    revisionMutation.mutate({
-      ...form.getFieldsValue(true),
-      change_summary: summary,
-    })
-  }
+  useImperativeHandle(ref, () => ({ saveDraft }))
 
   return (
     <>
@@ -243,26 +214,16 @@ export default function KnowledgeRevisionEditor({
           className="knowledge-editor__alert"
           type="warning"
           showIcon
-          message="Nội dung trên máy chủ đã thay đổi"
+          title="Nội dung trên máy chủ đã thay đổi"
           description="Bản cục bộ vẫn được giữ. Tải lại dữ liệu trước khi lưu để tránh ghi đè công việc của đồng đội."
           action={<Button onClick={() => window.location.reload()}>Tải lại</Button>}
         />
       )}
-      {article && !draftRevision && (
-        <Alert
-          className="knowledge-editor__alert"
-          type={latestRevision?.status === 'IN_REVIEW' ? 'info' : 'warning'}
-          showIcon
-          message={latestRevision?.status === 'IN_REVIEW' ? 'Revision đang chờ duyệt' : 'Nội dung hiện tại chỉ đọc'}
-          description={latestRevision?.status === 'IN_REVIEW'
-            ? 'Hoàn tất duyệt hoặc từ chối trước khi tạo bản chỉnh sửa tiếp theo.'
-            : 'Tạo revision mới từ nội dung gần nhất để bắt đầu chỉnh sửa.'}
-          action={latestRevision?.status !== 'IN_REVIEW' && (
-            <Button icon={<FileAddOutlined />} loading={revisionMutation.isPending} onClick={openRevisionDialog}>
-              Tạo revision mới
-            </Button>
-          )}
-        />
+      {article && !canEdit && (
+        <Alert className="knowledge-editor__alert" type="warning" showIcon title="Bài viết đã lưu trữ. Khôi phục bài để tiếp tục chỉnh sửa." />
+      )}
+      {canEdit && draftRevision && article?.published_revision_number && (
+        <Alert className="knowledge-editor__alert" type="info" showIcon title={`Bạn đang sửa bản nháp r${draftRevision.number}. Bản công khai r${article.published_revision_number} giữ nguyên cho tới khi xuất bản.`} />
       )}
 
       <KnowledgeEditorFields
@@ -275,7 +236,7 @@ export default function KnowledgeRevisionEditor({
         saving={saveMutation.isPending}
         type={watched.type}
         onPreview={() => setPreviewOpen(true)}
-        onSave={save}
+        onSave={() => saveDraft()}
       />
 
       <Drawer width={820} open={previewOpen} title="Xem trước nội dung" onClose={() => setPreviewOpen(false)}>
@@ -286,17 +247,6 @@ export default function KnowledgeRevisionEditor({
         </div>
       </Drawer>
 
-      <NewRevisionModal
-        open={revisionDialogOpen}
-        required={Boolean(article?.first_published_at)}
-        loading={revisionMutation.isPending}
-        summary={revisionSummary}
-        touched={revisionSummaryTouched}
-        onCancel={() => setRevisionDialogOpen(false)}
-        onChange={setRevisionSummary}
-        onConfirm={createRevision}
-        onTouch={() => setRevisionSummaryTouched(true)}
-      />
       </Form>
       {confirmationModal}
     </>

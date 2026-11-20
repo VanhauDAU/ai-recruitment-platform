@@ -8,6 +8,23 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-20
 
+#### Changed — FAQ/hướng dẫn và blog: Nháp → Xuất bản (ADR-0024)
+
+- Bỏ bước gửi duyệt/duyệt/từ chối vốn chỉ còn là tự duyệt sau ADR-0018.
+  Revision trợ giúp còn `DRAFT`/`PUBLISHED`; bài blog còn
+  `draft/published/archived`.
+- FAQ/hướng dẫn: sửa thẳng bài đang công khai (lưu lần đầu tạo bản nháp, bản
+  công khai giữ nguyên tới khi xuất bản), một nút Xuất bản lưu trước rồi xuất
+  bản, hủy bản nháp, công khai lại bản cũ từ thẻ Phiên bản.
+- **API**: thêm `POST /api/admin/knowledgebase/articles/{id}/revisions/{n}/discard/`;
+  `publish/` nhận bản nháp hoặc revision đã xuất bản (rollback); gỡ
+  `…/revisions/{n}/submit|approve|reject/`, `/api/admin/blog/posts/{id}/submit|return/`,
+  trường `review_note`, `submitted_*`, `reviewed_*`; KPI `in_review` → `drafts`.
+- Gỡ hàng chờ `knowledge_reviews`, `blog_reviews` khỏi dashboard, sidebar, chuông.
+- **Migration**: `knowledgebase.0003/0004`, `blog.0003/0004` — revision từng công
+  khai giữ lại, bản sửa dở mới nhất thành nháp, revision chưa từng công khai khác
+  bị xóa; bài blog chờ duyệt về nháp.
+
 #### Changed — Admin: sidebar hai tầng, nhóm "Cần xử lý" và tìm nhanh
 
 - Sidebar còn tối đa 2 tầng, chia mục Vận hành · Quản lý · Nội dung · Hệ thống;

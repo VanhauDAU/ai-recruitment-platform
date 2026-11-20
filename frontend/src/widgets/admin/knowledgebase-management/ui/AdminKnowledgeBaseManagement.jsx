@@ -16,6 +16,7 @@ import {
   KNOWLEDGE_ARTICLE_TYPES,
   KNOWLEDGE_LIFECYCLE_STATUS,
   KNOWLEDGE_REVISION_STATUS,
+  knowledgeLatestStatus,
   adminKnowledgeKeys,
   formatKnowledgeDate,
   getAdminKnowledgeArticles,
@@ -107,7 +108,7 @@ export default function AdminKnowledgeBaseManagement() {
       sorter: true,
       sortOrder: controlledSortOrder(ordering, 'revision_status'),
       render: (_, article) => {
-        const revision = KNOWLEDGE_REVISION_STATUS[article.latest_revision?.status]
+        const revision = knowledgeLatestStatus(article)
         return <Tag color={revision?.color}>{revision?.label || 'Chưa có revision'}</Tag>
       },
     },
@@ -190,13 +191,13 @@ export default function AdminKnowledgeBaseManagement() {
         <AdminStatCard icon={<BookOutlined />} label="Tổng bài viết" value={metric('total')} detail="Theo toàn bộ kết quả phù hợp" />
         <AdminStatCard icon={<CheckCircleOutlined />} label="Đã công khai" value={metric('published')} detail="Theo toàn bộ kết quả phù hợp" tone="green" />
         <AdminStatCard
-          active={params.revision_status === 'IN_REVIEW'}
-          detail="Cần người duyệt xử lý"
+          active={params.revision_status === 'DRAFT'}
+          detail="Đã lưu nhưng chưa xuất bản"
           icon={<ClockCircleOutlined />}
-          label="Chờ duyệt"
-          onClick={() => update({ revision_status: 'IN_REVIEW' })}
+          label="Có bản nháp"
+          onClick={() => update({ revision_status: 'DRAFT' })}
           tone="amber"
-          value={metric('in_review')}
+          value={metric('drafts')}
         />
         <AdminStatCard
           active={params.review_due === 'overdue'}
@@ -231,7 +232,7 @@ export default function AdminKnowledgeBaseManagement() {
             options={Object.entries(KNOWLEDGE_LIFECYCLE_STATUS).map(([value, item]) => ({ value, label: item.label }))}
             onChange={(value) => update({ lifecycle: value })}
           />
-          <Select allowClear placeholder="Trạng thái revision" value={params.revision_status} options={Object.entries(KNOWLEDGE_REVISION_STATUS).map(([value, item]) => ({ value, label: item.label }))} onChange={(value) => update({ revision_status: value })} />
+          <Select allowClear placeholder="Trạng thái biên tập" value={params.revision_status} options={Object.entries(KNOWLEDGE_REVISION_STATUS).map(([value, item]) => ({ value, label: item.label }))} onChange={(value) => update({ revision_status: value })} />
           <Select allowClear placeholder="Chu kỳ rà soát" value={params.review_due} options={[{ value: 'overdue', label: 'Đã quá hạn' }, { value: 'due_soon', label: 'Sắp đến hạn' }]} onChange={(value) => update({ review_due: value })} />
           {searchParams.size > 0 && <Button onClick={() => { setSearchDraft(''); setSearchParams({}) }}>Xóa lọc</Button>}
         </div>
