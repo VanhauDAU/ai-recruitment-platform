@@ -6,8 +6,7 @@ import re
 import requests
 
 from apps.cv_templates.models import empty_content
-from apps.sitecontent.models import SiteSetting
-from apps.sitecontent.selectors import get_string_setting
+from apps.sitecontent.selectors import get_bool_setting, get_string_setting
 from config.env import config
 
 
@@ -25,11 +24,6 @@ def _provider_api_key(name):
     Real process environment variables still take precedence.
     """
     return config(name, default='')
-
-
-def _setting_value(key, default=None):
-    value = SiteSetting.objects.filter(key=key).values_list('value', flat=True).first()
-    return default if value is None else value
 
 
 def _json_from_text(value):
@@ -215,7 +209,7 @@ def _canonical(payload, locale):
 
 
 def structure_cv_text(text, locale):
-    if _setting_value('ai_enabled', True) is False:
+    if not get_bool_setting('ai_enabled', True):
         raise AiCvParseError('ai_disabled')
     payload = None
     for attempt in range(2):

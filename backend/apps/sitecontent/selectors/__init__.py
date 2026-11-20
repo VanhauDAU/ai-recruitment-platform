@@ -19,13 +19,14 @@ from .settings import (
     email_branding,
     get_bool_setting,
     get_int_setting,
+    get_setting,
     get_settings_map,
     get_string_setting,
+    setting_registry,
     site_settings_by_group,
 )
 
 __all__ = [
-    'get_int_setting',
     'PRIORITY_TIER_BY_KIND',
     'active_announcements_for_request',
     'active_banners',
@@ -36,6 +37,7 @@ __all__ = [
     'email_branding',
     'get_bool_setting',
     'get_int_setting',
+    'get_setting',
     'get_settings_map',
     'get_string_setting',
     'normalize_request_path',
@@ -45,5 +47,6 @@ __all__ = [
     'resolve_link_group_items',
     'resolved_link_groups',
     'revision_targets_request',
+    'setting_registry',
     'site_settings_by_group',
 ]

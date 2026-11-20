@@ -1,5 +1,3 @@
-import json
-
 from django import forms
 from django.contrib import admin
 
@@ -8,49 +6,22 @@ from common.storage.media import delete_local_media_url, save_image_upload
 from .models import Banner, Feedback, LinkGroup, LinkItem, SiteSetting
 
 
-class SiteSettingAdminForm(forms.ModelForm):
-    value = forms.CharField(
-        required=False,
-        widget=forms.Textarea(attrs={'rows': 4, 'class': 'vLargeTextField'}),
-        help_text='Có thể nhập chuỗi thường như URL logo, hoặc nhập JSON nếu giá trị là object/array.',
-    )
-
-    class Meta:
-        model = SiteSetting
-        fields = ['key', 'label', 'group', 'value', 'description', 'is_public']
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        value = (
-            self.instance.value
-            if self.instance and self.instance.pk
-            else self.initial.get('value', '')
-        )
-        if isinstance(value, str):
-            self.initial['value'] = value
-        elif value not in (None, ''):
-            self.initial['value'] = json.dumps(value, ensure_ascii=False, indent=2)
-
-    def clean_value(self):
-        raw_value = self.cleaned_data.get('value', '')
-        if raw_value in (None, ''):
-            return ''
-        try:
-            return json.loads(raw_value)
-        except json.JSONDecodeError:
-            return raw_value.strip()
-
-
 @admin.register(SiteSetting)
 class SiteSettingAdmin(admin.ModelAdmin):
-    form = SiteSettingAdminForm
-    list_display = ['label', 'key', 'group', 'is_public', 'updated_at']
+    """Chỉ để tra cứu: sửa giá trị qua trang Cấu hình hệ thống (có kiểm tra và audit)."""
+
+    list_display = ['label', 'key', 'group', 'section', 'is_public', 'updated_at']
     list_filter = ['group', 'is_public']
     search_fields = ['key', 'label']
-    list_editable = ['is_public']
-    fieldsets = [
-        (None, {'fields': ['key', 'label', 'group', 'value', 'description', 'is_public']}),
-    ]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 class LinkItemInline(admin.TabularInline):

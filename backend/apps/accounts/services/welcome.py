@@ -4,16 +4,17 @@ from django.conf import settings
 from django.utils.html import escape
 from django.utils.translation import gettext as _
 
+from apps.sitecontent.selectors import get_string_setting
 from common.i18n import recipient_language
 
 from ..models import User
-from .mailing import frontend_link, send_html_email, site_setting
+from .mailing import frontend_link, send_html_email
 
 
 def _candidate_welcome(user):
     destination = frontend_link('/onboard-user')
-    site_name = site_setting('site_name', 'ProCV')
-    support_email = site_setting('support_email', '')
+    site_name = get_string_setting('site_name', 'ProCV')
+    support_email = get_string_setting('support_email', '')
     name = user.full_name or user.email
     action = _('Hoàn thiện thông tin tìm việc')
     values = {'site_name': site_name, 'name': name}
@@ -55,10 +56,10 @@ def _candidate_welcome(user):
 
 
 def _employer_welcome(user, context):
-    site_name = site_setting('site_name', 'ProCV')
-    support_email = site_setting('support_email', 'cskh@procv.vn')
-    hotline = site_setting('hotline', '')
-    zalo_url = site_setting('contact_zalo_url', '')
+    site_name = get_string_setting('site_name', 'ProCV')
+    support_email = get_string_setting('support_email', 'cskh@procv.vn')
+    hotline = get_string_setting('hotline', '')
+    zalo_url = get_string_setting('contact_zalo_url', '')
     destination = frontend_link(
         '/tuyendung/app/employer-verify',
         base_url=settings.EMPLOYER_FRONTEND_URL,

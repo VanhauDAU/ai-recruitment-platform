@@ -1,10 +1,9 @@
 from rest_framework import serializers
 
 from common.storage.media import media_url_from_value
-from config.env import config
 
 from ...models import Banner, Feedback, LinkGroup, SiteSetting
-from ...selectors import resolve_link_group_items
+from ...selectors import resolve_link_group_items, setting_registry
 
 
 class SiteSettingSerializer(serializers.ModelSerializer):
@@ -14,13 +13,9 @@ class SiteSettingSerializer(serializers.ModelSerializer):
 
 
 class AdminSiteSettingSerializer(serializers.ModelSerializer):
-    """Bản đầy đủ cho trang quản trị: kèm metadata để tự render form.
+    """Bản đầy đủ cho trang quản trị: kèm metadata để tự render form và nút "?"."""
 
-    Với `value_type=env` chỉ trả về `env_configured` (có biến môi trường hay
-    chưa), không bao giờ lộ giá trị secret.
-    """
-
-    env_configured = serializers.SerializerMethodField()
+    default_value = serializers.SerializerMethodField()
     display_value = serializers.SerializerMethodField()
 
     class Meta:
@@ -29,24 +24,23 @@ class AdminSiteSettingSerializer(serializers.ModelSerializer):
             'key',
             'label',
             'group',
+            'section',
             'value',
+            'default_value',
             'value_type',
             'options',
             'description',
+            'help',
             'is_public',
             'order',
-            'env_configured',
             'display_value',
             'updated_at',
         ]
 
-    def get_env_configured(self, obj):
-        if obj.value_type != SiteSetting.ValueType.ENV:
-            return None
-        # The shared resolver reads only backend/.env without mutating os.environ.
-        # This must use the same resolver as runtime services so the admin badge
-        # reflects whether a secret is actually available to the process.
-        return bool(config(obj.options.get('env_var', ''), default=''))
+    def get_default_value(self, obj):
+        """Seed default, for the "Đặt về mặc định" action; ``None`` for keys outside the seed."""
+        row = setting_registry().get(obj.key)
+        return row['value'] if row else None
 
     def get_display_value(self, obj):
         """URL chỉ để preview; ``value`` vẫn là storage key để PATCH an toàn."""

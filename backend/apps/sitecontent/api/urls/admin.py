@@ -14,6 +14,7 @@ from ..views import (
     AdminAnnouncementRevisionCreateView,
     AdminSettingUploadView,
     AdminSiteSettingView,
+    AdminSystemParametersView,
 )
 
 urlpatterns = [
@@ -73,6 +74,11 @@ urlpatterns = [
         name='site-admin-announcement-metrics',
     ),
     path('settings/', AdminSiteSettingView.as_view(), name='site-admin-settings'),
+    path(
+        'system-parameters/',
+        AdminSystemParametersView.as_view(),
+        name='site-admin-system-parameters',
+    ),
     path(
         'settings/upload/',
         AdminSettingUploadView.as_view(),
