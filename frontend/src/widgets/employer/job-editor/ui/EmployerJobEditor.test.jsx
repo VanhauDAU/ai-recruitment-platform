@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { useLocation, MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { hasUnsavedChanges } from '@/shared/lib/unsaved-changes'
 import EmployerJobEditor from './EmployerJobEditor'
 
 const mocks = vi.hoisted(() => ({
@@ -38,9 +39,10 @@ vi.mock('@/features/employer/job/generate-job-post', () => ({
 
 vi.mock('@/features/employer/job/post-job', () => ({
   createJobFormValues: mocks.createJobFormValues,
-  PostJobForm: ({ aiSuggestionKey, onSaveDraft }) => (
+  PostJobForm: ({ aiSuggestionKey, onSaveDraft, onValuesChange }) => (
     <div data-testid="post-job-form" data-ai-key={aiSuggestionKey || ''}>
       <button type="button" onClick={() => onSaveDraft({ title: 'Bản nháp' })}>Lưu từ form</button>
+      <button type="button" onClick={() => onValuesChange()}>Sửa form</button>
     </div>
   ),
 }))
@@ -124,5 +126,25 @@ describe('EmployerJobEditor', () => {
     expect(screen.getByTestId('post-job-form')).toBeInTheDocument()
     expect(screen.queryByTestId('ai-panel')).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Bạn muốn bắt đầu theo cách nào?' })).not.toBeInTheDocument()
+  })
+
+  it('reports unsaved edits to the page until the parent confirms a save', () => {
+    const view = render(
+      <MemoryRouter initialEntries={['/tuyendung/app/jobs/job_1/edit']}>
+        <EmployerJobEditor initialValues={{}} isEditing onPublish={vi.fn()} onSaveDraft={vi.fn()} />
+      </MemoryRouter>,
+    )
+    expect(hasUnsavedChanges()).toBe(false)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sửa form' }))
+    expect(hasUnsavedChanges()).toBe(true)
+
+    view.rerender(
+      <MemoryRouter initialEntries={['/tuyendung/app/jobs/job_1/edit']}>
+        <EmployerJobEditor initialValues={{}} isEditing onPublish={vi.fn()} onSaveDraft={vi.fn()} savedAt={1} />
+      </MemoryRouter>,
+    )
+    expect(hasUnsavedChanges()).toBe(false)
+    view.unmount()
   })
 })

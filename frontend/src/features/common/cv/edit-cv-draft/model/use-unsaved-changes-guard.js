@@ -3,6 +3,7 @@
 // Tách khỏi use-cv-draft-editor vì đây là mối quan tâm về browser event, không
 // phải nghiệp vụ CV — và cần test riêng được.
 import { useEffect } from 'react'
+import { registerUnsavedChanges } from '@/shared/lib/unsaved-changes'
 
 export function useUnsavedChangesGuard({
   documentRef,
@@ -16,12 +17,6 @@ export function useUnsavedChangesGuard({
       const documentChanged = documentRef.current && signature(documentRef.current) !== lastSavedSignatureRef.current
       return documentChanged || ['saving', 'failed', 'conflict'].includes(phaseRef.current)
     }
-    const warnBeforeUnload = (event) => {
-      flushPendingEdits()
-      if (!hasUnsavedChanges()) return
-      event.preventDefault()
-      event.returnValue = ''
-    }
     const flushInternalNavigation = (event) => {
       if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
       const link = event.target.closest?.('a[href]')
@@ -32,10 +27,14 @@ export function useUnsavedChangesGuard({
       if (!hasUnsavedChanges()) return
       if (!window.confirm('CV có thay đổi chưa lưu. Rời trang mà không lưu?')) event.preventDefault()
     }
-    window.addEventListener('beforeunload', warnBeforeUnload)
+    // Cảnh báo tải lại/đóng tab (và đổi ngôn ngữ) đi qua sổ đăng ký dùng chung.
+    const unregister = registerUnsavedChanges(() => {
+      flushPendingEdits()
+      return hasUnsavedChanges()
+    })
     globalThis.document.addEventListener('click', flushInternalNavigation, true)
     return () => {
-      window.removeEventListener('beforeunload', warnBeforeUnload)
+      unregister()
       globalThis.document.removeEventListener('click', flushInternalNavigation, true)
     }
   }, [documentRef, lastSavedSignatureRef, phaseRef, signature, flushPendingEdits])

@@ -21,5 +21,9 @@
   "common_reason_min": "At least {count} characters.",
   "common_reason_max": "At most {count} characters.",
   "common_reason_presets": "Quick picks",
-  "common_impact_load_failed": "Could not load the impact."
+  "common_impact_load_failed": "Could not load the impact.",
+  "common_language_unsaved_title": "Switch language with unsaved changes?",
+  "common_language_unsaved_description": "The page reloads to switch language, so any unsaved changes on this page will be lost.",
+  "common_language_unsaved_confirm": "Switch anyway",
+  "common_language_unsaved_cancel": "Stay and save"
 }

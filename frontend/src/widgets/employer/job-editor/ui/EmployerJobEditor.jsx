@@ -1,8 +1,9 @@
 import { Form } from 'antd'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { AI_JOB_MODES, AiJobGenerationPanel } from '@/features/employer/job/generate-job-post'
 import { createJobFormValues, PostJobForm } from '@/features/employer/job/post-job'
+import { useUnsavedChanges } from '@/shared/hooks/use-unsaved-changes'
 import useConfirmAction from '@/shared/ui/confirm-action/use-confirm-action'
 import JobCreationModeChooser from './JobCreationModeChooser'
 import { m } from '@/shared/config/i18n'
@@ -26,6 +27,7 @@ export default function EmployerJobEditor({
   isEditing = false,
   onPublish,
   onSaveDraft,
+  savedAt = 0,
   ...formProps
 }) {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -99,7 +101,18 @@ export default function EmployerJobEditor({
     })
   }, [setUrlState])
 
+  // Lưu nháp thành công giữ nguyên component (trang tạo → trang sửa cùng một
+  // element), nên trang cha báo mốc lưu để xóa cờ "đã sửa".
+  useEffect(() => {
+    if (savedAt) setFormDirty(false)
+  }, [savedAt])
+
   const currentDraft = useMemo(() => drafts[mode] || EMPTY_DRAFTS.ai_brief, [drafts, mode])
+  // Brief AI đã gõ nhưng chưa tạo bản nháp chỉ sống trong state; kết quả đã tạo
+  // thì khôi phục được qua tham số `generation` trên URL.
+  const hasUnsentBrief = AI_JOB_MODES.has(mode) && !generationPublicId
+    && JSON.stringify(currentDraft) !== JSON.stringify(EMPTY_DRAFTS[mode] || EMPTY_DRAFTS.ai_brief)
+  useUnsavedChanges(formDirty || hasUnsentBrief)
   const updateCurrentDraft = useCallback((nextDraft) => {
     setDrafts((current) => ({ ...current, [mode]: nextDraft }))
   }, [mode])

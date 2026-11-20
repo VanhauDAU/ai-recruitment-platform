@@ -67,6 +67,12 @@ phải tiếp tục chạy.
 - **Bộ chọn ngôn ngữ** (`features/common/preferences/switch-language`): khi đã
   đăng nhập thì PATCH `/api/auth/me/` trước rồi mới đổi. Lưu thất bại thì báo
   lỗi và giữ nguyên ngôn ngữ.
+- **Không mất dữ liệu khi tải lại:** form đang soạn báo trạng thái "chưa lưu"
+  qua `useUnsavedChanges(dirty)` (`@/shared/hooks/use-unsaved-changes`, sổ đăng
+  ký ở `@/shared/lib/unsaved-changes`). Sổ này bật cảnh báo `beforeunload` của
+  trình duyệt. Bộ chọn ngôn ngữ hỏi bằng hộp thoại trong app trước khi tải lại,
+  rồi bỏ qua cảnh báo trình duyệt để không hỏi hai lần. Trình soạn có dữ liệu
+  chưa lưu phải đăng ký vào sổ này.
 - **Tài khoản mới** lấy ngôn ngữ của request đăng ký (`UserManager.create_user`).
   Vì vậy NTD chọn English rồi đăng ký sẽ không bị trả về tiếng Việt.
 - Lựa chọn ngôn ngữ là lưu trữ "cần thiết" (người dùng chủ động yêu cầu), không
