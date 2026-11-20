@@ -601,6 +601,14 @@ class InstagramProviderTests(TestCase):
         self.sleep = MagicMock()
         return InstagramProvider(session=session, sleep=self.sleep), session
 
+    def test_consent_asks_for_business_assets_so_linked_accounts_come_back(self):
+        provider, _ = self.provider()
+
+        scope = parse_qs(urlparse(provider.authorize_url('state')).query)['scope'][0]
+
+        self.assertIn('business_management', scope.split(','))
+        self.assertIn('instagram_content_publish', scope.split(','))
+
     def test_lists_only_pages_with_a_linked_instagram_account(self):
         provider, _ = self.provider(
             {

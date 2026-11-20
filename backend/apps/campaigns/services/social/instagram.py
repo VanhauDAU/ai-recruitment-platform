@@ -19,8 +19,10 @@ CONTAINER_WAIT_SECONDS = 2
 
 class InstagramProvider(MetaGraphProvider):
     network = INSTAGRAM
+    # business_management: without it Pages in a business portfolio come back
+    # without their linked instagram_business_account (seen 2026-11-20).
     scopes = (
-        'pages_show_list,pages_read_engagement,'
+        'business_management,pages_show_list,pages_read_engagement,'
         'instagram_basic,instagram_content_publish,instagram_manage_contents'
     )
     # Code 9 is the 24-hour publishing limit: waiting and retrying is the fix.

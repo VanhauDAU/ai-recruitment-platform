@@ -57,7 +57,7 @@ function AccountPicker({ network, nonce, onDone }) {
       {accountsQuery.isLoading && <Skeleton active paragraph={{ rows: 3 }} />}
       {accountsQuery.isError && <Alert type="error" showIcon title={getApiErrorMessage(accountsQuery.error, m.employer_account_social_picker_expired())} />}
       {accountsQuery.isSuccess && accounts.length === 0 && (
-        <Empty description={m.employer_account_social_picker_empty({ network: network.platform })} />
+        <Empty description={m.employer_account_social_picker_empty({ network: network.label })} />
       )}
       <Radio.Group value={accountId} onChange={(event) => setAccountId(event.target.value)} className="sc-pages">
         {accounts.map((account) => (
