@@ -1607,70 +1607,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/AdminPostDetail'
           description: ''
-  /api/admin/blog/posts/{public_id}/return/:
-    post:
-      operationId: admin_blog_posts_return_create
-      summary: 'Admin: trả bài viết về nháp kèm ghi chú'
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - blog-admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AdminPostActionRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/AdminPostActionRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/AdminPostActionRequest'
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminPostDetail'
-          description: ''
-  /api/admin/blog/posts/{public_id}/submit/:
-    post:
-      operationId: admin_blog_posts_submit_create
-      summary: 'Admin: gửi bài viết chờ duyệt'
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - blog-admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AdminPostActionRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/AdminPostActionRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/AdminPostActionRequest'
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminPostDetail'
-          description: ''
   /api/admin/blog/posts/summary/:
     get:
       operationId: admin_blog_posts_summary_retrieve
@@ -6061,9 +5997,9 @@ paths:
           description: Thiếu permission quản trị.
         '409':
           description: Xung đột trạng thái hoặc revision token cũ.
-  /api/admin/knowledgebase/articles/{public_id}/revisions/{number}/approve/:
+  /api/admin/knowledgebase/articles/{public_id}/revisions/{number}/discard/:
     post:
-      operationId: admin_knowledgebase_articles_revisions_approve_create
+      operationId: admin_knowledgebase_articles_revisions_discard_create
       parameters:
       - in: path
         name: number
@@ -6081,99 +6017,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RevisionActionRequest'
+              $ref: '#/components/schemas/TokenActionRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/RevisionActionRequest'
+              $ref: '#/components/schemas/TokenActionRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/RevisionActionRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminArticleDetail'
-          description: ''
-        '400':
-          description: Dữ liệu không hợp lệ.
-        '403':
-          description: Thiếu permission quản trị.
-        '409':
-          description: Xung đột trạng thái hoặc revision token cũ.
-  /api/admin/knowledgebase/articles/{public_id}/revisions/{number}/reject/:
-    post:
-      operationId: admin_knowledgebase_articles_revisions_reject_create
-      parameters:
-      - in: path
-        name: number
-        schema:
-          type: integer
-        required: true
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - knowledgebase-admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RevisionActionRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/RevisionActionRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/RevisionActionRequest'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminArticleDetail'
-          description: ''
-        '400':
-          description: Dữ liệu không hợp lệ.
-        '403':
-          description: Thiếu permission quản trị.
-        '409':
-          description: Xung đột trạng thái hoặc revision token cũ.
-  /api/admin/knowledgebase/articles/{public_id}/revisions/{number}/submit/:
-    post:
-      operationId: admin_knowledgebase_articles_revisions_submit_create
-      parameters:
-      - in: path
-        name: number
-        schema:
-          type: integer
-        required: true
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - knowledgebase-admin
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RevisionActionRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/RevisionActionRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/RevisionActionRequest'
+              $ref: '#/components/schemas/TokenActionRequest'
         required: true
       security:
       - jwtAuth: []
@@ -15771,14 +15621,14 @@ components:
         published:
           type: integer
           minimum: 0
-        in_review:
+        drafts:
           type: integer
           minimum: 0
         overdue:
           type: integer
           minimum: 0
       required:
-      - in_review
+      - drafts
       - overdue
       - published
       - total
@@ -21511,13 +21361,11 @@ components:
     BlogPostStatusEnum:
       enum:
       - draft
-      - pending
       - published
       - archived
       type: string
       description: |-
         * `draft` - Nháp
-        * `pending` - Chờ duyệt
         * `published` - Đã xuất bản
         * `archived` - Đã gỡ
     BlogReorder:
@@ -34630,19 +34478,12 @@ components:
         source_reference:
           type: string
           maxLength: 500
-        review_note:
-          type: string
         created_by:
           type: object
           additionalProperties: {}
           nullable: true
           readOnly: true
-        submitted_by:
-          type: object
-          additionalProperties: {}
-          nullable: true
-          readOnly: true
-        reviewed_by:
+        first_published_by:
           type: object
           additionalProperties: {}
           nullable: true
@@ -34655,14 +34496,6 @@ components:
           type: string
           format: date-time
           readOnly: true
-        submitted_at:
-          type: string
-          format: date-time
-          nullable: true
-        reviewed_at:
-          type: string
-          format: date-time
-          nullable: true
         first_published_at:
           type: string
           format: date-time
@@ -34673,35 +34506,20 @@ components:
       - content_hash
       - created_at
       - created_by
+      - first_published_by
       - number
       - public_id
-      - reviewed_by
       - source_reference
-      - submitted_by
       - title
       - updated_at
-    RevisionActionRequest:
-      type: object
-      properties:
-        revision_token:
-          type: integer
-          minimum: 1
-        review_note:
-          type: string
-      required:
-      - revision_token
     RevisionStatusEnum:
       enum:
       - DRAFT
-      - IN_REVIEW
-      - APPROVED
-      - REJECTED
+      - PUBLISHED
       type: string
       description: |-
         * `DRAFT` - Nháp
-        * `IN_REVIEW` - Chờ duyệt
-        * `APPROVED` - Đã duyệt
-        * `REJECTED` - Bị từ chối
+        * `PUBLISHED` - Đã xuất bản
     RevisionWriteRequest:
       type: object
       properties:

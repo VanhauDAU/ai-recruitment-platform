@@ -40,6 +40,18 @@ def _text(row, key):
     return str(row.get(key) or '').strip()
 
 
+_PROVINCE_PREFIXES = ('thành phố ', 'tỉnh ', 'tp. ', 'tp ')
+
+
+def _province_key(value):
+    """Tên tỉnh/thành bỏ tiền tố hành chính: "Tỉnh Đồng Nai" và "Thành phố Đồng Nai" là một."""
+    name = _fold(value)
+    for prefix in _PROVINCE_PREFIXES:
+        if name.startswith(prefix):
+            return name[len(prefix) :]
+    return name
+
+
 def _names(row, key):
     return [name for name in (str(item).strip() for item in row.get(key) or []) if name]
 
@@ -79,7 +91,7 @@ class _Lookups:
             elif category.category_type == JobCategory.CategoryType.DOMAIN:
                 self.domains.setdefault(_fold(category.name), category)
         self.provinces = {
-            _fold(location.name): location
+            _province_key(location.name): location
             for location in Location.objects.filter(level=Location.Level.PROVINCE, is_active=True)
         }
         self.languages = {
@@ -241,7 +253,7 @@ def _resolve(row, lookups):
     if not domains and parent and parent.category_type == JobCategory.CategoryType.DOMAIN:
         domains.append(parent)
 
-    province = lookups.provinces.get(_fold(row.get('province')))
+    province = lookups.provinces.get(_province_key(row.get('province')))
     if province is None:
         errors.append(f'Tỉnh/thành không hợp lệ: {_text(row, "province") or "(trống)"}.')
 

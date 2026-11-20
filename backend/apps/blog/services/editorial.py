@@ -39,9 +39,8 @@ class BlogResourceChanged(APIException):
 
 
 def _state(post):
-    copy = getattr(post, 'working_copy', None)
-    if post.status == Post.Status.PUBLISHED and copy:
-        return f'published_with_{copy.status}'
+    if post.status == Post.Status.PUBLISHED and getattr(post, 'working_copy', None):
+        return 'published_with_draft'
     return post.status
 
 
@@ -156,54 +155,12 @@ def save_post_draft(*, post, actor, validated_data, tags=None, base_revision):
 
 
 @transaction.atomic
-def submit_post(*, post, actor):
-    post = Post.objects.select_for_update().select_related('category').get(pk=post.pk)
-    source = getattr(post, 'working_copy', None) if post.status == Post.Status.PUBLISHED else post
-    if source is None or source.status not in {Post.Status.DRAFT, Post.Status.PENDING}:
-        raise ValidationError(
-            {'detail': 'Chỉ bài nháp hoặc bài đang chờ duyệt mới có thể gửi duyệt.'}
-        )
-    _validate_publishable(source, category=source.category)
-    before = _state(post)
-    resubmitting = source.status == Post.Status.PENDING
-    source.status = Post.Status.PENDING
-    source.submitted_at = timezone.now()
-    source.edit_revision += 1
-    source.save(update_fields=['status', 'submitted_at', 'edit_revision', 'updated_at'])
-    _history(
-        post,
-        actor=actor,
-        action='resubmit' if resubmitting else 'submit',
-        from_status=before,
-        to_status=_state(post),
-    )
-    return post
-
-
-@transaction.atomic
-def return_post(*, post, actor, note):
-    post = Post.objects.select_for_update().get(pk=post.pk)
-    source = getattr(post, 'working_copy', None) if post.status == Post.Status.PUBLISHED else post
-    if source is None or source.status != Post.Status.PENDING:
-        raise ValidationError({'detail': 'Bài không ở trạng thái chờ duyệt.'})
-    before = _state(post)
-    source.status = Post.Status.DRAFT
-    source.submitted_at = None
-    source.edit_revision += 1
-    source.save(update_fields=['status', 'submitted_at', 'edit_revision', 'updated_at'])
-    _history(
-        post, actor=actor, action='return', from_status=before, to_status=_state(post), note=note
-    )
-    return post
-
-
-@transaction.atomic
 def publish_post(*, post, actor):
     post = Post.objects.select_for_update().select_related('category').get(pk=post.pk)
     copy = getattr(post, 'working_copy', None)
     source = copy if post.status == Post.Status.PUBLISHED else post
-    if source is None or source.status != Post.Status.PENDING:
-        raise ValidationError({'detail': 'Chỉ bài đang chờ duyệt mới có thể xuất bản.'})
+    if source is None or (source is post and post.status != Post.Status.DRAFT):
+        raise ValidationError({'detail': 'Chỉ bản nháp hoặc bản sửa nháp mới có thể xuất bản.'})
     _validate_publishable(source, category=source.category)
     before = _state(post)
     if copy:
@@ -252,9 +209,8 @@ def restore_post(*, post, actor):
     if post.status != Post.Status.ARCHIVED:
         raise ValidationError({'detail': 'Chỉ bài đã gỡ mới có thể khôi phục.'})
     post.status = Post.Status.DRAFT
-    post.submitted_at = None
     post.edit_revision += 1
-    post.save(update_fields=['status', 'submitted_at', 'edit_revision', 'updated_at'])
+    post.save(update_fields=['status', 'edit_revision', 'updated_at'])
     _history(
         post,
         actor=actor,
@@ -270,8 +226,6 @@ def discard_draft(*, post, actor):
     post = Post.objects.select_for_update().get(pk=post.pk)
     copy = getattr(post, 'working_copy', None)
     if copy:
-        if copy.status != PostWorkingCopy.Status.DRAFT:
-            raise ValidationError({'detail': 'Không thể hủy bản sửa đang chờ duyệt.'})
         before = _state(post)
         post.edit_revision = _next_post_revision(post, copy)
         copy.delete()

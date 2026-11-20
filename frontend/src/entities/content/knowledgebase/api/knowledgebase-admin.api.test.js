@@ -1,10 +1,10 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+  discardAdminKnowledgeDraft,
   getAdminKnowledgeArticles,
   getAdminKnowledgeArticleSummary,
   getAdminKnowledgeMedia,
-  runAdminKnowledgeRevisionAction,
   setAdminKnowledgeCategoryActive,
   updateAdminKnowledgeRevision,
   uploadAdminKnowledgeMedia,
@@ -26,7 +26,7 @@ describe('knowledgebase admin API', () => {
   })
 
   it('keeps server filters and AbortSignal on article lists', async () => {
-    const params = { q: 'đăng nhập', revision_status: 'IN_REVIEW', page: 2 }
+    const params = { q: 'đăng nhập', revision_status: 'DRAFT', page: 2 }
     await getAdminKnowledgeArticles(params, { signal: 'signal' })
     expect(get).toHaveBeenCalledWith('/admin/knowledgebase/articles/', { params, signal: 'signal' })
   })
@@ -43,10 +43,10 @@ describe('knowledgebase admin API', () => {
   it('sends revision tokens on category and editorial mutations', async () => {
     await setAdminKnowledgeCategoryActive('kbc_1', false, 4)
     await updateAdminKnowledgeRevision('kba_1', 2, { title: 'Mới', revision_token: 8 })
-    await runAdminKnowledgeRevisionAction('kba_1', 2, 'approve', { revision_token: 9 })
+    await discardAdminKnowledgeDraft('kba_1', 2, 9)
     expect(post).toHaveBeenNthCalledWith(1, '/admin/knowledgebase/categories/kbc_1/deactivate/', { revision_token: 4 })
     expect(patch).toHaveBeenCalledWith('/admin/knowledgebase/articles/kba_1/revisions/2/', { title: 'Mới', revision_token: 8 })
-    expect(post).toHaveBeenNthCalledWith(2, '/admin/knowledgebase/articles/kba_1/revisions/2/approve/', { revision_token: 9 })
+    expect(post).toHaveBeenNthCalledWith(2, '/admin/knowledgebase/articles/kba_1/revisions/2/discard/', { revision_token: 9 })
   })
 
   it('adapts backend media metadata to the shared image library', async () => {

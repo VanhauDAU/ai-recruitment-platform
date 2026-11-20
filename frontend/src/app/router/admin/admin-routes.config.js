@@ -4,8 +4,6 @@ export const ADMIN_ROUTES = [
     segment: '/dashboard',
     lazyKey: 'AdminDashboardPage',
     title: 'Bảng điều khiển',
-    navLabel: 'Trang chủ',
-    iconKey: 'dashboard',
     showInNav: true,
   },
   {
@@ -13,8 +11,6 @@ export const ADMIN_ROUTES = [
     segment: '/companies',
     lazyKey: 'AdminCompaniesPage',
     title: 'Quản lý công ty',
-    navLabel: 'Công ty',
-    iconKey: 'companies',
     showInNav: true,
   },
   {
@@ -29,8 +25,6 @@ export const ADMIN_ROUTES = [
     segment: '/cv/overview',
     lazyKey: 'AdminCvOverviewPage',
     title: 'Tổng quan Mẫu CV',
-    navLabel: 'Mẫu CV',
-    iconKey: 'cv',
     showInNav: true,
   },
   {
@@ -80,8 +74,6 @@ export const ADMIN_ROUTES = [
     segment: '/job-moderation',
     lazyKey: 'AdminJobModerationPage',
     title: 'Quản lý tin tuyển dụng',
-    navLabel: 'Quản lý tin tuyển dụng',
-    iconKey: 'moderation',
     showInNav: true,
   },
   {
@@ -96,8 +88,6 @@ export const ADMIN_ROUTES = [
     segment: '/company-reports',
     lazyKey: 'AdminCompanyReportsPage',
     title: 'Báo cáo công ty',
-    navLabel: 'Báo cáo công ty',
-    iconKey: 'moderation',
     showInNav: true,
   },
   {
@@ -105,8 +95,6 @@ export const ADMIN_ROUTES = [
     segment: '/blog',
     lazyKey: 'AdminBlogManagementPage',
     title: 'Cẩm nang nghề nghiệp',
-    navLabel: 'Bài viết',
-    iconKey: 'blog',
     showInNav: true,
   },
   {
@@ -114,8 +102,6 @@ export const ADMIN_ROUTES = [
     segment: '/knowledgebase',
     lazyKey: 'AdminKnowledgeBasePage',
     title: 'Trung tâm FAQ & hướng dẫn',
-    navLabel: 'FAQ & hướng dẫn',
-    iconKey: 'blog',
     showInNav: true,
   },
   {
@@ -151,8 +137,6 @@ export const ADMIN_ROUTES = [
     segment: '/announcements',
     lazyKey: 'AdminAnnouncementsPage',
     title: 'Trung tâm thông báo',
-    navLabel: 'Thông báo',
-    iconKey: 'announcements',
     showInNav: true,
   },
   {
@@ -160,8 +144,6 @@ export const ADMIN_ROUTES = [
     segment: '/accounts',
     lazyKey: 'AdminAccountsPage',
     title: 'Tài khoản người dùng',
-    navLabel: 'Tài khoản',
-    iconKey: 'accounts',
     showInNav: true,
   },
   {
@@ -169,8 +151,6 @@ export const ADMIN_ROUTES = [
     segment: '/recruiters',
     lazyKey: 'AdminRecruitersPage',
     title: 'Nhà tuyển dụng',
-    navLabel: 'Nhà tuyển dụng',
-    iconKey: 'accounts',
     showInNav: true,
   },
   {
@@ -192,8 +172,6 @@ export const ADMIN_ROUTES = [
     segment: '/settings',
     lazyKey: 'AdminSettingsPage',
     title: 'Cài đặt hệ thống',
-    navLabel: 'Cài đặt hệ thống',
-    iconKey: 'settings',
     requireSuperuser: true,
     showInNav: true,
   },
@@ -202,8 +180,6 @@ export const ADMIN_ROUTES = [
     segment: '/account',
     lazyKey: 'AdminAccountPage',
     title: 'Tài khoản của tôi',
-    navLabel: 'Tài khoản của tôi',
-    iconKey: 'account',
     showInNav: true,
   },
   {

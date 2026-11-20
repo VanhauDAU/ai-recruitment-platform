@@ -8,7 +8,7 @@ export default function AdminKnowledgeBase() {
       <AdminPageHeader
         eyebrow="Nội dung đa cổng"
         title="Trung tâm FAQ & hướng dẫn"
-        description="Biên tập, kiểm duyệt và giữ nội dung trợ giúp luôn chính xác trong một quy trình có lịch sử rõ ràng."
+        description="Soạn, xuất bản và rà soát định kỳ để nội dung trợ giúp luôn chính xác, có lịch sử phiên bản rõ ràng."
         icon={<BookOutlined />}
       />
       <AdminKnowledgeBaseManagement />

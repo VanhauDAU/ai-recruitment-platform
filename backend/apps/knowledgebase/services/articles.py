@@ -1,4 +1,4 @@
-"""Article lifecycle and the draft -> review -> publish revision workflow."""
+"""Article lifecycle and the draft -> publish revision workflow (ADR-0024)."""
 
 from datetime import timedelta
 
@@ -133,19 +133,14 @@ def create_revision(
 ):
     article = _lock_article(article)
     assert_revision_token(article, expected_revision_token)
-    open_revision = article.revisions.filter(
-        status__in=[
-            KnowledgeArticleRevision.Status.DRAFT,
-            KnowledgeArticleRevision.Status.IN_REVIEW,
-        ]
-    ).first()
+    open_revision = article.revisions.filter(status=KnowledgeArticleRevision.Status.DRAFT).first()
     if open_revision:
         raise KnowledgeConflict(
             'knowledgebase_open_revision_exists',
-            'Bài viết đã có một revision đang mở.',
+            'Bài viết đã có một bản nháp đang mở.',
             open_revision=open_revision,
         )
-    source = article.published_revision or article.revisions.order_by('-number').first()
+    source = article.revisions.order_by('-number').first()
     normalized = normalize_revision_content(
         title=title if title is not None else source.title,
         body=body if body is not None else source.body,
@@ -153,8 +148,6 @@ def create_revision(
             source_reference if source_reference is not None else source.source_reference
         ),
     )
-    if article.first_published_at and not str(change_summary or '').strip():
-        raise ValidationError({'change_summary': 'Bắt buộc mô tả thay đổi của bài đã xuất bản.'})
     number = article.revisions.aggregate(value=Max('number'))['value'] + 1
     revision = KnowledgeArticleRevision(
         article=article,
@@ -194,7 +187,7 @@ def update_draft_revision(
     if not revision or revision.status != KnowledgeArticleRevision.Status.DRAFT:
         raise KnowledgeConflict(
             'knowledgebase_revision_not_editable',
-            'Chỉ revision nháp mới được chỉnh sửa.',
+            'Chỉ bản nháp mới được chỉnh sửa.',
         )
     normalized = normalize_revision_content(
         title=changes.pop('title', revision.title),
@@ -219,72 +212,32 @@ def update_draft_revision(
     return article, revision
 
 
-def _transition_revision(
-    *,
-    article,
-    revision_number,
-    actor,
-    expected_revision_token,
-    from_status,
-    to_status,
-    review_note='',
-):
+@transaction.atomic
+def discard_draft_revision(*, article, revision_number, actor, expected_revision_token):
+    """Bỏ bản nháp của bài đã công khai; bản nháp chưa từng public nên xóa hẳn."""
     article = _lock_article(article)
     assert_revision_token(article, expected_revision_token)
     revision = article.revisions.select_for_update().filter(number=revision_number).first()
-    if not revision or revision.status != from_status:
+    if not revision or revision.status != KnowledgeArticleRevision.Status.DRAFT:
         raise KnowledgeConflict(
-            'knowledgebase_invalid_transition',
-            'Revision không ở trạng thái phù hợp cho thao tác này.',
+            'knowledgebase_revision_not_editable',
+            'Chỉ bản nháp mới có thể hủy.',
         )
-    if to_status == KnowledgeArticleRevision.Status.REJECTED and not str(review_note).strip():
-        raise ValidationError({'review_note': 'Nhập lý do từ chối.'})
-    now = timezone.now()
-    revision.status = to_status
-    if to_status == KnowledgeArticleRevision.Status.IN_REVIEW:
-        revision.submitted_by = actor
-        revision.submitted_at = now
-    else:
-        revision.reviewed_by = actor
-        revision.reviewed_at = now
-        revision.review_note = str(review_note or '').strip()
-    revision.save()
+    if not article.published_revision_id:
+        raise KnowledgeConflict(
+            'knowledgebase_draft_is_only_revision',
+            'Bài chưa từng xuất bản; hãy lưu trữ bài thay vì hủy bản nháp duy nhất.',
+        )
+    revision.delete()
     article.revision_token += 1
     article.save(update_fields=['revision_token', 'updated_at'])
     record_editorial_action(
         actor=actor,
-        action=f'knowledge_revision_{to_status.lower()}',
+        action='knowledge_revision_discard',
         target=article,
-        payload={'revision': revision.number},
+        payload={'revision': revision_number},
     )
-    return article, revision
-
-
-@transaction.atomic
-def submit_revision(**kwargs):
-    return _transition_revision(
-        from_status=KnowledgeArticleRevision.Status.DRAFT,
-        to_status=KnowledgeArticleRevision.Status.IN_REVIEW,
-        **kwargs,
-    )
-
-
-@transaction.atomic
-def approve_revision(**kwargs):
-    return _transition_revision(
-        from_status=KnowledgeArticleRevision.Status.IN_REVIEW,
-        to_status=KnowledgeArticleRevision.Status.APPROVED,
-        **kwargs,
-    )
-
-
-@transaction.atomic
-def reject_revision(**kwargs):
-    return _transition_revision(
-        from_status=KnowledgeArticleRevision.Status.IN_REVIEW,
-        to_status=KnowledgeArticleRevision.Status.REJECTED,
-        **kwargs,
-    )
+    return article
 
 
 @transaction.atomic
@@ -304,10 +257,20 @@ def publish_revision(
             'Khôi phục bài viết trước khi xuất bản revision.',
         )
     revision = article.revisions.select_for_update().filter(number=revision_number).first()
-    if not revision or revision.status != KnowledgeArticleRevision.Status.APPROVED:
+    if not revision:
         raise KnowledgeConflict(
-            'knowledgebase_revision_not_approved',
-            'Chỉ revision đã duyệt của chính bài viết mới được xuất bản.',
+            'knowledgebase_revision_not_found',
+            'Revision không thuộc bài viết này.',
+        )
+    if revision.status == KnowledgeArticleRevision.Status.DRAFT:
+        if article.first_published_at and not revision.change_summary.strip():
+            raise ValidationError(
+                {'change_summary': 'Bắt buộc mô tả thay đổi của bài đã xuất bản.'}
+            )
+    elif revision.pk == article.published_revision_id:
+        raise KnowledgeConflict(
+            'knowledgebase_revision_already_public',
+            'Revision này đang được công khai.',
         )
     now = timezone.now()
     maximum_due_at = now + timedelta(days=article.category.review_interval_days)
@@ -315,10 +278,14 @@ def publish_revision(
         raise ValidationError(
             {'review_due_at': 'Hạn xác minh không được muộn hơn chu kỳ category.'}
         )
-    if revision.first_published_at is None:
+    rollback = revision.status == KnowledgeArticleRevision.Status.PUBLISHED
+    if not rollback:
+        revision.status = KnowledgeArticleRevision.Status.PUBLISHED
         revision.first_published_at = now
         revision.first_published_by = actor
-        revision.save(update_fields=['first_published_at', 'first_published_by'])
+        revision.save(
+            update_fields=['status', 'first_published_at', 'first_published_by', 'updated_at']
+        )
     if article.first_published_at is None:
         article.first_published_at = now
     article.published_revision = revision
@@ -330,7 +297,7 @@ def publish_revision(
         actor=actor,
         action='knowledge_article_publish',
         target=article,
-        payload={'revision': revision.number},
+        payload={'revision': revision.number, 'rollback': rollback},
     )
     invalidate_knowledge_public_cache()
     return article

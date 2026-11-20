@@ -9,18 +9,15 @@ from ...services import sanitize_blog_html
 
 STATE_LABELS = {
     'draft': 'Nháp',
-    'pending': 'Chờ duyệt',
     'published': 'Đã xuất bản',
     'published_with_draft': 'Đã đăng · có bản sửa nháp',
-    'published_with_pending': 'Đã đăng · bản sửa chờ duyệt',
     'archived': 'Đã gỡ',
 }
 
 
 def editorial_state(post):
-    copy = getattr(post, 'working_copy', None)
-    if post.status == Post.Status.PUBLISHED and copy:
-        return f'published_with_{copy.status}'
+    if post.status == Post.Status.PUBLISHED and getattr(post, 'working_copy', None):
+        return 'published_with_draft'
     return post.status
 
 
@@ -52,8 +49,6 @@ def version_data(source, request):
         ),
         'seo_title': source.seo_title,
         'seo_description': source.seo_description,
-        'status': source.status,
-        'submitted_at': source.submitted_at,
         'edit_revision': source.edit_revision,
         'updated_at': source.updated_at,
     }
@@ -137,9 +132,9 @@ class AdminPostListSerializer(serializers.ModelSerializer):
         state = editorial_state(obj)
         if state == 'archived':
             return ['view', 'restore']
-        actions = ['edit', 'submit']
-        if state in {'pending', 'published_with_pending'}:
-            actions.extend(['return', 'publish'])
+        actions = ['edit']
+        if state in {'draft', 'published_with_draft'}:
+            actions.append('publish')
         actions.append('archive')
         if state in {'draft', 'published_with_draft'}:
             actions.append('discard_draft')

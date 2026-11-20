@@ -9,8 +9,8 @@ import {
   UploadOutlined,
 } from '@ant-design/icons'
 import { Button, Card, Divider, Form, Image, Input, Progress, Select, Space, Tag, Timeline, Upload } from 'antd'
+import { blogStateColor } from '@/entities/content/blog'
 import { EDITOR_COMPLETION_ITEMS } from '../model/editor-completion'
-import { stateColor } from '../model/editor-options'
 import BlogTagPicker from './BlogTagPicker'
 import { getIntlLocale } from '@/shared/config/i18n'
 
@@ -59,7 +59,7 @@ export default function BlogEditorSidebar({
       <Card className="border-slate-200 shadow-sm" title="Xuất bản">
         <div className="flex items-center justify-between gap-3">
           <span className="text-sm text-slate-500">Trạng thái</span>
-          <Tag color={post ? stateColor(post.editorial_state) : 'blue'}>{post?.editorial_state_label || 'Bản nháp mới'}</Tag>
+          <Tag color={post ? blogStateColor(post.editorial_state) : 'blue'}>{post?.editorial_state_label || 'Bản nháp mới'}</Tag>
         </div>
         <Divider className="my-4" />
         <div className="mb-2 flex items-center justify-between gap-3">
@@ -118,15 +118,14 @@ export default function BlogEditorSidebar({
       )}
 
       {post?.history?.length > 0 && (
-        <Card className="border-slate-200 shadow-sm" title="Lịch sử duyệt">
+        <Card className="border-slate-200 shadow-sm" title="Lịch sử biên tập">
           <Timeline items={post.history.slice(0, 8).map((item) => ({ content: <div><p className="font-medium text-slate-700">{item.action}</p><p className="text-xs text-slate-500">{item.actor_name} · {new Date(item.created_at).toLocaleString(getIntlLocale())}</p>{item.note && <p className="mt-1 text-sm text-slate-600">{item.note}</p>}</div> }))} />
         </Card>
       )}
 
-      {post && allowedActions.some((action) => ['return', 'restore', 'discard_draft', 'archive'].includes(action)) && (
+      {post && allowedActions.some((action) => ['restore', 'discard_draft', 'archive'].includes(action)) && (
         <Card className="border-slate-200 shadow-sm" title="Thao tác khác">
           <Space orientation="vertical" className="w-full" style={{ width: '100%' }}>
-            {allowedActions.includes('return') && <Button block onClick={() => onAction('return')}>Trả về chỉnh sửa</Button>}
             {/* Bài đã gỡ làm form chỉ đọc; action workflow này phải thoát disabled context của Form. */}
             {allowedActions.includes('restore') && <Button block disabled={false} onClick={() => onAction('restore')}>Khôi phục về nháp</Button>}
             {allowedActions.includes('discard_draft') && <Button block danger icon={<DeleteOutlined />} onClick={() => onAction('discard-draft')}>Hủy bản nháp</Button>}

@@ -51,7 +51,7 @@ danh từ nghiệp vụ (`account`, `job`, `company`, `cv`, `campaign`…).
 features   cổng      module (số slice)
            main      job (9) · application (4) · cv (5) · company (2) · account (3)
            employer  account (5) · company (4) · job (2) · candidate (8) · campaign (4) · marketing (3)
-           admin     account (5) · company (4) · job (2) · content (8) · system (2)
+           admin     account (5) · company (4) · job (2) · content (7) · system (2)
            common    account (4) · cv (1) · privacy (1)
 ```
 

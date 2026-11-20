@@ -278,8 +278,8 @@ Chi tiết contract document, renderer và API ở
 | Bảng (model) | Mục đích và ràng buộc |
 | --- | --- |
 | `PostCategory` | Danh mục phẳng một cấp (thanh danh mục `/blog`), `order`, `is_active`, SEO; seed bằng `seed_blog`. Tách biệt với `JobCategory`. |
-| `Post` | Bài viết: `title`, `slug` unique, `category` (PROTECT), `author` (SET_NULL), `summary`, `thumbnail_url` (storage key), `content` HTML, `related_job_category` → `JobCategory` (SET_NULL, nguồn khối việc làm liên quan), M2M `tags`, `status` draft → pending → published → archived, `published_at`, `view_count`, SEO, `edit_revision`. Check `chk_blog_post_status` và bài `published` bắt buộc có `published_at`. |
-| `PostWorkingCopy` | Bản sửa duy nhất (1-1) cho bài đang public, draft/pending; bị xóa sau khi duyệt/hủy — bản public vẫn nằm trên `Post`. |
+| `Post` | Bài viết: `title`, `slug` unique, `category` (PROTECT), `author` (SET_NULL), `summary`, `thumbnail_url` (storage key), `content` HTML, `related_job_category` → `JobCategory` (SET_NULL, nguồn khối việc làm liên quan), M2M `tags`, `status` draft → published → archived (ADR-0024), `published_at`, `view_count`, SEO, `edit_revision`. Check `chk_blog_post_status` và bài `published` bắt buộc có `published_at`. |
+| `PostWorkingCopy` | Bản sửa nháp duy nhất (1-1) cho bài đang public; bị xóa sau khi xuất bản/hủy — bản public vẫn nằm trên `Post`. |
 | `PostStatusHistory` | Timeline nghiệp vụ (autosave không ghi). |
 | `Tag` | Thẻ có slug unique. |
 | `PinnedPost` | Bài ghim theo `placement` (`support_docs` — "Tài liệu hỗ trợ tìm việc"); unique `(placement, post)`; chỉ hiện bài published. |
@@ -297,7 +297,7 @@ admin vẫn dùng permission `blog.can_publish_post` và các group `blog_editor
 | --- | --- |
 | `KnowledgeCategory` | Danh mục FAQ/hướng dẫn: slug unique, `review_interval_days` 30–365, `revision_token`. |
 | `KnowledgeArticle` | Identity bài (FAQ/GUIDE), unique `(category, slug)`, `lifecycle_state` ACTIVE/ARCHIVED, `published_revision`, `review_due_at`. |
-| `KnowledgeArticleRevision` | Nội dung theo revision: DRAFT → IN_REVIEW → APPROVED/REJECTED, `body` + `body_plain_text` + `content_hash`, `source_reference` bắt buộc; unique `(article, number)` và tối đa một revision đang mở (DRAFT/IN_REVIEW) mỗi bài. |
+| `KnowledgeArticleRevision` | Nội dung theo revision: DRAFT → PUBLISHED (ADR-0024), `body` + `body_plain_text` + `content_hash`, `source_reference` bắt buộc; unique `(article, number)` và tối đa một bản nháp mỗi bài. |
 | `KnowledgeMediaAsset` | Ảnh dùng trong bài. |
 
 Quy tắc chi tiết: [đặc tả trung tâm trợ giúp](../01-phan-tich/dac-ta-trung-tam-tro-giup.md).

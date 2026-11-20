@@ -9,7 +9,7 @@ export default function AdminBlogManagement() {
       <AdminPageHeader
         eyebrow="Nội dung đa cổng"
         title="Cẩm nang nghề nghiệp"
-        description="Biên tập, kiểm duyệt và tổ chức nội dung hiển thị cho ứng viên trong một quy trình có lịch sử rõ ràng."
+        description="Soạn, xuất bản và tổ chức nội dung hiển thị cho ứng viên, có lịch sử thay đổi rõ ràng."
         icon={<FileTextOutlined />}
       />
       <BlogContentManagement tagPanel={<BlogTagManagement />} />

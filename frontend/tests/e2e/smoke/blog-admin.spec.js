@@ -34,7 +34,7 @@ test('admin blog: list is responsive, public links open a new tab and article sl
     editorial_state: 'draft',
     editorial_state_label: 'Nháp',
     completeness: { score: 45, missing_fields: [] },
-    allowed_actions: ['edit', 'submit', 'archive', 'discard_draft'],
+    allowed_actions: ['edit', 'publish', 'archive', 'discard_draft'],
     view_count: 0,
     updated_at: '2026-07-27T08:00:00Z',
   }
@@ -48,7 +48,7 @@ test('admin blog: list is responsive, public links open a new tab and article sl
     editorial_state: 'published',
     editorial_state_label: 'Đã xuất bản',
     completeness: { score: 100, missing_fields: [] },
-    allowed_actions: ['edit', 'submit', 'archive'],
+    allowed_actions: ['edit', 'archive'],
     view_count: 128,
     updated_at: '2026-07-27T07:00:00Z',
   }
@@ -71,7 +71,6 @@ test('admin blog: list is responsive, public links open a new tab and article sl
       seo_title: '',
       seo_description: '',
       status: 'draft',
-      submitted_at: null,
       edit_revision: 1,
       updated_at: post.updated_at,
     },
@@ -91,10 +90,8 @@ test('admin blog: list is responsive, public links open a new tab and article sl
       body = {
         all: 2,
         draft: post.editorial_state === 'draft' ? 1 : 0,
-        pending: 0,
         published: publishedPost.editorial_state === 'published' ? 1 : 0,
         published_with_draft: 0,
-        published_with_pending: 0,
         archived: [post, publishedPost].filter((item) => item.editorial_state === 'archived').length,
       }
     } else if (path === '/api/admin/blog/posts/') {
@@ -103,11 +100,9 @@ test('admin blog: list is responsive, public links open a new tab and article sl
       const field = ordering.replace(/^-/, '')
       const stateOrder = {
         draft: 0,
-        pending: 1,
-        published: 2,
-        published_with_draft: 3,
-        published_with_pending: 4,
-        archived: 5,
+        published: 1,
+        published_with_draft: 2,
+        archived: 3,
       }
       const value = (item) => ({
         title: item.title,

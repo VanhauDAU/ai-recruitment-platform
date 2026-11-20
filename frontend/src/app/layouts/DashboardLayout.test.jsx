@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ConfigProvider, theme as antdTheme } from 'antd'
-import { MemoryRouter, Route, Routes } from 'react-router'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import DashboardLayout from './DashboardLayout'
 
@@ -29,6 +29,17 @@ vi.mock('@/entities/system/site-settings', () => ({
 }))
 vi.mock('@/widgets/common/announcement-strip', () => ({ AnnouncementStrip: () => null }))
 
+function LocationProbe() {
+  const { pathname, search } = useLocation()
+  return <span data-testid="location">{`${pathname}${search}`}</span>
+}
+
+const superuser = () => ({
+  role: 'admin',
+  email: 'superuser@example.com',
+  admin_access: { is_superuser: true },
+})
+
 function ThemeProbe() {
   const { token } = antdTheme.useToken()
   return <span data-testid="admin-primary-token">{token.colorPrimary}</span>
@@ -48,6 +59,7 @@ function renderDashboard(ui) {
 describe('DashboardLayout admin access', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    window.localStorage.clear()
     getAdminAccountSummary.mockResolvedValue({
       totals: { restricted: 4 },
       queues: { pending_admin_invitations: 5 },
@@ -68,7 +80,6 @@ describe('DashboardLayout admin access', () => {
   })
 
   it('hides superuser-only areas from a regular admin', async () => {
-    const user = userEvent.setup()
     useSession.mockReturnValue({
       user: {
         role: 'admin',
@@ -84,213 +95,156 @@ describe('DashboardLayout admin access', () => {
       </MemoryRouter>,
     )
 
-    await user.click(screen.getByRole('button', { name: /^Tin tuyển dụng/ }))
-    expect(screen.getByText('Tin có báo cáo chờ')).toBeInTheDocument()
-    expect(screen.getByText('Tài khoản cá nhân')).toBeInTheDocument()
-    expect(screen.queryByText('Hệ thống')).not.toBeInTheDocument()
-    expect(screen.getAllByText('Quản trị viên').length).toBeGreaterThan(0)
-    await user.click(screen.getByRole('button', { name: /^Người dùng/ }))
-    await user.click(screen.getByRole('button', { name: /^Tài khoản(?! cá nhân)/ }))
-    expect(screen.getByText('Ứng viên')).toBeInTheDocument()
-    expect(screen.queryByText('Lời mời quản trị')).not.toBeInTheDocument()
-    expect(screen.queryByText('Tất cả người dùng')).not.toBeInTheDocument()
-  })
-
-  it('groups related administration routes into expandable navigation sections', async () => {
-    const user = userEvent.setup()
-    useSession.mockReturnValue({
-      user: {
-        role: 'admin',
-        email: 'superuser@example.com',
-        admin_access: { is_superuser: true },
-      },
-      logout: vi.fn(),
-    })
-    renderDashboard(
-      <MemoryRouter initialEntries={['/admin/app/dashboard']}>
-        <DashboardLayout />
-      </MemoryRouter>,
-    )
-
-    const homeButton = screen.getByRole('button', { name: 'Trang chủ' })
-    const personalAccountButton = screen.getByRole('button', { name: 'Tài khoản cá nhân' })
-    expect(homeButton).toHaveAttribute('aria-current', 'page')
-    expect(homeButton).not.toHaveAttribute('aria-expanded')
-    expect(personalAccountButton).not.toHaveAttribute('aria-expanded')
     const navigation = screen.getByRole('navigation', { name: 'Điều hướng quản trị' })
-    expect(within(navigation).queryByText('Bảng điều khiển')).not.toBeInTheDocument()
-    expect(screen.queryByText('Thông tin cá nhân')).not.toBeInTheDocument()
-
-    expect(screen.getByText('Nội dung')).toBeInTheDocument()
-    expect(screen.queryByText('Danh mục')).not.toBeInTheDocument()
-
-    await user.click(screen.getByText('Nội dung'))
-    await user.click(screen.getByText('Cẩm nang nghề nghiệp'))
-
-    expect(await screen.findByText('Danh mục')).toBeInTheDocument()
-    expect(screen.getByText('Bài viết')).toBeInTheDocument()
+    expect(within(navigation).getByRole('button', { name: 'Tin tuyển dụng' }))
+      .toHaveAttribute('aria-expanded', 'true')
+    expect(within(navigation).getByRole('link', { name: 'Tất cả tin' }))
+      .toHaveAttribute('aria-current', 'page')
+    expect(within(navigation).queryByText('Hệ thống')).not.toBeInTheDocument()
+    expect(within(navigation).queryByRole('link', { name: 'Cấu hình hệ thống' })).not.toBeInTheDocument()
+    expect(within(navigation).queryByRole('link', { name: 'Quản trị viên' })).not.toBeInTheDocument()
+    expect(within(navigation).queryByRole('link', { name: 'Tất cả người dùng' })).not.toBeInTheDocument()
   })
 
-  it('opens flyouts beside the selected group without duplicating its heading', async () => {
-    const user = userEvent.setup()
-    useSession.mockReturnValue({
-      user: {
-        role: 'admin',
-        email: 'superuser@example.com',
-        admin_access: { is_superuser: true },
-      },
-      logout: vi.fn(),
-    })
+  it('groups destinations into sections with the review queues open first', () => {
+    useSession.mockReturnValue({ user: superuser(), logout: vi.fn() })
     renderDashboard(
       <MemoryRouter initialEntries={['/admin/app/dashboard']}>
         <DashboardLayout />
       </MemoryRouter>,
     )
 
-    await user.click(screen.getByText('Nội dung'))
-    const guideButton = screen.getByRole('button', { name: /^Cẩm nang/ })
-    vi.spyOn(guideButton, 'getBoundingClientRect').mockReturnValue({
-      top: 240,
-      bottom: 278,
-      left: 0,
-      right: 0,
-      width: 0,
-      height: 38,
-      x: 0,
-      y: 240,
-      toJSON: () => ({}),
-    })
-    await user.click(guideButton)
-
-    const flyout = screen.getByRole('complementary', { name: 'Cẩm nang nghề nghiệp' })
-    expect(flyout).toHaveStyle({ '--admin-nav-flyout-top': '240px' })
-    expect(screen.getAllByText('Cẩm nang nghề nghiệp')).toHaveLength(1)
+    const navigation = screen.getByRole('navigation', { name: 'Điều hướng quản trị' })
+    expect(within(navigation).getAllByText(/^(Vận hành|Quản lý|Nội dung|Hệ thống)$/)
+      .map((node) => node.textContent)).toEqual(['Vận hành', 'Quản lý', 'Nội dung', 'Hệ thống'])
+    const home = within(navigation).getByRole('link', { name: 'Tổng quan' })
+    expect(home).toHaveAttribute('href', '/admin/app/dashboard')
+    expect(home).toHaveAttribute('aria-current', 'page')
+    expect(within(navigation).getByRole('button', { name: 'Cần xử lý' }))
+      .toHaveAttribute('aria-expanded', 'true')
+    expect(within(navigation).getByRole('link', { name: 'Hậu kiểm nội dung' }))
+      .toHaveAttribute('href', '/admin/app/companies?tab=content-changes')
+    expect(within(navigation).getByRole('link', { name: 'Mẫu CV' }))
+      .toHaveAttribute('href', '/admin/app/cv/overview')
+    expect(within(navigation).queryByText('Tài khoản cá nhân')).not.toBeInTheDocument()
   })
 
-  it('keeps the auto-expand panel below the admin header brand area', async () => {
+  it('keeps several groups open and remembers them', async () => {
     const user = userEvent.setup()
-    useSession.mockReturnValue({
-      user: {
-        role: 'admin',
-        email: 'superuser@example.com',
-        admin_access: { is_superuser: true },
-      },
-      logout: vi.fn(),
-    })
-    const { container } = renderDashboard(
+    useSession.mockReturnValue({ user: superuser(), logout: vi.fn() })
+    const view = renderDashboard(
+      <MemoryRouter initialEntries={['/admin/app/dashboard']}>
+        <DashboardLayout />
+      </MemoryRouter>,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Doanh nghiệp' }))
+    await user.click(screen.getByRole('button', { name: 'Người dùng' }))
+    expect(screen.getByRole('button', { name: 'Doanh nghiệp' })).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByRole('button', { name: 'Người dùng' })).toHaveAttribute('aria-expanded', 'true')
+    await user.click(screen.getByRole('button', { name: 'Cần xử lý' }))
+    view.unmount()
+
+    renderDashboard(
+      <MemoryRouter initialEntries={['/admin/app/dashboard']}>
+        <DashboardLayout />
+      </MemoryRouter>,
+    )
+    expect(screen.getByRole('button', { name: 'Cần xử lý' })).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.getByRole('button', { name: 'Doanh nghiệp' })).toHaveAttribute('aria-expanded', 'true')
+  })
+
+  it('remembers a collapsed sidebar and peeks below the brand area', async () => {
+    const user = userEvent.setup()
+    useSession.mockReturnValue({ user: superuser(), logout: vi.fn() })
+    const view = renderDashboard(
       <MemoryRouter initialEntries={['/admin/app/dashboard']}>
         <DashboardLayout />
       </MemoryRouter>,
     )
 
     await user.click(screen.getByRole('button', { name: 'Thu gọn thanh điều hướng' }))
-    await user.hover(container.querySelector('.admin-sider'))
-
-    const peek = container.querySelector('.admin-sider__peek')
+    await user.hover(view.container.querySelector('.admin-sider'))
+    const peek = view.container.querySelector('.admin-sider__peek')
     expect(peek).toBeInTheDocument()
     expect(peek.querySelector('.admin-sider__brand')).toBeNull()
     expect(screen.getAllByText('Logo')).toHaveLength(1)
+    view.unmount()
+
+    renderDashboard(
+      <MemoryRouter initialEntries={['/admin/app/dashboard']}>
+        <DashboardLayout />
+      </MemoryRouter>,
+    )
+    expect(screen.getByRole('button', { name: 'Mở rộng thanh điều hướng' })).toBeInTheDocument()
   })
 
-  it('keeps only one navigation section expanded at a time', async () => {
+  it('totals queue counts on the closed group and fades empty queues', async () => {
     const user = userEvent.setup()
-    useSession.mockReturnValue({
-      user: {
-        role: 'admin',
-        email: 'superuser@example.com',
-        admin_access: { is_superuser: true },
-      },
-      logout: vi.fn(),
-    })
+    useSession.mockReturnValue({ user: superuser(), logout: vi.fn() })
     renderDashboard(
       <MemoryRouter initialEntries={['/admin/app/dashboard']}>
         <DashboardLayout />
       </MemoryRouter>,
     )
 
-    const contentSection = screen.getByRole('button', { name: /^Nội dung/ })
-    const accountSection = screen.getByRole('button', { name: /Doanh nghiệp/ })
-    await user.click(contentSection)
-    expect(contentSection).toHaveAttribute('aria-expanded', 'true')
+    const navigation = screen.getByRole('navigation', { name: 'Điều hướng quản trị' })
+    const verification = within(navigation).getByRole('link', { name: /^Xác thực NTD/ })
+    expect(await within(verification).findByLabelText('3 mục đang chờ')).toHaveClass('admin-nav__count')
+    expect(within(navigation).getByRole('link', { name: /^Báo cáo tin/ }))
+      .toContainElement(within(navigation).getByLabelText('4 mục đang chờ, có mục quá hạn'))
+    expect(within(navigation).getByRole('link', { name: 'Báo cáo công ty' }))
+      .toHaveClass('admin-nav__leaf--idle')
+    expect(within(navigation).getByRole('link', { name: /Lời mời quản trị/ }))
+      .toHaveTextContent('5')
 
-    await user.click(accountSection)
-    expect(accountSection).toHaveAttribute('aria-expanded', 'true')
-    expect(contentSection).toHaveAttribute('aria-expanded', 'false')
-  })
-
-  it('shows compact queue counts in submenu items', async () => {
-    const user = userEvent.setup()
-    useSession.mockReturnValue({
-      user: {
-        role: 'admin',
-        email: 'superuser@example.com',
-        admin_access: { is_superuser: true },
-      },
-      logout: vi.fn(),
-    })
-    renderDashboard(
-      <MemoryRouter initialEntries={['/admin/app/dashboard']}>
-        <DashboardLayout />
-      </MemoryRouter>,
-    )
-
-    const usersMenu = screen.getByRole('button', { name: /Người dùng/ })
-    expect(
-      await within(usersMenu).findByLabelText('5 mục đang chờ'),
-    ).toHaveTextContent('5')
-
-    const businessMenu = screen.getByRole('button', { name: /Doanh nghiệp/ })
-    expect(
-      await within(businessMenu).findByLabelText('12 mục đang chờ'),
-    ).toHaveTextContent('12')
-    await user.click(businessMenu)
-    expect(within(businessMenu).queryByLabelText('10 mục đang chờ')).not.toBeInTheDocument()
-
-    const recruiterMenu = screen.getByRole('button', { name: /^Nhà tuyển dụng/ })
-    expect(within(recruiterMenu).getByLabelText('5 mục đang chờ')).toHaveTextContent('5')
-    await user.click(recruiterMenu)
-    expect(within(recruiterMenu).queryByLabelText('3 mục đang chờ')).not.toBeInTheDocument()
-
-    const badge = await screen.findByLabelText('3 mục đang chờ')
-    expect(badge).toHaveTextContent('3')
-    expect(badge).toHaveClass('admin-nav__count')
-    expect(screen.getByRole('button', { name: /Xác minh tên miền/ }))
-      .toHaveTextContent('2')
-
-    const restrictedRecruiters = screen.getByRole('button', { name: 'NTD bị hạn chế' })
-    expect(restrictedRecruiters.querySelector('.admin-nav__count')).toBeNull()
-
-    await user.click(usersMenu)
-    expect(within(usersMenu).queryByLabelText('5 mục đang chờ')).not.toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /^Kiểm soát/ }))
-    const restrictedUsers = screen.getByRole('button', { name: 'Người dùng bị hạn chế' })
-    expect(restrictedUsers.querySelector('.admin-nav__count')).toBeNull()
-
-    const recruitmentMenu = screen.getByRole('button', { name: /Tuyển dụng & CV/ })
-    expect(within(recruitmentMenu).getByLabelText('4 mục đang chờ, có mục quá hạn'))
+    const queues = within(navigation).getByRole('button', { name: 'Cần xử lý' })
+    expect(within(queues).queryByLabelText(/mục đang chờ/)).not.toBeInTheDocument()
+    await user.click(queues)
+    expect(within(queues).getByLabelText('16 mục đang chờ, có mục quá hạn'))
       .toHaveClass('admin-nav__count--urgent')
+    expect(within(navigation).getByRole('button', { name: 'Doanh nghiệp' })
+      .querySelector('.admin-nav__count')).toBeNull()
     expect(await screen.findByRole('button', { name: '16 mục cần xử lý, 1 quá hạn' })).toBeInTheDocument()
   })
 
-  it('shows the active third-level item in the workspace header', () => {
-    useSession.mockReturnValue({
-      user: {
-        role: 'admin',
-        email: 'superuser@example.com',
-        admin_access: { is_superuser: true },
-      },
-      logout: vi.fn(),
-    })
+  it('shows the active queue in the workspace header', () => {
+    useSession.mockReturnValue({ user: superuser(), logout: vi.fn() })
     renderDashboard(
       <MemoryRouter initialEntries={['/admin/app/companies?tab=updates']}>
         <DashboardLayout />
       </MemoryRouter>,
     )
 
-    expect(screen.getByText('Đang ở: Yêu cầu cập nhật')).toBeInTheDocument()
+    expect(screen.getByText('Đang ở: Cập nhật công ty')).toBeInTheDocument()
     const breadcrumb = screen.getByRole('navigation', { name: 'Vị trí hiện tại' })
     expect(within(breadcrumb).getAllByRole('listitem').map((item) => item.textContent))
-      .toEqual(['Doanh nghiệp', 'Công ty'])
+      .toEqual(['Cần xử lý'])
+  })
+
+  it('jumps to any page from the keyboard palette', async () => {
+    const user = userEvent.setup()
+    useSession.mockReturnValue({ user: superuser(), logout: vi.fn() })
+    renderDashboard(
+      <MemoryRouter initialEntries={['/admin/app/dashboard']}>
+        <Routes>
+          <Route path="*" element={<DashboardLayout />}>
+            <Route path="*" element={<LocationProbe />} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    await user.keyboard('{Control>}k{/Control}')
+    const search = await screen.findByRole('combobox', { name: 'Tìm trang quản trị' })
+    await user.type(search, 'ten mien')
+    expect(screen.getByRole('option', { name: /Xác minh tên miền/ }))
+      .toHaveAttribute('aria-selected', 'true')
+    await user.keyboard('{Enter}')
+
+    expect(screen.getByTestId('location')).toHaveTextContent(
+      '/admin/app/recruiters?tab=domain-verification',
+    )
   })
 
   it('labels a superuser in the workspace header', () => {

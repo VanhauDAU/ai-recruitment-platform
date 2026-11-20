@@ -25,9 +25,7 @@ from ...services import (
     publish_post,
     reorder_by_public_id,
     restore_post,
-    return_post,
     save_post_draft,
-    submit_post,
 )
 from ..serializers import (
     AdminPinnedPostSerializer,
@@ -171,7 +169,7 @@ class AdminPostActionView(APIView):
 
     def post(self, request, public_id):
         post = _post(request, public_id)
-        note_required = self.action in {'return', 'archive'}
+        note_required = self.action == 'archive'
         serializer = AdminPostActionSerializer(
             data=request.data,
             context={'note_required': note_required},
@@ -180,8 +178,6 @@ class AdminPostActionView(APIView):
         note = serializer.validated_data.get('note', '')
 
         operation = {
-            'submit': lambda: submit_post(post=post, actor=request.user),
-            'return': lambda: return_post(post=post, actor=request.user, note=note),
             'publish': lambda: publish_post(post=post, actor=request.user),
             'archive': lambda: archive_post(post=post, actor=request.user, note=note),
             'restore': lambda: restore_post(post=post, actor=request.user),
@@ -190,16 +186,6 @@ class AdminPostActionView(APIView):
         operation()
         post = _post(request, public_id)
         return Response(AdminPostDetailSerializer(post, context=_serializer_context(request)).data)
-
-
-@extend_schema(summary='Admin: gửi bài viết chờ duyệt')
-class AdminPostSubmitView(AdminPostActionView):
-    action = 'submit'
-
-
-@extend_schema(summary='Admin: trả bài viết về nháp kèm ghi chú')
-class AdminPostReturnView(AdminPostActionView):
-    action = 'return'
 
 
 @extend_schema(summary='Admin: xuất bản bài viết')

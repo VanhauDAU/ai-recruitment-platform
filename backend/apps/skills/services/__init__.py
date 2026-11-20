@@ -1,3 +1,3 @@
-from .taxonomy import create_skill
+from .taxonomy import apply_skill_merge, create_skill
 
-__all__ = ['create_skill']
+__all__ = ['apply_skill_merge', 'create_skill']

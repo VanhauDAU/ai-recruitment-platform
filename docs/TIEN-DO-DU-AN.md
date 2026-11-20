@@ -7,7 +7,9 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Song ngữ vi/en cho 3 cổng (ADR-0023)](#song-ngữ-vien-cho-3-cổng-adr-0023-2026-11-19) | 🟨 GĐ0 đã gộp (#262); GĐ1 (cổng NTD) trên nhánh `feat/i18n-employer`; GĐ2–4 chưa làm |
+| [Chốt luồng FAQ/hướng dẫn và blog: Nháp → Xuất bản (ADR-0024)](#chốt-luồng-nội-dung-nháp--xuất-bản-adr-0024-2026-11-20) | ✅ Gộp vào `dev` (#272) |
+| [Tổ chức lại sidebar quản trị](#tổ-chức-lại-sidebar-quản-trị-2026-11-20) | ✅ Gộp vào `dev` (#270); gỡ khối "Hàng chờ quản trị" ở trang Người dùng: PR #271, chờ gộp |
+| [Song ngữ vi/en cho 3 cổng (ADR-0023)](#song-ngữ-vien-cho-3-cổng-adr-0023-2026-11-19) | 🟨 GĐ0 (#262), GĐ1 cổng NTD (#267) đã gộp; chặn mất dữ liệu khi đổi ngôn ngữ trên nhánh `fix/language-switch-unsaved-guard`; GĐ2–4 chưa làm |
 | [Chuẩn hóa tiêu đề trang 3 cổng](#chuẩn-hóa-tiêu-đề-trang-3-cổng-2026-11-19) | 🟨 PR #261 (nhánh `feat/page-titles`), chờ gộp |
 | [Hậu kiểm nội dung trang công ty](#hậu-kiểm-nội-dung-trang-công-ty-2026-11-19) | ✅ Gộp vào `dev` (#260) |
 | [Làm lại trang nhà tuyển dụng của admin](#làm-lại-trang-nhà-tuyển-dụng-của-admin-2026-11-19) | ✅ Gộp vào `dev` (#263); làm gọn giao diện chi tiết ở PR #266 (nhánh `feat/admin-recruiter-detail-ui`), chờ gộp |
@@ -21,7 +23,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Ảnh đại diện dùng chung 3 cổng](#ảnh-đại-diện-dùng-chung-3-cổng-2026-11-16) | 🟨 Xong trên nhánh `feat/avatar-editor`, chưa mở PR |
 | [Dọn mâu thuẫn còn lại sau thống nhất luồng](#dọn-mâu-thuẫn-còn-lại-sau-thống-nhất-luồng-2026-11-16) | ✅ Cả 3 GĐ đã gộp (#222, #223, #224); dọn phần còn hở trên nhánh `fix/flow-loose-ends` |
 | [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | ✅ Cả 6 giai đoạn đã gộp (#208–#215); hoàn thiện luồng nhắc NTD và lịch sử nộp trên nhánh `feat/application-reminders` |
-| [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Tuần 1–4 đã gộp (#207, #230, #231, #232, #233) |
+| [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Bản demo đã gộp (#207, #230–#233); kế hoạch bản 3 (20/11): GĐ 1 đo lường xong trên nhánh `feat/ai-eval-harness`, chờ PR |
 | [CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm](#cv-tải-lên-tệp-gốc-tiêu-chuẩn-upload-giới-hạn-cv-ntd-tìm-kiếm-2026-11-15) | ✅ Gộp vào `dev` (#203) |
 | [Việc làm tốt nhất xếp theo chất lượng tin](#việc-làm-tốt-nhất-xếp-theo-chất-lượng-tin-2026-11-15) | ✅ Gộp vào `dev` (#204) |
 | [Thiết kế lại quản lý tin tuyển dụng của NTD](#thiết-kế-lại-quản-lý-tin-tuyển-dụng-của-ntd-2026-11-15) | ✅ Gộp vào `dev` (nhánh `feat/employer-job-workspace`) |
@@ -45,7 +47,7 @@ Lý do: một số NTD là người nước ngoài. Quyết định và lộ tr�
 | GĐ | Phạm vi | Trạng thái |
 |---|---|---|
 | 0 | Nền tảng FE (Paraglide; antd/dayjs/Intl theo locale; `Accept-Language`; bộ chọn lưu vào tài khoản; `check:i18n` + ratchet); backend (`LocaleMiddleware`, `preferred_language`, catalog vi bổ sung cho DRF); chuyển 4 trang marketing NTD khỏi i18next | ✅ Gộp vào `dev` (#262) |
-| 1 | Cổng NTD: 3.029 khóa FE (công ty, tin, chiến dịch, tài khoản/đăng nhập dùng chung, khung workspace, entities/shared NTD dùng, trang pháp lý); backend 1.511 msgid ở `accounts`/`employers`/`jobs`/`campaigns`/`applications`; email + thông báo theo ngôn ngữ người nhận; prompt AI sinh tin/nội dung chiến dịch theo ngôn ngữ; bộ chọn ngôn ngữ ở workspace, đăng nhập, thiết lập; công cụ catalog Python thuần `common/i18n_catalog.py` | 🟨 Nhánh `feat/i18n-employer` |
+| 1 | Cổng NTD: 3.029 khóa FE (công ty, tin, chiến dịch, tài khoản/đăng nhập dùng chung, khung workspace, entities/shared NTD dùng, trang pháp lý); backend 1.511 msgid ở `accounts`/`employers`/`jobs`/`campaigns`/`applications`; email + thông báo theo ngôn ngữ người nhận; prompt AI sinh tin/nội dung chiến dịch theo ngôn ngữ; bộ chọn ngôn ngữ ở workspace, đăng nhập, thiết lập; công cụ catalog Python thuần `common/i18n_catalog.py` | ✅ Gộp vào `dev` (#267) |
 | 2 | Danh mục `name_en` (tỉnh/thành, kỹ năng, ngành nghề, phúc lợi); entities và shared | ⬜ |
 | 3 | Cổng ứng viên | ⬜ |
 | 4 | Cổng quản trị; ratchet về 0 | ⬜ |
@@ -59,6 +61,11 @@ Số đo:
     antd khoảng 2,2 KiB).
   - GĐ1: 332,2 KiB vì 204 chuỗi của form đăng nhập/phiên/lỗi API nằm sẵn trong
     shell. Trần nâng lên 334 KiB.
+- Đổi ngôn ngữ là tải lại trang, nên các trình soạn cấp trang của NTD (tin,
+  hồ sơ và nội dung/bố cục trang công ty, thông tin chiến dịch, thông tin tài
+  khoản, ghi chú đánh giá hồ sơ) cùng trình soạn CV đăng ký trạng thái "chưa
+  lưu". Bộ chọn ngôn ngữ hỏi trước khi bỏ thay đổi; tải lại hoặc đóng tab có
+  cảnh báo của trình duyệt.
 - Pytest trong container phải chạy với `--ds=config.settings.test`. Thiếu tham
   số này, 38 test lỗi giả vì URL R2 (đã sửa trong `scripts/check_all.sh`).
 
@@ -81,6 +88,37 @@ mục "Tiêu đề trang" của `frontend/ARCHITECTURE.md`.
 - Thanh trên cùng workspace NTD dùng chung resolver với tiêu đề tab (trước đây
   hiện "Không gian nhà tuyển dụng" ở trang đăng/sửa tin).
 - Gỡ `/tuyendung/bao-gia` khỏi SEO shell và sitemap (SPA không có trang này).
+
+## Chốt luồng nội dung: Nháp → Xuất bản (ADR-0024, 2026-11-20)
+
+Vấn đề: sau ADR-0018 mọi admin đủ quyền, nên FAQ/hướng dẫn (4 bước gửi duyệt →
+duyệt → xuất bản) và blog (gửi duyệt → xuất bản) chỉ còn là tự duyệt bài của
+chính mình; trạng thái hiển thị sai sau khi xuất bản và có hai hàng chờ giả.
+Quyết định: [ADR-0024](02-tong-quan/adr-0024-content-publish-without-review.md).
+Một PR, nhánh `feat/content-publish-flow`.
+
+| Phần | Nội dung |
+| --- | --- |
+| FAQ/hướng dẫn — backend | Revision chỉ còn `DRAFT`/`PUBLISHED`; publish nhận bản nháp hoặc bản đã xuất bản cũ (rollback); `POST …/revisions/{n}/discard/` hủy nháp; `change_summary` bắt buộc khi xuất bản bản sửa; gỡ `submit/approve/reject`, `review_note`, `submitted_*`, `reviewed_*`. Migration `0003` (chuyển dữ liệu, xóa revision chưa từng công khai không còn dùng) + `0004` (gỡ cột) |
+| FAQ/hướng dẫn — giao diện | Bài đang công khai sửa thẳng, lưu lần đầu tạo bản nháp; nút **Xuất bản** lưu trước rồi xuất bản; **Hủy bản nháp**; thẻ **Phiên bản** (so sánh với bản công khai, công khai lại bản cũ); KPI "Có bản nháp" thay "Chờ duyệt" |
+| Blog | `draft → published → archived`; xuất bản thẳng từ nháp hoặc bản sửa; gỡ `submit/return`, `submitted_at`, trạng thái working copy, quyền `can_publish_post`. Migration `0003` (pending → draft) + `0004` |
+| Hàng chờ | Gỡ `knowledge_reviews`, `blog_reviews` khỏi dashboard, sidebar, chuông; giữ "FAQ quá hạn rà soát" |
+| Kèm theo | Nhãn audit khớp mã backend (gồm mã cũ để đọc lịch sử); bỏ lỗi readiness `safety_content_not_reviewed` |
+
+## Tổ chức lại sidebar quản trị (2026-11-20)
+
+Mục tiêu: admin tới hàng chờ trong 1–2 cú bấm thay vì 3, mỗi trang chỉ có một
+lối vào trên sidebar. Một PR, nhánh `feat/admin-sidebar-ia`.
+
+| Phần | Nội dung |
+| --- | --- |
+| Cấu trúc | Tối đa 2 tầng, chia 4 mục Vận hành · Quản lý · Nội dung · Hệ thống. Nhóm "Cần xử lý" (mở sẵn) gom mọi hàng chờ theo đúng thứ tự và đích đến của `QUEUE_CONFIG` (dashboard, chuông); Doanh nghiệp/Tin/Người dùng chỉ còn danh sách; Mẫu CV, Cẩm nang, FAQ, Thông báo là mục thẳng; Hệ thống (superuser) gồm Quản trị viên, Lời mời quản trị, Cấu hình |
+| Gỡ trùng | Bỏ 15 lá Cấu hình và 5 lá Mẫu CV (trang đã có tab riêng), "Tài khoản cá nhân" (đã ở chân sidebar và menu avatar), các mục "Sắp ra mắt", "Tin có báo cáo chờ" (bộ lọc trong trang) |
+| Tương tác | Mục là liên kết thật (Ctrl/⌘-click mở tab mới); bỏ flyout tầng 3 đè nội dung; mở nhiều nhóm cùng lúc, nhớ nhóm đang mở và trạng thái thu gọn (localStorage); hàng chờ rỗng hiển thị mờ; drawer mobile dùng cùng accordion |
+| Tìm nhanh | Ô "Tìm trang…" + phím ⌘K/Ctrl+K: lọc mọi trang theo tên và nhóm, không phân biệt dấu; superuser tìm được cả từng nhóm cấu hình; tải lười khi mở lần đầu |
+| Hàng chờ mới | `company_content_changes` (hậu kiểm trang công ty, hạn 48 giờ) vào `GET /api/admin/dashboard/queues/` → badge sidebar, chuông, dashboard |
+| Kèm theo | Bộ lọc trạng thái ở danh sách Cẩm nang nằm trên URL (`?status=`) để hàng chờ mở đúng bài chờ duyệt; nhãn sidebar chuyển vào `messages/admin` |
+| Dọn sau gộp | Trang Người dùng bỏ khối "Hàng chờ quản trị" (lời mời đang chờ đã có badge trên tab "Lời mời quản trị" và nhóm "Cần xử lý"; ô "Phạm vi số liệu" lặp lại thẻ Tổng tài khoản); gỡ luôn `QueueCard`, prop `pendingInvitations/canInvite/onOpenQueue` và CSS `.account-queue*` |
 
 ## Hậu kiểm nội dung trang công ty (2026-11-19)
 
@@ -707,16 +745,91 @@ bản đọc từ PDF), và thêm bộ quy tắc chống bịa dữ liệu, ch�
 kỹ năng khớp và yêu cầu đạt phải có câu trích nguyên văn từ CV, thiếu dữ liệu thì
 loại tiêu chí khỏi điểm, kết quả tất định, có golden test và test nhiễu.
 
+Bản demo (kế hoạch bản 2, đã xong):
+
 | Tuần | Hạng mục | Trạng thái |
 | --- | --- | --- |
 | 1 | Nền tảng: pgvector, schema `apps/matching`, môi trường `ml/`; 100 JD thật, 100 CV tổng hợp, 51 PDF, rubric | ✅ Gộp vào `dev` (#207, #230) |
-| 2 | Trích xuất và chuẩn hóa CV/JD, chọn thư viện PDF, baseline TF-IDF/BM25, ghép cặp tập vàng và phiếu chấm (PR 1) | 🟨 PR #231 chờ gộp; phiếu chấm đã giao |
-| 3 | Encoder, chấm điểm 6 tiêu chí, giải thích, API, task, `ml-worker` (PR 2); gán nhãn tập vàng | ✅ Gộp vào `dev` (#232); tập vàng 150 nhãn do Claude gán, người kiểm tra sơ bộ 5 cặp |
-| 4 | Giao diện "Xem độ phù hợp" (PR 3), bản demo tối thiểu (M1) | 🟨 Xong trên nhánh `feat/ai-matching-ui`, chờ PR |
-| 5 | Đo baseline, `profile-rule-v2` và 4 mô hình zero-shot; sinh thêm CV và cặp huấn luyện | ⬜ |
-| 6 | Fine-tune, ablation, chỉnh ngưỡng và trọng số, chọn mô hình (M2) | ⬜ |
-| 7 | Đo hiệu năng, nghiệm thu TC-01…17, chạy tập test một lần, chấm lại 30 cặp (PR 4, M3) | ⬜ |
-| 8 | Viết báo cáo, diễn tập demo | ⬜ |
+| 2 | Trích xuất và chuẩn hóa CV/JD, chọn thư viện PDF, baseline TF-IDF/BM25, ghép cặp tập vàng và phiếu chấm | ✅ Gộp vào `dev` (#231) |
+| 3 | Encoder, chấm điểm 6 tiêu chí, giải thích, API, task, `ml-worker`; gán nhãn tập vàng | ✅ Gộp vào `dev` (#232); tập vàng 150 nhãn do Claude gán, người kiểm tra sơ bộ 5 cặp |
+| 4 | Giao diện "Xem độ phù hợp", bản demo tối thiểu (M1) | ✅ Gộp vào `dev` (#233) |
+
+Kế hoạch bản 3 (duyệt 19/11, thay các tuần 5–8 của bản 2). Phạm vi mở rộng: mô
+hình hai tầng (bi-encoder fine-tune `e5-base-ft-v1` + cross-encoder `req-ce-v1`
+phán từng yêu cầu của tin), công thức `hybrid-v2`, trích xuất `extract-v3`, "Việc
+làm gợi ý" theo ngữ nghĩa, và nhà tuyển dụng xếp hạng hồ sơ ứng tuyển. Mỗi giai
+đoạn một PR.
+
+| GĐ | Hạng mục | Trạng thái |
+| --- | --- | --- |
+| 1 | Đo lường: lệnh `matching_evaluate` (chấm bằng đúng mã sản phẩm), `ml/scripts/evaluate.py`, bảng số trên validation; mở rộng tập vàng lên 30 tin; tải mô hình và dữ liệu công khai | 🟨 Xong trên nhánh `feat/ai-eval-harness`, chờ PR |
+| 2 | `extract-v3`: PDF hai cột, chức danh CV tải lên, sửa các luật nhận ngày/bằng cấp/kỹ năng, schema `profile_json` | ⬜ |
+| 3 | Dữ liệu huấn luyện, cổng chất lượng, fine-tune bi-encoder và cross-encoder, ablation | ⬜ |
+| 4 | Việc làm gợi ý theo ngữ nghĩa (pgvector) | ⬜ |
+| 5 | `hybrid-v2`, cross-encoder vào `ml-worker`, `result_json` bản 2 (M2) | ⬜ |
+| 6 | Nhà tuyển dụng xếp hạng hồ sơ ứng tuyển | ⬜ |
+| 7 | Chạy tập test một lần, hiệu năng, nghiệm thu TC-01…30, kappa 30 cặp (M3) | ⬜ |
+| 8 | Báo cáo, slide, diễn tập demo | ⬜ |
+
+<details><summary>Ghi chú GĐ 1 (bản 3)</summary>
+
+- Ngày 19/11 DB dev được dựng lại từ baseline migration (đại tu backend GĐ6), nên
+  100 tin thật, 100 CV tổng hợp và danh mục kỹ năng mở rộng không còn. Ngày 20/11
+  nhập lại từ `ml/data` bằng đúng các script cũ (sao lưu trước:
+  `ai_career_coach-before-ai-reimport-20261120-131531.dump`): 100 tin, 100 CV, 15
+  bản PDF tải lên, 341 kỹ năng; mã tin mới ở `ml/data/jd/jd_import_map.json`.
+- Để nhập lại được: lệnh `apply_skill_merge` (app `skills`) áp bảng gộp kỹ năng
+  `ml/labeling/skill_merge.json`, trước đây áp tay một lần; `import_jd.py` tự gọi
+  lệnh này khi ghi thật, và tự chia lại tin của công ty demo không còn trong hệ
+  thống; lệnh nhập tin khớp tỉnh/thành bất kể tiền tố "Tỉnh"/"Thành phố".
+- `matching_evaluate` (chạy trong `ml-worker`) chấm danh sách cặp CV–tin bằng đúng
+  bước trích xuất, mã hóa và `score_match` của sản phẩm, không ghi DB, tắt tiêu chí
+  địa điểm; nhận `--model-path` để thử mô hình khác và `--rule-baseline` để lấy
+  điểm của bộ gợi ý theo luật. `ml/scripts/evaluate.py` tính Spearman, NDCG@5,
+  khoảng tin cậy bootstrap theo tin, số tin hơn BM25, kappa của mức hiển thị.
+- Tập vàng mở rộng lên 30 tin / 300 cặp (validation 10 tin, test 20 tin): thêm
+  JD-05, 07, 08, 10, 16, 18, 27, 30, 39, 40, 56, 62, 69, 71, 73, ghép cặp bằng
+  `build_gold_pairs.py --extend`. Mỗi cặp mới do hai lượt Claude độc lập gán theo
+  rubric: trùng 142/150, lệch không quá một mức 150/150, kappa bậc hai 0,979; 8 cặp
+  lệch được phân xử, các tình huống mới thành quy tắc E1–E5 trong
+  `ml/labeling/rubric.md` (`ml/reports/gold_batch2_agreement.md`). Nhãn đợt 2: 0: 48,
+  1: 67, 2: 19, 3: 4, 4: 12. Đây vẫn là nhãn do mô hình ngôn ngữ gán; kiểm chứng
+  của người (30 cặp chấm mù) chưa làm.
+- Bảng số trên validation, 100 cặp / 10 tin (`ml/reports/eval_validation.md`):
+
+  | Phương án | Spearman | NDCG@5 |
+  | --- | ---: | ---: |
+  | TF-IDF | 0,278 | 0,640 |
+  | BM25 | 0,216 | 0,679 |
+  | Luật `profile-rule-v2` | 0,628 | 0,874 |
+  | Bi-encoder `e5-small` gốc, cosine toàn văn | 0,457 | 0,702 |
+  | Bi-encoder `paraphrase-multilingual-MiniLM-L12-v2` gốc, cosine toàn văn | 0,530 | 0,663 |
+  | Bi-encoder `e5-base-zs-v1`, cosine toàn văn | 0,550 | 0,758 |
+  | `hybrid-v1` | 0,610 | 0,817 |
+
+  Xếp ngẫu nhiên cho NDCG@5 = 0,445. `hybrid-v1`: kappa mức hiển thị 0,525; 33 cặp
+  khác ngành có trung vị 28 điểm, cao nhất 58, 5 cặp từ 50 điểm trở lên. Khoảng tin
+  cậy của `hybrid-v1`: Spearman 0,42 đến 0,78, NDCG@5 0,65 đến 0,93.
+- Điều rút ra: bộ gợi ý theo luật ngang hoặc nhỉnh hơn `hybrid-v1` (khoảng tin cậy
+  chồng nhau, chưa kết luận được bên nào hơn). Với các CV này, điểm của luật chỉ
+  gồm số kỹ năng trùng theo danh mục (6 điểm mỗi kỹ năng), chức danh CV xuất hiện
+  trong tiêu đề tin (24 điểm) và đủ số năm (6 điểm), nên cặp khác ngành gần như 0
+  điểm. `hybrid-v1` cũng có tiêu chí kỹ năng, nhưng cộng thêm học vấn, cấp bậc,
+  ngoại ngữ, là những điểm được cho bất kể CV có đúng nghề hay không, nên cặp khác
+  ngành vẫn lên tới 58 điểm. Đây là bằng chứng cho "trần theo mức liên quan" của
+  `hybrid-v2` (GĐ 5). Mọi phương án ngữ nghĩa đều hơn rõ TF-IDF và BM25.
+- Hai tin có trường nhập tay lệch với nội dung (JD-69: kinh nghiệm và học vấn;
+  JD-62: vị trí chuyên môn), ghi trong rubric, chờ sửa trong `jd_input.xlsx`.
+- Đã tải bằng `ml/scripts/fetch_public.py` (nguồn và mã commit ở
+  `ml/data/public/SOURCES.md`): VietJobs (48.092 tin, kèm `LICENSE` MIT của kho
+  GitHub), resume-job-description-fit, mô hình gốc của cross-encoder
+  (`cross-encoder/mmarco-mMiniLMv2-L12-H384-v1`) và hai bi-encoder so sánh.
+- Dời sang GĐ 5: cho `calibrate.py` đọc kết quả của `matching_evaluate` thay vì tự
+  chép lại luật, làm cùng lúc với lần hiệu chuẩn lại.
+- Bỏ ngưỡng "P@3 ≥ 0,70" của bản 2: tập test cũ chỉ có 13 cặp nhãn ≥ 3 nên trần
+  lý thuyết là 0,43.
+
+</details>
 
 <details><summary>Ghi chú tuần 1</summary>
 

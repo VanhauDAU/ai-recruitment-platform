@@ -118,7 +118,6 @@ class Post(models.Model):
 
     class Status(models.TextChoices):
         DRAFT = 'draft', 'Nháp'
-        PENDING = 'pending', 'Chờ duyệt'
         PUBLISHED = 'published', 'Đã xuất bản'
         ARCHIVED = 'archived', 'Đã gỡ'
 
@@ -164,7 +163,6 @@ class Post(models.Model):
     seo_description = models.CharField(
         max_length=300, blank=True, help_text='Ghi đè meta description (mặc định dùng summary)'
     )
-    submitted_at = models.DateTimeField(null=True, blank=True)
     edit_revision = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -173,7 +171,6 @@ class Post(models.Model):
         ordering = ['-published_at', '-created_at']
         verbose_name = 'Bài viết'
         verbose_name_plural = 'Bài viết'
-        permissions = [('can_publish_post', 'Có thể duyệt và xuất bản bài viết')]
         indexes = [
             models.Index(fields=['status', '-published_at']),
             models.Index(
@@ -182,7 +179,7 @@ class Post(models.Model):
         ]
         constraints = [
             models.CheckConstraint(
-                condition=models.Q(status__in=['draft', 'pending', 'published', 'archived']),
+                condition=models.Q(status__in=['draft', 'published', 'archived']),
                 name='chk_blog_post_status',
             ),
             models.CheckConstraint(
@@ -249,15 +246,11 @@ class PinnedPost(models.Model):
 
 
 class PostWorkingCopy(models.Model):
-    """Một bản sửa duy nhất cho bài đang public.
+    """Một bản sửa nháp duy nhất cho bài đang public.
 
-    Bản public tiếp tục nằm trên ``Post``. Working copy bị xóa sau khi duyệt
+    Bản public tiếp tục nằm trên ``Post``. Working copy bị xóa sau khi xuất bản
     hoặc hủy, nên đây không phải kho version history dài hạn.
     """
-
-    class Status(models.TextChoices):
-        DRAFT = 'draft', 'Nháp'
-        PENDING = 'pending', 'Chờ duyệt'
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     post = models.OneToOneField(Post, on_delete=models.CASCADE, related_name='working_copy')
@@ -278,8 +271,6 @@ class PostWorkingCopy(models.Model):
     tags = models.ManyToManyField(Tag, related_name='working_copies', blank=True)
     seo_title = models.CharField(max_length=200, blank=True)
     seo_description = models.CharField(max_length=300, blank=True)
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
-    submitted_at = models.DateTimeField(null=True, blank=True)
     edit_revision = models.PositiveIntegerField(default=1)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,

@@ -7,6 +7,7 @@ from ..models.recommendation_queries import (
     recommend_jobs_for_candidate,
     recommend_jobs_for_cv,
     recommend_new_jobs_for_candidate_email,
+    rule_scores_for_cv,
 )
 
 __all__ = [
@@ -16,4 +17,5 @@ __all__ = [
     'recommend_jobs_for_candidate',
     'recommend_jobs_for_cv',
     'recommend_new_jobs_for_candidate_email',
+    'rule_scores_for_cv',
 ]

@@ -93,7 +93,7 @@ Mở rộng whitelist sau phải cập nhật doc + env/setting allowlist + rein
 | Lexical fallback | `common.db.search.search_q` | Khi Ollama down hoặc điểm thấp |
 | UI | Dựng widget mới khi mở CB-P2 | Widget `candidate-assistant` cũ đã gỡ 2026-11-14 |
 | Backend app | `apps.chatbot` trong monolith | ADR-0022; không microservice |
-| Nguồn kiến thức | Chỉ revision **APPROVED + published** + category active | Re-export từ `knowledgebase.services` |
+| Nguồn kiến thức | Chỉ revision **đang công khai** (`PUBLISHED`, ADR-0024) + category active | Re-export từ `knowledgebase.services` |
 | Auth | `AllowAny` + throttle IP | Khách + ứng viên |
 | Transcript | Chỉ memory UI (session panel) | Không bảng chat message |
 
@@ -214,7 +214,7 @@ widgets/candidate-assistant     # UI panel, mascot, progressive text
 - Tách theo đoạn/`\n\n` / heading; gộp đoạn ngắn; max ~400–600 ký tự/chunk;
   overlap ~40–80 ký tự nếu cắt cứng.
 - Bỏ chunk rỗng / chỉ whitespace.
-- Chỉ index article thuộc whitelist category + active + published approved.
+- Chỉ index article thuộc whitelist category + active + đang công khai.
 
 ### 5.2. API ask (đề xuất)
 

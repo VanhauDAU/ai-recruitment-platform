@@ -1,11 +1,6 @@
 from apps.accounts.models import User
 from apps.knowledgebase.models import KnowledgeArticle, KnowledgeCategory
-from apps.knowledgebase.services import (
-    approve_revision,
-    create_article,
-    publish_revision,
-    submit_revision,
-)
+from apps.knowledgebase.services import create_article, publish_revision
 
 
 class PublishedKnowledgeMixin:
@@ -38,18 +33,6 @@ class PublishedKnowledgeMixin:
             order=order,
             seo_title=f'Hướng dẫn: {title}',
             seo_description='Hướng dẫn đã được kiểm duyệt.',
-        )
-        article, revision = submit_revision(
-            article=article,
-            revision_number=revision.number,
-            actor=cls.actor,
-            expected_revision_token=article.revision_token,
-        )
-        article, revision = approve_revision(
-            article=article,
-            revision_number=revision.number,
-            actor=cls.actor,
-            expected_revision_token=article.revision_token,
         )
         return publish_revision(
             article=article,

@@ -88,6 +88,12 @@ export function DesktopNavigation({ menus, openKey, pathname, onOpen, onSelect }
   )
 }
 
+function GroupSkeleton({ className = '' }) {
+  return Array.from({ length: 4 }).map((_, index) => (
+    <div key={index} className={`my-2 h-4 w-40 animate-pulse rounded bg-slate-100 ${className}`} />
+  ))
+}
+
 function StandardDropdown({ menu, onSelect }) {
   return (
     <div className="absolute left-0 top-full z-40 flex w-max max-w-[calc(100vw-3rem)] divide-x divide-gray-100 rounded-xl border border-gray-100 bg-white py-4 shadow-xl">
@@ -101,9 +107,11 @@ function StandardDropdown({ menu, onSelect }) {
                 </p>
               )}
               <div className={group.cols === 2 ? 'grid grid-cols-2 gap-x-8' : ''}>
-                {group.items.map((item) => (
-                  <NavigationItem key={item.label} item={item} onSelect={onSelect} />
-                ))}
+                {group.loading
+                  ? <GroupSkeleton />
+                  : group.items.map((item) => (
+                    <NavigationItem key={item.label} item={item} onSelect={onSelect} />
+                  ))}
               </div>
             </div>
           ))}
@@ -216,6 +224,7 @@ export function MobileNavigation({ children, menus, open, openKey, onClose, onOp
                     {flattenMenuItems(menu).map((item) => (
                       <NavigationItem key={item.label} item={item} onSelect={onSelect} mobile />
                     ))}
+                    {menu.columns.some((column) => column.some((group) => group.loading)) && <GroupSkeleton className="ml-8" />}
                   </div>
                 </div>
               </div>

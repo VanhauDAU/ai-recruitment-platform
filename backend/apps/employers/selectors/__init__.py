@@ -23,6 +23,7 @@ from .company_content_changes import (
     admin_company_content_changes_queryset,
     content_change_labels,
     unreviewed_content_change_count,
+    unreviewed_content_changes,
     uploadable_content_change,
 )
 from .company_follows import company_follow_state, followed_companies_queryset
@@ -103,6 +104,7 @@ __all__ = [
     'admin_company_content_changes_queryset',
     'content_change_labels',
     'unreviewed_content_change_count',
+    'unreviewed_content_changes',
     'uploadable_content_change',
     'company_members_queryset',
     'former_company_members_queryset',

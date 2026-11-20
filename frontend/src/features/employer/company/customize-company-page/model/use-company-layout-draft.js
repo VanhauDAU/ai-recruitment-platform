@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { employerCompanyPageKeys, updateEmployerCompanyPageLayout } from '@/entities/company/employer-company-page'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { m } from '@/shared/config/i18n'
+import { useUnsavedChanges } from '@/shared/hooks/use-unsaved-changes'
 import { message } from '@/shared/lib/toast'
 
 const LAYOUT_FIELDS = ['section_order', 'hidden_sections', 'accent', 'pinned_job_public_ids']
@@ -38,6 +39,7 @@ export function useCompanyLayoutDraft(page) {
     (field) => fieldSignature(field, base[field]) !== fieldSignature(field, draft[field]),
   )
   const dirty = changed.length > 0
+  useUnsavedChanges(dirty)
 
   function adopt(layout) {
     setBase(layout)

@@ -10,7 +10,7 @@ describe('admin queue model', () => {
       { key: 'company_updates', count: 2, overdue: 0, oldest_at: hoursAgo(10), sla_hours: 72 },
       { key: 'recruiter_verification', count: 4, overdue: 0, oldest_at: hoursAgo(60), sla_hours: 72 },
       { key: 'job_reports', count: 1, overdue: 1, oldest_at: hoursAgo(50), sla_hours: 48 },
-      { key: 'blog_reviews', count: 0, overdue: 0, oldest_at: null, sla_hours: 72 },
+      { key: 'company_reports', count: 0, overdue: 0, oldest_at: null, sla_hours: 48 },
       { key: 'unknown_queue', count: 9, overdue: 9, oldest_at: hoursAgo(1), sla_hours: 1 },
     ], NOW)
 
@@ -19,7 +19,7 @@ describe('admin queue model', () => {
       ['recruiter_verification', 'warning'],
       ['company_updates', 'normal'],
     ])
-    expect(result.cleared.map((item) => item.key)).toEqual(['blog_reviews'])
+    expect(result.cleared.map((item) => item.key)).toEqual(['company_reports'])
     expect(result).toMatchObject({ total: 7, overdue: 1 })
     expect(result.pending[0].to).toBe('/admin/app/job-moderation?tab=reports')
   })

@@ -14,8 +14,6 @@ from ..views import (
     AdminPostListCreateView,
     AdminPostPublishView,
     AdminPostRestoreView,
-    AdminPostReturnView,
-    AdminPostSubmitView,
     AdminPostSummaryView,
     AdminTagDetailView,
     AdminTagListCreateView,
@@ -34,16 +32,6 @@ urlpatterns = [
         'posts/<str:public_id>/draft/',
         AdminPostDraftView.as_view(),
         name='blog-admin-post-draft',
-    ),
-    path(
-        'posts/<str:public_id>/submit/',
-        AdminPostSubmitView.as_view(),
-        name='blog-admin-post-submit',
-    ),
-    path(
-        'posts/<str:public_id>/return/',
-        AdminPostReturnView.as_view(),
-        name='blog-admin-post-return',
     ),
     path(
         'posts/<str:public_id>/publish/',

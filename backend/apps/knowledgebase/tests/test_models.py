@@ -33,7 +33,7 @@ class KnowledgebaseFoundationTests(TestCase):
         self.assertFalse(articles.filter(published_revision__isnull=True).exists())
         self.assertFalse(
             articles.exclude(
-                published_revision__status=KnowledgeArticleRevision.Status.APPROVED
+                published_revision__status=KnowledgeArticleRevision.Status.PUBLISHED
             ).exists()
         )
         self.assertFalse(articles.filter(published_revision__source_reference='').exists())
@@ -94,7 +94,7 @@ class KnowledgebaseFoundationTests(TestCase):
             KnowledgeArticleRevision.objects.create(
                 article=article,
                 number=2,
-                status=KnowledgeArticleRevision.Status.IN_REVIEW,
+                status=KnowledgeArticleRevision.Status.DRAFT,
                 title='Revision hai',
                 body='<p>Nội dung</p>',
                 body_plain_text='Nội dung',

@@ -8,6 +8,66 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-20
 
+#### Added — AI đối sánh: đo lường trên tập vàng (kế hoạch bản 3, GĐ 1)
+
+- Lệnh `matching_evaluate` chấm danh sách cặp CV–tin bằng đúng bước trích xuất,
+  mã hóa và `score_match` của sản phẩm, không ghi DB; `--model-path` thử mô hình
+  khác, `--rule-baseline` thêm điểm của bộ gợi ý theo luật `profile-rule-v2`.
+- `ml/scripts/evaluate.py`: Spearman, NDCG@5, khoảng tin cậy bootstrap theo tin, số
+  tin hơn BM25, kappa của mức hiển thị → `ml/reports/eval_validation.md`.
+- Lệnh `apply_skill_merge` áp bảng gộp kỹ năng (alias, nhóm) vào danh mục, chạy
+  lại được; `ml/scripts/import_jd.py` gọi lệnh này trước khi nhập tin.
+- `ml/scripts/fetch_public.py` tải dữ liệu và mô hình công khai, ghi nguồn và mã
+  commit.
+- Tập vàng mở rộng lên 30 tin / 300 cặp (`build_gold_pairs.py --extend`); đợt 2 do
+  hai lượt Claude độc lập gán (kappa 0,979), gộp bằng `merge_gold_passes.py`; rubric
+  thêm quy tắc E1–E5.
+- Nhập tin hàng loạt: khớp tỉnh/thành bất kể tiền tố "Tỉnh"/"Thành phố"; báo cáo
+  thêm `publisher_companies`.
+
+#### Changed — FAQ/hướng dẫn và blog: Nháp → Xuất bản (ADR-0024)
+
+- Bỏ bước gửi duyệt/duyệt/từ chối vốn chỉ còn là tự duyệt sau ADR-0018.
+  Revision trợ giúp còn `DRAFT`/`PUBLISHED`; bài blog còn
+  `draft/published/archived`.
+- FAQ/hướng dẫn: sửa thẳng bài đang công khai (lưu lần đầu tạo bản nháp, bản
+  công khai giữ nguyên tới khi xuất bản), một nút Xuất bản lưu trước rồi xuất
+  bản, hủy bản nháp, công khai lại bản cũ từ thẻ Phiên bản.
+- **API**: thêm `POST /api/admin/knowledgebase/articles/{id}/revisions/{n}/discard/`;
+  `publish/` nhận bản nháp hoặc revision đã xuất bản (rollback); gỡ
+  `…/revisions/{n}/submit|approve|reject/`, `/api/admin/blog/posts/{id}/submit|return/`,
+  trường `review_note`, `submitted_*`, `reviewed_*`; KPI `in_review` → `drafts`.
+- Gỡ hàng chờ `knowledge_reviews`, `blog_reviews` khỏi dashboard, sidebar, chuông.
+- **Migration**: `knowledgebase.0003/0004`, `blog.0003/0004` — revision từng công
+  khai giữ lại, bản sửa dở mới nhất thành nháp, revision chưa từng công khai khác
+  bị xóa; bài blog chờ duyệt về nháp.
+
+#### Changed — Admin: sidebar hai tầng, nhóm "Cần xử lý" và tìm nhanh
+
+- Sidebar còn tối đa 2 tầng, chia mục Vận hành · Quản lý · Nội dung · Hệ thống;
+  mọi hàng chờ gom vào nhóm "Cần xử lý" (mở sẵn, cùng thứ tự với dashboard và
+  chuông); bỏ flyout tầng 3 và các lá trùng với tab trong trang (Cấu hình, Mẫu
+  CV), "Tài khoản cá nhân" và mục "Sắp ra mắt".
+- Mục điều hướng là liên kết thật (mở tab mới được); mở nhiều nhóm cùng lúc,
+  nhớ nhóm đang mở và trạng thái thu gọn; hàng chờ rỗng hiển thị mờ.
+- Tìm trang nhanh bằng ô "Tìm trang…" hoặc ⌘K/Ctrl+K, không phân biệt dấu.
+- **API**: `GET /api/admin/dashboard/queues/` (và dashboard) thêm hàng chờ
+  `company_content_changes` (hậu kiểm trang công ty, hạn 48 giờ).
+- Danh sách Cẩm nang đọc bộ lọc trạng thái từ URL (`?status=`).
+
+#### Changed — README và chính sách bảo vệ `main`
+
+- Viết lại `README.md` theo đúng hệ thống hiện tại: giới thiệu ba cổng, tính
+  năng theo cổng, AI đối sánh CV–JD (`hybrid-v1`, mô hình E5 chạy local), sơ đồ
+  kiến trúc Mermaid, bảng công nghệ, hướng dẫn chạy bằng Docker kèm
+  `scripts/reset_local_db.sh`, cổng kiểm tra và quy trình nhánh. Bỏ các mô tả đã
+  lỗi thời (luyện phỏng vấn, gói dịch vụ/nhãn HOT, mục tài liệu trùng).
+- `quy-trinh-pull-request.md` ghi đúng ruleset `Protect main` đang bật: required
+  checks `quality` và `frontend-final-gate`, không yêu cầu approval, admin được
+  bypass.
+- Dọn repository GitHub: xóa 154 nhánh đã gộp, cache Actions của PR đã đóng và
+  artifact CI cũ; thêm mô tả, topics; tắt Wiki và Projects.
+
 #### Changed — Admin: giao diện chi tiết nhà tuyển dụng
 
 - Hero có dải số liệu (nhu cầu, tin, chiến dịch, giấy tờ, phiên đang mở); tab

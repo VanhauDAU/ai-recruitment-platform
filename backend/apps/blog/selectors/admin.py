@@ -74,17 +74,7 @@ def admin_posts_queryset(params=None):
         queryset = queryset.filter(author__public_id=author)
     if state := params.get('status'):
         if state == 'published_with_draft':
-            queryset = queryset.filter(
-                status=Post.Status.PUBLISHED,
-                working_copy__status='draft',
-            )
-        elif state == 'published_with_pending':
-            queryset = queryset.filter(
-                status=Post.Status.PUBLISHED,
-                working_copy__status='pending',
-            )
-        elif state == Post.Status.PUBLISHED:
-            queryset = queryset.filter(status=state)
+            queryset = queryset.filter(status=Post.Status.PUBLISHED, working_copy__isnull=False)
         else:
             queryset = queryset.filter(status=state)
 
@@ -113,17 +103,11 @@ def admin_posts_queryset(params=None):
             _editorial_state_sort=Case(
                 When(
                     status=Post.Status.PUBLISHED,
-                    working_copy__status='pending',
-                    then=Value(4),
+                    working_copy__isnull=False,
+                    then=Value(2),
                 ),
-                When(
-                    status=Post.Status.PUBLISHED,
-                    working_copy__status='draft',
-                    then=Value(3),
-                ),
-                When(status=Post.Status.PUBLISHED, then=Value(2)),
-                When(status=Post.Status.PENDING, then=Value(1)),
-                When(status=Post.Status.ARCHIVED, then=Value(5)),
+                When(status=Post.Status.PUBLISHED, then=Value(1)),
+                When(status=Post.Status.ARCHIVED, then=Value(3)),
                 default=Value(0),
                 output_field=IntegerField(),
             )
@@ -151,15 +135,11 @@ def admin_post_summary():
     return {
         'all': queryset.count(),
         Post.Status.DRAFT: queryset.filter(status=Post.Status.DRAFT).count(),
-        Post.Status.PENDING: queryset.filter(status=Post.Status.PENDING).count(),
         Post.Status.PUBLISHED: queryset.filter(
             status=Post.Status.PUBLISHED, working_copy__isnull=True
         ).count(),
         'published_with_draft': queryset.filter(
-            status=Post.Status.PUBLISHED, working_copy__status='draft'
-        ).count(),
-        'published_with_pending': queryset.filter(
-            status=Post.Status.PUBLISHED, working_copy__status='pending'
+            status=Post.Status.PUBLISHED, working_copy__isnull=False
         ).count(),
         Post.Status.ARCHIVED: queryset.filter(status=Post.Status.ARCHIVED).count(),
     }

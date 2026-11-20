@@ -26,7 +26,6 @@ from django.utils import timezone
 from apps.accounts.models import User
 from apps.ai_core.models import AiUsageDaily
 from apps.applications.models import Application
-from apps.blog.models import Post, PostWorkingCopy
 from apps.employers.models import (
     ADMIN_PENDING_COMPANY_UPDATE_STATUSES,
     CompanyDomainClaim,
@@ -39,6 +38,7 @@ from apps.employers.selectors import (
     admin_company_summary,
     admin_verification_summary,
     pending_join_requests_awaiting_admin,
+    unreviewed_content_changes,
 )
 from apps.jobs.models import (
     Job,
@@ -49,7 +49,6 @@ from apps.jobs.models import (
     job_effective_state_expression,
 )
 from apps.jobs.selectors import admin_job_management_summary
-from apps.knowledgebase.models import KnowledgeArticleRevision
 from apps.knowledgebase.selectors import admin_article_summary
 from apps.matching.models import MatchAnalysis
 from common.vietnam_time import VIETNAM_TZ, vietnam_day_start, vietnam_today
@@ -67,11 +66,11 @@ QUEUE_SLA_HOURS = {
     'domain_verification': 72,
     'company_updates': 72,
     'company_join_requests': 72,
+    # Page content is already public when it lands here (post-moderation).
+    'company_content_changes': 48,
     'job_reports': 48,
     'company_reports': 48,
     'job_resubmissions': 48,
-    'blog_reviews': 72,
-    'knowledge_reviews': 72,
 }
 
 
@@ -170,6 +169,7 @@ def _queues(now, job_summary):
             'created_at',
             now,
         ),
+        _queue('company_content_changes', unreviewed_content_changes(), 'created_at', now),
         _queue(
             'job_reports',
             JobReport.objects.filter(status=JobReport.Status.PENDING),
@@ -194,43 +194,6 @@ def _queues(now, job_summary):
             count=job_summary['resubmitted'],
         ),
     ]
-    pending_posts = _queue(
-        'blog_reviews',
-        Post.objects.filter(status=Post.Status.PENDING),
-        'submitted_at',
-        now,
-    )
-    # A published post can carry a pending working copy (an edit awaiting review).
-    pending_copies = _queue(
-        'blog_reviews',
-        PostWorkingCopy.objects.filter(
-            status=PostWorkingCopy.Status.PENDING, post__status=Post.Status.PUBLISHED
-        ),
-        'submitted_at',
-        now,
-    )
-    queues.append(
-        {
-            **pending_posts,
-            'count': pending_posts['count'] + pending_copies['count'],
-            'overdue': pending_posts['overdue'] + pending_copies['overdue'],
-            'oldest_at': min(
-                filter(None, [pending_posts['oldest_at'], pending_copies['oldest_at']]),
-                default=None,
-            ),
-        }
-    )
-    queues.append(
-        _queue(
-            'knowledge_reviews',
-            KnowledgeArticleRevision.objects.filter(
-                status=KnowledgeArticleRevision.Status.IN_REVIEW
-            ),
-            'submitted_at',
-            now,
-            count=knowledge['in_review'],
-        )
-    )
     return queues, {
         'companies': company['total'],
         'knowledge_review_overdue': knowledge['overdue'],

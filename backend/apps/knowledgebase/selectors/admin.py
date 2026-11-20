@@ -57,8 +57,6 @@ def _article_base_queryset():
                 'revisions',
                 queryset=KnowledgeArticleRevision.objects.select_related(
                     'created_by',
-                    'submitted_by',
-                    'reviewed_by',
                     'first_published_by',
                 ).order_by('-number'),
                 to_attr='admin_revisions',
@@ -110,9 +108,9 @@ def admin_article_summary(params=None):
     return queryset.aggregate(
         total=Count('pk', distinct=True),
         published=Count('pk', filter=Q(published_revision__isnull=False), distinct=True),
-        in_review=Count(
+        drafts=Count(
             'pk',
-            filter=Q(latest_revision_status=KnowledgeArticleRevision.Status.IN_REVIEW),
+            filter=Q(latest_revision_status=KnowledgeArticleRevision.Status.DRAFT),
             distinct=True,
         ),
         overdue=Count(

@@ -27,20 +27,20 @@ với thay đổi UI/nghiệp vụ lớn nếu không có lý do và test riêng
 
 ## Branch protection cho `main`
 
-Thiết lập này phải được bật trong GitHub repository settings bởi administrator:
+Ruleset `Protect main` (Settings → Rules → Rulesets) đang bật với:
 
-- Require a pull request before merging.
-- Require ít nhất một approval.
+- Bắt buộc pull request; không yêu cầu approval vì dự án một người phát triển.
 - Dismiss stale approvals khi có commit mới.
-- Require status checks trước khi merge.
-- Require conversation resolution trước khi merge.
-- Không cho force push.
-- Không cho merge khi CI thất bại.
+- Bắt buộc giải quyết hết conversation trước khi merge.
+- Required status checks: `quality` (Backend CI) và `frontend-final-gate`
+  (Frontend CI). Hai job này luôn chạy trên mọi PR và tổng hợp kết quả các job
+  con (`static-quality`, `coverage`, `build`, `bundle-budget`, `e2e-smoke`,
+  `audit`), nên vẫn đúng khi PR chỉ đụng một phía.
+- Không cho xóa nhánh và force push.
+- Vai trò Admin của repository được bypass để xử lý sự cố.
 
-Các quality gate hiện có là Frontend CI (`static-quality`, `coverage`, `build`,
-`bundle-budget`, `e2e-smoke`, `audit`) và Backend CI (`quality`) khi phần tương
-ứng của repo bị thay đổi. Thay đổi tên job phải đồng thời cập nhật required checks
-trong GitHub để branch protection không bị vô hiệu hóa ngầm.
+Đổi tên hai job tổng phải cập nhật required checks trong ruleset cùng lúc, nếu
+không mọi PR vào `main` sẽ bị chặn vì chờ check không bao giờ chạy.
 
 ## CODEOWNERS
 

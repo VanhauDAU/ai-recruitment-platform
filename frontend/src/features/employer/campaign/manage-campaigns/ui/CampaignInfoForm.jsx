@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 import { Button, Checkbox, DatePicker, Form, Input, InputNumber, Radio, Select } from 'antd'
 import dayjs from '@/shared/lib/dayjs'
 import {
@@ -9,6 +10,7 @@ import {
 } from '@/entities/campaign/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { m } from '@/shared/config/i18n'
+import { useUnsavedChanges } from '@/shared/hooks/use-unsaved-changes'
 import { message } from '@/shared/lib/toast'
 import { campaignInfoPayload, campaignInfoValues } from '../lib/campaign-info'
 import './campaign-info-form.css'
@@ -19,6 +21,8 @@ import './campaign-info-form.css'
 export default function CampaignInfoForm({ campaign, submitLabel = m.employer_campaign_info_submit(), onSaved }) {
   const [form] = Form.useForm()
   const queryClient = useQueryClient()
+  const [dirty, setDirty] = useState(false)
+  useUnsavedChanges(dirty)
   const isContinuous = Form.useWatch('is_continuous', form)
   const isNew = !campaign.public_id
   const startLocked = !isNew && !['draft', 'scheduled'].includes(campaign.status)
@@ -30,6 +34,7 @@ export default function CampaignInfoForm({ campaign, submitLabel = m.employer_ca
         ...updated,
       }))
       queryClient.invalidateQueries({ queryKey: campaignKeys.all })
+      setDirty(false)
       message.success(isNew ? m.employer_campaign_info_created() : m.employer_campaign_info_saved())
       onSaved?.(updated)
     },
@@ -60,6 +65,7 @@ export default function CampaignInfoForm({ campaign, submitLabel = m.employer_ca
       requiredMark={false}
       initialValues={campaignInfoValues(campaign)}
       onFinish={handleFinish}
+      onValuesChange={() => setDirty(true)}
       className="cg-form"
     >
       <Form.Item

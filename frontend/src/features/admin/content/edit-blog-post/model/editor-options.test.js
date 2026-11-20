@@ -15,9 +15,8 @@ describe('blog editor form mapping', () => {
     expect(values).not.toHaveProperty('slug')
   })
 
-  it('uses resubmit copy while an article is waiting for approval', () => {
-    expect(getActionCopy('submit', 'pending')[2]).toBe('Gửi duyệt lại')
-    expect(getActionCopy('submit', 'published_with_pending')[2]).toBe('Gửi duyệt lại')
-    expect(getActionCopy('submit', 'draft')[2]).toBe('Gửi duyệt')
+  it('warns that publishing an edit replaces the live post', () => {
+    expect(getActionCopy('publish', 'published_with_draft')[0]).toBe('Xuất bản bản sửa')
+    expect(getActionCopy('publish', 'draft')[0]).toBe('Xuất bản')
   })
 })

@@ -141,9 +141,35 @@ Kết quả (18/11/2026): 150 nhãn, phân bố 0: 38, 1: 61, 2: 29, 3: 14, 4: 8
 "chắc" sau ba đợt (đợt đầu, chấm lại theo A–B, chấm lại theo C–D). Nhãn ở
 `gold_pairs_claude.xlsx` (cột `annotator = claude`).
 
+## Đợt 2: thêm 15 tin (20/11/2026)
+
+Tập vàng mở rộng thêm 15 tin × 10 CV (cặp 151–300; kế hoạch bản 3) để tập test đủ
+lớn. Không đổi định nghĩa các mức và các quy tắc A–D. Mỗi cặp được hai lượt gán
+độc lập chấm (đều là Claude, mỗi lượt một phiên riêng, chỉ đọc rubric này cùng nội
+dung tin và CV). Hai lượt trùng nhau 142/150 cặp, lệch không quá một mức ở cả 150
+cặp, kappa có trọng số bậc hai 0,979 (`ml/reports/gold_batch2_agreement.md`). 8 cặp
+lệch được phân xử; các tình huống rubric chưa nêu được làm rõ như sau:
+
+| | Tình huống | Cách chấm |
+| --- | --- | --- |
+| E1 | Tin tự mâu thuẫn về số năm (trường "Kinh nghiệm yêu cầu" khác con số trong phần yêu cầu) và điều đó làm đổi nhãn | Lấy cách đọc chặt hơn, theo quy tắc "phân vân thì chọn mức thấp hơn" (JD-69: trường ghi dưới 1 năm, phần yêu cầu ghi tối thiểu 4 năm) |
+| E2 | Bậc học của CV khi tên bằng và trường `degree_level` lệch nhau | Theo chữ ghi ở tên bằng: đó là thứ người đọc CV thấy; CV tổng hợp có nhiều chỗ `degree_level` sai |
+| E3 | Trùng chức danh và đủ thẻ kỹ năng nhưng việc đã làm khác hẳn loại sản phẩm của tin (web so với hệ thống nhúng ô tô) | Không đạt "đúng loại công việc" của mức 4: nền 3 |
+| E4 | Nghề ngoài danh sách B6 (kho vận, sản xuất, lao động phổ thông) | Cùng mảng và CV có làm đúng việc tin yêu cầu thì là vị trí gần (tối đa 2); chỉ cùng nhóm lao động thì 1 |
+| E5 | Vị trí gần, đủ kỹ năng, chưa có kinh nghiệm, tin yêu cầu "Dưới 1 năm" | 2; C1 và D8 chỉ cộng dồn khi vừa thiếu kỹ năng vừa thiếu kinh nghiệm |
+
+Kết quả đợt 2: 150 nhãn ở `gold_pairs_claude_2.xlsx` (kèm nhãn của từng lượt); nhãn
+và lý do đầy đủ của hai lượt cùng phần phân xử ở `gold_pairs_2_passes.json`. Phiếu
+chấm mù cho người là `gold_pairs_2.xlsx`.
+
+Hai tin có trường nhập tay lệch với nội dung, cần người làm đồ án xem lại trong
+`jd_input.xlsx`: JD-69 (kinh nghiệm "Dưới 1 năm", học vấn "Không yêu cầu" trong khi
+phần yêu cầu ghi tối thiểu 4 năm và bằng cử nhân) và JD-62 (vị trí chuyên môn
+"Backend Developer" cho tin kỹ sư hệ thống nhúng ô tô).
+
 ## Người gán nhãn
 
-Tập vàng 150 cặp do mô hình ngôn ngữ (Claude) gán theo rubric này, chỉ dựa trên
+Tập vàng (đợt 1: 150 cặp; đợt 2: thêm 150 cặp) do mô hình ngôn ngữ (Claude) gán theo rubric này, chỉ dựa trên
 nội dung tin và CV (không xem điểm hệ thống hay nguồn ghép cặp); các cặp phân vân
 được hỏi lại người làm đồ án. Người làm đồ án chấm mù 30 cặp (2 cặp mỗi tin) để đo
 độ đồng thuận (quadratic weighted kappa). Báo cáo trình bày đúng như vậy.

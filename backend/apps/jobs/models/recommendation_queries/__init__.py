@@ -10,6 +10,7 @@ from .ranking import (
     recommend_jobs_for_candidate,
     recommend_jobs_for_cv,
     recommend_new_jobs_for_candidate_email,
+    rule_scores_for_cv,
 )
 from .scoring import EXPERIENCE_RANK, MIN_RECOMMENDATION_SCORE
 
@@ -22,4 +23,5 @@ __all__ = [
     'recommend_jobs_for_candidate',
     'recommend_jobs_for_cv',
     'recommend_new_jobs_for_candidate_email',
+    'rule_scores_for_cv',
 ]

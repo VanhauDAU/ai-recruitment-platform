@@ -51,7 +51,15 @@ def job_content_hash(job):
     return content_hash({'extractor': EXTRACTOR_VERSION, 'profile': job_profile(job)})
 
 
-def _cv_source(cv_version):
+def encode_profile(profile, kind, encoder):
+    """(ma trận vector của các chunk, vector toàn văn hoặc None) của một hồ sơ."""
+    texts = [chunk['text'] for chunk in profile.get('chunks', [])]
+    vectors = encoder.encode(texts, kind=ENCODE_KIND[kind])
+    text = document_text(profile)
+    return vectors, (encoder.encode([text], kind=ENCODE_KIND[kind])[0] if text else None)
+
+
+def cv_source(cv_version):
     """(hash nội dung, hàm tạo hồ sơ) của một phiên bản CV."""
     cv = cv_version.cv
     if cv.cv_type == UserCv.CvType.UPLOADED:
@@ -85,9 +93,7 @@ def _store(kind, source, digest, build_profile, encoder):
     except (ExtractionError, CvDocumentRejected) as error:
         profile, error_code = {}, error.code
     chunks = profile.get('chunks', [])
-    vectors = encoder.encode([chunk['text'] for chunk in chunks], kind=ENCODE_KIND[kind])
-    text = document_text(profile)
-    embedding = encoder.encode([text], kind=ENCODE_KIND[kind])[0].tolist() if text else None
+    vectors, embedding = encode_profile(profile, kind, encoder)
     try:
         with transaction.atomic():
             document = MatchDocument.objects.create(
@@ -95,7 +101,7 @@ def _store(kind, source, digest, build_profile, encoder):
                 content_hash=digest,
                 language=profile.get('language', ''),
                 profile_json=profile,
-                embedding=embedding,
+                embedding=None if embedding is None else embedding.tolist(),
                 extractor_version=EXTRACTOR_VERSION,
                 model_version=encoder.version,
                 status=MatchDocument.Status.FAILED if error_code else MatchDocument.Status.READY,
@@ -119,7 +125,7 @@ def _store(kind, source, digest, build_profile, encoder):
 
 
 def ensure_cv_document(cv_version, *, encoder, catalog):
-    digest, build = _cv_source(cv_version)
+    digest, build = cv_source(cv_version)
     return _store(
         MatchDocument.Kind.CV, {'cv_version': cv_version}, digest, lambda: build(catalog), encoder
     )

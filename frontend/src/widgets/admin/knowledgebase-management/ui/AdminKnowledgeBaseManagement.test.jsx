@@ -38,7 +38,7 @@ const article = {
   article_type: 'FAQ',
   title: 'Làm thế nào để đăng nhập?',
   lifecycle_state: 'ACTIVE',
-  latest_revision: { number: 2, status: 'IN_REVIEW' },
+  latest_revision: { number: 2, status: 'DRAFT' },
   published_revision_number: 1,
   review_due_at: '2026-08-01T00:00:00Z',
   updated_at: '2026-08-09T00:00:00Z',
@@ -67,7 +67,7 @@ describe('AdminKnowledgeBaseManagement', () => {
     getAdminKnowledgeArticleSummary.mockResolvedValue({
       total: 47,
       published: 31,
-      in_review: 8,
+      drafts: 8,
       overdue: 6,
     })
   })
