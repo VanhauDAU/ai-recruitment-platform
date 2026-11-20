@@ -7,8 +7,8 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Chốt luồng FAQ/hướng dẫn và blog: Nháp → Xuất bản (ADR-0024)](#chốt-luồng-nội-dung-nháp--xuất-bản-adr-0024-2026-11-20) | 🟨 PR #272 (nhánh `feat/content-publish-flow`), chờ gộp |
-| [Tổ chức lại sidebar quản trị](#tổ-chức-lại-sidebar-quản-trị-2026-11-20) | 🟨 PR #270 (nhánh `feat/admin-sidebar-ia`), chờ gộp |
+| [Chốt luồng FAQ/hướng dẫn và blog: Nháp → Xuất bản (ADR-0024)](#chốt-luồng-nội-dung-nháp--xuất-bản-adr-0024-2026-11-20) | ✅ Gộp vào `dev` (#272) |
+| [Tổ chức lại sidebar quản trị](#tổ-chức-lại-sidebar-quản-trị-2026-11-20) | ✅ Gộp vào `dev` (#270); gỡ khối "Hàng chờ quản trị" ở trang Người dùng: PR #271, chờ gộp |
 | [Song ngữ vi/en cho 3 cổng (ADR-0023)](#song-ngữ-vien-cho-3-cổng-adr-0023-2026-11-19) | 🟨 GĐ0 đã gộp (#262); GĐ1 (cổng NTD) trên nhánh `feat/i18n-employer`; GĐ2–4 chưa làm |
 | [Chuẩn hóa tiêu đề trang 3 cổng](#chuẩn-hóa-tiêu-đề-trang-3-cổng-2026-11-19) | 🟨 PR #261 (nhánh `feat/page-titles`), chờ gộp |
 | [Hậu kiểm nội dung trang công ty](#hậu-kiểm-nội-dung-trang-công-ty-2026-11-19) | ✅ Gộp vào `dev` (#260) |
@@ -113,6 +113,7 @@ lối vào trên sidebar. Một PR, nhánh `feat/admin-sidebar-ia`.
 | Tìm nhanh | Ô "Tìm trang…" + phím ⌘K/Ctrl+K: lọc mọi trang theo tên và nhóm, không phân biệt dấu; superuser tìm được cả từng nhóm cấu hình; tải lười khi mở lần đầu |
 | Hàng chờ mới | `company_content_changes` (hậu kiểm trang công ty, hạn 48 giờ) vào `GET /api/admin/dashboard/queues/` → badge sidebar, chuông, dashboard |
 | Kèm theo | Bộ lọc trạng thái ở danh sách Cẩm nang nằm trên URL (`?status=`) để hàng chờ mở đúng bài chờ duyệt; nhãn sidebar chuyển vào `messages/admin` |
+| Dọn sau gộp | Trang Người dùng bỏ khối "Hàng chờ quản trị" (lời mời đang chờ đã có badge trên tab "Lời mời quản trị" và nhóm "Cần xử lý"; ô "Phạm vi số liệu" lặp lại thẻ Tổng tài khoản); gỡ luôn `QueueCard`, prop `pendingInvitations/canInvite/onOpenQueue` và CSS `.account-queue*` |
 
 ## Hậu kiểm nội dung trang công ty (2026-11-19)
 

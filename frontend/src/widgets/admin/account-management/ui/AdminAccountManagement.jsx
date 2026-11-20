@@ -367,13 +367,7 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
         />
       )}
       {!recruiterScope && activeTab !== 'invitations' && (
-        <AccountOverview
-          metrics={metrics}
-          pendingInvitations={pendingInvitations}
-          canInvite={canManageAdmins}
-          onApplyFilter={applyOverviewFilter}
-          onOpenQueue={changeTab}
-        />
+        <AccountOverview metrics={metrics} onApplyFilter={applyOverviewFilter} />
       )}
 
       <section className="admin-panel account-management-panel">
