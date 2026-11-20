@@ -131,15 +131,27 @@
 .ch-composer__preview { position: sticky; top: 0; display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 14px; background: #f0f2f5; }
 .ch-plan { margin: -8px 0 0; padding-left: 20px; font-size: 13px; line-height: 22px; color: #334155; }
 
-/* Hộp Thêm kênh */
-.ch-kinds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.ch-kind-tile { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid #e2e8e5; border-radius: 12px; background: #fff; cursor: pointer; text-align: left; }
+/* Hộp Thêm kênh: nhóm ProCV tự đăng (ô lớn, kèm trạng thái kết nối) và nhóm tự đăng (ô gọn) */
+.ch-kind-groups { display: flex; flex-direction: column; gap: 18px; }
+.ch-kind-group header { margin-bottom: 8px; }
+.ch-kind-group h3 { margin: 0; font-size: 14px; font-weight: 600; color: #0f2a24; }
+.ch-kind-group p { margin: 2px 0 0; font-size: 12px; line-height: 18px; color: #64748b; }
+.ch-kinds { display: grid; gap: 8px; }
+.ch-kinds.is-auto { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ch-kinds.is-manual { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.ch-kind-tile { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 10px 12px; border: 1px solid #e2e8e5; border-radius: 12px; background: #fff; cursor: pointer; text-align: left; transition: border-color .15s, background-color .15s; }
+.ch-kind-tile.is-compact { padding: 8px 10px; }
 .ch-kind-tile:hover { border-color: #a7f3d0; }
 .ch-kind-tile:focus-visible { outline: 2px solid #059669; outline-offset: 1px; }
 .ch-kind-tile.is-on { border-color: #10b981; background: #ecfdf5; box-shadow: 0 0 0 1px #10b981; }
-.ch-kind-tile span { display: flex; min-width: 0; flex-direction: column; }
-.ch-kind-tile strong { font-size: 13px; color: #0f2a24; }
-.ch-kind-tile small { font-size: 11px; color: #64748b; }
+.ch-kind-tile > span { display: flex; min-width: 0; flex-direction: column; gap: 1px; }
+.ch-kind-tile strong { overflow: hidden; font-size: 13px; color: #0f2a24; text-overflow: ellipsis; white-space: nowrap; }
+.ch-kind-tile small { overflow: hidden; font-size: 11px; line-height: 16px; color: #64748b; text-overflow: ellipsis; white-space: nowrap; }
+.ch-kind-status { display: inline-flex; align-items: center; gap: 4px; }
+.ch-kind-status.is-ready { color: #047857; }
+.ch-kind-status.is-missing { color: #b45309; }
+.ch-kind-note { display: flex; align-items: flex-start; gap: 6px; margin: 8px 0 0; padding: 8px 10px; border-radius: 10px; background: #fffbeb; font-size: 12px; line-height: 18px; color: #92400e; }
+.ch-kind-note .anticon { margin-top: 3px; color: #d97706; }
 
 /* Bảng so sánh kênh */
 .ch-report { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -168,7 +180,10 @@
   .ch-kpis > div:nth-child(n + 3) { border-top: 1px solid #eef2f0; }
   .ch-tabs { padding: 0 14px 14px; }
   .ch-costs__sum, .ch-costs__row { grid-template-columns: 1fr; }
-  .ch-kinds { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ch-kinds.is-auto { grid-template-columns: 1fr; }
+  .ch-kinds.is-manual { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ch-kind-tile.is-compact { align-items: flex-start; }
+  .ch-kind-tile.is-compact strong, .ch-kind-tile.is-compact small { white-space: normal; }
   .ch-linkbox { flex-direction: column; }
 }
 @media (prefers-reduced-motion: reduce) {

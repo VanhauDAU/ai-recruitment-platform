@@ -463,6 +463,13 @@ GĐ1 đã làm:
   - Mạng chưa kết nối thì kênh quay về chép để đăng tay (áp dụng cho mọi mạng).
   - Migration campaigns 0009.
   - Còn mở: chưa thử thật; chưa làm Trang công ty (cần LinkedIn duyệt).
+- Hộp "Thêm kênh phân phối" chia hai nhóm (nhánh `feat/campaign-add-channel-groups`).
+  - **ProCV tự đăng:** danh sách mạng lấy từ API; mỗi ô có trạng thái "Đã kết
+    nối · tài khoản" hoặc "Chưa kết nối". Chọn mạng chưa kết nối thì hiện một
+    dòng nhắc kèm "Kết nối ngay".
+  - **Bạn tự đăng:** ô gọn, kèm gợi ý ngắn cho từng nơi đăng.
+  - Bỏ nhãn "Bạn sẽ đăng ở đâu?".
+  - Mobile: nhóm tự đăng một cột, nhóm đăng tay hai cột, chữ được xuống dòng.
 
 ## Ứng tuyển bằng CV tải lên và form ứng tuyển mới (2026-11-18)
 
