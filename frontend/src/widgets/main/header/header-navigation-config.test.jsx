@@ -44,3 +44,39 @@ describe('company directory navigation', () => {
     expect(isMenuActive(jobsMenu, '/cong-ty/tim-kiem')).toBe(true)
   })
 })
+
+describe('data-driven navigation groups', () => {
+  const SOURCES = {
+    jobGroups: [{ id: 46, name: 'Công nghệ thông tin', parent: null }, { id: 49, name: 'Backend', parent: 47 }],
+    industries: [{ id: 42, name: 'Fintech' }],
+    cvStyles: [{ category_type: 'style', slug: 'don-gian', name: 'Đơn giản' }, { category_type: 'position', slug: 'ke-toan', name: 'Kế toán' }],
+    cvPositions: [{ category_type: 'style', slug: 'don-gian', name: 'Đơn giản' }, { category_type: 'position', slug: 'ke-toan', name: 'Kế toán' }],
+    blogCategories: [],
+  }
+
+  it('links only real occupation groups, industries and CV categories', () => {
+    const items = allItems(navigationForCapabilities(HEADER_NAVIGATION, { sources: SOURCES }))
+    const byLabel = Object.fromEntries(items.map((item) => [item.label, item.to]))
+
+    expect(byLabel['Công nghệ thông tin']).toBe('/viec-lam?cat=46')
+    expect(byLabel.Backend).toBeUndefined()
+    expect(byLabel.Fintech).toBe('/viec-lam?nganh=42')
+    expect(byLabel['Đơn giản']).toBe('/mau-cv/don-gian')
+    expect(byLabel['Mẫu CV Kế toán']).toBe('/mau-cv/ke-toan')
+  })
+
+  it('marks groups as loading until data arrives and hides empty groups', () => {
+    const loading = navigationForCapabilities(HEADER_NAVIGATION)
+    const loaded = navigationForCapabilities(HEADER_NAVIGATION, { sources: SOURCES })
+    const groups = (menus) => menus.flatMap((menu) => menu.columns.flat())
+
+    expect(groups(loading).some((group) => group.source === 'blogCategories' && group.loading)).toBe(true)
+    expect(groups(loaded).some((group) => group.loading || group.source === 'blogCategories')).toBe(false)
+  })
+
+  it('every static item points to a route', () => {
+    const items = allItems(navigationForCapabilities(HEADER_NAVIGATION, { knowledgebaseEnabled: true, sources: SOURCES }))
+
+    expect(items.every((item) => typeof item.to === 'string' && item.to.startsWith('/'))).toBe(true)
+  })
+})

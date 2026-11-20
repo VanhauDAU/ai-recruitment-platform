@@ -820,11 +820,11 @@ test('public smoke: tablet header taps open top-level submenus', { tag: '@respon
 
   const navigation = page.locator('header nav')
   await navigation.getByRole('button', { name: /Việc làm/ }).click()
-  await expect(page.getByText('Việc làm theo vị trí', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Tìm việc làm' })).toBeVisible()
   await expect(page).toHaveURL('/')
 
   await navigation.getByRole('button', { name: /Tạo CV/ }).click()
-  await expect(page.getByText('Mẫu CV theo style', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Khám phá tất cả mẫu CV' })).toBeVisible()
   await expect(page).toHaveURL('/')
 })
 
