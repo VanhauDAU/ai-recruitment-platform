@@ -7,7 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Làm lại carousel banner trang chủ](#làm-lại-carousel-banner-trang-chủ-2026-11-21) | 🟨 Xong trên nhánh `feat/home-hero-banners`, chưa mở PR |
+| [Làm lại carousel banner trang chủ](#làm-lại-carousel-banner-trang-chủ-2026-11-21) | ✅ Gộp vào `dev` (#300); cắt ảnh + 8 tông màu trên nhánh `feat/banner-image-crop` |
 | [Làm lại trang Cấu hình hệ thống (ADR-0026)](#làm-lại-trang-cấu-hình-hệ-thống-adr-0026-2026-11-21) | 🟨 GĐ1–GĐ4 đã gộp (#294–#298); GĐ5 trên nhánh `feat/settings-recruiting` |
 | [Chốt luồng FAQ/hướng dẫn và blog: Nháp → Xuất bản (ADR-0024)](#chốt-luồng-nội-dung-nháp--xuất-bản-adr-0024-2026-11-20) | ✅ Gộp vào `dev` (#272) |
 | [Tổ chức lại sidebar quản trị](#tổ-chức-lại-sidebar-quản-trị-2026-11-20) | ✅ Gộp vào `dev` (#270); gỡ khối "Hàng chờ quản trị" ở trang Người dùng: PR #271, chờ gộp |
@@ -55,6 +55,8 @@ nhập qua Django admin. Nay:
   ứng viên (dùng chung query với khối gợi ý, không gọi API thêm).
 - Carousel dừng khi focus, tắt tự chạy khi giảm chuyển động, vuốt trên cảm ứng; mobile
   hiện carousel khung 2:1 phía trên danh mục (trước đây bị ẩn).
+- Đợt 2: hộp cắt ảnh khóa tỉ lệ (`react-easy-crop`), mức ảnh tối thiểu 960×360, 8 tông
+  gradient dùng chung cho mọi vị trí banner (migration `sitecontent.0008`).
 - Hướng dẫn nội dung: [cau-hinh-site-settings.md](05-huong-dan/cau-hinh-site-settings.md#banner-quảng-bá-trang-quản-trị-adminappbanners).
 
 ## Làm lại trang Cấu hình hệ thống (ADR-0026, 2026-11-21)

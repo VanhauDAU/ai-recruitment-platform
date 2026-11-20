@@ -584,5 +584,13 @@
   "banner_ai_matches_cta": "See matching jobs",
   "banner_ai_setup_title": "Set your preferences to get job suggestions",
   "banner_ai_setup_subtitle": "Pick industries, locations and salary so AI can suggest the right jobs for you.",
-  "banner_ai_setup_cta": "Set up now"
+  "banner_ai_setup_cta": "Set up now",
+  "banner_theme_green": "Brand green",
+  "banner_theme_blue": "Ocean blue",
+  "banner_theme_orange": "Sunset",
+  "banner_theme_violet": "Violet",
+  "banner_theme_teal": "Teal",
+  "banner_theme_rose": "Rose",
+  "banner_theme_aurora": "Aurora",
+  "banner_theme_midnight": "Midnight"
 }

@@ -8,6 +8,15 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-21
 
+#### Changed — Cắt ảnh banner và thêm tông màu
+
+- Chọn ảnh banner mở hộp cắt khóa tỉ lệ (8:3 cho slide ảnh trang chủ, 4:3 cho ảnh minh họa):
+  kéo, phóng to để căn khung rồi tải lên bản WebP. Ảnh tối thiểu hạ còn 960×360 nên banner
+  thiết kế sẵn rộng 1000 px dùng được.
+- Sửa lỗi tải ảnh báo "undefined" khi tạo banner mới (loại slide chưa vào form).
+- 8 tông gradient hiện đại (thêm tím, ngọc lam, hồng đỏ, cực quang, đêm) dùng chung cho
+  carousel, banner trang việc làm và cẩm nang; trang quản trị chọn tông bằng ô màu.
+
 #### Added — Carousel banner trang chủ động, nhiều loại slide
 
 - Bốn loại slide: ảnh + link (cả slide là ảnh thiết kế sẵn), nhà tuyển dụng nổi bật (ảnh
