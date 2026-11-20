@@ -1,16 +1,16 @@
 import { MenuOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { EMPLOYER_PORTAL_URL, HOME_BY_ROLE } from '@/shared/config/portals'
 import { useLoginPrompt } from '@/features/common/account/auth'
 import { useSession } from '@/entities/account/session'
 import { useHideOnScroll } from '@/shared/hooks/use-hide-on-scroll'
-import { message } from '@/shared/lib/toast'
 import { BrandLogo, useSiteSettings } from '@/entities/system/site-settings'
 import CandidateUserMenu from './CandidateUserMenu'
 import { DesktopNavigation, MobileNavigation } from './HeaderNavigation'
 import { HEADER_NAVIGATION, navigationForCapabilities } from './header-navigation-config'
+import { useHeaderNavigationSources } from './use-header-navigation-sources'
 
 function GuestActions({ mobile = false, onSelect, navigate }) {
   // Đăng nhập chuyển sang trang /login.
@@ -89,12 +89,13 @@ export default function Header({ editorMode = false }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [mobileKey, setMobileKey] = useState(null)
   const headerVisible = useHideOnScroll()
-  const menus = useMemo(
-    () => navigationForCapabilities(HEADER_NAVIGATION, {
-      knowledgebaseEnabled: settings.knowledgebase_public_enabled === true,
-    }),
-    [settings.knowledgebase_public_enabled],
-  )
+  const [menuTouched, setMenuTouched] = useState(false)
+  if (!menuTouched && (openKey || mobileOpen)) setMenuTouched(true)
+  const sources = useHeaderNavigationSources(menuTouched)
+  const menus = navigationForCapabilities(HEADER_NAVIGATION, {
+    knowledgebaseEnabled: settings.knowledgebase_public_enabled === true,
+    sources,
+  })
   const hideOnScroll = location.pathname === '/viec-lam'
     || location.pathname === '/jobs'
     || location.pathname.startsWith('/viec-lam/tai/')
@@ -109,15 +110,9 @@ export default function Header({ editorMode = false }) {
   function handleItem(item) {
     setOpenKey(null)
     setMobileOpen(false)
-    // Việc làm đã lưu yêu cầu đăng nhập — khách mở popup tại chỗ thay vì bị
-    // trang đó đá về /login.
-    if (item.action === 'saved-jobs') {
-      if (isAuthenticated) navigate('/viec-lam-da-luu')
-      else promptLogin(() => navigate('/viec-lam-da-luu'))
-    }
-    else if (item.to) navigate(item.to)
-    else if (item.search) navigate(`/viec-lam?search=${encodeURIComponent(item.search)}`)
-    else message.info('Tính năng sẽ sớm ra mắt.')
+    // Trang cần đăng nhập: khách mở popup tại chỗ thay vì bị đá về /login.
+    if (item.requiresAuth && !isAuthenticated) promptLogin(() => navigate(item.to))
+    else navigate(item.to)
   }
 
   return (
