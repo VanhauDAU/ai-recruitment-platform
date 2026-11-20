@@ -40,8 +40,6 @@ export const ADMIN_NAVIGATION = [
       { key: 'queue-domain-verification', label: m.admin_nav_queue_domain_verification(), badgeKey: 'domain_verification', routeRef: 'recruiters', query: { tab: 'domain-verification' } },
       { key: 'queue-company-joins', label: m.admin_nav_queue_company_joins(), badgeKey: 'company_join_requests', routeRef: 'companies', query: { tab: 'join-requests' } },
       { key: 'queue-company-updates', label: m.admin_nav_queue_company_updates(), badgeKey: 'company_updates', routeRef: 'companies', query: { tab: 'updates' } },
-      { key: 'queue-blog', label: m.admin_nav_queue_blog(), badgeKey: 'blog_reviews', routeRef: 'blog', query: { status: 'pending' } },
-      { key: 'queue-knowledge-review', label: m.admin_nav_queue_knowledge_review(), badgeKey: 'knowledge_reviews', routeRef: 'knowledgebase', query: { revision_status: 'IN_REVIEW' } },
       { key: 'queue-knowledge-overdue', label: m.admin_nav_queue_knowledge_overdue(), badgeKey: 'knowledge_overdue', routeRef: 'knowledgebase', query: { review_due: 'overdue' } },
     ],
   },

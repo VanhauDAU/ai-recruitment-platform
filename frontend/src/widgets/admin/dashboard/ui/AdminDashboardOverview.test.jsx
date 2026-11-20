@@ -21,7 +21,7 @@ const payload = {
   period: { days: 7, start: '2026-11-10', end: '2026-11-16' },
   queues: [
     { key: 'job_reports', count: 0, overdue: 0, oldest_at: null, sla_hours: 48 },
-    { key: 'blog_reviews', count: 0, overdue: 0, oldest_at: null, sla_hours: 72 },
+    { key: 'company_reports', count: 0, overdue: 0, oldest_at: null, sla_hours: 48 },
   ],
   kpis: {
     candidates: { current: 3, previous: 2 },

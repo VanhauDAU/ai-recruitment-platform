@@ -43,16 +43,6 @@ export const QUEUE_CONFIG = {
     hint: 'Sửa hồ sơ công ty chờ thẩm định, gồm đổi tên và mã số thuế',
     to: adminPath('/companies?tab=updates'),
   },
-  blog_reviews: {
-    label: 'Bài viết chờ duyệt',
-    hint: 'Bài mới và bản sửa của bài đã xuất bản',
-    to: adminPath('/blog?status=pending'),
-  },
-  knowledge_reviews: {
-    label: 'FAQ & hướng dẫn chờ duyệt',
-    hint: 'Phiên bản nội dung trợ giúp đã gửi duyệt',
-    to: adminPath('/knowledgebase?revision_status=IN_REVIEW'),
-  },
 }
 
 const QUEUE_ORDER = Object.keys(QUEUE_CONFIG)

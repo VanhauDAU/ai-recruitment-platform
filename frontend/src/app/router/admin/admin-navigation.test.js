@@ -60,8 +60,8 @@ describe('admin navigation tree', () => {
     expect(active('/admin/app/recruiters/rp_1')).toBe('employer-list')
     expect(active('/admin/app/companies', '?tab=updates&company=co_1')).toBe('queue-company-updates')
     expect(active('/admin/app/companies/co_1')).toBe('company-list')
-    expect(active('/admin/app/blog', '?status=pending')).toBe('queue-blog')
     expect(active('/admin/app/blog', '?status=draft')).toBe('blog')
+    expect(active('/admin/app/knowledgebase', '?review_due=overdue')).toBe('queue-knowledge-overdue')
   })
 
   it('lights the CV item on every CV sub-page', () => {
