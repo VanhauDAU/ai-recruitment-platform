@@ -34,7 +34,8 @@ describe('admin navigation tree', () => {
   it('keeps superuser-only areas, including the whole system section, from a regular admin', () => {
     const regular = tree()
     SUPERUSER_ONLY.forEach((key) => expect(leafKeys(regular)).not.toContain(key))
-    expect(regular.some((node) => node.section === 'system')).toBe(false)
+    expect(regular.find((node) => node.key === 'system')?.children.map((leaf) => leaf.key))
+      .toBeUndefined()
     SUPERUSER_ONLY.forEach((key) => expect(leafKeys(tree(true))).toContain(key))
   })
 
@@ -42,16 +43,24 @@ describe('admin navigation tree', () => {
     const queues = tree().find((node) => node.key === 'queues')
     const queueLeaves = queues.children.filter((leaf) => QUEUE_CONFIG[leaf.badgeKey])
 
-    expect(queues).toMatchObject({ section: 'operations', defaultOpen: true })
+    expect(queues).toMatchObject({ defaultOpen: true })
     expect(queueLeaves.map((leaf) => leaf.badgeKey)).toEqual(Object.keys(QUEUE_CONFIG))
     queueLeaves.forEach((leaf) => expect(leaf.href).toBe(QUEUE_CONFIG[leaf.badgeKey].to))
   })
 
-  it('keeps queues out of the management groups so badges are counted once', () => {
+  it('keeps queues out of the other groups so badges are counted once', () => {
     tree(true)
       .filter((node) => node.key !== 'queues')
       .flatMap((node) => node.children || [])
-      .forEach((leaf) => expect(leaf.badgeKey).toBeUndefined())
+      .forEach((leaf) => expect(QUEUE_CONFIG[leaf.badgeKey]).toBeUndefined())
+  })
+
+  it('keeps the sidebar to the dashboard plus six collapsible groups', () => {
+    const [dashboard, ...groups] = tree(true)
+    expect(dashboard.key).toBe('dashboard')
+    expect(groups.map((node) => node.key))
+      .toEqual(['queues', 'jobs', 'businesses', 'users', 'content', 'system'])
+    groups.forEach((node) => expect(node.children.length).toBeGreaterThan(0))
   })
 
   it('lights the queue for a queue tab and the directory for the plain list', () => {
