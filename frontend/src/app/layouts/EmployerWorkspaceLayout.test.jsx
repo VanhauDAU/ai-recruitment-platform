@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import EmployerWorkspaceLayout from './EmployerWorkspaceLayout'
@@ -258,7 +258,7 @@ describe('EmployerWorkspaceLayout', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Mở menu tài khoản' }))
 
-    await waitFor(() => expect(screen.getAllByText('Cài đặt tài khoản')).toHaveLength(2))
+    expect(await screen.findByText('Cài đặt tài khoản', { selector: '.ant-dropdown *' })).toBeInTheDocument()
     expect(screen.queryByText('Về trang ứng viên')).not.toBeInTheDocument()
     expect(screen.getByText('Đăng xuất')).toBeInTheDocument()
   })

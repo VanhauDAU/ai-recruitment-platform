@@ -531,7 +531,8 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
     await page.getByRole('button', { name: 'Mở menu quản trị' }).click()
   }
   await expect(page.getByRole('menuitem', { name: /Bảng tin/ })).toBeVisible()
-  await expect(page.getByRole('menuitem', { name: /Cài đặt tài khoản/ })).toBeVisible()
+  // Account settings live in the collapsible "Tài khoản" group.
+  await expect(page.getByRole('menuitem', { name: /Tài khoản$/ })).toBeVisible()
   if (page.viewportSize().width < 1024) {
     await page.getByRole('button', { name: 'Đóng menu quản trị' }).click()
   }

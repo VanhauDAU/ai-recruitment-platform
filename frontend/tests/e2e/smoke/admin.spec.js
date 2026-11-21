@@ -158,8 +158,9 @@ test('admin account management: filters, table actions and quick detail are resp
   const adminNavigation = page.getByRole('navigation', { name: 'Điều hướng quản trị' })
   await expect(adminNavigation.getByRole('link', { name: 'Tổng quan' }))
     .toHaveAttribute('href', '/admin/app/dashboard')
+  // Accordion: the current page's group opens and closes the queues.
   await expect(adminNavigation.getByRole('button', { name: 'Cần xử lý' }))
-    .toHaveAttribute('aria-expanded', 'true')
+    .toHaveAttribute('aria-expanded', 'false')
   await expect(adminNavigation.getByRole('button', { name: 'Người dùng' }))
     .toHaveAttribute('aria-expanded', 'true')
   await expect(adminNavigation.getByText('Tài khoản cá nhân')).toHaveCount(0)
