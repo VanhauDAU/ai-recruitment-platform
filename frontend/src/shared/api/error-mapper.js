@@ -123,6 +123,7 @@ const OAUTH_ERRORS = {
   inactive: m.api_error_oauth_inactive(),
   invalid_code: m.api_error_oauth_invalid_code(),
   complete_failed: m.api_error_oauth_complete_failed(),
+  registration_closed: m.api_error_oauth_registration_closed(),
 }
 
 export function getOAuthErrorMessage(code) {

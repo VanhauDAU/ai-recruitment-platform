@@ -1,9 +1,9 @@
 """Public HTML shell, robots policy, and top-level sitemaps."""
 
-from django.conf import settings as django_settings
 from django.http import HttpResponse
 from django.views import View
 
+from apps.sitecontent.selectors import knowledgebase_search_index_enabled
 from apps.sitecontent.services import resolved_seo_settings, seo_page_title
 from common.seo import (
     SeoMetadata,
@@ -15,10 +15,8 @@ from common.seo import (
 )
 
 STATIC_PAGE_METADATA = {
-    '/': (
-        '',
-        'Tìm việc làm, tạo CV chuyên nghiệp và phát triển sự nghiệp cùng AI.',
-    ),
+    # Trang chủ dùng seo_default_title / seo_default_description admin cấu hình.
+    '/': ('', ''),
     '/cong-ty': (
         'Danh sách công ty đang tuyển dụng',
         'Khám phá danh sách công ty, tìm hiểu doanh nghiệp và các cơ hội việc làm đang tuyển dụng.',
@@ -181,11 +179,7 @@ class SitemapIndexView(View):
             absolute_url(request, '/sitemaps/blog.xml'),
             absolute_url(request, '/sitemaps/cv-templates.xml'),
         ]
-        if (
-            django_settings.KNOWLEDGEBASE_PUBLIC_ENABLED
-            and django_settings.KNOWLEDGEBASE_SEARCH_INDEX_ENABLED
-            and seo_settings['seo_robots_index']
-        ):
+        if knowledgebase_search_index_enabled() and seo_settings['seo_robots_index']:
             urls.append(absolute_url(request, '/sitemaps/knowledgebase.xml'))
         return xml_response(sitemap_index(urls))
 

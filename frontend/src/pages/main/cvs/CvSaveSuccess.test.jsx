@@ -78,7 +78,9 @@ describe('CV save success page', () => {
     expect(mocks.getCvVersion).toHaveBeenCalledWith('cv_1', 'cvv_2')
     expect(screen.getByText('Marketing Executive')).toBeInTheDocument()
     expect(screen.getByText('Rất phù hợp')).toBeInTheDocument()
-    expect(screen.getByText('Khớp vị trí trên CV +24')).toBeInTheDocument()
+    expect(screen.getByText('Khớp vị trí')).toBeInTheDocument()
+    // Không hiện điểm thành phần.
+    expect(screen.queryByText('Khớp vị trí trên CV +24')).not.toBeInTheDocument()
     expect(screen.getByText('Ứng tuyển')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Chỉnh sửa/ })).toHaveAttribute('href', '/cvs/cv_1/edit?mode=edit')
   })

@@ -22,14 +22,10 @@ def _owned_campaign(campaign, user, *, lock=False):
     return campaign
 
 
-def _validate_target(campaign, target, job):
-    if target == CampaignChannel.Target.JOB:
-        if job is None:
-            raise ValidationError({'job': _('Chọn tin mà link sẽ dẫn tới.')})
-        if job.campaign_id != campaign.pk:
-            raise ValidationError({'job': _('Tin này không thuộc chiến dịch.')})
-        return job
-    return None
+def _validate_jobs(campaign, jobs):
+    if any(job.campaign_id != campaign.pk for job in jobs):
+        raise ValidationError({'jobs': _('Có tin không thuộc chiến dịch.')})
+    return jobs
 
 
 def _clean_content(content):
@@ -44,7 +40,7 @@ def _clean_content(content):
 
 
 @transaction.atomic
-def create_channel(*, campaign, user, kind, label, target=CampaignChannel.Target.LANDING, job=None):
+def create_channel(*, campaign, user, kind, label):
     campaign = _owned_campaign(campaign, user, lock=True)
     if campaign.is_terminal:
         raise ValidationError({'detail': _('Chiến dịch đã kết thúc, không thêm kênh được.')})
@@ -55,8 +51,6 @@ def create_channel(*, campaign, user, kind, label, target=CampaignChannel.Target
         campaign=campaign,
         kind=kind,
         label=label,
-        target=target,
-        job=_validate_target(campaign, target, job),
         created_by=user,
     )
     CampaignActivity.objects.record(
@@ -80,10 +74,10 @@ def update_channel(*, channel, user, **data):
         if clash.exclude(pk=channel.pk).exists():
             raise ValidationError({'label': _('Chiến dịch đã có kênh cùng tên.')})
         channel.label = label
-    if 'target' in data or 'job' in data:
-        target = data.get('target', channel.target)
-        channel.job = _validate_target(channel.campaign, target, data.get('job', channel.job))
-        channel.target = target
+    if 'target' in data:
+        channel.target = data['target']
+    if 'jobs' in data:
+        channel.jobs.set(_validate_jobs(channel.campaign, data['jobs']))
     if 'content' in data:
         channel.content = _clean_content(data['content'])
         channel.content_source = CampaignChannel.ContentSource.MANUAL

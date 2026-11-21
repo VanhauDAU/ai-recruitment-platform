@@ -16,10 +16,3 @@ export async function getSiteSettings() {
     return data
   })
 }
-
-export async function getBanners(placement) {
-  return cachedRequest(`banners:${placement || 'all'}`, SITE_CACHE_TTL, async () => {
-    const { data } = await api.get('/public/site/banners/', { params: placement ? { placement } : {} })
-    return data
-  })
-}

@@ -516,6 +516,19 @@ class EmployerJobSerializerTests(APITestCase):
         self.assertEqual(job.language_requirements.count(), 1)
         self.assertEqual(job.application_contact.emails.count(), 1)
 
+    def test_new_job_takes_the_admin_default_auto_rejection_period(self):
+        from apps.sitecontent.models import SiteSetting
+
+        SiteSetting.objects.update_or_create(key='auto_reject_default_days', defaults={'value': 14})
+        serializer = EmployerJobWriteSerializer(data=self.payload())
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        job = create_job_record(
+            {**serializer.validated_data, 'posted_by': self.user, 'company': self.company}
+        )
+
+        self.assertEqual(job.auto_reject_after_days, 14)
+
     def test_create_and_edit_contract_persists_automatic_application_status_settings(self):
         payload = self.payload()
         payload.update(

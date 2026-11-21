@@ -3,11 +3,13 @@ import { Button, Input, Typography } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { formatNumber, getJobCategories, getJobs } from '@/entities/job/job'
-import { getBanners, useSiteSettings } from '@/entities/system/site-settings'
+import { getBanners, HOME_HERO_PLACEMENT } from '@/entities/content/banner'
+import { useSiteSettings } from '@/entities/system/site-settings'
 import BannerCarousel from '@/shared/ui/BannerCarousel'
 import BestJobs from './ui/BestJobs'
 import CategoryMenu from './ui/CategoryMenu'
 import CvTemplateShowcase from './ui/CvTemplateShowcase'
+import { BEST_JOBS_PAGE_SIZE } from './lib/best-jobs-config'
 import FeaturedIndustriesEmployers from './ui/FeaturedIndustriesEmployers'
 import FlashBadge from './ui/FlashBadge'
 import HotlineConsultation from './ui/HotlineConsultation'
@@ -15,7 +17,8 @@ import HomeHeroMascot from './ui/HomeHeroMascot'
 import { LocationFilter } from '@/entities/system/location'
 import MarketStats from './ui/MarketStats'
 import { SearchDropdown, saveHistory } from '@/features/main/job/search-jobs'
-import { CandidateJobRecommendations } from '@/widgets/main/candidate-job-recommendations'
+import { HeroSlide } from '@/widgets/common/hero-banner'
+import { CandidateJobRecommendations, useHomeRecommendationSummary } from '@/widgets/main/candidate-job-recommendations'
 import './home-mascot.css'
 
 const SUGGESTED_JOBS = [
@@ -27,52 +30,34 @@ const SUGGESTED_JOBS = [
   'Data Analyst',
 ]
 
-// Khớp với Banner.Theme ở backend — banner nhập qua admin chọn 1 trong 3 tông này.
-const BANNER_THEMES = {
-  green: { gradient: 'from-[var(--brand-primary)] to-[var(--brand-primary-hover)]', text: 'text-green-50', eyebrow: 'text-green-100', button: 'text-[var(--brand-primary-hover)] hover:bg-green-50' },
-  blue: { gradient: 'from-blue-600 to-blue-800', text: 'text-blue-50', eyebrow: 'text-blue-100', button: 'text-blue-700 hover:bg-blue-50' },
-  orange: { gradient: 'from-orange-500 to-pink-600', text: 'text-orange-50', eyebrow: 'text-orange-100', button: 'text-orange-700 hover:bg-orange-50' },
-}
-
-function normalizePublicUrl(url = '#') {
-  if (url === '/jobs') return '/viec-lam'
-  if (url.startsWith('/jobs?')) return url.replace('/jobs?', '/viec-lam?')
-  if (url.startsWith('/jobs/')) return url.replace('/jobs/', '/viec-lam/')
-  if (url === '/register') return '/sign-up'
-  return url
-}
-
-function PromoBanner({ banner, navigate }) {
-  const t = BANNER_THEMES[banner.theme] || BANNER_THEMES.green
-  const hasImage = Boolean(banner.image_url)
-  const bg = hasImage
-    ? { backgroundImage: `url(${banner.image_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-    : undefined
+function StatsSlide({ jobCount, categoryCount }) {
   return (
-    <div
-      className={`relative h-full flex flex-col justify-center overflow-hidden rounded-md text-white px-12 py-6 ${!hasImage ? `bg-gradient-to-br ${t.gradient}` : ''}`}
-      style={bg}
-    >
-      {hasImage && <div className="absolute inset-0 bg-black/45" />}
-      <div className="relative">
-        {banner.eyebrow && <p className={`text-sm font-semibold mb-1 ${t.eyebrow}`}>{banner.eyebrow}</p>}
-        <h3 className="text-2xl font-bold">{banner.title}</h3>
-        {banner.subtitle && <p className={`mt-2 max-w-md ${t.text}`}>{banner.subtitle}</p>}
-        {banner.cta_label && (
-          <button
-            onClick={() => navigate(normalizePublicUrl(banner.cta_url || '#'))}
-            className={`mt-4 self-start bg-white font-medium px-4 py-2 rounded-lg text-sm cursor-pointer transition ${t.button}`}
-          >
-            {banner.cta_label}
-          </button>
-        )}
+    <div className="h-full flex flex-col justify-center rounded-md bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-primary-hover)] text-white px-5 py-4 sm:px-12 sm:py-6">
+      <h3 className="text-lg sm:text-2xl font-bold">Tiếp lợi thế, nối thành công</h3>
+      <p className="mt-2 text-sm sm:text-base text-green-50 max-w-md line-clamp-2">
+        Hệ sinh thái nhân sự ứng dụng AI: tạo CV chuyên nghiệp, phân tích CV, so khớp việc làm và luyện phỏng vấn thông minh.
+      </p>
+      <div className="mt-3 sm:mt-5 flex gap-8">
+        <div>
+          <p className="text-xl sm:text-2xl font-bold">{formatNumber(jobCount)}</p>
+          <p className="text-sm text-green-50">Việc làm đang tuyển</p>
+        </div>
+        <div>
+          <p className="text-xl sm:text-2xl font-bold">{categoryCount}</p>
+          <p className="text-sm text-green-50">Danh mục ngành nghề</p>
+        </div>
       </div>
     </div>
   )
 }
 
 export default function Home() {
-  const { siteName } = useSiteSettings()
+  const { settings, siteName } = useSiteSettings()
+  // Công tắc khối trang chủ (SiteSetting home_*); thiếu khoá thì hiện như mặc định.
+  const show = (key) => settings[key] !== false
+  const featuredJobsCount = Number.isInteger(settings.home_featured_jobs_count)
+    ? settings.home_featured_jobs_count
+    : BEST_JOBS_PAGE_SIZE
   const navigate = useNavigate()
   const [keyword, setKeyword] = useState('')
   const [searchBy, setSearchBy] = useState('title')
@@ -82,13 +67,14 @@ export default function Home() {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [banners, setBanners] = useState([])
   const searchBoxRef = useRef(null)
+  const recommendationSummary = useHomeRecommendationSummary()
 
   useEffect(() => {
     getJobCategories().then(setCategories).catch(() => {})
     getJobs()
       .then((data) => setJobCount(data.count ?? (data.results || data).length))
       .catch(() => {})
-    getBanners('home_hero').then(setBanners).catch(() => {})
+    getBanners(HOME_HERO_PLACEMENT).then(setBanners).catch(() => {})
   }, [])
 
   function searchWith(extraLocationIds, nextKeyword = keyword, by = searchBy) {
@@ -130,25 +116,13 @@ export default function Home() {
   const searchPlaceholder =
     searchBy === 'company' ? 'Tên công ty' : searchBy === 'both' ? 'Vị trí tuyển dụng, tên công ty' : 'Vị trí tuyển dụng'
 
-  const bannerSlides = [
-    <div key="stats" className="h-full flex flex-col justify-center rounded-md bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-primary-hover)] text-white px-12 py-6">
-      <h3 className="text-2xl font-bold">Tiếp lợi thế, nối thành công</h3>
-      <p className="mt-2 text-green-50 max-w-md">
-        Hệ sinh thái nhân sự ứng dụng AI: tạo CV chuyên nghiệp, phân tích CV, so khớp việc làm và luyện phỏng vấn thông minh.
-      </p>
-      <div className="mt-5 flex gap-8">
-        <div>
-          <p className="text-2xl font-bold">{formatNumber(jobCount)}</p>
-          <p className="text-sm text-green-50">Việc làm đang tuyển</p>
-        </div>
-        <div>
-          <p className="text-2xl font-bold">{categories.length}</p>
-          <p className="text-sm text-green-50">Danh mục ngành nghề</p>
-        </div>
-      </div>
-    </div>,
-    ...banners.map((banner) => <PromoBanner key={banner.id} banner={banner} navigate={navigate} />),
-  ]
+  // Banner admin cấu hình chạy xoay vòng; chỉ khi không có banner nào đang chạy
+  // mới hiện slide số liệu dự phòng.
+  const bannerSlides = banners.length
+    ? banners.map((banner, index) => (
+        <HeroSlide key={banner.id} banner={banner} personal={recommendationSummary} eager={index === 0} />
+      ))
+    : [<StatsSlide key="stats" jobCount={jobCount} categoryCount={categories.length} />]
 
   return (
     <div className="pb-10">
@@ -231,29 +205,38 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="max-w-6xl mx-auto px-4 -mt-8 relative z-20">
-        <CategoryMenu categories={categories} banner={<BannerCarousel slides={bannerSlides} />} />
-      </section>
+      {(show('home_show_categories') || show('home_show_banner')) && (
+        <section className="max-w-6xl mx-auto px-4 -mt-8 relative z-20">
+          <CategoryMenu
+            categories={show('home_show_categories') ? categories : []}
+            banner={show('home_show_banner') ? <BannerCarousel slides={bannerSlides} /> : null}
+          />
+        </section>
+      )}
 
-      <section className="max-w-6xl mx-auto px-4 pt-8">
-        <BestJobs categories={categories} />
-      </section>
+      {show('home_show_featured_jobs') && (
+        <section className="max-w-6xl mx-auto px-4 pt-8">
+          <BestJobs categories={categories} pageSize={featuredJobsCount} />
+        </section>
+      )}
 
       <CandidateJobRecommendations variant="home" />
 
-      <section className="pt-8">
-        <div className="bg-white py-8">
-          <div className="max-w-6xl mx-auto px-4">
-            <MarketStats />
+      {show('home_show_stats') && (
+        <section className="pt-8">
+          <div className="bg-white py-8">
+            <div className="max-w-6xl mx-auto px-4">
+              <MarketStats />
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <section className="pt-8">
         <FlashBadge />
       </section>
 
-      <CvTemplateShowcase />
+      {show('home_show_cv_templates') && <CvTemplateShowcase />}
       <FeaturedIndustriesEmployers />
       <HotlineConsultation />
     </div>

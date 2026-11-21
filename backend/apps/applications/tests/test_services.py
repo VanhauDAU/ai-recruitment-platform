@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 
 from django.contrib.auth import get_user_model
 from django.db import close_old_connections
-from django.test import TestCase, TransactionTestCase, override_settings
+from django.test import TestCase, TransactionTestCase
 from django.utils import timezone
 
 from apps.campaigns.models import RecruitmentCampaign
@@ -229,7 +229,6 @@ class ApplicationStatusTransitionServiceTests(TestCase):
         self.assertIsNone(application.rejected_at)
 
 
-@override_settings(CANDIDATE_STATUS_NOTIFICATION_DELAY=timedelta(minutes=5))
 class StatusDecisionNotificationTests(TestCase):
     def setUp(self):
         self.candidate, self.employer, self.application = create_status_application('notice')
@@ -365,6 +364,27 @@ class AutomaticApplicationRejectionTests(TestCase):
         self.assertEqual(
             notice.deliver_after, self.application.auto_rejected_at + timedelta(days=3)
         )
+
+    def test_business_email_switch_skips_emails_but_keeps_the_workflow(self):
+        from apps.sitecontent.models import SiteSetting
+
+        SiteSetting.objects.update_or_create(
+            key='email_notifications_enabled',
+            defaults={'value': False, 'value_type': SiteSetting.ValueType.BOOLEAN},
+        )
+        baseline = timezone.now()
+        Application.objects.filter(pk=self.application.pk).update(
+            applied_at=baseline - timedelta(days=18), status_updated_at=baseline
+        )
+
+        for days in (0, 3, 6):
+            process_automatic_application_rejections(now=baseline + timedelta(days=days))
+
+        self.application.refresh_from_db()
+        self.assertEqual(self.application.status, Application.Status.REJECTED)
+        # Đánh dấu đã xử lý để bật lại công tắc không gửi bù hàng loạt.
+        self.assertIsNotNone(self.application.auto_rejection_email_sent_at)
+        self.assertEqual(len(self.mailbox), 0)
 
     @property
     def mailbox(self):

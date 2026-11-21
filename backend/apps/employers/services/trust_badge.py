@@ -14,7 +14,7 @@ from django.utils.translation import gettext_lazy
 from apps.accounts.models import User
 from apps.accounts.services import is_account_accessible
 from apps.jobs.models import JobReport
-from apps.sitecontent.models import SiteSetting
+from apps.sitecontent.selectors import get_settings_map
 from common.metrics import record_metric
 
 from ..models import (
@@ -30,11 +30,39 @@ DEFAULT_MINIMUM_ACCOUNT_MONTHS = 6
 MINIMUM_ACCOUNT_MONTHS_LIMIT = 1
 MAXIMUM_ACCOUNT_MONTHS_LIMIT = 60
 
-TRUST_REPORT_REASONS = (
+DEFAULT_TRUST_REPORT_REASONS = (
     JobReport.Reason.FAKE_COMPANY,
     JobReport.Reason.SCAM,
     JobReport.Reason.WRONG_INFO,
 )
+
+
+def _badge_settings():
+    """Mọi cấu hình của dấu tick trong một lần đọc (không đọc lại theo từng công ty)."""
+    return get_settings_map(
+        (
+            MINIMUM_ACCOUNT_MONTHS_SETTING,
+            'employer_trust_report_reasons',
+            'employer_badge_policy_mode',
+        )
+    )
+
+
+def trust_report_reasons(values=None):
+    """Lý do báo cáo đã xác nhận làm mất dấu tick (SiteSetting, chỉ nhận lý do hợp lệ)."""
+    value = (values if values is not None else _badge_settings()).get(
+        'employer_trust_report_reasons'
+    )
+    if not isinstance(value, list):
+        return DEFAULT_TRUST_REPORT_REASONS
+    return tuple(reason for reason in JobReport.Reason.values if reason in value)
+
+
+def badge_policy_mode(values=None):
+    """``enforce``/``shadow`` admin chọn; để trống thì theo ``EMPLOYER_BADGE_POLICY_MODE``."""
+    mode = (values if values is not None else _badge_settings()).get('employer_badge_policy_mode')
+    return mode if mode in {'shadow', 'enforce'} else settings.EMPLOYER_BADGE_POLICY_MODE
+
 
 BADGE_CRITERIA = (
     (
@@ -61,11 +89,9 @@ BADGE_CRITERIA = (
 )
 
 
-def _minimum_account_months():
-    value = (
-        SiteSetting.objects.filter(key=MINIMUM_ACCOUNT_MONTHS_SETTING)
-        .values_list('value', flat=True)
-        .first()
+def _minimum_account_months(values=None):
+    value = (values if values is not None else _badge_settings()).get(
+        MINIMUM_ACCOUNT_MONTHS_SETTING
     )
     if (
         isinstance(value, bool)
@@ -100,11 +126,11 @@ def _approved_document_exists(doc_type):
     )
 
 
-def _recruiters_for_badge(*, company_ids, user_ids):
+def _recruiters_for_badge(*, company_ids, user_ids, reasons):
     trust_violation = JobReport.objects.filter(
         posted_by_id_snapshot=OuterRef('user_id'),
         status=JobReport.Status.UPHELD,
-        reason__in=TRUST_REPORT_REASONS,
+        reason__in=reasons,
     )
     return (
         RecruiterProfile.objects.filter(
@@ -167,10 +193,18 @@ def employer_badge_state_map(badge_keys):
     if not keys:
         return {}
 
-    minimum_months = _minimum_account_months()
+    badge_settings = _badge_settings()
+    minimum_months = _minimum_account_months(badge_settings)
+    mode = badge_policy_mode(badge_settings)
     company_ids = {company_id for company_id, _ in keys}
     user_ids = {user_id for _, user_id in keys}
-    recruiters = list(_recruiters_for_badge(company_ids=company_ids, user_ids=user_ids))
+    recruiters = list(
+        _recruiters_for_badge(
+            company_ids=company_ids,
+            user_ids=user_ids,
+            reasons=trust_report_reasons(badge_settings),
+        )
+    )
     now = timezone.now()
     verified_domains = set(
         CompanyDomainClaim.objects.filter(
@@ -225,13 +259,11 @@ def employer_badge_state_map(badge_keys):
             state[key] for key, _, _ in BADGE_CRITERIA
         )
         state['verified'] = (
-            state['policy_verified']
-            if settings.EMPLOYER_BADGE_POLICY_MODE == 'enforce'
-            else state['legacy_verified']
+            state['policy_verified'] if mode == 'enforce' else state['legacy_verified']
         )
         states[key] = state
 
-    if settings.EMPLOYER_BADGE_POLICY_MODE == 'shadow':
+    if mode == 'shadow':
         cohorts = {}
         for state in states.values():
             cohort = (state['legacy_verified'], state['policy_verified'])

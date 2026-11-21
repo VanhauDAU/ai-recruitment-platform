@@ -6,6 +6,7 @@ from .notifications import (
     CandidateNotificationUnreadCountView,
 )
 from .profile import (
+    MyAiRecommendationView,
     MyCandidateJobPreferencesView,
     MyCandidateProfileView,
     MyRecruiterVisibilityView,
@@ -19,5 +20,6 @@ __all__ = [
     'MyCandidateEmailNotificationSettingsView',
     'MyCandidateJobPreferencesView',
     'MyCandidateProfileView',
+    'MyAiRecommendationView',
     'MyRecruiterVisibilityView',
 ]

@@ -2,352 +2,952 @@
   {
     "key": "site_name",
     "label": "Tên site",
-    "group": "general",
+    "group": "brand",
+    "section": "Nhận diện",
     "value_type": "text",
     "value": "ProCV",
     "is_public": true,
-    "description": "Tên thương hiệu hiển thị ở header, footer và các màn đăng nhập/đăng ký.",
-    "options": {}
+    "description": "Tên thương hiệu ở header, footer, tiêu đề trang và email.",
+    "help": "Dùng ở header/footer cả hai cổng, hậu tố tiêu đề trang (title), trang SEO do server render và mọi email gửi đi. Để trống thì hệ thống dùng \"ProCV\".",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên",
+        "Cổng nhà tuyển dụng",
+        "Email",
+        "SEO"
+      ],
+      "max_length": 60
+    }
   },
   {
     "key": "site_tagline",
     "label": "Slogan",
-    "group": "general",
+    "group": "brand",
+    "section": "Nhận diện",
     "value_type": "text",
     "value": "Nền tảng việc làm & AI Career Coach",
     "is_public": true,
-    "description": "Câu slogan ngắn hiển thị kèm tên site.",
-    "options": {}
+    "description": "Câu giới thiệu ngắn đặt dưới tên site trong email.",
+    "help": "Hiện tại chỉ hiển thị ở phần đầu email thông báo gửi ứng viên và nhà tuyển dụng. Giao diện web dùng câu giới thiệu riêng theo ngôn ngữ.",
+    "options": {
+      "applies_to": [
+        "Email"
+      ],
+      "max_length": 120
+    }
   },
   {
     "key": "brand_logo_url",
     "label": "Logo đầy đủ",
-    "group": "general",
+    "group": "brand",
+    "section": "Logo & biểu tượng",
     "value_type": "image",
-    "value": "/images/logo/logo-full.png",
+    "value": "/images/logo/logo-full.webp",
     "is_public": true,
-    "description": "Logo dạng ngang/wordmark dùng ở header.",
-    "options": {}
+    "description": "Logo ngang dùng ở header, footer, email và ảnh chia sẻ dự phòng.",
+    "help": "Nên dùng ảnh nền trong suốt, tỉ lệ ngang. Logo này cũng là ảnh Organization.logo trong dữ liệu có cấu trúc của SEO.",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên",
+        "Cổng nhà tuyển dụng",
+        "Email",
+        "SEO"
+      ]
+    }
   },
   {
     "key": "brand_logo_mark_url",
     "label": "Logo biểu tượng",
-    "group": "general",
+    "group": "brand",
+    "section": "Logo & biểu tượng",
     "value_type": "image",
-    "value": "/images/logo/logo-mark.png",
+    "value": "/images/logo/logo-mark.webp",
     "is_public": true,
-    "description": "Logo vuông/icon dùng ở màn đăng nhập hoặc nơi thiếu diện tích.",
-    "options": {}
+    "description": "Logo vuông dùng ở màn đăng nhập/đăng ký và nơi thiếu diện tích.",
+    "help": "Ảnh vuông, tối thiểu 128×128 px.",
+    "options": {
+      "applies_to": [
+        "Màn đăng nhập/đăng ký"
+      ]
+    }
   },
   {
     "key": "brand_favicon_url",
     "label": "Favicon",
-    "group": "general",
+    "group": "brand",
+    "section": "Logo & biểu tượng",
     "value_type": "image",
     "value": "/favicon-32.png",
     "is_public": true,
-    "description": "Icon cho tab trình duyệt. Ảnh upload sẽ tự resize xuống tối đa 256x256 để tránh nặng trang.",
-    "options": {}
+    "description": "Icon trên tab trình duyệt; ảnh upload tự thu nhỏ tối đa 256×256.",
+    "help": "Trình duyệt áp dụng favicon sau khi trang tải xong. Ảnh vuông PNG 32×32 hoặc 64×64 là đủ.",
+    "options": {
+      "applies_to": [
+        "Tab trình duyệt"
+      ]
+    }
   },
   {
     "key": "brand_primary_color",
     "label": "Màu thương hiệu chính",
-    "group": "general",
+    "group": "brand",
+    "section": "Màu sắc",
     "value_type": "color",
     "value": "#00b14f",
     "is_public": true,
-    "description": "Mã màu hex dùng làm biến --brand-primary cho giao diện.",
-    "options": {}
-  },
-  {
-    "key": "maintenance_mode",
-    "label": "Chế độ bảo trì",
-    "group": "general",
-    "value_type": "boolean",
-    "value": false,
-    "is_public": true,
-    "description": "Bật để hiển thị thông báo bảo trì thay cho nội dung site.",
-    "options": {}
-  },
-  {
-    "key": "maintenance_message",
-    "label": "Thông báo bảo trì",
-    "group": "general",
-    "value_type": "textarea",
-    "value": "Hệ thống đang bảo trì, vui lòng quay lại sau.",
-    "is_public": true,
-    "description": "",
-    "options": {}
+    "description": "Màu chủ đạo của nút, liên kết và điểm nhấn.",
+    "help": "Áp dụng cho biến CSS --brand-primary, theme Ant Design của cổng ứng viên/admin và email thông báo. Chọn màu đủ đậm để chữ trắng trên nền màu vẫn dễ đọc.",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên",
+        "Trang quản trị",
+        "Email"
+      ]
+    }
   },
   {
     "key": "home_show_banner",
     "label": "Hiện carousel banner",
     "group": "homepage",
+    "section": "Khối trang chủ",
     "value_type": "boolean",
     "value": true,
     "is_public": true,
-    "description": "",
-    "options": {}
+    "description": "Carousel banner đầu trang chủ (banner nhập ở mục Banner).",
+    "help": "Ẩn/hiện khối tương ứng trên trang chủ cổng ứng viên.",
+    "options": {
+      "applies_to": [
+        "Trang chủ"
+      ]
+    }
   },
   {
     "key": "home_show_stats",
-    "label": "Hiện khối thống kê",
+    "label": "Hiện khối thống kê thị trường",
     "group": "homepage",
+    "section": "Khối trang chủ",
     "value_type": "boolean",
     "value": true,
     "is_public": true,
-    "description": "",
-    "options": {}
+    "description": "Khối thống kê thị trường việc làm trên trang chủ.",
+    "help": "Ẩn/hiện khối tương ứng trên trang chủ cổng ứng viên.",
+    "options": {
+      "applies_to": [
+        "Trang chủ"
+      ]
+    }
   },
   {
     "key": "home_show_categories",
-    "label": "Hiện ngành nghề nổi bật",
+    "label": "Hiện menu ngành nghề",
     "group": "homepage",
+    "section": "Khối trang chủ",
     "value_type": "boolean",
     "value": true,
     "is_public": true,
-    "description": "",
-    "options": {}
+    "description": "Menu ngành nghề cạnh carousel đầu trang chủ.",
+    "help": "Ẩn/hiện khối tương ứng trên trang chủ cổng ứng viên.",
+    "options": {
+      "applies_to": [
+        "Trang chủ"
+      ]
+    }
   },
   {
     "key": "home_show_featured_jobs",
-    "label": "Hiện việc làm nổi bật",
+    "label": "Hiện khối việc làm tốt nhất",
     "group": "homepage",
+    "section": "Khối trang chủ",
     "value_type": "boolean",
     "value": true,
     "is_public": true,
-    "description": "",
-    "options": {}
+    "description": "Khối \"Việc làm tốt nhất\" trên trang chủ.",
+    "help": "Ẩn/hiện khối tương ứng trên trang chủ cổng ứng viên.",
+    "options": {
+      "applies_to": [
+        "Trang chủ"
+      ]
+    }
   },
   {
     "key": "home_featured_jobs_count",
-    "label": "Số việc làm nổi bật",
+    "label": "Số tin ở khối việc làm tốt nhất",
     "group": "homepage",
+    "section": "Khối trang chủ",
     "value_type": "number",
     "value": 12,
     "is_public": true,
-    "description": "Số tin hiển thị ở khối việc làm nổi bật trang chủ.",
-    "options": {}
+    "description": "Số tin mỗi trang ở khối \"Việc làm tốt nhất\".",
+    "help": "Nên là bội số của 3 để lưới 3 cột không bị hụt dòng.",
+    "options": {
+      "applies_to": [
+        "Trang chủ"
+      ],
+      "integer": true,
+      "min": 3,
+      "max": 30,
+      "step": 3,
+      "depends_on": "home_show_featured_jobs"
+    }
   },
   {
     "key": "home_show_cv_templates",
     "label": "Hiện khối mẫu CV",
     "group": "homepage",
+    "section": "Khối trang chủ",
     "value_type": "boolean",
     "value": true,
     "is_public": true,
-    "description": "",
-    "options": {}
+    "description": "Khối giới thiệu mẫu CV trên trang chủ.",
+    "help": "Ẩn/hiện khối giới thiệu mẫu CV trên trang chủ.",
+    "options": {
+      "applies_to": [
+        "Trang chủ"
+      ]
+    }
   },
   {
     "key": "home_show_popular_searches",
-    "label": "Hiện cụm link SEO",
+    "label": "Hiện khối Tra cứu phổ biến",
     "group": "homepage",
+    "section": "Điều hướng",
     "value_type": "boolean",
     "value": true,
     "is_public": true,
-    "description": "Khối \"Tra cứu phổ biến\" cuối trang chủ (dữ liệu từ Cụm link).",
-    "options": {}
+    "description": "Khối \"Tra cứu phổ biến\" ở cuối mọi trang cổng ứng viên.",
+    "help": "Nội dung khối lấy từ các Cụm link vị trí \"footer_seo\". Tắt ở đây ẩn toàn bộ khối; muốn ẩn một cụm thì tắt cụm đó.",
+    "options": {
+      "applies_to": [
+        "Mọi trang cổng ứng viên"
+      ]
+    }
   },
   {
     "key": "seo_default_title",
-    "label": "Tiêu đề mặc định",
+    "label": "Tiêu đề trang chủ",
     "group": "seo",
+    "section": "Mặc định",
     "value_type": "text",
     "value": "ProCV - Việc làm & Tạo CV cùng AI",
     "is_public": true,
-    "description": "Thẻ <title> mặc định khi trang không tự đặt.",
-    "options": {}
+    "description": "Thẻ <title> của trang chủ.",
+    "help": "Các trang khác tự đặt tiêu đề riêng và ghép hậu tố \"| Tên site\". Nên dài 50–60 ký tự.",
+    "options": {
+      "applies_to": [
+        "SEO"
+      ],
+      "max_length": 70
+    }
   },
   {
     "key": "seo_default_description",
     "label": "Mô tả mặc định",
     "group": "seo",
+    "section": "Mặc định",
     "value_type": "textarea",
     "value": "ProCV - Nền tảng tìm việc làm, tạo CV chuyên nghiệp và phát triển sự nghiệp cùng AI.",
     "is_public": true,
-    "description": "Thẻ meta description mặc định.",
-    "options": {}
-  },
-  {
-    "key": "seo_default_keywords",
-    "label": "Từ khoá mặc định",
-    "group": "seo",
-    "value_type": "text",
-    "value": "việc làm, tuyển dụng, tạo cv, ai",
-    "is_public": true,
-    "description": "",
-    "options": {}
+    "description": "Mô tả (meta description) dùng khi trang không có mô tả riêng.",
+    "help": "Hiện trong kết quả tìm kiếm Google. Nên dài 140–160 ký tự.",
+    "options": {
+      "applies_to": [
+        "SEO"
+      ],
+      "max_length": 200
+    }
   },
   {
     "key": "seo_og_image",
     "label": "Ảnh OG mặc định",
     "group": "seo",
+    "section": "Chia sẻ mạng xã hội",
     "value_type": "image",
     "value": "",
     "is_public": true,
-    "description": "Ảnh hiển thị khi chia sẻ link lên mạng xã hội.",
-    "options": {}
+    "description": "Ảnh xem trước khi chia sẻ link lên mạng xã hội.",
+    "help": "Kích thước khuyến nghị 1200×630 px. Trang có ảnh riêng (tin tuyển dụng, bài viết) sẽ dùng ảnh của trang đó.",
+    "options": {
+      "applies_to": [
+        "SEO",
+        "Mạng xã hội"
+      ]
+    }
   },
   {
     "key": "seo_robots_index",
     "label": "Cho phép index",
     "group": "seo",
+    "section": "Lập chỉ mục",
     "value_type": "boolean",
     "value": true,
     "is_public": true,
-    "description": "Tắt để chặn công cụ tìm kiếm index toàn site (robots noindex).",
-    "options": {}
-  },
-  {
-    "key": "seo_google_analytics_id",
-    "label": "Google Analytics ID",
-    "group": "seo",
-    "value_type": "text",
-    "value": "",
-    "is_public": true,
-    "description": "VD: G-XXXXXXXXXX. Để trống nếu chưa dùng.",
-    "options": {}
+    "description": "Tắt để chặn công cụ tìm kiếm lập chỉ mục toàn site.",
+    "help": "Khi tắt: robots.txt trả \"Disallow: /\" và mọi trang gắn noindex. Chỉ tắt ở môi trường thử nghiệm hoặc khi cần gỡ site khỏi Google.",
+    "options": {
+      "applies_to": [
+        "SEO"
+      ],
+      "risky": "off"
+    }
   },
   {
     "key": "seo_google_site_verification",
     "label": "Google Search Console verification",
     "group": "seo",
+    "section": "Lập chỉ mục",
     "value_type": "text",
     "value": "",
     "is_public": true,
-    "description": "",
-    "options": {}
+    "description": "Mã xác minh Google Search Console (thẻ meta).",
+    "help": "Chỉ dán phần content của thẻ <meta name=\"google-site-verification\">.",
+    "options": {
+      "applies_to": [
+        "SEO"
+      ],
+      "max_length": 120
+    }
+  },
+  {
+    "key": "hotline",
+    "label": "Hotline hỗ trợ",
+    "group": "contact",
+    "section": "Kênh hỗ trợ",
+    "value_type": "text",
+    "value": "1900 1234",
+    "is_public": true,
+    "description": "Số hotline chung hiển thị ở footer, nút nổi và email.",
+    "help": "Cũng là số dự phòng khi hotline miền Bắc/miền Nam của trang nhà tuyển dụng để trống.",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên",
+        "Cổng nhà tuyển dụng",
+        "Email"
+      ],
+      "max_length": 30
+    }
+  },
+  {
+    "key": "support_email",
+    "label": "Email hỗ trợ",
+    "group": "contact",
+    "section": "Kênh hỗ trợ",
+    "value_type": "email",
+    "value": "support@aicareercoach.vn",
+    "is_public": true,
+    "description": "Email hỗ trợ; cũng là địa chỉ nhận trả lời (reply-to) của email hệ thống.",
+    "help": "Người dùng bấm trả lời email hệ thống sẽ gửi về địa chỉ này.",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên",
+        "Cổng nhà tuyển dụng",
+        "Email"
+      ]
+    }
+  },
+  {
+    "key": "contact_address",
+    "label": "Địa chỉ",
+    "group": "contact",
+    "section": "Kênh hỗ trợ",
+    "value_type": "textarea",
+    "value": "",
+    "is_public": true,
+    "description": "Địa chỉ văn phòng ở footer, trang liên hệ và email.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Footer",
+        "Trang liên hệ",
+        "Email"
+      ],
+      "max_length": 300
+    }
+  },
+  {
+    "key": "contact_working_hours",
+    "label": "Giờ làm việc",
+    "group": "contact",
+    "section": "Kênh hỗ trợ",
+    "value_type": "text",
+    "value": "8:00 - 17:30, Thứ 2 - Thứ 6",
+    "is_public": true,
+    "description": "Giờ làm việc ở footer ứng viên và trang liên hệ.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Footer cổng ứng viên",
+        "Trang liên hệ"
+      ],
+      "max_length": 100
+    }
+  },
+  {
+    "key": "contact_zalo_url",
+    "label": "Zalo",
+    "group": "contact",
+    "section": "Kênh hỗ trợ",
+    "value_type": "url",
+    "value": "",
+    "is_public": true,
+    "description": "Link Zalo ở nút nổi, trang liên hệ và email chào mừng.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Nút nổi",
+        "Trang liên hệ",
+        "Email"
+      ]
+    }
+  },
+  {
+    "key": "contact_messenger_url",
+    "label": "Facebook Messenger",
+    "group": "contact",
+    "section": "Kênh hỗ trợ",
+    "value_type": "url",
+    "value": "",
+    "is_public": true,
+    "description": "Link Messenger ở trang liên hệ nhà tuyển dụng.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Trang liên hệ"
+      ]
+    }
+  },
+  {
+    "key": "contact_map_embed_url",
+    "label": "Google Maps embed",
+    "group": "contact",
+    "section": "Kênh hỗ trợ",
+    "value_type": "url",
+    "value": "",
+    "is_public": true,
+    "description": "Link nhúng Google Maps ở trang liên hệ nhà tuyển dụng.",
+    "help": "Lấy từ Google Maps → Chia sẻ → Nhúng bản đồ, chỉ dán giá trị src của thẻ iframe.",
+    "options": {
+      "applies_to": [
+        "Trang liên hệ"
+      ]
+    }
+  },
+  {
+    "key": "employer_hotline_north",
+    "label": "Hotline tư vấn miền Bắc",
+    "group": "contact",
+    "section": "Hotline nhà tuyển dụng",
+    "value_type": "text",
+    "value": "",
+    "is_public": true,
+    "description": "Hotline miền Bắc trên trang nhà tuyển dụng.",
+    "help": "Để trống thì dùng hotline chung.",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng"
+      ],
+      "max_length": 30
+    }
+  },
+  {
+    "key": "employer_hotline_south",
+    "label": "Hotline tư vấn miền Nam",
+    "group": "contact",
+    "section": "Hotline nhà tuyển dụng",
+    "value_type": "text",
+    "value": "",
+    "is_public": true,
+    "description": "Hotline miền Nam trên trang nhà tuyển dụng.",
+    "help": "Để trống thì khối hotline miền Nam được ẩn.",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng"
+      ],
+      "max_length": 30
+    }
+  },
+  {
+    "key": "footer_facebook_url",
+    "label": "Facebook",
+    "group": "contact",
+    "section": "Mạng xã hội",
+    "value_type": "url",
+    "value": "",
+    "is_public": true,
+    "description": "Trang Facebook chính thức ở footer và email.",
+    "help": "Để trống để ẩn biểu tượng. Bật/tắt toàn bộ biểu tượng ở nhóm Chân trang.",
+    "options": {
+      "applies_to": [
+        "Footer",
+        "Email"
+      ]
+    }
+  },
+  {
+    "key": "footer_linkedin_url",
+    "label": "LinkedIn",
+    "group": "contact",
+    "section": "Mạng xã hội",
+    "value_type": "url",
+    "value": "",
+    "is_public": true,
+    "description": "Trang LinkedIn chính thức ở footer và email.",
+    "help": "Để trống để ẩn biểu tượng. Bật/tắt toàn bộ biểu tượng ở nhóm Chân trang.",
+    "options": {
+      "applies_to": [
+        "Footer",
+        "Email"
+      ]
+    }
+  },
+  {
+    "key": "footer_youtube_url",
+    "label": "YouTube",
+    "group": "contact",
+    "section": "Mạng xã hội",
+    "value_type": "url",
+    "value": "",
+    "is_public": true,
+    "description": "Trang YouTube chính thức ở footer và email.",
+    "help": "Để trống để ẩn biểu tượng. Bật/tắt toàn bộ biểu tượng ở nhóm Chân trang.",
+    "options": {
+      "applies_to": [
+        "Footer",
+        "Email"
+      ]
+    }
+  },
+  {
+    "key": "footer_tiktok_url",
+    "label": "TikTok",
+    "group": "contact",
+    "section": "Mạng xã hội",
+    "value_type": "url",
+    "value": "",
+    "is_public": true,
+    "description": "Trang TikTok chính thức ở footer và email.",
+    "help": "Để trống để ẩn biểu tượng. Bật/tắt toàn bộ biểu tượng ở nhóm Chân trang.",
+    "options": {
+      "applies_to": [
+        "Footer",
+        "Email"
+      ]
+    }
+  },
+  {
+    "key": "footer_logo_url",
+    "label": "Logo riêng cho footer",
+    "group": "footer",
+    "section": "Nội dung",
+    "value_type": "image",
+    "value": "",
+    "is_public": true,
+    "description": "Logo riêng cho footer cổng ứng viên; để trống dùng logo chính.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Footer cổng ứng viên"
+      ]
+    }
+  },
+  {
+    "key": "footer_description",
+    "label": "Mô tả ngắn ở footer",
+    "group": "footer",
+    "section": "Nội dung",
+    "value_type": "textarea",
+    "value": "ProCV - Nền tảng việc làm và phát triển sự nghiệp cùng AI dành cho người Việt.",
+    "is_public": true,
+    "description": "Đoạn giới thiệu ở footer cổng ứng viên.",
+    "help": "Cũng là chân email khi chưa nhập \"Chân email\".",
+    "options": {
+      "applies_to": [
+        "Footer cổng ứng viên",
+        "Email"
+      ]
+    }
+  },
+  {
+    "key": "footer_copyright",
+    "label": "Dòng bản quyền",
+    "group": "footer",
+    "section": "Nội dung",
+    "value_type": "text",
+    "value": "© {year} {site_name}. All rights reserved.",
+    "is_public": true,
+    "description": "Dòng bản quyền; hỗ trợ {year} và {site_name}.",
+    "help": "Ví dụ \"© {year} {site_name}. All rights reserved.\" sẽ hiển thị năm hiện tại và tên site.",
+    "options": {
+      "applies_to": [
+        "Footer",
+        "Email"
+      ],
+      "max_length": 200
+    }
+  },
+  {
+    "key": "footer_company_name",
+    "label": "Tên pháp lý doanh nghiệp",
+    "group": "footer",
+    "section": "Pháp lý doanh nghiệp",
+    "value_type": "text",
+    "value": "",
+    "is_public": true,
+    "description": "Tên pháp nhân vận hành nền tảng.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Footer"
+      ]
+    }
+  },
+  {
+    "key": "footer_business_license",
+    "label": "Thông tin giấy phép / mã số thuế",
+    "group": "footer",
+    "section": "Pháp lý doanh nghiệp",
+    "value_type": "textarea",
+    "value": "",
+    "is_public": true,
+    "description": "Giấy phép kinh doanh, mã số thuế, nơi cấp.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Footer"
+      ]
+    }
+  },
+  {
+    "key": "footer_app_store_url",
+    "label": "Link tải trên App Store",
+    "group": "footer",
+    "section": "Ứng dụng di động",
+    "value_type": "url",
+    "value": "",
+    "is_public": true,
+    "description": "Link tải app trên App Store.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Footer cổng ứng viên"
+      ],
+      "depends_on": "footer_show_apps"
+    }
+  },
+  {
+    "key": "footer_google_play_url",
+    "label": "Link tải trên Google Play",
+    "group": "footer",
+    "section": "Ứng dụng di động",
+    "value_type": "url",
+    "value": "",
+    "is_public": true,
+    "description": "Link tải app trên Google Play.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Footer cổng ứng viên"
+      ],
+      "depends_on": "footer_show_apps"
+    }
+  },
+  {
+    "key": "footer_qr_code_url",
+    "label": "Mã QR",
+    "group": "footer",
+    "section": "Ứng dụng di động",
+    "value_type": "image",
+    "value": "",
+    "is_public": true,
+    "description": "Mã QR tải app.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Footer cổng ứng viên"
+      ],
+      "depends_on": "footer_show_apps"
+    }
+  },
+  {
+    "key": "footer_qr_label",
+    "label": "Nhãn dưới mã QR",
+    "group": "footer",
+    "section": "Ứng dụng di động",
+    "value_type": "text",
+    "value": "",
+    "is_public": true,
+    "description": "Chú thích dưới mã QR.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Footer cổng ứng viên"
+      ],
+      "depends_on": "footer_show_apps",
+      "max_length": 100
+    }
+  },
+  {
+    "key": "footer_show_link_groups",
+    "label": "Hiện menu điều hướng",
+    "group": "footer",
+    "section": "Hiển thị",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "Hiện các cột menu điều hướng ở footer cổng ứng viên.",
+    "help": "Nội dung cột lấy từ Cụm link vị trí \"footer_nav\".",
+    "options": {
+      "applies_to": [
+        "Footer cổng ứng viên"
+      ]
+    }
+  },
+  {
+    "key": "footer_show_contact",
+    "label": "Hiện thông tin liên hệ",
+    "group": "footer",
+    "section": "Hiển thị",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "Hiện khối thông tin liên hệ ở footer cổng ứng viên.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Footer cổng ứng viên"
+      ]
+    }
+  },
+  {
+    "key": "footer_show_apps",
+    "label": "Hiện liên kết tải ứng dụng",
+    "group": "footer",
+    "section": "Hiển thị",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "Hiện khối tải ứng dụng ở footer cổng ứng viên.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Footer cổng ứng viên"
+      ]
+    }
+  },
+  {
+    "key": "footer_show_socials",
+    "label": "Hiện mạng xã hội",
+    "group": "footer",
+    "section": "Hiển thị",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "Hiện biểu tượng mạng xã hội ở footer ứng viên và email.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Footer cổng ứng viên",
+        "Email"
+      ]
+    }
+  },
+  {
+    "key": "blog_page_title",
+    "label": "Tiêu đề trang Cẩm nang",
+    "group": "blog",
+    "section": "Trang cẩm nang",
+    "value_type": "text",
+    "value": "Cẩm nang nghề nghiệp",
+    "is_public": true,
+    "description": "Tiêu đề đầu trang /blog và thẻ <title> của trang danh mục.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Trang cẩm nang"
+      ],
+      "max_length": 100
+    }
+  },
+  {
+    "key": "blog_support_docs_title",
+    "label": "Tiêu đề khối Tài liệu hỗ trợ",
+    "group": "blog",
+    "section": "Trang cẩm nang",
+    "value_type": "text",
+    "value": "Tài liệu hỗ trợ tìm việc",
+    "is_public": true,
+    "description": "Tiêu đề khối bài viết ghim ở sidebar trang chi tiết.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Trang chi tiết bài viết"
+      ],
+      "max_length": 100
+    }
   },
   {
     "key": "candidate_allow_registration",
     "label": "Cho phép đăng ký ứng viên",
-    "group": "candidate",
+    "group": "accounts",
+    "section": "Đăng ký",
     "value_type": "boolean",
     "value": true,
     "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "candidate_require_email_verification",
-    "label": "Bắt buộc xác thực email",
-    "group": "candidate",
-    "value_type": "boolean",
-    "value": false,
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "candidate_max_cvs",
-    "label": "Số CV tối đa mỗi người",
-    "group": "candidate",
-    "value_type": "number",
-    "value": 6,
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "candidate_max_applications_per_day",
-    "label": "Giới hạn ứng tuyển mỗi ngày",
-    "group": "candidate",
-    "value_type": "number",
-    "value": 20,
-    "is_public": false,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "candidate_allow_avatar_upload",
-    "label": "Cho phép upload avatar",
-    "group": "candidate",
-    "value_type": "boolean",
-    "value": true,
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "candidate_profile_completion_required",
-    "label": "Bắt buộc hoàn thiện hồ sơ để ứng tuyển",
-    "group": "candidate",
-    "value_type": "boolean",
-    "value": false,
-    "is_public": true,
-    "description": "",
-    "options": {}
+    "description": "Tắt để tạm dừng tạo tài khoản ứng viên mới.",
+    "help": "Tắt để tạm dừng tạo tài khoản ứng viên mới (form đăng ký và đăng nhập mạng xã hội lần đầu). Tài khoản đã có vẫn đăng nhập bình thường.",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên"
+      ],
+      "risky": "off"
+    }
   },
   {
     "key": "employer_allow_registration",
-    "label": "Cho phép đăng ký NTD",
-    "group": "employer",
+    "label": "Cho phép đăng ký nhà tuyển dụng",
+    "group": "accounts",
+    "section": "Đăng ký",
     "value_type": "boolean",
     "value": true,
     "is_public": true,
-    "description": "",
-    "options": {}
+    "description": "Tắt để tạm dừng tạo tài khoản nhà tuyển dụng mới.",
+    "help": "Tắt để tạm dừng tạo tài khoản nhà tuyển dụng mới. Lời mời do admin gửi không bị ảnh hưởng.",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng"
+      ],
+      "risky": "off"
+    }
   },
   {
-    "key": "employer_require_approval",
-    "label": "Duyệt tài khoản NTD trước khi hoạt động",
-    "group": "employer",
-    "value_type": "boolean",
-    "value": true,
-    "is_public": false,
-    "description": "",
-    "options": {}
+    "key": "oauth_providers_candidate",
+    "label": "Đăng nhập mạng xã hội (ứng viên)",
+    "group": "accounts",
+    "section": "Đăng nhập mạng xã hội",
+    "value_type": "multiselect",
+    "value": [
+      "google",
+      "facebook",
+      "linkedin"
+    ],
+    "is_public": true,
+    "description": "Nhà cung cấp hiện ở trang đăng nhập/đăng ký ứng viên.",
+    "help": "Chỉ bật được nhà cung cấp máy chủ đã cấu hình khoá (OAUTH_*). Bỏ chọn để ẩn nút và chặn đăng nhập qua nhà cung cấp đó; tài khoản vẫn đăng nhập bằng mật khẩu hoặc đặt lại mật khẩu.",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên"
+      ],
+      "choices": [
+        {
+          "value": "google",
+          "label": "Google"
+        },
+        {
+          "value": "facebook",
+          "label": "Facebook"
+        },
+        {
+          "value": "linkedin",
+          "label": "LinkedIn"
+        }
+      ]
+    }
   },
   {
-    "key": "employer_require_company_info",
-    "label": "Bắt buộc thông tin công ty",
-    "group": "employer",
-    "value_type": "boolean",
-    "value": true,
-    "is_public": false,
-    "description": "",
-    "options": {}
+    "key": "oauth_providers_employer",
+    "label": "Đăng nhập mạng xã hội (nhà tuyển dụng)",
+    "group": "accounts",
+    "section": "Đăng nhập mạng xã hội",
+    "value_type": "multiselect",
+    "value": [
+      "google"
+    ],
+    "is_public": true,
+    "description": "Nhà cung cấp hiện ở trang đăng nhập/đăng ký nhà tuyển dụng.",
+    "help": "Cổng nhà tuyển dụng hiện chỉ hỗ trợ Google.",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng"
+      ],
+      "choices": [
+        {
+          "value": "google",
+          "label": "Google"
+        }
+      ]
+    }
   },
   {
-    "key": "employer_max_active_jobs",
-    "label": "Số tin đang đăng tối đa",
-    "group": "employer",
+    "key": "admin_invitation_ttl_hours",
+    "label": "Hạn lời mời quản trị viên (giờ)",
+    "group": "accounts",
+    "section": "Quản trị viên",
     "value_type": "number",
-    "value": 10,
+    "value": 72,
     "is_public": false,
-    "description": "",
-    "options": {}
+    "description": "Link lời mời quản trị viên hết hạn sau số giờ này.",
+    "help": "Lời mời là quyền truy cập quản trị: hạn ngắn an toàn hơn. Áp cho lời mời gửi mới và gửi lại.",
+    "options": {
+      "applies_to": [
+        "Trang quản trị"
+      ],
+      "integer": true,
+      "min": 24,
+      "max": 336
+    }
   },
   {
     "key": "employer_free_job_quota",
-    "label": "Lượt đăng tin miễn phí khi chưa đủ xác thực",
+    "label": "Lượt đăng tin khi chưa đạt Cấp 3",
     "group": "employer",
+    "section": "Hạn mức đăng tin",
     "value_type": "number",
     "value": 3,
     "is_public": false,
-    "description": "Quota đăng tin trọn đời cho tài khoản chưa hoàn tất xác thực hồ sơ hoặc chưa đạt Cấp 3. Đóng hoặc hết hạn tin không hoàn lượt.",
-    "options": {}
+    "description": "Số tin được gửi đăng (trọn đời) khi tài khoản chưa đạt Cấp 3.",
+    "help": "Tính theo số tin đã gửi duyệt; đóng hoặc hết hạn tin không hoàn lượt.",
+    "options": {
+      "applies_to": [
+        "Đăng tin"
+      ],
+      "integer": true,
+      "min": 0,
+      "max": 1000
+    }
   },
   {
     "key": "employer_verified_level_three_job_quota",
     "label": "Lượt đăng tin sau xác thực Cấp 3",
     "group": "employer",
+    "section": "Hạn mức đăng tin",
     "value_type": "number",
     "value": 100,
     "is_public": false,
-    "description": "Quota đăng tin trọn đời khi hồ sơ xác thực của chính tài khoản đã hoàn tất và tài khoản đạt Cấp 3. Những tin miễn phí đã dùng được tính trong quota này.",
-    "options": {}
+    "description": "Số tin được gửi đăng (trọn đời) sau khi đạt Cấp 3.",
+    "help": "Các tin miễn phí đã dùng được tính vào hạn mức này.",
+    "options": {
+      "applies_to": [
+        "Đăng tin"
+      ],
+      "integer": true,
+      "min": 0,
+      "max": 100000
+    }
   },
   {
     "key": "employer_badge_min_account_months",
-    "label": "Tuổi tài khoản tối thiểu để tin có dấu tick (tháng)",
+    "label": "Tuổi tài khoản tối thiểu cho dấu tick (tháng)",
     "group": "employer",
+    "section": "Uy tín",
     "value_type": "number",
     "value": 6,
     "is_public": false,
-    "description": "Một trong năm điều kiện gắn dấu tick \"đã xác thực\" lên tin tuyển dụng. Giá trị là số tháng lịch nguyên từ 1 đến 60.",
+    "description": "Tuổi tài khoản tối thiểu để tin được gắn dấu tick xác thực (tháng).",
+    "help": "Là một trong năm điều kiện gắn dấu tick. Giá trị nằm trong 1–60 tháng.",
     "options": {
+      "applies_to": [
+        "Tin tuyển dụng",
+        "Trang công ty"
+      ],
       "integer": true,
       "min": 1,
       "max": 60,
@@ -355,19 +955,10 @@
     }
   },
   {
-    "key": "employer_allow_logo_upload",
-    "label": "Cho phép upload logo công ty",
-    "group": "employer",
-    "value_type": "boolean",
-    "value": true,
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
     "key": "employer_stats",
     "label": "Số liệu trang NTD",
     "group": "employer",
+    "section": "Trang giới thiệu nhà tuyển dụng",
     "value_type": "json",
     "value": [
       {
@@ -402,832 +993,1252 @@
       }
     ],
     "is_public": true,
-    "description": "Khối số liệu trên trang chủ NTD. Mỗi mục gồm value, label_vi, label_en.",
-    "options": {}
+    "description": "Dải số liệu ở trang chủ và trang giới thiệu của cổng nhà tuyển dụng.",
+    "help": "Mỗi dòng gồm giá trị (vd \"60.000+\") và nhãn tiếng Việt/tiếng Anh. Để trống danh sách để ẩn khối.",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng"
+      ],
+      "schema": {
+        "item": "object",
+        "fields": [
+          "value",
+          "label_vi",
+          "label_en"
+        ],
+        "required": [
+          "value",
+          "label_vi"
+        ]
+      }
+    }
   },
   {
     "key": "employer_partners",
     "label": "Khách hàng tiêu biểu (trang NTD)",
     "group": "employer",
+    "section": "Trang giới thiệu nhà tuyển dụng",
     "value_type": "json",
     "value": [],
     "is_public": true,
-    "description": "Danh sách logo khách hàng: [{\"name\": \"...\", \"logo_url\": \"...\"}]. Để trống sẽ ẩn khối này.",
-    "options": {}
+    "description": "Logo đối tác ở trang chủ cổng nhà tuyển dụng.",
+    "help": "Mỗi dòng gồm logo_url và tên (name, có thể thêm name_vi/name_en). Để trống để ẩn khối.",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng"
+      ],
+      "schema": {
+        "item": "object",
+        "fields": [
+          "name",
+          "name_vi",
+          "name_en",
+          "logo_url"
+        ],
+        "required": [
+          "logo_url"
+        ]
+      }
+    }
   },
   {
-    "key": "employer_hotline_north",
-    "label": "Hotline tư vấn miền Bắc",
+    "key": "employer_require_approved_verification",
+    "label": "Bắt buộc duyệt hồ sơ xác thực",
     "group": "employer",
-    "value_type": "text",
-    "value": "",
-    "is_public": true,
-    "description": "Để trống sẽ dùng hotline chung ở nhóm Liên hệ.",
-    "options": {}
-  },
-  {
-    "key": "employer_hotline_south",
-    "label": "Hotline tư vấn miền Nam",
-    "group": "employer",
-    "value_type": "text",
-    "value": "",
-    "is_public": true,
-    "description": "Để trống sẽ dùng hotline chung ở nhóm Liên hệ.",
-    "options": {}
-  },
-  {
-    "key": "job_expiry_days",
-    "label": "Số ngày hết hạn tin",
-    "group": "jobs",
-    "value_type": "number",
-    "value": 30,
-    "is_public": false,
-    "description": "Tin tự chuyển hết hạn sau số ngày này kể từ khi đăng.",
-    "options": {}
-  },
-  {
-    "key": "jobs_per_page",
-    "label": "Số tin mỗi trang",
-    "group": "jobs",
-    "value_type": "number",
-    "value": 20,
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "job_allow_salary_negotiable",
-    "label": "Cho phép lương thoả thuận",
-    "group": "jobs",
-    "value_type": "boolean",
-    "value": true,
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "job_require_salary_range",
-    "label": "Bắt buộc khoảng lương",
-    "group": "jobs",
+    "section": "Xác thực & uy tín",
     "value_type": "boolean",
     "value": false,
     "is_public": false,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "job_allow_urgent_tag",
-    "label": "Cho phép tag tuyển gấp",
-    "group": "jobs",
-    "value_type": "boolean",
-    "value": true,
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "cv_allow_pdf_export",
-    "label": "Cho phép xuất PDF",
-    "group": "cv",
-    "value_type": "boolean",
-    "value": true,
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "cv_default_template",
-    "label": "Mẫu CV mặc định",
-    "group": "cv",
-    "value_type": "select",
-    "value": "modern",
-    "is_public": true,
-    "description": "",
+    "description": "Nhà tuyển dụng phải được duyệt hồ sơ xác thực trước khi đăng tin và dùng các chức năng tuyển dụng.",
+    "help": "Máy chủ production luôn bắt buộc (REQUIRE_APPROVED_EMPLOYER_VERIFICATION). Công tắc này chỉ siết thêm được ở môi trường máy chủ chưa bắt buộc; không tắt được yêu cầu của máy chủ.",
     "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng"
+      ],
+      "risky": "on"
+    }
+  },
+  {
+    "key": "employer_badge_policy_mode",
+    "label": "Chế độ dấu tick xác thực",
+    "group": "employer",
+    "section": "Xác thực & uy tín",
+    "value_type": "select",
+    "value": "",
+    "is_public": false,
+    "description": "Cách gắn dấu tick \"đã xác thực\" lên tin và trang công ty.",
+    "help": "Theo máy chủ: dùng EMPLOYER_BADGE_POLICY_MODE. Shadow: vẫn hiển thị theo luật cũ, chỉ ghi số liệu so sánh. Enforce: áp luật mới (5 điều kiện), có thể gỡ dấu tick của nhiều công ty cùng lúc; nên xem số liệu shadow trước khi chuyển.",
+    "options": {
+      "applies_to": [
+        "Tin tuyển dụng",
+        "Trang công ty"
+      ],
       "choices": [
         {
-          "value": "modern",
-          "label": "Modern"
+          "value": "",
+          "label": "Theo cấu hình máy chủ"
         },
         {
-          "value": "classic",
-          "label": "Classic"
+          "value": "shadow",
+          "label": "Shadow (chỉ đo)"
         },
         {
-          "value": "minimal",
-          "label": "Minimal"
+          "value": "enforce",
+          "label": "Enforce (áp dụng)"
         }
       ]
     }
   },
   {
-    "key": "cv_allow_public_share",
-    "label": "Cho phép chia sẻ CV công khai",
-    "group": "cv",
-    "value_type": "boolean",
-    "value": true,
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "cv_watermark_enabled",
-    "label": "Đóng watermark bản miễn phí",
-    "group": "cv",
-    "value_type": "boolean",
-    "value": false,
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "cv_ai_review_free_limit",
-    "label": "Lượt AI review miễn phí",
-    "group": "cv",
+    "key": "employer_verification_max_rejections",
+    "label": "Số lần từ chối tối đa",
+    "group": "employer",
+    "section": "Xác thực & uy tín",
     "value_type": "number",
     "value": 3,
     "is_public": false,
-    "description": "",
-    "options": {}
+    "description": "Số lần hồ sơ xác thực bị từ chối cuối cùng trước khi khoá nộp lại.",
+    "help": "Sau mức này nhà tuyển dụng phải liên hệ hỗ trợ để mở khoá.",
+    "options": {
+      "applies_to": [
+        "Xác thực nhà tuyển dụng"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 10
+    }
+  },
+  {
+    "key": "employer_trust_report_reasons",
+    "label": "Lý do báo cáo làm mất dấu tick",
+    "group": "employer",
+    "section": "Xác thực & uy tín",
+    "value_type": "multiselect",
+    "value": [
+      "fake_company",
+      "scam",
+      "wrong_info"
+    ],
+    "is_public": false,
+    "description": "Báo cáo vi phạm đã xác nhận với các lý do này sẽ gỡ dấu tick của nhà tuyển dụng.",
+    "help": "Chỉ báo cáo đã được quản trị viên xác nhận mới tính.",
+    "options": {
+      "applies_to": [
+        "Tin tuyển dụng",
+        "Trang công ty"
+      ],
+      "choices": [
+        {
+          "value": "fake_company",
+          "label": "Công ty không có thật"
+        },
+        {
+          "value": "scam",
+          "label": "Lừa đảo, thu phí ứng viên"
+        },
+        {
+          "value": "wrong_info",
+          "label": "Thông tin tin đăng sai sự thật"
+        },
+        {
+          "value": "duplicate",
+          "label": "Tin trùng lặp"
+        },
+        {
+          "value": "expired",
+          "label": "Tin đã tuyển xong nhưng chưa gỡ"
+        },
+        {
+          "value": "other",
+          "label": "Lý do khác"
+        }
+      ]
+    }
+  },
+  {
+    "key": "company_description_min_length",
+    "label": "Độ dài tối thiểu mô tả công ty",
+    "group": "employer",
+    "section": "Xác thực & uy tín",
+    "value_type": "number",
+    "value": 500,
+    "is_public": true,
+    "description": "Số ký tự tối thiểu của phần giới thiệu công ty.",
+    "help": "Áp ở form công ty của nhà tuyển dụng và khi lưu trên máy chủ; mô tả cũ không bị chặn cho tới khi sửa.",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng"
+      ],
+      "integer": true,
+      "min": 0,
+      "max": 5000
+    }
+  },
+  {
+    "key": "moderation_sla_hours",
+    "label": "Hạn xử lý hồ sơ xác thực (giờ)",
+    "group": "employer",
+    "section": "Hạn xử lý của quản trị viên",
+    "value_type": "number",
+    "value": 72,
+    "is_public": false,
+    "description": "Hồ sơ xác thực, yêu cầu cập nhật và tham gia công ty chờ quá hạn này bị đánh dấu quá hạn.",
+    "help": "Dùng cho bảng điều khiển, hàng chờ xác thực và danh sách nhà tuyển dụng.",
+    "options": {
+      "applies_to": [
+        "Trang quản trị"
+      ],
+      "integer": true,
+      "min": 12,
+      "max": 336
+    }
+  },
+  {
+    "key": "report_sla_hours",
+    "label": "Hạn xử lý báo cáo vi phạm (giờ)",
+    "group": "employer",
+    "section": "Hạn xử lý của quản trị viên",
+    "value_type": "number",
+    "value": 48,
+    "is_public": false,
+    "description": "Báo cáo vi phạm, nội dung trang công ty và tin gửi lại chờ quá hạn này bị đánh dấu quá hạn.",
+    "help": "Nên ngắn hơn hạn xử lý xác thực vì nội dung đã công khai.",
+    "options": {
+      "applies_to": [
+        "Trang quản trị"
+      ],
+      "integer": true,
+      "min": 6,
+      "max": 336
+    }
+  },
+  {
+    "key": "job_default_deadline_days",
+    "label": "Hạn nhận hồ sơ gợi ý (ngày)",
+    "group": "jobs",
+    "section": "Hạn tin",
+    "value_type": "number",
+    "value": 30,
+    "is_public": false,
+    "description": "Hạn nhận hồ sơ điền sẵn khi nhà tuyển dụng tạo tin mới.",
+    "help": "Không vượt quá hạn nhận hồ sơ tối đa.",
+    "options": {
+      "applies_to": [
+        "Đăng tin"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 90
+    }
+  },
+  {
+    "key": "job_max_deadline_days",
+    "label": "Hạn nhận hồ sơ tối đa (ngày)",
+    "group": "jobs",
+    "section": "Hạn tin",
+    "value_type": "number",
+    "value": 90,
+    "is_public": false,
+    "description": "Hạn nhận hồ sơ xa nhất nhà tuyển dụng được chọn, tính từ hôm nay.",
+    "help": "Trần cứng 90 ngày nằm trong mã nguồn.",
+    "options": {
+      "applies_to": [
+        "Đăng tin"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 90
+    }
+  },
+  {
+    "key": "job_max_public_lifetime_days",
+    "label": "Thời gian hiển thị tối đa (ngày)",
+    "group": "jobs",
+    "section": "Hạn tin",
+    "value_type": "number",
+    "value": 90,
+    "is_public": false,
+    "description": "Một tin được hiển thị công khai tối đa bao nhiêu ngày.",
+    "help": "Trần cứng 90 ngày nằm trong mã nguồn.",
+    "options": {
+      "applies_to": [
+        "Đăng tin",
+        "Tìm việc"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 90
+    }
+  },
+  {
+    "key": "job_renewal_grace_days",
+    "label": "Thời gian cho gia hạn tin hết hạn (ngày)",
+    "group": "jobs",
+    "section": "Hạn tin",
+    "value_type": "number",
+    "value": 30,
+    "is_public": false,
+    "description": "Tin hết hạn được đăng lại (gia hạn) trong số ngày này.",
+    "help": "Quá hạn thì phải tạo tin mới.",
+    "options": {
+      "applies_to": [
+        "Đăng tin"
+      ],
+      "integer": true,
+      "min": 0,
+      "max": 90
+    }
+  },
+  {
+    "key": "job_view_dedup_hours",
+    "label": "Gộp lượt xem trùng (giờ)",
+    "group": "jobs",
+    "section": "Thống kê",
+    "value_type": "number",
+    "value": 24,
+    "is_public": false,
+    "description": "Một người xem lại tin trong khoảng này chỉ tính một lượt xem.",
+    "help": "Ảnh hưởng số lượt xem nhà tuyển dụng thấy; khoảng ngắn làm số liệu cao hơn thực tế.",
+    "options": {
+      "applies_to": [
+        "Thống kê tin"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 168
+    }
+  },
+  {
+    "key": "application_max_per_job",
+    "label": "Số lần nộp tối đa mỗi tin",
+    "group": "applications",
+    "section": "Nộp hồ sơ",
+    "value_type": "number",
+    "value": 3,
+    "is_public": true,
+    "description": "Một ứng viên được nộp lại vào cùng một tin tối đa bao nhiêu lần.",
+    "help": "Nộp lại thay thế bản nộp trước; giới hạn để nhà tuyển dụng không bị làm phiền.",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 10
+    }
+  },
+  {
+    "key": "application_reapply_cooldown_minutes",
+    "label": "Thời gian chờ giữa hai lần nộp (phút)",
+    "group": "applications",
+    "section": "Nộp hồ sơ",
+    "value_type": "number",
+    "value": 5,
+    "is_public": false,
+    "description": "Khoảng cách tối thiểu giữa hai lần nộp vào cùng một tin.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên"
+      ],
+      "integer": true,
+      "min": 0,
+      "max": 1440
+    }
+  },
+  {
+    "key": "auto_reject_default_days",
+    "label": "Thời hạn tự từ chối gợi ý",
+    "group": "applications",
+    "section": "Tự động từ chối",
+    "value_type": "select",
+    "value": 21,
+    "is_public": false,
+    "description": "Thời hạn tự chuyển hồ sơ chưa xử lý sang \"Không phù hợp\" điền sẵn cho tin mới.",
+    "help": "Nhà tuyển dụng vẫn đổi được ở từng tin.",
+    "options": {
+      "applies_to": [
+        "Đăng tin"
+      ],
+      "choices": [
+        {
+          "value": 14,
+          "label": "2 tuần"
+        },
+        {
+          "value": 21,
+          "label": "3 tuần"
+        },
+        {
+          "value": 28,
+          "label": "4 tuần"
+        },
+        {
+          "value": 42,
+          "label": "6 tuần"
+        },
+        {
+          "value": 56,
+          "label": "8 tuần"
+        }
+      ]
+    }
+  },
+  {
+    "key": "auto_reject_min_notice_days",
+    "label": "Nhắc trước khi tự từ chối (ngày)",
+    "group": "applications",
+    "section": "Tự động từ chối",
+    "value_type": "number",
+    "value": 3,
+    "is_public": false,
+    "description": "Nhà tuyển dụng được nhắc trước khi hồ sơ bị tự từ chối bao nhiêu ngày.",
+    "help": "Cũng là thời gian tối thiểu còn lại sau khi nhà tuyển dụng hoàn tác về \"chưa xử lý\".",
+    "options": {
+      "applies_to": [
+        "Email",
+        "Cổng nhà tuyển dụng"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 14
+    }
+  },
+  {
+    "key": "auto_reject_email_grace_days",
+    "label": "Chờ trước khi báo ứng viên (ngày)",
+    "group": "applications",
+    "section": "Tự động từ chối",
+    "value_type": "number",
+    "value": 3,
+    "is_public": false,
+    "description": "Sau khi tự từ chối, chờ bao nhiêu ngày mới báo ứng viên (nhà tuyển dụng còn hoàn tác).",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Email",
+        "Cổng ứng viên"
+      ],
+      "integer": true,
+      "min": 0,
+      "max": 14
+    }
+  },
+  {
+    "key": "candidate_status_notify_delay_minutes",
+    "label": "Chờ trước khi báo đổi trạng thái (phút)",
+    "group": "applications",
+    "section": "Thông báo cho ứng viên",
+    "value_type": "number",
+    "value": 5,
+    "is_public": false,
+    "description": "Quyết định của nhà tuyển dụng chỉ báo cho ứng viên sau khoảng này.",
+    "help": "Để nhà tuyển dụng kịp hoàn tác bấm nhầm; nhiều thay đổi liên tiếp gộp thành một thông báo.",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên",
+        "Email"
+      ],
+      "integer": true,
+      "min": 0,
+      "max": 60
+    }
+  },
+  {
+    "key": "recruiter_reminder_days",
+    "label": "Mốc nhắc nhà tuyển dụng (ngày)",
+    "group": "applications",
+    "section": "Nhắc nhà tuyển dụng",
+    "value_type": "json",
+    "value": [
+      3,
+      7
+    ],
+    "is_public": false,
+    "description": "Số ngày (tính từ lúc nộp) hệ thống nhắc nhà tuyển dụng về hồ sơ chưa phản hồi.",
+    "help": "Nhập các số ngày tăng dần, ví dụ 3 và 7. Bật/tắt nhắc ở nhóm Email & thông báo.",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng"
+      ],
+      "schema": {
+        "item": "integer",
+        "min": 1,
+        "max": 60
+      },
+      "depends_on": "recruiter_reminders_enabled"
+    }
+  },
+  {
+    "key": "candidate_reminder_after_days",
+    "label": "Ứng viên được nhắc sau (ngày)",
+    "group": "applications",
+    "section": "Ứng viên nhắc nhà tuyển dụng",
+    "value_type": "number",
+    "value": 3,
+    "is_public": true,
+    "description": "Ứng viên được bấm \"Nhắc nhà tuyển dụng\" sau bao nhiêu ngày kể từ lúc nộp.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 30
+    }
+  },
+  {
+    "key": "candidate_reminder_interval_days",
+    "label": "Khoảng cách giữa hai lần nhắc (ngày)",
+    "group": "applications",
+    "section": "Ứng viên nhắc nhà tuyển dụng",
+    "value_type": "number",
+    "value": 3,
+    "is_public": true,
+    "description": "Khoảng cách tối thiểu giữa hai lần ứng viên nhắc.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 30
+    }
+  },
+  {
+    "key": "candidate_reminder_max",
+    "label": "Số lần nhắc tối đa",
+    "group": "applications",
+    "section": "Ứng viên nhắc nhà tuyển dụng",
+    "value_type": "number",
+    "value": 2,
+    "is_public": true,
+    "description": "Mỗi hồ sơ được ứng viên nhắc tối đa bao nhiêu lần. 0 để tắt nút nhắc.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên"
+      ],
+      "integer": true,
+      "min": 0,
+      "max": 10
+    }
+  },
+  {
+    "key": "review_link_max_days",
+    "label": "Hạn link xem hồ sơ cho đồng nghiệp (ngày)",
+    "group": "applications",
+    "section": "Chia sẻ hồ sơ ứng tuyển",
+    "value_type": "number",
+    "value": 30,
+    "is_public": false,
+    "description": "Link nhà tuyển dụng gửi đồng nghiệp xem hồ sơ (đã che thông tin liên hệ) sống tối đa bao nhiêu ngày.",
+    "help": "Link là quyền xem dữ liệu ứng viên: hạn ngắn an toàn hơn.",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 90
+    }
+  },
+  {
+    "key": "candidate_max_cvs",
+    "label": "Số CV tối đa mỗi ứng viên",
+    "group": "cv",
+    "section": "Hồ sơ",
+    "value_type": "number",
+    "value": 6,
+    "is_public": true,
+    "description": "Số CV tối đa mỗi ứng viên được lưu.",
+    "help": "Áp dụng khi tạo, tải lên hoặc nhân bản CV.",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 50
+    }
+  },
+  {
+    "key": "cv_builder_wysiwyg_enabled",
+    "label": "Trình chỉnh sửa CV trực quan (WYSIWYG)",
+    "group": "cv",
+    "section": "Tính năng thử nghiệm",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "Trình chỉnh sửa CV trực quan; tắt để tạm quay về trình soạn dạng form.",
+    "help": "Chỉ dùng để rollback nhanh khi trình chỉnh sửa trực quan gặp lỗi.",
+    "options": {
+      "applies_to": [
+        "Trình tạo CV"
+      ]
+    }
+  },
+  {
+    "key": "cv_share_enabled",
+    "label": "Cho phép chia sẻ CV bằng link",
+    "group": "cv",
+    "section": "Chia sẻ CV",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": false,
+    "description": "Ứng viên tạo được link công khai để gửi CV.",
+    "help": "Khi tắt: không tạo được link mới và mọi link đang có ngừng hoạt động (bật lại thì link chưa hết hạn chạy lại).",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên"
+      ],
+      "risky": "off"
+    }
+  },
+  {
+    "key": "cv_share_default_days",
+    "label": "Hạn link chia sẻ mặc định (ngày)",
+    "group": "cv",
+    "section": "Chia sẻ CV",
+    "value_type": "number",
+    "value": 30,
+    "is_public": false,
+    "description": "Link không chọn hạn sẽ hết hạn sau số ngày này.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 3650,
+      "depends_on": "cv_share_enabled"
+    }
+  },
+  {
+    "key": "cv_share_max_days",
+    "label": "Hạn link chia sẻ tối đa (ngày)",
+    "group": "cv",
+    "section": "Chia sẻ CV",
+    "value_type": "number",
+    "value": 180,
+    "is_public": false,
+    "description": "Không link nào sống quá số ngày này, kể cả link tạo trước khi có giới hạn.",
+    "help": "Link cũ không đặt hạn được tính từ ngày tạo.",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 3650,
+      "depends_on": "cv_share_enabled"
+    }
   },
   {
     "key": "email_notifications_enabled",
     "label": "Bật gửi email",
     "group": "email",
+    "section": "Chung",
     "value_type": "boolean",
     "value": true,
     "is_public": false,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "email_from_name",
-    "label": "Tên người gửi",
-    "group": "email",
-    "value_type": "text",
-    "value": "ProCV",
-    "is_public": false,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "email_smtp_configured",
-    "label": "Mật khẩu SMTP",
-    "group": "email",
-    "value_type": "env",
-    "value": "",
-    "is_public": false,
-    "description": "Cấu hình qua biến môi trường, không lưu trong DB.",
+    "description": "Công tắc chung cho email nghiệp vụ gửi ứng viên và nhà tuyển dụng.",
+    "help": "Khi tắt sẽ ngừng: thông báo trạng thái ứng tuyển, báo hồ sơ mới cho nhà tuyển dụng, email gợi ý việc làm, nhắc và kết quả tự động từ chối, báo cáo tuần chiến dịch. Vẫn gửi: email xác thực, đặt lại mật khẩu, lời mời quản trị, kết quả xác thực nhà tuyển dụng. Email bị bỏ qua lúc tắt sẽ không gửi bù khi bật lại.",
     "options": {
-      "env_var": "EMAIL_HOST_PASSWORD"
+      "applies_to": [
+        "Email"
+      ],
+      "risky": "off"
     }
   },
   {
     "key": "email_notify_new_application",
     "label": "Báo NTD khi có ứng tuyển mới",
     "group": "email",
+    "section": "Loại email",
     "value_type": "boolean",
     "value": true,
     "is_public": false,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "email_notify_job_approved",
-    "label": "Báo NTD khi tin được duyệt",
-    "group": "email",
-    "value_type": "boolean",
-    "value": true,
-    "is_public": false,
-    "description": "",
-    "options": {}
+    "description": "Báo nhà tuyển dụng khi có hồ sơ ứng tuyển mới.",
+    "help": "Mỗi nhà tuyển dụng vẫn có thể tự tắt trong cài đặt thông báo của mình.",
+    "options": {
+      "applies_to": [
+        "Email"
+      ],
+      "depends_on": "email_notifications_enabled"
+    }
   },
   {
     "key": "email_welcome_enabled",
     "label": "Email chào mừng khi đăng ký",
     "group": "email",
+    "section": "Loại email",
     "value_type": "boolean",
     "value": true,
     "is_public": false,
-    "description": "",
-    "options": {}
+    "description": "Gửi email chào mừng sau khi người dùng xác thực email.",
+    "help": "Áp dụng cho tài khoản ứng viên và nhà tuyển dụng, cả đăng ký bằng email lẫn mạng xã hội.",
+    "options": {
+      "applies_to": [
+        "Email"
+      ]
+    }
+  },
+  {
+    "key": "email_from_name",
+    "label": "Tên người gửi",
+    "group": "email",
+    "section": "Nhận diện email",
+    "value_type": "text",
+    "value": "ProCV",
+    "is_public": false,
+    "description": "Tên người gửi hiển thị trong hộp thư, áp cho mọi email hệ thống.",
+    "help": "Địa chỉ gửi lấy từ cấu hình máy chủ (EMAIL_FROM_ADDRESS). Để trống thì dùng tên site. Người nhận bấm trả lời sẽ gửi về Email hỗ trợ.",
+    "options": {
+      "applies_to": [
+        "Email"
+      ],
+      "max_length": 60
+    }
   },
   {
     "key": "email_footer_text",
     "label": "Chân email",
     "group": "email",
+    "section": "Nhận diện email",
     "value_type": "textarea",
     "value": "ProCV - Nền tảng việc làm & AI Career Coach",
     "is_public": false,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "payment_enabled",
-    "label": "Bật thanh toán/gói dịch vụ",
-    "group": "payment",
-    "value_type": "boolean",
-    "value": false,
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "payment_currency",
-    "label": "Tiền tệ",
-    "group": "payment",
-    "value_type": "select",
-    "value": "VND",
-    "is_public": true,
-    "description": "",
+    "description": "Đoạn chân email thông báo gửi ứng viên và nhà tuyển dụng; để trống dùng mô tả footer.",
+    "help": "Email xác thực, đặt lại mật khẩu và chào mừng có phần chân riêng.",
     "options": {
-      "choices": [
-        {
-          "value": "VND",
-          "label": "VND"
-        },
-        {
-          "value": "USD",
-          "label": "USD"
-        }
-      ]
+      "applies_to": [
+        "Email"
+      ],
+      "max_length": 500
     }
   },
   {
-    "key": "payment_vnpay_enabled",
-    "label": "Bật VNPay",
-    "group": "payment",
+    "key": "job_alert_enabled",
+    "label": "Bật email gợi ý việc làm",
+    "group": "email",
+    "section": "Gợi ý việc làm qua email",
     "value_type": "boolean",
-    "value": false,
+    "value": true,
     "is_public": false,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "payment_vnpay_configured",
-    "label": "Khoá VNPay",
-    "group": "payment",
-    "value_type": "env",
-    "value": "",
-    "is_public": false,
-    "description": "Cấu hình qua biến môi trường.",
+    "description": "Email định kỳ gửi ứng viên: thông báo việc làm đã tạo, việc làm phù hợp, việc mới của công ty đang theo dõi.",
+    "help": "Cần cả công tắc email nghiệp vụ đang bật. Ứng viên vẫn tự chọn loại email muốn nhận.",
     "options": {
-      "env_var": "VNPAY_HASH_SECRET"
+      "applies_to": [
+        "Email"
+      ],
+      "depends_on": "email_notifications_enabled"
     }
   },
   {
-    "key": "payment_momo_enabled",
-    "label": "Bật MoMo",
-    "group": "payment",
-    "value_type": "boolean",
-    "value": false,
-    "is_public": false,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "payment_bank_transfer_info",
-    "label": "Thông tin chuyển khoản",
-    "group": "payment",
-    "value_type": "textarea",
-    "value": "",
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "payment_trial_days",
-    "label": "Số ngày dùng thử",
-    "group": "payment",
-    "value_type": "number",
-    "value": 7,
-    "is_public": false,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "security_min_password_length",
-    "label": "Độ dài mật khẩu tối thiểu",
-    "group": "security",
+    "key": "job_alert_delivery_hour",
+    "label": "Giờ gửi email gợi ý việc làm",
+    "group": "email",
+    "section": "Gợi ý việc làm qua email",
     "value_type": "number",
     "value": 8,
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "security_require_strong_password",
-    "label": "Bắt buộc mật khẩu mạnh",
-    "group": "security",
-    "value_type": "boolean",
-    "value": false,
-    "is_public": true,
-    "description": "Yêu cầu chữ hoa, chữ thường, số.",
-    "options": {}
-  },
-  {
-    "key": "security_max_login_attempts",
-    "label": "Số lần đăng nhập sai tối đa",
-    "group": "security",
-    "value_type": "number",
-    "value": 5,
     "is_public": false,
-    "description": "",
-    "options": {}
+    "description": "Giờ trong ngày (giờ Việt Nam) gửi email gợi ý việc làm hằng ngày/hằng tuần.",
+    "help": "Áp cho lịch gửi kế tiếp của từng thông báo việc làm. Nên chọn giờ hành chính để email không bị bỏ qua.",
+    "options": {
+      "applies_to": [
+        "Email"
+      ],
+      "integer": true,
+      "min": 0,
+      "max": 23,
+      "depends_on": "job_alert_enabled"
+    }
   },
   {
-    "key": "security_lockout_minutes",
-    "label": "Số phút khoá tạm",
-    "group": "security",
-    "value_type": "number",
-    "value": 15,
-    "is_public": false,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "security_session_timeout_minutes",
-    "label": "Số phút hết hạn phiên",
-    "group": "security",
-    "value_type": "number",
-    "value": 60,
-    "is_public": false,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "security_recaptcha_enabled",
-    "label": "Bật reCAPTCHA",
-    "group": "security",
-    "value_type": "boolean",
-    "value": false,
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "security_recaptcha_site_key",
-    "label": "reCAPTCHA site key",
-    "group": "security",
-    "value_type": "text",
-    "value": "",
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "upload_max_image_size_mb",
-    "label": "Ảnh tối đa (MB)",
-    "group": "upload",
-    "value_type": "number",
-    "value": 5,
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "upload_avatar_max_size_mb",
-    "label": "Avatar tối đa (MB)",
-    "group": "upload",
-    "value_type": "number",
-    "value": 2,
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "upload_max_cv_size_mb",
-    "label": "File CV tối đa (MB)",
-    "group": "upload",
+    "key": "job_alert_max_jobs",
+    "label": "Số việc làm tối đa mỗi email",
+    "group": "email",
+    "section": "Gợi ý việc làm qua email",
     "value_type": "number",
     "value": 10,
-    "is_public": true,
-    "description": "",
-    "options": {}
+    "is_public": false,
+    "description": "Số tin tối đa trong một email gợi ý việc làm.",
+    "help": "Email quá dài dễ bị lọc thư rác; 5–10 tin là vừa.",
+    "options": {
+      "applies_to": [
+        "Email"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 20,
+      "depends_on": "job_alert_enabled"
+    }
   },
   {
-    "key": "upload_allowed_image_types",
-    "label": "Định dạng ảnh cho phép",
-    "group": "upload",
-    "value_type": "json",
-    "value": [
-      "jpg",
-      "png",
-      "webp",
-      "gif"
-    ],
+    "key": "job_alert_limit_per_candidate",
+    "label": "Số thông báo việc làm mỗi ứng viên",
+    "group": "email",
+    "section": "Gợi ý việc làm qua email",
+    "value_type": "number",
+    "value": 5,
     "is_public": true,
-    "description": "Danh sách đuôi file, dạng JSON array.",
-    "options": {}
+    "description": "Số thông báo việc làm (bộ lọc đã lưu) tối đa mỗi ứng viên được tạo.",
+    "help": "Giảm giá trị không xoá thông báo đã có, chỉ chặn tạo thêm.",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 20
+    }
   },
   {
-    "key": "upload_allowed_cv_types",
-    "label": "Định dạng CV cho phép",
-    "group": "upload",
-    "value_type": "json",
-    "value": [
-      "pdf",
-      "doc",
-      "docx"
-    ],
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "footer_logo_url",
-    "label": "Logo riêng cho footer",
-    "group": "footer",
-    "value_type": "image",
-    "value": "",
-    "is_public": true,
-    "description": "Để trống để tự dùng Logo đầy đủ ở nhóm Cài đặt chung.",
-    "options": {}
-  },
-  {
-    "key": "footer_description",
-    "label": "Mô tả ngắn ở footer",
-    "group": "footer",
-    "value_type": "textarea",
-    "value": "ProCV - Nền tảng việc làm và phát triển sự nghiệp cùng AI dành cho người Việt.",
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "footer_copyright",
-    "label": "Dòng bản quyền",
-    "group": "footer",
-    "value_type": "text",
-    "value": "© {year} {site_name}. All rights reserved.",
-    "is_public": true,
-    "description": "Có thể dùng {year} và {site_name}; hệ thống sẽ tự thay bằng năm hiện tại và tên site.",
-    "options": {}
-  },
-  {
-    "key": "footer_show_link_groups",
-    "label": "Hiện menu điều hướng",
-    "group": "footer",
+    "key": "recruiter_reminders_enabled",
+    "label": "Nhắc nhà tuyển dụng hồ sơ chưa phản hồi",
+    "group": "email",
+    "section": "Nhắc nhà tuyển dụng",
     "value_type": "boolean",
     "value": true,
-    "is_public": true,
-    "description": "Nội dung menu quản lý tại Cụm link, placement \"Menu điều hướng footer\".",
-    "options": {}
-  },
-  {
-    "key": "footer_show_contact",
-    "label": "Hiện thông tin liên hệ",
-    "group": "footer",
-    "value_type": "boolean",
-    "value": true,
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "footer_show_apps",
-    "label": "Hiện liên kết tải ứng dụng",
-    "group": "footer",
-    "value_type": "boolean",
-    "value": true,
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "footer_show_socials",
-    "label": "Hiện mạng xã hội",
-    "group": "footer",
-    "value_type": "boolean",
-    "value": true,
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "footer_company_name",
-    "label": "Tên pháp lý doanh nghiệp",
-    "group": "footer",
-    "value_type": "text",
-    "value": "",
-    "is_public": true,
-    "description": "Để trống nếu chưa có pháp nhân hoặc không muốn hiển thị.",
-    "options": {}
-  },
-  {
-    "key": "footer_business_license",
-    "label": "Thông tin giấy phép / mã số thuế",
-    "group": "footer",
-    "value_type": "textarea",
-    "value": "",
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "footer_app_store_url",
-    "label": "Link tải trên App Store",
-    "group": "footer",
-    "value_type": "url",
-    "value": "",
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "footer_google_play_url",
-    "label": "Link tải trên Google Play",
-    "group": "footer",
-    "value_type": "url",
-    "value": "",
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "footer_qr_code_url",
-    "label": "Mã QR",
-    "group": "footer",
-    "value_type": "image",
-    "value": "",
-    "is_public": true,
-    "description": "QR tải ứng dụng hoặc dẫn về website. Để trống để ẩn.",
-    "options": {}
-  },
-  {
-    "key": "footer_qr_label",
-    "label": "Nhãn dưới mã QR",
-    "group": "footer",
-    "value_type": "text",
-    "value": "",
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "footer_facebook_url",
-    "label": "Facebook",
-    "group": "footer",
-    "value_type": "url",
-    "value": "",
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "footer_linkedin_url",
-    "label": "LinkedIn",
-    "group": "footer",
-    "value_type": "url",
-    "value": "",
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "footer_youtube_url",
-    "label": "YouTube",
-    "group": "footer",
-    "value_type": "url",
-    "value": "",
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "footer_tiktok_url",
-    "label": "TikTok",
-    "group": "footer",
-    "value_type": "url",
-    "value": "",
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "hotline",
-    "label": "Hotline hỗ trợ",
-    "group": "contact",
-    "value_type": "text",
-    "value": "1900 1234",
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "support_email",
-    "label": "Email hỗ trợ",
-    "group": "contact",
-    "value_type": "email",
-    "value": "support@aicareercoach.vn",
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "contact_address",
-    "label": "Địa chỉ",
-    "group": "contact",
-    "value_type": "textarea",
-    "value": "",
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "contact_working_hours",
-    "label": "Giờ làm việc",
-    "group": "contact",
-    "value_type": "text",
-    "value": "8:00 - 17:30, Thứ 2 - Thứ 6",
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "contact_zalo_url",
-    "label": "Zalo",
-    "group": "contact",
-    "value_type": "url",
-    "value": "",
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "contact_messenger_url",
-    "label": "Facebook Messenger",
-    "group": "contact",
-    "value_type": "url",
-    "value": "",
-    "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "contact_map_embed_url",
-    "label": "Google Maps embed",
-    "group": "contact",
-    "value_type": "url",
-    "value": "",
-    "is_public": true,
-    "description": "",
-    "options": {}
+    "is_public": false,
+    "description": "Tự động nhắc nhà tuyển dụng khi hồ sơ ứng tuyển chưa được phản hồi sau 3 và 7 ngày.",
+    "help": "Gửi thông báo trong cổng nhà tuyển dụng. Nút \"Nhắc nhà tuyển dụng\" của ứng viên không phụ thuộc công tắc này.",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng"
+      ]
+    }
   },
   {
     "key": "ai_enabled",
-    "label": "Bật tính năng AI",
+    "label": "Bật AI sinh nội dung",
     "group": "ai",
+    "section": "Công tắc chung",
     "value_type": "boolean",
     "value": true,
     "is_public": true,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "ai_provider",
-    "label": "Nhà cung cấp",
-    "group": "ai",
-    "value_type": "select",
-    "value": "gemini",
-    "is_public": false,
-    "description": "",
+    "description": "Công tắc chung cho AI trích xuất CV, AI viết tin tuyển dụng và AI viết bài chiến dịch.",
+    "help": "Chỉ có hiệu lực khi máy chủ bật AI (AI_RUNTIME_ENABLED) và có credential. Khi tắt: CV tải lên được đọc bằng bộ trích xuất quy tắc, tạo tin và viết bài chiến dịch dùng mẫu có sẵn. Không ảnh hưởng đối sánh CV–JD (mô hình nội bộ).",
     "options": {
-      "choices": [
-        {
-          "value": "gemini",
-          "label": "Google Gemini"
-        },
-        {
-          "value": "openai",
-          "label": "OpenAI"
-        },
-        {
-          "value": "anthropic",
-          "label": "Anthropic Claude"
-        }
-      ]
+      "applies_to": [
+        "Tải CV lên",
+        "Đăng tin",
+        "Chiến dịch"
+      ],
+      "risky": "off"
     }
-  },
-  {
-    "key": "ai_model",
-    "label": "Model",
-    "group": "ai",
-    "value_type": "text",
-    "value": "gemini-2.0-flash",
-    "is_public": false,
-    "description": "",
-    "options": {}
-  },
-  {
-    "key": "ai_api_key_configured",
-    "label": "API key",
-    "group": "ai",
-    "value_type": "env",
-    "value": "",
-    "is_public": false,
-    "description": "Cấu hình qua biến môi trường, không lưu trong DB.",
-    "options": {
-      "env_var": "GEMINI_API_KEY"
-    }
-  },
-  {
-    "key": "ai_cv_review_enabled",
-    "label": "AI chấm/review CV",
-    "group": "ai",
-    "value_type": "boolean",
-    "value": true,
-    "is_public": true,
-    "description": "",
-    "options": {}
   },
   {
     "key": "ai_job_match_enabled",
     "label": "AI xem độ phù hợp CV với tin",
     "group": "ai",
+    "section": "Đối sánh CV–JD (mô hình nội bộ)",
     "value_type": "boolean",
     "value": true,
     "is_public": true,
-    "description": "Nút \"Xem độ phù hợp\" trên trang chi tiết tin; tắt thì API trả 403.",
-    "options": {}
+    "description": "Cho ứng viên phân tích mức độ phù hợp giữa CV và tin tuyển dụng.",
+    "help": "Dùng mô hình đối sánh chạy nội bộ, không gửi dữ liệu ra ngoài.",
+    "options": {
+      "applies_to": [
+        "Trang chi tiết việc làm"
+      ]
+    }
   },
   {
-    "key": "ai_daily_request_limit",
-    "label": "Giới hạn request AI/ngày/người",
+    "key": "ai_job_recommendation_semantic_enabled",
+    "label": "AI gợi ý việc làm theo nội dung CV",
     "group": "ai",
-    "value_type": "number",
-    "value": 50,
+    "section": "Đối sánh CV–JD (mô hình nội bộ)",
+    "value_type": "boolean",
+    "value": true,
     "is_public": false,
-    "description": "",
-    "options": {}
+    "description": "Gợi ý việc làm bằng đối sánh ngữ nghĩa CV–JD.",
+    "help": "Khi tắt, gợi ý việc làm quay về chấm điểm theo quy tắc.",
+    "options": {
+      "applies_to": [
+        "Gợi ý việc làm"
+      ]
+    }
+  },
+  {
+    "key": "ai_data_policy_url",
+    "label": "Chính sách xử lý dữ liệu bằng AI",
+    "group": "ai",
+    "section": "Đối sánh CV–JD (mô hình nội bộ)",
+    "value_type": "url",
+    "value": "",
+    "is_public": true,
+    "description": "Trang chính sách dữ liệu AI liên kết khi ứng viên bật gợi ý AI.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên"
+      ]
+    }
   },
   {
     "key": "ai_job_generation_enabled",
     "label": "Bật AI tạo tin tuyển dụng",
     "group": "ai",
+    "section": "AI viết tin tuyển dụng",
     "value_type": "boolean",
     "value": false,
     "is_public": true,
-    "description": "Soft switch theo use case; hard switch AI_RUNTIME_ENABLED luôn có quyền ưu tiên.",
-    "options": {}
+    "description": "Cho nhà tuyển dụng dùng AI viết nội dung tin.",
+    "help": "Chỉ có hiệu lực khi máy chủ bật AI_RUNTIME_ENABLED và đã có credential.",
+    "options": {
+      "applies_to": [
+        "Đăng tin"
+      ]
+    }
   },
   {
     "key": "ai_job_generation_model",
     "label": "Model tạo tin tuyển dụng",
     "group": "ai",
+    "section": "AI viết tin tuyển dụng",
     "value_type": "select",
     "value": "gemini-3.5-flash-lite",
     "is_public": false,
     "description": "Chỉ chọn model có trong cả allowlist môi trường và allowlist bên dưới.",
+    "help": "Danh sách lấy từ AI_JOB_GENERATION_MODEL_ALLOWLIST của máy chủ.",
     "options": {
-      "choices": [
-        {
-          "value": "gemini-3.5-flash-lite",
-          "label": "Gemini 3.5 Flash Lite"
-        }
-      ]
+      "depends_on": "ai_job_generation_enabled"
     }
   },
   {
     "key": "ai_job_generation_model_allowlist",
     "label": "Model allowlist cho tạo tin",
     "group": "ai",
+    "section": "AI viết tin tuyển dụng",
     "value_type": "json",
     "value": [
       "gemini-3.5-flash-lite"
     ],
     "is_public": false,
     "description": "Chỉ được thu hẹp allowlist cấu hình qua môi trường, không thể mở rộng nó.",
-    "options": {}
+    "help": "",
+    "options": {
+      "depends_on": "ai_job_generation_enabled",
+      "schema": {
+        "item": "string"
+      }
+    }
   },
   {
     "key": "ai_job_generation_daily_limit",
     "label": "Lượt tạo tin/ngày/nhà tuyển dụng",
     "group": "ai",
+    "section": "AI viết tin tuyển dụng",
     "value_type": "number",
     "value": 10,
     "is_public": false,
     "description": "Internal retry không tạo thêm lượt quota.",
-    "options": {}
+    "help": "",
+    "options": {
+      "depends_on": "ai_job_generation_enabled",
+      "integer": true,
+      "min": 0,
+      "max": 1000
+    }
   },
   {
     "key": "ai_job_generation_rollout_percent",
     "label": "Tỷ lệ rollout tạo tin AI (%)",
     "group": "ai",
+    "section": "AI viết tin tuyển dụng",
     "value_type": "number",
     "value": 0,
     "is_public": false,
     "description": "Phân bucket ổn định theo công ty; allowlist luôn được xét trước tỷ lệ.",
-    "options": {}
+    "help": "",
+    "options": {
+      "depends_on": "ai_job_generation_enabled",
+      "integer": true,
+      "min": 0,
+      "max": 100,
+      "step": 5
+    }
   },
   {
     "key": "ai_job_generation_company_allowlist",
     "label": "Công ty allowlist tạo tin AI",
     "group": "ai",
+    "section": "AI viết tin tuyển dụng",
     "value_type": "json",
     "value": [],
     "is_public": false,
     "description": "Danh sách public ID công ty được pilot trước rollout phần trăm.",
-    "options": {}
+    "help": "",
+    "options": {
+      "depends_on": "ai_job_generation_enabled",
+      "schema": {
+        "item": "string"
+      }
+    }
+  },
+  {
+    "key": "ai_campaign_content_enabled",
+    "label": "Cho AI viết bài chiến dịch",
+    "group": "ai",
+    "section": "AI viết bài chiến dịch",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": false,
+    "description": "Nhà tuyển dụng dùng AI soạn bài đăng cho các kênh của chiến dịch.",
+    "help": "Khi tắt, bài đăng được soạn từ mẫu có sẵn.",
+    "options": {
+      "applies_to": [
+        "Chiến dịch"
+      ],
+      "depends_on": "ai_enabled"
+    }
+  },
+  {
+    "key": "ai_campaign_daily_quota",
+    "label": "Lượt AI viết bài mỗi ngày (mỗi nhà tuyển dụng)",
+    "group": "ai",
+    "section": "AI viết bài chiến dịch",
+    "value_type": "number",
+    "value": 20,
+    "is_public": false,
+    "description": "Số lần một nhà tuyển dụng được dùng AI viết bài trong một ngày.",
+    "help": "Hết lượt thì phải chờ sang ngày; dùng để kiểm soát chi phí AI.",
+    "options": {
+      "applies_to": [
+        "Chiến dịch"
+      ],
+      "integer": true,
+      "min": 0,
+      "max": 200,
+      "depends_on": "ai_campaign_content_enabled"
+    }
+  },
+  {
+    "key": "legal_terms_url",
+    "label": "Điều khoản sử dụng (ứng viên)",
+    "group": "legal",
+    "section": "Văn bản pháp lý",
+    "value_type": "url",
+    "value": "",
+    "is_public": true,
+    "description": "Trang điều khoản ứng viên đồng ý khi đăng ký.",
+    "help": "Dán link trang điều khoản của chính nền tảng (vd một bài trong Trung tâm trợ giúp). Để trống thì form đăng ký chỉ hiện chữ, không có link. Trang điều khoản nhà tuyển dụng nằm ở cổng nhà tuyển dụng.",
+    "options": {
+      "applies_to": [
+        "Đăng ký ứng viên"
+      ]
+    }
+  },
+  {
+    "key": "legal_privacy_url",
+    "label": "Chính sách bảo mật (ứng viên)",
+    "group": "legal",
+    "section": "Văn bản pháp lý",
+    "value_type": "url",
+    "value": "",
+    "is_public": true,
+    "description": "Trang chính sách bảo mật ứng viên đồng ý khi đăng ký.",
+    "help": "Để trống thì form đăng ký chỉ hiện chữ, không có link. Chính sách cookie có trang riêng (/chinh-sach-cookie).",
+    "options": {
+      "applies_to": [
+        "Đăng ký ứng viên"
+      ]
+    }
+  },
+  {
+    "key": "employer_dpa_guide_url",
+    "label": "Hướng dẫn thỏa thuận xử lý dữ liệu ứng viên",
+    "group": "legal",
+    "section": "Văn bản pháp lý",
+    "value_type": "url",
+    "value": "",
+    "is_public": true,
+    "description": "Link hướng dẫn ở bước \"Bảo vệ dữ liệu\" khi nhà tuyển dụng xác thực tài khoản.",
+    "help": "Để trống để ẩn link. Bản DPA chính thức (phiên bản, mã băm, đường dẫn) do cấu hình máy chủ quản lý vì gắn với bằng chứng ký; xem ở Vận hành → Thông số hệ thống.",
+    "options": {
+      "applies_to": [
+        "Xác thực nhà tuyển dụng"
+      ]
+    }
+  },
+  {
+    "key": "talent_pool_retention_days",
+    "label": "Lưu ứng viên trong kho (ngày)",
+    "group": "retention",
+    "section": "Thời gian lưu trữ",
+    "value_type": "number",
+    "value": 365,
+    "is_public": false,
+    "description": "Ứng viên được lưu trong kho ứng viên của nhà tuyển dụng tối đa bao nhiêu ngày.",
+    "help": "Chỉ rút ngắn được (tối đa 365 ngày). Áp cho lượt lưu mới; ứng viên luôn tự rút khỏi kho được.",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng"
+      ],
+      "integer": true,
+      "min": 30,
+      "max": 365
+    }
+  },
+  {
+    "key": "candidate_notification_retention_days",
+    "label": "Lưu thông báo của ứng viên (ngày)",
+    "group": "retention",
+    "section": "Thời gian lưu trữ",
+    "value_type": "number",
+    "value": 730,
+    "is_public": false,
+    "description": "Thông báo trong hộp thông báo ứng viên bị xoá sau số ngày này.",
+    "help": "Chỉ rút ngắn được so với mức máy chủ (CANDIDATE_NOTIFICATION_RETENTION_DAYS). Rút ngắn sẽ xoá thông báo cũ ở lần dọn kế tiếp, không hoàn tác.",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên"
+      ],
+      "integer": true,
+      "min": 30,
+      "max": 730
+    }
+  },
+  {
+    "key": "cv_import_source_retention_days",
+    "label": "Lưu tệp CV gốc khi nhập (ngày)",
+    "group": "retention",
+    "section": "Thời gian lưu trữ",
+    "value_type": "number",
+    "value": 30,
+    "is_public": false,
+    "description": "Tệp CV ứng viên tải lên để trích xuất được giữ tối đa bao nhiêu ngày.",
+    "help": "Chỉ rút ngắn được so với mức máy chủ (CV_IMPORT_SOURCE_RETENTION_DAYS).",
+    "options": {
+      "applies_to": [
+        "Tải CV lên"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 30
+    }
+  },
+  {
+    "key": "digest_history_retention_days",
+    "label": "Lưu lịch sử email gợi ý việc làm (ngày)",
+    "group": "retention",
+    "section": "Thời gian lưu trữ",
+    "value_type": "number",
+    "value": 90,
+    "is_public": false,
+    "description": "Lịch sử gửi email gợi ý việc làm bị xoá sau số ngày này.",
+    "help": "Chỉ rút ngắn được (tối đa 90 ngày). Lịch sử dùng để không gửi trùng tin.",
+    "options": {
+      "applies_to": [
+        "Email"
+      ],
+      "integer": true,
+      "min": 7,
+      "max": 90
+    }
+  },
+  {
+    "key": "knowledgebase_public_enabled",
+    "label": "Mở Trung tâm trợ giúp công khai",
+    "group": "features",
+    "section": "Trung tâm trợ giúp",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": false,
+    "description": "Cho phép trang /tro-giup hiển thị công khai.",
+    "help": "Chỉ có hiệu lực khi máy chủ cho phép (KNOWLEDGEBASE_PUBLIC_ENABLED). Tắt ở đây để tạm đóng mà không cần deploy.",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên"
+      ],
+      "risky": "off"
+    }
+  },
+  {
+    "key": "knowledgebase_search_index_enabled",
+    "label": "Cho Google lập chỉ mục Trung tâm trợ giúp",
+    "group": "features",
+    "section": "Trung tâm trợ giúp",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": false,
+    "description": "Đưa bài trợ giúp vào sitemap và cho phép index.",
+    "help": "Chỉ có hiệu lực khi Trung tâm trợ giúp đang mở và máy chủ cho phép (KNOWLEDGEBASE_SEARCH_INDEX_ENABLED).",
+    "options": {
+      "applies_to": [
+        "SEO"
+      ],
+      "depends_on": "knowledgebase_public_enabled"
+    }
+  },
+  {
+    "key": "announcement_surfaces",
+    "label": "Nơi hiển thị thông báo đa cổng",
+    "group": "features",
+    "section": "Thông báo đa cổng",
+    "value_type": "multiselect",
+    "value": [
+      "candidate",
+      "employer_marketing",
+      "employer_workspace",
+      "admin_workspace"
+    ],
+    "is_public": false,
+    "description": "Các cổng được hiện thông báo tạo ở mục Thông báo.",
+    "help": "Chỉ thu hẹp được danh sách máy chủ cho phép (ANNOUNCEMENT_REMOTE_ENABLED_SURFACES). Bỏ chọn một cổng để tạm ẩn mọi thông báo ở cổng đó.",
+    "options": {
+      "choices": [
+        {
+          "value": "candidate",
+          "label": "Cổng ứng viên"
+        },
+        {
+          "value": "employer_marketing",
+          "label": "Trang giới thiệu nhà tuyển dụng"
+        },
+        {
+          "value": "employer_workspace",
+          "label": "Workspace nhà tuyển dụng"
+        },
+        {
+          "value": "admin_workspace",
+          "label": "Trang quản trị"
+        }
+      ]
+    }
+  },
+  {
+    "key": "maintenance_mode",
+    "label": "Chế độ bảo trì",
+    "group": "operations",
+    "section": "Bảo trì",
+    "value_type": "boolean",
+    "value": false,
+    "is_public": true,
+    "description": "Bật để cổng ứng viên và nhà tuyển dụng hiện màn bảo trì.",
+    "help": "Khi bật: API của cổng ứng viên, nhà tuyển dụng và API công khai trả 503; trang SEO trả 503 để Google hiểu là gián đoạn tạm thời. Trang quản trị, đăng nhập và cấu hình công khai vẫn chạy để tắt lại được. Tác vụ nền (email định kỳ...) vẫn chạy.",
+    "options": {
+      "risky": "on"
+    }
+  },
+  {
+    "key": "maintenance_message",
+    "label": "Thông báo bảo trì",
+    "group": "operations",
+    "section": "Bảo trì",
+    "value_type": "textarea",
+    "value": "Hệ thống đang bảo trì, vui lòng quay lại sau.",
+    "is_public": true,
+    "description": "Nội dung hiển thị trên màn bảo trì.",
+    "help": "Nội dung hiển thị trên màn bảo trì.",
+    "options": {
+      "depends_on": "maintenance_mode",
+      "max_length": 500
+    }
   }
 ]

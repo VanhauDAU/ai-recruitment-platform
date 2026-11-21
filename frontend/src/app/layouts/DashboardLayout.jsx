@@ -46,7 +46,7 @@ function AdminBrand({ collapsed = false, action = null }) {
         imageClassName={collapsed ? 'h-8 w-8 object-contain object-left' : 'h-8 max-w-[148px]'}
         textClassName="text-sm"
       />
-      {!collapsed && <span className="admin-sider__product">ProCV - Quản trị</span>}
+      {!collapsed && <span className="admin-sider__product">Quản trị hệ thống</span>}
       {action}
     </div>
   )

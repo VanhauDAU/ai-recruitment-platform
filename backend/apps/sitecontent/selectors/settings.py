@@ -1,20 +1,63 @@
 """Read site-managed configuration through a small public selector."""
 
+import json
+from functools import lru_cache
+from pathlib import Path
+
+from django.conf import settings as django_settings
+from django.core.cache import cache
+from django.db import connection
+
 from common.api.params import parse_bool
 from common.vietnam_time import vietnam_today
 
 from ..models import SiteSetting
 
+SETTINGS_CACHE_KEY = 'sitecontent:settings:all:v1'
+SETTINGS_CACHE_TIMEOUT = 60 * 60
+SEED_SETTINGS_PATH = Path(__file__).resolve().parents[1] / 'seed_data' / 'settings.json'
+
+
+@lru_cache(maxsize=1)
+def setting_registry():
+    """``{key: seed row}`` from ``seed_data/settings.json``: the one source of defaults."""
+    rows = json.loads(SEED_SETTINGS_PATH.read_text(encoding='utf-8'))
+    return {row['key']: row for row in rows}
+
+
+def _stored_values():
+    """Every stored ``{key: value}``.
+
+    Outside a transaction the committed map is cached and receivers drop it
+    after each commit. Inside one, read the database so uncommitted changes of
+    the same transaction are visible and never leak into the shared cache.
+    """
+    if connection.in_atomic_block:
+        return dict(SiteSetting.objects.values_list('key', 'value'))
+    values = cache.get(SETTINGS_CACHE_KEY)
+    if values is None:
+        values = dict(SiteSetting.objects.values_list('key', 'value'))
+        cache.set(SETTINGS_CACHE_KEY, values, SETTINGS_CACHE_TIMEOUT)
+    return values
+
+
+def get_setting(key):
+    """Stored value of ``key``; the seed default when no row exists, else ``None``."""
+    values = _stored_values()
+    if key in values:
+        return values[key]
+    row = setting_registry().get(key)
+    return row['value'] if row else None
+
 
 def get_string_setting(key, default=''):
-    setting = SiteSetting.objects.filter(key=key).only('value').first()
-    value = setting.value if setting else None
-    return value if isinstance(value, str) and value.strip() else default
+    """Trimmed non-blank string value; ``default`` when blank or not a string."""
+    value = get_setting(key)
+    return value.strip() if isinstance(value, str) and value.strip() else default
 
 
 def get_int_setting(key, default=0):
-    setting = SiteSetting.objects.filter(key=key).only('value').first()
-    value = setting.value if setting else default
+    value = get_setting(key)
     try:
         return int(value)
     except (TypeError, ValueError):
@@ -23,7 +66,7 @@ def get_int_setting(key, default=0):
 
 def get_bool_setting(key, default=False):
     """Read an admin switch; malformed values fail closed (False)."""
-    value = SiteSetting.objects.filter(key=key).values_list('value', flat=True).first()
+    value = get_setting(key)
     if value is None:
         return default
     if isinstance(value, int) and not isinstance(value, bool):
@@ -31,9 +74,59 @@ def get_bool_setting(key, default=False):
     return parse_bool(value, False)
 
 
+def retention_days(key, ceiling, minimum=1):
+    """Số ngày lưu trữ admin đặt, chỉ rút ngắn được: kẹp trong [``minimum``, ``ceiling``].
+
+    ``ceiling`` là mức của máy chủ/mã nguồn (giữ lâu nhất được phép).
+    """
+    return min(max(get_int_setting(key, ceiling), minimum), ceiling)
+
+
+def approved_employer_verification_required():
+    """Bắt buộc nhà tuyển dụng được duyệt hồ sơ xác thực trước khi hoạt động.
+
+    Cờ máy chủ ``REQUIRE_APPROVED_EMPLOYER_VERIFICATION`` (production bật) HOẶC công
+    tắc admin: admin chỉ siết thêm được, không tắt yêu cầu máy chủ đặt.
+    """
+    return bool(django_settings.REQUIRE_APPROVED_EMPLOYER_VERIFICATION) or get_bool_setting(
+        'employer_require_approved_verification', False
+    )
+
+
+def moderation_sla_hours():
+    """Hạn xử lý hàng chờ xác thực/cập nhật công ty trước khi bị coi là quá hạn."""
+    return min(max(get_int_setting('moderation_sla_hours', 72), 12), 14 * 24)
+
+
+def report_sla_hours():
+    """Hạn xử lý báo cáo vi phạm và nội dung đã công khai (ảnh hưởng an toàn ứng viên)."""
+    return min(max(get_int_setting('report_sla_hours', 48), 6), 14 * 24)
+
+
 def get_settings_map(keys):
-    """Read several settings in one query; missing keys are absent."""
-    return dict(SiteSetting.objects.filter(key__in=keys).values_list('key', 'value'))
+    """``{key: value}`` for ``keys``; keys with neither a row nor a seed default are absent."""
+    stored = _stored_values()
+    registry = setting_registry()
+    values = {
+        key: stored[key] if key in stored else registry.get(key, {}).get('value') for key in keys
+    }
+    return {key: value for key, value in values.items() if value is not None}
+
+
+def knowledgebase_public_enabled():
+    """Trung tâm trợ giúp công khai: máy chủ cho phép VÀ admin đang mở."""
+    return bool(django_settings.KNOWLEDGEBASE_PUBLIC_ENABLED) and get_bool_setting(
+        'knowledgebase_public_enabled', True
+    )
+
+
+def knowledgebase_search_index_enabled():
+    """Cho index bài trợ giúp: đang mở công khai, máy chủ cho phép VÀ admin cho phép."""
+    return (
+        knowledgebase_public_enabled()
+        and bool(django_settings.KNOWLEDGEBASE_SEARCH_INDEX_ENABLED)
+        and get_bool_setting('knowledgebase_search_index_enabled', True)
+    )
 
 
 _BRANDING_KEYS = (
@@ -80,7 +173,9 @@ def email_branding():
         'site_name': site_name,
         'tagline': _text(values, 'site_tagline'),
         'logo_path': _text(values, 'brand_logo_url'),
-        'primary_color': _text(values, 'brand_primary_color', '#1FA65A'),
+        'primary_color': _text(
+            values, 'brand_primary_color', setting_registry()['brand_primary_color']['value']
+        ),
         'from_name': _text(values, 'email_from_name', site_name),
         'footer_text': _text(values, 'email_footer_text') or _text(values, 'footer_description'),
         'support_email': _text(values, 'support_email'),
@@ -97,9 +192,42 @@ def email_branding():
     }
 
 
+def email_brand_color():
+    """Màu chính của email: ``brand_primary_color`` (đã kiểm tra là #rrggbb khi lưu)."""
+    return email_branding()['primary_color']
+
+
+def email_sender():
+    """``from_email`` and ``reply_to`` for every product email (send_html_email kwargs).
+
+    Display name from ``email_from_name`` (falls back to the site name), address
+    from the server config; replies go to ``support_email``.
+    """
+    brand = email_branding()
+    address = django_settings.EMAIL_FROM_ADDRESS
+    return {
+        'from_email': f'{brand["from_name"]} <{address}>' if brand['from_name'] else address,
+        'reply_to': brand['support_email'] or None,
+    }
+
+
+def business_emails_enabled():
+    """Công tắc chung ``email_notifications_enabled`` cho email nghiệp vụ.
+
+    Áp cho thông báo ứng viên, hồ sơ mới, gợi ý việc làm, nhắc/kết quả tự động từ
+    chối và báo cáo tuần chiến dịch. Không áp cho email bảo mật/tài khoản (xác
+    thực, đặt lại mật khẩu, lời mời, kết quả xác thực nhà tuyển dụng).
+    """
+    return get_bool_setting('email_notifications_enabled', True)
+
+
 def site_settings_by_group():
-    """Every setting grouped by ``SiteSetting.Group``, in the admin display order."""
+    """Non-empty ``SiteSetting.Group`` buckets in admin display order, with their area."""
     by_group = {}
     for setting in SiteSetting.objects.order_by('group', 'order', 'key'):
         by_group.setdefault(setting.group, []).append(setting)
-    return [(key, label, by_group.get(key, [])) for key, label in SiteSetting.Group.choices]
+    return [
+        (group, SiteSetting.GROUP_AREAS[group], by_group[group])
+        for group in SiteSetting.Group
+        if group in by_group
+    ]

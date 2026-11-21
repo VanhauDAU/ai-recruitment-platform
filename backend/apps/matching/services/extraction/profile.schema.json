@@ -1,0 +1,466 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "profile_json (extract-v3)",
+  "description": "Hồ sơ đã chuẩn hóa của một CV hoặc một tin tuyển dụng: đầu vào của bước mã hóa và chấm điểm. Lưu ở MatchDocument.profile_json.",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/cv"
+    },
+    {
+      "$ref": "#/$defs/job"
+    }
+  ],
+  "$defs": {
+    "skill": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "skill_id",
+        "name",
+        "group",
+        "counted",
+        "source",
+        "evidence"
+      ],
+      "properties": {
+        "skill_id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "group": {
+          "type": "string"
+        },
+        "counted": {
+          "type": "boolean",
+          "description": "False với nhóm \"Phẩm chất cá nhân\" và \"Tên vị trí\": không tính vào điểm."
+        },
+        "source": {
+          "enum": [
+            "declared",
+            "listed",
+            "text",
+            "job"
+          ],
+          "description": "declared: khai ở mục kỹ năng; listed: dòng liệt kê ngắn; text: chỉ thấy trong câu nội dung; job: kỹ năng của tin."
+        },
+        "evidence": {
+          "type": "string",
+          "description": "Câu nguyên văn của CV nhắc tới kỹ năng; rỗng nếu chỉ được liệt kê."
+        },
+        "importance": {
+          "enum": [
+            "required",
+            "preferred"
+          ]
+        },
+        "weight": {
+          "type": "number"
+        }
+      }
+    },
+    "chunks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "index",
+          "section",
+          "text"
+        ],
+        "properties": {
+          "index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "section": {
+            "type": "string",
+            "minLength": 1
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 600
+          }
+        }
+      }
+    },
+    "quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "char_count",
+        "chunk_count",
+        "ocr_used",
+        "missing"
+      ],
+      "properties": {
+        "char_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "chunk_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "ocr_used": {
+          "type": "boolean"
+        },
+        "missing": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "skills",
+              "experience",
+              "education",
+              "languages",
+              "position_level"
+            ]
+          },
+          "description": "Tiêu chí mà tài liệu không ghi thông tin: bước chấm đánh dấu insufficient_data, không đoán."
+        }
+      }
+    },
+    "cv": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "source",
+        "language",
+        "title",
+        "skills",
+        "experience",
+        "education",
+        "position_level",
+        "languages",
+        "locations",
+        "chunks",
+        "quality"
+      ],
+      "properties": {
+        "kind": {
+          "const": "cv"
+        },
+        "source": {
+          "enum": [
+            "builder",
+            "upload"
+          ]
+        },
+        "language": {
+          "enum": [
+            "vi",
+            "en",
+            ""
+          ],
+          "description": "Ngôn ngữ chính của tài liệu."
+        },
+        "title": {
+          "type": "string"
+        },
+        "skills": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/skill"
+          }
+        },
+        "education": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "level"
+          ],
+          "properties": {
+            "level": {
+              "enum": [
+                "",
+                "none",
+                "middle_school",
+                "high_school",
+                "intermediate",
+                "college",
+                "university",
+                "postgraduate"
+              ]
+            }
+          }
+        },
+        "position_level": {
+          "enum": [
+            "",
+            "employee",
+            "team_lead",
+            "manager",
+            "supervisor",
+            "branch_manager",
+            "vice_director",
+            "director",
+            "intern"
+          ]
+        },
+        "chunks": {
+          "$ref": "#/$defs/chunks"
+        },
+        "quality": {
+          "$ref": "#/$defs/quality"
+        },
+        "experience": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "months",
+            "basis",
+            "items",
+            "band"
+          ],
+          "properties": {
+            "months": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "description": "null: không xác định được, không phải 0."
+            },
+            "basis": {
+              "enum": [
+                "dates",
+                "no_experience",
+                "section",
+                "whole_text",
+                "no_experience_section",
+                ""
+              ],
+              "description": "Căn cứ tính số tháng; whole_text là ước lượng từ ngoài mục kinh nghiệm."
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              }
+            },
+            "band": {
+              "enum": [
+                "",
+                "none",
+                "under_1",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "over_5"
+              ]
+            }
+          }
+        },
+        "languages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "code",
+              "level",
+              "evidence"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "minLength": 2
+              },
+              "level": {
+                "enum": [
+                  "",
+                  "basic",
+                  "conversational",
+                  "working",
+                  "professional",
+                  "native"
+                ]
+              },
+              "evidence": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "locations": {
+          "type": "array",
+          "maxItems": 0,
+          "description": "CV không mang địa điểm; địa điểm lấy từ nơi làm việc mong muốn của ứng viên."
+        }
+      }
+    },
+    "job": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "language",
+        "title",
+        "skills",
+        "experience",
+        "education",
+        "position_level",
+        "languages",
+        "locations",
+        "work_types",
+        "chunks",
+        "quality"
+      ],
+      "properties": {
+        "kind": {
+          "const": "job"
+        },
+        "language": {
+          "enum": [
+            "vi",
+            "en",
+            ""
+          ],
+          "description": "Ngôn ngữ chính của tài liệu."
+        },
+        "title": {
+          "type": "string"
+        },
+        "skills": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/skill"
+          }
+        },
+        "education": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "level"
+          ],
+          "properties": {
+            "level": {
+              "enum": [
+                "",
+                "none",
+                "middle_school",
+                "high_school",
+                "intermediate",
+                "college",
+                "university",
+                "postgraduate"
+              ]
+            }
+          }
+        },
+        "position_level": {
+          "enum": [
+            "",
+            "employee",
+            "team_lead",
+            "manager",
+            "supervisor",
+            "branch_manager",
+            "vice_director",
+            "director",
+            "intern"
+          ]
+        },
+        "chunks": {
+          "$ref": "#/$defs/chunks"
+        },
+        "quality": {
+          "$ref": "#/$defs/quality"
+        },
+        "experience": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "months",
+            "band"
+          ],
+          "properties": {
+            "months": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            },
+            "band": {
+              "enum": [
+                "",
+                "none",
+                "under_1",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "over_5"
+              ]
+            }
+          }
+        },
+        "languages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "code",
+              "level",
+              "required"
+            ],
+            "properties": {
+              "code": {
+                "type": "string",
+                "minLength": 2
+              },
+              "level": {
+                "enum": [
+                  "",
+                  "basic",
+                  "conversational",
+                  "working",
+                  "professional",
+                  "native"
+                ]
+              },
+              "required": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "locations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "province_id",
+              "name"
+            ],
+            "properties": {
+              "province_id": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "work_types": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

@@ -32,6 +32,9 @@ def apply_skill_merge(merge):
     - `aliases`: {tên chuẩn: [cách viết khác]}: cách viết khác được nối vào `Skill.aliases`
       của kỹ năng chuẩn, để tin và CV ghi theo cách nào cũng về một kỹ năng.
     - `groups`: {tên nhóm: [tên kỹ năng]}: gán kỹ năng vào nhóm.
+    - `split`: {tên kỹ năng: [alias]}: alias quá rộng được gỡ khỏi kỹ năng và thành
+      một kỹ năng riêng cùng nhóm ("PyTorch" không còn là "Deep Learning": tin cần
+      PyTorch không được coi là khớp với CV chỉ có TensorFlow).
 
     Kỹ năng hoặc nhóm chưa có thì được tạo. Cách viết khác đã tồn tại thành một kỹ
     năng riêng thì không tự gộp (bản ghi đó có thể đang được tin hoặc CV dùng) mà
@@ -42,8 +45,27 @@ def apply_skill_merge(merge):
         'aliases_added': 0,
         'groups_created': 0,
         'skills_grouped': 0,
+        'aliases_split': 0,
         'conflicts': [],
     }
+    for canonical, names in merge.get('split', {}).items():
+        skill, created = create_skill(canonical)
+        report['skills_created'] += created
+        kept = [
+            alias
+            for alias in skill.aliases or []
+            if not any(_same_name(alias, name) for name in names)
+        ]
+        if kept != list(skill.aliases or []):
+            report['aliases_split'] += len(skill.aliases) - len(kept)
+            skill.aliases = kept
+            skill.save(update_fields=['aliases'])
+        for name in names:
+            separate, created = create_skill(name)
+            report['skills_created'] += created
+            if created and skill.group_id:
+                separate.group = skill.group
+                separate.save(update_fields=['group'])
     for canonical, variants in merge.get('aliases', {}).items():
         skill, created = create_skill(canonical)
         report['skills_created'] += created

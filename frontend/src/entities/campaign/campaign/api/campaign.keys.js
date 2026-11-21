@@ -13,7 +13,8 @@ export const campaignKeys = {
   channelPosts: (publicId, channelId) => ['campaigns', 'channels', publicId, channelId, 'posts'],
   postImageChoices: (publicId, channelId) => ['campaigns', 'channels', publicId, channelId, 'post-images'],
   socialConnections: ['campaigns', 'social-connections'],
-  pendingPages: (nonce) => ['campaigns', 'social-pending', nonce],
+  socialNetworks: ['campaigns', 'social-networks'],
+  pendingAccounts: (network, nonce) => ['campaigns', 'social-pending', network, nonce],
   pauseImpact: (publicId) => ['campaigns', 'pause-impact', publicId],
   activities: (publicId, params = {}) => ['campaigns', 'activities', publicId, params],
   jobPerformance: (publicId, days, jobPublicId = '') => [

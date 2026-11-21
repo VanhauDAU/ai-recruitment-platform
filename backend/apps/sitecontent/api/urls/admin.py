@@ -12,11 +12,21 @@ from ..views import (
     AdminAnnouncementResetDismissalsView,
     AdminAnnouncementResumeView,
     AdminAnnouncementRevisionCreateView,
+    AdminBannerDetailView,
+    AdminBannerImageUploadView,
+    AdminBannerListCreateView,
+    AdminBannerReorderView,
     AdminSettingUploadView,
+    AdminSiteSettingHistoryView,
     AdminSiteSettingView,
+    AdminSystemParametersView,
 )
 
 urlpatterns = [
+    path('banners/', AdminBannerListCreateView.as_view(), name='site-admin-banners'),
+    path('banners/reorder/', AdminBannerReorderView.as_view(), name='site-admin-banner-reorder'),
+    path('banners/images/', AdminBannerImageUploadView.as_view(), name='site-admin-banner-images'),
+    path('banners/<int:pk>/', AdminBannerDetailView.as_view(), name='site-admin-banner-detail'),
     path(
         'announcements/',
         AdminAnnouncementListCreateView.as_view(),
@@ -73,6 +83,16 @@ urlpatterns = [
         name='site-admin-announcement-metrics',
     ),
     path('settings/', AdminSiteSettingView.as_view(), name='site-admin-settings'),
+    path(
+        'settings/<slug:key>/history/',
+        AdminSiteSettingHistoryView.as_view(),
+        name='site-admin-setting-history',
+    ),
+    path(
+        'system-parameters/',
+        AdminSystemParametersView.as_view(),
+        name='site-admin-system-parameters',
+    ),
     path(
         'settings/upload/',
         AdminSettingUploadView.as_view(),

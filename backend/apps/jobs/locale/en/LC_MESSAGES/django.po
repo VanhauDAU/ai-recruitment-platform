@@ -619,6 +619,9 @@ msgstr "In your preferred location"
 msgid "Kinh nghiệm phù hợp"
 msgstr "Suitable experience"
 
+msgid "Mức lương phù hợp"
+msgstr "Suitable salary"
+
 msgid "Phù hợp với tìm kiếm của bạn"
 msgstr "Matches your search"
 
@@ -632,9 +635,6 @@ msgstr[1] "Matches %(count)s skills"
 
 msgid "Phù hợp với lựa chọn sẵn sàng chuyển địa điểm"
 msgstr "Fits your willingness to relocate"
-
-msgid "Mức lương phù hợp"
-msgstr "Suitable salary"
 
 msgid "Công ty không có thật"
 msgstr "The company does not exist"
@@ -668,6 +668,18 @@ msgstr "URGENT"
 
 msgid "Phản hồi nhanh"
 msgstr "Fast response"
+
+msgid "Đúng vị trí bạn mong muốn"
+msgstr "Matches the position you want"
+
+msgid "Đúng nơi làm việc bạn mong muốn"
+msgstr "In your preferred location"
+
+msgid "Mức lương hợp mong muốn của bạn"
+msgstr "Salary fits your expectation"
+
+msgid "Số năm kinh nghiệm vừa với tin"
+msgstr "Your years of experience fit this job"
 
 msgid "Cùng vị trí chuyên môn"
 msgstr "Same specialization"
@@ -983,8 +995,8 @@ msgstr "The application deadline cannot be shortened when extending."
 msgid "Chỉ có thể gia hạn tin hết hạn trong vòng %(days)s ngày."
 msgstr "Expired postings can only be extended within %(days)s days."
 
-msgid "Bạn đã dùng hết %(limit)s lượt đăng tin miễn phí. Hoàn tất xác thực hồ sơ và đạt Cấp 3 để có quota 100 tin."
-msgstr "You have used all %(limit)s free job postings. Complete your verification and reach Level 3 to get a quota of 100 postings."
+msgid "Bạn đã dùng hết %(limit)s lượt đăng tin miễn phí. Hoàn tất xác thực hồ sơ và đạt Cấp 3 để có quota %(verified_limit)s tin."
+msgstr "You have used all %(limit)s free job posts. Complete account verification and reach Level 3 to get a quota of %(verified_limit)s jobs."
 
 msgid "Bạn đã dùng hết %(limit)s lượt đăng tin của tài khoản Cấp 3."
 msgstr "You have used all %(limit)s job postings of your Level 3 account."

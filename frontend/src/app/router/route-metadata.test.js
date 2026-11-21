@@ -77,6 +77,17 @@ describe('route metadata', () => {
       .toEqual(expect.objectContaining({ title: 'Trang không tồn tại', robots: 'noindex, nofollow' }))
   })
 
+  it('uses the configured homepage description and falls back to the logo for sharing', () => {
+    const metadata = resolveRouteMetadata({
+      pathname: '/',
+      portal: 'main',
+      settings: { ...settings, brand_logo_url: 'https://cdn.test/logo.webp' },
+    })
+
+    expect(metadata.description).toBe('Mô tả mặc định')
+    expect(metadata.imageUrl).toBe('https://cdn.test/logo.webp')
+  })
+
   it('honors the global indexing kill switch', () => {
     expect(resolveRouteMetadata({
       pathname: '/viec-lam',

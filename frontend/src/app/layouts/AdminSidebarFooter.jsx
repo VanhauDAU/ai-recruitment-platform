@@ -5,7 +5,7 @@ import { adminTierLabel } from '@/entities/account/admin-account'
 import { adminPath } from '@/shared/config/portals'
 import ConfirmAction from '@/shared/ui/confirm-action/ConfirmAction'
 
-/** Identity and sign-out pinned to the bottom of the admin sidebar. */
+/** Identity, account settings and sign-out on one row at the bottom of the admin sidebar. */
 export default function AdminSidebarFooter({ user, logout, collapsed = false, onNavigate }) {
   const name = user?.full_name || user?.email || 'Quản trị viên'
   const logoutButton = (
@@ -23,9 +23,7 @@ export default function AdminSidebarFooter({ user, logout, collapsed = false, on
         aria-label="Đăng xuất"
         title="Đăng xuất"
         type="text"
-      >
-        {collapsed ? null : 'Đăng xuất'}
-      </Button>
+      />
     </ConfirmAction>
   )
 
@@ -34,7 +32,7 @@ export default function AdminSidebarFooter({ user, logout, collapsed = false, on
       <div className="admin-sider-footer admin-sider-footer--collapsed">
         <Tooltip placement="right" title={`${name}, ${adminTierLabel(user?.admin_access)}`}>
           <Link to={adminPath('/account')} aria-label="Tài khoản của tôi" className="admin-sider-footer__avatar-link">
-            <Avatar size={36} src={user?.avatar_url || undefined} icon={<UserOutlined />} className="admin-user__avatar" />
+            <Avatar size={34} src={user?.avatar_url || undefined} icon={<UserOutlined />} className="admin-user__avatar" />
           </Link>
         </Tooltip>
         {logoutButton}
@@ -45,7 +43,7 @@ export default function AdminSidebarFooter({ user, logout, collapsed = false, on
   return (
     <div className="admin-sider-footer">
       <div className="admin-sider-footer__identity">
-        <Avatar size={38} src={user?.avatar_url || undefined} icon={<UserOutlined />} className="admin-user__avatar" />
+        <Avatar size={34} src={user?.avatar_url || undefined} icon={<UserOutlined />} className="admin-user__avatar" />
         <div className="admin-sider-footer__meta">
           <strong title={name}>{name}</strong>
           <span>{adminTierLabel(user?.admin_access)}</span>
@@ -60,8 +58,8 @@ export default function AdminSidebarFooter({ user, logout, collapsed = false, on
             <SettingOutlined />
           </Link>
         </Tooltip>
+        {logoutButton}
       </div>
-      {logoutButton}
     </div>
   )
 }

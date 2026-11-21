@@ -6,7 +6,6 @@ live here so the employer form context and every workflow read the same limits.
 
 from datetime import timedelta
 
-from django.conf import settings
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
@@ -17,8 +16,12 @@ from common.vietnam_time import vietnam_today
 
 from ...models import Job, JobCategoryAssignment
 from ..lifecycle import visibility_days_error
+from ..policy import (
+    job_default_deadline_days,
+    job_max_deadline_days,
+    job_max_public_lifetime_days,
+)
 
-EXPIRED_JOB_RENEWAL_GRACE_DAYS = 30
 # The commitment a recruiter accepts each time a job goes public. Change the
 # version together with the text so stored acknowledgements stay attributable.
 RESPONSIBILITY_STATEMENT_VERSION = '2026-11'
@@ -30,12 +33,9 @@ RESPONSIBILITY_STATEMENT_TEXT = gettext_lazy(
 
 def job_deadline_policy():
     """Return the validated deadline contract shared with employer clients."""
-    maximum_days = max(settings.JOB_POSTING_MAX_DEADLINE_DAYS, 1)
-    default_days = min(max(settings.JOB_POSTING_DEFAULT_DEADLINE_DAYS, 1), maximum_days)
-    maximum_public_lifetime_days = max(
-        settings.JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS,
-        maximum_days,
-    )
+    maximum_days = job_max_deadline_days()
+    default_days = job_default_deadline_days()
+    maximum_public_lifetime_days = max(job_max_public_lifetime_days(), maximum_days)
     return {
         'default_deadline_days': default_days,
         'max_deadline_days': maximum_days,

@@ -1,0 +1,50 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: procv\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Hệ thống đang bảo trì, vui lòng quay lại sau."
+msgstr "We are under maintenance. Please come back later."
+
+msgid "Chọn công ty cho slide nhà tuyển dụng."
+msgstr "Choose a company for the employer slide."
+
+msgid "Nhập tiêu đề banner."
+msgstr "Enter a banner title."
+
+msgid "Thời điểm kết thúc phải sau thời điểm bắt đầu."
+msgstr "The end time must be after the start time."
+
+msgid "Slide ảnh cần ảnh banner."
+msgstr "An image slide needs a banner image."
+
+msgid "Slide ảnh cần link hoặc công ty để mở khi bấm."
+msgstr "An image slide needs a link or a company to open on click."
+
+msgid "Chọn file ảnh."
+msgstr "Choose an image file."
+
+msgid "Chỉ nhận ảnh JPEG, PNG hoặc WebP."
+msgstr "Only JPEG, PNG or WebP images are accepted."
+
+msgid "Ảnh banner trang chủ cần tỉ lệ khoảng 8:3, ví dụ 1600×600 px."
+msgstr "Homepage banner images need an aspect ratio of about 8:3, for example 1600×600 px."
+
+msgid "Ảnh tối đa %(size)s KB."
+msgstr "Images can be at most %(size)s KB."
+
+msgid "Không đọc được file ảnh."
+msgstr "The image file could not be read."
+
+msgid "Ảnh quá nhỏ, tối thiểu %(width)s×%(height)s px."
+msgstr "The image is too small; the minimum is %(width)s×%(height)s px."
+
+msgid "Ảnh phải được tải lên từ trang quản trị."
+msgstr "Images must be uploaded from the admin page."
+
+msgid "Danh sách phải gồm đủ mọi banner của vị trí, không trùng."
+msgstr "The list must contain every banner of this placement exactly once."

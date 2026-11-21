@@ -1,5 +1,6 @@
 import { oauthStartUrl } from '../api/auth.api'
 import { getReturnUrl } from '../model/return-url'
+import { useSiteSettings } from '@/entities/system/site-settings'
 import { m } from '@/shared/config/i18n'
 
 function GoogleIcon() {
@@ -64,7 +65,12 @@ export default function SocialLoginButtons({
   next,
   onBeforeRedirect,
 }) {
-  const keys = providers || (portal === 'employer' ? ['google'] : ['google', 'facebook', 'linkedin'])
+  const { settings } = useSiteSettings()
+  // Admin có thể tắt bớt nhà cung cấp theo cổng (oauth_providers_*); backend chặn tương tự.
+  const enabled = settings[portal === 'employer' ? 'oauth_providers_employer' : 'oauth_providers_candidate']
+  const supported = portal === 'employer' ? ['google'] : ['google', 'facebook', 'linkedin']
+  const keys = providers || (Array.isArray(enabled) ? supported.filter((key) => enabled.includes(key)) : supported)
+  if (!keys.length) return null
   const appearanceClasses = APPEARANCE_CLASSES[appearance] || APPEARANCE_CLASSES.default
 
   return (

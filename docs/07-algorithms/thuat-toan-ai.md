@@ -269,19 +269,21 @@ lộ trình ở [tiến độ dự án](../TIEN-DO-DU-AN.md#đối-sánh-ngữ-n
   (`ml/requirements.txt`, `ml/scripts/smoke_mps.py`); mô hình nền là
   `intfloat/multilingual-e5-base`.
 
-Trích xuất hồ sơ (`apps/matching/services/extraction/`, phiên bản `extract-v2`):
+Trích xuất hồ sơ (`apps/matching/services/extraction/`, phiên bản `extract-v3`):
 CV builder, CV tải lên và tin tuyển dụng đều thành `profile_json` gồm kỹ năng,
 kinh nghiệm, học vấn, cấp bậc, ngoại ngữ, địa điểm và các chunk (đoạn văn để
-tính vector).
+tính vector). Cấu trúc của `profile_json` được mô tả bằng JSON Schema ở
+`services/extraction/profile.schema.json`; test kiểm mọi hồ sơ trích ra đều hợp lệ.
 
 | Tệp | Việc |
 | --- | --- |
-| `text.py` | NFC, tách câu, nối dòng PDF bị ngắt, nhận diện ngôn ngữ (tỷ lệ chữ có dấu) |
-| `facts.py` | Khoảng ngày (03/2021, 2021-03, Sep 2021, "Hiện tại"), bậc học (từ chỉ bằng cấp trước tên trường), cấp bậc (chỉ từ khóa chức danh rõ nghĩa), mức ngoại ngữ (từ chỉ mức, IELTS/TOEIC/JLPT…) |
+| `cvs/services/pdf_layout.py` | Thứ tự đọc của trang PDF dựng lại từ tọa độ ký tự: khe dọc giữa hai cột, dòng chạy ngang chia dải, cột ngày ghép vào dòng cùng hàng |
+| `text.py` | NFC, tách câu, nối dòng PDF bị ngắt (không nối dòng bắt đầu bằng ngày), nhận diện ngôn ngữ (tỷ lệ chữ cái riêng của tiếng Việt) |
+| `facts.py` | Khoảng ngày (03/2021, 2021-03, Sep 2021, T9/2021, "tháng 9 năm 2021", "Hiện tại", khoảng in thành hai dòng, khoảng chỉ ghi năm tính từ giữa năm), bậc học (từ chỉ bằng cấp trước tên trường, so theo ranh giới từ), cấp bậc (chỉ từ khóa chức danh rõ nghĩa), từ chỉ nghề để nhận chức danh, mức ngoại ngữ (từ chỉ mức, IELTS/TOEIC/JLPT…) |
 | `cv_builder.py` | Đọc trường có cấu trúc của `content_json`; số tháng và bậc học dùng chung hàm với trường matching của CV |
-| `cv_upload.py` | Chia mục theo dòng tiêu đề, nhận ra bố cục PDF bị đảo, tính số tháng theo bốn trường hợp (`experience.basis`) |
+| `cv_upload.py` | Chia mục theo dòng tiêu đề, nhận ra bố cục PDF bị đảo, tính số tháng theo bốn trường hợp (`experience.basis`), chức danh (`title`) từ đầu trang hoặc các việc, cấp bậc theo việc gần nhất |
 | `job.py` | Trường có cấu trúc của tin; chunk là tên vị trí (tiêu đề đã bỏ lương, địa điểm, giới tính), từng câu yêu cầu, mô tả, tên kỹ năng |
-| `services/skills.py` | Khớp tên và alias của danh mục kỹ năng, nguồn `declared`/`listed`/`text`/`job` |
+| `services/skills.py` | Khớp tên và alias của danh mục kỹ năng, nguồn `declared`/`listed`/`text`/`job`; nhóm "Phẩm chất cá nhân" và "Tên vị trí" không được đếm |
 
 Quy tắc chống bịa dữ liệu:
 
@@ -293,9 +295,52 @@ Quy tắc chống bịa dữ liệu:
 - Chunk bỏ email và số điện thoại; câu yêu cầu của tin về giới tính, tuổi, ngoại
   hình, hôn nhân không được đối sánh.
 
-Đọc chữ PDF bằng `pypdfium2`; số liệu đo thư viện, độ chính xác trích xuất và
-baseline ở `ml/reports/`. Lệnh `matching_export_dataset` (chỉ đọc) xuất hồ sơ
+Đọc chữ PDF bằng `pypdfium2` rồi sắp lại theo vị trí; số liệu đo thư viện, độ chính
+xác trích xuất (PDF bố cục lạ: kỹ năng 98,9%, kinh nghiệm 100%, học vấn 97%, ngoại
+ngữ 94% trên những gì có in trong tệp) và baseline ở `ml/reports/`. Lệnh `matching_export_dataset` (chỉ đọc) xuất hồ sơ
 cho các script ở `ml/`.
+
+Gợi ý việc làm theo ngữ nghĩa (`semantic-v1`, `apps/matching/selectors/recommendations.py`,
+kế hoạch bản 3 GĐ 4): vector toàn văn của CV mặc định được so với vector toàn văn của mọi tin
+đang công khai mà ứng viên chưa ứng tuyển hay ẩn, bằng khoảng cách cosine của pgvector (tìm
+chính xác, không dùng chỉ mục xấp xỉ). 100 tin gần nhất, cộng 50 tin gần CV nhất trong các vị
+trí ứng viên khai là mong muốn, được xếp lại:
+
+    điểm = 0,75 · mức liên quan + 0,25 · tỷ lệ kỹ năng của tin mà CV có + điểm cộng theo nhu cầu
+
+Điểm cộng theo nhu cầu đã khai (`apps/jobs/selectors/recommendation_intent.py`): đúng vị trí
+mong muốn +0,40, đúng tỉnh mong muốn +0,05, lương chạm mức mong muốn +0,03, số năm kinh
+nghiệm đủ và không vượt quá hai bậc so với yêu cầu +0,03. CV kể ứng viên đã làm gì, nhu cầu
+nói ứng viên muốn làm gì tiếp, nên tin đúng vị trí mong muốn không bị ngưỡng cắt và lý do
+"Đúng vị trí bạn mong muốn" đứng đầu. Thứ tự theo điểm chưa chặn ở 100.
+
+Mức liên quan là trung bình điểm toàn văn và điểm chức danh, quy đổi bằng đúng mốc hiệu
+chuẩn của "Xem độ phù hợp". Tin dưới 30 điểm bị bỏ. Kết quả chỉ mang lý do bằng lời ("Trùng
+kỹ năng: …", "Vị trí gần với CV của bạn"), không kèm điểm. Không cần nạp mô hình: vector đã
+tính sẵn khi lưu CV và tin; chỉ dùng bản hiện hành (`MatchDocument.is_current`). Cờ tắt, chưa
+đồng ý, CV chưa có vector hoặc không tin nào đủ gần thì dùng bộ gợi ý theo luật.
+
+Đo trên nhãn yếu (100 CV tổng hợp × 100 tin thật, `ml/reports/recommendations.md`):
+
+| Phương án | Tin neo ở hạng 1 | Trong top 10 | MRR | Precision@5 cùng vị trí | NDCG@10 cùng vị trí |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| BM25 | 0,350 | 0,613 | 0,443 | 0,270 | 0,538 |
+| Luật `profile-rule-v2` | 0,675 | 0,975 | 0,795 | 0,362 | 0,726 |
+| `semantic-v1` (e5-base gốc) | 0,650 | 0,975 | 0,780 | 0,430 | 0,830 |
+
+Ngang luật ở việc đưa đúng tin gốc của CV lên đầu, hơn ở việc gợi ý các tin cùng vị trí khác.
+
+Mức cộng vị trí mong muốn chọn bằng mô phỏng trên cùng 100 CV (`--intent-study`):
+
+| Điểm cộng | Khai đúng nghề cũ: MRR tin neo | NDCG@10 cùng vị trí | Đổi nghề: tin nghề mới trong top 10 (trần 36%) | NDCG@10 nghề mới | Tin nghề cũ còn trong top 10 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Không khai | 0,776 | 0,832 | 3% | 0,043 | 25% |
+| +0,20 | 0,826 | 0,961 | 20% | 0,326 | 24% |
+| +0,40 (chọn) | 0,829 | 0,998 | 34% | 0,719 | 23% |
+| +0,50 | 0,829 | 1,000 | 36% | 0,829 | 22% |
+
+Mức +0,40 đưa gần hết tin nghề mới vào 10 gợi ý đầu mà vẫn giữ tin nghề cũ; mức cao hơn bắt
+đầu đẩy tin nghề cũ ra.
 
 Luồng phân tích (`apps/matching/services/`):
 
@@ -370,11 +415,10 @@ Chưa có: fine-tune bi-encoder, cross-encoder cho từng yêu cầu, `hybrid-v2
 
 ## Việc còn mở
 
-- Đưa import CV vào runtime `ai_core` để dùng chung hard switch, invocation log
-  và quota; hiện import vẫn dùng adapter REST riêng theo Site Setting.
+- Import CV đã dùng runtime `ai_core` (hard switch, invocation log); còn thiếu quota
+  theo người dùng ngoài throttle `cv_import`.
 - Chưa có trích xuất kỹ năng tự động vào `CvSkill`, OCR cho PDF scan hay đối
-  sánh phía nhà tuyển dụng; các Site Setting `ai_cv_review_enabled`,
-  `ai_job_match_enabled`, `ai_daily_request_limit` được seed nhưng chưa có code
-  đọc.
+  sánh phía nhà tuyển dụng. Hai Site Setting không có code đọc
+  (`ai_cv_review_enabled`, `ai_daily_request_limit`) đã được gỡ theo ADR-0026.
 - Đối sánh đang chạy trong sản phẩm vẫn là so khớp token/chuỗi con; embedding và
   độ tương đồng ngữ nghĩa thuộc module ở mục 7, chưa có logic.

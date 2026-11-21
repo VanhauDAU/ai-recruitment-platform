@@ -16,14 +16,26 @@ import {
   PasswordRequirements,
   passwordValidationRule,
   register,
+  RegistrationClosedNotice,
   SocialLoginButtons,
 } from '@/features/common/account/auth'
-import { useSiteSettings } from '@/entities/system/site-settings'
+import { settingText, useSiteSettings } from '@/entities/system/site-settings'
 import { useSession } from '@/entities/account/session'
 import { m } from '@/shared/config/i18n'
 
+// Link văn bản pháp lý lấy từ cấu hình (nhóm Pháp lý & đồng ý); chưa có trang thì chỉ hiện chữ.
+function LegalLink({ href, children }) {
+  const url = settingText(href)
+  if (!url) return <span className="font-semibold">{children}</span>
+  return (
+    <a href={url} target="_blank" rel="noreferrer" className="font-semibold text-[var(--brand-primary)] hover:underline">
+      {children}
+    </a>
+  )
+}
+
 export default function Register() {
-  const { siteName } = useSiteSettings()
+  const { settings, siteName } = useSiteSettings()
   const { setCurrentUser } = useSession()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -124,6 +136,15 @@ export default function Register() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (settings.candidate_allow_registration === false) {
+    return (
+      <div className="w-full">
+        <AuthLogo className="mb-4" />
+        <RegistrationClosedNotice loginPath="/login" />
+      </div>
+    )
   }
 
   return (
@@ -340,23 +361,9 @@ export default function Register() {
                 <Checkbox className="!items-start">
                   <span className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">
                     Tôi đã đọc và đồng ý với{' '}
-                    <a
-                      href="https://www.topcv.vn/terms-of-service"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="font-semibold text-[var(--brand-primary)] hover:underline"
-                    >
-                      Điều khoản dịch vụ
-                    </a>{' '}
+                    <LegalLink href={settings.legal_terms_url}>Điều khoản dịch vụ</LegalLink>{' '}
                     và{' '}
-                    <a
-                      href="https://www.topcv.vn/dieu-khoan-bao-mat"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="font-semibold text-[var(--brand-primary)] hover:underline"
-                    >
-                      Chính sách quyền riêng tư
-                    </a>{' '}
+                    <LegalLink href={settings.legal_privacy_url}>Chính sách quyền riêng tư</LegalLink>{' '}
                     của {siteName}.
                   </span>
                 </Checkbox>

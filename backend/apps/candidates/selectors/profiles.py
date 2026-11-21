@@ -44,6 +44,13 @@ def candidate_job_preference_for_user(user):
     )
 
 
+def ai_recommendation_consent(profile):
+    """Current AI job-recommendation consent of a profile, or ``None`` if never decided."""
+    return profile.consents.filter(
+        consent_type=CandidateConsent.ConsentType.AI_RECOMMENDATION,
+    ).first()
+
+
 def recruiter_visibility_consent(profile):
     """Current recruiter-search consent of a profile, or ``None`` if never decided."""
     return profile.consents.filter(

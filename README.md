@@ -85,7 +85,7 @@ và một tài khoản nhà tuyển dụng, mật khẩu và phiên đăng nhậ
 - Duyệt xác thực nhà tuyển dụng, yêu cầu cập nhật công ty, hậu kiểm tin và nội
   dung trang công ty; xử lý báo cáo vi phạm.
 - Quản lý tài khoản (khóa, cấm, thu hồi phiên) với nhật ký hoạt động theo nhóm.
-- Quản lý mẫu CV, blog, trung tâm trợ giúp, thông báo đa cổng và 15 nhóm cấu hình
+- Quản lý mẫu CV, blog, trung tâm trợ giúp, thông báo đa cổng và 17 nhóm cấu hình
   website không cần sửa code.
 - Hai cấp quyền: quản trị viên và superuser; mọi thao tác được ghi audit.
 

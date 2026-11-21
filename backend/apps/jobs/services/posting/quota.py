@@ -38,5 +38,5 @@ def _quota_exhausted_message(*, verified_level_three, limit):
         return _('Bạn đã dùng hết %(limit)s lượt đăng tin của tài khoản Cấp 3.') % {'limit': limit}
     return _(
         'Bạn đã dùng hết %(limit)s lượt đăng tin miễn phí. '
-        'Hoàn tất xác thực hồ sơ và đạt Cấp 3 để có quota 100 tin.'
-    ) % {'limit': limit}
+        'Hoàn tất xác thực hồ sơ và đạt Cấp 3 để có quota %(verified_limit)s tin.'
+    ) % {'limit': limit, 'verified_limit': _verified_level_three_job_quota()}

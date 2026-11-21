@@ -1,22 +1,20 @@
-import { DeleteOutlined, EditOutlined, MoreOutlined } from '@ant-design/icons'
+import { DeleteOutlined, MoreOutlined } from '@ant-design/icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { App, Button, Dropdown, Tabs } from 'antd'
-import { campaignKeys, deleteCampaignChannel } from '@/entities/campaign/campaign'
+import { campaignKeys, ChannelIcon, deleteCampaignChannel } from '@/entities/campaign/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { message } from '@/shared/lib/toast'
 import HelpTip from '@/shared/ui/HelpTip'
 import { money } from '../lib/channel-kinds'
 import { CHANNEL_METRIC_HELP as HELP } from '../lib/metric-help'
-import ChannelIcon from './ChannelIcon'
-import ChannelContentSection from './ChannelContentSection'
 import ChannelCostsPanel from './ChannelCostsPanel'
-import ChannelFacebookPosts from './ChannelFacebookPosts'
 import ChannelLinkSection from './ChannelLinkSection'
+import ChannelPostSection from './ChannelPostSection'
 import { getIntlLocale, m } from '@/shared/config/i18n'
 
 const rate = (part, whole) => (whole ? `${((part * 100) / whole).toLocaleString(getIntlLocale(), { maximumFractionDigits: 1 })}%` : '—')
 
-export default function ChannelDetail({ campaign, channel, editable, onEditContent }) {
+export default function ChannelDetail({ campaign, channel, editable }) {
   const queryClient = useQueryClient()
   const { modal } = App.useApp()
   const remove = useMutation({
@@ -28,13 +26,11 @@ export default function ChannelDetail({ campaign, channel, editable, onEditConte
     },
     onError: (error) => message.error(getApiErrorMessage(error, m.employer_campaign_channel_delete_error())),
   })
-  const facebook = channel.kind === 'facebook_page'
   const sections = [
-    { key: 'content', label: m.employer_campaign_channel_tab_content(), children: <ChannelContentSection campaign={campaign} channel={channel} editable={editable} onEditContent={onEditContent} /> },
-    facebook && { key: 'facebook', label: m.employer_campaign_channel_tab_facebook(), children: <ChannelFacebookPosts campaign={campaign} channel={channel} editable={editable} /> },
+    { key: 'post', label: m.employer_campaign_channel_tab_content(), children: <ChannelPostSection campaign={campaign} channel={channel} editable={editable} /> },
     { key: 'link', label: m.employer_campaign_channel_tab_link(), children: <ChannelLinkSection channel={channel} /> },
     { key: 'costs', label: m.employer_campaign_channel_tab_costs(), children: <ChannelCostsPanel campaign={campaign} channel={channel} editable={editable} /> },
-  ].filter(Boolean)
+  ]
 
   return (
     <section className="ch-detail" aria-labelledby={`channel-${channel.public_id}`}>
@@ -49,11 +45,9 @@ export default function ChannelDetail({ campaign, channel, editable, onEditConte
             trigger={['click']}
             menu={{
               items: [
-                { key: 'content', icon: <EditOutlined />, label: m.employer_campaign_channel_edit_content() },
                 { key: 'delete', icon: <DeleteOutlined />, label: m.employer_campaign_channel_delete(), danger: true },
               ],
               onClick: ({ key }) => {
-                if (key === 'content') onEditContent(channel)
                 if (key === 'delete') {
                   modal.confirm({
                     title: m.employer_campaign_channel_delete_confirm({ label: channel.label }),

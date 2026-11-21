@@ -17,10 +17,18 @@ from .announcements_reader import (
     AnnouncementRuntimeEventView,
     AnnouncementStateView,
 )
+from .banners import (
+    AdminBannerDetailView,
+    AdminBannerImageUploadView,
+    AdminBannerListCreateView,
+    AdminBannerReorderView,
+    BannerListView,
+)
 from .settings import (
     AdminSettingUploadView,
+    AdminSiteSettingHistoryView,
     AdminSiteSettingView,
-    BannerListView,
+    AdminSystemParametersView,
     FeedbackCreateView,
     LinkGroupListView,
     SiteSettingListView,
@@ -43,7 +51,13 @@ __all__ = [
     'AdminAnnouncementResumeView',
     'AdminAnnouncementRevisionCreateView',
     'AdminSettingUploadView',
+    'AdminSiteSettingHistoryView',
     'AdminSiteSettingView',
+    'AdminSystemParametersView',
+    'AdminBannerDetailView',
+    'AdminBannerImageUploadView',
+    'AdminBannerListCreateView',
+    'AdminBannerReorderView',
     'BannerListView',
     'FeedbackCreateView',
     'LinkGroupListView',

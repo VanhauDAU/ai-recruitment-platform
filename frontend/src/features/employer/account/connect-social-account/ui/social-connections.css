@@ -1,7 +1,15 @@
 /* Trang kết nối mạng xã hội trong cài đặt NTD (route lazy). */
-.sc-panel { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
-.sc-panel .ant-list { align-self: stretch; }
+.sc-panel { display: flex; flex-direction: column; gap: 16px; }
 .sc-intro { margin: 0; max-width: 70ch; font-size: 14px; line-height: 22px; color: #475569; }
-.sc-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.sc-networks { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); gap: 12px; }
+.sc-network { display: flex; flex-direction: column; gap: 12px; padding: 16px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; }
+.sc-network__head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.sc-network__head h3 { margin: 0; font-size: 15px; font-weight: 600; color: #0f172a; }
+.sc-network__empty { margin: 0; font-size: 13px; color: #64748b; }
+.sc-network__connect { align-self: flex-start; }
+.sc-accounts { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.sc-account { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+.sc-account__info { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
+.sc-account__name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 500; color: #0f172a; }
 .sc-pages { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
 .sc-page { display: inline-flex; align-items: center; gap: 8px; }

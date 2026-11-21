@@ -1,6 +1,7 @@
 from .email_notifications import CandidateEmailNotificationSettingsSerializer
 from .notifications import CandidateNotificationSerializer
 from .profile import (
+    AiRecommendationConsentSerializer,
     CandidateJobPreferenceSerializer,
     CandidateProfileReadSerializer,
     CandidateProfileUpdateSerializer,
@@ -13,5 +14,6 @@ __all__ = [
     'CandidateNotificationSerializer',
     'CandidateProfileReadSerializer',
     'CandidateProfileUpdateSerializer',
+    'AiRecommendationConsentSerializer',
     'RecruiterVisibilitySerializer',
 ]

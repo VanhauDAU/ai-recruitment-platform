@@ -342,6 +342,50 @@ test('employer domain verification creates a one-time DNS challenge responsively
   await expectNoHorizontalOverflow(page)
 })
 
+test('employer social connections list one card per network responsively', { tag: '@responsive' }, async ({ page }) => {
+  await setEmployerSession(page, {
+    email_verified: true,
+    employer_onboarding_required: false,
+    employer_onboarding_step: 'complete',
+    employer_verification_completed: true,
+  })
+  await page.route('**/api/employer/me/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ public_id: 'rec_social', ...READY_EMPLOYER_READINESS }) })
+  })
+  await page.route('**/api/employer/social/networks/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify([{
+      key: 'facebook_page',
+      platform: 'Facebook',
+      label: 'Fanpage Facebook',
+      channel_kind: 'facebook_page',
+      capabilities: { max_chars: 5000, max_images: 4, requires_image: false, supports_delete: true },
+      simulated: true,
+    }]) })
+  })
+  await page.route('**/api/employer/social/connections/', async (route) => {
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify([{
+      public_id: 'soc_e2e',
+      network: 'facebook_page',
+      network_label: 'Fanpage Facebook',
+      simulated: true,
+      account_id: 'fake-facebook_page-1',
+      account_name: 'Tuyển dụng Công ty ProCV có tên rất dài để thử cắt chữ trên điện thoại',
+      account_picture_url: '',
+      status: 'connected',
+      status_label: 'Đang kết nối',
+    }]) })
+  })
+
+  await page.goto('/tuyendung/app/account/settings/integrations')
+
+  const card = page.getByRole('region', { name: 'Fanpage Facebook' })
+  await expect(card).toBeVisible()
+  await expect(card.getByText('Giả lập, không đăng lên Facebook thật')).toBeVisible()
+  await expect(card.getByText('Đang kết nối')).toBeVisible()
+  await expect(card.getByRole('button', { name: 'Kết nối thêm' })).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+})
+
 test('employer auth: unverified session is redirected to account verification', async ({ page }) => {
   await mockPublicApi(page)
   await setEmployerSession(page)

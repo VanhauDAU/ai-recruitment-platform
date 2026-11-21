@@ -28,8 +28,8 @@ vi.mock('@/entities/account/employer-profile', () => api)
 vi.mock('@/entities/account/session', () => ({
   useSession: () => session,
 }))
-vi.mock('@/entities/system/site-settings', () => ({
-  settingText: (_value, fallback) => fallback,
+vi.mock('@/entities/system/site-settings', async (importOriginal) => ({
+  ...await importOriginal(),
   useSiteSettings: () => ({ settings: {} }),
 }))
 vi.mock('@/shared/lib/toast', () => toast)

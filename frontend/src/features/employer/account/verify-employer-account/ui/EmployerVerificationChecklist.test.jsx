@@ -6,8 +6,8 @@ import EmployerVerificationChecklist from './EmployerVerificationChecklist'
 vi.mock('@/entities/account/session', () => ({
   useSession: () => ({ user: { has_usable_password: true } }),
 }))
-vi.mock('@/entities/system/site-settings', () => ({
-  settingText: (_value, fallback) => fallback,
+vi.mock('@/entities/system/site-settings', async (importOriginal) => ({
+  ...await importOriginal(),
   useSiteSettings: () => ({ settings: {}, siteName: 'ProCV' }),
 }))
 

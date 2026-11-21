@@ -11,10 +11,11 @@ from django.utils.translation import gettext_lazy
 from rest_framework.exceptions import ValidationError as DRFValidationError
 
 from apps.accounts.services.token_cache import atomic_pop
+from apps.sitecontent.selectors import email_brand_color, get_string_setting
 from common.i18n import recipient_language
 
 from ..models import AuthEmailJob, User
-from .mailing import frontend_link, send_html_email, site_setting
+from .mailing import frontend_link, send_html_email
 from .refresh_cookies import PORTAL_ROLE_BY_NAME
 from .tokens import revoke_refresh_tokens
 
@@ -212,7 +213,7 @@ def send_password_reset_email(user, *, expected_email=None, expected_auth_revisi
 def _password_reset_content(user, recipient, link):
     is_admin = user.is_admin_role
     is_employer = user.role == user.Role.EMPLOYER
-    site_name = site_setting('site_name', 'ProCV')
+    site_name = get_string_setting('site_name', 'ProCV')
     minutes = settings.PASSWORD_RESET_TTL // 60
     name = user.full_name or recipient
     # Nêu rõ cổng: một email có thể có tài khoản Ứng viên và Nhà tuyển dụng riêng,
@@ -220,7 +221,7 @@ def _password_reset_content(user, recipient, link):
     portal_label = (
         _('Quản trị') if is_admin else _('Nhà tuyển dụng') if is_employer else _('Ứng viên')
     )
-    accent_color = '#0369a1' if is_admin else '#00b14f'
+    accent_color = '#0369a1' if is_admin else email_brand_color()
     values = {
         'portal': portal_label,
         'site_name': site_name,

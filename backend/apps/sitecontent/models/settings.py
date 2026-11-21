@@ -1,31 +1,68 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 
 class SiteSetting(models.Model):
     """Kho cấu hình key-value cho toàn dự án (giá trị JSON).
 
-    Nền tảng cho mọi cấu hình admin chỉnh được mà không cần deploy: thông tin
-    liên hệ, feature flag, màu sắc/giao diện, SEO... Giá trị là JSON nên chứa
-    được cả chuỗi, số, danh sách hay object tuỳ `key`.
+    Chỉ chứa cấu hình vận hành admin chỉnh được mà không cần deploy. Mọi key
+    phải có code đọc thật (xem ADR-0026 và test hợp đồng). Secret và giới hạn
+    bảo mật/hạ tầng nằm ở ``.env``; trang quản trị chỉ hiển thị chúng ở dạng
+    chỉ đọc. Metadata mỗi key (nhãn, nhóm, mặc định...) do
+    ``seed_data/settings.json`` quản lý.
     """
 
     class Group(models.TextChoices):
-        GENERAL = 'general', 'Cài đặt chung'
-        HOMEPAGE = 'homepage', 'Giao diện trang chủ'
-        SEO = 'seo', 'SEO'
-        CANDIDATE = 'candidate', 'Tài khoản ứng viên'
-        EMPLOYER = 'employer', 'Nhà tuyển dụng'
-        JOBS = 'jobs', 'Việc làm'
-        CV = 'cv', 'Hồ sơ / CV'
+        # Giao diện & nội dung
+        BRAND = 'brand', 'Thương hiệu'
+        HOMEPAGE = 'homepage', 'Trang chủ & điều hướng'
+        SEO = 'seo', 'SEO & chia sẻ'
+        CONTACT = 'contact', 'Liên hệ & mạng xã hội'
+        FOOTER = 'footer', 'Chân trang'
+        BLOG = 'blog', 'Cẩm nang'
+        # Nghiệp vụ tuyển dụng
+        ACCOUNTS = 'accounts', 'Tài khoản & đăng nhập'
+        EMPLOYER = 'employer', 'Nhà tuyển dụng & xác thực'
+        JOBS = 'jobs', 'Tin tuyển dụng'
+        APPLICATIONS = 'applications', 'Ứng tuyển & SLA'
+        CV = 'cv', 'Hồ sơ & CV'
         EMAIL = 'email', 'Email & thông báo'
-        PAYMENT = 'payment', 'Thanh toán / gói dịch vụ'
-        SECURITY = 'security', 'Bảo mật'
-        UPLOAD = 'upload', 'Upload file / media'
-        FOOTER = 'footer', 'Footer'
-        CONTACT = 'contact', 'Liên hệ / hỗ trợ'
-        AI = 'ai', 'Cài đặt AI'
-        BLOG = 'blog', 'Cẩm nang nghề nghiệp (Blog)'
+        AI = 'ai', 'AI'
+        # Tuân thủ & vận hành
+        LEGAL = 'legal', 'Pháp lý & đồng ý'
+        RETENTION = 'retention', 'Lưu trữ dữ liệu'
+        FEATURES = 'features', 'Tính năng'
+        OPERATIONS = 'operations', 'Vận hành'
+
+    class Area(models.TextChoices):
+        """Khu trên thanh bên trang cấu hình; mỗi nhóm thuộc đúng một khu."""
+
+        CONTENT = 'content', 'Giao diện & nội dung'
+        RECRUITING = 'recruiting', 'Nghiệp vụ tuyển dụng'
+        COMPLIANCE = 'compliance', 'Tuân thủ & vận hành'
+
+    GROUP_AREAS = {
+        Group.BRAND: Area.CONTENT,
+        Group.HOMEPAGE: Area.CONTENT,
+        Group.SEO: Area.CONTENT,
+        Group.CONTACT: Area.CONTENT,
+        Group.FOOTER: Area.CONTENT,
+        Group.BLOG: Area.CONTENT,
+        Group.ACCOUNTS: Area.RECRUITING,
+        Group.EMPLOYER: Area.RECRUITING,
+        Group.JOBS: Area.RECRUITING,
+        Group.APPLICATIONS: Area.RECRUITING,
+        Group.CV: Area.RECRUITING,
+        Group.EMAIL: Area.RECRUITING,
+        Group.AI: Area.RECRUITING,
+        Group.LEGAL: Area.COMPLIANCE,
+        Group.RETENTION: Area.COMPLIANCE,
+        Group.FEATURES: Area.COMPLIANCE,
+        Group.OPERATIONS: Area.COMPLIANCE,
+    }
 
     class ValueType(models.TextChoices):
         TEXT = 'text', 'Chuỗi ngắn'
@@ -33,18 +70,21 @@ class SiteSetting(models.Model):
         NUMBER = 'number', 'Số'
         BOOLEAN = 'boolean', 'Bật/tắt'
         SELECT = 'select', 'Chọn một'
+        MULTISELECT = 'multiselect', 'Chọn nhiều'
         COLOR = 'color', 'Màu'
         IMAGE = 'image', 'Ảnh'
         EMAIL = 'email', 'Email'
         URL = 'url', 'URL'
         JSON = 'json', 'JSON'
-        ENV = 'env', 'Cấu hình qua .env'
 
     key = models.SlugField(
         max_length=100, unique=True, help_text='Định danh dùng ở code/frontend, vd: site_name'
     )
     label = models.CharField(max_length=200, help_text='Tên hiển thị trong trang quản trị')
-    group = models.CharField(max_length=30, choices=Group.choices, default=Group.GENERAL)
+    group = models.CharField(max_length=30, choices=Group.choices, default=Group.BRAND)
+    section = models.CharField(
+        max_length=100, blank=True, help_text='Tiêu đề khối con trong nhóm, vd: Logo & biểu tượng'
+    )
     value = models.JSONField(default=dict, blank=True)
     value_type = models.CharField(
         max_length=20,
@@ -55,10 +95,16 @@ class SiteSetting(models.Model):
     options = models.JSONField(
         default=dict,
         blank=True,
-        help_text='select: {"choices": [{"value","label"}]}; env: {"env_var": "TÊN_BIẾN"}',
+        help_text=(
+            'number: min/max/integer/step; select: choices; json: schema; '
+            'chung: applies_to, depends_on, risky, max_length'
+        ),
     )
     order = models.PositiveSmallIntegerField(default=0, help_text='Thứ tự hiển thị trong nhóm')
     description = models.CharField(max_length=300, blank=True)
+    help = models.TextField(
+        blank=True, help_text='Giải thích chi tiết hiện trong nút "?" của trang quản trị'
+    )
     is_public = models.BooleanField(default=True, help_text='Cho phép trả về qua API công khai')
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -69,6 +115,20 @@ class SiteSetting(models.Model):
 
     def __str__(self):
         return self.key
+
+    # Lựa chọn lấy từ cấu hình máy chủ thay vì seed, để admin không chọn được
+    # giá trị máy chủ không cho phép (key -> tên biến Django settings).
+    SERVER_CHOICES = {'ai_job_generation_model': 'AI_JOB_GENERATION_MODEL_ALLOWLIST'}
+
+    def resolved_options(self):
+        """``options`` kèm ``choices`` lấy từ máy chủ cho key trong ``SERVER_CHOICES``."""
+        options = dict(self.options) if isinstance(self.options, dict) else {}
+        setting_name = self.SERVER_CHOICES.get(self.key)
+        if setting_name:
+            options['choices'] = [
+                {'value': value, 'label': value} for value in getattr(settings, setting_name, ())
+            ]
+        return options
 
 
 class LinkGroup(models.Model):
@@ -132,15 +192,34 @@ class LinkItem(models.Model):
 class Banner(models.Model):
     """Một slide banner (vd: carousel đầu trang chủ), nội dung nhập qua admin.
 
-    Chưa có kho ảnh nên nền dùng gradient theo `theme` (đủ 3 tông đang có sẵn
-    trên giao diện); khi có ảnh thật, `image_url` sẽ được ưu tiên hơn theme.
-    `placement` để tái dùng model này cho carousel ở trang khác sau này.
+    ``kind`` quyết định cách dựng slide:
+
+    - ``image``: cả slide là ảnh đã thiết kế sẵn (nút nằm trong ảnh), bấm vào
+      đâu cũng mở ``cta_url``; ``title`` chỉ là tên nội bộ dùng làm alt/tooltip.
+    - ``promo``: bố cục chữ + ảnh minh họa tùy chọn trên nền gradient ``theme``.
+    - ``company``: nhà tuyển dụng nổi bật, nội dung lấy từ ``company`` thật.
+    - ``ai``: gợi ý việc làm bằng AI; ứng viên đăng nhập thấy số việc phù hợp,
+      khách thấy nội dung nhập ở đây.
+
+    ``starts_at``/``ends_at`` hẹn giờ chạy; ``placement`` để tái dùng model cho
+    banner ở trang khác.
     """
 
+    class Kind(models.TextChoices):
+        IMAGE = 'image', 'Ảnh + link'
+        PROMO = 'promo', 'Bố cục chữ'
+        COMPANY = 'company', 'Nhà tuyển dụng nổi bật'
+        AI = 'ai', 'Gợi ý việc làm AI'
+
     class Theme(models.TextChoices):
-        GREEN = 'green', 'Xanh lá (thương hiệu)'
-        BLUE = 'blue', 'Xanh dương'
-        ORANGE = 'orange', 'Cam - hồng'
+        GREEN = 'green', 'Xanh thương hiệu'
+        BLUE = 'blue', 'Xanh đại dương'
+        ORANGE = 'orange', 'Hoàng hôn'
+        VIOLET = 'violet', 'Tím'
+        TEAL = 'teal', 'Ngọc lam'
+        ROSE = 'rose', 'Hồng đỏ'
+        AURORA = 'aurora', 'Cực quang'
+        MIDNIGHT = 'midnight', 'Đêm'
 
     class Placement(models.TextChoices):
         HOME_HERO = 'home_hero', 'Carousel trang chủ'
@@ -157,10 +236,19 @@ class Banner(models.Model):
     placement = models.CharField(
         max_length=30, choices=Placement.choices, default=Placement.HOME_HERO
     )
+    kind = models.CharField(max_length=20, choices=Kind.choices, default=Kind.PROMO)
+    company = models.ForeignKey(
+        'employers.Company',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='+',
+        help_text='Bắt buộc với slide nhà tuyển dụng; với slide ảnh là đích mặc định của link',
+    )
     eyebrow = models.CharField(
         max_length=100, blank=True, help_text='Nhãn nhỏ phía trên tiêu đề, vd: TUYỂN DỤNG GẤP'
     )
-    title = models.CharField(max_length=200)
+    title = models.CharField(max_length=200, blank=True)
     subtitle = models.CharField(max_length=300, blank=True)
     image_url = models.TextField(
         blank=True, help_text='Để trống để dùng nền gradient theo Theme bên dưới'
@@ -178,15 +266,45 @@ class Banner(models.Model):
     cta_secondary_url = models.CharField(max_length=300, blank=True)
     order = models.PositiveSmallIntegerField(default=0)
     is_active = models.BooleanField(default=True)
+    starts_at = models.DateTimeField(null=True, blank=True)
+    ends_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['placement', 'order']
+        ordering = ['placement', 'order', 'id']
         verbose_name = 'Banner'
         verbose_name_plural = 'Banner'
 
     def __str__(self):
-        return self.title
+        return self.title or (self.company.display_name if self.company_id else self.kind)
+
+    def clean(self):
+        errors = {}
+        if self.kind == self.Kind.COMPANY and not self.company_id:
+            errors['company'] = _('Chọn công ty cho slide nhà tuyển dụng.')
+        if self.kind == self.Kind.IMAGE:
+            if not self.image_url:
+                errors['image_url'] = _('Slide ảnh cần ảnh banner.')
+            if not self.cta_url and not self.company_id:
+                errors['cta_url'] = _('Slide ảnh cần link hoặc công ty để mở khi bấm.')
+        if self.kind != self.Kind.COMPANY and not self.title.strip():
+            errors['title'] = _('Nhập tiêu đề banner.')
+        if self.starts_at and self.ends_at and self.ends_at <= self.starts_at:
+            errors['ends_at'] = _('Thời điểm kết thúc phải sau thời điểm bắt đầu.')
+        if errors:
+            raise ValidationError(errors)
+
+    def schedule_state(self, now=None):
+        """``off`` | ``scheduled`` | ``expired`` | ``running`` tại thời điểm ``now``."""
+        if not self.is_active:
+            return 'off'
+        now = now or timezone.now()
+        if self.starts_at and self.starts_at > now:
+            return 'scheduled'
+        if self.ends_at and self.ends_at <= now:
+            return 'expired'
+        return 'running'
 
 
 class Feedback(models.Model):

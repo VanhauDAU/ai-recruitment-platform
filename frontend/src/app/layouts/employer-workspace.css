@@ -1,0 +1,290 @@
+/* Employer workspace sidebar. Rows share the admin sidebar's shape and take
+ * their tint from the brand color set in site settings, so both portals read
+ * as one product. Loaded with the lazy workspace layout, not the initial CSS. */
+.employer-sider__profile {
+  border-bottom: 1px solid #f1f5f9;
+  display: grid;
+  flex: none;
+  gap: 6px;
+  padding: 14px 14px 12px;
+}
+
+.employer-sider__profile--compact {
+  justify-items: center;
+  padding: 12px 0;
+}
+
+.employer-sider__identity {
+  align-items: center;
+  border-radius: 10px;
+  color: inherit;
+  display: flex;
+  gap: 10px;
+  margin: -4px;
+  min-width: 0;
+  padding: 4px;
+  transition: background-color 160ms ease;
+}
+
+.employer-sider__identity:hover {
+  background: #f8fafc;
+}
+
+.employer-sider__identity:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 1px;
+}
+
+.employer-sider__avatar.ant-avatar {
+  background: #f1f5f9;
+  color: #475569;
+  flex: none;
+  font-weight: 700;
+}
+
+.employer-sider__name {
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.employer-sider__verification {
+  align-items: center;
+  color: #64748b;
+  display: flex;
+  font-size: 11.5px;
+  gap: 4px;
+  padding-left: 46px;
+  white-space: nowrap;
+}
+
+.employer-sider__verification strong {
+  color: color-mix(in srgb, var(--brand-primary) 75%, #0f172a);
+  font-weight: 700;
+}
+
+.employer-sider__help {
+  background: none;
+  border: 0;
+  color: #94a3b8;
+  cursor: help;
+  display: inline-flex;
+  padding: 0;
+  transition: color 150ms ease;
+}
+
+.employer-sider__help:hover,
+.employer-sider__help:focus-visible {
+  color: #475569;
+}
+
+.employer-nav.ant-menu {
+  background: transparent;
+  border-inline-end: 0 !important;
+  padding: 10px 12px 16px;
+}
+
+.employer-nav.ant-menu .ant-menu-sub.ant-menu-inline {
+  background: transparent;
+}
+
+/* Rows: top-level items and group titles share one shape with the admin sidebar. */
+.employer-nav.ant-menu .ant-menu-item,
+.employer-nav.ant-menu .ant-menu-submenu-title {
+  align-items: center;
+  border-radius: 9px;
+  color: #475569;
+  display: flex;
+  font-size: 13.5px;
+  font-weight: 500;
+  height: 38px;
+  line-height: 38px;
+  margin: 2px 0;
+  overflow: visible;
+  padding-inline: 10px !important;
+  position: relative;
+  transition: background-color 160ms ease, color 160ms ease;
+  width: 100%;
+}
+
+.employer-nav.ant-menu .ant-menu-item .anticon,
+.employer-nav.ant-menu .ant-menu-submenu-title .anticon {
+  color: #94a3b8;
+  font-size: 16px;
+  transition: color 160ms ease;
+}
+
+.employer-nav.ant-menu .ant-menu-title-content {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.employer-nav.ant-menu .anticon + .ant-menu-title-content {
+  margin-inline-start: 10px;
+}
+
+.employer-nav.ant-menu .ant-menu-submenu-arrow {
+  color: #94a3b8;
+  inset-inline-end: 12px;
+}
+
+.employer-nav.ant-menu .ant-menu-item:not(.ant-menu-item-selected):hover,
+.employer-nav.ant-menu .ant-menu-submenu-title:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.employer-nav.ant-menu .ant-menu-item:hover .anticon,
+.employer-nav.ant-menu .ant-menu-submenu-title:hover .anticon {
+  color: #475569;
+}
+
+/* A group holding the current page only darkens; the page itself carries the tint. */
+.employer-nav.ant-menu .ant-menu-submenu-selected > .ant-menu-submenu-title {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.employer-nav.ant-menu .ant-menu-submenu-selected > .ant-menu-submenu-title .anticon {
+  color: var(--brand-primary);
+}
+
+/* Children hang off a thin guide line under the group icon. */
+.employer-nav.ant-menu .ant-menu-sub.ant-menu-inline {
+  border-left: 1px solid #e2e8f0;
+  margin: 2px 0 6px 19px;
+  padding: 2px 0 2px 10px;
+}
+
+.employer-nav.ant-menu .ant-menu-sub .ant-menu-item {
+  color: #64748b;
+  font-size: 13px;
+  height: 34px;
+  line-height: 34px;
+  margin: 1px 0;
+}
+
+.employer-nav.ant-menu .ant-menu-item::before {
+  background: var(--brand-primary);
+  border-radius: 0 3px 3px 0;
+  content: '';
+  height: 18px;
+  left: -12px;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%) scaleY(0);
+  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  width: 3px;
+}
+
+/* The bar sits on the guide line. */
+.employer-nav.ant-menu .ant-menu-sub .ant-menu-item::before {
+  left: -11px;
+}
+
+.employer-nav.ant-menu .ant-menu-item-selected,
+.employer-nav.ant-menu .ant-menu-item-selected:hover {
+  background: color-mix(in srgb, var(--brand-primary) 10%, #ffffff);
+  color: color-mix(in srgb, var(--brand-primary) 75%, #0f172a);
+  font-weight: 600;
+}
+
+.employer-nav.ant-menu .ant-menu-item-selected::before {
+  transform: translateY(-50%) scaleY(1);
+}
+
+.employer-nav.ant-menu .ant-menu-item-selected .anticon {
+  color: var(--brand-primary);
+}
+
+.employer-nav.ant-menu .ant-menu-item-divider {
+  border-color: #eef2f6;
+  margin: 8px 10px;
+}
+
+.employer-nav.ant-menu-inline-collapsed .ant-menu-item-divider {
+  margin-inline: 6px;
+}
+
+.employer-nav__row {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.employer-nav__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.employer-nav__count {
+  align-items: center;
+  background: var(--brand-primary);
+  border-radius: 999px;
+  color: #ffffff;
+  display: inline-flex;
+  flex: none;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  height: 20px;
+  justify-content: center;
+  line-height: 1;
+  min-width: 20px;
+  padding: 0 6px;
+}
+
+.employer-nav__dot {
+  background: var(--brand-primary);
+  border-radius: 999px;
+  display: inline-block;
+  height: 7px;
+  margin-left: 6px;
+  vertical-align: middle;
+  width: 7px;
+}
+
+/* Icon rail: labels and children move into hover popups. */
+.employer-nav.ant-menu-inline-collapsed {
+  padding-inline: 8px;
+  width: 100%;
+}
+
+.employer-nav.ant-menu-inline-collapsed > .ant-menu-item,
+.employer-nav.ant-menu-inline-collapsed > .ant-menu-submenu > .ant-menu-submenu-title {
+  justify-content: center;
+  padding-inline: 0 !important;
+}
+
+.employer-nav.ant-menu-inline-collapsed > .ant-menu-item::before {
+  left: -8px;
+}
+
+.employer-nav.ant-menu-inline-collapsed .anticon {
+  font-size: 18px !important;
+}
+
+/* antd keeps the hidden label in the flow (opacity 0), which pushes icons left. */
+.employer-nav.ant-menu-inline-collapsed > .ant-menu-item .ant-menu-title-content,
+.employer-nav.ant-menu-inline-collapsed > .ant-menu-submenu > .ant-menu-submenu-title .ant-menu-title-content,
+.employer-nav.ant-menu-inline-collapsed .ant-menu-submenu-arrow {
+  display: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .employer-nav.ant-menu .ant-menu-item,
+  .employer-nav.ant-menu .ant-menu-submenu-title,
+  .employer-nav.ant-menu .ant-menu-item::before,
+  .employer-sider__identity {
+    transition: none;
+  }
+}

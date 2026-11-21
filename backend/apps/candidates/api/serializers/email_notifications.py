@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from apps.sitecontent.selectors import get_bool_setting
+from apps.sitecontent.selectors import business_emails_enabled
 
 from ...models import CandidateEmailNotificationSettings
 
@@ -29,4 +29,4 @@ class CandidateEmailNotificationSettingsSerializer(serializers.ModelSerializer):
 
     def get_email_delivery_enabled(self, obj) -> bool:
         # Admin kill switch for all product email; the page explains it.
-        return get_bool_setting('email_notifications_enabled', True)
+        return business_emails_enabled()

@@ -5,10 +5,11 @@ from django.utils.html import escape
 from django.utils.translation import gettext as _
 
 from apps.accounts.services.admin_invitation_tokens import create_admin_invitation_token
+from apps.sitecontent.selectors import get_string_setting
 from common.i18n import recipient_language
 
 from ..models import AdminInvitation
-from .mailing import frontend_link, send_html_email, site_setting
+from .mailing import frontend_link, send_html_email
 
 
 def send_admin_invitation_email(invitation_public_id, token_version):
@@ -34,7 +35,7 @@ def send_admin_invitation_email(invitation_public_id, token_version):
 
 
 def _invitation_content(invitation, link):
-    site_name = site_setting('site_name', 'ProCV')
+    site_name = get_string_setting('site_name', 'ProCV')
     values = {
         'site_name': site_name,
         'name': invitation.user.full_name or invitation.user.email,

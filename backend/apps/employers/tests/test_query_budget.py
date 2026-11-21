@@ -47,28 +47,32 @@ from .factories import (
 
 # Authentication is bypassed with force_authenticate: one recruiter lookup plus
 # one recruitment-need SELECT. The count must remain flat as rows are added.
-RECRUITMENT_NEED_READ_BUDGET = 2
-COMPANY_UPDATE_REQUEST_LIST_BUDGET = 4
+# +1 cho mỗi request vào API cổng ứng viên/NTD/công khai: middleware bảo trì đọc
+# `maintenance_mode` (ADR-0026). Trong TestCase mọi request nằm trong transaction nên
+# selector đọc thẳng DB; ở production đọc từ cache.
+MAINTENANCE_CHECK_QUERIES = 1
+RECRUITMENT_NEED_READ_BUDGET = 2 + MAINTENANCE_CHECK_QUERIES
+COMPANY_UPDATE_REQUEST_LIST_BUDGET = 4 + MAINTENANCE_CHECK_QUERIES
 ADMIN_COMPANY_UPDATE_REQUEST_LIST_BUDGET = 8
 # Rows proposing benefits/offices add, once per page: benefit and province
 # names for the proposals, published benefits and offices for current values.
 ADMIN_COMPANY_UPDATE_REQUEST_CONTENT_LIST_BUDGET = ADMIN_COMPANY_UPDATE_REQUEST_LIST_BUDGET + 4
-PUBLIC_COMPANY_LIST_QUERY_BUDGET = 5
+PUBLIC_COMPANY_LIST_QUERY_BUDGET = 5 + MAINTENANCE_CHECK_QUERIES
 # Company row (indexability is an EXISTS annotation and the saved layout a
 # join of the same SELECT), industries prefetch, gallery prefetch, canonical
 # public-job count, publicly available pinned jobs (CP-5), benefits with their
 # catalogue entry and offices with their province (CP-6, one prefetch each).
-PUBLIC_COMPANY_DETAIL_QUERY_BUDGET = 7
+PUBLIC_COMPANY_DETAIL_QUERY_BUDGET = 7 + MAINTENANCE_CHECK_QUERIES
 # Visible-company lookup, one canonical job aggregate over the same-industry
 # candidates, the ranked projection, industries prefetch.
-PUBLIC_COMPANY_SIMILAR_QUERY_BUDGET = 4
+PUBLIC_COMPANY_SIMILAR_QUERY_BUDGET = 4 + MAINTENANCE_CHECK_QUERIES
 # Visible-company lookup, one grouped province aggregate.
-PUBLIC_COMPANY_JOB_FACETS_QUERY_BUDGET = 2
+PUBLIC_COMPANY_JOB_FACETS_QUERY_BUDGET = 2 + MAINTENANCE_CHECK_QUERIES
 # Visible-company lookup, the caller's follow next to the follower total.
-COMPANY_FOLLOW_STATE_QUERY_BUDGET = 2
+COMPANY_FOLLOW_STATE_QUERY_BUDGET = 2 + MAINTENANCE_CHECK_QUERIES
 # Pagination count, followed companies (follow columns ride the same join),
 # industries prefetch, one grouped canonical job count for the page.
-FOLLOWED_COMPANY_LIST_QUERY_BUDGET = 4
+FOLLOWED_COMPANY_LIST_QUERY_BUDGET = 4 + MAINTENANCE_CHECK_QUERIES
 # Pagination count, reports joined to company/reporter/resolver, resolution
 # history prefetch, history actors prefetch.
 ADMIN_COMPANY_REPORT_LIST_QUERY_BUDGET = 4
@@ -196,7 +200,7 @@ class PublicCompanyListQueryBudgetTests(APITestCase):
         self.assertEqual(cursor_page.status_code, 200, cursor_page.data)
         self.assertNotIn('count', cursor_page.data)
         self.assertEqual(len(cursor_page.data['results']), 7)
-        self.assertEqual(len(cursor_queries), 3)
+        self.assertEqual(len(cursor_queries), 3 + MAINTENANCE_CHECK_QUERIES)
         self.assertEqual(_canonical_job_table_references(cursor_queries), 1)
 
 

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { App } from 'antd'
 import { MemoryRouter } from 'react-router'
@@ -9,12 +9,22 @@ import SocialConnectionsPanel from './SocialConnectionsPanel'
 
 const mocks = vi.hoisted(() => ({
   getSocialConnections: vi.fn(),
-  startFacebookConnect: vi.fn(),
-  getPendingFacebookPages: vi.fn(),
-  selectFacebookPage: vi.fn(),
+  useSocialNetworks: vi.fn(),
+  startSocialConnect: vi.fn(),
+  getPendingSocialAccounts: vi.fn(),
+  selectSocialAccount: vi.fn(),
   disconnectSocialConnection: vi.fn(),
 }))
 vi.mock('@/entities/campaign/campaign', async (importOriginal) => ({ ...(await importOriginal()), ...mocks }))
+
+const facebook = {
+  key: 'facebook_page',
+  platform: 'Facebook',
+  label: 'Fanpage Facebook',
+  channel_kind: 'facebook_page',
+  capabilities: { max_chars: 5000, max_images: 4, requires_image: false, supports_delete: true },
+  simulated: true,
+}
 
 function renderPanel(entry = '/tuyendung/app/account/settings/integrations') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
@@ -31,44 +41,48 @@ describe('SocialConnectionsPanel', () => {
   beforeEach(() => {
     Object.values(mocks).forEach((mock) => mock.mockReset())
     vi.spyOn(message, 'success').mockImplementation(() => {})
+    mocks.useSocialNetworks.mockReturnValue({ data: [facebook], isLoading: false })
   })
 
-  it('lists pages, flags the simulated provider and starts the Facebook OAuth redirect', async () => {
+  it('lists accounts per network, flags simulation and starts that network OAuth redirect', async () => {
     const user = userEvent.setup()
     const assign = vi.fn()
     vi.stubGlobal('location', { ...window.location, assign })
     mocks.getSocialConnections.mockResolvedValue([
-      { public_id: 'soc_1', page_name: 'Fanpage ProCV', status: 'connected', status_label: 'Đang kết nối', simulated: true },
+      { public_id: 'soc_1', network: 'facebook_page', account_name: 'Fanpage ProCV', status: 'connected', status_label: 'Đang kết nối', simulated: true },
     ])
-    mocks.startFacebookConnect.mockResolvedValue('https://www.facebook.com/v21.0/dialog/oauth?state=x')
+    mocks.startSocialConnect.mockResolvedValue('https://www.facebook.com/v21.0/dialog/oauth?state=x')
     renderPanel()
 
-    expect(await screen.findByText('Fanpage ProCV')).toBeInTheDocument()
-    expect(screen.getByText('Chế độ giả lập, không đăng lên Facebook thật')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /Kết nối thêm Fanpage/ }))
+    const card = await screen.findByRole('region', { name: 'Fanpage Facebook' })
+    expect(within(card).getByText('Fanpage ProCV')).toBeInTheDocument()
+    expect(within(card).getByText('Giả lập, không đăng lên Facebook thật')).toBeInTheDocument()
+    await user.click(within(card).getByRole('button', { name: 'Kết nối thêm' }))
 
     await waitFor(() => expect(assign).toHaveBeenCalledWith('https://www.facebook.com/v21.0/dialog/oauth?state=x'))
+    expect(mocks.startSocialConnect.mock.calls[0][0]).toBe('facebook_page')
     vi.unstubAllGlobals()
   })
 
-  it('lets the recruiter pick a page after returning from Facebook', async () => {
+  it('lets the recruiter pick an account after returning from the network', async () => {
     const user = userEvent.setup()
     mocks.getSocialConnections.mockResolvedValue([])
-    mocks.getPendingFacebookPages.mockResolvedValue([{ id: 'page_1', name: 'Tuyển dụng ProCV', picture_url: '' }])
-    mocks.selectFacebookPage.mockResolvedValue({ public_id: 'soc_1', page_name: 'Tuyển dụng ProCV' })
-    renderPanel('/tuyendung/app/account/settings/integrations?fb_select=nonce1')
+    mocks.getPendingSocialAccounts.mockResolvedValue([{ id: 'page_1', name: 'Tuyển dụng ProCV', picture_url: '' }])
+    mocks.selectSocialAccount.mockResolvedValue({ public_id: 'soc_1', account_name: 'Tuyển dụng ProCV' })
+    renderPanel('/tuyendung/app/account/settings/integrations?network=facebook_page&social_select=nonce1')
 
-    await user.click(await screen.findByRole('radio', { name: /Tuyển dụng ProCV/ }))
-    await user.click(screen.getByRole('button', { name: 'Kết nối Fanpage' }))
+    const picker = await screen.findByRole('dialog')
+    await user.click(await within(picker).findByRole('radio', { name: /Tuyển dụng ProCV/ }))
+    await user.click(within(picker).getByRole('button', { name: 'Kết nối' }))
 
-    await waitFor(() => expect(mocks.selectFacebookPage).toHaveBeenCalledWith('nonce1', 'page_1'))
-    expect(message.success).toHaveBeenCalledWith('Đã kết nối Fanpage "Tuyển dụng ProCV".')
+    await waitFor(() => expect(mocks.selectSocialAccount).toHaveBeenCalledWith('facebook_page', 'nonce1', 'page_1'))
+    expect(message.success).toHaveBeenCalledWith('Đã kết nối Fanpage Facebook "Tuyển dụng ProCV".')
   })
 
-  it('explains a failed return from Facebook', async () => {
+  it('explains a failed return from the network', async () => {
     mocks.getSocialConnections.mockResolvedValue([])
-    renderPanel('/tuyendung/app/account/settings/integrations?fb_error=denied')
+    renderPanel('/tuyendung/app/account/settings/integrations?network=facebook_page&social_error=denied')
 
-    expect(await screen.findByText(/Bạn chưa cấp quyền cho ProCV/)).toBeInTheDocument()
+    expect(await screen.findByText('Bạn chưa cấp quyền cho ProCV trên Facebook nên chưa kết nối được.')).toBeInTheDocument()
   })
 })

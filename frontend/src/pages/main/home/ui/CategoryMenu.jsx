@@ -25,15 +25,15 @@ export default function CategoryMenu({ categories, banner }) {
     setActiveId(null)
   }
 
-  if (parents.length === 0) return banner || null
+  if (parents.length === 0) return banner ? <div className="aspect-[2/1] md:aspect-auto md:h-[360px]">{banner}</div> : null
 
   return (
     <div
-      className="flex bg-white rounded-lg border border-gray-200 overflow-hidden min-h-[360px]"
+      className="flex flex-col md:flex-row bg-white rounded-lg border border-gray-200 overflow-hidden md:min-h-[360px]"
       onMouseLeave={() => setActiveId(null)}
     >
       {/* Cột 1: NHÓM NGHỀ */}
-      <div className="w-full md:w-64 shrink-0 border-r border-gray-100 flex flex-col">
+      <div className="w-full md:w-64 shrink-0 md:border-r border-gray-100 flex flex-col">
         <ul className="flex-1 py-2">
           {pageParents.map((p) => (
             <li key={p.id}>
@@ -66,10 +66,11 @@ export default function CategoryMenu({ categories, banner }) {
         )}
       </div>
 
-      {/* Cột 2 + 3: NGHỀ | VỊ TRÍ CHUYÊN MÔN (hiện khi hover nhóm nghề) */}
-      <div className="hidden md:flex flex-1 flex-col">
-        {activeId != null ? (
-          <>
+      {/* Cột 2 + 3: NGHỀ | VỊ TRÍ CHUYÊN MÔN (hiện khi hover nhóm nghề, chỉ desktop).
+          Mobile không có hover nên carousel luôn hiện, đặt lên trên danh sách nhóm nghề. */}
+      <div className="order-first md:order-none flex flex-1 flex-col min-w-0">
+        {activeId != null && (
+          <div className="hidden md:flex flex-1 flex-col">
             <div className="grid grid-cols-[200px_1fr] gap-3 px-5 pt-4 pb-2 text-xs font-semibold text-gray-400 tracking-wide border-b border-gray-50">
               <span>NGHỀ</span>
               <span>VỊ TRÍ CHUYÊN MÔN</span>
@@ -101,9 +102,12 @@ export default function CategoryMenu({ categories, banner }) {
                 ))}
               </div>
             )}
-          </>
-        ) : (
-          <div className="flex-1 p-3">{banner}</div>
+          </div>
+        )}
+        {banner && (
+          <div className={`p-2 sm:p-3 aspect-[2/1] md:aspect-auto md:flex-1 ${activeId != null ? 'md:hidden' : ''}`}>
+            {banner}
+          </div>
         )}
       </div>
     </div>

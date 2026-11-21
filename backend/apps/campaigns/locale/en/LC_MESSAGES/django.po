@@ -25,26 +25,62 @@ msgstr "The maximum budget cannot be lower than the minimum."
 msgid "Chi phí phải lớn hơn 0."
 msgstr "The cost must be greater than 0."
 
+msgid "Trang tuyển dụng của chiến dịch"
+msgstr "Campaign careers page"
+
+msgid "Trang công ty"
+msgstr "Company page"
+
 msgid "Facebook không mở được link trong bài. Link phải là địa chỉ công khai, không phải localhost."
 msgstr "Facebook could not open the link in the post. The link must be a public address, not localhost."
 
-msgid "Kết nối Fanpage đã hết hạn. Hãy kết nối lại trong Cài đặt tài khoản."
-msgstr "The Facebook Page connection has expired. Reconnect it in Account settings."
+msgid "Kết nối đã hết hạn. Hãy kết nối lại trong Cài đặt tài khoản."
+msgstr "The connection has expired. Reconnect it in Account settings."
 
-msgid "Fanpage chưa cho ProCV quyền đăng bài. Hãy kết nối lại và bật quyền đăng bài."
-msgstr "The Facebook Page has not allowed ProCV to publish posts. Reconnect it and enable the publishing permission."
+msgid "Tài khoản chưa cho ProCV quyền đăng bài. Hãy kết nối lại và bật quyền đăng bài."
+msgstr "The account hasn't given ProCV permission to post. Reconnect and allow posting."
 
-msgid "Facebook đang tạm chặn đăng bài từ Fanpage này. Hãy thử lại sau."
-msgstr "Facebook is temporarily blocking posts from this Page. Please try again later."
+msgid "Mạng xã hội đang tạm chặn đăng bài từ tài khoản này. Hãy thử lại sau."
+msgstr "The social network is temporarily blocking posts from this account. Try again later."
 
-msgid "Facebook từ chối nội dung bài. Hãy sửa nội dung rồi đăng lại."
-msgstr "Facebook rejected the post content. Edit the content and post again."
+msgid "Mạng xã hội từ chối nội dung bài. Hãy sửa nội dung rồi đăng lại."
+msgstr "The social network rejected the post content. Edit it and post again."
 
-msgid "Facebook không phản hồi kịp. Hệ thống đã thử lại nhiều lần."
-msgstr "Facebook did not respond in time. The system retried several times."
+msgid "Mạng xã hội không phản hồi kịp. Hệ thống đã thử lại nhiều lần."
+msgstr "The social network did not respond in time. The system retried several times."
 
-msgid "Không kết nối được tới Facebook. Hệ thống đã thử lại nhiều lần."
-msgstr "Could not connect to Facebook. The system retried several times."
+msgid "Không kết nối được tới mạng xã hội. Hệ thống đã thử lại nhiều lần."
+msgstr "Could not reach the social network. The system retried several times."
+
+msgid "Tài khoản đã đăng quá số bài Instagram cho phép trong 24 giờ. Hệ thống sẽ thử lại sau."
+msgstr "The account reached Instagram's 24-hour posting limit. The system will retry later."
+
+msgid "Instagram không tải được ảnh của bài. Hãy đổi ảnh rồi đăng lại."
+msgstr "Instagram couldn't download the post's images. Change the images and post again."
+
+msgid "Mạng xã hội không xử lý được bài hoặc ảnh của bài. Hãy đổi ảnh rồi đăng lại."
+msgstr "The social network couldn't process the post or its images. Change the images and post again."
+
+msgid "Mạng xã hội xử lý bài quá lâu. Hệ thống đã thử lại nhiều lần."
+msgstr "The social network took too long to process the post. The system retried several times."
+
+msgid "Bài Instagram cần ít nhất một ảnh."
+msgstr "An Instagram post needs at least one image."
+
+msgid "Mạng xã hội không phản hồi khi tạo bài nên không rõ bài đã lên chưa. Hãy xem trang cá nhân trước khi đăng lại để tránh trùng bài."
+msgstr "The social network didn't respond while creating the post, so it's unclear whether it went live. Check the profile before posting again to avoid a duplicate."
+
+msgid "Kết nối LinkedIn đã hết hạn. Hãy kết nối lại trong Cài đặt tài khoản."
+msgstr "The LinkedIn connection has expired. Reconnect it in Account settings."
+
+msgid "LinkedIn chưa cho ProCV quyền đăng bài. Hãy kết nối lại và đồng ý quyền đăng bài."
+msgstr "LinkedIn hasn't given ProCV permission to post. Reconnect and allow posting."
+
+msgid "Tài khoản đã đăng quá số bài LinkedIn cho phép trong ngày."
+msgstr "The account reached LinkedIn's daily posting limit."
+
+msgid "Mạng xã hội này không cho gỡ bài tự động. Hãy mở bài và tự xóa."
+msgstr "This social network does not allow automatic removal. Open the post and delete it yourself."
 
 msgid "Chiến dịch đang tạm dừng nên bài được hoãn."
 msgstr "The recruitment campaign is paused, so the post was postponed."
@@ -55,11 +91,11 @@ msgstr "The recruitment campaign has ended, so the post was cancelled."
 msgid "Chiến dịch đã bàn giao cho người khác nên bài bị hủy."
 msgstr "The recruitment campaign was handed over to someone else, so the post was cancelled."
 
-msgid "Fanpage đã ngắt kết nối. Hãy kết nối lại trong Cài đặt tài khoản."
-msgstr "The Facebook Page was disconnected. Reconnect it in Account settings."
+msgid "Tài khoản đã ngắt kết nối. Hãy kết nối lại trong Cài đặt tài khoản."
+msgstr "The account was disconnected. Reconnect it in Account settings."
 
-msgid "Facebook báo lỗi (%(code)s). Hãy thử đăng lại."
-msgstr "Facebook reported an error (%(code)s). Please try posting again."
+msgid "%(network)s báo lỗi (%(code)s). Hãy thử đăng lại."
+msgstr "%(network)s returned an error (%(code)s). Try posting again."
 
 msgid "Đã dùng hết lượt soạn bằng AI hôm nay."
 msgstr "You have used all of today's AI drafts."
@@ -69,6 +105,18 @@ msgstr "Choose xlsx or pdf."
 
 msgid "Chọn một ảnh."
 msgstr "Choose an image."
+
+msgid "Fanpage Facebook"
+msgstr "Facebook Page"
+
+msgid "Instagram doanh nghiệp"
+msgstr "Instagram Business"
+
+msgid "Threads"
+msgstr "Threads"
+
+msgid "Trang cá nhân LinkedIn"
+msgstr "LinkedIn profile"
 
 msgid "Nháp"
 msgstr "Draft"
@@ -151,11 +199,11 @@ msgstr "Distribution channel added"
 msgid "Đã đăng lên kênh"
 msgstr "Posted to channel"
 
-msgid "Đã đăng lên Fanpage"
-msgstr "Posted to Facebook Page"
+msgid "Đã tự đăng bài"
+msgstr "Post published automatically"
 
-msgid "Đã gỡ bài khỏi Fanpage"
-msgstr "Post removed from Facebook Page"
+msgid "Đã tự gỡ bài"
+msgstr "Post removed automatically"
 
 msgid "Thêm tin tuyển dụng"
 msgstr "Job posting added"
@@ -181,9 +229,6 @@ msgstr "Held due to account status"
 msgid "Gỡ giữ do trạng thái tài khoản"
 msgstr "Account status hold released"
 
-msgid "Fanpage Facebook"
-msgstr "Facebook Page"
-
 msgid "Nhóm Facebook"
 msgstr "Facebook group"
 
@@ -196,11 +241,8 @@ msgstr "Flyer / QR"
 msgid "Kênh khác"
 msgstr "Other channel"
 
-msgid "Trang tuyển dụng của chiến dịch"
-msgstr "Campaign careers page"
-
-msgid "Một tin tuyển dụng"
-msgstr "A single job posting"
+msgid "Link riêng từng tin"
+msgstr "A link for each job"
 
 msgid "Chưa có"
 msgstr "None yet"
@@ -238,9 +280,6 @@ msgstr "Publish draft job posting"
 msgid "Gắn tin đang hiển thị"
 msgstr "Attach live job posting"
 
-msgid "Giả lập"
-msgstr "Simulated"
-
 msgid "Đang kết nối"
 msgstr "Connected"
 
@@ -265,11 +304,11 @@ msgstr "Postponed while the campaign is paused"
 msgid "Đăng không thành công"
 msgstr "Failed to publish"
 
-msgid "Đã gỡ khỏi Fanpage"
-msgstr "Removed from Facebook Page"
+msgid "Đã gỡ bài"
+msgstr "Removed"
 
-msgid "Chưa gỡ được khỏi Fanpage"
-msgstr "Could not be removed from Facebook Page"
+msgid "Cần tự gỡ bài"
+msgstr "Remove manually"
 
 msgid "Mời từ kho ứng viên"
 msgstr "Invited from talent pool"
@@ -325,25 +364,17 @@ msgstr "The end date cannot be earlier than the application deadline of an open 
 msgid "Bạn không có quyền với chiến dịch này."
 msgstr "You do not have access to this recruitment campaign."
 
+msgid "Có tin không thuộc chiến dịch."
+msgstr "Some jobs do not belong to the campaign."
+
 msgid "Chiến dịch đã kết thúc, không thêm kênh được."
 msgstr "The recruitment campaign has ended, so no channels can be added."
 
 msgid "Chiến dịch đã có kênh cùng tên."
 msgstr "This campaign already has a channel with the same name."
 
-msgid "Chọn tin mà link sẽ dẫn tới."
-msgstr "Choose the job posting the link should lead to."
-
-msgid "Tin này không thuộc chiến dịch."
-msgstr "This job posting does not belong to the campaign."
-
 msgid "Chúng tôi"
 msgstr "We"
-
-msgid "• %(title)s (%(count)s người, %(salary)s)"
-msgid_plural "• %(title)s (%(count)s người, %(salary)s)"
-msgstr[0] "• %(title)s (%(count)s opening, %(salary)s)"
-msgstr[1] "• %(title)s (%(count)s openings, %(salary)s)"
 
 msgid "%(company)s đang tuyển dụng: %(campaign)s"
 msgstr "%(company)s is hiring: %(campaign)s"
@@ -357,8 +388,16 @@ msgstr "jobs"
 msgid "Ứng tuyển ngay: %(link)s"
 msgstr "Apply now: %(link)s"
 
+msgid "• %(title)s (%(count)s người, %(salary)s)"
+msgid_plural "• %(title)s (%(count)s người, %(salary)s)"
+msgstr[0] "• %(title)s (%(count)s opening, %(salary)s)"
+msgstr[1] "• %(title)s (%(count)s openings, %(salary)s)"
+
 msgid "%(company)s đang tìm đồng đội cho các vị trí:"
 msgstr "%(company)s is looking for teammates for these positions:"
+
+msgid "Xem tất cả vị trí: %(link)s"
+msgstr "See all openings: %(link)s"
 
 msgid "Ứng tuyển tại: %(link)s"
 msgstr "Apply here: %(link)s"
@@ -599,11 +638,17 @@ msgstr "Campaign \"%(campaign)s\" ends on %(date)s. Extend it if you need to kee
 msgid "Bạn không có quyền với kết nối này."
 msgstr "You do not have access to this connection."
 
-msgid "Phiên chọn Fanpage đã hết hạn. Hãy kết nối lại."
-msgstr "The Facebook Page selection session has expired. Please connect again."
+msgid "Phiên chọn tài khoản đã hết hạn. Hãy kết nối lại."
+msgstr "The account selection session has expired. Connect again."
 
-msgid "Fanpage không có trong danh sách vừa kết nối."
-msgstr "This Facebook Page is not in the list you just connected."
+msgid "Tài khoản không có trong danh sách vừa kết nối."
+msgstr "This account is not in the list you just connected."
+
+msgid "Kết nối %(network)s \"%(account)s\" đã hết hạn. Hãy kết nối lại để tiếp tục đăng."
+msgstr "The %(network)s connection \"%(account)s\" has expired. Reconnect it to keep posting."
+
+msgid "Kết nối %(network)s \"%(account)s\" hết hạn ngày %(date)s. Hãy kết nối lại trước ngày đó để không gián đoạn đăng bài."
+msgstr "The %(network)s connection \"%(account)s\" expires on %(date)s. Reconnect before then to keep posting."
 
 msgid "Ảnh bìa công ty"
 msgstr "Company cover image"
@@ -614,8 +659,8 @@ msgstr "Company logo"
 msgid "Chiến dịch đã kết thúc, không đăng thêm được."
 msgstr "The recruitment campaign has ended, so nothing more can be posted."
 
-msgid "Chỉ kênh Fanpage Facebook mới đăng tự động được."
-msgstr "Only Facebook Page channels can be posted automatically."
+msgid "Kênh này không tự đăng bài được."
+msgstr "This channel cannot publish automatically."
 
 msgid "Ảnh bị lỗi hoặc không đọc được."
 msgstr "The image is corrupted or cannot be read."
@@ -631,17 +676,14 @@ msgid_plural "Mỗi bài tối đa %(count)s ảnh."
 msgstr[0] "Each post can have at most %(count)s image."
 msgstr[1] "Each post can have at most %(count)s images."
 
+msgid "Chưa gỡ được bài kênh \"%(channel)s\" khỏi %(network)s. Hãy tự xóa bài: %(permalink)s"
+msgstr "Could not remove the post of channel \"%(channel)s\" from %(network)s. Please delete it yourself: %(permalink)s"
+
 msgid "Bạn không có quyền với bài đăng này."
 msgstr "You do not have access to this post."
 
-msgid "Kết nối Fanpage \"%(page)s\" đã hết hạn. Hãy kết nối lại để tiếp tục đăng."
-msgstr "The connection to Facebook Page \"%(page)s\" has expired. Reconnect it to keep posting."
-
-msgid "Chưa đăng được bài của kênh \"%(channel)s\" lên Fanpage. Mở chiến dịch để hẹn lại."
-msgstr "The post for channel \"%(channel)s\" could not be published to the Facebook Page. Open the campaign to reschedule it."
-
-msgid "Fanpage chưa kết nối hoặc không thuộc tài khoản này."
-msgstr "The Facebook Page is not connected or does not belong to this account."
+msgid "Chưa đăng được bài của kênh \"%(channel)s\" lên %(network)s. Mở chiến dịch để hẹn lại."
+msgstr "Could not publish the post of channel \"%(channel)s\" to %(network)s. Open the campaign to reschedule."
 
 msgid "Chọn thời điểm từ bây giờ trở đi."
 msgstr "Choose a time from now onwards."
@@ -655,8 +697,14 @@ msgstr "The post has already been published or cancelled."
 msgid "Chỉ hẹn lại được bài chưa đăng."
 msgstr "Only unpublished posts can be rescheduled."
 
-msgid "Chưa gỡ được bài kênh \"%(channel)s\" khỏi Fanpage. Hãy tự xóa bài: %(permalink)s"
-msgstr "The post for channel \"%(channel)s\" could not be removed from the Facebook Page. Please delete it yourself: %(permalink)s"
+msgid "%(network)s chưa kết nối hoặc không thuộc tài khoản này."
+msgstr "%(network)s is not connected or does not belong to this account."
+
+msgid "%(network)s nhận tối đa %(count)s ký tự mỗi bài, tính cả link."
+msgstr "%(network)s accepts at most %(count)s characters per post, including the link."
+
+msgid "%(network)s cần ít nhất một ảnh."
+msgstr "%(network)s needs at least one image."
 
 msgid "Báo cáo tuần"
 msgstr "Weekly report"

@@ -14,7 +14,7 @@ export const DEFAULT_SITE_SETTINGS = {
   seo_google_site_verification: '',
   footer_logo_url: '',
   footer_description: 'ProCV - Nền tảng việc làm và phát triển sự nghiệp cùng AI dành cho người Việt.',
-  footer_copyright: '© 2026 ProCV. All rights reserved.',
+  footer_copyright: '© {year} {site_name}. All rights reserved.',
   footer_show_link_groups: true,
   footer_show_contact: true,
   footer_show_apps: true,

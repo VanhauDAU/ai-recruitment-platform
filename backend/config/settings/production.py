@@ -39,12 +39,6 @@ if set(ALLOWED_HOSTS).issubset({'localhost', '127.0.0.1'}):
     _errors.append('ALLOWED_HOSTS production phải chứa domain hợp lệ.')
 if not RECAPTCHA_SECRET_KEY:
     _errors.append('RECAPTCHA_SECRET_KEY là bắt buộc ở production.')
-if not 1 <= JOB_POSTING_DEFAULT_DEADLINE_DAYS <= JOB_POSTING_MAX_DEADLINE_DAYS:
-    _errors.append('JOB_POSTING_DEFAULT_DEADLINE_DAYS phải từ 1 đến JOB_POSTING_MAX_DEADLINE_DAYS.')
-if JOB_POSTING_MAX_DEADLINE_DAYS > JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS:
-    _errors.append('JOB_POSTING_MAX_DEADLINE_DAYS không được vượt quá vòng đời công khai tối đa.')
-if JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS > 90:
-    _errors.append('JOB_POSTING_MAX_PUBLIC_LIFETIME_DAYS không được vượt quá 90 ngày.')
 if EMPLOYER_BADGE_POLICY_MODE not in {'shadow', 'enforce'}:
     _errors.append('EMPLOYER_BADGE_POLICY_MODE phải là shadow hoặc enforce.')
 
@@ -244,13 +238,44 @@ if not AUTH_REFRESH_COOKIE_SECURE:
 if AUTH_REFRESH_COOKIE_SAMESITE not in {'Lax', 'Strict'}:
     _errors.append('Refresh cookie production phải dùng SameSite=Lax hoặc Strict.')
 
-if CAMPAIGN_SOCIAL_PROVIDER not in {'fake', 'facebook'}:
-    _errors.append('CAMPAIGN_SOCIAL_PROVIDER phải là fake hoặc facebook.')
-if CAMPAIGN_SOCIAL_PROVIDER == 'facebook':
+_unknown_networks = set(CAMPAIGN_SOCIAL_LIVE_NETWORKS) - {
+    'facebook_page',
+    'instagram',
+    'threads',
+    'linkedin',
+}
+if _unknown_networks:
+    _errors.append(
+        'CAMPAIGN_SOCIAL_LIVE_NETWORKS có mạng không hỗ trợ: '
+        + ', '.join(sorted(_unknown_networks))
+    )
+# Fanpage và Instagram cùng đăng nhập qua Meta App của FACEBOOK_APP_ID.
+if {'facebook_page', 'instagram'} & set(CAMPAIGN_SOCIAL_LIVE_NETWORKS):
     if not (FACEBOOK_APP_ID and FACEBOOK_APP_SECRET):
         _errors.append('FACEBOOK_APP_ID và FACEBOOK_APP_SECRET là bắt buộc khi đăng Facebook.')
+if 'threads' in CAMPAIGN_SOCIAL_LIVE_NETWORKS and not (THREADS_APP_ID and THREADS_APP_SECRET):
+    _errors.append('THREADS_APP_ID và THREADS_APP_SECRET là bắt buộc khi đăng Threads.')
+if 'linkedin' in CAMPAIGN_SOCIAL_LIVE_NETWORKS and not (
+    (LINKEDIN_SOCIAL_CLIENT_ID or OAUTH_LINKEDIN_CLIENT_ID)
+    and (LINKEDIN_SOCIAL_CLIENT_SECRET or OAUTH_LINKEDIN_CLIENT_SECRET)
+):
+    _errors.append(
+        'Cần LINKEDIN_SOCIAL_CLIENT_ID/SECRET (hoặc OAUTH_LINKEDIN_*) khi đăng LinkedIn.'
+    )
+for _network, _redirect in (
+    ('threads', THREADS_OAUTH_REDIRECT_URI),
+    ('linkedin', LINKEDIN_OAUTH_REDIRECT_URI),
+):
+    if (
+        _network in CAMPAIGN_SOCIAL_LIVE_NETWORKS
+        and _redirect
+        and not _redirect.startswith('https://')
+    ):
+        _errors.append(f'{_network.upper()}_OAUTH_REDIRECT_URI production phải dùng HTTPS.')
+if 'facebook_page' in CAMPAIGN_SOCIAL_LIVE_NETWORKS:
     if not FACEBOOK_OAUTH_REDIRECT_URI.startswith('https://'):
         _errors.append('FACEBOOK_OAUTH_REDIRECT_URI production phải dùng HTTPS.')
+if CAMPAIGN_SOCIAL_LIVE_NETWORKS:
     try:
         Fernet(CAMPAIGN_SOCIAL_TOKEN_ENCRYPTION_KEY.encode())
     except (TypeError, ValueError):

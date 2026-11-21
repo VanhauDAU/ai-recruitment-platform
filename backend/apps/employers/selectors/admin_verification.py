@@ -6,6 +6,8 @@ from django.db.models import Count, IntegerField, OuterRef, Prefetch, Q, Subquer
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
+from apps.sitecontent.selectors import moderation_sla_hours
+
 from ..models import (
     Company,
     CompanyDocument,
@@ -189,7 +191,7 @@ def admin_verification_summary():
         'pending': base.filter(pending_filter).distinct().count(),
         'overdue': base.filter(
             pending_filter,
-            submitted_at__lt=now - timedelta(hours=72),
+            submitted_at__lt=now - timedelta(hours=moderation_sla_hours()),
         )
         .distinct()
         .count(),

@@ -59,28 +59,48 @@ class ChannelTestMixin(JobPostingFixture):
 
 
 class CampaignChannelApiTests(ChannelTestMixin, TestCase):
-    def test_channels_get_tracked_links_and_validate_their_target(self):
-        foreign_job = self.make_active_job()
+    def test_channels_get_tracked_links_for_every_destination(self):
+        job = self.make_active_job(campaign=self.campaign)
         channel = self.add_channel()
 
         listed = self.client.get(self.channels_url())
         duplicate = self.client.post(
             self.channels_url(), {'kind': 'zalo', 'label': 'nhóm it hà nội'}, format='json'
         )
-        foreign_target = self.client.post(
-            self.channels_url(),
-            {'kind': 'zalo', 'label': 'Zalo', 'target': 'job', 'job': foreign_job.public_id},
-            format='json',
-        )
 
+        base = f'{settings.FRONTEND_URL.rstrip("/")}/r/{channel.code}'
+        self.assertEqual(listed.data[0]['link'], base)
         self.assertEqual(
-            listed.data[0]['link'], f'{settings.FRONTEND_URL.rstrip("/")}/r/{channel.code}'
+            [(link['key'], link['url']) for link in listed.data[0]['links']],
+            [
+                ('landing', base),
+                ('company', f'{base}/cong-ty'),
+                (job.public_id, f'{base}/{job.public_id}'),
+            ],
         )
         self.assertEqual(listed.data[0]['clicks'], 0)
         self.assertEqual(duplicate.status_code, 400)
-        self.assertEqual(foreign_target.status_code, 400)
-        self.assertIn('job', foreign_target.data)
         self.assertTrue(self.campaign.activities.filter(event_type='channel_added').exists())
+
+    def test_one_channel_posts_about_any_jobs_of_its_campaign(self):
+        job_a = self.make_active_job(campaign=self.campaign)
+        job_b = self.make_active_job(campaign=self.campaign)
+        foreign_job = self.make_active_job()
+        channel = self.add_channel(kind='facebook_page', label='Fanpage')
+        url = self.channel_url('employer-campaign-channel-detail', channel)
+        base = f'{settings.FRONTEND_URL.rstrip("/")}/r/{channel.code}'
+
+        single = self.client.patch(url, {'target': 'job', 'jobs': [job_a.public_id]}, format='json')
+        both = self.client.patch(url, {'jobs': [job_a.public_id, job_b.public_id]}, format='json')
+        company = self.client.patch(url, {'target': 'company'}, format='json')
+        foreign = self.client.patch(url, {'jobs': [foreign_job.public_id]}, format='json')
+
+        self.assertEqual(single.data['link'], f'{base}/{job_a.public_id}')
+        self.assertEqual(set(both.data['jobs']), {job_a.public_id, job_b.public_id})
+        self.assertEqual(both.data['link'], base)
+        self.assertEqual(company.data['link'], f'{base}/cong-ty')
+        self.assertEqual(foreign.status_code, 400)
+        self.assertIn('jobs', foreign.data)
 
     def test_marking_posted_and_editing_content(self):
         channel = self.add_channel()
@@ -119,6 +139,30 @@ class CampaignChannelApiTests(ChannelTestMixin, TestCase):
         self.assertEqual(response.data['content_source'], 'template')
         self.assertIn('Backend Engineer', response.data['content']['body'])
         self.assertIn('{link}', response.data['content']['body'])
+
+    @override_settings(AI_RUNTIME_ENABLED=False)
+    def test_drafting_a_post_with_a_link_per_job(self):
+        job_a = self.make_active_job(campaign=self.campaign)
+        job_b = self.make_active_job(campaign=self.campaign)
+        self.make_active_job(campaign=self.campaign)
+        channel = self.add_channel()
+        self.client.patch(
+            self.channel_url('employer-campaign-channel-detail', channel),
+            {'target': 'job', 'jobs': [job_a.public_id, job_b.public_id]},
+            format='json',
+        )
+
+        response = self.client.post(self.channel_url('employer-campaign-channel-content', channel))
+
+        base = f'{settings.FRONTEND_URL.rstrip("/")}/r/{channel.code}'
+        body = response.data['content']['body']
+        rendered = response.data['rendered_content']['body']
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data['target'], 'job')
+        self.assertEqual(body.count('{link:'), 2)
+        self.assertIn(f'{base}/{job_a.public_id}', rendered)
+        self.assertIn(f'{base}/{job_b.public_id}', rendered)
+        self.assertIn(f'Xem tất cả vị trí: {base}\n', rendered + '\n')
 
     def test_report_compares_channels_costs_and_organic_sources(self):
         job = self.make_active_job(campaign=self.campaign)
@@ -190,20 +234,27 @@ class TrackedLinkRedirectTests(ChannelTestMixin, TestCase):
             (2, 1, 1, 0),
         )
 
-    def test_job_target_goes_to_the_job_only_while_the_campaign_runs(self):
+    def test_job_and_company_links_open_their_page_only_while_the_campaign_runs(self):
         job = self.make_active_job(campaign=self.campaign)
+        foreign_job = self.make_active_job()
         Job.objects.filter(pk=job.pk).update(slug='backend-engineer-x')
-        channel = self.add_channel(target='job', job=job.public_id)
+        channel = self.add_channel()
 
-        live = self.click(channel)
-        RecruitmentCampaign.objects.filter(pk=self.campaign.pk).update(status=Status.PAUSED)
-        paused = self.click(channel)
-
-        self.assertTrue(live['Location'].startswith('/viec-lam/backend-engineer-x?ref='))
-        self.assertTrue(paused['Location'].startswith(f'/tuyen-dung/{self.campaign.slug}?ref='))
-        self.assertEqual(
-            CampaignChannelClickDaily.objects.get(channel=channel).inactive_click_count, 1
+        live = self.client.get(f'/r/{channel.code}/{job.public_id}', HTTP_USER_AGENT=BROWSER)
+        company = self.client.get(f'/r/{channel.code}/cong-ty', HTTP_USER_AGENT=BROWSER)
+        foreign = self.client.get(
+            f'/r/{channel.code}/{foreign_job.public_id}', HTTP_USER_AGENT=BROWSER
         )
+        RecruitmentCampaign.objects.filter(pk=self.campaign.pk).update(status=Status.PAUSED)
+        paused = self.client.get(f'/r/{channel.code}/{job.public_id}', HTTP_USER_AGENT=BROWSER)
+
+        landing = f'/tuyen-dung/{self.campaign.slug}?ref='
+        self.assertTrue(live['Location'].startswith('/viec-lam/backend-engineer-x?ref='))
+        self.assertTrue(company['Location'].startswith(f'/cong-ty/{self.company.slug}?ref='))
+        self.assertTrue(foreign['Location'].startswith(landing))
+        self.assertTrue(paused['Location'].startswith(landing))
+        day = CampaignChannelClickDaily.objects.get(channel=channel)
+        self.assertEqual((day.click_count, day.inactive_click_count), (4, 1))
 
     def test_unknown_code_is_not_found(self):
         self.assertEqual(self.client.get('/r/nothing1').status_code, 404)

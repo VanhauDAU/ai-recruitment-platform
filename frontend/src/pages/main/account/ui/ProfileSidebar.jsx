@@ -3,10 +3,12 @@ import {
   QrcodeOutlined, QuestionCircleOutlined, WarningFilled,
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Avatar } from 'antd'
+import { Avatar, Popover } from 'antd'
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { getMyCvs } from '@/entities/cv/cv'
+import { AiPolicyLink, AiRecommendationSwitch } from '@/features/main/job/toggle-ai-recommendation'
+import { m } from '@/shared/config/i18n'
 import { useSession } from '@/entities/account/session'
 import { AvatarEditorModal } from '@/features/common/account/edit-profile'
 import { RecruiterSearchListModal } from '@/features/main/cv/update-recruiter-visibility'
@@ -74,22 +76,27 @@ function GreetingCard() {
   )
 }
 
+// Công tắc đồng ý gợi ý việc làm bằng AI (AI_RECOMMENDATION). Độc lập với nhu cầu
+// công việc; bật hay tắt đều hỏi lại bằng popup.
 function SuggestionToggleRow() {
-  const { user } = useSession()
-  const configured = Boolean(user?.job_preferences_configured)
+  const { siteName } = useSiteSettings()
+  const help = (
+    <p className="max-w-64 text-xs leading-5 text-slate-600">
+      {m.candidate_reco_toggle_help({ site: siteName })} <AiPolicyLink />.
+    </p>
+  )
 
   return (
     <div className="flex items-center justify-between gap-3 border-t border-slate-100 px-4 py-3">
       <span className="flex items-center gap-1.5 text-sm font-semibold text-slate-700">
-        Gợi ý việc làm
-        <QuestionCircleOutlined className="text-xs text-slate-400" title="Nhận gợi ý việc làm phù hợp với hồ sơ của bạn" />
+        {m.candidate_reco_toggle_label()}
+        <Popover content={help} trigger={['hover', 'click']} placement="bottom">
+          <button type="button" aria-label={m.candidate_reco_toggle_help_label()} className="cursor-pointer text-xs text-slate-400 hover:text-slate-600">
+            <QuestionCircleOutlined />
+          </button>
+        </Popover>
       </span>
-      <Link
-        to="/tai-khoan/cai-dat-goi-y-viec-lam"
-        className="rounded-full border border-[var(--brand-primary)] px-4 py-1.5 text-sm font-bold text-[var(--brand-primary)] transition-colors duration-200 hover:bg-[var(--brand-primary-soft)]"
-      >
-        {configured ? 'Quản lý' : 'Thiết lập'}
-      </Link>
+      <AiRecommendationSwitch />
     </div>
   )
 }

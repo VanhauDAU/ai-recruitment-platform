@@ -1,44 +1,147 @@
 {
-  "_note": "Bảng gộp kỹ năng áp vào danh mục trước khi nhập 100 JD (2026-11-15). aliases: cách viết khác được nối vào một kỹ năng. groups: nhóm để bước chấm điểm tách kỹ năng mềm và phẩm chất khỏi kỹ năng chuyên môn.",
+  "_note": "Bảng gộp kỹ năng áp vào danh mục trước khi nhập 100 JD (2026-11-15; bổ sung 2026-11-21). aliases: cách viết khác được nối vào một kỹ năng. groups: nhóm để bước chấm điểm tách kỹ năng mềm, phẩm chất và tên vị trí khỏi kỹ năng chuyên môn (hai nhóm sau không được đếm). split: alias quá rộng được gỡ ra thành kỹ năng riêng.",
   "aliases": {
-    "Data Analysis": ["Phân tích dữ liệu"],
-    "Manual Testing": ["Viết test case"],
-    "Excel": ["Excel nâng cao"],
-    "Microsoft Office": ["Tin học văn phòng", "MS Office"],
-    "Telesales": ["Cold calling"],
-    "Chăm sóc khách hàng": ["Customer Service"],
-    "Xử lý sự cố": ["Troubleshooting"],
-    "Dựng video": ["Video Production"],
-    "Quay phim": ["Quay video"],
-    "Sáng tạo nội dung": ["Content Creation"],
-    "Google Analytics": ["GA4"],
-    "Quản lý đội nhóm": ["Team leading", "Lãnh đạo"],
-    "Sắp xếp công việc": ["Tổ chức công việc"],
-    "Cẩn thận": ["Tỉ mỉ"],
-    "Kiên trì": ["Kiên nhẫn"],
-    "Trung thực": ["Chính trực"],
-    "Chịu áp lực": ["Chịu áp lực doanh số"],
-    "Bảo mật": ["Information Security"],
-    "LLM": ["LLM API"],
-    "AI": ["Ứng dụng AI"],
-    "Social media": ["Mạng xã hội"],
-    "JavaScript": ["JS"],
-    "Golang": ["Go"],
-    "Kubernetes": ["K8s"],
-    "AWS": ["Amazon Web Services"],
-    "GCP": ["Google Cloud"]
+    "Data Analysis": [
+      "Phân tích dữ liệu"
+    ],
+    "Manual Testing": [
+      "Viết test case"
+    ],
+    "Excel": [
+      "Excel nâng cao"
+    ],
+    "Microsoft Office": [
+      "Tin học văn phòng",
+      "MS Office"
+    ],
+    "Telesales": [
+      "Cold calling"
+    ],
+    "Chăm sóc khách hàng": [
+      "Customer Service"
+    ],
+    "Xử lý sự cố": [
+      "Troubleshooting"
+    ],
+    "Dựng video": [
+      "Video Production"
+    ],
+    "Quay phim": [
+      "Quay video"
+    ],
+    "Sáng tạo nội dung": [
+      "Content Creation"
+    ],
+    "Google Analytics": [
+      "GA4"
+    ],
+    "Quản lý đội nhóm": [
+      "Team leading",
+      "Lãnh đạo"
+    ],
+    "Sắp xếp công việc": [
+      "Tổ chức công việc"
+    ],
+    "Cẩn thận": [
+      "Tỉ mỉ"
+    ],
+    "Kiên trì": [
+      "Kiên nhẫn"
+    ],
+    "Trung thực": [
+      "Chính trực"
+    ],
+    "Chịu áp lực": [
+      "Chịu áp lực doanh số"
+    ],
+    "Bảo mật": [
+      "Information Security"
+    ],
+    "LLM": [
+      "LLM API"
+    ],
+    "AI": [
+      "Ứng dụng AI"
+    ],
+    "Social media": [
+      "Mạng xã hội"
+    ],
+    "JavaScript": [
+      "JS"
+    ],
+    "Golang": [
+      "Go"
+    ],
+    "Kubernetes": [
+      "K8s"
+    ],
+    "AWS": [
+      "Amazon Web Services"
+    ],
+    "GCP": [
+      "Google Cloud"
+    ]
   },
   "groups": {
     "Kỹ năng mềm": [
-      "Giao tiếp", "Làm việc nhóm", "Làm việc độc lập", "Giải quyết vấn đề", "Xử lý tình huống",
-      "Đàm phán", "Thuyết phục", "Thuyết trình", "Tư duy logic", "Tư duy chiến lược",
-      "Quản lý thời gian", "Sắp xếp công việc", "Lập kế hoạch", "Lắng nghe", "Quản lý đội nhóm",
-      "Viết báo cáo", "Đọc hiểu tài liệu"
+      "Giao tiếp",
+      "Làm việc nhóm",
+      "Làm việc độc lập",
+      "Giải quyết vấn đề",
+      "Xử lý tình huống",
+      "Đàm phán",
+      "Thuyết phục",
+      "Thuyết trình",
+      "Tư duy logic",
+      "Tư duy chiến lược",
+      "Quản lý thời gian",
+      "Sắp xếp công việc",
+      "Lập kế hoạch",
+      "Lắng nghe",
+      "Quản lý đội nhóm",
+      "Viết báo cáo",
+      "Đọc hiểu tài liệu"
     ],
     "Phẩm chất cá nhân": [
-      "Trung thực", "Cẩn thận", "Nhanh nhẹn", "Ham học hỏi", "Chăm chỉ", "Chủ động", "Chu đáo",
-      "Có trách nhiệm", "Kiên trì", "Khách quan", "Sáng tạo", "Chịu áp lực", "Quan sát",
-      "Hoạt ngôn", "Làm việc theo ca"
+      "Trung thực",
+      "Cẩn thận",
+      "Nhanh nhẹn",
+      "Ham học hỏi",
+      "Chăm chỉ",
+      "Chủ động",
+      "Chu đáo",
+      "Có trách nhiệm",
+      "Kiên trì",
+      "Khách quan",
+      "Sáng tạo",
+      "Chịu áp lực",
+      "Quan sát",
+      "Hoạt ngôn",
+      "Làm việc theo ca"
+    ],
+    "Tên vị trí": [
+      "Fullstack",
+      "Kế toán",
+      "Kế toán tổng hợp",
+      "IT Support",
+      "Tuyển dụng"
+    ]
+  },
+  "split": {
+    "Deep Learning": [
+      "TensorFlow",
+      "PyTorch"
+    ],
+    "CI/CD": [
+      "GitHub Actions",
+      "Jenkins"
+    ],
+    "Unit Testing": [
+      "Pytest",
+      "Jest"
+    ],
+    "Node.js": [
+      "Express.js"
     ]
   }
 }

@@ -175,7 +175,7 @@ describe('AnnouncementStrip runtime', () => {
     renderStrip()
 
     expect(screen.getByText(
-      'Hãy chia sẻ nhu cầu công việc để nhận gợi ý việc làm tốt nhất.',
+      'Thêm vị trí, mức lương mong muốn để gợi ý việc làm sát hướng bạn muốn hơn.',
     )).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Cập nhật nhu cầu/ })).toHaveAttribute(
       'href',

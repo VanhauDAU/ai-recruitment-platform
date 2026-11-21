@@ -54,6 +54,8 @@ export const CAMPAIGN_BUDGET_SOURCE_OPTIONS = [
 export const CAMPAIGN_CHANNEL_KINDS = [
   { value: 'facebook_page', label: m.campaign_channel_facebook_page() },
   { value: 'facebook_group', label: m.campaign_channel_facebook_group() },
+  { value: 'instagram', label: 'Instagram' },
+  { value: 'threads', label: 'Threads' },
   { value: 'linkedin', label: 'LinkedIn' },
   { value: 'zalo', label: 'Zalo' },
   { value: 'tiktok', label: 'TikTok' },

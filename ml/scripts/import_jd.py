@@ -145,9 +145,9 @@ def manage(command, payload, *flags):
     return json.loads(result.stdout.strip().splitlines()[-1])
 
 
-def run_import(rows, *, apply, create_skills):
-    flags = [flag for flag, on in (('--apply', apply), ('--create-skills', create_skills)) if on]
-    return manage('import_job_postings', rows, *flags)
+def run_import(rows, *, apply, create_skills, refresh_skills=False):
+    switches = (('--apply', apply), ('--create-skills', create_skills), ('--refresh-skills', refresh_skills))
+    return manage('import_job_postings', rows, *[flag for flag, on in switches if on])
 
 
 def apply_skill_merge():
@@ -235,6 +235,11 @@ def main():
         action='store_true',
         help='Khi ghi thật, tạo kỹ năng chưa có trong danh mục thay vì từ chối dòng.',
     )
+    parser.add_argument(
+        '--refresh-skills',
+        action='store_true',
+        help='Đồng bộ lại kỹ năng của tin đã nhập (sau khi sửa bảng gộp kỹ năng).',
+    )
     options = parser.parse_args()
 
     numbered_rows = read_rows(options.file)
@@ -247,8 +252,16 @@ def main():
     if options.apply:
         apply_skill_merge()
     released = release_missing_companies(sendable)
-    report = run_import(sendable, apply=options.apply, create_skills=options.create_skills)
+    report = run_import(
+        sendable,
+        apply=options.apply,
+        create_skills=options.create_skills,
+        refresh_skills=options.refresh_skills,
+    )
     print_report(numbered_rows, held_back, report)
+    if options.refresh_skills:
+        changed = {entry['code']: entry['skills_changed'] for entry in report['rows'] if entry.get('skills_changed')}
+        print(f'Kỹ năng của tin đã có được đồng bộ lại ở {len(changed)} tin: {changed}')
     for company, count in sorted(released.items()):
         print(f'Công ty demo "{company}" không còn đăng được tin: {count} tin được hệ thống tự chia.')
     if options.apply:

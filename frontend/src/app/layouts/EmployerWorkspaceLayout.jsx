@@ -1,7 +1,6 @@
 import {
   ArrowLeftOutlined,
   BarChartOutlined,
-  CustomerServiceOutlined,
   FileTextOutlined,
   LogoutOutlined,
   MenuOutlined,
@@ -12,7 +11,7 @@ import {
   SettingOutlined,
 } from '@ant-design/icons'
 import { Avatar, Button, Dropdown, Layout, Menu, Popover, Tooltip } from 'antd'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router'
 import { ANNOUNCEMENT_SURFACES } from '@/entities/content/announcement'
 import {
@@ -38,11 +37,12 @@ import { m } from '@/shared/config/i18n'
 import EmployerAccountVerificationPopover from './EmployerAccountVerificationPopover'
 import useUnreadApplicationCount from './use-unread-application-count'
 import {
-  CV_MANAGEMENT_MENU_KEY,
   employerNavItems,
+  employerOpenMenuKey,
   employerRouteTitle,
   employerSelectedMenuKey,
 } from './EmployerWorkspaceNavigation'
+import './employer-workspace.css'
 
 const { Header, Sider, Content } = Layout
 
@@ -144,6 +144,17 @@ export default function EmployerWorkspaceLayout() {
     : m.employer_workspace_back_to_campaign()
   const sidebarCollapsed = collapsed && (isMobileViewport || !isSidebarHovered)
   const isCompactSidebar = sidebarCollapsed && !isMobileViewport
+  // Moving to a CV page opens the "Quản lý CV" dropdown; the icon rail keeps
+  // its own hover popup state so collapsing never pops the group open.
+  const selectedMenuKey = employerSelectedMenuKey(pathname)
+  const [openMenuKey, setOpenMenuKey] = useState(() => employerOpenMenuKey(selectedMenuKey) || '')
+  const [popupMenuKey, setPopupMenuKey] = useState('')
+  useEffect(() => {
+    const groupKey = employerOpenMenuKey(selectedMenuKey)
+    if (groupKey) setOpenMenuKey(groupKey)
+  }, [selectedMenuKey])
+  const menuOpenKey = isCompactSidebar ? popupMenuKey : openMenuKey
+  const setMenuOpenKey = isCompactSidebar ? setPopupMenuKey : setOpenMenuKey
   const accountMenu = {
     items: [
       { key: 'settings', label: m.employer_workspace_nav_account_settings(), icon: <SettingOutlined /> },
@@ -157,7 +168,7 @@ export default function EmployerWorkspaceLayout() {
   }
 
   function navigateFromMenu({ key }) {
-    if (!key.startsWith('coming-')) navigate(key)
+    navigate(key)
     if (isMobileViewport) setCollapsed(true)
   }
 
@@ -245,58 +256,45 @@ export default function EmployerWorkspaceLayout() {
           className={`!h-full !overflow-hidden !border-r !border-slate-200 !bg-white ${isMobileViewport ? '!absolute !inset-y-0 !left-0 !z-40 !shadow-2xl' : ''}`}
         >
           <div className="flex h-full flex-col bg-white">
-            <div className={`shrink-0 border-b border-slate-100 ${isCompactSidebar ? 'px-2 py-3' : 'px-4 py-4'}`}>
+            <div className={`employer-sider__profile ${isCompactSidebar ? 'employer-sider__profile--compact' : ''}`}>
               {isCompactSidebar ? (
-                <div className="flex flex-col items-center gap-3">
-                  <Tooltip title={m.employer_workspace_title_account_info()} placement="right">
-                    <Link to={EMPLOYER_ACCOUNT_SETTINGS_URL} aria-label={m.employer_workspace_title_account_info()}>
-                      <Avatar size={34} src={user?.avatar_url || undefined} className="!bg-slate-100 !font-bold !text-slate-500">{initials}</Avatar>
-                    </Link>
-                  </Tooltip>
-                </div>
+                <Tooltip title={m.employer_workspace_title_account_info()} placement="right">
+                  <Link to={EMPLOYER_ACCOUNT_SETTINGS_URL} aria-label={m.employer_workspace_title_account_info()}>
+                    <Avatar size={34} src={user?.avatar_url || undefined} className="employer-sider__avatar">{initials}</Avatar>
+                  </Link>
+                </Tooltip>
               ) : (
                 <>
-                  <div className="flex items-start gap-3">
-                    <Link to={EMPLOYER_ACCOUNT_SETTINGS_URL} aria-label={m.employer_workspace_title_account_info()} className="flex min-w-0 flex-1 items-start gap-3 rounded-xl outline-none transition hover:bg-emerald-50 focus-visible:ring-2 focus-visible:ring-emerald-500">
-                      <Avatar size={42} src={user?.avatar_url || undefined} className="!bg-slate-100 !font-bold !text-slate-500">{initials}</Avatar>
-                    <div className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-extrabold text-slate-800 transition hover:text-emerald-600">{user?.full_name || m.employer_workspace_employer_fallback_name()}</span>
-                      <span className="mt-0.5 block text-[11px] font-semibold text-slate-500">Employer</span>
-                      <span className="mt-1 block truncate text-[10px] text-slate-400">{m.employer_workspace_employer_code({ code: profile.public_id || user?.public_id || '—' })}</span>
-                    </div>
-                    </Link>
-                  </div>
-                  <span className="mt-1 flex items-center gap-1 text-[10px] text-slate-500">
-                    {m.employer_workspace_verification_level_label()} <strong className="text-emerald-600">{m.employer_workspace_verification_level({ level: accountVerificationLevel.level, total: accountVerificationLevel.total })}</strong>
+                  <Link to={EMPLOYER_ACCOUNT_SETTINGS_URL} aria-label={m.employer_workspace_title_account_info()} className="employer-sider__identity">
+                    <Avatar size={36} src={user?.avatar_url || undefined} className="employer-sider__avatar">{initials}</Avatar>
+                    <span className="employer-sider__name">{user?.full_name || m.employer_workspace_employer_fallback_name()}</span>
+                  </Link>
+                  <span className="employer-sider__verification">
+                    {m.employer_workspace_verification_level_label()} <strong>{m.employer_workspace_verification_level({ level: accountVerificationLevel.level, total: accountVerificationLevel.total })}</strong>
                     <Popover
                       trigger={['hover', 'focus']}
                       placement="rightTop"
                       styles={{ container: { padding: 12 } }}
                       content={<EmployerAccountVerificationPopover verification={effectiveVerification} level={accountVerificationLevel} />}
                     >
-                      <button type="button" aria-label={m.employer_workspace_verification_details_button()} className="inline-flex cursor-help text-slate-400 transition hover:text-slate-600"><QuestionCircleFilled /></button>
+                      <button type="button" aria-label={m.employer_workspace_verification_details_button()} className="employer-sider__help"><QuestionCircleFilled /></button>
                     </Popover>
                   </span>
                 </>
               )}
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto py-2">
+            <div className="min-h-0 flex-1 overflow-y-auto">
               <Menu
                 mode="inline"
                 inlineCollapsed={isCompactSidebar}
-                selectedKeys={[employerSelectedMenuKey(pathname)]}
-                defaultOpenKeys={isApplicationWorkspace || ['/candidate-blocks', '/talent-pool'].map(employerAppPath).includes(pathname) ? [CV_MANAGEMENT_MENU_KEY] : []}
+                selectedKeys={[selectedMenuKey]}
+                openKeys={menuOpenKey ? [menuOpenKey] : []}
+                onOpenChange={(keys) => setMenuOpenKey(keys.find((key) => key !== menuOpenKey) || '')}
                 items={employerNavItems({ unreadApplications })}
                 onClick={navigateFromMenu}
-                className="!border-0 !bg-white [&>.ant-menu-item]:!px-3 [&>.ant-menu-submenu>.ant-menu-submenu-title]:!px-3 [&_.ant-menu-item]:!mx-2 [&_.ant-menu-item]:!my-0.5 [&_.ant-menu-item]:!h-10 [&_.ant-menu-item]:!w-auto [&_.ant-menu-item]:!rounded-lg [&_.ant-menu-item]:!text-xs [&_.ant-menu-sub_.ant-menu-item]:!pl-8 [&_.ant-menu-item-divider]:!my-2 [&_.ant-menu-item-selected]:!bg-emerald-50 [&_.ant-menu-item-selected]:!font-bold [&_.ant-menu-item-selected]:!text-emerald-600 [&.ant-menu-inline-collapsed_.ant-menu-item]:!flex [&.ant-menu-inline-collapsed_.ant-menu-item]:!w-12 [&.ant-menu-inline-collapsed_.ant-menu-item]:!items-center [&.ant-menu-inline-collapsed_.ant-menu-item]:!justify-center [&.ant-menu-inline-collapsed_.ant-menu-item]:!px-0 [&.ant-menu-inline-collapsed_.ant-menu-item_.anticon]:!mr-0 [&.ant-menu-inline-collapsed_.ant-menu-item_.anticon]:!text-xl"
+                className="employer-nav"
               />
-            </div>
-
-            <div className="shrink-0 border-t border-slate-100 p-2">
-              <Tooltip title={isCompactSidebar ? m.employer_workspace_nav_coming_soon_title({ label: m.employer_workspace_support_inbox() }) : null} placement="right">
-                <div aria-disabled="true" className={`flex cursor-not-allowed items-center rounded-lg py-2.5 text-xs font-semibold text-slate-500 ${isCompactSidebar ? 'justify-center px-0' : 'gap-3 px-3'}`}><CustomerServiceOutlined className={`${isCompactSidebar ? 'text-xl' : 'text-base'} text-emerald-600`} /> {!isCompactSidebar && <>{m.employer_workspace_support_inbox()} <span className="ml-auto text-[9px] text-slate-400">{m.employer_workspace_nav_coming_soon()}</span></>}</div>
-              </Tooltip>
             </div>
           </div>
         </Sider>

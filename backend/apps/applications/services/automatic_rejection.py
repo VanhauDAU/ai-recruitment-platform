@@ -12,18 +12,17 @@ from django.utils.translation import gettext as _
 from django.utils.translation import ngettext
 
 from apps.jobs.models import Job, JobApplicationContact
+from apps.sitecontent.selectors import business_emails_enabled, email_sender
 from common.email import send_html_email
 from common.i18n import recipient_language
 
 from ..models import Application, ApplicationStatusHistory
+from .policy import auto_rejection_email_grace, auto_rejection_min_notice
 from .status import (
-    AUTO_REJECTION_EMAIL_GRACE,
-    AUTO_REJECTION_MIN_NOTICE,
     notify_candidate_of_status,
 )
 
 # The recruiter is warned this long before; an undo also guarantees it.
-REMINDER_LEAD_TIME = AUTO_REJECTION_MIN_NOTICE
 
 
 def _due_before(moment):
@@ -44,7 +43,9 @@ def _due_before(moment):
 def _age_filter(now, *, reminder=False):
     # Replaced submissions are history; only the current one can go stale.
     if reminder:
-        return Q(is_current=True) & _due_before(now + REMINDER_LEAD_TIME) & ~_due_before(now)
+        return (
+            Q(is_current=True) & _due_before(now + auto_rejection_min_notice()) & ~_due_before(now)
+        )
     return Q(is_current=True) & _due_before(now)
 
 
@@ -117,8 +118,12 @@ def send_due_application_reminders(*, now=None, batch_size=200):
             subject = _('Nhắc xử lý hồ sơ ứng tuyển — %(job)s') % {'job': job.title}
             text = _('%(body)s\n\nXem hồ sơ: %(url)s') % {'body': body, 'url': action_url}
             html = _email_html(body, action_url=action_url, action_label=_('Xem hồ sơ ứng tuyển'))
-        for recipient in recipients:
-            send_html_email(subject=subject, text=text, html=html, to=recipient)
+        # Admin tắt email nghiệp vụ thì vẫn đánh dấu đã nhắc để không gửi bù hàng loạt khi bật lại.
+        if business_emails_enabled():
+            for recipient in recipients:
+                send_html_email(
+                    subject=subject, text=text, html=html, to=recipient, **email_sender()
+                )
         application_ids = [application.pk for application in applications]
         Application.objects.filter(
             pk__in=application_ids,
@@ -182,7 +187,7 @@ def reject_due_applications(*, now=None, batch_size=200):
             notify_candidate_of_status(
                 application,
                 history,
-                deliver_after=now + AUTO_REJECTION_EMAIL_GRACE,
+                deliver_after=now + auto_rejection_email_grace(),
                 send_email=False,
             )
             rejected += 1
@@ -195,7 +200,7 @@ def send_due_auto_rejection_emails(*, now=None, batch_size=200):
     applications = list(
         Application.objects.filter(
             status=Application.Status.REJECTED,
-            auto_rejected_at__lte=now - AUTO_REJECTION_EMAIL_GRACE,
+            auto_rejected_at__lte=now - auto_rejection_email_grace(),
             auto_rejection_email_sent_at__isnull=True,
         )
         .select_related('candidate', 'job', 'job__company')
@@ -207,12 +212,14 @@ def send_due_auto_rejection_emails(*, now=None, batch_size=200):
         recipient = application.contact_email or application.candidate.email
         with recipient_language(application.candidate):
             subject = _('Kết quả ứng tuyển vị trí %(job)s') % {'job': application.job.title}
-        send_html_email(
-            subject=subject,
-            text=body,
-            html=_email_html(body),
-            to=recipient,
-        )
+        if business_emails_enabled():
+            send_html_email(
+                subject=subject,
+                text=body,
+                html=_email_html(body),
+                to=recipient,
+                **email_sender(),
+            )
         updated = Application.objects.filter(
             pk=application.pk,
             status=Application.Status.REJECTED,

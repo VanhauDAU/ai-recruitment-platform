@@ -6783,11 +6783,161 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
+  /api/admin/site/banners/:
+    get:
+      operationId: admin_site_banners_list
+      summary: 'Admin: danh sách banner theo vị trí'
+      parameters:
+      - in: query
+        name: placement
+        schema:
+          type: string
+          enum:
+          - blog_inline
+          - blog_sidebar
+          - home_hero
+          - job_detail_sidebar
+          - job_empty
+          - job_list_inline
+      tags:
+      - site-banners-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminBanner'
+          description: ''
+    post:
+      operationId: admin_site_banners_create
+      summary: 'Admin: tạo banner'
+      tags:
+      - site-banners-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BannerWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BannerWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BannerWriteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminBanner'
+          description: ''
+  /api/admin/site/banners/{id}/:
+    patch:
+      operationId: admin_site_banners_partial_update
+      summary: 'Admin: sửa banner'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - site-banners-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBannerWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedBannerWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedBannerWriteRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminBanner'
+          description: ''
+    delete:
+      operationId: admin_site_banners_destroy
+      summary: 'Admin: xóa banner'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - site-banners-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/admin/site/banners/images/:
+    post:
+      operationId: admin_site_banners_images_create
+      description: Kiểm tra theo vị trí và loại slide (slide ảnh trang chủ cần tỉ
+        lệ 8:3).
+      summary: 'Admin: tải ảnh banner'
+      tags:
+      - site-banners-admin
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BannerImageUploadRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/admin/site/banners/reorder/:
+    post:
+      operationId: admin_site_banners_reorder_create
+      summary: 'Admin: sắp lại thứ tự banner của một vị trí'
+      tags:
+      - site-banners-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BannerReorderRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BannerReorderRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BannerReorderRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/admin/site/settings/:
     get:
       operationId: admin_site_settings_retrieve
-      description: 'GET: toàn bộ cấu hình gộp theo 15 nhóm. PATCH: cập nhật hàng loạt
-        value.'
+      description: 'GET: cấu hình gộp theo nhóm (kèm khu trên thanh bên). PATCH: cập
+        nhật hàng loạt value.'
       summary: 'Admin: đọc toàn bộ site settings'
       tags:
       - site-admin
@@ -6803,8 +6953,8 @@ paths:
           description: ''
     patch:
       operationId: admin_site_settings_partial_update
-      description: 'GET: toàn bộ cấu hình gộp theo 15 nhóm. PATCH: cập nhật hàng loạt
-        value.'
+      description: 'GET: cấu hình gộp theo nhóm (kèm khu trên thanh bên). PATCH: cập
+        nhật hàng loạt value.'
       summary: 'Admin: cập nhật site settings'
       tags:
       - site-admin
@@ -6832,6 +6982,29 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
+  /api/admin/site/settings/{key}/history/:
+    get:
+      operationId: admin_site_settings_history_retrieve
+      description: 20 lần đổi gần nhất của một key (từ audit log), mới nhất trước.
+      summary: 'Admin: lịch sử thay đổi một site setting'
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - site-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
   /api/admin/site/settings/upload/:
     post:
       operationId: admin_site_settings_upload_create
@@ -6849,6 +7022,24 @@ paths:
             schema:
               type: object
               additionalProperties: {}
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/admin/site/system-parameters/:
+    get:
+      operationId: admin_site_system_parameters_retrieve
+      description: Giá trị tiến trình đang áp dụng cho các thông số không sửa qua
+        admin; không trả secret.
+      summary: 'Admin: thông số hệ thống chỉ đọc (.env/code)'
+      tags:
+      - site-admin
       security:
       - jwtAuth: []
       responses:
@@ -7578,6 +7769,51 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VerifyResend'
+          description: ''
+  /api/candidate/ai-recommendation/:
+    get:
+      operationId: candidate_ai_recommendation_retrieve
+      description: Công tắc "Gợi ý việc làm" ở thanh bên tài khoản; độc lập với nhu
+        cầu công việc.
+      summary: Trạng thái đồng ý nhận gợi ý việc làm bằng AI
+      tags:
+      - candidate
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AiRecommendationConsentStatus'
+          description: ''
+    patch:
+      operationId: candidate_ai_recommendation_partial_update
+      description: Công tắc "Gợi ý việc làm" ở thanh bên tài khoản; độc lập với nhu
+        cầu công việc.
+      summary: Bật/tắt gợi ý việc làm bằng AI
+      tags:
+      - candidate
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAiRecommendationConsentRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAiRecommendationConsentRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAiRecommendationConsentRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
           description: ''
   /api/candidate/applications/:
     get:
@@ -10108,7 +10344,7 @@ paths:
   /api/employer/campaigns/{public_id}/channels/{channel_id}/content/:
     post:
       operationId: employer_campaigns_channels_content_create
-      summary: Soạn nội dung kênh bằng AI (kèm fallback_reason khi dùng mẫu)
+      summary: Soạn bài của kênh bằng AI theo tin và loại link đã chọn (kèm fallback_reason)
       parameters:
       - in: path
         name: channel_id
@@ -10226,7 +10462,7 @@ paths:
   /api/employer/campaigns/{public_id}/channels/{channel_id}/post-images/:
     get:
       operationId: employer_campaigns_channels_post_images_retrieve
-      description: Upload an image for a Fanpage post, or list the company's ready-made
+      description: Upload an image for a social post, or list the company's ready-made
         images.
       summary: Ảnh có sẵn của công ty
       parameters:
@@ -10254,9 +10490,9 @@ paths:
           description: ''
     post:
       operationId: employer_campaigns_channels_post_images_create
-      description: Upload an image for a Fanpage post, or list the company's ready-made
+      description: Upload an image for a social post, or list the company's ready-made
         images.
-      summary: Tải ảnh cho bài đăng Fanpage
+      summary: Tải ảnh cho bài tự đăng
       parameters:
       - in: path
         name: channel_id
@@ -10289,7 +10525,7 @@ paths:
   /api/employer/campaigns/{public_id}/channels/{channel_id}/posts/:
     get:
       operationId: employer_campaigns_channels_posts_list
-      summary: Bài đăng Fanpage của kênh
+      summary: Bài tự đăng của kênh
       parameters:
       - in: path
         name: channel_id
@@ -10316,7 +10552,7 @@ paths:
           description: ''
     post:
       operationId: employer_campaigns_channels_posts_create
-      summary: Lên lịch một bài đăng Fanpage
+      summary: Lên lịch một bài tự đăng
       parameters:
       - in: path
         name: channel_id
@@ -12760,44 +12996,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/SessionUser'
           description: ''
-  /api/employer/social/connections/:
-    get:
-      operationId: employer_social_connections_list
-      summary: Các Fanpage đã kết nối
-      tags:
-      - campaigns
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SocialConnection'
-          description: ''
-  /api/employer/social/connections/{connection_id}/:
-    delete:
-      operationId: employer_social_connections_destroy
-      summary: Ngắt kết nối Fanpage
+  /api/employer/social/{network}/authorize/:
+    post:
+      operationId: employer_social_authorize_create
+      summary: Bắt đầu kết nối tài khoản mạng xã hội (trả URL đăng nhập của mạng)
       parameters:
       - in: path
-        name: connection_id
+        name: network
         schema:
           type: string
         required: true
-      tags:
-      - campaigns
-      security:
-      - jwtAuth: []
-      responses:
-        '204':
-          description: No response body
-  /api/employer/social/facebook/authorize/:
-    post:
-      operationId: employer_social_facebook_authorize_create
-      summary: Bắt đầu kết nối Fanpage (trả URL đăng nhập Facebook)
       tags:
       - campaigns
       security:
@@ -12809,11 +13017,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/SocialConnectStart'
           description: ''
-  /api/employer/social/facebook/pending/{nonce}/:
+  /api/employer/social/{network}/pending/{nonce}/:
     get:
-      operationId: employer_social_facebook_pending_retrieve
-      summary: Các Fanpage chờ chọn sau khi đăng nhập Facebook
+      operationId: employer_social_pending_retrieve
+      summary: Các tài khoản chờ chọn sau khi đăng nhập mạng xã hội
       parameters:
+      - in: path
+        name: network
+        schema:
+          type: string
+        required: true
       - in: path
         name: nonce
         schema:
@@ -12832,9 +13045,14 @@ paths:
                 additionalProperties: {}
           description: ''
     post:
-      operationId: employer_social_facebook_pending_create
-      summary: Chọn Fanpage để kết nối
+      operationId: employer_social_pending_create
+      summary: Chọn tài khoản để kết nối
       parameters:
+      - in: path
+        name: network
+        schema:
+          type: string
+        required: true
       - in: path
         name: nonce
         schema:
@@ -12846,13 +13064,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SelectPageRequest'
+              $ref: '#/components/schemas/SelectAccountRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/SelectPageRequest'
+              $ref: '#/components/schemas/SelectAccountRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/SelectPageRequest'
+              $ref: '#/components/schemas/SelectAccountRequest'
         required: true
       security:
       - jwtAuth: []
@@ -12862,6 +13080,57 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SocialConnection'
+          description: ''
+  /api/employer/social/connections/:
+    get:
+      operationId: employer_social_connections_list
+      summary: Các tài khoản mạng xã hội đã kết nối
+      tags:
+      - campaigns
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SocialConnection'
+          description: ''
+  /api/employer/social/connections/{connection_id}/:
+    delete:
+      operationId: employer_social_connections_destroy
+      summary: Ngắt kết nối tài khoản mạng xã hội
+      parameters:
+      - in: path
+        name: connection_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - campaigns
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/employer/social/networks/:
+    get:
+      operationId: employer_social_networks_list
+      summary: Các mạng xã hội kết nối được và giới hạn bài đăng của từng mạng
+      tags:
+      - campaigns
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SocialNetwork'
           description: ''
   /api/employer/talent-pool/:
     get:
@@ -14313,8 +14582,20 @@ paths:
   /api/public/site/banners/:
     get:
       operationId: public_site_banners_list
-      description: Banner đang bật, sắp theo order. Lọc theo ?placement=home_hero.
-      summary: Banner đang bật theo vị trí
+      description: Banner đang bật và trong lịch chạy, sắp theo order. Lọc theo ?placement=home_hero.
+      summary: Banner đang chạy theo vị trí
+      parameters:
+      - in: query
+        name: placement
+        schema:
+          type: string
+          enum:
+          - blog_inline
+          - blog_sidebar
+          - home_hero
+          - job_detail_sidebar
+          - job_empty
+          - job_list_inline
       tags:
       - site
       security:
@@ -15670,6 +15951,88 @@ components:
       - public_id
       - source
       - target_type
+    AdminBanner:
+      type: object
+      description: 'Bản quản trị: thêm đường dẫn ảnh gốc, lịch chạy và trạng thái
+        tính sẵn.'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        kind:
+          $ref: '#/components/schemas/BannerKindEnum'
+        eyebrow:
+          type: string
+          description: 'Nhãn nhỏ phía trên tiêu đề, vd: TUYỂN DỤNG GẤP'
+          maxLength: 100
+        title:
+          type: string
+          maxLength: 200
+        subtitle:
+          type: string
+          maxLength: 300
+        image_url:
+          type: string
+          readOnly: true
+        theme:
+          $ref: '#/components/schemas/BannerThemeEnum'
+        cta_label:
+          type: string
+          description: Để trống nếu banner không có nút bấm
+          maxLength: 100
+        cta_url:
+          type: string
+          maxLength: 300
+        cta_secondary_label:
+          type: string
+          description: Nút thứ hai (vd banner blog có 2 nút)
+          maxLength: 100
+        cta_secondary_url:
+          type: string
+          maxLength: 300
+        company:
+          allOf:
+          - $ref: '#/components/schemas/BannerCompany'
+          readOnly: true
+          nullable: true
+        placement:
+          $ref: '#/components/schemas/BannerPlacementEnum'
+        image_path:
+          type: string
+          readOnly: true
+        order:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        is_active:
+          type: boolean
+        starts_at:
+          type: string
+          format: date-time
+          nullable: true
+        ends_at:
+          type: string
+          format: date-time
+          nullable: true
+        schedule_state:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - company
+      - created_at
+      - id
+      - image_path
+      - image_url
+      - schedule_state
+      - updated_at
     AdminCampaign:
       type: object
       properties:
@@ -19979,6 +20342,29 @@ components:
       required:
       - company_name
       - tax_code
+    AiRecommendationConsentSourceEnum:
+      enum:
+      - account_sidebar
+      - account_settings
+      type: string
+      description: |-
+        * `account_sidebar` - account_sidebar
+        * `account_settings` - account_settings
+    AiRecommendationConsentStatus:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        policy_version:
+          type: string
+        decided_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - decided_at
+      - enabled
+      - policy_version
     Analysis:
       type: object
       description: Trạng thái và kết quả một lần phân tích; `result` chỉ có khi đã
@@ -21294,6 +21680,8 @@ components:
         id:
           type: integer
           readOnly: true
+        kind:
+          $ref: '#/components/schemas/BannerKindEnum'
         eyebrow:
           type: string
           description: 'Nhãn nhỏ phía trên tiêu đề, vd: TUYỂN DỤNG GẤP'
@@ -21308,7 +21696,7 @@ components:
           type: string
           readOnly: true
         theme:
-          $ref: '#/components/schemas/ThemeEnum'
+          $ref: '#/components/schemas/BannerThemeEnum'
         cta_label:
           type: string
           description: Để trống nếu banner không có nút bấm
@@ -21316,10 +21704,195 @@ components:
         cta_url:
           type: string
           maxLength: 300
+        cta_secondary_label:
+          type: string
+          description: Nút thứ hai (vd banner blog có 2 nút)
+          maxLength: 100
+        cta_secondary_url:
+          type: string
+          maxLength: 300
+        company:
+          allOf:
+          - $ref: '#/components/schemas/BannerCompany'
+          readOnly: true
+          nullable: true
       required:
+      - company
       - id
       - image_url
-      - title
+    BannerCompany:
+      type: object
+      description: Phần công ty công khai mà slide nhà tuyển dụng cần.
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        company_name:
+          type: string
+          readOnly: true
+        trade_name:
+          type: string
+          readOnly: true
+        logo_url:
+          type: string
+          readOnly: true
+        cover_image_url:
+          type: string
+          readOnly: true
+        description_excerpt:
+          type: string
+          readOnly: true
+        headquarters:
+          type: string
+          readOnly: true
+        active_public_job_count:
+          type: integer
+          readOnly: true
+        industries_detail:
+          type: array
+          items:
+            $ref: '#/components/schemas/Industry'
+          readOnly: true
+      required:
+      - active_public_job_count
+      - company_name
+      - cover_image_url
+      - description_excerpt
+      - headquarters
+      - industries_detail
+      - logo_url
+      - public_id
+      - slug
+      - trade_name
+    BannerImageUploadRequest:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+        placement:
+          $ref: '#/components/schemas/BannerPlacementEnum'
+        kind:
+          $ref: '#/components/schemas/BannerKindEnum'
+      required:
+      - file
+      - kind
+      - placement
+    BannerKindEnum:
+      enum:
+      - image
+      - promo
+      - company
+      - ai
+      type: string
+      description: |-
+        * `image` - Ảnh + link
+        * `promo` - Bố cục chữ
+        * `company` - Nhà tuyển dụng nổi bật
+        * `ai` - Gợi ý việc làm AI
+    BannerPlacementEnum:
+      enum:
+      - home_hero
+      - job_detail_sidebar
+      - blog_sidebar
+      - blog_inline
+      - job_empty
+      - job_list_inline
+      type: string
+      description: |-
+        * `home_hero` - Carousel trang chủ
+        * `job_detail_sidebar` - Thẻ ảnh sidebar trang chi tiết việc làm
+        * `blog_sidebar` - Banner sidebar bài viết cẩm nang
+        * `blog_inline` - Banner chèn giữa trang cẩm nang
+        * `job_empty` - Banner trang việc làm khi không có kết quả
+        * `job_list_inline` - Banner chèn giữa danh sách việc làm
+    BannerReorderRequest:
+      type: object
+      properties:
+        placement:
+          $ref: '#/components/schemas/BannerPlacementEnum'
+        ids:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+      required:
+      - ids
+      - placement
+    BannerThemeEnum:
+      enum:
+      - green
+      - blue
+      - orange
+      - violet
+      - teal
+      - rose
+      - aurora
+      - midnight
+      type: string
+      description: |-
+        * `green` - Xanh thương hiệu
+        * `blue` - Xanh đại dương
+        * `orange` - Hoàng hôn
+        * `violet` - Tím
+        * `teal` - Ngọc lam
+        * `rose` - Hồng đỏ
+        * `aurora` - Cực quang
+        * `midnight` - Đêm
+    BannerWriteRequest:
+      type: object
+      description: Dữ liệu ghi; ràng buộc theo loại slide nằm ở ``Banner.clean``.
+      properties:
+        placement:
+          $ref: '#/components/schemas/BannerPlacementEnum'
+        kind:
+          $ref: '#/components/schemas/BannerKindEnum'
+        company:
+          type: string
+          minLength: 1
+          nullable: true
+        eyebrow:
+          type: string
+          maxLength: 100
+        title:
+          type: string
+          maxLength: 200
+        subtitle:
+          type: string
+          maxLength: 300
+        image_url:
+          type: string
+        theme:
+          $ref: '#/components/schemas/BannerThemeEnum'
+        cta_label:
+          type: string
+          maxLength: 100
+        cta_url:
+          type: string
+          maxLength: 300
+        cta_secondary_label:
+          type: string
+          maxLength: 100
+        cta_secondary_url:
+          type: string
+          maxLength: 300
+        is_active:
+          type: boolean
+        starts_at:
+          type: string
+          format: date-time
+          nullable: true
+        ends_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - kind
+      - placement
     Benefit:
       type: object
       properties:
@@ -21495,8 +22068,8 @@ components:
         * `campaign_cancelled` - Hủy chiến dịch
         * `channel_added` - Thêm kênh phân phối
         * `channel_posted` - Đã đăng lên kênh
-        * `social_post_published` - Đã đăng lên Fanpage
-        * `social_post_deleted` - Đã gỡ bài khỏi Fanpage
+        * `social_post_published` - Đã tự đăng bài
+        * `social_post_deleted` - Đã tự gỡ bài
         * `job_added` - Thêm tin tuyển dụng
         * `job_removed` - Gỡ tin tuyển dụng
         * `job_updated` - Cập nhật tin tuyển dụng
@@ -21521,15 +22094,20 @@ components:
           maxLength: 120
         target:
           $ref: '#/components/schemas/TargetEnum'
-        job:
-          type: string
-          nullable: true
-        job_title:
-          type: string
-          readOnly: true
-          default: ''
+        jobs:
+          type: array
+          items:
+            type: string
         link:
           type: string
+          readOnly: true
+        links:
+          type: array
+          items: {}
+          description: |-
+            Every tracked link of the channel: landing, company page, then one per open job.
+
+            The view passes the campaign's open jobs as ``context['campaign_jobs']``.
           readOnly: true
         content: {}
         content_source:
@@ -21581,11 +22159,11 @@ components:
       - cost
       - created_at
       - hires
-      - job_title
       - kind
       - kind_label
       - label
       - link
+      - links
       - posted_at
       - public_id
       - rendered_content
@@ -21599,12 +22177,6 @@ components:
           type: string
           minLength: 1
           maxLength: 120
-        target:
-          $ref: '#/components/schemas/TargetEnum'
-        job:
-          type: string
-          minLength: 1
-          nullable: true
       required:
       - kind
       - label
@@ -21612,6 +22184,8 @@ components:
       enum:
       - facebook_page
       - facebook_group
+      - instagram
+      - threads
       - linkedin
       - zalo
       - tiktok
@@ -21623,6 +22197,8 @@ components:
       description: |-
         * `facebook_page` - Fanpage Facebook
         * `facebook_group` - Nhóm Facebook
+        * `instagram` - Instagram
+        * `threads` - Threads
         * `linkedin` - LinkedIn
         * `zalo` - Zalo
         * `tiktok` - TikTok
@@ -22147,6 +22723,10 @@ components:
           type: integer
         preference_configured:
           type: boolean
+        cv_recommendations_enabled:
+          type: boolean
+        ai_recommendation_enabled:
+          type: boolean
         needs_setup:
           type: boolean
         consent_required:
@@ -22170,7 +22750,9 @@ components:
         pagination:
           $ref: '#/components/schemas/RecommendationPagination'
       required:
+      - ai_recommendation_enabled
       - consent_required
+      - cv_recommendations_enabled
       - focus_keyword
       - minimum_match_score
       - needs_setup
@@ -26828,6 +27410,7 @@ components:
       - social_post_delete_failed
       - campaign_health_alert
       - social_connection_expired
+      - social_connection_expiring
       type: string
       description: |-
         * `verification_approved` - Hồ sơ xác thực đã được duyệt
@@ -26855,10 +27438,11 @@ components:
         * `campaign_activation_failed` - Chiến dịch chưa kích hoạt được theo lịch
         * `campaign_ending_soon` - Chiến dịch sắp đến ngày kết thúc
         * `campaign_auto_completed` - Chiến dịch đã tự kết thúc
-        * `social_post_failed` - Bài đăng Fanpage không thành công
-        * `social_post_delete_failed` - Chưa gỡ được bài khỏi Fanpage
+        * `social_post_failed` - Tự đăng bài không thành công
+        * `social_post_delete_failed` - Cần tự gỡ bài trên mạng xã hội
         * `campaign_health_alert` - Chiến dịch cần chú ý
-        * `social_connection_expired` - Kết nối Fanpage đã hết hạn
+        * `social_connection_expired` - Kết nối mạng xã hội đã hết hạn
+        * `social_connection_expiring` - Kết nối mạng xã hội sắp hết hạn
     EmployerNotificationPreference:
       type: object
       properties:
@@ -29839,6 +30423,18 @@ components:
         * `manual_review` - Tạm ẩn để rà soát nội dung
         * `confirmed_violation` - Tạm ẩn do vi phạm đã xác nhận
         * `changes_requested` - Tạm ẩn, cần chỉnh sửa theo yêu cầu
+    NetworkEnum:
+      enum:
+      - facebook_page
+      - instagram
+      - threads
+      - linkedin
+      type: string
+      description: |-
+        * `facebook_page` - Fanpage Facebook
+        * `instagram` - Instagram doanh nghiệp
+        * `threads` - Threads
+        * `linkedin` - Trang cá nhân LinkedIn
     NullEnum:
       enum:
       - null
@@ -31325,6 +31921,16 @@ components:
         is_active:
           type: boolean
           description: Ẩn thẻ khỏi phía ứng viên và form chọn thẻ
+    PatchedAiRecommendationConsentRequest:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        source:
+          $ref: '#/components/schemas/AiRecommendationConsentSourceEnum'
+        source_path:
+          type: string
+          maxLength: 2048
     PatchedAnnouncementRenameRequest:
       type: object
       properties:
@@ -31365,6 +31971,53 @@ components:
         revision_token:
           type: integer
           minimum: 1
+    PatchedBannerWriteRequest:
+      type: object
+      description: Dữ liệu ghi; ràng buộc theo loại slide nằm ở ``Banner.clean``.
+      properties:
+        placement:
+          $ref: '#/components/schemas/BannerPlacementEnum'
+        kind:
+          $ref: '#/components/schemas/BannerKindEnum'
+        company:
+          type: string
+          minLength: 1
+          nullable: true
+        eyebrow:
+          type: string
+          maxLength: 100
+        title:
+          type: string
+          maxLength: 200
+        subtitle:
+          type: string
+          maxLength: 300
+        image_url:
+          type: string
+        theme:
+          $ref: '#/components/schemas/BannerThemeEnum'
+        cta_label:
+          type: string
+          maxLength: 100
+        cta_url:
+          type: string
+          maxLength: 300
+        cta_secondary_label:
+          type: string
+          maxLength: 100
+        cta_secondary_url:
+          type: string
+          maxLength: 300
+        is_active:
+          type: boolean
+        starts_at:
+          type: string
+          format: date-time
+          nullable: true
+        ends_at:
+          type: string
+          format: date-time
+          nullable: true
     PatchedCampaignChannelRequest:
       type: object
       properties:
@@ -31376,10 +32029,11 @@ components:
           maxLength: 120
         target:
           $ref: '#/components/schemas/TargetEnum'
-        job:
-          type: string
-          minLength: 1
-          nullable: true
+        jobs:
+          type: array
+          items:
+            type: string
+            minLength: 1
         content: {}
         posted:
           type: boolean
@@ -31930,11 +32584,6 @@ components:
         cv_public_id:
           type: string
           maxLength: 50
-        policy_version:
-          type: string
-          minLength: 1
-          default: v1
-          maxLength: 64
         source:
           $ref: '#/components/schemas/RecruiterVisibilitySourceEnum'
         source_path:
@@ -32360,14 +33009,6 @@ components:
       description: |-
         * `business_registration` - Giấy đăng ký doanh nghiệp hoặc tương đương
         * `authorization_and_id` - Giấy ủy quyền + giấy tờ định danh
-    ProviderEnum:
-      enum:
-      - facebook
-      - fake
-      type: string
-      description: |-
-        * `facebook` - Facebook
-        * `fake` - Giả lập
     ProviderStatusEnum:
       enum:
       - pending
@@ -34917,10 +35558,13 @@ components:
         public_id:
           type: string
           readOnly: true
-        page_name:
+        network:
           type: string
           readOnly: true
-        page_picture_url:
+        account_name:
+          type: string
+          readOnly: true
+        account_picture_url:
           type: string
           readOnly: true
         message:
@@ -34941,6 +35585,11 @@ components:
           readOnly: true
         status_label:
           type: string
+          readOnly: true
+        queued:
+          type: boolean
+          description: 'Due and waiting for the worker: shown as being published,
+            not as scheduled.'
           readOnly: true
         attempts:
           type: integer
@@ -34966,17 +35615,19 @@ components:
           readOnly: true
           nullable: true
       required:
+      - account_name
+      - account_picture_url
       - attempts
       - deleted_at
       - error_message
       - images
       - last_error_code
       - message
-      - page_name
-      - page_picture_url
+      - network
       - permalink
       - public_id
       - published_at
+      - queued
       - scheduled_for
       - status
       - status_label
@@ -34998,8 +35649,8 @@ components:
         * `postponed` - Hoãn do chiến dịch tạm dừng
         * `failed` - Đăng không thành công
         * `cancelled` - Đã hủy
-        * `deleted` - Đã gỡ khỏi Fanpage
-        * `delete_failed` - Chưa gỡ được khỏi Fanpage
+        * `deleted` - Đã gỡ bài
+        * `delete_failed` - Cần tự gỡ bài
     SectionKeyEnum:
       enum:
       - about
@@ -35026,15 +35677,15 @@ components:
         * `social_links` - social_links
         * `share` - share
         * `similar_companies` - similar_companies
-    SelectPageRequest:
+    SelectAccountRequest:
       type: object
       properties:
-        page_id:
+        account_id:
           type: string
           minLength: 1
           maxLength: 64
       required:
-      - page_id
+      - account_id
     SelfServiceRoleEnum:
       enum:
       - candidate
@@ -35273,6 +35924,29 @@ components:
         * `beginner` - Beginner
         * `intermediate` - Intermediate
         * `advanced` - Advanced
+    SocialCapabilities:
+      type: object
+      properties:
+        max_chars:
+          type: integer
+        max_images:
+          type: integer
+        requires_image:
+          type: boolean
+        supports_delete:
+          type: boolean
+        image_ratio:
+          type: array
+          items:
+            type: number
+            format: double
+          nullable: true
+      required:
+      - image_ratio
+      - max_chars
+      - max_images
+      - requires_image
+      - supports_delete
     SocialConnectStart:
       type: object
       properties:
@@ -35287,20 +35961,23 @@ components:
         public_id:
           type: string
           readOnly: true
-        provider:
+        network:
           allOf:
-          - $ref: '#/components/schemas/ProviderEnum'
+          - $ref: '#/components/schemas/NetworkEnum'
+          readOnly: true
+        network_label:
+          type: string
           readOnly: true
         simulated:
           type: boolean
           readOnly: true
-        page_id:
+        account_id:
           type: string
           readOnly: true
-        page_name:
+        account_name:
           type: string
           readOnly: true
-        page_picture_url:
+        account_picture_url:
           type: string
           format: uri
           readOnly: true
@@ -35319,12 +35996,13 @@ components:
           format: date-time
           readOnly: true
       required:
+      - account_id
+      - account_name
+      - account_picture_url
       - connected_at
       - last_error_code
-      - page_id
-      - page_name
-      - page_picture_url
-      - provider
+      - network
+      - network_label
       - public_id
       - simulated
       - status
@@ -35339,6 +36017,28 @@ components:
         * `connected` - Đang kết nối
         * `expired` - Hết hạn, cần kết nối lại
         * `revoked` - Đã ngắt kết nối
+    SocialNetwork:
+      type: object
+      properties:
+        key:
+          type: string
+        platform:
+          type: string
+        label:
+          type: string
+        channel_kind:
+          type: string
+        capabilities:
+          $ref: '#/components/schemas/SocialCapabilities'
+        simulated:
+          type: boolean
+      required:
+      - capabilities
+      - channel_kind
+      - key
+      - label
+      - platform
+      - simulated
     SourceTypeEnum:
       enum:
       - file
@@ -35476,10 +36176,12 @@ components:
       enum:
       - landing
       - job
+      - company
       type: string
       description: |-
         * `landing` - Trang tuyển dụng của chiến dịch
-        * `job` - Một tin tuyển dụng
+        * `job` - Link riêng từng tin
+        * `company` - Trang công ty
     TaxNameComparisonEnum:
       enum:
       - match
@@ -35539,16 +36241,6 @@ components:
           type: string
           minLength: 1
           pattern: ^#[0-9A-Fa-f]{6}$
-    ThemeEnum:
-      enum:
-      - green
-      - blue
-      - orange
-      type: string
-      description: |-
-        * `green` - Xanh lá (thương hiệu)
-        * `blue` - Xanh dương
-        * `orange` - Cam - hồng
     ThemePresetEnum:
       enum:
       - brand

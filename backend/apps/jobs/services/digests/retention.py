@@ -5,17 +5,20 @@ from datetime import timedelta
 from django.db import transaction
 from django.utils import timezone
 
+from apps.sitecontent.selectors import retention_days
 from common.metrics import record_metric
 
 from ...models import CandidateJobDigest, CandidateJobEmailReceipt
 
-DIGEST_HISTORY_RETENTION = timedelta(days=90)
+# Mức giữ lâu nhất; admin chỉ rút ngắn được (SiteSetting digest_history_retention_days).
+DIGEST_HISTORY_RETENTION_DAYS = 90
 
 
 @transaction.atomic
 def purge_candidate_job_digest_history(now=None):
-    """Delete terminal outbox history and successful receipts after 90 days."""
-    cutoff = (now or timezone.now()) - DIGEST_HISTORY_RETENTION
+    """Delete terminal outbox history and successful receipts after the retention window."""
+    days = retention_days('digest_history_retention_days', DIGEST_HISTORY_RETENTION_DAYS, minimum=7)
+    cutoff = (now or timezone.now()) - timedelta(days=days)
     receipt_count, _ = CandidateJobEmailReceipt.objects.filter(sent_at__lt=cutoff).delete()
     expired_digests = CandidateJobDigest.objects.filter(created_at__lt=cutoff).exclude(
         status__in=(

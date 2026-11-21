@@ -6,7 +6,190 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-11-21
+
+#### Changed — Cắt ảnh banner và thêm tông màu
+
+- Chọn ảnh banner mở hộp cắt khóa tỉ lệ (8:3 cho slide ảnh trang chủ, 4:3 cho ảnh minh họa):
+  kéo, phóng to để căn khung rồi tải lên bản WebP. Ảnh tối thiểu hạ còn 960×360 nên banner
+  thiết kế sẵn rộng 1000 px dùng được.
+- Sửa lỗi tải ảnh báo "undefined" khi tạo banner mới (loại slide chưa vào form).
+- 8 tông gradient hiện đại (thêm tím, ngọc lam, hồng đỏ, cực quang, đêm) dùng chung cho
+  carousel, banner trang việc làm và cẩm nang; trang quản trị chọn tông bằng ô màu.
+
+#### Added — Carousel banner trang chủ động, nhiều loại slide
+
+- Bốn loại slide: ảnh + link (cả slide là ảnh thiết kế sẵn), nhà tuyển dụng nổi bật (ảnh
+  bìa, logo, số tin đang tuyển thật), gợi ý việc làm AI (ứng viên thấy số việc hợp CV),
+  bố cục chữ. Banner có lịch bắt đầu/kết thúc, xoay vòng theo thứ tự.
+- Trang quản trị **Banner quảng bá** thay cho Django admin: tải ảnh có kiểm tra tỉ lệ,
+  chọn công ty, kéo thả sắp thứ tự, bật/tắt, xem trước, audit.
+- Carousel hiện trên điện thoại (khung 2:1, vuốt để chuyển); dừng khi focus và tôn trọng
+  giảm chuyển động. API công khai trả thêm `kind`, CTA phụ và công ty lồng nhau.
+
+#### Changed — Luật tuyển dụng và lưu trữ chỉnh được ở trang cấu hình (ADR-0026, GĐ5)
+
+- **Ứng tuyển & SLA:** admin chỉnh số lần nộp mỗi tin, thời gian chờ nộp lại, thời hạn
+  tự từ chối mặc định cho tin mới, thời gian nhắc trước, khoảng chờ email kết quả, khoảng
+  hoàn tác thông báo, các mốc nhắc nhà tuyển dụng, nút nhắc của ứng viên và hạn link chia
+  sẻ hồ sơ. Giá trị lạ bị kẹp vào khoảng an toàn; form của ứng viên và NTD đọc cùng giá trị.
+- **Tin tuyển dụng:** hạn nhận hồ sơ mặc định/tối đa, thời gian hiển thị, thời gian gia
+  hạn và thời gian chống đếm trùng lượt xem chuyển từ `.env` (`JOB_POSTING_*`,
+  `JOB_VIEW_DEDUP_TTL_SECONDS`) sang cấu hình; trần cứng 90 ngày giữ trong mã nguồn.
+- **Nhà tuyển dụng:**
+  - Công tắc bắt buộc duyệt hồ sơ xác thực (chỉ siết thêm cờ máy chủ).
+  - Chế độ dấu tick (shadow/enforce), số lần bị từ chối trước khi khoá nộp lại, lý do
+    báo cáo làm mất tick, độ dài tối thiểu mô tả công ty (form NTD đọc cùng giá trị).
+  - Một SLA cho hàng chờ xác thực/cập nhật công ty và một SLA cho báo cáo vi phạm, dùng
+    chung ở bảng điều khiển, danh sách tài khoản và hàng chờ xác thực.
+- **Chia sẻ CV:** tắt được; tắt thì mọi link đang có ngừng mở. Link mới có hạn mặc định,
+  không đặt quá hạn tối đa; link cũ không hạn hết hiệu lực khi quá hạn tối đa.
+- **Lưu trữ dữ liệu:** thời gian giữ kho ứng viên, thông báo ứng viên, file nguồn import
+  CV và lịch sử email gợi ý việc làm chỉ rút ngắn được, có mức sàn.
+- **Đăng nhập:** admin tắt bớt Google/Facebook/LinkedIn theo từng cổng (nút và API cùng
+  chặn); hạn lời mời quản trị viên chỉnh được.
+- **Sửa CI:** cổng cấu trúc backend đỏ từ GĐ1/GĐ3 — audit ghi qua
+  `AdminAccessAuditLog.objects.record()`, middleware bảo trì chuyển vào `sitecontent/api/`.
+
+#### Changed — Email, AI và gợi ý việc làm theo cấu hình (ADR-0026, GĐ4)
+
+- **Email:**
+  - Mọi email hệ thống dùng chung tên người gửi, địa chỉ trả lời (email hỗ trợ) và màu
+    thương hiệu trong cấu hình. Trước đây email gợi ý việc làm, tự động từ chối và báo
+    cáo tuần gửi bằng tên trong `.env`; email xác thực, chào mừng, đặt lại mật khẩu và
+    gợi ý việc làm viết cứng màu `#00b14f`.
+  - Công tắc "email nghiệp vụ" chặn thêm email nhắc/kết quả tự động từ chối và báo cáo
+    tuần chiến dịch. Email bỏ qua khi tắt không gửi bù.
+  - Email chào mừng tắt được.
+- **Email gợi ý việc làm:** công tắc riêng; giờ gửi, số tin mỗi email và số thông báo
+  việc làm mỗi ứng viên chỉnh được. Thêm công tắc nhắc nhà tuyển dụng về hồ sơ chưa
+  phản hồi.
+- **AI:**
+  - Import CV dùng chung runtime AI với tạo tin (`AI_CV_IMPORT_MODEL`): có log
+    invocation, theo `AI_RUNTIME_ENABLED`, không còn gọi thẳng REST của
+    Gemini/OpenAI/Anthropic.
+  - Gỡ `ai_provider`, `ai_model`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`.
+  - `ai_enabled` là công tắc chung cho import CV, viết tin và viết bài chiến dịch. Khi
+    tắt, CV được đọc bằng bộ trích xuất quy tắc thay vì báo lỗi.
+- **AI viết bài chiến dịch:** có công tắc và hạn mức lượt mỗi ngày.
+- **Lựa chọn model tạo tin** lấy từ `AI_JOB_GENERATION_MODEL_ALLOWLIST` của máy chủ.
+
+#### Changed — Cấu hình hệ thống chạy thật ở các cổng (ADR-0026, GĐ3)
+
+- **Chế độ bảo trì:**
+  - API cổng ứng viên, nhà tuyển dụng và API công khai trả 503; trang SEO trả 503 kèm noindex.
+  - Frontend hiện màn bảo trì, kể cả khi API mới báo 503 mà bản cấu hình đã tải còn cũ.
+  - Trang quản trị vẫn dùng được.
+- **Tạm dừng đăng ký** ứng viên hoặc nhà tuyển dụng: chặn ở form và ở lần đăng nhập mạng
+  xã hội đầu tiên; trang đăng ký hiện thông báo kèm link đăng nhập.
+- **Trang chủ:** ẩn/hiện từng khối (carousel, ngành nghề, việc làm tốt nhất, thống kê,
+  mẫu CV) và đổi số tin "Việc làm tốt nhất".
+- **Sửa lỗi:** số liệu và logo đối tác ở trang nhà tuyển dụng không bao giờ hiện, vì giá
+  trị mảng bị đọc như chuỗi.
+- **SEO:** trang chủ dùng mô tả admin cấu hình ở cả server lẫn frontend; ảnh chia sẻ đã
+  upload dùng URL `/media/` đúng, khi trống thì dùng logo.
+- **Nhận diện:**
+  - Layout đăng nhập/thiết lập của NTD theo màu thương hiệu.
+  - Footer NTD theo công tắc mạng xã hội và liên hệ.
+  - Khối hotline trang chủ dùng hotline/email trong cấu hình thay số viết cứng.
+  - Các fallback liên hệ dùng chung một nguồn mặc định.
+- **Pháp lý:**
+  - Link điều khoản/bảo mật ở form đăng ký ứng viên và link hướng dẫn DPA chuyển thành
+    cấu hình, không còn trỏ sang topcv.vn.
+  - Bỏ URL DPA mặc định của bên thứ ba.
+  - Phiên bản đồng ý của ứng viên do server gán.
+- **Tính năng:** admin tạm đóng được Trung tâm trợ giúp, việc index và từng nơi hiện
+  thông báo đa cổng, nhưng không mở vượt cấu hình máy chủ. Thêm kiểu cấu hình
+  `multiselect`.
+- **Hạn mức đăng tin:** thông báo hết lượt dùng hạn mức Cấp 3 thật thay số "100".
+
+#### Changed — Giao diện mới trang Cấu hình hệ thống (ADR-0026, GĐ2)
+
+- Thanh bên chia 3 khu kèm ô tìm kiếm trên mọi nhóm. Trên mobile, thanh bên thành
+  dải chip cuộn ngang.
+- Nút "?" ở mỗi mục giải thích tác dụng, nơi áp dụng và giá trị mặc định (có nút
+  "Đặt về mặc định"), kèm key và lịch sử thay đổi
+  (`GET /api/admin/site/settings/{key}/history/`).
+- Lưu một lần cho mọi nhóm:
+  - thanh lưu dính đáy màn hình, hoàn tác được từng mục;
+  - hỏi lại trước khi bật bảo trì, tắt đăng ký, tắt index, tắt email;
+  - lỗi hiện ngay dưới mục bị lỗi.
+- Editor dạng danh sách cho số liệu và logo đối tác; ô nhập dạng thẻ cho allowlist;
+  bộ đếm ký tự cho ô có giới hạn độ dài.
+- Xem trước thương hiệu (kèm độ tương phản WCAG), kết quả Google và dòng bản quyền.
+- Bảng Thông số hệ thống chỉ đọc nằm ở nhóm Vận hành.
+- Toàn bộ chuỗi giao diện của trang đã chuyển sang vi/en.
+
+#### Changed — Hợp đồng cấu hình hệ thống (ADR-0026, GĐ1)
+
+- Gỡ 46 site setting không có code nào đọc. Một số trong đó còn ghi giá trị trái với
+  hệ thống:
+  - toàn bộ nhóm thanh toán, bảo mật, upload, tin tuyển dụng;
+  - phần lớn nhóm CV;
+  - các key `env`.
+- Thông số bảo mật/upload/email/AI runtime thật hiển thị ở API chỉ đọc
+  `GET /api/admin/site/system-parameters/`; secret chỉ báo "đã/chưa cấu hình".
+- Gom key vào 17 nhóm, thuộc 3 khu:
+  - Giao diện & nội dung;
+  - Nghiệp vụ tuyển dụng;
+  - Tuân thủ & vận hành.
+- Mỗi key có `section` và `help` (nội dung nút "?"); API admin trả thêm `default_value`.
+  Link `?group=` của nhóm cũ vẫn mở đúng nhóm.
+- `seed_data/settings.json` là nguồn default duy nhất. Key blog và
+  `cv_builder_wysiwyg_enabled` được đưa vào seed. Logo mặc định đổi sang `.webp`, vì
+  bản `.png` đã bị xoá.
+- Gộp 4 helper đọc setting thành `apps.sitecontent.selectors`. Map cấu hình được cache
+  và xoá sau commit; code trong transaction đọc thẳng DB.
+- Server kiểm tra thêm URL, email, `max_length` và JSON `schema`. Upload ảnh cấu hình
+  có ghi audit. Django admin chỉ còn quyền xem SiteSetting.
+- Test hợp đồng (`test_settings_contract.py`) chặn hai trường hợp: key trong seed không
+  có code đọc, và code đọc key không có trong seed.
+
 ### 2026-11-20
+
+#### Changed — Trang "Việc làm phù hợp" và bật/tắt gợi ý việc làm
+
+- Bật hay tắt "Gợi ý việc làm" đều hỏi lại bằng popup (đồng ý kèm liên kết chính sách AI;
+  tắt thì nói rõ hệ thống ngừng phân tích CV).
+- Tắt gợi ý bằng AI vẫn có danh sách nhưng không đọc CV: xếp theo nhu cầu đã khai, hoặc tin
+  mới nhất khi chưa khai (`latest-v1`); API thêm `ai_recommendation_enabled`, trang hiện
+  khung "Gợi ý việc làm đang tắt" kèm nút bật lại. Khối gợi ý ở trang chủ ẩn khi tắt.
+- Giao diện mới: đầu trang có mascot, "Tìm thấy N việc làm…", thẻ tin có "Vì sao phù hợp?"
+  (chú thích liệt kê lý do), "Ứng tuyển" (mở form ứng tuyển ở trang tin qua `?ung-tuyen=1`),
+  ẩn tin, lưu tin.
+
+#### Added — Công tắc "Gợi ý việc làm" ở thanh bên tài khoản ứng viên
+
+- Bật/tắt đồng ý gợi ý việc làm bằng AI ngay ở thanh bên, độc lập với nhu cầu công việc
+  (`GET/PATCH /api/candidate/ai-recommendation/`, ghi `CandidateConsentEvent` nguồn
+  `account_sidebar`; không đánh dấu đã khai nhu cầu).
+- Biểu tượng "?" giải thích chức năng và trỏ tới văn bản chính sách xử lý dữ liệu bằng AI
+  qua cài đặt quản trị mới `ai_data_policy_url` (để trống thì không hiện liên kết).
+
+#### Added — Việc làm gợi ý theo ngữ nghĩa (kế hoạch bản 3, GĐ 4)
+
+- "Việc làm phù hợp" và trang lưu CV xếp tin theo độ gần ngữ nghĩa với CV (`semantic-v1`,
+  pgvector, vector tính sẵn); rơi về gợi ý theo luật khi chưa có vector hoặc cờ tắt.
+- Cài đặt mới `ai_job_recommendation_semantic_enabled` (mặc định bật).
+- `MatchDocument.is_current` (**migration** `matching.0002`, điền cờ cho dữ liệu cũ).
+- Trang lưu CV hiện lý do gợi ý thay cho thẻ "+điểm".
+- Nhu cầu đã khai lái gợi ý theo ngữ nghĩa: tin đúng vị trí mong muốn luôn được xét và xếp
+  trên (người đổi nghề), điểm cộng nhỏ cho tỉnh, lương, kinh nghiệm, kèm lý do. API gợi ý
+  thêm `cv_recommendations_enabled`; trang chủ hiện gợi ý cả khi chưa khai nhu cầu.
+- `matching_evaluate_recommendations` và `ml/scripts/evaluate_recommendations.py`.
+
+#### Changed — AI đối sánh: trích xuất `extract-v3` (kế hoạch bản 3, GĐ 2)
+
+- PDF được đọc theo vị trí chữ (`apps/cvs/services/pdf_layout.py`): mẫu CV hai cột
+  không còn để tiêu đề mục rời khỏi nội dung. Áp dụng cho cả bước nhận dạng CV tải lên.
+- Khoảng ngày viết liền, in thành hai dòng, "tháng 9 năm 2021", "T9/2021"; khoảng chỉ
+  ghi năm tính từ giữa năm; từ khóa bằng cấp, ngoại ngữ so theo ranh giới từ.
+- CV tải lên có chức danh (`title`); cấp bậc lấy theo việc gần nhất.
+- Danh mục kỹ năng: công cụ cụ thể tách khỏi khái niệm chung (PyTorch ≠ Deep Learning…);
+  nhóm "Tên vị trí" không được đếm; `import_job_postings --refresh-skills`.
+- `profile_json` có JSON Schema (`services/extraction/profile.schema.json`).
+- `EXTRACTOR_VERSION = 'extract-v3'`: sau khi triển khai chạy
+  `docker compose exec ml-worker python manage.py matching_backfill --inline`.
 
 #### Added — AI đối sánh: đo lường trên tập vàng (kế hoạch bản 3, GĐ 1)
 
@@ -263,7 +446,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   dịch tạm dừng, tự gỡ khi chiến dịch hoàn tất hoặc bị hủy; lỗi tạm thời được
   thử lại, token hết hạn thì báo NTD.
 - `CAMPAIGN_SOCIAL_PROVIDER=fake` chạy toàn bộ luồng không cần Meta; hướng dẫn
-  tạo Meta App ở `docs/06-deployment/facebook-page-integration.md`.
+  tạo Meta App ở `docs/06-deployment/social-integrations.md`.
 
 #### Added — Chiến dịch: phân phối đa kênh và ghi nhận nguồn (GĐ2)
 

@@ -12,6 +12,7 @@ from apps.accounts.services.admin_invitation_tokens import (
     decode_admin_invitation_token,
 )
 from apps.accounts.services.exceptions import AdminPermissionDenied
+from apps.sitecontent.selectors import get_int_setting
 
 from ..models import (
     AdminInvitation,
@@ -24,7 +25,10 @@ from .admin_account_common import (
 )
 from .admin_audit import record_admin_action
 
-INVITATION_TTL = timedelta(hours=72)
+
+def invitation_ttl():
+    """Hạn link lời mời quản trị viên (SiteSetting admin_invitation_ttl_hours, 24h–14 ngày)."""
+    return timedelta(hours=min(max(get_int_setting('admin_invitation_ttl_hours', 72), 24), 14 * 24))
 
 
 def _queue_invitation_email(invitation):
@@ -91,7 +95,7 @@ def create_admin_invitation(*, email, full_name, reason, actor):
             user=user,
             invited_by=actor,
             reason=reason,
-            expires_at=timezone.now() + INVITATION_TTL,
+            expires_at=timezone.now() + invitation_ttl(),
         )
         record_admin_action(
             **admin_actor_kwargs(actor),
@@ -130,7 +134,7 @@ def resend_admin_invitation(invitation, *, actor):
         invitation.status = AdminInvitation.Status.PENDING
         invitation.revoked_at = None
         invitation.token_version += 1
-        invitation.expires_at = timezone.now() + INVITATION_TTL
+        invitation.expires_at = timezone.now() + invitation_ttl()
         invitation.save(
             update_fields=[
                 'status',

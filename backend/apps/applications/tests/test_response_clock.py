@@ -23,7 +23,7 @@ from ..services import (
     withdraw_application,
 )
 from ..services.automatic_rejection import reject_due_applications
-from ..services.status import AUTO_REJECTION_MIN_NOTICE
+from ..services.policy import auto_rejection_min_notice
 from .test_services import create_status_application
 
 Status = Application.Status
@@ -111,6 +111,6 @@ class CandidateVisibleStatusTests(TestCase):
         self.assertEqual(application.status, Status.SUBMITTED)
         self.assertGreaterEqual(
             application.auto_reject_due_at,
-            timezone.now() + AUTO_REJECTION_MIN_NOTICE - timedelta(minutes=1),
+            timezone.now() + auto_rejection_min_notice() - timedelta(minutes=1),
         )
         self.assertIsNone(application.auto_rejection_reminder_sent_at)

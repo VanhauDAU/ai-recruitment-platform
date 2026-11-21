@@ -157,11 +157,11 @@ from .tax_lookup import (
 )
 from .trust_badge import (
     BADGE_CRITERIA,
-    TRUST_REPORT_REASONS,
     account_badge_eligible_at,
     employer_badge_payload,
     employer_badge_state_map,
     recruiter_badge_eligibility,
+    trust_report_reasons,
 )
 from .upload_validation import (
     EmployerUploadSessionRejected,
@@ -202,7 +202,7 @@ __all__ = [
     'request_company_join',
     'transfer_company_ownership',
     'BADGE_CRITERIA',
-    'TRUST_REPORT_REASONS',
+    'trust_report_reasons',
     'COMPANY_DESCRIPTION_MIN_LENGTH',
     'CompanyUnlinkError',
     'company_unlink_impact',

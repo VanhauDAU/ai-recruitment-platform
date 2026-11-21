@@ -21,7 +21,9 @@ from rest_framework.exceptions import ValidationError
 
 from apps.accounts.models import SocialAccount, User
 from apps.accounts.services.access import is_account_accessible
+from apps.accounts.services.registration import registration_open
 from apps.accounts.services.token_cache import atomic_pop
+from apps.sitecontent.selectors import get_setting
 
 _STATE_PREFIX = 'oauth:state:'
 _CODE_PREFIX = 'oauth:code:'
@@ -31,10 +33,28 @@ PORTAL_PROVIDERS = {
     'main': ('google', 'facebook', 'linkedin'),
     'employer': ('google',),
 }
+# Admin chỉ thu hẹp được danh sách trên theo từng cổng (ADR-0026).
+PORTAL_PROVIDER_SETTINGS = {
+    'main': 'oauth_providers_candidate',
+    'employer': 'oauth_providers_employer',
+}
 PORTAL_ROLE = {
     'main': User.Role.CANDIDATE,
     'employer': User.Role.EMPLOYER,
 }
+
+
+def portal_providers(portal):
+    """Provider đang mở cho ``portal``: danh sách trong code giao với lựa chọn của admin."""
+    supported = PORTAL_PROVIDERS.get(portal, ())
+    allowed = (
+        get_setting(PORTAL_PROVIDER_SETTINGS[portal])
+        if portal in PORTAL_PROVIDER_SETTINGS
+        else None
+    )
+    if not isinstance(allowed, list):
+        return supported
+    return tuple(provider for provider in supported if provider in allowed)
 
 
 class OAuthError(Exception):
@@ -325,6 +345,8 @@ def resolve_user(provider, profile, portal, *, include_created=False):
                 user.save(update_fields=['email_verified', 'updated_at'])
             return result(user, False)
         else:
+            if not registration_open(role):
+                raise OAuthError('registration_closed')
             user = User.objects.create_user(
                 email=email,
                 password=None,  # password unusable — chỉ đăng nhập qua social

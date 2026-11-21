@@ -1,5 +1,4 @@
 import {
-  ArrowRightOutlined,
   CheckCircleFilled,
   DeleteOutlined,
   EnvironmentOutlined,
@@ -20,7 +19,8 @@ import { useSavedJob } from '@/features/main/job/saved-jobs'
 import { JobImpressionBoundary } from '@/features/main/job/track-job-engagement'
 import { recommendationReasons } from '../model/recommendation-reasons'
 
-export default function CandidateRecommendationCard({ compact = false, hidePending, job, onHide }) {
+// Thẻ gọn của khối gợi ý ở trang chủ; trang "Việc làm phù hợp" dùng MatchingJobCard.
+export default function CandidateRecommendationCard({ hidePending, job, onHide }) {
   const [saved, toggleSaved, savePending] = useSavedJob(job.public_id, job)
   const detailPath = jobDetailPath(job)
   const reasons = recommendationReasons(job)
@@ -42,7 +42,7 @@ export default function CandidateRecommendationCard({ compact = false, hidePendi
           <Link
             to={detailPath}
             aria-label={`Xem chi tiết ${job.title} qua logo công ty`}
-            className={`flex shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white ${compact ? 'h-14 w-14' : 'h-16 w-16 sm:h-20 sm:w-20'}`}
+            className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white"
           >
             {job.company_logo_url ? (
               <img src={job.company_logo_url} alt="" className="h-full w-full object-contain p-2" loading="lazy" />
@@ -58,7 +58,7 @@ export default function CandidateRecommendationCard({ compact = false, hidePendi
               <div className="min-w-0">
                 <Link
                   to={detailPath}
-                  className={`line-clamp-2 text-sm font-bold leading-5 transition sm:text-base sm:leading-6 ${compact ? '!text-black hover:!text-black focus-visible:!text-black' : 'text-slate-900 group-hover:text-[var(--brand-primary)]'}`}
+                  className="line-clamp-2 text-sm font-bold leading-5 !text-black transition hover:!text-black focus-visible:!text-black sm:text-base sm:leading-6"
                 >
                   {job.title}
                 </Link>
@@ -115,16 +115,6 @@ export default function CandidateRecommendationCard({ compact = false, hidePendi
                   <span>{reason}</span>
                 </p>
               ))}
-            </div>
-          )}
-          {!compact && (
-            <div className={`flex justify-end ${reasons.length ? '' : 'border-t border-slate-100 pt-3'}`}>
-              <Link
-                to={detailPath}
-                className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-primary)] px-4 py-2 text-xs font-bold text-white transition hover:bg-[var(--brand-primary-hover)]"
-              >
-                Xem việc làm <ArrowRightOutlined />
-              </Link>
             </div>
           )}
         </div>

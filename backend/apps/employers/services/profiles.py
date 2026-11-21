@@ -2,11 +2,11 @@
 
 from http import HTTPStatus
 
-from django.conf import settings
 from django.utils.translation import gettext, gettext_lazy
 from rest_framework.exceptions import APIException
 
 from apps.accounts.models import User
+from apps.sitecontent.selectors import approved_employer_verification_required
 
 from ..models import Company, CompanyDocument, EmployerVerificationCase, RecruiterProfile
 from ..models.readiness import (
@@ -118,7 +118,7 @@ def get_or_create_recruiter(user):
 
 def _legacy_verification_completed(readiness):
     completed = readiness['job_workspace_ready']
-    if settings.REQUIRE_APPROVED_EMPLOYER_VERIFICATION:
+    if approved_employer_verification_required():
         completed = completed and readiness['verification_approved']
     return completed
 

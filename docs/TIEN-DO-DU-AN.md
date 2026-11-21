@@ -7,6 +7,8 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Làm lại carousel banner trang chủ](#làm-lại-carousel-banner-trang-chủ-2026-11-21) | ✅ Gộp vào `dev` (#300); cắt ảnh + 8 tông màu trên nhánh `feat/banner-image-crop` |
+| [Làm lại trang Cấu hình hệ thống (ADR-0026)](#làm-lại-trang-cấu-hình-hệ-thống-adr-0026-2026-11-21) | 🟨 GĐ1–GĐ4 đã gộp (#294–#298); GĐ5 trên nhánh `feat/settings-recruiting` |
 | [Chốt luồng FAQ/hướng dẫn và blog: Nháp → Xuất bản (ADR-0024)](#chốt-luồng-nội-dung-nháp--xuất-bản-adr-0024-2026-11-20) | ✅ Gộp vào `dev` (#272) |
 | [Tổ chức lại sidebar quản trị](#tổ-chức-lại-sidebar-quản-trị-2026-11-20) | ✅ Gộp vào `dev` (#270); gỡ khối "Hàng chờ quản trị" ở trang Người dùng: PR #271, chờ gộp |
 | [Song ngữ vi/en cho 3 cổng (ADR-0023)](#song-ngữ-vien-cho-3-cổng-adr-0023-2026-11-19) | 🟨 GĐ0 (#262), GĐ1 cổng NTD (#267) đã gộp; chặn mất dữ liệu khi đổi ngôn ngữ trên nhánh `fix/language-switch-unsaved-guard`; GĐ2–4 chưa làm |
@@ -23,7 +25,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Ảnh đại diện dùng chung 3 cổng](#ảnh-đại-diện-dùng-chung-3-cổng-2026-11-16) | 🟨 Xong trên nhánh `feat/avatar-editor`, chưa mở PR |
 | [Dọn mâu thuẫn còn lại sau thống nhất luồng](#dọn-mâu-thuẫn-còn-lại-sau-thống-nhất-luồng-2026-11-16) | ✅ Cả 3 GĐ đã gộp (#222, #223, #224); dọn phần còn hở trên nhánh `fix/flow-loose-ends` |
 | [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | ✅ Cả 6 giai đoạn đã gộp (#208–#215); hoàn thiện luồng nhắc NTD và lịch sử nộp trên nhánh `feat/application-reminders` |
-| [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Bản demo đã gộp (#207, #230–#233); kế hoạch bản 3 (20/11): GĐ 1 đo lường xong trên nhánh `feat/ai-eval-harness`, chờ PR |
+| [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Bản demo đã gộp (#207, #230–#233); kế hoạch bản 3 (20/11): GĐ 1 đo lường ở PR #274; GĐ 2 `extract-v3` xong trên nhánh `feat/ai-extract-v3` |
 | [CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm](#cv-tải-lên-tệp-gốc-tiêu-chuẩn-upload-giới-hạn-cv-ntd-tìm-kiếm-2026-11-15) | ✅ Gộp vào `dev` (#203) |
 | [Việc làm tốt nhất xếp theo chất lượng tin](#việc-làm-tốt-nhất-xếp-theo-chất-lượng-tin-2026-11-15) | ✅ Gộp vào `dev` (#204) |
 | [Thiết kế lại quản lý tin tuyển dụng của NTD](#thiết-kế-lại-quản-lý-tin-tuyển-dụng-của-ntd-2026-11-15) | ✅ Gộp vào `dev` (nhánh `feat/employer-job-workspace`) |
@@ -38,6 +40,86 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Gọn sidebar quản trị và NTD theo góp ý GVHD (2026-11-21)
+
+Góp ý: sidebar admin nhiều mục, nhiều tầng tiêu đề, rối mắt. Giữ đủ mọi lối vào
+nhưng gom thành ít nhóm thả xuống hơn, hai cổng dùng chung một kiểu hiển thị.
+
+| Phần | Nội dung |
+| --- | --- |
+| Admin | Bỏ 4 tiêu đề mục (Vận hành · Quản lý · Nội dung · Hệ thống); gốc chỉ còn Tổng quan + 6 nhóm: Cần xử lý, Tin tuyển dụng, Doanh nghiệp, Người dùng, Nội dung (gom Cẩm nang, FAQ, Mẫu CV, Banner, Thông báo), Hệ thống. Từ 13 dòng gốc + 4 tiêu đề xuống 7 dòng |
+| Accordion | Mỗi lúc mở một nhóm (cả admin và NTD), nhóm chứa trang hiện tại tự mở; trượt mở/đóng bằng `grid-template-rows`, tắt khi `prefers-reduced-motion` |
+| NTD | Giữ thứ tự mục ban đầu (Bảng tin · Chiến dịch · Tin · Trang công ty · Quản lý CV · Lịch sử · Cài đặt · Thông báo); chỉ "Quản lý CV" là danh sách thả xuống (CV ứng tuyển, Kho ứng viên tiềm năng, Danh sách đen). Bỏ hẳn 9 mục chưa làm ("Sắp mở" ở đầu menu, trong Quản lý CV, Báo cáo tuyển dụng, Hộp thư hỗ trợ ở chân sidebar). Trang con (sửa tin, chi tiết chiến dịch) giữ mục cha sáng |
+| Giao diện | Dòng 38px, mục con 34px treo trên đường dẫn hướng, trang hiện tại có nền + vạch màu thương hiệu (tính từ `--brand-primary`, đổi theo cấu hình); vùng logo admin cao bằng topbar; footer admin một hàng; hồ sơ NTD gọn (bỏ "Employer", mã NTD) |
+| Kỹ thuật | Style menu NTD chuyển từ chuỗi Tailwind arbitrary sang `employer-workspace.css` tải lười cùng layout |
+
+## Làm lại carousel banner trang chủ (2026-11-21)
+
+Carousel cạnh danh mục nghề trước đây chỉ có slide số liệu viết cứng và banner chữ
+nhập qua Django admin. Nay:
+
+- `Banner` có `kind` (`image`, `promo`, `company`, `ai`), FK công ty và lịch
+  `starts_at`/`ends_at` (migration `sitecontent.0007`).
+- Trang quản trị **Banner quảng bá** (`/admin/app/banners`): lọc theo vị trí, kéo thả
+  hoặc nút lên/xuống để sắp thứ tự, bật/tắt, xem trước bằng đúng slide trang chủ, tải
+  ảnh có kiểm tra tỉ lệ 8:3, ghi audit mọi thao tác.
+- Slide nhà tuyển dụng lấy số tin đang tuyển thật; slide AI hiện số việc hợp CV cho
+  ứng viên (dùng chung query với khối gợi ý, không gọi API thêm).
+- Carousel dừng khi focus, tắt tự chạy khi giảm chuyển động, vuốt trên cảm ứng; mobile
+  hiện carousel khung 2:1 phía trên danh mục (trước đây bị ẩn).
+- Đợt 2: hộp cắt ảnh khóa tỉ lệ (`react-easy-crop`), mức ảnh tối thiểu 960×360, 8 tông
+  gradient dùng chung cho mọi vị trí banner (migration `sitecontent.0008`).
+- Hướng dẫn nội dung: [cau-hinh-site-settings.md](05-huong-dan/cau-hinh-site-settings.md#banner-quảng-bá-trang-quản-trị-adminappbanners).
+
+## Làm lại trang Cấu hình hệ thống (ADR-0026, 2026-11-21)
+
+Kế hoạch: [ke-hoach-cau-hinh-he-thong.md](01-phan-tich/ke-hoach-cau-hinh-he-thong.md).
+Quyết định: [ADR-0026](02-tong-quan/adr-0026-settings-contract.md).
+
+Rà soát 120 key: khoảng 60 key không có code đọc, khoảng 25 key chạy sai, 8 key seed
+ghi ngược với code.
+
+| GĐ | Nội dung | Trạng thái |
+| --- | --- | --- |
+| 1 | Hợp đồng cấu hình (xem bên dưới) | ✅ #294, #295 |
+| 2 | Giao diện mới: thanh bên 3 khu, tìm kiếm, nút "?", lưu chung, xác nhận thao tác nguy hiểm, lịch sử thay đổi, bảng thông số | ✅ #296 |
+| 3 | Nối bảo trì, công tắc đăng ký, khối trang chủ; sửa SEO/màu/footer/hotline; link pháp lý (bỏ topcv.vn); công tắc Trung tâm trợ giúp và thông báo đa cổng | ✅ #297 |
+| 4 | Email (phạm vi công tắc, chào mừng, branding chung), AI hợp nhất theo runtime, job alert, AI chiến dịch | ✅ #298 |
+| 5 | Xác thực & uy tín NTD, Ứng tuyển & SLA, hạn tin, chia sẻ CV, lưu trữ dữ liệu, OAuth theo cổng (xem bên dưới) | 🟨 Nhánh `feat/settings-recruiting` |
+
+GĐ1 gồm:
+
+- Xoá 46 key không có code đọc (migration `sitecontent.0004`).
+- Gom key vào 17 nhóm, chia thành 3 khu.
+- Seed có thêm `section` và `help`; seed là nguồn default duy nhất.
+- Một bộ đọc dùng chung, có cache, thay cho 4 helper trùng nhau.
+- Kiểm tra URL, email, JSON schema và `max_length`.
+- Ghi audit khi upload ảnh; Django admin chỉ còn quyền xem.
+- API thông số hệ thống chỉ đọc.
+- Test hợp đồng chặn key chết.
+
+GĐ5 thêm 33 key (seed có 118 key) cho các luật trước đây viết cứng hoặc nằm ở `.env`:
+
+- Ứng tuyển: số lần nộp mỗi tin, thời gian chờ nộp lại, các mốc tự từ chối, khoảng
+  hoàn tác thông báo, lịch nhắc nhà tuyển dụng, nút nhắc của ứng viên, hạn link chia sẻ
+  hồ sơ. FE nhận cùng giá trị qua `application_rules()`.
+- Tin tuyển dụng: hạn mặc định/tối đa (trần cứng 90 ngày), thời gian hiển thị, thời
+  gian gia hạn, thời gian chống đếm trùng lượt xem.
+- NTD: bắt buộc duyệt xác thực (chỉ siết thêm cờ máy chủ), chế độ dấu tick, số lần bị từ
+  chối, lý do báo cáo làm mất tick, độ dài mô tả công ty, SLA kiểm duyệt và SLA báo cáo.
+- CV: bật/tắt chia sẻ (tắt thì mọi link ngừng mở), hạn mặc định và tối đa.
+- Lưu trữ: kho ứng viên, thông báo ứng viên, file nguồn import CV, lịch sử email gợi ý
+  (chỉ rút ngắn, có mức sàn).
+- Đăng nhập mạng xã hội theo cổng, hạn lời mời quản trị viên.
+
+Cùng PR sửa cổng cấu trúc backend đã đỏ từ GĐ1/GĐ3 (`check_backend_imports.py`): audit
+ghi qua `AdminAccessAuditLog.objects.record()`, middleware bảo trì chuyển vào
+`sitecontent/api/`.
+
+GĐ3 nối 10 key `pending`, GĐ4 nối `email_welcome_enabled`: không còn key "Chưa có hiệu lực". Việc dời lại: đồng bộ giới hạn
+upload phía frontend (cần sửa chuỗi "5MB" trong i18n nhiều vùng); file mẫu
+`/documents/topcv-mau-van-ban-thong-bao-dong-y-xu-ly-dlcn.docx` còn tên/nội dung của bên thứ ba.
 
 ## Song ngữ vi/en cho 3 cổng (ADR-0023, 2026-11-19)
 
@@ -328,7 +410,7 @@ GĐ1 đã làm:
     token hỏng thì kết nối "Hết hạn" và báo NTD;
   - frontend: trang "Kết nối mạng xã hội" trong Cài đặt tài khoản; khối "Đăng
     tự động lên Fanpage" trong thẻ kênh Fanpage;
-  - hướng dẫn Meta App ở `docs/06-deployment/facebook-page-integration.md`,
+  - hướng dẫn Meta App ở `docs/06-deployment/social-integrations.md`,
     ADR-0021.
   - Chưa thử với Meta App thật; cần user tạo app ở Development mode.
 - GĐ4 đã làm (#241), công thức ở
@@ -368,6 +450,35 @@ GĐ1 đã làm:
     use case (20, thêm tác nhân Bộ lập lịch, Facebook, Ứng viên), 5 sơ đồ tuần
     tự và 5 sơ đồ hoạt động (thiết lập và kích hoạt, vòng đời, phân phối đa
     kênh, đăng Fanpage, sức khỏe và báo cáo).
+- Thêm lại cùng loại kênh (nhánh `fix/campaign-channel-reuse`): hộp Thêm kênh
+  gợi ý tên không trùng (kèm tên tin khi link dẫn tới một tin, còn trùng thì
+  đánh số), chặn tên trùng ngay trên form — trước đây tên tự điền luôn là tên
+  loại kênh nên Fanpage thứ hai (cho tin khác) bị backend từ chối.
+- Một kênh đăng nhiều bài, nhiều tin (nhánh `feat/campaign-channel-posts`):
+  - kênh chỉ còn là nơi đăng (bỏ "Link dẫn tới" khi thêm kênh); migration
+    campaigns 0003 đổi `job` thành `jobs` (M2M), kênh cũ trỏ một tin giữ tin
+    đó với link riêng từng tin;
+  - bước soạn bài chọn tin trong bài và link dẫn tới trang chiến dịch, từng tin
+    (mỗi tin một link `/r/<code>/<mã tin>`) hoặc trang công ty
+    (`/r/<code>/cong-ty`); AI và mẫu chèn đủ link từng tin;
+  - tab Link & QR liệt kê mọi link của kênh, chọn link để tạo QR;
+  - link tin/công ty chỉ mở trang đó khi chiến dịch đang chạy và tin thuộc
+    chiến dịch, còn lại về trang tuyển dụng; lượt bấm vẫn tính cho kênh.
+- Gộp luồng đăng bài (nhánh `feat/campaign-post-flow`): hai tab "Nội dung bài"
+  và "Đăng Fanpage" thành một tab **Bài đăng** theo 3 bước đánh số (Chọn tin và
+  link → Soạn nội dung → Đăng bài). Bước 3 đổi theo kênh: Fanpage có nút "Đăng
+  lên Fanpage" (mở ngăn chọn trang, ảnh, giờ đăng) và lịch sử bài ngay dưới;
+  kênh khác có "Sao chép bài" và ô đánh dấu đã đăng. Tab kênh còn Bài đăng ·
+  Link & QR · Chi phí; bỏ mục "Sửa nội dung" trùng ở menu kênh.
+- Làm gọn tab Bài đăng (nhánh `feat/campaign-post-composer`): tab chỉ còn một
+  dòng hướng dẫn, nút **Soạn bài** và danh sách bài (Fanpage: thẻ bài có nhãn
+  trạng thái màu, giờ, ảnh thu nhỏ, tóm tắt 2 dòng; kênh đăng tay: thẻ bài đang
+  dùng với Sao chép · Sửa · Đã đăng). Mọi bước soạn dồn vào ngăn **Soạn bài**
+  dùng chung cho mọi kênh: chip tin ngắn (tiêu đề dài tự trượt, tắt khi giảm
+  chuyển động), ô chọn link dẫn tới, ô nội dung chứa link thật kèm nút **Chèn
+  link** (chèn đúng chỗ con trỏ, chưa đặt thì cuối bài) và Soạn bằng AI, xem
+  trước; Fanpage thêm trang, ảnh, giờ đăng; kênh khác "Lưu và sao chép". Bỏ hộp
+  Sửa tay với chuỗi `{link}`.
 - Giải thích chỉ số (nhánh `feat/campaign-metric-help`): `shared/ui/HelpTip`
   (icon ? có tooltip, bấm được bằng bàn phím) ở bảng so sánh nguồn, chi tiết
   kênh, chi phí, tab Sức khỏe, Tổng quan và đầu trang chiến dịch.
@@ -378,6 +489,76 @@ GĐ1 đã làm:
 - Còn mở: chưa xem bằng mắt trên trình duyệt (đã có test API và test giao diện);
   `openapi.yaml` được sinh lại nên kéo theo phần lệch tích tụ từ các tính năng
   trước.
+- Khung tự đăng nhiều mạng xã hội (ADR-0025, #286). Ba mạng thêm sau, mỗi mạng
+  một PR: Instagram doanh nghiệp, Threads, LinkedIn. Zalo OA đã bỏ ngày 21/11.
+  PR này chưa thêm mạng nào.
+  - Mạng khai báo ở `campaigns/domain/social_networks.py` kèm giới hạn: số ký
+    tự, số ảnh, có bắt buộc ảnh không, có gỡ bài được không.
+  - Migration campaigns 0004–0006 (thêm cột, chép dữ liệu, đổi cột; tách ba bước
+    vì Postgres không ALTER bảng còn trigger chờ): `provider` thành `network` +
+    `simulated`, các cột `page_*` thành `account_*`; nhãn trạng thái "Đã gỡ bài"
+    và "Cần tự gỡ bài".
+  - `CAMPAIGN_SOCIAL_LIVE_NETWORKS` bật thật hay giả lập theo từng mạng; vẫn
+    hiểu `CAMPAIGN_SOCIAL_PROVIDER=facebook`.
+  - API `/social/<network>/...` cùng `GET /social/networks/`; giữ
+    `/social/facebook/callback/` vì đã khai với Meta.
+  - Mạng không gỡ được bài thì giữ bài và báo NTD tự gỡ (`delete_unsupported`).
+  - Trang Kết nối mạng xã hội thành lưới thẻ, mỗi mạng một thẻ. Ngăn soạn bài
+    lấy giới hạn ký tự và số ảnh từ API. `ChannelIcon` chuyển xuống entity
+    campaign.
+- Instagram doanh nghiệp (#287).
+  - Kết nối qua Facebook Login, dùng chung Meta App; chỉ hiện các Fanpage đã
+    liên kết Instagram.
+  - Đăng bài một ảnh hoặc carousel (tối đa 10 ảnh); ảnh là bắt buộc.
+  - Ảnh lệch tỷ lệ được tạo thành JPEG thêm viền trắng, trong khoảng 4:5 đến
+    1.91:1; khung xem trước hiện đúng như vậy.
+  - Tự gỡ bài khi chiến dịch kết thúc (`instagram_manage_contents`).
+  - Lỗi giới hạn số bài trong 24 giờ (mã 9) được thử lại.
+  - Thêm kênh `instagram` (migration campaigns 0007) và lớp chung
+    `MetaGraphProvider`.
+  - Thử thật 20/11: kết nối `@levanhau122`, đăng carousel 3 ảnh thành công.
+    Phát hiện hai lỗi, đã sửa ở #288:
+    - thiếu quyền `business_management`;
+    - "Đăng ngay" phải chờ lượt quét 60 giây; nay đăng khi commit và hiện
+      "Đang đăng".
+- Threads (#289).
+  - Kết nối qua Threads Login, App ID/secret riêng.
+  - Bài chữ có thẻ xem trước link; bài một ảnh hoặc carousel; tối đa 500 ký
+    tự, tính cả link.
+  - Token 60 ngày được làm mới mỗi ngày (`token_expires_at`, task
+    `refresh_social_tokens`). Token hỏng thì kết nối hết hạn và NTD được báo.
+  - Gỡ bài bằng quyền `threads_delete`.
+  - Migration campaigns 0008.
+  - Task đăng bài được tới 3 phút, để carousel nhiều ảnh không bị cắt giữa
+    chừng.
+  - Còn mở: chưa thử thật. Cần Threads App ID/secret, khai Redirect Callback
+    URL và thêm người thử nghiệm Threads.
+- LinkedIn (#290).
+  - Đăng lên trang cá nhân qua Share on LinkedIn và Posts API; bài chữ, một
+    ảnh hoặc nhiều ảnh; tối đa 3.000 ký tự, tính cả link; ký tự đặc biệt được
+    escape.
+  - Token 60 ngày không làm mới được: nhắc kết nối lại trước 10 ngày (thông
+    báo mới "sắp hết hạn", migration employers 0005), đến hạn thì đánh dấu hết
+    hạn.
+  - Lệnh tạo bài quá thời gian chờ thì không tự thử lại, vì không kiểm được
+    bài trùng.
+  - Mạng chưa kết nối thì kênh quay về chép để đăng tay (áp dụng cho mọi mạng).
+  - Migration campaigns 0009.
+  - Còn mở: chưa thử thật; chưa làm Trang công ty (cần LinkedIn duyệt).
+- Kết thúc đợt tự đăng (21/11): bốn mạng là Fanpage, Instagram, Threads và
+  LinkedIn. Bỏ Zalo OA; kênh `zalo` vẫn đăng tay.
+  - Đã đăng thật: Fanpage và Instagram.
+  - Threads (`@levanhau122`) và LinkedIn đã kết nối thật nhưng chưa đăng bài
+    thật. Threads chỉ nhận redirect HTTPS (xem #292); LinkedIn nhận
+    `http://localhost`.
+  - Chưa thử gỡ bài Instagram trên tài khoản thật.
+- Hộp "Thêm kênh phân phối" chia hai nhóm (nhánh `feat/campaign-add-channel-groups`).
+  - **ProCV tự đăng:** danh sách mạng lấy từ API; mỗi ô có trạng thái "Đã kết
+    nối · tài khoản" hoặc "Chưa kết nối". Chọn mạng chưa kết nối thì hiện một
+    dòng nhắc kèm "Kết nối ngay".
+  - **Bạn tự đăng:** ô gọn, kèm gợi ý ngắn cho từng nơi đăng.
+  - Bỏ nhãn "Bạn sẽ đăng ở đâu?".
+  - Mobile: nhóm tự đăng một cột, nhóm đăng tay hai cột, chữ được xuống dòng.
 
 ## Ứng tuyển bằng CV tải lên và form ứng tuyển mới (2026-11-18)
 
@@ -762,10 +943,10 @@ làm gợi ý" theo ngữ nghĩa, và nhà tuyển dụng xếp hạng hồ sơ 
 
 | GĐ | Hạng mục | Trạng thái |
 | --- | --- | --- |
-| 1 | Đo lường: lệnh `matching_evaluate` (chấm bằng đúng mã sản phẩm), `ml/scripts/evaluate.py`, bảng số trên validation; mở rộng tập vàng lên 30 tin; tải mô hình và dữ liệu công khai | 🟨 Xong trên nhánh `feat/ai-eval-harness`, chờ PR |
-| 2 | `extract-v3`: PDF hai cột, chức danh CV tải lên, sửa các luật nhận ngày/bằng cấp/kỹ năng, schema `profile_json` | ⬜ |
+| 1 | Đo lường: lệnh `matching_evaluate` (chấm bằng đúng mã sản phẩm), `ml/scripts/evaluate.py`, bảng số trên validation; mở rộng tập vàng lên 30 tin; tải mô hình và dữ liệu công khai | 🟨 PR #274 chờ gộp |
+| 2 | `extract-v3`: PDF hai cột, chức danh CV tải lên, sửa các luật nhận ngày/bằng cấp/kỹ năng, schema `profile_json` | 🟨 Xong trên nhánh `feat/ai-extract-v3`, chờ PR |
 | 3 | Dữ liệu huấn luyện, cổng chất lượng, fine-tune bi-encoder và cross-encoder, ablation | ⬜ |
-| 4 | Việc làm gợi ý theo ngữ nghĩa (pgvector) | ⬜ |
+| 4 | Việc làm gợi ý theo ngữ nghĩa (pgvector) | 🟨 Xong trên nhánh `feat/ai-semantic-recommendations`, chờ PR |
 | 5 | `hybrid-v2`, cross-encoder vào `ml-worker`, `result_json` bản 2 (M2) | ⬜ |
 | 6 | Nhà tuyển dụng xếp hạng hồ sơ ứng tuyển | ⬜ |
 | 7 | Chạy tập test một lần, hiệu năng, nghiệm thu TC-01…30, kappa 30 cặp (M3) | ⬜ |
@@ -828,6 +1009,107 @@ làm gợi ý" theo ngữ nghĩa, và nhà tuyển dụng xếp hạng hồ sơ 
   chép lại luật, làm cùng lúc với lần hiệu chuẩn lại.
 - Bỏ ngưỡng "P@3 ≥ 0,70" của bản 2: tập test cũ chỉ có 13 cặp nhãn ≥ 3 nên trần
   lý thuyết là 0,43.
+
+</details>
+<details><summary>Ghi chú GĐ 2 (bản 3)</summary>
+
+- Đọc PDF theo vị trí chữ (`apps/cvs/services/pdf_layout.py`): `pypdfium2` trả chữ
+  theo thứ tự vẽ trong tệp, nên mẫu CV hai cột để mọi tiêu đề mục sau nội dung của
+  chúng. Module dựng lại thứ tự đọc từ tọa độ từng ký tự: gom ký tự thành đoạn, tìm
+  khe dọc giữa hai cột, dòng chạy ngang qua khe chia trang thành dải, cột hẹp chỉ
+  gồm ngày được ghép vào dòng cùng hàng; xử lý chữ ghép ("ffi") và dấu gạch nối
+  cuối dòng. Dùng cho cả bước nhận dạng CV khi tải lên.
+- Luật ngày tháng (`facts.py`): dấu nối viết liền (`04/2023-12/2024`), dấu `>>`,
+  khoảng in thành hai dòng, "tháng 9 năm 2021", "T9/2021"; khoảng chỉ ghi năm tính
+  từ giữa năm này tới giữa năm kia (ít nhất 6 tháng); hai năm đứng cạnh nhau không
+  có dấu nối không phải một khoảng.
+- Từ khóa bằng cấp, nơi học, ngoại ngữ so theo ranh giới từ ("Scrum Master",
+  "samba", "HSKS" không còn bị nhận nhầm); nhận "ĐH".
+- CV tải lên có `title` (trước đây rỗng nên phép so chức danh với tin bị bỏ): mẩu
+  ngắn có từ chỉ nghề ở đầu trang, rồi chức danh lặp lại ở các việc, rồi chức danh
+  của việc gần nhất; không chắc thì để rỗng. Cấp bậc lấy theo việc gần nhất, không
+  theo chức danh cao nhất từng giữ.
+- Tên kỹ năng có dấu `/` ("CI/CD") không bị tách; dòng liệt kê kỹ năng trong tin
+  ("ReactJS, TypeScript, Redux") không bị coi là tiêu đề con; nhận tiếng Việt bằng
+  chữ cái riêng của tiếng Việt, ngưỡng 5%.
+- Danh mục kỹ năng: công cụ cụ thể không còn là alias của khái niệm chung
+  (PyTorch/TensorFlow ≠ Deep Learning, Jenkins/GitHub Actions ≠ CI/CD, Pytest/Jest ≠
+  Unit Testing, Express.js ≠ Node.js) ở `seed_skills` và khóa `split` của
+  `skill_merge.json`; nhóm "Tên vị trí" (Fullstack, Kế toán, Kế toán tổng hợp, IT
+  Support, Tuyển dụng) không được đếm như nhóm "Phẩm chất cá nhân"; lệnh nhập tin có
+  `--refresh-skills` để đồng bộ lại kỹ năng của tin đã nhập (2 tin đổi: JD-25, JD-27).
+- Chuẩn đầu vào: `services/extraction/profile.schema.json` mô tả `profile_json` của CV
+  và tin; test kiểm hồ sơ CV builder, CV tải lên, tin; cả 246 hồ sơ thật trong DB
+  dev đều hợp lệ. `EXTRACTOR_VERSION = 'extract-v3'`, đã chạy `matching_backfill`.
+- Đo lại (`ml/reports/extraction_check.md`). Bộ kiểm tra được sửa để so công bằng:
+  bậc học của PDF so với chữ in ở tên bằng (`ml/labeling/education_key.json`, vì
+  trường `degree_level` của CV tổng hợp lệch tên bằng ở 53/100 CV); kỹ năng, ngoại
+  ngữ, số tháng chỉ tính mục thật sự in trong tệp (mẫu TopCV bỏ 41 kỹ năng).
+
+  | Nguồn | Kỹ năng | Kinh nghiệm ±3 tháng | Học vấn | Ngoại ngữ | Chức danh |
+  | --- | ---: | ---: | ---: | ---: | ---: |
+  | CV builder (100) | 100% | 100% | 100% | 100% | 100/100 |
+  | PDF hệ thống (15) | 96,2% | 93% | 100% | 100% | 15/15 |
+  | PDF TopCV (36) | 98,9% | 100% | 97% | 94% | 29/36 (34 có chức danh) |
+
+  Bản `extract-v2` đo bằng bộ kiểm tra cũ cho PDF TopCV 78,7% / 72% / 36% (kỹ năng /
+  kinh nghiệm / học vấn) và không có chức danh. Hai con số kỹ năng và học vấn thấp
+  chủ yếu do đáp án cũ (kỹ năng không in trong tệp, `degree_level` lệch tên bằng);
+  phần cải thiện thật của bộ trích xuất nằm ở số tháng kinh nghiệm và chức danh.
+- Validation gần như không đổi (CV ở đây tạo trên hệ thống): `hybrid-v1` Spearman
+  0,603, NDCG@5 0,815, kappa mức hiển thị 0,511.
+- Phát hiện cho GĐ 5: khớp kỹ năng ngữ nghĩa của `hybrid-v1` (ngưỡng cosine 0,846
+  trên mô hình gốc) cho dương tính giả. Tin kế toán JD-60 với CV phân tích dữ liệu
+  CV-004 (nhãn 0) được 65 điểm vì "Phần mềm kế toán" bị coi là khớp với câu "Sử dụng
+  công cụ như Python, R để phân tích…" (cosine 0,848), tương tự cho "Phân tích tài
+  chính" và "Báo cáo tài chính". Bỏ "Kế toán tổng hợp" khỏi kỹ năng được đếm làm cặp
+  này tăng từ 58 lên 65. Cần cross-encoder hoặc bỏ khớp ngữ nghĩa cho kỹ năng.
+- Còn sót: PDF hệ thống CV-045 (không có mục kinh nghiệm, bố cục bị coi là đảo nên
+  số tháng để trống thay vì 0), vài kỹ năng viết khác danh mục, 2 PDF TopCV không
+  nhận được chức danh.
+
+</details>
+<details><summary>Ghi chú GĐ 4 (bản 3)</summary>
+
+- Trang "Việc làm phù hợp" làm lại theo mẫu (thẻ tin có "Vì sao phù hợp?", "Ứng tuyển", ẩn,
+  lưu). Bật/tắt gợi ý đều qua popup xác nhận. Tắt gợi ý bằng AI vẫn có danh sách không đọc
+  CV (theo nhu cầu đã khai, hoặc `latest-v1` tin mới nhất), kèm khung mời bật lại; khối gợi ý
+  trang chủ ẩn khi tắt.
+
+- Thanh bên tài khoản ứng viên có công tắc "Gợi ý việc làm" (đồng ý `AI_RECOMMENDATION`,
+  endpoint riêng `/api/candidate/ai-recommendation/`, không cần khai nhu cầu) và chú thích
+  "?" trỏ tới chính sách dữ liệu AI qua cài đặt `ai_data_policy_url`. Trước đây chỉ có nút
+  dẫn sang trang cài đặt, và đồng ý chỉ lưu được qua form nhu cầu (ghi đè toàn bộ).
+
+- Trang "Việc làm phù hợp" và trang lưu CV xếp tin theo chiến lược `semantic-v1`
+  (`apps/matching/selectors/recommendations.py`): tìm tin gần vector toàn văn của CV mặc định
+  nhất bằng pgvector (tìm chính xác), xếp lại 100 tin gần nhất theo mức liên quan (toàn văn,
+  chức danh) và tỷ lệ kỹ năng trùng, bỏ tin dưới 30 điểm. Không cần khai nguyện vọng trước:
+  có CV đã lưu là đủ.
+- Nhu cầu đã khai lái thứ hạng (`apps/jobs/selectors/recommendation_intent.py`): tin đúng vị
+  trí mong muốn luôn được xét, +0,40 và không bị ngưỡng cắt (người đổi nghề); tỉnh +0,05,
+  lương +0,03, kinh nghiệm vừa +0,03, mỗi điểm cộng kèm lý do. Mức +0,40 chọn bằng mô phỏng
+  đổi nghề trên 100 CV: 34% tin nghề mới trong top 10 (trần 36%), vẫn giữ 23% tin nghề cũ;
+  khai đúng nghề cũ thì NDCG@10 cùng vị trí 0,832 → 0,998. Giao diện bỏ lời "dựa trên mong
+  muốn", trang chủ hiện gợi ý cả khi chưa khai nhu cầu; API thêm `cv_recommendations_enabled`.
+- PR #275 và #278 được gộp vào nhánh trung gian (không vào `dev`); hai commit GĐ 2 và GĐ 4
+  được đưa lại vào `dev` cùng phần nhu cầu trên nhánh `feat/ai-recs-preferences`.
+- Rơi về luật cũ khi cờ `ai_job_recommendation_semantic_enabled` tắt, ứng viên chưa đồng ý
+  nhận gợi ý AI, CV chưa có vector, hoặc không tin nào đủ gần. Email gợi ý và tin chèn trong
+  danh sách việc làm vẫn theo luật.
+- Kết quả chỉ mang lý do bằng lời; trang lưu CV bỏ các thẻ "+điểm" của luật cũ, hiện lý do.
+- `MatchDocument.is_current` (migration `matching.0002`): bản mới nhất của mỗi nguồn với cùng
+  phiên bản, để tìm kiếm không ra tin trùng hay nội dung lỗi thời. Hằng số phiên bản và mốc
+  hiệu chuẩn chuyển sang `apps/matching/domain/` vì selectors không được import services.
+- Ngưỡng 30 điểm đo trên 100 CV tổng hợp: ở 35 điểm khoảng 10% tin neo của CV khớp mạnh bị
+  cắt và 5% CV không còn gợi ý nào.
+- Đo trên nhãn yếu (`ml/scripts/evaluate_recommendations.py`): `semantic-v1` ngang luật cũ ở
+  việc đưa tin gốc của CV lên đầu (MRR 0,780 so với 0,795), hơn ở gợi ý tin cùng vị trí
+  (NDCG@10 0,830 so với 0,726; BM25 0,538).
+- Kiểm thử TC-18…22 (`apps/matching/tests/test_recommendations.py`), số truy vấn không tăng
+  theo số tin; sơ đồ tuần tự và hoạt động "37_goi_y_ngu_nghia" đã cập nhật theo mã.
+- Thực nghiệm HNSW (chỉ mục xấp xỉ trên 48 nghìn tin VietJobs) chưa làm; với vài nghìn tin,
+  tìm chính xác vẫn đủ nhanh.
 
 </details>
 
@@ -1387,15 +1669,14 @@ AI lõi của đồ án (phạm vi chốt 2026-11-15, xem
   `recruiter_visibility`).
 - Giai đoạn 2–3: lưu kết quả phân tích CV và đối sánh, trích xuất kỹ năng
   ([thuật toán AI](07-algorithms/thuat-toan-ai.md)).
-- Import CV gọi thẳng REST của Gemini, OpenAI hoặc Anthropic trong
-  `apps/ai_core/services/cv_import.py`, không qua runtime `ai_core`: không bị
-  `AI_RUNTIME_ENABLED` chặn, không ghi `AiInvocation`, không quota.
-- Site setting `ai_cv_review_enabled`, `ai_job_match_enabled`,
-  `ai_daily_request_limit` được seed nhưng không có chỗ nào đọc.
+- ✅ Import CV đã đi qua runtime `ai_core` (ADR-0026, GĐ4): chịu `AI_RUNTIME_ENABLED`,
+  ghi `AiInvocation`; còn thiếu quota riêng cho import (vẫn dựa vào throttle `cv_import`).
+- Đã gỡ site setting `ai_cv_review_enabled`, `ai_daily_request_limit` vì không có
+  chỗ nào đọc (ADR-0026). `ai_job_match_enabled` đang được dùng.
 
 Dọn phần còn sót của ADR-0014 và ADR-0015:
 
-- Site setting nhóm `payment` và `email_notify_job_approved` không còn consumer.
+- ✅ Đã gỡ site setting nhóm `payment` và `email_notify_job_approved` (ADR-0026).
 - `RecruitmentNeed.consultation_topics` còn lựa chọn `service_packages`.
 
 Kích hoạt và rollout:

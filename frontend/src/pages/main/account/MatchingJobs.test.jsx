@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { App } from 'antd'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -8,10 +8,17 @@ import MatchingJobs from './MatchingJobs'
 const mocks = vi.hoisted(() => ({
   getCandidateJobRecommendations: vi.fn(),
   toggleSaved: vi.fn(),
+  updateAiRecommendation: vi.fn(),
+}))
+
+vi.mock('@/entities/job/candidate-preferences', () => ({
+  AI_RECOMMENDATION_QUERY_KEY: ['candidate', 'ai-recommendation'],
+  getAiRecommendation: vi.fn().mockResolvedValue({ enabled: false }),
+  updateAiRecommendation: mocks.updateAiRecommendation,
 }))
 
 vi.mock('@/entities/job/job', () => ({
-  formatLocations: (job) => job.location,
+  formatJobPostedLabel: () => 'Đăng 2 tuần trước',
   formatSalary: (job) => job.salary,
   jobCardToneClass: () => 'border-slate-200 bg-white',
   getCandidateJobRecommendations: mocks.getCandidateJobRecommendations,
@@ -80,7 +87,7 @@ describe('MatchingJobs', () => {
         company_verified: true,
         company_logo_url: '',
         salary: '20 - 30 triệu',
-        location: 'Hà Nội',
+        locations_detail: [{ name: 'Hà Nội' }, { name: 'Đà Nẵng' }, { name: 'Huế' }],
         match_details: [{ code: 'category', label: 'Đúng vị trí chuyên môn', points: 38 }],
         match_reasons: ['Phù hợp với tìm kiếm của bạn'],
       }],
@@ -89,8 +96,14 @@ describe('MatchingJobs', () => {
     renderPage()
 
     expect(await screen.findByText('Fullstack Developer')).toBeInTheDocument()
-    expect(screen.getByText('Phù hợp với tìm kiếm của bạn')).toBeInTheDocument()
-    expect(screen.getByText('Những công việc phù hợp nhất với bạn dựa trên mong muốn, kỹ năng và kinh nghiệm.')).toBeInTheDocument()
+    expect(screen.getByText('Hà Nội & 2 nơi khác')).toBeInTheDocument()
+    expect(screen.getByText('Đăng 2 tuần trước')).toBeInTheDocument()
+    expect(screen.getByText(/Tìm thấy/)).toHaveTextContent('Tìm thấy 1 việc làm phù hợp với yêu cầu của bạn.')
+    // Lý do nằm trong chú thích "Vì sao phù hợp?".
+    fireEvent.click(screen.getByRole('button', { name: /Vì sao phù hợp\?/ }))
+    expect(await screen.findByText('Phù hợp với tìm kiếm của bạn')).toBeInTheDocument()
+    expect(screen.queryByText('Gợi ý việc làm đang tắt')).not.toBeInTheDocument()
+    expect(screen.getByText('Những công việc gần nhất với CV và hướng đi bạn mong muốn.')).toBeInTheDocument()
     expect(screen.queryByText('CV: CV Fullstack')).not.toBeInTheDocument()
     expect(screen.queryByText(/% phù hợp|Rất phù hợp/)).not.toBeInTheDocument()
     expect(screen.queryByText('Dữ liệu đang được dùng')).not.toBeInTheDocument()
@@ -98,10 +111,38 @@ describe('MatchingJobs', () => {
     expect(screen.getByRole('link', {
       name: 'Xem chi tiết Fullstack Developer qua logo công ty',
     })).toHaveAttribute('href', '/viec-lam/fullstack-developer')
-    expect(screen.getByRole('link', { name: /Xem việc làm/ })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Ứng tuyển' })).toHaveAttribute(
       'href',
-      '/viec-lam/fullstack-developer',
+      '/viec-lam/fullstack-developer?ung-tuyen=1',
     )
+  })
+
+  it('keeps showing jobs when AI recommendations are off and offers to turn them back on', async () => {
+    mocks.updateAiRecommendation.mockResolvedValue({ enabled: true })
+    mocks.getCandidateJobRecommendations.mockResolvedValue({
+      status: 'ready',
+      strategy: 'latest-v1',
+      ai_recommendation_enabled: false,
+      pagination: { page: 1, page_size: 10, total: 1, total_pages: 1 },
+      results: [{
+        public_id: 'job_2', slug: 'ke-toan', title: 'Kế toán tổng hợp', company_name: 'Pro Company',
+        salary: 'Thỏa thuận', match_details: [], match_reasons: [],
+      }],
+    })
+
+    renderPage()
+
+    expect(await screen.findByText('Kế toán tổng hợp')).toBeInTheDocument()
+    expect(screen.getByText('Gợi ý việc làm đang tắt')).toBeInTheDocument()
+    expect(screen.getByText(/Tìm thấy/)).toHaveTextContent('Tìm thấy 1 việc làm mới nhất.')
+    expect(screen.queryByRole('button', { name: /Vì sao phù hợp/ })).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Bật gợi ý việc làm/ }))
+    expect(await screen.findByText('Xác nhận bật Gợi ý việc làm')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Xác nhận' }))
+    await vi.waitFor(() => expect(mocks.updateAiRecommendation).toHaveBeenCalledWith(
+      expect.objectContaining({ enabled: true, source: 'account_settings' }),
+    ))
   })
 
   it('does not read recommendation data until consent is granted', async () => {
@@ -118,5 +159,33 @@ describe('MatchingJobs', () => {
       'href',
       '/tai-khoan/cai-dat-goi-y-viec-lam',
     )
+  })
+
+  it('asks for a CV or preferences when recommendations follow the CV', async () => {
+    mocks.getCandidateJobRecommendations.mockResolvedValue({
+      status: 'preferences_required',
+      cv_recommendations_enabled: true,
+      results: [],
+      pagination: { total: 0, total_pages: 0 },
+    })
+
+    renderPage()
+
+    expect(await screen.findByText('Lưu CV hoặc khai nhu cầu công việc')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Quản lý CV' })).toHaveAttribute('href', '/tai-khoan/cv-cua-toi')
+  })
+
+  it('suggests adding preferences when the list comes from the CV alone', async () => {
+    mocks.getCandidateJobRecommendations.mockResolvedValue({
+      status: 'ready',
+      preference_configured: false,
+      cv_recommendations_enabled: true,
+      results: [],
+      pagination: { total: 0, total_pages: 0 },
+    })
+
+    renderPage()
+
+    expect(await screen.findByRole('link', { name: /Thêm nhu cầu để gợi ý sát hơn/ })).toBeInTheDocument()
   })
 })

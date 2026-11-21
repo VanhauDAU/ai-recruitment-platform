@@ -31,7 +31,7 @@ class CandidateProfileServiceTests(TestCase):
 
     def visibility(self, **kwargs):
         return set_recruiter_visibility(
-            self.profile, enabled=True, policy_version='v1', source='cv_save_success', **kwargs
+            self.profile, enabled=True, source='cv_save_success', **kwargs
         )
 
     def test_update_profile_saves_only_given_fields(self):

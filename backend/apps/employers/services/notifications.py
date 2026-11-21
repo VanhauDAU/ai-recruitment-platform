@@ -126,15 +126,19 @@ EVENT_PRESENTATION = {
         CAMPAIGNS_PATH,
     ),
     EmployerNotification.EventType.SOCIAL_POST_FAILED: (
-        gettext_lazy('Bài đăng Fanpage không thành công'),
+        gettext_lazy('Tự đăng bài không thành công'),
         CAMPAIGNS_PATH,
     ),
     EmployerNotification.EventType.SOCIAL_POST_DELETE_FAILED: (
-        gettext_lazy('Chưa gỡ được bài khỏi Fanpage'),
+        gettext_lazy('Cần tự gỡ bài trên mạng xã hội'),
         CAMPAIGNS_PATH,
     ),
     EmployerNotification.EventType.SOCIAL_CONNECTION_EXPIRED: (
-        gettext_lazy('Kết nối Fanpage đã hết hạn'),
+        gettext_lazy('Kết nối mạng xã hội đã hết hạn'),
+        INTEGRATIONS_PATH,
+    ),
+    EmployerNotification.EventType.SOCIAL_CONNECTION_EXPIRING: (
+        gettext_lazy('Kết nối mạng xã hội sắp hết hạn'),
         INTEGRATIONS_PATH,
     ),
 }

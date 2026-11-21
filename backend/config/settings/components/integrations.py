@@ -99,10 +99,8 @@ EMPLOYER_PASSWORD_RESET_PATH = config(
 EMPLOYER_TERMS_POLICY_VERSION = config('EMPLOYER_TERMS_POLICY_VERSION', default='2026-07-18')
 EMPLOYER_DPA_POLICY_VERSION = config('EMPLOYER_DPA_POLICY_VERSION', default='').strip()
 EMPLOYER_DPA_DOCUMENT_SHA256 = config('EMPLOYER_DPA_DOCUMENT_SHA256', default='').strip().lower()
-EMPLOYER_DPA_DOCUMENT_URL = config(
-    'EMPLOYER_DPA_DOCUMENT_URL',
-    default='https://tuyendung.topcv.vn/data-processing-agreement',
-).strip()
+# Không có mặc định: DPA phải là văn bản của chính nền tảng, khớp mã băm SHA-256.
+EMPLOYER_DPA_DOCUMENT_URL = config('EMPLOYER_DPA_DOCUMENT_URL', default='').strip()
 EMPLOYER_DPA_GRACE_DAYS = config('EMPLOYER_DPA_GRACE_DAYS', default=30, cast=int)
 REQUIRE_APPROVED_EMPLOYER_VERIFICATION = config(
     'REQUIRE_APPROVED_EMPLOYER_VERIFICATION',
@@ -110,10 +108,19 @@ REQUIRE_APPROVED_EMPLOYER_VERIFICATION = config(
     cast=bool,
 )
 
-# Đăng bài chiến dịch lên Facebook Page của NTD (GĐ3). ``fake`` chạy toàn bộ luồng
-# OAuth/đăng/gỡ mà không gọi Meta, dùng cho dev và CI. Xem
-# docs/06-deployment/facebook-page-integration.md.
-CAMPAIGN_SOCIAL_PROVIDER = config('CAMPAIGN_SOCIAL_PROVIDER', default='fake')
+# Chiến dịch tự đăng bài lên mạng xã hội của NTD (ADR-0025). Mạng có trong
+# CAMPAIGN_SOCIAL_LIVE_NETWORKS gọi API thật; mạng còn lại dùng provider giả lập,
+# chạy trọn luồng kết nối/đăng/gỡ mà không gọi ra ngoài (dev, CI, demo). Xem
+# docs/06-deployment/social-integrations.md. CAMPAIGN_SOCIAL_PROVIDER=facebook là
+# cách bật cũ, tương đương CAMPAIGN_SOCIAL_LIVE_NETWORKS=facebook_page.
+_legacy_live_networks = (
+    'facebook_page' if config('CAMPAIGN_SOCIAL_PROVIDER', default='fake') == 'facebook' else ''
+)
+CAMPAIGN_SOCIAL_LIVE_NETWORKS = [
+    network.strip()
+    for network in config('CAMPAIGN_SOCIAL_LIVE_NETWORKS', default=_legacy_live_networks).split(',')
+    if network.strip()
+]
 FACEBOOK_APP_ID = config('FACEBOOK_APP_ID', default='')
 FACEBOOK_APP_SECRET = config('FACEBOOK_APP_SECRET', default='')
 FACEBOOK_GRAPH_API_VERSION = config('FACEBOOK_GRAPH_API_VERSION', default='v21.0')
@@ -121,6 +128,19 @@ FACEBOOK_OAUTH_REDIRECT_URI = config(
     'FACEBOOK_OAUTH_REDIRECT_URI',
     default=f'{FRONTEND_URL.rstrip("/")}/api/employer/social/facebook/callback/',
 )
+# Threads có App ID/secret riêng trong use case Threads của Meta App.
+THREADS_APP_ID = config('THREADS_APP_ID', default='')
+THREADS_APP_SECRET = config('THREADS_APP_SECRET', default='')
+THREADS_GRAPH_API_VERSION = config('THREADS_GRAPH_API_VERSION', default='v1.0')
+# Mặc định {FRONTEND_URL}/api/employer/social/threads/callback/. Threads chỉ nhận
+# HTTPS: máy cục bộ khai https://localhost:5173/... (xem social-integrations.md).
+THREADS_OAUTH_REDIRECT_URI = config('THREADS_OAUTH_REDIRECT_URI', default='')
+# LinkedIn: app có sản phẩm "Share on LinkedIn" và "Sign In with LinkedIn using
+# OpenID Connect". Mặc định dùng lại app đăng nhập LinkedIn (OAUTH_LINKEDIN_*).
+LINKEDIN_SOCIAL_CLIENT_ID = config('LINKEDIN_SOCIAL_CLIENT_ID', default='')
+LINKEDIN_SOCIAL_CLIENT_SECRET = config('LINKEDIN_SOCIAL_CLIENT_SECRET', default='')
+LINKEDIN_API_VERSION = config('LINKEDIN_API_VERSION', default='202611')
+LINKEDIN_OAUTH_REDIRECT_URI = config('LINKEDIN_OAUTH_REDIRECT_URI', default='')
 CAMPAIGN_SOCIAL_TOKEN_ENCRYPTION_KEY = config('CAMPAIGN_SOCIAL_TOKEN_ENCRYPTION_KEY', default='')
 CAMPAIGN_SOCIAL_HTTP_TIMEOUT_SECONDS = config(
     'CAMPAIGN_SOCIAL_HTTP_TIMEOUT_SECONDS', default=10.0, cast=float

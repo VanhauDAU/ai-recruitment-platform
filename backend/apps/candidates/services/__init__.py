@@ -14,12 +14,15 @@ from .notifications import (
     restore_superseded_candidate_notification,
 )
 from .profiles import (
+    CONSENT_POLICY_VERSION,
     replace_candidate_job_preferences,
+    set_ai_recommendation,
     set_recruiter_visibility,
     update_candidate_profile,
 )
 
 __all__ = [
+    'CONSENT_POLICY_VERSION',
     'cancel_candidate_notification',
     'deliver_candidate_notification_email',
     'email_brand_context',
@@ -32,6 +35,7 @@ __all__ = [
     'release_due_candidate_notifications',
     'replace_candidate_job_preferences',
     'restore_superseded_candidate_notification',
+    'set_ai_recommendation',
     'set_recruiter_visibility',
     'update_candidate_profile',
 ]

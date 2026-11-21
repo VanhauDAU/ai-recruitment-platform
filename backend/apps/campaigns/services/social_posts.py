@@ -1,4 +1,4 @@
-"""Scheduled posts on a connected Facebook Page: schedule, publish, retry, clean up.
+"""Scheduled posts on a connected social account: schedule, publish, retry, clean up.
 
 Celery calls ``dispatch_due_posts`` every minute and ``reconcile_social_posts``
 every five minutes (and right after a campaign changes status). Both re-read
@@ -16,15 +16,18 @@ from django.utils.translation import gettext_lazy
 from rest_framework.exceptions import ValidationError
 
 from apps.campaigns.models import CampaignActivity, RecruitmentCampaign
+from apps.campaigns.signals import social_post_due
 from apps.employers.models import EmployerNotification
 from apps.employers.services import emit_employer_event
 from common.i18n import recipient_language
 
-from ..models import CampaignChannel, ScheduledSocialPost, SocialAccountConnection
+from ..domain.social_networks import network_for_channel_kind
+from ..models import ScheduledSocialPost, SocialAccountConnection
 from .content import render_content
 from .social import SocialProviderError, decrypt_token, get_provider
+from .social_connections import expire_connection
 from .social_post_images import clean_post_images, read_post_images
-from .tracking import channel_link
+from .tracking import post_link
 
 Post = ScheduledSocialPost
 CampaignStatus = RecruitmentCampaign.Status
@@ -60,14 +63,19 @@ def schedule_post(*, channel, user, connection, scheduled_for=None, message='', 
         raise ValidationError(_('Bạn không có quyền với chiến dịch này.'))
     if campaign.is_terminal:
         raise ValidationError({'detail': _('Chiến dịch đã kết thúc, không đăng thêm được.')})
-    if channel.kind != CampaignChannel.Kind.FACEBOOK_PAGE:
-        raise ValidationError({'detail': _('Chỉ kênh Fanpage Facebook mới đăng tự động được.')})
+    network = network_for_channel_kind(channel.kind)
+    if network is None:
+        raise ValidationError({'detail': _('Kênh này không tự đăng bài được.')})
     if (
-        connection.owner_id != campaign.owner_id
+        connection.network != network.key
+        or connection.owner_id != campaign.owner_id
         or connection.status != SocialAccountConnection.Status.CONNECTED
     ):
         raise ValidationError(
-            {'connection': _('Fanpage chưa kết nối hoặc không thuộc tài khoản này.')}
+            {
+                'connection': _('%(network)s chưa kết nối hoặc không thuộc tài khoản này.')
+                % {'network': network.label}
+            }
         )
     now = timezone.now()
     scheduled_for = scheduled_for or now
@@ -78,14 +86,32 @@ def schedule_post(*, channel, user, connection, scheduled_for=None, message='', 
         raise ValidationError(
             {'message': _('Kênh chưa có nội dung. Soạn nội dung trước khi hẹn đăng.')}
         )
-    return Post.objects.create(
+    limits = network.capabilities
+    link = post_link(channel)
+    # Providers append the tracking link when the text does not carry it.
+    sent_length = len(message) if link in message else len(message) + len(link) + 2
+    if sent_length > limits.max_chars:
+        raise ValidationError(
+            {
+                'message': _('%(network)s nhận tối đa %(count)s ký tự mỗi bài, tính cả link.')
+                % {'network': network.platform, 'count': limits.max_chars}
+            }
+        )
+    images = clean_post_images(campaign, images, max_images=limits.max_images)
+    if limits.requires_image and not images:
+        raise ValidationError(
+            {'images': _('%(network)s cần ít nhất một ảnh.') % {'network': network.platform}}
+        )
+    post = Post.objects.create(
         channel=channel,
         connection=connection,
-        message=message[:5000],
-        images=clean_post_images(campaign, images),
-        link=channel_link(channel),
+        message=message,
+        images=images,
+        link=link,
         scheduled_for=scheduled_for,
     )
+    _publish_if_due(post)
+    return post
 
 
 @transaction.atomic
@@ -120,7 +146,13 @@ def reschedule_post(*, post, user, scheduled_for):
             'updated_at',
         ]
     )
+    _publish_if_due(post)
     return post
+
+
+def _publish_if_due(post):
+    if post.scheduled_for <= timezone.now():
+        social_post_due.send(sender=Post, post_id=post.pk)
 
 
 def _notify(campaign, event_type, dedupe_key, message, **params):
@@ -139,7 +171,7 @@ def _notify(campaign, event_type, dedupe_key, message, **params):
 
 
 def _claim(post_id):
-    """Lock a due post and move it to ``publishing``, or settle it without calling Meta."""
+    """Lock a due post and move it to ``publishing``, or settle it without calling the network."""
     with transaction.atomic():
         post = (
             Post.objects.select_for_update(of=('self',))
@@ -172,20 +204,21 @@ def _claim(post_id):
 
 
 def _publish_remote(post):
-    provider = get_provider()
-    token = decrypt_token(post.connection.token_ciphertext)
+    connection = post.connection
+    provider = get_provider(connection.network)
+    token = decrypt_token(connection.token_ciphertext)
     if post.attempts > 1:
         existing = provider.find_recent_post(
-            page_id=post.connection.page_id, page_token=token, link=post.link
+            account_id=connection.account_id, token=token, link=post.link
         )
         if existing:
             return existing
     return provider.publish(
-        page_id=post.connection.page_id,
-        page_token=token,
+        account_id=connection.account_id,
+        token=token,
         message=post.message,
         link=post.link,
-        images=read_post_images(post.images),
+        images=read_post_images(post),
     )
 
 
@@ -208,7 +241,11 @@ def _mark_published(post, published):
         event_type=CampaignActivity.EventType.SOCIAL_POST_PUBLISHED,
         group=CampaignActivity.Group.CAMPAIGN,
         subject_public_id=post.public_id,
-        metadata={'label': channel.label, 'page': post.connection.page_name},
+        metadata={
+            'label': channel.label,
+            'network': post.connection.network,
+            'account': post.connection.account_name,
+        },
     )
 
 
@@ -217,18 +254,7 @@ def _mark_failed(post, error):
     campaign = post.channel.campaign
     post.last_error_code = error.code
     if error.token_invalid:
-        SocialAccountConnection.objects.filter(pk=post.connection_id).update(
-            status=SocialAccountConnection.Status.EXPIRED, last_error_code=error.code
-        )
-        _notify(
-            campaign,
-            EmployerNotification.EventType.SOCIAL_CONNECTION_EXPIRED,
-            f'social-connection-expired:{post.connection.public_id}:{error.code}',
-            gettext_lazy(
-                'Kết nối Fanpage "%(page)s" đã hết hạn. Hãy kết nối lại để tiếp tục đăng.'
-            ),
-            page=post.connection.page_name,
-        )
+        expire_connection(post.connection, error.code)
     if error.transient and not error.token_invalid and post.attempts < MAX_ATTEMPTS:
         post.status = Post.Status.SCHEDULED
         post.next_attempt_at = timezone.now() + RETRY_DELAYS[post.attempts - 1]
@@ -239,9 +265,11 @@ def _mark_failed(post, error):
             EmployerNotification.EventType.SOCIAL_POST_FAILED,
             f'social-post-failed:{post.public_id}',
             gettext_lazy(
-                'Chưa đăng được bài của kênh "%(channel)s" lên Fanpage. Mở chiến dịch để hẹn lại.'
+                'Chưa đăng được bài của kênh "%(channel)s" lên %(network)s. '
+                'Mở chiến dịch để hẹn lại.'
             ),
             channel=post.channel.label,
+            network=post.connection.spec.label,
         )
     post.save(update_fields=['status', 'next_attempt_at', 'last_error_code', 'updated_at'])
 
@@ -269,27 +297,37 @@ def due_post_ids(now=None):
     )
 
 
+def _leave_for_recruiter(post, code):
+    """The post stays online; the recruiter removes it by hand from the link."""
+    post.status = Post.Status.DELETE_FAILED
+    post.last_error_code = code
+    post.save(update_fields=['status', 'last_error_code', 'updated_at'])
+    _notify(
+        post.channel.campaign,
+        EmployerNotification.EventType.SOCIAL_POST_DELETE_FAILED,
+        f'social-post-delete-failed:{post.public_id}',
+        gettext_lazy(
+            'Chưa gỡ được bài kênh "%(channel)s" khỏi %(network)s. Hãy tự xóa bài: %(permalink)s'
+        ),
+        channel=post.channel.label,
+        network=post.connection.spec.label,
+        permalink=post.permalink,
+    )
+
+
 def _delete_remote(post):
     campaign = post.channel.campaign
+    connection = post.connection
+    if not connection.spec.capabilities.supports_delete:
+        _leave_for_recruiter(post, 'delete_unsupported')
+        return
     try:
-        get_provider().delete(
+        get_provider(connection.network).delete(
             post_id=post.external_post_id,
-            page_token=decrypt_token(post.connection.token_ciphertext),
+            token=decrypt_token(connection.token_ciphertext),
         )
     except SocialProviderError as error:
-        post.status = Post.Status.DELETE_FAILED
-        post.last_error_code = error.code
-        post.save(update_fields=['status', 'last_error_code', 'updated_at'])
-        _notify(
-            campaign,
-            EmployerNotification.EventType.SOCIAL_POST_DELETE_FAILED,
-            f'social-post-delete-failed:{post.public_id}',
-            gettext_lazy(
-                'Chưa gỡ được bài kênh "%(channel)s" khỏi Fanpage. Hãy tự xóa bài: %(permalink)s'
-            ),
-            channel=post.channel.label,
-            permalink=post.permalink,
-        )
+        _leave_for_recruiter(post, error.code)
         return
     post.status = Post.Status.DELETED
     post.deleted_at = timezone.now()

@@ -2,21 +2,33 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { App } from 'antd'
+import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { message } from '@/shared/lib/toast'
 import CampaignChannelBoard from './CampaignChannelBoard'
 import ChannelReport from './ChannelReport'
 
 const mocks = vi.hoisted(() => ({
+  useSocialNetworks: vi.fn(),
+  getSocialConnections: vi.fn(),
   getCampaignChannels: vi.fn(),
   generateCampaignChannelContent: vi.fn(),
   updateCampaignChannel: vi.fn(),
   getCampaignChannelReport: vi.fn(),
   getCampaignChannelCosts: vi.fn(),
   addCampaignChannelCost: vi.fn(),
+  getChannelPosts: vi.fn(),
 }))
 
 vi.mock('@/entities/campaign/campaign', async (importOriginal) => ({ ...(await importOriginal()), ...mocks }))
+const facebook = {
+  key: 'facebook_page',
+  platform: 'Facebook',
+  label: 'Fanpage Facebook',
+  channel_kind: 'facebook_page',
+  capabilities: { max_chars: 5000, max_images: 4, requires_image: false, supports_delete: true },
+  simulated: true,
+}
 
 const campaign = { public_id: 'camp_1', status: 'active' }
 const channel = {
@@ -25,7 +37,14 @@ const channel = {
   kind_label: 'Nhóm Facebook',
   label: 'Nhóm IT Hà Nội',
   link: 'https://procv.vn/r/AbC123xy',
+  links: [
+    { key: 'landing', label: 'Trang tuyển dụng của chiến dịch', url: 'https://procv.vn/r/AbC123xy' },
+    { key: 'company', label: 'Trang công ty', url: 'https://procv.vn/r/AbC123xy/cong-ty' },
+    { key: 'jb_a', label: 'Kỹ sư Backend', url: 'https://procv.vn/r/AbC123xy/jb_a' },
+    { key: 'jb_b', label: 'Kế toán', url: 'https://procv.vn/r/AbC123xy/jb_b' },
+  ],
   target: 'landing',
+  jobs: [],
   content: {},
   rendered_content: {},
   posted_at: null,
@@ -49,6 +68,7 @@ function renderWithClient(component) {
 describe('campaign channels', () => {
   beforeEach(() => {
     Object.values(mocks).forEach((mock) => mock.mockReset())
+    mocks.useSocialNetworks.mockReturnValue({ data: [facebook], isLoading: false })
     vi.spyOn(message, 'success').mockImplementation(() => {})
     vi.spyOn(message, 'info').mockImplementation(() => {})
   })
@@ -57,6 +77,7 @@ describe('campaign channels', () => {
     const user = userEvent.setup()
     mocks.getCampaignChannels.mockResolvedValue([channel, { ...channel, public_id: 'chn_2', kind: 'linkedin', kind_label: 'LinkedIn', label: 'LinkedIn công ty' }])
     mocks.generateCampaignChannelContent.mockResolvedValue({ ...channel, fallback_reason: 'ai_disabled' })
+    mocks.updateCampaignChannel.mockResolvedValue(channel)
     renderWithClient(<CampaignChannelBoard campaign={campaign} />)
 
     const list = await screen.findByRole('navigation', { name: 'Danh sách kênh' })
@@ -65,9 +86,14 @@ describe('campaign channels', () => {
     expect(screen.getByText('2.000.000 đ')).toBeInTheDocument()
     expect(screen.getByText('20% người bấm')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /Soạn bằng AI/ }))
+    expect(screen.getByText(/Chưa có bài/)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Soạn bài' }))
+    const drawer = await screen.findByRole('dialog')
+    await user.click(within(drawer).getByRole('button', { name: /Soạn bằng AI/ }))
     await waitFor(() => expect(mocks.generateCampaignChannelContent).toHaveBeenCalledWith('camp_1', 'chn_1'))
+    expect(mocks.updateCampaignChannel).toHaveBeenCalledWith('camp_1', 'chn_1', { jobs: [], target: 'landing' })
     expect(message.info).toHaveBeenCalledWith('AI đang tắt nên dùng mẫu có sẵn. Hãy đọc lại và sửa cho hợp.')
+    await user.click(within(drawer).getByRole('button', { name: 'Close' }))
 
     await user.click(screen.getByRole('tab', { name: 'Link & QR' }))
     expect(await screen.findByText('https://procv.vn/r/AbC123xy')).toBeInTheDocument()
@@ -76,9 +102,64 @@ describe('campaign channels', () => {
     expect(await screen.findByRole('heading', { name: 'LinkedIn công ty' })).toBeInTheDocument()
   })
 
+  it('writes a post in one drawer: jobs, link type, an inserted link, then save and copy', async () => {
+    const user = userEvent.setup()
+    const drafted = { ...channel, content: { body: 'Ứng tuyển {link}' }, rendered_content: { body: 'Ứng tuyển https://procv.vn/r/AbC123xy' } }
+    mocks.getCampaignChannels.mockResolvedValue([drafted])
+    mocks.updateCampaignChannel.mockResolvedValue(drafted)
+    renderWithClient(<CampaignChannelBoard campaign={campaign} />)
+
+    expect(await screen.findByText('Ứng tuyển https://procv.vn/r/AbC123xy')).toBeInTheDocument()
+    expect(screen.getByText('Tin mới nhất · Trang chiến dịch')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Sửa' }))
+    const drawer = await screen.findByRole('dialog')
+    const jobs = within(drawer).getByRole('group', { name: 'Tin trong bài' })
+    await user.click(within(jobs).getByRole('button', { name: 'Kế toán' }))
+    await user.click(within(drawer).getByRole('combobox'))
+    await user.click(await screen.findByTitle('Từng tin'))
+    expect(within(drawer).getByRole('status')).toHaveTextContent('Soạn lại bằng AI')
+
+    await user.click(within(drawer).getByRole('button', { name: /Chèn link/ }))
+    await user.click(await screen.findByRole('menuitem', { name: 'Trang công ty' }))
+    expect(within(drawer).getByRole('textbox')).toHaveValue('Ứng tuyển https://procv.vn/r/AbC123xy https://procv.vn/r/AbC123xy/cong-ty ')
+
+    await user.click(within(drawer).getByRole('button', { name: /Lưu và sao chép/ }))
+    await waitFor(() => expect(mocks.updateCampaignChannel).toHaveBeenCalledWith('camp_1', 'chn_1', {
+      jobs: ['jb_b'],
+      target: 'job',
+      content: { body: 'Ứng tuyển https://procv.vn/r/AbC123xy https://procv.vn/r/AbC123xy/cong-ty ' },
+    }))
+
+    await user.click(screen.getByRole('tab', { name: 'Link & QR' }))
+    expect(await screen.findByText('https://procv.vn/r/AbC123xy/cong-ty')).toBeInTheDocument()
+    expect(screen.getByText('Tin: Kế toán')).toBeInTheDocument()
+  })
+
+  it('shows a Fanpage tab as its posts with one compose button', async () => {
+    mocks.getCampaignChannels.mockResolvedValue([{ ...channel, kind: 'facebook_page', kind_label: 'Fanpage Facebook', label: 'Fanpage' }])
+    mocks.getChannelPosts.mockResolvedValue([])
+    mocks.getSocialConnections.mockResolvedValue([{ public_id: 'soc_1', network: 'facebook_page', status: 'connected' }])
+    renderWithClient(<MemoryRouter><CampaignChannelBoard campaign={campaign} /></MemoryRouter>)
+
+    expect(await screen.findByText('Chưa có bài nào trên Fanpage Facebook.')).toBeInTheDocument()
+    expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Bài đăng', 'Link & QR', 'Chi phí'])
+    expect(screen.getByRole('button', { name: 'Soạn bài' })).toBeEnabled()
+    expect(screen.queryByRole('button', { name: /Sao chép bài/ })).not.toBeInTheDocument()
+  })
+
+  it('keeps copy-and-post for a channel whose network is not connected yet', async () => {
+    mocks.getCampaignChannels.mockResolvedValue([{ ...channel, kind: 'facebook_page', kind_label: 'Fanpage Facebook', label: 'Fanpage', rendered_content: { body: 'Tuyển gấp' } }])
+    mocks.getChannelPosts.mockResolvedValue([])
+    mocks.getSocialConnections.mockResolvedValue([])
+    renderWithClient(<MemoryRouter><CampaignChannelBoard campaign={campaign} /></MemoryRouter>)
+
+    expect(await screen.findByRole('checkbox', { name: 'Tôi đã đăng bài lên kênh này' })).toBeInTheDocument()
+    expect(screen.queryByText('Chưa có bài nào trên Fanpage Facebook.')).not.toBeInTheDocument()
+  })
+
   it('marks a manual channel as posted', async () => {
     const user = userEvent.setup()
-    mocks.getCampaignChannels.mockResolvedValue([channel])
+    mocks.getCampaignChannels.mockResolvedValue([{ ...channel, rendered_content: { body: 'Tuyển gấp' } }])
     mocks.updateCampaignChannel.mockResolvedValue({ ...channel, posted_at: '2026-11-18T10:00:00Z' })
     renderWithClient(<CampaignChannelBoard campaign={campaign} />)
 

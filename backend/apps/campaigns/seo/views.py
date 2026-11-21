@@ -15,19 +15,20 @@ from ..services import record_click, redirect_target
 
 
 class TrackedLinkRedirectView(View):
-    """``/r/<code>``: count the click, then send the visitor on with a signed ref."""
+    """``/r/<code>[/<destination>]``: count the click, then send the visitor on with a signed ref."""
 
     def dispatch(self, request, *args, **kwargs):
         if request.method not in ('GET', 'HEAD'):
             raise Http404
         return super().dispatch(request, *args, **kwargs)
 
-    def get(self, request, code):
+    def get(self, request, code, destination=''):
         channel = get_object_or_404(
-            CampaignChannel.objects.select_related('campaign__owner__user', 'job'), code=code
+            CampaignChannel.objects.select_related('campaign__owner__user', 'campaign__company'),
+            code=code,
         )
         record_click(request, channel)
-        response = HttpResponseRedirect(redirect_target(channel))
+        response = HttpResponseRedirect(redirect_target(channel, destination))
         response['Cache-Control'] = 'no-store'
         response['Referrer-Policy'] = 'strict-origin-when-cross-origin'
         response['X-Robots-Tag'] = 'noindex'

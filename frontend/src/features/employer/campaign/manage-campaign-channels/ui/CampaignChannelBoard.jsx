@@ -1,19 +1,17 @@
 import { PlusOutlined, ShareAltOutlined } from '@ant-design/icons'
 import { Alert, Button, Skeleton } from 'antd'
 import { useState } from 'react'
+import { ChannelIcon } from '@/entities/campaign/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { m } from '@/shared/config/i18n'
-import ChannelIcon from './ChannelIcon'
 import { useCampaignChannels } from '../model/use-campaign-channels'
 import AddChannelModal from './AddChannelModal'
-import ChannelContentModal from './ChannelContentModal'
 import ChannelDetail from './ChannelDetail'
 import './channel-board.css'
 
 // Kênh phân phối của chiến dịch: danh sách bên trái, chi tiết kênh đang chọn bên phải.
 export default function CampaignChannelBoard({ campaign }) {
   const [adding, setAdding] = useState(false)
-  const [editingContent, setEditingContent] = useState(null)
   const [selectedId, setSelectedId] = useState(null)
   const channelsQuery = useCampaignChannels(campaign.public_id)
   const editable = !['completed', 'cancelled'].includes(campaign.status)
@@ -71,7 +69,6 @@ export default function CampaignChannelBoard({ campaign }) {
             campaign={campaign}
             channel={selected}
             editable={editable}
-            onEditContent={setEditingContent}
           />
         </div>
       )}
@@ -81,12 +78,6 @@ export default function CampaignChannelBoard({ campaign }) {
         open={adding}
         onClose={() => setAdding(false)}
         onCreated={(channel) => setSelectedId(channel.public_id)}
-      />
-      <ChannelContentModal
-        key={editingContent?.public_id}
-        campaignId={campaign.public_id}
-        channel={editingContent}
-        onClose={() => setEditingContent(null)}
       />
     </div>
   )

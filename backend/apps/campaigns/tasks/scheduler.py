@@ -4,6 +4,7 @@ from ..services import (
     due_post_ids,
     publish_post,
     reconcile_social_posts,
+    refresh_expiring_tokens,
     run_campaign_schedule,
     run_health_snapshots,
     send_weekly_reports,
@@ -23,7 +24,9 @@ def dispatch_due_social_posts():
     return len(post_ids)
 
 
-@shared_task(name='apps.campaigns.tasks.publish_social_post', soft_time_limit=45, time_limit=55)
+# A carousel polls one container per image before publishing (Instagram took 40 s
+# for three images on 2026-11-20), so publishing gets three minutes.
+@shared_task(name='apps.campaigns.tasks.publish_social_post', soft_time_limit=170, time_limit=180)
 def publish_social_post(post_id):
     return publish_post(post_id)
 
@@ -45,3 +48,8 @@ def snapshot_campaign_health():
 )
 def send_campaign_weekly_reports():
     return send_weekly_reports()
+
+
+@shared_task(name='apps.campaigns.tasks.refresh_social_tokens', soft_time_limit=110, time_limit=120)
+def refresh_social_tokens():
+    return refresh_expiring_tokens()

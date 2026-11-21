@@ -23,7 +23,9 @@ from ..services import create_application_record
 # 1 SELECT applications (JOIN job/cv/version) + 1 prefetch preferred_locations
 # + 1 prefetch status history for the candidate-visible timeline
 # + 1 prefetch reminders (timeline entries and the remind action).
-CANDIDATE_APPLICATION_LIST_BUDGET = 7
+# +1: middleware bảo trì đọc cấu hình (ADR-0026).
+# +1: luật nút nhắc nhà tuyển dụng, đọc một lần cho cả trang.
+CANDIDATE_APPLICATION_LIST_BUDGET = 7 + 1 + 1
 
 
 class CandidateApplicationListQueryBudgetTests(APITestCase):

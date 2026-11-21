@@ -17,7 +17,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from apps.accounts.services import is_account_accessible
-from apps.sitecontent.selectors import get_bool_setting
+from apps.sitecontent.selectors import business_emails_enabled, retention_days
 from common.email import send_html_email
 from common.metrics import record_metric
 from common.outbox import MAX_DELIVERY_ATTEMPTS, is_sending_fresh, stale_sending_before
@@ -160,7 +160,7 @@ def _email_skip_reason(notification):
         return 'email_unverified'
     if not is_account_accessible(recipient):
         return 'account_restricted'
-    if not get_bool_setting('email_notifications_enabled', True):
+    if not business_emails_enabled():
         return 'site_disabled'
     # Re-read at send time: the candidate may have changed it since the event.
     if not switch_enabled(recipient.pk, EVENTS[notification.event_type].email_switch):
@@ -260,7 +260,11 @@ def mark_all_candidate_notifications_read(user):
 
 def purge_expired_candidate_notifications(*, now=None):
     cutoff = (now or timezone.now()) - timedelta(
-        days=settings.CANDIDATE_NOTIFICATION_RETENTION_DAYS
+        days=retention_days(
+            'candidate_notification_retention_days',
+            settings.CANDIDATE_NOTIFICATION_RETENTION_DAYS,
+            minimum=30,
+        )
     )
     deleted, _ = CandidateNotification.objects.filter(created_at__lt=cutoff).delete()
     return deleted
