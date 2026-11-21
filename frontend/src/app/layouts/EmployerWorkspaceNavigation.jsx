@@ -1,9 +1,12 @@
 import {
   DashboardOutlined,
   FileTextOutlined,
-  RocketOutlined,
+  HistoryOutlined,
+  LayoutOutlined,
+  NotificationOutlined,
+  SettingOutlined,
   TeamOutlined,
-  UserOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons'
 import { createElement } from 'react'
 import { NOT_FOUND_TITLE } from '@/shared/config/document-title'
@@ -43,34 +46,23 @@ function unreadDotLabel(label, hasUnread) {
   )
 }
 
-// Only top-level rows carry an icon; children hang off the group's guide line.
 const link = (path, title, label = title) => ({ key: employerAppPath(path), label, title })
-
-// Features on the roadmap share one closed group at the bottom, so they stay
-// visible without crowding the pages that work today.
-const upcoming = (key, label) => ({
-  key: `coming-${key}`,
-  label,
-  title: m.employer_workspace_nav_coming_soon_title({ label }),
-  disabled: true,
-})
+const iconLink = (path, Icon, title) => ({ ...link(path, title), icon: <Icon /> })
 
 export const CV_MANAGEMENT_MENU_KEY = 'cv-management'
 
-/** Sidebar items; `unreadApplications` badges the CV inbox (submitted, not yet opened). */
+/**
+ * Sidebar items: only pages that work today, in the original order. The CV
+ * tools fold into one dropdown; `unreadApplications` badges the CV inbox
+ * (submitted, not yet opened).
+ */
 export function employerNavItems({ unreadApplications = 0 } = {}) {
   return [
-    { ...link('/dashboard', m.employer_workspace_title_dashboard()), icon: <DashboardOutlined /> },
-    {
-      key: 'recruiting',
-      icon: <FileTextOutlined />,
-      label: m.employer_workspace_nav_recruiting(),
-      children: [
-        link('/campaigns', m.employer_workspace_title_campaigns()),
-        link('/jobs', m.employer_workspace_title_jobs()),
-        link('/company-page', m.employer_workspace_title_company_page()),
-      ],
-    },
+    iconLink('/dashboard', DashboardOutlined, m.employer_workspace_title_dashboard()),
+    { type: 'divider', key: 'divider-work' },
+    iconLink('/campaigns', ThunderboltOutlined, m.employer_workspace_title_campaigns()),
+    iconLink('/jobs', FileTextOutlined, m.employer_workspace_title_jobs()),
+    iconLink('/company-page', LayoutOutlined, m.employer_workspace_title_company_page()),
     {
       key: CV_MANAGEMENT_MENU_KEY,
       icon: <TeamOutlined />,
@@ -86,31 +78,10 @@ export function employerNavItems({ unreadApplications = 0 } = {}) {
         link('/candidate-blocks', m.employer_workspace_title_candidate_blocks()),
       ],
     },
-    {
-      key: 'account',
-      icon: <UserOutlined />,
-      label: m.employer_workspace_nav_account(),
-      children: [
-        link('/notifications', m.employer_workspace_title_notifications()),
-        link('/activities', m.employer_workspace_title_activities()),
-        link('/account/settings/account-info', m.employer_workspace_nav_account_settings()),
-      ],
-    },
-    {
-      key: 'upcoming',
-      icon: <RocketOutlined />,
-      label: m.employer_workspace_nav_upcoming(),
-      children: [
-        upcoming('insights', 'ProCV Insights'),
-        upcoming('rewards', 'ProCV Rewards'),
-        upcoming('ai', m.employer_workspace_nav_ai_recommendations()),
-        upcoming('cv-recommendations', m.employer_workspace_nav_cv_recommendations()),
-        upcoming('cv-labels', m.employer_workspace_nav_cv_labels()),
-        upcoming('cv-connection-requests', m.employer_workspace_nav_cv_connection_requests()),
-        upcoming('reports', m.employer_workspace_nav_reports()),
-        upcoming('support', m.employer_workspace_support_inbox()),
-      ],
-    },
+    { type: 'divider', key: 'divider-account' },
+    iconLink('/activities', HistoryOutlined, m.employer_workspace_title_activities()),
+    iconLink('/account/settings/account-info', SettingOutlined, m.employer_workspace_nav_account_settings()),
+    iconLink('/notifications', NotificationOutlined, m.employer_workspace_title_notifications()),
   ]
 }
 
