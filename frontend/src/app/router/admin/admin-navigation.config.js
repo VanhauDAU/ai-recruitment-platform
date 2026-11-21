@@ -1,23 +1,16 @@
 import { m } from '@/shared/config/i18n'
 
 /**
- * Admin sidebar, at most two levels deep. Top-level items carry a `section`
- * (rendered as a heading where it changes) and are either a direct link or a
- * collapsible group of links. Every destination appears exactly once; tabs and
- * filters that live inside a page (settings groups, CV sub-pages, blog
+ * Admin sidebar: the dashboard plus a handful of collapsible groups, at most
+ * two levels deep. Only one group is open at a time, so the sidebar stays short
+ * while every destination is still one click away. Each destination appears
+ * once; tabs that live inside a page (settings groups, CV sub-pages, blog
  * categories) stay on that page instead of being mirrored here.
  *
  * Queue leaves follow `QUEUE_CONFIG` in `entities/dashboard/admin-dashboard`
  * (same order and destination), so the sidebar, the bell and the dashboard
  * send an administrator to the same list.
  */
-export const ADMIN_NAVIGATION_SECTIONS = {
-  operations: m.admin_nav_section_operations(),
-  management: m.admin_nav_section_management(),
-  content: m.admin_nav_section_content(),
-  system: m.admin_nav_section_system(),
-}
-
 export const ADMIN_NAVIGATION = [
   {
     key: 'dashboard',
@@ -27,7 +20,6 @@ export const ADMIN_NAVIGATION = [
   },
   {
     key: 'queues',
-    section: 'operations',
     label: m.admin_nav_queues(),
     iconKey: 'queues',
     defaultOpen: true,
@@ -44,8 +36,16 @@ export const ADMIN_NAVIGATION = [
     ],
   },
   {
+    key: 'jobs',
+    label: m.admin_nav_jobs(),
+    iconKey: 'jobs',
+    children: [
+      { key: 'job-list', label: m.admin_nav_jobs_all(), routeRef: 'jobModeration' },
+      { key: 'held-jobs', label: m.admin_nav_jobs_held(), routeRef: 'jobModeration', query: { job_scope: 'held' } },
+    ],
+  },
+  {
     key: 'businesses',
-    section: 'management',
     label: m.admin_nav_businesses(),
     iconKey: 'companies',
     children: [
@@ -55,18 +55,7 @@ export const ADMIN_NAVIGATION = [
     ],
   },
   {
-    key: 'jobs',
-    section: 'management',
-    label: m.admin_nav_jobs(),
-    iconKey: 'jobs',
-    children: [
-      { key: 'job-list', label: m.admin_nav_jobs_all(), routeRef: 'jobModeration' },
-      { key: 'held-jobs', label: m.admin_nav_jobs_held(), routeRef: 'jobModeration', query: { job_scope: 'held' } },
-    ],
-  },
-  {
     key: 'users',
-    section: 'management',
     label: m.admin_nav_users(),
     iconKey: 'accounts',
     children: [
@@ -75,13 +64,27 @@ export const ADMIN_NAVIGATION = [
       { key: 'all-accounts', label: m.admin_nav_users_all(), routeRef: 'accounts', access: { superuser: true } },
     ],
   },
-  { key: 'blog', section: 'content', label: m.admin_nav_blog(), iconKey: 'blog', routeRef: 'blog' },
-  { key: 'knowledgebase', section: 'content', label: m.admin_nav_knowledgebase(), iconKey: 'help', routeRef: 'knowledgebase' },
-  { key: 'announcements', section: 'content', label: m.admin_nav_announcements(), iconKey: 'announcements', routeRef: 'announcements' },
-  { key: 'banners', section: 'content', label: m.admin_nav_banners(), iconKey: 'banners', routeRef: 'banners' },
-  // Every CV page shares one in-page tab bar, so the whole /cv area lights this item.
-  { key: 'cv-templates', section: 'content', label: m.admin_nav_cv_templates(), iconKey: 'cv', routeRef: 'cvOverview', matchSegment: '/cv' },
-  { key: 'admin-accounts', section: 'system', label: m.admin_nav_admins(), iconKey: 'admins', routeRef: 'accounts', query: { tab: 'admin' }, access: { superuser: true } },
-  { key: 'admin-invitations', section: 'system', label: m.admin_nav_admin_invitations(), iconKey: 'invitations', badgeKey: 'admin_invitations', routeRef: 'accounts', query: { tab: 'invitations' }, access: { superuser: true } },
-  { key: 'settings', section: 'system', label: m.admin_nav_settings(), iconKey: 'settings', routeRef: 'settings' },
+  {
+    key: 'content',
+    label: m.admin_nav_content(),
+    iconKey: 'content',
+    children: [
+      { key: 'blog', label: m.admin_nav_blog(), routeRef: 'blog' },
+      { key: 'knowledgebase', label: m.admin_nav_knowledgebase(), routeRef: 'knowledgebase' },
+      // Every CV page shares one in-page tab bar, so the whole /cv area lights this item.
+      { key: 'cv-templates', label: m.admin_nav_cv_templates(), routeRef: 'cvOverview', matchSegment: '/cv' },
+      { key: 'banners', label: m.admin_nav_banners(), routeRef: 'banners' },
+      { key: 'announcements', label: m.admin_nav_announcements(), routeRef: 'announcements' },
+    ],
+  },
+  {
+    key: 'system',
+    label: m.admin_nav_system(),
+    iconKey: 'settings',
+    children: [
+      { key: 'admin-accounts', label: m.admin_nav_admins(), routeRef: 'accounts', query: { tab: 'admin' }, access: { superuser: true } },
+      { key: 'admin-invitations', label: m.admin_nav_admin_invitations(), badgeKey: 'admin_invitations', routeRef: 'accounts', query: { tab: 'invitations' }, access: { superuser: true } },
+      { key: 'settings', label: m.admin_nav_settings(), routeRef: 'settings' },
+    ],
+  },
 ]

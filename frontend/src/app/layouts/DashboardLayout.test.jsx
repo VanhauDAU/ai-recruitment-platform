@@ -106,7 +106,8 @@ describe('DashboardLayout admin access', () => {
     expect(within(navigation).queryByRole('link', { name: 'Tất cả người dùng' })).not.toBeInTheDocument()
   })
 
-  it('groups destinations into sections with the review queues open first', () => {
+  it('folds every destination into a few groups with the review queues open first', async () => {
+    const user = userEvent.setup()
     useSession.mockReturnValue({ user: superuser(), logout: vi.fn() })
     renderDashboard(
       <MemoryRouter initialEntries={['/admin/app/dashboard']}>
@@ -115,8 +116,9 @@ describe('DashboardLayout admin access', () => {
     )
 
     const navigation = screen.getByRole('navigation', { name: 'Điều hướng quản trị' })
-    expect(within(navigation).getAllByText(/^(Vận hành|Quản lý|Nội dung|Hệ thống)$/)
-      .map((node) => node.textContent)).toEqual(['Vận hành', 'Quản lý', 'Nội dung', 'Hệ thống'])
+    expect(within(navigation).getAllByRole('button', { expanded: false }).length
+      + within(navigation).getAllByRole('button', { expanded: true }).length).toBe(6)
+    expect(within(navigation).queryByText('Vận hành')).not.toBeInTheDocument()
     const home = within(navigation).getByRole('link', { name: 'Tổng quan' })
     expect(home).toHaveAttribute('href', '/admin/app/dashboard')
     expect(home).toHaveAttribute('aria-current', 'page')
@@ -124,12 +126,13 @@ describe('DashboardLayout admin access', () => {
       .toHaveAttribute('aria-expanded', 'true')
     expect(within(navigation).getByRole('link', { name: 'Hậu kiểm nội dung' }))
       .toHaveAttribute('href', '/admin/app/companies?tab=content-changes')
+    await user.click(within(navigation).getByRole('button', { name: 'Nội dung' }))
     expect(within(navigation).getByRole('link', { name: 'Mẫu CV' }))
       .toHaveAttribute('href', '/admin/app/cv/overview')
     expect(within(navigation).queryByText('Tài khoản cá nhân')).not.toBeInTheDocument()
   })
 
-  it('keeps several groups open and remembers them', async () => {
+  it('opens one group at a time and remembers it', async () => {
     const user = userEvent.setup()
     useSession.mockReturnValue({ user: superuser(), logout: vi.fn() })
     const view = renderDashboard(
@@ -139,10 +142,10 @@ describe('DashboardLayout admin access', () => {
     )
 
     await user.click(screen.getByRole('button', { name: 'Doanh nghiệp' }))
+    expect(screen.getByRole('button', { name: 'Cần xử lý' })).toHaveAttribute('aria-expanded', 'false')
     await user.click(screen.getByRole('button', { name: 'Người dùng' }))
-    expect(screen.getByRole('button', { name: 'Doanh nghiệp' })).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByRole('button', { name: 'Doanh nghiệp' })).toHaveAttribute('aria-expanded', 'false')
     expect(screen.getByRole('button', { name: 'Người dùng' })).toHaveAttribute('aria-expanded', 'true')
-    await user.click(screen.getByRole('button', { name: 'Cần xử lý' }))
     view.unmount()
 
     renderDashboard(
@@ -151,7 +154,7 @@ describe('DashboardLayout admin access', () => {
       </MemoryRouter>,
     )
     expect(screen.getByRole('button', { name: 'Cần xử lý' })).toHaveAttribute('aria-expanded', 'false')
-    expect(screen.getByRole('button', { name: 'Doanh nghiệp' })).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByRole('button', { name: 'Người dùng' })).toHaveAttribute('aria-expanded', 'true')
   })
 
   it('remembers a collapsed sidebar and peeks below the brand area', async () => {
@@ -195,12 +198,13 @@ describe('DashboardLayout admin access', () => {
       .toContainElement(within(navigation).getByLabelText('4 mục đang chờ, có mục quá hạn'))
     expect(within(navigation).getByRole('link', { name: 'Báo cáo công ty' }))
       .toHaveClass('admin-nav__leaf--idle')
+
+    // Opening another group closes the queues, which then show their total.
+    await user.click(within(navigation).getByRole('button', { name: 'Hệ thống' }))
     expect(within(navigation).getByRole('link', { name: /Lời mời quản trị/ }))
       .toHaveTextContent('5')
-
     const queues = within(navigation).getByRole('button', { name: 'Cần xử lý' })
-    expect(within(queues).queryByLabelText(/mục đang chờ/)).not.toBeInTheDocument()
-    await user.click(queues)
+    expect(queues).toHaveAttribute('aria-expanded', 'false')
     expect(within(queues).getByLabelText('16 mục đang chờ, có mục quá hạn'))
       .toHaveClass('admin-nav__count--urgent')
     expect(within(navigation).getByRole('button', { name: 'Doanh nghiệp' })

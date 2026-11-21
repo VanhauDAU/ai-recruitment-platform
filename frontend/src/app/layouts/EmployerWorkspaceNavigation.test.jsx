@@ -2,45 +2,48 @@ import { describe, expect, it } from 'vitest'
 import {
   CV_MANAGEMENT_MENU_KEY,
   employerNavItems,
+  employerOpenMenuKey,
   employerRouteTitle,
   employerSelectedMenuKey,
 } from './EmployerWorkspaceNavigation'
 
+const group = (key, options) => employerNavItems(options).find((item) => item.key === key)
+const titles = (key) => group(key).children.map((item) => item.title)
+
 describe('EmployerWorkspaceNavigation', () => {
-  it('registers notification and activity as real workspace routes', () => {
-    const routableKeys = employerNavItems().filter((item) => item?.key).map((item) => item.key)
-
-    expect(routableKeys).toContain('/tuyendung/app/notifications')
-    expect(routableKeys).toContain('/tuyendung/app/activities')
-    expect(routableKeys).not.toContain('coming-activity')
-    expect(routableKeys).not.toContain('coming-system-notifications')
-    expect(employerRouteTitle('/tuyendung/app/notifications')).toBe('Thông báo hệ thống')
-    expect(employerSelectedMenuKey('/tuyendung/app/activities')).toBe('/tuyendung/app/activities')
-  })
-
-  it('registers the company page workspace with its own menu item and title', () => {
-    const item = employerNavItems().find((entry) => entry.key === '/tuyendung/app/company-page')
-
-    expect(item).toMatchObject({ label: 'Trang công ty', title: 'Trang công ty' })
-    expect(item.disabled).toBeUndefined()
-    expect(employerRouteTitle('/tuyendung/app/company-page')).toBe('Trang công ty')
-    expect(employerSelectedMenuKey('/tuyendung/app/company-page')).toBe('/tuyendung/app/company-page')
-  })
-
-  it('groups the CV inbox with the upcoming CV tools and selects it on its route', () => {
-    const group = employerNavItems({ unreadApplications: 3 }).find((item) => item.key === CV_MANAGEMENT_MENU_KEY)
-    const [inbox, talentPool, blocklist, ...upcoming] = group.children
-
-    expect(inbox).toMatchObject({ key: '/tuyendung/app/applications', title: 'CV ứng tuyển' })
-    expect(inbox.disabled).toBeUndefined()
-    expect(blocklist).toMatchObject({ key: '/tuyendung/app/candidate-blocks', title: 'Danh sách đen' })
-    expect(talentPool).toMatchObject({ key: '/tuyendung/app/talent-pool', title: 'Kho ứng viên tiềm năng' })
-    expect(upcoming.map((item) => item.title)).toEqual([
-      'Quản lý nhãn CV — Sắp mở',
-      'Quản lý yêu cầu kết nối CV — Sắp mở',
+  it('folds every page into four groups under the dashboard', () => {
+    const items = employerNavItems()
+    expect(items.map((item) => item.key)).toEqual([
+      '/tuyendung/app/dashboard', 'recruiting', CV_MANAGEMENT_MENU_KEY, 'account', 'upcoming',
     ])
+    expect(titles('recruiting')).toEqual(['Chiến dịch tuyển dụng', 'Tin tuyển dụng', 'Trang công ty'])
+    expect(titles(CV_MANAGEMENT_MENU_KEY)).toEqual(['CV ứng tuyển', 'Kho ứng viên tiềm năng', 'Danh sách đen'])
+    expect(titles('account')).toEqual(['Thông báo hệ thống', 'Lịch sử hoạt động', 'Cài đặt tài khoản'])
+  })
+
+  it('keeps roadmap features together in one closed group, all disabled', () => {
+    const upcoming = group('upcoming').children
+    expect(upcoming.map((item) => item.title)).toContain('Quản lý nhãn CV — Sắp mở')
     expect(upcoming.every((item) => item.disabled)).toBe(true)
-    expect(employerSelectedMenuKey('/tuyendung/app/applications')).toBe('/tuyendung/app/applications')
-    expect(employerRouteTitle('/tuyendung/app/applications')).toBe('CV ứng tuyển')
+    expect(employerNavItems().filter((item) => item.key !== 'upcoming')
+      .flatMap((item) => item.children || [item])
+      .some((item) => item.disabled)).toBe(false)
+  })
+
+  it('badges unread CVs on the inbox and hints at them on the CV group', () => {
+    const cv = group(CV_MANAGEMENT_MENU_KEY, { unreadApplications: 3 })
+    expect(cv.children[0].label.props.children[1].props['aria-label']).toBe('3 CV mới chưa xem')
+    expect(cv.label.props.children[1].props['aria-label']).toBe('Có CV mới chưa xem')
+  })
+
+  it('lights a section on its detail pages and opens the group that holds it', () => {
+    expect(employerSelectedMenuKey('/tuyendung/app/jobs/jb_1/edit')).toBe('/tuyendung/app/jobs')
+    expect(employerSelectedMenuKey('/tuyendung/app/campaigns/cp_1')).toBe('/tuyendung/app/campaigns')
+    expect(employerSelectedMenuKey('/tuyendung/app/account/settings/password'))
+      .toBe('/tuyendung/app/account/settings/account-info')
+    expect(employerOpenMenuKey('/tuyendung/app/talent-pool')).toBe(CV_MANAGEMENT_MENU_KEY)
+    expect(employerOpenMenuKey('/tuyendung/app/notifications')).toBe('account')
+    expect(employerOpenMenuKey('/tuyendung/app/dashboard')).toBeUndefined()
+    expect(employerRouteTitle('/tuyendung/app/company-page')).toBe('Trang công ty')
   })
 })

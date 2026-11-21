@@ -41,6 +41,19 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
 
+## Gọn sidebar quản trị và NTD theo góp ý GVHD (2026-11-21)
+
+Góp ý: sidebar admin nhiều mục, nhiều tầng tiêu đề, rối mắt. Giữ đủ mọi lối vào
+nhưng gom thành ít nhóm thả xuống hơn, hai cổng dùng chung một kiểu hiển thị.
+
+| Phần | Nội dung |
+| --- | --- |
+| Admin | Bỏ 4 tiêu đề mục (Vận hành · Quản lý · Nội dung · Hệ thống); gốc chỉ còn Tổng quan + 6 nhóm: Cần xử lý, Tin tuyển dụng, Doanh nghiệp, Người dùng, Nội dung (gom Cẩm nang, FAQ, Mẫu CV, Banner, Thông báo), Hệ thống. Từ 13 dòng gốc + 4 tiêu đề xuống 7 dòng |
+| Accordion | Mỗi lúc mở một nhóm (cả admin và NTD), nhóm chứa trang hiện tại tự mở; trượt mở/đóng bằng `grid-template-rows`, tắt khi `prefers-reduced-motion` |
+| NTD | Gom thành Bảng tin + 4 nhóm: Tuyển dụng (Chiến dịch, Tin, Trang công ty), Quản lý CV, Tài khoản (Thông báo, Lịch sử, Cài đặt), Sắp ra mắt (8 tính năng "Sắp mở" trước đây rải ở đầu menu và chân sidebar). Trang con (sửa tin, chi tiết chiến dịch) giữ mục cha sáng |
+| Giao diện | Dòng 38px, mục con 34px treo trên đường dẫn hướng, trang hiện tại có nền + vạch màu thương hiệu (tính từ `--brand-primary`, đổi theo cấu hình); vùng logo admin cao bằng topbar; footer admin một hàng; hồ sơ NTD gọn (bỏ "Employer", mã NTD) |
+| Kỹ thuật | Style menu NTD chuyển từ chuỗi Tailwind arbitrary sang `employer-workspace.css` tải lười cùng layout |
+
 ## Làm lại carousel banner trang chủ (2026-11-21)
 
 Carousel cạnh danh mục nghề trước đây chỉ có slide số liệu viết cứng và banner chữ

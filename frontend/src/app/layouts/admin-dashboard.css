@@ -15,6 +15,9 @@
   --admin-sidebar-muted: #94a3b8;
   --admin-sidebar-text: #475569;
   --admin-sidebar-hover: #f1f5f9;
+  /* Current nav page: derived from the configurable brand color. */
+  --admin-nav-active-bg: color-mix(in srgb, var(--admin-primary) 10%, #ffffff);
+  --admin-nav-active-text: color-mix(in srgb, var(--admin-primary) 75%, #0f172a);
   --admin-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
   /* Status colors shared by the dashboard and every admin workspace. */
   --admin-critical: #d03b3b;
@@ -69,23 +72,26 @@
   align-items: flex-start;
   border-bottom: 1px solid var(--admin-border);
   display: flex;
-  flex-direction: column;
   flex: 0 0 auto;
-  height: 82px;
+  flex-direction: column;
+  gap: 4px;
+  /* Same height as the topbar so both bottom borders form one line. */
+  height: var(--admin-topbar-height);
   justify-content: center;
-  padding: 0 20px;
+  padding: 0 18px;
   position: relative;
 }
 
 .admin-sider__close.ant-btn {
   border-color: var(--admin-border);
   color: var(--admin-sidebar-text);
-  height: 40px;
-  min-height: 40px;
+  height: 36px;
+  min-height: 36px;
   position: absolute;
   right: 14px;
-  top: 20px;
-  width: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
 }
 
 .admin-sider__close.ant-btn:hover,
@@ -100,18 +106,20 @@
 }
 
 .admin-sider__product {
-  color: var(--admin-text-muted);
-  font-size: 12px;
+  color: var(--admin-sidebar-muted);
+  font-size: 11px;
   font-weight: 600;
+  letter-spacing: 0.04em;
   line-height: 1;
-  margin-top: 6px;
+  text-transform: uppercase;
 }
 
 .admin-sider__navigation {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  padding: 12px 10px 20px;
+  padding: 12px 12px 16px;
+  scrollbar-width: thin;
 }
 
 .admin-sider__peek {
@@ -121,38 +129,36 @@
   box-shadow: 18px 0 40px rgba(15, 23, 42, 0.12);
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - 82px);
+  height: calc(100dvh - var(--admin-topbar-height));
   left: 0;
   position: fixed;
-  top: 82px;
+  top: var(--admin-topbar-height);
   width: 280px;
   z-index: 60;
 }
 
-.admin-nav__section-label {
-  color: var(--admin-sidebar-muted);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  margin: 16px 11px 6px;
-  text-transform: uppercase;
+.admin-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .admin-nav__search {
   align-items: center;
   background: var(--admin-canvas);
   border: 1px solid var(--admin-border);
-  border-radius: 10px;
-  color: var(--admin-text-muted);
+  border-radius: 9px;
+  color: var(--admin-sidebar-muted);
   cursor: pointer;
   display: flex;
+  flex: 0 0 auto;
   font: inherit;
   font-size: 13px;
   gap: 8px;
   margin-bottom: 8px;
-  min-height: 38px;
+  min-height: 36px;
   padding: 0 10px;
-  transition: border-color 150ms ease, color 150ms ease;
+  transition: border-color 150ms ease, color 150ms ease, background-color 150ms ease;
   width: 100%;
 }
 
@@ -164,17 +170,18 @@
 .admin-nav__search kbd {
   background: var(--admin-surface);
   border: 1px solid var(--admin-border);
-  border-radius: 6px;
-  color: var(--admin-text-muted);
+  border-radius: 5px;
+  color: var(--admin-sidebar-muted);
   font-family: inherit;
-  font-size: 11px;
-  padding: 1px 6px;
+  font-size: 10px;
+  padding: 1px 5px;
 }
 
 .admin-nav__search:hover,
 .admin-nav__search:focus-visible {
-  border-color: var(--admin-primary);
-  color: var(--admin-text);
+  background: var(--admin-surface);
+  border-color: color-mix(in srgb, var(--admin-primary) 45%, var(--admin-border));
+  color: var(--admin-text-muted);
 }
 
 .admin-nav__level-one,
@@ -186,22 +193,29 @@
   cursor: pointer;
   display: flex;
   font: inherit;
+  position: relative;
   text-align: left;
   text-decoration: none;
+  transition: background-color 160ms ease, color 160ms ease;
   width: 100%;
 }
 
 .admin-nav__label {
   flex: 1;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
+/* Top row: icon, label, count, chevron. */
 .admin-nav__level-one {
-  border-radius: 11px;
-  gap: 11px;
-  min-height: 42px;
-  padding: 8px 11px;
-  transition: background 150ms ease, color 150ms ease;
+  border-radius: 9px;
+  font-size: 13.5px;
+  font-weight: 500;
+  gap: 10px;
+  min-height: 38px;
+  padding: 0 10px;
 }
 
 .admin-nav__level-one:hover,
@@ -210,92 +224,142 @@
   color: var(--admin-text);
 }
 
-.admin-nav__level-one--active,
-.admin-nav__level-one--active:hover {
-  background: var(--admin-primary-soft);
-  color: #0f5132;
-  font-weight: 700;
+/* A group holding the current page only darkens; the page itself carries the tint. */
+.admin-nav__level-one--active {
+  color: var(--admin-text);
+  font-weight: 600;
 }
 
-.admin-nav__level-one--active .admin-nav__level-one-icon {
-  color: var(--admin-primary);
+a.admin-nav__level-one--active,
+a.admin-nav__level-one--active:hover,
+.admin-nav__leaf--active,
+.admin-nav__leaf--active:hover {
+  background: var(--admin-nav-active-bg);
+  color: var(--admin-nav-active-text);
+  font-weight: 600;
+}
+
+/* Short brand bar on the left edge of the current page. */
+a.admin-nav__level-one::before,
+.admin-nav__leaf::before {
+  background: var(--admin-primary);
+  border-radius: 0 3px 3px 0;
+  content: '';
+  height: 18px;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%) scaleY(0);
+  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  width: 3px;
+}
+
+a.admin-nav__level-one::before {
+  left: -12px;
+}
+
+a.admin-nav__level-one--active::before,
+.admin-nav__leaf--active::before {
+  transform: translateY(-50%) scaleY(1);
 }
 
 .admin-nav__level-one-icon {
   align-items: center;
+  color: var(--admin-sidebar-muted);
   display: inline-flex;
   flex: 0 0 auto;
-  font-size: 18px;
+  font-size: 16px;
   justify-content: center;
-  width: 22px;
+  transition: color 160ms ease;
+  width: 20px;
+}
+
+.admin-nav__level-one:hover .admin-nav__level-one-icon,
+.admin-nav__level-one:focus-visible .admin-nav__level-one-icon {
+  color: var(--admin-sidebar-text);
+}
+
+.admin-nav__level-one--active .admin-nav__level-one-icon,
+.admin-nav__level-one--active:hover .admin-nav__level-one-icon {
+  color: var(--admin-primary);
 }
 
 .admin-nav__chevron {
   color: var(--admin-sidebar-muted);
-  font-size: 11px;
-  transition: transform 160ms ease;
+  font-size: 10px;
+  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .admin-nav__chevron--open {
-  transform: rotate(90deg);
+  transform: rotate(-180deg);
 }
 
+/* Height animates via grid rows so both opening and closing slide smoothly. */
+.admin-nav__collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 160ms ease,
+    visibility 0s linear 220ms;
+  visibility: hidden;
+}
+
+.admin-nav__collapse--open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition:
+    grid-template-rows 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 200ms ease 40ms,
+    visibility 0s;
+  visibility: visible;
+}
+
+.admin-nav__collapse > .admin-nav__secondary {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Children hang off a thin guide line under the group icon. */
 .admin-nav__secondary {
-  animation: admin-nav-accordion-in 180ms cubic-bezier(0.22, 1, 0.36, 1);
   border-left: 1px solid var(--admin-border);
-  margin: 3px 0 8px 22px;
-  padding: 3px 0 3px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 2px 0 6px 19px;
+  padding: 2px 0 2px 10px;
+  transition: margin 220ms cubic-bezier(0.22, 1, 0.36, 1), padding 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.admin-nav__collapse:not(.admin-nav__collapse--open) > .admin-nav__secondary {
+  margin-block: 0;
+  padding-block: 0;
 }
 
 .admin-nav__leaf {
-  border-radius: 10px;
-  color: #334155;
+  border-radius: 8px;
+  color: var(--admin-text-muted);
   font-size: 13px;
-  font-weight: 600;
-  gap: 10px;
-  line-height: 1.4;
-  min-height: 36px;
-  padding: 6px 9px;
-  transition:
-    background-color 150ms ease,
-    color 150ms ease,
-    transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  font-weight: 500;
+  gap: 8px;
+  min-height: 34px;
+  padding: 0 10px;
 }
 
-.admin-nav__leaf:hover,
-.admin-nav__leaf:focus-visible,
-.admin-nav__leaf--active {
-  background: var(--admin-primary-soft);
-  color: #0f5132;
+/* The bar sits on the guide line. */
+.admin-nav__leaf::before {
+  left: -12px;
 }
 
 .admin-nav__leaf:hover,
 .admin-nav__leaf:focus-visible {
-  transform: translateX(2px);
+  background: var(--admin-sidebar-hover);
+  color: var(--admin-text);
 }
 
 /* A queue with nothing waiting fades so the eye lands on the ones that do. */
 .admin-nav__leaf--idle:not(.admin-nav__leaf--active) {
   color: var(--admin-sidebar-muted);
-  font-weight: 500;
-}
-
-.admin-nav__leaf-marker {
-  background: #cbd5e1;
-  border-radius: 999px;
-  flex: 0 0 auto;
-  height: 7px;
-  transition:
-    background-color 150ms ease,
-    box-shadow 150ms ease,
-    transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
-  width: 7px;
-}
-
-.admin-nav__leaf--active .admin-nav__leaf-marker {
-  background: var(--admin-primary);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--admin-primary) 14%, transparent);
-  transform: scale(1.08);
 }
 
 .admin-nav__coming-soon {
@@ -306,96 +370,97 @@
 
 .admin-nav__count {
   align-items: center;
-  background: #e2e8f0;
-  border: 1px solid transparent;
+  background: #eef2f6;
   border-radius: 999px;
-  box-shadow: none;
-  color: #334155;
+  color: var(--admin-sidebar-text);
   display: inline-flex;
   flex: 0 0 auto;
-  font-size: 10px;
+  font-size: 11px;
   font-variant-numeric: tabular-nums;
-  font-weight: 800;
+  font-weight: 700;
   height: 20px;
   justify-content: center;
-  letter-spacing: 0.02em;
   line-height: 1;
-  min-width: 24px;
+  min-width: 20px;
   padding: 0 6px;
 }
 
 .admin-nav__leaf--active .admin-nav__count {
-  background: #ffffff;
-  border-color: #cbd5e1;
-  box-shadow: none;
+  background: var(--admin-surface);
+  color: var(--admin-nav-active-text);
 }
 
 .admin-nav__count--urgent,
 .admin-nav__leaf--active .admin-nav__count--urgent {
-  background: #d03b3b;
-  border-color: #d03b3b;
+  background: var(--admin-critical);
   color: #ffffff;
 }
 
+/* Icon rail: labels move into tooltips, counts shrink onto the icon. */
 .admin-nav--collapsed {
   align-items: center;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
   overflow: visible;
-  padding-inline: 11px;
-}
-
-.admin-nav__divider {
-  background: var(--admin-border);
-  flex: 0 0 auto;
-  height: 1px;
-  margin: 4px 0;
-  width: 32px;
+  padding-inline: 10px;
 }
 
 .admin-nav__collapsed-button {
   align-items: center;
   background: transparent;
   border: 0;
-  border-radius: 11px;
-  color: var(--admin-text-muted);
+  border-radius: 9px;
+  color: var(--admin-sidebar-muted);
   cursor: pointer;
   display: flex;
   flex: 0 0 auto;
-  font-size: 19px;
-  height: 44px;
+  font-size: 18px;
+  height: 40px;
   justify-content: center;
   position: relative;
-  transition:
-    background-color 150ms ease,
-    color 150ms ease,
-    transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
-  width: 52px;
+  transition: background-color 160ms ease, color 160ms ease;
+  width: 44px;
 }
 
 .admin-nav__collapsed-button .admin-nav__count {
   border: 2px solid var(--admin-sidebar);
-  font-size: 8px;
-  height: 18px;
-  min-width: 18px;
+  font-size: 9px;
+  height: 17px;
+  min-width: 17px;
   padding: 0 4px;
   position: absolute;
-  right: 3px;
-  top: 2px;
+  right: 0;
+  top: 1px;
+}
+
+.admin-nav__collapsed-button .admin-nav__count:not(.admin-nav__count--urgent) {
+  background: #64748b;
+  color: #ffffff;
 }
 
 .admin-nav__collapsed-button:hover,
 .admin-nav__collapsed-button:focus-visible {
   background: var(--admin-sidebar-hover);
   color: var(--admin-text);
-  transform: translateY(-1px) scale(1.02);
 }
 
 .admin-nav__collapsed-button--active,
 .admin-nav__collapsed-button--active:hover {
-  background: var(--admin-primary-soft);
-  color: var(--admin-primary-hover);
+  background: var(--admin-nav-active-bg);
+  color: var(--admin-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-nav__level-one,
+  .admin-nav__leaf,
+  .admin-nav__level-one::before,
+  .admin-nav__leaf::before,
+  .admin-nav__chevron,
+  .admin-nav__collapse,
+  .admin-nav__collapse--open,
+  .admin-nav__secondary,
+  .admin-sider__peek {
+    animation: none;
+    transition: none;
+  }
 }
 
 .admin-palette .ant-modal-container {
@@ -471,18 +536,6 @@
   to {
     opacity: 1;
     transform: translateX(0);
-  }
-}
-
-@keyframes admin-nav-accordion-in {
-  from {
-    opacity: 0;
-    transform: translateY(-5px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -659,15 +712,15 @@
   border-top: 1px solid var(--admin-border);
   display: grid;
   flex: none;
-  gap: 8px;
-  padding: 12px;
+  gap: 6px;
+  padding: 10px 12px;
 }
 
 .admin-sider-footer__identity {
   align-items: center;
   display: grid;
-  gap: 10px;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
 }
 
 .admin-sider-footer__meta {
@@ -679,23 +732,28 @@
 .admin-sider-footer__meta strong {
   color: var(--admin-text);
   font-size: 13px;
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .admin-sider-footer__meta span {
-  color: var(--admin-text-muted);
-  font-size: 12px;
+  color: var(--admin-sidebar-muted);
+  font-size: 11.5px;
 }
 
-.admin-sider-footer__settings {
+.admin-sider-footer__settings,
+.admin-sider-footer__logout.ant-btn {
   align-items: center;
   border-radius: 8px;
-  color: var(--admin-text-muted);
+  color: var(--admin-sidebar-muted);
   display: inline-flex;
   height: 32px;
   justify-content: center;
+  min-width: 32px;
+  padding: 0;
+  transition: background-color 150ms ease, color 150ms ease;
   width: 32px;
 }
 
@@ -705,25 +763,15 @@
   color: var(--admin-text);
 }
 
-.admin-sider-footer__logout.ant-btn {
-  color: #b42318;
-  justify-content: flex-start;
-  width: 100%;
-}
-
-.admin-sider-footer__logout.ant-btn:hover {
-  background: #fdf0f0 !important;
-  color: #b42318 !important;
+.admin-sider-footer__logout.ant-btn:hover,
+.admin-sider-footer__logout.ant-btn:focus-visible {
+  background: var(--admin-critical-soft) !important;
+  color: var(--admin-critical) !important;
 }
 
 .admin-sider-footer--collapsed {
   justify-items: center;
   padding-inline: 8px;
-}
-
-.admin-sider-footer--collapsed .admin-sider-footer__logout.ant-btn {
-  justify-content: center;
-  width: 44px;
 }
 
 .admin-user__avatar {
