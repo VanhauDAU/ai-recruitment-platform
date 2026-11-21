@@ -144,8 +144,8 @@ export default function EmployerWorkspaceLayout() {
     : m.employer_workspace_back_to_campaign()
   const sidebarCollapsed = collapsed && (isMobileViewport || !isSidebarHovered)
   const isCompactSidebar = sidebarCollapsed && !isMobileViewport
-  // Accordion: one group open at a time; moving to a page opens its group.
-  // The icon rail keeps its own hover popup state so it never pops a group open.
+  // Moving to a CV page opens the "Quản lý CV" dropdown; the icon rail keeps
+  // its own hover popup state so collapsing never pops the group open.
   const selectedMenuKey = employerSelectedMenuKey(pathname)
   const [openMenuKey, setOpenMenuKey] = useState(() => employerOpenMenuKey(selectedMenuKey) || '')
   const [popupMenuKey, setPopupMenuKey] = useState('')

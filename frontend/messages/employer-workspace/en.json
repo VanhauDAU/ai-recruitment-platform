@@ -33,8 +33,6 @@
   "employer_workspace_title_campaign_setup": "Set up recruitment campaign",
   "employer_workspace_title_campaign_detail": "Recruitment campaign details",
   "employer_workspace_title_application_review": "Candidate review",
-  "employer_workspace_nav_coming_soon": "Soon",
-  "employer_workspace_nav_coming_soon_title": "{label} — Coming soon",
   "employer_workspace_nav_unread_cv_count": [
     {
       "declarations": [
@@ -51,16 +49,8 @@
     }
   ],
   "employer_workspace_nav_has_unread_cv": "New CVs waiting to be viewed",
-  "employer_workspace_nav_ai_recommendations": "AI recommendations",
-  "employer_workspace_nav_cv_recommendations": "Recommended CVs",
   "employer_workspace_nav_cv_management": "CV management",
-  "employer_workspace_nav_cv_labels": "CV labels",
-  "employer_workspace_nav_cv_connection_requests": "CV connection requests",
-  "employer_workspace_nav_reports": "Recruitment reports",
   "employer_workspace_nav_account_settings": "Account settings",
-  "employer_workspace_nav_recruiting": "Recruiting",
-  "employer_workspace_nav_account": "Account",
-  "employer_workspace_nav_upcoming": "Coming soon",
   "employer_workspace_nav_fallback_title": "Employer workspace",
   "employer_workspace_topbar_coming_tooltip": "{label} — coming in a future release",
   "employer_workspace_topbar_market_survey": "Market insights",
@@ -81,7 +71,6 @@
   "employer_workspace_verification_level_label": "Account verification:",
   "employer_workspace_verification_level": "Level {level}/{total}",
   "employer_workspace_verification_details_button": "View account verification level details",
-  "employer_workspace_support_inbox": "Support inbox",
   "employer_workspace_campaign_detail_heading": "Campaign details",
   "employer_workspace_add_campaign": "New campaign",
   "employer_workspace_verification_popover_label": "Account verification level details",
