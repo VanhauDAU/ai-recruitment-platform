@@ -657,6 +657,13 @@ GĐ1 đã làm:
   - **Bạn tự đăng:** ô gọn, kèm gợi ý ngắn cho từng nơi đăng.
   - Bỏ nhãn "Bạn sẽ đăng ở đâu?".
   - Mobile: nhóm tự đăng một cột, nhóm đăng tay hai cột, chữ được xuống dòng.
+- Tab "Kênh & nguồn" làm lại giao diện (22/11, chưa tạo PR).
+  - Danh sách kênh chuyển thành hàng tab ngang kiểu thẻ hồ sơ. Mỗi tab chỉ có
+    logo và tên kênh, tab đang chọn liền khối với khung chi tiết, góc dưới cong.
+    Chuyển tab bằng phím mũi tên, Home, End.
+  - "Kênh phân phối" và "Hiệu quả theo nguồn" thành hai cụm thu gọn: mở cụm này
+    thì cụm kia đóng, co giãn có hiệu ứng. Bảng nguồn chỉ gọi API khi mở lần đầu.
+  - Danh sách bài đã đăng trên mạng xã hội chia trang, mỗi trang 3 bài.
 
 ## Ứng tuyển bằng CV tải lên và form ứng tuyển mới (2026-11-18)
 

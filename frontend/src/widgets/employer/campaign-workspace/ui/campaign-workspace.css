@@ -38,10 +38,32 @@
 .cw-metric.is-green .cw-metric__value { color: #047857; }
 .cw-metric.is-violet .cw-metric__value { color: #6d28d9; }
 
-/* Tab Kênh & nguồn */
-.cw-channels { display: flex; flex-direction: column; gap: 24px; padding: 20px; }
+/* Tab Kênh & nguồn: hai cụm thu gọn, chỉ mở một cụm */
+.cw-channels { display: flex; flex-direction: column; gap: 12px; padding: 20px; }
 .cw-section-title { margin: 0; font-size: 16px; font-weight: 700; color: #0f2a24; }
-.cw-section-intro { margin: 4px 0 12px; max-width: 72ch; font-size: 13px; line-height: 20px; color: #64748b; }
+.cw-section-intro { margin: 0 0 12px; max-width: 72ch; font-size: 13px; line-height: 20px; color: #64748b; }
+.cw-fold { border: 1px solid #e2e8e5; border-radius: 14px; background: #fff; transition: border-color .15s, box-shadow .15s; }
+.cw-fold.is-open { border-color: #cfe3da; box-shadow: 0 1px 3px rgb(15 42 36 / .06); }
+.cw-fold__title { margin: 0; }
+.cw-fold__title button { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 14px 18px; border: 0; border-radius: 14px; background: none; cursor: pointer; text-align: left; font-size: 16px; font-weight: 700; color: #0f2a24; }
+.cw-fold__title button { transition: background-color .15s; }
+.cw-fold__title button:hover { background: #f8faf9; }
+.cw-fold__title button:focus-visible { outline: 2px solid #059669; outline-offset: -2px; }
+.cw-fold.is-open .cw-fold__title button { border-radius: 14px 14px 0 0; }
+.cw-fold__chevron { display: inline-grid; width: 28px; height: 28px; flex: none; place-items: center; border-radius: 999px; background: #f1f5f3; font-size: 11px; color: #475569; transition: transform .36s cubic-bezier(.22, 1, .36, 1), background-color .2s, color .2s; }
+.cw-fold.is-open .cw-fold__chevron { transform: rotate(180deg); background: #ecfdf5; color: #047857; }
+/* Co giãn chiều cao bằng grid 0fr → 1fr: mượt mà không cần đo chiều cao bằng JS */
+.cw-fold__panel { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: 0fr; transition: grid-template-rows .36s cubic-bezier(.22, 1, .36, 1); }
+.cw-fold.is-open .cw-fold__panel { grid-template-rows: 1fr; }
+.cw-fold__clip { min-height: 0; overflow: hidden; }
+.cw-fold.is-open .cw-fold__clip { animation: cw-fold-unclip 0s .36s forwards; }
+.cw-fold__body { padding: 2px 18px 18px; opacity: 0; transform: translateY(-8px); transition: opacity .2s ease, transform .3s cubic-bezier(.22, 1, .36, 1); }
+.cw-fold.is-open .cw-fold__body { opacity: 1; transform: none; transition-delay: .08s; }
+/* Mở xong thì bỏ cắt để menu thả xuống, viền focus và góc cong của tab không bị xén */
+@keyframes cw-fold-unclip { to { overflow: visible; } }
+@media (prefers-reduced-motion: reduce) {
+  .cw-fold__panel, .cw-fold__body, .cw-fold__chevron { transition: none; }
+}
 
 @media (max-width: 900px) {
   .cw-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -59,6 +81,8 @@
   .cw-metric__value { font-size: 20px; }
   .cw-fact { padding: 10px 16px; }
   .cw-channels { padding: 14px; }
+  .cw-fold__title button { padding: 12px 14px; }
+  .cw-fold__body { padding: 2px 12px 14px; }
 }
 
 /* Tab Sức khỏe */

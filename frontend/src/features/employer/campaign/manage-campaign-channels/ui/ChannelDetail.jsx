@@ -33,7 +33,12 @@ export default function ChannelDetail({ campaign, channel, editable }) {
   ]
 
   return (
-    <section className="ch-detail" aria-labelledby={`channel-${channel.public_id}`}>
+    <section
+      id={`channel-panel-${channel.public_id}`}
+      className="ch-detail"
+      role="tabpanel"
+      aria-labelledby={`channel-tab-${channel.public_id}`}
+    >
       <header className="ch-detail__head">
         <ChannelIcon kind={channel.kind} size="lg" />
         <div className="ch-detail__title">

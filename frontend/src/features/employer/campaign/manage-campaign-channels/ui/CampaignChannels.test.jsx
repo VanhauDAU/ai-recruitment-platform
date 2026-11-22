@@ -80,8 +80,9 @@ describe('campaign channels', () => {
     mocks.updateCampaignChannel.mockResolvedValue(channel)
     renderWithClient(<CampaignChannelBoard campaign={campaign} />)
 
-    const list = await screen.findByRole('navigation', { name: 'Danh sách kênh' })
-    expect(within(list).getAllByRole('button')).toHaveLength(2)
+    const list = await screen.findByRole('tablist', { name: 'Danh sách kênh' })
+    expect(within(list).getAllByRole('tab')).toHaveLength(2)
+    expect(within(list).getByRole('tab', { name: /Nhóm IT Hà Nội/ })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByRole('heading', { name: 'Nhóm IT Hà Nội' })).toBeInTheDocument()
     expect(screen.getByText('2.000.000 đ')).toBeInTheDocument()
     expect(screen.getByText('20% người bấm')).toBeInTheDocument()
@@ -98,7 +99,7 @@ describe('campaign channels', () => {
     await user.click(screen.getByRole('tab', { name: 'Link & QR' }))
     expect(await screen.findByText('https://procv.vn/r/AbC123xy')).toBeInTheDocument()
 
-    await user.click(within(list).getByRole('button', { name: /LinkedIn công ty/ }))
+    await user.click(within(list).getByRole('tab', { name: /LinkedIn công ty/ }))
     expect(await screen.findByRole('heading', { name: 'LinkedIn công ty' })).toBeInTheDocument()
   })
 
@@ -142,7 +143,7 @@ describe('campaign channels', () => {
     renderWithClient(<MemoryRouter><CampaignChannelBoard campaign={campaign} /></MemoryRouter>)
 
     expect(await screen.findByText('Chưa có bài nào trên Fanpage Facebook.')).toBeInTheDocument()
-    expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Bài đăng', 'Link & QR', 'Chi phí'])
+    expect(within(screen.getByRole('tabpanel', { name: 'Fanpage' })).getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Bài đăng', 'Link & QR', 'Chi phí'])
     expect(screen.getByRole('button', { name: 'Soạn bài' })).toBeEnabled()
     expect(screen.queryByRole('button', { name: /Sao chép bài/ })).not.toBeInTheDocument()
   })
