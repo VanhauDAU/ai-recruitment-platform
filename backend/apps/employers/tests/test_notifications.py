@@ -91,6 +91,9 @@ class EmployerNotificationApiTests(APITestCase):
         self.assertEqual(row['actor_kind'], 'system')
         self.assertEqual(row['action_path'], '/tuyendung/app/applications?application=app_1')
         self.assertEqual(recent.data['category_counts']['all'], 2)
+        self.assertEqual(len(everything.data['daily_counts']), 14)
+        self.assertEqual(everything.data['daily_counts'][-1]['count'], 2)
+        self.assertEqual(sum(day['count'] for day in applications.data['daily_counts']), 1)
         self.assertEqual(
             {item['category'] for item in recent.data['results']}, {'applications', 'company'}
         )

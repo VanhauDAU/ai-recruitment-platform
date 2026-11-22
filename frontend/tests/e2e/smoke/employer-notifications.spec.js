@@ -109,7 +109,7 @@ test('employer notification and activity routes are usable and responsive', { ta
   await page.goto('/tuyendung/app/notifications')
   await expect(page.getByRole('heading', { name: 'Thông báo hệ thống' })).toBeAttached()
   const groups = page.getByRole('group', { name: 'Lọc theo nhóm' })
-  await expect(groups.getByRole('button', { name: /Công ty & xác thực\s*1/ })).toBeVisible()
+  await expect(groups.getByRole('button', { name: /1\s*Công ty & xác thực/ })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Hồ sơ xác thực cần bổ sung' }).first()).toHaveAttribute('href', '/tuyendung/app/employer-verify')
   await expect(page.getByRole('button', { name: 'Đánh dấu đã đọc' })).toBeVisible()
   await expect(page.locator('.ant-badge-count')).toContainText('1')

@@ -1,4 +1,4 @@
-import { CheckOutlined, ReloadOutlined } from '@ant-design/icons'
+import { ReloadOutlined } from '@ant-design/icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Button, Empty, Result, Skeleton, Tooltip } from 'antd'
 import {
@@ -8,8 +8,10 @@ import {
   markEmployerNotificationRead,
 } from '@/entities/notification/employer-notification'
 import { m } from '@/shared/config/i18n'
+import { formatTimeAgo } from '@/shared/lib/date-time'
+import DuotoneIcon from '@/shared/ui/icons/DuotoneIcon'
 import useEventFeed from '../model/use-event-feed'
-import { EventCategoryTabs, EventDayGroups, EventFeedFooter, EventRow } from './EventFeed'
+import { CategoryTiles, EventDayGroups, EventFeedFooter, EventRow, FeedHero } from './EventFeed'
 
 const FILTER_KEYS = ['category', 'unread']
 
@@ -29,40 +31,50 @@ export default function EmployerNotificationCenter() {
   const total = firstPage?.count || 0
   const unreadOnly = filters.unread === 'true'
   const hasFilters = Boolean(filters.category || unreadOnly)
+  const latest = items[0]?.created_at
   const markRead = (item) => !item.is_read && readMutation.mutate(item.public_id)
 
   return (
     <section className="ws-page" aria-labelledby="employer-notifications-title">
       <h1 id="employer-notifications-title" className="sr-only">{m.employer_workspace_title_notifications()}</h1>
-      <div className="ws-panel">
-        <EventCategoryTabs value={filters.category} counts={unreadCounts} onChange={(category) => setFilters({ category })} />
-        <div className="ef-toolbar">
-          <button
-            type="button"
-            aria-pressed={unreadOnly}
-            className="ws-chip ws-tone-emerald"
-            onClick={() => setFilters({ unread: unreadOnly ? '' : 'true' })}
+      <FeedHero
+        icon="bellRinging"
+        title={unreadTotal
+          ? m.employer_workspace_notifications_unread_title({ count: unreadTotal })
+          : m.employer_workspace_notifications_all_read()}
+        hint={latest && !hasFilters
+          ? `${m.employer_workspace_notifications_hero_hint()} ${m.employer_workspace_feed_latest({ time: formatTimeAgo(latest) })}.`
+          : m.employer_workspace_notifications_hero_hint()}
+        aside={(
+          <Button
+            type="primary"
+            icon={<DuotoneIcon name="checks" />}
+            loading={readAllMutation.isPending}
+            disabled={!unreadTotal}
+            onClick={() => readAllMutation.mutate()}
+            className="ef-hero__button"
           >
-            <span aria-hidden className="ws-dot" />
-            {m.employer_workspace_notifications_unread_only()}
-            {unreadCounts && <span className="ws-chip__count">{unreadTotal}</span>}
-          </button>
-          <span className="ef-toolbar__meta">
-            {hasFilters && <button type="button" className="ws-link-button" onClick={clearFilters}>{m.employer_workspace_clear_filters()}</button>}
-            <Button
-              size="small"
-              icon={<CheckOutlined />}
-              loading={readAllMutation.isPending}
-              disabled={!unreadTotal}
-              onClick={() => readAllMutation.mutate()}
-            >
-              {m.employer_workspace_notifications_mark_all_read()}
-            </Button>
-          </span>
-        </div>
-      </div>
+            {m.employer_workspace_notifications_mark_all_read()}
+          </Button>
+        )}
+      />
+      <CategoryTiles value={filters.category} counts={unreadCounts} onChange={(category) => setFilters({ category })} />
 
       <div className="ws-panel ef-list" aria-busy={query.isFetching}>
+        <div className="ef-toolbar">
+          <div className="ef-segmented">
+            <button type="button" aria-pressed={!unreadOnly} onClick={() => setFilters({ unread: '' })}>
+              {m.employer_workspace_event_category_all()}
+            </button>
+            <button type="button" aria-pressed={unreadOnly} onClick={() => setFilters({ unread: 'true' })}>
+              {m.employer_workspace_notifications_unread_only()}
+            </button>
+          </div>
+          <span className="ef-toolbar__meta">
+            {!query.isPending && <span className="ws-quick__count">{m.employer_workspace_shown_of({ shown: items.length, total })}</span>}
+            {hasFilters && <button type="button" className="ws-link-button" onClick={clearFilters}>{m.employer_workspace_clear_filters()}</button>}
+          </span>
+        </div>
         {query.isPending && <div className="p-4"><Skeleton active avatar paragraph={{ rows: 4 }} /></div>}
         {query.isError && (
           <Result
@@ -88,7 +100,6 @@ export default function EmployerNotificationCenter() {
             timeOf={(item) => item.created_at}
             renderRow={(item) => (
               <EventRow
-                key={item.public_id}
                 event={item}
                 title={item.title}
                 message={item.message}
@@ -99,9 +110,8 @@ export default function EmployerNotificationCenter() {
                   <Tooltip title={m.employer_workspace_notifications_mark_read()}>
                     <Button
                       type="text"
-                      size="small"
                       aria-label={m.employer_workspace_notifications_mark_read()}
-                      icon={<CheckOutlined />}
+                      icon={<DuotoneIcon name="check" />}
                       loading={readMutation.isPending && readMutation.variables === item.public_id}
                       onClick={() => markRead(item)}
                       className="ef-mark-read"

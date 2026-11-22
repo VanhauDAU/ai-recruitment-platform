@@ -17,6 +17,7 @@ from ...selectors import (
     EMPLOYER_ACTIVITY_PERIOD_DAYS,
     EMPLOYER_EVENT_CATEGORY_KEYS,
     employer_activity_category_counts,
+    employer_activity_daily_counts,
     employer_activity_queryset,
     employer_notification_preference,
     employer_notification_queryset,
@@ -149,7 +150,7 @@ class EmployerNotificationReadAllView(APIView):
 
 @extend_schema_view(
     get=extend_schema(
-        summary='Nhật ký hoạt động của tôi (kèm category_counts khi phân trang)',
+        summary='Nhật ký hoạt động của tôi (kèm category_counts, daily_counts khi phân trang)',
         parameters=[
             CATEGORY_PARAMETER,
             OpenApiParameter(
@@ -183,5 +184,9 @@ class EmployerActivityListView(generics.ListAPIView):
         if isinstance(response.data, dict):
             response.data['category_counts'] = employer_activity_category_counts(
                 request.user, days=self._days()
+            )
+            # Chart of the last 14 days for the open tab, independent of the period.
+            response.data['daily_counts'] = employer_activity_daily_counts(
+                request.user, category=request.query_params.get('category')
             )
         return response

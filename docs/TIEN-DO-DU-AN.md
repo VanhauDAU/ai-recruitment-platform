@@ -49,7 +49,11 @@ Hai trang `/tuyendung/app/notifications` và `/tuyendung/app/activities` trướ
 một danh sách phân trang (timeline antd), không lọc được và lịch sử không dẫn tới
 đâu. Làm lại cùng khung với trang tin/chiến dịch (#305), theo `ui-ux-pro-max`.
 
-- Tab theo nhóm sự kiện: Ứng tuyển · Tin tuyển dụng · Chiến dịch · Công ty & xác
+- Thiết kế: thẻ tổng quan gradient (số chưa đọc + nút đánh dấu hết; tổng hoạt động
+  + biểu đồ cột 14 ngày), ô nhóm có icon và thanh tỉ lệ, lịch sử dạng trục thời gian,
+  thông báo dạng thẻ có vạch màu khi chưa đọc, giờ tương đối ("18 phút trước"). Icon
+  Phosphor *duotone* (MIT) tải từ repo chính thức, nhúng ở `shared/ui/icons`.
+- Nhóm sự kiện: Ứng tuyển · Tin tuyển dụng · Chiến dịch · Công ty & xác
   thực. Thông báo đếm số **chưa đọc** mỗi nhóm, có chip "Chỉ chưa đọc", nút đánh dấu
   đã đọc trên từng dòng và "Đánh dấu tất cả đã đọc". Lịch sử đếm tổng mỗi nhóm, lọc
   7/30/90 ngày.
@@ -59,7 +63,8 @@ một danh sách phân trang (timeline antd), không lọc được và lịch s
   phân trang; bộ lọc nằm trong URL.
 - API: `GET /api/employer/notifications/` nhận `category`, `unread`, trả
   `unread_counts` và `category`; `GET /api/employer/activities/` nhận `category`,
-  `days`, trả `category_counts`, `category`, `actor_kind`, `action_path`. Bỏ một truy
+  `days`, trả `category_counts`, `daily_counts` (14 ngày), `category`, `actor_kind`,
+  `action_path`. Bỏ một truy
   vấn mỗi dòng khi tính người thực hiện (đọc `actor_id` thay vì `actor`).
 - CSS dùng chung chuyển sang `frontend/src/shared/ui/workspace-list/workspace-list.css`
   để widget cũng dùng được.

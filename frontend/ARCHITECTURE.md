@@ -1209,6 +1209,12 @@ app/router + EmployerAuthLayout|EmployerSetupLayout|EmployerWorkspaceLayout
   `category|days`, tab đếm `category_counts`, mỗi dòng mở `action_path` của
   thông báo cùng sự kiện. Nhóm và khoảng thời gian ở `model/event-filters.js`
   của widget (chỉ trang lazy dùng) để không nặng thêm bundle khởi tạo của chuông.
+  Giao diện: thẻ tổng quan (`FeedHero`), ô nhóm (`CategoryTiles`), lịch sử dạng
+  trục thời gian kèm biểu đồ 14 ngày (`daily_counts`), thông báo dạng thẻ.
+- Icon hai lớp hiện đại: `shared/ui/icons/DuotoneIcon` chứa sẵn dữ liệu path của
+  các icon Phosphor *duotone* (MIT) đang dùng, không thêm thư viện npm. Cần icon
+  mới thì lấy SVG `assets/duotone/<tên>-duotone.svg` từ repo `phosphor-icons/core`
+  và thêm cặp `[lớp tô, nét]` vào `ICONS` (tên camelCase).
 - Protected employer route giữ thứ tự `AuthGuard → RoleGuard`; dashboard thêm
   `EmployerOnboardingGuard`. State server lần lượt là `registration →
   email_verification → consulting_need → complete`; UI redirect không thay thế

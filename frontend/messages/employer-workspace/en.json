@@ -631,5 +631,12 @@
   "employer_workspace_notifications_mark_read": "Mark as read",
   "employer_workspace_notifications_empty_filtered": "No notifications match these filters",
   "employer_workspace_notifications_all_read": "You have read every notification",
-  "employer_workspace_clear_filters": "Clear filters"
+  "employer_workspace_clear_filters": "Clear filters",
+  "employer_workspace_notifications_unread_title": "{count} unread notifications",
+  "employer_workspace_notifications_hero_hint": "Approvals, alerts and to-dos for your account. Open one to land on the page that handles it.",
+  "employer_workspace_feed_latest": "Latest {time}",
+  "employer_workspace_activity_hero_hint": "A log of every important change to your account, kept for 24 months.",
+  "employer_workspace_activity_chart_title": "Last 14 days",
+  "employer_workspace_activity_chart_aria": "Chart of activity over the last 14 days, {total} in total",
+  "employer_workspace_activity_chart_day": "{date}: {count} activities"
 }

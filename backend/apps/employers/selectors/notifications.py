@@ -1,8 +1,10 @@
 from datetime import timedelta
 
 from django.db.models import CharField, Count, OuterRef, Q, Subquery, Value
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, TruncDate
 from django.utils import timezone
+
+from common.vietnam_time import VIETNAM_TZ, vietnam_day_start, vietnam_today
 
 from ..models import EmployerActivity, EmployerNotification, EmployerNotificationPreference
 
@@ -32,6 +34,8 @@ EMPLOYER_ACTIVITY_CATEGORIES = {
 # Everything else is about the company: verification, documents, membership, page.
 EMPLOYER_ACTIVITY_COMPANY_CATEGORY = 'company'
 EMPLOYER_ACTIVITY_PERIOD_DAYS = (7, 30, 90)
+# Days in the activity chart of the history page, today included.
+EMPLOYER_ACTIVITY_CHART_DAYS = 14
 EMPLOYER_EVENT_CATEGORY_KEYS = (*EMPLOYER_ACTIVITY_CATEGORIES, EMPLOYER_ACTIVITY_COMPANY_CATEGORY)
 _CATEGORY_BY_EVENT = {
     event: category for category, events in EMPLOYER_ACTIVITY_CATEGORIES.items() for event in events
@@ -106,3 +110,26 @@ def employer_unread_notification_count(user):
 def employer_notification_preference(user):
     """The stored email preferences, or ``None`` while every default still applies."""
     return EmployerNotificationPreference.objects.filter(recipient=user).first()
+
+
+def employer_activity_daily_counts(user, *, category=None, days=EMPLOYER_ACTIVITY_CHART_DAYS):
+    """``[{date, count}]`` for the last ``days`` Vietnamese calendar days, gaps as zero."""
+    today = vietnam_today()
+    first_day = today - timedelta(days=days - 1)
+    rows = (
+        _filter_category(
+            EmployerActivity.objects.filter(
+                recipient=user, occurred_at__gte=vietnam_day_start(first_day)
+            ),
+            category,
+        )
+        .annotate(day=TruncDate('occurred_at', tzinfo=VIETNAM_TZ))
+        .values('day')
+        .annotate(total=Count('id'))
+        .order_by()
+    )
+    by_day = {row['day']: row['total'] for row in rows}
+    return [
+        {'date': day, 'count': by_day.get(day, 0)}
+        for day in (first_day + timedelta(days=offset) for offset in range(days))
+    ]

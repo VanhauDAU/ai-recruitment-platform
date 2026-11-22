@@ -72,7 +72,7 @@ describe('EmployerNotificationCenter', () => {
     renderWidget(EmployerNotificationCenter)
 
     const tabs = await screen.findByRole('group', { name: 'Lọc theo nhóm' })
-    expect(await within(tabs).findByRole('button', { name: /Công ty & xác thực\s*1/ })).toBeInTheDocument()
+    expect(await within(tabs).findByRole('button', { name: /1\s*Công ty & xác thực/ })).toBeInTheDocument()
     await user.click(within(tabs).getByRole('button', { name: /Ứng tuyển/ }))
     await user.click(screen.getByRole('button', { name: /Chỉ chưa đọc/ }))
 
@@ -96,6 +96,7 @@ describe('EmployerActivityFeed', () => {
       count: 2,
       next: page === 1 ? 'next' : null,
       category_counts: { all: 2, applications: 1, jobs: 0, campaigns: 0, company: 1 },
+      daily_counts: [{ date: '2026-11-21', count: 0 }, { date: '2026-11-22', count: 2 }],
       results: [page === 1
         ? { public_id: 'eac_1', event_type: 'application_received', category: 'applications', summary: 'Có hồ sơ ứng tuyển mới', actor_name: 'Hệ thống', action_path: '/tuyendung/app/applications?application=app_1', occurred_at: new Date().toISOString() }
         : { public_id: 'eac_2', event_type: 'verification_approved', category: 'company', summary: 'Hồ sơ xác thực đã được duyệt', actor_name: 'Quản trị viên', action_path: '', occurred_at: '2026-01-05T03:00:00Z' }],
@@ -109,6 +110,7 @@ describe('EmployerActivityFeed', () => {
     expect(await screen.findByRole('link', { name: 'Có hồ sơ ứng tuyển mới' }))
       .toHaveAttribute('href', '/tuyendung/app/applications?application=app_1')
     expect(screen.getByText('Đã hiển thị 1/2')).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Biểu đồ số hoạt động 14 ngày qua, tổng 2' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Xem thêm' }))
     expect(await screen.findByText('Hồ sơ xác thực đã được duyệt')).toBeInTheDocument()
     expect(screen.getByText('Quản trị viên')).toBeInTheDocument()

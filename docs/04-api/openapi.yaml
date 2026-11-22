@@ -9588,7 +9588,8 @@ paths:
   /api/employer/activities/:
     get:
       operationId: employer_activities_list
-      summary: Nhật ký hoạt động của tôi (kèm category_counts khi phân trang)
+      summary: Nhật ký hoạt động của tôi (kèm category_counts, daily_counts khi phân
+        trang)
       parameters:
       - in: query
         name: category
