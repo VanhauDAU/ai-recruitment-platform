@@ -108,6 +108,11 @@ export default function EmployerWorkspaceLayout() {
   const unreadApplications = useUnreadApplicationCount(Boolean(readiness.candidateDataAccess))
   const initials = (user?.full_name || user?.email || 'NTD').trim().charAt(0).toUpperCase()
   const isCampaignList = pathname === employerAppPath('/campaigns')
+  const routeAction = isCampaignList
+    ? { to: '/campaigns/new', label: m.employer_workspace_add_campaign() }
+    : pathname === employerAppPath('/jobs')
+      ? { to: '/jobs/new', label: m.employer_job_list_post_job() }
+      : null
   const campaignDetailMatch = pathname.match(new RegExp(`^${employerAppPath('/campaigns')}/(?!new$)([^/]+)$`))
   const isCampaignDetail = Boolean(campaignDetailMatch)
   const jobEditMatch = pathname.match(new RegExp(`^${employerAppPath('/jobs')}/([^/]+)/edit$`))
@@ -267,7 +272,10 @@ export default function EmployerWorkspaceLayout() {
                 <>
                   <Link to={EMPLOYER_ACCOUNT_SETTINGS_URL} aria-label={m.employer_workspace_title_account_info()} className="employer-sider__identity">
                     <Avatar size={36} src={user?.avatar_url || undefined} className="employer-sider__avatar">{initials}</Avatar>
-                    <span className="employer-sider__name">{user?.full_name || m.employer_workspace_employer_fallback_name()}</span>
+                    <span className="employer-sider__text">
+                      <span className="employer-sider__name">{user?.full_name || m.employer_workspace_employer_fallback_name()}</span>
+                      {user?.public_id && <span className="employer-sider__code">{m.employer_workspace_employer_code({ code: user.public_id })}</span>}
+                    </span>
                   </Link>
                   <span className="employer-sider__verification">
                     {m.employer_workspace_verification_level_label()} <strong>{m.employer_workspace_verification_level({ level: accountVerificationLevel.level, total: accountVerificationLevel.total })}</strong>
@@ -326,14 +334,14 @@ export default function EmployerWorkspaceLayout() {
                 <strong className="min-w-0 truncate text-sm text-slate-700">{employerRouteTitle(pathname)}</strong>
               )}
             </div>
-            {isCampaignList && (
-              <Link to={employerAppPath('/campaigns/new')}>
+            {routeAction && (
+              <Link to={employerAppPath(routeAction.to)}>
                 <Button
                   type="primary"
                   icon={<PlusOutlined aria-hidden />}
                   className="!h-9 !rounded-xl !border-0 !bg-gradient-to-r !from-emerald-600 !to-teal-600 !px-3.5 !font-semibold !shadow-md transition-all duration-200 hover:!-translate-y-0.5 hover:!from-emerald-500 hover:!to-teal-500 hover:!shadow-lg active:!translate-y-0"
                 >
-                  {m.employer_workspace_add_campaign()}
+                  {routeAction.label}
                 </Button>
               </Link>
             )}

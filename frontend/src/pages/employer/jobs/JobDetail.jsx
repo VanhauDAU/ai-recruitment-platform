@@ -6,7 +6,7 @@ import {
   TeamOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Segmented, Skeleton, Tabs } from 'antd'
+import { Alert, Button, Skeleton } from 'antd'
 import dayjs from '@/shared/lib/dayjs'
 import { useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
@@ -28,6 +28,7 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { employerAppPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
 import useConfirmAction from '@/shared/ui/confirm-action/use-confirm-action'
+import FolderTabs from '@/shared/ui/folder-tabs/FolderTabs'
 import JobApplicationsWorkspace from './JobApplicationsWorkspace'
 import JobDetailHeader from './JobDetailHeader'
 import JobEngagementPanel from './JobEngagementPanel'
@@ -42,6 +43,7 @@ import {
   publicJobUrl,
 } from './job-detail-presentation'
 import { formatCount, jobDisplayTitle } from './job-list-presentation'
+import '@/shared/ui/workspace-list/workspace-list.css'
 import './employer-jobs.css'
 import { m } from '@/shared/config/i18n'
 
@@ -266,43 +268,25 @@ export default function JobDetail() {
       />
       <JobVisibilityIssuesAlert job={job} />
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
-        <div className="border-b border-slate-100 p-2 sm:hidden">
-          <Segmented
-            block
-            aria-label={m.employer_job_detail_tabs_aria()}
-            value={activeTab}
-            onChange={selectTab}
-            options={JOB_DETAIL_TABS.map((key) => ({
-              value: key,
-              title: TAB_META[key].label,
-              label: (
-                <span className="flex flex-col items-center gap-0.5 py-1 text-[11px] font-semibold leading-tight">
-                  {TAB_META[key].icon}
-                  {TAB_META[key].short}
-                </span>
-              ),
-            }))}
-          />
-        </div>
-        <Tabs
-          activeKey={activeTab}
-          onChange={selectTab}
-          className="job-detail-tabs"
-          items={JOB_DETAIL_TABS.map((key) => ({
-            key,
-            label: (
-              <span className="inline-flex items-center gap-2">
-                {TAB_META[key].icon} {TAB_META[key].label}
-                {key === 'apply_cv' && (
-                  <span className="job-filter-tab__count">{formatCount(summary.total)}</span>
-                )}
-              </span>
-            ),
-            children: panels[key],
-          }))}
-        />
-      </div>
+      <FolderTabs
+        idPrefix="job-detail"
+        ariaLabel={m.employer_job_detail_tabs_aria()}
+        activeKey={activeTab}
+        onChange={selectTab}
+        items={JOB_DETAIL_TABS.map((key) => ({
+          key,
+          icon: TAB_META[key].icon,
+          title: TAB_META[key].label,
+          label: (
+            <>
+              <span className="sm:hidden">{TAB_META[key].short}</span>
+              <span className="hidden sm:inline">{TAB_META[key].label}</span>
+              {key === 'apply_cv' && <span className="job-filter-tab__count">{formatCount(summary.total)}</span>}
+            </>
+          ),
+          children: panels[key],
+        }))}
+      />
 
       <JobLifecycleModal
         action={deadlineAction}

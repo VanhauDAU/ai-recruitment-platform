@@ -34,7 +34,7 @@ const ORDERING_OPTIONS = [
 
 function StatusPill({ status }) {
   return (
-    <span className={`job-pill job-pill--status job-tone-${APPLICATION_STATUS_TONES[status] || 'slate'}`}>
+    <span className={`ws-pill ws-pill--status ws-tone-${APPLICATION_STATUS_TONES[status] || 'slate'}`}>
       {RECRUITER_APPLICATION_STATUS_LABELS[status] || status}
     </span>
   )
@@ -194,7 +194,7 @@ export default function JobApplicationsWorkspace({ jobPublicId, summary, filter,
               onClick={() => onFilterChange(chip.key)}
               className="job-chip"
             >
-              {chip.tone && <span aria-hidden className={`job-dot job-tone-${chip.tone}`} />}
+              {chip.tone && <span aria-hidden className={`ws-dot ws-tone-${chip.tone}`} />}
               {chip.label}
               <span>{formatCount(chip.count)}</span>
             </button>

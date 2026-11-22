@@ -791,16 +791,21 @@ pages/employer/jobs/JobList + JobDetail
   (`JobListCard`, `JobDetailHeader`, `JobApplicationsWorkspace`, ...); hàm
   trình bày thuần ở `job-list-presentation.js`/`job-detail-presentation.js`.
 - Số đếm luôn do backend tính: tab trạng thái đọc `status_counts` của
-  `GET /api/employer/jobs/`, badge "N mới" đọc `unviewed_application_count`, chỉ
+  `GET /api/employer/jobs/`, chip "Cần xử lý" đọc `attention_counts` (đếm trong
+  tab đang mở), badge "N mới" đọc `unviewed_application_count`, chỉ
   số chi tiết đọc `application_summary`. Không suy số liệu từ trang dữ liệu đã
   tải. Mọi aggregate ứng tuyển tính trên lần nộp mới nhất của mỗi ứng viên;
   "chưa phản hồi" là `Application.UNANSWERED_STATUSES`.
-- URL là nguồn chuẩn: danh sách giữ `status|q|page`; chi tiết giữ `active_tab`
+- URL là nguồn chuẩn: danh sách giữ `status|q|campaign|attention|ordering|page`
+  (xóa bộ lọc giữ `ordering`); chi tiết giữ `active_tab`
   (`apply_cv|viewed_job|job|cv_label`) và `cv_filter` (`unanswered` hoặc một
   status). Tab CV gọi `/api/employer/applications/?job=…&latest=1` có phân
   trang server và chỉ mount khi `canAccessCandidateData`.
 - Style riêng của hai route nằm trong `employer-jobs.css` (import từ hai page
-  lazy); không thêm utility Tailwind mới vì CSS khởi tạo sát trần budget.
+  lazy); phần dùng chung với danh sách chiến dịch (tông màu, pill, panel lọc,
+  chip, header sắp xếp, ô số liệu, tiền tố `ws-`) ở `shared/ui/workspace-list/workspace-list.css`.
+  Dòng danh sách là thẻ cho tới khi chính danh sách rộng 1080px (container query,
+  tính cả sidebar). Không thêm utility Tailwind mới vì CSS khởi tạo sát trần budget.
 
 ## Ownership map — Quản lý tin tuyển dụng quản trị
 
@@ -1016,10 +1021,12 @@ pages/employer/campaigns/CampaignSetup
 - Trang tuyển dụng công khai `pages/main/jobs/CampaignLanding` (route
   `/tuyen-dung/:slug`) dùng lại `JobCard`; CSS `campaign-landing.css` (tiền tố
   `cpg-`).
-- Trang danh sách: dải trạng thái có số đếm (`status_counts` của API), mặc định
-  `ordering=status`, mỗi dòng một nút việc tiếp theo; style trong
-  `campaign-list.css` (lazy) và tự lo ẩn/hiện bảng/thẻ vì CSS ngoài layer thắng
-  utility `lg:hidden`.
+- Trang danh sách: dải trạng thái có số đếm (`status_counts` của API), chip "Cần
+  xử lý" (`scope=needs_review|expired_jobs`, số từ `attention_counts`), mặc định
+  `ordering=status`, mỗi dòng một nút việc tiếp theo và tiến độ tuyển
+  (`accepted_count`/`headcount`); dòng `CampaignListRow` dùng khung
+  `shared/ui/workspace-list/workspace-list.css` chung với danh sách tin, lưới riêng trong
+  `campaign-list.css` (lazy).
 - `widgets/employer/campaign-workspace` sở hữu header và bốn tab dữ liệu thật:
   Tổng quan, CV ứng tuyển, Tin tuyển dụng và Lịch sử hoạt động. Page chi tiết
   chỉ đọc route param rồi compose widget; query `active_tab` là contract URL,
@@ -1193,9 +1200,28 @@ app/router + EmployerAuthLayout|EmployerSetupLayout|EmployerWorkspaceLayout
   toast thành công giả.
 - `entities/notification/employer-notification` sở hữu API/query key và presentation model
   cho notification/activity. `widgets/employer/notification-center` sở hữu
-  bell badge/popover, list phân trang, mark-read và activity timeline; page
+  bell badge/popover, trang thông báo và lịch sử hoạt động; page
   `/notifications|/activities` chỉ compose widget. Layout được phép compose
   bell qua public index của widget nhưng không gọi API notification trực tiếp.
+  Hai trang dùng chung `EventFeed` (tab nhóm `category`, gom theo ngày, dòng sự
+  kiện, "Xem thêm") và hook `use-event-feed` (bộ lọc trong URL + `useInfiniteQuery`):
+  thông báo lọc `category|unread`, tab đếm `unread_counts`; lịch sử lọc
+  `category|days`, tab đếm `category_counts`, mỗi dòng mở `action_path` của
+  thông báo cùng sự kiện. Nhóm và khoảng thời gian ở `model/event-filters.js`
+  của widget (chỉ trang lazy dùng) để không nặng thêm bundle khởi tạo của chuông.
+  Giao diện tiết chế: nền slate, một màu nhấn emerald cho trạng thái chọn/chưa
+  đọc; chỉ sự kiện cảnh báo/lỗi có chấm màu trên icon. Từ 1024px hai cột
+  (`FeedLayout`): thanh bên gồm `FeedSummary` (số lớn, biểu đồ 14 ngày từ
+  `daily_counts` ở trang lịch sử) và `CategoryNav`; cột phải là `FeedToolbar` +
+  danh sách theo ngày. Hẹp hơn thì thanh bên xếp trên, nhóm cuộn ngang.
+  Trang thông báo còn có nhóm "Hệ thống": thông báo admin phát hành cho bề mặt
+  `employer_workspace` (đọc `GET /api/shared/site/announcements/inbox/` qua
+  `entities/content/announcement`), thông báo đang hiển thị ghim ở đầu chế độ
+  "Tất cả"; dải trên cùng workspace vẫn do `widgets/common/announcement-strip` lo.
+- Icon hai lớp hiện đại: `shared/ui/icons/DuotoneIcon` chứa sẵn dữ liệu path của
+  các icon Phosphor *duotone* (MIT) đang dùng, không thêm thư viện npm. Cần icon
+  mới thì lấy SVG `assets/duotone/<tên>-duotone.svg` từ repo `phosphor-icons/core`
+  và thêm cặp `[lớp tô, nét]` vào `ICONS` (tên camelCase).
 - Protected employer route giữ thứ tự `AuthGuard → RoleGuard`; dashboard thêm
   `EmployerOnboardingGuard`. State server lần lượt là `registration →
   email_verification → consulting_need → complete`; UI redirect không thay thế

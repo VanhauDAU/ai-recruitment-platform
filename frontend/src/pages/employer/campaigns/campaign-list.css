@@ -1,51 +1,104 @@
-/* Danh sách chiến dịch (route lazy, ngoài CSS khởi tạo). */
-.cpl { display: flex; flex-direction: column; gap: 16px; }
-
-/* Dải trạng thái: lọc chính của trang, có số đếm từng nhóm. */
-.cpl-tabs {
-  display: flex; gap: 4px; overflow-x: auto; padding: 8px 12px 0; border-bottom: 1px solid #e2e8e5;
-  scrollbar-width: none;
+/*
+ * Campaign list (/campaigns) rows on top of @/shared/ui/workspace-list/workspace-list.css (lazy, out
+ * of the initial stylesheet). A narrow list shows cards (title and action,
+ * status, meta, then three labelled stats); a wide one lines every cell up
+ * under the header through grid areas.
+ */
+.cpl-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'title action'
+    'status status'
+    'meta meta'
+    'stats stats';
 }
-.cpl-tabs::-webkit-scrollbar { display: none; }
-.cpl-tab {
-  display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; padding: 10px 12px 12px;
-  border: 0; border-bottom: 2px solid transparent; background: none; cursor: pointer;
-  font-size: 14px; font-weight: 600; color: #64748b; white-space: nowrap;
+
+.cpl-row > .ws-row__title { grid-area: title; }
+.cpl-row > .ws-row__meta { grid-area: meta; }
+.cpl-row > .ws-row__stats { grid-area: stats; }
+.cpl-row__status { grid-area: status; display: flex; }
+.cpl-row__action { grid-area: action; display: flex; align-self: start; justify-content: flex-end; }
+
+.cpl-states,
+.cpl-candidates {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
 }
-.cpl-tab:hover { color: #0f2a24; }
-.cpl-tab:focus-visible { outline: 2px solid #059669; outline-offset: -2px; border-radius: 6px; }
-.cpl-tab.is-active { border-bottom-color: #059669; color: #047857; }
-.cpl-tab__count {
-  min-width: 22px; padding: 0 7px; border-radius: 999px; background: #f1f5f9;
-  font-size: 12px; line-height: 20px; color: #475569; text-align: center;
+
+.cpl-states { margin-top: 2px; }
+.cpl-avatars { display: none; padding-left: 6px; }
+
+.cpl-avatar.ant-avatar {
+  position: relative;
+  margin-left: -6px;
+  border: 2px solid #fff;
+  background: #334155;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.12);
+  font-size: 9px;
+  font-weight: 700;
 }
-.cpl-tab.is-active .cpl-tab__count { background: #d1fae5; color: #047857; }
 
-.cpl-filters { display: grid; grid-template-columns: minmax(0, 1fr) 240px 190px; gap: 10px; padding: 12px; }
+.cpl-progress { display: flex; width: 100%; flex-direction: column; }
+.cpl-progress .ws-progress > span { background: #0ea5e9; }
+.cpl-progress .ws-progress > span.is-done { background: #10b981; }
 
-/* Ô tên chiến dịch */
-.cpl-name { display: flex; flex-direction: column; gap: 6px; min-width: 240px; }
-.cpl-name__title { font-size: 15px; font-weight: 700; line-height: 1.35; color: #0f2a24; overflow-wrap: anywhere; }
-.cpl-name__title:hover { color: #047857; }
-.cpl-name__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; color: #64748b; }
-
-.cpl-activity { display: flex; flex-direction: column; gap: 2px; font-size: 13px; color: #334155; }
-.cpl-activity time { font-size: 12px; color: #94a3b8; }
-
-/* Bảng từ 1024px, thẻ ở màn hẹp hơn (CSS này nằm ngoài layer nên tự lo ẩn/hiện). */
-.cpl-table { overflow: hidden; }
-.cpl-cards { display: none; flex-direction: column; gap: 12px; }
-.cpl-card__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 14px; padding: 12px; border-radius: 12px; background: #f8faf9; }
-.cpl-card__foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-top: 12px; }
-
-@media (max-width: 1023px) {
-  .cpl-table { display: none; }
-  .cpl-cards { display: flex; }
-  .cpl-filters { grid-template-columns: 1fr 1fr; }
-  .cpl-filters > :first-child { grid-column: 1 / -1; }
+.cpl-action {
+  display: inline-flex;
+  height: 32px;
+  align-items: center;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff !important;
+  padding: 0 12px;
+  color: #334155 !important;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background-color 0.15s, border-color 0.15s;
 }
-@media (max-width: 560px) {
-  .cpl-filters { grid-template-columns: 1fr; }
-  .cpl-card__grid { grid-template-columns: 1fr; }
-  .cpl-name { min-width: 0; }
+
+.cpl-action:hover { border-color: #cbd5e1; background: #f8fafc !important; }
+.cpl-action.is-primary { border-color: #059669; background: #059669 !important; color: #fff !important; }
+.cpl-action.is-primary:hover { border-color: #10b981; background: #10b981 !important; }
+
+@media (min-width: 640px) {
+  .cpl-row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'title title action'
+      'status meta meta'
+      'stats stats stats';
+  }
+
+  .cpl-avatars { display: flex; }
+}
+
+/* One select only: it sits beside the search on every screen. */
+.cpl-filters { grid-template-columns: minmax(0, 1fr) 150px; }
+.cpl-filters > :first-child { grid-column: auto; }
+
+@media (min-width: 768px) {
+  .cpl-filters { grid-template-columns: minmax(0, 1fr) 220px; }
+}
+
+@container (min-width: 1080px) {
+  .cpl-head,
+  .cpl-row {
+    grid-template-columns: minmax(0, 1fr) 112px 200px 200px 140px 136px;
+    column-gap: 16px;
+  }
+
+  .cpl-row {
+    grid-template-areas:
+      'title status jobs candidates progress action'
+      'meta status jobs candidates progress action';
+  }
+
+  .cpl-row__action { align-self: center; }
+  .cpl-stat--jobs { grid-area: jobs; }
+  .cpl-stat--candidates { grid-area: candidates; }
+  .cpl-stat--progress { grid-area: progress; }
 }

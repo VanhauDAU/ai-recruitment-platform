@@ -31,13 +31,13 @@ describe('employer notification API', () => {
   })
 
   it('uses the canonical list, unread and activity contracts', async () => {
-    await getEmployerNotifications(2)
+    await getEmployerNotifications({ page: 2, category: 'applications', unread: true })
     await getEmployerNotificationUnreadCount()
-    await getEmployerActivities(3)
+    await getEmployerActivities({ page: 3, days: 30 })
 
-    expect(get).toHaveBeenNthCalledWith(1, '/employer/notifications/', { params: { page: 2 } })
+    expect(get).toHaveBeenNthCalledWith(1, '/employer/notifications/', { params: { page: 2, category: 'applications', unread: true } })
     expect(get).toHaveBeenNthCalledWith(2, '/employer/notifications/unread-count/')
-    expect(get).toHaveBeenNthCalledWith(3, '/employer/activities/', { params: { page: 3 } })
+    expect(get).toHaveBeenNthCalledWith(3, '/employer/activities/', { params: { page: 3, days: 30 } })
   })
 
   it('marks one or all notifications through explicit actions', async () => {

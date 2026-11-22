@@ -1,6 +1,6 @@
-import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
+import { ArrowDownOutlined, ArrowUpOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Empty, Input, Pagination, Skeleton } from 'antd'
+import { Alert, Button, Empty, Input, Pagination, Select, Skeleton } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import {
@@ -10,6 +10,7 @@ import {
   getEmployerJobPage,
   jobKeys,
 } from '@/entities/job/job'
+import { campaignKeys, getCampaignOptions } from '@/entities/campaign/campaign'
 import { useEmployerReadiness } from '@/entities/account/employer-profile'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { employerAppPath } from '@/shared/config/portals'
@@ -17,27 +18,45 @@ import { message } from '@/shared/lib/toast'
 import { MascotEmpty } from '@/shared/ui/mascot'
 import useConfirmAction from '@/shared/ui/confirm-action/use-confirm-action'
 import JobListCard from './JobListCard'
-import { JOB_STATUS_TABS, formatCount } from './job-list-presentation'
+import {
+  JOB_ATTENTION_FILTERS,
+  JOB_SORT_COLUMNS,
+  JOB_SORT_OPTIONS,
+  JOB_STATUS_TABS,
+  formatCount,
+} from './job-list-presentation'
+import '@/shared/ui/workspace-list/workspace-list.css'
 import './employer-jobs.css'
 import { m } from '@/shared/config/i18n'
 
 const PAGE_SIZE = 20
 const SEARCH_DELAY_MS = 400
 const EMPTY_PAGE = { count: 0, next: null, previous: null, results: [] }
+// URL search params the list reads; `page` is handled on its own.
+const FILTER_KEYS = ['status', 'q', 'campaign', 'attention', 'ordering']
 const primaryLinkClass = 'inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg !bg-emerald-600 px-3.5 text-sm font-semibold !text-white shadow-sm transition hover:!bg-emerald-500'
 
 function JobListSkeleton() {
   return (
-    <div className="divide-y divide-slate-100" aria-label={m.employer_job_list_loading_aria()}>
+    <div aria-label={m.employer_job_list_loading_aria()}>
       {[1, 2, 3, 4].map((item) => (
-        <div key={item} className="job-row flex flex-col gap-3 px-4 py-4">
-          <Skeleton active title={{ width: '55%' }} paragraph={{ rows: 1, width: '80%' }} />
-          <Skeleton.Input active size="small" className="!w-40" />
-          <Skeleton.Input active size="small" className="!w-28" />
-          <Skeleton.Input active size="small" className="!w-28" />
+        <div key={item} className="ws-row ejl-row">
+          <Skeleton active title={{ width: '55%' }} paragraph={{ rows: 1, width: '80%' }} className="ejl-row__skeleton" />
         </div>
       ))}
     </div>
+  )
+}
+
+function SortHeader({ column, ordering, onSort, children }) {
+  const value = JOB_SORT_COLUMNS[column]
+  const active = ordering === value
+  const Arrow = value.startsWith('-') ? ArrowDownOutlined : ArrowUpOutlined
+  return (
+    <button type="button" className="ws-sort" aria-pressed={active} onClick={() => onSort(active ? '' : value)}>
+      {children}
+      <Arrow aria-hidden className="ws-sort__icon" />
+    </button>
   )
 }
 
@@ -55,23 +74,33 @@ function useJobMutation(mutationFn, success, failure) {
 
 export default function JobList() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const status = searchParams.get('status') || ''
-  const query = searchParams.get('q') || ''
+  const filters = Object.fromEntries(FILTER_KEYS.map((key) => [key, searchParams.get(key) || '']))
+  const { status, q: query, campaign, attention, ordering } = filters
   const page = Math.max(Number(searchParams.get('page')) || 1, 1)
   const [searchValue, setSearchValue] = useState(query)
+  const [campaignMenuOpened, setCampaignMenuOpened] = useState(false)
   const searchTimer = useRef(null)
   const { confirmationModal, requestConfirmation } = useConfirmAction()
   const { canAccessCandidateData } = useEmployerReadiness()
-  const queryParams = useMemo(() => ({
-    page,
-    ...(status ? { status } : {}),
-    ...(query ? { q: query } : {}),
-  }), [page, query, status])
+  const queryParams = useMemo(() => {
+    const params = { page }
+    Object.entries({ status, q: query, campaign, attention, ordering }).forEach(([key, value]) => {
+      if (value) params[key] = value
+    })
+    return params
+  }, [attention, campaign, ordering, page, query, status])
   const jobsQuery = useQuery({
     queryKey: jobKeys.employerList(queryParams),
     queryFn: () => getEmployerJobPage(queryParams),
     // Keep the rows and tab counts on screen while the next tab/page loads.
     placeholderData: keepPreviousData,
+  })
+  // Campaign names load once the filter is opened or the URL already sets one.
+  const campaignsQuery = useQuery({
+    queryKey: campaignKeys.options,
+    queryFn: getCampaignOptions,
+    enabled: campaignMenuOpened || Boolean(campaign),
+    staleTime: 60_000,
   })
   const closeMutation = useJobMutation(closeEmployerJob, m.employer_job_detail_closed(), m.employer_job_detail_close_failed())
   const duplicateMutation = useJobMutation(duplicateEmployerJob, m.employer_job_list_duplicated(), m.employer_job_list_duplicate_failed())
@@ -79,7 +108,12 @@ export default function JobList() {
   const pageData = jobsQuery.data || EMPTY_PAGE
   const jobs = pageData.results || []
   const counts = pageData.status_counts
-  const hasFilters = Boolean(query || status)
+  const attentionCounts = pageData.attention_counts
+  const hasFilters = Boolean(status || query || campaign || attention)
+  const campaignOptions = useMemo(() => [
+    { value: '', label: m.employer_job_list_campaign_all() },
+    ...(campaignsQuery.data || []).map((item) => ({ value: item.public_id, label: item.name })),
+  ], [campaignsQuery.data])
 
   // Follow back/forward navigation without trimming what the user is typing.
   useEffect(() => {
@@ -106,66 +140,113 @@ export default function JobList() {
     searchTimer.current = window.setTimeout(() => replaceFilters({ q: value.trim() }, { replace: true }), delay)
   }
 
+  // Filters narrow the list; the chosen order stays.
   function clearFilters() {
     window.clearTimeout(searchTimer.current)
     setSearchValue('')
-    setSearchParams({})
+    setSearchParams(ordering ? { ordering } : {})
   }
 
+  const sortBy = (value) => replaceFilters({ ordering: value })
   const isBusy = (mutation, publicId) => mutation.isPending && mutation.variables === publicId
   const firstRow = (page - 1) * PAGE_SIZE + 1
   const lastRow = Math.min(page * PAGE_SIZE, pageData.count || 0)
 
   return (
-    <section className="pb-5 pt-3">
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
-        <div className="job-list-toolbar border-b border-slate-200 px-3 pt-3 sm:px-4">
-          <div className="job-list-toolbar__search flex items-center gap-2">
-            <Input
-              allowClear
-              aria-label={m.employer_job_list_search_aria()}
-              className="!h-9 min-w-0 flex-1"
-              prefix={<SearchOutlined className="text-slate-400" aria-hidden />}
-              placeholder={m.employer_job_list_search_placeholder()}
-              type="search"
-              value={searchValue}
-              onChange={(event) => search(event.target.value)}
-              onClear={() => search('', 0)}
-              onPressEnter={() => search(searchValue, 0)}
-            />
-            <Link aria-label={m.employer_job_list_post_job()} className={primaryLinkClass} to={employerAppPath('/jobs/new')}>
-              <PlusOutlined aria-hidden />
-              <span className="hidden sm:inline">{m.employer_job_list_post_job()}</span>
-              <span className="sm:hidden">{m.employer_job_list_post_job_short()}</span>
-            </Link>
-          </div>
-          <div role="group" aria-label={m.employer_job_list_status_filter_aria()} className="job-strip">
-            {JOB_STATUS_TABS.map((tab) => {
-              const active = status === tab.value
-              const count = counts?.[tab.countKey]
+    <section className="ws-page">
+      <div className="ws-panel">
+        <div role="group" aria-label={m.employer_job_list_status_filter_aria()} className="ws-tabs">
+          {JOB_STATUS_TABS.map((tab) => {
+            const count = counts?.[tab.countKey]
+            return (
+              <button
+                key={tab.countKey}
+                type="button"
+                aria-pressed={status === tab.value}
+                className="ws-tab"
+                onClick={() => replaceFilters({ status: tab.value })}
+              >
+                {tab.label}
+                {count === undefined
+                  ? <span aria-hidden className="ws-tab__count ws-tab__count--loading" />
+                  : <span className="ws-tab__count">{formatCount(count)}</span>}
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="ws-filters ejl-filters">
+          <Input
+            allowClear
+            aria-label={m.employer_job_list_search_aria()}
+            prefix={<SearchOutlined className="text-slate-400" aria-hidden />}
+            placeholder={m.employer_job_list_search_placeholder()}
+            type="search"
+            value={searchValue}
+            onChange={(event) => search(event.target.value)}
+            onClear={() => search('', 0)}
+            onPressEnter={() => search(searchValue, 0)}
+          />
+          <Select
+            aria-label={m.employer_job_list_campaign_aria()}
+            showSearch={{ optionFilterProp: 'label' }}
+            loading={campaignsQuery.isFetching}
+            // Hold the raw id back until its name has loaded.
+            value={campaign && !campaignsQuery.data ? undefined : campaign}
+            placeholder={m.employer_job_list_campaign_all()}
+            options={campaignOptions}
+            onOpenChange={(open) => open && setCampaignMenuOpened(true)}
+            onChange={(value) => replaceFilters({ campaign: value })}
+          />
+          <Select
+            aria-label={m.employer_job_list_sort_aria()}
+            value={ordering}
+            options={JOB_SORT_OPTIONS}
+            onChange={sortBy}
+          />
+        </div>
+
+        <div className="ws-quick">
+          <span className="ws-quick__label">{m.employer_job_list_attention_label()}</span>
+          <div role="group" aria-label={m.employer_job_list_attention_aria()} className="ws-quick__chips">
+            {JOB_ATTENTION_FILTERS.map((item) => {
+              const active = attention === item.value
+              const count = attentionCounts?.[item.value]
               return (
                 <button
-                  key={tab.countKey}
+                  key={item.value}
                   type="button"
                   aria-pressed={active}
-                  className="job-filter-tab"
-                  onClick={() => replaceFilters({ status: tab.value })}
+                  title={item.hint}
+                  disabled={!active && count === 0}
+                  className={`ws-chip ws-tone-${item.tone}`}
+                  onClick={() => replaceFilters({ attention: active ? '' : item.value })}
                 >
-                  {tab.label}
-                  {count === undefined
-                    ? <span aria-hidden className="h-4 w-6 animate-pulse rounded-full bg-slate-100" />
-                    : <span className="job-filter-tab__count">{formatCount(count)}</span>}
+                  <span aria-hidden className="ws-dot" />
+                  {item.label}
+                  {count !== undefined && <span className="ws-chip__count">{formatCount(count)}</span>}
                 </button>
               )
             })}
           </div>
+          <span className="ws-quick__meta">
+            {!jobsQuery.isLoading && <span className="ws-quick__count">{m.employer_job_list_result_count({ count: formatCount(pageData.count) })}</span>}
+            {hasFilters && (
+              <button type="button" className="ws-link-button" onClick={clearFilters}>
+                {m.employer_job_list_clear_filters()}
+              </button>
+            )}
+          </span>
         </div>
+      </div>
 
-        <div className="job-table-head border-b border-slate-100 bg-slate-50/70 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+      <div className="ws-panel ws-list">
+        <div className="ws-head ejl-head">
           <span>{m.employer_job_list_col_job()}</span>
-          <span>{m.employer_job_list_col_applications()}</span>
-          <span>{m.employer_job_list_col_performance()}</span>
-          <span>{m.employer_job_list_col_deadline()}</span>
+          <span>{m.employer_job_list_col_status()}</span>
+          <SortHeader column="candidates" ordering={ordering} onSort={sortBy}>{m.employer_job_list_col_candidates()}</SortHeader>
+          <SortHeader column="views" ordering={ordering} onSort={sortBy}>{m.employer_job_list_col_views()}</SortHeader>
+          <SortHeader column="deadline" ordering={ordering} onSort={sortBy}>{m.employer_job_list_col_deadline()}</SortHeader>
           <span className="sr-only">{m.employer_job_list_col_actions()}</span>
         </div>
 
@@ -200,7 +281,7 @@ export default function JobList() {
           <div
             aria-busy={jobsQuery.isFetching}
             aria-live="polite"
-            className={`divide-y divide-slate-100 transition-opacity ${jobsQuery.isPlaceholderData ? 'opacity-60' : ''}`}
+            className={`transition-opacity ${jobsQuery.isPlaceholderData ? 'opacity-60' : ''}`}
           >
             {jobs.map((job) => (
               <JobListCard

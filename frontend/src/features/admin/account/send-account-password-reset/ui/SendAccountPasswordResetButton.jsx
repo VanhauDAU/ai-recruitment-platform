@@ -20,8 +20,10 @@ export default function SendAccountPasswordResetButton({
   accountEmail,
   disabled = false,
   disabledReason = '',
+  label = 'Gửi đặt lại mật khẩu',
   onSuccess,
   publicId,
+  type = 'default',
 }) {
   const [form] = Form.useForm()
   const [open, setOpen] = useState(false)
@@ -64,11 +66,12 @@ export default function SendAccountPasswordResetButton({
       <Tooltip title={disabled ? disabledReason : 'Gửi link để người dùng tự đặt mật khẩu mới'}>
         <span>
           <Button
-            icon={<KeyOutlined />}
+            icon={type === 'primary' ? <KeyOutlined /> : null}
             disabled={disabled}
+            type={type}
             onClick={() => setOpen(true)}
           >
-            Gửi đặt lại mật khẩu
+            {label}
           </Button>
         </span>
       </Tooltip>

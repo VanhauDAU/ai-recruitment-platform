@@ -51,3 +51,22 @@ export function formatRelativeDay(value, now = new Date()) {
   const day = new Intl.DateTimeFormat(getIntlLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' }).format(date)
   return `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)}, ${day}`
 }
+
+/**
+ * "5 phút trước" / "2 giờ trước" / "Hôm qua" — how long ago, in the UI language.
+ * `inSentence` lowercases the first letter for use inside a sentence: Vietnamese
+ * capitalizes standalone words such as "Hôm kia".
+ */
+export function formatTimeAgo(value, now = Date.now(), { inSentence = false } = {}) {
+  const date = toDate(value)
+  if (!date) return '—'
+  const seconds = Math.round((date.getTime() - now) / 1000)
+  const format = new Intl.RelativeTimeFormat(getIntlLocale(), { numeric: 'auto' })
+  const minutes = Math.round(seconds / 60)
+  const hours = Math.round(minutes / 60)
+  const text = Math.abs(seconds) < 60 ? format.format(0, 'second')
+    : Math.abs(minutes) < 60 ? format.format(minutes, 'minute')
+      : Math.abs(hours) < 24 ? format.format(hours, 'hour')
+        : format.format(Math.round(hours / 24), 'day')
+  return inSentence ? text.charAt(0).toLocaleLowerCase(getIntlLocale()) + text.slice(1) : text
+}

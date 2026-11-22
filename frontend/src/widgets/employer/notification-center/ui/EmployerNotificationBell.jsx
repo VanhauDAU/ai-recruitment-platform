@@ -21,8 +21,8 @@ export default function EmployerNotificationBell() {
     refetchInterval: 60_000,
   })
   const listQuery = useQuery({
-    queryKey: employerNotificationKeys.list(1),
-    queryFn: () => getEmployerNotifications(1),
+    queryKey: employerNotificationKeys.list({ page: 1 }),
+    queryFn: () => getEmployerNotifications({ page: 1 }),
   })
   const readMutation = useMutation({
     mutationFn: markEmployerNotificationRead,

@@ -7,6 +7,10 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Mã tài khoản dạng số cho 3 cổng](#mã-tài-khoản-dạng-số-cho-3-cổng-2026-11-22) | 🟨 Xong trên nhánh `feat/numeric-user-id`, chờ gộp PR |
+| [Làm lại trang Thông tin tài khoản NTD](#làm-lại-trang-thông-tin-tài-khoản-ntd-2026-11-22) | 🟨 Xong trên nhánh `feat/employer-account-info-redesign`, chờ gộp |
+| [Làm lại Thông báo hệ thống và Lịch sử hoạt động của NTD](#làm-lại-thông-báo-hệ-thống-và-lịch-sử-hoạt-động-của-ntd-2026-11-22) | ✅ Gộp vào `dev` (#307) |
+| [Làm lại danh sách tin tuyển dụng và chiến dịch của NTD](#làm-lại-danh-sách-tin-tuyển-dụng-và-chiến-dịch-của-ntd-2026-11-22) | ✅ Gộp vào `dev` (#305) |
 | [Làm lại carousel banner trang chủ](#làm-lại-carousel-banner-trang-chủ-2026-11-21) | ✅ Gộp vào `dev` (#300); cắt ảnh + 8 tông màu trên nhánh `feat/banner-image-crop` |
 | [Làm lại trang Cấu hình hệ thống (ADR-0026)](#làm-lại-trang-cấu-hình-hệ-thống-adr-0026-2026-11-21) | 🟨 GĐ1–GĐ4 đã gộp (#294–#298); GĐ5 trên nhánh `feat/settings-recruiting` |
 | [Chốt luồng FAQ/hướng dẫn và blog: Nháp → Xuất bản (ADR-0024)](#chốt-luồng-nội-dung-nháp--xuất-bản-adr-0024-2026-11-20) | ✅ Gộp vào `dev` (#272) |
@@ -40,6 +44,100 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Làm lại Thông báo hệ thống và Lịch sử hoạt động của NTD (2026-11-22)
+
+Hai trang `/tuyendung/app/notifications` và `/tuyendung/app/activities` trước đây là
+một danh sách phân trang (timeline antd), không lọc được và lịch sử không dẫn tới
+đâu. Làm lại cùng khung với trang tin/chiến dịch (#305), theo `ui-ux-pro-max`.
+
+- Thiết kế (làm gọn lại 22/11 theo góp ý "nhiều màu, hơi cơ bản"): nền trung tính,
+  một màu nhấn; hai cột với thanh bên (số lớn chưa đọc/tổng hoạt động, biểu đồ 14
+  ngày, danh sách nhóm) và cột danh sách theo ngày; chỉ cảnh báo/lỗi có chấm màu;
+  giờ tương đối ("18 phút trước"). Icon Phosphor *duotone* (MIT) tải từ repo chính
+  thức, nhúng ở `shared/ui/icons`.
+- Thông báo admin phát hành (trang quản trị Thông báo, bề mặt workspace NTD) trước
+  đây chỉ hiện ở dải trên cùng, đóng là mất. Nay trang Thông báo hệ thống có nhóm
+  **Hệ thống** liệt kê thông báo 90 ngày (đang hiển thị trước), thông báo đang hiển
+  thị được ghim ở đầu chế độ "Tất cả" kèm loại và nút hành động. API mới
+  `GET /api/shared/site/announcements/inbox/?surface=…` (đúng luật đối tượng/vai trò,
+  bỏ qua luật đường dẫn và việc đã đóng dải). Admin gửi tin riêng cho một NTD vẫn
+  chưa có.
+- Nhóm sự kiện: Ứng tuyển · Tin tuyển dụng · Chiến dịch · Công ty & xác
+  thực. Thông báo đếm số **chưa đọc** mỗi nhóm, có chip "Chỉ chưa đọc", nút đánh dấu
+  đã đọc trên từng dòng và "Đánh dấu tất cả đã đọc". Lịch sử đếm tổng mỗi nhóm, lọc
+  7/30/90 ngày.
+- Gom theo ngày (tiêu đề "Hôm nay", "Hôm qua", thứ + ngày dính đầu khi cuộn); mỗi
+  dòng có icon theo nhóm, màu theo mức độ, giờ (rê để xem đủ ngày giờ), người thực
+  hiện; dòng lịch sử mở trang liên quan như thông báo cùng sự kiện. "Xem thêm" thay
+  phân trang; bộ lọc nằm trong URL.
+- API: `GET /api/employer/notifications/` nhận `category`, `unread`, trả
+  `unread_counts` và `category`; `GET /api/employer/activities/` nhận `category`,
+  `days`, trả `category_counts`, `daily_counts` (14 ngày), `category`, `actor_kind`,
+  `action_path`. Bỏ một truy
+  vấn mỗi dòng khi tính người thực hiện (đọc `actor_id` thay vì `actor`).
+- CSS dùng chung chuyển sang `frontend/src/shared/ui/workspace-list/workspace-list.css`
+  để widget cũng dùng được.
+
+## Mã tài khoản dạng số cho 3 cổng (2026-11-22)
+
+`User.public_id` trước đây là `usr_` + 12 ký tự hex, khó đọc cho bộ phận hỗ trợ qua
+điện thoại; "Mã NTD" ở dashboard và email NTD lại lấy `Recruiter.public_id` (`rec_…`).
+
+- Mã tài khoản mới: 8 chữ số ngẫu nhiên, chữ số đầu khác 0 (vd `48261937`), không
+  tăng dần nên không lộ số lượng tài khoản; sinh lại khi trùng, DB có ràng buộc
+  unique + `chk_users_public_id_digits`. Ứng viên, NTD, admin dùng chung định dạng;
+  cùng email ở hai cổng vẫn là hai mã khác nhau.
+- Migration `accounts.0004` đổi mã mọi tài khoản cũ và ghi lại `AdminAccessAuditLog`
+  (`target_public_id` của timeline tài khoản, `payload.user_public_id`); `0005` thu
+  cột về 8 ký tự và thêm ràng buộc. Đường dẫn file cũ (`users/avatars/usr_…/`) vẫn
+  dùng được vì DB lưu key đầy đủ. URL admin `usr_…` đã lưu và token ngắn hạn đang
+  lưu hành (xác nhận thao tác admin, link tài sản CV) hết hiệu lực sau khi migrate.
+- "Mã NTD" ở dashboard NTD và email chào mừng/xác minh đổi sang mã tài khoản;
+  payload dashboard đổi `account.recruiter_public_id` → `account.public_id`.
+- Admin tìm theo mã bỏ qua dấu cách/chấm/gạch ("4826 1937").
+
+## Làm lại trang Thông tin tài khoản NTD (2026-11-22)
+
+Trang `/tuyendung/app/account/settings/account-info`: cụm sửa thông tin cá nhân nằm
+cuối trang, ảnh đại diện 36px, các cụm còn lại mỗi cụm một kiểu (nền vàng, nền xám).
+
+- Cụm hồ sơ lên đầu trang: dải nền chấm mờ, ảnh đại diện 88px có nút máy ảnh để
+  đổi ảnh, họ tên + vai trò trong công ty + chức danh, email/SĐT kèm "Đã xác thực",
+  nơi làm việc; dải công ty (logo, tên, mở trang Thông tin công ty) và ngày tham
+  gia; nút Xuất dữ liệu. Form "Thông tin cá nhân" bên dưới, nút Hủy/Lưu chỉ bật khi
+  có thay đổi, kèm dòng nhắc "Bạn có thay đổi chưa lưu".
+- Cụm "Tài khoản xác thực" giữ nguyên.
+- "Điều kiện nhận dấu tick" và "Xác minh tên miền công ty" chuyển về cùng kiểu thẻ
+  trắng viền mảnh với ô icon đồng bộ; dấu tick bỏ nền vàng, điều kiện chưa đạt tô xám,
+  tiến độ "3/5" ở góc.
+- Mobile: ảnh trên, thông tin xếp dọc. Style riêng ở `account-information.css` (lazy).
+
+## Làm lại danh sách tin tuyển dụng và chiến dịch của NTD (2026-11-22)
+
+Hai trang `/tuyendung/app/jobs` và `/tuyendung/app/campaigns` trước đây chỉ có tab
+trạng thái + ô tìm kiếm, thao tác nhanh chỉ hiện khi rê chuột và tiêu đề bị cắt ở
+màn 1280px. Áp dụng skill `ui-ux-pro-max` (cài ở `.claude/skills`) cùng
+`web-design-guidelines`, `vercel-react-best-practices`; giữ ngôn ngữ antd + Tailwind
+của cổng NTD.
+
+- Tin tuyển dụng: lọc theo chiến dịch (tải tên khi mở ô chọn), sắp xếp (mới tạo,
+  cập nhật, sắp hết hạn, nhiều CV chưa xem, nhiều ứng viên, nhiều lượt xem; bấm tiêu
+  đề cột để sắp), chip "Cần xử lý" có số đếm (CV chưa xem, sắp hết hạn 7 ngày). Cột
+  trạng thái riêng kèm lý do khi tin bị ẩn; hạn nộp tính theo ngày đóng thật (hạn nộp
+  hoặc hết thời gian hiển thị, cái nào sớm hơn); thao tác nhanh luôn hiện; nút "Đăng
+  tin tuyển dụng" lên thanh tiêu đề như trang chiến dịch.
+- Chiến dịch: bỏ bảng antd + thẻ riêng, dùng chung khung với trang tin; chip "Cần xử
+  lý" (CV chưa xem, có tin hết hạn) thay ô chọn; cột tin theo trạng thái, ứng viên,
+  **tiến độ tuyển** (trúng tuyển/số cần tuyển), hoạt động gần nhất trong dòng meta.
+- Bảng chuyển thành thẻ theo bề rộng thật của danh sách (container query 1080px),
+  nên sidebar mở hay đóng đều không bóp cột tiêu đề; mobile có nhãn cho từng số liệu.
+- API: `GET /api/employer/jobs/` nhận `ordering`, `attention=unviewed|expiring`, trả
+  `closes_on` và `attention_counts` (tính trong tab đang mở, cùng một query với
+  `status_counts`); `GET /api/employer/campaigns/` trả `attention_counts`
+  (`needs_review`, `expired_jobs`). Số query của trang danh sách không đổi.
+- Style dùng chung ở `shared/ui/workspace-list/workspace-list.css` (lazy); CSS khởi tạo không
+  thêm utility mới.
 
 ## Gọn sidebar quản trị và NTD theo góp ý GVHD (2026-11-21)
 
@@ -559,6 +657,38 @@ GĐ1 đã làm:
   - **Bạn tự đăng:** ô gọn, kèm gợi ý ngắn cho từng nơi đăng.
   - Bỏ nhãn "Bạn sẽ đăng ở đâu?".
   - Mobile: nhóm tự đăng một cột, nhóm đăng tay hai cột, chữ được xuống dòng.
+- Tab "Kênh & nguồn" làm lại giao diện (22/11, chưa tạo PR).
+  - Danh sách kênh chuyển thành hàng tab ngang kiểu thẻ hồ sơ. Mỗi tab chỉ có
+    logo và tên kênh, tab đang chọn liền khối với khung chi tiết, góc dưới cong.
+    Chuyển tab bằng phím mũi tên, Home, End.
+  - "Kênh phân phối" và "Hiệu quả theo nguồn" thành hai cụm thu gọn: mở cụm này
+    thì cụm kia đóng, co giãn có hiệu ứng. Bảng nguồn chỉ gọi API khi mở lần đầu.
+  - Danh sách bài đã đăng trên mạng xã hội chia trang, mỗi trang 3 bài.
+- Hàng tab kiểu thẻ hồ sơ thành component dùng chung `shared/ui/folder-tabs` (22/11, cùng PR).
+  - Không còn nền bao ngoài: hàng tab nằm trên đường kẻ mảnh, tab đang chọn có
+    viền mảnh, vạch xanh trên đỉnh, góc cong vẽ bằng SVG nối liền đường kẻ.
+  - Hai kiểu: khung viền (trang nền xám) và `plain` chỉ giữ đường kẻ (đã nằm
+    trong thẻ trắng).
+  - Áp dụng: kênh phân phối, chi tiết tin tuyển dụng (bỏ `Segmented` riêng cho
+    mobile, dùng nhãn ngắn), trang công ty (Bố cục, Nội dung, Người biên tập),
+    thông tin tài khoản NTD chia 3 tab Tài khoản, Xác thực, Tên miền công ty
+    (`?tab=` giữ tab khi tải lại).
+  - Chi tiết tài khoản (admin) dùng cùng hàng tab: khung trắng bo đủ góc, tab
+    đang chọn trắng dính liền khung. Tách trùng lặp: "Hồ sơ cá nhân" chỉ còn
+    thông tin cá nhân; "Nhu cầu tìm việc" gom mong muốn trên hồ sơ và tiêu chí
+    có cấu trúc (trước đây hai tab cùng hiện một khối).
+- Tab Bảo mật (admin, chi tiết tài khoản) làm lại theo tình huống (22/11, cùng PR).
+  - Một dòng tình trạng: trạng thái, email (kèm "Gửi lại xác minh" khi chưa xác
+    minh), mật khẩu, số phiên.
+  - "Xử lý theo tình huống": Không đăng nhập được (gửi link đặt mật khẩu; lối
+    phụ đổi email khi mất email), Nghi bị chiếm tài khoản (thu hồi mọi phiên),
+    thẻ thứ ba đổi theo trạng thái (vi phạm: tạm khóa/cấm; đang khóa: mở lại,
+    rà soát giữ tài nguyên; bị cấm: bắt đầu khôi phục).
+  - Tiến trình khôi phục 3 bước chỉ hiện khi đang khôi phục; danh sách phiên
+    thu gọn, chỉ tải khi mở.
+  - `AdminAccountSecurityActions` thành hook `useAccountSecurityOperations`
+    (logic + popup), widget tự vẽ nút. Popup `ActionDialog` có hiệu ứng mở,
+    mobile trượt lên từ đáy. Chữ của tab đưa vào i18n.
 
 ## Ứng tuyển bằng CV tải lên và form ứng tuyển mới (2026-11-18)
 

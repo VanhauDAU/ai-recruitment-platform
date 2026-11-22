@@ -9,6 +9,7 @@ export default function ChangeAccountEmailButton({
   disabledReason = '',
   onSuccess,
   publicId,
+  type = 'default',
 }) {
   const [open, setOpen] = useState(false)
   return (
@@ -16,8 +17,8 @@ export default function ChangeAccountEmailButton({
       <Tooltip title={disabled ? disabledReason : 'Khôi phục email đăng nhập'}>
         <span>
           <Button
-            danger
-            icon={<MailOutlined />}
+            type={type}
+            icon={type === 'link' ? null : <MailOutlined />}
             disabled={disabled}
             onClick={() => setOpen(true)}
           >

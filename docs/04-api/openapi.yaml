@@ -9588,8 +9588,27 @@ paths:
   /api/employer/activities/:
     get:
       operationId: employer_activities_list
-      summary: Nhật ký hoạt động của tôi
+      summary: Nhật ký hoạt động của tôi (kèm category_counts, daily_counts khi phân
+        trang)
       parameters:
+      - in: query
+        name: category
+        schema:
+          type: string
+          enum:
+          - applications
+          - campaigns
+          - company
+          - jobs
+      - in: query
+        name: days
+        schema:
+          type: integer
+          enum:
+          - 30
+          - 7
+          - 90
+        description: Chỉ lấy hoạt động trong N ngày gần nhất
       - name: page
         required: false
         in: query
@@ -12084,7 +12103,40 @@ paths:
       operationId: employer_jobs_list
       description: Authoritatively gate recruiter workspace reads and cache their
         state.
+      summary: Tin tuyển dụng của NTD (kèm status_counts, attention_counts khi phân
+        trang)
       parameters:
+      - in: query
+        name: attention
+        schema:
+          type: string
+          enum:
+          - expiring
+          - unviewed
+        description: 'unviewed: còn CV chưa xem; expiring: đang tuyển, sắp hết hạn'
+      - in: query
+        name: campaign
+        schema:
+          type: string
+        description: public_id của chiến dịch
+      - in: query
+        name: ordering
+        schema:
+          type: string
+          enum:
+          - -candidates
+          - -created
+          - -deadline
+          - -unviewed
+          - -updated
+          - -views
+          - candidates
+          - created
+          - deadline
+          - unviewed
+          - updated
+          - views
+        description: Mặc định -created
       - name: page
         required: false
         in: query
@@ -12097,6 +12149,21 @@ paths:
         description: Number of results to return per page.
         schema:
           type: integer
+      - in: query
+        name: q
+        schema:
+          type: string
+        description: Tìm theo tiêu đề
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - active
+          - closed
+          - draft
+          - expired
+          - hidden
       tags:
       - jobs
       security:
@@ -12112,19 +12179,28 @@ paths:
       operationId: employer_jobs_create
       description: Authoritatively gate recruiter workspace reads and cache their
         state.
+      summary: 'Tạo tin: đăng ngay, hoặc lưu nháp với ?as=draft'
+      parameters:
+      - in: query
+        name: as
+        schema:
+          type: string
+          enum:
+          - draft
       tags:
       - jobs
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EmployerJobDraftRequest'
+              $ref: '#/components/schemas/EmployerJobWriteRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/EmployerJobDraftRequest'
+              $ref: '#/components/schemas/EmployerJobWriteRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/EmployerJobDraftRequest'
+              $ref: '#/components/schemas/EmployerJobWriteRequest'
+        required: true
       security:
       - jwtAuth: []
       responses:
@@ -12132,7 +12208,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EmployerJobDraft'
+                $ref: '#/components/schemas/EmployerJobDetail'
           description: ''
   /api/employer/jobs/{public_id}/:
     get:
@@ -12677,8 +12753,17 @@ paths:
   /api/employer/notifications/:
     get:
       operationId: employer_notifications_list
-      summary: Thông báo của nhà tuyển dụng
+      summary: Thông báo của nhà tuyển dụng (kèm unread_counts khi phân trang)
       parameters:
+      - in: query
+        name: category
+        schema:
+          type: string
+          enum:
+          - applications
+          - campaigns
+          - company
+          - jobs
       - name: page
         required: false
         in: query
@@ -12691,6 +12776,10 @@ paths:
         description: Number of results to return per page.
         schema:
           type: integer
+      - in: query
+        name: unread
+        schema:
+          type: boolean
       tags:
       - employer
       security:
@@ -14794,6 +14883,47 @@ paths:
           description: ''
         '409':
           description: No response body
+  /api/shared/site/announcements/inbox/:
+    get:
+      operationId: shared_site_announcements_inbox_retrieve
+      description: Thông báo đang hiển thị trước, rồi thông báo đã phát hành trong
+        90 ngày; bỏ qua luật đường dẫn và việc đã đóng dải để người dùng đọc lại được.
+      summary: Hộp thông báo hệ thống của người dùng trên một bề mặt
+      parameters:
+      - in: query
+        name: locale
+        schema:
+          type: string
+          minLength: 1
+          default: vi
+          maxLength: 16
+      - in: query
+        name: surface
+        schema:
+          enum:
+          - candidate
+          - employer_marketing
+          - employer_workspace
+          - admin_workspace
+          type: string
+          minLength: 1
+        description: |-
+          * `candidate` - Ứng viên
+          * `employer_marketing` - Trang nhà tuyển dụng
+          * `employer_workspace` - Workspace nhà tuyển dụng
+          * `admin_workspace` - Workspace quản trị
+        required: true
+      tags:
+      - site-announcements
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnouncementInbox'
+          description: ''
   /api/shared/uploads/sessions/:
     post:
       operationId: shared_uploads_sessions_create
@@ -20729,6 +20859,66 @@ components:
         * `shield` - Khiên
         * `sparkles` - Lấp lánh
         * `wrench` - Bảo trì
+    AnnouncementInbox:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnnouncementInboxItem'
+      required:
+      - items
+    AnnouncementInboxItem:
+      type: object
+      description: 'What the inbox lists: the content of the strip, not how it animates.'
+      properties:
+        public_id:
+          type: string
+        kind:
+          allOf:
+          - $ref: '#/components/schemas/AnnouncementKindEnum'
+          readOnly: true
+        message:
+          type: string
+          readOnly: true
+        badge:
+          type: string
+          readOnly: true
+        icon:
+          allOf:
+          - $ref: '#/components/schemas/AnnouncementIconEnum'
+          readOnly: true
+        cta:
+          allOf:
+          - $ref: '#/components/schemas/AnnouncementCta'
+          nullable: true
+          readOnly: true
+        starts_at:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+        ends_at:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+        is_live:
+          type: boolean
+        shown_at:
+          type: string
+          format: date-time
+      required:
+      - badge
+      - cta
+      - ends_at
+      - icon
+      - is_live
+      - kind
+      - message
+      - public_id
+      - shown_at
+      - starts_at
     AnnouncementKindEnum:
       enum:
       - critical
@@ -25982,12 +26172,25 @@ components:
         actor_name:
           type: string
           readOnly: true
+        actor_kind:
+          type: string
+          readOnly: true
+        category:
+          type: string
+          readOnly: true
+        action_path:
+          type: string
+          readOnly: true
+          default: ''
         occurred_at:
           type: string
           format: date-time
           readOnly: true
       required:
+      - action_path
+      - actor_kind
       - actor_name
+      - category
       - event_type
       - occurred_at
       - public_id
@@ -26111,8 +26314,9 @@ components:
     EmployerDashboardAccount:
       type: object
       properties:
-        recruiter_public_id:
+        public_id:
           type: string
+          description: Mã tài khoản NTD (8 chữ số).
         company_public_id:
           type: string
           nullable: true
@@ -26130,7 +26334,7 @@ components:
       - company_name
       - company_public_id
       - company_size
-      - recruiter_public_id
+      - public_id
       - recruiter_verification_status
       - verification
       - work_location_name
@@ -27081,6 +27285,11 @@ components:
           format: date
           readOnly: true
           nullable: true
+        closes_on:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
         requested_visibility_days:
           type: integer
           readOnly: true
@@ -27183,6 +27392,7 @@ components:
       - campaign_name
       - candidate_count
       - candidate_previews
+      - closes_on
       - company_name
       - created_at
       - deadline
@@ -27345,6 +27555,173 @@ components:
       - action
       - code
       - label
+    EmployerJobWriteRequest:
+      type: object
+      description: Create/update DTO for the employer job form; never used for public
+        reads.
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+        category_assignments:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobCategoryAssignmentRequest'
+        job_locations:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobLocationRequest'
+        description:
+          type: string
+          minLength: 1
+        requirements:
+          type: string
+        benefits:
+          type: string
+        application_reasons:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 160
+          maxItems: 3
+        work_schedule_note:
+          type: string
+          description: Mô tả lịch không thể hiện hết bằng các khung giờ có cấu trúc.
+        work_type:
+          oneOf:
+          - $ref: '#/components/schemas/JobWorkTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        work_types:
+          description: Các hình thức làm việc được áp dụng; work_type giữ giá trị
+            đầu tiên để tương thích bộ lọc cũ.
+        employment_type:
+          oneOf:
+          - $ref: '#/components/schemas/EmploymentTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        education_level:
+          oneOf:
+          - $ref: '#/components/schemas/EducationLevelEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        experience_years:
+          description: |-
+            Số năm kinh nghiệm yêu cầu (bộ lọc "Kinh nghiệm")
+
+            * `none` - Không yêu cầu
+            * `under_1` - Dưới 1 năm
+            * `1` - 1 năm
+            * `2` - 2 năm
+            * `3` - 3 năm
+            * `4` - 4 năm
+            * `5` - 5 năm
+            * `over_5` - Trên 5 năm
+          oneOf:
+          - $ref: '#/components/schemas/ExperienceYearsEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        position_level:
+          description: |-
+            Cấp bậc tuyển dụng (bộ lọc "Cấp bậc")
+
+            * `employee` - Nhân viên
+            * `team_lead` - Trưởng nhóm
+            * `manager` - Trưởng/Phó phòng
+            * `supervisor` - Quản lý / Giám sát
+            * `branch_manager` - Trưởng chi nhánh
+            * `vice_director` - Phó giám đốc
+            * `director` - Giám đốc
+            * `intern` - Thực tập sinh
+          oneOf:
+          - $ref: '#/components/schemas/JobPositionLevelEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        gender_requirement:
+          $ref: '#/components/schemas/GenderRequirementEnum'
+        age_min:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          nullable: true
+        age_max:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          nullable: true
+        number_of_vacancies:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+          description: Số lượng cần tuyển; null = không giới hạn
+        salary_type:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SalaryTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        salary_min:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          nullable: true
+        salary_max:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          nullable: true
+        income_display_type:
+          $ref: '#/components/schemas/IncomeDisplayTypeEnum'
+        currency:
+          $ref: '#/components/schemas/CurrencyEnum'
+        deadline:
+          type: string
+          format: date
+          nullable: true
+        job_skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobSkillRequest'
+        work_schedules:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobWorkScheduleRequest'
+        job_benefits:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobBenefitRequest'
+        language_requirements:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobLanguageRequirementRequest'
+        application_contact:
+          allOf:
+          - $ref: '#/components/schemas/JobApplicationContactRequest'
+          nullable: true
+        campaign:
+          type: string
+          minLength: 1
+          nullable: true
+        ai_generation_public_id:
+          type: string
+          writeOnly: true
+          minLength: 1
+          maxLength: 50
+        auto_reject_stale_applications:
+          type: boolean
+          description: Tự chuyển hồ sơ chờ xử lý quá hạn sang trạng thái từ chối.
+        auto_reject_after_days:
+          allOf:
+          - $ref: '#/components/schemas/AutoRejectAfterDaysEnum'
+          minimum: 0
+          maximum: 32767
+        auto_rejection_email_body:
+          type: string
+          minLength: 1
+          description: Nội dung email gửi ứng viên ba ngày sau khi hồ sơ bị tự động
+            từ chối.
+          maxLength: 1000
+      required:
+      - description
+      - title
     EmployerNotification:
       type: object
       properties:
@@ -27369,11 +27746,15 @@ components:
           type: string
           format: date-time
           nullable: true
+        category:
+          type: string
+          readOnly: true
         created_at:
           type: string
           format: date-time
           readOnly: true
       required:
+      - category
       - created_at
       - event_type
       - is_read
@@ -28625,6 +29006,25 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/JobApplicationEmail'
+      required:
+      - emails
+      - phone
+      - recipient_name
+    JobApplicationContactRequest:
+      type: object
+      properties:
+        recipient_name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        phone:
+          type: string
+          minLength: 1
+          maxLength: 30
+        emails:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobApplicationEmailRequest'
       required:
       - emails
       - phone

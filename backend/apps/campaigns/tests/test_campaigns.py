@@ -138,9 +138,19 @@ class RecruitmentCampaignApiTests(TestCase):
             ('Completed', RecruitmentCampaign.Status.COMPLETED),
             ('Paused', RecruitmentCampaign.Status.PAUSED),
         ]:
-            RecruitmentCampaign.objects.create(
+            campaign = RecruitmentCampaign.objects.create(
                 owner=self.owner_profile, company=self.company, name=name, status=status
             )
+            if name == 'Running':
+                Job.objects.create(
+                    posted_by=self.owner,
+                    company=self.company,
+                    campaign=campaign,
+                    title='Expired job',
+                    status=Job.Status.ACTIVE,
+                    deadline=timezone.localdate() - timedelta(days=1),
+                    **open_visibility_window(),
+                )
         self.client.force_authenticate(self.owner)
 
         listed = self.client.get(reverse('employer-campaign-list'), {'ordering': 'status'})
@@ -167,6 +177,10 @@ class RecruitmentCampaignApiTests(TestCase):
         self.assertEqual(
             sorted(item['name'] for item in ended.data['results']), ['Cancelled', 'Completed']
         )
+        # Attention chips count inside the open tab; the tabs do not.
+        self.assertEqual(listed.data['attention_counts'], {'needs_review': 0, 'expired_jobs': 1})
+        self.assertEqual(ended.data['attention_counts'], {'needs_review': 0, 'expired_jobs': 0})
+        self.assertEqual(ended.data['status_counts']['all'], 5)
 
     def test_campaign_creation_requires_a_ready_workspace(self):
         user_model = get_user_model()
@@ -373,6 +387,9 @@ class RecruitmentCampaignApiTests(TestCase):
         self.assertEqual(item['unviewed_application_count'], 1)
         self.assertEqual(item['unviewed_count'], 1)
         self.assertEqual(needs_review.data['count'], 1)
+        self.assertEqual(
+            needs_review.data['attention_counts'], {'needs_review': 1, 'expired_jobs': 0}
+        )
         self.assertEqual(report.data['jobs']['total'], 2)
         self.assertEqual(report.data['jobs']['active'], 2)
         self.assertEqual(report.data['jobs']['expired'], 0)

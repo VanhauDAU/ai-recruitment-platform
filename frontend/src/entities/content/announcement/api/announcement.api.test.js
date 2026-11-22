@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getActiveAnnouncements } from './announcement.api'
+import { getActiveAnnouncements, getAnnouncementInbox } from './announcement.api'
 
 const { get, post } = vi.hoisted(() => ({
   get: vi.fn(),
@@ -67,5 +67,15 @@ describe('announcement runtime API', () => {
       items: [],
     })
     expect(post).not.toHaveBeenCalled()
+  })
+
+  it('reads the inbox of one surface for the signed-in reader', async () => {
+    get.mockResolvedValue({ data: { items: [{ public_id: 'ann_1' }] } })
+
+    await expect(getAnnouncementInbox({ surface: 'employer_workspace', locale: 'vi' }))
+      .resolves.toEqual([{ public_id: 'ann_1' }])
+    expect(get).toHaveBeenCalledWith('/shared/site/announcements/inbox/', {
+      params: { surface: 'employer_workspace', locale: 'vi' },
+    })
   })
 })

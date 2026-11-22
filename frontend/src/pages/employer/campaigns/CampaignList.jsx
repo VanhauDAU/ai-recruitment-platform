@@ -1,92 +1,41 @@
-import { SearchOutlined } from '@ant-design/icons'
-import { useQuery } from '@tanstack/react-query'
-import { Alert, Button, Card, Empty, Input, Pagination, Select, Table, Tag } from 'antd'
-import dayjs from '@/shared/lib/dayjs'
-import { useMemo, useState } from 'react'
+import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { Alert, Button, Empty, Input, Pagination, Select, Skeleton } from 'antd'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import {
+  CAMPAIGN_ATTENTION_SCOPES,
   CAMPAIGN_ORDERING_OPTIONS,
-  CAMPAIGN_SCOPE_OPTIONS,
-  CAMPAIGN_SETUP_STATUSES,
-  CAMPAIGN_STATUS_COLORS,
-  CAMPAIGN_STATUS_LABELS,
   CAMPAIGN_STATUS_TABS,
   campaignKeys,
   getCampaigns,
 } from '@/entities/campaign/campaign'
 import { useEmployerReadiness } from '@/entities/account/employer-profile'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
-import { m } from '@/shared/config/i18n'
+import { m, getIntlLocale } from '@/shared/config/i18n'
 import { employerAppPath } from '@/shared/config/portals'
-import CampaignCandidateSummary from './CampaignCandidates'
-import CampaignJobsSummary from './CampaignJobsSummary'
+import { MascotEmpty } from '@/shared/ui/mascot'
+import CampaignListRow from './CampaignListRow'
+import '@/shared/ui/workspace-list/workspace-list.css'
 import './campaign-list.css'
 
 const PAGE_SIZE = 20
-const detailPath = (campaign, suffix = '') => employerAppPath(`/campaigns/${campaign.public_id}${suffix}`)
-const shortDate = (value) => (value ? dayjs(value).format('DD/MM/YYYY') : '')
-
-function campaignPeriod(campaign) {
-  const start = shortDate(campaign.start_date) || m.employer_campaign_list_on_launch()
-  const end = campaign.is_continuous
-    ? m.employer_campaign_list_continuous()
-    : shortDate(campaign.target_date) || m.employer_campaign_list_no_end_date()
-  return m.employer_campaign_list_period({ start, end })
-}
-
-// Mỗi dòng chỉ có một hành động: việc tiếp theo hợp lý nhất cho trạng thái đó.
-function nextAction(campaign, candidateDataAccess) {
-  if (CAMPAIGN_SETUP_STATUSES.includes(campaign.status)) {
-    return { label: m.employer_campaign_list_action_setup(), to: detailPath(campaign, '/setup'), primary: true }
-  }
-  const unviewed = campaign.unviewed_count ?? campaign.unviewed_application_count ?? 0
-  if (candidateDataAccess && unviewed > 0) {
-    return { label: m.employer_campaign_list_action_view_new_cv({ count: unviewed }), to: detailPath(campaign, '?active_tab=apply_cv'), primary: true }
-  }
-  return { label: m.employer_campaign_list_action_open(), to: detailPath(campaign) }
-}
-
-function CampaignName({ campaign }) {
-  return (
-    <div className="cpl-name">
-      <Link className="cpl-name__title" to={detailPath(campaign)}>{campaign.name}</Link>
-      <div className="cpl-name__meta">
-        <Tag color={CAMPAIGN_STATUS_COLORS[campaign.status]} className="!m-0">
-          {CAMPAIGN_STATUS_LABELS[campaign.status]}
-        </Tag>
-        <span>{campaignPeriod(campaign)}</span>
-      </div>
-    </div>
-  )
-}
-
-function NextActionButton({ campaign, candidateDataAccess }) {
-  const action = nextAction(campaign, candidateDataAccess)
-  return (
-    <Link to={action.to}>
-      <Button type={action.primary ? 'primary' : 'default'} size="small">{action.label}</Button>
-    </Link>
-  )
-}
-
-function LastActivity({ campaign }) {
-  const occurredAt = campaign.last_activity?.occurred_at
-  return (
-    <div className="cpl-activity">
-      <span>{campaign.last_activity?.label || m.employer_campaign_list_activity_fallback()}</span>
-      <time>{occurredAt ? dayjs(occurredAt).format('HH:mm DD/MM/YYYY') : '—'}</time>
-    </div>
-  )
-}
+const SEARCH_DELAY_MS = 400
+const DEFAULT_ORDERING = 'status'
+const ATTENTION_TONES = { needs_review: 'orange', expired_jobs: 'red' }
+const primaryLinkClass = 'inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg !bg-emerald-600 px-3.5 text-sm font-semibold !text-white shadow-sm transition hover:!bg-emerald-500'
+const formatCount = (value) => (value || 0).toLocaleString(getIntlLocale())
 
 export default function CampaignList() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [searchValue, setSearchValue] = useState(searchParams.get('q') || '')
   const status = searchParams.get('status') || ''
   const scope = searchParams.get('scope') || ''
-  const ordering = searchParams.get('ordering') || 'status'
-  const page = Number(searchParams.get('page')) || 1
   const query = searchParams.get('q') || ''
+  const ordering = searchParams.get('ordering') || DEFAULT_ORDERING
+  const page = Math.max(Number(searchParams.get('page')) || 1, 1)
+  const [searchValue, setSearchValue] = useState(query)
+  const searchTimer = useRef(null)
+  const { canAccessCandidateData } = useEmployerReadiness()
   const queryParams = useMemo(() => ({
     page,
     ordering,
@@ -97,141 +46,199 @@ export default function CampaignList() {
   const campaignsQuery = useQuery({
     queryKey: campaignKeys.list(queryParams),
     queryFn: () => getCampaigns(queryParams),
+    // Keep the rows and tab counts on screen while the next tab/page loads.
+    placeholderData: keepPreviousData,
   })
-  const { canAccessCandidateData } = useEmployerReadiness()
   const pageData = campaignsQuery.data || { count: 0, results: [] }
   const campaigns = pageData.results || []
-  const counts = pageData.status_counts || {}
+  const counts = pageData.status_counts
+  const attentionCounts = pageData.attention_counts
+  const hasFilters = Boolean(status || scope || query)
 
-  function replaceFilters(next) {
-    const values = Object.fromEntries(searchParams)
-    Object.entries(next).forEach(([key, value]) => {
-      if (value) values[key] = String(value)
-      else delete values[key]
-    })
-    if (!Object.hasOwn(next, 'page')) delete values.page
-    setSearchParams(values)
+  // Follow back/forward navigation without trimming what the user is typing.
+  useEffect(() => {
+    setSearchValue((current) => (current.trim() === query ? current : query))
+  }, [query])
+  useEffect(() => () => window.clearTimeout(searchTimer.current), [])
+
+  // Functional update so a debounced search never overwrites a newer tab/page.
+  const replaceFilters = useCallback((next, options) => {
+    setSearchParams((current) => {
+      const params = new URLSearchParams(current)
+      Object.entries(next).forEach(([key, value]) => {
+        if (value) params.set(key, String(value))
+        else params.delete(key)
+      })
+      if (!Object.hasOwn(next, 'page')) params.delete('page')
+      return params
+    }, options)
+  }, [setSearchParams])
+
+  function search(value, delay = SEARCH_DELAY_MS) {
+    setSearchValue(value)
+    window.clearTimeout(searchTimer.current)
+    searchTimer.current = window.setTimeout(() => replaceFilters({ q: value.trim() }, { replace: true }), delay)
   }
 
-  const empty = (
-    <Empty description={status || scope || query ? m.employer_campaign_list_empty_filtered() : m.employer_campaign_list_empty()} />
-  )
-  const columns = [
-    { title: m.employer_campaign_list_col_campaign(), render: (_, campaign) => <CampaignName campaign={campaign} /> },
-    { title: m.employer_campaign_jobs_col_job(), width: 280, render: (_, campaign) => <CampaignJobsSummary campaign={campaign} /> },
-    {
-      title: m.employer_campaign_cv_col_candidate(),
-      width: 180,
-      render: (_, campaign) => (
-        <CampaignCandidateSummary campaign={campaign} candidateDataAccess={canAccessCandidateData} />
-      ),
-    },
-    { title: m.employer_campaign_list_col_last_activity(), width: 190, render: (_, campaign) => <LastActivity campaign={campaign} /> },
-    {
-      title: '',
-      width: 130,
-      align: 'right',
-      render: (_, campaign) => <NextActionButton campaign={campaign} candidateDataAccess={canAccessCandidateData} />,
-    },
-  ]
+  // Filters narrow the list; the chosen order stays.
+  function clearFilters() {
+    window.clearTimeout(searchTimer.current)
+    setSearchValue('')
+    setSearchParams(searchParams.has('ordering') ? { ordering } : {})
+  }
+
+  const firstRow = (page - 1) * PAGE_SIZE + 1
+  const lastRow = Math.min(page * PAGE_SIZE, pageData.count || 0)
 
   return (
-    <section className="cpl">
-      <Card styles={{ body: { padding: 0 } }}>
-        <nav className="cpl-tabs" aria-label={m.employer_campaign_list_status_tabs_aria()}>
-          {CAMPAIGN_STATUS_TABS.map((tab) => (
-            <button
-              key={tab.countKey}
-              type="button"
-              aria-pressed={status === tab.value}
-              className={`cpl-tab${status === tab.value ? ' is-active' : ''}`}
-              onClick={() => replaceFilters({ status: tab.value })}
-            >
-              {tab.label}
-              <span className="cpl-tab__count">{counts[tab.countKey] ?? 0}</span>
-            </button>
-          ))}
-        </nav>
-        <div className="cpl-filters">
+    <section className="ws-page">
+      <div className="ws-panel">
+        <div role="group" aria-label={m.employer_campaign_list_status_tabs_aria()} className="ws-tabs">
+          {CAMPAIGN_STATUS_TABS.map((tab) => {
+            const tabCount = counts?.[tab.countKey]
+            return (
+              <button
+                key={tab.countKey}
+                type="button"
+                aria-pressed={status === tab.value}
+                className="ws-tab"
+                onClick={() => replaceFilters({ status: tab.value })}
+              >
+                {tab.label}
+                {tabCount === undefined
+                  ? <span aria-hidden className="ws-tab__count ws-tab__count--loading" />
+                  : <span className="ws-tab__count">{formatCount(tabCount)}</span>}
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="ws-filters cpl-filters">
           <Input
             allowClear
-            value={searchValue}
-            prefix={<SearchOutlined className="text-slate-400" />}
+            aria-label={m.employer_campaign_list_search_aria()}
+            prefix={<SearchOutlined className="text-slate-400" aria-hidden />}
             placeholder={m.employer_campaign_list_search_placeholder()}
-            onChange={(event) => setSearchValue(event.target.value)}
-            onClear={() => replaceFilters({ q: '' })}
-            onPressEnter={() => replaceFilters({ q: searchValue.trim() })}
-          />
-          <Select
-            aria-label={m.employer_campaign_list_scope_aria()}
-            value={scope}
-            options={CAMPAIGN_SCOPE_OPTIONS}
-            onChange={(value) => replaceFilters({ scope: value })}
+            type="search"
+            value={searchValue}
+            onChange={(event) => search(event.target.value)}
+            onClear={() => search('', 0)}
+            onPressEnter={() => search(searchValue, 0)}
           />
           <Select
             aria-label={m.employer_campaign_list_sort_aria()}
             value={ordering}
             options={CAMPAIGN_ORDERING_OPTIONS}
-            onChange={(value) => replaceFilters({ ordering: value })}
+            onChange={(value) => replaceFilters({ ordering: value === DEFAULT_ORDERING ? '' : value })}
           />
         </div>
-      </Card>
 
-      {campaignsQuery.isError && (
-        <Alert
-          type="error"
-          showIcon
-          title={getApiErrorMessage(campaignsQuery.error, m.employer_campaign_list_load_error())}
-          action={<Button size="small" danger onClick={() => campaignsQuery.refetch()}>{m.employer_campaign_retry()}</Button>}
-        />
-      )}
-
-      <div className="cpl-cards">
-        {campaignsQuery.isLoading && <Card loading />}
-        {!campaignsQuery.isLoading && campaigns.length === 0 && <Card>{empty}</Card>}
-        {campaigns.map((campaign) => (
-          <Card key={campaign.public_id} styles={{ body: { padding: 16 } }}>
-            <CampaignName campaign={campaign} />
-            <div className="cpl-card__grid">
-              <CampaignJobsSummary campaign={campaign} />
-              <CampaignCandidateSummary campaign={campaign} candidateDataAccess={canAccessCandidateData} />
-            </div>
-            <div className="cpl-card__foot">
-              <LastActivity campaign={campaign} />
-              <NextActionButton campaign={campaign} candidateDataAccess={canAccessCandidateData} />
-            </div>
-          </Card>
-        ))}
-        {pageData.count > PAGE_SIZE && (
-          <Pagination
-            align="center"
-            current={page}
-            pageSize={PAGE_SIZE}
-            total={pageData.count}
-            showSizeChanger={false}
-            onChange={(nextPage) => replaceFilters({ page: nextPage })}
-          />
-        )}
+        <div className="ws-quick">
+          <span className="ws-quick__label">{m.employer_campaign_list_attention_label()}</span>
+          <div role="group" aria-label={m.employer_campaign_list_attention_aria()} className="ws-quick__chips">
+            {CAMPAIGN_ATTENTION_SCOPES.map((item) => {
+              const active = scope === item.value
+              const chipCount = attentionCounts?.[item.value]
+              return (
+                <button
+                  key={item.value}
+                  type="button"
+                  aria-pressed={active}
+                  disabled={!active && chipCount === 0}
+                  className={`ws-chip ws-tone-${ATTENTION_TONES[item.value]}`}
+                  onClick={() => replaceFilters({ scope: active ? '' : item.value })}
+                >
+                  <span aria-hidden className="ws-dot" />
+                  {item.label}
+                  {chipCount !== undefined && <span className="ws-chip__count">{formatCount(chipCount)}</span>}
+                </button>
+              )
+            })}
+          </div>
+          <span className="ws-quick__meta">
+            {!campaignsQuery.isLoading && (
+              <span className="ws-quick__count">{m.employer_campaign_list_result_count({ count: formatCount(pageData.count) })}</span>
+            )}
+            {hasFilters && (
+              <button type="button" className="ws-link-button" onClick={clearFilters}>
+                {m.employer_campaign_list_clear_filters()}
+              </button>
+            )}
+          </span>
+        </div>
       </div>
 
-      <Card className="cpl-table" styles={{ body: { padding: 0 } }}>
-        <Table
-          rowKey="public_id"
-          loading={campaignsQuery.isLoading}
-          dataSource={campaigns}
-          locale={{ emptyText: empty }}
-          pagination={{
-            current: page,
-            pageSize: PAGE_SIZE,
-            total: pageData.count,
-            showSizeChanger: false,
-            hideOnSinglePage: true,
-            onChange: (nextPage) => replaceFilters({ page: nextPage }),
-          }}
-          scroll={{ x: 1000 }}
-          columns={columns}
-        />
-      </Card>
+      <div className="ws-panel ws-list">
+        <div className="ws-head cpl-head">
+          <span>{m.employer_campaign_list_col_campaign()}</span>
+          <span>{m.employer_campaign_list_col_status()}</span>
+          <span>{m.employer_campaign_jobs_col_job()}</span>
+          <span>{m.employer_campaign_cv_col_candidate()}</span>
+          <span>{m.employer_campaign_list_col_progress()}</span>
+          <span className="sr-only">{m.employer_campaign_jobs_col_actions()}</span>
+        </div>
+
+        {campaignsQuery.isError && (
+          <div className="p-3">
+            <Alert
+              type="error"
+              showIcon
+              title={getApiErrorMessage(campaignsQuery.error, m.employer_campaign_list_load_error())}
+              action={<Button size="small" danger onClick={() => campaignsQuery.refetch()}>{m.employer_campaign_retry()}</Button>}
+            />
+          </div>
+        )}
+
+        {campaignsQuery.isLoading ? (
+          <div aria-label={m.employer_campaign_list_loading_aria()}>
+            {[1, 2, 3].map((item) => (
+              <div key={item} className="ws-row">
+                <Skeleton active title={{ width: '45%' }} paragraph={{ rows: 2, width: ['70%', '90%'] }} />
+              </div>
+            ))}
+          </div>
+        ) : campaigns.length === 0 && !campaignsQuery.isError ? (
+          hasFilters ? (
+            <div className="py-14">
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={m.employer_campaign_list_empty_filtered()}>
+                <Button onClick={clearFilters}>{m.employer_campaign_list_clear_filters()}</Button>
+              </Empty>
+            </div>
+          ) : (
+            <MascotEmpty className="py-12" description={m.employer_campaign_list_empty()}>
+              <Link className={primaryLinkClass} to={employerAppPath('/campaigns/new')}>
+                <PlusOutlined /> {m.employer_campaign_list_create_first()}
+              </Link>
+            </MascotEmpty>
+          )
+        ) : (
+          <div
+            aria-busy={campaignsQuery.isFetching}
+            aria-live="polite"
+            className={`transition-opacity ${campaignsQuery.isPlaceholderData ? 'opacity-60' : ''}`}
+          >
+            {campaigns.map((campaign) => (
+              <CampaignListRow key={campaign.public_id} campaign={campaign} candidateDataAccess={canAccessCandidateData} />
+            ))}
+          </div>
+        )}
+
+        {pageData.count > 0 && (
+          <div className="flex flex-col items-center justify-between gap-2 border-t border-slate-100 px-4 py-3 text-xs text-slate-500 sm:flex-row">
+            <span>{m.employer_campaign_list_range({ first: firstRow, last: lastRow, total: formatCount(pageData.count) })}</span>
+            {pageData.count > PAGE_SIZE && (
+              <Pagination
+                size="small"
+                current={page}
+                pageSize={PAGE_SIZE}
+                total={pageData.count}
+                showSizeChanger={false}
+                onChange={(nextPage) => replaceFilters({ page: nextPage })}
+              />
+            )}
+          </div>
+        )}
+      </div>
     </section>
   )
 }

@@ -1,0 +1,437 @@
+/*
+ * Notification and activity feeds of the employer workspace. Restrained on
+ * purpose: slate neutrals, one emerald accent for selection and unread state,
+ * color on an event only when it needs attention (a dot on its icon).
+ * Lazy with the pages; no new Tailwind utilities (initial CSS budget).
+ */
+.ef-shell {
+  --ef-line: #e5e7eb;
+  --ef-soft: #f8fafc;
+  --ef-ink: #0f172a;
+  --ef-text: #334155;
+  --ef-muted: #64748b;
+  --ef-faint: #94a3b8;
+  --ef-accent: #059669;
+
+  display: grid;
+  gap: 12px;
+  padding: 4px 0 24px;
+}
+
+/* Side rail. */
+.ef-side { display: grid; min-width: 0; align-content: start; gap: 12px; }
+
+.ef-summary {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--ef-line);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 1px 1px, rgb(148 163 184 / 0.22) 1px, transparent 0) 0 0 / 14px 14px,
+    #fff;
+  padding: 16px;
+}
+
+/* Fade the dot grid out under the text. */
+.ef-summary::before {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, #fff 45%, rgb(255 255 255 / 0.6));
+  content: '';
+}
+
+.ef-summary > * { position: relative; }
+
+.ef-summary__eyebrow {
+  margin: 0;
+  color: var(--ef-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ef-summary__figure { display: flex; align-items: baseline; gap: 8px; margin: 6px 0 0; }
+
+.ef-summary__value {
+  color: var(--ef-ink);
+  font-size: 36px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.ef-summary__unit { color: var(--ef-muted); font-size: 14px; font-weight: 500; }
+.ef-summary__hint { margin: 8px 0 0; color: var(--ef-muted); font-size: 12px; line-height: 1.5; }
+
+.ef-summary__action.ant-btn {
+  width: 100%;
+  height: 36px;
+  margin-top: 14px;
+  border-color: var(--ef-line);
+  border-radius: 10px;
+  color: var(--ef-ink);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.06);
+}
+
+.ef-summary__action.ant-btn:not(:disabled):hover { border-color: #cbd5e1 !important; background: var(--ef-soft) !important; color: var(--ef-ink) !important; }
+.ef-summary__action .anticon,
+.ef-summary__action > svg { color: var(--ef-accent); font-size: 17px; }
+
+/* Activity bars: grey history, today in the accent. */
+.ef-spark { margin-top: 14px; }
+.ef-spark__bars { display: flex; height: 40px; align-items: flex-end; gap: 3px; }
+
+.ef-spark__bar {
+  flex: 1;
+  min-height: 3px;
+  border-radius: 2px;
+  background: #cbd5e1;
+  transition: background-color 0.15s;
+}
+
+.ef-spark__bar:hover { background: #94a3b8; }
+.ef-spark__bar.is-empty { background: #eef2f6; }
+.ef-spark__bar.is-today { background: var(--ef-accent); }
+.ef-spark__axis { display: flex; justify-content: space-between; margin-top: 6px; color: var(--ef-faint); font-size: 10px; font-variant-numeric: tabular-nums; }
+
+/* Group navigation: a scroll strip on phones, a vertical list in the rail. */
+.ef-nav {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  margin: 0 -10px;
+  padding: 0 10px 2px;
+  scrollbar-width: none;
+}
+
+.ef-nav::-webkit-scrollbar { display: none; }
+
+.ef-nav__item {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--ef-line);
+  border-radius: 10px;
+  background: #fff;
+  padding: 7px 10px;
+  color: var(--ef-text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.ef-nav__item:hover { background: var(--ef-soft); color: var(--ef-ink); }
+.ef-nav__icon { flex-shrink: 0; color: var(--ef-faint); font-size: 18px; transition: color 0.15s; }
+.ef-nav__label { white-space: nowrap; }
+
+.ef-nav__count {
+  margin-left: auto;
+  min-width: 20px;
+  color: var(--ef-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.ef-nav__count.is-zero { color: #cbd5e1; }
+
+.ef-nav__item[aria-pressed='true'] {
+  border-color: #cbd5e1;
+  color: var(--ef-ink);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.06), 0 4px 12px -8px rgb(15 23 42 / 0.25);
+}
+
+.ef-nav__item[aria-pressed='true'] .ef-nav__icon,
+.ef-nav__item[aria-pressed='true'] .ef-nav__count { color: var(--ef-accent); }
+
+/* Feed column. */
+.ef-main {
+  min-width: 0;
+  overflow: clip;
+  border: 1px solid var(--ef-line);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.ef-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  border-bottom: 1px solid var(--ef-line);
+  padding: 12px 14px;
+}
+
+.ef-toolbar__title { margin: 0; color: var(--ef-ink); font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+.ef-toolbar__tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; color: var(--ef-muted); font-size: 12px; }
+
+.ef-segmented { display: inline-flex; gap: 2px; border-radius: 9px; background: #f1f5f9; padding: 3px; }
+
+.ef-segmented > button {
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  padding: 4px 10px;
+  color: var(--ef-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.ef-segmented > button:hover { color: var(--ef-ink); }
+.ef-segmented > button[aria-pressed='true'] { background: #fff; color: var(--ef-ink); box-shadow: 0 1px 2px rgb(15 23 42 / 0.12); }
+
+/* Day label: small caps with a hairline to the edge. */
+.ef-group + .ef-group { border-top: 1px solid var(--ef-line); }
+
+.ef-day {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  background: rgb(255 255 255 / 0.94);
+  padding: 12px 14px 6px;
+  color: var(--ef-faint);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  backdrop-filter: blur(6px);
+}
+
+.ef-day::after { flex: 1; height: 1px; background: var(--ef-line); content: ''; }
+.ef-rows { position: relative; display: grid; padding: 0 6px 8px; }
+
+/* Event row; the title link covers the whole row. */
+.ef-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+  border-radius: 10px;
+  padding: 10px 8px;
+  transition: background-color 0.15s;
+}
+
+.ef-row:hover,
+.ef-row:focus-within { background: var(--ef-soft); }
+
+.ef-row__icon {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--ef-line);
+  border-radius: 10px;
+  background: #fff;
+  color: #475569;
+  font-size: 18px;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+}
+
+.ef-row__icon[data-severity='warning']::after,
+.ef-row__icon[data-severity='danger']::after {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 9px;
+  height: 9px;
+  border: 2px solid #fff;
+  border-radius: 9999px;
+  background: #f59e0b;
+  content: '';
+}
+
+.ef-row__icon[data-severity='danger']::after { background: #ef4444; }
+
+.ef-row__body { min-width: 0; }
+.ef-row__head { display: flex; align-items: center; gap: 8px; }
+
+.ef-row__title {
+  min-width: 0;
+  color: var(--ef-text) !important;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+a.ef-row__title::after { position: absolute; inset: 0; border-radius: inherit; content: ''; }
+.ef-row.is-unread .ef-row__title { color: var(--ef-ink) !important; font-weight: 600; }
+
+.ef-row__dot {
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background: var(--ef-accent);
+}
+
+.ef-row__message {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 2px 0 0;
+  color: var(--ef-muted);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.ef-row__meta { display: flex; flex-wrap: wrap; gap: 4px 6px; margin: 4px 0 0; color: var(--ef-faint); font-size: 12px; }
+.ef-row__meta > * + *::before { margin-right: 6px; color: #cbd5e1; content: '·'; }
+
+.ef-row__side {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.ef-row__time { color: var(--ef-faint); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ef-row__actions { display: flex; min-height: 28px; align-items: center; }
+
+/* Mark-read shows on hover/focus with a mouse; touch keeps it visible. */
+.ef-mark-read.ant-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  color: var(--ef-muted);
+  font-size: 16px;
+}
+
+.ef-mark-read.ant-btn:hover { background: #fff !important; color: var(--ef-accent) !important; box-shadow: 0 0 0 1px var(--ef-line); }
+
+@media (hover: hover) {
+  .ef-row .ef-mark-read { opacity: 0; transition: opacity 0.15s; }
+  .ef-row:hover .ef-mark-read,
+  .ef-row:focus-within .ef-mark-read { opacity: 1; }
+}
+
+/* History: a hairline joins the icons of a day. */
+.ef-rows--timeline::before {
+  position: absolute;
+  top: 18px;
+  bottom: 26px;
+  left: 31px;
+  width: 1px;
+  background: var(--ef-line);
+  content: '';
+}
+
+.ef-row a:focus-visible,
+.ef-row button:focus-visible,
+.ef-nav__item:focus-visible,
+.ef-segmented > button:focus-visible {
+  outline: 2px solid var(--ef-accent);
+  outline-offset: 2px;
+}
+
+.ef-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-top: 1px solid var(--ef-line);
+  padding: 10px 14px;
+  color: var(--ef-muted);
+  font-size: 12px;
+}
+
+.ef-more.ant-btn { border-radius: 9px; font-weight: 600; }
+
+@media (min-width: 640px) {
+  .ef-toolbar { padding: 14px 18px; }
+  .ef-day { padding-inline: 18px; }
+  .ef-rows { padding-inline: 10px; }
+  .ef-rows--timeline::before { left: 35px; }
+  .ef-footer { padding-inline: 18px; }
+}
+
+@media (min-width: 1024px) {
+  .ef-shell { grid-template-columns: 248px minmax(0, 1fr); align-items: start; gap: 16px; }
+  .ef-side { position: sticky; top: 0; }
+  .ef-nav { flex-direction: column; gap: 2px; overflow: visible; margin: 0; padding: 0; }
+  .ef-nav__item { border-color: transparent; background: transparent; padding: 8px 10px; }
+  .ef-nav__item:hover { background: rgb(255 255 255 / 0.7); }
+  .ef-nav__item[aria-pressed='true'] { border-color: var(--ef-line); background: #fff; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ef-row,
+  .ef-nav__item,
+  .ef-nav__icon,
+  .ef-segmented > button,
+  .ef-spark__bar,
+  .ef-row .ef-mark-read { transition: none; }
+}
+
+/* Admin announcements: the pinned block of the "All" view and the "System" group. */
+.ef-pinned { border-bottom: 1px solid var(--ef-line); background: linear-gradient(180deg, var(--ef-soft), #fff); }
+.ef-pinned .ef-day { background: transparent; color: var(--ef-accent); backdrop-filter: none; }
+.ef-row--announcement .ef-row__icon { color: var(--ef-ink); }
+
+.ef-row__eyebrow {
+  margin: 0 0 2px;
+  color: var(--ef-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ef-row__title--text { margin: 0; color: var(--ef-ink) !important; }
+
+.ef-live { display: inline-flex; align-items: center; gap: 6px; color: var(--ef-accent); font-weight: 600; }
+
+.ef-live::before {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--ef-accent);
+  box-shadow: 0 0 0 3px rgb(5 150 105 / 0.16);
+  content: '';
+}
+
+.ef-cta {
+  display: inline-flex;
+  height: 30px;
+  align-items: center;
+  border: 1px solid var(--ef-line);
+  border-radius: 9px;
+  background: #fff !important;
+  padding: 0 12px;
+  color: var(--ef-ink) !important;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.ef-cta:hover { border-color: #cbd5e1; background: var(--ef-soft) !important; }
+.ef-cta:focus-visible { outline: 2px solid var(--ef-accent); outline-offset: 2px; }
+.ef-rows--history { padding-top: 8px; }
+.ef-note { margin: 4px 8px 8px; color: var(--ef-muted); font-size: 12px; line-height: 1.5; }

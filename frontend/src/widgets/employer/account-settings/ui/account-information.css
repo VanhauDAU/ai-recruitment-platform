@@ -1,0 +1,199 @@
+/*
+ * Account information card of the employer settings: who the account is on
+ * top (photo, name, role, contact, company), the editable personal fields
+ * below. Border and radius match the verification card it sits above.
+ * Lazy with the page; no new Tailwind utilities (initial CSS budget).
+ */
+.eai {
+  margin-bottom: 20px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.eai-loading { padding: 24px; }
+
+/* Header: a quiet band behind the photo. */
+.eai-header { position: relative; }
+
+.eai-cover {
+  height: 76px;
+  border-bottom: 1px solid #eef2f6;
+  background:
+    radial-gradient(circle at 1px 1px, rgb(148 163 184 / 0.25) 1px, transparent 0) 0 0 / 14px 14px,
+    linear-gradient(120deg, #f8fafc, #ecfdf5);
+}
+
+.eai-identity {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 4px 16px;
+  margin-top: -44px;
+  padding: 0 20px;
+}
+
+.eai-avatar { position: relative; width: 88px; height: 88px; }
+
+.eai-avatar__image.ant-avatar {
+  border: 4px solid #fff;
+  background: #e2e8f0;
+  color: #334155;
+  font-size: 32px;
+  font-weight: 700;
+  box-shadow: 0 6px 18px -10px rgb(15 23 42 / 0.45);
+}
+
+.eai-avatar__edit {
+  position: absolute;
+  right: 0;
+  bottom: 2px;
+  display: inline-flex;
+  width: 30px;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  border-radius: 9999px;
+  background: #0f172a;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgb(15 23 42 / 0.25);
+  transition: background-color 0.15s, transform 0.15s;
+}
+
+.eai-avatar__edit:hover { background: #059669; transform: scale(1.06); }
+.eai-avatar__edit:focus-visible,
+.eai-link:focus-visible,
+.eai-company__link:focus-visible { outline: 2px solid #10b981; outline-offset: 2px; }
+
+.eai-identity__text { min-width: 0; padding-top: 10px; }
+.eai-identity__name { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+
+.eai-identity__name h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.eai-role {
+  border: 1px solid #d1fae5;
+  border-radius: 9999px;
+  background: #ecfdf5;
+  padding: 1px 10px;
+  color: #047857;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.eai-position { margin: 2px 0 0; color: #475569; font-size: 13px; }
+
+.eai-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 6px 0 0;
+  padding: 0;
+  color: #475569;
+  font-size: 13px;
+  list-style: none;
+}
+
+.eai-facts li { display: inline-flex; min-width: 0; align-items: center; gap: 6px; }
+.eai-facts li > span:first-of-type { overflow-wrap: anywhere; }
+.eai-facts .anticon { color: #94a3b8; }
+.eai-verified { display: inline-flex; align-items: center; gap: 4px; color: #059669; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.eai-verified .anticon { color: #10b981; }
+
+.eai-export.ant-btn { justify-self: start; margin-top: 8px; }
+
+/* Company strip. */
+.eai-company {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin: 16px 20px 0;
+  border: 1px solid #eef2f6;
+  border-radius: 4px;
+  background: #f8fafc;
+  padding: 10px 12px;
+}
+
+.eai-company__link {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  color: #0f172a !important;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.eai-company__link:hover .eai-company__name { color: #047857; }
+.eai-company__link--empty { color: #047857 !important; }
+.eai-company__logo.ant-avatar { flex-shrink: 0; border: 1px solid #e2e8f0; background: #fff; color: #334155; font-weight: 700; }
+.eai-company__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: color 0.15s; }
+.eai-company__joined { color: #64748b; font-size: 12px; }
+
+/* Editable fields. */
+.eai-form { padding: 20px; }
+
+.eai-form__title {
+  margin: 0 0 14px;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.eai-form__grid { display: grid; column-gap: 24px; }
+.eai-phone-label { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+
+.eai-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: #059669 !important;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.eai-link:hover { text-decoration: underline; }
+
+.eai-form__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 10px;
+  border-top: 1px solid #eef2f6;
+  padding-top: 16px;
+}
+
+.eai-form__hint { margin-right: auto; color: #b45309; font-size: 12px; }
+.eai-form__footer .ant-btn { min-width: 96px; }
+
+@media (min-width: 640px) {
+  .eai-identity { grid-template-columns: auto minmax(0, 1fr) auto; padding: 0 24px; }
+  .eai-identity__text { padding-top: 52px; }
+  .eai-export.ant-btn { grid-column: auto; margin: 56px 0 0; }
+  .eai-company { margin-inline: 24px; }
+  .eai-form { padding: 24px; }
+  .eai-form__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eai-avatar__edit,
+  .eai-company__name { transition: none; }
+  .eai-avatar__edit:hover { transform: none; }
+}

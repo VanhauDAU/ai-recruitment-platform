@@ -6,6 +6,17 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-11-22
+
+#### Changed — Mã tài khoản 8 chữ số cho ứng viên, NTD và admin
+
+- `User.public_id` đổi từ `usr_<12 hex>` sang 8 chữ số ngẫu nhiên (vd `48261937`), dễ
+  đọc qua điện thoại; không tăng dần nên không đoán được số lượng tài khoản. Migration
+  đổi mã toàn bộ tài khoản cũ và cập nhật nhật ký quản trị theo mã mới.
+- "Mã NTD" ở dashboard và email NTD dùng mã tài khoản thay cho mã hồ sơ NTD `rec_…`;
+  API dashboard NTD đổi `account.recruiter_public_id` thành `account.public_id`.
+- Ô tìm kiếm tài khoản của admin chấp nhận mã gõ theo nhóm ("4826 1937").
+
 ### 2026-11-21
 
 #### Changed — Cắt ảnh banner và thêm tông màu

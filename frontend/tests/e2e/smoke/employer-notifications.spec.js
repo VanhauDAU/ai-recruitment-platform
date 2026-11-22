@@ -61,8 +61,10 @@ test.beforeEach(async ({ page }) => {
         count: 1,
         next: null,
         previous: null,
+        unread_counts: { all: 1, applications: 0, jobs: 0, campaigns: 0, company: 1 },
         results: [{
           public_id: 'eno_1',
+          category: 'company',
           event_type: 'verification_changes_requested',
           title: 'Hồ sơ xác thực cần bổ sung',
           message: 'Vui lòng bổ sung giấy đăng ký doanh nghiệp.',
@@ -71,6 +73,24 @@ test.beforeEach(async ({ page }) => {
           is_read: false,
           read_at: null,
           created_at: '2026-08-10T02:00:00Z',
+        }],
+      }),
+    })
+  })
+  await page.route(/http:\/\/localhost:8000\/api\/shared\/site\/announcements\/inbox\/.*/, async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        items: [{
+          public_id: 'ann_live',
+          kind: 'maintenance',
+          message: 'Hệ thống bảo trì từ 22:00 đến 23:00 tối nay.',
+          badge: '',
+          icon: 'wrench',
+          cta: null,
+          is_live: true,
+          shown_at: '2026-08-10T01:00:00Z',
+          ends_at: null,
         }],
       }),
     })
@@ -85,8 +105,12 @@ test.beforeEach(async ({ page }) => {
         count: 1,
         next: null,
         previous: null,
+        category_counts: { all: 1, applications: 0, jobs: 0, campaigns: 0, company: 1 },
         results: [{
           public_id: 'eac_1',
+          category: 'company',
+          actor_kind: 'admin',
+          action_path: '/tuyendung/app/employer-verify',
           event_type: 'verification_changes_requested',
           summary: 'Hồ sơ xác thực cần bổ sung',
           subject_public_id: 'evc_1',
@@ -101,13 +125,23 @@ test.beforeEach(async ({ page }) => {
 
 test('employer notification and activity routes are usable and responsive', { tag: '@responsive' }, async ({ page }) => {
   await page.goto('/tuyendung/app/notifications')
-  await expect(page.getByRole('heading', { name: 'Thông báo hệ thống' })).toBeVisible()
-  await expect(page.getByText('Hồ sơ xác thực cần bổ sung').first()).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Thông báo hệ thống' })).toBeAttached()
+  const groups = page.getByRole('group', { name: 'Lọc theo nhóm' })
+  await expect(groups.getByRole('button', { name: /Công ty & xác thực\s*1/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Hồ sơ xác thực cần bổ sung' }).first()).toHaveAttribute('href', '/tuyendung/app/employer-verify')
+  await expect(page.getByRole('button', { name: 'Đánh dấu đã đọc' })).toBeVisible()
   await expect(page.locator('.ant-badge-count')).toContainText('1')
+  await expect(page.getByRole('region', { name: 'Từ hệ thống' }).getByText('Hệ thống bảo trì từ 22:00 đến 23:00 tối nay.')).toBeVisible()
   await expectNoHorizontalOverflow(page)
 
+  await page.getByRole('button', { name: /Chỉ chưa đọc/ }).click()
+  await expect(page).toHaveURL(/unread=true/)
+
   await page.goto('/tuyendung/app/activities')
-  await expect(page.getByRole('heading', { name: 'Lịch sử hoạt động' })).toBeVisible()
-  await expect(page.getByText('Thực hiện bởi: Quản trị viên')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Lịch sử hoạt động' })).toBeAttached()
+  await expect(page.getByRole('link', { name: 'Hồ sơ xác thực cần bổ sung' })).toHaveAttribute('href', '/tuyendung/app/employer-verify')
+  await expect(page.getByText('Quản trị viên')).toBeVisible()
+  await page.getByRole('button', { name: '30 ngày' }).click()
+  await expect(page).toHaveURL(/days=30/)
   await expectNoHorizontalOverflow(page)
 })

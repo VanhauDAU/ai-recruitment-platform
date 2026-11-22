@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { message } from '@/shared/lib/toast'
 import { useConsent } from '@/entities/system/consent'
 import { CookieConsentBanner, CookiePreferencesModal } from '@/features/common/privacy/cookie-consent'
@@ -9,6 +9,11 @@ const ALL_ON = { necessary: true, preferences: true, analytics: true, marketing:
 export default function CookieConsentLayer() {
   const { consent, status, isDecided, isEnabled, settingsOpen, openSettings, closeSettings, updateConsent } = useConsent()
   const [saving, setSaving] = useState(false)
+  // Mount the lazy modal on first open and keep it, so closing still animates.
+  const [modalMounted, setModalMounted] = useState(false)
+  useEffect(() => {
+    if (settingsOpen) setModalMounted(true)
+  }, [settingsOpen])
 
   function sameConsent(left, right) {
     return ['preferences', 'analytics', 'marketing'].every((key) => left?.[key] === right?.[key])
@@ -50,7 +55,11 @@ export default function CookieConsentLayer() {
   return (
     <>
       {!isDecided && <CookieConsentBanner onAcceptAll={() => save(ALL_ON)} onCustomize={openSettings} onRejectOptional={() => save(OPTIONAL_OFF)} saving={saving} />}
-      <CookiePreferencesModal open={settingsOpen} consent={consent} onClose={closeSettings} onSave={save} saving={saving} />
+      {modalMounted && (
+        <Suspense fallback={null}>
+          <CookiePreferencesModal open={settingsOpen} consent={consent} onClose={closeSettings} onSave={save} saving={saving} />
+        </Suspense>
+      )}
     </>
   )
 }

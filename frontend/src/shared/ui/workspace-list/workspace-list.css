@@ -1,0 +1,348 @@
+/*
+ * Shared look of the employer workspace lists (jobs, campaigns, notifications,
+ * activity history) and the job workspace: status tones, pills, the filter
+ * panel, attention chips, sortable headers and stat cells. Domain-free, so
+ * pages and widgets both import it; lazy chunks only. Tailwind
+ * utilities land in the initial stylesheet, which is at its budget
+ * (frontend/ARCHITECTURE.md). Each page keeps its own row grid.
+ */
+
+/* Status tones: one class sets the colours, pills, dots and chips read them. */
+.ws-tone-emerald { --ws-tone-bg: #ecfdf5; --ws-tone-fg: #047857; --ws-tone-dot: #10b981; }
+.ws-tone-red { --ws-tone-bg: #fef2f2; --ws-tone-fg: #b91c1c; --ws-tone-dot: #ef4444; }
+.ws-tone-orange { --ws-tone-bg: #fff7ed; --ws-tone-fg: #c2410c; --ws-tone-dot: #f97316; }
+.ws-tone-amber { --ws-tone-bg: #fffbeb; --ws-tone-fg: #b45309; --ws-tone-dot: #f59e0b; }
+.ws-tone-sky { --ws-tone-bg: #f0f9ff; --ws-tone-fg: #0369a1; --ws-tone-dot: #0ea5e9; }
+.ws-tone-cyan { --ws-tone-bg: #ecfeff; --ws-tone-fg: #0e7490; --ws-tone-dot: #06b6d4; }
+.ws-tone-violet { --ws-tone-bg: #f5f3ff; --ws-tone-fg: #6d28d9; --ws-tone-dot: #8b5cf6; }
+.ws-tone-teal { --ws-tone-bg: #f0fdfa; --ws-tone-fg: #0f766e; --ws-tone-dot: #0d9488; }
+.ws-tone-slate { --ws-tone-bg: #f1f5f9; --ws-tone-fg: #475569; --ws-tone-dot: #94a3b8; }
+
+.ws-pill {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  border-radius: 9999px;
+  padding: 2px 8px;
+  background: var(--ws-tone-bg);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ws-tone-fg) 16%, transparent);
+  color: var(--ws-tone-fg);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.ws-pill--status { font-size: 12px; font-weight: 500; }
+
+.ws-pill::before,
+.ws-dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background: var(--ws-tone-dot);
+}
+
+.ws-pill::before { content: ''; }
+.ws-pill--plain::before { content: none; }
+
+/* Page: a filter panel above a list panel. */
+.ws-page { display: grid; gap: 12px; padding: 4px 0 20px; }
+
+.ws-panel {
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+}
+
+/* Status tabs scroll sideways on phones without a scrollbar. */
+.ws-tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0 6px;
+  scrollbar-width: none;
+}
+
+.ws-tabs::-webkit-scrollbar { display: none; }
+
+.ws-tab {
+  margin-bottom: -1px;
+  display: inline-flex;
+  height: 44px;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  padding: 0 10px;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.ws-tab:hover { color: #0f172a; }
+.ws-tab[aria-pressed='true'] { border-bottom-color: #059669; color: #047857; }
+
+.ws-tab__count {
+  min-width: 24px;
+  border-radius: 9999px;
+  background: #f1f5f9;
+  padding: 1px 6px;
+  color: #475569;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.ws-tab[aria-pressed='true'] .ws-tab__count { background: #059669; color: #fff; }
+
+.ws-tab__count--loading {
+  width: 24px;
+  height: 18px;
+  animation: ws-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes ws-pulse { 50% { opacity: 0.4; } }
+
+/* Search spans the first row on phones; the selects share the second. */
+.ws-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 12px 12px 0;
+}
+
+.ws-filters > :first-child { grid-column: 1 / -1; }
+
+.ws-quick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 12px 12px;
+}
+
+.ws-quick__label { color: #64748b; font-size: 12px; font-weight: 600; }
+.ws-quick__chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.ws-quick__meta {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: #64748b;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Attention chip: a toggle filter that shows how many rows it would keep. */
+.ws-chip {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 9999px;
+  background: #fff;
+  padding: 0 10px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s, color 0.15s;
+}
+
+.ws-chip:hover:not(:disabled) { border-color: #cbd5e1; color: #0f172a; }
+.ws-chip:disabled { cursor: default; opacity: 0.5; }
+
+.ws-chip[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--ws-tone-fg) 45%, transparent);
+  background: var(--ws-tone-bg);
+  color: var(--ws-tone-fg);
+}
+
+.ws-chip__count {
+  min-width: 20px;
+  border-radius: 9999px;
+  background: var(--ws-tone-bg);
+  padding: 0 6px;
+  color: var(--ws-tone-fg);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  line-height: 18px;
+  text-align: center;
+}
+
+.ws-chip[aria-pressed='true'] .ws-chip__count { background: #fff; }
+
+.ws-link-button,
+.ws-sort {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.ws-link-button { color: #047857; font-weight: 600; }
+.ws-link-button:hover { text-decoration: underline; }
+
+.ws-tab:focus-visible,
+.ws-chip:focus-visible,
+.ws-link-button:focus-visible,
+.ws-sort:focus-visible,
+.ws-row a:focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: 2px;
+}
+
+/* List: rows are cards until the list itself is wide (a container query, so
+ * the sidebar counts); each page sets the columns and areas of its table. */
+.ws-list { container-type: inline-size; }
+.ws-head { display: none; }
+
+.ws-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: inherit;
+  font-weight: 600;
+  transition: color 0.15s;
+}
+
+.ws-sort:hover { color: #0f172a; }
+.ws-sort__icon { font-size: 10px; opacity: 0; transition: opacity 0.15s; }
+.ws-sort:hover .ws-sort__icon { opacity: 0.5; }
+.ws-sort[aria-pressed='true'] { color: #047857; }
+.ws-sort[aria-pressed='true'] .ws-sort__icon { opacity: 1; }
+
+.ws-row {
+  display: grid;
+  gap: 6px 12px;
+  border-top: 1px solid #f1f5f9;
+  padding: 14px 12px;
+  transition: background-color 0.15s;
+}
+
+.ws-row:first-child { border-top: 0; }
+.ws-row:hover,
+.ws-row:focus-within { background: #f8fafc; }
+
+.ws-row__title {
+  display: -webkit-box;
+  overflow: hidden;
+  align-self: center;
+  color: #0f172a !important;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.ws-row__title:hover { color: #047857 !important; }
+
+.ws-row__meta {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 12px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.ws-row__meta .anticon { color: #94a3b8; }
+
+/* Labelled stats under the title of a card row. */
+.ws-row__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px 12px;
+  margin-top: 4px;
+  border-top: 1px dashed #e2e8f0;
+  padding-top: 10px;
+}
+
+.ws-stat {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  font-size: 12px;
+}
+
+.ws-stat__label { color: #94a3b8; font-size: 11px; font-weight: 600; }
+.ws-strong { color: #0f172a; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ws-strong--sm { font-size: 13px; }
+.ws-muted { color: #94a3b8; }
+.ws-caption { font-size: 12px; font-weight: 500; line-height: 1.3; }
+
+.ws-progress {
+  display: block;
+  width: 100%;
+  max-width: 128px;
+  height: 4px;
+  overflow: hidden;
+  margin-top: 4px;
+  border-radius: 9999px;
+  background: #f1f5f9;
+}
+
+.ws-progress > span { display: block; height: 100%; border-radius: inherit; }
+
+.ws-head {
+  align-items: center;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+  padding: 10px 16px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* The result count repeats the footer range, so phones keep only the chips;
+ * the narrowest screens drop the label too so both chips fit on one line. */
+@media (max-width: 639px) {
+  .ws-quick__count { display: none; }
+}
+
+@media (max-width: 419px) {
+  .ws-quick__label { display: none; }
+}
+
+@media (min-width: 640px) {
+  .ws-tabs { padding: 0 10px; }
+  .ws-filters { padding: 14px 16px 0; }
+  .ws-quick { padding: 10px 16px 14px; }
+  .ws-row { padding-inline: 16px; }
+}
+
+@container (min-width: 1080px) {
+  .ws-head { display: grid; }
+  .ws-row { align-items: center; row-gap: 4px; padding-block: 12px; }
+  .ws-row__title { align-self: end; }
+  .ws-row__meta { align-self: start; }
+  .ws-row__stats { display: contents; }
+  .ws-stat__label { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-tab,
+  .ws-chip,
+  .ws-sort,
+  .ws-sort__icon,
+  .ws-row { transition: none; }
+  .ws-tab__count--loading { animation: none; }
+}

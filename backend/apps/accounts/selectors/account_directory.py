@@ -164,12 +164,18 @@ def _with_recruiter_next_action(queryset):
     )
 
 
+def _account_code_q(query):
+    """Mã tài khoản hay được đọc/gõ theo nhóm số ("4826 1937"), nên bỏ dấu ngăn cách."""
+    code = re.sub(r'[\s.-]', '', query)
+    return Q(public_id__icontains=code) if code else Q(pk__in=[])
+
+
 def _recruiter_search(query):
     """Name/email/id plus company name (accent-insensitive), tax code and phone."""
     condition = (
         Q(email__icontains=query)
         | Q(full_name__icontains=query)
-        | Q(public_id__icontains=query)
+        | _account_code_q(query)
         | search_q('recruiter_profile__company__company_name', query)
     )
     digits = re.sub(r'\D', '', query)
@@ -255,9 +261,7 @@ def accounts_queryset(actor, *, params=None):
         queryset = queryset.filter(_recruiter_search(query))
     elif query:
         queryset = queryset.filter(
-            Q(email__icontains=query)
-            | Q(full_name__icontains=query)
-            | Q(public_id__icontains=query)
+            Q(email__icontains=query) | Q(full_name__icontains=query) | _account_code_q(query)
         )
     if scope != ACCOUNT_SCOPE_USERS and (
         codes := next_action.next_action_codes(params.get('next_action'))

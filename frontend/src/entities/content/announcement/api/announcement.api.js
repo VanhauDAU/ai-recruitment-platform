@@ -27,6 +27,12 @@ export async function getActiveAnnouncements(params, { signal } = {}) {
   return feed
 }
 
+/** Live then recent announcements a signed-in user is shown on `surface`. */
+export async function getAnnouncementInbox({ surface, locale }) {
+  const { data } = await api.get('/shared/site/announcements/inbox/', { params: { surface, locale } })
+  return data?.items || []
+}
+
 export async function setAnnouncementState(publicId, payload) {
   const { data } = await api.put(`/shared/site/announcements/${publicId}/state/`, payload)
   return data
