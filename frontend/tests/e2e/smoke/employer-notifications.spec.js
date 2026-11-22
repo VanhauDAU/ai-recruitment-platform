@@ -77,6 +77,24 @@ test.beforeEach(async ({ page }) => {
       }),
     })
   })
+  await page.route(/http:\/\/localhost:8000\/api\/shared\/site\/announcements\/inbox\/.*/, async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        items: [{
+          public_id: 'ann_live',
+          kind: 'maintenance',
+          message: 'Hệ thống bảo trì từ 22:00 đến 23:00 tối nay.',
+          badge: '',
+          icon: 'wrench',
+          cta: null,
+          is_live: true,
+          shown_at: '2026-08-10T01:00:00Z',
+          ends_at: null,
+        }],
+      }),
+    })
+  })
   await page.route('http://localhost:8000/api/employer/notifications/eno_1/read/', async (route) => {
     await route.fulfill({ contentType: 'application/json', body: '{"public_id":"eno_1","is_read":true}' })
   })
@@ -109,10 +127,11 @@ test('employer notification and activity routes are usable and responsive', { ta
   await page.goto('/tuyendung/app/notifications')
   await expect(page.getByRole('heading', { name: 'Thông báo hệ thống' })).toBeAttached()
   const groups = page.getByRole('group', { name: 'Lọc theo nhóm' })
-  await expect(groups.getByRole('button', { name: /1\s*Công ty & xác thực/ })).toBeVisible()
+  await expect(groups.getByRole('button', { name: /Công ty & xác thực\s*1/ })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Hồ sơ xác thực cần bổ sung' }).first()).toHaveAttribute('href', '/tuyendung/app/employer-verify')
   await expect(page.getByRole('button', { name: 'Đánh dấu đã đọc' })).toBeVisible()
   await expect(page.locator('.ant-badge-count')).toContainText('1')
+  await expect(page.getByRole('region', { name: 'Từ hệ thống' }).getByText('Hệ thống bảo trì từ 22:00 đến 23:00 tối nay.')).toBeVisible()
   await expectNoHorizontalOverflow(page)
 
   await page.getByRole('button', { name: /Chỉ chưa đọc/ }).click()

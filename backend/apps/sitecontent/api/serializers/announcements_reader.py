@@ -143,6 +143,30 @@ class ActiveAnnouncementSerializer(serializers.Serializer):
         )
 
 
+class AnnouncementInboxQuerySerializer(serializers.Serializer):
+    surface = serializers.ChoiceField(choices=AnnouncementRevision.Surface.choices)
+    locale = serializers.CharField(max_length=16, default='vi')
+
+
+class AnnouncementInboxItemSerializer(ActiveAnnouncementSerializer):
+    """What the inbox lists: the content of the strip, not how it animates."""
+
+    revision = None
+    priority_tier = None
+    priority = None
+    animation = None
+    display_seconds = None
+    dismiss = None
+    theme = None
+    background = None
+    is_live = serializers.BooleanField(source='inbox_is_live')
+    shown_at = serializers.DateTimeField(source='inbox_shown_at')
+
+
+class AnnouncementInboxSerializer(serializers.Serializer):
+    items = AnnouncementInboxItemSerializer(many=True)
+
+
 class ActiveAnnouncementFeedSerializer(serializers.Serializer):
     items = ActiveAnnouncementSerializer(many=True)
     next_transition_at = serializers.DateTimeField(allow_null=True)

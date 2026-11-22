@@ -11,12 +11,43 @@ const api = vi.hoisted(() => ({
   getEmployerNotifications: vi.fn(),
   markAllEmployerNotificationsRead: vi.fn(),
   markEmployerNotificationRead: vi.fn(),
+  getAnnouncementInbox: vi.fn(),
 }))
 
 vi.mock('@/entities/notification/employer-notification', async (importOriginal) => ({
   ...await importOriginal(),
   ...api,
 }))
+vi.mock('@/entities/content/announcement', async (importOriginal) => ({
+  ...await importOriginal(),
+  getAnnouncementInbox: api.getAnnouncementInbox,
+}))
+vi.mock('@/entities/account/session', () => ({
+  useSession: () => ({ user: { public_id: 'usr_1', role: 'employer' } }),
+}))
+
+const LIVE_ANNOUNCEMENT = {
+  public_id: 'ann_live',
+  kind: 'maintenance',
+  message: 'Hệ thống bảo trì từ 22:00 đến 23:00 tối nay.',
+  badge: '',
+  icon: 'wrench',
+  cta: { label: 'Xem chi tiết', url: '/tro-giup/bao-tri', external: false },
+  is_live: true,
+  shown_at: new Date().toISOString(),
+  ends_at: new Date(Date.now() + 36e5).toISOString(),
+}
+const PAST_ANNOUNCEMENT = {
+  public_id: 'ann_past',
+  kind: 'feature',
+  message: 'Đã có bộ lọc tin tuyển dụng mới.',
+  badge: '',
+  icon: 'sparkles',
+  cta: null,
+  is_live: false,
+  shown_at: '2026-11-01T02:00:00Z',
+  ends_at: null,
+}
 
 const UNREAD_COUNTS = { all: 1, applications: 0, jobs: 0, campaigns: 0, company: 1 }
 const NOTIFICATION = {
@@ -50,6 +81,27 @@ describe('EmployerNotificationCenter', () => {
     })
     api.markAllEmployerNotificationsRead.mockReset().mockResolvedValue({ updated: 1 })
     api.markEmployerNotificationRead.mockReset().mockResolvedValue({ is_read: true })
+    api.getAnnouncementInbox.mockReset().mockResolvedValue([LIVE_ANNOUNCEMENT, PAST_ANNOUNCEMENT])
+  })
+
+  it('pins live system announcements above the feed and lists them all under System', async () => {
+    const user = userEvent.setup()
+    renderWidget(EmployerNotificationCenter)
+
+    const pinned = await screen.findByRole('region', { name: 'Từ hệ thống' })
+    expect(within(pinned).getByText('Hệ thống bảo trì từ 22:00 đến 23:00 tối nay.')).toBeInTheDocument()
+    expect(within(pinned).getByText('Bảo trì')).toBeInTheDocument()
+    expect(within(pinned).getByRole('link', { name: 'Xem chi tiết' })).toHaveAttribute('href', '/tro-giup/bao-tri')
+    expect(within(pinned).queryByText('Đã có bộ lọc tin tuyển dụng mới.')).not.toBeInTheDocument()
+
+    const groups = screen.getByRole('group', { name: 'Lọc theo nhóm' })
+    await user.click(within(groups).getByRole('button', { name: /Hệ thống\s*1/ }))
+
+    expect(await screen.findByText('Đã có bộ lọc tin tuyển dụng mới.')).toBeInTheDocument()
+    expect(screen.getByText('Tính năng mới')).toBeInTheDocument()
+    expect(screen.getByText(/^Phát hành/)).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Hồ sơ xác thực cần bổ sung' })).not.toBeInTheDocument()
+    expect(screen.getByTestId('location-search')).toHaveTextContent('?category=system')
   })
 
   it('groups notifications by day and marks one read from the row or all at once', async () => {
@@ -72,7 +124,7 @@ describe('EmployerNotificationCenter', () => {
     renderWidget(EmployerNotificationCenter)
 
     const tabs = await screen.findByRole('group', { name: 'Lọc theo nhóm' })
-    expect(await within(tabs).findByRole('button', { name: /1\s*Công ty & xác thực/ })).toBeInTheDocument()
+    expect(await within(tabs).findByRole('button', { name: /Công ty & xác thực\s*1/ })).toBeInTheDocument()
     await user.click(within(tabs).getByRole('button', { name: /Ứng tuyển/ }))
     await user.click(screen.getByRole('button', { name: /Chỉ chưa đọc/ }))
 

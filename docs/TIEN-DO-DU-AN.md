@@ -49,10 +49,18 @@ Hai trang `/tuyendung/app/notifications` và `/tuyendung/app/activities` trướ
 một danh sách phân trang (timeline antd), không lọc được và lịch sử không dẫn tới
 đâu. Làm lại cùng khung với trang tin/chiến dịch (#305), theo `ui-ux-pro-max`.
 
-- Thiết kế: thẻ tổng quan gradient (số chưa đọc + nút đánh dấu hết; tổng hoạt động
-  + biểu đồ cột 14 ngày), ô nhóm có icon và thanh tỉ lệ, lịch sử dạng trục thời gian,
-  thông báo dạng thẻ có vạch màu khi chưa đọc, giờ tương đối ("18 phút trước"). Icon
-  Phosphor *duotone* (MIT) tải từ repo chính thức, nhúng ở `shared/ui/icons`.
+- Thiết kế (làm gọn lại 22/11 theo góp ý "nhiều màu, hơi cơ bản"): nền trung tính,
+  một màu nhấn; hai cột với thanh bên (số lớn chưa đọc/tổng hoạt động, biểu đồ 14
+  ngày, danh sách nhóm) và cột danh sách theo ngày; chỉ cảnh báo/lỗi có chấm màu;
+  giờ tương đối ("18 phút trước"). Icon Phosphor *duotone* (MIT) tải từ repo chính
+  thức, nhúng ở `shared/ui/icons`.
+- Thông báo admin phát hành (trang quản trị Thông báo, bề mặt workspace NTD) trước
+  đây chỉ hiện ở dải trên cùng, đóng là mất. Nay trang Thông báo hệ thống có nhóm
+  **Hệ thống** liệt kê thông báo 90 ngày (đang hiển thị trước), thông báo đang hiển
+  thị được ghim ở đầu chế độ "Tất cả" kèm loại và nút hành động. API mới
+  `GET /api/shared/site/announcements/inbox/?surface=…` (đúng luật đối tượng/vai trò,
+  bỏ qua luật đường dẫn và việc đã đóng dải). Admin gửi tin riêng cho một NTD vẫn
+  chưa có.
 - Nhóm sự kiện: Ứng tuyển · Tin tuyển dụng · Chiến dịch · Công ty & xác
   thực. Thông báo đếm số **chưa đọc** mỗi nhóm, có chip "Chỉ chưa đọc", nút đánh dấu
   đã đọc trên từng dòng và "Đánh dấu tất cả đã đọc". Lịch sử đếm tổng mỗi nhóm, lọc

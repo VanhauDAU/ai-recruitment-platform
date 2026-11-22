@@ -16,6 +16,7 @@ from common.metrics import record_metric
 from ...models import Announcement
 from ...selectors import (
     active_announcements_for_request,
+    announcement_inbox_for_user,
     remote_announcements_enabled,
 )
 from ...services import (
@@ -29,6 +30,8 @@ from ..serializers import (
     ActiveAnnouncementQuerySerializer,
     ActiveAnnouncementSerializer,
     AnnouncementEventBatchSerializer,
+    AnnouncementInboxQuerySerializer,
+    AnnouncementInboxSerializer,
     AnnouncementRuntimeEventSerializer,
     AnnouncementStateWriteSerializer,
     AnnouncementUserStateSerializer,
@@ -103,6 +106,35 @@ class ActiveAnnouncementListView(APIView):
                 'next_transition_at': next_transition_at,
                 'remote_enabled': remote_enabled,
             }
+        )
+        response['Cache-Control'] = 'private, no-store'
+        return response
+
+
+@extend_schema(
+    summary='Hộp thông báo hệ thống của người dùng trên một bề mặt',
+    description=(
+        'Thông báo đang hiển thị trước, rồi thông báo đã phát hành trong 90 ngày; '
+        'bỏ qua luật đường dẫn và việc đã đóng dải để người dùng đọc lại được.'
+    ),
+    parameters=[AnnouncementInboxQuerySerializer],
+    responses={200: AnnouncementInboxSerializer},
+    tags=['site-announcements'],
+)
+class AnnouncementInboxView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        query = AnnouncementInboxQuerySerializer(data=request.query_params)
+        query.is_valid(raise_exception=True)
+        params = query.validated_data
+        items = (
+            announcement_inbox_for_user(surface=params['surface'], user=request.user)
+            if remote_announcements_enabled(params['surface'])
+            else []
+        )
+        response = Response(
+            AnnouncementInboxSerializer({'items': items}, context={'locale': params['locale']}).data
         )
         response['Cache-Control'] = 'private, no-store'
         return response

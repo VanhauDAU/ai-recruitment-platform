@@ -14,6 +14,7 @@ from .announcements_admin import (
 from .announcements_reader import (
     ActiveAnnouncementListView,
     AnnouncementEventBatchView,
+    AnnouncementInboxView,
     AnnouncementRuntimeEventView,
     AnnouncementStateView,
 )
@@ -38,6 +39,7 @@ __all__ = [
     'ActiveAnnouncementListView',
     'AnnouncementEventBatchView',
     'AnnouncementRuntimeEventView',
+    'AnnouncementInboxView',
     'AnnouncementStateView',
     'AdminAnnouncementArchiveView',
     'AdminAnnouncementBackgroundUploadView',

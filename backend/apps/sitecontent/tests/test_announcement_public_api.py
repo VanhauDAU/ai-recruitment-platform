@@ -290,3 +290,87 @@ class AnnouncementRuntimeEventApiTests(APITestCase):
                 for record in metric_logs.records
             )
         )
+
+
+class AnnouncementInboxApiTests(APITestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user(
+            email='announcement-inbox-admin@example.com',
+            password='Password@123',
+            role=User.Role.ADMIN,
+            is_superuser=True,
+        )
+        self.employer = User.objects.create_user(
+            email='announcement-inbox-employer@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
+        )
+        self.url = reverse('site-announcement-inbox')
+
+    def publish(self, internal_name, **overrides):
+        overrides.setdefault('surfaces', [AnnouncementRevision.Surface.EMPLOYER_WORKSPACE])
+        overrides.setdefault('auth_audiences', [AnnouncementRevision.Audience.AUTHENTICATED])
+        announcement = create_announcement(
+            actor=self.admin,
+            internal_name=internal_name,
+            revision_data=revision_payload(**overrides),
+        )
+        return publish_announcement(
+            announcement=announcement,
+            actor=self.admin,
+            revision_number=1,
+            expected_revision_token=1,
+        )
+
+    def test_lists_live_then_recent_announcements_for_the_surface_ignoring_paths(self):
+        info = self.publish('Tính năng mới', message_vi='Có bộ lọc mới.')
+        maintenance = self.publish(
+            'Bảo trì',
+            kind=AnnouncementRevision.Kind.MAINTENANCE,
+            message_vi='Bảo trì tối nay.',
+            include_path_prefixes=['/tuyendung/app/jobs'],
+        )
+        archived = self.publish('Đã lưu trữ', message_vi='Thông báo cũ.')
+        old = self.publish('Quá cũ', message_vi='Rất cũ.')
+        self.publish('Chỉ ứng viên', surfaces=[AnnouncementRevision.Surface.CANDIDATE])
+        self.publish(
+            'Sắp tới',
+            starts_at=(timezone.now() + timedelta(days=2)).isoformat(),
+            ends_at=(timezone.now() + timedelta(days=5)).isoformat(),
+        )
+        archived.lifecycle_state = archived.LifecycleState.ARCHIVED
+        archived.published_at = timezone.now() - timedelta(days=10)
+        archived.save(update_fields=['lifecycle_state', 'published_at'])
+        type(old).objects.filter(pk=old.pk).update(
+            lifecycle_state=old.LifecycleState.ARCHIVED,
+            published_at=timezone.now() - timedelta(days=120),
+        )
+        self.client.force_authenticate(self.employer)
+
+        response = self.client.get(self.url, {'surface': 'employer_workspace', 'locale': 'en'})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        items = response.data['items']
+        self.assertEqual(
+            [item['public_id'] for item in items],
+            [maintenance.public_id, info.public_id, archived.public_id],
+        )
+        self.assertEqual([item['is_live'] for item in items], [True, True, False])
+        self.assertEqual(items[0]['kind'], 'maintenance')
+        self.assertEqual(items[1]['badge'], 'New')
+        self.assertNotIn('animation', items[0])
+        self.assertEqual(response['Cache-Control'], 'private, no-store')
+
+    def test_other_roles_see_nothing_and_guests_are_refused(self):
+        self.publish('Chỉ nhà tuyển dụng')
+        candidate = User.objects.create_user(
+            email='announcement-inbox-candidate@example.com',
+            password='Password@123',
+            role=User.Role.CANDIDATE,
+        )
+        guest = self.client.get(self.url, {'surface': 'employer_workspace'})
+        self.client.force_authenticate(candidate)
+        candidate_view = self.client.get(self.url, {'surface': 'employer_workspace'})
+
+        self.assertIn(guest.status_code, (status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN))
+        self.assertEqual(candidate_view.data['items'], [])
