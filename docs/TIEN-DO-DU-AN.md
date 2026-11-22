@@ -666,6 +666,38 @@ GĐ1 đã làm:
   - **Bạn tự đăng:** ô gọn, kèm gợi ý ngắn cho từng nơi đăng.
   - Bỏ nhãn "Bạn sẽ đăng ở đâu?".
   - Mobile: nhóm tự đăng một cột, nhóm đăng tay hai cột, chữ được xuống dòng.
+- Tab "Kênh & nguồn" làm lại giao diện (22/11, chưa tạo PR).
+  - Danh sách kênh chuyển thành hàng tab ngang kiểu thẻ hồ sơ. Mỗi tab chỉ có
+    logo và tên kênh, tab đang chọn liền khối với khung chi tiết, góc dưới cong.
+    Chuyển tab bằng phím mũi tên, Home, End.
+  - "Kênh phân phối" và "Hiệu quả theo nguồn" thành hai cụm thu gọn: mở cụm này
+    thì cụm kia đóng, co giãn có hiệu ứng. Bảng nguồn chỉ gọi API khi mở lần đầu.
+  - Danh sách bài đã đăng trên mạng xã hội chia trang, mỗi trang 3 bài.
+- Hàng tab kiểu thẻ hồ sơ thành component dùng chung `shared/ui/folder-tabs` (22/11, cùng PR).
+  - Không còn nền bao ngoài: hàng tab nằm trên đường kẻ mảnh, tab đang chọn có
+    viền mảnh, vạch xanh trên đỉnh, góc cong vẽ bằng SVG nối liền đường kẻ.
+  - Hai kiểu: khung viền (trang nền xám) và `plain` chỉ giữ đường kẻ (đã nằm
+    trong thẻ trắng).
+  - Áp dụng: kênh phân phối, chi tiết tin tuyển dụng (bỏ `Segmented` riêng cho
+    mobile, dùng nhãn ngắn), trang công ty (Bố cục, Nội dung, Người biên tập),
+    thông tin tài khoản NTD chia 3 tab Tài khoản, Xác thực, Tên miền công ty
+    (`?tab=` giữ tab khi tải lại).
+  - Chi tiết tài khoản (admin) dùng cùng hàng tab: khung trắng bo đủ góc, tab
+    đang chọn trắng dính liền khung. Tách trùng lặp: "Hồ sơ cá nhân" chỉ còn
+    thông tin cá nhân; "Nhu cầu tìm việc" gom mong muốn trên hồ sơ và tiêu chí
+    có cấu trúc (trước đây hai tab cùng hiện một khối).
+- Tab Bảo mật (admin, chi tiết tài khoản) làm lại theo tình huống (22/11, cùng PR).
+  - Một dòng tình trạng: trạng thái, email (kèm "Gửi lại xác minh" khi chưa xác
+    minh), mật khẩu, số phiên.
+  - "Xử lý theo tình huống": Không đăng nhập được (gửi link đặt mật khẩu; lối
+    phụ đổi email khi mất email), Nghi bị chiếm tài khoản (thu hồi mọi phiên),
+    thẻ thứ ba đổi theo trạng thái (vi phạm: tạm khóa/cấm; đang khóa: mở lại,
+    rà soát giữ tài nguyên; bị cấm: bắt đầu khôi phục).
+  - Tiến trình khôi phục 3 bước chỉ hiện khi đang khôi phục; danh sách phiên
+    thu gọn, chỉ tải khi mở.
+  - `AdminAccountSecurityActions` thành hook `useAccountSecurityOperations`
+    (logic + popup), widget tự vẽ nút. Popup `ActionDialog` có hiệu ứng mở,
+    mobile trượt lên từ đáy. Chữ của tab đưa vào i18n.
 
 ## Ứng tuyển bằng CV tải lên và form ứng tuyển mới (2026-11-18)
 

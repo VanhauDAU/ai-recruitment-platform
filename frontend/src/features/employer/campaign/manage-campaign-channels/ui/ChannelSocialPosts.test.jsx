@@ -64,6 +64,23 @@ describe('ChannelSocialPosts', () => {
     vi.spyOn(message, 'success').mockImplementation(() => {})
   })
 
+  it('shows three posts per page', async () => {
+    const user = userEvent.setup()
+    mocks.getChannelPosts.mockResolvedValue(Array.from({ length: 5 }, (_, index) => ({
+      public_id: `post_${index}`, status: 'published', status_label: 'Đã đăng', published_at: '2026-11-18T03:00:00Z', message: `Bài số ${index + 1}`,
+    })))
+    renderPosts()
+
+    const list = await screen.findByRole('list', { name: /Fanpage Facebook/ })
+    expect(within(list).getAllByRole('listitem')).toHaveLength(3)
+    expect(screen.getByText('Bài số 1')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('listitem', { name: '2' }))
+    expect(within(screen.getByRole('list', { name: /Fanpage Facebook/ })).getAllByRole('listitem')).toHaveLength(2)
+    expect(screen.getByText('Bài số 4')).toBeInTheDocument()
+    expect(screen.queryByText('Bài số 1')).not.toBeInTheDocument()
+  })
+
   it('lists posts with readable errors and retries a failed one', async () => {
     const user = userEvent.setup()
     mocks.getChannelPosts.mockResolvedValue([

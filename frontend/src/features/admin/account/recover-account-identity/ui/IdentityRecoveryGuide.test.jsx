@@ -9,23 +9,11 @@ const account = {
 }
 
 describe('IdentityRecoveryGuide', () => {
-  it('explains the complete workflow and that no password is generated', () => {
-    render(
-      <IdentityRecoveryGuide
-        account={{ ...account, email_verified: true, has_usable_password: true }}
-        emailAction={<button type="button">Đổi email</button>}
-        passwordResetAction={<button type="button">Gửi link</button>}
-      />,
+  it('renders nothing until a recovery has started', () => {
+    const { container } = render(
+      <IdentityRecoveryGuide account={{ ...account, email_verified: true, has_usable_password: true }} />,
     )
-
-    expect(screen.getByText('Khôi phục quyền truy cập'))
-      .toBeInTheDocument()
-    expect(screen.getByText(
-      'Không có mật khẩu tạm — người dùng tự đặt mật khẩu mới qua email.',
-    )).toBeInTheDocument()
-    expect(screen.getByText('Quy trình bảo mật · 3 bước')).toBeInTheDocument()
-    expect(screen.getAllByText('Đổi email')).toHaveLength(2)
-    expect(screen.getByText('Người dùng hoàn tất')).toBeInTheDocument()
+    expect(container).toBeEmptyDOMElement()
   })
 
   it('moves from password reset delivery to waiting for the user', () => {
@@ -35,6 +23,8 @@ describe('IdentityRecoveryGuide', () => {
 
     expect(screen.getByText('Tiếp theo: gửi link đặt lại mật khẩu'))
       .toBeInTheDocument()
+    expect(screen.getAllByRole('listitem')).toHaveLength(3)
+    expect(screen.getByText('Gửi link mật khẩu').closest('li')).toHaveAttribute('aria-current', 'step')
 
     rerender(
       <IdentityRecoveryGuide account={account} emailCompleted passwordResetSent />,

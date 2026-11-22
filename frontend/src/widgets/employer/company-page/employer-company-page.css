@@ -71,6 +71,11 @@
   padding: 0.5rem 1rem 0;
 }
 
+/* Khung tab Bố cục / Nội dung / Người biên tập (FolderTabs) */
+.employer-company-page__tab-panel {
+  padding: 1rem;
+}
+
 .employer-company-page__aside {
   position: sticky;
   top: 0.75rem;

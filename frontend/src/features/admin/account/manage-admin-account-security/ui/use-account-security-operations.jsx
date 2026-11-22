@@ -1,12 +1,5 @@
-import {
-  LockOutlined,
-  ReloadOutlined,
-  SafetyCertificateOutlined,
-  StopOutlined,
-  WarningOutlined,
-} from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
-import { Button, Form, Select, Space } from 'antd'
+import { Form, Select } from 'antd'
 import { useState } from 'react'
 import {
   adminAccountKeys,
@@ -53,7 +46,12 @@ function auditPayload(values) {
   }
 }
 
-export default function AdminAccountSecurityActions({
+/**
+ * Thao tác trạng thái/phiên của một tài khoản: mỗi thao tác xem trước tác động rồi mới xác nhận.
+ * Trả về `available` (thao tác nào dùng được với trạng thái hiện tại), `start` (mở popup của thao tác)
+ * và `dialog` để đặt vào cây. Nút và bố cục do nơi dùng quyết định.
+ */
+export default function useAccountSecurityOperations({
   account,
   allowBan = false,
   allowResourceRelease = false,
@@ -126,111 +124,88 @@ export default function AdminAccountSecurityActions({
     }
   }
 
+  const available = {
+    suspend: account.status === 'active',
+    reactivate: account.status === 'inactive',
+    reactivateBlocked: requiresResourceReview,
+    resourceHold: allowResourceRelease && account.status === 'inactive' && requiresResourceReview,
+    unban: allowBan && account.status === 'banned',
+    ban: allowBan && ['active', 'inactive'].includes(account.status),
+    sessions: true,
+  }
+  const start = {
+    suspend: () => open({ kind: 'status', status: 'inactive' }),
+    reactivate: () => open({ kind: 'status', status: 'active' }),
+    resourceHold: () => open({ kind: 'resource-hold' }),
+    unban: () => open({ kind: 'status', status: 'inactive' }),
+    ban: () => open({ kind: 'status', status: 'banned' }),
+    sessions: () => open({ kind: 'sessions' }),
+  }
+
   const requiresEvidence = operation?.kind === 'resource-hold'
     || operation?.status === 'banned'
     || operation?.beforeStatus === 'banned'
   const { facts, notes, blockers } = statusImpactFacts(operation, impactState.impact)
   const breakdown = statusImpactBreakdown(impactState.impact)
 
-  return (
-    <>
-      <Space wrap>
-        {account.status === 'active' && (
-          <Button danger icon={<LockOutlined />} onClick={() => open({ kind: 'status', status: 'inactive' })}>
-            Tạm khóa tài khoản
-          </Button>
+  const dialog = (
+    <ActionDialog
+      loading={impactState.submitting}
+      onCancel={close}
+      onSubmit={submit}
+      open={Boolean(operation)}
+      submitDisabled={impactState.impact?.can_apply === false}
+      submitLabel={operationSubmitLabel(operation)}
+      target={`${account.full_name || 'Chưa có họ tên'} · ${account.email}`}
+      title={operationTitle(operation)}
+      tone={operationTone(operation)}
+    >
+      <p className="action-dialog__lead">{operation && effectDescription(operation, account)}</p>
+      <ImpactFacts
+        blockers={blockers}
+        changed={impactState.changed}
+        details={breakdown.length > 0 && (
+          <dl className="impact-facts__list">
+            {breakdown.map((row) => (
+              <div className="impact-facts__item" key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>
+            ))}
+          </dl>
         )}
-        {account.status === 'inactive' && (
-          <Button
-            type="primary"
-            icon={<ReloadOutlined />}
-            disabled={requiresResourceReview}
-            title={requiresResourceReview ? 'Cần rà soát và gỡ giữ tài nguyên trước khi mở lại.' : ''}
-            onClick={() => open({ kind: 'status', status: 'active' })}
-          >
-            Mở lại tài khoản
-          </Button>
-        )}
-        {allowBan && ['active', 'inactive'].includes(account.status) && (
-          <Button
-            danger
-            type="primary"
-            icon={<WarningOutlined />}
-            onClick={() => open({ kind: 'status', status: 'banned' })}
-          >
-            Cấm tài khoản
-          </Button>
-        )}
-        {allowBan && account.status === 'banned' && (
-          <Button icon={<SafetyCertificateOutlined />} onClick={() => open({ kind: 'status', status: 'inactive' })}>
-            Bắt đầu khôi phục
-          </Button>
-        )}
-        {allowResourceRelease && account.status === 'inactive' && requiresResourceReview && (
-          <Button icon={<SafetyCertificateOutlined />} onClick={() => open({ kind: 'resource-hold' })}>
-            Rà soát & gỡ giữ tài nguyên
-          </Button>
-        )}
-        <Button danger icon={<StopOutlined />} onClick={() => open({ kind: 'sessions' })}>
-          Thu hồi mọi phiên
-        </Button>
-      </Space>
-      <ActionDialog
-        loading={impactState.submitting}
-        onCancel={close}
-        onSubmit={submit}
-        open={Boolean(operation)}
-        submitDisabled={impactState.impact?.can_apply === false}
-        submitLabel={operationSubmitLabel(operation)}
-        target={`${account.full_name || 'Chưa có họ tên'} · ${account.email}`}
-        title={operationTitle(operation)}
-        tone={operationTone(operation)}
-      >
-        <p className="action-dialog__lead">{operation && effectDescription(operation, account)}</p>
-        <ImpactFacts
-          blockers={blockers}
-          changed={impactState.changed}
-          details={breakdown.length > 0 && (
-            <dl className="impact-facts__list">
-              {breakdown.map((row) => (
-                <div className="impact-facts__item" key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>
-              ))}
-            </dl>
+        error={impactState.error}
+        facts={facts}
+        loading={impactState.loading}
+        notes={notes}
+        onRetry={impactState.reload}
+      />
+      <Form form={form} layout="vertical" requiredMark initialValues={{ reason: '', enforcement_evidence: '' }}>
+        <div className="action-dialog__fields">
+          {operation?.status === 'banned' && (
+            <Form.Item
+              name="violation_category"
+              label="Nhóm vi phạm"
+              rules={[{ required: true, message: 'Chọn nhóm vi phạm.' }]}
+            >
+              <Select placeholder="Chọn nhóm vi phạm đã xác minh" options={VIOLATION_OPTIONS} />
+            </Form.Item>
           )}
-          error={impactState.error}
-          facts={facts}
-          loading={impactState.loading}
-          notes={notes}
-          onRetry={impactState.reload}
-        />
-        <Form form={form} layout="vertical" requiredMark initialValues={{ reason: '', enforcement_evidence: '' }}>
-          <div className="action-dialog__fields">
-            {operation?.status === 'banned' && (
-              <Form.Item
-                name="violation_category"
-                label="Nhóm vi phạm"
-                rules={[{ required: true, message: 'Chọn nhóm vi phạm.' }]}
-              >
-                <Select placeholder="Chọn nhóm vi phạm đã xác minh" options={VIOLATION_OPTIONS} />
-              </Form.Item>
-            )}
+          <ReasonField
+            extra="Ghi vào nhật ký quản trị."
+            label="Lý do xử lý"
+            presets={operationReasonPresets(operation)}
+          />
+          {requiresEvidence && (
             <ReasonField
-              extra="Ghi vào nhật ký quản trị."
-              label="Lý do xử lý"
-              presets={operationReasonPresets(operation)}
+              extra="Nguồn đối chiếu, mã ticket hoặc biên bản. Không ghi mật khẩu, mã OTP."
+              label="Bằng chứng xử lý"
+              minLength={20}
+              name="enforcement_evidence"
+              rows={3}
             />
-            {requiresEvidence && (
-              <ReasonField
-                extra="Nguồn đối chiếu, mã ticket hoặc biên bản. Không ghi mật khẩu, mã OTP."
-                label="Bằng chứng xử lý"
-                minLength={20}
-                name="enforcement_evidence"
-                rows={3}
-              />
-            )}
-          </div>
-        </Form>
-      </ActionDialog>
-    </>
+          )}
+        </div>
+      </Form>
+    </ActionDialog>
   )
+
+  return { available, start, dialog }
 }

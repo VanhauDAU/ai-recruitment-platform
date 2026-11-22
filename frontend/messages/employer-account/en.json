@@ -681,5 +681,9 @@
   "employer_account_info_joined": "Joined {date}",
   "employer_account_info_no_company": "Link a company",
   "employer_account_info_unsaved": "You have unsaved changes",
-  "employer_account_info_save": "Save changes"
+  "employer_account_info_save": "Save changes",
+  "employer_account_tabs_aria": "Account information sections",
+  "employer_account_tab_account": "Account",
+  "employer_account_tab_verification": "Verification",
+  "employer_account_tab_domain": "Company domain"
 }
