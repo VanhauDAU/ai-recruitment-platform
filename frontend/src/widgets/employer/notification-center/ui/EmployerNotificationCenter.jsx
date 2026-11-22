@@ -43,7 +43,7 @@ export default function EmployerNotificationCenter() {
           ? m.employer_workspace_notifications_unread_title({ count: unreadTotal })
           : m.employer_workspace_notifications_all_read()}
         hint={latest && !hasFilters
-          ? `${m.employer_workspace_notifications_hero_hint()} ${m.employer_workspace_feed_latest({ time: formatTimeAgo(latest) })}.`
+          ? `${m.employer_workspace_notifications_hero_hint()} ${m.employer_workspace_feed_latest({ time: formatTimeAgo(latest, Date.now(), { inSentence: true }) })}.`
           : m.employer_workspace_notifications_hero_hint()}
         aside={(
           <Button
