@@ -9588,8 +9588,27 @@ paths:
   /api/employer/activities/:
     get:
       operationId: employer_activities_list
-      summary: Nhật ký hoạt động của tôi
+      summary: Nhật ký hoạt động của tôi (kèm category_counts, daily_counts khi phân
+        trang)
       parameters:
+      - in: query
+        name: category
+        schema:
+          type: string
+          enum:
+          - applications
+          - campaigns
+          - company
+          - jobs
+      - in: query
+        name: days
+        schema:
+          type: integer
+          enum:
+          - 30
+          - 7
+          - 90
+        description: Chỉ lấy hoạt động trong N ngày gần nhất
       - name: page
         required: false
         in: query
@@ -12734,8 +12753,17 @@ paths:
   /api/employer/notifications/:
     get:
       operationId: employer_notifications_list
-      summary: Thông báo của nhà tuyển dụng
+      summary: Thông báo của nhà tuyển dụng (kèm unread_counts khi phân trang)
       parameters:
+      - in: query
+        name: category
+        schema:
+          type: string
+          enum:
+          - applications
+          - campaigns
+          - company
+          - jobs
       - name: page
         required: false
         in: query
@@ -12748,6 +12776,10 @@ paths:
         description: Number of results to return per page.
         schema:
           type: integer
+      - in: query
+        name: unread
+        schema:
+          type: boolean
       tags:
       - employer
       security:
@@ -26039,12 +26071,25 @@ components:
         actor_name:
           type: string
           readOnly: true
+        actor_kind:
+          type: string
+          readOnly: true
+        category:
+          type: string
+          readOnly: true
+        action_path:
+          type: string
+          readOnly: true
+          default: ''
         occurred_at:
           type: string
           format: date-time
           readOnly: true
       required:
+      - action_path
+      - actor_kind
       - actor_name
+      - category
       - event_type
       - occurred_at
       - public_id
@@ -27599,11 +27644,15 @@ components:
           type: string
           format: date-time
           nullable: true
+        category:
+          type: string
+          readOnly: true
         created_at:
           type: string
           format: date-time
           readOnly: true
       required:
+      - category
       - created_at
       - event_type
       - is_read

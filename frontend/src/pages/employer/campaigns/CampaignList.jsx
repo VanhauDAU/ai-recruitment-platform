@@ -16,7 +16,7 @@ import { m, getIntlLocale } from '@/shared/config/i18n'
 import { employerAppPath } from '@/shared/config/portals'
 import { MascotEmpty } from '@/shared/ui/mascot'
 import CampaignListRow from './CampaignListRow'
-import '../workspace-list.css'
+import '@/shared/ui/workspace-list/workspace-list.css'
 import './campaign-list.css'
 
 const PAGE_SIZE = 20

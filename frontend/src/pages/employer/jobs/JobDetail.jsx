@@ -42,7 +42,7 @@ import {
   publicJobUrl,
 } from './job-detail-presentation'
 import { formatCount, jobDisplayTitle } from './job-list-presentation'
-import '../workspace-list.css'
+import '@/shared/ui/workspace-list/workspace-list.css'
 import './employer-jobs.css'
 import { m } from '@/shared/config/i18n'
 

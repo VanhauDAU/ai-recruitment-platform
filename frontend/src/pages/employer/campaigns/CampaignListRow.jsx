@@ -6,7 +6,7 @@ import { m, getIntlLocale } from '@/shared/config/i18n'
 import { employerAppPath } from '@/shared/config/portals'
 import dayjs from '@/shared/lib/dayjs'
 
-// Status tones map onto `.ws-tone-*` in ../workspace-list.css.
+// Status tones map onto `.ws-tone-*` in @/shared/ui/workspace-list/workspace-list.css.
 const STATUS_TONES = {
   active: 'emerald',
   paused: 'amber',

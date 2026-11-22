@@ -120,7 +120,7 @@
 
 
 /*
- * Job list (/jobs) rows on top of ../workspace-list.css. A narrow list shows
+ * Job list (/jobs) rows on top of @/shared/ui/workspace-list/workspace-list.css. A narrow list shows
  * cards (title, status, meta, then three labelled stats); a wide one lines
  * every cell up under the sortable header through grid areas.
  */
