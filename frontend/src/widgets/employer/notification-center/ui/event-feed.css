@@ -1,0 +1,168 @@
+/*
+ * Notification and activity feeds of the employer workspace, on top of
+ * @/shared/ui/workspace-list/workspace-list.css (panels, tabs, chips, tones).
+ * Lazy with the pages; no new Tailwind utilities (initial CSS budget).
+ */
+.ef-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 12px 12px;
+}
+
+.ef-toolbar__meta {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: #64748b;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* `clip` keeps the rounded corners without making the panel a scroll
+ * container, so the day heading can stick to the workspace scroll. */
+.ws-panel.ef-list { overflow: clip; }
+
+/* Day heading stays on top of its rows while they scroll under it. */
+.ef-day {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0;
+  border-top: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f1f5f9;
+  background: #f8fafc;
+  padding: 6px 12px;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ef-day:first-child { border-top: 0; }
+
+.ef-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+  border-top: 1px solid #f1f5f9;
+  padding: 12px;
+  transition: background-color 0.15s;
+}
+
+.ef-day + .ef-row { border-top: 0; }
+.ef-row:hover,
+.ef-row:focus-within { background: #f8fafc; }
+.ef-row.is-unread { background: #f0fdf4; }
+.ef-row.is-unread:hover { background: #ecfdf5; }
+
+.ef-row__icon {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: var(--ws-tone-bg);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ws-tone-fg) 14%, transparent);
+  color: var(--ws-tone-fg);
+  font-size: 14px;
+}
+
+.ef-row__body { min-width: 0; }
+.ef-row__head { display: flex; align-items: flex-start; gap: 8px; }
+
+.ef-row__title {
+  min-width: 0;
+  color: #1e293b !important;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+a.ef-row__title:hover { color: #047857 !important; }
+.ef-row.is-unread .ef-row__title { color: #0f172a !important; font-weight: 700; }
+
+.ef-row__dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  margin-top: 6px;
+  border-radius: 9999px;
+  background: #10b981;
+}
+
+.ef-row__message {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 2px 0 0;
+  color: #475569;
+  font-size: 13px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.ef-row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 8px;
+  margin-top: 4px;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.ef-row__meta > * + *::before { content: '·'; margin-right: 8px; color: #cbd5e1; }
+.ef-row__meta time { font-variant-numeric: tabular-nums; }
+
+.ef-row__actions { display: flex; align-items: center; gap: 2px; }
+
+.ef-mark-read.ant-btn { width: 32px; height: 32px; border-radius: 8px; color: #64748b; }
+.ef-mark-read.ant-btn:hover { background: #fff !important; color: #047857 !important; }
+
+.ef-row__open {
+  display: none;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: #94a3b8 !important;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.ef-row__open:hover { background: #f1f5f9; color: #0f172a !important; }
+
+.ef-row a:focus-visible,
+.ef-row button:focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: 2px;
+}
+
+.ef-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-top: 1px solid #f1f5f9;
+  padding: 10px 12px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+@media (min-width: 640px) {
+  .ef-toolbar { padding: 10px 16px 14px; }
+  .ef-day { padding-inline: 16px; }
+  .ef-row { padding: 12px 16px; }
+  .ef-row__open { display: inline-flex; }
+  .ef-footer { padding-inline: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ef-row,
+  .ef-row__open { transition: none; }
+}

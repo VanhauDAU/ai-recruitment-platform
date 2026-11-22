@@ -803,7 +803,7 @@ pages/employer/jobs/JobList + JobDetail
   trang server và chỉ mount khi `canAccessCandidateData`.
 - Style riêng của hai route nằm trong `employer-jobs.css` (import từ hai page
   lazy); phần dùng chung với danh sách chiến dịch (tông màu, pill, panel lọc,
-  chip, header sắp xếp, ô số liệu, tiền tố `ws-`) ở `pages/employer/workspace-list.css`.
+  chip, header sắp xếp, ô số liệu, tiền tố `ws-`) ở `shared/ui/workspace-list/workspace-list.css`.
   Dòng danh sách là thẻ cho tới khi chính danh sách rộng 1080px (container query,
   tính cả sidebar). Không thêm utility Tailwind mới vì CSS khởi tạo sát trần budget.
 
@@ -1025,7 +1025,7 @@ pages/employer/campaigns/CampaignSetup
   xử lý" (`scope=needs_review|expired_jobs`, số từ `attention_counts`), mặc định
   `ordering=status`, mỗi dòng một nút việc tiếp theo và tiến độ tuyển
   (`accepted_count`/`headcount`); dòng `CampaignListRow` dùng khung
-  `pages/employer/workspace-list.css` chung với danh sách tin, lưới riêng trong
+  `shared/ui/workspace-list/workspace-list.css` chung với danh sách tin, lưới riêng trong
   `campaign-list.css` (lazy).
 - `widgets/employer/campaign-workspace` sở hữu header và bốn tab dữ liệu thật:
   Tổng quan, CV ứng tuyển, Tin tuyển dụng và Lịch sử hoạt động. Page chi tiết
@@ -1200,9 +1200,15 @@ app/router + EmployerAuthLayout|EmployerSetupLayout|EmployerWorkspaceLayout
   toast thành công giả.
 - `entities/notification/employer-notification` sở hữu API/query key và presentation model
   cho notification/activity. `widgets/employer/notification-center` sở hữu
-  bell badge/popover, list phân trang, mark-read và activity timeline; page
+  bell badge/popover, trang thông báo và lịch sử hoạt động; page
   `/notifications|/activities` chỉ compose widget. Layout được phép compose
   bell qua public index của widget nhưng không gọi API notification trực tiếp.
+  Hai trang dùng chung `EventFeed` (tab nhóm `category`, gom theo ngày, dòng sự
+  kiện, "Xem thêm") và hook `use-event-feed` (bộ lọc trong URL + `useInfiniteQuery`):
+  thông báo lọc `category|unread`, tab đếm `unread_counts`; lịch sử lọc
+  `category|days`, tab đếm `category_counts`, mỗi dòng mở `action_path` của
+  thông báo cùng sự kiện. Nhóm và khoảng thời gian ở `model/event-filters.js`
+  của widget (chỉ trang lazy dùng) để không nặng thêm bundle khởi tạo của chuông.
 - Protected employer route giữ thứ tự `AuthGuard → RoleGuard`; dashboard thêm
   `EmployerOnboardingGuard`. State server lần lượt là `registration →
   email_verification → consulting_need → complete`; UI redirect không thay thế

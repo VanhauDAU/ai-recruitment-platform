@@ -1,7 +1,8 @@
 /*
- * Shared look of the employer workspace list pages (jobs, campaigns) and the
- * job workspace: status tones, pills, the filter panel, attention chips,
- * sortable headers and stat cells. Imported by the lazy pages only; Tailwind
+ * Shared look of the employer workspace lists (jobs, campaigns, notifications,
+ * activity history) and the job workspace: status tones, pills, the filter
+ * panel, attention chips, sortable headers and stat cells. Domain-free, so
+ * pages and widgets both import it; lazy chunks only. Tailwind
  * utilities land in the initial stylesheet, which is at its budget
  * (frontend/ARCHITECTURE.md). Each page keeps its own row grid.
  */

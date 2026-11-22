@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Làm lại Thông báo hệ thống và Lịch sử hoạt động của NTD](#làm-lại-thông-báo-hệ-thống-và-lịch-sử-hoạt-động-của-ntd-2026-11-22) | 🟨 Xong trên nhánh `feat/employer-activity-redesign`, chờ gộp |
 | [Làm lại danh sách tin tuyển dụng và chiến dịch của NTD](#làm-lại-danh-sách-tin-tuyển-dụng-và-chiến-dịch-của-ntd-2026-11-22) | ✅ Gộp vào `dev` (#305) |
 | [Làm lại carousel banner trang chủ](#làm-lại-carousel-banner-trang-chủ-2026-11-21) | ✅ Gộp vào `dev` (#300); cắt ảnh + 8 tông màu trên nhánh `feat/banner-image-crop` |
 | [Làm lại trang Cấu hình hệ thống (ADR-0026)](#làm-lại-trang-cấu-hình-hệ-thống-adr-0026-2026-11-21) | 🟨 GĐ1–GĐ4 đã gộp (#294–#298); GĐ5 trên nhánh `feat/settings-recruiting` |
@@ -42,6 +43,27 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
 
+## Làm lại Thông báo hệ thống và Lịch sử hoạt động của NTD (2026-11-22)
+
+Hai trang `/tuyendung/app/notifications` và `/tuyendung/app/activities` trước đây là
+một danh sách phân trang (timeline antd), không lọc được và lịch sử không dẫn tới
+đâu. Làm lại cùng khung với trang tin/chiến dịch (#305), theo `ui-ux-pro-max`.
+
+- Tab theo nhóm sự kiện: Ứng tuyển · Tin tuyển dụng · Chiến dịch · Công ty & xác
+  thực. Thông báo đếm số **chưa đọc** mỗi nhóm, có chip "Chỉ chưa đọc", nút đánh dấu
+  đã đọc trên từng dòng và "Đánh dấu tất cả đã đọc". Lịch sử đếm tổng mỗi nhóm, lọc
+  7/30/90 ngày.
+- Gom theo ngày (tiêu đề "Hôm nay", "Hôm qua", thứ + ngày dính đầu khi cuộn); mỗi
+  dòng có icon theo nhóm, màu theo mức độ, giờ (rê để xem đủ ngày giờ), người thực
+  hiện; dòng lịch sử mở trang liên quan như thông báo cùng sự kiện. "Xem thêm" thay
+  phân trang; bộ lọc nằm trong URL.
+- API: `GET /api/employer/notifications/` nhận `category`, `unread`, trả
+  `unread_counts` và `category`; `GET /api/employer/activities/` nhận `category`,
+  `days`, trả `category_counts`, `category`, `actor_kind`, `action_path`. Bỏ một truy
+  vấn mỗi dòng khi tính người thực hiện (đọc `actor_id` thay vì `actor`).
+- CSS dùng chung chuyển sang `frontend/src/shared/ui/workspace-list/workspace-list.css`
+  để widget cũng dùng được.
+
 ## Làm lại danh sách tin tuyển dụng và chiến dịch của NTD (2026-11-22)
 
 Hai trang `/tuyendung/app/jobs` và `/tuyendung/app/campaigns` trước đây chỉ có tab
@@ -65,7 +87,7 @@ của cổng NTD.
   `closes_on` và `attention_counts` (tính trong tab đang mở, cùng một query với
   `status_counts`); `GET /api/employer/campaigns/` trả `attention_counts`
   (`needs_review`, `expired_jobs`). Số query của trang danh sách không đổi.
-- Style dùng chung ở `pages/employer/workspace-list.css` (lazy); CSS khởi tạo không
+- Style dùng chung ở `shared/ui/workspace-list/workspace-list.css` (lazy); CSS khởi tạo không
   thêm utility mới.
 
 ## Gọn sidebar quản trị và NTD theo góp ý GVHD (2026-11-21)

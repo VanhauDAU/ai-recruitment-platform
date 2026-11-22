@@ -1,7 +1,8 @@
 import api from '@/shared/api/client'
 
-export async function getEmployerNotifications(page = 1) {
-  const { data } = await api.get('/employer/notifications/', { params: { page } })
+/** One page of the inbox; `params` may hold `page`, `category` and `unread`. */
+export async function getEmployerNotifications(params = {}) {
+  const { data } = await api.get('/employer/notifications/', { params })
   return data
 }
 
@@ -30,7 +31,8 @@ export async function markAllEmployerNotificationsRead() {
   return data
 }
 
-export async function getEmployerActivities(page = 1) {
-  const { data } = await api.get('/employer/activities/', { params: { page } })
+/** One page of the history; `params` may hold `page`, `category` and `days`. */
+export async function getEmployerActivities(params = {}) {
+  const { data } = await api.get('/employer/activities/', { params })
   return data
 }

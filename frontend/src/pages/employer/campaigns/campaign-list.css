@@ -1,5 +1,5 @@
 /*
- * Campaign list (/campaigns) rows on top of ../workspace-list.css (lazy, out
+ * Campaign list (/campaigns) rows on top of @/shared/ui/workspace-list/workspace-list.css (lazy, out
  * of the initial stylesheet). A narrow list shows cards (title and action,
  * status, meta, then three labelled stats); a wide one lines every cell up
  * under the header through grid areas.
