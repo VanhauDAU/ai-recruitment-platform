@@ -50,6 +50,7 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { m } from '@/shared/config/i18n'
 import { adminPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
+import FolderTabs from '@/shared/ui/folder-tabs/FolderTabs'
 import AccountProfilePanel from './AccountProfilePanel'
 import DetailPanel from './DetailPanel'
 import EmployerOverview from './EmployerOverview'
@@ -320,11 +321,11 @@ function Overview({ account }) {
   )
 }
 
-function CandidateTabs({ publicId, profilePanel, security, activity }) {
+function CandidateTabs({ publicId, profilePanel, preferencesPanel, security, activity }) {
   return [
     { key: 'overview', label: 'Tổng quan' },
     { key: 'profile', label: 'Hồ sơ cá nhân', children: profilePanel },
-    { key: 'preferences', label: 'Nhu cầu tìm việc', children: profilePanel },
+    { key: 'preferences', label: m.admin_account_tab_preferences(), children: preferencesPanel },
     {
       key: 'cvs',
       label: 'CV',
@@ -476,6 +477,14 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
       onEdit={setEditState}
     />
   )
+  const preferencesPanel = account && (
+    <AccountProfilePanel
+      publicId={publicId}
+      account={account}
+      onEdit={setEditState}
+      section="preferences"
+    />
+  )
   const companyPanel = account && (
     <div className="account-detail-stack">
       <AccountProfilePanel
@@ -510,7 +519,7 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
   const tabs = (() => {
     if (!account) return []
     if (account.role === 'candidate') {
-      return CandidateTabs({ publicId, profilePanel, security, activity })
+      return CandidateTabs({ publicId, profilePanel, preferencesPanel, security, activity })
     }
     if (account.role === 'employer') {
       return [
@@ -671,12 +680,13 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
           )}
         </div>
       )}
-      <Tabs
+      <FolderTabs
+        idPrefix="account-detail"
         className="account-detail-tabs"
+        ariaLabel={m.admin_account_tabs_aria()}
         activeKey={validActiveTab}
         items={currentTabs}
         onChange={(tab) => openTab(tab)}
-        tabBarGutter={24}
       />
       <AdminAccountProfileModal
         account={account}

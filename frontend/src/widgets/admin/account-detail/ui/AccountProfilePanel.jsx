@@ -27,14 +27,8 @@ const PROFILE_LABELS = {
   bio: 'Giới thiệu',
   career_objective: 'Mục tiêu nghề nghiệp',
   current_position: 'Vị trí hiện tại',
-  desired_position: 'Vị trí mong muốn',
   experience_years: 'Số năm kinh nghiệm',
   education_level: 'Trình độ học vấn',
-  expected_salary_min: 'Lương mong muốn tối thiểu',
-  expected_salary_max: 'Lương mong muốn tối đa',
-  preferred_location: 'Địa điểm mong muốn',
-  preferred_work_type: 'Hình thức làm việc',
-  job_search_status: 'Trạng thái tìm việc',
   portfolio_url: 'Portfolio',
   github_url: 'GitHub',
   linkedin_url: 'LinkedIn',
@@ -47,6 +41,16 @@ const CONSENT_LABELS = {
   dpa_accepted_at: 'Chấp nhận DPA lúc',
   marketing_opt_in: 'Đồng ý nhận thông tin',
   marketing_decided_at: 'Quyết định marketing lúc',
+}
+
+// Tab "Nhu cầu tìm việc": mong muốn khai trên hồ sơ, rồi tiêu chí có cấu trúc (job_preference).
+const JOB_SEARCH_LABELS = {
+  job_search_status: 'Trạng thái tìm việc',
+  desired_position: 'Vị trí mong muốn',
+  expected_salary_min: 'Lương mong muốn tối thiểu',
+  expected_salary_max: 'Lương mong muốn tối đa',
+  preferred_location: 'Địa điểm mong muốn',
+  preferred_work_type: 'Hình thức làm việc',
 }
 
 const PREFERENCE_LABELS = {
@@ -67,8 +71,9 @@ function RevealButton({ reveal, onToggle }) {
 }
 
 /**
- * `section` chọn phần hồ sơ được render: "Tổng quan"/"Hồ sơ cá nhân" lấy
- * `profile`, tab "Công ty" lấy `company`, để khối công ty không lặp ở hai nơi.
+ * `section` chọn phần hồ sơ được render, để mỗi khối chỉ hiện ở một tab:
+ * "Tổng quan"/"Hồ sơ cá nhân" lấy `profile`, "Nhu cầu tìm việc" lấy `preferences`,
+ * "Công ty" lấy `company`.
  */
 export default function AccountProfilePanel({
   publicId,
@@ -113,48 +118,52 @@ export default function AccountProfilePanel({
     )
   }
 
-  const preference = roleProfile?.job_preference
+  const editButton = onEdit && (
+    <Button size="small" icon={<EditOutlined />} onClick={() => onEdit(profile)}>Sửa hồ sơ</Button>
+  )
+
+  if (section === 'preferences') {
+    const preference = roleProfile?.job_preference
+    const salary = preference?.desired_salary_vnd
+      ? `${Number(preference.desired_salary_vnd).toLocaleString(getIntlLocale())} ₫`
+      : null
+    return (
+      <DetailPanel title={m.admin_account_tab_preferences()} extra={editButton}>
+        <ProfileFieldSection title={m.admin_account_preferences_profile()}>
+          <ProfileFieldGrid data={roleProfile} labels={JOB_SEARCH_LABELS} />
+        </ProfileFieldSection>
+        <ProfileFieldSection title={m.admin_account_preferences_structured()}>
+          {preference
+            ? <ProfileFieldGrid data={{ ...preference, desired_salary: salary }} labels={PREFERENCE_LABELS} />
+            : <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={m.admin_account_preferences_empty()} />}
+        </ProfileFieldSection>
+      </DetailPanel>
+    )
+  }
+
   const onboarding = isEmployer ? roleProfile?.initial_onboarding : null
-  const salary = preference?.desired_salary_vnd
-    ? `${Number(preference.desired_salary_vnd).toLocaleString(getIntlLocale())} ₫`
-    : null
 
   return (
-    <div className="account-detail-stack">
-      <DetailPanel
-        className="account-profile-panel"
-        title={isEmployer ? 'Hồ sơ nhà tuyển dụng' : 'Hồ sơ cá nhân'}
-        description={m.admin_account_sensitive_note()}
-        extra={(
-          <Space wrap size={8}>
-            {revealButton}
-            {onEdit && (
-              <Button size="small" icon={<EditOutlined />} onClick={() => onEdit(profile)}>Sửa hồ sơ</Button>
-            )}
-          </Space>
-        )}
-      >
-        {onboarding && (
-          <div className="account-onboarding">
-            <span className="account-onboarding__label">{m.admin_recruiter_onboarding()}</span>
-            <InitialOnboardingStatus onboarding={onboarding} />
-          </div>
-        )}
-        <ProfileFieldSection title={m.admin_account_profile_personal()}>
-          <ProfileFieldGrid data={roleProfile} labels={PROFILE_LABELS} />
-        </ProfileFieldSection>
-        {hasProfileFields(roleProfile, CONSENT_LABELS) && (
-          <ProfileFieldSection title={m.admin_account_profile_consents()}>
-            <ProfileFieldGrid data={roleProfile} labels={CONSENT_LABELS} />
-          </ProfileFieldSection>
-        )}
-      </DetailPanel>
-
-      {account.role === 'candidate' && preference && (
-        <DetailPanel title="Nhu cầu tìm việc có cấu trúc">
-          <ProfileFieldGrid data={{ ...preference, desired_salary: salary }} labels={PREFERENCE_LABELS} />
-        </DetailPanel>
+    <DetailPanel
+      className="account-profile-panel"
+      title={isEmployer ? 'Hồ sơ nhà tuyển dụng' : 'Hồ sơ cá nhân'}
+      description={m.admin_account_sensitive_note()}
+      extra={<Space wrap size={8}>{revealButton}{editButton}</Space>}
+    >
+      {onboarding && (
+        <div className="account-onboarding">
+          <span className="account-onboarding__label">{m.admin_recruiter_onboarding()}</span>
+          <InitialOnboardingStatus onboarding={onboarding} />
+        </div>
       )}
-    </div>
+      <ProfileFieldSection title={m.admin_account_profile_personal()}>
+        <ProfileFieldGrid data={roleProfile} labels={PROFILE_LABELS} />
+      </ProfileFieldSection>
+      {hasProfileFields(roleProfile, CONSENT_LABELS) && (
+        <ProfileFieldSection title={m.admin_account_profile_consents()}>
+          <ProfileFieldGrid data={roleProfile} labels={CONSENT_LABELS} />
+        </ProfileFieldSection>
+      )}
+    </DetailPanel>
   )
 }

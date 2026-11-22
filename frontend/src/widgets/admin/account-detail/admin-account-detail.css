@@ -159,27 +159,19 @@
   border-inline-start-color: var(--admin-info);
 }
 
-/* ---- Tabs: page-level navigation on the canvas, content in panels ---- */
+/* ---- Tabs: FolderTabs, tab đang chọn nền trắng liền với khung nội dung ---- */
 
 .account-detail-tabs {
-  min-width: 0;
+  --ftabs-line: var(--admin-border);
 }
 
-.account-detail-tabs > .ant-tabs-nav {
-  margin-bottom: 14px;
+.account-detail-tabs .ftabs__panel {
+  padding: 16px;
 }
 
-.account-detail-tabs > .ant-tabs-nav::before {
-  border-bottom-color: var(--admin-border);
-}
-
-.account-detail-tabs .ant-tabs-tab {
-  font-weight: 600;
-}
-
-.account-detail-tabs .ant-tabs-content,
-.account-detail-tabs .ant-tabs-tabpane {
-  min-width: 0;
+/* Panel con nằm trong khung trắng: giữ viền mảnh, bỏ đổ bóng để không chồng lớp */
+.account-detail-tabs .ftabs__panel .admin-panel {
+  box-shadow: none;
 }
 
 .account-detail-subtabs .admin-panel__body {

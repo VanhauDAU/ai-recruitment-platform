@@ -673,6 +673,10 @@ GĐ1 đã làm:
     mobile, dùng nhãn ngắn), trang công ty (Bố cục, Nội dung, Người biên tập),
     thông tin tài khoản NTD chia 3 tab Tài khoản, Xác thực, Tên miền công ty
     (`?tab=` giữ tab khi tải lại).
+  - Chi tiết tài khoản (admin) dùng cùng hàng tab: khung trắng bo đủ góc, tab
+    đang chọn trắng dính liền khung. Tách trùng lặp: "Hồ sơ cá nhân" chỉ còn
+    thông tin cá nhân; "Nhu cầu tìm việc" gom mong muốn trên hồ sơ và tiêu chí
+    có cấu trúc (trước đây hai tab cùng hiện một khối).
 
 ## Ứng tuyển bằng CV tải lên và form ứng tuyển mới (2026-11-18)
 

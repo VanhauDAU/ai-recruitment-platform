@@ -307,5 +307,10 @@
   "admin_banner_crop_confirm": "Crop and upload",
   "admin_banner_crop_zoom": "Zoom image",
   "admin_banner_crop_size": "Selection {width}×{height} px",
-  "admin_banner_crop_small": "smaller than the recommended {width} px; the image may look soft"
+  "admin_banner_crop_small": "smaller than the recommended {width} px; the image may look soft",
+  "admin_account_tab_preferences": "Job preferences",
+  "admin_account_preferences_profile": "Stated on the profile",
+  "admin_account_preferences_structured": "Structured criteria",
+  "admin_account_preferences_empty": "The candidate has not set structured job criteria",
+  "admin_account_tabs_aria": "Account detail sections"
 }

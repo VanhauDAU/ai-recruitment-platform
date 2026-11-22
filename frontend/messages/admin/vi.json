@@ -307,5 +307,10 @@
   "admin_banner_crop_confirm": "Cắt và tải lên",
   "admin_banner_crop_zoom": "Phóng to ảnh",
   "admin_banner_crop_size": "Vùng chọn {width}×{height} px",
-  "admin_banner_crop_small": "nhỏ hơn mức khuyến nghị {width} px, ảnh có thể kém nét"
+  "admin_banner_crop_small": "nhỏ hơn mức khuyến nghị {width} px, ảnh có thể kém nét",
+  "admin_account_tab_preferences": "Nhu cầu tìm việc",
+  "admin_account_preferences_profile": "Khai báo trên hồ sơ",
+  "admin_account_preferences_structured": "Tiêu chí có cấu trúc",
+  "admin_account_preferences_empty": "Ứng viên chưa khai báo tiêu chí tìm việc có cấu trúc",
+  "admin_account_tabs_aria": "Mục chi tiết tài khoản"
 }

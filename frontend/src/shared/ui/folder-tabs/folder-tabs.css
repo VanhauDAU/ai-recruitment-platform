@@ -11,11 +11,12 @@
 .ftabs__tab:hover { background: #f3f7f5; color: #0f2a24; }
 .ftabs__tab:focus-visible { outline: 2px solid #059669; outline-offset: -2px; }
 .ftabs__tab.is-active { z-index: 1; border-color: var(--ftabs-line); background: var(--ftabs-surface); font-weight: 600; color: #0f2a24; }
-/* Góc cong: SVG phủ đúng lên cột viền dọc của tab, vẽ cung viền và tô trắng phần ngoài cung để che đường kẻ.
-   Màu viết thẳng trong SVG (#dfe7e3 = --ftabs-line, #fff = --ftabs-surface); đổi màu thì sửa cả hai nơi. */
-.ftabs__tab.is-active::before, .ftabs__tab.is-active::after { content: ''; position: absolute; bottom: 0; width: 12px; height: 12px; background: no-repeat center / 100% 100%; pointer-events: none; }
-.ftabs__tab.is-active::before { left: -12px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M12 0A12 12 0 0 1 0 12H12Z' fill='%23fff'/%3E%3Cpath d='M11.5 0A11.5 11.5 0 0 1 0 11.5' fill='none' stroke='%23dfe7e3'/%3E%3C/svg%3E"); }
-.ftabs__tab.is-active::after { right: -12px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M0 0A12 12 0 0 0 12 12H0Z' fill='%23fff'/%3E%3Cpath d='M0.5 0A11.5 11.5 0 0 0 12 11.5' fill='none' stroke='%23dfe7e3'/%3E%3C/svg%3E"); }
+/* Góc cong (SVG trong FolderTabs.jsx) phủ đúng lên cột viền dọc của tab và che đường kẻ ở chân tab */
+.ftabs__corner { position: absolute; bottom: 0; width: 12px; height: 12px; overflow: visible; pointer-events: none; }
+.ftabs__corner.is-left { left: -12px; }
+.ftabs__corner.is-right { right: -12px; }
+.ftabs__corner-fill { fill: var(--ftabs-surface); }
+.ftabs__corner-line { fill: none; stroke: var(--ftabs-line); stroke-width: 1px; }
 /* Vạch màu thương hiệu trên đỉnh tab đang chọn */
 .ftabs__tab.is-active > .ftabs__label::after { content: ''; position: absolute; top: -1px; right: 10px; left: 10px; height: 2px; border-radius: 0 0 2px 2px; background: #10b981; animation: ftabs-mark-in .3s cubic-bezier(.22, 1, .36, 1); }
 .ftabs__icon { display: inline-flex; flex: none; transition: transform .2s cubic-bezier(.22, 1, .36, 1); }
@@ -24,7 +25,11 @@
 .ftabs__label { display: inline-flex; min-width: 0; align-items: center; gap: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Nội dung: mặc định là khung trắng nối tiếp tab (trang nền xám); `is-plain` chỉ giữ đường kẻ (đã nằm trong thẻ trắng) */
-.ftabs__panel { min-width: 0; border: 1px solid var(--ftabs-line); border-top: 0; border-radius: 0 0 12px 12px; background: var(--ftabs-surface); animation: ftabs-panel-in .32s cubic-bezier(.22, 1, .36, 1) both; }
+/* Kiểu khung: viền trên của khung thay cho đường kẻ, bo đủ bốn góc; hàng tab đè lên viền đó 1px để tab đang chọn che nó */
+.ftabs:not(.is-plain) > .ftabs__bar { position: relative; z-index: 1; margin-bottom: -1px; background: none; }
+.ftabs__panel { min-width: 0; border: 1px solid var(--ftabs-line); border-radius: 12px; background: var(--ftabs-surface); }
+/* Khung đứng yên để luôn dính với tab; chỉ nội dung trồi nhẹ lên khi đổi tab */
+.ftabs__panel > * { animation: ftabs-panel-in .32s cubic-bezier(.22, 1, .36, 1) both; }
 .ftabs.is-plain .ftabs__panel { padding-top: 16px; border: 0; border-radius: 0; background: none; }
 .ftabs__panel[hidden] { display: none; }
 /* Thẻ con tự có lề dưới thì bỏ lề ở thẻ cuối, để đáy khung đều với phần đệm */
@@ -36,6 +41,6 @@
   .ftabs__tab { max-width: 180px; height: 38px; padding: 0 10px; font-size: 13px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ftabs__panel, .ftabs__tab.is-active > .ftabs__label::after { animation: none; }
+  .ftabs__panel > *, .ftabs__tab.is-active > .ftabs__label::after { animation: none; }
   .ftabs__icon { transition: none; }
 }
