@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './folder-tabs.css'
 
 // Mũi tên trái/phải, Home/End chuyển tab (mẫu tablist của WAI-ARIA).
@@ -30,6 +30,17 @@ const Corner = ({ side }) => (
 export default function FolderTabs({ items, activeKey, onChange, ariaLabel, idPrefix, extra, plain = false, destroyInactive = false, className = '', panelClassName = '' }) {
   const [visited, setVisited] = useState(() => new Set([activeKey]))
   if (!visited.has(activeKey)) setVisited(new Set(visited).add(activeKey))
+  const stripRef = useRef(null)
+  const scrolled = useRef(false)
+  // Hàng tab cuộn ngang trên màn hẹp: luôn đưa tab đang chọn vào giữa tầm nhìn (lần đầu không chạy hiệu ứng).
+  useEffect(() => {
+    const strip = stripRef.current
+    const tab = strip?.querySelector('[aria-selected="true"]')
+    if (!tab || strip.scrollWidth <= strip.clientWidth) return
+    const left = tab.offsetLeft - (strip.clientWidth - tab.offsetWidth) / 2
+    strip.scrollTo?.({ left, behavior: scrolled.current ? 'smooth' : 'auto' })
+    scrolled.current = true
+  }, [activeKey])
   const tabId = (key) => `${idPrefix}-tab-${key}`
   const panelId = (key) => `${idPrefix}-panel-${key}`
 
@@ -46,7 +57,7 @@ export default function FolderTabs({ items, activeKey, onChange, ariaLabel, idPr
   return (
     <div className={`ftabs ${plain ? 'is-plain' : ''} ${className}`}>
       <div className="ftabs__bar">
-        <div className="ftabs__strip" role="tablist" aria-label={ariaLabel} onKeyDown={onKeyDown}>
+        <div ref={stripRef} className="ftabs__strip" role="tablist" aria-label={ariaLabel} onKeyDown={onKeyDown}>
           {items.map((item) => {
             const active = item.key === activeKey
             return (

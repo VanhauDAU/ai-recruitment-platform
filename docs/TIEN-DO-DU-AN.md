@@ -677,6 +677,18 @@ GĐ1 đã làm:
     đang chọn trắng dính liền khung. Tách trùng lặp: "Hồ sơ cá nhân" chỉ còn
     thông tin cá nhân; "Nhu cầu tìm việc" gom mong muốn trên hồ sơ và tiêu chí
     có cấu trúc (trước đây hai tab cùng hiện một khối).
+- Tab Bảo mật (admin, chi tiết tài khoản) làm lại theo tình huống (22/11, cùng PR).
+  - Một dòng tình trạng: trạng thái, email (kèm "Gửi lại xác minh" khi chưa xác
+    minh), mật khẩu, số phiên.
+  - "Xử lý theo tình huống": Không đăng nhập được (gửi link đặt mật khẩu; lối
+    phụ đổi email khi mất email), Nghi bị chiếm tài khoản (thu hồi mọi phiên),
+    thẻ thứ ba đổi theo trạng thái (vi phạm: tạm khóa/cấm; đang khóa: mở lại,
+    rà soát giữ tài nguyên; bị cấm: bắt đầu khôi phục).
+  - Tiến trình khôi phục 3 bước chỉ hiện khi đang khôi phục; danh sách phiên
+    thu gọn, chỉ tải khi mở.
+  - `AdminAccountSecurityActions` thành hook `useAccountSecurityOperations`
+    (logic + popup), widget tự vẽ nút. Popup `ActionDialog` có hiệu ứng mở,
+    mobile trượt lên từ đáy. Chữ của tab đưa vào i18n.
 
 ## Ứng tuyển bằng CV tải lên và form ứng tuyển mới (2026-11-18)
 

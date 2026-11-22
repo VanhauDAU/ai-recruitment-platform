@@ -3,7 +3,7 @@
    dưới cong ra ngoài (radial-gradient vẽ cả vòng viền), nên tab liền khối với nội dung bên dưới. */
 .ftabs { --ftabs-r: 12px; --ftabs-line: #dfe7e3; --ftabs-surface: #fff; min-width: 0; }
 .ftabs__bar { display: flex; align-items: flex-end; gap: 8px; background: linear-gradient(var(--ftabs-line), var(--ftabs-line)) bottom / 100% 1px no-repeat; }
-.ftabs__strip { display: flex; min-width: 0; flex: 1; gap: 2px; padding: 4px calc(var(--ftabs-r) + 2px) 0; overflow-x: auto; scrollbar-width: none; }
+.ftabs__strip { position: relative; display: flex; min-width: 0; flex: 1; gap: 2px; padding: 4px calc(var(--ftabs-r) + 2px) 0; overflow-x: auto; scrollbar-width: none; }
 .ftabs__strip::-webkit-scrollbar { display: none; }
 .ftabs__extra { display: flex; flex: none; align-items: center; align-self: center; padding-bottom: 4px; }
 

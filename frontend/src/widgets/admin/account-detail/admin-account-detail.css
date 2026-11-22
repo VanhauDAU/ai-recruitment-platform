@@ -169,6 +169,12 @@
   padding: 16px;
 }
 
+@media (max-width: 560px) {
+  .account-detail-tabs .ftabs__panel {
+    padding: 10px;
+  }
+}
+
 /* Panel con nằm trong khung trắng: giữ viền mảnh, bỏ đổ bóng để không chồng lớp */
 .account-detail-tabs .ftabs__panel .admin-panel {
   box-shadow: none;
@@ -609,5 +615,232 @@
 
   .account-company-gallery {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ---- Tab Bảo mật (AccountSecurityPanel): một dòng tình trạng, thẻ theo tình huống, phiên thu gọn ---- */
+
+.acc-sec__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 22px;
+  margin: 0;
+  padding: 12px 16px;
+  list-style: none;
+}
+
+.acc-sec__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--admin-text);
+}
+
+.acc-sec__inline.ant-btn {
+  height: auto;
+  padding: 0 2px;
+}
+
+.acc-sec__dot {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: #cbd5e1;
+}
+
+.acc-sec__dot.is-good { background: #22c55e; }
+.acc-sec__dot.is-warn { background: #f59e0b; }
+.acc-sec__dot.is-bad { background: var(--admin-critical); }
+
+.acc-sec__heading {
+  margin: 4px 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--admin-text-muted);
+}
+
+.acc-sec__cases {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.acc-sec__case {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  background: var(--admin-surface);
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: acc-sec-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.acc-sec__case:nth-child(2) { animation-delay: 0.05s; }
+.acc-sec__case:nth-child(3) { animation-delay: 0.1s; }
+
+.acc-sec__case:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  transform: translateY(-1px);
+}
+
+.acc-sec__case-icon {
+  display: inline-flex;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: #f1f5f9;
+  font-size: 16px;
+  color: #475569;
+}
+
+.acc-sec__case.is-danger .acc-sec__case-icon {
+  background: var(--admin-critical-soft);
+  color: var(--admin-critical);
+}
+
+.acc-sec__case h3 {
+  margin: 12px 0 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--admin-text);
+}
+
+.acc-sec__case p {
+  flex: 1;
+  margin: 4px 0 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--admin-text-muted);
+}
+
+.acc-sec__case-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.acc-sec__case-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--admin-border);
+  font-size: 12px;
+  color: var(--admin-text-muted);
+}
+
+.acc-sec__case-foot .ant-btn {
+  height: auto;
+  padding: 0 4px;
+  font-size: 12px;
+}
+
+/* Danh sách phiên thu gọn: co giãn bằng grid-template-rows 0fr → 1fr */
+.acc-sec__fold-title {
+  margin: 0;
+}
+
+.acc-sec__fold-title button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--admin-text);
+  transition: background-color 0.15s;
+}
+
+.acc-sec__fold-title button:hover { background: #f8fafc; }
+.acc-sec__fold-title button:focus-visible { outline: 2px solid var(--admin-primary); outline-offset: -2px; }
+
+.acc-sec__count {
+  display: inline-flex;
+  min-width: 22px;
+  justify-content: center;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  color: #475569;
+}
+
+.acc-sec__chevron {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--admin-text-muted);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.acc-sec__fold.is-open .acc-sec__chevron { transform: rotate(180deg); }
+
+.acc-sec__fold-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.acc-sec__fold.is-open .acc-sec__fold-panel { grid-template-rows: 1fr; }
+.acc-sec__fold-clip { min-height: 0; overflow: hidden; }
+.acc-sec__fold.is-open .acc-sec__fold-clip { padding: 0 16px 16px; }
+
+.acc-sec__device {
+  display: grid;
+  gap: 2px;
+}
+
+.acc-sec__device strong {
+  font-weight: 600;
+  color: var(--admin-text);
+}
+
+.acc-sec__device span {
+  font-size: 12px;
+  color: var(--admin-text-muted);
+}
+
+.acc-sec__state {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.acc-sec__sessions .ant-table-thead > tr > th {
+  background: #f8fafc;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--admin-text-muted);
+}
+
+@keyframes acc-sec-in {
+  from { opacity: 0; transform: translateY(6px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .acc-sec__case,
+  .acc-sec__fold-panel,
+  .acc-sec__chevron {
+    animation: none;
+    transition: none;
   }
 }

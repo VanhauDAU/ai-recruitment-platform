@@ -31,27 +31,20 @@ import {
   getAdminAccount,
   getAdminAccountProfile,
   getAdminAccountResource,
-  getAdminAccountSessions,
-  resendAdminAccountVerification,
   updateAdminAccountProfile,
 } from '@/entities/account/admin-account'
 import { useAdminAccess } from '@/entities/account/admin-access'
 import { useSession } from '@/entities/account/session'
 import { AdminAccountProfileModal } from '@/features/admin/account/edit-admin-account-profile'
-import { AdminAccountSecurityActions } from '@/features/admin/account/manage-admin-account-security'
 import { EmployerCompanyLinkRecovery } from '@/features/admin/company/recover-employer-company-link'
 import { EmployerVerificationReview } from '@/features/admin/company/review-employer-verification'
-import {
-  ChangeAccountEmailButton,
-  IdentityRecoveryGuide,
-} from '@/features/admin/account/recover-account-identity'
-import { SendAccountPasswordResetButton } from '@/features/admin/account/send-account-password-reset'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { m } from '@/shared/config/i18n'
 import { adminPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
 import FolderTabs from '@/shared/ui/folder-tabs/FolderTabs'
 import AccountProfilePanel from './AccountProfilePanel'
+import AccountSecurityPanel from './AccountSecurityPanel'
 import DetailPanel from './DetailPanel'
 import EmployerOverview from './EmployerOverview'
 import '../admin-account-detail.css'
@@ -121,150 +114,6 @@ function ResourceTable({ publicId, resource, columns, rowKey = 'public_id' }) {
         onChange: setPage,
       }}
     />
-  )
-}
-
-function SecurityPanel({
-  publicId,
-  account,
-  isSuperuser,
-}) {
-  const [recoveryProgress, setRecoveryProgress] = useState({
-    emailCompleted: false,
-    passwordResetSent: false,
-  })
-  const sessions = useQuery({
-    queryKey: adminAccountKeys.sessions(publicId),
-    queryFn: ({ signal }) => getAdminAccountSessions(publicId, { signal }),
-  })
-  const [sending, setSending] = useState(false)
-  useEffect(() => {
-    setRecoveryProgress({
-      emailCompleted: false,
-      passwordResetSent: false,
-    })
-  }, [publicId])
-
-  const emailRecoveryStarted = recoveryProgress.emailCompleted || (
-    account.email_verified === false
-    && account.has_usable_password === false
-  )
-
-  const sendVerification = async () => {
-    setSending(true)
-    try {
-      await resendAdminAccountVerification(publicId)
-      message.success('Đã xếp lịch gửi email xác minh.')
-    } catch (error) {
-      message.error(getApiErrorMessage(error))
-    } finally {
-      setSending(false)
-    }
-  }
-  return (
-    <div className="account-detail-stack">
-      <IdentityRecoveryGuide
-        account={account}
-        emailCompleted={recoveryProgress.emailCompleted}
-        passwordResetSent={recoveryProgress.passwordResetSent}
-        emailAction={(
-          <ChangeAccountEmailButton
-            account={account}
-            publicId={publicId}
-            disabled={account.status === 'pending'}
-            disabledReason="Tài khoản đang chờ phải xử lý qua quy trình lời mời."
-            onSuccess={() => setRecoveryProgress((current) => ({
-              ...current,
-              emailCompleted: true,
-              passwordResetSent: false,
-            }))}
-          />
-        )}
-        passwordResetAction={emailRecoveryStarted ? (
-          <SendAccountPasswordResetButton
-            account={account}
-            publicId={publicId}
-            accountEmail={account.email}
-            disabled={account.status !== 'active'}
-            disabledReason="Phải mở lại tài khoản bằng workflow trạng thái trước khi gửi password reset."
-            onSuccess={() => setRecoveryProgress((current) => ({
-              ...current,
-              passwordResetSent: true,
-            }))}
-          />
-        ) : null}
-      />
-      <DetailPanel title="Xác thực & quyền truy cập">
-        <Descriptions bordered size="small" column={{ xs: 1, md: 2 }}>
-          <Descriptions.Item label="Email">
-            <Tag color={account.email_verified ? 'green' : 'orange'}>
-              {account.email_verified ? 'Đã xác minh' : 'Chưa xác minh'}
-            </Tag>
-          </Descriptions.Item>
-          <Descriptions.Item label="Phiên hoạt động">
-            {account.active_session_count}
-          </Descriptions.Item>
-        </Descriptions>
-        <div className="mt-4 border-t border-slate-100 pt-4">
-          <div className="mb-3">
-            <Typography.Text strong>Thao tác bảo mật độc lập</Typography.Text>
-            <div>
-              <Typography.Text type="secondary" className="!text-xs">
-                Dùng khi không thực hiện quy trình đổi email ở phía trên.
-              </Typography.Text>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {!emailRecoveryStarted && (
-              <SendAccountPasswordResetButton
-                account={account}
-                publicId={publicId}
-                accountEmail={account.email}
-                disabled={account.status !== 'active'}
-                disabledReason="Phải mở lại tài khoản trước khi gửi password reset."
-              />
-            )}
-            {!account.email_verified && (
-              <Button loading={sending} icon={<MailOutlined />} onClick={sendVerification}>
-                Gửi lại xác minh email
-              </Button>
-            )}
-            {/* Chi tiết tài khoản admin chỉ superuser mở được (backend), nên
-                mọi tài khoản hiển thị ở đây đều được đổi trạng thái. */}
-            <AdminAccountSecurityActions
-              account={account}
-              allowBan={isSuperuser}
-              allowResourceRelease={isSuperuser}
-            />
-          </div>
-        </div>
-      </DetailPanel>
-      <DetailPanel title="Danh sách phiên">
-        <Table
-          rowKey="id"
-          loading={sessions.isLoading}
-          dataSource={sessions.data || []}
-          pagination={false}
-          scroll={{ x: 760 }}
-          columns={[
-            { title: 'Thiết bị', dataIndex: 'device_label', render: (value) => value || 'Không xác định' },
-            { title: 'Cổng', dataIndex: 'portal' },
-            { title: 'Phương thức', dataIndex: 'auth_method' },
-            { title: 'IP', dataIndex: 'ip_address', render: (value) => value || '—' },
-            { title: 'Hoạt động gần nhất', dataIndex: 'last_seen_at', render: (value) => formatAdminDate(value) },
-            {
-              title: 'Trạng thái',
-              key: 'status',
-              render: (_, row) => (
-                <Tag color={row.revoked_at ? 'default' : 'green'}>
-                  {row.revoked_at ? 'Đã thu hồi' : 'Hoạt động'}
-                </Tag>
-              ),
-            },
-          ]}
-        />
-      </DetailPanel>
-    </div>
   )
 }
 
@@ -500,7 +349,7 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
     </div>
   )
   const security = account && (
-    <SecurityPanel
+    <AccountSecurityPanel
       publicId={publicId}
       account={account}
       isSuperuser={isSuperuser}

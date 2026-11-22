@@ -190,6 +190,37 @@
   }
 }
 
+/* Mở popup: các khối trong thân hiện lần lượt, nhẹ và nhanh */
+.action-dialog__body > * {
+  animation: action-dialog-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.action-dialog__body > :nth-child(2) { animation-delay: 0.04s; }
+.action-dialog__body > :nth-child(3) { animation-delay: 0.08s; }
+.action-dialog__body > :nth-child(n + 4) { animation-delay: 0.12s; }
+@keyframes action-dialog-in {
+  from { opacity: 0; transform: translateY(6px); }
+}
+
+/* Mobile: dạng bottom sheet thì trượt lên từ đáy thay cho phóng to */
+@media (max-width: 639px) {
+  .action-dialog-root .ant-modal-wrap .action-dialog.ant-zoom-enter,
+  .action-dialog-root .ant-modal-wrap .action-dialog.ant-zoom-appear {
+    animation-name: action-dialog-sheet-in;
+    transform: none;
+  }
+  .action-dialog-root .ant-modal-wrap .action-dialog.ant-zoom-leave {
+    animation-name: action-dialog-sheet-out;
+  }
+  @keyframes action-dialog-sheet-in {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  @keyframes action-dialog-sheet-out {
+    to { transform: translateY(100%); }
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reason-field__preset { transition: none; }
+  .action-dialog__body > * { animation: none; }
 }
