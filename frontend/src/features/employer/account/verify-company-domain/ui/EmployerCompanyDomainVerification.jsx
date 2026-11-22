@@ -242,15 +242,18 @@ export default function EmployerCompanyDomainVerification({ className = '', comp
   const canCreateClaim = hasCompany && claimsQuery.isSuccess && claims.length === 0
 
   return (
-    <section className={`min-w-0 rounded-xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5 ${className}`}>
+    <section className={`min-w-0 rounded-sm border border-slate-200 bg-white p-5 sm:p-6 ${className}`}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <h2 className="flex items-center gap-2 text-base font-bold text-slate-900">
-            <GlobalOutlined className="text-emerald-600" /> {m.employer_account_domain_title()}
-          </h2>
-          <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">
-            {m.employer_account_domain_subtitle()}
-          </p>
+        <div className="flex min-w-0 items-start gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+            <GlobalOutlined className="text-lg" />
+          </span>
+          <div className="min-w-0">
+            <h2 className="text-base font-bold text-slate-900">{m.employer_account_domain_title()}</h2>
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">
+              {m.employer_account_domain_subtitle()}
+            </p>
+          </div>
         </div>
         {canCreateClaim && (
           <Button

@@ -13,10 +13,10 @@ export default function EmployerAccountInformationPage() {
       title={m.employer_account_settings_nav_account()}
       description={m.employer_account_page_account_desc()}
     >
+      <EmployerAccountInformation />
       <EmployerAccountVerificationCard />
       <EmployerTrustBadgeEligibility className="mb-5" />
-      <EmployerCompanyDomainVerification className="mb-5" />
-      <EmployerAccountInformation />
+      <EmployerCompanyDomainVerification />
     </EmployerAccountSettingsShell>
   )
 }

@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Làm lại trang Thông tin tài khoản NTD](#làm-lại-trang-thông-tin-tài-khoản-ntd-2026-11-22) | 🟨 Xong trên nhánh `feat/employer-account-info-redesign`, chờ gộp |
 | [Làm lại Thông báo hệ thống và Lịch sử hoạt động của NTD](#làm-lại-thông-báo-hệ-thống-và-lịch-sử-hoạt-động-của-ntd-2026-11-22) | ✅ Gộp vào `dev` (#307) |
 | [Làm lại danh sách tin tuyển dụng và chiến dịch của NTD](#làm-lại-danh-sách-tin-tuyển-dụng-và-chiến-dịch-của-ntd-2026-11-22) | ✅ Gộp vào `dev` (#305) |
 | [Làm lại carousel banner trang chủ](#làm-lại-carousel-banner-trang-chủ-2026-11-21) | ✅ Gộp vào `dev` (#300); cắt ảnh + 8 tông màu trên nhánh `feat/banner-image-crop` |
@@ -76,6 +77,22 @@ một danh sách phân trang (timeline antd), không lọc được và lịch s
   vấn mỗi dòng khi tính người thực hiện (đọc `actor_id` thay vì `actor`).
 - CSS dùng chung chuyển sang `frontend/src/shared/ui/workspace-list/workspace-list.css`
   để widget cũng dùng được.
+
+## Làm lại trang Thông tin tài khoản NTD (2026-11-22)
+
+Trang `/tuyendung/app/account/settings/account-info`: cụm sửa thông tin cá nhân nằm
+cuối trang, ảnh đại diện 36px, các cụm còn lại mỗi cụm một kiểu (nền vàng, nền xám).
+
+- Cụm hồ sơ lên đầu trang: dải nền chấm mờ, ảnh đại diện 88px có nút máy ảnh để
+  đổi ảnh, họ tên + vai trò trong công ty + chức danh, email/SĐT kèm "Đã xác thực",
+  nơi làm việc; dải công ty (logo, tên, mở trang Thông tin công ty) và ngày tham
+  gia; nút Xuất dữ liệu. Form "Thông tin cá nhân" bên dưới, nút Hủy/Lưu chỉ bật khi
+  có thay đổi, kèm dòng nhắc "Bạn có thay đổi chưa lưu".
+- Cụm "Tài khoản xác thực" giữ nguyên.
+- "Điều kiện nhận dấu tick" và "Xác minh tên miền công ty" chuyển về cùng kiểu thẻ
+  trắng viền mảnh với ô icon đồng bộ; dấu tick bỏ nền vàng, điều kiện chưa đạt tô xám,
+  tiến độ "3/5" ở góc.
+- Mobile: ảnh trên, thông tin xếp dọc. Style riêng ở `account-information.css` (lazy).
 
 ## Làm lại danh sách tin tuyển dụng và chiến dịch của NTD (2026-11-22)
 

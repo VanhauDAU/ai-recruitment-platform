@@ -435,7 +435,6 @@
   "employer_account_info_save_failed": "Không thể lưu thông tin. Vui lòng thử lại.",
   "employer_account_info_title": "Cập nhật thông tin tài khoản",
   "employer_account_info_export": "Xuất dữ liệu",
-  "employer_account_info_avatar": "Avatar",
   "employer_account_info_change_avatar": "Đổi avatar",
   "employer_account_info_full_name": "Họ và tên",
   "employer_account_info_full_name_required": "Vui lòng nhập họ và tên.",
@@ -620,5 +619,11 @@
   "employer_account_page_general_desc": "Quản lý thông báo và các phương thức xác thực bảo mật cho tài khoản tuyển dụng của bạn.",
   "employer_account_page_integrations_desc": "Kết nối Fanpage và tài khoản mạng xã hội để chiến dịch tự đăng bài tuyển dụng.",
   "employer_account_page_company_desc": "Tìm doanh nghiệp đã có trên hệ thống hoặc tạo hồ sơ công ty mới.",
-  "employer_account_page_dpa_desc": "Hoàn thiện riêng văn bản với ứng viên và thỏa thuận với nền tảng."
+  "employer_account_page_dpa_desc": "Hoàn thiện riêng văn bản với ứng viên và thỏa thuận với nền tảng.",
+  "employer_account_info_personal": "Thông tin cá nhân",
+  "employer_account_info_verified": "Đã xác thực",
+  "employer_account_info_joined": "Tham gia từ {date}",
+  "employer_account_info_no_company": "Liên kết công ty",
+  "employer_account_info_unsaved": "Bạn có thay đổi chưa lưu",
+  "employer_account_info_save": "Lưu thay đổi"
 }
