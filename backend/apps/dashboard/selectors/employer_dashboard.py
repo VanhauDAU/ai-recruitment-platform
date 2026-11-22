@@ -111,7 +111,7 @@ def build_employer_dashboard(user):
 
     return {
         'account': {
-            'recruiter_public_id': recruiter.public_id,
+            'public_id': user.public_id,
             'company_public_id': company.public_id if company else None,
             'company_name': company.company_name if company else '',
             'recruiter_verification_status': (

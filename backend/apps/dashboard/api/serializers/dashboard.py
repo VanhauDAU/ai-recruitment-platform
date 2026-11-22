@@ -23,7 +23,7 @@ class VerificationProgressSerializer(serializers.Serializer):
 
 
 class EmployerDashboardAccountSerializer(serializers.Serializer):
-    recruiter_public_id = serializers.CharField()
+    public_id = serializers.CharField(help_text='Mã tài khoản NTD (8 chữ số).')
     company_public_id = serializers.CharField(allow_null=True)
     company_name = serializers.CharField(allow_blank=True)
     recruiter_verification_status = serializers.CharField()

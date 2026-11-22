@@ -72,14 +72,12 @@ def _employer_verification(user, link):
     site_name = get_string_setting('site_name', 'ProCV')
     hours = settings.EMAIL_VERIFICATION_TTL // 3600
     name = user.full_name or user.email
-    recruiter = getattr(user, 'recruiter_profile', None)
-    recruiter_code = recruiter.public_id if recruiter else user.public_id
     support_email = get_string_setting('support_email', '')
     hotline = get_string_setting('hotline', '')
     values = {
         'site_name': site_name,
         'name': name,
-        'code': recruiter_code,
+        'code': user.public_id,
         'email': user.email,
         'link': link,
         'hours': hours,

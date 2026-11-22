@@ -68,7 +68,7 @@ export async function mockPublicApi(page) {
         : path === '/api/employer/dashboard/'
           ? {
               account: {
-                recruiter_public_id: 'rec_test', company_name: 'Công ty Acme',
+                public_id: '48261937', company_name: 'Công ty Acme',
                 company_size: '25-99', work_location_name: 'Hà Nội',
                 verification: { email_verified: true, phone_verified: false, company_linked: false, business_doc_submitted: false, candidate_dpa_submitted: false, dpa_accepted: false, representative_verified: false, first_job_posted: false },
               },

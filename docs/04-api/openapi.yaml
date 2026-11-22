@@ -26314,8 +26314,9 @@ components:
     EmployerDashboardAccount:
       type: object
       properties:
-        recruiter_public_id:
+        public_id:
           type: string
+          description: Mã tài khoản NTD (8 chữ số).
         company_public_id:
           type: string
           nullable: true
@@ -26333,7 +26334,7 @@ components:
       - company_name
       - company_public_id
       - company_size
-      - recruiter_public_id
+      - public_id
       - recruiter_verification_status
       - verification
       - work_location_name
