@@ -6,7 +6,7 @@ export default function JobStatusPill({ job }) {
   const reasons = (job.visibility_issues || []).map((issue) => issue.label).join(' ')
   return (
     <Tooltip title={reasons || null}>
-      <span className={`job-pill job-tone-${status.tone}`}>{status.label}</span>
+      <span className={`ws-pill ws-tone-${status.tone}`}>{status.label}</span>
     </Tooltip>
   )
 }

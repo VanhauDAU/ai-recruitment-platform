@@ -112,6 +112,7 @@ class EmployerJobSerializerTests(APITestCase):
                 'locations_detail',
                 'employment_type',
                 'deadline',
+                'closes_on',
                 'requested_visibility_days',
                 'first_approved_at',
                 'visibility_starts_at',
@@ -185,6 +186,60 @@ class EmployerJobSerializerTests(APITestCase):
         everything = self.client.get(reverse('employer-job-list-create'))
         self.assertEqual(everything.data['status_counts']['all'], 6)
         self.assertEqual(everything.data['status_counts']['active'], 3)
+
+    def test_employer_list_filters_attention_and_sorts_by_closing_day(self):
+        today = timezone.localdate()
+        jobs = {
+            title: Job.objects.create(
+                posted_by=self.user,
+                company=self.company,
+                title=title,
+                status=status,
+                deadline=deadline,
+                view_count=views,
+                **open_visibility_window(days=window),
+            )
+            for title, status, deadline, window, views in (
+                ('Sắp hết hạn nộp', Job.Status.ACTIVE, today + timedelta(days=3), 30, 5),
+                ('Sắp hết hiển thị', Job.Status.ACTIVE, None, 5, 20),
+                ('Còn lâu', Job.Status.ACTIVE, today + timedelta(days=20), 30, 1),
+                ('Nháp có CV', Job.Status.DRAFT, None, 30, 0),
+            )
+        }
+        candidate = User.objects.create_user(
+            email='attention-candidate@example.com',
+            password='Password@123',
+            role=User.Role.CANDIDATE,
+        )
+        cv = UserCv.objects.create(user=candidate, cv_type=UserCv.CvType.BUILDER, title='CV')
+        version = CvVersion.objects.create(
+            cv=cv, version_number=1, content_hash='a' * 64, created_by=candidate
+        )
+        for title in ('Còn lâu', 'Nháp có CV'):
+            Application.objects.create(
+                candidate=candidate, job=jobs[title], cv=cv, submitted_cv_version=version
+            )
+        self.client.force_authenticate(self.user)
+        url = reverse('employer-job-list-create')
+
+        def fetch(**params):
+            response = self.client.get(url, params)
+            self.assertEqual(response.status_code, 200, response.data)
+            return [item['title'] for item in response.data['results']], response.data
+
+        expiring, data = fetch(attention='expiring', ordering='deadline')
+        self.assertEqual(expiring, ['Sắp hết hạn nộp', 'Sắp hết hiển thị'])
+        self.assertEqual(data['attention_counts'], {'unviewed': 2, 'expiring': 2})
+        self.assertIsNotNone(data['results'][1]['closes_on'])
+
+        self.assertEqual(fetch(attention='unviewed')[0], ['Nháp có CV', 'Còn lâu'])
+        active_tab = fetch(status='active', attention='unviewed')[1]
+        self.assertEqual(active_tab['attention_counts'], {'unviewed': 1, 'expiring': 2})
+        self.assertEqual(
+            fetch(ordering='-views')[0][:3], ['Sắp hết hiển thị', 'Sắp hết hạn nộp', 'Còn lâu']
+        )
+        # Unknown values fall back to the default newest-first list.
+        self.assertEqual(fetch(ordering='bogus', attention='bogus')[0][0], 'Nháp có CV')
 
     def test_job_application_aggregates_count_the_latest_submission_per_candidate(self):
         job = Job.objects.create(

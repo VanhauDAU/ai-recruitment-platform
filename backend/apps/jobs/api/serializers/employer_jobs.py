@@ -209,6 +209,7 @@ class EmployerJobListSerializer(EmployerJobVisibilityHoldMixin, PublicJobListSer
     is_expired = serializers.BooleanField(read_only=True)
     candidate_count = serializers.IntegerField(read_only=True, default=0)
     unviewed_application_count = serializers.IntegerField(read_only=True, default=0)
+    closes_on = serializers.DateField(read_only=True, allow_null=True, default=None)
     candidate_previews = serializers.SerializerMethodField()
 
     class Meta(PublicJobListSerializer.Meta):
@@ -219,6 +220,7 @@ class EmployerJobListSerializer(EmployerJobVisibilityHoldMixin, PublicJobListSer
             'locations_detail',
             'employment_type',
             'deadline',
+            'closes_on',
             'requested_visibility_days',
             'first_approved_at',
             'visibility_starts_at',

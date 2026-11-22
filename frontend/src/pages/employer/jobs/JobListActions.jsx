@@ -139,19 +139,13 @@ export default function JobListActions({
   }
 
   return (
-    <div data-testid="job-row-actions" className="ml-auto flex shrink-0 items-center justify-end gap-1">
+    <div data-testid="job-row-actions" className="ejl-row__actions">
       {action ? (
-        <Link
-          className="inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 text-xs font-semibold !text-emerald-700 transition hover:border-emerald-300 hover:!bg-emerald-100"
-          to={action.to}
-        >
-          {action.icon} {action.label}
+        <Link aria-label={action.label} className="ejl-primary-action" to={action.to}>
+          {action.icon}<span>{action.label}</span>
         </Link>
       ) : (
-        <div
-          data-testid="job-hover-actions"
-          className="pointer-events-none hidden items-center gap-0.5 opacity-0 transition-opacity duration-150 lg:flex lg:group-hover:pointer-events-auto lg:group-hover:opacity-100 lg:group-focus-within:pointer-events-auto lg:group-focus-within:opacity-100"
-        >
+        <div data-testid="job-quick-actions" className="ejl-quick-actions">
           {candidateDataAccess && job.application_count > 0 && (
             <Tooltip title={m.employer_job_list_view_applications()}>
               <Link aria-label={m.employer_job_list_view_applications()} className={iconActionClass} to={employerJobApplicationsPath(job)}>

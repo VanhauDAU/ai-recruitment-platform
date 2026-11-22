@@ -1,22 +1,41 @@
 """Read queries owned by an employer for the jobs domain."""
 
 from collections import defaultdict
+from datetime import timedelta
 
 from django.db.models import (
     CharField,
     Count,
+    Exists,
+    F,
     IntegerField,
     OuterRef,
+    Q,
     Subquery,
     Value,
 )
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, Least, TruncDate
+from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from apps.applications.models import Application
+from common.vietnam_time import VIETNAM_TZ, vietnam_today
 
-from ..models import Job, JobModerationEvent
-from ..models.querysets import job_state_counts, with_job_visibility
+from ..models import Job, JobModerationEvent, JobState
+from ..models.querysets import job_effective_state_expression, with_job_visibility
+
+# Days before ``closes_on`` that the list flags a live job as closing soon.
+EXPIRING_SOON_DAYS = 7
+# ``ordering`` values of the management list (``-`` prefix = descending).
+EMPLOYER_JOB_ORDERINGS = {
+    'created': 'created_at',
+    'updated': 'updated_at',
+    'deadline': 'closes_on',
+    'candidates': 'candidate_count',
+    'unviewed': 'unviewed_application_count',
+    'views': 'view_count',
+}
+EMPLOYER_JOB_ATTENTION_FILTERS = ('unviewed', 'expiring')
 
 
 def _latest_hide_reason_codes(job_reference):
@@ -158,7 +177,38 @@ def _employer_jobs(user, *, campaign=None, q=None):
     return queryset
 
 
-def employer_job_list_queryset(user, *, status=None, campaign=None, q=None):
+def _closes_on():
+    """Last day candidates can apply: the earlier of the deadline and the display window."""
+    return Least('deadline', TruncDate('visibility_ends_at', tzinfo=VIETNAM_TZ))
+
+
+def _unviewed_applications():
+    return Application.objects.filter(
+        job_id=OuterRef('pk'),
+        status=Application.Status.SUBMITTED,
+        is_current=True,
+    )
+
+
+def _expiring_soon(now):
+    deadline = vietnam_today(now) + timedelta(days=EXPIRING_SOON_DAYS)
+    return Q(effective_state=JobState.ACTIVE, closes_on__lte=deadline)
+
+
+def _ordering(value):
+    """``order_by`` arguments for a public ``ordering`` value; newest first otherwise."""
+    descending = (value or '').startswith('-')
+    field = EMPLOYER_JOB_ORDERINGS.get((value or '').lstrip('-'))
+    if field is None:
+        return ('-created_at', '-id')
+    expression = F(field)
+    expression = expression.desc(nulls_last=True) if descending else expression.asc(nulls_last=True)
+    return (expression, '-id')
+
+
+def employer_job_list_queryset(
+    user, *, status=None, campaign=None, q=None, attention=None, ordering=None
+):
     """Compact query for the employer management table."""
     candidate_count = (
         Application.objects.filter(job_id=OuterRef('pk'))
@@ -167,14 +217,7 @@ def employer_job_list_queryset(user, *, status=None, campaign=None, q=None):
         .values('total')[:1]
     )
     unviewed_count = (
-        Application.objects.filter(
-            job_id=OuterRef('pk'),
-            status=Application.Status.SUBMITTED,
-            is_current=True,
-        )
-        .values('job_id')
-        .annotate(total=Count('id'))
-        .values('total')[:1]
+        _unviewed_applications().values('job_id').annotate(total=Count('id')).values('total')[:1]
     )
     queryset = (
         with_job_visibility(_with_hold_reason(_employer_jobs(user, campaign=campaign, q=q)))
@@ -195,18 +238,44 @@ def employer_job_list_queryset(user, *, status=None, campaign=None, q=None):
                 Subquery(unviewed_count, output_field=IntegerField()),
                 0,
             ),
+            closes_on=_closes_on(),
         )
-        .order_by('-created_at', '-id')
+        .order_by(*_ordering(ordering))
     )
     if status:
         queryset = queryset.filter(effective_state=status)
+    if attention == 'unviewed':
+        queryset = queryset.filter(unviewed_application_count__gt=0)
+    elif attention == 'expiring':
+        queryset = queryset.filter(_expiring_soon(timezone.now()))
     return queryset
+
+
+def employer_job_list_counts(user, *, status=None, campaign=None, q=None):
+    """Status tab and attention-chip counts of the list in one aggregate query.
+
+    Tabs count every state under the search; the attention chips count inside
+    the open tab, so a chip never promises rows the tab cannot show.
+    """
+    now = timezone.now()
+    queryset = _employer_jobs(user, campaign=campaign, q=q).alias(
+        effective_state=job_effective_state_expression(at=now),
+        closes_on=_closes_on(),
+        has_unviewed=Exists(_unviewed_applications()),
+    )
+    in_tab = Q(effective_state=status) if status else Q()
+    counts = queryset.aggregate(
+        **{state: Count('id', filter=Q(effective_state=state)) for state in JobState.values},
+        attention_unviewed=Count('id', filter=in_tab & Q(has_unviewed=True)),
+        attention_expiring=Count('id', filter=in_tab & _expiring_soon(now)),
+    )
+    attention = {key: counts.pop(f'attention_{key}') for key in EMPLOYER_JOB_ATTENTION_FILTERS}
+    return {'all': sum(counts.values()), **counts}, attention
 
 
 def employer_job_status_counts(user, *, campaign=None, q=None):
     """Count every status tab of the list in one query, under the same search."""
-    counts = job_state_counts(_employer_jobs(user, campaign=campaign, q=q))
-    return {'all': sum(counts.values()), **counts}
+    return employer_job_list_counts(user, campaign=campaign, q=q)[0]
 
 
 def employer_job_application_summary(job):

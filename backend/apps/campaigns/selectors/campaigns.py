@@ -5,6 +5,7 @@ from django.db.models import (
     Case,
     Count,
     DateTimeField,
+    Exists,
     F,
     IntegerField,
     OuterRef,
@@ -49,19 +50,43 @@ def _status_filter(status):
     return Q(status=status)
 
 
-def campaign_status_counts(user, *, q=None):
-    """Campaign count per status (plus ``ended``) for the list's status tabs."""
+# ``scope`` values the list offers as attention chips, counted inside the open tab.
+CAMPAIGN_ATTENTION_SCOPES = ('needs_review', 'expired_jobs')
+
+
+def campaign_list_counts(user, *, status=None, q=None):
+    """Status tab and attention-chip counts of the list in one aggregate query.
+
+    Tabs count every status under the search (``ended`` groups the terminal
+    ones); chips count inside the open tab so they never promise hidden rows.
+    """
     queryset = RecruitmentCampaign.objects.filter(owner__user=user)
     if q:
         term = q.strip()
         queryset = queryset.filter(Q(name__icontains=term) | Q(public_id__icontains=term))
-    counts = dict.fromkeys(RecruitmentCampaign.Status.values, 0)
-    counts.update(queryset.values_list('status').annotate(total=Count('id')).order_by())
-    counts[ENDED_STATUS_FILTER] = sum(
-        counts[status] for status in RecruitmentCampaign.TERMINAL_STATUSES
+    unviewed = Application.objects.filter(
+        job__campaign_id=OuterRef('pk'),
+        status=Application.Status.SUBMITTED,
+        is_current=True,
     )
-    counts['all'] = sum(counts[status] for status in RecruitmentCampaign.Status.values)
-    return counts
+    in_tab = _status_filter(status) if status else Q()
+    counts = queryset.alias(
+        has_unviewed=Exists(unviewed),
+        expired_jobs=job_state_count_subquery(JobState.EXPIRED, campaign_id='pk'),
+    ).aggregate(
+        **{
+            value: Count('id', filter=Q(status=value))
+            for value in RecruitmentCampaign.Status.values
+        },
+        attention_needs_review=Count('id', filter=in_tab & Q(has_unviewed=True)),
+        attention_expired_jobs=Count('id', filter=in_tab & Q(expired_jobs__gt=0)),
+    )
+    attention = {scope: counts.pop(f'attention_{scope}') for scope in CAMPAIGN_ATTENTION_SCOPES}
+    counts[ENDED_STATUS_FILTER] = sum(
+        counts[value] for value in RecruitmentCampaign.TERMINAL_STATUSES
+    )
+    counts['all'] = sum(counts[value] for value in RecruitmentCampaign.Status.values)
+    return counts, attention
 
 
 class CampaignJobPerformanceScopeNotFound(LookupError):

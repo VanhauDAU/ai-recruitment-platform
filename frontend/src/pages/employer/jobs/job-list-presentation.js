@@ -13,6 +13,29 @@ export const JOB_STATUS_TABS = [
   { value: 'closed', label: m.employer_job_status_closed(), countKey: 'closed' },
 ]
 
+// `ordering` of GET /api/employer/jobs/; '' is the backend default (-created).
+export const JOB_SORT_OPTIONS = [
+  { value: '', label: m.employer_job_list_sort_newest() },
+  { value: '-updated', label: m.employer_job_list_sort_updated() },
+  { value: 'deadline', label: m.employer_job_list_sort_deadline() },
+  { value: '-unviewed', label: m.employer_job_list_sort_unviewed() },
+  { value: '-candidates', label: m.employer_job_list_sort_candidates() },
+  { value: '-views', label: m.employer_job_list_sort_views() },
+]
+
+// Sortable column headers: a click sorts by the column, a second click resets.
+export const JOB_SORT_COLUMNS = {
+  candidates: '-candidates',
+  views: '-views',
+  deadline: 'deadline',
+}
+
+// `attention` filters; counts come from `attention_counts` inside the open tab.
+export const JOB_ATTENTION_FILTERS = [
+  { value: 'unviewed', label: m.employer_job_list_attention_unviewed(), tone: 'orange' },
+  { value: 'expiring', label: m.employer_job_list_attention_expiring(), hint: m.employer_job_list_attention_expiring_hint(), tone: 'amber' },
+]
+
 // Keys are the backend `effective_state`: what candidates experience now.
 const STATUS_META = {
   active: { label: m.employer_job_status_active(), tone: 'emerald' },
@@ -60,15 +83,18 @@ const DEADLINE_TONES = {
  * posting window has elapsed (only for jobs candidates can still apply to).
  */
 export function jobDeadlineMeta(job, now = dayjs()) {
-  const date = job.deadline ? formatJobDate(job.deadline) : null
-  const build = (hint, tone, progress = null) => ({ date, hint, progress, tone: DEADLINE_TONES[tone] })
+  // `closes_on` is the earlier of the deadline and the end of the display window.
+  const closesOn = job.closes_on || job.deadline
+  const date = closesOn ? formatJobDate(closesOn) : null
+  const windowEnds = Boolean(job.closes_on && job.closes_on !== job.deadline)
+  const build = (hint, tone, progress = null) => ({ date, hint, progress, windowEnds, tone: DEADLINE_TONES[tone] })
   if (job.status === 'draft') return build(m.employer_job_list_deadline_not_posted(), 'muted')
   if (job.status === 'closed') return build(m.employer_job_list_deadline_closed(), 'muted')
   if (job.is_expired) return build(m.employer_job_list_deadline_expired(), 'expired')
-  if (!job.deadline) return build(m.employer_job_list_deadline_unlimited(), 'success')
+  if (!closesOn) return build(m.employer_job_list_deadline_unlimited(), 'success')
 
   const today = now.startOf('day')
-  const deadline = dayjs(job.deadline).startOf('day')
+  const deadline = dayjs(closesOn).startOf('day')
   const daysLeft = deadline.diff(today, 'day')
   const postedAt = dayjs(job.first_approved_at || job.published_at || job.created_at).startOf('day')
   const window = deadline.diff(postedAt, 'day')
