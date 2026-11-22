@@ -27,6 +27,7 @@ describe('date-time helpers', () => {
     expect(formatTimeAgo(ago(5), NOW.getTime())).toBe('5 phút trước')
     expect(formatTimeAgo(ago(180), NOW.getTime())).toBe('3 giờ trước')
     expect(formatTimeAgo(ago(1500), NOW.getTime())).toBe('Hôm qua')
+    expect(formatTimeAgo(ago(2900), NOW.getTime(), { inSentence: true })).toBe('hôm kia')
     expect(formatTimeAgo(null)).toBe('—')
   })
 })
