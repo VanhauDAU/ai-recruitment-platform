@@ -625,5 +625,9 @@
   "employer_account_info_joined": "Tham gia từ {date}",
   "employer_account_info_no_company": "Liên kết công ty",
   "employer_account_info_unsaved": "Bạn có thay đổi chưa lưu",
-  "employer_account_info_save": "Lưu thay đổi"
+  "employer_account_info_save": "Lưu thay đổi",
+  "employer_account_tabs_aria": "Mục thông tin tài khoản",
+  "employer_account_tab_account": "Tài khoản",
+  "employer_account_tab_verification": "Xác thực",
+  "employer_account_tab_domain": "Tên miền công ty"
 }

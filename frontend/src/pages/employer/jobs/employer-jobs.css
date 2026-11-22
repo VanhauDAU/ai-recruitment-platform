@@ -78,18 +78,6 @@
 .job-cv-table .ant-table-cell:first-child { padding-left: 20px !important; }
 .job-cv-table .ant-table-cell:last-child { padding-right: 20px !important; }
 
-.job-detail-tabs .ant-tabs-content-holder { min-width: 0; }
-.job-detail-tabs > .ant-tabs-nav { display: none !important; }
-
-@media (min-width: 640px) {
-  .job-detail-tabs > .ant-tabs-nav {
-    display: flex !important;
-    margin-bottom: 0 !important;
-    padding: 0 20px;
-  }
-}
-
-.job-detail-tabs .ant-tabs-tab { padding-block: 14px !important; }
 
 
 /* Job workspace header. */

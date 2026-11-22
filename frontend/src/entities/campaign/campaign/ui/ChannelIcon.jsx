@@ -28,6 +28,7 @@ const KINDS = {
 }
 
 const SIZES = {
+  sm: { width: 24, height: 24, borderRadius: 7, fontSize: 13 },
   md: { width: 36, height: 36, borderRadius: 10, fontSize: 18 },
   lg: { width: 44, height: 44, borderRadius: 12, fontSize: 22 },
 }

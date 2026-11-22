@@ -3,13 +3,14 @@ import { Alert, Button, Skeleton } from 'antd'
 import { useState } from 'react'
 import { ChannelIcon } from '@/entities/campaign/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import FolderTabs from '@/shared/ui/folder-tabs/FolderTabs'
 import { m } from '@/shared/config/i18n'
 import { useCampaignChannels } from '../model/use-campaign-channels'
 import AddChannelModal from './AddChannelModal'
 import ChannelDetail from './ChannelDetail'
 import './channel-board.css'
 
-// Kênh phân phối của chiến dịch: danh sách bên trái, chi tiết kênh đang chọn bên phải.
+// Kênh phân phối của chiến dịch: hàng tab kênh ở trên, chi tiết kênh đang chọn bên dưới.
 export default function CampaignChannelBoard({ campaign }) {
   const [adding, setAdding] = useState(false)
   const [selectedId, setSelectedId] = useState(null)
@@ -44,33 +45,21 @@ export default function CampaignChannelBoard({ campaign }) {
           {editable && <Button onClick={() => setAdding(true)}>{m.employer_campaign_board_add_first()}</Button>}
         </div>
       ) : (
-        <div className="ch-layout">
-          <nav className="ch-list" aria-label={m.employer_campaign_board_list_aria()}>
-            {channels.map((channel) => (
-              <button
-                key={channel.public_id}
-                type="button"
-                className={`ch-list__item ${channel.public_id === selected.public_id ? 'is-active' : ''}`}
-                aria-current={channel.public_id === selected.public_id ? 'true' : undefined}
-                onClick={() => setSelectedId(channel.public_id)}
-              >
-                <ChannelIcon kind={channel.kind} />
-                <span className="ch-list__text">
-                  <strong>{channel.label}</strong>
-                  <span>{m.employer_campaign_board_item_stats({ clicks: channel.unique_clicks, applications: channel.applications })}</span>
-                </span>
-                <span className={`ch-dot ${channel.posted_at ? 'is-on' : ''}`} aria-hidden />
-                <span className="ch-sr">{channel.posted_at ? m.employer_campaign_board_posted() : m.employer_campaign_board_not_posted()}</span>
-              </button>
-            ))}
-          </nav>
-          <ChannelDetail
-            key={selected.public_id}
-            campaign={campaign}
-            channel={selected}
-            editable={editable}
-          />
-        </div>
+        <FolderTabs
+          idPrefix="channel"
+          ariaLabel={m.employer_campaign_board_list_aria()}
+          activeKey={selected.public_id}
+          onChange={setSelectedId}
+          plain
+          destroyInactive
+          items={channels.map((channel) => ({
+            key: channel.public_id,
+            title: channel.label,
+            icon: <ChannelIcon kind={channel.kind} size="sm" />,
+            label: channel.label,
+            children: <ChannelDetail campaign={campaign} channel={channel} editable={editable} />,
+          }))}
+        />
       )}
 
       <AddChannelModal

@@ -2,7 +2,7 @@ import { App } from 'antd'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import AdminAccountSecurityActions from './AdminAccountSecurityActions'
+import useAccountSecurityOperations from './use-account-security-operations'
 
 const mocks = vi.hoisted(() => ({
   changeAccountStatus: vi.fn(),
@@ -34,12 +34,34 @@ const account = {
   status_enforcement: { requires_resource_review: false },
 }
 
+// Nơi dùng thật vẽ nút theo `available`; harness vẽ mỗi thao tác một nút để bấm.
+const LABELS = {
+  suspend: 'Tạm khóa tài khoản',
+  reactivate: 'Mở lại tài khoản',
+  resourceHold: 'Rà soát & gỡ giữ tài nguyên',
+  unban: 'Bắt đầu khôi phục',
+  ban: 'Cấm tài khoản',
+  sessions: 'Thu hồi mọi phiên',
+}
+
+function Harness(props) {
+  const { available, start, dialog } = useAccountSecurityOperations(props)
+  return (
+    <>
+      {Object.entries(LABELS).filter(([key]) => available[key]).map(([key, label]) => (
+        <button key={key} type="button" onClick={start[key]}>{label}</button>
+      ))}
+      {dialog}
+    </>
+  )
+}
+
 function renderActions(props = {}) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={client}>
       <App>
-        <AdminAccountSecurityActions
+        <Harness
           account={account}
           allowBan
           allowResourceRelease
@@ -50,7 +72,7 @@ function renderActions(props = {}) {
   )
 }
 
-describe('AdminAccountSecurityActions', () => {
+describe('useAccountSecurityOperations', () => {
   beforeEach(() => {
     Object.values(mocks).forEach((value) => {
       if (typeof value?.mockReset === 'function') value.mockReset()

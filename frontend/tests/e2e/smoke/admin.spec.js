@@ -474,9 +474,10 @@ test('superuser recovers email, then sends password reset', { tag: '@responsive'
 
   await page.goto('/admin/app/accounts/usr_recovery?tab=security')
   await expect(page.getByRole('heading', { name: 'Nguyễn Cần Hỗ Trợ' })).toBeVisible()
-  await expect(page.getByText('Khôi phục quyền truy cập'))
-    .toBeVisible()
+  // Tab Bảo mật xử lý theo tình huống; tiến trình khôi phục chỉ hiện sau khi đổi email.
+  await expect(page.getByRole('heading', { name: 'Không đăng nhập được' })).toBeVisible()
   await expect(page.getByText(/không có mật khẩu tạm/i)).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Khôi phục quyền truy cập' })).toHaveCount(0)
 
   await page.getByRole('button', { name: 'Đổi email đăng nhập' }).click()
   const emailDialog = page.getByRole('dialog', { name: 'Khôi phục email đăng nhập' })
@@ -511,6 +512,7 @@ test('superuser recovers email, then sends password reset', { tag: '@responsive'
   await emailDialog.getByRole('button', { name: 'Đổi email' }).click()
   await expect(emailDialog).toBeHidden()
   await expect(page.getByText('new-identity@example.com', { exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Khôi phục quyền truy cập' })).toBeVisible()
   await expect(page.getByText('Tiếp theo: gửi link đặt lại mật khẩu'))
     .toBeVisible()
   await expect(page.getByRole('button', { name: 'Gửi đặt lại mật khẩu' }))
