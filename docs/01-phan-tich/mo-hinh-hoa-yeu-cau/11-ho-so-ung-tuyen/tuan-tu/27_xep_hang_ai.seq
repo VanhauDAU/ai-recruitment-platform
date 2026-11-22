@@ -1,30 +1,37 @@
-title Sơ đồ tuần tự chức năng sàng lọc và xếp hạng hồ sơ ứng tuyển bằng AI (dự kiến)
+title Sơ đồ tuần tự chức năng xếp hạng hồ sơ ứng tuyển bằng AI
+actor UV Ứng viên
 actor NTD Nhà tuyển dụng
 participant FE Giao diện web\n(React)
 participant BE Máy chủ API\n(Django REST)
 database DB CSDL\n(PostgreSQL + pgvector)
-queue ML ML Worker\n(Celery ai-matching)
-NTD -> FE : Mở hồ sơ ứng tuyển của một tin, bấm "Xếp hạng bằng AI"
-FE -> BE : POST /api/matching/rankings/ {job} (dự kiến)
-BE -> BE : Kiểm tra NTD là người đăng tin, có quyền đọc dữ liệu ứng viên, tính năng đang bật
+queue ML ML Worker\n(Celery ai-matching-batch)
+group Chấm điểm nền khi hồ sơ được nộp
+UV -> FE : Nộp hồ sơ, chọn đồng ý cho nhà tuyển dụng phân tích bằng AI
+FE -> BE : POST /api/candidate/applications/
+BE -> DB : Lưu hồ sơ, bản chụp CV đã nộp (allow_ai_analysis = true)
+BE --> FE : 201 Đã nộp hồ sơ
+alt Tính năng bật và ứng viên đồng ý phân tích
+BE ->> ML : Sau commit: chấm một hồ sơ (signal tạo hồ sơ)
+ML -> DB : Lấy vector bản chụp CV đã nộp và vector tin
+ML -> ML : Chưa có vector thì trích hồ sơ, mã hóa (e5-base)
+ML -> ML : score_match (cùng lõi với ứng viên tự phân tích)
+ML -> DB : Lưu MatchAnalysis (purpose = application_ranking)
+else Không đồng ý hoặc tính năng tắt
+BE -> BE : Không chấm, hồ sơ vào nhóm "Không tham gia phân tích AI"
+end
+end
+NTD -> FE : Mở hồ sơ của một tin, chọn "Sắp theo độ phù hợp (AI)"
+FE -> BE : GET /api/employer/applications/?job=…&ordering=ai_match
+BE -> BE : Kiểm tra NTD sở hữu tin, có quyền đọc dữ liệu ứng viên, tính năng bật
 alt Không đủ quyền hoặc tính năng tắt
 BE --> FE : 403
 else Hợp lệ
-BE -> DB : Lấy hồ sơ hiện hành của tin
-BE -> BE : Chỉ chọn hồ sơ ứng viên đã đồng ý allow_ai_analysis
-BE -> DB : Tạo lượt xếp hạng (queued) cho các hồ sơ được chọn
-BE ->> ML : rank_applications (dự kiến)
-BE --> FE : 202 {ranking_id}
-loop Mỗi hồ sơ được chọn
-ML -> DB : Lấy vector của bản chụp CV đã nộp; chưa có thì trích hồ sơ và mã hóa
-ML -> ML : Chấm theo cùng công thức hybrid-v1 với tin (vector tin đã tính sẵn)
-ML -> DB : Lưu điểm, tiêu chí, kỹ năng khớp/thiếu cho hồ sơ
+BE -> DB : Truy vấn hồ sơ hiện hành kèm điểm AI (một Subquery)
+BE --> FE : Danh sách kèm ai_match_score, ai_match_level
+FE --> NTD : Hồ sơ sắp theo điểm; nhóm riêng hồ sơ không tham gia phân tích
+NTD -> FE : Mở chi tiết một hồ sơ
+FE -> BE : GET /api/employer/applications/{public_id}/
+BE --> FE : Điểm từng tiêu chí, kỹ năng khớp/thiếu (không có gợi ý sửa CV)
+FE --> NTD : Bảng chi tiết đánh giá AI của hồ sơ
 end
-ML -> DB : Lượt xếp hạng = succeeded
-loop Thăm dò trạng thái
-FE -> BE : GET /api/matching/rankings/{id}/
-BE --> FE : Trạng thái, danh sách đã sắp xếp
-end
-FE --> NTD : Danh sách hồ sơ sắp theo điểm, giải thích từng tiêu chí; hồ sơ không đồng ý phân tích hiện "Chưa có điểm AI"
-end
-note over NTD,ML : Hệ thống chỉ gợi ý thứ tự, không tự loại hay đổi trạng thái hồ sơ; quyết định vẫn do NTD
+note over NTD,ML : Hệ thống chỉ gợi ý thứ tự; không tự loại hay đổi trạng thái hồ sơ theo điểm, quyết định do nhà tuyển dụng

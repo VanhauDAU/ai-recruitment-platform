@@ -1,31 +1,32 @@
-title Sơ đồ hoạt động chức năng sàng lọc và xếp hạng hồ sơ ứng tuyển bằng AI (dự kiến)
-Nhà tuyển dụng mở hồ sơ của một tin, bấm "Xếp hạng bằng AI"
-Hệ thống kiểm tra người đăng tin, quyền đọc dữ liệu, tính năng bật
+title Sơ đồ hoạt động chức năng xếp hạng hồ sơ ứng tuyển bằng AI
+Ứng viên nộp hồ sơ vào một tin
+Hệ thống lưu hồ sơ và bản chụp CV đã nộp
+if Tính năng bật và ứng viên đồng ý phân tích AI?
+case Có
+  Hệ thống xếp việc chấm hồ sơ lên hàng đợi ai-matching-batch
+  if Bản chụp CV đã có vector?
+  case Không
+    ML Worker trích hồ sơ và mã hóa CV thành vector
+  case Có
+  endif
+  ML Worker chấm điểm bằng score_match với vector tin
+  ML Worker lưu điểm, tiêu chí, kỹ năng khớp và thiếu
+case Không
+  Hệ thống đưa hồ sơ vào nhóm "Không tham gia phân tích AI"
+endif
+Nhà tuyển dụng mở hồ sơ của tin, chọn "Sắp theo độ phù hợp (AI)"
+Hệ thống kiểm tra quyền sở hữu tin, quyền đọc dữ liệu, tính năng bật
 if Đủ quyền và tính năng đang bật?
 case Không
   Giao diện báo lỗi không đủ quyền (403)
   stop
 case Có
 endif
-Hệ thống lấy hồ sơ hiện hành, chọn hồ sơ đồng ý phân tích AI
-Hệ thống tạo lượt xếp hạng (queued), giao cho ML Worker
-fork
-  while Còn hồ sơ chưa chấm điểm? | Có | Không
-    if Bản chụp CV đã có vector?
-    case Không
-      ML Worker trích hồ sơ và mã hóa CV thành vector
-    case Có
-    endif
-    ML Worker chấm điểm theo công thức hybrid-v1
-    ML Worker lưu điểm, tiêu chí, kỹ năng khớp và thiếu
-  endwhile
-  ML Worker đánh dấu lượt xếp hạng thành công
-again
-  Hệ thống trả mã lượt xếp hạng (202)
-  while Lượt xếp hạng chưa hoàn tất? | Có | Không
-    Giao diện thăm dò trạng thái lượt xếp hạng
-  endwhile
-endfork
-Giao diện hiển thị hồ sơ sắp theo điểm, giải thích tiêu chí
-Giao diện ghi "Chưa có điểm AI" cho hồ sơ không đồng ý
+Hệ thống trả hồ sơ sắp theo điểm AI kèm mức phù hợp
+Giao diện hiển thị cột "Độ phù hợp (AI)" và nhóm hồ sơ không tham gia
+if Nhà tuyển dụng mở chi tiết một hồ sơ?
+case Có
+  Giao diện hiển thị điểm từng tiêu chí, kỹ năng khớp và thiếu
+case Không
+endif
 Nhà tuyển dụng tự quyết định trạng thái từng hồ sơ

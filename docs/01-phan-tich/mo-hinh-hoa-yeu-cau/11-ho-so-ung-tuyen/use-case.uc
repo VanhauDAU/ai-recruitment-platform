@@ -11,7 +11,7 @@ usecase TIM 1 Tìm kiếm hồ sơ ứng viên (dự kiến)
 usecase XUAT 2 Xuất danh sách hồ sơ
 usecase TAI 2 Tải CV ứng viên
 usecase HT 2 Hoàn tác quyết định
-usecase AI 2* Sàng lọc và xếp hạng hồ sơ bằng AI (dự kiến)
+usecase AI 2* Xếp hạng hồ sơ ứng tuyển bằng AI
 usecase NH 3 Nhắc hồ sơ chờ phản hồi
 usecase TU 3 Tự động từ chối hồ sơ quá hạn
 usecase DSN 3* Đối sánh ngữ nghĩa CV–JD
