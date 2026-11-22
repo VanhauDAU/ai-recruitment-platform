@@ -18,10 +18,9 @@ export const CAMPAIGN_STATUS_COLORS = {
   cancelled: 'red',
 }
 
-export const CAMPAIGN_SCOPE_OPTIONS = [
-  { value: '', label: m.campaign_scope_all() },
+// Attention filters (`scope`) of the list; counts come from `attention_counts`.
+export const CAMPAIGN_ATTENTION_SCOPES = [
   { value: 'needs_review', label: m.campaign_scope_needs_review() },
-  { value: 'active_jobs', label: m.campaign_scope_active_jobs() },
   { value: 'expired_jobs', label: m.campaign_scope_expired_jobs() },
 ]
 

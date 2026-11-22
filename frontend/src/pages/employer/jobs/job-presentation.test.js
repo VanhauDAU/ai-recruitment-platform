@@ -33,6 +33,12 @@ describe('job list presentation', () => {
     expect(jobDeadlineMeta({ ...job, deadline: '2026-11-15' }, NOW).hint).toBe('Hết hạn hôm nay')
   })
 
+  it('counts down to the end of the display window when it comes before the deadline', () => {
+    const job = { status: 'active', deadline: null, closes_on: '2026-11-20' }
+    expect(jobDeadlineMeta(job, NOW)).toMatchObject({ date: '20/11/2026', hint: 'Còn 5 ngày', windowEnds: true })
+    expect(jobDeadlineMeta({ ...job, deadline: '2026-11-20' }, NOW).windowEnds).toBe(false)
+  })
+
   it('formats the apply rate only when the job has views and applicants', () => {
     expect(formatApplyRate(3, 128)).toBe('2,3%')
     expect(formatApplyRate(0, 128)).toBeNull()

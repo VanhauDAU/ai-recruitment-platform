@@ -791,16 +791,21 @@ pages/employer/jobs/JobList + JobDetail
   (`JobListCard`, `JobDetailHeader`, `JobApplicationsWorkspace`, ...); hàm
   trình bày thuần ở `job-list-presentation.js`/`job-detail-presentation.js`.
 - Số đếm luôn do backend tính: tab trạng thái đọc `status_counts` của
-  `GET /api/employer/jobs/`, badge "N mới" đọc `unviewed_application_count`, chỉ
+  `GET /api/employer/jobs/`, chip "Cần xử lý" đọc `attention_counts` (đếm trong
+  tab đang mở), badge "N mới" đọc `unviewed_application_count`, chỉ
   số chi tiết đọc `application_summary`. Không suy số liệu từ trang dữ liệu đã
   tải. Mọi aggregate ứng tuyển tính trên lần nộp mới nhất của mỗi ứng viên;
   "chưa phản hồi" là `Application.UNANSWERED_STATUSES`.
-- URL là nguồn chuẩn: danh sách giữ `status|q|page`; chi tiết giữ `active_tab`
+- URL là nguồn chuẩn: danh sách giữ `status|q|campaign|attention|ordering|page`
+  (xóa bộ lọc giữ `ordering`); chi tiết giữ `active_tab`
   (`apply_cv|viewed_job|job|cv_label`) và `cv_filter` (`unanswered` hoặc một
   status). Tab CV gọi `/api/employer/applications/?job=…&latest=1` có phân
   trang server và chỉ mount khi `canAccessCandidateData`.
 - Style riêng của hai route nằm trong `employer-jobs.css` (import từ hai page
-  lazy); không thêm utility Tailwind mới vì CSS khởi tạo sát trần budget.
+  lazy); phần dùng chung với danh sách chiến dịch (tông màu, pill, panel lọc,
+  chip, header sắp xếp, ô số liệu, tiền tố `ws-`) ở `pages/employer/workspace-list.css`.
+  Dòng danh sách là thẻ cho tới khi chính danh sách rộng 1080px (container query,
+  tính cả sidebar). Không thêm utility Tailwind mới vì CSS khởi tạo sát trần budget.
 
 ## Ownership map — Quản lý tin tuyển dụng quản trị
 
@@ -1016,10 +1021,12 @@ pages/employer/campaigns/CampaignSetup
 - Trang tuyển dụng công khai `pages/main/jobs/CampaignLanding` (route
   `/tuyen-dung/:slug`) dùng lại `JobCard`; CSS `campaign-landing.css` (tiền tố
   `cpg-`).
-- Trang danh sách: dải trạng thái có số đếm (`status_counts` của API), mặc định
-  `ordering=status`, mỗi dòng một nút việc tiếp theo; style trong
-  `campaign-list.css` (lazy) và tự lo ẩn/hiện bảng/thẻ vì CSS ngoài layer thắng
-  utility `lg:hidden`.
+- Trang danh sách: dải trạng thái có số đếm (`status_counts` của API), chip "Cần
+  xử lý" (`scope=needs_review|expired_jobs`, số từ `attention_counts`), mặc định
+  `ordering=status`, mỗi dòng một nút việc tiếp theo và tiến độ tuyển
+  (`accepted_count`/`headcount`); dòng `CampaignListRow` dùng khung
+  `pages/employer/workspace-list.css` chung với danh sách tin, lưới riêng trong
+  `campaign-list.css` (lazy).
 - `widgets/employer/campaign-workspace` sở hữu header và bốn tab dữ liệu thật:
   Tổng quan, CV ứng tuyển, Tin tuyển dụng và Lịch sử hoạt động. Page chi tiết
   chỉ đọc route param rồi compose widget; query `active_tab` là contract URL,

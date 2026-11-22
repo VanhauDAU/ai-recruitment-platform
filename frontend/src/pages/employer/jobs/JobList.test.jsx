@@ -12,12 +12,12 @@ const mocks = vi.hoisted(() => ({
   deleteEmployerJob: vi.fn(),
   duplicateEmployerJob: vi.fn(),
   getEmployerJobPage: vi.fn(),
+  getCampaignOptions: vi.fn(),
   readinessState: { canAccessCandidateData: true },
   message: { error: vi.fn(), success: vi.fn() },
 }))
 
 vi.mock('@/entities/job/job', () => ({
-  EMPLOYMENT_TYPE_LABELS: { full_time: 'Toàn thời gian' },
   closeEmployerJob: mocks.closeEmployerJob,
   deleteEmployerJob: mocks.deleteEmployerJob,
   duplicateEmployerJob: mocks.duplicateEmployerJob,
@@ -29,6 +29,11 @@ vi.mock('@/entities/job/job', () => ({
   },
 }))
 
+vi.mock('@/entities/campaign/campaign', () => ({
+  campaignKeys: { options: ['campaigns', 'options'] },
+  getCampaignOptions: mocks.getCampaignOptions,
+}))
+
 vi.mock('@/shared/lib/toast', () => ({ message: mocks.message }))
 vi.mock('@/entities/account/employer-profile', async (importOriginal) => ({
   ...await importOriginal(),
@@ -37,6 +42,7 @@ vi.mock('@/entities/account/employer-profile', async (importOriginal) => ({
 
 const DEADLINE = dayjs().add(12, 'day')
 const STATUS_COUNTS = { all: 7, active: 3, draft: 2, expired: 1, closed: 1 }
+const ATTENTION_COUNTS = { unviewed: 1, expiring: 0 }
 
 const ACTIVE_JOB = {
   public_id: 'job_active',
@@ -118,7 +124,11 @@ describe('JobList', () => {
       previous: null,
       results: [ACTIVE_JOB, DRAFT_JOB],
       status_counts: STATUS_COUNTS,
+      attention_counts: ATTENTION_COUNTS,
     })
+    mocks.getCampaignOptions.mockReset().mockResolvedValue([
+      { public_id: 'camp_growth', name: 'Đội sản phẩm Growth' },
+    ])
     mocks.closeEmployerJob.mockReset().mockResolvedValue({
       ...ACTIVE_JOB,
       status: 'closed',
@@ -163,8 +173,6 @@ describe('JobList', () => {
   it('renders each job as a compact data row with status, deadline and grouped candidate avatars', async () => {
     renderPage()
 
-    expect(await screen.findByRole('link', { name: 'Đăng tin tuyển dụng' }))
-      .toHaveAttribute('href', '/tuyendung/app/jobs/new')
     const activeCard = await screen.findByTestId('job-list-item-job_active')
     expect(screen.queryByRole('table')).not.toBeInTheDocument()
     expect(within(activeCard).getByRole('link', { name: 'Kỹ sư Frontend' })).toHaveAttribute(
@@ -211,16 +219,16 @@ describe('JobList', () => {
     expect(screen.getByText('Hiển thị 1–2 trên 2 tin')).toBeInTheDocument()
   })
 
-  it('keeps quick actions hover-revealed and exposes the full status-aware menu', async () => {
+  it('keeps quick actions in the row and exposes the full status-aware menu', async () => {
     const user = userEvent.setup()
     renderPage()
 
     const activeCard = await screen.findByTestId('job-list-item-job_active')
-    const activeHoverActions = within(activeCard).getByTestId('job-hover-actions')
-    expect(activeHoverActions).toHaveClass('opacity-0')
-    expect(activeHoverActions.className).toContain('lg:group-hover:opacity-100')
-    expect(within(activeCard).getAllByRole('link', { name: 'Xem hồ sơ ứng tuyển' })).not.toHaveLength(0)
-    expect(within(activeCard).getAllByRole('link', { name: 'Chỉnh sửa tin' })).not.toHaveLength(0)
+    const quickActions = within(activeCard).getByTestId('job-quick-actions')
+    expect(within(quickActions).getByRole('link', { name: 'Xem hồ sơ ứng tuyển' }))
+      .toHaveAttribute('href', '/tuyendung/app/applications?job=job_active')
+    expect(within(quickActions).getByRole('link', { name: 'Chỉnh sửa tin' }))
+      .toHaveAttribute('href', '/tuyendung/app/jobs/job_active/edit')
     await user.click(within(activeCard).getByRole('button', {
       name: 'Mở thao tác cho Kỹ sư Frontend',
     }))
@@ -264,6 +272,7 @@ describe('JobList', () => {
 
     const heldCard = await screen.findByTestId('job-list-item-job_active')
     expect(within(heldCard).getByText('Bị ẩn')).toBeInTheDocument()
+    expect(within(heldCard).getByText('Tạm ẩn để rà soát nội dung')).toBeInTheDocument()
     expect(within(heldCard).queryByText('Đang tuyển')).not.toBeInTheDocument()
     expect(within(heldCard).queryByRole('link', { name: 'Chỉnh sửa tin' })).not.toBeInTheDocument()
     await user.click(within(heldCard).getByRole('button', {
@@ -305,6 +314,37 @@ describe('JobList', () => {
     }))
   })
 
+  it('filters by attention chip, campaign and sort while keeping the order when filters clear', async () => {
+    const user = userEvent.setup()
+    renderPage('/tuyendung/app/jobs?campaign=camp_growth')
+
+    await waitFor(() => expect(mocks.getEmployerJobPage).toHaveBeenCalledWith({ page: 1, campaign: 'camp_growth' }))
+    // The campaign name is loaded because the URL already filters by it.
+    expect(await screen.findByTitle('Đội sản phẩm Growth')).toBeInTheDocument()
+
+    const chips = screen.getByRole('group', { name: 'Lọc nhanh tin cần xử lý' })
+    expect(await within(chips).findByRole('button', { name: /Sắp hết hạn\s*0/ })).toBeDisabled()
+    await user.click(within(chips).getByRole('button', { name: /CV chưa xem\s*1/ }))
+    await waitFor(() => expect(mocks.getEmployerJobPage).toHaveBeenLastCalledWith({
+      page: 1,
+      campaign: 'camp_growth',
+      attention: 'unviewed',
+    }))
+    expect(within(chips).getByRole('button', { name: /CV chưa xem/ })).toHaveAttribute('aria-pressed', 'true')
+
+    await user.click(screen.getByRole('button', { name: 'Ứng viên' }))
+    await waitFor(() => expect(mocks.getEmployerJobPage).toHaveBeenLastCalledWith({
+      page: 1,
+      campaign: 'camp_growth',
+      attention: 'unviewed',
+      ordering: '-candidates',
+    }))
+    expect(screen.getByRole('button', { name: 'Ứng viên' })).toHaveAttribute('aria-pressed', 'true')
+
+    await user.click(screen.getAllByRole('button', { name: 'Xóa bộ lọc' })[0])
+    await waitFor(() => expect(screen.getByTestId('location-search')).toHaveTextContent('?ordering=-candidates'))
+  })
+
   it('searches after the user stops typing and starts again from the first page', async () => {
     const user = userEvent.setup()
     renderPage('/tuyendung/app/jobs?status=draft&page=2')
@@ -338,9 +378,10 @@ describe('JobList', () => {
       .toHaveAttribute('href', '/tuyendung/app/jobs/new')
     expect(screen.queryByText('Hiển thị', { exact: false })).not.toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /Hết hạn/ }))
+    await user.click(within(screen.getByRole('group', { name: 'Lọc theo trạng thái tin' }))
+      .getByRole('button', { name: /Hết hạn/ }))
 
-    await user.click(await screen.findByRole('button', { name: 'Xóa bộ lọc' }))
+    await user.click((await screen.findAllByRole('button', { name: 'Xóa bộ lọc' }))[0])
     await waitFor(() => expect(screen.getByTestId('location-search')).toHaveTextContent(''))
   })
 

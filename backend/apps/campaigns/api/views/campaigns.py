@@ -21,11 +21,11 @@ from apps.campaigns.selectors.campaigns import (
     campaign_activity_queryset,
     campaign_detail_queryset,
     campaign_job_performance,
+    campaign_list_counts,
     campaign_list_queryset,
     campaign_options,
     campaign_pause_impact,
     campaign_report,
-    campaign_status_counts,
     owned_campaign_queryset,
 )
 from apps.campaigns.services.campaigns import (
@@ -75,9 +75,13 @@ class RecruitmentCampaignListCreateView(EmployerWorkspaceReadMixin, generics.Lis
                 attach_campaign_candidate_previews(page)
             serializer = self.get_serializer(page, many=True)
             response = self.get_paginated_response(serializer.data)
-            response.data['status_counts'] = campaign_status_counts(
-                request.user, q=request.query_params.get('q')
+            status_counts, attention_counts = campaign_list_counts(
+                request.user,
+                status=request.query_params.get('status'),
+                q=request.query_params.get('q'),
             )
+            response.data['status_counts'] = status_counts
+            response.data['attention_counts'] = attention_counts
             return response
 
         campaigns = list(queryset)

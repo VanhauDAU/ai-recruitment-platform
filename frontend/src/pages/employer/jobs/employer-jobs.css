@@ -4,46 +4,6 @@
  * (frontend/ARCHITECTURE.md), so page-only patterns live here.
  */
 
-/* Status tones: one class sets the colours, pills and dots read them. */
-.job-tone-emerald { --job-tone-bg: #ecfdf5; --job-tone-fg: #047857; --job-tone-dot: #10b981; }
-.job-tone-red { --job-tone-bg: #fef2f2; --job-tone-fg: #b91c1c; --job-tone-dot: #ef4444; }
-.job-tone-orange { --job-tone-bg: #fff7ed; --job-tone-fg: #c2410c; --job-tone-dot: #f97316; }
-.job-tone-amber { --job-tone-bg: #fffbeb; --job-tone-fg: #b45309; --job-tone-dot: #f59e0b; }
-.job-tone-sky { --job-tone-bg: #f0f9ff; --job-tone-fg: #0369a1; --job-tone-dot: #0ea5e9; }
-.job-tone-cyan { --job-tone-bg: #ecfeff; --job-tone-fg: #0e7490; --job-tone-dot: #06b6d4; }
-.job-tone-violet { --job-tone-bg: #f5f3ff; --job-tone-fg: #6d28d9; --job-tone-dot: #8b5cf6; }
-.job-tone-teal { --job-tone-bg: #f0fdfa; --job-tone-fg: #0f766e; --job-tone-dot: #0d9488; }
-.job-tone-slate { --job-tone-bg: #f1f5f9; --job-tone-fg: #475569; --job-tone-dot: #94a3b8; }
-
-.job-pill {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: 6px;
-  border-radius: 9999px;
-  padding: 2px 8px;
-  background: var(--job-tone-bg);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--job-tone-fg) 16%, transparent);
-  color: var(--job-tone-fg);
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 16px;
-  white-space: nowrap;
-}
-
-.job-pill--status { font-size: 12px; font-weight: 500; }
-
-.job-pill::before,
-.job-dot {
-  width: 6px;
-  height: 6px;
-  flex-shrink: 0;
-  border-radius: 9999px;
-  background: var(--job-tone-dot);
-}
-
-.job-pill::before { content: ''; }
-
 /* Horizontal strips (status tabs, CV chips) scroll on phones without a bar. */
 .job-strip {
   display: flex;
@@ -106,54 +66,7 @@
 .job-chip > span:last-child { color: #94a3b8; font-variant-numeric: tabular-nums; }
 .job-chip[aria-pressed='true'] { border-color: #059669; background: #059669; color: #fff; }
 .job-chip[aria-pressed='true'] > span:last-child { color: rgb(255 255 255 / 0.8); }
-.job-chip[aria-pressed='true'] .job-dot { background: #fff; }
-
-/* Job rows stack below xl and become table rows from 1280px. */
-.job-row__title { display: block; }
-
-@media (min-width: 640px) {
-  .job-row__title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-}
-
-.job-row__stats {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 8px 12px;
-}
-
-@media (max-width: 639px) {
-  .job-row__stats > :nth-child(2) { justify-self: end; }
-}
-
-@media (min-width: 640px) {
-  .job-row__stats { display: flex; flex-wrap: wrap; column-gap: 20px; }
-}
-
-.job-table-head { display: none; }
-
-@media (min-width: 1280px) {
-  .job-row,
-  .job-table-head {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 220px 124px 136px 136px;
-    align-items: center;
-    gap: 16px;
-  }
-
-  .job-row__stats {
-    display: contents;
-  }
-
-  .job-row__stack { flex-direction: column; align-items: flex-start; gap: 2px; }
-  .job-row__stack .job-row__inline-only { display: none; }
-}
-
-.job-deadline-bar { display: none; }
-
-@media (min-width: 1280px) {
-  .job-deadline-bar { display: block; max-width: 128px; margin-top: 4px; }
-}
+.job-chip[aria-pressed='true'] .ws-dot { background: #fff; }
 
 /* CV table of the job workspace. */
 .job-cv-table .ant-table-thead .ant-table-cell {
@@ -178,21 +91,6 @@
 
 .job-detail-tabs .ant-tabs-tab { padding-block: 14px !important; }
 
-.job-pill--plain::before { content: none; }
-
-/* Job list toolbar: search beside the status tabs from xl. */
-.job-list-toolbar { display: flex; flex-direction: column; gap: 12px; }
-.job-list-toolbar > .job-strip { gap: 4px; margin: 0 -12px; padding: 0 6px; }
-
-@media (min-width: 640px) {
-  .job-list-toolbar > .job-strip { margin: 0 -16px; padding: 0 10px; }
-}
-
-@media (min-width: 1280px) {
-  .job-list-toolbar { flex-direction: row-reverse; align-items: center; justify-content: space-between; padding-top: 8px; }
-  .job-list-toolbar > .job-strip { margin: 0; padding: 0; }
-  .job-list-toolbar__search { width: 440px; }
-}
 
 /* Job workspace header. */
 .job-hairline-grid { gap: 1px; }
@@ -219,3 +117,137 @@
 
 .job-cv-card__meta { padding-left: 48px; }
 .job-rich > p:last-child { margin-bottom: 0; }
+
+
+/*
+ * Job list (/jobs) rows on top of ../workspace-list.css. A narrow list shows
+ * cards (title, status, meta, then three labelled stats); a wide one lines
+ * every cell up under the sortable header through grid areas.
+ */
+.ejl-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'title actions'
+    'status status'
+    'meta meta'
+    'stats stats';
+}
+
+.ejl-row__skeleton { grid-column: 1 / -1; }
+.ejl-row > .ws-row__title { grid-area: title; }
+.ejl-row > .ws-row__meta { grid-area: meta; }
+.ejl-row > .ws-row__stats { grid-area: stats; }
+.ejl-row .is-untitled { color: #64748b !important; font-style: italic; }
+
+.ejl-row__status {
+  grid-area: status;
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.ejl-row__reason { color: #b91c1c; font-size: 12px; line-height: 1.35; }
+
+.ejl-row__campaign {
+  display: inline-flex;
+  max-width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+  color: #475569 !important;
+  font-weight: 500;
+}
+
+.ejl-row__campaign .anticon { color: #059669; }
+.ejl-row__campaign > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ejl-row__campaign:hover { color: #047857 !important; }
+
+.ejl-row__actions {
+  grid-area: actions;
+  display: flex;
+  align-items: center;
+  align-self: start;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.ejl-candidates { display: flex; min-width: 0; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.ejl-candidates__count { color: #0f172a !important; }
+.ejl-candidates__count:hover .ws-strong { color: #047857; }
+.ejl-avatars { display: none; margin: 0; padding: 0 0 0 6px; list-style: none; }
+.ejl-avatars > li { position: relative; margin-left: -6px; }
+.ejl-avatar-link { display: block; border-radius: 9999px; }
+
+.ejl-avatar.ant-avatar {
+  border: 2px solid #fff;
+  background: #334155;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.12);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.ejl-primary-action {
+  display: inline-flex;
+  height: 32px;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  background: #ecfdf5 !important;
+  padding: 0 10px;
+  color: #047857 !important;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.ejl-primary-action:hover { border-color: #6ee7b7; background: #d1fae5 !important; }
+.ejl-quick-actions { display: none; align-items: center; gap: 2px; }
+
+/* Phones: the primary action keeps its icon only (the label stays as aria-label). */
+@media (max-width: 479px) {
+  .ejl-primary-action { width: 32px; justify-content: center; padding: 0; }
+  .ejl-primary-action > span:last-child { display: none; }
+}
+
+@media (min-width: 640px) {
+  .ejl-row {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'title title actions'
+      'status meta meta'
+      'stats stats stats';
+  }
+
+  .ejl-quick-actions,
+  .ejl-avatars { display: flex; }
+}
+
+@media (min-width: 768px) {
+  .ejl-filters { grid-template-columns: minmax(0, 1fr) 220px 200px; }
+  .ejl-filters > :first-child { grid-column: auto; }
+}
+
+@container (min-width: 1080px) {
+  .ejl-head,
+  .ejl-row {
+    grid-template-columns: minmax(0, 1fr) 132px 200px 104px 136px 168px;
+    column-gap: 16px;
+  }
+
+  .ejl-row {
+    grid-template-areas:
+      'title status candidates views deadline actions'
+      'meta status candidates views deadline actions';
+  }
+
+  .ejl-row__status { flex-direction: column; align-items: flex-start; }
+  .ejl-row__reason { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  .ejl-row__actions { align-self: center; }
+  .ejl-stat--candidates { grid-area: candidates; }
+  .ejl-stat--views { grid-area: views; }
+  .ejl-stat--deadline { grid-area: deadline; }
+}
