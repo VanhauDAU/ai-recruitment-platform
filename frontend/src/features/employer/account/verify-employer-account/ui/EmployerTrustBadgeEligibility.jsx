@@ -45,9 +45,9 @@ export default function EmployerTrustBadgeEligibility({ profile: suppliedProfile
   const accountAgeDate = eligibleDate(eligibility.eligible_at)
 
   return (
-    <section className={`min-w-0 rounded-xl border ${eligibility.verified ? 'border-emerald-200 bg-emerald-50/70' : 'border-amber-200 bg-amber-50/50'} p-4 sm:p-5 ${className}`}>
+    <section className={`min-w-0 rounded-sm border border-slate-200 bg-white p-5 sm:p-6 ${className}`}>
       <div className="flex items-start gap-3">
-        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${eligibility.verified ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
           <SafetyCertificateOutlined className="text-lg" />
         </span>
         <div className="min-w-0 flex-1">
@@ -58,17 +58,20 @@ export default function EmployerTrustBadgeEligibility({ profile: suppliedProfile
               : m.employer_account_badge_progress({ reached, total })}
           </p>
         </div>
+        <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${eligibility.verified ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
+          {reached}/{total}
+        </span>
       </div>
 
       <div className="mt-4 grid gap-2 sm:grid-cols-2">
         {eligibility.criteria.map((criterion) => (
           <div
             key={criterion.key}
-            className={`flex min-w-0 items-start gap-2 rounded-lg border bg-white px-3 py-2.5 text-sm ${criterion.passed ? 'border-emerald-100 text-slate-700' : 'border-amber-200 text-amber-900'}`}
+            className={`flex min-w-0 items-start gap-2 rounded-lg border border-slate-200 px-3 py-2.5 text-sm ${criterion.passed ? 'bg-white text-slate-700' : 'bg-slate-50 text-slate-500'}`}
           >
             {criterion.passed
               ? <CheckCircleFilled className="mt-0.5 shrink-0 text-emerald-600" />
-              : <ClockCircleOutlined className="mt-0.5 shrink-0 text-amber-600" />}
+              : <ClockCircleOutlined className="mt-0.5 shrink-0 text-slate-400" />}
             <span className="min-w-0 break-words">{criterion.label}</span>
           </div>
         ))}

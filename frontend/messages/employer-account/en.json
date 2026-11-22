@@ -477,7 +477,6 @@
   "employer_account_info_save_failed": "Couldn't save your information. Please try again.",
   "employer_account_info_title": "Update account information",
   "employer_account_info_export": "Export data",
-  "employer_account_info_avatar": "Avatar",
   "employer_account_info_change_avatar": "Change avatar",
   "employer_account_info_full_name": "Full name",
   "employer_account_info_full_name_required": "Please enter your full name.",
@@ -676,5 +675,11 @@
   "employer_account_page_general_desc": "Manage notifications and security verification methods for your recruiter account.",
   "employer_account_page_integrations_desc": "Connect a Facebook Page and other social accounts so campaigns can publish job posts automatically.",
   "employer_account_page_company_desc": "Find an existing company on the platform or create a new company profile.",
-  "employer_account_page_dpa_desc": "Complete the candidate document and the platform agreement separately."
+  "employer_account_page_dpa_desc": "Complete the candidate document and the platform agreement separately.",
+  "employer_account_info_personal": "Personal details",
+  "employer_account_info_verified": "Verified",
+  "employer_account_info_joined": "Joined {date}",
+  "employer_account_info_no_company": "Link a company",
+  "employer_account_info_unsaved": "You have unsaved changes",
+  "employer_account_info_save": "Save changes"
 }
