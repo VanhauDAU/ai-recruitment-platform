@@ -272,7 +272,10 @@ export default function EmployerWorkspaceLayout() {
                 <>
                   <Link to={EMPLOYER_ACCOUNT_SETTINGS_URL} aria-label={m.employer_workspace_title_account_info()} className="employer-sider__identity">
                     <Avatar size={36} src={user?.avatar_url || undefined} className="employer-sider__avatar">{initials}</Avatar>
-                    <span className="employer-sider__name">{user?.full_name || m.employer_workspace_employer_fallback_name()}</span>
+                    <span className="employer-sider__text">
+                      <span className="employer-sider__name">{user?.full_name || m.employer_workspace_employer_fallback_name()}</span>
+                      {user?.public_id && <span className="employer-sider__code">{m.employer_workspace_employer_code({ code: user.public_id })}</span>}
+                    </span>
                   </Link>
                   <span className="employer-sider__verification">
                     {m.employer_workspace_verification_level_label()} <strong>{m.employer_workspace_verification_level({ level: accountVerificationLevel.level, total: accountVerificationLevel.total })}</strong>
