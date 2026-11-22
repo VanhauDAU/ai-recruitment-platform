@@ -42,6 +42,19 @@
   font-weight: 700;
 }
 
+.employer-sider__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.employer-sider__code {
+  color: #64748b;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+}
+
 .employer-sider__name {
   color: #0f172a;
   font-size: 14px;

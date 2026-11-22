@@ -218,7 +218,7 @@ describe('EmployerWorkspaceLayout', () => {
 
   it('opens the account information settings tab from the sidebar profile', () => {
     useSession.mockReturnValue({
-      user: { full_name: 'Nguyễn An', email: 'hr@example.com' },
+      user: { full_name: 'Nguyễn An', email: 'hr@example.com', public_id: '48261937' },
       logout: vi.fn(),
     })
 
@@ -235,6 +235,7 @@ describe('EmployerWorkspaceLayout', () => {
 
     const accountLink = screen.getByRole('link', { name: 'Thông tin tài khoản' })
     expect(accountLink).toHaveAttribute('href', '/tuyendung/app/account/settings/account-info')
+    expect(accountLink).toHaveTextContent('Mã NTD: 48261937')
     fireEvent.click(accountLink)
 
     expect(screen.getByText('Thông tin tài khoản đang mở')).toBeInTheDocument()
