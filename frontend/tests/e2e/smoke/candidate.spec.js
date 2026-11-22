@@ -173,8 +173,11 @@ test('candidate smoke: personalization pages and compact desktop menu remain usa
   await page.goto('/tai-khoan/viec-lam-phu-hop')
   await expect(page.getByRole('heading', { name: 'Việc làm phù hợp' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Backend Developer', exact: true })).toBeVisible()
+  // Reasons sit behind "Vì sao phù hợp?" since the matching page redesign (a01935f6).
+  await page.getByRole('button', { name: /Vì sao phù hợp\?/ }).click()
   await expect(page.getByText('Phù hợp với tìm kiếm của bạn')).toBeVisible()
   await expect(page.getByText('Phù hợp với kỹ năng của bạn')).toBeVisible()
+  await page.keyboard.press('Escape')
   await expect(page.getByText('Dữ liệu đang được dùng')).toHaveCount(0)
   await expect(page.getByText(/% phù hợp|Rất phù hợp/)).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Ẩn tin tuyển dụng này' })).toBeVisible()

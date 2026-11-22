@@ -19,7 +19,9 @@ export default function CompanySelect({ value, onChange, initialCompany, onCompa
     queryFn: ({ signal }) => getPublicCompanies(keyword ? { q: keyword } : {}, { signal }),
     staleTime: 60_000,
   })
-  const companies = query.data?.results || query.data || []
+  // A paginated page or a bare list; anything else must not break the drawer.
+  const page = query.data?.results ?? query.data
+  const companies = Array.isArray(page) ? page : []
   const options = [initialCompany, ...companies]
     .filter((company, index, list) => company && list.findIndex((item) => item?.public_id === company.public_id) === index)
     .map((company) => ({ value: company.public_id, label: company.trade_name || company.company_name, company }))
