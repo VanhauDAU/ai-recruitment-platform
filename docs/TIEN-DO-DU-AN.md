@@ -664,6 +664,15 @@ GĐ1 đã làm:
   - "Kênh phân phối" và "Hiệu quả theo nguồn" thành hai cụm thu gọn: mở cụm này
     thì cụm kia đóng, co giãn có hiệu ứng. Bảng nguồn chỉ gọi API khi mở lần đầu.
   - Danh sách bài đã đăng trên mạng xã hội chia trang, mỗi trang 3 bài.
+- Hàng tab kiểu thẻ hồ sơ thành component dùng chung `shared/ui/folder-tabs` (22/11, cùng PR).
+  - Không còn nền bao ngoài: hàng tab nằm trên đường kẻ mảnh, tab đang chọn có
+    viền mảnh, vạch xanh trên đỉnh, góc cong vẽ bằng SVG nối liền đường kẻ.
+  - Hai kiểu: khung viền (trang nền xám) và `plain` chỉ giữ đường kẻ (đã nằm
+    trong thẻ trắng).
+  - Áp dụng: kênh phân phối, chi tiết tin tuyển dụng (bỏ `Segmented` riêng cho
+    mobile, dùng nhãn ngắn), trang công ty (Bố cục, Nội dung, Người biên tập),
+    thông tin tài khoản NTD chia 3 tab Tài khoản, Xác thực, Tên miền công ty
+    (`?tab=` giữ tab khi tải lại).
 
 ## Ứng tuyển bằng CV tải lên và form ứng tuyển mới (2026-11-18)
 

@@ -1,0 +1,41 @@
+/* Hàng tab kiểu thẻ hồ sơ (FolderTabs). Chỉ được import từ trang lazy, không vào CSS khởi tạo.
+   Hàng tab nằm trên một đường kẻ mảnh; tab đang chọn có viền mảnh, phần đáy che đường kẻ và hai góc
+   dưới cong ra ngoài (radial-gradient vẽ cả vòng viền), nên tab liền khối với nội dung bên dưới. */
+.ftabs { --ftabs-r: 12px; --ftabs-line: #dfe7e3; --ftabs-surface: #fff; min-width: 0; }
+.ftabs__bar { display: flex; align-items: flex-end; gap: 8px; background: linear-gradient(var(--ftabs-line), var(--ftabs-line)) bottom / 100% 1px no-repeat; }
+.ftabs__strip { display: flex; min-width: 0; flex: 1; gap: 2px; padding: 4px calc(var(--ftabs-r) + 2px) 0; overflow-x: auto; scrollbar-width: none; }
+.ftabs__strip::-webkit-scrollbar { display: none; }
+.ftabs__extra { display: flex; flex: none; align-items: center; align-self: center; padding-bottom: 4px; }
+
+.ftabs__tab { position: relative; display: inline-flex; flex: none; align-items: center; gap: 8px; max-width: 240px; height: 40px; padding: 0 14px 0 12px; border: 1px solid transparent; border-bottom: 0; border-radius: var(--ftabs-r) var(--ftabs-r) 0 0; background: none; cursor: pointer; font-size: 14px; font-weight: 500; color: #64748b; transition: background-color .15s, color .15s; }
+.ftabs__tab:hover { background: #f3f7f5; color: #0f2a24; }
+.ftabs__tab:focus-visible { outline: 2px solid #059669; outline-offset: -2px; }
+.ftabs__tab.is-active { z-index: 1; border-color: var(--ftabs-line); background: var(--ftabs-surface); font-weight: 600; color: #0f2a24; }
+/* Góc cong: SVG phủ đúng lên cột viền dọc của tab, vẽ cung viền và tô trắng phần ngoài cung để che đường kẻ.
+   Màu viết thẳng trong SVG (#dfe7e3 = --ftabs-line, #fff = --ftabs-surface); đổi màu thì sửa cả hai nơi. */
+.ftabs__tab.is-active::before, .ftabs__tab.is-active::after { content: ''; position: absolute; bottom: 0; width: 12px; height: 12px; background: no-repeat center / 100% 100%; pointer-events: none; }
+.ftabs__tab.is-active::before { left: -12px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M12 0A12 12 0 0 1 0 12H12Z' fill='%23fff'/%3E%3Cpath d='M11.5 0A11.5 11.5 0 0 1 0 11.5' fill='none' stroke='%23dfe7e3'/%3E%3C/svg%3E"); }
+.ftabs__tab.is-active::after { right: -12px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M0 0A12 12 0 0 0 12 12H0Z' fill='%23fff'/%3E%3Cpath d='M0.5 0A11.5 11.5 0 0 0 12 11.5' fill='none' stroke='%23dfe7e3'/%3E%3C/svg%3E"); }
+/* Vạch màu thương hiệu trên đỉnh tab đang chọn */
+.ftabs__tab.is-active > .ftabs__label::after { content: ''; position: absolute; top: -1px; right: 10px; left: 10px; height: 2px; border-radius: 0 0 2px 2px; background: #10b981; animation: ftabs-mark-in .3s cubic-bezier(.22, 1, .36, 1); }
+.ftabs__icon { display: inline-flex; flex: none; transition: transform .2s cubic-bezier(.22, 1, .36, 1); }
+.ftabs__tab:hover .ftabs__icon, .ftabs__tab.is-active .ftabs__icon { transform: scale(1.08); }
+.ftabs__tab.is-active .ftabs__icon { color: #059669; }
+.ftabs__label { display: inline-flex; min-width: 0; align-items: center; gap: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Nội dung: mặc định là khung trắng nối tiếp tab (trang nền xám); `is-plain` chỉ giữ đường kẻ (đã nằm trong thẻ trắng) */
+.ftabs__panel { min-width: 0; border: 1px solid var(--ftabs-line); border-top: 0; border-radius: 0 0 12px 12px; background: var(--ftabs-surface); animation: ftabs-panel-in .32s cubic-bezier(.22, 1, .36, 1) both; }
+.ftabs.is-plain .ftabs__panel { padding-top: 16px; border: 0; border-radius: 0; background: none; }
+.ftabs__panel[hidden] { display: none; }
+/* Thẻ con tự có lề dưới thì bỏ lề ở thẻ cuối, để đáy khung đều với phần đệm */
+.ftabs__panel > :last-child { margin-bottom: 0; }
+@keyframes ftabs-panel-in { from { opacity: 0; transform: translateY(6px); } }
+@keyframes ftabs-mark-in { from { transform: scaleX(.3); opacity: 0; } }
+
+@media (max-width: 560px) {
+  .ftabs__tab { max-width: 180px; height: 38px; padding: 0 10px; font-size: 13px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ftabs__panel, .ftabs__tab.is-active > .ftabs__label::after { animation: none; }
+  .ftabs__icon { transition: none; }
+}

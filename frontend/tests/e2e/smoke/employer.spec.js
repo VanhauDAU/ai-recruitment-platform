@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { expectAnimatedLoginButton, mockPublicApi, selectTab } from './helpers'
+import { expectAnimatedLoginButton, mockPublicApi } from './helpers'
 
 async function expectNoHorizontalOverflow(page) {
   await expect.poll(() => page.evaluate(() => {
@@ -331,7 +331,7 @@ test('employer domain verification creates a one-time DNS challenge responsively
     await route.fulfill({ contentType: 'application/json', body: '[]' })
   })
 
-  await page.goto('/tuyendung/app/account/settings/account-info')
+  await page.goto('/tuyendung/app/account/settings/account-info?tab=domain')
 
   await expect(page.getByRole('heading', { name: 'Xác minh tên miền công ty' })).toBeVisible()
   await expect(page.getByText('Tên miền công ty chưa được xác minh')).toBeVisible()
@@ -1561,15 +1561,11 @@ test('employer jobs: detail workspace is compact, actionable and responsive', { 
   await expect(page.getByTestId('job-metric-unanswered-cvs')).toContainText('2')
   // An expired job is not public, so the header offers no public link.
   await expect(page.getByRole('link', { name: /Xem tin đăng/ })).toHaveCount(0)
-  const usesCompactTabs = page.viewportSize().width < 640
-  if (usesCompactTabs) {
-    await expect(page.getByRole('radiogroup', { name: 'Chọn nội dung quản lý tin' })).toBeVisible()
-  } else {
-    await expect(page.getByRole('tab', { name: /CV ứng tuyển/ })).toBeVisible()
-    await expect(page.getByRole('tab', { name: /Ứng viên đã xem tin/ })).toBeVisible()
-    await expect(page.getByRole('tab', { name: /Thông tin tuyển dụng/ })).toBeVisible()
-    await expect(page.getByRole('tab', { name: /Nhãn/ })).toBeVisible()
-  }
+  // Một hàng tab cho mọi cỡ màn hình; dưới 640px dùng nhãn ngắn.
+  const jobTabs = page.getByRole('tablist', { name: 'Chọn nội dung quản lý tin' })
+  await expect(jobTabs).toBeVisible()
+  await expect(jobTabs.getByRole('tab')).toHaveCount(4)
+  await expect(jobTabs.getByRole('tab', { selected: true })).toHaveAttribute('id', 'job-detail-tab-apply_cv')
   await expect(page.getByText('Trần Minh').filter({ visible: true })).toBeVisible()
   await expect.poll(() => applicationQueries.at(-1)?.get('latest')).toBe('1')
   await expectNoHorizontalOverflow(page)
@@ -1582,11 +1578,7 @@ test('employer jobs: detail workspace is compact, actionable and responsive', { 
   await expect(page).toHaveURL(/cv_filter=interviewed/)
   await expectNoHorizontalOverflow(page)
 
-  if (usesCompactTabs) {
-    await page.getByRole('radiogroup', { name: 'Chọn nội dung quản lý tin' }).getByText('Thông tin', { exact: true }).click()
-  } else {
-    await selectTab(page, /Thông tin tuyển dụng/)
-  }
+  await page.locator('#job-detail-tab-job').click()
   await expect(page).toHaveURL(/active_tab=job/)
   await expect(page.getByText('18 - 30 triệu')).toBeVisible()
   await expect(page.getByText('Phường Hải Châu')).toBeVisible()
