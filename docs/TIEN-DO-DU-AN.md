@@ -54,6 +54,13 @@ một danh sách phân trang (timeline antd), không lọc được và lịch s
   ngày, danh sách nhóm) và cột danh sách theo ngày; chỉ cảnh báo/lỗi có chấm màu;
   giờ tương đối ("18 phút trước"). Icon Phosphor *duotone* (MIT) tải từ repo chính
   thức, nhúng ở `shared/ui/icons`.
+- Thông báo admin phát hành (trang quản trị Thông báo, bề mặt workspace NTD) trước
+  đây chỉ hiện ở dải trên cùng, đóng là mất. Nay trang Thông báo hệ thống có nhóm
+  **Hệ thống** liệt kê thông báo 90 ngày (đang hiển thị trước), thông báo đang hiển
+  thị được ghim ở đầu chế độ "Tất cả" kèm loại và nút hành động. API mới
+  `GET /api/shared/site/announcements/inbox/?surface=…` (đúng luật đối tượng/vai trò,
+  bỏ qua luật đường dẫn và việc đã đóng dải). Admin gửi tin riêng cho một NTD vẫn
+  chưa có.
 - Nhóm sự kiện: Ứng tuyển · Tin tuyển dụng · Chiến dịch · Công ty & xác
   thực. Thông báo đếm số **chưa đọc** mỗi nhóm, có chip "Chỉ chưa đọc", nút đánh dấu
   đã đọc trên từng dòng và "Đánh dấu tất cả đã đọc". Lịch sử đếm tổng mỗi nhóm, lọc

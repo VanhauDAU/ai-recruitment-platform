@@ -14883,6 +14883,47 @@ paths:
           description: ''
         '409':
           description: No response body
+  /api/shared/site/announcements/inbox/:
+    get:
+      operationId: shared_site_announcements_inbox_retrieve
+      description: Thông báo đang hiển thị trước, rồi thông báo đã phát hành trong
+        90 ngày; bỏ qua luật đường dẫn và việc đã đóng dải để người dùng đọc lại được.
+      summary: Hộp thông báo hệ thống của người dùng trên một bề mặt
+      parameters:
+      - in: query
+        name: locale
+        schema:
+          type: string
+          minLength: 1
+          default: vi
+          maxLength: 16
+      - in: query
+        name: surface
+        schema:
+          enum:
+          - candidate
+          - employer_marketing
+          - employer_workspace
+          - admin_workspace
+          type: string
+          minLength: 1
+        description: |-
+          * `candidate` - Ứng viên
+          * `employer_marketing` - Trang nhà tuyển dụng
+          * `employer_workspace` - Workspace nhà tuyển dụng
+          * `admin_workspace` - Workspace quản trị
+        required: true
+      tags:
+      - site-announcements
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnouncementInbox'
+          description: ''
   /api/shared/uploads/sessions/:
     post:
       operationId: shared_uploads_sessions_create
@@ -20818,6 +20859,66 @@ components:
         * `shield` - Khiên
         * `sparkles` - Lấp lánh
         * `wrench` - Bảo trì
+    AnnouncementInbox:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnnouncementInboxItem'
+      required:
+      - items
+    AnnouncementInboxItem:
+      type: object
+      description: 'What the inbox lists: the content of the strip, not how it animates.'
+      properties:
+        public_id:
+          type: string
+        kind:
+          allOf:
+          - $ref: '#/components/schemas/AnnouncementKindEnum'
+          readOnly: true
+        message:
+          type: string
+          readOnly: true
+        badge:
+          type: string
+          readOnly: true
+        icon:
+          allOf:
+          - $ref: '#/components/schemas/AnnouncementIconEnum'
+          readOnly: true
+        cta:
+          allOf:
+          - $ref: '#/components/schemas/AnnouncementCta'
+          nullable: true
+          readOnly: true
+        starts_at:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+        ends_at:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+        is_live:
+          type: boolean
+        shown_at:
+          type: string
+          format: date-time
+      required:
+      - badge
+      - cta
+      - ends_at
+      - icon
+      - is_live
+      - kind
+      - message
+      - public_id
+      - shown_at
+      - starts_at
     AnnouncementKindEnum:
       enum:
       - critical

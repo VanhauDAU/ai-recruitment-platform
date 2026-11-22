@@ -415,5 +415,21 @@
   "employer_workspace_activity_chart_day": "{date}: {count} hoạt động",
   "employer_workspace_activity_unit": "hoạt động",
   "employer_workspace_notifications_unread_unit": "chưa đọc",
-  "employer_workspace_notifications_view_aria": "Hiển thị thông báo"
+  "employer_workspace_notifications_view_aria": "Hiển thị thông báo",
+  "employer_workspace_event_category_system": "Hệ thống",
+  "employer_workspace_announcements_title": "Từ hệ thống",
+  "employer_workspace_announcements_hint": "Thông báo chung gửi tới nhà tuyển dụng: bảo trì, tính năng mới, thay đổi chính sách. Giữ trong 90 ngày.",
+  "employer_workspace_announcements_empty": "Chưa có thông báo hệ thống nào trong 90 ngày qua",
+  "employer_workspace_announcement_live": "Đang hiển thị",
+  "employer_workspace_announcement_shown": "Phát hành {date}",
+  "employer_workspace_announcement_until": "đến {date}",
+  "employer_workspace_announcement_kind_critical": "Sự cố",
+  "employer_workspace_announcement_kind_security": "Bảo mật",
+  "employer_workspace_announcement_kind_compliance": "Chính sách",
+  "employer_workspace_announcement_kind_warning": "Cảnh báo",
+  "employer_workspace_announcement_kind_maintenance": "Bảo trì",
+  "employer_workspace_announcement_kind_info": "Thông tin",
+  "employer_workspace_announcement_kind_success": "Hoàn tất",
+  "employer_workspace_announcement_kind_event": "Sự kiện",
+  "employer_workspace_announcement_kind_feature": "Tính năng mới"
 }

@@ -1214,6 +1214,10 @@ app/router + EmployerAuthLayout|EmployerSetupLayout|EmployerWorkspaceLayout
   (`FeedLayout`): thanh bên gồm `FeedSummary` (số lớn, biểu đồ 14 ngày từ
   `daily_counts` ở trang lịch sử) và `CategoryNav`; cột phải là `FeedToolbar` +
   danh sách theo ngày. Hẹp hơn thì thanh bên xếp trên, nhóm cuộn ngang.
+  Trang thông báo còn có nhóm "Hệ thống": thông báo admin phát hành cho bề mặt
+  `employer_workspace` (đọc `GET /api/shared/site/announcements/inbox/` qua
+  `entities/content/announcement`), thông báo đang hiển thị ghim ở đầu chế độ
+  "Tất cả"; dải trên cùng workspace vẫn do `widgets/common/announcement-strip` lo.
 - Icon hai lớp hiện đại: `shared/ui/icons/DuotoneIcon` chứa sẵn dữ liệu path của
   các icon Phosphor *duotone* (MIT) đang dùng, không thêm thư viện npm. Cần icon
   mới thì lấy SVG `assets/duotone/<tên>-duotone.svg` từ repo `phosphor-icons/core`

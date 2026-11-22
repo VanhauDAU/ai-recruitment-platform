@@ -639,5 +639,21 @@
   "employer_workspace_activity_chart_day": "{date}: {count} activities",
   "employer_workspace_activity_unit": "activities",
   "employer_workspace_notifications_unread_unit": "unread",
-  "employer_workspace_notifications_view_aria": "Show notifications"
+  "employer_workspace_notifications_view_aria": "Show notifications",
+  "employer_workspace_event_category_system": "System",
+  "employer_workspace_announcements_title": "From the system",
+  "employer_workspace_announcements_hint": "Announcements to all employers: maintenance, new features, policy changes. Kept for 90 days.",
+  "employer_workspace_announcements_empty": "No system announcements in the last 90 days",
+  "employer_workspace_announcement_live": "Showing now",
+  "employer_workspace_announcement_shown": "Published {date}",
+  "employer_workspace_announcement_until": "until {date}",
+  "employer_workspace_announcement_kind_critical": "Incident",
+  "employer_workspace_announcement_kind_security": "Security",
+  "employer_workspace_announcement_kind_compliance": "Policy",
+  "employer_workspace_announcement_kind_warning": "Warning",
+  "employer_workspace_announcement_kind_maintenance": "Maintenance",
+  "employer_workspace_announcement_kind_info": "Information",
+  "employer_workspace_announcement_kind_success": "Done",
+  "employer_workspace_announcement_kind_event": "Event",
+  "employer_workspace_announcement_kind_feature": "New feature"
 }

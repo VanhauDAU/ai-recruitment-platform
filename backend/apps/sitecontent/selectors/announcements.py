@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from django.conf import settings
 from django.db.models import (
@@ -66,7 +66,8 @@ def path_prefix_matches(path, prefix):
     return path == prefix or path.startswith(f'{prefix}/')
 
 
-def revision_targets_request(revision, *, surface, path, user):
+def _revision_targets_user(revision, *, surface, user):
+    """Surface, audience and role rules; page paths are checked separately."""
     if surface not in revision.surfaces:
         return False
 
@@ -84,11 +85,15 @@ def revision_targets_request(revision, *, surface, path, user):
         not authenticated or not user.is_admin_role
     ):
         return False
-    if surface == AnnouncementRevision.Surface.EMPLOYER_WORKSPACE and (
-        not authenticated or not user.is_employer
-    ):
-        return False
+    return not (
+        surface == AnnouncementRevision.Surface.EMPLOYER_WORKSPACE
+        and (not authenticated or not user.is_employer)
+    )
 
+
+def revision_targets_request(revision, *, surface, path, user):
+    if not _revision_targets_user(revision, surface=surface, user=user):
+        return False
     path = normalize_request_path(path)
     if any(path_prefix_matches(path, prefix) for prefix in revision.exclude_path_prefixes):
         return False
@@ -306,3 +311,56 @@ def announcement_metrics(*, announcement, date_from, date_to):
         .order_by('date', 'surface')
     )
     return list(rows)
+
+
+# How far back the in-app inbox lists announcements that are no longer shown.
+ANNOUNCEMENT_INBOX_DAYS = 90
+ANNOUNCEMENT_INBOX_LIMIT = 30
+
+
+def announcement_inbox_for_user(*, surface, user, now=None):
+    """Announcements a signed-in user is or was shown on ``surface``.
+
+    Live ones come first (by tier, then priority), then those published in the
+    last 90 days, newest first. Page paths and dismissals are ignored on
+    purpose: the inbox is where a closed or missed strip can be read again.
+    Each item gets ``inbox_is_live`` and ``inbox_shown_at``.
+    """
+    now = now or timezone.now()
+    since = now - timedelta(days=ANNOUNCEMENT_INBOX_DAYS)
+    queryset = (
+        Announcement.objects.filter(
+            active_revision__isnull=False,
+            published_at__isnull=False,
+            lifecycle_state__in=(
+                Announcement.LifecycleState.PUBLISHED,
+                Announcement.LifecycleState.PAUSED,
+                Announcement.LifecycleState.ARCHIVED,
+            ),
+        )
+        .filter(
+            Q(lifecycle_state=Announcement.LifecycleState.PUBLISHED) | Q(published_at__gte=since)
+        )
+        .select_related('active_revision')
+    )
+    items = []
+    for announcement in queryset:
+        revision = announcement.active_revision
+        if not _revision_targets_user(revision, surface=surface, user=user):
+            continue
+        status = presentation_status(announcement, now=now)
+        shown_at = max(filter(None, (revision.starts_at, announcement.published_at)))
+        if status == 'scheduled' or (status != 'live' and shown_at < since):
+            continue
+        announcement.inbox_is_live = status == 'live'
+        announcement.inbox_shown_at = shown_at
+        items.append(announcement)
+    items.sort(
+        key=lambda item: (
+            not item.inbox_is_live,
+            PRIORITY_TIER_BY_KIND[item.active_revision.kind] if item.inbox_is_live else 0,
+            -item.active_revision.priority if item.inbox_is_live else 0,
+            -item.inbox_shown_at.timestamp(),
+        )
+    )
+    return items[:ANNOUNCEMENT_INBOX_LIMIT]

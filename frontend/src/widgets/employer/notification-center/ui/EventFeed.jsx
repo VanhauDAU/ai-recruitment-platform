@@ -47,10 +47,10 @@ export function FeedSummary({ eyebrow, value, unit, hint, children }) {
 }
 
 /** Group navigation; the selected group filters the feed. */
-export function CategoryNav({ value, counts, onChange }) {
+export function CategoryNav({ value, counts, onChange, items = EMPLOYER_EVENT_CATEGORIES }) {
   return (
     <div role="group" aria-label={m.employer_workspace_event_category_aria()} className="ef-nav">
-      {EMPLOYER_EVENT_CATEGORIES.map((item) => {
+      {items.map((item) => {
         const count = counts?.[item.countKey]
         return (
           <button
@@ -70,11 +70,11 @@ export function CategoryNav({ value, counts, onChange }) {
   )
 }
 
-/** Header of the feed column: the open group and its view switch. */
-export function FeedToolbar({ category, children }) {
+/** Header of the feed column: the open group (or `title`) and its view switch. */
+export function FeedToolbar({ category, title, children }) {
   return (
     <div className="ef-toolbar">
-      <h2 className="ef-toolbar__title">{(CATEGORIES[category] || CATEGORIES['']).label}</h2>
+      <h2 className="ef-toolbar__title">{title || (CATEGORIES[category] || CATEGORIES['']).label}</h2>
       <div className="ef-toolbar__tools">{children}</div>
     </div>
   )

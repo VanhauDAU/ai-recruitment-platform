@@ -387,3 +387,51 @@ a.ef-row__title::after { position: absolute; inset: 0; border-radius: inherit; c
   .ef-spark__bar,
   .ef-row .ef-mark-read { transition: none; }
 }
+
+/* Admin announcements: the pinned block of the "All" view and the "System" group. */
+.ef-pinned { border-bottom: 1px solid var(--ef-line); background: linear-gradient(180deg, var(--ef-soft), #fff); }
+.ef-pinned .ef-day { background: transparent; color: var(--ef-accent); backdrop-filter: none; }
+.ef-row--announcement .ef-row__icon { color: var(--ef-ink); }
+
+.ef-row__eyebrow {
+  margin: 0 0 2px;
+  color: var(--ef-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ef-row__title--text { margin: 0; color: var(--ef-ink) !important; }
+
+.ef-live { display: inline-flex; align-items: center; gap: 6px; color: var(--ef-accent); font-weight: 600; }
+
+.ef-live::before {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--ef-accent);
+  box-shadow: 0 0 0 3px rgb(5 150 105 / 0.16);
+  content: '';
+}
+
+.ef-cta {
+  display: inline-flex;
+  height: 30px;
+  align-items: center;
+  border: 1px solid var(--ef-line);
+  border-radius: 9px;
+  background: #fff !important;
+  padding: 0 12px;
+  color: var(--ef-ink) !important;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.ef-cta:hover { border-color: #cbd5e1; background: var(--ef-soft) !important; }
+.ef-cta:focus-visible { outline: 2px solid var(--ef-accent); outline-offset: 2px; }
+.ef-rows--history { padding-top: 8px; }
+.ef-note { margin: 4px 8px 8px; color: var(--ef-muted); font-size: 12px; line-height: 1.5; }
