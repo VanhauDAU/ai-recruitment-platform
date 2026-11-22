@@ -8,6 +8,7 @@ export const announcementKeys = {
     locale,
     audienceKey,
   ],
+  inbox: ({ audienceKey, locale, surface }) => [...announcementKeys.all, 'inbox', surface, locale, audienceKey],
   admin: () => [...announcementKeys.all, 'admin'],
   adminLists: () => [...announcementKeys.admin(), 'list'],
   adminList: (params) => [...announcementKeys.adminLists(), params],

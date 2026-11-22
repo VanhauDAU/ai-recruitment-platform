@@ -1209,8 +1209,15 @@ app/router + EmployerAuthLayout|EmployerSetupLayout|EmployerWorkspaceLayout
   `category|days`, tab đếm `category_counts`, mỗi dòng mở `action_path` của
   thông báo cùng sự kiện. Nhóm và khoảng thời gian ở `model/event-filters.js`
   của widget (chỉ trang lazy dùng) để không nặng thêm bundle khởi tạo của chuông.
-  Giao diện: thẻ tổng quan (`FeedHero`), ô nhóm (`CategoryTiles`), lịch sử dạng
-  trục thời gian kèm biểu đồ 14 ngày (`daily_counts`), thông báo dạng thẻ.
+  Giao diện tiết chế: nền slate, một màu nhấn emerald cho trạng thái chọn/chưa
+  đọc; chỉ sự kiện cảnh báo/lỗi có chấm màu trên icon. Từ 1024px hai cột
+  (`FeedLayout`): thanh bên gồm `FeedSummary` (số lớn, biểu đồ 14 ngày từ
+  `daily_counts` ở trang lịch sử) và `CategoryNav`; cột phải là `FeedToolbar` +
+  danh sách theo ngày. Hẹp hơn thì thanh bên xếp trên, nhóm cuộn ngang.
+  Trang thông báo còn có nhóm "Hệ thống": thông báo admin phát hành cho bề mặt
+  `employer_workspace` (đọc `GET /api/shared/site/announcements/inbox/` qua
+  `entities/content/announcement`), thông báo đang hiển thị ghim ở đầu chế độ
+  "Tất cả"; dải trên cùng workspace vẫn do `widgets/common/announcement-strip` lo.
 - Icon hai lớp hiện đại: `shared/ui/icons/DuotoneIcon` chứa sẵn dữ liệu path của
   các icon Phosphor *duotone* (MIT) đang dùng, không thêm thư viện npm. Cần icon
   mới thì lấy SVG `assets/duotone/<tên>-duotone.svg` từ repo `phosphor-icons/core`
