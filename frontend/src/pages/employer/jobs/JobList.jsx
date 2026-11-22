@@ -25,7 +25,7 @@ import {
   JOB_STATUS_TABS,
   formatCount,
 } from './job-list-presentation'
-import '../workspace-list.css'
+import '@/shared/ui/workspace-list/workspace-list.css'
 import './employer-jobs.css'
 import { m } from '@/shared/config/i18n'
 

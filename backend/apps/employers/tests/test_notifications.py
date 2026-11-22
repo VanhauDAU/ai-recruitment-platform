@@ -58,6 +58,75 @@ class EmployerNotificationApiTests(APITestCase):
         self.assertNotIn('must-not-leak', rendered_metrics)
         self.assertNotIn('private/', rendered_metrics)
 
+    def test_activity_history_filters_by_category_and_period_with_tab_counts(self):
+        self.emit(dedupe_key='case:1:approved')
+        _, application = emit_employer_event(
+            recipient=self.employer,
+            event_type=EmployerNotification.EventType.APPLICATION_RECEIVED,
+            dedupe_key='application:1',
+            action_path='/tuyendung/app/applications?application=app_1',
+        )
+        _, old = emit_employer_event(
+            recipient=self.employer,
+            event_type=EmployerNotification.EventType.CAMPAIGN_HEALTH_ALERT,
+            dedupe_key='campaign:1:health',
+        )
+        EmployerActivity.objects.filter(pk=old.pk).update(
+            occurred_at=timezone.now() - timedelta(days=40)
+        )
+        url = reverse('employer-activity-list')
+
+        everything = self.client.get(url)
+        applications = self.client.get(url, {'category': 'applications'})
+        recent = self.client.get(url, {'days': 30})
+
+        self.assertEqual(everything.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            everything.data['category_counts'],
+            {'all': 3, 'applications': 1, 'jobs': 0, 'campaigns': 1, 'company': 1},
+        )
+        [row] = applications.data['results']
+        self.assertEqual(row['public_id'], application.public_id)
+        self.assertEqual(row['category'], 'applications')
+        self.assertEqual(row['actor_kind'], 'system')
+        self.assertEqual(row['action_path'], '/tuyendung/app/applications?application=app_1')
+        self.assertEqual(recent.data['category_counts']['all'], 2)
+        self.assertEqual(len(everything.data['daily_counts']), 14)
+        self.assertEqual(everything.data['daily_counts'][-1]['count'], 2)
+        self.assertEqual(sum(day['count'] for day in applications.data['daily_counts']), 1)
+        self.assertEqual(
+            {item['category'] for item in recent.data['results']}, {'applications', 'company'}
+        )
+        company = self.client.get(url, {'category': 'company', 'days': 'bogus'})
+        self.assertEqual([item['category'] for item in company.data['results']], ['company'])
+
+    def test_notification_list_filters_category_and_unread_with_unread_counts(self):
+        read_notice, _ = self.emit(dedupe_key='case:1:approved')
+        self.emit(dedupe_key='case:2:approved')
+        application, _ = emit_employer_event(
+            recipient=self.employer,
+            event_type=EmployerNotification.EventType.APPLICATION_RECEIVED,
+            dedupe_key='application:1',
+        )
+        self.client.post(
+            reverse('employer-notification-read', kwargs={'public_id': read_notice.public_id})
+        )
+        url = reverse('employer-notification-list')
+
+        company_unread = self.client.get(url, {'category': 'company', 'unread': 'true'})
+        applications = self.client.get(url, {'category': 'applications'})
+
+        self.assertEqual(company_unread.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(company_unread.data['results']), 1)
+        self.assertEqual(company_unread.data['results'][0]['category'], 'company')
+        self.assertEqual(
+            company_unread.data['unread_counts'],
+            {'all': 2, 'applications': 1, 'jobs': 0, 'campaigns': 0, 'company': 1},
+        )
+        self.assertEqual(
+            [item['public_id'] for item in applications.data['results']], [application.public_id]
+        )
+
     def test_list_unread_read_and_read_all_are_scoped_to_recipient(self):
         first_notice, _ = self.emit(dedupe_key='case:1:approved')
         self.emit(dedupe_key='case:2:approved')

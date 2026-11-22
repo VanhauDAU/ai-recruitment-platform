@@ -26,7 +26,7 @@ export function applicationFilterChips(summary, selected) {
       key: status,
       label,
       count: summary.by_status?.[status] || 0,
-      // Tone names map onto `.ws-tone-*` in ../workspace-list.css.
+      // Tone names map onto `.ws-tone-*` in @/shared/ui/workspace-list/workspace-list.css.
       tone: APPLICATION_STATUS_TONES[status],
     })),
   ]

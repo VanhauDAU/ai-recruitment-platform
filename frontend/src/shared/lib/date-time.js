@@ -51,3 +51,17 @@ export function formatRelativeDay(value, now = new Date()) {
   const day = new Intl.DateTimeFormat(getIntlLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' }).format(date)
   return `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)}, ${day}`
 }
+
+/** "5 phút trước" / "2 giờ trước" / "hôm qua" — how long ago, in the UI language. */
+export function formatTimeAgo(value, now = Date.now()) {
+  const date = toDate(value)
+  if (!date) return '—'
+  const seconds = Math.round((date.getTime() - now) / 1000)
+  const format = new Intl.RelativeTimeFormat(getIntlLocale(), { numeric: 'auto' })
+  if (Math.abs(seconds) < 60) return format.format(0, 'second')
+  const minutes = Math.round(seconds / 60)
+  if (Math.abs(minutes) < 60) return format.format(minutes, 'minute')
+  const hours = Math.round(minutes / 60)
+  if (Math.abs(hours) < 24) return format.format(hours, 'hour')
+  return format.format(Math.round(hours / 24), 'day')
+}

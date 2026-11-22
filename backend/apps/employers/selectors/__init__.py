@@ -77,9 +77,15 @@ from .domain_claims import (
     effective_company_domain_claims,
 )
 from .notifications import (
+    EMPLOYER_ACTIVITY_PERIOD_DAYS,
+    EMPLOYER_EVENT_CATEGORY_KEYS,
+    employer_activity_category,
+    employer_activity_category_counts,
+    employer_activity_daily_counts,
     employer_activity_queryset,
     employer_notification_preference,
     employer_notification_queryset,
+    employer_notification_unread_counts,
     employer_unread_notification_count,
 )
 from .onboarding import (
@@ -122,8 +128,14 @@ __all__ = [
     'admin_company_summary',
     'admin_verification_cases_queryset',
     'admin_verification_summary',
+    'EMPLOYER_ACTIVITY_PERIOD_DAYS',
+    'EMPLOYER_EVENT_CATEGORY_KEYS',
+    'employer_activity_category',
+    'employer_activity_category_counts',
+    'employer_activity_daily_counts',
     'employer_activity_queryset',
     'employer_notification_queryset',
+    'employer_notification_unread_counts',
     'employer_unread_notification_count',
     'first_recruitment_need',
     'has_explicit_company_link',
