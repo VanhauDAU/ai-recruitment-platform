@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Lưu ảnh đại diện Google vào storage](#lưu-ảnh-đại-diện-google-vào-storage-2026-11-22) | 🟨 Xong trên nhánh `fix/google-avatar-storage`, chưa mở PR |
 | [Làm lại trang Thông tin tài khoản NTD](#làm-lại-trang-thông-tin-tài-khoản-ntd-2026-11-22) | 🟨 Xong trên nhánh `feat/employer-account-info-redesign`, chờ gộp |
 | [Làm lại Thông báo hệ thống và Lịch sử hoạt động của NTD](#làm-lại-thông-báo-hệ-thống-và-lịch-sử-hoạt-động-của-ntd-2026-11-22) | ✅ Gộp vào `dev` (#307) |
 | [Làm lại danh sách tin tuyển dụng và chiến dịch của NTD](#làm-lại-danh-sách-tin-tuyển-dụng-và-chiến-dịch-của-ntd-2026-11-22) | ✅ Gộp vào `dev` (#305) |
@@ -77,6 +78,21 @@ một danh sách phân trang (timeline antd), không lọc được và lịch s
   vấn mỗi dòng khi tính người thực hiện (đọc `actor_id` thay vì `actor`).
 - CSS dùng chung chuyển sang `frontend/src/shared/ui/workspace-list/workspace-list.css`
   để widget cũng dùng được.
+
+## Lưu ảnh đại diện Google vào storage (2026-11-22)
+
+Ứng viên đăng nhập Google không thấy ảnh: DB lưu thẳng URL
+`lh3.googleusercontent.com`, mà Google chặn ảnh khi trình duyệt gửi Referer của site.
+Tài khoản có sẵn rồi mới liên kết Google cũng không được gán ảnh.
+
+- Sau khi đăng nhập social, backend tải ảnh của provider (Google xin bản 256px) rồi
+  lưu vào `users/avatars/<public_id>/` như ảnh tự tải lên
+  (`apps/accounts/services/social_avatar.py`), ngoài transaction của `resolve_user`.
+- Chỉ chạy khi tài khoản chưa có ảnh trong storage: không ghi đè ảnh tự tải lên;
+  URL Google cũ trong DB được thay ở lần đăng nhập kế tiếp.
+- Chỉ tải từ CDN ảnh của provider (Google, Facebook, LinkedIn), chỉ https, không theo
+  redirect, giới hạn `IMAGE_UPLOAD_MAX_SIZE`; lỗi tải chỉ ghi log, không chặn đăng nhập.
+- Kiểm tra: pytest `apps/accounts` 212 passed (7 test mới), ruff, import-linter, layering.
 
 ## Làm lại trang Thông tin tài khoản NTD (2026-11-22)
 

@@ -6,6 +6,14 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-11-22
+
+#### Fixed — Ảnh đại diện khi đăng nhập Google
+
+- Ảnh Google/Facebook/LinkedIn được tải về storage nội bộ lúc đăng nhập thay vì lưu URL
+  ngoài (Google chặn ảnh khi trình duyệt gửi Referer). Không ghi đè ảnh người dùng tự tải
+  lên; tài khoản cũ có URL Google được sửa ở lần đăng nhập kế tiếp.
+
 ### 2026-11-21
 
 #### Changed — Cắt ảnh banner và thêm tông màu
