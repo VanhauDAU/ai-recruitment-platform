@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="frontend/public/images/logo/logo-full.webp" alt="ProCV" width="260">
+<img src="docs/assets/logo-readme.png" alt="ProCV" width="300">
 
 ### Nền tảng tuyển dụng tích hợp AI đối sánh CV–JD
 
