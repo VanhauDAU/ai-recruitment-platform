@@ -1,14 +1,13 @@
 import { m } from '@/shared/config/i18n'
 
 // Event groups of the notification and history pages (`category` of the API).
-// `countKey` reads `unread_counts` or `category_counts`; `tone` maps onto
-// `.ws-tone-*`; `icon` is a DuotoneIcon name.
+// `countKey` reads `unread_counts` or `category_counts`; `icon` is a DuotoneIcon name.
 export const EMPLOYER_EVENT_CATEGORIES = [
-  { value: '', countKey: 'all', tone: 'emerald', icon: 'squaresFour', label: m.employer_workspace_event_category_all() },
-  { value: 'applications', countKey: 'applications', tone: 'sky', icon: 'usersThree', label: m.employer_workspace_event_category_applications() },
-  { value: 'jobs', countKey: 'jobs', tone: 'violet', icon: 'briefcase', label: m.employer_workspace_event_category_jobs() },
-  { value: 'campaigns', countKey: 'campaigns', tone: 'amber', icon: 'megaphone', label: m.employer_workspace_event_category_campaigns() },
-  { value: 'company', countKey: 'company', tone: 'teal', icon: 'shieldCheck', label: m.employer_workspace_event_category_company() },
+  { value: '', countKey: 'all', icon: 'squaresFour', label: m.employer_workspace_event_category_all() },
+  { value: 'applications', countKey: 'applications', icon: 'usersThree', label: m.employer_workspace_event_category_applications() },
+  { value: 'jobs', countKey: 'jobs', icon: 'briefcase', label: m.employer_workspace_event_category_jobs() },
+  { value: 'campaigns', countKey: 'campaigns', icon: 'megaphone', label: m.employer_workspace_event_category_campaigns() },
+  { value: 'company', countKey: 'company', icon: 'shieldCheck', label: m.employer_workspace_event_category_company() },
 ]
 
 // `days` of the history API; '' keeps the whole 24-month retention.

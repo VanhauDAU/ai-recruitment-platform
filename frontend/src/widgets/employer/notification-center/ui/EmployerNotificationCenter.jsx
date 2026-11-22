@@ -11,9 +11,22 @@ import { m } from '@/shared/config/i18n'
 import { formatTimeAgo } from '@/shared/lib/date-time'
 import DuotoneIcon from '@/shared/ui/icons/DuotoneIcon'
 import useEventFeed from '../model/use-event-feed'
-import { CategoryTiles, EventDayGroups, EventFeedFooter, EventRow, FeedHero } from './EventFeed'
+import {
+  CategoryNav,
+  EventDayGroups,
+  EventFeedFooter,
+  EventRow,
+  FeedLayout,
+  FeedSummary,
+  FeedToolbar,
+  Segmented,
+} from './EventFeed'
 
 const FILTER_KEYS = ['category', 'unread']
+const VIEW_OPTIONS = [
+  { value: '', label: m.employer_workspace_event_category_all() },
+  { value: 'true', label: m.employer_workspace_notifications_unread_only() },
+]
 
 export default function EmployerNotificationCenter() {
   const queryClient = useQueryClient()
@@ -31,50 +44,47 @@ export default function EmployerNotificationCenter() {
   const total = firstPage?.count || 0
   const unreadOnly = filters.unread === 'true'
   const hasFilters = Boolean(filters.category || unreadOnly)
-  const latest = items[0]?.created_at
+  const latest = !hasFilters && items[0]?.created_at
   const markRead = (item) => !item.is_read && readMutation.mutate(item.public_id)
 
   return (
-    <section className="ws-page" aria-labelledby="employer-notifications-title">
-      <h1 id="employer-notifications-title" className="sr-only">{m.employer_workspace_title_notifications()}</h1>
-      <FeedHero
-        icon="bellRinging"
-        title={unreadTotal
-          ? m.employer_workspace_notifications_unread_title({ count: unreadTotal })
-          : m.employer_workspace_notifications_all_read()}
-        hint={latest && !hasFilters
-          ? `${m.employer_workspace_notifications_hero_hint()} ${m.employer_workspace_feed_latest({ time: formatTimeAgo(latest, Date.now(), { inSentence: true }) })}.`
-          : m.employer_workspace_notifications_hero_hint()}
-        aside={(
-          <Button
-            type="primary"
-            icon={<DuotoneIcon name="checks" />}
-            loading={readAllMutation.isPending}
-            disabled={!unreadTotal}
-            onClick={() => readAllMutation.mutate()}
-            className="ef-hero__button"
+    <FeedLayout
+      titleId="employer-notifications-title"
+      title={m.employer_workspace_title_notifications()}
+      side={(
+        <>
+          <FeedSummary
+            eyebrow={m.employer_workspace_title_notifications()}
+            value={unreadCounts ? unreadTotal : undefined}
+            unit={m.employer_workspace_notifications_unread_unit()}
+            hint={latest
+              ? m.employer_workspace_feed_latest({ time: formatTimeAgo(latest, Date.now(), { inSentence: true }) })
+              : m.employer_workspace_notifications_hero_hint()}
           >
-            {m.employer_workspace_notifications_mark_all_read()}
-          </Button>
-        )}
-      />
-      <CategoryTiles value={filters.category} counts={unreadCounts} onChange={(category) => setFilters({ category })} />
-
-      <div className="ws-panel ef-list" aria-busy={query.isFetching}>
-        <div className="ef-toolbar">
-          <div className="ef-segmented">
-            <button type="button" aria-pressed={!unreadOnly} onClick={() => setFilters({ unread: '' })}>
-              {m.employer_workspace_event_category_all()}
-            </button>
-            <button type="button" aria-pressed={unreadOnly} onClick={() => setFilters({ unread: 'true' })}>
-              {m.employer_workspace_notifications_unread_only()}
-            </button>
-          </div>
-          <span className="ef-toolbar__meta">
-            {!query.isPending && <span className="ws-quick__count">{m.employer_workspace_shown_of({ shown: items.length, total })}</span>}
-            {hasFilters && <button type="button" className="ws-link-button" onClick={clearFilters}>{m.employer_workspace_clear_filters()}</button>}
-          </span>
-        </div>
+            <Button
+              icon={<DuotoneIcon name="checks" />}
+              loading={readAllMutation.isPending}
+              disabled={!unreadTotal}
+              onClick={() => readAllMutation.mutate()}
+              className="ef-summary__action"
+            >
+              {m.employer_workspace_notifications_mark_all_read()}
+            </Button>
+          </FeedSummary>
+          <CategoryNav value={filters.category} counts={unreadCounts} onChange={(category) => setFilters({ category })} />
+        </>
+      )}
+    >
+      <FeedToolbar category={filters.category}>
+        {hasFilters && <button type="button" className="ws-link-button" onClick={clearFilters}>{m.employer_workspace_clear_filters()}</button>}
+        <Segmented
+          label={m.employer_workspace_notifications_view_aria()}
+          value={unreadOnly ? 'true' : ''}
+          options={VIEW_OPTIONS}
+          onChange={(unread) => setFilters({ unread })}
+        />
+      </FeedToolbar>
+      <div aria-busy={query.isFetching}>
         {query.isPending && <div className="p-4"><Skeleton active avatar paragraph={{ rows: 4 }} /></div>}
         {query.isError && (
           <Result
@@ -124,6 +134,6 @@ export default function EmployerNotificationCenter() {
         </div>
         <EventFeedFooter shown={items.length} total={total} query={query} />
       </div>
-    </section>
+    </FeedLayout>
   )
 }

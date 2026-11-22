@@ -72,7 +72,7 @@ describe('EmployerNotificationCenter', () => {
     renderWidget(EmployerNotificationCenter)
 
     const tabs = await screen.findByRole('group', { name: 'Lọc theo nhóm' })
-    expect(await within(tabs).findByRole('button', { name: /1\s*Công ty & xác thực/ })).toBeInTheDocument()
+    expect(await within(tabs).findByRole('button', { name: /Công ty & xác thực\s*1/ })).toBeInTheDocument()
     await user.click(within(tabs).getByRole('button', { name: /Ứng tuyển/ }))
     await user.click(screen.getByRole('button', { name: /Chỉ chưa đọc/ }))
 

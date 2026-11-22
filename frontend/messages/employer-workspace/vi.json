@@ -399,7 +399,6 @@
   "employer_workspace_activity_period_aria": "Khoảng thời gian",
   "employer_workspace_activity_period_all": "Mọi lúc",
   "employer_workspace_activity_period_days": "{days} ngày",
-  "employer_workspace_activity_count": "{count} hoạt động",
   "employer_workspace_activity_empty_filtered": "Không có hoạt động trong nhóm hoặc khoảng thời gian này",
   "employer_workspace_load_more": "Xem thêm",
   "employer_workspace_shown_of": "Đã hiển thị {shown}/{total}",
@@ -408,11 +407,13 @@
   "employer_workspace_notifications_empty_filtered": "Không có thông báo phù hợp bộ lọc",
   "employer_workspace_notifications_all_read": "Bạn đã đọc hết thông báo",
   "employer_workspace_clear_filters": "Xóa bộ lọc",
-  "employer_workspace_notifications_unread_title": "{count} thông báo chưa đọc",
   "employer_workspace_notifications_hero_hint": "Duyệt, cảnh báo và việc cần làm của tài khoản. Bấm một thông báo để mở đúng trang xử lý.",
   "employer_workspace_feed_latest": "Mới nhất {time}",
   "employer_workspace_activity_hero_hint": "Nhật ký mọi thay đổi quan trọng của tài khoản, lưu 24 tháng.",
   "employer_workspace_activity_chart_title": "14 ngày qua",
   "employer_workspace_activity_chart_aria": "Biểu đồ số hoạt động 14 ngày qua, tổng {total}",
-  "employer_workspace_activity_chart_day": "{date}: {count} hoạt động"
+  "employer_workspace_activity_chart_day": "{date}: {count} hoạt động",
+  "employer_workspace_activity_unit": "hoạt động",
+  "employer_workspace_notifications_unread_unit": "chưa đọc",
+  "employer_workspace_notifications_view_aria": "Hiển thị thông báo"
 }
