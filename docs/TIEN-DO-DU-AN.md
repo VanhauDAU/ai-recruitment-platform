@@ -10,6 +10,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Làm lại trang Thông tin tài khoản NTD](#làm-lại-trang-thông-tin-tài-khoản-ntd-2026-11-22) | 🟨 Xong trên nhánh `feat/employer-account-info-redesign`, chờ gộp |
 | [Làm lại Thông báo hệ thống và Lịch sử hoạt động của NTD](#làm-lại-thông-báo-hệ-thống-và-lịch-sử-hoạt-động-của-ntd-2026-11-22) | ✅ Gộp vào `dev` (#307) |
 | [Làm lại danh sách tin tuyển dụng và chiến dịch của NTD](#làm-lại-danh-sách-tin-tuyển-dụng-và-chiến-dịch-của-ntd-2026-11-22) | ✅ Gộp vào `dev` (#305) |
+| [Báo cáo ĐATN](#báo-cáo-đatn-2026-11-21) | 🟨 Chương 1 bản nháp (md + Word); nộp cuối 12/2026 |
 | [Làm lại carousel banner trang chủ](#làm-lại-carousel-banner-trang-chủ-2026-11-21) | ✅ Gộp vào `dev` (#300); cắt ảnh + 8 tông màu trên nhánh `feat/banner-image-crop` |
 | [Làm lại trang Cấu hình hệ thống (ADR-0026)](#làm-lại-trang-cấu-hình-hệ-thống-adr-0026-2026-11-21) | 🟨 GĐ1–GĐ4 đã gộp (#294–#298); GĐ5 trên nhánh `feat/settings-recruiting` |
 | [Chốt luồng FAQ/hướng dẫn và blog: Nháp → Xuất bản (ADR-0024)](#chốt-luồng-nội-dung-nháp--xuất-bản-adr-0024-2026-11-20) | ✅ Gộp vào `dev` (#272) |
@@ -132,6 +133,14 @@ nhưng gom thành ít nhóm thả xuống hơn, hai cổng dùng chung một ki�
 | NTD | Giữ thứ tự mục ban đầu (Bảng tin · Chiến dịch · Tin · Trang công ty · Quản lý CV · Lịch sử · Cài đặt · Thông báo); chỉ "Quản lý CV" là danh sách thả xuống (CV ứng tuyển, Kho ứng viên tiềm năng, Danh sách đen). Bỏ hẳn 9 mục chưa làm ("Sắp mở" ở đầu menu, trong Quản lý CV, Báo cáo tuyển dụng, Hộp thư hỗ trợ ở chân sidebar). Trang con (sửa tin, chi tiết chiến dịch) giữ mục cha sáng |
 | Giao diện | Dòng 38px, mục con 34px treo trên đường dẫn hướng, trang hiện tại có nền + vạch màu thương hiệu (tính từ `--brand-primary`, đổi theo cấu hình); vùng logo admin cao bằng topbar; footer admin một hàng; hồ sơ NTD gọn (bỏ "Employer", mã NTD) |
 | Kỹ thuật | Style menu NTD chuyển từ chuỗi Tailwind arbitrary sang `employer-workspace.css` tải lười cùng layout |
+
+## Báo cáo ĐATN (2026-11-21)
+
+- Bố cục theo báo cáo khóa trước, không có phần Mở đầu. Quy cách theo tệp Word mẫu của khoa.
+- Chương 1 "Giới thiệu tổng quan" có hai bản:
+  - nội dung: `docs/bao-cao/do-an/02-chuong-1.md`;
+  - bản Word dựng từ khung của khoa: `docs/bao-cao/do-an/Chuong-1-Gioi-thieu-tong-quan.docx`.
+- Hạn nộp cuối 12/2026.
 
 ## Làm lại carousel banner trang chủ (2026-11-21)
 
