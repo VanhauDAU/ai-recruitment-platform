@@ -118,7 +118,7 @@ export default function DashboardSidebar({
         <div className="mt-4 space-y-2.5 text-[11px] text-slate-500">
           {account.work_location_name && <p className="flex items-center gap-2"><EnvironmentOutlined className="text-slate-400" /> <span className="truncate">{account.work_location_name}</span></p>}
           {account.company_size && <p className="flex items-center gap-2"><TeamOutlined className="text-slate-400" /> {m.employer_workspace_dash_company_size({ size: account.company_size })}</p>}
-          <p className="flex items-center gap-2"><BankOutlined className="text-slate-400" /> {m.employer_workspace_employer_code({ code: account.recruiter_public_id || '—' })}</p>
+          <p className="flex items-center gap-2"><BankOutlined className="text-slate-400" /> {m.employer_workspace_employer_code({ code: account.public_id || '—' })}</p>
         </div>
       </section>
     </aside>

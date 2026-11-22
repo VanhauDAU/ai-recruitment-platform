@@ -63,7 +63,7 @@ describe('EmployerDashboardOverview', () => {
     useSession.mockReturnValue({ user: { full_name: 'Nguyễn An', email: 'hr@example.com' } })
     getEmployerDashboard.mockResolvedValue({
       account: {
-        recruiter_public_id: 'rec_1',
+        public_id: '48261937',
         company_name: 'Công ty Acme',
         company_size: '25-99',
         work_location_name: 'Hà Nội',
@@ -116,6 +116,7 @@ describe('EmployerDashboardOverview', () => {
     expect(screen.queryByText('Xác thực địa chỉ email')).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Hoàn thiện workspace tuyển dụng' })).toBeInTheDocument()
     expect(screen.getByText('Công ty Acme')).toBeInTheDocument()
+    expect(screen.getByText(/Mã NTD: 48261937/)).toBeInTheDocument()
     expect(screen.getByText('Kinh doanh phần mềm')).toBeInTheDocument()
     expect(screen.getByText('240')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Xác thực số điện thoại/ })).toHaveAttribute('target', '_blank')
@@ -128,7 +129,7 @@ describe('EmployerDashboardOverview', () => {
     useSession.mockReturnValue({ user: { full_name: 'Nguyễn An' } })
     getEmployerDashboard.mockResolvedValue({
       account: {
-        recruiter_public_id: 'rec_verified',
+        public_id: '35172946',
         company_name: 'Công ty Acme',
         recruiter_verification_status: 'approved',
         verification: { representative_verified: true },
@@ -154,7 +155,7 @@ describe('EmployerDashboardOverview', () => {
     useSession.mockReturnValue({ user: { full_name: 'Nguyễn An' } })
     getEmployerDashboard.mockResolvedValue({
       account: {
-        recruiter_public_id: 'rec_revoked',
+        public_id: '71938264',
         company_name: 'Công ty Acme',
         recruiter_verification_status: 'revoked',
         verification: { representative_verified: true },
