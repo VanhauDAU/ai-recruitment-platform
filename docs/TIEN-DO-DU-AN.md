@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Mã tài khoản dạng số cho 3 cổng](#mã-tài-khoản-dạng-số-cho-3-cổng-2026-11-22) | 🟨 Xong trên nhánh `feat/numeric-user-id`, chờ gộp PR |
 | [Làm lại trang Thông tin tài khoản NTD](#làm-lại-trang-thông-tin-tài-khoản-ntd-2026-11-22) | 🟨 Xong trên nhánh `feat/employer-account-info-redesign`, chờ gộp |
 | [Làm lại Thông báo hệ thống và Lịch sử hoạt động của NTD](#làm-lại-thông-báo-hệ-thống-và-lịch-sử-hoạt-động-của-ntd-2026-11-22) | ✅ Gộp vào `dev` (#307) |
 | [Làm lại danh sách tin tuyển dụng và chiến dịch của NTD](#làm-lại-danh-sách-tin-tuyển-dụng-và-chiến-dịch-của-ntd-2026-11-22) | ✅ Gộp vào `dev` (#305) |
@@ -78,6 +79,24 @@ một danh sách phân trang (timeline antd), không lọc được và lịch s
   vấn mỗi dòng khi tính người thực hiện (đọc `actor_id` thay vì `actor`).
 - CSS dùng chung chuyển sang `frontend/src/shared/ui/workspace-list/workspace-list.css`
   để widget cũng dùng được.
+
+## Mã tài khoản dạng số cho 3 cổng (2026-11-22)
+
+`User.public_id` trước đây là `usr_` + 12 ký tự hex, khó đọc cho bộ phận hỗ trợ qua
+điện thoại; "Mã NTD" ở dashboard và email NTD lại lấy `Recruiter.public_id` (`rec_…`).
+
+- Mã tài khoản mới: 8 chữ số ngẫu nhiên, chữ số đầu khác 0 (vd `48261937`), không
+  tăng dần nên không lộ số lượng tài khoản; sinh lại khi trùng, DB có ràng buộc
+  unique + `chk_users_public_id_digits`. Ứng viên, NTD, admin dùng chung định dạng;
+  cùng email ở hai cổng vẫn là hai mã khác nhau.
+- Migration `accounts.0004` đổi mã mọi tài khoản cũ và ghi lại `AdminAccessAuditLog`
+  (`target_public_id` của timeline tài khoản, `payload.user_public_id`); `0005` thu
+  cột về 8 ký tự và thêm ràng buộc. Đường dẫn file cũ (`users/avatars/usr_…/`) vẫn
+  dùng được vì DB lưu key đầy đủ. URL admin `usr_…` đã lưu và token ngắn hạn đang
+  lưu hành (xác nhận thao tác admin, link tài sản CV) hết hiệu lực sau khi migrate.
+- "Mã NTD" ở dashboard NTD và email chào mừng/xác minh đổi sang mã tài khoản;
+  payload dashboard đổi `account.recruiter_public_id` → `account.public_id`.
+- Admin tìm theo mã bỏ qua dấu cách/chấm/gạch ("4826 1937").
 
 ## Làm lại trang Thông tin tài khoản NTD (2026-11-22)
 
