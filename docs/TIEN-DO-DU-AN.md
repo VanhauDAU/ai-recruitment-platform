@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Làm lại danh sách tin tuyển dụng và chiến dịch của NTD](#làm-lại-danh-sách-tin-tuyển-dụng-và-chiến-dịch-của-ntd-2026-11-22) | 🟨 Xong trên nhánh `feat/employer-job-list-redesign`, chờ gộp |
 | [Làm lại carousel banner trang chủ](#làm-lại-carousel-banner-trang-chủ-2026-11-21) | ✅ Gộp vào `dev` (#300); cắt ảnh + 8 tông màu trên nhánh `feat/banner-image-crop` |
 | [Làm lại trang Cấu hình hệ thống (ADR-0026)](#làm-lại-trang-cấu-hình-hệ-thống-adr-0026-2026-11-21) | 🟨 GĐ1–GĐ4 đã gộp (#294–#298); GĐ5 trên nhánh `feat/settings-recruiting` |
 | [Chốt luồng FAQ/hướng dẫn và blog: Nháp → Xuất bản (ADR-0024)](#chốt-luồng-nội-dung-nháp--xuất-bản-adr-0024-2026-11-20) | ✅ Gộp vào `dev` (#272) |
@@ -40,6 +41,32 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Làm lại danh sách tin tuyển dụng và chiến dịch của NTD (2026-11-22)
+
+Hai trang `/tuyendung/app/jobs` và `/tuyendung/app/campaigns` trước đây chỉ có tab
+trạng thái + ô tìm kiếm, thao tác nhanh chỉ hiện khi rê chuột và tiêu đề bị cắt ở
+màn 1280px. Áp dụng skill `ui-ux-pro-max` (cài ở `.claude/skills`) cùng
+`web-design-guidelines`, `vercel-react-best-practices`; giữ ngôn ngữ antd + Tailwind
+của cổng NTD.
+
+- Tin tuyển dụng: lọc theo chiến dịch (tải tên khi mở ô chọn), sắp xếp (mới tạo,
+  cập nhật, sắp hết hạn, nhiều CV chưa xem, nhiều ứng viên, nhiều lượt xem; bấm tiêu
+  đề cột để sắp), chip "Cần xử lý" có số đếm (CV chưa xem, sắp hết hạn 7 ngày). Cột
+  trạng thái riêng kèm lý do khi tin bị ẩn; hạn nộp tính theo ngày đóng thật (hạn nộp
+  hoặc hết thời gian hiển thị, cái nào sớm hơn); thao tác nhanh luôn hiện; nút "Đăng
+  tin tuyển dụng" lên thanh tiêu đề như trang chiến dịch.
+- Chiến dịch: bỏ bảng antd + thẻ riêng, dùng chung khung với trang tin; chip "Cần xử
+  lý" (CV chưa xem, có tin hết hạn) thay ô chọn; cột tin theo trạng thái, ứng viên,
+  **tiến độ tuyển** (trúng tuyển/số cần tuyển), hoạt động gần nhất trong dòng meta.
+- Bảng chuyển thành thẻ theo bề rộng thật của danh sách (container query 1080px),
+  nên sidebar mở hay đóng đều không bóp cột tiêu đề; mobile có nhãn cho từng số liệu.
+- API: `GET /api/employer/jobs/` nhận `ordering`, `attention=unviewed|expiring`, trả
+  `closes_on` và `attention_counts` (tính trong tab đang mở, cùng một query với
+  `status_counts`); `GET /api/employer/campaigns/` trả `attention_counts`
+  (`needs_review`, `expired_jobs`). Số query của trang danh sách không đổi.
+- Style dùng chung ở `pages/employer/workspace-list.css` (lazy); CSS khởi tạo không
+  thêm utility mới.
 
 ## Gọn sidebar quản trị và NTD theo góp ý GVHD (2026-11-21)
 

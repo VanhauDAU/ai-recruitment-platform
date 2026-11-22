@@ -7,11 +7,14 @@ from rest_framework.response import Response
 from apps.accounts.api.permissions import IsEmployer
 from apps.employers.services import ensure_recruiter_job_workspace
 
+from ...models import JobState
 from ...selectors import (
+    EMPLOYER_JOB_ATTENTION_FILTERS,
+    EMPLOYER_JOB_ORDERINGS,
     attach_job_candidate_previews,
     employer_job_detail_queryset,
+    employer_job_list_counts,
     employer_job_list_queryset,
-    employer_job_status_counts,
 )
 from ...services import (
     close_job,
@@ -54,8 +57,27 @@ class EmployerJobWorkspaceReadMixin:
 
 
 @extend_schema_view(
-    list=extend_schema(summary='Tin tuyển dụng của NTD (kèm status_counts khi phân trang)'),
-    create=extend_schema(
+    get=extend_schema(
+        summary='Tin tuyển dụng của NTD (kèm status_counts, attention_counts khi phân trang)',
+        parameters=[
+            OpenApiParameter('status', str, enum=JobState.values),
+            OpenApiParameter('campaign', str, description='public_id của chiến dịch'),
+            OpenApiParameter('q', str, description='Tìm theo tiêu đề'),
+            OpenApiParameter(
+                'attention',
+                str,
+                enum=list(EMPLOYER_JOB_ATTENTION_FILTERS),
+                description='unviewed: còn CV chưa xem; expiring: đang tuyển, sắp hết hạn',
+            ),
+            OpenApiParameter(
+                'ordering',
+                str,
+                enum=[f'{sign}{key}' for key in EMPLOYER_JOB_ORDERINGS for sign in ('', '-')],
+                description='Mặc định -created',
+            ),
+        ],
+    ),
+    post=extend_schema(
         summary='Tạo tin: đăng ngay, hoặc lưu nháp với ?as=draft',
         parameters=[OpenApiParameter('as', str, enum=['draft'])],
         request=EmployerJobWriteSerializer,
@@ -75,11 +97,14 @@ class EmployerJobListCreateView(EmployerJobWorkspaceReadMixin, generics.ListCrea
 
     def get_queryset(self):
         self.employer_workspace_readiness()
+        params = self.request.query_params
         return employer_job_list_queryset(
             self.request.user,
-            status=self.request.query_params.get('status'),
-            campaign=self.request.query_params.get('campaign'),
-            q=self.request.query_params.get('q'),
+            status=params.get('status'),
+            campaign=params.get('campaign'),
+            q=params.get('q'),
+            attention=params.get('attention'),
+            ordering=params.get('ordering'),
         )
 
     def list(self, request, *args, **kwargs):
@@ -90,13 +115,16 @@ class EmployerJobListCreateView(EmployerJobWorkspaceReadMixin, generics.ListCrea
                 attach_job_candidate_previews(page)
             serializer = self.get_serializer(page, many=True)
             response = self.get_paginated_response(serializer.data)
-            # Counts of every status tab under the same campaign/search scope,
-            # so the tabs stay correct whichever tab the page is showing.
-            response.data['status_counts'] = employer_job_status_counts(
+            # Status tabs count under the campaign/search scope, whichever tab
+            # is open; attention chips count inside the open tab.
+            status_counts, attention_counts = employer_job_list_counts(
                 request.user,
+                status=request.query_params.get('status'),
                 campaign=request.query_params.get('campaign'),
                 q=request.query_params.get('q'),
             )
+            response.data['status_counts'] = status_counts
+            response.data['attention_counts'] = attention_counts
             return response
 
         jobs = list(queryset)
