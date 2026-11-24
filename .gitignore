@@ -63,3 +63,9 @@ coverage/
 # Logs
 *.log
 npm-debug.log*
+
+# Production (chỉ tồn tại trên VPS): chứng chỉ origin, bản sao lưu, nhật ký deploy
+/deploy/certs/*
+!/deploy/certs/README.md
+/deploy/history.log
+/backups/

@@ -1,5 +1,9 @@
 # Chạy dự án local bằng Docker Compose
 
+File này chỉ nói về `docker-compose.yml` (môi trường dev). Production dùng
+`docker-compose.prod.yml` qua `scripts/deploy/compose.sh`, xem
+[huong-dan-deployment.md](huong-dan-deployment.md).
+
 ## Máy mới chỉ cần Docker
 
 ```bash
