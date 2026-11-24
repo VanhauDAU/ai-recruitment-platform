@@ -10,7 +10,7 @@ const benefits = [
   { id: 3, name: 'Laptop', category: 'equipment' },
 ]
 
-const badge = () => screen.getByRole('button', { name: /Thu gọn|Thêm thông tin/ }).querySelector('.bg-emerald-100')
+const badge = () => screen.getByRole('button', { name: /Thu gọn|Thêm thông tin/ }).querySelector('span.min-w-5')
 
 describe('JobDescriptionFields — quyền lợi bổ sung', () => {
   it('chỉ cho thêm tối đa ba lý do nên ứng tuyển', async () => {

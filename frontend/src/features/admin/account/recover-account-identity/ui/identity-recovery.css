@@ -13,13 +13,13 @@
 .idr__steps { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none; }
 .idr__steps::before, .idr__steps::after { content: ''; position: absolute; top: 13px; left: calc(100% / 6); height: 2px; border-radius: 2px; }
 .idr__steps::before { right: calc(100% / 6); background: #e2e8f0; }
-.idr__steps::after { width: calc(100% * 2 / 3 * var(--idr-progress, 0)); background: var(--admin-primary, #00b14f); transition: width .6s cubic-bezier(.22, 1, .36, 1); animation: idr-grow .7s cubic-bezier(.22, 1, .36, 1); }
+.idr__steps::after { width: calc(100% * 2 / 3 * var(--idr-progress, 0)); background: var(--admin-primary, var(--brand-primary)); transition: width .6s cubic-bezier(.22, 1, .36, 1); animation: idr-grow .7s cubic-bezier(.22, 1, .36, 1); }
 .idr__step { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
 .idr__dot { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: 2px solid #e2e8f0; border-radius: 50%; background: #fff; font-size: 12px; font-weight: 700; color: #94a3b8; transition: background-color .3s, border-color .3s, color .3s; }
 .idr__label { font-size: 12px; font-weight: 500; color: #94a3b8; }
 .idr__step.is-done .idr__dot { border-color: var(--admin-primary, #00b14f); background: var(--admin-primary, #00b14f); color: #fff; animation: idr-pop .35s cubic-bezier(.22, 1, .36, 1); }
 .idr__step.is-done .idr__label { color: #475569; }
-.idr__step.is-current .idr__dot { border-color: var(--admin-primary, #00b14f); color: var(--admin-primary-hover, #008f40); box-shadow: 0 0 0 4px var(--admin-primary-soft, #e6f8ee); }
+.idr__step.is-current .idr__dot { border-color: var(--admin-primary, var(--brand-primary)); color: var(--admin-primary-hover, var(--brand-primary-hover)); box-shadow: 0 0 0 4px var(--admin-primary-soft, var(--brand-primary-soft)); }
 .idr__step.is-current .idr__label { font-weight: 600; color: var(--admin-text, #0f172a); }
 
 /* Việc tiếp theo: một dòng nền nhạt, đúng một nút */

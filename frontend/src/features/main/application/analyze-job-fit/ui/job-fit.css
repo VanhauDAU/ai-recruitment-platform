@@ -4,7 +4,7 @@
   --jf-muted: #64748b;
   --jf-line: #e5e9ee;
   --jf-mist: #f5f7f8;
-  --jf-good: var(--brand-primary, #00b14f);
+  --jf-good: var(--brand-primary);
   --jf-warn: #b45309;
   --jf-warn-soft: #fef3e2;
   --jf-miss: #be123c;
@@ -48,8 +48,8 @@
 .jf-scan__doc i:first-child { height: 8px; background: #cfe9da; }
 .jf-scan__beam {
   position: absolute; left: 0; right: 0; top: -30px; height: 30px;
-  background: linear-gradient(180deg, transparent, rgba(0, 177, 79, 0.28), transparent);
-  border-bottom: 2px solid rgba(0, 177, 79, 0.55);
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--brand-primary) 28%, transparent), transparent);
+  border-bottom: 2px solid color-mix(in srgb, var(--brand-primary) 55%, transparent);
   animation: jf-beam 1.5s ease-in-out infinite alternate;
 }
 .jf-scan__mascot { position: absolute; right: -6px; bottom: -6px; }
@@ -71,7 +71,7 @@
 /* Kết luận: mascot theo mức, nhãn + điểm đếm tăng, thước bốn dải với mốc 50 / 65 / 80. */
 .jf-verdict {
   display: grid; grid-template-columns: auto 1fr; column-gap: 16px; row-gap: 10px; align-items: center;
-  padding: 16px 18px 14px; border-radius: 16px; background: linear-gradient(120deg, #f2fbf6, #ffffff 70%);
+  padding: 16px 18px 14px; border-radius: 16px; background: linear-gradient(120deg, var(--brand-primary-soft), #ffffff 70%);
   border: 1px solid #e1f1e8;
 }
 .jf-verdict__mascot { grid-row: 1; animation: jf-pop 420ms cubic-bezier(0.2, 1.4, 0.4, 1) both; }

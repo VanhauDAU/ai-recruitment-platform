@@ -49,9 +49,9 @@ describe('JobHero', () => {
 
     const salary = screen.getByRole('group', { name: 'Mức lương: 15 - 20 triệu, Khi đạt 100% KPI' })
 
-    expect(salary).toHaveClass('job-hero__salary', 'border-emerald-100')
+    expect(salary).toHaveClass('job-hero__salary', 'border-[var(--brand-primary)]/20')
     expect(screen.getByText('15 - 20 triệu')).toHaveClass('text-xl', 'font-extrabold')
-    expect(screen.getByText('Khi đạt 100% KPI')).toHaveClass('text-xs', 'text-emerald-700')
+    expect(screen.getByText('Khi đạt 100% KPI')).toHaveClass('text-xs', 'text-[var(--brand-primary-hover)]')
     expect(screen.getByRole('group', { name: /Địa điểm: Thành phố Đà Nẵng/ })).toBeInTheDocument()
     expect(screen.getByRole('group', { name: 'Kinh nghiệm: 2 năm' })).toBeInTheDocument()
   })

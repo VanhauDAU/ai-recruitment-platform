@@ -35,7 +35,7 @@ export default function EmployerNotificationBell() {
     <div className="w-[min(360px,calc(100vw-24px))] overflow-hidden rounded-xl bg-white">
       <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
         <strong className="text-sm text-slate-800">{m.employer_workspace_notifications_heading()}</strong>
-        <Link to={employerAppPath('/notifications')} className="text-xs font-semibold text-emerald-600">{m.employer_workspace_dash_view_all()}</Link>
+        <Link to={employerAppPath('/notifications')} className="text-xs font-semibold text-[var(--brand-primary)]">{m.employer_workspace_dash_view_all()}</Link>
       </div>
       <div className="max-h-[420px] overflow-y-auto">
         {listQuery.isPending && <div className="p-4"><Skeleton active paragraph={{ rows: 3 }} /></div>}

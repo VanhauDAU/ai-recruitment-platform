@@ -19,7 +19,7 @@ function TagRow({ label, children }) {
 }
 
 function Tag({ children, highlighted }) {
-  return <span className={`rounded-full px-3 py-1 text-xs ${highlighted ? 'bg-emerald-50 font-medium text-[var(--brand-primary)]' : 'bg-slate-100 text-slate-600'}`}>{children}</span>
+  return <span className={`rounded-full px-3 py-1 text-xs ${highlighted ? 'bg-[var(--brand-primary-soft)] font-medium text-[var(--brand-primary)]' : 'bg-slate-100 text-slate-600'}`}>{children}</span>
 }
 
 export function RequirementTags({ tags }) {
@@ -116,7 +116,7 @@ export function LanguageRequirementList({ items }) {
               <GlobalOutlined className="mt-0.5 text-[var(--brand-primary)]" />
               <span>
                 {parts.join(' — ')}
-                {item.is_required === false && <span className="ml-2 rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-600">Ưu tiên</span>}
+                {item.is_required === false && <span className="ml-2 rounded bg-[var(--brand-primary-soft)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--brand-primary)]">Ưu tiên</span>}
                 {item.note && <span className="block text-xs text-gray-500">{item.note}</span>}
               </span>
             </li>

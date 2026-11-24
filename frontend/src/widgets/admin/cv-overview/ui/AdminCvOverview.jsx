@@ -33,7 +33,7 @@ export default function AdminCvOverview() {
       <AdminPanel title="Việc cần làm">
         {todos.length === 0
           ? <p className="flex items-center gap-2 text-sm text-slate-500"><CheckCircleFilled className="!text-emerald-500" />Không có việc tồn đọng.</p>
-          : <ul className="space-y-2">{todos.map((todo) => <li key={todo.key}><Link to={adminPath(todo.to)} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2 text-sm hover:border-emerald-400"><span className="min-w-0"><span className="block font-semibold text-slate-800">{todo.label}</span><span className="block text-xs text-slate-500">{todo.hint}</span></span><Tag color="orange" className="!mr-0">{data.todos[todo.key]}</Tag></Link></li>)}</ul>}
+          : <ul className="space-y-2">{todos.map((todo) => <li key={todo.key}><Link to={adminPath(todo.to)} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2 text-sm hover:border-[var(--brand-primary)]"><span className="min-w-0"><span className="block font-semibold text-slate-800">{todo.label}</span><span className="block text-xs text-slate-500">{todo.hint}</span></span><Tag color="orange" className="!mr-0">{data.todos[todo.key]}</Tag></Link></li>)}</ul>}
       </AdminPanel>
       <AdminPanel title="Mẫu được dùng nhiều" padded={false}>
         <Table size="small" rowKey="public_id" pagination={false} dataSource={data.top_templates} scroll={{ x: 420 }} columns={[

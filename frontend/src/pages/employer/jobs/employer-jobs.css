@@ -31,7 +31,7 @@
 }
 
 .job-filter-tab:hover { color: #0f172a; }
-.job-filter-tab[aria-pressed='true'] { border-bottom-color: #059669; color: #047857; }
+.job-filter-tab[aria-pressed='true'] { border-bottom-color: var(--brand-primary); color: var(--brand-primary-hover); }
 
 .job-filter-tab__count {
   min-width: 24px;
@@ -44,7 +44,7 @@
   text-align: center;
 }
 
-.job-filter-tab[aria-pressed='true'] .job-filter-tab__count { background: #059669; color: #fff; }
+.job-filter-tab[aria-pressed='true'] .job-filter-tab__count { background: var(--brand-primary); color: #fff; }
 
 .job-chip {
   display: inline-flex;
@@ -64,7 +64,7 @@
 
 .job-chip:hover { border-color: #cbd5e1; color: #0f172a; }
 .job-chip > span:last-child { color: #94a3b8; font-variant-numeric: tabular-nums; }
-.job-chip[aria-pressed='true'] { border-color: #059669; background: #059669; color: #fff; }
+.job-chip[aria-pressed='true'] { border-color: var(--brand-primary); background: var(--brand-primary); color: #fff; }
 .job-chip[aria-pressed='true'] > span:last-child { color: rgb(255 255 255 / 0.8); }
 .job-chip[aria-pressed='true'] .ws-dot { background: #fff; }
 
@@ -123,11 +123,11 @@
 }
 
 .ejl-row__campaign > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ejl-row__campaign:hover { color: #047857 !important; }
+.ejl-row__campaign:hover { color: var(--brand-primary-hover) !important; }
 
 .ejl-candidates { display: flex; min-width: 0; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
 .ejl-candidates__count { color: #0f172a !important; }
-.ejl-candidates__count:hover .ws-strong { color: #047857; }
+.ejl-candidates__count:hover .ws-strong { color: var(--brand-primary-hover); }
 .ejl-avatars { display: none; margin: 0; padding: 0 0 0 6px; list-style: none; }
 .ejl-avatars > li { position: relative; margin-left: -6px; }
 .ejl-avatar-link { display: block; border-radius: 9999px; }

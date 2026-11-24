@@ -63,7 +63,7 @@ describe('FeaturedEmployers', () => {
     let dots = pageStatus.querySelectorAll('span')
     expect(dots).toHaveLength(2)
     expect(dots[0]).toHaveClass('bg-[var(--brand-primary)]')
-    expect(dots[1]).toHaveClass('bg-emerald-200')
+    expect(dots[1]).toHaveClass('bg-[var(--brand-primary)]/20')
 
     await user.click(within(panel).getByRole('button', { name: 'Nhóm công ty tiếp theo' }))
 
@@ -71,7 +71,7 @@ describe('FeaturedEmployers', () => {
     expect(within(panel).getByRole('button', { name: 'Nhóm công ty tiếp theo' })).toBeDisabled()
     pageStatus = within(panel).getByRole('status', { name: 'Trang 2 trên 2' })
     dots = pageStatus.querySelectorAll('span')
-    expect(dots[0]).toHaveClass('bg-emerald-200')
+    expect(dots[0]).toHaveClass('bg-[var(--brand-primary)]/20')
     expect(dots[1]).toHaveClass('bg-[var(--brand-primary)]')
 
     await user.click(within(panel).getByRole('button', { name: 'Nhóm công ty trước' }))

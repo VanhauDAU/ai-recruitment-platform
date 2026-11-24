@@ -59,23 +59,23 @@ export default function EmployerAccountVerificationCard() {
         verificationCase={verificationCase}
       />
       <h2 className="text-base font-bold text-slate-800">
-        {m.employer_account_level_title()} <span className="text-emerald-600">{m.employer_account_level_value({ level: level.level, total: level.total })}</span>
+        {m.employer_account_level_title()} <span className="text-[var(--brand-primary)]">{m.employer_account_level_value({ level: level.level, total: level.total })}</span>
       </h2>
 
       {!verifiedJobQuotaUnlocked && (
         <div className="mt-4 flex items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xl">🌟</span>
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--brand-primary-soft)] text-xl">🌟</span>
           <p className="text-sm leading-6 text-slate-600">
             {m.employer_account_level_free_before()}<strong className="text-slate-800">{m.employer_account_level_free_count()}</strong>.{' '}
             {level.level < level.total ? (
               <>
                 {m.employer_account_level_next_before()}<strong className="text-slate-800">{m.employer_account_level_value({ level: nextLevel, total: level.total })}</strong>{m.employer_account_level_next_after()}{' '}
-                <strong className="text-emerald-600">{m.employer_account_level_quota()}</strong>.
+                <strong className="text-[var(--brand-primary)]">{m.employer_account_level_quota()}</strong>.
               </>
             ) : (
               <>
                 {m.employer_account_level_auto_unlock()}{' '}
-                <strong className="text-emerald-600">{m.employer_account_level_quota()}</strong>.
+                <strong className="text-[var(--brand-primary)]">{m.employer_account_level_quota()}</strong>.
               </>
             )}
           </p>
@@ -91,7 +91,7 @@ export default function EmployerAccountVerificationCard() {
 
       <div className="mt-5 flex items-center justify-between text-sm">
         <strong className="text-base text-slate-800">{m.employer_account_checklist_title()}</strong>
-        <span className="text-slate-500">{m.employer_account_level_progress()}<strong className="text-emerald-600">{percent}%</strong></span>
+        <span className="text-slate-500">{m.employer_account_level_progress()}<strong className="text-[var(--brand-primary)]">{percent}%</strong></span>
       </div>
 
       <div className="mt-4 divide-y divide-slate-100">
@@ -104,13 +104,13 @@ export default function EmployerAccountVerificationCard() {
             <Link
               key={step.key}
               to={step.to}
-              className="flex items-center gap-3 py-4 text-sm font-semibold !text-slate-800 transition hover:!text-emerald-700"
+              className="flex items-center gap-3 py-4 text-sm font-semibold !text-slate-800 transition hover:!text-[var(--brand-primary-hover)]"
             >
-              <span className={`flex h-5 w-5 items-center justify-center rounded-full ${completed ? 'text-emerald-600' : 'border border-slate-400 text-transparent'}`}>
+              <span className={`flex h-5 w-5 items-center justify-center rounded-full ${completed ? 'text-[var(--brand-primary)]' : 'border border-slate-400 text-transparent'}`}>
                 {completed && <CheckCircleFilled />}
               </span>
               <span className="min-w-0 flex-1">{step.label}</span>
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-emerald-600"><ArrowRightOutlined /></span>
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--brand-primary-soft)] text-[var(--brand-primary)]"><ArrowRightOutlined /></span>
             </Link>
           )
         })}
@@ -119,7 +119,7 @@ export default function EmployerAccountVerificationCard() {
       <div className="mt-4 flex justify-end border-t border-slate-100 pt-4">
         <Link
           to={EMPLOYER_VERIFY_URL}
-          className="rounded-md border border-emerald-500 px-4 py-2 text-sm font-medium !text-emerald-600 transition hover:bg-emerald-50"
+          className="rounded-md border border-[var(--brand-primary)] px-4 py-2 text-sm font-medium !text-[var(--brand-primary)] transition hover:bg-[var(--brand-primary-soft)]"
         >
           {m.employer_account_level_learn_more()}
         </Link>

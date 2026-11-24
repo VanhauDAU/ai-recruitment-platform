@@ -180,7 +180,7 @@ export default function UserCvCard({ cv, onRefresh }) {
                   e.stopPropagation()
                   handleDownload()
                 }}
-                className="flex items-center gap-1 rounded-full px-2.5 py-1.5 text-[11px] font-bold text-black hover:text-[#00b14f] transition shadow-sm cursor-pointer border border-slate-100 hover:scale-105"
+                className="flex items-center gap-1 rounded-full px-2.5 py-1.5 text-[11px] font-bold text-black hover:text-[var(--brand-primary)] transition shadow-sm cursor-pointer border border-slate-100 hover:scale-105"
                 style={{ backgroundColor: '#ffffff' }}
               >
                 <DownloadOutlined /> Xem
@@ -188,7 +188,7 @@ export default function UserCvCard({ cv, onRefresh }) {
               {!isUploaded && <Link
                 to={`/cvs/${cv.public_id}/edit`}
                 onClick={(e) => e.stopPropagation()}
-                className="flex items-center gap-1 rounded-full px-2.5 py-1.5 text-[11px] font-bold text-black hover:text-[#00b14f] transition shadow-sm cursor-pointer border border-slate-100 hover:scale-105"
+                className="flex items-center gap-1 rounded-full px-2.5 py-1.5 text-[11px] font-bold text-black hover:text-[var(--brand-primary)] transition shadow-sm cursor-pointer border border-slate-100 hover:scale-105"
                 style={{ backgroundColor: '#ffffff' }}
               >
                 <EditOutlined /> Sửa
@@ -204,7 +204,7 @@ export default function UserCvCard({ cv, onRefresh }) {
                   type="button"
                   aria-label="Thao tác CV"
                   onClick={(e) => e.stopPropagation()}
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-black hover:text-[#00b14f] transition shadow-sm cursor-pointer border border-slate-100 hover:scale-105"
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-black hover:text-[var(--brand-primary)] transition shadow-sm cursor-pointer border border-slate-100 hover:scale-105"
                   style={{ backgroundColor: '#ffffff' }}
                 >
                   <EllipsisOutlined className="text-base" />

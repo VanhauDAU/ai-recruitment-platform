@@ -96,10 +96,10 @@ describe('EmployerDataProtectionForm', () => {
     expect(getEmployerCompanyDocuments).toHaveBeenCalledWith({ scope: 'mine' })
     // Link hướng dẫn lấy từ cấu hình employer_dpa_guide_url (ADR-0026), không trỏ ra site khác.
     expect(screen.getByRole('link', { name: 'Tại đây' })).toHaveAttribute('href', '/tro-giup/thoa-thuan-du-lieu')
-    expect(screen.getByRole('link', { name: 'Tại đây' })).toHaveClass('!text-emerald-600')
+    expect(screen.getByRole('link', { name: 'Tại đây' })).toHaveClass('!text-[var(--brand-primary)]')
     expect(screen.getByText('Tải mẫu văn bản').closest('a')).toHaveAttribute('href', '/documents/topcv-mau-van-ban-thong-bao-dong-y-xu-ly-dlcn.docx')
-    expect(screen.getByRole('link', { name: /Tải mẫu văn bản/ })).toHaveClass('!text-emerald-600')
-    expect(screen.getByRole('link', { name: /Xem nội dung đầy đủ của văn bản/ })).toHaveClass('!text-emerald-600')
+    expect(screen.getByRole('link', { name: /Tải mẫu văn bản/ })).toHaveClass('!text-[var(--brand-primary)]')
+    expect(screen.getByRole('link', { name: /Xem nội dung đầy đủ của văn bản/ })).toHaveClass('!text-[var(--brand-primary)]')
     expect(screen.getByRole('button', { name: 'Lưu' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Xác nhận' })).toBeDisabled()
 

@@ -136,7 +136,7 @@ function AppBanner() {
   return (
     <div className="p-4 pt-1">
       {/* TODO(app-banner): thay bằng Banner placement riêng khi có app/QR thật. */}
-      <div className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-emerald-900 to-emerald-600 p-3.5 text-white">
+      <div className="flex items-center gap-3 rounded-xl bg-gradient-to-r from-[var(--brand-surface-dark)] to-[var(--brand-primary-hover)] p-3.5 text-white">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold">Tải App {siteName} ngay!</p>
           <p className="mt-0.5 text-xs leading-4 opacity-90">

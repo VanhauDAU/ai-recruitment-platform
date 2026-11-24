@@ -4,7 +4,7 @@ import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, XAxis, Y
 import { getIntlLocale, m } from '@/shared/config/i18n'
 
 const SERIES = [
-  { key: 'impressions', label: m.employer_campaign_metric_impressions(), color: '#059669', axis: 'reach', kind: 'area' },
+  { key: 'impressions', label: m.employer_campaign_metric_impressions(), color: 'var(--brand-primary)', axis: 'reach', kind: 'area' },
   { key: 'views', label: m.employer_campaign_chart_views(), color: '#2563eb', axis: 'response', kind: 'line' },
   { key: 'applications', label: m.employer_campaign_metric_applications(), color: '#7c3aed', axis: 'response', kind: 'line' },
 ]
@@ -259,7 +259,7 @@ export default function CampaignPerformanceChart({ data = [] }) {
                 aria-label={pointLabel(item)}
                 aria-pressed={activeIndex === index}
                 aria-describedby={activeIndex === index ? tooltipId : undefined}
-                className="pointer-events-auto absolute inset-y-0 cursor-crosshair rounded-sm bg-transparent outline-none transition-colors focus-visible:bg-emerald-50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-500"
+                className="pointer-events-auto absolute inset-y-0 cursor-crosshair rounded-sm bg-transparent outline-none transition-colors focus-visible:bg-[var(--brand-primary-soft)] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--brand-primary)]/25"
                 style={sharedStyle}
                 onMouseEnter={() => setActiveIndex(index)}
                 onFocus={() => setActiveIndex(index)}
@@ -285,7 +285,7 @@ export default function CampaignPerformanceChart({ data = [] }) {
               className="pointer-events-none absolute inset-y-0 w-px bg-slate-400 shadow-sm"
               style={{ left: `${activeBounds.point}%` }}
             >
-              <span className="absolute -left-1.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-emerald-500 shadow" />
+              <span className="absolute -left-1.5 -top-0.5 h-3 w-3 rounded-full border-2 border-white bg-[var(--brand-primary)] shadow" />
             </span>
           )}
         </div>

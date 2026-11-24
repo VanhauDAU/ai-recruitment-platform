@@ -140,7 +140,7 @@ export default function BestJobsResults({ animKey, jobs, loading, pageSize = BES
                         <span
                           data-job-label="top-employer"
                           title="Nhà tuyển dụng có trang thương hiệu nổi bật"
-                          className="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-100 px-1.5 py-0.5 text-[10px] font-extrabold leading-none tracking-wide text-emerald-800"
+                          className="inline-flex items-center rounded-full border border-[var(--brand-primary)]/20 bg-[var(--brand-primary-soft)] px-1.5 py-0.5 text-[10px] font-extrabold leading-none tracking-wide text-[var(--brand-primary-hover)]"
                         >
                           TOP
                         </span>

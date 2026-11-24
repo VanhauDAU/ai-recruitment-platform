@@ -13,7 +13,7 @@ export function PostThumb({ post, className = '' }) {
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
       ) : (
-        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[var(--brand-primary-soft)] to-emerald-100 transition-transform duration-500 group-hover:scale-105">
+        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[var(--brand-primary-soft)] to-[var(--brand-primary-soft)] transition-transform duration-500 group-hover:scale-105">
           <span className="text-3xl font-black text-[var(--brand-primary)] opacity-30">{post.title?.[0] || 'B'}</span>
         </div>
       )}
@@ -121,7 +121,7 @@ export function BlogCardHero({ post, size = 'default' }) {
 
         {/* Text block anchored to bottom */}
         <div className="relative z-10 mt-auto p-4 sm:p-5">
-          <h3 className="line-clamp-3 text-lg font-extrabold leading-6 text-white drop-shadow-sm transition-colors duration-300 group-hover:text-emerald-200 sm:text-xl sm:leading-7">
+          <h3 className="line-clamp-3 text-lg font-extrabold leading-6 text-white drop-shadow-sm transition-colors duration-300 group-hover:text-[color-mix(in_srgb,var(--brand-primary)_40%,#fff)] sm:text-xl sm:leading-7">
             {post.title}
           </h3>
           {post.excerpt && (

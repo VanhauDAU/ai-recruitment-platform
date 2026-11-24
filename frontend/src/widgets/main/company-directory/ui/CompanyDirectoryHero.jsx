@@ -40,7 +40,7 @@ function CompanySearchForm({ query, onQueryChange }) {
   return (
     <form onSubmit={submit} role="search" className="flex max-w-2xl flex-col gap-2 rounded-2xl border border-slate-200/90 bg-white p-2 shadow-[0_14px_34px_rgba(5,150,105,0.12)] sm:flex-row">
       <label className="flex min-w-0 flex-1 items-center gap-3 px-3">
-        <SearchOutlined className="shrink-0 text-lg text-emerald-600" aria-hidden="true" />
+        <SearchOutlined className="shrink-0 text-lg text-[var(--brand-primary)]" aria-hidden="true" />
         <span className="sr-only">Tên công ty</span>
         <input
           type="search"
@@ -51,7 +51,7 @@ function CompanySearchForm({ query, onQueryChange }) {
           className="h-11 min-w-0 flex-1 border-0 bg-transparent text-base text-slate-800 outline-none placeholder:text-slate-400"
         />
       </label>
-      <button type="submit" className="h-11 shrink-0 rounded-xl bg-[var(--brand-primary)] px-7 text-sm font-bold text-white transition hover:bg-[var(--brand-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2">
+      <button type="submit" className="h-11 shrink-0 rounded-xl bg-[var(--brand-primary)] px-7 text-sm font-bold text-white transition hover:bg-[var(--brand-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]/25 focus-visible:ring-offset-2">
         Tìm kiếm
       </button>
     </form>
@@ -66,12 +66,12 @@ export function CompanyDirectoryHero({ query, onQueryChange }) {
         background: 'transparent linear-gradient(6deg, #fff, #c4ffdd 100%, rgba(195, 255, 221, .702) 0) 0 0 no-repeat padding-box',
       }}
     >
-      <span className="pointer-events-none absolute -left-20 top-10 h-52 w-52 rounded-full bg-emerald-200/30 blur-3xl" aria-hidden="true" />
+      <span className="pointer-events-none absolute -left-20 top-10 h-52 w-52 rounded-full bg-[var(--brand-primary)]/20 blur-3xl" aria-hidden="true" />
       <span className="pointer-events-none absolute -right-20 -top-28 h-80 w-80 rounded-full bg-teal-200/35 blur-3xl" aria-hidden="true" />
 
       <div className="relative mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 sm:py-14 md:grid-cols-[minmax(0,1.5fr)_minmax(250px,0.65fr)] md:items-center lg:px-8 lg:py-16">
         <div className="min-w-0">
-          <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-emerald-700">Danh sách công ty</p>
+          <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-[var(--brand-primary-hover)]">Danh sách công ty</p>
           <h1 className="mt-3 max-w-3xl text-3xl font-black leading-tight text-slate-900 sm:text-4xl">
             Khám phá công ty phù hợp với bạn
           </h1>

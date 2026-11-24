@@ -77,7 +77,7 @@ function scheduleLabel(item) {
 
 function CompanyMark({ companyName, large = false }) {
   return (
-    <span className={`flex shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-gradient-to-br from-emerald-50 to-emerald-100 font-black text-[var(--brand-primary)] ${large ? 'h-16 w-16 text-xl' : 'h-11 w-11 text-sm'}`}>
+    <span className={`flex shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-gradient-to-br from-[var(--brand-primary-soft)] to-[var(--brand-primary-soft)] font-black text-[var(--brand-primary)] ${large ? 'h-16 w-16 text-xl' : 'h-11 w-11 text-sm'}`}>
       {(companyName || 'C').charAt(0).toUpperCase()}
     </span>
   )
@@ -94,7 +94,7 @@ function Chip({ children, primary = false }) {
 function Metric({ icon, label, value, compact = false }) {
   return (
     <div className={`flex min-w-0 items-center rounded-lg bg-slate-50 ${compact ? 'gap-2 p-2' : 'gap-3 p-3'}`}>
-      <span className={`flex shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[var(--brand-primary)] ${compact ? 'h-7 w-7 text-xs' : 'h-9 w-9'}`}>{icon}</span>
+      <span className={`flex shrink-0 items-center justify-center rounded-full bg-[var(--brand-primary-soft)] text-[var(--brand-primary)] ${compact ? 'h-7 w-7 text-xs' : 'h-9 w-9'}`}>{icon}</span>
       <div className="min-w-0">
         <p className="text-[9px] text-slate-400">{label}</p>
         <p className={`${compact ? 'text-[10px]' : 'text-xs'} truncate font-bold text-slate-700`} title={value}>{value || EMPTY_LABEL}</p>
@@ -309,7 +309,7 @@ function JobHero({ data, compact = false }) {
   const deadline = data.values.deadline ? `${formatDate(data.values.deadline)} · ${formatDeadline(data.values.deadline)}` : EMPTY_LABEL
   return (
     <section className={`overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm ${compact ? '' : 'rounded-2xl'}`}>
-      <div className="h-1 bg-gradient-to-r from-[var(--brand-primary)] via-emerald-400 to-emerald-100" />
+      <div className="h-1 bg-gradient-to-r from-[var(--brand-primary)] via-[var(--brand-primary)] to-[var(--brand-primary-soft)]" />
       <div className={compact ? 'p-3' : 'p-5'}>
         <div className="flex items-start gap-3">
           {compact && <CompanyMark companyName={data.companyName} />}

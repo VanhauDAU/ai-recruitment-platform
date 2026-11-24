@@ -21,7 +21,7 @@ export default function JobAlertPageHeader({ createDisabled, limit, onCreate, us
           icon={<PlusOutlined />}
           disabled={createDisabled}
           onClick={onCreate}
-          className="!h-11 !w-full !shrink-0 !rounded-full !border-white !bg-white !px-5 !font-bold !text-emerald-700 hover:!bg-emerald-50 sm:!w-auto"
+          className="!h-11 !w-full !shrink-0 !rounded-full !border-white !bg-white !px-5 !font-bold !text-[var(--brand-primary-hover)] hover:!bg-[var(--brand-primary-soft)] sm:!w-auto"
         >
           Tạo thông báo việc làm mới
         </Button>

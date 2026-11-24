@@ -117,7 +117,7 @@ export default function JobDetailContent({
                 aria-controls="job-detail-collapsible-content"
                 aria-expanded={detailsExpanded}
                 onClick={() => setDetailsExpanded((current) => !current)}
-                className="pointer-events-auto inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)] bg-white px-5 text-sm font-semibold text-[var(--brand-primary)] shadow-[0_8px_24px_rgba(15,118,78,0.12)] transition-colors duration-200 hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 motion-reduce:transition-none"
+                className="pointer-events-auto inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)] bg-white px-5 text-sm font-semibold text-[var(--brand-primary)] shadow-[0_8px_24px_rgba(15,118,78,0.12)] transition-colors duration-200 hover:bg-[var(--brand-primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 motion-reduce:transition-none"
               >
                 {detailsExpanded ? 'Thu gọn mô tả công việc' : 'Xem đầy đủ mô tả công việc'}
                 {detailsExpanded ? <UpOutlined aria-hidden="true" /> : <DownOutlined aria-hidden="true" />}
@@ -136,12 +136,12 @@ export default function JobDetailContent({
 function ApplicationReasons({ items = [] }) {
   if (!items.length) return null
   return (
-    <section className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-4 sm:p-5">
+    <section className="rounded-xl border border-[var(--brand-primary)]/20 bg-[var(--brand-primary-soft)] p-4 sm:p-5">
       <SectionHeading>Vì sao bạn nên ứng tuyển?</SectionHeading>
       <ul className="mt-3 grid gap-2 sm:grid-cols-3">
         {items.map((item, index) => (
           <li key={`${item}-${index}`} className="flex items-start gap-2 text-sm leading-6 text-slate-700">
-            <span aria-hidden="true" className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white">✓</span>
+            <span aria-hidden="true" className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--brand-primary)] text-[10px] font-bold text-white">✓</span>
             <span>{item}</span>
           </li>
         ))}
@@ -178,7 +178,7 @@ function JobClosingActions({ accepting, deadline, saved, savePending, applicatio
       )}
       <div className="job-closing__buttons mt-4 flex flex-wrap gap-2">
         {accepting ? <button type="button" onClick={onApply} disabled={applicationStatus.isLimitReached} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg bg-[var(--brand-primary)] px-4 text-sm font-bold text-white hover:bg-[var(--brand-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60">{applicationStatus.isResubmission && <i className="fa-solid fa-arrow-rotate-right" aria-hidden="true" />}{applicationStatus.applyLabel}</button> : <JobApplicationClosed compact />}
-        <button type="button" onClick={onSave} disabled={savePending} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-emerald-200 px-4 text-sm font-semibold text-[var(--brand-primary)] hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60">{saved ? <HeartFilled /> : <HeartOutlined />}{saved ? 'Đã lưu tin' : 'Lưu tin'}</button>
+        <button type="button" onClick={onSave} disabled={savePending} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-[var(--brand-primary)]/20 px-4 text-sm font-semibold text-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)] disabled:cursor-not-allowed disabled:opacity-60">{saved ? <HeartFilled /> : <HeartOutlined />}{saved ? 'Đã lưu tin' : 'Lưu tin'}</button>
       </div>
       <p className="mt-4 rounded-lg bg-[#F2F4F5] px-4 py-3 text-sm leading-7 text-slate-600">
         <strong className="font-semibold text-slate-700">Báo cáo tin tuyển dụng:</strong>{' '}

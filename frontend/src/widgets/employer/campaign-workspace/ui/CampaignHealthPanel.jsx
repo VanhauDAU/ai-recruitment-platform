@@ -85,7 +85,7 @@ function alertItems(health) {
 }
 
 const LEGEND = [
-  [m.employer_campaign_health_forecast(), '#059669'],
+  [m.employer_campaign_health_forecast(), 'var(--brand-primary)'],
   [m.employer_campaign_funnel_accepted(), '#7c3aed'],
   [m.employer_campaign_health_target(), '#94a3b8', true],
 ]
@@ -104,7 +104,7 @@ function TrendChart({ history, headcount }) {
           <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: '#64748b' }} tickLine={false} axisLine={false} />
           <Tooltip formatter={(value) => num(value)} />
           <Line dataKey="headcount" name={m.employer_campaign_health_target()} stroke="#94a3b8" strokeDasharray="4 4" dot={false} isAnimationActive={false} />
-          <Line dataKey="forecast" name={m.employer_campaign_health_forecast()} stroke="#059669" strokeWidth={2} dot={false} isAnimationActive={false} />
+          <Line dataKey="forecast" name={m.employer_campaign_health_forecast()} stroke="var(--brand-primary)" strokeWidth={2} dot={false} isAnimationActive={false} />
           <Line dataKey="accepted" name={m.employer_campaign_funnel_accepted()} stroke="#7c3aed" strokeWidth={2} dot={false} isAnimationActive={false} />
         </LineChart>
       </ResponsiveContainer>

@@ -36,7 +36,7 @@ export default function ApplicationReview() {
     <main className="min-h-dvh bg-slate-100 px-3 py-5 sm:px-6">
       <div className="mx-auto max-w-6xl">
         <header className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <p className="text-xs font-semibold text-emerald-600">{m.employer_job_review_invite({ company: data.company_name })}</p>
+          <p className="text-xs font-semibold text-[var(--brand-primary)]">{m.employer_job_review_invite({ company: data.company_name })}</p>
           <h1 className="mt-1 text-xl font-black text-slate-900">{data.candidate_name} — {data.job_title}</h1>
           <p className="mt-1 text-xs text-slate-500">{m.employer_job_review_sent_to({ name: data.reviewer_name, date: formatDateTime(data.expires_at) })}</p>
           {data.message && <p className="mt-3 rounded-xl bg-slate-50 p-3 text-sm text-slate-700">“{data.message}”</p>}
@@ -66,7 +66,7 @@ export default function ApplicationReview() {
           </section>
           <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-4">
             <h2 className="mb-3 flex items-center gap-2 text-base font-bold text-slate-900">
-              <LockOutlined className="text-emerald-600" aria-hidden /> {m.employer_job_review_scorecard()}
+              <LockOutlined className="text-[var(--brand-primary)]" aria-hidden /> {m.employer_job_review_scorecard()}
             </h2>
             <ReviewScorecardForm token={token} review={data.review} />
           </aside>

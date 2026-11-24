@@ -14,7 +14,7 @@
   border-radius: 16px;
   background:
     linear-gradient(100deg, #f3fcf7, #ffffff 60%) padding-box,
-    linear-gradient(100deg, var(--brand-primary, #00b14f), #8be0b3, #22b8a5, var(--brand-primary, #00b14f)) border-box;
+    linear-gradient(100deg, var(--brand-primary), #8be0b3, #22b8a5, var(--brand-primary)) border-box;
   background-size: 100% 100%, 300% 100%;
   color: #1f2a37;
   text-align: left;
@@ -24,7 +24,7 @@
   animation: jf-trigger-border 7s linear infinite;
 }
 .jf-trigger:hover { transform: translateY(-1px); box-shadow: 0 12px 26px -14px rgba(0, 120, 60, 0.65); }
-.jf-trigger:focus-visible { outline: 2px solid var(--brand-primary, #00b14f); outline-offset: 3px; }
+.jf-trigger:focus-visible { outline: 2px solid var(--brand-primary); outline-offset: 3px; }
 
 /* Mascot đứng tràn lên trên mép thẻ. */
 .jf-trigger__mascot {
@@ -41,7 +41,7 @@
 .jf-trigger__badge {
   padding: 1px 7px;
   border-radius: 999px;
-  background: linear-gradient(100deg, var(--brand-primary, #00b14f), #22b8a5);
+  background: linear-gradient(100deg, var(--brand-primary), #22b8a5);
   color: #fff;
   font-size: 11px;
   font-weight: 800;
@@ -55,7 +55,7 @@
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: var(--brand-primary, #00b14f);
+  background: var(--brand-primary);
   color: #fff;
   font-size: 12px;
   transition: transform 160ms ease;

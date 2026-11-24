@@ -121,7 +121,7 @@ export default function FloatingActions() {
           {saveNoticeOpen && (
             <div
               role="status"
-              className="absolute bottom-[calc(100%+12px)] left-0 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-emerald-100 bg-[#053a2c] p-3.5 text-xs leading-relaxed text-emerald-50 shadow-xl shadow-emerald-900/20"
+              className="absolute bottom-[calc(100%+12px)] left-0 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-[var(--brand-primary)]/20 bg-[#053a2c] p-3.5 text-xs leading-relaxed text-emerald-50 shadow-xl shadow-[var(--brand-primary)]/20"
               style={{ animation: 'savedNoticeIn 0.25s ease both' }}
             >
               <p className="font-bold text-white">Lưu tin thành công!</p>
@@ -145,7 +145,7 @@ export default function FloatingActions() {
             </Badge>
           </Tooltip>
           <style>{`
-            @keyframes savedHeartButton{0%{transform:scale(.72);box-shadow:0 0 0 0 rgba(16,185,129,.45)}45%{transform:scale(1.16);box-shadow:0 0 0 12px rgba(16,185,129,0)}75%{transform:scale(.96)}100%{transform:scale(1);box-shadow:0 0 0 0 rgba(16,185,129,0)}}
+            @keyframes savedHeartButton{0%{transform:scale(.72);box-shadow:0 0 0 0 color-mix(in srgb, var(--brand-primary) 45%, transparent)}45%{transform:scale(1.16);box-shadow:0 0 0 12px color-mix(in srgb, var(--brand-primary) 0%, transparent)}75%{transform:scale(.96)}100%{transform:scale(1);box-shadow:0 0 0 0 color-mix(in srgb, var(--brand-primary) 0%, transparent)}}
             @keyframes savedNoticeIn{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
           `}</style>
         </div>
@@ -191,7 +191,7 @@ export default function FloatingActions() {
                     key={item.key}
                     type="button"
                     onClick={item.onClick}
-                    className="group flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-emerald-50/60"
+                    className="group flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-[var(--brand-primary-soft)]"
                   >
                     <span className="text-base text-[var(--brand-primary)]">{item.icon}</span>
                     <span className="flex-1 text-sm font-medium text-gray-700">
@@ -208,7 +208,7 @@ export default function FloatingActions() {
           <button
             type="button"
             onClick={() => setSupportOpen((open) => !open)}
-            className={`flex cursor-pointer items-center gap-2 rounded-full py-2.5 pl-3 pr-4 text-sm font-semibold text-white shadow-lg shadow-emerald-600/30 transition hover:-translate-y-0.5 ${
+            className={`flex cursor-pointer items-center gap-2 rounded-full py-2.5 pl-3 pr-4 text-sm font-semibold text-white shadow-lg shadow-[var(--brand-primary)]/30 transition hover:-translate-y-0.5 ${
               supportOpen ? 'bg-[var(--brand-primary-hover)]' : 'bg-[var(--brand-primary)] hover:bg-[var(--brand-primary-hover)]'
             }`}
           >
@@ -228,9 +228,9 @@ export default function FloatingActions() {
             <button
               type="button"
               onClick={() => { setWantOpen(false); setFeedbackOpen(true) }}
-              className="group flex cursor-pointer flex-col items-center gap-3 rounded-2xl border-2 border-gray-100 p-6 text-center transition hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:bg-emerald-50/40 hover:shadow-lg hover:shadow-emerald-600/10"
+              className="group flex cursor-pointer flex-col items-center gap-3 rounded-2xl border-2 border-gray-100 p-6 text-center transition hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)] hover:shadow-lg hover:shadow-[var(--brand-primary)]/10"
             >
-              <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-3xl text-[var(--brand-primary)] transition group-hover:scale-105">
+              <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--brand-primary-soft)] text-3xl text-[var(--brand-primary)] transition group-hover:scale-105">
                 <MailOutlined />
               </span>
               <span className="text-base font-bold text-gray-900">Góp ý sản phẩm</span>
@@ -250,7 +250,7 @@ export default function FloatingActions() {
             </button>
           </div>
 
-          <p className="mt-5 flex items-start gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-xs leading-snug text-emerald-800">
+          <p className="mt-5 flex items-start gap-2 rounded-xl bg-[var(--brand-primary-soft)] px-4 py-3 text-xs leading-snug text-[var(--brand-primary-hover)]">
             <span className="text-sm">ℹ️</span>
             <span>Bạn đang gửi góp ý/yêu cầu hỗ trợ tới {siteName} — Nền tảng kết nối Ứng viên và Nhà tuyển dụng. Nhà tuyển dụng sẽ không đọc được góp ý này.</span>
           </p>

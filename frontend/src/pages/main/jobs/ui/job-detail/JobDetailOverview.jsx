@@ -66,7 +66,7 @@ export function JobHero({ job, saved, applicationStatus, onApply, onSave, onShar
             </h1>
             <p className="mt-1 text-sm font-medium text-gray-600">{job.company_name}</p>
           </div>
-          <button type="button" onClick={onShare} className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-[var(--brand-primary)]" aria-label="Chia sẻ việc làm" title="Sao chép liên kết để chia sẻ"><ShareAltOutlined /></button>
+          <button type="button" onClick={onShare} className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border border-gray-200 text-gray-500 transition hover:border-[var(--brand-primary)]/40 hover:bg-[var(--brand-primary-soft)] hover:text-[var(--brand-primary)]" aria-label="Chia sẻ việc làm" title="Sao chép liên kết để chia sẻ"><ShareAltOutlined /></button>
         </div>
 
         <div className="job-hero__metrics mt-5 grid gap-3 border-y border-gray-100 py-4 sm:grid-cols-[1.15fr_1fr_0.8fr] sm:gap-0 sm:divide-x sm:divide-gray-100">
@@ -88,7 +88,7 @@ export function JobHero({ job, saved, applicationStatus, onApply, onSave, onShar
             {isAcceptingApplications(job) ? <button type="button" onClick={onApply} disabled={applicationStatus.isLimitReached} className="job-hero__cta inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-[var(--brand-primary)] px-5 text-sm font-bold text-white shadow-sm transition hover:bg-[var(--brand-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60">{applicationStatus.isResubmission ? <i className="fa-solid fa-arrow-rotate-right" aria-hidden="true" /> : <SafetyCertificateOutlined />} {applicationStatus.applyLabel}</button> : <JobApplicationClosed className="job-hero__cta" />}
             <LatestApplicationNotice application={applicationStatus.latestApplication} />
           </div>
-          <button type="button" onClick={onSave} disabled={savePending} className="job-hero__cta hidden h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-emerald-300 px-4 text-sm font-semibold text-[var(--brand-primary)] transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60 sm:inline-flex">{saved ? <HeartFilled /> : <HeartOutlined />} {saved ? 'Đã lưu' : 'Lưu tin'}</button>
+          <button type="button" onClick={onSave} disabled={savePending} className="job-hero__cta hidden h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-[var(--brand-primary)]/20 px-4 text-sm font-semibold text-[var(--brand-primary)] transition hover:bg-[var(--brand-primary-soft)] disabled:cursor-not-allowed disabled:opacity-60 sm:inline-flex">{saved ? <HeartFilled /> : <HeartOutlined />} {saved ? 'Đã lưu' : 'Lưu tin'}</button>
           <JobCompareButton job={job} variant="reveal" className="job-hero__cta" />
         </div>
       </div>
@@ -118,15 +118,15 @@ function HeroMetric({ icon, label, value, note, highlight = false, className = '
       <div
         role="group"
         aria-label={`${label}: ${value}${note ? `, ${note}` : ''}`}
-        className="job-hero__salary flex min-w-0 items-center gap-3 rounded-xl border border-emerald-100 bg-emerald-50/60 px-3.5 py-3 sm:-my-1 sm:mr-4"
+        className="job-hero__salary flex min-w-0 items-center gap-3 rounded-xl border border-[var(--brand-primary)]/20 bg-[var(--brand-primary-soft)] px-3.5 py-3 sm:-my-1 sm:mr-4"
       >
         <span className="job-hero__salary-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--brand-primary)] text-lg text-white">
           {icon}
         </span>
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">{label}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--brand-primary-hover)]">{label}</p>
           <p className="mt-0.5 break-words text-xl font-extrabold leading-tight text-[var(--brand-primary)] sm:text-2xl" title={value}>{value}</p>
-          {note && <p className="mt-1 text-xs font-medium leading-4 text-emerald-700">{note}</p>}
+          {note && <p className="mt-1 text-xs font-medium leading-4 text-[var(--brand-primary-hover)]">{note}</p>}
         </div>
       </div>
     )

@@ -35,10 +35,10 @@
 
 /* Candidate groups */
 .aw-group { border: 1px solid #e2e8f0; border-radius: 14px; background: #fff; overflow: hidden; }
-.aw-group.is-active { border-color: #a7f3d0; box-shadow: 0 0 0 3px rgb(16 185 129 / .08); }
+.aw-group.is-active { border-color: color-mix(in srgb, var(--brand-primary) 45%, #fff); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 8%, transparent); }
 .aw-avatar {
   display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
-  width: 38px; height: 38px; border-radius: 12px; background: #ecfdf5; color: #047857;
+  width: 38px; height: 38px; border-radius: 12px; background: var(--brand-primary-soft); color: var(--brand-primary-hover);
   font-size: 13px; font-weight: 800;
 }
 .aw-new-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; flex-shrink: 0; }
@@ -47,7 +47,7 @@
   background: transparent; text-align: left; cursor: pointer; transition: background .15s, border-color .15s;
 }
 .aw-application:hover { background: #fff; border-color: #e2e8f0; }
-.aw-application[aria-current='true'] { background: #fff; border-color: #10b981; box-shadow: 0 1px 2px rgb(15 23 42 / .06); }
+.aw-application[aria-current='true'] { background: #fff; border-color: var(--brand-primary); box-shadow: 0 1px 2px rgb(15 23 42 / .06); }
 .aw-application.is-unread .aw-application__title { color: #0f172a; font-weight: 800; }
 .aw-application__title { font-size: 12px; font-weight: 600; color: #334155; line-height: 18px; }
 

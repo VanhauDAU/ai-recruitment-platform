@@ -40,7 +40,7 @@ export default function ReviewQueue() {
   const selected = data.find((sample) => sample.public_id === selectedId) || data[0]
   return <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
     <AdminPanel padded={false} title={`Chờ duyệt (${data.length})`} description="Bản AI viết chưa đến tay ứng viên cho tới khi bạn duyệt.">
-      <ul className="divide-y divide-slate-100">{data.map((sample) => <li key={sample.public_id}><button type="button" onClick={() => setSelectedId(sample.public_id)} className={`w-full px-4 py-3 text-left text-sm hover:bg-slate-50 ${sample.public_id === selected.public_id ? 'bg-emerald-50' : ''}`}><p className="font-semibold">{sample.position_name}</p><p className="mt-1 flex flex-wrap gap-1"><Tag>{localeLabel(sample.locale)}</Tag><Tag>Kinh nghiệm {bandLabel(sample.experience_band).toLowerCase()}</Tag></p></button></li>)}</ul>
+      <ul className="divide-y divide-slate-100">{data.map((sample) => <li key={sample.public_id}><button type="button" onClick={() => setSelectedId(sample.public_id)} className={`w-full px-4 py-3 text-left text-sm hover:bg-slate-50 ${sample.public_id === selected.public_id ? 'bg-[var(--brand-primary-soft)]' : ''}`}><p className="font-semibold">{sample.position_name}</p><p className="mt-1 flex flex-wrap gap-1"><Tag>{localeLabel(sample.locale)}</Tag><Tag>Kinh nghiệm {bandLabel(sample.experience_band).toLowerCase()}</Tag></p></button></li>)}</ul>
     </AdminPanel>
     <AdminPanel title={selected.title} extra={<div className="flex flex-wrap gap-2">
       <Button size="small" type="primary" icon={<CheckOutlined />} loading={act.isPending} onClick={() => act.mutate({ action: 'approve', sample: selected })}>Duyệt & dùng</Button>

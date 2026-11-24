@@ -24,15 +24,15 @@ export default function DashboardHeader({
   const employerVerified = Boolean(account.verification?.representative_verified)
 
   return (
-    <header className="relative overflow-hidden rounded-[24px] bg-[linear-gradient(120deg,#0f172a_0%,#123d3a_58%,#087a55_115%)] px-5 py-6 text-white shadow-[0_18px_50px_-24px_rgba(15,23,42,.65)] sm:px-7 sm:py-7">
+    <header className="relative overflow-hidden rounded-[24px] employer-dash-hero px-5 py-6 text-white shadow-[0_18px_50px_-24px_rgba(15,23,42,.65)] sm:px-7 sm:py-7">
       <div className="pointer-events-none absolute -right-16 -top-28 h-64 w-64 rounded-full border-[38px] border-white/[.06]" />
-      <div className="pointer-events-none absolute -bottom-32 right-[22%] h-64 w-64 rounded-full bg-emerald-300/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 right-[22%] h-64 w-64 rounded-full employer-dash-hero-glow blur-3xl" />
 
       <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-emerald-100/80">
+          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold employer-dash-hero-meta">
             <span className="inline-flex items-center gap-1.5"><ClockCircleOutlined /> {fullDateFormatter.format(new Date())}</span>
-            <span aria-hidden="true" className="h-1 w-1 rounded-full bg-emerald-200/50" />
+            <span aria-hidden="true" className="h-1 w-1 rounded-full bg-white/40" />
             <span className="inline-flex items-center gap-1.5">
               <CheckCircleFilled className={employerVerified ? 'text-emerald-300' : 'text-amber-300'} />
               {employerVerified ? m.employer_workspace_dash_employer_verified() : m.employer_workspace_dash_verification_in_progress()}
@@ -55,7 +55,7 @@ export default function DashboardHeader({
           </Link>
           <Link
             to={jobActionTarget}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-white !bg-white px-4 text-sm font-extrabold !text-emerald-700 shadow-lg shadow-emerald-950/15 transition hover:-translate-y-0.5 hover:!bg-emerald-50 hover:!text-emerald-800"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-white !bg-white px-4 text-sm font-extrabold employer-dash-hero-cta shadow-lg shadow-slate-900/15 transition hover:-translate-y-0.5"
           >
             <PlusOutlined /> {m.employer_workspace_dash_new_job()}
           </Link>

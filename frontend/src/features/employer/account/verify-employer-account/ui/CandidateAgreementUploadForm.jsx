@@ -16,7 +16,7 @@ export function CandidateAgreementTemplate() {
   return (
     <aside className="flex flex-col items-center gap-4 text-center">
       <p className="text-sm font-medium text-slate-800">{m.employer_account_dpa_template()}</p>
-      <a href={DPA_TEMPLATE_URL} download className="inline-flex items-center gap-2 rounded-md border border-emerald-500 px-4 py-2 text-sm font-medium !text-emerald-600 transition hover:!text-emerald-700 hover:bg-emerald-50"><DownloadOutlined />{m.employer_account_dpa_download_template()}</a>
+      <a href={DPA_TEMPLATE_URL} download className="inline-flex items-center gap-2 rounded-md border border-[var(--brand-primary)] px-4 py-2 text-sm font-medium !text-[var(--brand-primary)] transition hover:!text-[var(--brand-primary-hover)] hover:bg-[var(--brand-primary-soft)]"><DownloadOutlined />{m.employer_account_dpa_download_template()}</a>
     </aside>
   )
 }
@@ -60,7 +60,7 @@ export default function CandidateAgreementUploadForm({
                 onOpenDocument={onOpenDocument}
                 openingDocument={openingDocument}
               >
-                <FileTextOutlined className="shrink-0 text-emerald-600 transition-colors group-hover:text-[var(--brand-primary)]" />
+                <FileTextOutlined className="shrink-0 text-[var(--brand-primary)] transition-colors group-hover:text-[var(--brand-primary)]" />
                 {m.employer_account_dpa_current_file({ name: CANDIDATE_AGREEMENT_DOCUMENT_NAME })}
               </CandidateAgreementDocumentLink>
             )}

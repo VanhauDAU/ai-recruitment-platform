@@ -28,7 +28,7 @@ export default function SearchHistorySection({ isOpen, onSearchByChange, onSelec
         <span className="shrink-0 text-sm text-gray-500">Tìm kiếm theo:</span>
         {SEARCH_BY_TABS.map((tab) => {
           const active = searchBy === tab.key
-          return <button key={tab.key} type="button" onClick={() => onSearchByChange?.(tab.key)} className={`inline-flex cursor-pointer items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition ${active ? 'border-[var(--brand-primary)] bg-green-50 text-[var(--brand-primary)]' : 'border-gray-200 text-gray-600 hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]'}`}>{active && <CheckOutlined className="text-[10px]" />}{tab.label}</button>
+          return <button key={tab.key} type="button" onClick={() => onSearchByChange?.(tab.key)} className={`inline-flex cursor-pointer items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition ${active ? 'border-[var(--brand-primary)] bg-[var(--brand-primary-soft)] text-[var(--brand-primary)]' : 'border-gray-200 text-gray-600 hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]'}`}>{active && <CheckOutlined className="text-[10px]" />}{tab.label}</button>
         })}
       </div>
 

@@ -27,7 +27,7 @@ export default function TopEmployersSidebar({
       {!isPending && isError && (
         <div className="mt-4 rounded-xl bg-slate-50 px-3 py-4 text-center">
           <p className="text-sm text-slate-500">Chưa thể tải danh sách nổi bật.</p>
-          <button type="button" onClick={onRetry} className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-emerald-700 hover:text-emerald-800">
+          <button type="button" onClick={onRetry} className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-[var(--brand-primary-hover)]">
             <ReloadOutlined aria-hidden="true" /> Thử lại
           </button>
         </div>
@@ -49,7 +49,7 @@ export default function TopEmployersSidebar({
                 to={companyDetailPath(company)}
                 aria-label={`Xem trang công ty ${displayName}`}
                 title={displayName}
-                className="group flex aspect-square min-w-0 items-center justify-center rounded-2xl border border-slate-200 bg-white p-2 shadow-sm transition hover:border-emerald-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
+                className="group flex aspect-square min-w-0 items-center justify-center rounded-2xl border border-slate-200 bg-white p-2 shadow-sm transition hover:border-[var(--brand-primary)]/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
               >
                 <CompanyLogo
                   company={company}

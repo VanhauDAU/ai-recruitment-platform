@@ -69,7 +69,7 @@ export function DashboardVerificationJourney({
     <section className="rounded-[20px] border border-slate-200/80 bg-white p-5 shadow-[0_12px_35px_-26px_rgba(15,23,42,.45)] sm:p-6" aria-labelledby="verification-journey-title">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-lg text-emerald-600"><LockOutlined /></span>
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl employer-dash-icon text-lg"><LockOutlined /></span>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h2 id="verification-journey-title" className="text-base font-black text-slate-900">{m.employer_workspace_dash_journey_title()}</h2>
@@ -80,7 +80,7 @@ export function DashboardVerificationJourney({
         </div>
         <div className="flex items-center gap-3 sm:min-w-52">
           <Progress percent={progress.percent} showInfo={false} strokeColor={primaryColor} railColor="#e2e8f0" className="!mb-0" />
-          <strong className="w-10 text-right text-xs text-emerald-700">{progress.percent}%</strong>
+          <strong className="w-10 text-right text-xs employer-dash-text">{progress.percent}%</strong>
         </div>
       </div>
 
@@ -94,13 +94,13 @@ export function DashboardVerificationJourney({
               href={target}
               target="_blank"
               rel="noreferrer"
-              className={`group flex min-w-0 items-center gap-2.5 rounded-xl border px-3 py-3 transition ${done ? 'border-emerald-100 bg-emerald-50/60' : index === activeIndex ? 'border-emerald-300 bg-white ring-2 ring-emerald-100' : 'border-slate-200 bg-slate-50/70 hover:border-emerald-200'}`}
+              className={`group flex min-w-0 items-center gap-2.5 rounded-xl border px-3 py-3 transition ${done ? 'border-emerald-100 bg-emerald-50/60' : index === activeIndex ? 'employer-dash-step-active bg-white' : 'employer-dash-step-todo border-slate-200 bg-slate-50/70'}`}
             >
               {done
                 ? <CheckCircleFilled className="shrink-0 text-emerald-500" />
-                : <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-black ${index === activeIndex ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-500'}`}>{index + 1}</span>}
+                : <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-black ${index === activeIndex ? 'employer-dash-step-active-index' : 'bg-slate-200 text-slate-500'}`}>{index + 1}</span>}
               <span className={`min-w-0 flex-1 text-[11px] font-bold leading-4 ${done ? 'text-emerald-800' : 'text-slate-600'}`}>{step.label}</span>
-              <ArrowRightOutlined className="shrink-0 text-[10px] text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-emerald-500" />
+              <ArrowRightOutlined className="shrink-0 text-[10px] text-slate-300 transition group-hover:translate-x-0.5 employer-dash-hover-text" />
             </a>
           )
         })}
@@ -109,9 +109,9 @@ export function DashboardVerificationJourney({
       <Link
         to={jobWorkspaceReady ? employerAppPath('/jobs/new') : EMPLOYER_VERIFY_URL}
         aria-label={m.employer_workspace_dash_first_job()}
-        className="mt-3 flex items-center gap-3 rounded-xl border border-dashed border-slate-300 !bg-slate-50/80 px-3 py-3 text-xs font-bold !text-slate-600 transition hover:border-emerald-300 hover:!bg-emerald-50 hover:!text-emerald-700"
+        className="mt-3 flex items-center gap-3 rounded-xl border border-dashed border-slate-300 !bg-slate-50/80 px-3 py-3 text-xs font-bold !text-slate-600 transition employer-dash-hover-tint"
       >
-        <RocketOutlined className="text-emerald-600" />
+        <RocketOutlined className="employer-dash-text" />
         <span className="min-w-0 flex-1">{m.employer_workspace_dash_first_job_cta()}</span>
         <ArrowRightOutlined />
       </Link>

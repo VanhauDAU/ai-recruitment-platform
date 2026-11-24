@@ -31,15 +31,15 @@ export default function UploadCvSuccess({ siteName, cvPublicId }) {
   const openTemplate = (template) => navigate(`/mau-cv/chi-tiet/${template.slug}?nguon=tai-len`)
 
   return (
-    <div className="bg-gradient-to-b from-emerald-50 via-white to-slate-50 pb-12">
+    <div className="bg-gradient-to-b from-[var(--brand-primary-soft)] via-white to-slate-50 pb-12">
       <section className="px-4 pb-8 pt-10 text-center">
         <CheckCircleFilled className="text-5xl text-[#00b14f]" />
         <h1 className="mt-3 text-2xl font-extrabold text-[#00a848] md:text-3xl">Đã tải lên CV thành công!</h1>
         <div className="mt-5 flex flex-wrap justify-center gap-3">
-          <Link to={`/cvs/${cvPublicId}/view`} target="_blank" rel="noopener noreferrer" className="rounded-full border-2 border-[#00b14f] !bg-white px-6 py-2.5 font-bold !text-[#00b14f] transition hover:!bg-emerald-50">
+          <Link to={`/cvs/${cvPublicId}/view`} target="_blank" rel="noopener noreferrer" className="rounded-full border-2 border-[var(--brand-primary)] !bg-white px-6 py-2.5 font-bold !text-[var(--brand-primary)] transition hover:!bg-[var(--brand-primary-soft)]">
             Xem CV tải lên của tôi
           </Link>
-          <Link to="/viec-lam" className="rounded-full border-2 border-[#00b14f] !bg-[#00b14f] px-6 py-2.5 font-bold !text-white transition hover:!bg-[#009643]">
+          <Link to="/viec-lam" className="rounded-full border-2 border-[var(--brand-primary)] !bg-[var(--brand-primary)] px-6 py-2.5 font-bold !text-white transition hover:!bg-[#009643]">
             Xem việc làm phù hợp
           </Link>
         </div>
@@ -57,7 +57,7 @@ export default function UploadCvSuccess({ siteName, cvPublicId }) {
           <div className="mt-5 grid gap-4 md:grid-cols-3">
             {CV_ONLINE_BENEFITS.map(({ icon: Icon, title, text }) => (
               <div key={title} className="flex gap-3 rounded-xl border border-slate-200 p-4">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-lg text-[#00b14f]"><Icon /></span>
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--brand-primary-soft)] text-lg text-[var(--brand-primary)]"><Icon /></span>
                 <div>
                   <h3 className="font-bold text-[#00a848]">{title}</h3>
                   <p className="mt-1 text-sm leading-6 text-slate-600">{text}</p>

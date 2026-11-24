@@ -47,7 +47,7 @@ export default function EmployerTrustBadgeEligibility({ profile: suppliedProfile
   return (
     <section className={`min-w-0 rounded-sm border border-slate-200 bg-white p-5 sm:p-6 ${className}`}>
       <div className="flex items-start gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--brand-primary-soft)] text-[var(--brand-primary)]">
           <SafetyCertificateOutlined className="text-lg" />
         </span>
         <div className="min-w-0 flex-1">

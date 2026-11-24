@@ -119,7 +119,7 @@ export default function FlashBadge() {
   const containerH = VISIBLE * ITEM_H + (VISIBLE - 1) * GAP
 
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-[#0aa14a] via-[#02893c] to-[#046b32] bg-cover bg-center text-white" style={{ backgroundImage: `url("${FLASH_BADGE_COVER_URL}")` }}>
+    <div className="relative overflow-hidden bg-gradient-to-br from-[var(--brand-primary)] via-[var(--brand-primary-hover)] to-[var(--brand-primary-hover)] bg-cover bg-center text-white" style={{ backgroundImage: `url("${FLASH_BADGE_COVER_URL}")` }}>
       {/* Background decorations */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-32 right-1/4 h-96 w-96 rounded-full bg-[#5dffa3]/15 blur-3xl" />
@@ -182,7 +182,7 @@ export default function FlashBadge() {
                 <div key={seg.u} className="flex items-center gap-1.5">
                   {i > 0 && <span className="text-lg font-bold text-[#ffe27a]/80 mb-3">:</span>}
                   <div className="flex flex-col items-center">
-                    <span className="flex h-10 w-11 items-center justify-center rounded-lg bg-white text-xl font-extrabold tabular-nums text-[#046b32] shadow-md ring-1 ring-black/10">
+                    <span className="flex h-10 w-11 items-center justify-center rounded-lg bg-white text-xl font-extrabold tabular-nums text-[var(--brand-primary-hover)] shadow-md ring-1 ring-black/10">
                       {pad(seg.v)}
                     </span>
                     <span className="mt-1 text-[10px] text-green-50/70">{seg.u}</span>
@@ -244,7 +244,7 @@ export default function FlashBadge() {
                       className="group flex cursor-pointer items-center gap-3 rounded-xl bg-white/95 p-3 text-gray-800 shadow-md ring-1 ring-black/5 hover:bg-white hover:shadow-lg"
                     >
                       <div className="relative shrink-0">
-                        <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#eafaf1] to-[#d1fae5] text-base font-bold text-[#02893c] shadow-sm ring-1 ring-[#02893c]/10">
+                        <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--brand-primary-soft)] to-[var(--brand-primary-soft)] text-base font-bold text-[var(--brand-primary-hover)] shadow-sm ring-1 ring-[var(--brand-primary-hover)]/10">
                           {job.company_logo_url ? (
                             <img
                               src={job.company_logo_url}
@@ -259,12 +259,12 @@ export default function FlashBadge() {
                         </span>
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-gray-900 group-hover:text-[#02893c] transition-colors">
+                        <p className="truncate text-sm font-semibold text-gray-900 group-hover:text-[var(--brand-primary-hover)] transition-colors">
                           {job.title}
                         </p>
                         <p className="truncate text-xs text-gray-500 mt-0.5">{job.company_name}</p>
                       </div>
-                      <ArrowRightOutlined className="text-gray-300 group-hover:text-[#02893c] transition-colors shrink-0 text-xs" />
+                      <ArrowRightOutlined className="text-gray-300 group-hover:text-[var(--brand-primary-hover)] transition-colors shrink-0 text-xs" />
                     </JobImpressionBoundary>
                   )
                 })}
@@ -290,7 +290,7 @@ export default function FlashBadge() {
           </p>
           <button
             onClick={() => navigate('/viec-lam')}
-            className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-semibold text-[#02893c] shadow-md transition-all hover:bg-green-50 hover:shadow-lg hover:-translate-y-px active:scale-95 cursor-pointer"
+            className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-semibold text-[var(--brand-primary-hover)] shadow-md transition-all hover:bg-[var(--brand-primary-soft)] hover:shadow-lg hover:-translate-y-px active:scale-95 cursor-pointer"
           >
             Xem ngay <ArrowRightOutlined className="text-xs" />
           </button>

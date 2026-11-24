@@ -5,13 +5,31 @@
 
 #section-header {
   background:
-    linear-gradient(180deg, #002b33 0%, rgba(0, 43, 51, 0.25) 100%),
-    linear-gradient(90deg, #008060 21.86%, #2bab60 78.13%);
+    linear-gradient(
+      180deg,
+      var(--brand-surface-dark) 0%,
+      color-mix(in srgb, var(--brand-surface-dark) 25%, transparent) 100%
+    ),
+    linear-gradient(
+      90deg,
+      var(--brand-primary-hover) 21.86%,
+      color-mix(in srgb, var(--brand-primary) 85%, #fff) 78.13%
+    );
   background-repeat: no-repeat;
   background-size: 100% 100%;
   isolation: isolate;
   overflow: hidden;
   position: relative;
+}
+
+/* Chữ phụ và quầng sáng trên nền hero: theo màu chủ đạo (--brand-*). */
+.home-hero-muted {
+  color: var(--brand-primary-soft) !important;
+}
+
+.home-hero-glow {
+  background-color: color-mix(in srgb, var(--brand-primary) 55%, #fff);
+  opacity: 0.25;
 }
 
 /* Ảnh nền trang trí lấy từ R2. CSS không đọc được config JS nên base URL lặp lại

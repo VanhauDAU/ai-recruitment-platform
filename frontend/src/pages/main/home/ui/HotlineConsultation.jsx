@@ -108,7 +108,7 @@ export default function HotlineConsultation() {
             })}
           </div>
 
-          <div className="relative overflow-hidden rounded-b-3xl rounded-tr-3xl bg-[linear-gradient(100deg,#ffffff_0%,#ffffff_48%,#e4ffef_100%)] px-6 py-8 shadow-xl shadow-emerald-950/15 md:px-12 md:py-12">
+          <div className="relative overflow-hidden rounded-b-3xl rounded-tr-3xl bg-[linear-gradient(100deg,#ffffff_0%,#ffffff_48%,#e4ffef_100%)] px-6 py-8 shadow-xl shadow-slate-900/10 md:px-12 md:py-12">
             <div className="relative z-10 grid gap-8 md:grid-cols-[1.1fr_0.9fr] md:items-center">
               <div>
                 <h3 className="text-2xl font-extrabold leading-tight text-[#1f2937] md:text-3xl">
@@ -118,13 +118,13 @@ export default function HotlineConsultation() {
                 {contact[active.key] && <div className="mt-7 flex max-w-lg flex-col gap-3 sm:flex-row sm:items-center">
                   <a
                     href={telHref(contact[active.key])}
-                    className="inline-flex min-h-14 flex-1 items-center justify-center rounded-full bg-[#039b49] px-5 text-base font-extrabold text-white shadow-lg shadow-emerald-700/20 transition hover:bg-[var(--brand-primary-hover)]"
+                    className="inline-flex min-h-14 flex-1 items-center justify-center rounded-full bg-[var(--brand-primary)] px-5 text-base font-extrabold text-white shadow-lg shadow-[var(--brand-primary)]/20 transition hover:bg-[var(--brand-primary-hover)]"
                   >
                     {contact[active.key]}
                   </a>
                   <a
                     href={telHref(contact[active.key])}
-                    className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-7 text-sm font-extrabold text-[var(--brand-primary)] transition hover:bg-green-50"
+                    className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-7 text-sm font-extrabold text-[var(--brand-primary)] transition hover:bg-[var(--brand-primary-soft)]"
                   >
                     <PhoneFilled />
                     GỌI NGAY
@@ -133,7 +133,7 @@ export default function HotlineConsultation() {
 
                 {email && <div className="mt-6 flex flex-wrap items-center gap-3 text-base font-bold text-gray-500">
                   <span>{active.emailLabel}</span>
-                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-[var(--brand-primary)]">
+                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--brand-primary-soft)] text-[var(--brand-primary)]">
                     <MailFilled className="text-sm" />
                   </span>
                   <a href={`mailto:${email}`} className="font-extrabold text-[var(--brand-primary)] hover:underline">

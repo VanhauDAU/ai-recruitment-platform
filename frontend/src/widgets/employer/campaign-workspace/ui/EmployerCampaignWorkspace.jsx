@@ -180,10 +180,10 @@ export default function EmployerCampaignWorkspace({ publicId }) {
                     aria-controls={`campaign-panel-${tab.key}`}
                     aria-label={tab.label}
                     tabIndex={selected ? 0 : -1}
-                    className={`inline-flex h-11 items-center gap-2 whitespace-nowrap rounded-xl px-3.5 text-sm font-semibold transition-all duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500 ${
+                    className={`inline-flex h-11 items-center gap-2 whitespace-nowrap rounded-xl px-3.5 text-sm font-semibold transition-all duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-primary)] ${
                       selected
-                        ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/15'
-                        : 'text-slate-500 hover:bg-slate-50 hover:text-emerald-700'
+                        ? 'bg-[var(--brand-primary)] text-white shadow-md shadow-[var(--brand-primary)]/25'
+                        : 'text-slate-500 hover:bg-slate-50 hover:text-[var(--brand-primary-hover)]'
                     }`}
                     onClick={() => selectTab(tab.key)}
                     onKeyDown={(event) => moveTabFocus(event, index)}
@@ -193,7 +193,7 @@ export default function EmployerCampaignWorkspace({ publicId }) {
                     {tabCounts[tab.key] != null && (
                       <span
                         aria-hidden
-                        className={`inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-xs ${selected ? 'bg-white text-emerald-700' : 'bg-slate-100 text-slate-500'}`}
+                        className={`inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-xs ${selected ? 'bg-white text-[var(--brand-primary-hover)]' : 'bg-slate-100 text-slate-500'}`}
                       >
                         {tabCounts[tab.key]}
                       </span>
@@ -266,7 +266,7 @@ export default function EmployerCampaignWorkspace({ publicId }) {
         width={760}
         title={(
           <span className="inline-flex items-center gap-2">
-            <EditOutlined className="text-emerald-600" />
+            <EditOutlined className="text-[var(--brand-primary)]" />
             {m.employer_campaign_workspace_edit_title()}
           </span>
         )}

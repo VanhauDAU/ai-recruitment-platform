@@ -94,8 +94,8 @@ export default function FeedbackModal({ open, onClose }) {
                   onClick={() => { setTopic(option.value); setTopicError(false) }}
                   className={`cursor-pointer rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
                     active
-                      ? 'bg-[var(--brand-primary)] text-white shadow-sm shadow-emerald-600/30'
-                      : 'bg-gray-100 text-gray-700 hover:bg-emerald-50 hover:text-[var(--brand-primary)]'
+                      ? 'bg-[var(--brand-primary)] text-white shadow-sm shadow-[var(--brand-primary)]/30'
+                      : 'bg-gray-100 text-gray-700 hover:bg-[var(--brand-primary-soft)] hover:text-[var(--brand-primary)]'
                   }`}
                 >
                   {option.label}
@@ -138,8 +138,8 @@ export default function FeedbackModal({ open, onClose }) {
                   <span
                     className={`flex h-12 w-12 items-center justify-center rounded-full text-2xl transition-all duration-200 group-hover:scale-110 ${
                       active
-                        ? 'bg-[var(--brand-primary)] shadow-md shadow-emerald-600/30 ring-2 ring-emerald-200'
-                        : 'bg-gray-100 grayscale group-hover:bg-emerald-50 group-hover:grayscale-0'
+                        ? 'bg-[var(--brand-primary)] shadow-md shadow-[var(--brand-primary)]/30 ring-2 ring-[var(--brand-primary)]/15'
+                        : 'bg-gray-100 grayscale group-hover:bg-[var(--brand-primary-soft)] group-hover:grayscale-0'
                     }`}
                   >
                     {option.emoji}

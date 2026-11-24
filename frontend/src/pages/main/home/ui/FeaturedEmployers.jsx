@@ -32,7 +32,7 @@ function PlatformStatistics({ stats }) {
       label: 'Việc làm',
       value: stats?.active_jobs,
       icon: <SolutionOutlined />,
-      iconClassName: 'bg-emerald-600',
+      iconClassName: 'bg-[var(--brand-primary)]',
     },
     {
       key: 'employers',
@@ -46,13 +46,13 @@ function PlatformStatistics({ stats }) {
   return (
     <section
       aria-labelledby="platform-statistics-title"
-      className="relative overflow-hidden rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-50 via-white to-emerald-50/70 px-5 py-6 shadow-[0_8px_24px_rgba(0,177,79,0.09)] lg:grid lg:grid-cols-[minmax(300px,1fr)_minmax(0,1.7fr)] lg:items-center lg:px-10"
+      className="relative overflow-hidden rounded-2xl border border-[var(--brand-primary)]/20 bg-gradient-to-r from-[var(--brand-primary-soft)] via-white to-[var(--brand-primary-soft)] px-5 py-6 shadow-[0_8px_24px_color-mix(in_srgb,var(--brand-primary)_9%,transparent)] lg:grid lg:grid-cols-[minmax(300px,1fr)_minmax(0,1.7fr)] lg:items-center lg:px-10"
     >
       <span className="pointer-events-none absolute -right-12 -top-20 h-44 w-44 rounded-full bg-[var(--brand-primary)] opacity-[0.06]" aria-hidden="true" />
-      <span className="pointer-events-none absolute bottom-0 left-0 h-20 w-40 bg-[radial-gradient(circle_at_1px_1px,rgba(0,177,79,0.15)_1px,transparent_0)] bg-[length:18px_18px] opacity-50" aria-hidden="true" />
+      <span className="pointer-events-none absolute bottom-0 left-0 h-20 w-40 bg-[radial-gradient(circle_at_1px_1px,color-mix(in_srgb,var(--brand-primary)_15%,transparent)_1px,transparent_0)] bg-[length:18px_18px] opacity-50" aria-hidden="true" />
 
       <div className="relative text-center lg:text-left">
-        <span className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-emerald-700">
+        <span className="inline-flex rounded-full bg-[var(--brand-primary-soft)] px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-[var(--brand-primary-hover)]">
           Hệ sinh thái tuyển dụng
         </span>
         <h2
@@ -64,7 +64,7 @@ function PlatformStatistics({ stats }) {
         <p className="mt-1 text-sm text-slate-500">Những kết nối đang hoạt động trên toàn nền tảng</p>
       </div>
 
-      <div className="relative mt-5 grid divide-y divide-emerald-100 sm:grid-cols-3 sm:divide-x sm:divide-y-0 lg:mt-0">
+      <div className="relative mt-5 grid divide-y divide-[var(--brand-primary)]/15 sm:grid-cols-3 sm:divide-x sm:divide-y-0 lg:mt-0">
         {items.map((item) => (
           <div key={item.key} className="flex min-w-0 items-center justify-center gap-3 py-3 sm:px-4 sm:py-0">
             <span
@@ -96,7 +96,7 @@ export default function FeaturedEmployers({ employers, navigate, stats }) {
     <div className="mt-8" data-testid="featured-employers-block">
       <PlatformStatistics stats={stats} />
 
-      <section aria-labelledby="featured-employers-title" className="mt-8 rounded-2xl border border-emerald-100 bg-emerald-50/60 px-4 py-5 sm:px-5">
+      <section aria-labelledby="featured-employers-title" className="mt-8 rounded-2xl border border-[var(--brand-primary)]/20 bg-[var(--brand-primary-soft)] px-4 py-5 sm:px-5">
         <div className="mb-3 flex items-center justify-between gap-4">
           <div className="min-w-0">
             <h2 id="featured-employers-title" className="text-xl font-extrabold text-[var(--brand-primary-hover)]">
@@ -110,14 +110,14 @@ export default function FeaturedEmployers({ employers, navigate, stats }) {
               disabled={!carousel.canPrev}
               onClick={carousel.goPrev}
               aria-label="Nhóm công ty trước"
-              className="!h-9 !w-9 enabled:!border-emerald-200 enabled:!bg-white enabled:!text-emerald-600 enabled:hover:!border-[var(--brand-primary)] enabled:hover:!bg-[var(--brand-primary)] enabled:hover:!text-white enabled:hover:!shadow-sm"
+              className="!h-9 !w-9 enabled:!border-[var(--brand-primary)]/20 enabled:!bg-white enabled:!text-[var(--brand-primary)] enabled:hover:!border-[var(--brand-primary)] enabled:hover:!bg-[var(--brand-primary)] enabled:hover:!text-white enabled:hover:!shadow-sm"
             />
             <ArrowButton
               dir="right"
               disabled={!carousel.canNext}
               onClick={carousel.goNext}
               aria-label="Nhóm công ty tiếp theo"
-              className="!h-9 !w-9 enabled:!border-emerald-200 enabled:!bg-white enabled:!text-emerald-600 enabled:hover:!border-[var(--brand-primary)] enabled:hover:!bg-[var(--brand-primary)] enabled:hover:!text-white enabled:hover:!shadow-sm"
+              className="!h-9 !w-9 enabled:!border-[var(--brand-primary)]/20 enabled:!bg-white enabled:!text-[var(--brand-primary)] enabled:hover:!border-[var(--brand-primary)] enabled:hover:!bg-[var(--brand-primary)] enabled:hover:!text-white enabled:hover:!shadow-sm"
             />
           </div>
         </div>
@@ -139,7 +139,7 @@ export default function FeaturedEmployers({ employers, navigate, stats }) {
                     key={employer.public_id}
                     type="button"
                     onClick={() => navigate(companyDetailPath(employer))}
-                    className="featured-employer-card group flex min-h-[220px] min-w-0 cursor-pointer flex-col items-center rounded-xl border border-emerald-100 bg-white px-3 py-3 text-center transition duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:shadow-[0_8px_24px_rgba(0,177,79,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
+                    className="featured-employer-card group flex min-h-[220px] min-w-0 cursor-pointer flex-col items-center rounded-xl border border-[var(--brand-primary)]/20 bg-white px-3 py-3 text-center transition duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:shadow-[0_8px_24px_color-mix(in_srgb,var(--brand-primary)_12%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
                   >
                     <span className="flex h-[92px] w-full max-w-[120px] items-center justify-center overflow-hidden">
                       <img
@@ -156,7 +156,7 @@ export default function FeaturedEmployers({ employers, navigate, stats }) {
                     <span className="mt-1 line-clamp-1 min-h-4 w-full text-xs text-slate-500">
                       {industryLabel(employer)}
                     </span>
-                    <span className="mt-2 inline-flex min-h-8 items-center rounded-md bg-emerald-50 px-3 py-2 text-sm font-semibold leading-none text-emerald-700">
+                    <span className="mt-2 inline-flex min-h-8 items-center rounded-md bg-[var(--brand-primary-soft)] px-3 py-2 text-sm font-semibold leading-none text-[var(--brand-primary-hover)]">
                       {formatNumber(employer.active_public_job_count)} Việc làm
                     </span>
                   </button>
@@ -172,7 +172,7 @@ export default function FeaturedEmployers({ employers, navigate, stats }) {
             {groups.map((_, index) => (
               <span
                 key={index}
-                className={`h-2.5 w-2.5 rounded-full transition-colors ${index === carousel.page ? 'bg-[var(--brand-primary)]' : 'bg-emerald-200'}`}
+                className={`h-2.5 w-2.5 rounded-full transition-colors ${index === carousel.page ? 'bg-[var(--brand-primary)]' : 'bg-[var(--brand-primary)]/20'}`}
                 aria-hidden="true"
               />
             ))}

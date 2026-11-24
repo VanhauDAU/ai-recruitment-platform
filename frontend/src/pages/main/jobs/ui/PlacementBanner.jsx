@@ -28,7 +28,7 @@ export default function PlacementBanner({ placement }) {
           {banner.subtitle && <p className="mt-1.5 text-sm leading-5 text-white/85">{banner.subtitle}</p>}
         </div>
         {banner.cta_label && (
-          <span className="inline-flex w-fit shrink-0 items-center rounded-full bg-white px-5 py-2.5 text-sm font-bold text-emerald-700">
+          <span className="inline-flex w-fit shrink-0 items-center rounded-full bg-white px-5 py-2.5 text-sm font-bold text-[var(--brand-primary-hover)]">
             {banner.cta_label} →
           </span>
         )}
