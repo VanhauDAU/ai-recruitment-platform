@@ -248,6 +248,13 @@ class KnowledgeAdminApiTests(APITestCase):
             {'total': 25, 'published': 21, 'drafts': 4, 'overdue': 3},
         )
 
+        published = self.client.get(
+            reverse('kb-admin-article-list'),
+            {'q': 'KB summary aggregate', 'published': 'true', 'page_size': 60},
+        )
+        self.assertEqual(published.status_code, 200, published.data)
+        self.assertEqual(published.data['count'], summary.data['published'])
+
     @patch('apps.knowledgebase.api.views.admin_shared.record_metric')
     def test_admin_requests_emit_pii_free_status_and_latency_metrics(self, metric):
         self.client.force_authenticate(self.admin)
