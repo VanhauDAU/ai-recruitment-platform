@@ -36,17 +36,16 @@ export const RECRUITER_ORDERING_OPTIONS = [
   { value: 'status', label: 'Trạng thái tài khoản' },
 ]
 
-export const NEXT_ACTION_FILTER_LABELS = {
-  admin_queue: 'Cần admin duyệt',
-  verification_overdue: 'Quá hạn 72 giờ',
-  verification_review: 'Chờ duyệt xác thực',
-  company_update_review: 'Chờ duyệt cập nhật công ty',
-  account_restricted: 'Bị hạn chế',
-  awaiting_resubmission: 'Chờ NTD bổ sung',
-  awaiting_company: 'Chưa liên kết công ty',
-  awaiting_onboarding: 'Chưa hoàn tất thiết lập',
-  awaiting_submission: 'Chưa nộp hồ sơ',
-}
+export const VERIFICATION_OPTIONS = [
+  { value: '', label: 'Mọi trạng thái xác thực' },
+  { value: 'none', label: 'Chưa có hồ sơ' },
+  { value: 'draft', label: 'Chưa nộp' },
+  { value: 'pending', label: 'Chờ duyệt' },
+  { value: 'in_review', label: 'Đang xử lý' },
+  { value: 'changes_requested', label: 'Cần bổ sung' },
+  { value: 'approved', label: 'Đã xác thực' },
+  { value: 'rejected', label: 'Bị từ chối' },
+]
 
 // Các trường chỉ xuất hiện trong panel nâng cao: dùng cho badge đếm và nút đặt lại.
 export const ADVANCED_KEYS = [
@@ -58,6 +57,9 @@ export const ADVANCED_KEYS = [
   'created_range',
   'last_login_range',
 ]
+
+// Advanced fields that only apply to the recruiter list.
+export const RECRUITER_ADVANCED_ONLY = ['company', 'company_state', 'verification_status']
 
 const EMPTY_BY_KEY = { created_range: [], last_login_range: [] }
 

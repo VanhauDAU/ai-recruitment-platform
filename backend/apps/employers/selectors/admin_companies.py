@@ -153,6 +153,9 @@ def admin_companies_queryset(*, params=None):
         queryset = queryset.filter(owner_count=0)
     elif has_owner == 'ineligible':
         queryset = queryset.filter(has_eligible_owner=False)
+    elif has_owner == 'not_single':
+        # Same rule as the summary's companies_without_single_owner tile.
+        queryset = queryset.exclude(owner_count=1)
 
     industry = params.get('industry', '').strip()
     if industry:
