@@ -45,6 +45,19 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
 
+## Bảng toàn chiều rộng cho danh sách tin và chiến dịch của NTD (2026-11-24)
+
+| Hạng mục | Trạng thái |
+| --- | --- |
+| `/tuyendung/app/jobs` và `/campaigns` bỏ khung 1320px, bảng tràn hết vùng làm việc, thanh phân trang dính đáy | ✅ |
+| 6 ô thống kê trạng thái (bấm để lọc) thay dải tab; chip "Cần xử lý" + bộ lọc nằm trong đầu bảng; tiêu đề bảng nền xám tách khỏi ô | ✅ |
+| Cột tin tuyển dụng: ngày tạo, thời gian đăng, ngành nghề chính, địa điểm, mức lương, chiến dịch | ✅ |
+| API danh sách tin NTD thêm `category_name` và các trường lương; prefetch ngành nghề một truy vấn (ngân sách 7 + bảo trì) | ✅ |
+| Giao diện tiết chế màu: trạng thái chỉ giữ chấm màu, hạn nộp bình thường màu xám, nút chính màu trơn | ✅ |
+| Ô thao tác tối đa 3 nút (gồm "Khác"): Xem chi tiết, Xem trang tuyển dụng (API thêm `slug`); chiến dịch "Mở" → "Xem chi tiết" | ✅ |
+| Mọi trang cổng NTD tràn toàn chiều rộng qua khung dùng chung `shared/ui/workspace-page` (lề `--workspace-gutter`), sẵn để cổng admin dùng lại | ✅ |
+| Sidebar NTD nền tối cùng màu topbar; form đăng/sửa tin: cột tiến độ và xem trước rộng theo % | ✅ |
+
 ## Làm lại Thông báo hệ thống và Lịch sử hoạt động của NTD (2026-11-22)
 
 Hai trang `/tuyendung/app/notifications` và `/tuyendung/app/activities` trước đây là

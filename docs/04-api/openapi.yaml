@@ -27264,6 +27264,10 @@ components:
         public_id:
           type: string
           readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
         title:
           type: string
           readOnly: true
@@ -27279,6 +27283,35 @@ components:
         employment_type:
           allOf:
           - $ref: '#/components/schemas/EmploymentTypeEnum'
+          readOnly: true
+        category_name:
+          type: string
+          readOnly: true
+        salary_type:
+          readOnly: true
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SalaryTypeEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        salary_min:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        salary_max:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        income_display_type:
+          allOf:
+          - $ref: '#/components/schemas/IncomeDisplayTypeEnum'
+          readOnly: true
+        currency:
+          allOf:
+          - $ref: '#/components/schemas/CurrencyEnum'
           readOnly: true
         deadline:
           type: string
@@ -27392,19 +27425,26 @@ components:
       - campaign_name
       - candidate_count
       - candidate_previews
+      - category_name
       - closes_on
       - company_name
       - created_at
+      - currency
       - deadline
       - effective_state
       - employment_type
       - first_approved_at
+      - income_display_type
       - is_expired
       - is_visibility_expired
       - locations_detail
       - public_id
       - published_at
       - requested_visibility_days
+      - salary_max
+      - salary_min
+      - salary_type
+      - slug
       - status
       - submitted_at
       - title

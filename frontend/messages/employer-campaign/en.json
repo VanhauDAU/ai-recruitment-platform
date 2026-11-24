@@ -857,7 +857,7 @@
       }
     }
   ],
-  "employer_campaign_list_action_open": "Open",
+  "employer_campaign_list_action_open": "View details",
   "employer_campaign_list_activity_fallback": "Campaign update",
   "employer_campaign_list_empty_filtered": "No campaigns match your filters",
   "employer_campaign_list_empty": "No campaigns yet",

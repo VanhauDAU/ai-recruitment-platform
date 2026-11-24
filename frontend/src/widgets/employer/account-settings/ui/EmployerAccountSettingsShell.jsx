@@ -39,7 +39,7 @@ export default function EmployerAccountSettingsShell({ title, children, hideHead
   const activeItem = ITEMS.find((item) => item.to === pathname)
 
   return (
-    <div className="mx-auto max-w-[1256px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
       <div className="grid min-w-0 items-stretch xl:grid-cols-[275px_minmax(0,1fr)]">
         <nav aria-label={m.employer_account_settings_nav_aria()} className="border-b border-slate-200 bg-slate-50/80 p-3 xl:border-b-0 xl:border-r xl:p-2">
           <div className="xl:hidden">

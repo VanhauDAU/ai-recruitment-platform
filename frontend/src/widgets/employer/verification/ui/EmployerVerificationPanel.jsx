@@ -51,7 +51,7 @@ export default function EmployerVerificationPanel() {
   const needQuery = useQuery({ queryKey: ['employer', 'recruitment-need'], queryFn: getEmployerRecruitmentNeed })
 
   if (isChecking && !profile) {
-    return <div className="mx-auto max-w-6xl rounded-2xl bg-white p-8"><Skeleton active paragraph={{ rows: 14 }} /></div>
+    return <div className="rounded-2xl bg-white p-8"><Skeleton active paragraph={{ rows: 14 }} /></div>
   }
   if (isAccessError) {
     return (
@@ -60,7 +60,6 @@ export default function EmployerVerificationPanel() {
         showIcon
         title={m.employer_company_verify_load_error()}
         action={<Button size="small" onClick={() => profileQuery.refetch()}>{m.employer_company_retry()}</Button>}
-        className="mx-auto max-w-4xl"
       />
     )
   }
@@ -71,7 +70,7 @@ export default function EmployerVerificationPanel() {
   }
 
   return (
-    <div className="mx-auto grid min-w-0 max-w-6xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,.10)] xl:grid-cols-[minmax(300px,.85fr)_minmax(0,1.15fr)]">
+    <div className="grid min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,.10)] xl:grid-cols-[minmax(300px,.85fr)_minmax(0,1.15fr)]">
       <VerificationStory
         need={needQuery.data}
         companyName={resolvedProfile.onboarding?.company_linked ? resolvedProfile.company?.company_name : ''}

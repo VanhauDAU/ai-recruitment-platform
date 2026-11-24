@@ -23,7 +23,9 @@ vi.mock('@/entities/job/job', () => ({
   duplicateEmployerJob: mocks.duplicateEmployerJob,
   formatJobPostedLabel: () => 'Đăng 2 tuần trước',
   formatLocations: (job) => job.locations_detail?.[0]?.name || null,
+  formatSalary: (job) => (job.salary_max ? `${job.salary_min / 1e6} - ${job.salary_max / 1e6} triệu` : 'Thỏa thuận'),
   getEmployerJobPage: mocks.getEmployerJobPage,
+  jobDetailPath: (job) => `/viec-lam/${job.slug}`,
   jobKeys: {
     employerList: (params = {}) => ['jobs', 'employer-list', params],
   },
@@ -46,11 +48,16 @@ const ATTENTION_COUNTS = { unviewed: 1, expiring: 0 }
 
 const ACTIVE_JOB = {
   public_id: 'job_active',
+  slug: 'ky-su-frontend',
   title: 'Kỹ sư Frontend',
   status: 'active',
   effective_state: 'active',
   campaign: 'camp_growth',
   campaign_name: 'Đội sản phẩm Growth',
+  category_name: 'CNTT - Phần mềm',
+  created_at: '2026-11-20T03:30:00Z',
+  salary_min: 10000000,
+  salary_max: 15000000,
   deadline: DEADLINE.format('YYYY-MM-DD'),
   employment_type: 'full_time',
   locations_detail: [{ name: 'Đà Nẵng' }],
@@ -183,6 +190,9 @@ describe('JobList', () => {
     expect(within(activeCard).getByText('Đội sản phẩm Growth')).toBeInTheDocument()
     expect(within(activeCard).getByText(/Đà Nẵng/)).toBeInTheDocument()
     expect(within(activeCard).getByText('Đăng 2 tuần trước')).toBeInTheDocument()
+    expect(within(activeCard).getByText('CNTT - Phần mềm')).toBeInTheDocument()
+    expect(within(activeCard).getByText('10 - 15 triệu')).toBeInTheDocument()
+    expect(within(activeCard).getByText(/^Ngày tạo: 20\/11\/2026/)).toBeInTheDocument()
     expect(within(activeCard).getByText(DEADLINE.format('DD/MM/YYYY'))).toBeInTheDocument()
     expect(within(activeCard).getByText(/Còn 12 ngày/)).toBeInTheDocument()
     expect(within(activeCard).getByText('128')).toBeInTheDocument()
@@ -225,13 +235,18 @@ describe('JobList', () => {
 
     const activeCard = await screen.findByTestId('job-list-item-job_active')
     const quickActions = within(activeCard).getByTestId('job-quick-actions')
-    expect(within(quickActions).getByRole('link', { name: 'Xem hồ sơ ứng tuyển' }))
-      .toHaveAttribute('href', '/tuyendung/app/applications?job=job_active')
-    expect(within(quickActions).getByRole('link', { name: 'Chỉnh sửa tin' }))
-      .toHaveAttribute('href', '/tuyendung/app/jobs/job_active/edit')
+    expect(within(quickActions).getAllByRole('link')).toHaveLength(2)
+    expect(within(quickActions).getByRole('link', { name: 'Xem chi tiết' }))
+      .toHaveAttribute('href', '/tuyendung/app/jobs/job_active')
+    expect(within(quickActions).getByRole('link', { name: 'Xem trang tuyển dụng' }).getAttribute('href'))
+      .toMatch(/\/viec-lam\/ky-su-frontend$/)
+    expect(within(quickActions).queryByRole('link', { name: 'Chỉnh sửa tin' })).not.toBeInTheDocument()
     await user.click(within(activeCard).getByRole('button', {
       name: 'Mở thao tác cho Kỹ sư Frontend',
     }))
+    expect(await screen.findByRole('menuitem', { name: /Chỉnh sửa tin/ })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Xem hồ sơ ứng tuyển' }))
+      .toHaveAttribute('href', '/tuyendung/app/applications?job=job_active')
     expect(await screen.findByRole('menuitem', { name: /Sao chép thành bản nháp/ }))
       .toBeInTheDocument()
     expect(await screen.findByRole('menuitem', { name: /Ngừng tuyển/ })).toBeInTheDocument()

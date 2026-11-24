@@ -450,7 +450,7 @@
   "employer_campaign_list_period": "{start} đến {end}",
   "employer_campaign_list_action_setup": "Thiết lập",
   "employer_campaign_list_action_view_new_cv": "Xem {count} CV mới",
-  "employer_campaign_list_action_open": "Mở",
+  "employer_campaign_list_action_open": "Xem chi tiết",
   "employer_campaign_list_activity_fallback": "Cập nhật chiến dịch",
   "employer_campaign_list_empty_filtered": "Không có chiến dịch phù hợp bộ lọc",
   "employer_campaign_list_empty": "Chưa có chiến dịch nào",
