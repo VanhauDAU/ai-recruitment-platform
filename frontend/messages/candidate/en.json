@@ -45,5 +45,17 @@
   "candidate_reco_unsave": "Unsave job",
   "candidate_reco_hide": "Hide this job",
   "candidate_reco_logo_label": "View {title} via the company logo",
-  "candidate_reco_more_places": "{first} & {count} more"
+  "candidate_reco_more_places": "{first} & {count} more",
+  "company_follow_prompt_label": "Follow company",
+  "company_follow_prompt_lead": "Follow to get",
+  "company_follow_prompt_highlight": "the latest job alerts",
+  "company_follow_prompt_from": "from",
+  "company_follow_prompt_cta": "Follow now",
+  "company_follow_prompt_close": "Dismiss follow suggestion",
+  "company_jobs_heading": "Jobs at {company}",
+  "company_jobs_categories": "Job categories",
+  "company_jobs_categories_empty": "No job categories yet.",
+  "company_jobs_list_title": "Job postings",
+  "company_jobs_keyword_label": "Job title",
+  "company_jobs_keyword_placeholder": "Job title, position…"
 }
