@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Làm lại khối Việc làm nổi bật trang chủ](#làm-lại-khối-việc-làm-nổi-bật-trang-chủ-2026-11-25) | 🟨 Xong trên nhánh `feat/home-featured-jobs-redesign`, chưa commit/PR |
 | [Mã tin và mã công ty dễ đọc](#mã-tin-và-mã-công-ty-dễ-đọc-2026-11-25) | 🟨 Xong trên nhánh `feat/readable-record-codes`, chờ gộp PR |
 | [Bộ file triển khai production procv.site](#bộ-file-triển-khai-production-procvsite-2026-11-24) | 🟨 Xong trên nhánh `feat/production-deploy`, chờ gộp PR; chưa lên VPS |
 | [Làm lại trang công ty phía ứng viên](#làm-lại-trang-công-ty-phía-ứng-viên-2026-11-24) | 🟨 Xong trên nhánh `feat/company-page-jobs-layout`, chờ gộp PR |
@@ -47,6 +48,19 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Làm lại khối Việc làm nổi bật trang chủ (2026-11-25)
+
+- Khối "Việc làm tốt nhất" đổi tên thành "Việc làm nổi bật", giao diện theo mẫu: tông trung
+  tính, thẻ gọn (logo cạnh một cột nội dung), ô "Lọc theo", chip trượt ngang, gợi ý (ẩn
+  trên mobile), phân trang "x / N trang". Thanh tiến trình 2px điều khiển tự chuyển trang
+  (dừng khi rê chuột); thẻ hiện so le; logo lỗi ảnh lộ chữ cái dự phòng.
+- Chip địa điểm chỉ gồm tỉnh/phường đang có tin công khai, kèm số tin: API mới
+  `GET /api/public/jobs/best/locations/` (`homepage_best_job_locations`, 3 query phẳng).
+  Bỏ chip "Các phường/xã còn lại" và `getWardsByParents` không còn dùng.
+- Thẻ là thẻ `<a>` nên nền dùng `!bg-` (reset antd ngoài layer); chuỗi mới vào
+  `messages/candidate` (`candidate_best_jobs_*`), trần i18n `pages/main` hạ còn 778.
+- Bỏ 2 tab "Việc văn phòng/phổ thông" của mẫu vì tin chưa có trường phân loại này.
 
 ## Mã tin và mã công ty dễ đọc (2026-11-25)
 

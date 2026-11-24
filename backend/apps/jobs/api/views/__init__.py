@@ -28,6 +28,7 @@ from .moderation import (
 )
 from .public import (
     HomepageBestJobListView,
+    HomepageBestJobLocationsView,
     JobDetailView,
     JobListView,
     JobStatsView,
@@ -64,6 +65,7 @@ __all__ = [
     'CandidateJobAlertListCreateView',
     'CvJobRecommendationView',
     'HomepageBestJobListView',
+    'HomepageBestJobLocationsView',
     'HiddenJobCreateView',
     'HiddenJobDestroyView',
     'InlineJobRecommendationView',

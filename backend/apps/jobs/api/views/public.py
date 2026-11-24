@@ -12,6 +12,7 @@ from rest_framework.views import APIView
 from ...selectors.homepage import (
     DEFAULT_BEST_JOBS_ROTATION_SEED,
     build_homepage_best_jobs_queryset,
+    homepage_best_job_locations,
 )
 from ...selectors.listing import (
     build_job_list_queryset,
@@ -80,6 +81,43 @@ class HomepageBestJobListView(generics.ListAPIView):
         response = super().list(request, *args, **kwargs)
         response.data['rotation_seed'] = self._rotation_seed()
         return response
+
+
+_LOCATION_FACET_FIELDS = {
+    'id': serializers.IntegerField(),
+    'name': serializers.CharField(),
+    'job_count': serializers.IntegerField(),
+}
+
+
+class HomepageBestJobLocationsView(APIView):
+    """Locations that currently have public jobs, for the Best Jobs filter chips."""
+
+    permission_classes = [permissions.AllowAny]
+
+    @extend_schema(
+        tags=['jobs'],
+        summary='Tỉnh và phường/xã đang có việc làm (bộ lọc Việc làm nổi bật)',
+        responses=inline_serializer(
+            'HomepageBestJobLocations',
+            fields={
+                'provinces': inline_serializer(
+                    'HomepageBestJobProvince', many=True, fields=_LOCATION_FACET_FIELDS
+                ),
+                'wards': inline_serializer(
+                    'HomepageBestJobWard',
+                    many=True,
+                    fields={
+                        **_LOCATION_FACET_FIELDS,
+                        'parent_id': serializers.IntegerField(allow_null=True),
+                        'parent_name': serializers.CharField(),
+                    },
+                ),
+            },
+        ),
+    )
+    def get(self, request):
+        return Response(homepage_best_job_locations())
 
 
 class JobStatsView(APIView):

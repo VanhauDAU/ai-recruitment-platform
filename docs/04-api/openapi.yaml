@@ -14276,6 +14276,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedPublicJobPreviewList'
           description: ''
+  /api/public/jobs/best/locations/:
+    get:
+      operationId: public_jobs_best_locations_retrieve
+      description: Locations that currently have public jobs, for the Best Jobs filter
+        chips.
+      summary: Tỉnh và phường/xã đang có việc làm (bộ lọc Việc làm nổi bật)
+      tags:
+      - jobs
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HomepageBestJobLocations'
+          description: ''
   /api/public/jobs/categories/:
     get:
       operationId: public_jobs_categories_list
@@ -28557,6 +28575,44 @@ components:
       description: |-
         * `manual_review` - manual_review
         * `confirmed_violation` - confirmed_violation
+    HomepageBestJobLocations:
+      type: object
+      properties:
+        provinces:
+          type: array
+          items:
+            $ref: '#/components/schemas/HomepageBestJobProvince'
+        wards:
+          type: array
+          items:
+            $ref: '#/components/schemas/HomepageBestJobWard'
+      required:
+      - provinces
+      - wards
+    HomepageBestJobProvince:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        job_count:
+          type: integer
+      required:
+      - id
+      - job_count
+      - name
+    HomepageBestJobWard:
+      type: object
+      properties:
+        parent_id:
+          type: integer
+          nullable: true
+        parent_name:
+          type: string
+      required:
+      - parent_id
+      - parent_name
     ImportanceEnum:
       enum:
       - required

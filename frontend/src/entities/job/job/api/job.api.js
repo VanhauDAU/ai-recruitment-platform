@@ -15,6 +15,12 @@ export async function getHomepageBestJobs(params = {}) {
   return data
 }
 
+// Tỉnh và phường/xã đang có tin công khai (kèm số tin) cho chip địa điểm.
+export async function getHomepageBestJobLocations() {
+  const { data } = await api.get('/public/jobs/best/locations/')
+  return data
+}
+
 export async function getCvJobRecommendations(publicId) {
   const { data } = await api.get(`/candidate/jobs/recommendations/by-cv/${publicId}/`)
   return data

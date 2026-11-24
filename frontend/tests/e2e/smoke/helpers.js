@@ -42,6 +42,8 @@ export async function mockPublicApi(page) {
     }
     const body = path === '/api/public/jobs/best/'
       ? []
+      : path === '/api/public/jobs/best/locations/'
+        ? { provinces: [], wards: [] }
       : path === '/api/public/jobs/'
         ? { count: 0, results: [] }
         : path === '/api/public/jobs/stats/'
