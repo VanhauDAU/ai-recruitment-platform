@@ -24,7 +24,7 @@ export default function UploadCvForm({ onUploaded, disabled = false }) {
           <div className="px-4 py-3">
             {file ? (
               <p className="flex items-center justify-center gap-2 text-sm font-semibold text-slate-700">
-                <FileTextOutlined className="text-lg text-[#00b14f]" />
+                <FileTextOutlined className="text-lg text-[var(--brand-primary)]" />
                 <span className="truncate">{file.name}</span>
               </p>
             ) : (
@@ -43,7 +43,7 @@ export default function UploadCvForm({ onUploaded, disabled = false }) {
 
       <ul className="space-y-1 text-xs text-slate-500">
         {CV_UPLOAD_STANDARDS.map((rule) => (
-          <li key={rule} className="flex gap-2"><CheckCircleFilled className="mt-0.5 text-[#00b14f]" />{rule}</li>
+          <li key={rule} className="flex gap-2"><CheckCircleFilled className="mt-0.5 text-[var(--brand-primary)]" />{rule}</li>
         ))}
       </ul>
 
@@ -57,7 +57,7 @@ export default function UploadCvForm({ onUploaded, disabled = false }) {
           onClick={submit}
           loading={uploading}
           disabled={disabled || !file}
-          className="!bg-[#00b14f] !font-bold disabled:!bg-slate-200"
+          className="!bg-[var(--brand-primary)] !font-bold disabled:!bg-slate-200"
         >
           Tải CV lên
         </Button>

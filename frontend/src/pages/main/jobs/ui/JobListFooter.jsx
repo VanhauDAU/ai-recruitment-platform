@@ -44,7 +44,7 @@ export default function JobListFooter({ relatedCategories, onCategorySelect, cat
       <SatisfactionSurvey />
 
       {catChain.length >= 2 && (
-        <p className="rounded-xl border border-emerald-100 bg-emerald-50 px-5 py-4 text-sm leading-6 text-gray-700">
+        <p className="rounded-xl border border-[var(--brand-primary)]/20 bg-[var(--brand-primary-soft)] px-5 py-4 text-sm leading-6 text-gray-700">
           <span className="font-semibold text-[var(--brand-primary)]">{catChain.at(-1).name}</span>{' '}
           là chuyên môn được nhiều doanh nghiệp uy tín ưu tiên tuyển dụng. Bạn có thể dễ dàng
           tìm thấy việc làm thuộc chuyên môn này trong danh mục nghề{' '}
@@ -104,7 +104,7 @@ function SatisfactionSurvey() {
                 type="button"
                 disabled={sending}
                 onClick={() => rate(value, label)}
-                className="flex w-[72px] cursor-pointer flex-col items-center gap-1 rounded-xl border border-gray-200 bg-white py-2.5 transition hover:border-[var(--brand-primary)] hover:bg-green-50 disabled:cursor-wait disabled:opacity-60"
+                className="flex w-[72px] cursor-pointer flex-col items-center gap-1 rounded-xl border border-gray-200 bg-white py-2.5 transition hover:border-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)] disabled:cursor-wait disabled:opacity-60"
               >
                 <span className="text-xl grayscale transition group-hover:grayscale-0">{emoji}</span>
                 <span className="text-xs text-gray-600">{label}</span>

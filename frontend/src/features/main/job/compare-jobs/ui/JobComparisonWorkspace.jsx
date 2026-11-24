@@ -311,7 +311,7 @@ export default function JobComparisonWorkspace() {
           </div>
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={handleCopyLink} className="inline-flex h-11 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 hover:border-slate-300 hover:text-slate-800"><CopyOutlined /> Sao chép liên kết</button>
-            <Link to="/viec-lam" className="inline-flex h-11 items-center gap-2 rounded-lg border border-slate-200 !bg-white px-4 text-sm font-semibold !text-slate-600 hover:!border-emerald-300 hover:!text-[var(--brand-primary)]"><PlusOutlined /> Thêm việc khác</Link>
+            <Link to="/viec-lam" className="inline-flex h-11 items-center gap-2 rounded-lg border border-slate-200 !bg-white px-4 text-sm font-semibold !text-slate-600 hover:!border-[var(--brand-primary)]/40 hover:!text-[var(--brand-primary)]"><PlusOutlined /> Thêm việc khác</Link>
           </div>
         </div>
 

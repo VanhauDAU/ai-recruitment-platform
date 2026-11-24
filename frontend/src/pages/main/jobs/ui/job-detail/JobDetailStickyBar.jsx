@@ -34,7 +34,7 @@ export default function JobDetailStickyBar({ job, relatedJobs, applicationStatus
         </div>
         <div className="hidden shrink-0 items-center gap-2 md:flex">
           <JobCompareButton job={job} />
-          <button type="button" onClick={onSave} disabled={savePending} className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-emerald-200 text-[var(--brand-primary)] hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60" aria-label="Lưu tin"><HeartOutlined /></button>
+          <button type="button" onClick={onSave} disabled={savePending} className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-[var(--brand-primary)]/20 text-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)] disabled:cursor-not-allowed disabled:opacity-60" aria-label="Lưu tin"><HeartOutlined /></button>
           {isAcceptingApplications(job) ? <button type="button" onClick={onApply} disabled={applicationStatus.isLimitReached} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg bg-[var(--brand-primary)] px-5 text-sm font-bold text-white hover:bg-[var(--brand-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60">{applicationStatus.isResubmission ? <i className="fa-solid fa-arrow-rotate-right" aria-hidden="true" /> : <SendOutlined />} {applicationStatus.applyLabel}</button> : <JobApplicationClosed compact />}
         </div>
       </div>
@@ -44,7 +44,7 @@ export default function JobDetailStickyBar({ job, relatedJobs, applicationStatus
 
 function AnchorButton({ target, icon, children }) {
   return (
-    <button type="button" onClick={() => scrollToSection(target)} className="shrink-0 cursor-pointer rounded-full bg-slate-100 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-emerald-50 hover:text-[var(--brand-primary)] sm:px-4 sm:text-sm">
+    <button type="button" onClick={() => scrollToSection(target)} className="shrink-0 cursor-pointer rounded-full bg-slate-100 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-[var(--brand-primary-soft)] hover:text-[var(--brand-primary)] sm:px-4 sm:text-sm">
       {icon} {children}
     </button>
   )

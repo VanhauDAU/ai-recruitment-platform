@@ -57,7 +57,7 @@ const STATUS_ICONS = {
   expired: <ClockCircleOutlined />,
   closed: <StopOutlined />,
 }
-const primaryLinkClass = 'inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg !bg-emerald-600 px-3.5 text-sm font-semibold !text-white shadow-sm transition hover:!bg-emerald-500'
+const primaryLinkClass = 'inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg !bg-[var(--brand-primary)] px-3.5 text-sm font-semibold !text-white shadow-sm transition hover:!bg-[var(--brand-primary-hover)]'
 
 function JobListSkeleton() {
   return (

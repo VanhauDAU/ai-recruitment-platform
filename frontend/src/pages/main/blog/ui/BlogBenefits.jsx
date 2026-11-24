@@ -40,7 +40,7 @@ export default function BlogBenefits() {
         aria-label="Ẩn khối lợi ích"
         title="Ẩn khối lợi ích"
         onClick={() => setVisible(false)}
-        className="absolute right-2 top-2 z-20 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-black/10 text-sm text-emerald-200 transition hover:bg-black/20 hover:text-white sm:right-6 sm:top-5 sm:h-9 sm:w-9"
+        className="absolute right-2 top-2 z-20 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-black/10 text-sm text-[color-mix(in_srgb,var(--brand-primary)_40%,#fff)] transition hover:bg-black/20 hover:text-white sm:right-6 sm:top-5 sm:h-9 sm:w-9"
       >
         <CloseOutlined />
       </button>
@@ -54,7 +54,7 @@ export default function BlogBenefits() {
           {BENEFITS.map((item) => (
             <div
               key={item.title}
-              className="group relative flex min-h-48 overflow-hidden rounded-xl border border-emerald-300/50 bg-[#004f40] text-center transition duration-300 hover:-translate-y-0.5 hover:border-emerald-200/80 hover:shadow-lg hover:shadow-black/10 sm:min-h-56 sm:rounded-2xl"
+              className="group relative flex min-h-48 overflow-hidden rounded-xl border border-[var(--brand-primary)]/20 bg-[#004f40] text-center transition duration-300 hover:-translate-y-0.5 hover:border-[var(--brand-primary)]/40 hover:shadow-lg hover:shadow-black/10 sm:min-h-56 sm:rounded-2xl"
               style={{
                 backgroundImage: `url(${item.image})`,
                 backgroundPosition: 'center',

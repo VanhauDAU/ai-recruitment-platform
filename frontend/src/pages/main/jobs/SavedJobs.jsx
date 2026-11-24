@@ -16,7 +16,7 @@ const RECOMMENDATION_LIMIT = 12
 function PromoAside() {
   return (
     <aside className="hidden lg:block">
-      <div className="sticky top-24 overflow-hidden rounded-2xl bg-gradient-to-br from-[#063d30] via-[#087552] to-[var(--brand-primary)] p-6 text-white shadow-lg shadow-emerald-950/10">
+      <div className="sticky top-24 overflow-hidden rounded-2xl bg-gradient-to-br from-[var(--brand-surface-dark)] via-[var(--brand-primary-hover)] to-[var(--brand-primary)] p-6 text-white shadow-lg shadow-[var(--brand-primary)]/10">
         <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 text-xl ring-1 ring-white/20">
           <FileTextOutlined />
         </span>
@@ -30,7 +30,7 @@ function PromoAside() {
         </p>
         <Link
           to="/mau-cv"
-          className="mt-5 inline-flex rounded-full !bg-white px-5 py-2.5 text-sm font-bold !text-emerald-700 transition hover:-translate-y-0.5 hover:!bg-emerald-50"
+          className="mt-5 inline-flex rounded-full !bg-white px-5 py-2.5 text-sm font-bold !text-[var(--brand-primary-hover)] transition hover:-translate-y-0.5 hover:!bg-[var(--brand-primary-soft)]"
         >
           Tạo CV ngay
         </Link>

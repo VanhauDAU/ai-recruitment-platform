@@ -29,7 +29,7 @@ export default function WardSuggestionCard({ wards, onSelect }) {
             key={ward.id}
             type="button"
             onClick={() => onSelect(ward.id)}
-            className="cursor-pointer rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 transition hover:border-[var(--brand-primary)] hover:bg-green-50 hover:text-[var(--brand-primary)]"
+            className="cursor-pointer rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 transition hover:border-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)] hover:text-[var(--brand-primary)]"
           >
             {ward.name}
             {ward.provinceName && <span className="ml-1 text-gray-400">tại {ward.provinceName}</span>}

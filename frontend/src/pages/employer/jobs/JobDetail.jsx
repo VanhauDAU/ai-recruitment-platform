@@ -193,7 +193,7 @@ export default function JobDetail() {
     const notFound = jobQuery.error?.response?.status === 404
     return (
       <section className="space-y-3 pb-4 pt-3">
-        <Link to={employerAppPath('/jobs')} className="inline-flex items-center gap-1.5 text-xs font-medium !text-slate-500 hover:!text-emerald-700">
+        <Link to={employerAppPath('/jobs')} className="inline-flex items-center gap-1.5 text-xs font-medium !text-slate-500 hover:!text-[var(--brand-primary-hover)]">
           <ArrowLeftOutlined aria-hidden /> {m.employer_job_detail_back_to_jobs()}
         </Link>
         <Alert

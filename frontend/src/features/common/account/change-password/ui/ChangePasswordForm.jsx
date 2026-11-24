@@ -284,7 +284,7 @@ export default function ChangePasswordForm({
             size="middle"
             loading={mutation.isPending}
             disabled={needsReauth}
-            className="!h-10 min-w-28 !rounded-lg !bg-emerald-600 font-semibold text-white shadow-sm hover:!bg-emerald-700 !border-emerald-600"
+            className="!h-10 min-w-28 !rounded-lg !bg-[var(--brand-primary)] font-semibold text-white shadow-sm hover:!bg-[var(--brand-primary-hover)] !border-[var(--brand-primary)]"
           >
             {hasPassword ? m.account_password_submit_update() : m.account_password_submit_create()}
           </Button>

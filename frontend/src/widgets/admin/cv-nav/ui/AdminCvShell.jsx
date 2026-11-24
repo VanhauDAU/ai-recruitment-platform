@@ -13,7 +13,7 @@ const ITEMS = [
 
 export function AdminCvNav() {
   return <nav aria-label="Các trang Mẫu CV" className="-mx-1 flex gap-1 overflow-x-auto rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
-    {ITEMS.map((item) => <NavLink key={item.to} to={adminPath(item.to)} className={({ isActive }) => `flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition ${isActive ? '!bg-emerald-50 !text-emerald-700' : '!text-slate-600 hover:!bg-slate-50 hover:!text-slate-900'}`}>
+    {ITEMS.map((item) => <NavLink key={item.to} to={adminPath(item.to)} className={({ isActive }) => `flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition ${isActive ? '!bg-[var(--brand-primary-soft)] !text-[var(--brand-primary-hover)]' : '!text-slate-600 hover:!bg-slate-50 hover:!text-slate-900'}`}>
       {item.icon}{item.label}
     </NavLink>)}
   </nav>

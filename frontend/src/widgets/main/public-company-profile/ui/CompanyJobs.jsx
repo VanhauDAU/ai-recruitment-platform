@@ -31,7 +31,7 @@ function JobListError({ onRetry }) {
   return (
     <div className="rounded-xl bg-slate-50 px-3 py-4 text-center" role="alert">
       <p className="text-sm text-slate-500">Chưa thể tải danh sách tin tuyển dụng.</p>
-      <button type="button" onClick={onRetry} className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-emerald-700 hover:text-emerald-800">
+      <button type="button" onClick={onRetry} className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-[var(--brand-primary-hover)]">
         <ReloadOutlined aria-hidden="true" /> Thử lại
       </button>
     </div>
@@ -69,7 +69,7 @@ export function CompanyJobsPreview({ company, jobsPath }) {
       <div className="mt-4 flex justify-center">
         <Link
           to={jobsPath}
-          className="inline-flex h-10 items-center gap-2 rounded-lg border border-emerald-200 px-4 text-sm font-semibold !text-[var(--brand-primary)] hover:!bg-emerald-50"
+          className="inline-flex h-10 items-center gap-2 rounded-lg border border-[var(--brand-primary)]/20 px-4 text-sm font-semibold !text-[var(--brand-primary)] hover:!bg-[var(--brand-primary-soft)]"
         >
           Xem tất cả tin tuyển dụng
         </Link>

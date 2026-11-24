@@ -48,7 +48,7 @@ function CandidateCell({ application }) {
   const displayName = application.candidate_name || application.candidate_email || m.employer_campaign_cv_candidate_fallback()
   return (
     <div className="flex min-w-52 items-center gap-3">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-50 font-bold text-emerald-700">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--brand-primary-soft)] font-bold text-[var(--brand-primary-hover)]">
         {displayName.trim().charAt(0).toLocaleUpperCase(getIntlLocale())}
       </span>
       <div className="min-w-0">
@@ -195,7 +195,7 @@ export default function CampaignApplyCvPanel({ publicId }) {
           </div>
           <button
             type="button"
-            className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl px-3 text-sm font-medium text-slate-500 transition hover:bg-white hover:text-emerald-700"
+            className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl px-3 text-sm font-medium text-slate-500 transition hover:bg-white hover:text-[var(--brand-primary-hover)]"
             onClick={resetFilters}
           >
             <ReloadOutlined /> {m.employer_campaign_cv_reset()}
@@ -211,7 +211,7 @@ export default function CampaignApplyCvPanel({ publicId }) {
           <button
             type="button"
             aria-pressed={scope === 'unread'}
-            className={`rounded-full border px-3 py-1.5 text-slate-600 transition ${scope === 'unread' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-transparent bg-slate-100 hover:bg-slate-200'}`}
+            className={`rounded-full border px-3 py-1.5 text-slate-600 transition ${scope === 'unread' ? 'border-[var(--brand-primary)]/20 bg-[var(--brand-primary-soft)] text-[var(--brand-primary-hover)]' : 'border-transparent bg-slate-100 hover:bg-slate-200'}`}
             onClick={() => updateFilter(setScope)('unread')}
           >
             {m.employer_campaign_cv_scope_unread()} <strong>{report.unviewed_count || 0}</strong>
@@ -219,7 +219,7 @@ export default function CampaignApplyCvPanel({ publicId }) {
           <button
             type="button"
             aria-pressed={scope === 'unanswered'}
-            className={`rounded-full border px-3 py-1.5 text-slate-600 transition ${scope === 'unanswered' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-transparent bg-slate-100 hover:bg-slate-200'}`}
+            className={`rounded-full border px-3 py-1.5 text-slate-600 transition ${scope === 'unanswered' ? 'border-[var(--brand-primary)]/20 bg-[var(--brand-primary-soft)] text-[var(--brand-primary-hover)]' : 'border-transparent bg-slate-100 hover:bg-slate-200'}`}
             onClick={() => updateFilter(setScope)('unanswered')}
           >
             {m.employer_campaign_cv_scope_unanswered()} <strong>{report.unanswered_count || 0}</strong>
@@ -228,7 +228,7 @@ export default function CampaignApplyCvPanel({ publicId }) {
         <button
           type="button"
           disabled={!pageData.count || exportMutation.isPending}
-          className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 text-sm font-semibold text-emerald-700 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400"
+          className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-[var(--brand-primary)]/20 bg-[var(--brand-primary-soft)] px-4 text-sm font-semibold text-[var(--brand-primary-hover)] shadow-sm transition hover:border-[var(--brand-primary)]/40 hover:bg-[var(--brand-primary-soft)] disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-400"
           onClick={() => exportMutation.mutate()}
         >
           <DownloadOutlined /> {m.employer_campaign_cv_export()}
@@ -319,7 +319,7 @@ export default function CampaignApplyCvPanel({ publicId }) {
                 render: (_, application) => (
                   <Link
                     to={employerAppPath(`/applications?campaign=${publicId}&application=${application.public_id}`)}
-                    className="inline-flex items-center gap-1 whitespace-nowrap font-semibold !text-emerald-700"
+                    className="inline-flex items-center gap-1 whitespace-nowrap font-semibold !text-[var(--brand-primary-hover)]"
                   >
                     <EyeOutlined /> {m.employer_campaign_cv_details()}
                   </Link>

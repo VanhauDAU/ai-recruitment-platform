@@ -44,7 +44,7 @@
 }
 
 .knowledge-sidebar__eyebrow {
-  color: var(--brand-primary, #00b14f);
+  color: var(--brand-primary);
   font-size: 12px;
   font-weight: 750;
   letter-spacing: .04em;

@@ -102,9 +102,9 @@ export function EmployerBusinessDocumentCard({
                           aria-label={m.employer_account_docs_view_submitted_aria({ fileName: displayedFileName })}
                           disabled={viewingDocument}
                           onClick={() => onViewDocument(document)}
-                          className="inline-flex min-w-0 max-w-full cursor-pointer items-center gap-2 rounded-md border border-transparent px-2 py-1 text-sm font-medium text-slate-700 transition hover:border-emerald-100 hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 active:bg-emerald-100 disabled:cursor-wait disabled:opacity-60"
+                          className="inline-flex min-w-0 max-w-full cursor-pointer items-center gap-2 rounded-md border border-transparent px-2 py-1 text-sm font-medium text-slate-700 transition hover:border-[var(--brand-primary)]/40 hover:bg-[var(--brand-primary-soft)] hover:text-[var(--brand-primary-hover)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-primary)] active:bg-[var(--brand-primary-soft)] disabled:cursor-wait disabled:opacity-60"
                         >
-                          <FileTextOutlined className="shrink-0 text-emerald-600" />
+                          <FileTextOutlined className="shrink-0 text-[var(--brand-primary)]" />
                           <span className="truncate">
                             {viewingDocument ? m.employer_account_docs_opening_file() : displayedFileName}
                           </span>
@@ -232,7 +232,7 @@ export function EmployerBusinessDocumentCard({
         <aside className="flex flex-col items-center gap-3 text-center">
           <p className="text-sm font-medium text-slate-800">{m.employer_account_docs_sample()}</p>
           <Illustration variant={variant} />
-          {showTemplate && <a href={AUTHORIZATION_TEMPLATE_URL} target="_blank" rel="noreferrer" className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-emerald-500 px-4 py-2 text-center text-sm font-medium text-emerald-600 transition hover:bg-emerald-50 sm:w-auto"><DownloadOutlined />{m.employer_account_docs_download_authorization_template()}</a>}
+          {showTemplate && <a href={AUTHORIZATION_TEMPLATE_URL} target="_blank" rel="noreferrer" className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-[var(--brand-primary)] px-4 py-2 text-center text-sm font-medium text-[var(--brand-primary)] transition hover:bg-[var(--brand-primary-soft)] sm:w-auto"><DownloadOutlined />{m.employer_account_docs_download_authorization_template()}</a>}
         </aside>
       </div>
     </section>

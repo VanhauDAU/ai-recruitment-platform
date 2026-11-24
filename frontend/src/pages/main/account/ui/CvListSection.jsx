@@ -12,7 +12,7 @@ export default function CvListSection({ title, action, emptyText, cvs, loading, 
         <button
           type="button"
           onClick={action.onClick}
-          className="inline-flex items-center gap-1.5 rounded-full bg-[#00b14f] px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-[#008a3e] cursor-pointer"
+          className="inline-flex items-center gap-1.5 rounded-full bg-[var(--brand-primary)] px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-[var(--brand-primary-hover)] cursor-pointer"
         >
           {action.label}
         </button>

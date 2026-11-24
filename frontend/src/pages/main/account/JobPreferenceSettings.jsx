@@ -85,7 +85,7 @@ export default function JobPreferenceSettings() {
             submitLabel="Cập nhật"
             renderFooter={({ saving, catalogLoading }) => (
               <div className="mt-4 flex justify-center border-t border-slate-100 pt-4">
-                <Button type="primary" htmlType="submit" size="middle" loading={saving} disabled={catalogLoading} className="!h-9 !min-w-32 !rounded-lg !font-semibold !bg-emerald-600 hover:!bg-emerald-700 !border-emerald-600">Cập nhật</Button>
+                <Button type="primary" htmlType="submit" size="middle" loading={saving} disabled={catalogLoading} className="!h-9 !min-w-32 !rounded-lg !font-semibold !bg-[var(--brand-primary)] hover:!bg-[var(--brand-primary-hover)] !border-[var(--brand-primary)]">Cập nhật</Button>
               </div>
             )}
             onProfileSaved={async (values) => {

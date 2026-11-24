@@ -132,7 +132,7 @@ export default function CompanyContentChangeQueue({ companyPublicId }) {
       key: 'company',
       render: (_, row) => (
         <span className="content-change-queue__company">
-          <Link className="!text-emerald-700" to={adminPath(`/companies/${row.company.public_id}?tab=public-page`)}>
+          <Link className="!text-[var(--brand-primary-hover)]" to={adminPath(`/companies/${row.company.public_id}?tab=public-page`)}>
             {row.company.name}
           </Link>
           {row.company.content_review_required && <Tag color="orange">Duyệt trước</Tag>}

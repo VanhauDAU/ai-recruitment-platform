@@ -145,7 +145,7 @@ export default function CompanyPublicPage({ company, enabled }) {
               href={`${MAIN_PORTAL_URL.replace(/\/$/, '')}${page.public_path}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-semibold !text-emerald-700"
+              className="font-semibold !text-[var(--brand-primary-hover)]"
             >
               Mở trang công khai
             </a>

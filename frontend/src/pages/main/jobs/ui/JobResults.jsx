@@ -51,7 +51,7 @@ export default function JobResults({
                 onClick={() => onSearchByChange(tab.key)}
                 className={`job-list-chip cursor-pointer rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
                   active
-                    ? 'border-[var(--brand-primary)] bg-green-50 text-[var(--brand-primary)]'
+                    ? 'border-[var(--brand-primary)] bg-[var(--brand-primary-soft)] text-[var(--brand-primary)]'
                     : 'border-gray-200 bg-white text-gray-600 hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]'
                 }`}
               >

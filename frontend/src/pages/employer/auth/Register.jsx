@@ -43,13 +43,13 @@ function RegistrationRules({ expanded, hotline, onToggle, siteName }) {
   const phoneHref = hotline ? `tel:${hotline.replace(/[^\d+]/g, '')}` : undefined
 
   return (
-    <section className="login-field mb-7 overflow-hidden rounded-xl border border-emerald-400 bg-white" aria-labelledby="registration-rules-title">
+    <section className="login-field mb-7 overflow-hidden rounded-xl border border-[var(--brand-primary)] bg-white" aria-labelledby="registration-rules-title">
       <button
         type="button"
         aria-controls="registration-rules-content"
         aria-expanded={expanded}
         onClick={onToggle}
-        className="flex min-h-12 w-full cursor-pointer items-center justify-between gap-4 px-4 py-3 text-left text-emerald-700 transition-colors hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-emerald-600 sm:px-5"
+        className="flex min-h-12 w-full cursor-pointer items-center justify-between gap-4 px-4 py-3 text-left text-[var(--brand-primary-hover)] transition-colors hover:bg-[var(--brand-primary-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[var(--brand-primary)] sm:px-5"
       >
         <span id="registration-rules-title" className="text-base font-bold">{m.employer_account_register_rules_title()}</span>
         <span className="flex shrink-0 items-center gap-2 text-sm font-semibold">
@@ -58,7 +58,7 @@ function RegistrationRules({ expanded, hotline, onToggle, siteName }) {
       </button>
 
       {expanded && (
-        <div id="registration-rules-content" className="border-t border-emerald-100 px-4 pb-5 pt-4 text-sm leading-6 text-slate-600 sm:px-5">
+        <div id="registration-rules-content" className="border-t border-[var(--brand-primary)]/20 px-4 pb-5 pt-4 text-sm leading-6 text-slate-600 sm:px-5">
           <p>
             {m.employer_account_register_rules_1_before()}<strong className="font-semibold text-slate-800">{siteName}</strong>{m.employer_account_register_rules_1_after()}
           </p>
@@ -70,9 +70,9 @@ function RegistrationRules({ expanded, hotline, onToggle, siteName }) {
           </p>
           {hotline && (
             <p className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 font-medium text-slate-700">
-              <PhoneOutlined className="text-emerald-600" aria-hidden="true" />
+              <PhoneOutlined className="text-[var(--brand-primary)]" aria-hidden="true" />
               {m.employer_account_register_rules_hotline()}
-              <a href={phoneHref} className="font-bold !text-emerald-700 hover:!text-emerald-800 hover:underline">{hotline}</a>
+              <a href={phoneHref} className="font-bold !text-[var(--brand-primary-hover)] hover:underline">{hotline}</a>
             </p>
           )}
         </div>
@@ -213,7 +213,7 @@ export default function EmployerRegister() {
       <header className="login-card mb-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <AuthLogo className="!mx-0 !h-12 !w-12 !rounded-xl" />
-          <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">{m.employer_account_register_badge()}</span>
+          <span className="rounded-full bg-[var(--brand-primary-soft)] px-3 py-1.5 text-xs font-bold text-[var(--brand-primary-hover)]">{m.employer_account_register_badge()}</span>
         </div>
         <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">{m.employer_account_register_title()}</h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
@@ -277,7 +277,7 @@ export default function EmployerRegister() {
                   },
                 ]}
               >
-                <Input autoFocus autoComplete="email" prefix={<MailOutlined className="text-emerald-600" />} placeholder="hr@congty.vn" className="!h-12 !rounded-lg !text-base" />
+                <Input autoFocus autoComplete="email" prefix={<MailOutlined className="text-[var(--brand-primary)]" />} placeholder="hr@congty.vn" className="!h-12 !rounded-lg !text-base" />
               </Form.Item>
               <p className="-mt-3 mb-5 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-900 md:col-span-2">
                 <InfoCircleOutlined className="mt-0.5 shrink-0 text-amber-600" aria-hidden="true" />
@@ -286,7 +286,7 @@ export default function EmployerRegister() {
               <Form.Item name="password" label={m.employer_account_register_password_label()} rules={[{ required: true, message: m.employer_account_register_password_required() }, { validator: employerPasswordValidationRule }]} className="!mb-1">
                 <Input.Password
                   autoComplete="new-password"
-                  prefix={<LockOutlined className="text-emerald-600" />}
+                  prefix={<LockOutlined className="text-[var(--brand-primary)]" />}
                   placeholder={m.employer_account_register_password_placeholder()}
                   className="!h-12 !rounded-lg !text-base"
                   onFocus={() => setPasswordFocused(true)}
@@ -306,7 +306,7 @@ export default function EmployerRegister() {
                   }),
                 ]}
               >
-                <Input.Password autoComplete="new-password" prefix={<LockOutlined className="text-emerald-600" />} placeholder={m.employer_account_register_confirm_label()} className="!h-12 !rounded-lg !text-base" />
+                <Input.Password autoComplete="new-password" prefix={<LockOutlined className="text-[var(--brand-primary)]" />} placeholder={m.employer_account_register_confirm_label()} className="!h-12 !rounded-lg !text-base" />
               </Form.Item>
               {passwordFocused && <div className="md:col-span-2"><PasswordRequirements password={password} mode="employer" /></div>}
             </div>
@@ -320,7 +320,7 @@ export default function EmployerRegister() {
             <RegistrationSectionTitle title={m.employer_account_register_step2_title()} description={m.employer_account_register_step2_desc()} />
             <EmployerRegistrationFields provinces={provincesQuery.data || []} locationsLoading={provincesQuery.isLoading} />
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <button type="button" onClick={returnToAccount} className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 px-6 py-4 text-base font-bold text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700"><ArrowLeftOutlined />{m.employer_account_register_back()}</button>
+              <button type="button" onClick={returnToAccount} className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 px-6 py-4 text-base font-bold text-slate-700 transition hover:border-[var(--brand-primary)]/40 hover:text-[var(--brand-primary-hover)]"><ArrowLeftOutlined />{m.employer_account_register_back()}</button>
               <button type="submit" disabled={loading} className="submit-btn flex cursor-pointer items-center justify-center gap-2.5 rounded-xl px-6 py-4 text-base font-bold text-white disabled:cursor-not-allowed disabled:opacity-70">
                 {loading ? m.employer_account_register_submitting() : <><span>{m.employer_account_register_submit()}</span><ArrowRightOutlined /></>}
               </button>
@@ -331,7 +331,7 @@ export default function EmployerRegister() {
 
       <p className="login-field mt-6 text-center text-sm text-slate-500">
         {m.employer_account_register_have_account()}{' '}
-        <Link to={employerAppPath('/login')} className="font-semibold !text-emerald-700 hover:underline">{m.employer_account_register_login_now()}</Link>
+        <Link to={employerAppPath('/login')} className="font-semibold !text-[var(--brand-primary-hover)] hover:underline">{m.employer_account_register_login_now()}</Link>
       </p>
     </div>
   )

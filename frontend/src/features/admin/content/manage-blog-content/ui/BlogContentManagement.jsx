@@ -152,7 +152,7 @@ function PublicPostUrl({ post }) {
       {PUBLIC_EDITORIAL_STATES.has(post.editorial_state) && <ExportOutlined className="shrink-0" aria-hidden="true" />}
     </>
   )
-  const className = 'mt-1 flex w-fit max-w-full items-center gap-1 text-xs focus-visible:rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600'
+  const className = 'mt-1 flex w-fit max-w-full items-center gap-1 text-xs focus-visible:rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-primary)]'
 
   if (!PUBLIC_EDITORIAL_STATES.has(post.editorial_state)) {
     return <span className={`${className} cursor-not-allowed !text-slate-400`} title="Chỉ mở được ở trang public sau khi bài viết được xuất bản">{content}</span>
@@ -163,7 +163,7 @@ function PublicPostUrl({ post }) {
       href={path}
       target="_blank"
       rel="noreferrer"
-      className={`${className} !text-slate-500 transition hover:!text-emerald-700 hover:underline`}
+      className={`${className} !text-slate-500 transition hover:!text-[var(--brand-primary-hover)] hover:underline`}
       aria-label={`Mở URL ${path} ở trang public`}
     >
       {content}
@@ -302,11 +302,11 @@ function PostList() {
       ...sortable('title'),
       render: (_, row) => (
         <div className="flex min-w-0 gap-3">
-          <AdminPostLink post={row} className="shrink-0 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600" label={`Mở ảnh bài “${row.title}” trong trang admin`}>
+          <AdminPostLink post={row} className="shrink-0 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-primary)]" label={`Mở ảnh bài “${row.title}” trong trang admin`}>
             {row.thumbnail_url ? <img src={row.thumbnail_url} alt="" className="h-16 w-24 rounded-lg object-cover transition hover:opacity-85" /> : <span className="grid h-16 w-24 place-items-center rounded-lg bg-slate-100 text-2xl font-bold text-slate-300">{row.title?.[0]}</span>}
           </AdminPostLink>
           <div className="min-w-0">
-            <AdminPostLink post={row} className="line-clamp-2 font-semibold !text-slate-800 transition hover:!text-emerald-700 hover:underline focus-visible:rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">
+            <AdminPostLink post={row} className="line-clamp-2 font-semibold !text-slate-800 transition hover:!text-[var(--brand-primary-hover)] hover:underline focus-visible:rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-primary)]">
               {row.title}
             </AdminPostLink>
             <PublicPostUrl post={row} />
@@ -366,8 +366,8 @@ function PostList() {
           >
             <Card
               size="small"
-              className={`h-full cursor-pointer transition hover:border-emerald-300 hover:shadow-sm ${
-                ((key === 'all' && !status) || status === key) ? 'border-emerald-500 bg-emerald-50/60' : ''
+              className={`h-full cursor-pointer transition hover:border-[var(--brand-primary)]/40 hover:shadow-sm ${
+                ((key === 'all' && !status) || status === key) ? 'border-[var(--brand-primary)] bg-[var(--brand-primary-soft)]' : ''
               }`}
             >
               <p className="text-xs text-slate-500">{label}</p><p className="mt-1 text-2xl font-bold text-slate-800">{stats[key] || 0}</p>
@@ -502,12 +502,12 @@ function PostList() {
                     />
                   </label>
                   {row.thumbnail_url && (
-                    <AdminPostLink post={row} className="shrink-0 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600" label={`Mở ảnh bài “${row.title}” trong trang admin`}>
+                    <AdminPostLink post={row} className="shrink-0 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-primary)]" label={`Mở ảnh bài “${row.title}” trong trang admin`}>
                       <img src={row.thumbnail_url} alt="" className="h-16 w-24 rounded-lg object-cover" />
                     </AdminPostLink>
                   )}
                   <div className="min-w-0 flex-1">
-                    <AdminPostLink post={row} className="line-clamp-2 font-semibold !text-slate-800 hover:!text-emerald-700 hover:underline focus-visible:rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600">
+                    <AdminPostLink post={row} className="line-clamp-2 font-semibold !text-slate-800 hover:!text-[var(--brand-primary-hover)] hover:underline focus-visible:rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-primary)]">
                       {row.title}
                     </AdminPostLink>
                     <PublicPostUrl post={row} />
@@ -616,7 +616,7 @@ function SortableDragHandle({ label, disabled = false }) {
       {...sortable.listeners}
       type="button"
       disabled={disabled}
-      className="grid min-h-11 min-w-11 cursor-grab touch-none place-items-center rounded-lg border-0 bg-transparent text-slate-400 transition hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40"
+      className="grid min-h-11 min-w-11 cursor-grab touch-none place-items-center rounded-lg border-0 bg-transparent text-slate-400 transition hover:bg-[var(--brand-primary-soft)] hover:text-[var(--brand-primary-hover)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-primary)] active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40"
       aria-label={label}
       title="Kéo để đổi thứ tự"
     >
@@ -627,8 +627,8 @@ function SortableDragHandle({ label, disabled = false }) {
 
 function SortableDragOverlay({ item, testId, title, subtitle }) {
   return <DragOverlay dropAnimation={{ duration: 180, easing: 'ease-out' }}>
-    {item && <div data-testid={testId} aria-hidden="true" className="flex min-w-64 max-w-md items-center gap-3 rounded-xl border-2 border-emerald-500 bg-white px-4 py-3 shadow-2xl">
-      <HolderOutlined className="shrink-0 text-lg text-emerald-600" />
+    {item && <div data-testid={testId} aria-hidden="true" className="flex min-w-64 max-w-md items-center gap-3 rounded-xl border-2 border-[var(--brand-primary)] bg-white px-4 py-3 shadow-2xl">
+      <HolderOutlined className="shrink-0 text-lg text-[var(--brand-primary)]" />
       <div className="min-w-0">
         <p className="truncate font-semibold text-slate-800">{title}</p>
         <p className="truncate text-xs text-slate-500">{subtitle}</p>

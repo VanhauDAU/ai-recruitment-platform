@@ -22,7 +22,7 @@ export default function AdminJobPublicLink({ job }) {
     <Tooltip title={label}>
       <a
         aria-label={`${label} (tab mới)`}
-        className={`${BASE} !text-slate-500 transition hover:!text-emerald-700`}
+        className={`${BASE} !text-slate-500 transition hover:!text-[var(--brand-primary-hover)]`}
         href={path}
         rel="noreferrer"
         target="_blank"

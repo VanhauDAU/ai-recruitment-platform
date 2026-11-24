@@ -23,7 +23,7 @@ function TemplateCard({ template, sortable, onAction }) {
   const rendererKey = currentRendererKey(template)
   const href = adminPath(`/cv/templates/${template.public_id}`)
   const published = template.lifecycle_status === 'published'
-  return <article ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }} className={`group relative flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md ${isDragging ? 'z-10 opacity-60 shadow-lg' : ''}`}>
+  return <article ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }} className={`group relative flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:border-[var(--brand-primary)]/40 hover:shadow-md ${isDragging ? 'z-10 opacity-60 shadow-lg' : ''}`}>
     <Link to={href} tabIndex={-1} aria-hidden="true" className="block !bg-slate-50 px-6 pb-0 pt-4">
       {template.thumbnail_url
         ? <img src={template.thumbnail_url} alt="" loading="lazy" width={210} height={297} className="mx-auto aspect-[210/297] w-full rounded-t border border-b-0 border-slate-200 object-cover object-top shadow-sm" />
@@ -31,7 +31,7 @@ function TemplateCard({ template, sortable, onAction }) {
     </Link>
     <Tag color={status[0]} className="!absolute !right-2 !top-2 !mr-0 shadow-sm">{status[1]}</Tag>
     <div className="flex flex-1 flex-col gap-1 border-t border-slate-100 p-3">
-      <Link to={href} className="truncate font-semibold !text-slate-900 hover:!text-emerald-700">{template.name}</Link>
+      <Link to={href} className="truncate font-semibold !text-slate-900 hover:!text-[var(--brand-primary-hover)]">{template.name}</Link>
       <p className="truncate text-xs text-slate-500">{RENDERER_CONTRACTS[rendererKey]?.label || 'Chưa chọn bố cục'} · {template.usage_count} lượt dùng</p>
       <div className="mt-1 flex items-center gap-1">
         <span className="flex flex-1 -space-x-1">{template.colors.slice(0, 6).map((color) => <span key={color.public_id} title={color.name} className="h-4 w-4 rounded-full border-2 border-white" style={{ background: color.hex_code }} />)}</span>

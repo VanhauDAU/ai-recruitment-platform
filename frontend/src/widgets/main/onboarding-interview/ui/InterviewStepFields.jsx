@@ -22,8 +22,8 @@ function ChoiceChip({ children, onClick, selected }) {
       aria-pressed={selected}
       onClick={onClick}
       className={`shrink-0 cursor-pointer whitespace-nowrap rounded-xl border px-4 py-2.5 text-sm font-medium transition ${selected
-        ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm shadow-emerald-900/20'
-        : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700'
+        ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)] text-white shadow-sm shadow-[var(--brand-primary)]/20'
+        : 'border-slate-200 bg-white text-slate-700 hover:border-[var(--brand-primary)]/40 hover:bg-[var(--brand-primary-soft)] hover:text-[var(--brand-primary-hover)]'
       }`}
     >
       {children}

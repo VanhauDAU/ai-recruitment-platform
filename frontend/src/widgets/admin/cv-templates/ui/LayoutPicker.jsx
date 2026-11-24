@@ -9,9 +9,9 @@ export default function LayoutPicker({ value, onChange, disabled = false }) {
     {Object.values(RENDERER_CONTRACTS).map((contract) => {
       const active = value === contract.key
       return <button key={contract.key} type="button" role="radio" aria-checked={active} title={contract.label} disabled={disabled} onClick={() => onChange?.(contract.key)}
-        className={`min-w-0 rounded-xl border p-1.5 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${active ? 'border-emerald-500 bg-emerald-50/70 shadow-sm ring-2 ring-emerald-500/25' : 'border-slate-200 bg-white hover:border-emerald-300'}`}>
+        className={`min-w-0 rounded-xl border p-1.5 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${active ? 'border-[var(--brand-primary)] bg-[var(--brand-primary-soft)] shadow-sm ring-2 ring-[var(--brand-primary)]/15' : 'border-slate-200 bg-white hover:border-[var(--brand-primary)]/40'}`}>
         <LayoutSchematic rendererKey={contract.key} active={active} />
-        <span className={`mt-1.5 line-clamp-2 block text-[11px] font-semibold leading-tight ${active ? 'text-emerald-800' : 'text-slate-600'}`}>{contract.label}</span>
+        <span className={`mt-1.5 line-clamp-2 block text-[11px] font-semibold leading-tight ${active ? 'text-[var(--brand-primary-hover)]' : 'text-slate-600'}`}>{contract.label}</span>
       </button>
     })}
   </div></div>

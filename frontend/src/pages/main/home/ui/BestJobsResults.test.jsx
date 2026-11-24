@@ -43,7 +43,7 @@ describe('BestJobsResults', () => {
     const labels = container.querySelector('[data-best-job-labels]')
     const title = screen.getByRole('heading', { name: 'Kỹ sư phần mềm' })
 
-    expect(card).toHaveClass('bg-[#f2fbf6]', 'border-l-4', 'border-l-[#00b14f]')
+    expect(card).toHaveClass('bg-[var(--brand-primary-soft)]', 'border-l-4', 'border-l-[var(--brand-primary)]')
     expect(logoFrame).toHaveClass('h-16', 'w-16')
     expect(screen.getByText('TOP')).toBeInTheDocument()
     expect(screen.getByText('Tài trợ')).toBeInTheDocument()

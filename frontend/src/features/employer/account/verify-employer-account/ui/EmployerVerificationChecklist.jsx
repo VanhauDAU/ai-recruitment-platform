@@ -49,7 +49,7 @@ export default function EmployerVerificationChecklist({ profile, onContinue }) {
   }
 
   function stepAction(step) {
-    if (verification[step.key]) return <span className="text-xs font-bold text-emerald-600">{m.employer_account_checklist_done()}</span>
+    if (verification[step.key]) return <span className="text-xs font-bold text-[var(--brand-primary)]">{m.employer_account_checklist_done()}</span>
     return <Button type="text" aria-label={step.actionLabel} icon={<ArrowRightOutlined />} onClick={() => openStep(step)} />
   }
 
@@ -64,9 +64,9 @@ export default function EmployerVerificationChecklist({ profile, onContinue }) {
           <h2 className="text-lg font-extrabold text-slate-900">{m.employer_account_checklist_title()}</h2>
           <p className="mt-1 text-sm text-slate-500">{m.employer_account_checklist_subtitle()}</p>
         </div>
-        <strong className="text-sm text-emerald-600">{m.employer_account_checklist_progress({ percent: progress.percent })}</strong>
+        <strong className="text-sm text-[var(--brand-primary)]">{m.employer_account_checklist_progress({ percent: progress.percent })}</strong>
       </div>
-      <Progress percent={progress.percent} showInfo={false} strokeColor="#00b14f" railColor="#e8edf2" className="!mb-6" />
+      <Progress percent={progress.percent} showInfo={false} strokeColor="var(--brand-primary)" railColor="#e8edf2" className="!mb-6" />
 
       <div className="divide-y divide-slate-100">
         {STEP_DEFINITIONS.map((step) => {
@@ -74,7 +74,7 @@ export default function EmployerVerificationChecklist({ profile, onContinue }) {
           const done = Boolean(verification[step.key])
           return (
             <div key={step.key} className="grid min-h-20 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 py-3 sm:gap-4">
-              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${done ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
+              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${done ? 'bg-[var(--brand-primary-soft)] text-[var(--brand-primary)]' : 'bg-slate-100 text-slate-500'}`}>
                 {done ? <CheckCircleFilled className="text-xl" /> : <Icon className="text-lg" />}
               </span>
               <div className="min-w-0 flex-1">
@@ -105,8 +105,8 @@ export default function EmployerVerificationChecklist({ profile, onContinue }) {
           </Button>
           <div className="rounded-xl bg-slate-50 p-4 text-xs leading-5">
             {m.employer_account_checklist_support_intro()}<br />
-            {m.employer_account_checklist_support_hotline()} <a href={`tel:${hotline.replace(/[^+\d]/g, '')}`} className="font-bold text-emerald-700">{hotline}</a><br />
-            Email: <a href={`mailto:${supportEmail}`} className="font-bold text-emerald-700">{supportEmail}</a>
+            {m.employer_account_checklist_support_hotline()} <a href={`tel:${hotline.replace(/[^+\d]/g, '')}`} className="font-bold text-[var(--brand-primary-hover)]">{hotline}</a><br />
+            Email: <a href={`mailto:${supportEmail}`} className="font-bold text-[var(--brand-primary-hover)]">{supportEmail}</a>
           </div>
         </div>
       </Modal>

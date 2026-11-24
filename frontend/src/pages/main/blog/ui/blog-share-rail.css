@@ -1,8 +1,8 @@
 /* Scoped reset: tránh button/a UA + Ant icon kế thừa màu link xanh mặc định. */
 .blog-share-rail {
   --blog-share-fg: #64748b;
-  --blog-share-fg-hover: var(--brand-primary, #00b14f);
-  --blog-share-bg-hover: var(--brand-primary-soft, #f0fbf5);
+  --blog-share-fg-hover: var(--brand-primary);
+  --blog-share-bg-hover: var(--brand-primary-soft);
   --blog-share-border: #e2e8f0;
   display: flex;
   flex-direction: row;

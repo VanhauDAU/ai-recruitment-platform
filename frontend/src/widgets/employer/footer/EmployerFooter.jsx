@@ -67,7 +67,7 @@ export default function EmployerFooter() {
 
   return (
     <footer className="border-t border-slate-200 bg-white">
-      <div className="h-1 bg-gradient-to-r from-[var(--brand-primary)] via-emerald-400 to-teal-500" />
+      <div className="h-1 bg-gradient-to-r from-[var(--brand-primary)] via-[var(--brand-primary)] to-[var(--brand-primary-hover)]" />
 
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-10 sm:px-6 md:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1.2fr] lg:px-8 lg:py-14">
         <div>

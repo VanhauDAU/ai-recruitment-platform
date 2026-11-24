@@ -63,7 +63,7 @@ function GenerationProgress({ generation, hasError = false }) {
     ? 'border-rose-200 bg-rose-50/70'
     : cancelled
       ? 'border-amber-200 bg-amber-50/70'
-      : 'border-emerald-100 bg-emerald-50/50'
+      : 'border-[var(--brand-primary)]/20 bg-[var(--brand-primary-soft)]'
 
   return (
     <div className={`flex min-w-0 flex-col items-center gap-4 rounded-xl border p-5 text-center sm:flex-row sm:text-left ${palette}`}>
@@ -78,7 +78,7 @@ function GenerationProgress({ generation, hasError = false }) {
       />
       <div className="min-w-0 flex-1" aria-live="polite" role="status">
         <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
-          {active && <RobotOutlined aria-hidden="true" className="text-emerald-600" />}
+          {active && <RobotOutlined aria-hidden="true" className="text-[var(--brand-primary)]" />}
           <h1 className="break-words text-xl font-bold text-slate-900">{title}</h1>
         </div>
         <p className="mt-1 break-words text-sm text-slate-600">

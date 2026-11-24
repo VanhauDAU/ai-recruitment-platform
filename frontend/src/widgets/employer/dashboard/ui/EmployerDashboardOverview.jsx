@@ -23,6 +23,7 @@ import {
 } from './DashboardWelcomeSections'
 import { RecentApplicationsCard, RecentJobsCard } from './RecentRecruitmentCards'
 import RecruitmentPipelineCard from './RecruitmentPipelineCard'
+import './employer-dashboard.css'
 
 export default function EmployerDashboardOverview() {
   const { user } = useSession()

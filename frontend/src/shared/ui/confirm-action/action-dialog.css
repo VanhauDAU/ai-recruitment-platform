@@ -87,16 +87,16 @@
   touch-action: manipulation;
 }
 .reason-field__preset:hover {
-  border-color: var(--admin-primary, #00b14f);
-  color: var(--admin-primary-hover, #008f40);
+  border-color: var(--admin-primary, var(--brand-primary));
+  color: var(--admin-primary-hover, var(--brand-primary-hover));
 }
 .reason-field__preset[aria-pressed='true'] {
-  border-color: var(--admin-primary, #00b14f);
-  background: var(--admin-primary-soft, #e6f8ee);
-  color: var(--admin-primary-hover, #008f40);
+  border-color: var(--admin-primary, var(--brand-primary));
+  background: var(--admin-primary-soft, var(--brand-primary-soft));
+  color: var(--admin-primary-hover, var(--brand-primary-hover));
 }
 .reason-field__preset:focus-visible {
-  outline: 2px solid var(--admin-primary, #00b14f);
+  outline: 2px solid var(--admin-primary, var(--brand-primary));
   outline-offset: 2px;
 }
 
@@ -152,7 +152,7 @@
   cursor: pointer;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--admin-primary-hover, #008f40);
+  color: var(--admin-primary-hover, var(--brand-primary-hover));
 }
 .impact-facts details[open] summary {
   margin-bottom: 8px;

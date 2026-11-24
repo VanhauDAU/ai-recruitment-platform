@@ -19,7 +19,7 @@ export default function EmployerRegistrationFields({ provinces = [], locationsLo
           { min: 2, message: m.employer_account_reg_fields_full_name_min() },
         ]}
       >
-        <Input autoFocus prefix={<UserOutlined className="text-emerald-600" />} placeholder={m.employer_account_reg_fields_full_name_placeholder()} className={fieldClassName} />
+        <Input autoFocus prefix={<UserOutlined className="text-[var(--brand-primary)]" />} placeholder={m.employer_account_reg_fields_full_name_placeholder()} className={fieldClassName} />
       </Form.Item>
 
       <Form.Item name="gender" label={m.employer_account_info_gender()} rules={[{ required: true, message: m.employer_account_reg_fields_gender_required() }]}>
@@ -38,7 +38,7 @@ export default function EmployerRegistrationFields({ provinces = [], locationsLo
           { pattern: /^(0|\+84)\d{9,10}$/, message: m.employer_account_reg_fields_phone_invalid() },
         ]}
       >
-        <Input prefix={<PhoneOutlined className="text-emerald-600" />} inputMode="tel" placeholder="0912 345 678" className={fieldClassName} />
+        <Input prefix={<PhoneOutlined className="text-[var(--brand-primary)]" />} inputMode="tel" placeholder="0912 345 678" className={fieldClassName} />
       </Form.Item>
 
       <Form.Item
@@ -52,7 +52,7 @@ export default function EmployerRegistrationFields({ provinces = [], locationsLo
           loading={locationsLoading}
           optionFilterProp="label"
           placeholder={m.employer_account_reg_fields_location_placeholder()}
-          suffixIcon={<EnvironmentOutlined className="text-emerald-600" />}
+          suffixIcon={<EnvironmentOutlined className="text-[var(--brand-primary)]" />}
           options={provinces.map((item) => ({ value: item.id, label: item.name }))}
           className="[&_.ant-select-selector]:!h-12 [&_.ant-select-selector]:!rounded-lg [&_.ant-select-selection-item]:!leading-[46px] [&_.ant-select-selection-placeholder]:!leading-[46px]"
         />

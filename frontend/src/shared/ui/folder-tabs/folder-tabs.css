@@ -9,7 +9,7 @@
 
 .ftabs__tab { position: relative; display: inline-flex; flex: none; align-items: center; gap: 8px; max-width: 240px; height: 40px; padding: 0 14px 0 12px; border: 1px solid transparent; border-bottom: 0; border-radius: var(--ftabs-r) var(--ftabs-r) 0 0; background: none; cursor: pointer; font-size: 14px; font-weight: 500; color: #64748b; transition: background-color .15s, color .15s; }
 .ftabs__tab:hover { background: #f3f7f5; color: #0f2a24; }
-.ftabs__tab:focus-visible { outline: 2px solid #059669; outline-offset: -2px; }
+.ftabs__tab:focus-visible { outline: 2px solid var(--brand-primary); outline-offset: -2px; }
 .ftabs__tab.is-active { z-index: 1; border-color: var(--ftabs-line); background: var(--ftabs-surface); font-weight: 600; color: #0f2a24; }
 /* Góc cong (SVG trong FolderTabs.jsx) phủ đúng lên cột viền dọc của tab và che đường kẻ ở chân tab */
 .ftabs__corner { position: absolute; bottom: 0; width: 12px; height: 12px; overflow: visible; pointer-events: none; }
@@ -18,10 +18,10 @@
 .ftabs__corner-fill { fill: var(--ftabs-surface); }
 .ftabs__corner-line { fill: none; stroke: var(--ftabs-line); stroke-width: 1px; }
 /* Vạch màu thương hiệu trên đỉnh tab đang chọn */
-.ftabs__tab.is-active > .ftabs__label::after { content: ''; position: absolute; top: -1px; right: 10px; left: 10px; height: 2px; border-radius: 0 0 2px 2px; background: #10b981; animation: ftabs-mark-in .3s cubic-bezier(.22, 1, .36, 1); }
+.ftabs__tab.is-active > .ftabs__label::after { content: ''; position: absolute; top: -1px; right: 10px; left: 10px; height: 2px; border-radius: 0 0 2px 2px; background: var(--brand-primary); animation: ftabs-mark-in .3s cubic-bezier(.22, 1, .36, 1); }
 .ftabs__icon { display: inline-flex; flex: none; transition: transform .2s cubic-bezier(.22, 1, .36, 1); }
 .ftabs__tab:hover .ftabs__icon, .ftabs__tab.is-active .ftabs__icon { transform: scale(1.08); }
-.ftabs__tab.is-active .ftabs__icon { color: #059669; }
+.ftabs__tab.is-active .ftabs__icon { color: var(--brand-primary); }
 .ftabs__label { display: inline-flex; min-width: 0; align-items: center; gap: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Nội dung: mặc định là khung trắng nối tiếp tab (trang nền xám); `is-plain` chỉ giữ đường kẻ (đã nằm trong thẻ trắng) */

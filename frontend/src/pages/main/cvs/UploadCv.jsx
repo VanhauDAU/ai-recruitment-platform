@@ -9,7 +9,7 @@ import { UploadCvForm } from '@/features/main/cv/upload-cv'
 import UploadCvSuccess from './ui/UploadCvSuccess'
 
 const BENEFITS = [
-  { icon: FolderOpenOutlined, tone: 'bg-emerald-50 text-[#00b14f]', title: 'Luôn sẵn trong tài khoản', text: 'Xem bản gốc và quản lý CV của bạn ở mọi thiết bị.' },
+  { icon: FolderOpenOutlined, tone: 'bg-[var(--brand-primary-soft)] text-[var(--brand-primary)]', title: 'Luôn sẵn trong tài khoản', text: 'Xem bản gốc và quản lý CV của bạn ở mọi thiết bị.' },
   { icon: TeamOutlined, tone: 'bg-orange-50 text-orange-500', title: 'Để nhà tuyển dụng tìm thấy bạn', text: 'Bật "Cho phép NTD tìm kiếm" trên CV để nhà tuyển dụng chủ động kết nối.' },
   { icon: FileDoneOutlined, tone: 'bg-blue-50 text-blue-600', title: 'Chuyển thành CV online', text: 'Chọn một mẫu, hệ thống chuyển nội dung CV của bạn sang mẫu chuẩn ATS.' },
   { icon: LockOutlined, tone: 'bg-red-50 text-red-500', title: 'Riêng tư và an toàn', text: 'Tệp được kiểm tra an toàn; chỉ bạn xem được bản gốc của CV.' },
@@ -32,7 +32,7 @@ export default function UploadCv() {
             <h1 className="text-lg font-bold md:text-xl">Tải CV lên để cơ hội việc làm tự tìm đến bạn</h1>
             <p className="mt-1 text-sm text-emerald-100">Rút ngắn thời gian tìm được công việc phù hợp với bạn.</p>
           </div>
-          <CloudUploadOutlined className="hidden text-6xl text-emerald-300 sm:block" />
+          <CloudUploadOutlined className="hidden text-6xl text-[color-mix(in_srgb,var(--brand-primary)_40%,#fff)] sm:block" />
         </header>
 
         <div className="space-y-6 px-5 py-6 md:px-8">

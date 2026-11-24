@@ -23,7 +23,7 @@ export default function SearchCompanyCard({ company }) {
       <Link
         to={companyDetailPath(company)}
         aria-label={`Xem trang công ty ${displayName}`}
-        className="group flex min-w-0 gap-2.5 rounded-lg border border-slate-200 bg-white p-2.5 !text-inherit shadow-sm transition duration-200 hover:border-emerald-200 hover:shadow-[0_8px_20px_rgba(15,118,110,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 sm:p-3"
+        className="group flex min-w-0 gap-2.5 rounded-lg border border-slate-200 bg-white p-2.5 !text-inherit shadow-sm transition duration-200 hover:border-[var(--brand-primary)]/40 hover:shadow-[0_8px_20px_rgba(15,118,110,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 sm:p-3"
       >
         <CompanyLogo
           company={company}
@@ -39,17 +39,17 @@ export default function SearchCompanyCard({ company }) {
               <h3 className="line-clamp-2 text-sm font-bold leading-5 text-slate-900 transition-colors group-hover:text-[var(--brand-primary-hover)] sm:text-base">
                 {displayName}
               </h3>
-              <p className="mt-0.5 inline-flex items-center gap-1 text-xs font-semibold text-emerald-700">
+              <p className="mt-0.5 inline-flex items-center gap-1 text-xs font-semibold text-[var(--brand-primary-hover)]">
                 <SolutionOutlined aria-hidden="true" />
                 Đang tuyển {activeJobCount(company).toLocaleString(getIntlLocale())} vị trí
               </p>
             </div>
-            <ArrowRightOutlined className="mt-0.5 hidden shrink-0 text-sm text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-emerald-600 sm:block" aria-hidden="true" />
+            <ArrowRightOutlined className="mt-0.5 hidden shrink-0 text-sm text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-[var(--brand-primary)] sm:block" aria-hidden="true" />
           </div>
 
           {headquarters && (
             <p className="mt-1 flex min-w-0 items-start gap-1 text-xs leading-4 text-slate-500">
-              <EnvironmentOutlined className="mt-0.5 shrink-0 text-emerald-600" aria-hidden="true" />
+              <EnvironmentOutlined className="mt-0.5 shrink-0 text-[var(--brand-primary)]" aria-hidden="true" />
               <span className="line-clamp-1 min-w-0">{headquarters}</span>
             </p>
           )}

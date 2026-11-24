@@ -41,10 +41,10 @@ export default function FeaturedIndustries({ industries, navigate }) {
                     key={category.id}
                     type="button"
                     onClick={() => navigate(`/viec-lam?cat=${category.id}`)}
-                    className="group flex min-h-[156px] cursor-pointer flex-col items-center justify-center rounded-lg border border-transparent bg-[#F4F5F7] px-5 py-6 text-center transition hover:-translate-y-1 hover:border-[var(--brand-primary)] hover:bg-white hover:shadow-md hover:shadow-emerald-100"
+                    className="group flex min-h-[156px] cursor-pointer flex-col items-center justify-center rounded-lg border border-transparent bg-[#F4F5F7] px-5 py-6 text-center transition hover:-translate-y-1 hover:border-[var(--brand-primary)] hover:bg-white hover:shadow-md hover:shadow-[var(--brand-primary)]/25"
                   >
                     {logoUrl && (
-                      <span className="mb-5 flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-white p-2 shadow-sm transition group-hover:scale-105 group-hover:border group-hover:border-emerald-100">
+                      <span className="mb-5 flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-white p-2 shadow-sm transition group-hover:scale-105 group-hover:border group-hover:border-[var(--brand-primary)]/40">
                         <img
                           src={logoUrl}
                           alt={category.name}

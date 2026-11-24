@@ -1,5 +1,5 @@
 const STANDARD_CARD_CLASS = 'border-slate-200 bg-white'
-const TOP_EMPLOYER_CARD_CLASS = 'border-emerald-200 border-l-4 border-l-[#00b14f] bg-[#f2fbf6]'
+const TOP_EMPLOYER_CARD_CLASS = 'border-[var(--brand-primary)]/20 border-l-4 border-l-[var(--brand-primary)] bg-[var(--brand-primary-soft)]'
 
 /**
  * Quyền xuất hiện trong "Việc làm tốt nhất" thuộc về tin tuyển dụng, còn nền

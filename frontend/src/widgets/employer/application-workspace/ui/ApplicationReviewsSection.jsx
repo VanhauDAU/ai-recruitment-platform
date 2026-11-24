@@ -20,7 +20,7 @@ export default function ApplicationReviewsSection({ publicId }) {
   return (
     <section className="aw-section" aria-label={m.employer_workspace_app_reviews_from_others()}>
       <h3 className="aw-section__title">
-        <TeamOutlined className="text-emerald-600" aria-hidden /> {m.employer_workspace_app_reviews_from_others()}
+        <TeamOutlined className="text-[var(--brand-primary)]" aria-hidden /> {m.employer_workspace_app_reviews_from_others()}
         <span className="aw-count">{summary.total}</span>
       </h3>
       <div className="aw-review-summary">

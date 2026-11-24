@@ -64,7 +64,7 @@ export default function JobDescriptionFields({ form, provinces, benefits }) {
       >
         <RichTextEditor contentClassName="post-job-rich-editor__content" minHeight={230} placeholder={m.employer_job_form_benefits_placeholder()} />
       </Form.Item>
-      <div className="mb-6 rounded-xl border border-emerald-100 bg-emerald-50/50 p-4 sm:p-5">
+      <div className="mb-6 rounded-xl border border-[var(--brand-primary)]/20 bg-[var(--brand-primary-soft)] p-4 sm:p-5">
         <div>
           <h3 className="font-semibold text-slate-800">{m.employer_job_form_reasons_title()}</h3>
           <p className="mt-1 text-sm leading-6 text-slate-600">
@@ -109,7 +109,7 @@ export default function JobDescriptionFields({ form, provinces, benefits }) {
           )}
         </Form.List>
       </div>
-      <div className="mb-6 rounded-xl border border-emerald-200 bg-white p-4 sm:p-5">
+      <div className="mb-6 rounded-xl border border-[var(--brand-primary)]/20 bg-white p-4 sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <div className="font-semibold text-slate-800">{m.employer_job_form_extra_benefits()}</div>
@@ -122,7 +122,7 @@ export default function JobDescriptionFields({ form, provinces, benefits }) {
             onClick={() => setShowAdditionalBenefits((current) => !current)}
           >
             <span>{showAdditionalBenefits ? m.employer_job_form_collapse() : m.employer_job_form_add_info()}</span>
-            <span className="ml-1 inline-flex min-w-5 items-center justify-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-xs font-semibold text-emerald-600">
+            <span className="ml-1 inline-flex min-w-5 items-center justify-center rounded-full bg-[var(--brand-primary-soft)] px-1.5 py-0.5 text-xs font-semibold text-[var(--brand-primary)]">
               {selectedBenefitIds.length}
             </span>
           </Button>
@@ -147,8 +147,8 @@ export default function JobDescriptionFields({ form, provinces, benefits }) {
                         aria-pressed={selected}
                         onClick={() => toggleBenefit(option.value)}
                         className={`cursor-pointer rounded-full border px-3 py-1 text-sm transition-colors ${selected
-                          ? 'border-emerald-500 bg-emerald-50 text-emerald-600'
-                          : 'border-transparent bg-slate-100 text-slate-600 hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-600'
+                          ? 'border-[var(--brand-primary)] bg-[var(--brand-primary-soft)] text-[var(--brand-primary)]'
+                          : 'border-transparent bg-slate-100 text-slate-600 hover:border-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)] hover:text-[var(--brand-primary)]'
                         }`}
                       >
                         {option.label}

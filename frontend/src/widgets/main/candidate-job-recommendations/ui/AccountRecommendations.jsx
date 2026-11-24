@@ -23,7 +23,7 @@ function AccountLoading() {
 
 function Header() {
   return (
-    <header className="relative overflow-hidden rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-emerald-50 px-5 py-6 sm:px-8 sm:py-8">
+    <header className="relative overflow-hidden rounded-2xl border border-[var(--brand-primary)]/20 bg-gradient-to-br from-[var(--brand-primary-soft)] via-white to-[var(--brand-primary-soft)] px-5 py-6 sm:px-8 sm:py-8">
       <div className="relative max-w-xl pr-20 sm:pr-40">
         <h1 className="text-xl font-extrabold text-slate-900 sm:text-2xl">{m.candidate_reco_title()}</h1>
         <p className="mt-2 text-sm leading-6 text-slate-600">{m.candidate_reco_intro()}</p>

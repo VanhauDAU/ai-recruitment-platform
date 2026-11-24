@@ -56,9 +56,9 @@ export default function RecruiterVisibilityControl({ cvPublicId }) {
           checked={status.enabled}
           loading={updating}
           onChange={(checked) => checked ? setConfirmOpen(true) : persist(false)}
-          className={status.enabled ? '!bg-[#00b14f]' : ''}
+          className={status.enabled ? '!bg-[var(--brand-primary)]' : ''}
         />
-        <span className={`text-sm font-bold ${status.enabled ? 'text-[#00b14f]' : 'text-slate-500'}`}>
+        <span className={`text-sm font-bold ${status.enabled ? 'text-[var(--brand-primary)]' : 'text-slate-500'}`}>
           {status.enabled ? 'Cho phép NTD tìm kiếm hồ sơ' : 'Chưa cho phép NTD tìm kiếm hồ sơ'}
         </span>
       </div>

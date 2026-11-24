@@ -124,7 +124,7 @@ function SavedVersionImage({ version, title, onError }) {
 
 function CvPreviewCard({ cv, version, publicId, previewError, onCaptureError, onRetryPreview }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-[#16c768] bg-white p-3 shadow-[0_12px_28px_rgba(0,177,79,0.08)]">
+    <div className="overflow-hidden rounded-2xl border border-[var(--brand-primary)] bg-white p-3 shadow-[0_12px_28px_color-mix(in_srgb,var(--brand-primary)_8%,transparent)]">
       <div className="flex aspect-[210/280] items-center justify-center overflow-hidden rounded-lg bg-[#f8fafb]">
         {version && !previewError ? (
           <SavedVersionImage version={version} title={cv.title} onError={onCaptureError} />
@@ -132,7 +132,7 @@ function CvPreviewCard({ cv, version, publicId, previewError, onCaptureError, on
           <div className="max-w-xs px-6 text-center">
             <p className="font-bold text-slate-600">Chưa thể tạo ảnh xem trước</p>
             <p className="mt-2 text-sm leading-5 text-slate-400">Không thể tải phiên bản vừa lưu. CV vẫn được lưu an toàn.</p>
-            <Button className="mt-4 !border-[#00b14f] !font-bold !text-[#00b14f]" icon={<ReloadOutlined />} onClick={onRetryPreview}>
+            <Button className="mt-4 !border-[var(--brand-primary)] !font-bold !text-[var(--brand-primary)]" icon={<ReloadOutlined />} onClick={onRetryPreview}>
               Tải lại bản xem trước
             </Button>
           </div>
@@ -146,7 +146,7 @@ function CvPreviewCard({ cv, version, publicId, previewError, onCaptureError, on
       <h2 className="mt-5 text-center text-xl font-extrabold text-[#26384a]">{displayCvTitle(cv.title)}</h2>
       <div className="mt-4 flex flex-wrap justify-center gap-3 pb-2">
         <Link to={`/cvs/${publicId}/edit?mode=edit`}>
-          <Button shape="round" size="large" icon={<EditOutlined />} className="!border-[#00b14f] !font-bold !text-[#00b14f] hover:!bg-emerald-50">
+          <Button shape="round" size="large" icon={<EditOutlined />} className="!border-[var(--brand-primary)] !font-bold !text-[var(--brand-primary)] hover:!bg-[var(--brand-primary-soft)]">
             Chỉnh sửa
           </Button>
         </Link>
@@ -162,13 +162,13 @@ function VisibilityCard({ publicId }) {
       <h2 className="text-xl font-extrabold leading-snug text-[#26384a] md:text-2xl">200,000 NTD đang tìm kiếm ứng viên mỗi ngày!</h2>
       <p className="mt-2 text-sm leading-6 text-slate-600 md:text-base">
         Hãy bật Cho phép ngay để không bỏ lỡ những cơ hội nghề nghiệp đầy tiềm năng.
-        <Link to="/viec-lam" className="ml-1 font-semibold text-[#00b14f] underline">Khám phá nhà tuyển dụng uy tín.</Link>
+        <Link to="/viec-lam" className="ml-1 font-semibold text-[var(--brand-primary)] underline">Khám phá nhà tuyển dụng uy tín.</Link>
       </p>
       <div className="mt-4"><RecruiterVisibilityControl cvPublicId={publicId} /></div>
       <div className="mt-5 space-y-2 text-sm leading-6 text-slate-500 md:text-base">
         <p>Khi cho phép, nhà tuyển dụng uy tín có thể tiếp cận kinh nghiệm làm việc, học vấn và kỹ năng trên CV của bạn.</p>
-        <p className="flex items-start gap-2"><CheckOutlined className="mt-1 text-[#00b14f]" /><span>Nếu phù hợp, nhà tuyển dụng sẽ gửi cho bạn một <strong>Lời mời kết nối.</strong></span></p>
-        <p className="flex items-start gap-2"><SafetyCertificateOutlined className="mt-1 text-[#00b14f]" /><span>Họ tên, ảnh đại diện, số điện thoại, email và địa chỉ chỉ được chia sẻ sau khi bạn đồng ý lời mời.</span></p>
+        <p className="flex items-start gap-2"><CheckOutlined className="mt-1 text-[var(--brand-primary)]" /><span>Nếu phù hợp, nhà tuyển dụng sẽ gửi cho bạn một <strong>Lời mời kết nối.</strong></span></p>
+        <p className="flex items-start gap-2"><SafetyCertificateOutlined className="mt-1 text-[var(--brand-primary)]" /><span>Họ tên, ảnh đại diện, số điện thoại, email và địa chỉ chỉ được chia sẻ sau khi bạn đồng ý lời mời.</span></p>
         <p>Bạn có thể thay đổi lại quyền này bất cứ lúc nào trong phần cài đặt tài khoản.</p>
       </div>
     </section>
@@ -181,28 +181,28 @@ function JobCard({ job }) {
   const compatibility = job.is_high_match ? 'Rất phù hợp' : 'Phù hợp'
   return (
     <JobImpressionBoundary slug={job.slug}>
-      <Link to={jobDetailPath(job)} className="group relative flex gap-4 overflow-hidden rounded-2xl border border-white !bg-white p-4 shadow-[0_2px_12px_rgba(15,23,42,0.05)] transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_10px_28px_rgba(0,177,79,0.12)] md:items-center">
+      <Link to={jobDetailPath(job)} className="group relative flex gap-4 overflow-hidden rounded-2xl border border-white !bg-white p-4 shadow-[0_2px_12px_rgba(15,23,42,0.05)] transition hover:-translate-y-0.5 hover:border-[var(--brand-primary)]/40 hover:shadow-[0_10px_28px_color-mix(in_srgb,var(--brand-primary)_12%,transparent)] md:items-center">
         <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white md:h-24 md:w-24">
-        {job.company_logo_url ? <img src={job.company_logo_url} alt="" className="h-full w-full object-contain p-2" /> : <span className="text-2xl font-black text-[#00b14f]">{job.company_name?.charAt(0) || 'P'}</span>}
+        {job.company_logo_url ? <img src={job.company_logo_url} alt="" className="h-full w-full object-contain p-2" /> : <span className="text-2xl font-black text-[var(--brand-primary)]">{job.company_name?.charAt(0) || 'P'}</span>}
       </div>
       <div className="min-w-0 flex-1">
-        <h3 className="line-clamp-2 text-base font-extrabold leading-6 text-[#26384a] transition group-hover:text-[#00b14f]">{job.title}</h3>
+        <h3 className="line-clamp-2 text-base font-extrabold leading-6 text-[#26384a] transition group-hover:text-[var(--brand-primary)]">{job.title}</h3>
         <p className="mt-1 truncate text-sm uppercase text-slate-500">{job.company_name}</p>
         <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-slate-600">
           <span className="rounded-md bg-[#f1f3f5] px-3 py-1">{formatSalary(job)}</span>
           {formatLocations(job) && <span className="inline-flex items-center gap-1 rounded-md bg-[#f1f3f5] px-3 py-1"><EnvironmentOutlined />{formatLocations(job)}</span>}
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-          <span className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 font-bold ${job.is_high_match ? 'border-emerald-300 bg-emerald-50 text-[#00b14f]' : 'border-slate-200 bg-slate-50 text-slate-600'}`}>
+          <span className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 font-bold ${job.is_high_match ? 'border-[var(--brand-primary)]/20 bg-[var(--brand-primary-soft)] text-[var(--brand-primary)]' : 'border-slate-200 bg-slate-50 text-slate-600'}`}>
             <StarFilled /> {compatibility}
           </span>
           {[...new Set(job.match_reasons || [])].map((reason) => (
-            <span key={reason} className="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700">
+            <span key={reason} className="rounded-full bg-[var(--brand-primary-soft)] px-3 py-1 font-semibold text-[var(--brand-primary-hover)]">
               {reason}
             </span>
           ))}
         </div>
-        <span className="mt-3 inline-flex items-center justify-center rounded-full bg-[#00b14f] px-5 py-2 text-sm font-bold text-white shadow-sm transition group-hover:bg-[#009643] md:absolute md:bottom-4 md:right-4 md:mt-0 md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100">
+        <span className="mt-3 inline-flex items-center justify-center rounded-full bg-[var(--brand-primary)] px-5 py-2 text-sm font-bold text-white shadow-sm transition group-hover:bg-[#009643] md:absolute md:bottom-4 md:right-4 md:mt-0 md:translate-y-2 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100">
           Ứng tuyển
         </span>
         </div>
@@ -263,14 +263,14 @@ export default function CvSaveSuccessView({ publicId, savedCv = null, savedVersi
         <aside className="h-fit lg:sticky lg:top-24">
           <div className="rounded-2xl bg-gradient-to-b from-[#e7fbf1] via-white to-white p-5 shadow-[0_3px_18px_rgba(15,23,42,0.06)]">
             <div className="flex items-center gap-4 px-1 py-2">
-              <CheckCircleFilled className="text-6xl text-[#00b14f]" />
+              <CheckCircleFilled className="text-6xl text-[var(--brand-primary)]" />
               <div><h1 className="text-2xl font-extrabold text-[#00a848]">Lưu CV thành công!</h1><p className="mt-1 leading-6 text-slate-600">Hồ sơ của bạn đã được cập nhật. Bạn có thể dùng CV này để ứng tuyển ngay.</p></div>
             </div>
             <div className="mt-5"><CvPreviewCard cv={cv} version={version} publicId={publicId} previewError={previewError} onCaptureError={() => setPreviewError(true)} onRetryPreview={() => {
                 setPreviewError(false)
                 if (!version) setPreviewRetry((value) => value + 1)
               }} /></div>
-            <Link to="/tai-khoan/cv-cua-toi" className="mt-5 flex w-full items-center justify-center gap-2 rounded-full border-2 border-[#00b14f] bg-white py-3 font-bold text-[#00b14f] transition hover:bg-emerald-50">Tới trang quản lý CV <ArrowRightOutlined /></Link>
+            <Link to="/tai-khoan/cv-cua-toi" className="mt-5 flex w-full items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white py-3 font-bold text-[var(--brand-primary)] transition hover:bg-[var(--brand-primary-soft)]">Tới trang quản lý CV <ArrowRightOutlined /></Link>
           </div>
         </aside>
 
@@ -281,15 +281,15 @@ export default function CvSaveSuccessView({ publicId, savedCv = null, savedVersi
             {!recommendations ? (
               <Skeleton active paragraph={{ rows: 5 }} />
             ) : jobs.consent_required ? (
-              <div className="rounded-2xl border border-emerald-200 bg-white p-7 text-center shadow-sm">
-                <SafetyCertificateOutlined className="text-3xl text-[#00b14f]" />
+              <div className="rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-7 text-center shadow-sm">
+                <SafetyCertificateOutlined className="text-3xl text-[var(--brand-primary)]" />
                 <h3 className="mt-3 text-lg font-bold text-[#26384a]">Bật quyền gợi ý việc làm</h3>
                 <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-500">
                   Hệ thống chỉ đọc nhu cầu và CV để tìm cơ hội phù hợp sau khi bạn đồng ý.
                 </p>
                 <Link
                   to="/tai-khoan/cai-dat-goi-y-viec-lam"
-                  className="mt-4 inline-flex rounded-full bg-[#00b14f] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#009643]"
+                  className="mt-4 inline-flex rounded-full bg-[var(--brand-primary)] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#009643]"
                 >
                   Đi tới cài đặt gợi ý
                 </Link>
@@ -301,12 +301,12 @@ export default function CvSaveSuccessView({ publicId, savedCv = null, savedVersi
                 Chưa có việc làm đủ phù hợp. Hệ thống sẽ tiếp tục cập nhật cho bạn.
               </div>
             )}
-            <div className="mt-6 flex justify-center"><Link to={viewAllPath} className="inline-flex items-center gap-2 rounded-full border-2 border-[#00b14f] bg-white px-7 py-3 font-bold text-[#00b14f] transition hover:bg-emerald-50">Việc làm phù hợp với CV của bạn <ArrowRightOutlined /></Link></div>
+            <div className="mt-6 flex justify-center"><Link to={viewAllPath} className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-7 py-3 font-bold text-[var(--brand-primary)] transition hover:bg-[var(--brand-primary-soft)]">Việc làm phù hợp với CV của bạn <ArrowRightOutlined /></Link></div>
           </section>
           {jobs.related_positions.length > 0 && (
             <section className="rounded-2xl bg-white p-6 shadow-[0_2px_12px_rgba(15,23,42,0.05)]">
               <h2 className="text-xl font-extrabold text-[#26384a]">Vị trí có thể bạn quan tâm</h2>
-              <div className="mt-4 flex flex-wrap gap-3">{jobs.related_positions.map((position) => <Link key={position.label} to={`/viec-lam?search=${encodeURIComponent(position.search)}`} className="rounded-full border border-slate-200 bg-[#f8fafb] px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[#00b14f] hover:bg-emerald-50 hover:text-[#00b14f]">{position.label}</Link>)}</div>
+              <div className="mt-4 flex flex-wrap gap-3">{jobs.related_positions.map((position) => <Link key={position.label} to={`/viec-lam?search=${encodeURIComponent(position.search)}`} className="rounded-full border border-slate-200 bg-[#f8fafb] px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)] hover:text-[var(--brand-primary)]">{position.label}</Link>)}</div>
             </section>
           )}
         </main>

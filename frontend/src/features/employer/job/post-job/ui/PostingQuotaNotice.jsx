@@ -12,10 +12,10 @@ import { m } from '@/shared/config/i18n'
 const NOTICE_TONES = {
   eligible: {
     Icon: CheckCircleFilled,
-    container: 'border-emerald-200 bg-emerald-50',
-    icon: 'bg-white text-emerald-600 ring-emerald-100',
-    title: 'text-emerald-900',
-    badge: 'bg-emerald-100 text-emerald-700',
+    container: 'border-[var(--brand-primary)]/20 bg-[var(--brand-primary-soft)]',
+    icon: 'bg-white text-[var(--brand-primary)] ring-[var(--brand-primary)]/15',
+    title: 'text-[var(--brand-primary-hover)]',
+    badge: 'bg-[var(--brand-primary-soft)] text-[var(--brand-primary-hover)]',
   },
   free: {
     Icon: InfoCircleFilled,
@@ -146,7 +146,7 @@ export default function PostingQuotaNotice({ postingContext }) {
           <button
             type="button"
             aria-label={m.employer_job_quota_dismiss()}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white/80 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white/80 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]/25 focus-visible:ring-offset-1"
             onClick={() => setVisible(false)}
           >
             <CloseOutlined />

@@ -191,7 +191,7 @@ export default function ApplicationInspectorPanel({
 
           <section className="aw-section">
             <h3 className="aw-section__title">
-              <HistoryOutlined className="text-emerald-600" aria-hidden /> {m.employer_workspace_app_history()}
+              <HistoryOutlined className="text-[var(--brand-primary)]" aria-hidden /> {m.employer_workspace_app_history()}
             </h3>
             <ApplicationHistoryTimeline
               items={history}
