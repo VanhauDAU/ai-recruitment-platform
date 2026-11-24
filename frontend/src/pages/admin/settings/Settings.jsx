@@ -1,4 +1,4 @@
-import { SearchOutlined, SettingOutlined } from '@ant-design/icons'
+import { SearchOutlined } from '@ant-design/icons'
 import { Alert, Button, Empty, Input, Skeleton } from 'antd'
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
@@ -17,7 +17,7 @@ import {
 } from '@/features/admin/system/manage-site-settings'
 import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
-import { AdminPageHeader, AdminPanel } from '@/shared/ui/admin'
+import { AdminPanel } from '@/shared/ui/admin'
 import useConfirmAction from '@/shared/ui/confirm-action/use-confirm-action'
 
 // Nhóm cũ (trước khi gom nhóm theo ADR-0026) để link/bookmark cũ vẫn mở đúng chỗ.
@@ -29,17 +29,6 @@ const sectionsOf = (settings) => settings.reduce((sections, setting) => {
   else sections.push({ title: setting.section, settings: [setting] })
   return sections
 }, [])
-
-function SettingsPageHeader() {
-  return (
-    <AdminPageHeader
-      eyebrow={m.admin_settings_eyebrow()}
-      title={m.admin_settings_title()}
-      description={m.admin_settings_description()}
-      icon={<SettingOutlined />}
-    />
-  )
-}
 
 export default function AdminSettings() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -132,7 +121,6 @@ export default function AdminSettings() {
   if (!groups) {
     return (
       <div className="space-y-5">
-        <SettingsPageHeader />
         <AdminPanel>
           {form.loadError ? (
             <Alert
@@ -176,7 +164,6 @@ export default function AdminSettings() {
   return (
     <>
       <div className="space-y-5">
-        <SettingsPageHeader />
         <div className="settings-layout">
           <SettingsGroupNav
             groups={groups}

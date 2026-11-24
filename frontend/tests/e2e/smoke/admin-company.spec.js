@@ -151,7 +151,7 @@ test('admin company directory: sidebar navigation, detail and owner roster', { t
   })
 
   await page.goto('/admin/app/companies')
-  await expect(page.getByRole('heading', { name: 'Quản lý công ty' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Công ty', exact: true })).toBeVisible()
   await expect(page.getByRole('tab', { name: 'Danh sách công ty' })).toHaveAttribute(
     'aria-selected',
     'true',

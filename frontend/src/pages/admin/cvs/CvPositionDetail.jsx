@@ -3,7 +3,7 @@ import { AdminCvPositionDetail } from '@/widgets/admin/cv-positions'
 
 export default function AdminCvPositionDetailPage() {
   return (
-    <AdminCvShell compact>
+    <AdminCvShell>
       <AdminCvPositionDetail />
     </AdminCvShell>
   )

@@ -46,6 +46,15 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
 
+## Cổng admin toàn trang và danh sách tin dạng bảng (2026-11-24)
+
+| Hạng mục | Trạng thái |
+| --- | --- |
+| Layout admin dùng khung chung `shared/ui/workspace-page` như cổng NTD; bỏ `max-width: 1600px` và các `mx-auto max-w-*` ở 9 trang admin | ✅ |
+| Bỏ cụm tiêu đề trang (`AdminPageHeader`) ở mọi trang admin; tên trang là `<h1>` trên topbar ("Đang ở: …") | ✅ |
+| Danh sách tin admin dạng bảng như NTD: 6 ô phạm vi, chip "Cần xem" (quá hạn, bị ẩn, ngừng tuyển), lọc/sắp xếp/tìm kiếm, cột sắp xếp được, phân trang dính đáy; chuỗi đưa vào `messages/admin` | ✅ |
+| Bảng dùng chung: ô thống kê chia cột theo khung chứa (không cắt chữ khi sidebar rộng), cụm nút phụ `wt-filters__extra` | ✅ |
+
 ## Bảng toàn chiều rộng cho danh sách tin và chiến dịch của NTD (2026-11-24)
 
 | Hạng mục | Trạng thái |

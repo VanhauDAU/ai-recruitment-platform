@@ -1,7 +1,6 @@
 import { ApartmentOutlined, BgColorsOutlined, DashboardOutlined, FileTextOutlined, SolutionOutlined } from '@ant-design/icons'
 import { NavLink } from 'react-router'
 import { adminPath } from '@/shared/config/portals'
-import { AdminPageHeader } from '@/shared/ui/admin'
 
 // Mọi trang Mẫu CV dùng chung thanh điều hướng này để chuyển trang trong một chạm.
 const ITEMS = [
@@ -20,11 +19,13 @@ export function AdminCvNav() {
   </nav>
 }
 
-// Khung trang: tiêu đề gọn + điều hướng chung. Trang chi tiết bỏ tiêu đề lớn (`compact`).
-export default function AdminCvShell({ title, description, icon, actions, compact = false, children }) {
+// Khung trang: điều hướng chung, kèm nút thao tác của trang (nếu có) bên phải.
+export default function AdminCvShell({ actions, children }) {
   return <div className="space-y-4">
-    {!compact && <AdminPageHeader eyebrow="Mẫu CV" title={title} description={description} icon={icon} actions={actions} />}
-    <AdminCvNav />
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <AdminCvNav />
+      {actions}
+    </div>
     {children}
   </div>
 }
