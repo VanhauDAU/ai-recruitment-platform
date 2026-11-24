@@ -42,6 +42,7 @@ import {
   employerRouteTitle,
   employerSelectedMenuKey,
 } from './EmployerWorkspaceNavigation'
+import '@/shared/ui/workspace-page/workspace-page.css'
 import './employer-workspace.css'
 
 const { Header, Sider, Content } = Layout
@@ -258,9 +259,9 @@ export default function EmployerWorkspaceLayout() {
           onMouseLeave={() => setIsSidebarHovered(false)}
           trigger={null}
           data-testid="employer-sidebar"
-          className={`!h-full !overflow-hidden !border-r !border-slate-200 !bg-white ${isMobileViewport ? '!absolute !inset-y-0 !left-0 !z-40 !shadow-2xl' : ''}`}
+          className={`employer-sider !h-full !overflow-hidden ${isMobileViewport ? '!absolute !inset-y-0 !left-0 !z-40 !shadow-2xl' : ''}`}
         >
-          <div className="flex h-full flex-col bg-white">
+          <div className="flex h-full flex-col">
             <div className={`employer-sider__profile ${isCompactSidebar ? 'employer-sider__profile--compact' : ''}`}>
               {isCompactSidebar ? (
                 <Tooltip title={m.employer_workspace_title_account_info()} placement="right">
@@ -339,7 +340,7 @@ export default function EmployerWorkspaceLayout() {
                 <Button
                   type="primary"
                   icon={<PlusOutlined aria-hidden />}
-                  className="!h-9 !rounded-xl !border-0 !bg-gradient-to-r !from-emerald-600 !to-teal-600 !px-3.5 !font-semibold !shadow-md transition-all duration-200 hover:!-translate-y-0.5 hover:!from-emerald-500 hover:!to-teal-500 hover:!shadow-lg active:!translate-y-0"
+                  className="!h-9 !rounded-lg !px-3.5 !font-semibold !shadow-none"
                 >
                   {routeAction.label}
                 </Button>
@@ -348,14 +349,14 @@ export default function EmployerWorkspaceLayout() {
           </div>
           <Content
             data-testid="employer-workspace-content"
-            className="min-h-0 min-w-0 overflow-x-hidden overflow-y-auto bg-[#edf1f5] p-2.5 pt-3 sm:p-5 sm:pt-4 xl:p-6 xl:pt-4"
+            className="workspace-content min-h-0 min-w-0 overflow-x-hidden overflow-y-auto"
             style={{
               // 56px topbar + 48px route bar. A percentage here would resolve
               // against each descendant's containing block, not this scrollport.
               '--workspace-viewport': 'calc(100dvh - 104px - var(--announcement-strip-height, 0px))',
             }}
           >
-            <div className="mx-auto w-full max-w-[1320px]">
+            <div className="workspace-page">
               <Outlet />
             </div>
           </Content>

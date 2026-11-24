@@ -34,8 +34,9 @@ JOB_LIST_QUERY_BUDGET = 5 + BADGE_QUERY_BUDGET + MAINTENANCE_CHECK_QUERIES
 # Homepage preview adds two relation prefetches (benefits + schedules).
 HOMEPAGE_BEST_JOB_LIST_QUERY_BUDGET = JOB_LIST_QUERY_BUDGET + 2
 ADMIN_JOB_LIST_QUERY_BUDGET = 2
-# +1 aggregate for the status-tab counts (one query whatever the page size).
-EMPLOYER_JOB_LIST_QUERY_BUDGET = 6 + MAINTENANCE_CHECK_QUERIES
+# +1 aggregate for the status-tab counts and +1 category prefetch (one query
+# each whatever the page size).
+EMPLOYER_JOB_LIST_QUERY_BUDGET = 7 + MAINTENANCE_CHECK_QUERIES
 SAVED_JOB_SIMILARITY_QUERY_BUDGET = 8 + BADGE_QUERY_BUDGET + MAINTENANCE_CHECK_QUERIES
 SAVED_JOB_FALLBACK_QUERY_BUDGET = 9 + BADGE_QUERY_BUDGET + MAINTENANCE_CHECK_QUERIES
 
@@ -161,8 +162,8 @@ class EmployerJobListQueryBudgetTests(APITestCase):
     def test_employer_job_list_query_count_is_flat_with_candidate_previews(self):
         # 1 canonical readiness query + 1 COUNT + 1 SELECT jobs
         # (candidate_count and unviewed_application_count are correlated
-        # subqueries) + 1 locations prefetch + 1 batched candidate-preview
-        # query + 1 status-tab aggregate.
+        # subqueries) + 1 locations prefetch + 1 category prefetch + 1 batched
+        # candidate-preview query + 1 status-tab aggregate.
         with self.assertNumQueries(EMPLOYER_JOB_LIST_QUERY_BUDGET):
             response = self.client.get(reverse('employer-job-list-create'))
 

@@ -211,14 +211,22 @@ class EmployerJobListSerializer(EmployerJobVisibilityHoldMixin, PublicJobListSer
     unviewed_application_count = serializers.IntegerField(read_only=True, default=0)
     closes_on = serializers.DateField(read_only=True, allow_null=True, default=None)
     candidate_previews = serializers.SerializerMethodField()
+    category_name = serializers.SerializerMethodField()
 
     class Meta(PublicJobListSerializer.Meta):
         fields = [
             'public_id',
+            'slug',
             'title',
             'company_name',
             'locations_detail',
             'employment_type',
+            'category_name',
+            'salary_type',
+            'salary_min',
+            'salary_max',
+            'income_display_type',
+            'currency',
             'deadline',
             'closes_on',
             'requested_visibility_days',
@@ -246,6 +254,10 @@ class EmployerJobListSerializer(EmployerJobVisibilityHoldMixin, PublicJobListSer
         ]
         list_serializer_class = serializers.ListSerializer
         read_only_fields = fields
+
+    def get_category_name(self, obj) -> str:
+        assignment = self._primary_assignment(obj)
+        return assignment.category.name if assignment else ''
 
     def get_candidate_previews(self, obj) -> list[dict]:
         return [

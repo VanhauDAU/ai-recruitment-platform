@@ -1,6 +1,17 @@
-import { ArrowDownOutlined, ArrowUpOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
+import {
+  ArrowDownOutlined,
+  ArrowUpOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  EditOutlined,
+  EyeInvisibleOutlined,
+  PlusOutlined,
+  ProfileOutlined,
+  SearchOutlined,
+  StopOutlined,
+} from '@ant-design/icons'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Empty, Input, Pagination, Select, Skeleton } from 'antd'
+import { Alert, Button, Empty, Input, Select, Skeleton } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import {
@@ -17,6 +28,9 @@ import { employerAppPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
 import { MascotEmpty } from '@/shared/ui/mascot'
 import useConfirmAction from '@/shared/ui/confirm-action/use-confirm-action'
+import WorkspaceQuickFilters from '@/shared/ui/workspace-list/WorkspaceQuickFilters'
+import WorkspaceListFooter from '@/shared/ui/workspace-list/WorkspaceListFooter'
+import WorkspaceStatusTiles from '@/shared/ui/workspace-list/WorkspaceStatusTiles'
 import JobListCard from './JobListCard'
 import {
   JOB_ATTENTION_FILTERS,
@@ -26,6 +40,7 @@ import {
   formatCount,
 } from './job-list-presentation'
 import '@/shared/ui/workspace-list/workspace-list.css'
+import '@/shared/ui/workspace-list/workspace-table.css'
 import './employer-jobs.css'
 import { m } from '@/shared/config/i18n'
 
@@ -34,13 +49,21 @@ const SEARCH_DELAY_MS = 400
 const EMPTY_PAGE = { count: 0, next: null, previous: null, results: [] }
 // URL search params the list reads; `page` is handled on its own.
 const FILTER_KEYS = ['status', 'q', 'campaign', 'attention', 'ordering']
+const STATUS_ICONS = {
+  all: <ProfileOutlined />,
+  active: <CheckCircleOutlined />,
+  hidden: <EyeInvisibleOutlined />,
+  draft: <EditOutlined />,
+  expired: <ClockCircleOutlined />,
+  closed: <StopOutlined />,
+}
 const primaryLinkClass = 'inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg !bg-emerald-600 px-3.5 text-sm font-semibold !text-white shadow-sm transition hover:!bg-emerald-500'
 
 function JobListSkeleton() {
   return (
     <div aria-label={m.employer_job_list_loading_aria()}>
       {[1, 2, 3, 4].map((item) => (
-        <div key={item} className="ws-row ejl-row">
+        <div key={item} className="wt-row">
           <Skeleton active title={{ width: '55%' }} paragraph={{ rows: 1, width: '80%' }} className="ejl-row__skeleton" />
         </div>
       ))}
@@ -153,101 +176,74 @@ export default function JobList() {
   const lastRow = Math.min(page * PAGE_SIZE, pageData.count || 0)
 
   return (
-    <section className="ws-page">
-      <div className="ws-panel">
-        <div role="group" aria-label={m.employer_job_list_status_filter_aria()} className="ws-tabs">
-          {JOB_STATUS_TABS.map((tab) => {
-            const count = counts?.[tab.countKey]
-            return (
-              <button
-                key={tab.countKey}
-                type="button"
-                aria-pressed={status === tab.value}
-                className="ws-tab"
-                onClick={() => replaceFilters({ status: tab.value })}
-              >
-                {tab.label}
-                {count === undefined
-                  ? <span aria-hidden className="ws-tab__count ws-tab__count--loading" />
-                  : <span className="ws-tab__count">{formatCount(count)}</span>}
-              </button>
-            )
-          })}
-        </div>
+    <section className="wt-page">
+      <WorkspaceStatusTiles
+        ariaLabel={m.employer_job_list_status_filter_aria()}
+        value={status}
+        onChange={(value) => replaceFilters({ status: value })}
+        items={JOB_STATUS_TABS.map((tab) => ({
+          key: tab.countKey,
+          value: tab.value,
+          label: tab.label,
+          icon: STATUS_ICONS[tab.countKey],
+          count: counts?.[tab.countKey] === undefined ? undefined : formatCount(counts[tab.countKey]),
+        }))}
+      />
 
-        <div className="ws-filters ejl-filters">
-          <Input
-            allowClear
-            aria-label={m.employer_job_list_search_aria()}
-            prefix={<SearchOutlined className="text-slate-400" aria-hidden />}
-            placeholder={m.employer_job_list_search_placeholder()}
-            type="search"
-            value={searchValue}
-            onChange={(event) => search(event.target.value)}
-            onClear={() => search('', 0)}
-            onPressEnter={() => search(searchValue, 0)}
+      <div className="wt-table ejl-table">
+        <div className="wt-toolbar">
+          <WorkspaceQuickFilters
+            label={m.employer_job_list_attention_label()}
+            ariaLabel={m.employer_job_list_attention_aria()}
+            items={JOB_ATTENTION_FILTERS.map((item) => ({ ...item, count: attentionCounts?.[item.value] }))}
+            value={attention}
+            onChange={(value) => replaceFilters({ attention: value })}
+            clearLabel={m.employer_job_list_clear_filters()}
+            onClear={hasFilters ? clearFilters : undefined}
           />
-          <Select
-            aria-label={m.employer_job_list_campaign_aria()}
-            showSearch={{ optionFilterProp: 'label' }}
-            loading={campaignsQuery.isFetching}
-            // Hold the raw id back until its name has loaded.
-            value={campaign && !campaignsQuery.data ? undefined : campaign}
-            placeholder={m.employer_job_list_campaign_all()}
-            options={campaignOptions}
-            onOpenChange={(open) => open && setCampaignMenuOpened(true)}
-            onChange={(value) => replaceFilters({ campaign: value })}
-          />
-          <Select
-            aria-label={m.employer_job_list_sort_aria()}
-            value={ordering}
-            options={JOB_SORT_OPTIONS}
-            onChange={sortBy}
-          />
-        </div>
-
-        <div className="ws-quick">
-          <span className="ws-quick__label">{m.employer_job_list_attention_label()}</span>
-          <div role="group" aria-label={m.employer_job_list_attention_aria()} className="ws-quick__chips">
-            {JOB_ATTENTION_FILTERS.map((item) => {
-              const active = attention === item.value
-              const count = attentionCounts?.[item.value]
-              return (
-                <button
-                  key={item.value}
-                  type="button"
-                  aria-pressed={active}
-                  title={item.hint}
-                  disabled={!active && count === 0}
-                  className={`ws-chip ws-tone-${item.tone}`}
-                  onClick={() => replaceFilters({ attention: active ? '' : item.value })}
-                >
-                  <span aria-hidden className="ws-dot" />
-                  {item.label}
-                  {count !== undefined && <span className="ws-chip__count">{formatCount(count)}</span>}
-                </button>
-              )
-            })}
+          <div className="wt-filters">
+            <Select
+              size="large"
+              aria-label={m.employer_job_list_campaign_aria()}
+              showSearch={{ optionFilterProp: 'label' }}
+              loading={campaignsQuery.isFetching}
+              // Hold the raw id back until its name has loaded.
+              value={campaign && !campaignsQuery.data ? undefined : campaign}
+              placeholder={m.employer_job_list_campaign_all()}
+              options={campaignOptions}
+              onOpenChange={(open) => open && setCampaignMenuOpened(true)}
+              onChange={(value) => replaceFilters({ campaign: value })}
+            />
+            <Select
+              size="large"
+              aria-label={m.employer_job_list_sort_aria()}
+              value={ordering}
+              options={JOB_SORT_OPTIONS}
+              onChange={sortBy}
+            />
+            <Input
+              size="large"
+              allowClear
+              className="wt-filters__search"
+              aria-label={m.employer_job_list_search_aria()}
+              prefix={<SearchOutlined className="text-slate-400" aria-hidden />}
+              placeholder={m.employer_job_list_search_placeholder()}
+              type="search"
+              value={searchValue}
+              onChange={(event) => search(event.target.value)}
+              onClear={() => search('', 0)}
+              onPressEnter={() => search(searchValue, 0)}
+            />
           </div>
-          <span className="ws-quick__meta">
-            {!jobsQuery.isLoading && <span className="ws-quick__count">{m.employer_job_list_result_count({ count: formatCount(pageData.count) })}</span>}
-            {hasFilters && (
-              <button type="button" className="ws-link-button" onClick={clearFilters}>
-                {m.employer_job_list_clear_filters()}
-              </button>
-            )}
-          </span>
         </div>
-      </div>
 
-      <div className="ws-panel ws-list">
-        <div className="ws-head ejl-head">
+        <div className="wt-head">
           <span>{m.employer_job_list_col_job()}</span>
           <span>{m.employer_job_list_col_status()}</span>
-          <SortHeader column="candidates" ordering={ordering} onSort={sortBy}>{m.employer_job_list_col_candidates()}</SortHeader>
-          <SortHeader column="views" ordering={ordering} onSort={sortBy}>{m.employer_job_list_col_views()}</SortHeader>
-          <SortHeader column="deadline" ordering={ordering} onSort={sortBy}>{m.employer_job_list_col_deadline()}</SortHeader>
-          <span className="sr-only">{m.employer_job_list_col_actions()}</span>
+          <span><SortHeader column="candidates" ordering={ordering} onSort={sortBy}>{m.employer_job_list_col_candidates()}</SortHeader></span>
+          <span><SortHeader column="views" ordering={ordering} onSort={sortBy}>{m.employer_job_list_col_views()}</SortHeader></span>
+          <span><SortHeader column="deadline" ordering={ordering} onSort={sortBy}>{m.employer_job_list_col_deadline()}</SortHeader></span>
+          <span>{m.employer_job_list_col_actions()}</span>
         </div>
 
         {jobsQuery.isError && (
@@ -265,7 +261,7 @@ export default function JobList() {
           <JobListSkeleton />
         ) : jobs.length === 0 && !jobsQuery.isError ? (
           hasFilters ? (
-            <div className="py-14">
+            <div className="wt-empty">
               <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={m.employer_job_list_no_match()}>
                 <Button onClick={clearFilters}>{m.employer_job_list_clear_filters()}</Button>
               </Empty>
@@ -297,23 +293,17 @@ export default function JobList() {
             ))}
           </div>
         )}
-
-        {pageData.count > 0 && (
-          <div className="flex flex-col items-center justify-between gap-2 border-t border-slate-100 px-4 py-3 text-xs text-slate-500 sm:flex-row">
-            <span>{m.employer_job_list_range({ first: firstRow, last: lastRow, total: formatCount(pageData.count) })}</span>
-            {pageData.count > PAGE_SIZE && (
-              <Pagination
-                size="small"
-                current={page}
-                pageSize={PAGE_SIZE}
-                total={pageData.count}
-                showSizeChanger={false}
-                onChange={(nextPage) => replaceFilters({ page: nextPage })}
-              />
-            )}
-          </div>
-        )}
       </div>
+
+      {pageData.count > 0 && (
+        <WorkspaceListFooter
+          summary={m.employer_job_list_range({ first: firstRow, last: lastRow, total: formatCount(pageData.count) })}
+          page={page}
+          pageSize={PAGE_SIZE}
+          total={pageData.count}
+          onChange={(nextPage) => replaceFilters({ page: nextPage })}
+        />
+      )}
       {confirmationModal}
     </section>
   )

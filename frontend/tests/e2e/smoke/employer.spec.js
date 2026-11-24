@@ -18,25 +18,21 @@ async function expectVisibleActionBackground(locator) {
 }
 
 async function expectJobFormTopBackground(page) {
+  // The shared workspace frame gives the form its tinted gutter on every side.
   const scroller = page
     .getByTestId('employer-workspace')
     .locator('main.ant-layout-content')
-  const form = page.locator('form.post-job-form')
-  const grid = form.locator(':scope > div')
-  const firstColumn = grid.locator(':scope > div').first()
+  const firstColumn = page.locator('form.post-job-form .post-job-layout > div').first()
 
   await scroller.evaluate((element) => { element.scrollTop = 0 })
-  await expect(grid).toHaveCSS('background-color', 'rgb(250, 250, 250)')
-  await expect.poll(async () => grid.evaluate((element) => (
-    Number.parseFloat(getComputedStyle(element).paddingTop)
-  ))).toBeGreaterThanOrEqual(16)
+  await expect(scroller).toHaveCSS('background-color', 'rgb(248, 250, 252)')
   await expect.poll(async () => {
-    const [gridRect, firstColumnRect] = await Promise.all([
-      grid.evaluate((element) => element.getBoundingClientRect().toJSON()),
+    const [scrollerRect, firstColumnRect] = await Promise.all([
+      scroller.evaluate((element) => element.getBoundingClientRect().toJSON()),
       firstColumn.evaluate((element) => element.getBoundingClientRect().toJSON()),
     ])
-    return Math.round(firstColumnRect.top - gridRect.top)
-  }).toBeGreaterThanOrEqual(16)
+    return Math.round(firstColumnRect.top - scrollerRect.top)
+  }).toBeGreaterThanOrEqual(12)
 }
 
 async function expectJobPreviewPinned(page) {
@@ -1058,14 +1054,13 @@ test('employer jobs: compact list keeps candidate previews and contextual action
   // labelled stats under the title.
   const usesTableRows = await page.getByRole('button', { name: 'Lượt xem' }).isVisible()
   const cardHeight = await activeJob.evaluate((element) => element.getBoundingClientRect().height)
-  expect(cardHeight).toBeLessThan(usesTableRows ? 120 : 220)
+  // Rows carry created date, category, location, salary and stacked actions.
+  expect(cardHeight).toBeLessThan(usesTableRows ? 180 : 340)
 
-  // Quick actions stay visible (no hover-only controls); phones use the menu.
-  if (viewportWidth >= 640) {
-    await expect(activeJob.getByTestId('job-quick-actions').getByRole('link', { name: 'Chỉnh sửa tin' })).toBeVisible()
-  }
+  // Link actions stay visible as stacked buttons; the rest sits under "Khác".
+  await expect(activeJob.getByTestId('job-quick-actions').getByRole('link', { name: 'Xem chi tiết' })).toBeVisible()
   await activeJob.getByRole('button', { name: 'Mở thao tác cho Kỹ sư Frontend React' }).click()
-  await expect(page.getByRole('menuitem', { name: /Chỉnh sửa tin/ })).toBeVisible()
+  await expect(page.getByRole('menuitem', { name: /Sao chép thành bản nháp/ })).toBeVisible()
   await page.keyboard.press('Escape')
 
   await page.getByRole('searchbox', { name: 'Tìm tin tuyển dụng' }).fill('Frontend')

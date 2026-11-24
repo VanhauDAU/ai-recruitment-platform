@@ -28,7 +28,7 @@ describe('job list presentation', () => {
     const job = { status: 'active', first_approved_at: '2026-11-05T02:00:00Z', deadline: '2026-11-25' }
     const open = jobDeadlineMeta(job, NOW)
     expect(open).toMatchObject({ hint: 'Còn 10 ngày', progress: 50 })
-    expect(open.tone.text).toBe('text-emerald-700')
+    expect(open.tone.text).toBe('text-slate-500')
     expect(jobDeadlineMeta({ ...job, deadline: '2026-11-18' }, NOW).tone.text).toBe('text-red-600')
     expect(jobDeadlineMeta({ ...job, deadline: '2026-11-15' }, NOW).hint).toBe('Hết hạn hôm nay')
   })
