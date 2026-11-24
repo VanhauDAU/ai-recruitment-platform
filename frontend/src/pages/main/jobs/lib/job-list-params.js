@@ -11,11 +11,13 @@ const SIMPLE_MAP = {
   level: 'position_level',
   nganh: 'industry',
   sort: 'ordering',
+  // Huy hiệu Sấm Chớp: tin của NTD phản hồi hồ sơ đúng hạn (ADR-0027).
+  fast: 'flash_badge',
 }
 const LIST_MAP = { cat: 'category', exp: 'experience_years' }
 
 // Key filter trên URL (dùng cho "Xóa lọc" và kiểm tra đang có lọc).
-export const FILTER_KEYS = ['cat', 'exp', 'wt', 'et', 'level', 'nganh', 'salary', 'sort']
+export const FILTER_KEYS = ['cat', 'exp', 'wt', 'et', 'level', 'nganh', 'salary', 'sort', 'fast']
 
 export function mergeSearchParams(current, entries, { resetPage = true } = {}) {
   const next = new URLSearchParams(current)

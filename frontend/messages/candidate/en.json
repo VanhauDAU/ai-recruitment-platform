@@ -70,5 +70,12 @@
   "candidate_best_jobs_hide_hint": "Hide tip",
   "candidate_best_jobs_page_total": "/ {total} pages",
   "candidate_best_jobs_save": "Save job",
-  "candidate_best_jobs_saved": "Job saved"
+  "candidate_best_jobs_saved": "Job saved",
+  "candidate_flash_badge_count": "jobs whose employer answers at least {rate}% of applications within {hours} hours",
+  "candidate_flash_badge_point_real": "Based on the employer's real decisions on applications",
+  "candidate_flash_badge_point_hourly": "Updated automatically every hour",
+  "candidate_job_filter_fast_response": "Employer answers quickly",
+  "candidate_job_flash_stats": "The employer answers {rate}% of applications",
+  "candidate_job_flash_stats_hours": "The employer answers {rate}% of applications, {hours} hours on average",
+  "candidate_job_flash_stats_days": "The employer answers {rate}% of applications, {days} days on average"
 }

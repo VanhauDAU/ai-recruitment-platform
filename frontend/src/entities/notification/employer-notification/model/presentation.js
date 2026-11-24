@@ -4,10 +4,12 @@ const EVENT_TONES = {
   company_page_editor_granted: 'success',
   company_join_approved: 'success',
   campaign_activated: 'success',
+  flash_badge_granted: 'success',
   verification_changes_requested: 'warning',
   verification_expired: 'warning',
   document_changes_requested: 'warning',
   application_awaiting_reply: 'warning',
+  flash_badge_at_risk: 'warning',
   job_changes_requested: 'warning',
   campaign_ending_soon: 'warning',
   campaign_health_alert: 'warning',
@@ -22,6 +24,7 @@ const EVENT_TONES = {
   campaign_activation_failed: 'danger',
   social_post_failed: 'danger',
   social_connection_expired: 'danger',
+  flash_badge_lost: 'danger',
 }
 
 export function employerNotificationTone(eventType) {

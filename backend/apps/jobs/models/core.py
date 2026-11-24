@@ -250,8 +250,10 @@ class Job(models.Model):
     tier = models.CharField(max_length=20, choices=Tier.choices, default=Tier.STANDARD)
     is_hot = models.BooleanField(default=False, help_text='Nhãn HOT (đỏ) trên card')
     is_urgent = models.BooleanField(default=False, help_text='Nhãn GẤP / tuyển gấp (cam) trên card')
+    # Huy hiệu Sấm Chớp do task định kỳ tính từ mức phản hồi của người đăng
+    # (ADR-0027, apps.applications.services.refresh_flash_badges), không ai sửa tay.
     has_flash_badge = models.BooleanField(
-        default=False, help_text='Huy hiệu Sấm Chớp — NTD tương tác nhanh'
+        default=False, help_text='Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD'
     )
     status = models.CharField(max_length=50, choices=Status.choices, default=Status.DRAFT)
     policy_hold = models.CharField(

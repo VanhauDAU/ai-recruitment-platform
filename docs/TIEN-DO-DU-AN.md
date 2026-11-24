@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Huy hiệu Sấm Chớp tính từ mức phản hồi thật (ADR-0027)](#huy-hiệu-sấm-chớp-tính-từ-mức-phản-hồi-thật-adr-0027-2026-11-25) | 🟨 Xong trên nhánh `feat/flash-badge-responsiveness`, chờ PR |
 | [Làm lại khối Việc làm nổi bật trang chủ](#làm-lại-khối-việc-làm-nổi-bật-trang-chủ-2026-11-25) | 🟨 Xong trên nhánh `feat/home-featured-jobs-redesign`, chưa commit/PR |
 | [Mã tin và mã công ty dễ đọc](#mã-tin-và-mã-công-ty-dễ-đọc-2026-11-25) | 🟨 Xong trên nhánh `feat/readable-record-codes`, chờ gộp PR |
 | [Bộ file triển khai production procv.site](#bộ-file-triển-khai-production-procvsite-2026-11-24) | 🟨 Xong trên nhánh `feat/production-deploy`, chờ gộp PR; chưa lên VPS |
@@ -48,6 +49,22 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Huy hiệu Sấm Chớp tính từ mức phản hồi thật (ADR-0027, 2026-11-25)
+
+Trước đây `has_flash_badge` do admin tick tay, seed bật ngẫu nhiên. Banner trang chủ có
+đồng hồ đếm ngược giả và câu "tương tác trong 24 giờ qua" không đúng số liệu.
+
+| Hạng mục | Trạng thái |
+| --- | --- |
+| Luật thuần `applications/domain/flash_badge.py`; ảnh chụp `RecruiterResponsiveness`; service `refresh_flash_badges` + beat mỗi giờ; chiếu xuống `Job.has_flash_badge` bằng `update()` | ✅ |
+| 6 key `flash_badge_*` (nhóm Ứng tuyển & SLA); Django admin chỉ xem cờ; seed demo bỏ bật ngẫu nhiên | ✅ |
+| Thông báo NTD: đạt, mất (kèm lý do), sắp mất (hồ sơ sắp quá hạn 24 giờ) | ✅ |
+| Dashboard NTD: thẻ tiến độ 4 tiêu chí + số hồ sơ quá hạn/sắp quá hạn đo trực tiếp | ✅ |
+| Ứng viên: banner bỏ đếm ngược, câu theo ngưỡng thật, nút dẫn tới `/viec-lam?fast=1`; bộ lọc "NTD phản hồi nhanh"; tooltip nhãn; số thật ở chi tiết tin; +2 điểm "Việc làm tốt nhất" | ✅ |
+| Dữ liệu demo có huy hiệu (cần hồ sơ + quyết định thật, seed hiện không tạo hồ sơ) | ⬜ Chưa làm |
+
+Đặc tả: [huy-hieu-sam-chop.md](07-algorithms/huy-hieu-sam-chop.md).
 
 ## Làm lại khối Việc làm nổi bật trang chủ (2026-11-25)
 

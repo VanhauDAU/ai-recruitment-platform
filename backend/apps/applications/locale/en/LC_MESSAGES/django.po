@@ -159,6 +159,21 @@ msgstr "You cannot apply for this job posting right now."
 msgid "Ứng viên này đã ở trong danh sách chặn của công ty."
 msgstr "This candidate is already on the company block list."
 
+msgid "Bạn chưa đưa ra quyết định nào cho hồ sơ trong %(days)s ngày gần nhất."
+msgstr "You have not decided on any application in the last %(days)s days."
+
+msgid "Bạn phản hồi %(rate)s%% hồ sơ trong %(hours)s giờ. Tin đăng của bạn được gắn Huy hiệu Sấm Chớp và ưu tiên hiển thị với ứng viên."
+msgstr "You answered %(rate)s%% of applications within %(hours)s hours. Your jobs now carry the Flash badge and rank higher for candidates."
+
+msgid "Chưa đủ %(count)s hồ sơ đến hạn phản hồi trong %(days)s ngày gần nhất."
+msgstr "Fewer than %(count)s applications came due in the last %(days)s days."
+
+msgid "Tỷ lệ hồ sơ được phản hồi trong %(hours)s giờ còn %(rate)s%%, dưới mức %(target)s%%."
+msgstr "Only %(rate)s%% of applications were answered within %(hours)s hours, below the %(target)s%% required."
+
+msgid "%(count)s hồ sơ sẽ quá hạn %(hours)s giờ trong 24 giờ tới. Hãy phản hồi để giữ Huy hiệu Sấm Chớp."
+msgstr "%(count)s applications pass the %(hours)s-hour deadline in the next 24 hours. Answer them to keep the Flash badge."
+
 msgid "Chiến dịch của hồ sơ vừa thay đổi. Vui lòng tải lại."
 msgstr "The recruitment campaign of this application has just changed. Please reload."
 

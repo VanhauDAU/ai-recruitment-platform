@@ -245,7 +245,6 @@ class Command(BaseCommand):
                     tier=tier,
                     is_hot=rnd.random() < 0.18,
                     is_urgent=rnd.random() < 0.18,
-                    has_flash_badge=rnd.random() < 0.3,
                     deadline=(published + timedelta(days=rnd.choice([7, 15, 30, 45]))).date(),
                     status=Job.Status.ACTIVE,
                     published_at=published,

@@ -21,6 +21,7 @@ của danh sách việc làm, trang chủ và luồng ứng tuyển.
    nhiên; không còn vị trí tài trợ, làm mới tin trả phí hay remarketing.
 3. Các nhãn `tier`, `is_hot`, `is_urgent`, `has_flash_badge` trên tin được
    giữ lại. Đây là nhãn do quản trị viên gán tay, không phụ thuộc gói.
+   `has_flash_badge` về sau do hệ thống tính (ADR-0027).
 4. Vòng đời hiển thị của tin (`requested_visibility_days`,
    `visibility_starts_at`, `visibility_ends_at`) trong ADR-0012 được giữ.
 

@@ -48,6 +48,7 @@
   "job_label_sponsored": "Tài trợ",
   "job_label_urgent": "GẤP",
   "job_label_fast_response": "Phản hồi nhanh",
+  "job_label_fast_response_hint": "Nhà tuyển dụng thường xuyên phản hồi hồ sơ đúng hạn. Hệ thống tính lại mỗi giờ.",
   "job_weekday_mon": "Thứ 2",
   "job_weekday_tue": "Thứ 3",
   "job_weekday_wed": "Thứ 4",

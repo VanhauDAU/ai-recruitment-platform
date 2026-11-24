@@ -70,5 +70,12 @@
   "candidate_best_jobs_hide_hint": "Ẩn gợi ý",
   "candidate_best_jobs_page_total": "/ {total} trang",
   "candidate_best_jobs_save": "Lưu việc làm",
-  "candidate_best_jobs_saved": "Đã lưu việc làm"
+  "candidate_best_jobs_saved": "Đã lưu việc làm",
+  "candidate_flash_badge_count": "tin đăng có nhà tuyển dụng phản hồi từ {rate}% hồ sơ trong {hours} giờ",
+  "candidate_flash_badge_point_real": "Tính từ quyết định thật của nhà tuyển dụng với hồ sơ",
+  "candidate_flash_badge_point_hourly": "Hệ thống tự cập nhật mỗi giờ",
+  "candidate_job_filter_fast_response": "Nhà tuyển dụng phản hồi nhanh",
+  "candidate_job_flash_stats": "Nhà tuyển dụng phản hồi {rate}% hồ sơ",
+  "candidate_job_flash_stats_hours": "Nhà tuyển dụng phản hồi {rate}% hồ sơ, trung bình {hours} giờ",
+  "candidate_job_flash_stats_days": "Nhà tuyển dụng phản hồi {rate}% hồ sơ, trung bình {days} ngày"
 }

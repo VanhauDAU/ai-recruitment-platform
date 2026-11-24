@@ -1546,6 +1546,134 @@
     }
   },
   {
+    "key": "flash_badge_enabled",
+    "label": "Bật Huy hiệu Sấm Chớp",
+    "group": "applications",
+    "section": "Huy hiệu Sấm Chớp",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "Hệ thống tự gắn huy hiệu cho tin của nhà tuyển dụng phản hồi hồ sơ đúng hạn, đều đặn. Tắt thì gỡ huy hiệu khỏi mọi tin ở lần tính kế tiếp.",
+    "help": "Huy hiệu được tính lại mỗi giờ.",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng",
+        "Trang chủ",
+        "Tin tuyển dụng"
+      ]
+    }
+  },
+  {
+    "key": "flash_badge_window_days",
+    "label": "Cửa sổ xét (ngày)",
+    "group": "applications",
+    "section": "Huy hiệu Sấm Chớp",
+    "value_type": "number",
+    "value": 30,
+    "is_public": true,
+    "description": "Xét các hồ sơ nộp trong bấy nhiêu ngày gần nhất.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng",
+        "Trang chủ",
+        "Tin tuyển dụng"
+      ],
+      "integer": true,
+      "min": 7,
+      "max": 180,
+      "depends_on": "flash_badge_enabled"
+    }
+  },
+  {
+    "key": "flash_badge_response_hours",
+    "label": "Hạn phản hồi (giờ)",
+    "group": "applications",
+    "section": "Huy hiệu Sấm Chớp",
+    "value_type": "number",
+    "value": 72,
+    "is_public": true,
+    "description": "Hồ sơ phải có quyết định (phù hợp, phỏng vấn, nhận, từ chối) trong bấy nhiêu giờ từ lúc nộp mới tính là phản hồi đúng hạn.",
+    "help": "Mở xem CV hay hệ thống tự từ chối không tính là phản hồi.",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng",
+        "Trang chủ",
+        "Tin tuyển dụng"
+      ],
+      "integer": true,
+      "min": 4,
+      "max": 336,
+      "depends_on": "flash_badge_enabled"
+    }
+  },
+  {
+    "key": "flash_badge_min_applications",
+    "label": "Số hồ sơ tối thiểu",
+    "group": "applications",
+    "section": "Huy hiệu Sấm Chớp",
+    "value_type": "number",
+    "value": 5,
+    "is_public": true,
+    "description": "Cần ít nhất bấy nhiêu hồ sơ đã đến hạn trong cửa sổ xét để được xét huy hiệu.",
+    "help": "Tránh cấp huy hiệu từ một hai hồ sơ.",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng",
+        "Trang chủ",
+        "Tin tuyển dụng"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 100,
+      "depends_on": "flash_badge_enabled"
+    }
+  },
+  {
+    "key": "flash_badge_min_response_rate",
+    "label": "Tỷ lệ phản hồi đúng hạn tối thiểu (%)",
+    "group": "applications",
+    "section": "Huy hiệu Sấm Chớp",
+    "value_type": "number",
+    "value": 80,
+    "is_public": true,
+    "description": "Phần trăm hồ sơ phải được quyết định trong hạn phản hồi.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng",
+        "Trang chủ",
+        "Tin tuyển dụng"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 100,
+      "depends_on": "flash_badge_enabled"
+    }
+  },
+  {
+    "key": "flash_badge_active_days",
+    "label": "Hoạt động gần đây (ngày)",
+    "group": "applications",
+    "section": "Huy hiệu Sấm Chớp",
+    "value_type": "number",
+    "value": 7,
+    "is_public": false,
+    "description": "Nhà tuyển dụng phải có ít nhất một quyết định cho hồ sơ trong bấy nhiêu ngày gần nhất để giữ huy hiệu.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng",
+        "Trang chủ",
+        "Tin tuyển dụng"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 60,
+      "depends_on": "flash_badge_enabled"
+    }
+  },
+  {
     "key": "candidate_max_cvs",
     "label": "Số CV tối đa mỗi ứng viên",
     "group": "cv",

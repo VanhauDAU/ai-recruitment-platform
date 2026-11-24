@@ -532,8 +532,9 @@ cáo hoặc phát hiện vi phạm.
 | `Application`, `ApplicationStatusHistory` | Hồ sơ ứng tuyển và timeline. |
 
 Chi tiết cột ở [thiet-ke-database.md](../03-database/thiet-ke-database.md).
-Nhãn hiển thị `tier`, `is_hot`, `is_urgent`, `has_flash_badge` vẫn do admin
-gán, không gắn với gói dịch vụ nào.
+Nhãn hiển thị `tier`, `is_hot`, `is_urgent` vẫn do admin gán, không gắn với gói
+dịch vụ nào. `has_flash_badge` (Huy hiệu Sấm Chớp) do hệ thống tính mỗi giờ từ việc
+người đăng tin quyết định hồ sơ đúng hạn ([ADR-0027](../02-tong-quan/adr-0027-flash-badge-responsiveness.md)).
 
 ## 10. Việc còn mở
 

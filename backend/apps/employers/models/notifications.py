@@ -63,6 +63,15 @@ class EmployerNotification(models.Model):
             'application_awaiting_reply',
             gettext_lazy('Hồ sơ đang chờ phản hồi'),
         )
+        FLASH_BADGE_GRANTED = (
+            'flash_badge_granted',
+            gettext_lazy('Bạn đã đạt Huy hiệu Sấm Chớp'),
+        )
+        FLASH_BADGE_LOST = 'flash_badge_lost', gettext_lazy('Bạn đã mất Huy hiệu Sấm Chớp')
+        FLASH_BADGE_AT_RISK = (
+            'flash_badge_at_risk',
+            gettext_lazy('Huy hiệu Sấm Chớp sắp bị gỡ'),
+        )
         JOB_CHANGES_REQUESTED = (
             'job_changes_requested',
             gettext_lazy('Tin tuyển dụng cần chỉnh sửa'),

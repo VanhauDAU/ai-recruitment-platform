@@ -17,6 +17,7 @@ import ApplicationActivityCard from './ApplicationActivityCard'
 import DashboardHeader from './DashboardHeader'
 import DashboardSidebar from './DashboardSidebar'
 import DashboardSummaryCards from './DashboardSummaryCards'
+import FlashBadgeProgressCard from './FlashBadgeProgressCard'
 import {
   DashboardComplianceNotice,
   DashboardVerificationJourney,
@@ -114,13 +115,16 @@ export default function EmployerDashboardOverview() {
             />
           )}
         </div>
-        <DashboardSidebar
-          account={account}
-          recruitmentNeed={data.recruitment_need}
-          summary={summary}
-          candidateActionTarget={candidateActionTarget}
-          jobWorkspaceReady={jobWorkspaceReady}
-        />
+        <div className="space-y-5">
+          <FlashBadgeProgressCard badge={data.flash_badge} />
+          <DashboardSidebar
+            account={account}
+            recruitmentNeed={data.recruitment_need}
+            summary={summary}
+            candidateActionTarget={candidateActionTarget}
+            jobWorkspaceReady={jobWorkspaceReady}
+          />
+        </div>
       </div>
     </div>
   )

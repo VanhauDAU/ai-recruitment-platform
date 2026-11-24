@@ -15,6 +15,8 @@ DEFAULT_BEST_JOBS_ROTATION_SEED = 'homepage-best-jobs'
 # (TOP) đã bỏ cùng dịch vụ thương mại. Giữ ít tiêu chí để giải thích được.
 SALARY_DISCLOSED_POINTS = 3
 HOT_OR_URGENT_POINTS = 2
+# Huy hiệu Sấm Chớp: người đăng thật sự trả lời ứng viên đúng hạn (ADR-0027).
+FLASH_BADGE_POINTS = 2
 FRESH_WEEK_POINTS = 2
 FRESH_MONTH_POINTS = 1
 POPULAR_POINTS = 1
@@ -22,7 +24,7 @@ POPULAR_MIN_APPLICATIONS = 5
 
 
 def best_job_score(at):
-    """Điểm chất lượng của tin: lương công khai, nhãn HOT/GẤP, độ mới, độ quan tâm."""
+    """Điểm chất lượng của tin: lương công khai, HOT/GẤP, Sấm Chớp, độ mới, độ quan tâm."""
     return (
         Case(
             When(
@@ -35,6 +37,7 @@ def best_job_score(at):
             When(Q(is_hot=True) | Q(is_urgent=True), then=Value(HOT_OR_URGENT_POINTS)),
             default=Value(0),
         )
+        + Case(When(has_flash_badge=True, then=Value(FLASH_BADGE_POINTS)), default=Value(0))
         + Case(
             When(published_at__gte=at - timedelta(days=7), then=Value(FRESH_WEEK_POINTS)),
             When(published_at__gte=at - timedelta(days=30), then=Value(FRESH_MONTH_POINTS)),

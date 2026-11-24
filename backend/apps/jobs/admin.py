@@ -199,11 +199,13 @@ class JobAdmin(admin.ModelAdmin):
         'gender_requirement',
         'salary_type',
     ]
-    # Gán hạng tin + nhãn ngay trên danh sách, không cần mở từng job.
-    list_editable = ['tier', 'is_hot', 'is_urgent', 'has_flash_badge']
+    # Gán hạng tin + nhãn ngay trên danh sách, không cần mở từng job. Huy hiệu
+    # Sấm Chớp do hệ thống tính (ADR-0027) nên chỉ xem.
+    list_editable = ['tier', 'is_hot', 'is_urgent']
     search_fields = ['title', 'company__company_name']
     readonly_fields = [
         'public_id',
+        'has_flash_badge',
         'submitted_at',
         'approved_at',
         'published_at',

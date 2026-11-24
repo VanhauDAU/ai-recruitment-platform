@@ -41,7 +41,10 @@ def _active_until(job):
 
 
 def job_presentation(job):
-    """Resolve the card projection from admin-assigned labels and the visibility window."""
+    """Resolve the card projection from labels and the visibility window.
+
+    ``has_flash_badge`` (Sấm Chớp) is computed from recruiter responsiveness (ADR-0027).
+    """
     sponsored = job.tier != Job.Tier.STANDARD
     if job.tier == Job.Tier.TOP:
         card_tone = 'green'

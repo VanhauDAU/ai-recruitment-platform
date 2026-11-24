@@ -178,9 +178,10 @@ stateDiagram-v2
 - **Lớp phủ hiển thị:** `policy_hold` (trạng thái tài khoản), `moderation_hold`
   (`manual_review`/`confirmed_violation` — admin tạm ẩn/khôi phục tin active sau
   báo cáo). Không đổi `status`.
-- **Nhãn admin gán:** `tier` standard/featured/top, `is_hot`, `is_urgent`,
-  `has_flash_badge`. Nhà tuyển dụng không ghi được các field này, cũng như
-  counter và mốc vòng đời.
+- **Nhãn admin gán:** `tier` standard/featured/top, `is_hot`, `is_urgent`.
+  `has_flash_badge` (Huy hiệu Sấm Chớp) do task mỗi giờ tính từ mức phản hồi của
+  người đăng tin (ADR-0027), không ai sửa tay. Nhà tuyển dụng không ghi được các
+  field này, cũng như counter và mốc vòng đời.
 - **Counter:** `view_count`, `impression_count`, `application_count`; số liệu
   theo ngày ở `JobEngagementDaily`.
 - **Ràng buộc DB:** `chk_jobs_status`, tuổi trong 15–100 và `age_max ≥ age_min`,
@@ -230,6 +231,7 @@ và chủ chiến dịch active.
 | `TalentPoolEntry`, `TalentPoolInvitation` | Kho ứng viên tiềm năng theo NTD: unique (recruiter, candidate) khi đang mở, `source_application` (tin dùng để đối sánh), `note`, `tags` JSON ≤ 5, `expires_at` = +12 tháng, `removed_at` (NTD gỡ), `withdrawn_at` (ứng viên rút); lời mời unique (entry, job). |
 | `CandidateBlock` | Danh sách đen theo NTD: (recruiter, candidate) unique khi chưa gỡ, `reason`, `note`, `expires_at` (NULL = tới khi gỡ), `lifted_at`. Hằng `MASS_APPLY_WINDOW_DAYS=14`, `MASS_APPLY_MIN_JOBS=5` cho cảnh báo nộp hàng loạt. |
 | `ApplicationReviewLink`, `ApplicationReview` | Link mời đánh giá (token chỉ lưu hash, `expires_at` ≤ 30 ngày, `revoked_at`, đếm lượt mở) và phiếu đánh giá 1-1 theo link (`recommendation`, `rating` 1–5, điểm mạnh, băn khoăn). |
+| `RecruiterResponsiveness` | Ảnh chụp mức phản hồi của một người đăng tin (unique `(company, recruiter)`) cho Huy hiệu Sấm Chớp (ADR-0027): `matured_count`, `on_time_count`, `avg_response_hours`, `last_decision_at`, `overdue_count`, `qualified`, `qualified_since`, `computed_at`. Task `refresh-flash-badges` ghi mỗi giờ rồi chiếu xuống `Job.has_flash_badge`. |
 | `ApplicationStatusHistory` | Timeline đổi trạng thái (actor SET_NULL, note nội bộ, `reverted_at` khi NTD hoàn tác). Mỗi dòng là khóa `application-status:<pk>` của thông báo nó tạo; ứng viên chỉ thấy dòng chưa hoàn tác có thông báo đã giao (hoặc không có thông báo). |
 
 Quyền đọc: nhà tuyển dụng chỉ thấy application của tin mình đăng
@@ -367,7 +369,8 @@ Cần extension `vector` (pgvector); migration `matching.0001` tự bật.
    chỉ tách con trỏ `Application.cv`.
 6. **Không còn dịch vụ thương mại** (ADR-0015): không có bảng gói dịch vụ,
    entitlement, đơn hàng, làm mới tin hay lead tư vấn; app `services` đã bị gỡ.
-   `tier`/`is_hot`/`is_urgent`/`has_flash_badge` chỉ do admin gán.
+   `tier`/`is_hot`/`is_urgent` chỉ do admin gán; `has_flash_badge` do hệ thống tính
+   (ADR-0027).
 7. **Bằng chứng không bị viết lại**: event/history/report/transition chỉ thêm;
    thay đổi nghiệp vụ và bản ghi audit luôn commit cùng transaction.
 
