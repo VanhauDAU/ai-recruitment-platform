@@ -52,13 +52,17 @@ const BENEFITS = [
 ]
 
 function VerificationBanner() {
+  // Ảnh rộng 1870×841: chặn chiều cao để form xác thực nằm trên màn hình đầu,
+  // nền hai nửa trùng màu mép trái/phải của ảnh (chỗ nối nằm sau ảnh) nên hai bên liền mạch.
   return (
-    <img
-      src={BANNER_SRC}
-      alt={m.employer_account_phone_banner_alt()}
-      className="block w-full"
-      loading="lazy"
-    />
+    <div className="bg-[linear-gradient(90deg,#f9f9f9_50%,#edeef0_50%)]">
+      <img
+        src={BANNER_SRC}
+        alt={m.employer_account_phone_banner_alt()}
+        className="block max-h-44 w-full object-contain sm:max-h-60"
+        loading="lazy"
+      />
+    </div>
   )
 }
 
