@@ -81,8 +81,6 @@ function SidebarItem({ item, active, onNavigate }) {
   return (
     <Link
       to={item.path}
-      target={item.blank ? '_blank' : undefined}
-      rel={item.blank ? 'noopener' : undefined}
       onClick={onNavigate}
       className={`${base} ${
         active

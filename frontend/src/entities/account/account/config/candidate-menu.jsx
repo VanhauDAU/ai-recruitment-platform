@@ -6,10 +6,6 @@ import { FileTextOutlined, IdcardOutlined, MailOutlined, SafetyOutlined } from '
  * - Sidebar trái của cụm trang tài khoản 3 cột (`AccountSidebar`)
  * Route con của layout 3 cột cũng sinh từ đây (xem main.routes.jsx) nên thêm/sửa
  * một trang chỉ cần đổi đúng file này.
- *
- * Quy ước item:
- * - `path`  : route đích.
- * - `blank` : mở tab mới vì trang KHÔNG dùng layout 3 cột (vd: Việc làm đã lưu).
  */
 
 export const ACCOUNT_ROOT = '/tai-khoan'
@@ -19,7 +15,7 @@ export const CANDIDATE_MENU = [
   {
     key: 'search', title: 'Quản lý tìm việc', icon: <IdcardOutlined />, dot: true,
     items: [
-      { key: 'saved-jobs', label: 'Việc làm đã lưu', path: '/viec-lam-da-luu', blank: true },
+      { key: 'saved-jobs', label: 'Việc làm đã lưu', path: '/viec-lam-da-luu' },
       { key: 'applied-jobs', label: 'Việc làm đã ứng tuyển', path: accountPath('viec-lam-da-ung-tuyen') },
       { key: 'matching-jobs', label: 'Việc làm phù hợp với bạn', path: accountPath('viec-lam-phu-hop') },
       { key: 'followed-companies', label: 'Công ty đang theo dõi', path: accountPath('cong-ty-dang-theo-doi') },
@@ -50,10 +46,8 @@ export const CANDIDATE_MENU = [
   },
 ]
 
-// Các trang nằm TRONG layout 3 cột (không blank) — nguồn sinh route con.
-export const ACCOUNT_LAYOUT_ITEMS = CANDIDATE_MENU.flatMap(
-  (group) => group.items.filter((item) => !item.blank),
-)
+// Mọi trang trong menu đều nằm trong layout 3 cột — nguồn sinh route con.
+export const ACCOUNT_LAYOUT_ITEMS = CANDIDATE_MENU.flatMap((group) => group.items)
 
 // Trang mặc định khi vào thẳng /tai-khoan.
 export const ACCOUNT_DEFAULT_PATH = accountPath('thong-tin-ca-nhan')
@@ -64,7 +58,7 @@ export function findActiveAccountItem(pathname) {
 
 export function findGroupKeyByPath(pathname) {
   const group = CANDIDATE_MENU.find(
-    (g) => g.items.some((item) => !item.blank && pathname === item.path),
+    (g) => g.items.some((item) => pathname === item.path),
   )
   return group?.key || null
 }

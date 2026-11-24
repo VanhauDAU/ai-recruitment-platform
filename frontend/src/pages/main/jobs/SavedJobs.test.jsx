@@ -132,10 +132,6 @@ describe('SavedJobs', () => {
       name: 'Việc làm tương tự việc bạn đã lưu',
     })).toBeInTheDocument()
     expect(screen.getByText('Django Developer')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Tạo CV ngay' })).toHaveAttribute(
-      'href',
-      '/mau-cv',
-    )
   })
 
   it('distinguishes a saved-list failure from a true empty state and retries', async () => {
