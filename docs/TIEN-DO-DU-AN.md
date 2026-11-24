@@ -7,8 +7,9 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Huy hiệu Sấm Chớp tính từ mức phản hồi thật (ADR-0027)](#huy-hiệu-sấm-chớp-tính-từ-mức-phản-hồi-thật-adr-0027-2026-11-25) | 🟨 Xong trên nhánh `feat/flash-badge-responsiveness`, chờ PR |
-| [Làm lại khối Việc làm nổi bật trang chủ](#làm-lại-khối-việc-làm-nổi-bật-trang-chủ-2026-11-25) | 🟨 Xong trên nhánh `feat/home-featured-jobs-redesign`, chưa commit/PR |
+| [Làm lại khối Gợi ý việc làm phù hợp trang chủ](#làm-lại-khối-gợi-ý-việc-làm-phù-hợp-trang-chủ-2026-11-25) | 🟨 Xong trên nhánh `feat/home-recommendations-redesign`, chưa commit/PR |
+| [Huy hiệu Sấm Chớp tính từ mức phản hồi thật (ADR-0027)](#huy-hiệu-sấm-chớp-tính-từ-mức-phản-hồi-thật-adr-0027-2026-11-25) | ✅ Đã gộp dev (#334) |
+| [Làm lại khối Việc làm nổi bật trang chủ](#làm-lại-khối-việc-làm-nổi-bật-trang-chủ-2026-11-25) | ✅ Đã gộp dev (#333) |
 | [Mã tin và mã công ty dễ đọc](#mã-tin-và-mã-công-ty-dễ-đọc-2026-11-25) | 🟨 Xong trên nhánh `feat/readable-record-codes`, chờ gộp PR |
 | [Bộ file triển khai production procv.site](#bộ-file-triển-khai-production-procvsite-2026-11-24) | 🟨 Xong trên nhánh `feat/production-deploy`, chờ gộp PR; chưa lên VPS |
 | [Làm lại trang công ty phía ứng viên](#làm-lại-trang-công-ty-phía-ứng-viên-2026-11-24) | 🟨 Xong trên nhánh `feat/company-page-jobs-layout`, chờ gộp PR |
@@ -65,6 +66,18 @@ Trước đây `has_flash_badge` do admin tick tay, seed bật ngẫu nhiên. Ba
 | Dữ liệu demo có huy hiệu (cần hồ sơ + quyết định thật, seed hiện không tạo hồ sơ) | ⬜ Chưa làm |
 
 Đặc tả: [huy-hieu-sam-chop.md](07-algorithms/huy-hieu-sam-chop.md).
+
+## Làm lại khối Gợi ý việc làm phù hợp trang chủ (2026-11-25)
+
+- Khối đặt trong một tấm nền nhạt (pha từ `--brand-*`, lưới chấm mờ) để tách khỏi "Việc làm
+  nổi bật" nhưng dùng chung ngôn ngữ: thẻ trắng gọn, pill lương/địa điểm, `ArrowButton`.
+- Desktop: cột trái có maskcot `ProcvMascot` (ôm bảng checklist) kèm bong bóng tổng số việc
+  phù hợp, tiêu đề, "Xem tất cả" và "Tùy chỉnh gợi ý"; mobile thu thành một hàng ngang.
+- Thẻ gọn hơn (logo 46px, lý do phù hợp ở chân thẻ); nút ẩn tin chỉ hiện khi rê/focus trên
+  máy có chuột. Tự chuyển trang theo thanh chạy trong chấm phân trang (`animationend`,
+  dừng khi rê chuột, tắt khi giảm chuyển động); trang ẩn dùng `inert`.
+- Tách `HomeRecommendations.jsx` + `home-recommendations.css` (chunk lazy); chuỗi vào
+  `messages/candidate` (`candidate_reco_home_*`), trần i18n `widgets/main` hạ còn 300.
 
 ## Làm lại khối Việc làm nổi bật trang chủ (2026-11-25)
 
