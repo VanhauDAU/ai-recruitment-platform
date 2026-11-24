@@ -54,6 +54,7 @@
   "employer_workspace_compliance_default": "Dữ liệu ứng viên đang được bảo vệ.",
   "employer_workspace_employer_fallback_name": "Nhà tuyển dụng",
   "employer_workspace_employer_code": "Mã NTD: {code}",
+  "employer_workspace_employer_code_label": "Mã NTD",
   "employer_workspace_verification_level_label": "Tài khoản xác thực:",
   "employer_workspace_verification_level": "Cấp {level}/{total}",
   "employer_workspace_verification_details_button": "Xem chi tiết cấp xác thực tài khoản",

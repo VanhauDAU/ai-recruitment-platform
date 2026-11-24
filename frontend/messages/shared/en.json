@@ -590,5 +590,10 @@
   "banner_theme_teal": "Teal",
   "banner_theme_rose": "Rose",
   "banner_theme_aurora": "Aurora",
-  "banner_theme_midnight": "Midnight"
+  "banner_theme_midnight": "Midnight",
+  "ui_code_copy": "Copy code {code}",
+  "ui_code_copied": "Copied {code}.",
+  "ui_code_copy_manually": "Couldn't copy, select the code to copy it manually.",
+  "ui_code_job": "Job ID",
+  "ui_code_company": "Company ID"
 }

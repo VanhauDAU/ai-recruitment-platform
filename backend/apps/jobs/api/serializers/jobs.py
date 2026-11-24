@@ -96,6 +96,7 @@ class JobSerializer(serializers.ModelSerializer):
         model = Job
         fields = [
             'public_id',
+            'code',
             'slug',
             'title',
             'company_name',
@@ -153,6 +154,7 @@ class JobSerializer(serializers.ModelSerializer):
         list_serializer_class = JobBadgeListSerializer
         read_only_fields = [
             'public_id',
+            'code',
             'slug',
             'company_name',
             'company_slug',

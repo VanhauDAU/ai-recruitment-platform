@@ -68,6 +68,7 @@
   "employer_workspace_compliance_default": "Candidate data is protected.",
   "employer_workspace_employer_fallback_name": "Employer",
   "employer_workspace_employer_code": "Employer ID: {code}",
+  "employer_workspace_employer_code_label": "Employer ID",
   "employer_workspace_verification_level_label": "Account verification:",
   "employer_workspace_verification_level": "Level {level}/{total}",
   "employer_workspace_verification_details_button": "View account verification level details",

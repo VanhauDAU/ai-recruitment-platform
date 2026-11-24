@@ -328,7 +328,9 @@ def campaign_pause_impact(campaign):
         'confirmation_code': campaign.public_id,
         'active_public_job_count': active_jobs.count(),
         'active_public_jobs': list(
-            active_jobs.order_by('-created_at').values('public_id', 'title', 'deadline')[:10]
+            active_jobs.order_by('-created_at').values('public_id', 'code', 'title', 'deadline')[
+                :10
+            ]
         ),
     }
 

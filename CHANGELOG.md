@@ -6,6 +6,15 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-11-25
+
+#### Added — Mã tin và mã công ty dễ đọc
+
+- `Job.code` (`J` + 7 chữ số) và `Company.code` (`C` + 6 chữ số): ngẫu nhiên, unique, có
+  check constraint; migration gán mã cho dữ liệu cũ. `public_id` giữ nguyên cho API và slug.
+- Admin tìm tin/công ty theo mã, NTD tìm tin theo mã; bỏ dấu ngăn cách khi đọc mã theo nhóm.
+- `CodeBadge` dùng chung (monospace + nút sao chép) ở cổng admin và NTD; CSV admin xuất mã mới.
+
 ### 2026-11-24
 
 #### Added — Bộ file triển khai production procv.site

@@ -190,7 +190,7 @@ export default function AdminCompanyDirectory({ onOpenTab }) {
               <AdminDataActions
                 iconOnly
                 columns={[
-                  { key: 'public_id', label: m.admin_company_list_csv_code() },
+                  { key: 'code', label: m.admin_company_list_csv_code() },
                   { key: 'company_name', label: m.admin_company_list_col_company() },
                   { key: 'tax_code', label: m.admin_company_list_csv_tax_code() },
                   { label: m.admin_company_list_csv_owner(), value: (row) => row.owners?.[0]?.full_name || row.owners?.[0]?.email || '' },

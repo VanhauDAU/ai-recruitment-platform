@@ -16429,6 +16429,9 @@ components:
         public_id:
           type: string
           readOnly: true
+        code:
+          type: string
+          readOnly: true
         company_name:
           type: string
           maxLength: 255
@@ -16531,6 +16534,7 @@ components:
           readOnly: true
       required:
       - business_type_label
+      - code
       - company_name
       - company_size_label
       - created_at
@@ -17001,6 +17005,9 @@ components:
         public_id:
           type: string
           readOnly: true
+        code:
+          type: string
+          readOnly: true
         company_name:
           type: string
           maxLength: 255
@@ -17055,6 +17062,7 @@ components:
           readOnly: true
       required:
       - business_type_label
+      - code
       - company_name
       - created_at
       - has_eligible_owner
@@ -18279,6 +18287,9 @@ components:
         public_id:
           type: string
           readOnly: true
+        code:
+          type: string
+          readOnly: true
         slug:
           type: string
           readOnly: true
@@ -18600,6 +18611,7 @@ components:
       - blocked_reasons
       - can_view_sensitive_contact
       - category_assignments
+      - code
       - company_name
       - company_public_id
       - company_role
@@ -18654,6 +18666,9 @@ components:
       type: object
       properties:
         public_id:
+          type: string
+          readOnly: true
+        code:
           type: string
           readOnly: true
         slug:
@@ -18797,6 +18812,7 @@ components:
       required:
       - application_count
       - approved_at
+      - code
       - company_name
       - company_public_id
       - company_role
@@ -23277,6 +23293,9 @@ components:
         public_id:
           type: string
           readOnly: true
+        code:
+          type: string
+          readOnly: true
         slug:
           type: string
           readOnly: true
@@ -23360,6 +23379,7 @@ components:
           readOnly: true
       required:
       - address
+      - code
       - company_name
       - company_size
       - cover_image_url
@@ -26430,6 +26450,9 @@ components:
         public_id:
           type: string
           readOnly: true
+        code:
+          type: string
+          readOnly: true
         slug:
           type: string
           readOnly: true
@@ -26725,6 +26748,7 @@ components:
       - brand_slug
       - campaign_name
       - category
+      - code
       - company_cover_url
       - company_logo_url
       - company_name
@@ -26762,6 +26786,9 @@ components:
         time.
       properties:
         public_id:
+          type: string
+          readOnly: true
+        code:
           type: string
           readOnly: true
         slug:
@@ -27051,6 +27078,7 @@ components:
       - brand_slug
       - campaign_name
       - category
+      - code
       - company_cover_url
       - company_logo_url
       - company_name
@@ -27264,6 +27292,9 @@ components:
         public_id:
           type: string
           readOnly: true
+        code:
+          type: string
+          readOnly: true
         slug:
           type: string
           readOnly: true
@@ -27427,6 +27458,7 @@ components:
       - candidate_previews
       - category_name
       - closes_on
+      - code
       - company_name
       - created_at
       - currency

@@ -5,6 +5,7 @@ import {
   formatAdminJobDateTime,
 } from '@/entities/job/admin-job'
 import { getIntlLocale, m } from '@/shared/config/i18n'
+import CodeBadge from '@/shared/ui/code-badge/CodeBadge'
 
 // Pill tones map onto `.ws-tone-*` in @/shared/ui/workspace-list/workspace-list.css.
 const STATUS_TONES = { active: 'emerald', draft: 'slate', closed: 'slate' }
@@ -30,7 +31,7 @@ export default function AdminJobListRow({ job, onOpen }) {
       <div className="wt-cell wt-cell--main">
         <button type="button" className="wt-title ajl-title" onClick={() => onOpen(job)}>{job.title}</button>
         <div className="wt-meta">
-          <span className="ajl-code">{job.public_id}</span>
+          <CodeBadge code={job.code} />
           <span><BankOutlined aria-hidden />{job.company_name}</span>
         </div>
         <div className="wt-meta">

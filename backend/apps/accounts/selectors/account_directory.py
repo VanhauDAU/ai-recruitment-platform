@@ -29,6 +29,7 @@ from apps.employers.models import (
 )
 from apps.sitecontent.selectors import moderation_sla_hours
 from common.api.params import parse_bool
+from common.db.readable_code import code_search_q
 from common.db.search import search_q
 
 from ..domain import recruiter_next_action as next_action
@@ -166,8 +167,7 @@ def _with_recruiter_next_action(queryset):
 
 def _account_code_q(query):
     """Mã tài khoản hay được đọc/gõ theo nhóm số ("4826 1937"), nên bỏ dấu ngăn cách."""
-    code = re.sub(r'[\s.-]', '', query)
-    return Q(public_id__icontains=code) if code else Q(pk__in=[])
+    return code_search_q('public_id', query)
 
 
 def _recruiter_search(query):

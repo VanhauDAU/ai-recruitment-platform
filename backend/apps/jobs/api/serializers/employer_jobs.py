@@ -216,6 +216,7 @@ class EmployerJobListSerializer(EmployerJobVisibilityHoldMixin, PublicJobListSer
     class Meta(PublicJobListSerializer.Meta):
         fields = [
             'public_id',
+            'code',
             'slug',
             'title',
             'company_name',

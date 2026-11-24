@@ -103,6 +103,7 @@ class AdminJobManagementListSerializer(serializers.ModelSerializer):
         model = Job
         fields = [
             'public_id',
+            'code',
             'slug',
             'title',
             'company_public_id',

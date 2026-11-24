@@ -29,6 +29,7 @@ class AdminCompanyListSerializer(serializers.ModelSerializer):
         model = Company
         fields = [
             'public_id',
+            'code',
             'company_name',
             'trade_name',
             'logo_url',

@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Mã tin và mã công ty dễ đọc](#mã-tin-và-mã-công-ty-dễ-đọc-2026-11-25) | 🟨 Xong trên nhánh `feat/readable-record-codes`, chờ gộp PR |
 | [Bộ file triển khai production procv.site](#bộ-file-triển-khai-production-procvsite-2026-11-24) | 🟨 Xong trên nhánh `feat/production-deploy`, chờ gộp PR; chưa lên VPS |
 | [Làm lại trang công ty phía ứng viên](#làm-lại-trang-công-ty-phía-ứng-viên-2026-11-24) | 🟨 Xong trên nhánh `feat/company-page-jobs-layout`, chờ gộp PR |
 | [Mã tài khoản dạng số cho 3 cổng](#mã-tài-khoản-dạng-số-cho-3-cổng-2026-11-22) | 🟨 Xong trên nhánh `feat/numeric-user-id`, chờ gộp PR |
@@ -46,6 +47,19 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Mã tin và mã công ty dễ đọc (2026-11-25)
+
+Mã cũ `jb_<12 hex>`/`co_<12 hex>` khó đọc qua điện thoại. Thêm trường `code` riêng, giữ
+`public_id` làm khóa API và trong slug SEO.
+
+| Hạng mục | Trạng thái |
+| --- | --- |
+| `Job.code` = `J` + 7 chữ số, `Company.code` = `C` + 6 chữ số; ngẫu nhiên, chữ số đầu ≠ 0, unique + check constraint; helper chung `common/db/readable_code.py` | ✅ |
+| Migration `jobs.0003–0004`, `employers.0007–0008`: gán mã cho dữ liệu cũ rồi mới bắt buộc; nhân bản tin sinh mã mới | ✅ |
+| Tìm theo mã (bỏ dấu cách/chấm/gạch/`#`, không phân biệt hoa thường) ở danh sách tin và công ty admin, danh sách tin NTD; CSV admin xuất mã mới | ✅ |
+| `shared/ui/code-badge/CodeBadge`: nhãn monospace + nút sao chép; gắn ở list/chi tiết tin và công ty admin, header và list tin NTD, công ty NTD, cảnh báo tạm dừng chiến dịch, Mã NTD trên dashboard | ✅ |
+| Hiện mã tin trên trang tin công khai để ứng viên báo lỗi | ⬜ Chưa làm |
 
 ## Bộ file triển khai production procv.site (2026-11-24)
 

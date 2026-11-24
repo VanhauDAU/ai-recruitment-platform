@@ -107,6 +107,7 @@ class EmployerJobSerializerTests(APITestCase):
             set(item),
             {
                 'public_id',
+                'code',
                 'slug',
                 'title',
                 'company_name',
