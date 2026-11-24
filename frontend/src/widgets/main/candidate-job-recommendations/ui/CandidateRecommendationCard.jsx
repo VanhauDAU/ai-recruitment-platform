@@ -37,7 +37,7 @@ export default function CandidateRecommendationCard({ hidePending, job, onHide }
 
   return (
     <JobImpressionBoundary slug={job.slug} className="h-full">
-      <article className={`group flex h-full min-w-0 flex-col rounded-2xl border p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-[0_12px_30px_rgba(16,185,129,0.1)] ${jobCardToneClass(job)}`}>
+      <article className={`group flex h-full min-w-0 flex-col rounded-2xl border p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[var(--brand-primary)]/40 hover:shadow-[0_12px_30px_color-mix(in_srgb,var(--brand-primary)_10%,transparent)] ${jobCardToneClass(job)}`}>
         <div className="flex min-w-0 gap-3 sm:gap-4">
           <Link
             to={detailPath}
@@ -75,7 +75,7 @@ export default function CandidateRecommendationCard({ hidePending, job, onHide }
                     aria-label={saved ? 'Bỏ lưu việc làm' : 'Lưu việc làm'}
                     disabled={savePending}
                     onClick={handleSaved}
-                    className="grid h-8 w-8 cursor-pointer place-items-center rounded-full border border-slate-200 text-sm text-slate-400 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-[var(--brand-primary)] disabled:cursor-wait disabled:opacity-50"
+                    className="grid h-8 w-8 cursor-pointer place-items-center rounded-full border border-slate-200 text-sm text-slate-400 transition hover:border-[var(--brand-primary)]/40 hover:bg-[var(--brand-primary-soft)] hover:text-[var(--brand-primary)] disabled:cursor-wait disabled:opacity-50"
                   >
                     {saved ? <HeartFilled className="text-[var(--brand-primary)]" /> : <HeartOutlined />}
                   </button>
@@ -110,7 +110,7 @@ export default function CandidateRecommendationCard({ hidePending, job, onHide }
           {reasons.length > 0 && (
             <div className="mb-3 space-y-1.5 border-t border-slate-100 pt-3">
               {reasons.map((reason) => (
-                <p key={reason} className="flex items-start gap-1.5 text-xs font-semibold text-emerald-700">
+                <p key={reason} className="flex items-start gap-1.5 text-xs font-semibold text-[var(--brand-primary-hover)]">
                   <CheckCircleFilled className="mt-0.5 shrink-0" />
                   <span>{reason}</span>
                 </p>

@@ -498,7 +498,7 @@ function RecruiterVerification({ company }) {
           )
         })}
         <Link
-          className="inline-flex pt-2 font-semibold text-emerald-700"
+          className="inline-flex pt-2 font-semibold text-[var(--brand-primary-hover)]"
           to={`${adminPath('/recruiters')}?tab=verification&company=${company.public_id}`}
         >
           Mở hàng chờ xác thực NTD
@@ -569,7 +569,7 @@ export default function AdminCompanyDetail({ publicId }) {
       children: (
         <CompanyPanel title="Yêu cầu cập nhật thông tin">
           <Link
-            className="inline-flex font-semibold text-emerald-700"
+            className="inline-flex font-semibold text-[var(--brand-primary-hover)]"
             to={`${adminPath('/companies')}?tab=updates&company=${company.public_id}`}
           >
             Xem yêu cầu cập nhật của công ty

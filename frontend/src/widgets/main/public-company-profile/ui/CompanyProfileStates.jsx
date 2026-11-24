@@ -40,7 +40,7 @@ export function CompanyProfileError({ onRetry }) {
       <div className="mx-auto max-w-6xl rounded-xl border border-red-100 bg-white px-5 py-10 text-center shadow-sm" role="alert">
         <p className="text-lg font-bold text-slate-900">Không thể tải trang công ty</p>
         <p className="mt-2 text-sm text-slate-500">Kết nối đang gặp sự cố. Vui lòng thử lại.</p>
-        <button type="button" onClick={() => onRetry()} className="mt-5 inline-flex items-center gap-2 rounded-lg border border-emerald-200 px-5 py-2.5 text-sm font-bold text-emerald-700 transition hover:border-emerald-500 hover:bg-emerald-50">
+        <button type="button" onClick={() => onRetry()} className="mt-5 inline-flex items-center gap-2 rounded-lg border border-[var(--brand-primary)]/20 px-5 py-2.5 text-sm font-bold text-[var(--brand-primary-hover)] transition hover:border-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)]">
           <ReloadOutlined aria-hidden="true" /> Thử lại
         </button>
       </div>

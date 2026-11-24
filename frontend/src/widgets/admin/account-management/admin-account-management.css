@@ -259,7 +259,7 @@
 
 .recruiter-next__cta {
   width: fit-content;
-  color: var(--admin-primary-hover, #008f40) !important;
+  color: var(--admin-primary-hover, var(--brand-primary-hover)) !important;
   font-size: 0.8125rem;
   font-weight: 600;
 }
@@ -325,15 +325,15 @@
   min-height: 30px;
   padding: 0 12px;
   border-radius: 8px;
-  background: var(--admin-primary, #00b14f) !important;
+  background: var(--admin-primary, var(--brand-primary)) !important;
   color: #fff !important;
   font-size: 0.8125rem;
   font-weight: 600;
 }
 
-.recruiter-quick__cta:hover { background: var(--admin-primary-hover, #008f40) !important; }
+.recruiter-quick__cta:hover { background: var(--admin-primary-hover, var(--brand-primary-hover)) !important; }
 
-.recruiter-quick__cta:focus-visible { outline: 2px solid var(--admin-primary, #00b14f); outline-offset: 2px; }
+.recruiter-quick__cta:focus-visible { outline: 2px solid var(--admin-primary, var(--brand-primary)); outline-offset: 2px; }
 
 .recruiter-quick__facts {
   display: grid;
@@ -369,4 +369,4 @@
 
 .recruiter-quick__activity-head h3 { margin: 0; font-size: 0.875rem; font-weight: 700; }
 
-.recruiter-quick__activity-head a { color: var(--admin-primary-hover, #008f40) !important; font-size: 0.8125rem; font-weight: 600; }
+.recruiter-quick__activity-head a { color: var(--admin-primary-hover, var(--brand-primary-hover)) !important; font-size: 0.8125rem; font-weight: 600; }

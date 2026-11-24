@@ -61,7 +61,7 @@ export default function JobDetailSearchBar() {
             type="primary"
             size="large"
             onClick={runSearch}
-            className="!h-11 !rounded-lg !border-white/20 !bg-white !px-7 !font-semibold !text-[var(--brand-primary)] hover:!bg-emerald-50"
+            className="!h-11 !rounded-lg !border-white/20 !bg-white !px-7 !font-semibold !text-[var(--brand-primary)] hover:!bg-[var(--brand-primary-soft)]"
           >
             Tìm kiếm
           </Button>

@@ -271,8 +271,8 @@ export default function LocationFilter({ value = [], onChange, size = 'middle', 
             : 'border-gray-200 hover:border-[var(--brand-primary)]'
         } ${size === 'large' ? 'h-12 text-base' : 'h-8 text-sm'}`}
       >
-        {/* Pin icon với nền xanh nhạt */}
-        <span className="flex items-center justify-center w-6 h-6 rounded-md bg-[#e6f7ee] shrink-0">
+        {/* Pin icon trên nền nhạt màu chủ đạo */}
+        <span className="flex items-center justify-center w-6 h-6 rounded-md bg-[var(--brand-primary-soft)] shrink-0">
           <EnvironmentOutlined className="text-[var(--brand-primary)] text-sm" />
         </span>
 

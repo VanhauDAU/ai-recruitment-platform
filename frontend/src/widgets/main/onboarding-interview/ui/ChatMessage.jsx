@@ -43,7 +43,7 @@ function BotMessage({ emotion, live, message, onContentProgress, onRevealed }) {
         </span>
         {message.kind === 'saving' && (
           <span className="mt-2.5 block h-1.5 overflow-hidden rounded-full bg-slate-200">
-            <span className="onboarding-chat__progress block h-full rounded-full bg-gradient-to-r from-emerald-500 to-lime-400" />
+            <span className="onboarding-chat__progress block h-full rounded-full bg-gradient-to-r from-[var(--brand-primary)] to-lime-400" />
           </span>
         )}
       </div>
@@ -55,14 +55,14 @@ function BotMessage({ emotion, live, message, onContentProgress, onRevealed }) {
 function UserMessage({ message, onEdit }) {
   return (
     <div className="flex flex-col items-end gap-1">
-      <div className={`${BUBBLE_CLASS} rounded-br-md bg-emerald-600 text-white shadow-sm shadow-emerald-900/20`}>
+      <div className={`${BUBBLE_CLASS} rounded-br-md bg-[var(--brand-primary)] text-white shadow-sm shadow-[var(--brand-primary)]/20`}>
         {message.text}
       </div>
       {onEdit && (
         <button
           type="button"
           onClick={() => onEdit(message.stepId)}
-          className="cursor-pointer rounded-full px-2 py-0.5 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-emerald-700"
+          className="cursor-pointer rounded-full px-2 py-0.5 text-xs font-medium text-slate-500 transition hover:bg-slate-100 hover:text-[var(--brand-primary-hover)]"
         >
           Sửa
         </button>

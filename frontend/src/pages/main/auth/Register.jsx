@@ -168,7 +168,7 @@ export default function Register() {
           background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%);
           transition: all 0.2s ease;
         }
-        .reg-submit:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,177,79,0.35); }
+        .reg-submit:hover { transform: translateY(-1px); box-shadow: 0 8px 24px color-mix(in srgb, var(--brand-primary) 35%, transparent); }
         .reg-submit:active { transform: translateY(0); }
         .reg-submit::after {
           content:''; position:absolute; inset:0;

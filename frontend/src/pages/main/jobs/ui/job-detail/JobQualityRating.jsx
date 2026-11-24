@@ -55,7 +55,7 @@ export default function JobQualityRating({ jobId }) {
   if (hasSubmitted) {
     if (!showThanks) return null
     return (
-      <section className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-5 text-center shadow-sm sm:p-6">
+      <section className="rounded-2xl border border-[var(--brand-primary)]/20 bg-[var(--brand-primary-soft)] p-5 text-center shadow-sm sm:p-6">
         <CheckCircleFilled className="text-3xl text-[var(--brand-primary)]" />
         <h2 className="mt-3 text-base font-bold text-slate-800">Cảm ơn bạn đã đánh giá</h2>
         <p className="mt-1 text-sm text-slate-600">Phản hồi của bạn giúp cải thiện chất lượng tin tuyển dụng.</p>
@@ -80,7 +80,7 @@ export default function JobQualityRating({ jobId }) {
               className={`job-rating__option flex min-h-20 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border px-2 text-center text-xs transition ${
                 active
                   ? 'border-[var(--brand-primary)] bg-[var(--brand-primary-soft)] font-semibold text-[var(--brand-primary)]'
-                  : 'border-slate-200 bg-white text-slate-500 hover:border-emerald-300 hover:bg-emerald-50'
+                  : 'border-slate-200 bg-white text-slate-500 hover:border-[var(--brand-primary)]/40 hover:bg-[var(--brand-primary-soft)]'
               }`}
             >
               <span className="text-xl">{option.icon}</span>

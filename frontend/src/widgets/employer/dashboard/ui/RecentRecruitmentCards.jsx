@@ -29,7 +29,7 @@ function EmptyState({ type }) {
       <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-xl text-slate-300 shadow-sm">{job ? <FileSearchOutlined /> : <InboxOutlined />}</span>
       <strong className="mt-3 text-sm text-slate-700">{job ? m.employer_workspace_dash_empty_jobs_title() : m.employer_workspace_dash_empty_applications_title()}</strong>
       <p className="mt-1 max-w-xs text-xs leading-5 text-slate-400">{job ? m.employer_workspace_dash_empty_jobs_text() : m.employer_workspace_dash_empty_applications_text()}</p>
-      {job && <Link to={employerAppPath('/jobs/new')} className="mt-3 inline-flex h-9 items-center gap-1.5 rounded-lg border border-emerald-600 !bg-emerald-600 px-3 text-xs font-bold !text-white shadow-sm transition hover:border-emerald-700 hover:!bg-emerald-700"><PlusOutlined /> {m.employer_workspace_dash_new_job()}</Link>}
+      {job && <Link to={employerAppPath('/jobs/new')} className="mt-3 inline-flex h-9 items-center gap-1.5 rounded-lg border employer-dash-button px-3 text-xs font-bold shadow-sm transition"><PlusOutlined /> {m.employer_workspace_dash_new_job()}</Link>}
     </div>
   )
 }
@@ -39,10 +39,10 @@ function SectionHeader({ title, description, icon, to, actionLabel }) {
   return (
     <div className="mb-4 flex items-start justify-between gap-3">
       <div className="flex min-w-0 items-start gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600"><Icon /></span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl employer-dash-icon"><Icon /></span>
         <div className="min-w-0"><h2 className="text-base font-black text-slate-900 sm:text-lg">{title}</h2><p className="mt-0.5 text-xs text-slate-500">{description}</p></div>
       </div>
-      <Link to={to} className="inline-flex shrink-0 items-center gap-1.5 pt-1 text-xs font-bold !text-slate-500 transition hover:!text-emerald-600">{actionLabel}<ArrowRightOutlined /></Link>
+      <Link to={to} className="inline-flex shrink-0 items-center gap-1.5 pt-1 text-xs font-bold !text-slate-500 transition employer-dash-hover-text">{actionLabel}<ArrowRightOutlined /></Link>
     </div>
   )
 }
@@ -57,11 +57,11 @@ export function RecentJobsCard({ jobs = [] }) {
             const status = JOB_STATUS[job.status] || { label: job.status_label || job.status, className: 'bg-slate-100 text-slate-600' }
             return (
               <Link to={`${employerAppPath('/jobs')}/${job.public_id}`} key={job.public_id} className="group flex flex-col gap-3 py-4 first:pt-1 last:pb-0 sm:flex-row sm:items-center">
-                <div className="min-w-0 flex-1"><h3 className="truncate text-sm font-bold text-slate-900 transition group-hover:text-emerald-700">{job.title}</h3><p className="mt-1 text-[11px] text-slate-400">{m.employer_workspace_dash_job_created({ date: dateFormatter.format(new Date(job.created_at)) })}</p></div>
+                <div className="min-w-0 flex-1"><h3 className="truncate text-sm font-bold text-slate-900 transition employer-dash-hover-text">{job.title}</h3><p className="mt-1 text-[11px] text-slate-400">{m.employer_workspace_dash_job_created({ date: dateFormatter.format(new Date(job.created_at)) })}</p></div>
                 <div className="flex items-center justify-between gap-4 sm:justify-end">
                   <div className="flex items-center gap-4 text-[11px] text-slate-500"><span><strong className="text-slate-800">{job.application_count}</strong> {m.employer_workspace_dash_applications_unit({ count: job.application_count })}</span><span><strong className="text-slate-800">{job.view_count}</strong> {m.employer_workspace_dash_views_unit({ count: job.view_count })}</span></div>
                   <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold ${status.className}`}>{status.label}</span>
-                  <ArrowRightOutlined className="hidden text-xs text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-emerald-500 sm:block" />
+                  <ArrowRightOutlined className="hidden text-xs text-slate-300 transition group-hover:translate-x-0.5 employer-dash-hover-text sm:block" />
                 </div>
               </Link>
             )
@@ -85,10 +85,10 @@ export function RecentApplicationsCard({ applications = [] }) {
             }
             return (
               <Link to={`${employerAppPath('/applications')}?job=${encodeURIComponent(application.job_public_id)}`} key={application.public_id} className="group flex items-center gap-3 py-3.5 first:pt-1 last:pb-0">
-                <Avatar className="!shrink-0 !bg-emerald-50 !font-bold !text-emerald-700">{application.candidate_name?.trim()?.charAt(0)?.toUpperCase() || 'U'}</Avatar>
-                <div className="min-w-0 flex-1"><h3 className="truncate text-sm font-bold text-slate-900 transition group-hover:text-emerald-700">{application.candidate_name}</h3><p className="mt-1 truncate text-[11px] text-slate-500">{application.job_title} · {dateFormatter.format(new Date(application.applied_at))}</p></div>
+                <Avatar className="!shrink-0 employer-dash-icon !font-bold">{application.candidate_name?.trim()?.charAt(0)?.toUpperCase() || 'U'}</Avatar>
+                <div className="min-w-0 flex-1"><h3 className="truncate text-sm font-bold text-slate-900 transition employer-dash-hover-text">{application.candidate_name}</h3><p className="mt-1 truncate text-[11px] text-slate-500">{application.job_title} · {dateFormatter.format(new Date(application.applied_at))}</p></div>
                 <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold ${status.className}`}>{status.label}</span>
-                <ArrowRightOutlined className="hidden text-xs text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-emerald-500 sm:block" />
+                <ArrowRightOutlined className="hidden text-xs text-slate-300 transition group-hover:translate-x-0.5 employer-dash-hover-text sm:block" />
               </Link>
             )
           })}

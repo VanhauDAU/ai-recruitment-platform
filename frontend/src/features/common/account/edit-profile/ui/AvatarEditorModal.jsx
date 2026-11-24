@@ -120,8 +120,8 @@ function AvatarEditor({ onClose }) {
           {source ? (
             <CropStage source={source} crop={crop} onChange={setCrop} />
           ) : (
-            <Upload.Dragger showUploadList={false} accept={AVATAR_ACCEPT} beforeUpload={beforeUpload} disabled={saving} className="!border-emerald-200 !bg-emerald-50/70">
-              <p className="ant-upload-drag-icon"><InboxOutlined className="!text-emerald-600" /></p>
+            <Upload.Dragger showUploadList={false} accept={AVATAR_ACCEPT} beforeUpload={beforeUpload} disabled={saving} className="!border-[var(--brand-primary)]/20 !bg-[var(--brand-primary-soft)]">
+              <p className="ant-upload-drag-icon"><InboxOutlined className="!text-[var(--brand-primary)]" /></p>
               <p className="ant-upload-text">{m.account_avatar_drop()}</p>
               <p className="ant-upload-hint">{m.account_avatar_hint({ min: AVATAR_MIN_SIDE })}</p>
             </Upload.Dragger>
@@ -234,7 +234,7 @@ function CropStage({ source, crop, onChange }) {
           onPointerDown={(event) => start(event, null)}
           onKeyDown={nudge}
         >
-          <span className="absolute left-0 top-0 bg-slate-900/75 px-1.5 py-0.5 text-[11px] font-medium text-emerald-300">{crop.size} × {crop.size}</span>
+          <span className="absolute left-0 top-0 bg-slate-900/75 px-1.5 py-0.5 text-[11px] font-medium text-[color-mix(in_srgb,var(--brand-primary)_40%,#fff)]">{crop.size} × {crop.size}</span>
           {CORNERS.map(({ key, className, ...corner }) => (
             <span key={key} aria-hidden="true" className={className} onPointerDown={(event) => start(event, corner)} />
           ))}

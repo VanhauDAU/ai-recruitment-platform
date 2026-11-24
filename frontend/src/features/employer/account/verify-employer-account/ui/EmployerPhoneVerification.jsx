@@ -289,7 +289,7 @@ export default function EmployerPhoneVerification() {
           <div className="mt-4 grid gap-5 sm:grid-cols-2">
             {BENEFITS.map(({ icon: Icon, text }) => (
               <div key={text} className="flex gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-lg text-emerald-600">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--brand-primary-soft)] text-lg text-[var(--brand-primary)]">
                   <Icon />
                 </span>
                 <p className="text-sm leading-6 text-slate-600">{text}</p>

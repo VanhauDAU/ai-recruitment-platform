@@ -29,7 +29,7 @@
 
 .cpl-progress { display: flex; width: 100%; flex-direction: column; }
 .cpl-progress .ws-progress > span { background: #94a3b8; }
-.cpl-progress .ws-progress > span.is-done { background: #10b981; }
+.cpl-progress .ws-progress > span.is-done { background: var(--brand-primary); }
 
 @media (min-width: 640px) {
   .cpl-avatars { display: flex; }

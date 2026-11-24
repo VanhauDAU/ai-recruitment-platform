@@ -44,7 +44,7 @@ export default function CandidateNotificationBell() {
         ))}
       </div>
       <div className="border-t border-gray-100 px-4 py-2.5 text-right">
-        <Link to={NOTIFICATION_SETTINGS_PATH} onClick={() => setOpen(false)} className="text-xs font-semibold text-emerald-600">
+        <Link to={NOTIFICATION_SETTINGS_PATH} onClick={() => setOpen(false)} className="text-xs font-semibold text-[var(--brand-primary)]">
           Cài đặt thông báo
         </Link>
       </div>

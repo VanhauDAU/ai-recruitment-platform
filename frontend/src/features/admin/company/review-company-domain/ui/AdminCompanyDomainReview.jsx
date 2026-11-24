@@ -140,7 +140,7 @@ function ClaimCard({ claim, onReview, onOpenDetail }) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h3 className="flex min-w-0 items-center gap-2 text-base font-bold text-slate-900">
-            <GlobalOutlined className="shrink-0 text-emerald-600" />
+            <GlobalOutlined className="shrink-0 text-[var(--brand-primary)]" />
             <span className="break-all">{claim.domain}</span>
           </h3>
           <p className="mt-1 break-words text-sm text-slate-600">{claim.company_name || 'Công ty chưa có tên'}</p>

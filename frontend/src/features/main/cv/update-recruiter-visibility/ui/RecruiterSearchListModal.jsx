@@ -82,7 +82,7 @@ export default function RecruiterSearchListModal({ open, onClose }) {
               loading={saving}
               disabled={loading || (anySelected && !consented)}
               onClick={save}
-              className="!bg-[#00b14f] disabled:!bg-slate-200"
+              className="!bg-[var(--brand-primary)] disabled:!bg-slate-200"
             >
               Lưu
             </Button>
@@ -102,14 +102,14 @@ export default function RecruiterSearchListModal({ open, onClose }) {
                 aria-label={`Cho phép NTD tìm kiếm ${cv.title}`}
                 checked={Boolean(selected[cv.public_id])}
                 onChange={(checked) => setSelected((current) => ({ ...current, [cv.public_id]: checked }))}
-                className={selected[cv.public_id] ? '!bg-[#00b14f]' : ''}
+                className={selected[cv.public_id] ? '!bg-[var(--brand-primary)]' : ''}
               />
               <div className="min-w-0">
                 <Link
                   to={`/cvs/${cv.public_id}/view`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block truncate text-sm font-bold !text-slate-800 hover:!text-[#00b14f]"
+                  className="block truncate text-sm font-bold !text-slate-800 hover:!text-[var(--brand-primary)]"
                 >
                   {cv.title}
                 </Link>

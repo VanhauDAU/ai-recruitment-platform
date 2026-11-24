@@ -84,7 +84,7 @@ function JobActions({
     && Boolean(job.slug)
     && !campaignPaused
     && !job.visibility_held
-  const actionClassName = 'inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white !text-slate-600 shadow-sm transition hover:border-emerald-500 hover:bg-emerald-50 hover:!text-emerald-700'
+  const actionClassName = 'inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white !text-slate-600 shadow-sm transition hover:border-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)] hover:!text-[var(--brand-primary-hover)]'
 
   return (
     <div className="flex items-center gap-2">
@@ -93,7 +93,7 @@ function JobActions({
         aria-label={m.employer_campaign_jobs_view_report_aria({ title: job.title || m.employer_campaign_jobs_untitled_fallback() })}
         aria-pressed={reportSelected}
         onClick={() => onViewReport(job)}
-        className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold shadow-sm transition ${reportSelected ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-300 bg-white text-slate-600 hover:border-emerald-500 hover:bg-emerald-50 hover:text-emerald-700'}`}
+        className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold shadow-sm transition ${reportSelected ? 'border-[var(--brand-primary)] bg-[var(--brand-primary-soft)] text-[var(--brand-primary-hover)]' : 'border-slate-300 bg-white text-slate-600 hover:border-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)] hover:text-[var(--brand-primary-hover)]'}`}
       >
         <LineChartOutlined />
         {reportSelected ? m.employer_campaign_jobs_viewing() : m.employer_campaign_jobs_view_report()}
@@ -147,7 +147,7 @@ function AddJobButton({ publicId }) {
   return (
     <Link
       to={employerAppPath(`/jobs/new?campaign=${publicId}`)}
-      className="inline-flex h-10 shrink-0 items-center rounded-xl px-4 text-sm font-semibold !text-white shadow-md transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+      className="inline-flex h-10 shrink-0 items-center rounded-xl px-4 text-sm font-semibold !text-white shadow-md transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]/25 focus-visible:ring-offset-2"
       style={{ backgroundColor: 'var(--brand-primary)', color: '#fff' }}
     >
       <PlusOutlined aria-hidden className="mr-2" /> {m.employer_campaign_jobs_add()}
@@ -224,7 +224,7 @@ export default function CampaignJobsPanel({
                 {m.employer_campaign_jobs_view_all()}
               </button>
             )}
-            <button type="button" className="text-sm font-semibold text-emerald-700" onClick={() => performanceQuery.refetch()}>{m.employer_campaign_retry()}</button>
+            <button type="button" className="text-sm font-semibold text-[var(--brand-primary-hover)]" onClick={() => performanceQuery.refetch()}>{m.employer_campaign_retry()}</button>
           </div>
         </div>
       </div>
@@ -249,11 +249,11 @@ export default function CampaignJobsPanel({
           <div className="flex min-w-0 flex-wrap items-center gap-1.5">
             <span className="font-semibold">{m.employer_campaign_jobs_report_label()}</span>
             {selectedJob ? (
-              <Link to={employerAppPath(`/jobs/${selectedJob.public_id}`)} className="truncate font-semibold !text-emerald-700 hover:underline">
+              <Link to={employerAppPath(`/jobs/${selectedJob.public_id}`)} className="truncate font-semibold !text-[var(--brand-primary-hover)] hover:underline">
                 {selectedJob.title || m.employer_campaign_untitled_draft()}
               </Link>
             ) : (
-              <span className="font-semibold text-emerald-700">{m.employer_campaign_jobs_all_in_campaign({ count: jobs.length })}</span>
+              <span className="font-semibold text-[var(--brand-primary-hover)]">{m.employer_campaign_jobs_all_in_campaign({ count: jobs.length })}</span>
             )}
           </div>
           <p className="mt-1 text-xs leading-5 text-slate-500">
@@ -313,14 +313,14 @@ export default function CampaignJobsPanel({
           </div>
         </section>
 
-        <aside className="self-start rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-4 shadow-sm">
+        <aside className="self-start rounded-2xl border border-[var(--brand-primary)]/20 bg-gradient-to-br from-[var(--brand-primary-soft)] to-white p-4 shadow-sm">
           <p className="text-sm leading-6 text-slate-600">
             <strong className="text-slate-800">{m.employer_campaign_jobs_48h()}</strong>{m.employer_campaign_jobs_48h_tip()}
           </p>
           {candidateDataAccess && (
             <Link
               to={employerAppPath(`/applications?campaign=${publicId}`)}
-              className="mt-4 inline-flex h-9 items-center gap-2 rounded bg-emerald-50 px-3 text-sm font-semibold !text-emerald-700 hover:bg-emerald-100"
+              className="mt-4 inline-flex h-9 items-center gap-2 rounded bg-[var(--brand-primary-soft)] px-3 text-sm font-semibold !text-[var(--brand-primary-hover)] hover:bg-[var(--brand-primary-soft)]"
             >
               <FileSearchOutlined /> {m.employer_campaign_jobs_check_cv()}
             </Link>
@@ -370,7 +370,7 @@ export default function CampaignJobsPanel({
               width: 250,
               render: (_, job) => (
                 <div className="min-w-48">
-                  <Link className="font-semibold !text-emerald-700 hover:underline" to={employerAppPath(`/jobs/${job.public_id}`)}>{job.title || m.employer_campaign_untitled_draft()}</Link>
+                  <Link className="font-semibold !text-[var(--brand-primary-hover)] hover:underline" to={employerAppPath(`/jobs/${job.public_id}`)}>{job.title || m.employer_campaign_untitled_draft()}</Link>
                   <div className="mt-2 flex flex-wrap items-center gap-1.5"><JobStatus job={job} campaignPaused={campaign?.status === 'paused'} /><span className="text-xs text-slate-400">{m.employer_campaign_jobs_deadline({ date: formatDate(job.deadline) })}</span></div>
                 </div>
               ),
@@ -395,7 +395,7 @@ export default function CampaignJobsPanel({
               align: 'right',
               render: (_, job) => (
                 job.available && candidateDataAccess
-                  ? <Link to={employerAppPath(`/applications?job=${job.public_id}`)} className="font-semibold !text-emerald-700">{formatNumber(job.applications)}</Link>
+                  ? <Link to={employerAppPath(`/applications?job=${job.public_id}`)} className="font-semibold !text-[var(--brand-primary-hover)]">{formatNumber(job.applications)}</Link>
                   : <span className={job.available ? 'font-semibold text-slate-700' : 'text-slate-400'}>{job.available ? formatNumber(job.applications) : '—'}</span>
               ),
             },

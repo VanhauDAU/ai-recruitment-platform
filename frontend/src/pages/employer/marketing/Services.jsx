@@ -44,9 +44,9 @@ const SECTIONS = [
 function ServiceVisual({ Icon, index }) {
   return (
     <div className="relative mx-auto flex min-h-72 w-full max-w-lg items-center justify-center overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 to-slate-800 p-5 text-white shadow-xl shadow-slate-950/10 sm:p-8">
-      <div className="absolute -right-16 -top-16 h-52 w-52 rounded-full bg-emerald-400/20 blur-2xl" />
+      <div className="absolute -right-16 -top-16 h-52 w-52 rounded-full bg-[var(--brand-primary)]/20 blur-2xl" />
       <div className="relative w-full">
-        <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-400 text-3xl text-slate-950"><Icon /></span>
+        <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--brand-primary)] text-3xl text-slate-950"><Icon /></span>
         <div className="mt-8 space-y-3">
           {[88, 70, 52].map((width, row) => (
             <div key={width} className="rounded-xl border border-white/10 bg-white/5 p-4">
@@ -62,9 +62,9 @@ function ServiceVisual({ Icon, index }) {
 export default function EmployerServices() {
   return (
     <>
-      <section className="bg-gradient-to-br from-emerald-50 via-white to-cyan-50">
+      <section className="bg-gradient-to-br from-[var(--brand-primary-soft)] via-white to-cyan-50">
         <div className="mx-auto max-w-7xl px-4 py-16 text-center sm:px-6 lg:px-8 lg:py-24">
-          <span className="rounded-full border border-emerald-200 bg-white px-4 py-2 text-xs font-extrabold uppercase tracking-[0.16em] text-emerald-700">{m.marketing_services_page_eyebrow()}</span>
+          <span className="rounded-full border border-[var(--brand-primary)]/20 bg-white px-4 py-2 text-xs font-extrabold uppercase tracking-[0.16em] text-[var(--brand-primary-hover)]">{m.marketing_services_page_eyebrow()}</span>
           <h1 className="mx-auto mt-6 max-w-4xl text-3xl font-black leading-tight text-slate-950 sm:text-5xl">{m.marketing_services_page_title()}</h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-600">{m.marketing_services_page_subtitle()}</p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row [&_a]:w-full sm:[&_a]:w-auto [&_.ant-btn]:w-full sm:[&_.ant-btn]:w-auto">
@@ -79,11 +79,11 @@ export default function EmployerServices() {
           <section key={key} className={`grid gap-10 border-b border-slate-100 py-14 last:border-0 lg:grid-cols-2 lg:items-center lg:py-20 ${index % 2 ? 'lg:[&>*:first-child]:order-2' : ''}`}>
             <ServiceVisual Icon={Icon} index={index} />
             <div className="max-w-xl">
-              <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-emerald-600">0{index + 1}</p>
+              <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-[var(--brand-primary)]">0{index + 1}</p>
               <h2 className="mt-4 text-3xl font-extrabold text-slate-950">{title()}</h2>
               <p className="mt-4 text-lg leading-8 text-slate-600">{desc()}</p>
               <ul className="mt-6 space-y-3">
-                {benefits.map((benefit, i) => <li key={i} className="flex items-start gap-3 leading-7 text-slate-600"><CheckCircleFilled className="mt-1.5 text-emerald-500" />{benefit()}</li>)}
+                {benefits.map((benefit, i) => <li key={i} className="flex items-start gap-3 leading-7 text-slate-600"><CheckCircleFilled className="mt-1.5 text-[var(--brand-primary)]" />{benefit()}</li>)}
               </ul>
             </div>
           </section>

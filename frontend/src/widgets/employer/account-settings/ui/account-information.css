@@ -22,7 +22,7 @@
   border-bottom: 1px solid #eef2f6;
   background:
     radial-gradient(circle at 1px 1px, rgb(148 163 184 / 0.25) 1px, transparent 0) 0 0 / 14px 14px,
-    linear-gradient(120deg, #f8fafc, #ecfdf5);
+    linear-gradient(120deg, #f8fafc, var(--brand-primary-soft));
 }
 
 .eai-identity {
@@ -64,10 +64,10 @@
   transition: background-color 0.15s, transform 0.15s;
 }
 
-.eai-avatar__edit:hover { background: #059669; transform: scale(1.06); }
+.eai-avatar__edit:hover { background: var(--brand-primary); transform: scale(1.06); }
 .eai-avatar__edit:focus-visible,
 .eai-link:focus-visible,
-.eai-company__link:focus-visible { outline: 2px solid #10b981; outline-offset: 2px; }
+.eai-company__link:focus-visible { outline: 2px solid var(--brand-primary); outline-offset: 2px; }
 
 .eai-identity__text { min-width: 0; padding-top: 10px; }
 .eai-identity__name { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
@@ -82,11 +82,11 @@
 }
 
 .eai-role {
-  border: 1px solid #d1fae5;
+  border: 1px solid var(--brand-primary-soft);
   border-radius: 9999px;
-  background: #ecfdf5;
+  background: var(--brand-primary-soft);
   padding: 1px 10px;
-  color: #047857;
+  color: var(--brand-primary-hover);
   font-size: 12px;
   font-weight: 600;
 }
@@ -136,8 +136,8 @@
   font-weight: 600;
 }
 
-.eai-company__link:hover .eai-company__name { color: #047857; }
-.eai-company__link--empty { color: #047857 !important; }
+.eai-company__link:hover .eai-company__name { color: var(--brand-primary-hover); }
+.eai-company__link--empty { color: var(--brand-primary-hover) !important; }
 .eai-company__logo.ant-avatar { flex-shrink: 0; border: 1px solid #e2e8f0; background: #fff; color: #334155; font-weight: 700; }
 .eai-company__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: color 0.15s; }
 .eai-company__joined { color: #64748b; font-size: 12px; }
@@ -162,7 +162,7 @@
   border: 0;
   background: none;
   padding: 0;
-  color: #059669 !important;
+  color: var(--brand-primary) !important;
   font: inherit;
   font-size: 13px;
   cursor: pointer;

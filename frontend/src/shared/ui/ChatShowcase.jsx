@@ -75,7 +75,7 @@ export default function ChatShowcase({
         @keyframes chatIn { from { opacity: 0; transform: translateY(10px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
         .chat-in { animation: chatIn 0.34s cubic-bezier(0.22,1,0.36,1) both; }
         @keyframes chatDot { 0%,60%,100% { opacity: 0.3; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
-        .chat-dot { width: 5px; height: 5px; border-radius: 9999px; background: ${dark ? 'rgba(255,255,255,0.75)' : 'rgba(0,177,79,0.75)'}; animation: chatDot 1.1s ease-in-out infinite; }
+        .chat-dot { width: 5px; height: 5px; border-radius: 9999px; background: ${dark ? 'rgba(255,255,255,0.75)' : 'color-mix(in srgb, var(--brand-primary) 75%, transparent)'}; animation: chatDot 1.1s ease-in-out infinite; }
         @media (prefers-reduced-motion: reduce) { .chat-in, .chat-dot { animation: none !important; } }
       `}</style>
 
@@ -83,7 +83,7 @@ export default function ChatShowcase({
         className={`overflow-hidden rounded-2xl border transition-all duration-300 shadow-xl ${
           dark
             ? 'border-white/10 bg-[#0b3320]/75 shadow-black/30 backdrop-blur-md text-white'
-            : 'border-emerald-100 bg-white shadow-emerald-950/5 text-gray-800'
+            : 'border-[var(--brand-primary)]/20 bg-white shadow-[var(--brand-primary)]/5 text-gray-800'
         }`}
       >
         {/* Header */}
@@ -107,7 +107,7 @@ export default function ChatShowcase({
           {matchPercentage && (
             <span
               className={`ml-auto shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                dark ? 'bg-[var(--brand-primary)]/20 text-[#4ade80]' : 'bg-emerald-50 text-[var(--brand-primary)]'
+                dark ? 'bg-[var(--brand-primary)]/20 text-[#4ade80]' : 'bg-[var(--brand-primary-soft)] text-[var(--brand-primary)]'
               }`}
             >
               {matchPercentage}

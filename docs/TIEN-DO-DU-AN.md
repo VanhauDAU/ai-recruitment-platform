@@ -46,6 +46,16 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
 
+## Nội dung trang theo màu chủ đạo của hệ thống (2026-11-24)
+
+| Hạng mục | Trạng thái |
+| --- | --- |
+| Bảng tin NTD: khung chào mừng (gradient từ `--brand-surface-dark`), thẻ số liệu, biểu đồ, hành trình xác thực, thẻ tin/hồ sơ gần đây dùng class ngữ nghĩa `employer-dash-*` trong CSS lazy của widget | ✅ |
+| Hero trang chủ ứng viên (`#section-header`), chữ phụ và quầng sáng theo `--brand-*` | ✅ |
+| Rà toàn bộ trang ứng viên, NTD, admin: nút chính, liên kết, ô đang chọn, focus, nền nhấn, đường biểu đồ chuyển sang `--brand-*` (ưu tiên utility `[var(--brand-*)]` đã có nên CSS khởi tạo giảm 36,6 → 35,9 KiB) | ✅ |
+| Giữ xanh lá ngữ nghĩa: trạng thái thành công/đã xác thực/hoàn thành/đang tuyển, điều kiện mật khẩu đạt, `.ws-tone-emerald`, chấm và cột phân loại theo màu | ✅ |
+| Chưa đổi (có chủ đích): màu chủ đề CV trong trình soạn CV, tông "green" do admin chọn cho banner/thông báo/nhãn tin, ảnh trang trí PNG của hero | — |
+
 ## Sidebar, header theo màu chủ đạo của hệ thống (2026-11-24)
 
 | Hạng mục | Trạng thái |
@@ -53,7 +63,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | Biến `--brand-surface-dark` (trộn 14% màu chủ đạo vào nền tối) cho sidebar admin, sidebar và topbar NTD; hai cổng cùng một tông, đổi theo màu trong Cấu hình hệ thống | ✅ |
 | Điểm nhấn của bảng dùng chung và các danh sách admin (ô đang chọn, nút chính, cột đang sắp xếp, liên kết, focus) theo `--brand-*` thay vì xanh lá viết cứng; màu trạng thái giữ nguyên | ✅ |
 | Nút "Khảo sát thị trường" trên topbar NTD và bảng lệnh admin theo màu chủ đạo | ✅ |
-| Nội dung trang còn viết cứng xanh lá (khung chào mừng bảng tin NTD, ảnh hero trang chủ) | ⏳ Việc riêng |
+| Nội dung trang còn viết cứng xanh lá (khung chào mừng bảng tin NTD, ảnh hero trang chủ) | ✅ Xem mục dưới |
 
 ## Danh sách FAQ & hướng dẫn admin dạng bảng (2026-11-24)
 

@@ -32,11 +32,11 @@ export default function EmployerLegal() {
   return (
     <main className="bg-slate-50 py-12 sm:py-16">
       <div className="mx-auto max-w-4xl px-4 sm:px-6">
-        <header className="rounded-3xl bg-[linear-gradient(135deg,#073e35,#06845f)] p-7 text-white shadow-xl shadow-emerald-950/10 sm:p-10">
-          <Icon className="text-3xl text-emerald-200" />
+        <header className="rounded-3xl bg-[linear-gradient(135deg,var(--brand-surface-dark),var(--brand-primary-hover))] p-7 text-white shadow-xl shadow-[var(--brand-primary)]/10 sm:p-10">
+          <Icon className="text-3xl text-[color-mix(in_srgb,var(--brand-primary)_40%,#fff)]" />
           <h1 className="mt-4 text-3xl font-black sm:text-4xl">{title}</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-white/70">{m.marketing_legal_applies_to({ siteName })}</p>
-          <p className="mt-5 text-xs font-semibold uppercase tracking-widest text-emerald-200">{m.marketing_legal_version()}</p>
+          <p className="mt-5 text-xs font-semibold uppercase tracking-widest text-[color-mix(in_srgb,var(--brand-primary)_40%,#fff)]">{m.marketing_legal_version()}</p>
         </header>
         <article className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10">
           <p className="text-sm leading-7 text-slate-600">{m.marketing_legal_intro()}</p>

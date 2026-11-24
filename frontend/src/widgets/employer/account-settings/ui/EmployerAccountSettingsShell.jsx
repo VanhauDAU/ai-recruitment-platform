@@ -77,7 +77,7 @@ export default function EmployerAccountSettingsShell({ title, children, hideHead
                   key={item.to}
                   to={item.to}
                   aria-current={active ? 'page' : undefined}
-                  className={`flex h-12 items-center gap-3 rounded-sm border-l-2 px-3 text-sm transition ${active ? 'border-emerald-500 bg-white font-bold !text-emerald-600 shadow-sm ring-1 ring-slate-200' : 'border-transparent font-semibold !text-slate-900 hover:bg-white'}`}
+                  className={`flex h-12 items-center gap-3 rounded-sm border-l-2 px-3 text-sm transition ${active ? 'border-[var(--brand-primary)] bg-white font-bold !text-[var(--brand-primary)] shadow-sm ring-1 ring-slate-200' : 'border-transparent font-semibold !text-slate-900 hover:bg-white'}`}
                 >
                   <Icon aria-hidden="true" className="text-base" />
                   <span className="whitespace-nowrap">{item.label}</span>

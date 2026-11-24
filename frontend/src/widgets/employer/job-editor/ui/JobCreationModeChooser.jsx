@@ -31,9 +31,9 @@ const MODES = [
 export default function JobCreationModeChooser({ onChoose }) {
   return (
     <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" aria-labelledby="job-creation-mode-title">
-      <div className="grid min-w-0 gap-5 bg-gradient-to-br from-emerald-50 to-white p-5 sm:p-7 lg:grid-cols-[minmax(0,1fr)_180px] lg:items-center">
+      <div className="grid min-w-0 gap-5 bg-gradient-to-br from-[var(--brand-primary-soft)] to-white p-5 sm:p-7 lg:grid-cols-[minmax(0,1fr)_180px] lg:items-center">
         <div className="min-w-0">
-          <p className="text-sm font-semibold uppercase tracking-wide text-emerald-600">{m.employer_job_mode_eyebrow()}</p>
+          <p className="text-sm font-semibold uppercase tracking-wide text-[var(--brand-primary)]">{m.employer_job_mode_eyebrow()}</p>
           <h1 id="job-creation-mode-title" className="mt-2 break-words text-2xl font-bold text-slate-900 sm:text-3xl">
             {m.employer_job_mode_heading()}
           </h1>
@@ -51,16 +51,16 @@ export default function JobCreationModeChooser({ onChoose }) {
           <article
             key={mode.key}
             className={`relative flex min-w-0 flex-col rounded-xl border p-4 transition-colors sm:p-5 ${mode.recommended
-              ? 'border-emerald-300 bg-emerald-50/50'
-              : 'border-slate-200 bg-white hover:border-emerald-200'
+              ? 'border-[var(--brand-primary)]/20 bg-[var(--brand-primary-soft)]'
+              : 'border-slate-200 bg-white hover:border-[var(--brand-primary)]/40'
             }`}
           >
             {mode.recommended && (
-              <span className="absolute right-3 top-3 rounded-full bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-700">
+              <span className="absolute right-3 top-3 rounded-full bg-[var(--brand-primary-soft)] px-2 py-1 text-xs font-semibold text-[var(--brand-primary-hover)]">
                 {m.employer_job_mode_recommended()}
               </span>
             )}
-            <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 text-lg text-emerald-700">
+            <span className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--brand-primary-soft)] text-lg text-[var(--brand-primary-hover)]">
               {mode.icon}
             </span>
             <h2 className="break-words text-lg font-bold text-slate-800">{mode.title}</h2>

@@ -136,7 +136,7 @@ export default function JobApplicationsWorkspace({ jobPublicId, summary, filter,
       width: 120,
       align: 'right',
       render: (_, item) => (
-        <Link to={manageUrl(item)} className="inline-flex items-center gap-1 whitespace-nowrap text-sm font-semibold !text-emerald-700 hover:!text-emerald-600">
+        <Link to={manageUrl(item)} className="inline-flex items-center gap-1 whitespace-nowrap text-sm font-semibold !text-[var(--brand-primary-hover)] hover:!text-[var(--brand-primary)]">
           {m.employer_job_cv_view_application()} <ArrowRightOutlined aria-hidden className="text-[10px]" />
         </Link>
       ),
@@ -172,7 +172,7 @@ export default function JobApplicationsWorkspace({ jobPublicId, summary, filter,
         </Tooltip>
         <Link
           to={manageUrl()}
-          className="inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-200 px-3 text-sm font-semibold !text-slate-700 transition hover:border-emerald-300 hover:!text-emerald-700"
+          className="inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-lg border border-slate-200 px-3 text-sm font-semibold !text-slate-700 transition hover:border-[var(--brand-primary)]/40 hover:!text-[var(--brand-primary-hover)]"
         >
           {m.employer_job_cv_manage()} <ArrowRightOutlined aria-hidden className="text-[10px]" />
         </Link>

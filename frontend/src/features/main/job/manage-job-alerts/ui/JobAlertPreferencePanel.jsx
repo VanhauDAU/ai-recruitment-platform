@@ -4,7 +4,7 @@ import { Alert, Button, Skeleton, Switch } from 'antd'
 function PreferenceRow({ checked, description, disabled, icon, label, loading, onChange }) {
   return (
     <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-3 rounded-xl border border-slate-200 p-4">
-      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-lg text-emerald-700">{icon}</span>
+      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--brand-primary-soft)] text-lg text-[var(--brand-primary-hover)]">{icon}</span>
       <div className="min-w-0">
         <h2 className="text-sm font-bold text-slate-800">{label}</h2>
         <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
@@ -27,7 +27,7 @@ export default function JobAlertPreferencePanel({
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
       <div className="mb-4 flex items-center gap-2">
-        <SafetyCertificateOutlined className="text-emerald-600" />
+        <SafetyCertificateOutlined className="text-[var(--brand-primary)]" />
         <h2 className="text-sm font-bold text-slate-800">Cài đặt nhận email</h2>
       </div>
       {loading ? (

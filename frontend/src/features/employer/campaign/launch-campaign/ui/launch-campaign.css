@@ -11,11 +11,11 @@
   border: 1px dashed #6ee7b7; border-radius: 12px; background: #f6fefa; color: inherit;
   transition: border-color .15s, background .15s;
 }
-.cl-create:hover { border-color: #059669; background: #ecfdf5; color: inherit; }
-.cl-create:focus-visible { outline: 2px solid #059669; outline-offset: 2px; }
+.cl-create:hover { border-color: var(--brand-primary); background: var(--brand-primary-soft); color: inherit; }
+.cl-create:focus-visible { outline: 2px solid var(--brand-primary); outline-offset: 2px; }
 .cl-create__icon {
   display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
-  width: 36px; height: 36px; border-radius: 10px; background: #059669; color: #fff; font-size: 17px;
+  width: 36px; height: 36px; border-radius: 10px; background: var(--brand-primary); color: #fff; font-size: 17px;
 }
 .cl-create__title { display: block; font-size: 15px; font-weight: 700; color: #064e3b; }
 .cl-create__text { display: block; margin-top: 2px; font-size: 13px; line-height: 20px; color: #475569; }
@@ -28,7 +28,7 @@
   display: flex; align-items: center; border: 1px solid #e2e8e5; border-radius: 12px; background: #fff;
   transition: border-color .15s, box-shadow .15s;
 }
-.cl-job.is-checked { border-color: #34d399; box-shadow: 0 0 0 3px rgb(16 185 129 / .1); }
+.cl-job.is-checked { border-color: color-mix(in srgb, var(--brand-primary) 45%, #fff); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 10%, transparent); }
 .cl-job.is-static { gap: 12px; padding: 12px 14px; }
 .cl-job__hit.ant-checkbox-wrapper { display: flex; align-items: center; gap: 4px; width: 100%; padding: 12px 14px; margin: 0; }
 .cl-job__hit > span:last-child { display: flex; flex: 1; align-items: center; gap: 12px; min-width: 0; padding-inline-end: 0; }
@@ -36,7 +36,7 @@
 .cl-job__title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 600; color: #0f172a; }
 .cl-job__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; color: #64748b; }
 .cl-job__warn { display: flex; gap: 6px; font-size: 12px; color: #b45309; }
-.cl-job__edit { flex-shrink: 0; font-size: 13px; font-weight: 600; color: #047857; }
+.cl-job__edit { flex-shrink: 0; font-size: 13px; font-weight: 600; color: var(--brand-primary-hover); }
 .cl-job__edit:hover { color: #065f46; text-decoration: underline; }
 .cl-chip { padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 700; line-height: 20px; }
 .cl-chip--draft { background: #f1f5f9; color: #475569; }
@@ -71,7 +71,7 @@
 }
 .cl-mark--todo { background: #f59e0b; color: #fff; }
 .cl-mark--ok { background: #d1fae5; color: #047857; }
-.cl-fix-link { flex-shrink: 0; font-size: 13px; font-weight: 600; color: #047857; }
+.cl-fix-link { flex-shrink: 0; font-size: 13px; font-weight: 600; color: var(--brand-primary-hover); }
 
 .cl-callout {
   display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; padding: 12px 14px;
@@ -93,16 +93,16 @@
   padding: 14px; border: 1px solid #e2e8e5; border-radius: 12px; background: #fff; cursor: pointer;
   transition: border-color .15s, box-shadow .15s;
 }
-.cl-mode.is-selected { border-color: #059669; box-shadow: 0 0 0 3px rgb(16 185 129 / .12); }
+.cl-mode.is-selected { border-color: var(--brand-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 12%, transparent); }
 .cl-mode.is-disabled { cursor: not-allowed; background: #f8faf9; }
 .cl-mode.is-disabled .cl-mode__title, .cl-mode.is-disabled .cl-mode__icon { color: #94a3b8; }
 .cl-mode__input { position: absolute; opacity: 0; pointer-events: none; }
-.cl-mode:has(.cl-mode__input:focus-visible) { outline: 2px solid #059669; outline-offset: 2px; }
-.cl-mode__icon { grid-row: span 2; font-size: 20px; color: #059669; }
+.cl-mode:has(.cl-mode__input:focus-visible) { outline: 2px solid var(--brand-primary); outline-offset: 2px; }
+.cl-mode__icon { grid-row: span 2; font-size: 20px; color: var(--brand-primary); }
 .cl-mode__title { font-size: 14px; font-weight: 700; color: #0f2a24; }
 .cl-mode__text { font-size: 13px; line-height: 19px; color: #64748b; }
 
-.cl-effects { margin: 0; padding-left: 12px; border-left: 3px solid #34d399; font-size: 14px; color: #1f2937; }
+.cl-effects { margin: 0; padding-left: 12px; border-left: 3px solid color-mix(in srgb, var(--brand-primary) 45%, #fff); font-size: 14px; color: #1f2937; }
 .cl-commit.ant-checkbox-wrapper { align-items: flex-start; padding: 12px 14px; border-radius: 12px; background: #f8faf9; font-size: 13px; line-height: 20px; color: #334155; }
 
 @media (max-width: 640px) {

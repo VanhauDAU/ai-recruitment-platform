@@ -121,7 +121,7 @@ export default function Footer() {
 
   return (
     <footer className="mt-auto border-t border-slate-200 bg-white text-slate-700">
-      <div className="h-1 bg-gradient-to-r from-[var(--brand-primary)] via-emerald-400 to-teal-500" />
+      <div className="h-1 bg-gradient-to-r from-[var(--brand-primary)] via-[var(--brand-primary)] to-[var(--brand-primary-hover)]" />
 
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
         <div className="grid gap-10 lg:grid-cols-[minmax(220px,1.15fr)_2fr] xl:gap-16">

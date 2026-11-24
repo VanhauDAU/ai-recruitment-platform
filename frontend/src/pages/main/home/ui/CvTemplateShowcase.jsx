@@ -65,7 +65,7 @@ export default function CvTemplateShowcase() {
   if (!isLoading && templates.length === 0) return null
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-white via-emerald-50/70 to-white py-14">
+    <section className="relative overflow-hidden bg-gradient-to-b from-white via-[var(--brand-primary)]/70 to-white py-14">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-24 top-10 h-72 w-72 rounded-full bg-[var(--brand-primary)]/10 blur-3xl" />
         <div className="absolute -right-16 bottom-0 h-80 w-80 rounded-full bg-amber-200/25 blur-3xl" />
@@ -80,7 +80,7 @@ export default function CvTemplateShowcase() {
           </span>
           <h2 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight text-slate-900 md:text-4xl">
             Tạo CV ấn tượng,{' '}
-            <span className="bg-gradient-to-r from-[var(--brand-primary)] to-teal-500 bg-clip-text text-transparent">chinh phục nhà tuyển dụng</span>
+            <span className="bg-gradient-to-r from-[var(--brand-primary)] to-[var(--brand-primary-hover)] bg-clip-text text-transparent">chinh phục nhà tuyển dụng</span>
           </h2>
           <p className="mt-3 max-w-md text-[15px] leading-relaxed text-slate-600">
             Chọn mẫu, đổi màu, điền nội dung — một chiếc CV chuyên nghiệp chỉ mất vài phút. Hoàn toàn miễn phí.
@@ -102,7 +102,7 @@ export default function CvTemplateShowcase() {
             <button
               type="button"
               onClick={() => navigate('/mau-cv')}
-              className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-[var(--brand-primary)] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-600/25 transition-all hover:-translate-y-0.5 hover:bg-[var(--brand-primary-hover)] hover:shadow-xl active:scale-95"
+              className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-[var(--brand-primary)] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[var(--brand-primary)]/25 transition-all hover:-translate-y-0.5 hover:bg-[var(--brand-primary-hover)] hover:shadow-xl active:scale-95"
             >
               Tạo CV ngay <ArrowRightOutlined className="text-xs" />
             </button>

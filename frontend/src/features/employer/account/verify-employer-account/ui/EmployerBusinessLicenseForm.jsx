@@ -312,14 +312,14 @@ export default function EmployerBusinessLicenseForm() {
               icon={<EditOutlined />}
               onClick={startEditing}
               disabled={resubmissionLocked}
-              className="!border-emerald-500 !text-emerald-600 hover:!border-emerald-600 hover:!text-emerald-700"
+              className="!border-[var(--brand-primary)] !text-[var(--brand-primary)] hover:!border-[var(--brand-primary)] hover:!text-[var(--brand-primary-hover)]"
             >
               {m.employer_account_docs_edit()}
             </Button>
           )}
         </div>
       </div>
-      <p className="mt-6 text-sm text-slate-700">{m.employer_account_docs_choose_method()}<a href={UPLOAD_GUIDE_URL} target="_blank" rel="noreferrer" className="font-medium text-emerald-600 hover:text-emerald-700">{m.employer_account_docs_guide_link()}</a></p>
+      <p className="mt-6 text-sm text-slate-700">{m.employer_account_docs_choose_method()}<a href={UPLOAD_GUIDE_URL} target="_blank" rel="noreferrer" className="font-medium text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)]">{m.employer_account_docs_guide_link()}</a></p>
 
       {!showDocumentForm && <Radio.Group value={savedDocuments.method} disabled className="!mt-6 !grid !gap-0">
         <Radio value="business_registration" className="!my-3 !mr-0 !text-sm !font-semibold !text-slate-800">{m.employer_account_docs_business_or_equivalent()}</Radio>
@@ -442,7 +442,7 @@ export default function EmployerBusinessLicenseForm() {
         >
           {m.employer_account_docs_save()}
         </Button>
-        {!companyLinked && <p className="text-left text-xs leading-5 text-slate-500 sm:text-right">{m.employer_account_docs_need_company_before()}<Link to={`${EMPLOYER_COMPANY_SETTINGS_URL}?update=true`} className="font-medium text-emerald-600 hover:text-emerald-700">{m.employer_account_docs_need_company_link()}</Link>{m.employer_account_docs_need_company_after()}</p>}
+        {!companyLinked && <p className="text-left text-xs leading-5 text-slate-500 sm:text-right">{m.employer_account_docs_need_company_before()}<Link to={`${EMPLOYER_COMPANY_SETTINGS_URL}?update=true`} className="font-medium text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)]">{m.employer_account_docs_need_company_link()}</Link>{m.employer_account_docs_need_company_after()}</p>}
       </div>
       }
       <Modal

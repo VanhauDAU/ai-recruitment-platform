@@ -43,7 +43,7 @@ export default function EmployerContact() {
 
   return (
     <>
-      <section className="bg-gradient-to-br from-[#eafff3] via-white to-[#f7fff9]">
+      <section className="bg-gradient-to-br from-[var(--brand-primary-soft)] via-white to-[var(--brand-primary-soft)]">
         <div className="mx-auto max-w-7xl px-4 py-14 text-center sm:px-6 lg:px-8">
           <span className="rounded-full bg-[var(--brand-primary)]/10 px-4 py-1.5 text-sm font-bold text-[var(--brand-primary-hover)]">
             {m.marketing_contact_hero_eyebrow()}

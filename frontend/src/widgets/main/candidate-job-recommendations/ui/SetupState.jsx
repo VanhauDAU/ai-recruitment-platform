@@ -15,7 +15,7 @@ function setupCopy({ consentRequired, cvEnabled }) {
 export default function SetupState({ consentRequired = false, cvEnabled = false }) {
   const [title, text] = setupCopy({ consentRequired, cvEnabled })
   return (
-    <div className="rounded-2xl border border-dashed border-emerald-300 bg-gradient-to-br from-emerald-50 to-white px-5 py-10 text-center">
+    <div className="rounded-2xl border border-dashed border-[var(--brand-primary)]/20 bg-gradient-to-br from-[var(--brand-primary-soft)] to-white px-5 py-10 text-center">
       <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-white text-2xl text-[var(--brand-primary)] shadow-sm">
         {consentRequired ? <InfoCircleOutlined /> : <CompassOutlined />}
       </span>

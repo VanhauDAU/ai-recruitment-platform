@@ -157,7 +157,7 @@ export default function JobListHeader({
           type="button"
           aria-label="Tạo thông báo việc làm"
           onClick={onCreateJobAlert}
-          className="job-list-alert inline-flex w-fit shrink-0 cursor-pointer items-center gap-2 rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:border-emerald-400 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+          className="job-list-alert inline-flex w-fit shrink-0 cursor-pointer items-center gap-2 rounded-full border border-[var(--brand-primary)]/20 bg-white px-4 py-2 text-sm font-semibold text-[var(--brand-primary-hover)] shadow-sm transition hover:border-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/25"
         >
           <BellOutlined /> Tạo thông báo việc làm
         </button>

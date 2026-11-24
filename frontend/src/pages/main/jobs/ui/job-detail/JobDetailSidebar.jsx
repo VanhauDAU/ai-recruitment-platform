@@ -45,7 +45,7 @@ function CompanyCard({ job }) {
         <CompanyInfo icon={<BankOutlined />} label="Địa điểm" value={job.company_address} />
       </div>
       {/* Nền/chữ phải dùng `!`: reset của antd đặt style thẻ `a` ngoài layer nên thắng utility thường. */}
-      <Link to={jobCompanyPath(job)} target="_blank" rel="noopener noreferrer" className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[var(--brand-primary)] !bg-white text-sm font-semibold !text-[var(--brand-primary)] transition hover:!bg-emerald-50">
+      <Link to={jobCompanyPath(job)} target="_blank" rel="noopener noreferrer" className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[var(--brand-primary)] !bg-white text-sm font-semibold !text-[var(--brand-primary)] transition hover:!bg-[var(--brand-primary-soft)]">
         Xem trang công ty<ExportOutlined />
       </Link>
     </section>
@@ -66,5 +66,5 @@ function RelatedTopics({ job }) {
   // Mỗi tag link theo đúng danh mục của nó (chuyên môn chính + kiến thức chuyên ngành).
   const topics = [job.primary_specialization, ...(job.domain_knowledge || [])].filter(Boolean).slice(0, 5)
   if (!topics.length) return null
-  return <section className="job-related-topics rounded-2xl border border-gray-200 bg-white p-5 shadow-sm"><h2 className="flex items-center gap-2 text-base font-bold text-slate-800"><TagsOutlined className="text-[var(--brand-primary)]" />Danh mục nghề liên quan</h2><div className="mt-4 flex flex-wrap gap-2">{topics.map((topic) => <Link key={topic.id} to={`/viec-lam?cat=${topic.id}`} className="group inline-flex items-center gap-1.5 rounded-full border border-gray-200 !bg-white px-3 py-1.5 text-xs font-medium !text-slate-600 transition hover:-translate-y-px hover:border-emerald-300 hover:!bg-emerald-50 hover:!text-[var(--brand-primary)] hover:shadow-sm"><span className="h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300 transition group-hover:bg-[var(--brand-primary)]" />{topic.name}</Link>)}</div></section>
+  return <section className="job-related-topics rounded-2xl border border-gray-200 bg-white p-5 shadow-sm"><h2 className="flex items-center gap-2 text-base font-bold text-slate-800"><TagsOutlined className="text-[var(--brand-primary)]" />Danh mục nghề liên quan</h2><div className="mt-4 flex flex-wrap gap-2">{topics.map((topic) => <Link key={topic.id} to={`/viec-lam?cat=${topic.id}`} className="group inline-flex items-center gap-1.5 rounded-full border border-gray-200 !bg-white px-3 py-1.5 text-xs font-medium !text-slate-600 transition hover:-translate-y-px hover:border-[var(--brand-primary)]/40 hover:!bg-[var(--brand-primary-soft)] hover:!text-[var(--brand-primary)] hover:shadow-sm"><span className="h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300 transition group-hover:bg-[var(--brand-primary)]" />{topic.name}</Link>)}</div></section>
 }

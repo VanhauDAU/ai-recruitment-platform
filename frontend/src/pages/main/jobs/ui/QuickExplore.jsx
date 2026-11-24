@@ -17,12 +17,12 @@ function ShortcutCard({ icon, img, label, active, onClick }) {
       type="button"
       onClick={onClick}
       className={`job-quick-explore__card group flex w-[128px] shrink-0 cursor-pointer flex-col items-center gap-2 rounded-xl border bg-white px-2 py-3.5 text-center transition ${
-        active ? 'border-[var(--brand-primary)] bg-green-50/60' : 'border-gray-200 hover:border-[var(--brand-primary)] hover:shadow-sm'
+        active ? 'border-[var(--brand-primary)] bg-[var(--brand-primary-soft)]' : 'border-gray-200 hover:border-[var(--brand-primary)] hover:shadow-sm'
       }`}
     >
       <span
         className={`job-quick-explore__icon flex h-11 w-11 items-center justify-center overflow-hidden rounded-full text-lg ${
-          img ? 'bg-white ring-1 ring-gray-100' : active ? 'bg-[var(--brand-primary)] text-white' : 'bg-emerald-50 text-[var(--brand-primary)]'
+          img ? 'bg-white ring-1 ring-gray-100' : active ? 'bg-[var(--brand-primary)] text-white' : 'bg-[var(--brand-primary-soft)] text-[var(--brand-primary)]'
         }`}
       >
         {img ? <img src={img} alt="" className="h-7 w-7 object-contain" loading="lazy" /> : icon}
@@ -162,7 +162,7 @@ export default function QuickExplore({
               onClick={pill.onClick}
               className={`job-list-chip inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
                 pill.active
-                  ? 'border-[var(--brand-primary)] bg-green-50 text-[var(--brand-primary)]'
+                  ? 'border-[var(--brand-primary)] bg-[var(--brand-primary-soft)] text-[var(--brand-primary)]'
                   : 'border-gray-200 bg-white text-gray-700 hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]'
               }`}
             >

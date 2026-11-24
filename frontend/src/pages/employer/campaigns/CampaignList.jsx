@@ -44,7 +44,7 @@ const STATUS_ICONS = {
   ended: <CheckCircleOutlined />,
 }
 const ATTENTION_TONES = { needs_review: 'orange', expired_jobs: 'red' }
-const primaryLinkClass = 'inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg !bg-emerald-600 px-3.5 text-sm font-semibold !text-white shadow-sm transition hover:!bg-emerald-500'
+const primaryLinkClass = 'inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg !bg-[var(--brand-primary)] px-3.5 text-sm font-semibold !text-white shadow-sm transition hover:!bg-[var(--brand-primary-hover)]'
 const formatCount = (value) => (value || 0).toLocaleString(getIntlLocale())
 
 export default function CampaignList() {

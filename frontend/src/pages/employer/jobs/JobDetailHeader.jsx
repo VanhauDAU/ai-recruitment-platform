@@ -35,7 +35,7 @@ function Metric({ label, value, hint, tooltip, accent, onClick, testId }) {
         data-testid={testId}
         type={onClick ? 'button' : undefined}
         onClick={onClick}
-        className={`flex min-w-0 flex-col items-start bg-white px-4 py-3 text-left sm:px-5 ${onClick ? 'cursor-pointer border-0 transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-emerald-500' : ''}`}
+        className={`flex min-w-0 flex-col items-start bg-white px-4 py-3 text-left sm:px-5 ${onClick ? 'cursor-pointer border-0 transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-[var(--brand-primary)]' : ''}`}
       >
         <span className="text-xs font-medium text-slate-500">{label}</span>
         <span className="mt-0.5 flex min-w-0 items-end gap-1.5">
@@ -61,7 +61,7 @@ export default function JobDetailHeader({ job, publicId, summary, closing, onClo
   return (
     <header className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
       <div className="p-4 sm:p-5">
-        <Link to={employerAppPath('/jobs')} className="inline-flex items-center gap-1.5 text-xs font-medium !text-slate-500 hover:!text-emerald-700">
+        <Link to={employerAppPath('/jobs')} className="inline-flex items-center gap-1.5 text-xs font-medium !text-slate-500 hover:!text-[var(--brand-primary-hover)]">
           <ArrowLeftOutlined aria-hidden /> {m.employer_job_detail_back_to_jobs()}
         </Link>
         <div className="mt-2 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -75,7 +75,7 @@ export default function JobDetailHeader({ job, publicId, summary, closing, onClo
                 {job.campaign && job.campaign_name ? (
                   <Link
                     aria-label={m.employer_job_header_open_campaign({ name: job.campaign_name })}
-                    className="inline-flex max-w-72 items-center gap-1.5 font-medium !text-emerald-700 hover:!text-emerald-600"
+                    className="inline-flex max-w-72 items-center gap-1.5 font-medium !text-[var(--brand-primary-hover)] hover:!text-[var(--brand-primary)]"
                     to={employerAppPath(`/campaigns/${job.campaign}?active_tab=job`)}
                   >
                     <ThunderboltOutlined aria-hidden /> <span className="truncate">{job.campaign_name}</span>

@@ -12,7 +12,7 @@ export default function EmployerGeneralSettings() {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-sm font-bold text-slate-800">{m.employer_account_settings_cv_notify_title()}</p>
-            <span className="rounded bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-600">{m.employer_account_settings_active()}</span>
+            <span className="rounded bg-[var(--brand-primary-soft)] px-2 py-0.5 text-xs font-semibold text-[var(--brand-primary)]">{m.employer_account_settings_active()}</span>
           </div>
           <p className="mt-1 text-sm leading-6 text-slate-500">{m.employer_account_settings_cv_notify_desc()}</p>
         </div>

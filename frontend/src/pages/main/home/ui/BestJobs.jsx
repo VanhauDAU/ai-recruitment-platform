@@ -153,7 +153,7 @@ export default function BestJobs({ categories = [], pageSize }) {
                   if (Date.now() >= dragState.current.suppressClickUntil) selectChip(chip)
                 }}
                 className={`h-9 shrink-0 cursor-pointer whitespace-nowrap rounded-full border px-4 text-sm font-medium transition-all duration-150 ${active
-                    ? 'border-(--brand-primary) bg-(--brand-primary) text-white shadow-sm shadow-green-200'
+                    ? 'border-(--brand-primary) bg-(--brand-primary) text-white shadow-sm shadow-[var(--brand-primary)]/25'
                     : 'border-gray-200 bg-white text-gray-600 hover:border-(--brand-primary) hover:text-(--brand-primary)'
                   }`}
               >
@@ -169,7 +169,7 @@ export default function BestJobs({ categories = [], pageSize }) {
 
       {/* ── Hint bar ── */}
       {showHint && (
-        <div className="mb-4 flex items-center gap-2 rounded-xl border border-(--brand-primary)/20 bg-linear-to-r from-(--brand-primary-soft) to-green-50 px-4 py-2.5 text-sm text-gray-600">
+        <div className="mb-4 flex items-center gap-2 rounded-xl border border-(--brand-primary)/20 bg-linear-to-r from-(--brand-primary-soft) to-[var(--brand-primary-soft)] px-4 py-2.5 text-sm text-gray-600">
           <BulbOutlined className="shrink-0 text-(--brand-primary)" />
           <span className="flex-1">Ưu tiên tin công khai mức lương, mới đăng và có nhãn HOT/GẤP; các tin cùng mức được luân phiên, F5 sẽ tạo một lượt hiển thị khác.</span>
           <CloseOutlined

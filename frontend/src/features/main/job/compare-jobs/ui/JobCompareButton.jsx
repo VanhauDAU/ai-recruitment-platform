@@ -35,8 +35,8 @@ export default function JobCompareButton({
       onClick={handleClick}
       className={`inline-flex shrink-0 items-center justify-center border text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 motion-reduce:transition-none ${VARIANT_CLASSES[variant] || VARIANT_CLASSES.icon} ${
         selected
-          ? 'border-emerald-300 bg-emerald-50 text-[var(--brand-primary)]'
-          : 'border-slate-200 bg-white text-slate-500 hover:border-emerald-300 hover:bg-slate-50 hover:text-[var(--brand-primary)]'
+          ? 'border-[var(--brand-primary)]/20 bg-[var(--brand-primary-soft)] text-[var(--brand-primary)]'
+          : 'border-slate-200 bg-white text-slate-500 hover:border-[var(--brand-primary)]/40 hover:bg-slate-50 hover:text-[var(--brand-primary)]'
       } ${className}`}
     >
       {selected

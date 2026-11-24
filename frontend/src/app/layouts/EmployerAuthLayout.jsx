@@ -12,7 +12,7 @@ function HiringFunnelVisual() {
       <div className="absolute -right-24 top-24 h-72 w-72 rounded-full border border-emerald-400/15" />
       <div className="absolute -right-10 top-36 h-48 w-48 rounded-full border border-emerald-400/15" />
       <div className="relative">
-        <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-emerald-300">
+        <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[color-mix(in_srgb,var(--brand-primary)_40%,#fff)]">
           <RobotOutlined /> AI Recruitment Workspace
         </span>
         <h2 className="mt-6 max-w-lg text-3xl font-black leading-tight xl:text-4xl">
@@ -25,8 +25,8 @@ function HiringFunnelVisual() {
 
       <div className="relative mx-auto w-full max-w-md rounded-3xl border border-white/10 bg-white/[0.07] p-5 shadow-2xl shadow-black/30 backdrop-blur">
         <div className="flex items-center justify-between border-b border-white/10 pb-4">
-          <div><p className="text-xs font-bold uppercase tracking-widest text-emerald-300">Hiring funnel</p><p className="mt-1 font-bold">{m.employer_workspace_auth_visual_campaign()}</p></div>
-          <BarChartOutlined className="text-2xl text-emerald-300" />
+          <div><p className="text-xs font-bold uppercase tracking-widest text-[color-mix(in_srgb,var(--brand-primary)_40%,#fff)]">Hiring funnel</p><p className="mt-1 font-bold">{m.employer_workspace_auth_visual_campaign()}</p></div>
+          <BarChartOutlined className="text-2xl text-[color-mix(in_srgb,var(--brand-primary)_40%,#fff)]" />
         </div>
         <div className="mt-5 grid grid-cols-3 gap-3">
           {[
@@ -35,7 +35,7 @@ function HiringFunnelVisual() {
             [m.employer_workspace_auth_visual_interviews(), '24', <CheckCircleFilled key="check" />],
           ].map(([label, value, icon]) => (
             <div key={label} className="rounded-2xl bg-black/15 p-3">
-              <span className="text-emerald-300">{icon}</span>
+              <span className="text-[color-mix(in_srgb,var(--brand-primary)_40%,#fff)]">{icon}</span>
               <strong className="mt-3 block text-2xl">{value}</strong>
               <span className="text-xs text-white/55">{label}</span>
             </div>
@@ -44,7 +44,7 @@ function HiringFunnelVisual() {
         <div className="mt-5 space-y-3">
           {[86, 62, 38].map((width, index) => (
             <div key={width} className="h-3 overflow-hidden rounded-full bg-white/10">
-              <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-300" style={{ width: `${width}%`, opacity: 1 - index * 0.18 }} />
+              <div className="h-full rounded-full bg-gradient-to-r from-[var(--brand-primary)] to-teal-300" style={{ width: `${width}%`, opacity: 1 - index * 0.18 }} />
             </div>
           ))}
         </div>
@@ -52,7 +52,7 @@ function HiringFunnelVisual() {
 
       <div className="relative flex items-center justify-between text-xs text-white/45">
         <span>Smart Recruitment Platform</span>
-        <span className="flex gap-1.5"><i className="h-2 w-2 rounded-full bg-emerald-400" /><i className="h-2 w-2 rounded-full bg-white/30" /><i className="h-2 w-2 rounded-full bg-white/30" /></span>
+        <span className="flex gap-1.5"><i className="h-2 w-2 rounded-full bg-[var(--brand-primary)]" /><i className="h-2 w-2 rounded-full bg-white/30" /><i className="h-2 w-2 rounded-full bg-white/30" /></span>
       </div>
     </aside>
   )

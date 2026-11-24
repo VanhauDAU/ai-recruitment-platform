@@ -37,7 +37,7 @@ export default function RecruitmentPipelineCard({ summary = {} }) {
     <section className="rounded-[20px] border border-slate-200/80 bg-white p-5 shadow-[0_12px_35px_-24px_rgba(15,23,42,.45)] sm:p-6" aria-labelledby="pipeline-title">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-[11px] font-extrabold uppercase tracking-[.14em] text-emerald-600">Pipeline</p>
+          <p className="text-[11px] font-extrabold uppercase tracking-[.14em] employer-dash-text">Pipeline</p>
           <h2 id="pipeline-title" className="mt-1 text-lg font-black text-slate-900">{m.employer_workspace_dash_pipeline_title()}</h2>
           <p className="mt-1 text-xs leading-5 text-slate-500">{m.employer_workspace_dash_pipeline_description()}</p>
         </div>
@@ -82,7 +82,7 @@ export default function RecruitmentPipelineCard({ summary = {} }) {
         ))}
       </div>
 
-      <Link to={employerAppPath('/applications')} className="mt-5 flex items-center justify-center gap-2 rounded-xl border border-slate-200 !bg-slate-50 px-3 py-2.5 text-xs font-bold !text-slate-700 transition hover:border-emerald-200 hover:!bg-emerald-50 hover:!text-emerald-700">
+      <Link to={employerAppPath('/applications')} className="mt-5 flex items-center justify-center gap-2 rounded-xl border border-slate-200 !bg-slate-50 px-3 py-2.5 text-xs font-bold !text-slate-700 transition employer-dash-hover-tint">
         {m.employer_workspace_dash_view_all_applications()} <ArrowRightOutlined />
       </Link>
     </section>

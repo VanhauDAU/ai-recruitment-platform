@@ -67,7 +67,7 @@ function SkillMultiSelect({ value = [], onChange, options, placeholder, onCreate
           {menu}
           {normalizedSearch && !hasExactMatch && !searchQuery.isFetching && (
             <div className="border-t border-slate-100 p-1.5" onMouseDown={(event) => event.preventDefault()}>
-              <Button type="text" size="small" className="!w-full !justify-start !text-emerald-600" loading={creating} onClick={addSkill}>
+              <Button type="text" size="small" className="!w-full !justify-start !text-[var(--brand-primary)]" loading={creating} onClick={addSkill}>
                 {m.employer_job_form_add_skill({ name: normalizedSearch })}
               </Button>
             </div>

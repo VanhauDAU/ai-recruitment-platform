@@ -75,7 +75,7 @@ function WardPicker({ open, wards, loading, allWardId, onOpenChange, onApply }) 
             {loading && <p className="p-4 text-sm text-slate-500">{m.employer_job_location_loading_wards()}</p>}
             {!loading && visibleWards.length === 0 && <p className="p-4 text-sm text-slate-500">{m.employer_job_location_no_wards()}</p>}
             {!loading && visibleWards.map((ward) => (
-              <label key={ward.id} className="flex cursor-pointer items-center gap-3 border-b border-slate-100 px-3 py-2.5 last:border-b-0 hover:bg-emerald-50">
+              <label key={ward.id} className="flex cursor-pointer items-center gap-3 border-b border-slate-100 px-3 py-2.5 last:border-b-0 hover:bg-[var(--brand-primary-soft)]">
                 <Checkbox checked={includesId(draftIds, ward.id)} onChange={() => toggleWard(ward.id)} />
                 <span className="text-sm text-slate-700">{ward.name}</span>
               </label>

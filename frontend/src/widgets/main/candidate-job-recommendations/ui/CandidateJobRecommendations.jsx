@@ -72,11 +72,11 @@ function HomeRecommendations({ data, hiddenIds, hide, pendingIds, query }) {
     >
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-emerald-600">Dành riêng cho bạn</p>
+          <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[var(--brand-primary)]">Dành riêng cho bạn</p>
           <h2 id="candidate-recommendations-title" className="mt-1 text-xl font-extrabold text-slate-950 sm:text-2xl">Gợi ý việc làm phù hợp</h2>
           <p className="mt-1 text-sm text-slate-500">{m.candidate_reco_home_intro()}</p>
         </div>
-        <Link to={MATCHING_PATH} className="inline-flex items-center gap-2 rounded-full border border-emerald-600 px-4 py-2 text-sm font-bold text-emerald-700 transition hover:bg-emerald-50">
+        <Link to={MATCHING_PATH} className="inline-flex items-center gap-2 rounded-full border border-[var(--brand-primary)] px-4 py-2 text-sm font-bold text-[var(--brand-primary-hover)] transition hover:bg-[var(--brand-primary-soft)]">
           Xem tất cả <ArrowRightOutlined />
         </Link>
       </div>
@@ -116,7 +116,7 @@ function HomeRecommendations({ data, hiddenIds, hide, pendingIds, query }) {
               aria-label={`Xem trang ${index + 1}`}
               aria-current={page === index ? 'true' : undefined}
               onClick={() => setPage(index)}
-              className={`h-2.5 cursor-pointer rounded-full transition-all ${page === index ? 'w-7 bg-emerald-600' : 'w-2.5 bg-slate-300 hover:bg-slate-400'}`}
+              className={`h-2.5 cursor-pointer rounded-full transition-all ${page === index ? 'w-7 bg-[var(--brand-primary)]' : 'w-2.5 bg-slate-300 hover:bg-slate-400'}`}
             />
           ))}
         </div>
