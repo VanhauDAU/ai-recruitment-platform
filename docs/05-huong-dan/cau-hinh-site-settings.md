@@ -279,6 +279,12 @@ Quy tắc nội dung:
 | Ứng viên nhắc nhà tuyển dụng | `candidate_reminder_interval_days` | Khoảng cách giữa hai lần nhắc (ngày) | number | 3 | ✓ |
 | Ứng viên nhắc nhà tuyển dụng | `candidate_reminder_max` | Số lần nhắc tối đa | number | 2 | ✓ |
 | Chia sẻ hồ sơ ứng tuyển | `review_link_max_days` | Hạn link xem hồ sơ cho đồng nghiệp (ngày) | number | 30 |  |
+| Huy hiệu Sấm Chớp | `flash_badge_enabled` | Bật Huy hiệu Sấm Chớp | boolean | true | ✓ |
+| Huy hiệu Sấm Chớp | `flash_badge_window_days` | Cửa sổ xét (ngày) | number | 30 | ✓ |
+| Huy hiệu Sấm Chớp | `flash_badge_response_hours` | Hạn phản hồi (giờ) | number | 72 | ✓ |
+| Huy hiệu Sấm Chớp | `flash_badge_min_applications` | Số hồ sơ tối thiểu | number | 5 | ✓ |
+| Huy hiệu Sấm Chớp | `flash_badge_min_response_rate` | Tỷ lệ phản hồi đúng hạn tối thiểu (%) | number | 80 | ✓ |
+| Huy hiệu Sấm Chớp | `flash_badge_active_days` | Hoạt động gần đây (ngày) | number | 7 |  |
 
 ### Hồ sơ & CV (`cv`)
 

@@ -232,9 +232,14 @@ export default function Home() {
         </section>
       )}
 
-      <section className="pt-8">
-        <FlashBadge />
-      </section>
+      {show('flash_badge_enabled') && (
+        <section className="pt-8">
+          <FlashBadge
+            responseRate={settings.flash_badge_min_response_rate}
+            responseHours={settings.flash_badge_response_hours}
+          />
+        </section>
+      )}
 
       {show('home_show_cv_templates') && <CvTemplateShowcase />}
       <FeaturedIndustriesEmployers />

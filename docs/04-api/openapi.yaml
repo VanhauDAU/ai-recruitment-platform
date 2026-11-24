@@ -18399,7 +18399,7 @@ components:
         has_flash_badge:
           type: boolean
           readOnly: true
-          description: Huy hiệu Sấm Chớp — NTD tương tác nhanh
+          description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         deadline:
           type: string
           format: date
@@ -18780,7 +18780,7 @@ components:
         has_flash_badge:
           type: boolean
           readOnly: true
-          description: Huy hiệu Sấm Chớp — NTD tương tác nhanh
+          description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         deadline:
           type: string
           format: date
@@ -26334,6 +26334,10 @@ components:
           allOf:
           - $ref: '#/components/schemas/RecruitmentNeedSummary'
           nullable: true
+        flash_badge:
+          allOf:
+          - $ref: '#/components/schemas/FlashBadgeState'
+          nullable: true
         recent_jobs:
           type: array
           items:
@@ -26345,6 +26349,7 @@ components:
       required:
       - account
       - application_activity
+      - flash_badge
       - recent_applications
       - recent_jobs
       - recruitment_need
@@ -26662,7 +26667,7 @@ components:
         has_flash_badge:
           type: boolean
           readOnly: true
-          description: Huy hiệu Sấm Chớp — NTD tương tác nhanh
+          description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         presentation:
           type: object
           additionalProperties: {}
@@ -27000,7 +27005,7 @@ components:
         has_flash_badge:
           type: boolean
           readOnly: true
-          description: Huy hiệu Sấm Chớp — NTD tương tác nhanh
+          description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         presentation:
           type: object
           additionalProperties: {}
@@ -27866,6 +27871,9 @@ components:
       - application_received
       - application_withdrawn
       - application_awaiting_reply
+      - flash_badge_granted
+      - flash_badge_lost
+      - flash_badge_at_risk
       - job_changes_requested
       - company_join_requested
       - company_join_approved
@@ -27898,6 +27906,9 @@ components:
         * `application_received` - Có hồ sơ ứng tuyển mới
         * `application_withdrawn` - Ứng viên đã rút hồ sơ
         * `application_awaiting_reply` - Hồ sơ đang chờ phản hồi
+        * `flash_badge_granted` - Bạn đã đạt Huy hiệu Sấm Chớp
+        * `flash_badge_lost` - Bạn đã mất Huy hiệu Sấm Chớp
+        * `flash_badge_at_risk` - Huy hiệu Sấm Chớp sắp bị gỡ
         * `job_changes_requested` - Tin tuyển dụng cần chỉnh sửa
         * `company_join_requested` - Có yêu cầu tham gia công ty
         * `company_join_approved` - Yêu cầu tham gia công ty đã được duyệt
@@ -28382,6 +28393,80 @@ components:
         * `select` - Chọn một
         * `multi_select` - Chọn nhiều
         * `tags` - Thẻ
+    FlashBadgeCriterion:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/FlashBadgeCriterionCodeEnum'
+        met:
+          type: boolean
+        value:
+          nullable: true
+        target:
+          type: integer
+      required:
+      - code
+      - met
+      - target
+      - value
+    FlashBadgeCriterionCodeEnum:
+      enum:
+      - enough_applications
+      - response_rate
+      - recent_activity
+      - no_overdue
+      type: string
+      description: |-
+        * `enough_applications` - enough_applications
+        * `response_rate` - response_rate
+        * `recent_activity` - recent_activity
+        * `no_overdue` - no_overdue
+    FlashBadgeState:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        qualified:
+          type: boolean
+        qualified_since:
+          type: string
+          format: date-time
+          nullable: true
+        response_rate:
+          type: integer
+          nullable: true
+        avg_response_hours:
+          type: number
+          format: double
+          nullable: true
+        criteria:
+          type: array
+          items:
+            $ref: '#/components/schemas/FlashBadgeCriterion'
+        overdue_count:
+          type: integer
+        at_risk_count:
+          type: integer
+        response_hours:
+          type: integer
+        window_days:
+          type: integer
+        computed_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - at_risk_count
+      - avg_response_hours
+      - computed_at
+      - criteria
+      - enabled
+      - overdue_count
+      - qualified
+      - qualified_since
+      - response_hours
+      - response_rate
+      - window_days
     FollowedCompany:
       type: object
       description: Directory card of a followed company plus the candidate's own follow.
@@ -29507,6 +29592,11 @@ components:
           type: object
           additionalProperties: {}
           readOnly: true
+        flash_badge_stats:
+          allOf:
+          - $ref: '#/components/schemas/JobFlashBadgeStats'
+          nullable: true
+          readOnly: true
         job_locations:
           type: array
           items:
@@ -29625,6 +29715,7 @@ components:
       - employment_type
       - experience_years
       - first_approved_at
+      - flash_badge_stats
       - gender_requirement
       - income_display_type
       - is_hot
@@ -29655,6 +29746,26 @@ components:
       - work_type
       - work_types
       - workplace_groups
+    JobFlashBadgeStats:
+      type: object
+      description: Số liệu thật sau Huy hiệu Sấm Chớp của người đăng tin (ADR-0027).
+      properties:
+        response_rate:
+          type: integer
+        avg_response_hours:
+          type: number
+          format: double
+          nullable: true
+        matured_count:
+          type: integer
+        computed_at:
+          type: string
+          format: date-time
+      required:
+      - avg_response_hours
+      - computed_at
+      - matured_count
+      - response_rate
     JobImpressionBatchRequest:
       type: object
       properties:
@@ -33998,7 +34109,7 @@ components:
         has_flash_badge:
           type: boolean
           readOnly: true
-          description: Huy hiệu Sấm Chớp — NTD tương tác nhanh
+          description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         presentation:
           type: object
           additionalProperties: {}
@@ -34221,7 +34332,7 @@ components:
         has_flash_badge:
           type: boolean
           readOnly: true
-          description: Huy hiệu Sấm Chớp — NTD tương tác nhanh
+          description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         presentation:
           type: object
           additionalProperties: {}
@@ -34706,7 +34817,7 @@ components:
         has_flash_badge:
           type: boolean
           readOnly: true
-          description: Huy hiệu Sấm Chớp — NTD tương tác nhanh
+          description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         presentation:
           type: object
           additionalProperties: {}
@@ -35985,7 +36096,7 @@ components:
         has_flash_badge:
           type: boolean
           readOnly: true
-          description: Huy hiệu Sấm Chớp — NTD tương tác nhanh
+          description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         presentation:
           type: object
           additionalProperties: {}

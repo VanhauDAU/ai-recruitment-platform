@@ -6,6 +6,7 @@ from django.db.models import Count, Q, Sum, Value
 from django.db.models.functions import Coalesce, TruncDate
 
 from apps.applications.models import Application
+from apps.applications.selectors import recruiter_flash_badge_state
 from apps.employers.models import RecruiterProfile
 from apps.employers.selectors import build_employer_onboarding_steps, build_employer_readiness
 from apps.jobs.models import Job, JobState, job_effective_state_expression, job_state_counts
@@ -135,6 +136,10 @@ def build_employer_dashboard(user):
             'is_continuous': need.is_continuous,
             'headcount': need.headcount,
         },
+        # Huy hiệu Sấm Chớp (ADR-0027): tiến độ của chính người đăng tin tại công ty này.
+        'flash_badge': recruiter_flash_badge_state(company_id=company.pk, user_id=user.pk)
+        if company
+        else None,
         'recent_jobs': _recent_jobs(jobs),
         'recent_applications': (
             _recent_applications(applications) if readiness['candidate_data_access'] else []

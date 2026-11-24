@@ -106,7 +106,7 @@ Không phải capability thương mại:
 - title tối đa 255 ký tự;
 - ba lý do nên ứng tuyển;
 - HOT do hệ thống tính;
-- huy hiệu phản hồi nhanh do SLA thực tế;
+- huy hiệu phản hồi nhanh do SLA thực tế (đã làm ở ADR-0027);
 - nhãn RED.
 
 ### 2.5. Presentation và ranking

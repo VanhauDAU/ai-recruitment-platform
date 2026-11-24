@@ -4,6 +4,7 @@ from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
+from apps.applications.selectors import flash_badge_stats_for_job
 from common.html.plain_text import html_plain_text
 
 from ...models import Benefit, Job, JobCategoryAssignment, JobSkill
@@ -83,6 +84,15 @@ class PublicJobPreviewSerializer(PublicJobListSerializer):
         ]
 
 
+class JobFlashBadgeStatsSerializer(serializers.Serializer):
+    """Số liệu thật sau Huy hiệu Sấm Chớp của người đăng tin (ADR-0027)."""
+
+    response_rate = serializers.IntegerField()
+    avg_response_hours = serializers.FloatField(allow_null=True)
+    matured_count = serializers.IntegerField()
+    computed_at = serializers.DateTimeField()
+
+
 class JobDetailSerializer(JobSerializer):
     """Extended public detail without internal application-recipient data.
 
@@ -114,6 +124,7 @@ class JobDetailSerializer(JobSerializer):
     # A stopped job stays readable but shows "Hết hạn ứng tuyển" instead of apply.
     accepting_applications = serializers.BooleanField(read_only=True, default=True)
     stopped_at = serializers.DateTimeField(read_only=True)
+    flash_badge_stats = serializers.SerializerMethodField()
 
     class Meta(JobSerializer.Meta):
         model = Job
@@ -160,6 +171,7 @@ class JobDetailSerializer(JobSerializer):
             'is_hot',
             'is_urgent',
             'presentation',
+            'flash_badge_stats',
             'job_locations',
             'work_schedules',
             'language_requirements',
@@ -184,6 +196,10 @@ class JobDetailSerializer(JobSerializer):
     @extend_schema_field(JobVerificationSerializer)
     def get_company_verification(self, obj):
         return self._badge_payload(obj)
+
+    @extend_schema_field(JobFlashBadgeStatsSerializer(allow_null=True))
+    def get_flash_badge_stats(self, obj):
+        return flash_badge_stats_for_job(obj)
 
     def get_category_name(self, obj) -> str:
         assignment = self._primary_assignment(obj)

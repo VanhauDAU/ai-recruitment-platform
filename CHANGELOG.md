@@ -8,6 +8,17 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-25
 
+#### Changed — Huy hiệu Sấm Chớp tính từ mức phản hồi thật (ADR-0027)
+
+- `Job.has_flash_badge` không còn do admin tick tay. Task mỗi giờ (`refresh-flash-badges`)
+  đo từng người đăng tin: đủ hồ sơ đến hạn, tỷ lệ quyết định trong hạn, có quyết định gần
+  đây. Tin nào có hồ sơ chờ quá hạn thì không mang huy hiệu.
+- Ảnh chụp `RecruiterResponsiveness`; 6 key `flash_badge_*` trong Cấu hình hệ thống.
+- NTD: thẻ tiến độ trên dashboard, thông báo đạt, mất và sắp mất huy hiệu.
+- Ứng viên: banner trang chủ bỏ đồng hồ đếm ngược giả; bộ lọc "Nhà tuyển dụng phản hồi
+  nhanh"; số liệu thật ở chi tiết tin; +2 điểm trong "Việc làm tốt nhất"; nhãn GẤP đổi
+  icon để không trùng tia sét.
+
 #### Added — Mã tin và mã công ty dễ đọc
 
 - `Job.code` (`J` + 7 chữ số) và `Company.code` (`C` + 6 chữ số): ngẫu nhiên, unique, có

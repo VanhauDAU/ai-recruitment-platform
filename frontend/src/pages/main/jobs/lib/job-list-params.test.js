@@ -40,7 +40,7 @@ describe('job list search params', () => {
 
   it('maps compact public URL filters to backend API params', () => {
     const current = new URLSearchParams(
-      'search=dev&cat=1,2&exp=none,one&locations=10,11&salary=10-15&sort=salary_desc',
+      'search=dev&cat=1,2&exp=none,one&locations=10,11&salary=10-15&sort=salary_desc&fast=1',
     )
     const api = toApiParams(current)
 
@@ -51,5 +51,6 @@ describe('job list search params', () => {
     expect(api.get('salary_gte')).toBe('10000000')
     expect(api.get('salary_lte')).toBe('15000000')
     expect(api.get('ordering')).toBe('salary_desc')
+    expect(api.get('flash_badge')).toBe('1')
   })
 })

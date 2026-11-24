@@ -5,6 +5,7 @@ import {
   HeartOutlined,
   SafetyCertificateOutlined,
   ShareAltOutlined,
+  ThunderboltFilled,
   UserOutlined,
   WalletOutlined,
 } from '@ant-design/icons'
@@ -21,7 +22,7 @@ import {
   VerifiedEmployerBadge,
 } from '@/entities/job/job'
 import { JobCompareButton } from '@/features/main/job/compare-jobs'
-import { formatJobDate, isAcceptingApplications } from '../../lib/job-detail-presentation'
+import { formatFlashBadgeStats, formatJobDate, isAcceptingApplications } from '../../lib/job-detail-presentation'
 import JobApplicationClosed from './JobApplicationClosed'
 import { getIntlLocale } from '@/shared/config/i18n'
 
@@ -81,6 +82,12 @@ export function JobHero({ job, saved, applicationStatus, onApply, onSave, onShar
             <EyeOutlined className="text-[var(--brand-primary)]" />
             {formatNumber(job.view_count)} lượt xem
           </span>
+          {job.flash_badge_stats && (
+            <span className="inline-flex items-center gap-1.5 text-gray-500" data-testid="flash-badge-stats">
+              <ThunderboltFilled className="text-amber-500" aria-hidden="true" />
+              {formatFlashBadgeStats(job.flash_badge_stats)}
+            </span>
+          )}
         </div>
 
         <div className="job-hero__actions mt-5 flex gap-2 sm:gap-3">

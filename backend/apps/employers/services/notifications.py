@@ -17,6 +17,7 @@ COMPANY_MEMBERS_PATH = f'{COMPANY_PATH}?tab=members'
 COMPANY_PAGE_PATH = '/tuyendung/app/company-page'
 JOBS_PATH = '/tuyendung/app/jobs'
 APPLICATIONS_PATH = '/tuyendung/app/applications'
+DASHBOARD_PATH = '/tuyendung/app/dashboard'
 CAMPAIGNS_PATH = '/tuyendung/app/campaigns'
 INTEGRATIONS_PATH = '/tuyendung/app/account/settings/integrations'
 
@@ -79,6 +80,18 @@ EVENT_PRESENTATION = {
     ),
     EmployerNotification.EventType.APPLICATION_AWAITING_REPLY: (
         gettext_lazy('Hồ sơ đang chờ phản hồi'),
+        APPLICATIONS_PATH,
+    ),
+    EmployerNotification.EventType.FLASH_BADGE_GRANTED: (
+        gettext_lazy('Bạn đã đạt Huy hiệu Sấm Chớp'),
+        DASHBOARD_PATH,
+    ),
+    EmployerNotification.EventType.FLASH_BADGE_LOST: (
+        gettext_lazy('Bạn đã mất Huy hiệu Sấm Chớp'),
+        DASHBOARD_PATH,
+    ),
+    EmployerNotification.EventType.FLASH_BADGE_AT_RISK: (
+        gettext_lazy('Huy hiệu Sấm Chớp sắp bị gỡ'),
         APPLICATIONS_PATH,
     ),
     EmployerNotification.EventType.JOB_CHANGES_REQUESTED: (

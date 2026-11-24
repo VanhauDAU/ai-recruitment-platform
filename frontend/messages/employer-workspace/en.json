@@ -238,6 +238,20 @@
   "employer_workspace_dash_pipeline_title": "Application status",
   "employer_workspace_dash_pipeline_description": "Breakdown across all current applications",
   "employer_workspace_dash_pipeline_interview_rate": "{rate}% interviewed",
+  "employer_workspace_dash_flash_title": "Flash badge",
+  "employer_workspace_dash_flash_description": "Answer applications on time so your jobs carry the badge and rank higher.",
+  "employer_workspace_dash_flash_earned": "Earned",
+  "employer_workspace_dash_flash_not_earned": "Not yet",
+  "employer_workspace_dash_flash_met": "Met",
+  "employer_workspace_dash_flash_unmet": "Not met",
+  "employer_workspace_dash_flash_enough": "{value}/{target} applications due in the last {days} days",
+  "employer_workspace_dash_flash_rate": "Answered within {hours} hours: {value}% (needs {target}%)",
+  "employer_workspace_dash_flash_recent": "A decision on an application in the last {days} days",
+  "employer_workspace_dash_flash_no_overdue": "No overdue applications",
+  "employer_workspace_dash_flash_overdue": "Overdue applications waiting: {count}",
+  "employer_workspace_dash_flash_at_risk": "Applications becoming overdue within 24 hours: {count}",
+  "employer_workspace_dash_flash_reply": "Answer waiting applications",
+  "employer_workspace_dash_flash_hourly": "Recalculated every hour. Only shortlist, interview, hire or reject decisions count as answers.",
   "employer_workspace_dash_pipeline_chart": [
     {
       "declarations": [
