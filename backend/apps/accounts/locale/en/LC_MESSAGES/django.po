@@ -43,8 +43,8 @@ msgstr "The password confirmation does not match."
 msgid "Email hoặc mật khẩu không đúng. Vui lòng thử lại."
 msgstr "Incorrect email or password. Please try again."
 
-msgid "Email này đã được sử dụng cho một tài khoản cùng loại."
-msgstr "This email is already used by an account of the same type."
+msgid "Email này đã được sử dụng cho một tài khoản khác."
+msgstr "This email is already associated with an account."
 
 msgid "Mật khẩu phải bao gồm chữ hoa, chữ thường và ký tự số."
 msgstr "Password must contain uppercase letters, lowercase letters and digits."

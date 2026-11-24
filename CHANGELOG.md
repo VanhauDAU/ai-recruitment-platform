@@ -8,6 +8,12 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-24
 
+#### Changed — Câu báo email đã được dùng khi đăng ký và đổi email
+
+- Đăng ký và đổi email báo "Email này đã được sử dụng cho một tài khoản khác." thay cho
+  "…cho một tài khoản cùng loại.", không để lộ cách hệ thống chia tài khoản theo cổng.
+  Bản tiếng Anh: "This email is already associated with an account."
+
 #### Added — Bộ file triển khai production procv.site
 
 - `docker-compose.prod.yml` cho một VPS: PostgreSQL/Redis không mở cổng ra ngoài, service
