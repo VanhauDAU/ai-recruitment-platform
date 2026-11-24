@@ -10,12 +10,6 @@
   width: 44px;
 }
 
-@media (min-width: 640px) {
-  .job-rating__caption {
-    display: none;
-  }
-}
-
 @media (max-width: 767px) {
   /* Đang đọc tin thì không cần thanh tìm kiếm 4 hàng chiếm nửa màn hình. */
   .job-detail-search {
@@ -95,31 +89,5 @@
 
   .job-general-info dt {
     display: none;
-  }
-}
-
-@media (max-width: 639px) {
-  /* 5 mức đánh giá trên một hàng, nhãn của mức đã chọn hiện bên dưới. */
-  .job-rating__options {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
-
-  .job-rating__option {
-    min-height: 52px;
-  }
-
-  .job-rating__option > span:first-child {
-    font-size: 24px;
-  }
-
-  .job-rating__label {
-    display: none;
-  }
-
-  .job-rating__caption {
-    color: #475569;
-    font-size: 13px;
-    margin-top: 10px;
-    text-align: center;
   }
 }
