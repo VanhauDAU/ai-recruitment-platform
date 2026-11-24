@@ -3,7 +3,7 @@
  * take their accent from the brand color set in site settings. Loaded with
  * the lazy workspace layout, not the initial CSS. */
 .employer-sider.ant-layout-sider {
-  background: #1e2f40;
+  background: var(--brand-surface-dark);
   border-right: 1px solid rgb(255 255 255 / 0.06);
 }
 
@@ -323,4 +323,13 @@
   .employer-sider__identity {
     transition: none;
   }
+}
+
+/* Topbar shares the sidebar's brand-derived dark surface. */
+.employer-topbar.ant-layout-header { background: var(--brand-surface-dark); }
+
+.employer-topbar-action--prominent {
+  border-color: color-mix(in srgb, var(--brand-primary) 45%, transparent);
+  background: color-mix(in srgb, var(--brand-primary) 15%, transparent);
+  color: color-mix(in srgb, var(--brand-primary) 55%, #ffffff);
 }

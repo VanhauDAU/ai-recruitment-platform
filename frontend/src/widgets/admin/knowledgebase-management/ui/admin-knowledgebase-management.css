@@ -34,7 +34,7 @@
 .knowledge-article-workspace { padding-top: 16px; }
 .knowledge-article-workspace__header { align-items: center; background: rgba(255, 255, 255, .94); border: 1px solid #e6edf3; border-radius: 18px; display: flex; justify-content: space-between; margin-bottom: 18px; padding: 16px 18px; }
 .knowledge-article-workspace__identity { align-items: center; display: flex; min-width: 0; }
-.knowledge-article-workspace__icon { align-items: center; background: #ecfdf5; border-radius: 12px; color: #059669; display: flex; flex: 0 0 42px; font-size: 19px; height: 42px; justify-content: center; margin: 0 12px 0 4px; }
+.knowledge-article-workspace__icon { align-items: center; background: var(--brand-primary-soft); border-radius: 12px; color: var(--brand-primary-hover); display: flex; flex: 0 0 42px; font-size: 19px; height: 42px; justify-content: center; margin: 0 12px 0 4px; }
 .knowledge-article-workspace__identity h1 { font-size: 18px; margin: 3px 0 0; max-width: 720px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .knowledge-article-workspace__identity p { color: #64748b; font-size: 12px; margin: 3px 0 0; }
 .knowledge-article-workspace__tags { display: flex; gap: 2px; }

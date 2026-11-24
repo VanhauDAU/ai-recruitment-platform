@@ -35,11 +35,11 @@
 }
 
 .acl-identity__text { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
-.acl-identity:hover .wt-title { color: #047857 !important; }
+.acl-identity:hover .wt-title { color: var(--brand-primary-hover) !important; }
 
 .acl-identity:focus-visible {
   border-radius: 6px;
-  outline: 2px solid #10b981;
+  outline: 2px solid var(--brand-primary);
   outline-offset: 2px;
 }
 
