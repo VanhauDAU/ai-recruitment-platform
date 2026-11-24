@@ -61,7 +61,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         """
         if User.objects.email_claimed_for_role(attrs['email'], attrs['role']):
             raise serializers.ValidationError(
-                {'email': _('Email này đã được sử dụng cho một tài khoản cùng loại.')}
+                {'email': _('Email này đã được sử dụng cho một tài khoản khác.')}
             )
         return attrs
 
