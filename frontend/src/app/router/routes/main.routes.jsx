@@ -57,6 +57,7 @@ import { AuthLayout, MainLayout, OnboardingLayout } from '../lazy/layouts'
 
 // Trang tài khoản đã xây thật, map theo item.key trong candidate-menu.
 const ACCOUNT_PAGE_BY_KEY = {
+  'saved-jobs': SavedJobsPage,
   'applied-jobs': AppliedJobsPage,
   'followed-companies': FollowedCompaniesPage,
   'personal-info': PersonalInfoPage,
@@ -126,7 +127,6 @@ export function mainRoutes() {
           nhập. Chỉ item có page thật trong registry mới được tạo route. */}
       <Route element={<AuthGuard />}>
         <Route element={<RoleGuard allowedRoles={['candidate']} />}>
-          <Route path="/viec-lam-da-luu" element={<SavedJobsPage />} />
           <Route path="/cvs/:publicId/edit" element={<CvEditorPage />} />
           <Route path="/save-cv-success/:publicId" element={<CvSaveSuccessPage />} />
           <Route path="/tai-cv-len" element={<UploadCvPage />} />
