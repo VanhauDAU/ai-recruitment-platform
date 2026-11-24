@@ -79,7 +79,7 @@ Người không đủ quyền vào được ở chế độ chỉ xem, kèm lý 
 
 - Nút **Theo dõi** (khách bấm thì mời đăng nhập), trang `/tai-khoan/cong-ty-dang-theo-doi`, công tắc "nhận email việc mới" theo từng công ty. NTD chỉ thấy tổng số người theo dõi.
 - **Báo cáo thông tin sai**: modal chọn lý do + khối liên quan, theo khuôn mẫu báo cáo tin.
-- **Email việc mới**: nguồn thứ ba của digest hiện có; chỉ gồm tin đăng sau thời điểm theo dõi; tôn trọng cài đặt email chung và công tắc toàn site.
+- **Email việc mới**: nguồn thứ ba của digest hiện có; chỉ gồm tin đăng sau lần bật email gần nhất của công ty đó (`CompanyFollow.notify_since`, đặt lại mỗi khi bật lại chuông); tôn trọng cài đặt email chung và công tắc toàn site. Tin vừa công bố đặt lịch của người theo dõi về "đến hạn ngay", nên email đi ở nhịp quét kế tiếp (≤ ~10 phút); lịch gộp hằng ngày giữ làm lưới an toàn (24/11).
 
 ### 3.4. Admin
 

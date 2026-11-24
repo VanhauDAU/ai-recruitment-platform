@@ -13,6 +13,7 @@ from apps.candidates.models import (
     CandidateEmailNotificationSettings,
 )
 from apps.employers.models import Company, CompanyFollow
+from apps.employers.services import follow_company
 from apps.employers.tests.factories import make_employer_ready
 from apps.sitecontent.models import SiteSetting
 
@@ -34,7 +35,9 @@ from ..services.digests import (
     claim_due_candidate_job_digest_candidates,
     due_candidate_ids,
     prepare_candidate_job_digest,
+    wake_followed_company_digests,
 )
+from ..services.digests.scheduling import PREPARATION_CLAIM_LEASE
 from .factories import enable_email_notifications, open_visibility_window
 
 
@@ -77,9 +80,12 @@ class FollowedCompanyDigestSourceTests(TestCase):
             company=company or self.company,
             notify_new_jobs=notify_new_jobs,
         )
+        follow_at = self.now - timedelta(hours=hours_ago)
         CompanyFollow.objects.filter(pk=follow.pk).update(
-            created_at=self.now - timedelta(hours=hours_ago)
+            created_at=follow_at,
+            notify_since=follow_at,
         )
+        follow.refresh_from_db()
         return follow
 
     def _due_schedule(self, candidate=None):
@@ -175,6 +181,91 @@ class FollowedCompanyDigestSourceTests(TestCase):
         digest = prepare_candidate_job_digest(self.candidate.pk, self.now)
         self.assertEqual(digest.status, CandidateJobDigest.Status.EMPTY)
         self.assertFalse(digest.items.exists())
+
+    def test_unmuting_starts_a_new_window_for_that_company(self):
+        follow = self._follow(hours_ago=24 * 10)
+        CompanyFollow.objects.filter(pk=follow.pk).update(notify_new_jobs=False)
+        muted_period_job = self._job('Posted while muted', minutes_old=5 * 24 * 60)
+        # Muting every follow leaves the candidate off the due list, so the
+        # shared cursor stays where it was until the switch comes back on.
+        CandidateFollowedCompanyDigestSchedule.objects.create(
+            candidate=self.candidate,
+            cursor_at=self.now - timedelta(days=9),
+            next_run_at=self.now - timedelta(seconds=1),
+        )
+
+        follow_company(company=self.company, candidate=self.candidate, notify_new_jobs=True)
+        follow.refresh_from_db()
+        self.assertGreater(follow.notify_since, follow.created_at)
+        unmuted_job = Job.objects.create(
+            posted_by=self.employer,
+            company=self.company,
+            title='Posted after unmute',
+            description='Mô tả.',
+            status=Job.Status.ACTIVE,
+            published_at=follow.notify_since + timedelta(seconds=1),
+            **open_visibility_window(),
+        )
+
+        digest = prepare_candidate_job_digest(
+            self.candidate.pk, unmuted_job.published_at + timedelta(seconds=1)
+        )
+        self.assertEqual(
+            list(digest.items.values_list('job_id', flat=True)),
+            [unmuted_job.pk],
+        )
+        self.assertFalse(digest.items.filter(job=muted_period_job).exists())
+
+    def test_repeating_the_same_email_choice_keeps_the_window(self):
+        follow = self._follow()
+
+        follow_company(company=self.company, candidate=self.candidate, notify_new_jobs=True)
+
+        self.assertEqual(
+            CompanyFollow.objects.get(pk=follow.pk).notify_since,
+            follow.notify_since,
+        )
+
+    def test_new_job_makes_the_followers_email_due_now(self):
+        self._follow()
+        CandidateFollowedCompanyDigestSchedule.objects.create(
+            candidate=self.candidate,
+            cursor_at=self.now - timedelta(days=1),
+            next_run_at=self.now + timedelta(hours=20),
+        )
+
+        self.assertEqual(wake_followed_company_digests(self.company.pk, now=self.now), 1)
+
+        schedule = CandidateFollowedCompanyDigestSchedule.objects.get(candidate=self.candidate)
+        self.assertEqual(schedule.next_run_at, self.now)
+        self.assertIn(self.candidate.pk, due_candidate_ids(self.now))
+
+    def test_new_job_creates_a_missing_schedule_due_now(self):
+        follow = self._follow()
+
+        wake_followed_company_digests(self.company.pk, now=self.now)
+
+        schedule = CandidateFollowedCompanyDigestSchedule.objects.get(candidate=self.candidate)
+        self.assertEqual(schedule.next_run_at, self.now)
+        self.assertEqual(schedule.cursor_at, follow.notify_since)
+
+    def test_new_job_leaves_muted_followers_and_running_preparations_alone(self):
+        self._follow(notify_new_jobs=False)
+        later = self.now + timedelta(hours=20)
+        CandidateFollowedCompanyDigestSchedule.objects.create(
+            candidate=self.candidate,
+            cursor_at=self.now - timedelta(days=1),
+            next_run_at=later,
+        )
+        self.assertEqual(wake_followed_company_digests(self.company.pk, now=self.now), 0)
+
+        CompanyFollow.objects.filter(candidate=self.candidate).update(notify_new_jobs=True)
+        claimed_at = self.now - timedelta(minutes=1)
+        CandidateFollowedCompanyDigestSchedule.objects.filter(candidate=self.candidate).update(
+            updated_at=claimed_at,
+            next_run_at=claimed_at + PREPARATION_CLAIM_LEASE,
+        )
+        self.assertEqual(wake_followed_company_digests(self.company.pk, now=self.now), 0)
 
     def test_preference_off_is_excluded_and_discards_the_window(self):
         self._follow()

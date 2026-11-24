@@ -9,10 +9,12 @@ from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 from rest_framework.test import APIClient
 
+from apps.accounts.models import User
 from apps.campaigns.models import RecruitmentCampaign
 from apps.employers.models import (
     Company,
     CompanyDocument,
+    CompanyFollow,
     EmployerVerificationCase,
     RecruiterProfile,
     RecruitmentNeed,
@@ -20,7 +22,7 @@ from apps.employers.models import (
 from apps.employers.services import recruiter_job_posting_entitlement
 from common.vietnam_time import vietnam_today
 
-from ..models import Job
+from ..models import CandidateFollowedCompanyDigestSchedule, Job
 from ..models.querysets import publicly_available_job_filter
 from ..services import (
     RESPONSIBILITY_STATEMENT_VERSION,
@@ -81,6 +83,22 @@ class JobPublicationTests(JobPostingFixture, TestCase):
         self.assertEqual(history.to_status, Job.Status.ACTIVE)
         self.assertEqual(history.changed_by, self.user)
         self.assertTrue(Job.objects.filter(publicly_available_job_filter(), pk=job.pk).exists())
+
+    @patch(ENTITLEMENT)
+    def test_publish_makes_the_followers_new_job_email_due_now(self, entitlement):
+        entitlement.return_value = (self.recruiter, self.free_entitlement)
+        follower = User.objects.create_user(
+            email='publish-follower@example.com',
+            password='Password@123',
+            role=User.Role.CANDIDATE,
+            email_verified=True,
+        )
+        CompanyFollow.objects.create(candidate=follower, company=self.company)
+
+        published = publish_job(self.make_publishable_job(), self.user, **ACCEPTED)
+
+        schedule = CandidateFollowedCompanyDigestSchedule.objects.get(candidate=follower)
+        self.assertEqual(schedule.next_run_at, published.published_at)
 
     def test_publish_requires_the_commitment_currently_in_force(self):
         job = self.make_publishable_job()

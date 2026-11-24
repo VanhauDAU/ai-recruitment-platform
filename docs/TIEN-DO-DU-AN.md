@@ -1650,6 +1650,7 @@ Quyết định: [ADR-0017](02-tong-quan/adr-0017-company-page.md), ER-D58 đế
 | CP-5 | Chính sách quyền ở tầng models, uỷ quyền biên tập, bố cục áp dụng ngay (khoá lạc quan), tin ghim; workspace `/tuyendung/app/company-page` có xem trước | ✅ Xong trên nhánh, chưa gộp |
 | CP-6 | Khẩu hiệu, văn hoá, video, mạng xã hội, phúc lợi dạng thẻ, văn phòng qua `CompanyUpdateRequest` (gộp theo khối), tab "Nội dung", độ hoàn thiện (từ 19/11 đăng ngay và hậu kiểm, xem [Hậu kiểm nội dung trang công ty](#hậu-kiểm-nội-dung-trang-công-ty-2026-11-19)) | ✅ Xong trên nhánh, chưa gộp |
 | CP-7 | Nguồn digest email thứ ba "công ty đang theo dõi", tuỳ chọn `followed_company_jobs` | ✅ Xong trên nhánh, chưa gộp |
+| CP-7b | Email người theo dõi gửi ngay khi tin được công bố (đánh thức lịch trong `_go_live`, không chờ lượt 8:00 hằng ngày); `CompanyFollow.notify_since` để bật lại chuông không gửi bù tin đăng lúc đang tắt (24/11) | 🟨 Nhánh `fix/followed-company-instant-email`, chưa tạo PR |
 
 ## Làm lại Template CV (CVT-v3, 2026-11-13)
 

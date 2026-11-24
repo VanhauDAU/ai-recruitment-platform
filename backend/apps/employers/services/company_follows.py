@@ -2,6 +2,7 @@
 
 from django.db import transaction
 from django.db.models import F
+from django.utils import timezone
 
 from ..models import Company, CompanyFollow
 
@@ -23,7 +24,12 @@ def follow_company(*, company, candidate, notify_new_jobs=None):
         # the optimistic-lock base of open company update requests.
         Company.objects.filter(pk=company.pk).update(follower_count=F('follower_count') + 1)
     elif notify_new_jobs is not None and follow.notify_new_jobs != notify_new_jobs:
-        CompanyFollow.objects.filter(pk=follow.pk).update(notify_new_jobs=notify_new_jobs)
+        changes = {'notify_new_jobs': notify_new_jobs}
+        if notify_new_jobs:
+            # Turning emails back on starts a new window: nothing published
+            # while they were off is sent afterwards.
+            changes['notify_since'] = timezone.now()
+        CompanyFollow.objects.filter(pk=follow.pk).update(**changes)
 
 
 @transaction.atomic
