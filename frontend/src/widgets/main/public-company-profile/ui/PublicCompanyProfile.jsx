@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Suspense, useEffect, useRef } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import {
   COMPANY_DIRECTORY_PATH,
@@ -12,7 +12,7 @@ import {
 } from '@/entities/company/company'
 import { useCandidateAudience } from '@/entities/account/session'
 import { useLoginPrompt } from '@/features/common/account/auth'
-import { FollowCompanyButton } from '@/features/main/company/follow-company'
+import { FollowCompanyButton, FollowCompanyPrompt } from '@/features/main/company/follow-company'
 import { ReportCompanyButton } from '@/features/main/company/report-company'
 import { CompanyJobsPreview, CompanyJobsTab } from './CompanyJobs'
 import {
@@ -40,7 +40,7 @@ function CompanyTabs({ ref, slug, isJobsTab, jobCount }) {
   const tabs = [
     { label: 'Tổng quan', to: companyDetailPath(slug), current: !isJobsTab },
     {
-      label: `Việc làm (${jobCount.toLocaleString(getIntlLocale())})`,
+      label: `Tin tuyển dụng (${jobCount.toLocaleString(getIntlLocale())})`,
       to: companyDetailPath(slug, { tab: COMPANY_JOBS_TAB }),
       current: isJobsTab,
     },
@@ -56,7 +56,25 @@ function CompanyTabs({ ref, slug, isJobsTab, jobCount }) {
   )
 }
 
-/** Thanh hành động dính đáy trên màn hẹp: nút theo dõi rồi tới nút xem việc làm. */
+// Hero (và nút theo dõi trong đó) đã cuộn khỏi màn hình khi thanh tab chạm header.
+const HEADER_OFFSET = 84
+
+function useScrolledPast(ref) {
+  const [past, setPast] = useState(false)
+  useEffect(() => {
+    const target = ref.current
+    if (!target || typeof IntersectionObserver === 'undefined') return undefined
+    const observer = new IntersectionObserver(
+      ([entry]) => setPast(!entry.isIntersecting && entry.boundingClientRect.top < HEADER_OFFSET),
+      { rootMargin: `-${HEADER_OFFSET}px 0px 0px 0px` },
+    )
+    observer.observe(target)
+    return () => observer.disconnect()
+  }, [ref])
+  return past
+}
+
+/** Thanh hành động dính đáy trên màn hẹp: nút theo dõi rồi tới nút xem tin tuyển dụng. */
 function CompanyMobileCta({ children }) {
   useEffect(() => {
     // Nút nổi (góp ý, hỗ trợ) tự nâng lên khỏi thanh này nhờ class trên body.
@@ -71,10 +89,11 @@ function CompanyMobileCta({ children }) {
   )
 }
 
-function CompanyProfilePage({ profile, tab, q, location, page }) {
+function CompanyProfilePage({ profile, tab, q, location, category, page }) {
   const tabsRef = useRef(null)
+  const scrolledPastHero = useScrolledPast(tabsRef)
   const isJobsTab = tab === COMPANY_JOBS_TAB
-  const view = `${tab}|${q}|${location}|${page}`
+  const view = `${tab}|${q}|${location}|${category}|${page}`
   const lastView = useRef(view)
   const jobCount = Number(profile.stats?.active_public_job_count) || 0
   const jobsPath = companyDetailPath(profile.slug, { tab: COMPANY_JOBS_TAB })
@@ -116,19 +135,12 @@ function CompanyProfilePage({ profile, tab, q, location, page }) {
 
           <CompanyProfileView
             profile={profile}
-            heroActions={(hasCandidateActions || showJobsLink) && (
-              <>
-                <FollowCompanyButton
-                  publicId={profile.public_id}
-                  onRequireLogin={promptLogin}
-                  className="hidden lg:inline-flex"
-                />
-                {showJobsLink && (
-                  <Link to={jobsPath} className={`hidden h-11 px-5 lg:inline-flex ${PRIMARY_LINK}`}>
-                    Xem việc làm
-                  </Link>
-                )}
-              </>
+            heroActions={hasCandidateActions && (
+              <FollowCompanyButton
+                publicId={profile.public_id}
+                onRequireLogin={promptLogin}
+                className="hidden lg:inline-flex"
+              />
             )}
             sidebarFooter={(
               <ReportCompanyButton
@@ -140,11 +152,11 @@ function CompanyProfilePage({ profile, tab, q, location, page }) {
             navigation={(
               <CompanyTabs ref={tabsRef} slug={profile.slug} isJobsTab={isJobsTab} jobCount={jobCount} />
             )}
-            focusType={isJobsTab ? 'jobs' : undefined}
+            content={isJobsTab && (
+              <CompanyJobsTab company={profile} q={q} location={location} category={category} page={page} />
+            )}
             slots={{
-              jobs: isJobsTab
-                ? <CompanyJobsTab company={profile} q={q} location={location} page={page} />
-                : <CompanyJobsPreview company={profile} jobsPath={jobsPath} />,
+              jobs: <CompanyJobsPreview company={profile} jobsPath={jobsPath} />,
               similar_companies: similarQuery.isPending
                 ? SIMILAR_SKELETON
                 : similarCompanies.length > 0 && <SimilarCompanies companies={similarCompanies} />,
@@ -152,6 +164,12 @@ function CompanyProfilePage({ profile, tab, q, location, page }) {
           />
         </div>
       </main>
+
+      <FollowCompanyPrompt
+        company={{ public_id: profile.public_id, name: profile.identity.display_name, logo_url: profile.identity.logo_url }}
+        visible={scrolledPastHero}
+        onRequireLogin={promptLogin}
+      />
 
       {(hasCandidateActions || showJobsLink) && (
         <CompanyMobileCta>
@@ -162,7 +180,7 @@ function CompanyProfilePage({ profile, tab, q, location, page }) {
           />
           {showJobsLink && (
             <Link to={jobsPath} className={`inline-flex h-11 flex-1 px-4 ${PRIMARY_LINK}`}>
-              Xem việc làm ({jobCount.toLocaleString(getIntlLocale())})
+              Xem tin tuyển dụng ({jobCount.toLocaleString(getIntlLocale())})
             </Link>
           )}
         </CompanyMobileCta>
@@ -171,8 +189,8 @@ function CompanyProfilePage({ profile, tab, q, location, page }) {
   )
 }
 
-/** Trang công ty công khai: `tab`, `q`, `location`, `page` là trạng thái URL do page đọc. */
-export default function PublicCompanyProfile({ slug, tab = '', q = '', location = '', page = 1 }) {
+/** Trang công ty công khai: `tab`, `q`, `location`, `category`, `page` là trạng thái URL do page đọc. */
+export default function PublicCompanyProfile({ slug, tab = '', q = '', location = '', category = '', page = 1 }) {
   const { profile, isPending, isNotFound, isError, refetch } = usePublicCompany(slug)
 
   if (isPending) return <CompanyProfileSkeleton />
@@ -183,7 +201,7 @@ export default function PublicCompanyProfile({ slug, tab = '', q = '', location 
   // CompanyProfileView là lazy chunk của entity; khung chờ giữ nguyên bố cục.
   return (
     <Suspense fallback={<CompanyProfileSkeleton />}>
-      <CompanyProfilePage profile={profile} tab={tab} q={q} location={location} page={page} />
+      <CompanyProfilePage profile={profile} tab={tab} q={q} location={location} category={category} page={page} />
     </Suspense>
   )
 }

@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Làm lại trang công ty phía ứng viên](#làm-lại-trang-công-ty-phía-ứng-viên-2026-11-24) | 🟨 Xong trên nhánh `feat/company-page-jobs-layout`, chờ gộp PR |
 | [Mã tài khoản dạng số cho 3 cổng](#mã-tài-khoản-dạng-số-cho-3-cổng-2026-11-22) | 🟨 Xong trên nhánh `feat/numeric-user-id`, chờ gộp PR |
 | [Làm lại trang Thông tin tài khoản NTD](#làm-lại-trang-thông-tin-tài-khoản-ntd-2026-11-22) | 🟨 Xong trên nhánh `feat/employer-account-info-redesign`, chờ gộp |
 | [Làm lại Thông báo hệ thống và Lịch sử hoạt động của NTD](#làm-lại-thông-báo-hệ-thống-và-lịch-sử-hoạt-động-của-ntd-2026-11-22) | ✅ Gộp vào `dev` (#307) |
@@ -91,6 +92,21 @@ một danh sách phân trang (timeline antd), không lọc được và lịch s
   vấn mỗi dòng khi tính người thực hiện (đọc `actor_id` thay vì `actor`).
 - CSS dùng chung chuyển sang `frontend/src/shared/ui/workspace-list/workspace-list.css`
   để widget cũng dùng được.
+
+## Làm lại trang công ty phía ứng viên (2026-11-24)
+
+- Hero chỉ còn nút "Theo dõi" (kèm chuông email khi đang theo dõi); bỏ nút
+  "Xem việc làm" và nút "Website", URL website hiện ngay dưới tên công ty.
+- Cuộn qua hero thì lời mời "Theo dõi ngay" dính giữa đáy màn hình (màn ≥ lg; màn hẹp
+  đã có thanh CTA đáy); ẩn khi đã theo dõi hoặc người dùng đóng.
+- Tab "Việc làm" đổi thành "Tin tuyển dụng"; tab này bỏ sidebar "Thông tin chung",
+  chia 2 cột: Danh mục nghề 30% và danh sách tin 70%. Lọc danh mục chọn nhiều, là
+  trạng thái URL `category=1,2` (API nhận key lặp); chọn nhóm thì các chip con sáng
+  theo, chọn đủ chip con thì gộp thành nhóm.
+- `GET /public/companies/<id>/job-facets/` trả thêm `categories`: chuyên môn chính
+  của tin công khai, gom theo danh mục cha kèm số tin (thêm 1 truy vấn, budget 3).
+- Thẻ tin trong trang công ty theo bố cục thẻ danh sách việc làm: logo, tên công
+  ty, nền theo gói hiển thị, cao hơn.
 
 ## Mã tài khoản dạng số cho 3 cổng (2026-11-22)
 

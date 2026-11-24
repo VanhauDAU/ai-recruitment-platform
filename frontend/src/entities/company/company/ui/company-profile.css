@@ -65,6 +65,22 @@
   flex: 1;
 }
 
+.company-profile-website {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.25rem;
+  color: var(--company-accent) !important;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.company-profile-website:hover {
+  color: var(--company-accent-hover) !important;
+  text-decoration: underline;
+}
+
 .company-profile-hero__icon {
   color: var(--company-accent);
 }

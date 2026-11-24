@@ -15,7 +15,7 @@ from apps.employers.domain.page_registry import (
     SIDEBAR_SECTIONS,
     resolve_section_order,
 )
-from apps.jobs.models import Job, JobLocation
+from apps.jobs.models import Job, JobCategoryAssignment, JobLocation
 from common.html.plain_text import html_plain_text
 from common.seo import SITEMAP_URL_LIMIT
 from common.storage.media import media_url_from_value
@@ -354,6 +354,48 @@ def public_company_job_locations(company):
         {'id': row['province_id'], 'name': row['province_name'], 'count': row['count']}
         for row in provinces
     ]
+
+
+def public_company_job_categories(company):
+    """Primary specialisations of the company's public jobs, grouped under their parent.
+
+    Every job has exactly one primary specialisation, so a group's count is the
+    sum of its children. A specialisation without parent forms its own group.
+    """
+    public_jobs = Job.publicly_available_queryset().filter(company_id=company.pk)
+    rows = (
+        JobCategoryAssignment.objects.filter(
+            job__in=public_jobs,
+            role=JobCategoryAssignment.Role.PRIMARY_SPECIALIZATION,
+        )
+        .values('category_id', 'category__name', 'category__parent_id', 'category__parent__name')
+        .annotate(count=Count('job_id', distinct=True))
+        .order_by('-count', 'category__name')
+    )
+    groups = {}
+    for row in rows:
+        parent_id = row['category__parent_id']
+        if parent_id is None:
+            group = groups.setdefault(
+                row['category_id'],
+                {
+                    'id': row['category_id'],
+                    'name': row['category__name'],
+                    'count': 0,
+                    'children': [],
+                },
+            )
+            group['count'] += row['count']
+            continue
+        group = groups.setdefault(
+            parent_id,
+            {'id': parent_id, 'name': row['category__parent__name'], 'count': 0, 'children': []},
+        )
+        group['count'] += row['count']
+        group['children'].append(
+            {'id': row['category_id'], 'name': row['category__name'], 'count': row['count']}
+        )
+    return sorted(groups.values(), key=lambda group: (-group['count'], group['name']))
 
 
 def company_page_policy_hold(company):

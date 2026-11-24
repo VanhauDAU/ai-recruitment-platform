@@ -45,5 +45,17 @@
   "candidate_reco_unsave": "Bỏ lưu việc làm",
   "candidate_reco_hide": "Ẩn tin tuyển dụng này",
   "candidate_reco_logo_label": "Xem chi tiết {title} qua logo công ty",
-  "candidate_reco_more_places": "{first} & {count} nơi khác"
+  "candidate_reco_more_places": "{first} & {count} nơi khác",
+  "company_follow_prompt_label": "Theo dõi công ty",
+  "company_follow_prompt_lead": "Theo dõi để nhận",
+  "company_follow_prompt_highlight": "thông báo việc làm mới nhất",
+  "company_follow_prompt_from": "từ",
+  "company_follow_prompt_cta": "Theo dõi ngay",
+  "company_follow_prompt_close": "Đóng lời mời theo dõi",
+  "company_jobs_heading": "Việc làm tại {company}",
+  "company_jobs_categories": "Danh mục nghề",
+  "company_jobs_categories_empty": "Chưa có danh mục nghề.",
+  "company_jobs_list_title": "Tin tuyển dụng",
+  "company_jobs_keyword_label": "Tên công việc",
+  "company_jobs_keyword_placeholder": "Tên công việc, vị trí ứng tuyển…"
 }

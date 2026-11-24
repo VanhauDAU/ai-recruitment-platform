@@ -95,7 +95,8 @@ describe('CompanyProfileView', () => {
     expect(screen.getByText('12 việc làm đang tuyển')).toBeVisible()
     expect(container.querySelector('.company-profile-cover > img')).toHaveAttribute('src', 'https://cdn.example/cover.png')
     expect(container.querySelector('.company-profile-cover')).not.toHaveClass('company-profile-cover--fallback')
-    expect(screen.getByRole('link', { name: /Website$/ })).toHaveAttribute('href', 'https://fpt-software.com')
+    expect(container.querySelector('.company-profile-website')).toHaveAttribute('href', 'https://fpt-software.com')
+    expect(container.querySelector('.company-profile-website')).toHaveTextContent('fpt-software.com')
 
     // `jobs`/`similar_companies` cần slot của nơi dùng; video thiếu URL nhúng chuẩn bị ẩn.
     expect(headings()).toEqual([
@@ -157,10 +158,10 @@ describe('CompanyProfileView', () => {
     expect(headings().indexOf('Việc làm đang tuyển')).toBe(headings().indexOf('Giới thiệu công ty') + 1)
   })
 
-  it('narrows the main column to one section type while keeping the sidebar', () => {
-    render(<CompanyProfileView profile={PROFILE} focusType="jobs" slots={{ jobs: <p>Danh sách có bộ lọc</p> }} />)
+  it('replaces the sections and sidebar with custom content', () => {
+    render(<CompanyProfileView profile={PROFILE} content={<p>Danh sách có bộ lọc</p>} />)
 
-    expect(headings()).toEqual(['Việc làm đang tuyển', 'Thông tin chung', 'Địa điểm', 'Mạng xã hội', 'Chia sẻ công ty'])
+    expect(screen.queryAllByRole('heading', { level: 2 })).toEqual([])
     expect(screen.getByText('Danh sách có bộ lọc')).toBeVisible()
   })
 
@@ -178,7 +179,7 @@ describe('CompanyProfileView', () => {
     expect(container.querySelector('.company-profile-logo')).toHaveTextContent('C')
     expect(container.querySelector('.company-profile-logo img')).toBeNull()
     expect(screen.getByText('Chưa có việc làm đang tuyển')).toBeVisible()
-    expect(screen.queryByRole('link', { name: /Website/ })).not.toBeInTheDocument()
+    expect(container.querySelector('.company-profile-website')).toBeNull()
     expect(headings()).toEqual([
       'Việc làm đang tuyển',
       'Thông tin chung',

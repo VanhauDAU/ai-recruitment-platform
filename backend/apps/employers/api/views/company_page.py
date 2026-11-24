@@ -12,6 +12,7 @@ from common.api.throttling import ClientIPScopedRateThrottle
 
 from ...selectors import (
     build_public_company_profile,
+    public_company_job_categories,
     public_company_job_locations,
     similar_public_companies,
     visible_company_by_public_id,
@@ -72,14 +73,22 @@ class PublicCompanySimilarView(PublicCompanyPageView):
 
 class PublicCompanyJobFacetsView(PublicCompanyPageView):
     @extend_schema(
-        summary='Địa điểm có tin tuyển dụng của công ty',
+        summary='Địa điểm và danh mục nghề có tin tuyển dụng của công ty',
         responses={
             200: inline_serializer(
                 'PublicCompanyJobFacets',
-                fields={'locations': serializers.ListField(child=serializers.DictField())},
+                fields={
+                    'locations': serializers.ListField(child=serializers.DictField()),
+                    'categories': serializers.ListField(child=serializers.DictField()),
+                },
             )
         },
     )
     def get(self, request, public_id):
         company = get_visible_company(public_id)
-        return Response({'locations': public_company_job_locations(company)})
+        return Response(
+            {
+                'locations': public_company_job_locations(company),
+                'categories': public_company_job_categories(company),
+            }
+        )

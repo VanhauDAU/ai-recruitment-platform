@@ -55,7 +55,7 @@ describe('CompanyDetail page', () => {
     const { lastMetadata } = renderRoutes('/cong-ty/fpt-software')
 
     expect(JSON.parse(screen.getByTestId('company-profile').textContent))
-      .toEqual({ slug: 'fpt-software', tab: '', q: '', location: '', page: 1 })
+      .toEqual({ slug: 'fpt-software', tab: '', q: '', location: '', category: '', page: 1 })
     expect(lastMetadata()).toEqual(expect.objectContaining({ title: 'Hồ sơ công ty', robots: 'noindex, nofollow' }))
 
     await waitFor(() => expect(lastMetadata().title).toBe('FPT Software tuyển dụng'))
@@ -73,7 +73,7 @@ describe('CompanyDetail page', () => {
     const { lastMetadata } = renderRoutes('/cong-ty/fpt-software?tab=viec-lam&q=React&location=1&page=2')
 
     expect(JSON.parse(screen.getByTestId('company-profile').textContent))
-      .toEqual({ slug: 'fpt-software', tab: 'viec-lam', q: 'React', location: '1', page: 2 })
+      .toEqual({ slug: 'fpt-software', tab: 'viec-lam', q: 'React', location: '1', category: '', page: 2 })
     await waitFor(() => expect(lastMetadata().title).toBe('FPT Software tuyển dụng'))
     expect(lastMetadata().robots).toBe('noindex, nofollow')
     expect(lastMetadata().canonicalPath).toBe('/cong-ty/fpt-software')
