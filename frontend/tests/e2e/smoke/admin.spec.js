@@ -169,7 +169,7 @@ test('admin account management: filters, table actions and quick detail are resp
   }
   // The account workspace is one of the largest lazy chunks; leave headroom
   // when the full smoke suite compiles several portals in parallel.
-  await expect(page.getByRole('region', { name: 'Tổng quan tài khoản' })).toBeVisible({
+  await expect(page.getByRole('group', { name: 'Tổng quan tài khoản' })).toBeVisible({
     timeout: 15_000,
   })
   await expect(page.getByPlaceholder('Tìm theo tên, email hoặc mã tài khoản')).toBeVisible()
@@ -189,7 +189,7 @@ test('admin account management: filters, table actions and quick detail are resp
 
   await page.goto('/admin/app/recruiters?tab=verification')
   await expect(page.getByRole('heading', {
-    name: 'Nhà tuyển dụng',
+    name: 'Xác thực NTD',
     exact: true,
   })).toBeVisible()
   const verificationTab = page.getByRole('tab', { name: /Chờ xác thực NTD/ })
@@ -201,8 +201,7 @@ test('admin account management: filters, table actions and quick detail are resp
   await expect(page.getByText('NTD chờ duyệt')).toBeVisible()
   await expect(page.getByText('NTD đang xử lý')).toBeVisible()
   expect(verificationQueueStatus).toBe('actionable')
-  await expect.poll(() => page.getByRole('tabpanel', { name: /Chờ xác thực NTD/ })
-    .locator('.account-management-tab-content')
+  await expect.poll(() => page.locator('#admin-main .account-management-tab-content')
     .evaluate((element) => getComputedStyle(element).paddingTop)).toBe(isMobile ? '16px' : '24px')
   await expect(page.locator('html')).toHaveJSProperty(
     'scrollWidth',
@@ -288,12 +287,14 @@ test('admin recruiter workspace: segments, next action and quick view', { tag: '
               ? { results: [], next_cursor: null, category_counts: { all: 0 } }
               : path === '/api/admin/company-domain-claims/summary/'
                 ? { total: 0, manual_pending: 0 }
-                : {}
+                : path === '/api/public/privacy/consent/'
+                  ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
+                  : {}
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })
 
   await page.goto('/admin/app/recruiters')
-  const segments = page.getByRole('region', { name: 'Tổng quan nhà tuyển dụng' })
+  const segments = page.getByRole('group', { name: 'Tổng quan nhà tuyển dụng' })
   await expect(segments).toBeVisible({ timeout: 15_000 })
   await expect(page.getByPlaceholder('Tìm tên, email, công ty, MST hoặc số điện thoại…')).toBeVisible()
   const queueTile = segments.getByRole('button', { name: /Cần admin duyệt/ })

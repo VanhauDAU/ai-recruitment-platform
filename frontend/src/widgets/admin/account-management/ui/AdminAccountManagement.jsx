@@ -1,5 +1,15 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Badge, Form, Tabs } from 'antd'
+import {
+  AuditOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  DisconnectOutlined,
+  LockOutlined,
+  MailOutlined,
+  SyncOutlined,
+  TeamOutlined,
+} from '@ant-design/icons'
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Badge, Form, Tabs } from 'antd'
 import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import {
@@ -16,15 +26,13 @@ import {
 import { useSession } from '@/entities/account/session'
 import { AdminCompanyDomainReview } from '@/features/admin/company/review-company-domain'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { getIntlLocale, m } from '@/shared/config/i18n'
 import { adminPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
 import AccountEditModal from './AccountEditModal'
-import AccountFilters from './AccountFilters'
-import AccountOverview from './AccountOverview'
+import AccountList from './AccountList'
 import AccountQuickDrawer from './AccountQuickDrawer'
-import AccountTable from './AccountTable'
 import InvitationPanel from './InvitationPanel'
-import RecruiterSegments from './RecruiterSegments'
 import VerificationQueuePanel from './VerificationQueuePanel'
 import {
   ACCOUNT_QUERY_KEYS,
@@ -37,11 +45,43 @@ import {
   SIMPLE_FILTER_KEYS,
   VERIFICATION_QUERY_KEYS,
 } from '../model/account-query'
-import { activeRecruiterSegment, applyRecruiterSegment } from '../model/recruiter-segments'
+import { activeRecruiterSegment, applyRecruiterSegment, RECRUITER_SEGMENTS } from '../model/recruiter-segments'
 import '../admin-account-management.css'
 
 const EMPTY_PAGE = { count: 0, results: [] }
-const EMPTY_METRICS = { total: 0, active: 0, restricted: 0, unverified: 0 }
+const formatCount = (value) => Number(value || 0).toLocaleString(getIntlLocale())
+
+const SEGMENT_ICONS = {
+  all: <TeamOutlined />,
+  admin_queue: <AuditOutlined />,
+  overdue: <ClockCircleOutlined />,
+  resubmission: <SyncOutlined />,
+  companyless: <DisconnectOutlined />,
+  restricted: <LockOutlined />,
+}
+const USER_TILES = [
+  { value: 'all', label: m.admin_account_list_tile_total(), metric: 'total', icon: <TeamOutlined /> },
+  { value: 'active', label: m.admin_account_list_tile_active(), metric: 'active', icon: <CheckCircleOutlined /> },
+  { value: 'restricted', label: m.admin_account_list_tile_restricted(), metric: 'restricted', icon: <LockOutlined /> },
+  { value: 'unverified', label: m.admin_account_list_tile_unverified(), metric: 'unverified', icon: <MailOutlined /> },
+]
+// Quick chips: user chips each set one filter; recruiter chips pick a next action.
+const USER_CHIPS = [
+  { value: 'pending', label: m.admin_account_list_chip_pending(), tone: 'sky', filters: { status: 'pending' } },
+  { value: 'session', label: m.admin_account_list_chip_session(), tone: 'emerald', filters: { has_active_session: 'true' } },
+]
+const RECRUITER_CHIPS = [
+  { value: 'verification_review', label: m.admin_recruiter_list_chip_review(), tone: 'amber' },
+  { value: 'awaiting_submission', label: m.admin_recruiter_list_chip_submission(), tone: 'slate' },
+  { value: 'awaiting_onboarding', label: m.admin_recruiter_list_chip_onboarding(), tone: 'slate' },
+]
+
+function userTile(filters) {
+  if (filters.status === 'active' && !filters.email_verified) return 'active'
+  if (filters.status === 'inactive,banned') return 'restricted'
+  if (filters.email_verified === 'false' && !filters.status) return 'unverified'
+  return filters.status || filters.email_verified ? '' : 'all'
+}
 
 function QueueTabLabel({ children, count }) {
   return <span>{children}<Badge className="ml-2" count={count || 0} overflowCount={999} /></span>
@@ -100,13 +140,14 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
     queryKey: adminAccountKeys.list(params),
     queryFn: ({ signal }) => getAdminAccounts(params, { signal }),
     enabled: accountTabs.includes(activeTab),
+    // Keep the rows on screen while the next page, filter or order loads.
+    placeholderData: keepPreviousData,
   })
 
   const summary = summaryQuery.data || {}
   const accounts = accountsQuery.data || EMPTY_PAGE
-  const metrics = activeTab === 'all'
-    ? summary.totals || EMPTY_METRICS
-    : summary.by_role?.[activeTab] || EMPTY_METRICS
+  const metrics = activeTab === 'all' ? summary.totals : summary.by_role?.[activeTab]
+  const tileCount = (value) => (summaryQuery.data ? formatCount(value) : undefined)
 
   useEffect(() => {
     const defaultTab = accountTabs[0]
@@ -183,11 +224,19 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
     syncQuery(activeTab, next, 1)
   }
 
-  // Segment tiles sit above the tabs, so picking one always shows the list.
-  const selectSegment = (key) => {
-    const next = applyRecruiterSegment(filters, key)
-    setFilters(next)
-    syncQuery(accountTabs[0], next, 1)
+  const selectSegment = (key) => changeFilters(applyRecruiterSegment(filters, key))
+
+  const quickValue = recruiterScope
+    ? (RECRUITER_CHIPS.some((chip) => chip.value === filters.next_action) ? filters.next_action : '')
+    : USER_CHIPS.find((chip) => Object.entries(chip.filters).every(([key, value]) => filters[key] === value))?.value || ''
+  const selectQuick = (value) => {
+    if (recruiterScope) return changeFilters({ ...filters, next_action: value })
+    const cleared = {
+      ...filters,
+      has_active_session: '',
+      status: filters.status === 'pending' ? '' : filters.status,
+    }
+    return changeFilters({ ...cleared, ...USER_CHIPS.find((chip) => chip.value === value)?.filters })
   }
 
   const changePageSize = (size) => {
@@ -212,7 +261,7 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
     if (next) setSelectedAccount(next)
   }
 
-  const applyOverviewFilter = (kind) => {
+  const applyUserTile = (kind) => {
     const next = {
       ...filters,
       status: '',
@@ -258,47 +307,58 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
     }
   }
 
+  const tiles = recruiterScope
+    ? {
+        ariaLabel: m.admin_recruiter_list_tiles_aria(),
+        value: activeRecruiterSegment(filters),
+        onChange: selectSegment,
+        items: RECRUITER_SEGMENTS.map((segment) => ({
+          key: segment.key,
+          value: segment.key,
+          label: segment.label,
+          icon: SEGMENT_ICONS[segment.key],
+          count: tileCount(segment.count(summary)),
+        })),
+      }
+    : {
+        ariaLabel: m.admin_account_list_tiles_aria(),
+        value: userTile(filters),
+        onChange: applyUserTile,
+        items: USER_TILES.map((tile) => ({ ...tile, key: tile.value, count: tileCount(metrics?.[tile.metric]) })),
+      }
+
   const accountList = (
-    <div className="account-management-tab-content">
-      <AccountFilters
-        filters={filters}
-        total={accounts.count}
-        loading={accountsQuery.isLoading}
-        recruiterOnly={recruiterScope}
-        onChange={changeFilters}
-        onClear={() => changeFilters(DEFAULT_FILTERS)}
-      />
-      {accountsQuery.isError && (
-        <Alert
-          className="mb-4"
-          type="error"
-          showIcon
-          title={recruiterScope
-            ? 'Không thể tải danh sách nhà tuyển dụng'
-            : 'Không thể tải danh sách người dùng'}
-          description={getApiErrorMessage(accountsQuery.error)}
-        />
-      )}
-      <AccountTable
-        data={accounts}
-        loading={accountsQuery.isLoading}
-        page={page}
-        ordering={filters.ordering}
-        recruiterOnly={recruiterScope}
-        onPageChange={(nextPage) => syncQuery(activeTab, filters, nextPage)}
-        pageSize={pageSize}
-        onPageSizeChange={recruiterScope ? changePageSize : undefined}
-        originState={listOrigin}
-        onOrderingChange={(ordering) => changeFilters({ ...filters, ordering })}
-        onQuickView={setSelectedAccount}
-        onOpenDetail={openDetail}
-        onEdit={openEdit}
-        onSecurity={(account) => openDetail(account, 'security')}
-        canEdit={canManageAccount}
-        canManageSecurity={canManageAccount}
-        resultLabel={recruiterScope ? 'nhà tuyển dụng' : 'người dùng'}
-      />
-    </div>
+    <AccountList
+      recruiterOnly={recruiterScope}
+      tiles={tiles}
+      toolbar={{
+        filters,
+        quickItems: recruiterScope ? RECRUITER_CHIPS : USER_CHIPS,
+        quickValue,
+        onQuick: selectQuick,
+        onChange: changeFilters,
+        onClear: () => changeFilters(DEFAULT_FILTERS),
+      }}
+      query={accountsQuery}
+      page={page}
+      pageSize={pageSize}
+      onPageChange={(nextPage) => syncQuery(activeTab, filters, nextPage)}
+      onPageSizeChange={recruiterScope ? changePageSize : undefined}
+      originState={listOrigin}
+      actions={{
+        onQuickView: setSelectedAccount,
+        onOpenDetail: openDetail,
+        onEdit: openEdit,
+        onSecurity: (account) => openDetail(account, 'security'),
+        canEdit: canManageAccount,
+        canManageSecurity: canManageAccount,
+      }}
+    />
+  )
+  const queuePanel = (content) => (
+    <section className="admin-panel">
+      <div className="account-management-tab-content">{content}</div>
+    </section>
   )
 
   const pendingInvitations = summary.queues?.pending_admin_invitations || 0
@@ -330,7 +390,7 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
           Chờ xác thực NTD
         </QueueTabLabel>
       ),
-      children: <div className="account-management-tab-content"><VerificationQueuePanel /></div>,
+      children: queuePanel(<VerificationQueuePanel />),
     }] : []),
     ...(recruiterScope ? [{
       key: 'domain-verification',
@@ -339,45 +399,23 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
           Xác minh domain
         </QueueTabLabel>
       ),
-      children: (
-        <div className="account-management-tab-content">
-          <AdminCompanyDomainReview />
-        </div>
-      ),
+      children: queuePanel(<AdminCompanyDomainReview />),
     }] : []),
     ...(canManageAdmins ? [{
       key: 'invitations',
       label: <QueueTabLabel count={pendingInvitations}>Lời mời quản trị</QueueTabLabel>,
-      children: (
-        <div className="account-management-tab-content">
-          <InvitationPanel />
-        </div>
-      ),
+      children: queuePanel(<InvitationPanel />),
     }] : []),
   ]
 
   return (
-    <div className="min-w-0 space-y-5">
-      {recruiterScope && (
-        <RecruiterSegments
-          active={activeTab === accountTabs[0] ? activeRecruiterSegment(filters) : ''}
-          loading={summaryQuery.isLoading}
-          onSelect={selectSegment}
-          summary={summary}
-        />
-      )}
-      {!recruiterScope && activeTab !== 'invitations' && (
-        <AccountOverview metrics={metrics} onApplyFilter={applyOverviewFilter} />
-      )}
-
-      <section className="admin-panel account-management-panel">
-        <Tabs
-          activeKey={activeTab}
-          items={tabs}
-          onChange={changeTab}
-          destroyOnHidden={false}
-        />
-      </section>
+    <section className="account-workspace">
+      <Tabs
+        activeKey={activeTab}
+        items={tabs.map(({ children: _children, ...tab }) => tab)}
+        onChange={changeTab}
+      />
+      {tabs.find((tab) => tab.key === activeTab)?.children}
 
       <AccountQuickDrawer
         account={selectedAccount}
@@ -395,6 +433,6 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
         onClose={() => setEditingAccount(null)}
         onSave={saveEdit}
       />
-    </div>
+    </section>
   )
 }

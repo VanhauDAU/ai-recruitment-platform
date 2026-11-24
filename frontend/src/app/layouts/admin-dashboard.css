@@ -5,7 +5,7 @@
   --admin-primary: var(--brand-primary, #00b14f);
   --admin-primary-hover: var(--brand-primary-hover, #008f40);
   --admin-primary-soft: var(--brand-primary-soft, #e6f8ee);
-  --admin-accent: #16a34a;
+  --admin-accent: var(--admin-primary);
   --admin-canvas: #f4f7fb;
   --admin-surface: #ffffff;
   --admin-text: #0f172a;
@@ -31,6 +31,36 @@
   background: var(--admin-canvas);
   color: var(--admin-text);
   min-height: 100dvh;
+}
+
+/* Dark navigation column. Tokens are redefined on the sidebar (desktop, peek
+ * and the mobile drawer portal) so every nav rule below follows them. */
+.admin-sider {
+  --admin-sidebar: var(--brand-surface-dark);
+  --admin-sidebar-text: #cbd5e1;
+  --admin-sidebar-muted: #8391a7;
+  --admin-sidebar-hover: rgb(255 255 255 / 6%);
+  --admin-border: rgb(255 255 255 / 8%);
+  --admin-text: #f8fafc;
+  --admin-text-muted: #a3b0c2;
+  --admin-canvas: rgb(255 255 255 / 5%);
+  --admin-surface: rgb(255 255 255 / 10%);
+  --admin-nav-active-bg: color-mix(in srgb, var(--admin-primary) 18%, transparent);
+  --admin-nav-active-text: color-mix(in srgb, var(--admin-primary) 40%, #ffffff);
+  --admin-critical-soft: rgb(239 68 68 / 16%);
+  color-scheme: dark;
+}
+
+/* The logo is drawn for light backgrounds, so it sits on a small white plate
+ * inside the dark brand strip. */
+.admin-sider__brand > a {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 4px 8px;
+}
+
+.admin-sider__brand--collapsed > a {
+  padding: 4px;
 }
 
 /* Ant Layout đặt width: 100% cho cột nội dung; khi đứng cạnh Sider, giá trị đó
@@ -370,7 +400,7 @@ a.admin-nav__level-one--active::before,
 
 .admin-nav__count {
   align-items: center;
-  background: #eef2f6;
+  background: var(--admin-surface);
   border-radius: 999px;
   color: var(--admin-sidebar-text);
   display: inline-flex;
@@ -488,8 +518,8 @@ a.admin-nav__level-one--active::before,
 
 .admin-palette__item--active,
 .admin-palette__item:hover {
-  background: var(--admin-primary-soft, #e6f8ee);
-  color: #0f5132;
+  background: var(--brand-primary-soft);
+  color: color-mix(in srgb, var(--brand-primary) 75%, #0f172a);
 }
 
 .admin-palette__label {
@@ -623,6 +653,12 @@ a.admin-nav__level-one--active::before,
   white-space: nowrap;
 }
 
+.admin-topbar__heading {
+  display: inline;
+  font: inherit;
+  margin: 0;
+}
+
 .admin-topbar__create.ant-btn {
   border-radius: 10px;
   height: 40px;
@@ -703,6 +739,7 @@ a.admin-nav__level-one--active::before,
 }
 
 .admin-sider--drawer {
+  background: var(--admin-sidebar);
   display: flex;
   flex-direction: column;
   min-height: 100%;
@@ -766,7 +803,7 @@ a.admin-nav__level-one--active::before,
 .admin-sider-footer__logout.ant-btn:hover,
 .admin-sider-footer__logout.ant-btn:focus-visible {
   background: var(--admin-critical-soft) !important;
-  color: var(--admin-critical) !important;
+  color: #fca5a5 !important;
 }
 
 .admin-sider-footer--collapsed {
@@ -780,10 +817,11 @@ a.admin-nav__level-one--active::before,
   flex: 0 0 auto;
 }
 
+/* Page frame and gutter come from @/shared/ui/workspace-page (shared with the
+ * employer workspace); the window scrolls here, under the sticky topbar. */
 .admin-main {
-  margin-inline: auto;
-  max-width: 1600px;
-  padding: 20px;
+  --workspace-viewport: calc(100dvh - var(--admin-topbar-height));
+
   width: 100%;
 }
 
@@ -806,78 +844,6 @@ a.admin-nav__level-one--active::before,
 
 .admin-skip-link:focus {
   top: 12px;
-}
-
-.admin-page-header {
-  align-items: flex-start;
-  display: flex;
-  gap: 16px;
-  justify-content: space-between;
-  margin-bottom: 18px;
-}
-
-.admin-page-header__content {
-  align-items: flex-start;
-  display: flex;
-  gap: 14px;
-  min-width: 0;
-}
-
-.admin-page-header__icon {
-  align-items: center;
-  background: linear-gradient(145deg, var(--admin-primary-soft), color-mix(in srgb, var(--admin-primary-soft) 45%, white));
-  border: 1px solid color-mix(in srgb, var(--admin-primary) 24%, white);
-  border-radius: 14px;
-  color: var(--admin-primary);
-  display: flex;
-  flex: 0 0 auto;
-  font-size: 22px;
-  height: 48px;
-  justify-content: center;
-  width: 48px;
-}
-
-.admin-page-header__eyebrow {
-  color: var(--admin-primary);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  margin: 0 0 5px;
-  text-transform: uppercase;
-}
-
-.admin-page-header__title {
-  color: var(--admin-text);
-  font-size: clamp(24px, 3vw, 32px);
-  font-weight: 750;
-  letter-spacing: -0.025em;
-  line-height: 1.2;
-  margin: 0;
-}
-
-.admin-page-header__description {
-  color: var(--admin-text-muted);
-  font-size: 13px;
-  line-height: 1.55;
-  margin: 5px 0 0;
-  max-width: 760px;
-}
-
-.admin-page-header__meta {
-  align-items: center;
-  color: var(--admin-text-muted);
-  display: flex;
-  flex-wrap: wrap;
-  font-size: 12px;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.admin-page-header__actions {
-  align-items: center;
-  display: flex;
-  flex: 0 0 auto;
-  gap: 10px;
 }
 
 .admin-panel {
@@ -1108,20 +1074,6 @@ a.admin-nav__level-one--active::before,
     padding: 0 12px !important;
   }
 
-  .admin-main {
-    padding: 18px 14px 30px;
-  }
-
-  .admin-page-header {
-    flex-direction: column;
-  }
-
-  .admin-page-header__content {
-    width: 100%;
-  }
-
-  .admin-page-header__actions,
-  .admin-page-header__actions .ant-btn,
   .admin-panel__extra,
   .admin-panel__extra .ant-select {
     width: 100%;
@@ -1216,20 +1168,7 @@ a.admin-nav__level-one--active::before,
   }
 
   .admin-main {
-    max-width: none;
     padding: 0;
-  }
-
-  .admin-page-header {
-    margin-bottom: 12px;
-  }
-
-  .admin-page-header__icon {
-    border: 1px solid #cbd5e1;
-  }
-
-  .admin-page-header__title {
-    font-size: 22px;
   }
 
   .admin-panel,

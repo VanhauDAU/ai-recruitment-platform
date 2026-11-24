@@ -13691,7 +13691,7 @@ paths:
       operationId: public_companies_job_facets_retrieve
       description: 'Shares the directory throttle: one client budget for all company
         reads.'
-      summary: Địa điểm có tin tuyển dụng của công ty
+      summary: Địa điểm và danh mục nghề có tin tuyển dụng của công ty
       parameters:
       - in: path
         name: public_id
@@ -33662,7 +33662,13 @@ components:
           items:
             type: object
             additionalProperties: {}
+        categories:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
       required:
+      - categories
       - locations
     PublicCompanyList:
       type: object

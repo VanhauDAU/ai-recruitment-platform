@@ -27,6 +27,9 @@ vi.mock('@/features/main/company/follow-company', () => ({
   FollowCompanyButton: ({ publicId, onRequireLogin, className }) => (
     <button type="button" className={className} data-company={publicId} onClick={() => onRequireLogin()}>Theo dõi</button>
   ),
+  FollowCompanyPrompt: ({ company, visible }) => (
+    <aside data-company={company.public_id} data-visible={String(visible)}>Lời mời theo dõi</aside>
+  ),
 }))
 vi.mock('@/features/main/company/report-company', () => ({
   ReportCompanyButton: ({ company, sections }) => (
@@ -86,14 +89,14 @@ function jobsPage(total, shown = Math.min(total, 10)) {
   return { count: total, results: Array.from({ length: shown }, (_, index) => job(index + 1)) }
 }
 
-function mockApi({ profile = PROFILE, profileErrors = [], jobs = jobsPage(7), similar = [], locations = [] } = {}) {
+function mockApi({ profile = PROFILE, profileErrors = [], jobs = jobsPage(7), similar = [], locations = [], categories = [] } = {}) {
   const pendingErrors = [...profileErrors]
   client.get.mockImplementation((url, config) => {
     if (url === `/public/companies/${profile.slug}/`) {
       return pendingErrors.length ? Promise.reject(pendingErrors.shift()) : Promise.resolve({ data: profile })
     }
     if (url === `/public/companies/${profile.public_id}/similar/`) return Promise.resolve({ data: { results: similar } })
-    if (url === `/public/companies/${profile.public_id}/job-facets/`) return Promise.resolve({ data: { locations } })
+    if (url === `/public/companies/${profile.public_id}/job-facets/`) return Promise.resolve({ data: { locations, categories } })
     if (url === '/public/jobs/') return Promise.resolve({ data: typeof jobs === 'function' ? jobs(config.params) : jobs })
     return Promise.reject(new Error(`Unexpected GET ${url}`))
   })
@@ -156,8 +159,8 @@ describe('PublicCompanyProfile', () => {
     expect(within(breadcrumb).getByRole('link', { name: 'Công ty' })).toHaveAttribute('href', '/cong-ty')
     const tabs = screen.getByRole('navigation', { name: 'Nội dung trang công ty' })
     expect(within(tabs).getByRole('link', { name: 'Tổng quan' })).toHaveAttribute('aria-current', 'page')
-    expect(within(tabs).getByRole('link', { name: 'Việc làm (7)' })).toHaveAttribute('href', '/cong-ty/fpt-software?tab=viec-lam')
-    expect(within(tabs).getByRole('link', { name: 'Việc làm (7)' })).not.toHaveAttribute('aria-current')
+    expect(within(tabs).getByRole('link', { name: 'Tin tuyển dụng (7)' })).toHaveAttribute('href', '/cong-ty/fpt-software?tab=viec-lam')
+    expect(within(tabs).getByRole('link', { name: 'Tin tuyển dụng (7)' })).not.toHaveAttribute('aria-current')
 
     const jobs = screen.getByRole('region', { name: 'Việc làm đang tuyển' })
     expect(await within(jobs).findAllByRole('article')).toHaveLength(5)
@@ -167,9 +170,9 @@ describe('PublicCompanyProfile', () => {
     expect(within(firstJob).getByText('Hà Nội')).toBeVisible()
     expect(within(firstJob).getByText('Đăng hôm nay')).toBeVisible()
     expect(within(firstJob).getByRole('button', { name: 'Lưu việc làm Kỹ sư phần mềm 1' })).toBeVisible()
-    expect(within(firstJob).queryByText(/Phần mềm FPT/)).not.toBeInTheDocument()
+    expect(within(firstJob).getByText('Công ty TNHH Phần mềm FPT')).toBeVisible()
     expect(firstJob).toHaveAttribute('data-job-slug', 'ky-su-phan-mem-1')
-    expect(within(jobs).getByRole('link', { name: 'Xem tất cả việc làm' })).toHaveAttribute('href', '/cong-ty/fpt-software?tab=viec-lam')
+    expect(within(jobs).getByRole('link', { name: 'Xem tất cả tin tuyển dụng' })).toHaveAttribute('href', '/cong-ty/fpt-software?tab=viec-lam')
     expect(requests('/public/jobs/')).toEqual([['/public/jobs/', { params: { company: 'co_ab12', page: 1, page_size: 10 } }]])
     expect(requests('/public/companies/co_ab12/job-facets/')).toHaveLength(0)
 
@@ -177,7 +180,11 @@ describe('PublicCompanyProfile', () => {
     expect(await within(similar).findByRole('link', { name: /CMC Global/ })).toHaveAttribute('href', '/cong-ty/cmc-global')
     expect(within(similar).getByText('3 việc làm đang tuyển')).toBeVisible()
 
-    expect(screen.getAllByRole('link', { name: 'Xem việc làm (7)' })[0]).toHaveAttribute('href', '/cong-ty/fpt-software?tab=viec-lam')
+    // Hero chỉ còn nút theo dõi; lối sang tab tin tuyển dụng nằm ở thanh CTA màn hẹp.
+    expect(screen.getAllByRole('link', { name: 'Xem tin tuyển dụng (7)' })).toHaveLength(1)
+    expect(screen.getByRole('link', { name: 'fpt-software.com' })).toHaveAttribute('href', 'https://fpt-software.com')
+    expect(screen.queryByRole('link', { name: /Website/ })).not.toBeInTheDocument()
+    expect(screen.getByText('Lời mời theo dõi')).toHaveAttribute('data-company', 'co_ab12')
     expect(document.body).toHaveClass('has-bottom-action-bar')
   })
 
@@ -192,7 +199,7 @@ describe('PublicCompanyProfile', () => {
     expect(heroFollow).toHaveAttribute('data-company', 'co_ab12')
     expect(heroFollow.closest('section')).toContainElement(screen.getByRole('heading', { level: 1 }))
     expect(barFollow).toHaveClass('inline-flex')
-    expect(barFollow.parentElement).toContainElement(screen.getByRole('link', { name: 'Xem việc làm (7)' }))
+    expect(barFollow.parentElement).toContainElement(screen.getByRole('link', { name: 'Xem tin tuyển dụng (7)' }))
 
     await user.click(barFollow)
     expect(promptLogin).toHaveBeenCalledOnce()
@@ -210,7 +217,7 @@ describe('PublicCompanyProfile', () => {
 
     await screen.findByRole('heading', { level: 1, name: 'FPT Software' })
     expect(screen.getAllByRole('button', { name: 'Theo dõi' })[1]).toHaveClass('flex', 'flex-1')
-    expect(screen.queryByRole('link', { name: /Xem việc làm/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Xem tin tuyển dụng/ })).not.toBeInTheDocument()
     expect(document.body).toHaveClass('has-bottom-action-bar')
     unmount()
 
@@ -235,13 +242,13 @@ describe('PublicCompanyProfile', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: 'FPT Software' })).toBeVisible()
     expect(container.querySelector('.company-profile-cover')).toHaveClass('company-profile-cover--fallback')
-    expect(await screen.findByText('Công ty chưa có việc làm đang tuyển.')).toBeVisible()
+    expect(await screen.findByText('Công ty chưa có tin tuyển dụng đang mở.')).toBeVisible()
     expect(screen.getByRole('heading', { name: 'Thông tin chung' })).toBeVisible()
     expect(screen.getByRole('heading', { name: 'Chia sẻ công ty' })).toBeVisible()
     await waitFor(() => expect(requests('/public/companies/co_ab12/similar/')).toHaveLength(1))
     await waitFor(() => expect(screen.queryByRole('heading', { name: 'Công ty cùng lĩnh vực' })).not.toBeInTheDocument())
-    expect(screen.queryByRole('link', { name: /Xem việc làm/ })).not.toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Việc làm (0)' })).toBeVisible()
+    expect(screen.queryByRole('link', { name: /Xem tin tuyển dụng/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Tin tuyển dụng (0)' })).toBeVisible()
     expect(document.body).not.toHaveClass('has-bottom-action-bar')
   })
 
@@ -267,27 +274,32 @@ describe('PublicCompanyProfile', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'FPT Software' })).toBeVisible()
   })
 
-  it('drives the jobs tab from the URL: keyword, location and page', async () => {
+  it('drives the jobs tab from the URL: keyword, location, category and page', async () => {
     const user = userEvent.setup()
     mockApi({
       jobs: (params) => (params.search === 'khong-co' ? jobsPage(0) : jobsPage(25)),
       locations: [{ id: 1, name: 'Hà Nội', count: 7 }, { id: 2, name: 'Đà Nẵng', count: 2 }],
+      categories: [
+        { id: 10, name: 'Ngân hàng', count: 9, children: [{ id: 11, name: 'Giao dịch viên', count: 4 }, { id: 12, name: 'Tín dụng', count: 5 }] },
+        { id: 20, name: 'Nhân sự', count: 2, children: [] },
+      ],
     })
     renderProfile('/cong-ty/fpt-software?tab=viec-lam&q=react&location=1&page=2')
 
-    const jobs = await screen.findByRole('region', { name: 'Việc làm đang tuyển' })
+    expect(await screen.findByRole('heading', { level: 2, name: 'Tin tuyển dụng tại FPT Software' })).toBeVisible()
+    const jobs = await screen.findByRole('region', { name: 'Tin tuyển dụng' })
     expect(await within(jobs).findAllByRole('article')).toHaveLength(10)
     expect(requests('/public/jobs/')).toEqual([[
       '/public/jobs/',
       { params: { company: 'co_ab12', page: 2, page_size: 10, search: 'react', location: '1' } },
     ]])
-    expect(within(jobs).getByRole('status')).toHaveTextContent('Tìm thấy 25 việc làm phù hợp')
+    expect(within(jobs).getByRole('status')).toHaveTextContent('Tìm thấy 25 tin tuyển dụng phù hợp')
     expect(screen.queryByRole('heading', { name: 'Giới thiệu công ty' })).not.toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Thông tin chung' })).toBeVisible()
-    expect(screen.getByRole('link', { name: 'Việc làm (7)' })).toHaveAttribute('aria-current', 'page')
-    expect(screen.queryByRole('link', { name: /Xem việc làm/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Thông tin chung' })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Tin tuyển dụng (7)' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.queryByRole('link', { name: /Xem tin tuyển dụng/ })).not.toBeInTheDocument()
 
-    const keyword = within(jobs).getByRole('searchbox', { name: 'Tên việc làm' })
+    const keyword = within(jobs).getByRole('searchbox', { name: 'Tên công việc' })
     const location = within(jobs).getByRole('combobox', { name: 'Địa điểm' })
     expect(keyword).toHaveValue('react')
     expect(await within(location).findByRole('option', { name: 'Hà Nội (7)' })).toBeInTheDocument()
@@ -308,9 +320,39 @@ describe('PublicCompanyProfile', () => {
     await user.selectOptions(location, '2')
     expect(screen.getByTestId('location')).toHaveTextContent('/cong-ty/fpt-software?tab=viec-lam&q=node&location=2')
 
+    const categories = screen.getByRole('complementary', { name: 'Danh mục nghề' })
+    await user.click(within(categories).getByRole('button', { name: 'Giao dịch viên' }))
+    expect(screen.getByTestId('location')).toHaveTextContent('/cong-ty/fpt-software?tab=viec-lam&q=node&location=2&category=11')
+    await waitFor(() => expect(client.get).toHaveBeenCalledWith(
+      '/public/jobs/',
+      { params: { company: 'co_ab12', page: 1, page_size: 10, search: 'node', location: '2', category: '11' } },
+    ))
+    expect(within(categories).getByRole('button', { name: 'Giao dịch viên' })).toHaveAttribute('aria-pressed', 'true')
+    expect(within(categories).getByRole('checkbox', { name: /Ngân hàng/ })).toBePartiallyChecked()
+    // Chọn thêm nhiều mục: các chip đã chọn cùng sáng, API nhận key lặp.
+    await user.click(within(categories).getByRole('checkbox', { name: /Nhân sự/ }))
+    expect(screen.getByTestId('location')).toHaveTextContent('category=11%2C20')
+    await waitFor(() => expect(client.get.mock.calls.some(([url, config]) => (
+      url === '/public/jobs/' && String(config.params) === 'company=co_ab12&page=1&page_size=10&search=node&location=2&category=11&category=20'
+    ))).toBe(true))
+    // Chọn đủ chip con thì gộp thành cả nhóm, mọi chip con của nhóm cùng sáng.
+    await user.click(within(categories).getByRole('button', { name: 'Tín dụng' }))
+    expect(screen.getByTestId('location')).toHaveTextContent('category=20%2C10')
+    expect(within(categories).getByRole('checkbox', { name: /Ngân hàng/ })).toBeChecked()
+    expect(within(categories).getByRole('button', { name: 'Giao dịch viên' })).toHaveAttribute('aria-pressed', 'true')
+    expect(within(categories).getByRole('button', { name: 'Tín dụng' })).toHaveAttribute('aria-pressed', 'true')
+    // Bỏ một chip con khi cả nhóm đang chọn: giữ chip còn lại.
+    await user.click(within(categories).getByRole('button', { name: 'Tín dụng' }))
+    expect(screen.getByTestId('location')).toHaveTextContent('category=20%2C11')
+    await user.click(within(categories).getByRole('checkbox', { name: /Ngân hàng/ }))
+    await user.click(within(categories).getByRole('checkbox', { name: /Ngân hàng/ }))
+    await user.click(within(categories).getByRole('checkbox', { name: /Nhân sự/ }))
+    expect(screen.getByTestId('location')).toHaveTextContent('/cong-ty/fpt-software?tab=viec-lam&q=node&location=2')
+    expect(screen.getByTestId('location')).not.toHaveTextContent('category')
+
     await user.clear(keyword)
     await user.type(keyword, 'khong-co{Enter}')
-    expect(await within(jobs).findByText(/Không có việc làm khớp bộ lọc/)).toBeVisible()
+    expect(await within(jobs).findByText(/Không có tin tuyển dụng khớp bộ lọc/)).toBeVisible()
     expect(within(jobs).getByRole('link', { name: 'Xoá bộ lọc' })).toHaveAttribute('href', '/cong-ty/fpt-software?tab=viec-lam')
   })
 

@@ -32,6 +32,23 @@
 
 .wt-tiles::-webkit-scrollbar { display: none; }
 
+/* Columns follow the frame, not the viewport, so a wider sidebar (admin)
+ * never squeezes the labels; six tiles in a narrow row drop their icons. */
+.wt-tiles-frame { container-type: inline-size; }
+
+@container (min-width: 720px) {
+  .wt-tiles { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; }
+}
+
+@container (min-width: 880px) {
+  .wt-tiles { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
+
+@container (min-width: 880px) and (max-width: 1100px) {
+  .wt-tiles-frame .wt-tile { padding-inline: 12px; }
+  .wt-tiles-frame .wt-tile__icon { display: none; }
+}
+
 .wt-tile {
   display: flex;
   min-width: 0;
@@ -48,10 +65,10 @@
 }
 
 .wt-tile:hover { border-color: #cbd5e1; }
-.wt-tile[aria-pressed='true'] { border-color: #10b981; box-shadow: 0 0 0 1px #10b981; }
+.wt-tile[aria-pressed='true'] { border-color: var(--brand-primary); box-shadow: 0 0 0 1px var(--brand-primary); }
 
 .wt-tile:focus-visible {
-  outline: 2px solid #10b981;
+  outline: 2px solid var(--brand-primary);
   outline-offset: 2px;
 }
 
@@ -68,7 +85,7 @@
   font-size: 16px;
 }
 
-.wt-tile[aria-pressed='true'] .wt-tile__icon { border-color: #a7f3d0; color: #047857; }
+.wt-tile[aria-pressed='true'] .wt-tile__icon { border-color: color-mix(in srgb, var(--brand-primary) 35%, #fff); color: var(--brand-primary-hover); }
 .wt-tile__body { display: flex; min-width: 0; flex-direction: column; }
 
 .wt-tile__label {
@@ -138,6 +155,7 @@
 }
 
 .wt-filters > .wt-filters__search { grid-column: 1 / -1; grid-row: 1; }
+.wt-filters > .wt-filters__extra { grid-column: 1 / -1; }
 .wt-filters--single { grid-template-columns: minmax(0, 1fr); }
 
 .wt-head { display: none; }
@@ -177,7 +195,7 @@
   -webkit-line-clamp: 2;
 }
 
-.wt-title:hover { color: #047857 !important; }
+.wt-title:hover { color: var(--brand-primary-hover) !important; }
 
 .wt-meta {
   display: flex;
@@ -224,13 +242,13 @@
 
 .wt-btn:hover { border-color: #cbd5e1 !important; background: #f8fafc !important; color: #0f172a !important; }
 .wt-btn .anticon-down { font-size: 10px; }
-.wt-btn--primary { border-color: #10b981 !important; color: #047857 !important; }
-.wt-btn--primary:hover { border-color: #059669 !important; background: #ecfdf5 !important; color: #065f46 !important; }
+.wt-btn--primary { border-color: var(--brand-primary) !important; color: var(--brand-primary-hover) !important; }
+.wt-btn--primary:hover { border-color: var(--brand-primary-hover) !important; background: var(--brand-primary-soft) !important; color: color-mix(in srgb, var(--brand-primary-hover) 80%, #000) !important; }
 
 .wt-btn:focus-visible,
 .wt-title:focus-visible,
 .wt-row a:focus-visible {
-  outline: 2px solid #10b981;
+  outline: 2px solid var(--brand-primary);
   outline-offset: 2px;
 }
 
@@ -269,9 +287,6 @@
   .wt-tile__value { font-size: 17px; }
 }
 
-@media (min-width: 768px) {
-  .wt-tiles { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; }
-}
 
 @media (min-width: 1024px) {
   .wt-filters {
@@ -279,16 +294,17 @@
     width: auto;
     margin-left: auto;
     flex-wrap: wrap;
+    align-items: center;
     justify-content: flex-end;
   }
 
   .wt-filters > * { width: 220px; }
   .wt-filters > .wt-filters__search { width: 300px; order: 9; }
+
+  /* Extra controls (refresh, export…) keep their own width, last in the row. */
+  .wt-filters > .wt-filters__extra { width: auto; order: 10; }
 }
 
-@media (min-width: 1280px) {
-  .wt-tiles { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-}
 
 @container (min-width: 1080px) {
   .wt-head,
@@ -320,6 +336,63 @@
   .wt-cell--actions .wt-actions { width: 100%; flex-direction: column; align-items: stretch; }
   .wt-row > .wt-cell--actions { padding-inline: 12px; }
   .wt-label { display: none; }
+}
+
+/* Compact toolbar (admin lists): regular-size controls and narrower fields so
+ * the quick chips and the filters share one row on a desktop-wide table. */
+.wt-table--compact .wt-toolbar { padding-block: 10px; }
+.wt-table--compact .wt-toolbar .ws-chip { min-height: 30px; padding: 0 10px; font-size: 12.5px; }
+
+/* Extra controls stay a row of natural-width buttons, also on phones where the
+ * admin shell otherwise stretches data actions into a two-column grid. */
+.wt-table--compact .wt-filters__extra { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+.wt-table--compact .wt-filters__extra .admin-data-actions {
+  display: inline-flex;
+  width: auto;
+}
+
+.wt-table--compact .wt-filters__extra .admin-data-actions > .ant-space-item,
+.wt-table--compact .wt-filters__extra .admin-data-actions > .ant-space-item > span,
+.wt-table--compact .wt-filters__extra .admin-data-actions .ant-btn { width: auto; }
+.wt-table--compact .wt-filters__extra .admin-data-actions .ant-btn-icon-only { width: 40px; }
+
+/* Wide enough: one row, chips shrink and wrap on the left, filters stay right. */
+@container (min-width: 880px) {
+  .wt-table--compact .wt-toolbar { flex-wrap: nowrap; }
+  .wt-table--compact .wt-toolbar__quick { flex: 1 1 auto; min-width: 0; flex-wrap: nowrap; }
+
+  /* The chip group keeps its aria-label; the visible label gives way. */
+  .wt-table--compact .wt-toolbar__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .wt-table--compact .ws-quick__chips {
+    min-width: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .wt-table--compact .ws-quick__chips::-webkit-scrollbar { display: none; }
+  .wt-table--compact .ws-chip { flex: none; white-space: nowrap; }
+
+  .wt-table--compact .wt-filters {
+    display: flex;
+    width: auto;
+    flex: none;
+    flex-wrap: nowrap;
+    margin-left: auto;
+  }
+
+  .wt-table--compact .wt-filters > * { width: 150px; }
+  .wt-table--compact .wt-filters > .wt-filters__search { width: 210px; order: 9; }
+  .wt-table--compact .wt-filters > .wt-filters__extra { width: auto; order: 10; }
 }
 
 @media (prefers-reduced-motion: reduce) {

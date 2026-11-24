@@ -67,7 +67,7 @@ PUBLIC_COMPANY_DETAIL_QUERY_BUDGET = 7 + MAINTENANCE_CHECK_QUERIES
 # candidates, the ranked projection, industries prefetch.
 PUBLIC_COMPANY_SIMILAR_QUERY_BUDGET = 4 + MAINTENANCE_CHECK_QUERIES
 # Visible-company lookup, one grouped province aggregate.
-PUBLIC_COMPANY_JOB_FACETS_QUERY_BUDGET = 2 + MAINTENANCE_CHECK_QUERIES
+PUBLIC_COMPANY_JOB_FACETS_QUERY_BUDGET = 3 + MAINTENANCE_CHECK_QUERIES
 # Visible-company lookup, the caller's follow next to the follower total.
 COMPANY_FOLLOW_STATE_QUERY_BUDGET = 2 + MAINTENANCE_CHECK_QUERIES
 # Pagination count, followed companies (follow columns ride the same join),

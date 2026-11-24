@@ -7,6 +7,7 @@ from .scheduling import (
     claim_due_candidate_job_digest_candidates,
     due_candidate_ids,
     release_candidate_job_digest_claim,
+    wake_followed_company_digests,
 )
 
 __all__ = [
@@ -17,4 +18,5 @@ __all__ = [
     'prepare_candidate_job_digest',
     'purge_candidate_job_digest_history',
     'release_candidate_job_digest_claim',
+    'wake_followed_company_digests',
 ]

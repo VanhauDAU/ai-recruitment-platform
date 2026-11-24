@@ -113,6 +113,9 @@ body {
   --brand-primary: #00b14f;
   --brand-primary-hover: #008a3e;
   --brand-primary-soft: #f0fbf5;
+  /* Dark chrome (portal sidebars, employer topbar): a deep shade of the brand
+   * color, so it follows the primary color set in site settings. */
+  --brand-surface-dark: color-mix(in srgb, var(--brand-primary) 14%, #0f172a);
 }
 
 .text-\[\#00b14f\] {

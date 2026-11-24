@@ -5,6 +5,8 @@ import {
   BOOLEAN_OPTIONS,
   clearedAdvanced,
   isFilled,
+  RECRUITER_ADVANCED_ONLY,
+  VERIFICATION_OPTIONS,
 } from '../model/account-filter-options'
 
 const { RangePicker } = DatePicker
@@ -29,11 +31,7 @@ export default function AccountAdvancedFilters({
   const patch = (name, value) => onChange({ ...filters, [name]: value })
   const advancedKeys = recruiterOnly
     ? ADVANCED_KEYS
-    : ADVANCED_KEYS.filter((key) => ![
-      'company',
-      'company_state',
-      'verification_status',
-    ].includes(key))
+    : ADVANCED_KEYS.filter((key) => !RECRUITER_ADVANCED_ONLY.includes(key))
   const activeCount = advancedKeys.filter((key) => isFilled(filters[key])).length
 
   return (
@@ -83,16 +81,7 @@ export default function AccountAdvancedFilters({
                 <Select
                   value={filters.verification_status}
                   onChange={(value) => patch('verification_status', value)}
-                  options={[
-                    { value: '', label: 'Mọi trạng thái xác thực' },
-                    { value: 'none', label: 'Chưa có hồ sơ' },
-                    { value: 'draft', label: 'Chưa nộp' },
-                    { value: 'pending', label: 'Chờ duyệt' },
-                    { value: 'in_review', label: 'Đang xử lý' },
-                    { value: 'changes_requested', label: 'Cần bổ sung' },
-                    { value: 'approved', label: 'Đã xác thực' },
-                    { value: 'rejected', label: 'Bị từ chối' },
-                  ]}
+                  options={VERIFICATION_OPTIONS}
                 />
               </Field>
             </>

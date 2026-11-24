@@ -220,7 +220,7 @@ describe('DashboardLayout admin access', () => {
       </MemoryRouter>,
     )
 
-    expect(screen.getByText('Đang ở: Cập nhật công ty')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Cập nhật công ty' })).toBeInTheDocument()
     const breadcrumb = screen.getByRole('navigation', { name: 'Vị trí hiện tại' })
     expect(within(breadcrumb).getAllByRole('listitem').map((item) => item.textContent))
       .toEqual(['Cần xử lý'])

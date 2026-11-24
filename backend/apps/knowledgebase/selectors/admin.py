@@ -74,6 +74,8 @@ def _filter_admin_articles(queryset, params):
         queryset = queryset.filter(lifecycle_state=lifecycle)
     if revision_status := params.get('revision_status'):
         queryset = queryset.filter(latest_revision_status=revision_status)
+    if params.get('published') is not None:
+        queryset = queryset.filter(published_revision__isnull=not params['published'])
     if query := params.get('q'):
         queryset = queryset.filter(
             search_q('revisions__title', query) | search_q('revisions__body_plain_text', query)

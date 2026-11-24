@@ -135,6 +135,23 @@ class AdminCompanyApiTests(APITestCase):
         )
         self.assertEqual(response.data['results'][0]['tax_code'], '0207654321')
 
+    def test_list_filters_companies_without_single_owner(self):
+        no_owner = Company.objects.create(
+            company_name='Công ty cần kiểm tra quản lý',
+            tax_code='0207654322',
+            created_by=self._employer('creator2@example.com', 'Người tạo 2'),
+        )
+        self.client.force_authenticate(make_admin())
+
+        response = self.client.get(reverse('admin-company-list'), {'has_owner': 'not_single'})
+        summary = self.client.get(reverse('admin-company-summary'))
+
+        self.assertEqual(response.status_code, 200, response.data)
+        ids = [item['public_id'] for item in response.data['results']]
+        self.assertIn(no_owner.public_id, ids)
+        self.assertTrue(all(item['owner_count'] != 1 for item in response.data['results']))
+        self.assertEqual(response.data['count'], summary.data['companies_without_single_owner'])
+
     def test_regular_admin_sees_company_contact_details(self):
         self.client.force_authenticate(make_admin())
 

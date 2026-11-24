@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -18,52 +18,6 @@ vi.mock('@/entities/job/admin-job', async (importOriginal) => ({
 vi.mock('@/features/admin/job/review-job-reports', () => ({
   JobReportQueue: () => <div>Mock report queue</div>,
 }))
-
-vi.mock('antd', async (importOriginal) => {
-  const antd = await importOriginal()
-  return {
-    ...antd,
-    Table: ({ columns, dataSource = [], onChange }) => (
-      <table>
-        <thead>
-          <tr>
-            {columns.map((column) => (
-              <th key={column.key || column.dataIndex}>
-                {column.sorter ? (
-                  <button
-                    aria-label={`Sắp xếp ${column.key}`}
-                    onClick={() => onChange(
-                      { current: 1 },
-                      {},
-                      { columnKey: column.key, order: 'descend' },
-                    )}
-                    type="button"
-                  >
-                    {column.title}
-                  </button>
-                ) : column.title}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {dataSource.map((row, rowIndex) => (
-            <tr key={row.public_id}>
-              {columns.map((column) => {
-                const value = column.dataIndex ? row[column.dataIndex] : undefined
-                return (
-                  <td key={column.key || column.dataIndex}>
-                    {column.render ? column.render(value, row, rowIndex) : value}
-                  </td>
-                )
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    ),
-  }
-})
 
 function renderPage(initialEntry = '/admin/app/job-moderation') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -117,21 +71,39 @@ describe('JobModeration', () => {
       { ordering: '-created_at', page: 1 },
       expect.any(Object),
     )
-    expect(screen.getByRole('button', { name: 'Sắp xếp created_at' })).toBeVisible()
+    const row = screen.getByTestId('admin-job-row-job_active')
+    expect(within(row).getByText('Đang tuyển')).toBeInTheDocument()
+    expect(within(row).getByText('Acme')).toBeInTheDocument()
+    expect(within(row).getByText('2 tin đã đăng')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Duyệt tin' })).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Xem chi tiết' })).toBeVisible()
+    expect(within(row).getByRole('button', { name: 'Xem chi tiết' })).toBeVisible()
+    expect(screen.getByText('Hiển thị 1–1 trên 1 tin')).toBeInTheDocument()
   })
 
   it('sends table ordering to the server and resets to page one', async () => {
     renderPage('/admin/app/job-moderation?job_page=3')
     await screen.findByText('Backend Engineer')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Sắp xếp title' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Tin tuyển dụng' }))
 
     await waitFor(() => expect(getAdminJobs).toHaveBeenLastCalledWith(
       { ordering: '-title', page: 1 },
       expect.any(Object),
     ))
+  })
+
+  it('filters by a status tile and keeps the tile pressed', async () => {
+    renderPage()
+    await screen.findByText('Backend Engineer')
+    const tiles = screen.getByRole('group', { name: 'Tổng quan tin tuyển dụng' })
+
+    fireEvent.click(within(tiles).getByRole('button', { name: /Đang tuyển\s*1/ }))
+
+    await waitFor(() => expect(getAdminJobs).toHaveBeenLastCalledWith(
+      { scope: 'active', ordering: '-created_at', page: 1 },
+      expect.any(Object),
+    ))
+    expect(within(tiles).getByRole('button', { name: /Đang tuyển/ })).toHaveAttribute('aria-pressed', 'true')
   })
 
   it('narrows the list to jobs with pending reports from the deep-linked scope', async () => {

@@ -55,7 +55,7 @@ const EMPLOYER_SIDEBAR_COLLAPSED_WIDTH = 64
 function TopbarAction({ icon, label, prominent = false, to }) {
   const content = (
     <span
-      className={`hidden h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-bold lg:inline-flex ${prominent ? 'border-emerald-500/45 bg-emerald-500/15 text-emerald-300' : 'border-white/10 bg-white/10 text-slate-200'}`}
+      className={`hidden h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-bold lg:inline-flex ${prominent ? 'employer-topbar-action--prominent' : 'border-white/10 bg-white/10 text-slate-200'}`}
     >
       {icon}{label}
     </span>
@@ -67,7 +67,7 @@ function TopbarAction({ icon, label, prominent = false, to }) {
     <Tooltip title={m.employer_workspace_topbar_coming_tooltip({ label })}>
       <span
         aria-disabled="true"
-        className={`hidden h-8 cursor-not-allowed items-center gap-1.5 rounded-full border px-3 text-xs font-bold lg:inline-flex ${prominent ? 'border-emerald-500/45 bg-emerald-500/15 text-emerald-300' : 'border-white/10 bg-white/10 text-slate-200'}`}
+        className={`hidden h-8 cursor-not-allowed items-center gap-1.5 rounded-full border px-3 text-xs font-bold lg:inline-flex ${prominent ? 'employer-topbar-action--prominent' : 'border-white/10 bg-white/10 text-slate-200'}`}
       >
         {icon}{label}
       </span>
@@ -186,7 +186,7 @@ export default function EmployerWorkspaceLayout() {
 
   return (
     <Layout data-testid="employer-workspace" className="!flex !h-dvh !min-h-dvh !flex-col !overflow-hidden !bg-[#edf1f5]">
-      <Header data-testid="employer-topbar" className="!z-20 !flex !h-14 !shrink-0 !items-center !justify-between !bg-[#1e2f40] !px-3 !leading-none sm:!px-4">
+      <Header data-testid="employer-topbar" className="!z-20 !flex !h-14 !shrink-0 !items-center !justify-between employer-topbar !px-3 !leading-none sm:!px-4">
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <Button
             type="text"

@@ -137,7 +137,7 @@ test('knowledgebase admin: explicit save, publish, edit and discard a draft', { 
   await page.waitForTimeout(300)
   expect(pageErrors).toEqual([])
   expect(page.url()).toContain('/admin/app/knowledgebase')
-  await expect(page.getByRole('heading', { name: 'Trung tâm FAQ & hướng dẫn' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'FAQ & hướng dẫn' })).toBeVisible()
   await expect(page.getByText('Làm thế nào để đặt lại mật khẩu?', { exact: true })).toBeVisible()
   await expect(page.locator('html')).toHaveJSProperty('scrollWidth', await page.locator('html').evaluate((element) => element.clientWidth))
 

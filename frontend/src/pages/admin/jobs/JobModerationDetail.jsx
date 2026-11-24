@@ -4,7 +4,7 @@ import { AdminJobDetail } from '@/widgets/admin/job-management'
 export default function JobModerationDetail() {
   const { publicId } = useParams()
   return (
-    <div className="mx-auto max-w-[1600px]">
+    <div>
       <AdminJobDetail publicId={publicId} />
     </div>
   )

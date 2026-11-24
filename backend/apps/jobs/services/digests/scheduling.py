@@ -83,40 +83,76 @@ def remove_ineligible_suitable_digest_schedules():
     return deleted
 
 
-def initialize_missing_followed_company_digest_schedules(now=None):
-    """Give candidates with a notifying follow a daily schedule, bounded per tick.
+def _notifying_follows():
+    """Follows that may email new jobs: switch on and an account able to receive."""
+    return CompanyFollow.objects.filter(
+        notify_new_jobs=True,
+        candidate__role='candidate',
+        candidate__is_active=True,
+        candidate__is_deleted=False,
+        candidate__status='active',
+        candidate__email_verified=True,
+    )
 
-    The follow service lives in another app, so this scheduler backstop is the
-    only writer. The cursor starts at the earliest follow: each follow's own
-    ``created_at`` is what keeps a company's older jobs out of the email.
+
+def _create_missing_followed_schedules(follows, *, next_run_at):
+    """Daily schedules for candidates behind ``follows`` that have none yet.
+
+    The cursor starts at the earliest email window: each follow's own
+    ``notify_since`` is what keeps a company's older jobs out of the email.
     """
-    now = now or timezone.now()
     missing = list(
-        CompanyFollow.objects.filter(
-            notify_new_jobs=True,
-            candidate__role='candidate',
-            candidate__is_active=True,
-            candidate__is_deleted=False,
-            candidate__status='active',
-            candidate__email_verified=True,
-            candidate__followed_company_digest_schedule__isnull=True,
-        )
+        follows.filter(candidate__followed_company_digest_schedule__isnull=True)
         .values('candidate_id')
-        .annotate(first_followed_at=models.Min('created_at'))
+        .annotate(first_notify_since=models.Min('notify_since'))
         .order_by('candidate_id')[:MAX_DUE_CANDIDATES]
     )
     CandidateFollowedCompanyDigestSchedule.objects.bulk_create(
         [
             CandidateFollowedCompanyDigestSchedule(
                 candidate_id=row['candidate_id'],
-                cursor_at=row['first_followed_at'],
-                next_run_at=next_job_alert_run(now, JobAlert.Frequency.DAILY),
+                cursor_at=row['first_notify_since'],
+                next_run_at=next_run_at,
             )
             for row in missing
         ],
         ignore_conflicts=True,
     )
     return len(missing)
+
+
+def initialize_missing_followed_company_digest_schedules(now=None):
+    """Give candidates with a notifying follow a daily schedule, bounded per tick.
+
+    The follow service lives in another app, so this scheduler backstop and
+    ``wake_followed_company_digests`` are the only writers.
+    """
+    now = now or timezone.now()
+    return _create_missing_followed_schedules(
+        _notifying_follows(),
+        next_run_at=next_job_alert_run(now, JobAlert.Frequency.DAILY),
+    )
+
+
+def wake_followed_company_digests(company_id, now=None):
+    """Make the followed-company email of ``company_id``'s followers due now.
+
+    Called when one of its jobs goes public, so followers hear about it on the
+    next scheduler tick instead of the next daily run. A schedule leased to a
+    running preparation is left alone: that run, or the next one, sends it.
+    """
+    now = now or timezone.now()
+    follows = _notifying_follows().filter(company_id=company_id)
+    created = _create_missing_followed_schedules(follows, next_run_at=now)
+    woken = (
+        CandidateFollowedCompanyDigestSchedule.objects.filter(
+            candidate_id__in=follows.values('candidate_id'),
+            next_run_at__gt=now,
+        )
+        .exclude(next_run_at=models.F('updated_at') + PREPARATION_CLAIM_LEASE)
+        .update(next_run_at=now)
+    )
+    return created + woken
 
 
 def _followed_due_exists(now):

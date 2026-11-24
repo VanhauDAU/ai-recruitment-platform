@@ -2,6 +2,7 @@ import { Tabs } from 'antd'
 import { useSearchParams } from 'react-router'
 import { JobReportQueue } from '@/features/admin/job/review-job-reports'
 import AdminJobList from './AdminJobList'
+import '../admin-job-list.css'
 
 export default function AdminJobManagement() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -15,7 +16,7 @@ export default function AdminJobManagement() {
   }
 
   return (
-    <section className="space-y-4">
+    <section className="admin-job-management">
       <Tabs
         activeKey={activeTab}
         items={[

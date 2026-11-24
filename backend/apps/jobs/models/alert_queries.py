@@ -91,7 +91,7 @@ def followed_company_job_matches(
     job_ids=None,
     exclude_digest_id=None,
 ):
-    """Match jobs published after the candidate started following their company.
+    """Match jobs published after the candidate turned on emails for their company.
 
     One filter() call keeps every ``company__follows`` condition on the same
     follow row; (candidate, company) is unique so the join never duplicates jobs.
@@ -105,7 +105,7 @@ def followed_company_job_matches(
         company__content_policy_hold=False,
         company__follows__candidate=candidate,
         company__follows__notify_new_jobs=True,
-        company__follows__created_at__lt=F('published_at'),
+        company__follows__notify_since__lt=F('published_at'),
     )
     if published_after is not None:
         queryset = queryset.filter(published_at__gt=published_after)

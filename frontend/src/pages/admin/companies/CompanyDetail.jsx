@@ -4,7 +4,7 @@ import { AdminCompanyDetail } from '@/widgets/admin/company-directory'
 export default function CompanyDetail() {
   const { publicId } = useParams()
   return (
-    <div className="mx-auto max-w-[1600px]">
+    <div>
       <AdminCompanyDetail publicId={publicId} />
     </div>
   )

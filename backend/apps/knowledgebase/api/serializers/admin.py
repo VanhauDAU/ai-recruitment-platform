@@ -211,6 +211,8 @@ class ArticleQuerySerializer(serializers.Serializer):
         required=False,
     )
     review_due = serializers.ChoiceField(choices=['overdue', 'due_soon'], required=False)
+    # Articles with a public revision: the summary's `published` count.
+    published = serializers.BooleanField(required=False, allow_null=True, default=None)
     q = serializers.CharField(
         max_length=120, required=False, allow_blank=True, trim_whitespace=True
     )

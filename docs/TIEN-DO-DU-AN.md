@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Làm lại trang công ty phía ứng viên](#làm-lại-trang-công-ty-phía-ứng-viên-2026-11-24) | 🟨 Xong trên nhánh `feat/company-page-jobs-layout`, chờ gộp PR |
 | [Mã tài khoản dạng số cho 3 cổng](#mã-tài-khoản-dạng-số-cho-3-cổng-2026-11-22) | 🟨 Xong trên nhánh `feat/numeric-user-id`, chờ gộp PR |
 | [Làm lại trang Thông tin tài khoản NTD](#làm-lại-trang-thông-tin-tài-khoản-ntd-2026-11-22) | 🟨 Xong trên nhánh `feat/employer-account-info-redesign`, chờ gộp |
 | [Làm lại Thông báo hệ thống và Lịch sử hoạt động của NTD](#làm-lại-thông-báo-hệ-thống-và-lịch-sử-hoạt-động-của-ntd-2026-11-22) | ✅ Gộp vào `dev` (#307) |
@@ -44,6 +45,45 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Sidebar, header theo màu chủ đạo của hệ thống (2026-11-24)
+
+| Hạng mục | Trạng thái |
+| --- | --- |
+| Biến `--brand-surface-dark` (trộn 14% màu chủ đạo vào nền tối) cho sidebar admin, sidebar và topbar NTD; hai cổng cùng một tông, đổi theo màu trong Cấu hình hệ thống | ✅ |
+| Điểm nhấn của bảng dùng chung và các danh sách admin (ô đang chọn, nút chính, cột đang sắp xếp, liên kết, focus) theo `--brand-*` thay vì xanh lá viết cứng; màu trạng thái giữ nguyên | ✅ |
+| Nút "Khảo sát thị trường" trên topbar NTD và bảng lệnh admin theo màu chủ đạo | ✅ |
+| Nội dung trang còn viết cứng xanh lá (khung chào mừng bảng tin NTD, ảnh hero trang chủ) | ⏳ Việc riêng |
+
+## Danh sách FAQ & hướng dẫn admin dạng bảng (2026-11-24)
+
+| Hạng mục | Trạng thái |
+| --- | --- |
+| Danh sách FAQ & hướng dẫn dùng bảng chung như các danh sách admin khác: 4 ô (tổng, đã công khai, có bản nháp, quá hạn rà soát) lọc được và giữ số khi chọn, chip "Sắp đến hạn rà soát" / "Đã lưu trữ", lọc chuyên mục/loại/tìm kiếm (tự tìm sau 0,4 giây), nút chuyên mục trong thanh lọc, phân trang dính đáy | ✅ |
+| Bỏ hàng nút riêng: tạo bài viết qua "Tạo mới" trên topbar như Tin và Công ty; nhãn vòng đời chỉ hiện khi bài đã lưu trữ | ✅ |
+| API `GET /admin/knowledgebase/articles/?published=true\|false`: bài có (không có) bản công khai, khớp số `published` trên ô tóm tắt | ✅ |
+| Thanh lọc gọn trên mobile: nút biểu tượng làm mới/CSV/in giữ kích thước tự nhiên thay vì giãn thành lưới | ✅ |
+
+## Danh sách công ty, người dùng, NTD admin dạng bảng và sidebar tối (2026-11-24)
+
+| Hạng mục | Trạng thái |
+| --- | --- |
+| Danh sách công ty admin dùng bảng chung như danh sách tin: 4 ô (tất cả, cần kiểm tra quản lý, yêu cầu cập nhật, nội dung chờ hậu kiểm), chip "Cần xem" (chưa có quản lý, quản lý chưa xác thực), lọc xác thực NTD/sắp xếp/tìm kiếm, làm mới/CSV/in, cột sắp xếp được, phân trang dính đáy; chuỗi đưa vào `messages/admin` | ✅ |
+| Bỏ bộ lọc "Vai trò NTD" ở danh sách công ty (chỉ lọc "có ít nhất một owner/member") | ✅ |
+| API `GET /admin/companies/?has_owner=not_single`: công ty không đúng một quản lý, khớp số trên ô tóm tắt | ✅ |
+| Sidebar admin nền tối (cả desktop, bảng nổi khi thu gọn và drawer mobile); logo đặt trên ô trắng; header giữ trắng | ✅ |
+| Danh sách Tất cả người dùng và Nhà tuyển dụng dùng bảng chung: ô thống kê lọc được (4 ô tài khoản, 6 ô NTD), chip "Cần xem", lọc trạng thái/sắp xếp/tìm kiếm/bộ lọc nâng cao (chip điều kiện đang áp dụng), hàng có Xem nhanh/Chi tiết/menu, phân trang dính đáy (NTD chọn được số dòng); bỏ bảng antd, thẻ thống kê và ô segment cũ | ✅ |
+| Thanh lọc gọn một dòng cho mọi danh sách admin (Tin, Công ty, Tài khoản): ô lọc cỡ thường, nút làm mới/CSV/in chỉ có biểu tượng, chip cuộn ngang khi chật | ✅ |
+| Dùng chung `WorkspaceSortHeader` cho tiêu đề cột sắp xếp; `WorkspaceListFooter` hỗ trợ chọn số dòng mỗi trang | ✅ |
+
+## Cổng admin toàn trang và danh sách tin dạng bảng (2026-11-24)
+
+| Hạng mục | Trạng thái |
+| --- | --- |
+| Layout admin dùng khung chung `shared/ui/workspace-page` như cổng NTD; bỏ `max-width: 1600px` và các `mx-auto max-w-*` ở 9 trang admin | ✅ |
+| Bỏ cụm tiêu đề trang (`AdminPageHeader`) ở mọi trang admin; tên trang là `<h1>` trên topbar ("Đang ở: …") | ✅ |
+| Danh sách tin admin dạng bảng như NTD: 6 ô phạm vi, chip "Cần xem" (quá hạn, bị ẩn, ngừng tuyển), lọc/sắp xếp/tìm kiếm, cột sắp xếp được, phân trang dính đáy; chuỗi đưa vào `messages/admin` | ✅ |
+| Bảng dùng chung: ô thống kê chia cột theo khung chứa (không cắt chữ khi sidebar rộng), cụm nút phụ `wt-filters__extra` | ✅ |
 
 ## Bảng toàn chiều rộng cho danh sách tin và chiến dịch của NTD (2026-11-24)
 
@@ -91,6 +131,21 @@ một danh sách phân trang (timeline antd), không lọc được và lịch s
   vấn mỗi dòng khi tính người thực hiện (đọc `actor_id` thay vì `actor`).
 - CSS dùng chung chuyển sang `frontend/src/shared/ui/workspace-list/workspace-list.css`
   để widget cũng dùng được.
+
+## Làm lại trang công ty phía ứng viên (2026-11-24)
+
+- Hero chỉ còn nút "Theo dõi" (kèm chuông email khi đang theo dõi); bỏ nút
+  "Xem việc làm" và nút "Website", URL website hiện ngay dưới tên công ty.
+- Cuộn qua hero thì lời mời "Theo dõi ngay" dính giữa đáy màn hình (màn ≥ lg; màn hẹp
+  đã có thanh CTA đáy); ẩn khi đã theo dõi hoặc người dùng đóng.
+- Tab "Việc làm" đổi thành "Tin tuyển dụng"; tab này bỏ sidebar "Thông tin chung",
+  chia 2 cột: Danh mục nghề 30% và danh sách tin 70%. Lọc danh mục chọn nhiều, là
+  trạng thái URL `category=1,2` (API nhận key lặp); chọn nhóm thì các chip con sáng
+  theo, chọn đủ chip con thì gộp thành nhóm.
+- `GET /public/companies/<id>/job-facets/` trả thêm `categories`: chuyên môn chính
+  của tin công khai, gom theo danh mục cha kèm số tin (thêm 1 truy vấn, budget 3).
+- Thẻ tin trong trang công ty theo bố cục thẻ danh sách việc làm: logo, tên công
+  ty, nền theo gói hiển thị, cao hơn.
 
 ## Mã tài khoản dạng số cho 3 cổng (2026-11-22)
 
@@ -1650,6 +1705,7 @@ Quyết định: [ADR-0017](02-tong-quan/adr-0017-company-page.md), ER-D58 đế
 | CP-5 | Chính sách quyền ở tầng models, uỷ quyền biên tập, bố cục áp dụng ngay (khoá lạc quan), tin ghim; workspace `/tuyendung/app/company-page` có xem trước | ✅ Xong trên nhánh, chưa gộp |
 | CP-6 | Khẩu hiệu, văn hoá, video, mạng xã hội, phúc lợi dạng thẻ, văn phòng qua `CompanyUpdateRequest` (gộp theo khối), tab "Nội dung", độ hoàn thiện (từ 19/11 đăng ngay và hậu kiểm, xem [Hậu kiểm nội dung trang công ty](#hậu-kiểm-nội-dung-trang-công-ty-2026-11-19)) | ✅ Xong trên nhánh, chưa gộp |
 | CP-7 | Nguồn digest email thứ ba "công ty đang theo dõi", tuỳ chọn `followed_company_jobs` | ✅ Xong trên nhánh, chưa gộp |
+| CP-7b | Email người theo dõi gửi ngay khi tin được công bố (đánh thức lịch trong `_go_live`, không chờ lượt 8:00 hằng ngày); `CompanyFollow.notify_since` để bật lại chuông không gửi bù tin đăng lúc đang tắt (24/11) | 🟨 Nhánh `fix/followed-company-instant-email`, chưa tạo PR |
 
 ## Làm lại Template CV (CVT-v3, 2026-11-13)
 
