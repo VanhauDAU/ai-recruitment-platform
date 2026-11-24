@@ -5,7 +5,7 @@
   --admin-primary: var(--brand-primary, #00b14f);
   --admin-primary-hover: var(--brand-primary-hover, #008f40);
   --admin-primary-soft: var(--brand-primary-soft, #e6f8ee);
-  --admin-accent: #16a34a;
+  --admin-accent: var(--admin-primary);
   --admin-canvas: #f4f7fb;
   --admin-surface: #ffffff;
   --admin-text: #0f172a;
@@ -36,7 +36,7 @@
 /* Dark navigation column. Tokens are redefined on the sidebar (desktop, peek
  * and the mobile drawer portal) so every nav rule below follows them. */
 .admin-sider {
-  --admin-sidebar: #0f172a;
+  --admin-sidebar: var(--brand-surface-dark);
   --admin-sidebar-text: #cbd5e1;
   --admin-sidebar-muted: #8391a7;
   --admin-sidebar-hover: rgb(255 255 255 / 6%);
@@ -518,8 +518,8 @@ a.admin-nav__level-one--active::before,
 
 .admin-palette__item--active,
 .admin-palette__item:hover {
-  background: var(--admin-primary-soft, #e6f8ee);
-  color: #0f5132;
+  background: var(--brand-primary-soft);
+  color: color-mix(in srgb, var(--brand-primary) 75%, #0f172a);
 }
 
 .admin-palette__label {

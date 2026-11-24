@@ -46,6 +46,15 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
 
+## Sidebar, header theo màu chủ đạo của hệ thống (2026-11-24)
+
+| Hạng mục | Trạng thái |
+| --- | --- |
+| Biến `--brand-surface-dark` (trộn 14% màu chủ đạo vào nền tối) cho sidebar admin, sidebar và topbar NTD; hai cổng cùng một tông, đổi theo màu trong Cấu hình hệ thống | ✅ |
+| Điểm nhấn của bảng dùng chung và các danh sách admin (ô đang chọn, nút chính, cột đang sắp xếp, liên kết, focus) theo `--brand-*` thay vì xanh lá viết cứng; màu trạng thái giữ nguyên | ✅ |
+| Nút "Khảo sát thị trường" trên topbar NTD và bảng lệnh admin theo màu chủ đạo | ✅ |
+| Nội dung trang còn viết cứng xanh lá (khung chào mừng bảng tin NTD, ảnh hero trang chủ) | ⏳ Việc riêng |
+
 ## Danh sách FAQ & hướng dẫn admin dạng bảng (2026-11-24)
 
 | Hạng mục | Trạng thái |

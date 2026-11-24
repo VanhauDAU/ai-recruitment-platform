@@ -44,11 +44,11 @@
 }
 
 .aml-identity__text { display: flex; min-width: 0; flex-direction: column; gap: 1px; }
-.aml-identity:hover .wt-title { color: #047857 !important; }
+.aml-identity:hover .wt-title { color: var(--brand-primary-hover) !important; }
 
 .aml-identity:focus-visible {
   border-radius: 6px;
-  outline: 2px solid #10b981;
+  outline: 2px solid var(--brand-primary);
   outline-offset: 2px;
 }
 
@@ -167,7 +167,7 @@
   gap: 3px;
 }
 
-.account-security-stack .is-positive { color: #047857; }
+.account-security-stack .is-positive { color: var(--brand-primary-hover); }
 
 .account-security-stack .is-warning { color: #b45309; }
 
