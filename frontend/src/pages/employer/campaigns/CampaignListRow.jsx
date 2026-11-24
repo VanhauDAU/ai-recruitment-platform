@@ -42,22 +42,23 @@ function initials(name) {
   return words.slice(-2).map((word) => word[0]).join('').toUpperCase() || m.employer_campaign_candidates_initials_fallback()
 }
 
-// Each row offers one action: the most useful next step for its state.
+// The most useful next step for the row's state; "Xem chi tiết" is always there.
 function nextAction(campaign, candidateDataAccess) {
   if (CAMPAIGN_SETUP_STATUSES.includes(campaign.status)) {
-    return { label: m.employer_campaign_list_action_setup(), to: detailPath(campaign, '/setup'), primary: true }
+    return { label: m.employer_campaign_list_action_setup(), to: detailPath(campaign, '/setup') }
   }
   const unviewed = count(campaign.unviewed_count ?? campaign.unviewed_application_count)
   if (candidateDataAccess && unviewed > 0) {
-    return { label: m.employer_campaign_list_action_view_new_cv({ count: unviewed }), to: detailPath(campaign, '?active_tab=apply_cv'), primary: true }
+    return { label: m.employer_campaign_list_action_view_new_cv({ count: unviewed }), to: detailPath(campaign, '?active_tab=apply_cv') }
   }
-  return { label: m.employer_campaign_list_action_open(), to: detailPath(campaign) }
+  return null
 }
 
-function Stat({ area, label, children }) {
+// On a narrow list each stat carries its own label; a wide table has a header.
+function Stat({ label, children }) {
   return (
-    <div className={`ws-stat cpl-stat--${area}`}>
-      <span className="ws-stat__label">{label}</span>
+    <div className="wt-cell">
+      <span className="wt-label">{label}</span>
       {children}
     </div>
   )
@@ -139,29 +140,33 @@ export default function CampaignListRow({ campaign, candidateDataAccess }) {
   const action = nextAction(campaign, candidateDataAccess)
   const occurredAt = campaign.last_activity?.occurred_at
   return (
-    <article data-testid={`campaign-row-${campaign.public_id}`} className="ws-row cpl-row">
-      <Link className="ws-row__title" to={detailPath(campaign)}>{campaign.name}</Link>
-      <div className="cpl-row__status">
+    <article data-testid={`campaign-row-${campaign.public_id}`} className="wt-row">
+      <div className="wt-cell wt-cell--main">
+        <Link className="wt-title" to={detailPath(campaign)}>{campaign.name}</Link>
+        <div className="wt-meta">
+          <span><CalendarOutlined aria-hidden />{campaignPeriod(campaign)}</span>
+          <span>
+            <HistoryOutlined aria-hidden />
+            <span>
+              {campaign.last_activity?.label || m.employer_campaign_list_activity_fallback()}
+              {occurredAt && <time className="ws-muted" dateTime={occurredAt}> · {dayjs(occurredAt).format('HH:mm DD/MM/YYYY')}</time>}
+            </span>
+          </span>
+        </div>
+      </div>
+      <div className="wt-cell wt-cell--status">
         <span className={`ws-pill ws-tone-${STATUS_TONES[campaign.status] || 'slate'}`}>{CAMPAIGN_STATUS_LABELS[campaign.status]}</span>
       </div>
-      <div className="ws-row__meta">
-        <span><CalendarOutlined aria-hidden /> {campaignPeriod(campaign)}</span>
-        <span>
-          <HistoryOutlined aria-hidden /> {campaign.last_activity?.label || m.employer_campaign_list_activity_fallback()}
-          {occurredAt && <time className="ws-muted" dateTime={occurredAt}> · {dayjs(occurredAt).format('HH:mm DD/MM/YYYY')}</time>}
-        </span>
-      </div>
-
-      <div className="ws-row__stats">
-        <Stat area="jobs" label={m.employer_campaign_jobs_col_job()}><Jobs campaign={campaign} /></Stat>
-        <Stat area="candidates" label={m.employer_campaign_cv_col_candidate()}>
-          <Candidates campaign={campaign} candidateDataAccess={candidateDataAccess} />
-        </Stat>
-        <Stat area="progress" label={m.employer_campaign_list_col_progress()}><Progress campaign={campaign} /></Stat>
-      </div>
-
-      <div className="cpl-row__action">
-        <Link className={`cpl-action${action.primary ? ' is-primary' : ''}`} to={action.to}>{action.label}</Link>
+      <Stat label={m.employer_campaign_jobs_col_job()}><Jobs campaign={campaign} /></Stat>
+      <Stat label={m.employer_campaign_cv_col_candidate()}>
+        <Candidates campaign={campaign} candidateDataAccess={candidateDataAccess} />
+      </Stat>
+      <Stat label={m.employer_campaign_list_col_progress()}><Progress campaign={campaign} /></Stat>
+      <div className="wt-cell wt-cell--actions">
+        <div className="wt-actions">
+          {action && <Link className="wt-btn wt-btn--primary" to={action.to}>{action.label}</Link>}
+          <Link className="wt-btn" to={detailPath(campaign)}>{m.employer_campaign_list_action_open()}</Link>
+        </div>
       </div>
     </article>
   )

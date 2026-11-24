@@ -71,7 +71,7 @@ export function formatJobDate(value) {
 }
 
 const DEADLINE_TONES = {
-  success: { text: 'text-emerald-700', bar: 'bg-emerald-500' },
+  success: { text: 'text-slate-500', bar: 'bg-slate-400' },
   warning: { text: 'text-amber-700', bar: 'bg-amber-500' },
   danger: { text: 'text-red-600', bar: 'bg-red-500' },
   expired: { text: 'text-orange-700', bar: 'bg-orange-500' },

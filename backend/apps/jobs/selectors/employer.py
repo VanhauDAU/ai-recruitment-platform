@@ -10,6 +10,7 @@ from django.db.models import (
     F,
     IntegerField,
     OuterRef,
+    Prefetch,
     Q,
     Subquery,
     Value,
@@ -21,7 +22,7 @@ from django.utils.translation import gettext as _
 from apps.applications.models import Application
 from common.vietnam_time import VIETNAM_TZ, vietnam_today
 
-from ..models import Job, JobModerationEvent, JobState
+from ..models import Job, JobCategoryAssignment, JobModerationEvent, JobState
 from ..models.querysets import job_effective_state_expression, with_job_visibility
 
 # Days before ``closes_on`` that the list flags a live job as closing soon.
@@ -222,7 +223,14 @@ def employer_job_list_queryset(
     queryset = (
         with_job_visibility(_with_hold_reason(_employer_jobs(user, campaign=campaign, q=q)))
         .select_related('company', 'campaign')
-        .prefetch_related('job_locations__location__parent')
+        .prefetch_related(
+            'job_locations__location__parent',
+            # One query: the primary specialisation names its category column.
+            Prefetch(
+                'category_assignments',
+                queryset=JobCategoryAssignment.objects.select_related('category'),
+            ),
+        )
         .defer(
             'description',
             'requirements',

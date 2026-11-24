@@ -124,7 +124,7 @@ export default function JobForm() {
   const hold = detailQuery.data?.visibility_hold
   if (hold && !hold.editable) {
     return (
-      <section className="mx-auto max-w-[1480px] space-y-4">
+      <section className="space-y-4">
         <JobVisibilityHoldAlert hold={detailQuery.data.visibility_hold} />
         <Link className="inline-block text-sm font-semibold" to={employerAppPath(`/jobs/${publicId}`)}>
           {m.employer_job_edit_back_to_detail()}
@@ -133,7 +133,7 @@ export default function JobForm() {
     )
   }
   return (
-    <section className="mx-auto max-w-[1480px] space-y-5">
+    <section className="space-y-5">
       <JobVisibilityHoldAlert hold={hold} />
 
       {(categoriesQuery.isError || campaignsQuery.isError || postingContextQuery.isError) && (

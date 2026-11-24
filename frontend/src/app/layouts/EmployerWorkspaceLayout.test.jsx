@@ -104,7 +104,7 @@ describe('EmployerWorkspaceLayout', () => {
     expect(sidebar).toHaveClass('ant-layout-sider-collapsed')
   })
 
-  it('keeps shared breathing room between the route header and every employer page', () => {
+  it('frames every employer page full width inside one shared gutter', () => {
     useSession.mockReturnValue({
       user: { full_name: 'Nguyễn An', email: 'hr@example.com' },
       logout: vi.fn(),
@@ -121,8 +121,11 @@ describe('EmployerWorkspaceLayout', () => {
     )
 
     const content = screen.getByTestId('employer-workspace-content')
-    expect(content).toHaveClass('pt-3', 'sm:pt-4', 'xl:pt-4')
-    expect(content).not.toHaveClass('pt-0', 'sm:pt-0', 'xl:pt-0')
+    const page = screen.getByText('Bảng tin', { selector: 'p' }).parentElement
+    expect(content).toHaveClass('workspace-content')
+    expect(page).toHaveClass('workspace-page')
+    expect(page).not.toHaveClass('mx-auto')
+    expect(page.className).not.toMatch(/max-w-/)
   })
 
   it('shows the three-level account verification popover from the sidebar question mark', async () => {
