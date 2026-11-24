@@ -228,7 +228,7 @@ export default function DashboardLayout() {
           size={320}
           closable={false}
           onClose={() => setMobileNavOpen(false)}
-          styles={{ body: { padding: 0, background: '#ffffff' } }}
+          styles={{ body: { padding: 0 } }}
         >
           <div className="admin-sider admin-sider--drawer">
             <AdminBrand

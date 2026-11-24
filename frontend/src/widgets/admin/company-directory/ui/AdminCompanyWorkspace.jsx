@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { useSearchParams } from 'react-router'
 import { adminCompanyKeys, getAdminCompanySummary } from '@/entities/company/admin-company'
 import { CompanyContentChangeQueue } from '@/features/admin/company/review-company-content-changes'
+import { m } from '@/shared/config/i18n'
 import AdminCompanyDirectory from './AdminCompanyDirectory'
 import AdminCompanyJoinRequestQueue from './AdminCompanyJoinRequestQueue'
 import AdminCompanyUpdateQueue from './AdminCompanyUpdateQueue'
@@ -14,7 +15,7 @@ const TABS = ['updates', 'content-changes', 'join-requests']
 const DIRECTORY_QUERY_KEYS = [
   'q',
   'recruiter_verification_status',
-  'member_role',
+  'has_owner',
   'ordering',
   'page',
 ]
@@ -53,50 +54,43 @@ export default function AdminCompanyWorkspace() {
     setSearchParams(next)
   }
 
-  const items = [
-    {
-      key: 'directory',
-      label: 'Danh sách công ty',
-      children: <AdminCompanyDirectory onOpenUpdates={() => changeTab('updates')} />,
-    },
-    {
-      key: 'updates',
-      label: 'Yêu cầu cập nhật',
-      children: <AdminCompanyUpdateQueue />,
-    },
-    {
-      key: 'content-changes',
-      label: (
-        <span>
-          Thay đổi nội dung <Badge count={unreviewed} size="small" overflowCount={99} />
-        </span>
-      ),
-      children: (
-        <CompanyPanel
-          title="Hậu kiểm nội dung trang công ty"
-          description="Nội dung trang công ty lên trang ngay khi nhà tuyển dụng lưu. Xem lại theo lô, hoàn tác nội dung vi phạm và bật duyệt trước cho công ty tái phạm."
-        >
-          <CompanyContentChangeQueue />
-        </CompanyPanel>
-      ),
-    },
-    {
-      key: 'join-requests',
-      label: 'Yêu cầu tham gia',
-      children: <AdminCompanyJoinRequestQueue />,
-    },
-  ]
+  const panels = {
+    updates: (
+      <section className="admin-panel">
+        <AdminCompanyUpdateQueue />
+      </section>
+    ),
+    'content-changes': (
+      <CompanyPanel
+        title="Hậu kiểm nội dung trang công ty"
+        description="Nội dung trang công ty lên trang ngay khi nhà tuyển dụng lưu. Xem lại theo lô, hoàn tác nội dung vi phạm và bật duyệt trước cho công ty tái phạm."
+      >
+        <CompanyContentChangeQueue />
+      </CompanyPanel>
+    ),
+    'join-requests': <AdminCompanyJoinRequestQueue />,
+  }
 
   return (
     <section className="admin-company-workspace">
-      <section className="admin-panel company-management-panel">
-        <Tabs
-          activeKey={activeTab}
-          items={items}
-          onChange={changeTab}
-          destroyOnHidden={false}
-        />
-      </section>
+      <Tabs
+        activeKey={activeTab}
+        onChange={changeTab}
+        items={[
+          { key: 'directory', label: m.admin_company_list_tab_directory() },
+          { key: 'updates', label: m.admin_company_list_tab_updates() },
+          {
+            key: 'content-changes',
+            label: (
+              <span>
+                {m.admin_company_list_tab_content()} <Badge count={unreviewed} size="small" overflowCount={99} />
+              </span>
+            ),
+          },
+          { key: 'join-requests', label: m.admin_company_list_tab_join() },
+        ]}
+      />
+      {panels[activeTab] || <AdminCompanyDirectory onOpenTab={changeTab} />}
     </section>
   )
 }

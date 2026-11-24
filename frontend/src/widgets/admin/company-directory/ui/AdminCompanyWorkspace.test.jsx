@@ -81,9 +81,8 @@ describe('AdminCompanyWorkspace', () => {
     const user = userEvent.setup()
     renderWorkspace()
 
-    await user.click(await screen.findByRole('button', {
-      name: 'Yêu cầu cập nhật: 0. Mở hàng đợi xử lý',
-    }))
+    const tiles = await screen.findByRole('group', { name: 'Tóm tắt công ty' })
+    await user.click(within(tiles).getByRole('button', { name: /Yêu cầu cập nhật/ }))
 
     expect(screen.getByRole('tab', { name: 'Yêu cầu cập nhật' })).toHaveAttribute(
       'aria-selected',

@@ -33,6 +33,36 @@
   min-height: 100dvh;
 }
 
+/* Dark navigation column. Tokens are redefined on the sidebar (desktop, peek
+ * and the mobile drawer portal) so every nav rule below follows them. */
+.admin-sider {
+  --admin-sidebar: #0f172a;
+  --admin-sidebar-text: #cbd5e1;
+  --admin-sidebar-muted: #8391a7;
+  --admin-sidebar-hover: rgb(255 255 255 / 6%);
+  --admin-border: rgb(255 255 255 / 8%);
+  --admin-text: #f8fafc;
+  --admin-text-muted: #a3b0c2;
+  --admin-canvas: rgb(255 255 255 / 5%);
+  --admin-surface: rgb(255 255 255 / 10%);
+  --admin-nav-active-bg: color-mix(in srgb, var(--admin-primary) 18%, transparent);
+  --admin-nav-active-text: color-mix(in srgb, var(--admin-primary) 40%, #ffffff);
+  --admin-critical-soft: rgb(239 68 68 / 16%);
+  color-scheme: dark;
+}
+
+/* The logo is drawn for light backgrounds, so it sits on a small white plate
+ * inside the dark brand strip. */
+.admin-sider__brand > a {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 4px 8px;
+}
+
+.admin-sider__brand--collapsed > a {
+  padding: 4px;
+}
+
 /* Ant Layout đặt width: 100% cho cột nội dung; khi đứng cạnh Sider, giá trị đó
  * làm tổng chiều rộng thành viewport + sidebar. Cho cột này co theo phần còn
  * lại để bảng rộng tự cuộn bên trong thay vì kéo tràn toàn bộ trang. */
@@ -370,7 +400,7 @@ a.admin-nav__level-one--active::before,
 
 .admin-nav__count {
   align-items: center;
-  background: #eef2f6;
+  background: var(--admin-surface);
   border-radius: 999px;
   color: var(--admin-sidebar-text);
   display: inline-flex;
@@ -709,6 +739,7 @@ a.admin-nav__level-one--active::before,
 }
 
 .admin-sider--drawer {
+  background: var(--admin-sidebar);
   display: flex;
   flex-direction: column;
   min-height: 100%;
@@ -772,7 +803,7 @@ a.admin-nav__level-one--active::before,
 .admin-sider-footer__logout.ant-btn:hover,
 .admin-sider-footer__logout.ant-btn:focus-visible {
   background: var(--admin-critical-soft) !important;
-  color: var(--admin-critical) !important;
+  color: #fca5a5 !important;
 }
 
 .admin-sider-footer--collapsed {

@@ -46,6 +46,15 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
 
+## Danh sách công ty admin dạng bảng và sidebar tối (2026-11-24)
+
+| Hạng mục | Trạng thái |
+| --- | --- |
+| Danh sách công ty admin dùng bảng chung như danh sách tin: 4 ô (tất cả, cần kiểm tra quản lý, yêu cầu cập nhật, nội dung chờ hậu kiểm), chip "Cần xem" (chưa có quản lý, quản lý chưa xác thực), lọc xác thực NTD/sắp xếp/tìm kiếm, làm mới/CSV/in, cột sắp xếp được, phân trang dính đáy; chuỗi đưa vào `messages/admin` | ✅ |
+| Bỏ bộ lọc "Vai trò NTD" ở danh sách công ty (chỉ lọc "có ít nhất một owner/member") | ✅ |
+| API `GET /admin/companies/?has_owner=not_single`: công ty không đúng một quản lý, khớp số trên ô tóm tắt | ✅ |
+| Sidebar admin nền tối (cả desktop, bảng nổi khi thu gọn và drawer mobile); logo đặt trên ô trắng; header giữ trắng | ✅ |
+
 ## Cổng admin toàn trang và danh sách tin dạng bảng (2026-11-24)
 
 | Hạng mục | Trạng thái |
