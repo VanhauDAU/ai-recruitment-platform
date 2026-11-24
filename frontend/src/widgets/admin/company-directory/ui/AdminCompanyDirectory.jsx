@@ -1,7 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import {
-  ArrowDownOutlined,
-  ArrowUpOutlined,
   BankOutlined,
   EditOutlined,
   FileSyncOutlined,
@@ -22,6 +20,7 @@ import { getIntlLocale, m } from '@/shared/config/i18n'
 import { adminPath } from '@/shared/config/portals'
 import { AdminDataActions } from '@/shared/ui/admin'
 import WorkspaceListFooter from '@/shared/ui/workspace-list/WorkspaceListFooter'
+import WorkspaceSortHeader from '@/shared/ui/workspace-list/WorkspaceSortHeader'
 import WorkspaceQuickFilters from '@/shared/ui/workspace-list/WorkspaceQuickFilters'
 import WorkspaceStatusTiles from '@/shared/ui/workspace-list/WorkspaceStatusTiles'
 import AdminCompanyListRow from './AdminCompanyListRow'
@@ -53,19 +52,6 @@ const OWNER_CHIPS = [
   { value: 'false', label: m.admin_company_list_chip_no_owner(), tone: 'amber' },
   { value: 'ineligible', label: m.admin_company_list_chip_ineligible(), tone: 'slate' },
 ]
-
-// A header click sorts descending, a second ascending, a third resets.
-function SortHeader({ field, ordering, onSort, children }) {
-  const active = ordering === field || ordering === `-${field}`
-  const Arrow = ordering === field ? ArrowUpOutlined : ArrowDownOutlined
-  const next = ordering === `-${field}` ? field : ordering === field ? DEFAULT_ORDERING : `-${field}`
-  return (
-    <button type="button" className="ws-sort" aria-pressed={active} onClick={() => onSort(next)}>
-      {children}
-      <Arrow aria-hidden className="ws-sort__icon" />
-    </button>
-  )
-}
 
 export default function AdminCompanyDirectory({ onOpenTab }) {
   const navigate = useNavigate()
@@ -165,7 +151,7 @@ export default function AdminCompanyDirectory({ onOpenTab }) {
         />
       </div>
 
-      <div className="wt-table acl-table">
+      <div className="wt-table wt-table--compact acl-table">
         <div className="wt-toolbar">
           <WorkspaceQuickFilters
             label={m.admin_company_list_quick_label()}
@@ -178,14 +164,12 @@ export default function AdminCompanyDirectory({ onOpenTab }) {
           />
           <div className="wt-filters">
             <Select
-              size="large"
               aria-label={m.admin_company_list_verification_aria()}
               onChange={(value) => patchParams({ recruiter_verification_status: value })}
               options={VERIFICATION_OPTIONS}
               value={filters.recruiter_verification_status}
             />
             <Select
-              size="large"
               aria-label={m.admin_company_list_sort_aria()}
               onChange={sortBy}
               options={ORDERING_OPTIONS}
@@ -194,7 +178,6 @@ export default function AdminCompanyDirectory({ onOpenTab }) {
             />
             <Input
               allowClear
-              size="large"
               type="search"
               className="wt-filters__search"
               aria-label={m.admin_company_list_search_aria()}
@@ -205,6 +188,7 @@ export default function AdminCompanyDirectory({ onOpenTab }) {
             />
             <div className="wt-filters__extra">
               <AdminDataActions
+                iconOnly
                 columns={[
                   { key: 'public_id', label: m.admin_company_list_csv_code() },
                   { key: 'company_name', label: m.admin_company_list_col_company() },
@@ -226,11 +210,11 @@ export default function AdminCompanyDirectory({ onOpenTab }) {
         </div>
 
         <div className="wt-head">
-          <span><SortHeader field="company_name" ordering={ordering} onSort={sortBy}>{m.admin_company_list_col_company()}</SortHeader></span>
-          <span><SortHeader field="owner_count" ordering={ordering} onSort={sortBy}>{m.admin_company_list_col_owner()}</SortHeader></span>
-          <span><SortHeader field="recruiter_count" ordering={ordering} onSort={sortBy}>{m.admin_company_list_col_recruiters()}</SortHeader></span>
-          <span><SortHeader field="pending_update_count" ordering={ordering} onSort={sortBy}>{m.admin_company_list_col_updates()}</SortHeader></span>
-          <span><SortHeader field="updated_at" ordering={ordering} onSort={sortBy}>{m.admin_company_list_col_updated()}</SortHeader></span>
+          <span><WorkspaceSortHeader defaultOrdering={DEFAULT_ORDERING} field="company_name" ordering={ordering} onSort={sortBy}>{m.admin_company_list_col_company()}</WorkspaceSortHeader></span>
+          <span><WorkspaceSortHeader defaultOrdering={DEFAULT_ORDERING} field="owner_count" ordering={ordering} onSort={sortBy}>{m.admin_company_list_col_owner()}</WorkspaceSortHeader></span>
+          <span><WorkspaceSortHeader defaultOrdering={DEFAULT_ORDERING} field="recruiter_count" ordering={ordering} onSort={sortBy}>{m.admin_company_list_col_recruiters()}</WorkspaceSortHeader></span>
+          <span><WorkspaceSortHeader defaultOrdering={DEFAULT_ORDERING} field="pending_update_count" ordering={ordering} onSort={sortBy}>{m.admin_company_list_col_updates()}</WorkspaceSortHeader></span>
+          <span><WorkspaceSortHeader defaultOrdering={DEFAULT_ORDERING} field="updated_at" ordering={ordering} onSort={sortBy}>{m.admin_company_list_col_updated()}</WorkspaceSortHeader></span>
           <span>{m.admin_company_list_col_actions()}</span>
         </div>
 

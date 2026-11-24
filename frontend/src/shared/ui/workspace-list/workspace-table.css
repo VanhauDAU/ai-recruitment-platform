@@ -338,6 +338,49 @@
   .wt-label { display: none; }
 }
 
+/* Compact toolbar (admin lists): regular-size controls and narrower fields so
+ * the quick chips and the filters share one row on a desktop-wide table. */
+.wt-table--compact .wt-toolbar { padding-block: 10px; }
+.wt-table--compact .wt-toolbar .ws-chip { min-height: 30px; padding: 0 10px; font-size: 12.5px; }
+
+/* Wide enough: one row, chips shrink and wrap on the left, filters stay right. */
+@container (min-width: 880px) {
+  .wt-table--compact .wt-toolbar { flex-wrap: nowrap; }
+  .wt-table--compact .wt-toolbar__quick { flex: 1 1 auto; min-width: 0; flex-wrap: nowrap; }
+
+  /* The chip group keeps its aria-label; the visible label gives way. */
+  .wt-table--compact .wt-toolbar__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .wt-table--compact .ws-quick__chips {
+    min-width: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .wt-table--compact .ws-quick__chips::-webkit-scrollbar { display: none; }
+  .wt-table--compact .ws-chip { flex: none; white-space: nowrap; }
+
+  .wt-table--compact .wt-filters {
+    display: flex;
+    width: auto;
+    flex: none;
+    flex-wrap: nowrap;
+    margin-left: auto;
+  }
+
+  .wt-table--compact .wt-filters > * { width: 150px; }
+  .wt-table--compact .wt-filters > .wt-filters__search { width: 210px; order: 9; }
+  .wt-table--compact .wt-filters > .wt-filters__extra { width: auto; order: 10; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .wt-tile,
   .wt-row,

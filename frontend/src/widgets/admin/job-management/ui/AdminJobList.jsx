@@ -1,8 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import {
   AlertOutlined,
-  ArrowDownOutlined,
-  ArrowUpOutlined,
   CheckCircleOutlined,
   EditOutlined,
   FileTextOutlined,
@@ -24,6 +22,7 @@ import { getIntlLocale, m } from '@/shared/config/i18n'
 import { adminPath } from '@/shared/config/portals'
 import { AdminDataActions } from '@/shared/ui/admin'
 import WorkspaceListFooter from '@/shared/ui/workspace-list/WorkspaceListFooter'
+import WorkspaceSortHeader from '@/shared/ui/workspace-list/WorkspaceSortHeader'
 import WorkspaceQuickFilters from '@/shared/ui/workspace-list/WorkspaceQuickFilters'
 import WorkspaceStatusTiles from '@/shared/ui/workspace-list/WorkspaceStatusTiles'
 import AdminJobListRow from './AdminJobListRow'
@@ -68,19 +67,6 @@ function scopeToParams(scope) {
   // Candidate-facing states are computed server-side; `held` is an admin hold.
   if (['active', 'expired', 'hidden', 'held', 'resubmitted'].includes(scope)) return { scope }
   return { status: scope }
-}
-
-// A header click sorts descending, a second ascending, a third resets.
-function SortHeader({ field, ordering, onSort, children }) {
-  const active = ordering === field || ordering === `-${field}`
-  const Arrow = ordering === field ? ArrowUpOutlined : ArrowDownOutlined
-  const next = ordering === `-${field}` ? field : ordering === field ? DEFAULT_ORDERING : `-${field}`
-  return (
-    <button type="button" className="ws-sort" aria-pressed={active} onClick={() => onSort(next)}>
-      {children}
-      <Arrow aria-hidden className="ws-sort__icon" />
-    </button>
-  )
 }
 
 export default function AdminJobList() {
@@ -173,7 +159,7 @@ export default function AdminJobList() {
         }))}
       />
 
-      <div className="wt-table ajl-table">
+      <div className="wt-table wt-table--compact ajl-table">
         <div className="wt-toolbar">
           <WorkspaceQuickFilters
             label={m.admin_job_list_quick_label()}
@@ -189,14 +175,12 @@ export default function AdminJobList() {
           />
           <div className="wt-filters">
             <Select
-              size="large"
               aria-label={m.admin_job_list_scope_aria()}
               onChange={chooseScope}
               options={JOB_SCOPE_OPTIONS}
               value={scope}
             />
             <Select
-              size="large"
               aria-label={m.admin_job_list_sort_aria()}
               onChange={sortBy}
               options={ORDERING_OPTIONS}
@@ -205,7 +189,6 @@ export default function AdminJobList() {
             />
             <Input
               allowClear
-              size="large"
               type="search"
               className="wt-filters__search"
               aria-label={m.admin_job_list_search_aria()}
@@ -216,6 +199,7 @@ export default function AdminJobList() {
             />
             <div className="wt-filters__extra">
               <AdminDataActions
+                iconOnly
                 columns={[
                   { key: 'public_id', label: m.admin_job_list_csv_code() },
                   { key: 'title', label: m.admin_job_list_col_job() },
@@ -239,11 +223,11 @@ export default function AdminJobList() {
         </div>
 
         <div className="wt-head">
-          <span><SortHeader field="title" ordering={ordering} onSort={sortBy}>{m.admin_job_list_col_job()}</SortHeader></span>
-          <span><SortHeader field="status" ordering={ordering} onSort={sortBy}>{m.admin_job_list_col_status()}</SortHeader></span>
-          <span><SortHeader field="pending_reports" ordering={ordering} onSort={sortBy}>{m.admin_job_list_col_signals()}</SortHeader></span>
-          <span><SortHeader field="application_count" ordering={ordering} onSort={sortBy}>{m.admin_job_list_col_applications()}</SortHeader></span>
-          <span><SortHeader field="deadline" ordering={ordering} onSort={sortBy}>{m.admin_job_list_col_deadline()}</SortHeader></span>
+          <span><WorkspaceSortHeader defaultOrdering={DEFAULT_ORDERING} field="title" ordering={ordering} onSort={sortBy}>{m.admin_job_list_col_job()}</WorkspaceSortHeader></span>
+          <span><WorkspaceSortHeader defaultOrdering={DEFAULT_ORDERING} field="status" ordering={ordering} onSort={sortBy}>{m.admin_job_list_col_status()}</WorkspaceSortHeader></span>
+          <span><WorkspaceSortHeader defaultOrdering={DEFAULT_ORDERING} field="pending_reports" ordering={ordering} onSort={sortBy}>{m.admin_job_list_col_signals()}</WorkspaceSortHeader></span>
+          <span><WorkspaceSortHeader defaultOrdering={DEFAULT_ORDERING} field="application_count" ordering={ordering} onSort={sortBy}>{m.admin_job_list_col_applications()}</WorkspaceSortHeader></span>
+          <span><WorkspaceSortHeader defaultOrdering={DEFAULT_ORDERING} field="deadline" ordering={ordering} onSort={sortBy}>{m.admin_job_list_col_deadline()}</WorkspaceSortHeader></span>
           <span>{m.admin_job_list_col_actions()}</span>
         </div>
 

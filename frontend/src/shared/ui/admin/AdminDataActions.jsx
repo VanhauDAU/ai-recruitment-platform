@@ -25,8 +25,11 @@ export default function AdminDataActions({
   allowExport = true,
   allowPrint = true,
   compact = false,
+  // Icon buttons only; each keeps its tooltip and accessible name.
+  iconOnly = false,
 }) {
   const buttonProps = compact ? { size: 'small' } : {}
+  const text = (value) => (iconOnly ? null : value)
   const canExport = !exportDisabled && (
     Boolean(onExport) || (rows.length > 0 && columns.length > 0)
   )
@@ -42,7 +45,7 @@ export default function AdminDataActions({
             loading={refreshing}
             onClick={onRefresh}
           >
-            Làm mới
+            {text('Làm mới')}
           </Button>
         </Tooltip>
       )}
@@ -56,8 +59,8 @@ export default function AdminDataActions({
           maxCount={1}
           showUploadList={false}
         >
-          <Button {...buttonProps} icon={<UploadOutlined />}>
-            {importLabel}
+          <Button {...buttonProps} aria-label={importLabel} icon={<UploadOutlined />}>
+            {text(importLabel)}
           </Button>
         </Upload>
       )}
@@ -78,7 +81,7 @@ export default function AdminDataActions({
                 downloadCsv({ rows, columns, filename })
               }}
             >
-              {exportLabel}
+              {text(exportLabel)}
             </Button>
           </span>
         </Tooltip>
@@ -91,7 +94,7 @@ export default function AdminDataActions({
             icon={<PrinterOutlined />}
             onClick={() => window.print()}
           >
-            In
+            {text('In')}
           </Button>
         </Tooltip>
       )}
