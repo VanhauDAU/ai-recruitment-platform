@@ -3,7 +3,7 @@ import { AdminCvTemplateEditor } from '@/widgets/admin/cv-templates'
 
 export default function AdminCvTemplateEditorPage() {
   return (
-    <AdminCvShell compact>
+    <AdminCvShell>
       <AdminCvTemplateEditor />
     </AdminCvShell>
   )

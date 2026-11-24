@@ -33,6 +33,7 @@ import {
 } from './admin-sidebar-storage'
 import EmployerWorkspaceLayout from './EmployerWorkspaceLayout'
 import { useAdminCommandPalette } from './use-admin-command-palette'
+import '@/shared/ui/workspace-page/workspace-page.css'
 import './admin-dashboard.css'
 
 const { Sider, Content } = Layout
@@ -273,8 +274,8 @@ export default function DashboardLayout() {
             path={pathname}
             stickyOffset="var(--admin-topbar-height)"
           />
-          <Content>
-            <div id="admin-main" ref={mainRef} tabIndex={-1} className="admin-main">
+          <Content className="workspace-content">
+            <div id="admin-main" ref={mainRef} tabIndex={-1} className="admin-main workspace-page">
               <Outlet context={{ adminAccess }} />
             </div>
           </Content>

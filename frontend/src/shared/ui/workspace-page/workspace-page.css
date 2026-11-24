@@ -1,5 +1,5 @@
 /*
- * Page frame of a signed-in workspace (employer today, admin next): the
+ * Page frame of the signed-in workspaces (employer and admin portals): the
  * scroll area behind every route and one gutter that pages share, so every
  * page spans the full width beside the sidebar instead of a centred column.
  * Domain-free and lazy (imported by the workspace layout chunk).

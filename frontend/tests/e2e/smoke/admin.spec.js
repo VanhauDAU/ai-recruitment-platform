@@ -189,7 +189,7 @@ test('admin account management: filters, table actions and quick detail are resp
 
   await page.goto('/admin/app/recruiters?tab=verification')
   await expect(page.getByRole('heading', {
-    name: 'Nhà tuyển dụng',
+    name: 'Xác thực NTD',
     exact: true,
   })).toBeVisible()
   const verificationTab = page.getByRole('tab', { name: /Chờ xác thực NTD/ })
@@ -288,7 +288,9 @@ test('admin recruiter workspace: segments, next action and quick view', { tag: '
               ? { results: [], next_cursor: null, category_counts: { all: 0 } }
               : path === '/api/admin/company-domain-claims/summary/'
                 ? { total: 0, manual_pending: 0 }
-                : {}
+                : path === '/api/public/privacy/consent/'
+                  ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
+                  : {}
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })
 

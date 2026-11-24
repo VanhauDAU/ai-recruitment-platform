@@ -100,7 +100,10 @@ export default function AdminTopbar({
               </ol>
             </nav>
           )}
-          <p className="admin-topbar__title">{`Đang ở: ${title || 'Quản trị hệ thống'}`}</p>
+          {/* The page heading lives here, so every admin page shares one h1. */}
+          <div className="admin-topbar__title">
+            Đang ở: <h1 className="admin-topbar__heading">{title || 'Quản trị hệ thống'}</h1>
+          </div>
         </div>
       </div>
 

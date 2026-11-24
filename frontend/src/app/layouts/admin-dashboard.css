@@ -623,6 +623,12 @@ a.admin-nav__level-one--active::before,
   white-space: nowrap;
 }
 
+.admin-topbar__heading {
+  display: inline;
+  font: inherit;
+  margin: 0;
+}
+
 .admin-topbar__create.ant-btn {
   border-radius: 10px;
   height: 40px;
@@ -780,10 +786,11 @@ a.admin-nav__level-one--active::before,
   flex: 0 0 auto;
 }
 
+/* Page frame and gutter come from @/shared/ui/workspace-page (shared with the
+ * employer workspace); the window scrolls here, under the sticky topbar. */
 .admin-main {
-  margin-inline: auto;
-  max-width: 1600px;
-  padding: 20px;
+  --workspace-viewport: calc(100dvh - var(--admin-topbar-height));
+
   width: 100%;
 }
 
@@ -806,78 +813,6 @@ a.admin-nav__level-one--active::before,
 
 .admin-skip-link:focus {
   top: 12px;
-}
-
-.admin-page-header {
-  align-items: flex-start;
-  display: flex;
-  gap: 16px;
-  justify-content: space-between;
-  margin-bottom: 18px;
-}
-
-.admin-page-header__content {
-  align-items: flex-start;
-  display: flex;
-  gap: 14px;
-  min-width: 0;
-}
-
-.admin-page-header__icon {
-  align-items: center;
-  background: linear-gradient(145deg, var(--admin-primary-soft), color-mix(in srgb, var(--admin-primary-soft) 45%, white));
-  border: 1px solid color-mix(in srgb, var(--admin-primary) 24%, white);
-  border-radius: 14px;
-  color: var(--admin-primary);
-  display: flex;
-  flex: 0 0 auto;
-  font-size: 22px;
-  height: 48px;
-  justify-content: center;
-  width: 48px;
-}
-
-.admin-page-header__eyebrow {
-  color: var(--admin-primary);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  margin: 0 0 5px;
-  text-transform: uppercase;
-}
-
-.admin-page-header__title {
-  color: var(--admin-text);
-  font-size: clamp(24px, 3vw, 32px);
-  font-weight: 750;
-  letter-spacing: -0.025em;
-  line-height: 1.2;
-  margin: 0;
-}
-
-.admin-page-header__description {
-  color: var(--admin-text-muted);
-  font-size: 13px;
-  line-height: 1.55;
-  margin: 5px 0 0;
-  max-width: 760px;
-}
-
-.admin-page-header__meta {
-  align-items: center;
-  color: var(--admin-text-muted);
-  display: flex;
-  flex-wrap: wrap;
-  font-size: 12px;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.admin-page-header__actions {
-  align-items: center;
-  display: flex;
-  flex: 0 0 auto;
-  gap: 10px;
 }
 
 .admin-panel {
@@ -1108,20 +1043,6 @@ a.admin-nav__level-one--active::before,
     padding: 0 12px !important;
   }
 
-  .admin-main {
-    padding: 18px 14px 30px;
-  }
-
-  .admin-page-header {
-    flex-direction: column;
-  }
-
-  .admin-page-header__content {
-    width: 100%;
-  }
-
-  .admin-page-header__actions,
-  .admin-page-header__actions .ant-btn,
   .admin-panel__extra,
   .admin-panel__extra .ant-select {
     width: 100%;
@@ -1216,20 +1137,7 @@ a.admin-nav__level-one--active::before,
   }
 
   .admin-main {
-    max-width: none;
     padding: 0;
-  }
-
-  .admin-page-header {
-    margin-bottom: 12px;
-  }
-
-  .admin-page-header__icon {
-    border: 1px solid #cbd5e1;
-  }
-
-  .admin-page-header__title {
-    font-size: 22px;
   }
 
   .admin-panel,

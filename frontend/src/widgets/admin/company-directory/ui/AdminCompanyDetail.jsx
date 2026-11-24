@@ -622,8 +622,8 @@ export default function AdminCompanyDetail({ publicId }) {
       <header className="company-directory__hero">
         <CompanyLogo company={company} size={72} />
         <div className="min-w-0 flex-1">
-          <p className="admin-page-header__eyebrow">Hồ sơ công ty</p>
-          <h1 className="admin-page-header__title">{company.company_name}</h1>
+          <p className="company-directory__eyebrow">Hồ sơ công ty</p>
+          <h1 className="company-directory__title">{company.company_name}</h1>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <Tag icon={<TeamOutlined />}>{company.recruiter_count} NTD</Tag>
           </div>

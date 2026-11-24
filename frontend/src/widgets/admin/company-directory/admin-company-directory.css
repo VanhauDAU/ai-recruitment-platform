@@ -487,3 +487,22 @@
     padding: 18px;
   }
 }
+
+/* Company name heading of the detail hero. */
+.company-directory__eyebrow {
+  color: var(--admin-primary);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  margin: 0 0 5px;
+  text-transform: uppercase;
+}
+
+.company-directory__title {
+  color: var(--admin-text);
+  font-size: clamp(24px, 3vw, 32px);
+  font-weight: 750;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  margin: 0;
+}

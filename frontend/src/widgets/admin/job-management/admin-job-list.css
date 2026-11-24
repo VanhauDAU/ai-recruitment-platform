@@ -1,0 +1,35 @@
+/* Tabs above the list; the page fills the frame so the pagination bar sits
+ * at the bottom of short lists too. */
+.admin-job-management {
+  display: flex;
+  flex: 1 0 auto;
+  min-width: 0;
+  flex-direction: column;
+}
+
+/*
+ * Admin job list on top of @/shared/ui/workspace-list/workspace-table.css, the
+ * same table as the employer job list: column widths and row details only.
+ */
+.ajl-table { --wt-cols: minmax(320px, 1fr) 150px 160px 130px 150px 180px; }
+.ajl-skeleton { grid-column: 1 / -1; }
+
+.ajl-title {
+  border: 0;
+  background: none;
+  padding: 0;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ajl-code {
+  color: #64748b;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11.5px;
+}
+
+.ajl-alert { color: #b91c1c; }
+
+/* Refresh, CSV and print stay on one line at the end of the filter row. */
+.ajl-table .wt-filters__extra .admin-data-actions { flex-wrap: nowrap; }
