@@ -23,12 +23,6 @@
   cursor: pointer;
 }
 
-.ajl-code {
-  color: #64748b;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 11.5px;
-}
-
 .ajl-alert { color: #b91c1c; }
 
 /* Refresh, CSV and print stay on one line at the end of the filter row. */

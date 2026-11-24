@@ -16,6 +16,7 @@ import {
 } from '@/entities/campaign/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { m } from '@/shared/config/i18n'
+import CodeBadge from '@/shared/ui/code-badge/CodeBadge'
 import { message } from '@/shared/lib/toast'
 
 // Kết thúc chiến dịch đóng mọi tin đang tuyển; hủy lịch đưa chiến dịch về nháp.
@@ -166,7 +167,7 @@ export default function CampaignLifecycleActions({ campaign }) {
                     className="border-b border-slate-100 px-3 py-2 text-sm last:border-b-0"
                   >
                     <strong className="text-slate-700">{job.title}</strong>
-                    <span className="ml-2 text-xs text-slate-400">#{job.public_id}</span>
+                    <CodeBadge code={job.code} className="ml-2" />
                   </div>
                 ))}
               </div>

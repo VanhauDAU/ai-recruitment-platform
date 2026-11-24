@@ -35,6 +35,7 @@ vi.mock('@/entities/job/admin-job', async (importOriginal) => ({
 
 const company = {
   public_id: 'co_alpha',
+  code: 'C305812',
   company_name: 'Công ty Alpha',
   trade_name: 'Alpha',
   logo_url: '',
@@ -129,6 +130,7 @@ describe('admin company directory', () => {
 
     expect(await screen.findByText('Công ty Alpha')).toBeInTheDocument()
     expect(screen.getByText('Chưa có hồ sơ · 1')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Sao chép mã C305812' })).toBeInTheDocument()
     expect(screen.getByText('Đã xác thực · 1')).toBeInTheDocument()
     expect(screen.getByLabelText('Công ty Alpha chưa cập nhật logo')).toHaveTextContent('A')
     expect(screen.getByRole('button', { name: 'Nhà tuyển dụng' })).toBeInTheDocument()

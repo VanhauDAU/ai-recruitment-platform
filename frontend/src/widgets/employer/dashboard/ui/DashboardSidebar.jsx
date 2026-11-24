@@ -17,6 +17,7 @@ import {
   EMPLOYER_VERIFY_URL,
   employerAppPath,
 } from '@/shared/config/portals'
+import CodeBadge from '@/shared/ui/code-badge/CodeBadge'
 import { getIntlLocale, m } from '@/shared/config/i18n'
 
 const dateFormatter = new Intl.DateTimeFormat(getIntlLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -118,7 +119,7 @@ export default function DashboardSidebar({
         <div className="mt-4 space-y-2.5 text-[11px] text-slate-500">
           {account.work_location_name && <p className="flex items-center gap-2"><EnvironmentOutlined className="text-slate-400" /> <span className="truncate">{account.work_location_name}</span></p>}
           {account.company_size && <p className="flex items-center gap-2"><TeamOutlined className="text-slate-400" /> {m.employer_workspace_dash_company_size({ size: account.company_size })}</p>}
-          <p className="flex items-center gap-2"><BankOutlined className="text-slate-400" /> {m.employer_workspace_employer_code({ code: account.public_id || '—' })}</p>
+          {account.public_id && <p className="flex items-center gap-2"><BankOutlined className="text-slate-400" /> <CodeBadge code={account.public_id} label={m.employer_workspace_employer_code_label()} /></p>}
         </div>
       </section>
     </aside>

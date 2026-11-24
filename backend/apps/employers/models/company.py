@@ -5,7 +5,10 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy
 
 from common.db.public_id import generate_public_id
+from common.db.readable_code import new_unique_code
 from common.db.search import fold_accents
+
+from ..domain.company_code import COMPANY_CODE_LENGTH, COMPANY_CODE_REGEX, random_company_code
 
 # Path segments owned by static routes under /cong-ty/; a company slug equal to
 # one of them would be unreachable at /cong-ty/<slug>.
@@ -66,6 +69,8 @@ class Company(models.Model):
         B2G = 'b2g', 'B2G'
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
+    # Mã đọc qua điện thoại cho hỗ trợ/tra cứu (xem domain/company_code).
+    code = models.CharField(max_length=COMPANY_CODE_LENGTH, unique=True, editable=False)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
     business_type = models.CharField(
         max_length=20, choices=BusinessType.choices, default=BusinessType.ENTERPRISE
@@ -142,6 +147,11 @@ class Company(models.Model):
                 opclasses=['gin_trgm_ops'],
             ),
         ]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(code__regex=COMPANY_CODE_REGEX), name='chk_companies_code_format'
+            ),
+        ]
 
     def __str__(self):
         return self.company_name
@@ -149,6 +159,8 @@ class Company(models.Model):
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('co')
+        if not self.code:
+            self.code = new_unique_code(Company.objects, 'code', random_company_code)
         if not self.slug:
             base_slug = slugify(self.company_name) or 'company'
             self.slug = base_slug

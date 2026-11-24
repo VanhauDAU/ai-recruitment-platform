@@ -10,7 +10,7 @@ import {
   SyncOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons'
-import { Button, Dropdown, Tooltip, Typography } from 'antd'
+import { Button, Dropdown, Tooltip } from 'antd'
 import dayjs from '@/shared/lib/dayjs'
 import { Link, useNavigate } from 'react-router'
 import { employerAppPath } from '@/shared/config/portals'
@@ -25,6 +25,7 @@ import {
   jobDeadlineMeta,
   jobDisplayTitle,
 } from './job-list-presentation'
+import CodeBadge from '@/shared/ui/code-badge/CodeBadge'
 import { m } from '@/shared/config/i18n'
 
 function Metric({ label, value, hint, tooltip, accent, onClick, testId }) {
@@ -96,14 +97,7 @@ export default function JobDetailHeader({ job, publicId, summary, closing, onClo
                   <ClockCircleOutlined aria-hidden /> {m.employer_job_header_posted({ date: formatJobDate(job.first_approved_at || job.published_at) })}
                 </li>
               )}
-              <li>
-                <Typography.Text
-                  copyable={{ text: publicId, tooltips: [m.employer_job_header_copy_id(), m.employer_job_header_copied()] }}
-                  className="font-mono !text-xs !text-slate-400"
-                >
-                  #{publicId}
-                </Typography.Text>
-              </li>
+              {job.code && <li><CodeBadge code={job.code} label={m.ui_code_job()} /></li>}
             </ul>
           </div>
 

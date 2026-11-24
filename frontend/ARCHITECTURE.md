@@ -269,6 +269,14 @@ dụng`, `Quản trị ProCV`. Riêng trang chủ dùng nguyên `seo_default_tit
   hoặc feature `model/`), không đưa vào `shared`. Cảnh báo
   `beforeunload` khi đóng/reload tab phải dùng hộp thoại native của trình duyệt.
 
+## Mã hiển thị cho người dùng
+
+Mã tin (`job.code`), mã công ty (`company.code`) và mã tài khoản (`public_id` của
+user) hiển thị bằng `@/shared/ui/code-badge/CodeBadge`: nhãn monospace kèm nút sao
+chép, tự chặn lan sự kiện để dùng được trong dòng danh sách bấm được. Không đặt
+badge bên trong `<button>`/`<a>` (nút lồng nút); không hiển thị `public_id`
+dạng `jb_…`/`co_…` cho người dùng.
+
 ## Bảng dữ liệu quản trị
 
 - Mọi cột dữ liệu của bảng quản trị phải có sorter và icon tăng/giảm rõ ràng.

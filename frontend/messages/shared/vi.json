@@ -366,5 +366,10 @@
   "banner_theme_teal": "Ngọc lam",
   "banner_theme_rose": "Hồng đỏ",
   "banner_theme_aurora": "Cực quang",
-  "banner_theme_midnight": "Đêm"
+  "banner_theme_midnight": "Đêm",
+  "ui_code_copy": "Sao chép mã {code}",
+  "ui_code_copied": "Đã sao chép mã {code}.",
+  "ui_code_copy_manually": "Không sao chép được, hãy chọn mã để sao chép thủ công.",
+  "ui_code_job": "Mã tin",
+  "ui_code_company": "Mã công ty"
 }

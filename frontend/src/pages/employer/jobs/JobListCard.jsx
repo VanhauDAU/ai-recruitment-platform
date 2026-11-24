@@ -14,6 +14,7 @@ import {
   jobDeadlineMeta,
   jobDisplayTitle,
 } from './job-list-presentation'
+import CodeBadge from '@/shared/ui/code-badge/CodeBadge'
 import { m } from '@/shared/config/i18n'
 
 // On a narrow list a row is a card and each stat carries its own label; on a
@@ -119,6 +120,7 @@ export default function JobListCard({ job, candidateDataAccess = false, ...actio
           {jobDisplayTitle(job)}
         </Link>
         <div className="wt-meta">
+          <CodeBadge code={job.code} />
           {createdAt && <span><CalendarOutlined aria-hidden />{m.employer_job_list_created_at({ date: createdAt })}</span>}
           {timeline && <span><ClockCircleOutlined aria-hidden />{timeline}</span>}
         </div>

@@ -5,6 +5,8 @@ import {
   FlagOutlined,
 } from '@ant-design/icons'
 import { Alert, Space, Tag, Tooltip } from 'antd'
+import { m } from '@/shared/config/i18n'
+import CodeBadge from '@/shared/ui/code-badge/CodeBadge'
 import {
   adminJobStatusMeta,
   formatAdminJobDate,
@@ -54,8 +56,9 @@ export default function AdminJobOverview({ job }) {
     <section className="admin-panel admin-job-overview">
       <div className="admin-job-overview__heading">
         <div className="min-w-0">
-          <p className="admin-job-overview__eyebrow">{job.company_name} · {job.public_id}</p>
+          <p className="admin-job-overview__eyebrow">{job.company_name}</p>
           <h1 className="admin-job-overview__title">{job.title}</h1>
+          <CodeBadge code={job.code} label={m.ui_code_job()} size="md" className="mt-2" />
         </div>
         <Space wrap>
           <Tag color={statusMeta.color}>{job.status_label || statusMeta.label}</Tag>
