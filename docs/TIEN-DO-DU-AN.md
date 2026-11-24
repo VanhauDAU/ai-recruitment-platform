@@ -46,6 +46,15 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
 
+## Danh sách FAQ & hướng dẫn admin dạng bảng (2026-11-24)
+
+| Hạng mục | Trạng thái |
+| --- | --- |
+| Danh sách FAQ & hướng dẫn dùng bảng chung như các danh sách admin khác: 4 ô (tổng, đã công khai, có bản nháp, quá hạn rà soát) lọc được và giữ số khi chọn, chip "Sắp đến hạn rà soát" / "Đã lưu trữ", lọc chuyên mục/loại/tìm kiếm (tự tìm sau 0,4 giây), nút chuyên mục trong thanh lọc, phân trang dính đáy | ✅ |
+| Bỏ hàng nút riêng: tạo bài viết qua "Tạo mới" trên topbar như Tin và Công ty; nhãn vòng đời chỉ hiện khi bài đã lưu trữ | ✅ |
+| API `GET /admin/knowledgebase/articles/?published=true\|false`: bài có (không có) bản công khai, khớp số `published` trên ô tóm tắt | ✅ |
+| Thanh lọc gọn trên mobile: nút biểu tượng làm mới/CSV/in giữ kích thước tự nhiên thay vì giãn thành lưới | ✅ |
+
 ## Danh sách công ty, người dùng, NTD admin dạng bảng và sidebar tối (2026-11-24)
 
 | Hạng mục | Trạng thái |

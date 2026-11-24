@@ -343,6 +343,20 @@
 .wt-table--compact .wt-toolbar { padding-block: 10px; }
 .wt-table--compact .wt-toolbar .ws-chip { min-height: 30px; padding: 0 10px; font-size: 12.5px; }
 
+/* Extra controls stay a row of natural-width buttons, also on phones where the
+ * admin shell otherwise stretches data actions into a two-column grid. */
+.wt-table--compact .wt-filters__extra { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+.wt-table--compact .wt-filters__extra .admin-data-actions {
+  display: inline-flex;
+  width: auto;
+}
+
+.wt-table--compact .wt-filters__extra .admin-data-actions > .ant-space-item,
+.wt-table--compact .wt-filters__extra .admin-data-actions > .ant-space-item > span,
+.wt-table--compact .wt-filters__extra .admin-data-actions .ant-btn { width: auto; }
+.wt-table--compact .wt-filters__extra .admin-data-actions .ant-btn-icon-only { width: 40px; }
+
 /* Wide enough: one row, chips shrink and wrap on the left, filters stay right. */
 @container (min-width: 880px) {
   .wt-table--compact .wt-toolbar { flex-wrap: nowrap; }

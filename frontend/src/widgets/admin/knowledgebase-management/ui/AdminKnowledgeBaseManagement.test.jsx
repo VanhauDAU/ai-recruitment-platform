@@ -91,20 +91,38 @@ describe('AdminKnowledgeBaseManagement', () => {
     renderWidget('/admin/app/knowledgebase?page=3')
     await screen.findByText('Làm thế nào để đăng nhập?')
 
-    fireEvent.click(screen.getByRole('columnheader', { name: /Phân loại/ }))
+    const header = (name) => screen.getByText(name, { selector: '.ws-sort' })
+    fireEvent.click(header('Phân loại'))
     await waitFor(() => expect(getAdminKnowledgeArticles).toHaveBeenLastCalledWith(
-      expect.objectContaining({ ordering: 'category', page: '1' }),
+      expect.not.objectContaining({ page: expect.anything() }),
       expect.any(Object),
     ))
-    expect(screen.getByRole('columnheader', { name: /Phân loại/ }))
-      .toHaveAttribute('aria-sort', 'ascending')
+    expect(getAdminKnowledgeArticles).toHaveBeenLastCalledWith(
+      expect.objectContaining({ ordering: 'category' }),
+      expect.any(Object),
+    )
+    expect(header('Phân loại')).toHaveAttribute('aria-pressed', 'true')
 
-    fireEvent.click(screen.getByRole('columnheader', { name: /Biên tập/ }))
+    fireEvent.click(header('Trạng thái'))
     await waitFor(() => expect(getAdminKnowledgeArticles).toHaveBeenLastCalledWith(
-      expect.objectContaining({ ordering: 'revision_status', page: '1' }),
+      expect.objectContaining({ ordering: 'revision_status' }),
       expect.any(Object),
     ))
-    expect(screen.getByRole('columnheader', { name: /Biên tập/ }))
-      .toHaveAttribute('aria-sort', 'ascending')
+    expect(header('Trạng thái')).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('filters published articles from the tile while keeping tile counts', async () => {
+    renderWidget('/admin/app/knowledgebase?q=dang+nhap')
+    await screen.findByText('Làm thế nào để đăng nhập?')
+
+    const tile = screen.getByText('Đã công khai', { selector: '.wt-tile__label' }).closest('button')
+    fireEvent.click(tile)
+
+    await waitFor(() => expect(getAdminKnowledgeArticles).toHaveBeenLastCalledWith(
+      expect.objectContaining({ q: 'dang nhap', published: 'true' }),
+      expect.any(Object),
+    ))
+    expect(getAdminKnowledgeArticleSummary).toHaveBeenLastCalledWith({ q: 'dang nhap' }, expect.any(Object))
+    await waitFor(() => expect(tile).toHaveAttribute('aria-pressed', 'true'))
   })
 })
