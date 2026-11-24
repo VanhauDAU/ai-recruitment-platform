@@ -57,5 +57,18 @@
   "company_jobs_categories_empty": "Chưa có danh mục nghề.",
   "company_jobs_list_title": "Tin tuyển dụng",
   "company_jobs_keyword_label": "Tên công việc",
-  "company_jobs_keyword_placeholder": "Tên công việc, vị trí ứng tuyển…"
+  "company_jobs_keyword_placeholder": "Tên công việc, vị trí ứng tuyển…",
+  "candidate_best_jobs_title": "Việc làm nổi bật",
+  "candidate_best_jobs_see_all": "Xem tất cả",
+  "candidate_best_jobs_prev_page": "Trang trước",
+  "candidate_best_jobs_next_page": "Trang sau",
+  "candidate_best_jobs_filter_by": "Lọc theo:",
+  "candidate_best_jobs_scroll_left": "Cuộn bộ lọc sang trái",
+  "candidate_best_jobs_scroll_right": "Cuộn bộ lọc sang phải",
+  "candidate_best_jobs_hint_label": "Gợi ý:",
+  "candidate_best_jobs_hint": "Di chuột vào tiêu đề việc làm để xem thêm thông tin chi tiết",
+  "candidate_best_jobs_hide_hint": "Ẩn gợi ý",
+  "candidate_best_jobs_page_total": "/ {total} trang",
+  "candidate_best_jobs_save": "Lưu việc làm",
+  "candidate_best_jobs_saved": "Đã lưu việc làm"
 }

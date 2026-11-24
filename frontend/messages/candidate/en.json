@@ -57,5 +57,18 @@
   "company_jobs_categories_empty": "No job categories yet.",
   "company_jobs_list_title": "Job postings",
   "company_jobs_keyword_label": "Job title",
-  "company_jobs_keyword_placeholder": "Job title, position…"
+  "company_jobs_keyword_placeholder": "Job title, position…",
+  "candidate_best_jobs_title": "Featured jobs",
+  "candidate_best_jobs_see_all": "View all",
+  "candidate_best_jobs_prev_page": "Previous page",
+  "candidate_best_jobs_next_page": "Next page",
+  "candidate_best_jobs_filter_by": "Filter by:",
+  "candidate_best_jobs_scroll_left": "Scroll filters left",
+  "candidate_best_jobs_scroll_right": "Scroll filters right",
+  "candidate_best_jobs_hint_label": "Tip:",
+  "candidate_best_jobs_hint": "Hover over a job title to see more details",
+  "candidate_best_jobs_hide_hint": "Hide tip",
+  "candidate_best_jobs_page_total": "/ {total} pages",
+  "candidate_best_jobs_save": "Save job",
+  "candidate_best_jobs_saved": "Job saved"
 }

@@ -31,7 +31,7 @@ const TOP_JOB = {
 }
 
 describe('BestJobsResults', () => {
-  it('renders the top-employer treatment with larger logo and labels above title', () => {
+  it('renders the top-employer treatment with labels above title', () => {
     const { container } = render(
       <MemoryRouter>
         <BestJobsResults animKey="first" jobs={[TOP_JOB]} loading={false} />
@@ -39,12 +39,11 @@ describe('BestJobsResults', () => {
     )
 
     const card = container.querySelector('a[href="/viec-lam/ky-su-phan-mem"]')
-    const logoFrame = screen.getByRole('img', { name: 'Công ty Kim Cương' }).parentElement
     const labels = container.querySelector('[data-best-job-labels]')
     const title = screen.getByRole('heading', { name: 'Kỹ sư phần mềm' })
 
-    expect(card).toHaveClass('bg-[var(--brand-primary-soft)]', 'border-l-4', 'border-l-[var(--brand-primary)]')
-    expect(logoFrame).toHaveClass('h-16', 'w-16')
+    expect(card).toHaveClass('!bg-[var(--brand-primary-soft)]/50')
+    expect(screen.getByRole('img', { name: 'Công ty Kim Cương' })).toBeInTheDocument()
     expect(screen.getByText('TOP')).toBeInTheDocument()
     expect(screen.getByText('Tài trợ')).toBeInTheDocument()
     expect(labels.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
