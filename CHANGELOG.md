@@ -6,6 +6,19 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-11-24
+
+#### Added — Bộ file triển khai production procv.site
+
+- `docker-compose.prod.yml` cho một VPS: PostgreSQL/Redis không mở cổng ra ngoài, service
+  `migrate` chạy trước backend và worker, gunicorn, worker Celery tách queue như dev, giới hạn
+  RAM từng service; giá trị theo domain đặt trong compose, bí mật đọc từ `backend/.env`.
+- `frontend/Dockerfile` build SPA và phục vụ bằng nginx: route SEO, `/api`, `/r` về Django,
+  còn lại là SPA; cổng nội bộ 8080 cho SEO shell và trang in CV; IP thật qua Cloudflare.
+- `scripts/deploy/`: deploy/rollback theo commit, sao lưu PostgreSQL hằng ngày lên R2,
+  khôi phục, khởi tạo VPS Ubuntu, đồng bộ mô hình đối sánh.
+- Viết lại `docs/06-deployment/huong-dan-deployment.md` thành runbook triển khai.
+
 ### 2026-11-22
 
 #### Changed — Mã tài khoản 8 chữ số cho ứng viên, NTD và admin

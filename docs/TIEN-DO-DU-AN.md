@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Bộ file triển khai production procv.site](#bộ-file-triển-khai-production-procvsite-2026-11-24) | 🟨 Xong trên nhánh `feat/production-deploy`, chờ gộp PR; chưa lên VPS |
 | [Làm lại trang công ty phía ứng viên](#làm-lại-trang-công-ty-phía-ứng-viên-2026-11-24) | 🟨 Xong trên nhánh `feat/company-page-jobs-layout`, chờ gộp PR |
 | [Mã tài khoản dạng số cho 3 cổng](#mã-tài-khoản-dạng-số-cho-3-cổng-2026-11-22) | 🟨 Xong trên nhánh `feat/numeric-user-id`, chờ gộp PR |
 | [Làm lại trang Thông tin tài khoản NTD](#làm-lại-trang-thông-tin-tài-khoản-ntd-2026-11-22) | 🟨 Xong trên nhánh `feat/employer-account-info-redesign`, chờ gộp |
@@ -45,6 +46,20 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Bộ file triển khai production procv.site (2026-11-24)
+
+Một VPS (BKNS MMO7 8 vCPU/8 GB), Docker Compose, Cloudflare proxy + R2, một domain theo
+đường dẫn. Runbook: [huong-dan-deployment.md](06-deployment/huong-dan-deployment.md).
+
+| Hạng mục | Trạng thái |
+| --- | --- |
+| `docker-compose.prod.yml`: db/redis không lộ cổng, `migrate` chạy một lần trước backend/worker, gunicorn, 3 worker Celery + beat, giới hạn RAM từng service, giá trị theo domain ghi đè `.env` | ✅ |
+| `frontend/Dockerfile` + nginx: route SEO/API/`/r` về Django, SPA còn lại, cổng nội bộ 8080 cho SEO shell và in CV, IP thật qua Cloudflare | ✅ |
+| `scripts/deploy/`: `compose.sh`, `deploy.sh` (rollback theo commit), `backup_db.sh` (cron + R2), `restore_db.sh`, `bootstrap_vps.sh`, `sync_ml_models.sh` | ✅ |
+| Runbook Cloudflare/R2, env cần điền, dữ liệu ban đầu, checklist sau deploy | ✅ |
+| Thuê VPS, DNS, Origin Certificate, điền secret, DPA của ProCV, callback OAuth/reCAPTCHA cho `procv.site` | ⬜ Người dùng làm |
+| ClamAV + upload session ở production | ⬜ Chưa bật (thiếu RAM) |
 
 ## Nội dung trang theo màu chủ đạo của hệ thống (2026-11-24)
 
@@ -1860,7 +1875,7 @@ production, staging và soak (ER-8). Lệnh kiểm tra chỉ đọc:
 | 4 — CV nâng cao | 🟨 | Còn import LinkedIn, AI writer, review CV bằng AI |
 | 5 — Tuyển dụng nâng cao | ✅ | Việc đã lưu, lịch sử trạng thái hồ sơ, notification center của nhà tuyển dụng |
 | 6 — Thương mại & quản trị | ✅ | Quản trị (hai cấp superuser/admin theo ADR-0018), blog, marketing. Gói đăng ký và quota trả phí (6.1, 6.2) bỏ khỏi phạm vi theo ADR-0015 |
-| 7 — Deployment | 🟨 | Docker Compose local có; cấu hình production đã bỏ ở P3, chưa triển khai |
+| 7 — Deployment | 🟨 | Có bộ file production cho procv.site (compose prod, nginx, script deploy/backup); chưa lên VPS |
 
 ## Việc còn mở
 
