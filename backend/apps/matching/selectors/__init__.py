@@ -1,6 +1,11 @@
 """Public read boundary for the matching domain."""
 
 from .analyses import owner_analysis, recent_owner_analyses
+from .application_ranking import (
+    application_match_annotations,
+    application_match_detail,
+    match_status,
+)
 from .profiles import (
     cvs_for_profile,
     latest_cv_versions,
@@ -20,6 +25,9 @@ from .recommendations import (
 )
 
 __all__ = [
+    'application_match_annotations',
+    'application_match_detail',
+    'match_status',
     'MIN_SEMANTIC_SCORE',
     'SEMANTIC_STRATEGY',
     'Bonus',

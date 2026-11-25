@@ -1252,7 +1252,7 @@ một commit, một PR vào `dev` khi xong GĐ E.
 | GĐ | Hạng mục | Trạng thái |
 | --- | --- | --- |
 | A | Công thức `hybrid-v2` phần không cần huấn luyện: bỏ địa điểm, tắt khớp kỹ năng viết khác tên, hệ số liên quan; đo trên validation | ✅ Commit trên nhánh (25/11) |
-| B | Đường ống xếp hạng hồ sơ ứng tuyển (backend): chấm bản CV đã nộp khi ứng viên đồng ý, queue `ai-matching-batch`, `ordering=ai_match`, endpoint chi tiết | ⬜ |
+| B | Đường ống xếp hạng hồ sơ ứng tuyển (backend): chấm bản CV đã nộp khi ứng viên đồng ý, queue `ai-matching-batch`, `ordering=ai_match`, endpoint chi tiết | ✅ Commit trên nhánh (25/11); test tự động viết ở bước kiểm tra cuối |
 | C | Giao diện xếp hạng ở cổng NTD: cột "Phù hợp", tab Đánh giá, bộ hiển thị dùng chung | ⬜ |
 | D | Một CV được bật cho NTD tìm kiếm + "Hồ sơ NTD nhìn thấy" phía ứng viên | ⬜ |
 | E | Tìm CV: tìm ứng viên ẩn danh theo tin, xem nhanh, mời ứng tuyển | ⬜ |
@@ -1287,6 +1287,33 @@ xuất ẩn danh và tìm theo một tin đang tuyển; bước tiếp là mời
   `flags.relevance_discount_applied`; không còn `location` trong `components`. Kết quả cũ
   (`hybrid-v1`) trong cache không dùng lại vì khóa cache có phiên bản công thức.
 - Test `apps/matching` (100 test) đạt; phần test của tập vàng chưa chạy.
+
+</details>
+<details><summary>Ghi chú GĐ B (phần NTD)</summary>
+
+- `MatchAnalysis.purpose` (`candidate_self` | `application_ranking`, migration
+  `matching.0003`). Không thêm FK tới hồ sơ và không đổi khóa cache: mỗi hồ sơ có một
+  `CvVersion` bản chụp riêng, nên nối bằng `Application.submitted_cv_version`.
+- `services/application_ranking.py`: chỉ chấm hồ sơ hiện hành có `allow_ai_analysis`; hàng
+  phân tích được tạo ngay trong task nên hồ sơ chưa tới lượt hiện "đang phân tích". Task
+  `score_application`, `rescore_job_applications` ở queue `ai-matching-batch`; `ml-worker`
+  nghe cả hai queue. Hạn chờ 10 phút và gửi lại sau 30 giây chỉ còn áp cho lượt ứng viên tự
+  xem; hàng xếp hạng kẹt được gửi lại sau 5 phút.
+- Kích hoạt: hồ sơ vừa tạo (signal, sau commit); tin đổi nội dung (trong task `embed_job`,
+  chỉ gửi task cho hồ sơ chưa có kết quả với nội dung mới); `matching_backfill --only
+  applications`. Vector được tính sẵn khi bất kỳ cờ đối sánh nào bật (trước đây chỉ theo
+  `ai_job_match_enabled`).
+- `cv_source` đọc tệp đã nộp (`source_file_key`) cho bản chụp của CV tải lên và không còn
+  cần `cv_version.cv` (rỗng khi ứng viên đã xóa CV).
+- API: cột `ai_match_*` gắn bằng truy vấn con trong `employer_applications_queryset`; điểm
+  lấy từ lần chấm thành công gần nhất, nên khi tin đang được chấm lại danh sách vẫn hiện
+  điểm cũ. Chi tiết ở `/ai-match/`, đã bỏ gợi ý sửa CV và câu tóm tắt viết cho ứng viên;
+  giao diện tự dựng câu từ `components[].detail` để dịch được. Ứng viên không thấy bản chấm
+  này (`selectors/analyses.py` lọc `candidate_self`).
+- Chạy thử trên DB dev: 4 hồ sơ có đồng ý, 2 chấm được (3 và 15 điểm, đúng là khác nghề), 2
+  báo lỗi có mã (`job_text_too_short`, `cv_text_unavailable` với PDF không có lớp chữ).
+- Chưa làm: test tự động cho GĐ B (viết ở bước kiểm tra cuối theo yêu cầu không chạy test
+  giữa các giai đoạn); bảng điều khiển admin vẫn đếm chung hai loại phân tích.
 
 </details>
 <details><summary>Ghi chú GĐ 1 (bản 3)</summary>

@@ -12,7 +12,17 @@ class MatchAnalysis(models.Model):
     Bộ (cv_version, job, job_content_hash, model_version, scoring_version) là khóa
     cache: trùng khóa thì dùng lại kết quả cũ. CV có phiên bản mới, tin đổi nội
     dung, hoặc đổi mô hình/công thức chấm thì khóa đổi và kết quả được tính lại.
+
+    `purpose` tách hai chỗ dùng: ứng viên tự xem (`candidate_self`, chấm phiên bản
+    mới nhất của CV trong thư viện) và xếp hạng hồ sơ cho nhà tuyển dụng
+    (`application_ranking`, chấm bản CV đã nộp). Mỗi hồ sơ ứng tuyển có một
+    `CvVersion` bản chụp riêng, nên hai mục đích không bao giờ trùng khóa cache và
+    hồ sơ nối với kết quả qua `Application.submitted_cv_version`.
     """
+
+    class Purpose(models.TextChoices):
+        CANDIDATE_SELF = 'candidate_self', 'Ứng viên tự xem'
+        APPLICATION_RANKING = 'application_ranking', 'Xếp hạng hồ sơ ứng tuyển'
 
     class Status(models.TextChoices):
         QUEUED = 'queued', 'Đang chờ'
@@ -33,6 +43,9 @@ class MatchAnalysis(models.Model):
     )
     job = models.ForeignKey('jobs.Job', on_delete=models.CASCADE, related_name='match_analyses')
     job_content_hash = models.CharField(max_length=64)
+    purpose = models.CharField(
+        max_length=24, choices=Purpose.choices, default=Purpose.CANDIDATE_SELF
+    )
     cv_document = models.ForeignKey(
         MatchDocument,
         on_delete=models.SET_NULL,
@@ -77,6 +90,11 @@ class MatchAnalysis(models.Model):
         ]
         indexes = [
             models.Index(fields=['user', 'job', '-created_at'], name='idx_match_analysis_user_job'),
+            # Danh sách hồ sơ của một tin tra kết quả xếp hạng theo bản CV đã nộp.
+            models.Index(
+                fields=['cv_version', 'purpose', '-created_at'],
+                name='idx_match_analysis_ranking',
+            ),
         ]
 
     def __str__(self):

@@ -9,6 +9,11 @@
 3. `recover_stale_analyses` (beat mỗi 60 giây): gửi lại hàng chờ quá lâu, đưa
    hàng đang xử lý của worker đã chết về hàng chờ, cho hàng chờ quá hạn thất bại.
    Chấm điểm không gọi dịch vụ ngoài và cho cùng kết quả, nên chạy lại an toàn.
+
+Hạn chờ 10 phút và việc gửi lại sau 30 giây chỉ áp cho lượt ứng viên tự xem
+(`purpose = candidate_self`): có người đang đợi kết quả. Hàng xếp hạng hồ sơ cho
+nhà tuyển dụng chạy nền ở queue `ai-matching-batch` (`application_ranking.py`),
+không có hạn chờ.
 """
 
 import logging
@@ -24,6 +29,7 @@ from rest_framework.exceptions import APIException
 from apps.cvs.services import is_unsaved_builder_baseline
 from apps.sitecontent.selectors import get_bool_setting
 
+from ..domain import CANDIDATE_FIT_FLAG, FEATURE_FLAGS
 from ..models import MatchAnalysis, MatchDocument
 from .documents import chunk_vectors, ensure_cv_document, ensure_job_document, job_content_hash
 from .encoder import model_version
@@ -33,7 +39,7 @@ from .scoring import SCORING_VERSION, ScoringError, score_match
 
 logger = logging.getLogger(__name__)
 
-FEATURE_FLAG = 'ai_job_match_enabled'
+FEATURE_FLAG = CANDIDATE_FIT_FLAG
 REDISPATCH_AFTER = timedelta(seconds=30)
 STALE_PROCESSING_AFTER = timedelta(seconds=60)
 QUEUED_TIMEOUT = timedelta(minutes=10)
@@ -66,6 +72,11 @@ def matching_enabled():
     return get_bool_setting(FEATURE_FLAG, default=False)
 
 
+def precompute_enabled():
+    """Có chỗ dùng nào của đối sánh đang bật không (khi đó vector được tính sẵn)."""
+    return any(get_bool_setting(flag, default=False) for flag in FEATURE_FLAGS)
+
+
 def ensure_enabled():
     if not matching_enabled():
         raise MatchingRequestError('feature_disabled')
@@ -95,7 +106,7 @@ def request_analysis(*, user, job, cv):
     if not created and analysis.status == MatchAnalysis.Status.FAILED:
         # Lỗi tạm (worker chết, quá hạn) có thể qua ở lần sau; lỗi do nội dung
         # (CV scan) sẽ thất bại lại ngay với cùng mã.
-        _reset(analysis)
+        reset_failed_analysis(analysis)
         created = True
     if created:
         _dispatch_after_commit(analysis.pk)
@@ -115,7 +126,7 @@ def _dispatch_after_commit(analysis_id):
     transaction.on_commit(dispatch)
 
 
-def _reset(analysis):
+def reset_failed_analysis(analysis):
     """Đưa một phân tích thất bại về hàng chờ như một yêu cầu mới (tính lại hạn chờ)."""
     values = {
         'status': MatchAnalysis.Status.QUEUED,
@@ -249,14 +260,15 @@ def fail_analysis(analysis_id, code):
 def recover_stale_analyses(*, now=None, batch_size=100):
     """Id các phân tích cần gửi lại task."""
     now = now or timezone.now()
-    MatchAnalysis.objects.filter(
+    interactive = MatchAnalysis.objects.filter(purpose=MatchAnalysis.Purpose.CANDIDATE_SELF)
+    interactive.filter(
         status=MatchAnalysis.Status.QUEUED, created_at__lte=now - QUEUED_TIMEOUT
     ).update(status=MatchAnalysis.Status.FAILED, error_code='analysis_timeout', completed_at=now)
     MatchAnalysis.objects.filter(
         status=MatchAnalysis.Status.PROCESSING, started_at__lte=now - STALE_PROCESSING_AFTER
     ).update(status=MatchAnalysis.Status.QUEUED, started_at=None)
     return list(
-        MatchAnalysis.objects.filter(
+        interactive.filter(
             status=MatchAnalysis.Status.QUEUED, created_at__lte=now - REDISPATCH_AFTER
         )
         .order_by('created_at')

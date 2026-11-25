@@ -10,6 +10,7 @@ from ..views.cv_exports import (
     RecruiterApplicationCvFileView,
 )
 from ..views.employer import (
+    EmployerApplicationAiMatchView,
     EmployerApplicationAssessmentView,
     EmployerApplicationDecisionUndoView,
     EmployerApplicationDecisionView,
@@ -125,6 +126,11 @@ urlpatterns = [
         'applications/<str:public_id>/reviews/',
         RecruiterApplicationReviewListView.as_view(),
         name='recruiter-application-reviews',
+    ),
+    path(
+        'applications/<str:public_id>/ai-match/',
+        EmployerApplicationAiMatchView.as_view(),
+        name='recruiter-application-ai-match',
     ),
     path(
         'applications/<str:public_id>/submissions/',

@@ -8,6 +8,21 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-25
 
+#### Added — AI xếp hạng hồ sơ ứng tuyển cho nhà tuyển dụng (backend)
+
+- Hồ sơ ứng viên đồng ý phân tích AI được chấm trên **bản CV đã nộp** ngay sau khi nộp
+  (queue nền `ai-matching-batch`, cùng `ml-worker`); tin đổi nội dung thì các hồ sơ của tin
+  được chấm lại. `MatchAnalysis.purpose` tách bản chấm cho NTD khỏi lượt ứng viên tự xem.
+- `GET /api/employer/applications/` thêm `ai_match_score`, `ai_match_level`,
+  `ai_match_status` và `ordering=ai_match`; endpoint chi tiết
+  `/api/employer/applications/{id}/ai-match/`. Sắp xếp mặc định vẫn là mới nhất, không có
+  bước nào tự loại hồ sơ theo điểm.
+- Cờ `ai_application_ranking_enabled` (nhóm AI); lệnh `matching_backfill --only applications`.
+- Form ứng tuyển: ô đồng ý ghi rõ kết quả hiện cho nhà tuyển dụng, giữ lựa chọn của lần
+  ứng tuyển gần nhất.
+- Sửa: bản chụp của CV tải lên được đọc từ tệp đã nộp, không phải tệp hiện tại trong thư
+  viện; CV đã bị xóa khỏi thư viện vẫn chấm được.
+
 #### Changed — Công thức chấm độ phù hợp `hybrid-v2`
 
 - Bỏ tiêu chí địa điểm; tắt khớp kỹ năng "viết khác tên" với mô hình chưa fine-tune; học

@@ -35,6 +35,9 @@ CELERY_TASK_ROUTES = {
     'apps.cvs.tasks.*': {'queue': 'cv-export'},
     'apps.uploads.tasks.*': {'queue': 'upload-scan'},
     'apps.jobs.tasks.ai_generation.*': {'queue': 'ai-generation'},
+    # Chấm hồ sơ ứng tuyển chạy nền, tách khỏi lượt ứng viên đang đợi kết quả.
+    'apps.matching.tasks.score_application': {'queue': 'ai-matching-batch'},
+    'apps.matching.tasks.rescore_job_applications': {'queue': 'ai-matching-batch'},
     'apps.matching.tasks.*': {'queue': 'ai-matching'},
     'apps.jobs.tasks.*': {'queue': 'candidate-email'},
     'apps.applications.tasks.*': {'queue': 'candidate-email'},

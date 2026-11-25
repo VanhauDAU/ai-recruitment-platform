@@ -30,7 +30,6 @@ from . import criteria
 from .criteria import EXPERIENCE_SECTIONS, MatchInput
 from .semantic import best_matches, calibration_for, cosine, requirement_status, to_score
 
-SCORING_VERSION = 'hybrid-v2'
 RESULT_SCHEMA_VERSION = 2
 WEIGHTS = {
     'skills': 0.40,

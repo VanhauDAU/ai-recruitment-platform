@@ -41,7 +41,7 @@ thay đổi; không cần sửa `VITE_API_BASE_URL`, CORS hoặc `ALLOWED_HOSTS`
   trong `backend/.env` (mặc định `5432` = Postgres local).
 - Service: `db` (PostgreSQL 16 + pgvector, image `pgvector/pgvector:pg16-trixie`), `redis`, `backend` (runserver + auto migrate),
   `worker` (Celery tác vụ chung), `ai-worker` (chỉ queue `ai-generation`,
-  concurrency 2), `ml-worker` (chỉ queue `ai-matching`, xem dưới), `beat`
+  concurrency 2), `ml-worker` (queue `ai-matching` và `ai-matching-batch`, xem dưới), `beat`
   (Celery beat) và `frontend` (vite).
 - **`ml-worker`** chạy đối sánh CV–JD bằng mô hình local: image riêng
   `ai-recruitment-platform-ml-worker` (Dockerfile target `ml`, có torch CPU và

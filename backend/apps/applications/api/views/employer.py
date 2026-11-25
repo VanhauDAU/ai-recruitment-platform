@@ -12,6 +12,7 @@ from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import IsEmployer
 from apps.employers.services import ensure_recruiter_candidate_data_access
+from apps.matching.selectors import application_match_detail
 
 from ...selectors import (
     employer_application_queryset,
@@ -116,6 +117,23 @@ def _workspace_row(request, application):
     return ApplicationSerializer(
         employer_applications_queryset(request.user).get(pk=application.pk)
     ).data
+
+
+@extend_schema(
+    tags=['applications'],
+    summary='Mức phù hợp do AI chấm cho một hồ sơ (chi tiết từng tiêu chí)',
+    description=(
+        '`status`: `ready` (có `result`), `pending` (đang phân tích), `failed`, '
+        '`not_consented` (ứng viên không tham gia phân tích AI), hoặc null khi tính năng tắt. '
+        'Kết quả chấm trên bản CV đã nộp; không có gợi ý sửa CV dành cho ứng viên.'
+    ),
+    responses={200: OpenApiTypes.OBJECT},
+)
+class EmployerApplicationAiMatchView(APIView):
+    permission_classes = [IsEmployer]
+
+    def get(self, request, public_id):
+        return Response(application_match_detail(_recruiter_application(request, public_id)))
 
 
 @extend_schema(
