@@ -349,21 +349,40 @@ Luồng phân tích (`apps/matching/services/`):
 | 1 | `extraction/` | Hồ sơ `profile_json` (như trên) |
 | 2 | `encoder.py` | Câu → vector 768 chiều: E5 (tiền tố `query:` cho tin, `passage:` cho CV) trong `ml-worker`; `hashing` tất định cho test/CI |
 | 3 | `documents.py` | Lưu `MatchDocument`/`MatchChunk` theo (nguồn, hash nội dung, phiên bản trích xuất, phiên bản mô hình); vector tài liệu là vector toàn văn |
-| 4 | `scoring/` | Công thức `hybrid-v1` (bảng dưới) |
+| 4 | `scoring/` | Công thức `hybrid-v2` (bảng dưới) |
 | 5 | `explain.py` | Câu tóm tắt từng tiêu chí và gợi ý theo luật, chỉ dạng "nếu bạn đã có…" |
 | 6 | `analyses.py` | Cache theo khóa, task `run_analysis` ở queue `ai-matching`, phục hồi job treo |
 
-Công thức `hybrid-v1` (mỗi tiêu chí 0–100; tiêu chí thiếu dữ liệu hoặc tin
-không yêu cầu bị loại, trọng số chuẩn hóa lại):
+Công thức `hybrid-v2` (từ 25/11; mỗi tiêu chí 0–100; tiêu chí thiếu dữ liệu hoặc
+tin không yêu cầu bị loại, trọng số chuẩn hóa lại):
 
 | Tiêu chí | Trọng số | Cách tính |
 | --- | ---: | --- |
-| Kỹ năng | 0,40 | `Σ(w·m)/Σw`, w = trọng số × (1 cần có / 0,5 nên có); m = 1 khi CV có kỹ năng theo danh mục, hoặc có câu với cosine ≥ τ_skill tới tên kỹ năng (câu đó là bằng chứng). Tin có kỹ năng mà CV không thể hiện là 0 điểm |
+| Kỹ năng | 0,40 | `Σ(w·m)/Σw`, w = trọng số × (1 cần có / 0,5 nên có); m = 1 khi CV có kỹ năng theo danh mục. Khớp "viết khác tên" (câu CV có cosine ≥ τ_skill tới tên kỹ năng) đang tắt với mô hình chưa fine-tune. Tin có kỹ năng mà CV không thể hiện là 0 điểm |
 | Kinh nghiệm | 0,30 | `0,4·Y·R/100 + 0,6·R`; Y theo số năm (đủ 100, thiếu 1 bậc 60, thiếu ≥ 2 bậc 20), R = mức liên quan = trung bình điểm hiệu chuẩn của cosine toàn văn và cosine chức danh |
 | Học vấn | 0,10 | Đủ/vượt 100, thấp 1 bậc 50, thấp hơn 0 |
 | Cấp bậc | 0,10 | Lệch 0/1/2/≥ 3 bậc: 100/70/40/10 |
 | Ngoại ngữ | 0,10 | Đủ mức 100, thấp 1 bậc 50, không có 0; thiếu ngoại ngữ bắt buộc thì điểm tổng tối đa 64 |
-| Địa điểm | 0,10 | Cùng tỉnh hoặc remote 100, khác tỉnh 30; tắt khi so với nhãn người chấm |
+
+**Hệ số liên quan.** Học vấn, cấp bậc, ngoại ngữ là điểm "đủ điều kiện chung": người
+khác nghề vẫn đạt. Khi cộng vào điểm tổng, ba tiêu chí này được nhân với
+`min(1, R/50)`. Điểm hiển thị của từng tiêu chí giữ giá trị thật ("đủ bậc học" vẫn
+là 100) và phần tóm tắt ghi rõ tiêu chí chỉ được tính một phần; kết quả mang cờ
+`flags.relevance_discount_applied` và `overall.relevance`. Mốc 50 là giữa thang hiệu
+chuẩn (0 = trung vị cặp khác ngành, 100 = phân vị 90 cặp khớp mạnh).
+
+**Khác `hybrid-v1`** (đo trên validation, bảng ở cuối mục):
+- Bỏ tiêu chí địa điểm (trọng số 0,10): CV không mang địa điểm nên tiêu chí này
+  chưa bao giờ chấm được, và rubric gán nhãn không xét địa điểm.
+- Tắt khớp kỹ năng "viết khác tên": với mô hình zero-shot, ngưỡng 0,846 nhận nhầm
+  phần lớn. Ở cặp khác ngành, 23/42 lượt khớp kỹ năng là khớp kiểu này; ở cặp nhãn
+  3–4 chỉ 1/53. Ví dụ: "Phần mềm kế toán" khớp với câu "Sử dụng công cụ như Python, R
+  để phân tích…". Cơ chế còn trong mã (`Calibration.semantic_skills`), chờ mô hình
+  đủ chính xác.
+- Thêm hệ số liên quan. Kế hoạch ban đầu là chặn trần điểm tổng theo R; đo cho thấy
+  trần phải rất chặt mới hạ được điểm cặp khác ngành, và khi đó cắt cả cặp đúng nghề
+  có R thấp. Giảm phần đóng góp của ba tiêu chí chung thì đạt được mà không mất độ
+  chính xác xếp hạng.
 
 Hai thay đổi so với kế hoạch, theo số đo (`ml/reports/calibration_e5-base-zs-v1.md`,
 nhãn yếu, mô hình zero-shot):
@@ -390,7 +409,7 @@ Giao diện: thẻ "Xem độ phù hợp" ở cột phải trang chi tiết tin,
 
 **Đo lường (20/11, kế hoạch bản 3 GĐ 1).** Lệnh `matching_evaluate` chạy trong
 `ml-worker`, chấm các cặp của tập vàng bằng đúng bước trích xuất, mã hóa và
-`score_match` ở trên (không ghi DB, tắt địa điểm); `ml/scripts/evaluate.py` tính
+`score_match` ở trên (không ghi DB); `ml/scripts/evaluate.py` tính
 chỉ số. Tập vàng có 30 tin × 10 CV (validation 10 tin, test 20 tin; nhãn do Claude
 gán theo rubric, đợt 2 do hai lượt độc lập gán với kappa 0,979). Trên validation
 (100 cặp, 10 tin):
@@ -401,17 +420,33 @@ gán theo rubric, đợt 2 do hai lượt độc lập gán với kappa 0,979). 
 | BM25 | 0,216 | 0,679 |
 | Luật `profile-rule-v2` (bộ gợi ý hiện có) | 0,628 | 0,874 |
 | Bi-encoder `e5-base-zs-v1`, cosine toàn văn | 0,550 | 0,758 |
-| `hybrid-v1` | 0,610 | 0,817 |
+| `hybrid-v1` | 0,603 | 0,815 |
+| `hybrid-v2`, bật lại khớp kỹ năng viết khác tên | 0,626 | 0,821 |
+| `hybrid-v2`, bỏ hệ số liên quan | 0,692 | 0,857 |
+| **`hybrid-v2`** | **0,699** | **0,857** |
 
 Xếp ngẫu nhiên cho NDCG@5 = 0,445 vì mỗi tin chỉ có 10 CV. Bộ gợi ý theo luật
 ngang hoặc nhỉnh hơn `hybrid-v1` (khoảng tin cậy chồng nhau): điểm của luật chỉ
 gồm số kỹ năng trùng, chức danh khớp tiêu đề tin và số năm, nên cặp khác ngành gần
 0 điểm; `hybrid-v1` cộng thêm học vấn, cấp bậc, ngoại ngữ bất kể CV có đúng nghề
-hay không, nên cặp khác ngành vẫn lên tới 58 điểm. Chi tiết ở
-`ml/reports/eval_validation.md`. Phần test chỉ chạy một lần ở giai đoạn nghiệm thu.
+hay không, nên cặp khác ngành vẫn lên tới 65 điểm. `hybrid-v2` sửa đúng hai chỗ đó:
 
-Chưa có: fine-tune bi-encoder, cross-encoder cho từng yêu cầu, `hybrid-v2`
-(kế hoạch bản 3, GĐ 3 và 5).
+| Thang điểm (33 cặp nhãn 0, khác ngành) | Kappa mức hiển thị | Trung vị | Cao nhất | Từ 50 điểm |
+| --- | ---: | ---: | ---: | ---: |
+| `hybrid-v1` | 0,511 | 28 | 65 | 6 cặp |
+| `hybrid-v2`, bật lại khớp kỹ năng viết khác tên | 0,535 | 17 | 57 | 5 cặp |
+| `hybrid-v2`, bỏ hệ số liên quan | 0,672 | 27 | 48 | 0 |
+| **`hybrid-v2`** | **0,663** | **11** | **46** | **0** |
+
+Tắt khớp kỹ năng viết khác tên đem lại gần hết phần tăng về xếp hạng; hệ số liên quan
+đưa điểm cặp khác ngành về gần 0 mà không đổi thứ hạng. Khoảng tin cậy của `hybrid-v2`:
+Spearman 0,54 đến 0,82, NDCG@5 0,76 đến 0,94 (10 tin nên còn rộng). Các dòng "bật
+lại"/"bỏ" đo bằng `matching_evaluate --ablation` (`evaluate.py --ablation`), tức cùng
+mã sản phẩm với một thay đổi bị tắt. Chi tiết ở `ml/reports/eval_validation.md`. Phần
+test chỉ chạy một lần ở giai đoạn nghiệm thu.
+
+Chưa có: fine-tune bi-encoder, cross-encoder cho từng yêu cầu (kế hoạch bản 3, GĐ 3
+và phần còn lại của GĐ 5).
 
 ## Việc còn mở
 

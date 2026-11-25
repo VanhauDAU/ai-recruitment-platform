@@ -8,6 +8,17 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-25
 
+#### Changed — Công thức chấm độ phù hợp `hybrid-v2`
+
+- Bỏ tiêu chí địa điểm; tắt khớp kỹ năng "viết khác tên" với mô hình chưa fine-tune; học
+  vấn, cấp bậc, ngoại ngữ chỉ được tính đủ vào điểm tổng khi CV đúng lĩnh vực của tin (hệ số
+  liên quan `min(1, R/50)`). Điểm từng tiêu chí vẫn hiện giá trị thật.
+- Trên validation: Spearman 0,603 → 0,699, NDCG@5 0,815 → 0,857; cặp khác ngành trung vị
+  28 → 11 điểm, cao nhất 65 → 46, không còn cặp nào từ 50 điểm.
+- `result_json` thêm `schema_version = 2`, `overall.relevance`,
+  `flags.relevance_discount_applied`; không còn mục `location` trong `components`.
+- `matching_evaluate --detail` và `--ablation`; `ml/scripts/evaluate.py --ablation`.
+
 #### Changed — Phễu tuyển dụng trên trang chủ NTD
 
 - Thẻ donut "Trạng thái hồ sơ" thay bằng phễu 3D (SVG): Nhận hồ sơ → Phù hợp → Phỏng vấn

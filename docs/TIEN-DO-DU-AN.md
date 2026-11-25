@@ -36,7 +36,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Ảnh đại diện dùng chung 3 cổng](#ảnh-đại-diện-dùng-chung-3-cổng-2026-11-16) | 🟨 Xong trên nhánh `feat/avatar-editor`, chưa mở PR |
 | [Dọn mâu thuẫn còn lại sau thống nhất luồng](#dọn-mâu-thuẫn-còn-lại-sau-thống-nhất-luồng-2026-11-16) | ✅ Cả 3 GĐ đã gộp (#222, #223, #224); dọn phần còn hở trên nhánh `fix/flow-loose-ends` |
 | [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | ✅ Cả 6 giai đoạn đã gộp (#208–#215); hoàn thiện luồng nhắc NTD và lịch sử nộp trên nhánh `feat/application-reminders` |
-| [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Bản demo đã gộp (#207, #230–#233); kế hoạch bản 3 (20/11): GĐ 1 đo lường ở PR #274; GĐ 2 `extract-v3` xong trên nhánh `feat/ai-extract-v3` |
+| [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Bản demo, GĐ 1, 2, 4 của bản 3 đã ở `dev`; từ 25/11 làm phần NTD (xếp hạng hồ sơ, hồ sơ trích xuất, Tìm CV) trên nhánh `feat/recruiter-ranking`: GĐ A `hybrid-v2` xong |
 | [CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm](#cv-tải-lên-tệp-gốc-tiêu-chuẩn-upload-giới-hạn-cv-ntd-tìm-kiếm-2026-11-15) | ✅ Gộp vào `dev` (#203) |
 | [Việc làm tốt nhất xếp theo chất lượng tin](#việc-làm-tốt-nhất-xếp-theo-chất-lượng-tin-2026-11-15) | ✅ Gộp vào `dev` (#204) |
 | [Thiết kế lại quản lý tin tuyển dụng của NTD](#thiết-kế-lại-quản-lý-tin-tuyển-dụng-của-ntd-2026-11-15) | ✅ Gộp vào `dev` (nhánh `feat/employer-job-workspace`) |
@@ -1236,15 +1236,59 @@ làm gợi ý" theo ngữ nghĩa, và nhà tuyển dụng xếp hạng hồ sơ 
 
 | GĐ | Hạng mục | Trạng thái |
 | --- | --- | --- |
-| 1 | Đo lường: lệnh `matching_evaluate` (chấm bằng đúng mã sản phẩm), `ml/scripts/evaluate.py`, bảng số trên validation; mở rộng tập vàng lên 30 tin; tải mô hình và dữ liệu công khai | 🟨 PR #274 chờ gộp |
-| 2 | `extract-v3`: PDF hai cột, chức danh CV tải lên, sửa các luật nhận ngày/bằng cấp/kỹ năng, schema `profile_json` | 🟨 Xong trên nhánh `feat/ai-extract-v3`, chờ PR |
+| 1 | Đo lường: lệnh `matching_evaluate` (chấm bằng đúng mã sản phẩm), `ml/scripts/evaluate.py`, bảng số trên validation; mở rộng tập vàng lên 30 tin; tải mô hình và dữ liệu công khai | ✅ Đã ở `dev` |
+| 2 | `extract-v3`: PDF hai cột, chức danh CV tải lên, sửa các luật nhận ngày/bằng cấp/kỹ năng, schema `profile_json` | ✅ Đã ở `dev` |
 | 3 | Dữ liệu huấn luyện, cổng chất lượng, fine-tune bi-encoder và cross-encoder, ablation | ⬜ |
-| 4 | Việc làm gợi ý theo ngữ nghĩa (pgvector) | 🟨 Xong trên nhánh `feat/ai-semantic-recommendations`, chờ PR |
-| 5 | `hybrid-v2`, cross-encoder vào `ml-worker`, `result_json` bản 2 (M2) | ⬜ |
-| 6 | Nhà tuyển dụng xếp hạng hồ sơ ứng tuyển | ⬜ |
+| 4 | Việc làm gợi ý theo ngữ nghĩa (pgvector) | ✅ Đã ở `dev` |
+| 5 | `hybrid-v2`, cross-encoder vào `ml-worker`, `result_json` bản 2 (M2) | 🟨 Phần không cần huấn luyện xong ở GĐ A bên dưới; cross-encoder chưa làm |
+| 6 | Nhà tuyển dụng xếp hạng hồ sơ ứng tuyển | 🟨 Làm sớm, tách thành GĐ B–C bên dưới |
 | 7 | Chạy tập test một lần, hiệu năng, nghiệm thu TC-01…30, kappa 30 cặp (M3) | ⬜ |
 | 8 | Báo cáo, slide, diễn tập demo | ⬜ |
 
+Kế hoạch phần nhà tuyển dụng (duyệt 25/11): kéo GĐ 6 lên trước, thêm hồ sơ trích xuất
+và Tìm CV. Cả năm giai đoạn làm trên một nhánh `feat/recruiter-ranking`, mỗi giai đoạn
+một commit, một PR vào `dev` khi xong GĐ E.
+
+| GĐ | Hạng mục | Trạng thái |
+| --- | --- | --- |
+| A | Công thức `hybrid-v2` phần không cần huấn luyện: bỏ địa điểm, tắt khớp kỹ năng viết khác tên, hệ số liên quan; đo trên validation | ✅ Commit trên nhánh (25/11) |
+| B | Đường ống xếp hạng hồ sơ ứng tuyển (backend): chấm bản CV đã nộp khi ứng viên đồng ý, queue `ai-matching-batch`, `ordering=ai_match`, endpoint chi tiết | ⬜ |
+| C | Giao diện xếp hạng ở cổng NTD: cột "Phù hợp", tab Đánh giá, bộ hiển thị dùng chung | ⬜ |
+| D | Một CV được bật cho NTD tìm kiếm + "Hồ sơ NTD nhìn thấy" phía ứng viên | ⬜ |
+| E | Tìm CV: tìm ứng viên ẩn danh theo tin, xem nhanh, mời ứng tuyển | ⬜ |
+
+Quyết định đã chốt: chỉ chấm hồ sơ ứng viên đồng ý (ô đồng ý tự chọn, nhớ lần trước);
+sắp xếp mặc định vẫn là mới nhất; không tự loại theo điểm; Tìm CV chỉ hiện hồ sơ trích
+xuất ẩn danh và tìm theo một tin đang tuyển; bước tiếp là mời ứng tuyển vào tin.
+
+<details><summary>Ghi chú GĐ A (phần NTD)</summary>
+
+- `hybrid-v2` (`apps/matching/services/scoring/`): bỏ tiêu chí địa điểm; tắt khớp kỹ năng
+  "viết khác tên" cho mô hình zero-shot (`Calibration.semantic_skills`); học vấn, cấp bậc,
+  ngoại ngữ nhân `min(1, R/50)` khi cộng vào điểm tổng (hệ số liên quan), điểm hiển thị giữ
+  giá trị thật và tóm tắt ghi rõ "chỉ được tính một phần".
+- Kế hoạch viết là "chặn trần điểm tổng theo R". Đo cho thấy trần không hạ được trung vị cặp
+  khác ngành nếu không cắt cả cặp đúng nghề có R thấp, nên đổi sang hệ số liên quan.
+- Validation (100 cặp, 10 tin; `ml/reports/eval_validation.md`):
+
+  | Phương án | Spearman | NDCG@5 | Kappa mức | Nhãn 0: trung vị / cao nhất / từ 50 điểm |
+  | --- | ---: | ---: | ---: | --- |
+  | `hybrid-v1` | 0,603 | 0,815 | 0,511 | 28 / 65 / 6 cặp |
+  | Bật lại khớp kỹ năng viết khác tên | 0,626 | 0,821 | 0,535 | 17 / 57 / 5 cặp |
+  | Bỏ hệ số liên quan | 0,692 | 0,857 | 0,672 | 27 / 48 / 0 |
+  | `hybrid-v2` | 0,699 | 0,857 | 0,663 | 11 / 46 / 0 |
+
+  Đạt điều kiện bật điểm cho NTD (nhãn 0 trung vị ≤ 20, không cặp nào ≥ 50). `hybrid-v2`
+  lần đầu hơn bộ luật `profile-rule-v2` về Spearman (0,699 so với 0,628); NDCG@5 ngang
+  (0,857 so với 0,874), khoảng tin cậy còn chồng nhau.
+- `matching_evaluate --detail` (kèm nguyên kết quả chấm) và `--ablation` (tắt một thay đổi
+  của công thức); `ml/scripts/evaluate.py --ablation` thêm ba dòng vào bảng.
+- `result_json.schema_version = 2`: thêm `overall.relevance`,
+  `flags.relevance_discount_applied`; không còn `location` trong `components`. Kết quả cũ
+  (`hybrid-v1`) trong cache không dùng lại vì khóa cache có phiên bản công thức.
+- Test `apps/matching` (100 test) đạt; phần test của tập vàng chưa chạy.
+
+</details>
 <details><summary>Ghi chú GĐ 1 (bản 3)</summary>
 
 - Ngày 19/11 DB dev được dựng lại từ baseline migration (đại tu backend GĐ6), nên
