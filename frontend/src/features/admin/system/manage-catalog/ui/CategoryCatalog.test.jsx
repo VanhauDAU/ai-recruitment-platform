@@ -38,6 +38,7 @@ describe('category tree model', () => {
     const tree = buildCategoryTree(CATEGORIES)
     expect(tree.map((node) => node.name)).toEqual(['Công nghệ thông tin', 'Kế toán'])
     expect(tree[1].children).toBeUndefined()
+    expect(tree[0].branch_job_count).toBe(7)
 
     const matches = filterCategoryTree(tree, categoryMatcher({ search: 'lap trinh', type: '', status: 'all' }))
     expect(matches).toHaveLength(1)

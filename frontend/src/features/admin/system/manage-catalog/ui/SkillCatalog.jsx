@@ -225,7 +225,6 @@ export default function SkillCatalog() {
         <Table
           rowKey="id"
           size="middle"
-          sticky
           columns={columns}
           dataSource={skills}
           loading={skillsQuery.isFetching && skillsQuery.isPlaceholderData}

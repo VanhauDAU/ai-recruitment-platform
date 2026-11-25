@@ -1,5 +1,7 @@
 .skill-catalog {
   display: grid;
+  /* Cột auto giãn theo nội dung rộng nhất và đẩy trang tràn ngang; khóa vào bề rộng khung. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
 }
 
@@ -26,16 +28,12 @@
 
 .skill-catalog__toolbar,
 .skill-catalog__bulk {
-  position: sticky;
-  top: 0;
-  z-index: 3;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   box-sizing: border-box;
   min-height: 40px;
-  background: var(--admin-canvas, #f4f7fb);
 }
 
 .skill-catalog__bulk {
@@ -48,6 +46,7 @@
 
 .skill-catalog__search {
   flex: 1 1 220px;
+  max-width: 420px;
 }
 
 .skill-catalog__filter {
@@ -227,6 +226,7 @@
   .skill-catalog__search,
   .skill-catalog__filter {
     flex: 1 1 calc(50% - 4px);
+    max-width: none;
     width: auto;
   }
 

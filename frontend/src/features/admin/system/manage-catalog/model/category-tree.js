@@ -22,6 +22,12 @@ export function buildCategoryTree(categories) {
     if (!parent) roots.push(node)
     else (parent.children ??= []).push(node)
   })
+  // Tin chỉ gắn với vị trí chuyên môn và kiến thức chuyên ngành; nhóm nghề hiện tổng của cả nhánh.
+  const total = (node) => {
+    node.branch_job_count = node.job_count + (node.children ?? []).reduce((sum, child) => sum + total(child), 0)
+    return node.branch_job_count
+  }
+  roots.forEach(total)
   return roots
 }
 

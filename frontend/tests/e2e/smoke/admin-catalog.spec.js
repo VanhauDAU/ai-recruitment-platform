@@ -92,6 +92,8 @@ test('admin catalog: job category tree and benefits', { tag: '@responsive' }, as
   await routeCatalogApi(page, { onCategoryCreate: (payload) => { created = payload } })
   await page.goto('/admin/app/catalog?tab=categories')
   await expect(page.getByText('Công nghệ thông tin')).toBeVisible()
+  // Thanh công cụ của bảng cây từng đẩy trang tràn ngang ở mọi độ rộng.
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
 
   await page.getByRole('textbox', { name: 'Tìm ngành nghề…' }).fill('backend')
   await expect(page.getByText('Backend Developer')).toBeVisible()
