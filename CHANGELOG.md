@@ -8,6 +8,12 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-25
 
+#### Fixed — Thỏa thuận xử lý DLCN ProCV–NTD không còn trỏ sang TopCV
+
+- Link "Xem nội dung đầy đủ" ở bước Bảo vệ dữ liệu mở văn bản DPA của ProCV
+  (`/documents/procv-thoa-thuan-xu-ly-dlcn-nha-tuyen-dung-2026-11.html`, phiên bản `2026-11`)
+  thay cho URL tạm của TopCV trong `.env`. Hướng dẫn deploy ghi sẵn URL và SHA-256.
+
 #### Changed — Tải trang đầu nhẹ hơn
 
 - Bundle đầu còn 9 file JS, 252 KiB gzip (trước 78 file, 333 KiB): thư viện trang đầu gom
