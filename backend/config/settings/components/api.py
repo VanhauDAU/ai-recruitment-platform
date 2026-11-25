@@ -52,6 +52,9 @@ REST_FRAMEWORK = {
         'consent': '20/hour',
         # Mỗi lần (re)connect WebSocket một vé; backoff phía client giữ dưới mức này.
         'realtime_ticket': '30/min',
+        # Việc làm gần bạn: mỗi lần đổi bán kính/bộ lọc gọi danh sách + bản đồ.
+        'nearby_jobs': '120/min',
+        'geo_lookup': '60/min',
         'job_view': '120/hour',
         'job_impression': '240/hour',
         'job_report': '10/hour',

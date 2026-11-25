@@ -770,6 +770,22 @@ cầu: `met`/`partial`/`unmet`, câu CV làm bằng chứng), `suggestions` (`co
 `priority`, `section`, `message`, `params`), `flags`, `disclaimer`, `meta`
 (phiên bản mô hình, công thức, trích xuất, `latency_ms`).
 
+### Việc làm gần tôi (ADR-0029)
+
+| Method | Endpoint | Ghi chú |
+| --- | --- | --- |
+| GET | `/api/public/jobs/nearby/?lat=&lng=&radius_km=` | Phân trang như `/public/jobs/`, nhận mọi bộ lọc của nó; thêm `include_province_wide` (1), `include_remote` (0), `ordering=distance\|newest\|salary_desc`. Mỗi tin có `distance_km`, `match_kind` (`distance`/`province_wide`/`remote`), `nearest_workplace`, `nearby_workplace_count`, `deadline`; gốc có `origin` và `expand_suggestion` (khi rỗng). |
+| GET | `/api/public/jobs/nearby/map/` | Cùng tham số, không phân trang: `points[]` gom theo tọa độ (`label` = tên phường, `jobs[]`), `truncated`. |
+| GET | `/api/public/locations/geo/autocomplete/?q=&lat=&lng=` | Phường/xã cục bộ (`type=ward`, có tọa độ) + địa chỉ của nhà cung cấp (`type=place`, `ref`). |
+| GET | `/api/public/locations/geo/place/?ref=` | Tọa độ của một gợi ý; 404 nếu không xác định được. |
+| GET | `/api/public/locations/geo/wards/<slug>/` | Tâm + tỉnh của phường (URL chia sẻ `?gan=`). |
+
+Tọa độ được làm tròn 3 chữ số (~110 m), không lưu. Ngoài VN hoặc sai định dạng → 400;
+`nearby_jobs_enabled` tắt → 404. Throttle ẩn danh `nearby_jobs` 120/phút, `geo_lookup`
+60/phút. Form NTD gửi ghim tùy chọn ở `job_locations[].latitude/longitude` (đủ cả hai,
+trong VN, đúng tỉnh), trả lại kèm `coordinate_precision`, `coordinate_source`.
+`/api/public/locations/` trả thêm `latitude`, `longitude` (tâm phường/tỉnh).
+
 ### Employer readiness và mã lỗi ER-2
 
 `blockers[]` có đúng bốn field `code`, `capabilities[]`, `message`, `action`.

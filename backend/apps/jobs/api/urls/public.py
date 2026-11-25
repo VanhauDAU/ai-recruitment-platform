@@ -12,6 +12,8 @@ from ..views import (
     JobSuggestView,
     JobViewCreateView,
     LanguageListView,
+    NearbyJobListView,
+    NearbyJobMapView,
 )
 
 urlpatterns = [
@@ -26,6 +28,8 @@ urlpatterns = [
         name='homepage-best-job-locations',
     ),
     path('suggest/', JobSuggestView.as_view(), name='job-suggest'),
+    path('nearby/', NearbyJobListView.as_view(), name='job-nearby-list'),
+    path('nearby/map/', NearbyJobMapView.as_view(), name='job-nearby-map'),
     path(
         'impressions/',
         JobImpressionBatchCreateView.as_view(),

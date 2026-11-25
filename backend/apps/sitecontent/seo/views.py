@@ -190,6 +190,7 @@ class StaticSitemapView(View):
             '/',
             '/cong-ty',
             '/viec-lam',
+            '/viec-lam-gan-ban',
             '/blog',
             '/chinh-sach-cookie',
             '/tuyendung',

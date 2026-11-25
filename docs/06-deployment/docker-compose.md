@@ -76,6 +76,7 @@ docker compose exec backend sh -c "\
   python manage.py seed_skills && \
   python manage.py seed_locations && \
   python manage.py seed_province_merges && \
+  python manage.py seed_location_coordinates && \
   python manage.py seed_job_categories && \
   python manage.py seed_sitecontent && \
   python manage.py seed_cv_catalog && \

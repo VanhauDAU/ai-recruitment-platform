@@ -80,3 +80,11 @@ describe('data-driven navigation groups', () => {
     expect(items.every((item) => typeof item.to === 'string' && item.to.startsWith('/'))).toBe(true)
   })
 })
+
+describe('nearby jobs navigation capability', () => {
+  it('lists Jobs near me unless the admin switch is off', () => {
+    const near = (menus) => allItems(menus).find((item) => item.to === '/viec-lam-gan-ban')
+    expect(near(navigationForCapabilities(HEADER_NAVIGATION))).toBeTruthy()
+    expect(near(navigationForCapabilities(HEADER_NAVIGATION, { nearbyJobsEnabled: false }))).toBeUndefined()
+  })
+})

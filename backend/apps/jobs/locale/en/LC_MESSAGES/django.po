@@ -172,6 +172,15 @@ msgstr "This category is no longer active."
 msgid "Loại danh mục không phù hợp với vai trò đã chọn."
 msgstr "The category type does not match the selected role."
 
+msgid "Ghim vị trí cần đủ cả vĩ độ và kinh độ."
+msgstr "A location pin needs both latitude and longitude."
+
+msgid "Ghim vị trí phải nằm trong lãnh thổ Việt Nam."
+msgstr "The location pin must be inside Vietnam."
+
+msgid "Ghim vị trí nằm ngoài tỉnh/thành đã chọn."
+msgstr "The location pin is outside the selected province."
+
 msgid "Giờ kết thúc phải sau giờ bắt đầu."
 msgstr "The end time must be after the start time."
 

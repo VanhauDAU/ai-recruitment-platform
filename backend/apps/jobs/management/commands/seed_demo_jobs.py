@@ -110,6 +110,18 @@ def approve_demo_representative(recruiter, now):
     )
 
 
+def _demo_pin(ward, jitter):
+    """Ghim giả quanh tâm phường (≤ ~800 m) để bản đồ "Việc làm gần bạn" có dữ liệu."""
+    if ward.latitude is None:
+        return {'coordinate_precision': JobLocation.Precision.PROVINCE}
+    return {
+        'latitude': round(ward.latitude + jitter.uniform(-0.007, 0.007), 6),
+        'longitude': round(ward.longitude + jitter.uniform(-0.007, 0.007), 6),
+        'coordinate_precision': JobLocation.Precision.EXACT,
+        'coordinate_source': JobLocation.CoordinateSource.EMPLOYER_PIN,
+    }
+
+
 class Command(BaseCommand):
     help = 'Seed demo companies + active jobs (spread over recent days) for the homepage dashboard/demo. Re-runnable.'
 
@@ -157,6 +169,8 @@ class Command(BaseCommand):
 
         now = timezone.now()
         rnd = random.Random(42)
+        # Riêng một bộ sinh số cho tọa độ để không xáo trộn dữ liệu demo cũ (seed 42).
+        jitter = random.Random(7)
         companies = []
         for i, (cname, size, industry) in enumerate(COMPANIES):
             user = User.objects.create_user(
@@ -284,6 +298,7 @@ class Command(BaseCommand):
                             job=job,
                             location=ward,
                             address_detail=f'Tầng {rnd.randint(2, 15)}, tòa nhà số {rnd.randint(1, 200)} đường Trung Tâm',
+                            **_demo_pin(ward, jitter),
                         )
                         for ward in selected_wards
                     ]

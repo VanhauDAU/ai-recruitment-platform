@@ -64,7 +64,10 @@ class ApiSecurityHeadersMiddleware:
     def __call__(self, request):
         response = self.get_response(request)
         response.setdefault('Referrer-Policy', 'strict-origin-when-cross-origin')
-        response.setdefault('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+        # geolocation=(self): "Việc làm gần bạn" hỏi vị trí trên chính trang của site
+        # (ADR-0029). Trang SEO shell do Django trả là tài liệu gốc của SPA, nên chặn
+        # ở đây sẽ chặn luôn định vị cả phiên sau khi điều hướng trong ứng dụng.
+        response.setdefault('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self)')
 
         if request.path.startswith('/api/') and request.path not in self._API_DOCUMENTATION_PATHS:
             response.setdefault(

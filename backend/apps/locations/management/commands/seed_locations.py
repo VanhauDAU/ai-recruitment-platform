@@ -7,6 +7,8 @@ from django.db import transaction
 from apps.locations.models import Location
 
 API_BASE = 'https://provinces.open-api.vn/api/v2'
+# Mã phường/xã chính thức 5 chữ số; nguồn trả số trần (4, 25…) trùng mã tỉnh.
+WARD_CODE_WIDTH = 5
 
 
 def fetch_json(url):
@@ -44,7 +46,7 @@ class Command(BaseCommand):
                 detail = fetch_json(f'{API_BASE}/p/{province["code"]}?depth=2')
                 for ward in detail.get('wards', []):
                     Location.objects.update_or_create(
-                        code=str(ward['code']),
+                        code=str(ward['code']).zfill(WARD_CODE_WIDTH),
                         defaults={
                             'level': Location.Level.WARD,
                             'name': ward['name'],

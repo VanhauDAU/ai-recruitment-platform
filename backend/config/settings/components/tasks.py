@@ -64,6 +64,8 @@ CELERY_TASK_ROUTES = {
     'apps.matching.tasks.score_application': {'queue': 'ai-matching-batch'},
     'apps.matching.tasks.rescore_job_applications': {'queue': 'ai-matching-batch'},
     'apps.matching.tasks.*': {'queue': 'ai-matching'},
+    # Geocode địa chỉ nơi làm việc (ADR-0029): gọi provider ngoài, không chặn hàng email.
+    'apps.jobs.tasks.geocoding.*': {'queue': 'default'},
     'apps.jobs.tasks.*': {'queue': 'candidate-email'},
     'apps.applications.tasks.*': {'queue': 'candidate-email'},
     'apps.candidates.tasks.*': {'queue': 'candidate-email'},

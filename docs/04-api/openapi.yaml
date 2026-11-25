@@ -14600,6 +14600,118 @@ paths:
                 items:
                   $ref: '#/components/schemas/Language'
           description: ''
+  /api/public/jobs/nearby/:
+    get:
+      operationId: public_jobs_nearby_list
+      summary: Việc làm gần một vị trí (sắp theo khoảng cách)
+      parameters:
+      - in: query
+        name: include_province_wide
+        schema:
+          type: boolean
+        description: Gồm tin tuyển khắp tỉnh
+      - in: query
+        name: include_remote
+        schema:
+          type: boolean
+        description: Gồm tin chỉ làm từ xa
+      - in: query
+        name: lat
+        schema:
+          type: number
+          format: double
+        description: Vĩ độ (làm tròn 3 chữ số)
+        required: true
+      - in: query
+        name: lng
+        schema:
+          type: number
+          format: double
+        description: Kinh độ (làm tròn 3 chữ số)
+        required: true
+      - in: query
+        name: ordering
+        schema:
+          type: string
+          enum:
+          - distance
+          - newest
+          - salary_desc
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: radius_km
+        schema:
+          type: integer
+        description: Bán kính, kẹp theo cấu hình (mặc định 10)
+      tags:
+      - jobs
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPublicNearbyJobList'
+          description: ''
+  /api/public/jobs/nearby/map/:
+    get:
+      operationId: public_jobs_nearby_map_retrieve
+      summary: Điểm việc làm trên bản đồ quanh một vị trí
+      parameters:
+      - in: query
+        name: include_province_wide
+        schema:
+          type: boolean
+        description: Gồm tin tuyển khắp tỉnh
+      - in: query
+        name: include_remote
+        schema:
+          type: boolean
+        description: Gồm tin chỉ làm từ xa
+      - in: query
+        name: lat
+        schema:
+          type: number
+          format: double
+        description: Vĩ độ (làm tròn 3 chữ số)
+        required: true
+      - in: query
+        name: lng
+        schema:
+          type: number
+          format: double
+        description: Kinh độ (làm tròn 3 chữ số)
+        required: true
+      - in: query
+        name: radius_km
+        schema:
+          type: integer
+        description: Bán kính, kẹp theo cấu hình (mặc định 10)
+      tags:
+      - jobs
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NearbyJobMap'
+          description: ''
   /api/public/jobs/stats/:
     get:
       operationId: public_jobs_stats_retrieve
@@ -14769,6 +14881,85 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/LocationLookup'
+          description: ''
+  /api/public/locations/geo/autocomplete/:
+    get:
+      operationId: public_locations_geo_autocomplete_list
+      summary: 'Gợi ý vị trí: phường/xã có sẵn rồi địa chỉ từ nhà cung cấp bản đồ'
+      parameters:
+      - in: query
+        name: lat
+        schema:
+          type: number
+          format: double
+        description: Ưu tiên gợi ý gần điểm này
+      - in: query
+        name: lng
+        schema:
+          type: number
+          format: double
+      - in: query
+        name: q
+        schema:
+          type: string
+        required: true
+      tags:
+      - locations
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GeoSuggestion'
+          description: ''
+  /api/public/locations/geo/place/:
+    get:
+      operationId: public_locations_geo_place_retrieve
+      summary: Tọa độ của một gợi ý địa chỉ
+      parameters:
+      - in: query
+        name: ref
+        schema:
+          type: string
+        required: true
+      tags:
+      - locations
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeoPoint'
+          description: ''
+  /api/public/locations/geo/wards/{slug}/:
+    get:
+      operationId: public_locations_geo_wards_retrieve
+      summary: Phường/xã theo slug (gốc tìm việc gần chia sẻ được qua URL)
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - locations
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeoPlaceLabel'
           description: ''
   /api/public/privacy/consent/:
     get:
@@ -24694,6 +24885,26 @@ components:
         * `ai` - AI soạn
         * `template` - Mẫu có sẵn
         * `manual` - Tự soạn
+    CoordinatePrecisionEnum:
+      enum:
+      - exact
+      - ward
+      - province
+      type: string
+      description: |-
+        * `exact` - Exact address
+        * `ward` - Ward centroid
+        * `province` - Whole province
+    CoordinateSourceEnum:
+      enum:
+      - employer_pin
+      - geocoder
+      - ward_centroid
+      type: string
+      description: |-
+        * `employer_pin` - Employer pin
+        * `geocoder` - Geocoded address
+        * `ward_centroid` - Ward centroid
     CurrencyEnum:
       enum:
       - VND
@@ -28892,6 +29103,88 @@ components:
         * `any` - Không yêu cầu
         * `male` - Nam
         * `female` - Nữ
+    GeoPlaceLabel:
+      type: object
+      properties:
+        ward_id:
+          type: integer
+        ward_name:
+          type: string
+        ward_slug:
+          type: string
+        province_id:
+          type: integer
+        province_name:
+          type: string
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+      required:
+      - latitude
+      - longitude
+      - province_id
+      - province_name
+      - ward_id
+      - ward_name
+      - ward_slug
+    GeoPoint:
+      type: object
+      properties:
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        label:
+          type: string
+      required:
+      - label
+      - latitude
+      - longitude
+    GeoSuggestion:
+      type: object
+      description: |-
+        One autocomplete option: a ward (coordinates known locally) or a provider
+        place that needs ``/geo/place/`` to resolve its coordinates.
+      properties:
+        type:
+          $ref: '#/components/schemas/GeoSuggestionTypeEnum'
+        ref:
+          type: string
+        label:
+          type: string
+        secondary:
+          type: string
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
+        slug:
+          type: string
+      required:
+      - label
+      - latitude
+      - longitude
+      - ref
+      - secondary
+      - slug
+      - type
+    GeoSuggestionTypeEnum:
+      enum:
+      - ward
+      - place
+      type: string
+      description: |-
+        * `ward` - ward
+        * `place` - place
     GroupEnum:
       enum:
       - campaign
@@ -30158,7 +30451,25 @@ components:
           type: integer
           maximum: 32767
           minimum: 0
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
+        coordinate_precision:
+          allOf:
+          - $ref: '#/components/schemas/CoordinatePrecisionEnum'
+          readOnly: true
+        coordinate_source:
+          allOf:
+          - $ref: '#/components/schemas/CoordinateSourceEnum'
+          readOnly: true
       required:
+      - coordinate_precision
+      - coordinate_source
       - id
       - location
       - location_level
@@ -30177,6 +30488,14 @@ components:
           type: integer
           maximum: 32767
           minimum: 0
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
       required:
       - location
     JobModerationEvent:
@@ -30957,9 +31276,21 @@ components:
           nullable: true
         merged_from:
           readOnly: true
+        latitude:
+          type: number
+          format: double
+          readOnly: true
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          readOnly: true
+          nullable: true
       required:
       - id
+      - latitude
       - level
+      - longitude
       - merged_from
       - name
       - parent
@@ -31346,6 +31677,156 @@ components:
         * `manual_review` - Tạm ẩn để rà soát nội dung
         * `confirmed_violation` - Tạm ẩn do vi phạm đã xác nhận
         * `changes_requested` - Tạm ẩn, cần chỉnh sửa theo yêu cầu
+    NearbyJobMap:
+      type: object
+      properties:
+        origin:
+          $ref: '#/components/schemas/NearbyJobMapOrigin'
+        points:
+          type: array
+          items:
+            $ref: '#/components/schemas/NearbyMarker'
+        truncated:
+          type: boolean
+      required:
+      - origin
+      - points
+      - truncated
+    NearbyJobMapOrigin:
+      type: object
+      properties:
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        radius_km:
+          type: integer
+        ward:
+          allOf:
+          - $ref: '#/components/schemas/NearbyOriginPlace'
+          nullable: true
+      required:
+      - latitude
+      - longitude
+      - radius_km
+      - ward
+    NearbyMarker:
+      type: object
+      properties:
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        precision:
+          type: string
+        distance_km:
+          type: number
+          format: double
+          readOnly: true
+        label:
+          type: string
+          description: Tên phường/xã của điểm
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/NearbyMarkerJob'
+      required:
+      - distance_km
+      - jobs
+      - label
+      - latitude
+      - longitude
+      - precision
+    NearbyMarkerJob:
+      type: object
+      properties:
+        slug:
+          type: string
+        title:
+          type: string
+        company_name:
+          type: string
+        company_logo_url:
+          type: string
+          nullable: true
+          readOnly: true
+        salary_type:
+          type: string
+        salary_min:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          nullable: true
+        salary_max:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          nullable: true
+        currency:
+          type: string
+        workplace:
+          type: string
+          readOnly: true
+      required:
+      - company_logo_url
+      - company_name
+      - currency
+      - salary_max
+      - salary_min
+      - salary_type
+      - slug
+      - title
+      - workplace
+    NearbyOriginPlace:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        province_id:
+          type: integer
+        province_name:
+          type: string
+      required:
+      - id
+      - name
+      - province_id
+      - province_name
+      - slug
+    NearbyWorkplace:
+      type: object
+      properties:
+        id:
+          type: integer
+        display:
+          type: string
+          readOnly: true
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        precision:
+          type: string
+        distance_km:
+          type: number
+          format: double
+          readOnly: true
+      required:
+      - display
+      - distance_km
+      - id
+      - latitude
+      - longitude
+      - precision
     NetworkEnum:
       enum:
       - facebook_page
@@ -32495,6 +32976,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PublicJobPreview'
+    PaginatedPublicNearbyJobList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicNearbyJob'
     PaginatedRecruitmentCampaignList:
       type: object
       required:
@@ -34467,7 +34971,20 @@ components:
         address_detail:
           type: string
           maxLength: 500
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
+        coordinate_precision:
+          allOf:
+          - $ref: '#/components/schemas/CoordinatePrecisionEnum'
+          readOnly: true
       required:
+      - coordinate_precision
       - id
       - location
       - location_level
@@ -34753,6 +35270,228 @@ components:
           maxLength: 500
       required:
       - id
+    PublicNearbyJob:
+      type: object
+      description: Search card plus how close the job is to the candidate's chosen
+        point.
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        title:
+          type: string
+          readOnly: true
+        company_name:
+          type: string
+          readOnly: true
+        company_slug:
+          type: string
+          nullable: true
+          readOnly: true
+        company_logo_url:
+          type: string
+          nullable: true
+          readOnly: true
+        brand_slug:
+          type: string
+          nullable: true
+          readOnly: true
+        company_verified:
+          type: boolean
+          readOnly: true
+        category:
+          type: integer
+          nullable: true
+          readOnly: true
+        locations_detail:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
+        job_skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobListSkill'
+          readOnly: true
+        work_type:
+          allOf:
+          - $ref: '#/components/schemas/JobWorkTypeEnum'
+          readOnly: true
+        work_types:
+          readOnly: true
+          description: Các hình thức làm việc được áp dụng; work_type giữ giá trị
+            đầu tiên để tương thích bộ lọc cũ.
+        employment_type:
+          allOf:
+          - $ref: '#/components/schemas/EmploymentTypeEnum'
+          readOnly: true
+        education_level:
+          allOf:
+          - $ref: '#/components/schemas/EducationLevelEnum'
+          readOnly: true
+        experience_years:
+          allOf:
+          - $ref: '#/components/schemas/ExperienceYearsEnum'
+          readOnly: true
+          description: |-
+            Số năm kinh nghiệm yêu cầu (bộ lọc "Kinh nghiệm")
+
+            * `none` - Không yêu cầu
+            * `under_1` - Dưới 1 năm
+            * `1` - 1 năm
+            * `2` - 2 năm
+            * `3` - 3 năm
+            * `4` - 4 năm
+            * `5` - 5 năm
+            * `over_5` - Trên 5 năm
+        position_level:
+          allOf:
+          - $ref: '#/components/schemas/JobPositionLevelEnum'
+          readOnly: true
+          description: |-
+            Cấp bậc tuyển dụng (bộ lọc "Cấp bậc")
+
+            * `employee` - Nhân viên
+            * `team_lead` - Trưởng nhóm
+            * `manager` - Trưởng/Phó phòng
+            * `supervisor` - Quản lý / Giám sát
+            * `branch_manager` - Trưởng chi nhánh
+            * `vice_director` - Phó giám đốc
+            * `director` - Giám đốc
+            * `intern` - Thực tập sinh
+        age_min:
+          type: integer
+          readOnly: true
+          nullable: true
+        age_max:
+          type: integer
+          readOnly: true
+          nullable: true
+        salary_type:
+          readOnly: true
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SalaryTypeEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        salary_min:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        salary_max:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        income_display_type:
+          allOf:
+          - $ref: '#/components/schemas/IncomeDisplayTypeEnum'
+          readOnly: true
+        currency:
+          allOf:
+          - $ref: '#/components/schemas/CurrencyEnum'
+          readOnly: true
+        tier:
+          allOf:
+          - $ref: '#/components/schemas/TierEnum'
+          readOnly: true
+        is_hot:
+          type: boolean
+          readOnly: true
+          description: Nhãn HOT (đỏ) trên card
+        is_urgent:
+          type: boolean
+          readOnly: true
+          description: Nhãn GẤP / tuyển gấp (cam) trên card
+        has_flash_badge:
+          type: boolean
+          readOnly: true
+          description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
+        presentation:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+        first_approved_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          description: Mốc duyệt đầu tiên bất biến của public cycle hiện tại.
+        published_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        deadline:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        distance_km:
+          type: number
+          format: double
+          nullable: true
+          readOnly: true
+        match_kind:
+          type: string
+          readOnly: true
+        nearest_workplace:
+          allOf:
+          - $ref: '#/components/schemas/NearbyWorkplace'
+          nullable: true
+          readOnly: true
+        nearby_workplace_count:
+          type: integer
+          readOnly: true
+      required:
+      - age_max
+      - age_min
+      - brand_slug
+      - category
+      - company_logo_url
+      - company_name
+      - company_slug
+      - company_verified
+      - created_at
+      - currency
+      - deadline
+      - distance_km
+      - education_level
+      - employment_type
+      - experience_years
+      - first_approved_at
+      - has_flash_badge
+      - income_display_type
+      - is_hot
+      - is_urgent
+      - job_skills
+      - locations_detail
+      - match_kind
+      - nearby_workplace_count
+      - nearest_workplace
+      - position_level
+      - presentation
+      - public_id
+      - published_at
+      - salary_max
+      - salary_min
+      - salary_type
+      - slug
+      - tier
+      - title
+      - work_type
+      - work_types
     PublicSimilarCompanies:
       type: object
       properties:

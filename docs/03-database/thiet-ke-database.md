@@ -207,7 +207,7 @@ và chủ chiến dịch active.
 | `JobCategory` | Taxonomy 3 cấp (`parent`), `category_type` occupation_group/domain/specialization, `status`, `public_id`, slug unique. Picker CV dùng loại `specialization`. |
 | `JobCategoryLocalization` | Tên hiển thị/alias tìm kiếm theo `locale` (`vi-VN`, `en-US`); unique `(category, locale)`. |
 | `JobCategoryAssignment` | Một `primary_specialization` (partial unique mỗi job) và nhiều `domain_knowledge`; unique `(job, category, role)`; category PROTECT. |
-| `JobLocation` | Địa điểm + `address_detail`; ghi mới bắt buộc cấp phường/xã (tỉnh suy ra từ `location.parent`), liên kết cấp tỉnh cũ được giữ; unique `(job, location, address_detail)`. |
+| `JobLocation` | Địa điểm + `address_detail`; ghi mới bắt buộc cấp phường/xã (tỉnh suy ra từ `location.parent`), liên kết cấp tỉnh cũ được giữ; unique `(job, location, address_detail)`. Tọa độ cho "Việc làm gần tôi" (ADR-0029): `latitude`/`longitude` (index ghép, check trong khoảng hợp lệ), `coordinate_precision` exact/ward/province, `coordinate_source` employer_pin/geocoder/ward_centroid, `geocode_pending` (địa chỉ chờ Celery geocode). |
 | `JobWorkSchedule` | Khung ngày/giờ có cấu trúc (`weekday_from/to` 1–7, giờ, `is_overnight`, note). |
 | `JobSkill` | Kỹ năng required/preferred + mức tối thiểu; unique `(job, skill)`. |
 | `Benefit`, `JobBenefit` | Danh mục quyền lợi chuẩn hóa (có nhóm), quan hệ theo tin; unique `(job, benefit)`, benefit PROTECT. |
@@ -325,7 +325,8 @@ Quy tắc chi tiết: [đặc tả thông báo đa cổng](../01-phan-tich/dac-t
 | --- | --- |
 | `SkillGroup` | Taxonomy nhóm kỹ năng mở (có `parent`), thay cho choices IT cố định. |
 | `Skill` | Nguồn kỹ năng duy nhất: `name`, `slug`, `normalized_name` (đều unique), `aliases` JSON, `group`. CV, preference và tin tuyển dụng đều tham chiếu `skill_id`. Nhà tuyển dụng không tạo skill mới khi gõ. |
-| `Location` | Đơn vị hành chính 2 cấp (34 tỉnh/thành, ~3.321 phường/xã, không còn cấp huyện từ 01/07/2025): `code` chính thức unique, `level`, `parent`, `merged_from`. Seed bằng `seed_locations`, không gọi API lúc chạy. |
+| `Location` | Đơn vị hành chính 2 cấp (34 tỉnh/thành, 3.321 phường/xã, không còn cấp huyện từ 01/07/2025): `code` chính thức unique (mã phường đệm 5 chữ số để không trùng mã tỉnh), `level`, `parent`, `merged_from`, tâm `latitude`/`longitude` + `centroid_source`. Seed bằng `seed_locations` rồi `seed_location_coordinates` (từ `seed_data/centroids.json`), không gọi API lúc chạy. |
+| `GeocodeCache` | Kết quả geocoding theo khóa địa chỉ chuẩn hóa (`query_key` unique): `status` found/not_found, tọa độ, `provider`, `expires_at` (180 ngày / 7 ngày khi không thấy). Tránh gọi lại nhà cung cấp khi tin được lưu lại. |
 
 ## 11. Upload, quyền riêng tư và AI (`uploads`, `privacy`, `ai_core`)
 

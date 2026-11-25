@@ -1,10 +1,11 @@
 import {
-  AppstoreOutlined, BankOutlined, BookOutlined, DiffOutlined, EditOutlined, FileDoneOutlined,
+  AppstoreOutlined, BankOutlined, BookOutlined, DiffOutlined, EditOutlined, EnvironmentOutlined, FileDoneOutlined,
   GlobalOutlined, HeartOutlined, LikeOutlined, ProfileOutlined, SearchOutlined, UploadOutlined,
 } from '@ant-design/icons'
 import { COMPANY_DIRECTORY_PATH } from '@/entities/company/company'
 import { ACCOUNT_ROOT } from '@/entities/account/account'
 import { blogCategoryPath } from '@/entities/content/blog'
+import { m } from '@/shared/config/i18n'
 
 // Nhóm có `source` lấy mục từ dữ liệu thật (danh mục nghề, lĩnh vực, danh mục
 // mẫu CV) — xem `navigationForCapabilities`. `requiresAuth` mở popup đăng nhập
@@ -14,13 +15,14 @@ export const HEADER_NAVIGATION = [
     key: 'jobs',
     label: 'Việc làm',
     to: '/viec-lam',
-    activePaths: ['/jobs', '/so-sanh-viec-lam', COMPANY_DIRECTORY_PATH],
+    activePaths: ['/jobs', '/viec-lam-gan-ban', '/so-sanh-viec-lam', COMPANY_DIRECTORY_PATH],
     columns: [
       [
         {
           title: 'Việc làm',
           items: [
             { label: 'Tìm việc làm', to: '/viec-lam', icon: <SearchOutlined /> },
+            { label: m.candidate_nearby_nav(), to: '/viec-lam-gan-ban', icon: <EnvironmentOutlined />, requiresNearbyJobs: true },
             { label: 'Việc làm đã lưu', to: '/viec-lam-da-luu', icon: <BookOutlined />, requiresAuth: true },
             { label: 'Việc làm đã ứng tuyển', to: `${ACCOUNT_ROOT}/viec-lam-da-ung-tuyen`, icon: <FileDoneOutlined />, requiresAuth: true },
             { label: 'Việc làm phù hợp', to: `${ACCOUNT_ROOT}/viec-lam-phu-hop`, icon: <LikeOutlined />, requiresAuth: true },
@@ -108,14 +110,21 @@ export function flattenMenuItems(menu) {
  * Lọc mục theo năng lực backend và đổ dữ liệu cho nhóm động. `sources[key]`
  * chưa có (undefined) = đang tải → nhóm hiện skeleton; mảng rỗng → ẩn nhóm.
  */
-export function navigationForCapabilities(menus, { knowledgebaseEnabled = false, sources = {} } = {}) {
+export function navigationForCapabilities(
+  menus,
+  { knowledgebaseEnabled = false, nearbyJobsEnabled = true, sources = {} } = {},
+) {
   return menus.map((menu) => ({
     ...menu,
     columns: menu.columns
       .map((column) => column
         .map((group) => {
           if (!group.source) {
-            return { ...group, items: group.items.filter((item) => knowledgebaseEnabled || !item.requiresKnowledgebase) }
+            return {
+              ...group,
+              items: group.items.filter((item) => (knowledgebaseEnabled || !item.requiresKnowledgebase)
+                && (nearbyJobsEnabled || !item.requiresNearbyJobs)),
+            }
           }
           const raw = sources[group.source]
           return raw === undefined

@@ -94,6 +94,7 @@ export default function Header({ editorMode = false }) {
   const sources = useHeaderNavigationSources(menuTouched)
   const menus = navigationForCapabilities(HEADER_NAVIGATION, {
     knowledgebaseEnabled: settings.knowledgebase_public_enabled === true,
+    nearbyJobsEnabled: settings.nearby_jobs_enabled !== false,
     sources,
   })
   const hideOnScroll = location.pathname === '/viec-lam'

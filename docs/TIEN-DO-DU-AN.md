@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Việc làm gần tôi: bản đồ, bán kính, tọa độ nơi làm việc (ADR-0029)](#việc-làm-gần-tôi-bản-đồ-bán-kính-tọa-độ-nơi-làm-việc-adr-0029-2026-11-25) | 🟨 PR #344 (nhánh `feat/nearby-jobs`), chờ gộp |
 | [Thông báo thời gian thực qua WebSocket, hoàn tác 15 giây (ADR-0028)](#thông-báo-thời-gian-thực-qua-websocket-hoàn-tác-15-giây-adr-0028-2026-11-25) | ✅ Đã gộp dev (#340); sửa socket rớt mỗi 5 giây trên nhánh `fix/realtime-redis-timeout` |
 | [Phễu tuyển dụng trên trang chủ NTD](#phễu-tuyển-dụng-trên-trang-chủ-ntd-2026-11-25) | 🟨 PR #338 (nhánh `feat/employer-recruitment-funnel`), chờ gộp |
 | [Làm lại khối Gợi ý việc làm phù hợp trang chủ](#làm-lại-khối-gợi-ý-việc-làm-phù-hợp-trang-chủ-2026-11-25) | 🟨 Xong trên nhánh `feat/home-recommendations-redesign`, chưa commit/PR |
@@ -52,6 +53,26 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+
+## Việc làm gần tôi: bản đồ, bán kính, tọa độ nơi làm việc (ADR-0029) (2026-11-25)
+
+Đặc tả: [`dac-ta-tim-viec-gan-day.md`](01-phan-tich/dac-ta-tim-viec-gan-day.md).
+
+- **Dữ liệu:** tâm 34 tỉnh + 3.321 phường/xã tính từ ranh giới sau sáp nhập
+  (`seed_data/centroids.json`, phủ 100%); sửa lỗi mã phường trùng mã tỉnh làm mất
+  5 phường trung tâm Hà Nội (đệm mã 5 chữ số). `JobLocation` có tọa độ + độ chính xác;
+  `GeocodeCache`; adapter geocoding VietMap/Goong/Nominatim; Celery geocode nền.
+- **NTD:** ghim tùy chọn cho từng phường/xã trong form đăng tin (gợi ý từ địa chỉ, kiểm
+  đúng tỉnh); không ghim thì tự geocode hoặc dùng tâm phường.
+- **Ứng viên:** trang `/viec-lam-gan-ban` (GPS / chọn phường / nhập địa chỉ / bấm bản đồ,
+  bán kính 3–50 km, ngành nghề, lương, việc từ xa, nhóm "Tuyển khắp tỉnh", gợi ý mở rộng
+  bán kính), lối vào ở header + trang chủ, "Cách bạn x km" và bản đồ ở chi tiết tin.
+- **Kiểm tra:** pytest đủ bộ 2.117 qua (coverage 91%), Vitest + E2E `nearby-jobs.spec.js`
+  (`@responsive`), bundle khởi tạo không đổi (MapLibre chỉ ở chunk lazy).
+- **PR:** #344 vào `dev`.
+- **Còn lại:** cấp key VietMap (server + tile) và đặt `map_style_url` trước khi lên
+  production; sau deploy chạy `seed_location_coordinates` rồi `refresh_job_coordinates`.
 
 ## Phễu tuyển dụng trên trang chủ NTD (2026-11-25)
 

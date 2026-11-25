@@ -8,6 +8,26 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-25
 
+#### Added — Việc làm gần tôi (ADR-0029)
+
+- Trang `/viec-lam-gan-ban`: bản đồ (MapLibre, nạp lazy) + danh sách sắp theo khoảng cách,
+  bán kính 3/5/10/20/50 km, lấy vị trí bằng GPS, chọn phường/xã, nhập địa chỉ hoặc bấm/kéo
+  ghim; lọc ngành nghề, mức lương, gồm việc từ xa; nhóm "Tuyển khắp tỉnh"; gợi ý mở rộng
+  bán kính khi trống. Lối vào ở header và trang chủ; chi tiết tin có bản đồ nơi làm việc và
+  "Cách bạn x km".
+- API `GET /api/public/jobs/nearby/`, `/nearby/map/`, `/api/public/locations/geo/*`
+  (autocomplete, place, wards); site settings `nearby_jobs_*`, `map_style_url`,
+  `map_attribution`; env `GEOCODING_*` (VietMap/Goong/Nominatim).
+- Tọa độ: tâm 34 tỉnh + 3.321 phường/xã (`seed_location_coordinates`), `JobLocation` có
+  tọa độ/độ chính xác, ghim tùy chọn của NTD trong form đăng tin, geocode nền có cache,
+  lệnh `refresh_job_coordinates` để backfill.
+
+#### Fixed — Mất 5 phường trung tâm Hà Nội khi seed địa điểm
+
+- Mã phường từ nguồn seed là số trần (Ba Đình = 4, Giảng Võ = 25…) trùng mã tỉnh nên ghi đè
+  lẫn nhau. Mã phường nay đệm 5 chữ số (migration `locations.0002` cho dữ liệu cũ).
+- `Permissions-Policy` cho phép định vị trên chính site (`geolocation=(self)`).
+
 #### Changed — Hồ sơ trích xuất đầy đủ (`extract-v4`) và giải thích mức phù hợp
 
 - `profile_json` thêm `sections`: nội dung đầy đủ từng mục của CV (tóm tắt, từng công việc kèm
