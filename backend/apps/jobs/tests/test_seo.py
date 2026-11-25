@@ -92,3 +92,14 @@ class JobSeoTests(TestCase):
 
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response['X-Robots-Tag'], 'noindex, nofollow')
+
+
+class NearbyJobsSeoShellTests(TestCase):
+    def test_nearby_page_has_its_own_indexable_metadata_and_allows_geolocation(self):
+        response = self.client.get('/viec-lam-gan-ban')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Việc làm gần tôi')
+        self.assertContains(response, 'rel="canonical" href="http://testserver/viec-lam-gan-ban"')
+        self.assertIn('geolocation=(self)', response['Permissions-Policy'])
+        self.assertContains(self.client.get('/sitemaps/static.xml'), '/viec-lam-gan-ban')

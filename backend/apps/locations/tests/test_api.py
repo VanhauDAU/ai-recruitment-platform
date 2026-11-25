@@ -23,7 +23,10 @@ class LocationLookupApiTests(APITestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data), 1)
-        self.assertEqual(set(response.data[0]), {'id', 'name', 'level', 'parent', 'merged_from'})
+        self.assertEqual(
+            set(response.data[0]),
+            {'id', 'name', 'level', 'parent', 'merged_from', 'latitude', 'longitude'},
+        )
         self.assertTrue({'code', 'slug', 'ward_type', 'province_type'}.isdisjoint(response.data[0]))
 
 
@@ -89,6 +92,8 @@ class LocationLookupFilterTests(APITestCase):
                     'level': 'ward',
                     'parent': self.hanoi.pk,
                     'merged_from': [],
+                    'latitude': None,
+                    'longitude': None,
                 }
             ],
         )

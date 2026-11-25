@@ -23,6 +23,7 @@ BASE_SEEDS=(
   seed_skills
   seed_locations
   seed_province_merges # cần locations
+  seed_location_coordinates # tâm phường/tỉnh từ seed_data, không gọi mạng
   seed_job_categories  # cần skills
   seed_sitecontent
   seed_cv_catalog

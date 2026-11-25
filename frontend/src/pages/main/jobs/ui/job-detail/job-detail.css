@@ -289,3 +289,9 @@
     display: none;
   }
 }
+
+/* Bản đồ nơi làm việc (ADR-0029) */
+.job-workplace-map {
+  height: 260px;
+  margin-top: 12px;
+}

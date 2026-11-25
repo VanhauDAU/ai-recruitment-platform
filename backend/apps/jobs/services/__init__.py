@@ -26,6 +26,7 @@ from .content_snapshot import (
     build_job_content_snapshot,
     job_published_content_changes,
 )
+from .coordinates import assign_coordinates, refresh_job_coordinates
 from .digests import (
     claim_due_candidate_job_digest_candidates,
     deliver_candidate_job_digest,
@@ -79,6 +80,8 @@ from .reports import resolve_job_report, reverse_job_report, submit_job_report
 from .saved_jobs import save_job_for_candidate
 
 __all__ = [
+    'assign_coordinates',
+    'refresh_job_coordinates',
     'auto_reject_default_days',
     'absolute_url',
     'job_email_card',

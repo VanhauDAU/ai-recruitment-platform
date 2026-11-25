@@ -21,6 +21,7 @@ from ...models import (
     JobLocation,
     JobSkill,
 )
+from ..coordinates import assign_coordinates
 from ..lifecycle import job_lifecycle_policy
 from ..posting import job_deadline_policy, publish_operator_imported_job
 from .rows import RowRejected, _Lookups, _names, _resolve, _text
@@ -136,9 +137,11 @@ def _create_job(resolved, *, create_missing_skills):
         )
         for index, domain in enumerate(resolved['domains'])
     )
-    JobLocation.objects.create(
+    workplace = JobLocation(
         job=job, location=resolved['province'], address_detail=resolved['address_detail']
     )
+    assign_coordinates([workplace])
+    workplace.save()
     JobSkill.objects.bulk_create(
         JobSkill(job=job, skill=skill, importance=importance)
         for skill, importance in _job_skills(resolved, create_missing_skills=create_missing_skills)

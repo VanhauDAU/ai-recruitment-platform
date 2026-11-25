@@ -27,6 +27,7 @@ import {
   JobComparisonPage,
   JobAlertSettingsPage,
   JobListPage,
+  NearbyJobsPage,
   CampaignLandingPage,
   KnowledgeCategoryPage,
   KnowledgeDetailPage,
@@ -88,6 +89,7 @@ export function mainRoutes() {
       <Route path={COMPANY_DETAIL_ROUTE} element={<CompanyDetailPage />} />
       <Route path="/viec-lam" element={<JobListPage />} />
       <Route path="/viec-lam/tai/:locationSlug" element={<JobListPage />} />
+      <Route path="/viec-lam-gan-ban" element={<NearbyJobsPage />} />
       <Route path="/so-sanh-viec-lam" element={<JobComparisonPage />} />
       <Route path="/viec-lam/:slug" element={<JobDetailPage />} />
       <Route path="/tuyen-dung/:slug" element={<CampaignLandingPage />} />

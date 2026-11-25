@@ -174,8 +174,18 @@ mọi lỗi cấu hình thành một thông báo — xem bằng
 - *DB trống*: chạy lần lượt các seed nền giống `scripts/reset_local_db.sh`:
 
   ```bash
-  for cmd in seed_skills seed_locations seed_province_merges seed_job_categories seed_sitecontent seed_cv_catalog seed_cv_templates; do scripts/deploy/compose.sh exec backend python manage.py "$cmd"; done
+  for cmd in seed_skills seed_locations seed_province_merges seed_location_coordinates seed_job_categories seed_sitecontent seed_cv_catalog seed_cv_templates; do scripts/deploy/compose.sh exec backend python manage.py "$cmd"; done
   ```
+
+Việc làm gần tôi (ADR-0029): khi DB đã có tin (khôi phục từ dump), chạy một lần
+`seed_location_coordinates` rồi `refresh_job_coordinates` để gán tọa độ cho nơi làm
+việc cũ. Đặt `GEOCODING_PROVIDER=vietmap` + `GEOCODING_API_KEY` trong `backend/.env`
+và site setting `map_style_url` (style VietMap kèm key tile giới hạn domain procv.site).
+
+```bash
+scripts/deploy/compose.sh exec backend python manage.py seed_location_coordinates
+scripts/deploy/compose.sh exec backend python manage.py refresh_job_coordinates
+```
 
 Tài khoản quản trị đầu tiên:
 

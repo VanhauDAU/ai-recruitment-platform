@@ -26,6 +26,7 @@ from .moderation import (
     AdminJobModerationListView,
     AdminJobModerationSummaryView,
 )
+from .nearby import NearbyJobListView, NearbyJobMapView
 from .public import (
     HomepageBestJobListView,
     HomepageBestJobLocationsView,
@@ -51,6 +52,8 @@ from .reports import (
 from .saved import SavedJobDestroyView, SavedJobListCreateView
 
 __all__ = [
+    'NearbyJobListView',
+    'NearbyJobMapView',
     'BenefitListView',
     'AdminJobModerationListView',
     'AdminJobModerationDetailView',

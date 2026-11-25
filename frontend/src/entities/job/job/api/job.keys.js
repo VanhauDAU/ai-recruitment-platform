@@ -16,6 +16,8 @@ export const jobKeys = {
   list: (params) => [...jobKeys.publicLists(), normalizeListParams(params)],
   homepageBest: (params) => [...jobKeys.all, 'homepage-best', normalizeListParams(params)],
   homepageBestLocations: () => [...jobKeys.all, 'homepage-best-locations'],
+  nearby: (params) => [...jobKeys.all, 'nearby', normalizeListParams(params)],
+  nearbyMap: (params) => [...jobKeys.all, 'nearby-map', normalizeListParams(params)],
   detail: (slug) => ['jobs', 'detail', slug],
   stats: ['jobs', 'stats'],
   categories: ['jobs', 'categories'],

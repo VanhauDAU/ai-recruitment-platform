@@ -597,5 +597,16 @@
   "employer_job_list_attention_expiring_hint": "Tin đang tuyển hết hạn trong 7 ngày tới",
   "employer_job_cv_sort_ai_match": "Phù hợp nhất",
   "employer_job_cv_col_fit": "Phù hợp",
-  "employer_job_cv_fit_order_note": "Hồ sơ chưa có điểm (đang phân tích hoặc ứng viên không tham gia phân tích AI) nằm cuối danh sách, không phải vì kém phù hợp. Điểm chỉ để tham khảo, quyết định là của bạn."
+  "employer_job_cv_fit_order_note": "Hồ sơ chưa có điểm (đang phân tích hoặc ứng viên không tham gia phân tích AI) nằm cuối danh sách, không phải vì kém phù hợp. Điểm chỉ để tham khảo, quyết định là của bạn.",
+  "employer_job_location_pin_add": "Ghim trên bản đồ",
+  "employer_job_location_pin_set": "Đã ghim vị trí",
+  "employer_job_location_pin_hint": "Không ghim: hệ thống tự xác định từ địa chỉ, hoặc ước tính theo phường/xã.",
+  "employer_job_location_pin_title": "Ghim vị trí nơi làm việc",
+  "employer_job_location_pin_help": "Bấm lên bản đồ hoặc kéo ghim tới đúng toà nhà. Ứng viên tìm \"Việc làm gần tôi\" sẽ thấy khoảng cách theo ghim này.",
+  "employer_job_location_pin_suggested": "Đã đặt ghim gợi ý theo địa chỉ bạn nhập — kiểm tra lại cho đúng.",
+  "employer_job_location_pin_ward_center": "Ghim đang ở tâm phường/xã — kéo tới đúng địa chỉ.",
+  "employer_job_location_pin_far": "Ghim cách tâm phường/xã đã chọn khoảng {km} km — kiểm tra lại phường/xã hoặc địa chỉ.",
+  "employer_job_location_pin_save": "Lưu vị trí",
+  "employer_job_location_pin_remove": "Bỏ ghim",
+  "employer_job_location_pin_map_label": "Bản đồ chọn vị trí nơi làm việc"
 }

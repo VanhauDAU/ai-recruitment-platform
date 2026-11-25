@@ -1,13 +1,13 @@
-import { CloseOutlined, DeleteOutlined, PlusOutlined, SearchOutlined, UpOutlined } from '@ant-design/icons'
+import { DeleteOutlined, PlusOutlined, SearchOutlined, UpOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Button, Checkbox, Form, Input, Popover, Select } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { getWards } from '@/entities/system/location'
 import { m } from '@/shared/config/i18n'
+import { focusAfterOpen, sameId } from '../lib/location-ids'
+import WorkplaceRow from './WorkplaceRow'
 
-const sameId = (left, right) => String(left) === String(right)
 const includesId = (ids, id) => ids.some((item) => sameId(item, id))
-const focusAfterOpen = (ref) => requestAnimationFrame(() => ref.current?.focus())
 
 function uniqueIds(ids) {
   return ids.filter((id, index) => ids.findIndex((item) => sameId(item, id)) === index)
@@ -103,49 +103,6 @@ function WardPicker({ open, wards, loading, allWardId, onOpenChange, onApply }) 
   )
 }
 
-function WorkplaceRow({ areaIndex, index, wards, loading, onRemove }) {
-  const locationPath = [areaIndex, 'workplaces', index, 'location']
-  const wardSelectRef = useRef(null)
-  return (
-    <div className="relative grid gap-2 pr-9 sm:grid-cols-[minmax(180px,1fr)_minmax(220px,1fr)]">
-      <Form.Item
-        className="!mb-0"
-        name={locationPath}
-        rules={[{ required: true, message: m.employer_job_location_ward_required() }]}
-      >
-        <Select
-          ref={wardSelectRef}
-          aria-label={m.employer_job_location_ward_aria({ index: index + 1, area: areaIndex + 1 })}
-          showSearch
-          optionFilterProp="label"
-          loading={loading}
-          placeholder={m.employer_job_location_choose_ward()}
-          onOpenChange={(nextOpen) => {
-            if (nextOpen) focusAfterOpen(wardSelectRef)
-          }}
-          options={wards.map((ward) => ({
-            value: ward.id,
-            label: ward.name,
-          }))}
-        />
-      </Form.Item>
-      <Form.Item
-        className="!mb-0"
-        name={[areaIndex, 'workplaces', index, 'address_detail']}
-      >
-        <Input aria-label={m.employer_job_location_address_aria({ index: index + 1, area: areaIndex + 1 })} placeholder={m.employer_job_location_address_placeholder()} />
-      </Form.Item>
-      <Button
-        className="!absolute right-0 top-0"
-        type="text"
-        icon={<CloseOutlined />}
-        aria-label={m.employer_job_location_remove_ward_aria({ index: index + 1, area: areaIndex + 1 })}
-        onClick={onRemove}
-      />
-    </div>
-  )
-}
-
 function WorkArea({ field, index, form, provinces, canRemove, onRemove }) {
   const [pickerOpen, setPickerOpen] = useState(false)
   const provinceSelectRef = useRef(null)
@@ -219,6 +176,8 @@ function WorkArea({ field, index, form, provinces, canRemove, onRemove }) {
             {displayedWorkplaces.map((_, workplaceIndex) => (
               <WorkplaceRow
                 key={workplaceIndex}
+                form={form}
+                provinceId={provinceId}
                 areaIndex={field.name}
                 index={workplaceIndex}
                 wards={selectableWards}
