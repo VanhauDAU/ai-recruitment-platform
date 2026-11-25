@@ -33,6 +33,10 @@ lộ số điện thoại/email trước khi cần.
 
 Mở lại khi đã có hội thoại trả về hội thoại cũ (một cặp tin–ứng viên chỉ có một hội thoại).
 
+Cổng xác thực + DPA của NTD được kiểm ở **mọi** API phía NTD (danh sách, đọc, gửi, đánh dấu đã đọc,
+tệp, lịch hẹn), không chỉ lúc mở hội thoại; NTD mất điều kiện thì cũng không nhận tin qua socket hay
+email nhắc cho tới khi đủ điều kiện lại.
+
 ### 3.2 Gửi tin
 
 - Thành viên mới gửi được; hội thoại **khóa** thì chỉ đọc.

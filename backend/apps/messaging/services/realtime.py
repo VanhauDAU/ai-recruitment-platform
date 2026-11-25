@@ -4,18 +4,24 @@ import json
 
 from django.core.serializers.json import DjangoJSONEncoder
 
+from apps.employers.services import recruiter_readiness_state
 from apps.realtime.services import push_to_user
 
 from ..domain import Role
 from .presenters import present_message
 
 
+def recruiter_may_receive(recruiter):
+    """NTD chỉ nhận nội dung hội thoại khi còn qua cổng dữ liệu ứng viên (xác thực + DPA)."""
+    return bool(recruiter_readiness_state(recruiter)[1]['candidate_data_access'])
+
+
 def participants(conversation):
-    """``[(role, user_id)]`` hai phía; phía NTD là người đang phụ trách tin."""
-    return [
-        (Role.CANDIDATE, conversation.candidate_id),
-        (Role.RECRUITER, conversation.job.posted_by_id),
-    ]
+    """``[(role, user_id)]`` các phía được nhận sự kiện; phía NTD là người phụ trách tin."""
+    rows = [(Role.CANDIDATE, conversation.candidate_id)]
+    if recruiter_may_receive(conversation.job.posted_by):
+        rows.append((Role.RECRUITER, conversation.job.posted_by_id))
+    return rows
 
 
 def _jsonable(event):

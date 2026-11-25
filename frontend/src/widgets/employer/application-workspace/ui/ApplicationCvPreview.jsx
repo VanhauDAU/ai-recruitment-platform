@@ -10,6 +10,7 @@ import { m } from '@/shared/config/i18n'
 import { documentFromVersion } from '../model/application-workspace'
 import useCvZoom, { CV_PAGE_WIDTH } from '../model/use-cv-zoom'
 import ApplicationExtractedProfile from './ApplicationExtractedProfile'
+import MessageCandidateButton from './MessageCandidateButton'
 
 const SOURCE_LABELS = {
   builder: m.employer_workspace_app_cv_source_builder(),
@@ -96,6 +97,7 @@ export default function ApplicationCvPreview({
       </header>
       {selectedPublicId && (
         <div className="aw-actionbar" role="toolbar" aria-label={m.employer_workspace_app_cv_actions()}>
+          <MessageCandidateButton application={selectedApplication} />
           <DownloadApplicationCvButton publicId={selectedPublicId} candidateName={candidateName} sourceFile={sourceFile} />
           <ShareApplicationReviewButton
             publicId={selectedPublicId}

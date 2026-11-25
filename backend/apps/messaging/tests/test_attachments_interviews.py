@@ -1,5 +1,6 @@
 import uuid
 from datetime import timedelta
+from unittest.mock import patch
 
 from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -241,3 +242,14 @@ class BackgroundAndPrivacyTests(ConversationMixin, APITestCase):
         )
         self.assertIsNone(typing_target(self.outsider.pk, self.conversation_id))
         self.assertIsNone(typing_target(self.candidate.pk, 'cnv_missing'))
+
+    def test_no_unread_email_to_a_recruiter_without_candidate_data_access(self):
+        enable_email_notifications()
+        self.send_text(self.candidate, 'candidate', 'Chào anh chị')
+        mail.outbox.clear()
+
+        with patch('apps.messaging.services.background.recruiter_may_receive', return_value=False):
+            sent = send_unread_message_emails(now=timezone.now() + timedelta(hours=1))
+
+        self.assertEqual(sent, 0)
+        self.assertEqual(mail.outbox, [])
