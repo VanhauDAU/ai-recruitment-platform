@@ -1,5 +1,5 @@
 import { m } from '@/shared/config/i18n'
-import useApplicationWorkspace, { PAGE_SIZE } from '../model/use-application-workspace'
+import useApplicationWorkspace from '../model/use-application-workspace'
 import ApplicationCandidateList from './ApplicationCandidateList'
 import ApplicationCvPreview from './ApplicationCvPreview'
 import ApplicationInspectorPanel from './ApplicationInspectorPanel'
@@ -19,21 +19,8 @@ export default function EmployerApplicationWorkspace() {
     <section className="space-y-4 pb-5 pt-3">
       <div className="grid min-w-0 gap-4 md:grid-cols-3 xl:h-[calc(100dvh-10rem)] xl:min-h-96 xl:grid-cols-12">
         <ApplicationCandidateList
-          groups={workspace.groups}
-          applicationCount={workspace.applicationCount}
-          selectedPublicId={selectedPublicId}
-          keyword={workspace.keyword}
-          status={workspace.statusFilter}
-          page={workspace.page}
-          pageSize={PAGE_SIZE}
-          loading={workspace.listQuery.isLoading}
-          error={workspace.listQuery.error}
-          onKeywordChange={workspace.setKeyword}
-          onKeywordSubmit={(value) => workspace.setListFilter('q', value.trim())}
-          onStatusChange={(value) => workspace.setListFilter('status', value)}
-          onPageChange={workspace.changePage}
-          onRetry={() => workspace.listQuery.refetch()}
-          onSelect={workspace.selectApplication}
+          workspace={workspace}
+          onKeywordSubmit={(value) => workspace.setListFilters({ q: value.trim() })}
         />
         {selectedPublicId && (
           <div role="tablist" aria-label={m.employer_workspace_app_mobile_tabs()} className="aw-tabs">

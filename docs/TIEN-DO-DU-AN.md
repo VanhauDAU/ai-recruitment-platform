@@ -1275,6 +1275,7 @@ một commit, một PR vào `dev` khi xong GĐ E.
 | C | Giao diện xếp hạng ở cổng NTD: cột "Phù hợp", tab Đánh giá, bộ hiển thị dùng chung | ✅ Commit trên nhánh (25/11); chưa chụp màn hình, chưa có test giao diện |
 | D | Một CV được bật cho NTD tìm kiếm + "Hồ sơ NTD nhìn thấy" phía ứng viên | ✅ Commit trên nhánh (25/11); chưa chụp màn hình, chưa có test |
 | E | Tìm CV: tìm ứng viên ẩn danh theo tin, xem nhanh, mời ứng tuyển | ✅ Commit trên nhánh (25/11); chưa chụp màn hình, test viết ở bước kiểm tra cuối |
+| E+ | Làm lại trang "CV ứng tuyển" (3 cột): cột Ứng viên lọc theo tin/trạng thái (gộp "Chưa phản hồi"), sắp xếp (gồm "Phù hợp nhất (AI)" khi bật), dòng phẳng có điểm AI gọn, nhóm giữ thứ tự máy chủ; khung CV phóng to/thu nhỏ (nút, Ctrl/⌘ + cuộn, "Vừa khung", cả tệp PDF tải lên); panel phải dạng nhãn–giá trị | 🟨 PR #341 (nhánh `feat/cv-workspace-redesign`), chờ gộp; chưa thử thu phóng tệp PDF thật trên trình duyệt |
 
 Quyết định đã chốt: chỉ chấm hồ sơ ứng viên đồng ý (ô đồng ý tự chọn, nhớ lần trước);
 sắp xếp mặc định vẫn là mới nhất; không tự loại theo điểm; Tìm CV chỉ hiện hồ sơ trích

@@ -34,8 +34,7 @@ describe('ApplicationCvPreview', () => {
     renderPreview({ submitted_cv_title: 'cv.pdf', submitted_cv_source: 'imported', cv: { has_source_file: true } })
 
     expect(await screen.findByTitle('cv.pdf')).toHaveAttribute('src', expect.stringContaining('blob:cv-file'))
-    expect(screen.getByText('Tệp CV ứng viên đã nộp')).toBeInTheDocument()
-    expect(screen.getByText('CV tải lên')).toBeInTheDocument()
+    expect(screen.getByText('CV tải lên · Tệp CV ứng viên đã nộp')).toBeInTheDocument()
     // Không ẩn danh được tệp nên không mời người ngoài đánh giá.
     expect(screen.getByRole('button', { name: /Mời đánh giá/ })).toBeDisabled()
 

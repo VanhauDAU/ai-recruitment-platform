@@ -1,47 +1,24 @@
 import { SearchOutlined } from '@ant-design/icons'
-import { Alert, Empty, Input, Pagination, Skeleton } from 'antd'
-import { useEffect, useMemo, useState } from 'react'
+import { Alert, Button, Empty, Input, Pagination, Select, Skeleton } from 'antd'
 import { m } from '@/shared/config/i18n'
 import ApplicationStatusFilter from './ApplicationStatusFilter'
 import CandidateGroup from './CandidateGroup'
 
-export default function ApplicationCandidateList({
-  groups,
-  applicationCount,
-  selectedPublicId,
-  keyword,
-  status,
-  page,
-  pageSize,
-  loading,
-  error,
-  onKeywordChange,
-  onKeywordSubmit,
-  onStatusChange,
-  onPageChange,
-  onRetry,
-  onSelect,
-}) {
-  const [expandedKeys, setExpandedKeys] = useState(() => new Set())
-  const selectedGroupKey = useMemo(
-    () => groups.find((group) => group.applications.some((item) => item.public_id === selectedPublicId))?.key,
-    [groups, selectedPublicId],
-  )
+const ORDERING_OPTIONS = [
+  { value: 'newest', label: m.employer_workspace_app_sort_newest() },
+  { value: 'oldest', label: m.employer_workspace_app_sort_oldest() },
+  { value: 'name', label: m.employer_workspace_app_sort_name() },
+]
+const AI_ORDERING_OPTION = { value: 'ai_match', label: m.employer_workspace_app_sort_ai_match() }
 
-  useEffect(() => {
-    const key = selectedGroupKey || groups[0]?.key
-    if (!key) return
-    setExpandedKeys((current) => current.has(key) ? current : new Set([...current, key]))
-  }, [groups, selectedGroupKey])
-
-  function toggleGroup(key) {
-    setExpandedKeys((current) => {
-      const next = new Set(current)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
-      return next
-    })
-  }
+/** Cột trái: tìm, lọc theo tin và trạng thái, sắp xếp, rồi danh sách ứng viên. */
+export default function ApplicationCandidateList({ workspace, onKeywordSubmit }) {
+  const {
+    groups, applicationCount, selectedPublicId, keyword, statusFilter, scopeFilter, jobFilter,
+    ordering, rankingEnabled, jobOptions, jobOptionsLoading, hasFilters, page, listQuery,
+  } = workspace
+  const loading = listQuery.isLoading
+  const error = listQuery.error
 
   return (
     <section
@@ -51,68 +28,92 @@ export default function ApplicationCandidateList({
     >
       <header className="aw-panel-head">
         <h2 id="application-candidate-list-title" className="aw-panel-title">{m.employer_workspace_app_candidates()}</h2>
-        <span className="aw-count">{m.employer_workspace_app_candidate_count({ count: groups.length })} · {m.employer_workspace_app_cv_count({ count: applicationCount })}</span>
+        {!loading && (
+          <span className="aw-panel-meta">
+            {m.employer_workspace_app_candidate_count({ count: groups.length })} · {m.employer_workspace_app_cv_count({ count: applicationCount })}
+          </span>
+        )}
       </header>
 
-      <div className="aw-filters border-b border-slate-100 p-3">
+      <div className="aw-filters">
         <Input
+          className="aw-filters__wide"
           aria-label={m.employer_workspace_app_search()}
           allowClear
           value={keyword}
-          prefix={<SearchOutlined className="text-slate-400" />}
+          prefix={<SearchOutlined className="text-slate-400" aria-hidden />}
           placeholder={m.employer_workspace_app_search_placeholder()}
           onChange={(event) => {
-            onKeywordChange(event.target.value)
+            workspace.setKeyword(event.target.value)
             if (!event.target.value) onKeywordSubmit('')
           }}
           onPressEnter={(event) => onKeywordSubmit(event.currentTarget.value)}
         />
-        <ApplicationStatusFilter value={status} onChange={onStatusChange} />
+        <Select
+          className="aw-filters__wide"
+          aria-label={m.employer_workspace_app_filter_job()}
+          placeholder={m.employer_workspace_app_all_jobs()}
+          allowClear
+          value={jobFilter || undefined}
+          loading={jobOptionsLoading}
+          showSearch
+          optionFilterProp="label"
+          popupMatchSelectWidth={false}
+          options={jobOptions}
+          onChange={(value) => workspace.setListFilters({ job: value || '', campaign: '' })}
+        />
+        <ApplicationStatusFilter status={statusFilter} scope={scopeFilter} onChange={workspace.setListFilters} />
+        <Select
+          aria-label={m.employer_workspace_app_sort()}
+          value={ordering}
+          popupMatchSelectWidth={false}
+          options={rankingEnabled ? [AI_ORDERING_OPTION, ...ORDERING_OPTIONS] : ORDERING_OPTIONS}
+          onChange={(value) => workspace.setListFilters({ ordering: value === 'newest' ? '' : value })}
+        />
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto p-2.5">
-        {loading && <Skeleton active paragraph={{ rows: 9 }} />}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {loading && <div className="p-3"><Skeleton active avatar paragraph={{ rows: 8 }} /></div>}
         {!loading && error && (
-          <Alert
-            showIcon
-            type="error"
-            message={m.employer_workspace_app_list_load_error()}
-            action={<button type="button" className="font-semibold text-red-600" onClick={onRetry}>{m.employer_workspace_retry()}</button>}
-          />
+          <div className="p-3">
+            <Alert
+              showIcon
+              type="error"
+              message={m.employer_workspace_app_list_load_error()}
+              action={<Button size="small" type="text" danger onClick={() => listQuery.refetch()}>{m.employer_workspace_retry()}</Button>}
+            />
+          </div>
         )}
         {!loading && !error && groups.length === 0 && (
-          <Empty
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description={m.employer_workspace_app_list_empty()}
-            className="py-8"
-          />
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={m.employer_workspace_app_list_empty()} className="py-8">
+            {hasFilters && <Button size="small" onClick={workspace.clearFilters}>{m.employer_workspace_app_clear_filters()}</Button>}
+          </Empty>
         )}
         {!loading && !error && groups.length > 0 && (
-          <div className="space-y-2">
+          <ul className="aw-list">
             {groups.map((group) => (
               <CandidateGroup
                 key={group.key}
                 group={group}
-                expanded={expandedKeys.has(group.key)}
                 selectedPublicId={selectedPublicId}
-                onToggle={() => toggleGroup(group.key)}
-                onSelect={onSelect}
+                jobFiltered={Boolean(jobFilter)}
+                onSelect={workspace.selectApplication}
               />
             ))}
-          </div>
+          </ul>
         )}
       </div>
 
-      {applicationCount > pageSize && (
-        <footer className="flex justify-center border-t border-slate-100 px-2 py-3">
+      {applicationCount > workspace.pageSize && (
+        <footer className="flex justify-center border-t border-slate-100 px-2 py-2.5">
           <Pagination
             simple
             size="small"
             current={page}
-            pageSize={pageSize}
+            pageSize={workspace.pageSize}
             total={applicationCount}
             showSizeChanger={false}
-            onChange={onPageChange}
+            onChange={workspace.changePage}
           />
         </footer>
       )}

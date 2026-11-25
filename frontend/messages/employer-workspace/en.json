@@ -364,7 +364,6 @@
   "employer_workspace_app_no_cv_preview": "No CV preview available for this application",
   "employer_workspace_app_cv_uploaded_file": "CV file submitted by the candidate",
   "employer_workspace_app_cv_snapshot": "CV as submitted by the candidate",
-  "employer_workspace_app_cv_source_fallback": "CV source",
   "employer_workspace_app_assessment_saved": "Internal assessment saved.",
   "employer_workspace_app_assessment_save_error": "Couldn't save the assessment.",
   "employer_workspace_app_assessment_title": "Internal assessment",
@@ -374,8 +373,6 @@
   "employer_workspace_app_internal_note": "Internal note",
   "employer_workspace_app_internal_note_placeholder": "Note strengths, things to verify or next steps...",
   "employer_workspace_app_save_assessment": "Save assessment",
-  "employer_workspace_app_collapse_candidate": "Collapse {name}'s applications",
-  "employer_workspace_app_expand_candidate": "Expand {name}'s applications",
   "employer_workspace_app_blocked": "Blocked",
   "employer_workspace_app_cv_count": [
     {
@@ -433,7 +430,6 @@
   "employer_workspace_app_average_score": "Avg. score {score}/5",
   "employer_workspace_app_strengths": "Strengths:",
   "employer_workspace_app_concerns": "Concerns:",
-  "employer_workspace_app_filter_all": "All",
   "employer_workspace_app_filter_status": "Filter by application status",
   "employer_workspace_app_status_unknown": "Unknown",
   "employer_workspace_app_candidate_fallback": "Candidate",
@@ -695,5 +691,21 @@
   "employer_workspace_app_profile_pending": "This CV is being read. The profile will appear here in a few minutes.",
   "employer_workspace_app_profile_not_consented": "The candidate did not opt in to AI analysis when applying, so there is no extracted profile. View the original CV.",
   "employer_workspace_app_profile_failed": "This CV could not be read (it may be a scan). View the original CV.",
-  "employer_workspace_app_profile_load_failed": "Could not load the extracted profile."
+  "employer_workspace_app_profile_load_failed": "Could not load the extracted profile.",
+  "employer_workspace_app_filter_job": "Filter by job",
+  "employer_workspace_app_all_jobs": "All jobs",
+  "employer_workspace_app_filter_unanswered": "Awaiting reply",
+  "employer_workspace_app_sort": "Sort applications",
+  "employer_workspace_app_sort_newest": "Newest",
+  "employer_workspace_app_sort_oldest": "Oldest",
+  "employer_workspace_app_sort_name": "Name A–Z",
+  "employer_workspace_app_sort_ai_match": "Best match (AI)",
+  "employer_workspace_app_clear_filters": "Clear filters",
+  "employer_workspace_app_candidate_cvs": "CVs of {name}",
+  "employer_workspace_app_zoom": "CV zoom",
+  "employer_workspace_app_zoom_in": "Zoom in",
+  "employer_workspace_app_zoom_out": "Zoom out",
+  "employer_workspace_app_zoom_fit": "Fit to width",
+  "employer_workspace_app_zoom_hint": "Hold Ctrl/⌘ and scroll to zoom",
+  "employer_workspace_app_status_placeholder": "Status"
 }
