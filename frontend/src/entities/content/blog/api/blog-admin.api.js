@@ -146,3 +146,7 @@ export function getAdminBlogMedia(params = {}, { signal } = {}) {
 export function uploadAdminBlogThumbnail(file) {
   return upload('/admin/blog/thumbnails/', file)
 }
+
+export function importAdminBlogThumbnail(url) {
+  return data(api.post('/admin/blog/thumbnails/', { url }))
+}

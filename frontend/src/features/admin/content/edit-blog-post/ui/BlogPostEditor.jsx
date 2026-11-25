@@ -10,6 +10,7 @@ import {
   getAdminBlogMedia,
   getAdminBlogPost,
   getAdminBlogTags,
+  importAdminBlogThumbnail,
   invalidatePublicBlogCache,
   runAdminBlogAction,
   saveAdminBlogDraft,
@@ -17,6 +18,7 @@ import {
   uploadAdminBlogThumbnail,
 } from '@/entities/content/blog'
 import { getJobCategories } from '@/entities/job/job'
+import { m } from '@/shared/config/i18n'
 import { adminPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
 import { isBlogRevisionConflict } from '../model/blog-save-error'
@@ -183,18 +185,25 @@ export default function BlogPostEditor({ publicId }) {
     }
     actionMutation.mutate({ name: action, note: actionNote })
   }
+  const applyThumbnail = (saved) => {
+    form.setFieldsValue({ thumbnail_storage_key: saved.path, thumbnail_url: saved.url })
+    handleValuesChange()
+    message.success('Đã tải ảnh đại diện.')
+  }
   const uploadThumbnail = async (file) => {
     if (!canEdit) return false
     try {
-      const uploaded = await uploadAdminBlogThumbnail(file)
-      form.setFieldsValue({ thumbnail_storage_key: uploaded.path, thumbnail_url: uploaded.url })
-      handleValuesChange()
-      message.success('Đã tải ảnh đại diện.')
+      applyThumbnail(await uploadAdminBlogThumbnail(file))
     } catch {
       message.error('Không thể tải ảnh đại diện.')
     }
     return false
   }
+  const importThumbnail = useMutation({
+    mutationFn: (url) => importAdminBlogThumbnail(url),
+    onSuccess: applyThumbnail,
+    onError: (error) => message.error([error.response?.data?.url].flat()[0] || m.admin_blog_thumbnail_link_error()),
+  })
 
   if (publicId && postQuery.isLoading) return <div className="grid min-h-80 place-items-center"><Spin size="large" /></div>
   if (publicId && postQuery.isError) return <Alert type="error" showIcon title="Không thể tải bài viết" action={<Button onClick={() => postQuery.refetch()}>Thử lại</Button>} />
@@ -237,6 +246,8 @@ export default function BlogPostEditor({ publicId }) {
             jobsLoading={jobsQuery.isLoading}
             onAction={startAction}
             onUploadThumbnail={uploadThumbnail}
+            onImportThumbnail={importThumbnail.mutateAsync}
+            thumbnailImporting={importThumbnail.isPending}
             post={post}
             slug={version?.slug}
             tags={tagsQuery.data || []}

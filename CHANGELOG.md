@@ -8,6 +8,13 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Added — Ảnh đại diện bài cẩm nang lấy từ đường dẫn
+
+- Trình soạn bài có ô "Dán link ảnh": backend tải ảnh về media (mã hóa lại như ảnh
+  tải từ máy) rồi hiển thị; bài chỉ lưu storage key, không trỏ sang máy chủ ngoài.
+- `common/http/safe_fetch.py` chặn URL trỏ vào mạng nội bộ (SSRF), kể cả qua chuyển
+  hướng, và dừng khi vượt giới hạn dung lượng ảnh.
+
 #### Fixed — Banner cookie hiện lại mỗi lần tải trang dù đã chọn
 
 - `GET /api/public/privacy/consent/` tốn lượt của scope `consent` (20/giờ): tải trang
