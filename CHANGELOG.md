@@ -8,6 +8,12 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Changed — Tiêu đề trang chủ gõ chữ trên điện thoại
+
+- Màn dưới 768px: dưới tên trang lần lượt gõ rồi xóa "Tạo CV", "Tìm việc làm",
+  "Tuyển dụng hiệu quả", có con trỏ nhấp nháy. Thẻ h1 vẫn giữ nguyên câu đầy đủ cho
+  SEO và trình đọc màn hình; desktop và người bật giảm chuyển động thấy câu tĩnh.
+
 #### Changed — Tắt ClamAV trên production
 
 - `docker-compose.prod.yml`: `UPLOAD_QUARANTINE_ENABLED: 'False'`, service `clamav`

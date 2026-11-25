@@ -302,3 +302,53 @@
     transform: none;
   }
 }
+
+/* Tiêu đề hero gõ chữ (chỉ điện thoại, HeroTypingTitle). Hai hàng cố định để chữ
+   gõ/xóa không đẩy cụm tìm kiếm lên xuống. */
+.home-typing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.2;
+}
+
+.home-typing-brand {
+  font-size: 0.8em;
+  letter-spacing: 0.02em;
+  opacity: 0.92;
+}
+
+.home-typing-line {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.3em;
+  white-space: nowrap;
+}
+
+.home-typing-text {
+  background: linear-gradient(90deg, #fde68a 0%, #fff7d6 55%, #ffffff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 24px rgb(253 230 138 / 0.25);
+}
+
+.home-typing-caret {
+  width: 3px;
+  height: 1em;
+  margin-left: 4px;
+  border-radius: 2px;
+  background: #fde68a;
+  box-shadow: 0 0 10px rgb(253 230 138 / 0.7);
+}
+
+/* Đang gõ thì con trỏ đứng yên; chỉ nhấp nháy khi dừng giữa hai vế. */
+.home-typing-caret[data-resting] {
+  animation: home-typing-blink 1s steps(1, end) infinite;
+}
+
+@keyframes home-typing-blink {
+  50% {
+    opacity: 0;
+  }
+}
