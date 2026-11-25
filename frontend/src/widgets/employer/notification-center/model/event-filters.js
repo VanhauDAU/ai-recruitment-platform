@@ -22,6 +22,8 @@ export const EMPLOYER_ACTIVITY_PERIODS = [
 export const EVENT_ICONS = {
   application_received: 'userPlus',
   application_withdrawn: 'userMinus',
+  search_invitation_accepted: 'userCheck',
+  search_invitation_declined: 'userCircleMinus',
   application_review_submitted: 'star',
   application_awaiting_reply: 'hourglassMedium',
   job_changes_requested: 'pencilSimpleLine',

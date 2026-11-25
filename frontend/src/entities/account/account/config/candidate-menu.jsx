@@ -1,4 +1,5 @@
 import { FileTextOutlined, IdcardOutlined, MailOutlined, SafetyOutlined } from '@ant-design/icons'
+import { m } from '@/shared/config/i18n'
 
 /**
  * Nguồn dữ liệu DUY NHẤT cho menu tài khoản ứng viên — dùng chung bởi:
@@ -27,6 +28,7 @@ export const CANDIDATE_MENU = [
     key: 'cv', title: 'Quản lý CV', icon: <FileTextOutlined />, dot: true,
     items: [
       { key: 'my-cv', label: 'CV của tôi', path: accountPath('cv-cua-toi') },
+      { key: 'employer-connections', label: m.candidate_connections_menu(), path: accountPath('nha-tuyen-dung-muon-ket-noi') },
     ],
   },
   {

@@ -8,6 +8,15 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-25
 
+#### Added — Lời mời kết nối của NTD cho ứng viên
+
+- Tìm CV: nút đổi thành "Mời kết nối"; ứng viên đồng ý hoặc từ chối ở trang mới
+  `/tai-khoan/nha-tuyen-dung-muon-ket-noi` (menu Quản lý CV). NTD nhận thông báo kèm mã ẩn danh
+  và thấy "Đã kết nối"/"Đã từ chối"; nút "Nhắn tin" giữ chỗ, chưa hoạt động.
+- API `GET /api/candidate/connection-invitations/`,
+  `POST /api/candidate/connection-invitations/<public_id>/respond/`; trường `status`,
+  `responded_at`, `public_id` cho `CandidateSearchInvitation`; thông báo `connection_invitation`
+  (ứng viên), `search_invitation_accepted`/`search_invitation_declined` (NTD).
 #### Changed — Thứ tự và nhãn tin tuyển dụng công bằng (ADR-0030)
 
 - Bỏ hạng tin `tier` và nhãn gán tay HOT/GẤP/"Tài trợ" cùng thẻ tô màu; chỉ còn nhãn hệ

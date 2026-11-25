@@ -171,6 +171,18 @@ msgstr "This candidate has already applied for this job posting."
 msgid "Bạn đã mời ứng viên này ứng tuyển tin này."
 msgstr "You have already invited this candidate to apply for this job posting."
 
+msgid "Không tìm thấy lời mời."
+msgstr "Invitation not found."
+
+msgid "Bạn đã phản hồi lời mời này."
+msgstr "You have already responded to this invitation."
+
+msgid "Ứng viên %(code)s đã đồng ý kết nối về vị trí %(job)s."
+msgstr "Candidate %(code)s accepted your connection request for %(job)s."
+
+msgid "Ứng viên %(code)s đã từ chối lời mời kết nối về vị trí %(job)s."
+msgstr "Candidate %(code)s declined your connection request for %(job)s."
+
 msgid "Bạn chưa đưa ra quyết định nào cho hồ sơ trong %(days)s ngày gần nhất."
 msgstr "You have not decided on any application in the last %(days)s days."
 

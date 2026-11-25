@@ -167,6 +167,10 @@ test('candidate smoke: personalization pages and compact desktop menu remain usa
   await expect(page.getByText('Sắp hết hạn')).toBeVisible()
   await expect(page.getByText('Tài trợ')).toHaveCount(0)
 
+  await page.goto('/tai-khoan/nha-tuyen-dung-muon-ket-noi')
+  await expect(page.getByRole('heading', { name: 'Lời mời cơ hội nghề nghiệp' })).toBeVisible()
+  await expect(page.getByText('Bạn chưa có lời mời kết nối nào')).toBeVisible()
+
   await page.goto('/tai-khoan/doi-mat-khau')
   await expect(page.getByRole('heading', { name: 'Đổi mật khẩu' })).toBeVisible()
   await expect(page.getByRole('textbox', { name: 'Email đăng nhập' })).toHaveValue('candidate@example.com')

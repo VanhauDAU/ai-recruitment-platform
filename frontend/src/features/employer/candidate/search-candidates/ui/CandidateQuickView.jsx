@@ -1,13 +1,14 @@
-import { SendOutlined } from '@ant-design/icons'
+import { MessageOutlined, SendOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Drawer, Grid, Skeleton } from 'antd'
+import { Button, Drawer, Grid, Skeleton, Tooltip } from 'antd'
 import { ExtractedProfile, FitBreakdown } from '@/entities/application/job-fit'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
 import { candidateSearchKeys, getCandidateSearchDetail, inviteSearchCandidate } from '../api/candidate-search.api'
+import { candidateStateLabel } from '../model/invitation-state'
 
-/** Xem nhanh một ứng viên: hồ sơ trích xuất ẩn danh, mức phù hợp với tin, mời ứng tuyển. */
+/** Xem nhanh một ứng viên: hồ sơ trích xuất ẩn danh, mức phù hợp với tin, mời kết nối. */
 export default function CandidateQuickView({ candidate, jobPublicId, onClose }) {
   const queryClient = useQueryClient()
   const wide = Grid.useBreakpoint().md
@@ -22,7 +23,7 @@ export default function CandidateQuickView({ candidate, jobPublicId, onClose }) 
     mutationFn: () => inviteSearchCandidate(candidate.ref, jobPublicId),
     onSuccess: () => {
       queryClient.setQueryData(candidateSearchKeys.detail(candidate.ref, jobPublicId), (current) => (
-        current ? { ...current, invited: true } : current
+        current ? { ...current, invited: true, invitation_status: 'pending' } : current
       ))
       queryClient.invalidateQueries({ queryKey: candidateSearchKeys.all(), refetchType: 'active' })
       message.success(m.employer_workspace_search_invite_success({ code: candidate.code }))
@@ -42,19 +43,24 @@ export default function CandidateQuickView({ candidate, jobPublicId, onClose }) 
       footer={(
         <div className="cs-drawer-footer">
           <p>{m.employer_workspace_search_privacy_note()}</p>
-          <Button
-            type="primary"
-            icon={<SendOutlined />}
-            disabled={state.applied || state.invited}
-            loading={inviteMutation.isPending}
-            onClick={() => inviteMutation.mutate()}
-          >
-            {state.applied
-              ? m.employer_workspace_search_applied()
-              : state.invited
-                ? m.employer_workspace_search_invited()
-                : m.employer_workspace_search_invite()}
-          </Button>
+          {!state.applied && state.invitation_status === 'accepted' ? (
+            // Nhắn tin realtime NTD–ứng viên sẽ làm sau; nút giữ chỗ cho luồng đã kết nối.
+            <Tooltip title={m.employer_workspace_search_message_soon()}>
+              <Button type="primary" icon={<MessageOutlined />} disabled>
+                {m.employer_workspace_search_message()}
+              </Button>
+            </Tooltip>
+          ) : (
+            <Button
+              type="primary"
+              icon={<SendOutlined />}
+              disabled={state.applied || state.invited}
+              loading={inviteMutation.isPending}
+              onClick={() => inviteMutation.mutate()}
+            >
+              {candidateStateLabel(state) || m.employer_workspace_search_invite()}
+            </Button>
+          )}
         </div>
       )}
     >

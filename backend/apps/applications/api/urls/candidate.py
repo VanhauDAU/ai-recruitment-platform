@@ -6,6 +6,10 @@ from apps.applications.api.views.applications import (
     CandidateApplicationWithdrawView,
 )
 
+from ..views.candidate_search import (
+    CandidateSearchInvitationListView,
+    CandidateSearchInvitationRespondView,
+)
 from ..views.talent_pool import (
     CandidateTalentPoolListView,
     CandidateTalentPoolWithdrawView,
@@ -26,6 +30,16 @@ urlpatterns = [
         'applications/<str:public_id>/remind/',
         CandidateApplicationRemindView.as_view(),
         name='candidate-application-remind',
+    ),
+    path(
+        'connection-invitations/',
+        CandidateSearchInvitationListView.as_view(),
+        name='candidate-connection-invitations',
+    ),
+    path(
+        'connection-invitations/<str:public_id>/respond/',
+        CandidateSearchInvitationRespondView.as_view(),
+        name='candidate-connection-invitation-respond',
     ),
     path(
         'talent-pools/mine/',
