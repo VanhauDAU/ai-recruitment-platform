@@ -1,4 +1,4 @@
-import { HistoryOutlined, LockOutlined } from '@ant-design/icons'
+import { HistoryOutlined, LockOutlined, StopOutlined, WarningOutlined } from '@ant-design/icons'
 import { Alert, Empty, Skeleton } from 'antd'
 import { Link } from 'react-router'
 import { ApplicationDecisionBar } from '@/features/employer/candidate/application-status-decision'
@@ -39,35 +39,48 @@ function TextBlock({ label, children }) {
   )
 }
 
-/** Blocklist state, or the mass-apply signal that suggests blocking. */
+/** Nhãn trạng thái tin cậy: một dải mềm, chữ chạy hết chiều ngang, không chen nút. */
+function TrustFlag({ tone, icon, title, detail, action }) {
+  return (
+    <div className={`aw-flag aw-flag--${tone}`} role="status">
+      <span className="aw-flag__icon" aria-hidden>{icon}</span>
+      <div className="min-w-0 flex-1">
+        <p className="aw-flag__title">{title}</p>
+        {detail && <p className="aw-flag__detail">{detail}</p>}
+      </div>
+      {action}
+    </div>
+  )
+}
+
+/** Blocklist state, or the mass-apply signal above the usual save/block actions. */
 function CandidateTrust({ application, candidateName }) {
   if (application.candidate_blocked) {
     return (
-      <Alert
-        showIcon
-        type="error"
+      <TrustFlag
+        tone="danger"
+        icon={<StopOutlined />}
         title={m.employer_workspace_app_blocked_title()}
-        action={<Link to={employerAppPath('/candidate-blocks')} className="text-xs font-semibold">{m.employer_workspace_app_manage()}</Link>}
+        action={<Link to={employerAppPath('/candidate-blocks')} className="aw-flag__link">{m.employer_workspace_app_manage()}</Link>}
       />
     )
   }
   const signal = application.mass_apply_signal
-  if (signal) {
-    return (
-      <Alert
-        showIcon
-        type="warning"
-        title={m.employer_workspace_app_mass_apply_title()}
-        description={m.employer_workspace_app_mass_apply_description({ jobs: signal.jobs, days: signal.window_days })}
-        action={<BlockCandidateButton application={application} candidateName={candidateName} />}
-      />
-    )
-  }
   return (
-    <div className="aw-secondary-actions">
-      <SaveToTalentPoolButton application={application} candidateName={candidateName} block />
-      <BlockCandidateButton application={application} candidateName={candidateName} block label={m.employer_workspace_app_block()} />
-    </div>
+    <>
+      {signal && (
+        <TrustFlag
+          tone="warning"
+          icon={<WarningOutlined />}
+          title={m.employer_workspace_app_mass_apply_title()}
+          detail={m.employer_workspace_app_mass_apply_description({ jobs: signal.jobs, days: signal.window_days })}
+        />
+      )}
+      <div className="aw-secondary-actions">
+        <SaveToTalentPoolButton application={application} candidateName={candidateName} block />
+        <BlockCandidateButton application={application} candidateName={candidateName} block label={m.employer_workspace_app_block()} />
+      </div>
+    </>
   )
 }
 
