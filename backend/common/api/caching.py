@@ -48,9 +48,12 @@ def cache_public_get(seconds=PUBLIC_CACHE_SECONDS, *, query_params=()):
             patch_cache_control(response, public=True, max_age=seconds)
             if callable(getattr(response, 'render', None)):
                 # DRF renders after the view returns; store the rendered bytes.
-                response.add_post_render_callback(
-                    lambda rendered: cache.set(key, rendered, seconds)
-                )
+                # The callback must return None: Django replaces the response
+                # with any other return value, and django-redis ``set`` returns True.
+                def store(rendered):
+                    cache.set(key, rendered, seconds)
+
+                response.add_post_render_callback(store)
             else:
                 cache.set(key, response, seconds)
             return response

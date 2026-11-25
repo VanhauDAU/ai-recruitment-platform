@@ -7,7 +7,8 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Tối ưu tải trang đầu frontend](#tối-ưu-tải-trang-đầu-frontend-2026-11-25) | 🟨 Nhánh `perf/initial-load`, chờ PR |
+| [Tối ưu tải trang đầu frontend](#tối-ưu-tải-trang-đầu-frontend-2026-11-25) | 🟨 PR #358 (nhánh `perf/initial-load`), chờ gộp |
+| [Sửa API công khai có cache trả 500 với Redis](#sửa-api-công-khai-có-cache-trả-500-với-redis-2026-11-25) | 🟨 Nhánh `fix/public-cache-redis`, chờ gộp |
 | [Thanh tab dưới và thông báo trên mobile cho ứng viên](#thanh-tab-dưới-và-thông-báo-trên-mobile-cho-ứng-viên-2026-11-25) | 🟨 PR #354 (nhánh `feat/mobile-tab-bar`), chờ gộp |
 | [Lời mời kết nối của NTD cho ứng viên](#lời-mời-kết-nối-của-ntd-cho-ứng-viên-2026-11-25) | 🟨 PR #356 (nhánh `feat/employer-connections`), chờ gộp; nhắn tin chưa làm |
 | [Thứ tự và nhãn tin tuyển dụng công bằng (ADR-0030)](#thứ-tự-và-nhãn-tin-tuyển-dụng-công-bằng-adr-0030-2026-11-25) | 🟨 Nhánh `feat/fair-job-listing`, chờ PR |
@@ -64,6 +65,15 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
 
+
+## Sửa API công khai có cache trả 500 với Redis (2026-11-25)
+
+- `common/api/caching.cache_public_get` (perf GĐ4, #349) đăng ký callback sau render là
+  `lambda: cache.set(...)`. Django dùng giá trị trả về khác `None` của callback làm response;
+  django-redis trả `True` nên các endpoint công khai có cache (danh mục nghề, địa điểm, địa
+  điểm việc làm tốt nhất…) trả 500 trên docker dev và sẽ lỗi cả production. Test dùng
+  LocMem (`set` trả `None`) nên CI không bắt được.
+- Sửa: callback là hàm không trả giá trị. Test mới giả lập `set` trả `True` (đỏ trước khi sửa).
 
 ## Thanh tab dưới và thông báo trên mobile cho ứng viên (2026-11-25)
 
