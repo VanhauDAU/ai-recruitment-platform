@@ -10,7 +10,7 @@ pyOpenSSL==26.4.0
 djangorestframework-simplejwt==5.5.1
 drf-spectacular==0.28.0
 django-cors-headers==4.6.0
-django-redis==5.4.0
+django-redis==7.0.0
 dnspython==2.9.2
 idna==3.20
 tldextract==5.1.3
