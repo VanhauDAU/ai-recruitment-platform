@@ -1,6 +1,9 @@
 """Portal-scoped HttpOnly refresh-cookie contract."""
 
+import time
+
 from django.conf import settings
+from rest_framework_simplejwt.state import token_backend
 
 from ..models import User
 
@@ -35,7 +38,8 @@ def set_refresh_cookie(response, refresh, *, user):
     response.set_cookie(
         cookie_name(portal_for_user(user)),
         refresh,
-        max_age=int(settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'].total_seconds()),
+        # Cookie sống đúng bằng phần còn lại của refresh JWT (= hạn phiên của cổng).
+        max_age=max(0, int(token_backend.decode(refresh, verify=False)['exp'] - time.time())),
         httponly=True,
         secure=settings.AUTH_REFRESH_COOKIE_SECURE,
         samesite=settings.AUTH_REFRESH_COOKIE_SAMESITE,

@@ -140,7 +140,10 @@ onboarding ứng viên đặc tả trong [`dac-ta-onboarding-ung-vien.md`](../01
 
 ### Xác thực và phiên
 
-- Access JWT ngắn hạn (mặc định 15 phút; admin 5 phút) gửi qua header
+- Hạn phiên riêng theo cổng ([ADR-0033](adr-0033-portal-session-policy.md)):
+  ứng viên tối đa 30 ngày (rảnh 7 ngày thì đăng xuất), NTD 24 giờ (1 giờ), admin
+  12 giờ (15 phút). Hạn tối đa tính từ lần đăng nhập, refresh không gia hạn.
+- Access JWT ngắn hạn (15 phút; admin 5 phút) gửi qua header
   `Bearer`. Refresh JWT xoay vòng, blacklist sau khi xoay, nằm trong cookie
   HttpOnly tách theo portal, không vào storage JavaScript.
 - Mỗi lần đăng nhập tạo `AuthSession` (một thiết bị); access token mang claim

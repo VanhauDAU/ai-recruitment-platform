@@ -21,6 +21,32 @@ def _duration(seconds):
     return f'{minutes} phút'
 
 
+def _span(minutes):
+    if minutes % (24 * 60) == 0:
+        return f'{minutes // (24 * 60)} ngày'
+    if minutes % 60 == 0:
+        return f'{minutes // 60} giờ'
+    return f'{minutes} phút'
+
+
+def _session_param(role, label):
+    policy = settings.AUTH_SESSION_POLICIES[role]
+    idle = (
+        f'tự đăng xuất sau {_span(policy["idle_minutes"])} không hoạt động'
+        if policy['idle_minutes']
+        else 'không tự đăng xuất khi không hoạt động'
+    )
+    return _param(
+        f'AUTH_{role.upper()}_*',
+        label,
+        f'Tối đa {_span(policy["max_age_hours"] * 60)}, {idle}',
+        help_text=(
+            f'Access token {_span(policy["access_minutes"])}. Hết hạn tối đa thì phải '
+            'đăng nhập lại dù vẫn đang dùng.'
+        ),
+    )
+
+
 def _megabytes(size):
     return f'{size / (1024 * 1024):g} MB'
 
@@ -46,7 +72,6 @@ def _password_min_length():
 
 def system_parameters():
     """Grouped ``[{key, label, items: [{key, label, value, source, help}]}]``."""
-    jwt = settings.SIMPLE_JWT
     return [
         {
             'key': 'auth',
@@ -70,26 +95,9 @@ def system_parameters():
                     'Thời gian chờ tối đa',
                     _duration(settings.LOGIN_BACKOFF_MAX_SECONDS),
                 ),
-                _param(
-                    'AUTH_SESSION_IDLE_TIMEOUT_SECONDS',
-                    'Tự đăng xuất khi không hoạt động',
-                    _duration(settings.AUTH_SESSION_IDLE_TIMEOUT_SECONDS),
-                ),
-                _param(
-                    'JWT_ACCESS_TOKEN_MINUTES',
-                    'Hạn access token',
-                    _duration(jwt['ACCESS_TOKEN_LIFETIME'].total_seconds()),
-                ),
-                _param(
-                    'JWT_REFRESH_TOKEN_DAYS',
-                    'Hạn đăng nhập (refresh token)',
-                    f'{jwt["REFRESH_TOKEN_LIFETIME"].days} ngày',
-                ),
-                _param(
-                    'ADMIN_ACCESS_TOKEN_MINUTES',
-                    'Hạn access token trang quản trị',
-                    f'{settings.ADMIN_ACCESS_TOKEN_MINUTES} phút',
-                ),
+                _session_param('candidate', 'Phiên ứng viên'),
+                _session_param('employer', 'Phiên nhà tuyển dụng'),
+                _session_param('admin', 'Phiên quản trị'),
                 _param(
                     'RECAPTCHA_SECRET_KEY',
                     'reCAPTCHA',

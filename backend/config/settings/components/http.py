@@ -51,11 +51,6 @@ AUTH_REFRESH_COOKIE_SECURE = config('AUTH_REFRESH_COOKIE_SECURE', default=IS_PRO
 AUTH_REFRESH_COOKIE_SAMESITE = config('AUTH_REFRESH_COOKIE_SAMESITE', default='Lax')
 AUTH_REFRESH_COOKIE_DOMAIN = config('AUTH_REFRESH_COOKIE_DOMAIN', default='') or None
 AUTH_REFRESH_COOKIE_PATH = config('AUTH_REFRESH_COOKIE_PATH', default='/api/')
-AUTH_SESSION_IDLE_TIMEOUT_SECONDS = config(
-    'AUTH_SESSION_IDLE_TIMEOUT_SECONDS',
-    default=30 * 60,
-    cast=int,
-)
 AUTH_SESSION_TOUCH_INTERVAL_SECONDS = config(
     'AUTH_SESSION_TOUCH_INTERVAL_SECONDS',
     default=5 * 60,
@@ -65,7 +60,6 @@ AUTH_REAUTH_MAX_AGE_SECONDS = config('AUTH_REAUTH_MAX_AGE_SECONDS', default=5 * 
 # Ân hạn cho refresh token vừa bị xoay vòng: trong ngần này giây, việc gặp lại
 # nó được coi là đua giữa hai tab / đăng nhập lại chứ không phải token bị trộm.
 AUTH_REFRESH_REUSE_GRACE_SECONDS = config('AUTH_REFRESH_REUSE_GRACE_SECONDS', default=30, cast=int)
-ADMIN_ACCESS_TOKEN_MINUTES = config('ADMIN_ACCESS_TOKEN_MINUTES', default=5, cast=int)
 
 # Chống dò mật khẩu theo từng tài khoản: sau ngần này lần sai, mỗi lần kế tiếp
 # phải chờ gấp đôi lần trước (không khoá cứng — xem services/login_guard.py).
