@@ -21,18 +21,14 @@ function ShortcutCard({ icon, img, label, active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`job-quick-explore__card group flex w-[128px] shrink-0 cursor-pointer flex-col items-center gap-2 rounded-xl border bg-white px-2 py-3.5 text-center transition ${
-        active ? 'border-[var(--brand-primary)] bg-[var(--brand-primary-soft)]' : 'border-gray-200 hover:border-[var(--brand-primary)] hover:shadow-sm'
+      className={`job-quick-explore__card group flex w-28 shrink-0 cursor-pointer flex-col items-center gap-1.5 rounded-lg border bg-white px-1.5 py-2.5 text-center transition ${
+        active ? 'border-[var(--brand-primary)] bg-[var(--brand-primary-soft)]' : 'border-gray-200 hover:border-[var(--brand-primary)]'
       }`}
     >
-      <span
-        className={`job-quick-explore__icon flex h-11 w-11 items-center justify-center overflow-hidden rounded-full text-lg ${
-          img ? 'bg-white ring-1 ring-gray-100' : active ? 'bg-[var(--brand-primary)] text-white' : 'bg-[var(--brand-primary-soft)] text-[var(--brand-primary)]'
-        }`}
-      >
-        {img ? <img src={img} alt="" className="h-8 w-8 object-contain" loading="lazy" /> : icon}
+      <span className="job-quick-explore__icon flex h-7 w-7 items-center justify-center text-xl text-[var(--brand-primary)]">
+        {img ? <img src={img} alt="" className="h-7 w-7 object-contain" loading="lazy" /> : icon}
       </span>
-      <span className="line-clamp-2 h-8 text-xs font-medium leading-snug text-gray-700">{label}</span>
+      <span className="line-clamp-2 h-8 text-xs font-medium leading-4 text-gray-700">{label}</span>
     </button>
   )
 }
@@ -41,6 +37,7 @@ export default function QuickExplore({
   canScrollLeft,
   canScrollRight,
   expYears,
+  extraChip,
   groups,
   noExpCount,
   onOpenAllCategories,
@@ -100,14 +97,14 @@ export default function QuickExplore({
 
   return (
     <>
-      <div className="relative mt-4">
+      <div className="relative mt-3">
         <div
           ref={scrollerRef}
-          className="job-list-scroll-row flex gap-2.5 overflow-x-auto scroll-smooth pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="job-list-scroll-row flex gap-2 overflow-x-auto scroll-smooth pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {sidebarLoading
             ? Array.from({ length: 8 }).map((_, index) => (
-                <div key={index} className="w-[128px] shrink-0 rounded-xl border border-gray-200 bg-white px-2 py-3.5">
+                <div key={index} className="w-28 shrink-0 rounded-lg border border-gray-200 bg-white px-1.5 py-2.5">
                   <Skeleton active title={false} paragraph={{ rows: 2, width: ['60%', '90%'] }} />
                 </div>
               ))
@@ -153,19 +150,19 @@ export default function QuickExplore({
       </div>
 
       {sidebarLoading ? (
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-2 flex flex-wrap gap-2">
           {[168, 132, 108, 232].map((width) => (
             <Skeleton.Button key={width} active size="small" style={{ width, borderRadius: 9999 }} />
           ))}
         </div>
       ) : (
-        <div className="job-list-scroll-row mt-3 flex flex-wrap gap-2">
+        <div className="job-list-scroll-row mt-2 flex flex-wrap gap-2">
           {quickPills.map((pill) => (
             <button
               key={pill.key}
               type="button"
               onClick={pill.onClick}
-              className={`job-list-chip inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
+              className={`job-list-chip inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1 text-[13px] font-medium transition ${
                 pill.active
                   ? 'border-[var(--brand-primary)] bg-[var(--brand-primary-soft)] text-[var(--brand-primary)]'
                   : 'border-gray-200 bg-white text-gray-700 hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]'
@@ -176,6 +173,7 @@ export default function QuickExplore({
               <RightOutlined className="text-[10px]" />
             </button>
           ))}
+          {extraChip}
         </div>
       )}
     </>
