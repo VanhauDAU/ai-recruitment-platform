@@ -38687,10 +38687,16 @@ components:
       enum:
       - cv_save_success
       - account_settings
+      - cv_library
+      - cv_library_banner
+      - cv_search_list
       type: string
       description: |-
         * `cv_save_success` - cv_save_success
         * `account_settings` - account_settings
+        * `cv_library` - cv_library
+        * `cv_library_banner` - cv_library_banner
+        * `cv_search_list` - cv_search_list
     RecruiterVisibilityStatus:
       type: object
       properties:
