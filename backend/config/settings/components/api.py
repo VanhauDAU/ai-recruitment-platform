@@ -46,6 +46,8 @@ REST_FRAMEWORK = {
         # Bucket riêng cho bước confirm: gõ sai mật khẩu mới vài lần không được
         # phép khoá luôn việc xin link (và ngược lại) — chung IP, chung quota.
         'password_reset_confirm': '10/min',
+        'password_change': '10/hour',
+        'admin_invitation': '20/min',
         'oauth': '10/min',
         'feedback': '5/min',
         'consultation': '5/min',
@@ -61,6 +63,9 @@ REST_FRAMEWORK = {
         'announcement_event': '240/hour',
         'announcement_runtime': '60/hour',
         'cv_import': '10/hour',
+        # Mở tệp gốc CV/giấy tờ: DOCX phải qua LibreOffice (tới 30 giây/lần).
+        'cv_shared_file': '30/min',
+        'office_file_preview': '60/min',
         'ai_job_generation': '3/min',
         'match_analysis': '20/hour',
         # Tìm CV: mỗi lượt tìm chấm lại tới 200 CV; lời mời gửi thông báo cho ứng viên.

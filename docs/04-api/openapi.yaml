@@ -17018,6 +17018,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/CompanyDomainClaimStatusEnum'
           readOnly: true
+          default: pending
         txt_name:
           type: string
           readOnly: true
@@ -17178,6 +17179,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/CompanyDomainClaimStatusEnum'
           readOnly: true
+          default: pending
         txt_name:
           type: string
           readOnly: true
@@ -24048,6 +24050,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/CompanyDomainClaimStatusEnum'
           readOnly: true
+          default: pending
         txt_name:
           type: string
           readOnly: true

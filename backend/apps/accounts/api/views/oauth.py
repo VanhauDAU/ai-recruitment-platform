@@ -2,6 +2,7 @@
 
 from urllib.parse import urlencode
 
+from django.conf import settings
 from django.shortcuts import redirect
 from django.urls import reverse
 from drf_spectacular.utils import extend_schema, inline_serializer
@@ -19,6 +20,24 @@ from ..serializers import SessionUserSerializer
 
 def _oauth_error_redirect(portal, error_code):
     return redirect(f'{oauth.frontend_callback_url(portal)}?{urlencode({"error": error_code})}')
+
+
+def _callback_path(provider):
+    return reverse('auth-oauth-callback', args=[provider])
+
+
+def _bind_browser(response, provider, binding):
+    # SameSite=Lax: provider trả về bằng điều hướng GET cấp cao nhất, cookie vẫn đi kèm.
+    response.set_cookie(
+        oauth.OAUTH_BROWSER_COOKIE,
+        binding,
+        max_age=settings.OAUTH_STATE_TTL,
+        path=_callback_path(provider),
+        secure=settings.AUTH_REFRESH_COOKIE_SECURE,
+        httponly=True,
+        samesite='Lax',
+    )
+    return response
 
 
 @extend_schema(exclude=True)  # endpoint redirect toàn trang, không dùng qua Swagger
@@ -39,11 +58,14 @@ class OAuthStartView(APIView):
 
         next_path = oauth.safe_next(request.query_params.get('next', ''))
         try:
-            redirect_uri = request.build_absolute_uri(
-                reverse('auth-oauth-callback', args=[provider])
+            redirect_uri = request.build_absolute_uri(_callback_path(provider))
+            binding = oauth.new_browser_binding()
+            state = oauth.create_state(provider, portal, next_path, binding)
+            return _bind_browser(
+                redirect(oauth.build_authorize_url(provider, redirect_uri, state)),
+                provider,
+                binding,
             )
-            state = oauth.create_state(provider, portal, next_path)
-            return redirect(oauth.build_authorize_url(provider, redirect_uri, state))
         except oauth.OAuthError as exc:
             return _oauth_error_redirect(portal, exc.code)
 
@@ -57,7 +79,15 @@ class OAuthCallbackView(APIView):
     authentication_classes = []
 
     def get(self, request, provider):
-        state_data = oauth.pop_state(request.query_params.get('state'))
+        response = self._complete(request, provider)
+        response.delete_cookie(oauth.OAUTH_BROWSER_COOKIE, path=_callback_path(provider))
+        return response
+
+    def _complete(self, request, provider):
+        state_data = oauth.pop_state(
+            request.query_params.get('state'),
+            request.COOKIES.get(oauth.OAUTH_BROWSER_COOKIE, ''),
+        )
         if not state_data or state_data.get('provider') != provider:
             return _oauth_error_redirect('main', 'invalid_state')
 
@@ -69,9 +99,7 @@ class OAuthCallbackView(APIView):
             return _oauth_error_redirect(portal, 'invalid_state')
 
         try:
-            redirect_uri = request.build_absolute_uri(
-                reverse('auth-oauth-callback', args=[provider])
-            )
+            redirect_uri = request.build_absolute_uri(_callback_path(provider))
             one_time_code = oauth.complete_provider_login(provider, code, redirect_uri, portal)
         except oauth.OAuthError as exc:
             return _oauth_error_redirect(portal, exc.code)

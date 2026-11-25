@@ -7,6 +7,7 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import IsEmployer
@@ -132,6 +133,8 @@ def _download_name(application):
 )
 class RecruiterApplicationCvFileView(APIView):
     permission_classes = [IsEmployer]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'office_file_preview'
 
     def get(self, request, public_id):
         application = _snapshot_application(request, public_id)
