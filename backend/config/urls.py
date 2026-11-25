@@ -92,6 +92,7 @@ api_portal_patterns = [
             portal(
                 ('uploads/', 'apps.uploads.api.urls.shared'),
                 ('site/', 'apps.sitecontent.api.urls.shared'),
+                ('realtime/', 'apps.realtime.api.urls.shared'),
             )
         ),
     ),

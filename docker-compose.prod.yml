@@ -36,7 +36,7 @@ x-prod-env: &prod-env
   FACEBOOK_OAUTH_REDIRECT_URI: https://procv.site/api/employer/social/facebook/callback/
   THREADS_OAUTH_REDIRECT_URI: https://procv.site/api/employer/social/threads/callback/
   LINKEDIN_OAUTH_REDIRECT_URI: https://procv.site/api/employer/social/linkedin/callback/
-  # Cloudflare -> nginx (container web, IP cố định) -> gunicorn.
+  # Cloudflare -> nginx (container web, IP cố định) -> gunicorn (HTTP) / daphne (WebSocket).
   SECURE_SSL_REDIRECT: 'True'
   SECURE_PROXY_SSL_HEADER_ENABLED: 'True'
   SESSION_COOKIE_SECURE: 'True'
@@ -162,6 +162,40 @@ services:
       migrate:
         condition: service_completed_successfully
 
+  # WebSocket thông báo (/ws/notifications/, apps.realtime). Tách khỏi gunicorn:
+  # kết nối sống lâu không giữ worker HTTP. Sự kiện đến qua Redis channel layer.
+  realtime:
+    <<: *backend
+    command: >-
+      daphne -b 0.0.0.0 -p 8001
+      --proxy-headers
+      --ping-interval 20 --ping-timeout 30
+      --application-close-timeout 10
+      config.asgi:application
+    pids_limit: 128
+    mem_limit: 384m
+    stop_grace_period: 15s
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import urllib.request as u;
+          u.urlopen(u.Request('http://127.0.0.1:8001/api/health/',
+          headers={'Host': 'procv.site', 'X-Forwarded-Proto': 'https'}), timeout=3)
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
   worker:
     <<: *backend
     # -Q bắt buộc như dev: thiếu queue nào thì task của queue đó chết lặng.
@@ -271,6 +305,8 @@ services:
         ipv4_address: 172.28.0.10
     depends_on:
       backend:
+        condition: service_healthy
+      realtime:
         condition: service_healthy
 
 networks:

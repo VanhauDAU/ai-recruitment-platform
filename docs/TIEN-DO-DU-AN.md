@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Thông báo thời gian thực qua WebSocket, hoàn tác 15 giây (ADR-0028)](#thông-báo-thời-gian-thực-qua-websocket-hoàn-tác-15-giây-adr-0028-2026-11-25) | 🟨 Xong trên nhánh `feat/realtime-notifications`, chưa commit/PR |
 | [Phễu tuyển dụng trên trang chủ NTD](#phễu-tuyển-dụng-trên-trang-chủ-ntd-2026-11-25) | 🟨 PR #338 (nhánh `feat/employer-recruitment-funnel`), chờ gộp |
 | [Làm lại khối Gợi ý việc làm phù hợp trang chủ](#làm-lại-khối-gợi-ý-việc-làm-phù-hợp-trang-chủ-2026-11-25) | 🟨 Xong trên nhánh `feat/home-recommendations-redesign`, chưa commit/PR |
 | [Huy hiệu Sấm Chớp tính từ mức phản hồi thật (ADR-0027)](#huy-hiệu-sấm-chớp-tính-từ-mức-phản-hồi-thật-adr-0027-2026-11-25) | ✅ Đã gộp dev (#334) |
@@ -62,6 +63,24 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
   `*_at`), nên hồ sơ phỏng vấn rồi bị loại vẫn tính ở bước phỏng vấn.
 - Khối "Hoàn thiện workspace tuyển dụng" ẩn khi đủ 5 bước xác thực (bỏ huy hiệu
   "Đã hoàn tất").
+## Thông báo thời gian thực qua WebSocket, hoàn tác 15 giây (ADR-0028, 2026-11-25)
+
+Chuông ứng viên/NTD trước đây polling 60–120 giây; quyết định của NTD tới ứng viên sau 5
+phút + tối đa 60 giây chờ beat. Chi tiết quyết định ở
+[ADR-0028](02-tong-quan/adr-0028-realtime-notifications.md).
+
+| Hạng mục | Trạng thái |
+| --- | --- |
+| App `apps.realtime`: vé một lần 30 giây, consumer `/ws/notifications/`, kiểm lại phiên mỗi 60 giây (không kéo dài idle), chặn Origin lạ | ✅ |
+| Đẩy `notification.created`/`notification.read` sau commit từ `emit_employer_event` và lúc phát hành thông báo ứng viên (tôn trọng tắt kênh website) | ✅ |
+| Cửa sổ hoàn tác 15 giây (`candidate_status_notify_delay_seconds`, migration xóa key phút), phát hành đúng hạn bằng task riêng, email gửi ngay | ✅ |
+| Frontend: socket dùng chung, ping 25 giây, nối lại có backoff, polling chỉ khi socket đóng; hồ sơ mới làm mới danh sách hồ sơ NTD ngay | ✅ |
+| Âm thanh thông báo mới (một tab kêu), nút bật/tắt chuông; toast + thanh "Hoàn tác" đếm ngược đúng thời gian còn lại | ✅ |
+| Triển khai: service `realtime` (daphne) trong compose prod, nginx route `/ws/notifications/`, Vite proxy `/ws` | ✅ code; chưa lên VPS |
+| Admin realtime (badge hàng chờ) | ⬜ Chưa làm, vẫn polling 30 giây |
+
+Sau khi pull: build lại image backend (`docker compose build backend worker beat`) vì có
+gói mới `channels`, `channels-redis`, `daphne`.
 
 ## Huy hiệu Sấm Chớp tính từ mức phản hồi thật (ADR-0027, 2026-11-25)
 

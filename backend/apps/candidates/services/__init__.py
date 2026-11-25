@@ -10,6 +10,7 @@ from .notifications import (
     mark_candidate_notification_read,
     pending_candidate_notification_email_ids,
     purge_expired_candidate_notifications,
+    release_candidate_notification,
     release_due_candidate_notifications,
     restore_superseded_candidate_notification,
 )
@@ -32,6 +33,7 @@ __all__ = [
     'patch_candidate_email_notification_settings',
     'pending_candidate_notification_email_ids',
     'purge_expired_candidate_notifications',
+    'release_candidate_notification',
     'release_due_candidate_notifications',
     'replace_candidate_job_preferences',
     'restore_superseded_candidate_notification',

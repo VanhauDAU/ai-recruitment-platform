@@ -6,6 +6,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext_lazy
 
+from apps.realtime.services import push_to_user
 from common.i18n import recipient_language
 from common.metrics import record_metric
 
@@ -256,7 +257,23 @@ def emit_employer_event(
         event=event_type,
         status=('created' if notification_created and activity_created else 'deduplicated'),
     )
+    if notification_created:
+        push_to_user(recipient.pk, _pushed_event(notification))
     return notification, activity
+
+
+def _pushed_event(notification):
+    """The socket payload: what the bell shows, nothing the REST list does not."""
+    return {
+        'type': 'notification.created',
+        'scope': 'employer',
+        'notification': {
+            'public_id': notification.public_id,
+            'event_type': notification.event_type,
+            'title': notification.title,
+            'action_path': notification.action_path,
+        },
+    }
 
 
 def update_employer_notification_preference(user, changes):
@@ -278,11 +295,15 @@ def mark_employer_notification_read(user, public_id):
     if notification is not None and notification.read_at is None:
         notification.read_at = timezone.now()
         notification.save(update_fields=['read_at'])
+        push_to_user(user.pk, {'type': 'notification.read', 'scope': 'employer'})
     return notification
 
 
 def mark_all_employer_notifications_read(user):
     """Mark every unread notification read; returns how many changed."""
-    return EmployerNotification.objects.filter(recipient=user, read_at__isnull=True).update(
+    updated = EmployerNotification.objects.filter(recipient=user, read_at__isnull=True).update(
         read_at=timezone.now()
     )
+    if updated:
+        push_to_user(user.pk, {'type': 'notification.read', 'scope': 'employer'})
+    return updated

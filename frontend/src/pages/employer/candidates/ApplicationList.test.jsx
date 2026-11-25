@@ -226,9 +226,10 @@ describe('EmployerApplicationList', () => {
 
   it('decides immediately for non-final statuses and offers undo while the notice is pending', async () => {
     const user = userEvent.setup()
+    const noticeAt = new Date(Date.now() + 15_000).toISOString()
     mocks.decideApplicationStatus.mockResolvedValue({
       application: { ...APPLICATIONS[0], status: 'shortlisted', available_decisions: ['interviewed', 'accepted', 'rejected'] },
-      candidate_notice_at: '2026-07-22T09:10:00+07:00',
+      candidate_notice_at: noticeAt,
     })
     mocks.undoApplicationStatusChange.mockResolvedValue(APPLICATIONS[0])
     renderPage()
@@ -237,7 +238,7 @@ describe('EmployerApplicationList', () => {
     const decisions = await within(inspector).findByRole('group', { name: 'Quyết định cho hồ sơ' })
     mocks.getApplicationHistory.mockResolvedValue([
       VIEWED_ROW,
-      { ...VIEWED_ROW, from_status: 'viewed', to_status: 'shortlisted', can_undo: true, candidate_notice: { state: 'scheduled', deliver_at: '2026-07-22T09:10:00+07:00', delivered_at: null, email_sent_at: null } },
+      { ...VIEWED_ROW, from_status: 'viewed', to_status: 'shortlisted', can_undo: true, candidate_notice: { state: 'scheduled', deliver_at: noticeAt, delivered_at: null, email_sent_at: null } },
     ])
     await user.click(within(decisions).getByRole('button', { name: 'Phù hợp' }))
 

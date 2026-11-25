@@ -60,6 +60,12 @@ export default defineConfig(({ mode }) => {
           target: apiProxyTarget,
           changeOrigin: false,
         },
+        // WebSocket thông báo: runserver (daphne trong INSTALLED_APPS) phục vụ ASGI.
+        '/ws': {
+          target: apiProxyTarget,
+          changeOrigin: false,
+          ws: true,
+        },
         // Link theo dõi của kênh chiến dịch (/r/<mã>, /r/<mã>/<tin hoặc cong-ty>):
         // backend đếm lượt bấm rồi chuyển hướng.
         '^/r/[A-Za-z0-9]+(/[A-Za-z0-9_-]+)?$': {

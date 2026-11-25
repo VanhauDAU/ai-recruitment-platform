@@ -1734,13 +1734,15 @@ test('employer applications: grouped CV workspace is clear across responsive lay
     const { status } = route.request().postDataJSON()
     decisions.push(status)
     applications[0] = { ...applications[0], status, available_decisions: ['interviewed', 'accepted', 'rejected'] }
+    // The undo window is live (15 s by default): the notice is due shortly after now.
+    const noticeAt = new Date(Date.now() + 15_000).toISOString()
     history.push({
       from_status: 'viewed', to_status: status, note: '', changed_by_name: 'HR Team', created_at: '2026-08-02T10:00:00+07:00', reverted_at: null, can_undo: true,
-      candidate_notice: { state: 'scheduled', deliver_at: '2026-08-02T10:05:00+07:00', delivered_at: null, email_sent_at: null },
+      candidate_notice: { state: 'scheduled', deliver_at: noticeAt, delivered_at: null, email_sent_at: null },
     })
     await route.fulfill({
       contentType: 'application/json',
-      body: JSON.stringify({ application: applications[0], candidate_notice_at: '2026-08-02T10:05:00+07:00' }),
+      body: JSON.stringify({ application: applications[0], candidate_notice_at: noticeAt }),
     })
   })
   await page.route('http://localhost:8000/api/employer/applications/app_befb3400ade3/status/undo/', async (route) => {
@@ -1811,7 +1813,7 @@ test('employer applications: grouped CV workspace is clear across responsive lay
 
   const decisionBar = inspector.getByRole('group', { name: 'Quyết định cho hồ sơ' })
   await decisionBar.getByRole('button', { name: 'Phù hợp', exact: true }).click()
-  await expect(inspector.getByRole('status').filter({ hasText: 'Ứng viên sẽ được báo lúc' })).toBeVisible()
+  await expect(inspector.getByRole('status').filter({ hasText: 'Ứng viên sẽ được báo sau' })).toBeVisible()
   await inspector.getByRole('button', { name: 'Hoàn tác' }).click()
   await expect(inspector.getByText('Không gửi: đã hoàn tác')).toBeVisible()
   expect(decisions).toEqual(['shortlisted', 'undo'])

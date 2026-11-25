@@ -1,7 +1,9 @@
-"""Beat-driven release and email delivery of candidate notifications.
+"""Release and email delivery of candidate notifications.
 
-The dispatcher is the only producer of email tasks, so a notice cancelled
-(undone or superseded) before its ``deliver_after`` can never be emailed.
+A notice due within minutes (the undo window) gets a timed release task; the
+beat dispatcher releases everything else and catches a lost timed task. Email
+tasks are only produced after a release, so a notice cancelled (undone or
+superseded) before its ``deliver_after`` can never be emailed.
 """
 
 from celery import shared_task
@@ -14,6 +16,9 @@ from ..services import (
 from ..services import (
     purge_expired_candidate_notifications as purge_expired,
 )
+from ..services import (
+    release_candidate_notification as release_one,
+)
 
 
 @shared_task
@@ -23,6 +28,15 @@ def dispatch_candidate_notifications():
     for notification_id in email_ids:
         send_candidate_notification_email.delay(notification_id)
     return {'released': released, 'emails': len(email_ids)}
+
+
+@shared_task
+def release_candidate_notification(notification_id):
+    """Timed release at the end of the undo window, then its email right away."""
+    if not release_one(notification_id):
+        return False
+    send_candidate_notification_email.delay(notification_id)
+    return True
 
 
 @shared_task

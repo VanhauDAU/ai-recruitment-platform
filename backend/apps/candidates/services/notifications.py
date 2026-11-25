@@ -17,6 +17,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from apps.accounts.services import is_account_accessible
+from apps.realtime.services import push_to_user
 from apps.sitecontent.selectors import business_emails_enabled, retention_days
 from common.email import send_html_email
 from common.metrics import record_metric
@@ -29,6 +30,10 @@ from .notification_events import EVENTS, render_text, switch_enabled
 logger = logging.getLogger(__name__)
 
 SAFE_METADATA_KEYS = {'application_public_id', 'job_public_id'}
+# Notices due sooner than this get their own timed release (the undo window);
+# later ones (auto-rejection grace, days) are left to the beat dispatcher,
+# which also catches any timed release that was lost.
+PRECISE_RELEASE_MAX_DELAY = timedelta(minutes=10)
 
 Status = CandidateNotification.EmailStatus
 
@@ -97,7 +102,52 @@ def emit_candidate_notification(
         event=event_type,
         status='created' if created else 'deduplicated',
     )
+    if created:
+        _schedule_release(notification.pk, notification.deliver_after)
     return notification
+
+
+def _schedule_release(notification_id, deliver_after):
+    """After commit, release this notice the moment its undo window ends."""
+    delay = deliver_after - timezone.now()
+    if delay > PRECISE_RELEASE_MAX_DELAY:
+        return
+
+    def enqueue():
+        # Imported here: tasks depend on services, not the other way round.
+        from ..tasks import release_candidate_notification
+
+        try:
+            release_candidate_notification.apply_async(
+                args=[notification_id], countdown=max(delay.total_seconds(), 0)
+            )
+        except Exception:  # noqa: BLE001 - the beat dispatcher still releases it
+            logger.warning('Unable to schedule candidate notice %s.', notification_id)
+
+    transaction.on_commit(enqueue)
+
+
+def _pushed_event(notification):
+    """The socket payload: what the bell shows, nothing the REST list does not."""
+    return {
+        'type': 'notification.created',
+        'scope': 'candidate',
+        'notification': {
+            'public_id': notification.public_id,
+            'event_type': notification.event_type,
+            'title': notification.title,
+            'action_path': notification.action_path,
+        },
+    }
+
+
+def _push_released(ids, released_at):
+    """Push only the rows this call released and the candidate shows on the website."""
+    released = CandidateNotification.objects.filter(
+        pk__in=ids, delivered_at=released_at, show_in_inbox=True
+    ).only('pk', 'public_id', 'recipient_id', 'event_type', 'title', 'action_path')
+    for notification in released:
+        push_to_user(notification.recipient_id, _pushed_event(notification))
 
 
 def cancel_candidate_notification(*, recipient_id, dedupe_key):
@@ -113,15 +163,19 @@ def cancel_candidate_notification(*, recipient_id, dedupe_key):
 
 def restore_superseded_candidate_notification(*, recipient_id, dedupe_key, deliver_after):
     """Reschedule a notice that an undone, newer notice had replaced."""
-    return (
-        CandidateNotification.objects.filter(
-            recipient_id=recipient_id,
-            dedupe_key=dedupe_key,
-            delivered_at__isnull=True,
-            cancel_reason=CandidateNotification.CancelReason.SUPERSEDED,
-        ).update(cancelled_at=None, cancel_reason='', deliver_after=deliver_after)
-        == 1
+    notices = CandidateNotification.objects.filter(
+        recipient_id=recipient_id,
+        dedupe_key=dedupe_key,
+        delivered_at__isnull=True,
+        cancel_reason=CandidateNotification.CancelReason.SUPERSEDED,
     )
+    notification_id = notices.values_list('pk', flat=True).first()
+    if notification_id is None or not notices.filter(pk=notification_id).update(
+        cancelled_at=None, cancel_reason='', deliver_after=deliver_after
+    ):
+        return False
+    _schedule_release(notification_id, deliver_after)
+    return True
 
 
 def release_due_candidate_notifications(*, now=None, batch_size=500):
@@ -134,9 +188,27 @@ def release_due_candidate_notifications(*, now=None, batch_size=500):
     )
     if not due_ids:
         return 0
-    return CandidateNotification.objects.filter(_undelivered(), pk__in=due_ids).update(
+    released = CandidateNotification.objects.filter(_undelivered(), pk__in=due_ids).update(
         delivered_at=now
     )
+    if released:
+        _push_released(due_ids, now)
+    return released
+
+
+def release_candidate_notification(notification_id, *, now=None):
+    """Timed release of one notice; False when it was undone, superseded or early.
+
+    Same conditional UPDATE as the dispatcher, so an undo that commits first
+    always wins and a notice is never released twice.
+    """
+    now = now or timezone.now()
+    released = CandidateNotification.objects.filter(
+        _undelivered(), pk=notification_id, deliver_after__lte=now
+    ).update(delivered_at=now)
+    if released:
+        _push_released([notification_id], now)
+    return released == 1
 
 
 def pending_candidate_notification_email_ids(*, now=None, limit=100):
@@ -245,17 +317,24 @@ def mark_candidate_notification_read(user, public_id):
     )
     if notification is None:
         return None
-    if notification.read_at is None:
-        CandidateNotification.objects.filter(pk=notification.pk, read_at__isnull=True).update(
-            read_at=timezone.now()
-        )
+    if notification.read_at is None and CandidateNotification.objects.filter(
+        pk=notification.pk, read_at__isnull=True
+    ).update(read_at=timezone.now()):
+        push_to_user(user.pk, _READ_EVENT)
     return CandidateNotification.objects.get(pk=notification.pk)
 
 
 def mark_all_candidate_notifications_read(user):
-    return CandidateNotification.objects.filter(
+    updated = CandidateNotification.objects.filter(
         recipient=user, delivered_at__isnull=False, show_in_inbox=True, read_at__isnull=True
     ).update(read_at=timezone.now())
+    if updated:
+        push_to_user(user.pk, _READ_EVENT)
+    return updated
+
+
+# Other tabs of the same account refresh their badge.
+_READ_EVENT = {'type': 'notification.read', 'scope': 'candidate'}
 
 
 def purge_expired_candidate_notifications(*, now=None):

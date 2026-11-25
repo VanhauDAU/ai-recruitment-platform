@@ -11,7 +11,17 @@ export const SOUND_EFFECTS = Object.freeze({
     toastClassName: 'app-toast--sound-done',
     volume: 0.2,
   }),
+  // Thông báo mới đến qua realtime: cùng tiếng chuông nhưng đủ nghe khi người
+  // dùng đang ở tab khác hoặc không nhìn màn hình.
+  incoming: Object.freeze({
+    src: '/audio/effects/notification.mp3',
+    toastClassName: 'app-toast--sound-incoming',
+    volume: 0.35,
+  }),
 })
+
+// Toast mang class này không phát âm thanh (người dùng đã tắt chuông).
+export const SILENT_TOAST_CLASS = 'app-toast--silent'
 
 export function getSoundEffect(name) {
   return SOUND_EFFECTS[name] || null
@@ -25,6 +35,7 @@ export function toastSoundOptions(name) {
 }
 
 export function getToastSoundName(toast) {
+  if (toast.classList.contains(SILENT_TOAST_CLASS)) return null
   const matched = Object.entries(SOUND_EFFECTS).find(([, effect]) => (
     toast.classList.contains(effect.toastClassName)
   ))
