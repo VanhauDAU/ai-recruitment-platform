@@ -76,6 +76,7 @@ export const ADMIN_NAVIGATION = [
       { key: 'cv-templates', label: m.admin_nav_cv_templates(), routeRef: 'cvOverview', matchSegment: '/cv' },
       { key: 'banners', label: m.admin_nav_banners(), routeRef: 'banners' },
       { key: 'announcements', label: m.admin_nav_announcements(), routeRef: 'announcements' },
+      { key: 'catalog', label: m.admin_nav_catalog(), routeRef: 'catalog' },
     ],
   },
   {

@@ -26,7 +26,7 @@ from .application_ranking import (
     stale_application_ids,
 )
 from .candidate_search import ProfileFilters, candidate_search_enabled, rank_cvs_for_job
-from .documents import ensure_cv_document, ensure_job_document
+from .documents import ensure_cv_document, ensure_job_document, reassign_document_skill
 from .encoder import get_encoder
 from .skills import SkillCatalog
 
@@ -51,6 +51,7 @@ __all__ = [
     'fail_analysis',
     'get_encoder',
     'matching_enabled',
+    'reassign_document_skill',
     'recover_stale_analyses',
     'request_analysis',
 ]

@@ -80,6 +80,7 @@ api_portal_patterns = [
                 ('site/', 'apps.sitecontent.api.urls.admin'),
                 ('blog/', 'apps.blog.api.urls.admin'),
                 ('knowledgebase/', 'apps.knowledgebase.api.urls.admin'),
+                ('skills/', 'apps.skills.api.urls.admin'),
                 ('privacy/', 'apps.privacy.api.urls.admin'),
             )
         ),

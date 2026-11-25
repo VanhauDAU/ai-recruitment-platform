@@ -5,7 +5,8 @@ gửi task đợi tới khi transaction commit và mới đọc cờ tính năng
 CV/tin không phát sinh thêm truy vấn nào.
 
 Hồ sơ ứng tuyển vừa tạo mà ứng viên đồng ý phân tích thì được xếp task chấm
-(`score_application`, queue `ai-matching-batch`) khi cờ xếp hạng bật.
+(`score_application`, queue `ai-matching-batch`) khi cờ xếp hạng bật. Khi admin
+gộp hai kỹ năng, hồ sơ đối sánh đã lưu được đổi sang kỹ năng giữ lại.
 """
 
 from django.conf import settings
@@ -16,7 +17,12 @@ from django.dispatch import receiver
 from apps.applications.models import Application
 from apps.cvs.models import CvVersion
 from apps.jobs.models import Job
-from apps.matching.services import application_ranking_enabled, precompute_enabled
+from apps.matching.services import (
+    application_ranking_enabled,
+    precompute_enabled,
+    reassign_document_skill,
+)
+from apps.skills.signals import skill_merged
 
 # Trường của tin ảnh hưởng tới hồ sơ đối sánh; lưu các trường khác thì bỏ qua.
 JOB_PROFILE_FIELDS = {
@@ -65,3 +71,8 @@ def _dispatch_application_score(application_id):
 def score_new_application(sender, instance, created, **kwargs):
     if created and instance.allow_ai_analysis and settings.MATCHING_PRECOMPUTE_ENABLED:
         transaction.on_commit(lambda: _dispatch_application_score(instance.pk))
+
+
+@receiver(skill_merged, dispatch_uid='matching_reassign_merged_skill')
+def reassign_merged_skill(sender, source_id, target, **kwargs):
+    reassign_document_skill(source_id, target)
