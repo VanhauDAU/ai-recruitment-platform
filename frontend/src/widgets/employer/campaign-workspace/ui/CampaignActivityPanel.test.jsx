@@ -130,7 +130,7 @@ describe('CampaignActivityPanel', () => {
     renderPanel()
 
     await screen.findByTestId('activity-day-2026-07-22')
-    await user.click(screen.getByTitle('2'))
+    await user.click(within(screen.getByTitle('2')).getByRole('button'))
     await waitFor(() => expect(mocks.getCampaignActivities).toHaveBeenLastCalledWith(
       'camp_1',
       { page: 2 },
