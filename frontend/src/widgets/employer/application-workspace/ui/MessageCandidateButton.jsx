@@ -6,12 +6,13 @@ import { m } from '@/shared/config/i18n'
 
 /**
  * Mở (hoặc mở lại) hội thoại ProCV Connect của hồ sơ đang xem. Ẩn khi admin tắt
- * tính năng, ứng viên đã rút hồ sơ hoặc đang bị công ty chặn (máy chủ cũng từ chối).
+ * tính năng, ứng viên đã rút CV, hồ sơ Không phù hợp hoặc ứng viên đang bị công ty chặn
+ * (máy chủ cũng từ chối).
  */
 export default function MessageCandidateButton({ application }) {
   const start = useStartConversation('employer')
   const enabled = useSiteSettings().settings.connect_enabled === true
-  if (!enabled || !application || application.status === 'withdrawn' || application.candidate_blocked) return null
+  if (!enabled || !application || ['withdrawn', 'rejected'].includes(application.status) || application.candidate_blocked) return null
   return (
     <Button
       size="small"

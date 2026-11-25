@@ -173,5 +173,6 @@
   "connect_blocked_done": "Messages blocked.",
   "connect_unblocked_done": "Unblocked.",
   "connect_action_failed": "That did not work. Try again later.",
-  "connect_locked_blocked_by_me": "You blocked messages in this conversation."
+  "connect_locked_blocked_by_me": "You blocked messages in this conversation.",
+  "connect_locked_closed": "This application has a result, so the conversation is closed."
 }

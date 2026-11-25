@@ -72,7 +72,11 @@ describe('ApplicationCvPreview', () => {
     expect(screen.queryByRole('button', { name: /Nhắn tin/ })).not.toBeInTheDocument()
     unmount()
 
-    renderPreview(snapshot, { application: { public_id: 'app_1', status: 'withdrawn' }, connectEnabled: true })
+    const { unmount: unmountWithdrawn } = renderPreview(snapshot, { application: { public_id: 'app_1', status: 'withdrawn' }, connectEnabled: true })
+    expect(screen.queryByRole('button', { name: /Nhắn tin/ })).not.toBeInTheDocument()
+    unmountWithdrawn()
+
+    renderPreview(snapshot, { application: { public_id: 'app_1', status: 'rejected' }, connectEnabled: true })
     expect(screen.queryByRole('button', { name: /Nhắn tin/ })).not.toBeInTheDocument()
   })
 })

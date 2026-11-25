@@ -108,6 +108,9 @@ def applied_jobs_for_candidate(user, limit=50):
         Application.objects.filter(candidate=user, is_current=True)
         .exclude(status=Application.Status.WITHDRAWN)
         .select_related('job__company')
+        .prefetch_related(
+            Prefetch('status_history', queryset=candidate_published_history_queryset())
+        )
         .order_by('-applied_at')[:limit]
     )
     existing = dict(
@@ -120,8 +123,15 @@ def applied_jobs_for_candidate(user, limit=50):
             'company_id', flat=True
         )
     )
+    # Hồ sơ đã báo "Không phù hợp" thì hội thoại đóng: không mời bấm "Nhắn tin".
     return [
-        (application, existing.get(application.job_id), application.job.company_id not in blocked)
+        (
+            application,
+            existing.get(application.job_id),
+            application.job.company_id not in blocked
+            and application.candidate_visible_status(application.status_history.all())
+            != Application.Status.REJECTED,
+        )
         for application in applications
     ]
 

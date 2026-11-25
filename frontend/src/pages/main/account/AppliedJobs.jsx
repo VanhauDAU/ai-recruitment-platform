@@ -126,7 +126,8 @@ function ApplicationProgress({ application }) {
 function MessageRecruiterButton({ application }) {
   const start = useStartConversation('candidate')
   const enabled = useSiteSettings().settings.connect_enabled === true
-  if (!enabled || !application.job_public_id || application.status === 'withdrawn') return null
+  // Rút CV hoặc đã báo Không phù hợp: hội thoại đóng, không mời nhắn tin.
+  if (!enabled || !application.job_public_id || ['withdrawn', 'rejected'].includes(application.status)) return null
   return (
     <Button size="small" icon={<MessageOutlined />} loading={start.isPending} onClick={() => start.mutate({ job: application.job_public_id })}>
       {m.connect_message_action()}
