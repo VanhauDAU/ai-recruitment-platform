@@ -6,7 +6,7 @@ trị lạ trong DB bị kẹp lại thay vì phá luồng đăng tin.
 
 from apps.sitecontent.selectors import get_int_setting
 
-from ..domain import MAX_LISTING_DAYS
+from ..domain import CLOSING_SOON_DEFAULT_DAYS, CLOSING_SOON_MAX_DAYS, MAX_LISTING_DAYS
 from ..models import Job
 
 
@@ -28,6 +28,11 @@ def job_max_public_lifetime_days():
 
 def job_renewal_grace_days():
     return _int('job_renewal_grace_days', 30, 0, MAX_LISTING_DAYS)
+
+
+def job_closing_soon_days():
+    """Ngưỡng nhãn "Sắp hết hạn" (ADR-0030)."""
+    return _int('job_closing_soon_days', CLOSING_SOON_DEFAULT_DAYS, 1, CLOSING_SOON_MAX_DAYS)
 
 
 def job_view_dedup_seconds():

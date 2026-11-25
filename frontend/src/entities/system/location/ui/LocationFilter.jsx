@@ -271,9 +271,9 @@ export default function LocationFilter({ value = [], onChange, size = 'middle', 
             : 'border-gray-200 hover:border-[var(--brand-primary)]'
         } ${size === 'large' ? 'h-12 text-base' : 'h-8 text-sm'}`}
       >
-        {/* Pin icon với nền xanh nhạt */}
-        <span className="flex items-center justify-center w-6 h-6 rounded-md bg-[#e6f7ee] shrink-0">
-          <EnvironmentOutlined className="text-[var(--brand-primary)] text-sm" />
+        {/* Pin icon trên nền nhạt màu chủ đạo — màu đặt ở span vì antd `.anticon { color: inherit }` đè utility trên icon */}
+        <span className="flex items-center justify-center w-6 h-6 rounded-md bg-[var(--brand-primary-soft)] text-[var(--brand-primary)] text-sm shrink-0">
+          <EnvironmentOutlined />
         </span>
 
         {/* Label */}

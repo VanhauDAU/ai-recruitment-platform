@@ -22,10 +22,17 @@ from .alerts import (
     update_job_alert,
 )
 from .bulk_import import import_job_postings
+from .catalog_admin import (
+    reorder_benefits,
+    save_catalog_entry,
+    save_job_category,
+    upload_category_icon,
+)
 from .content_snapshot import (
     build_job_content_snapshot,
     job_published_content_changes,
 )
+from .coordinates import assign_coordinates, refresh_job_coordinates
 from .digests import (
     claim_due_candidate_job_digest_candidates,
     deliver_candidate_job_digest,
@@ -56,7 +63,7 @@ from .moderation import (
     restore_job_visibility,
     resubmit_job_for_review,
 )
-from .policy import auto_reject_default_days
+from .policy import auto_reject_default_days, job_closing_soon_days
 from .posting import (
     RESPONSIBILITY_STATEMENT_VERSION,
     assign_job_to_campaign,
@@ -79,7 +86,14 @@ from .reports import resolve_job_report, reverse_job_report, submit_job_report
 from .saved_jobs import save_job_for_candidate
 
 __all__ = [
+    'reorder_benefits',
+    'save_catalog_entry',
+    'save_job_category',
+    'upload_category_icon',
+    'assign_coordinates',
+    'refresh_job_coordinates',
     'auto_reject_default_days',
+    'job_closing_soon_days',
     'absolute_url',
     'job_email_card',
     'job_url',

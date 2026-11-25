@@ -64,11 +64,16 @@ export default function JobPreferenceSettings() {
   return (
     <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="w-full overflow-hidden">
-        <img
-          src="/images/candidate/job-preference-banner.png"
-          alt="Cập nhật thông tin gợi ý việc làm"
-          className="h-auto w-full object-cover"
-        />
+        <picture>
+          <source srcSet="/images/candidate/job-preference-banner.webp" type="image/webp" />
+          <img
+            src="/images/candidate/job-preference-banner.png"
+            alt="Cập nhật thông tin gợi ý việc làm"
+            width={1024}
+            height={341}
+            className="h-auto w-full object-cover"
+          />
+        </picture>
       </div>
       <div className="p-4 sm:p-5">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -85,7 +90,7 @@ export default function JobPreferenceSettings() {
             submitLabel="Cập nhật"
             renderFooter={({ saving, catalogLoading }) => (
               <div className="mt-4 flex justify-center border-t border-slate-100 pt-4">
-                <Button type="primary" htmlType="submit" size="middle" loading={saving} disabled={catalogLoading} className="!h-9 !min-w-32 !rounded-lg !font-semibold !bg-emerald-600 hover:!bg-emerald-700 !border-emerald-600">Cập nhật</Button>
+                <Button type="primary" htmlType="submit" size="middle" loading={saving} disabled={catalogLoading} className="!h-9 !min-w-32 !rounded-lg !font-semibold !bg-[var(--brand-primary)] hover:!bg-[var(--brand-primary-hover)] !border-[var(--brand-primary)]">Cập nhật</Button>
               </div>
             )}
             onProfileSaved={async (values) => {

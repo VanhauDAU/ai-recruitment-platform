@@ -30,8 +30,8 @@ from pgvector.django import CosineDistance
 
 from apps.cvs.models import CvVersion, UserCv
 
-from ..domain import EXTRACTOR_VERSION, calibration_for, model_version, to_score
-from ..models import MatchChunk, MatchDocument
+from ..domain import calibration_for, to_score
+from ..models import MatchDocument, current_documents, title_vectors
 
 STRATEGY = 'semantic-v1'
 SEMANTIC_POOL = 100
@@ -71,27 +71,11 @@ def recommendation_cv(user, public_id=None):
     return queryset.order_by('-is_default', '-updated_at', '-pk').first()
 
 
-def _current(kind):
-    return MatchDocument.objects.filter(
-        kind=kind,
-        is_current=True,
-        status=MatchDocument.Status.READY,
-        extractor_version=EXTRACTOR_VERSION,
-        model_version=model_version(),
-        embedding__isnull=False,
-    )
-
-
 def cv_document_for(cv):
     """Hồ sơ và vector hiện hành của phiên bản mới nhất của CV, hoặc None nếu chưa tính xong."""
-    return _current(MatchDocument.Kind.CV).filter(cv_version_id=cv.latest_version_id).first()
-
-
-def _title_vectors(document_ids):
-    rows = MatchChunk.objects.filter(document_id__in=document_ids, section='title').values_list(
-        'document_id', 'embedding'
+    return (
+        current_documents(MatchDocument.Kind.CV).filter(cv_version_id=cv.latest_version_id).first()
     )
-    return {document_id: np.asarray(vector, dtype=np.float32) for document_id, vector in rows}
 
 
 def _counted_skills(profile):
@@ -114,7 +98,7 @@ def _reasons(*, shared, title_score, document_score):
 
 def _nearest(job_queryset, vector, limit):
     return list(
-        _current(MatchDocument.Kind.JOB)
+        current_documents(MatchDocument.Kind.JOB)
         .filter(job__in=job_queryset.values('pk'))
         .annotate(distance=CosineDistance('embedding', vector))
         .order_by('distance', 'job_id')
@@ -168,7 +152,7 @@ def rank_jobs_for_cv(cv_document, job_queryset, *, intent=None, min_score=MIN_SE
             for row in _nearest(intent.focus_jobs, vector, FOCUS_POOL)
             if row['job_id'] not in seen
         ]
-    titles = _title_vectors([cv_document.pk, *(row['pk'] for row in nearest)])
+    titles = title_vectors([cv_document.pk, *(row['pk'] for row in nearest)])
     bonuses = intent.bonuses([row['job_id'] for row in nearest]) if nearest else {}
     calibration = calibration_for(cv_document.model_version)
     cv_title = titles.get(cv_document.pk)

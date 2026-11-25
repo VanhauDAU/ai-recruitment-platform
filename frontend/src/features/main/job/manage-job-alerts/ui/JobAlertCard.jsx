@@ -42,12 +42,12 @@ export default function JobAlertCard({
   const hiddenCategoryCount = Math.max(categories.length - visibleCategories.length, 0)
 
   return (
-    <article aria-labelledby={titleId} className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm transition hover:border-emerald-200 sm:p-4">
+    <article aria-labelledby={titleId} className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm transition hover:border-[var(--brand-primary)]/40 sm:p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-1.5">
             <h3 id={titleId} className="min-w-0 break-words text-base font-bold text-slate-900">{alert.keyword}</h3>
-            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${alert.is_active && globalEnabled ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${alert.is_active && globalEnabled ? 'bg-[var(--brand-primary-soft)] text-[var(--brand-primary-hover)]' : 'bg-slate-100 text-slate-500'}`}>
               {alert.is_active && globalEnabled ? 'Đang nhận tin' : 'Đang tạm dừng'}
             </span>
           </div>
@@ -66,7 +66,7 @@ export default function JobAlertCard({
               icon={<EditOutlined />}
               disabled={interactionsDisabled}
               onClick={() => onEdit(alert)}
-              className="!h-8 !w-8 !text-slate-500 hover:!bg-emerald-50 hover:!text-emerald-700"
+              className="!h-8 !w-8 !text-slate-500 hover:!bg-[var(--brand-primary-soft)] hover:!text-[var(--brand-primary-hover)]"
             />
             <ConfirmAction
               title="Xóa thông báo"
@@ -136,7 +136,7 @@ export default function JobAlertCard({
         <Link
           to={jobAlertResultsPath(alert)}
           aria-label={`Xem danh sách việc làm ${alert.keyword}`}
-          className="inline-flex min-h-8 shrink-0 items-center justify-center rounded-md border border-emerald-200 px-3 text-sm font-semibold text-emerald-700 transition hover:border-emerald-400 hover:bg-emerald-50"
+          className="inline-flex min-h-8 shrink-0 items-center justify-center rounded-md border border-[var(--brand-primary)]/20 px-3 text-sm font-semibold text-[var(--brand-primary-hover)] transition hover:border-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)]"
         >
           Xem danh sách việc làm
         </Link>

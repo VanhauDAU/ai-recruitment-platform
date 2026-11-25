@@ -18,7 +18,7 @@ export default function EmployerAbout() {
 
   return (
     <>
-      <section className="bg-gradient-to-br from-[#eafff3] via-white to-[#f7fff9]">
+      <section className="bg-gradient-to-br from-[var(--brand-primary-soft)] via-white to-[var(--brand-primary-soft)]">
         <div className="mx-auto max-w-7xl px-4 py-16 text-center sm:px-6 lg:px-8 lg:py-24">
           <span className="rounded-full bg-[var(--brand-primary)]/10 px-4 py-1.5 text-sm font-bold text-[var(--brand-primary-hover)]">
             {m.marketing_about_hero_eyebrow()}
@@ -44,7 +44,7 @@ export default function EmployerAbout() {
           <p className="mt-5 leading-8 text-gray-600">{m.marketing_about_who_body1()}</p>
           <p className="mt-4 leading-8 text-gray-600">{m.marketing_about_who_body2()}</p>
         </div>
-        <div className="min-w-0 rounded-2xl border border-[var(--brand-primary)]/15 bg-gradient-to-br from-[#f0fff6] to-white p-5 shadow-[0_24px_80px_rgba(0,177,79,0.10)] sm:p-8">
+        <div className="min-w-0 rounded-2xl border border-[var(--brand-primary)]/15 bg-gradient-to-br from-[#f0fff6] to-white p-5 shadow-[0_24px_80px_color-mix(in_srgb,var(--brand-primary)_10%,transparent)] sm:p-8">
           <p className="break-words text-3xl font-extrabold text-[var(--brand-primary)] sm:text-5xl">{siteName}</p>
           <p className="mt-4 text-lg font-semibold text-gray-800">{m.marketing_footer_tagline()}</p>
         </div>

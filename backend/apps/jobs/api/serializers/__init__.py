@@ -14,6 +14,15 @@ from .alerts import (
     JobAlertReadSerializer,
     JobAlertWriteSerializer,
 )
+from .catalog_admin import (
+    AdminBenefitSerializer,
+    AdminJobCategorySerializer,
+    AdminLanguageSerializer,
+    BenefitReorderSerializer,
+    CategoryIconSerializer,
+    CategoryIconUploadSerializer,
+    JobCategoryWriteSerializer,
+)
 from .catalogs import BenefitSerializer, LanguageSerializer
 from .employer_jobs import (
     EmployerJobDetailSerializer,
@@ -33,7 +42,13 @@ from .posting_context import (
     EmployerJobPostingContextSerializer,
     JobResponsibilityAcknowledgementSerializer,
 )
-from .public_jobs import JobDetailSerializer, PublicJobListSerializer, PublicJobPreviewSerializer
+from .public_jobs import (
+    JobDetailSerializer,
+    NearbyMarkerSerializer,
+    PublicJobListSerializer,
+    PublicJobPreviewSerializer,
+    PublicNearbyJobSerializer,
+)
 from .recommendations import (
     CandidateJobRecommendationResponseSerializer,
     CvJobRecommendationResponseSerializer,
@@ -71,6 +86,13 @@ from .supporting import (
 )
 
 __all__ = [
+    'AdminBenefitSerializer',
+    'AdminJobCategorySerializer',
+    'AdminLanguageSerializer',
+    'BenefitReorderSerializer',
+    'CategoryIconSerializer',
+    'CategoryIconUploadSerializer',
+    'JobCategoryWriteSerializer',
     'BenefitSerializer',
     'AdminJobDecisionSerializer',
     'AdminJobDetailSerializer',
@@ -123,6 +145,8 @@ __all__ = [
     'PublicJobListSerializer',
     'PublicJobLocationSerializer',
     'PublicJobPreviewSerializer',
+    'PublicNearbyJobSerializer',
+    'NearbyMarkerSerializer',
     'PublicJobWorkScheduleSerializer',
     'RecommendationPermissionDeniedSerializer',
     'SavedJobRecommendationResponseSerializer',

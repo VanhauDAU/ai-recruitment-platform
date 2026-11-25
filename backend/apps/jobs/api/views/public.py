@@ -9,9 +9,13 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from common.api.caching import cache_public_get
+from common.api.throttling import ClientIPScopedRateThrottle
+
 from ...selectors.homepage import (
     DEFAULT_BEST_JOBS_ROTATION_SEED,
     build_homepage_best_jobs_queryset,
+    homepage_best_job_locations,
 )
 from ...selectors.listing import (
     build_job_list_queryset,
@@ -20,6 +24,10 @@ from ...selectors.listing import (
 )
 from ...selectors.stats import build_job_stats
 from ..serializers import JobDetailSerializer, PublicJobListSerializer, PublicJobPreviewSerializer
+
+# The dashboard payload is cached server-side for five minutes; browsers and
+# shared caches may keep a response for one.
+JOB_STATS_CACHE_CONTROL = 'public, max-age=60'
 
 
 @extend_schema(
@@ -82,10 +90,50 @@ class HomepageBestJobListView(generics.ListAPIView):
         return response
 
 
+_LOCATION_FACET_FIELDS = {
+    'id': serializers.IntegerField(),
+    'name': serializers.CharField(),
+    'job_count': serializers.IntegerField(),
+}
+
+
+@cache_public_get()
+class HomepageBestJobLocationsView(APIView):
+    """Locations that currently have public jobs, for the Best Jobs filter chips."""
+
+    permission_classes = [permissions.AllowAny]
+
+    @extend_schema(
+        tags=['jobs'],
+        summary='Tỉnh và phường/xã đang có việc làm (bộ lọc Việc làm nổi bật)',
+        responses=inline_serializer(
+            'HomepageBestJobLocations',
+            fields={
+                'provinces': inline_serializer(
+                    'HomepageBestJobProvince', many=True, fields=_LOCATION_FACET_FIELDS
+                ),
+                'wards': inline_serializer(
+                    'HomepageBestJobWard',
+                    many=True,
+                    fields={
+                        **_LOCATION_FACET_FIELDS,
+                        'parent_id': serializers.IntegerField(allow_null=True),
+                        'parent_name': serializers.CharField(),
+                    },
+                ),
+            },
+        ),
+    )
+    def get(self, request):
+        return Response(homepage_best_job_locations())
+
+
 class JobStatsView(APIView):
     """Aggregate stats for the homepage market dashboard (public)."""
 
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [ClientIPScopedRateThrottle]
+    throttle_scope = 'job_stats'
 
     @extend_schema(
         summary='Thống kê thị trường việc làm (dashboard trang chủ)',
@@ -170,13 +218,17 @@ class JobStatsView(APIView):
         tags=['jobs'],
     )
     def get(self, request):
-        return Response(build_job_stats(request))
+        return Response(
+            build_job_stats(request), headers={'Cache-Control': JOB_STATS_CACHE_CONTROL}
+        )
 
 
 class JobSuggestView(APIView):
     """Gợi ý từ khóa tìm kiếm dựa trên nội dung nhập (tên việc làm hoặc tên công ty)."""
 
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [ClientIPScopedRateThrottle]
+    throttle_scope = 'job_suggest'
 
     @extend_schema(
         summary='Gợi ý từ khóa tìm kiếm việc làm (autocomplete)',

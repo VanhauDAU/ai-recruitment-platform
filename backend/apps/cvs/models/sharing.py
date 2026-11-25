@@ -64,6 +64,8 @@ class CvAccessLog(models.Model):
         ADMIN = 'admin', 'Admin'
         SHARED_LINK = 'shared_link', 'Shared link'
         EXPORT = 'export', 'Export'
+        # Nhà tuyển dụng mở hồ sơ trích xuất ẩn danh ở Tìm CV (không mở tệp CV).
+        RECRUITER_SEARCH = 'recruiter_search', 'Recruiter search'
 
     # NULL for recruiter access to an application snapshot (keyed by version).
     cv = models.ForeignKey(

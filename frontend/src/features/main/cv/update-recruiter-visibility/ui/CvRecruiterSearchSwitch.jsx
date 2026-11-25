@@ -14,7 +14,7 @@ export default function CvRecruiterSearchSwitch({ cv }) {
           checked={enabled}
           loading={busy}
           onChange={setSearchable}
-          className={enabled ? '!bg-[#00b14f]' : ''}
+          className={enabled ? '!bg-[var(--brand-primary)]' : ''}
         />
         Cho phép NTD tìm kiếm
       </label>

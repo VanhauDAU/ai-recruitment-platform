@@ -10,7 +10,7 @@ export default function CompanyLogo({
 }) {
   return (
     <span
-      className={`relative flex shrink-0 items-center justify-center overflow-hidden border border-slate-200 bg-white font-black text-emerald-700 shadow-sm ${className}`}
+      className={`relative flex shrink-0 items-center justify-center overflow-hidden border border-slate-200 bg-white font-black text-[var(--brand-primary-hover)] shadow-sm ${className}`}
       aria-hidden="true"
     >
       <span>{companyInitial(company)}</span>

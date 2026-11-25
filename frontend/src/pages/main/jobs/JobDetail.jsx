@@ -10,6 +10,7 @@ import { JobCompareButton } from '@/features/main/job/compare-jobs'
 import { ReportJobModal } from '@/features/main/job/report-job'
 import { useSession } from '@/entities/account/session'
 import { useSavedJob } from '@/features/main/job/saved-jobs'
+import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import { message } from '@/shared/lib/toast'
 import { buildJobDetailAlertPrefill } from './lib/job-detail-alert-prefill'
 import JobDetailContent from './ui/job-detail/JobDetailContent'
@@ -205,6 +206,14 @@ function ApplyButtonLabel({ status }) {
 }
 
 function MobileActions({ job, saved, applicationStatus, onApply, onSave, savePending }) {
+  // Thanh chỉ hiện dưới md: báo cho thanh tab dưới nhường chỗ và nút nổi nâng lên.
+  const isMobile = useMediaQuery('(max-width: 767.98px)')
+  useEffect(() => {
+    if (!isMobile) return undefined
+    document.body.classList.add('has-bottom-action-bar')
+    return () => document.body.classList.remove('has-bottom-action-bar')
+  }, [isMobile])
+
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 p-3 shadow-[0_-8px_24px_rgba(15,23,42,0.08)] backdrop-blur md:hidden">
       <div className="mx-auto flex max-w-6xl gap-2">

@@ -210,7 +210,7 @@ test('announcement admin: create, publish and stale conflict stay responsive', {
   await expect(page).toHaveURL('/admin/app/announcements')
   await page.waitForLoadState('networkidle')
   expect(pageErrors).toEqual([])
-  await expect(page.getByRole('heading', { name: 'Trung tâm thông báo' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Thông báo đa cổng' })).toBeVisible()
   await expect(page.getByText('Bảo trì hệ thống')).toBeVisible()
   await expect(page.getByRole('columnheader', { name: /Cập nhật/ }))
     .toHaveAttribute('aria-sort', 'descending')

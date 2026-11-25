@@ -4,7 +4,6 @@ import { SALARY_RANGES } from '@/entities/job/job'
 export const BEST_JOBS_PAGE_SIZE = 12
 export const BEST_JOBS_ROTATE_MS = 8000
 export const BEST_JOBS_PREVIEW_DELAY_MS = 500
-const OTHER_WARDS_VALUE = '__other_wards__'
 
 function createRotationSeed() {
   if (globalThis.crypto?.randomUUID) {
@@ -43,30 +42,29 @@ export const EMPTY_BEST_JOBS_FILTERS = {
   category: null,
 }
 
-const LOCATION_CHIP_LIMIT = 15
+const LOCATION_CHIP_LIMIT = 20
 const shortProvince = (name = '') => name.replace(/^Thành phố |^Tỉnh /, '')
 const shortWard = (name = '') => name.replace(/^Phường |^Xã |^Đặc khu /, '')
 
-export function buildBestJobsChips(dimension, { featuredWards, parents, provinces }) {
+// `locations` là kết quả /public/jobs/best/locations/: chỉ nơi đang có tin,
+// đã sắp nhiều tin trước. Tỉnh đứng trước phường/xã; mỗi chip kèm số tin.
+export function buildBestJobsChips(dimension, { locations, parents = [] } = {}) {
   if (dimension === 'location') {
-    const provinceChips = provinces.slice(0, 8).map((province) => ({
+    const provinceChips = (locations?.provinces ?? []).map((province) => ({
       value: province.id,
       label: shortProvince(province.name),
+      count: province.job_count,
     }))
-    const provinceById = new Map(provinces.map((province) => [province.id, province]))
-    const wardChips = featuredWards.map((ward) => {
-      const province = provinceById.get(ward.parent)
-      return {
-        value: ward.id,
-        label: province
-          ? `${shortWard(ward.name)}, ${shortProvince(province.name)}`
-          : shortWard(ward.name),
-      }
-    })
+    const wardChips = (locations?.wards ?? []).map((ward) => ({
+      value: ward.id,
+      label: ward.parent_name
+        ? `${shortWard(ward.name)}, ${shortProvince(ward.parent_name)}`
+        : shortWard(ward.name),
+      count: ward.job_count,
+    }))
     return [
       { value: null, label: 'Ngẫu nhiên' },
       ...[...provinceChips, ...wardChips].slice(0, LOCATION_CHIP_LIMIT),
-      { value: OTHER_WARDS_VALUE, label: 'Các phường/xã còn lại', action: 'openLocations' },
     ]
   }
   if (dimension === 'salary') {

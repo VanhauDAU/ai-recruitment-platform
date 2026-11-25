@@ -6,7 +6,14 @@ from django.db import models
 from django.db.models.functions import Lower
 from django.utils import timezone, translation
 
-from common.db.public_id import generate_public_id
+from ..domain.account_code import (
+    ACCOUNT_CODE_LENGTH,
+    ACCOUNT_CODE_REGEX,
+    random_account_code,
+)
+
+# 9·10^7 mã khả dụng: trùng liên tiếp chừng này lần nghĩa là bảng gần đầy.
+ACCOUNT_CODE_ATTEMPTS = 20
 
 
 class UserManager(BaseUserManager):
@@ -62,6 +69,14 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(email, password, **extra_fields)
 
+    def new_public_id(self):
+        """Mã tài khoản 8 chữ số chưa ai dùng; ràng buộc unique vẫn là chốt cuối."""
+        for _ in range(ACCOUNT_CODE_ATTEMPTS):
+            code = random_account_code()
+            if not self.filter(public_id=code).exists():
+                return code
+        raise RuntimeError('Không còn mã tài khoản trống sau nhiều lần thử.')
+
     def email_claimed_for_role(self, email, role, *, exclude_user_id=None):
         """Whether an email identity is already owned inside a portal.
 
@@ -109,7 +124,8 @@ class User(AbstractUser):
     first_name = None
     last_name = None
 
-    public_id = models.CharField(max_length=50, unique=True, editable=False)
+    # Mã tài khoản hiển thị cho người dùng và bộ phận hỗ trợ (xem domain/account_code).
+    public_id = models.CharField(max_length=ACCOUNT_CODE_LENGTH, unique=True, editable=False)
     # Email KHÔNG unique toàn cục: một email dùng được cho tối đa một tài khoản
     # mỗi role (ứng viên / NTD / admin) — mô hình tách cổng giống TopCV. Tính duy
     # nhất được đảm bảo bởi ràng buộc (Lower(email), role) trong Meta.
@@ -147,6 +163,10 @@ class User(AbstractUser):
                 condition=models.Q(role__in=['candidate', 'employer', 'admin']),
                 name='chk_users_role',
             ),
+            models.CheckConstraint(
+                condition=models.Q(public_id__regex=ACCOUNT_CODE_REGEX),
+                name='chk_users_public_id_digits',
+            ),
             # Duy nhất theo (email, role), không phân biệt hoa/thường: chặn tạo hai
             # tài khoản cùng cổng cho một email, nhưng CHO PHÉP cùng email tồn tại
             # ở khác cổng (ứng viên vs NTD) — mỗi tài khoản mật khẩu riêng.
@@ -159,7 +179,7 @@ class User(AbstractUser):
 
     def save(self, *args, **kwargs):
         if not self.public_id:
-            self.public_id = generate_public_id('usr')
+            self.public_id = User.objects.new_public_id()
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -219,6 +239,7 @@ class AuthEmailJob(models.Model):
         ADMIN_INVITATION = 'admin_invitation', 'Admin invitation'
         EMAIL_CHANGED_NOTICE = 'email_changed_notice', 'Email changed security notice'
         ACCOUNT_STATUS_NOTICE = 'account_status_notice', 'Account status security notice'
+        PASSWORD_SETUP_CODE = 'password_setup_code', 'Password setup verification code'
 
     class Status(models.TextChoices):
         PENDING = 'pending', 'Pending'

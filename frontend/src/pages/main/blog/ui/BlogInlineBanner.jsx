@@ -2,7 +2,7 @@ import { ArrowRightOutlined } from '@ant-design/icons'
 import { Link } from 'react-router'
 
 const GRADIENTS = {
-  green: 'from-emerald-600 via-emerald-500 to-teal-400',
+  green: 'from-[var(--brand-primary)] via-[var(--brand-primary)] to-[var(--brand-primary-hover)]',
   blue: 'from-sky-600 via-blue-500 to-indigo-400',
   orange: 'from-orange-500 via-rose-400 to-pink-400',
 }

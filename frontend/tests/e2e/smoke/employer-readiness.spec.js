@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { mockPublicApi } from './helpers'
+import { chooseSelectOption, mockPublicApi } from './helpers'
 
 const DENIED_PROFILE = {
   public_id: 'rec_readiness_denied',
@@ -160,8 +160,7 @@ test('campaign sensitive tabs keep their URLs without mounting Apply CV or Activ
   await expect.poll(() => applicationCalls).toBe(0)
 
   if (page.viewportSize().width < 640) {
-    await page.getByRole('combobox', { name: 'Chọn nội dung chiến dịch' }).click()
-    await page.locator('.ant-select-dropdown:visible').getByText(/Lịch sử hoạt động/).click()
+    await chooseSelectOption(page, page.getByRole('combobox', { name: 'Chọn nội dung chiến dịch' }), /Lịch sử hoạt động/)
   } else {
     await page.getByRole('tab', { name: 'Lịch sử hoạt động' }).click()
   }

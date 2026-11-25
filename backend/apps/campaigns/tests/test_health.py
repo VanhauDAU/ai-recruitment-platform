@@ -232,19 +232,45 @@ class CampaignHealthApiTests(HealthFixtures, TestCase):
         )
         self.assertEqual(workbook['Tổng quan']['B1'].value, 'Tuyển kỹ thuật')
 
-    def test_pdf_export_renders_a_self_contained_report(self):
+    def pdf_result(self, token, **params):
+        return self.client.get(
+            reverse(
+                'employer-campaign-report-pdf-result',
+                kwargs={'public_id': self.campaign.public_id, 'token': token},
+            ),
+            params,
+        )
+
+    def test_pdf_export_is_queued_then_downloaded(self):
+        url = reverse('employer-campaign-report-pdf', kwargs={'public_id': self.campaign.public_id})
         with patch(
             'apps.campaigns.services.report_export.render_html_pdf', return_value=b'%PDF-1.7 test'
         ) as render:
-            response = self.client.get(
-                reverse(
-                    'employer-campaign-report-export', kwargs={'public_id': self.campaign.public_id}
-                ),
-                {'type': 'pdf'},
-            )
+            with self.captureOnCommitCallbacks() as callbacks:
+                queued = self.client.post(url)
+            token = queued.data['token']
+            self.assertEqual(queued.status_code, 202)
+            self.assertEqual(self.pdf_result(token).data, {'status': 'pending'})
+            render.assert_not_called()  # Chromium never runs in the web request.
+            for callback in callbacks:
+                callback()
 
+        self.assertEqual(self.pdf_result(token).data, {'status': 'ready'})
+        response = self.pdf_result(token, download=1)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertEqual(response.content, b'%PDF-1.7 test')
+        self.assertEqual(
+            self.client.get(
+                reverse(
+                    'employer-campaign-report-export',
+                    kwargs={'public_id': self.campaign.public_id},
+                ),
+                {'type': 'pdf'},
+            ).status_code,
+            400,
+        )
+        self.assertEqual(self.pdf_result('0' * 32).status_code, 400)
         html = render.call_args.args[0]
         self.assertIn('Báo cáo chiến dịch: Tuyển kỹ thuật', html)
         self.assertNotIn(
@@ -293,3 +319,27 @@ class CampaignReportServiceTests(HealthFixtures, TestCase):
         self.assertEqual(
             content_type, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
+
+
+class CampaignReportPdfTaskTests(HealthFixtures, TestCase):
+    def test_render_failure_reports_a_failed_status(self):
+        from ..services import campaign_report_pdf_job, request_campaign_report_pdf
+        from ..tasks import render_campaign_report_pdf
+
+        with self.captureOnCommitCallbacks():
+            token = request_campaign_report_pdf(self.campaign)
+        with patch(
+            'apps.campaigns.services.report_export.render_html_pdf',
+            side_effect=PdfRenderingError('chromium down'),
+        ):
+            render_campaign_report_pdf(token, self.campaign.pk, 'vi')
+
+        self.assertEqual(
+            campaign_report_pdf_job(self.campaign, token),
+            {
+                'status': 'failed',
+                'campaign_id': self.campaign.pk,
+            },
+        )
+        other = type(self.campaign)(pk=self.campaign.pk + 1)
+        self.assertIsNone(campaign_report_pdf_job(other, token))

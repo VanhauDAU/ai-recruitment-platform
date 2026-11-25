@@ -17,12 +17,14 @@ import ApplicationActivityCard from './ApplicationActivityCard'
 import DashboardHeader from './DashboardHeader'
 import DashboardSidebar from './DashboardSidebar'
 import DashboardSummaryCards from './DashboardSummaryCards'
+import FlashBadgeProgressCard from './FlashBadgeProgressCard'
 import {
   DashboardComplianceNotice,
   DashboardVerificationJourney,
 } from './DashboardWelcomeSections'
 import { RecentApplicationsCard, RecentJobsCard } from './RecentRecruitmentCards'
-import RecruitmentPipelineCard from './RecruitmentPipelineCard'
+import RecruitmentFunnelCard from './RecruitmentFunnelCard'
+import './employer-dashboard.css'
 
 export default function EmployerDashboardOverview() {
   const { user } = useSession()
@@ -86,9 +88,9 @@ export default function EmployerDashboardOverview() {
 
       <DashboardSummaryCards summary={summary} />
 
-      <div className="grid items-stretch gap-5 xl:grid-cols-[minmax(0,1.7fr)_minmax(300px,.7fr)]">
+      <div className="grid items-stretch gap-5 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
         <ApplicationActivityCard activity={data.application_activity || []} />
-        <RecruitmentPipelineCard summary={summary} />
+        <RecruitmentFunnelCard funnel={data.funnel} />
       </div>
 
       <DashboardVerificationJourney
@@ -113,13 +115,16 @@ export default function EmployerDashboardOverview() {
             />
           )}
         </div>
-        <DashboardSidebar
-          account={account}
-          recruitmentNeed={data.recruitment_need}
-          summary={summary}
-          candidateActionTarget={candidateActionTarget}
-          jobWorkspaceReady={jobWorkspaceReady}
-        />
+        <div className="space-y-5">
+          <FlashBadgeProgressCard badge={data.flash_badge} />
+          <DashboardSidebar
+            account={account}
+            recruitmentNeed={data.recruitment_need}
+            summary={summary}
+            candidateActionTarget={candidateActionTarget}
+            jobWorkspaceReady={jobWorkspaceReady}
+          />
+        </div>
       </div>
     </div>
   )

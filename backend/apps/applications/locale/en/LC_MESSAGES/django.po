@@ -159,6 +159,45 @@ msgstr "You cannot apply for this job posting right now."
 msgid "Ứng viên này đã ở trong danh sách chặn của công ty."
 msgstr "This candidate is already on the company block list."
 
+msgid "Tính năng Tìm CV đang tắt."
+msgstr "CV search is turned off."
+
+msgid "Tin này chưa được phân tích xong. Thử lại sau ít phút hoặc chọn tin khác."
+msgstr "This job posting has not been analysed yet. Try again in a few minutes or choose another one."
+
+msgid "Ứng viên này đã ứng tuyển tin này."
+msgstr "This candidate has already applied for this job posting."
+
+msgid "Bạn đã mời ứng viên này ứng tuyển tin này."
+msgstr "You have already invited this candidate to apply for this job posting."
+
+msgid "Không tìm thấy lời mời."
+msgstr "Invitation not found."
+
+msgid "Bạn đã phản hồi lời mời này."
+msgstr "You have already responded to this invitation."
+
+msgid "Ứng viên %(code)s đã đồng ý kết nối về vị trí %(job)s."
+msgstr "Candidate %(code)s accepted your connection request for %(job)s."
+
+msgid "Ứng viên %(code)s đã từ chối lời mời kết nối về vị trí %(job)s."
+msgstr "Candidate %(code)s declined your connection request for %(job)s."
+
+msgid "Bạn chưa đưa ra quyết định nào cho hồ sơ trong %(days)s ngày gần nhất."
+msgstr "You have not decided on any application in the last %(days)s days."
+
+msgid "Bạn phản hồi %(rate)s%% hồ sơ trong %(hours)s giờ. Tin đăng của bạn được gắn Huy hiệu Sấm Chớp và ưu tiên hiển thị với ứng viên."
+msgstr "You answered %(rate)s%% of applications within %(hours)s hours. Your jobs now carry the Flash badge and rank higher for candidates."
+
+msgid "Chưa đủ %(count)s hồ sơ đến hạn phản hồi trong %(days)s ngày gần nhất."
+msgstr "Fewer than %(count)s applications came due in the last %(days)s days."
+
+msgid "Tỷ lệ hồ sơ được phản hồi trong %(hours)s giờ còn %(rate)s%%, dưới mức %(target)s%%."
+msgstr "Only %(rate)s%% of applications were answered within %(hours)s hours, below the %(target)s%% required."
+
+msgid "%(count)s hồ sơ sẽ quá hạn %(hours)s giờ trong 24 giờ tới. Hãy phản hồi để giữ Huy hiệu Sấm Chớp."
+msgstr "%(count)s applications pass the %(hours)s-hour deadline in the next 24 hours. Answer them to keep the Flash badge."
+
 msgid "Chiến dịch của hồ sơ vừa thay đổi. Vui lòng tải lại."
 msgstr "The recruitment campaign of this application has just changed. Please reload."
 
@@ -209,9 +248,6 @@ msgstr "Cannot move the application from \"%(from)s\" to \"%(to)s\"."
 
 msgid "Ứng viên đã có trong kho của bạn."
 msgstr "This candidate is already in your talent pool."
-
-msgid "Bạn đã mời ứng viên này ứng tuyển tin này."
-msgstr "You have already invited this candidate to apply for this job posting."
 
 msgid "Bạn có hồ sơ ứng tuyển mới"
 msgstr "You have a new application"

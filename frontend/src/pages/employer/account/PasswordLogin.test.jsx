@@ -5,7 +5,6 @@ import EmployerPasswordLogin from './PasswordLogin'
 
 vi.mock('@/features/common/account/auth', () => ({
   getReturnUrl: (params) => params.get('returnUrl') || '',
-  startOAuthReauth: vi.fn(),
 }))
 
 vi.mock('@/features/common/account/change-password', () => ({
@@ -16,6 +15,10 @@ vi.mock('@/features/common/account/change-password', () => ({
 
 vi.mock('@/features/common/account/session-management', () => ({
   SessionManager: () => <span>Quản lý phiên</span>,
+}))
+
+vi.mock('@/features/common/privacy/data-requests', () => ({
+  DataRequestsPanel: () => <span>Quyền dữ liệu cá nhân</span>,
 }))
 
 vi.mock('@/widgets/employer/account-settings', () => ({

@@ -857,7 +857,7 @@
       }
     }
   ],
-  "employer_campaign_list_action_open": "Open",
+  "employer_campaign_list_action_open": "View details",
   "employer_campaign_list_activity_fallback": "Campaign update",
   "employer_campaign_list_empty_filtered": "No campaigns match your filters",
   "employer_campaign_list_empty": "No campaigns yet",
@@ -1056,9 +1056,6 @@
   "employer_campaign_board_empty": "Add a Fanpage, Facebook group, LinkedIn, Zalo or flyers with a QR code. ProCV drafts content for each channel.",
   "employer_campaign_board_add_first": "Add your first channel",
   "employer_campaign_board_list_aria": "Channel list",
-  "employer_campaign_board_item_stats": "{clicks} clickers, {applications} applications",
-  "employer_campaign_board_posted": "Posted",
-  "employer_campaign_board_not_posted": "Not posted",
   "employer_campaign_link_note": "Use these links when posting to {label}. Candidates who arrive through any of them are credited to the channel, even if they apply a few days later.",
   "employer_campaign_link_copy": "Copy",
   "employer_campaign_link_download_qr": "Download QR code",

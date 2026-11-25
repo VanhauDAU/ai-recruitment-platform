@@ -8,6 +8,7 @@ import {
   updateRecruiterVisibility,
 } from '@/entities/job/candidate-preferences'
 import { cvApiErrorMessage, getMyCvs, setCvRecruiterSearchable } from '@/entities/cv/cv'
+import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
 
 const CV_TYPE_LABELS = { builder: 'CV online', uploaded: 'CV tải lên' }
@@ -19,7 +20,7 @@ function formatUpdatedAt(value) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
 }
 
-/** Chọn những CV cho NTD tìm thấy, cùng sự đồng ý ở mức hồ sơ, trong một lần lưu. */
+/** Chọn một CV cho NTD tìm thấy, cùng sự đồng ý ở mức hồ sơ, trong một lần lưu. */
 export default function RecruiterSearchListModal({ open, onClose }) {
   const queryClient = useQueryClient()
   const cvsQuery = useQuery({ queryKey: ['my-cvs', 'recruiter-searchable'], queryFn: getMyCvs, enabled: open })
@@ -52,8 +53,14 @@ export default function RecruiterSearchListModal({ open, onClose }) {
         })
         queryClient.setQueryData(RECRUITER_VISIBILITY_QUERY_KEY, saved)
       }
-      const changed = cvs.filter((cv) => Boolean(cv.recruiter_searchable) !== selected[cv.public_id])
-      await Promise.all(changed.map((cv) => setCvRecruiterSearchable(cv.public_id, selected[cv.public_id])))
+      // Chỉ một CV được bật: bật CV mới thì máy chủ tự tắt CV cũ; không chọn CV nào thì
+      // tắt CV đang bật.
+      const chosen = cvs.find((cv) => selected[cv.public_id])
+      if (chosen && !chosen.recruiter_searchable) await setCvRecruiterSearchable(chosen.public_id, true)
+      if (!chosen) {
+        const turnedOff = cvs.filter((cv) => cv.recruiter_searchable)
+        await Promise.all(turnedOff.map((cv) => setCvRecruiterSearchable(cv.public_id, false)))
+      }
       await queryClient.invalidateQueries({ queryKey: ['my-cvs'] })
       message.success('Đã cập nhật danh sách CV cho phép NTD tìm kiếm.')
       onClose()
@@ -67,7 +74,7 @@ export default function RecruiterSearchListModal({ open, onClose }) {
   return (
     <Modal
       open={open}
-      title="Chọn CV bật cho phép NTD tìm kiếm"
+      title={m.candidate_recruiter_search_modal_title()}
       onCancel={onClose}
       width={620}
       footer={(
@@ -82,7 +89,7 @@ export default function RecruiterSearchListModal({ open, onClose }) {
               loading={saving}
               disabled={loading || (anySelected && !consented)}
               onClick={save}
-              className="!bg-[#00b14f] disabled:!bg-slate-200"
+              className="!bg-[var(--brand-primary)] disabled:!bg-slate-200"
             >
               Lưu
             </Button>
@@ -101,15 +108,15 @@ export default function RecruiterSearchListModal({ open, onClose }) {
               <Switch
                 aria-label={`Cho phép NTD tìm kiếm ${cv.title}`}
                 checked={Boolean(selected[cv.public_id])}
-                onChange={(checked) => setSelected((current) => ({ ...current, [cv.public_id]: checked }))}
-                className={selected[cv.public_id] ? '!bg-[#00b14f]' : ''}
+                onChange={(checked) => setSelected(checked ? { [cv.public_id]: true } : {})}
+                className={selected[cv.public_id] ? '!bg-[var(--brand-primary)]' : ''}
               />
               <div className="min-w-0">
                 <Link
                   to={`/cvs/${cv.public_id}/view`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block truncate text-sm font-bold !text-slate-800 hover:!text-[#00b14f]"
+                  className="block truncate text-sm font-bold !text-slate-800 hover:!text-[var(--brand-primary)]"
                 >
                   {cv.title}
                 </Link>
@@ -122,7 +129,7 @@ export default function RecruiterSearchListModal({ open, onClose }) {
         </ul>
       )}
       <p className="mt-5 text-xs italic leading-5 text-slate-500">
-        * Khi tắt cho phép tìm kiếm, NTD sẽ không thể tìm thấy và chủ động kết nối với bạn qua CV đó.
+        {m.candidate_recruiter_search_one_only()}
         {anySelected && !consented && ' Hãy tick đồng ý bên dưới để lưu các CV đang bật.'}
       </p>
     </Modal>

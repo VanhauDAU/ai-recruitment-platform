@@ -1,31 +1,65 @@
-import { useQuery } from '@tanstack/react-query'
-import { EyeOutlined } from '@ant-design/icons'
-import { Alert, Button, Input, Select, Space, Table, Tag, Tooltip } from 'antd'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import {
+  AlertOutlined,
+  CheckCircleOutlined,
+  EditOutlined,
+  FileTextOutlined,
+  PauseCircleOutlined,
+  SearchOutlined,
+  SyncOutlined,
+} from '@ant-design/icons'
+import { Alert, Button, Empty, Input, Select, Skeleton } from 'antd'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import {
   adminJobKeys,
-  adminJobStatusMeta,
-  formatAdminJobDate,
-  formatAdminJobDateTime,
   getAdminJobs,
   getAdminJobSummary,
   JOB_SCOPE_OPTIONS,
 } from '@/entities/job/admin-job'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
+import { getIntlLocale, m } from '@/shared/config/i18n'
 import { adminPath } from '@/shared/config/portals'
-import { AdminDataActions, AdminPanel } from '@/shared/ui/admin'
-import AdminJobPublicLink from './AdminJobPublicLink'
+import { AdminDataActions } from '@/shared/ui/admin'
+import WorkspaceListFooter from '@/shared/ui/workspace-list/WorkspaceListFooter'
+import WorkspaceSortHeader from '@/shared/ui/workspace-list/WorkspaceSortHeader'
+import WorkspaceQuickFilters from '@/shared/ui/workspace-list/WorkspaceQuickFilters'
+import WorkspaceStatusTiles from '@/shared/ui/workspace-list/WorkspaceStatusTiles'
+import AdminJobListRow from './AdminJobListRow'
+import '@/shared/ui/workspace-list/workspace-list.css'
+import '@/shared/ui/workspace-list/workspace-table.css'
+import '../admin-job-list.css'
 
+const PAGE_SIZE = 20
 const EMPTY_PAGE = { count: 0, results: [] }
 const DEFAULT_SCOPE = 'all'
 const DEFAULT_ORDERING = '-created_at'
+const formatCount = (value) => (value ?? 0).toLocaleString(getIntlLocale())
 
-function sorterOrder(ordering, field) {
-  if (ordering === field) return 'ascend'
-  if (ordering === `-${field}`) return 'descend'
-  return null
-}
+// Tiles: the scopes an admin checks first; `summaryKey` reads GET .../summary.
+const SCOPE_TILES = [
+  { value: 'all', label: m.admin_job_list_tile_all(), summaryKey: 'total', icon: <FileTextOutlined /> },
+  { value: 'active', label: m.admin_job_list_tile_active(), summaryKey: 'active', icon: <CheckCircleOutlined /> },
+  { value: 'reported', label: m.admin_job_list_tile_reported(), summaryKey: 'pending_reports', icon: <AlertOutlined /> },
+  { value: 'held', label: m.admin_job_list_tile_held(), summaryKey: 'held', icon: <PauseCircleOutlined /> },
+  { value: 'resubmitted', label: m.admin_job_list_tile_resubmitted(), summaryKey: 'resubmitted', icon: <SyncOutlined /> },
+  { value: 'draft', label: m.admin_job_list_tile_draft(), summaryKey: 'draft', icon: <EditOutlined /> },
+]
+
+// Chips: the remaining scopes that need a look, toggled on and off.
+const SCOPE_CHIPS = [
+  { value: 'expired', label: m.admin_job_list_chip_expired(), tone: 'orange' },
+  { value: 'hidden', label: m.admin_job_list_chip_hidden(), tone: 'red' },
+  { value: 'closed', label: m.admin_job_list_chip_closed(), tone: 'slate' },
+]
+
+const ORDERING_OPTIONS = [
+  { value: '-created_at', label: m.admin_job_list_order_newest() },
+  { value: 'created_at', label: m.admin_job_list_order_oldest() },
+  { value: '-submitted_at', label: m.admin_job_list_order_submitted() },
+  { value: 'company', label: m.admin_job_list_order_company() },
+  { value: 'employer', label: m.admin_job_list_order_employer() },
+]
 
 function scopeToParams(scope) {
   if (scope === 'all') return {}
@@ -53,6 +87,8 @@ export default function AdminJobList() {
   const jobsQuery = useQuery({
     queryKey: adminJobKeys.list(params),
     queryFn: ({ signal }) => getAdminJobs(params, { signal }),
+    // Keep the rows on screen while the next page, scope or order loads.
+    placeholderData: keepPreviousData,
   })
   const summaryQuery = useQuery({
     queryKey: adminJobKeys.summary,
@@ -96,271 +132,152 @@ export default function AdminJobList() {
         origin: {
           pathname: location.pathname,
           search: location.search,
-          label: 'Quản lý tin tuyển dụng',
+          label: m.admin_job_list_origin_label(),
         },
       },
     })
   }
 
-  const columns = [
-    {
-      title: 'Tin tuyển dụng',
-      dataIndex: 'title',
-      key: 'title',
-      sorter: true,
-      sortOrder: sorterOrder(ordering, 'title'),
-      width: 280,
-      render: (title, job) => (
-        <div className="flex min-w-0 items-start gap-1">
-          <button className="min-w-0 text-left" onClick={() => openJob(job)} type="button">
-            <span className="font-semibold text-slate-900 hover:text-[var(--brand-primary)]">
-              {title}
-            </span>
-            <span className="mt-1 block font-mono text-xs text-slate-500">{job.public_id}</span>
-          </button>
-          <AdminJobPublicLink iconOnly job={job} />
-        </div>
-      ),
-    },
-    {
-      title: 'Công ty',
-      dataIndex: 'company_name',
-      key: 'company',
-      sorter: true,
-      sortOrder: sorterOrder(ordering, 'company'),
-      width: 220,
-      render: (value, job) => (
-        <div>
-          <span className="font-medium text-slate-800">{value}</span>
-          <span className="mt-1 block font-mono text-xs text-slate-500">{job.company_public_id}</span>
-        </div>
-      ),
-    },
-    {
-      title: 'Nhà tuyển dụng',
-      dataIndex: 'employer_name',
-      key: 'employer',
-      sorter: true,
-      sortOrder: sorterOrder(ordering, 'employer'),
-      width: 230,
-      render: (value, job) => (
-        <div className="min-w-0">
-          <span className="block truncate font-medium">{value}</span>
-          <span className="block truncate text-xs text-slate-500">{job.employer_email}</span>
-        </div>
-      ),
-    },
-    {
-      title: 'Trạng thái',
-      dataIndex: 'status',
-      key: 'status',
-      sorter: true,
-      sortOrder: sorterOrder(ordering, 'status'),
-      width: 150,
-      render: (_, job) => {
-        const meta = adminJobStatusMeta(job)
-        return (
-          <Space orientation="vertical" size={3}>
-            <Tag color={meta.color}>{job.status_label || meta.label}</Tag>
-            {job.is_expired && <Tag color="orange">Quá hạn</Tag>}
-            {(job.policy_hold || job.moderation_hold) && <Tag color="red">Tạm giữ</Tag>}
-          </Space>
-        )
-      },
-    },
-    {
-      title: 'Tín hiệu',
-      dataIndex: 'pending_report_count',
-      key: 'pending_reports',
-      sorter: true,
-      sortOrder: sorterOrder(ordering, 'pending_reports'),
-      width: 155,
-      render: (value, job) => (
-        <Space orientation="vertical" size={2}>
-          <span className={value ? 'font-semibold text-red-600' : 'text-slate-600'}>
-            {value || 0} báo cáo chờ
-          </span>
-          <span className="text-xs text-slate-500">{job.published_job_count || 0} tin đã đăng</span>
-        </Space>
-      ),
-    },
-    {
-      title: 'Hạn nhận hồ sơ',
-      dataIndex: 'deadline',
-      key: 'deadline',
-      sorter: true,
-      sortOrder: sorterOrder(ordering, 'deadline'),
-      width: 130,
-      render: formatAdminJobDate,
-    },
-    {
-      title: 'Tạo lúc',
-      dataIndex: 'created_at',
-      key: 'created_at',
-      sorter: true,
-      sortOrder: sorterOrder(ordering, 'created_at'),
-      width: 175,
-      render: formatAdminJobDateTime,
-    },
-    {
-      title: 'Đăng lần đầu lúc',
-      dataIndex: 'submitted_at',
-      key: 'submitted_at',
-      sorter: true,
-      sortOrder: sorterOrder(ordering, 'submitted_at'),
-      width: 175,
-      render: formatAdminJobDateTime,
-    },
-    {
-      title: 'Ứng tuyển',
-      dataIndex: 'application_count',
-      key: 'application_count',
-      sorter: true,
-      sortOrder: sorterOrder(ordering, 'application_count'),
-      width: 110,
-      align: 'right',
-    },
-    {
-      title: 'Thao tác',
-      key: 'actions',
-      fixed: 'right',
-      width: 100,
-      render: (_, job) => (
-        <Button
-          aria-label="Xem chi tiết"
-          icon={<EyeOutlined />}
-          size="small"
-          type="link"
-          onClick={() => openJob(job)}
-        >
-          Xem chi tiết
-        </Button>
-      ),
-    },
-  ]
-
-  const scopeStats = [
-    { key: 'all', label: 'Tất cả tin', value: summary.total, detail: 'Toàn bộ vòng đời' },
-    { key: 'active', label: 'Đang tuyển', value: summary.active, detail: `${summary.expired || 0} quá hạn · ${summary.hidden || 0} bị ẩn` },
-    { key: 'reported', label: 'Báo cáo chờ', value: summary.pending_reports, detail: 'Tin cần hậu kiểm' },
-    { key: 'held', label: 'Đang tạm giữ', value: summary.held, detail: `${summary.resubmitted || 0} chờ duyệt lại` },
-    { key: 'draft', label: 'Bản nháp', value: summary.draft, detail: 'Chưa đăng' },
-  ]
+  const sortBy = (value) => patchParams({ job_ordering: value === DEFAULT_ORDERING ? null : value })
+  const results = jobs.results || []
+  const firstRow = (page - 1) * PAGE_SIZE + 1
+  const lastRow = Math.min(page * PAGE_SIZE, jobs.count || 0)
+  const summaryCount = (key) => (summaryQuery.data ? summary[key] ?? 0 : undefined)
 
   return (
-    <div className="space-y-4">
-      <section
-        aria-label="Tổng quan tin tuyển dụng"
-        className="flex overflow-x-auto rounded-lg border border-slate-200 bg-white"
-      >
-        {scopeStats.map((item) => (
-          <button
-            aria-pressed={scope === item.key}
-            className={`flex min-w-[9.5rem] flex-1 flex-col gap-0.5 border-r border-slate-100 px-4 py-2.5 text-left last:border-r-0 ${
-              scope === item.key
-                ? 'bg-slate-100 shadow-[inset_0_-2px_0_#334155]'
-                : 'hover:bg-slate-50'
-            }`}
-            key={item.key}
-            onClick={() => chooseScope(item.key)}
-            type="button"
-          >
-            <span className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
-              {item.label}
-            </span>
-            <span className="text-lg font-bold leading-tight text-slate-900">
-              {item.value ?? 0}
-            </span>
-            <span className="truncate text-[11px] text-slate-400">{item.detail}</span>
-          </button>
-        ))}
-      </section>
+    <div className="wt-page">
+      <WorkspaceStatusTiles
+        ariaLabel={m.admin_job_list_tiles_aria()}
+        value={scope}
+        onChange={chooseScope}
+        items={SCOPE_TILES.map((tile) => ({
+          key: tile.value,
+          value: tile.value,
+          label: tile.label,
+          icon: tile.icon,
+          count: summaryCount(tile.summaryKey) === undefined ? undefined : formatCount(summaryCount(tile.summaryKey)),
+        }))}
+      />
 
-      <AdminPanel
-        title="Danh sách tin tuyển dụng"
-        description="Tin công khai ngay khi nhà tuyển dụng đăng. Mở chi tiết để xem nội dung, báo cáo và lịch sử trước khi tạm ẩn."
-        extra={(
-          <Space wrap>
-            <Input.Search
-              allowClear
-              aria-label="Tìm tin tuyển dụng"
-              onChange={(event) => setSearchInput(event.target.value)}
-              placeholder="Tên tin, công ty, email, mã tin"
-              value={searchInput}
-              className="w-full sm:w-72"
-            />
+      <div className="wt-table wt-table--compact ajl-table">
+        <div className="wt-toolbar">
+          <WorkspaceQuickFilters
+            label={m.admin_job_list_quick_label()}
+            ariaLabel={m.admin_job_list_quick_aria()}
+            items={SCOPE_CHIPS.map((chip) => ({ ...chip, count: summaryCount(chip.value) }))}
+            value={scope}
+            onChange={(value) => chooseScope(value || DEFAULT_SCOPE)}
+            clearLabel={m.admin_job_list_clear_filters()}
+            onClear={scope !== DEFAULT_SCOPE || query ? () => {
+              setSearchInput('')
+              patchParams({ job_scope: null, job_q: null })
+            } : undefined}
+          />
+          <div className="wt-filters">
             <Select
-              aria-label="Phạm vi tin tuyển dụng"
-              className="w-full sm:w-44"
+              aria-label={m.admin_job_list_scope_aria()}
               onChange={chooseScope}
               options={JOB_SCOPE_OPTIONS}
               value={scope}
             />
-            <AdminDataActions
-              compact
-              columns={[
-                { key: 'public_id', label: 'Mã tin' },
-                { key: 'title', label: 'Tin tuyển dụng' },
-                { key: 'company_name', label: 'Công ty' },
-                { label: 'Trạng thái', value: (row) => row.status_label || row.status },
-                { key: 'deadline', label: 'Hạn nộp' },
-                { key: 'created_at', label: 'Tạo lúc' },
-                { key: 'submitted_at', label: 'Đăng lần đầu lúc' },
-                { key: 'application_count', label: 'Số lượt ứng tuyển' },
-                { key: 'pending_report_count', label: 'Báo cáo đang chờ' },
-              ]}
-              exportLabel="CSV trang này"
-              exportScopeLabel={`Xuất ${jobs.results.length} tin của trang ${page}`}
-              filename={`tin-tuyen-dung-trang-${page}`}
-              onRefresh={() => Promise.all([jobsQuery.refetch(), summaryQuery.refetch()])}
-              refreshing={jobsQuery.isFetching || summaryQuery.isFetching}
-              rows={jobs.results}
+            <Select
+              aria-label={m.admin_job_list_sort_aria()}
+              onChange={sortBy}
+              options={ORDERING_OPTIONS}
+              value={ORDERING_OPTIONS.some((option) => option.value === ordering) ? ordering : undefined}
+              placeholder={m.admin_job_list_sort_by_column()}
             />
-          </Space>
-        )}
-      >
-        {jobsQuery.isError && (
-          <Alert
-            action={<Button onClick={() => jobsQuery.refetch()}>Thử lại</Button>}
-            className="mb-4"
-            description={getApiErrorMessage(jobsQuery.error)}
-            showIcon
-            title="Không thể tải danh sách tin tuyển dụng"
-            type="error"
-          />
-        )}
-        <div className="overflow-x-auto">
-          <Table
-            columns={columns}
-            dataSource={jobs.results || []}
-            loading={jobsQuery.isLoading}
-            locale={{ emptyText: 'Không có tin phù hợp.' }}
-            onChange={(pagination, _, sorter) => {
-              const field = sorter.columnKey || sorter.field
-              const nextOrdering = sorter.order
-                ? `${sorter.order === 'descend' ? '-' : ''}${field}`
-                : DEFAULT_ORDERING
-              patchParams({
-                job_page: pagination.current,
-                job_ordering: nextOrdering === DEFAULT_ORDERING ? null : nextOrdering,
-              }, { resetPage: false })
-            }}
-            pagination={{
-              current: page,
-              pageSize: 20,
-              showSizeChanger: false,
-              total: jobs.count || 0,
-            }}
-            rowKey="public_id"
-            scroll={{ x: 1755 }}
-          />
+            <Input
+              allowClear
+              type="search"
+              className="wt-filters__search"
+              aria-label={m.admin_job_list_search_aria()}
+              prefix={<SearchOutlined className="text-slate-400" aria-hidden />}
+              onChange={(event) => setSearchInput(event.target.value)}
+              placeholder={m.admin_job_list_search_placeholder()}
+              value={searchInput}
+            />
+            <div className="wt-filters__extra">
+              <AdminDataActions
+                iconOnly
+                columns={[
+                  { key: 'code', label: m.admin_job_list_csv_code() },
+                  { key: 'title', label: m.admin_job_list_col_job() },
+                  { key: 'company_name', label: m.admin_job_list_csv_company() },
+                  { label: m.admin_job_list_col_status(), value: (row) => row.status_label || row.status },
+                  { key: 'deadline', label: m.admin_job_list_csv_deadline() },
+                  { key: 'created_at', label: m.admin_job_list_csv_created() },
+                  { key: 'submitted_at', label: m.admin_job_list_csv_submitted() },
+                  { key: 'application_count', label: m.admin_job_list_csv_applications() },
+                  { key: 'pending_report_count', label: m.admin_job_list_csv_reports() },
+                ]}
+                exportLabel={m.admin_job_list_export_label()}
+                exportScopeLabel={m.admin_job_list_export_scope({ count: results.length, page })}
+                filename={`tin-tuyen-dung-trang-${page}`}
+                onRefresh={() => Promise.all([jobsQuery.refetch(), summaryQuery.refetch()])}
+                refreshing={jobsQuery.isFetching || summaryQuery.isFetching}
+                rows={results}
+              />
+            </div>
+          </div>
         </div>
-        {summaryQuery.isError && (
-          <Tooltip title="Số liệu tổng quan chưa tải được; danh sách vẫn có thể sử dụng.">
-            <span className="mt-3 inline-block text-xs text-amber-700">Không thể tải số liệu tổng quan.</span>
-          </Tooltip>
+
+        <div className="wt-head">
+          <span><WorkspaceSortHeader defaultOrdering={DEFAULT_ORDERING} field="title" ordering={ordering} onSort={sortBy}>{m.admin_job_list_col_job()}</WorkspaceSortHeader></span>
+          <span><WorkspaceSortHeader defaultOrdering={DEFAULT_ORDERING} field="status" ordering={ordering} onSort={sortBy}>{m.admin_job_list_col_status()}</WorkspaceSortHeader></span>
+          <span><WorkspaceSortHeader defaultOrdering={DEFAULT_ORDERING} field="pending_reports" ordering={ordering} onSort={sortBy}>{m.admin_job_list_col_signals()}</WorkspaceSortHeader></span>
+          <span><WorkspaceSortHeader defaultOrdering={DEFAULT_ORDERING} field="application_count" ordering={ordering} onSort={sortBy}>{m.admin_job_list_col_applications()}</WorkspaceSortHeader></span>
+          <span><WorkspaceSortHeader defaultOrdering={DEFAULT_ORDERING} field="deadline" ordering={ordering} onSort={sortBy}>{m.admin_job_list_col_deadline()}</WorkspaceSortHeader></span>
+          <span>{m.admin_job_list_col_actions()}</span>
+        </div>
+
+        {jobsQuery.isError && (
+          <div className="p-3">
+            <Alert
+              action={<Button onClick={() => jobsQuery.refetch()}>{m.admin_job_list_retry()}</Button>}
+              description={getApiErrorMessage(jobsQuery.error)}
+              showIcon
+              title={m.admin_job_list_load_error()}
+              type="error"
+            />
+          </div>
         )}
-      </AdminPanel>
+
+        {jobsQuery.isLoading ? (
+          <div aria-label={m.admin_job_list_loading_aria()}>
+            {[1, 2, 3, 4].map((item) => (
+              <div key={item} className="wt-row">
+                <Skeleton active title={{ width: '50%' }} paragraph={{ rows: 2 }} className="ajl-skeleton" />
+              </div>
+            ))}
+          </div>
+        ) : results.length === 0 && !jobsQuery.isError ? (
+          <div className="wt-empty">
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={m.admin_job_list_empty()} />
+          </div>
+        ) : (
+          <div
+            aria-busy={jobsQuery.isFetching}
+            className={`transition-opacity ${jobsQuery.isPlaceholderData ? 'opacity-60' : ''}`}
+          >
+            {results.map((job) => <AdminJobListRow key={job.public_id} job={job} onOpen={openJob} />)}
+          </div>
+        )}
+      </div>
+
+      {summaryQuery.isError && (
+        <span className="text-xs text-amber-700">{m.admin_job_list_summary_error()}</span>
+      )}
+
+      {jobs.count > 0 && (
+        <WorkspaceListFooter
+          summary={m.admin_job_list_range({ first: firstRow, last: lastRow, total: formatCount(jobs.count) })}
+          page={page}
+          pageSize={PAGE_SIZE}
+          total={jobs.count}
+          onChange={(nextPage) => patchParams({ job_page: nextPage }, { resetPage: false })}
+        />
+      )}
     </div>
   )
 }

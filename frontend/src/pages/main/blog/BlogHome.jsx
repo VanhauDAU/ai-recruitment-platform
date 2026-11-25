@@ -5,7 +5,6 @@ import { Link, useSearchParams } from 'react-router'
 import { getBanners } from '@/entities/content/banner'
 import { settingText, useSiteSettings } from '@/entities/system/site-settings'
 import { BLOG_ROOT, getBlogCategories, getBlogHome, getBlogPosts } from '@/entities/content/blog'
-import { legacyAsset } from '@/shared/config/assets'
 import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
 import BlogCard from './ui/BlogCard'
 import { BlogCategoryNav } from './ui/BlogCategoryBar'
@@ -110,7 +109,7 @@ export default function BlogHome() {
       {/* ── Hero banner ── */}
       <div
         style={{
-          backgroundImage: `url("${legacyAsset('blog/banner-blog-procv.png')}"), linear-gradient(180deg, #065f2e 1.52%, #0e964b)`,
+          backgroundImage: `url("${'/images/blog/banner-blog.webp'}"), linear-gradient(180deg, #065f2e 1.52%, #0e964b)`,
           backgroundPosition: 'center top, center',
           backgroundRepeat: 'no-repeat, no-repeat',
           backgroundSize: 'cover, cover',

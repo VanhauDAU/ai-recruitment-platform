@@ -24,7 +24,7 @@ function CompanyCardSkeleton() {
           <div className="h-full w-full motion-safe:animate-pulse rounded-lg bg-slate-100" />
         </div>
         <div className="h-5 w-4/5 motion-safe:animate-pulse rounded bg-slate-100" />
-        <div className="mt-3 h-6 w-28 motion-safe:animate-pulse rounded-full bg-emerald-50" />
+        <div className="mt-3 h-6 w-28 motion-safe:animate-pulse rounded-full bg-[var(--brand-primary-soft)]" />
         <div className="mt-4 space-y-2">
           <div className="h-3 w-full motion-safe:animate-pulse rounded bg-slate-100" />
           <div className="h-3 w-full motion-safe:animate-pulse rounded bg-slate-100" />
@@ -41,7 +41,7 @@ function SearchCompanyCardSkeleton() {
       <div className="h-14 w-14 shrink-0 motion-safe:animate-pulse rounded-lg bg-slate-100 sm:h-16 sm:w-16" />
       <div className="min-w-0 flex-1">
         <div className="h-4 w-3/5 motion-safe:animate-pulse rounded bg-slate-100" />
-        <div className="mt-1 h-3 w-32 motion-safe:animate-pulse rounded bg-emerald-50" />
+        <div className="mt-1 h-3 w-32 motion-safe:animate-pulse rounded bg-[var(--brand-primary-soft)]" />
         <div className="mt-2 h-3 w-2/5 motion-safe:animate-pulse rounded bg-slate-100" />
         <div className="mt-1.5 h-2.5 w-full motion-safe:animate-pulse rounded bg-slate-100" />
         <div className="mt-1.5 h-2.5 w-4/5 motion-safe:animate-pulse rounded bg-slate-100" />
@@ -57,7 +57,7 @@ function InitialError({ isSearch, onRetry }) {
         {isSearch ? 'Không thể tải kết quả tìm kiếm' : 'Không thể tải công ty nổi bật'}
       </p>
       <p className="mt-2 text-sm text-slate-500">Kết nối đang gặp sự cố. Vui lòng thử lại.</p>
-      <button type="button" onClick={onRetry} className="mt-5 inline-flex items-center gap-2 rounded-lg border border-emerald-200 px-5 py-2.5 text-sm font-bold text-emerald-700 transition hover:border-emerald-500 hover:bg-emerald-50">
+      <button type="button" onClick={onRetry} className="mt-5 inline-flex items-center gap-2 rounded-lg border border-[var(--brand-primary)]/20 px-5 py-2.5 text-sm font-bold text-[var(--brand-primary-hover)] transition hover:border-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)]">
         <ReloadOutlined /> Thử lại
       </button>
     </div>
@@ -67,7 +67,7 @@ function InitialError({ isSearch, onRetry }) {
 function EmptyState() {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white px-6 py-14 text-center shadow-sm">
-      <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-2xl text-emerald-600" aria-hidden="true"><BankOutlined /></span>
+      <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[var(--brand-primary-soft)] text-2xl text-[var(--brand-primary)]" aria-hidden="true"><BankOutlined /></span>
       <h3 className="mt-4 text-lg font-bold text-slate-900">Chưa có công ty nổi bật</h3>
       <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
         Chưa có doanh nghiệp đáp ứng điều kiện hiển thị nổi bật.
@@ -190,7 +190,7 @@ export default function CompanyDirectory({
                           type="button"
                           onClick={() => fetchNextPage()}
                           disabled={isFetchingNextPage}
-                          className="rounded-full border border-emerald-200 bg-white px-6 py-2.5 text-sm font-bold text-emerald-700 shadow-sm transition hover:border-emerald-500 hover:bg-emerald-50 disabled:cursor-wait disabled:opacity-60"
+                          className="rounded-full border border-[var(--brand-primary)]/20 bg-white px-6 py-2.5 text-sm font-bold text-[var(--brand-primary-hover)] shadow-sm transition hover:border-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)] disabled:cursor-wait disabled:opacity-60"
                         >
                           {isFetchingNextPage ? 'Đang tải thêm công ty…' : 'Tải thêm công ty'}
                         </button>

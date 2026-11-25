@@ -129,13 +129,13 @@ export default function JobCategoryTreePicker({
           {selectedIds.map((categoryId) => {
             const label = byId.get(categoryId)?.name || m.job_category_picker_fallback({ id: categoryId })
             return (
-              <span key={categoryId} className="inline-flex min-h-7 max-w-full items-center gap-1 rounded-full bg-emerald-50 px-2.5 text-xs font-semibold text-emerald-700">
+              <span key={categoryId} className="inline-flex min-h-7 max-w-full items-center gap-1 rounded-full bg-[var(--brand-primary-soft)] px-2.5 text-xs font-semibold text-[var(--brand-primary-hover)]">
                 <span className="min-w-0 truncate">{label}</span>
                 <button
                   type="button"
                   aria-label={m.job_category_picker_remove({ label })}
                   onClick={() => onChange(selectedIds.filter((item) => item !== categoryId))}
-                  className="grid h-5 w-5 shrink-0 place-items-center rounded-full border-0 bg-transparent text-emerald-600 hover:bg-emerald-100"
+                  className="grid h-5 w-5 shrink-0 place-items-center rounded-full border-0 bg-transparent text-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)]"
                 >
                   ×
                 </button>
@@ -175,7 +175,7 @@ export default function JobCategoryTreePicker({
                     onMouseEnter={() => setActiveId(group.id)}
                     className={`flex items-center gap-2.5 pl-4 ${
                       activeGroup?.id === group.id
-                        ? 'bg-green-50 font-medium text-[var(--brand-primary)]'
+                        ? 'bg-[var(--brand-primary-soft)] font-medium text-[var(--brand-primary)]'
                         : 'hover:bg-gray-50'
                     }`}
                   >
@@ -249,7 +249,7 @@ export default function JobCategoryTreePicker({
                             className={`rounded-full px-3 py-1 text-sm transition ${
                               positionState.checked
                                 ? 'bg-[var(--brand-primary)] text-white'
-                                : 'bg-gray-100 text-gray-700 hover:bg-green-50 hover:text-[var(--brand-primary)]'
+                                : 'bg-gray-100 text-gray-700 hover:bg-[var(--brand-primary-soft)] hover:text-[var(--brand-primary)]'
                             }`}
                           >
                             {position.name}

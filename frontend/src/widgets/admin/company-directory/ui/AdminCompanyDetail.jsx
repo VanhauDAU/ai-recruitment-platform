@@ -35,6 +35,7 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath } from '@/shared/config/portals'
 import { sanitizeHtml } from '@/shared/lib/sanitize-html'
 import { message } from '@/shared/lib/toast'
+import CodeBadge from '@/shared/ui/code-badge/CodeBadge'
 import AdminCompanyJoinRequestQueue from './AdminCompanyJoinRequestQueue'
 import CompanyLogo from './CompanyLogo'
 import CompanyJobs from './CompanyJobs'
@@ -42,7 +43,7 @@ import { CompanyPanel } from './CompanyPanel'
 import CompanyPublicPage from './CompanyPublicPage'
 import RecruiterStatusTag from './RecruiterStatusTag'
 import '../admin-company-directory.css'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { getIntlLocale, m } from '@/shared/config/i18n'
 
 const EMPTY_PAGE = { count: 0, results: [] }
 const TAB_KEYS = new Set([
@@ -498,7 +499,7 @@ function RecruiterVerification({ company }) {
           )
         })}
         <Link
-          className="inline-flex pt-2 font-semibold text-emerald-700"
+          className="inline-flex pt-2 font-semibold text-[var(--brand-primary-hover)]"
           to={`${adminPath('/recruiters')}?tab=verification&company=${company.public_id}`}
         >
           Mở hàng chờ xác thực NTD
@@ -569,7 +570,7 @@ export default function AdminCompanyDetail({ publicId }) {
       children: (
         <CompanyPanel title="Yêu cầu cập nhật thông tin">
           <Link
-            className="inline-flex font-semibold text-emerald-700"
+            className="inline-flex font-semibold text-[var(--brand-primary-hover)]"
             to={`${adminPath('/companies')}?tab=updates&company=${company.public_id}`}
           >
             Xem yêu cầu cập nhật của công ty
@@ -622,9 +623,10 @@ export default function AdminCompanyDetail({ publicId }) {
       <header className="company-directory__hero">
         <CompanyLogo company={company} size={72} />
         <div className="min-w-0 flex-1">
-          <p className="admin-page-header__eyebrow">Hồ sơ công ty</p>
-          <h1 className="admin-page-header__title">{company.company_name}</h1>
+          <p className="company-directory__eyebrow">Hồ sơ công ty</p>
+          <h1 className="company-directory__title">{company.company_name}</h1>
           <div className="mt-3 flex flex-wrap items-center gap-2">
+            <CodeBadge code={company.code} label={m.ui_code_company()} size="md" />
             <Tag icon={<TeamOutlined />}>{company.recruiter_count} NTD</Tag>
           </div>
         </div>

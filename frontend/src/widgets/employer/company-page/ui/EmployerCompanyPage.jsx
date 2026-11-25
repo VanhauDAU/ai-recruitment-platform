@@ -1,6 +1,6 @@
-import { EyeOutlined } from '@ant-design/icons'
+import { EditOutlined, EyeOutlined, LayoutOutlined, TeamOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Button, Drawer, Empty, Grid, Result, Skeleton, Tabs } from 'antd'
+import { Button, Drawer, Empty, Grid, Result, Skeleton } from 'antd'
 import { Suspense, useState } from 'react'
 import { Link } from 'react-router'
 import { employerCompanyPageKeys, getEmployerCompanyPage } from '@/entities/company/employer-company-page'
@@ -9,6 +9,7 @@ import { CompanyCompletenessMeter, CompanyContentEditor } from '@/features/emplo
 import { CompanyPageEditors } from '@/features/employer/company/manage-company-page-editors'
 import { employerAppPath } from '@/shared/config/portals'
 import { m } from '@/shared/config/i18n'
+import FolderTabs from '@/shared/ui/folder-tabs/FolderTabs'
 import CompanyPageHeader from './CompanyPageHeader'
 import CompanyPagePreview from './CompanyPagePreview'
 import '../employer-company-page.css'
@@ -17,6 +18,7 @@ import '../employer-company-page.css'
 const WORKSPACE_TABS = [
   {
     key: 'layout',
+    icon: <LayoutOutlined />,
     label: m.employer_company_tab_layout(),
     visible: () => true,
     render: ({ page, controller }) => (
@@ -25,6 +27,7 @@ const WORKSPACE_TABS = [
   },
   {
     key: 'content',
+    icon: <EditOutlined />,
     label: m.employer_company_tab_content(),
     visible: (page) => Boolean(page.content_form),
     render: ({ page, focusCard }) => (
@@ -35,6 +38,7 @@ const WORKSPACE_TABS = [
   },
   {
     key: 'editors',
+    icon: <TeamOutlined />,
     label: m.employer_company_tab_editors(),
     visible: (page) => Boolean(page.permissions.can_manage_editors),
     render: () => <CompanyPageEditors />,
@@ -72,20 +76,23 @@ function CompanyPageWorkspace({ page }) {
         )}
       />
       <div className="employer-company-page__body">
-        <section className="employer-company-page__panel" aria-label={m.employer_company_workspace_label()}>
-          <Tabs
-            activeKey={activeTab}
-            onChange={setActiveTab}
-            items={WORKSPACE_TABS.filter((tab) => tab.visible(page)).map((tab) => ({
-              key: tab.key,
-              label: tab.label,
-              children: tab.render({ page, controller, focusCard }),
-            }))}
-            tabBarExtraContent={!xl && (
-              <Button size="small" icon={<EyeOutlined aria-hidden="true" />} onClick={() => setPreviewOpen(true)}>{m.employer_company_preview_title()}</Button>
-            )}
-          />
-        </section>
+        <FolderTabs
+          idPrefix="company-page"
+          className="employer-company-page__tabs"
+          panelClassName="employer-company-page__tab-panel"
+          ariaLabel={m.employer_company_workspace_label()}
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          items={WORKSPACE_TABS.filter((tab) => tab.visible(page)).map((tab) => ({
+            key: tab.key,
+            icon: tab.icon,
+            label: tab.label,
+            children: tab.render({ page, controller, focusCard }),
+          }))}
+          extra={!xl && (
+            <Button size="small" icon={<EyeOutlined aria-hidden="true" />} onClick={() => setPreviewOpen(true)}>{m.employer_company_preview_title()}</Button>
+          )}
+        />
         {xl && (
           <aside className="employer-company-page__panel employer-company-page__aside" aria-label={m.employer_company_preview_page()}>
             <CompanyPagePreview {...previewProps} />

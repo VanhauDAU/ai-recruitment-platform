@@ -1,3 +1,4 @@
+import api from '@/shared/api/client'
 import { fetchAllPages } from '@/shared/api/pagination'
 import { cachedRequest } from '@/shared/api/request-deduplication'
 
@@ -11,15 +12,27 @@ export async function getWards(provinceId) {
   return cachedRequest(`locations:ward:${provinceId}`, LOCATION_CACHE_TTL, () => fetchAllPages('/public/locations/', { level: 'ward', parent: provinceId }))
 }
 
-// Fetch wards for several provinces in one request to avoid an N+1 fan-out.
-export async function getWardsByParents(parentIds = []) {
-  const ids = [...new Set(parentIds)].filter((id) => id != null)
-  if (!ids.length) return []
-  const key = `locations:ward:${[...ids].sort((a, b) => a - b).join(',')}`
-  return cachedRequest(key, LOCATION_CACHE_TTL, () => fetchAllPages('/public/locations/', { level: 'ward', parent: ids.join(',') }))
-}
-
 export async function getLocationsByIds(ids = []) {
   if (!ids.length) return []
   return fetchAllPages('/public/locations/', { ids: ids.join(',') })
+}
+
+// Tra vị trí cho "Việc làm gần tôi" (ADR-0029): phường/xã có sẵn tâm + gợi ý của
+// nhà cung cấp bản đồ (qua backend, không lộ key). Tọa độ chỉ để xếp gợi ý gần.
+export async function searchGeoPlaces(query, focus, { signal } = {}) {
+  const params = { q: query }
+  if (focus) Object.assign(params, { lat: focus.latitude, lng: focus.longitude })
+  const { data } = await api.get('/public/locations/geo/autocomplete/', { params, signal })
+  return data
+}
+
+export async function resolveGeoPlace(ref) {
+  const { data } = await api.get('/public/locations/geo/place/', { params: { ref } })
+  return data
+}
+
+
+export async function getGeoWard(slug) {
+  const { data } = await api.get(`/public/locations/geo/wards/${encodeURIComponent(slug)}/`)
+  return data
 }

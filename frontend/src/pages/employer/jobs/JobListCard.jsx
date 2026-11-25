@@ -1,8 +1,9 @@
-import { EnvironmentOutlined, ThunderboltOutlined } from '@ant-design/icons'
+import { CalendarOutlined, ClockCircleOutlined, DollarOutlined, EnvironmentOutlined, TagOutlined, ThunderboltOutlined } from '@ant-design/icons'
 import { Avatar, Tooltip } from 'antd'
 import { Link } from 'react-router'
-import { formatJobPostedLabel, formatLocations } from '@/entities/job/job'
+import { formatJobPostedLabel, formatLocations, formatSalary } from '@/entities/job/job'
 import { employerAppPath } from '@/shared/config/portals'
+import dayjs from '@/shared/lib/dayjs'
 import JobListActions from './JobListActions'
 import JobStatusPill from './JobStatusPill'
 import {
@@ -10,18 +11,18 @@ import {
   employerJobApplicationsPath,
   formatApplyRate,
   formatCount,
-  formatJobDate,
   jobDeadlineMeta,
   jobDisplayTitle,
 } from './job-list-presentation'
+import CodeBadge from '@/shared/ui/code-badge/CodeBadge'
 import { m } from '@/shared/config/i18n'
 
 // On a narrow list a row is a card and each stat carries its own label; on a
 // wide list the table header names the columns.
-function Stat({ area, label, children }) {
+function Stat({ label, children }) {
   return (
-    <div className={`ws-stat ejl-stat--${area}`}>
-      <span className="ws-stat__label">{label}</span>
+    <div className="wt-cell">
+      <span className="wt-label">{label}</span>
       {children}
     </div>
   )
@@ -103,54 +104,61 @@ function hiddenReason(job) {
 
 export default function JobListCard({ job, candidateDataAccess = false, ...actionProps }) {
   const location = formatLocations(job)
-  const timeline = job.status === 'draft'
-    ? m.employer_job_list_created_on({ date: formatJobDate(job.created_at) })
-    : formatJobPostedLabel(job)
+  const timeline = job.status === 'draft' ? null : formatJobPostedLabel(job)
+  const createdAt = job.created_at ? dayjs(job.created_at).format('DD/MM/YYYY HH:mm') : null
   const rate = formatApplyRate(job.candidate_count ?? job.application_count, job.view_count)
   const reason = hiddenReason(job)
 
   return (
-    <article data-testid={`job-list-item-${job.public_id}`} className="ws-row ejl-row">
-      <Link
-        className={`ws-row__title${job.title ? '' : ' is-untitled'}`}
-        title={jobDisplayTitle(job)}
-        to={employerAppPath(`/jobs/${job.public_id}`)}
-      >
-        {jobDisplayTitle(job)}
-      </Link>
-      <div className="ejl-row__status">
+    <article data-testid={`job-list-item-${job.public_id}`} className="wt-row">
+      <div className="wt-cell wt-cell--main">
+        <Link
+          className={`wt-title${job.title ? '' : ' is-untitled'}`}
+          title={jobDisplayTitle(job)}
+          to={employerAppPath(`/jobs/${job.public_id}`)}
+        >
+          {jobDisplayTitle(job)}
+        </Link>
+        <div className="wt-meta">
+          <CodeBadge code={job.code} />
+          {createdAt && <span><CalendarOutlined aria-hidden />{m.employer_job_list_created_at({ date: createdAt })}</span>}
+          {timeline && <span><ClockCircleOutlined aria-hidden />{timeline}</span>}
+        </div>
+        <div className="wt-meta">
+          {job.category_name && <span><TagOutlined aria-hidden />{job.category_name}</span>}
+          {location && <span><EnvironmentOutlined aria-hidden /> {location}</span>}
+        </div>
+        <div className="wt-meta">
+          <span><DollarOutlined aria-hidden />{formatSalary(job)}</span>
+          {job.campaign_name && (
+            <Link className="ejl-row__campaign" to={employerAppPath(`/campaigns/${job.campaign}`)}>
+              <ThunderboltOutlined aria-hidden />
+              <span>{job.campaign_name}</span>
+            </Link>
+          )}
+        </div>
+      </div>
+      <div className="wt-cell wt-cell--status">
         <JobStatusPill job={job} />
         {reason && <span className="ejl-row__reason">{reason}</span>}
       </div>
-      <div className="ws-row__meta">
-        {job.campaign_name && (
-          <Link className="ejl-row__campaign" to={employerAppPath(`/campaigns/${job.campaign}`)}>
-            <ThunderboltOutlined aria-hidden />
-            <span>{job.campaign_name}</span>
-          </Link>
+      <Stat label={m.employer_job_list_col_candidates()}>
+        <Candidates job={job} candidateDataAccess={candidateDataAccess} />
+      </Stat>
+      <Stat label={m.employer_job_list_col_views()}>
+        <span><strong className="ws-strong">{formatCount(job.view_count)}</strong> <span className="ws-muted">{m.employer_job_list_views_suffix()}</span></span>
+        {rate && (
+          <Tooltip title={m.employer_job_header_apply_rate_tooltip()}>
+            <span className="ws-caption ws-muted">{m.employer_job_list_apply_rate_suffix({ rate })}</span>
+          </Tooltip>
         )}
-        {location && <span><EnvironmentOutlined aria-hidden /> {location}</span>}
-        {timeline && <span className="ws-muted">{timeline}</span>}
+      </Stat>
+      <Stat label={m.employer_job_list_col_closes()}>
+        <Deadline job={job} />
+      </Stat>
+      <div className="wt-cell wt-cell--actions">
+        <JobListActions job={job} candidateDataAccess={candidateDataAccess} {...actionProps} />
       </div>
-
-      <div className="ws-row__stats">
-        <Stat area="candidates" label={m.employer_job_list_col_candidates()}>
-          <Candidates job={job} candidateDataAccess={candidateDataAccess} />
-        </Stat>
-        <Stat area="views" label={m.employer_job_list_col_views()}>
-          <span><strong className="ws-strong">{formatCount(job.view_count)}</strong> <span className="ws-muted">{m.employer_job_list_views_suffix()}</span></span>
-          {rate && (
-            <Tooltip title={m.employer_job_header_apply_rate_tooltip()}>
-              <span className="ws-caption ws-muted">{m.employer_job_list_apply_rate_suffix({ rate })}</span>
-            </Tooltip>
-          )}
-        </Stat>
-        <Stat area="deadline" label={m.employer_job_list_col_closes()}>
-          <Deadline job={job} />
-        </Stat>
-      </div>
-
-      <JobListActions job={job} candidateDataAccess={candidateDataAccess} {...actionProps} />
     </article>
   )
 }

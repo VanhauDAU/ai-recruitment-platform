@@ -9,6 +9,9 @@ async function mockJobListDependencies(page) {
     if (path === '/api/public/site/banners/') body = []
     if (path === '/api/public/jobs/') body = { count: 0, results: [] }
     if (path === '/api/public/jobs/best/') body = { count: 0, results: [] }
+    if (path === '/api/public/jobs/best/locations/') {
+      body = { provinces: [{ id: 1, name: 'Thành phố Hà Nội', job_count: 7 }], wards: [] }
+    }
     if (path === '/api/public/jobs/categories/') body = []
     if (path === '/api/public/jobs/stats/') body = { demand: [] }
     if (path === '/api/public/locations/') body = []
@@ -54,10 +57,9 @@ test('homepage Best Jobs uses its own rotation seed after browser refresh', asyn
   const firstRequest = await firstRequestPromise
   const firstSeed = new URL(firstRequest.url()).searchParams.get('rotation_seed')
   expect(firstSeed).toMatch(/^[A-Za-z0-9_-]{1,64}$/)
-  if (page.viewportSize().width >= 640) {
-    await expect(page.getByText('Luân phiên ngẫu nhiên')).toBeVisible()
-  }
-  await expect(page.getByText(/các tin cùng mức được luân phiên/)).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Việc làm nổi bật' })).toBeVisible()
+  // Chip địa điểm chỉ lấy nơi đang có việc làm, kèm số tin.
+  await expect(page.getByRole('button', { name: 'Hà Nội 7' })).toBeVisible()
 
   const reloadedRequestPromise = page.waitForRequest((request) => {
     const url = new URL(request.url())

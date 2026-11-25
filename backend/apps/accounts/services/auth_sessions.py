@@ -206,6 +206,29 @@ def locked_refresh_session(*, sid, user_id, refresh_jti, auth_revision):
     )
 
 
+def is_session_live(*, sid, user, auth_revision):
+    """Read-only twin of ``active_session_for_access`` for long-lived sockets.
+
+    It never touches ``last_seen_at``: an open websocket is not user activity,
+    so a tab left alone still reaches the idle timeout like any other client.
+    """
+    if not sid or user is None or auth_revision != user.auth_revision:
+        return False
+    now = timezone.now()
+    sessions = AuthSession.objects.filter(
+        id=sid,
+        user=user,
+        portal=user.role,
+        auth_revision=auth_revision,
+        revoked_at__isnull=True,
+        expires_at__gt=now,
+    )
+    idle_timeout = settings.AUTH_SESSION_IDLE_TIMEOUT_SECONDS
+    if idle_timeout > 0:
+        sessions = sessions.filter(last_seen_at__gt=now - timedelta(seconds=idle_timeout))
+    return sessions.exists()
+
+
 def active_session_for_access(*, sid, user, auth_revision):
     """Enforce immediate access-token revocation and idle/absolute timeouts."""
     if not sid:
@@ -266,15 +289,6 @@ def current_session(request, user):
         )
         .first()
     )
-
-
-def requires_oauth_reauthentication(user, session):
-    """Đặt mật khẩu LẦN ĐẦU không có `current_password` để chứng minh chủ sở hữu.
-
-    Bằng chứng thay thế là một lần đăng nhập OAuth vừa diễn ra trên chính phiên
-    này, nên token bị đánh cắp không tự đặt được mật khẩu để chiếm tài khoản.
-    """
-    return not user.has_usable_password() and not is_recent_oauth_reauthentication(session)
 
 
 def is_recent_oauth_reauthentication(session):

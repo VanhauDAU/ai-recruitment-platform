@@ -1,6 +1,8 @@
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import generics, permissions
 
+from common.api.caching import cache_public_get
+
 from ...selectors import location_lookup_queryset
 from ..serializers import LocationLookupSerializer
 
@@ -15,6 +17,7 @@ from ..serializers import LocationLookupSerializer
     ],
     tags=['locations'],
 )
+@cache_public_get(query_params=('ids', 'level', 'parent', 'search'))
 class LocationListView(generics.ListAPIView):
     """Cascading lookup for address selects: ?level=province or ?level=ward&parent=<id>, plus ?search=."""
 

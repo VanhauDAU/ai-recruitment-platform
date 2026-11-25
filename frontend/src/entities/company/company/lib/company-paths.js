@@ -26,10 +26,10 @@ export function companySearchPath(keyword) {
 /**
  * Trang công ty công khai. Nhận slug hoặc DTO công ty có `slug`; không nhận tin
  * tuyển dụng vì `slug` của tin là slug của chính tin đó (dùng `jobCompanyPath`).
- * Bộ lọc `q`/`location`/`page` chỉ thuộc tab việc làm nên bị bỏ ở tab tổng quan.
+ * Bộ lọc `q`/`location`/`category`/`page` chỉ thuộc tab tin tuyển dụng nên bị bỏ ở tab tổng quan.
  * Thiếu slug thì quay về danh bạ đã lọc theo tên.
  */
-export function companyDetailPath(slugOrCompany, { tab, q, location, page } = {}) {
+export function companyDetailPath(slugOrCompany, { tab, q, location, category, page } = {}) {
   const slug = String(
     (typeof slugOrCompany === 'string' ? slugOrCompany : slugOrCompany?.slug) || '',
   ).trim()
@@ -41,6 +41,7 @@ export function companyDetailPath(slugOrCompany, { tab, q, location, page } = {}
     const keyword = String(q || '').trim()
     if (keyword) params.set('q', keyword)
     if (location) params.set('location', String(location))
+    if (category) params.set('category', String(category))
     if (page > 1) params.set('page', String(page))
   }
   const query = params.toString()
@@ -50,14 +51,17 @@ export function companyDetailPath(slugOrCompany, { tab, q, location, page } = {}
 /** Chiều ngược của `companyDetailPath`: chuẩn hoá query của trang công ty. */
 export function parseCompanyDetailQuery(searchParams) {
   if (searchParams.get('tab') !== COMPANY_JOBS_TAB) {
-    return { tab: '', q: '', location: '', page: 1 }
+    return { tab: '', q: '', location: '', category: '', page: 1 }
   }
   const location = searchParams.get('location') || ''
+  // Nhiều danh mục gộp bằng dấu phẩy; bỏ mã sai và trùng.
+  const categories = [...new Set((searchParams.get('category') || '').split(',').filter((id) => /^\d+$/.test(id)))]
   const page = Number(searchParams.get('page'))
   return {
     tab: COMPANY_JOBS_TAB,
     q: (searchParams.get('q') || '').trim().slice(0, MAX_JOB_KEYWORD_LENGTH),
     location: /^\d+$/.test(location) ? location : '',
+    category: categories.join(','),
     page: Number.isInteger(page) && page > 1 ? page : 1,
   }
 }

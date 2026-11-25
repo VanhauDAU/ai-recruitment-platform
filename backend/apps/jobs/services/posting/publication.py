@@ -14,6 +14,7 @@ from common.vietnam_time import vietnam_today
 
 from ...models import Job, JobStatusHistory
 from ..content_snapshot import build_job_content_snapshot
+from ..digests import wake_followed_company_digests
 from ..lifecycle import extend_job_visibility, initialize_job_visibility
 from ..policy import job_renewal_grace_days
 from .history import _record_status
@@ -72,6 +73,8 @@ def _go_live(job, *, user, previous_status, acknowledged, update_fields=()):
         ]
     )
     _record_status(job, from_status=previous_status, to_status=Job.Status.ACTIVE, user=user)
+    # Followers hear about a new job within minutes, not at the next daily run.
+    wake_followed_company_digests(job.company_id, now=now)
     return job
 
 

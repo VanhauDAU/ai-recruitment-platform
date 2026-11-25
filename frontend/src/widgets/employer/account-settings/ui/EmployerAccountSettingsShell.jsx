@@ -39,7 +39,7 @@ export default function EmployerAccountSettingsShell({ title, children, hideHead
   const activeItem = ITEMS.find((item) => item.to === pathname)
 
   return (
-    <div className="mx-auto max-w-[1256px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
       <div className="grid min-w-0 items-stretch xl:grid-cols-[275px_minmax(0,1fr)]">
         <nav aria-label={m.employer_account_settings_nav_aria()} className="border-b border-slate-200 bg-slate-50/80 p-3 xl:border-b-0 xl:border-r xl:p-2">
           <div className="xl:hidden">
@@ -77,7 +77,7 @@ export default function EmployerAccountSettingsShell({ title, children, hideHead
                   key={item.to}
                   to={item.to}
                   aria-current={active ? 'page' : undefined}
-                  className={`flex h-12 items-center gap-3 rounded-sm border-l-2 px-3 text-sm transition ${active ? 'border-emerald-500 bg-white font-bold !text-emerald-600 shadow-sm ring-1 ring-slate-200' : 'border-transparent font-semibold !text-slate-900 hover:bg-white'}`}
+                  className={`flex h-12 items-center gap-3 rounded-sm border-l-2 px-3 text-sm transition ${active ? 'border-[var(--brand-primary)] bg-white font-bold !text-[var(--brand-primary)] shadow-sm ring-1 ring-slate-200' : 'border-transparent font-semibold !text-slate-900 hover:bg-white'}`}
                 >
                   <Icon aria-hidden="true" className="text-base" />
                   <span className="whitespace-nowrap">{item.label}</span>

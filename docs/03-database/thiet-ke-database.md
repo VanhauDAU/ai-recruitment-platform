@@ -21,7 +21,8 @@ Tài liệu liên quan:
 | --- | --- |
 | Tên bảng | Mặc định của Django `<app>_<model>` (vd `accounts_user`, `jobs_job`, `employers_company`, `cvs_usercv`). Ngoại lệ đặt `db_table` tường minh: `candidate_*` (preference/consent/email settings), `candidate_hidden_jobs`, `upload_sessions`, `upload_assets`, `upload_scan_attempts`, `ai_invocations`, `ai_usage_daily`. |
 | Khóa | `id` BigAutoField chỉ dùng nội bộ. `AuthSession.id` là UUID (nhúng vào claim `sid`). |
-| `public_id` | Định danh lộ ra URL/API, sinh bởi `common.db.public_id.generate_public_id(prefix)` dạng `<prefix>_<12 hex>` (vd `usr_`, `co_`, `jb_`, `app_`, `cvv_`). API không bao giờ nhận/trả `id` số. |
+| `public_id` | Định danh lộ ra URL/API, sinh bởi `common.db.public_id.generate_public_id(prefix)` dạng `<prefix>_<12 hex>` (vd `co_`, `jb_`, `app_`, `cvv_`). Riêng `users.public_id` là mã tài khoản 8 chữ số ngẫu nhiên (`apps.accounts.domain.account_code`, ràng buộc `chk_users_public_id_digits`). API không bao giờ nhận/trả `id` nội bộ. |
+| `code` | Mã hiển thị đọc được qua điện thoại cho hỗ trợ/tra cứu, tách khỏi `public_id`: `jobs_job.code` = `J` + 7 chữ số (`chk_jobs_code_format`), `employers_company.code` = `C` + 6 chữ số (`chk_companies_code_format`). Sinh ngẫu nhiên bởi `common.db.readable_code`, unique. |
 | `slug` | Unique, tự sinh khi trống. `Job.slug = slugify(title)-<public_id>` để không trùng; slug blog sinh bởi `friendly_post_slug` (ngắn, không gắn `public_id`) và admin được sửa tay; slug bài knowledgebase unique theo `(category, slug)`. |
 | Soft delete | Chỉ `User` và `UserCv` có `is_deleted` + `deleted_at`. Các aggregate nội dung dùng trạng thái `archived` thay cho xóa mềm. Bảng bằng chứng (event/history/report) chặn xóa. |
 | JSONB | Chỉ cho dữ liệu không cần ràng buộc quan hệ hoặc lọc: document CV (`content_json`/`layout_json`/`style_json`), snapshot/payload audit, `SiteSetting.value`, cấu hình template, danh sách nhỏ có thứ tự (`Job.application_reasons`, `Job.work_types`, `Company.markets`). Taxonomy, kỹ năng, địa điểm, quyền lợi luôn là bảng quan hệ, không lưu JSON hay chuỗi phân cách. |
@@ -177,8 +178,10 @@ stateDiagram-v2
 - **Lớp phủ hiển thị:** `policy_hold` (trạng thái tài khoản), `moderation_hold`
   (`manual_review`/`confirmed_violation` — admin tạm ẩn/khôi phục tin active sau
   báo cáo). Không đổi `status`.
-- **Nhãn admin gán:** `tier` standard/featured/top, `is_hot`, `is_urgent`,
-  `has_flash_badge`. Nhà tuyển dụng không ghi được các field này, cũng như
+- **Nhãn:** không có hạng tin hay nhãn gán tay (`tier`, `is_hot`, `is_urgent` đã xóa
+  ở `jobs.0009`, ADR-0030). `has_flash_badge` (Huy hiệu Sấm Chớp) do task mỗi giờ tính
+  từ mức phản hồi của người đăng tin (ADR-0027), không ai sửa tay; nhãn "Sắp hết hạn"
+  tính lúc trả API từ `deadline`. Nhà tuyển dụng không ghi được các field này, cũng như
   counter và mốc vòng đời.
 - **Counter:** `view_count`, `impression_count`, `application_count`; số liệu
   theo ngày ở `JobEngagementDaily`.
@@ -205,7 +208,7 @@ và chủ chiến dịch active.
 | `JobCategory` | Taxonomy 3 cấp (`parent`), `category_type` occupation_group/domain/specialization, `status`, `public_id`, slug unique. Picker CV dùng loại `specialization`. |
 | `JobCategoryLocalization` | Tên hiển thị/alias tìm kiếm theo `locale` (`vi-VN`, `en-US`); unique `(category, locale)`. |
 | `JobCategoryAssignment` | Một `primary_specialization` (partial unique mỗi job) và nhiều `domain_knowledge`; unique `(job, category, role)`; category PROTECT. |
-| `JobLocation` | Địa điểm + `address_detail`; ghi mới bắt buộc cấp phường/xã (tỉnh suy ra từ `location.parent`), liên kết cấp tỉnh cũ được giữ; unique `(job, location, address_detail)`. |
+| `JobLocation` | Địa điểm + `address_detail`; ghi mới bắt buộc cấp phường/xã (tỉnh suy ra từ `location.parent`), liên kết cấp tỉnh cũ được giữ; unique `(job, location, address_detail)`. Tọa độ cho "Việc làm gần tôi" (ADR-0029): `latitude`/`longitude` (index ghép, check trong khoảng hợp lệ), `coordinate_precision` exact/ward/province, `coordinate_source` employer_pin/geocoder/ward_centroid, `geocode_pending` (địa chỉ chờ Celery geocode). |
 | `JobWorkSchedule` | Khung ngày/giờ có cấu trúc (`weekday_from/to` 1–7, giờ, `is_overnight`, note). |
 | `JobSkill` | Kỹ năng required/preferred + mức tối thiểu; unique `(job, skill)`. |
 | `Benefit`, `JobBenefit` | Danh mục quyền lợi chuẩn hóa (có nhóm), quan hệ theo tin; unique `(job, benefit)`, benefit PROTECT. |
@@ -226,9 +229,10 @@ và chủ chiến dịch active.
 | Bảng (model) | Mục đích và ràng buộc |
 | --- | --- |
 | `Application` | Một lần nộp của ứng viên vào tin. **Không** unique `(candidate, job)`: tối đa 3 lần nộp mỗi tin (`MAX_APPLICATIONS_PER_JOB`, kiểm ở service). `submitted_cv_version` (PROTECT, bắt buộc) trỏ `CvVersion` kind `application_snapshot`; `cv` chỉ là con trỏ thư viện, SET_NULL khi ứng viên xóa CV. Thông tin liên hệ, thư xin việc, `preferred_locations` M2M, consent AI/DLCN, `source` applied/recommended/invited, `campaign_channel` (FK `CampaignChannel`, SET_NULL: kênh chiến dịch đưa ứng viên tới) và `acquisition_channel` (bản chụp loại kênh, giữ nguyên khi kênh bị xóa), `status` submitted/viewed/shortlisted/interviewed/rejected/accepted (`chk_applications_status`; `considering` gộp vào `viewed` ở migration 0013) cùng các mốc thời gian và mốc tự từ chối. |
-| `TalentPoolEntry`, `TalentPoolInvitation` | Kho ứng viên tiềm năng theo NTD: unique (recruiter, candidate) khi đang mở, `source_application` (tin dùng để đối sánh), `note`, `tags` JSON ≤ 5, `expires_at` = +12 tháng, `removed_at` (NTD gỡ), `withdrawn_at` (ứng viên rút); lời mời unique (entry, job). |
+| `TalentPoolEntry`, `TalentPoolInvitation` | Kho ứng viên tiềm năng theo NTD: unique (recruiter, candidate) khi đang mở, `source_application` (tin dùng để đối sánh), `note`, `tags` JSON ≤ 5, `expires_at` = +12 tháng, `removed_at` (NTD gỡ), `withdrawn_at` (ứng viên rút); lời mời unique (entry, job). `CandidateSearchInvitation` (`recruiter`, `candidate`, `job`, unique (candidate, job)) là lời mời ứng tuyển gửi từ Tìm CV, cho người chưa từng ứng tuyển vào tin của NTD. |
 | `CandidateBlock` | Danh sách đen theo NTD: (recruiter, candidate) unique khi chưa gỡ, `reason`, `note`, `expires_at` (NULL = tới khi gỡ), `lifted_at`. Hằng `MASS_APPLY_WINDOW_DAYS=14`, `MASS_APPLY_MIN_JOBS=5` cho cảnh báo nộp hàng loạt. |
 | `ApplicationReviewLink`, `ApplicationReview` | Link mời đánh giá (token chỉ lưu hash, `expires_at` ≤ 30 ngày, `revoked_at`, đếm lượt mở) và phiếu đánh giá 1-1 theo link (`recommendation`, `rating` 1–5, điểm mạnh, băn khoăn). |
+| `RecruiterResponsiveness` | Ảnh chụp mức phản hồi của một người đăng tin (unique `(company, recruiter)`) cho Huy hiệu Sấm Chớp (ADR-0027): `matured_count`, `on_time_count`, `avg_response_hours`, `last_decision_at`, `overdue_count`, `qualified`, `qualified_since`, `computed_at`. Task `refresh-flash-badges` ghi mỗi giờ rồi chiếu xuống `Job.has_flash_badge`. |
 | `ApplicationStatusHistory` | Timeline đổi trạng thái (actor SET_NULL, note nội bộ, `reverted_at` khi NTD hoàn tác). Mỗi dòng là khóa `application-status:<pk>` của thông báo nó tạo; ứng viên chỉ thấy dòng chưa hoàn tác có thông báo đã giao (hoặc không có thông báo). |
 
 Quyền đọc: nhà tuyển dụng chỉ thấy application của tin mình đăng
@@ -241,14 +245,14 @@ Chi tiết contract document, renderer và API ở
 
 | Bảng (model) | Mục đích và ràng buộc |
 | --- | --- |
-| `UserCv` | Aggregate CV của ứng viên (builder hoặc upload): metadata, `lifecycle_status`, `processing_status`, `visibility`, con trỏ `current_template_version`/`latest_version`/`published_version`, `lock_version`, `is_default` (partial unique: một CV mặc định chưa xóa mỗi user), soft delete. Trường matching cùng từ vựng với `Job`: `experience_years` (`Job.ExperienceYears`, tính từ mục kinh nghiệm khi tạo version), `education_level` (`Job.EducationLevel` cao nhất trong mục học vấn, tính khi tạo version), `position_level` (`Job.PositionLevel`, ứng viên chọn) và `position` (FK `JobCategory`). Không lưu văn bản thô của file upload. |
+| `UserCv` | Aggregate CV của ứng viên (builder hoặc upload): metadata, `lifecycle_status`, `processing_status`, `visibility`, con trỏ `current_template_version`/`latest_version`/`published_version`, `lock_version`, `is_default` (partial unique: một CV mặc định chưa xóa mỗi user), `recruiter_searchable` (partial unique `uq_user_searchable_cv`: mỗi user chỉ một CV chưa xóa được bật cho NTD tìm kiếm), soft delete. Trường matching cùng từ vựng với `Job`: `experience_years` (`Job.ExperienceYears`, tính từ mục kinh nghiệm khi tạo version), `education_level` (`Job.EducationLevel` cao nhất trong mục học vấn, tính khi tạo version), `position_level` (`Job.PositionLevel`, ứng viên chọn) và `position` (FK `JobCategory`). Không lưu văn bản thô của file upload. |
 | `CvVersion` | Document canonical **bất biến** (`content_json`, `layout_json`, `style_json`, `schema_version`, `content_hash`), `version_kind` initial/manual_save/published/application_snapshot/export_snapshot/imported, ghim `template_version`; unique `(cv, version_number)`. Sửa row đã lưu raise `ImmutableCvVersionError`. |
 | `CvDraft` | Một draft autosave mutable mỗi CV (1-1), `base_version`, `document_hash`, optimistic lock. |
 | `CvAsset` | Ảnh avatar/background bất biến, document chỉ tham chiếu public ID; owner null = asset hệ thống. |
 | `CvSharedLink` | Link chia sẻ bearer gắn một version; chỉ lưu `token_hash` (unique), có `expires_at`/`revoked_at`. |
 | `CvExport` | Job + artifact PDF gắn version; unique theo version + `render_config`; `storage_key` nội bộ, tải qua endpoint có phân quyền. Export snapshot ứng tuyển của NTD có `cv=NULL` (khóa theo version) nên còn sau khi ứng viên xóa CV. |
 | `CvImportJob` | Job nhập PDF/DOCX → canonical (1-1 CV), unique `(user, idempotency_key)`, `result_version`. |
-| `CvAccessLog` | Audit tối thiểu truy cập CV (owner/recruiter/admin/anonymous theo kênh), không lưu payload hay PII thô. NTD xem (`application`) hoặc tải (`export`) snapshot ghi một dòng `cv=NULL` gắn version. |
+| `CvAccessLog` | Audit tối thiểu truy cập CV (owner/recruiter/admin/anonymous theo kênh), không lưu payload hay PII thô. NTD xem (`application`) hoặc tải (`export`) snapshot ghi một dòng `cv=NULL` gắn version; NTD mở hồ sơ trích xuất ẩn danh ở Tìm CV ghi kênh `recruiter_search`, cũng `cv=NULL` gắn version. |
 | `CvSkill` | Kỹ năng theo CV trỏ taxonomy `skills.Skill` (cùng bảng với `JobSkill`); unique `(cv, skill)`. Nguồn `manual` được đồng bộ mỗi lần tạo version từ mục kỹ năng và trường riêng `maps_to=skills` (khớp tên chuẩn hóa hoặc alias, mức 1–5 → `beginner/intermediate/advanced`); tên ngoài taxonomy bị bỏ qua. |
 | `CvTemplate` | Identity/catalogue mẫu: slug, tên/mô tả/SEO song ngữ `display_name_vi/en`, `description_vi/en`, `seo_title_vi/en`, `seo_description_vi/en` (rỗng ở ngôn ngữ nào thì không hiện ở kho ngôn ngữ đó), `lifecycle_status` draft/published/archived (nguồn duy nhất cho hiển thị công khai), `current_published_version`, `is_premium`; M2M category/color qua bảng link, ảnh xem trước theo từng màu nằm ở `CvTemplateColorLink`. |
 | `CvTemplateVersion` | Contract renderer bất biến sau publish: `renderer_key` (khóa layout trong registry `apps/cv_templates/domain/layouts.json`), `renderer_version`, schema/default layout/style, `capabilities`, `content_contract`, `version_status` draft/published/retired; unique `(template, version_number)`. |
@@ -322,7 +326,8 @@ Quy tắc chi tiết: [đặc tả thông báo đa cổng](../01-phan-tich/dac-t
 | --- | --- |
 | `SkillGroup` | Taxonomy nhóm kỹ năng mở (có `parent`), thay cho choices IT cố định. |
 | `Skill` | Nguồn kỹ năng duy nhất: `name`, `slug`, `normalized_name` (đều unique), `aliases` JSON, `group`. CV, preference và tin tuyển dụng đều tham chiếu `skill_id`. Nhà tuyển dụng không tạo skill mới khi gõ. |
-| `Location` | Đơn vị hành chính 2 cấp (34 tỉnh/thành, ~3.321 phường/xã, không còn cấp huyện từ 01/07/2025): `code` chính thức unique, `level`, `parent`, `merged_from`. Seed bằng `seed_locations`, không gọi API lúc chạy. |
+| `Location` | Đơn vị hành chính 2 cấp (34 tỉnh/thành, 3.321 phường/xã, không còn cấp huyện từ 01/07/2025): `code` chính thức unique (mã phường đệm 5 chữ số để không trùng mã tỉnh), `level`, `parent`, `merged_from`, tâm `latitude`/`longitude` + `centroid_source`. Seed bằng `seed_locations` rồi `seed_location_coordinates` (từ `seed_data/centroids.json`), không gọi API lúc chạy. |
+| `GeocodeCache` | Kết quả geocoding theo khóa địa chỉ chuẩn hóa (`query_key` unique): `status` found/not_found, tọa độ, `provider`, `expires_at` (180 ngày / 7 ngày khi không thấy). Tránh gọi lại nhà cung cấp khi tin được lưu lại. |
 
 ## 11. Upload, quyền riêng tư và AI (`uploads`, `privacy`, `ai_core`)
 
@@ -347,7 +352,7 @@ Cần extension `vector` (pgvector); migration `matching.0001` tự bật.
 | --- | --- |
 | `matching_matchdocument` | Hồ sơ đã chuẩn hóa (`profile_json`) và vector 768 chiều của một phiên bản CV **hoặc** một nội dung tin (check: đúng một nguồn theo `kind`). Unique theo (nguồn, `content_hash`, `extractor_version`, `model_version`), nên đổi nội dung hay đổi mô hình thì sinh hàng mới; hàng cũ là cache. `is_current` đánh dấu bản mới nhất của nguồn với cùng phiên bản (unique có điều kiện; chỉ mục có điều kiện `is_current AND status = ready` cho tìm việc theo vector). |
 | `matching_matchchunk` | Từng đoạn của tài liệu kèm vector, unique theo (`document`, `position`); điểm ngữ nghĩa tính ở mức đoạn. |
-| `matching_matchanalysis` | Một lần phân tích độ phù hợp do ứng viên yêu cầu: queued → processing → succeeded/failed, `overall_score` 0–100, `result_json`. Unique theo khóa cache (`cv_version`, `job`, `job_content_hash`, `model_version`, `scoring_version`). Xóa `MatchDocument` chỉ gỡ con trỏ, không xóa kết quả. |
+| `matching_matchanalysis` | Một lần phân tích độ phù hợp: queued → processing → succeeded/failed, `overall_score` 0–100, `result_json`. `purpose` = `candidate_self` (ứng viên tự xem, chấm phiên bản mới nhất của CV) hoặc `application_ranking` (xếp hạng hồ sơ cho NTD, chấm bản chụp CV đã nộp; nối với hồ sơ qua `Application.submitted_cv_version`, chỉ mục (`cv_version`, `purpose`, `created_at`)). Unique theo khóa cache (`cv_version`, `job`, `job_content_hash`, `model_version`, `scoring_version`). Xóa `MatchDocument` chỉ gỡ con trỏ, không xóa kết quả. |
 
 ## 12. Bất biến xuyên domain
 
@@ -366,7 +371,8 @@ Cần extension `vector` (pgvector); migration `matching.0001` tự bật.
    chỉ tách con trỏ `Application.cv`.
 6. **Không còn dịch vụ thương mại** (ADR-0015): không có bảng gói dịch vụ,
    entitlement, đơn hàng, làm mới tin hay lead tư vấn; app `services` đã bị gỡ.
-   `tier`/`is_hot`/`is_urgent`/`has_flash_badge` chỉ do admin gán.
+   `tier`/`is_hot`/`is_urgent` chỉ do admin gán; `has_flash_badge` do hệ thống tính
+   (ADR-0027).
 7. **Bằng chứng không bị viết lại**: event/history/report/transition chỉ thêm;
    thay đổi nghiệp vụ và bản ghi audit luôn commit cùng transaction.
 

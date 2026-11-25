@@ -172,6 +172,15 @@ msgstr "This category is no longer active."
 msgid "Loại danh mục không phù hợp với vai trò đã chọn."
 msgstr "The category type does not match the selected role."
 
+msgid "Ghim vị trí cần đủ cả vĩ độ và kinh độ."
+msgstr "A location pin needs both latitude and longitude."
+
+msgid "Ghim vị trí phải nằm trong lãnh thổ Việt Nam."
+msgstr "The location pin must be inside Vietnam."
+
+msgid "Ghim vị trí nằm ngoài tỉnh/thành đã chọn."
+msgstr "The location pin is outside the selected province."
+
 msgid "Giờ kết thúc phải sau giờ bắt đầu."
 msgstr "The end time must be after the start time."
 
@@ -180,6 +189,12 @@ msgstr "Select an application deadline."
 
 msgid "Bạn cần đồng ý nhận gợi ý việc làm trước khi hệ thống đọc dữ liệu CV."
 msgstr "You need to consent to job recommendations before the system can read your CV data."
+
+msgid "Sắp hết hạn"
+msgstr "Closing soon"
+
+msgid "Phản hồi nhanh"
+msgstr "Fast response"
 
 msgid "Brief có hướng dẫn"
 msgstr "Guided brief"
@@ -475,15 +490,6 @@ msgstr "Hidden for a confirmed violation"
 msgid "Tạm ẩn, cần chỉnh sửa theo yêu cầu"
 msgstr "Hidden, changes requested"
 
-msgid "Tin thường"
-msgstr "Standard posting"
-
-msgid "Tin nổi bật"
-msgstr "Featured posting"
-
-msgid "Tin TOP"
-msgstr "TOP posting"
-
 msgid "Mỗi lý do phải có từ 1 đến 160 ký tự."
 msgstr "Each reason must be between 1 and 160 characters."
 
@@ -660,15 +666,6 @@ msgstr "Dismissed"
 msgid "Ứng viên"
 msgstr "Candidate"
 
-msgid "Tài trợ"
-msgstr "Sponsored"
-
-msgid "GẤP"
-msgstr "URGENT"
-
-msgid "Phản hồi nhanh"
-msgstr "Fast response"
-
 msgid "Đúng vị trí bạn mong muốn"
 msgstr "Matches the position you want"
 
@@ -757,6 +754,36 @@ msgstr "The selected job category is no longer active."
 
 msgid "Bạn chỉ có thể tạo tối đa %(limit)s thông báo việc làm."
 msgstr "You can create at most %(limit)s job alerts."
+
+msgid "Vị trí chuyên môn là cấp cuối, không chứa mục con."
+msgstr "A specialization is the last level and can't have children."
+
+msgid "Vị trí chuyên môn cần có tên tiếng Anh."
+msgstr "A specialization needs an English name."
+
+msgid "Chọn file ảnh."
+msgstr "Choose an image file."
+
+msgid "Ảnh tối đa 512 KB."
+msgstr "The image can be at most 512 KB."
+
+msgid "Chỉ nhận ảnh JPEG, PNG hoặc WebP."
+msgstr "Only JPEG, PNG or WebP images are accepted."
+
+msgid "Icon cần gần vuông và tối thiểu 64×64 px."
+msgstr "The icon must be roughly square and at least 64×64 px."
+
+msgid "Danh sách phải gồm đủ mọi phúc lợi, mỗi mục một lần."
+msgstr "The list must contain every benefit exactly once."
+
+msgid "Chỉ chuyển được sang một mục cùng cấp với mục cha hiện tại."
+msgstr "It can only move under an item on the same level as its current parent."
+
+msgid "Đã có mục cùng tên ở cùng cấp."
+msgstr "An item with this name already exists on this level."
+
+msgid "Không đọc được file ảnh."
+msgstr "Couldn't read the image file."
 
 msgid "Tiêu đề tin"
 msgstr "Posting title"
@@ -856,9 +883,6 @@ msgstr "Verified employer"
 
 msgid "%(amount)s triệu"
 msgstr "%(amount)s million"
-
-msgid "Nổi bật"
-msgstr "Featured"
 
 msgid "Chọn thời gian hiển thị tin."
 msgstr "Select how long the posting is displayed."

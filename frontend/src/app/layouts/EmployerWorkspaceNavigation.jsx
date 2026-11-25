@@ -74,6 +74,7 @@ export function employerNavItems({ unreadApplications = 0 } = {}) {
           m.employer_workspace_title_applications(),
           countLabel(m.employer_workspace_title_applications(), unreadApplications),
         ),
+        link('/candidate-search', m.employer_workspace_title_candidate_search()),
         link('/talent-pool', m.employer_workspace_title_talent_pool()),
         link('/candidate-blocks', m.employer_workspace_title_candidate_blocks()),
       ],
@@ -99,7 +100,7 @@ export function employerRouteTitle(pathname) {
 
 const SECTION_PATHS = [
   '/dashboard', '/campaigns', '/jobs', '/company-page', '/applications',
-  '/talent-pool', '/candidate-blocks', '/notifications', '/activities',
+  '/talent-pool', '/candidate-search', '/candidate-blocks', '/notifications', '/activities',
 ].map((path) => employerAppPath(path))
 
 /** Detail and form pages keep their section lit (a job's editor lights "Tin tuyển dụng"). */

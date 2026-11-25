@@ -1,3 +1,5 @@
+import { normalizeJobSort } from './job-sort-options'
+
 export const PAGE_SIZE = 20
 export const SALARY_UNIT = 1_000_000
 export const SAVED_FILTER_KEY = 'saved_job_filter'
@@ -10,12 +12,13 @@ const SIMPLE_MAP = {
   et: 'employment_type',
   level: 'position_level',
   nganh: 'industry',
-  sort: 'ordering',
+  // Huy hiệu Sấm Chớp: tin của NTD phản hồi hồ sơ đúng hạn (ADR-0027).
+  fast: 'flash_badge',
 }
 const LIST_MAP = { cat: 'category', exp: 'experience_years' }
 
 // Key filter trên URL (dùng cho "Xóa lọc" và kiểm tra đang có lọc).
-export const FILTER_KEYS = ['cat', 'exp', 'wt', 'et', 'level', 'nganh', 'salary', 'sort']
+export const FILTER_KEYS = ['cat', 'exp', 'wt', 'et', 'level', 'nganh', 'salary', 'sort', 'fast']
 
 export function mergeSearchParams(current, entries, { resetPage = true } = {}) {
   const next = new URLSearchParams(current)
@@ -94,6 +97,8 @@ export function toApiParams(params) {
   for (const [short, backend] of Object.entries(LIST_MAP)) {
     getCommaList(params, short).forEach((value) => api.append(backend, value))
   }
+  const ordering = normalizeJobSort(params.get('sort'))
+  if (ordering) api.set('ordering', ordering)
   getLocationIds(params).forEach((id) => api.append('location', id))
   const salary = decodeSalary(params.get('salary'))
   if (salary?.nego) api.set('salary_negotiable', '1')

@@ -1,6 +1,12 @@
 import { CheckOutlined, CloseOutlined, InfoCircleOutlined, MinusOutlined } from '@ant-design/icons'
 import { ProcvMascot } from '@/shared/ui/mascot'
-import { CONFIDENCE_COPY, CRITERIA_LABELS, FIT_BANDS, STATUS_COPY, bandOf } from '../model/job-fit'
+import {
+  FIT_BANDS,
+  bandOf,
+  confidenceLabel,
+  criterionLabel,
+  criterionStatusLabel,
+} from '@/entities/application/job-fit'
 import { useCountUp, useRevealed } from './use-reveal'
 
 // Mascot theo mức: mừng khi rất phù hợp, nghĩ ngợi khi còn thiếu nhiều.
@@ -22,7 +28,7 @@ const REQUIREMENT_ICONS = {
 function FitScale({ score, revealed }) {
   const current = bandOf(score)
   return (
-    <div className="jf-scale" role="img" aria-label={`${score} điểm, mức ${current.label}`}>
+    <div className="jf-scale" role="img" aria-label={`${score} điểm, mức ${current.label()}`}>
       <div className="jf-scale__track">
         {FIT_BANDS.map((band, index) => {
           const to = FIT_BANDS[index + 1]?.from ?? 100
@@ -43,14 +49,14 @@ function FitScale({ score, revealed }) {
 }
 
 function Criterion({ component, order, revealed }) {
-  const label = CRITERIA_LABELS[component.key] || component.key
+  const label = criterionLabel(component.key)
   const scored = component.status === 'ok'
   return (
     <li className="jf-criterion">
       <div className="jf-criterion__head">
         <span className="jf-criterion__name">{label}</span>
         <span className={scored ? 'jf-criterion__score' : 'jf-criterion__status'}>
-          {scored ? component.score : STATUS_COPY[component.status]}
+          {scored ? component.score : criterionStatusLabel(component.status)}
         </span>
       </div>
       {scored && (
@@ -103,7 +109,7 @@ export default function JobFitResult({ result }) {
           <FitScale score={overall.score} revealed={revealed} />
         </div>
         <p className="jf-note">
-          <InfoCircleOutlined aria-hidden="true" /> {result.disclaimer} {CONFIDENCE_COPY[overall.confidence]}
+          <InfoCircleOutlined aria-hidden="true" /> {result.disclaimer} {confidenceLabel(overall.confidence)}
         </p>
       </section>
 

@@ -10,8 +10,25 @@ export async function getJobs(params = {}) {
   return data
 }
 
+// Việc làm gần một vị trí (ADR-0029): danh sách phân trang + điểm cho bản đồ.
+export async function getNearbyJobs(params) {
+  const { data } = await api.get('/public/jobs/nearby/', { params })
+  return data
+}
+
+export async function getNearbyJobMap(params) {
+  const { data } = await api.get('/public/jobs/nearby/map/', { params })
+  return data
+}
+
 export async function getHomepageBestJobs(params = {}) {
   const { data } = await api.get('/public/jobs/best/', { params })
+  return data
+}
+
+// Tỉnh và phường/xã đang có tin công khai (kèm số tin) cho chip địa điểm.
+export async function getHomepageBestJobLocations() {
+  const { data } = await api.get('/public/jobs/best/locations/')
   return data
 }
 

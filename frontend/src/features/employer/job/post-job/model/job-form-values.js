@@ -45,7 +45,11 @@ export function createJobFormValues(
       province_id: item.province_id,
       workplaces: [],
     }
-    area.workplaces.push({ location: item.location, address_detail: item.address_detail })
+    // Chỉ ghim của NTD được nạp lại; tọa độ geocode/tâm phường do máy chủ tự tính.
+    const pin = item.coordinate_source === 'employer_pin' && item.latitude != null
+      ? { latitude: item.latitude, longitude: item.longitude }
+      : null
+    area.workplaces.push({ location: item.location, address_detail: item.address_detail, pin })
     groupedAreas.set(item.province_id, area)
   })
   return {
@@ -214,7 +218,11 @@ export function buildJobPayload(values) {
     job_locations: (values.work_areas || []).flatMap((area) => (
       (area.workplaces || [])
         .filter((item) => item.location)
-        .map((item) => ({ location: item.location, address_detail: item.address_detail?.trim() || '' }))
+        .map((item) => ({
+          location: item.location,
+          address_detail: item.address_detail?.trim() || '',
+          ...(item.pin ? { latitude: item.pin.latitude, longitude: item.pin.longitude } : {}),
+        }))
     )).map((item, index) => ({ ...item, sort_order: index })),
     work_schedules: (values.work_schedules || [])
       .filter((item) => item.weekday_from && item.weekday_to && item.start_time)

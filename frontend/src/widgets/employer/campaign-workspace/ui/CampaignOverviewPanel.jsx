@@ -188,7 +188,7 @@ export default function CampaignOverviewPanel({ campaign, report, reportLoading 
                 <CampaignPerformanceChart data={performance.daily || []} />
               </div>
               <p className="mt-3 flex items-start gap-2 text-xs leading-5 text-slate-400">
-                <SafetyCertificateOutlined className="mt-1 shrink-0 text-emerald-500" aria-hidden />
+                <SafetyCertificateOutlined className="mt-1 shrink-0 text-[var(--brand-primary)]" aria-hidden />
                 {m.employer_campaign_overview_privacy_note()}
               </p>
             </>
@@ -213,7 +213,7 @@ export default function CampaignOverviewPanel({ campaign, report, reportLoading 
                   <Link
                     key={item.label}
                     to={item.to}
-                    className="group flex min-w-0 items-center gap-3 rounded-xl border border-slate-100 p-3 !text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50"
+                    className="group flex min-w-0 items-center gap-3 rounded-xl border border-slate-100 p-3 !text-slate-700 transition hover:border-[var(--brand-primary)]/40 hover:bg-[var(--brand-primary-soft)]"
                   >
                     <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${item.tone}`}>
                       <Icon aria-hidden />
@@ -223,7 +223,7 @@ export default function CampaignOverviewPanel({ campaign, report, reportLoading 
                       <span className="mt-0.5 block text-xs text-slate-400">{item.helper}</span>
                     </span>
                     <strong className="text-base text-slate-900">{formatNumber(item.count)}</strong>
-                    <ArrowRightOutlined className="text-xs text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-emerald-600" aria-hidden />
+                    <ArrowRightOutlined className="text-xs text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-[var(--brand-primary)]" aria-hidden />
                   </Link>
                 )
               })}

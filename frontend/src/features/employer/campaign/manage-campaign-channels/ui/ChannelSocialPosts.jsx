@@ -6,7 +6,8 @@ import {
   SyncOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Skeleton } from 'antd'
+import { Button, Pagination, Skeleton } from 'antd'
+import { useState } from 'react'
 import dayjs from '@/shared/lib/dayjs'
 import { campaignKeys, cancelChannelPost, getChannelPosts, rescheduleChannelPost } from '@/entities/campaign/campaign'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
@@ -23,6 +24,7 @@ const STATUS = {
   delete_failed: { icon: CloseCircleFilled, tone: 'red' },
   deleted: { icon: CheckCircleFilled, tone: 'slate' },
 }
+const PAGE_SIZE = 3
 const OPEN = ['scheduled', 'postponed', 'failed']
 // Bài còn trên mạng: đã đăng, hoặc chờ NTD tự gỡ khi mạng không gỡ được.
 const OPEN_LINK = ['published', 'delete_failed']
@@ -45,6 +47,7 @@ function postTime(post) {
 // ``hideWhenEmpty``: kênh chưa nối tài khoản chỉ hiện lịch sử khi đã có bài.
 export default function ChannelSocialPosts({ campaign, channel, network, editable, hideWhenEmpty = false }) {
   const queryClient = useQueryClient()
+  const [page, setPage] = useState(1)
   const key = campaignKeys.channelPosts(campaign.public_id, channel.public_id)
   const postsQuery = useQuery({
     queryKey: key,
@@ -64,14 +67,18 @@ export default function ChannelSocialPosts({ campaign, channel, network, editabl
   })
   const posts = (postsQuery.data || []).filter((post) => post.status !== 'cancelled')
   if (hideWhenEmpty && !postsQuery.isLoading && posts.length === 0) return null
+  // Bài bị hủy/xóa làm danh sách ngắn lại thì lùi về trang cuối còn bài.
+  const current = Math.min(page, Math.max(1, Math.ceil(posts.length / PAGE_SIZE)))
+  const shown = posts.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE)
 
   return (
     <div className="ch-fb">
       {postsQuery.isLoading ? <Skeleton active paragraph={{ rows: 2 }} /> : posts.length === 0 ? (
         <p className="ch-section-note">{m.employer_campaign_posts_empty({ network: network.label })}</p>
       ) : (
-        <ol className="ch-postcards" aria-label={m.employer_campaign_posts_timeline_aria({ network: network.label })}>
-          {posts.map((post) => {
+        <>
+        <ol key={current} className="ch-postcards" aria-label={m.employer_campaign_posts_timeline_aria({ network: network.label })}>
+          {shown.map((post) => {
             const status = shownStatus(post)
             const meta = STATUS[status] || STATUS.scheduled
             const Icon = meta.icon
@@ -115,6 +122,18 @@ export default function ChannelSocialPosts({ campaign, channel, network, editabl
             )
           })}
         </ol>
+        <Pagination
+          className="ch-postcards__pager"
+          size="small"
+          align="center"
+          current={current}
+          pageSize={PAGE_SIZE}
+          total={posts.length}
+          showSizeChanger={false}
+          hideOnSinglePage
+          onChange={setPage}
+        />
+        </>
       )}
     </div>
   )

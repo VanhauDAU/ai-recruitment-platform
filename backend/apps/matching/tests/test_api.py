@@ -107,6 +107,7 @@ class MatchingApiTests(MatchingApiBase):
         self.assertEqual(
             set(result),
             {
+                'schema_version',
                 'overall',
                 'components',
                 'skills',

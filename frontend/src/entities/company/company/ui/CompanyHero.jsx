@@ -16,7 +16,12 @@ function HeroStat({ icon, children }) {
   )
 }
 
-/** `actions` là chỗ gắn nút của nền tảng (xem việc làm, theo dõi, báo cáo). */
+// Hiển thị gọn: bỏ giao thức, `www.` và dấu `/` cuối.
+function websiteLabel(url) {
+  return url.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '')
+}
+
+/** `actions` là chỗ gắn nút của nền tảng (theo dõi công ty). */
 export default function CompanyHero({ profile, actions, titleAs: Title = 'h1' }) {
   const { identity, stats } = profile
   const industries = identity.industries || []
@@ -54,6 +59,17 @@ export default function CompanyHero({ profile, actions, titleAs: Title = 'h1' })
           <Title id="company-profile-name" className="break-words text-xl font-bold leading-snug text-slate-900 sm:text-2xl">
             {identity.display_name}
           </Title>
+          {hasWebsite && (
+            <a
+              href={identity.website_url}
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+              className="company-profile-website"
+            >
+              <GlobalOutlined aria-hidden="true" />
+              <span className="truncate">{websiteLabel(identity.website_url)}</span>
+            </a>
+          )}
           {identity.headline && <p className="company-profile-headline">{identity.headline}</p>}
           {identity.legal_name && (
             <p className="mt-1 break-words text-sm font-medium text-gray-600">{identity.legal_name}</p>
@@ -82,21 +98,7 @@ export default function CompanyHero({ profile, actions, titleAs: Title = 'h1' })
           </ul>
         </div>
 
-        {(actions || hasWebsite) && (
-          <div className="company-profile-hero__actions">
-            {actions}
-            {hasWebsite && (
-              <a
-                href={identity.website_url}
-                target="_blank"
-                rel="noopener noreferrer nofollow"
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-emerald-300 px-4 text-sm font-semibold !text-[var(--brand-primary)] transition hover:!bg-emerald-50"
-              >
-                <GlobalOutlined aria-hidden="true" /> Website
-              </a>
-            )}
-          </div>
-        )}
+        {actions && <div className="company-profile-hero__actions">{actions}</div>}
       </div>
     </section>
   )

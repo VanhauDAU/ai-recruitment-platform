@@ -1,4 +1,8 @@
-"""Kết quả phân tích, luôn lọc theo chủ sở hữu."""
+"""Kết quả ứng viên tự xem, luôn lọc theo chủ sở hữu.
+
+Bản chấm cho nhà tuyển dụng (`purpose = application_ranking`) cũng mang `user` là
+ứng viên nhưng không thuộc các truy vấn này: ứng viên không xem được nó.
+"""
 
 from ..models import MatchAnalysis
 
@@ -6,7 +10,9 @@ RECENT_LIMIT = 10
 
 
 def _owner_queryset(user):
-    return MatchAnalysis.objects.filter(user=user).select_related('job', 'cv_version__cv')
+    return MatchAnalysis.objects.filter(
+        user=user, purpose=MatchAnalysis.Purpose.CANDIDATE_SELF
+    ).select_related('job', 'cv_version__cv')
 
 
 def owner_analysis(user, public_id):

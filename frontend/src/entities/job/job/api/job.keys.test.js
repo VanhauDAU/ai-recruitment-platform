@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import { isDefaultJobListQuery, jobKeys } from './job.keys'
+import { jobKeys } from './job.keys'
 
 describe('job query keys', () => {
   it('provides one root key for invalidating every public job list', () => {
@@ -29,16 +29,5 @@ describe('job query keys', () => {
     const params = { category: 10, page_size: 12 }
 
     expect(jobKeys.list(params)).toEqual(['jobs', 'list', params])
-  })
-
-  it('matches only default-ranked public list queries', () => {
-    expect(isDefaultJobListQuery({ queryKey: jobKeys.list(new URLSearchParams('page=2')) }))
-      .toBe(true)
-    expect(isDefaultJobListQuery({
-      queryKey: jobKeys.list(new URLSearchParams('ordering=newest')),
-    })).toBe(false)
-    expect(isDefaultJobListQuery({ queryKey: jobKeys.list({ ordering: 'salary_desc' }) }))
-      .toBe(false)
-    expect(isDefaultJobListQuery({ queryKey: jobKeys.employerList() })).toBe(false)
   })
 })

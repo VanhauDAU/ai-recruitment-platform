@@ -60,7 +60,7 @@ function DomainClaimCard({ claim, challenge, busy, onVerify, onRotate, onManualR
       <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="flex min-w-0 items-center gap-2 text-sm font-bold text-slate-900">
-            <GlobalOutlined className="shrink-0 text-emerald-600" />
+            <GlobalOutlined className="shrink-0 text-[var(--brand-primary)]" />
             <span className="break-all">{claim.domain}</span>
           </p>
           <p className="mt-1 text-xs text-slate-500">
@@ -83,7 +83,7 @@ function DomainClaimCard({ claim, challenge, busy, onVerify, onRotate, onManualR
       )}
 
       {claim.method === 'dns_txt' && claim.txt_name && claim.status !== 'verified' && (
-        <div className="mt-4 space-y-3 rounded-lg border border-emerald-100 bg-emerald-50/60 p-3 sm:p-4">
+        <div className="mt-4 space-y-3 rounded-lg border border-[var(--brand-primary)]/20 bg-[var(--brand-primary-soft)] p-3 sm:p-4">
           <p className="text-sm leading-6 text-slate-700">
             {m.employer_account_domain_txt_intro_before()}<strong>TXT</strong>{m.employer_account_domain_txt_intro_after()}
           </p>
@@ -245,7 +245,7 @@ export default function EmployerCompanyDomainVerification({ className = '', comp
     <section className={`min-w-0 rounded-sm border border-slate-200 bg-white p-5 sm:p-6 ${className}`}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--brand-primary-soft)] text-[var(--brand-primary)]">
             <GlobalOutlined className="text-lg" />
           </span>
           <div className="min-w-0">

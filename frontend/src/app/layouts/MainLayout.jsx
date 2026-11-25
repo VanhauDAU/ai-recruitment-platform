@@ -4,12 +4,11 @@ import { SavedJobsProvider } from '@/features/main/job/saved-jobs'
 import { JobComparisonDock, JobComparisonProvider } from '@/features/main/job/compare-jobs'
 import { CampaignRefCapture } from '@/features/main/job/track-campaign-ref'
 import { ANNOUNCEMENT_SURFACES } from '@/entities/content/announcement'
-import { JobListRankingSync } from '@/entities/job/job'
 import { AnnouncementStrip } from '@/widgets/common/announcement-strip'
 import { FloatingActions } from '@/widgets/main/floating-actions'
 import { Footer } from '@/widgets/main/footer'
 import { JobPreferencesReminder } from '@/widgets/main/job-preferences-reminder'
-import { Header } from '@/widgets/main/header'
+import { Header, MobileTabBar } from '@/widgets/main/header'
 import { PopularSearches } from '@/widgets/main/popular-searches'
 
 export default function MainLayout() {
@@ -24,7 +23,6 @@ export default function MainLayout() {
     return (
       <JobComparisonProvider>
         <SavedJobsProvider>
-          <JobListRankingSync />
           <LoginPromptProvider>
             <div className="flex h-dvh flex-col overflow-hidden bg-gray-50">
               <Header editorMode />
@@ -47,7 +45,6 @@ export default function MainLayout() {
   return (
     <JobComparisonProvider>
       <SavedJobsProvider>
-        <JobListRankingSync />
         <CampaignRefCapture />
         <LoginPromptProvider>
           <div className="min-h-screen flex flex-col bg-gray-50">
@@ -73,6 +70,7 @@ export default function MainLayout() {
             <Footer />
             <JobComparisonDock />
             <FloatingActions />
+            <MobileTabBar />
           </div>
         </LoginPromptProvider>
       </SavedJobsProvider>

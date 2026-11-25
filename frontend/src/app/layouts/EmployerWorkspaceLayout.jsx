@@ -4,7 +4,6 @@ import {
   FileTextOutlined,
   LogoutOutlined,
   MenuOutlined,
-  MessageOutlined,
   PlusOutlined,
   QuestionCircleFilled,
   SearchOutlined,
@@ -42,6 +41,7 @@ import {
   employerRouteTitle,
   employerSelectedMenuKey,
 } from './EmployerWorkspaceNavigation'
+import '@/shared/ui/workspace-page/workspace-page.css'
 import './employer-workspace.css'
 
 const { Header, Sider, Content } = Layout
@@ -54,7 +54,7 @@ const EMPLOYER_SIDEBAR_COLLAPSED_WIDTH = 64
 function TopbarAction({ icon, label, prominent = false, to }) {
   const content = (
     <span
-      className={`hidden h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-bold lg:inline-flex ${prominent ? 'border-emerald-500/45 bg-emerald-500/15 text-emerald-300' : 'border-white/10 bg-white/10 text-slate-200'}`}
+      className={`hidden h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-bold lg:inline-flex ${prominent ? 'employer-topbar-action--prominent' : 'border-white/10 bg-white/10 text-slate-200'}`}
     >
       {icon}{label}
     </span>
@@ -66,7 +66,7 @@ function TopbarAction({ icon, label, prominent = false, to }) {
     <Tooltip title={m.employer_workspace_topbar_coming_tooltip({ label })}>
       <span
         aria-disabled="true"
-        className={`hidden h-8 cursor-not-allowed items-center gap-1.5 rounded-full border px-3 text-xs font-bold lg:inline-flex ${prominent ? 'border-emerald-500/45 bg-emerald-500/15 text-emerald-300' : 'border-white/10 bg-white/10 text-slate-200'}`}
+        className={`hidden h-8 cursor-not-allowed items-center gap-1.5 rounded-full border px-3 text-xs font-bold lg:inline-flex ${prominent ? 'employer-topbar-action--prominent' : 'border-white/10 bg-white/10 text-slate-200'}`}
       >
         {icon}{label}
       </span>
@@ -185,7 +185,7 @@ export default function EmployerWorkspaceLayout() {
 
   return (
     <Layout data-testid="employer-workspace" className="!flex !h-dvh !min-h-dvh !flex-col !overflow-hidden !bg-[#edf1f5]">
-      <Header data-testid="employer-topbar" className="!z-20 !flex !h-14 !shrink-0 !items-center !justify-between !bg-[#1e2f40] !px-3 !leading-none sm:!px-4">
+      <Header data-testid="employer-topbar" className="!z-20 !flex !h-14 !shrink-0 !items-center !justify-between employer-topbar !px-3 !leading-none sm:!px-4">
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <Button
             type="text"
@@ -207,8 +207,7 @@ export default function EmployerWorkspaceLayout() {
         <div className="flex items-center gap-2">
           <TopbarAction icon={<BarChartOutlined />} label={m.employer_workspace_topbar_market_survey()} prominent />
           <TopbarAction icon={<FileTextOutlined />} label={m.employer_workspace_topbar_post_job()} to={employerAppPath('/jobs/new')} />
-          <TopbarAction icon={<SearchOutlined />} label={m.employer_workspace_topbar_search_cv()} />
-          <TopbarAction icon={<MessageOutlined />} label="Connect" />
+          <TopbarAction icon={<SearchOutlined />} label={m.employer_workspace_topbar_search_cv()} to={employerAppPath('/candidate-search')} />
           <LanguageSwitcher className="!border-white/20 !text-white/80 hover:!text-white" />
           <EmployerNotificationBell />
           <Dropdown menu={accountMenu} trigger={['click']} placement="bottomRight">
@@ -258,9 +257,9 @@ export default function EmployerWorkspaceLayout() {
           onMouseLeave={() => setIsSidebarHovered(false)}
           trigger={null}
           data-testid="employer-sidebar"
-          className={`!h-full !overflow-hidden !border-r !border-slate-200 !bg-white ${isMobileViewport ? '!absolute !inset-y-0 !left-0 !z-40 !shadow-2xl' : ''}`}
+          className={`employer-sider !h-full !overflow-hidden ${isMobileViewport ? '!absolute !inset-y-0 !left-0 !z-40 !shadow-2xl' : ''}`}
         >
-          <div className="flex h-full flex-col bg-white">
+          <div className="flex h-full flex-col">
             <div className={`employer-sider__profile ${isCompactSidebar ? 'employer-sider__profile--compact' : ''}`}>
               {isCompactSidebar ? (
                 <Tooltip title={m.employer_workspace_title_account_info()} placement="right">
@@ -272,7 +271,10 @@ export default function EmployerWorkspaceLayout() {
                 <>
                   <Link to={EMPLOYER_ACCOUNT_SETTINGS_URL} aria-label={m.employer_workspace_title_account_info()} className="employer-sider__identity">
                     <Avatar size={36} src={user?.avatar_url || undefined} className="employer-sider__avatar">{initials}</Avatar>
-                    <span className="employer-sider__name">{user?.full_name || m.employer_workspace_employer_fallback_name()}</span>
+                    <span className="employer-sider__text">
+                      <span className="employer-sider__name">{user?.full_name || m.employer_workspace_employer_fallback_name()}</span>
+                      {user?.public_id && <span className="employer-sider__code">{m.employer_workspace_employer_code({ code: user.public_id })}</span>}
+                    </span>
                   </Link>
                   <span className="employer-sider__verification">
                     {m.employer_workspace_verification_level_label()} <strong>{m.employer_workspace_verification_level({ level: accountVerificationLevel.level, total: accountVerificationLevel.total })}</strong>
@@ -336,7 +338,7 @@ export default function EmployerWorkspaceLayout() {
                 <Button
                   type="primary"
                   icon={<PlusOutlined aria-hidden />}
-                  className="!h-9 !rounded-xl !border-0 !bg-gradient-to-r !from-emerald-600 !to-teal-600 !px-3.5 !font-semibold !shadow-md transition-all duration-200 hover:!-translate-y-0.5 hover:!from-emerald-500 hover:!to-teal-500 hover:!shadow-lg active:!translate-y-0"
+                  className="!h-9 !rounded-lg !px-3.5 !font-semibold !shadow-none"
                 >
                   {routeAction.label}
                 </Button>
@@ -345,14 +347,14 @@ export default function EmployerWorkspaceLayout() {
           </div>
           <Content
             data-testid="employer-workspace-content"
-            className="min-h-0 min-w-0 overflow-x-hidden overflow-y-auto bg-[#edf1f5] p-2.5 pt-3 sm:p-5 sm:pt-4 xl:p-6 xl:pt-4"
+            className="workspace-content min-h-0 min-w-0 overflow-x-hidden overflow-y-auto"
             style={{
               // 56px topbar + 48px route bar. A percentage here would resolve
               // against each descendant's containing block, not this scrollport.
               '--workspace-viewport': 'calc(100dvh - 104px - var(--announcement-strip-height, 0px))',
             }}
           >
-            <div className="mx-auto w-full max-w-[1320px]">
+            <div className="workspace-page">
               <Outlet />
             </div>
           </Content>

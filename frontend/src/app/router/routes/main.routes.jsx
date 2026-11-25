@@ -20,6 +20,7 @@ import {
   CompanyListPage,
   CompanySearchPage,
   EmailNotificationSettingsPage,
+  EmployerConnectionsPage,
   FollowedCompaniesPage,
   ForgotPasswordPage,
   HomePage,
@@ -27,6 +28,7 @@ import {
   JobComparisonPage,
   JobAlertSettingsPage,
   JobListPage,
+  NearbyJobsPage,
   CampaignLandingPage,
   KnowledgeCategoryPage,
   KnowledgeDetailPage,
@@ -57,6 +59,7 @@ import { AuthLayout, MainLayout, OnboardingLayout } from '../lazy/layouts'
 
 // Trang tài khoản đã xây thật, map theo item.key trong candidate-menu.
 const ACCOUNT_PAGE_BY_KEY = {
+  'saved-jobs': SavedJobsPage,
   'applied-jobs': AppliedJobsPage,
   'followed-companies': FollowedCompaniesPage,
   'personal-info': PersonalInfoPage,
@@ -67,6 +70,7 @@ const ACCOUNT_PAGE_BY_KEY = {
   'job-notifications': JobAlertSettingsPage,
   'matching-jobs': MatchingJobsPage,
   'talent-pools': TalentPoolsPage,
+  'employer-connections': EmployerConnectionsPage,
   security: SecuritySettingsPage,
 }
 
@@ -87,6 +91,7 @@ export function mainRoutes() {
       <Route path={COMPANY_DETAIL_ROUTE} element={<CompanyDetailPage />} />
       <Route path="/viec-lam" element={<JobListPage />} />
       <Route path="/viec-lam/tai/:locationSlug" element={<JobListPage />} />
+      <Route path="/viec-lam-gan-ban" element={<NearbyJobsPage />} />
       <Route path="/so-sanh-viec-lam" element={<JobComparisonPage />} />
       <Route path="/viec-lam/:slug" element={<JobDetailPage />} />
       <Route path="/tuyen-dung/:slug" element={<CampaignLandingPage />} />
@@ -126,7 +131,6 @@ export function mainRoutes() {
           nhập. Chỉ item có page thật trong registry mới được tạo route. */}
       <Route element={<AuthGuard />}>
         <Route element={<RoleGuard allowedRoles={['candidate']} />}>
-          <Route path="/viec-lam-da-luu" element={<SavedJobsPage />} />
           <Route path="/cvs/:publicId/edit" element={<CvEditorPage />} />
           <Route path="/save-cv-success/:publicId" element={<CvSaveSuccessPage />} />
           <Route path="/tai-cv-len" element={<UploadCvPage />} />

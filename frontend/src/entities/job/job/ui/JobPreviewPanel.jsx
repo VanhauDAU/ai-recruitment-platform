@@ -172,7 +172,7 @@ export default function JobPreviewPanel({
         <button
           type="button"
           onClick={onViewDetail}
-          className="inline-flex h-10 flex-[2] cursor-pointer items-center justify-center gap-2 rounded-md bg-[var(--brand-primary)] text-sm font-semibold text-white transition hover:bg-[#009944]"
+          className="inline-flex h-10 flex-[2] cursor-pointer items-center justify-center gap-2 rounded-md bg-[var(--brand-primary)] text-sm font-semibold text-white transition hover:bg-[var(--brand-primary-hover)]"
         >
           <EyeOutlined className="text-xs" />
           {m.common_show_details()}

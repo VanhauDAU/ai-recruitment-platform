@@ -68,7 +68,7 @@ export default function CvDownloadButton({ publicId, versionPublicId, title, ren
   return (
     <>
       {renderTrigger ? renderTrigger({ onClick: startDownload }) : (
-        <Button type="primary" shape="round" size="large" icon={<DownloadOutlined />} className="!bg-[#00b14f] hover:!bg-[#009643]" onClick={startDownload}>
+        <Button type="primary" shape="round" size="large" icon={<DownloadOutlined />} className="!bg-[var(--brand-primary)] hover:!bg-[#009643]" onClick={startDownload}>
           Tải về
         </Button>
       )}
@@ -77,13 +77,13 @@ export default function CvDownloadButton({ publicId, versionPublicId, title, ren
           {job?.status === 'completed' && !error ? (
             <CheckCircleFilled className="text-5xl text-[#00b14f]" />
           ) : (
-            <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-3xl text-[#00b14f]"><LoadingOutlined spin /></span>
+            <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[var(--brand-primary-soft)] text-3xl text-[var(--brand-primary)]"><LoadingOutlined spin /></span>
           )}
           <h3 className="mt-4 text-xl font-extrabold text-slate-800">
             {job?.status === 'completed' ? 'CV đã sẵn sàng!' : 'Đang chuẩn bị CV của bạn'}
           </h3>
           <p className="mt-2 text-sm text-slate-500">PDF được tạo từ đúng phiên bản vừa lưu trên máy chủ.</p>
-          <Progress className="mt-5" percent={progress} showInfo={false} strokeColor="#00b14f" />
+          <Progress className="mt-5" percent={progress} showInfo={false} strokeColor="var(--brand-primary)" />
           {error && <Alert className="mt-4 text-left" type="error" showIcon title={error} />}
           {(error || job?.status === 'failed') && <Button className="mt-4" icon={<ReloadOutlined />} loading={submitting} onClick={retry}>Thử lại</Button>}
           {job?.status === 'completed' && <Button className="mt-4" onClick={() => setOpen(false)}>Đóng</Button>}

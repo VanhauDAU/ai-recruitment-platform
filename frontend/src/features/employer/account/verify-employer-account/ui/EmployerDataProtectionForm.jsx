@@ -196,11 +196,11 @@ export default function EmployerDataProtectionForm() {
             >
               {candidateAgreementStatusMeta?.label || m.employer_account_docs_not_updated()}
             </Tag>
-            {candidateAgreementSubmitted && !editingCandidateAgreement && <Button aria-label={m.employer_account_dpa_edit_aria()} icon={<EditOutlined />} onClick={() => setEditingCandidateAgreement(true)} className="!border-emerald-500 !text-emerald-600 hover:!border-emerald-600 hover:!text-emerald-700">{m.employer_account_docs_edit()}</Button>}
+            {candidateAgreementSubmitted && !editingCandidateAgreement && <Button aria-label={m.employer_account_dpa_edit_aria()} icon={<EditOutlined />} onClick={() => setEditingCandidateAgreement(true)} className="!border-[var(--brand-primary)] !text-[var(--brand-primary)] hover:!border-[var(--brand-primary)] hover:!text-[var(--brand-primary-hover)]">{m.employer_account_docs_edit()}</Button>}
           </div>
         </div>
 
-        {guideUrl && <p className="mt-6 text-sm text-slate-500">{m.employer_account_dpa_guide_intro()}<a href={guideUrl} target="_blank" rel="noreferrer" className="font-medium !text-emerald-600 hover:!text-emerald-700">{m.employer_account_docs_guide_link()}</a></p>}
+        {guideUrl && <p className="mt-6 text-sm text-slate-500">{m.employer_account_dpa_guide_intro()}<a href={guideUrl} target="_blank" rel="noreferrer" className="font-medium !text-[var(--brand-primary)] hover:!text-[var(--brand-primary-hover)]">{m.employer_account_docs_guide_link()}</a></p>}
 
         {['rejected', 'changes_requested'].includes(candidateAgreementStatus) && (
           <Alert
@@ -240,7 +240,7 @@ export default function EmployerDataProtectionForm() {
               onOpenDocument={openPrivateDocument}
               openingDocument={documentPreviewMutation.isPending}
             >
-              <FileTextOutlined className="shrink-0 text-emerald-600 transition-colors group-hover:text-[var(--brand-primary)]" />
+              <FileTextOutlined className="shrink-0 text-[var(--brand-primary)] transition-colors group-hover:text-[var(--brand-primary)]" />
               <span className="truncate">{CANDIDATE_AGREEMENT_DOCUMENT_NAME}</span>
             </CandidateAgreementDocumentLink>
             <CandidateAgreementTemplate />
@@ -254,7 +254,7 @@ export default function EmployerDataProtectionForm() {
           <StatusTag completed={currentDpaAccepted} completedLabel={m.employer_account_dpa_confirmed()} pendingLabel={m.employer_account_dpa_not_confirmed()} />
         </div>
         <p className="mt-5 text-sm leading-6 text-slate-600">{m.employer_account_dpa_platform_intro({ siteName })}</p>
-        {platformDpaUrl && <a href={platformDpaUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-sm font-medium !text-emerald-600 hover:!text-emerald-700">{m.employer_account_dpa_view_full()} <LinkOutlined /></a>}
+        {platformDpaUrl && <a href={platformDpaUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-sm font-medium !text-[var(--brand-primary)] hover:!text-[var(--brand-primary-hover)]">{m.employer_account_dpa_view_full()} <LinkOutlined /></a>}
 
         {dpaStatus === 'grace' && (
           <Alert
@@ -276,7 +276,7 @@ export default function EmployerDataProtectionForm() {
         )}
 
         {currentDpaAccepted ? (
-          <p className="mt-4 text-sm text-emerald-700">{agreementAcceptedAt ? m.employer_account_dpa_accepted_at({ date: agreementAcceptedAt }) : m.employer_account_dpa_accepted()}</p>
+          <p className="mt-4 text-sm text-[var(--brand-primary-hover)]">{agreementAcceptedAt ? m.employer_account_dpa_accepted_at({ date: agreementAcceptedAt }) : m.employer_account_dpa_accepted()}</p>
         ) : (
           <>
             {!dpaPolicyAvailable && (
@@ -289,7 +289,7 @@ export default function EmployerDataProtectionForm() {
               />
             )}
             <div className="mt-4">
-              <Checkbox disabled={!dpaPolicyAvailable} checked={platformAgreementAccepted} onChange={(event) => setPlatformAgreementAccepted(event.target.checked)} className="!flex !items-start !text-sm !leading-5 !text-slate-600">{m.employer_account_dpa_agree_before()}{platformDpaUrl ? <a href={platformDpaUrl} target="_blank" rel="noreferrer" className="font-medium !text-emerald-600 hover:!text-emerald-700">{m.employer_account_dpa_agree_link()}</a> : m.employer_account_dpa_agree_link()}</Checkbox>
+              <Checkbox disabled={!dpaPolicyAvailable} checked={platformAgreementAccepted} onChange={(event) => setPlatformAgreementAccepted(event.target.checked)} className="!flex !items-start !text-sm !leading-5 !text-slate-600">{m.employer_account_dpa_agree_before()}{platformDpaUrl ? <a href={platformDpaUrl} target="_blank" rel="noreferrer" className="font-medium !text-[var(--brand-primary)] hover:!text-[var(--brand-primary-hover)]">{m.employer_account_dpa_agree_link()}</a> : m.employer_account_dpa_agree_link()}</Checkbox>
             </div>
             <div className="mt-4 flex justify-stretch sm:justify-end">
               <Button type="primary" size="large" disabled={!dpaPolicyAvailable || !platformAgreementAccepted} loading={acceptMutation.isPending} onClick={() => acceptMutation.mutate(dpaPolicy)} className="w-full !shadow-none sm:!min-w-[112px] sm:w-auto">{m.employer_account_dpa_confirm()}</Button>

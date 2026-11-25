@@ -1,13 +1,5 @@
 import { UserOutlined } from '@ant-design/icons'
 import { useEffect, useRef, useState } from 'react'
-import { m } from '@/shared/config/i18n'
-
-const DEFAULT_MESSAGES = [
-  { from: 'recruiter', text: m.ui_chat_demo_recruiter_1() },
-  { from: 'candidate', text: m.ui_chat_demo_candidate_1() },
-  { from: 'recruiter', text: m.ui_chat_demo_recruiter_2() },
-  { from: 'candidate', text: m.ui_chat_demo_candidate_2() },
-]
 
 const TYPING_MS = 950
 const READ_MS = 900
@@ -17,10 +9,10 @@ const prefersReduced = () =>
   typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
 export default function ChatShowcase({
-  messages = DEFAULT_MESSAGES,
-  avatarInitials = 'MA',
-  headerName = 'Minh Anh',
-  headerStatus = m.ui_chat_demo_status(),
+  messages,
+  avatarInitials,
+  headerName,
+  headerStatus,
   matchPercentage,
   dark = true,
 }) {
@@ -75,7 +67,7 @@ export default function ChatShowcase({
         @keyframes chatIn { from { opacity: 0; transform: translateY(10px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
         .chat-in { animation: chatIn 0.34s cubic-bezier(0.22,1,0.36,1) both; }
         @keyframes chatDot { 0%,60%,100% { opacity: 0.3; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
-        .chat-dot { width: 5px; height: 5px; border-radius: 9999px; background: ${dark ? 'rgba(255,255,255,0.75)' : 'rgba(0,177,79,0.75)'}; animation: chatDot 1.1s ease-in-out infinite; }
+        .chat-dot { width: 5px; height: 5px; border-radius: 9999px; background: ${dark ? 'rgba(255,255,255,0.75)' : 'color-mix(in srgb, var(--brand-primary) 75%, transparent)'}; animation: chatDot 1.1s ease-in-out infinite; }
         @media (prefers-reduced-motion: reduce) { .chat-in, .chat-dot { animation: none !important; } }
       `}</style>
 
@@ -83,7 +75,7 @@ export default function ChatShowcase({
         className={`overflow-hidden rounded-2xl border transition-all duration-300 shadow-xl ${
           dark
             ? 'border-white/10 bg-[#0b3320]/75 shadow-black/30 backdrop-blur-md text-white'
-            : 'border-emerald-100 bg-white shadow-emerald-950/5 text-gray-800'
+            : 'border-[var(--brand-primary)]/20 bg-white shadow-[var(--brand-primary)]/5 text-gray-800'
         }`}
       >
         {/* Header */}
@@ -107,7 +99,7 @@ export default function ChatShowcase({
           {matchPercentage && (
             <span
               className={`ml-auto shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                dark ? 'bg-[var(--brand-primary)]/20 text-[#4ade80]' : 'bg-emerald-50 text-[var(--brand-primary)]'
+                dark ? 'bg-[var(--brand-primary)]/20 text-[#4ade80]' : 'bg-[var(--brand-primary-soft)] text-[var(--brand-primary)]'
               }`}
             >
               {matchPercentage}
@@ -128,11 +120,11 @@ export default function ChatShowcase({
 }
 
 function Avatar({ from }) {
-  const isCandidate = from === 'candidate'
+  const isUser = from === 'user'
   return (
     <div
       className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] text-white ${
-        isCandidate ? 'bg-[var(--brand-primary)]' : 'bg-gray-400/20'
+        isUser ? 'bg-[var(--brand-primary)]' : 'bg-gray-400/20'
       }`}
     >
       <UserOutlined className="text-[11px]" />
@@ -141,13 +133,13 @@ function Avatar({ from }) {
 }
 
 function Bubble({ from, text, dark }) {
-  const isCandidate = from === 'candidate'
+  const isUser = from === 'user'
   return (
-    <div className={`chat-in flex items-end gap-2 ${isCandidate ? 'flex-row-reverse' : 'flex-row'}`}>
+    <div className={`chat-in flex items-end gap-2 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
       <Avatar from={from} />
       <div
         className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-[13px] leading-snug shadow-sm ${
-          isCandidate
+          isUser
             ? 'rounded-br-sm bg-[var(--brand-primary)] text-white'
             : dark
             ? 'rounded-bl-sm bg-white/12 text-green-50'
@@ -161,13 +153,13 @@ function Bubble({ from, text, dark }) {
 }
 
 function TypingBubble({ side, dark }) {
-  const isCandidate = side === 'candidate'
+  const isUser = side === 'user'
   return (
-    <div className={`chat-in flex items-end gap-2 ${isCandidate ? 'flex-row-reverse' : 'flex-row'}`}>
+    <div className={`chat-in flex items-end gap-2 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
       <Avatar from={side} />
       <div
         className={`flex items-center gap-1 rounded-2xl px-3.5 py-3 ${
-          isCandidate
+          isUser
             ? 'rounded-br-sm bg-[var(--brand-primary)]/80'
             : dark
             ? 'rounded-bl-sm bg-white/12'

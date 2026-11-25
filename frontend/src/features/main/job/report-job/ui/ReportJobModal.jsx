@@ -61,7 +61,7 @@ export default function ReportJobModal({
       onCancel={handleClose}
       open={open}
       title={(
-        <h2 className="m-0 text-center text-xl font-bold text-emerald-600 sm:text-2xl">
+        <h2 className="m-0 text-center text-xl font-bold text-[var(--brand-primary)] sm:text-2xl">
           Phản ánh tin tuyển dụng không chính xác
         </h2>
       )}

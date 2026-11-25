@@ -1,4 +1,4 @@
-import { BankOutlined, DownOutlined, FilterOutlined, PushpinOutlined, UpOutlined } from '@ant-design/icons'
+import { BankOutlined, DownOutlined, FilterOutlined, PushpinOutlined, ThunderboltFilled, UpOutlined } from '@ant-design/icons'
 import { Button, Checkbox, InputNumber, Select, Skeleton } from 'antd'
 import {
   EMPLOYMENT_TYPE_LABELS,
@@ -8,6 +8,7 @@ import {
   WORK_TYPE_LABELS,
   formatNumber,
 } from '@/entities/job/job'
+import { m } from '@/shared/config/i18n'
 import { VISIBLE_GROUPS } from '../lib/job-list-params'
 import { FilterSection, FilterSkeleton, MultiChips, SingleChips } from './FilterControls'
 
@@ -60,6 +61,15 @@ export default function JobFilterSidebar({
           <FilterOutlined className="text-[var(--brand-primary)]" />
           <span className="text-base font-bold text-gray-900">Lọc nâng cao</span>
         </div>
+
+        <Checkbox
+          checked={searchParams.get('fast') === '1'}
+          onChange={(event) => onUpdateParams({ fast: event.target.checked ? '1' : null })}
+          className="!mb-4"
+        >
+          <ThunderboltFilled className="mr-1 text-amber-500" aria-hidden="true" />
+          {m.candidate_job_filter_fast_response()}
+        </Checkbox>
 
         <div id="cat-filter">
           <FilterSection title="Theo danh mục nghề">

@@ -47,7 +47,7 @@ export default function ChatComposer({
             loading={busy}
             disabled={catalog.loading && step.needsCatalog}
             onClick={() => onSend()}
-            className="!h-10 !rounded-full !border-emerald-700 !bg-emerald-600 !px-6 !font-semibold hover:!bg-emerald-700"
+            className="!h-10 !rounded-full !border-[var(--brand-primary)] !bg-[var(--brand-primary)] !px-6 !font-semibold hover:!bg-[var(--brand-primary-hover)]"
           >
             {sendLabel}
           </Button>

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { ADMIN_ROUTES } from '../../../src/app/router/admin/admin-routes.config.js'
-import { API_ROUTE, expectAnimatedLoginButton, mockPublicApi } from './helpers'
+import { API_ROUTE, chooseSelectOption, expectAnimatedLoginButton, mockPublicApi } from './helpers'
 
 test('admin smoke: login loads and dashboard stays role-protected', { tag: '@responsive' }, async ({ page }) => {
   // One full navigation per admin route (23 and growing): the budget has to
@@ -169,7 +169,7 @@ test('admin account management: filters, table actions and quick detail are resp
   }
   // The account workspace is one of the largest lazy chunks; leave headroom
   // when the full smoke suite compiles several portals in parallel.
-  await expect(page.getByRole('region', { name: 'Tổng quan tài khoản' })).toBeVisible({
+  await expect(page.getByRole('group', { name: 'Tổng quan tài khoản' })).toBeVisible({
     timeout: 15_000,
   })
   await expect(page.getByPlaceholder('Tìm theo tên, email hoặc mã tài khoản')).toBeVisible()
@@ -189,7 +189,7 @@ test('admin account management: filters, table actions and quick detail are resp
 
   await page.goto('/admin/app/recruiters?tab=verification')
   await expect(page.getByRole('heading', {
-    name: 'Nhà tuyển dụng',
+    name: 'Xác thực NTD',
     exact: true,
   })).toBeVisible()
   const verificationTab = page.getByRole('tab', { name: /Chờ xác thực NTD/ })
@@ -201,8 +201,7 @@ test('admin account management: filters, table actions and quick detail are resp
   await expect(page.getByText('NTD chờ duyệt')).toBeVisible()
   await expect(page.getByText('NTD đang xử lý')).toBeVisible()
   expect(verificationQueueStatus).toBe('actionable')
-  await expect.poll(() => page.getByRole('tabpanel', { name: /Chờ xác thực NTD/ })
-    .locator('.account-management-tab-content')
+  await expect.poll(() => page.locator('#admin-main .account-management-tab-content')
     .evaluate((element) => getComputedStyle(element).paddingTop)).toBe(isMobile ? '16px' : '24px')
   await expect(page.locator('html')).toHaveJSProperty(
     'scrollWidth',
@@ -288,12 +287,14 @@ test('admin recruiter workspace: segments, next action and quick view', { tag: '
               ? { results: [], next_cursor: null, category_counts: { all: 0 } }
               : path === '/api/admin/company-domain-claims/summary/'
                 ? { total: 0, manual_pending: 0 }
-                : {}
+                : path === '/api/public/privacy/consent/'
+                  ? { consent: { necessary: true, preferences: false, analytics: false, marketing: false } }
+                  : {}
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })
 
   await page.goto('/admin/app/recruiters')
-  const segments = page.getByRole('region', { name: 'Tổng quan nhà tuyển dụng' })
+  const segments = page.getByRole('group', { name: 'Tổng quan nhà tuyển dụng' })
   await expect(segments).toBeVisible({ timeout: 15_000 })
   await expect(page.getByPlaceholder('Tìm tên, email, công ty, MST hoặc số điện thoại…')).toBeVisible()
   const queueTile = segments.getByRole('button', { name: /Cần admin duyệt/ })
@@ -474,9 +475,10 @@ test('superuser recovers email, then sends password reset', { tag: '@responsive'
 
   await page.goto('/admin/app/accounts/usr_recovery?tab=security')
   await expect(page.getByRole('heading', { name: 'Nguyễn Cần Hỗ Trợ' })).toBeVisible()
-  await expect(page.getByText('Khôi phục quyền truy cập'))
-    .toBeVisible()
+  // Tab Bảo mật xử lý theo tình huống; tiến trình khôi phục chỉ hiện sau khi đổi email.
+  await expect(page.getByRole('heading', { name: 'Không đăng nhập được' })).toBeVisible()
   await expect(page.getByText(/không có mật khẩu tạm/i)).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Khôi phục quyền truy cập' })).toHaveCount(0)
 
   await page.getByRole('button', { name: 'Đổi email đăng nhập' }).click()
   const emailDialog = page.getByRole('dialog', { name: 'Khôi phục email đăng nhập' })
@@ -511,6 +513,7 @@ test('superuser recovers email, then sends password reset', { tag: '@responsive'
   await emailDialog.getByRole('button', { name: 'Đổi email' }).click()
   await expect(emailDialog).toBeHidden()
   await expect(page.getByText('new-identity@example.com', { exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Khôi phục quyền truy cập' })).toBeVisible()
   await expect(page.getByText('Tiếp theo: gửi link đặt lại mật khẩu'))
     .toBeVisible()
   await expect(page.getByRole('button', { name: 'Gửi đặt lại mật khẩu' }))
@@ -1015,8 +1018,6 @@ test('admin job management: list, detail and revision-bound hide workflow', { ta
     policy_hold_label: 'Không giữ',
     moderation_hold: '',
     moderation_hold_label: 'Không giữ',
-    tier: 'standard',
-    tier_label: 'Tin thường',
     deadline: '2026-08-30',
     submitted_at: '2026-07-30T09:00:00Z',
     updated_at: '2026-07-30T09:00:00Z',
@@ -1129,8 +1130,7 @@ test('admin job management: list, detail and revision-bound hide workflow', { ta
 
   await page.getByRole('button', { name: 'Tạm ẩn tin' }).click()
   const dialog = page.getByRole('dialog')
-  await dialog.getByRole('combobox', { name: 'Căn cứ xử lý' }).click()
-  await page.locator('.ant-select-dropdown:visible').getByText('Có dấu hiệu lừa đảo', { exact: true }).click()
+  await chooseSelectOption(page, dialog.getByRole('combobox', { name: 'Căn cứ xử lý' }), 'Có dấu hiệu lừa đảo')
   await dialog.getByRole('textbox', { name: 'Ghi chú tạm ẩn' }).fill('Cần xác minh lại nội dung.')
   await dialog.getByRole('button', { name: 'Tạm ẩn tin' }).click()
 

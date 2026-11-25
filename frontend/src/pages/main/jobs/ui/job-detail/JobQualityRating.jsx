@@ -1,14 +1,30 @@
-import { CheckCircleFilled, MehOutlined, SmileOutlined, FrownOutlined } from '@ant-design/icons'
 import { useState } from 'react'
 import { message } from '@/shared/lib/toast'
+import { useMediaQuery } from '@/shared/hooks/use-media-query'
+import './job-rating.css'
+
+// Emoji động Noto (CC BY 4.0) — nguồn và cách tạo file ở public/images/emoji/README.md.
+const EMOJI_DIR = '/images/emoji'
 
 const RATING_OPTIONS = [
-  { value: 1, label: 'Không đáng tin cậy & rõ ràng', icon: <FrownOutlined /> },
-  { value: 2, label: 'Ít đáng tin cậy & rõ ràng', icon: <FrownOutlined /> },
-  { value: 3, label: 'Bình thường', icon: <MehOutlined /> },
-  { value: 4, label: 'Đáng tin cậy & rõ ràng', icon: <SmileOutlined /> },
-  { value: 5, label: 'Rất đáng tin cậy & rõ ràng', icon: <CheckCircleFilled /> },
+  { value: 1, label: 'Không đáng tin cậy & rõ ràng', emoji: 'crying', tone: '#e11d48', toneText: '#be123c' },
+  { value: 2, label: 'Ít đáng tin cậy & rõ ràng', emoji: 'sad', tone: '#f97316', toneText: '#c2410c' },
+  { value: 3, label: 'Bình thường', emoji: 'neutral', tone: '#64748b', toneText: '#475569' },
+  { value: 4, label: 'Đáng tin cậy & rõ ràng', emoji: 'happy', tone: '#10b981', toneText: '#047857' },
+  { value: 5, label: 'Rất đáng tin cậy & rõ ràng', emoji: 'star-struck', tone: '#f59e0b', toneText: '#b45309' },
 ]
+
+const toneStyle = (option) => option && { '--tone': option.tone, '--tone-text': option.toneText }
+
+// Bản tĩnh luôn hiện; bản động chỉ gắn khi cần để không tải 5 ảnh động cùng lúc.
+function RatingEmoji({ name, animated, className = 'job-rating__emoji' }) {
+  return (
+    <span className={className} aria-hidden="true">
+      <img src={`${EMOJI_DIR}/${name}-static.webp`} alt="" width={56} height={56} loading="lazy" decoding="async" />
+      {animated && <img src={`${EMOJI_DIR}/${name}.webp`} alt="" width={56} height={56} decoding="async" />}
+    </span>
+  )
+}
 
 const ISSUE_OPTIONS = [
   'Mô tả công việc không rõ ràng, đọc xong không hiểu rõ nhiệm vụ cần phải làm gì',
@@ -30,6 +46,9 @@ export default function JobQualityRating({ jobId }) {
     jobId && window.localStorage.getItem(`job-quality-feedback:${jobId}`),
   ))
   const [showThanks, setShowThanks] = useState(false)
+  const [hovered, setHovered] = useState(null)
+  const reduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
+  const selectedOption = RATING_OPTIONS.find((option) => option.value === selected)
   const needsReason = selected !== null && selected <= 3
   const canSubmit = selected !== null && (!needsReason || issues.length > 0)
 
@@ -55,8 +74,8 @@ export default function JobQualityRating({ jobId }) {
   if (hasSubmitted) {
     if (!showThanks) return null
     return (
-      <section className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-5 text-center shadow-sm sm:p-6">
-        <CheckCircleFilled className="text-3xl text-[var(--brand-primary)]" />
+      <section className="rounded-2xl border border-[var(--brand-primary)]/20 bg-[var(--brand-primary-soft)] p-5 text-center shadow-sm sm:p-6">
+        <RatingEmoji name={selectedOption?.emoji || 'happy'} animated={!reduceMotion} className="job-rating__emoji job-rating__thanks-emoji" />
         <h2 className="mt-3 text-base font-bold text-slate-800">Cảm ơn bạn đã đánh giá</h2>
         <p className="mt-1 text-sm text-slate-600">Phản hồi của bạn giúp cải thiện chất lượng tin tuyển dụng.</p>
       </section>
@@ -67,7 +86,7 @@ export default function JobQualityRating({ jobId }) {
     <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
       <h2 className="border-l-4 border-[var(--brand-primary)] pl-3 text-base font-bold text-slate-800 sm:text-lg">Đánh giá tin tuyển dụng</h2>
       <p className="mt-4 text-sm text-slate-600">Bạn thấy độ tin cậy và rõ ràng của tin tuyển dụng này thế nào?</p>
-      <div className="job-rating__options mt-4 grid grid-cols-1 gap-2 sm:grid-cols-5">
+      <div className={`job-rating__options${selected ? ' has-selection' : ''}`}>
         {RATING_OPTIONS.map((option) => {
           const active = selected === option.value
           return (
@@ -77,20 +96,19 @@ export default function JobQualityRating({ jobId }) {
               aria-label={option.label}
               aria-pressed={active}
               onClick={() => selectRating(option.value)}
-              className={`job-rating__option flex min-h-20 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border px-2 text-center text-xs transition ${
-                active
-                  ? 'border-[var(--brand-primary)] bg-[var(--brand-primary-soft)] font-semibold text-[var(--brand-primary)]'
-                  : 'border-slate-200 bg-white text-slate-500 hover:border-emerald-300 hover:bg-emerald-50'
-              }`}
+              onPointerEnter={() => setHovered(option.value)}
+              onPointerLeave={() => setHovered(null)}
+              className={`job-rating__option${active ? ' is-active' : ''}`}
+              style={toneStyle(option)}
             >
-              <span className="text-xl">{option.icon}</span>
+              <RatingEmoji name={option.emoji} animated={!reduceMotion && (active || hovered === option.value)} />
               <span className="job-rating__label">{option.label}</span>
             </button>
           )
         })}
       </div>
-      <p className="job-rating__caption" aria-hidden="true">
-        {RATING_OPTIONS.find((option) => option.value === selected)?.label || 'Chạm biểu tượng để chọn mức đánh giá'}
+      <p className="job-rating__caption" aria-hidden="true" style={toneStyle(selectedOption)}>
+        {selectedOption?.label || 'Chạm biểu tượng để chọn mức đánh giá'}
       </p>
       {needsReason && (
         <div className="mt-5">

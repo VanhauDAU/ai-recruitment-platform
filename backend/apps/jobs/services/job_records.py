@@ -19,6 +19,7 @@ from ..models import (
     JobSkill,
     JobWorkSchedule,
 )
+from .coordinates import assign_coordinates, schedule_geocoding
 from .policy import auto_reject_default_days
 
 # Form field -> row model; each field is also the reverse accessor on Job.
@@ -68,7 +69,12 @@ def _replace_relations(job, relations):
             continue
         model = JOB_RELATIONS[field]
         getattr(job, field).all().delete()
-        model.objects.bulk_create([model(job=job, **item) for item in values])
+        rows = [model(job=job, **item) for item in values]
+        if model is JobLocation:
+            assign_coordinates(rows)
+        model.objects.bulk_create(rows)
+        if model is JobLocation and any(row.geocode_pending for row in rows):
+            schedule_geocoding(job.pk)
 
 
 def _replace_application_contact(job, contact_data):

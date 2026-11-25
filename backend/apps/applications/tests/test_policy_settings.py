@@ -44,11 +44,11 @@ class ApplicationPolicySettingsTests(TestCase):
 
     def test_out_of_range_values_are_clamped_instead_of_breaking_the_flow(self):
         _set('application_max_per_job', 0)
-        _set('candidate_status_notify_delay_minutes', 999)
+        _set('candidate_status_notify_delay_seconds', 999)
         _set('review_link_max_days', -4)
 
         self.assertEqual(policy.max_applications_per_job(), 1)
-        self.assertEqual(policy.candidate_status_notification_delay(), timedelta(minutes=60))
+        self.assertEqual(policy.candidate_status_notification_delay(), timedelta(seconds=60))
         self.assertEqual(policy.review_link_max_days(), 1)
 
     def test_recruiter_reminder_days_are_sorted_unique_and_in_range(self):

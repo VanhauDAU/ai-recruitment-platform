@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { EnvironmentOutlined } from '@ant-design/icons'
 import { Link, useNavigate } from 'react-router'
-import { companyInitial, formatLocations, formatSalary, getJobs, jobCardToneClass, JOB_LOGO_TINTS, jobDetailPath, JobPresentationLabels, JobPreviewPanel, stripCompanyPrefix } from '@/entities/job/job'
+import { companyInitial, formatLocations, formatSalary, getJobs, JOB_LOGO_TINTS, jobDetailPath, JobPresentationLabels, JobPreviewPanel, stripCompanyPrefix } from '@/entities/job/job'
 import { JobImpressionBoundary } from '@/features/main/job/track-job-engagement'
 
 // Khối "Danh sách việc làm ..." trong bài, lấy theo danh mục nghề liên quan.
@@ -44,12 +44,12 @@ export default function BlogRelatedJobs({ jobCategory }) {
   if (!jobCategory?.id || jobs.length === 0) return null
 
   return (
-    <section className="my-6 rounded-2xl border border-emerald-100 bg-emerald-50/40 p-4">
+    <section className="my-6 rounded-2xl border border-[var(--brand-primary)]/20 bg-[var(--brand-primary-soft)] p-4">
       <h2 className="mb-3 text-lg font-bold text-slate-800">
         Việc làm {jobCategory.name}
       </h2>
       <p className="mb-3 text-xs text-slate-500">Di chuột vào một việc làm để xem nhanh thông tin chi tiết.</p>
-      <ul className="max-h-[26rem] space-y-2 overflow-y-scroll pr-2 [scrollbar-gutter:stable] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-emerald-300 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-emerald-50 sm:max-h-[30rem]">
+      <ul className="max-h-[26rem] space-y-2 overflow-y-scroll pr-2 [scrollbar-gutter:stable] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[var(--brand-primary)]/20 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-[var(--brand-primary-soft)] sm:max-h-[30rem]">
         {jobs.map((job) => (
           <JobImpressionBoundary
             as="li"
@@ -63,7 +63,7 @@ export default function BlogRelatedJobs({ jobCategory }) {
               to={jobDetailPath(job)}
               target="_blank"
               rel="noopener"
-              className={`group flex items-center gap-3 rounded-xl border p-3 transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:shadow-md ${jobCardToneClass(job)}`}
+              className={`group flex items-center gap-3 rounded-xl border p-3 transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:shadow-md border-slate-200 bg-white`}
             >
               <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-100 bg-slate-50 text-sm font-bold text-slate-500">
                 {job.company_logo_url ? (

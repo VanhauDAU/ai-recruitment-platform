@@ -1,4 +1,4 @@
-import { DesktopOutlined, EnvironmentOutlined } from '@ant-design/icons'
+import { DesktopOutlined, EnvironmentOutlined, MobileOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Empty, Skeleton, Tag } from 'antd'
 import { listSessions, revokeOtherSessions, revokeSession } from '../api/session-management.api'
@@ -15,6 +15,8 @@ function timeAgo(iso) {
   if (hours < 24) return m.account_sessions_hours_ago({ count: hours })
   return m.account_sessions_days_ago({ count: Math.floor(hours / 24) })
 }
+
+const MOBILE_DEVICE = /iphone|ipad|android|mobile/i
 
 export default function SessionManager() {
   const queryClient = useQueryClient()
@@ -62,9 +64,19 @@ export default function SessionManager() {
       ) : (
         <ul className="space-y-3">
           {sessions.map((session) => (
-            <li key={session.id} className="flex items-center justify-between gap-4 rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
-              <div className="flex min-w-0 items-start gap-3">
-                <DesktopOutlined className="mt-1 text-lg text-slate-400" />
+            <li
+              key={session.id}
+              className={`flex items-center justify-between gap-3 rounded-xl border p-3.5 sm:p-4 ${
+                session.current ? 'border-[var(--brand-primary)]/30 bg-[var(--brand-primary-soft)]' : 'border-slate-100 bg-white shadow-sm'
+              }`}
+            >
+              <div className="flex min-w-0 items-center gap-3">
+                <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg ${
+                  session.current ? 'bg-white text-[var(--brand-primary)]' : 'bg-slate-100 text-slate-500'
+                }`}
+                >
+                  {MOBILE_DEVICE.test(session.device_label || '') ? <MobileOutlined aria-hidden /> : <DesktopOutlined aria-hidden />}
+                </span>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2 font-semibold text-slate-800">
                     {session.device_label}

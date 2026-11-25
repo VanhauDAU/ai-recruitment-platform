@@ -1,7 +1,7 @@
-import { FireOutlined, SearchOutlined } from '@ant-design/icons'
+import { EnvironmentOutlined, FireOutlined, SearchOutlined } from '@ant-design/icons'
 import { Button, Input, Typography } from 'antd'
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { formatNumber, getJobCategories, getJobs } from '@/entities/job/job'
 import { getBanners, HOME_HERO_PLACEMENT } from '@/entities/content/banner'
 import { useSiteSettings } from '@/entities/system/site-settings'
@@ -19,6 +19,7 @@ import MarketStats from './ui/MarketStats'
 import { SearchDropdown, saveHistory } from '@/features/main/job/search-jobs'
 import { HeroSlide } from '@/widgets/common/hero-banner'
 import { CandidateJobRecommendations, useHomeRecommendationSummary } from '@/widgets/main/candidate-job-recommendations'
+import { m } from '@/shared/config/i18n'
 import './home-mascot.css'
 
 const SUGGESTED_JOBS = [
@@ -34,17 +35,17 @@ function StatsSlide({ jobCount, categoryCount }) {
   return (
     <div className="h-full flex flex-col justify-center rounded-md bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-primary-hover)] text-white px-5 py-4 sm:px-12 sm:py-6">
       <h3 className="text-lg sm:text-2xl font-bold">Tiếp lợi thế, nối thành công</h3>
-      <p className="mt-2 text-sm sm:text-base text-green-50 max-w-md line-clamp-2">
+      <p className="mt-2 text-sm sm:text-base home-hero-muted max-w-md line-clamp-2">
         Hệ sinh thái nhân sự ứng dụng AI: tạo CV chuyên nghiệp, phân tích CV, so khớp việc làm và luyện phỏng vấn thông minh.
       </p>
       <div className="mt-3 sm:mt-5 flex gap-8">
         <div>
           <p className="text-xl sm:text-2xl font-bold">{formatNumber(jobCount)}</p>
-          <p className="text-sm text-green-50">Việc làm đang tuyển</p>
+          <p className="text-sm home-hero-muted">Việc làm đang tuyển</p>
         </div>
         <div>
           <p className="text-xl sm:text-2xl font-bold">{categoryCount}</p>
-          <p className="text-sm text-green-50">Danh mục ngành nghề</p>
+          <p className="text-sm home-hero-muted">Danh mục ngành nghề</p>
         </div>
       </div>
     </div>
@@ -130,10 +131,10 @@ export default function Home() {
         <div className="pointer-events-none absolute inset-0 z-[1] overflow-hidden">
           <div className="absolute left-1/2 top-0 h-64 w-[760px] -translate-x-1/2 rounded-full bg-white/10 blur-3xl" />
           <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.32)_1px,transparent_0)] bg-[length:30px_30px]" />
-          <div className="absolute bottom-[-120px] right-[18%] h-72 w-72 rounded-full bg-emerald-300/25 blur-3xl" />
+          <div className="absolute bottom-[-120px] right-[18%] h-72 w-72 rounded-full home-hero-glow blur-3xl" />
         </div>
         <div className="relative z-10 max-w-6xl mx-auto px-4 pt-12 pb-16 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/12 px-4 py-1.5 text-sm font-semibold text-green-50 shadow-sm backdrop-blur">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/12 px-4 py-1.5 text-sm font-semibold home-hero-muted shadow-sm backdrop-blur">
             <FireOutlined className="text-amber-200" />
             {formatNumber(jobCount)} việc làm đang tuyển hôm nay
           </div>
@@ -141,7 +142,7 @@ export default function Home() {
           <Typography.Title level={1} className="!text-white !mb-3 !mt-5 !text-3xl md:!text-4xl !font-extrabold">
             {siteName} — Tạo CV, Tìm việc làm, Tuyển dụng hiệu quả
           </Typography.Title>
-          <Typography.Paragraph className="!text-green-50 !text-base md:!text-lg !mb-0">
+          <Typography.Paragraph className="home-hero-muted !text-base md:!text-lg !mb-0">
             Tiếp lợi thế, nối thành công cùng nền tảng nhân sự ứng dụng AI.
           </Typography.Paragraph>
 
@@ -149,7 +150,7 @@ export default function Home() {
             <HomeHeroMascot />
             <div
               ref={searchBoxRef}
-              className="relative z-40 rounded-2xl border border-white/20 bg-white/95 p-2.5 shadow-2xl shadow-emerald-950/25 backdrop-blur"
+              className="relative z-40 rounded-2xl border border-white/20 bg-white/95 p-2.5 shadow-2xl shadow-slate-900/15 backdrop-blur"
             >
               <div className="flex flex-col md:flex-row gap-2.5">
                 <Input
@@ -189,18 +190,30 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="mt-4 max-w-6xl mx-auto flex items-center gap-2 overflow-x-auto pb-1 text-left md:flex-wrap md:justify-center md:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <span className="shrink-0 px-2 text-sm font-semibold text-green-50">Gợi ý:</span>
-            {SUGGESTED_JOBS.map((job) => (
-              <button
-                key={job}
-                type="button"
-                onClick={() => handleSuggestedJob(job)}
-                className="shrink-0 cursor-pointer rounded-full border border-white/70 bg-white px-4 py-2 text-sm font-semibold text-[var(--brand-primary-hover)] shadow-sm transition hover:-translate-y-0.5 hover:border-white hover:bg-green-50 hover:shadow-md"
-              >
-                {job}
-              </button>
-            ))}
+          {/* Một hàng: vừa thì canh giữa, chật thì vuốt ngang (không xuống dòng). */}
+          <div className="mt-4 max-w-6xl mx-auto overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="mx-auto flex w-max items-center gap-1.5 text-left">
+              <span className="shrink-0 px-1 text-sm font-semibold home-hero-muted">Gợi ý:</span>
+              {show('nearby_jobs_enabled') && (
+                <Link
+                  to="/viec-lam-gan-ban"
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-amber-200 !bg-amber-300 px-3 py-1.5 text-[13px] font-bold !text-emerald-950 shadow-sm transition hover:-translate-y-0.5 hover:!bg-amber-200 hover:shadow-md"
+                >
+                  <EnvironmentOutlined aria-hidden />
+                  {m.candidate_nearby_hero_link()}
+                </Link>
+              )}
+              {SUGGESTED_JOBS.map((job) => (
+                <button
+                  key={job}
+                  type="button"
+                  onClick={() => handleSuggestedJob(job)}
+                  className="shrink-0 cursor-pointer rounded-full border border-white/70 bg-white px-3 py-1.5 text-[13px] font-semibold text-[var(--brand-primary-hover)] shadow-sm transition hover:-translate-y-0.5 hover:border-white hover:bg-green-50 hover:shadow-md"
+                >
+                  {job}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -232,9 +245,14 @@ export default function Home() {
         </section>
       )}
 
-      <section className="pt-8">
-        <FlashBadge />
-      </section>
+      {show('flash_badge_enabled') && (
+        <section className="pt-8">
+          <FlashBadge
+            responseRate={settings.flash_badge_min_response_rate}
+            responseHours={settings.flash_badge_response_hours}
+          />
+        </section>
+      )}
 
       {show('home_show_cv_templates') && <CvTemplateShowcase />}
       <FeaturedIndustriesEmployers />

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "profile_json (extract-v3)",
+  "title": "profile_json (extract-v4)",
   "description": "Hồ sơ đã chuẩn hóa của một CV hoặc một tin tuyển dụng: đầu vào của bước mã hóa và chấm điểm. Lưu ở MatchDocument.profile_json.",
   "oneOf": [
     {
@@ -139,7 +139,8 @@
         "languages",
         "locations",
         "chunks",
-        "quality"
+        "quality",
+        "sections"
       ],
       "properties": {
         "kind": {
@@ -293,6 +294,76 @@
           "type": "array",
           "maxItems": 0,
           "description": "CV không mang địa điểm; địa điểm lấy từ nơi làm việc mong muốn của ứng viên."
+        },
+        "sections": {
+          "type": "array",
+          "description": "Nội dung CV theo mục để hiển thị (\"hồ sơ trích xuất\"), đầy đủ hơn chunks; không dùng để chấm điểm.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "key",
+              "items"
+            ],
+            "properties": {
+              "key": {
+                "enum": [
+                  "summary",
+                  "experience",
+                  "projects",
+                  "education",
+                  "skills",
+                  "certifications",
+                  "awards",
+                  "activities",
+                  "languages",
+                  "interests",
+                  "other"
+                ]
+              },
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "title",
+                    "subtitle",
+                    "start",
+                    "end",
+                    "lines"
+                  ],
+                  "properties": {
+                    "title": {
+                      "type": "string"
+                    },
+                    "subtitle": {
+                      "type": "string"
+                    },
+                    "start": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "end": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "lines": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },

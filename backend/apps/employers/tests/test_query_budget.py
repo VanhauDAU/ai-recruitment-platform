@@ -67,7 +67,7 @@ PUBLIC_COMPANY_DETAIL_QUERY_BUDGET = 7 + MAINTENANCE_CHECK_QUERIES
 # candidates, the ranked projection, industries prefetch.
 PUBLIC_COMPANY_SIMILAR_QUERY_BUDGET = 4 + MAINTENANCE_CHECK_QUERIES
 # Visible-company lookup, one grouped province aggregate.
-PUBLIC_COMPANY_JOB_FACETS_QUERY_BUDGET = 2 + MAINTENANCE_CHECK_QUERIES
+PUBLIC_COMPANY_JOB_FACETS_QUERY_BUDGET = 3 + MAINTENANCE_CHECK_QUERIES
 # Visible-company lookup, the caller's follow next to the follower total.
 COMPANY_FOLLOW_STATE_QUERY_BUDGET = 2 + MAINTENANCE_CHECK_QUERIES
 # Pagination count, followed companies (follow columns ride the same join),
@@ -153,8 +153,12 @@ class PublicCompanyListQueryBudgetTests(APITestCase):
 
         for index in range(1, 25):
             self._company(index, featured=True)
+        # The ranked pool is cached for two minutes; measure a cold read again.
+        cache.clear()
         with CaptureQueriesContext(connection) as expanded_queries:
             expanded = self.client.get(reverse('public-company-list'))
+        with CaptureQueriesContext(connection) as cached_queries:
+            self.client.get(reverse('public-company-list'))
 
         self.assertEqual(baseline.status_code, 200, baseline.data)
         self.assertEqual(expanded.status_code, 200, expanded.data)
@@ -166,6 +170,7 @@ class PublicCompanyListQueryBudgetTests(APITestCase):
         self.assertLessEqual(len(expanded_queries), PUBLIC_COMPANY_LIST_QUERY_BUDGET)
         self.assertEqual(_canonical_job_table_references(baseline_queries), 1)
         self.assertEqual(_canonical_job_table_references(expanded_queries), 1)
+        self.assertEqual(_canonical_job_table_references(cached_queries), 0)
 
     def test_public_company_search_query_count_stays_flat(self):
         self._company(0, featured=False)

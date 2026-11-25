@@ -133,7 +133,29 @@ export async function getCampaignHealth(publicId) {
   return data
 }
 
+const REPORT_PDF_POLL_MS = 1500
+const REPORT_PDF_MAX_POLLS = 60
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+// PDF dựng bằng Chromium trong worker: xếp hàng, hỏi trạng thái tới khi xong rồi tải.
+async function downloadCampaignReportPdf(publicId) {
+  const base = `/employer/campaigns/${publicId}/report/export/pdf/`
+  const { data: queued } = await api.post(base)
+  const resultUrl = `${base}${queued.token}/`
+  for (let poll = 0; poll < REPORT_PDF_MAX_POLLS; poll += 1) {
+    await wait(REPORT_PDF_POLL_MS)
+    const { data: job } = await api.get(resultUrl)
+    if (job.status === 'failed') throw new Error('Campaign report PDF failed')
+    if (job.status === 'ready') {
+      const { data } = await api.get(resultUrl, { params: { download: 1 }, responseType: 'blob' })
+      return data
+    }
+  }
+  throw new Error('Campaign report PDF timed out')
+}
+
 export async function downloadCampaignReport(publicId, type) {
+  if (type === 'pdf') return downloadCampaignReportPdf(publicId)
   const { data } = await api.get(`/employer/campaigns/${publicId}/report/export/`, {
     params: { type },
     responseType: 'blob',

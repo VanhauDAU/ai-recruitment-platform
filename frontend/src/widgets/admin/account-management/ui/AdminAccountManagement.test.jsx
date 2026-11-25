@@ -67,8 +67,8 @@ function renderWidget({
 }
 
 const statCard = (label) => screen
-  .getByText(label, { selector: '.account-stat__label' })
-  .closest('.account-stat')
+  .getByText(label, { selector: '.wt-tile__label' })
+  .closest('button')
 // Thẻ tồn tại ngay từ lần render đầu với giá trị 0, nên phải chờ số liệu thật.
 const waitForSummary = () => waitFor(
   () => expect(statCard('Tổng tài khoản')).toHaveTextContent('200'),
@@ -96,9 +96,17 @@ describe('AdminAccountManagement overview', () => {
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     )
     expect(within(statCard('Đang hoạt động')).getByText('150')).toBeInTheDocument()
-    expect(statCard('Đang hoạt động')).toHaveTextContent('75% tài khoản')
-    expect(statCard('Bị hạn chế')).toHaveTextContent('Tạm khóa hoặc đã cấm')
-    expect(statCard('Email chưa xác minh')).toHaveTextContent('Chưa hoàn tất xác thực email')
+    expect(statCard('Bị hạn chế')).toHaveTextContent('20')
+    expect(statCard('Email chưa xác minh')).toHaveTextContent('50')
+    expect(statCard('Tổng tài khoản')).toHaveAttribute('aria-pressed', 'true')
+
+    statCard('Bị hạn chế').click()
+
+    await waitFor(() => expect(accountApi.getAdminAccounts).toHaveBeenLastCalledWith(
+      expect.objectContaining({ status: 'inactive,banned' }),
+      expect.anything(),
+    ))
+    await waitFor(() => expect(statCard('Bị hạn chế')).toHaveAttribute('aria-pressed', 'true'))
   })
 
   it('keeps employer verification out of the general account workspace', async () => {
@@ -122,10 +130,11 @@ describe('AdminAccountManagement overview', () => {
     )
     expect(screen.getByRole('tab', { name: /Danh sách NTD/ })).toBeInTheDocument()
     expect(await screen.findByRole('tab', { name: /Xác minh domain/ })).toHaveTextContent('2')
-    expect(screen.getByLabelText('Tổng quan nhà tuyển dụng')).toBeInTheDocument()
+    // Segment tiles belong to the recruiter list, not to the review queues.
+    expect(screen.queryByLabelText('Tổng quan nhà tuyển dụng')).not.toBeInTheDocument()
   })
 
-  it('turns a segment tile into the matching server filter and switches to the list', async () => {
+  it('turns a segment tile into the matching server filter', async () => {
     accountApi.getAdminAccountSummary.mockResolvedValue({
       scope: 'recruiters',
       totals: { total: 40, restricted: 3 },
@@ -133,7 +142,7 @@ describe('AdminAccountManagement overview', () => {
       next_actions: { admin_queue: 7, verification_overdue: 2, awaiting_resubmission: 4 },
       verification: { pending: 6 },
     })
-    renderWidget({ scope: 'recruiters', initialEntry: '/?tab=verification&page_size=40' })
+    renderWidget({ scope: 'recruiters', initialEntry: '/?page_size=40' })
 
     const tile = (await screen.findByText('Cần admin duyệt')).closest('button')
     await waitFor(() => expect(tile).toHaveTextContent('7'))

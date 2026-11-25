@@ -52,8 +52,8 @@ describe('FeaturedEmployers', () => {
     expect(cards[0].parentElement.querySelectorAll('.featured-employer-card')).toHaveLength(6)
     expect(cards[6].parentElement.querySelectorAll('.featured-employer-card')).toHaveLength(1)
     expect(cards[0].parentElement).not.toBe(cards[6].parentElement)
-    expect(within(panel).getByText('1.000 Việc làm')).toBeInTheDocument()
-    expect(within(panel).getByText('7 Việc làm')).toBeInTheDocument()
+    expect(within(panel).getByText('1.000 việc làm')).toBeInTheDocument()
+    expect(within(panel).getByText('7 việc làm')).toBeInTheDocument()
     expect(within(panel).getByText('Công nghệ')).toBeInTheDocument()
 
     expect(within(panel).getByRole('button', { name: 'Nhóm công ty trước' })).toBeDisabled()
@@ -62,8 +62,8 @@ describe('FeaturedEmployers', () => {
     let pageStatus = within(panel).getByRole('status', { name: 'Trang 1 trên 2' })
     let dots = pageStatus.querySelectorAll('span')
     expect(dots).toHaveLength(2)
-    expect(dots[0]).toHaveClass('bg-[var(--brand-primary)]')
-    expect(dots[1]).toHaveClass('bg-emerald-200')
+    expect(dots[0]).toHaveClass('is-active')
+    expect(dots[1]).not.toHaveClass('is-active')
 
     await user.click(within(panel).getByRole('button', { name: 'Nhóm công ty tiếp theo' }))
 
@@ -71,8 +71,8 @@ describe('FeaturedEmployers', () => {
     expect(within(panel).getByRole('button', { name: 'Nhóm công ty tiếp theo' })).toBeDisabled()
     pageStatus = within(panel).getByRole('status', { name: 'Trang 2 trên 2' })
     dots = pageStatus.querySelectorAll('span')
-    expect(dots[0]).toHaveClass('bg-emerald-200')
-    expect(dots[1]).toHaveClass('bg-[var(--brand-primary)]')
+    expect(dots[0]).not.toHaveClass('is-active')
+    expect(dots[1]).toHaveClass('is-active')
 
     await user.click(within(panel).getByRole('button', { name: 'Nhóm công ty trước' }))
     expect(within(panel).getByRole('status', { name: 'Trang 1 trên 2' })).toBeInTheDocument()

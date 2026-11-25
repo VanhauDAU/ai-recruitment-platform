@@ -49,7 +49,7 @@ describe('admin route titles', () => {
     window.history.replaceState({}, '', adminPath('/reset-password'))
     expect(resolveRouteTitle(adminPath('/invitation'))).toBe('Hoàn tất tài khoản quản trị')
     expect(resolveRouteTitle(adminPath('/reset-password'))).toBe('Đặt lại mật khẩu quản trị')
-    expect(resolveRouteTitle(adminPath('/accounts/usr_8c63f3dbaac4'))).toBe('Chi tiết tài khoản')
+    expect(resolveRouteTitle(adminPath('/accounts/48261937'))).toBe('Chi tiết tài khoản')
   })
 })
 

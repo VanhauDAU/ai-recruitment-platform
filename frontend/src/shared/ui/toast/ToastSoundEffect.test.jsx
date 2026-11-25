@@ -79,4 +79,13 @@ describe('ToastSoundEffect', () => {
     act(() => toast.setAttribute('aria-live', 'polite'))
     expect(audio.sourceStart).toHaveBeenCalledTimes(1)
   })
+
+  it('stays silent for a toast the user muted', async () => {
+    render(<ToastSoundEffect />)
+    appendToast('app-toast--silent')
+    appendToast('app-toast--sound-incoming')
+
+    await waitFor(() => expect(audio.sourceStart).toHaveBeenCalledTimes(1))
+    expect(audio.fetch).toHaveBeenCalledWith('/audio/effects/notification.mp3')
+  })
 })

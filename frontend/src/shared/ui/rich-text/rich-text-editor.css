@@ -50,8 +50,8 @@
 }
 
 .company-rich-editor__table-toolbar {
-  background: #ecfdf5;
-  border-bottom-color: #a7f3d0;
+  background: var(--brand-primary-soft);
+  border-bottom-color: color-mix(in srgb, var(--brand-primary) 45%, #fff);
 }
 
 .company-rich-editor__table-toolbar .ant-btn {

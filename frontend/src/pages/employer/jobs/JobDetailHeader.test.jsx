@@ -6,6 +6,7 @@ import JobDetailHeader from './JobDetailHeader'
 const SUMMARY = { total: 9, unviewed: 3, unanswered: 5, by_status: {} }
 const LIVE_JOB = {
   public_id: 'jb_live',
+  code: 'J4829173',
   slug: 'ky-su-frontend',
   title: 'Kỹ sư Frontend',
   status: 'active',
@@ -34,6 +35,7 @@ describe('JobDetailHeader', () => {
     const props = renderHeader(LIVE_JOB)
 
     expect(screen.getByRole('heading', { name: 'Kỹ sư Frontend' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Sao chép mã J4829173' })).toBeInTheDocument()
     expect(screen.getByText('Đà Nẵng', { exact: false })).toHaveTextContent(/^\s*Đà Nẵng$/)
     expect(screen.getByTestId('job-metric-views')).toHaveTextContent('480/ 1.200 hiển thị')
     expect(screen.getByTestId('job-metric-total-cvs')).toHaveTextContent('91,9% tỉ lệ nộp')

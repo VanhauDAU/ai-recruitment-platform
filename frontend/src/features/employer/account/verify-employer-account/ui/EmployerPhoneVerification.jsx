@@ -30,6 +30,7 @@ import EmployerPhoneChallengeForm from './EmployerPhoneChallengeForm'
 import { m } from '@/shared/config/i18n'
 
 const BANNER_SRC = '/images/employer/phone-verify-banner.png'
+const BANNER_WEBP_SRC = '/images/employer/phone-verify-banner.webp'
 const PASSWORD_SETTINGS_FROM_PHONE_URL = getPasswordSetupFromPhoneUrl(
   EMPLOYER_PASSWORD_SETTINGS_URL,
   EMPLOYER_PHONE_VERIFY_URL,
@@ -52,13 +53,22 @@ const BENEFITS = [
 ]
 
 function VerificationBanner() {
+  // Ảnh rộng 1870×841: chặn chiều cao để form xác thực nằm trên màn hình đầu,
+  // nền hai nửa trùng màu mép trái/phải của ảnh (chỗ nối nằm sau ảnh) nên hai bên liền mạch.
   return (
-    <img
-      src={BANNER_SRC}
-      alt={m.employer_account_phone_banner_alt()}
-      className="block w-full"
-      loading="lazy"
-    />
+    <div className="bg-[linear-gradient(90deg,#f9f9f9_50%,#edeef0_50%)]">
+      <picture>
+        <source srcSet={BANNER_WEBP_SRC} type="image/webp" />
+        <img
+          src={BANNER_SRC}
+          alt={m.employer_account_phone_banner_alt()}
+          width={1870}
+          height={841}
+          className="block h-auto max-h-44 w-full object-contain sm:max-h-60"
+          loading="lazy"
+        />
+      </picture>
+    </div>
   )
 }
 
@@ -289,7 +299,7 @@ export default function EmployerPhoneVerification() {
           <div className="mt-4 grid gap-5 sm:grid-cols-2">
             {BENEFITS.map(({ icon: Icon, text }) => (
               <div key={text} className="flex gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-lg text-emerald-600">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--brand-primary-soft)] text-lg text-[var(--brand-primary)]">
                   <Icon />
                 </span>
                 <p className="text-sm leading-6 text-slate-600">{text}</p>

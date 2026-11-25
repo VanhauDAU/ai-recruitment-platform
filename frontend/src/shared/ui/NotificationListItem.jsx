@@ -21,7 +21,7 @@ export default function NotificationListItem({ item, tone = 'info', time, compac
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3">
           <strong className="text-sm font-bold text-slate-800">{item.title}</strong>
-          {!item.is_read && <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-emerald-500" aria-label={m.ui_notification_unread()} />}
+          {!item.is_read && <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[var(--brand-primary)]" aria-label={m.ui_notification_unread()} />}
         </div>
         {item.message && <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-600">{item.message}</p>}
         <time className="mt-1.5 block text-[11px] font-medium text-slate-400" dateTime={time}>

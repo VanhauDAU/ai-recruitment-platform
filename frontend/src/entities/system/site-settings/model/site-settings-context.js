@@ -30,7 +30,7 @@ export const DEFAULT_SITE_SETTINGS = {
   footer_youtube_url: '',
   footer_tiktok_url: '',
   hotline: '1900 1234',
-  support_email: 'support@aicareercoach.vn',
+  support_email: 'support@procv.site',
   contact_address: '',
   contact_working_hours: '8:00 - 17:30, Thứ 2 - Thứ 6',
   cv_builder_wysiwyg_enabled: true,

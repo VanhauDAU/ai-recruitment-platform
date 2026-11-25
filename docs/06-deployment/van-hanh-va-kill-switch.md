@@ -18,7 +18,10 @@ giám sát còn tồn tại trong code. Biến môi trường chung xem
 - Lệnh audit/preflight mặc định chỉ đọc. Lệnh có `--apply`/`--repair`/
   `--confirm` chỉ chạy sau khi người vận hành duyệt báo cáo dry-run và có backup.
 - Trên máy dev, chạy `manage.py` qua `docker compose exec backend ...` để vào
-  đúng PostgreSQL của stack.
+  đúng PostgreSQL của stack. Trên VPS production **luôn** dùng
+  `scripts/deploy/compose.sh` (nạp env + `docker-compose.prod.yml`); `docker compose`
+  trần ở `/srv/procv` đọc file dev và không chạm stack production. Các lệnh dưới
+  đây viết cho production.
 - Các kiểm soát IDOR, tải file private/quarantine, quyết định xác thực cuối của
   admin và guard trạng thái tài khoản luôn fail-closed, không có kill switch.
 
@@ -60,8 +63,8 @@ URL hay error message.
 Trình tự sau khi deploy code có migration `accounts`:
 
 ```bash
-docker compose exec backend python manage.py migrate
-docker compose exec backend python manage.py reconcile_account_status_holds
+scripts/deploy/compose.sh exec backend python manage.py migrate
+scripts/deploy/compose.sh exec backend python manage.py reconcile_account_status_holds
 ```
 
 ### Cấu hình
@@ -270,12 +273,12 @@ Kiến trúc xem mục 7 của [`thuat-toan-ai.md`](../07-algorithms/thuat-toan-
 Không gọi dịch vụ ngoài; mô hình chạy trong service `ml-worker`.
 
 - Tắt nhanh: Site Setting `ai_job_match_enabled = False` (API trả 403, không tạo
-  phân tích mới). Dừng hẳn tính toán: `docker compose stop ml-worker`; yêu cầu
+  phân tích mới). Dừng hẳn tính toán: `scripts/deploy/compose.sh stop ml-worker`; yêu cầu
   đang chờ quá 10 phút tự chuyển `failed` (`analysis_timeout`).
 - Beat chạy `recover_stale_analyses` mỗi 60 giây: gửi lại phân tích chờ quá 30
   giây, đưa phân tích đang xử lý quá 60 giây (worker chết) về hàng chờ.
 - Đổi mô hình: sửa `MATCHING_MODEL_PATH` + `MATCHING_MODEL_VERSION`, khởi động
-  lại `ml-worker`, chạy `docker compose exec ml-worker python manage.py
+  lại `ml-worker`, chạy `scripts/deploy/compose.sh exec ml-worker python manage.py
   matching_backfill --inline`. Quay lui: đặt lại hai biến về bản cũ (kết quả cũ
   vẫn còn trong cache theo phiên bản).
 - `MATCHING_ENCODER_BACKEND=hashing` chỉ để thử luồng khi chưa có mô hình; điểm

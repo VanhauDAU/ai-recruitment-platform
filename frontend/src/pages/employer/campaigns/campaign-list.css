@@ -1,23 +1,9 @@
 /*
- * Campaign list (/campaigns) rows on top of @/shared/ui/workspace-list/workspace-list.css (lazy, out
- * of the initial stylesheet). A narrow list shows cards (title and action,
- * status, meta, then three labelled stats); a wide one lines every cell up
- * under the header through grid areas.
+ * Campaign list (/campaigns) on top of @/shared/ui/workspace-list/workspace-table.css:
+ * the columns of the wide table and the cell content of a campaign row.
  */
-.cpl-row {
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas:
-    'title action'
-    'status status'
-    'meta meta'
-    'stats stats';
-}
-
-.cpl-row > .ws-row__title { grid-area: title; }
-.cpl-row > .ws-row__meta { grid-area: meta; }
-.cpl-row > .ws-row__stats { grid-area: stats; }
-.cpl-row__status { grid-area: status; display: flex; }
-.cpl-row__action { grid-area: action; display: flex; align-self: start; justify-content: flex-end; }
+.cpl-table { --wt-cols: minmax(280px, 1fr) 140px 210px 230px 160px 180px; }
+.cpl-skeleton { grid-column: 1 / -1; }
 
 .cpl-states,
 .cpl-candidates {
@@ -42,63 +28,9 @@
 }
 
 .cpl-progress { display: flex; width: 100%; flex-direction: column; }
-.cpl-progress .ws-progress > span { background: #0ea5e9; }
-.cpl-progress .ws-progress > span.is-done { background: #10b981; }
-
-.cpl-action {
-  display: inline-flex;
-  height: 32px;
-  align-items: center;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: #fff !important;
-  padding: 0 12px;
-  color: #334155 !important;
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-  transition: background-color 0.15s, border-color 0.15s;
-}
-
-.cpl-action:hover { border-color: #cbd5e1; background: #f8fafc !important; }
-.cpl-action.is-primary { border-color: #059669; background: #059669 !important; color: #fff !important; }
-.cpl-action.is-primary:hover { border-color: #10b981; background: #10b981 !important; }
+.cpl-progress .ws-progress > span { background: #94a3b8; }
+.cpl-progress .ws-progress > span.is-done { background: var(--brand-primary); }
 
 @media (min-width: 640px) {
-  .cpl-row {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    grid-template-areas:
-      'title title action'
-      'status meta meta'
-      'stats stats stats';
-  }
-
   .cpl-avatars { display: flex; }
-}
-
-/* One select only: it sits beside the search on every screen. */
-.cpl-filters { grid-template-columns: minmax(0, 1fr) 150px; }
-.cpl-filters > :first-child { grid-column: auto; }
-
-@media (min-width: 768px) {
-  .cpl-filters { grid-template-columns: minmax(0, 1fr) 220px; }
-}
-
-@container (min-width: 1080px) {
-  .cpl-head,
-  .cpl-row {
-    grid-template-columns: minmax(0, 1fr) 112px 200px 200px 140px 136px;
-    column-gap: 16px;
-  }
-
-  .cpl-row {
-    grid-template-areas:
-      'title status jobs candidates progress action'
-      'meta status jobs candidates progress action';
-  }
-
-  .cpl-row__action { align-self: center; }
-  .cpl-stat--jobs { grid-area: jobs; }
-  .cpl-stat--candidates { grid-area: candidates; }
-  .cpl-stat--progress { grid-area: progress; }
 }

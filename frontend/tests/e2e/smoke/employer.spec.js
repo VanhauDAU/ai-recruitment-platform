@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { expectAnimatedLoginButton, mockPublicApi, selectTab } from './helpers'
+import { chooseSelectOption, expectAnimatedLoginButton, mockPublicApi } from './helpers'
 
 async function expectNoHorizontalOverflow(page) {
   await expect.poll(() => page.evaluate(() => {
@@ -18,25 +18,21 @@ async function expectVisibleActionBackground(locator) {
 }
 
 async function expectJobFormTopBackground(page) {
+  // The shared workspace frame gives the form its tinted gutter on every side.
   const scroller = page
     .getByTestId('employer-workspace')
     .locator('main.ant-layout-content')
-  const form = page.locator('form.post-job-form')
-  const grid = form.locator(':scope > div')
-  const firstColumn = grid.locator(':scope > div').first()
+  const firstColumn = page.locator('form.post-job-form .post-job-layout > div').first()
 
   await scroller.evaluate((element) => { element.scrollTop = 0 })
-  await expect(grid).toHaveCSS('background-color', 'rgb(250, 250, 250)')
-  await expect.poll(async () => grid.evaluate((element) => (
-    Number.parseFloat(getComputedStyle(element).paddingTop)
-  ))).toBeGreaterThanOrEqual(16)
+  await expect(scroller).toHaveCSS('background-color', 'rgb(248, 250, 252)')
   await expect.poll(async () => {
-    const [gridRect, firstColumnRect] = await Promise.all([
-      grid.evaluate((element) => element.getBoundingClientRect().toJSON()),
+    const [scrollerRect, firstColumnRect] = await Promise.all([
+      scroller.evaluate((element) => element.getBoundingClientRect().toJSON()),
       firstColumn.evaluate((element) => element.getBoundingClientRect().toJSON()),
     ])
-    return Math.round(firstColumnRect.top - gridRect.top)
-  }).toBeGreaterThanOrEqual(16)
+    return Math.round(firstColumnRect.top - scrollerRect.top)
+  }).toBeGreaterThanOrEqual(12)
 }
 
 async function expectJobPreviewPinned(page) {
@@ -155,7 +151,7 @@ test('employer smoke: marketing pages render', { tag: '@responsive' }, async ({ 
 
   await page.goto('/tuyendung/lien-he')
   await expect(page.getByRole('heading', { level: 2, name: 'Thông tin liên hệ' })).toBeVisible()
-  await expect(page.locator('main').getByRole('link', { name: /support@aicareercoach\.vn/ })).toBeVisible()
+  await expect(page.locator('main').getByRole('link', { name: /support@procv\.site/ })).toBeVisible()
   await expect(page.getByLabel('Họ và tên')).toHaveCount(0)
   await expectNoHorizontalOverflow(page)
 
@@ -331,7 +327,7 @@ test('employer domain verification creates a one-time DNS challenge responsively
     await route.fulfill({ contentType: 'application/json', body: '[]' })
   })
 
-  await page.goto('/tuyendung/app/account/settings/account-info')
+  await page.goto('/tuyendung/app/account/settings/account-info?tab=domain')
 
   await expect(page.getByRole('heading', { name: 'Xác minh tên miền công ty' })).toBeVisible()
   await expect(page.getByText('Tên miền công ty chưa được xác minh')).toBeVisible()
@@ -455,11 +451,9 @@ test('employer auth: verified session completes recruitment need before dashboar
   await expect(page.getByRole('heading', { name: /Xin chào, Nguyễn An/ })).toBeVisible()
   await expect(page.getByText('Nhu cầu tuyển dụng', { exact: true })).toBeVisible()
   await expect(page.getByText('Bạn đang tuyển dụng vị trí chuyên môn nào?')).toBeVisible()
-  await page.getByRole('combobox', { name: /Bạn đang tuyển dụng vị trí chuyên môn nào/ }).click()
-  await page.locator('.ant-select-dropdown:visible').getByText('Kinh doanh phần mềm').click()
+  await chooseSelectOption(page, page.getByRole('combobox', { name: /Bạn đang tuyển dụng vị trí chuyên môn nào/ }), 'Kinh doanh phần mềm')
   await page.getByRole('checkbox', { name: 'Tuyển liên tục' }).check()
-  await page.getByRole('combobox', { name: /Bạn có nhu cầu cần tư vấn kỹ hơn/ }).click()
-  await page.locator('.ant-select-dropdown:visible').getByText('Tôi muốn tìm hiểu thêm về các gói dịch vụ').click()
+  await chooseSelectOption(page, page.getByRole('combobox', { name: /Bạn có nhu cầu cần tư vấn kỹ hơn/ }), 'Tôi muốn biết thêm về các chương trình ưu đãi')
   await page.getByRole('button', { name: 'Hoàn thành' }).click()
 
   await expect.poll(() => submittedNeed).toMatchObject({
@@ -468,7 +462,7 @@ test('employer auth: verified session completes recruitment need before dashboar
     is_continuous: true,
     headcount: 1,
     budget_source: 'company',
-    consultation_topics: ['service_packages'],
+    consultation_topics: ['promotions'],
   })
   await expect(page).toHaveURL(/\/tuyendung\/app\/employer-verify$/)
   await expect(page.getByRole('heading', { name: 'Xác thực thông tin' })).toBeVisible()
@@ -586,7 +580,7 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
 
   await page.goto('/tuyendung/app/account/settings/personal-data-protection')
   await expect(page.getByRole('heading', { name: /giữa Ứng viên - Nhà tuyển dụng/i })).toBeVisible()
-  await expect(page.getByRole('link', { name: /Tải mẫu văn bản/ })).toHaveAttribute('href', '/documents/topcv-mau-van-ban-thong-bao-dong-y-xu-ly-dlcn.docx')
+  await expect(page.getByRole('link', { name: /Tải mẫu văn bản/ })).toHaveAttribute('href', '/documents/procv-mau-thong-bao-xu-ly-dlcn-ung-vien.docx')
   const dpaFileInput = page.locator('input[type="file"]')
   await dpaFileInput.setInputFiles({
     name: 'thoa-thuan.pdf',
@@ -659,9 +653,9 @@ test('employer dashboard: charts and action buttons stay visible and responsive'
 
   await expect(page.getByRole('heading', { name: /Xin chào, Nguyễn An/ })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Xu hướng hồ sơ ứng tuyển' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Trạng thái hồ sơ' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Phễu tuyển dụng' })).toBeVisible()
   await expect(page.getByRole('img', { name: /Biểu đồ đường cong hồ sơ ứng tuyển 7 ngày/ })).toBeVisible()
-  await expect(page.getByRole('img', { name: /Biểu đồ pipeline/ })).toBeVisible()
+  await expect(page.getByRole('img', { name: /^Phễu tuyển dụng: Nhận hồ sơ: 0/ })).toBeVisible()
 
   const dashboardPrimaryAction = page.getByRole('link', { name: /Đăng tin mới/ }).first()
   const dashboardSecondaryAction = page.getByRole('link', { name: /Quản lý hồ sơ/ })
@@ -1058,14 +1052,13 @@ test('employer jobs: compact list keeps candidate previews and contextual action
   // labelled stats under the title.
   const usesTableRows = await page.getByRole('button', { name: 'Lượt xem' }).isVisible()
   const cardHeight = await activeJob.evaluate((element) => element.getBoundingClientRect().height)
-  expect(cardHeight).toBeLessThan(usesTableRows ? 120 : 220)
+  // Rows carry created date, category, location, salary and stacked actions.
+  expect(cardHeight).toBeLessThan(usesTableRows ? 180 : 340)
 
-  // Quick actions stay visible (no hover-only controls); phones use the menu.
-  if (viewportWidth >= 640) {
-    await expect(activeJob.getByTestId('job-quick-actions').getByRole('link', { name: 'Chỉnh sửa tin' })).toBeVisible()
-  }
+  // Link actions stay visible as stacked buttons; the rest sits under "Khác".
+  await expect(activeJob.getByTestId('job-quick-actions').getByRole('link', { name: 'Xem chi tiết' })).toBeVisible()
   await activeJob.getByRole('button', { name: 'Mở thao tác cho Kỹ sư Frontend React' }).click()
-  await expect(page.getByRole('menuitem', { name: /Chỉnh sửa tin/ })).toBeVisible()
+  await expect(page.getByRole('menuitem', { name: /Sao chép thành bản nháp/ })).toBeVisible()
   await page.keyboard.press('Escape')
 
   await page.getByRole('searchbox', { name: 'Tìm tin tuyển dụng' }).fill('Frontend')
@@ -1231,8 +1224,7 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
   }
   await page.keyboard.press('Escape')
   await expect(page.getByRole('heading', { name: 'Thông tin chung' })).toBeVisible()
-  await page.getByRole('combobox', { name: 'Cách hiển thị thu nhập' }).click()
-  await page.locator('.ant-select-dropdown:visible').getByText('Thu nhập khi đạt 100% KPI', { exact: true }).click()
+  await chooseSelectOption(page, page.getByRole('combobox', { name: 'Cách hiển thị thu nhập' }), /^Thu nhập khi đạt 100% KPI$/)
   await page.getByLabel('Đến mức').fill('7000000')
   await expect(page.locator('#description').getByRole('heading', { name: 'Mô tả công việc' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Kỳ vọng về ứng viên' })).toBeVisible()
@@ -1247,10 +1239,8 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
   await expect(page.getByRole('button', { name: 'Thêm lý do (0/3)' })).toBeVisible()
   await expect(page.locator('.company-rich-editor__content')).toHaveCount(3)
   await expect(page.locator('.company-rich-editor__content').first()).toHaveCSS('min-height', '230px')
-  await page.getByLabel(/Khu vực 1 - Tỉnh\/thành phố/).click()
-  await page.locator('.ant-select-dropdown:visible').getByText('Đà Nẵng', { exact: true }).click()
-  await page.getByRole('combobox', { name: /Phường\/xã 1/ }).click()
-  await page.locator('.ant-select-dropdown:visible').getByText('Phường Hải Châu', { exact: true }).click()
+  await chooseSelectOption(page, page.getByLabel(/Khu vực 1 - Tỉnh\/thành phố/), /^Đà Nẵng$/)
+  await chooseSelectOption(page, page.getByRole('combobox', { name: /Phường\/xã 1/ }), /^Phường Hải Châu$/)
   await page.getByLabel('Địa điểm chi tiết').fill('123 đường Nguyễn Huệ')
   await page.getByRole('button', { name: 'Thêm phường/xã' }).click()
   const wardPicker = page.locator('.ant-popover:visible')
@@ -1561,15 +1551,11 @@ test('employer jobs: detail workspace is compact, actionable and responsive', { 
   await expect(page.getByTestId('job-metric-unanswered-cvs')).toContainText('2')
   // An expired job is not public, so the header offers no public link.
   await expect(page.getByRole('link', { name: /Xem tin đăng/ })).toHaveCount(0)
-  const usesCompactTabs = page.viewportSize().width < 640
-  if (usesCompactTabs) {
-    await expect(page.getByRole('radiogroup', { name: 'Chọn nội dung quản lý tin' })).toBeVisible()
-  } else {
-    await expect(page.getByRole('tab', { name: /CV ứng tuyển/ })).toBeVisible()
-    await expect(page.getByRole('tab', { name: /Ứng viên đã xem tin/ })).toBeVisible()
-    await expect(page.getByRole('tab', { name: /Thông tin tuyển dụng/ })).toBeVisible()
-    await expect(page.getByRole('tab', { name: /Nhãn/ })).toBeVisible()
-  }
+  // Một hàng tab cho mọi cỡ màn hình; dưới 640px dùng nhãn ngắn.
+  const jobTabs = page.getByRole('tablist', { name: 'Chọn nội dung quản lý tin' })
+  await expect(jobTabs).toBeVisible()
+  await expect(jobTabs.getByRole('tab')).toHaveCount(4)
+  await expect(jobTabs.getByRole('tab', { selected: true })).toHaveAttribute('id', 'job-detail-tab-apply_cv')
   await expect(page.getByText('Trần Minh').filter({ visible: true })).toBeVisible()
   await expect.poll(() => applicationQueries.at(-1)?.get('latest')).toBe('1')
   await expectNoHorizontalOverflow(page)
@@ -1582,11 +1568,7 @@ test('employer jobs: detail workspace is compact, actionable and responsive', { 
   await expect(page).toHaveURL(/cv_filter=interviewed/)
   await expectNoHorizontalOverflow(page)
 
-  if (usesCompactTabs) {
-    await page.getByRole('radiogroup', { name: 'Chọn nội dung quản lý tin' }).getByText('Thông tin', { exact: true }).click()
-  } else {
-    await selectTab(page, /Thông tin tuyển dụng/)
-  }
+  await page.locator('#job-detail-tab-job').click()
   await expect(page).toHaveURL(/active_tab=job/)
   await expect(page.getByText('18 - 30 triệu')).toBeVisible()
   await expect(page.getByText('Phường Hải Châu')).toBeVisible()
@@ -1628,6 +1610,7 @@ test('employer applications: grouped CV workspace is clear across responsive lay
       available_decisions: ['shortlisted', 'interviewed', 'accepted', 'rejected'],
       cover_letter: 'Tôi mong muốn đồng hành cùng đội ngũ sản phẩm.',
       applied_at: '2026-08-02T09:20:00+07:00',
+      ai_match_score: 72, ai_match_level: 'high', ai_match_status: 'ready',
     },
     {
       public_id: 'app_previous', candidate_name: 'Lê Văn Hậu',
@@ -1637,12 +1620,75 @@ test('employer applications: grouped CV workspace is clear across responsive lay
       source: 'applied', status: 'submitted', employer_note: '', employer_rating: null,
       available_decisions: ['shortlisted', 'interviewed', 'accepted', 'rejected'],
       applied_at: '2026-07-28T08:00:00+07:00',
+      ai_match_score: null, ai_match_level: null, ai_match_status: 'not_consented',
     },
   ]
   await page.route(/http:\/\/localhost:8000\/api\/employer\/applications\/(?:\?.*)?$/, async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({ count: 2, next: null, previous: null, results: applications }),
+    })
+  })
+  await page.route(/http:\/\/localhost:8000\/api\/employer\/jobs\/(?:\?.*)?$/, async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ count: 1, next: null, previous: null, results: [{ public_id: 'jb_987ecf21d547', title: 'Senior Frontend Developer' }] }),
+    })
+  })
+  await page.route('http://localhost:8000/api/employer/applications/app_befb3400ade3/ai-match/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        status: 'ready', analysed_at: '2026-08-02T09:21:00+07:00', error_code: '',
+        result: {
+          schema_version: 2,
+          overall: { score: 72, level: 'high', label: 'Phù hợp', confidence: 'high', relevance: 81 },
+          components: [
+            { key: 'skills', score: 67, weight: 0.4, status: 'ok', detail: { matched: [{}, {}], missing: [{}] } },
+            { key: 'experience', score: 78, weight: 0.3, status: 'ok', detail: { cv_months: 72, required_band: '3', relevance_score: 81 } },
+            { key: 'education', score: 100, weight: 0.1, status: 'ok', detail: { required: 'university', cv: 'university' } },
+            { key: 'position_level', score: 70, weight: 0.1, status: 'ok', detail: { required: 'team_lead', cv: 'employee' } },
+            { key: 'languages', score: null, weight: 0.1, status: 'not_required', detail: {} },
+          ],
+          skills: {
+            matched: [
+              { name: 'ReactJS', importance: 'required', match_type: 'exact', evidence: 'Xây dựng design system bằng React cho 4 sản phẩm.' },
+              { name: 'TypeScript', importance: 'preferred', match_type: 'exact', evidence: '' },
+            ],
+            missing: [{ name: 'GraphQL', importance: 'required' }],
+            extra: ['Figma'],
+          },
+          requirements: [],
+          flags: { relevance_discount_applied: false, language_cap_applied: false, experience_estimated: false },
+        },
+      }),
+    })
+  })
+  await page.route('http://localhost:8000/api/employer/applications/app_befb3400ade3/extracted-profile/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        status: 'ready', error_code: '',
+        profile: {
+          source: 'builder', language: 'vi', title: 'Senior Frontend Developer',
+          skill_groups: [{ group: 'Frontend', skills: ['ReactJS', 'TypeScript'] }, { group: '', skills: ['Figma'] }],
+          experience: { months: 72, band: 'over_5', estimated: false, item_count: 2 },
+          education_level: 'university', position_level: 'employee',
+          languages: [{ code: 'en', level: 'working' }],
+          sections: [
+            { key: 'summary', items: [{ title: '', subtitle: '', start: null, end: null, lines: ['6 năm xây dựng sản phẩm React cho thương mại điện tử.'] }] },
+            {
+              key: 'experience',
+              items: [
+                { title: 'Senior Frontend Developer', subtitle: 'Công ty Sao Mai', start: '2022-03', end: null, lines: ['Xây dựng design system bằng React cho 4 sản phẩm.', 'Giảm 35% thời gian tải trang thanh toán.'] },
+                { title: 'Frontend Developer', subtitle: 'Công ty Biển Xanh', start: '2019-06', end: '2022-02', lines: ['Phát triển trang quản trị đơn hàng.'] },
+              ],
+            },
+            { key: 'education', items: [{ title: 'Kỹ sư Công nghệ thông tin', subtitle: 'Đại học Đà Nẵng', start: '2015-09', end: '2019-06', lines: [] }] },
+          ],
+          missing: [],
+        },
+      }),
     })
   })
   await page.route('http://localhost:8000/api/employer/applications/app_befb3400ade3/cv/', async (route) => {
@@ -1689,13 +1735,15 @@ test('employer applications: grouped CV workspace is clear across responsive lay
     const { status } = route.request().postDataJSON()
     decisions.push(status)
     applications[0] = { ...applications[0], status, available_decisions: ['interviewed', 'accepted', 'rejected'] }
+    // The undo window is live (15 s by default): the notice is due shortly after now.
+    const noticeAt = new Date(Date.now() + 15_000).toISOString()
     history.push({
       from_status: 'viewed', to_status: status, note: '', changed_by_name: 'HR Team', created_at: '2026-08-02T10:00:00+07:00', reverted_at: null, can_undo: true,
-      candidate_notice: { state: 'scheduled', deliver_at: '2026-08-02T10:05:00+07:00', delivered_at: null, email_sent_at: null },
+      candidate_notice: { state: 'scheduled', deliver_at: noticeAt, delivered_at: null, email_sent_at: null },
     })
     await route.fulfill({
       contentType: 'application/json',
-      body: JSON.stringify({ application: applications[0], candidate_notice_at: '2026-08-02T10:05:00+07:00' }),
+      body: JSON.stringify({ application: applications[0], candidate_notice_at: noticeAt }),
     })
   })
   await page.route('http://localhost:8000/api/employer/applications/app_befb3400ade3/status/undo/', async (route) => {
@@ -1723,15 +1771,29 @@ test('employer applications: grouped CV workspace is clear across responsive lay
   const backToJobButton = page.getByRole('button', { name: 'Quay lại chi tiết tin tuyển dụng' })
   await expect(backToJobButton).toBeVisible()
   await expect(candidateList).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Thu gọn hồ sơ của Lê Văn Hậu' })).toBeVisible()
-  await expect(candidateList.getByText(/^2 CV ·/)).toBeVisible()
+  await expect(candidateList.getByRole('combobox', { name: 'Lọc theo tin tuyển dụng' })).toBeVisible()
+  await expect(candidateList.getByRole('list', { name: 'Các CV của Lê Văn Hậu' })).toBeVisible()
   await expect(candidateList.getByRole('button', { name: 'Xem CV Frontend 2026 của Lê Văn Hậu' })).toBeVisible()
   await expect(candidateList.getByRole('button', { name: 'Xem CV Frontend bản đầu của Lê Văn Hậu' })).toBeVisible()
   await expect(cvPreview.getByLabel('Xem trước CV single_column_v1 trang 1')).toBeVisible()
-  await expect(cvPreview.getByRole('button', { name: /Nhắn tin/ })).toBeDisabled()
+  // Nhắn tin đã bị gỡ khỏi hệ thống (#343): CV preview không còn lối vào nào.
+  await expect(cvPreview.getByRole('button', { name: /Nhắn tin/ })).toHaveCount(0)
+  const zoom = cvPreview.getByRole('group', { name: 'Thu phóng CV' })
+  await zoom.getByRole('button', { name: 'Phóng to' }).click()
+  await zoom.getByRole('button', { name: 'Vừa khung' }).click()
+  await expect(zoom.getByRole('button', { name: 'Vừa khung' })).toBeDisabled()
   const download = page.waitForEvent('download')
   await cvPreview.getByRole('button', { name: /Tải PDF/ }).click()
   expect((await download).suggestedFilename()).toBe('CV - Lê Văn Hậu.pdf')
+
+  // Hồ sơ trích xuất từ CV đã nộp, xem thay cho CV gốc để đối chiếu.
+  await cvPreview.getByText('Hồ sơ trích xuất', { exact: true }).click()
+  await expect(cvPreview.getByRole('heading', { name: /Kinh nghiệm/ })).toBeVisible()
+  await expect(cvPreview.getByText('Công ty Sao Mai')).toBeVisible()
+  await expect(cvPreview.getByText('03/2022 – nay')).toBeVisible()
+  await expect(cvPreview.getByText('Giảm 35% thời gian tải trang thanh toán.')).toBeVisible()
+  await cvPreview.getByText('CV gốc', { exact: true }).click()
+  await expect(cvPreview.getByLabel('Xem trước CV single_column_v1 trang 1')).toBeVisible()
 
   const viewportWidth = page.viewportSize().width
   if (viewportWidth < 768) {
@@ -1744,9 +1806,20 @@ test('employer applications: grouped CV workspace is clear across responsive lay
   await expect(inspector.getByText('Đà Nẵng, Làm việc từ xa')).toBeVisible()
   await expect(inspector.getByText(/Đã báo ứng viên/)).toBeVisible()
 
+  // Mức phù hợp do AI chấm: điểm ở đầu panel, bấm "Xem vì sao" mở bảng giải thích.
+  await expect(inspector.getByRole('heading', { name: 'Mức độ phù hợp (AI)' })).toBeVisible()
+  await expect(inspector.getByText('72').first()).toBeVisible()
+  await inspector.getByRole('button', { name: /Xem vì sao/ }).click()
+  const matchDrawer = page.getByRole('dialog').filter({ hasText: 'Điểm được tính thế nào' })
+  await expect(matchDrawer).toContainText('Đáp ứng 2/3 kỹ năng tin yêu cầu.')
+  await expect(matchDrawer).toContainText('Xây dựng design system bằng React cho 4 sản phẩm.')
+  await expect(matchDrawer).toContainText('GraphQL')
+  await page.keyboard.press('Escape')
+  await expect(matchDrawer).toBeHidden()
+
   const decisionBar = inspector.getByRole('group', { name: 'Quyết định cho hồ sơ' })
   await decisionBar.getByRole('button', { name: 'Phù hợp', exact: true }).click()
-  await expect(inspector.getByRole('status').filter({ hasText: 'Ứng viên sẽ được báo lúc' })).toBeVisible()
+  await expect(inspector.getByRole('status').filter({ hasText: 'Ứng viên sẽ được báo sau' })).toBeVisible()
   await inspector.getByRole('button', { name: 'Hoàn tác' }).click()
   await expect(inspector.getByText('Không gửi: đã hoàn tác')).toBeVisible()
   expect(decisions).toEqual(['shortlisted', 'undo'])
@@ -2052,8 +2125,7 @@ test('employer campaign detail: TopCV-style workspace is responsive and uses API
   const compactCampaignTabs = page.viewportSize().width < 640
   const chooseCampaignTab = async (label) => {
     if (compactCampaignTabs) {
-      await page.getByRole('combobox', { name: 'Chọn nội dung chiến dịch' }).click()
-      await page.locator('.ant-select-dropdown:visible').getByText(label, { exact: false }).click()
+      await chooseSelectOption(page, page.getByRole('combobox', { name: 'Chọn nội dung chiến dịch' }), label)
       return
     }
     await page.getByRole('tab', { name: label }).click()
@@ -2129,8 +2201,7 @@ test('employer campaign detail: TopCV-style workspace is responsive and uses API
   await expect(applicationsMetric).toContainText('1')
 
   const requestsBeforeStatusFilter = performanceRequestCount
-  await page.getByRole('combobox', { name: 'Lọc bảng theo trạng thái' }).click()
-  await page.locator('.ant-select-dropdown:visible').getByText('Đang tuyển', { exact: true }).click()
+  await chooseSelectOption(page, page.getByRole('combobox', { name: 'Lọc bảng theo trạng thái' }), /^Đang tuyển$/)
   await expect(performanceTable.getByRole('link', { name: 'Kỹ sư Frontend', exact: true })).toBeVisible()
   await expect(performanceTable.getByRole('link', { name: 'Backend Engineer', exact: true })).toHaveCount(0)
   expect(performanceRequestCount).toBe(requestsBeforeStatusFilter)

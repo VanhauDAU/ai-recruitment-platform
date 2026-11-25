@@ -108,7 +108,7 @@ export default function EmailNotificationSettingsForm() {
                   <p className="mt-0.5 text-xs leading-5 text-slate-500">{row.description}</p>
                 </div>
                 {row.mandatory ? (
-                  <span className="col-span-2 inline-flex items-center justify-center gap-1 text-xs font-semibold text-emerald-600">
+                  <span className="col-span-2 inline-flex items-center justify-center gap-1 text-xs font-semibold text-[var(--brand-primary)]">
                     <LockOutlined aria-hidden /> Luôn bật
                   </span>
                 ) : (

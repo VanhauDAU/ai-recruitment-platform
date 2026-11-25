@@ -1,0 +1,152 @@
+/* Brand accents of the employer dashboard. They follow the primary color set in
+ * site settings (--brand-*); status colors (verified, done, active job) stay
+ * semantic green in the components. */
+
+.employer-dash-hero {
+  background: linear-gradient(
+    120deg,
+    #0f172a 0%,
+    var(--brand-surface-dark) 58%,
+    color-mix(in srgb, var(--brand-primary) 72%, #0f172a) 115%
+  );
+}
+
+.employer-dash-hero-glow {
+  background-color: color-mix(in srgb, var(--brand-primary) 14%, transparent);
+}
+
+.employer-dash-hero-meta {
+  color: color-mix(in srgb, var(--brand-primary) 12%, rgb(255 255 255 / 0.8));
+}
+
+a.employer-dash-hero-cta,
+a.employer-dash-hero-cta:hover {
+  color: var(--brand-primary-hover);
+}
+
+a.employer-dash-hero-cta:hover {
+  background-color: var(--brand-primary-soft) !important;
+}
+
+.employer-dash-text {
+  color: var(--brand-primary);
+}
+
+.employer-dash-icon {
+  /* !important: also used on antd Avatar, whose CSS-in-JS loads later. */
+  background-color: var(--brand-primary-soft) !important;
+  color: var(--brand-primary) !important;
+}
+
+.employer-dash-icon-ring {
+  --tw-ring-color: color-mix(in srgb, var(--brand-primary) 18%, transparent);
+}
+
+.employer-dash-accent {
+  background-image: linear-gradient(90deg, var(--brand-primary), var(--brand-primary-hover));
+}
+
+/* Solid primary action (Link): hover darkens to the brand hover shade. */
+a.employer-dash-button,
+a.employer-dash-button:hover {
+  border-color: var(--brand-primary);
+  background-color: var(--brand-primary) !important;
+  color: #fff !important;
+}
+
+a.employer-dash-button:hover {
+  border-color: var(--brand-primary-hover);
+  background-color: var(--brand-primary-hover) !important;
+}
+
+/* Quiet tiles/links that pick up the brand tint on hover. */
+.employer-dash-hover-tint:hover {
+  border-color: color-mix(in srgb, var(--brand-primary) 30%, transparent);
+  background-color: var(--brand-primary-soft) !important;
+  color: var(--brand-primary-hover) !important;
+}
+
+a.employer-dash-hover-text:hover,
+.group:hover .employer-dash-hover-text {
+  color: var(--brand-primary) !important;
+}
+
+/* Verification journey: the next step to do. */
+.employer-dash-step-active {
+  border-color: color-mix(in srgb, var(--brand-primary) 45%, transparent);
+  box-shadow: 0 0 0 2px var(--brand-primary-soft);
+}
+
+.employer-dash-step-active-index {
+  background-color: var(--brand-primary);
+  color: #fff;
+}
+
+.employer-dash-step-todo:hover {
+  border-color: color-mix(in srgb, var(--brand-primary) 30%, transparent);
+}
+
+/* Recruitment funnel: 3D layers drawn in SVG, stage labels as HTML so they stay
+ * readable when the SVG scales down on small screens. */
+.employer-funnel {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  margin: 1rem auto 0;
+}
+
+.employer-funnel svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.employer-funnel-count {
+  fill: #fff;
+  font-size: 32px;
+  font-weight: 800;
+}
+
+.employer-funnel-label {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  transform: translateY(-50%);
+  color: #334155;
+  font-size: clamp(0.75rem, 2.6vw, 0.875rem);
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.employer-funnel-label small {
+  color: #94a3b8;
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.employer-funnel-layer {
+  transition: filter 0.2s ease;
+  animation: employer-funnel-in 0.5s ease-out both;
+  animation-delay: calc(var(--funnel-index) * 70ms);
+}
+
+.employer-funnel-layer:hover {
+  filter: brightness(1.06);
+}
+
+@keyframes employer-funnel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .employer-funnel-layer {
+    animation: none;
+  }
+}

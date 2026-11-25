@@ -6,7 +6,7 @@ from .assets import (
     create_avatar_asset_from_session,
     readable_asset,
 )
-from .audit import record_application_snapshot_access
+from .audit import record_application_snapshot_access, record_cv_access
 from .completeness import application_readiness_issues, is_unsaved_builder_baseline
 from .cv_document import (
     CvDocumentRejected,
@@ -135,6 +135,7 @@ __all__ = [
     'request_application_snapshot_export',
     'application_snapshot_export',
     'record_application_snapshot_access',
+    'record_cv_access',
     'application_readiness_issues',
     'is_unsaved_builder_baseline',
     'create_version',

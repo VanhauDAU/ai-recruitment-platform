@@ -11,14 +11,12 @@ export const RECRUITER_SEGMENTS = [
   {
     key: 'all',
     label: m.admin_segment_all(),
-    hint: m.admin_segment_all_hint(),
     filters: {},
     count: (summary) => summary.totals?.total,
   },
   {
     key: 'admin_queue',
     label: m.admin_segment_queue(),
-    hint: m.admin_segment_queue_hint(),
     tone: 'warning',
     filters: { next_action: 'admin_queue', ordering: 'next_action' },
     count: (summary) => summary.next_actions?.admin_queue,
@@ -26,7 +24,6 @@ export const RECRUITER_SEGMENTS = [
   {
     key: 'overdue',
     label: m.admin_segment_overdue(),
-    hint: m.admin_segment_overdue_hint(),
     tone: 'critical',
     filters: { next_action: 'verification_overdue', ordering: 'next_action' },
     count: (summary) => summary.next_actions?.verification_overdue,
@@ -34,21 +31,18 @@ export const RECRUITER_SEGMENTS = [
   {
     key: 'resubmission',
     label: m.admin_segment_resubmission(),
-    hint: m.admin_segment_resubmission_hint(),
     filters: { next_action: 'awaiting_resubmission' },
     count: (summary) => summary.next_actions?.awaiting_resubmission,
   },
   {
     key: 'companyless',
     label: m.admin_segment_companyless(),
-    hint: m.admin_segment_companyless_hint(),
     filters: { company_state: 'missing' },
     count: (summary) => summary.companyless,
   },
   {
     key: 'restricted',
     label: m.admin_segment_restricted(),
-    hint: m.admin_segment_restricted_hint(),
     filters: { status: 'inactive,banned' },
     count: (summary) => summary.totals?.restricted,
   },

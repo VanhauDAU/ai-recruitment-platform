@@ -7,6 +7,12 @@ from .ai_generation import (
     EmployerJobAiGenerationFeedbackView,
 )
 from .alerts import CandidateJobAlertDetailView, CandidateJobAlertListCreateView
+from .catalog_admin import (
+    AdminBenefitViewSet,
+    AdminJobCategoryIconUploadView,
+    AdminJobCategoryViewSet,
+    AdminLanguageViewSet,
+)
 from .catalogs import BenefitListView, JobCategoryListView, LanguageListView
 from .employer import (
     EmployerJobCloseView,
@@ -26,8 +32,10 @@ from .moderation import (
     AdminJobModerationListView,
     AdminJobModerationSummaryView,
 )
+from .nearby import NearbyJobListView, NearbyJobMapView
 from .public import (
     HomepageBestJobListView,
+    HomepageBestJobLocationsView,
     JobDetailView,
     JobListView,
     JobStatsView,
@@ -50,6 +58,12 @@ from .reports import (
 from .saved import SavedJobDestroyView, SavedJobListCreateView
 
 __all__ = [
+    'AdminBenefitViewSet',
+    'AdminJobCategoryIconUploadView',
+    'AdminJobCategoryViewSet',
+    'AdminLanguageViewSet',
+    'NearbyJobListView',
+    'NearbyJobMapView',
     'BenefitListView',
     'AdminJobModerationListView',
     'AdminJobModerationDetailView',
@@ -64,6 +78,7 @@ __all__ = [
     'CandidateJobAlertListCreateView',
     'CvJobRecommendationView',
     'HomepageBestJobListView',
+    'HomepageBestJobLocationsView',
     'HiddenJobCreateView',
     'HiddenJobDestroyView',
     'InlineJobRecommendationView',

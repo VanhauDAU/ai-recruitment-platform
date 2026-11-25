@@ -20,6 +20,7 @@ from django.utils import timezone
 
 from apps.candidates.models import CandidateNotification
 from apps.employers.models import RecruiterProfile
+from apps.matching.selectors import application_match_annotations
 
 from ..models import (
     Application,
@@ -139,6 +140,8 @@ def employer_applications_queryset(
             recent_jobs_applied=Coalesce(
                 Subquery(_recent_jobs_applied_count(), output_field=IntegerField()), 0
             ),
+            # Mức phù hợp do AI chấm trên bản CV đã nộp (chỉ hồ sơ ứng viên đồng ý).
+            **application_match_annotations(),
         )
     )
     if job_public_id:
@@ -158,6 +161,9 @@ def employer_applications_queryset(
         queryset = queryset.filter(status=Application.Status.SUBMITTED)
     elif scope == 'unanswered':
         queryset = queryset.filter(status__in=Application.UNANSWERED_STATUSES)
+    if ordering == 'ai_match':
+        # Hồ sơ chưa có điểm (đang phân tích, không tham gia) đứng sau, theo ngày nộp.
+        return queryset.order_by(F('ai_match_score').desc(nulls_last=True), '-applied_at', '-id')
     order_fields = {
         'oldest': 'applied_at',
         'name': 'candidate__full_name',

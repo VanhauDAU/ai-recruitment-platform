@@ -1,5 +1,6 @@
 import { HeartFilled, HeartOutlined } from '@ant-design/icons'
 import { Link } from 'react-router'
+import { CompanyLogo } from '@/entities/company/company'
 import {
   EXPERIENCE_YEARS_LABELS,
   formatJobPostedLabel,
@@ -7,6 +8,7 @@ import {
   formatSalary,
   jobDetailPath,
   JobPresentationLabels,
+  VerifiedEmployerBadge,
 } from '@/entities/job/job'
 import { useSession } from '@/entities/account/session'
 import { useLoginPrompt } from '@/features/common/account/auth'
@@ -15,16 +17,12 @@ import { JobImpressionBoundary } from '@/features/main/job/track-job-engagement'
 import { message } from '@/shared/lib/toast'
 
 function Chip({ children }) {
-  return (
-    <span className="inline-flex max-w-full items-center truncate rounded-full bg-gray-50 px-2.5 py-1 text-xs text-gray-600 ring-1 ring-gray-200/70">
-      {children}
-    </span>
-  )
+  return <span className="company-job-card__chip">{children}</span>
 }
 
 /**
- * Thẻ tin trong trang công ty: bỏ logo và tên công ty vì cả trang đã là công ty
- * đó. `pinned` gắn nhãn "Nổi bật" cho tin công ty ghim lên đầu.
+ * Thẻ tin trong trang công ty, cùng bố cục với thẻ ở danh sách việc làm (logo,
+ * tên công ty, nhãn hệ thống). `pinned` gắn nhãn "Nổi bật" cho tin chủ trang ghim.
  */
 export default function CompanyJobCard({ job, pinned = false }) {
   const { isAuthenticated, user } = useSession()
@@ -50,9 +48,16 @@ export default function CompanyJobCard({ job, pinned = false }) {
     <JobImpressionBoundary
       as="article"
       slug={job.slug}
-      className="flex min-w-0 items-start gap-3 rounded-xl border border-gray-200 bg-white p-4 transition-colors duration-200 hover:border-[var(--brand-primary)] hover:shadow-md hover:shadow-emerald-600/5"
+      className="company-job-card border-slate-200 bg-white"
     >
-      <div className="min-w-0 flex-1">
+      <CompanyLogo
+        company={{ trade_name: job.company_name, logo_url: job.company_logo_url }}
+        width={96}
+        height={96}
+        className="company-job-card__logo"
+        imageClassName="p-1"
+      />
+      <div className="company-job-card__body">
         <div className="company-job-card__headline">
           <h3 className="min-w-0 font-semibold leading-snug text-slate-950 line-clamp-2">
             {pinned && <span className="company-job-card__pin">Nổi bật</span>}
@@ -62,27 +67,33 @@ export default function CompanyJobCard({ job, pinned = false }) {
             >
               {job.title}
             </Link>
+            <VerifiedEmployerBadge verified={job.company_verified} className="ml-1.5" />
           </h3>
-          <span className="shrink-0 text-sm font-semibold text-[var(--brand-primary)]">{formatSalary(job)}</span>
+          <span className="company-job-card__salary">{formatSalary(job)}</span>
         </div>
         <JobPresentationLabels job={job} compact className="mt-1.5" />
-        <div className="mt-2 flex flex-wrap items-center gap-1.5">
-          {locationLabel && <Chip>{locationLabel}</Chip>}
-          {experience && <Chip>{experience}</Chip>}
-          {posted && <span className="text-xs text-gray-400">{posted}</span>}
+        {job.company_name && <p className="company-job-card__company">{job.company_name}</p>}
+        <div className="company-job-card__footer">
+          <div className="company-job-card__chips">
+            {locationLabel && <Chip>{locationLabel}</Chip>}
+            {experience && <Chip>{experience}</Chip>}
+          </div>
+          <div className="company-job-card__actions">
+            {posted && <span className="company-job-card__posted">{posted}</span>}
+            <button
+              type="button"
+              onClick={toggleSave}
+              disabled={savePending}
+              aria-label={saved ? `Bỏ lưu việc làm ${job.title}` : `Lưu việc làm ${job.title}`}
+              className="company-job-card__save"
+            >
+              {saved
+                ? <HeartFilled className="!text-[var(--brand-primary)]" />
+                : <HeartOutlined className="!text-gray-400" />}
+            </button>
+          </div>
         </div>
       </div>
-      <button
-        type="button"
-        onClick={toggleSave}
-        disabled={savePending}
-        aria-label={saved ? `Bỏ lưu việc làm ${job.title}` : `Lưu việc làm ${job.title}`}
-        className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border border-gray-200 text-sm transition hover:border-[var(--brand-primary)] hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {saved
-          ? <HeartFilled className="!text-[var(--brand-primary)]" />
-          : <HeartOutlined className="!text-gray-400" />}
-      </button>
     </JobImpressionBoundary>
   )
 }

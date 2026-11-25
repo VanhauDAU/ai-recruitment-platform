@@ -58,14 +58,14 @@ function SelectedFileItem({
       >
         <span className="flex h-28 items-center justify-center overflow-hidden rounded bg-slate-50">
           {previewing
-            ? <LoadingOutlined className="text-3xl text-emerald-600" spin />
+            ? <LoadingOutlined className="text-3xl text-[var(--brand-primary)]" spin />
             : isImage && thumbnailUrl
               ? <img src={thumbnailUrl} alt={m.employer_account_upload_preview_alt({ fileName })} className="h-full w-full object-contain" />
               : isWord
                 ? <FileWordOutlined className="text-4xl text-blue-600" />
                 : <FilePdfOutlined className="text-4xl text-red-500" />}
         </span>
-        <span className="mt-2 flex min-w-0 items-center gap-1 text-xs text-slate-600 group-hover:text-emerald-700">
+        <span className="mt-2 flex min-w-0 items-center gap-1 text-xs text-slate-600 group-hover:text-[var(--brand-primary-hover)]">
           <EyeOutlined className="shrink-0" />
           <span className="truncate">{m.employer_account_upload_new_file()} {fileName}</span>
         </span>
@@ -157,13 +157,13 @@ export default function EmployerDocumentUploadBox({
         multiple={multiple}
         showUploadList={false}
         onChange={({ fileList }) => onFilesChange(fileList.slice(-effectiveMaxCount))}
-        className="!rounded-lg !border-dashed !border-slate-300 !bg-white !px-4 !py-2 hover:!border-emerald-500"
+        className="!rounded-lg !border-dashed !border-slate-300 !bg-white !px-4 !py-2 hover:!border-[var(--brand-primary)]"
       >
         <p className="mb-1 text-sm font-medium text-slate-600">
           {multiple ? m.employer_account_upload_drop_many() : m.employer_account_upload_drop_one()}
         </p>
         <p className="mb-2 text-xs text-slate-500">{uploadHint}</p>
-        <Button type="text" icon={<UploadOutlined />} className="!h-8 !border !border-emerald-100 !bg-emerald-50 !text-emerald-600">
+        <Button type="text" icon={<UploadOutlined />} className="!h-8 !border !border-[var(--brand-primary)]/20 !bg-[var(--brand-primary-soft)] !text-[var(--brand-primary)]">
           {multiple ? m.employer_account_upload_choose_many() : m.employer_account_upload_choose_one()}
         </Button>
       </Upload.Dragger>

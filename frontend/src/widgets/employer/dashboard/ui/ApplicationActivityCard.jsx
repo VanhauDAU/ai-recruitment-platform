@@ -40,7 +40,7 @@ export default function ApplicationActivityCard({ activity = [] }) {
       <div className="flex flex-col gap-4 px-5 pb-2 pt-5 sm:flex-row sm:items-start sm:justify-between sm:px-6 sm:pt-6">
         <div>
           <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600"><RiseOutlined /></span>
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg employer-dash-icon"><RiseOutlined /></span>
             <div>
               <h2 id="activity-title" className="text-lg font-black text-slate-900">{m.employer_workspace_dash_activity_title()}</h2>
               <p className="mt-0.5 text-xs text-slate-500">{m.employer_workspace_dash_activity_description()}</p>
@@ -59,9 +59,9 @@ export default function ApplicationActivityCard({ activity = [] }) {
           <AreaChart data={chartData} margin={{ top: 12, right: 12, left: -22, bottom: 4 }}>
             <defs>
               <linearGradient id="dashboardApplicationGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#10b981" stopOpacity={0.32} />
-                <stop offset="70%" stopColor="#10b981" stopOpacity={0.07} />
-                <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
+                <stop offset="0%" stopColor="var(--brand-primary)" stopOpacity={0.32} />
+                <stop offset="70%" stopColor="var(--brand-primary)" stopOpacity={0.07} />
+                <stop offset="100%" stopColor="var(--brand-primary)" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid vertical={false} stroke="#e8eef3" strokeDasharray="4 6" />
@@ -84,11 +84,11 @@ export default function ApplicationActivityCard({ activity = [] }) {
             <Area
               type="monotone"
               dataKey="count"
-              stroke="#059669"
+              stroke="var(--brand-primary)"
               strokeWidth={3}
               fill="url(#dashboardApplicationGradient)"
-              dot={{ r: 3.5, fill: '#fff', stroke: '#059669', strokeWidth: 2 }}
-              activeDot={{ r: 6, fill: '#059669', stroke: '#fff', strokeWidth: 3 }}
+              dot={{ r: 3.5, fill: '#fff', stroke: 'var(--brand-primary)', strokeWidth: 2 }}
+              activeDot={{ r: 6, fill: 'var(--brand-primary)', stroke: '#fff', strokeWidth: 3 }}
               connectNulls
               animationDuration={1000}
               animationEasing="ease-out"

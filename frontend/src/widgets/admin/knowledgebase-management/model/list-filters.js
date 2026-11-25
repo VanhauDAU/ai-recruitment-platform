@@ -1,6 +1,15 @@
 const ALLOWED_FILTERS = new Set([
-  'q', 'category', 'type', 'lifecycle', 'revision_status', 'review_due', 'ordering', 'page', 'page_size',
+  'q', 'category', 'type', 'lifecycle', 'revision_status', 'review_due', 'published', 'ordering', 'page', 'page_size',
 ])
+
+// Summary tiles: each one is a set of filters; they replace one another.
+export const KNOWLEDGE_VIEWS = {
+  all: {},
+  published: { published: 'true' },
+  drafts: { revision_status: 'DRAFT' },
+  overdue: { review_due: 'overdue' },
+}
+const VIEW_KEYS = ['published', 'revision_status', 'review_due']
 
 export function knowledgeListParams(searchParams) {
   return Object.fromEntries(
@@ -8,9 +17,23 @@ export function knowledgeListParams(searchParams) {
   )
 }
 
+/** Summary counts follow the other filters but not the tile filters, so the
+ * numbers on the tiles stay put while one of them is selected. */
 export function knowledgeSummaryParams(params) {
   const { ordering: _ordering, page: _page, page_size: _pageSize, ...filters } = params
-  return filters
+  return Object.fromEntries(Object.entries(filters).filter(([key]) => !VIEW_KEYS.includes(key)))
+}
+
+/** The tile whose filters match the current ones exactly, or ''. */
+export function activeKnowledgeView(params) {
+  return Object.entries(KNOWLEDGE_VIEWS).find(([, filters]) => VIEW_KEYS.every(
+    (key) => (params[key] || '') === (filters[key] || ''),
+  ))?.[0] || ''
+}
+
+/** Patch that switches to a tile: its filters set, the other tile filters cleared. */
+export function knowledgeViewPatch(view) {
+  return { ...Object.fromEntries(VIEW_KEYS.map((key) => [key, undefined])), ...KNOWLEDGE_VIEWS[view] }
 }
 
 export function updateKnowledgeListParams(searchParams, patch) {

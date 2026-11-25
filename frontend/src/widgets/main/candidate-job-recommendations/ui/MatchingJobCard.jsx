@@ -4,7 +4,6 @@ import { Link } from 'react-router'
 import {
   formatJobPostedLabel,
   formatSalary,
-  jobCardToneClass,
   jobDetailPath,
   JobPresentationLabels,
   VerifiedEmployerBadge,
@@ -33,7 +32,7 @@ export default function MatchingJobCard({ hidePending, job, onHide }) {
 
   return (
     <JobImpressionBoundary slug={job.slug}>
-      <article className={`group rounded-2xl border border-slate-200 p-3 shadow-sm transition hover:border-[var(--brand-primary)] hover:shadow-[0_12px_30px_rgba(16,185,129,0.12)] sm:p-4 ${jobCardToneClass(job)}`}>
+      <article className="group rounded-2xl border border-slate-200 p-3 shadow-sm transition hover:border-[var(--brand-primary)] hover:shadow-[0_12px_30px_color-mix(in_srgb,var(--brand-primary)_12%,transparent)] bg-white sm:p-4">
         <div className="flex gap-3 sm:gap-4">
           <Link
             to={detailPath}
@@ -104,7 +103,7 @@ export default function MatchingJobCard({ hidePending, job, onHide }) {
                     aria-label={saveLabel}
                     disabled={savePending}
                     onClick={toggleSaved}
-                    className={`${ICON_BUTTON} hover:border-emerald-300 hover:bg-emerald-50 hover:text-[var(--brand-primary)]`}
+                    className={`${ICON_BUTTON} hover:border-[var(--brand-primary)]/40 hover:bg-[var(--brand-primary-soft)] hover:text-[var(--brand-primary)]`}
                   >
                     {saved ? <HeartFilled className="text-[var(--brand-primary)]" /> : <HeartOutlined />}
                   </button>

@@ -13,6 +13,8 @@ def location_lookup_queryset(params):
         'level',
         'parent_id',
         'merged_from',
+        'latitude',
+        'longitude',
     )
     if ids := params.get('ids'):
         id_list = [int(x) for x in ids.split(',') if x.strip().isdigit()]

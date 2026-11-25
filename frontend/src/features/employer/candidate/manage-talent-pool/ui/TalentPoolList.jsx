@@ -52,7 +52,7 @@ export default function TalentPoolList() {
                   {entry.source_application_public_id && (
                     <Link
                       to={`${employerAppPath('/applications')}?job=${entry.source_job_public_id}&application=${entry.source_application_public_id}`}
-                      className="text-[11px] font-semibold text-emerald-600"
+                      className="text-[11px] font-semibold text-[var(--brand-primary)]"
                     >
                       {m.employer_workspace_pool_source_application({ job: entry.source_job_title })}
                     </Link>

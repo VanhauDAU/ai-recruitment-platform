@@ -1,0 +1,31 @@
+/*
+ * Page frame of the signed-in workspaces (employer and admin portals): the
+ * scroll area behind every route and one gutter that pages share, so every
+ * page spans the full width beside the sidebar instead of a centred column.
+ * Domain-free and lazy (imported by the workspace layout chunk).
+ *
+ * `--workspace-gutter` is the page padding; full-bleed parts of a page (such
+ * as a pinned pagination bar) cancel it with a negative margin of the same
+ * value. `--workspace-viewport` (set by the layout) is the scroll area height.
+ */
+.workspace-content {
+  background: #f8fafc;
+}
+
+.workspace-page {
+  --workspace-gutter: 12px;
+
+  display: flex;
+  min-height: var(--workspace-viewport, 100%);
+  min-width: 0;
+  flex-direction: column;
+  padding: var(--workspace-gutter);
+}
+
+@media (min-width: 640px) {
+  .workspace-page { --workspace-gutter: 20px; }
+}
+
+@media (min-width: 1280px) {
+  .workspace-page { --workspace-gutter: 24px; }
+}

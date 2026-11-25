@@ -23,8 +23,9 @@ const EXACT_MAIN_TITLES = new Map([
   [COMPANY_SEARCH_PATH, 'Tìm kiếm công ty'],
   ['/viec-lam', 'Tuyển dụng việc làm mới nhất'],
   ['/jobs', 'Tuyển dụng việc làm mới nhất'],
+  ['/viec-lam-gan-ban', m.candidate_nearby_title()],
   ['/so-sanh-viec-lam', 'So sánh việc làm'],
-  ['/viec-lam-da-luu', 'Việc làm đã lưu'],
+  ['/viec-lam-da-luu', m.candidate_title_saved_jobs()],
   ['/tai-cv-len', 'Tải CV lên'],
   ['/chinh-sach-cookie', 'Chính sách cookie'],
   ['/tai-khoan/xac-thuc-email', 'Xác thực email'],
@@ -77,6 +78,7 @@ const EXACT_EMPLOYER_TITLES = new Map([
   [employerAppPath('/applications'), m.employer_workspace_title_applications()],
   [employerAppPath('/candidate-blocks'), m.employer_workspace_title_candidate_blocks()],
   [employerAppPath('/talent-pool'), m.employer_workspace_title_talent_pool()],
+  [employerAppPath('/candidate-search'), m.employer_workspace_title_candidate_search()],
 ])
 
 // Thứ tự quan trọng: mẫu cụ thể (…/edit, …/setup) đứng trước mẫu chi tiết.
@@ -92,7 +94,7 @@ const DYNAMIC_EMPLOYER_TITLES = [
 const EXACT_ADMIN_TITLES = new Map([
   [adminPath('/login'), 'Đăng nhập quản trị'],
   [adminPath('/invitation'), 'Hoàn tất tài khoản quản trị'],
-  [adminPath('/reset-password'), 'Đặt lại mật khẩu quản trị'],
+  [adminPath('/reset-password'), m.account_reset_title_admin()],
   ...ADMIN_ROUTES
     .filter((route) => !route.segment.includes(':'))
     .map((route) => [adminPath(route.segment), route.title]),

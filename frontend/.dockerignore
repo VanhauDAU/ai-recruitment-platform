@@ -3,6 +3,7 @@ dist/
 .vite/
 .git/
 .env
+.env.*
 coverage/
 playwright-report/
 test-results/
@@ -12,3 +13,4 @@ src/**/*.spec.*
 playwright.config.*
 Dockerfile
 .dockerignore
+src/shared/config/i18n/paraglide/

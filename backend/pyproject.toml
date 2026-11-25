@@ -40,6 +40,7 @@ containers = [
     "apps.cv_templates", "apps.cvs", "apps.dashboard", "apps.employers",
     "apps.jobs", "apps.locations", "apps.matching", "apps.privacy",
     "apps.sitecontent", "apps.skills", "apps.knowledgebase", "apps.uploads",
+    "apps.realtime",
 ]
 layers = [
     "(api)",

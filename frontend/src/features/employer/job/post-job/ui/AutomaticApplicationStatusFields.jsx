@@ -20,7 +20,7 @@ export default function AutomaticApplicationStatusFields() {
   return (
     <section className="mt-5 overflow-hidden rounded-xl border border-slate-200 bg-white" aria-labelledby="automatic-application-status-title">
       <header className="flex gap-3 bg-slate-50 px-4 py-4 sm:px-5">
-        <ThunderboltOutlined className="mt-0.5 text-lg text-emerald-600" aria-hidden="true" />
+        <ThunderboltOutlined className="mt-0.5 text-lg text-[var(--brand-primary)]" aria-hidden="true" />
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h3 id="automatic-application-status-title" className="m-0 text-base font-extrabold text-slate-900">
@@ -28,7 +28,7 @@ export default function AutomaticApplicationStatusFields() {
             </h3>
             <span className="rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">{m.employer_job_auto_status_new()}</span>
           </div>
-          <p className="mb-0 mt-1 text-sm leading-6 text-emerald-700">
+          <p className="mb-0 mt-1 text-sm leading-6 text-[var(--brand-primary-hover)]">
             {m.employer_job_auto_status_intro()}
           </p>
         </div>

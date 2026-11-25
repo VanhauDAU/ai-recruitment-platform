@@ -119,7 +119,7 @@ Cục bộ chỉ chạy test liên quan tới phần sửa. CI của PR là lầ
 | Toàn bộ backend song song (~1 phút) | `docker compose exec -T backend pytest -n auto --dist load` |
 | Toàn bộ, khớp CI | `./scripts/check_all.sh` |
 
-Trên CI: `backend-checks` chạy ~3 phút, 5 shard unit frontend mỗi shard ≤ 4 phút,
+Trên CI: `backend-checks` chạy ~3 phút, 7 shard unit frontend mỗi shard ≤ 4 phút (mỗi shard chạy coverage một worker; 25/11 tăng 5 → 7 khi shard chạm trần 8 phút),
 E2E chạy trong image `mcr.microsoft.com/playwright` đúng phiên bản lockfile. Job
 nào vượt 5 phút là tín hiệu cần chia nhỏ hoặc tối ưu, không phải lý do để tăng
 timeout.

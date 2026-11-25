@@ -62,15 +62,7 @@ async function mockCandidatePersonalizationApi(page) {
                   currency: 'VND',
                   locations_detail: [{ id: 1, name: 'Hà Nội' }],
                   presentation: {
-                    sponsored: true,
-                    card_tone: 'green',
-                    labels: [
-                      { code: 'sponsored', text: 'Tài trợ', tone: 'sponsored' },
-                      { code: 'urgent', text: 'GẤP', tone: 'warning' },
-                    ],
-                    display_reason: '',
-                    active_until: '2026-08-31T23:59:59+07:00',
-                    placement: 'legacy_priority',
+                    labels: [{ code: 'closing_soon', text: 'Sắp hết hạn', tone: 'warning' }],
                   },
                   match_score: 86,
                   is_high_match: true,
@@ -102,16 +94,7 @@ async function mockCandidatePersonalizationApi(page) {
                     currency: 'VND',
                     locations_detail: [{ id: 1, name: 'Hà Nội' }],
                     job_skills: [],
-                    presentation: {
-                      sponsored: true,
-                      card_tone: 'orange',
-                      labels: [
-                        { code: 'sponsored', text: 'Tài trợ', tone: 'sponsored' },
-                      ],
-                      display_reason: '',
-                      active_until: '2026-08-31T23:59:59+07:00',
-                      placement: 'legacy_priority',
-                    },
+                    presentation: { labels: [] },
                     similarity_score: 0,
                     similarity_details: [],
                     similarity_reasons: [],
@@ -168,18 +151,25 @@ test('candidate smoke: personalization pages and compact desktop menu remain usa
     name: 'Việc làm bạn có thể quan tâm',
   })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Python Developer' })).toBeVisible()
-  await expect(page.getByText('Tài trợ')).toBeVisible()
+  await expect(page.getByText('Tài trợ')).toHaveCount(0)
 
   await page.goto('/tai-khoan/viec-lam-phu-hop')
   await expect(page.getByRole('heading', { name: 'Việc làm phù hợp' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Backend Developer', exact: true })).toBeVisible()
+  // Reasons sit behind "Vì sao phù hợp?" since the matching page redesign (a01935f6).
+  await page.getByRole('button', { name: /Vì sao phù hợp\?/ }).click()
   await expect(page.getByText('Phù hợp với tìm kiếm của bạn')).toBeVisible()
   await expect(page.getByText('Phù hợp với kỹ năng của bạn')).toBeVisible()
+  await page.keyboard.press('Escape')
   await expect(page.getByText('Dữ liệu đang được dùng')).toHaveCount(0)
   await expect(page.getByText(/% phù hợp|Rất phù hợp/)).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Ẩn tin tuyển dụng này' })).toBeVisible()
-  await expect(page.getByText('Tài trợ')).toBeVisible()
-  await expect(page.getByText('GẤP')).toBeVisible()
+  await expect(page.getByText('Sắp hết hạn')).toBeVisible()
+  await expect(page.getByText('Tài trợ')).toHaveCount(0)
+
+  await page.goto('/tai-khoan/nha-tuyen-dung-muon-ket-noi')
+  await expect(page.getByRole('heading', { name: 'Lời mời cơ hội nghề nghiệp' })).toBeVisible()
+  await expect(page.getByText('Bạn chưa có lời mời kết nối nào')).toBeVisible()
 
   await page.goto('/tai-khoan/doi-mat-khau')
   await expect(page.getByRole('heading', { name: 'Đổi mật khẩu' })).toBeVisible()

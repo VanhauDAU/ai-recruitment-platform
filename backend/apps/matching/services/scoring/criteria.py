@@ -1,4 +1,4 @@
-"""Sáu tiêu chí của công thức `hybrid-v1`, mỗi tiêu chí cho điểm 0–100.
+"""Năm tiêu chí của công thức `hybrid-v2`, mỗi tiêu chí cho điểm 0–100.
 
 Tiêu chí trả `status`:
 - `ok`: tính được, có điểm;
@@ -8,12 +8,14 @@ Tiêu chí trả `status`:
 
 | Tiêu chí | Cách tính |
 | --- | --- |
-| Kỹ năng | `Σ(w·m)/Σw`, w = trọng số kỹ năng × (1 cần có / 0,5 nên có), m = 1 khi CV có kỹ năng (theo danh mục) hoặc có câu gần nghĩa |
+| Kỹ năng | `Σ(w·m)/Σw`, w = trọng số kỹ năng × (1 cần có / 0,5 nên có), m = 1 khi CV có kỹ năng (theo danh mục); khớp theo câu gần nghĩa chỉ bật khi `Calibration.semantic_skills` |
 | Kinh nghiệm | `0,4·Y·R/100 + 0,6·R`; Y theo số năm (đủ 100, thiếu 1 bậc 60, thiếu ≥ 2 bậc 20); R = mức liên quan (trung bình điểm toàn văn và điểm chức danh, xem `semantic.py`). Y nhân R/100: năm làm việc khác nghề không được tính |
 | Học vấn | Đủ hoặc vượt 100, thấp 1 bậc 50, thấp ≥ 2 bậc 0 |
 | Cấp bậc | Lệch 0/1/2/≥3 bậc: 100/70/40/10, tính cả hai chiều |
 | Ngoại ngữ | Đủ mức 100, thấp 1 bậc 50, thấp hơn hoặc không có 0 |
-| Địa điểm | Cùng tỉnh hoặc remote 100, khác tỉnh 30 |
+
+Địa điểm không phải tiêu chí chấm: CV không mang địa điểm (nơi làm việc mong muốn
+nằm ở hồ sơ ứng viên), và rubric gán nhãn không xét địa điểm.
 """
 
 from dataclasses import dataclass, field
@@ -42,7 +44,6 @@ YEARS_SCORE = {0: 100, 1: 60}  # thiếu bao nhiêu bậc → điểm; thiếu n
 YEARS_FLOOR = 20
 POSITION_SCORE = {0: 100, 1: 70, 2: 40}  # lệch bao nhiêu bậc → điểm; lệch nhiều hơn → 10
 POSITION_FLOOR = 10
-LOCATION_OTHER_PROVINCE = 30
 
 
 @dataclass
@@ -63,6 +64,8 @@ class MatchInput:
     # Mức liên quan 0–100 (None nếu không so được) và chi tiết các phép so.
     relevance: float | None
     relevance_detail: dict
+    # Có nhận kỹ năng viết khác tên qua câu gần nghĩa không (xem `Calibration`).
+    semantic_skills: bool = False
 
 
 def skills(data):
@@ -80,7 +83,7 @@ def skills(data):
         similarity, sentence = data.skill_hits.get(skill['name'], (0.0, ''))
         if own is not None:
             match = {'match_type': 'exact', 'similarity': None, 'evidence': own['evidence']}
-        elif sentence and similarity >= data.calibration.skill:
+        elif data.semantic_skills and sentence and similarity >= data.calibration.skill:
             match = {'match_type': 'semantic', 'similarity': similarity, 'evidence': sentence}
         else:
             missing.append({'name': skill['name'], 'importance': skill['importance']})
@@ -191,14 +194,4 @@ def languages(data):
     )
 
 
-def location(data):
-    if 'remote' in data.job.get('work_types', []):
-        return Component('location', 100, detail={'remote': True})
-    own = {item['province_id'] for item in data.cv['locations']}
-    if not own or not data.job['locations']:
-        return Component('location', status='insufficient_data')
-    same = own & {item['province_id'] for item in data.job['locations']}
-    return Component('location', 100 if same else LOCATION_OTHER_PROVINCE)
-
-
-CRITERIA = (skills, experience, education, position_level, languages, location)
+CRITERIA = (skills, experience, education, position_level, languages)

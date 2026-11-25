@@ -13,7 +13,7 @@ from apps.employers.domain.page_registry import (
     MAIN_SECTIONS,
     SIDEBAR_SECTIONS,
 )
-from apps.jobs.models import Job, JobLocation
+from apps.jobs.models import Job, JobCategory, JobCategoryAssignment, JobLocation
 from apps.locations.models import Location
 
 from ..models import Company, CompanyImage, CompanyIndustry, Industry
@@ -514,7 +514,8 @@ class PublicCompanyJobFacetsApiTests(PublicCompanyPageTestCase):
                     {'id': hanoi.pk, 'name': 'Hà Nội', 'count': 2},
                     {'id': cantho.pk, 'name': 'Cần Thơ', 'count': 1},
                     {'id': danang.pk, 'name': 'Đà Nẵng', 'count': 1},
-                ]
+                ],
+                'categories': [],
             },
         )
 
@@ -523,7 +524,50 @@ class PublicCompanyJobFacetsApiTests(PublicCompanyPageTestCase):
 
         response = self.client.get(reverse('public-company-job-facets', args=[company.public_id]))
 
-        self.assertEqual(response.data, {'locations': []})
+        self.assertEqual(response.data, {'locations': [], 'categories': []})
+
+    def test_facets_group_primary_specialisations_under_parent(self):
+        domain = JobCategory.objects.create(
+            name='Ngân hàng', category_type=JobCategory.CategoryType.DOMAIN
+        )
+        teller = JobCategory.objects.create(name='Giao dịch viên', parent=domain)
+        credit = JobCategory.objects.create(name='Tín dụng', parent=domain)
+        orphan = JobCategory.objects.create(name='Nhân sự')
+        company = make_company(self.creator, name='Công ty Ngân Hàng')
+        recruiter = add_recruiter(company)
+        primary = JobCategoryAssignment.Role.PRIMARY_SPECIALIZATION
+
+        def job_in(category, **overrides):
+            job = publish_job(company, recruiter, **overrides)
+            JobCategoryAssignment.objects.create(job=job, category=category, role=primary)
+            return job
+
+        job_in(teller)
+        job_in(teller)
+        tagged = job_in(credit)
+        JobCategoryAssignment.objects.create(
+            job=tagged, category=orphan, role=JobCategoryAssignment.Role.DOMAIN_KNOWLEDGE
+        )
+        job_in(orphan)
+        job_in(credit, status=Job.Status.CLOSED)
+
+        response = self.client.get(reverse('public-company-job-facets', args=[company.public_id]))
+
+        self.assertEqual(
+            response.data['categories'],
+            [
+                {
+                    'id': domain.pk,
+                    'name': 'Ngân hàng',
+                    'count': 3,
+                    'children': [
+                        {'id': teller.pk, 'name': 'Giao dịch viên', 'count': 2},
+                        {'id': credit.pk, 'name': 'Tín dụng', 'count': 1},
+                    ],
+                },
+                {'id': orphan.pk, 'name': 'Nhân sự', 'count': 1, 'children': []},
+            ],
+        )
 
 
 class PolicyHoldDirectoryTests(PublicCompanyPageTestCase):

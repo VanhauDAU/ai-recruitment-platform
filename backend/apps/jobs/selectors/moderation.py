@@ -4,6 +4,7 @@ from django.db.models import BooleanField, Case, CharField, Count, Prefetch, Q, 
 from django.db.models.functions import Coalesce, NullIf
 
 from common.api.params import parse_bool
+from common.db.readable_code import code_search_q
 from common.db.search import search_q
 
 from ..models import (
@@ -74,6 +75,7 @@ def admin_job_management_queryset(*, params=None):
             | search_q('company__company_name', query)
             | search_q('posted_by__full_name', query)
             | Q(public_id__icontains=query)
+            | code_search_q('code', query)
             | Q(posted_by__email__icontains=query)
         )
 
@@ -94,8 +96,6 @@ def admin_job_management_queryset(*, params=None):
         queryset = queryset.filter(company__public_id=company)
     if employer := params.get('employer'):
         queryset = queryset.filter(posted_by__public_id=employer)
-    if tier := params.get('tier'):
-        queryset = queryset.filter(tier=tier)
     if policy_hold := params.get('policy_hold'):
         queryset = queryset.filter(policy_hold=policy_hold)
     if moderation_hold := params.get('moderation_hold'):

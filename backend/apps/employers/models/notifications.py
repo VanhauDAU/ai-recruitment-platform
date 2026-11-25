@@ -59,9 +59,26 @@ class EmployerNotification(models.Model):
         )
         APPLICATION_RECEIVED = 'application_received', gettext_lazy('Có hồ sơ ứng tuyển mới')
         APPLICATION_WITHDRAWN = 'application_withdrawn', gettext_lazy('Ứng viên đã rút hồ sơ')
+        SEARCH_INVITATION_ACCEPTED = (
+            'search_invitation_accepted',
+            gettext_lazy('Ứng viên đồng ý kết nối'),
+        )
+        SEARCH_INVITATION_DECLINED = (
+            'search_invitation_declined',
+            gettext_lazy('Ứng viên từ chối lời mời kết nối'),
+        )
         APPLICATION_AWAITING_REPLY = (
             'application_awaiting_reply',
             gettext_lazy('Hồ sơ đang chờ phản hồi'),
+        )
+        FLASH_BADGE_GRANTED = (
+            'flash_badge_granted',
+            gettext_lazy('Bạn đã đạt Huy hiệu Sấm Chớp'),
+        )
+        FLASH_BADGE_LOST = 'flash_badge_lost', gettext_lazy('Bạn đã mất Huy hiệu Sấm Chớp')
+        FLASH_BADGE_AT_RISK = (
+            'flash_badge_at_risk',
+            gettext_lazy('Huy hiệu Sấm Chớp sắp bị gỡ'),
         )
         JOB_CHANGES_REQUESTED = (
             'job_changes_requested',

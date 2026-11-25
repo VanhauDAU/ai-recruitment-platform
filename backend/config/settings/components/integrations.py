@@ -51,7 +51,7 @@ EMAIL_BACKEND = config('EMAIL_BACKEND', default='') or (
 # `or` để dòng .env bỏ trống (EMAIL_FROM_ADDRESS=) vẫn rơi về địa chỉ hợp lệ.
 EMAIL_FROM_NAME = config('EMAIL_FROM_NAME', default='') or 'ProCV'
 EMAIL_FROM_ADDRESS = (
-    config('EMAIL_FROM_ADDRESS', default='') or EMAIL_HOST_USER or 'no-reply@procv.vn'
+    config('EMAIL_FROM_ADDRESS', default='') or EMAIL_HOST_USER or 'no-reply@procv.site'
 )
 DEFAULT_FROM_EMAIL = (
     config('DEFAULT_FROM_EMAIL', default='') or f'{EMAIL_FROM_NAME} <{EMAIL_FROM_ADDRESS}>'
@@ -146,6 +146,14 @@ CAMPAIGN_SOCIAL_HTTP_TIMEOUT_SECONDS = config(
     'CAMPAIGN_SOCIAL_HTTP_TIMEOUT_SECONDS', default=10.0, cast=float
 )
 
+# Geocoding cho "Việc làm gần bạn" (ADR-0029): vietmap (production) | goong |
+# nominatim (chỉ dev, không key) | disabled. Key là bí mật phía server; key tile
+# bản đồ công khai nằm trong site setting `map_style_url`.
+GEOCODING_PROVIDER = config('GEOCODING_PROVIDER', default='disabled').strip().lower()
+GEOCODING_API_KEY = config('GEOCODING_API_KEY', default='').strip()
+GEOCODING_TIMEOUT_SECONDS = config('GEOCODING_TIMEOUT_SECONDS', default=5.0, cast=float)
+GEOCODING_USER_AGENT = config('GEOCODING_USER_AGENT', default='ProCV/1.0 (+https://procv.site)')
+
 # Provider-neutral employer phone verification. Production remains disabled
 # until Ops/Product explicitly select a gateway, sender and approved template.
 EMPLOYER_SMS_OTP_ENABLED = config('EMPLOYER_SMS_OTP_ENABLED', default=False, cast=bool)
@@ -180,6 +188,10 @@ EMAIL_VERIFICATION_RESEND_COOLDOWN = config(
 # được tài khoản; cooldown chặn spam gửi lại tới cùng một hòm thư.
 PASSWORD_RESET_TTL = config('PASSWORD_RESET_TTL', default=60 * 30, cast=int)
 PASSWORD_RESET_RESEND_COOLDOWN = config('PASSWORD_RESET_RESEND_COOLDOWN', default=60, cast=int)
+PASSWORD_SETUP_CODE_TTL = config('PASSWORD_SETUP_CODE_TTL', default=60 * 10, cast=int)
+PASSWORD_SETUP_CODE_RESEND_COOLDOWN = config(
+    'PASSWORD_SETUP_CODE_RESEND_COOLDOWN', default=60, cast=int
+)
 
 # Social login (OAuth Authorization Code Flow qua backend callback).
 # Chưa điền client id/secret -> nút social báo "chưa cấu hình" (không crash).

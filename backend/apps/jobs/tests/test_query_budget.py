@@ -14,9 +14,10 @@ from apps.applications.models import Application
 from apps.cvs.models import CvVersion, UserCv
 from apps.employers.models import Company, CompanyPinnedJob
 from apps.employers.tests.factories import make_employer_ready
+from apps.locations.models import Location
 from apps.skills.models import Skill
 
-from ..models import Job, JobCategory, JobCategoryAssignment, JobSkill, SavedJob
+from ..models import Job, JobCategory, JobCategoryAssignment, JobLocation, JobSkill, SavedJob
 from .factories import open_visibility_window
 
 # +1 cho mỗi request vào API cổng ứng viên/NTD/công khai: middleware bảo trì đọc
@@ -30,14 +31,24 @@ MAINTENANCE_CHECK_QUERIES = 1
 # recruiter + correlated legal/report evidence, và active domain claims. Các
 # query chạy một lần cho cả response nên tổng vẫn phẳng theo số bản ghi.
 BADGE_QUERY_BUDGET = 3
-JOB_LIST_QUERY_BUDGET = 5 + BADGE_QUERY_BUDGET + MAINTENANCE_CHECK_QUERIES
+# +1 cho ngưỡng nhãn "Sắp hết hạn" (`job_closing_soon_days`, ADR-0030): đọc một lần
+# cho cả trang; giống MAINTENANCE_CHECK_QUERIES, production đọc từ cache.
+LABEL_SETTING_QUERIES = 1
+CARD_QUERIES = BADGE_QUERY_BUDGET + LABEL_SETTING_QUERIES + MAINTENANCE_CHECK_QUERIES
+JOB_LIST_QUERY_BUDGET = 5 + CARD_QUERIES
 # Homepage preview adds two relation prefetches (benefits + schedules).
 HOMEPAGE_BEST_JOB_LIST_QUERY_BUDGET = JOB_LIST_QUERY_BUDGET + 2
+# Chip địa điểm: đếm theo tỉnh + đếm theo phường + 1 SELECT tên (kèm tỉnh cha).
+HOMEPAGE_BEST_JOB_LOCATIONS_QUERY_BUDGET = 3 + MAINTENANCE_CHECK_QUERIES
+# Dashboard thống kê trang chủ: tài khoản, tổng/tăng trưởng/lương (một aggregate),
+# danh mục gộp theo gốc, việc mới nhất + prefetch địa điểm, NTD nổi bật.
+JOB_STATS_QUERY_BUDGET = 6 + MAINTENANCE_CHECK_QUERIES
 ADMIN_JOB_LIST_QUERY_BUDGET = 2
-# +1 aggregate for the status-tab counts (one query whatever the page size).
-EMPLOYER_JOB_LIST_QUERY_BUDGET = 6 + MAINTENANCE_CHECK_QUERIES
-SAVED_JOB_SIMILARITY_QUERY_BUDGET = 8 + BADGE_QUERY_BUDGET + MAINTENANCE_CHECK_QUERIES
-SAVED_JOB_FALLBACK_QUERY_BUDGET = 9 + BADGE_QUERY_BUDGET + MAINTENANCE_CHECK_QUERIES
+# +1 aggregate for the status-tab counts and +1 category prefetch (one query
+# each whatever the page size).
+EMPLOYER_JOB_LIST_QUERY_BUDGET = 7 + MAINTENANCE_CHECK_QUERIES
+SAVED_JOB_SIMILARITY_QUERY_BUDGET = 8 + CARD_QUERIES
+SAVED_JOB_FALLBACK_QUERY_BUDGET = 9 + CARD_QUERIES
 
 
 class JobListQueryBudgetTests(APITestCase):
@@ -102,6 +113,47 @@ class JobListQueryBudgetTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data['results']), 5)
 
+    def test_homepage_best_job_locations_query_count_is_flat(self):
+        province = Location.objects.create(code='qb-p', level=Location.Level.PROVINCE, name='P')
+        for index, job in enumerate(Job.objects.all()):
+            ward = Location.objects.create(
+                code=f'qb-w{index}', level=Location.Level.WARD, name=f'W{index}', parent=province
+            )
+            JobLocation.objects.create(job=job, location=ward)
+
+        with self.assertNumQueries(HOMEPAGE_BEST_JOB_LOCATIONS_QUERY_BUDGET):
+            response = self.client.get(reverse('homepage-best-job-locations'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['provinces'][0]['job_count'], 5)
+        self.assertEqual(len(response.data['wards']), 5)
+
+    def test_job_stats_query_count_is_flat_and_cached(self):
+        root = JobCategory.objects.create(name='Công nghệ', slug='qb-root')
+        child = JobCategory.objects.create(name='Phần mềm', slug='qb-child', parent=root)
+        leaf = JobCategory.objects.create(name='Backend', slug='qb-leaf', parent=child)
+        province = Location.objects.create(code='qb-sp', level=Location.Level.PROVINCE, name='P')
+        for index, job in enumerate(Job.objects.all()):
+            category = (root, child, leaf)[index % 3]
+            JobCategoryAssignment.objects.create(job=job, category=category)
+            ward = Location.objects.create(
+                code=f'qb-sw{index}', level=Location.Level.WARD, name=f'W{index}', parent=province
+            )
+            JobLocation.objects.create(job=job, location=ward)
+
+        with self.assertNumQueries(JOB_STATS_QUERY_BUDGET):
+            response = self.client.get(reverse('job-stats'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Cache-Control'], 'public, max-age=60')
+        self.assertEqual(response.data['active_jobs'], 5)
+        self.assertEqual([item['count'] for item in response.data['demand']], [5])
+        self.assertEqual(len(response.data['latest_jobs']), 5)
+        self.assertEqual(response.data['latest_jobs'][0]['location_names'], ['P'])
+        # Lần sau đọc payload từ cache: chỉ còn query của middleware bảo trì.
+        with self.assertNumQueries(MAINTENANCE_CHECK_QUERIES):
+            self.assertEqual(self.client.get(reverse('job-stats')).data, response.data)
+
 
 class EmployerJobListQueryBudgetTests(APITestCase):
     def setUp(self):
@@ -161,8 +213,8 @@ class EmployerJobListQueryBudgetTests(APITestCase):
     def test_employer_job_list_query_count_is_flat_with_candidate_previews(self):
         # 1 canonical readiness query + 1 COUNT + 1 SELECT jobs
         # (candidate_count and unviewed_application_count are correlated
-        # subqueries) + 1 locations prefetch + 1 batched candidate-preview
-        # query + 1 status-tab aggregate.
+        # subqueries) + 1 locations prefetch + 1 category prefetch + 1 batched
+        # candidate-preview query + 1 status-tab aggregate.
         with self.assertNumQueries(EMPLOYER_JOB_LIST_QUERY_BUDGET):
             response = self.client.get(reverse('employer-job-list-create'))
 

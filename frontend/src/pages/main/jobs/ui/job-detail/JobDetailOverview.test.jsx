@@ -44,16 +44,13 @@ describe('JobHero', () => {
     expect(screen.getByRole('button', { name: 'Xem việc làm liên quan' })).toBeVisible()
   })
 
-  it('promotes salary as the primary hero metric', () => {
-    renderHero()
+  it('shows salary with its note and the three key facts', () => {
+    renderHero({ ...JOB, deadline: '2099-12-29' })
 
-    const salary = screen.getByRole('group', { name: 'Mức lương: 15 - 20 triệu, Khi đạt 100% KPI' })
-
-    expect(salary).toHaveClass('job-hero__salary', 'border-emerald-100')
-    expect(screen.getByText('15 - 20 triệu')).toHaveClass('text-xl', 'font-extrabold')
-    expect(screen.getByText('Khi đạt 100% KPI')).toHaveClass('text-xs', 'text-emerald-700')
-    expect(screen.getByRole('group', { name: /Địa điểm: Thành phố Đà Nẵng/ })).toBeInTheDocument()
-    expect(screen.getByRole('group', { name: 'Kinh nghiệm: 2 năm' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Mức lương: 15 - 20 triệu, Khi đạt 100% KPI')).toBeVisible()
+    expect(screen.getByText('Địa điểm').nextElementSibling).toHaveTextContent('Thành phố Đà Nẵng')
+    expect(screen.getByText('Kinh nghiệm').nextElementSibling).toHaveTextContent('2 năm')
+    expect(screen.getByText('Hạn ứng tuyển').nextElementSibling).toHaveTextContent('29/12/2099')
   })
 
   it('shows the first approval date after a job is approved again', () => {

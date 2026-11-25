@@ -53,7 +53,17 @@ const PROFILE = {
   },
 }
 
-function renderPanel(section = 'profile') {
+const CANDIDATE_PROFILE = {
+  candidate: {
+    gender: 'male',
+    headline: 'Kỹ sư dữ liệu',
+    desired_position: 'Data Engineer',
+    preferred_location: 'Đà Nẵng',
+    job_preference: { experience_level: 'junior', willing_to_relocate: true, desired_salary_vnd: 20000000 },
+  },
+}
+
+function renderPanel(section = 'profile', role = 'employer') {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
@@ -62,7 +72,7 @@ function renderPanel(section = 'profile') {
       <QueryClientProvider client={queryClient}>
         <AccountProfilePanel
           publicId="usr_1"
-          account={{ role: 'employer' }}
+          account={{ role }}
           section={section}
         />
       </QueryClientProvider>
@@ -82,6 +92,22 @@ describe('AccountProfilePanel', () => {
     await waitFor(() => expect(screen.getByText('Người tạo công ty')).toBeInTheDocument())
     expect(screen.getByText('Nam')).toBeInTheDocument()
     expect(screen.queryByText('Thông tin công ty')).not.toBeInTheDocument()
+  })
+
+  it('splits a candidate profile from job preferences so no block repeats across tabs', async () => {
+    getAdminAccountProfile.mockResolvedValue(CANDIDATE_PROFILE)
+    const { unmount } = renderPanel('profile', 'candidate')
+    await waitFor(() => expect(screen.getByText('Kỹ sư dữ liệu')).toBeInTheDocument())
+    expect(screen.queryByText('Data Engineer')).not.toBeInTheDocument()
+    expect(screen.queryByText('Tiêu chí có cấu trúc')).not.toBeInTheDocument()
+    unmount()
+
+    renderPanel('preferences', 'candidate')
+    await waitFor(() => expect(screen.getByText('Data Engineer')).toBeInTheDocument())
+    expect(screen.getByText('Đà Nẵng')).toBeInTheDocument()
+    expect(screen.getByText('Tiêu chí có cấu trúc')).toBeInTheDocument()
+    expect(screen.getByText(/20\.000\.000/)).toBeInTheDocument()
+    expect(screen.queryByText('Kỹ sư dữ liệu')).not.toBeInTheDocument()
   })
 
   it('renders only the company card in the company section', async () => {

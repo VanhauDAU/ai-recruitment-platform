@@ -31,7 +31,7 @@
 }
 
 .job-filter-tab:hover { color: #0f172a; }
-.job-filter-tab[aria-pressed='true'] { border-bottom-color: #059669; color: #047857; }
+.job-filter-tab[aria-pressed='true'] { border-bottom-color: var(--brand-primary); color: var(--brand-primary-hover); }
 
 .job-filter-tab__count {
   min-width: 24px;
@@ -44,7 +44,7 @@
   text-align: center;
 }
 
-.job-filter-tab[aria-pressed='true'] .job-filter-tab__count { background: #059669; color: #fff; }
+.job-filter-tab[aria-pressed='true'] .job-filter-tab__count { background: var(--brand-primary); color: #fff; }
 
 .job-chip {
   display: inline-flex;
@@ -64,7 +64,7 @@
 
 .job-chip:hover { border-color: #cbd5e1; color: #0f172a; }
 .job-chip > span:last-child { color: #94a3b8; font-variant-numeric: tabular-nums; }
-.job-chip[aria-pressed='true'] { border-color: #059669; background: #059669; color: #fff; }
+.job-chip[aria-pressed='true'] { border-color: var(--brand-primary); background: var(--brand-primary); color: #fff; }
 .job-chip[aria-pressed='true'] > span:last-child { color: rgb(255 255 255 / 0.8); }
 .job-chip[aria-pressed='true'] .ws-dot { background: #fff; }
 
@@ -78,18 +78,6 @@
 .job-cv-table .ant-table-cell:first-child { padding-left: 20px !important; }
 .job-cv-table .ant-table-cell:last-child { padding-right: 20px !important; }
 
-.job-detail-tabs .ant-tabs-content-holder { min-width: 0; }
-.job-detail-tabs > .ant-tabs-nav { display: none !important; }
-
-@media (min-width: 640px) {
-  .job-detail-tabs > .ant-tabs-nav {
-    display: flex !important;
-    margin-bottom: 0 !important;
-    padding: 0 20px;
-  }
-}
-
-.job-detail-tabs .ant-tabs-tab { padding-block: 14px !important; }
 
 
 /* Job workspace header. */
@@ -120,62 +108,26 @@
 
 
 /*
- * Job list (/jobs) rows on top of @/shared/ui/workspace-list/workspace-list.css. A narrow list shows
- * cards (title, status, meta, then three labelled stats); a wide one lines
- * every cell up under the sortable header through grid areas.
+ * Job list (/jobs) on top of @/shared/ui/workspace-list/workspace-table.css:
+ * the columns of the wide table and the cell content of a job row.
  */
-.ejl-row {
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas:
-    'title actions'
-    'status status'
-    'meta meta'
-    'stats stats';
-}
-
+.ejl-table { --wt-cols: minmax(280px, 1fr) 140px 200px 110px 150px 210px; }
 .ejl-row__skeleton { grid-column: 1 / -1; }
-.ejl-row > .ws-row__title { grid-area: title; }
-.ejl-row > .ws-row__meta { grid-area: meta; }
-.ejl-row > .ws-row__stats { grid-area: stats; }
-.ejl-row .is-untitled { color: #64748b !important; font-style: italic; }
-
-.ejl-row__status {
-  grid-area: status;
-  display: flex;
-  min-width: 0;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 8px;
-}
-
+.wt-title.is-untitled { color: #64748b !important; font-style: italic; }
 .ejl-row__reason { color: #b91c1c; font-size: 12px; line-height: 1.35; }
 
 .ejl-row__campaign {
-  display: inline-flex;
   max-width: 100%;
-  min-width: 0;
-  align-items: center;
-  gap: 4px;
   color: #475569 !important;
   font-weight: 500;
 }
 
-.ejl-row__campaign .anticon { color: #059669; }
 .ejl-row__campaign > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ejl-row__campaign:hover { color: #047857 !important; }
-
-.ejl-row__actions {
-  grid-area: actions;
-  display: flex;
-  align-items: center;
-  align-self: start;
-  justify-content: flex-end;
-  gap: 4px;
-}
+.ejl-row__campaign:hover { color: var(--brand-primary-hover) !important; }
 
 .ejl-candidates { display: flex; min-width: 0; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
 .ejl-candidates__count { color: #0f172a !important; }
-.ejl-candidates__count:hover .ws-strong { color: #047857; }
+.ejl-candidates__count:hover .ws-strong { color: var(--brand-primary-hover); }
 .ejl-avatars { display: none; margin: 0; padding: 0 0 0 6px; list-style: none; }
 .ejl-avatars > li { position: relative; margin-left: -6px; }
 .ejl-avatar-link { display: block; border-radius: 9999px; }
@@ -188,66 +140,19 @@
   font-weight: 700;
 }
 
-.ejl-primary-action {
-  display: inline-flex;
-  height: 32px;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid #a7f3d0;
-  border-radius: 8px;
-  background: #ecfdf5 !important;
-  padding: 0 10px;
-  color: #047857 !important;
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-  transition: background-color 0.15s, border-color 0.15s;
-}
-
-.ejl-primary-action:hover { border-color: #6ee7b7; background: #d1fae5 !important; }
-.ejl-quick-actions { display: none; align-items: center; gap: 2px; }
+.ejl-quick-actions { display: none; align-items: center; gap: 6px; }
 
 /* Phones: the primary action keeps its icon only (the label stays as aria-label). */
 @media (max-width: 479px) {
-  .ejl-primary-action { width: 32px; justify-content: center; padding: 0; }
+  .ejl-primary-action { width: 30px; padding: 0; }
   .ejl-primary-action > span:last-child { display: none; }
 }
 
 @media (min-width: 640px) {
-  .ejl-row {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    grid-template-areas:
-      'title title actions'
-      'status meta meta'
-      'stats stats stats';
-  }
-
   .ejl-quick-actions,
   .ejl-avatars { display: flex; }
 }
 
-@media (min-width: 768px) {
-  .ejl-filters { grid-template-columns: minmax(0, 1fr) 220px 200px; }
-  .ejl-filters > :first-child { grid-column: auto; }
-}
-
 @container (min-width: 1080px) {
-  .ejl-head,
-  .ejl-row {
-    grid-template-columns: minmax(0, 1fr) 132px 200px 104px 136px 168px;
-    column-gap: 16px;
-  }
-
-  .ejl-row {
-    grid-template-areas:
-      'title status candidates views deadline actions'
-      'meta status candidates views deadline actions';
-  }
-
-  .ejl-row__status { flex-direction: column; align-items: flex-start; }
   .ejl-row__reason { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-  .ejl-row__actions { align-self: center; }
-  .ejl-stat--candidates { grid-area: candidates; }
-  .ejl-stat--views { grid-area: views; }
-  .ejl-stat--deadline { grid-area: deadline; }
 }

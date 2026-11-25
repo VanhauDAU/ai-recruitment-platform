@@ -108,7 +108,7 @@ export default function FollowedCompanyList() {
     return (
       <div className="rounded-xl bg-slate-50 px-3 py-4 text-center" role="alert">
         <p className="text-sm text-slate-500">Chưa thể tải danh sách công ty đang theo dõi.</p>
-        <button type="button" onClick={() => refetch()} className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-emerald-700 hover:text-emerald-800">
+        <button type="button" onClick={() => refetch()} className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-[var(--brand-primary-hover)]">
           <ReloadOutlined aria-hidden="true" /> Thử lại
         </button>
       </div>

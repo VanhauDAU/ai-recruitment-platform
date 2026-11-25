@@ -84,6 +84,10 @@ class AdminAccountViewSet(
     lookup_field = 'public_id'
 
     def get_queryset(self):
+        # Schema generation has no admin behind the request; the scoped
+        # selector cannot run there, so give drf-spectacular the model.
+        if getattr(self, 'swagger_fake_view', False):
+            return User.objects.none()
         params = (
             _validated_account_params(self.request.query_params) if self.action == 'list' else {}
         )

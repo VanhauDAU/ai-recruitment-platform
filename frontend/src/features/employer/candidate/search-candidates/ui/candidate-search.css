@@ -1,0 +1,28 @@
+/* Trang Tìm CV của nhà tuyển dụng: nạp cùng chunk trễ của trang. */
+.cs-workspace { display: flex; flex-direction: column; gap: 14px; }
+.cs-toolbar { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.cs-count { margin: 0 0 8px; font-size: 12px; color: #64748b; }
+.cs-list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; border-top: 1px solid #f1f5f9; }
+.cs-row { display: flex; flex-direction: column; gap: 10px; padding: 12px 2px; border-bottom: 1px solid #f1f5f9; }
+.cs-row__main { min-width: 0; flex: 1; }
+.cs-row__title { margin: 0; font-size: 14px; font-weight: 700; color: #0f172a; overflow-wrap: anywhere; }
+.cs-row__code { margin-left: 8px; font-size: 11px; font-weight: 600; color: #94a3b8; font-variant-numeric: tabular-nums; }
+.cs-row__facts, .cs-row__skills { margin: 2px 0 0; font-size: 12px; line-height: 1.5; color: #64748b; }
+.cs-row__skills { color: #475569; }
+.cs-row__side { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.cs-state { font-size: 12px; font-weight: 600; color: #64748b; }
+.cs-state[data-state="accepted"] { color: var(--brand-primary, #00b14f); }
+.cs-muted { margin: 0; font-size: 13px; color: #64748b; }
+.cs-quick { display: flex; flex-direction: column; gap: 22px; }
+.cs-heading { margin: 0 0 10px; font-size: 12px; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; color: #64748b; }
+.cs-drawer-footer { display: flex; flex-direction: column; gap: 10px; }
+.cs-drawer-footer p { margin: 0; font-size: 12px; line-height: 1.5; color: #64748b; }
+@media (min-width: 640px) {
+  .cs-row { flex-direction: row; align-items: center; }
+  .cs-row__side { flex: none; justify-content: flex-end; }
+  .cs-drawer-footer { flex-direction: row; align-items: center; justify-content: space-between; }
+  .cs-drawer-footer .ant-btn { flex: none; }
+}
+@media (min-width: 900px) {
+  .cs-toolbar { grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); }
+}

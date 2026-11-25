@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import AdminPortalPermission
+from common.api.throttling import ClientIPScopedRateThrottle
 
 from ...selectors import (
     invitation_queryset,
@@ -115,6 +116,8 @@ class AdminInvitationViewSet(
 )
 class AdminInvitationValidateView(APIView):
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [ClientIPScopedRateThrottle]
+    throttle_scope = 'admin_invitation'
 
     def get(self, request):
         serializer = AdminInvitationTokenSerializer(data=request.query_params)
@@ -141,6 +144,8 @@ class AdminInvitationValidateView(APIView):
 )
 class AdminInvitationAcceptView(APIView):
     permission_classes = [permissions.AllowAny]
+    throttle_classes = [ClientIPScopedRateThrottle]
+    throttle_scope = 'admin_invitation'
 
     def post(self, request):
         serializer = AdminInvitationAcceptSerializer(data=request.data)

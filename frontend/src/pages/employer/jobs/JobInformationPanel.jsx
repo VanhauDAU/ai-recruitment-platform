@@ -134,13 +134,13 @@ export default function JobInformationPanel({ job }) {
         <SideCard title={m.employer_job_detail_location_time()}>
           {(job.job_locations || []).map((location) => (
             <p key={location.id || `${location.location}-${location.address_detail}`} className="flex gap-2">
-              <EnvironmentOutlined aria-hidden className="mt-1 shrink-0 text-emerald-600" />
+              <EnvironmentOutlined aria-hidden className="mt-1 shrink-0 text-[var(--brand-primary)]" />
               <span>{[location.address_detail, location.location_name, location.province_name].filter(Boolean).join(', ')}</span>
             </p>
           ))}
           {[...(job.work_schedules || []).map(scheduleLabel), job.work_schedule_note].filter(Boolean).map((label) => (
             <p key={label} className="flex gap-2">
-              <FieldTimeOutlined aria-hidden className="mt-1 shrink-0 text-emerald-600" />
+              <FieldTimeOutlined aria-hidden className="mt-1 shrink-0 text-[var(--brand-primary)]" />
               <span>{label}</span>
             </p>
           ))}

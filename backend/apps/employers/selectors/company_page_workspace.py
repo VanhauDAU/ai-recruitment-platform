@@ -3,10 +3,9 @@
 from dataclasses import asdict
 
 from django.db.models import Prefetch
-from django.db.models.functions import Coalesce
 
 from apps.employers.domain.page_registry import company_page_registry
-from apps.jobs.models import Job
+from apps.jobs.models import Job, listing_recency
 from common.db.search import search_q
 
 from ..models import CompanyPageEditorGrant
@@ -91,7 +90,7 @@ def pinnable_company_jobs(company_id, *, query=''):
     jobs = Job.publicly_available_queryset().filter(company_id=company_id)
     if query:
         jobs = jobs.filter(search_q('title', query))
-    jobs = jobs.order_by(Coalesce('published_at', 'created_at').desc(), '-id')
+    jobs = jobs.order_by(listing_recency().desc(), '-id')
     return [
         _job_reference(job)
         for job in jobs.only('public_id', 'title', 'slug', 'published_at')[:PINNABLE_JOB_LIMIT]

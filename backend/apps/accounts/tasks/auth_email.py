@@ -15,6 +15,7 @@ from ..services import (
     admin_invitation_mail,
     email_verification,
     password_reset,
+    password_setup_code,
     welcome,
 )
 
@@ -125,6 +126,12 @@ def _send(job):
             occurred_at=job.context.get('occurred_at', ''),
         )
         return True
+    if job.kind == AuthEmailJob.Kind.PASSWORD_SETUP_CODE:
+        return password_setup_code.send_code_email(
+            job.user,
+            expected_email=job.context.get('email'),
+            expected_auth_revision=job.context.get('auth_revision'),
+        )
     raise ValueError(f'Unsupported authentication email kind: {job.kind}')
 
 

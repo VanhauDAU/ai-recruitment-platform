@@ -14,10 +14,8 @@ import {
   formatJobPostedLabel,
   formatLocations,
   formatSalary,
-  jobCardToneClass,
   jobDetailPath,
   JobPresentationLabels,
-  resolveJobPresentation,
   SavedJobTooltipContent,
   VerifiedEmployerBadge,
 } from '@/entities/job/job'
@@ -35,15 +33,9 @@ function savedLabel(value) {
   return `Đã lưu ${date} - ${time}`
 }
 
-function Chip({ children, elevated = false }) {
-  // `elevated`: card nền xanh (featured/top) dùng chip trắng nổi trên nền;
-  // card thường nền trắng dùng chip xám để vẫn tách khỏi nền.
+function Chip({ children }) {
   return (
-    <span
-      className={`inline-flex max-w-full items-center truncate rounded-full px-2.5 py-1 text-xs text-gray-600 ring-1 transition-colors group-hover:bg-gray-100 group-hover:ring-transparent ${
-        elevated ? 'bg-white/70 ring-emerald-100' : 'bg-gray-50 ring-gray-200/70'
-      }`}
-    >
+    <span className="inline-flex max-w-full items-center truncate rounded-full bg-gray-50 px-2.5 py-1 text-xs text-gray-600 ring-1 ring-gray-200/70 transition-colors group-hover:bg-gray-100 group-hover:ring-transparent">
       {children}
     </span>
   )
@@ -99,8 +91,6 @@ export default function JobCard({
   const [hovered, setHovered] = useState(false)
   const impressionRef = useJobImpression(job.slug)
   const locationLabel = formatLocations(job)
-  const presentation = resolveJobPresentation(job)
-  const elevated = presentation.card_tone !== 'neutral'
   const skills = (job.job_skills || []).map((s) => s.skill_name).filter(Boolean)
   const posted = formatJobPostedLabel(job)
   const savedAtLabel = savedLabel(savedAt)
@@ -155,9 +145,9 @@ export default function JobCard({
       onClick={handleQuickView}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className={`job-card group relative flex min-w-0 cursor-pointer gap-4 rounded-xl border transition-colors duration-200 hover:bg-white hover:shadow-md hover:shadow-emerald-600/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]/25 ${
+      className={`job-card group relative flex min-w-0 cursor-pointer gap-4 rounded-xl border transition-colors duration-200 hover:bg-white hover:shadow-md hover:shadow-[var(--brand-primary)]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]/25 ${
         compact ? 'p-3' : 'p-4'
-      } ${active ? 'border-[var(--brand-primary)] bg-white shadow-md shadow-emerald-600/10' : `${jobCardToneClass(job)} hover:border-[var(--brand-primary)]`}`}
+      } ${active ? 'border-[var(--brand-primary)] bg-white shadow-md shadow-[var(--brand-primary)]/10' : 'border-slate-200 bg-white hover:border-[var(--brand-primary)]'}`}
     >
       <div className="relative shrink-0">
         <div
@@ -168,7 +158,7 @@ export default function JobCard({
           {job.company_logo_url ? (
             <img src={job.company_logo_url} alt={job.company_name} className="h-full w-full object-contain p-0.5" loading="lazy" />
           ) : (
-            <div className="flex h-full w-full items-center justify-center job-card__logo-initial bg-gradient-to-br from-emerald-50 to-emerald-100 text-2xl font-bold text-[var(--brand-primary)]">
+            <div className="flex h-full w-full items-center justify-center job-card__logo-initial bg-gradient-to-br from-[var(--brand-primary-soft)] to-[var(--brand-primary-soft)] text-2xl font-bold text-[var(--brand-primary)]">
               {companyInitial(job.company_name)}
             </div>
           )}
@@ -213,11 +203,11 @@ export default function JobCard({
         </p>
 
         <div className="mt-2 flex flex-wrap gap-1.5">
-          {locationLabel && <Chip elevated={elevated}>{locationLabel}</Chip>}
-          {job.experience_years && <Chip elevated={elevated}>{EXPERIENCE_YEARS_LABELS[job.experience_years]}</Chip>}
+          {locationLabel && <Chip>{locationLabel}</Chip>}
+          {job.experience_years && <Chip>{EXPERIENCE_YEARS_LABELS[job.experience_years]}</Chip>}
         </div>
 
-        <div className={`job-card__footer mt-3 flex items-center justify-between gap-3 border-t pt-2.5 transition-colors group-hover:border-gray-200/70 ${elevated ? 'border-emerald-100' : 'border-gray-100'}`}>
+        <div className={`job-card__footer mt-3 flex items-center justify-between gap-3 border-t pt-2.5 transition-colors group-hover:border-gray-200/70 border-gray-100`}>
           <Tooltip
             placement="topLeft"
             title={<RequirementTooltip details={requirementDetails} />}
@@ -244,7 +234,7 @@ export default function JobCard({
               <button
                 type="button"
                 onClick={handleApply}
-                className={`hidden origin-center cursor-pointer rounded-full bg-[var(--brand-primary)] px-4 py-2 text-sm font-semibold text-white shadow-md shadow-emerald-600/20 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-[var(--brand-primary-hover)] hover:shadow-lg hover:shadow-emerald-600/25 md:inline-flex ${
+                className={`hidden origin-center cursor-pointer rounded-full bg-[var(--brand-primary)] px-4 py-2 text-sm font-semibold text-white shadow-md shadow-[var(--brand-primary)]/20 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-[var(--brand-primary-hover)] hover:shadow-lg hover:shadow-[var(--brand-primary)]/25 md:inline-flex ${
                   hovered ? 'translate-y-0 scale-100 opacity-100 delay-75' : 'pointer-events-none translate-y-2 scale-95 opacity-0'
                 }`}
               >
@@ -258,7 +248,7 @@ export default function JobCard({
                 onClick={toggleSave}
                 disabled={savePending}
                 aria-label={isAuthenticated ? (saved ? 'Bỏ lưu việc làm' : 'Lưu việc làm') : 'Hãy đăng nhập để lưu tin'}
-                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-gray-200 text-sm transition hover:border-[var(--brand-primary)] hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-gray-200 text-sm transition hover:border-[var(--brand-primary)] hover:bg-[var(--brand-primary-soft)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {saved
                   ? <HeartFilled className="!text-[var(--brand-primary)]" />
@@ -272,7 +262,7 @@ export default function JobCard({
         <button
           type="button"
           onClick={handleQuickView}
-          className={`absolute right-4 top-[52px] hidden origin-center cursor-pointer items-center gap-1 rounded-full bg-emerald-50 px-4 py-2 text-sm font-medium text-[var(--brand-primary)] shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-emerald-100 hover:shadow-md md:inline-flex ${
+          className={`absolute right-4 top-[52px] hidden origin-center cursor-pointer items-center gap-1 rounded-full bg-[var(--brand-primary-soft)] px-4 py-2 text-sm font-medium text-[var(--brand-primary)] shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-[var(--brand-primary-soft)] hover:shadow-md md:inline-flex ${
             hovered ? 'translate-y-0 scale-100 opacity-100' : 'pointer-events-none translate-y-2 scale-95 opacity-0'
           }`}
         >

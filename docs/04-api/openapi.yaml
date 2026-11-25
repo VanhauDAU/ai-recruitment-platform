@@ -5231,6 +5231,94 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
+  /api/admin/industries/:
+    get:
+      operationId: admin_industries_list
+      description: |-
+        Danh sách không phân trang (vài chục mục), thêm và sửa một phần.
+
+        Lớp con khai `permission_classes`, `serializer_class`, `get_queryset` và
+        `save_entry(actor=, entry=, **changes)` là service ghi của app (kèm audit).
+      tags:
+      - employers-catalog-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminIndustry'
+          description: ''
+    post:
+      operationId: admin_industries_create
+      description: |-
+        Danh sách không phân trang (vài chục mục), thêm và sửa một phần.
+
+        Lớp con khai `permission_classes`, `serializer_class`, `get_queryset` và
+        `save_entry(actor=, entry=, **changes)` là service ghi của app (kèm audit).
+      tags:
+      - employers-catalog-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminIndustryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminIndustryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminIndustryRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminIndustry'
+          description: ''
+  /api/admin/industries/{id}/:
+    patch:
+      operationId: admin_industries_partial_update
+      description: |-
+        Danh sách không phân trang (vài chục mục), thêm và sửa một phần.
+
+        Lớp con khai `permission_classes`, `serializer_class`, `get_queryset` và
+        `save_entry(actor=, entry=, **changes)` là service ghi của app (kèm audit).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      tags:
+      - employers-catalog-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminIndustryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminIndustryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminIndustryRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminIndustry'
+          description: ''
   /api/admin/jobs/{job_public_id}/applications/:
     get:
       operationId: admin_jobs_applications_list
@@ -5292,6 +5380,301 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedAdminJobApplicationList'
+          description: ''
+  /api/admin/jobs/benefits/:
+    get:
+      operationId: admin_jobs_benefits_list
+      description: Phúc lợi chọn khi đăng tin và trên trang công ty; thứ tự đặt bằng
+        `reorder`.
+      tags:
+      - jobs-catalog-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminBenefit'
+          description: ''
+    post:
+      operationId: admin_jobs_benefits_create
+      description: Phúc lợi chọn khi đăng tin và trên trang công ty; thứ tự đặt bằng
+        `reorder`.
+      tags:
+      - jobs-catalog-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminBenefitRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminBenefitRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminBenefitRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminBenefit'
+          description: ''
+  /api/admin/jobs/benefits/{id}/:
+    patch:
+      operationId: admin_jobs_benefits_partial_update
+      description: Phúc lợi chọn khi đăng tin và trên trang công ty; thứ tự đặt bằng
+        `reorder`.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      tags:
+      - jobs-catalog-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminBenefitRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminBenefitRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminBenefitRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminBenefit'
+          description: ''
+  /api/admin/jobs/benefits/reorder/:
+    post:
+      operationId: admin_jobs_benefits_reorder_create
+      description: Phúc lợi chọn khi đăng tin và trên trang công ty; thứ tự đặt bằng
+        `reorder`.
+      tags:
+      - jobs-catalog-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BenefitReorderRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BenefitReorderRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BenefitReorderRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminBenefit'
+          description: ''
+  /api/admin/jobs/categories/:
+    get:
+      operationId: admin_jobs_categories_list
+      description: Cây ngành nghề ba cấp; cấp của mục suy ra từ mục cha.
+      tags:
+      - jobs-catalog-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminJobCategory'
+          description: ''
+    post:
+      operationId: admin_jobs_categories_create
+      description: Cây ngành nghề ba cấp; cấp của mục suy ra từ mục cha.
+      tags:
+      - jobs-catalog-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobCategoryWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/JobCategoryWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/JobCategoryWriteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminJobCategory'
+          description: ''
+  /api/admin/jobs/categories/{id}/:
+    patch:
+      operationId: admin_jobs_categories_partial_update
+      description: Cây ngành nghề ba cấp; cấp của mục suy ra từ mục cha.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      tags:
+      - jobs-catalog-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedJobCategoryWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedJobCategoryWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedJobCategoryWriteRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminJobCategory'
+          description: ''
+  /api/admin/jobs/categories/icon/:
+    post:
+      operationId: admin_jobs_categories_icon_create
+      description: Tải icon lên trước; form ngành nghề gửi lại `path` vào `logo_url`
+        khi lưu.
+      tags:
+      - jobs-catalog-admin
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CategoryIconUploadRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryIcon'
+          description: ''
+  /api/admin/jobs/languages/:
+    get:
+      operationId: admin_jobs_languages_list
+      description: |-
+        Danh sách không phân trang (vài chục mục), thêm và sửa một phần.
+
+        Lớp con khai `permission_classes`, `serializer_class`, `get_queryset` và
+        `save_entry(actor=, entry=, **changes)` là service ghi của app (kèm audit).
+      tags:
+      - jobs-catalog-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminLanguage'
+          description: ''
+    post:
+      operationId: admin_jobs_languages_create
+      description: |-
+        Danh sách không phân trang (vài chục mục), thêm và sửa một phần.
+
+        Lớp con khai `permission_classes`, `serializer_class`, `get_queryset` và
+        `save_entry(actor=, entry=, **changes)` là service ghi của app (kèm audit).
+      tags:
+      - jobs-catalog-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminLanguageRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminLanguageRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminLanguageRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminLanguage'
+          description: ''
+  /api/admin/jobs/languages/{id}/:
+    patch:
+      operationId: admin_jobs_languages_partial_update
+      description: |-
+        Danh sách không phân trang (vài chục mục), thêm và sửa một phần.
+
+        Lớp con khai `permission_classes`, `serializer_class`, `get_queryset` và
+        `save_entry(actor=, entry=, **changes)` là service ghi của app (kèm audit).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      tags:
+      - jobs-catalog-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminLanguageRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminLanguageRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminLanguageRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminLanguage'
           description: ''
   /api/admin/jobs/moderation/:
     get:
@@ -5363,10 +5746,6 @@ paths:
           type: string
       - in: query
         name: submitted_to
-        schema:
-          type: string
-      - in: query
-        name: tier
         schema:
           type: string
       tags:
@@ -6369,6 +6748,124 @@ paths:
           description: Thiếu permission quản trị.
         '409':
           description: Xung đột trạng thái hoặc revision token cũ.
+  /api/admin/privacy/requests/:
+    get:
+      operationId: admin_privacy_requests_list
+      summary: Hàng chờ yêu cầu của chủ thể dữ liệu
+      parameters:
+      - in: query
+        name: kind
+        schema:
+          enum:
+          - erasure
+          - export
+          - ''
+          type: string
+        description: |-
+          * `erasure` - Xóa tài khoản
+          * `export` - Xuất dữ liệu
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          enum:
+          - pending
+          - completed
+          - rejected
+          - cancelled
+          - ''
+          type: string
+        description: |-
+          * `pending` - Chờ xử lý
+          * `completed` - Đã xử lý
+          * `rejected` - Từ chối
+          * `cancelled` - Đã hủy
+      tags:
+      - privacy
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdminDataRequestList'
+          description: ''
+  /api/admin/privacy/requests/{public_id}/complete/:
+    post:
+      operationId: admin_privacy_requests_complete_create
+      summary: 'Hoàn tất yêu cầu (xóa tài khoản: ẩn danh hóa và xóa CV)'
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - privacy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminDataRequestDecisionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminDataRequestDecisionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminDataRequestDecisionRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminDataRequest'
+          description: ''
+  /api/admin/privacy/requests/{public_id}/reject/:
+    post:
+      operationId: admin_privacy_requests_reject_create
+      summary: Từ chối yêu cầu kèm lý do
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - privacy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminDataRequestDecisionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminDataRequestDecisionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminDataRequestDecisionRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminDataRequest'
+          description: ''
   /api/admin/site/announcements/:
     get:
       operationId: admin_site_announcements_list
@@ -7050,6 +7547,303 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
+  /api/admin/skills/:
+    get:
+      operationId: admin_skills_list
+      parameters:
+      - in: query
+        name: duplicates
+        schema:
+          type: boolean
+        description: Chỉ kỹ năng có thể trùng nhau
+      - in: query
+        name: group
+        schema:
+          type: integer
+        description: Id nhóm kỹ năng
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - in: query
+        name: ordering
+        schema:
+          type: string
+          enum:
+          - name
+          - recent
+          - usage
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Tìm theo tên hoặc tên gọi khác
+      - in: query
+        name: source
+        schema:
+          type: string
+          enum:
+          - admin
+          - employer
+          - import
+          - seed
+      - in: query
+        name: ungrouped
+        schema:
+          type: boolean
+        description: Chỉ kỹ năng chưa có nhóm
+      tags:
+      - skills-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdminSkillList'
+          description: ''
+    post:
+      operationId: admin_skills_create
+      tags:
+      - skills-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkillWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SkillWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SkillWriteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSkill'
+          description: ''
+  /api/admin/skills/{id}/:
+    patch:
+      operationId: admin_skills_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      tags:
+      - skills-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSkillWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSkillWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSkillWriteRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSkill'
+          description: ''
+  /api/admin/skills/{id}/merge/:
+    post:
+      operationId: admin_skills_merge_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      tags:
+      - skills-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkillMergeRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SkillMergeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SkillMergeRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSkill'
+          description: ''
+  /api/admin/skills/{id}/merge-preview/:
+    get:
+      operationId: admin_skills_merge_preview_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      - in: query
+        name: target
+        schema:
+          type: integer
+        required: true
+      tags:
+      - skills-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillMergePreview'
+          description: ''
+  /api/admin/skills/bulk-update/:
+    post:
+      operationId: admin_skills_bulk_update_create
+      tags:
+      - skills-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkillBulkUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SkillBulkUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SkillBulkUpdateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillSummary'
+          description: ''
+  /api/admin/skills/groups/:
+    get:
+      operationId: admin_skills_groups_list
+      tags:
+      - skills-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminSkillGroup'
+          description: ''
+    post:
+      operationId: admin_skills_groups_create
+      tags:
+      - skills-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkillGroupWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SkillGroupWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SkillGroupWriteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSkillGroup'
+          description: ''
+  /api/admin/skills/groups/{id}/:
+    patch:
+      operationId: admin_skills_groups_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      tags:
+      - skills-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSkillGroupWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSkillGroupWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSkillGroupWriteRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSkillGroup'
+          description: ''
+  /api/admin/skills/summary/:
+    get:
+      operationId: admin_skills_summary_retrieve
+      tags:
+      - skills-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillSummary'
+          description: ''
   /api/admin/user-cvs/:
     get:
       operationId: admin_user_cvs_list
@@ -7475,8 +8269,9 @@ paths:
   /api/auth/password/:
     get:
       operationId: auth_password_retrieve
-      description: Cho phép client hiển thị yêu cầu xác thực lại TRƯỚC khi người dùng
-        điền form, thay vì để họ nhận 403 sau khi bấm lưu.
+      description: Tài khoản chưa có mật khẩu (đăng nhập mạng xã hội) phải nhập mã
+        gửi qua email; client biết trước để hiện ô nhập mã thay vì nhận lỗi sau khi
+        lưu.
       summary: Điều kiện cần để đặt hoặc thay đổi mật khẩu ở phiên hiện tại
       tags:
       - auth
@@ -7588,6 +8383,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PasswordResetValidate'
+          description: ''
+  /api/auth/password/setup-code/:
+    post:
+      operationId: auth_password_setup_code_create
+      description: Gửi mã xác minh qua email để tài khoản chưa có mật khẩu tạo mật
+        khẩu.
+      summary: Gửi mã xác minh tạo mật khẩu tới email tài khoản
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordSetupCodeResponse'
           description: ''
   /api/auth/refresh/:
     post:
@@ -7908,6 +8720,67 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CandidateApplication'
+          description: ''
+  /api/candidate/connection-invitations/:
+    get:
+      operationId: candidate_connection_invitations_list
+      summary: Lời mời kết nối của nhà tuyển dụng gửi cho tôi
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - applications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCandidateSearchInvitationList'
+          description: ''
+  /api/candidate/connection-invitations/{public_id}/respond/:
+    post:
+      operationId: candidate_connection_invitations_respond_create
+      summary: Đồng ý hoặc từ chối một lời mời kết nối
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateSearchInvitationResponseRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CandidateSearchInvitationResponseRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CandidateSearchInvitationResponseRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateSearchInvitation'
           description: ''
   /api/candidate/cvs/:
     get:
@@ -9374,6 +10247,31 @@ paths:
               schema:
                 $ref: '#/components/schemas/AnalysisError'
           description: ''
+  /api/candidate/matching/cv-profiles/{cv_public_id}/:
+    get:
+      operationId: candidate_matching_cv_profiles_retrieve
+      description: '`status`: `ready` (có `profile`), `pending` (CV vừa lưu, chưa
+        trích xuất xong), `failed` (không đọc được CV, kèm `error_code`). Chỉ đọc;
+        không chứa chữ nguyên văn ngoài các mục liệt kê.'
+      summary: Hồ sơ trích xuất từ CV của ứng viên
+      parameters:
+      - in: path
+        name: cv_public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - Matching
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
   /api/candidate/notifications/:
     get:
       operationId: candidate_notifications_list
@@ -9692,6 +10590,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/Application'
           description: ''
+  /api/employer/applications/{public_id}/ai-match/:
+    get:
+      operationId: employer_applications_ai_match_retrieve
+      description: '`status`: `ready` (có `result`), `pending` (đang phân tích), `failed`,
+        `not_consented` (ứng viên không tham gia phân tích AI), hoặc null khi tính
+        năng tắt. Kết quả chấm trên bản CV đã nộp; không có gợi ý sửa CV dành cho
+        ứng viên.'
+      summary: Mức phù hợp do AI chấm cho một hồ sơ (chi tiết từng tiêu chí)
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
   /api/employer/applications/{public_id}/cv/:
     get:
       operationId: employer_applications_cv_retrieve
@@ -9814,6 +10738,32 @@ paths:
               schema:
                 type: string
                 format: binary
+          description: ''
+  /api/employer/applications/{public_id}/extracted-profile/:
+    get:
+      operationId: employer_applications_extracted_profile_retrieve
+      description: '`status`: `ready` (có `profile`), `pending`, `failed`, hoặc `not_consented`
+        khi ứng viên không tham gia phân tích AI. `profile` gồm chức danh, kinh nghiệm,
+        học vấn, cấp bậc, ngoại ngữ, kỹ năng theo nhóm và nội dung từng mục của CV
+        (`sections`).'
+      summary: Hồ sơ trích xuất từ bản CV đã nộp của một hồ sơ
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
           description: ''
   /api/employer/applications/{public_id}/history/:
     get:
@@ -10884,9 +11834,8 @@ paths:
   /api/employer/campaigns/{public_id}/report/export/:
     get:
       operationId: employer_campaigns_report_export_retrieve
-      description: Excel or PDF report of the campaign; aggregates only, no candidate
-        data.
-      summary: Tải báo cáo chiến dịch (Excel hoặc PDF)
+      description: Excel report of the campaign; aggregates only, no candidate data.
+      summary: 'Tải báo cáo chiến dịch dạng Excel (PDF: xếp hàng qua report/export/pdf/)'
       parameters:
       - in: path
         name: public_id
@@ -10898,7 +11847,6 @@ paths:
         schema:
           type: string
           enum:
-          - pdf
           - xlsx
       tags:
       - campaigns
@@ -10911,6 +11859,59 @@ paths:
               schema:
                 type: string
                 format: binary
+          description: ''
+  /api/employer/campaigns/{public_id}/report/export/pdf/:
+    post:
+      operationId: employer_campaigns_report_export_pdf_create
+      summary: Xếp hàng tạo PDF báo cáo chiến dịch (trả token để hỏi kết quả)
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - campaigns
+      security:
+      - jwtAuth: []
+      responses:
+        '202':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/employer/campaigns/{public_id}/report/export/pdf/{token}/:
+    get:
+      operationId: employer_campaigns_report_export_pdf_retrieve
+      summary: Trạng thái PDF báo cáo chiến dịch; ?download=1 tải tệp khi đã xong
+      parameters:
+      - in: query
+        name: download
+        schema:
+          type: boolean
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: token
+        schema:
+          type: string
+        required: true
+      tags:
+      - campaigns
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
             application/pdf:
               schema:
                 type: string
@@ -11042,6 +12043,150 @@ paths:
               schema:
                 $ref: '#/components/schemas/CandidateBlock'
           description: ''
+  /api/employer/candidate-search/:
+    get:
+      operationId: employer_candidate_search_retrieve
+      description: 'Kết quả ẩn danh: mã ứng viên, chức danh, kinh nghiệm, học vấn,
+        cấp bậc, ngoại ngữ, kỹ năng trùng với tin, điểm và mức phù hợp. Không có tên,
+        liên hệ, tệp CV hay tên công ty.'
+      summary: 'Tìm CV: ứng viên đang bật tìm kiếm, xếp theo mức phù hợp với một tin'
+      parameters:
+      - in: query
+        name: education
+        schema:
+          enum:
+          - none
+          - middle_school
+          - high_school
+          - intermediate
+          - college
+          - university
+          - postgraduate
+          - ''
+          type: string
+          default: ''
+        description: |-
+          * `none` - none
+          * `middle_school` - middle_school
+          * `high_school` - high_school
+          * `intermediate` - intermediate
+          * `college` - college
+          * `university` - university
+          * `postgraduate` - postgraduate
+      - in: query
+        name: job
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 50
+        required: true
+      - in: query
+        name: language
+        schema:
+          type: string
+          default: ''
+          maxLength: 5
+      - in: query
+        name: min_months
+        schema:
+          type: integer
+          maximum: 600
+          minimum: 0
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - in: query
+        name: province
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: q
+        schema:
+          type: string
+          default: ''
+          maxLength: 80
+      - in: query
+        name: skills
+        schema:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 10
+      tags:
+      - applications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/employer/candidate-search/{ref}/:
+    get:
+      operationId: employer_candidate_search_detail
+      description: Mỗi lần mở được ghi `CvAccessLog` kênh `recruiter_search`.
+      summary: 'Tìm CV: hồ sơ trích xuất ẩn danh và mức phù hợp chi tiết của một ứng
+        viên'
+      parameters:
+      - in: query
+        name: job
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: ref
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/employer/candidate-search/{ref}/invite/:
+    post:
+      operationId: employer_candidate_search_invite_create
+      summary: 'Tìm CV: gửi lời mời kết nối về một tin đang tuyển cho một ứng viên'
+      parameters:
+      - in: path
+        name: ref
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateSearchInviteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CandidateSearchInviteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CandidateSearchInviteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/employer/company/:
     get:
       operationId: employer_company_retrieve
@@ -12081,9 +13226,9 @@ paths:
   /api/employer/industries/all/:
     get:
       operationId: employer_industries_all_list
-      description: Toàn bộ lĩnh vực — cho dropdown chọn lĩnh vực khi tạo hồ sơ công
-        ty.
-      summary: Toàn bộ lĩnh vực công ty
+      description: Lĩnh vực đang mở (admin chưa ẩn) cho dropdown chọn lĩnh vực của
+        hồ sơ công ty.
+      summary: Lĩnh vực đang mở để chọn
       tags:
       - employer
       security:
@@ -13691,7 +14836,7 @@ paths:
       operationId: public_companies_job_facets_retrieve
       description: 'Shares the directory throttle: one client budget for all company
         reads.'
-      summary: Địa điểm có tin tuyển dụng của công ty
+      summary: Địa điểm và danh mục nghề có tin tuyển dụng của công ty
       parameters:
       - in: path
         name: public_id
@@ -14276,6 +15421,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedPublicJobPreviewList'
           description: ''
+  /api/public/jobs/best/locations/:
+    get:
+      operationId: public_jobs_best_locations_retrieve
+      description: Locations that currently have public jobs, for the Best Jobs filter
+        chips.
+      summary: Tỉnh và phường/xã đang có việc làm (bộ lọc Việc làm nổi bật)
+      tags:
+      - jobs
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HomepageBestJobLocations'
+          description: ''
   /api/public/jobs/categories/:
     get:
       operationId: public_jobs_categories_list
@@ -14360,6 +15523,118 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Language'
+          description: ''
+  /api/public/jobs/nearby/:
+    get:
+      operationId: public_jobs_nearby_list
+      summary: Việc làm gần một vị trí (sắp theo khoảng cách)
+      parameters:
+      - in: query
+        name: include_province_wide
+        schema:
+          type: boolean
+        description: Gồm tin tuyển khắp tỉnh
+      - in: query
+        name: include_remote
+        schema:
+          type: boolean
+        description: Gồm tin chỉ làm từ xa
+      - in: query
+        name: lat
+        schema:
+          type: number
+          format: double
+        description: Vĩ độ (làm tròn 3 chữ số)
+        required: true
+      - in: query
+        name: lng
+        schema:
+          type: number
+          format: double
+        description: Kinh độ (làm tròn 3 chữ số)
+        required: true
+      - in: query
+        name: ordering
+        schema:
+          type: string
+          enum:
+          - distance
+          - newest
+          - salary_desc
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: radius_km
+        schema:
+          type: integer
+        description: Bán kính, kẹp theo cấu hình (mặc định 10)
+      tags:
+      - jobs
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPublicNearbyJobList'
+          description: ''
+  /api/public/jobs/nearby/map/:
+    get:
+      operationId: public_jobs_nearby_map_retrieve
+      summary: Điểm việc làm trên bản đồ quanh một vị trí
+      parameters:
+      - in: query
+        name: include_province_wide
+        schema:
+          type: boolean
+        description: Gồm tin tuyển khắp tỉnh
+      - in: query
+        name: include_remote
+        schema:
+          type: boolean
+        description: Gồm tin chỉ làm từ xa
+      - in: query
+        name: lat
+        schema:
+          type: number
+          format: double
+        description: Vĩ độ (làm tròn 3 chữ số)
+        required: true
+      - in: query
+        name: lng
+        schema:
+          type: number
+          format: double
+        description: Kinh độ (làm tròn 3 chữ số)
+        required: true
+      - in: query
+        name: radius_km
+        schema:
+          type: integer
+        description: Bán kính, kẹp theo cấu hình (mặc định 10)
+      tags:
+      - jobs
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NearbyJobMap'
           description: ''
   /api/public/jobs/stats/:
     get:
@@ -14530,6 +15805,85 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/LocationLookup'
+          description: ''
+  /api/public/locations/geo/autocomplete/:
+    get:
+      operationId: public_locations_geo_autocomplete_list
+      summary: 'Gợi ý vị trí: phường/xã có sẵn rồi địa chỉ từ nhà cung cấp bản đồ'
+      parameters:
+      - in: query
+        name: lat
+        schema:
+          type: number
+          format: double
+        description: Ưu tiên gợi ý gần điểm này
+      - in: query
+        name: lng
+        schema:
+          type: number
+          format: double
+      - in: query
+        name: q
+        schema:
+          type: string
+        required: true
+      tags:
+      - locations
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GeoSuggestion'
+          description: ''
+  /api/public/locations/geo/place/:
+    get:
+      operationId: public_locations_geo_place_retrieve
+      summary: Tọa độ của một gợi ý địa chỉ
+      parameters:
+      - in: query
+        name: ref
+        schema:
+          type: string
+        required: true
+      tags:
+      - locations
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeoPoint'
+          description: ''
+  /api/public/locations/geo/wards/{slug}/:
+    get:
+      operationId: public_locations_geo_wards_retrieve
+      summary: Phường/xã theo slug (gốc tìm việc gần chia sẻ được qua URL)
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - locations
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeoPlaceLabel'
           description: ''
   /api/public/privacy/consent/:
     get:
@@ -14847,6 +16201,109 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/SkillGroup'
+          description: ''
+  /api/shared/privacy/requests/:
+    get:
+      operationId: shared_privacy_requests_list
+      summary: Yêu cầu xóa tài khoản / xuất dữ liệu của tôi
+      tags:
+      - privacy
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DataRequest'
+          description: ''
+    post:
+      operationId: shared_privacy_requests_create
+      summary: Gửi yêu cầu xóa tài khoản hoặc xuất dữ liệu
+      tags:
+      - privacy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataRequestCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DataRequestCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DataRequestCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataRequest'
+          description: ''
+  /api/shared/privacy/requests/{public_id}/cancel/:
+    post:
+      operationId: shared_privacy_requests_cancel_create
+      summary: Hủy yêu cầu đang chờ xử lý
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - privacy
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataRequest'
+          description: ''
+  /api/shared/privacy/requests/{public_id}/export/:
+    get:
+      operationId: shared_privacy_requests_export_retrieve
+      summary: Tải bản xuất dữ liệu cá nhân (JSON)
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - privacy
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/shared/realtime/ticket/:
+    post:
+      operationId: shared_realtime_ticket_create
+      description: Any signed-in portal account; the JWT authentication already enforced
+        its session.
+      summary: Cấp vé kết nối WebSocket thông báo (dùng một lần, 30 giây)
+      tags:
+      - realtime
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealtimeTicket'
           description: ''
   /api/shared/site/announcements/{public_id}/state/:
     put:
@@ -16163,6 +17620,47 @@ components:
       - image_url
       - schedule_state
       - updated_at
+    AdminBenefit:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        category:
+          $ref: '#/components/schemas/BenefitCategoryEnum'
+        is_active:
+          type: boolean
+        sort_order:
+          type: integer
+          readOnly: true
+        job_count:
+          type: integer
+          readOnly: true
+        company_count:
+          type: integer
+          readOnly: true
+      required:
+      - company_count
+      - id
+      - job_count
+      - name
+      - sort_order
+    AdminBenefitRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        category:
+          $ref: '#/components/schemas/BenefitCategoryEnum'
+        is_active:
+          type: boolean
+      required:
+      - name
     AdminCampaign:
       type: object
       properties:
@@ -16429,6 +17927,9 @@ components:
         public_id:
           type: string
           readOnly: true
+        code:
+          type: string
+          readOnly: true
         company_name:
           type: string
           maxLength: 255
@@ -16531,6 +18032,7 @@ components:
           readOnly: true
       required:
       - business_type_label
+      - code
       - company_name
       - company_size_label
       - created_at
@@ -16567,6 +18069,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/CompanyDomainClaimStatusEnum'
           readOnly: true
+          default: pending
         txt_name:
           type: string
           readOnly: true
@@ -16727,6 +18230,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/CompanyDomainClaimStatusEnum'
           readOnly: true
+          default: pending
         txt_name:
           type: string
           readOnly: true
@@ -17001,6 +18505,9 @@ components:
         public_id:
           type: string
           readOnly: true
+        code:
+          type: string
+          readOnly: true
         company_name:
           type: string
           maxLength: 255
@@ -17055,6 +18562,7 @@ components:
           readOnly: true
       required:
       - business_type_label
+      - code
       - company_name
       - created_at
       - has_eligible_owner
@@ -17956,6 +19464,103 @@ components:
       - compliance_holds_active
       - job_reports
       - restricted_accounts
+    AdminDataRequest:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        kind:
+          allOf:
+          - $ref: '#/components/schemas/DataSubjectRequestKindEnum'
+          readOnly: true
+        kind_label:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/DataSubjectRequestStatusEnum'
+          readOnly: true
+          default: pending
+        status_label:
+          type: string
+          readOnly: true
+        note:
+          type: string
+          readOnly: true
+        resolution_note:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        handled_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        export_available_until:
+          type: string
+          nullable: true
+          readOnly: true
+        account:
+          allOf:
+          - $ref: '#/components/schemas/DataRequestAccount'
+          readOnly: true
+        handled_by_email:
+          type: string
+          format: email
+          readOnly: true
+          nullable: true
+      required:
+      - account
+      - created_at
+      - export_available_until
+      - handled_at
+      - handled_by_email
+      - kind
+      - kind_label
+      - note
+      - public_id
+      - resolution_note
+      - status
+      - status_label
+    AdminDataRequestDecisionRequest:
+      type: object
+      properties:
+        note:
+          type: string
+          maxLength: 1000
+    AdminIndustry:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        is_active:
+          type: boolean
+        company_count:
+          type: integer
+          readOnly: true
+      required:
+      - company_count
+      - id
+      - name
+    AdminIndustryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        is_active:
+          type: boolean
+      required:
+      - name
     AdminInvitation:
       type: object
       properties:
@@ -18239,6 +19844,48 @@ components:
       - submitted_cv_title
       - submitted_cv_version_public_id
       - updated_at
+    AdminJobCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        name_en:
+          type: string
+          readOnly: true
+        description:
+          type: string
+        category_type:
+          $ref: '#/components/schemas/JobCategoryTypeEnum'
+        parent:
+          type: integer
+          nullable: true
+        status:
+          $ref: '#/components/schemas/JobCategoryStatusEnum'
+        logo_url:
+          type: string
+          description: Storage key nội bộ hoặc URL ngoài; API tự resolve storage key
+            thành URL public.
+        logo_preview:
+          type: string
+          nullable: true
+          readOnly: true
+        job_count:
+          type: integer
+          readOnly: true
+        child_count:
+          type: integer
+          readOnly: true
+      required:
+      - child_count
+      - id
+      - job_count
+      - logo_preview
+      - name
+      - name_en
     AdminJobDecisionActionEnum:
       enum:
       - hide
@@ -18277,6 +19924,9 @@ components:
       type: object
       properties:
         public_id:
+          type: string
+          readOnly: true
+        code:
           type: string
           readOnly: true
         slug:
@@ -18352,25 +20002,10 @@ components:
         moderation_hold_label:
           type: string
           readOnly: true
-        tier:
-          allOf:
-          - $ref: '#/components/schemas/TierEnum'
-          readOnly: true
-        tier_label:
-          type: string
-          readOnly: true
-        is_hot:
-          type: boolean
-          readOnly: true
-          description: Nhãn HOT (đỏ) trên card
-        is_urgent:
-          type: boolean
-          readOnly: true
-          description: Nhãn GẤP / tuyển gấp (cam) trên card
         has_flash_badge:
           type: boolean
           readOnly: true
-          description: Huy hiệu Sấm Chớp — NTD tương tác nhanh
+          description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         deadline:
           type: string
           format: date
@@ -18600,6 +20235,7 @@ components:
       - blocked_reasons
       - can_view_sensitive_contact
       - category_assignments
+      - code
       - company_name
       - company_public_id
       - company_role
@@ -18618,9 +20254,7 @@ components:
       - employer_verification_completed
       - has_flash_badge
       - is_expired
-      - is_hot
       - is_publicly_visible
-      - is_urgent
       - job_benefits
       - job_locations
       - job_skills
@@ -18644,8 +20278,6 @@ components:
       - status_history
       - status_label
       - submitted_at
-      - tier
-      - tier_label
       - title
       - updated_at
       - view_count
@@ -18654,6 +20286,9 @@ components:
       type: object
       properties:
         public_id:
+          type: string
+          readOnly: true
+        code:
           type: string
           readOnly: true
         slug:
@@ -18729,25 +20364,10 @@ components:
         moderation_hold_label:
           type: string
           readOnly: true
-        tier:
-          allOf:
-          - $ref: '#/components/schemas/TierEnum'
-          readOnly: true
-        tier_label:
-          type: string
-          readOnly: true
-        is_hot:
-          type: boolean
-          readOnly: true
-          description: Nhãn HOT (đỏ) trên card
-        is_urgent:
-          type: boolean
-          readOnly: true
-          description: Nhãn GẤP / tuyển gấp (cam) trên card
         has_flash_badge:
           type: boolean
           readOnly: true
-          description: Huy hiệu Sấm Chớp — NTD tương tác nhanh
+          description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         deadline:
           type: string
           format: date
@@ -18797,6 +20417,7 @@ components:
       required:
       - application_count
       - approved_at
+      - code
       - company_name
       - company_public_id
       - company_role
@@ -18811,9 +20432,7 @@ components:
       - employer_public_id
       - has_flash_badge
       - is_expired
-      - is_hot
       - is_publicly_visible
-      - is_urgent
       - moderation_hold
       - moderation_hold_label
       - pending_report_count
@@ -18828,8 +20447,6 @@ components:
       - status
       - status_label
       - submitted_at
-      - tier
-      - tier_label
       - title
       - updated_at
       - view_count
@@ -18932,6 +20549,44 @@ components:
           maxLength: 1000
       required:
       - note
+    AdminLanguage:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        code:
+          type: string
+          maxLength: 20
+        is_active:
+          type: boolean
+        job_count:
+          type: integer
+          readOnly: true
+      required:
+      - code
+      - id
+      - job_count
+      - name
+    AdminLanguageRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        code:
+          type: string
+          minLength: 1
+          maxLength: 20
+        is_active:
+          type: boolean
+      required:
+      - code
+      - name
     AdminPinnedPost:
       type: object
       properties:
@@ -19352,6 +21007,85 @@ components:
       - position_level_label
       - public_id
       - updated_at
+    AdminSkill:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        aliases:
+          description: Alternate names for keyword matching, e.g. ["ReactJS", "React.js"]
+        group:
+          type: integer
+          nullable: true
+        group_name:
+          type: string
+          readOnly: true
+          default: ''
+        description:
+          type: string
+        is_active:
+          type: boolean
+        source:
+          $ref: '#/components/schemas/AdminSkillSourceEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        usage:
+          allOf:
+          - $ref: '#/components/schemas/SkillUsage'
+          readOnly: true
+        usage_total:
+          type: integer
+          readOnly: true
+      required:
+      - created_at
+      - group_name
+      - id
+      - name
+      - usage
+      - usage_total
+    AdminSkillGroup:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        parent:
+          type: integer
+          nullable: true
+        is_active:
+          type: boolean
+        skill_count:
+          type: integer
+          readOnly: true
+        is_system:
+          type: boolean
+          readOnly: true
+      required:
+      - id
+      - is_system
+      - name
+      - skill_count
+    AdminSkillSourceEnum:
+      enum:
+      - seed
+      - import
+      - employer
+      - admin
+      type: string
+      description: |-
+        * `seed` - Hệ thống
+        * `import` - Nhập dữ liệu
+        * `employer` - Nhà tuyển dụng
+        * `admin` - Quản trị viên
     AdminTag:
       type: object
       properties:
@@ -21512,6 +23246,18 @@ components:
           type: string
           format: date-time
           readOnly: true
+        ai_match_score:
+          type: integer
+          readOnly: true
+          nullable: true
+        ai_match_level:
+          type: string
+          readOnly: true
+          nullable: true
+        ai_match_status:
+          type: string
+          nullable: true
+          readOnly: true
         viewed_at:
           type: string
           format: date-time
@@ -21544,6 +23290,9 @@ components:
       required:
       - accepted_at
       - acquisition_channel
+      - ai_match_level
+      - ai_match_score
+      - ai_match_status
       - applied_at
       - available_decisions
       - campaign_channel_label
@@ -22118,6 +23867,16 @@ components:
         * `equipment` - Hỗ trợ thiết bị làm việc
         * `welfare` - Phúc lợi
         * `other` - Khác
+    BenefitReorderRequest:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: integer
+          minItems: 1
+      required:
+      - ids
     BlankEnum:
       enum:
       - ''
@@ -23040,6 +24799,7 @@ components:
       - application_rejected
       - talent_pool_saved
       - job_invitation
+      - connection_invitation
       type: string
       description: |-
         * `application_submitted` - Hồ sơ đã được tiếp nhận
@@ -23051,6 +24811,7 @@ components:
         * `application_rejected` - Chưa phù hợp
         * `talent_pool_saved` - Được lưu vào kho ứng viên tiềm năng
         * `job_invitation` - Lời mời ứng tuyển
+        * `connection_invitation` - Lời mời kết nối
     CandidatePreferredProvinceRead:
       type: object
       properties:
@@ -23100,6 +24861,88 @@ components:
           type: integer
       required:
       - updated
+    CandidateSearchInvitation:
+      type: object
+      description: 'Lời mời kết nối ứng viên nhận được: công ty, tin và trạng thái
+        phản hồi.'
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/CandidateSearchInvitationStatusEnum'
+          readOnly: true
+        invited_at:
+          type: string
+          format: date-time
+          readOnly: true
+        responded_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        company_name:
+          type: string
+          readOnly: true
+        company_slug:
+          type: string
+          readOnly: true
+        company_logo_url:
+          type: string
+          nullable: true
+          readOnly: true
+        job_public_id:
+          type: string
+          readOnly: true
+        job_title:
+          type: string
+          readOnly: true
+        job_slug:
+          type: string
+          readOnly: true
+        job_stopped_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - company_logo_url
+      - company_name
+      - company_slug
+      - invited_at
+      - job_public_id
+      - job_slug
+      - job_stopped_at
+      - job_title
+      - public_id
+      - responded_at
+      - status
+    CandidateSearchInvitationResponseRequest:
+      type: object
+      properties:
+        accept:
+          type: boolean
+      required:
+      - accept
+    CandidateSearchInvitationStatusEnum:
+      enum:
+      - pending
+      - accepted
+      - declined
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `accepted` - Accepted
+        * `declined` - Declined
+    CandidateSearchInviteRequest:
+      type: object
+      properties:
+        job:
+          type: string
+          minLength: 1
+          maxLength: 50
+      required:
+      - job
     CandidateTalentPool:
       type: object
       description: 'What the candidate sees: who keeps their profile and until when.'
@@ -23166,6 +25009,24 @@ components:
       - unchanged
       type: string
       description: '* `unchanged` - unchanged'
+    CategoryIcon:
+      type: object
+      properties:
+        path:
+          type: string
+        url:
+          type: string
+      required:
+      - path
+      - url
+    CategoryIconUploadRequest:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+      required:
+      - file
     CategoryWriteRequest:
       type: object
       properties:
@@ -23277,6 +25138,9 @@ components:
         public_id:
           type: string
           readOnly: true
+        code:
+          type: string
+          readOnly: true
         slug:
           type: string
           readOnly: true
@@ -23360,6 +25224,7 @@ components:
           readOnly: true
       required:
       - address
+      - code
       - company_name
       - company_size
       - cover_image_url
@@ -23557,6 +25422,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/CompanyDomainClaimStatusEnum'
           readOnly: true
+          default: pending
         txt_name:
           type: string
           readOnly: true
@@ -24374,13 +26240,11 @@ components:
     ConsultationTopicsEnum:
       enum:
       - free_posting
-      - service_packages
       - promotions
       - other
       type: string
       description: |-
         * `free_posting` - Tôi muốn được đăng tin miễn phí
-        * `service_packages` - Tôi muốn tìm hiểu thêm về các gói dịch vụ
         * `promotions` - Tôi muốn biết thêm về các chương trình ưu đãi
         * `other` - Khác
     ContentSourceEnum:
@@ -24394,6 +26258,26 @@ components:
         * `ai` - AI soạn
         * `template` - Mẫu có sẵn
         * `manual` - Tự soạn
+    CoordinatePrecisionEnum:
+      enum:
+      - exact
+      - ward
+      - province
+      type: string
+      description: |-
+        * `exact` - Exact address
+        * `ward` - Ward centroid
+        * `province` - Whole province
+    CoordinateSourceEnum:
+      enum:
+      - employer_pin
+      - geocoder
+      - ward_centroid
+      type: string
+      description: |-
+        * `employer_pin` - Employer pin
+        * `geocoder` - Geocoded address
+        * `ward_centroid` - Ward centroid
     CurrencyEnum:
       enum:
       - VND
@@ -26018,6 +27902,107 @@ components:
       - template_renderer_version
       - version_kind
       - version_number
+    DataRequest:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        kind:
+          allOf:
+          - $ref: '#/components/schemas/DataSubjectRequestKindEnum'
+          readOnly: true
+        kind_label:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/DataSubjectRequestStatusEnum'
+          readOnly: true
+        status_label:
+          type: string
+          readOnly: true
+        note:
+          type: string
+          readOnly: true
+        resolution_note:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        handled_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        export_available_until:
+          type: string
+          nullable: true
+          readOnly: true
+      required:
+      - created_at
+      - export_available_until
+      - handled_at
+      - kind
+      - kind_label
+      - note
+      - public_id
+      - resolution_note
+      - status
+      - status_label
+    DataRequestAccount:
+      type: object
+      properties:
+        public_id:
+          type: string
+        email:
+          type: string
+          format: email
+        full_name:
+          type: string
+        role:
+          type: string
+        is_deleted:
+          type: boolean
+      required:
+      - email
+      - full_name
+      - is_deleted
+      - public_id
+      - role
+    DataRequestCreateRequest:
+      type: object
+      properties:
+        kind:
+          $ref: '#/components/schemas/DataSubjectRequestKindEnum'
+        note:
+          type: string
+          default: ''
+          maxLength: 1000
+      required:
+      - kind
+    DataSubjectRequestKindEnum:
+      enum:
+      - erasure
+      - export
+      type: string
+      description: |-
+        * `erasure` - Xóa tài khoản
+        * `export` - Xuất dữ liệu
+    DataSubjectRequestStatusEnum:
+      enum:
+      - pending
+      - completed
+      - rejected
+      - cancelled
+      type: string
+      description: |-
+        * `pending` - Chờ xử lý
+        * `completed` - Đã xử lý
+        * `rejected` - Từ chối
+        * `cancelled` - Đã hủy
     DeadlineRequest:
       type: object
       properties:
@@ -26288,6 +28273,8 @@ components:
           $ref: '#/components/schemas/EmployerDashboardAccount'
         summary:
           $ref: '#/components/schemas/EmployerDashboardSummary'
+        funnel:
+          $ref: '#/components/schemas/EmployerDashboardFunnel'
         application_activity:
           type: array
           items:
@@ -26295,6 +28282,10 @@ components:
         recruitment_need:
           allOf:
           - $ref: '#/components/schemas/RecruitmentNeedSummary'
+          nullable: true
+        flash_badge:
+          allOf:
+          - $ref: '#/components/schemas/FlashBadgeState'
           nullable: true
         recent_jobs:
           type: array
@@ -26307,6 +28298,8 @@ components:
       required:
       - account
       - application_activity
+      - flash_badge
+      - funnel
       - recent_applications
       - recent_jobs
       - recruitment_need
@@ -26314,8 +28307,9 @@ components:
     EmployerDashboardAccount:
       type: object
       properties:
-        recruiter_public_id:
+        public_id:
           type: string
+          description: Mã tài khoản NTD (8 chữ số).
         company_public_id:
           type: string
           nullable: true
@@ -26333,10 +28327,29 @@ components:
       - company_name
       - company_public_id
       - company_size
-      - recruiter_public_id
+      - public_id
       - recruiter_verification_status
       - verification
       - work_location_name
+    EmployerDashboardFunnel:
+      type: object
+      properties:
+        received:
+          type: integer
+        shortlisted:
+          type: integer
+        interviewed:
+          type: integer
+        accepted:
+          type: integer
+        rejected:
+          type: integer
+      required:
+      - accepted
+      - interviewed
+      - received
+      - rejected
+      - shortlisted
     EmployerDashboardSummary:
       type: object
       properties:
@@ -26427,6 +28440,9 @@ components:
         candidate, so they stay readable while candidate-data access is blocked.
       properties:
         public_id:
+          type: string
+          readOnly: true
+        code:
           type: string
           readOnly: true
         slug:
@@ -26605,25 +28621,13 @@ components:
         view_count:
           type: integer
           readOnly: true
-        tier:
-          allOf:
-          - $ref: '#/components/schemas/TierEnum'
-          readOnly: true
-        is_hot:
-          type: boolean
-          readOnly: true
-          description: Nhãn HOT (đỏ) trên card
-        is_urgent:
-          type: boolean
-          readOnly: true
-          description: Nhãn GẤP / tuyển gấp (cam) trên card
         has_flash_badge:
           type: boolean
           readOnly: true
-          description: Huy hiệu Sấm Chớp — NTD tương tác nhanh
+          description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         presentation:
-          type: object
-          additionalProperties: {}
+          allOf:
+          - $ref: '#/components/schemas/JobPresentation'
           readOnly: true
         company_verified:
           type: boolean
@@ -26724,6 +28728,7 @@ components:
       - brand_slug
       - campaign_name
       - category
+      - code
       - company_cover_url
       - company_logo_url
       - company_name
@@ -26736,8 +28741,6 @@ components:
       - has_flash_badge
       - impression_count
       - is_expired
-      - is_hot
-      - is_urgent
       - locations_detail
       - presentation
       - public_id
@@ -26747,7 +28750,6 @@ components:
       - slug
       - status
       - submitted_at
-      - tier
       - title
       - updated_at
       - view_count
@@ -26761,6 +28763,9 @@ components:
         time.
       properties:
         public_id:
+          type: string
+          readOnly: true
+        code:
           type: string
           readOnly: true
         slug:
@@ -26939,25 +28944,13 @@ components:
         view_count:
           type: integer
           readOnly: true
-        tier:
-          allOf:
-          - $ref: '#/components/schemas/TierEnum'
-          readOnly: true
-        is_hot:
-          type: boolean
-          readOnly: true
-          description: Nhãn HOT (đỏ) trên card
-        is_urgent:
-          type: boolean
-          readOnly: true
-          description: Nhãn GẤP / tuyển gấp (cam) trên card
         has_flash_badge:
           type: boolean
           readOnly: true
-          description: Huy hiệu Sấm Chớp — NTD tương tác nhanh
+          description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         presentation:
-          type: object
-          additionalProperties: {}
+          allOf:
+          - $ref: '#/components/schemas/JobPresentation'
           readOnly: true
         company_verified:
           type: boolean
@@ -27050,6 +29043,7 @@ components:
       - brand_slug
       - campaign_name
       - category
+      - code
       - company_cover_url
       - company_logo_url
       - company_name
@@ -27060,8 +29054,6 @@ components:
       - first_approved_at
       - has_flash_badge
       - is_expired
-      - is_hot
-      - is_urgent
       - locations_detail
       - presentation
       - public_id
@@ -27071,7 +29063,6 @@ components:
       - slug
       - status
       - submitted_at
-      - tier
       - updated_at
       - view_count
       - visibility_ends_at
@@ -27263,6 +29254,13 @@ components:
         public_id:
           type: string
           readOnly: true
+        code:
+          type: string
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
         title:
           type: string
           readOnly: true
@@ -27278,6 +29276,35 @@ components:
         employment_type:
           allOf:
           - $ref: '#/components/schemas/EmploymentTypeEnum'
+          readOnly: true
+        category_name:
+          type: string
+          readOnly: true
+        salary_type:
+          readOnly: true
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SalaryTypeEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        salary_min:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        salary_max:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        income_display_type:
+          allOf:
+          - $ref: '#/components/schemas/IncomeDisplayTypeEnum'
+          readOnly: true
+        currency:
+          allOf:
+          - $ref: '#/components/schemas/CurrencyEnum'
           readOnly: true
         deadline:
           type: string
@@ -27391,19 +29418,27 @@ components:
       - campaign_name
       - candidate_count
       - candidate_previews
+      - category_name
       - closes_on
+      - code
       - company_name
       - created_at
+      - currency
       - deadline
       - effective_state
       - employment_type
       - first_approved_at
+      - income_display_type
       - is_expired
       - is_visibility_expired
       - locations_detail
       - public_id
       - published_at
       - requested_visibility_days
+      - salary_max
+      - salary_min
+      - salary_type
+      - slug
       - status
       - submitted_at
       - title
@@ -27774,7 +29809,12 @@ components:
       - company_content_reverted
       - application_received
       - application_withdrawn
+      - search_invitation_accepted
+      - search_invitation_declined
       - application_awaiting_reply
+      - flash_badge_granted
+      - flash_badge_lost
+      - flash_badge_at_risk
       - job_changes_requested
       - company_join_requested
       - company_join_approved
@@ -27806,7 +29846,12 @@ components:
         * `company_content_reverted` - Nội dung trang công ty đã bị hoàn tác
         * `application_received` - Có hồ sơ ứng tuyển mới
         * `application_withdrawn` - Ứng viên đã rút hồ sơ
+        * `search_invitation_accepted` - Ứng viên đồng ý kết nối
+        * `search_invitation_declined` - Ứng viên từ chối lời mời kết nối
         * `application_awaiting_reply` - Hồ sơ đang chờ phản hồi
+        * `flash_badge_granted` - Bạn đã đạt Huy hiệu Sấm Chớp
+        * `flash_badge_lost` - Bạn đã mất Huy hiệu Sấm Chớp
+        * `flash_badge_at_risk` - Huy hiệu Sấm Chớp sắp bị gỡ
         * `job_changes_requested` - Tin tuyển dụng cần chỉnh sửa
         * `company_join_requested` - Có yêu cầu tham gia công ty
         * `company_join_approved` - Yêu cầu tham gia công ty đã được duyệt
@@ -28291,6 +30336,80 @@ components:
         * `select` - Chọn một
         * `multi_select` - Chọn nhiều
         * `tags` - Thẻ
+    FlashBadgeCriterion:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/FlashBadgeCriterionCodeEnum'
+        met:
+          type: boolean
+        value:
+          nullable: true
+        target:
+          type: integer
+      required:
+      - code
+      - met
+      - target
+      - value
+    FlashBadgeCriterionCodeEnum:
+      enum:
+      - enough_applications
+      - response_rate
+      - recent_activity
+      - no_overdue
+      type: string
+      description: |-
+        * `enough_applications` - enough_applications
+        * `response_rate` - response_rate
+        * `recent_activity` - recent_activity
+        * `no_overdue` - no_overdue
+    FlashBadgeState:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        qualified:
+          type: boolean
+        qualified_since:
+          type: string
+          format: date-time
+          nullable: true
+        response_rate:
+          type: integer
+          nullable: true
+        avg_response_hours:
+          type: number
+          format: double
+          nullable: true
+        criteria:
+          type: array
+          items:
+            $ref: '#/components/schemas/FlashBadgeCriterion'
+        overdue_count:
+          type: integer
+        at_risk_count:
+          type: integer
+        response_hours:
+          type: integer
+        window_days:
+          type: integer
+        computed_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - at_risk_count
+      - avg_response_hours
+      - computed_at
+      - criteria
+      - enabled
+      - overdue_count
+      - qualified
+      - qualified_since
+      - response_hours
+      - response_rate
+      - window_days
     FollowedCompany:
       type: object
       description: Directory card of a followed company plus the candidate's own follow.
@@ -28432,6 +30551,88 @@ components:
         * `any` - Không yêu cầu
         * `male` - Nam
         * `female` - Nữ
+    GeoPlaceLabel:
+      type: object
+      properties:
+        ward_id:
+          type: integer
+        ward_name:
+          type: string
+        ward_slug:
+          type: string
+        province_id:
+          type: integer
+        province_name:
+          type: string
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+      required:
+      - latitude
+      - longitude
+      - province_id
+      - province_name
+      - ward_id
+      - ward_name
+      - ward_slug
+    GeoPoint:
+      type: object
+      properties:
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        label:
+          type: string
+      required:
+      - label
+      - latitude
+      - longitude
+    GeoSuggestion:
+      type: object
+      description: |-
+        One autocomplete option: a ward (coordinates known locally) or a provider
+        place that needs ``/geo/place/`` to resolve its coordinates.
+      properties:
+        type:
+          $ref: '#/components/schemas/GeoSuggestionTypeEnum'
+        ref:
+          type: string
+        label:
+          type: string
+        secondary:
+          type: string
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
+        slug:
+          type: string
+      required:
+      - label
+      - latitude
+      - longitude
+      - ref
+      - secondary
+      - slug
+      - type
+    GeoSuggestionTypeEnum:
+      enum:
+      - ward
+      - place
+      type: string
+      description: |-
+        * `ward` - ward
+        * `place` - place
     GroupEnum:
       enum:
       - campaign
@@ -28484,6 +30685,44 @@ components:
       description: |-
         * `manual_review` - manual_review
         * `confirmed_violation` - confirmed_violation
+    HomepageBestJobLocations:
+      type: object
+      properties:
+        provinces:
+          type: array
+          items:
+            $ref: '#/components/schemas/HomepageBestJobProvince'
+        wards:
+          type: array
+          items:
+            $ref: '#/components/schemas/HomepageBestJobWard'
+      required:
+      - provinces
+      - wards
+    HomepageBestJobProvince:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        job_count:
+          type: integer
+      required:
+      - id
+      - job_count
+      - name
+    HomepageBestJobWard:
+      type: object
+      properties:
+        parent_id:
+          type: integer
+          nullable: true
+        parent_name:
+          type: string
+      required:
+      - parent_id
+      - parent_name
     ImportanceEnum:
       enum:
       - required
@@ -29162,6 +31401,14 @@ components:
       - id
       - logo_url
       - name
+    JobCategoryStatusEnum:
+      enum:
+      - active
+      - inactive
+      type: string
+      description: |-
+        * `active` - Active
+        * `inactive` - Inactive
     JobCategoryTypeEnum:
       enum:
       - occupation_group
@@ -29172,6 +31419,27 @@ components:
         * `occupation_group` - Nhóm nghề
         * `domain` - Kiến thức chuyên ngành
         * `specialization` - Vị trí chuyên môn
+    JobCategoryWriteRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        name_en:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        parent:
+          type: integer
+          nullable: true
+        status:
+          $ref: '#/components/schemas/JobCategoryStatusEnum'
+        logo_url:
+          type: string
+      required:
+      - name
     JobDetail:
       type: object
       description: |-
@@ -29366,17 +31634,14 @@ components:
         view_count:
           type: integer
           readOnly: true
-        is_hot:
-          type: boolean
-          readOnly: true
-          description: Nhãn HOT (đỏ) trên card
-        is_urgent:
-          type: boolean
-          readOnly: true
-          description: Nhãn GẤP / tuyển gấp (cam) trên card
         presentation:
-          type: object
-          additionalProperties: {}
+          allOf:
+          - $ref: '#/components/schemas/JobPresentation'
+          readOnly: true
+        flash_badge_stats:
+          allOf:
+          - $ref: '#/components/schemas/JobFlashBadgeStats'
+          nullable: true
           readOnly: true
         job_locations:
           type: array
@@ -29496,10 +31761,9 @@ components:
       - employment_type
       - experience_years
       - first_approved_at
+      - flash_badge_stats
       - gender_requirement
       - income_display_type
-      - is_hot
-      - is_urgent
       - job_locations
       - language_requirements
       - locations_detail
@@ -29526,6 +31790,26 @@ components:
       - work_type
       - work_types
       - workplace_groups
+    JobFlashBadgeStats:
+      type: object
+      description: Số liệu thật sau Huy hiệu Sấm Chớp của người đăng tin (ADR-0027).
+      properties:
+        response_rate:
+          type: integer
+        avg_response_hours:
+          type: number
+          format: double
+          nullable: true
+        matured_count:
+          type: integer
+        computed_at:
+          type: string
+          format: date-time
+      required:
+      - avg_response_hours
+      - computed_at
+      - matured_count
+      - response_rate
     JobImpressionBatchRequest:
       type: object
       properties:
@@ -29634,7 +31918,25 @@ components:
           type: integer
           maximum: 32767
           minimum: 0
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
+        coordinate_precision:
+          allOf:
+          - $ref: '#/components/schemas/CoordinatePrecisionEnum'
+          readOnly: true
+        coordinate_source:
+          allOf:
+          - $ref: '#/components/schemas/CoordinateSourceEnum'
+          readOnly: true
       required:
+      - coordinate_precision
+      - coordinate_source
       - id
       - location
       - location_level
@@ -29653,6 +31955,14 @@ components:
           type: integer
           maximum: 32767
           minimum: 0
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
       required:
       - location
     JobModerationEvent:
@@ -29757,6 +32067,36 @@ components:
         * `vice_director` - Phó giám đốc
         * `director` - Giám đốc
         * `intern` - Thực tập sinh
+    JobPresentation:
+      type: object
+      properties:
+        labels:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobPresentationLabel'
+      required:
+      - labels
+    JobPresentationLabel:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/JobPresentationLabelCodeEnum'
+        text:
+          type: string
+        tone:
+          type: string
+      required:
+      - code
+      - text
+      - tone
+    JobPresentationLabelCodeEnum:
+      enum:
+      - closing_soon
+      - fast_response
+      type: string
+      description: |-
+        * `closing_soon` - closing_soon
+        * `fast_response` - fast_response
     JobReportCreateRequest:
       type: object
       properties:
@@ -30433,9 +32773,21 @@ components:
           nullable: true
         merged_from:
           readOnly: true
+        latitude:
+          type: number
+          format: double
+          readOnly: true
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          readOnly: true
+          nullable: true
       required:
       - id
+      - latitude
       - level
+      - longitude
       - merged_from
       - name
       - parent
@@ -30822,6 +33174,156 @@ components:
         * `manual_review` - Tạm ẩn để rà soát nội dung
         * `confirmed_violation` - Tạm ẩn do vi phạm đã xác nhận
         * `changes_requested` - Tạm ẩn, cần chỉnh sửa theo yêu cầu
+    NearbyJobMap:
+      type: object
+      properties:
+        origin:
+          $ref: '#/components/schemas/NearbyJobMapOrigin'
+        points:
+          type: array
+          items:
+            $ref: '#/components/schemas/NearbyMarker'
+        truncated:
+          type: boolean
+      required:
+      - origin
+      - points
+      - truncated
+    NearbyJobMapOrigin:
+      type: object
+      properties:
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        radius_km:
+          type: integer
+        ward:
+          allOf:
+          - $ref: '#/components/schemas/NearbyOriginPlace'
+          nullable: true
+      required:
+      - latitude
+      - longitude
+      - radius_km
+      - ward
+    NearbyMarker:
+      type: object
+      properties:
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        precision:
+          type: string
+        distance_km:
+          type: number
+          format: double
+          readOnly: true
+        label:
+          type: string
+          description: Tên phường/xã của điểm
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/NearbyMarkerJob'
+      required:
+      - distance_km
+      - jobs
+      - label
+      - latitude
+      - longitude
+      - precision
+    NearbyMarkerJob:
+      type: object
+      properties:
+        slug:
+          type: string
+        title:
+          type: string
+        company_name:
+          type: string
+        company_logo_url:
+          type: string
+          nullable: true
+          readOnly: true
+        salary_type:
+          type: string
+        salary_min:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          nullable: true
+        salary_max:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          nullable: true
+        currency:
+          type: string
+        workplace:
+          type: string
+          readOnly: true
+      required:
+      - company_logo_url
+      - company_name
+      - currency
+      - salary_max
+      - salary_min
+      - salary_type
+      - slug
+      - title
+      - workplace
+    NearbyOriginPlace:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        province_id:
+          type: integer
+        province_name:
+          type: string
+      required:
+      - id
+      - name
+      - province_id
+      - province_name
+      - slug
+    NearbyWorkplace:
+      type: object
+      properties:
+        id:
+          type: integer
+        display:
+          type: string
+          readOnly: true
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        precision:
+          type: string
+        distance_km:
+          type: number
+          format: double
+          readOnly: true
+      required:
+      - display
+      - distance_km
+      - id
+      - latitude
+      - longitude
+      - precision
     NetworkEnum:
       enum:
       - facebook_page
@@ -31216,6 +33718,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AdminCv'
+    PaginatedAdminDataRequestList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminDataRequest'
     PaginatedAdminInvitationList:
       type: object
       required:
@@ -31377,6 +33902,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AdminRecruitmentNeed'
+    PaginatedAdminSkillList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminSkill'
     PaginatedAdminUserCvList:
       type: object
       required:
@@ -31561,6 +34109,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CandidateNotification'
+    PaginatedCandidateSearchInvitationList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CandidateSearchInvitation'
     PaginatedCandidateTalentPoolList:
       type: object
       required:
@@ -31971,6 +34542,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PublicJobPreview'
+    PaginatedPublicNearbyJobList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicNearbyJob'
     PaginatedRecruitmentCampaignList:
       type: object
       required:
@@ -32019,10 +34613,16 @@ components:
             $ref: '#/components/schemas/TalentPoolEntry'
     PasswordChangeRequest:
       type: object
-      description: Đặt mật khẩu lần đầu cho OAuth hoặc đổi mật khẩu của phiên hiện
-        tại.
+      description: |-
+        Đặt mật khẩu lần đầu cho OAuth hoặc đổi mật khẩu của phiên hiện tại.
+
+        Tài khoản chưa có mật khẩu chứng minh chủ sở hữu bằng mã gửi qua email
+        (``email_code``) thay cho mật khẩu hiện tại.
       properties:
         current_password:
+          type: string
+          writeOnly: true
+        email_code:
           type: string
           writeOnly: true
         password:
@@ -32139,23 +34739,32 @@ components:
       required:
       - email
       - role
+    PasswordSetupCodeResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+        resend_after_seconds:
+          type: integer
+      required:
+      - detail
+      - resend_after_seconds
     PasswordSetupRequirements:
       type: object
       properties:
         has_usable_password:
           type: boolean
-        requires_reauth:
+        requires_email_code:
           type: boolean
-        reauth_provider:
-          type: string
-          nullable: true
-        reauth_max_age_seconds:
+        email_code_ttl_seconds:
+          type: integer
+        resend_after_seconds:
           type: integer
       required:
+      - email_code_ttl_seconds
       - has_usable_password
-      - reauth_max_age_seconds
-      - reauth_provider
-      - requires_reauth
+      - requires_email_code
+      - resend_after_seconds
     PatchedAdminAccountProfileUpdateRequest:
       type: object
       properties:
@@ -32232,6 +34841,39 @@ components:
         work_location_id:
           type: integer
           nullable: true
+    PatchedAdminBenefitRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        category:
+          $ref: '#/components/schemas/BenefitCategoryEnum'
+        is_active:
+          type: boolean
+    PatchedAdminIndustryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        is_active:
+          type: boolean
+    PatchedAdminLanguageRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        code:
+          type: string
+          minLength: 1
+          maxLength: 20
+        is_active:
+          type: boolean
     PatchedAdminPinnedPostRequest:
       type: object
       properties:
@@ -32937,6 +35579,25 @@ components:
           $ref: '#/components/schemas/FrequencyEnum'
         is_active:
           type: boolean
+    PatchedJobCategoryWriteRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        name_en:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        parent:
+          type: integer
+          nullable: true
+        status:
+          $ref: '#/components/schemas/JobCategoryStatusEnum'
+        logo_url:
+          type: string
     PatchedManagedAccountUpdateRequest:
       type: object
       properties:
@@ -33098,6 +35759,39 @@ components:
         revision_token:
           type: integer
           minimum: 1
+    PatchedSkillGroupWriteRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        parent:
+          type: integer
+          nullable: true
+        is_active:
+          type: boolean
+    PatchedSkillWriteRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        aliases:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 255
+          maxItems: 50
+        group:
+          type: integer
+          nullable: true
+        description:
+          type: string
+        is_active:
+          type: boolean
     PatchedTalentPoolUpdateRequest:
       type: object
       properties:
@@ -33621,7 +36315,13 @@ components:
           items:
             type: object
             additionalProperties: {}
+        categories:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
       required:
+      - categories
       - locations
     PublicCompanyList:
       type: object
@@ -33848,25 +36548,13 @@ components:
           allOf:
           - $ref: '#/components/schemas/CurrencyEnum'
           readOnly: true
-        tier:
-          allOf:
-          - $ref: '#/components/schemas/TierEnum'
-          readOnly: true
-        is_hot:
-          type: boolean
-          readOnly: true
-          description: Nhãn HOT (đỏ) trên card
-        is_urgent:
-          type: boolean
-          readOnly: true
-          description: Nhãn GẤP / tuyển gấp (cam) trên card
         has_flash_badge:
           type: boolean
           readOnly: true
-          description: Huy hiệu Sấm Chớp — NTD tương tác nhanh
+          description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         presentation:
-          type: object
-          additionalProperties: {}
+          allOf:
+          - $ref: '#/components/schemas/JobPresentation'
           readOnly: true
         first_approved_at:
           type: string
@@ -33900,8 +36588,6 @@ components:
       - first_approved_at
       - has_flash_badge
       - income_display_type
-      - is_hot
-      - is_urgent
       - job_skills
       - locations_detail
       - position_level
@@ -33912,7 +36598,6 @@ components:
       - salary_min
       - salary_type
       - slug
-      - tier
       - title
       - work_type
       - work_types
@@ -33937,7 +36622,20 @@ components:
         address_detail:
           type: string
           maxLength: 500
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
+        coordinate_precision:
+          allOf:
+          - $ref: '#/components/schemas/CoordinatePrecisionEnum'
+          readOnly: true
       required:
+      - coordinate_precision
       - id
       - location
       - location_level
@@ -34071,25 +36769,13 @@ components:
           allOf:
           - $ref: '#/components/schemas/CurrencyEnum'
           readOnly: true
-        tier:
-          allOf:
-          - $ref: '#/components/schemas/TierEnum'
-          readOnly: true
-        is_hot:
-          type: boolean
-          readOnly: true
-          description: Nhãn HOT (đỏ) trên card
-        is_urgent:
-          type: boolean
-          readOnly: true
-          description: Nhãn GẤP / tuyển gấp (cam) trên card
         has_flash_badge:
           type: boolean
           readOnly: true
-          description: Huy hiệu Sấm Chớp — NTD tương tác nhanh
+          description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         presentation:
-          type: object
-          additionalProperties: {}
+          allOf:
+          - $ref: '#/components/schemas/JobPresentation'
           readOnly: true
         first_approved_at:
           type: string
@@ -34171,8 +36857,6 @@ components:
       - first_approved_at
       - has_flash_badge
       - income_display_type
-      - is_hot
-      - is_urgent
       - job_benefits
       - job_locations
       - job_skills
@@ -34186,7 +36870,6 @@ components:
       - salary_type
       - short_description
       - slug
-      - tier
       - title
       - work_schedules
       - work_type
@@ -34223,6 +36906,213 @@ components:
           maxLength: 500
       required:
       - id
+    PublicNearbyJob:
+      type: object
+      description: Search card plus how close the job is to the candidate's chosen
+        point.
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        title:
+          type: string
+          readOnly: true
+        company_name:
+          type: string
+          readOnly: true
+        company_slug:
+          type: string
+          nullable: true
+          readOnly: true
+        company_logo_url:
+          type: string
+          nullable: true
+          readOnly: true
+        brand_slug:
+          type: string
+          nullable: true
+          readOnly: true
+        company_verified:
+          type: boolean
+          readOnly: true
+        category:
+          type: integer
+          nullable: true
+          readOnly: true
+        locations_detail:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
+        job_skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobListSkill'
+          readOnly: true
+        work_type:
+          allOf:
+          - $ref: '#/components/schemas/JobWorkTypeEnum'
+          readOnly: true
+        work_types:
+          readOnly: true
+          description: Các hình thức làm việc được áp dụng; work_type giữ giá trị
+            đầu tiên để tương thích bộ lọc cũ.
+        employment_type:
+          allOf:
+          - $ref: '#/components/schemas/EmploymentTypeEnum'
+          readOnly: true
+        education_level:
+          allOf:
+          - $ref: '#/components/schemas/EducationLevelEnum'
+          readOnly: true
+        experience_years:
+          allOf:
+          - $ref: '#/components/schemas/ExperienceYearsEnum'
+          readOnly: true
+          description: |-
+            Số năm kinh nghiệm yêu cầu (bộ lọc "Kinh nghiệm")
+
+            * `none` - Không yêu cầu
+            * `under_1` - Dưới 1 năm
+            * `1` - 1 năm
+            * `2` - 2 năm
+            * `3` - 3 năm
+            * `4` - 4 năm
+            * `5` - 5 năm
+            * `over_5` - Trên 5 năm
+        position_level:
+          allOf:
+          - $ref: '#/components/schemas/JobPositionLevelEnum'
+          readOnly: true
+          description: |-
+            Cấp bậc tuyển dụng (bộ lọc "Cấp bậc")
+
+            * `employee` - Nhân viên
+            * `team_lead` - Trưởng nhóm
+            * `manager` - Trưởng/Phó phòng
+            * `supervisor` - Quản lý / Giám sát
+            * `branch_manager` - Trưởng chi nhánh
+            * `vice_director` - Phó giám đốc
+            * `director` - Giám đốc
+            * `intern` - Thực tập sinh
+        age_min:
+          type: integer
+          readOnly: true
+          nullable: true
+        age_max:
+          type: integer
+          readOnly: true
+          nullable: true
+        salary_type:
+          readOnly: true
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SalaryTypeEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        salary_min:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        salary_max:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        income_display_type:
+          allOf:
+          - $ref: '#/components/schemas/IncomeDisplayTypeEnum'
+          readOnly: true
+        currency:
+          allOf:
+          - $ref: '#/components/schemas/CurrencyEnum'
+          readOnly: true
+        has_flash_badge:
+          type: boolean
+          readOnly: true
+          description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
+        presentation:
+          allOf:
+          - $ref: '#/components/schemas/JobPresentation'
+          readOnly: true
+        first_approved_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          description: Mốc duyệt đầu tiên bất biến của public cycle hiện tại.
+        published_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        deadline:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        distance_km:
+          type: number
+          format: double
+          nullable: true
+          readOnly: true
+        match_kind:
+          type: string
+          readOnly: true
+        nearest_workplace:
+          allOf:
+          - $ref: '#/components/schemas/NearbyWorkplace'
+          nullable: true
+          readOnly: true
+        nearby_workplace_count:
+          type: integer
+          readOnly: true
+      required:
+      - age_max
+      - age_min
+      - brand_slug
+      - category
+      - company_logo_url
+      - company_name
+      - company_slug
+      - company_verified
+      - created_at
+      - currency
+      - deadline
+      - distance_km
+      - education_level
+      - employment_type
+      - experience_years
+      - first_approved_at
+      - has_flash_badge
+      - income_display_type
+      - job_skills
+      - locations_detail
+      - match_kind
+      - nearby_workplace_count
+      - nearest_workplace
+      - position_level
+      - presentation
+      - public_id
+      - published_at
+      - salary_max
+      - salary_min
+      - salary_type
+      - slug
+      - title
+      - work_type
+      - work_types
     PublicSimilarCompanies:
       type: object
       properties:
@@ -34247,6 +37137,16 @@ components:
       required:
       - revision_number
       - revision_token
+    RealtimeTicket:
+      type: object
+      properties:
+        ticket:
+          type: string
+        expires_in:
+          type: integer
+      required:
+      - expires_in
+      - ticket
     ReasonCodeEnum:
       enum:
       - incomplete_content
@@ -34556,25 +37456,13 @@ components:
           allOf:
           - $ref: '#/components/schemas/CurrencyEnum'
           readOnly: true
-        tier:
-          allOf:
-          - $ref: '#/components/schemas/TierEnum'
-          readOnly: true
-        is_hot:
-          type: boolean
-          readOnly: true
-          description: Nhãn HOT (đỏ) trên card
-        is_urgent:
-          type: boolean
-          readOnly: true
-          description: Nhãn GẤP / tuyển gấp (cam) trên card
         has_flash_badge:
           type: boolean
           readOnly: true
-          description: Huy hiệu Sấm Chớp — NTD tương tác nhanh
+          description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         presentation:
-          type: object
-          additionalProperties: {}
+          allOf:
+          - $ref: '#/components/schemas/JobPresentation'
           readOnly: true
         first_approved_at:
           type: string
@@ -34621,8 +37509,6 @@ components:
       - has_flash_badge
       - income_display_type
       - is_high_match
-      - is_hot
-      - is_urgent
       - job_skills
       - locations_detail
       - match_details
@@ -34636,7 +37522,6 @@ components:
       - salary_min
       - salary_type
       - slug
-      - tier
       - title
       - work_type
       - work_types
@@ -35835,25 +38720,13 @@ components:
           allOf:
           - $ref: '#/components/schemas/CurrencyEnum'
           readOnly: true
-        tier:
-          allOf:
-          - $ref: '#/components/schemas/TierEnum'
-          readOnly: true
-        is_hot:
-          type: boolean
-          readOnly: true
-          description: Nhãn HOT (đỏ) trên card
-        is_urgent:
-          type: boolean
-          readOnly: true
-          description: Nhãn GẤP / tuyển gấp (cam) trên card
         has_flash_badge:
           type: boolean
           readOnly: true
-          description: Huy hiệu Sấm Chớp — NTD tương tác nhanh
+          description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         presentation:
-          type: object
-          additionalProperties: {}
+          allOf:
+          - $ref: '#/components/schemas/JobPresentation'
           readOnly: true
         first_approved_at:
           type: string
@@ -35897,8 +38770,6 @@ components:
       - first_approved_at
       - has_flash_badge
       - income_display_type
-      - is_hot
-      - is_urgent
       - job_skills
       - locations_detail
       - position_level
@@ -35912,7 +38783,6 @@ components:
       - similarity_reasons
       - similarity_score
       - slug
-      - tier
       - title
       - work_type
       - work_types
@@ -36285,6 +39155,22 @@ components:
       - group_name
       - id
       - name
+    SkillBulkUpdateRequest:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: integer
+          maxItems: 200
+          minItems: 1
+        group:
+          type: integer
+          nullable: true
+        is_active:
+          type: boolean
+      required:
+      - ids
     SkillCreateRequest:
       type: object
       properties:
@@ -36313,6 +39199,20 @@ components:
       required:
       - id
       - name
+    SkillGroupWriteRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        parent:
+          type: integer
+          nullable: true
+        is_active:
+          type: boolean
+      required:
+      - name
     SkillLevelEnum:
       enum:
       - beginner
@@ -36323,6 +39223,69 @@ components:
         * `beginner` - Beginner
         * `intermediate` - Intermediate
         * `advanced` - Advanced
+    SkillMergePreview:
+      type: object
+      properties:
+        moved:
+          $ref: '#/components/schemas/SkillUsage'
+        dropped:
+          $ref: '#/components/schemas/SkillUsage'
+      required:
+      - dropped
+      - moved
+    SkillMergeRequest:
+      type: object
+      properties:
+        target:
+          type: integer
+      required:
+      - target
+    SkillSummary:
+      type: object
+      properties:
+        ungrouped:
+          type: integer
+        duplicates:
+          type: integer
+      required:
+      - duplicates
+      - ungrouped
+    SkillUsage:
+      type: object
+      properties:
+        jobs:
+          type: integer
+        cvs:
+          type: integer
+        candidates:
+          type: integer
+      required:
+      - candidates
+      - cvs
+      - jobs
+    SkillWriteRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        aliases:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 255
+          maxItems: 50
+        group:
+          type: integer
+          nullable: true
+        description:
+          type: string
+        is_active:
+          type: boolean
+      required:
+      - name
     SocialCapabilities:
       type: object
       properties:
@@ -36658,16 +39621,6 @@ components:
         * `violet` - Tím
         * `slate` - Xám
         * `ocean` - Xanh biển
-    TierEnum:
-      enum:
-      - standard
-      - featured
-      - top
-      type: string
-      description: |-
-        * `standard` - Tin thường
-        * `featured` - Tin nổi bật
-        * `top` - Tin TOP
     TokenActionRequest:
       type: object
       properties:

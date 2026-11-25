@@ -1,0 +1,403 @@
+/*
+ * Full-width workspace table (employer job and campaign lists): status tiles,
+ * one bordered table with its toolbar, and a pagination bar pinned to the
+ * bottom of the workspace. Builds on workspace-list.css (pills, chips, sort
+ * headers, tones) and, like it, rides the lazy route chunks only.
+ *
+ * A page sets its columns with `--wt-cols` on `.wt-table`; rows are cards
+ * until the table itself is wide (container query, so the sidebar counts).
+ */
+/* Inside .workspace-page (@/shared/ui/workspace-page): fills the frame so the
+ * pagination bar sits at the bottom, flush with the page edges. */
+.wt-page {
+  --wt-gutter: var(--workspace-gutter, 12px);
+
+  display: flex;
+  flex: 1 0 auto;
+  min-width: 0;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Status tiles: one per status, each also filters the table. */
+/* Phones: one row that scrolls sideways; wider screens: a grid. */
+.wt-tiles {
+  display: grid;
+  grid-auto-columns: minmax(150px, 1fr);
+  grid-auto-flow: column;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.wt-tiles::-webkit-scrollbar { display: none; }
+
+/* Columns follow the frame, not the viewport, so a wider sidebar (admin)
+ * never squeezes the labels; six tiles in a narrow row drop their icons. */
+.wt-tiles-frame { container-type: inline-size; }
+
+@container (min-width: 720px) {
+  .wt-tiles { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; }
+}
+
+@container (min-width: 880px) {
+  .wt-tiles { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
+
+@container (min-width: 880px) and (max-width: 1100px) {
+  .wt-tiles-frame .wt-tile { padding-inline: 12px; }
+  .wt-tiles-frame .wt-tile__icon { display: none; }
+}
+
+.wt-tile {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  padding: 12px 14px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.wt-tile:hover { border-color: #cbd5e1; }
+.wt-tile[aria-pressed='true'] { border-color: var(--brand-primary); box-shadow: 0 0 0 1px var(--brand-primary); }
+
+.wt-tile:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.wt-tile__icon {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #64748b;
+  font-size: 16px;
+}
+
+.wt-tile[aria-pressed='true'] .wt-tile__icon { border-color: color-mix(in srgb, var(--brand-primary) 35%, #fff); color: var(--brand-primary-hover); }
+.wt-tile__body { display: flex; min-width: 0; flex-direction: column; }
+
+.wt-tile__label {
+  overflow: hidden;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wt-tile__value {
+  color: #0f172a;
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+}
+
+.wt-tile__value--loading {
+  display: block;
+  width: 32px;
+  height: 20px;
+  margin-top: 3px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  animation: ws-pulse 1.2s ease-in-out infinite;
+}
+
+/* Table: toolbar, header and rows inside one bordered panel. */
+.wt-table {
+  container-type: inline-size;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.wt-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 12px;
+}
+
+.wt-toolbar__quick {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+
+.wt-toolbar__label { color: #64748b; font-size: 13px; font-weight: 600; }
+.wt-toolbar .ws-chip { min-height: 36px; padding: 0 12px; font-size: 13px; }
+.wt-toolbar .ws-link-button { font-size: 13px; }
+
+/* Filters: search takes the full row on phones, then sits last on the right. */
+.wt-filters {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.wt-filters > .wt-filters__search { grid-column: 1 / -1; grid-row: 1; }
+.wt-filters > .wt-filters__extra { grid-column: 1 / -1; }
+.wt-filters--single { grid-template-columns: minmax(0, 1fr); }
+
+.wt-head { display: none; }
+
+.wt-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-areas:
+    'main main main'
+    'status status status';
+  gap: 10px 12px;
+  border-top: 1px solid #f1f5f9;
+  padding: 14px 12px;
+  transition: background-color 0.15s;
+}
+
+.wt-row:first-child { border-top: 0; }
+.wt-row:hover,
+.wt-row:focus-within { background: #fafafa; }
+
+.wt-cell { display: flex; min-width: 0; flex-direction: column; align-items: flex-start; gap: 3px; font-size: 12px; }
+.wt-cell--main { grid-area: main; gap: 3px; }
+.wt-cell--main > .wt-title { margin-bottom: 3px; }
+.wt-cell--status { grid-area: status; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.wt-cell--actions { grid-column: 1 / -1; }
+
+.wt-label { color: #94a3b8; font-size: 11px; font-weight: 600; }
+
+.wt-title {
+  display: -webkit-box;
+  overflow: hidden;
+  color: #0f172a !important;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.wt-title:hover { color: var(--brand-primary-hover) !important; }
+
+.wt-meta {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 14px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.wt-meta:empty { display: none; }
+.wt-meta > * { display: inline-flex; min-width: 0; align-items: center; gap: 5px; }
+.wt-meta .anticon { color: #94a3b8; font-size: 12px; }
+
+/* Calm pills: a white outline and the tone kept in the dot only. */
+.wt-table .ws-pill {
+  background: #fff;
+  box-shadow: inset 0 0 0 1px #e2e8f0;
+  color: #334155;
+  font-weight: 500;
+}
+
+/* Row actions: outlined buttons in one row on cards, stacked in the table. */
+.wt-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+
+.wt-btn {
+  display: inline-flex;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 7px;
+  background: #fff !important;
+  padding: 0 10px;
+  color: #334155 !important;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: border-color 0.15s, background-color 0.15s, color 0.15s;
+}
+
+.wt-btn:hover { border-color: #cbd5e1 !important; background: #f8fafc !important; color: #0f172a !important; }
+.wt-btn .anticon-down { font-size: 10px; }
+.wt-btn--primary { border-color: var(--brand-primary) !important; color: var(--brand-primary-hover) !important; }
+.wt-btn--primary:hover { border-color: var(--brand-primary-hover) !important; background: var(--brand-primary-soft) !important; color: color-mix(in srgb, var(--brand-primary-hover) 80%, #000) !important; }
+
+.wt-btn:focus-visible,
+.wt-title:focus-visible,
+.wt-row a:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.wt-empty { padding: 48px 16px; }
+
+/* Pagination bar pinned to the bottom of the workspace scroll area. */
+.wt-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin: auto calc(var(--wt-gutter) * -1) calc(var(--wt-gutter) * -1);
+  border-top: 1px solid #e2e8f0;
+  background: #fff;
+  padding: 12px var(--wt-gutter);
+  color: #475569;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.wt-footer strong { color: #0f172a; font-weight: 600; }
+
+@media (min-width: 640px) {
+  .wt-page { gap: 16px; }
+  .wt-toolbar { padding: 12px 16px; }
+  .wt-row { padding-inline: 16px; }
+}
+
+@media (max-width: 767px) {
+  .wt-tile { gap: 10px; padding: 10px 12px; }
+  .wt-tile__icon { width: 30px; height: 30px; font-size: 14px; }
+  .wt-tile__value { font-size: 17px; }
+}
+
+
+@media (min-width: 1024px) {
+  .wt-filters {
+    display: flex;
+    width: auto;
+    margin-left: auto;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .wt-filters > * { width: 220px; }
+  .wt-filters > .wt-filters__search { width: 300px; order: 9; }
+
+  /* Extra controls (refresh, export…) keep their own width, last in the row. */
+  .wt-filters > .wt-filters__extra { width: auto; order: 10; }
+}
+
+
+@container (min-width: 1080px) {
+  .wt-head,
+  .wt-row {
+    display: grid;
+    grid-template-columns: var(--wt-cols);
+    grid-template-areas: none;
+    gap: 0;
+  }
+
+  .wt-head {
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .wt-head > * { display: flex; align-items: center; padding: 11px 16px; }
+  .wt-head > * + * { border-left: 1px solid #e2e8f0; }
+  .wt-row > .wt-cell + .wt-cell { border-left: 1px solid #f1f5f9; }
+  .wt-head > :last-child { justify-content: center; }
+  .wt-head .ws-sort__icon { opacity: 0.35; }
+
+  .wt-row { padding: 0; }
+  .wt-row > .wt-cell { grid-area: auto; justify-content: center; padding: 16px; }
+  .wt-cell--status { flex-direction: column; align-items: flex-start; }
+  .wt-cell--actions { grid-column: auto; }
+  .wt-cell--actions .wt-actions { width: 100%; flex-direction: column; align-items: stretch; }
+  .wt-row > .wt-cell--actions { padding-inline: 12px; }
+  .wt-label { display: none; }
+}
+
+/* Compact toolbar (admin lists): regular-size controls and narrower fields so
+ * the quick chips and the filters share one row on a desktop-wide table. */
+.wt-table--compact .wt-toolbar { padding-block: 10px; }
+.wt-table--compact .wt-toolbar .ws-chip { min-height: 30px; padding: 0 10px; font-size: 12.5px; }
+
+/* Extra controls stay a row of natural-width buttons, also on phones where the
+ * admin shell otherwise stretches data actions into a two-column grid. */
+.wt-table--compact .wt-filters__extra { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+.wt-table--compact .wt-filters__extra .admin-data-actions {
+  display: inline-flex;
+  width: auto;
+}
+
+.wt-table--compact .wt-filters__extra .admin-data-actions > .ant-space-item,
+.wt-table--compact .wt-filters__extra .admin-data-actions > .ant-space-item > span,
+.wt-table--compact .wt-filters__extra .admin-data-actions .ant-btn { width: auto; }
+.wt-table--compact .wt-filters__extra .admin-data-actions .ant-btn-icon-only { width: 40px; }
+
+/* Wide enough: one row, chips shrink and wrap on the left, filters stay right. */
+@container (min-width: 880px) {
+  .wt-table--compact .wt-toolbar { flex-wrap: nowrap; }
+  .wt-table--compact .wt-toolbar__quick { flex: 1 1 auto; min-width: 0; flex-wrap: nowrap; }
+
+  /* The chip group keeps its aria-label; the visible label gives way. */
+  .wt-table--compact .wt-toolbar__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .wt-table--compact .ws-quick__chips {
+    min-width: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .wt-table--compact .ws-quick__chips::-webkit-scrollbar { display: none; }
+  .wt-table--compact .ws-chip { flex: none; white-space: nowrap; }
+
+  .wt-table--compact .wt-filters {
+    display: flex;
+    width: auto;
+    flex: none;
+    flex-wrap: nowrap;
+    margin-left: auto;
+  }
+
+  .wt-table--compact .wt-filters > * { width: 150px; }
+  .wt-table--compact .wt-filters > .wt-filters__search { width: 210px; order: 9; }
+  .wt-table--compact .wt-filters > .wt-filters__extra { width: auto; order: 10; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wt-tile,
+  .wt-row,
+  .wt-btn { transition: none; }
+  .wt-tile__value--loading { animation: none; }
+}

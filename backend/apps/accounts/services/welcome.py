@@ -59,7 +59,7 @@ def _candidate_welcome(user):
 def _employer_welcome(user, context):
     brand_color = email_brand_color()
     site_name = get_string_setting('site_name', 'ProCV')
-    support_email = get_string_setting('support_email', 'cskh@procv.vn')
+    support_email = get_string_setting('support_email', 'support@procv.site')
     hotline = get_string_setting('hotline', '')
     zalo_url = get_string_setting('contact_zalo_url', '')
     destination = frontend_link(
@@ -67,15 +67,13 @@ def _employer_welcome(user, context):
         base_url=settings.EMPLOYER_FRONTEND_URL,
     )
     name = user.full_name or user.email
-    recruiter = getattr(user, 'recruiter_profile', None)
-    recruiter_code = recruiter.public_id if recruiter else user.public_id
     registration_method = (context or {}).get('registration_method', '')
     verification_note = (
         _('Google đã xác thực địa chỉ email cho tài khoản này.')
         if registration_method == User.Provider.GOOGLE
         else _('Địa chỉ email của tài khoản đã được xác thực thành công.')
     )
-    values = {'site_name': site_name, 'name': name, 'code': recruiter_code}
+    values = {'site_name': site_name, 'name': name, 'code': user.public_id}
     html_values = {key: escape(str(value)) for key, value in values.items()}
     subject = _('Chúc mừng %(name)s đã có tài khoản dành cho nhà tuyển dụng') % values
     support_parts = [part for part in (hotline, support_email, zalo_url) if part]

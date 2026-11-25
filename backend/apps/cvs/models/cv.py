@@ -143,6 +143,13 @@ class UserCv(models.Model):
                 condition=models.Q(is_default=True, is_deleted=False),
                 name='uq_user_active_default_cv',
             ),
+            # Một ứng viên chỉ bật một CV cho nhà tuyển dụng tìm kiếm: một ứng viên là
+            # một kết quả tìm kiếm và một hồ sơ trích xuất.
+            models.UniqueConstraint(
+                fields=['user'],
+                condition=models.Q(recruiter_searchable=True, is_deleted=False),
+                name='uq_user_searchable_cv',
+            ),
         ]
 
     def __str__(self):

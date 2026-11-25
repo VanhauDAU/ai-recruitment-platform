@@ -1,6 +1,15 @@
-import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
+import {
+  CalendarOutlined,
+  CheckCircleOutlined,
+  EditOutlined,
+  FlagOutlined,
+  PauseCircleOutlined,
+  PlayCircleOutlined,
+  PlusOutlined,
+  SearchOutlined,
+} from '@ant-design/icons'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { Alert, Button, Empty, Input, Pagination, Select, Skeleton } from 'antd'
+import { Alert, Button, Empty, Input, Select, Skeleton } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import {
@@ -15,15 +24,27 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { m, getIntlLocale } from '@/shared/config/i18n'
 import { employerAppPath } from '@/shared/config/portals'
 import { MascotEmpty } from '@/shared/ui/mascot'
+import WorkspaceQuickFilters from '@/shared/ui/workspace-list/WorkspaceQuickFilters'
+import WorkspaceListFooter from '@/shared/ui/workspace-list/WorkspaceListFooter'
+import WorkspaceStatusTiles from '@/shared/ui/workspace-list/WorkspaceStatusTiles'
 import CampaignListRow from './CampaignListRow'
 import '@/shared/ui/workspace-list/workspace-list.css'
+import '@/shared/ui/workspace-list/workspace-table.css'
 import './campaign-list.css'
 
 const PAGE_SIZE = 20
 const SEARCH_DELAY_MS = 400
 const DEFAULT_ORDERING = 'status'
+const STATUS_ICONS = {
+  all: <FlagOutlined />,
+  active: <PlayCircleOutlined />,
+  paused: <PauseCircleOutlined />,
+  scheduled: <CalendarOutlined />,
+  draft: <EditOutlined />,
+  ended: <CheckCircleOutlined />,
+}
 const ATTENTION_TONES = { needs_review: 'orange', expired_jobs: 'red' }
-const primaryLinkClass = 'inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg !bg-emerald-600 px-3.5 text-sm font-semibold !text-white shadow-sm transition hover:!bg-emerald-500'
+const primaryLinkClass = 'inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg !bg-[var(--brand-primary)] px-3.5 text-sm font-semibold !text-white shadow-sm transition hover:!bg-[var(--brand-primary-hover)]'
 const formatCount = (value) => (value || 0).toLocaleString(getIntlLocale())
 
 export default function CampaignList() {
@@ -91,91 +112,62 @@ export default function CampaignList() {
   const lastRow = Math.min(page * PAGE_SIZE, pageData.count || 0)
 
   return (
-    <section className="ws-page">
-      <div className="ws-panel">
-        <div role="group" aria-label={m.employer_campaign_list_status_tabs_aria()} className="ws-tabs">
-          {CAMPAIGN_STATUS_TABS.map((tab) => {
-            const tabCount = counts?.[tab.countKey]
-            return (
-              <button
-                key={tab.countKey}
-                type="button"
-                aria-pressed={status === tab.value}
-                className="ws-tab"
-                onClick={() => replaceFilters({ status: tab.value })}
-              >
-                {tab.label}
-                {tabCount === undefined
-                  ? <span aria-hidden className="ws-tab__count ws-tab__count--loading" />
-                  : <span className="ws-tab__count">{formatCount(tabCount)}</span>}
-              </button>
-            )
-          })}
-        </div>
+    <section className="wt-page">
+      <WorkspaceStatusTiles
+        ariaLabel={m.employer_campaign_list_status_tabs_aria()}
+        value={status}
+        onChange={(value) => replaceFilters({ status: value })}
+        items={CAMPAIGN_STATUS_TABS.map((tab) => ({
+          key: tab.countKey,
+          value: tab.value,
+          label: tab.label,
+          icon: STATUS_ICONS[tab.countKey],
+          count: counts?.[tab.countKey] === undefined ? undefined : formatCount(counts[tab.countKey]),
+        }))}
+      />
 
-        <div className="ws-filters cpl-filters">
-          <Input
-            allowClear
-            aria-label={m.employer_campaign_list_search_aria()}
-            prefix={<SearchOutlined className="text-slate-400" aria-hidden />}
-            placeholder={m.employer_campaign_list_search_placeholder()}
-            type="search"
-            value={searchValue}
-            onChange={(event) => search(event.target.value)}
-            onClear={() => search('', 0)}
-            onPressEnter={() => search(searchValue, 0)}
+      <div className="wt-table cpl-table">
+        <div className="wt-toolbar">
+          <WorkspaceQuickFilters
+            label={m.employer_campaign_list_attention_label()}
+            ariaLabel={m.employer_campaign_list_attention_aria()}
+            items={CAMPAIGN_ATTENTION_SCOPES.map((item) => ({ ...item, tone: ATTENTION_TONES[item.value], count: attentionCounts?.[item.value] }))}
+            value={scope}
+            onChange={(value) => replaceFilters({ scope: value })}
+            clearLabel={m.employer_campaign_list_clear_filters()}
+            onClear={hasFilters ? clearFilters : undefined}
           />
-          <Select
-            aria-label={m.employer_campaign_list_sort_aria()}
-            value={ordering}
-            options={CAMPAIGN_ORDERING_OPTIONS}
-            onChange={(value) => replaceFilters({ ordering: value === DEFAULT_ORDERING ? '' : value })}
-          />
-        </div>
-
-        <div className="ws-quick">
-          <span className="ws-quick__label">{m.employer_campaign_list_attention_label()}</span>
-          <div role="group" aria-label={m.employer_campaign_list_attention_aria()} className="ws-quick__chips">
-            {CAMPAIGN_ATTENTION_SCOPES.map((item) => {
-              const active = scope === item.value
-              const chipCount = attentionCounts?.[item.value]
-              return (
-                <button
-                  key={item.value}
-                  type="button"
-                  aria-pressed={active}
-                  disabled={!active && chipCount === 0}
-                  className={`ws-chip ws-tone-${ATTENTION_TONES[item.value]}`}
-                  onClick={() => replaceFilters({ scope: active ? '' : item.value })}
-                >
-                  <span aria-hidden className="ws-dot" />
-                  {item.label}
-                  {chipCount !== undefined && <span className="ws-chip__count">{formatCount(chipCount)}</span>}
-                </button>
-              )
-            })}
+          <div className="wt-filters">
+            <Select
+              size="large"
+              aria-label={m.employer_campaign_list_sort_aria()}
+              value={ordering}
+              options={CAMPAIGN_ORDERING_OPTIONS}
+              onChange={(value) => replaceFilters({ ordering: value === DEFAULT_ORDERING ? '' : value })}
+            />
+            <Input
+              size="large"
+              allowClear
+              className="wt-filters__search"
+              aria-label={m.employer_campaign_list_search_aria()}
+              prefix={<SearchOutlined className="text-slate-400" aria-hidden />}
+              placeholder={m.employer_campaign_list_search_placeholder()}
+              type="search"
+              value={searchValue}
+              onChange={(event) => search(event.target.value)}
+              onClear={() => search('', 0)}
+              onPressEnter={() => search(searchValue, 0)}
+            />
           </div>
-          <span className="ws-quick__meta">
-            {!campaignsQuery.isLoading && (
-              <span className="ws-quick__count">{m.employer_campaign_list_result_count({ count: formatCount(pageData.count) })}</span>
-            )}
-            {hasFilters && (
-              <button type="button" className="ws-link-button" onClick={clearFilters}>
-                {m.employer_campaign_list_clear_filters()}
-              </button>
-            )}
-          </span>
         </div>
-      </div>
 
-      <div className="ws-panel ws-list">
-        <div className="ws-head cpl-head">
+        <div className="wt-head">
           <span>{m.employer_campaign_list_col_campaign()}</span>
           <span>{m.employer_campaign_list_col_status()}</span>
           <span>{m.employer_campaign_jobs_col_job()}</span>
           <span>{m.employer_campaign_cv_col_candidate()}</span>
           <span>{m.employer_campaign_list_col_progress()}</span>
-          <span className="sr-only">{m.employer_campaign_jobs_col_actions()}</span>
+          <span>{m.employer_campaign_jobs_col_actions()}</span>
         </div>
 
         {campaignsQuery.isError && (
@@ -192,14 +184,14 @@ export default function CampaignList() {
         {campaignsQuery.isLoading ? (
           <div aria-label={m.employer_campaign_list_loading_aria()}>
             {[1, 2, 3].map((item) => (
-              <div key={item} className="ws-row">
-                <Skeleton active title={{ width: '45%' }} paragraph={{ rows: 2, width: ['70%', '90%'] }} />
+              <div key={item} className="wt-row">
+                <Skeleton active title={{ width: '45%' }} paragraph={{ rows: 2, width: ['70%', '90%'] }} className="cpl-skeleton" />
               </div>
             ))}
           </div>
         ) : campaigns.length === 0 && !campaignsQuery.isError ? (
           hasFilters ? (
-            <div className="py-14">
+            <div className="wt-empty">
               <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={m.employer_campaign_list_empty_filtered()}>
                 <Button onClick={clearFilters}>{m.employer_campaign_list_clear_filters()}</Button>
               </Empty>
@@ -222,23 +214,17 @@ export default function CampaignList() {
             ))}
           </div>
         )}
-
-        {pageData.count > 0 && (
-          <div className="flex flex-col items-center justify-between gap-2 border-t border-slate-100 px-4 py-3 text-xs text-slate-500 sm:flex-row">
-            <span>{m.employer_campaign_list_range({ first: firstRow, last: lastRow, total: formatCount(pageData.count) })}</span>
-            {pageData.count > PAGE_SIZE && (
-              <Pagination
-                size="small"
-                current={page}
-                pageSize={PAGE_SIZE}
-                total={pageData.count}
-                showSizeChanger={false}
-                onChange={(nextPage) => replaceFilters({ page: nextPage })}
-              />
-            )}
-          </div>
-        )}
       </div>
+
+      {pageData.count > 0 && (
+        <WorkspaceListFooter
+          summary={m.employer_campaign_list_range({ first: firstRow, last: lastRow, total: formatCount(pageData.count) })}
+          page={page}
+          pageSize={PAGE_SIZE}
+          total={pageData.count}
+          onChange={(nextPage) => replaceFilters({ page: nextPage })}
+        />
+      )}
     </section>
   )
 }

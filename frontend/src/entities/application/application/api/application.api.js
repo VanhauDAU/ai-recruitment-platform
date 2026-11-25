@@ -124,6 +124,18 @@ export async function getRecruiterApplicationSnapshot(publicId) {
   return data
 }
 
+/** Mức phù hợp do AI chấm cho một hồ sơ: `{status, analysed_at, error_code, result}`. */
+export async function getRecruiterApplicationMatch(publicId) {
+  const { data } = await api.get(`/employer/applications/${publicId}/ai-match/`)
+  return data
+}
+
+/** Hồ sơ trích xuất từ bản CV đã nộp: `{status, error_code, profile}`. */
+export async function getRecruiterApplicationCvProfile(publicId) {
+  const { data } = await api.get(`/employer/applications/${publicId}/extracted-profile/`)
+  return data
+}
+
 export async function getApplicationHistory(publicId) {
   const { data } = await api.get(`/employer/applications/${publicId}/history/`)
   return data.results || data
@@ -206,4 +218,15 @@ export async function getMyTalentPools() {
 
 export async function withdrawFromTalentPool(publicId) {
   await api.post(`/candidate/talent-pools/mine/${publicId}/withdraw/`)
+}
+
+// Connection requests employers send from candidate search.
+export async function getMyConnectionInvitations() {
+  const { data } = await api.get('/candidate/connection-invitations/')
+  return data.results || data
+}
+
+export async function respondToConnectionInvitation(publicId, accept) {
+  const { data } = await api.post(`/candidate/connection-invitations/${publicId}/respond/`, { accept })
+  return data
 }

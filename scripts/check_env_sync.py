@@ -34,6 +34,8 @@ LOCAL_ENV_FILES = {
 BACKEND_PROCESS_KEYS = {
     'DJANGO_SETTINGS_MODULE': 'Django entrypoints/CI: selects settings before backend/.env loads',
     'USER': 'operating system shell: actor label fallback for management commands',
+    'BACKEND_IGNORE_ENV_FILE': 'scripts/check_production_settings.py: skips backend/.env so the check is hermetic',
+    'PATH': 'operating system: passed through to the sandboxed LibreOffice subprocess',
 }
 FRONTEND_PROCESS_KEYS = {
     'ANALYZE': 'one-off CLI flag: `ANALYZE=1 npm run build` emits the bundle treemap',

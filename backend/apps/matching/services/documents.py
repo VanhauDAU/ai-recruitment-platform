@@ -13,7 +13,13 @@ import numpy as np
 from django.db import IntegrityError, transaction
 
 from apps.cvs.models import UserCv
-from apps.cvs.services import CvDocumentRejected, extract_cv_text, open_uploaded_cv_pdf
+from apps.cvs.services import (
+    CvDocumentRejected,
+    extract_cv_text,
+    open_snapshot_source_pdf,
+    open_uploaded_cv_pdf,
+)
+from apps.skills.domain import UNCOUNTED_GROUPS
 
 from ..models import MatchChunk, MatchDocument
 from .extraction import EXTRACTOR_VERSION, ExtractionError, cv_profile, job_profile, text_cv_profile
@@ -34,13 +40,21 @@ def content_hash(value):
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
-def read_uploaded_cv_text(cv):
-    """Chữ của tệp CV tải lên (DOCX được đổi sang PDF trước khi đọc)."""
-    source = open_uploaded_cv_pdf(cv)
+def _pdf_text(source):
     if source is None:
         raise ExtractionError('cv_text_unavailable')
     with source:
         return extract_cv_text(source, 'pdf')
+
+
+def read_uploaded_cv_text(cv):
+    """Chữ của tệp CV tải lên (DOCX được đổi sang PDF trước khi đọc)."""
+    return _pdf_text(open_uploaded_cv_pdf(cv))
+
+
+def read_snapshot_cv_text(cv_version):
+    """Chữ của tệp đã nộp kèm một hồ sơ ứng tuyển (bản sao riêng của bản chụp)."""
+    return _pdf_text(open_snapshot_source_pdf(cv_version))
 
 
 def job_content_hash(job):
@@ -60,9 +74,22 @@ def encode_profile(profile, kind, encoder):
 
 
 def cv_source(cv_version):
-    """(hash nội dung, hàm tạo hồ sơ) của một phiên bản CV."""
+    """(hash nội dung, hàm tạo hồ sơ) của một phiên bản CV.
+
+    Ba nguồn, theo thứ tự:
+    1. Bản chụp hồ sơ ứng tuyển của CV tải lên: đọc đúng tệp đã nộp
+       (`source_file_key`), không đọc tệp hiện tại của CV trong thư viện. Ứng viên
+       có thể đã thay tệp hoặc xóa CV sau khi nộp (`cv_version.cv` khi đó là None).
+    2. Phiên bản của CV tải lên trong thư viện: đọc tệp của CV.
+    3. CV tạo trên hệ thống (kể cả bản chụp): đọc `content_json` của phiên bản.
+    """
+    if cv_version.source_file_key:
+        digest = content_hash(
+            {'file': cv_version.source_file_key, 'type': cv_version.source_file_type}
+        )
+        return digest, lambda catalog: text_cv_profile(read_snapshot_cv_text(cv_version), catalog)
     cv = cv_version.cv
-    if cv.cv_type == UserCv.CvType.UPLOADED:
+    if cv is not None and cv.cv_type == UserCv.CvType.UPLOADED:
         digest = content_hash({'file': cv.file_url, 'type': cv.file_type})
         return digest, lambda catalog: text_cv_profile(read_uploaded_cv_text(cv), catalog)
     digest = content_hash(cv_version.content_json)
@@ -156,12 +183,21 @@ def ensure_cv_document(cv_version, *, encoder, catalog):
     )
 
 
+def job_document_hash(job):
+    """Như `job_content_hash`, nhưng tin không đủ nội dung vẫn có một hash cố định.
+
+    Nhờ vậy lỗi "tin quá ngắn" cũng lưu được thành một hàng (tài liệu hoặc phân tích
+    thất bại) thay vì bị thử lại mãi.
+    """
+    try:
+        return job_content_hash(job)
+    except ExtractionError:
+        return content_hash({'extractor': EXTRACTOR_VERSION, 'job': job.pk, 'invalid': True})
+
+
 def ensure_job_document(job, *, encoder):
     """`job` cần nạp sẵn quan hệ bằng `models.jobs_for_profile`."""
-    try:
-        digest = job_content_hash(job)
-    except ExtractionError:
-        digest = content_hash({'extractor': EXTRACTOR_VERSION, 'job': job.pk, 'invalid': True})
+    digest = job_document_hash(job)
     return _store(MatchDocument.Kind.JOB, {'job': job}, digest, lambda: job_profile(job), encoder)
 
 
@@ -170,3 +206,33 @@ def chunk_vectors(document):
     chunks = list(document.chunks.order_by('position'))
     matrix = np.array([chunk.embedding for chunk in chunks], dtype=np.float32)
     return chunks, matrix.reshape(len(chunks), -1)
+
+
+def reassign_document_skill(source_id, target):
+    """Hồ sơ đã lưu ghi `skill_id`; khi kỹ năng bị gộp, đổi sang kỹ năng giữ lại.
+
+    Hash nội dung của CV không gồm danh mục kỹ năng nên tài liệu cũ không tự dựng
+    lại; sửa thẳng `profile_json` cho đúng mà không phải mã hóa lại vector.
+    """
+    group = target.group.name if target.group else ''
+    replacement = {
+        'skill_id': target.pk,
+        'name': target.name,
+        'group': group,
+        'counted': group not in UNCOUNTED_GROUPS,
+    }
+    changed = []
+    for document in MatchDocument.objects.filter(
+        profile_json__skills__contains=[{'skill_id': source_id}]
+    ):
+        entries = document.profile_json['skills']
+        has_target = any(entry['skill_id'] == target.pk for entry in entries)
+        skills = [
+            {**entry, **replacement} if entry['skill_id'] == source_id else entry
+            for entry in entries
+            if not (has_target and entry['skill_id'] == source_id)
+        ]
+        document.profile_json = {**document.profile_json, 'skills': skills}
+        changed.append(document)
+    MatchDocument.objects.bulk_update(changed, ['profile_json'])
+    return len(changed)

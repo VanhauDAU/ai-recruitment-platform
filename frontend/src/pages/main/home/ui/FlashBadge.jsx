@@ -1,38 +1,20 @@
-import { ArrowRightOutlined, ThunderboltFilled } from '@ant-design/icons'
+import { ArrowRightOutlined, CheckCircleFilled, ThunderboltFilled } from '@ant-design/icons'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { companyInitial, formatNumber as fmt, getJobs, jobDetailPath } from '@/entities/job/job'
 import { JobImpressionBoundary } from '@/features/main/job/track-job-engagement'
 import { useCountUp } from '@/shared/hooks/use-count-up'
-import { legacyAsset } from '@/shared/config/assets'
+import { m } from '@/shared/config/i18n'
 
-const CYCLE_HOURS = 4
 const VISIBLE = 3
 const ROTATE_MS = 3500
 const ITEM_H = 72   // height của mỗi card (px)
 const GAP    = 8    // khoảng cách giữa các card (px)
 const SLOT   = ITEM_H + GAP
-const FLASH_BADGE_COVER_URL = legacyAsset('welcome/flash-badge-cover.png')
-const FLASH_BADGE_INTRO_URL = legacyAsset('welcome/flash-badge-intro.png')
-const pad = (n) => String(n).padStart(2, '0')
-
-function useCountdown() {
-  const [left, setLeft] = useState({ h: 0, m: 0, s: 0 })
-  useEffect(() => {
-    const tick = () => {
-      const now = new Date()
-      const next = new Date(now)
-      const nextHour = (Math.floor(now.getHours() / CYCLE_HOURS) + 1) * CYCLE_HOURS
-      next.setHours(nextHour, 0, 0, 0)
-      const diff = Math.max(0, Math.floor((next - now) / 1000))
-      setLeft({ h: Math.floor(diff / 3600), m: Math.floor((diff % 3600) / 60), s: diff % 60 })
-    }
-    tick()
-    const id = setInterval(tick, 1000)
-    return () => clearInterval(id)
-  }, [])
-  return left
-}
+const FLASH_BADGE_COVER_URL = '/images/home/flash-badge-cover.webp'
+const FLASH_BADGE_INTRO_URL = '/images/home/flash-badge-intro.webp'
+// The flash badge is computed hourly from how recruiters answer applications (ADR-0027).
+const FLASH_BADGE_FILTER_PATH = '/viec-lam?fast=1'
 
 /**
  * useJobQueue – quản lý danh sách hiển thị theo slot position.
@@ -93,12 +75,11 @@ function useJobQueue(jobs) {
   return items
 }
 
-export default function FlashBadge() {
+export default function FlashBadge({ responseRate = 80, responseHours = 72 }) {
   const navigate = useNavigate()
   const [jobs, setJobs] = useState([])
   const [count, setCount] = useState(0)
   const [loaded, setLoaded] = useState(false)
-  const { h, m, s } = useCountdown()
   const displayCount = useCountUp(count)
   const items = useJobQueue(jobs)
 
@@ -119,7 +100,7 @@ export default function FlashBadge() {
   const containerH = VISIBLE * ITEM_H + (VISIBLE - 1) * GAP
 
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-[#0aa14a] via-[#02893c] to-[#046b32] bg-cover bg-center text-white" style={{ backgroundImage: `url("${FLASH_BADGE_COVER_URL}")` }}>
+    <div className="relative overflow-hidden bg-gradient-to-br from-[var(--brand-primary)] via-[var(--brand-primary-hover)] to-[var(--brand-primary-hover)] bg-cover bg-center text-white" style={{ backgroundImage: `url("${FLASH_BADGE_COVER_URL}")` }}>
       {/* Background decorations */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-32 right-1/4 h-96 w-96 rounded-full bg-[#5dffa3]/15 blur-3xl" />
@@ -164,40 +145,26 @@ export default function FlashBadge() {
             <div>
               <span className="text-2xl font-bold tabular-nums leading-none">{fmt(displayCount)}</span>
               <p className="text-[11px] text-green-50/75 leading-tight mt-0.5 max-w-[190px]">
-                tin đăng được NTD tương tác trong 24 giờ qua
+                {m.candidate_flash_badge_count({ rate: responseRate, hours: responseHours })}
               </p>
             </div>
           </div>
 
-          <div className="mt-5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-green-50/60 mb-2">
-              Tự động cập nhật sau
-            </p>
-            <div className="flex items-center gap-1.5">
-              {[
-                { v: h, u: 'Giờ' },
-                { v: m, u: 'Phút' },
-                { v: s, u: 'Giây' },
-              ].map((seg, i) => (
-                <div key={seg.u} className="flex items-center gap-1.5">
-                  {i > 0 && <span className="text-lg font-bold text-[#ffe27a]/80 mb-3">:</span>}
-                  <div className="flex flex-col items-center">
-                    <span className="flex h-10 w-11 items-center justify-center rounded-lg bg-white text-xl font-extrabold tabular-nums text-[#046b32] shadow-md ring-1 ring-black/10">
-                      {pad(seg.v)}
-                    </span>
-                    <span className="mt-1 text-[10px] text-green-50/70">{seg.u}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <ul className="mt-5 space-y-1.5 text-xs text-green-50/80">
+            {[m.candidate_flash_badge_point_real(), m.candidate_flash_badge_point_hourly()].map((text) => (
+              <li key={text} className="flex items-center gap-2">
+                <CheckCircleFilled className="text-[#ffe27a]" aria-hidden="true" />
+                {text}
+              </li>
+            ))}
+          </ul>
         </div>
 
         {/* ── Cột giữa: Job feed ── */}
         <div className="flex flex-col justify-center">
           <div className="mb-3 flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-[0.12em] text-green-50/60">
-              Tin nổi bật
+              Tin phản hồi nhanh
             </span>
             <span className="flex items-center gap-1.5 text-[10px] text-green-50/50">
               <span className="w-1.5 h-1.5 rounded-full bg-[#5dffa3] animate-pulse inline-block" />
@@ -244,7 +211,7 @@ export default function FlashBadge() {
                       className="group flex cursor-pointer items-center gap-3 rounded-xl bg-white/95 p-3 text-gray-800 shadow-md ring-1 ring-black/5 hover:bg-white hover:shadow-lg"
                     >
                       <div className="relative shrink-0">
-                        <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#eafaf1] to-[#d1fae5] text-base font-bold text-[#02893c] shadow-sm ring-1 ring-[#02893c]/10">
+                        <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--brand-primary-soft)] to-[var(--brand-primary-soft)] text-base font-bold text-[var(--brand-primary-hover)] shadow-sm ring-1 ring-[var(--brand-primary-hover)]/10">
                           {job.company_logo_url ? (
                             <img
                               src={job.company_logo_url}
@@ -259,12 +226,12 @@ export default function FlashBadge() {
                         </span>
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-gray-900 group-hover:text-[#02893c] transition-colors">
+                        <p className="truncate text-sm font-semibold text-gray-900 group-hover:text-[var(--brand-primary-hover)] transition-colors">
                           {job.title}
                         </p>
                         <p className="truncate text-xs text-gray-500 mt-0.5">{job.company_name}</p>
                       </div>
-                      <ArrowRightOutlined className="text-gray-300 group-hover:text-[#02893c] transition-colors shrink-0 text-xs" />
+                      <ArrowRightOutlined className="text-gray-300 group-hover:text-[var(--brand-primary-hover)] transition-colors shrink-0 text-xs" />
                     </JobImpressionBoundary>
                   )
                 })}
@@ -277,6 +244,8 @@ export default function FlashBadge() {
             <div className="absolute inset-0 rounded-full bg-[#5dffa3]/25 blur-2xl scale-110" />
             <img
               src={FLASH_BADGE_INTRO_URL}
+              width={384}
+              height={324}
               alt="Huy hiệu Sấm Chớp"
               className="relative z-10 h-auto w-48 max-w-full drop-shadow-[0_16px_32px_rgba(0,0,0,0.28)]"
               loading="lazy"
@@ -289,8 +258,8 @@ export default function FlashBadge() {
             <span className="font-bold text-white">Huy hiệu Sấm Chớp</span>
           </p>
           <button
-            onClick={() => navigate('/viec-lam')}
-            className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-semibold text-[#02893c] shadow-md transition-all hover:bg-green-50 hover:shadow-lg hover:-translate-y-px active:scale-95 cursor-pointer"
+            onClick={() => navigate(FLASH_BADGE_FILTER_PATH)}
+            className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-semibold text-[var(--brand-primary-hover)] shadow-md transition-all hover:bg-[var(--brand-primary-soft)] hover:shadow-lg hover:-translate-y-px active:scale-95 cursor-pointer"
           >
             Xem ngay <ArrowRightOutlined className="text-xs" />
           </button>

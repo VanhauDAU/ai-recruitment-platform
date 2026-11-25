@@ -163,7 +163,7 @@ export default function JobQuickView({ job, onClose, isAuthenticated = true, onR
               onClick={handleSave}
               disabled={savePending}
               aria-label="Lưu việc làm"
-              className="flex h-10 w-11 cursor-pointer items-center justify-center rounded-lg border border-[var(--brand-primary)] transition hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex h-10 w-11 cursor-pointer items-center justify-center rounded-lg border border-[var(--brand-primary)] transition hover:bg-[var(--brand-primary-soft)] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {saved ? <HeartFilled className="text-[var(--brand-primary)]" /> : <HeartOutlined className="text-[var(--brand-primary)]" />}
             </button>

@@ -17,7 +17,7 @@ import '../onboarding-interview.css'
 const TYPING_MS = 420
 /** Đếm ngược sang trang việc làm, chỉ chạy sau khi tin nhắn chốt hiện đầy đủ. */
 const COUNTDOWN_SECONDS = 5
-const ICON_BUTTON_CLASS = 'inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-emerald-600 disabled:cursor-not-allowed disabled:opacity-40'
+const ICON_BUTTON_CLASS = 'inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-[var(--brand-primary)] disabled:cursor-not-allowed disabled:opacity-40'
 
 function botEmotion({ latestId, phase }) {
   if (phase === 'saving') return 'thinking'
@@ -138,7 +138,7 @@ export default function OnboardingChat({ onFinish, onSaved, onSkip, preference, 
       className="mx-auto flex w-full min-h-0 max-w-3xl flex-1 flex-col px-3 py-3 sm:px-6 sm:py-6"
       style={bottomInset ? { paddingBottom: bottomInset } : undefined}
     >
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl bg-white shadow-2xl shadow-emerald-950/30">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl bg-white shadow-2xl shadow-[var(--brand-primary)]/30">
         <header className="flex shrink-0 items-center gap-2 border-b border-slate-100 px-3 py-2.5 sm:gap-3 sm:px-5">
           <ProcvMascot blink emotion={emotion} size={compact ? 36 : 44} />
           <div className="min-w-0 flex-1">
@@ -146,7 +146,7 @@ export default function OnboardingChat({ onFinish, onSaved, onSkip, preference, 
             <p className="truncate text-xs text-slate-500">{status}</p>
           </div>
           {chat.answering && (
-            <span className="shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+            <span className="shrink-0 rounded-full bg-[var(--brand-primary-soft)] px-2.5 py-1 text-xs font-semibold text-[var(--brand-primary-hover)]">
               Câu {chat.index + 1}/{chat.total}
             </span>
           )}
@@ -176,8 +176,8 @@ export default function OnboardingChat({ onFinish, onSaved, onSkip, preference, 
               if (message.id === liveId && !liveShown) return null
               if (chat.editing && message.stepId === chat.editing) {
                 return (
-                  <div key={message.id} className="onboarding-chat__edit rounded-2xl border border-emerald-200 bg-white p-3 shadow-sm sm:p-4">
-                    <p className="mb-3 text-xs font-semibold text-emerald-700">Sửa câu trả lời</p>
+                  <div key={message.id} className="onboarding-chat__edit rounded-2xl border border-[var(--brand-primary)]/20 bg-white p-3 shadow-sm sm:p-4">
+                    <p className="mb-3 text-xs font-semibold text-[var(--brand-primary-hover)]">Sửa câu trả lời</p>
                     <ChatComposer
                       catalog={catalog}
                       onCancel={chat.cancelEdit}
@@ -224,7 +224,7 @@ export default function OnboardingChat({ onFinish, onSaved, onSkip, preference, 
                 icon={<ArrowRightOutlined />}
                 iconPlacement="end"
                 onClick={chat.start}
-                className="!h-10 !rounded-full !border-emerald-700 !bg-emerald-600 !px-7 !font-semibold hover:!bg-emerald-700"
+                className="!h-10 !rounded-full !border-[var(--brand-primary)] !bg-[var(--brand-primary)] !px-7 !font-semibold hover:!bg-[var(--brand-primary-hover)]"
               >
                 {START_REPLY}
               </Button>
@@ -258,13 +258,13 @@ export default function OnboardingChat({ onFinish, onSaved, onSkip, preference, 
                 icon={<ArrowRightOutlined />}
                 iconPlacement="end"
                 onClick={onFinish}
-                className="!h-11 !w-full !rounded-full !border-emerald-700 !bg-emerald-600 !px-7 !font-semibold hover:!bg-emerald-700 sm:!w-auto"
+                className="!h-11 !w-full !rounded-full !border-[var(--brand-primary)] !bg-[var(--brand-primary)] !px-7 !font-semibold hover:!bg-[var(--brand-primary-hover)] sm:!w-auto"
               >
                 Xem việc làm dành riêng cho bạn
               </Button>
               <p className="text-xs text-slate-500">
                 {readyRevealed
-                  ? <>Tự động chuyển sau <span className="font-semibold text-emerald-700">{secondsLeft}</span> giây</>
+                  ? <>Tự động chuyển sau <span className="font-semibold text-[var(--brand-primary-hover)]">{secondsLeft}</span> giây</>
                   : 'Hệ thống sẽ tự động chuyển bạn đến trang việc làm ngay sau đây'}
               </p>
             </div>

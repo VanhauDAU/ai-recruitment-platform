@@ -2,6 +2,7 @@
 
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 from .company import Company
 
@@ -20,6 +21,9 @@ class CompanyFollow(models.Model):
     )
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='follows')
     notify_new_jobs = models.BooleanField(default=True)
+    # When the email switch last turned on: only jobs published after it are
+    # emailed, so muting and unmuting never mails what came out in between.
+    notify_since = models.DateTimeField(default=timezone.now)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -14,6 +14,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { DEFAULT_SITE_SETTINGS, getLinkGroups, settingText, useSiteSettings } from '@/entities/system/site-settings'
 import { CookieSettingsButton } from '@/features/common/privacy/cookie-consent'
+import { m } from '@/shared/config/i18n'
+
+const LEGAL_LINK_CLASS = 'font-semibold text-slate-600 transition-colors hover:text-[var(--brand-primary)]'
 
 function SmartLink({ href, className = '', children, ...props }) {
   if (!href) {
@@ -101,6 +104,8 @@ export default function Footer() {
     .replaceAll('{site_name}', siteName)
   const phone = settingText(settings.hotline)
   const email = settingText(settings.support_email)
+  const termsUrl = settingText(settings.legal_terms_url)
+  const privacyUrl = settingText(settings.legal_privacy_url)
   const address = settingText(settings.contact_address)
   const workingHours = settingText(settings.contact_working_hours)
   const companyName = settingText(settings.footer_company_name)
@@ -121,7 +126,7 @@ export default function Footer() {
 
   return (
     <footer className="mt-auto border-t border-slate-200 bg-white text-slate-700">
-      <div className="h-1 bg-gradient-to-r from-[var(--brand-primary)] via-emerald-400 to-teal-500" />
+      <div className="h-1 bg-gradient-to-r from-[var(--brand-primary)] via-[var(--brand-primary)] to-[var(--brand-primary-hover)]" />
 
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
         <div className="grid gap-10 lg:grid-cols-[minmax(220px,1.15fr)_2fr] xl:gap-16">
@@ -204,7 +209,9 @@ export default function Footer() {
           )}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <p>{copyright}</p>
-            <Link to="/chinh-sach-cookie" className="font-semibold text-slate-600 transition-colors hover:text-[var(--brand-primary)]">Chính sách cookie</Link>
+            {termsUrl && <SmartLink href={termsUrl} className={LEGAL_LINK_CLASS}>{m.candidate_footer_terms()}</SmartLink>}
+            {privacyUrl && <SmartLink href={privacyUrl} className={LEGAL_LINK_CLASS}>{m.candidate_footer_privacy()}</SmartLink>}
+            <Link to="/chinh-sach-cookie" className={LEGAL_LINK_CLASS}>Chính sách cookie</Link>
             <CookieSettingsButton />
           </div>
         </div>

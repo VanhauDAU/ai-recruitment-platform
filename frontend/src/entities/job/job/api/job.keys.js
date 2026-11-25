@@ -15,6 +15,9 @@ export const jobKeys = {
   publicLists: () => [...jobKeys.all, 'list'],
   list: (params) => [...jobKeys.publicLists(), normalizeListParams(params)],
   homepageBest: (params) => [...jobKeys.all, 'homepage-best', normalizeListParams(params)],
+  homepageBestLocations: () => [...jobKeys.all, 'homepage-best-locations'],
+  nearby: (params) => [...jobKeys.all, 'nearby', normalizeListParams(params)],
+  nearbyMap: (params) => [...jobKeys.all, 'nearby-map', normalizeListParams(params)],
   detail: (slug) => ['jobs', 'detail', slug],
   stats: ['jobs', 'stats'],
   categories: ['jobs', 'categories'],
@@ -31,13 +34,4 @@ export const jobKeys = {
   inlineRecommendations: (params = {}) => ['jobs', 'inline-recommendations', params],
   postingContext: ['jobs', 'posting-context'],
   adminModeration: (params = {}) => ['jobs', 'admin-moderation', params],
-}
-
-export function isDefaultJobListQuery(query) {
-  const [domain, kind, params] = query.queryKey
-  if (domain !== 'jobs' || kind !== 'list') return false
-  if (typeof params === 'string') {
-    return !new URLSearchParams(params).get('ordering')
-  }
-  return !params?.ordering
 }

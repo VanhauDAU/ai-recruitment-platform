@@ -5,6 +5,7 @@ from django.views import View
 from apps.jobs.models import Job
 from apps.jobs.selectors.seo import job_sitemap_rows, seo_job_by_slug, seo_location_by_slug
 from apps.sitecontent.services import resolved_seo_settings, seo_page_title
+from common.api.caching import cache_public_get
 from common.html.plain_text import html_plain_text
 from common.seo import (
     SeoMetadata,
@@ -214,6 +215,24 @@ class JobListSeoShellView(View):
         )
 
 
+class NearbyJobsSeoShellView(View):
+    """/viec-lam-gan-ban: static metadata, results depend on the visitor's location."""
+
+    def get(self, request):
+        return render_seo_shell(
+            request,
+            _metadata(
+                request,
+                title='Việc làm gần tôi',
+                description=(
+                    'Tìm việc làm gần nhà hoặc gần vị trí hiện tại trên bản đồ, chọn bán kính '
+                    '3–50 km và lọc theo ngành nghề, mức lương trên ProCV.'
+                ),
+                canonical_path='/viec-lam-gan-ban',
+            ),
+        )
+
+
 class JobDetailSeoShellView(View):
     def get(self, request, slug, company_slug=None):
         job = seo_job_by_slug(slug)
@@ -255,6 +274,7 @@ class JobDetailSeoShellView(View):
         )
 
 
+@cache_public_get()
 class JobSitemapView(View):
     def get(self, request):
         items = (

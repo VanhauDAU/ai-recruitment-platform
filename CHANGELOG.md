@@ -6,7 +6,242 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-11-25
+
+#### Changed — Tải trang đầu nhẹ hơn
+
+- Bundle đầu còn 9 file JS, 252 KiB gzip (trước 78 file, 333 KiB): thư viện trang đầu gom
+  vào chunk `vendor`, barrel `index.js` của slice khai báo không side effect nên form đăng
+  nhập không còn nằm trong bundle đầu. Ngân sách hạ về 256 KiB JS, 35 KiB CSS.
+- 7 ảnh PNG lớn trên R2 (trang chủ, blog, onboarding, CV online; ~3,1 MB) chuyển sang
+  WebP trong `public/images` (177 KB).
+- Nginx gửi file `.gz` nén sẵn mức 9 (`gzip_static`); Vite dev biên dịch sẵn trang chủ khi khởi động.
+
+#### Fixed — API công khai có cache trả 500 khi chạy với Redis
+
+- `cache_public_get` (#349) lưu cache bằng callback sau render trả về kết quả `cache.set`;
+  Django thay response bằng giá trị đó, và django-redis trả `True`, nên danh mục nghề,
+  địa điểm, địa điểm việc làm tốt nhất… trả 500 ở môi trường dùng Redis (dev docker,
+  production). Callback giờ không trả giá trị; thêm test với cache trả `True`.
+
+#### Changed — Điều hướng cổng ứng viên trên mobile
+
+- Thanh tab dưới (Trang chủ, Việc làm, Tạo CV nổi ở giữa, Cẩm nang, Tài khoản) thay cụm
+  avatar/tin nhắn/đăng nhập trên header ở màn < 768px; header mobile còn logo, nút
+  "Danh mục", tìm việc và chuông. Tab Tài khoản mở tấm trượt từ đáy.
+- Chuông thông báo ứng viên mở dạng tấm trượt từ đáy trên mobile, popover làm lại trên
+  desktop (số chưa đọc ở tiêu đề, trạng thái rỗng mới).
+- Hủy được đăng nhập trên mobile: tab Tài khoản mở popup đăng nhập tại chỗ; trang
+  đăng nhập/đăng ký ứng viên có nút ✕ quay lại trang trước (hoặc trang chủ).
+- Cụm nút nổi Việc làm đã lưu/Góp ý/Hỗ trợ trên mobile gom thành một nút, bấm mới bung
+  lên có hiệu ứng; desktop không đổi.
+- Trang Cài đặt bảo mật ứng viên làm lại (tổng quan email/mật khẩu, thiết bị, quyền dữ liệu);
+  mục menu "Cài đặt thông tin cá nhân" đổi tên thành "Hồ sơ cá nhân".
+- Tài khoản đăng nhập bằng mạng xã hội tạo mật khẩu lần đầu bằng mã 6 số gửi qua email thay
+  cho đăng nhập lại Google/Facebook (`POST /api/auth/password/setup-code/`, `email_code`).
+- Thanh tab tự ẩn ở trang có thanh hành động riêng (chi tiết tin, mẫu CV, trang công ty);
+  nút nổi và dock so sánh việc làm nâng lên theo `--page-bottom-bar-height`.
+
+#### Added — Lời mời kết nối của NTD cho ứng viên
+
+- Tìm CV: nút đổi thành "Mời kết nối"; ứng viên đồng ý hoặc từ chối ở trang mới
+  `/tai-khoan/nha-tuyen-dung-muon-ket-noi` (menu Quản lý CV). NTD nhận thông báo kèm mã ẩn danh
+  và thấy "Đã kết nối"/"Đã từ chối"; nút "Nhắn tin" giữ chỗ, chưa hoạt động.
+- API `GET /api/candidate/connection-invitations/`,
+  `POST /api/candidate/connection-invitations/<public_id>/respond/`; trường `status`,
+  `responded_at`, `public_id` cho `CandidateSearchInvitation`; thông báo `connection_invitation`
+  (ứng viên), `search_invitation_accepted`/`search_invitation_declined` (NTD).
+#### Changed — Thứ tự và nhãn tin tuyển dụng công bằng (ADR-0030)
+
+- Bỏ hạng tin `tier` và nhãn gán tay HOT/GẤP/"Tài trợ" cùng thẻ tô màu; chỉ còn nhãn hệ
+  thống "Sắp hết hạn" (`job_closing_soon_days`) và "Phản hồi nhanh".
+- Mọi bề mặt xếp theo một mốc là lần đăng đầu; mở lại tin không còn đẩy tin lên trang
+  chủ, gợi ý hay email báo việc.
+- `/viec-lam`: sắp xếp Mới đăng / Lương cao nhất / Sắp hết hạn nộp (`ordering=closing_soon`,
+  bỏ `urgent`); thêm ô "Việc không cần kinh nghiệm" và nút "Tìm việc gần tôi".
+- **Breaking API:** `tier`, `is_hot`, `is_urgent`, `tier_label` và các trường
+  `presentation.sponsored/card_tone/display_reason/placement/active_until` bị gỡ;
+  `presentation` chỉ còn `labels`. Bỏ chủ đề tư vấn `service_packages`.
+
+#### Added — Trang Danh mục dữ liệu cho admin
+
+- `/admin/app/catalog` (mục Nội dung), 5 tab: Kỹ năng, Ngành nghề, Phúc lợi, Lĩnh vực công ty,
+  Ngôn ngữ. Bảng + ngăn kéo sửa; ẩn/hiện áp dụng ngay kèm Hoàn tác 15 giây; số tin/CV/công ty
+  đang dùng trên từng dòng; danh sách thẻ trên điện thoại; chuỗi vi/en.
+- Kỹ năng: dải "Cần dọn" (chưa có nhóm, có thể trùng), gán nhóm ngay trên dòng và hàng loạt,
+  "Lưu & tiếp", gộp kỹ năng có xem trước (chỉ superuser; chuyển tin, CV, nhu cầu tìm việc và
+  `profile_json` của tài liệu đối sánh), quản lý nhóm kỹ năng (khóa hai nhóm hệ thống).
+- Ngành nghề: bảng cây ba cấp, tìm không dấu tự mở nhánh, cấp suy ra từ mục cha, tên tiếng
+  Anh (`JobCategoryLocalization`), icon nhóm nghề.
+- API `/api/admin/skills/`, `/api/admin/skills/groups/`, `/api/admin/jobs/categories/`
+  (+ `icon/`), `/api/admin/jobs/benefits/` (+ `reorder/`), `/api/admin/jobs/languages/`,
+  `/api/admin/industries/`; mọi thao tác ghi audit.
+- `Skill.source`, `Industry.is_active` (ô chọn lĩnh vực của hồ sơ công ty chỉ còn mục đang mở).
+
+#### Removed — Trang Django admin trùng lặp của danh mục
+
+- Gỡ trang Django admin của Skill, SkillGroup, Benefit, Language, Industry và form sửa
+  JobCategory (giữ bản chỉ-xem cho autocomplete); sửa danh mục giờ chỉ qua cổng quản trị.
+
+#### Fixed — Slug danh mục trùng nhau
+
+- Tên cho cùng slug ("C", "C++", "C#") không còn làm lỗi 500 khi NTD hoặc admin thêm kỹ
+  năng, ngành nghề, lĩnh vực: slug tự thêm hậu tố (`common/db/slugs.py`).
+
+#### Added — Việc làm gần tôi (ADR-0029)
+
+- Trang `/viec-lam-gan-ban`: bản đồ (MapLibre, nạp lazy) + danh sách sắp theo khoảng cách,
+  bán kính 3/5/10/20/50 km, lấy vị trí bằng GPS, chọn phường/xã, nhập địa chỉ hoặc bấm/kéo
+  ghim; lọc ngành nghề, mức lương, gồm việc từ xa; nhóm "Tuyển khắp tỉnh"; gợi ý mở rộng
+  bán kính khi trống. Lối vào ở header và trang chủ; chi tiết tin có bản đồ nơi làm việc và
+  "Cách bạn x km".
+- API `GET /api/public/jobs/nearby/`, `/nearby/map/`, `/api/public/locations/geo/*`
+  (autocomplete, place, wards); site settings `nearby_jobs_*`, `map_style_url`,
+  `map_attribution`; env `GEOCODING_*` (VietMap/Goong/Nominatim).
+- Tọa độ: tâm 34 tỉnh + 3.321 phường/xã (`seed_location_coordinates`), `JobLocation` có
+  tọa độ/độ chính xác, ghim tùy chọn của NTD trong form đăng tin, geocode nền có cache,
+  lệnh `refresh_job_coordinates` để backfill.
+
+#### Fixed — Mất 5 phường trung tâm Hà Nội khi seed địa điểm
+
+- Mã phường từ nguồn seed là số trần (Ba Đình = 4, Giảng Võ = 25…) trùng mã tỉnh nên ghi đè
+  lẫn nhau. Mã phường nay đệm 5 chữ số (migration `locations.0002` cho dữ liệu cũ).
+- `Permissions-Policy` cho phép định vị trên chính site (`geolocation=(self)`).
+
+#### Changed — Hồ sơ trích xuất đầy đủ (`extract-v4`) và giải thích mức phù hợp
+
+- `profile_json` thêm `sections`: nội dung đầy đủ từng mục của CV (tóm tắt, từng công việc kèm
+  mô tả, dự án, học vấn, kỹ năng, chứng chỉ, giải thưởng, hoạt động, ngoại ngữ, sở thích, thông
+  tin thêm), đã bỏ email, số điện thoại, phần đầu trang và người tham chiếu. Hiển thị ở "Hồ sơ
+  NTD nhìn thấy", ở cột giữa màn xử lý hồ sơ (chuyển "CV gốc | Hồ sơ trích xuất", API
+  `/api/employer/applications/{id}/extracted-profile/`) và ở xem nhanh của Tìm CV (che họ tên
+  trong câu văn, không có mục "Thông tin thêm").
+- Bộ đọc PDF tải lên: dòng "Kỹ năng …" dưới tiêu đề Kỹ năng là một kỹ năng (trước bị coi là
+  tiêu đề nên mất); nhận thêm tiêu đề "Danh hiệu và giải thưởng", "Người giới thiệu", "Thông
+  tin thêm", kể cả khi tiêu đề bị ngắt hai dòng; phần nội dung của một cột chạy sang trang sau
+  được ghép về đúng cột; tên/chức danh đặt trên cột phải được đưa về đầu tài liệu; bỏ dòng chân
+  trang. Trên 51 PDF mẫu: kinh nghiệm PDF hệ thống 93% → 100%, chức danh PDF TopCV 29 → 32/36,
+  các chỉ số khác giữ nguyên.
+- Cổng NTD: chip mức phù hợp bấm được, mở bảng "vì sao" (điểm từng tiêu chí kèm lý do, kỹ năng
+  có/thiếu kèm câu trích, cách tính điểm) ở bảng CV của tin, bảng CV của chiến dịch (thêm cột và
+  sắp xếp "Phù hợp nhất") và đầu panel "Xử lý hồ sơ". Panel này giữ nguyên các mục cũ (liên hệ,
+  thông tin ứng tuyển, đánh giá, lịch sử); bản chia ba tab đã bỏ.
+- Sửa: ứng viên không xóa được CV sau khi NTD xem hồ sơ ở Tìm CV (nhật ký truy cập chặn việc
+  xóa phiên bản CV).
+
+#### Added — Tìm CV: nhà tuyển dụng tìm ứng viên theo một tin
+
+- Nút **Tìm CV** trên header và mục "Tìm CV" ở thanh bên cổng NTD mở trang
+  `/tuyendung/app/candidate-search`: chọn tin đang tuyển, lọc theo chức danh, kinh nghiệm, học
+  vấn; danh sách ứng viên ẩn danh xếp theo mức phù hợp (`hybrid-v2`); **Xem nhanh** hiện hồ sơ
+  trích xuất và mức phù hợp theo tiêu chí; **Mời ứng tuyển** gửi thông báo cho ứng viên.
+- API `/api/employer/candidate-search/` (danh sách, chi tiết, mời). Chỉ gồm ứng viên đang bật
+  một CV cho NTD tìm kiếm, còn đồng ý, không bị công ty chặn. Không trả tên, liên hệ, tệp CV,
+  tên công ty cũ hay câu trích. Mỗi lần xem nhanh ghi `CvAccessLog` kênh `recruiter_search`.
+- Model `CandidateSearchInvitation` (một lời mời cho mỗi ứng viên và tin); cờ
+  `ai_candidate_search_enabled`; giới hạn tần suất tìm và mời.
+
+#### Changed — Mỗi ứng viên chỉ bật một CV cho NTD tìm kiếm; thêm "Hồ sơ NTD nhìn thấy"
+
+- Ràng buộc `uq_user_searchable_cv` (migration `cvs.0003`): ứng viên đang bật nhiều CV thì giữ
+  CV chính nếu nó đang bật, không thì CV cập nhật gần nhất. Bật CV khác thì CV cũ tự tắt.
+- `GET /api/candidate/matching/cv-profiles/{cv_public_id}/`: hồ sơ trích xuất từ CV (chức
+  danh, kỹ năng theo nhóm, kinh nghiệm, học vấn, cấp bậc, ngoại ngữ), qua danh sách trắng
+  trường; không trả chữ nguyên văn ngoài các mục liệt kê.
+- Trang "CV của tôi" và thanh bên tài khoản: chọn một CV, nút "Xem hồ sơ NTD nhìn thấy" mở
+  hộp thoại hai cột CV | hồ sơ trích xuất (màn hẹp: hai tab). Hồ sơ chỉ đọc.
+
+#### Added — Mức phù hợp của hồ sơ ở cổng nhà tuyển dụng (giao diện)
+
+- Bảng "CV ứng tuyển" của một tin có cột **Phù hợp** và lựa chọn sắp xếp "Phù hợp nhất"
+  (mặc định vẫn là mới nhất, lựa chọn được nhớ). Hồ sơ chưa có điểm ghi rõ lý do.
+- Màn xử lý hồ sơ: thẻ hồ sơ có chip điểm; panel bên phải chia ba tab Đánh giá | Thông
+  tin | Hoạt động, tab Đánh giá hiện điểm tổng, năm tiêu chí, kỹ năng có/thiếu kèm câu
+  trích từ CV và dòng "quyết định là của bạn".
+- Bộ hiển thị dùng chung `entities/application/job-fit` cho cả hai cổng; hộp thoại "Xem độ
+  phù hợp" của ứng viên dùng chung nhãn. Một màu nhấn, mức phù hợp thể hiện bằng chữ.
+
+#### Added — AI xếp hạng hồ sơ ứng tuyển cho nhà tuyển dụng (backend)
+
+- Hồ sơ ứng viên đồng ý phân tích AI được chấm trên **bản CV đã nộp** ngay sau khi nộp
+  (queue nền `ai-matching-batch`, cùng `ml-worker`); tin đổi nội dung thì các hồ sơ của tin
+  được chấm lại. `MatchAnalysis.purpose` tách bản chấm cho NTD khỏi lượt ứng viên tự xem.
+- `GET /api/employer/applications/` thêm `ai_match_score`, `ai_match_level`,
+  `ai_match_status` và `ordering=ai_match`; endpoint chi tiết
+  `/api/employer/applications/{id}/ai-match/`. Sắp xếp mặc định vẫn là mới nhất, không có
+  bước nào tự loại hồ sơ theo điểm.
+- Cờ `ai_application_ranking_enabled` (nhóm AI); lệnh `matching_backfill --only applications`.
+- Form ứng tuyển: ô đồng ý ghi rõ kết quả hiện cho nhà tuyển dụng, giữ lựa chọn của lần
+  ứng tuyển gần nhất.
+- Sửa: bản chụp của CV tải lên được đọc từ tệp đã nộp, không phải tệp hiện tại trong thư
+  viện; CV đã bị xóa khỏi thư viện vẫn chấm được.
+
+#### Changed — Công thức chấm độ phù hợp `hybrid-v2`
+
+- Bỏ tiêu chí địa điểm; tắt khớp kỹ năng "viết khác tên" với mô hình chưa fine-tune; học
+  vấn, cấp bậc, ngoại ngữ chỉ được tính đủ vào điểm tổng khi CV đúng lĩnh vực của tin (hệ số
+  liên quan `min(1, R/50)`). Điểm từng tiêu chí vẫn hiện giá trị thật.
+- Trên validation: Spearman 0,603 → 0,699, NDCG@5 0,815 → 0,857; cặp khác ngành trung vị
+  28 → 11 điểm, cao nhất 65 → 46, không còn cặp nào từ 50 điểm.
+- `result_json` thêm `schema_version = 2`, `overall.relevance`,
+  `flags.relevance_discount_applied`; không còn mục `location` trong `components`.
+- `matching_evaluate --detail` và `--ablation`; `ml/scripts/evaluate.py --ablation`.
+
+#### Changed — Phễu tuyển dụng trên trang chủ NTD
+
+- Thẻ donut "Trạng thái hồ sơ" thay bằng phễu 3D (SVG): Nhận hồ sơ → Phù hợp → Phỏng vấn
+  → Trúng tuyển, thêm tầng Không phù hợp; nhãn kèm tỉ lệ so với tổng hồ sơ nhận.
+- `GET /api/employer/dashboard/` thêm `funnel`: số hồ sơ hiện có đã tới từng bước (theo
+  `*_at`), nên hồ sơ phỏng vấn rồi bị loại vẫn tính ở bước phỏng vấn.
+- Khối "Hoàn thiện workspace tuyển dụng" ẩn khi đủ 5 bước xác thực.
+
+#### Changed — Huy hiệu Sấm Chớp tính từ mức phản hồi thật (ADR-0027)
+
+- `Job.has_flash_badge` không còn do admin tick tay. Task mỗi giờ (`refresh-flash-badges`)
+  đo từng người đăng tin: đủ hồ sơ đến hạn, tỷ lệ quyết định trong hạn, có quyết định gần
+  đây. Tin nào có hồ sơ chờ quá hạn thì không mang huy hiệu.
+- Ảnh chụp `RecruiterResponsiveness`; 6 key `flash_badge_*` trong Cấu hình hệ thống.
+- NTD: thẻ tiến độ trên dashboard, thông báo đạt, mất và sắp mất huy hiệu.
+- Ứng viên: banner trang chủ bỏ đồng hồ đếm ngược giả; bộ lọc "Nhà tuyển dụng phản hồi
+  nhanh"; số liệu thật ở chi tiết tin; +2 điểm trong "Việc làm tốt nhất"; nhãn GẤP đổi
+  icon để không trùng tia sét.
+
+#### Added — Mã tin và mã công ty dễ đọc
+
+- `Job.code` (`J` + 7 chữ số) và `Company.code` (`C` + 6 chữ số): ngẫu nhiên, unique, có
+  check constraint; migration gán mã cho dữ liệu cũ. `public_id` giữ nguyên cho API và slug.
+- Admin tìm tin/công ty theo mã, NTD tìm tin theo mã; bỏ dấu ngăn cách khi đọc mã theo nhóm.
+- `CodeBadge` dùng chung (monospace + nút sao chép) ở cổng admin và NTD; CSV admin xuất mã mới.
+
+### 2026-11-24
+
+#### Changed — Câu báo email đã được dùng khi đăng ký và đổi email
+
+- Đăng ký và đổi email báo "Email này đã được sử dụng cho một tài khoản khác." thay cho
+  "…cho một tài khoản cùng loại.", không để lộ cách hệ thống chia tài khoản theo cổng.
+  Bản tiếng Anh: "This email is already associated with an account."
+
+#### Added — Bộ file triển khai production procv.site
+
+- `docker-compose.prod.yml` cho một VPS: PostgreSQL/Redis không mở cổng ra ngoài, service
+  `migrate` chạy trước backend và worker, gunicorn, worker Celery tách queue như dev, giới hạn
+  RAM từng service; giá trị theo domain đặt trong compose, bí mật đọc từ `backend/.env`.
+- `frontend/Dockerfile` build SPA và phục vụ bằng nginx: route SEO, `/api`, `/r` về Django,
+  còn lại là SPA; cổng nội bộ 8080 cho SEO shell và trang in CV; IP thật qua Cloudflare.
+- `scripts/deploy/`: deploy/rollback theo commit, sao lưu PostgreSQL hằng ngày lên R2,
+  khôi phục, khởi tạo VPS Ubuntu, đồng bộ mô hình đối sánh.
+- Viết lại `docs/06-deployment/huong-dan-deployment.md` thành runbook triển khai.
+
 ### 2026-11-22
+
+#### Changed — Mã tài khoản 8 chữ số cho ứng viên, NTD và admin
+
+- `User.public_id` đổi từ `usr_<12 hex>` sang 8 chữ số ngẫu nhiên (vd `48261937`), dễ
+  đọc qua điện thoại; không tăng dần nên không đoán được số lượng tài khoản. Migration
+  đổi mã toàn bộ tài khoản cũ và cập nhật nhật ký quản trị theo mã mới.
+- "Mã NTD" ở dashboard và email NTD dùng mã tài khoản thay cho mã hồ sơ NTD `rec_…`;
+  API dashboard NTD đổi `account.recruiter_public_id` thành `account.public_id`.
+- Ô tìm kiếm tài khoản của admin chấp nhận mã gõ theo nhóm ("4826 1937").
 
 #### Fixed — Ảnh đại diện khi đăng nhập Google
 

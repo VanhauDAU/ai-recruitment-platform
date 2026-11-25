@@ -8,9 +8,13 @@ import {
   getRecruiterApplicationSnapshot,
   replaceApplicationInPage,
 } from '@/entities/application/application'
+import { getEmployerJobPage, jobKeys } from '@/entities/job/job'
+import { useSiteSettings } from '@/entities/system/site-settings'
 import { groupApplicationsByCandidate } from './application-workspace'
 
-export const PAGE_SIZE = 60
+const PAGE_SIZE = 60
+// Mọi tin của nhà tuyển dụng (kể cả đã đóng) vì hồ sơ cũ vẫn thuộc về chúng.
+const JOB_OPTION_PARAMS = { page_size: 100 }
 
 /** URL-driven state and server data of the applications workspace. */
 export default function useApplicationWorkspace() {
@@ -19,13 +23,25 @@ export default function useApplicationWorkspace() {
   const selectedPublicId = searchParams.get('application') || ''
   const [keyword, setKeyword] = useState(searchParams.get('q') || '')
   const [mobilePanel, setMobilePanel] = useState('cv')
+  const rankingEnabled = useSiteSettings().settings.ai_application_ranking_enabled === true
 
   const listParams = useMemo(() => {
     const next = Object.fromEntries(searchParams)
     delete next.application
+    // "Phù hợp nhất" đã lưu trong URL không còn hiệu lực khi tính năng tắt.
+    if (next.ordering === 'ai_match' && !rankingEnabled) delete next.ordering
     next.page_size = PAGE_SIZE
     return next
-  }, [searchParams])
+  }, [rankingEnabled, searchParams])
+  const jobsQuery = useQuery({
+    queryKey: jobKeys.employerList(JOB_OPTION_PARAMS),
+    queryFn: () => getEmployerJobPage(JOB_OPTION_PARAMS),
+    staleTime: 60_000,
+  })
+  const jobOptions = useMemo(
+    () => (jobsQuery.data?.results || []).map((job) => ({ value: job.public_id, label: job.title })),
+    [jobsQuery.data],
+  )
 
   const listQuery = useQuery({
     queryKey: applicationKeys.recruiterList(listParams),
@@ -87,6 +103,7 @@ export default function useApplicationWorkspace() {
   return {
     groups,
     applicationCount: listQuery.data?.count || 0,
+    pageSize: PAGE_SIZE,
     listQuery,
     snapshotQuery,
     historyQuery,
@@ -97,13 +114,29 @@ export default function useApplicationWorkspace() {
     mobilePanel,
     setMobilePanel,
     statusFilter: searchParams.get('status') || '',
+    scopeFilter: searchParams.get('scope') || '',
+    jobFilter: searchParams.get('job') || '',
+    ordering: listParams.ordering || 'newest',
+    rankingEnabled,
+    jobOptions,
+    jobOptionsLoading: jobsQuery.isPending,
+    hasFilters: ['q', 'status', 'scope', 'job', 'campaign'].some((key) => searchParams.get(key)),
     page: Math.max(1, Number.parseInt(searchParams.get('page') || '1', 10) || 1),
-    setListFilter: (key, value) => updateParams((next) => {
-      if (value) next.set(key, value)
-      else next.delete(key)
+    /** Sets list params (`{ status: 'viewed', scope: '' }`) and starts again at page 1. */
+    setListFilters: (values) => updateParams((next) => {
+      Object.entries(values).forEach(([key, value]) => {
+        if (value) next.set(key, value)
+        else next.delete(key)
+      })
       next.delete('application')
       next.delete('page')
     }),
+    clearFilters: () => {
+      setKeyword('')
+      updateParams((next) => {
+        ['q', 'status', 'scope', 'job', 'campaign', 'application', 'page'].forEach((key) => next.delete(key))
+      })
+    },
     changePage: (nextPage) => updateParams((next) => {
       if (nextPage > 1) next.set('page', String(nextPage))
       else next.delete('page')

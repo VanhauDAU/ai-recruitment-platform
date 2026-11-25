@@ -104,6 +104,8 @@ export function useApplyForm({
         setCvs(ordered)
         setLastAppliedCvId(lastCvId)
         setLastCoverLetter(applications.find((item) => item.cover_letter?.trim())?.cover_letter.trim() || '')
+        // Đồng ý phân tích AI: giữ lựa chọn của lần ứng tuyển gần nhất; lần đầu để trống.
+        setAllowAiAnalysis(applications[0]?.allow_ai_analysis === true)
         // Mặc định: CV vừa dùng, rồi CV chính, rồi CV đầu tiên nộp được.
         const usable = ordered.filter(isCvApplicationReady)
         const initial = usable.find((cv) => cv.public_id === lastCvId) || usable.find((cv) => cv.is_default) || usable[0]

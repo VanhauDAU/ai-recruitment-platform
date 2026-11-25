@@ -1,26 +1,52 @@
+import { AppstoreOutlined, ArrowRightOutlined } from '@ant-design/icons'
 import { useMemo } from 'react'
+import { Link } from 'react-router'
 import { formatNumber } from '@/entities/job/job'
+import { m } from '@/shared/config/i18n'
+import ArrowButton from '@/shared/ui/ArrowButton'
 import { categoryLogoUrlFor } from '../lib/logo-url'
 import { chunkItems, usePagedDrag } from '../model/use-paged-drag'
-import { CarouselHeader, PagedTrack } from './PagedCarousel'
+import { PagedTrack } from './PagedCarousel'
+import './home-showcase.css'
 
 const INDUSTRIES_PER_PAGE = 8
 
 export default function FeaturedIndustries({ industries, navigate }) {
   const groups = useMemo(() => chunkItems(industries, INDUSTRIES_PER_PAGE), [industries])
   const carousel = usePagedDrag(groups.length)
-
   if (industries.length === 0) return null
 
   return (
-    <div>
-      <CarouselHeader
-        title="Top ngành nghề nổi bật"
-        carousel={carousel}
-        totalPages={groups.length}
-        prevLabel="Nhóm ngành nghề trước"
-        nextLabel="Nhóm ngành nghề tiếp theo"
-      />
+    <section aria-labelledby="featured-industries-title" className="home-showcase">
+      <div className="home-showcase__header">
+        <div className="min-w-0">
+          <h2 id="featured-industries-title" className="home-showcase__title">Top ngành nghề nổi bật</h2>
+          <p className="home-showcase__subtitle">{m.candidate_home_industries_subtitle()}</p>
+        </div>
+        <div className="home-showcase__actions">
+          <Link to="/viec-lam" className="home-showcase__more">
+            {m.candidate_home_industries_view_all()} <ArrowRightOutlined aria-hidden="true" />
+          </Link>
+          {groups.length > 1 && (
+            <>
+              <ArrowButton
+                dir="left"
+                disabled={!carousel.canPrev}
+                onClick={carousel.goPrev}
+                aria-label="Nhóm ngành nghề trước"
+                className="home-showcase__nav"
+              />
+              <ArrowButton
+                dir="right"
+                disabled={!carousel.canNext}
+                onClick={carousel.goNext}
+                aria-label="Nhóm ngành nghề tiếp theo"
+                className="home-showcase__nav"
+              />
+            </>
+          )}
+        </div>
+      </div>
 
       <div
         className="cursor-grab select-none active:cursor-grabbing"
@@ -33,7 +59,7 @@ export default function FeaturedIndustries({ industries, navigate }) {
           isDragging={carousel.isDragging}
         >
           {(group) => (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
               {group.map((category) => {
                 const logoUrl = categoryLogoUrlFor(category)
                 return (
@@ -41,23 +67,15 @@ export default function FeaturedIndustries({ industries, navigate }) {
                     key={category.id}
                     type="button"
                     onClick={() => navigate(`/viec-lam?cat=${category.id}`)}
-                    className="group flex min-h-[156px] cursor-pointer flex-col items-center justify-center rounded-lg border border-transparent bg-[#F4F5F7] px-5 py-6 text-center transition hover:-translate-y-1 hover:border-[var(--brand-primary)] hover:bg-white hover:shadow-md hover:shadow-emerald-100"
+                    className="home-showcase__card featured-industries__card"
                   >
-                    {logoUrl && (
-                      <span className="mb-5 flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-white p-2 shadow-sm transition group-hover:scale-105 group-hover:border group-hover:border-emerald-100">
-                        <img
-                          src={logoUrl}
-                          alt={category.name}
-                          className="max-h-full max-w-full object-contain"
-                          loading="lazy"
-                          draggable={false}
-                        />
-                      </span>
-                    )}
-                    <span className="line-clamp-1 text-sm font-bold text-gray-800">{category.name}</span>
-                    <span className="mt-2 text-xs font-medium text-[var(--brand-primary)]">
-                      {formatNumber(category.count)} việc làm
+                    <span className="featured-industries__icon" aria-hidden="true">
+                      {logoUrl
+                        ? <img src={logoUrl} alt="" loading="lazy" draggable={false} />
+                        : <AppstoreOutlined />}
                     </span>
+                    <span className="home-showcase__name">{category.name}</span>
+                    <span className="home-showcase__count">{formatNumber(category.count)} việc làm</span>
                   </button>
                 )
               })}
@@ -65,6 +83,14 @@ export default function FeaturedIndustries({ industries, navigate }) {
           )}
         </PagedTrack>
       </div>
-    </div>
+
+      {groups.length > 1 && (
+        <div className="home-showcase__dots" aria-hidden="true">
+          {groups.map((_, index) => (
+            <span key={index} className={`home-showcase__dot${index === carousel.page ? ' is-active' : ''}`} />
+          ))}
+        </div>
+      )}
+    </section>
   )
 }

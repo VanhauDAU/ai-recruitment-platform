@@ -15,8 +15,8 @@ vi.mock('@/features/main/job/track-job-engagement', () => ({
   JobImpressionBoundary: ({ children, className }) => <div className={className}>{children}</div>,
 }))
 
-const TOP_JOB = {
-  public_id: 'job_top_1',
+const JOB = {
+  public_id: 'job_1',
   slug: 'ky-su-phan-mem',
   title: 'Kỹ sư phần mềm',
   company_name: 'Công ty Kim Cương',
@@ -25,28 +25,26 @@ const TOP_JOB = {
   locations_detail: [{ id: 1, name: 'Hà Nội' }],
   salary_type: 'negotiable',
   presentation: {
-    card_tone: 'green_strong',
-    labels: [{ code: 'sponsored', text: 'Tài trợ', tone: 'sponsored' }],
+    labels: [{ code: 'fast_response', text: 'Phản hồi nhanh', tone: 'success' }],
   },
 }
 
 describe('BestJobsResults', () => {
-  it('renders the top-employer treatment with larger logo and labels above title', () => {
+  it('renders every job on the same plain card, system labels above the title', () => {
     const { container } = render(
       <MemoryRouter>
-        <BestJobsResults animKey="first" jobs={[TOP_JOB]} loading={false} />
+        <BestJobsResults animKey="first" jobs={[JOB]} loading={false} />
       </MemoryRouter>,
     )
 
     const card = container.querySelector('a[href="/viec-lam/ky-su-phan-mem"]')
-    const logoFrame = screen.getByRole('img', { name: 'Công ty Kim Cương' }).parentElement
     const labels = container.querySelector('[data-best-job-labels]')
     const title = screen.getByRole('heading', { name: 'Kỹ sư phần mềm' })
 
-    expect(card).toHaveClass('bg-[#f2fbf6]', 'border-l-4', 'border-l-[#00b14f]')
-    expect(logoFrame).toHaveClass('h-16', 'w-16')
-    expect(screen.getByText('TOP')).toBeInTheDocument()
-    expect(screen.getByText('Tài trợ')).toBeInTheDocument()
+    expect(card).toHaveClass('!bg-white')
+    expect(screen.getByRole('img', { name: 'Công ty Kim Cương' })).toBeInTheDocument()
+    expect(screen.queryByText('TOP')).not.toBeInTheDocument()
+    expect(screen.getByText('Phản hồi nhanh')).toBeInTheDocument()
     expect(labels.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 })

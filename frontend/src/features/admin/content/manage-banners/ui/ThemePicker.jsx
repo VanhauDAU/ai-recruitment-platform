@@ -15,7 +15,7 @@ export default function ThemePicker({ id, value, onChange }) {
             aria-checked={selected}
             onClick={() => onChange?.(key)}
             className={`flex items-center gap-2 rounded-lg border p-1.5 text-left text-sm transition ${
-              selected ? 'border-emerald-500 ring-2 ring-emerald-200' : 'border-slate-200 hover:border-slate-300'
+              selected ? 'border-[var(--brand-primary)] ring-2 ring-[var(--brand-primary)]/15' : 'border-slate-200 hover:border-slate-300'
             }`}
           >
             <span className="flex size-8 shrink-0 items-center justify-center rounded-md text-white" style={bannerBackgroundStyle(key)}>

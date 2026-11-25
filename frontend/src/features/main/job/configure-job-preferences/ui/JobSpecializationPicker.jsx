@@ -73,7 +73,7 @@ export default function JobSpecializationPicker({ categories = [], disabled, max
         onKeyDown={(event) => {
           if (!disabled && (event.key === 'Enter' || event.key === ' ')) setOpen(true)
         }}
-        className="flex min-h-12 w-full cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-left text-sm transition hover:border-[var(--brand-primary)] focus:outline-none focus:ring-2 focus:ring-emerald-200 disabled:cursor-not-allowed disabled:bg-slate-50"
+        className="flex min-h-12 w-full cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-left text-sm transition hover:border-[var(--brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]/25 disabled:cursor-not-allowed disabled:bg-slate-50"
       >
         <UnorderedListOutlined className="shrink-0 text-[var(--brand-primary)]" />
         {selectedSpecializations.length ? (
@@ -132,7 +132,7 @@ export default function JobSpecializationPicker({ categories = [], disabled, max
                   <p className="mb-2 text-xs font-semibold tracking-wide text-slate-400">NHÓM NGHỀ</p>
                   <div className="flex gap-2 overflow-x-auto pb-1">
                     {visibleGroups.map((group) => (
-                      <button key={group.id} type="button" onClick={() => setActiveGroupId(group.id)} className={`shrink-0 rounded-full border px-3 py-1.5 text-sm transition ${activeGroup?.id === group.id ? 'border-emerald-600 bg-emerald-50 font-medium text-emerald-700' : 'border-slate-200 text-slate-600 hover:border-emerald-300 hover:text-emerald-700'}`}>{group.name}</button>
+                      <button key={group.id} type="button" onClick={() => setActiveGroupId(group.id)} className={`shrink-0 rounded-full border px-3 py-1.5 text-sm transition ${activeGroup?.id === group.id ? 'border-[var(--brand-primary)] bg-[var(--brand-primary-soft)] font-medium text-[var(--brand-primary-hover)]' : 'border-slate-200 text-slate-600 hover:border-[var(--brand-primary)]/40 hover:text-[var(--brand-primary-hover)]'}`}>{group.name}</button>
                     ))}
                   </div>
                 </div>
@@ -153,7 +153,7 @@ export default function JobSpecializationPicker({ categories = [], disabled, max
                         {specializations.map((specialization) => {
                           const selected = selectedIds.has(specialization.id)
                           const disabledSpecialization = !selected && selectedIds.size >= maxSelections
-                          return <button key={specialization.id} type="button" disabled={disabledSpecialization} onClick={() => toggleSpecializations([specialization.id])} className={`rounded-lg border px-3 py-2 text-left text-sm transition ${selected ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700'} disabled:cursor-not-allowed disabled:opacity-40`}>{selected && <CheckOutlined className="mr-1.5 text-xs" />}{specialization.name}</button>
+                          return <button key={specialization.id} type="button" disabled={disabledSpecialization} onClick={() => toggleSpecializations([specialization.id])} className={`rounded-lg border px-3 py-2 text-left text-sm transition ${selected ? 'border-[var(--brand-primary)] bg-[var(--brand-primary)] text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-[var(--brand-primary)]/40 hover:bg-[var(--brand-primary-soft)] hover:text-[var(--brand-primary-hover)]'} disabled:cursor-not-allowed disabled:opacity-40`}>{selected && <CheckOutlined className="mr-1.5 text-xs" />}{specialization.name}</button>
                         })}
                       </div>
                     </section>

@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   getApplicationReviews: vi.fn(),
   triggerBlobDownload: vi.fn(),
   cvPreview: vi.fn(),
+  getEmployerJobPage: vi.fn(),
 }))
 
 vi.mock('@/entities/application/application', async (importOriginal) => ({
@@ -32,6 +33,11 @@ vi.mock('@/entities/application/application', async (importOriginal) => ({
   getApplicationCvExport: mocks.getApplicationCvExport,
   downloadApplicationCv: mocks.downloadApplicationCv,
   getApplicationReviews: mocks.getApplicationReviews,
+}))
+
+vi.mock('@/entities/job/job', async (importOriginal) => ({
+  ...(await importOriginal()),
+  getEmployerJobPage: mocks.getEmployerJobPage,
 }))
 
 vi.mock('@/shared/lib/download-blob', () => ({ triggerBlobDownload: mocks.triggerBlobDownload }))
@@ -132,6 +138,9 @@ describe('EmployerApplicationList', () => {
     })
     mocks.getRecruiterApplicationSnapshot.mockImplementation(async (publicId) => snapshotFor(publicId))
     mocks.getApplicationHistory.mockResolvedValue([VIEWED_ROW])
+    mocks.getEmployerJobPage.mockResolvedValue({
+      count: 2, results: [{ public_id: 'jb_1', title: 'Kỹ sư Frontend' }, { public_id: 'jb_2', title: 'Kỹ sư Backend' }],
+    })
     mocks.getApplicationReviews.mockResolvedValue({
       summary: { total: 1, average_rating: 4, by_recommendation: { strong_yes: 0, yes: 1, no: 0, strong_no: 0 } },
       results: [{ reviewer_name: 'Anh Minh', recommendation: 'yes', recommendation_label: 'Nên tuyển', rating: 4, strengths: 'SQL tốt', concerns: '', submitted_at: '2026-07-22T10:00:00+07:00', updated_at: '2026-07-22T10:00:00+07:00' }],
@@ -147,11 +156,14 @@ describe('EmployerApplicationList', () => {
 
     expect(within(candidateList).getByRole('heading', { name: 'Ứng viên' })).toBeVisible()
     expect(within(candidateList).getByRole('combobox', { name: 'Lọc trạng thái hồ sơ' })).toBeVisible()
-    expect(await within(candidateList).findByRole('button', { name: 'Thu gọn hồ sơ của Nguyễn An' })).toBeVisible()
-    expect(within(candidateList).getByText(/^2 CV ·/)).toBeVisible()
-    expect(within(preview).getByRole('heading', { name: 'Xem trước CV' })).toBeVisible()
+    expect(within(candidateList).getByRole('combobox', { name: 'Lọc theo tin tuyển dụng' })).toBeVisible()
+    expect(within(candidateList).getByRole('combobox', { name: 'Sắp xếp hồ sơ' })).toBeVisible()
+    // Hai CV của cùng một người: tên hiện một lần, các CV xếp ngay dưới.
+    const cvs = await within(candidateList).findByRole('list', { name: 'Các CV của Nguyễn An' })
+    expect(within(cvs).getAllByRole('button')).toHaveLength(2)
+    expect(within(candidateList).getByText('2 CV')).toBeVisible()
+    expect(within(preview).getByRole('heading', { name: 'CV Frontend 2026' })).toBeVisible()
     expect(within(preview).getByRole('button', { name: /Tải PDF/ })).toBeEnabled()
-    expect(within(preview).getByRole('button', { name: /Nhắn tin/ })).toBeDisabled()
     expect(within(inspector).getByRole('heading', { name: 'Xử lý hồ sơ' })).toBeVisible()
     const decisions = await within(inspector).findByRole('group', { name: 'Quyết định cho hồ sơ' })
     expect(within(decisions).getAllByRole('button')).toHaveLength(4)
@@ -192,6 +204,39 @@ describe('EmployerApplicationList', () => {
     expect(within(inspector).getAllByRole('button', { name: /Chặn ứng viên/ }).length).toBeGreaterThan(0)
   })
 
+  it('zooms the CV in and back to the panel width', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    const preview = await screen.findByTestId('application-cv-preview')
+    const zoom = await within(preview).findByRole('group', { name: 'Thu phóng CV' })
+    const level = within(zoom).getByRole('status')
+    const fitted = level.textContent
+    expect(within(zoom).getByRole('button', { name: 'Vừa khung' })).toBeDisabled()
+
+    await user.click(within(zoom).getByRole('button', { name: 'Phóng to' }))
+    expect(level.textContent).not.toBe(fitted)
+    await user.click(within(zoom).getByRole('button', { name: 'Vừa khung' }))
+    expect(level.textContent).toBe(fitted)
+  })
+
+  it('filters by job and sorts through the URL', async () => {
+    const user = userEvent.setup()
+    renderPage()
+
+    await user.click(await screen.findByRole('combobox', { name: 'Lọc theo tin tuyển dụng' }))
+    await user.click(await screen.findByTitle('Kỹ sư Backend'))
+    await user.click(screen.getByRole('combobox', { name: 'Sắp xếp hồ sơ' }))
+    await user.click(await screen.findByTitle('Cũ nhất'))
+
+    await waitFor(() => {
+      const params = new URLSearchParams(screen.getByTestId('location-search').textContent)
+      expect(params.get('job')).toBe('jb_2')
+      expect(params.get('ordering')).toBe('oldest')
+      expect(params.get('application')).toBeNull()
+    })
+  })
+
   it('filters by status through the URL', async () => {
     const user = userEvent.setup()
     renderPage()
@@ -226,9 +271,10 @@ describe('EmployerApplicationList', () => {
 
   it('decides immediately for non-final statuses and offers undo while the notice is pending', async () => {
     const user = userEvent.setup()
+    const noticeAt = new Date(Date.now() + 15_000).toISOString()
     mocks.decideApplicationStatus.mockResolvedValue({
       application: { ...APPLICATIONS[0], status: 'shortlisted', available_decisions: ['interviewed', 'accepted', 'rejected'] },
-      candidate_notice_at: '2026-07-22T09:10:00+07:00',
+      candidate_notice_at: noticeAt,
     })
     mocks.undoApplicationStatusChange.mockResolvedValue(APPLICATIONS[0])
     renderPage()
@@ -237,7 +283,7 @@ describe('EmployerApplicationList', () => {
     const decisions = await within(inspector).findByRole('group', { name: 'Quyết định cho hồ sơ' })
     mocks.getApplicationHistory.mockResolvedValue([
       VIEWED_ROW,
-      { ...VIEWED_ROW, from_status: 'viewed', to_status: 'shortlisted', can_undo: true, candidate_notice: { state: 'scheduled', deliver_at: '2026-07-22T09:10:00+07:00', delivered_at: null, email_sent_at: null } },
+      { ...VIEWED_ROW, from_status: 'viewed', to_status: 'shortlisted', can_undo: true, candidate_notice: { state: 'scheduled', deliver_at: noticeAt, delivered_at: null, email_sent_at: null } },
     ])
     await user.click(within(decisions).getByRole('button', { name: 'Phù hợp' }))
 

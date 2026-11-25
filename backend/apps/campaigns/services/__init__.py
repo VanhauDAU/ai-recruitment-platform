@@ -18,7 +18,14 @@ from .health import campaign_health
 from .launch import execute_launch, launch_campaign, save_launch_selection
 from .launch_check import campaign_launch_overview
 from .monitoring import run_health_snapshots, send_weekly_reports, snapshot_campaign
-from .report_export import REPORT_CONTENT_TYPES, campaign_report_file
+from .report_export import (
+    REPORT_CONTENT_TYPES,
+    campaign_report_file,
+    campaign_report_pdf_job,
+    fail_campaign_report_pdf,
+    finish_campaign_report_pdf,
+    request_campaign_report_pdf,
+)
 from .schedule import run_campaign_schedule
 from .social_connections import (
     complete_connection,
@@ -58,6 +65,10 @@ __all__ = [
     'save_post_image',
     'REPORT_CONTENT_TYPES',
     'campaign_report_file',
+    'campaign_report_pdf_job',
+    'fail_campaign_report_pdf',
+    'finish_campaign_report_pdf',
+    'request_campaign_report_pdf',
     'campaign_health',
     'run_health_snapshots',
     'send_weekly_reports',

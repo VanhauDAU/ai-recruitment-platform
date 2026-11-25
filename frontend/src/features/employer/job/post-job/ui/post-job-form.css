@@ -41,19 +41,38 @@
 }
 
  /*
- * Cột trái (tiến độ) sticky từ xl, cột phải (xem trước) từ 2xl — cùng bám theo chiều cao vùng cuộn.
- * top: 16px khớp với xl:pt-4 của lưới nên giữ dải nền phía trên và vị trí
- * trước/sau khi dính là một.
- * --workspace-viewport do EmployerWorkspaceLayout công bố theo đúng chiều cao
- * scrollport. Không dùng 100% ở đây: phần trăm sẽ bám theo grid cao bằng toàn form.
- * Trừ thêm 72px cho top gutter, padding dưới và khoảng thở để footer luôn nằm
- * trong viewport.
+ * Bố cục 3 cột: tiến độ | form | xem trước. Lưới nằm thẳng trong khung trang
+ * (.workspace-page) nên không có nền/padding riêng. Hai cột bên rộng theo %
+ * (có mức tối thiểu) để tiến độ và bản xem trước đọc thoải mái; cột form
+ * nhận phần còn lại.
+ */
+.post-job-layout {
+  display: grid;
+  align-items: start;
+  gap: 16px;
+}
+
+@media (min-width: 1280px) {
+  .post-job-layout { grid-template-columns: minmax(240px, 24%) minmax(0, 1fr); }
+}
+
+@media (min-width: 1536px) {
+  .post-job-layout { grid-template-columns: minmax(240px, 20%) minmax(0, 1fr) minmax(380px, 34%); }
+}
+
+/*
+ * Cột trái (tiến độ) sticky từ xl, cột phải (xem trước) từ 2xl — cùng bám theo
+ * chiều cao vùng cuộn. top bằng lề trang (--workspace-gutter) nên vị trí
+ * trước/sau khi dính là một. --workspace-viewport do EmployerWorkspaceLayout
+ * công bố theo đúng chiều cao scrollport; không dùng 100% vì phần trăm sẽ bám
+ * theo grid cao bằng toàn form. Trừ lề trên và dưới để footer luôn nằm trong
+ * viewport.
  */
 @media (min-width: 1280px) {
   .post-job-sticky-col {
     position: sticky;
-    top: 16px;
-    max-height: calc(var(--workspace-viewport, 100dvh) - 72px);
+    top: var(--workspace-gutter, 16px);
+    max-height: calc(var(--workspace-viewport, 100dvh) - var(--workspace-gutter, 16px) * 2);
     overflow-y: auto;
     scrollbar-width: thin;
   }
@@ -63,8 +82,8 @@
 @media (min-width: 1536px) {
   .post-job-preview-col {
     position: sticky;
-    top: 16px;
-    height: calc(var(--workspace-viewport, 100dvh) - 72px);
+    top: var(--workspace-gutter, 16px);
+    height: calc(var(--workspace-viewport, 100dvh) - var(--workspace-gutter, 16px) * 2);
     min-height: 0;
   }
 
@@ -98,4 +117,49 @@
   .post-job-preview-col:hover .post-job-preview-scroll::-webkit-scrollbar-thumb {
     background: #94a3b8;
   }
+}
+
+/* Thanh chọn trang xem trước: hai lựa chọn trên một hàng, dạng viên thuốc. */
+.post-job-preview-switch {
+  display: flex;
+  gap: 4px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  padding: 4px;
+}
+
+.post-job-preview-switch__option {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 7px 10px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.post-job-preview-switch__option:hover {
+  color: #334155;
+}
+
+.post-job-preview-switch__option.is-active {
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgb(15 23 42 / 0.12);
+  color: var(--brand-primary);
+}
+
+.post-job-preview-switch__option:has(input:focus-visible) {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 1px;
 }

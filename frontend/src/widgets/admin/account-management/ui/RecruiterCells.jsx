@@ -6,24 +6,25 @@ import {
 } from '@/entities/account/admin-account'
 import { formatElapsed } from '@/shared/lib/date-time'
 
+// Verification status → `.ws-tone-*` dot of a calm workspace pill.
 const VERIFICATION_TONES = {
-  approved: 'good',
-  rejected: 'critical',
-  changes_requested: 'warning',
-  in_review: 'info',
-  pending: 'warning',
-  revoked: 'critical',
-  expired: 'warning',
+  approved: 'emerald',
+  rejected: 'red',
+  changes_requested: 'orange',
+  in_review: 'sky',
+  pending: 'amber',
+  revoked: 'red',
+  expired: 'orange',
 }
 const WAITING_STATUSES = new Set(['pending', 'in_review'])
 
 export function CompanyCell({ company }) {
-  if (!company) return <span className="recruiter-cell__muted">Chưa liên kết công ty</span>
+  if (!company) return <span className="ws-caption ws-muted">Chưa liên kết công ty</span>
   return (
-    <span className="recruiter-cell">
-      <strong className="recruiter-cell__title" title={company.name}>{company.name}</strong>
-      <span className="recruiter-cell__sub" translate="no">{company.tax_code ? `MST ${company.tax_code}` : 'Chưa có MST'}</span>
-    </span>
+    <>
+      <strong className="ws-strong ws-strong--sm aml-truncate" title={company.name}>{company.name}</strong>
+      <span className="ws-caption ws-muted" translate="no">{company.tax_code ? `MST ${company.tax_code}` : 'Chưa có MST'}</span>
+    </>
   )
 }
 
@@ -31,22 +32,22 @@ export function VerificationCell({ verification }) {
   const status = verification?.status || 'draft'
   const waiting = WAITING_STATUSES.has(status) && verification?.submitted_at
   return (
-    <span className="recruiter-cell">
-      <span className={`recruiter-status recruiter-status--${VERIFICATION_TONES[status] || 'muted'}`}>
+    <>
+      <span className={`ws-pill ws-tone-${VERIFICATION_TONES[status] || 'slate'}`}>
         {verification?.status_label || 'Chưa nộp'}
       </span>
-      <span className="recruiter-cell__sub">
+      <span className="ws-caption ws-muted">
         {waiting
           ? `Chờ ${formatElapsed(verification.submitted_at)}`
           : status === 'approved' ? 'Đủ điều kiện' : `${verification?.missing_step_count ?? 10} bước còn thiếu`}
       </span>
-    </span>
+    </>
   )
 }
 
 export function NextActionCell({ row, originState }) {
   const action = recruiterNextAction(row)
-  if (!action || action.tone === 'none') return <span className="recruiter-cell__muted">Không có việc cần làm</span>
+  if (!action || action.tone === 'none') return <span className="ws-caption ws-muted">Không có việc cần làm</span>
   return (
     <span className="recruiter-next">
       <NextActionLabel action={action} />
@@ -58,4 +59,3 @@ export function NextActionCell({ row, originState }) {
     </span>
   )
 }
-

@@ -35,6 +35,7 @@ vi.mock('@/entities/job/admin-job', async (importOriginal) => ({
 
 const company = {
   public_id: 'co_alpha',
+  code: 'C305812',
   company_name: 'Công ty Alpha',
   trade_name: 'Alpha',
   logo_url: '',
@@ -129,10 +130,11 @@ describe('admin company directory', () => {
 
     expect(await screen.findByText('Công ty Alpha')).toBeInTheDocument()
     expect(screen.getByText('Chưa có hồ sơ · 1')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Sao chép mã C305812' })).toBeInTheDocument()
     expect(screen.getByText('Đã xác thực · 1')).toBeInTheDocument()
     expect(screen.getByLabelText('Công ty Alpha chưa cập nhật logo')).toHaveTextContent('A')
-    expect(screen.getByRole('columnheader', { name: 'Xác thực NTD' })).toBeInTheDocument()
-    expect(screen.queryByRole('columnheader', { name: 'Hồ sơ pháp nhân' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Nhà tuyển dụng' })).toBeInTheDocument()
+    expect(screen.queryByText('Hồ sơ pháp nhân')).not.toBeInTheDocument()
     expect(screen.queryByRole('combobox', { name: 'Lọc trạng thái công ty' })).not.toBeInTheDocument()
     expect(screen.queryByRole('combobox', { name: 'Lọc owner' })).not.toBeInTheDocument()
     expect(getAdminCompanies).toHaveBeenCalledWith(
@@ -156,6 +158,19 @@ describe('admin company directory', () => {
     expect(screen.getByLabelText('Tóm tắt công ty')).toHaveTextContent('Cần kiểm tra quản lý')
   })
 
+  it('filters companies that need a manager check from the summary tile', async () => {
+    const user = userEvent.setup()
+    renderWithApp(<AdminCompanyDirectory />, '/admin/app/companies')
+
+    await screen.findByText('Công ty Alpha')
+    await user.click(within(screen.getByLabelText('Tóm tắt công ty')).getByRole('button', { name: /Cần kiểm tra quản lý/ }))
+
+    await waitFor(() => expect(getAdminCompanies).toHaveBeenLastCalledWith(
+      expect.objectContaining({ has_owner: 'not_single' }),
+      expect.any(Object),
+    ))
+  })
+
   it('opens the read-only company detail', async () => {
     const user = userEvent.setup()
     const { container } = renderWithApp(<AdminCompanyDirectory />, '/admin/app/companies')
@@ -176,7 +191,7 @@ describe('admin company directory', () => {
 
     await screen.findByText('Công ty Alpha')
     const initialCalls = getAdminCompanies.mock.calls.length
-    await user.type(screen.getByRole('textbox', { name: 'Tìm công ty' }), ' beta')
+    await user.type(screen.getByRole('searchbox', { name: 'Tìm công ty' }), ' beta')
 
     expect(getAdminCompanies).toHaveBeenCalledTimes(initialCalls)
     await waitFor(

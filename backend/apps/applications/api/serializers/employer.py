@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from apps.accounts.services import is_account_accessible
+from apps.matching.selectors import match_status
 
 from ...models import Application, CandidateBlock
 from ...services import available_status_decisions
@@ -30,6 +31,11 @@ class ApplicationSerializer(serializers.ModelSerializer):
     mass_apply_signal = serializers.SerializerMethodField()
     submission_number = serializers.IntegerField(read_only=True, default=1)
     last_reminded_at = serializers.DateTimeField(read_only=True, default=None)
+    # Mức phù hợp do AI chấm trên bản CV đã nộp. Cả ba rỗng khi tính năng tắt; điểm và
+    # mức chỉ có khi `ai_match_status = ready`.
+    ai_match_score = serializers.IntegerField(read_only=True, default=None, allow_null=True)
+    ai_match_level = serializers.CharField(read_only=True, default=None, allow_null=True)
+    ai_match_status = serializers.SerializerMethodField()
 
     class Meta:
         model = Application
@@ -61,6 +67,9 @@ class ApplicationSerializer(serializers.ModelSerializer):
             'applied_at',
             'submission_number',
             'last_reminded_at',
+            'ai_match_score',
+            'ai_match_level',
+            'ai_match_status',
             'viewed_at',
             'shortlisted_at',
             'interviewed_at',
@@ -69,6 +78,14 @@ class ApplicationSerializer(serializers.ModelSerializer):
             'updated_at',
         ]
         read_only_fields = fields
+
+    def get_ai_match_status(self, obj) -> str | None:
+        return match_status(
+            enabled=getattr(obj, 'ai_match_enabled', False),
+            consented=obj.allow_ai_analysis,
+            score=getattr(obj, 'ai_match_score', None),
+            state=getattr(obj, 'ai_match_state', None),
+        )
 
     def get_candidate_account_restricted(self, obj) -> bool:
         return not is_account_accessible(obj.candidate)

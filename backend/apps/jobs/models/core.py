@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from django.conf import settings
+from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
@@ -9,7 +10,11 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
 from common.db.public_id import generate_public_id
+from common.db.readable_code import new_unique_code
+from common.db.search import fold_accents
 from common.vietnam_time import vietnam_day_start, vietnam_today
+
+from ..domain.job_code import JOB_CODE_LENGTH, JOB_CODE_REGEX, random_job_code
 
 
 def validate_application_reasons(value):
@@ -127,19 +132,9 @@ class Job(models.Model):
         # Fixable content: the owner may edit, then resubmits for review.
         CHANGES_REQUESTED = 'changes_requested', gettext_lazy('Tạm ẩn, cần chỉnh sửa theo yêu cầu')
 
-    class Tier(models.TextChoices):
-        """Hạng hiển thị của tin — quyết định nền card + thứ tự ưu tiên trong danh sách.
-
-        Admin gán qua Django admin; về sau (giai đoạn gói dịch vụ NTD) sẽ gán
-        tự động theo gói đã mua. Tách riêng khỏi các nhãn HOT/GẤP vì hạng là
-        single-choice còn nhãn gắn kèm được nhiều cái cùng lúc.
-        """
-
-        STANDARD = 'standard', gettext_lazy('Tin thường')
-        FEATURED = 'featured', gettext_lazy('Tin nổi bật')
-        TOP = 'top', gettext_lazy('Tin TOP')
-
     public_id = models.CharField(max_length=50, unique=True, editable=False)
+    # Mã đọc qua điện thoại cho hỗ trợ/tra cứu (xem domain/job_code).
+    code = models.CharField(max_length=JOB_CODE_LENGTH, unique=True, editable=False)
     # Tin thuộc về công ty; posted_by là HR cụ thể đã đăng (nhiều HR/công ty).
     posted_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='posted_jobs'
@@ -153,6 +148,9 @@ class Job(models.Model):
         related_name='jobs',
     )
     title = models.CharField(max_length=255)
+    # fold_accents(title), set in save(): lets search use a GIN trigram index
+    # instead of scanning every row with unaccent(title) ILIKE.
+    title_search = models.CharField(max_length=255, blank=True, editable=False)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
     description = models.TextField()
     requirements = models.TextField(blank=True)
@@ -240,13 +238,12 @@ class Job(models.Model):
         default=DEFAULT_AUTO_REJECTION_EMAIL,
         help_text='Nội dung email gửi ứng viên ba ngày sau khi hồ sơ bị tự động từ chối.',
     )
-    # Hạng tin + nhãn dịch vụ (admin gán). Nhãn "xác thực" không lưu ở đây vì
-    # được tính từ các tiêu chí của recruiter đăng tin; nhãn thời gian tính từ ngày.
-    tier = models.CharField(max_length=20, choices=Tier.choices, default=Tier.STANDARD)
-    is_hot = models.BooleanField(default=False, help_text='Nhãn HOT (đỏ) trên card')
-    is_urgent = models.BooleanField(default=False, help_text='Nhãn GẤP / tuyển gấp (cam) trên card')
+    # Nhãn tin chỉ do hệ thống tính từ dữ liệu thật (ADR-0030): không có hạng
+    # trả phí hay nhãn gán tay.
+    # Huy hiệu Sấm Chớp do task định kỳ tính từ mức phản hồi của người đăng
+    # (ADR-0027, apps.applications.services.refresh_flash_badges), không ai sửa tay.
     has_flash_badge = models.BooleanField(
-        default=False, help_text='Huy hiệu Sấm Chớp — NTD tương tác nhanh'
+        default=False, help_text='Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD'
     )
     status = models.CharField(max_length=50, choices=Status.choices, default=Status.DRAFT)
     policy_hold = models.CharField(
@@ -323,8 +320,16 @@ class Job(models.Model):
                 fields=['company', 'status', '-created_at'], name='jobs_job_company_status_idx'
             ),
             models.Index(fields=['campaign', 'status'], name='jobs_job_campaign_status_idx'),
+            GinIndex(
+                fields=['title_search'],
+                name='jobs_job_title_trgm_idx',
+                opclasses=['gin_trgm_ops'],
+            ),
         ]
         constraints = [
+            models.CheckConstraint(
+                condition=models.Q(code__regex=JOB_CODE_REGEX), name='chk_jobs_code_format'
+            ),
             models.CheckConstraint(
                 condition=models.Q(status__in=['draft', 'active', 'closed']),
                 name='chk_jobs_status',
@@ -389,9 +394,15 @@ class Job(models.Model):
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('jb')
+        if not self.code:
+            self.code = new_unique_code(Job.objects, 'code', random_job_code)
         if not self.slug:
             base_slug = slugify(self.title)
             self.slug = f'{base_slug}-{self.public_id}'
+        self.title_search = fold_accents(self.title)
+        update_fields = kwargs.get('update_fields')
+        if update_fields is not None and 'title' in update_fields:
+            kwargs['update_fields'] = {*update_fields, 'title_search'}
         super().save(*args, **kwargs)
 
     @classmethod
@@ -412,6 +423,15 @@ class Job(models.Model):
             or self.visibility_ends_at is None
             or self.visibility_ends_at <= now
         )
+
+    @property
+    def listing_recency_at(self):
+        """Mốc xếp hạng duy nhất của tin: lần đăng đầu (ADR-0030).
+
+        Sửa, đóng/mở lại, gia hạn hay khôi phục sau kiểm duyệt không đổi mốc này,
+        nên không có cách "làm mới" tin để chen lên đầu. Khớp ``listing_recency()``.
+        """
+        return self.first_approved_at or self.published_at or self.created_at
 
     @property
     def stopped_at(self):

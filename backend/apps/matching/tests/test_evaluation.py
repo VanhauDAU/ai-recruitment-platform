@@ -27,21 +27,28 @@ class MatchingEvaluateTests(MatchingApiBase):
         self.assertEqual(row['model_version'], 'hashing-v1')
         self.assertGreater(row['score'], 0)
         self.assertEqual(row['components']['skills'], 100)
-        # Rubric gán nhãn không xét địa điểm, nên tiêu chí này không có mặt.
-        self.assertNotIn('location', row['components'])
+        self.assertNotIn('result', row)
         self.assertIsNotNone(row['document_similarity'])
         self.assertFalse(MatchDocument.objects.exists())
         self.assertFalse(MatchAnalysis.objects.exists())
 
-    def test_same_score_as_the_candidate_facing_analysis_apart_from_location(self):
+    def test_same_score_as_the_candidate_facing_analysis(self):
         self.request()
         analysis = MatchAnalysis.objects.get()
         components = {c['key']: c['score'] for c in analysis.result_json['components']}
 
         row = self.evaluate([{'jd': self.job.public_id, 'cv': 'CV-901'}])[0]
 
-        for key in ('skills', 'experience', 'education', 'position_level', 'languages'):
-            self.assertEqual(row['components'][key], components[key], key)
+        self.assertEqual(row['components'], components)
+        self.assertEqual(row['score'], analysis.overall_score)
+
+    def test_detail_adds_the_full_result_and_ablation_changes_the_formula(self):
+        pairs = [{'jd': self.job.public_id, 'cv': 'CV-901'}]
+
+        row = self.evaluate(pairs, '--detail', '--ablation', 'no_relevance_discount')[0]
+
+        self.assertEqual(row['result']['overall']['score'], row['score'])
+        self.assertFalse(row['result']['flags']['relevance_discount_applied'])
 
     def test_reports_pairs_it_cannot_find(self):
         rows = self.evaluate(

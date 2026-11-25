@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { CANDIDATE_MENU } from '@/entities/account/account'
 import { CandidateNotificationBell } from '@/features/main/account/view-candidate-notifications'
+import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import { message } from '@/shared/lib/toast'
 
 const SECTIONS = CANDIDATE_MENU
@@ -66,10 +67,10 @@ function Section({ section, open, onToggle, onItem, activePathname }) {
   )
 }
 
-export default function CandidateUserMenu({ user, logout }) {
+/** Thẻ tài khoản ứng viên: dùng trong dropdown avatar (desktop) và tấm đáy (mobile). */
+export function CandidateAccountPanel({ user, logout, onClose, className = '' }) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
-  const [open, setOpen] = useState(false)
   const [openKey, setOpenKey] = useState(
     () => SECTIONS.find((section) => section.items.some((item) => item.path === pathname))?.key || 'search',
   )
@@ -80,18 +81,13 @@ export default function CandidateUserMenu({ user, logout }) {
     if (activeSection) setOpenKey(activeSection.key)
   }, [pathname])
 
-  function toggleSection(key) {
-    setOpenKey((current) => current === key ? null : key)
-  }
-
   function handleItem(it) {
-    setOpen(false)
-    if (it.blank) window.open(it.path, '_blank', 'noopener')
-    else navigate(it.path)
+    onClose()
+    navigate(it.path)
   }
 
-  const userPanel = (
-    <div className="flex max-h-[calc(100dvh-5rem)] w-[360px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl">
+  return (
+    <div className={`flex flex-col overflow-hidden bg-white ${className}`}>
       <div className="flex shrink-0 items-center gap-3 px-4 py-3">
         <Avatar size={48} src={user?.avatar_url || undefined} icon={<IdcardOutlined />} />
         <div className="min-w-0">
@@ -99,7 +95,7 @@ export default function CandidateUserMenu({ user, logout }) {
           {verified ? (
             <p className="flex items-center gap-1 text-xs text-[var(--brand-primary)]"><CheckCircleFilled /> Tài khoản đã xác thực</p>
           ) : (
-            <Link to="/tai-khoan/xac-thuc-email" onClick={() => setOpen(false)} className="flex items-center gap-1 text-xs text-amber-600 hover:underline">
+            <Link to="/tai-khoan/xac-thuc-email" onClick={onClose} className="flex items-center gap-1 text-xs text-amber-600 hover:underline">
               <WarningFilled /> Tài khoản chưa xác thực
             </Link>
           )}
@@ -111,14 +107,21 @@ export default function CandidateUserMenu({ user, logout }) {
 
       <div className="min-h-0 overflow-y-auto overscroll-contain border-t border-gray-100 px-2 [scrollbar-width:thin]">
         {SECTIONS.map((s) => (
-          <Section key={s.key} section={s} activePathname={pathname} open={openKey === s.key} onToggle={() => toggleSection(s.key)} onItem={handleItem} />
+          <Section
+            key={s.key}
+            section={s}
+            activePathname={pathname}
+            open={openKey === s.key}
+            onToggle={() => setOpenKey((current) => current === s.key ? null : s.key)}
+            onItem={handleItem}
+          />
         ))}
       </div>
 
       <div className="shrink-0 border-t border-gray-100 p-3">
         <button
           type="button"
-          onClick={() => { setOpen(false); logout() }}
+          onClick={() => { onClose(); logout() }}
           className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-[var(--brand-primary-soft)] py-2 text-sm font-semibold text-[var(--brand-primary)] transition-colors hover:bg-[var(--brand-primary)] hover:text-white"
         >
           <LogoutOutlined /> Đăng xuất
@@ -126,17 +129,41 @@ export default function CandidateUserMenu({ user, logout }) {
       </div>
     </div>
   )
+}
+
+/**
+ * Cụm hành động ứng viên trên header. `compactMobile`: màn hẹp chỉ giữ chuông,
+ * tin nhắn và avatar chuyển xuống thanh tab dưới (`MobileTabBar`).
+ */
+export default function CandidateUserMenu({ user, logout, compactMobile = false }) {
+  const [open, setOpen] = useState(false)
+  // Chạm trên màn cảm ứng sinh cả mouseenter lẫn click: hover mở rồi click đóng ngay.
+  const canHover = useMediaQuery('(hover: hover)')
+  const desktopOnly = compactMobile ? 'hidden md:flex' : 'flex'
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-2 md:gap-4">
       <CandidateNotificationBell />
 
-      <button type="button" aria-label="Mở tin nhắn" className="flex cursor-pointer text-xl text-gray-500 transition-colors hover:text-[var(--brand-primary)]" onClick={() => message.info('Tính năng sẽ sớm ra mắt.')}>
+      <button type="button" aria-label="Mở tin nhắn" className={`${desktopOnly} cursor-pointer text-xl text-gray-500 transition-colors hover:text-[var(--brand-primary)]`} onClick={() => message.info('Tính năng sẽ sớm ra mắt.')}>
         <MessageOutlined />
       </button>
 
-      <Dropdown open={open} onOpenChange={setOpen} trigger={['hover', 'click']} placement="bottomRight" popupRender={() => userPanel}>
-        <button type="button" aria-label="Mở menu tài khoản" aria-expanded={open} className="flex cursor-pointer items-center gap-1">
+      <Dropdown
+        open={open}
+        onOpenChange={setOpen}
+        trigger={canHover ? ['hover', 'click'] : ['click']}
+        placement="bottomRight"
+        popupRender={() => (
+          <CandidateAccountPanel
+            user={user}
+            logout={logout}
+            onClose={() => setOpen(false)}
+            className="max-h-[calc(100dvh-5rem)] w-[360px] max-w-[calc(100vw-2rem)] rounded-2xl border border-gray-100 shadow-xl"
+          />
+        )}
+      >
+        <button type="button" aria-label="Mở menu tài khoản" aria-expanded={open} className={`${desktopOnly} cursor-pointer items-center gap-1`}>
           <Avatar size={38} src={user?.avatar_url || undefined} icon={<IdcardOutlined />} />
           <CaretRightOutlined className={`text-xs text-gray-400 transition-transform duration-300 ${open ? '-rotate-90' : 'rotate-90'}`} />
         </button>

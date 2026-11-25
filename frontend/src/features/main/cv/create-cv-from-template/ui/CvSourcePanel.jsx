@@ -149,7 +149,7 @@ export default function CvSourcePanel({ cv, onBack, showActions = true }) {
                   className={[
                     'flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-left cursor-pointer transition-all duration-200',
                     selectedCvId === cv.public_id
-                      ? 'border-[var(--brand-primary)] bg-[var(--brand-primary-soft,#f0fdf4)]'
+                      ? 'border-[var(--brand-primary)] bg-[var(--brand-primary-soft)]'
                       : 'border-slate-200 hover:border-[var(--brand-primary)] bg-white',
                   ].join(' ')}
                 >
@@ -163,7 +163,7 @@ export default function CvSourcePanel({ cv, onBack, showActions = true }) {
                     <span className="block truncate text-sm font-semibold text-slate-800">{cv.title}</span>
                     <span className="block text-xs text-slate-500">{cv.updated_at ? new Date(cv.updated_at).toLocaleDateString(getIntlLocale()) : ''}</span>
                   </span>
-                  <Link to={`/cvs/${cv.public_id}/view`} target="_blank" className="shrink-0 text-xs font-medium text-[#00b14f] hover:text-[#008a3e] cursor-pointer" onClick={(event) => event.stopPropagation()}>
+                  <Link to={`/cvs/${cv.public_id}/view`} target="_blank" className="shrink-0 text-xs font-medium text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)] cursor-pointer" onClick={(event) => event.stopPropagation()}>
                     (Xem CV)
                   </Link>
                 </button>
@@ -226,7 +226,7 @@ export default function CvSourcePanel({ cv, onBack, showActions = true }) {
           <button
             type="button"
             onClick={onBack}
-            className="w-full rounded-lg border border-[#00b14f] bg-white py-2 text-sm font-semibold text-[#00b14f] transition hover:bg-slate-50 cursor-pointer mt-3 flex items-center justify-center gap-1.5"
+            className="w-full rounded-lg border border-[var(--brand-primary)] bg-white py-2 text-sm font-semibold text-[var(--brand-primary)] transition hover:bg-slate-50 cursor-pointer mt-3 flex items-center justify-center gap-1.5"
           >
             ← Quay lại danh sách mẫu CV
           </button>

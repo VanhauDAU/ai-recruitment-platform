@@ -134,7 +134,7 @@ describe('CampaignList', () => {
     expect(live.getByText('3 ứng viên')).toBeInTheDocument()
     expect(live.queryByTitle('Nguyễn Minh Anh')).not.toBeInTheDocument()
     expect(live.queryByRole('link', { name: 'Xem 3 CV mới' })).not.toBeInTheDocument()
-    expect(live.getByRole('link', { name: 'Mở' }))
+    expect(live.getByRole('link', { name: 'Xem chi tiết' }))
       .toHaveAttribute('href', '/tuyendung/app/campaigns/camp_live')
   })
 })
