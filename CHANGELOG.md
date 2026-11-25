@@ -8,6 +8,25 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-25
 
+#### Added — Sao lưu media công khai và báo cáo CSP qua Sentry
+
+- `scripts/deploy/backup_files.sh` sao lưu thêm bucket `procv-public-media` sang
+  `procv-backups-public-media` khi có `BACKUP_PUBLIC_FILES_REMOTE` (trống thì cảnh báo,
+  bỏ qua); `restore_files.sh --bucket private|public`; `lib.sh` tách `_set_r2_remote`,
+  thêm `set_public_remote`.
+- Image `web` dựng `report-uri`/`report-to` + `Reporting-Endpoints` của CSP từ
+  `VITE_SENTRY_DSN` lúc build (`frontend/docker/nginx/render-csp.sh`); CSP vẫn Report-Only.
+  CI shellcheck thêm script này.
+
+#### Changed — Mô tả site setting xác thực NTD và runbook go-live
+
+- `employer_require_approved_verification`: nhãn/mô tả/trợ giúp nói đúng phạm vi (chỉ bước
+  checklist onboarding; đăng tin công khai luôn cần hồ sơ đã duyệt + DPA). Chạy
+  `seed_sitecontent` sau deploy để đồng bộ.
+- Runbook deploy: Cloudflare Access cho `/admin*`, `/api/admin/*` (email OTP) + kiểm
+  WebSocket admin, quota/inbound filter Sentry cho báo cáo CSP; runbook sao lưu: bucket
+  `procv-backups-public-media`, token, khôi phục `--bucket public`.
+
 #### Changed — Tải trang đầu nhẹ hơn
 
 - Bundle đầu còn 9 file JS, 252 KiB gzip (trước 78 file, 333 KiB): thư viện trang đầu gom

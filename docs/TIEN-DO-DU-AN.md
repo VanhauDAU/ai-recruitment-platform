@@ -7,7 +7,8 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Lưu ảnh đại diện Google vào storage](#lưu-ảnh-đại-diện-google-vào-storage-2026-11-22) | 🟨 Nhánh `fix/google-avatar-storage`, chờ gộp PR |
+| [Chuẩn bị deploy: lấp chỗ hở vận hành và cấu hình](#chuẩn-bị-deploy-lấp-chỗ-hở-vận-hành-và-cấu-hình-2026-11-25) | 🟨 Nhánh `chore/predeploy-ops-gaps`, chờ PR; kiểm trên VPS/R2/Cloudflare thật ở GĐ6 rehearsal |
+| [Lưu ảnh đại diện Google vào storage](#lưu-ảnh-đại-diện-google-vào-storage-2026-11-22) | ✅ Đã gộp dev (#359) |
 | [Tối ưu tải trang đầu frontend](#tối-ưu-tải-trang-đầu-frontend-2026-11-25) | 🟨 PR #358 (nhánh `perf/initial-load`), chờ gộp |
 | [Sửa API công khai có cache trả 500 với Redis](#sửa-api-công-khai-có-cache-trả-500-với-redis-2026-11-25) | 🟨 Nhánh `fix/public-cache-redis`, chờ gộp |
 | [Thanh tab dưới và thông báo trên mobile cho ứng viên](#thanh-tab-dưới-và-thông-báo-trên-mobile-cho-ứng-viên-2026-11-25) | 🟨 PR #354 (nhánh `feat/mobile-tab-bar`), chờ gộp |
@@ -165,6 +166,31 @@ Kế hoạch: [`ke-hoach-quan-ly-danh-muc.md`](01-phan-tich/ke-hoach-quan-ly-dan
   Vitest feature `manage-catalog`; E2E `admin-catalog.spec.js` (`@responsive`, 3 khung).
 - **Lưu ý:** `seed_job_categories` chỉ chạy lúc dựng DB trống; chạy lại sẽ ẩn mục admin
   thêm và hiện lại mục admin đã ẩn.
+
+## Chuẩn bị deploy: lấp chỗ hở vận hành và cấu hình (2026-11-25)
+
+Đợt bổ sung sau GĐ1–GĐ5 của [kế hoạch](06-deployment/ke-hoach-chuan-bi-deploy.md).
+
+- **Sao lưu media công khai:** `backup_files.sh` chép thêm `procv-public-media` →
+  `procv-backups-public-media` (Bucket Lock 30 ngày, lifecycle 45 ngày) khi đặt
+  `BACKUP_PUBLIC_FILES_REMOTE`; trống thì cảnh báo và bỏ qua. Một bucket lỗi không chặn
+  bucket kia. `restore_files.sh --bucket private|public`; `lib.sh` dựng remote R2 chung
+  (`_set_r2_remote`, khóa qua `RCLONE_CONFIG_*`, không lên argv). `--metadata` giữ
+  `Cache-Control` của object. Runbook [sao lưu](06-deployment/sao-luu-va-khoi-phuc.md).
+- **Báo cáo CSP qua Sentry:** `frontend/docker/nginx/render-csp.sh` chạy lúc build image
+  `web`, đổi `VITE_SENTRY_DSN` thành endpoint security của Sentry, thêm `report-uri`,
+  `report-to` + header `Reporting-Endpoints`; DSN trống thì không báo cáo, DSN sai dạng
+  thì build lỗi. Vẫn Report-Only. Runbook mục 9: lọc nguồn rác, rate limit DSN để giữ quota.
+- **Site setting `employer_require_approved_verification`:** sửa nhãn/mô tả/trợ giúp —
+  công tắc chỉ đổi bước "Hoàn tất xác thực" của checklist onboarding và cờ báo cáo
+  tương thích; đăng tin công khai luôn cần hồ sơ đã duyệt + DPA. Chạy `seed_sitecontent`
+  sau deploy để đồng bộ mô tả (không ghi đè giá trị).
+- **Cloudflare Access cho admin** (chỉ tài liệu): bước 1.7 + checklist mục 6 của
+  [runbook deploy](06-deployment/huong-dan-deployment.md), GĐ6 của kế hoạch; TOTP trong
+  ứng dụng để sau go-live.
+- **Kiểm chứng:** shellcheck; backup/restore public bằng remote rclone `local` (kể cả
+  nhánh bỏ qua, lỗi một bucket, `--dry-run`); build image `web` có/không DSN + `nginx -t`;
+  pytest `apps/sitecontent`. Chưa chạy với R2/Sentry/Cloudflare thật.
 
 ## Chuẩn bị deploy: GĐ1 bảo mật ứng dụng (2026-11-25)
 
