@@ -31,9 +31,9 @@ ENV VITE_API_BASE_URL=$VITE_API_BASE_URL \
     VITE_ANNOUNCEMENT_ROLLOUT_SURFACES=$VITE_ANNOUNCEMENT_ROLLOUT_SURFACES
 
 COPY . .
-RUN npm run build
+RUN npm run build && rm -rf dist/.vite
 
-FROM nginx:1.27-alpine AS runtime
+FROM nginx:1.28-alpine AS runtime
 # Bỏ server mặc định; cấu hình ProCV nằm trong conf.d + snippets.
 RUN rm /etc/nginx/conf.d/default.conf
 COPY docker/nginx/procv.conf /etc/nginx/conf.d/procv.conf

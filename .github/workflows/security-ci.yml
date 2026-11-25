@@ -1,0 +1,80 @@
+name: Security CI
+
+# Kiểm tra trước khi lên production (docs/06-deployment/ke-hoach-chuan-bi-deploy.md):
+# lỗ hổng phụ thuộc Python, secret lọt vào commit, cấu hình production nạp được,
+# script triển khai sạch shellcheck. Chạy lại hằng tuần vì CVE mới xuất hiện cả
+# khi code không đổi.
+on:
+  pull_request:
+  push:
+    branches: [main, dev]
+  schedule:
+    - cron: '0 1 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-ci-${{ github.event.pull_request.number || format('{0}-{1}', github.event_name, github.ref) }}
+  cancel-in-progress: true
+
+jobs:
+  python-audit:
+    name: python-dependency-audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: pip-audit (backend/requirements.txt)
+        run: |
+          python -m pip install --disable-pip-version-check pip-audit
+          pip-audit -r backend/requirements.txt --progress-spinner off
+
+  production-settings:
+    name: production-settings
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check -r backend/requirements.txt
+      - name: config.settings.production + check --deploy
+        run: python scripts/check_production_settings.py
+
+  secrets-scan:
+    name: secrets-scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: gitleaks (commit trong PR, hoặc toàn lịch sử khi chạy định kỳ)
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          range=()
+          if [[ -n "$BASE_SHA" ]]; then
+            range=(--log-opts "${BASE_SHA}..${HEAD_SHA}")
+          fi
+          docker run --rm -v "$PWD:/repo" -w /repo zricethezav/gitleaks:v8.24.3 \
+            git /repo --redact --no-banner "${range[@]}"
+
+  shellcheck:
+    name: shellcheck-deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - name: shellcheck scripts/deploy
+        run: shellcheck --severity=warning scripts/deploy/*.sh

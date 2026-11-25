@@ -18,7 +18,7 @@ from ..services import email_verification, password_reset
 from ..services.refresh_cookies import cookie_name
 from ..services.tokens import issue_tokens
 from ..tasks import deliver_auth_email_job
-from .factories import GOOGLE_PROFILE, refresh_session
+from .factories import GOOGLE_PROFILE, oauth_state_for, refresh_session
 
 
 @override_settings(
@@ -264,7 +264,7 @@ class LastLoginTests(APITestCase):
     )
     def test_oauth_login_sets_last_login(self):
         cache.clear()
-        state = oauth.create_state('google', 'main', '')
+        state = oauth_state_for(self.client)
         with (
             patch.object(oauth, 'exchange_code', return_value='provider-token'),
             patch.object(oauth, 'fetch_profile', return_value=dict(GOOGLE_PROFILE)),

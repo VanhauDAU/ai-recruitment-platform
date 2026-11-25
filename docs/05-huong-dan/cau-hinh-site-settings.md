@@ -189,7 +189,7 @@ Quy tắc nội dung:
 | Section | Key | Tên | Kiểu | Mặc định | Public |
 |---|---|---|---|---|---|
 | Kênh hỗ trợ | `hotline` | Hotline hỗ trợ | text | "1900 1234" | ✓ |
-| Kênh hỗ trợ | `support_email` | Email hỗ trợ | email | "support@aicareercoach.vn" | ✓ |
+| Kênh hỗ trợ | `support_email` | Email hỗ trợ | email | "support@procv.site" | ✓ |
 | Kênh hỗ trợ | `contact_address` | Địa chỉ | textarea | "" | ✓ |
 | Kênh hỗ trợ | `contact_working_hours` | Giờ làm việc | text | "8:00 - 17:30, Thứ 2 - Thứ 6" | ✓ |
 | Kênh hỗ trợ | `contact_zalo_url` | Zalo | url | "" | ✓ |

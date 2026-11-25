@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 from django.contrib.postgres.aggregates import StringAgg
-from django.db.models import Count, Q
+from django.db.models import Case, Count, IntegerField, Q, Value, When
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from django.utils.html import strip_tags
@@ -11,7 +11,7 @@ from apps.accounts.models import User
 from apps.employers.models import Company
 from common.storage.media import media_url_from_value
 
-from ..models import Job, JobCategory
+from ..models import Job, JobCategory, JobCategoryAssignment
 from .listing import SALARY_BUCKETS, filter_salary_bucket, publicly_available_job_filter
 
 
@@ -41,33 +41,49 @@ def _growth_series(active_jobs, now):
 
 
 def _category_demand(active_jobs, request):
-    demand = []
-    top_categories = JobCategory.objects.filter(
-        parent__isnull=True,
-        status=JobCategory.Status.ACTIVE,
+    # Gom ngành con/cháu về ngành cấp 1 rồi đếm tin (distinct) trong một truy vấn.
+    top_categories = list(
+        JobCategory.objects.filter(parent__isnull=True, status=JobCategory.Status.ACTIVE)
     )
-    for category in top_categories:
-        children = list(JobCategory.objects.filter(parent=category).values_list('id', flat=True))
-        grandchildren = list(
-            JobCategory.objects.filter(parent_id__in=children).values_list('id', flat=True)
-        )
-        count = (
-            active_jobs.filter(
-                category_assignments__category_id__in=[category.id, *children, *grandchildren]
+    descendants = {category.id: {category.id} for category in top_categories}
+    top_ids = list(descendants)
+    for category_id, parent_id, grandparent_id in JobCategory.objects.filter(
+        Q(parent_id__in=top_ids) | Q(parent__parent_id__in=top_ids)
+    ).values_list('id', 'parent_id', 'parent__parent_id'):
+        descendants[parent_id if parent_id in descendants else grandparent_id].add(category_id)
+
+    counts = {}
+    if descendants:
+        counts = dict(
+            JobCategoryAssignment.objects.filter(
+                job__in=active_jobs,
+                category_id__in={cid for ids in descendants.values() for cid in ids},
             )
-            .distinct()
-            .count()
-        )
-        if count:
-            demand.append(
-                {
-                    'id': category.id,
-                    'name': category.name,
-                    'slug': category.slug,
-                    'logo_url': media_url_from_value(category.logo_url, request=request),
-                    'count': count,
-                }
+            .annotate(
+                top_id=Case(
+                    *(
+                        When(category_id__in=ids, then=Value(top_id))
+                        for top_id, ids in descendants.items()
+                    ),
+                    output_field=IntegerField(),
+                )
             )
+            .values('top_id')
+            .annotate(count=Count('job_id', distinct=True))
+            .values_list('top_id', 'count')
+        )
+
+    demand = [
+        {
+            'id': category.id,
+            'name': category.name,
+            'slug': category.slug,
+            'logo_url': media_url_from_value(category.logo_url, request=request),
+            'count': counts[category.id],
+        }
+        for category in top_categories
+        if counts.get(category.id)
+    ]
     return sorted(demand, key=lambda item: item['count'], reverse=True)[:24]
 
 

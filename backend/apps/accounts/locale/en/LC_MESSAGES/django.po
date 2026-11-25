@@ -541,6 +541,9 @@ msgstr "Please complete the captcha."
 msgid "Xác thực captcha thất bại."
 msgstr "Captcha verification failed."
 
+msgid "Captcha không hợp lệ cho trang này."
+msgstr "The captcha is not valid for this site."
+
 msgid "Captcha không hợp lệ cho hành động này."
 msgstr "The captcha is not valid for this action."
 

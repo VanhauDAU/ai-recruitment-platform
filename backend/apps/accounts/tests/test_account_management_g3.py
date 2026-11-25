@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 from django.core import management
 from django.db import close_old_connections, connection
-from django.test import TestCase, TransactionTestCase
+from django.test import TestCase, TransactionTestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
@@ -703,3 +703,27 @@ class AccountInvitationConcurrencyTests(TransactionTestCase):
             ).count(),
             1,
         )
+
+
+class DemoAccountProductionGuardTests(TestCase):
+    @override_settings(IS_PRODUCTION=True)
+    def test_admin_demo_seed_refuses_production_even_with_force(self):
+        with self.assertRaises(management.CommandError):
+            management.call_command('seed_admin_account_demo', force=True, stdout=StringIO())
+
+        self.assertFalse(User.objects.filter(email__endswith='@demo.local').exists())
+
+    def test_purge_lists_by_default_and_deletes_only_with_confirm(self):
+        management.call_command('seed_admin_account_demo', force=True, stdout=StringIO())
+        kept = User.objects.create_user(
+            email='real@procv.site', password='Str0ng-pass!', role=User.Role.CANDIDATE
+        )
+
+        output = StringIO()
+        management.call_command('purge_demo_accounts', stdout=output)
+        self.assertIn('admin: 2', output.getvalue())
+        self.assertEqual(User.objects.filter(email__endswith='@demo.local').count(), 2)
+
+        management.call_command('purge_demo_accounts', confirm=True, stdout=StringIO())
+        self.assertFalse(User.objects.filter(email__endswith='@demo.local').exists())
+        self.assertTrue(User.objects.filter(pk=kept.pk).exists())

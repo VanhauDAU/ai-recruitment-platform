@@ -10,7 +10,7 @@ import {
   UserOutlined,
   WalletOutlined,
 } from '@ant-design/icons'
-import { Modal, Radio } from 'antd'
+import { Modal } from 'antd'
 import dayjs from '@/shared/lib/dayjs'
 import { useMemo, useState } from 'react'
 import {
@@ -456,25 +456,24 @@ export default function JobFormPreview({
           <h2 className="text-sm font-extrabold text-slate-800">{m.employer_job_preview_heading()}</h2>
           <div className="mt-2">
             <span className="text-[11px] font-medium text-slate-500">{m.employer_job_preview_on_page()}</span>
-            <Radio.Group
-              aria-label={m.employer_job_preview_placement_aria()}
-              className="mt-1.5 flex w-full"
-              value={previewPage}
-              onChange={(event) => setPreviewPage(event.target.value)}
-            >
-              <Radio.Button
-                className="!flex !h-9 !min-w-0 !flex-1 !items-center !justify-center !rounded-l-lg !px-2 !text-center !text-[11px] !font-semibold"
-                value="job-list"
-              >
-                {m.employer_job_preview_job_list_page()}
-              </Radio.Button>
-              <Radio.Button
-                className="!flex !h-9 !min-w-0 !flex-1 !items-center !justify-center !rounded-r-lg !px-2 !text-center !text-[11px] !font-semibold"
-                value="job-detail"
-              >
-                {m.employer_job_preview_job_details()}
-              </Radio.Button>
-            </Radio.Group>
+            <div role="radiogroup" aria-label={m.employer_job_preview_placement_aria()} className="post-job-preview-switch mt-1.5">
+              {[
+                ['job-list', m.employer_job_preview_job_list_page()],
+                ['job-detail', m.employer_job_preview_job_details()],
+              ].map(([value, label]) => (
+                <label key={value} className={`post-job-preview-switch__option${previewPage === value ? ' is-active' : ''}`}>
+                  <input
+                    type="radio"
+                    name="post-job-preview-page"
+                    value={value}
+                    checked={previewPage === value}
+                    onChange={() => setPreviewPage(value)}
+                    className="sr-only"
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
           </div>
         </div>
 

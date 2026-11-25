@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Chuẩn bị deploy: GĐ1 bảo mật ứng dụng](#chuẩn-bị-deploy-gđ1-bảo-mật-ứng-dụng-2026-11-25) | 🟨 Nhánh `feat/predeploy-security`, chờ PR; GĐ2–GĐ6 theo [kế hoạch](06-deployment/ke-hoach-chuan-bi-deploy.md) |
 | [Việc làm gần tôi: bản đồ, bán kính, tọa độ nơi làm việc (ADR-0029)](#việc-làm-gần-tôi-bản-đồ-bán-kính-tọa-độ-nơi-làm-việc-adr-0029-2026-11-25) | 🟨 PR #344 (nhánh `feat/nearby-jobs`), chờ gộp |
 | [Thông báo thời gian thực qua WebSocket, hoàn tác 15 giây (ADR-0028)](#thông-báo-thời-gian-thực-qua-websocket-hoàn-tác-15-giây-adr-0028-2026-11-25) | ✅ Đã gộp dev (#340); sửa socket rớt mỗi 5 giây trên nhánh `fix/realtime-redis-timeout` |
 | [Phễu tuyển dụng trên trang chủ NTD](#phễu-tuyển-dụng-trên-trang-chủ-ntd-2026-11-25) | 🟨 PR #338 (nhánh `feat/employer-recruitment-funnel`), chờ gộp |
@@ -54,6 +55,29 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
 
+
+## Chuẩn bị deploy: GĐ1 bảo mật ứng dụng (2026-11-25)
+
+Kế hoạch 6 giai đoạn (bảo mật, hạ tầng/giám sát, backup/khôi phục, hiệu năng,
+pháp lý, rehearsal): [`ke-hoach-chuan-bi-deploy.md`](06-deployment/ke-hoach-chuan-bi-deploy.md).
+
+- **Phụ thuộc:** Django 5.1.5 (hết hỗ trợ) → 5.2.19 LTS; DRF 3.18.3, simplejwt 5.5.1,
+  cryptography 50.0.2, Pillow 13.0.0, pypdf 6.21.4, requests 2.34.2, daphne 4.2.3
+  (ghim twisted/autobahn/pyOpenSSL đã vá), channels, dnspython, idna — `pip-audit` sạch.
+- **LibreOffice (DOCX→PDF):** tiến trình chuyển đổi chỉ nhận env tối thiểu (không còn
+  thấy SECRET_KEY/DB/R2); PDF đã dựng giữ 10 phút trong cache; throttle
+  `cv_shared_file` (link chia sẻ ẩn danh, theo IP) và `office_file_preview`.
+- **Tài khoản demo:** `seed_admin_account_demo`/`seed_demo_jobs` từ chối chạy trên
+  production; lệnh mới `purge_demo_accounts [--confirm]` dọn `@demo.local` sau khi
+  khôi phục dump từ dev.
+- **OAuth:** state gắn với cookie HttpOnly của trình duyệt bắt đầu đăng nhập (chặn
+  login CSRF); reCAPTCHA kiểm `hostname` ở production; throttle đổi mật khẩu và
+  lời mời admin; production bắt buộc `API_DOCS_ENABLED=False`.
+- **nginx:** CSP (Report-Only, bật chặn sau rehearsal), Permissions-Policy, COOP,
+  HSTS includeSubDomains, `X-Frame-Options: DENY`; chặn tệp ẩn (`/.vite/manifest.json`);
+  nginx 1.28; canonical mặc định `procv.site`.
+- **CI:** workflow `security-ci.yml` (pip-audit, gitleaks, nạp `config.settings.production`
+  + `check --deploy`, shellcheck `scripts/deploy`); Dependabot nhắm `dev`.
 
 ## Việc làm gần tôi: bản đồ, bán kính, tọa độ nơi làm việc (ADR-0029) (2026-11-25)
 

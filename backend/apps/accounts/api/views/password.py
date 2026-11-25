@@ -6,6 +6,7 @@ from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import permissions, serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from ...selectors import linked_oauth_provider
@@ -18,6 +19,10 @@ from ..serializers import PasswordChangeSerializer, SessionUserSerializer
 
 class PasswordChangeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    # current_password là một lần đoán mật khẩu: token access bị lộ không được
+    # dùng để dò mật khẩu không giới hạn.
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'password_change'
 
     @extend_schema(
         summary='Điều kiện cần để đặt hoặc thay đổi mật khẩu ở phiên hiện tại',

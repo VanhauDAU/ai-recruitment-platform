@@ -94,6 +94,7 @@ class JobSeoTests(TestCase):
         self.assertEqual(response['X-Robots-Tag'], 'noindex, nofollow')
 
 
+@override_settings(FRONTEND_SHELL_HTML=SHELL)
 class NearbyJobsSeoShellTests(TestCase):
     def test_nearby_page_has_its_own_indexable_metadata_and_allows_geolocation(self):
         response = self.client.get('/viec-lam-gan-ban')

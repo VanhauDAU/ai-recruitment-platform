@@ -170,7 +170,12 @@ mọi lỗi cấu hình thành một thông báo — xem bằng
   ```
 
   chép lên VPS rồi `scripts/deploy/restore_db.sh procv-initial.dump`. Media
-  public đã nằm sẵn trên R2 nên không cần chép.
+  public đã nằm sẵn trên R2 nên không cần chép. **Bắt buộc** dọn tài khoản demo
+  (`@demo.local`, mật khẩu nằm trong repo công khai, có cả một superuser):
+
+  ```bash
+  scripts/deploy/compose.sh exec backend python manage.py purge_demo_accounts --confirm
+  ```
 - *DB trống*: chạy lần lượt các seed nền giống `scripts/reset_local_db.sh`:
 
   ```bash
@@ -210,6 +215,12 @@ scripts/deploy/compose.sh exec ml-worker python manage.py matching_backfill --in
 - Xuất PDF một CV thành công (worker → `http://web:8080/cv-print.html`).
 - Danh sách thiết bị đăng nhập hiện **IP thật** của bạn, không phải `172.28.0.10`.
 - `https://procv.site/robots.txt`, `/sitemap.xml` trả nội dung của Django.
+- `curl -sI https://procv.site/viec-lam` có `Content-Security-Policy-Report-Only`,
+  `Strict-Transport-Security`, `Permissions-Policy`; `/.vite/manifest.json` trả 404.
+- **CSP:** mở đủ ba cổng (đăng nhập, đăng tin, xem CV, bản đồ, reCAPTCHA, video
+  nhúng) với DevTools mở; khi console không còn vi phạm CSP, đổi
+  `Content-Security-Policy-Report-Only` thành `Content-Security-Policy` trong
+  `frontend/docker/nginx/snippets/csp.conf` rồi deploy lại để bắt đầu chặn.
 
 ## 7. Sao lưu
 

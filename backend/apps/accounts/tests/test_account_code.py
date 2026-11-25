@@ -3,9 +3,10 @@
 import re
 from unittest.mock import patch
 
-from django.db import IntegrityError, connection
-from django.db.migrations.executor import MigrationExecutor
-from django.test import TestCase, TransactionTestCase
+from django.db import IntegrityError
+from django.test import TestCase
+
+from common.tests.migration_case import MigrationTestCase
 
 from ..domain.account_code import ACCOUNT_CODE_REGEX, random_account_code
 from ..models import AdminAccessAuditLog, User
@@ -65,22 +66,9 @@ class AccountCodeTests(TestCase):
             self.assertEqual(list(found.values_list('pk', flat=True)), [user.pk], query)
 
 
-class NumericPublicIdMigrationTests(TransactionTestCase):
-    # Như các TransactionTestCase khác của accounts: flush không tạo lại content type,
-    # để test serialized_rollback chạy sau không chèn trùng.
-    serialized_rollback = True
+class NumericPublicIdMigrationTests(MigrationTestCase):
     before = [('accounts', '0003_admin_audit_target_idx')]
     after = [('accounts', '0005_user_public_id_digits')]
-
-    def migrate(self, targets):
-        executor = MigrationExecutor(connection)
-        executor.loader.build_graph()
-        executor.migrate(targets)
-        return executor.loader.project_state(targets).apps
-
-    def tearDown(self):
-        self.migrate(MigrationExecutor(connection).loader.graph.leaf_nodes())
-        super().tearDown()
 
     def test_legacy_codes_become_numeric_and_audit_logs_follow(self):
         apps = self.migrate(self.before)

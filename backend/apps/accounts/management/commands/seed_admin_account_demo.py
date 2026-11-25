@@ -19,10 +19,13 @@ class Command(BaseCommand):
         parser.add_argument(
             '--force',
             action='store_true',
-            help='Cho phép chạy ngoài DEBUG (không khuyến nghị).',
+            help='Cho phép chạy ngoài DEBUG (không khuyến nghị). Không có hiệu lực ở production.',
         )
 
     def handle(self, *args, **options):
+        # Mật khẩu demo nằm trong repo công khai: production không bao giờ được tạo.
+        if settings.IS_PRODUCTION:
+            raise CommandError('Không tạo tài khoản demo trên production.')
         if not settings.DEBUG and not options['force']:
             raise CommandError(
                 'Seed demo chỉ được chạy khi DEBUG=True. Dùng --force nếu đã hiểu rủi ro.'
