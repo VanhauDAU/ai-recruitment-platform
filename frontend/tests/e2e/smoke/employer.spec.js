@@ -1781,7 +1781,8 @@ test('employer applications: grouped CV workspace is clear across responsive lay
   await expect(candidateList.getByRole('button', { name: 'Xem CV Frontend 2026 của Lê Văn Hậu' })).toBeVisible()
   await expect(candidateList.getByRole('button', { name: 'Xem CV Frontend bản đầu của Lê Văn Hậu' })).toBeVisible()
   await expect(cvPreview.getByLabel('Xem trước CV single_column_v1 trang 1')).toBeVisible()
-  await expect(cvPreview.getByRole('button', { name: /Nhắn tin/ })).toBeDisabled()
+  // Nhắn tin đã bị gỡ khỏi hệ thống (#343): CV preview không còn lối vào nào.
+  await expect(cvPreview.getByRole('button', { name: /Nhắn tin/ })).toHaveCount(0)
   const zoom = cvPreview.getByRole('group', { name: 'Thu phóng CV' })
   await zoom.getByRole('button', { name: 'Phóng to' }).click()
   await zoom.getByRole('button', { name: 'Vừa khung' }).click()

@@ -510,7 +510,8 @@ test('public smoke: company page renders from a direct URL with overview, jobs a
   const jobs = page.getByRole('region', { name: 'Việc làm đang tuyển' })
   await expect(jobs.getByRole('article')).toHaveCount(5)
   await expect(jobs.getByRole('article').first().getByText('20 - 35 triệu')).toBeVisible()
-  await expect(jobs.getByText('Công ty TNHH Phần mềm FPT')).toHaveCount(0)
+  // Thẻ tin trang công ty dùng chung bố cục thẻ danh sách việc làm: có tên công ty.
+  await expect(jobs.getByRole('article').first().getByText('Công ty TNHH Phần mềm FPT')).toBeVisible()
   expect(jobRequests).toEqual([{ company: 'co_ab12', page: '1', page_size: '10' }])
 
   await expect(page.getByRole('region', { name: 'Thông tin chung' }).getByRole('link', { name: 'fpt-software.example' }))
@@ -519,19 +520,19 @@ test('public smoke: company page renders from a direct URL with overview, jobs a
   await expect(page.getByRole('region', { name: 'Công ty cùng lĩnh vực' }).getByRole('link', { name: /CMC Global/ }))
     .toHaveAttribute('href', '/cong-ty/cmc-global')
 
-  const mobileCta = page.getByRole('link', { name: 'Xem việc làm (12)' })
+  const mobileCta = page.getByRole('link', { name: 'Xem tin tuyển dụng (12)' })
   if (testInfo.project.name === 'desktop-chromium') {
     await expect(mobileCta).toBeHidden()
-    await expect(page.getByRole('link', { name: 'Xem việc làm', exact: true })).toBeVisible()
   } else {
     await expect(mobileCta).toBeVisible()
   }
   await expectNoHorizontalOverflow(page)
 
-  await jobs.getByRole('link', { name: 'Xem tất cả việc làm' }).click()
+  await jobs.getByRole('link', { name: 'Xem tất cả tin tuyển dụng' }).click()
   await expect(page).toHaveURL(/\/cong-ty\/fpt-software\?tab=viec-lam$/)
-  await expect(tabs.getByRole('link', { name: 'Việc làm (12)' })).toHaveAttribute('aria-current', 'page')
-  await expect(jobs.getByRole('article')).toHaveCount(10)
+  await expect(tabs.getByRole('link', { name: 'Tin tuyển dụng (12)' })).toHaveAttribute('aria-current', 'page')
+  await expect(page.getByRole('heading', { level: 2, name: 'Việc làm tại FPT Software' })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Tin tuyển dụng', exact: true }).getByRole('article')).toHaveCount(10)
   await expect(mobileCta).toHaveCount(0)
   await expectNoHorizontalOverflow(page)
 })
@@ -542,18 +543,20 @@ test('public smoke: company page keeps the jobs tab, keyword and location in the
 
   await page.goto('/cong-ty/fpt-software?tab=viec-lam&q=react&location=1&page=2')
 
-  const jobs = page.getByRole('region', { name: 'Việc làm đang tuyển' })
+  const jobs = page.getByRole('region', { name: 'Tin tuyển dụng', exact: true })
   await expect(jobs.getByRole('article')).toHaveCount(10)
   expect(jobRequests).toEqual([
     { company: 'co_ab12', page: '2', page_size: '10', search: 'react', location: '1' },
   ])
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow')
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /\/cong-ty\/fpt-software$/)
-  await expect(jobs.getByRole('status')).toHaveText('Tìm thấy 25 việc làm phù hợp')
+  await expect(jobs.getByRole('status')).toHaveText('Tìm thấy 25 tin tuyển dụng phù hợp')
+  // Tab tin tuyển dụng thay cả khối tổng quan lẫn sidebar bằng cột danh mục nghề.
   await expect(page.getByRole('heading', { name: 'Giới thiệu công ty' })).toHaveCount(0)
-  await expect(page.getByRole('heading', { name: 'Thông tin chung' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Thông tin chung' })).toHaveCount(0)
+  await expect(page.getByRole('complementary', { name: 'Danh mục nghề' })).toBeVisible()
 
-  const keyword = jobs.getByRole('searchbox', { name: 'Tên việc làm' })
+  const keyword = jobs.getByRole('searchbox', { name: 'Tên công việc' })
   const location = jobs.getByRole('combobox', { name: 'Địa điểm' })
   await expect(keyword).toHaveValue('react')
   await expect(location).toHaveValue('1')
@@ -566,7 +569,7 @@ test('public smoke: company page keeps the jobs tab, keyword and location in the
   await keyword.fill('khong-co')
   await jobs.getByRole('button', { name: 'Tìm kiếm' }).click()
   await expect(page).toHaveURL(/\?tab=viec-lam&q=khong-co&location=2$/)
-  await expect(jobs.getByText('Không có việc làm khớp bộ lọc.')).toBeVisible()
+  await expect(jobs.getByText('Không có tin tuyển dụng khớp bộ lọc.')).toBeVisible()
 
   await jobs.getByRole('link', { name: 'Xoá bộ lọc' }).click()
   await expect(page).toHaveURL(/\/cong-ty\/fpt-software\?tab=viec-lam$/)
@@ -610,11 +613,11 @@ test('public smoke: company page stays complete for a sparse company and shows a
   await expect(page.locator('.company-profile-cover--fallback')).toBeVisible()
   await expect(page.locator('.company-profile-cover img')).toHaveCount(0)
   await expect(page.locator('.company-profile-logo')).toHaveText('C')
-  await expect(page.getByText('Công ty chưa có việc làm đang tuyển.')).toBeVisible()
+  await expect(page.getByText('Công ty chưa có tin tuyển dụng đang mở.')).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Thông tin chung' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Chia sẻ công ty' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Công ty cùng lĩnh vực' })).toHaveCount(0)
-  await expect(page.getByRole('link', { name: /Xem việc làm/ })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: /Xem tin tuyển dụng/ })).toHaveCount(0)
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', 'noindex, nofollow')
   await expectNoHorizontalOverflow(page)
 
@@ -690,7 +693,7 @@ test('public smoke: company page follow asks guests to sign in and toggles for a
   await expect(notify).not.toBeChecked()
   await expect(notify).toBeEnabled()
   if (testInfo.project.name !== 'desktop-chromium') {
-    const bar = await page.getByRole('link', { name: 'Xem việc làm (12)' }).boundingBox()
+    const bar = await page.getByRole('link', { name: 'Xem tin tuyển dụng (12)' }).boundingBox()
     expect(bar.x + bar.width).toBeLessThanOrEqual(page.viewportSize().width)
   }
   await expectNoHorizontalOverflow(page)
