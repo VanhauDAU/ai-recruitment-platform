@@ -26326,6 +26326,8 @@ components:
           $ref: '#/components/schemas/EmployerDashboardAccount'
         summary:
           $ref: '#/components/schemas/EmployerDashboardSummary'
+        funnel:
+          $ref: '#/components/schemas/EmployerDashboardFunnel'
         application_activity:
           type: array
           items:
@@ -26350,6 +26352,7 @@ components:
       - account
       - application_activity
       - flash_badge
+      - funnel
       - recent_applications
       - recent_jobs
       - recruitment_need
@@ -26381,6 +26384,25 @@ components:
       - recruiter_verification_status
       - verification
       - work_location_name
+    EmployerDashboardFunnel:
+      type: object
+      properties:
+        received:
+          type: integer
+        shortlisted:
+          type: integer
+        interviewed:
+          type: integer
+        accepted:
+          type: integer
+        rejected:
+          type: integer
+      required:
+      - accepted
+      - interviewed
+      - received
+      - rejected
+      - shortlisted
     EmployerDashboardSummary:
       type: object
       properties:

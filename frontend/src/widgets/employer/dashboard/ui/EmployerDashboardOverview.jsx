@@ -23,7 +23,7 @@ import {
   DashboardVerificationJourney,
 } from './DashboardWelcomeSections'
 import { RecentApplicationsCard, RecentJobsCard } from './RecentRecruitmentCards'
-import RecruitmentPipelineCard from './RecruitmentPipelineCard'
+import RecruitmentFunnelCard from './RecruitmentFunnelCard'
 import './employer-dashboard.css'
 
 export default function EmployerDashboardOverview() {
@@ -88,9 +88,9 @@ export default function EmployerDashboardOverview() {
 
       <DashboardSummaryCards summary={summary} />
 
-      <div className="grid items-stretch gap-5 xl:grid-cols-[minmax(0,1.7fr)_minmax(300px,.7fr)]">
+      <div className="grid items-stretch gap-5 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
         <ApplicationActivityCard activity={data.application_activity || []} />
-        <RecruitmentPipelineCard summary={summary} />
+        <RecruitmentFunnelCard funnel={data.funnel} />
       </div>
 
       <DashboardVerificationJourney

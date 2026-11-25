@@ -655,9 +655,9 @@ test('employer dashboard: charts and action buttons stay visible and responsive'
 
   await expect(page.getByRole('heading', { name: /Xin chào, Nguyễn An/ })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Xu hướng hồ sơ ứng tuyển' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Trạng thái hồ sơ' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Phễu tuyển dụng' })).toBeVisible()
   await expect(page.getByRole('img', { name: /Biểu đồ đường cong hồ sơ ứng tuyển 7 ngày/ })).toBeVisible()
-  await expect(page.getByRole('img', { name: /Biểu đồ pipeline/ })).toBeVisible()
+  await expect(page.getByRole('img', { name: /^Phễu tuyển dụng: Nhận hồ sơ: 0/ })).toBeVisible()
 
   const dashboardPrimaryAction = page.getByRole('link', { name: /Đăng tin mới/ }).first()
   const dashboardSecondaryAction = page.getByRole('link', { name: /Quản lý hồ sơ/ })

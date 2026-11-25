@@ -44,6 +44,14 @@ class EmployerDashboardSummarySerializer(serializers.Serializer):
     applications_interviewed = serializers.IntegerField()
 
 
+class EmployerDashboardFunnelSerializer(serializers.Serializer):
+    received = serializers.IntegerField()
+    shortlisted = serializers.IntegerField()
+    interviewed = serializers.IntegerField()
+    accepted = serializers.IntegerField()
+    rejected = serializers.IntegerField()
+
+
 class ApplicationActivitySerializer(serializers.Serializer):
     date = serializers.DateField()
     count = serializers.IntegerField()
@@ -108,6 +116,7 @@ class FlashBadgeStateSerializer(serializers.Serializer):
 class EmployerDashboardSerializer(serializers.Serializer):
     account = EmployerDashboardAccountSerializer()
     summary = EmployerDashboardSummarySerializer()
+    funnel = EmployerDashboardFunnelSerializer()
     application_activity = ApplicationActivitySerializer(many=True)
     recruitment_need = RecruitmentNeedSummarySerializer(allow_null=True)
     flash_badge = FlashBadgeStateSerializer(allow_null=True)

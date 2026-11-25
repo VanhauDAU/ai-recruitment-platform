@@ -35,6 +35,18 @@ def _summary(jobs, applications):
     }
 
 
+def _funnel(applications):
+    # Reached counts: an application that was interviewed and later rejected
+    # still counts at every step it went through.
+    return applications.aggregate(
+        received=Count('id'),
+        shortlisted=Count('id', filter=Q(shortlisted_at__isnull=False)),
+        interviewed=Count('id', filter=Q(interviewed_at__isnull=False)),
+        accepted=Count('id', filter=Q(accepted_at__isnull=False)),
+        rejected=Count('id', filter=Q(status=Application.Status.REJECTED)),
+    )
+
+
 def _application_activity(applications):
     start = vietnam_today() - timedelta(days=6)
     daily = {
@@ -125,6 +137,7 @@ def build_employer_dashboard(user):
             'verification': verification,
         },
         'summary': _summary(jobs, applications),
+        'funnel': _funnel(applications),
         'application_activity': _application_activity(applications),
         'recruitment_need': None
         if need is None

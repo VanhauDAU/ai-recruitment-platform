@@ -8,6 +8,14 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-25
 
+#### Changed — Phễu tuyển dụng trên trang chủ NTD
+
+- Thẻ donut "Trạng thái hồ sơ" thay bằng phễu 3D (SVG): Nhận hồ sơ → Phù hợp → Phỏng vấn
+  → Trúng tuyển, thêm tầng Không phù hợp; nhãn kèm tỉ lệ so với tổng hồ sơ nhận.
+- `GET /api/employer/dashboard/` thêm `funnel`: số hồ sơ hiện có đã tới từng bước (theo
+  `*_at`), nên hồ sơ phỏng vấn rồi bị loại vẫn tính ở bước phỏng vấn.
+- Khối "Hoàn thiện workspace tuyển dụng" ẩn khi đủ 5 bước xác thực.
+
 #### Changed — Huy hiệu Sấm Chớp tính từ mức phản hồi thật (ADR-0027)
 
 - `Job.has_flash_badge` không còn do admin tick tay. Task mỗi giờ (`refresh-flash-badges`)

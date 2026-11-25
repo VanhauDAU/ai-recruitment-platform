@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Phễu tuyển dụng trên trang chủ NTD](#phễu-tuyển-dụng-trên-trang-chủ-ntd-2026-11-25) | 🟨 Nhánh `feat/employer-recruitment-funnel`, chờ gộp PR |
 | [Làm lại khối Gợi ý việc làm phù hợp trang chủ](#làm-lại-khối-gợi-ý-việc-làm-phù-hợp-trang-chủ-2026-11-25) | 🟨 Xong trên nhánh `feat/home-recommendations-redesign`, chưa commit/PR |
 | [Huy hiệu Sấm Chớp tính từ mức phản hồi thật (ADR-0027)](#huy-hiệu-sấm-chớp-tính-từ-mức-phản-hồi-thật-adr-0027-2026-11-25) | ✅ Đã gộp dev (#334) |
 | [Làm lại khối Việc làm nổi bật trang chủ](#làm-lại-khối-việc-làm-nổi-bật-trang-chủ-2026-11-25) | ✅ Đã gộp dev (#333) |
@@ -50,6 +51,17 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+## Phễu tuyển dụng trên trang chủ NTD (2026-11-25)
+
+- Thẻ donut "Trạng thái hồ sơ" thay bằng phễu 3D vẽ SVG: Nhận hồ sơ → Phù hợp →
+  Phỏng vấn → Trúng tuyển, thêm tầng Không phù hợp; nhãn bên trái kèm tỉ lệ so với
+  tổng hồ sơ nhận được.
+- API `GET /api/employer/dashboard/` thêm `funnel` (received, shortlisted,
+  interviewed, accepted, rejected): đếm hồ sơ hiện có **đã tới** từng bước (theo
+  `*_at`), nên hồ sơ phỏng vấn rồi bị loại vẫn tính ở bước phỏng vấn.
+- Khối "Hoàn thiện workspace tuyển dụng" ẩn khi đủ 5 bước xác thực (bỏ huy hiệu
+  "Đã hoàn tất").
 
 ## Huy hiệu Sấm Chớp tính từ mức phản hồi thật (ADR-0027, 2026-11-25)
 

@@ -64,6 +64,7 @@ export function DashboardVerificationJourney({
   const progress = getEmployerVerificationProgress(verification)
   const completedCount = VERIFICATION_STEPS.filter((step) => verification[step.key]).length
   const activeIndex = VERIFICATION_STEPS.findIndex((step) => !verification[step.key])
+  if (activeIndex === -1) return null
 
   return (
     <section className="rounded-[20px] border border-slate-200/80 bg-white p-5 shadow-[0_12px_35px_-26px_rgba(15,23,42,.45)] sm:p-6" aria-labelledby="verification-journey-title">
@@ -71,10 +72,7 @@ export function DashboardVerificationJourney({
         <div className="flex min-w-0 items-center gap-3">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl employer-dash-icon text-lg"><LockOutlined /></span>
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 id="verification-journey-title" className="text-base font-black text-slate-900">{m.employer_workspace_dash_journey_title()}</h2>
-              {completedCount === VERIFICATION_STEPS.length && <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">{m.employer_workspace_dash_journey_done()}</span>}
-            </div>
+            <h2 id="verification-journey-title" className="text-base font-black text-slate-900">{m.employer_workspace_dash_journey_title()}</h2>
             <p className="mt-1 text-xs text-slate-500">{m.employer_workspace_dash_journey_progress({ completed: completedCount, total: VERIFICATION_STEPS.length })}</p>
           </div>
         </div>
