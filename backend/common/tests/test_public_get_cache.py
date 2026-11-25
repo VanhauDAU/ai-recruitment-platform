@@ -1,10 +1,13 @@
 """Cache ngắn cho GET công khai (common.api.caching)."""
 
+from unittest.mock import patch
+
 from django.http import HttpResponse
 from django.test import RequestFactory, SimpleTestCase, override_settings
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from common.api import caching
 from common.api.caching import cache_public_get
 
 
@@ -34,6 +37,7 @@ class PlainView:
 class CachePublicGetTests(SimpleTestCase):
     def setUp(self):
         CountingView.calls = PlainView.calls = 0
+        caching.cache.clear()
         self.factory = RequestFactory()
         self.view = CountingView.as_view()
 
@@ -57,6 +61,19 @@ class CachePublicGetTests(SimpleTestCase):
         self.assertEqual(self.get('?level=bad').status_code, 400)
         self.assertEqual(self.get('?level=bad').status_code, 400)
         self.assertEqual(CountingView.calls, 2)
+
+    def test_cache_backends_whose_set_returns_true_do_not_replace_the_response(self):
+        # django-redis (dev, production) returns True from set(); LocMem returns None.
+        locmem_set = caching.cache.set
+        with patch.object(
+            caching.cache, 'set', side_effect=lambda *a, **kw: locmem_set(*a, **kw) or True
+        ):
+            response = self.view(self.factory.get('/api/public/x/?level=province'))
+            rendered = response.render()
+
+        self.assertIs(rendered, response)
+        self.assertEqual(rendered.status_code, 200)
+        self.assertEqual(self.get('?level=province').data, {'level': 'province', 'call': 1})
 
     def test_plain_django_responses_are_cached_too(self):
         view = PlainView()
