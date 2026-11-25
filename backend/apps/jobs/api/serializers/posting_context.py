@@ -64,7 +64,5 @@ class EmployerJobPostingContextSerializer(serializers.Serializer):
     publish_limit = serializers.IntegerField(min_value=0)
     publish_remain = serializers.IntegerField(min_value=0)
     verified_publish_limit = serializers.IntegerField(min_value=0)
-    free_publish_limit = serializers.IntegerField(min_value=0)
-    free_publish_remain = serializers.IntegerField(min_value=0)
     job_postable = serializers.BooleanField()
     block_reason = serializers.CharField(allow_blank=True)

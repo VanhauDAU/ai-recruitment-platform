@@ -42,7 +42,6 @@ from ..views import (
     JoinCompanyView,
     MyCompanyJoinRequestView,
     MyCompanyView,
-    PhoneAvailabilityView,
     PhoneChallengeView,
     RecruiterMeView,
     RecruitmentNeedDetailView,
@@ -98,7 +97,6 @@ urlpatterns = [
         name='employer-recruitment-need-detail',
     ),
     path('me/', RecruiterMeView.as_view(), name='employer-me'),
-    path('phone/check/', PhoneAvailabilityView.as_view(), name='employer-phone-check'),
     path('phone/send-otp/', SendPhoneOtpView.as_view(), name='employer-phone-send-otp'),
     path(
         'phone/challenges/<str:public_id>/',

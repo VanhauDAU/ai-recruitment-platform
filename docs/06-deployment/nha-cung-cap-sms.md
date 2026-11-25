@@ -52,8 +52,8 @@ Live API contract:
 - `POST /api/employer/phone/verify/` nhận exact `challenge_id,code`;
 - cooldown 60 giây, TTL 10 phút, tối đa năm lần sai; resend vô hiệu challenge
   active cũ;
-- `/api/employer/phone/check/` chỉ validate format và luôn trả generic;
-  uniqueness được recheck sau khi mã đúng trong transaction.
+- không có endpoint tra số đã dùng; uniqueness được recheck sau khi mã đúng
+  trong transaction.
 
 Adapter `http` gửi request provider như sau:
 

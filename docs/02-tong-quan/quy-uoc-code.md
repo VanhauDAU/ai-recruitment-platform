@@ -64,6 +64,26 @@ apps/jobs/
   `signals`; `common/` chỉ dành cho hạ tầng dùng qua nhiều Django app.
 - Thay đổi schema phải đi kèm migration; không sửa migration đã chạy ở môi trường khác.
 
+### Thư mục và file phụ được phép
+
+ADR-0022 liệt kê bố cục chính. Các phần sau cũng hợp lệ, vì có lý do riêng và
+`scripts/check_backend_imports.py` không chặn chúng:
+
+| Ở đâu | Dùng cho | App đang dùng |
+| --- | --- | --- |
+| `templates/<app>/` | Template email và HTML in PDF | applications, campaigns, candidates, jobs, messaging |
+| `locale/en/LC_MESSAGES/` | Bản dịch tiếng Anh của chuỗi `gettext` (ADR-0023) | app có chuỗi trả về người dùng |
+| `seed_data/` | JSON và module dữ liệu cho lệnh `seed_*`, không chạy lúc import app | cv_templates, jobs, locations, sitecontent |
+| `domain/*.json` | Registry tĩnh đọc trong `domain/` | cv_templates |
+| `api/authentication.py`, `api/schema.py` | Lớp xác thực DRF và extension OpenAPI | accounts |
+| `api/exceptions.py` | Exception HTTP riêng của app (mã lỗi API) | cvs, employers |
+| `api/middleware.py` | Middleware chạy trên request HTTP | sitecontent (chế độ bảo trì) |
+| `api/consumers.py`, `api/routing.py` | WebSocket consumer và route ASGI | realtime |
+
+App thiếu tầng chính, có chủ đích: `ai_core` không có `api/` (runtime cho app
+khác gọi); `dashboard` không có `models/` (chỉ đọc số liệu của app khác);
+`realtime` không có `models/`, `selectors/` (chỉ đẩy sự kiện qua channel layer).
+
 ## Kiểm tra trước khi hoàn tất
 
 ```bash

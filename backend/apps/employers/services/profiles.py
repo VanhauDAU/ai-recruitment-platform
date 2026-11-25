@@ -116,17 +116,11 @@ def get_or_create_recruiter(user):
     return recruiter
 
 
-def _legacy_verification_completed(readiness):
+def _verification_completed(readiness):
     completed = readiness['job_workspace_ready']
     if approved_employer_verification_required():
         completed = completed and readiness['verification_approved']
     return completed
-
-
-def recruiter_posting_readiness(user):
-    """Return the compatibility readiness bit from the canonical policy state."""
-    recruiter, readiness = recruiter_readiness_state(user)
-    return recruiter, _legacy_verification_completed(readiness)
 
 
 def recruiter_job_posting_entitlement(user):
@@ -137,7 +131,7 @@ def recruiter_job_posting_entitlement(user):
     appropriate limit under a transaction.
     """
     recruiter, readiness = recruiter_readiness_state(user)
-    verification_completed = _legacy_verification_completed(readiness)
+    verification_completed = _verification_completed(readiness)
     if recruiter is None or recruiter.company_id is None:
         return recruiter, {
             'verification_completed': False,

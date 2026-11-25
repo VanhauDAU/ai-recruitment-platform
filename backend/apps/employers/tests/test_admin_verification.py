@@ -34,7 +34,7 @@ from ..services import (
     confirm_verification_decision,
     ensure_recruiter_candidate_data_access,
     recruiter_is_approved,
-    recruiter_posting_readiness,
+    recruiter_job_posting_entitlement,
     verification_decision_impact,
 )
 from .cases import AdminVerificationTestCase
@@ -87,10 +87,10 @@ class EmployerAccountVerificationTests(AdminVerificationTestCase):
             impact_token=impact['impact_token'],
         )
 
-        _, first_ready = recruiter_posting_readiness(self.first_user)
-        _, second_ready = recruiter_posting_readiness(self.second_user)
-        self.assertTrue(first_ready)
-        self.assertFalse(second_ready)
+        _, first = recruiter_job_posting_entitlement(self.first_user)
+        _, second = recruiter_job_posting_entitlement(self.second_user)
+        self.assertTrue(first['verification_completed'])
+        self.assertFalse(second['verification_completed'])
         ensure_recruiter_candidate_data_access(self.first_user)
         with self.assertRaises(CandidateDataBlocked) as blocked:
             ensure_recruiter_candidate_data_access(self.second_user)

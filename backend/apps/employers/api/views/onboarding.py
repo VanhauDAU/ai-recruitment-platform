@@ -1,7 +1,6 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils.translation import gettext as _
 from drf_spectacular.utils import (
-    OpenApiParameter,
     extend_schema,
     extend_schema_view,
     inline_serializer,
@@ -23,7 +22,6 @@ from ...services import (
     accept_recruiter_dpa,
     get_or_create_recruiter,
     get_sms_phone_challenge,
-    normalize_vietnamese_mobile,
     phone_challenge_snapshot,
     start_sms_phone_verification,
     verify_sms_phone_challenge,
@@ -54,36 +52,6 @@ class RecruiterMeView(generics.RetrieveUpdateAPIView):
         # A GET still creates the profile: the response is the profile itself,
         # including its public_id, so there is nothing to answer without one.
         return get_or_create_recruiter(self.request.user)
-
-
-class PhoneAvailabilityView(APIView):
-    """Compatibility endpoint that validates format without exposing account use."""
-
-    permission_classes = [IsEmployer]
-    throttle_classes = [ScopedRateThrottle]
-    throttle_scope = 'employer_phone_status'
-
-    @extend_schema(
-        summary='Kiểm tra định dạng số điện thoại nhà tuyển dụng',
-        parameters=[OpenApiParameter('phone', str, OpenApiParameter.QUERY, required=True)],
-        responses=inline_serializer(
-            'PhoneAvailability',
-            fields={
-                'available': serializers.BooleanField(),
-                'detail': serializers.CharField(required=False),
-            },
-        ),
-        tags=['employer'],
-    )
-    def get(self, request):
-        phone = (request.query_params.get('phone') or '').strip()
-        if not phone:
-            raise ValidationError({'phone': _('Nhập số điện thoại cần kiểm tra.')})
-        try:
-            normalize_vietnamese_mobile(phone)
-        except DjangoValidationError as error:
-            raise ValidationError({'phone': error.message}) from error
-        return Response({'available': True})
 
 
 class SendPhoneOtpView(APIView):

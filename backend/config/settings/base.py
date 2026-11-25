@@ -1,4 +1,9 @@
-"""Settings dùng chung mọi môi trường, ghép từ ``components/`` theo thứ tự phụ thuộc."""
+"""Settings dùng chung mọi môi trường, ghép từ ``components/``.
+
+Thứ tự import không mang nghĩa: component nào cần giá trị nền (``BASE_DIR``,
+``config``, ``IS_PRODUCTION``…) tự import từ ``.core``, ``core`` không import
+component nào khác.
+"""
 
 from .components.ai import *  # noqa: F403
 from .components.api import *  # noqa: F403

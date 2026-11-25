@@ -14958,29 +14958,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/EmployerPhoneChallengeStatus'
           description: ''
-  /api/employer/phone/check/:
-    get:
-      operationId: employer_phone_check_retrieve
-      description: Compatibility endpoint that validates format without exposing account
-        use.
-      summary: Kiểm tra định dạng số điện thoại nhà tuyển dụng
-      parameters:
-      - in: query
-        name: phone
-        schema:
-          type: string
-        required: true
-      tags:
-      - employer
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PhoneAvailability'
-          description: ''
   /api/employer/phone/send-otp/:
     post:
       operationId: employer_phone_send_otp_create
@@ -30484,12 +30461,6 @@ components:
         verified_publish_limit:
           type: integer
           minimum: 0
-        free_publish_limit:
-          type: integer
-          minimum: 0
-        free_publish_remain:
-          type: integer
-          minimum: 0
         job_postable:
           type: boolean
         block_reason:
@@ -30502,8 +30473,6 @@ components:
       - candidate_data_access
       - default_deadline_days
       - dpa_status
-      - free_publish_limit
-      - free_publish_remain
       - job_postable
       - job_workspace_ready
       - lifecycle_policy
@@ -36943,15 +36912,6 @@ components:
         * `completed` - Hoàn tất
         * `failed` - Thất bại
         * `cancelled` - Đã hủy
-    PhoneAvailability:
-      type: object
-      properties:
-        available:
-          type: boolean
-        detail:
-          type: string
-      required:
-      - available
     PinnedPost:
       type: object
       description: Item khối "Tài liệu hỗ trợ tìm việc" — lấy tiêu đề/slug từ bài

@@ -197,8 +197,8 @@ thêm kênh sau khi chiến dịch chạy cũng được.
   - token hết hạn thì kết nối chuyển "Hết hạn" và NTD được báo.
 - **Đăng thành công**: kênh tự đánh dấu "Đã đăng" (kèm link bài) và ghi
   `CampaignActivity`.
-- **Môi trường**: `CAMPAIGN_SOCIAL_PROVIDER=fake` chạy toàn bộ luồng không cần
-  Meta. Đăng thật theo `docs/06-deployment/tich-hop-mang-xa-hoi.md`.
+- **Môi trường**: mạng không có trong `CAMPAIGN_SOCIAL_LIVE_NETWORKS` chạy bằng
+  provider giả lập, đủ luồng kết nối/đăng/gỡ mà không gọi Meta. Đăng thật theo `docs/06-deployment/tich-hop-mang-xa-hoi.md`.
 
 ### Trạng thái chiến dịch
 

@@ -260,9 +260,9 @@ Hai mốc độc lập trên trang `/account/settings/personal-data-protection`:
 
 ## 7. Xác minh số điện thoại bằng SMS
 
-- Chỉ nhận số di động Việt Nam chuẩn hóa `+84` (ER-D32). Không có availability
-  oracle: `GET /api/employer/phone/check/` chỉ kiểm format và trả kết quả
-  generic; uniqueness được kiểm lại trong transaction sau khi chứng minh sở hữu.
+- Chỉ nhận số di động Việt Nam chuẩn hóa `+84` (ER-D32). Không có endpoint tra
+  số đã được dùng chưa (availability oracle); định dạng kiểm ở `send-otp`, còn
+  uniqueness kiểm lại trong transaction sau khi chứng minh sở hữu.
 - `POST /api/employer/phone/send-otp/` (re-auth mật khẩu) tạo `PhoneOtp`
   actor-bound với purpose `initial_verification|phone_change|reverify` và đẩy
   SMS qua queue `auth-sms`. `GET .../phone/challenges/<public_id>/` poll trạng

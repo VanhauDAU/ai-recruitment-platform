@@ -70,9 +70,6 @@ def employer_job_posting_context(user):
         'publish_limit': limit,
         'publish_remain': max(limit - count, 0),
         'verified_publish_limit': _verified_level_three_job_quota(),
-        # Compatibility for clients deployed before the quota contract rename.
-        'free_publish_limit': limit,
-        'free_publish_remain': max(limit - count, 0),
         'job_postable': bool(
             readiness['job_workspace_ready']
             and has_company

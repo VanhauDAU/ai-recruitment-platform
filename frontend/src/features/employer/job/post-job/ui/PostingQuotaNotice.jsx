@@ -41,8 +41,8 @@ const BLOCKER_ACTIONS = {
 }
 
 function noticeContent(postingContext) {
-  const remaining = postingContext.publish_remain ?? postingContext.free_publish_remain
-  const limit = postingContext.publish_limit ?? postingContext.free_publish_limit
+  const remaining = postingContext.publish_remain
+  const limit = postingContext.publish_limit
   const remainingLabel = remaining == null || limit == null ? m.employer_job_quota_unknown() : `${remaining}/${limit}`
   const eligibleDescription = m.employer_job_quota_eligible_description({ remaining: remainingLabel })
 

@@ -111,14 +111,10 @@ REQUIRE_APPROVED_EMPLOYER_VERIFICATION = config(
 # Chiến dịch tự đăng bài lên mạng xã hội của NTD (ADR-0025). Mạng có trong
 # CAMPAIGN_SOCIAL_LIVE_NETWORKS gọi API thật; mạng còn lại dùng provider giả lập,
 # chạy trọn luồng kết nối/đăng/gỡ mà không gọi ra ngoài (dev, CI, demo). Xem
-# docs/06-deployment/tich-hop-mang-xa-hoi.md. CAMPAIGN_SOCIAL_PROVIDER=facebook là
-# cách bật cũ, tương đương CAMPAIGN_SOCIAL_LIVE_NETWORKS=facebook_page.
-_legacy_live_networks = (
-    'facebook_page' if config('CAMPAIGN_SOCIAL_PROVIDER', default='fake') == 'facebook' else ''
-)
+# docs/06-deployment/tich-hop-mang-xa-hoi.md.
 CAMPAIGN_SOCIAL_LIVE_NETWORKS = [
     network.strip()
-    for network in config('CAMPAIGN_SOCIAL_LIVE_NETWORKS', default=_legacy_live_networks).split(',')
+    for network in config('CAMPAIGN_SOCIAL_LIVE_NETWORKS', default='').split(',')
     if network.strip()
 ]
 FACEBOOK_APP_ID = config('FACEBOOK_APP_ID', default='')

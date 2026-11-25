@@ -142,7 +142,6 @@ from .profiles import (
     get_or_create_recruiter,
     recruiter_job_posting_entitlement,
     recruiter_job_publication_state,
-    recruiter_posting_readiness,
     recruiter_readiness_state,
 )
 from .recruitment_needs import (
@@ -268,7 +267,6 @@ __all__ = [
     'recruiter_badge_eligibility',
     'recruiter_job_posting_entitlement',
     'get_or_create_verification_case',
-    'recruiter_posting_readiness',
     'recruiter_readiness_state',
     'lookup_company_tax',
     'lock_company_update_request',

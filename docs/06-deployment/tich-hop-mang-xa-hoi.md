@@ -18,9 +18,7 @@ phẩy. Mạng không có trong danh sách chạy bằng provider giả lập.
 | `threads` | Kết nối trả một trang cá nhân Threads giả lập có hạn token 60 ngày; tác vụ làm mới token cũng chạy giả lập. | Gọi Threads API (`graph.threads.com`) qua Threads Login với quyền `threads_basic`, `threads_content_publish`, `threads_delete`. Xem mục Threads. |
 | `linkedin` | Kết nối trả một trang cá nhân LinkedIn giả lập có hạn token 60 ngày; gần hết hạn thì nhắc kết nối lại. | Gọi Posts API (`api.linkedin.com/rest`) với quyền `openid`, `profile`, `w_member_social`. Xem mục LinkedIn. |
 
-`CAMPAIGN_SOCIAL_PROVIDER=facebook` là cách bật cũ, được hiểu là
-`CAMPAIGN_SOCIAL_LIVE_NETWORKS=facebook_page`. Test luôn chạy giả lập, bất kể
-`.env` đặt gì.
+Test luôn chạy giả lập, bất kể `.env` đặt gì.
 
 ## Fanpage Facebook
 

@@ -85,7 +85,6 @@ Xác thực trong Swagger UI: gọi `POST /api/auth/login/` lấy `access`, bấ
 | GET | `/api/employer/campaigns/{public_id}/activities/` | Activity owner-only. Event application chỉ trả candidate actor/name/deep-link khi `candidate_data_access=true`; nếu chỉ workspace-ready thì metadata được allowlist/redact. |
 | POST/GET | `/api/shared/uploads/sessions/` · `/api/shared/uploads/sessions/{public_id}/` | Tạo và poll upload session owner-scoped. State machine `uploading → quarantined → scanning → clean\|rejected\|error\|expired`; response không lộ storage key hoặc scanner evidence. |
 | POST | `/api/shared/uploads/sessions/{public_id}/content/` · `cancel/` · `retry/` | Gửi byte vào quarantine, hủy hoặc retry bounded. Chỉ owner và purpose/role hợp lệ; chỉ `clean` có thể attach vào nghiệp vụ. |
-| GET | `/api/employer/phone/check/?phone=` | Compatibility format check trả kết quả generic; không tiết lộ số đã thuộc tài khoản khác |
 | POST | `/api/employer/phone/send-otp/` | Re-auth bằng mật khẩu, tạo challenge actor-bound và gửi OTP qua SMS; cooldown 60 giây, hết hạn 10 phút |
 | GET | `/api/employer/phone/challenges/{public_id}/` | Poll trạng thái challenge của chính actor; không trả số điện thoại, OTP, provider ID hoặc secret |
 | POST | `/api/employer/phone/verify/` | Nhận `{challenge_id,code}`; xác thực initial/change/reverify, chống replay và giới hạn 5 lần sai |
