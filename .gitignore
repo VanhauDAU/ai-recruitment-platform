@@ -56,6 +56,9 @@ coverage/
 # OS
 .DS_Store
 
+# Worktree do Claude Code tạo trong repo
+.claude/worktrees/
+
 # IDE
 .vscode/
 .idea/
@@ -64,7 +67,8 @@ coverage/
 *.log
 npm-debug.log*
 
-# Production (chỉ tồn tại trên VPS): chứng chỉ origin, bản sao lưu, nhật ký deploy
+# Production (chỉ tồn tại trên VPS): chứng chỉ origin, bản sao lưu, nhật ký deploy.
+# Trên máy dev, /backups/ chứa pg_dump trước các migration phá dữ liệu.
 /deploy/certs/*
 !/deploy/certs/README.md
 /deploy/history.log

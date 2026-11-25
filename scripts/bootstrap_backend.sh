@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Dựng môi trường backend từ đầu, khóa đúng Python theo .python-version.
-# Dùng: ./scripts/bootstrap-backend.sh [--recreate]
+# Dùng: ./scripts/bootstrap_backend.sh [--recreate]
 #
 # - Kiểm tra Python major/minor khớp .python-version (mặc định 3.11).
 # - Từ chối cài dependencies vào venv cũ sai phiên bản (dùng --recreate để tạo lại).
@@ -58,8 +58,8 @@ if [ -d venv ]; then
   else
     fail "backend/venv đang dùng Python ${VENV_VER:-không xác định} nhưng cần $REQUIRED."
     printf 'KHÔNG cài dependencies vào venv sai phiên bản. Chọn một cách:\n' >&2
-    printf '  1) Xóa rồi chạy lại:  rm -rf backend/venv && ./scripts/bootstrap-backend.sh\n' >&2
-    printf '  2) Tự động tạo lại:   ./scripts/bootstrap-backend.sh --recreate\n' >&2
+    printf '  1) Xóa rồi chạy lại:  rm -rf backend/venv && ./scripts/bootstrap_backend.sh\n' >&2
+    printf '  2) Tự động tạo lại:   ./scripts/bootstrap_backend.sh --recreate\n' >&2
     exit 1
   fi
 else

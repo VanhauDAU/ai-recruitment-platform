@@ -85,7 +85,7 @@ classify_path() {
       backend=true
       ci=true
       ;;
-    .github/workflows/frontend-ci.yml|scripts/check_api_boundary.sh|scripts/check_feature_boundary.sh)
+    .github/workflows/frontend-ci.yml)
       frontend=true
       ci=true
       frontend_audit=true

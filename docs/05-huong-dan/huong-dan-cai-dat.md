@@ -1,9 +1,9 @@
 # 05 - Hướng dẫn cài đặt & chạy local
 
 ## Yêu cầu
-- Python 3.11, khóa qua `.python-version` ở gốc repo và `backend/.python-version`;
+- Python 3.11, khóa qua `.python-version` ở gốc repo (pyenv/uv tự tìm lên thư mục cha);
   local và CI (`.github/workflows/backend-ci.yml`) phải cùng major.minor. Có thể
-  dựng backend bằng `./scripts/bootstrap-backend.sh` (tự kiểm tra Python 3.11) hoặc
+  dựng backend bằng `./scripts/bootstrap_backend.sh` (tự kiểm tra Python 3.11) hoặc
   `pyenv install 3.11`.
 - Node.js 20.19+ hoặc 22.12+ (Vite 8 yêu cầu các bản này)
 - PostgreSQL 16 có extension [pgvector](https://github.com/pgvector/pgvector)

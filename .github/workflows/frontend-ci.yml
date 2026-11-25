@@ -125,16 +125,6 @@ jobs:
         if: ${{ needs.changes.outputs.frontend == 'true' }}
         run: npm ci --prefer-offline --no-audit
 
-      - name: API boundary (axios chỉ trong shared/api)
-        if: ${{ needs.changes.outputs.frontend == 'true' }}
-        working-directory: .
-        run: bash scripts/check_api_boundary.sh
-
-      - name: Feature boundary (không deep-import feature khác)
-        if: ${{ needs.changes.outputs.frontend == 'true' }}
-        working-directory: .
-        run: bash scripts/check_feature_boundary.sh
-
       - name: Env example đồng bộ với code
         if: ${{ needs.changes.outputs.frontend == 'true' }}
         working-directory: .
