@@ -70,6 +70,11 @@ HIGH_RISK_WRITE_SCOPES = {
     'CvAssetUploadView': ('cv_asset_upload', {'POST'}),
     'AvatarUploadView': ('avatar_upload', {'POST'}),
     'OwnDataRequestListCreateView': ('privacy_data_request', {'POST'}),
+    'ConversationListCreateView': ('chat_conversation_start', {'POST'}),
+    'ConversationMessageListCreateView': ('chat_message_send', {'POST'}),
+    'MessageCvExportView': ('application_cv_export', {'POST'}),
+    'InterviewCreateView': ('chat_interview', {'POST'}),
+    'InterviewRespondView': ('chat_interview', {'POST'}),
 }
 
 

@@ -2,7 +2,8 @@ import { describe, expect, it, vi } from 'vitest'
 import AuthGuard from '../guards/AuthGuard'
 import EmployerOnboardingGuard from '../guards/EmployerOnboardingGuard'
 import RoleGuard from '../guards/RoleGuard'
-import { EmployerCompanyWorkspacePage } from '../lazy/employer.pages'
+import CandidateDataGuard from '../guards/CandidateDataGuard'
+import { EmployerCompanyWorkspacePage, EmployerConnectPage } from '../lazy/employer.pages'
 import { employerRoutes } from './employer.routes'
 
 vi.mock('../lazy/layouts', () => ({
@@ -31,5 +32,16 @@ describe('employer company page route', () => {
     expect(wrappers[1].props.allowedRoles).toEqual(['employer'])
     expect(types.at(-1)).toBe(EmployerCompanyWorkspacePage)
     expect(types).toEqual(wrappersOf('/tuyendung/app/activities').map((element) => element.type).with(-1, EmployerCompanyWorkspacePage))
+  })
+})
+
+describe('employer ProCV Connect routes', () => {
+  it('sit with the other candidate-data pages of the workspace', () => {
+    for (const path of ['/tuyendung/app/connect', '/tuyendung/app/connect/:conversationId']) {
+      const types = wrappersOf(path).map((element) => element.type)
+      expect(types.slice(0, 3)).toEqual([AuthGuard, RoleGuard, EmployerOnboardingGuard])
+      expect(types).toContain(CandidateDataGuard)
+      expect(types).toEqual(wrappersOf('/tuyendung/app/applications').map((element) => element.type).with(-1, EmployerConnectPage))
+    }
   })
 })

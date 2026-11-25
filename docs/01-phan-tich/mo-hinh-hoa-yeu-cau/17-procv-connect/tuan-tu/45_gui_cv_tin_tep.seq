@@ -1,0 +1,36 @@
+title Sơ đồ tuần tự chức năng gửi CV, tin tuyển dụng và tệp đính kèm
+actor A Người gửi\n(UV hoặc NTD)
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+queue RT Kênh realtime\n(Channels + Redis)
+actor B Người nhận
+A -> FE : Bấm đính kèm, chọn loại nội dung
+alt Gửi CV (ứng viên)
+FE -> BE : GET /api/candidate/cvs/
+BE --> FE : CV đã lưu của ứng viên
+A -> FE : Chọn CV
+FE -> BE : POST /conversations/{id}/messages/ {client_id, kind: cv, cv}
+BE -> DB : Kiểm tra CV thuộc ứng viên và đã lưu, tạo CvVersion bản chụp, tạo Message
+else Gửi tin tuyển dụng (NTD)
+FE -> BE : GET /api/employer/conversations/shareable-jobs/
+BE --> FE : Tin đang công khai của công ty
+A -> FE : Chọn tin
+FE -> BE : POST /conversations/{id}/messages/ {client_id, kind: job, job}
+BE -> DB : Kiểm tra tin thuộc công ty, lưu thẻ tin (tiêu đề, lương, địa điểm), tạo Message
+else Gửi tệp hoặc ảnh
+A -> FE : Chọn tệp PDF, DOCX hoặc ảnh ≤ 10 MB
+FE -> BE : POST /conversations/{id}/messages/ (multipart: client_id, file)
+BE -> BE : Nhận dạng định dạng bằng chữ ký tệp, kiểm cấu trúc (PDF, DOCX, ảnh)
+break Sai định dạng, quá dung lượng hoặc tệp hỏng
+BE --> FE : 400 lỗi tệp
+FE --> A : Báo không gửi được tệp, dừng
+end
+BE -> DB : Lưu tệp vào kho riêng tư, tạo Message kind file hoặc image
+end
+BE --> FE : 201 tin nhắn
+BE ->> RT : chat.message.created (sau commit)
+RT ->> B : Thẻ CV, thẻ tin hoặc tệp hiện trong khung chat
+B -> BE : GET /conversations/{id}/messages/{msg}/file/
+BE -> DB : Kiểm tra thành viên; với CV kiểm tra quyền xem dữ liệu ứng viên và ghi CvAccessLog
+BE --> B : Luồng tệp (Cache-Control: private, no-store)

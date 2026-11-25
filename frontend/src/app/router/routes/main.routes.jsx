@@ -5,6 +5,7 @@ import {
   COMPANY_DIRECTORY_PATH,
   COMPANY_SEARCH_PATH,
 } from '@/entities/company/company'
+import { CANDIDATE_CONNECT_PATH } from '@/entities/messaging/conversation'
 import { employerAppPath } from '@/shared/config/portals'
 import AuthGuard from '../guards/AuthGuard'
 import GuestGuard from '../guards/GuestGuard'
@@ -19,6 +20,7 @@ import {
   CompanyDetailPage,
   CompanyListPage,
   CompanySearchPage,
+  CandidateConnectPage,
   EmailNotificationSettingsPage,
   EmployerConnectionsPage,
   FollowedCompaniesPage,
@@ -148,6 +150,14 @@ export function mainRoutes() {
             })}
           </Route>
         </Route>
+      </Route>
+    </Route>,
+
+    // ProCV Connect có layout gọn riêng (không header/footer site) và chiếm trọn màn hình.
+    <Route key="candidate-connect" element={<AuthGuard />}>
+      <Route element={<RoleGuard allowedRoles={['candidate']} />}>
+        <Route path={CANDIDATE_CONNECT_PATH} element={<CandidateConnectPage />} />
+        <Route path={`${CANDIDATE_CONNECT_PATH}/:conversationId`} element={<CandidateConnectPage />} />
       </Route>
     </Route>,
 

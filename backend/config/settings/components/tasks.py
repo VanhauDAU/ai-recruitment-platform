@@ -157,6 +157,15 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'apps.applications.tasks.refresh_flash_badges',
         **_every(3600),
     },
+    # ProCV Connect (ADR-0032): email nhắc tin chưa đọc, nhắc lịch phỏng vấn.
+    'send-unread-message-emails': {
+        'task': 'apps.messaging.tasks.send_unread_message_emails',
+        **_every(300),
+    },
+    'send-interview-reminders': {
+        'task': 'apps.messaging.tasks.send_interview_reminders',
+        **_every(300),
+    },
     'dispatch-candidate-notifications': {
         'task': 'apps.candidates.tasks.notifications.dispatch_candidate_notifications',
         **_every(60),

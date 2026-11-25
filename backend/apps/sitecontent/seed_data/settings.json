@@ -2483,6 +2483,82 @@
     }
   },
   {
+    "key": "connect_enabled",
+    "label": "Bật ProCV Connect (nhắn tin)",
+    "group": "features",
+    "section": "ProCV Connect",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "Cho nhà tuyển dụng và ứng viên nhắn tin với nhau về tin tuyển dụng.",
+    "help": "Tắt để ẩn lối vào ProCV Connect ở hai cổng và chặn gửi tin mới; lịch sử hội thoại vẫn giữ nguyên.",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên",
+        "Cổng nhà tuyển dụng"
+      ],
+      "risky": "off"
+    }
+  },
+  {
+    "key": "connect_candidate_unanswered_limit",
+    "label": "Số tin ứng viên gửi khi NTD chưa trả lời",
+    "group": "features",
+    "section": "ProCV Connect",
+    "value_type": "number",
+    "value": 3,
+    "is_public": false,
+    "description": "Ứng viên gửi tối đa chừng này tin cho tới khi nhà tuyển dụng trả lời lần đầu.",
+    "help": "Chống làm phiền nhà tuyển dụng. Nhà tuyển dụng trả lời một lần thì bỏ giới hạn.",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 20
+    }
+  },
+  {
+    "key": "connect_attachment_max_mb",
+    "label": "Dung lượng tệp đính kèm tối đa (MB)",
+    "group": "features",
+    "section": "ProCV Connect",
+    "value_type": "number",
+    "value": 10,
+    "is_public": true,
+    "description": "Giới hạn mỗi tệp PDF, DOCX hoặc ảnh gửi trong ProCV Connect.",
+    "help": "Tối đa 25 MB. Giao diện kiểm trước khi tải lên, máy chủ kiểm lại.",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên",
+        "Cổng nhà tuyển dụng"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 25
+    }
+  },
+  {
+    "key": "connect_unread_email_delay_minutes",
+    "label": "Email nhắc tin chưa đọc sau (phút)",
+    "group": "features",
+    "section": "ProCV Connect",
+    "value_type": "number",
+    "value": 30,
+    "is_public": false,
+    "description": "Tin nhắn chưa đọc quá khoảng này thì email nhắc người nhận (không kèm nội dung tin).",
+    "help": "Mỗi đợt tin chưa đọc chỉ email một lần; đọc xong mới được nhắc lại. Đặt 0 để tắt email nhắc.",
+    "options": {
+      "applies_to": [
+        "Email"
+      ],
+      "integer": true,
+      "min": 0,
+      "max": 1440
+    }
+  },
+  {
     "key": "announcement_surfaces",
     "label": "Nơi hiển thị thông báo đa cổng",
     "group": "features",

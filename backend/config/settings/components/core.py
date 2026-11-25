@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     'apps.knowledgebase',
     'apps.uploads',
     'apps.realtime',
+    'apps.messaging',
 ]
 
 MIDDLEWARE = [

@@ -167,6 +167,7 @@ from .trust_badge import (
 from .upload_validation import (
     EmployerUploadSessionRejected,
     EmployerUploadStructureError,
+    validate_employer_document_file,
     validate_employer_upload_structure,
 )
 from .verification import (
@@ -218,6 +219,7 @@ __all__ = [
     'CandidateDataBlocked',
     'EmployerWorkspaceBlocked',
     'EmployerUploadStructureError',
+    'validate_employer_document_file',
     'DpaPolicyChanged',
     'DpaGraceConflict',
     'DpaPolicyUnavailable',

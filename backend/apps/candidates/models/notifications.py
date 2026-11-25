@@ -26,6 +26,9 @@ class CandidateNotification(models.Model):
         TALENT_POOL_SAVED = 'talent_pool_saved', 'Được lưu vào kho ứng viên tiềm năng'
         JOB_INVITATION = 'job_invitation', 'Lời mời ứng tuyển'
         CONNECTION_INVITATION = 'connection_invitation', 'Lời mời kết nối'
+        INTERVIEW_SCHEDULED = 'interview_scheduled', 'Lịch phỏng vấn mới'
+        INTERVIEW_UPDATED = 'interview_updated', 'Lịch phỏng vấn thay đổi'
+        INTERVIEW_REMINDER = 'interview_reminder', 'Nhắc lịch phỏng vấn'
 
     class CancelReason(models.TextChoices):
         SUPERSEDED = 'superseded', 'Bị thay bằng thông báo mới hơn'

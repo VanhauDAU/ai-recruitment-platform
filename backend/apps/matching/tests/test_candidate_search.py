@@ -251,6 +251,12 @@ class CandidateSearchTests(SearchBase):
         self.assertNotIn(self.candidate.email, notice.message)
         self.client.force_authenticate(self.employer)
         self.assertEqual(self.only_candidate()['invitation_status'], 'accepted')
+        # Chi tiết trả mã lời mời để NTD mở ProCV Connect (ADR-0032).
+        detail = self.client.get(
+            reverse('recruiter-candidate-search-detail', args=[row['ref']]),
+            {'job': self.job.public_id},
+        ).data
+        self.assertEqual(detail['invitation_public_id'], accepted.data['public_id'])
 
     def test_candidate_declines_and_others_cannot_answer(self):
         _row, url = self.invite_and_open_as_candidate()

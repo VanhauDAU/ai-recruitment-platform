@@ -4,7 +4,10 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 
 
-def send_html_email(*, subject, text, html, to, from_email=None, reply_to=None, headers=None):
+def send_html_email(
+    *, subject, text, html, to, from_email=None, reply_to=None, headers=None, attachments=None
+):
+    """``attachments``: các bộ ``(tên tệp, nội dung, MIME)``, vd lịch .ics."""
     message = EmailMultiAlternatives(
         subject=subject,
         body=text,
@@ -14,4 +17,6 @@ def send_html_email(*, subject, text, html, to, from_email=None, reply_to=None, 
         headers=headers,
     )
     message.attach_alternative(html, 'text/html')
+    for attachment in attachments or ():
+        message.attach(*attachment)
     message.send(fail_silently=False)

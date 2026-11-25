@@ -94,6 +94,10 @@ REST_FRAMEWORK = {
         'consent': '20/hour',
         # Mỗi lần (re)connect WebSocket một vé; backoff phía client giữ dưới mức này.
         'realtime_ticket': '30/min',
+        # ProCV Connect: gửi tin, mở hội thoại (ADR-0032).
+        'chat_message_send': '30/min',
+        'chat_conversation_start': '30/hour',
+        'chat_interview': '30/hour',
         # Việc làm gần bạn: mỗi lần đổi bán kính/bộ lọc gọi danh sách + bản đồ.
         'nearby_jobs': '120/min',
         'geo_lookup': '60/min',

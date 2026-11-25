@@ -4,7 +4,7 @@
 TICKET_TTL_SECONDS = 30
 # How often an open socket re-checks the account and its login session.
 REVALIDATE_SECONDS = 60
-# Clients only ever send heartbeats; anything larger is dropped unread.
+# Clients only send heartbeats and "typing" (ADR-0032); anything larger is dropped unread.
 MAX_CLIENT_MESSAGE_BYTES = 256
 # Application close code (4000-4999): the client must get a new ticket, and
 # re-authenticate first if that fails, instead of blindly reconnecting.

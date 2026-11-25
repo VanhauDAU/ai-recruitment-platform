@@ -1,7 +1,9 @@
 import { MessageOutlined, SendOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Drawer, Grid, Skeleton, Tooltip } from 'antd'
+import { Button, Drawer, Grid, Skeleton } from 'antd'
 import { ExtractedProfile, FitBreakdown } from '@/entities/application/job-fit'
+import { useStartConversation } from '@/entities/messaging/conversation'
+import { useSiteSettings } from '@/entities/system/site-settings'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
@@ -30,8 +32,11 @@ export default function CandidateQuickView({ candidate, jobPublicId, onClose }) 
     },
     onError: (error) => message.error(getApiErrorMessage(error, m.employer_workspace_search_invite_failed())),
   })
+  const startConversation = useStartConversation('employer')
+  const connectEnabled = useSiteSettings().settings.connect_enabled === true
   const detail = detailQuery.data
   const state = detail || candidate
+  const invitationId = state.invitation_public_id
 
   return (
     <Drawer
@@ -44,12 +49,16 @@ export default function CandidateQuickView({ candidate, jobPublicId, onClose }) 
         <div className="cs-drawer-footer">
           <p>{m.employer_workspace_search_privacy_note()}</p>
           {!state.applied && state.invitation_status === 'accepted' ? (
-            // Nhắn tin realtime NTD–ứng viên sẽ làm sau; nút giữ chỗ cho luồng đã kết nối.
-            <Tooltip title={m.employer_workspace_search_message_soon()}>
-              <Button type="primary" icon={<MessageOutlined />} disabled>
+            connectEnabled && invitationId && (
+              <Button
+                type="primary"
+                icon={<MessageOutlined />}
+                loading={startConversation.isPending}
+                onClick={() => startConversation.mutate({ invitation: invitationId })}
+              >
                 {m.employer_workspace_search_message()}
               </Button>
-            </Tooltip>
+            )
           ) : (
             <Button
               type="primary"

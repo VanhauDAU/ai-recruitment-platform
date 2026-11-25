@@ -1,7 +1,8 @@
 """The authenticated notification socket: ``/ws/notifications/?ticket=…``.
 
-The socket is receive-only for the client: it never changes data and carries
-no request other than a heartbeat, so it cannot widen what a user may do.
+The client never changes data through it: besides the heartbeat it may only
+announce "typing" in a ProCV Connect conversation it belongs to (ADR-0032),
+which is relayed to the other side and never stored.
 """
 
 from __future__ import annotations
@@ -9,11 +10,14 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import json
+import time
 from urllib.parse import parse_qs
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 
+from apps.messaging.domain import TYPING_MIN_INTERVAL_SECONDS
+from apps.messaging.services import typing_target
 from common.metrics import record_metric
 
 from ..domain import (
@@ -31,6 +35,11 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     # Not ``groups``: Channels would join those before the ticket is checked.
     joined = ()
     _watchdog = None
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._typing_sent = {}
+        self._typing_targets = {}
 
     async def connect(self):
         ticket = parse_qs(self.scope.get('query_string', b'').decode()).get('ticket', [''])[0]
@@ -62,9 +71,42 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data=None, bytes_data=None):
         if not text_data or len(text_data) > MAX_CLIENT_MESSAGE_BYTES:
             return
-        with contextlib.suppress(ValueError):
-            if json.loads(text_data).get('type') == 'ping':
-                await self.send(text_data=json.dumps({'type': 'pong'}))
+        try:
+            message = json.loads(text_data)
+        except ValueError:
+            return
+        if not isinstance(message, dict):
+            return
+        if message.get('type') == 'ping':
+            await self.send(text_data=json.dumps({'type': 'pong'}))
+        elif message.get('type') == 'typing':
+            await self._relay_typing(str(message.get('conversation') or '')[:50])
+
+    async def _relay_typing(self, conversation):
+        """Chuyển "đang soạn tin" cho phía kia; dồn dập hoặc không phải thành viên thì bỏ."""
+        now = time.monotonic()
+        last = self._typing_sent.get(conversation, 0)
+        if not conversation or now - last < TYPING_MIN_INTERVAL_SECONDS:
+            return
+        self._typing_sent[conversation] = now
+        cached = self._typing_targets.get(conversation)
+        if cached is None or cached[1] < now:
+            target = await database_sync_to_async(typing_target)(
+                self.identity.user_id, conversation
+            )
+            cached = (target, now + REVALIDATE_SECONDS)
+            self._typing_targets[conversation] = cached
+        target = cached[0]
+        if target is None or target[0] is None:
+            return
+        recipient, role = target
+        await self.channel_layer.group_send(
+            user_group(recipient),
+            {
+                'type': 'push.event',
+                'event': {'type': 'chat.typing', 'conversation': conversation, 'role': str(role)},
+            },
+        )
 
     async def push_event(self, message):
         await self.send(text_data=json.dumps(message['event'], ensure_ascii=False))
