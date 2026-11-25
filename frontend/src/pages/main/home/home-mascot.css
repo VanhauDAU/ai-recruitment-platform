@@ -46,7 +46,6 @@
 }
 
 #section-header::before {
-  background-image: url("https://pub-8375cfb0dcca48ed8459003b91080f08.r2.dev/frontend/legacy/welcome/section-header-before.png");
   background-repeat: no-repeat;
   background-size: calc(100% + 23px);
   left: 0;
@@ -54,12 +53,23 @@
 }
 
 #section-header::after {
-  background-image: url("https://pub-8375cfb0dcca48ed8459003b91080f08.r2.dev/frontend/legacy/welcome/section-header-after.png");
   background-position: 100%;
   background-repeat: no-repeat;
   background-size: calc(100% - 120px);
   opacity: 0.95;
   right: 0;
+}
+
+/* Ảnh chỉ tải từ tablet ngang trở lên: trên điện thoại nó mờ sau chữ mà lại là
+   phần tử LCP (hơn 400 KB cho hai ảnh). */
+@media (min-width: 769px) {
+  #section-header::before {
+    background-image: url("https://pub-8375cfb0dcca48ed8459003b91080f08.r2.dev/frontend/legacy/welcome/section-header-before.png");
+  }
+
+  #section-header::after {
+    background-image: url("https://pub-8375cfb0dcca48ed8459003b91080f08.r2.dev/frontend/legacy/welcome/section-header-after.png");
+  }
 }
 
 @media (max-width: 768px) {

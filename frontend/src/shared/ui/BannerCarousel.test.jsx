@@ -32,6 +32,15 @@ describe('BannerCarousel', () => {
     expect(visibleSlide()).toBe(0)
   })
 
+  it('mounts only the current, next and already seen slides', () => {
+    render(<BannerCarousel slides={slides} />)
+    expect(screen.queryByText('Ba')).not.toBeInTheDocument()
+
+    act(() => vi.advanceTimersByTime(5000))
+    expect(screen.getByText('Một')).toBeInTheDocument()
+    expect(screen.getByText('Ba')).toBeInTheDocument()
+  })
+
   it('moves with swipe gestures and the dot buttons', () => {
     render(<BannerCarousel slides={slides} />)
     const carousel = screen.getByRole('region', { name: 'Banner nổi bật' })

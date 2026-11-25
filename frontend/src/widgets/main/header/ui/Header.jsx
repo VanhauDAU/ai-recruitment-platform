@@ -125,7 +125,7 @@ export default function Header({ editorMode = false }) {
           type="button"
           aria-label={m.candidate_header_open_categories()}
           onClick={() => setMobileOpen(true)}
-          className="flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-[var(--brand-primary-soft)] px-3 text-sm font-semibold text-[var(--brand-primary)] transition active:scale-95 md:hidden"
+          className="flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-[var(--brand-primary-soft)] px-3 text-sm font-semibold text-[var(--brand-primary-hover)] transition active:scale-95 md:hidden"
         >
           <AppstoreOutlined aria-hidden /> {m.candidate_header_categories()}
         </button>

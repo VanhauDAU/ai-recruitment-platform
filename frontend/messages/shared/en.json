@@ -465,6 +465,8 @@
   "api_error_oauth_invalid_code": "Invalid sign-in code. Please try again.",
   "api_error_oauth_complete_failed": "Couldn't complete sign-in. Please try again.",
   "api_error_oauth_failed": "Social sign-in failed. Please try again.",
+  "ui_arrow_previous": "Previous page",
+  "ui_arrow_next": "Next page",
   "ui_banner_previous": "Previous banner",
   "ui_banner_next": "Next banner",
   "ui_banner_go_to": "Go to banner {index}",

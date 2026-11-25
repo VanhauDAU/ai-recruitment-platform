@@ -277,7 +277,7 @@ export default function LocationFilter({ value = [], onChange, size = 'middle', 
         </span>
 
         {/* Label */}
-        <span className={`flex-1 truncate font-medium ${displayLabel || triggerLabel ? 'text-gray-800' : 'text-gray-400'}`}>
+        <span className={`flex-1 truncate font-medium ${displayLabel || triggerLabel ? 'text-gray-800' : 'text-gray-500'}`}>
           {displayLabel || triggerLabel || m.location_filter_placeholder()}
         </span>
 

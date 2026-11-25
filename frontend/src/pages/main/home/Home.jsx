@@ -20,6 +20,7 @@ import { SearchDropdown, saveHistory } from '@/features/main/job/search-jobs'
 import { HeroSlide } from '@/widgets/common/hero-banner'
 import { CandidateJobRecommendations, useHomeRecommendationSummary } from '@/widgets/main/candidate-job-recommendations'
 import { m } from '@/shared/config/i18n'
+import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import './home-mascot.css'
 
 const SUGGESTED_JOBS = [
@@ -60,6 +61,8 @@ export default function Home() {
     ? settings.home_featured_jobs_count
     : BEST_JOBS_PAGE_SIZE
   const navigate = useNavigate()
+  // Linh vật chỉ hiện từ desktop (home-mascot.css); không dựng ở màn nhỏ để khỏi tải ảnh.
+  const showMascot = useMediaQuery('(min-width: 1024px)')
   const [keyword, setKeyword] = useState('')
   const [searchBy, setSearchBy] = useState('title')
   const [locationIds, setLocationIds] = useState([])
@@ -147,7 +150,7 @@ export default function Home() {
           </Typography.Paragraph>
 
           <div className="home-search-stage max-w-6xl mx-auto">
-            <HomeHeroMascot />
+            {showMascot && <HomeHeroMascot />}
             <div
               ref={searchBoxRef}
               className="relative z-40 rounded-2xl border border-white/20 bg-white/95 p-2.5 shadow-2xl shadow-slate-900/15 backdrop-blur"
