@@ -128,6 +128,8 @@
   "account_password_update_failed": "Không thể cập nhật mật khẩu.",
   "account_password_no_password_title": "Tài khoản chưa có mật khẩu đăng nhập",
   "account_password_code_desc": "Tài khoản đăng nhập bằng mạng xã hội chưa có mật khẩu. Bấm “Gửi mã”, chúng tôi gửi mã 6 số tới {email} (hiệu lực {minutes} phút) để xác minh bạn là chủ tài khoản.",
+  "account_password_google_recent_desc": "Bạn vừa đăng nhập bằng Google nên có thể tạo mật khẩu ngay, không cần mã xác minh.",
+  "account_password_google_expired": "Đã quá thời gian miễn mã sau khi đăng nhập Google. Bấm “Gửi mã” rồi nhập mã để tạo mật khẩu.",
   "account_password_code_label": "Mã xác minh qua email",
   "account_password_code_placeholder": "Nhập mã 6 số",
   "account_password_code_required": "Nhập mã xác minh gửi tới email",

@@ -1,5 +1,7 @@
 """Mã xác minh qua email để tài khoản OAuth đặt mật khẩu lần đầu.
 
+Phiên vừa đăng nhập Google (xem ``is_required``) được miễn mã.
+
 Tài khoản chỉ đăng nhập bằng mạng xã hội không có mật khẩu hiện tại để chứng
 minh chủ sở hữu. Mã 6 số gửi tới email tài khoản thay cho việc đăng nhập lại
 provider: người chỉ cầm phiên/token bị lộ không đặt được mật khẩu để chiếm tài
@@ -20,6 +22,7 @@ from apps.sitecontent.selectors import email_brand_color, get_string_setting
 from common.i18n import recipient_language
 
 from ..models import AuthEmailJob
+from .auth_sessions import is_recent_google_sign_in
 from .exceptions import PasswordSetupCodeCooldown
 from .mailing import send_html_email
 
@@ -40,6 +43,11 @@ def _digest(user, code):
     # Gắn auth_revision: đổi email/khóa tài khoản sau khi gửi làm mã cũ mất hiệu lực.
     message = f'{user.pk}:{user.auth_revision}:{code}'.encode()
     return hmac.new(settings.SECRET_KEY.encode(), message, hashlib.sha256).hexdigest()
+
+
+def is_required(user, session):
+    """Tài khoản chưa có mật khẩu phải nhập mã, trừ khi phiên vừa đăng nhập Google."""
+    return not user.has_usable_password() and not is_recent_google_sign_in(session)
 
 
 def cooldown_remaining(user):

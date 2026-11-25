@@ -42,7 +42,7 @@ class ProviderAvatarImportTests(TestCase):
             patch.object(social_avatar.requests, 'get', get),
         ):
             code = oauth.complete_provider_login('google', 'code', 'https://cb', 'main')
-        return oauth.redeem_one_time_code(code)
+        return oauth.redeem_one_time_code(code)[0]
 
     def test_new_google_account_stores_avatar_in_media_storage(self):
         get = _response()

@@ -292,6 +292,8 @@ class AuthSession(models.Model):
     portal = models.CharField(max_length=20, choices=User.Role.choices)
     refresh_jti = models.CharField(max_length=64, db_index=True)
     auth_method = models.CharField(max_length=20, default='password')
+    # Nhà cung cấp của lần đăng nhập mạng xã hội mở phiên; rỗng nếu không phải OAuth.
+    oauth_provider = models.CharField(max_length=20, blank=True)
     auth_revision = models.PositiveBigIntegerField(default=1)
     device_label = models.CharField(max_length=120, blank=True)
     ip_address = models.GenericIPAddressField(null=True, blank=True)

@@ -28,7 +28,7 @@ from rest_framework_simplejwt.utils import datetime_from_epoch
 
 from common.http.client_ip import client_ip as _client_ip
 
-from ..models import AuthSession
+from ..models import AuthSession, User
 from .admin_audit import record_admin_self_action
 from .refresh_cookies import refresh_from_request
 from .session_policy import policy_for
@@ -110,7 +110,7 @@ def _ensure_outstanding(token):
     )
 
 
-def start_session(user, refresh, request, *, auth_method='password'):
+def start_session(user, refresh, request, *, auth_method='password', oauth_provider=''):
     """Khởi tạo hoặc cập nhật phiên của cùng thiết bị rồi gắn claim ``sid``.
 
     Không gộp chỉ theo IP: nhiều người hoặc thiết bị có thể cùng Wi-Fi/NAT. Khi
@@ -149,6 +149,7 @@ def start_session(user, refresh, request, *, auth_method='password'):
             _blacklist_jti(session.refresh_jti)
             session.refresh_jti = new_jti
             session.auth_method = auth_method
+            session.oauth_provider = oauth_provider
             session.auth_revision = user.auth_revision
             session.device_label = parse_device_label(user_agent)
             session.last_seen_at = now
@@ -158,6 +159,7 @@ def start_session(user, refresh, request, *, auth_method='password'):
                 update_fields=[
                     'refresh_jti',
                     'auth_method',
+                    'oauth_provider',
                     'auth_revision',
                     'device_label',
                     'last_seen_at',
@@ -171,6 +173,7 @@ def start_session(user, refresh, request, *, auth_method='password'):
                 portal=user.role,
                 refresh_jti=new_jti,
                 auth_method=auth_method,
+                oauth_provider=oauth_provider,
                 auth_revision=user.auth_revision,
                 device_label=parse_device_label(user_agent),
                 user_agent=user_agent,
@@ -311,6 +314,21 @@ def is_recent_oauth_reauthentication(session):
         and session.reauthenticated_at
         and session.reauthenticated_at
         > timezone.now() - timedelta(seconds=settings.AUTH_REAUTH_MAX_AGE_SECONDS)
+    )
+
+
+def is_recent_google_sign_in(session):
+    """Phiên được mở bằng chính một lần đăng nhập Google còn đủ mới.
+
+    ``reauthenticated_at`` chỉ đổi ở ``start_session``; refresh xoay vòng không
+    làm mới nó, nên phiên cũ được refresh vẫn bị coi là cũ.
+    """
+    return bool(
+        session
+        and session.auth_method == 'oauth'
+        and session.oauth_provider == User.Provider.GOOGLE
+        and session.reauthenticated_at
+        > timezone.now() - timedelta(seconds=settings.PASSWORD_SETUP_GOOGLE_MAX_AGE_SECONDS)
     )
 
 

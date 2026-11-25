@@ -8270,8 +8270,8 @@ paths:
     get:
       operationId: auth_password_retrieve
       description: Tài khoản chưa có mật khẩu (đăng nhập mạng xã hội) phải nhập mã
-        gửi qua email; client biết trước để hiện ô nhập mã thay vì nhận lỗi sau khi
-        lưu.
+        gửi qua email, trừ khi phiên hiện tại vừa đăng nhập Google; client biết trước
+        để ẩn/hiện ô nhập mã thay vì nhận lỗi sau khi lưu.
       summary: Điều kiện cần để đặt hoặc thay đổi mật khẩu ở phiên hiện tại
       tags:
       - auth
@@ -35633,7 +35633,8 @@ components:
         Đặt mật khẩu lần đầu cho OAuth hoặc đổi mật khẩu của phiên hiện tại.
 
         Tài khoản chưa có mật khẩu chứng minh chủ sở hữu bằng mã gửi qua email
-        (``email_code``) thay cho mật khẩu hiện tại.
+        (``email_code``) thay cho mật khẩu hiện tại, trừ khi phiên hiện tại
+        vừa đăng nhập Google.
       properties:
         current_password:
           type: string

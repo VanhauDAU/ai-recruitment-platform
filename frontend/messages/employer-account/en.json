@@ -128,6 +128,8 @@
   "account_password_update_failed": "Couldn't update your password.",
   "account_password_no_password_title": "Your account has no sign-in password",
   "account_password_code_desc": "This social sign-in account has no password yet. Click “Send code” and we will email a 6-digit code to {email} (valid for {minutes} minutes) to confirm you own the account.",
+  "account_password_google_recent_desc": "You just signed in with Google, so you can create a password now without a verification code.",
+  "account_password_google_expired": "The code-free window after your Google sign-in has ended. Select “Send code” and enter it to create your password.",
   "account_password_code_label": "Email verification code",
   "account_password_code_placeholder": "Enter the 6-digit code",
   "account_password_code_required": "Enter the code sent to your email",
