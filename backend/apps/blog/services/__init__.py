@@ -8,7 +8,7 @@ from .editorial import (
     restore_post,
     save_post_draft,
 )
-from .media import upload_blog_media, upload_blog_thumbnail
+from .media import import_blog_thumbnail, upload_blog_media, upload_blog_thumbnail
 from .ordering import reorder_by_public_id
 from .publishing import record_post_view
 from .tags import delete_tag, merge_tags
@@ -28,5 +28,6 @@ __all__ = [
     'sanitize_blog_html',
     'save_post_draft',
     'upload_blog_media',
+    'import_blog_thumbnail',
     'upload_blog_thumbnail',
 ]

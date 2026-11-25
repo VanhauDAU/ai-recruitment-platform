@@ -15,6 +15,8 @@ dnspython==2.9.2
 idna==3.20
 tldextract==5.4.0
 requests==2.34.2
+# Dùng trực tiếp trong common/http/safe_fetch.py (nối thẳng tới địa chỉ đã kiểm).
+urllib3==2.8.0
 celery==5.7.0
 psycopg2-binary==2.9.13
 pgvector==0.5.1

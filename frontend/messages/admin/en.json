@@ -719,5 +719,9 @@
   "admin_privacy_failed": "Could not update the request. The list will reload.",
   "admin_privacy_load_failed": "Could not load requests.",
   "admin_privacy_retry": "Retry",
-  "admin_privacy_empty": "No requests."
+  "admin_privacy_empty": "No requests.",
+  "admin_blog_thumbnail_link_label": "Thumbnail image link",
+  "admin_blog_thumbnail_link_placeholder": "Or paste an image link",
+  "admin_blog_thumbnail_link_submit": "Use link",
+  "admin_blog_thumbnail_link_error": "Could not load the thumbnail."
 }

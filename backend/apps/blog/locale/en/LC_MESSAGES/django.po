@@ -1,0 +1,17 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: procv\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Ảnh ở đường dẫn này quá lớn."
+msgstr "The image at this link is too large."
+
+msgid "Không tải được ảnh từ đường dẫn này."
+msgstr "Could not download an image from this link."
+
+msgid "Đường dẫn không phải ảnh JPG, PNG, GIF hoặc WebP hợp lệ."
+msgstr "The link is not a valid JPG, PNG, GIF or WebP image."
