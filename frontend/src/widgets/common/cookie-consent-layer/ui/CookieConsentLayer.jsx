@@ -7,7 +7,7 @@ const OPTIONAL_OFF = { necessary: true, preferences: false, analytics: false, ma
 const ALL_ON = { necessary: true, preferences: true, analytics: true, marketing: true }
 
 export default function CookieConsentLayer() {
-  const { consent, status, isDecided, isEnabled, settingsOpen, openSettings, closeSettings, updateConsent } = useConsent()
+  const { consent, status, isDecided, isEnabled, isBannerVisible, dismissBanner, settingsOpen, openSettings, closeSettings, updateConsent } = useConsent()
   const [saving, setSaving] = useState(false)
   // Mount the lazy modal on first open and keep it, so closing still animates.
   const [modalMounted, setModalMounted] = useState(false)
@@ -54,7 +54,7 @@ export default function CookieConsentLayer() {
 
   return (
     <>
-      {!isDecided && <CookieConsentBanner onAcceptAll={() => save(ALL_ON)} onCustomize={openSettings} onRejectOptional={() => save(OPTIONAL_OFF)} saving={saving} />}
+      {isBannerVisible && <CookieConsentBanner onAcceptAll={() => save(ALL_ON)} onCustomize={openSettings} onDismiss={dismissBanner} onRejectOptional={() => save(OPTIONAL_OFF)} saving={saving} />}
       {modalMounted && (
         <Suspense fallback={null}>
           <CookiePreferencesModal open={settingsOpen} consent={consent} onClose={closeSettings} onSave={save} saving={saving} />

@@ -11,20 +11,20 @@ export default function CandidateLoginContent({ onSuccess }) {
   return (
     <div className="w-full">
       {/* Tiêu đề */}
-      <div className="login-card mb-7 text-center">
+      <div className="login-card mb-5 text-center">
         <AuthLogo className="mb-3" />
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white sm:text-xl">
           {m.account_auth_candidate_welcome()}
         </h2>
       </div>
 
       {/* Social login */}
-      <div className="login-field mb-5">
+      <div className="login-field mb-4">
         <SocialLoginButtons portal="main" action={m.account_social_action_login()} onSuccess={onSuccess} />
       </div>
 
       {/* Divider */}
-      <div className="login-field flex items-center gap-3 mb-5">
+      <div className="login-field flex items-center gap-3 mb-4">
         <div className="divider-line" />
         <span className="shrink-0 text-xs font-medium text-gray-400 uppercase tracking-widest">
           {m.account_auth_or_email()}
@@ -40,7 +40,7 @@ export default function CandidateLoginContent({ onSuccess }) {
       />
 
       {/* Register link */}
-      <div className="login-field mt-6 text-center">
+      <div className="login-field mt-4 text-center">
         <p className="text-sm text-gray-500 dark:text-gray-400">
           {m.account_auth_no_account()}{' '}
           <Link
@@ -52,8 +52,8 @@ export default function CandidateLoginContent({ onSuccess }) {
         </p>
       </div>
 
-      {/* Support hotline */}
-      <div className="login-field mt-6 rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3.5 dark:border-zinc-800 dark:bg-zinc-900">
+      {/* Support hotline: trong popup trên mobile thì ẩn để form gọn, vừa một màn hình. */}
+      <div className={`login-field mt-4 rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3.5 dark:border-zinc-800 dark:bg-zinc-900 ${onSuccess ? 'hidden sm:block' : ''}`}>
         <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed text-center">
           {m.account_auth_help_question()}{' '}
           <br className="sm:hidden" />

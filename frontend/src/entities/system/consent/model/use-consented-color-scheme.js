@@ -24,5 +24,9 @@ export function useConsentedColorScheme() {
     if (status === 'ready' && consent.preferences) localStorage.setItem(STORAGE_KEY, scheme)
   }, [consent.preferences, scheme, status])
 
+  // Chỉ AuthLayout có giao diện tối: rời trang đăng nhập (điều hướng trong SPA) thì
+  // gỡ `.dark`, nếu không popup đăng nhập ở trang nền sáng bị chữ trắng trên nền trắng.
+  useEffect(() => () => document.documentElement.classList.remove('dark'), [])
+
   return [scheme, () => setScheme((current) => (current === 'dark' ? 'light' : 'dark'))]
 }

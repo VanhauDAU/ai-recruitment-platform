@@ -19,6 +19,7 @@ from .dispatch import (
     mark_sms_dispatch_retries_exhausted,
     recover_stale_sms_dispatches,
 )
+from .manual import verify_phone_by_admin
 from .retention import (
     purge_expired_phone_verification_events,
     purge_expired_sms_challenge_payloads,
@@ -39,5 +40,6 @@ __all__ = [
     'purge_expired_sms_challenge_payloads',
     'recover_stale_sms_dispatches',
     'start_sms_phone_verification',
+    'verify_phone_by_admin',
     'verify_sms_phone_challenge',
 ]

@@ -1,14 +1,24 @@
+import { CloseOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
 import { Link } from 'react-router'
 import { m } from '@/shared/config/i18n'
 
 const OUTLINE_CLASS = '!border-slate-400 !bg-transparent !text-white hover:!border-white hover:!text-white'
 
-export default function CookieConsentBanner({ onAcceptAll, onCustomize, onRejectOptional, saving }) {
+export default function CookieConsentBanner({ onAcceptAll, onCustomize, onDismiss, onRejectOptional, saving }) {
   return (
     <section className="cookie-consent-banner" aria-label={m.account_cookie_banner_aria()}>
-      <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 lg:px-8">
-        <p className="text-xs leading-5 text-slate-200 sm:text-sm">
+      <div className="relative mx-auto flex max-w-6xl flex-col gap-2 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 lg:px-8">
+        {/* Banner chiếm khá nhiều màn hình điện thoại nên cho đóng tạm. */}
+        <button
+          type="button"
+          onClick={onDismiss}
+          aria-label={m.account_cookie_dismiss_banner()}
+          className="absolute right-1 top-1 flex size-9 items-center justify-center rounded-full text-slate-300 hover:text-white sm:hidden"
+        >
+          <CloseOutlined />
+        </button>
+        <p className="pr-8 text-xs leading-5 text-slate-200 sm:pr-0 sm:text-sm">
           {m.account_cookie_banner_desc()}{' '}
           <Link to="/chinh-sach-cookie" className="font-semibold !text-white underline underline-offset-2">{m.account_cookie_learn_more()}</Link>
         </p>

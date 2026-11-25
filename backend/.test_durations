@@ -1701,7 +1701,7 @@
     "apps/jobs/tests/test_seo.py::NearbyJobsSeoShellTests::test_nearby_page_has_its_own_indexable_metadata_and_allows_geolocation": 0.014781501002289588,
     "apps/jobs/tests/test_stats_api.py::JobStatsApiTests::test_category_demand_rolls_descendants_up_to_top_groups": 0.07912054200278362,
     "apps/jobs/tests/test_stats_api.py::JobStatsApiTests::test_demand_counts_each_job_once_per_root_and_salary_bands_are_labelled": 0.05904362499495619,
-    "apps/jobs/tests/test_stats_api.py::JobStatsApiTests::test_featured_employers_skip_companies_whose_page_is_held": 0.06192620799629367,
+    "apps/jobs/tests/test_stats_api.py::JobStatsApiTests::test_held_company_jobs_leave_stats": 0.06192620799629367,
     "apps/jobs/tests/test_stats_api.py::JobStatsApiTests::test_platform_account_totals_only_include_active_non_deleted_accounts": 0.042249291993357474,
     "apps/jobs/tests/test_verification_badge.py::EmployerBadgeCriteriaTests::test_account_must_reach_calendar_month_threshold": 0.05226925000533811,
     "apps/jobs/tests/test_verification_badge.py::EmployerBadgeCriteriaTests::test_all_five_criteria_are_required": 0.11268829199616448,

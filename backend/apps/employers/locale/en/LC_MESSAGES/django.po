@@ -373,9 +373,6 @@ msgstr "Joining a company does not require or accept proof documents. Documents 
 msgid "Không tìm thấy thông báo."
 msgstr "Notification not found."
 
-msgid "Nhập số điện thoại cần kiểm tra."
-msgstr "Enter the phone number to check."
-
 msgid "Nhập số điện thoại cần xác thực."
 msgstr "Enter the phone number to verify."
 
@@ -1527,6 +1524,15 @@ msgstr "Incorrect verification code."
 
 msgid "Số điện thoại phải là số di động Việt Nam hợp lệ."
 msgstr "The phone number must be a valid Vietnamese mobile number."
+
+msgid "SMS đang bật: nhà tuyển dụng tự xác thực số điện thoại bằng mã OTP."
+msgstr "SMS is enabled: employers verify their phone number themselves with an OTP code."
+
+msgid "Cần ghi lý do xác minh thủ công."
+msgstr "A reason for manual verification is required."
+
+msgid "Số điện thoại này đã được nhà tuyển dụng khác xác thực."
+msgstr "This phone number has already been verified by another employer."
 
 msgid "Nhà tuyển dụng chưa được duyệt xác thực."
 msgstr "The employer's verification has not been approved."

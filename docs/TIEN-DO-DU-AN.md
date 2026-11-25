@@ -91,7 +91,7 @@ luyện ở [`ml/`](../ml/README.md).
 | Docker Compose dev, CI (backend, frontend, docs, security) | ✅ | [Docker Compose](06-deployment/docker-compose.md), [tiêu chuẩn kiểm thử](05-huong-dan/tieu-chuan-kiem-thu.md) |
 | Bộ file production procv.site, hardening bảo mật, giám sát, chịu tải, pháp lý | ✅ | [runbook](06-deployment/huong-dan-deployment.md) |
 | Sao lưu mã hóa và khôi phục | ✅ | [sao lưu và khôi phục](06-deployment/sao-luu-va-khoi-phuc.md) |
-| Lên VPS, đo k6 thật, diễn tập khôi phục | ⬜ | Hẹn 2/12/2026 theo [go-live](06-deployment/go-live.md) |
+| Lên VPS, đo k6 thật, diễn tập khôi phục | 🟨 | Đang chạy demo trên VPS Azure 16 GB (26/11); k6 và diễn tập khôi phục hẹn 2/12/2026 theo [go-live](06-deployment/go-live.md) |
 
 ## Việc đang mở
 

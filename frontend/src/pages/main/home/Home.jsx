@@ -165,7 +165,7 @@ export default function Home() {
                   className="flex-1 !h-12 !rounded-xl !bg-gray-50 !px-3 !text-base"
                 />
                 <div className="hidden md:block w-px bg-gray-200 my-2" />
-                <div className="md:w-80 flex items-center [&>button]:!h-12 [&>button]:!rounded-xl [&>button]:!border-gray-200">
+                <div className="md:w-80 flex items-center [&>button]:!h-12 [&>button]:!rounded-xl [&>button]:!border-gray-200 max-md:[&>button]:!border-gray-300">
                   <LocationFilter value={locationIds} onChange={handleLocationApply} size="large" />
                 </div>
                 <Button
