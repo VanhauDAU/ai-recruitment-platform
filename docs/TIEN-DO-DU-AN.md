@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [AI chạy được bằng Claude (Anthropic) bên cạnh Gemini](#ai-chạy-được-bằng-claude-anthropic-bên-cạnh-gemini-2026-11-26) | 🟨 Nhánh `feat/ai-provider-claude`, chờ PR |
 | [Đăng nhập mạng xã hội bằng cửa sổ popup](#đăng-nhập-mạng-xã-hội-bằng-cửa-sổ-popup-2026-11-25) | 🟨 PR #380 (nhánh `feat/oauth-popup-login`), chờ gộp |
 | [Chuẩn bị deploy: khóa admin bằng Access, vá cấu hình, checklist 2/12](#chuẩn-bị-deploy-khóa-admin-bằng-access-vá-cấu-hình-checklist-212-2026-11-25) | ✅ Đã gộp dev (#378); việc phía user theo checklist |
 | [Gia cố xử lý file tải lên (không antivirus)](#gia-cố-xử-lý-file-tải-lên-không-antivirus-2026-11-25) | 🟨 Nhánh `fix/file-handling-hardening`, chờ PR |
@@ -71,6 +72,25 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
 
+
+## AI chạy được bằng Claude (Anthropic) bên cạnh Gemini (2026-11-26)
+
+- **Provider mới** `apps/ai_core/services/providers/claude.py` (SDK `anthropic` 2.14,
+  JSON outputs qua `output_config.format`): bật bằng `AI_PROVIDER_BACKEND=anthropic` +
+  `ANTHROPIC_API_KEY`; `AI_ANTHROPIC_EFFORT` tùy chọn. Schema được chuyển sang tập JSON
+  Schema Claude hỗ trợ (đóng object, bỏ min/max/pattern); ràng buộc bị bỏ vẫn do
+  validator/sanitizer của từng tính năng kiểm như với Gemini.
+- **Tách vòng retry dùng chung** sang `providers/base.py`; Gemini chỉ còn phần gọi SDK.
+  `providers/registry.py` chọn adapter theo backend. Lỗi mạng (`*Connection*`) giờ được
+  thử lại một lần cho cả hai provider.
+- **Hết credit/chưa thanh toán (402)** → mã `provider_quota_exhausted`, không retry; nhập
+  CV coi như AI không khả dụng và đọc bằng quy tắc.
+- `production.py` nhận backend `anthropic`, bắt buộc key khi bật, kiểm giá trị effort.
+  Migration `ai_core.0002` thêm lựa chọn `anthropic` cho `provider_backend`.
+- **Kiểm chứng:** pytest `apps/ai_core`, `cvs`, `campaigns`, `cv_templates`, `jobs`
+  (729 passed); chạy provider với SDK thật qua transport giả (request body, version
+  `2026-10-21`, đọc `request-id`; 402/529/401 ánh xạ đúng, không lộ nội dung lỗi). Chưa
+  gọi API Anthropic thật.
 
 ## Đăng nhập mạng xã hội bằng cửa sổ popup (2026-11-25)
 

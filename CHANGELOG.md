@@ -6,6 +6,14 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-11-26
+
+#### Added — AI chạy được bằng Claude
+
+- `AI_PROVIDER_BACKEND=anthropic` + `ANTHROPIC_API_KEY`: AI soạn tin, nhập CV, bài đăng
+  chiến dịch và CV mẫu chạy bằng Claude; đổi về Gemini chỉ cần sửa env. Hết credit (402)
+  thì nhập CV và bài đăng chuyển sang cách dự phòng thay vì báo lỗi.
+
 ### 2026-11-25
 
 #### Changed — Đăng nhập mạng xã hội mở cửa sổ popup trên desktop

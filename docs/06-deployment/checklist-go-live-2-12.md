@@ -60,7 +60,9 @@ nhập admin. Phần còn lại là **tài khoản và cấu hình bên ngoài**
   `backend/.env`, site key vào `frontend/.env` (`VITE_RECAPTCHA_SITE_KEY`).
 
 **AI và bản đồ**
-- [ ] Gemini: project đã bật thanh toán + key; `AI_MODEL_PRICING_USD` theo giá thật.
+- [ ] AI: **Claude** (`AI_PROVIDER_BACKEND=anthropic`, `ANTHROPIC_API_KEY`, model + giá thật,
+  `AI_ANTHROPIC_EFFORT=low`; credit hiện có hết hạn 13/12) hoặc Gemini trả phí, hoặc
+  `AI_RUNTIME_ENABLED=False`. Sau 13/12 nếu chưa nạp thêm: đổi backend hoặc tắt AI.
   Hoặc đặt `AI_RUNTIME_ENABLED=False` nếu chưa dùng.
 - [ ] VietMap key + site setting `map_style_url` (nếu bật "Việc làm gần tôi").
 

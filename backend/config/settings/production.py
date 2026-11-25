@@ -55,11 +55,14 @@ if not RECAPTCHA_SECRET_KEY:
 if EMPLOYER_BADGE_POLICY_MODE not in {'shadow', 'enforce'}:
     _errors.append('EMPLOYER_BADGE_POLICY_MODE phải là shadow hoặc enforce.')
 
-_ai_provider_backends = {'gemini_developer', 'vertex'}
+_ai_provider_backends = {'gemini_developer', 'vertex', 'anthropic'}
 if AI_PROVIDER_BACKEND not in _ai_provider_backends:
     _errors.append(
-        'AI_PROVIDER_BACKEND phải là gemini_developer hoặc vertex; không có fallback provider.'
+        'AI_PROVIDER_BACKEND phải là gemini_developer, vertex hoặc anthropic; '
+        'không có fallback provider.'
     )
+if AI_ANTHROPIC_EFFORT and AI_ANTHROPIC_EFFORT not in {'low', 'medium', 'high', 'xhigh', 'max'}:
+    _errors.append('AI_ANTHROPIC_EFFORT phải là low, medium, high, xhigh hoặc max (hoặc để trống).')
 if not AI_JOB_GENERATION_MODEL_ALLOWLIST:
     _errors.append('AI_JOB_GENERATION_MODEL_ALLOWLIST phải có ít nhất một model đã duyệt.')
 elif AI_JOB_GENERATION_MODEL not in AI_JOB_GENERATION_MODEL_ALLOWLIST:
@@ -101,6 +104,10 @@ if AI_RUNTIME_ENABLED:
             _errors.append('GOOGLE_CLOUD_PROJECT là bắt buộc khi bật Vertex AI.')
         if not GOOGLE_CLOUD_LOCATION:
             _errors.append('GOOGLE_CLOUD_LOCATION là bắt buộc khi bật Vertex AI.')
+    if AI_PROVIDER_BACKEND == 'anthropic' and not ANTHROPIC_API_KEY:
+        _errors.append(
+            'ANTHROPIC_API_KEY là bắt buộc khi bật Claude (AI_PROVIDER_BACKEND=anthropic).'
+        )
 
 _announcement_surfaces = {
     'candidate',

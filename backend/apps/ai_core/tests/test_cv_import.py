@@ -54,6 +54,13 @@ class CvImportStructuringTests(TestCase):
         self.assertEqual(content['personal_info']['full_name'], 'Nguyen Van A')
         self.assertEqual(content['personal_info']['email'], 'nguyen@example.com')
 
+    def test_exhausted_provider_credit_falls_back_to_rule_based_parsing(self, generate):
+        generate.side_effect = AiGenerationError('provider_quota_exhausted')
+
+        content = structure_cv_text(SOURCE, 'vi-VN')
+
+        self.assertEqual(content['personal_info']['full_name'], 'Nguyen Van A')
+
     def test_admin_switch_skips_ai_entirely(self, generate):
         SiteSetting.objects.update_or_create(
             key='ai_enabled', defaults={'value': False, 'value_type': SiteSetting.ValueType.BOOLEAN}
