@@ -58,6 +58,7 @@ ml/
       pdf/topcv/          36 PDF xuất từ TopCV, nhiều mẫu khác nhau
     labels/gold_pool.json nguồn ghép cặp và phép chia validation/test (không xem khi chấm)
     profiles/             profile_json xuất từ hệ thống (*.jsonl)
+    eval/                 điểm từng cặp của mỗi lần đo (evaluate.py, *.jsonl)
     pairs/                cặp huấn luyện
     public/               dữ liệu công khai (VietJobs, resume-job-description-fit)
   reports/                bảng số liệu (commit, đưa vào báo cáo); tên = script sinh ra nó
