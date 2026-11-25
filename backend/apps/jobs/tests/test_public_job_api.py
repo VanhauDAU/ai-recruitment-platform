@@ -1,7 +1,7 @@
 """Public job reads: catalog, search, list filters, detail visibility and tracking."""
 
 from datetime import timedelta
-from unittest.mock import ANY, patch
+from unittest.mock import patch
 
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
@@ -14,6 +14,7 @@ from apps.accounts.models import User
 from apps.campaigns.models import RecruitmentCampaign
 from apps.employers.models import Company
 from apps.employers.tests.factories import make_employer_ready
+from apps.sitecontent.models import SiteSetting
 
 from ..models import Job, JobCategory, JobEngagementDaily
 from .factories import open_visibility_window
@@ -444,19 +445,29 @@ class JobSalaryBucketFilterTests(APITestCase):
         titles = {job['title'] for job in response.data['results']}
         self.assertEqual(titles, {'Under 10'})
 
-    def test_urgent_ordering_uses_urgent_label_not_flash_badge(self):
-        urgent = self.create_job('Urgent semantic', 10_000_000, 15_000_000)
-        urgent.is_urgent = True
-        urgent.save(update_fields=['is_urgent'])
-        flash = self.create_job('Fast response badge', 10_000_000, 15_000_000)
-        flash.has_flash_badge = True
-        flash.save(update_fields=['has_flash_badge'])
+    def test_closing_soon_label_follows_admin_threshold(self):
+        job = self.create_job('Closes in ten days', 10_000_000, 15_000_000)
+        job.deadline = timezone.localdate() + timedelta(days=10)
+        job.save(update_fields=['deadline'])
 
-        response = self.client.get(reverse('job-list'), {'ordering': 'urgent'})
+        def labels():
+            response = self.client.get(reverse('job-list'))
+            item = next(
+                item for item in response.data['results'] if item['public_id'] == job.public_id
+            )
+            return [label['code'] for label in item['presentation']['labels']]
 
-        self.assertEqual(response.status_code, 200)
-        titles = [job['title'] for job in response.data['results']]
-        self.assertLess(titles.index('Urgent semantic'), titles.index('Fast response badge'))
+        self.assertEqual(labels(), [])
+        SiteSetting.objects.update_or_create(
+            key='job_closing_soon_days',
+            defaults={
+                'label': 'Closing soon',
+                'group': SiteSetting.Group.JOBS,
+                'value': 14,
+                'value_type': SiteSetting.ValueType.NUMBER,
+            },
+        )
+        self.assertEqual(labels(), ['closing_soon'])
 
     def test_unknown_ordering_is_rejected(self):
         self.create_job('Ordering validation', 10_000_000, 15_000_000)
@@ -500,9 +511,6 @@ class JobSalaryBucketFilterTests(APITestCase):
                 'salary_max',
                 'income_display_type',
                 'currency',
-                'tier',
-                'is_hot',
-                'is_urgent',
                 'has_flash_badge',
                 'presentation',
                 'first_approved_at',
@@ -557,37 +565,27 @@ class JobSalaryBucketFilterTests(APITestCase):
         self.assertEqual(parse_datetime(item['first_approved_at']), first_approved_at)
         self.assertEqual(parse_datetime(item['published_at']), latest_published_at)
 
-    def test_list_presentation_is_semantic_and_keeps_legacy_fields_for_rollback(self):
+    def test_list_presentation_has_only_system_labels(self):
         job = self.create_job('Presented job', 10_000_000, 15_000_000)
-        job.tier = Job.Tier.FEATURED
-        job.is_urgent = True
         job.has_flash_badge = True
-        job.deadline = timezone.localdate() + timedelta(days=10)
-        job.save(update_fields=['tier', 'is_urgent', 'has_flash_badge', 'deadline'])
+        job.deadline = timezone.localdate() + timedelta(days=7)
+        job.save(update_fields=['has_flash_badge', 'deadline'])
+        self.create_job('Plain job', 10_000_000, 15_000_000)
 
         response = self.client.get(reverse('job-list'))
 
-        item = next(job for job in response.data['results'] if job['title'] == 'Presented job')
-        self.assertEqual(item['tier'], Job.Tier.FEATURED)
+        items = {job['title']: job for job in response.data['results']}
         self.assertEqual(
-            item['presentation'],
+            items['Presented job']['presentation'],
             {
-                'sponsored': True,
-                'card_tone': 'orange',
                 'labels': [
-                    {'code': 'sponsored', 'text': 'Tài trợ', 'tone': 'sponsored'},
-                    {'code': 'urgent', 'text': 'GẤP', 'tone': 'warning'},
-                    {
-                        'code': 'fast_response',
-                        'text': 'Phản hồi nhanh',
-                        'tone': 'success',
-                    },
-                ],
-                'display_reason': '',
-                'active_until': ANY,
-                'placement': 'legacy_priority',
+                    {'code': 'closing_soon', 'text': 'Sắp hết hạn', 'tone': 'warning'},
+                    {'code': 'fast_response', 'text': 'Phản hồi nhanh', 'tone': 'success'},
+                ]
             },
         )
+        self.assertEqual(items['Plain job']['presentation'], {'labels': []})
+        item = items['Presented job']
         self.assertTrue(
             {
                 'description',

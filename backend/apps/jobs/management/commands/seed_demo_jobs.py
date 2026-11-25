@@ -232,12 +232,6 @@ class Command(BaseCommand):
                 work_type = rnd.choice(WORK_TYPES)
                 days_ago = rnd.choice(day_slots)
                 published = now - timedelta(days=days_ago, hours=rnd.randint(0, 23))
-                # Hạng tin + nhãn demo: tỉ lệ mô phỏng danh sách thật (đa số tin thường,
-                # một ít nổi bật/TOP) để trang danh sách thể hiện đủ các biến thể card.
-                tier = rnd.choices(
-                    [Job.Tier.STANDARD, Job.Tier.FEATURED, Job.Tier.TOP],
-                    weights=[65, 25, 10],
-                )[0]
                 job = Job.objects.create(
                     posted_by=user,
                     company=company,
@@ -260,9 +254,6 @@ class Command(BaseCommand):
                     salary_type=salary_type,
                     salary_min=smin,
                     salary_max=smax,
-                    tier=tier,
-                    is_hot=rnd.random() < 0.18,
-                    is_urgent=rnd.random() < 0.18,
                     deadline=(published + timedelta(days=rnd.choice([7, 15, 30, 45]))).date(),
                     status=Job.Status.ACTIVE,
                     published_at=published,

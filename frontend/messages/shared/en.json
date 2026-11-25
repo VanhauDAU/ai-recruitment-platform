@@ -115,9 +115,6 @@
       }
     }
   ],
-  "job_label_sponsored": "Sponsored",
-  "job_label_urgent": "URGENT",
-  "job_label_fast_response": "Fast response",
   "job_label_fast_response_hint": "The employer regularly answers applications on time. Recalculated every hour.",
   "job_weekday_mon": "Mon",
   "job_weekday_tue": "Tue",

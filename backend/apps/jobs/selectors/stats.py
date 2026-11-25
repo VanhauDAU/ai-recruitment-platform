@@ -20,7 +20,7 @@ from apps.accounts.models import User
 from apps.employers.models import Company
 from common.storage.media import media_url_from_value
 
-from ..models import Job, JobCategory, JobCategoryAssignment, JobLocation
+from ..models import Job, JobCategory, JobCategoryAssignment, JobLocation, listing_recency
 from ..models.querysets import SALARY_BUCKET_VALUE, salary_bucket_condition
 from .listing import SALARY_BUCKETS, publicly_available_job_filter
 
@@ -204,7 +204,8 @@ def job_stats_payload():
         return payload
     now = timezone.now()
     active_jobs = Job.objects.filter(publicly_available_job_filter()).annotate(
-        published=Coalesce('published_at', 'created_at')
+        # Một mốc với danh sách (ADR-0030): mở lại tin không thành "tin mới".
+        published=listing_recency()
     )
     payload = {
         **_platform_account_counts(),

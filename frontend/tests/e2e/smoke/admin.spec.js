@@ -1018,8 +1018,6 @@ test('admin job management: list, detail and revision-bound hide workflow', { ta
     policy_hold_label: 'Không giữ',
     moderation_hold: '',
     moderation_hold_label: 'Không giữ',
-    tier: 'standard',
-    tier_label: 'Tin thường',
     deadline: '2026-08-30',
     submitted_at: '2026-07-30T09:00:00Z',
     updated_at: '2026-07-30T09:00:00Z',

@@ -63,7 +63,7 @@ from .moderation import (
     restore_job_visibility,
     resubmit_job_for_review,
 )
-from .policy import auto_reject_default_days
+from .policy import auto_reject_default_days, job_closing_soon_days
 from .posting import (
     RESPONSIBILITY_STATEMENT_VERSION,
     assign_job_to_campaign,
@@ -93,6 +93,7 @@ __all__ = [
     'assign_coordinates',
     'refresh_job_coordinates',
     'auto_reject_default_days',
+    'job_closing_soon_days',
     'absolute_url',
     'job_email_card',
     'job_url',

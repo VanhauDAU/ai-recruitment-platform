@@ -190,6 +190,12 @@ msgstr "Select an application deadline."
 msgid "Bạn cần đồng ý nhận gợi ý việc làm trước khi hệ thống đọc dữ liệu CV."
 msgstr "You need to consent to job recommendations before the system can read your CV data."
 
+msgid "Sắp hết hạn"
+msgstr "Closing soon"
+
+msgid "Phản hồi nhanh"
+msgstr "Fast response"
+
 msgid "Brief có hướng dẫn"
 msgstr "Guided brief"
 
@@ -484,15 +490,6 @@ msgstr "Hidden for a confirmed violation"
 msgid "Tạm ẩn, cần chỉnh sửa theo yêu cầu"
 msgstr "Hidden, changes requested"
 
-msgid "Tin thường"
-msgstr "Standard posting"
-
-msgid "Tin nổi bật"
-msgstr "Featured posting"
-
-msgid "Tin TOP"
-msgstr "TOP posting"
-
 msgid "Mỗi lý do phải có từ 1 đến 160 ký tự."
 msgstr "Each reason must be between 1 and 160 characters."
 
@@ -668,15 +665,6 @@ msgstr "Dismissed"
 
 msgid "Ứng viên"
 msgstr "Candidate"
-
-msgid "Tài trợ"
-msgstr "Sponsored"
-
-msgid "GẤP"
-msgstr "URGENT"
-
-msgid "Phản hồi nhanh"
-msgstr "Fast response"
 
 msgid "Đúng vị trí bạn mong muốn"
 msgstr "Matches the position you want"
@@ -895,9 +883,6 @@ msgstr "Verified employer"
 
 msgid "%(amount)s triệu"
 msgstr "%(amount)s million"
-
-msgid "Nổi bật"
-msgstr "Featured"
 
 msgid "Chọn thời gian hiển thị tin."
 msgstr "Select how long the posting is displayed."

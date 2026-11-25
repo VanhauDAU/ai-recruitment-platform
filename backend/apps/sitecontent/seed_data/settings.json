@@ -1290,6 +1290,26 @@
     }
   },
   {
+    "key": "job_closing_soon_days",
+    "label": "Nhãn \"Sắp hết hạn\" (ngày)",
+    "group": "jobs",
+    "section": "Hạn tin",
+    "value_type": "number",
+    "value": 7,
+    "is_public": false,
+    "description": "Tin còn tối đa số ngày này tới hạn nộp hồ sơ thì hiện nhãn \"Sắp hết hạn\".",
+    "help": "Nhãn do hệ thống tính, áp dụng như nhau cho mọi tin.",
+    "options": {
+      "applies_to": [
+        "Tìm việc",
+        "Trang chi tiết việc làm"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 30
+    }
+  },
+  {
     "key": "job_view_dedup_hours",
     "label": "Gộp lượt xem trùng (giờ)",
     "group": "jobs",

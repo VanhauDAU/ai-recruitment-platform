@@ -827,7 +827,6 @@ class EmployerJobSerializerTests(APITestCase):
             {
                 'status',
                 'application_count',
-                'tier',
                 'has_flash_badge',
                 'category_assignments',
                 'job_skills',

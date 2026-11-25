@@ -144,7 +144,6 @@
   "candidate_nearby_group_remote": "Remote jobs",
   "candidate_nearby_badge_province": "Province-wide",
   "candidate_nearby_badge_remote": "Remote",
-  "candidate_nearby_urgent": "Urgent",
   "candidate_nearby_deadline": "Until {date}",
   "candidate_nearby_more_workplaces": "+{count} nearby workplaces",
   "candidate_nearby_approx": "approximate, ward centre",

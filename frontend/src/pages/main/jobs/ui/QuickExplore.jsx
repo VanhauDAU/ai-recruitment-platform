@@ -1,13 +1,19 @@
 import {
   AppstoreOutlined,
   DollarOutlined,
+  EnvironmentOutlined,
   LaptopOutlined,
   RightOutlined,
   RocketOutlined,
 } from '@ant-design/icons'
 import { Skeleton } from 'antd'
+import { Link } from 'react-router'
+import { useSiteSettings } from '@/entities/system/site-settings'
+import { m } from '@/shared/config/i18n'
 import ArrowButton from '@/shared/ui/ArrowButton'
-import { formatNumber } from '@/entities/job/job'
+
+const PILL_CLASS = 'job-list-chip inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1 text-[13px] font-medium transition'
+const PILL_IDLE_CLASS = 'border-gray-200 bg-white text-gray-700 hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]'
 
 // Icon 3D (Fluent Emoji, MIT) cho các lối tắt không phải ngành; ảnh ngành lấy từ logo_url.
 const SHORTCUT_ICON = {
@@ -39,7 +45,6 @@ export default function QuickExplore({
   expYears,
   extraChip,
   groups,
-  noExpCount,
   onOpenAllCategories,
   onScroll,
   onToggleCategory,
@@ -66,6 +71,13 @@ export default function QuickExplore({
       active: searchParams.get('et') === 'part_time',
       onClick: () => onToggleParam('et', 'part_time'),
     },
+    {
+      key: 'no-exp',
+      label: 'Việc không cần kinh nghiệm',
+      icon: <RocketOutlined />,
+      active: expYears.includes('none'),
+      onClick: () => onToggleExperienceYears('none'),
+    },
   ]
   const quickPills = [
     {
@@ -82,18 +94,9 @@ export default function QuickExplore({
       active: searchParams.get('wt') === 'remote',
       onClick: () => onToggleParam('wt', 'remote'),
     },
-    // Pill kèm số chỉ có nghĩa khi đã biết số và số > 0; chưa có thì ẩn hẳn
-    // thay vì hiện "... việc làm" / "0 việc làm".
-    ...(noExpCount
-      ? [{
-          key: 'no-exp',
-          label: `${formatNumber(noExpCount)} việc làm không cần kinh nghiệm`,
-          icon: <RocketOutlined />,
-          active: expYears.includes('none'),
-          onClick: () => onToggleExperienceYears('none'),
-        }]
-      : []),
   ]
+  const { settings } = useSiteSettings()
+  const nearbyJobsEnabled = settings.nearby_jobs_enabled !== false
 
   return (
     <>
@@ -114,6 +117,7 @@ export default function QuickExplore({
                   <ShortcutCard
                     key={shortcut.key}
                     img={shortcut.img}
+                    icon={shortcut.icon}
                     label={shortcut.label}
                     active={shortcut.active}
                     onClick={shortcut.onClick}
@@ -157,15 +161,26 @@ export default function QuickExplore({
         </div>
       ) : (
         <div className="job-list-scroll-row mt-2 flex flex-wrap gap-2">
+          {nearbyJobsEnabled && (
+            // Link là <a>: reset antd đè màu chữ/nền utility thường nên dùng `!`.
+            <Link
+              to="/viec-lam-gan-ban"
+              className={`${PILL_CLASS} border-gray-200 !bg-white !text-gray-700 hover:border-[var(--brand-primary)] hover:!text-[var(--brand-primary)]`}
+            >
+              <EnvironmentOutlined aria-hidden />
+              {m.candidate_nearby_hero_link()}
+              <RightOutlined className="text-[10px]" />
+            </Link>
+          )}
           {quickPills.map((pill) => (
             <button
               key={pill.key}
               type="button"
               onClick={pill.onClick}
-              className={`job-list-chip inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1 text-[13px] font-medium transition ${
+              className={`${PILL_CLASS} ${
                 pill.active
                   ? 'border-[var(--brand-primary)] bg-[var(--brand-primary-soft)] text-[var(--brand-primary)]'
-                  : 'border-gray-200 bg-white text-gray-700 hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]'
+                  : PILL_IDLE_CLASS
               }`}
             >
               {pill.icon}

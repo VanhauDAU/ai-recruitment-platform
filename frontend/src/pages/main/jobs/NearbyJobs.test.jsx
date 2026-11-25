@@ -96,13 +96,13 @@ describe('NearbyJobs page', () => {
       count: 2,
       origin: ORIGIN,
       expand_suggestion: null,
-      results: [job('a', { is_urgent: true }), job('b', { match_kind: 'province_wide', distance_km: null })],
+      results: [job('a', { presentation: { labels: [{ code: 'closing_soon', text: 'Sắp hết hạn', tone: 'warning' }] } }), job('b', { match_kind: 'province_wide', distance_km: null })],
     })
     renderPage()
 
     expect(await screen.findByRole('heading', { name: 'Việc làm gần tôi tại Đà Nẵng' })).toBeInTheDocument()
     expect(screen.getByText('3,4 km')).toBeInTheDocument()
-    expect(screen.getByText('Gấp')).toBeInTheDocument()
+    expect(screen.getByText('Sắp hết hạn')).toBeInTheDocument()
     expect(screen.getByText('Tuyển khắp Đà Nẵng')).toBeInTheDocument()
     expect(screen.getByText('Khắp tỉnh')).toBeInTheDocument()
     expect(screen.getAllByText('Phường Điện Bàn, Thành phố Đà Nẵng')).toHaveLength(2)

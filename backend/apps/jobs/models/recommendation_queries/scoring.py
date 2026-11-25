@@ -134,8 +134,8 @@ def score_job(job, context):
     if salary_fits(job, context['desired_salary']):
         add_detail('salary', _('Mức lương phù hợp'), 8)
 
-    # Paid tier is intentionally excluded from compatibility. It is only a
-    # deterministic tie-breaker below and can never make an unrelated job fit.
+    # Only fit counts: there is no paid or hand-set rank (ADR-0030). Ties are
+    # broken by first publication in ``ranking._rank_jobs``.
     score = min(sum(item['points'] for item in details), 100)
     return score, details
 

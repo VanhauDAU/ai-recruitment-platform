@@ -453,7 +453,7 @@ test('employer auth: verified session completes recruitment need before dashboar
   await expect(page.getByText('Bạn đang tuyển dụng vị trí chuyên môn nào?')).toBeVisible()
   await chooseSelectOption(page, page.getByRole('combobox', { name: /Bạn đang tuyển dụng vị trí chuyên môn nào/ }), 'Kinh doanh phần mềm')
   await page.getByRole('checkbox', { name: 'Tuyển liên tục' }).check()
-  await chooseSelectOption(page, page.getByRole('combobox', { name: /Bạn có nhu cầu cần tư vấn kỹ hơn/ }), 'Tôi muốn tìm hiểu thêm về các gói dịch vụ')
+  await chooseSelectOption(page, page.getByRole('combobox', { name: /Bạn có nhu cầu cần tư vấn kỹ hơn/ }), 'Tôi muốn biết thêm về các chương trình ưu đãi')
   await page.getByRole('button', { name: 'Hoàn thành' }).click()
 
   await expect.poll(() => submittedNeed).toMatchObject({
@@ -462,7 +462,7 @@ test('employer auth: verified session completes recruitment need before dashboar
     is_continuous: true,
     headcount: 1,
     budget_source: 'company',
-    consultation_topics: ['service_packages'],
+    consultation_topics: ['promotions'],
   })
   await expect(page).toHaveURL(/\/tuyendung\/app\/employer-verify$/)
   await expect(page.getByRole('heading', { name: 'Xác thực thông tin' })).toBeVisible()

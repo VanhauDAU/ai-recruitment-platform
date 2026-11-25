@@ -20,7 +20,6 @@ function job(slug, title, distance) {
     salary_type: 'from',
     salary_min: 7_500_000,
     currency: 'VND',
-    is_urgent: true,
     deadline: '2026-12-17',
     distance_km: distance,
     match_kind: 'distance',

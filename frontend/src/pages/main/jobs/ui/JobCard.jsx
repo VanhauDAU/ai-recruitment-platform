@@ -14,10 +14,8 @@ import {
   formatJobPostedLabel,
   formatLocations,
   formatSalary,
-  jobCardToneClass,
   jobDetailPath,
   JobPresentationLabels,
-  resolveJobPresentation,
   SavedJobTooltipContent,
   VerifiedEmployerBadge,
 } from '@/entities/job/job'
@@ -35,15 +33,9 @@ function savedLabel(value) {
   return `Đã lưu ${date} - ${time}`
 }
 
-function Chip({ children, elevated = false }) {
-  // `elevated`: card nền nhạt màu chủ đạo (featured/top) dùng chip trắng nổi trên nền;
-  // card thường nền trắng dùng chip xám để vẫn tách khỏi nền.
+function Chip({ children }) {
   return (
-    <span
-      className={`inline-flex max-w-full items-center truncate rounded-full px-2.5 py-1 text-xs text-gray-600 ring-1 transition-colors group-hover:bg-gray-100 group-hover:ring-transparent ${
-        elevated ? 'bg-white/70 ring-[var(--brand-primary)]/15' : 'bg-gray-50 ring-gray-200/70'
-      }`}
-    >
+    <span className="inline-flex max-w-full items-center truncate rounded-full bg-gray-50 px-2.5 py-1 text-xs text-gray-600 ring-1 ring-gray-200/70 transition-colors group-hover:bg-gray-100 group-hover:ring-transparent">
       {children}
     </span>
   )
@@ -99,8 +91,6 @@ export default function JobCard({
   const [hovered, setHovered] = useState(false)
   const impressionRef = useJobImpression(job.slug)
   const locationLabel = formatLocations(job)
-  const presentation = resolveJobPresentation(job)
-  const elevated = presentation.card_tone !== 'neutral'
   const skills = (job.job_skills || []).map((s) => s.skill_name).filter(Boolean)
   const posted = formatJobPostedLabel(job)
   const savedAtLabel = savedLabel(savedAt)
@@ -157,7 +147,7 @@ export default function JobCard({
       onMouseLeave={() => setHovered(false)}
       className={`job-card group relative flex min-w-0 cursor-pointer gap-4 rounded-xl border transition-colors duration-200 hover:bg-white hover:shadow-md hover:shadow-[var(--brand-primary)]/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]/25 ${
         compact ? 'p-3' : 'p-4'
-      } ${active ? 'border-[var(--brand-primary)] bg-white shadow-md shadow-[var(--brand-primary)]/10' : `${jobCardToneClass(job)} hover:border-[var(--brand-primary)]`}`}
+      } ${active ? 'border-[var(--brand-primary)] bg-white shadow-md shadow-[var(--brand-primary)]/10' : 'border-slate-200 bg-white hover:border-[var(--brand-primary)]'}`}
     >
       <div className="relative shrink-0">
         <div
@@ -213,11 +203,11 @@ export default function JobCard({
         </p>
 
         <div className="mt-2 flex flex-wrap gap-1.5">
-          {locationLabel && <Chip elevated={elevated}>{locationLabel}</Chip>}
-          {job.experience_years && <Chip elevated={elevated}>{EXPERIENCE_YEARS_LABELS[job.experience_years]}</Chip>}
+          {locationLabel && <Chip>{locationLabel}</Chip>}
+          {job.experience_years && <Chip>{EXPERIENCE_YEARS_LABELS[job.experience_years]}</Chip>}
         </div>
 
-        <div className={`job-card__footer mt-3 flex items-center justify-between gap-3 border-t pt-2.5 transition-colors group-hover:border-gray-200/70 ${elevated ? 'border-[var(--brand-primary)]/20' : 'border-gray-100'}`}>
+        <div className={`job-card__footer mt-3 flex items-center justify-between gap-3 border-t pt-2.5 transition-colors group-hover:border-gray-200/70 border-gray-100`}>
           <Tooltip
             placement="topLeft"
             title={<RequirementTooltip details={requirementDetails} />}

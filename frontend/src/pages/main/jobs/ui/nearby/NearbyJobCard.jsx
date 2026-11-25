@@ -1,5 +1,5 @@
 import { Link } from 'react-router'
-import { companyInitial, formatSalary, jobDetailPath } from '@/entities/job/job'
+import { companyInitial, formatSalary, jobDetailPath, JobPresentationLabels } from '@/entities/job/job'
 import { getIntlLocale, m } from '@/shared/config/i18n'
 import { formatDistance } from '@/shared/lib/geo'
 import { shortPlaceName } from '../../lib/nearby-params'
@@ -45,8 +45,8 @@ export default function NearbyJobCard({ job, active, onHover }) {
       <div className="nearby-card__body">
         <h3 className="nearby-card__title">
           <Link to={jobDetailPath(job)}>{job.title}</Link>
-          {job.is_urgent && <span className="nearby-card__urgent">{m.candidate_nearby_urgent()}</span>}
         </h3>
+        <JobPresentationLabels job={job} compact />
         <p className="nearby-card__company">{job.company_name}</p>
         <p className="nearby-card__meta">
           <span className="nearby-card__salary">{formatSalary(job)}</span>

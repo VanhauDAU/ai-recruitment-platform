@@ -75,17 +75,11 @@ class JobAdmin(admin.ModelAdmin):
         'title',
         'company',
         'status',
-        'tier',
-        'is_hot',
-        'is_urgent',
         'has_flash_badge',
         'created_at',
     ]
     list_filter = [
         'status',
-        'tier',
-        'is_hot',
-        'is_urgent',
         'has_flash_badge',
         'work_type',
         'employment_type',
@@ -95,9 +89,7 @@ class JobAdmin(admin.ModelAdmin):
         'gender_requirement',
         'salary_type',
     ]
-    # Gán hạng tin + nhãn ngay trên danh sách, không cần mở từng job. Huy hiệu
-    # Sấm Chớp do hệ thống tính (ADR-0027) nên chỉ xem.
-    list_editable = ['tier', 'is_hot', 'is_urgent']
+    # Nhãn tin do hệ thống tính (ADR-0030); Huy hiệu Sấm Chớp chỉ xem (ADR-0027).
     search_fields = ['title', 'company__company_name']
     readonly_fields = [
         'public_id',
@@ -128,9 +120,6 @@ class JobAdmin(admin.ModelAdmin):
                     'posted_by',
                     'company',
                     'status',
-                    'tier',
-                    'is_hot',
-                    'is_urgent',
                     'has_flash_badge',
                 )
             },
