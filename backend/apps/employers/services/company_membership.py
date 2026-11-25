@@ -12,6 +12,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 
+from apps.realtime.services import notify_admin_queue
 from common.i18n import recipient_language
 
 from ..models import (
@@ -57,9 +58,10 @@ def create_company_for_recruiter(user, validated_data):
     form a logo upload follows, so it is not stored.
     """
     recruiter = _locked_unlinked_recruiter(user)
-    CompanyJoinRequest.objects.filter(
+    if CompanyJoinRequest.objects.filter(
         recruiter=recruiter, status=CompanyJoinRequest.Status.PENDING
-    ).update(status=CompanyJoinRequest.Status.CANCELLED, decided_at=timezone.now())
+    ).update(status=CompanyJoinRequest.Status.CANCELLED, decided_at=timezone.now()):
+        notify_admin_queue('company_join_requests')
     values = dict(validated_data)
     industries = values.pop('industries')
     primary_industry = values.pop('primary_industry')
@@ -122,6 +124,7 @@ def cancel_company_join(user):
     ).update(status=CompanyJoinRequest.Status.CANCELLED, decided_at=timezone.now())
     if not updated:
         raise NotFound(_('Không có yêu cầu tham gia nào đang chờ.'))
+    notify_admin_queue('company_join_requests')
 
 
 def _require_decider(user, company):

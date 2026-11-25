@@ -9,6 +9,7 @@ import {
   domainClaimStatusPresentation,
   formatDomainClaimDate,
 } from '@/entities/account/employer-profile'
+import { useRealtimeOpen } from '@/shared/api/use-realtime'
 
 const METHOD_LABELS = {
   dns_txt: 'DNS TXT',
@@ -68,11 +69,12 @@ function eventDescription(event) {
 }
 
 export default function AdminCompanyDomainDetailDrawer({ publicId, onClose }) {
+  const live = useRealtimeOpen()
   const detailQuery = useQuery({
     queryKey: adminCompanyDomainClaimKeys.detail(publicId),
     queryFn: ({ signal }) => getAdminCompanyDomainClaim(publicId, { signal }),
     enabled: Boolean(publicId),
-    refetchInterval: publicId ? 10_000 : false,
+    refetchInterval: publicId && !live ? 10_000 : false,
     refetchOnWindowFocus: 'always',
     staleTime: 0,
   })

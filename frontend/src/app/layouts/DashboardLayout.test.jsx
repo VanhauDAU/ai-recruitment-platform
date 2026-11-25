@@ -28,6 +28,11 @@ vi.mock('@/entities/system/site-settings', () => ({
   BrandLogo: () => <span>Logo</span>,
 }))
 vi.mock('@/widgets/common/announcement-strip', () => ({ AnnouncementStrip: () => null }))
+// Không mở WebSocket thật trong jsdom; phần nghe sự kiện có test riêng.
+vi.mock('@/shared/api/use-realtime', () => ({
+  useRealtimeEvents: () => {},
+  useRealtimeOpen: () => false,
+}))
 
 function LocationProbe() {
   const { pathname, search } = useLocation()

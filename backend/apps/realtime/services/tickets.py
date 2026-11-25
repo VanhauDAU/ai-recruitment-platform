@@ -27,6 +27,8 @@ class SocketIdentity:
     user_id: int
     sid: str
     auth_revision: int
+    # Decides whether the socket also joins the admin group; re-checked with the session.
+    is_admin: bool = False
 
 
 def issue_ticket(*, user, validated_token):
@@ -51,19 +53,28 @@ def redeem_ticket(ticket):
     payload = atomic_pop(f'{_KEY_PREFIX}{ticket}')
     if not isinstance(payload, dict):
         return None
+    user = User.objects.filter(pk=int(payload['user_id'])).first()
+    if user is None:
+        return None
     identity = SocketIdentity(
-        user_id=int(payload['user_id']),
+        user_id=user.pk,
         sid=payload['sid'],
         auth_revision=int(payload['auth_rev']),
+        is_admin=user.is_admin_role,
     )
-    return identity if identity_is_authorized(identity) else None
+    return identity if _is_authorized(user, identity) else None
 
 
 def identity_is_authorized(identity):
     """Same rules as the HTTP API: active account, same credentials, live session."""
     user = User.objects.filter(pk=identity.user_id).first()
+    return user is not None and _is_authorized(user, identity)
+
+
+def _is_authorized(user, identity):
     return (
-        user is not None
-        and is_account_accessible(user)
+        is_account_accessible(user)
+        # A role change must not leave the socket in (or out of) the admin group.
+        and user.is_admin_role == identity.is_admin
         and is_session_live(sid=identity.sid, user=user, auth_revision=identity.auth_revision)
     )

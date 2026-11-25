@@ -47,6 +47,7 @@ import {
 } from '../model/account-query'
 import { activeRecruiterSegment, applyRecruiterSegment, RECRUITER_SEGMENTS } from '../model/recruiter-segments'
 import '../admin-account-management.css'
+import { useRealtimeOpen } from '@/shared/api/use-realtime'
 
 const EMPTY_PAGE = { count: 0, results: [] }
 const formatCount = (value) => Number(value || 0).toLocaleString(getIntlLocale())
@@ -124,6 +125,7 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
     [activeTab, apiScope, deferredSearch, filters, page, pageSize],
   )
   const summaryParams = useMemo(() => ({ scope: apiScope }), [apiScope])
+  const live = useRealtimeOpen()
   const summaryQuery = useQuery({
     queryKey: adminAccountKeys.summary(summaryParams),
     queryFn: ({ signal }) => getAdminAccountSummary(summaryParams, { signal }),
@@ -132,7 +134,7 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
     queryKey: adminCompanyDomainClaimKeys.summary,
     queryFn: ({ signal }) => getAdminCompanyDomainClaimSummary({ signal }),
     enabled: recruiterScope,
-    refetchInterval: 10_000,
+    refetchInterval: live ? false : 10_000,
     refetchOnWindowFocus: 'always',
     staleTime: 0,
   })
