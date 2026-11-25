@@ -241,6 +241,8 @@
   "api_error_oauth_invalid_code": "Mã đăng nhập không hợp lệ. Vui lòng thử lại.",
   "api_error_oauth_complete_failed": "Đăng nhập chưa hoàn tất được. Vui lòng thử lại.",
   "api_error_oauth_failed": "Đăng nhập mạng xã hội thất bại. Vui lòng thử lại.",
+  "ui_arrow_previous": "Trang trước",
+  "ui_arrow_next": "Trang sau",
   "ui_banner_previous": "Banner trước",
   "ui_banner_next": "Banner tiếp theo",
   "ui_banner_go_to": "Chuyển đến banner {index}",

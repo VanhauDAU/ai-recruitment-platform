@@ -28,18 +28,27 @@ export function scrubEvent(event) {
   return event
 }
 
+// Lúc đang chờ mạng trình duyệt cũng "rảnh", nên đợi `load` rồi thêm vài giây để
+// SDK không tranh băng thông với nội dung đầu trang.
+const SDK_DELAY_MS = 4000
+
 function whenIdle(callback) {
-  if (typeof window.requestIdleCallback === 'function') {
-    window.requestIdleCallback(callback, { timeout: 5000 })
-  } else {
-    window.setTimeout(callback, 2000)
+  const idle = () => {
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(callback, { timeout: 5000 })
+    } else {
+      callback()
+    }
   }
+  const later = () => window.setTimeout(idle, SDK_DELAY_MS)
+  if (document.readyState === 'complete') later()
+  else window.addEventListener('load', later, { once: true })
 }
 
 export function initErrorReporting({
   dsn = import.meta.env.VITE_SENTRY_DSN,
   environment = import.meta.env.VITE_SENTRY_ENVIRONMENT || 'production',
-  loadSdk = () => import('@sentry/browser'),
+  loadSdk = () => import('./sentry-sdk'),
   schedule = whenIdle,
 } = {}) {
   if (!dsn) return false

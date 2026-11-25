@@ -13,6 +13,16 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Bổ sung 3 bản dịch en trong `apps/employers` của `verify_employer_phone` (#402);
   `test_locale_catalogs[employers]` xanh trở lại.
 
+#### Changed — Trang chủ tải nhanh hơn trên điện thoại, sửa một số lỗi hỗ trợ tiếp cận
+
+- Ảnh nền trang trí hai bên khối tìm kiếm (hơn 400 KB, đang là phần tử LCP) chỉ tải
+  từ màn hình 769px; linh vật hero chỉ dựng trên desktop.
+- Carousel banner chỉ dựng slide đang xem, slide kế tiếp và slide đã xem.
+- Sentry chỉ re-export `init` (bỏ Replay, Feedback khỏi chunk) và nạp sau `load`.
+- Ảnh loader linh vật còn 40 khung hình, 160px (266 KB → 125 KB).
+- Thêm nhãn cho nút mũi tên và ô chọn loại biểu đồ, tăng tương phản một số chữ xám,
+  nới vùng bấm chấm chuyển banner lên 24px.
+
 #### Fixed — Giao diện mobile: ô chat Connect trên iPhone, banner cookie, ô Địa điểm
 
 - ProCV Connect: ô nhập trên màn hình cảm ứng dùng chữ 16px để iOS (Safari, Chrome)

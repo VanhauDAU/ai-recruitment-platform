@@ -1,4 +1,5 @@
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
+import { m } from '@/shared/config/i18n'
 
 // Circular prev/next arrow (brand-color outline, hover-fill). Shared by carousels & paginators.
 const CLASS =
@@ -9,7 +10,12 @@ const CLASS =
 
 export default function ArrowButton({ dir = 'left', className = '', ...props }) {
   return (
-    <button type="button" className={`${CLASS} ${className}`} {...props}>
+    <button
+      type="button"
+      aria-label={dir === 'left' ? m.ui_arrow_previous() : m.ui_arrow_next()}
+      className={`${CLASS} ${className}`}
+      {...props}
+    >
       {dir === 'left' ? <LeftOutlined className="text-xs" /> : <RightOutlined className="text-xs" />}
     </button>
   )
