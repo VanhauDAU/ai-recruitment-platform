@@ -85,6 +85,11 @@ EMPLOYER_DOMAIN_RECHECK_BATCH_SIZE = config(
     'EMPLOYER_DOMAIN_RECHECK_BATCH_SIZE', default=100, cast=int
 )
 CELERY_BEAT_SCHEDULE = {
+    # Việc làm gần tôi (ADR-0029): geocode các địa chỉ nơi làm việc còn chờ.
+    'geocode-pending-job-locations': {
+        'task': 'apps.jobs.tasks.geocoding.geocode_pending_job_locations',
+        'schedule': 600.0,
+    },
     'purge-expired-ai-runtime-metadata': {
         'task': 'apps.ai_core.tasks.purge_expired_ai_metadata',
         'schedule': 86400.0,

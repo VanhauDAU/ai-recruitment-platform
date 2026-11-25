@@ -56,6 +56,11 @@ export default function NearbyJobs() {
     ? m.candidate_nearby_title_in({ place: shortPlaceName(provinceName) })
     : m.candidate_nearby_title()
   const placeLabel = origin?.label || m.candidate_nearby_my_location()
+  // Mô tả nơi đang tra: phường/xã + tỉnh gần nhất (máy chủ suy từ tâm), không có thì tọa độ.
+  const originWard = search.originInfo?.ward
+  const nearLabel = originWard
+    ? `${shortPlaceName(originWard.name)}, ${shortPlaceName(originWard.province_name)}`
+    : origin && `${origin.latitude.toFixed(4)}, ${origin.longitude.toFixed(4)}`
 
   function updateParams(entries, options) {
     setSelectedPoint(null)
@@ -156,6 +161,7 @@ export default function NearbyJobs() {
                   count={search.count}
                   radius={filters.radius}
                   placeLabel={placeLabel}
+                  nearLabel={origin?.label === originWard?.name ? null : nearLabel}
                   provinceName={provinceName}
                   page={filters.page}
                   loading={search.loading}

@@ -137,7 +137,7 @@
   "candidate_nearby_map_label": "Bản đồ việc làm quanh vị trí đã chọn",
   "candidate_nearby_pick_title": "Chọn vị trí để xem việc làm quanh bạn",
   "candidate_nearby_pick_text": "Dùng vị trí hiện tại của thiết bị, chọn phường/xã, nhập địa chỉ hoặc bấm trực tiếp lên bản đồ. Vị trí chỉ dùng để tìm việc trong phiên này, không lưu lên máy chủ.",
-  "candidate_nearby_empty_title": "Chưa có việc làm trong bán kính {radius} km",
+  "candidate_nearby_empty_title": "Chưa có việc làm trong bán kính {radius} km quanh {place}",
   "candidate_nearby_empty_text": "Thử mở rộng bán kính hoặc bỏ bớt bộ lọc.",
   "candidate_nearby_expand": "Mở rộng {radius} km ({count} việc)",
   "candidate_nearby_group_province": "Tuyển khắp {province}",
@@ -161,5 +161,7 @@
   "candidate_nearby_disabled": "Tính năng Việc làm gần tôi đang tạm tắt.",
   "candidate_nearby_load_failed": "Không tải được việc làm gần đây. Thử lại sau.",
   "candidate_nearby_distance_from_you": "Cách bạn {distance}",
-  "candidate_job_detail_not_found_title": "Không tìm thấy tin tuyển dụng"
+  "candidate_job_detail_not_found_title": "Không tìm thấy tin tuyển dụng",
+  "candidate_nearby_near": "gần {place}",
+  "candidate_nearby_searching_at": "Đang tìm quanh: {place}"
 }

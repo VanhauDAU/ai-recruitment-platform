@@ -39,8 +39,11 @@ def _set(row, lat, lng, precision, source, pending=False):
 
 
 def _point_matches_province(point, province_id):
+    """True unless centroids prove the point lies in another province. Without any
+    centroid near the point (not seeded yet) the in-Vietnam check of the provider
+    adapter is the only guard left, so the point is accepted."""
     province = province_of_point(point.latitude, point.longitude)
-    return province is not None and province.pk == province_id
+    return province is None or province.pk == province_id
 
 
 def assign_coordinates(rows):
@@ -50,10 +53,14 @@ def assign_coordinates(rows):
         if row.coordinate_source == Source.EMPLOYER_PIN and row.latitude is not None:
             _set(row, row.latitude, row.longitude, Precision.EXACT, Source.EMPLOYER_PIN)
             continue
-        if location.level == Location.Level.PROVINCE or location.latitude is None:
+        if location.level == Location.Level.PROVINCE:
             _set(row, None, None, Precision.PROVINCE, '')
             continue
-        _set(row, location.latitude, location.longitude, Precision.WARD, Source.WARD_CENTROID)
+        if location.latitude is None:
+            # Phường chưa có tâm (chưa seed): chỉ còn địa chỉ để định vị.
+            _set(row, None, None, Precision.PROVINCE, '')
+        else:
+            _set(row, location.latitude, location.longitude, Precision.WARD, Source.WARD_CENTROID)
         if not row.address_detail:
             continue
         point, hit = cached_geocode(geocode_query(row))
@@ -107,6 +114,16 @@ def geocode_pending_locations(job_id):
             ]
         )
     return upgraded
+
+
+def pending_geocode_job_ids(limit):
+    """Jobs whose workplace addresses still wait for the geocoder (oldest first)."""
+    return list(
+        JobLocation.objects.filter(geocode_pending=True)
+        .order_by('job_id')
+        .values_list('job_id', flat=True)
+        .distinct()[:limit]
+    )
 
 
 def refresh_job_coordinates(job, *, force=False):

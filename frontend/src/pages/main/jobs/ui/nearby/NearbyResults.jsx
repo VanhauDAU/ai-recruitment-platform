@@ -27,6 +27,7 @@ export default function NearbyResults({
   count,
   radius,
   placeLabel,
+  nearLabel,
   provinceName,
   page,
   loading,
@@ -48,7 +49,13 @@ export default function NearbyResults({
   if (!count) {
     return (
       <div className="nearby-empty">
-        <h2>{m.candidate_nearby_empty_title({ radius })}</h2>
+        <h2>{m.candidate_nearby_empty_title({ radius, place: placeLabel })}</h2>
+        {nearLabel && (
+          <p className="nearby-empty__place">
+            <EnvironmentOutlined aria-hidden />
+            {m.candidate_nearby_searching_at({ place: `${placeLabel} (${m.candidate_nearby_near({ place: nearLabel })})` })}
+          </p>
+        )}
         <p>{m.candidate_nearby_empty_text()}</p>
         {expandSuggestion && (
           <Button type="primary" onClick={() => onExpand(expandSuggestion.radius_km)}>
@@ -65,6 +72,7 @@ export default function NearbyResults({
         <strong>{m.candidate_nearby_result_jobs({ count })}</strong>
         {' '}{m.candidate_nearby_result_within({ radius })}{' '}
         <strong>{placeLabel}</strong>
+        {nearLabel && <span className="nearby-results__near"> ({m.candidate_nearby_near({ place: nearLabel })})</span>}
       </p>
       {jobs.map((job, index) => {
         const heading = job.match_kind !== jobs[index - 1]?.match_kind && groupHeading(job.match_kind, provinceName)

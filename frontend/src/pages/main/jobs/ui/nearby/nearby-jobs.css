@@ -402,6 +402,22 @@
   font-size: 14px;
 }
 
+.nearby-empty .nearby-empty__place {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 13px;
+}
+
+.nearby-results__near {
+  color: #64748b;
+}
+
 .nearby-empty__icon {
   font-size: 28px;
   color: var(--brand-primary);

@@ -137,7 +137,7 @@
   "candidate_nearby_map_label": "Map of jobs around the chosen location",
   "candidate_nearby_pick_title": "Choose a location to see jobs around you",
   "candidate_nearby_pick_text": "Use your device location, choose a ward, type an address or click the map. The location is only used for this search session and is never stored on our servers.",
-  "candidate_nearby_empty_title": "No jobs within {radius} km yet",
+  "candidate_nearby_empty_title": "No jobs within {radius} km of {place} yet",
   "candidate_nearby_empty_text": "Try a larger radius or fewer filters.",
   "candidate_nearby_expand": "Widen to {radius} km ({count} jobs)",
   "candidate_nearby_group_province": "Hiring anywhere in {province}",
@@ -161,5 +161,7 @@
   "candidate_nearby_disabled": "Jobs near me is currently turned off.",
   "candidate_nearby_load_failed": "Could not load nearby jobs. Please try again.",
   "candidate_nearby_distance_from_you": "{distance} from you",
-  "candidate_job_detail_not_found_title": "Job posting not found"
+  "candidate_job_detail_not_found_title": "Job posting not found",
+  "candidate_nearby_near": "near {place}",
+  "candidate_nearby_searching_at": "Searching around: {place}"
 }
