@@ -1,4 +1,4 @@
-import { EditOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
+import { EditOutlined, PlusOutlined, SearchOutlined, SubnodeOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Alert, Button, Empty, Input, Select, Skeleton, Switch, Table, Tag } from 'antd'
 import { useMemo, useState } from 'react'
@@ -96,7 +96,7 @@ export default function CategoryCatalog() {
       width: 72,
       align: 'right',
       responsive: ['md'],
-      render: (category) => <span className={category.job_count ? 'skill-catalog__usage' : 'skill-catalog__usage is-zero'}>{formatCount(category.job_count)}</span>,
+      render: (category) => <span className={category.branch_job_count ? 'skill-catalog__usage' : 'skill-catalog__usage is-zero'}>{formatCount(category.branch_job_count ?? category.job_count)}</span>,
     },
     {
       key: 'active',
@@ -120,7 +120,7 @@ export default function CategoryCatalog() {
       render: (category) => (
         <span className="catalog-tree__actions" onClick={(event) => event.stopPropagation()}>
           {CATEGORY_TYPES[category.category_type].child && (
-            <Button size="small" type="text" icon={<PlusOutlined />} aria-label={m.admin_catalog_add_child({ name: category.name })} onClick={() => setEditing({ parent: category.id })} />
+            <Button size="small" type="text" icon={<SubnodeOutlined />} title={m.admin_catalog_add_child({ name: category.name })} aria-label={m.admin_catalog_add_child({ name: category.name })} onClick={() => setEditing({ parent: category.id })} />
           )}
           <Button size="small" type="text" icon={<EditOutlined />} aria-label={m.admin_catalog_edit_item({ name: category.name })} onClick={() => setEditing(category)} />
         </span>
@@ -176,7 +176,6 @@ export default function CategoryCatalog() {
         <Table
           rowKey="id"
           size="middle"
-          sticky
           columns={columns}
           dataSource={visible}
           pagination={false}
