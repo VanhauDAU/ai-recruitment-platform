@@ -41,8 +41,8 @@ describe('useJobListData', () => {
 
     await waitFor(() => expect(result.current.loading).toBe(false))
     expect(mocks.getJobs).toHaveBeenCalledTimes(1)
-    const initialRankingSeed = mocks.getJobs.mock.calls[0][0].get('ranking_seed')
-    expect(initialRankingSeed).toMatch(/^[A-Za-z0-9_-]{1,64}$/)
+    expect(mocks.getJobs.mock.calls[0][0].has('ranking_seed')).toBe(false)
+    expect(result.current.rankingSeed).toMatch(/^[A-Za-z0-9_-]{1,64}$/)
     let resolveTransition
     mocks.getJobs.mockImplementationOnce(() => new Promise((resolve) => {
       resolveTransition = resolve
@@ -50,7 +50,6 @@ describe('useJobListData', () => {
     rerender({ search: 'page=2' })
 
     await waitFor(() => expect(mocks.getJobs).toHaveBeenCalledTimes(2))
-    expect(mocks.getJobs.mock.calls[1][0].get('ranking_seed')).toBe(initialRankingSeed)
     expect(result.current.loading).toBe(true)
 
     await act(async () => resolveTransition({
@@ -79,7 +78,7 @@ describe('useJobListData', () => {
     expect(result.current.results).toEqual([{ public_id: 'job_2_refreshed' }])
   })
 
-  it('does not send a rotation seed for an explicit user-selected ordering', async () => {
+  it('sends the selected ordering without a rotation seed', async () => {
     mocks.getJobs.mockResolvedValue({ count: 0, results: [] })
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false } },
@@ -89,12 +88,12 @@ describe('useJobListData', () => {
     )
 
     renderHook(
-      () => useJobListData(new URLSearchParams('sort=newest')),
+      () => useJobListData(new URLSearchParams('sort=salary_desc')),
       { wrapper },
     )
 
     await waitFor(() => expect(mocks.getJobs).toHaveBeenCalledTimes(1))
-    expect(mocks.getJobs.mock.calls[0][0].get('ordering')).toBe('newest')
+    expect(mocks.getJobs.mock.calls[0][0].get('ordering')).toBe('salary_desc')
     expect(mocks.getJobs.mock.calls[0][0].has('ranking_seed')).toBe(false)
   })
 })

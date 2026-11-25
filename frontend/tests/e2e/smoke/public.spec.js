@@ -776,7 +776,6 @@ test('public smoke: reapproval keeps the original posted date on job cards and d
         company_verified: false,
         locations_detail: [],
         job_skills: [],
-        tier: 'standard',
         first_approved_at: firstApproval.toISOString(),
         published_at: latestApproval.toISOString(),
       }],

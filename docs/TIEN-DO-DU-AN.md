@@ -8,6 +8,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | Hạng mục | Trạng thái |
 | --- | --- |
 | [Thanh tab dưới và thông báo trên mobile cho ứng viên](#thanh-tab-dưới-và-thông-báo-trên-mobile-cho-ứng-viên-2026-11-25) | 🟨 PR #354 (nhánh `feat/mobile-tab-bar`), chờ gộp |
+| [Thứ tự và nhãn tin tuyển dụng công bằng (ADR-0030)](#thứ-tự-và-nhãn-tin-tuyển-dụng-công-bằng-adr-0030-2026-11-25) | 🟨 Nhánh `feat/fair-job-listing`, chờ PR |
 | [Trang Danh mục dữ liệu cho admin](#trang-danh-mục-dữ-liệu-cho-admin-2026-11-25) | 🟨 Cả 3 GĐ + dọn dẹp xong trên nhánh `feat/admin-catalog`, chờ PR |
 | [Chuẩn bị deploy: GĐ5 pháp lý và dữ liệu cá nhân](#chuẩn-bị-deploy-gđ5-pháp-lý-và-dữ-liệu-cá-nhân-2026-11-25) | ✅ Đã gộp dev (#348, 25/11); kiểm trên VPS ở GĐ6 rehearsal. |
 | [Chuẩn bị deploy: GĐ4 hiệu năng và chịu tải](#chuẩn-bị-deploy-gđ4-hiệu-năng-và-chịu-tải-2026-11-25) | ✅ Đã gộp dev (#349, 25/11); kiểm trên VPS ở GĐ6 rehearsal. Số đo k6 thật ở GĐ6. |
@@ -92,6 +93,26 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
   đổi email của tài khoản chưa có mật khẩu vẫn dùng mốc xác thực lại OAuth như cũ.
 - Kiểm: `MobileTabBar.test.jsx`, test chuông mobile, E2E `mobile-tab-bar.spec.js`,
   `candidate-security.spec.js` (@responsive), `PasswordSetupCodeTests` (backend).
+
+## Thứ tự và nhãn tin tuyển dụng công bằng (ADR-0030, 2026-11-25)
+
+Không còn gói dịch vụ (ADR-0015) nhưng tin vẫn mang hạng TOP/Nổi bật, HOT, GẤP do admin
+gán tay hoặc seed gán ngẫu nhiên, thẻ tô màu và hạng TOP xếp đầu `/viec-lam`. Chi tiết ở
+[ADR-0030](02-tong-quan/adr-0030-fair-job-listing.md).
+
+- **Nhãn:** xóa `tier`, `is_hot`, `is_urgent` (`jobs.0009`), nhãn "Tài trợ", thẻ màu.
+  Chỉ còn nhãn hệ thống: "Sắp hết hạn" (cấu hình `job_closing_soon_days`, mặc định 7)
+  và "Phản hồi nhanh" (Sấm Chớp).
+- **Một mốc xếp hạng = lần đăng đầu** cho danh sách, gần tôi, trang chủ, gợi ý, email
+  báo việc, theo dõi công ty, thống kê. Đóng/mở lại tin không còn là cách làm mới ngầm.
+- **Sắp xếp ứng viên:** Mới đăng (mặc định), Lương cao nhất, Sắp hết hạn nộp; bỏ "Cần
+  tuyển gấp". Tin cũ có lượt ở khối "Việc làm nổi bật" (điểm chất lượng, bỏ điểm HOT/GẤP).
+- **Trang `/viec-lam`:** thêm ô "Việc không cần kinh nghiệm" ở thanh ngang (thay pill
+  có đếm số) và nút "Tìm việc gần tôi" (ẩn khi tắt `nearby_jobs_enabled`).
+- **Dọn:** pill "TOP" theo trang thương hiệu, tiêu đề "Tin nổi bật" sai ở khối Sấm Chớp,
+  nhãn chết ở "Việc làm mới nhất", `ranking_seed` gửi thừa, `JobListRankingSync`, fallback
+  nhãn ở frontend, bộ lọc `tier` admin, chủ đề tư vấn "gói dịch vụ" (`employers.0011`).
+- **Còn lại:** báo cáo đồ án nếu có nhắc hạng tin/HOT/GẤP thì sửa theo.
 
 ## Trang Danh mục dữ liệu cho admin (2026-11-25)
 
@@ -206,7 +227,7 @@ Mục tiêu: 200 người đồng thời, p95 < 800 ms, lỗi < 1 %.
 - **DB**: `CONN_MAX_AGE=60` + health check (realtime/ASGI giữ 0); `statement_timeout=15s`,
   `idle_in_transaction_session_timeout=30s` chỉ cho gunicorn; Postgres nạp
   `pg_stat_statements`, `random_page_cost=1.1`, log câu > 500 ms.
-- **Tìm kiếm việc làm**: cột `title_search` (gấp dấu) + GIN trigram (`jobs 0008`); gợi ý
+- **Tìm kiếm việc làm**: cột `title_search` (gấp dấu) + GIN trigram (`jobs.0008`); gợi ý
   giới hạn 50 trong SQL + throttle `job_suggest`.
 - **Impression**: một lô ghi bằng một `UPDATE … FROM (VALUES …)` + upsert bảng theo ngày.
 - **Throttle chung** `/api/public/*` cho khách (600/phút/IP, `PUBLIC_API_THROTTLE_RATE`);

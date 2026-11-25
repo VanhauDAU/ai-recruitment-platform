@@ -6,15 +6,14 @@ from django.utils import timezone
 
 from apps.locations.models import Location
 
-from ..models import Job, JobLocation
+from ..models import Job, JobLocation, listing_recency
 from .listing import filter_job_list_queryset, publicly_available_job_filter
 
 DEFAULT_BEST_JOBS_ROTATION_SEED = 'homepage-best-jobs'
 
-# Điểm "Việc làm tốt nhất" theo điều ứng viên quan tâm, thay cho hạng tin trả phí
-# (TOP) đã bỏ cùng dịch vụ thương mại. Giữ ít tiêu chí để giải thích được.
+# Điểm "Việc làm nổi bật" chỉ từ dữ liệu thật của tin, không hạng trả phí hay nhãn
+# gán tay (ADR-0030). Giữ ít tiêu chí để giải thích được; tin cũ mà tốt vẫn có lượt.
 SALARY_DISCLOSED_POINTS = 3
-HOT_OR_URGENT_POINTS = 2
 # Huy hiệu Sấm Chớp: người đăng thật sự trả lời ứng viên đúng hạn (ADR-0027).
 FLASH_BADGE_POINTS = 2
 FRESH_WEEK_POINTS = 2
@@ -24,7 +23,7 @@ POPULAR_MIN_APPLICATIONS = 5
 
 
 def best_job_score(at):
-    """Điểm chất lượng của tin: lương công khai, HOT/GẤP, Sấm Chớp, độ mới, độ quan tâm."""
+    """Điểm chất lượng của tin: lương công khai, Sấm Chớp, độ mới, độ quan tâm."""
     return (
         Case(
             When(
@@ -33,14 +32,10 @@ def best_job_score(at):
             ),
             default=Value(0),
         )
-        + Case(
-            When(Q(is_hot=True) | Q(is_urgent=True), then=Value(HOT_OR_URGENT_POINTS)),
-            default=Value(0),
-        )
         + Case(When(has_flash_badge=True, then=Value(FLASH_BADGE_POINTS)), default=Value(0))
         + Case(
-            When(published_at__gte=at - timedelta(days=7), then=Value(FRESH_WEEK_POINTS)),
-            When(published_at__gte=at - timedelta(days=30), then=Value(FRESH_MONTH_POINTS)),
+            When(listing_recency__gte=at - timedelta(days=7), then=Value(FRESH_WEEK_POINTS)),
+            When(listing_recency__gte=at - timedelta(days=30), then=Value(FRESH_MONTH_POINTS)),
             default=Value(0),
         )
         + Case(
@@ -60,16 +55,20 @@ def build_homepage_best_jobs_queryset(params, *, at=None, rotation_seed=''):
     at = at or timezone.now()
     queryset = filter_job_list_queryset(params, include_preview=True, at=at)
     seed = rotation_seed or DEFAULT_BEST_JOBS_ROTATION_SEED
-    return queryset.alias(
-        best_job_score=ExpressionWrapper(best_job_score(at), output_field=IntegerField()),
-        homepage_rotation_key=MD5(
-            Concat(
-                Value(seed),
-                Value(':'),
-                Cast('pk', output_field=CharField()),
-            )
-        ),
-    ).order_by('-best_job_score', 'homepage_rotation_key', 'id')
+    return (
+        queryset.alias(listing_recency=listing_recency())
+        .alias(
+            best_job_score=ExpressionWrapper(best_job_score(at), output_field=IntegerField()),
+            homepage_rotation_key=MD5(
+                Concat(
+                    Value(seed),
+                    Value(':'),
+                    Cast('pk', output_field=CharField()),
+                )
+            ),
+        )
+        .order_by('-best_job_score', 'homepage_rotation_key', 'id')
+    )
 
 
 HOMEPAGE_LOCATION_WARD_LIMIT = 15

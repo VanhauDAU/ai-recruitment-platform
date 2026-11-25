@@ -934,9 +934,6 @@ msgstr "The account is restricted."
 msgid "Tôi muốn được đăng tin miễn phí"
 msgstr "I want to post jobs for free"
 
-msgid "Tôi muốn tìm hiểu thêm về các gói dịch vụ"
-msgstr "I want to learn more about service packages"
-
 msgid "Tôi muốn biết thêm về các chương trình ưu đãi"
 msgstr "I want to know more about promotions"
 

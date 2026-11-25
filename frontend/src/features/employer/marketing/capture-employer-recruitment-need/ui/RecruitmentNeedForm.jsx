@@ -14,7 +14,6 @@ import { m } from '@/shared/config/i18n'
 
 const CONSULTATION_OPTIONS = [
   { value: 'free_posting', label: m.employer_account_need_topic_free_posting() },
-  { value: 'service_packages', label: m.employer_account_need_topic_service_packages() },
   { value: 'promotions', label: m.employer_account_need_topic_promotions() },
   { value: 'other', label: m.employer_account_need_topic_other() },
 ]

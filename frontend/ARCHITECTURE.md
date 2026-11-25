@@ -893,7 +893,8 @@ pages/admin/CvCatalogue
   không được gọi đó là xuất toàn bộ dữ liệu hệ thống.
 - Dịch vụ thương mại (gói, kho lượt, kích hoạt, job alert trả phí, remarketing
   tin đã lưu, lead tư vấn) đã bị gỡ khỏi cả backend và frontend theo ADR-0015.
-  Nhãn `tier`/HOT/gấp/flash badge của tin vẫn thuộc `entities/job/job`.
+  Nhãn tin (chỉ nhãn hệ thống `closing_soon`, `fast_response` từ `presentation.labels`,
+  ADR-0030) thuộc `entities/job/job`; mọi thẻ tin cùng một kiểu, không tô màu theo hạng.
 - Upload hình nền CV là asset workflow, không phải bulk import. Không hiển thị
   nút nhập dữ liệu cho tới khi có contract dry-run, validate, idempotency,
   permission và audit phía server.

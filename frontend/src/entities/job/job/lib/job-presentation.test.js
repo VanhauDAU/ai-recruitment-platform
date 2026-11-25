@@ -1,38 +1,16 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import { jobCardToneClass, resolveJobPresentation } from './job-presentation'
+import { jobLabels } from './job-presentation'
 
-describe('job candidate presentation', () => {
-  it('prefers the backend projection over legacy package fields', () => {
-    const projection = {
-      sponsored: true,
-      card_tone: 'orange',
-      labels: [{ code: 'sponsored', text: 'Tài trợ', tone: 'sponsored' }],
-      placement: 'sponsored_search',
-    }
+describe('jobLabels', () => {
+  it('reads only the system labels the backend computed', () => {
+    const labels = [{ code: 'closing_soon', text: 'Sắp hết hạn', tone: 'warning' }]
 
-    expect(resolveJobPresentation({ tier: 'top', presentation: projection })).toBe(projection)
-    expect(jobCardToneClass({ presentation: projection })).toContain('orange')
+    expect(jobLabels({ presentation: { labels } })).toBe(labels)
   })
 
-  it('keeps a compatibility projection while legacy clients are rolling out', () => {
-    expect(resolveJobPresentation({ tier: 'featured', is_urgent: true })).toMatchObject({
-      sponsored: true,
-      card_tone: 'orange',
-      labels: [
-        { code: 'sponsored', text: 'Tài trợ' },
-        { code: 'urgent', text: 'GẤP' },
-      ],
-    })
-  })
-
-  it('supports the strongest commercial card tone without package-name mapping', () => {
-    const toneClass = jobCardToneClass({
-      presentation: { card_tone: 'green_strong', labels: [], sponsored: true },
-    })
-
-    expect(toneClass).toContain('from-white')
-    expect(toneClass).toContain('green-100/35')
-    expect(toneClass).not.toContain('bg-emerald-100/80')
+  it('has no fallback that rebuilds labels from retired fields', () => {
+    expect(jobLabels({ tier: 'top', is_hot: true, is_urgent: true })).toEqual([])
+    expect(jobLabels(undefined)).toEqual([])
   })
 })

@@ -20,7 +20,7 @@ from django.db.models import (
     Value,
     When,
 )
-from django.db.models.functions import ASin, Coalesce, Cos, Least, Power, Radians, Sin, Sqrt
+from django.db.models.functions import ASin, Cos, Least, Power, Radians, Sin, Sqrt
 from rest_framework.exceptions import ValidationError
 
 from apps.locations.domain import EARTH_RADIUS_KM, bounding_box, is_in_vietnam, round_coordinate
@@ -28,7 +28,7 @@ from apps.locations.selectors import nearest_ward
 from apps.sitecontent.selectors import get_bool_setting, get_int_setting
 from common.api.params import parse_bool
 
-from ..models import Job, JobLocation
+from ..models import Job, JobLocation, listing_recency
 from .listing import _order_jobs, filter_job_list_queryset
 
 RADIUS_OPTIONS_KM = (3, 5, 10, 20, 50)
@@ -174,10 +174,9 @@ def build_nearby_queryset(params, origin):
         When(match_kind=MatchKind.PROVINCE_WIDE, then=1),
         default=2,
     )
-    return queryset.annotate(
-        kind_rank=kind_rank,
-        lifecycle_recency=Coalesce('first_approved_at', 'published_at', 'created_at'),
-    ).order_by('kind_rank', F('distance_km').asc(nulls_last=True), '-lifecycle_recency', '-id')
+    return queryset.annotate(kind_rank=kind_rank, listing_recency=listing_recency()).order_by(
+        'kind_rank', F('distance_km').asc(nulls_last=True), '-listing_recency', '-id'
+    )
 
 
 def expand_radius_suggestion(params, origin):

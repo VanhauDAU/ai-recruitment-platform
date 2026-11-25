@@ -9,7 +9,9 @@ from django.utils.translation import gettext as _
 from common.storage.media import media_url_from_value
 from common.vietnam_time import vietnam_today
 
+from ..domain import job_presentation
 from ..models import Job
+from .policy import job_closing_soon_days
 
 
 def absolute_url(value):
@@ -56,17 +58,10 @@ def _province_names(job):
 
 
 def _badges(job, verified_employer):
-    badges = []
-    if job.tier == Job.Tier.TOP:
-        badges.append('TOP')
-    elif job.tier == Job.Tier.FEATURED:
-        badges.append(_('Nổi bật'))
-    if job.is_hot:
-        badges.append('HOT')
-    if job.is_urgent:
-        badges.append(_('GẤP'))
-    if job.has_flash_badge:
-        badges.append(_('Phản hồi nhanh'))
+    labels = job_presentation(
+        job, closing_soon_within=job_closing_soon_days(), today=vietnam_today()
+    )['labels']
+    badges = [label['text'] for label in labels]
     if verified_employer:
         badges.append(_('Nhà tuyển dụng đã xác thực'))
     return badges

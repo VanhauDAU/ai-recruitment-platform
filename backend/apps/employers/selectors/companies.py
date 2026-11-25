@@ -12,9 +12,9 @@ from django.db.models import (
     Value,
     When,
 )
-from django.db.models.functions import Coalesce, Length, Trim
+from django.db.models.functions import Length, Trim
 
-from apps.jobs.models import Job
+from apps.jobs.models import Job, listing_recency
 from common.db.search import folded_search_q, search_q
 
 from ..models import Company, CompanyIndustry
@@ -91,7 +91,7 @@ def _featured_public_job_metrics_queryset():
         .values('company_id')
         .annotate(
             active_public_job_count=Count('id', distinct=True),
-            latest_public_job_at=Max(Coalesce('published_at', 'created_at')),
+            latest_public_job_at=Max(listing_recency()),
         )
         .order_by(
             '-active_public_job_count',

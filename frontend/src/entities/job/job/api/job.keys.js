@@ -35,12 +35,3 @@ export const jobKeys = {
   postingContext: ['jobs', 'posting-context'],
   adminModeration: (params = {}) => ['jobs', 'admin-moderation', params],
 }
-
-export function isDefaultJobListQuery(query) {
-  const [domain, kind, params] = query.queryKey
-  if (domain !== 'jobs' || kind !== 'list') return false
-  if (typeof params === 'string') {
-    return !new URLSearchParams(params).get('ordering')
-  }
-  return !params?.ordering
-}

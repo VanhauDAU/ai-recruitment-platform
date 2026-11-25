@@ -56,7 +56,7 @@ export default function JobList() {
   const { promptLogin } = useLoginPrompt()
   const isDesktop = useMediaQuery('(min-width: 1024px)')
 
-  const { categories, demandCounts, industries, noExpCount, provinces, sidebarLoading } = useJobSidebarData()
+  const { categories, demandCounts, industries, provinces, sidebarLoading } = useJobSidebarData()
   const filters = useJobListFilters(provinces)
   const {
     expYears, hasFilters, keyword, ordering, page,
@@ -359,7 +359,6 @@ export default function JobList() {
             canScrollRight={canScrollShortcutsRight}
             expYears={expYears}
             groups={groups}
-            noExpCount={noExpCount}
             onOpenAllCategories={openAllCategories}
             onScroll={scrollShortcuts}
             onToggleCategory={toggleCategory}

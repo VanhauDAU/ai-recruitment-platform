@@ -5748,10 +5748,6 @@ paths:
         name: submitted_to
         schema:
           type: string
-      - in: query
-        name: tier
-        schema:
-          type: string
       tags:
       - jobs-admin
       security:
@@ -19945,21 +19941,6 @@ components:
         moderation_hold_label:
           type: string
           readOnly: true
-        tier:
-          allOf:
-          - $ref: '#/components/schemas/TierEnum'
-          readOnly: true
-        tier_label:
-          type: string
-          readOnly: true
-        is_hot:
-          type: boolean
-          readOnly: true
-          description: Nhãn HOT (đỏ) trên card
-        is_urgent:
-          type: boolean
-          readOnly: true
-          description: Nhãn GẤP / tuyển gấp (cam) trên card
         has_flash_badge:
           type: boolean
           readOnly: true
@@ -20212,9 +20193,7 @@ components:
       - employer_verification_completed
       - has_flash_badge
       - is_expired
-      - is_hot
       - is_publicly_visible
-      - is_urgent
       - job_benefits
       - job_locations
       - job_skills
@@ -20238,8 +20217,6 @@ components:
       - status_history
       - status_label
       - submitted_at
-      - tier
-      - tier_label
       - title
       - updated_at
       - view_count
@@ -20326,21 +20303,6 @@ components:
         moderation_hold_label:
           type: string
           readOnly: true
-        tier:
-          allOf:
-          - $ref: '#/components/schemas/TierEnum'
-          readOnly: true
-        tier_label:
-          type: string
-          readOnly: true
-        is_hot:
-          type: boolean
-          readOnly: true
-          description: Nhãn HOT (đỏ) trên card
-        is_urgent:
-          type: boolean
-          readOnly: true
-          description: Nhãn GẤP / tuyển gấp (cam) trên card
         has_flash_badge:
           type: boolean
           readOnly: true
@@ -20409,9 +20371,7 @@ components:
       - employer_public_id
       - has_flash_badge
       - is_expired
-      - is_hot
       - is_publicly_visible
-      - is_urgent
       - moderation_hold
       - moderation_hold_label
       - pending_report_count
@@ -20426,8 +20386,6 @@ components:
       - status
       - status_label
       - submitted_at
-      - tier
-      - tier_label
       - title
       - updated_at
       - view_count
@@ -26146,13 +26104,11 @@ components:
     ConsultationTopicsEnum:
       enum:
       - free_posting
-      - service_packages
       - promotions
       - other
       type: string
       description: |-
         * `free_posting` - Tôi muốn được đăng tin miễn phí
-        * `service_packages` - Tôi muốn tìm hiểu thêm về các gói dịch vụ
         * `promotions` - Tôi muốn biết thêm về các chương trình ưu đãi
         * `other` - Khác
     ContentSourceEnum:
@@ -28529,25 +28485,13 @@ components:
         view_count:
           type: integer
           readOnly: true
-        tier:
-          allOf:
-          - $ref: '#/components/schemas/TierEnum'
-          readOnly: true
-        is_hot:
-          type: boolean
-          readOnly: true
-          description: Nhãn HOT (đỏ) trên card
-        is_urgent:
-          type: boolean
-          readOnly: true
-          description: Nhãn GẤP / tuyển gấp (cam) trên card
         has_flash_badge:
           type: boolean
           readOnly: true
           description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         presentation:
-          type: object
-          additionalProperties: {}
+          allOf:
+          - $ref: '#/components/schemas/JobPresentation'
           readOnly: true
         company_verified:
           type: boolean
@@ -28661,8 +28605,6 @@ components:
       - has_flash_badge
       - impression_count
       - is_expired
-      - is_hot
-      - is_urgent
       - locations_detail
       - presentation
       - public_id
@@ -28672,7 +28614,6 @@ components:
       - slug
       - status
       - submitted_at
-      - tier
       - title
       - updated_at
       - view_count
@@ -28867,25 +28808,13 @@ components:
         view_count:
           type: integer
           readOnly: true
-        tier:
-          allOf:
-          - $ref: '#/components/schemas/TierEnum'
-          readOnly: true
-        is_hot:
-          type: boolean
-          readOnly: true
-          description: Nhãn HOT (đỏ) trên card
-        is_urgent:
-          type: boolean
-          readOnly: true
-          description: Nhãn GẤP / tuyển gấp (cam) trên card
         has_flash_badge:
           type: boolean
           readOnly: true
           description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         presentation:
-          type: object
-          additionalProperties: {}
+          allOf:
+          - $ref: '#/components/schemas/JobPresentation'
           readOnly: true
         company_verified:
           type: boolean
@@ -28989,8 +28918,6 @@ components:
       - first_approved_at
       - has_flash_badge
       - is_expired
-      - is_hot
-      - is_urgent
       - locations_detail
       - presentation
       - public_id
@@ -29000,7 +28927,6 @@ components:
       - slug
       - status
       - submitted_at
-      - tier
       - updated_at
       - view_count
       - visibility_ends_at
@@ -31568,17 +31494,9 @@ components:
         view_count:
           type: integer
           readOnly: true
-        is_hot:
-          type: boolean
-          readOnly: true
-          description: Nhãn HOT (đỏ) trên card
-        is_urgent:
-          type: boolean
-          readOnly: true
-          description: Nhãn GẤP / tuyển gấp (cam) trên card
         presentation:
-          type: object
-          additionalProperties: {}
+          allOf:
+          - $ref: '#/components/schemas/JobPresentation'
           readOnly: true
         flash_badge_stats:
           allOf:
@@ -31706,8 +31624,6 @@ components:
       - flash_badge_stats
       - gender_requirement
       - income_display_type
-      - is_hot
-      - is_urgent
       - job_locations
       - language_requirements
       - locations_detail
@@ -32011,6 +31927,36 @@ components:
         * `vice_director` - Phó giám đốc
         * `director` - Giám đốc
         * `intern` - Thực tập sinh
+    JobPresentation:
+      type: object
+      properties:
+        labels:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobPresentationLabel'
+      required:
+      - labels
+    JobPresentationLabel:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/JobPresentationLabelCodeEnum'
+        text:
+          type: string
+        tone:
+          type: string
+      required:
+      - code
+      - text
+      - tone
+    JobPresentationLabelCodeEnum:
+      enum:
+      - closing_soon
+      - fast_response
+      type: string
+      description: |-
+        * `closing_soon` - closing_soon
+        * `fast_response` - fast_response
     JobReportCreateRequest:
       type: object
       properties:
@@ -36439,25 +36385,13 @@ components:
           allOf:
           - $ref: '#/components/schemas/CurrencyEnum'
           readOnly: true
-        tier:
-          allOf:
-          - $ref: '#/components/schemas/TierEnum'
-          readOnly: true
-        is_hot:
-          type: boolean
-          readOnly: true
-          description: Nhãn HOT (đỏ) trên card
-        is_urgent:
-          type: boolean
-          readOnly: true
-          description: Nhãn GẤP / tuyển gấp (cam) trên card
         has_flash_badge:
           type: boolean
           readOnly: true
           description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         presentation:
-          type: object
-          additionalProperties: {}
+          allOf:
+          - $ref: '#/components/schemas/JobPresentation'
           readOnly: true
         first_approved_at:
           type: string
@@ -36491,8 +36425,6 @@ components:
       - first_approved_at
       - has_flash_badge
       - income_display_type
-      - is_hot
-      - is_urgent
       - job_skills
       - locations_detail
       - position_level
@@ -36503,7 +36435,6 @@ components:
       - salary_min
       - salary_type
       - slug
-      - tier
       - title
       - work_type
       - work_types
@@ -36675,25 +36606,13 @@ components:
           allOf:
           - $ref: '#/components/schemas/CurrencyEnum'
           readOnly: true
-        tier:
-          allOf:
-          - $ref: '#/components/schemas/TierEnum'
-          readOnly: true
-        is_hot:
-          type: boolean
-          readOnly: true
-          description: Nhãn HOT (đỏ) trên card
-        is_urgent:
-          type: boolean
-          readOnly: true
-          description: Nhãn GẤP / tuyển gấp (cam) trên card
         has_flash_badge:
           type: boolean
           readOnly: true
           description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         presentation:
-          type: object
-          additionalProperties: {}
+          allOf:
+          - $ref: '#/components/schemas/JobPresentation'
           readOnly: true
         first_approved_at:
           type: string
@@ -36775,8 +36694,6 @@ components:
       - first_approved_at
       - has_flash_badge
       - income_display_type
-      - is_hot
-      - is_urgent
       - job_benefits
       - job_locations
       - job_skills
@@ -36790,7 +36707,6 @@ components:
       - salary_type
       - short_description
       - slug
-      - tier
       - title
       - work_schedules
       - work_type
@@ -36955,25 +36871,13 @@ components:
           allOf:
           - $ref: '#/components/schemas/CurrencyEnum'
           readOnly: true
-        tier:
-          allOf:
-          - $ref: '#/components/schemas/TierEnum'
-          readOnly: true
-        is_hot:
-          type: boolean
-          readOnly: true
-          description: Nhãn HOT (đỏ) trên card
-        is_urgent:
-          type: boolean
-          readOnly: true
-          description: Nhãn GẤP / tuyển gấp (cam) trên card
         has_flash_badge:
           type: boolean
           readOnly: true
           description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         presentation:
-          type: object
-          additionalProperties: {}
+          allOf:
+          - $ref: '#/components/schemas/JobPresentation'
           readOnly: true
         first_approved_at:
           type: string
@@ -37030,8 +36934,6 @@ components:
       - first_approved_at
       - has_flash_badge
       - income_display_type
-      - is_hot
-      - is_urgent
       - job_skills
       - locations_detail
       - match_kind
@@ -37045,7 +36947,6 @@ components:
       - salary_min
       - salary_type
       - slug
-      - tier
       - title
       - work_type
       - work_types
@@ -37392,25 +37293,13 @@ components:
           allOf:
           - $ref: '#/components/schemas/CurrencyEnum'
           readOnly: true
-        tier:
-          allOf:
-          - $ref: '#/components/schemas/TierEnum'
-          readOnly: true
-        is_hot:
-          type: boolean
-          readOnly: true
-          description: Nhãn HOT (đỏ) trên card
-        is_urgent:
-          type: boolean
-          readOnly: true
-          description: Nhãn GẤP / tuyển gấp (cam) trên card
         has_flash_badge:
           type: boolean
           readOnly: true
           description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         presentation:
-          type: object
-          additionalProperties: {}
+          allOf:
+          - $ref: '#/components/schemas/JobPresentation'
           readOnly: true
         first_approved_at:
           type: string
@@ -37457,8 +37346,6 @@ components:
       - has_flash_badge
       - income_display_type
       - is_high_match
-      - is_hot
-      - is_urgent
       - job_skills
       - locations_detail
       - match_details
@@ -37472,7 +37359,6 @@ components:
       - salary_min
       - salary_type
       - slug
-      - tier
       - title
       - work_type
       - work_types
@@ -38671,25 +38557,13 @@ components:
           allOf:
           - $ref: '#/components/schemas/CurrencyEnum'
           readOnly: true
-        tier:
-          allOf:
-          - $ref: '#/components/schemas/TierEnum'
-          readOnly: true
-        is_hot:
-          type: boolean
-          readOnly: true
-          description: Nhãn HOT (đỏ) trên card
-        is_urgent:
-          type: boolean
-          readOnly: true
-          description: Nhãn GẤP / tuyển gấp (cam) trên card
         has_flash_badge:
           type: boolean
           readOnly: true
           description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         presentation:
-          type: object
-          additionalProperties: {}
+          allOf:
+          - $ref: '#/components/schemas/JobPresentation'
           readOnly: true
         first_approved_at:
           type: string
@@ -38733,8 +38607,6 @@ components:
       - first_approved_at
       - has_flash_badge
       - income_display_type
-      - is_hot
-      - is_urgent
       - job_skills
       - locations_detail
       - position_level
@@ -38748,7 +38620,6 @@ components:
       - similarity_reasons
       - similarity_score
       - slug
-      - tier
       - title
       - work_type
       - work_types
@@ -39587,16 +39458,6 @@ components:
         * `violet` - Tím
         * `slate` - Xám
         * `ocean` - Xanh biển
-    TierEnum:
-      enum:
-      - standard
-      - featured
-      - top
-      type: string
-      description: |-
-        * `standard` - Tin thường
-        * `featured` - Tin nổi bật
-        * `top` - Tin TOP
     TokenActionRequest:
       type: object
       properties:

@@ -26,6 +26,18 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Thanh tab tự ẩn ở trang có thanh hành động riêng (chi tiết tin, mẫu CV, trang công ty);
   nút nổi và dock so sánh việc làm nâng lên theo `--page-bottom-bar-height`.
 
+#### Changed — Thứ tự và nhãn tin tuyển dụng công bằng (ADR-0030)
+
+- Bỏ hạng tin `tier` và nhãn gán tay HOT/GẤP/"Tài trợ" cùng thẻ tô màu; chỉ còn nhãn hệ
+  thống "Sắp hết hạn" (`job_closing_soon_days`) và "Phản hồi nhanh".
+- Mọi bề mặt xếp theo một mốc là lần đăng đầu; mở lại tin không còn đẩy tin lên trang
+  chủ, gợi ý hay email báo việc.
+- `/viec-lam`: sắp xếp Mới đăng / Lương cao nhất / Sắp hết hạn nộp (`ordering=closing_soon`,
+  bỏ `urgent`); thêm ô "Việc không cần kinh nghiệm" và nút "Tìm việc gần tôi".
+- **Breaking API:** `tier`, `is_hot`, `is_urgent`, `tier_label` và các trường
+  `presentation.sponsored/card_tone/display_reason/placement/active_until` bị gỡ;
+  `presentation` chỉ còn `labels`. Bỏ chủ đề tư vấn `service_packages`.
+
 #### Added — Trang Danh mục dữ liệu cho admin
 
 - `/admin/app/catalog` (mục Nội dung), 5 tab: Kỹ năng, Ngành nghề, Phúc lợi, Lĩnh vực công ty,
