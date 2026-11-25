@@ -52,12 +52,15 @@ def append_message(
     payload=None,
     reader_role=None,
     push=True,
+    activity=True,
     **fields,
 ):
     """Ghi một tin vào hội thoại đã ``select_for_update``; cập nhật seq, xem trước, chưa đọc.
 
     ``reader_role`` là phía coi như đã đọc tin này (người gửi; với tin hệ thống là
-    người gây ra sự kiện). Phía còn lại tăng số chưa đọc.
+    người gây ra sự kiện). Phía còn lại tăng số chưa đọc. ``activity=False`` (tin hệ
+    thống "bắt đầu trò chuyện"): chỉ ghi vào luồng, không đưa hội thoại lên danh sách,
+    không tính chưa đọc — hội thoại chỉ hiện khi có tin thật đầu tiên.
     """
     reader_role = reader_role or role
     now = timezone.now()
@@ -72,6 +75,11 @@ def append_message(
         payload=payload or {},
         **fields,
     )
+    if not activity:
+        conversation.save(update_fields=['last_seq'])
+        if push:
+            push_message(conversation, message)
+        return message
     conversation.last_message_at = now
     conversation.last_message_preview = message_preview(body) if kind == Message.Kind.TEXT else ''
     conversation.last_message_kind = kind

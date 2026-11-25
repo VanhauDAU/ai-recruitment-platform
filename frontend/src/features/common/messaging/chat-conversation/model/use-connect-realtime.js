@@ -73,11 +73,6 @@ export function useConnectRealtime({ portal, activeId }) {
       else if (next.detail) queryClient.setQueryData(detailKey, next.detail)
       return
     }
-    if (event.type === 'chat.conversation.updated') {
-      queryClient.invalidateQueries(listFilter)
-      queryClient.invalidateQueries({ queryKey: conversationKeys.detail(portal, conversationId) })
-      return
-    }
     if (event.type === 'chat.typing') {
       setTyping({ conversation: conversationId, until: Date.now() + TYPING_VISIBLE_MS })
     }

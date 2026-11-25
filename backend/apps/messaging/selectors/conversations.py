@@ -37,7 +37,9 @@ def _base():
 
 
 def conversations_for(user, role, *, query=''):
-    queryset = _base().filter(_owned(role, user))
+    # Bấm "Nhắn tin" mà chưa gửi gì thì hội thoại chưa có hoạt động: không hiện ở danh
+    # sách hai bên (vẫn mở được theo mã để soạn tin đầu tiên).
+    queryset = _base().filter(_owned(role, user), last_message_at__isnull=False)
     query = (query or '').strip()
     if query:
         other = (

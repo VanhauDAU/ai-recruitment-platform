@@ -15,7 +15,7 @@ from ..models import Conversation, Message
 from .access import NOT_ALLOWED
 from .messages import append_message
 from .policy import connect_enabled
-from .realtime import push_conversation_changed, push_read
+from .realtime import push_read
 
 
 def _current_application(job, candidate):
@@ -44,6 +44,7 @@ def _get_or_create(job, candidate, origin, opened_by_role):
         payload={'event': SystemEvent.STARTED, 'actor_role': str(opened_by_role)},
         reader_role=opened_by_role,
         push=False,
+        activity=False,
     )
     return conversation, True
 
@@ -69,8 +70,6 @@ def start_candidate_conversation(candidate, job_public_id):
     conversation, created = _get_or_create(
         job, candidate, Conversation.Origin.APPLICATION, Role.CANDIDATE
     )
-    if created:
-        push_conversation_changed(conversation, [job.posted_by_id])
     return conversation, created
 
 
@@ -100,8 +99,6 @@ def start_recruiter_conversation(recruiter, *, application_public_id='', invitat
     job, candidate = source.job, source.candidate
     _ensure_open(job, candidate, Role.RECRUITER)
     conversation, created = _get_or_create(job, candidate, origin, Role.RECRUITER)
-    if created:
-        push_conversation_changed(conversation, [candidate.pk])
     return conversation, created
 
 

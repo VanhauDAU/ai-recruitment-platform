@@ -38,10 +38,34 @@ class StartConversationTests(ConnectFixture, APITestCase):
         conversation = Conversation.objects.get()
         system = conversation.messages.get()
         self.assertEqual((system.kind, system.payload['event']), ('system', 'started'))
-        # Bên kia nhận tín hiệu hội thoại mới, người mở thì không.
-        self.assertEqual(self.events(self.recruiter)[-1]['type'], 'chat.conversation.updated')
-        self.assertEqual(conversation.recruiter_unread, 1)
-        self.assertEqual(conversation.candidate_unread, 0)
+        # Chưa gửi gì: chưa là hoạt động, không báo, không tính chưa đọc cho bên nào.
+        self.assertIsNone(conversation.last_message_at)
+        self.assertEqual((conversation.candidate_unread, conversation.recruiter_unread), (0, 0))
+        self.assertFalse(
+            [event for event in self.events(self.recruiter) if event['type'].startswith('chat.')]
+        )
+
+    def test_empty_conversation_stays_out_of_both_lists_until_the_first_message(self):
+        public_id = self.start_as_candidate().data['public_id']
+        self.login(self.recruiter)
+        hidden = self.client.get(reverse('employer-conversation-list')).data['count']
+        unread = self.client.get(reverse('employer-conversation-unread-count')).data['count']
+        self.login(self.candidate)
+        own_list = self.client.get(reverse('candidate-conversation-list')).data['count']
+        detail = self.client.get(reverse('candidate-conversation-detail', args=[public_id]))
+
+        self.client.post(
+            reverse('candidate-conversation-messages', args=[public_id]),
+            {'client_id': str(uuid.uuid4()), 'body': 'Chào anh chị'},
+            format='json',
+        )
+        self.login(self.recruiter)
+        shown = self.client.get(reverse('employer-conversation-list')).data['count']
+
+        self.assertEqual((hidden, unread, own_list), (0, 0, 0))
+        self.assertEqual(detail.status_code, 200)
+        self.assertEqual(shown, 1)
+        self.assertEqual(self.events(self.recruiter)[-1]['type'], 'chat.message.created')
 
     def test_candidate_cannot_open_without_a_current_application(self):
         other_job = self.make_job('Other job')
@@ -161,7 +185,7 @@ class MessagingTests(ConnectFixture, APITestCase):
         pushed = self.events(self.recruiter)[-1]
         self.assertEqual(pushed['type'], 'chat.message.created')
         self.assertFalse(pushed['message']['mine'])
-        self.assertEqual(pushed['unread_count'], 2)
+        self.assertEqual(pushed['unread_count'], 1)
         self.assertIsInstance(pushed['message']['created_at'], str)
         self.assertEqual(self.events(self.candidate)[-1]['message']['seq'], 2)
 
@@ -245,6 +269,7 @@ class MessagingTests(ConnectFixture, APITestCase):
         self.assertEqual(self.send(self.outsider, 'employer', body='hi').status_code, 404)
 
     def test_block_locks_the_conversation_with_a_neutral_reason_for_the_candidate(self):
+        self.send(self.candidate, 'candidate', body='Chào anh chị')
         CandidateBlock.objects.create(
             recruiter=self.recruiter, company=self.company, candidate=self.candidate, reason='spam'
         )
@@ -275,6 +300,7 @@ class MessagingTests(ConnectFixture, APITestCase):
         self.assertEqual(detail.data['application']['status'], 'submitted')
 
     def test_search_filters_by_job_or_counterpart(self):
+        self.send(self.candidate, 'candidate', body='Chào anh chị')
         self.login(self.recruiter)
         url = reverse('employer-conversation-list')
 
@@ -287,9 +313,15 @@ class MessagingTests(ConnectFixture, APITestCase):
             job = self.make_job(f'Job {index}')
             self.apply(self.candidate, job)
             self.login(self.candidate)
-            self.client.post(
+            opened = self.client.post(
                 reverse('candidate-conversation-list'), {'job': job.public_id}, format='json'
             )
+            self.client.post(
+                reverse('candidate-conversation-messages', args=[opened.data['public_id']]),
+                {'client_id': str(uuid.uuid4()), 'body': f'Chào {index}'},
+                format='json',
+            )
+        self.send(self.candidate, 'candidate', body='Chào anh chị')
         self.login(self.recruiter)
         url = reverse('employer-conversation-list')
         self.client.get(url)
@@ -397,5 +429,7 @@ class RecruiterDataAccessTests(ConnectFixture, APITestCase):
         )
 
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(self.events(self.recruiter), [])
+        self.assertFalse(
+            [event for event in self.events(self.recruiter) if event['type'].startswith('chat.')]
+        )
         self.assertEqual(self.events(self.candidate)[-1]['type'], 'chat.message.created')

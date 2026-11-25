@@ -94,11 +94,13 @@ Server → client:
 {"type": "chat.message.created", "conversation": "cnv_x", "message": {Message theo góc nhìn người nhận}, "unread_count": 2}
 {"type": "chat.message.updated", "conversation": "cnv_x", "message": {…}}
 {"type": "chat.read", "conversation": "cnv_x", "role": "candidate|recruiter", "last_read_seq": 12}
-{"type": "chat.conversation.updated", "conversation": "cnv_x"}
 {"type": "chat.typing", "conversation": "cnv_x", "role": "candidate|recruiter"}
 ```
 
 Client → server: `{"type": "typing", "conversation": "cnv_x"}` (gửi tối đa 1 lần/3 giây khi đang gõ).
+
+Hội thoại vừa mở mà chưa có tin nào không nằm trong danh sách và không tính chưa đọc; tin thật
+đầu tiên (`chat.message.created` của một hội thoại chưa có trong danh sách) làm client tải lại danh sách.
 
 Khi nhận `{"type": "connected"}` (socket mở lại), client tải lại danh sách hội thoại, badge và bù tin
 (`after=<seq cuối>`) cho hội thoại đang mở.
