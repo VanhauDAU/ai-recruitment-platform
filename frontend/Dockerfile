@@ -5,7 +5,7 @@
 # ở cổng nội bộ 8080 cho Django lấy SEO shell và Chromium in CV.
 # Dev không dùng file này: docker-compose.yml chạy Vite dev server.
 
-FROM node:22-alpine AS build
+FROM node:26-alpine AS build
 WORKDIR /app
 
 COPY package.json package-lock.json ./
