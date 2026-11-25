@@ -25,7 +25,7 @@ Pillow==13.0.0
 openpyxl==3.1.5
 playwright==1.64.1
 pypdfium2==4.30.0
-pypdf==6.21.4
+pypdf==7.1.1
 python-docx==1.2.0
 cryptography==50.0.2
 google-genai==2.13.0
