@@ -43,7 +43,7 @@ Không tạo `utils` chung không có owner. Component chỉ dùng một page/fe
 1. Xác định portal và owner bằng bảng trên trước khi tạo file.
 2. Thêm page trong portal sở hữu; page chỉ compose UI và lấy route params.
 3. Đặt action/domain/UI tái sử dụng vào feature, entity, widget hoặc shared.
-4. Thêm dynamic loader tại `src/app/router/lazy/<portal>.pages.jsx`.
+4. Thêm dynamic loader tại `src/app/router/lazy/<portal>.pages.js`.
 5. Đăng ký route ở `src/app/router/routes/<portal>.routes.jsx`; không import
    page trực tiếp vào `AppRouter`.
 6. Protected route phải theo thứ tự `AuthGuard` rồi `RoleGuard`.

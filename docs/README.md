@@ -110,6 +110,7 @@ ADR-0033.
 | Tài liệu | Nội dung |
 | --- | --- |
 | [cau-truc-frontend.md](08-frontend/cau-truc-frontend.md) | Tóm tắt stack, ba cổng, layer, routing và phiên đăng nhập |
+| [ban-do-so-huu.md](08-frontend/ban-do-so-huu.md) | Module nghiệp vụ nào nằm ở slice nào, public API và quy tắc riêng từng module |
 | [quan-ly-tin-cong-quan-tri.md](08-frontend/quan-ly-tin-cong-quan-tri.md) | Module quản lý tin tuyển dụng của quản trị viên |
 | [dai-thong-bao-da-cong.md](08-frontend/dai-thong-bao-da-cong.md) | Runtime dải thông báo đa cổng |
 | [mascot.md](08-frontend/mascot.md) | Bộ hình mascot ProCV và cách dùng cho empty state, lỗi, loading |

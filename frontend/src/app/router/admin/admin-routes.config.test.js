@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { ADMIN_PAGE_BY_KEY } from '../lazy/admin.pages'
+import { ADMIN_PAGE_BY_KEY } from '../lazy/admin.pages.js'
 import { ADMIN_NAVIGATION } from './admin-navigation.config'
 import { flattenAdminNavigation } from './admin-navigation'
 import { ADMIN_ROUTES } from './admin-routes.config'

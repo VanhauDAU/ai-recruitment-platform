@@ -15,7 +15,7 @@ có thao tác duyệt/từ chối. Quy tắc nghiệp vụ đầy đủ ở
 | `/admin/app/job-moderation/:publicId` | `pages/admin/jobs/JobModerationDetail.jsx` | `job_moderation.view` |
 
 Route đăng ký ở `app/router/admin/admin-routes.config.js`, loader lazy ở
-`app/router/lazy/admin.pages.jsx`. Mục menu "Quản lý tin tuyển dụng".
+`app/router/lazy/admin.pages.js`. Mục menu "Quản lý tin tuyển dụng".
 
 Quyền thao tác:
 

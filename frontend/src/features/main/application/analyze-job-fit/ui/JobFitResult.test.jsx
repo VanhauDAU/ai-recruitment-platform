@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import JobFitResult from './JobFitResult'
-import { RESULT } from './fixtures'
+import { RESULT } from '../tests/job-fit-fixtures'
 
 describe('JobFitResult', () => {
   it('shows the verdict on the band scale with the disclaimer', () => {

@@ -43,9 +43,9 @@ import {
   EmployerRegisterPage,
   EmployerServicesPage,
   EmployerVerifyPage,
-} from '../lazy/employer.pages'
-import { ForgotPasswordPage, OAuthCallbackPage, ResetPasswordPage, VerifyEmailPage } from '../lazy/main.pages'
-import { DashboardLayout, EmployerAuthLayout, EmployerMarketingLayout, EmployerSetupLayout } from '../lazy/layouts'
+} from '../lazy/employer.pages.js'
+import { ForgotPasswordPage, OAuthCallbackPage, ResetPasswordPage, VerifyEmailPage } from '../lazy/main.pages.js'
+import { DashboardLayout, EmployerAuthLayout, EmployerMarketingLayout, EmployerSetupLayout } from '../lazy/layouts.js'
 
 export function employerRoutes() {
   return [

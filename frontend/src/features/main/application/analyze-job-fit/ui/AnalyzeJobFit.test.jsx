@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router'
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { SiteSettingsContext } from '@/entities/system/site-settings'
 import AnalyzeJobFit from './AnalyzeJobFit'
-import { RESULT } from './fixtures'
+import { RESULT } from '../tests/job-fit-fixtures'
 
 const api = vi.hoisted(() => ({ getJobFit: vi.fn(), listJobFits: vi.fn(), requestJobFit: vi.fn() }))
 const cv = vi.hoisted(() => ({ getMySavedCvs: vi.fn() }))
