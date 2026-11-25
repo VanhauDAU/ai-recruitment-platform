@@ -6,6 +6,7 @@ import {
   updateRecruiterVisibility,
 } from '@/entities/job/candidate-preferences'
 import { cvApiErrorMessage, setCvRecruiterSearchable } from '@/entities/cv/cv'
+import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
 
@@ -60,8 +61,8 @@ export function useCvRecruiterSearch(cv, { source = 'cv_library' } = {}) {
       })
       queryClient.setQueryData(RECRUITER_VISIBILITY_QUERY_KEY, saved)
       setConsentOpen(false)
-    } catch {
-      message.error('Không thể lưu sự đồng ý lúc này.')
+    } catch (error) {
+      message.error(getApiErrorMessage(error, 'Không thể lưu sự đồng ý lúc này.'))
       setUpdating(false)
       return
     }
