@@ -57,6 +57,7 @@ export function buildGenerationPayload(mode, draft) {
     responsibilities: linesToItems(draft?.responsibilities),
     requirements: linesToItems(draft?.requirements),
     preferred_skills: linesToItems(draft?.preferred_skills),
+    benefits: linesToItems(draft?.benefits),
     notes: String(draft?.notes || '').trim(),
   }
   if (draft?.position_level) brief.position_level = draft.position_level

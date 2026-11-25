@@ -8,7 +8,10 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | Hạng mục | Trạng thái |
 | --- | --- |
 | [ProCV Connect: nhắn tin NTD ↔ ứng viên (ADR-0032)](#procv-connect-nhắn-tin-ntd--ứng-viên-adr-0032-2026-11-26) | 🟨 GĐ0–5 xong trên nhánh `feat/procv-connect`, chờ PR; GĐ0 riêng ở PR #384 |
-| [AI chạy được bằng Claude (Anthropic) bên cạnh Gemini](#ai-chạy-được-bằng-claude-anthropic-bên-cạnh-gemini-2026-11-26) | 🟨 Nhánh `feat/ai-provider-claude`, chờ PR |
+| [Cổng quản trị cập nhật hàng chờ realtime](#cổng-quản-trị-cập-nhật-hàng-chờ-realtime-2026-11-26) | 🟨 Nhánh `feat/admin-realtime`, chờ gộp PR |
+| [Đăng tin xong mở thẻ Thông tin tuyển dụng](#đăng-tin-xong-mở-thẻ-thông-tin-tuyển-dụng-2026-11-26) | 🟨 Nhánh `feat/job-publish-info-tab`, chờ PR |
+| [AI tạo tin: đủ quyền lợi, ngoại ngữ, lương/số lượng từ JD](#ai-tạo-tin-đủ-quyền-lợi-ngoại-ngữ-lươngsố-lượng-từ-jd-2026-11-26) | ✅ Đã gộp dev (#385) |
+| [AI chạy được bằng Claude (Anthropic) bên cạnh Gemini](#ai-chạy-được-bằng-claude-anthropic-bên-cạnh-gemini-2026-11-26) | ✅ Đã gộp dev (#382, #383) |
 | [Đăng nhập mạng xã hội bằng cửa sổ popup](#đăng-nhập-mạng-xã-hội-bằng-cửa-sổ-popup-2026-11-25) | 🟨 PR #380 (nhánh `feat/oauth-popup-login`), chờ gộp |
 | [Chuẩn bị deploy: khóa admin bằng Access, vá cấu hình, checklist 2/12](#chuẩn-bị-deploy-khóa-admin-bằng-access-vá-cấu-hình-checklist-212-2026-11-25) | ✅ Đã gộp dev (#378); việc phía user theo checklist |
 | [Gia cố xử lý file tải lên (không antivirus)](#gia-cố-xử-lý-file-tải-lên-không-antivirus-2026-11-25) | 🟨 Nhánh `fix/file-handling-hardening`, chờ PR |
@@ -101,6 +104,51 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 - Đính kèm chưa qua quét virus (ClamAV chưa bật ở production): kiểm chữ ký + cấu trúc như giấy tờ NTD.
 - Kiểm tay 26/11 trên DB riêng `procv_connect`: gửi/nhận realtime hai tab, "Đã xem", nhận lịch
   phỏng vấn cập nhật thẻ và chuông phía NTD, mobile 375px, bảng emoji.
+
+## Cổng quản trị cập nhật hàng chờ realtime (2026-11-26)
+
+Bổ sung [ADR-0028](02-tong-quan/adr-0028-realtime-notifications.md): admin không còn phải tải
+lại hay chờ polling 30 giây mới thấy việc mới.
+
+- **Backend:** socket của tài khoản admin vào thêm nhóm `role.admin` (vai trò đọc lúc tiêu vé,
+  kiểm lại mỗi 60 giây). `apps/dashboard/signals/receivers.py` phát
+  `admin.queue.changed` kèm đúng khóa hàng chờ khi có ghi vào hồ sơ xác thực, giấy tờ, tên
+  miền, yêu cầu cập nhật/tham gia công ty, thay đổi trang công ty, báo cáo tin/công ty, yêu
+  cầu dữ liệu cá nhân, lời mời admin, và khi trường kiểm duyệt của tin đổi (gửi duyệt lại).
+  Chỗ hủy hàng loạt bằng `.update()` gọi `notify_admin_queue` trực tiếp. Không lộ mã/nội dung.
+- **Frontend:** `useAdminQueueRealtime` trong layout admin gom sự kiện 400 ms rồi invalidate
+  số đếm sidebar/chuông, bảng điều khiển và danh sách của hàng chờ đó; nối lại thì làm mới hết.
+  Socket mở thì badge, bảng điều khiển, trang xác minh tên miền tắt polling; đóng thì polling
+  quay lại như cũ.
+- **Kiểm chứng:** pytest toàn bộ 2307 passed (coverage 91,67%; 1 lỗi `ai_job_generation_model`
+  do env local đặt model Claude, không liên quan); test mới cho receivers, consumer, vé. Chạy
+  thật trên Redis channel layer: socket admin nhận sự kiện, socket thường không. Vitest layout
+  + trang admin liên quan 50 passed; lint, kiến trúc, build, ngân sách bundle (JS 266/268 KiB)
+  sạch. Chưa thử trên trình duyệt vì container dev chạy checkout chính ở nhánh khác.
+
+## Đăng tin xong mở thẻ Thông tin tuyển dụng (2026-11-26)
+
+- `JobForm` sau khi đăng/cập nhật tin chuyển tới `/jobs/<id>?active_tab=job` thay vì thẻ CV
+  ứng tuyển (tin mới chưa có CV). Test `JobForm.test.jsx` kiểm địa chỉ chuyển tới.
+
+## AI tạo tin: đủ quyền lợi, ngoại ngữ, lương/số lượng từ JD (2026-11-26)
+
+- **Quyền lợi chế độ brief không còn trống:** form brief thêm ô *Quyền lợi*; nguồn hợp lệ
+  gồm ô đó, ghi chú, quyền lợi trong hồ sơ công ty và 3 quyền lợi bắt buộc theo luật
+  (BHXH/BHYT/BHTN, phép năm ≥ 12 ngày, nghỉ lễ Tết) — chỉ khi loại hình là toàn thời gian,
+  bán thời gian, hợp đồng hoặc chưa chọn. Câu AI diễn đạt lại một quyền lợi nguồn vẫn được
+  giữ; quyền lợi bịa vẫn bị loại.
+- **Ngoại ngữ:** schema có `language_requirements`, khớp danh mục `Language` + mức thành thạo.
+- **Lương và số lượng tuyển chỉ từ JD:** AI chép con số JD ghi rõ; code đối chiếu lại với các
+  số có trong JD (hiểu 15 triệu, 15.000.000, 1,500, 2k) trước khi giữ, sai thì bỏ và cảnh
+  báo. Chế độ brief không bao giờ điền. `manual_fields` chỉ còn trường AI chưa điền.
+- **Kỹ năng hiện ID:** danh sách kỹ năng của form chỉ tải 100/348 mục; form ghép tên kỹ năng
+  từ gợi ý AI và tin đang sửa vào lựa chọn. Prompt gửi đủ danh mục kỹ năng (trần 600).
+- Prompt/schema `job-post-v3`; không đưa lương vào mục quyền lợi.
+- **Kiểm chứng:** pytest `apps/jobs` + `apps/ai_core` (439 passed, 9 test mới); vitest form
+  đăng tin + AI (67 passed); lint, kiến trúc, OpenAPI sạch. Chạy thật với Claude Opus 5.5 trên
+  dev: brief và JD (~10 giây, ~0,04 USD/lần) cho quyền lợi, ngoại ngữ, lương 18–25 triệu và
+  3 người đúng như JD.
 
 ## AI chạy được bằng Claude (Anthropic) bên cạnh Gemini (2026-11-26)
 

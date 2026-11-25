@@ -42,6 +42,14 @@ class JobAiBriefSerializer(serializers.Serializer):
         max_length=10,
         allow_empty=True,
     )
+    # Quyền lợi NTD tự liệt kê: nguồn hợp lệ duy nhất (cùng ghi chú, hồ sơ công ty và
+    # quyền lợi luật định) để AI viết mục Quyền lợi ở chế độ brief.
+    benefits = serializers.ListField(
+        child=serializers.CharField(max_length=120),
+        required=False,
+        max_length=10,
+        allow_empty=True,
+    )
     notes = serializers.CharField(max_length=2000, required=False, allow_blank=True)
 
     def validate_work_types(self, values):

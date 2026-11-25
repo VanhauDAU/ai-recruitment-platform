@@ -20,13 +20,20 @@ from apps.messaging.domain import TYPING_MIN_INTERVAL_SECONDS
 from apps.messaging.services import typing_target
 from common.metrics import record_metric
 
-from ..domain import CLOSE_UNAUTHORIZED, MAX_CLIENT_MESSAGE_BYTES, REVALIDATE_SECONDS, user_group
+from ..domain import (
+    ADMIN_GROUP,
+    CLOSE_UNAUTHORIZED,
+    MAX_CLIENT_MESSAGE_BYTES,
+    REVALIDATE_SECONDS,
+    user_group,
+)
 from ..services import identity_is_authorized, redeem_ticket
 
 
 class NotificationConsumer(AsyncWebsocketConsumer):
     identity = None
-    group = ''
+    # Not ``groups``: Channels would join those before the ticket is checked.
+    joined = ()
     _watchdog = None
 
     def __init__(self, *args, **kwargs):
@@ -43,8 +50,11 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             await self.accept()
             await self.close(code=CLOSE_UNAUTHORIZED)
             return
-        self.group = user_group(self.identity.user_id)
-        await self.channel_layer.group_add(self.group, self.channel_name)
+        self.joined = (user_group(self.identity.user_id),) + (
+            (ADMIN_GROUP,) if self.identity.is_admin else ()
+        )
+        for group in self.joined:
+            await self.channel_layer.group_add(group, self.channel_name)
         await self.accept()
         await self.send(text_data=json.dumps({'type': 'ready'}))
         self._watchdog = asyncio.ensure_future(self._revalidate_forever())
@@ -55,8 +65,8 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             self._watchdog.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await self._watchdog
-        if self.group:
-            await self.channel_layer.group_discard(self.group, self.channel_name)
+        for group in self.joined:
+            await self.channel_layer.group_discard(group, self.channel_name)
 
     async def receive(self, text_data=None, bytes_data=None):
         if not text_data or len(text_data) > MAX_CLIENT_MESSAGE_BYTES:

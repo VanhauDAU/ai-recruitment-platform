@@ -8,10 +8,11 @@ from django.test import SimpleTestCase
 
 from config.asgi import application
 
-from ..domain import CLOSE_UNAUTHORIZED, user_group
+from ..domain import ADMIN_GROUP, CLOSE_UNAUTHORIZED, user_group
 from ..services import SocketIdentity
 
 IDENTITY = SocketIdentity(user_id=7, sid='sid-1', auth_revision=1)
+ADMIN = SocketIdentity(user_id=9, sid='sid-2', auth_revision=1, is_admin=True)
 SAME_ORIGIN = [(b'origin', b'http://testserver'), (b'host', b'testserver')]
 
 
@@ -36,6 +37,24 @@ class NotificationConsumerTests(SimpleTestCase):
             self.assertEqual(await socket.receive_json_from(), event)
             self.assertTrue(await socket.receive_nothing())
             await socket.disconnect()
+
+    @async_to_sync
+    async def test_only_admin_sockets_receive_admin_queue_events(self):
+        event = {'type': 'admin.queue.changed', 'queue': 'job_reports'}
+        with patch('apps.realtime.api.consumers.redeem_ticket', side_effect=[IDENTITY, ADMIN]):
+            member, admin = communicator(), communicator()
+            for socket in (member, admin):
+                await socket.connect()
+                await socket.receive_json_from()
+
+            await get_channel_layer().group_send(
+                ADMIN_GROUP, {'type': 'push.event', 'event': event}
+            )
+
+            self.assertEqual(await admin.receive_json_from(), event)
+            self.assertTrue(await member.receive_nothing())
+            await member.disconnect()
+            await admin.disconnect()
 
     @async_to_sync
     async def test_ping_is_answered_and_other_messages_are_ignored(self):

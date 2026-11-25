@@ -31725,6 +31725,13 @@ components:
             minLength: 1
             maxLength: 120
           maxItems: 10
+        benefits:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 120
+          maxItems: 10
         notes:
           type: string
           maxLength: 2000

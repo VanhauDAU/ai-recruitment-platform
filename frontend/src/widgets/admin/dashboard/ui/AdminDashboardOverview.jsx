@@ -22,6 +22,7 @@ import {
 } from './InsightPanels'
 import KpiStrip from './KpiStrip'
 import '../admin-dashboard.css'
+import { useRealtimeOpen } from '@/shared/api/use-realtime'
 
 const DEFAULT_PERIOD = 30
 
@@ -44,11 +45,12 @@ export default function AdminDashboardOverview({ displayName, tierLabel }) {
   const [searchParams, setSearchParams] = useSearchParams()
   const requested = Number(searchParams.get('period'))
   const period = ADMIN_DASHBOARD_PERIODS.includes(requested) ? requested : DEFAULT_PERIOD
+  const live = useRealtimeOpen()
   const query = useQuery({
     queryKey: adminDashboardKeys.detail(period),
     queryFn: ({ signal }) => getAdminDashboard(period, { signal }),
     placeholderData: keepPreviousData,
-    refetchInterval: 60_000,
+    refetchInterval: live ? false : 60_000,
     refetchOnWindowFocus: 'always',
     staleTime: 30_000,
   })

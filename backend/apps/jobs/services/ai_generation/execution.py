@@ -13,6 +13,7 @@ from rest_framework.exceptions import ValidationError
 from apps.ai_core.services import AiGenerationError, generate_structured
 
 from ...models import JobAiGeneration
+from ...models.ai_generation import default_job_ai_manual_fields
 from .errors import JobAiGenerationUnavailable
 from .prompt import (
     PROMPT_VERSION,
@@ -173,6 +174,10 @@ def execute_job_ai_generation(generation_id):
         current.status = JobAiGeneration.Status.COMPLETED
         current.phase = JobAiGeneration.Phase.COMPLETED
         current.result = suggestion
+        # Lương/số lượng chỉ rời danh sách tự nhập khi AI đã chép được từ JD.
+        current.manual_fields = [
+            field for field in default_job_ai_manual_fields() if suggestion.get(field) is None
+        ]
         current.warnings = warnings
         current.unresolved_suggestions = unresolved
         current.provider_attempts = len(result.attempts)
@@ -186,6 +191,7 @@ def execute_job_ai_generation(generation_id):
                 'status',
                 'phase',
                 'result',
+                'manual_fields',
                 'warnings',
                 'unresolved_suggestions',
                 'provider_attempts',

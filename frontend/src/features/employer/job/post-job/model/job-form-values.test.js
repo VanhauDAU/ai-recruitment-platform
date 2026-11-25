@@ -305,6 +305,28 @@ describe('manual job form values', () => {
     })
   })
 
+  it('maps JD-grounded salary, vacancies and language requirements', () => {
+    const patch = createAiJobFormPatch({
+      title: 'Kỹ sư Backend',
+      number_of_vacancies: 3,
+      salary_type: 'from',
+      salary_min: 15_000_000,
+      salary_max: null,
+      currency: 'VND',
+      language_requirements: [{ language: 2, language_name: 'Tiếng Anh', proficiency_level: 'working' }],
+    })
+
+    expect(patch).toEqual({
+      title: 'Kỹ sư Backend',
+      number_of_vacancies: 3,
+      salary_type: 'range',
+      salary_min: 15_000_000,
+      salary_max: null,
+      currency: 'VND',
+      language_requirements: [{ language: 2, proficiency_level: 'working', sort_order: 0 }],
+    })
+  })
+
   it('never leaks an AI generation identifier from form values into a job payload', () => {
     const payload = buildJobPayload({
       title: 'Kỹ sư Backend',

@@ -15,6 +15,7 @@ import { adminDashboardKeys, getAdminQueueSummary } from '@/entities/dashboard/a
 import { ANNOUNCEMENT_SURFACES } from '@/entities/content/announcement'
 import { useSession } from '@/entities/account/session'
 import { BrandLogo } from '@/entities/system/site-settings'
+import { useRealtimeOpen } from '@/shared/api/use-realtime'
 import { adminPath } from '@/shared/config/portals'
 import { AnnouncementStrip } from '@/widgets/common/announcement-strip'
 import { ADMIN_ROUTES } from '../router/admin/admin-routes.config'
@@ -33,6 +34,7 @@ import {
 } from './admin-sidebar-storage'
 import EmployerWorkspaceLayout from './EmployerWorkspaceLayout'
 import { useAdminCommandPalette } from './use-admin-command-palette'
+import { useAdminQueueRealtime } from './use-admin-queue-realtime'
 import '@/shared/ui/workspace-page/workspace-page.css'
 import './admin-dashboard.css'
 
@@ -109,21 +111,26 @@ export default function DashboardLayout() {
     () => buildAdminNavigation(ADMIN_NAVIGATION, ADMIN_ROUTES, adminAccess),
     [adminAccess],
   )
+  const isAdmin = user?.role === 'admin'
+  // Socket mở thì hàng chờ đổi là được báo ngay; polling chỉ còn là dự phòng.
+  useAdminQueueRealtime(isAdmin)
+  const live = useRealtimeOpen()
+  const fallbackPoll = live ? false : 30_000
   const usersSummaryParams = useMemo(() => ({ scope: 'users' }), [])
   const needsUsersSummary = hasBadgeKey(navigation, ['admin_invitations'])
   const usersSummary = useQuery({
     queryKey: adminAccountKeys.summary(usersSummaryParams),
     queryFn: ({ signal }) => getAdminAccountSummary(usersSummaryParams, { signal }),
-    enabled: user?.role === 'admin' && needsUsersSummary,
-    refetchInterval: 30_000,
+    enabled: isAdmin && needsUsersSummary,
+    refetchInterval: fallbackPoll,
     refetchOnWindowFocus: 'always',
     staleTime: 10_000,
   })
   const queueSummary = useQuery({
     queryKey: adminDashboardKeys.queues,
     queryFn: ({ signal }) => getAdminQueueSummary({ signal }),
-    enabled: user?.role === 'admin',
-    refetchInterval: 30_000,
+    enabled: isAdmin,
+    refetchInterval: fallbackPoll,
     refetchOnWindowFocus: 'always',
     staleTime: 10_000,
   })
