@@ -83,3 +83,13 @@ describe('candidate route titles', () => {
     expect(resolveRouteTitle('/tuyen-dung/tuyen-frontend-q4')).toBe('Trang tuyển dụng')
   })
 })
+
+describe('ProCV Connect titles', () => {
+  it('uses one product title for the inbox and every conversation, never a person name', () => {
+    expect(resolveEmployerRouteTitle(employerAppPath('/connect'))).toBe('ProCV Connect')
+    expect(resolveEmployerRouteTitle(employerAppPath('/connect/cnv_123'))).toBe('ProCV Connect')
+    window.history.replaceState({}, '', '/procv-connect')
+    expect(resolveRouteTitle('/procv-connect')).toBe('ProCV Connect')
+    expect(resolveRouteTitle('/procv-connect/cnv_123')).toBe('ProCV Connect')
+  })
+})

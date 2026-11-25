@@ -2,13 +2,15 @@ import {
   CaretRightOutlined, CheckCircleFilled, IdcardOutlined,
   LogoutOutlined, MessageOutlined, WarningFilled,
 } from '@ant-design/icons'
-import { Avatar, Dropdown } from 'antd'
+import { Avatar, Badge, Dropdown } from 'antd'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { CANDIDATE_MENU } from '@/entities/account/account'
+import { connectPath, useConnectUnreadCount } from '@/entities/messaging/conversation'
+import { useSiteSettings } from '@/entities/system/site-settings'
 import { CandidateNotificationBell } from '@/features/main/account/view-candidate-notifications'
+import { m } from '@/shared/config/i18n'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
-import { message } from '@/shared/lib/toast'
 
 const SECTIONS = CANDIDATE_MENU
 
@@ -131,23 +133,39 @@ export function CandidateAccountPanel({ user, logout, onClose, className = '' })
   )
 }
 
+/** Lối vào ProCV Connect kèm số hội thoại có tin mới; ẩn khi admin tắt tính năng. */
+function ConnectShortcut() {
+  const unread = useConnectUnreadCount('candidate')
+  return (
+    <Link
+      to={connectPath('candidate')}
+      aria-label={unread ? m.connect_open_inbox_unread({ count: unread }) : m.connect_open_inbox()}
+      title={m.connect_title()}
+      className="flex text-xl !text-gray-500 transition-colors hover:!text-[var(--brand-primary)]"
+    >
+      <Badge count={unread} size="small" overflowCount={99}>
+        <MessageOutlined className="text-xl text-gray-500" />
+      </Badge>
+    </Link>
+  )
+}
+
 /**
- * Cụm hành động ứng viên trên header. `compactMobile`: màn hẹp chỉ giữ chuông,
- * tin nhắn và avatar chuyển xuống thanh tab dưới (`MobileTabBar`).
+ * Cụm hành động ứng viên trên header. `compactMobile`: màn hẹp giữ chuông và
+ * tin nhắn; avatar chuyển xuống thanh tab dưới (`MobileTabBar`).
  */
 export default function CandidateUserMenu({ user, logout, compactMobile = false }) {
   const [open, setOpen] = useState(false)
   // Chạm trên màn cảm ứng sinh cả mouseenter lẫn click: hover mở rồi click đóng ngay.
   const canHover = useMediaQuery('(hover: hover)')
   const desktopOnly = compactMobile ? 'hidden md:flex' : 'flex'
+  const connectEnabled = useSiteSettings().settings.connect_enabled === true
 
   return (
     <div className="flex items-center gap-2 md:gap-4">
       <CandidateNotificationBell />
 
-      <button type="button" aria-label="Mở tin nhắn" className={`${desktopOnly} cursor-pointer text-xl text-gray-500 transition-colors hover:text-[var(--brand-primary)]`} onClick={() => message.info('Tính năng sẽ sớm ra mắt.')}>
-        <MessageOutlined />
-      </button>
+      {connectEnabled && <ConnectShortcut />}
 
       <Dropdown
         open={open}

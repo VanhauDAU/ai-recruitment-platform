@@ -1,0 +1,37 @@
+title Sơ đồ tuần tự chức năng hẹn lịch phỏng vấn qua ProCV Connect
+actor NTD Nhà tuyển dụng
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+queue RT Kênh realtime\n(Channels + Redis)
+queue Q Worker nền\n(Celery + SMTP)
+actor UV Ứng viên
+NTD -> FE : Bấm "Đặt lịch phỏng vấn", nhập giờ, thời lượng, hình thức, địa điểm hoặc link, ghi chú
+FE -> BE : POST /api/employer/conversations/{id}/interviews/
+BE -> BE : Kiểm tra người phụ trách tin, hồ sơ hiện hành chưa có kết quả, thời gian ở tương lai
+alt Không hợp lệ
+BE --> FE : 400 lỗi theo trường
+else Hợp lệ
+BE -> DB : Lịch hẹn cũ đang chờ chuyển "superseded", tạo InterviewAppointment (proposed) và Message kind interview
+BE ->> RT : chat.message.created (sau commit)
+RT ->> UV : Thẻ lịch hẹn với nút Chấp nhận, Từ chối, Đề nghị giờ khác
+BE --> FE : 201 lịch hẹn
+UV -> BE : POST /api/candidate/interviews/{id}/respond/ {action, note}
+BE -> DB : Khóa lịch hẹn, kiểm tra còn "proposed"
+alt Chấp nhận
+BE -> DB : Trạng thái accepted, tin hệ thống "Ứng viên đã nhận lịch"
+BE ->> Q : Email kèm tệp .ics cho hai bên
+else Từ chối
+BE -> DB : Trạng thái declined kèm lý do, tin hệ thống
+else Đề nghị giờ khác
+BE -> DB : Trạng thái reschedule_requested kèm giờ mong muốn, tin hệ thống
+end
+BE ->> RT : chat.message.updated và chat.message.created tới hai bên
+RT ->> NTD : Thẻ lịch hẹn đổi trạng thái, chuông thông báo
+opt Lịch đã chấp nhận
+Q -> DB : Beat mỗi 5 phút lấy lịch còn 24 giờ hoặc 1 giờ chưa nhắc
+Q ->> UV : Thông báo và email nhắc lịch
+Q ->> NTD : Thông báo và email nhắc lịch
+end
+end
+note over NTD,BE : Sau buổi hẹn NTD có thể đánh dấu đã phỏng vấn; chuyển hồ sơ sang "Đã phỏng vấn" vẫn đi qua change_application_status

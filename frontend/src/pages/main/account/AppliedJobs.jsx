@@ -1,10 +1,13 @@
-import { CalendarOutlined, CheckOutlined, DownOutlined, FileTextOutlined, InfoCircleOutlined, LeftOutlined, RightOutlined, StopOutlined } from '@ant-design/icons'
+import { CalendarOutlined, CheckOutlined, DownOutlined, FileTextOutlined, InfoCircleOutlined, LeftOutlined, MessageOutlined, RightOutlined, StopOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Empty, Skeleton, Tooltip } from 'antd'
+import { Button, Empty, Skeleton, Tooltip } from 'antd'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { CANDIDATE_APPLICATION_FILTERS, applicationKeys, getCandidateApplications, useApplicationRules } from '@/entities/application/application'
+import { useStartConversation } from '@/entities/messaging/conversation'
+import { useSiteSettings } from '@/entities/system/site-settings'
 import { CandidateApplicationActions } from '@/features/main/application/manage-candidate-application'
+import { m } from '@/shared/config/i18n'
 import { MASCOT_SCENES, MascotEmpty } from '@/shared/ui/mascot'
 import {
   APPLICATION_STAGES,
@@ -119,6 +122,18 @@ function ApplicationProgress({ application }) {
   )
 }
 
+// ProCV Connect: mở (hoặc mở lại) hội thoại với NTD của tin; hồ sơ đã rút thì không.
+function MessageRecruiterButton({ application }) {
+  const start = useStartConversation('candidate')
+  const enabled = useSiteSettings().settings.connect_enabled === true
+  if (!enabled || !application.job_public_id || application.status === 'withdrawn') return null
+  return (
+    <Button size="small" icon={<MessageOutlined />} loading={start.isPending} onClick={() => start.mutate({ job: application.job_public_id })}>
+      {m.connect_message_action()}
+    </Button>
+  )
+}
+
 function ApplicationCard({ application, expanded, onToggle }) {
   const headline = getApplicationHeadline(application)
   const timeline = buildApplicationTimeline(application)
@@ -152,6 +167,7 @@ function ApplicationCard({ application, expanded, onToggle }) {
           {headline.time && <time> ({headline.time})</time>}
         </p>
         <div className="applied-job__actions">
+          <MessageRecruiterButton application={application} />
           <CandidateApplicationActions application={application} />
         </div>
       </div>

@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [ProCV Connect: nhắn tin NTD ↔ ứng viên (ADR-0032)](#procv-connect-nhắn-tin-ntd--ứng-viên-adr-0032-2026-11-26) | 🟨 GĐ0–5 xong trên nhánh `feat/procv-connect`, chờ PR; GĐ0 riêng ở PR #384 |
 | [Cổng quản trị cập nhật hàng chờ realtime](#cổng-quản-trị-cập-nhật-hàng-chờ-realtime-2026-11-26) | 🟨 Nhánh `feat/admin-realtime`, chờ gộp PR |
 | [Đăng tin xong mở thẻ Thông tin tuyển dụng](#đăng-tin-xong-mở-thẻ-thông-tin-tuyển-dụng-2026-11-26) | 🟨 Nhánh `feat/job-publish-info-tab`, chờ PR |
 | [AI tạo tin: đủ quyền lợi, ngoại ngữ, lương/số lượng từ JD](#ai-tạo-tin-đủ-quyền-lợi-ngoại-ngữ-lươngsố-lượng-từ-jd-2026-11-26) | ✅ Đã gộp dev (#385) |
@@ -75,6 +76,34 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
 
+
+## ProCV Connect: nhắn tin NTD ↔ ứng viên (ADR-0032, 2026-11-26)
+
+Đặc tả: [`dac-ta-procv-connect.md`](01-phan-tich/dac-ta-procv-connect.md); sơ đồ
+`mo-hinh-hoa-yeu-cau/17-procv-connect/` (chức năng 43–47).
+
+- Chốt 26/11: hội thoại theo cặp (tin, ứng viên), phía NTD là người phụ trách tin;
+  ứng viên mở khi có hồ sơ hiện hành, NTD mở với người đã nộp hoặc đã nhận lời mời kết
+  nối; gửi qua REST (`client_id`), nhận qua socket chung kèm nguyên tin, bù tin theo
+  `seq`; `typing` là tin duy nhất client gửi lên socket; emoji tự dựng, sticker để sau.
+
+| GĐ | Hạng mục | Trạng thái |
+| --- | --- | --- |
+| 0 | ADR-0032, đặc tả, sơ đồ use case/tuần tự/hoạt động | ✅ PR #384 |
+| 1 | Backend lõi: app `messaging`, mở/gửi/đọc/badge, typing qua socket, khóa khi chặn/rút/tắt | ✅ `feat/procv-connect` |
+| 2 | Frontend lõi: hộp thư 3 cột responsive, realtime + bù seq, badge, nút vào chat | ✅ `feat/procv-connect` |
+| 3 | Gửi CV (bản chụp, NTD xuất PDF), thẻ tin, tệp/ảnh | ✅ `feat/procv-connect` |
+| 4 | Lịch hẹn phỏng vấn, nhắc 24h/1h, email `.ics` | ✅ `feat/procv-connect` |
+| 5 | Email nhắc tin chưa đọc, xuất dữ liệu cá nhân, xóa khi xóa tài khoản | ✅ `feat/procv-connect` |
+
+- Giao diện tự thiết kế (không dùng dáng antd): bộ `shared/ui/connect-kit` (Button, Pill, Avatar,
+  Dialog `<dialog>` gốc, Popover, SidePanel, StatusText), CSS lazy `connect.css`; thẻ lịch hẹn dạng
+  cuống lịch. Màu thương hiệu chỉ cho nút gửi, viên "Nhắn tin", chấm chưa đọc.
+- Sau deploy chạy `seed_sitecontent` để có 4 key `connect_*` (giao diện mặc định ẩn ProCV Connect
+  khi chưa có `connect_enabled`).
+- Đính kèm chưa qua quét virus (ClamAV chưa bật ở production): kiểm chữ ký + cấu trúc như giấy tờ NTD.
+- Kiểm tay 26/11 trên DB riêng `procv_connect`: gửi/nhận realtime hai tab, "Đã xem", nhận lịch
+  phỏng vấn cập nhật thẻ và chuông phía NTD, mobile 375px, bảng emoji.
 
 ## Cổng quản trị cập nhật hàng chờ realtime (2026-11-26)
 
@@ -2400,7 +2429,7 @@ Lộ trình 6 giai đoạn của workspace `/tuyendung/app/applications`; mỗi 
 | 4 | Danh sách đen + phát hiện ứng tuyển hàng loạt | ✅ Đã gộp vào dev (#197) |
 | 5 | Kho ứng viên tiềm năng + gợi ý lại khi đăng tin mới | ✅ Đã gộp vào dev (#198) |
 | 6 | Gợi ý kỹ năng còn thiếu cho ứng viên bị từ chối | ⬜ |
-| Sau | Hẹn lịch phỏng vấn | ⬜ |
+| Sau | Hẹn lịch phỏng vấn | ✅ ProCV Connect GĐ4 (ADR-0032) |
 
 <details><summary>Ghi chú giai đoạn 1</summary>
 

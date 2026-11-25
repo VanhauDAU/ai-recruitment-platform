@@ -40,6 +40,7 @@ mo-hinh-hoa-yeu-cau/
 | `14-quan-ly-tai-khoan/` | Chức năng quản lý tài khoản | 9 | 1 | 1 |
 | `15-quan-ly-mau-cv/` | Chức năng quản lý mẫu CV | 10 | 1 | 1 |
 | `16-thong-ke-he-thong/` | Chức năng xem thống kê | 5 | 1 | 1 |
+| `17-procv-connect/` | Chức năng nhắn tin ProCV Connect | 12 | 5 | 5 |
 
 ## Dựng lại hình và file Word
 

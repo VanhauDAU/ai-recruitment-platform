@@ -8782,6 +8782,282 @@ paths:
               schema:
                 $ref: '#/components/schemas/CandidateSearchInvitation'
           description: ''
+  /api/candidate/conversations/:
+    get:
+      operationId: candidate_conversations_list
+      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
+      summary: Danh sách hội thoại ProCV Connect, mới nhất trước
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: {}
+          description: ''
+    post:
+      operationId: candidate_conversations_create
+      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
+      summary: Mở (hoặc lấy lại) hội thoại về một tin tuyển dụng
+      tags:
+      - messaging
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: {}
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              additionalProperties: {}
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: {}
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/candidate/conversations/{public_id}/:
+    get:
+      operationId: candidate_conversations_retrieve
+      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
+      summary: 'Một hội thoại: ngữ cảnh tin, hồ sơ, quyền gửi'
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/candidate/conversations/{public_id}/messages/:
+    get:
+      operationId: candidate_conversations_messages_retrieve
+      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
+      summary: 'Tin nhắn theo seq: trang cũ hơn (before) hoặc bù tin (after)'
+      parameters:
+      - in: query
+        name: after
+        schema:
+          type: integer
+          minimum: 0
+      - in: query
+        name: before
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          maximum: 50
+          minimum: 1
+          default: 30
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+    post:
+      operationId: candidate_conversations_messages_create
+      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
+      summary: 'Gửi tin: chữ/emoji, thẻ tin (NTD), CV (ứng viên) hoặc tệp (multipart)'
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SendFileRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/candidate/conversations/{public_id}/messages/{message_id}/file/:
+    get:
+      operationId: candidate_conversations_messages_file_retrieve
+      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
+      summary: Tệp, ảnh hoặc CV dạng tệp của một tin; ?download=1 để tải về
+      parameters:
+      - in: path
+        name: message_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+          description: ''
+  /api/candidate/conversations/{public_id}/read/:
+    post:
+      operationId: candidate_conversations_read_create
+      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
+      summary: Đánh dấu đã đọc tới seq
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReadRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReadRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReadRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/candidate/conversations/applied-jobs/:
+    get:
+      operationId: candidate_conversations_applied_jobs_retrieve
+      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
+      summary: Tin đã ứng tuyển (cột phải ProCV Connect) kèm hội thoại đã có
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/candidate/conversations/shareable-cvs/:
+    get:
+      operationId: candidate_conversations_shareable_cvs_retrieve
+      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
+      summary: CV của tôi có thể gửi trong hội thoại
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/candidate/conversations/unread-count/:
+    get:
+      operationId: candidate_conversations_unread_count_retrieve
+      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
+      summary: Số hội thoại có tin chưa đọc (badge)
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
   /api/candidate/cvs/:
     get:
       operationId: candidate_cvs_list
@@ -9701,6 +9977,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedFollowedCompanyList'
+          description: ''
+  /api/candidate/interviews/{public_id}/respond/:
+    post:
+      operationId: candidate_interviews_respond_create
+      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
+      summary: Ứng viên nhận, từ chối hoặc xin đổi giờ phỏng vấn
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterviewRespondRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InterviewRespondRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InterviewRespondRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
           description: ''
   /api/candidate/job-preferences/:
     get:
@@ -13161,6 +13472,401 @@ paths:
               schema:
                 $ref: '#/components/schemas/RecruitmentNeed'
           description: ''
+  /api/employer/conversations/:
+    get:
+      operationId: employer_conversations_list
+      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
+      summary: Danh sách hội thoại ProCV Connect, mới nhất trước
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: {}
+          description: ''
+    post:
+      operationId: employer_conversations_create
+      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
+      summary: Mở (hoặc lấy lại) hội thoại về một tin tuyển dụng
+      tags:
+      - messaging
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: {}
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              additionalProperties: {}
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: {}
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/employer/conversations/{public_id}/:
+    get:
+      operationId: employer_conversations_retrieve
+      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
+      summary: 'Một hội thoại: ngữ cảnh tin, hồ sơ, quyền gửi'
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/employer/conversations/{public_id}/interviews/:
+    post:
+      operationId: employer_conversations_interviews_create
+      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
+      summary: NTD đề xuất lịch phỏng vấn trong hội thoại
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterviewCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InterviewCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InterviewCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/employer/conversations/{public_id}/messages/:
+    get:
+      operationId: employer_conversations_messages_retrieve
+      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
+      summary: 'Tin nhắn theo seq: trang cũ hơn (before) hoặc bù tin (after)'
+      parameters:
+      - in: query
+        name: after
+        schema:
+          type: integer
+          minimum: 0
+      - in: query
+        name: before
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          maximum: 50
+          minimum: 1
+          default: 30
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+    post:
+      operationId: employer_conversations_messages_create
+      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
+      summary: 'Gửi tin: chữ/emoji, thẻ tin (NTD), CV (ứng viên) hoặc tệp (multipart)'
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SendFileRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/employer/conversations/{public_id}/messages/{message_id}/cv-export/:
+    post:
+      operationId: employer_conversations_messages_cv_export_create
+      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
+      summary: NTD yêu cầu PDF của CV dựng bằng trình tạo CV được gửi trong hội thoại
+      parameters:
+      - in: path
+        name: message_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/employer/conversations/{public_id}/messages/{message_id}/cv-export/{export_id}/:
+    get:
+      operationId: employer_conversations_messages_cv_export_retrieve
+      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
+      summary: Trạng thái PDF CV được gửi trong hội thoại
+      parameters:
+      - in: path
+        name: export_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: message_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/employer/conversations/{public_id}/messages/{message_id}/cv-export/{export_id}/download/:
+    get:
+      operationId: employer_conversations_messages_cv_export_download_retrieve
+      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
+      summary: Tải PDF CV được gửi trong hội thoại
+      parameters:
+      - in: path
+        name: export_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: message_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+          description: ''
+  /api/employer/conversations/{public_id}/messages/{message_id}/file/:
+    get:
+      operationId: employer_conversations_messages_file_retrieve
+      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
+      summary: Tệp, ảnh hoặc CV dạng tệp của một tin; ?download=1 để tải về
+      parameters:
+      - in: path
+        name: message_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+          description: ''
+  /api/employer/conversations/{public_id}/read/:
+    post:
+      operationId: employer_conversations_read_create
+      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
+      summary: Đánh dấu đã đọc tới seq
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReadRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReadRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReadRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/employer/conversations/shareable-jobs/:
+    get:
+      operationId: employer_conversations_shareable_jobs_retrieve
+      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
+      summary: Tin đang tuyển của công ty có thể gửi cho ứng viên
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/employer/conversations/unread-count/:
+    get:
+      operationId: employer_conversations_unread_count_retrieve
+      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
+      summary: Số hội thoại có tin chưa đọc (badge)
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
   /api/employer/dashboard/:
     get:
       operationId: employer_dashboard_retrieve
@@ -13242,6 +13948,63 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Industry'
+          description: ''
+  /api/employer/interviews/{public_id}/cancel/:
+    post:
+      operationId: employer_interviews_cancel_create
+      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
+      summary: NTD hủy lịch phỏng vấn
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterviewCancelRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InterviewCancelRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InterviewCancelRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/employer/interviews/{public_id}/complete/:
+    post:
+      operationId: employer_interviews_complete_create
+      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
+      summary: NTD đánh dấu đã phỏng vấn
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
           description: ''
   /api/employer/jobs/:
     get:
@@ -24833,6 +25596,9 @@ components:
       - talent_pool_saved
       - job_invitation
       - connection_invitation
+      - interview_scheduled
+      - interview_updated
+      - interview_reminder
       type: string
       description: |-
         * `application_submitted` - Hồ sơ đã được tiếp nhận
@@ -24845,6 +25611,9 @@ components:
         * `talent_pool_saved` - Được lưu vào kho ứng viên tiềm năng
         * `job_invitation` - Lời mời ứng tuyển
         * `connection_invitation` - Lời mời kết nối
+        * `interview_scheduled` - Lịch phỏng vấn mới
+        * `interview_updated` - Lịch phỏng vấn thay đổi
+        * `interview_reminder` - Nhắc lịch phỏng vấn
     CandidatePreferredProvinceRead:
       type: object
       properties:
@@ -29857,6 +30626,8 @@ components:
       - company_content_reverted
       - application_received
       - application_withdrawn
+      - interview_responded
+      - interview_reminder
       - search_invitation_accepted
       - search_invitation_declined
       - application_awaiting_reply
@@ -29894,6 +30665,8 @@ components:
         * `company_content_reverted` - Nội dung trang công ty đã bị hoàn tác
         * `application_received` - Có hồ sơ ứng tuyển mới
         * `application_withdrawn` - Ứng viên đã rút hồ sơ
+        * `interview_responded` - Ứng viên đã phản hồi lịch phỏng vấn
+        * `interview_reminder` - Sắp đến giờ phỏng vấn
         * `search_invitation_accepted` - Ứng viên đồng ý kết nối
         * `search_invitation_declined` - Ứng viên từ chối lời mời kết nối
         * `application_awaiting_reply` - Hồ sơ đang chờ phản hồi
@@ -30841,6 +31614,76 @@ components:
         * `not_shown` - not_shown
         * `preferences_required` - preferences_required
         * `consent_required` - consent_required
+    InterviewCancelRequest:
+      type: object
+      properties:
+        note:
+          type: string
+          default: ''
+          maxLength: 1000
+    InterviewCreateModeEnum:
+      enum:
+      - onsite
+      - online
+      - phone
+      type: string
+      description: |-
+        * `onsite` - Onsite
+        * `online` - Online
+        * `phone` - Phone
+    InterviewCreateRequest:
+      type: object
+      properties:
+        starts_at:
+          type: string
+          format: date-time
+        duration_minutes:
+          type: integer
+          maximum: 480
+          minimum: 15
+          default: 60
+        mode:
+          $ref: '#/components/schemas/InterviewCreateModeEnum'
+        location:
+          type: string
+          default: ''
+          maxLength: 255
+        meeting_url:
+          oneOf:
+          - type: string
+            format: uri
+            default: ''
+            maxLength: 500
+          - type: string
+            maxLength: 0
+        note:
+          type: string
+          default: ''
+          maxLength: 2000
+      required:
+      - mode
+      - starts_at
+    InterviewRespondActionEnum:
+      enum:
+      - accept
+      - decline
+      - reschedule
+      type: string
+      description: |-
+        * `accept` - accept
+        * `decline` - decline
+        * `reschedule` - reschedule
+    InterviewRespondRequest:
+      type: object
+      properties:
+        action:
+          $ref: '#/components/schemas/InterviewRespondActionEnum'
+        note:
+          type: string
+          default: ''
+          maxLength: 1000
+      required:
+      - action
     JobAiBriefRequest:
       type: object
       properties:
@@ -37234,6 +38077,14 @@ components:
       required:
       - revision_number
       - revision_token
+    ReadRequest:
+      type: object
+      properties:
+        seq:
+          type: integer
+          minimum: 0
+      required:
+      - seq
     RealtimeTicket:
       type: object
       properties:
@@ -39060,6 +39911,48 @@ components:
       description: |-
         * `candidate` - candidate
         * `employer` - employer
+    SendFileRequest:
+      type: object
+      properties:
+        client_id:
+          type: string
+          format: uuid
+          nullable: true
+        file:
+          type: string
+          format: binary
+      required:
+      - file
+    SendMessageKindEnum:
+      enum:
+      - text
+      - job
+      - cv
+      type: string
+      description: |-
+        * `text` - text
+        * `job` - job
+        * `cv` - cv
+    SendMessageRequest:
+      type: object
+      properties:
+        client_id:
+          type: string
+          format: uuid
+          nullable: true
+        kind:
+          allOf:
+          - $ref: '#/components/schemas/SendMessageKindEnum'
+          default: text
+        body:
+          type: string
+          maxLength: 4000
+        job:
+          type: string
+          maxLength: 50
+        cv:
+          type: string
+          maxLength: 50
     SendPhoneOtpRequest:
       type: object
       properties:

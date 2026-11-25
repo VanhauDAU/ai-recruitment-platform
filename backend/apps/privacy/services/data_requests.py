@@ -20,6 +20,7 @@ from apps.candidates.models import CandidateProfile
 from apps.cvs.models import UserCv
 from apps.cvs.services import permanently_delete_cv
 from apps.employers.models import RecruiterProfile
+from apps.messaging.services import erase_user_messages
 
 from ..models import DataSubjectRequest
 
@@ -93,6 +94,7 @@ def _erase_personal_data(user):
         for cv in UserCv.objects.filter(user=user):
             permanently_delete_cv(cv=cv, actor=user)
         CandidateProfile.objects.filter(user=user).delete()
+    erase_user_messages(user)
     anonymize_account(user)
     DataSubjectRequest.objects.filter(user=user, status=DataSubjectRequest.Status.PENDING).exclude(
         kind=DataSubjectRequest.Kind.ERASURE

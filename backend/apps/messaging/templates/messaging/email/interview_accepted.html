@@ -1,0 +1,15 @@
+{% extends "candidates/email/_layout.html" %}
+{% load i18n %}
+{% block body %}
+  <div style="margin:0 0 18px;padding:16px 18px;border-radius:12px;background:#f0fdf4;border:1px solid #bbf7d0">
+    <div style="font-size:17px;font-weight:800;color:#14532d">{% translate "Lịch phỏng vấn đã được xác nhận" %}</div>
+    <p style="margin:8px 0 0;line-height:1.6;color:#166534">
+      {% blocktranslate trimmed with job=job_title company=company_name time=starts_at_text minutes=duration_minutes %}
+      Phỏng vấn vị trí <strong>{{ job }}</strong> tại {{ company }} lúc <strong>{{ time }}</strong>, khoảng {{ minutes }} phút.
+      {% endblocktranslate %}
+    </p>
+    {% if where %}<p style="margin:8px 0 0;line-height:1.6;color:#166534">{% translate "Địa điểm / link họp:" %} {{ where }}</p>{% endif %}
+  </div>
+  <p style="margin:0 0 18px;line-height:1.6">{% translate "Tệp lịch đính kèm giúp bạn thêm buổi hẹn vào lịch của mình." %}</p>
+  <p style="margin:0"><a href="{{ action_url }}" style="display:inline-block;padding:11px 18px;border-radius:8px;background:{{ brand.primary_color }};color:#fff;text-decoration:none;font-weight:700">{% translate "Mở cuộc trò chuyện" %}</a></p>
+{% endblock %}

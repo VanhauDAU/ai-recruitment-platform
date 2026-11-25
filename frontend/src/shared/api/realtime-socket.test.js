@@ -145,4 +145,17 @@ describe('realtime socket', () => {
     expect(socket.readyState).toBe(3)
     expect(realtime.getRealtimeStatus()).toBe('idle')
   })
+
+  it('sends client messages only while the socket is open', async () => {
+    const realtime = await loadSocket()
+    expect(realtime.sendRealtime({ type: 'typing', conversation: 'cnv_1' })).toBe(false)
+    realtime.subscribeRealtime(() => {})
+    await flush()
+    const socket = FakeSocket.instances[0]
+    expect(realtime.sendRealtime({ type: 'typing', conversation: 'cnv_1' })).toBe(false)
+
+    socket.open()
+    expect(realtime.sendRealtime({ type: 'typing', conversation: 'cnv_1' })).toBe(true)
+    expect(socket.sent).toEqual(['{"type":"typing","conversation":"cnv_1"}'])
+  })
 })

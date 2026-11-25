@@ -222,7 +222,6 @@
   "candidate_connections_status_accepted": "Đã đồng ý",
   "candidate_connections_status_declined": "Đã từ chối",
   "candidate_connections_message": "Nhắn tin",
-  "candidate_connections_message_soon": "Tính năng nhắn tin sắp ra mắt",
   "candidate_connections_accepted_toast": "Đã đồng ý kết nối với nhà tuyển dụng.",
   "candidate_connections_declined_toast": "Đã từ chối lời mời.",
   "candidate_connections_respond_failed": "Chưa gửi được phản hồi.",

@@ -50,6 +50,7 @@ api_portal_patterns = [
                 ('cvs/', 'apps.cvs.api.urls.candidate'),
                 ('jobs/', 'apps.jobs.api.urls.candidate'),
                 ('matching/', 'apps.matching.api.urls.candidate'),
+                ('', 'apps.messaging.api.urls.candidate'),
             )
         ),
     ),
@@ -62,6 +63,7 @@ api_portal_patterns = [
                 ('', 'apps.applications.api.urls.employer'),
                 ('jobs/', 'apps.jobs.api.urls.employer'),
                 ('dashboard/', 'apps.dashboard.api.urls.employer'),
+                ('', 'apps.messaging.api.urls.employer'),
             )
         ),
     ),

@@ -1,0 +1,31 @@
+title Sơ đồ tuần tự chức năng xem lịch sử, đánh dấu đã đọc và nhắc tin chưa đọc
+actor ND Người dùng\n(UV hoặc NTD)
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+queue RT Kênh realtime\n(Channels + Redis)
+queue Q Worker nền\n(Celery + SMTP)
+actor BK Bên kia
+ND -> FE : Mở một hội thoại
+FE -> BE : GET /conversations/{id}/messages/?limit=30
+BE --> FE : 30 tin mới nhất theo seq
+FE --> ND : Hiện tin, ngăn ngày Hôm nay / Hôm qua
+loop Cuộn lên đầu khung chat
+FE -> BE : GET /conversations/{id}/messages/?before={seq nhỏ nhất}
+BE --> FE : Trang tin cũ hơn
+end
+FE -> BE : POST /conversations/{id}/read/ {seq}
+BE -> DB : last_read_seq = max(cũ, seq), unread_count = 0
+BE ->> RT : chat.read tới người đọc và bên kia (sau commit)
+RT ->> FE : Các tab khác giảm badge chưa đọc
+RT ->> BK : Tin cuối hiện "Đã xem"
+BE --> FE : 204
+opt Người nhận không mở hội thoại
+Q -> DB : Beat mỗi 5 phút: thành viên có tin chưa đọc quá thời gian chờ, chưa email từ lần đọc trước
+alt Tắt nhắc email hoặc tài khoản không nhận được
+Q -> Q : Bỏ qua
+else Cần nhắc
+Q ->> ND : Email "Bạn có N tin nhắn mới về tin ..." (không kèm nội dung tin)
+Q -> DB : Ghi emailed_through_seq
+end
+end

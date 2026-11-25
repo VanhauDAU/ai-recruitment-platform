@@ -28,6 +28,7 @@ export const FollowedCompaniesPage = lazy(() => import('@/pages/main/account/Fol
 export const EmployerConnectionsPage = lazy(() => import('@/pages/main/account/EmployerConnections'))
 export const TalentPoolsPage = lazy(() => import('@/pages/main/account/TalentPools'))
 export const OnboardUserPage = lazy(() => import('@/pages/main/onboarding/OnboardUser'))
+export const CandidateConnectPage = lazy(() => import('@/pages/main/connect/ConnectPage'))
 export const BlogHomePage = lazy(() => import('@/pages/main/blog/BlogHome'))
 export const BlogCategoryPage = lazy(() => import('@/pages/main/blog/BlogCategory'))
 export const BlogDetailPage = lazy(() => import('@/pages/main/blog/BlogDetail'))

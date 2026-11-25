@@ -59,6 +59,11 @@ class EmployerNotification(models.Model):
         )
         APPLICATION_RECEIVED = 'application_received', gettext_lazy('Có hồ sơ ứng tuyển mới')
         APPLICATION_WITHDRAWN = 'application_withdrawn', gettext_lazy('Ứng viên đã rút hồ sơ')
+        INTERVIEW_RESPONDED = (
+            'interview_responded',
+            gettext_lazy('Ứng viên đã phản hồi lịch phỏng vấn'),
+        )
+        INTERVIEW_REMINDER = 'interview_reminder', gettext_lazy('Sắp đến giờ phỏng vấn')
         SEARCH_INVITATION_ACCEPTED = (
             'search_invitation_accepted',
             gettext_lazy('Ứng viên đồng ý kết nối'),

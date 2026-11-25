@@ -4,12 +4,13 @@ import {
   FileTextOutlined,
   LogoutOutlined,
   MenuOutlined,
+  MessageOutlined,
   PlusOutlined,
   QuestionCircleFilled,
   SearchOutlined,
   SettingOutlined,
 } from '@ant-design/icons'
-import { Avatar, Button, Dropdown, Layout, Menu, Popover, Tooltip } from 'antd'
+import { Avatar, Badge, Button, Dropdown, Layout, Menu, Popover, Tooltip } from 'antd'
 import { useEffect, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router'
 import { ANNOUNCEMENT_SURFACES } from '@/entities/content/announcement'
@@ -20,7 +21,8 @@ import {
   useEmployerReadiness,
 } from '@/entities/account/employer-profile'
 import { useSession } from '@/entities/account/session'
-import { BrandLogo } from '@/entities/system/site-settings'
+import { useConnectUnreadCount } from '@/entities/messaging/conversation'
+import { BrandLogo, useSiteSettings } from '@/entities/system/site-settings'
 import {
   getEmployerAccountVerificationLevel,
   isEmployerVerificationInvalidated,
@@ -106,6 +108,9 @@ export default function EmployerWorkspaceLayout() {
   const complianceAction = employerReadinessAction(candidateBlocker?.action)
   const showComplianceNotice = !isChecking && !isAccessError && !readiness.candidateDataAccess
   const unreadApplications = useUnreadApplicationCount(Boolean(readiness.candidateDataAccess))
+  // ProCV Connect: nút trên header + badge + toast tin nhắn mới trong toàn workspace.
+  const connectEnabled = useSiteSettings().settings.connect_enabled === true && Boolean(readiness.candidateDataAccess)
+  const unreadConversations = useConnectUnreadCount('employer', { enabled: connectEnabled })
   const initials = (user?.full_name || user?.email || 'NTD').trim().charAt(0).toUpperCase()
   const isCampaignList = pathname === employerAppPath('/campaigns')
   const routeAction = isCampaignList
@@ -208,6 +213,20 @@ export default function EmployerWorkspaceLayout() {
           <TopbarAction icon={<BarChartOutlined />} label={m.employer_workspace_topbar_market_survey()} prominent />
           <TopbarAction icon={<FileTextOutlined />} label={m.employer_workspace_topbar_post_job()} to={employerAppPath('/jobs/new')} />
           <TopbarAction icon={<SearchOutlined />} label={m.employer_workspace_topbar_search_cv()} to={employerAppPath('/candidate-search')} />
+          {connectEnabled && (
+            <Badge count={unreadConversations} size="small" overflowCount={99}>
+              <Link
+                to={employerAppPath('/connect')}
+                aria-label={unreadConversations ? m.connect_open_inbox_unread({ count: unreadConversations }) : m.connect_open_inbox()}
+                className="rounded-full transition hover:opacity-90"
+              >
+                <span className="inline-flex h-8 items-center gap-1.5 rounded-full border border-white/10 bg-white/10 px-3 text-xs font-bold text-slate-200">
+                  <MessageOutlined />
+                  <span className="hidden sm:inline">{m.connect_title()}</span>
+                </span>
+              </Link>
+            </Badge>
+          )}
           <LanguageSwitcher className="!border-white/20 !text-white/80 hover:!text-white" />
           <EmployerNotificationBell />
           <Dropdown menu={accountMenu} trigger={['click']} placement="bottomRight">

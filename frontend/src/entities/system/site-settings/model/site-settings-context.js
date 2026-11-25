@@ -36,6 +36,9 @@ export const DEFAULT_SITE_SETTINGS = {
   cv_builder_wysiwyg_enabled: true,
   knowledgebase_public_enabled: false,
   knowledgebase_search_index_enabled: false,
+  // ProCV Connect: lối vào ẩn tới khi server xác nhận đang bật.
+  connect_enabled: false,
+  connect_attachment_max_mb: 10,
 }
 
 export const SiteSettingsContext = createContext({

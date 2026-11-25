@@ -19,7 +19,8 @@
       "./messages/employer-account/{locale}.json",
       "./messages/employer-workspace/{locale}.json",
       "./messages/shared/{locale}.json",
-      "./messages/candidate/{locale}.json"
+      "./messages/candidate/{locale}.json",
+      "./messages/connect/{locale}.json"
     ]
   }
 }
