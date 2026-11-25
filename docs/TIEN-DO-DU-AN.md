@@ -7,7 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Thông báo thời gian thực qua WebSocket, hoàn tác 15 giây (ADR-0028)](#thông-báo-thời-gian-thực-qua-websocket-hoàn-tác-15-giây-adr-0028-2026-11-25) | 🟨 PR #340 (nhánh `feat/realtime-notifications`), chờ gộp |
+| [Thông báo thời gian thực qua WebSocket, hoàn tác 15 giây (ADR-0028)](#thông-báo-thời-gian-thực-qua-websocket-hoàn-tác-15-giây-adr-0028-2026-11-25) | ✅ Đã gộp dev (#340); sửa socket rớt mỗi 5 giây trên nhánh `fix/realtime-redis-timeout` |
 | [Phễu tuyển dụng trên trang chủ NTD](#phễu-tuyển-dụng-trên-trang-chủ-ntd-2026-11-25) | 🟨 PR #338 (nhánh `feat/employer-recruitment-funnel`), chờ gộp |
 | [Làm lại khối Gợi ý việc làm phù hợp trang chủ](#làm-lại-khối-gợi-ý-việc-làm-phù-hợp-trang-chủ-2026-11-25) | 🟨 Xong trên nhánh `feat/home-recommendations-redesign`, chưa commit/PR |
 | [Huy hiệu Sấm Chớp tính từ mức phản hồi thật (ADR-0027)](#huy-hiệu-sấm-chớp-tính-từ-mức-phản-hồi-thật-adr-0027-2026-11-25) | ✅ Đã gộp dev (#334) |
@@ -78,9 +78,11 @@ phút + tối đa 60 giây chờ beat. Chi tiết quyết định ở
 | Âm thanh thông báo mới (một tab kêu), nút bật/tắt chuông; toast + thanh "Hoàn tác" đếm ngược đúng thời gian còn lại | ✅ |
 | Triển khai: service `realtime` (daphne) trong compose prod, nginx route `/ws/notifications/`, Vite proxy `/ws` | ✅ code; chưa lên VPS |
 | Admin realtime (badge hàng chờ) | ⬜ Chưa làm, vẫn polling 30 giây |
+| Sửa socket rớt mỗi ~5 giây: redis-py 8 chờ đọc mặc định 5 giây, bằng khoảng BZPOPMIN của channels_redis; đặt `socket_timeout` 15 giây cho channel layer + test hồi quy | 🟨 Nhánh `fix/realtime-redis-timeout`, chờ gộp |
 
-Sau khi pull: build lại image backend (`docker compose build backend worker beat`) vì có
-gói mới `channels`, `channels-redis`, `daphne`.
+Sau khi pull: build lại image backend **và** `ml-worker` (`docker compose build backend
+ml-worker`) vì có gói mới `channels`, `channels-redis`, `daphne`; `INSTALLED_APPS` có
+`daphne`/`channels` nên image cũ không khởi động được.
 
 ## Huy hiệu Sấm Chớp tính từ mức phản hồi thật (ADR-0027, 2026-11-25)
 

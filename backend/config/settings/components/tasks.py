@@ -17,11 +17,20 @@ CACHES = {
 # Channel layer của WebSocket thông báo: web, worker và beat cùng đẩy sự kiện vào
 # Redis, process `realtime` (daphne) chuyển tới socket đang mở. Prefix riêng để
 # không đụng key cache/Celery.
+# redis-py 8 mặc định chờ đọc 5 giây, bằng đúng thời gian channels_redis chặn ở
+# BZPOPMIN (`brpop_timeout = 5`), nên mỗi socket rảnh sẽ lỗi TimeoutError và bị
+# ngắt sau ~5 giây. Thời gian chờ đọc phải dài hơn khoảng chặn đó.
+CHANNEL_LAYER_SOCKET_TIMEOUT = 15
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [config('CHANNEL_LAYER_REDIS_URL', default=REDIS_URL)],
+            'hosts': [
+                {
+                    'address': config('CHANNEL_LAYER_REDIS_URL', default=REDIS_URL),
+                    'socket_timeout': CHANNEL_LAYER_SOCKET_TIMEOUT,
+                }
+            ],
             'prefix': 'procv-realtime',
             'capacity': 200,
             'expiry': 30,
