@@ -22,6 +22,11 @@ export default function BannerCarousel({ slides }) {
   const touchStartX = useRef(null)
   const count = slides.length
   const current = count ? index % count : 0
+  // Chỉ dựng slide đang xem, slide kế tiếp và các slide đã xem: mọi slide chồng
+  // lên nhau trong viewport nên `loading="lazy"` không hoãn được ảnh của chúng.
+  const [seen, setSeen] = useState(() => new Set())
+  if (count && !seen.has(current)) setSeen(new Set(seen).add(current))
+  const isMounted = (i) => i === current || i === (current + 1) % count || seen.has(i)
 
   useEffect(() => {
     if (hovered || focused || count <= 1 || prefersReducedMotion()) return
@@ -66,7 +71,7 @@ export default function BannerCarousel({ slides }) {
             i === current ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
         >
-          {slide}
+          {isMounted(i) ? slide : null}
         </div>
       ))}
 
@@ -88,7 +93,7 @@ export default function BannerCarousel({ slides }) {
           >
             <RightOutlined className="text-gray-700 text-xs" />
           </button>
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+          <div className="absolute bottom-0.5 left-1/2 -translate-x-1/2 flex">
             {slides.map((_, i) => (
               <button
                 type="button"
@@ -96,10 +101,14 @@ export default function BannerCarousel({ slides }) {
                 onClick={() => setIndex(i)}
                 aria-label={m.ui_banner_go_to({ index: i + 1 })}
                 aria-current={i === current}
-                className={`h-1.5 rounded-full cursor-pointer transition-all ${
-                  i === current ? 'w-5 bg-white' : 'w-1.5 bg-white/50 hover:bg-white/70'
-                }`}
-              />
+                className="group flex h-6 min-w-6 cursor-pointer items-center justify-center"
+              >
+                <span
+                  className={`h-1.5 rounded-full transition-all ${
+                    i === current ? 'w-5 bg-white' : 'w-1.5 bg-white/50 group-hover:bg-white/70'
+                  }`}
+                />
+              </button>
             ))}
           </div>
         </>

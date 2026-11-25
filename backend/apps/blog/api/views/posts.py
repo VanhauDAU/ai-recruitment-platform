@@ -1,7 +1,7 @@
 from drf_spectacular.utils import OpenApiTypes, extend_schema, inline_serializer
 from rest_framework import generics, permissions, serializers, status
 from rest_framework.exceptions import ValidationError
-from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -16,7 +16,12 @@ from ...selectors import (
     published_posts_queryset,
     related_published_posts,
 )
-from ...services import record_post_view, upload_blog_media, upload_blog_thumbnail
+from ...services import (
+    import_blog_thumbnail,
+    record_post_view,
+    upload_blog_media,
+    upload_blog_thumbnail,
+)
 from ..serializers import (
     BlogMediaAssetSerializer,
     PinnedPostSerializer,
@@ -134,7 +139,7 @@ class BlogImageUploadView(generics.ListAPIView):
 
 
 @extend_schema(
-    summary='Tải ảnh đại diện (thumbnail) cho bài viết',
+    summary='Tải ảnh đại diện (thumbnail) cho bài viết từ tệp hoặc đường dẫn',
     request=OpenApiTypes.OBJECT,
     responses={
         201: inline_serializer(
@@ -150,13 +155,17 @@ class BlogImageUploadView(generics.ListAPIView):
 )
 class BlogThumbnailUploadView(APIView):
     permission_classes = [AdminPortalPermission]
-    parser_classes = [MultiPartParser, FormParser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def post(self, request):
         upload = request.FILES.get('file') or request.FILES.get('image')
-        if upload is None:
-            raise ValidationError({'detail': 'Thiếu file ảnh (field "file").'})
-        saved = upload_blog_thumbnail(upload, request=request)
+        url = str(request.data.get('url') or '').strip()
+        if upload is not None:
+            saved = upload_blog_thumbnail(upload, request=request)
+        elif url:
+            saved = import_blog_thumbnail(url, request=request)
+        else:
+            raise ValidationError({'detail': 'Thiếu file ảnh (field "file") hoặc "url".'})
         return Response(
             {'path': saved['path'], 'url': saved['url'], 'name': saved['name']},
             status=status.HTTP_201_CREATED,

@@ -453,6 +453,36 @@ class BlogAdminApiTests(APITestCase):
         self.assertEqual(listing.data['count'], 1)
         self.assertEqual(listing.data['results'][0]['public_id'], uploaded.data['public_id'])
 
+    @patch('apps.blog.services.media.save_image_upload')
+    @patch('apps.blog.services.media.fetch_public_file', return_value=b'image-bytes')
+    def test_linked_thumbnail_is_stored_in_media(self, fetch, save_image):
+        save_image.return_value = {
+            'path': 'blog/thumbnails/a.webp',
+            'url': '/media/blog/thumbnails/a.webp',
+            'name': 'thumbnail',
+        }
+        self.client.force_authenticate(self.editor)
+
+        response = self.client.post(
+            reverse('blog-thumbnail-upload'),
+            {'url': 'https://images.example.com/a.webp'},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertEqual(response.data['path'], 'blog/thumbnails/a.webp')
+        self.assertEqual(fetch.call_args.args[0], 'https://images.example.com/a.webp')
+
+    def test_linked_thumbnail_to_internal_host_is_rejected(self):
+        self.client.force_authenticate(self.editor)
+
+        response = self.client.post(
+            reverse('blog-thumbnail-upload'), {'url': 'http://127.0.0.1/a.png'}, format='json'
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('url', response.data)
+
     def test_image_layout_attributes_are_sanitized_with_an_allowlist(self):
         safe = sanitize_blog_html(
             '<img src="/media/a.webp" alt="Sales" data-width="50%" data-align="right">'

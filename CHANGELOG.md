@@ -8,10 +8,34 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Added — Ảnh đại diện bài cẩm nang lấy từ đường dẫn
+
+- Trình soạn bài có ô "Dán link ảnh": backend tải ảnh về media (mã hóa lại như ảnh
+  tải từ máy) rồi hiển thị; bài chỉ lưu storage key, không trỏ sang máy chủ ngoài.
+- `common/http/safe_fetch.py` chặn URL trỏ vào mạng nội bộ (SSRF), kể cả qua chuyển
+  hướng, và dừng khi vượt giới hạn dung lượng ảnh.
+
+#### Fixed — Banner cookie hiện lại mỗi lần tải trang dù đã chọn
+
+- `GET /api/public/privacy/consent/` tốn lượt của scope `consent` (20/giờ): tải trang
+  quá 20 lần/giờ (hoặc chung IP) thì đọc lựa chọn trả 429, frontend coi như chưa đồng ý.
+  Scope nay chỉ tính lượt ghi (`WriteScopedRateThrottle`, khóa theo IP thật); lượt đọc
+  chịu trần chung `/api/public`.
+
 #### Fixed — Thiếu bản dịch tiếng Anh cho thông báo xác minh SĐT nhà tuyển dụng
 
 - Bổ sung 3 bản dịch en trong `apps/employers` của `verify_employer_phone` (#402);
   `test_locale_catalogs[employers]` xanh trở lại.
+
+#### Changed — Trang chủ tải nhanh hơn trên điện thoại, sửa một số lỗi hỗ trợ tiếp cận
+
+- Ảnh nền trang trí hai bên khối tìm kiếm (hơn 400 KB, đang là phần tử LCP) chỉ tải
+  từ màn hình 769px; linh vật hero chỉ dựng trên desktop.
+- Carousel banner chỉ dựng slide đang xem, slide kế tiếp và slide đã xem.
+- Sentry chỉ re-export `init` (bỏ Replay, Feedback khỏi chunk) và nạp sau `load`.
+- Ảnh loader linh vật còn 40 khung hình, 160px (266 KB → 125 KB).
+- Thêm nhãn cho nút mũi tên và ô chọn loại biểu đồ, tăng tương phản một số chữ xám,
+  nới vùng bấm chấm chuyển banner lên 24px.
 
 #### Fixed — Giao diện mobile: ô chat Connect trên iPhone, banner cookie, ô Địa điểm
 

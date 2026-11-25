@@ -8,11 +8,12 @@ import {
   TagsOutlined,
   UploadOutlined,
 } from '@ant-design/icons'
+import { useState } from 'react'
 import { Button, Card, Divider, Form, Image, Input, Progress, Select, Space, Tag, Timeline, Upload } from 'antd'
 import { blogStateColor } from '@/entities/content/blog'
 import { EDITOR_COMPLETION_ITEMS } from '../model/editor-completion'
 import BlogTagPicker from './BlogTagPicker'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { getIntlLocale, m } from '@/shared/config/i18n'
 
 function CompletionList({ checks }) {
   return (
@@ -39,6 +40,36 @@ function SeoPreview({ values, slug }) {
   )
 }
 
+function ThumbnailLinkInput({ disabled, loading, onImport }) {
+  const [url, setUrl] = useState('')
+  const submit = async () => {
+    const link = url.trim()
+    if (!link || loading) return
+    try {
+      await onImport(link)
+      setUrl('')
+    } catch {
+      // Lỗi đã được báo ở editor; giữ lại đường dẫn để sửa.
+    }
+  }
+  return (
+    <Input.Search
+      className="mt-3"
+      size="large"
+      type="url"
+      aria-label={m.admin_blog_thumbnail_link_label()}
+      placeholder={m.admin_blog_thumbnail_link_placeholder()}
+      enterButton={m.admin_blog_thumbnail_link_submit()}
+      disabled={disabled}
+      loading={loading}
+      value={url}
+      onChange={(event) => setUrl(event.target.value)}
+      onPressEnter={(event) => event.preventDefault()}
+      onSearch={submit}
+    />
+  )
+}
+
 export default function BlogEditorSidebar({
   allowedActions,
   completion,
@@ -46,12 +77,14 @@ export default function BlogEditorSidebar({
   jobs,
   jobsLoading,
   onAction,
+  onImportThumbnail,
   onUploadThumbnail,
   post,
   slug,
   tags,
   tagsError,
   tagsLoading,
+  thumbnailImporting = false,
   values,
 }) {
   return (
@@ -95,6 +128,7 @@ export default function BlogEditorSidebar({
         <Upload disabled={disabled} className="block w-full" accept="image/jpeg,image/png,image/webp" showUploadList={false} beforeUpload={onUploadThumbnail}>
           <Button block disabled={disabled} className="mt-3 min-h-11" icon={<UploadOutlined />}>{values.thumbnail_url ? 'Thay ảnh đại diện' : 'Tải ảnh đại diện'}</Button>
         </Upload>
+        <ThumbnailLinkInput disabled={disabled} loading={thumbnailImporting} onImport={onImportThumbnail} />
       </Card>
 
       <Card className="border-slate-200 shadow-sm" title={<span><SearchOutlined className="mr-2 text-[var(--brand-primary)]" />Tối ưu tìm kiếm</span>}>
