@@ -39,6 +39,32 @@ export function clearConsentMirror() {
   localStorage.removeItem(CONSENT_STORAGE_KEY)
 }
 
+// Kho tùy chọn trên trình duyệt theo nhóm (khớp trang /chinh-sach-cookie).
+// Nhóm nào chưa đồng ý thì xóa ngay khi biết lựa chọn, kể cả khi màn hình sở
+// hữu khóa chưa được mở lại.
+const OPTIONAL_STORAGE_KEYS = {
+  preferences: [
+    'color-scheme',
+    'search_history',
+    'saved_job_filter',
+    'procv_job_comparison_v1',
+    'procv_employer_cv_ordering',
+    'procv_admin_sidebar_collapsed',
+    'procv_admin_nav_open',
+  ],
+  analytics: ['procv_campaign_ref_v1'],
+}
+
+export function purgeWithdrawnStorage(consent) {
+  try {
+    Object.entries(OPTIONAL_STORAGE_KEYS).forEach(([group, keys]) => {
+      if (consent?.[group] !== true) keys.forEach((key) => localStorage.removeItem(key))
+    })
+  } catch {
+    // Trình duyệt chặn localStorage thì cũng không có gì để xóa.
+  }
+}
+
 export function hasPreferenceConsent() {
   return readConsentMirror()?.preferences === true
 }

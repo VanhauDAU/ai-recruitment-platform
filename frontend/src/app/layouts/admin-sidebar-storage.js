@@ -1,3 +1,5 @@
+import { hasPreferenceConsent } from '@/entities/system/consent'
+
 // Sidebar layout choices are per-viewer conveniences: blocked or empty storage
 // only means the sidebar starts from its defaults.
 export const SIDEBAR_COLLAPSED_KEY = 'procv_admin_sidebar_collapsed'
@@ -13,6 +15,7 @@ export function readSidebarPreference(key, fallback) {
 }
 
 export function saveSidebarPreference(key, value) {
+  if (!hasPreferenceConsent()) return
   try {
     window.localStorage.setItem(key, JSON.stringify(value))
   } catch {

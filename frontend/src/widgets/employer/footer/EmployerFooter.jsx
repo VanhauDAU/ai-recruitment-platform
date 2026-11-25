@@ -9,6 +9,7 @@ import {
 } from '@ant-design/icons'
 import { useMemo } from 'react'
 import { Link } from 'react-router'
+import { CookieSettingsButton } from '@/features/common/privacy/cookie-consent'
 import { BrandLogo, DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/system/site-settings'
 import { employerAppPath, employerMarketingPath, MAIN_PORTAL_URL } from '@/shared/config/portals'
 import { m } from '@/shared/config/i18n'
@@ -135,7 +136,11 @@ export default function EmployerFooter() {
         <div className="mx-auto max-w-7xl px-4 py-5 text-xs leading-5 text-slate-500 sm:px-6 lg:px-8">
           {companyName && <p className="font-semibold text-slate-700">{companyName}</p>}
           {businessLicense && <p className="mt-1 whitespace-pre-line">{businessLicense}</p>}
-          <p className="mt-2">{copyright}</p>
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+            <p>{copyright}</p>
+            <a href={`${MAIN_PORTAL_URL}chinh-sach-cookie`} className="font-semibold text-slate-600 hover:text-[var(--brand-primary)]">{m.account_cookie_policy()}</a>
+            <CookieSettingsButton />
+          </div>
         </div>
       </div>
     </footer>

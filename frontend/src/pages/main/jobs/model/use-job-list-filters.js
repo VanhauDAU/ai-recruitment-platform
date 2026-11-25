@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { saveHistory } from '@/features/main/job/search-jobs'
 import { SALARY_RANGES } from '@/entities/job/job'
+import { hasPreferenceConsent } from '@/entities/system/consent'
 import {
   FILTER_KEYS,
   SALARY_UNIT,
@@ -131,8 +132,9 @@ export default function useJobListFilters(provinces) {
     setSalaryTo(null)
   }
 
+  // Bộ lọc đã lưu thuộc nhóm cookie Sở thích: chưa đồng ý thì không ghi.
   function persistFilter() {
-    localStorage.setItem(SAVED_FILTER_KEY, searchParams.toString())
+    if (hasPreferenceConsent()) localStorage.setItem(SAVED_FILTER_KEY, searchParams.toString())
   }
 
   function handlePageChange(nextPage) {

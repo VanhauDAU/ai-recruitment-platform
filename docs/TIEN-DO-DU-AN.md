@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Rà soát tuân thủ cookie consent](#rà-soát-tuân-thủ-cookie-consent-2026-11-26) | 🟨 Nhánh `fix/cookie-consent-compliance`, chờ PR |
 | [Thiết kế lại trang Tìm CV của NTD](#thiết-kế-lại-trang-tìm-cv-của-ntd-2026-11-26) | 🟨 Nhánh `feat/candidate-search-redesign`, chờ gộp PR |
 | [Hạn phiên đăng nhập riêng theo cổng (ADR-0033)](#hạn-phiên-đăng-nhập-riêng-theo-cổng-adr-0033-2026-11-26) | 🟨 Nhánh `feat/per-portal-session-policy`, chờ PR |
 | [Cổng quản trị cập nhật hàng chờ realtime](#cổng-quản-trị-cập-nhật-hàng-chờ-realtime-2026-11-26) | 🟨 Nhánh `feat/admin-realtime`, chờ gộp PR |
@@ -77,6 +78,32 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
 
+
+## Rà soát tuân thủ cookie consent (2026-11-26)
+
+Kiểm trên trình duyệt: khách mới thấy banner, không có request tracking hay bên
+thứ ba trước khi chọn; "Chấp nhận tất cả" mới gửi impression; backend chặn
+view/impression/announcement event khi thiếu Analytics. Lỗ đã vá:
+
+- Rút đồng ý không xóa `search_history` (chỉ xóa khi mở lại ô tìm kiếm):
+  `ConsentProvider` nay xóa mọi khóa Tùy chọn/Analytics của nhóm chưa đồng ý
+  ngay khi biết lựa chọn (`purgeWithdrawnStorage`).
+- API consent lỗi vẫn để mirror cũ bật `hasPreferenceConsent`: nay xóa mirror.
+- Mã kênh chiến dịch được lưu 30 ngày theo mirror cũ khi consent còn `loading`:
+  nay chờ máy chủ xác nhận.
+- `saved_job_filter`, sắp xếp hồ sơ NTD, thanh bên admin ghi localStorage không
+  cần đồng ý: nay thuộc nhóm Tùy chọn.
+- Bản đồ Google Maps ở trang Liên hệ NTD tải ngay (cookie Google): nay nhấp để tải;
+  link rút gọn không nhúng được thì mở tab mới.
+- Trang `/chinh-sach-cookie` và tài liệu inventory liệt kê đủ khóa thực tế,
+  reCAPTCHA, nhóm Quảng cáo chưa dùng; trang chuyển sang `m.key()` (vi/en).
+- Cổng NTD không có chỗ mở lại Cài đặt cookie: footer NTD thêm link chính sách
+  và nút "Cài đặt cookie".
+- Thanh cookie gọn lại: bỏ tiêu đề, một câu mô tả, nút nhỏ; mobile ba nút một
+  hàng (~93px thay vì tiêu đề + ba nút xếp dọc).
+
+Còn mở: "Lưu bộ lọc" ghi `saved_job_filter` nhưng không nơi nào đọc lại; đánh giá
+chất lượng tin chỉ lưu localStorage, không gửi về máy chủ.
 
 ## Thiết kế lại trang Tìm CV của NTD (2026-11-26)
 

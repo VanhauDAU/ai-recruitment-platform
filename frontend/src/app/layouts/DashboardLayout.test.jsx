@@ -65,6 +65,10 @@ describe('DashboardLayout admin access', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     window.localStorage.clear()
+    // Ghi nhớ thanh bên thuộc nhóm cookie Tùy chọn.
+    window.localStorage.setItem('procv_consent_v1', JSON.stringify({
+      necessary: true, preferences: true, analytics: false, marketing: false,
+    }))
     getAdminAccountSummary.mockResolvedValue({
       totals: { restricted: 4 },
       queues: { pending_admin_invitations: 5 },
