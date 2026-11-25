@@ -19,6 +19,7 @@ from .blocks import (
 from .candidate_search import (
     candidate_detail,
     invite_candidate,
+    respond_to_search_invitation,
     search_candidates,
 )
 from .flash_badge import refresh_flash_badges
@@ -68,6 +69,7 @@ from .talent_pool import (
 __all__ = [
     'candidate_detail',
     'invite_candidate',
+    'respond_to_search_invitation',
     'search_candidates',
     'application_rules',
     'candidate_reminder_available_at',

@@ -25,6 +25,7 @@ class CandidateNotification(models.Model):
         APPLICATION_REJECTED = 'application_rejected', 'Chưa phù hợp'
         TALENT_POOL_SAVED = 'talent_pool_saved', 'Được lưu vào kho ứng viên tiềm năng'
         JOB_INVITATION = 'job_invitation', 'Lời mời ứng tuyển'
+        CONNECTION_INVITATION = 'connection_invitation', 'Lời mời kết nối'
 
     class CancelReason(models.TextChoices):
         SUPERSEDED = 'superseded', 'Bị thay bằng thông báo mới hơn'

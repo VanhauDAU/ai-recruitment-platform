@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Lời mời kết nối của NTD cho ứng viên](#lời-mời-kết-nối-của-ntd-cho-ứng-viên-2026-11-25) | 🟨 PR #356 (nhánh `feat/employer-connections`), chờ gộp; nhắn tin chưa làm |
 | [Thứ tự và nhãn tin tuyển dụng công bằng (ADR-0030)](#thứ-tự-và-nhãn-tin-tuyển-dụng-công-bằng-adr-0030-2026-11-25) | 🟨 Nhánh `feat/fair-job-listing`, chờ PR |
 | [Trang Danh mục dữ liệu cho admin](#trang-danh-mục-dữ-liệu-cho-admin-2026-11-25) | 🟨 Cả 3 GĐ + dọn dẹp xong trên nhánh `feat/admin-catalog`, chờ PR |
 | [Chuẩn bị deploy: GĐ5 pháp lý và dữ liệu cá nhân](#chuẩn-bị-deploy-gđ5-pháp-lý-và-dữ-liệu-cá-nhân-2026-11-25) | ✅ Đã gộp dev (#348, 25/11); kiểm trên VPS ở GĐ6 rehearsal. |
@@ -62,6 +63,28 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Việc còn mở](#việc-còn-mở) | |
 
 
+## Lời mời kết nối của NTD cho ứng viên (2026-11-25)
+
+Đổi bước cuối của Tìm CV từ "mời ứng tuyển" thành **lời mời kết nối** gắn với một tin, và
+thêm trang cho ứng viên trả lời.
+
+- Luồng: NTD Tìm CV → **Mời kết nối** → ứng viên nhận thông báo `connection_invitation`
+  (web/email theo công tắc "lời mời của NTD") dẫn tới `/tai-khoan/nha-tuyen-dung-muon-ket-noi`
+  (menu Quản lý CV → "Nhà tuyển dụng muốn kết nối với bạn") → **Đồng ý** hoặc **Từ chối**,
+  mỗi lời mời trả lời một lần.
+- Đồng ý: NTD nhận thông báo `search_invitation_accepted` (chỉ mã ẩn danh UV-xxxxxx), dòng ứng
+  viên ở Tìm CV hiện "Đã kết nối", nút **Nhắn tin** hiện ở cả hai phía nhưng đang tắt (nhắn tin
+  realtime NTD–ứng viên làm sau). Chưa lộ họ tên, liên hệ hay tệp CV.
+- Từ chối (có hộp xác nhận): NTD nhận `search_invitation_declined`, dòng hiện "Đã từ chối",
+  không mời lại được cho tin đó (ràng buộc duy nhất ứng viên–tin có sẵn).
+- Backend: `CandidateSearchInvitation` thêm `public_id`, `status`, `responded_at`
+  (migration `applications/0007` điền `public_id` cho lời mời cũ); API
+  `GET /api/candidate/connection-invitations/`,
+  `POST /api/candidate/connection-invitations/<public_id>/respond/` `{accept}`; kết quả Tìm CV
+  thêm `invitation_status`.
+- Lời mời từ kho ứng viên tiềm năng vẫn là "mời ứng tuyển" như cũ, không vào trang này.
+- Bỏ ô "thời gian muốn NTD liên hệ" và câu hứa "đề xuất chất lượng hơn/uy tín CV" trong ảnh mẫu
+  vì chưa có chức năng tương ứng.
 ## Thứ tự và nhãn tin tuyển dụng công bằng (ADR-0030, 2026-11-25)
 
 Không còn gói dịch vụ (ADR-0015) nhưng tin vẫn mang hạng TOP/Nổi bật, HOT, GẤP do admin
