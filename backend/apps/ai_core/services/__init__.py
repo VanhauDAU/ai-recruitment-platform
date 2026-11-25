@@ -1,6 +1,6 @@
 """Public service API for all AI use cases."""
 
-from .config import AiRuntimeConfig
+from .config import AiRuntimeConfig, provider_name_for
 from .contracts import (
     AiGenerationError,
     GenerationAttempt,
@@ -23,6 +23,7 @@ __all__ = [
     'StructuredOutputProvider',
     'TokenUsage',
     'generate_structured',
+    'provider_name_for',
     'record_ai_quota_rejection',
     'structure_cv_text',
 ]

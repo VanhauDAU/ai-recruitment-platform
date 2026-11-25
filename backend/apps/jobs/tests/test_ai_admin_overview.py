@@ -76,6 +76,24 @@ class AdminAiOverviewTests(TestCase):
         self.assertEqual(response.data['policy']['company_allowlist_count'], 1)
         self.assertNotIn('cmp-sensitive', str(response.data))
 
+    @override_settings(
+        AI_PROVIDER_BACKEND='anthropic',
+        ANTHROPIC_API_KEY='claude-test-secret',
+        GEMINI_API_KEY='',
+    )
+    def test_runtime_reports_the_configured_claude_provider(self):
+        client = APIClient()
+        client.force_authenticate(self.admin)
+
+        response = client.get(reverse('admin-ai-overview'))
+
+        runtime = response.data['runtime']
+        self.assertEqual(runtime['provider'], 'anthropic')
+        self.assertEqual(runtime['provider_backend'], 'anthropic')
+        self.assertTrue(runtime['credential_configured'])
+        self.assertEqual(response.data['policy']['provider'], 'anthropic')
+        self.assertNotIn('claude-test-secret', str(response.data))
+
     def test_non_admin_cannot_read_operational_metrics(self):
         employer = User.objects.create_user(
             email='ai-overview-employer@example.com',
