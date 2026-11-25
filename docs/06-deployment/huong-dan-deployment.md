@@ -32,7 +32,8 @@ quản trị `/admin`. Không tách frontend sang Vercel vì Django dựng SEO s
 | `backend/Dockerfile` | Target `runtime` (gunicorn + Chromium) và `ml` (torch) — dùng chung với dev |
 | `scripts/deploy/compose.sh` | `docker compose` đã nạp `backend/.env` + `frontend/.env`; mọi lệnh prod đi qua đây |
 | `scripts/deploy/deploy.sh` | Lấy code, build, migrate, khởi động lại, kiểm tra sức khỏe |
-| `scripts/deploy/backup_db.sh`, `restore_db.sh` | Sao lưu/khôi phục PostgreSQL (local + R2) |
+| `scripts/deploy/backup_db.sh`, `restore_db.sh` | Sao lưu (mã hóa `age`, đẩy R2)/khôi phục PostgreSQL |
+| `scripts/deploy/backup_files.sh`, `restore_files.sh`, `backup_secrets.sh` | Sao lưu bucket file riêng tư và gói bí mật — [sao-luu-va-khoi-phuc.md](sao-luu-va-khoi-phuc.md) |
 | `scripts/deploy/bootstrap_vps.sh` | Khởi tạo VPS mới (Docker, user, firewall, swap) |
 | `scripts/deploy/sync_ml_models.sh` | Đẩy mô hình đối sánh từ máy dev lên VPS |
 
@@ -95,8 +96,9 @@ chạy**: `UPLOAD_QUARANTINE_ENABLED=False`.
    riêng chỉ có quyền trên bucket đó — production từ chối khởi động nếu dùng chung
    bucket hoặc credential ([cloudflare-r2-media.md](cloudflare-r2-media.md)).
    Bucket quarantine bắt buộc có dù chưa bật ClamAV.
-6. **Backup**: thêm bucket `procv-backups` + token *Object Read & Write* chỉ cho
-   bucket này (dùng ở bước 7).
+6. **Backup**: thêm bucket `procv-backups` (DB, gói bí mật) và `procv-backups-files`
+   (bản sao file riêng tư), bật Bucket Lock + lifecycle, mỗi bucket một token *Object
+   Read & Write* riêng — chi tiết ở [sao-luu-va-khoi-phuc.md](sao-luu-va-khoi-phuc.md).
 7. Đăng ký domain `procv.site` ở reCAPTCHA admin; thêm callback OAuth:
    - Google/Facebook/LinkedIn đăng nhập: `https://procv.site/oauth/callback` và
      `https://procv.site/tuyendung/app/oauth/callback`;
@@ -279,20 +281,18 @@ scripts/deploy/compose.sh exec ml-worker python manage.py matching_backfill --in
 
 ## 7. Sao lưu
 
-Cấu hình rclone một lần (trên VPS, user `deploy`), dùng token của bucket
-`procv-backups`:
+Toàn bộ sao lưu, khôi phục và diễn tập nằm ở runbook riêng
+[sao-luu-va-khoi-phuc.md](sao-luu-va-khoi-phuc.md): tạo khóa `age` (giữ trong password
+manager, không đặt trên VPS), bucket `procv-backups` + `procv-backups-files` có Bucket
+Lock, hai remote rclone, healthchecks.io và cron:
 
-```bash
-rclone config create r2-backup s3 provider=Cloudflare access_key_id=<id> secret_access_key=<secret> endpoint=https://<account-id>.r2.cloudflarestorage.com
+```cron
+0 3 * * * /srv/procv/scripts/deploy/backup_db.sh >/dev/null 2>>/srv/procv/backups/cron-errors.log
+30 3 * * * /srv/procv/scripts/deploy/backup_files.sh >/dev/null 2>>/srv/procv/backups/cron-errors.log
 ```
 
-Cài cron chạy 03:00 hằng ngày (giữ 7 bản trên VPS, 30 ngày trên R2):
-
-```bash
-(crontab -l 2>/dev/null; echo '0 3 * * * RCLONE_REMOTE=r2-backup:procv-backups /srv/procv/scripts/deploy/backup_db.sh >> /srv/procv/backups/backup.log 2>&1') | crontab -
-```
-
-Thử khôi phục định kỳ trên máy dev để chắc bản sao lưu dùng được.
+Sau mỗi lần sửa `backend/.env`, `frontend/.env` hoặc `deploy/certs`: cập nhật password
+manager và chạy `scripts/deploy/backup_secrets.sh`.
 
 ## 8. Cập nhật và rollback
 
@@ -300,12 +300,19 @@ Thử khôi phục định kỳ trên máy dev để chắc bản sao lưu dùng
 scripts/deploy/deploy.sh
 ```
 
-- Deploy một commit/tag cụ thể (rollback): `scripts/deploy/deploy.sh <commit>`.
-  `deploy/history.log` ghi các commit đã deploy.
+- `deploy.sh` build trong worktree tạm (code đang chạy chưa đổi), gắn tag image
+  `procv-*:<12 ký tự sha>` + `:prod`, giữ 3 tag gần nhất. Chỉ khi build xong mới
+  checkout commit mới; build lỗi thì stack cũ nguyên vẹn. Có khóa `flock`: hai lần
+  deploy không chạy chồng nhau. `--dry-run` chỉ in kế hoạch.
+- Image mới có migration chưa áp (`migrate --check`) thì tự chạy
+  `backup_db.sh --label pre-deploy-<sha>` trước (`--no-backup` để bỏ qua).
+- Rollback **không build lại**: `scripts/deploy/deploy.sh --skip-build <sha>` (sha lấy
+  từ `deploy/history.log`; mỗi dòng ghi `ok` hoặc `FAIL:<bước>`). Commit cũ hơn 3 bản:
+  `scripts/deploy/deploy.sh <commit>` (build lại).
 - Migration lỗi: `up` dừng trước khi tạo lại backend/worker, bản cũ vẫn chạy.
-- Rollback code **không** lùi migration. Trước khi deploy migration phá dữ liệu,
-  chạy `scripts/deploy/backup_db.sh`; cần thì `restore_db.sh` bản đó rồi deploy
-  commit cũ.
+- Rollback code **không** lùi migration: khôi phục bản `pre-deploy-<sha>` bằng
+  `restore_db.sh` — xem kịch bản "Migration hỏng" trong
+  [sao-luu-va-khoi-phuc.md](sao-luu-va-khoi-phuc.md#migration-hỏng).
 - Sửa `backend/.env`: `scripts/deploy/compose.sh up -d` (tạo lại container).
   Sửa `frontend/.env`: `scripts/deploy/deploy.sh` (phải build lại `web`).
 
