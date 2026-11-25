@@ -5,8 +5,8 @@ from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import IsEmployer
 
-from ...models import Company, Industry
-from ...selectors import industries_in_use
+from ...models import Company
+from ...selectors import active_industries, industries_in_use
 from ..serializers import IndustrySerializer
 
 
@@ -22,14 +22,16 @@ class IndustryListView(generics.ListAPIView):
         return industries_in_use()
 
 
-@extend_schema_view(get=extend_schema(summary='Toàn bộ lĩnh vực công ty'))
+@extend_schema_view(get=extend_schema(summary='Lĩnh vực đang mở để chọn'))
 class AllIndustryListView(generics.ListAPIView):
-    """Toàn bộ lĩnh vực — cho dropdown chọn lĩnh vực khi tạo hồ sơ công ty."""
+    """Lĩnh vực đang mở (admin chưa ẩn) cho dropdown chọn lĩnh vực của hồ sơ công ty."""
 
     serializer_class = IndustrySerializer
     permission_classes = [permissions.AllowAny]
     pagination_class = None
-    queryset = Industry.objects.all()
+
+    def get_queryset(self):
+        return active_industries()
 
 
 class CompanyCatalogView(APIView):

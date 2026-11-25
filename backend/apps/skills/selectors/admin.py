@@ -4,30 +4,21 @@ from collections import defaultdict
 from functools import reduce
 from operator import add
 
-from django.db.models import Count, IntegerField, OuterRef, Q, Subquery, Value
-from django.db.models.functions import Coalesce
+from django.db.models import Count, Q
 
 from common.api.params import parse_bool, parse_int
+from common.db.aggregates import related_count
 
 from ..domain import duplicate_key
 from ..models import USAGE_RELATIONS, Skill, SkillGroup, usage_relation
 
 
-def _usage_count(related_name):
-    model, field = usage_relation(related_name)
-    counts = (
-        model.objects.filter(**{field: OuterRef('pk')})
-        .order_by()
-        .values(field)
-        .annotate(total=Count('pk'))
-        .values('total')
-    )
-    return Coalesce(Subquery(counts[:1], output_field=IntegerField()), Value(0))
-
-
 def with_usage(queryset):
     """Thêm `usage_<khóa>` và `usage_total`; mỗi quan hệ một subquery nên số query không đổi."""
-    counts = {f'usage_{key}': _usage_count(name) for key, name in USAGE_RELATIONS.items()}
+    counts = {
+        f'usage_{key}': related_count(*usage_relation(name))
+        for key, name in USAGE_RELATIONS.items()
+    }
     return queryset.annotate(**counts).annotate(usage_total=reduce(add, counts.values()))
 
 

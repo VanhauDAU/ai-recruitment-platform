@@ -14,6 +14,15 @@ from .alerts import (
     JobAlertReadSerializer,
     JobAlertWriteSerializer,
 )
+from .catalog_admin import (
+    AdminBenefitSerializer,
+    AdminJobCategorySerializer,
+    AdminLanguageSerializer,
+    BenefitReorderSerializer,
+    CategoryIconSerializer,
+    CategoryIconUploadSerializer,
+    JobCategoryWriteSerializer,
+)
 from .catalogs import BenefitSerializer, LanguageSerializer
 from .employer_jobs import (
     EmployerJobDetailSerializer,
@@ -77,6 +86,13 @@ from .supporting import (
 )
 
 __all__ = [
+    'AdminBenefitSerializer',
+    'AdminJobCategorySerializer',
+    'AdminLanguageSerializer',
+    'BenefitReorderSerializer',
+    'CategoryIconSerializer',
+    'CategoryIconUploadSerializer',
+    'JobCategoryWriteSerializer',
     'BenefitSerializer',
     'AdminJobDecisionSerializer',
     'AdminJobDetailSerializer',

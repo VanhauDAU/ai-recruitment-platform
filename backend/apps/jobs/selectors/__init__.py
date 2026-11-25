@@ -7,6 +7,11 @@ from .ai_admin import (
 )
 from .ai_generation import employer_job_ai_generation_queryset, job_ai_admin_overview
 from .alerts import candidate_job_alerts
+from .catalog_admin import (
+    admin_benefits_queryset,
+    admin_job_categories_queryset,
+    admin_languages_queryset,
+)
 from .catalogs import (
     active_benefits_queryset,
     active_job_categories_queryset,
@@ -54,6 +59,9 @@ from .verification_badge import (
 )
 
 __all__ = [
+    'admin_benefits_queryset',
+    'admin_job_categories_queryset',
+    'admin_languages_queryset',
     'ADMIN_JOB_REPORT_ORDERING_FIELDS',
     'active_benefits_queryset',
     'active_job_categories_queryset',

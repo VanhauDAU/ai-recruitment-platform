@@ -12,7 +12,7 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { m } from '@/shared/config/i18n'
 import useDebouncedValue from '@/shared/hooks/use-debounced-value'
 import { message } from '@/shared/lib/toast'
-import { usageText } from '../model/skill-catalog'
+import { usageText } from '../model/catalog'
 
 /** Gộp `source` vào kỹ năng khác; xem trước số dòng sẽ chuyển rồi mới xác nhận. */
 export default function SkillMergeModal({ source, onClose, onMerged }) {

@@ -23,16 +23,15 @@ import {
   emptyText,
   formatCount,
   groupOptions,
+  notifyWithUndo,
   skillListParams,
   usageText,
-} from '../model/skill-catalog'
+} from '../model/catalog'
 import SkillDrawer from './SkillDrawer'
 import SkillGroupsModal from './SkillGroupsModal'
 import SkillMergeModal from './SkillMergeModal'
 import SkillToolbar from './SkillToolbar'
-import './skill-catalog.css'
-
-const UNDO_DURATION = 15000
+import './catalog.css'
 
 function isTyping(target) {
   return target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)
@@ -85,10 +84,6 @@ export default function SkillCatalog() {
     refresh()
     message.error(getApiErrorMessage(error, m.admin_catalog_action_failed()))
   }
-  const undoToast = (text, undo) => message(text, {
-    duration: UNDO_DURATION,
-    action: { label: m.admin_catalog_undo(), onClick: undo },
-  })
 
   const update = useMutation({
     mutationFn: ({ skill, changes }) => updateAdminSkill(skill.id, changes),
@@ -112,15 +107,15 @@ export default function SkillCatalog() {
   }
   const toggleActive = (skill, active) => {
     update.mutate({ skill, changes: { is_active: active } })
-    undoToast(
-      active ? m.admin_catalog_skill_shown({ name: skill.name }) : m.admin_catalog_skill_hidden({ name: skill.name }),
+    notifyWithUndo(
+      active ? m.admin_catalog_item_shown({ name: skill.name }) : m.admin_catalog_item_hidden({ name: skill.name }),
       () => update.mutate({ skill, changes: { is_active: !active } }),
     )
   }
   const assignGroup = (skill, groupId) => {
     const group = groups.find((item) => item.id === groupId)
     update.mutate({ skill, changes: { group: groupId, group_name: group?.name } })
-    undoToast(
+    notifyWithUndo(
       m.admin_catalog_skill_grouped({ name: skill.name, group: group?.name ?? '' }),
       () => update.mutate({ skill, changes: { group: null, group_name: '' } }),
     )
@@ -129,7 +124,7 @@ export default function SkillCatalog() {
     const ids = selected
     bulk.mutate({ ids, changes })
     setSelected([])
-    if (undoChanges) undoToast(text, () => bulk.mutate({ ids, changes: undoChanges }))
+    if (undoChanges) notifyWithUndo(text, () => bulk.mutate({ ids, changes: undoChanges }))
     else message.success(text)
   }
 
@@ -149,7 +144,7 @@ export default function SkillCatalog() {
     <Switch
       size="small"
       checked={skill.is_active}
-      aria-label={m.admin_catalog_toggle_skill({ name: skill.name })}
+      aria-label={m.admin_catalog_toggle_item({ name: skill.name })}
       onClick={(checked, event) => {
         stop(event)
         toggleActive(skill, checked)

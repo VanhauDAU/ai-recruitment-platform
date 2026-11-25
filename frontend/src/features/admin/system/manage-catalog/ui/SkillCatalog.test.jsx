@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { Grid } from 'antd'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { skillListParams } from '../model/skill-catalog'
+import { skillListParams } from '../model/catalog'
 import SkillCatalog from './SkillCatalog'
 
 const api = vi.hoisted(() => ({
@@ -60,7 +60,7 @@ describe('SkillCatalog', () => {
 
   it('hides a skill at once and offers undo', async () => {
     renderCatalog()
-    fireEvent.click(await screen.findByRole('switch', { name: 'Hiện kỹ năng ReactJS' }))
+    fireEvent.click(await screen.findByRole('switch', { name: 'Hiện ReactJS' }))
     await waitFor(() => expect(api.updateAdminSkill).toHaveBeenCalledWith(1, { is_active: false }))
     const [text, options] = toast.mock.calls.at(-1)
     expect(text).toBe('Đã ẩn “ReactJS”')

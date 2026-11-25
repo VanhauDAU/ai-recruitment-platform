@@ -1,7 +1,7 @@
 import { ClusterOutlined, PlusOutlined, SearchOutlined, WarningOutlined } from '@ant-design/icons'
 import { Button, Input, Select } from 'antd'
 import { m } from '@/shared/config/i18n'
-import { CLEANUP_FILTERS, ORDERING_LABELS, SOURCE_LABELS, formatCount } from '../model/skill-catalog'
+import { CLEANUP_FILTERS, ORDERING_LABELS, SOURCE_LABELS, formatCount } from '../model/catalog'
 
 /** Dải "Cần dọn" và thanh bộ lọc; khi đã chọn dòng thì thanh chọn nhiều thế chỗ thanh bộ lọc. */
 export default function SkillToolbar({

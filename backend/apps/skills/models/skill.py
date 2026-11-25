@@ -1,22 +1,9 @@
 from django.db import models
-from django.utils.text import slugify
 from django.utils.translation import gettext_lazy
 
+from common.db.slugs import unique_slug
+
 from ..domain import normalize_skill_name
-
-
-def unique_slug(model, name, *, exclude_pk=None):
-    """Slug từ tên, thêm hậu tố khi trùng: "C", "C++", "C#" đều cho ra "c"."""
-    base = slugify(name)[:240] or 'muc'
-    taken = set(
-        model.objects.filter(slug__startswith=base)
-        .exclude(pk=exclude_pk)
-        .values_list('slug', flat=True)
-    )
-    slug, suffix = base, 2
-    while slug in taken:
-        slug, suffix = f'{base}-{suffix}', suffix + 1
-    return slug
 
 
 class SkillGroup(models.Model):

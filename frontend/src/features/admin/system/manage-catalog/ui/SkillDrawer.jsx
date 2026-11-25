@@ -8,7 +8,7 @@ import { m } from '@/shared/config/i18n'
 import { formatDateTime } from '@/shared/lib/date-time'
 import { message } from '@/shared/lib/toast'
 import useConfirmAction from '@/shared/ui/confirm-action/use-confirm-action'
-import { SOURCE_LABELS, apiFieldErrors, groupOptions, usageText } from '../model/skill-catalog'
+import { SOURCE_LABELS, apiFieldErrors, groupOptions, usageText } from '../model/catalog'
 
 const FIELDS = ['name', 'group', 'aliases', 'description', 'is_active']
 
@@ -42,7 +42,7 @@ export default function SkillDrawer({ skill, groups, nextSkill, canMerge, onClos
   const save = useMutation({
     mutationFn: ({ values }) => (editing ? updateAdminSkill(skill.id, values) : createAdminSkill(values)),
     onSuccess: (saved, { next }) => {
-      message.success(editing ? m.admin_catalog_skill_saved({ name: saved.name }) : m.admin_catalog_skill_created({ name: saved.name }))
+      message.success(editing ? m.admin_catalog_item_saved({ name: saved.name }) : m.admin_catalog_item_created({ name: saved.name }))
       onSaved(next)
     },
     onError: (error) => {

@@ -1,6 +1,7 @@
 from django.urls import include, path
 from rest_framework.routers import SimpleRouter
 
+from ..views.admin_catalog import AdminIndustryViewSet
 from ..views.admin_companies import AdminCompanyViewSet
 from ..views.admin_company_reports import AdminCompanyReportViewSet
 from ..views.admin_content_changes import AdminCompanyContentChangeViewSet
@@ -12,6 +13,7 @@ from ..views.admin_verification import (
 )
 
 router = SimpleRouter()
+router.register('industries', AdminIndustryViewSet, basename='admin-industry')
 router.register(
     'company-domain-claims',
     AdminCompanyDomainClaimViewSet,

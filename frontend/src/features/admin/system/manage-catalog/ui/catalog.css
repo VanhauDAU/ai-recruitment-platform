@@ -248,3 +248,73 @@
     flex: 1;
   }
 }
+
+.catalog-mark {
+  padding: 0;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--admin-warning, #b77900) 25%, transparent);
+  color: inherit;
+}
+
+.catalog-tree__name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.catalog-tree__name .skill-catalog__source {
+  display: block;
+}
+
+.catalog-tree__icon,
+.catalog-icon-field__preview {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.catalog-icon-field__preview {
+  width: 40px;
+  height: 40px;
+}
+
+.catalog-tree__actions,
+.catalog-icon-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.catalog-icon-field {
+  gap: 12px;
+}
+
+.catalog-lookup__add {
+  display: flex;
+  flex: 1 1 360px;
+  gap: 8px;
+}
+
+.catalog-lookup__code {
+  width: 110px;
+}
+
+.catalog-tree__type-filter {
+  width: 190px;
+}
+
+.skill-catalog__row.is-hidden .ant-typography {
+  color: var(--admin-text-muted, #64748b);
+}
+
+@media (max-width: 767px) {
+  .catalog-lookup__add {
+    flex-wrap: wrap;
+  }
+
+  .catalog-lookup__add > .ant-input:first-child {
+    flex: 1 1 100%;
+  }
+}

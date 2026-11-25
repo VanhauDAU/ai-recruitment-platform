@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy
 from common.db.public_id import generate_public_id
 from common.db.readable_code import new_unique_code
 from common.db.search import fold_accents
+from common.db.slugs import unique_slug
 
 from ..domain.company_code import COMPANY_CODE_LENGTH, COMPANY_CODE_REGEX, random_company_code
 
@@ -21,6 +22,8 @@ class Industry(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
+    # Lĩnh vực bị ẩn không còn hiện trong ô chọn; công ty đã chọn vẫn giữ.
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         verbose_name_plural = 'industries'
@@ -31,7 +34,7 @@ class Industry(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.name)
+            self.slug = unique_slug(Industry, self.name, exclude_pk=self.pk)
         super().save(*args, **kwargs)
 
 

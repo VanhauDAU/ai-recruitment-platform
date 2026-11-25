@@ -11,7 +11,12 @@ from .admin_verification import (
     admin_verification_cases_queryset,
     admin_verification_summary,
 )
-from .catalogs import industries_in_use, industry_labels
+from .catalogs import (
+    active_industries,
+    admin_industries_queryset,
+    industries_in_use,
+    industry_labels,
+)
 from .companies import (
     attach_active_public_job_counts,
     featured_public_companies,
@@ -108,6 +113,8 @@ from .recruitment_needs import (
 )
 
 __all__ = [
+    'active_industries',
+    'admin_industries_queryset',
     'admin_company_content_changes_queryset',
     'content_change_labels',
     'unreviewed_content_change_count',

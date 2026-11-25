@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { API_ROUTE, mockPublicApi } from './helpers'
+import { API_ROUTE, mockPublicApi, selectTab } from './helpers'
 
 const usage = (jobs, cvs = 0, candidates = 0) => ({ usage: { jobs, cvs, candidates }, usage_total: jobs + cvs + candidates })
 const SKILLS = [
@@ -14,7 +14,22 @@ const GROUPS = [
   { id: 7, name: 'Phẩm chất cá nhân', slug: 'pham-chat-ca-nhan', parent: null, is_active: true, skill_count: 0, is_system: true },
 ]
 
-async function routeCatalogApi(page, { onUpdate } = {}) {
+const category = (id, name, category_type, parent, extra = {}) => ({
+  id, public_id: `jobcat_${id}`, name, name_en: '', slug: `c-${id}`, description: '', category_type, parent,
+  status: 'active', logo_url: '', logo_preview: null, job_count: 0, child_count: 0, ...extra,
+})
+const CATEGORIES = [
+  category(1, 'Công nghệ thông tin', 'occupation_group', null, { child_count: 1 }),
+  category(2, 'Phát triển phần mềm', 'domain', 1, { child_count: 1, job_count: 3 }),
+  category(3, 'Lập trình viên Backend', 'specialization', 2, { name_en: 'Backend Developer', job_count: 7 }),
+  category(4, 'Kế toán - Kiểm toán', 'occupation_group', null),
+]
+const BENEFITS = [
+  { id: 1, name: 'Ăn trưa', category: 'allowance', is_active: true, sort_order: 0, job_count: 12, company_count: 4 },
+  { id: 2, name: 'Laptop', category: 'equipment', is_active: true, sort_order: 1, job_count: 5, company_count: 2 },
+]
+
+async function routeCatalogApi(page, { onUpdate, onCategoryCreate } = {}) {
   await mockPublicApi(page)
   await page.route(API_ROUTE, async (route) => {
     const request = route.request()
@@ -30,6 +45,13 @@ async function routeCatalogApi(page, { onUpdate } = {}) {
       return route.fulfill({ json: { total: 4, ungrouped: 2, duplicates: 2, employer: 1, hidden: 0 } })
     }
     if (path === '/api/admin/skills/groups/') return route.fulfill({ json: GROUPS })
+    if (path === '/api/admin/jobs/categories/' && request.method() === 'GET') return route.fulfill({ json: CATEGORIES })
+    if (path === '/api/admin/jobs/categories/' && request.method() === 'POST') {
+      const payload = request.postDataJSON()
+      onCategoryCreate?.(payload)
+      return route.fulfill({ status: 201, json: category(9, payload.name, 'specialization', payload.parent) })
+    }
+    if (path === '/api/admin/jobs/benefits/') return route.fulfill({ json: BENEFITS })
     if (path === '/api/admin/skills/') {
       const ungrouped = url.searchParams.get('ungrouped') === 'true'
       const results = ungrouped ? SKILLS.filter((skill) => !skill.group) : SKILLS
@@ -62,5 +84,27 @@ test('admin catalog: clean up skills from the cleanup strip and the drawer', { t
   await drawer.getByRole('button', { name: 'Lưu & tiếp' }).click()
   await expect.poll(() => updated).toMatchObject({ name: 'ReactJS', description: 'Thư viện giao diện' })
   await expect(page.getByRole('dialog', { name: 'Sửa kỹ năng' }).getByRole('textbox', { name: 'Tên' })).toHaveValue('React.js')
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+})
+
+test('admin catalog: job category tree and benefits', { tag: '@responsive' }, async ({ page }) => {
+  let created
+  await routeCatalogApi(page, { onCategoryCreate: (payload) => { created = payload } })
+  await page.goto('/admin/app/catalog?tab=categories')
+  await expect(page.getByText('Công nghệ thông tin')).toBeVisible()
+
+  await page.getByRole('textbox', { name: 'Tìm ngành nghề…' }).fill('backend')
+  await expect(page.getByText('Backend Developer')).toBeVisible()
+  await expect(page.getByText('Kế toán - Kiểm toán')).toBeHidden()
+
+  await page.getByRole('button', { name: 'Thêm mục con vào Phát triển phần mềm' }).click()
+  const drawer = page.getByRole('dialog', { name: 'Thêm vị trí chuyên môn' })
+  await drawer.getByRole('textbox', { name: 'Tên tiếng Việt' }).fill('Lập trình viên Go')
+  await drawer.getByRole('textbox', { name: 'Tên tiếng Anh' }).fill('Go Developer')
+  await drawer.getByRole('button', { name: 'Lưu' }).click()
+  await expect.poll(() => created).toMatchObject({ name: 'Lập trình viên Go', name_en: 'Go Developer', parent: 2, status: 'active' })
+
+  await selectTab(page, 'Phúc lợi')
+  await expect(page.getByText('Ăn trưa')).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
 })

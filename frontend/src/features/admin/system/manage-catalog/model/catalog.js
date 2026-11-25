@@ -1,6 +1,8 @@
 import { getIntlLocale, m } from '@/shared/config/i18n'
+import { message } from '@/shared/lib/toast'
 
 export const PAGE_SIZE = 50
+const UNDO_DURATION = 15000
 
 export const EMPTY_FILTERS = {
   search: '',
@@ -71,4 +73,35 @@ export function groupOptions(groups) {
   return groups
     .filter((group) => group.is_active)
     .map((group) => ({ value: group.id, label: group.name }))
+}
+
+/** Thao tác đổi được ngay (ẩn/hiện, gán nhóm) áp dụng luôn, kèm nút Hoàn tác 15 giây. */
+export function notifyWithUndo(text, undo) {
+  message(text, { duration: UNDO_DURATION, action: { label: m.admin_catalog_undo(), onClick: undo } })
+}
+
+export const BENEFIT_CATEGORIES = [
+  ['allowance', () => m.admin_catalog_benefit_allowance()],
+  ['equipment', () => m.admin_catalog_benefit_equipment()],
+  ['welfare', () => m.admin_catalog_benefit_welfare()],
+  ['other', () => m.admin_catalog_benefit_other()],
+]
+
+// Cấu hình từng danh mục nhỏ: trường phụ khi thêm/sửa, cách hiển thị lượt dùng, có sắp thứ tự không.
+export const LOOKUPS = {
+  benefits: {
+    extra: 'category',
+    reorder: true,
+    placeholder: () => m.admin_catalog_benefit_new(),
+    usage: (row) => m.admin_catalog_usage_benefit({ jobs: formatCount(row.job_count), companies: formatCount(row.company_count) }),
+  },
+  industries: {
+    placeholder: () => m.admin_catalog_industry_new(),
+    usage: (row) => m.admin_catalog_usage_companies({ count: formatCount(row.company_count) }),
+  },
+  languages: {
+    extra: 'code',
+    placeholder: () => m.admin_catalog_language_new(),
+    usage: (row) => m.admin_catalog_category_jobs({ count: formatCount(row.job_count) }),
+  },
 }

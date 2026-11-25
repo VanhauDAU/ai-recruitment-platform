@@ -46,3 +46,45 @@ export function createAdminSkillGroup(payload) {
 export function updateAdminSkillGroup(id, payload) {
   return data(api.patch(`${GROUPS}${id}/`, payload))
 }
+
+const CATEGORIES = '/admin/jobs/categories/'
+// Danh mục nhỏ sửa trên một màn: phúc lợi, ngôn ngữ (app jobs), lĩnh vực công ty (app employers).
+const LOOKUPS = {
+  benefits: '/admin/jobs/benefits/',
+  languages: '/admin/jobs/languages/',
+  industries: '/admin/industries/',
+}
+
+export function getAdminJobCategories({ signal } = {}) {
+  return data(api.get(CATEGORIES, { signal }))
+}
+
+export function createAdminJobCategory(payload) {
+  return data(api.post(CATEGORIES, payload))
+}
+
+export function updateAdminJobCategory(id, payload) {
+  return data(api.patch(`${CATEGORIES}${id}/`, payload))
+}
+
+export function uploadAdminCategoryIcon(file) {
+  const form = new FormData()
+  form.append('file', file)
+  return data(api.post(`${CATEGORIES}icon/`, form))
+}
+
+export function getAdminLookup(kind, { signal } = {}) {
+  return data(api.get(LOOKUPS[kind], { signal }))
+}
+
+export function createAdminLookup(kind, payload) {
+  return data(api.post(LOOKUPS[kind], payload))
+}
+
+export function updateAdminLookup(kind, id, payload) {
+  return data(api.patch(`${LOOKUPS[kind]}${id}/`, payload))
+}
+
+export function reorderAdminBenefits(ids) {
+  return data(api.post(`${LOOKUPS.benefits}reorder/`, { ids }))
+}

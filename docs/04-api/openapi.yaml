@@ -5231,6 +5231,94 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
+  /api/admin/industries/:
+    get:
+      operationId: admin_industries_list
+      description: |-
+        Danh sách không phân trang (vài chục mục), thêm và sửa một phần.
+
+        Lớp con khai `permission_classes`, `serializer_class`, `get_queryset` và
+        `save_entry(actor=, entry=, **changes)` là service ghi của app (kèm audit).
+      tags:
+      - employers-catalog-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminIndustry'
+          description: ''
+    post:
+      operationId: admin_industries_create
+      description: |-
+        Danh sách không phân trang (vài chục mục), thêm và sửa một phần.
+
+        Lớp con khai `permission_classes`, `serializer_class`, `get_queryset` và
+        `save_entry(actor=, entry=, **changes)` là service ghi của app (kèm audit).
+      tags:
+      - employers-catalog-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminIndustryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminIndustryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminIndustryRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminIndustry'
+          description: ''
+  /api/admin/industries/{id}/:
+    patch:
+      operationId: admin_industries_partial_update
+      description: |-
+        Danh sách không phân trang (vài chục mục), thêm và sửa một phần.
+
+        Lớp con khai `permission_classes`, `serializer_class`, `get_queryset` và
+        `save_entry(actor=, entry=, **changes)` là service ghi của app (kèm audit).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      tags:
+      - employers-catalog-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminIndustryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminIndustryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminIndustryRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminIndustry'
+          description: ''
   /api/admin/jobs/{job_public_id}/applications/:
     get:
       operationId: admin_jobs_applications_list
@@ -5292,6 +5380,301 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedAdminJobApplicationList'
+          description: ''
+  /api/admin/jobs/benefits/:
+    get:
+      operationId: admin_jobs_benefits_list
+      description: Phúc lợi chọn khi đăng tin và trên trang công ty; thứ tự đặt bằng
+        `reorder`.
+      tags:
+      - jobs-catalog-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminBenefit'
+          description: ''
+    post:
+      operationId: admin_jobs_benefits_create
+      description: Phúc lợi chọn khi đăng tin và trên trang công ty; thứ tự đặt bằng
+        `reorder`.
+      tags:
+      - jobs-catalog-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminBenefitRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminBenefitRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminBenefitRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminBenefit'
+          description: ''
+  /api/admin/jobs/benefits/{id}/:
+    patch:
+      operationId: admin_jobs_benefits_partial_update
+      description: Phúc lợi chọn khi đăng tin và trên trang công ty; thứ tự đặt bằng
+        `reorder`.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      tags:
+      - jobs-catalog-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminBenefitRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminBenefitRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminBenefitRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminBenefit'
+          description: ''
+  /api/admin/jobs/benefits/reorder/:
+    post:
+      operationId: admin_jobs_benefits_reorder_create
+      description: Phúc lợi chọn khi đăng tin và trên trang công ty; thứ tự đặt bằng
+        `reorder`.
+      tags:
+      - jobs-catalog-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BenefitReorderRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BenefitReorderRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BenefitReorderRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminBenefit'
+          description: ''
+  /api/admin/jobs/categories/:
+    get:
+      operationId: admin_jobs_categories_list
+      description: Cây ngành nghề ba cấp; cấp của mục suy ra từ mục cha.
+      tags:
+      - jobs-catalog-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminJobCategory'
+          description: ''
+    post:
+      operationId: admin_jobs_categories_create
+      description: Cây ngành nghề ba cấp; cấp của mục suy ra từ mục cha.
+      tags:
+      - jobs-catalog-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobCategoryWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/JobCategoryWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/JobCategoryWriteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminJobCategory'
+          description: ''
+  /api/admin/jobs/categories/{id}/:
+    patch:
+      operationId: admin_jobs_categories_partial_update
+      description: Cây ngành nghề ba cấp; cấp của mục suy ra từ mục cha.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      tags:
+      - jobs-catalog-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedJobCategoryWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedJobCategoryWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedJobCategoryWriteRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminJobCategory'
+          description: ''
+  /api/admin/jobs/categories/icon/:
+    post:
+      operationId: admin_jobs_categories_icon_create
+      description: Tải icon lên trước; form ngành nghề gửi lại `path` vào `logo_url`
+        khi lưu.
+      tags:
+      - jobs-catalog-admin
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CategoryIconUploadRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryIcon'
+          description: ''
+  /api/admin/jobs/languages/:
+    get:
+      operationId: admin_jobs_languages_list
+      description: |-
+        Danh sách không phân trang (vài chục mục), thêm và sửa một phần.
+
+        Lớp con khai `permission_classes`, `serializer_class`, `get_queryset` và
+        `save_entry(actor=, entry=, **changes)` là service ghi của app (kèm audit).
+      tags:
+      - jobs-catalog-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminLanguage'
+          description: ''
+    post:
+      operationId: admin_jobs_languages_create
+      description: |-
+        Danh sách không phân trang (vài chục mục), thêm và sửa một phần.
+
+        Lớp con khai `permission_classes`, `serializer_class`, `get_queryset` và
+        `save_entry(actor=, entry=, **changes)` là service ghi của app (kèm audit).
+      tags:
+      - jobs-catalog-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminLanguageRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminLanguageRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminLanguageRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminLanguage'
+          description: ''
+  /api/admin/jobs/languages/{id}/:
+    patch:
+      operationId: admin_jobs_languages_partial_update
+      description: |-
+        Danh sách không phân trang (vài chục mục), thêm và sửa một phần.
+
+        Lớp con khai `permission_classes`, `serializer_class`, `get_queryset` và
+        `save_entry(actor=, entry=, **changes)` là service ghi của app (kèm audit).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      tags:
+      - jobs-catalog-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminLanguageRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminLanguageRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAdminLanguageRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminLanguage'
           description: ''
   /api/admin/jobs/moderation/:
     get:
@@ -12599,9 +12982,9 @@ paths:
   /api/employer/industries/all/:
     get:
       operationId: employer_industries_all_list
-      description: Toàn bộ lĩnh vực — cho dropdown chọn lĩnh vực khi tạo hồ sơ công
-        ty.
-      summary: Toàn bộ lĩnh vực công ty
+      description: Lĩnh vực đang mở (admin chưa ẩn) cho dropdown chọn lĩnh vực của
+        hồ sơ công ty.
+      summary: Lĩnh vực đang mở để chọn
       tags:
       - employer
       security:
@@ -16907,6 +17290,47 @@ components:
       - image_url
       - schedule_state
       - updated_at
+    AdminBenefit:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        category:
+          $ref: '#/components/schemas/BenefitCategoryEnum'
+        is_active:
+          type: boolean
+        sort_order:
+          type: integer
+          readOnly: true
+        job_count:
+          type: integer
+          readOnly: true
+        company_count:
+          type: integer
+          readOnly: true
+      required:
+      - company_count
+      - id
+      - job_count
+      - name
+      - sort_order
+    AdminBenefitRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        category:
+          $ref: '#/components/schemas/BenefitCategoryEnum'
+        is_active:
+          type: boolean
+      required:
+      - name
     AdminCampaign:
       type: object
       properties:
@@ -18708,6 +19132,35 @@ components:
       - compliance_holds_active
       - job_reports
       - restricted_accounts
+    AdminIndustry:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        is_active:
+          type: boolean
+        company_count:
+          type: integer
+          readOnly: true
+      required:
+      - company_count
+      - id
+      - name
+    AdminIndustryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        is_active:
+          type: boolean
+      required:
+      - name
     AdminInvitation:
       type: object
       properties:
@@ -18991,6 +19444,56 @@ components:
       - submitted_cv_title
       - submitted_cv_version_public_id
       - updated_at
+    AdminJobCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        public_id:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        name_en:
+          type: string
+          readOnly: true
+        slug:
+          type: string
+          maxLength: 255
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
+        category_type:
+          $ref: '#/components/schemas/JobCategoryTypeEnum'
+        parent:
+          type: integer
+          nullable: true
+        status:
+          $ref: '#/components/schemas/JobCategoryStatusEnum'
+        logo_url:
+          type: string
+          description: Storage key nội bộ hoặc URL ngoài; API tự resolve storage key
+            thành URL public.
+        logo_preview:
+          type: string
+          nullable: true
+          readOnly: true
+        job_count:
+          type: integer
+          readOnly: true
+        child_count:
+          type: integer
+          readOnly: true
+      required:
+      - child_count
+      - id
+      - job_count
+      - logo_preview
+      - name
+      - name_en
+      - public_id
     AdminJobDecisionActionEnum:
       enum:
       - hide
@@ -19692,6 +20195,44 @@ components:
           maxLength: 1000
       required:
       - note
+    AdminLanguage:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        code:
+          type: string
+          maxLength: 20
+        is_active:
+          type: boolean
+        job_count:
+          type: integer
+          readOnly: true
+      required:
+      - code
+      - id
+      - job_count
+      - name
+    AdminLanguageRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        code:
+          type: string
+          minLength: 1
+          maxLength: 20
+        is_active:
+          type: boolean
+      required:
+      - code
+      - name
     AdminPinnedPost:
       type: object
       properties:
@@ -22980,6 +23521,16 @@ components:
         * `equipment` - Hỗ trợ thiết bị làm việc
         * `welfare` - Phúc lợi
         * `other` - Khác
+    BenefitReorderRequest:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: integer
+          minItems: 1
+      required:
+      - ids
     BlankEnum:
       enum:
       - ''
@@ -24037,6 +24588,24 @@ components:
       - unchanged
       type: string
       description: '* `unchanged` - unchanged'
+    CategoryIcon:
+      type: object
+      properties:
+        path:
+          type: string
+        url:
+          type: string
+      required:
+      - path
+      - url
+    CategoryIconUploadRequest:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+      required:
+      - file
     CategoryWriteRequest:
       type: object
       properties:
@@ -30337,6 +30906,14 @@ components:
       - id
       - logo_url
       - name
+    JobCategoryStatusEnum:
+      enum:
+      - active
+      - inactive
+      type: string
+      description: |-
+        * `active` - Active
+        * `inactive` - Inactive
     JobCategoryTypeEnum:
       enum:
       - occupation_group
@@ -30347,6 +30924,27 @@ components:
         * `occupation_group` - Nhóm nghề
         * `domain` - Kiến thức chuyên ngành
         * `specialization` - Vị trí chuyên môn
+    JobCategoryWriteRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        name_en:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        parent:
+          type: integer
+          nullable: true
+        status:
+          $ref: '#/components/schemas/JobCategoryStatusEnum'
+        logo_url:
+          type: string
+      required:
+      - name
     JobDetail:
       type: object
       description: |-
@@ -33667,6 +34265,39 @@ components:
         work_location_id:
           type: integer
           nullable: true
+    PatchedAdminBenefitRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        category:
+          $ref: '#/components/schemas/BenefitCategoryEnum'
+        is_active:
+          type: boolean
+    PatchedAdminIndustryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        is_active:
+          type: boolean
+    PatchedAdminLanguageRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        code:
+          type: string
+          minLength: 1
+          maxLength: 20
+        is_active:
+          type: boolean
     PatchedAdminPinnedPostRequest:
       type: object
       properties:
@@ -34372,6 +35003,25 @@ components:
           $ref: '#/components/schemas/FrequencyEnum'
         is_active:
           type: boolean
+    PatchedJobCategoryWriteRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        name_en:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        parent:
+          type: integer
+          nullable: true
+        status:
+          $ref: '#/components/schemas/JobCategoryStatusEnum'
+        logo_url:
+          type: string
     PatchedManagedAccountUpdateRequest:
       type: object
       properties:

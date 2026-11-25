@@ -6,7 +6,7 @@ import { adminCatalogKeys, createAdminSkillGroup, updateAdminSkillGroup } from '
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
-import { formatCount } from '../model/skill-catalog'
+import { formatCount } from '../model/catalog'
 
 /** Danh sách nhóm kỹ năng sửa ngay trên dòng; hai nhóm hệ thống chỉ xem. */
 export default function SkillGroupsModal({ open, groups, loading, onClose }) {
