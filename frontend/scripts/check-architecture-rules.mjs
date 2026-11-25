@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import { existsSync, readdirSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
@@ -106,6 +106,30 @@ for (const [layer, depth, byPortal] of [['features', 2, true], ['widgets', 1, tr
 
 if (structureErrors.length > 0) {
   throw new Error(`Slice group structure invalid:\n${structureErrors.join('\n')}`)
+}
+
+// vite.config.js khai báo index.js của slice không có side effect để bundler bỏ
+// qua barrel. Một lệnh chạy lúc import (gọi hàm, gán, import trần) sẽ bị bỏ
+// mất ở bản build, nên chặn ngay tại đây.
+const SIDE_EFFECT_LINE = /^(import\s+['"]|(if|for|while|try|switch)\b|[\w$.]+\s*\(|[\w$]+(\.[\w$]+)+\s*=[^=])/
+const impureBarrels = []
+const walkBarrels = (dir) => {
+  for (const entry of listEntries(dir)) {
+    const entryPath = path.join(dir, entry.name)
+    if (entry.isDirectory()) walkBarrels(entryPath)
+    else if (entry.name === 'index.js') {
+      readFileSync(entryPath, 'utf8').split('\n').forEach((line, index) => {
+        if (SIDE_EFFECT_LINE.test(line)) {
+          impureBarrels.push(`${path.relative(SRC_DIR, entryPath)}:${index + 1}: ${line.trim()}`)
+        }
+      })
+    }
+  }
+}
+for (const layer of ['features', 'widgets', 'entities']) walkBarrels(path.join(SRC_DIR, layer))
+
+if (impureBarrels.length > 0) {
+  throw new Error(`Barrel index.js chỉ được export, không chạy lệnh lúc import:\n${impureBarrels.join('\n')}`)
 }
 
 console.log(

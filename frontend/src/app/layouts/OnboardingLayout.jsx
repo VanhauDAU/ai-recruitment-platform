@@ -1,8 +1,7 @@
 import { Outlet } from 'react-router'
 import { BrandLogo } from '@/entities/system/site-settings'
-import { legacyAsset } from '@/shared/config/assets'
 
-const BG_IMAGE = legacyAsset('onboarding/bg-step-1.png')
+const BG_IMAGE = '/images/onboarding/bg-step-1.webp'
 
 /**
  * Layout cao đúng một màn hình và `min-h-0` xuống tận `main` để khung chat tự

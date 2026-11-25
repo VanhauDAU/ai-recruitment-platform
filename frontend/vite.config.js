@@ -46,6 +46,11 @@ export default defineConfig(({ mode }) => {
       // Backend/worker trong Docker gọi Vite qua hostname service `frontend`
       // (SEO shell, trang in PDF `cv-print.html`); Vite chặn Host lạ mặc định.
       allowedHosts: ['frontend'],
+      // Dev phục vụ từng module một: biên dịch sẵn shell + trang chủ ngay khi
+      // server khởi động để lần mở đầu không chờ transform hàng trăm file.
+      warmup: {
+        clientFiles: ['./src/main.jsx', './src/app/layouts/MainLayout.jsx', './src/pages/main/home/Home.jsx'],
+      },
       // API/media đi cùng origin để thiết bị thật trong LAN chỉ cần truy cập một
       // địa chỉ Vite.
       proxy: {
@@ -79,17 +84,40 @@ export default defineConfig(({ mode }) => {
       // and the incremental JS/CSS graph of each lazy route.
       manifest: true,
       rollupOptions: {
+        // Barrel (public index.js) của slice chỉ re-export, không chạy gì lúc
+        // import. Khai báo để bundler đi thẳng tới module thật: guard chỉ cần
+        // `withReturnUrl` thì không kéo LoginForm cùng barrel vào bundle đầu
+        // (25/11: JS khởi tạo -52 KiB, CSS -1,7 KiB). check:architecture chặn
+        // barrel có lệnh chạy lúc import.
+        treeshake: {
+          moduleSideEffects: [{ test: /[\\/]src[\\/](features|entities|widgets)[\\/].*[\\/]index\.js$/, sideEffects: false }],
+        },
         // cv-print.html: trang in PDF do worker mở bằng Chromium (CVT-2).
         input: {
           main: path.resolve(import.meta.dirname, 'index.html'),
           'cv-print': path.resolve(import.meta.dirname, 'cv-print.html'),
         },
         output: {
-          // Chỉ tách core React (dùng ở mọi route, ít đổi) thành vendor chunk riêng
-          // để cache tốt qua các lần deploy. KHÔNG gom antd vào 1 chunk: để Vite tự
-          // tách antd theo route, tránh kéo antd của trang admin vào initial load.
-          manualChunks(id) {
-            if (/[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler)[\\/]/.test(id)) return 'react'
+          codeSplitting: {
+            groups: [
+              // Core React ít đổi: chunk riêng để cache qua các lần deploy.
+              {
+                name: 'react',
+                test: /[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler)[\\/]/,
+                priority: 3,
+              },
+              // Thư viện mà trang đầu import tĩnh ($initial) gom vào một chunk thay
+              // vì ~60 mảnh nhỏ (25/11: 78 → 21 file JS khởi tạo, -28 KiB gzip vì
+              // bớt phần bọc chunk). Không bật entriesAware: rolldown coi mỗi route
+              // lazy là một entry và lại băm vụn chunk. Antd của route lazy vẫn
+              // để bundler tự tách theo route.
+              {
+                name: 'vendor',
+                test: /[\\/]node_modules[\\/]/,
+                tags: ['$initial'],
+                priority: 2,
+              },
+            ],
           },
         },
       },

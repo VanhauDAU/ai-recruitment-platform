@@ -35,7 +35,7 @@ ENV VITE_API_BASE_URL=$VITE_API_BASE_URL \
     VITE_SENTRY_ENVIRONMENT=$VITE_SENTRY_ENVIRONMENT
 
 COPY . .
-RUN npm run build && rm -rf dist/.vite
+RUN npm run build && rm -rf dist/.vite && node scripts/precompress-dist.mjs
 
 FROM nginx:1.28-alpine AS runtime
 # Bỏ server mặc định; cấu hình ProCV nằm trong conf.d + snippets.

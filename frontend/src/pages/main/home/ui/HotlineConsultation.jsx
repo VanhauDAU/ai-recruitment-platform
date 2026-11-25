@@ -3,9 +3,8 @@ import { useMemo, useState } from 'react'
 import { settingText, useSiteSettings } from '@/entities/system/site-settings'
 import { m } from '@/shared/config/i18n'
 import ChatShowcase from '@/shared/ui/ChatShowcase'
-import { legacyAsset } from '@/shared/config/assets'
 
-const HOTLINE_BG_URL = legacyAsset('home/hotline-bg.png')
+const HOTLINE_BG_URL = '/images/home/hotline-bg.webp'
 const HOTLINE_ILLUSTRATION_URL = '/images/home/hotline-consultation.webp'
 
 const HOTLINE_TABS = [

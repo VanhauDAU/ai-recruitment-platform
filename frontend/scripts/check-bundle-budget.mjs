@@ -13,11 +13,15 @@ const MANIFEST_PATH = path.join(DIST_DIR, '.vite/manifest.json')
 // (sign-in form, session notices, API error mapping) through Paraglide, and
 // each message ships its vi and en text. CI-equivalent build measured
 // 332.2 KiB; the cap follows with a 1.8 KiB margin.
-const INITIAL_JS_GZIP_BUDGET = 334 * 1024
+// 2026-11-25: one initial vendor chunk plus side-effect-free slice barrels
+// (vite.config.js) took the local build from 332.8 to 252.1 KiB. The cap drops
+// to lock that in, keeping ~1 KiB for the CI gap plus a small margin.
+const INITIAL_JS_GZIP_BUDGET = 256 * 1024
 // Shared account-setting styles now ship with the initial shell. The same
 // 2026-11-13 toolchain update moved the measured CSS from under 38.0 to
 // 38.1 KiB; keep a 0.4 KiB allowance while retaining a real cap.
-const INITIAL_CSS_GZIP_BUDGET = 38.5 * 1024
+// 2026-11-25: auth form styles left the shell with the barrel change (33.6 KiB).
+const INITIAL_CSS_GZIP_BUDGET = 35 * 1024
 const assetCache = new Map()
 
 function getAssetPaths(indexHtml) {
