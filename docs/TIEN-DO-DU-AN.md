@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Chuẩn bị deploy: GĐ3 sao lưu và khôi phục](#chuẩn-bị-deploy-gđ3-sao-lưu-và-khôi-phục-2026-11-25) | 🟨 Nhánh `feat/predeploy-backup` (trên GĐ1), chờ PR; diễn tập khôi phục thật ở GĐ6 |
 | [Chuẩn bị deploy: GĐ2 hạ tầng, giám sát, chịu lỗi](#chuẩn-bị-deploy-gđ2-hạ-tầng-giám-sát-chịu-lỗi-2026-11-25) | 🟨 Nhánh `feat/predeploy-ops` (dựng trên GĐ1), chờ PR; chưa lên VPS |
 | [Chuẩn bị deploy: GĐ1 bảo mật ứng dụng](#chuẩn-bị-deploy-gđ1-bảo-mật-ứng-dụng-2026-11-25) | 🟨 Nhánh `feat/predeploy-security`, chờ PR; GĐ2–GĐ6 theo [kế hoạch](06-deployment/ke-hoach-chuan-bi-deploy.md) |
 | [Việc làm gần tôi: bản đồ, bán kính, tọa độ nơi làm việc (ADR-0029)](#việc-làm-gần-tôi-bản-đồ-bán-kính-tọa-độ-nơi-làm-việc-adr-0029-2026-11-25) | 🟨 PR #344 (nhánh `feat/nearby-jobs`), chờ gộp |
@@ -117,6 +118,31 @@ Theo [kế hoạch](06-deployment/ke-hoach-chuan-bi-deploy.md); vận hành ở
 - **Còn mở:** tải CA AOP + bật AOP trên Cloudflare (GĐ0/GĐ6); tạo project Sentry +
   UptimeRobot; đo RAM thật khi rehearsal; GĐ4 (`email-worker`) phải đổi `depends_on`
   `redis` → `*backend-depends` khi rebase lên nhánh này.
+
+## Chuẩn bị deploy: GĐ3 sao lưu và khôi phục (2026-11-25)
+
+Runbook mới [`sao-luu-va-khoi-phuc.md`](06-deployment/sao-luu-va-khoi-phuc.md): RPO 24 h
+(DB, file riêng tư), RTO mục tiêu 2 h, khôi phục toàn phần lên VPS mới, diễn tập hằng
+quý trên VPS tạm, xử lý xóa nhầm / migration hỏng / mất VPS / lộ key R2 / mất khóa age.
+
+- **`backup_db.sh`:** `flock`, kiểm dung lượng trống, tên file có giây, từ chối dump
+  < 100 KB hoặc `pg_restore --list` lỗi, mã hóa `age` (khóa riêng không nằm trên VPS),
+  đẩy R2 `daily/` + `weekly/` + `monthly/` (không bao giờ xóa trên R2 — Bucket Lock +
+  lifecycle), giữ cục bộ 7 ngày + 4 tuần + 6 tháng chỉ bản mã hóa, ping healthchecks.io,
+  xoay `backup.log`.
+- **Mới:** `backup_files.sh` (bucket private → `procv-backups-files`, `copy
+  --ignore-existing`, cron 03:30), `restore_files.sh` (`--dry-run`, `--prefix`),
+  `backup_secrets.sh` (`.env` + cert → `age` → R2, chạy tay khi đổi), `lib.sh` (hàm chung).
+- **`restore_db.sh`:** giải mã `.age`, dump an toàn trước khi ghi đè, giữ `web` chạy khi
+  bảo trì, `dropdb`/`createdb` + `pg_restore --exit-on-error --single-transaction`,
+  FLUSHALL mọi `redis*`, chờ `/api/health/ready/` (lùi về `/api/health/`), đối soát
+  policy hold, `--from-dev` dọn tài khoản demo.
+- **`deploy.sh`:** `flock`; build trong worktree tạm rồi mới checkout; tag image theo
+  commit, giữ 3 bản → rollback `--skip-build <sha>` không build; tự sao lưu khi có
+  migration mới; `--dry-run`; ghi cả lần thất bại vào `history.log`.
+- Kiểm chứng trên stack giả (db + 2 redis + backend dev): backup → restore vào DB mới
+  khớp số dòng, giải mã sai khóa, dump quá nhỏ → `/fail`, `pg_restore` lỗi giữa chừng,
+  xoay vòng 7/4/6, khóa đồng thời. Chưa chạy trên VPS/R2 thật.
 
 ## Việc làm gần tôi: bản đồ, bán kính, tọa độ nơi làm việc (ADR-0029) (2026-11-25)
 
