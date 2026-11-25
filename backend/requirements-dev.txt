@@ -1,8 +1,12 @@
 # Công cụ lint/test — CI và compose dev; không cài vào image production.
 -r requirements.txt
-ruff==0.15.22
-import-linter==2.13
-pytest==8.4.2
-pytest-django==4.11.1
-pytest-cov==7.0.0
+ruff==0.17.6
+import-linter==2.17
+pytest==9.2.0
+pytest-django==4.14.0
+pytest-cov==7.1.0
+# Ghim để job backend-checks gộp coverage các shard bằng đúng phiên bản đã đo.
+coverage==7.17.5
 pytest-xdist==3.8.0
+# Chia bộ test thành các shard CI cân theo backend/.test_durations.
+pytest-split==0.11.0

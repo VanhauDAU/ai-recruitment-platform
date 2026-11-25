@@ -17,13 +17,7 @@ const EMPTY = {
   isCandidate: false,
 }
 
-export { SavedJobsContext, SavedJobsProvider }
-export {
-  getSavedJobRecommendations,
-  getSavedJobs,
-  saveJob,
-  unsaveJob,
-} from './api/saved-jobs.api'
+export { SavedJobsProvider }
 export { useSavedJobRecommendations }
 
 export function useSavedJobs() {

@@ -21,7 +21,7 @@ from .contracts import (
     StructuredOutputProvider,
     TokenUsage,
 )
-from .providers import GeminiStructuredOutputProvider
+from .providers import provider_for
 from .usage import record_ai_usage
 
 logger = logging.getLogger(__name__)
@@ -119,7 +119,7 @@ def generate_structured(
         config = replace(config, model=model.strip())
     config.validate(require_credentials=provider is None)
     owns_provider = provider is None
-    selected_provider = provider or GeminiStructuredOutputProvider(config)
+    selected_provider = provider or provider_for(config)
     if not isinstance(selected_provider, StructuredOutputProvider):
         raise AiGenerationError('invalid_provider')
 

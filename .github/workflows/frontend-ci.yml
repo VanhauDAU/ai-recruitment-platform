@@ -36,7 +36,7 @@ jobs:
       changed_count: ${{ steps.areas.outputs.changed_count }}
       playwright: ${{ steps.playwright.outputs.version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -50,7 +50,7 @@ jobs:
           BEFORE_SHA: ${{ github.event.before || '' }}
         run: |
           set -o pipefail
-          bash scripts/ci_changed_areas.sh | tee -a "$GITHUB_OUTPUT"
+          bash scripts/ci/changed_areas.sh | tee -a "$GITHUB_OUTPUT"
 
       # E2E runs inside the official Playwright image of the locked version.
       # Installing Chromium with --with-deps on the hosted runner took 16s on
@@ -110,12 +110,12 @@ jobs:
         working-directory: .
         run: echo "epoch=$(date +%s)" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         if: ${{ needs.changes.outputs.frontend == 'true' }}
 
       - name: Setup Node
         if: ${{ needs.changes.outputs.frontend == 'true' }}
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: npm
@@ -124,16 +124,6 @@ jobs:
       - name: Install dependencies
         if: ${{ needs.changes.outputs.frontend == 'true' }}
         run: npm ci --prefer-offline --no-audit
-
-      - name: API boundary (axios chỉ trong shared/api)
-        if: ${{ needs.changes.outputs.frontend == 'true' }}
-        working-directory: .
-        run: bash scripts/check_api_boundary.sh
-
-      - name: Feature boundary (không deep-import feature khác)
-        if: ${{ needs.changes.outputs.frontend == 'true' }}
-        working-directory: .
-        run: bash scripts/check_feature_boundary.sh
 
       - name: Env example đồng bộ với code
         if: ${{ needs.changes.outputs.frontend == 'true' }}
@@ -197,7 +187,7 @@ jobs:
 
       - name: Upload static diagnostics
         if: ${{ failure() && needs.changes.outputs.frontend == 'true' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: frontend-static-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
           path: frontend/dist/bundle-stats.json
@@ -215,17 +205,18 @@ jobs:
       fail-fast: false
       matrix:
         # Keep UNIT_TEST_SHARDS in the `coverage` job equal to this list's length.
-        # Vitest splits by file, not duration, so four shards ranged from 3 to
-        # 6 minutes; a fifth keeps the slowest one inside the 5-minute budget.
-        shard: [1, 2, 3, 4, 5, 6, 7]
+        # Files are assigned by measured duration (scripts/plan-vitest-shards.mjs,
+        # tests/vitest-durations.json): `vitest --shard` splits by file count and
+        # left the slowest of seven shards at 272s against 128s for the fastest.
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
     defaults:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: npm
@@ -250,10 +241,12 @@ jobs:
           # A single shard only sees part of the suite, so the ratchet in
           # vite.config.js cannot be evaluated here. Thresholds are zeroed for
           # the shard and enforced once on the merged report by `coverage`.
+          mapfile -t files < <(node scripts/plan-vitest-shards.mjs --shard "$SHARD" --total "$SHARD_TOTAL")
+          echo "Shard ${SHARD}/${SHARD_TOTAL}: ${#files[@]} test files"
           timeout --signal=TERM --kill-after=30s 8m \
             npm run test:coverage -- \
+              "${files[@]}" \
               --maxWorkers=1 \
-              --shard="${SHARD}/${SHARD_TOTAL}" \
               --reporter=verbose \
               --reporter=blob \
               --coverage.thresholds.statements=0 \
@@ -264,7 +257,7 @@ jobs:
 
       - name: Upload blob report
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: vitest-blob-${{ matrix.shard }}
           path: frontend/.vitest-reports/
@@ -274,7 +267,7 @@ jobs:
 
       - name: Upload shard diagnostics
         if: ${{ always() && steps.coverage_tests.outcome != 'success' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: frontend-coverage-shard-${{ matrix.shard }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: frontend/coverage.log
@@ -299,14 +292,14 @@ jobs:
           echo "coverage-shard result: $SHARD_RESULT"
           [[ "$SHARD_RESULT" == success ]]
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Start job timer
         id: timer
         run: echo "epoch=$(date +%s)" >> "$GITHUB_OUTPUT"
 
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: npm
@@ -316,7 +309,7 @@ jobs:
         run: npm ci --prefer-offline --no-audit
 
       - name: Download blob reports
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: vitest-blob-*
           path: frontend/.vitest-reports
@@ -326,7 +319,7 @@ jobs:
         id: coverage_tests
         shell: bash
         env:
-          UNIT_TEST_SHARDS: 7
+          UNIT_TEST_SHARDS: 8
         run: |
           set -o pipefail
           ls -l .vitest-reports
@@ -341,7 +334,22 @@ jobs:
             2>&1 | tee coverage.log
 
       - name: Test time budget (docs/05-huong-dan/tieu-chuan-kiem-thu.md)
-        run: node ../scripts/check_test_budgets.mjs --suite frontend-unit vitest-results.xml
+        run: node ../scripts/ci/check_test_budgets.mjs --suite frontend-unit vitest-results.xml
+
+      - name: Export per-file durations for shard planning
+        if: ${{ always() }}
+        run: |
+          node scripts/plan-vitest-shards.mjs --from-junit vitest-results.xml
+          node scripts/plan-vitest-shards.mjs --total 8 --summary | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload per-file durations
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: vitest-durations-${{ github.run_id }}
+          path: frontend/tests/vitest-durations.json
+          if-no-files-found: ignore
+          retention-days: 14
 
       - name: Verify coverage ratchet on merged report
         run: |
@@ -416,7 +424,7 @@ jobs:
 
       - name: Upload coverage diagnostics
         if: ${{ always() && steps.coverage_tests.outcome != 'success' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: frontend-coverage-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
@@ -427,7 +435,7 @@ jobs:
           retention-days: 5
 
   e2e-smoke-shard:
-    name: e2e-smoke-shard (${{ matrix.project }})
+    name: e2e-smoke-shard (${{ matrix.project }} ${{ matrix.shard }})
     needs: changes
     if: ${{ needs.changes.result == 'success' && needs.changes.outputs.frontend == 'true' && !cancelled() }}
     runs-on: ubuntu-latest
@@ -441,8 +449,13 @@ jobs:
       fail-fast: false
       matrix:
         # Must list every project in frontend/playwright.config.js; the
-        # e2e-smoke job below fails if the two lists drift apart.
-        project: [desktop-chromium, tablet-chromium, mobile-chromium]
+        # e2e-smoke job below fails if the two lists drift apart. Desktop runs
+        # the whole suite (tablet/mobile only @responsive), so it gets two shards.
+        include:
+          - { project: desktop-chromium, shard: 1/2 }
+          - { project: desktop-chromium, shard: 2/2 }
+          - { project: tablet-chromium, shard: 1/1 }
+          - { project: mobile-chromium, shard: 1/1 }
     env:
       # E2E mocks intercept this stable backend origin. Without an explicit
       # value, CI has no gitignored frontend/.env and Vite falls back to its
@@ -456,14 +469,14 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Start job timer
         id: timer
         run: echo "epoch=$(date +%s)" >> "$GITHUB_OUTPUT"
 
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: npm
@@ -472,12 +485,13 @@ jobs:
       - name: Install dependencies
         run: npm ci --prefer-offline --no-audit
 
-      - name: Run portal smoke tests (${{ matrix.project }})
+      - name: Run portal smoke tests (${{ matrix.project }} ${{ matrix.shard }})
         id: e2e
         shell: bash
         env:
           PLAYWRIGHT_JUNIT_OUTPUT_FILE: test-results/e2e-results.xml
           PROJECT: ${{ matrix.project }}
+          SHARD: ${{ matrix.shard }}
         run: |
           set -o pipefail
           # Keep traces from every failing attempt, including a first attempt
@@ -485,13 +499,14 @@ jobs:
           timeout --signal=TERM --kill-after=30s 9m \
             npm run test:e2e:smoke -- \
               --project="$PROJECT" \
+              --shard="$SHARD" \
               --reporter=line,junit \
               --trace=retain-on-failure \
             2>&1 | tee e2e.log
 
       - name: Test time budget (docs/05-huong-dan/tieu-chuan-kiem-thu.md)
         if: ${{ steps.e2e.outcome == 'success' }}
-        run: node ../scripts/check_test_budgets.mjs --suite e2e test-results/e2e-results.xml
+        run: node ../scripts/ci/check_test_budgets.mjs --suite e2e test-results/e2e-results.xml
 
       - name: Publish E2E summary
         if: ${{ always() }}
@@ -503,9 +518,9 @@ jobs:
 
       - name: Upload Playwright diagnostics
         if: ${{ always() && steps.e2e.outcome != 'success' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: playwright-smoke-report-${{ matrix.project }}-${{ github.run_id }}-${{ github.run_attempt }}
+          name: playwright-smoke-report-${{ matrix.project }}-${{ strategy.job-index }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             frontend/playwright-report
             frontend/test-results
@@ -520,7 +535,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Matrix covers every Playwright project
         run: |
@@ -559,7 +574,7 @@ jobs:
           [[ "$CHANGES_RESULT" == success ]]
           [[ "$AUDIT_REQUIRED" == true || "$AUDIT_REQUIRED" == false ]]
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         if: ${{ needs.changes.outputs.audit == 'true' }}
 
       - name: Start job timer
@@ -570,7 +585,7 @@ jobs:
 
       - name: Setup Node
         if: ${{ needs.changes.outputs.audit == 'true' }}
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
 

@@ -24,7 +24,7 @@ export default function CandidateApplicationActions({ application }) {
     mutationFn: () => withdrawCandidateApplication(application.public_id),
     onSuccess: (saved) => {
       replaceCached(saved)
-      message.success('Đã rút hồ sơ.')
+      message.success('Đã rút CV.')
     },
   })
   const remind = useMutation({
@@ -59,16 +59,16 @@ export default function CandidateApplicationActions({ application }) {
           danger
           icon={<RollbackOutlined aria-hidden="true" />}
           onClick={() => requestConfirmation({
-            title: 'Rút hồ sơ ứng tuyển',
+            title: 'Rút CV ứng tuyển',
             description: `Nhà tuyển dụng sẽ không xử lý hồ sơ của bạn cho vị trí ${application.job_title} nữa. Bạn có thể ứng tuyển lại sau.`,
-            confirmText: 'Rút hồ sơ',
-            cancelText: 'Giữ hồ sơ',
+            confirmText: 'Rút CV',
+            cancelText: 'Giữ CV',
             danger: true,
             onConfirm: () => withdraw.mutateAsync(),
-            onConfirmError: (error) => message.error(getApiErrorMessage(error, 'Không thể rút hồ sơ lúc này.')),
+            onConfirmError: (error) => message.error(getApiErrorMessage(error, 'Không thể rút CV lúc này.')),
           })}
         >
-          Rút hồ sơ
+          Rút CV
         </Button>
       )}
       {confirmationModal}

@@ -1,0 +1,35 @@
+title Sơ đồ tuần tự chức năng gửi và nhận tin nhắn ProCV Connect
+actor A Người gửi\n(UV hoặc NTD)
+participant FA Giao diện web\nngười gửi
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+queue RT Kênh realtime\n(Channels + Redis)
+participant FB Giao diện web\nngười nhận
+actor B Người nhận
+note over FA,FB : Mỗi tab đã mở socket bằng vé một lần (ADR-0028): POST /api/shared/realtime/ticket/ rồi wss /ws/notifications/?ticket=
+A -> FA : Gõ nội dung, chèn emoji
+FA ->> RT : {type: typing, conversation} (tối đa 1 lần/3 giây)
+RT ->> FB : chat.typing
+FB --> B : Hiện "Đang soạn tin…"
+A -> FA : Bấm Gửi
+FA -> FA : Sinh client_id, hiện bong bóng "Đang gửi"
+FA -> BE : POST /conversations/{id}/messages/ {client_id, kind, body}
+BE -> BE : Kiểm tra thành viên, hội thoại chưa khóa, giới hạn 3 tin khi NTD chưa trả lời, throttle
+alt Không hợp lệ
+BE --> FA : 400 / 403 / 429
+FA --> A : Bong bóng "Gửi lỗi – Thử lại"
+else Hợp lệ
+BE -> DB : Khóa Conversation, seq = last_seq + 1, tạo Message, cập nhật xem trước và số chưa đọc
+BE --> FA : 201 tin nhắn (seq) — trùng client_id thì trả tin đã có
+FA --> A : Bong bóng "Đã gửi"
+BE ->> RT : push_to_user người nhận và người gửi: chat.message.created (sau commit)
+RT ->> FB : chat.message.created {conversation, message}
+alt seq liền với seq cuối đang có
+FB --> B : Chèn tin; toast và âm báo nếu không mở hội thoại này
+else Hụt seq (vừa mất kết nối)
+FB -> BE : GET /conversations/{id}/messages/?after={seq cuối}
+BE --> FB : Các tin còn thiếu theo thứ tự seq
+FB --> B : Hiện đủ tin
+end
+end
+note over FB,BE : Socket đóng: giao diện poll 60 giây; kết nối lại nhận "connected" thì tải lại danh sách và bù tin

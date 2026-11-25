@@ -20,7 +20,7 @@ Backend do app `apps.sitecontent` sở hữu (`models/announcements.py`,
   người đã đóng", tab Hiệu quả):
   [`quan-tri-thong-bao-da-cong.md`](../05-huong-dan/quan-tri-thong-bao-da-cong.md);
 - field DTO đã khóa:
-  [`frontend-response-contracts.md`](../04-api/frontend-response-contracts.md).
+  [`hop-dong-du-lieu-frontend.md`](../04-api/hop-dong-du-lieu-frontend.md).
 
 Ngoài phạm vi: hộp thư/notification center theo user, email/push/WebSocket,
 HTML/rich text, video, marquee ngang, regex route, URL `javascript:`.
@@ -203,7 +203,7 @@ nhạy cảm.
   chặn UI; throttle vẫn fail-open.
 - Daily metric không chứa path, IP, user-agent hay viewer ID. Số liệu chỉ đại
   diện người đã bật Analytics. Xem thêm
-  [consent và tracking](../04-api/cookie-consent-va-job-view-tracking.md).
+  [consent và tracking](../04-api/dong-y-cookie-va-luot-xem-tin.md).
 - Metric vận hành PII-free: `announcement_feed_latency_ms`,
   `announcement_analytics` (reason `counted`/`duplicate`/`redis_error`/
   `consent_required`/`invalid_event`), `announcement_event_batch_size`,

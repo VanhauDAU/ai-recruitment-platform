@@ -6,6 +6,7 @@ import {
   PhoneOutlined,
 } from '@ant-design/icons'
 import { Button } from 'antd'
+import { useState } from 'react'
 import { settingText, useSiteSettings } from '@/entities/system/site-settings'
 import { m } from '@/shared/config/i18n'
 
@@ -24,6 +25,39 @@ function InfoRow({ icon, label, value, href }) {
         <span className="block break-words font-semibold text-gray-900">{value}</span>
       </span>
     </Container>
+  )
+}
+
+// Nhấp-để-tải: iframe Google Maps đặt cookie bên thứ ba, nên trang chỉ tải khi
+// người xem chủ động mở. Link rút gọn (maps.app.goo.gl) không nhúng được thì mở tab mới.
+function ContactMap({ url }) {
+  const [open, setOpen] = useState(false)
+  const embeddable = /\/maps\/embed|[?&]output=embed/.test(url)
+
+  if (open && embeddable) {
+    return (
+      <iframe
+        src={url}
+        title={m.marketing_contact_map_title()}
+        className="mt-8 h-72 w-full rounded-2xl border border-gray-200 sm:h-96"
+        referrerPolicy="no-referrer-when-downgrade"
+      />
+    )
+  }
+
+  return (
+    <div className="mt-8 flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-300 px-4 py-8 text-center">
+      <Button
+        shape="round"
+        icon={<EnvironmentOutlined />}
+        {...(embeddable
+          ? { onClick: () => setOpen(true) }
+          : { href: url, target: '_blank', rel: 'noreferrer' })}
+      >
+        {m.marketing_contact_map_show()}
+      </Button>
+      <p className="text-xs text-gray-500">{m.marketing_contact_map_note()}</p>
+    </div>
   )
 }
 
@@ -84,15 +118,7 @@ export default function EmployerContact() {
           </div>
         )}
 
-        {mapEmbedUrl && (
-          <iframe
-            src={mapEmbedUrl}
-            title={m.marketing_contact_map_title()}
-            loading="lazy"
-            className="mt-8 h-72 w-full rounded-2xl border border-gray-200 sm:h-96"
-            referrerPolicy="no-referrer-when-downgrade"
-          />
-        )}
+        {mapEmbedUrl && <ContactMap url={mapEmbedUrl} />}
       </section>
     </>
   )

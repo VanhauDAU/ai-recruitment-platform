@@ -19,6 +19,7 @@ COMPANY_PAGE_PATH = '/tuyendung/app/company-page'
 JOBS_PATH = '/tuyendung/app/jobs'
 APPLICATIONS_PATH = '/tuyendung/app/applications'
 CANDIDATE_SEARCH_PATH = '/tuyendung/app/candidate-search'
+CONNECT_PATH = '/tuyendung/app/connect'
 DASHBOARD_PATH = '/tuyendung/app/dashboard'
 CAMPAIGNS_PATH = '/tuyendung/app/campaigns'
 INTEGRATIONS_PATH = '/tuyendung/app/account/settings/integrations'
@@ -79,6 +80,14 @@ EVENT_PRESENTATION = {
     EmployerNotification.EventType.APPLICATION_WITHDRAWN: (
         gettext_lazy('Ứng viên đã rút hồ sơ'),
         APPLICATIONS_PATH,
+    ),
+    EmployerNotification.EventType.INTERVIEW_RESPONDED: (
+        gettext_lazy('Ứng viên đã phản hồi lịch phỏng vấn'),
+        CONNECT_PATH,
+    ),
+    EmployerNotification.EventType.INTERVIEW_REMINDER: (
+        gettext_lazy('Sắp đến giờ phỏng vấn'),
+        CONNECT_PATH,
     ),
     EmployerNotification.EventType.SEARCH_INVITATION_ACCEPTED: (
         gettext_lazy('Ứng viên đồng ý kết nối'),

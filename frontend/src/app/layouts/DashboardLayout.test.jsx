@@ -28,6 +28,11 @@ vi.mock('@/entities/system/site-settings', () => ({
   BrandLogo: () => <span>Logo</span>,
 }))
 vi.mock('@/widgets/common/announcement-strip', () => ({ AnnouncementStrip: () => null }))
+// Không mở WebSocket thật trong jsdom; phần nghe sự kiện có test riêng.
+vi.mock('@/shared/api/use-realtime', () => ({
+  useRealtimeEvents: () => {},
+  useRealtimeOpen: () => false,
+}))
 
 function LocationProbe() {
   const { pathname, search } = useLocation()
@@ -60,6 +65,10 @@ describe('DashboardLayout admin access', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     window.localStorage.clear()
+    // Ghi nhớ thanh bên thuộc nhóm cookie Tùy chọn.
+    window.localStorage.setItem('procv_consent_v1', JSON.stringify({
+      necessary: true, preferences: true, analytics: false, marketing: false,
+    }))
     getAdminAccountSummary.mockResolvedValue({
       totals: { restricted: 4 },
       queues: { pending_admin_invitations: 5 },

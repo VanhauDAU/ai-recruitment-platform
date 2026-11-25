@@ -1,1 +1,1 @@
-export { CampaignRefCapture, useCaptureCampaignRef } from './model/use-capture-campaign-ref'
+export { CampaignRefCapture } from './model/use-capture-campaign-ref'

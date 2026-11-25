@@ -26,6 +26,8 @@ UNAVAILABLE_CODES = {
     'provider_not_configured',
     'model_not_configured',
     'unsupported_provider_backend',
+    # Hết credit/chưa thanh toán ở nhà cung cấp: đọc bằng quy tắc thay vì báo lỗi.
+    'provider_quota_exhausted',
 }
 _DATED_ITEM = {
     'type': 'object',

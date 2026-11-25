@@ -6,7 +6,7 @@ database DB CSDL\n(PostgreSQL)
 queue Q Worker gửi email\n(Celery + SMTP)
 actor NTD Nhà tuyển dụng
 UV -> FE : Bấm "Ứng tuyển" trên trang chi tiết tin
-FE -> BE : GET /api/v2/applications/ và /api/v2/applications/rules/
+FE -> BE : GET /api/candidate/applications/ và /api/public/applications/rules/
 BE --> FE : Hồ sơ đã nộp và luật nộp lại (tối đa 3 lần, chờ 5 phút)
 alt Chưa đăng nhập, không phải ứng viên hoặc hồ sơ đang chờ xử lý
 FE --> UV : Yêu cầu đăng nhập hoặc báo lý do không thể nộp
@@ -14,10 +14,10 @@ else Được phép ứng tuyển
 FE --> UV : Mở hộp thoại ứng tuyển (chọn sẵn CV và thư giới thiệu gần nhất)
 UV -> FE : Chọn CV online hoặc tải CV mới, điền liên hệ, đồng ý xử lý dữ liệu, tùy chọn cho phép AI phân tích
 opt Tải CV mới từ máy
-FE -> BE : POST /api/v2/cvs/imports/ (tệp CV)
+FE -> BE : POST /api/candidate/cvs/imports/ (tệp CV)
 BE --> FE : CV dạng tệp đã lưu (cv_public_id)
 end
-FE -> BE : POST /api/v2/applications/ {job, cv, version, cover_letter, consent, contact}
+FE -> BE : POST /api/candidate/applications/ {job, cv, version, cover_letter, consent, contact}
 BE -> BE : Kiểm tra email đã xác minh, tin còn nhận hồ sơ, CV thuộc ứng viên và đã lưu, luật nộp lại
 alt Dữ liệu không hợp lệ
 BE --> FE : 400 + lỗi theo trường

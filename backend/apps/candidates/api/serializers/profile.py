@@ -76,11 +76,22 @@ class CandidateProfileUpdateSerializer(serializers.ModelSerializer):
         fields = ['gender']
 
 
+# Mọi nơi giao diện bật/tắt cho NTD tìm thấy CV; ghi vào nhật ký đồng ý để biết
+# ứng viên đồng ý ở đâu. Thêm lối vào mới thì phải thêm vào đây, nếu không PATCH trả 400.
+RECRUITER_VISIBILITY_SOURCES = (
+    'cv_save_success',  # màn lưu CV thành công
+    'account_settings',  # cài đặt tài khoản
+    'cv_library',  # công tắc trên thẻ CV ở "CV của tôi"
+    'cv_library_banner',  # banner gợi ý bật tìm kiếm ở "CV của tôi"
+    'cv_search_list',  # popup "Quản lý danh sách" CV được tìm thấy
+)
+
+
 class RecruiterVisibilitySerializer(serializers.Serializer):
     enabled = serializers.BooleanField()
     confirmed = serializers.BooleanField(default=False, write_only=True)
     cv_public_id = serializers.CharField(max_length=50, required=False, allow_blank=True)
-    source = serializers.ChoiceField(choices=['cv_save_success', 'account_settings'])
+    source = serializers.ChoiceField(choices=RECRUITER_VISIBILITY_SOURCES)
     source_path = serializers.CharField(max_length=2048, required=False, allow_blank=True)
 
     def validate(self, attrs):

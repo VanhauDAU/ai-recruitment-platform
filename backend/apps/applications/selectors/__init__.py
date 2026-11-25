@@ -3,6 +3,7 @@
 from .applications import (
     admin_job_applications_queryset,
     candidate_applications_queryset,
+    candidate_published_history_queryset,
     employer_application_queryset,
     employer_applications_queryset,
     previous_submissions_queryset,
@@ -23,6 +24,7 @@ from .talent_pool import (
 )
 
 __all__ = [
+    'candidate_published_history_queryset',
     'flash_badge_stats_for_job',
     'recruiter_flash_badge_state',
     'previous_submissions_queryset',

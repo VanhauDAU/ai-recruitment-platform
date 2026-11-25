@@ -102,6 +102,25 @@ EVENTS = {
         web_switch='employer_invitation_web',
         action_label='Xem lời mời',
     ),
+    # ProCV Connect (ADR-0032): lịch hẹn luôn báo cả email, ứng viên cần xác nhận kịp.
+    Event.INTERVIEW_SCHEDULED: EventSpec(
+        title='{company_name} mời bạn phỏng vấn',
+        message=(
+            '{company_name} đã gửi lịch phỏng vấn vị trí {job_title} trong ProCV Connect. '
+            'Hãy mở cuộc trò chuyện để nhận lịch, từ chối hoặc đề nghị giờ khác.'
+        ),
+        action_label='Xem lịch hẹn',
+    ),
+    Event.INTERVIEW_UPDATED: EventSpec(
+        title='Lịch phỏng vấn vị trí {job_title} đã thay đổi',
+        message='{company_name} đã cập nhật lịch phỏng vấn vị trí {job_title}.',
+        action_label='Xem lịch hẹn',
+    ),
+    Event.INTERVIEW_REMINDER: EventSpec(
+        title='Sắp đến giờ phỏng vấn vị trí {job_title}',
+        message='Bạn có lịch phỏng vấn với {company_name} cho vị trí {job_title} sắp diễn ra.',
+        action_label='Xem lịch hẹn',
+    ),
 }
 
 

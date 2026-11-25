@@ -17,7 +17,7 @@
 > [đặc tả trung tâm trợ giúp — Việc còn mở](../01-phan-tich/dac-ta-trung-tam-tro-giup.md),
 > UI `widgets/candidate-assistant` (đã gỡ 2026-11-14)
 >
-> Biên bản quyết định session: [chatbot-local-decision-log.md](../02-tong-quan/chatbot-local-decision-log.md)
+> Biên bản quyết định session: [chatbot-local-decision-log.md](../archive/decision-log/chatbot-local-decision-log.md)
 
 Tài liệu này mở epic **chatbot ứng viên** sau khi Help Center/FAQ đã có nguồn
 kiến thức đã kiểm duyệt. Mục tiêu release đầu: **trả lời bằng retrieval** từ

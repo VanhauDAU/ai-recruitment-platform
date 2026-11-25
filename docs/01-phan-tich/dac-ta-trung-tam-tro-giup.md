@@ -135,7 +135,7 @@ Frontend sanitize lần nữa bằng `@/shared/lib/sanitize-html` trong renderer
 ## 4. Vòng đời và quyền
 
 Nội dung do admin tự soạn nên không có bước gửi duyệt/duyệt
-([ADR-0024](../02-tong-quan/adr-0024-content-publish-without-review.md)).
+([ADR-0024](../adr/adr-0024-content-publish-without-review.md)).
 
 ```text
 Revision: DRAFT ──xuất bản──► PUBLISHED (bất biến; publish lại bản cũ = rollback)
@@ -143,7 +143,7 @@ Revision: DRAFT ──xuất bản──► PUBLISHED (bất biến; publish l�
 Article:  ACTIVE ⇄ ARCHIVED              (archived luôn bị ẩn public)
 ```
 
-Mọi admin (`AdminPortalPermission`, [ADR-0018](../02-tong-quan/adr-0018-remove-admin-rbac.md))
+Mọi admin (`AdminPortalPermission`, [ADR-0018](../adr/adr-0018-remove-admin-rbac.md))
 dùng được mọi thao tác dưới đây. Backend là nguồn kiểm quyền cuối.
 
 Quy tắc chuyển trạng thái (`services/articles.py`):
@@ -284,7 +284,7 @@ mất dữ liệu. Quy trình bật/tắt nằm ở
   category active, gắn chunk với revision public ID + `content_hash`, re-export
   read function qua `apps.knowledgebase.services`, không lộ `source_reference`
   hay actor. Xem [chatbot ứng viên](../07-algorithms/chatbot-ung-vien-faq.md) và
-  [biên bản quyết định](../02-tong-quan/chatbot-local-decision-log.md).
+  [biên bản quyết định](../archive/decision-log/chatbot-local-decision-log.md).
 - **Phản hồi người đọc:** chưa có endpoint/UI "bài viết có hữu ích không".
 - **Duyệt bốn mắt:** đã bỏ bước duyệt theo ADR-0024. Nếu sau này có nhiều biên
   tập viên, thêm lại như bước tùy chọn có bật/tắt.

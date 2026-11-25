@@ -117,7 +117,7 @@ export default function AiJobGenerationPanel({
     || (createdGeneration?.public_id === generationPublicId ? createdGeneration : null)
   const listErrors = useMemo(() => (
     mode === 'ai_brief'
-      ? ['responsibilities', 'requirements', 'preferred_skills'].map((field) => getGenerationListFieldError(draft[field])).filter(Boolean)
+      ? ['responsibilities', 'requirements', 'preferred_skills', 'benefits'].map((field) => getGenerationListFieldError(draft[field])).filter(Boolean)
       : []
   ), [draft, mode])
   const canGenerate = mode === 'jd_text'

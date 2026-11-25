@@ -86,7 +86,7 @@ còn các use case nghiệp vụ chính:
 
 Mở rộng ngày 2026-11-15: thêm fine-tune mô hình, baseline cho thực nghiệm, kỹ
 năng khớp/thiếu và gợi ý cải thiện CV. Tên các use case không đổi nên sơ đồ giữ
-nguyên. Lộ trình ở [tiến độ dự án](../TIEN-DO-DU-AN.md#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15).
+nguyên. Trạng thái ở [tiến độ dự án](../TIEN-DO-DU-AN.md#aiml-chạy-local); nhật ký thực nghiệm ở [bản lưu trữ](../archive/snapshot/tien-do-den-2026-11-26.md#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15).
 
 - Đối sánh ngữ nghĩa CV–JD chạy và huấn luyện local: bi-encoder đa ngôn ngữ mã
   nguồn mở (`intfloat/multilingual-e5-base`) fine-tune trên máy, pipeline tự xây

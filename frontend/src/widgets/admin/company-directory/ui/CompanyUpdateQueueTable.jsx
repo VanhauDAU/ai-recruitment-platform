@@ -4,6 +4,7 @@ import {
 } from '@ant-design/icons'
 import { Button, Empty, Space, Table, Tag } from 'antd'
 import { getIntlLocale } from '@/shared/config/i18n'
+import { formatDateTime } from '@/shared/lib/date-time'
 
 const CHANGE_FIELD_LABELS = {
   address: 'Địa chỉ',
@@ -41,13 +42,7 @@ const STATUS_PRESENTATION = {
   changes_requested: ['orange', 'Chờ chỉnh sửa'],
 }
 
-function formatDate(value) {
-  if (!value) return 'Chưa gửi'
-  return new Intl.DateTimeFormat(getIntlLocale(), {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  }).format(new Date(value))
-}
+const formatDate = (value) => formatDateTime(value, { fallback: 'Chưa gửi' })
 
 function ChangeSummary({ changes }) {
   const fields = Object.keys(changes || {})

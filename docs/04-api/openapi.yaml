@@ -8782,6 +8782,323 @@ paths:
               schema:
                 $ref: '#/components/schemas/CandidateSearchInvitation'
           description: ''
+  /api/candidate/conversations/:
+    get:
+      operationId: candidate_conversations_list
+      summary: Danh sách hội thoại ProCV Connect, mới nhất trước
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: {}
+          description: ''
+    post:
+      operationId: candidate_conversations_create
+      summary: Mở (hoặc lấy lại) hội thoại về một tin tuyển dụng
+      tags:
+      - messaging
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: {}
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              additionalProperties: {}
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: {}
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/candidate/conversations/{public_id}/:
+    get:
+      operationId: candidate_conversations_retrieve
+      summary: 'Một hội thoại: ngữ cảnh tin, hồ sơ, quyền gửi'
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/candidate/conversations/{public_id}/block/:
+    post:
+      operationId: candidate_conversations_block_create
+      summary: Chặn hoặc gỡ chặn nhắn tin trong cuộc trò chuyện
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BlockRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BlockRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BlockRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/candidate/conversations/{public_id}/clear/:
+    post:
+      operationId: candidate_conversations_clear_create
+      summary: Xóa cuộc trò chuyện phía mình (bên kia giữ nguyên; tin mới hiện lại)
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/candidate/conversations/{public_id}/messages/:
+    get:
+      operationId: candidate_conversations_messages_retrieve
+      summary: 'Tin nhắn theo seq: trang cũ hơn (before) hoặc bù tin (after)'
+      parameters:
+      - in: query
+        name: after
+        schema:
+          type: integer
+          minimum: 0
+      - in: query
+        name: before
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          maximum: 50
+          minimum: 1
+          default: 30
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+    post:
+      operationId: candidate_conversations_messages_create
+      summary: 'Gửi tin: chữ/emoji, thẻ tin (NTD), CV (ứng viên) hoặc tệp (multipart)'
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SendFileRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/candidate/conversations/{public_id}/messages/{message_id}/file/:
+    get:
+      operationId: candidate_conversations_messages_file_retrieve
+      summary: Tệp, ảnh hoặc CV dạng tệp của một tin; ?download=1 để tải về
+      parameters:
+      - in: path
+        name: message_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+          description: ''
+  /api/candidate/conversations/{public_id}/read/:
+    post:
+      operationId: candidate_conversations_read_create
+      summary: Đánh dấu đã đọc tới seq
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReadRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReadRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReadRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/candidate/conversations/applied-jobs/:
+    get:
+      operationId: candidate_conversations_applied_jobs_retrieve
+      summary: Tin đã ứng tuyển (cột phải ProCV Connect) kèm hội thoại đã có
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/candidate/conversations/shareable-cvs/:
+    get:
+      operationId: candidate_conversations_shareable_cvs_retrieve
+      summary: CV của tôi có thể gửi trong hội thoại
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/candidate/conversations/unread-count/:
+    get:
+      operationId: candidate_conversations_unread_count_retrieve
+      summary: Số hội thoại có tin chưa đọc (badge)
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
   /api/candidate/cvs/:
     get:
       operationId: candidate_cvs_list
@@ -9701,6 +10018,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedFollowedCompanyList'
+          description: ''
+  /api/candidate/interviews/{public_id}/respond/:
+    post:
+      operationId: candidate_interviews_respond_create
+      summary: Ứng viên nhận, từ chối hoặc xin đổi giờ phỏng vấn
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterviewRespondRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InterviewRespondRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InterviewRespondRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
           description: ''
   /api/candidate/job-preferences/:
     get:
@@ -12046,11 +12397,35 @@ paths:
   /api/employer/candidate-search/:
     get:
       operationId: employer_candidate_search_retrieve
-      description: 'Kết quả ẩn danh: mã ứng viên, chức danh, kinh nghiệm, học vấn,
-        cấp bậc, ngoại ngữ, kỹ năng trùng với tin, điểm và mức phù hợp. Không có tên,
-        liên hệ, tệp CV hay tên công ty.'
+      description: 'Kết quả ẩn danh: mã ứng viên, chức danh, kinh nghiệm theo chức
+        danh và mốc thời gian, học vấn, cấp bậc, ngoại ngữ, vị trí và tỉnh/thành mong
+        muốn, kỹ năng trùng với tin, điểm và mức phù hợp. Không có tên, liên hệ, tệp
+        CV hay tên công ty.'
       summary: 'Tìm CV: ứng viên đang bật tìm kiếm, xếp theo mức phù hợp với một tin'
       parameters:
+      - in: query
+        name: all_keywords
+        schema:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 80
+          maxItems: 10
+      - in: query
+        name: any_keywords
+        schema:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 80
+          maxItems: 10
+      - in: query
+        name: category
+        schema:
+          type: integer
+          minimum: 1
       - in: query
         name: education
         schema:
@@ -12087,17 +12462,87 @@ paths:
           default: ''
           maxLength: 5
       - in: query
+        name: language_level
+        schema:
+          enum:
+          - basic
+          - conversational
+          - working
+          - professional
+          - native
+          - ''
+          type: string
+          default: ''
+        description: |-
+          * `basic` - basic
+          * `conversational` - conversational
+          * `working` - working
+          * `professional` - professional
+          * `native` - native
+      - in: query
+        name: max_months
+        schema:
+          type: integer
+          maximum: 600
+          minimum: 0
+      - in: query
         name: min_months
         schema:
           type: integer
           maximum: 600
           minimum: 0
       - in: query
+        name: none_keywords
+        schema:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 80
+          maxItems: 10
+      - in: query
         name: page
         schema:
           type: integer
           minimum: 1
           default: 1
+      - in: query
+        name: page_size
+        schema:
+          enum:
+          - 10
+          - 20
+          - 50
+          type: integer
+          default: 20
+        description: |-
+          * `10` - 10
+          * `20` - 20
+          * `50` - 50
+      - in: query
+        name: position_level
+        schema:
+          enum:
+          - employee
+          - team_lead
+          - manager
+          - supervisor
+          - branch_manager
+          - vice_director
+          - director
+          - intern
+          - ''
+          type: string
+          default: ''
+        description: |-
+          * `employee` - employee
+          * `team_lead` - team_lead
+          * `manager` - manager
+          * `supervisor` - supervisor
+          * `branch_manager` - branch_manager
+          * `vice_director` - vice_director
+          * `director` - director
+          * `intern` - intern
       - in: query
         name: province
         schema:
@@ -12110,6 +12555,12 @@ paths:
           default: ''
           maxLength: 80
       - in: query
+        name: school
+        schema:
+          type: string
+          default: ''
+          maxLength: 80
+      - in: query
         name: skills
         schema:
           type: array
@@ -12117,6 +12568,12 @@ paths:
             type: integer
             minimum: 1
           maxItems: 10
+      - in: query
+        name: title
+        schema:
+          type: string
+          default: ''
+          maxLength: 80
       tags:
       - applications
       security:
@@ -13161,6 +13618,439 @@ paths:
               schema:
                 $ref: '#/components/schemas/RecruitmentNeed'
           description: ''
+  /api/employer/conversations/:
+    get:
+      operationId: employer_conversations_list
+      summary: Danh sách hội thoại ProCV Connect, mới nhất trước
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: q
+        schema:
+          type: string
+          maxLength: 100
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: {}
+          description: ''
+    post:
+      operationId: employer_conversations_create
+      summary: Mở (hoặc lấy lại) hội thoại về một tin tuyển dụng
+      tags:
+      - messaging
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: {}
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              additionalProperties: {}
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: {}
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/employer/conversations/{public_id}/:
+    get:
+      operationId: employer_conversations_retrieve
+      summary: 'Một hội thoại: ngữ cảnh tin, hồ sơ, quyền gửi'
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/employer/conversations/{public_id}/block/:
+    post:
+      operationId: employer_conversations_block_create
+      summary: Chặn hoặc gỡ chặn nhắn tin trong cuộc trò chuyện
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BlockRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BlockRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BlockRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/employer/conversations/{public_id}/clear/:
+    post:
+      operationId: employer_conversations_clear_create
+      summary: Xóa cuộc trò chuyện phía mình (bên kia giữ nguyên; tin mới hiện lại)
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/employer/conversations/{public_id}/interviews/:
+    post:
+      operationId: employer_conversations_interviews_create
+      summary: NTD đề xuất lịch phỏng vấn trong hội thoại
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterviewCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InterviewCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InterviewCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/employer/conversations/{public_id}/messages/:
+    get:
+      operationId: employer_conversations_messages_retrieve
+      summary: 'Tin nhắn theo seq: trang cũ hơn (before) hoặc bù tin (after)'
+      parameters:
+      - in: query
+        name: after
+        schema:
+          type: integer
+          minimum: 0
+      - in: query
+        name: before
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          maximum: 50
+          minimum: 1
+          default: 30
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+    post:
+      operationId: employer_conversations_messages_create
+      summary: 'Gửi tin: chữ/emoji, thẻ tin (NTD), CV (ứng viên) hoặc tệp (multipart)'
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SendFileRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/employer/conversations/{public_id}/messages/{message_id}/cv-export/:
+    post:
+      operationId: employer_conversations_messages_cv_export_create
+      summary: NTD yêu cầu PDF của CV dựng bằng trình tạo CV được gửi trong hội thoại
+      parameters:
+      - in: path
+        name: message_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/employer/conversations/{public_id}/messages/{message_id}/cv-export/{export_id}/:
+    get:
+      operationId: employer_conversations_messages_cv_export_retrieve
+      summary: Trạng thái PDF CV được gửi trong hội thoại
+      parameters:
+      - in: path
+        name: export_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: message_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/employer/conversations/{public_id}/messages/{message_id}/cv-export/{export_id}/download/:
+    get:
+      operationId: employer_conversations_messages_cv_export_download_retrieve
+      summary: Tải PDF CV được gửi trong hội thoại
+      parameters:
+      - in: path
+        name: export_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: message_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+          description: ''
+  /api/employer/conversations/{public_id}/messages/{message_id}/file/:
+    get:
+      operationId: employer_conversations_messages_file_retrieve
+      summary: Tệp, ảnh hoặc CV dạng tệp của một tin; ?download=1 để tải về
+      parameters:
+      - in: path
+        name: message_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+          description: ''
+  /api/employer/conversations/{public_id}/read/:
+    post:
+      operationId: employer_conversations_read_create
+      summary: Đánh dấu đã đọc tới seq
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReadRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ReadRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ReadRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/employer/conversations/shareable-jobs/:
+    get:
+      operationId: employer_conversations_shareable_jobs_retrieve
+      summary: Tin đang tuyển của công ty có thể gửi cho ứng viên
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/employer/conversations/unread-count/:
+    get:
+      operationId: employer_conversations_unread_count_retrieve
+      summary: Số hội thoại có tin chưa đọc (badge)
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
   /api/employer/dashboard/:
     get:
       operationId: employer_dashboard_retrieve
@@ -13242,6 +14132,39 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Industry'
+          description: ''
+  /api/employer/interviews/{public_id}/cancel/:
+    post:
+      operationId: employer_interviews_cancel_create
+      summary: NTD hủy lịch phỏng vấn
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterviewCancelRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InterviewCancelRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InterviewCancelRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
           description: ''
   /api/employer/jobs/:
     get:
@@ -14034,29 +14957,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EmployerPhoneChallengeStatus'
-          description: ''
-  /api/employer/phone/check/:
-    get:
-      operationId: employer_phone_check_retrieve
-      description: Compatibility endpoint that validates format without exposing account
-        use.
-      summary: Kiểm tra định dạng số điện thoại nhà tuyển dụng
-      parameters:
-      - in: query
-        name: phone
-        schema:
-          type: string
-        required: true
-      tags:
-      - employer
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PhoneAvailability'
           description: ''
   /api/employer/phone/send-otp/:
     post:
@@ -15696,9 +16596,12 @@ paths:
       - in: query
         name: q
         schema:
-          type: string
-          maxLength: 120
-          minLength: 2
+          oneOf:
+          - type: string
+            maxLength: 120
+            minLength: 2
+          - type: string
+            maxLength: 0
       - in: query
         name: type
         schema:
@@ -16835,10 +17738,13 @@ components:
           minLength: 1
           maxLength: 500
         enforcement_evidence:
-          type: string
-          default: ''
-          maxLength: 500
-          minLength: 20
+          oneOf:
+          - type: string
+            default: ''
+            maxLength: 500
+            minLength: 20
+          - type: string
+            maxLength: 0
         violation_category:
           default: ''
           oneOf:
@@ -16873,10 +17779,13 @@ components:
           default: ''
           maxLength: 500
         enforcement_evidence:
-          type: string
-          default: ''
-          maxLength: 500
-          minLength: 20
+          oneOf:
+          - type: string
+            default: ''
+            maxLength: 500
+            minLength: 20
+          - type: string
+            maxLength: 0
         violation_category:
           default: ''
           oneOf:
@@ -20719,10 +21628,13 @@ components:
           type: string
           maxLength: 255
         slug:
-          type: string
           description: URL /blog/<slug>; auto từ tiêu đề, sửa tay được để tối ưu SEO
-          maxLength: 255
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 255
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         thumbnail_url:
           type: string
           readOnly: true
@@ -20839,10 +21751,13 @@ components:
           type: string
           maxLength: 255
         slug:
-          type: string
           description: URL /blog/<slug>; auto từ tiêu đề, sửa tay được để tối ưu SEO
-          maxLength: 255
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 255
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         thumbnail_url:
           type: string
           readOnly: true
@@ -21096,9 +22011,12 @@ components:
           type: string
           maxLength: 100
         slug:
-          type: string
-          maxLength: 120
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 120
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         is_active:
           type: boolean
           description: Ẩn thẻ khỏi phía ứng viên và form chọn thẻ
@@ -21135,9 +22053,12 @@ components:
           minLength: 1
           maxLength: 100
         slug:
-          type: string
-          maxLength: 120
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 120
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         is_active:
           type: boolean
           description: Ẩn thẻ khỏi phía ứng viên và form chọn thẻ
@@ -23842,9 +24763,12 @@ components:
           type: string
           maxLength: 255
         slug:
-          type: string
-          maxLength: 255
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 255
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         icon:
           type: string
           maxLength: 100
@@ -23880,6 +24804,13 @@ components:
     BlankEnum:
       enum:
       - ''
+    BlockRequest:
+      type: object
+      properties:
+        blocked:
+          type: boolean
+      required:
+      - blocked
     BlogPostStatusEnum:
       enum:
       - draft
@@ -24074,9 +25005,12 @@ components:
           readOnly: true
           nullable: true
         posted_url:
-          type: string
-          format: uri
-          maxLength: 500
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 500
+          - type: string
+            maxLength: 0
         clicks:
           type: integer
           readOnly: true
@@ -24364,8 +25298,11 @@ components:
           type: string
           maxLength: 255
         contact_email:
-          type: string
-          format: email
+          oneOf:
+          - type: string
+            format: email
+          - type: string
+            maxLength: 0
         contact_phone:
           type: string
           maxLength: 20
@@ -24408,8 +25345,11 @@ components:
           type: string
           maxLength: 255
         contact_email:
-          type: string
-          format: email
+          oneOf:
+          - type: string
+            format: email
+          - type: string
+            maxLength: 0
         contact_phone:
           type: string
           maxLength: 20
@@ -24800,6 +25740,9 @@ components:
       - talent_pool_saved
       - job_invitation
       - connection_invitation
+      - interview_scheduled
+      - interview_updated
+      - interview_reminder
       type: string
       description: |-
         * `application_submitted` - Hồ sơ đã được tiếp nhận
@@ -24812,6 +25755,9 @@ components:
         * `talent_pool_saved` - Được lưu vào kho ứng viên tiềm năng
         * `job_invitation` - Lời mời ứng tuyển
         * `connection_invitation` - Lời mời kết nối
+        * `interview_scheduled` - Lịch phỏng vấn mới
+        * `interview_updated` - Lịch phỏng vấn thay đổi
+        * `interview_reminder` - Nhắc lịch phỏng vấn
     CandidatePreferredProvinceRead:
       type: object
       properties:
@@ -25171,9 +26117,12 @@ components:
         has_no_website:
           type: boolean
         email:
-          type: string
-          format: email
-          maxLength: 254
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
         phone:
           type: string
           maxLength: 20
@@ -25926,9 +26875,12 @@ components:
         has_no_website:
           type: boolean
         email:
-          type: string
-          format: email
-          maxLength: 254
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
         phone:
           type: string
           maxLength: 20
@@ -27441,9 +28393,12 @@ components:
           type: string
           maxLength: 255
         slug:
-          type: string
-          maxLength: 255
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 255
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         display_name_vi:
           type: string
           maxLength: 255
@@ -27515,9 +28470,12 @@ components:
           minLength: 1
           maxLength: 255
         slug:
-          type: string
-          maxLength: 255
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 255
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         display_name_vi:
           type: string
           maxLength: 255
@@ -28405,8 +29363,11 @@ components:
         document_sha256:
           type: string
         document_url:
-          type: string
-          format: uri
+          oneOf:
+          - type: string
+            format: uri
+          - type: string
+            maxLength: 0
       required:
       - available
       - document_sha256
@@ -29500,12 +30461,6 @@ components:
         verified_publish_limit:
           type: integer
           minimum: 0
-        free_publish_limit:
-          type: integer
-          minimum: 0
-        free_publish_remain:
-          type: integer
-          minimum: 0
         job_postable:
           type: boolean
         block_reason:
@@ -29518,8 +30473,6 @@ components:
       - candidate_data_access
       - default_deadline_days
       - dpa_status
-      - free_publish_limit
-      - free_publish_remain
       - job_postable
       - job_workspace_ready
       - lifecycle_policy
@@ -29809,6 +30762,8 @@ components:
       - company_content_reverted
       - application_received
       - application_withdrawn
+      - interview_responded
+      - interview_reminder
       - search_invitation_accepted
       - search_invitation_declined
       - application_awaiting_reply
@@ -29846,6 +30801,8 @@ components:
         * `company_content_reverted` - Nội dung trang công ty đã bị hoàn tác
         * `application_received` - Có hồ sơ ứng tuyển mới
         * `application_withdrawn` - Ứng viên đã rút hồ sơ
+        * `interview_responded` - Ứng viên đã phản hồi lịch phỏng vấn
+        * `interview_reminder` - Sắp đến giờ phỏng vấn
         * `search_invitation_accepted` - Ứng viên đồng ý kết nối
         * `search_invitation_declined` - Ứng viên từ chối lời mời kết nối
         * `application_awaiting_reply` - Hồ sơ đang chờ phản hồi
@@ -30237,10 +31194,13 @@ components:
           description: Số điện thoại nhận phản hồi (khách)
           maxLength: 20
         email:
-          type: string
-          format: email
           description: Email nhận phản hồi (để trống nếu không cần phản hồi)
-          maxLength: 254
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
         page_url:
           type: string
           description: Trang người dùng đang xem lúc gửi
@@ -30306,10 +31266,13 @@ components:
           description: Số điện thoại nhận phản hồi (khách)
           maxLength: 20
         email:
-          type: string
-          format: email
           description: Email nhận phản hồi (để trống nếu không cần phản hồi)
-          maxLength: 254
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
         page_url:
           type: string
           description: Trang người dùng đang xem lúc gửi
@@ -30749,9 +31712,12 @@ components:
           type: string
           maxLength: 255
         slug:
-          type: string
-          maxLength: 255
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 255
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
       required:
       - id
       - name
@@ -30784,6 +31750,76 @@ components:
         * `not_shown` - not_shown
         * `preferences_required` - preferences_required
         * `consent_required` - consent_required
+    InterviewCancelRequest:
+      type: object
+      properties:
+        note:
+          type: string
+          default: ''
+          maxLength: 1000
+    InterviewCreateModeEnum:
+      enum:
+      - onsite
+      - online
+      - phone
+      type: string
+      description: |-
+        * `onsite` - Onsite
+        * `online` - Online
+        * `phone` - Phone
+    InterviewCreateRequest:
+      type: object
+      properties:
+        starts_at:
+          type: string
+          format: date-time
+        duration_minutes:
+          type: integer
+          maximum: 480
+          minimum: 15
+          default: 60
+        mode:
+          $ref: '#/components/schemas/InterviewCreateModeEnum'
+        location:
+          type: string
+          default: ''
+          maxLength: 255
+        meeting_url:
+          oneOf:
+          - type: string
+            format: uri
+            default: ''
+            maxLength: 500
+          - type: string
+            maxLength: 0
+        note:
+          type: string
+          default: ''
+          maxLength: 2000
+      required:
+      - mode
+      - starts_at
+    InterviewRespondActionEnum:
+      enum:
+      - accept
+      - decline
+      - reschedule
+      type: string
+      description: |-
+        * `accept` - accept
+        * `decline` - decline
+        * `reschedule` - reschedule
+    InterviewRespondRequest:
+      type: object
+      properties:
+        action:
+          $ref: '#/components/schemas/InterviewRespondActionEnum'
+        note:
+          type: string
+          default: ''
+          maxLength: 1000
+      required:
+      - action
     JobAiBriefRequest:
       type: object
       properties:
@@ -30819,6 +31855,13 @@ components:
             maxLength: 120
           maxItems: 10
         preferred_skills:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 120
+          maxItems: 10
+        benefits:
           type: array
           items:
             type: string
@@ -32643,9 +33686,12 @@ components:
           type: string
           maxLength: 20
         slug:
-          type: string
-          maxLength: 120
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 120
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
       required:
       - code
       - id
@@ -34824,14 +35870,23 @@ components:
           type: string
           maxLength: 50
         portfolio_url:
-          type: string
-          format: uri
+          oneOf:
+          - type: string
+            format: uri
+          - type: string
+            maxLength: 0
         github_url:
-          type: string
-          format: uri
+          oneOf:
+          - type: string
+            format: uri
+          - type: string
+            maxLength: 0
         linkedin_url:
-          type: string
-          format: uri
+          oneOf:
+          - type: string
+            format: uri
+          - type: string
+            maxLength: 0
         position_title:
           type: string
           maxLength: 255
@@ -34956,9 +36011,12 @@ components:
           minLength: 1
           maxLength: 100
         slug:
-          type: string
-          maxLength: 120
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 120
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         is_active:
           type: boolean
           description: Ẩn thẻ khỏi phía ứng viên và form chọn thẻ
@@ -35080,9 +36138,12 @@ components:
           type: boolean
           writeOnly: true
         posted_url:
-          type: string
-          format: uri
-          maxLength: 500
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 500
+          - type: string
+            maxLength: 0
     PatchedCandidateEmailNotificationSettingsRequest:
       type: object
       description: Candidate-owned notification channels (email + website).
@@ -35327,9 +36388,12 @@ components:
           minLength: 1
           maxLength: 255
         slug:
-          type: string
-          maxLength: 255
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 255
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         display_name_vi:
           type: string
           maxLength: 255
@@ -35621,9 +36685,12 @@ components:
           minLength: 1
           maxLength: 255
         phone:
-          type: string
-          pattern: ^(0|\+84)\d{9,10}$
-          maxLength: 20
+          oneOf:
+          - type: string
+            pattern: ^(0|\+84)\d{9,10}$
+            maxLength: 20
+          - type: string
+            maxLength: 0
         preferred_language:
           $ref: '#/components/schemas/PreferredLanguageEnum'
     PatchedRecruiterProfileRequest:
@@ -35845,15 +36912,6 @@ components:
         * `completed` - Hoàn tất
         * `failed` - Thất bại
         * `cancelled` - Đã hủy
-    PhoneAvailability:
-      type: object
-      properties:
-        available:
-          type: boolean
-        detail:
-          type: string
-      required:
-      - available
     PinnedPost:
       type: object
       description: Item khối "Tài liệu hỗ trợ tìm việc" — lấy tiêu đề/slug từ bài
@@ -35887,10 +36945,13 @@ components:
           type: string
           maxLength: 150
         slug:
-          type: string
           description: Dùng cho URL /blog/danh-muc/<slug> và SEO
-          maxLength: 160
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 160
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         description:
           type: string
           description: Mô tả ngắn, dùng cho meta description trang danh mục
@@ -35913,10 +36974,13 @@ components:
           type: string
           maxLength: 255
         slug:
-          type: string
           description: URL /blog/<slug>; auto từ tiêu đề, sửa tay được để tối ưu SEO
-          maxLength: 255
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 255
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         thumbnail_url:
           type: string
           readOnly: true
@@ -35989,10 +37053,13 @@ components:
           type: string
           maxLength: 255
         slug:
-          type: string
           description: URL /blog/<slug>; auto từ tiêu đề, sửa tay được để tối ưu SEO
-          maxLength: 255
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 255
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         excerpt:
           type: string
           readOnly: true
@@ -37137,6 +38204,14 @@ components:
       required:
       - revision_number
       - revision_token
+    ReadRequest:
+      type: object
+      properties:
+        seq:
+          type: integer
+          minimum: 0
+      required:
+      - seq
     RealtimeTicket:
       type: object
       properties:
@@ -37765,10 +38840,16 @@ components:
       enum:
       - cv_save_success
       - account_settings
+      - cv_library
+      - cv_library_banner
+      - cv_search_list
       type: string
       description: |-
         * `cv_save_success` - cv_save_success
         * `account_settings` - account_settings
+        * `cv_library` - cv_library
+        * `cv_library_banner` - cv_library_banner
+        * `cv_search_list` - cv_search_list
     RecruiterVisibilityStatus:
       type: object
       properties:
@@ -38963,6 +40044,48 @@ components:
       description: |-
         * `candidate` - candidate
         * `employer` - employer
+    SendFileRequest:
+      type: object
+      properties:
+        client_id:
+          type: string
+          format: uuid
+          nullable: true
+        file:
+          type: string
+          format: binary
+      required:
+      - file
+    SendMessageKindEnum:
+      enum:
+      - text
+      - job
+      - cv
+      type: string
+      description: |-
+        * `text` - text
+        * `job` - job
+        * `cv` - cv
+    SendMessageRequest:
+      type: object
+      properties:
+        client_id:
+          type: string
+          format: uuid
+          nullable: true
+        kind:
+          allOf:
+          - $ref: '#/components/schemas/SendMessageKindEnum'
+          default: text
+        body:
+          type: string
+          maxLength: 4000
+        job:
+          type: string
+          maxLength: 50
+        cv:
+          type: string
+          maxLength: 50
     SendPhoneOtpRequest:
       type: object
       properties:
@@ -39139,9 +40262,12 @@ components:
           type: string
           maxLength: 255
         slug:
-          type: string
-          maxLength: 255
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 255
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         aliases:
           description: Alternate names for keyword matching, e.g. ["ReactJS", "React.js"]
         group:
@@ -39190,9 +40316,12 @@ components:
           type: string
           maxLength: 255
         slug:
-          type: string
-          maxLength: 255
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 255
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         parent:
           type: integer
           nullable: true
@@ -39436,9 +40565,12 @@ components:
           type: string
           maxLength: 100
         slug:
-          type: string
-          maxLength: 120
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 120
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
       required:
       - name
     TalentPoolAddRequest:

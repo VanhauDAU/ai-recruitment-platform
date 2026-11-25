@@ -10,15 +10,10 @@ import {
   SURFACE_LABELS,
 } from '../model/announcement-options'
 import { getIntlLocale } from '@/shared/config/i18n'
+import { formatDateTime, VN_TIME_ZONE } from '@/shared/lib/date-time'
 
-function formatDate(value, fallback = 'Không giới hạn') {
-  if (!value) return fallback
-  return new Intl.DateTimeFormat(getIntlLocale(), {
-    dateStyle: 'short',
-    timeStyle: 'short',
-    timeZone: 'Asia/Ho_Chi_Minh',
-  }).format(new Date(value))
-}
+const formatDate = (value, fallback = 'Không giới hạn') =>
+  formatDateTime(value, { timeZone: VN_TIME_ZONE, fallback })
 
 function sorterOrder(ordering, field) {
   if (ordering === field) return 'ascend'

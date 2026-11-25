@@ -814,6 +814,12 @@ msgstr "New application received"
 msgid "Ứng viên đã rút hồ sơ"
 msgstr "Candidate withdrew an application"
 
+msgid "Ứng viên đã phản hồi lịch phỏng vấn"
+msgstr "The candidate responded to the interview"
+
+msgid "Sắp đến giờ phỏng vấn"
+msgstr "Interview coming up"
+
 msgid "Ứng viên đồng ý kết nối"
 msgstr "Candidate accepted connection"
 

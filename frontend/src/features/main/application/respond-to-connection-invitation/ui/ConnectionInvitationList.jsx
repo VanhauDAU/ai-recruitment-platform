@@ -1,6 +1,6 @@
 import { MessageOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Skeleton, Tag, Tooltip } from 'antd'
+import { Alert, Button, Skeleton, Tag } from 'antd'
 import { Link } from 'react-router'
 import {
   applicationKeys,
@@ -9,6 +9,8 @@ import {
 } from '@/entities/application/application'
 import { CompanyLogo, companyDetailPath } from '@/entities/company/company'
 import { jobDetailPath } from '@/entities/job/job'
+import { connectPath } from '@/entities/messaging/conversation'
+import { useSiteSettings } from '@/entities/system/site-settings'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { m } from '@/shared/config/i18n'
 import { formatDateTime } from '@/shared/lib/date-time'
@@ -22,13 +24,17 @@ const STATUS_TAGS = {
 }
 
 function InvitationActions({ invitation, pending, onRespond }) {
+  const connectEnabled = useSiteSettings().settings.connect_enabled === true
   if (invitation.status === 'accepted') {
-    // Nhắn tin realtime NTD–ứng viên sẽ làm sau; nút giữ chỗ cho lời mời đã đồng ý.
-    return (
-      <Tooltip title={m.candidate_connections_message_soon()}>
-        <Button icon={<MessageOutlined />} disabled>{m.candidate_connections_message()}</Button>
-      </Tooltip>
-    )
+    // Hội thoại từ lời mời do NTD mở; ứng viên vào hộp thư ProCV Connect để thấy nó.
+    return connectEnabled ? (
+      <Link
+        to={connectPath('candidate')}
+        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-sm font-semibold !text-slate-700 hover:!text-[var(--brand-primary)]"
+      >
+        <MessageOutlined aria-hidden />{m.candidate_connections_message()}
+      </Link>
+    ) : null
   }
   if (invitation.status !== 'pending') return null
   return (

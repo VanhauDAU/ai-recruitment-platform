@@ -1,4 +1,4 @@
-"""Đối sánh CV–JD chạy local và AI tạo tin (Gemini)."""
+"""Đối sánh CV–JD chạy local và AI tạo tin (Gemini hoặc Claude)."""
 
 import json
 
@@ -69,6 +69,10 @@ AI_MODEL_PRICING_USD = config('AI_MODEL_PRICING_USD', default='{}', cast=json.lo
 GEMINI_API_KEY = config('GEMINI_API_KEY', default='').strip()
 GOOGLE_CLOUD_PROJECT = config('GOOGLE_CLOUD_PROJECT', default='').strip()
 GOOGLE_CLOUD_LOCATION = config('GOOGLE_CLOUD_LOCATION', default='global').strip()
+# AI_PROVIDER_BACKEND=anthropic: Claude qua Anthropic API (apps/ai_core/services/providers/claude.py).
+ANTHROPIC_API_KEY = config('ANTHROPIC_API_KEY', default='').strip()
+# Mức suy nghĩ của Claude (low/medium/high/xhigh/max); trống = mặc định của model.
+AI_ANTHROPIC_EFFORT = config('AI_ANTHROPIC_EFFORT', default='').strip()
 
 # Email — nhà cung cấp SMTP tuỳ ý (Gmail, SendGrid, Amazon SES, Mailgun, Postmark...).
 # Chưa điền EMAIL_HOST_USER -> in ra console cho dev; điền credential vào .env là

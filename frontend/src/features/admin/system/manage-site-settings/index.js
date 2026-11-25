@@ -1,7 +1,6 @@
 export * from './api/manage-site-settings.api'
 export { formatSettingValue, isRiskyChange, matchesQuery } from './model/setting-values'
 export { useSettingsForm } from './model/use-settings-form'
-export { default as SettingField } from './ui/SettingField'
 export { default as SettingHistoryDrawer } from './ui/SettingHistoryDrawer'
 export { default as SettingPreviews } from './ui/SettingPreviews'
 export { default as SettingRow } from './ui/SettingRow'

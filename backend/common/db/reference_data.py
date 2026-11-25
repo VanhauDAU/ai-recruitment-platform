@@ -3,8 +3,9 @@
 Dữ liệu ứng dụng cần ngay sau ``migrate`` — section CV, ngành nghề, phúc lợi,
 ngôn ngữ, bài trợ giúp, cấu hình site mặc định — nằm trong
 ``<app>/migrations/reference_data.json`` và được nạp bằng model lịch sử của
-migration, nên không phụ thuộc code model hiện tại. Dữ liệu demo không thuộc
-đây; dùng lệnh ``seed_all``.
+migration, nên không phụ thuộc code model hiện tại. Seed nền và dữ liệu demo
+không thuộc đây; danh sách lệnh seed và thứ tự chạy nằm ở
+``scripts/reset_local_db.sh``.
 """
 
 import json

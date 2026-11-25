@@ -142,7 +142,6 @@ from .profiles import (
     get_or_create_recruiter,
     recruiter_job_posting_entitlement,
     recruiter_job_publication_state,
-    recruiter_posting_readiness,
     recruiter_readiness_state,
 )
 from .recruitment_needs import (
@@ -167,6 +166,7 @@ from .trust_badge import (
 from .upload_validation import (
     EmployerUploadSessionRejected,
     EmployerUploadStructureError,
+    validate_employer_document_file,
     validate_employer_upload_structure,
 )
 from .verification import (
@@ -218,6 +218,7 @@ __all__ = [
     'CandidateDataBlocked',
     'EmployerWorkspaceBlocked',
     'EmployerUploadStructureError',
+    'validate_employer_document_file',
     'DpaPolicyChanged',
     'DpaGraceConflict',
     'DpaPolicyUnavailable',
@@ -266,7 +267,6 @@ __all__ = [
     'recruiter_badge_eligibility',
     'recruiter_job_posting_entitlement',
     'get_or_create_verification_case',
-    'recruiter_posting_readiness',
     'recruiter_readiness_state',
     'lookup_company_tax',
     'lock_company_update_request',

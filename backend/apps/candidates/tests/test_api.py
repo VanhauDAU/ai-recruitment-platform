@@ -533,6 +533,26 @@ class CandidateProfileApiTests(TestCase):
         self.assertFalse(disabled.data['enabled'])
         self.assertEqual(CandidateConsentEvent.objects.count(), 2)
 
+    def test_recruiter_visibility_accepts_every_cv_library_entry_point(self):
+        # Các nguồn frontend gửi (use-cv-recruiter-search, RecruiterSearchListModal):
+        # thiếu một giá trị là bật tìm kiếm ở đó báo "Không thể lưu sự đồng ý".
+        url = '/api/candidate/recruiter-visibility/'
+        for source in ('cv_library', 'cv_library_banner', 'cv_search_list'):
+            with self.subTest(source=source):
+                response = self.client.patch(
+                    url,
+                    {'enabled': True, 'confirmed': True, 'policy_version': 'v1', 'source': source},
+                    format='json',
+                )
+                self.assertEqual(response.status_code, 200, response.data)
+                self.assertEqual(CandidateConsentEvent.objects.latest('id').source, source)
+        unknown = self.client.patch(
+            url,
+            {'enabled': True, 'confirmed': True, 'policy_version': 'v1', 'source': 'nowhere'},
+            format='json',
+        )
+        self.assertEqual(unknown.status_code, 400)
+
     def searchable_cv(self, user, title='CV'):
         return UserCv.objects.create(
             user=user,

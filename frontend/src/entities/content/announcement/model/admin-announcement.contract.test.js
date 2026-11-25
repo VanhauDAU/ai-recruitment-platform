@@ -1,13 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
   ANNOUNCEMENT_AUDIENCES,
-  ANNOUNCEMENT_KINDS,
-  ANNOUNCEMENT_SURFACES,
   latestAnnouncementRevision,
   normalizeAdminAnnouncementDetail,
   normalizeAdminAnnouncementMetrics,
   normalizeAdminAnnouncementPage,
-} from '..'
+} from './admin-announcement.contract'
+import { ANNOUNCEMENT_KINDS, ANNOUNCEMENT_SURFACES } from './announcement.presentation'
 
 describe('admin announcement contract', () => {
   it('normalizes paginated list data without trusting optional aggregates', () => {

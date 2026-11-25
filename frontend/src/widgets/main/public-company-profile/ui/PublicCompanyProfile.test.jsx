@@ -305,7 +305,7 @@ describe('PublicCompanyProfile', () => {
     expect(await within(location).findByRole('option', { name: 'Hà Nội (7)' })).toBeInTheDocument()
     expect(location).toHaveValue('1')
 
-    await user.click(within(jobs).getByTitle('3'))
+    await user.click(within(within(jobs).getByTitle('3')).getByRole('button'))
     expect(screen.getByTestId('location')).toHaveTextContent('/cong-ty/fpt-software?tab=viec-lam&q=react&location=1&page=3')
 
     await user.clear(keyword)

@@ -67,6 +67,17 @@ export default function PostJobForm({
   // Making a job public requires accepting the commitment the backend has in force.
   const responsibilityStatement = postingContext?.responsibility_statement
   const sections = useMemo(() => getJobFormProgress(values), [values])
+  // Danh mục kỹ năng chỉ tải 100 mục đầu: kỹ năng của tin đang sửa hoặc AI gợi ý nằm ngoài
+  // đó vẫn cần tên để ô chọn không hiện ID.
+  const skills = useMemo(() => {
+    const byId = new Map((skillsQuery.data || []).map((item) => [item.id, item]))
+    ;[...(initialValues?.job_skills || []), ...(aiSuggestion?.job_skills || [])].forEach((item) => {
+      if (item.skill != null && item.skill_name && !byId.has(item.skill)) {
+        byId.set(item.skill, { id: item.skill, name: item.skill_name })
+      }
+    })
+    return [...byId.values()]
+  }, [skillsQuery.data, initialValues, aiSuggestion])
 
   useEffect(() => {
     const shouldInitialize = initializedFormRef.current !== form
@@ -247,7 +258,7 @@ export default function PostJobForm({
             active={activeSection === 'expectations'}
             onToggle={() => toggleSection('expectations')}
           >
-            <CandidateExpectationFields form={form} skills={skillsQuery.data || []} languages={languagesQuery.data || []} onCreateSkill={onCreateSkill} />
+            <CandidateExpectationFields form={form} skills={skills} languages={languagesQuery.data || []} onCreateSkill={onCreateSkill} />
           </JobFormSection>
           <JobFormSection
             id="application"
@@ -323,7 +334,7 @@ export default function PostJobForm({
           domainNames={domainNames}
           campaignName={selectedCampaign?.name}
           provinces={provincesQuery.data || []}
-          skills={skillsQuery.data || []}
+          skills={skills}
           languages={languagesQuery.data || []}
           benefitNames={benefitNames}
         />

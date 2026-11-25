@@ -19,9 +19,14 @@ def verify_request_captcha(request, action):
 
 
 def _hostname_allowed(hostname):
-    """Production chỉ nhận token phát cho đúng tên miền trong ALLOWED_HOSTS."""
-    if not settings.IS_PRODUCTION or not hostname:
+    """Production chỉ nhận token phát cho đúng tên miền trong ALLOWED_HOSTS.
+
+    Thiếu hostname cũng bị từ chối: reCAPTCHA v3 luôn trả trường này.
+    """
+    if not settings.IS_PRODUCTION:
         return True
+    if not hostname:
+        return False
     return any(
         hostname == host or (host.startswith('.') and hostname.endswith(host))
         for host in settings.ALLOWED_HOSTS

@@ -28,11 +28,6 @@ export async function completeEmployerRegistration(payload) {
   return data
 }
 
-export async function checkEmployerPhoneAvailability(phone) {
-  const { data } = await api.get('/employer/phone/check/', { params: { phone } })
-  return data
-}
-
 export async function sendEmployerPhoneOtp(phone, password) {
   const { data } = await api.post('/employer/phone/send-otp/', { phone, password })
   return data

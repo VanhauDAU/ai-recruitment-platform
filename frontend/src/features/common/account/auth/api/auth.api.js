@@ -86,10 +86,13 @@ export async function login({ email, password, captcha_token, portal }) {
 
 // ---- Social login (OAuth) ----
 
-// URL bắt đầu luồng OAuth (full-page redirect sang backend -> provider).
-export function oauthStartUrl(provider, { portal = 'main', next = '' } = {}) {
+// URL bắt đầu luồng OAuth (backend -> provider). `mode: 'popup'` + `nonce`: trang
+// callback phát kết quả về cửa sổ gốc thay vì tự đăng nhập (xem model/oauth-popup).
+export function oauthStartUrl(provider, { portal = 'main', next = '', mode, nonce } = {}) {
   const params = new URLSearchParams({ portal })
   if (next) params.set('next', next)
+  if (mode) params.set('mode', mode)
+  if (nonce) params.set('nonce', nonce)
   return `${api.defaults.baseURL}/auth/oauth/${provider}/start/?${params}`
 }
 

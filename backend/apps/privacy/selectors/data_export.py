@@ -7,6 +7,7 @@ from apps.candidates.models import CandidateProfile
 from apps.cvs.models import UserCv
 from apps.employers.models import CompanyFollow, RecruiterProfile
 from apps.jobs.models import Job, SavedJob
+from apps.messaging.selectors import personal_messages
 
 EXPORT_FORMAT_VERSION = 1
 
@@ -107,6 +108,7 @@ def _employer_section(user):
 def build_personal_data_export(user):
     """Dữ liệu cá nhân của một tài khoản, dạng dict sẵn sàng tuần tự hóa JSON."""
     section = _candidate_section(user) if user.is_candidate else _employer_section(user)
+    section['connect_messages'] = personal_messages(user)
     return {
         'format_version': EXPORT_FORMAT_VERSION,
         'generated_at': timezone.now(),

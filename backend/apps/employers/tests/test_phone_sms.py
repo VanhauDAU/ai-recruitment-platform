@@ -456,7 +456,7 @@ class SmsLiveWorkflowApiTests(APITestCase):
         self.profile.refresh_from_db()
         self.assertEqual(self.profile.verified_phone, '+84987654321')
 
-    def test_availability_is_generic_and_challenge_is_not_visible_to_other_actor(self):
+    def test_challenge_is_not_visible_to_other_actor(self):
         other = User.objects.create_user(
             email='sms-other@example.com',
             password='Password@123',
@@ -467,13 +467,6 @@ class SmsLiveWorkflowApiTests(APITestCase):
             verified_phone='+84912345678',
             phone_verified_at=timezone.now(),
         )
-        availability = self.client.get(
-            reverse('employer-phone-check'),
-            {'phone': '0912345678'},
-        )
-        self.assertEqual(availability.status_code, status.HTTP_200_OK)
-        self.assertEqual(availability.data, {'available': True})
-
         challenge = self._start('0987654321')
         self.client.force_authenticate(user=other)
         response = self.client.get(reverse('employer-phone-challenge', args=[challenge.public_id]))

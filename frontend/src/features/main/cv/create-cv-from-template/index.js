@@ -1,4 +1,3 @@
-export { createCvFromTemplate } from './api/create-cv.api'
 export { useCvSource } from './model/use-cv-source'
 export { default as UseTemplateModal } from './ui/UseTemplateModal'
 export { default as CvSourcePanel } from './ui/CvSourcePanel'

@@ -75,7 +75,7 @@ describe('ChannelSocialPosts', () => {
     expect(within(list).getAllByRole('listitem')).toHaveLength(3)
     expect(screen.getByText('Bài số 1')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('listitem', { name: '2' }))
+    await user.click(within(screen.getByRole('listitem', { name: '2' })).getByRole('button'))
     expect(within(screen.getByRole('list', { name: /Fanpage Facebook/ })).getAllByRole('listitem')).toHaveLength(2)
     expect(screen.getByText('Bài số 4')).toBeInTheDocument()
     expect(screen.queryByText('Bài số 1')).not.toBeInTheDocument()

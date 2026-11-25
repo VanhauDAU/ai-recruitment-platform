@@ -13,7 +13,7 @@ import { adminPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
 import ContentChangeDiff from './ContentChangeDiff'
 import './content-change-queue.css'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { formatDateTime } from '@/shared/lib/date-time'
 
 const EMPTY_PAGE = { count: 0, results: [] }
 const PAGE_SIZE = 20
@@ -39,9 +39,7 @@ const STATUS_OPTIONS = [
   { value: 'all', label: 'Tất cả' },
 ]
 
-function formatDate(value) {
-  return value ? new Intl.DateTimeFormat(getIntlLocale(), { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)) : '—'
-}
+const formatDate = (value) => formatDateTime(value, { dateStyle: 'medium' })
 
 function RevertModal({ change, loading, onCancel, onSubmit }) {
   const [form] = Form.useForm()

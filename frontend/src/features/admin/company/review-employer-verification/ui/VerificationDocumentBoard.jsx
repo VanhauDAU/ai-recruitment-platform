@@ -14,7 +14,7 @@ import { CheckOutlined, HolderOutlined, MoreOutlined, WarningOutlined } from '@a
 import { Button, Dropdown, Empty } from 'antd'
 import { useState } from 'react'
 import { documentStatusMeta } from '@/entities/company/admin-employer-verification'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { formatDateTime } from '@/shared/lib/date-time'
 
 const COLUMNS = [
   { status: 'pending', label: 'Chờ duyệt', acceptsDrop: false },
@@ -25,13 +25,7 @@ const COLUMNS = [
 
 const REVIEW_DECISIONS = COLUMNS.filter((column) => column.acceptsDrop)
 
-function formatDate(value) {
-  if (!value) return 'Chưa có ngày nộp'
-  return new Intl.DateTimeFormat(getIntlLocale(), {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  }).format(new Date(value))
-}
+const formatDate = (value) => formatDateTime(value, { fallback: 'Chưa có ngày nộp' })
 
 function DocumentCard({ document, selected, canReview, saving, onSelect, onDecision }) {
   const draggable = useDraggable({

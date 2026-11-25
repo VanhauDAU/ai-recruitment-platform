@@ -5,7 +5,10 @@ nhận diện trong phạm vi một tài khoản/cổng bằng IP và User-Agent
 từ cùng dấu hiệu sẽ cập nhật phiên có sẵn thay vì thêm dòng mới. `id` được nhúng
 vào JWT dưới claim ``sid``. Refresh xoay vòng cập nhật ``refresh_jti``; access
 token bị từ chối ngay khi phiên revoked, idle/absolute-expired hoặc tài khoản
-không còn được phép truy cập.
+không còn được phép truy cập. Ngưỡng idle/absolute khác nhau theo cổng
+(``session_policy``) và được kiểm ở CẢ access lẫn refresh: frontend chỉ refresh
+khi gặp 401, nên nếu refresh không kiểm idle thì access token hết hạn trước ngưỡng
+idle sẽ luôn được làm mới và phiên không bao giờ hết hạn vì không hoạt động.
 """
 
 from datetime import timedelta
@@ -28,6 +31,7 @@ from common.http.client_ip import client_ip as _client_ip
 from ..models import AuthSession
 from .admin_audit import record_admin_self_action
 from .refresh_cookies import refresh_from_request
+from .session_policy import policy_for
 
 SID_CLAIM = 'sid'
 AUTH_REVISION_CLAIM = 'auth_rev'
@@ -116,6 +120,7 @@ def start_session(user, refresh, request, *, auth_method='password'):
     client_ip = _client_ip(request)
     user_agent = _user_agent(request)[:400]
     now = timezone.now()
+    expires_at = now + policy_for(user.role).max_age
     new_jti = refresh[api_settings.JTI_CLAIM]
 
     with transaction.atomic():
@@ -148,7 +153,7 @@ def start_session(user, refresh, request, *, auth_method='password'):
             session.device_label = parse_device_label(user_agent)
             session.last_seen_at = now
             session.reauthenticated_at = now
-            session.expires_at = now + api_settings.REFRESH_TOKEN_LIFETIME
+            session.expires_at = expires_at
             session.save(
                 update_fields=[
                     'refresh_jti',
@@ -170,7 +175,7 @@ def start_session(user, refresh, request, *, auth_method='password'):
                 device_label=parse_device_label(user_agent),
                 user_agent=user_agent,
                 ip_address=client_ip,
-                expires_at=now + api_settings.REFRESH_TOKEN_LIFETIME,
+                expires_at=expires_at,
             )
     refresh[SID_CLAIM] = str(session.id)
     return session
@@ -188,22 +193,31 @@ def rotate_session(session, new_refresh_str):
     return session
 
 
-def locked_refresh_session(*, sid, user_id, refresh_jti, auth_revision):
-    """Lock and return the exact live session represented by a refresh JWT."""
+def locked_refresh_session(*, sid, user, refresh_jti, auth_revision):
+    """Lock and return the exact live session represented by a refresh JWT.
+
+    A session past its portal's idle timeout is revoked here and ``None`` is
+    returned, exactly as an access token would be refused.
+    """
     if not sid:
         return None
-    return (
+    now = timezone.now()
+    session = (
         AuthSession.objects.select_for_update()
         .filter(
             id=sid,
-            user_id=user_id,
+            user=user,
             refresh_jti=refresh_jti,
             auth_revision=auth_revision,
             revoked_at__isnull=True,
-            expires_at__gt=timezone.now(),
+            expires_at__gt=now,
         )
         .first()
     )
+    if session is not None and policy_for(user.role).is_idle(session.last_seen_at, now):
+        revoke_session(session)
+        return None
+    return session
 
 
 def is_session_live(*, sid, user, auth_revision):
@@ -223,9 +237,9 @@ def is_session_live(*, sid, user, auth_revision):
         revoked_at__isnull=True,
         expires_at__gt=now,
     )
-    idle_timeout = settings.AUTH_SESSION_IDLE_TIMEOUT_SECONDS
-    if idle_timeout > 0:
-        sessions = sessions.filter(last_seen_at__gt=now - timedelta(seconds=idle_timeout))
+    idle_timeout = policy_for(user.role).idle_timeout
+    if idle_timeout is not None:
+        sessions = sessions.filter(last_seen_at__gt=now - idle_timeout)
     return sessions.exists()
 
 
@@ -245,8 +259,7 @@ def active_session_for_access(*, sid, user, auth_revision):
         return None
 
     now = timezone.now()
-    idle_timeout = settings.AUTH_SESSION_IDLE_TIMEOUT_SECONDS
-    if idle_timeout > 0 and session.last_seen_at <= now - timedelta(seconds=idle_timeout):
+    if policy_for(user.role).is_idle(session.last_seen_at, now):
         revoke_session(session)
         return None
 

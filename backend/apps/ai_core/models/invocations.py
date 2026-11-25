@@ -15,6 +15,7 @@ class AiInvocation(models.Model):
     class ProviderBackend(models.TextChoices):
         GEMINI_DEVELOPER = 'gemini_developer', 'Gemini Developer API'
         VERTEX = 'vertex', 'Vertex AI'
+        ANTHROPIC = 'anthropic', 'Anthropic Claude API'
 
     use_case = models.CharField(max_length=64)
     correlation_key = models.CharField(max_length=128, blank=True)

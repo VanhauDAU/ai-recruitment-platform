@@ -197,6 +197,20 @@ export function subscribeRealtime(listener) {
   }
 }
 
+/**
+ * Gửi một tin JSON lên socket chung nếu đang mở; trả `false` khi không gửi được.
+ * Chỉ dành cho tín hiệu nhẹ có thể mất (vd "đang gõ"), không thay cho REST.
+ */
+export function sendRealtime(message) {
+  if (!socket || socket.readyState !== 1) return false
+  try {
+    socket.send(JSON.stringify(message))
+    return true
+  } catch {
+    return false
+  }
+}
+
 export function getRealtimeStatus() {
   return status
 }

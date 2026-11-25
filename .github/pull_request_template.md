@@ -33,6 +33,12 @@
 
 <!-- Dán lệnh và kết quả thực tế; bổ sung regression/manual evidence khi phù hợp. -->
 
+## Tài liệu
+
+- [ ] Mục mới trong `CHANGELOG.md`
+- [ ] Tài liệu nguồn của chủ đề đã cập nhật (đặc tả, ADR, runbook) hoặc không cần
+- [ ] `docs/TIEN-DO-DU-AN.md` chỉ sửa nếu trạng thái module hoặc việc đang mở đổi
+
 ## Screenshots
 
 <!-- Đính kèm trước/sau cho thay đổi UI; ghi "Không áp dụng" nếu không có UI. -->

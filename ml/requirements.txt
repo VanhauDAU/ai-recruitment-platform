@@ -3,7 +3,7 @@
 #   python3.11 -m venv ml/.venv && ml/.venv/bin/pip install -r ml/requirements.txt
 torch==2.15.0
 sentence-transformers==6.3.0
-transformers==5.23.0
+transformers==5.24.0
 datasets==5.2.0
 accelerate==1.15.0
 # Đọc tệp nhập tin tuyển dụng ml/data/jd/jd_input.xlsx

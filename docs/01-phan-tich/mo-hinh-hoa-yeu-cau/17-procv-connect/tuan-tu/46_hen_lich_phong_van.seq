@@ -1,0 +1,47 @@
+title Sơ đồ tuần tự chức năng hẹn lịch phỏng vấn qua ProCV Connect
+actor NTD Nhà tuyển dụng
+participant FE Giao diện web\n(React)
+participant BE Máy chủ API\n(Django REST)
+database DB CSDL\n(PostgreSQL)
+queue RT Kênh realtime\n(Channels + Redis)
+queue Q Worker nền\n(Celery + SMTP)
+actor UV Ứng viên
+NTD -> FE : Bấm "Đặt lịch phỏng vấn", nhập giờ, thời lượng, hình thức, địa điểm hoặc link, ghi chú
+FE -> BE : POST /api/employer/conversations/{id}/interviews/
+BE -> BE : Kiểm tra người phụ trách tin, hồ sơ hiện hành chưa có kết quả, thời gian ở tương lai
+alt Không hợp lệ
+BE --> FE : 400 lỗi theo trường
+else Hợp lệ
+opt Hồ sơ chưa ở "Phỏng vấn" (Mới, Đã xem, Phù hợp)
+BE -> DB : change_application_status → "Phỏng vấn" (lịch sử), báo ứng viên ngay một thông báo trỏ vào hội thoại
+end
+BE -> DB : Lịch đang chờ, xin đổi giờ hoặc đã nhận chưa diễn ra chuyển "superseded"; tạo InterviewAppointment (proposed) và Message kind interview
+BE ->> RT : chat.message.created (sau commit)
+RT ->> UV : Thẻ lịch hẹn với nút Chấp nhận, Từ chối, Đề nghị giờ khác
+BE --> FE : 201 lịch hẹn
+UV -> BE : POST /api/candidate/interviews/{id}/respond/ {action, note}
+BE -> DB : Khóa lịch hẹn, kiểm tra còn "proposed"
+alt Chấp nhận
+BE -> DB : Trạng thái accepted, ghi Application.interview_ended_at = giờ bắt đầu + thời lượng, tin hệ thống
+BE ->> Q : Email kèm tệp .ics cho hai bên
+else Từ chối
+BE -> DB : Trạng thái declined kèm lý do, tin hệ thống
+else Đề nghị giờ khác
+BE -> DB : Trạng thái reschedule_requested kèm giờ mong muốn, tin hệ thống
+NTD -> FE : Bấm "Đổi giờ" trên thẻ: form điền sẵn chi tiết cũ, chọn giờ mới, gửi lại (quay về đầu luồng)
+end
+BE ->> RT : chat.message.updated và chat.message.created tới hai bên
+RT ->> NTD : Thẻ lịch hẹn đổi trạng thái, chuông thông báo
+opt Lịch đã chấp nhận
+Q -> DB : Beat mỗi 5 phút lấy lịch còn 24 giờ hoặc 1 giờ chưa nhắc
+Q ->> UV : Thông báo và email nhắc lịch
+Q ->> NTD : Thông báo và email nhắc lịch
+end
+opt Qua giờ hẹn
+FE --> NTD : Thẻ "Đã diễn ra" với nút Trúng tuyển, Không phù hợp
+NTD -> BE : POST /api/employer/applications/{id}/status/ (cửa sổ hoàn tác 15 giây)
+end
+opt Quá N ngày (mặc định 3) sau buổi hẹn chưa có kết quả
+Q ->> NTD : Nhắc một lần (chuông + email); ứng viên được bấm "Nhắc NTD"
+end
+end

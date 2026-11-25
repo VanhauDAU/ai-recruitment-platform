@@ -99,9 +99,6 @@ class ManagedAccountSerializer(serializers.ModelSerializer):
                 'company_role': recruiter.company_role,
                 'company_role_label': recruiter.get_company_role_display(),
                 'initial_onboarding': initial_onboarding,
-                # Compatibility for admin clients that have not moved to the
-                # explicit initial_onboarding object yet.
-                'onboarding_completed': initial_onboarding['completed'],
                 'phone_verified': recruiter.has_verified_phone,
                 'next_action': next_action,
                 'verification': (

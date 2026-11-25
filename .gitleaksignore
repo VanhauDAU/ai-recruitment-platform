@@ -23,3 +23,4 @@ c912c1a255a445faade9a5b3f2e38ed3c5398394:frontend/src/features/accept-admin-invi
 d13d016b6e4bddb4c6beaa3f2edcf1f9907aabad:backend/apps/cv_templates/management/commands/_cv_template_catalog.py:generic-api-key:200
 d13d016b6e4bddb4c6beaa3f2edcf1f9907aabad:frontend/src/entities/cv/ui/CvDocumentPreview.test.jsx:generic-api-key:136
 d7c13cdded77df6c4bd0bb9474103ab32d928820:.github/workflows/backend-ci.yml:generic-api-key:291
+5856008efe5dd149111c407c2428df1855abea5e:.github/workflows/backend-ci.yml:generic-api-key:83

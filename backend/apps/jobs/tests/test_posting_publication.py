@@ -182,7 +182,7 @@ class JobPublicationTests(JobPostingFixture, TestCase):
 
         context = employer_job_posting_context(self.user)
         self.assertEqual(context['published_jobs_count'], 3)
-        self.assertEqual(context['free_publish_remain'], 0)
+        self.assertEqual(context['publish_remain'], 0)
         self.assertFalse(context['job_postable'])
         with self.assertRaises(ValidationError) as error:
             publish_job(draft, self.user, **ACCEPTED)

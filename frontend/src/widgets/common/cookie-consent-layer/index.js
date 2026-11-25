@@ -1,1 +1,1 @@
-export { default as CookieConsentLayer } from './CookieConsentLayer'
+export { default as CookieConsentLayer } from './ui/CookieConsentLayer'

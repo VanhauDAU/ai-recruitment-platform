@@ -1,0 +1,15 @@
+{% extends "candidates/email/_layout.html" %}
+{% load i18n %}
+{% block body %}
+  <p style="margin-top:0">{% blocktranslate trimmed with company=company_name %}Xin chào nhà tuyển dụng <strong>{{ company }}</strong>,{% endblocktranslate %}</p>
+  <div style="margin:0 0 18px;padding:16px 18px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0">
+    <div style="font-size:17px;font-weight:800;color:#0f172a">{% translate "Ứng viên đang chờ kết quả phỏng vấn" %}</div>
+    <p style="margin:8px 0 0;line-height:1.6;color:#334155">
+      {% blocktranslate trimmed with job=job_title total=count %}
+      {{ total }} ứng viên đã phỏng vấn vị trí <strong>{{ job }}</strong> chưa nhận được kết quả.
+      {% endblocktranslate %}
+    </p>
+  </div>
+  <p style="margin:0 0 18px;line-height:1.6">{% translate "Cập nhật Trúng tuyển hoặc Không phù hợp để ứng viên không phải chờ." %}</p>
+  <p style="margin:0"><a href="{{ action_url }}" style="display:inline-block;padding:11px 18px;border-radius:8px;background:{{ brand.primary_color }};color:#fff;text-decoration:none;font-weight:700">{% translate "Cập nhật kết quả" %}</a></p>
+{% endblock %}

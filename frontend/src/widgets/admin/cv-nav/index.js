@@ -1,1 +1,1 @@
-export { default as AdminCvShell, AdminCvNav } from './ui/AdminCvShell'
+export { default as AdminCvShell } from './ui/AdminCvShell'

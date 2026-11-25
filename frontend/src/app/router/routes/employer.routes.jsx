@@ -22,6 +22,7 @@ import {
   EmployerCampaignDetailPage,
   EmployerCampaignSetupPage,
   EmployerCampaignListPage,
+  EmployerConnectPage,
   EmployerContactPage,
   EmployerConsultingNeedPage,
   EmployerDashboardPage,
@@ -42,9 +43,9 @@ import {
   EmployerRegisterPage,
   EmployerServicesPage,
   EmployerVerifyPage,
-} from '../lazy/employer.pages'
-import { ForgotPasswordPage, OAuthCallbackPage, ResetPasswordPage, VerifyEmailPage } from '../lazy/main.pages'
-import { DashboardLayout, EmployerAuthLayout, EmployerMarketingLayout, EmployerSetupLayout } from '../lazy/layouts'
+} from '../lazy/employer.pages.js'
+import { ForgotPasswordPage, OAuthCallbackPage, ResetPasswordPage, VerifyEmailPage } from '../lazy/main.pages.js'
+import { DashboardLayout, EmployerAuthLayout, EmployerMarketingLayout, EmployerSetupLayout } from '../lazy/layouts.js'
 
 export function employerRoutes() {
   return [
@@ -139,6 +140,8 @@ export function employerRoutes() {
                 <Route path={employerAppPath('/candidate-blocks')} element={<EmployerCandidateBlocksPage />} />
                 <Route path={employerAppPath('/talent-pool')} element={<EmployerTalentPoolPage />} />
                 <Route path={employerAppPath('/candidate-search')} element={<EmployerCandidateSearchPage />} />
+                <Route path={employerAppPath('/connect')} element={<EmployerConnectPage />} />
+                <Route path={employerAppPath('/connect/:conversationId')} element={<EmployerConnectPage />} />
               </Route>
             </Route>
           </Route>

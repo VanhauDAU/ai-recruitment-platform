@@ -20,7 +20,7 @@ else Sạch
 WK -> DB : Phiên = clean, tạo UploadAsset
 end
 end
-FE -> BE : POST /api/v2/cvs/imports/ {upload_session | file, template, language} (Idempotency-Key)
+FE -> BE : POST /api/candidate/cvs/imports/ {upload_session | file, template, language} (Idempotency-Key)
 BE -> BE : Kiểm tra chữ ký tệp PDF/DOCX, dung lượng
 alt Tệp không hợp lệ
 BE --> FE : 400 "Tệp phải là PDF hoặc DOCX hợp lệ"
@@ -48,7 +48,7 @@ WK -> DB : UserCv = analyzed, CvImportJob = completed
 end
 end
 loop Mỗi giây, tối đa 60 giây
-FE -> BE : GET /api/v2/cvs/{cv}/
+FE -> BE : GET /api/candidate/cvs/{cv}/
 BE --> FE : processing_status
 end
 alt analyzed

@@ -1,4 +1,4 @@
-"""Đo độ phân biệt và mốc hiệu chuẩn của các phép so ngữ nghĩa (kế hoạch mục 5).
+"""Đo độ phân biệt và mốc hiệu chuẩn của các phép so ngữ nghĩa.
 
 So cặp khớp mạnh (CV `strong` với tin neo) với cặp khác ngành (mỗi CV với vài tin
 thuộc nhóm ngành khác) theo bốn phép đo, kèm AUC:

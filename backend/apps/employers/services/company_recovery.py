@@ -20,6 +20,7 @@ from apps.accounts.services import (
 )
 from apps.campaigns.models import RecruitmentCampaign
 from apps.jobs.models import Job
+from apps.realtime.services import notify_admin_queue
 from common.i18n import recipient_language
 
 from ..models import (
@@ -199,6 +200,9 @@ def _withdraw_unapproved_evidence(user, verification_case, company, *, actor, ev
         is_current=False
     )
     _open_update_requests(user, company).update(status=CompanyUpdateRequest.Status.CANCELLED)
+    # Bulk updates send no signal for the admin queue receivers.
+    notify_admin_queue('recruiter_verification')
+    notify_admin_queue('company_updates')
     if verification_case is None:
         return
     previous_status = verification_case.status

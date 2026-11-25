@@ -1,4 +1,4 @@
-# ProCV mascot
+# Mascot ProCV
 
 ## Trạng thái phase 1
 

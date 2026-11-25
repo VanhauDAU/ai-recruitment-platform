@@ -11,15 +11,9 @@ import {
   VALUE_LABELS,
 } from '../model/company-update-fields'
 import TaxLookupEvidenceCard from './TaxLookupEvidenceCard'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { formatDateTime } from '@/shared/lib/date-time'
 
-function formatDate(value) {
-  if (!value) return 'Chưa có'
-  return new Intl.DateTimeFormat(getIntlLocale(), {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  }).format(new Date(value))
-}
+const formatDate = (value) => formatDateTime(value, { fallback: 'Chưa có' })
 
 function displayValue(field, value, industryLabels) {
   if (value === null || value === undefined || value === '') return 'Chưa có'

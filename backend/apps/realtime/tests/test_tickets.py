@@ -1,7 +1,6 @@
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
-from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APITestCase
@@ -40,6 +39,19 @@ class RealtimeTicketTests(APITestCase):
         self.assertEqual(identity.sid, str(AuthSession.objects.get(user=self.user).id))
         self.assertIsNone(redeem_ticket(ticket))
 
+    def test_only_admin_accounts_join_the_admin_group(self):
+        self.assertFalse(redeem_ticket(self.ticket()).is_admin)
+
+        self.user.role = User.Role.ADMIN
+        self.user.save(update_fields=['role'])
+        self.assertTrue(redeem_ticket(self.ticket()).is_admin)
+
+    def test_role_change_closes_open_sockets(self):
+        identity = redeem_ticket(self.ticket())
+        User.objects.filter(pk=self.user.pk).update(role=User.Role.ADMIN)
+
+        self.assertFalse(identity_is_authorized(identity))
+
     def test_unknown_or_oversized_tickets_are_refused(self):
         self.assertIsNone(redeem_ticket(''))
         self.assertIsNone(redeem_ticket('nope'))
@@ -63,16 +75,15 @@ class RealtimeTicketTests(APITestCase):
 
         self.assertFalse(identity_is_authorized(identity))
 
-    @override_settings(AUTH_SESSION_IDLE_TIMEOUT_SECONDS=600)
     def test_an_open_socket_does_not_keep_an_idle_session_alive(self):
         identity = redeem_ticket(self.ticket())
         session = AuthSession.objects.get(user=self.user)
         AuthSession.objects.filter(pk=session.pk).update(
-            last_seen_at=timezone.now() - timedelta(seconds=601)
+            last_seen_at=timezone.now() - timedelta(minutes=61)
         )
 
         self.assertFalse(identity_is_authorized(identity))
         session.refresh_from_db()
         # The check is read-only: it neither revokes nor refreshes the session.
         self.assertIsNone(session.revoked_at)
-        self.assertLess(session.last_seen_at, timezone.now() - timedelta(seconds=600))
+        self.assertLess(session.last_seen_at, timezone.now() - timedelta(minutes=60))

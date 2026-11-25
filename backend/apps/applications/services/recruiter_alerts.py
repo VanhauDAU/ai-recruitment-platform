@@ -16,7 +16,7 @@ from apps.accounts.services import is_account_accessible
 from apps.candidates.services import email_brand_context
 from apps.employers.models import EmployerNotification
 from apps.employers.services import emit_employer_event, new_application_email_enabled
-from apps.jobs.models import JobApplicationContact
+from apps.jobs.models import Job, JobApplicationContact
 from apps.sitecontent.selectors import business_emails_enabled, email_sender, get_bool_setting
 from common.email import send_html_email
 from common.i18n import recipient_language
@@ -142,3 +142,45 @@ def _send_new_application_email(application):
             **email_sender(),
         )
     return len(recipients)
+
+
+def send_interview_decision_email(job_id, application_ids):
+    """Email nhắc NTD ra kết quả phỏng vấn; chỉ tên vị trí và số ứng viên, không dữ liệu cá nhân."""
+    # Import muộn: reminders → applications → recruiter_alerts tạo vòng lúc nạp module.
+    from .reminders import reminder_recipients
+
+    job = Job.objects.select_related('company', 'posted_by').filter(pk=job_id).first()
+    if job is None or not (business_emails_enabled() and application_ids):
+        return 0
+    count = Application.objects.filter(
+        pk__in=application_ids, job=job, status=Application.Status.INTERVIEWED, is_current=True
+    ).count()
+    if not count:
+        return 0
+    base = settings.EMPLOYER_FRONTEND_URL.rstrip('/')
+    sent = 0
+    for recipient in reminder_recipients(job):
+        if not (is_account_accessible(recipient) and recipient.email):
+            continue
+        with recipient_language(recipient):
+            brand = email_brand_context()
+            context = {
+                'brand': brand,
+                'site_name': brand['site_name'],
+                'title': _('Ứng viên đang chờ kết quả phỏng vấn vị trí %(job)s')
+                % {'job': job.title},
+                'job_title': job.title,
+                'company_name': job.company.company_name,
+                'count': count,
+                'action_url': f'{base}/tuyendung/app/applications?job={job.public_id}',
+                'email_settings_url': f'{base}{EMPLOYER_SETTINGS_PATH}',
+            }
+            send_html_email(
+                subject=f'{context["title"]} · {brand["site_name"]}',
+                text=render_to_string('applications/email/interview_result_pending.txt', context),
+                html=render_to_string('applications/email/interview_result_pending.html', context),
+                to=recipient.email,
+                **email_sender(),
+            )
+        sent += 1
+    return sent

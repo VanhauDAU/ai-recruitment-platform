@@ -222,7 +222,6 @@
   "candidate_connections_status_accepted": "Accepted",
   "candidate_connections_status_declined": "Declined",
   "candidate_connections_message": "Message",
-  "candidate_connections_message_soon": "Messaging is coming soon",
   "candidate_connections_accepted_toast": "You accepted the employer's connection request.",
   "candidate_connections_declined_toast": "Invitation declined.",
   "candidate_connections_respond_failed": "Could not send your reply.",

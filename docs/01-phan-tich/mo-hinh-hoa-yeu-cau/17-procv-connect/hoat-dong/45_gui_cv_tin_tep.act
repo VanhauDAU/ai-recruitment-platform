@@ -1,0 +1,37 @@
+title Sơ đồ hoạt động chức năng gửi CV, tin tuyển dụng và tệp đính kèm
+Người gửi bấm đính kèm trong khung soạn tin
+if Loại nội dung?
+case CV
+  Ứng viên chọn một CV đã lưu
+  Hệ thống kiểm tra CV thuộc ứng viên
+  Hệ thống tạo bản chụp CV
+case Tin tuyển dụng
+  Nhà tuyển dụng chọn một tin đang công khai của công ty
+  Hệ thống lưu thẻ tin (tiêu đề, lương, địa điểm)
+case Tệp hoặc ảnh
+  Người gửi chọn tệp từ máy
+  if Đúng định dạng và ≤ 10 MB?
+  case Không
+    Giao diện báo lỗi tệp
+    stop
+  case Có
+  endif
+  Hệ thống kiểm cấu trúc tệp (PDF, DOCX, ảnh)
+  if Tệp hợp lệ?
+  case Không
+    Giao diện báo không gửi được tệp
+    stop
+  case Có
+  endif
+  Hệ thống lưu tệp vào kho riêng tư và gắn vào tin
+endif
+Hệ thống tạo tin nhắn và đẩy realtime tới hai bên
+Người nhận mở thẻ CV, thẻ tin hoặc tệp
+if Là thành viên hội thoại?
+case Không
+  Hệ thống từ chối truy cập
+  stop
+case Có
+endif
+Hệ thống ghi nhật ký truy cập nếu là CV
+Giao diện hiển thị hoặc tải tệp

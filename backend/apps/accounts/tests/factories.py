@@ -26,13 +26,13 @@ GOOGLE_PROFILE = {
 }
 
 
-def oauth_state_for(client, provider='google', portal='main', next_path=''):
+def oauth_state_for(client, provider='google', portal='main', next_path='', *, nonce=''):
     """State OAuth gắn với trình duyệt của ``client`` (như OAuthStartView làm)."""
     from ..services import oauth
 
     binding = oauth.new_browser_binding()
     client.cookies[oauth.OAUTH_BROWSER_COOKIE] = binding
-    return oauth.create_state(provider, portal, next_path, binding)
+    return oauth.create_state(provider, portal, next_path, binding, nonce=nonce)
 
 
 def set_refresh_cookie(client, portal, refresh):

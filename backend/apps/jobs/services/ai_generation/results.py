@@ -68,6 +68,12 @@ def _generated_content_comparison(value):
         'job_benefits': [
             {'benefit': item.get('benefit')} for item in value.get('job_benefits') or []
         ],
+        'language_requirements': [
+            {'language': item.get('language'), 'proficiency_level': item.get('proficiency_level')}
+            for item in value.get('language_requirements') or []
+        ],
+        'number_of_vacancies': value.get('number_of_vacancies'),
+        'salary_type': value.get('salary_type'),
     }
 
 
@@ -90,6 +96,13 @@ def _applied_content_snapshot(job):
         ),
         'job_skills': list(job.job_skills.order_by('id').values('skill_id', 'importance')),
         'job_benefits': list(job.job_benefits.order_by('sort_order', 'id').values('benefit_id')),
+        'language_requirements': list(
+            job.language_requirements.order_by('sort_order', 'id').values(
+                'language_id', 'proficiency_level'
+            )
+        ),
+        'number_of_vacancies': job.number_of_vacancies,
+        'salary_type': job.salary_type,
     }
 
 
@@ -106,6 +119,10 @@ def _applied_content_diff(job, generated_result):
         for item in final['job_skills']
     ]
     final['job_benefits'] = [{'benefit': item['benefit_id']} for item in final['job_benefits']]
+    final['language_requirements'] = [
+        {'language': item['language_id'], 'proficiency_level': item['proficiency_level']}
+        for item in final['language_requirements']
+    ]
     changed_fields = [
         field for field, final_value in final.items() if generated.get(field) != final_value
     ]

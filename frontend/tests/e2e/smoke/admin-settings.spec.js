@@ -34,7 +34,7 @@ const GROUPS = [
   },
 ]
 const PARAMETERS = [{ key: 'auth', label: 'Đăng nhập & phiên', items: [
-  { key: 'AUTH_SESSION_IDLE_TIMEOUT_SECONDS', label: 'Tự đăng xuất khi không hoạt động', value: '30 phút', source: 'env', help: '' },
+  { key: 'AUTH_ADMIN_*', label: 'Phiên quản trị', value: 'Tối đa 12 giờ, tự đăng xuất sau 15 phút không hoạt động', source: 'env', help: '' },
 ] }]
 
 function respond(path, method) {
@@ -74,7 +74,7 @@ test('admin settings: grouped sidebar, search, help and confirmed risky save', {
   await noHorizontalScroll()
 
   await nav.getByRole('button', { name: 'Vận hành' }).click()
-  await expect(page.getByText('Tự đăng xuất khi không hoạt động')).toBeVisible()
+  await expect(page.getByText('Phiên quản trị', { exact: true })).toBeVisible()
   await expect(page.getByText('Bật "Chế độ bảo trì" để dùng mục này.')).toBeVisible()
   await page.getByRole('switch').click()
   await expect(page.getByText('1 thay đổi chưa lưu')).toBeVisible()

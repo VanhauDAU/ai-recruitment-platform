@@ -168,6 +168,17 @@
 .aw-secondary-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .aw-secondary-actions .ant-btn { height: 34px; border-radius: 10px; font-size: 12px; font-weight: 600; }
 
+/* Trust flag (blocklisted / mass applying): soft strip, text gets the full width. */
+.aw-flag { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border: 1px solid; border-radius: 10px; }
+.aw-flag--warning { border-color: #fde68a; background: #fffbeb; color: #92400e; }
+.aw-flag--danger { border-color: #fecaca; background: #fef2f2; color: #991b1b; }
+.aw-flag__icon { display: inline-flex; margin-top: 2px; font-size: 13px; }
+.aw-flag--warning .aw-flag__icon { color: #d97706; }
+.aw-flag--danger .aw-flag__icon { color: #dc2626; }
+.aw-flag__title { margin: 0; font-size: 12px; font-weight: 700; line-height: 18px; }
+.aw-flag__detail { margin: 1px 0 0; font-size: 11.5px; line-height: 17px; color: #78716c; }
+.aw-flag__link { flex-shrink: 0; align-self: center; font-size: 12px; font-weight: 700; color: inherit !important; text-decoration: underline; text-underline-offset: 2px; }
+
 /* Tệp CV ứng viên tải lên, hiện nguyên bản; bề rộng do mức thu phóng quyết định. */
 .aw-cv-file {
   height: 78vh;

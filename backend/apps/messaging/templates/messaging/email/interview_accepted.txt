@@ -1,0 +1,5 @@
+{% load i18n %}{% blocktranslate trimmed with job=job_title company=company_name time=starts_at_text minutes=duration_minutes %}Phỏng vấn vị trí {{ job }} tại {{ company }} lúc {{ time }}, khoảng {{ minutes }} phút.{% endblocktranslate %}
+{% if where %}{% translate "Địa điểm / link họp:" %} {{ where }}{% endif %}
+
+{% blocktranslate trimmed with url=action_url %}Mở cuộc trò chuyện: {{ url }}{% endblocktranslate %}
+— {{ site_name }}

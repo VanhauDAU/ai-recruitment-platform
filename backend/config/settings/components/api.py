@@ -94,6 +94,10 @@ REST_FRAMEWORK = {
         'consent': '20/hour',
         # Mỗi lần (re)connect WebSocket một vé; backoff phía client giữ dưới mức này.
         'realtime_ticket': '30/min',
+        # ProCV Connect: gửi tin, mở hội thoại (ADR-0032).
+        'chat_message_send': '30/min',
+        'chat_conversation_start': '30/hour',
+        'chat_interview': '30/hour',
         # Việc làm gần bạn: mỗi lần đổi bán kính/bộ lọc gọi danh sách + bản đồ.
         'nearby_jobs': '120/min',
         'geo_lookup': '60/min',
@@ -149,11 +153,38 @@ REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'].update(
     if '=' in item
 )
 
+# Hạn phiên theo cổng, theo mức bảo đảm của NIST SP 800-63B-4: ứng viên ~ AAL1,
+# NTD ~ AAL2 (giữ dữ liệu ứng viên, thanh toán), admin ~ AAL3. Ba mốc mỗi cổng:
+# hạn access token, ngưỡng không hoạt động (0 = tắt), hạn tối đa của phiên tính
+# từ lần đăng nhập — chỉ đăng nhập lại mới gia hạn. Đọc qua
+# ``apps.accounts.services.session_policy``.
+AUTH_SESSION_POLICIES = {
+    'candidate': {
+        'access_minutes': config('AUTH_CANDIDATE_ACCESS_MINUTES', default=15, cast=int),
+        'idle_minutes': config('AUTH_CANDIDATE_IDLE_MINUTES', default=7 * 24 * 60, cast=int),
+        'max_age_hours': config('AUTH_CANDIDATE_MAX_AGE_HOURS', default=30 * 24, cast=int),
+    },
+    'employer': {
+        'access_minutes': config('AUTH_EMPLOYER_ACCESS_MINUTES', default=15, cast=int),
+        'idle_minutes': config('AUTH_EMPLOYER_IDLE_MINUTES', default=60, cast=int),
+        'max_age_hours': config('AUTH_EMPLOYER_MAX_AGE_HOURS', default=24, cast=int),
+    },
+    'admin': {
+        'access_minutes': config('AUTH_ADMIN_ACCESS_MINUTES', default=5, cast=int),
+        'idle_minutes': config('AUTH_ADMIN_IDLE_MINUTES', default=15, cast=int),
+        'max_age_hours': config('AUTH_ADMIN_MAX_AGE_HOURS', default=12, cast=int),
+    },
+}
+
 SIMPLE_JWT = {
+    # Chỉ là trần chung của simplejwt; mọi luồng phát token đặt lại `exp` theo
+    # chính sách của cổng (services/tokens.py).
     'ACCESS_TOKEN_LIFETIME': timedelta(
-        minutes=config('JWT_ACCESS_TOKEN_MINUTES', default=15, cast=int)
+        minutes=min(p['access_minutes'] for p in AUTH_SESSION_POLICIES.values())
     ),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=config('JWT_REFRESH_TOKEN_DAYS', default=7, cast=int)),
+    'REFRESH_TOKEN_LIFETIME': timedelta(
+        hours=max(p['max_age_hours'] for p in AUTH_SESSION_POLICIES.values())
+    ),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'ALGORITHM': 'HS256',

@@ -4,6 +4,8 @@ Runbook triển khai ProCV lên **một VPS** (BKNS MMO7: 8 vCPU, 8 GB RAM, 80 G
 Ubuntu 24.04) bằng Docker Compose, sau Cloudflare, media trên Cloudflare R2.
 Dev vẫn dùng `docker-compose.yml` ([docker-compose.md](docker-compose.md)); file
 này chỉ nói về production.
+Việc cần chuẩn bị theo ngày (tài khoản, DNS, email, OAuth...):
+[go-live.md](go-live.md).
 
 ## Kiến trúc
 
@@ -94,7 +96,7 @@ chạy**: `UPLOAD_QUARANTINE_ENABLED=False`.
 5. **R2**: ba bucket `procv-public-media` (custom domain `media.procv.site`),
    `procv-private-files`, `procv-upload-quarantine`, mỗi bucket một API token
    riêng chỉ có quyền trên bucket đó — production từ chối khởi động nếu dùng chung
-   bucket hoặc credential ([cloudflare-r2-media.md](cloudflare-r2-media.md)).
+   bucket hoặc credential ([luu-tru-media-cloudflare-r2.md](luu-tru-media-cloudflare-r2.md)).
    Bucket quarantine bắt buộc có dù chưa bật ClamAV.
 6. **Backup**: thêm bucket `procv-backups` (DB, gói bí mật), `procv-backups-files`
    (bản sao file riêng tư) và `procv-backups-public-media` (bản sao media công khai),
@@ -107,11 +109,61 @@ chạy**: `UPLOAD_QUARANTINE_ENABLED=False`.
    origin, bù cho việc admin chưa có MFA trong ứng dụng (TOTP để sau go-live). Không
    đưa `/api/auth/*`, `/api/health/*` hay `/ws/*` vào application: cổng ứng viên/NTD
    dùng chung các đường đó.
-8. Đăng ký domain `procv.site` ở reCAPTCHA admin; thêm callback OAuth:
-   - Google/Facebook/LinkedIn đăng nhập: `https://procv.site/oauth/callback` và
-     `https://procv.site/tuyendung/app/oauth/callback`;
+
+   Đăng nhập/làm mới phiên admin lại đi qua `/api/auth/login/` và `/api/auth/refresh/`
+   (`portal=admin`), nằm ngoài application. Để lộ mật khẩu admin không đủ đăng nhập
+   từ ngoài Access, backend đòi cookie `CF_Authorization` (JWT Access, cookie của cả
+   domain) cho mọi lần phát phiên admin (`apps/accounts/services/cf_access.py`). Bật
+   bằng hai khóa trong `backend/.env`:
+
+   - `CLOUDFLARE_ACCESS_TEAM_DOMAIN`: Zero Trust → Settings → Custom Pages, dạng
+     `<team>.cloudflareaccess.com`;
+   - `CLOUDFLARE_ACCESS_AUD`: Access → Applications → application admin → Overview →
+     *Application Audience (AUD) Tag*.
+
+   Chỉ đặt hai khóa sau khi application đã chạy (đặt trước thì không ai vào được
+   admin). Kiểm: cửa sổ ẩn danh gọi thẳng
+   `curl -s -X POST https://procv.site/api/auth/login/ -H 'Content-Type: application/json' -d '{"portal":"admin"}'`
+   phải nhận 403 `cloudflare_access_required`; qua `/admin/login` (đã qua Access) vẫn
+   đăng nhập bình thường.
+8. Đăng ký domain `procv.site` ở reCAPTCHA admin (v3); thêm redirect URI OAuth.
+   Provider chuyển về **backend** (`OAuthCallbackView` đổi code), sau đó backend mới
+   chuyển tiếp sang trang `/oauth/callback` của SPA — nên chỉ khai URI backend:
+   - Google (Cloud Console → Credentials → OAuth client *Web*): *Authorized redirect
+     URI* `https://procv.site/api/auth/oauth/google/callback/`, *Authorized JavaScript
+     origin* `https://procv.site`; OAuth consent screen chuyển *In production* (để
+     *Testing* thì chỉ test user đăng nhập được);
+   - Facebook: `https://procv.site/api/auth/oauth/facebook/callback/`;
+   - LinkedIn: `https://procv.site/api/auth/oauth/linkedin/callback/`;
    - đăng bài mạng xã hội (nếu bật):
-     `https://procv.site/api/employer/social/{facebook,threads,linkedin}/callback/`.
+     `https://procv.site/api/employer/social/{facebook,instagram,threads,linkedin}/callback/`.
+9. **Tinh chỉnh zone** (không có trong code, bấm trên dashboard):
+   - Speed → Optimization: **tắt Rocket Loader**; Scrape Shield: **tắt Email
+     Address Obfuscation** — cả hai chèn script mà CSP `script-src` không cho;
+   - Caching → Configuration → *Browser Cache TTL* = *Respect Existing Headers*
+     (giữ `no-cache` của `index.html`); **không** tạo rule *Cache Everything* —
+     Cloudflare mặc định không cache JSON/HTML nên `/api` không cần bypass;
+   - Security → WAF → Rate limiting rules: gói Free có **một** rule, đặt cho
+     `starts_with(http.request.uri.path, "/api/auth/")`, ví dụ 60 request/10 giây/IP,
+     hành động *Block* 10 giây (throttle theo IP/tài khoản trong Django vẫn chạy);
+   - Network: WebSockets bật (mặc định) cho `/ws/notifications/`.
+10. **Email gửi đi** (OTP, xác thực, quên mật khẩu): ứng dụng gửi qua SMTP thuần
+    (`EMAIL_HOST*`), không phụ thuộc nhà cung cấp. Chuỗi gửi: request ghi
+    `AuthEmailJob` → Celery `email-worker` (queue `auth-email`) → SMTP; `beat` đẩy lại
+    job kẹt mỗi phút, lỗi lưu ở `last_error` + log/Sentry, người dùng không thấy lỗi.
+    - **Resend** (không cần xác minh số điện thoại): Domains → Add `procv.site` →
+      *Auto configure* với Cloudflare hoặc thêm tay đúng các bản ghi Resend hiển thị (DKIM `resend._domainkey`, MX + SPF cho
+      subdomain `send`). SMTP: `smtp.resend.com:587`, user `resend`, mật khẩu = API
+      key. Free 3.000 thư/tháng, 100 thư/ngày.
+    - **Brevo** (300 thư/ngày, cần xác minh SĐT bằng SMS khi kích hoạt): Senders &
+      domains → Authenticate domain, thêm bản ghi `brevo-code` + DKIM do Brevo sinh;
+      SMTP `smtp-relay.brevo.com:587`.
+    - **DMARC** (một bản ghi cho cả domain): `TXT _dmarc` =
+      `v=DMARC1; p=none; rua=mailto:dmarc@procv.site`; nâng `p=quarantine` khi báo cáo
+      sạch vài tuần.
+    - **Nhận thư** `support@`/`dmarc@procv.site`: Email → Email Routing → chuyển tiếp
+      về Gmail (Cloudflare tự thêm MX + SPF ở root, không đụng bản ghi của Resend).
+      Đặt `support_email` trong Cấu hình hệ thống để thư gửi đi có Reply-To thật.
 
 ## 2. Khởi tạo VPS
 
@@ -162,15 +214,18 @@ cd /srv/procv && cp backend/.env.example backend/.env && cp frontend/.env.exampl
 | --- | --- |
 | `SECRET_KEY`, `JWT_SIGNING_KEY` | Hai chuỗi khác nhau: `openssl rand -base64 48` |
 | `DB_NAME`, `DB_USER`, `DB_PASSWORD` | Ví dụ `procv` / `procv` / `openssl rand -hex 24` (không dùng `postgres`, tránh ký tự `$`) |
-| `EMAIL_HOST*`, `EMAIL_FROM_ADDRESS`, `DEFAULT_FROM_EMAIL` | SMTP thật (ví dụ Gmail app password) |
+| `EMAIL_HOST*`, `EMAIL_FROM_ADDRESS` | SMTP thật theo bước 1.10 (ví dụ Resend: `smtp.resend.com` / `resend` / API key / `no-reply@procv.site`); `DEFAULT_FROM_EMAIL` để trống |
 | `RECAPTCHA_SECRET_KEY` | Secret key của site đã đăng ký `procv.site` |
 | `R2_ENDPOINT_URL`, 3 cặp `R2_*_ACCESS_KEY_ID/SECRET_ACCESS_KEY`, 3 `R2_*_BUCKET` | Theo bước 1.5 |
-| `GEMINI_API_KEY`, `AI_JOB_GENERATION_MODEL*` | Key AI Studio của project **đã bật thanh toán** (tier trả phí): Google không dùng prompt/kết quả để huấn luyện; tier miễn phí thì có, không dùng cho dữ liệu tin tuyển dụng/CV thật |
+| `AI_PROVIDER_BACKEND` | `gemini_developer` (mặc định), `vertex` hoặc `anthropic` (Claude). Đổi qua lại chỉ cần sửa env + `deploy.sh --skip-build`, không sửa code |
+| `GEMINI_API_KEY`, `AI_JOB_GENERATION_MODEL*` | Backend Gemini: key AI Studio của project **đã bật thanh toán** (tier trả phí): Google không dùng prompt/kết quả để huấn luyện; tier miễn phí thì có, không dùng cho dữ liệu tin tuyển dụng/CV thật |
+| `ANTHROPIC_API_KEY`, `AI_ANTHROPIC_EFFORT` | Backend `anthropic`: key ở console Anthropic (dữ liệu API không dùng để huấn luyện). `AI_JOB_GENERATION_MODEL` + allowlist ví dụ `claude-opus-5-5` (giá `{"input":"4","output":"20"}`) hoặc `claude-haiku-5-5` (`{"input":"0.10","output":"0.50"}`). `AI_ANTHROPIC_EFFORT=low` để câu trả lời JSON nằm trong trần 40 giây của `AI_PROVIDER_TIMEOUT_SECONDS`. Hết credit (HTTP 402) → `provider_quota_exhausted`: nhập CV đọc bằng quy tắc, bài đăng chiến dịch dùng mẫu, AI soạn tin/CV mẫu báo không khả dụng. **Sau khi đổi backend**, vào admin → Cấu hình hệ thống → AI: chọn lại *Model tạo tin tuyển dụng* và sửa *Model allowlist cho tạo tin* (dữ liệu seed là `gemini-3.5-flash-lite`; allowlist site chỉ thu hẹp allowlist env, không trùng model nào thì AI soạn tin tắt) |
 | `AI_MODEL_PRICING_USD` | **Giá thật** của model đang bật — mẫu `0/0` làm production từ chối khởi động |
-| `EMPLOYER_DPA_POLICY_VERSION`, `EMPLOYER_DPA_DOCUMENT_URL`, `EMPLOYER_DPA_DOCUMENT_SHA256` | DPA giữa ProCV và NTD là tệp cố định `frontend/public/documents/procv-thoa-thuan-xu-ly-dlcn-nha-tuyen-dung-2026-11.html`: `2026-11`, `https://procv.site/documents/procv-thoa-thuan-xu-ly-dlcn-nha-tuyen-dung-2026-11.html`, `72301aa2d066f5318ec23893268a8bec901cca90c99170d68559afca86bd03cb`. Sửa nội dung thì tạo tệp + phiên bản mới, tính lại `sha256sum` ([employer-dpa-evidence-rollout.md](employer-dpa-evidence-rollout.md)). Đừng nhầm với mẫu "Văn bản thông báo và cam kết xử lý DLCN ứng viên" `procv-mau-thong-bao-xu-ly-dlcn-ung-vien.docx` (doanh nghiệp điền, ký đóng dấu rồi tải lên; ứng viên không ký) (key `employer_dpa_template_url`) |
+| `EMPLOYER_DPA_POLICY_VERSION`, `EMPLOYER_DPA_DOCUMENT_URL`, `EMPLOYER_DPA_DOCUMENT_SHA256` | DPA giữa ProCV và NTD là tệp cố định `frontend/public/documents/procv-thoa-thuan-xu-ly-dlcn-nha-tuyen-dung-2026-11.html`: `2026-11`, `https://procv.site/documents/procv-thoa-thuan-xu-ly-dlcn-nha-tuyen-dung-2026-11.html`, `72301aa2d066f5318ec23893268a8bec901cca90c99170d68559afca86bd03cb`. Sửa nội dung thì tạo tệp + phiên bản mới, tính lại `sha256sum` ([trien-khai-bang-chung-dpa.md](trien-khai-bang-chung-dpa.md)). Đừng nhầm với mẫu "Văn bản thông báo và cam kết xử lý DLCN ứng viên" `procv-mau-thong-bao-xu-ly-dlcn-ung-vien.docx` (doanh nghiệp điền, ký đóng dấu rồi tải lên; ứng viên không ký) (key `employer_dpa_template_url`) |
 | `EMPLOYER_SMS_OTP_ENABLED` | Giữ `False` khi chưa có nhà cung cấp SMS — bật lên thì production đòi đủ `EMPLOYER_SMS_*` |
 | `REQUIRE_APPROVED_EMPLOYER_VERIFICATION` | Mẫu đặt `False`. Chỉ đổi điều kiện bước "Hoàn tất xác thực" trong checklist onboarding NTD (cộng dồn với site setting `employer_require_approved_verification`); đăng tin công khai **luôn** cần hồ sơ xác thực đã duyệt + DPA hiện hành, bất kể khóa này |
-| `OAUTH_*_CLIENT_ID/SECRET` | Nếu bật đăng nhập mạng xã hội |
+| `OAUTH_*_CLIENT_ID/SECRET` | Nếu bật đăng nhập mạng xã hội (redirect URI theo bước 1.8) |
+| `CLOUDFLARE_ACCESS_TEAM_DOMAIN`, `CLOUDFLARE_ACCESS_AUD` | Sau khi dựng Access cho admin (bước 1.7); đặt cùng nhau |
 | `CAMPAIGN_SOCIAL_*`, `FACEBOOK_APP_*`, `THREADS_*`, `LINKEDIN_SOCIAL_*` | Nếu bật đăng bài; `CAMPAIGN_SOCIAL_TOKEN_ENCRYPTION_KEY` là Fernet key riêng |
 | `SENTRY_DSN` (+ `SENTRY_RELEASE` tùy chọn) | DSN project Sentry **backend**; trống = không gửi lỗi. Không gửi PII, body, query, cookie, header xác thực; đo hiệu năng 5% request |
 
@@ -208,7 +263,9 @@ scripts/deploy/sync_ml_models.sh deploy@<ip-vps>
 scripts/deploy/deploy.sh
 ```
 
-Script fetch `origin/main`, build image (`procv-backend`, `procv-ml-worker`,
+Script fetch `origin/main` — **gộp `dev` vào `main` trước** (PR "Dev"), code
+chỉ nằm trên `dev` sẽ không được deploy. Script cần bash ≥ 4 (`mapfile`) và `flock`
+nên chạy trên VPS Linux, không chạy trên macOS. Script fetch `origin/main`, build image (`procv-backend`, `procv-ml-worker`,
 `procv-web`), chạy service `migrate`, khởi động stack, chờ `backend` (healthcheck
 là `/api/health/ready/`: DB + 2 Redis) và `web` healthy rồi gọi thử
 `/api/health/ready/` và `/viec-lam` qua nginx từ chính VPS. `production.py` gom
@@ -432,7 +489,7 @@ và `scripts/deploy/bootstrap_vps.sh` lấy từ `https://www.cloudflare.com/ips
 - Database tiếp tục chỉ lưu **storage key**, không lưu filesystem path,
   credential hoặc signed URL. `MEDIA_PUBLIC_BASE_URL` chỉ áp dụng cho public
   media; không được dùng để tạo URL private.
-- Làm theo [ER-3 storage-boundary runbook](employer-upload-storage-boundary-runbook.md)
+- Làm theo [ER-3 storage-boundary runbook](ranh-gioi-luu-tru-upload.md)
   trước khi bật upload session (cần ClamAV) ở môi trường mới.
 
 ## Route SEO do Django phục vụ

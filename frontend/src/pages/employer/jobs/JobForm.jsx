@@ -78,7 +78,8 @@ export default function JobForm() {
           ? m.employer_job_edit_published()
           : m.employer_job_edit_updated(),
       )
-      navigate(employerAppPath(`/jobs/${job.public_id}`))
+      // Vừa đăng/cập nhật: mở thẻ Thông tin tuyển dụng để NTD soát lại tin, chưa có CV để xem.
+      navigate(employerAppPath(`/jobs/${job.public_id}?active_tab=job`))
     },
     onError: (error) => message.error(
       jobMutationErrorMessage(error, m.employer_job_edit_publish_failed()),

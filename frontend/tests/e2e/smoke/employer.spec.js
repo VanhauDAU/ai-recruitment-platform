@@ -1119,8 +1119,8 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
       contentType: 'application/json',
       body: JSON.stringify({
         job_postable: true,
-        free_publish_limit: 3,
-        free_publish_remain: 3,
+        publish_limit: 3,
+        publish_remain: 3,
         responsibility_statement: {
           version: '2026-11',
           text: 'Tôi cam kết nội dung tin tuyển dụng là đúng sự thật và chịu trách nhiệm về tin đã đăng.',
@@ -1331,8 +1331,8 @@ test('employer jobs: direct AI modes preserve campaign, resume generation and at
       contentType: 'application/json',
       body: JSON.stringify({
         job_postable: true,
-        free_publish_limit: 3,
-        free_publish_remain: 3,
+        publish_limit: 3,
+        publish_remain: 3,
         responsibility_statement: {
           version: '2026-11',
           text: 'Tôi cam kết nội dung tin tuyển dụng là đúng sự thật và chịu trách nhiệm về tin đã đăng.',

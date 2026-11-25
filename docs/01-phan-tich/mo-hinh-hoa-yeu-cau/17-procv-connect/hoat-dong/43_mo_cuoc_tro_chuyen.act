@@ -1,0 +1,36 @@
+title Sơ đồ hoạt động chức năng mở cuộc trò chuyện ProCV Connect
+Người dùng bấm "Nhắn tin" ở tin đã ứng tuyển hoặc ở hồ sơ ứng viên
+Hệ thống xác định tin tuyển dụng và ứng viên của hội thoại
+if Người mở là ai?
+case Ứng viên
+  Hệ thống lấy hồ sơ hiện hành của ứng viên vào tin
+  if Có hồ sơ hiện hành chưa rút?
+  case Không
+    Giao diện báo "Bạn chưa thể nhắn tin về tin này"
+    stop
+  case Có
+  endif
+case Nhà tuyển dụng
+  Hệ thống kiểm tra là người phụ trách tin, đủ quyền xem dữ liệu ứng viên
+  if Có hồ sơ hoặc lời mời kết nối đã nhận?
+  case Không
+    Giao diện báo không đủ điều kiện
+    stop
+  case Có
+  endif
+endif
+if Công ty chặn ứng viên hoặc tài khoản bị khóa?
+case Có
+  Giao diện hiển thị thông báo trung lập
+  stop
+case Không
+endif
+if Đã có hội thoại cho cặp tin và ứng viên?
+case Có
+  Hệ thống trả hội thoại đã có
+case Không
+  Hệ thống tạo hội thoại
+  Hệ thống ghi tin hệ thống "Cuộc trò chuyện đã bắt đầu"
+  Hệ thống chưa đưa hội thoại lên danh sách tới khi có tin đầu tiên
+endif
+Giao diện mở khung chat kèm thẻ tin đang trao đổi

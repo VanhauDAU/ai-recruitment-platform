@@ -9,6 +9,7 @@ from django.db.models import Count, Min, Q, Sum
 from django.utils import timezone
 
 from apps.ai_core.models import AiInvocation, AiUsageDaily
+from apps.ai_core.services import provider_name_for
 from apps.sitecontent.selectors import get_settings_map
 from common.vietnam_time import vietnam_day_start, vietnam_today
 
@@ -76,7 +77,7 @@ def job_ai_admin_policy_overview():
         'enabled': policy.enabled,
         'hard_switch_enabled': policy.hard_switch_enabled,
         'soft_switch_enabled': policy.soft_switch_enabled,
-        'provider': 'gemini',
+        'provider': provider_name_for(settings.AI_PROVIDER_BACKEND),
         'provider_backend': settings.AI_PROVIDER_BACKEND,
         'model': policy.model or policy.requested_model,
         'model_allowed': bool(policy.model),

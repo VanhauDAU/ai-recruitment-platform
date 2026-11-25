@@ -9,8 +9,8 @@ import {
   AdminInvitationAcceptPage,
   AdminLoginPage,
   AdminPasswordResetPage,
-} from '../lazy/admin.pages'
-import { AuthLayout, DashboardLayout } from '../lazy/layouts'
+} from '../lazy/admin.pages.js'
+import { AuthLayout, DashboardLayout } from '../lazy/layouts.js'
 import { ADMIN_ROUTES } from '../admin/admin-routes.config'
 import { resolveAdminDestination } from '../admin/admin-destination'
 

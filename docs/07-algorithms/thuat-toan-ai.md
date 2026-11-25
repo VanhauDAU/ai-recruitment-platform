@@ -9,9 +9,9 @@ lặp lại.
 | --- | --- | --- | --- |
 | Import và cấu trúc hóa CV | Trích text + LLM structured JSON, fallback heuristic | `apps/cvs/tasks/exports.py`, `apps/ai_core/services/cv_import.py` | mục 1 |
 | Điểm hoàn thiện CV | Rule có trọng số | `apps/cvs/services/completeness.py` | mục 2 |
-| Đối sánh CV/nhu cầu – tin tuyển dụng | Rule-based có trọng số, giải thích được | `apps/jobs/models/recommendation_queries/` | mục 3, [`candidate-job-recommendations.md`](./candidate-job-recommendations.md) |
-| Tin tương tự tin đã lưu | Similarity pairwise rule-based | `apps/jobs/selectors/saved_recommendations.py` | [`saved-job-recommendations.md`](./saved-job-recommendations.md) |
-| AI tạo tin tuyển dụng | LLM structured output qua `ai_core` | `apps/jobs/services/ai_generation/` (chính sách: `apps/jobs/domain/ai_policy.py`) | mục 5, [`ai-job-post-generation.md`](./ai-job-post-generation.md) |
+| Đối sánh CV/nhu cầu – tin tuyển dụng | Rule-based có trọng số, giải thích được | `apps/jobs/models/recommendation_queries/` | mục 3, [`goi-y-viec-lam-ung-vien.md`](goi-y-viec-lam-ung-vien.md) |
+| Tin tương tự tin đã lưu | Similarity pairwise rule-based | `apps/jobs/selectors/saved_recommendations.py` | [`goi-y-tu-viec-da-luu.md`](goi-y-tu-viec-da-luu.md) |
+| AI tạo tin tuyển dụng | LLM structured output qua `ai_core` | `apps/jobs/services/ai_generation/` (chính sách: `apps/jobs/domain/ai_policy.py`) | mục 5, [`ai-tao-tin-tuyen-dung.md`](ai-tao-tin-tuyen-dung.md) |
 | Chatbot FAQ ứng viên | Retrieval, không sinh LLM | — | [`chatbot-ung-vien-faq.md`](./chatbot-ung-vien-faq.md) |
 | Đối sánh ngữ nghĩa CV–JD (đang xây) | Bi-encoder đa ngữ fine-tune local, chấm nhiều tiêu chí, vector trong pgvector | `apps/matching` (mới có schema) | mục 7 |
 
@@ -127,10 +127,10 @@ dùng `fold_accents` (bỏ dấu tiếng Việt, chữ thường).
 `candidate-preference-rule-v2` (feed). Lane inline hiển thị cho khoảng 40%
 trang kết quả theo hash SHA-256 của `(user, ranking_seed, page)`, chọn 1–2 tin
 từ top 8. Contract, trạng thái `preferences_required`/`consent_required` và
-thao tác ẩn tin xem [`candidate-job-recommendations.md`](./candidate-job-recommendations.md).
+thao tác ẩn tin xem [`goi-y-viec-lam-ung-vien.md`](goi-y-viec-lam-ung-vien.md).
 
 Gợi ý từ tin đã lưu (`by-saved`) dùng bảng trọng số khác, so từng cặp tin và
-không cần consent: [`saved-job-recommendations.md`](./saved-job-recommendations.md).
+không cần consent: [`goi-y-tu-viec-da-luu.md`](goi-y-tu-viec-da-luu.md).
 
 Phía nhà tuyển dụng hiện **không** có chấm điểm hồ sơ ứng tuyển hay đối sánh
 JD → CV.
@@ -210,7 +210,7 @@ Use case `job_post_generation`, prompt/schema `job-post-v2`. Tóm tắt luồng:
    `AI_JOB_GENERATION_CONTENT_RETENTION_DAYS` (90).
 
 Hợp đồng output, trường cấm và tiêu chí train model xem
-[`ai-job-post-generation.md`](./ai-job-post-generation.md); cờ và rollback xem
+[`ai-tao-tin-tuyen-dung.md`](ai-tao-tin-tuyen-dung.md); cờ và rollback xem
 [`van-hanh-va-kill-switch.md`](../06-deployment/van-hanh-va-kill-switch.md).
 
 ## 5b. AI sinh nội dung CV mẫu (CVT-3)
@@ -255,7 +255,7 @@ Phần AI tự xây của đồ án: ứng viên chọn một CV và một tin �
 kỹ năng khớp/thiếu và gợi ý cải thiện CV. Mô hình chạy và fine-tune trên máy
 local, không gọi API ngoài; phạm vi ở
 [phân tích yêu cầu](../01-phan-tich/phan-tich-yeu-cau.md#phạm-vi-ai-đã-chốt),
-lộ trình ở [tiến độ dự án](../TIEN-DO-DU-AN.md#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15).
+trạng thái ở [tiến độ dự án](../TIEN-DO-DU-AN.md#aiml-chạy-local), nhật ký thực nghiệm từng giai đoạn ở [bản lưu trữ](../archive/snapshot/tien-do-den-2026-11-26.md#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15).
 
 Đã có:
 

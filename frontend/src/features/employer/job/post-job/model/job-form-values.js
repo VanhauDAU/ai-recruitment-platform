@@ -157,6 +157,28 @@ export function createAiJobFormPatch(suggestion = {}) {
       .map((item) => item.benefit))]
   }
 
+  if (Array.isArray(suggestion.language_requirements) && suggestion.language_requirements.length) {
+    patch.language_requirements = suggestion.language_requirements
+      .filter((item) => item.language != null)
+      .map((item, index) => ({
+        language: item.language,
+        proficiency_level: item.proficiency_level || '',
+        sort_order: index,
+      }))
+  }
+
+  // Lương và số lượng chỉ có khi máy chủ đã đối chiếu được con số trong JD.
+  if (Number.isInteger(suggestion.number_of_vacancies) && suggestion.number_of_vacancies > 0) {
+    patch.number_of_vacancies = suggestion.number_of_vacancies
+  }
+  if (suggestion.salary_type) {
+    // Form chỉ sửa "khoảng lương"; từ mức / đến mức là khoảng thiếu một đầu.
+    patch.salary_type = ['from', 'up_to'].includes(suggestion.salary_type) ? 'range' : suggestion.salary_type
+    patch.salary_min = suggestion.salary_min ?? null
+    patch.salary_max = suggestion.salary_max ?? null
+    if (suggestion.currency) patch.currency = suggestion.currency
+  }
+
   return patch
 }
 

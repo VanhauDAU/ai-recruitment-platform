@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import JobForm from './JobForm'
 
@@ -64,6 +64,11 @@ vi.mock('@/widgets/employer/job-editor', () => ({
   ),
 }))
 
+function CurrentLocation() {
+  const location = useLocation()
+  return <p data-testid="current-location">{location.pathname + location.search}</p>
+}
+
 function renderPage(initialEntry = '/tuyendung/app/jobs/new') {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -77,6 +82,7 @@ function renderPage(initialEntry = '/tuyendung/app/jobs/new') {
         <Routes>
           <Route path="/tuyendung/app/jobs/new" element={<JobForm />} />
           <Route path="/tuyendung/app/jobs/:publicId/edit" element={<JobForm />} />
+          <Route path="/tuyendung/app/jobs/:publicId" element={<CurrentLocation />} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -150,6 +156,9 @@ describe('JobForm submission feedback', () => {
       { title: 'Backend Engineer' },
       undefined,
       '2026-11',
+    )
+    expect(await screen.findByTestId('current-location')).toHaveTextContent(
+      '/tuyendung/app/jobs/job_1?active_tab=job',
     )
   })
 

@@ -32,16 +32,10 @@ import {
 import AnnouncementPreview from './AnnouncementPreview'
 import { AuditHistory, RevisionHistory } from './AnnouncementHistory'
 import AnnouncementMetrics from './AnnouncementMetrics'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { formatDateTime, VN_TIME_ZONE } from '@/shared/lib/date-time'
 
-function formatDate(value) {
-  if (!value) return 'Không giới hạn'
-  return new Intl.DateTimeFormat(getIntlLocale(), {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-    timeZone: 'Asia/Ho_Chi_Minh',
-  }).format(new Date(value))
-}
+const formatDate = (value) =>
+  formatDateTime(value, { dateStyle: 'medium', timeZone: VN_TIME_ZONE, fallback: 'Không giới hạn' })
 
 function DetailOverview({ detail }) {
   const revision = latestAnnouncementRevision(detail)

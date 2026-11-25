@@ -13,7 +13,15 @@ from .contracts import AiGenerationError
 
 GEMINI_DEVELOPER = 'gemini_developer'
 VERTEX = 'vertex'
-SUPPORTED_PROVIDER_BACKENDS = frozenset({GEMINI_DEVELOPER, VERTEX})
+ANTHROPIC = 'anthropic'
+SUPPORTED_PROVIDER_BACKENDS = frozenset({GEMINI_DEVELOPER, VERTEX, ANTHROPIC})
+ANTHROPIC_EFFORTS = frozenset({'low', 'medium', 'high', 'xhigh', 'max'})
+# Tên provider ghi vào AiInvocation/số liệu; gemini_developer và vertex dùng chung adapter.
+_PROVIDER_NAME_BY_BACKEND = {GEMINI_DEVELOPER: 'gemini', VERTEX: 'gemini', ANTHROPIC: 'anthropic'}
+
+
+def provider_name_for(provider_backend: str) -> str:
+    return _PROVIDER_NAME_BY_BACKEND.get((provider_backend or '').strip(), '')
 
 
 def _decimal(value: Any) -> Decimal:
@@ -49,6 +57,9 @@ class AiRuntimeConfig:
     gemini_api_key: str = ''
     google_cloud_project: str = ''
     google_cloud_location: str = 'global'
+    anthropic_api_key: str = ''
+    # Rỗng = mặc định của model Claude; chỉ provider anthropic dùng.
+    anthropic_effort: str = ''
     api_version: str = 'v1'
     timeout_seconds: float = 40.0
     max_attempts: int = 2
@@ -73,6 +84,8 @@ class AiRuntimeConfig:
             gemini_api_key=settings.GEMINI_API_KEY.strip(),
             google_cloud_project=settings.GOOGLE_CLOUD_PROJECT.strip(),
             google_cloud_location=settings.GOOGLE_CLOUD_LOCATION.strip() or 'global',
+            anthropic_api_key=settings.ANTHROPIC_API_KEY.strip(),
+            anthropic_effort=settings.AI_ANTHROPIC_EFFORT.strip(),
             api_version=settings.AI_PROVIDER_API_VERSION.strip() or 'v1',
             timeout_seconds=_positive_float(settings.AI_PROVIDER_TIMEOUT_SECONDS, 40),
             # The product budget is at most two provider calls per request, whatever the env says.
@@ -81,6 +94,18 @@ class AiRuntimeConfig:
             input_cost_per_million_usd=_decimal(model_pricing.get('input', 0)),
             output_cost_per_million_usd=_decimal(model_pricing.get('output', 0)),
         )
+
+    @property
+    def provider_name(self) -> str:
+        return provider_name_for(self.provider_backend)
+
+    @property
+    def credentials_configured(self) -> bool:
+        if self.provider_backend == VERTEX:
+            return bool(self.google_cloud_project and self.google_cloud_location)
+        if self.provider_backend == ANTHROPIC:
+            return bool(self.anthropic_api_key)
+        return bool(self.gemini_api_key)
 
     def with_model(self, model: str | None):
         return replace(self, model=model.strip()) if model and model.strip() else self
@@ -94,11 +119,7 @@ class AiRuntimeConfig:
             raise AiGenerationError('model_not_configured')
         if not require_credentials:
             return
-        if self.provider_backend == GEMINI_DEVELOPER and not self.gemini_api_key:
-            raise AiGenerationError('provider_not_configured')
-        if self.provider_backend == VERTEX and (
-            not self.google_cloud_project or not self.google_cloud_location
-        ):
+        if not self.credentials_configured:
             raise AiGenerationError('provider_not_configured')
 
     def cost_for(self, usage):

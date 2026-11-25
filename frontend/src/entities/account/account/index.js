@@ -1,1 +1,1 @@
-export * from './config/candidate-menu'
+export * from './model/candidate-menu'

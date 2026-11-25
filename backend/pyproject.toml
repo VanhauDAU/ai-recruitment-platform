@@ -1,7 +1,7 @@
 [tool.ruff]
 target-version = "py311"
 line-length = 100
-extend-exclude = ["*/migrations/*", "venv", "media"]
+extend-exclude = ["*/migrations/*", "venv"]
 
 [tool.ruff.lint]
 # Lỗi thật (E,F), import (I), modern hóa (UP), bug tiềm ẩn (B), rule Django (DJ).
@@ -40,7 +40,7 @@ containers = [
     "apps.cv_templates", "apps.cvs", "apps.dashboard", "apps.employers",
     "apps.jobs", "apps.locations", "apps.matching", "apps.privacy",
     "apps.sitecontent", "apps.skills", "apps.knowledgebase", "apps.uploads",
-    "apps.realtime",
+    "apps.realtime", "apps.messaging",
 ]
 layers = [
     "(api)",

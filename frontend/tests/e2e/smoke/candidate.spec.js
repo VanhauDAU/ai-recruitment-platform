@@ -507,7 +507,7 @@ test('candidate smoke: job application submits the selected immutable CV version
   })
 
   await page.goto('/viec-lam/apply-job')
-  await page.getByRole('button', { name: 'Chỉ cookie thiết yếu' }).click()
+  await page.getByRole('button', { name: 'Chỉ thiết yếu' }).click()
   const expandDetailsButton = page.getByRole('button', { name: /Xem đầy đủ mô tả công việc/ })
   await expect(expandDetailsButton).toBeVisible()
   await expect(expandDetailsButton).toHaveAttribute('aria-expanded', 'false')
@@ -563,7 +563,7 @@ test('candidate smoke: job application submits the selected immutable CV version
   applications = [{ ...applications[0], status: 'rejected', actions: { withdraw: false, reapply: true } }]
   await page.reload()
   // Banner cookie hiện lại sau reload và che thanh ứng tuyển dưới màn hình mobile.
-  await page.getByRole('button', { name: 'Chỉ cookie thiết yếu' }).click()
+  await page.getByRole('button', { name: 'Chỉ thiết yếu' }).click()
   await page.getByRole('button', { name: 'Ứng tuyển lại', exact: true }).filter({ visible: true }).last().click()
   await expect(page.getByRole('dialog').getByRole('alert')).toContainText('Bạn còn 2 lượt ứng tuyển lại')
 })
@@ -787,7 +787,7 @@ test('candidate smoke: applied jobs list every status and say when the employer 
   })
 
   await page.goto('/tai-khoan/viec-lam-da-ung-tuyen')
-  await page.getByRole('button', { name: 'Chỉ cookie thiết yếu' }).click()
+  await page.getByRole('button', { name: 'Chỉ thiết yếu' }).click()
   const filters = page.getByRole('tablist', { name: 'Lọc theo trạng thái hồ sơ' })
   await expect(filters.getByRole('tab')).toHaveText([
     'Tất cả', 'Tiếp nhận', 'Đã xem', 'Phù hợp', 'Phỏng vấn', 'Trúng tuyển', 'Chưa phù hợp', 'Đã rút',

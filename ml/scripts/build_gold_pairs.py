@@ -1,4 +1,4 @@
-"""Ghép cặp CV–JD cho tập vàng và xuất phiếu chấm (kế hoạch mục 9; bản 3 mục 3.1).
+"""Ghép cặp CV–JD cho tập vàng và xuất phiếu chấm.
 
 Tập vàng có hai đợt, mỗi đợt 15 JD × 10 CV = 150 cặp, chia 5 JD validation và
 10 JD test. Đợt 1 (18/11) là lệnh mặc định; đợt 2 (20/11, `--extend`) thêm 15 JD

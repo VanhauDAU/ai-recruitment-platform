@@ -1,0 +1,38 @@
+title Sơ đồ hoạt động chức năng hẹn lịch phỏng vấn qua ProCV Connect
+Nhà tuyển dụng bấm "Đặt lịch phỏng vấn" trong hội thoại
+Nhà tuyển dụng nhập giờ, thời lượng, hình thức, địa điểm hoặc link
+Hệ thống kiểm tra hồ sơ chưa có kết quả, thời gian ở tương lai
+if Hợp lệ?
+case Không
+  Giao diện hiển thị lỗi theo trường
+  stop
+case Có
+endif
+if Hồ sơ đã ở "Phỏng vấn"?
+case Chưa
+  Hệ thống chuyển hồ sơ sang "Phỏng vấn", báo ứng viên ngay
+case Rồi
+endif
+Hệ thống thay lịch đang chờ hoặc chưa diễn ra, tạo lịch hẹn mới
+Kênh realtime gửi thẻ lịch hẹn tới ứng viên
+Ứng viên xem thẻ lịch hẹn
+if Ứng viên phản hồi?
+case Chấp nhận
+  Hệ thống chuyển lịch hẹn sang "Đã nhận"
+  Worker gửi email kèm tệp lịch .ics cho hai bên
+  Worker nhắc hai bên trước 24 giờ và 1 giờ
+  Qua giờ hẹn, NTD chọn Trúng tuyển hoặc Không phù hợp trên thẻ
+  Quá 3 ngày chưa có kết quả thì nhắc NTD, ứng viên được nhắc NTD
+case Từ chối
+  Hệ thống chuyển lịch hẹn sang "Đã từ chối" kèm lý do
+case Đề nghị giờ khác
+  Hệ thống chuyển lịch hẹn sang "Xin đổi giờ"
+  if Nhà tuyển dụng xử lý?
+  case Đổi giờ
+    Nhà tuyển dụng sửa giờ trên form điền sẵn
+    Hệ thống tạo lịch hẹn mới thay lịch cũ
+  case Hủy
+    Hệ thống chuyển lịch hẹn sang "Đã hủy"
+  endif
+endif
+Hệ thống ghi tin hệ thống và báo bên kia qua chuông, realtime
