@@ -1,7 +1,7 @@
 # Tiến độ dự án
 
 Ảnh chụp trạng thái hiện tại, đối chiếu với `dev` ngày **26/11/2026** (commit
-`72d8c2d9`, PR mới nhất #395). File này trả lời câu hỏi "cái gì đã chạy, cái gì còn
+`19743621`, PR mới nhất #395). File này trả lời câu hỏi "cái gì đã chạy, cái gì còn
 mở". Nó không phải nhật ký:
 
 - chi tiết từng thay đổi nằm ở [`CHANGELOG.md`](../CHANGELOG.md);
