@@ -17,8 +17,9 @@ from PIL import Image, ImageOps, ImageSequence
 MAX_IMAGE_SIDE = 10_000
 MAX_IMAGE_PIXELS = 40_000_000
 MAX_IMAGE_FRAMES = 100
-# Tổng điểm ảnh của mọi frame: GIF/WebP động được giải mã từng frame khi mã hóa lại.
-MAX_ANIMATION_PIXELS = 100_000_000
+# Tổng điểm ảnh của mọi frame: khi mã hóa lại, mọi frame được giải mã (RGBA, 4 byte/điểm)
+# và giữ trong RAM cùng lúc. 25M điểm ≈ 100 MB mỗi request — vừa với backend 1 GB / 8 luồng.
+MAX_ANIMATION_PIXELS = 25_000_000
 UPLOAD_IMAGE_FORMATS = ('JPEG', 'PNG', 'GIF', 'WEBP')
 
 # Lưới an toàn cho mọi Image.open khác trong process: Pillow cảnh báo khi vượt
