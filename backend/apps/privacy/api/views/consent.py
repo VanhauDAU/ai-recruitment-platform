@@ -2,19 +2,20 @@ from django.conf import settings
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import permissions
 from rest_framework.response import Response
-from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.privacy.api.serializers.consent import ConsentSerializer
 from apps.privacy.services import build_consent, load_consent, set_consent_cookie
-from common.api.throttling import with_account_write_cap
+from common.api.throttling import WriteScopedRateThrottle, with_default_throttles
 
 
 class ConsentView(APIView):
     """Read or replace the signed, first-party consent cookie."""
 
     permission_classes = [permissions.AllowAny]
-    throttle_classes = with_account_write_cap(ScopedRateThrottle)
+    # Mỗi lần tải trang đều GET để biết đã đồng ý chưa: scope chỉ tính lượt ghi.
+    # Nếu GET tốn lượt, quá 20 lần tải/giờ sẽ trả 429 và banner hiện lại dù đã chọn.
+    throttle_classes = with_default_throttles(WriteScopedRateThrottle)
     throttle_scope = 'consent'
 
     def get_throttles(self):

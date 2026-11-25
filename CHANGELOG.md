@@ -8,6 +8,13 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Fixed — Banner cookie hiện lại mỗi lần tải trang dù đã chọn
+
+- `GET /api/public/privacy/consent/` tốn lượt của scope `consent` (20/giờ): tải trang
+  quá 20 lần/giờ (hoặc chung IP) thì đọc lựa chọn trả 429, frontend coi như chưa đồng ý.
+  Scope nay chỉ tính lượt ghi (`WriteScopedRateThrottle`, khóa theo IP thật); lượt đọc
+  chịu trần chung `/api/public`.
+
 #### Fixed — Thiếu bản dịch tiếng Anh cho thông báo xác minh SĐT nhà tuyển dụng
 
 - Bổ sung 3 bản dịch en trong `apps/employers` của `verify_employer_phone` (#402);
