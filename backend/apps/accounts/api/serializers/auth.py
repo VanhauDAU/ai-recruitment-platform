@@ -114,7 +114,8 @@ class PasswordChangeSerializer(serializers.Serializer):
     """Đặt mật khẩu lần đầu cho OAuth hoặc đổi mật khẩu của phiên hiện tại.
 
     Tài khoản chưa có mật khẩu chứng minh chủ sở hữu bằng mã gửi qua email
-    (``email_code``) thay cho mật khẩu hiện tại.
+    (``email_code``) thay cho mật khẩu hiện tại, trừ khi phiên hiện tại
+    vừa đăng nhập Google.
     """
 
     current_password = serializers.CharField(write_only=True, required=False, allow_blank=True)
@@ -125,6 +126,8 @@ class PasswordChangeSerializer(serializers.Serializer):
     def validate(self, attrs):
         user = self.context['request'].user
         if not user.has_usable_password():
+            if not password_setup_code.is_required(user, self.context.get('session')):
+                return attrs
             code = (attrs.get('email_code') or '').strip()
             if not code:
                 raise serializers.ValidationError(

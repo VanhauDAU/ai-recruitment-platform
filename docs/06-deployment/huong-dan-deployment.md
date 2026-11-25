@@ -52,12 +52,13 @@ quản trị `/admin`. Không tách frontend sang Vercel vì Django dựng SEO s
 | `email-worker` | 512 MB | concurrency 1: `auth-email`, `auth-sms` — OTP/đặt lại mật khẩu không chờ sau PDF |
 | `ai-worker` | 512 MB | queue `ai-generation` |
 | `ml-worker` | 1,75 GB | e5-base nằm sẵn trong RAM (~0,9 GB lúc rảnh); `cpus: 2`, `OMP/MKL_NUM_THREADS=2` |
-| `clamav` | 4 GB | quét upload session (`UPLOAD_QUARANTINE_ENABLED=True`); ~1,2–1,5 GB lúc rảnh, ~3 GB khi nạp lại bộ nhận diện |
+| `clamav` (profile `scanner`, đang tắt) | 4 GB | quét upload session khi `UPLOAD_QUARANTINE_ENABLED=True`; ~1,2–1,5 GB lúc rảnh, ~3 GB khi nạp lại bộ nhận diện |
 | `beat`, `web` | 384 MB, 128 MB | |
 
 Tổng trần ~12,4 GB: cần máy **≥ 12–16 GB RAM** (bootstrap tạo thêm 4 GB swap).
-Máy 8 GB thì bỏ service `clamav` và đặt lại `UPLOAD_QUARANTINE_ENABLED: 'False'`
-trong `x-prod-env` (tổng ~8 GB, sát trần). Đo trên VPS 16 GB lúc rảnh sau khi nạp
+ClamAV đang tắt mặc định (`UPLOAD_QUARANTINE_ENABLED: 'False'`, upload đi luồng cũ):
+bật lại bằng cách đặt cờ `'True'` trong `x-prod-env` và chạy compose với
+`--profile scanner`. Không có ClamAV thì tổng ~8 GB, sát trần máy 8 GB. Đo trên VPS 16 GB lúc rảnh sau khi nạp
 dữ liệu (26/11): backend ~920 MB, worker ~560 MB, ai-worker ~355 MB, ml-worker
 ~725 MB, email-worker ~280 MB, beat ~245 MB, realtime ~235 MB; mỗi lần healthcheck
 `celery inspect ping` thêm ~75 MB trong vài giây — trần 256 MB cũ của

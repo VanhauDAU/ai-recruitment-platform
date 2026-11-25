@@ -198,12 +198,13 @@ def pop_state(state, browser_binding):
     return data
 
 
-def create_one_time_code(user):
+def create_one_time_code(user, provider):
     code = secrets.token_urlsafe(32)
     cache.set(
         f'{_CODE_PREFIX}{code}',
         {
             'user_id': user.pk,
+            'provider': provider,
             'email': User.objects.normalize_email(user.email),
             'auth_revision': user.auth_revision,
         },
@@ -219,7 +220,7 @@ def pop_one_time_code(code):
 
 
 def redeem_one_time_code(code):
-    """Return the account a one-time code was issued for, consuming the code."""
+    """Return ``(user, provider)`` a one-time code was issued for, consuming the code."""
     identity = pop_one_time_code(code)
     user = (
         User.objects.filter(pk=identity.get('user_id'), is_active=True).first()
@@ -234,7 +235,7 @@ def redeem_one_time_code(code):
         raise ValidationError(
             {'detail': _('Mã đăng nhập không hợp lệ hoặc đã hết hạn. Vui lòng thử lại.')}
         )
-    return user
+    return user, identity.get('provider', '')
 
 
 # ---- Nói chuyện với provider ----
@@ -341,7 +342,7 @@ def complete_provider_login(provider, code, redirect_uri, portal):
     import_provider_avatar(user, provider, profile.get('avatar'))
     if created:
         queue_welcome_email(user, context={'registration_method': provider})
-    return create_one_time_code(user)
+    return create_one_time_code(user, provider)
 
 
 def resolve_user(provider, profile, portal, *, include_created=False):

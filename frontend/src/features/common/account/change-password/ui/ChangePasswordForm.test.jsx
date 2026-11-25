@@ -9,7 +9,7 @@ const mocks = vi.hoisted(() => ({
   changeCurrentPassword: vi.fn(),
   getPasswordSetupRequirements: vi.fn(),
   sendPasswordSetupCode: vi.fn(),
-  message: { error: vi.fn(), success: vi.fn() },
+  message: { error: vi.fn(), success: vi.fn(), warning: vi.fn() },
   onSetCurrentUser: vi.fn(),
   setTokens: vi.fn(),
   user: null,
@@ -64,6 +64,7 @@ describe('ChangePasswordForm', () => {
     mocks.sendPasswordSetupCode.mockReset()
     mocks.message.error.mockReset()
     mocks.message.success.mockReset()
+    mocks.message.warning.mockReset()
     mocks.onSetCurrentUser.mockReset()
     mocks.setTokens.mockReset()
     mocks.user = {
@@ -156,6 +157,35 @@ describe('ChangePasswordForm', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Tạo mật khẩu' }))
 
     expect(await screen.findByText('Mã xác minh không đúng hoặc đã hết hạn.')).toBeInTheDocument()
+  })
+
+  it('creates the password without a code right after a Google sign-in, then asks for one when the window ends', async () => {
+    mocks.user = { email: 'candidate@example.com', has_usable_password: false }
+    mocks.getPasswordSetupRequirements.mockResolvedValue({ requires_email_code: false })
+    mocks.changeCurrentPassword.mockRejectedValueOnce({
+      response: { status: 400, data: { email_code: ['Nhập mã xác minh gửi tới email.'] } },
+    })
+    mocks.changeCurrentPassword.mockResolvedValue({ user: mocks.user })
+
+    renderForm()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('không cần mã xác minh')
+    expect(screen.queryByLabelText('Mã xác minh qua email')).not.toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Mật khẩu mới'), { target: { value: 'CareerFlow872' } })
+    fireEvent.change(screen.getByLabelText('Nhập lại mật khẩu mới'), { target: { value: 'CareerFlow872' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Tạo mật khẩu' }))
+
+    // Server hết miễn mã giữa chừng: hiện ô mã, giữ nguyên mật khẩu đã nhập.
+    const codeInput = await screen.findByLabelText('Mã xác minh qua email')
+    expect(mocks.changeCurrentPassword.mock.calls[0][0]).not.toHaveProperty('email_code')
+    expect(mocks.message.warning).toHaveBeenCalled()
+    expect(screen.getByRole('alert')).toHaveTextContent('Gửi mã')
+    expect(screen.getByLabelText('Mật khẩu mới')).toHaveValue('CareerFlow872')
+
+    fireEvent.change(codeInput, { target: { value: '123456' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Tạo mật khẩu' }))
+    await waitFor(() => expect(mocks.changeCurrentPassword).toHaveBeenCalledTimes(2))
+    expect(mocks.changeCurrentPassword.mock.calls[1][0]).toMatchObject({ email_code: '123456' })
   })
 
   it('keeps the employer success redirect when the caller provides it', async () => {
