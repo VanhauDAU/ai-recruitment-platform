@@ -37,7 +37,7 @@ ENV VITE_API_BASE_URL=$VITE_API_BASE_URL \
 COPY . .
 RUN npm run build && rm -rf dist/.vite && node scripts/precompress-dist.mjs
 
-FROM nginx:1.28-alpine AS runtime
+FROM nginx:1.29-alpine AS runtime
 # Bỏ server mặc định; cấu hình ProCV nằm trong conf.d + snippets.
 RUN rm /etc/nginx/conf.d/default.conf
 COPY docker/nginx/procv.conf /etc/nginx/conf.d/procv.conf
