@@ -164,7 +164,6 @@ describe('EmployerApplicationList', () => {
     expect(within(candidateList).getByText('2 CV')).toBeVisible()
     expect(within(preview).getByRole('heading', { name: 'CV Frontend 2026' })).toBeVisible()
     expect(within(preview).getByRole('button', { name: /Tải PDF/ })).toBeEnabled()
-    expect(within(preview).getByRole('button', { name: /Nhắn tin/ })).toBeDisabled()
     expect(within(inspector).getByRole('heading', { name: 'Xử lý hồ sơ' })).toBeVisible()
     const decisions = await within(inspector).findByRole('group', { name: 'Quyết định cho hồ sơ' })
     expect(within(decisions).getAllByRole('button')).toHaveLength(4)

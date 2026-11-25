@@ -1,13 +1,5 @@
 import { UserOutlined } from '@ant-design/icons'
 import { useEffect, useRef, useState } from 'react'
-import { m } from '@/shared/config/i18n'
-
-const DEFAULT_MESSAGES = [
-  { from: 'recruiter', text: m.ui_chat_demo_recruiter_1() },
-  { from: 'candidate', text: m.ui_chat_demo_candidate_1() },
-  { from: 'recruiter', text: m.ui_chat_demo_recruiter_2() },
-  { from: 'candidate', text: m.ui_chat_demo_candidate_2() },
-]
 
 const TYPING_MS = 950
 const READ_MS = 900
@@ -17,10 +9,10 @@ const prefersReduced = () =>
   typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
 export default function ChatShowcase({
-  messages = DEFAULT_MESSAGES,
-  avatarInitials = 'MA',
-  headerName = 'Minh Anh',
-  headerStatus = m.ui_chat_demo_status(),
+  messages,
+  avatarInitials,
+  headerName,
+  headerStatus,
   matchPercentage,
   dark = true,
 }) {

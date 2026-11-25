@@ -1884,7 +1884,7 @@ Lộ trình 6 giai đoạn của workspace `/tuyendung/app/applications`; mỗi 
 | 4 | Danh sách đen + phát hiện ứng tuyển hàng loạt | ✅ Đã gộp vào dev (#197) |
 | 5 | Kho ứng viên tiềm năng + gợi ý lại khi đăng tin mới | ✅ Đã gộp vào dev (#198) |
 | 6 | Gợi ý kỹ năng còn thiếu cho ứng viên bị từ chối | ⬜ |
-| Sau | Nhắn tin ứng viên (nút đã đặt sẵn), hẹn lịch phỏng vấn | ⬜ |
+| Sau | Hẹn lịch phỏng vấn | ⬜ |
 
 <details><summary>Ghi chú giai đoạn 1</summary>
 

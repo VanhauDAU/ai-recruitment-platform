@@ -1,4 +1,4 @@
-import { ColumnWidthOutlined, MessageOutlined, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons'
+import { ColumnWidthOutlined, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons'
 import { Alert, Button, Empty, Segmented, Skeleton, Tooltip } from 'antd'
 import { useState } from 'react'
 import { applicationKeys, getApplicationCvFile } from '@/entities/application/application'
@@ -103,11 +103,6 @@ export default function ApplicationCvPreview({
             jobTitle={selectedApplication?.job_title || ''}
             disabledReason={sourceFile ? m.employer_workspace_app_share_disabled_uploaded() : ''}
           />
-          <Tooltip title={m.employer_workspace_app_message_coming_soon()}>
-            <span>
-              <Button size="small" icon={<MessageOutlined />} aria-label={m.employer_workspace_app_message()} disabled />
-            </span>
-          </Tooltip>
           {zoomable && <ZoomControls zoom={zoom} />}
         </div>
       )}
