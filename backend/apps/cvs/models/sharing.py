@@ -66,6 +66,8 @@ class CvAccessLog(models.Model):
         EXPORT = 'export', 'Export'
         # Nhà tuyển dụng mở hồ sơ trích xuất ẩn danh ở Tìm CV (không mở tệp CV).
         RECRUITER_SEARCH = 'recruiter_search', 'Recruiter search'
+        # NTD mở CV ứng viên gửi trong ProCV Connect (ADR-0032).
+        MESSAGE = 'message', 'Message'
 
     # NULL for recruiter access to an application snapshot (keyed by version).
     cv = models.ForeignKey(

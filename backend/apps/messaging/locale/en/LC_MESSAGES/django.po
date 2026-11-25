@@ -1,0 +1,158 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: procv\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Chọn đúng một hồ sơ ứng tuyển hoặc một lời mời kết nối."
+msgstr "Choose exactly one application or one connection invitation."
+
+msgid "Bạn chưa thể nhắn tin về tin tuyển dụng này."
+msgstr "You cannot message about this job yet."
+
+msgid "Chỉ gửi được tệp PDF, DOCX hoặc ảnh JPG, PNG, WEBP."
+msgstr "Only PDF, DOCX or JPG, PNG, WEBP images can be sent."
+
+msgid "Tệp tối đa %(mb)s MB."
+msgstr "Files can be at most %(mb)s MB."
+
+msgid "Nội dung tệp bị lỗi hoặc không đúng định dạng."
+msgstr "The file is damaged or not in the declared format."
+
+msgid "ProCV Connect đang tạm tắt."
+msgstr "ProCV Connect is temporarily turned off."
+
+msgid "Chỉ đánh dấu được lịch đã nhận và đã tới giờ hẹn."
+msgstr "Only an accepted interview whose time has come can be marked as done."
+
+msgid "Chỉ hẹn phỏng vấn với hồ sơ đang xét tuyển."
+msgstr "Interviews can only be scheduled for applications still under review."
+
+msgid "Giờ hẹn phải ở tương lai."
+msgstr "The interview time must be in the future."
+
+msgid "Hãy nhập link họp trực tuyến."
+msgstr "Enter the online meeting link."
+
+msgid "Hãy nhập địa điểm phỏng vấn."
+msgstr "Enter the interview location."
+
+msgid "Phản hồi không hợp lệ."
+msgstr "Invalid response."
+
+msgid "Lịch hẹn này không còn chờ phản hồi."
+msgstr "This interview is no longer awaiting a response."
+
+msgid "Lịch hẹn này không thể hủy."
+msgstr "This interview cannot be cancelled."
+
+msgid "Cuộc trò chuyện hiện không nhận tin nhắn."
+msgstr "This conversation is not accepting messages right now."
+
+msgid "Ứng viên này đang bị công ty chặn."
+msgstr "This candidate is blocked by your company."
+
+msgid "Hồ sơ ứng tuyển đã được rút nên không gửi được tin."
+msgstr "The application was withdrawn, so messages cannot be sent."
+
+msgid "Tài khoản bên kia không còn hoạt động."
+msgstr "The other account is no longer active."
+
+msgid "Bạn đã gửi đủ số tin cho phép. Hãy chờ nhà tuyển dụng trả lời."
+msgstr "You have sent the allowed number of messages. Please wait for the employer to reply."
+
+msgid "Hãy nhập nội dung tin nhắn."
+msgstr "Enter a message."
+
+msgid "Chỉ gửi được tin đang tuyển của công ty bạn."
+msgstr "Only your company's open jobs can be shared."
+
+msgid "Hãy chọn một CV đã lưu của bạn."
+msgstr "Choose one of your saved CVs."
+
+msgid "Tin nhắn tối đa %(max)s ký tự."
+msgstr "Messages can be at most %(max)s characters."
+
+msgid "Loại tin nhắn không hợp lệ."
+msgstr "Invalid message type."
+
+msgid "Bạn có %(count)s tin nhắn mới từ %(sender)s"
+msgstr "You have %(count)s new messages from %(sender)s"
+
+msgid "Lịch phỏng vấn vị trí %(job)s"
+msgstr "Interview for %(job)s"
+
+msgid "Ứng viên"
+msgstr "Candidate"
+
+msgid "Ứng viên đã nhận lịch phỏng vấn vị trí %(job)s."
+msgstr "The candidate accepted the interview for %(job)s."
+
+msgid "Ứng viên đã từ chối lịch phỏng vấn vị trí %(job)s."
+msgstr "The candidate declined the interview for %(job)s."
+
+msgid "Ứng viên đề nghị đổi giờ phỏng vấn vị trí %(job)s."
+msgstr "The candidate asked to reschedule the interview for %(job)s."
+
+msgid "Sắp đến giờ phỏng vấn vị trí %(job)s (%(time)s)."
+msgstr "The interview for %(job)s is coming up (%(time)s)."
+
+msgid "Phỏng vấn %(job)s"
+msgstr "Interview: %(job)s"
+
+msgid "Đã nộp hồ sơ"
+msgstr "Application submitted"
+
+msgid "Nhà tuyển dụng đã xem hồ sơ"
+msgstr "Employer viewed your application"
+
+msgid "Hồ sơ phù hợp"
+msgstr "Shortlisted"
+
+msgid "Mời phỏng vấn"
+msgstr "Invited to interview"
+
+msgid "Trúng tuyển"
+msgstr "Hired"
+
+msgid "Chưa phù hợp"
+msgstr "Not a fit"
+
+msgid "Đã rút hồ sơ"
+msgstr "Withdrawn"
+
+msgid "Lịch phỏng vấn đã được xác nhận"
+msgstr "Interview confirmed"
+
+msgid "Địa điểm / link họp:"
+msgstr "Location / meeting link:"
+
+msgid "Tệp lịch đính kèm giúp bạn thêm buổi hẹn vào lịch của mình."
+msgstr "The attached calendar file adds the interview to your calendar."
+
+msgid "Mở cuộc trò chuyện"
+msgstr "Open conversation"
+
+msgid "Phỏng vấn vị trí <strong>%(job)s</strong> tại %(company)s lúc <strong>%(time)s</strong>, khoảng %(minutes)s phút."
+msgstr "Interview for <strong>%(job)s</strong> at %(company)s at <strong>%(time)s</strong>, about %(minutes)s minutes."
+
+msgid "Phỏng vấn vị trí %(job)s tại %(company)s lúc %(time)s, khoảng %(minutes)s phút."
+msgstr "Interview for %(job)s at %(company)s at %(time)s, about %(minutes)s minutes."
+
+msgid "Mở cuộc trò chuyện: %(url)s"
+msgstr "Open conversation: %(url)s"
+
+msgid "Bạn có tin nhắn mới trên ProCV Connect"
+msgstr "You have new messages on ProCV Connect"
+
+msgid "Vì quyền riêng tư, nội dung tin nhắn chỉ hiển thị khi bạn đăng nhập ProCV."
+msgstr "For your privacy, message content is only shown after you sign in to ProCV."
+
+msgid "<strong>%(sender)s</strong> đã gửi %(count)s tin nhắn về vị trí <strong>%(job)s</strong> mà bạn chưa đọc."
+msgstr "<strong>%(sender)s</strong> sent %(count)s unread messages about <strong>%(job)s</strong>."
+
+msgid "%(sender)s đã gửi %(count)s tin nhắn về vị trí %(job)s mà bạn chưa đọc."
+msgstr "%(sender)s sent %(count)s unread messages about %(job)s."

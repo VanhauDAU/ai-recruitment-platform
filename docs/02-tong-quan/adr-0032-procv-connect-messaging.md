@@ -2,7 +2,7 @@
 
 **Trạng thái:** Đã chấp nhận (thiết kế; xây dựng theo GĐ1–GĐ5 ở đặc tả)
 **Ngày:** 26/11/2026
-**Owner:** Messaging (`apps.messaging`, app mới); lịch hẹn phỏng vấn thuộc `apps.applications`
+**Owner:** Messaging (`apps.messaging`, app mới, gồm cả lịch hẹn phỏng vấn)
 **Đặc tả:** [dac-ta-procv-connect.md](../01-phan-tich/dac-ta-procv-connect.md)
 **Mở rộng:** [ADR-0028](adr-0028-realtime-notifications.md)
 
@@ -17,9 +17,10 @@
 
 ## Quyết định
 
-1. **Một hội thoại cho mỗi cặp (tin tuyển dụng, ứng viên).** Phía NTD là người phụ trách
-   tin; bàn giao tin thì đổi thành viên phía NTD, lịch sử giữ nguyên. Ràng buộc duy nhất
-   `(job, candidate)`.
+1. **Một hội thoại cho mỗi cặp (tin tuyển dụng, ứng viên).** Phía NTD không lưu cố định
+   mà luôn là người đang phụ trách tin (`job.posted_by`): bàn giao tin là hội thoại đi theo,
+   không cần đồng bộ. Trạng thái đọc/chưa đọc lưu theo từng phía trên `Conversation`.
+   Ràng buộc duy nhất `(job, candidate)`.
 2. **Ai được mở:** ứng viên có hồ sơ hiện hành chưa rút vào tin; NTD phụ trách tin với
    ứng viên đã nộp vào tin đó hoặc đã chấp nhận lời mời kết nối gắn tin đó. NTD phải qua
    `ensure_recruiter_candidate_data_access`. Công ty chặn ứng viên thì mọi hội thoại với
@@ -40,16 +41,20 @@
 6. **Sự kiện:** `chat.message.created`, `chat.message.updated`, `chat.read`,
    `chat.conversation.updated`, `chat.typing`. Quyết định trạng thái hồ sơ **không** sinh
    tin hệ thống để không lộ quyết định trong cửa sổ hoàn tác 15 giây.
-7. **Đính kèm đi qua pipeline upload sẵn có** (purpose mới `chat_attachment`, hai vai,
-   quét ClamAV, kho riêng tư) và chỉ tải qua API stream kiểm thành viên,
-   `Cache-Control: private, no-store`. Chia sẻ CV tạo `CvVersion` bản chụp và ghi
-   `CvAccessLog` kênh `message`.
+7. **Đính kèm tải thẳng lên API** (PDF, DOCX, PNG, JPG, WEBP), kiểm chữ ký tệp và cấu
+   trúc bằng cùng bộ kiểm giấy tờ NTD (`validate_employer_document_file`: pypdf strict,
+   giới hạn DOCX, mở ảnh có giới hạn), lưu kho riêng tư và chỉ tải qua API stream kiểm
+   thành viên, `Cache-Control: private, no-store`. Không đi qua phiên quét virus vì pipeline
+   ClamAV chưa bật ở production; khi bật sẽ chuyển sang upload session. Chia sẻ CV tạo
+   `CvVersion` bản chụp và ghi `CvAccessLog` kênh `message`; CV dựng bằng trình tạo CV
+   được NTD xuất PDF qua luồng export sẵn có.
 8. **Quyền riêng tư:** admin không đọc hội thoại; email nhắc tin chưa đọc không chứa nội
    dung; xóa tài khoản xóa nội dung và tệp của người đó; hội thoại có trong bản xuất dữ
    liệu cá nhân.
 9. **Phụ thuộc một chiều:** `messaging` dùng services/selectors của `applications`, `jobs`,
-   `cvs`, `uploads`, `realtime`; `applications` không import `messaging`. Khóa/mở khi
-   chặn, bàn giao, xóa tài khoản đi qua signal mà `messaging` lắng nghe.
+   `cvs`, `employers`, `realtime`; `applications` không import `messaging`. Khóa hội thoại
+   tính lúc đọc/gửi (chặn theo công ty, hồ sơ đã rút, tài khoản không hoạt động, công tắc
+   admin) nên không cần signal; xóa tài khoản gọi `erase_user_messages` từ `apps.privacy`.
 
 ## Phương án đã cân nhắc
 

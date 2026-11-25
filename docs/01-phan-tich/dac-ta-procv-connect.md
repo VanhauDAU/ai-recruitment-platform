@@ -2,7 +2,8 @@
 
 > Quyết định kiến trúc: [ADR-0032](../02-tong-quan/adr-0032-procv-connect-messaging.md).
 > Sơ đồ use case, tuần tự, hoạt động: [`mo-hinh-hoa-yeu-cau/17-procv-connect/`](mo-hinh-hoa-yeu-cau/17-procv-connect/)
-> (chức năng 43–47). Cập nhật 26/11/2026 — bản thiết kế, chưa xây dựng.
+> (chức năng 43–47). Hợp đồng API: [`procv-connect-contract.md`](../04-api/procv-connect-contract.md).
+> Cập nhật 26/11/2026.
 
 ## 1. Mục tiêu
 
@@ -49,7 +50,7 @@ Mở lại khi đã có hội thoại trả về hội thoại cũ (một cặp 
 | --- | --- |
 | Công ty chặn ứng viên | Khóa mọi hội thoại của ứng viên với công ty; ứng viên thấy "Cuộc trò chuyện hiện không nhận tin nhắn" |
 | Gỡ chặn / chặn hết hạn | Mở lại |
-| Bàn giao tin cho thành viên khác | Đổi thành viên phía NTD sang người nhận bàn giao, tin hệ thống "Hội thoại được chuyển cho người phụ trách mới" |
+| Bàn giao tin cho thành viên khác | Phía NTD là người phụ trách mới ngay (đọc từ `job.posted_by`), lịch sử giữ nguyên |
 | Tài khoản bị khóa | Khóa; mở lại khi tài khoản được mở |
 | Xóa tài khoản | Xóa nội dung và tệp của người đó, hiện "Tài khoản đã xóa", khóa vĩnh viễn |
 
@@ -67,7 +68,7 @@ Mở lại khi đã có hội thoại trả về hội thoại cũ (một cặp 
 | `text` | cả hai | Chữ thuần ≤ 2000 ký tự, emoji Unicode, link tự nhận dạng (`rel="noopener nofollow"`) | Không nhận HTML; bỏ ký tự điều khiển |
 | `cv` | ứng viên | Một CV đã lưu trong thư viện → bản chụp `CvVersion` | CV thuộc ứng viên; NTD xem qua stream, ghi `CvAccessLog` kênh `message` |
 | `job` | NTD (ứng viên chia sẻ lại được tin đang trao đổi) | Thẻ tin: tiêu đề, lương, địa điểm (snapshot) + link trang tin | Tin thuộc công ty, đang công khai |
-| `file` / `image` | cả hai | PDF, DOCX, PNG, JPG, WEBP ≤ `connect_attachment_max_mb` (10 MB) | Upload session purpose `chat_attachment`, chữ ký tệp, ClamAV |
+| `file` / `image` | cả hai | PDF, DOCX, PNG, JPG, WEBP ≤ `connect_attachment_max_mb` (10 MB) | Chữ ký tệp + kiểm cấu trúc như giấy tờ NTD, kho riêng tư |
 | `interview` | NTD | Thẻ lịch hẹn (mục 6) | Hồ sơ hiện hành chưa có kết quả, giờ ở tương lai |
 | `system` | hệ thống | Bắt đầu hội thoại, sự kiện lịch hẹn, khóa/mở, bàn giao | — |
 
@@ -133,7 +134,7 @@ flowchart LR
     CL --> RT[daphne<br/>NotificationConsumer]
     RT -- chat.* --> WS
     WS -- typing --> RT
-    API -- tệp --> UP[apps.uploads<br/>cách ly → ClamAV → kho riêng tư]
+    API -- tệp đã kiểm cấu trúc --> UP[(Kho riêng tư<br/>R2 private)]
     BEAT[Celery beat] -- nhắc tin chưa đọc,<br/>nhắc lịch hẹn --> MAIL[Email]
 ```
 
@@ -143,10 +144,9 @@ Chi tiết từng luồng ở sơ đồ tuần tự 43–47.
 
 | Bảng | Trường chính | Ràng buộc |
 | --- | --- | --- |
-| `Conversation` (`cnv`) | `job`, `candidate`, `company`, `origin` (application/invitation), `status` (open/locked), `locked_reason`, `last_seq`, `last_message_at`, `last_message_preview`, `recruiter_replied_at` | Duy nhất `(job, candidate)`; chỉ mục `(company, candidate)` |
-| `ConversationParticipant` | `conversation`, `user`, `role`, `last_read_seq`, `unread_count`, `emailed_through_seq`, `archived_at` | Duy nhất `(conversation, user)` |
-| `Message` (`msg`) | `conversation`, `seq`, `sender` (null = hệ thống), `sender_role`, `kind`, `body`, `payload` (snapshot thẻ), `attachment`, `cv_version`, `interview`, `client_id`, `created_at` | Duy nhất `(conversation, seq)` và `(sender, client_id)` |
-| `InterviewAppointment` (`itv`, `apps.applications`) | `application`, `proposed_by`, `starts_at`, `duration_minutes`, `mode`, `location`, `meeting_url`, `note`, `status`, `candidate_note`, `responded_at`, `reminded_24h_at`, `reminded_1h_at` | Tối đa một lịch `proposed` mỗi hồ sơ |
+| `Conversation` (`cnv`) | `job`, `candidate`, `company`, `origin` (application/invitation), `last_seq`, `last_message_at`, `last_message_preview`, `last_message_kind`, `last_sender_role`, `candidate_/recruiter_last_read_seq`, `candidate_/recruiter_unread`, `candidate_/recruiter_emailed_seq`, `recruiter_replied_at` | Duy nhất `(job, candidate)`; phía NTD = `job.posted_by` |
+| `Message` (`msg`) | `conversation`, `seq`, `sender` (null = hệ thống), `sender_role`, `kind`, `body`, `payload` (snapshot thẻ, sự kiện hệ thống), `shared_job`, `cv_version`, `interview`, `attachment_*`, `client_id`, `created_at`, `erased_at` | Duy nhất `(conversation, seq)` và `(sender, client_id)` |
+| `InterviewAppointment` (`itv`) | `conversation`, `application`, `proposed_by`, `starts_at`, `duration_minutes`, `mode`, `location`, `meeting_url`, `note`, `status`, `candidate_note`, `responded_at`, `reminded_24h_at`, `reminded_1h_at` | Tối đa một lịch `proposed` mỗi hồ sơ |
 
 ## 9. API
 

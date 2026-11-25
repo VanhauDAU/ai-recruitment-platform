@@ -16,15 +16,14 @@ case Tệp hoặc ảnh
     stop
   case Có
   endif
-  Hệ thống lưu tệp vào vùng cách ly
-  Worker quét virus
-  if Tệp sạch?
+  Hệ thống kiểm cấu trúc tệp (PDF, DOCX, ảnh)
+  if Tệp hợp lệ?
   case Không
     Giao diện báo không gửi được tệp
     stop
   case Có
   endif
-  Hệ thống chuyển tệp sang kho riêng tư và gắn vào tin
+  Hệ thống lưu tệp vào kho riêng tư và gắn vào tin
 endif
 Hệ thống tạo tin nhắn và đẩy realtime tới hai bên
 Người nhận mở thẻ CV, thẻ tin hoặc tệp
