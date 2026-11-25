@@ -8,6 +8,19 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Fixed — Job `coverage` của Frontend CI chỉ gộp được một shard
+
+- Bỏ `--shard` khiến mọi shard đặt tên blob report là `blob.json` và ghi đè nhau khi
+  gộp; mỗi shard nay ghi `blob-<shard>-<tổng>.json`.
+
+#### Changed — CI nhanh hơn: cache DB test đã migrate, cân shard bằng số đo CI
+
+- Backend: shard nạp DB test đã migrate từ cache (khóa theo migration) thay vì
+  `migrate` 60–90 giây ở mỗi shard.
+- Frontend: 10 shard unit cân theo thời lượng đo trên CI (shard chậm nhất 164s → 106s
+  phần chạy test); bảng thời lượng đọc thẳng từ blob report nên vẫn xuất được khi
+  bước gộp đỏ. E2E 7 shard (desktop 3, tablet 2, mobile 2).
+
 #### Changed — Tổ chức lại tài liệu, dọn code tương thích, CI chia shard theo thời lượng
 
 - Tài liệu: ADR sang `docs/adr/` (có chỉ mục và trạng thái thay thế), kế hoạch đã

@@ -191,6 +191,22 @@ jobs:
             -c "ALTER SYSTEM SET full_page_writes = off" \
             -c "SELECT pg_reload_conf()"
 
+      # conftest.py migrates a template database once per PostgreSQL server,
+      # which took 60–90s of every shard. The migrated template is cached by
+      # the files that decide its content; a hit restores it in seconds.
+      - name: Restore migrated test database
+        id: testdb-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: backend/.testdb-template.dump
+          key: testdb-${{ hashFiles('backend/apps/*/migrations/*.py', 'backend/apps/*/migrations/*.json', 'backend/common/db/*.py', 'backend/requirements.txt') }}
+
+      - name: Load migrated test database
+        if: ${{ steps.testdb-cache.outputs.cache-hit == 'true' }}
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        run: bash ../scripts/ci/test_db_template.sh restore .testdb-template.dump
+
       - name: Test shard ${{ matrix.group }}/${{ strategy.job-total }}
         id: pytest
         shell: bash
@@ -221,6 +237,20 @@ jobs:
             -o junit_duration_report=call \
             2>&1 | tee pytest.log
           mv .coverage ".coverage.group$GROUP"
+
+      # One shard saves, so parallel shards do not race for the same key.
+      - name: Dump migrated test database
+        if: ${{ steps.testdb-cache.outputs.cache-hit != 'true' && steps.pytest.outcome == 'success' && matrix.group == 1 }}
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        run: bash ../scripts/ci/test_db_template.sh save .testdb-template.dump
+
+      - name: Cache migrated test database
+        if: ${{ steps.testdb-cache.outputs.cache-hit != 'true' && steps.pytest.outcome == 'success' && matrix.group == 1 }}
+        uses: actions/cache/save@v6
+        with:
+          path: backend/.testdb-template.dump
+          key: ${{ steps.testdb-cache.outputs.cache-primary-key }}
 
       - name: Upload shard results
         if: ${{ !cancelled() }}

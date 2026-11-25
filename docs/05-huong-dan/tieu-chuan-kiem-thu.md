@@ -123,8 +123,8 @@ Cục bộ chỉ chạy test liên quan tới phần sửa. CI của PR là lầ
 
 | Workflow | Job song song | Job tổng hợp (required check giữ nguyên tên) |
 | --- | --- | --- |
-| Backend | `backend-static` (ruff, import-linter, layering, `check`, migration, OpenAPI; không cần DB) và `backend-tests` 3 shard | `backend-checks`: gộp coverage, ratchet 84%, ngân sách thời gian → `quality` |
-| Frontend | `static-quality` (lint, kiến trúc, build, bundle), `coverage-shard` 8 shard, `e2e-smoke-shard` 4 shard (desktop chia đôi, tablet, mobile) | `coverage`, `e2e-smoke`, `build`, `bundle-budget` → `frontend-final-gate` |
+| Backend | `backend-static` (ruff, import-linter, layering, `check`, migration, OpenAPI; không cần DB) và `backend-tests` 3 shard (nạp DB test đã migrate từ cache) | `backend-checks`: gộp coverage, ratchet 84%, ngân sách thời gian → `quality` |
+| Frontend | `static-quality` (lint, kiến trúc, build, bundle), `coverage-shard` 10 shard, `e2e-smoke-shard` 7 shard (desktop 3, tablet 2, mobile 2) | `coverage`, `e2e-smoke`, `build`, `bundle-budget` → `frontend-final-gate` |
 
 Shard được cân theo thời lượng đã đo, không theo số file:
 
@@ -132,6 +132,11 @@ Shard được cân theo thời lượng đã đo, không theo số file:
   `duration_based_chunks` (giữ thứ tự TestCase trước TransactionTestCase).
 - Frontend: `frontend/scripts/plan-vitest-shards.mjs` đọc
   `frontend/tests/vitest-durations.json`, xếp tham lam file lâu nhất vào shard nhẹ nhất.
+
+Backend còn cache DB test đã migrate (`scripts/ci/test_db_template.sh`, khóa cache
+là hash của migration, `common/db/` và `requirements.txt`): shard trúng cache nạp
+bản dump vài giây thay vì `migrate` 60–90 giây. Đổi migration thì lần đầu trượt
+cache, shard 1 dựng lại và lưu bản mới.
 
 Test mới chưa có số đo được tính bằng trung bình (backend) hoặc trung vị (frontend),
 nên không cần cập nhật bảng mỗi PR. Khi bản tóm tắt của job `coverage` hoặc
