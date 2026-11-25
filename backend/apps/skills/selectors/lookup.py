@@ -7,6 +7,7 @@ from django.db.models import Q
 
 from common.api.params import parse_int
 
+from ..domain import normalize_skill_name
 from ..models import Skill, SkillGroup
 
 LOOKUP_CAP = 100
@@ -35,11 +36,6 @@ def active_skill_terms():
         .order_by('id')
         .values_list('id', 'name', 'aliases', 'group__name')
     )
-
-
-def normalize_skill_name(name):
-    """Khóa so khớp tên kỹ năng, cùng quy tắc với `Skill.normalized_name`."""
-    return ' '.join(str(name).split()).lower()
 
 
 def skills_by_names(names):

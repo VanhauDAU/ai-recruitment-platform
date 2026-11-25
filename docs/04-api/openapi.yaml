@@ -7050,6 +7050,303 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
+  /api/admin/skills/:
+    get:
+      operationId: admin_skills_list
+      parameters:
+      - in: query
+        name: duplicates
+        schema:
+          type: boolean
+        description: Chỉ kỹ năng có thể trùng nhau
+      - in: query
+        name: group
+        schema:
+          type: integer
+        description: Id nhóm kỹ năng
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - in: query
+        name: ordering
+        schema:
+          type: string
+          enum:
+          - name
+          - recent
+          - usage
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Tìm theo tên hoặc tên gọi khác
+      - in: query
+        name: source
+        schema:
+          type: string
+          enum:
+          - admin
+          - employer
+          - import
+          - seed
+      - in: query
+        name: ungrouped
+        schema:
+          type: boolean
+        description: Chỉ kỹ năng chưa có nhóm
+      tags:
+      - skills-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdminSkillList'
+          description: ''
+    post:
+      operationId: admin_skills_create
+      tags:
+      - skills-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkillWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SkillWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SkillWriteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSkill'
+          description: ''
+  /api/admin/skills/{id}/:
+    patch:
+      operationId: admin_skills_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      tags:
+      - skills-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSkillWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSkillWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSkillWriteRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSkill'
+          description: ''
+  /api/admin/skills/{id}/merge/:
+    post:
+      operationId: admin_skills_merge_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      tags:
+      - skills-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkillMergeRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SkillMergeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SkillMergeRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSkill'
+          description: ''
+  /api/admin/skills/{id}/merge-preview/:
+    get:
+      operationId: admin_skills_merge_preview_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      - in: query
+        name: target
+        schema:
+          type: integer
+        required: true
+      tags:
+      - skills-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillMergePreview'
+          description: ''
+  /api/admin/skills/bulk-update/:
+    post:
+      operationId: admin_skills_bulk_update_create
+      tags:
+      - skills-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkillBulkUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SkillBulkUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SkillBulkUpdateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillSummary'
+          description: ''
+  /api/admin/skills/groups/:
+    get:
+      operationId: admin_skills_groups_list
+      tags:
+      - skills-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdminSkillGroup'
+          description: ''
+    post:
+      operationId: admin_skills_groups_create
+      tags:
+      - skills-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkillGroupWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SkillGroupWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SkillGroupWriteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSkillGroup'
+          description: ''
+  /api/admin/skills/groups/{id}/:
+    patch:
+      operationId: admin_skills_groups_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      tags:
+      - skills-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSkillGroupWriteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSkillGroupWriteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSkillGroupWriteRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSkillGroup'
+          description: ''
+  /api/admin/skills/summary/:
+    get:
+      operationId: admin_skills_summary_retrieve
+      tags:
+      - skills-admin
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillSummary'
+          description: ''
   /api/admin/user-cvs/:
     get:
       operationId: admin_user_cvs_list
@@ -19815,6 +20112,93 @@ components:
       - position_level_label
       - public_id
       - updated_at
+    AdminSkill:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        slug:
+          type: string
+          maxLength: 255
+          pattern: ^[-a-zA-Z0-9_]+$
+        aliases:
+          description: Alternate names for keyword matching, e.g. ["ReactJS", "React.js"]
+        group:
+          type: integer
+          nullable: true
+        group_name:
+          type: string
+          readOnly: true
+          default: ''
+        description:
+          type: string
+        is_active:
+          type: boolean
+        source:
+          $ref: '#/components/schemas/AdminSkillSourceEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        usage:
+          allOf:
+          - $ref: '#/components/schemas/SkillUsage'
+          readOnly: true
+        usage_total:
+          type: integer
+          readOnly: true
+      required:
+      - created_at
+      - group_name
+      - id
+      - name
+      - usage
+      - usage_total
+    AdminSkillGroup:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        slug:
+          type: string
+          maxLength: 255
+          pattern: ^[-a-zA-Z0-9_]+$
+        parent:
+          type: integer
+          nullable: true
+        is_active:
+          type: boolean
+        skill_count:
+          type: integer
+          readOnly: true
+        is_system:
+          type: boolean
+          readOnly: true
+      required:
+      - id
+      - is_system
+      - name
+      - skill_count
+    AdminSkillSourceEnum:
+      enum:
+      - seed
+      - import
+      - employer
+      - admin
+      type: string
+      description: |-
+        * `seed` - Hệ thống
+        * `import` - Nhập dữ liệu
+        * `employer` - Nhà tuyển dụng
+        * `admin` - Quản trị viên
     AdminTag:
       type: object
       properties:
@@ -32382,6 +32766,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AdminRecruitmentNeed'
+    PaginatedAdminSkillList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminSkill'
     PaginatedAdminUserCvList:
       type: object
       required:
@@ -34126,6 +34533,39 @@ components:
         revision_token:
           type: integer
           minimum: 1
+    PatchedSkillGroupWriteRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        parent:
+          type: integer
+          nullable: true
+        is_active:
+          type: boolean
+    PatchedSkillWriteRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        aliases:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 255
+          maxItems: 50
+        group:
+          type: integer
+          nullable: true
+        description:
+          type: string
+        is_active:
+          type: boolean
     PatchedTalentPoolUpdateRequest:
       type: object
       properties:
@@ -37564,6 +38004,22 @@ components:
       - group_name
       - id
       - name
+    SkillBulkUpdateRequest:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: integer
+          maxItems: 200
+          minItems: 1
+        group:
+          type: integer
+          nullable: true
+        is_active:
+          type: boolean
+      required:
+      - ids
     SkillCreateRequest:
       type: object
       properties:
@@ -37592,6 +38048,20 @@ components:
       required:
       - id
       - name
+    SkillGroupWriteRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        parent:
+          type: integer
+          nullable: true
+        is_active:
+          type: boolean
+      required:
+      - name
     SkillLevelEnum:
       enum:
       - beginner
@@ -37602,6 +38072,78 @@ components:
         * `beginner` - Beginner
         * `intermediate` - Intermediate
         * `advanced` - Advanced
+    SkillMergePreview:
+      type: object
+      properties:
+        moved:
+          $ref: '#/components/schemas/SkillUsage'
+        dropped:
+          $ref: '#/components/schemas/SkillUsage'
+      required:
+      - dropped
+      - moved
+    SkillMergeRequest:
+      type: object
+      properties:
+        target:
+          type: integer
+      required:
+      - target
+    SkillSummary:
+      type: object
+      properties:
+        total:
+          type: integer
+        ungrouped:
+          type: integer
+        duplicates:
+          type: integer
+        employer:
+          type: integer
+        hidden:
+          type: integer
+      required:
+      - duplicates
+      - employer
+      - hidden
+      - total
+      - ungrouped
+    SkillUsage:
+      type: object
+      properties:
+        jobs:
+          type: integer
+        cvs:
+          type: integer
+        candidates:
+          type: integer
+      required:
+      - candidates
+      - cvs
+      - jobs
+    SkillWriteRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        aliases:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 255
+          maxItems: 50
+        group:
+          type: integer
+          nullable: true
+        description:
+          type: string
+        is_active:
+          type: boolean
+      required:
+      - name
     SocialCapabilities:
       type: object
       properties:

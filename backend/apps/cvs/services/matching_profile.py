@@ -14,7 +14,8 @@ Cấp bậc mong muốn (`Job.PositionLevel`) do ứng viên chọn, không suy 
 """
 
 from apps.jobs.models import Job
-from apps.skills.selectors import normalize_skill_name, skills_by_names
+from apps.skills.domain import normalize_skill_name
+from apps.skills.selectors import skills_by_names
 from common.vietnam_time import vietnam_today
 
 from ..models import CvSkill, UserCv

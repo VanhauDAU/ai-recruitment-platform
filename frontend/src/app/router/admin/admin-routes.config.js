@@ -140,6 +140,13 @@ export const ADMIN_ROUTES = [
     showInNav: true,
   },
   {
+    id: 'catalog',
+    segment: '/catalog',
+    lazyKey: 'AdminCatalogPage',
+    title: 'Danh mục dữ liệu',
+    showInNav: true,
+  },
+  {
     id: 'banners',
     segment: '/banners',
     lazyKey: 'AdminBannersPage',

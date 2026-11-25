@@ -19,6 +19,7 @@ from apps.cvs.services import (
     open_snapshot_source_pdf,
     open_uploaded_cv_pdf,
 )
+from apps.skills.domain import UNCOUNTED_GROUPS
 
 from ..models import MatchChunk, MatchDocument
 from .extraction import EXTRACTOR_VERSION, ExtractionError, cv_profile, job_profile, text_cv_profile
@@ -205,3 +206,33 @@ def chunk_vectors(document):
     chunks = list(document.chunks.order_by('position'))
     matrix = np.array([chunk.embedding for chunk in chunks], dtype=np.float32)
     return chunks, matrix.reshape(len(chunks), -1)
+
+
+def reassign_document_skill(source_id, target):
+    """Hồ sơ đã lưu ghi `skill_id`; khi kỹ năng bị gộp, đổi sang kỹ năng giữ lại.
+
+    Hash nội dung của CV không gồm danh mục kỹ năng nên tài liệu cũ không tự dựng
+    lại; sửa thẳng `profile_json` cho đúng mà không phải mã hóa lại vector.
+    """
+    group = target.group.name if target.group else ''
+    replacement = {
+        'skill_id': target.pk,
+        'name': target.name,
+        'group': group,
+        'counted': group not in UNCOUNTED_GROUPS,
+    }
+    changed = []
+    for document in MatchDocument.objects.filter(
+        profile_json__skills__contains=[{'skill_id': source_id}]
+    ):
+        entries = document.profile_json['skills']
+        has_target = any(entry['skill_id'] == target.pk for entry in entries)
+        skills = [
+            {**entry, **replacement} if entry['skill_id'] == source_id else entry
+            for entry in entries
+            if not (has_target and entry['skill_id'] == source_id)
+        ]
+        document.profile_json = {**document.profile_json, 'skills': skills}
+        changed.append(document)
+    MatchDocument.objects.bulk_update(changed, ['profile_json'])
+    return len(changed)
