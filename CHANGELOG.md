@@ -8,6 +8,11 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Fixed — `openapi.yaml` lệch so với endpoint ảnh đại diện cẩm nang
+
+- Sinh lại `docs/04-api/openapi.yaml` sau khi `POST /api/admin/blog/thumbnails/` nhận
+  thêm `url` (#409); Backend CI xanh trở lại.
+
 #### Added — Ảnh đại diện bài cẩm nang lấy từ đường dẫn
 
 - Trình soạn bài có ô "Dán link ảnh": backend tải ảnh về media (mã hóa lại như ảnh
