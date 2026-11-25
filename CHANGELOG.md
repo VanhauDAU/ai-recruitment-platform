@@ -15,6 +15,8 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   "Danh mục", tìm việc và chuông. Tab Tài khoản mở tấm trượt từ đáy.
 - Chuông thông báo ứng viên mở dạng tấm trượt từ đáy trên mobile, popover làm lại trên
   desktop (số chưa đọc ở tiêu đề, trạng thái rỗng mới).
+- Hủy được đăng nhập trên mobile: tab Tài khoản mở popup đăng nhập tại chỗ; trang
+  đăng nhập/đăng ký ứng viên có nút ✕ quay lại trang trước (hoặc trang chủ).
 - Thanh tab tự ẩn ở trang có thanh hành động riêng (chi tiết tin, mẫu CV, trang công ty);
   nút nổi và dock so sánh việc làm nâng lên theo `--page-bottom-bar-height`.
 

@@ -77,3 +77,22 @@ test('mobile tab bar replaces the header account cluster on narrow screens', { t
   )
   expect(hasHorizontalOverflow).toBe(false)
 })
+
+test('guests can cancel signing in from the tab bar and the login page', { tag: '@responsive' }, async ({ page }) => {
+  await mockPublicApi(page)
+  await page.goto('/blog')
+  if (page.viewportSize().width < 768) {
+    await page.getByRole('navigation', { name: 'Điều hướng nhanh' }).getByRole('button', { name: 'Tài khoản' }).click()
+    await page.getByRole('dialog', { name: 'Tài khoản' }).getByRole('button', { name: 'Đăng nhập' }).click()
+    const loginDialog = page.getByRole('dialog').filter({ hasText: 'Chào mừng quay trở lại' })
+    await expect(loginDialog).toBeVisible()
+    await loginDialog.getByRole('button', { name: /close|đóng/i }).first().click()
+    await expect(loginDialog).toBeHidden()
+    await expect(page).toHaveURL(/\/blog$/)
+  }
+
+  // Opened directly (no in-app history): closing falls back to the home page.
+  await page.goto('/login')
+  await page.getByRole('button', { name: 'Đóng, quay lại trang trước' }).click()
+  await expect(page).toHaveURL(/127\.0\.0\.1:\d+\/$/)
+})

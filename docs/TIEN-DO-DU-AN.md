@@ -75,6 +75,9 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
   để nút nổi và dock so sánh tự nâng lên; trang có thanh hành động riêng
   (`has-bottom-action-bar`: chi tiết tin, mẫu CV, trang công ty) thì thanh tab ẩn.
   Chi tiết tin chỉ gắn class này dưới md. Trang soạn CV không có thanh tab.
+- Hủy đăng nhập: nút Đăng nhập ở tab Tài khoản mở popup tại chỗ (đóng là về đúng trang
+  đang xem); trang `/login`, `/sign-up` có nút ✕ cạnh nút đổi giao diện, về trang trước
+  trong app hoặc trang chủ khi vào thẳng (không hiện ở cổng admin).
 - Kiểm: `MobileTabBar.test.jsx`, test chuông mobile, E2E `mobile-tab-bar.spec.js` (@responsive).
 
 ## Chuẩn bị deploy: GĐ1 bảo mật ứng dụng (2026-11-25)
