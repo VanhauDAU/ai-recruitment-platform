@@ -17,6 +17,8 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   desktop (số chưa đọc ở tiêu đề, trạng thái rỗng mới).
 - Hủy được đăng nhập trên mobile: tab Tài khoản mở popup đăng nhập tại chỗ; trang
   đăng nhập/đăng ký ứng viên có nút ✕ quay lại trang trước (hoặc trang chủ).
+- Cụm nút nổi Việc làm đã lưu/Góp ý/Hỗ trợ trên mobile gom thành một nút, bấm mới bung
+  lên có hiệu ứng; desktop không đổi.
 - Thanh tab tự ẩn ở trang có thanh hành động riêng (chi tiết tin, mẫu CV, trang công ty);
   nút nổi và dock so sánh việc làm nâng lên theo `--page-bottom-bar-height`.
 

@@ -78,6 +78,9 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 - Hủy đăng nhập: nút Đăng nhập ở tab Tài khoản mở popup tại chỗ (đóng là về đúng trang
   đang xem); trang `/login`, `/sign-up` có nút ✕ cạnh nút đổi giao diện, về trang trước
   trong app hoặc trang chủ khi vào thẳng (không hiện ở cổng admin).
+- Cụm nút nổi (♥ / Góp ý / Hỗ trợ) dưới md gom vào một nút tròn trắng; bấm thì các
+  nút bung lên lần lượt (speed dial), nút đổi thành ✕; bấm ra ngoài, Escape hoặc đổi
+  trang thì thu lại. Badge số tin đã lưu hiện trên nút gom. Desktop giữ nguyên cụm.
 - Kiểm: `MobileTabBar.test.jsx`, test chuông mobile, E2E `mobile-tab-bar.spec.js` (@responsive).
 
 ## Chuẩn bị deploy: GĐ1 bảo mật ứng dụng (2026-11-25)

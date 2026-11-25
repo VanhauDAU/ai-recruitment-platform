@@ -96,3 +96,25 @@ test('guests can cancel signing in from the tab bar and the login page', { tag: 
   await page.getByRole('button', { name: 'Đóng, quay lại trang trước' }).click()
   await expect(page).toHaveURL(/127\.0\.0\.1:\d+\/$/)
 })
+
+test('floating actions collapse into one speed-dial button on narrow screens', { tag: '@responsive' }, async ({ page }) => {
+  await mockPublicApi(page)
+  await page.goto('/blog')
+  const savedJobs = page.getByRole('button', { name: 'Việc làm đã lưu' })
+  if (page.viewportSize().width >= 768) {
+    await expect(savedJobs).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Mở tiện ích nhanh' })).toBeHidden()
+    return
+  }
+
+  const toggle = page.getByRole('button', { name: 'Mở tiện ích nhanh' })
+  await expect(savedJobs).toBeHidden()
+  await toggle.click()
+  await expect(page.getByRole('button', { name: 'Thu gọn tiện ích' })).toHaveAttribute('aria-expanded', 'true')
+  await expect(savedJobs).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Hỗ trợ' })).toBeVisible()
+
+  await page.keyboard.press('Escape')
+  await expect(savedJobs).toBeHidden()
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false')
+})

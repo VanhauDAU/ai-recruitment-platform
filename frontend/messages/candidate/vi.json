@@ -193,5 +193,7 @@
   "candidate_notifications_empty_hint": "Lời mời phỏng vấn, kết quả hồ sơ và gợi ý việc làm sẽ xuất hiện ở đây.",
   "candidate_notifications_error": "Không tải được thông báo.",
   "candidate_notifications_settings": "Cài đặt thông báo",
-  "candidate_auth_close": "Đóng, quay lại trang trước"
+  "candidate_auth_close": "Đóng, quay lại trang trước",
+  "candidate_fab_open": "Mở tiện ích nhanh",
+  "candidate_fab_close": "Thu gọn tiện ích"
 }

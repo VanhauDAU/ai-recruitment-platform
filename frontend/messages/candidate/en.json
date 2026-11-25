@@ -193,5 +193,7 @@
   "candidate_notifications_empty_hint": "Interview invitations, application updates and job suggestions will show up here.",
   "candidate_notifications_error": "Couldn't load notifications.",
   "candidate_notifications_settings": "Notification settings",
-  "candidate_auth_close": "Close and go back"
+  "candidate_auth_close": "Close and go back",
+  "candidate_fab_open": "Open quick actions",
+  "candidate_fab_close": "Collapse quick actions"
 }

@@ -12,7 +12,7 @@ import {
   UpOutlined,
 } from '@ant-design/icons'
 import { Badge, Modal, Tooltip } from 'antd'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { useLoginPrompt } from '@/features/common/account/auth'
 import { useSession } from '@/entities/account/session'
@@ -20,8 +20,11 @@ import { useSavedJobs } from '@/features/main/job/saved-jobs'
 import { useSiteSettings } from '@/entities/system/site-settings'
 import { FeedbackModal } from '@/features/main/account/submit-feedback'
 import { useVisualViewportBottomInset } from '@/shared/hooks/use-visual-viewport-bottom-inset'
+import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
 import { knowledgebaseSupportLinks } from './knowledgebase-support-links'
+
+const MENU_ID = 'floating-actions-menu'
 
 export default function FloatingActions() {
   const navigate = useNavigate()
@@ -35,6 +38,7 @@ export default function FloatingActions() {
   // Khách bấm "Việc làm đã lưu" -> popup đăng nhập rồi mới vào trang, thay vì bị đá về /login.
   function openSavedJobs() {
     setSupportOpen(false)
+    setMenuOpen(false)
     if (isAuthenticated) navigate('/viec-lam-da-luu')
     else promptLogin(() => navigate('/viec-lam-da-luu'))
   }
@@ -44,6 +48,29 @@ export default function FloatingActions() {
   const [saveNoticeOpen, setSaveNoticeOpen] = useState(false)
   const [heartPulseKey, setHeartPulseKey] = useState(0)
   const [showScrollTop, setShowScrollTop] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const rootRef = useRef(null)
+  // Chỉ có tác dụng dưới md: mục ẩn/hiện bằng max-md:*, bung lần lượt từ dưới lên.
+  const itemMotion = `transition duration-200 ease-out ${menuOpen ? '' : 'max-md:pointer-events-none max-md:invisible max-md:translate-y-3 max-md:scale-90 max-md:opacity-0'}`
+  const itemDelay = (order) => ({ transitionDelay: menuOpen ? `${order * 45}ms` : '0ms' })
+
+  useEffect(() => {
+    setMenuOpen(false)
+    setSupportOpen(false)
+  }, [location.pathname])
+
+  useEffect(() => {
+    if (!menuOpen && !supportOpen) return undefined
+    const close = () => { setMenuOpen(false); setSupportOpen(false) }
+    const onPointerDown = (event) => { if (!rootRef.current?.contains(event.target)) close() }
+    const onKeyDown = (event) => { if (event.key === 'Escape') close() }
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [menuOpen, supportOpen])
 
   useEffect(() => {
     if (!saveSuccess) return undefined
@@ -99,6 +126,7 @@ export default function FloatingActions() {
   return (
     <>
       <div
+        ref={rootRef}
         data-testid="floating-actions"
         className="fixed left-4 z-30 flex flex-col items-start gap-2.5 md:left-6"
         style={{
@@ -117,19 +145,27 @@ export default function FloatingActions() {
             </button>
           </Tooltip>
         )}
-        <div className="relative">
-          {saveNoticeOpen && (
-            <div
-              role="status"
-              className="absolute bottom-[calc(100%+12px)] left-0 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-[var(--brand-primary)]/20 bg-[#053a2c] p-3.5 text-xs leading-relaxed text-emerald-50 shadow-xl shadow-[var(--brand-primary)]/20"
-              style={{ animation: 'savedNoticeIn 0.25s ease both' }}
-            >
-              <p className="font-bold text-white">Lưu tin thành công!</p>
-              <p className="mt-0.5">
-                Để xem <button type="button" onClick={openSavedJobs} className="cursor-pointer font-bold text-white underline underline-offset-2">Danh sách việc làm đã lưu</button>, click vào đây:
-              </p>
-            </div>
-          )}
+        {saveNoticeOpen && (
+          <div
+            role="status"
+            className="absolute bottom-[calc(100%+12px)] left-0 w-80 max-w-[calc(100vw-2rem)] rounded-xl border border-[var(--brand-primary)]/20 bg-[#053a2c] p-3.5 text-xs leading-relaxed text-emerald-50 shadow-xl shadow-[var(--brand-primary)]/20"
+            style={{ animation: 'savedNoticeIn 0.25s ease both' }}
+          >
+            <p className="font-bold text-white">Lưu tin thành công!</p>
+            <p className="mt-0.5">
+              Để xem <button type="button" onClick={openSavedJobs} className="cursor-pointer font-bold text-white underline underline-offset-2">Danh sách việc làm đã lưu</button>, click vào đây:
+            </p>
+          </div>
+        )}
+        <style>{`
+          @keyframes savedHeartButton{0%{transform:scale(.72);box-shadow:0 0 0 0 color-mix(in srgb, var(--brand-primary) 45%, transparent)}45%{transform:scale(1.16);box-shadow:0 0 0 12px color-mix(in srgb, var(--brand-primary) 0%, transparent)}75%{transform:scale(.96)}100%{transform:scale(1);box-shadow:0 0 0 0 color-mix(in srgb, var(--brand-primary) 0%, transparent)}}
+          @keyframes savedNoticeIn{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+        `}</style>
+
+        {/* Màn hẹp: cả cụm gom vào một nút tròn, bấm mới bung lên lần lượt
+            (speed dial). Desktop luôn hiện cả cụm, không có nút gom. */}
+        <div id={MENU_ID} className="flex flex-col items-start gap-2.5 max-md:absolute max-md:bottom-[calc(100%+10px)] max-md:left-0 max-md:w-max">
+        <div className={itemMotion} style={itemDelay(2)}>
           <Tooltip title="Việc làm đã lưu" placement="right">
             <Badge count={items.length} size="small" offset={[-4, 4]}>
               <button
@@ -144,16 +180,13 @@ export default function FloatingActions() {
               </button>
             </Badge>
           </Tooltip>
-          <style>{`
-            @keyframes savedHeartButton{0%{transform:scale(.72);box-shadow:0 0 0 0 color-mix(in srgb, var(--brand-primary) 45%, transparent)}45%{transform:scale(1.16);box-shadow:0 0 0 12px color-mix(in srgb, var(--brand-primary) 0%, transparent)}75%{transform:scale(.96)}100%{transform:scale(1);box-shadow:0 0 0 0 color-mix(in srgb, var(--brand-primary) 0%, transparent)}}
-            @keyframes savedNoticeIn{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
-          `}</style>
         </div>
 
         <button
           type="button"
-          onClick={() => setWantOpen(true)}
-          className="flex cursor-pointer items-center gap-2 rounded-full border border-gray-200 bg-white py-2.5 pl-3 pr-4 text-sm font-semibold text-gray-700 shadow-lg shadow-gray-500/15 transition hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]"
+          onClick={() => { setMenuOpen(false); setWantOpen(true) }}
+          className={`${itemMotion} flex cursor-pointer items-center gap-2 rounded-full border border-gray-200 bg-white py-2.5 pl-3 pr-4 text-sm font-semibold text-gray-700 shadow-lg shadow-gray-500/15 hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)]`}
+          style={itemDelay(1)}
         >
           <CommentOutlined className="text-base" />
           Góp ý
@@ -163,7 +196,7 @@ export default function FloatingActions() {
             đúng ngay phía trên nút này (mép trái trùng mép trái nút), thay vì
             xếp chung hàng với cả cụm 3 nút — nếu không panel (rộng 300px) sẽ
             mở ra phía trên toàn bộ cụm nút hẹp hơn, trông như lệch/nổi lệch bên. */}
-        <div className="relative">
+        <div className={`relative ${itemMotion}`} style={itemDelay(0)}>
           {supportOpen && (
             <div
               className="absolute bottom-[calc(100%+12px)] left-0 w-[300px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-xl shadow-gray-500/15"
@@ -216,6 +249,23 @@ export default function FloatingActions() {
             Hỗ trợ
           </button>
         </div>
+        </div>
+
+        <Badge count={menuOpen ? 0 : items.length} size="small" offset={[-4, 4]} className="md:!hidden">
+          <button
+            key={heartPulseKey}
+            type="button"
+            aria-expanded={menuOpen}
+            aria-controls={MENU_ID}
+            aria-label={menuOpen ? m.candidate_fab_close() : m.candidate_fab_open()}
+            onClick={() => setMenuOpen((open) => !open)}
+            className={`relative flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border text-lg shadow-lg transition active:scale-95 ${menuOpen ? 'border-transparent bg-slate-800 text-white shadow-slate-900/25' : 'border-gray-200 bg-white text-[var(--brand-primary)] shadow-gray-500/20'}`}
+            style={{ animation: heartPulseKey && !menuOpen ? 'savedHeartButton 0.9s cubic-bezier(.2,.8,.2,1) both' : undefined }}
+          >
+            <CustomerServiceOutlined aria-hidden className={`absolute transition duration-300 ${menuOpen ? 'rotate-90 scale-50 opacity-0' : ''}`} />
+            <CloseOutlined aria-hidden className={`absolute text-base transition duration-300 ${menuOpen ? '' : '-rotate-90 scale-50 opacity-0'}`} />
+          </button>
+        </Badge>
       </div>
 
       {/* ── Modal giữa màn hình "Bạn muốn?" (từ nút Góp ý) ── */}
