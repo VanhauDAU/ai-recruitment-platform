@@ -8,6 +8,12 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Removed — `featured_employers` khỏi `GET /api/public/jobs/stats/`
+
+- Trang chủ đã lấy "Công ty nổi bật" từ danh bạ công khai; trường này không còn ai
+  đọc nhưng vẫn trả `id` số nội bộ của công ty. Gỡ cả truy vấn (dashboard 6 → 5
+  query), schema OpenAPI và mock test; khóa cache stats lên `v2`.
+
 #### Fixed — Job `coverage` của Frontend CI chỉ gộp được một shard
 
 - Bỏ `--shard` khiến mọi shard đặt tên blob report là `blob.json` và ghi đè nhau khi

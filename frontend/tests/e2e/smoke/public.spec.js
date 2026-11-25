@@ -303,7 +303,6 @@ test('public smoke: featured companies keep platform stats, the company page lin
       demand: [],
       salary_demand: [],
       latest_jobs: [],
-      featured_employers: [],
     }),
   }))
 

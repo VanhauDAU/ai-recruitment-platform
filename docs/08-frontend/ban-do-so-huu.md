@@ -73,8 +73,7 @@ app/router
   thái kiểm duyệt nội bộ.
 - Mọi surface “Công ty nổi bật” công khai, gồm danh bạ `/cong-ty` và khối tương
   ứng trên trang chủ, phải lấy request không có `q` từ `entities/company/company`; không
-  lấy cohort `featured_employers` của job stats hoặc dựng lại eligibility/rank
-  ở page. Job stats trên trang chủ chỉ sở hữu thống kê nền tảng và ngành nghề.
+  dựng lại eligibility/rank ở page (job stats không còn trả danh sách công ty). Job stats trên trang chủ chỉ sở hữu thống kê nền tảng và ngành nghề.
 - `widgets/main/company-directory` sở hữu tìm kiếm và trạng thái loading/empty/error.
   Request không có `q` chỉ render hữu hạn danh sách công ty nổi bật do API xáo
   thứ tự; không gắn observer hoặc nút tải thêm. Request có `q` phải trả mọi

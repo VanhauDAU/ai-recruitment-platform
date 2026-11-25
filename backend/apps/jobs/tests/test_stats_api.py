@@ -41,7 +41,7 @@ class JobStatsApiTests(APITestCase):
         self.assertEqual(response.data['candidates'], 1)
         self.assertEqual(response.data['employers'], 1)
 
-    def test_featured_employers_skip_companies_whose_page_is_held(self):
+    def test_held_company_jobs_leave_stats(self):
         companies = {}
         for name in ('Visible Co', 'Held Co'):
             employer = User.objects.create_user(
@@ -65,10 +65,8 @@ class JobStatsApiTests(APITestCase):
 
         # A held company page also takes its jobs off the public site.
         self.assertEqual(response.data['active_jobs'], 1)
-        self.assertEqual(
-            [item['slug'] for item in response.data['featured_employers']],
-            [companies['Visible Co'].slug],
-        )
+        # Công ty nổi bật lấy từ danh bạ công khai, không lộ id nội bộ qua stats.
+        self.assertNotIn('featured_employers', response.data)
 
     def test_category_demand_rolls_descendants_up_to_top_groups(self):
         employer = User.objects.create_user(

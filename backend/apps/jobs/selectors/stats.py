@@ -1,4 +1,4 @@
-"""Homepage market dashboard: six grouped queries, cached as one payload.
+"""Homepage market dashboard: five grouped queries, cached as one payload.
 
 The payload is the same for every visitor, so it is built at most once per
 ``STATS_CACHE_SECONDS``. The cache keeps media storage keys and salary band
@@ -8,7 +8,6 @@ keys, never absolute URLs or translated labels: those depend on the request
 
 from datetime import timedelta
 
-from django.contrib.postgres.aggregates import StringAgg
 from django.core.cache import cache
 from django.db.models import Count, OuterRef, Prefetch, Q, Subquery
 from django.db.models.functions import Coalesce, JSONObject
@@ -17,20 +16,18 @@ from django.utils.html import strip_tags
 from django.utils.translation import gettext as _
 
 from apps.accounts.models import User
-from apps.employers.models import Company
 from common.storage.media import media_url_from_value
 
 from ..models import Job, JobCategory, JobCategoryAssignment, JobLocation, listing_recency
 from ..models.querysets import SALARY_BUCKET_VALUE, salary_bucket_condition
 from .listing import SALARY_BUCKETS, publicly_available_job_filter
 
-STATS_CACHE_KEY = 'jobs:public-stats:v1'
+STATS_CACHE_KEY = 'jobs:public-stats:v2'
 STATS_CACHE_SECONDS = 5 * 60
 GROWTH_DAYS = 7
 DEMAND_LIMIT = 24
 SALARY_DEMAND_LIMIT = 6
 LATEST_JOBS_LIMIT = 10
-FEATURED_EMPLOYERS_LIMIT = 18
 NEGOTIABLE_SALARY_KEY = 'negotiable'
 
 
@@ -152,40 +149,6 @@ def _latest_jobs(active_jobs):
     return result
 
 
-def _featured_employers(active_jobs):
-    industries = (
-        Company.objects.filter(pk=OuterRef('company_id'))
-        .annotate(names=StringAgg('industries__name', delimiter=', ', distinct=True))
-        .values('names')
-    )
-    employers = (
-        # Each entry links to the company page, which answers 404 while held.
-        active_jobs.filter(company__content_policy_hold=False)
-        .order_by()
-        .values(
-            'company_id',
-            'company__public_id',
-            'company__company_name',
-            'company__slug',
-            'company__logo_url',
-        )
-        .annotate(job_count=Count('id'), industry=Subquery(industries))
-        .order_by('-job_count', 'company__company_name')[:FEATURED_EMPLOYERS_LIMIT]
-    )
-    return [
-        {
-            'id': item['company_id'],
-            'public_id': item['company__public_id'],
-            'company_name': item['company__company_name'],
-            'slug': item['company__slug'],
-            'company_logo_url': item['company__logo_url'],
-            'industry': item['industry'] or '',
-            'job_count': item['job_count'],
-        }
-        for item in employers
-    ]
-
-
 def _platform_account_counts():
     return User.objects.filter(
         is_active=True,
@@ -212,7 +175,6 @@ def job_stats_payload():
         **_job_totals(active_jobs, now),
         'demand': _category_demand(active_jobs),
         'latest_jobs': _latest_jobs(active_jobs),
-        'featured_employers': _featured_employers(active_jobs),
     }
     cache.set(STATS_CACHE_KEY, payload, STATS_CACHE_SECONDS)
     return payload
@@ -241,9 +203,5 @@ def build_job_stats(request):
         'latest_jobs': [
             {**item, 'company_logo_url': media(item['company_logo_url'])}
             for item in payload['latest_jobs']
-        ],
-        'featured_employers': [
-            {**item, 'company_logo_url': media(item['company_logo_url'])}
-            for item in payload['featured_employers']
         ],
     }
