@@ -1,10 +1,12 @@
 import { MailFilled, PhoneFilled } from '@ant-design/icons'
 import { useMemo, useState } from 'react'
 import { settingText, useSiteSettings } from '@/entities/system/site-settings'
+import { m } from '@/shared/config/i18n'
 import ChatShowcase from '@/shared/ui/ChatShowcase'
 import { legacyAsset } from '@/shared/config/assets'
 
 const HOTLINE_BG_URL = legacyAsset('home/hotline-bg.png')
+const HOTLINE_ILLUSTRATION_URL = '/images/home/hotline-consultation.webp'
 
 const HOTLINE_TABS = [
   {
@@ -13,17 +15,17 @@ const HOTLINE_TABS = [
     lead: 'Tìm việc khó',
     accent: 'đã có ProCV',
     emailLabel: 'Email hỗ trợ Ứng viên:',
+    chatName: m.candidate_hotline_chat_candidate_name,
     badge: 'Xin chào',
     message: 'ProCV có thể giúp bạn điều gì?',
     chatData: {
-      avatarInitials: 'AI',
-      headerName: 'AI Coach',
+      avatarInitials: 'TV',
       headerStatus: 'Trực tuyến',
       messages: [
-        { from: 'recruiter', text: 'Chào bạn! Mình có thể giúp gì cho hành trình tìm việc của bạn hôm nay?' },
-        { from: 'candidate', text: 'Chào Coach, làm sao để tối ưu CV thu hút nhà tuyển dụng hơn ạ?' },
-        { from: 'recruiter', text: 'Bạn hãy bật tính năng AI Phân tích CV, hệ thống sẽ gợi ý sửa chi tiết nhé!' },
-        { from: 'candidate', text: 'Tuyệt quá, để mình thử luôn. Cảm ơn Coach nhiều!' },
+        { from: 'support', text: 'Chào bạn! Mình là tư vấn viên ProCV, mình có thể giúp gì cho hành trình tìm việc của bạn?' },
+        { from: 'user', text: 'Chào bạn, làm sao để CV của mình thu hút nhà tuyển dụng hơn ạ?' },
+        { from: 'support', text: 'Bạn thử tính năng AI phân tích CV nhé, hệ thống sẽ gợi ý sửa chi tiết từng mục!' },
+        { from: 'user', text: 'Tuyệt quá, để mình thử luôn. Cảm ơn bạn nhiều!' },
       ],
     },
   },
@@ -33,17 +35,17 @@ const HOTLINE_TABS = [
     lead: 'Tuyển dụng hiệu quả',
     accent: 'đã có ProCV',
     emailLabel: 'Email hỗ trợ Nhà tuyển dụng:',
+    chatName: m.candidate_hotline_chat_employer_name,
     badge: 'Tư vấn ngay',
     message: 'ProCV đồng hành cùng đội ngũ tuyển dụng',
     chatData: {
-      avatarInitials: 'HR',
-      headerName: 'Hỗ Trợ Tuyển Dụng',
+      avatarInitials: 'TV',
       headerStatus: 'Trực tuyến',
       messages: [
-        { from: 'recruiter', text: 'Kính chào Quý công ty! ProCV hỗ trợ tìm kiếm ứng viên chất lượng.' },
-        { from: 'candidate', text: 'Chào bạn, bên mình muốn chạy lọc CV tự động theo JD có được không?' },
-        { from: 'recruiter', text: 'Dạ được ạ, hệ thống AI sẽ phân tích và xếp hạng độ trùng khớp ngay lập tức.' },
-        { from: 'candidate', text: 'Hay quá, liên hệ tư vấn chi tiết cho mình nhé!' },
+        { from: 'support', text: 'Kính chào Quý công ty! ProCV hỗ trợ tìm kiếm ứng viên chất lượng.' },
+        { from: 'user', text: 'Chào bạn, bên mình muốn chạy lọc CV tự động theo JD có được không?' },
+        { from: 'support', text: 'Dạ được ạ, hệ thống AI sẽ phân tích và xếp hạng độ trùng khớp ngay lập tức.' },
+        { from: 'user', text: 'Hay quá, liên hệ tư vấn chi tiết cho mình nhé!' },
       ],
     },
   },
@@ -109,6 +111,15 @@ export default function HotlineConsultation() {
           </div>
 
           <div className="relative overflow-hidden rounded-b-3xl rounded-tr-3xl bg-[linear-gradient(100deg,#ffffff_0%,#ffffff_48%,#e4ffef_100%)] px-6 py-8 shadow-xl shadow-slate-900/10 md:px-12 md:py-12">
+            {/* Ảnh minh hoạ làm nền mờ phía sau nội dung (trang trí, không cần alt) */}
+            <img
+              src={HOTLINE_ILLUSTRATION_URL}
+              alt=""
+              aria-hidden="true"
+              loading="lazy"
+              decoding="async"
+              className="pointer-events-none absolute inset-0 h-full w-full scale-105 object-cover opacity-20 blur-sm"
+            />
             <div className="relative z-10 grid gap-8 md:grid-cols-[1.1fr_0.9fr] md:items-center">
               <div>
                 <h3 className="text-2xl font-extrabold leading-tight text-[#1f2937] md:text-3xl">
@@ -118,13 +129,13 @@ export default function HotlineConsultation() {
                 {contact[active.key] && <div className="mt-7 flex max-w-lg flex-col gap-3 sm:flex-row sm:items-center">
                   <a
                     href={telHref(contact[active.key])}
-                    className="inline-flex min-h-14 flex-1 items-center justify-center rounded-full bg-[var(--brand-primary)] px-5 text-base font-extrabold text-white shadow-lg shadow-[var(--brand-primary)]/20 transition hover:bg-[var(--brand-primary-hover)]"
+                    className="inline-flex min-h-14 flex-1 items-center justify-center rounded-full !bg-[var(--brand-primary)] px-5 text-base font-extrabold !text-white shadow-lg shadow-[var(--brand-primary)]/20 transition hover:!bg-[var(--brand-primary-hover)]"
                   >
                     {contact[active.key]}
                   </a>
                   <a
                     href={telHref(contact[active.key])}
-                    className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] bg-white px-7 text-sm font-extrabold text-[var(--brand-primary)] transition hover:bg-[var(--brand-primary-soft)]"
+                    className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full border-2 border-[var(--brand-primary)] !bg-white px-7 text-sm font-extrabold !text-[var(--brand-primary)] transition hover:!bg-[var(--brand-primary-soft)]"
                   >
                     <PhoneFilled />
                     GỌI NGAY
@@ -136,14 +147,14 @@ export default function HotlineConsultation() {
                   <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--brand-primary-soft)] text-[var(--brand-primary)]">
                     <MailFilled className="text-sm" />
                   </span>
-                  <a href={`mailto:${email}`} className="font-extrabold text-[var(--brand-primary)] hover:underline">
+                  <a href={`mailto:${email}`} className="font-extrabold !text-[var(--brand-primary)] hover:underline">
                     {email}
                   </a>
                 </div>}
               </div>
 
               <div className="hidden md:flex justify-end items-center">
-                <ChatShowcase dark={false} {...active.chatData} />
+                <ChatShowcase dark={false} {...active.chatData} headerName={active.chatName()} />
               </div>
             </div>
           </div>

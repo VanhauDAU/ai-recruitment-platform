@@ -163,5 +163,7 @@
   "candidate_nearby_distance_from_you": "{distance} from you",
   "candidate_job_detail_not_found_title": "Job posting not found",
   "candidate_nearby_near": "near {place}",
-  "candidate_nearby_searching_at": "Searching around: {place}"
+  "candidate_nearby_searching_at": "Searching around: {place}",
+  "candidate_hotline_chat_candidate_name": "ProCV career advisor",
+  "candidate_hotline_chat_employer_name": "ProCV hiring advisor"
 }
