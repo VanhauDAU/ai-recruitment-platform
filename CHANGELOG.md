@@ -8,25 +8,15 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
-#### Fixed — Chạy thật trên VPS demo: compose prod, popup đăng nhập mobile; seed Cẩm nang và Trợ giúp
+#### Fixed — Giao diện mobile: ô chat Connect trên iPhone, banner cookie, ô Địa điểm
 
-- Compose prod: nâng `mem_limit` theo số đo trên VPS 16 GB (email-worker 512 MB — trần
-  256 MB làm healthcheck không chạy nổi và container khởi động lại liên tục; beat,
-  realtime 384 MB; backend 1,25 GB); thêm service `clamav` và bật
-  `UPLOAD_QUARANTINE_ENABLED` (hai cờ `*_UPLOAD_SESSION_REQUIRED` vẫn tắt).
-- nginx miễn trừ thêm gateway `172.28.0.128`: Docker 29 lấy địa chỉ đầu của
-  `ip_range` làm gateway, nên bước gọi thử của `deploy.sh` từng nhận 403.
-- `sync_ml_models.sh` cấp quyền đọc cho mô hình sau khi rsync (`model.safetensors` 600
-  từ máy dev làm ml-worker không nạp được) và nhận `SSH_KEY`.
-- Popup đăng nhập trên điện thoại để giao diện tối: chữ trắng trên nền trắng. Lớp
-  `dark` chỉ còn ở các trang dùng `AuthLayout` và chỉ khi người dùng tự chọn (bỏ suy từ
-  giao diện hệ điều hành), gỡ khi rời trang; popup gọn hơn trên mobile.
-- Thêm `seed_blog_posts` (30 bài Cẩm nang nghề nghiệp, 6 chuyên mục) và
-  `seed_knowledgebase` (48 bài Trợ giúp cho ứng viên và nhà tuyển dụng), đi qua service
-  biên tập như admin, chạy lại không nhân bản.
-- Thêm `verify_employer_phone`: khi SMS OTP còn tắt, quản trị viên gọi xác nhận rồi ghi
-  nhận số điện thoại cho NTD (ghi audit, chỉ lưu 3 số cuối; từ chối chạy khi SMS đã bật).
-  Trước đó NTD mới không có cách nào xác thực số nên hồ sơ xác thực không duyệt được.
+- ProCV Connect: ô nhập trên màn hình cảm ứng dùng chữ 16px để iOS (Safari, Chrome)
+  không tự phóng to khi chạm — phóng to làm ô soạn trượt dưới thanh công cụ trình
+  duyệt và gõ bị giật. Ô soạn tự giãn bằng `field-sizing: content`; trình duyệt
+  chưa hỗ trợ thì chỉ thu chiều cao khi chữ ngắn đi, không co/giãn ở mỗi phím.
+- Banner cookie có nút ✕ trên điện thoại: ẩn trong phiên, không ghi lựa chọn
+  (cookie tùy chọn vẫn tắt); dock so sánh việc làm hạ xuống theo.
+- Viền ô "Địa điểm" ở tìm kiếm trang chủ đậm hơn trên mobile.
 
 #### Removed — `featured_employers` khỏi `GET /api/public/jobs/stats/`
 
