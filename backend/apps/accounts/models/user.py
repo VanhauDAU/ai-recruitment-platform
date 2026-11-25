@@ -239,6 +239,7 @@ class AuthEmailJob(models.Model):
         ADMIN_INVITATION = 'admin_invitation', 'Admin invitation'
         EMAIL_CHANGED_NOTICE = 'email_changed_notice', 'Email changed security notice'
         ACCOUNT_STATUS_NOTICE = 'account_status_notice', 'Account status security notice'
+        PASSWORD_SETUP_CODE = 'password_setup_code', 'Password setup verification code'
 
     class Status(models.TextChoices):
         PENDING = 'pending', 'Pending'

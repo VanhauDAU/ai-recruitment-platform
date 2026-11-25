@@ -9,7 +9,7 @@ from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenObtainSerializer
 
 from ...models import User
-from ...services import login_guard
+from ...services import login_guard, password_setup_code
 from ...services.access import is_account_accessible
 from ...services.refresh_cookies import PORTAL_ROLE_BY_NAME
 
@@ -111,15 +111,30 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 
 
 class PasswordChangeSerializer(serializers.Serializer):
-    """Đặt mật khẩu lần đầu cho OAuth hoặc đổi mật khẩu của phiên hiện tại."""
+    """Đặt mật khẩu lần đầu cho OAuth hoặc đổi mật khẩu của phiên hiện tại.
+
+    Tài khoản chưa có mật khẩu chứng minh chủ sở hữu bằng mã gửi qua email
+    (``email_code``) thay cho mật khẩu hiện tại.
+    """
 
     current_password = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    email_code = serializers.CharField(write_only=True, required=False, allow_blank=True)
     password = password_field()
     logout_all_sessions = serializers.BooleanField(required=False, default=False)
 
     def validate(self, attrs):
         user = self.context['request'].user
-        if user.has_usable_password():
+        if not user.has_usable_password():
+            code = (attrs.get('email_code') or '').strip()
+            if not code:
+                raise serializers.ValidationError(
+                    {'email_code': _('Nhập mã xác minh gửi tới email.')}
+                )
+            if not password_setup_code.verify_code(user, code):
+                raise serializers.ValidationError(
+                    {'email_code': _('Mã xác minh không đúng hoặc đã hết hạn.')}
+                )
+        else:
             current_password = attrs.get('current_password') or ''
             if not current_password:
                 raise serializers.ValidationError(

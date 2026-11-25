@@ -82,7 +82,16 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 - Cụm nút nổi (♥ / Góp ý / Hỗ trợ) dưới md gom vào một nút tròn trắng; bấm thì các
   nút bung lên lần lượt (speed dial), nút đổi thành ✕; bấm ra ngoài, Escape hoặc đổi
   trang thì thu lại. Badge số tin đã lưu hiện trên nút gom. Desktop giữ nguyên cụm.
-- Kiểm: `MobileTabBar.test.jsx`, test chuông mobile, E2E `mobile-tab-bar.spec.js` (@responsive).
+- Menu tài khoản đổi "Cài đặt thông tin cá nhân" → "Hồ sơ cá nhân". Trang Cài đặt bảo mật
+  làm lại: thẻ tổng quan (email đã/chưa xác thực, mật khẩu đã/chưa đặt kèm nút hành động),
+  thẻ thiết bị (icon theo loại máy, tô nổi thiết bị hiện tại), thẻ quyền dữ liệu.
+- Tài khoản mạng xã hội chưa có mật khẩu: bỏ bước đăng nhập lại Google/Facebook, thay bằng
+  mã 6 số qua email (`POST /api/auth/password/setup-code/`, trường `email_code`; mã sinh
+  trong worker, cache chỉ giữ HMAC, 10 phút, 5 lần sai, gửi lại sau 60 giây, throttle
+  5/giờ). Gỡ `requires_oauth_reauthentication`, `OAuthReauthRequired`, `startOAuthReauth`;
+  đổi email của tài khoản chưa có mật khẩu vẫn dùng mốc xác thực lại OAuth như cũ.
+- Kiểm: `MobileTabBar.test.jsx`, test chuông mobile, E2E `mobile-tab-bar.spec.js`,
+  `candidate-security.spec.js` (@responsive), `PasswordSetupCodeTests` (backend).
 
 ## Trang Danh mục dữ liệu cho admin (2026-11-25)
 

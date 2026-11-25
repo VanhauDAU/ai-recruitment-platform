@@ -196,5 +196,16 @@
   "candidate_notifications_settings": "Cài đặt thông báo",
   "candidate_auth_close": "Đóng, quay lại trang trước",
   "candidate_fab_open": "Mở tiện ích nhanh",
-  "candidate_fab_close": "Thu gọn tiện ích"
+  "candidate_fab_close": "Thu gọn tiện ích",
+  "candidate_security_title": "Cài đặt bảo mật",
+  "candidate_security_subtitle": "Kiểm tra tình trạng tài khoản, thiết bị đang đăng nhập và quyền với dữ liệu cá nhân của bạn.",
+  "candidate_security_email": "Email đăng nhập",
+  "candidate_security_email_verified": "Email đã xác thực",
+  "candidate_security_email_unverified": "Email chưa xác thực",
+  "candidate_security_email_verify": "Xác thực ngay",
+  "candidate_security_password": "Mật khẩu đăng nhập",
+  "candidate_security_password_set": "Đã thiết lập",
+  "candidate_security_password_missing": "Chưa có, đang đăng nhập bằng mạng xã hội",
+  "candidate_security_password_change": "Đổi mật khẩu",
+  "candidate_security_password_create": "Tạo mật khẩu"
 }

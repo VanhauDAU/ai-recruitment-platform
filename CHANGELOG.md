@@ -19,6 +19,10 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   đăng nhập/đăng ký ứng viên có nút ✕ quay lại trang trước (hoặc trang chủ).
 - Cụm nút nổi Việc làm đã lưu/Góp ý/Hỗ trợ trên mobile gom thành một nút, bấm mới bung
   lên có hiệu ứng; desktop không đổi.
+- Trang Cài đặt bảo mật ứng viên làm lại (tổng quan email/mật khẩu, thiết bị, quyền dữ liệu);
+  mục menu "Cài đặt thông tin cá nhân" đổi tên thành "Hồ sơ cá nhân".
+- Tài khoản đăng nhập bằng mạng xã hội tạo mật khẩu lần đầu bằng mã 6 số gửi qua email thay
+  cho đăng nhập lại Google/Facebook (`POST /api/auth/password/setup-code/`, `email_code`).
 - Thanh tab tự ẩn ở trang có thanh hành động riêng (chi tiết tin, mẫu CV, trang công ty);
   nút nổi và dock so sánh việc làm nâng lên theo `--page-bottom-bar-height`.
 

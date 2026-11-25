@@ -291,15 +291,6 @@ def current_session(request, user):
     )
 
 
-def requires_oauth_reauthentication(user, session):
-    """Đặt mật khẩu LẦN ĐẦU không có `current_password` để chứng minh chủ sở hữu.
-
-    Bằng chứng thay thế là một lần đăng nhập OAuth vừa diễn ra trên chính phiên
-    này, nên token bị đánh cắp không tự đặt được mật khẩu để chiếm tài khoản.
-    """
-    return not user.has_usable_password() and not is_recent_oauth_reauthentication(session)
-
-
 def is_recent_oauth_reauthentication(session):
     return bool(
         session

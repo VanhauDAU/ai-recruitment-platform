@@ -39,7 +39,7 @@ export const CANDIDATE_MENU = [
   {
     key: 'account', title: 'Cá nhân & Bảo mật', icon: <SafetyOutlined />, dot: true,
     items: [
-      { key: 'personal-info', label: 'Cài đặt thông tin cá nhân', path: accountPath('thong-tin-ca-nhan') },
+      { key: 'personal-info', label: 'Hồ sơ cá nhân', path: accountPath('thong-tin-ca-nhan') },
       { key: 'security', label: 'Cài đặt bảo mật', path: accountPath('cai-dat-bao-mat') },
       { key: 'change-password', label: 'Đổi mật khẩu', path: accountPath('doi-mat-khau') },
     ],

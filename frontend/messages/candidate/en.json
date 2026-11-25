@@ -196,5 +196,16 @@
   "candidate_notifications_settings": "Notification settings",
   "candidate_auth_close": "Close and go back",
   "candidate_fab_open": "Open quick actions",
-  "candidate_fab_close": "Collapse quick actions"
+  "candidate_fab_close": "Collapse quick actions",
+  "candidate_security_title": "Security settings",
+  "candidate_security_subtitle": "Review your account status, signed-in devices and your rights over personal data.",
+  "candidate_security_email": "Sign-in email",
+  "candidate_security_email_verified": "Email verified",
+  "candidate_security_email_unverified": "Email not verified",
+  "candidate_security_email_verify": "Verify now",
+  "candidate_security_password": "Sign-in password",
+  "candidate_security_password_set": "Set up",
+  "candidate_security_password_missing": "Not set, signing in with a social account",
+  "candidate_security_password_change": "Change password",
+  "candidate_security_password_create": "Create password"
 }

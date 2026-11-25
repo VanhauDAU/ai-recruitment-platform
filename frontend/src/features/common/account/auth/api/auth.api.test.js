@@ -12,7 +12,6 @@ import {
   registerEmployer,
   requestPasswordReset,
   sendVerificationEmail,
-  startOAuthReauth,
   validatePasswordResetToken,
 } from './auth.api'
 import { clearAllPortalSessions, getAccessToken, setTokens } from '@/shared/api/token-store'
@@ -139,23 +138,5 @@ describe('auth API session storage', () => {
     expect(post).toHaveBeenCalledWith('/auth/oauth/complete/', { code: 'one-time-code' })
     expect(getAccessToken('admin')).toBe('access-token')
     expect(localStorage.getItem('admin_refresh_token')).toBeNull()
-  })
-
-  it('sends an OAuth reauthentication back to the page that asked for it', () => {
-    const assign = vi.fn()
-    vi.spyOn(window, 'location', 'get').mockReturnValue({
-      pathname: '/tai-khoan/change-password',
-      search: '?tab=bao-mat',
-      hostname: 'localhost',
-      assign,
-    })
-
-    startOAuthReauth('google', { portal: 'main' })
-
-    expect(assign).toHaveBeenCalledWith(
-      'http://localhost:8000/api/auth/oauth/google/start/?portal=main'
-      + '&next=%2Ftai-khoan%2Fchange-password%3Ftab%3Dbao-mat',
-    )
-    vi.restoreAllMocks()
   })
 })

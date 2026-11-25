@@ -188,6 +188,10 @@ EMAIL_VERIFICATION_RESEND_COOLDOWN = config(
 # được tài khoản; cooldown chặn spam gửi lại tới cùng một hòm thư.
 PASSWORD_RESET_TTL = config('PASSWORD_RESET_TTL', default=60 * 30, cast=int)
 PASSWORD_RESET_RESEND_COOLDOWN = config('PASSWORD_RESET_RESEND_COOLDOWN', default=60, cast=int)
+PASSWORD_SETUP_CODE_TTL = config('PASSWORD_SETUP_CODE_TTL', default=60 * 10, cast=int)
+PASSWORD_SETUP_CODE_RESEND_COOLDOWN = config(
+    'PASSWORD_SETUP_CODE_RESEND_COOLDOWN', default=60, cast=int
+)
 
 # Social login (OAuth Authorization Code Flow qua backend callback).
 # Chưa điền client id/secret -> nút social báo "chưa cấu hình" (không crash).

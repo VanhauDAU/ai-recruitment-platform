@@ -1,6 +1,6 @@
 import { Divider } from 'antd'
 import { useSearchParams } from 'react-router'
-import { getReturnUrl, startOAuthReauth } from '@/features/common/account/auth'
+import { getReturnUrl } from '@/features/common/account/auth'
 import { ChangePasswordForm } from '@/features/common/account/change-password'
 import { SessionManager } from '@/features/common/account/session-management'
 import { DataRequestsPanel } from '@/features/common/privacy/data-requests'
@@ -20,7 +20,7 @@ export default function EmployerPasswordLogin() {
       title={m.employer_account_page_password_title()}
       description={m.employer_account_page_password_desc()}
     >
-      <ChangePasswordForm successRedirect={successRedirect} onReauth={startOAuthReauth} />
+      <ChangePasswordForm successRedirect={successRedirect} />
       <Divider className="!my-8" />
       <SessionManager />
       <Divider className="!my-8" />

@@ -8273,8 +8273,9 @@ paths:
   /api/auth/password/:
     get:
       operationId: auth_password_retrieve
-      description: Cho phép client hiển thị yêu cầu xác thực lại TRƯỚC khi người dùng
-        điền form, thay vì để họ nhận 403 sau khi bấm lưu.
+      description: Tài khoản chưa có mật khẩu (đăng nhập mạng xã hội) phải nhập mã
+        gửi qua email; client biết trước để hiện ô nhập mã thay vì nhận lỗi sau khi
+        lưu.
       summary: Điều kiện cần để đặt hoặc thay đổi mật khẩu ở phiên hiện tại
       tags:
       - auth
@@ -8386,6 +8387,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PasswordResetValidate'
+          description: ''
+  /api/auth/password/setup-code/:
+    post:
+      operationId: auth_password_setup_code_create
+      description: Gửi mã xác minh qua email để tài khoản chưa có mật khẩu tạo mật
+        khẩu.
+      summary: Gửi mã xác minh tạo mật khẩu tới email tài khoản
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordSetupCodeResponse'
           description: ''
   /api/auth/refresh/:
     post:
@@ -34486,10 +34504,16 @@ components:
             $ref: '#/components/schemas/TalentPoolEntry'
     PasswordChangeRequest:
       type: object
-      description: Đặt mật khẩu lần đầu cho OAuth hoặc đổi mật khẩu của phiên hiện
-        tại.
+      description: |-
+        Đặt mật khẩu lần đầu cho OAuth hoặc đổi mật khẩu của phiên hiện tại.
+
+        Tài khoản chưa có mật khẩu chứng minh chủ sở hữu bằng mã gửi qua email
+        (``email_code``) thay cho mật khẩu hiện tại.
       properties:
         current_password:
+          type: string
+          writeOnly: true
+        email_code:
           type: string
           writeOnly: true
         password:
@@ -34606,23 +34630,32 @@ components:
       required:
       - email
       - role
+    PasswordSetupCodeResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+        resend_after_seconds:
+          type: integer
+      required:
+      - detail
+      - resend_after_seconds
     PasswordSetupRequirements:
       type: object
       properties:
         has_usable_password:
           type: boolean
-        requires_reauth:
+        requires_email_code:
           type: boolean
-        reauth_provider:
-          type: string
-          nullable: true
-        reauth_max_age_seconds:
+        email_code_ttl_seconds:
+          type: integer
+        resend_after_seconds:
           type: integer
       required:
+      - email_code_ttl_seconds
       - has_usable_password
-      - reauth_max_age_seconds
-      - reauth_provider
-      - requires_reauth
+      - requires_email_code
+      - resend_after_seconds
     PatchedAdminAccountProfileUpdateRequest:
       type: object
       properties:
