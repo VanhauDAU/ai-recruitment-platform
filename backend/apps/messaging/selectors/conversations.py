@@ -72,7 +72,7 @@ def current_applications(conversations):
 
 def messages_page(conversation, *, before=None, after=None, limit=30):
     limit = max(1, min(int(limit or 30), MESSAGE_PAGE_MAX))
-    queryset = conversation.messages.select_related('interview', 'cv_version')
+    queryset = conversation.messages.select_related('interview__application', 'cv_version')
     if after is not None:
         rows = list(queryset.filter(seq__gt=after).order_by('seq')[: limit + 1])
         return rows[:limit], len(rows) > limit
@@ -84,7 +84,7 @@ def messages_page(conversation, *, before=None, after=None, limit=30):
 
 def message_for(conversation, public_id):
     return (
-        Message.objects.select_related('cv_version', 'interview')
+        Message.objects.select_related('cv_version', 'interview__application')
         .filter(conversation=conversation, public_id=public_id)
         .first()
     )

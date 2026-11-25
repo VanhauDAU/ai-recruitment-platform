@@ -213,11 +213,20 @@ msgstr "A candidate withdrew their application for %(job)s."
 msgid "Có hồ sơ mới cho vị trí %(job)s."
 msgstr "There is a new application for %(job)s."
 
+msgid "Ứng viên đang chờ kết quả phỏng vấn vị trí %(job)s"
+msgstr "A candidate is waiting for the interview result for %(job)s"
+
 msgid "Không thể nhắc nhà tuyển dụng cho hồ sơ này nữa."
 msgstr "You can no longer remind the employer about this application."
 
 msgid "Bạn có thể nhắc nhà tuyển dụng từ %(time)s."
 msgstr "You can remind the employer from %(time)s."
+
+msgid "Ứng viên đang chờ kết quả phỏng vấn vị trí %(job)s."
+msgstr "A candidate is waiting for the interview result for %(job)s."
+
+msgid "%(count)s ứng viên vị trí %(job)s đang chờ kết quả phỏng vấn."
+msgstr "%(count)s candidates for %(job)s are waiting for their interview result."
 
 msgid "Ứng viên đang chờ bạn phản hồi hồ sơ vị trí %(job)s."
 msgstr "A candidate is waiting for your response to their application for %(job)s."
@@ -249,6 +258,33 @@ msgstr "Cannot move the application from \"%(from)s\" to \"%(to)s\"."
 msgid "Ứng viên đã có trong kho của bạn."
 msgstr "This candidate is already in your talent pool."
 
+msgid "Ứng viên đang chờ kết quả phỏng vấn"
+msgstr "Candidates are waiting for their interview result"
+
+msgid "Cập nhật Trúng tuyển hoặc Không phù hợp để ứng viên không phải chờ."
+msgstr "Mark them as Hired or Not a fit so they are not left waiting."
+
+msgid "Cập nhật kết quả"
+msgstr "Update the result"
+
+msgid "Xin chào nhà tuyển dụng <strong>%(company)s</strong>,"
+msgstr "Hello <strong>%(company)s</strong> hiring team,"
+
+msgid "%(total)s ứng viên đã phỏng vấn vị trí <strong>%(job)s</strong> chưa nhận được kết quả."
+msgstr "%(total)s interviewed candidates for <strong>%(job)s</strong> have not received a result."
+
+msgid "Xin chào nhà tuyển dụng %(company)s,"
+msgstr "Hello %(company)s hiring team,"
+
+msgid "%(total)s ứng viên đã phỏng vấn vị trí %(job)s chưa nhận được kết quả."
+msgstr "%(total)s interviewed candidates for %(job)s have not received a result."
+
+msgid "Cập nhật kết quả: %(url)s"
+msgstr "Update the result: %(url)s"
+
+msgid "Quản lý email & thông báo: %(url)s"
+msgstr "Manage emails & notifications: %(url)s"
+
 msgid "Bạn có hồ sơ ứng tuyển mới"
 msgstr "You have a new application"
 
@@ -258,20 +294,11 @@ msgstr "Responding early helps you keep strong candidates and prevents applicati
 msgid "Xem hồ sơ"
 msgstr "View application"
 
-msgid "Xin chào nhà tuyển dụng <strong>%(company)s</strong>,"
-msgstr "Hello <strong>%(company)s</strong> hiring team,"
-
 msgid "Vị trí <strong>%(job)s</strong> vừa nhận thêm một hồ sơ lúc %(time)s. Tin này hiện có %(total)s hồ sơ."
 msgstr "<strong>%(job)s</strong> received a new application at %(time)s. This job posting now has %(total)s application(s)."
-
-msgid "Xin chào nhà tuyển dụng %(company)s,"
-msgstr "Hello %(company)s hiring team,"
 
 msgid "Vị trí %(job)s vừa nhận thêm một hồ sơ lúc %(time)s. Tin này hiện có %(total)s hồ sơ."
 msgstr "%(job)s received a new application at %(time)s. This job posting now has %(total)s application(s)."
 
 msgid "Xem hồ sơ: %(url)s"
 msgstr "View application: %(url)s"
-
-msgid "Quản lý email & thông báo: %(url)s"
-msgstr "Manage emails & notifications: %(url)s"

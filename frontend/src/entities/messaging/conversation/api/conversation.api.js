@@ -99,11 +99,6 @@ export async function cancelInterview(interviewId, note = '') {
   return data
 }
 
-export async function completeInterview(interviewId) {
-  const { data } = await api.post(`/employer/interviews/${interviewId}/complete/`)
-  return data
-}
-
 /** `action`: accept | decline | reschedule. */
 export async function respondToInterview(interviewId, { action, note = '' }) {
   const { data } = await api.post(`/candidate/interviews/${interviewId}/respond/`, note ? { action, note } : { action })

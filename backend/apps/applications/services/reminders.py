@@ -2,7 +2,8 @@
 
 The system reminds on its own after a few quiet days, and the candidate may
 ask for a reminder too. Every nudge is recorded so the candidate sees it in
-the application timeline.
+the application timeline. After an interview the same applies to the result:
+counted from when the interview ended (or the invitation, without a schedule).
 """
 
 from collections import defaultdict
@@ -25,6 +26,7 @@ from ..models import Application, ApplicationReminder
 from .applications import ApplicationNotAllowed, _locked_current_application
 from .policy import (
     candidate_reminder_policy,
+    interview_decision_reminder_delay,
     system_reminder_days,
 )
 
@@ -43,21 +45,32 @@ def candidate_reminder_available_at(application, *, now=None, visible_status=Non
     read the reminder settings once for every row.
     """
     visible_status = visible_status or application.candidate_visible_status()
-    if (
-        not application.is_current
-        or visible_status not in Application.UNANSWERED_STATUSES
-        or application.job.stopped_at is not None
-    ):
+    if not application.is_current:
         return None
-    asked = [
-        item.created_at
-        for item in application.reminders.all()
-        if item.source == ApplicationReminder.Source.CANDIDATE
-    ]
+    if visible_status == Application.Status.INTERVIEWED:
+        # Chờ kết quả phỏng vấn: nhắc được cả khi tin đã ngừng nhận hồ sơ.
+        anchor = application.decision_anchor
+        if anchor is None:
+            return None
+        start = anchor + interview_decision_reminder_delay()
+        asked = [
+            item.created_at
+            for item in application.reminders.all()
+            if item.source == ApplicationReminder.Source.CANDIDATE and item.created_at >= anchor
+        ]
+    elif visible_status in Application.UNANSWERED_STATUSES and application.job.stopped_at is None:
+        start = None
+        asked = [
+            item.created_at
+            for item in application.reminders.all()
+            if item.source == ApplicationReminder.Source.CANDIDATE
+        ]
+    else:
+        return None
     policy = policy or candidate_reminder_policy()
     if len(asked) >= policy.max_count:
         return None
-    earliest = application.applied_at + policy.after
+    earliest = start or application.applied_at + policy.after
     if asked:
         earliest = max(earliest, max(asked) + policy.interval)
     return earliest
@@ -85,20 +98,31 @@ def reminder_recipients(job):
     ]
 
 
-def _notify(job, applications, *, reminder_ids):
+def _notify(job, applications, *, reminder_ids, interview=False):
     count = len(applications)
     for recipient in reminder_recipients(job):
         with recipient_language(recipient):
-            message = (
-                _('Ứng viên đang chờ bạn phản hồi hồ sơ vị trí %(job)s.') % {'job': job.title}
-                if count == 1
-                else _('%(count)s hồ sơ vị trí %(job)s đang chờ bạn phản hồi.')
-                % {'count': count, 'job': job.title}
-            )
+            if interview:
+                message = (
+                    _('Ứng viên đang chờ kết quả phỏng vấn vị trí %(job)s.') % {'job': job.title}
+                    if count == 1
+                    else _('%(count)s ứng viên vị trí %(job)s đang chờ kết quả phỏng vấn.')
+                    % {'count': count, 'job': job.title}
+                )
+            else:
+                message = (
+                    _('Ứng viên đang chờ bạn phản hồi hồ sơ vị trí %(job)s.') % {'job': job.title}
+                    if count == 1
+                    else _('%(count)s hồ sơ vị trí %(job)s đang chờ bạn phản hồi.')
+                    % {'count': count, 'job': job.title}
+                )
             emit_employer_event(
                 recipient=recipient,
                 event_type=EmployerNotification.EventType.APPLICATION_AWAITING_REPLY,
-                dedupe_key=f'application-awaiting-reply:{min(reminder_ids)}:{max(reminder_ids)}',
+                dedupe_key=(
+                    f'application-awaiting-{"result" if interview else "reply"}:'
+                    f'{min(reminder_ids)}:{max(reminder_ids)}'
+                ),
                 message=message,
                 subject_public_id=applications[0].public_id if count == 1 else job.public_id,
                 metadata={'application_public_id': applications[0].public_id} if count == 1 else {},
@@ -126,6 +150,8 @@ def request_recruiter_reminder(*, candidate, public_id):
     # without nudging a recruiter about something they answered.
     if application.status in Application.UNANSWERED_STATUSES:
         _notify(application.job, [application], reminder_ids=[reminder.pk])
+    elif application.status == Application.Status.INTERVIEWED:
+        _notify(application.job, [application], reminder_ids=[reminder.pk], interview=True)
     return application
 
 
@@ -199,3 +225,66 @@ def _system_reminder_count():
         .values('total')
     )
     return Coalesce(Subquery(reminders, output_field=IntegerField()), 0)
+
+
+def record_interview_end(application_id, ended_at):
+    """ProCV Connect báo buổi phỏng vấn đã nhận kết thúc lúc ``ended_at`` (None: lịch bị hủy)."""
+    Application.objects.filter(pk=application_id).update(
+        interview_ended_at=ended_at, decision_reminder_sent_at=None
+    )
+
+
+def send_interview_decision_reminders(*, now=None, batch_size=500):
+    """Nhắc NTD một lần khi ứng viên chờ kết quả phỏng vấn quá hạn (chuông + email).
+
+    Mốc là lúc buổi hẹn kết thúc, không có lịch thì lúc mời phỏng vấn. Không tự từ
+    chối: kết quả phỏng vấn phải do người quyết.
+    """
+    if not get_bool_setting('recruiter_reminders_enabled', True):
+        return 0
+    now = now or timezone.now()
+    cutoff = now - interview_decision_reminder_delay()
+    due = list(
+        Application.objects.filter(
+            Q(interview_ended_at__lte=cutoff)
+            | Q(interview_ended_at__isnull=True, interviewed_at__lte=cutoff),
+            is_current=True,
+            status=Application.Status.INTERVIEWED,
+            decision_reminder_sent_at__isnull=True,
+        )
+        .select_related('job', 'job__posted_by', 'job__company')
+        .order_by('job_id', 'pk')[:batch_size]
+    )
+    by_job = defaultdict(list)
+    for application in due:
+        by_job[application.job_id].append(application)
+    for applications in by_job.values():
+        with transaction.atomic():
+            reminders = ApplicationReminder.objects.bulk_create(
+                [
+                    ApplicationReminder(
+                        application=application, source=ApplicationReminder.Source.SYSTEM
+                    )
+                    for application in applications
+                ]
+            )
+            Application.objects.filter(pk__in=[item.pk for item in applications]).update(
+                decision_reminder_sent_at=now
+            )
+            _notify(
+                applications[0].job,
+                applications,
+                reminder_ids=[item.pk for item in reminders],
+                interview=True,
+            )
+            job_id = applications[0].job_id
+            ids = tuple(item.pk for item in applications)
+
+            def enqueue(job_id=job_id, ids=ids):
+                # Imported here: tasks depend on services, not the other way round.
+                from ..tasks import send_interview_decision_email
+
+                send_interview_decision_email.delay(job_id, list(ids))
+
+            transaction.on_commit(enqueue)
+    return len(due)

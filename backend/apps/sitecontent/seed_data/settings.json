@@ -1582,6 +1582,27 @@
     }
   },
   {
+    "key": "interview_decision_reminder_days",
+    "label": "Nhắc ra kết quả sau phỏng vấn (ngày)",
+    "group": "applications",
+    "section": "Nhắc nhà tuyển dụng",
+    "value_type": "number",
+    "value": 3,
+    "is_public": false,
+    "description": "Sau buổi phỏng vấn (hoặc từ lúc mời phỏng vấn khi không có lịch hẹn) chừng này ngày chưa có kết quả thì nhắc NTD một lần; ứng viên cũng được bấm Nhắc NTD từ mốc này.",
+    "help": "Không tự động từ chối hồ sơ đã phỏng vấn: kết quả phải do nhà tuyển dụng quyết định.",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng",
+        "Cổng ứng viên",
+        "Email"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 30
+    }
+  },
+  {
     "key": "candidate_reminder_after_days",
     "label": "Ứng viên được nhắc sau (ngày)",
     "group": "applications",

@@ -110,6 +110,10 @@ class Application(models.Model):
     auto_reject_due_floor = models.DateTimeField(null=True, blank=True)
     auto_rejected_at = models.DateTimeField(null=True, blank=True)
     auto_rejection_email_sent_at = models.DateTimeField(null=True, blank=True)
+    # Lúc buổi phỏng vấn đã nhận (ProCV Connect) kết thúc; mốc nhắc NTD ra kết quả. Không có
+    # lịch hẹn thì mốc là ``interviewed_at``.
+    interview_ended_at = models.DateTimeField(null=True, blank=True)
+    decision_reminder_sent_at = models.DateTimeField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -191,3 +195,8 @@ class Application(models.Model):
         )
         first = history.order_by('created_at', 'id').first()
         return (first.from_status or self.Status.SUBMITTED) if first else self.status
+
+    @property
+    def decision_anchor(self):
+        """Mốc tính "chờ kết quả phỏng vấn": buổi hẹn kết thúc, không có thì lúc mời phỏng vấn."""
+        return self.interview_ended_at or self.interviewed_at

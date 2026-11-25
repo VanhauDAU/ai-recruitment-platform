@@ -5,7 +5,6 @@ from apps.accounts.api.permissions import IsEmployer
 from ...domain import Role
 from ..views.extras import (
     InterviewCancelView,
-    InterviewCompleteView,
     InterviewCreateView,
     MessageCvExportDetailView,
     MessageCvExportDownloadView,
@@ -51,10 +50,5 @@ urlpatterns = [
         'interviews/<str:public_id>/cancel/',
         _view(InterviewCancelView),
         name='employer-interview-cancel',
-    ),
-    path(
-        'interviews/<str:public_id>/complete/',
-        _view(InterviewCompleteView),
-        name='employer-interview-complete',
     ),
 ]

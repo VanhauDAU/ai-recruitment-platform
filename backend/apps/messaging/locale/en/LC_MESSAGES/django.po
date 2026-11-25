@@ -25,9 +25,6 @@ msgstr "The file is damaged or not in the declared format."
 msgid "ProCV Connect đang tạm tắt."
 msgstr "ProCV Connect is temporarily turned off."
 
-msgid "Chỉ đánh dấu được lịch đã nhận và đã tới giờ hẹn."
-msgstr "Only an accepted interview whose time has come can be marked as done."
-
 msgid "Chỉ hẹn phỏng vấn với hồ sơ đang xét tuyển."
 msgstr "Interviews can only be scheduled for applications still under review."
 

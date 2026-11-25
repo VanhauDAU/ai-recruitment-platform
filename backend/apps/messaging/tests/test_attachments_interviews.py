@@ -112,8 +112,18 @@ class InterviewTests(ConversationMixin, APITestCase):
         card = response.data['interview']
         self.assertEqual((card['status'], card['duration_minutes']), ('proposed', 45))
         self.assertTrue(card['actions']['cancel'])
-        notice = CandidateNotification.objects.get(event_type='interview_scheduled')
-        self.assertIn(self.conversation_id, notice.action_path)
+        # Gửi lịch là mời phỏng vấn: hồ sơ "Mới" chuyển "Phỏng vấn", ứng viên nhận
+        # đúng một thông báo (mời phỏng vấn, báo ngay, trỏ vào hội thoại).
+        self.application.refresh_from_db()
+        self.assertEqual(self.application.status, 'interviewed')
+        notices = list(
+            CandidateNotification.objects.filter(recipient=self.candidate).exclude(
+                event_type='application_submitted'
+            )
+        )
+        self.assertEqual([item.event_type for item in notices], ['application_interviewed'])
+        self.assertIn(self.conversation_id, notices[0].action_path)
+        self.assertLessEqual(notices[0].deliver_after, timezone.now())
         pushed = [
             event['message']['interview']
             for event in self.events(self.candidate)
@@ -188,14 +198,74 @@ class InterviewTests(ConversationMixin, APITestCase):
             CandidateNotification.objects.filter(event_type='interview_reminder').count(), 2
         )
 
-    def test_candidate_cannot_complete_and_recruiter_waits_for_the_time(self):
+    def test_rescheduling_an_interviewed_application_sends_a_schedule_notice(self):
+        self.propose()
+        CandidateNotification.objects.all().delete()
+
+        self.propose(starts_at=(timezone.now() + timedelta(days=4)).isoformat())
+
+        self.assertEqual(
+            list(CandidateNotification.objects.values_list('event_type', flat=True)),
+            ['interview_scheduled'],
+        )
+
+    def test_recruiter_reschedules_an_accepted_interview(self):
         interview_id = self.propose().data['interview']['public_id']
         self.respond(interview_id, 'accept')
         self.login(self.recruiter)
+        card = next(
+            item
+            for item in self.client.get(
+                reverse('employer-conversation-messages', args=[self.conversation_id])
+            ).data['results']
+            if item['kind'] == 'interview'
+        )['interview']
 
-        early = self.client.post(reverse('employer-interview-complete', args=[interview_id]))
+        moved = self.propose(starts_at=(timezone.now() + timedelta(days=5)).isoformat())
 
-        self.assertEqual(early.status_code, 403)
+        self.assertTrue(card['actions']['reschedule'])
+        self.assertEqual(moved.status_code, 201, moved.data)
+        self.assertEqual(
+            InterviewAppointment.objects.get(public_id=interview_id).status, 'superseded'
+        )
+        self.application.refresh_from_db()
+        self.assertIsNone(self.application.interview_ended_at)
+
+    def test_accepting_records_when_the_interview_ends_and_cancel_clears_it(self):
+        starts = timezone.now() + timedelta(days=2)
+        interview_id = self.propose(starts_at=starts.isoformat()).data['interview']['public_id']
+
+        self.respond(interview_id, 'accept')
+        self.application.refresh_from_db()
+        ended = self.application.interview_ended_at
+        self.login(self.recruiter)
+        self.client.post(
+            reverse('employer-interview-cancel', args=[interview_id]), {}, format='json'
+        )
+        self.application.refresh_from_db()
+
+        self.assertAlmostEqual(
+            ended.timestamp(), (starts + timedelta(minutes=45)).timestamp(), delta=1
+        )
+        self.assertIsNone(self.application.interview_ended_at)
+
+    def test_after_the_interview_the_recruiter_decides_on_the_card(self):
+        interview_id = self.propose().data['interview']['public_id']
+        self.respond(interview_id, 'accept')
+        InterviewAppointment.objects.filter(public_id=interview_id).update(
+            starts_at=timezone.now() - timedelta(hours=2)
+        )
+        self.login(self.recruiter)
+
+        messages = self.client.get(
+            reverse('employer-conversation-messages', args=[self.conversation_id])
+        ).data['results']
+        card = next(item for item in messages if item['kind'] == 'interview')['interview']
+
+        self.assertTrue(card['ended'])
+        self.assertTrue(card['actions']['decide'])
+        self.assertFalse(card['actions']['cancel'])
+        self.assertEqual(card['application_public_id'], self.application.public_id)
 
 
 class BackgroundAndPrivacyTests(ConversationMixin, APITestCase):

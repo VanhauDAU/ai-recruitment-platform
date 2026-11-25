@@ -13958,28 +13958,6 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
-  /api/employer/interviews/{public_id}/complete/:
-    post:
-      operationId: employer_interviews_complete_create
-      summary: NTD đánh dấu đã phỏng vấn
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - messaging
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties: {}
-          description: ''
   /api/employer/jobs/:
     get:
       operationId: employer_jobs_list

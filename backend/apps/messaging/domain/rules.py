@@ -32,7 +32,6 @@ class SystemEvent(StrEnum):
     INTERVIEW_DECLINED = 'interview_declined'
     INTERVIEW_RESCHEDULE_REQUESTED = 'interview_reschedule_requested'
     INTERVIEW_CANCELLED = 'interview_cancelled'
-    INTERVIEW_COMPLETED = 'interview_completed'
 
 
 def message_preview(body):

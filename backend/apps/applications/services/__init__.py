@@ -25,7 +25,11 @@ from .candidate_search import (
 from .flash_badge import refresh_flash_badges
 from .locking import RecruitmentResourceChanged
 from .policy import candidate_reminder_policy
-from .recruiter_alerts import alert_recruiter_of_application, send_new_application_email
+from .recruiter_alerts import (
+    alert_recruiter_of_application,
+    send_interview_decision_email,
+    send_new_application_email,
+)
 from .recruiter_cv import (
     open_application_cv_file,
     open_application_snapshot,
@@ -33,7 +37,9 @@ from .recruiter_cv import (
 )
 from .reminders import (
     candidate_reminder_available_at,
+    record_interview_end,
     request_recruiter_reminder,
+    send_interview_decision_reminders,
     send_unanswered_application_reminders,
 )
 from .reviews import (
@@ -73,6 +79,9 @@ __all__ = [
     'search_candidates',
     'application_rules',
     'candidate_reminder_available_at',
+    'record_interview_end',
+    'send_interview_decision_email',
+    'send_interview_decision_reminders',
     'candidate_reminder_policy',
     'request_recruiter_reminder',
     'send_unanswered_application_reminders',

@@ -23,12 +23,12 @@ describe('CandidateApplicationActions', () => {
 
   it('offers only the actions the application allows', () => {
     const { rerender } = render(withQueryClient(<CandidateApplicationActions application={APPLICATION} />))
-    expect(screen.getByRole('button', { name: 'Rút hồ sơ' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Rút CV' })).toBeInTheDocument()
 
     rerender(withQueryClient(
       <CandidateApplicationActions application={{ ...APPLICATION, actions: { withdraw: false } }} />,
     ))
-    expect(screen.queryByRole('button', { name: 'Rút hồ sơ' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Rút CV' })).not.toBeInTheDocument()
   })
 
   it('withdraws only after the candidate confirms', async () => {
@@ -36,10 +36,10 @@ describe('CandidateApplicationActions', () => {
     const user = userEvent.setup()
     render(withQueryClient(<CandidateApplicationActions application={APPLICATION} />))
 
-    await user.click(screen.getByRole('button', { name: 'Rút hồ sơ' }))
+    await user.click(screen.getByRole('button', { name: 'Rút CV' }))
     expect(withdrawCandidateApplication).not.toHaveBeenCalled()
     const dialog = await screen.findByRole('dialog')
-    await user.click(within(dialog).getByRole('button', { name: 'Rút hồ sơ' }))
+    await user.click(within(dialog).getByRole('button', { name: 'Rút CV' }))
 
     await waitFor(() => expect(withdrawCandidateApplication).toHaveBeenCalledWith('app_1'))
   })

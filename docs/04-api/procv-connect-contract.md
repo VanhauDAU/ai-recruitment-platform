@@ -67,8 +67,9 @@ ID luôn là `public_id` (`cnv_…`, `msg_…`, `itv_…`). Thời gian ISO 8601
   "file": {"name": "a.pdf", "content_type": "application/pdf", "size": 12345},
   "interview": {"public_id","starts_at","duration_minutes": 60,"mode": "onsite|online|phone",
                 "location","meeting_url","note","status","candidate_note","responded_at",
-                "actions": {"respond": bool, "cancel": bool, "complete": bool}},
-  "system": {"event": "started | interview_accepted | interview_declined | interview_reschedule_requested | interview_cancelled | interview_completed", "actor_role": "candidate|recruiter|system"}
+                "ended": bool, "application_public_id": "app_x (chỉ NTD) | null",
+                "actions": {"respond": bool, "cancel": bool, "reschedule": bool, "decide": bool}},
+  "system": {"event": "started | interview_accepted | interview_declined | interview_reschedule_requested | interview_cancelled", "actor_role": "candidate|recruiter|system"}
 }
 ```
 
@@ -81,10 +82,17 @@ Trường không thuộc `kind` là `null`. URL tệp/ảnh = `/{portal}/convers
 | --- | --- | --- |
 | POST | `/employer/conversations/{id}/interviews/` | `{"starts_at","duration_minutes","mode","location","meeting_url","note"}` → 201 Message (`kind=interview`) |
 | POST | `/employer/interviews/{itv}/cancel/` | `{"note"?}` → 200 Message thẻ lịch hẹn đã cập nhật |
-| POST | `/employer/interviews/{itv}/complete/` | → 200 |
 | POST | `/candidate/interviews/{itv}/respond/` | `{"action": "accept|decline|reschedule", "note"?}` → 200 |
 
-Trạng thái: `proposed` · `accepted` · `declined` · `reschedule_requested` · `cancelled` · `superseded` · `completed`.
+Trạng thái: `proposed` · `accepted` · `declined` · `reschedule_requested` · `cancelled` · `superseded`.
+
+- Gửi lịch khi hồ sơ chưa ở "Phỏng vấn" thì hồ sơ chuyển "Phỏng vấn" (lịch sử trạng thái, báo ứng
+  viên ngay một thông báo trỏ vào hội thoại). Lịch mới thay lịch đang chờ/xin đổi giờ và lịch đã
+  nhận chưa diễn ra.
+- `actions.reschedule` (NTD): mở form đặt lịch điền sẵn từ thẻ cũ để chọn giờ mới.
+- `ended`: đã qua giờ kết thúc. `actions.decide` (NTD, lịch đã nhận và đã diễn ra, hồ sơ còn
+  "Phỏng vấn"): ra kết quả bằng `POST /employer/applications/{application_public_id}/status/`
+  `{"status": "accepted" | "rejected"}` (cửa sổ hoàn tác như mọi quyết định).
 
 ## Realtime (socket chung `/ws/notifications/`, ADR-0028)
 

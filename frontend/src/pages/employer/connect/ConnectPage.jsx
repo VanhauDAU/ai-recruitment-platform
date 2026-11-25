@@ -34,11 +34,19 @@ export default function EmployerConnectPage() {
             onClick: () => setDialog({ type: 'interview', conversation }),
           },
         ]}
-        renderInterviewActions={(message, conversation) => <InterviewCardActions conversation={conversation} message={message} />}
+        renderInterviewActions={(message, conversation) => (
+          <InterviewCardActions
+            conversation={conversation}
+            message={message}
+            onReschedule={(interview) => setDialog({ type: 'interview', conversation, previous: interview })}
+          />
+        )}
         renderCvActions={(message, conversation) => <SharedCvExport conversation={conversation} message={message} />}
       />
       {dialog?.type === 'job' && <ShareJobModal conversation={dialog.conversation} onClose={close} />}
-      {dialog?.type === 'interview' && <ScheduleInterviewModal conversation={dialog.conversation} onClose={close} />}
+      {dialog?.type === 'interview' && (
+        <ScheduleInterviewModal conversation={dialog.conversation} previous={dialog.previous} onClose={close} />
+      )}
     </div>
   )
 }

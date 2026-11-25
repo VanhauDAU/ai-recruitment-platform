@@ -103,26 +103,38 @@ thoại), địa điểm hoặc link họp, ghi chú; ứng viên có thể kèm
 
 ```mermaid
 stateDiagram-v2
-    [*] --> proposed: NTD đề xuất
+    [*] --> proposed: NTD đề xuất (hồ sơ chuyển "Phỏng vấn")
     proposed --> accepted: UV chấp nhận
     proposed --> declined: UV từ chối
     proposed --> reschedule_requested: UV đề nghị giờ khác
-    proposed --> superseded: NTD đề xuất lịch mới
-    reschedule_requested --> superseded: NTD đề xuất lại
-    reschedule_requested --> cancelled: NTD hủy
+    proposed --> superseded: NTD đổi giờ
+    reschedule_requested --> superseded: NTD đổi giờ
+    accepted --> superseded: NTD đổi giờ trước giờ hẹn
     proposed --> cancelled: NTD hủy
-    accepted --> cancelled: Một bên hủy
-    accepted --> completed: Qua giờ hẹn, NTD đánh dấu
+    reschedule_requested --> cancelled: NTD hủy
+    accepted --> cancelled: NTD hủy trước giờ hẹn
     declined --> [*]
     cancelled --> [*]
     superseded --> [*]
-    completed --> [*]
+    accepted --> [*]: Qua giờ hẹn → NTD ra kết quả hồ sơ
 ```
 
+**Gắn với trạng thái hồ sơ** (chốt 26/11):
+- Gửi lịch là mời phỏng vấn: hồ sơ "Mới / Đã xem / Phù hợp" chuyển "Phỏng vấn" qua đúng
+  `change_application_status` (lịch sử, hoạt động chiến dịch) và báo ứng viên **ngay**, một thông
+  báo trỏ vào hội thoại (không qua cửa sổ hoàn tác vì lịch đã hiện trong chat). Hồ sơ đã ở
+  "Phỏng vấn" (lịch mới, đổi giờ) thì báo riêng về lịch hẹn. Nhờ vậy hồ sơ có lịch không còn bị
+  tính "chưa phản hồi" (không bị nhắc/tự từ chối nhầm).
+- Ứng viên xin đổi giờ → thẻ phía NTD có "Đổi giờ": form điền sẵn hình thức, địa điểm/link, ghi
+  chú và hiện ghi chú của ứng viên; gửi là lịch mới thay lịch cũ.
+- Qua giờ hẹn đã nhận: thẻ ghi "Đã diễn ra"; phía NTD có Trúng tuyển / Không phù hợp (quyết định
+  hồ sơ bình thường, có cửa sổ hoàn tác). Không còn trạng thái "đã phỏng vấn" riêng của lịch.
+- Chờ kết quả: mốc là lúc buổi hẹn kết thúc (`Application.interview_ended_at`), không có lịch thì
+  lúc mời phỏng vấn. Quá `interview_decision_reminder_days` (mặc định 3) chưa có kết quả → nhắc NTD
+  một lần (chuông + email, không dữ liệu cá nhân) và ứng viên được bấm "Nhắc NTD". **Không tự từ
+  chối** hồ sơ đã phỏng vấn.
 - Chấp nhận → email kèm tệp `.ics` cho hai bên; beat nhắc trước 24 giờ và 1 giờ.
-- Mỗi lần đổi trạng thái: tin hệ thống + thẻ cập nhật (`chat.message.updated`) + chuông.
-- Đánh dấu đã phỏng vấn không tự đổi trạng thái hồ sơ; NTD chọn "Phỏng vấn" vẫn đi qua
-  `change_application_status` (giữ cửa sổ hoàn tác).
+- Mỗi lần đổi trạng thái lịch: tin hệ thống + thẻ cập nhật (`chat.message.updated`) + chuông.
 
 ## 7. Kiến trúc
 

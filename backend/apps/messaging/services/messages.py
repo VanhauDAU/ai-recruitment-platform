@@ -129,7 +129,7 @@ def _existing(user, client_id):
     if client_id is None:
         return None
     return (
-        Message.objects.select_related('interview', 'cv_version')
+        Message.objects.select_related('interview__application', 'cv_version')
         .filter(sender=user, client_id=client_id)
         .first()
     )
