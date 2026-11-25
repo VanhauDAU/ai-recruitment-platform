@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 import re
-import zipfile
 from hashlib import sha256
-from pathlib import PurePosixPath
 from tempfile import SpooledTemporaryFile
 
 from django.conf import settings
 
+from common.files.docx import DocxLimits, UnsafeDocxContainer, validate_docx_container
 from common.files.signatures import (
     SIGNATURE_WINDOW_BYTES,
     ZIP_SIGNATURE,
@@ -70,56 +69,21 @@ def _detect_content_type(header):
     return image_content_type(header)
 
 
+# python-docx và LibreOffice dựng DOM cho cả phần thân trong bộ nhớ.
+UPLOAD_DOCX_MAX_DOCUMENT_XML_BYTES = 25 * 1024 * 1024
+
+
 def _validate_docx_container(stream):
     """Inspect bounded ZIP metadata only; never extract or parse Office content."""
+    limits = DocxLimits(
+        max_entries=settings.UPLOAD_DOCX_MAX_ENTRIES,
+        max_uncompressed_bytes=settings.UPLOAD_DOCX_MAX_UNCOMPRESSED_BYTES,
+        max_document_xml_bytes=UPLOAD_DOCX_MAX_DOCUMENT_XML_BYTES,
+        max_compression_ratio=settings.UPLOAD_DOCX_MAX_COMPRESSION_RATIO,
+    )
     try:
-        stream.seek(0)
-        with zipfile.ZipFile(stream) as archive:
-            entries = archive.infolist()
-            if not entries or len(entries) > settings.UPLOAD_DOCX_MAX_ENTRIES:
-                raise upload_error('UPLOAD_CONTENT_MISMATCH')
-            names = set()
-            total_uncompressed = 0
-            total_compressed = 0
-            for entry in entries:
-                name = entry.filename
-                path = PurePosixPath(name)
-                if (
-                    not name
-                    or '\x00' in name
-                    or '\\' in name
-                    or name.startswith('/')
-                    or '..' in path.parts
-                    or entry.flag_bits & 0x1
-                    or entry.compress_type not in {zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED}
-                ):
-                    raise upload_error('UPLOAD_CONTENT_MISMATCH')
-                normalised_name = path.as_posix()
-                if normalised_name in names or any(':' in part for part in path.parts):
-                    raise upload_error('UPLOAD_CONTENT_MISMATCH')
-                unix_mode = entry.external_attr >> 16
-                if unix_mode and (unix_mode & 0o170000) == 0o120000:
-                    raise upload_error('UPLOAD_CONTENT_MISMATCH')
-                names.add(normalised_name)
-                total_uncompressed += entry.file_size
-                total_compressed += entry.compress_size
-                if total_uncompressed > settings.UPLOAD_DOCX_MAX_UNCOMPRESSED_BYTES:
-                    raise upload_error('UPLOAD_CONTENT_MISMATCH')
-                if entry.file_size and (
-                    entry.compress_size == 0
-                    or entry.file_size / entry.compress_size
-                    > settings.UPLOAD_DOCX_MAX_COMPRESSION_RATIO
-                ):
-                    raise upload_error('UPLOAD_CONTENT_MISMATCH')
-            if total_uncompressed and (
-                total_compressed == 0
-                or total_uncompressed / total_compressed
-                > settings.UPLOAD_DOCX_MAX_COMPRESSION_RATIO
-            ):
-                raise upload_error('UPLOAD_CONTENT_MISMATCH')
-            if not {'[Content_Types].xml', 'word/document.xml'}.issubset(names):
-                raise upload_error('UPLOAD_CONTENT_MISMATCH')
-    except (OSError, ValueError, zipfile.BadZipFile, zipfile.LargeZipFile) as exc:
+        validate_docx_container(stream, limits)
+    except UnsafeDocxContainer as exc:
         raise upload_error('UPLOAD_CONTENT_MISMATCH') from exc
 
 

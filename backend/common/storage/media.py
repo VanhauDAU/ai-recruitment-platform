@@ -1,13 +1,12 @@
-from io import BytesIO
 from pathlib import PurePosixPath
 from urllib.parse import unquote, urljoin, urlparse
 from uuid import uuid4
 
 from django.conf import settings
 from django.core.files.base import ContentFile
-from PIL import Image
 from rest_framework.exceptions import ValidationError
 
+from common.files.images import UnsafeImage, open_bounded_image, reencode_image
 from common.files.signatures import image_content_type
 from common.storage.r2 import public_media_storage
 
@@ -16,6 +15,12 @@ _IMAGE_EXTENSIONS = {
     'image/png': 'png',
     'image/gif': 'gif',
     'image/webp': 'webp',
+}
+_PILLOW_FORMATS = {
+    'image/jpeg': 'JPEG',
+    'image/png': 'PNG',
+    'image/gif': 'GIF',
+    'image/webp': 'WEBP',
 }
 
 
@@ -34,60 +39,33 @@ def validate_image_upload(upload):
     return _IMAGE_EXTENSIONS[content_type], content_type
 
 
-def _downscale_if_needed(upload, extension, max_dimensions):
-    """Resize ảnh raster nếu vượt max_dimensions (giữ tỉ lệ). GIF (animation) bỏ qua.
-
-    Trả None nếu không cần resize (ảnh đã đủ nhỏ), để dùng lại file upload gốc.
-    """
-    if extension == 'gif':
-        return None
-
-    max_w, max_h = max_dimensions
-    upload.seek(0)
-    image = Image.open(upload)
-    if image.width <= max_w and image.height <= max_h:
-        upload.seek(0)
-        return None
-
-    image.load()
-    image.thumbnail((max_w, max_h), Image.LANCZOS)
-    save_format = 'PNG' if extension == 'png' else image.format
-    if save_format == 'JPEG' and image.mode in ('RGBA', 'P'):
-        image = image.convert('RGB')
-
-    buffer = BytesIO()
-    image.save(buffer, format=save_format, optimize=True)
-    buffer.seek(0)
-    return ContentFile(buffer.read())
-
-
 def save_image_upload(upload, directory, request=None, max_dimensions=None):
+    """Kiểm, mã hóa lại (bỏ EXIF/GPS, thu nhỏ nếu cần) rồi lưu ảnh vào public media.
+
+    Tệp lưu luôn được dựng lại từ điểm ảnh, không bao giờ là byte gốc người dùng gửi.
+    """
     extension, content_type = validate_image_upload(upload)
+    try:
+        with open_bounded_image(upload) as image:
+            if image.format != _PILLOW_FORMATS[content_type]:
+                raise UnsafeImage
+            encoded = reencode_image(image, max_size=max_dimensions)
+    except UnsafeImage as error:
+        raise ValidationError({'file': 'The image is corrupted or too large.'}) from error
+
     safe_directory = str(PurePosixPath(directory.strip('/')))
-    filename = f'{uuid4().hex}.{extension}'
-
-    file_to_save = upload
-    if max_dimensions:
-        resized = _downscale_if_needed(upload, extension, max_dimensions)
-        if resized is not None:
-            file_to_save = resized
-
-    file_to_save.seek(0)
-    with Image.open(file_to_save) as verified_image:
-        width, height = verified_image.size
-        verified_image.verify()
-    file_to_save.seek(0)
-
-    path = public_media_storage().save(f'{safe_directory}/{filename}', file_to_save)
+    path = public_media_storage().save(
+        f'{safe_directory}/{uuid4().hex}.{extension}', ContentFile(encoded.data)
+    )
 
     return {
         'path': path,
         'url': media_public_url(path, request=request),
         'content_type': content_type,
-        'size': file_to_save.size,
+        'size': len(encoded.data),
         'name': upload.name,
-        'width': width,
-        'height': height,
+        'width': encoded.width,
+        'height': encoded.height,
     }
 
 

@@ -7,7 +7,8 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Lưu ảnh đại diện Google vào storage](#lưu-ảnh-đại-diện-google-vào-storage-2026-11-22) | 🟨 Nhánh `fix/google-avatar-storage`, chờ gộp PR |
+| [Gia cố xử lý file tải lên (không antivirus)](#gia-cố-xử-lý-file-tải-lên-không-antivirus-2026-11-25) | 🟨 Nhánh `fix/file-handling-hardening`, chờ PR |
+| [Lưu ảnh đại diện Google vào storage](#lưu-ảnh-đại-diện-google-vào-storage-2026-11-22) | ✅ Đã gộp dev (#359, 25/11) |
 | [Tối ưu tải trang đầu frontend](#tối-ưu-tải-trang-đầu-frontend-2026-11-25) | 🟨 PR #358 (nhánh `perf/initial-load`), chờ gộp |
 | [Sửa API công khai có cache trả 500 với Redis](#sửa-api-công-khai-có-cache-trả-500-với-redis-2026-11-25) | 🟨 Nhánh `fix/public-cache-redis`, chờ gộp |
 | [Thanh tab dưới và thông báo trên mobile cho ứng viên](#thanh-tab-dưới-và-thông-báo-trên-mobile-cho-ứng-viên-2026-11-25) | 🟨 PR #354 (nhánh `feat/mobile-tab-bar`), chờ gộp |
@@ -66,6 +67,36 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
 
+
+## Gia cố xử lý file tải lên (không antivirus) (2026-11-25)
+
+ClamAV tắt vì RAM, nên đường upload cũ (multipart trực tiếp) production đang dùng
+phải tự chặn file độc hại ở tầng parser.
+
+- **DOCX:** kiểm vỏ ZIP chuyển sang `common/files/docx.py` (`validate_docx_container`,
+  lỗi `UnsafeDocxContainer`), thêm trần riêng cho `word/document.xml`. Pipeline upload
+  giữ wrapper cũ. Đường cũ dùng `LEGACY_DOCX_LIMITS` (≤300 mục, ≤30 MB giải nén,
+  `document.xml` ≤10 MB, tỉ lệ nén ≤100) cho nhập CV (trước khi python-docx mở) và DPA.
+- **Giấy tờ NTD đường cũ:** `_save_document_file` chạy cùng kiểm cấu trúc với đường
+  phiên quét: PDF pypdf strict, không mã hóa, có trang, ≤50 trang; ảnh mở có giới hạn
+  rồi `verify()`; DOCX qua vỏ ZIP. **Bỏ `.doc` (OLE2)** khỏi DPA, bản xem trước
+  LibreOffice và trang giấy tờ admin.
+- **Ảnh:** `common/files/images.py` — `open_bounded_image` (≤10.000 px mỗi cạnh,
+  ≤40 MP, ≤100 frame, tổng điểm ảnh các frame ≤100 triệu; `Image.MAX_IMAGE_PIXELS`)
+  và `reencode_image` (xoay theo EXIF rồi bỏ EXIF/GPS/XMP, giữ ICC; JPEG q88 progressive,
+  PNG optimize, WebP q85; GIF/WebP động giữ frame, thời lượng, vòng lặp).
+  `save_image_upload` luôn mã hóa lại, không lưu byte gốc. Avatar CV, ảnh nền CV, ảnh
+  bài đăng mạng xã hội, banner, nền dải thông báo, icon nhóm nghề và giấy tờ NTD mở ảnh
+  qua `open_bounded_image`.
+- **LibreOffice:** chạy qua shim `python -I -S -c` đặt `RLIMIT_AS` 2 GiB, CPU 30 s,
+  FSIZE 100 MB, NOFILE 256, CORE 0, `oom_score_adj=1000` rồi `exec` soffice;
+  `Popen(start_new_session=True)`, quá 30 s thì `killpg(SIGKILL)` cả nhóm; tối đa 2
+  lượt render cùng lúc (khóa cache `office-preview:slot:<n>`), hết chỗ thì trả tệp gốc.
+  Đo trong image backend: mẫu DPA thật chuyển được từ 0,5 GiB (lỗi ở 0,25 GiB), giữ
+  2 GiB; ép timeout không còn `soffice.bin` (container chạy với `init: true`).
+- Kiểm tra: test mới `common/tests/test_docx_container.py`, `test_media_images.py`,
+  zip-bomb DOCX ở nhập CV, PDF mã hóa / >50 trang / PNG hỏng / `.doc` / zip-bomb ở
+  giấy tờ NTD đường cũ; fixture PDF/DOCX giả trong test employers thay bằng tệp thật.
 
 ## Sửa API công khai có cache trả 500 với Redis (2026-11-25)
 

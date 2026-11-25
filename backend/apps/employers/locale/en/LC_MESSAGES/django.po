@@ -1054,9 +1054,6 @@ msgstr "The company gallery can have at most %(limit)s images."
 msgid "Không thể khôi phục ảnh đã xoá: thư viện sẽ vượt quá %(limit)s ảnh."
 msgstr "Cannot restore deleted images: the gallery would exceed %(limit)s images."
 
-msgid "PDF, DOC hoặc DOCX"
-msgstr "PDF, DOC or DOCX"
-
 msgid "JPG, PNG hoặc PDF"
 msgstr "JPG, PNG or PDF"
 
@@ -1069,11 +1066,11 @@ msgstr "Documents must be smaller than 5 MB."
 msgid "Chỉ chấp nhận tệp %(allowed)s hợp lệ."
 msgstr "Only valid %(allowed)s files are accepted."
 
-msgid "Chỉ chấp nhận tệp %(allowed)s đã quét an toàn."
-msgstr "Only %(allowed)s files that passed a security scan are accepted."
-
 msgid "Nội dung tệp bị lỗi hoặc không đúng định dạng khai báo."
 msgstr "The file content is corrupted or does not match its declared format."
+
+msgid "Chỉ chấp nhận tệp %(allowed)s đã quét an toàn."
+msgstr "Only %(allowed)s files that passed a security scan are accepted."
 
 msgid "Không xác định được chủ sở hữu của giấy tờ."
 msgstr "The document owner could not be determined."

@@ -30,9 +30,7 @@ function SelectedFileItem({
   const fileName = file.name || rawFile.name
   const fileType = file.type || rawFile.type || ''
   const isImage = fileType.startsWith('image/')
-  const isWord = fileType === 'application/msword'
-    || fileType.includes('wordprocessingml')
-    || /\.(doc|docx)$/i.test(fileName)
+  const isWord = fileType.includes('wordprocessingml') || /\.docx$/i.test(fileName)
 
   useEffect(() => {
     if (

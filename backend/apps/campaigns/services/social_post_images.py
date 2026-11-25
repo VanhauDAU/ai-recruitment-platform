@@ -15,9 +15,10 @@ from uuid import uuid4
 from django.core.files.base import ContentFile
 from django.utils.translation import gettext as _
 from django.utils.translation import ngettext
-from PIL import Image, UnidentifiedImageError
+from PIL import Image, ImageOps
 from rest_framework.exceptions import ValidationError
 
+from common.files.images import UnsafeImage, open_bounded_image
 from common.storage.media import media_public_url, media_storage_path, validate_image_upload
 from common.storage.r2 import public_media_storage
 
@@ -47,12 +48,9 @@ def save_post_image(*, channel, user, upload):
     _ensure_postable(channel, user)
     validate_image_upload(upload)
     try:
-        with Image.open(upload) as probe:
-            probe.verify()
-        upload.seek(0)
-        image = Image.open(upload)
-        image.load()
-    except (UnidentifiedImageError, OSError, Image.DecompressionBombError) as error:
+        with open_bounded_image(upload) as source:
+            image = ImageOps.exif_transpose(source)
+    except (UnsafeImage, OSError, ValueError) as error:
         raise ValidationError({'file': _('Ảnh bị lỗi hoặc không đọc được.')}) from error
     image.thumbnail((MAX_SIDE, MAX_SIDE), Image.LANCZOS)
     has_alpha = image.mode in ('RGBA', 'LA') or (image.mode == 'P' and 'transparency' in image.info)
@@ -142,7 +140,7 @@ def _fitted_path(campaign, path, image_ratio):
     fitted = f'{_prefix(campaign)}fit/{digest}.jpg'
     storage = public_media_storage()
     if not storage.exists(fitted):
-        with storage.open(path, 'rb') as stored, Image.open(stored) as image:
+        with storage.open(path, 'rb') as stored, open_bounded_image(stored) as image:
             buffer = BytesIO()
             _fit_ratio(image, image_ratio).save(buffer, format='JPEG', quality=90, optimize=True)
         storage.save(fitted, ContentFile(buffer.getvalue()))

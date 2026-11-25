@@ -8,6 +8,19 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-25
 
+#### Security — Gia cố xử lý file tải lên
+
+- DOCX ở nhập CV và DPA của NTD (đường upload trực tiếp) bị kiểm vỏ ZIP trước khi
+  parse: ≤300 mục, ≤30 MB giải nén, `word/document.xml` ≤10 MB, tỉ lệ nén ≤100.
+  Bộ kiểm dùng chung ở `common/files/docx.py`.
+- Giấy tờ NTD tải trực tiếp được kiểm cấu trúc như đường phiên quét: PDF phải mở được
+  ở chế độ strict, không mã hóa, tối đa 50 trang; ảnh phải giải mã được. Không còn nhận
+  Word `.doc`; tệp `.doc` cũ không còn được dựng bản xem trước, chỉ tải về.
+- Ảnh công khai luôn được mã hóa lại: bỏ EXIF/GPS, xoay đúng chiều, giữ hồ sơ màu;
+  từ chối ảnh vượt 10.000 px mỗi cạnh, 40 MP hoặc 100 frame.
+- LibreOffice dựng bản xem trước chạy với giới hạn bộ nhớ 2 GiB, CPU 30 s, bị giết cả
+  nhóm tiến trình khi quá giờ; tối đa 2 lượt cùng lúc, hết chỗ thì trả tệp gốc.
+
 #### Changed — Tải trang đầu nhẹ hơn
 
 - Bundle đầu còn 9 file JS, 252 KiB gzip (trước 78 file, 333 KiB): thư viện trang đầu gom
