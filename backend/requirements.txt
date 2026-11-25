@@ -31,3 +31,5 @@ cryptography==50.0.2
 google-genai==2.13.0
 redis==8.1.0
 gunicorn==27.0.1
+# Báo lỗi production; chỉ khởi tạo khi có SENTRY_DSN (config/settings/components/observability.py).
+sentry-sdk[django,celery]==2.74.0

@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Chuẩn bị deploy: GĐ2 hạ tầng, giám sát, chịu lỗi](#chuẩn-bị-deploy-gđ2-hạ-tầng-giám-sát-chịu-lỗi-2026-11-25) | 🟨 Nhánh `feat/predeploy-ops` (dựng trên GĐ1), chờ PR; chưa lên VPS |
 | [Chuẩn bị deploy: GĐ1 bảo mật ứng dụng](#chuẩn-bị-deploy-gđ1-bảo-mật-ứng-dụng-2026-11-25) | 🟨 Nhánh `feat/predeploy-security`, chờ PR; GĐ2–GĐ6 theo [kế hoạch](06-deployment/ke-hoach-chuan-bi-deploy.md) |
 | [Việc làm gần tôi: bản đồ, bán kính, tọa độ nơi làm việc (ADR-0029)](#việc-làm-gần-tôi-bản-đồ-bán-kính-tọa-độ-nơi-làm-việc-adr-0029-2026-11-25) | 🟨 PR #344 (nhánh `feat/nearby-jobs`), chờ gộp |
 | [Thông báo thời gian thực qua WebSocket, hoàn tác 15 giây (ADR-0028)](#thông-báo-thời-gian-thực-qua-websocket-hoàn-tác-15-giây-adr-0028-2026-11-25) | ✅ Đã gộp dev (#340); sửa socket rớt mỗi 5 giây trên nhánh `fix/realtime-redis-timeout` |
@@ -78,6 +79,44 @@ pháp lý, rehearsal): [`ke-hoach-chuan-bi-deploy.md`](06-deployment/ke-hoach-ch
   nginx 1.28; canonical mặc định `procv.site`.
 - **CI:** workflow `security-ci.yml` (pip-audit, gitleaks, nạp `config.settings.production`
   + `check --deploy`, shellcheck `scripts/deploy`); Dependabot nhắm `dev`.
+
+## Chuẩn bị deploy: GĐ2 hạ tầng, giám sát, chịu lỗi (2026-11-25)
+
+Theo [kế hoạch](06-deployment/ke-hoach-chuan-bi-deploy.md); vận hành ở
+[runbook](06-deployment/huong-dan-deployment.md) mục 1.4, 2, 6, 9.
+
+- **Redis tách hai:** `redis-broker` (noeviction, AOF: Celery + channel layer
+  WebSocket) và `redis-cache` (allkeys-lru 384 MB, không lưu đĩa). Cache có timeout
+  socket 2 giây; channel layer giữ 15 giây (sửa #342). Dev vẫn một Redis.
+- **Beat:** lịch trên volume `beat_schedule`; job hằng ngày chạy crontab giờ Việt Nam
+  01:00–02:35 lệch nhau, mọi lịch có `expires`; thêm `flushexpiredtokens`,
+  `clearsessions`, xóa `AuthSession` kết thúc quá 90 ngày (giữ phiên là bằng chứng
+  DPA), outbox `AuthEmailJob` xong quá 30 ngày (giữ welcome); quét lease AI sinh tin
+  sang queue `default`.
+- **Tài nguyên:** tổng `mem_limit` ~6,9 GB (7,2 GB khi gộp `email-worker` của GĐ4),
+  cân theo RAM đo trên stack prod cục bộ; ml-worker 1,75 GB (~0,9 GB lúc rảnh) +
+  `cpus: 2` + `OMP/MKL_NUM_THREADS=2` — **đo lại khi rehearsal**; mạng `procv` chỉ cấp
+  IP động từ `.128/25` (container thứ 9 từng chiếm IP cố định `.10` của web);
+  gunicorn `--worker-tmp-dir /dev/shm`, bỏ access log; healthcheck
+  `celery inspect ping` cho worker/ai-worker/ml-worker.
+- **Log + Sentry:** `LOGGING` một dòng JSON ra stdout (`django.request` từ ERROR);
+  `sentry-sdk` backend chỉ khi có `SENTRY_DSN` (không PII, cắt body/query/cookie/
+  header xác thực, traces 5%); frontend `@sentry/browser` nạp lười khi có
+  `VITE_SENTRY_DSN` — bundle khởi tạo không đổi (331,6 KiB).
+- **Health:** `/api/health/ready/` kiểm DB + 2 Redis (503 + trạng thái từng phụ
+  thuộc, không lộ host); healthcheck backend dùng endpoint này (deploy.sh của GĐ3 cũng vậy).
+- **Khóa origin:** nginx Authenticated Origin Pulls (403 khi không có chứng chỉ
+  client của Cloudflare); `bootstrap_vps.sh` chặn 80/443 ngoài dải IP Cloudflare ở
+  `DOCKER-USER` (unit systemd, sống qua reboot), SSH chỉ `deploy` bằng key + sudo,
+  tự vá + reboot 04:30, Docker `live-restore`.
+- **nginx:** upstream `resolve` qua DNS Docker (deploy không còn 502 do IP cũ), trang
+  bảo trì `50x.html` + JSON 503 cho `/api/`, `/images/` cache 1 ngày; cổng chỉ IPv4.
+- **Chống nhầm dev/prod:** `docker-compose.yml` ghim `name: ai-recruitment-platform`
+  (giữ volume DB local); lệnh vận hành production trong `van-hanh-va-kill-switch.md`
+  đi qua `scripts/deploy/compose.sh`.
+- **Còn mở:** tải CA AOP + bật AOP trên Cloudflare (GĐ0/GĐ6); tạo project Sentry +
+  UptimeRobot; đo RAM thật khi rehearsal; GĐ4 (`email-worker`) phải đổi `depends_on`
+  `redis` → `*backend-depends` khi rebase lên nhánh này.
 
 ## Việc làm gần tôi: bản đồ, bán kính, tọa độ nơi làm việc (ADR-0029) (2026-11-25)
 

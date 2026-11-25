@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.http import JsonResponse
 from django.urls import include, path
 from drf_spectacular.views import (
     SpectacularAPIView,
@@ -9,9 +8,7 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
-
-def health_check(request):
-    return JsonResponse({'status': 'ok'})
+from config.health import health_check, readiness_check
 
 
 def portal(*routes):
@@ -111,6 +108,7 @@ urlpatterns = [
     path('', include('apps.employers.seo.urls')),
     path('', include('apps.campaigns.seo.urls')),
     path('api/health/', health_check, name='health-check'),
+    path('api/health/ready/', readiness_check, name='health-ready'),
     path('api/', include(api_portal_patterns)),
 ]
 

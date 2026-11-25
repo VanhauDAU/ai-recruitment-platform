@@ -1,5 +1,14 @@
 # Môi trường DEV: docker compose up
 # Backend đọc backend/.env; các biến hostname bị override trỏ vào service nội bộ.
+# Production là file khác (docker-compose.prod.yml, project `procv`), chỉ chạy
+# qua scripts/deploy/compose.sh.
+
+# Tên project ghim đúng tên thư mục gốc cũ: đổi tên là đổi tên mọi container và
+# volume (`ai-recruitment-platform_pgdata`...) -> mất DB local. Ghim còn để
+# `docker compose` trong thư mục `/srv/procv` của VPS không ra project `procv`
+# trùng tên stack production. Hệ quả: worktree ở thư mục khác cũng nhắm vào
+# chính stack này (không tự tạo stack riêng) — muốn stack riêng thì `-p <tên>`.
+name: ai-recruitment-platform
 
 # CELERY_BROKER_URL phải override TƯỜNG MINH: settings chỉ fallback về REDIS_URL
 # khi biến này vắng mặt, mà .env lại set sẵn 127.0.0.1 -> worker không thấy broker.

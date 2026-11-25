@@ -47,8 +47,12 @@ x-prod-env: &prod-env
   TRUSTED_PROXY_HOPS: '1'
   DB_HOST: db
   DB_PORT: '5432'
-  REDIS_URL: redis://redis:6379/1
-  CELERY_BROKER_URL: redis://redis:6379/1
+  # Hai Redis tách vai trò (config/settings/components/tasks.py): cache đầy thì
+  # đẩy key cũ ra, còn hàng đợi Celery + channel layer WebSocket không bao giờ
+  # bị đẩy ra hay chặn ghi vì cache.
+  REDIS_URL: redis://redis-cache:6379/0
+  CELERY_BROKER_URL: redis://redis-broker:6379/0
+  CHANNEL_LAYER_REDIS_URL: ''
   # Media nằm trên R2; các root local chỉ còn là chỗ tạm trong container.
   R2_PUBLIC_BASE_URL: https://media.procv.site
   PUBLIC_MEDIA_ROOT: /app/var/public-media
@@ -60,6 +64,26 @@ x-prod-env: &prod-env
   CANDIDATE_UPLOAD_SESSION_REQUIRED: 'False'
   MATCHING_ENCODER_BACKEND: sentence_transformers
   MATCHING_MODEL_PATH: /models/multilingual-e5-base/zs-v1
+
+# Kiểm worker Celery còn nhận lệnh qua broker (tiến trình chính trả lời ngay cả
+# khi mọi slot đang bận). Mỗi lần kiểm nạp settings (~1–2 giây CPU) nên thưa.
+x-celery-healthcheck: &celery-healthcheck
+  test: ['CMD-SHELL', 'celery -A config inspect ping -d "celery@$$HOSTNAME" --timeout 10 >/dev/null']
+  interval: 60s
+  timeout: 30s
+  retries: 3
+  start_period: 60s
+
+# Phụ thuộc chung của mọi process Django/Celery.
+x-backend-depends: &backend-depends
+  db:
+    condition: service_healthy
+  redis-broker:
+    condition: service_healthy
+  redis-cache:
+    condition: service_healthy
+  migrate:
+    condition: service_completed_successfully
 
 x-backend: &backend
   image: procv-backend:prod
@@ -89,7 +113,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     shm_size: 256m
-    mem_limit: 1536m
+    mem_limit: 1280m
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
       interval: 5s
@@ -99,13 +123,35 @@ services:
     logging: *default-logging
     networks: [procv]
 
-  redis:
-    # Broker Celery + cache: AOF để không mất task đang chờ khi khởi động lại.
+  # Hàng đợi Celery + channel layer WebSocket: AOF để không mất task đang chờ khi
+  # khởi động lại; noeviction vì mất key ở đây là mất task/sự kiện. Đầy thì lệnh
+  # ghi lỗi to (thấy trên Sentry) thay vì lặng lẽ bỏ task.
+  redis-broker:
     image: redis:7
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy noeviction
+    command: >-
+      redis-server --appendonly yes --appendfsync everysec
+      --maxmemory 192mb --maxmemory-policy noeviction
     volumes:
-      - redisdata:/data
-    mem_limit: 384m
+      - redis_broker_data:/data
+    mem_limit: 256m
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+    logging: *default-logging
+    networks: [procv]
+
+  # Cache Django (token xác thực email, cooldown, throttle, cache API công khai):
+  # không lưu đĩa, đầy thì đẩy key ít dùng nhất ra (allkeys-lru). Khởi động lại
+  # là mất cache — người dùng chỉ phải xin lại mã/link xác thực.
+  redis-cache:
+    image: redis:7
+    command: >-
+      redis-server --save '' --appendonly no
+      --maxmemory 384mb --maxmemory-policy allkeys-lru
+    mem_limit: 448m
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
       interval: 5s
@@ -136,10 +182,13 @@ services:
       --workers 4 --threads 2
       --timeout 90 --graceful-timeout 30
       --max-requests 1000 --max-requests-jitter 100
-      --access-logfile -
+      --worker-tmp-dir /dev/shm
+    # Không bật access log của gunicorn: nginx đã ghi mỗi request một lần.
+    # --worker-tmp-dir /dev/shm: heartbeat của worker không chặn khi đĩa chậm.
     pids_limit: 256
-    mem_limit: 1536m
+    mem_limit: 1024m
     healthcheck:
+      # Readiness (DB + 2 Redis): deploy.sh chờ healthy nghĩa là sẵn sàng phục vụ.
       # Host + proto như request đi qua nginx; không thì ALLOWED_HOSTS trả 400
       # và SECURE_SSL_REDIRECT trả 301.
       test:
@@ -148,19 +197,13 @@ services:
         - -c
         - >-
           import urllib.request as u;
-          u.urlopen(u.Request('http://127.0.0.1:8000/api/health/',
+          u.urlopen(u.Request('http://127.0.0.1:8000/api/health/ready/',
           headers={'Host': 'procv.site', 'X-Forwarded-Proto': 'https'}), timeout=3)
       interval: 15s
       timeout: 5s
       retries: 10
       start_period: 30s
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
+    depends_on: *backend-depends
 
   # WebSocket thông báo (/ws/notifications/, apps.realtime). Tách khỏi gunicorn:
   # kết nối sống lâu không giữ worker HTTP. Sự kiện đến qua Redis channel layer.
@@ -173,7 +216,7 @@ services:
       --application-close-timeout 10
       config.asgi:application
     pids_limit: 128
-    mem_limit: 384m
+    mem_limit: 256m
     stop_grace_period: 15s
     healthcheck:
       test:
@@ -188,13 +231,7 @@ services:
       timeout: 5s
       retries: 10
       start_period: 20s
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
+    depends_on: *backend-depends
 
   worker:
     <<: *backend
@@ -206,15 +243,10 @@ services:
     # Chromium headless (xuất PDF CV) cần /dev/shm lớn hơn mặc định 64 MB.
     shm_size: 512m
     pids_limit: 512
-    mem_limit: 1536m
+    mem_limit: 1152m
     stop_grace_period: 30s
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
+    healthcheck: *celery-healthcheck
+    depends_on: *backend-depends
 
   ai-worker:
     <<: *backend
@@ -222,15 +254,11 @@ services:
       celery -A config worker --loglevel=info -Q ai-generation
       --concurrency=2 --prefetch-multiplier=1 --max-tasks-per-child=100
     pids_limit: 128
+    # Đo cục bộ 25/11: ~245 MB lúc rảnh (2 tiến trình con) + ~75 MB mỗi lần healthcheck.
     mem_limit: 512m
     stop_grace_period: 100s
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
+    healthcheck: *celery-healthcheck
+    depends_on: *backend-depends
 
   ml-worker:
     <<: *backend
@@ -247,27 +275,37 @@ services:
       HF_HUB_OFFLINE: '1'
       TRANSFORMERS_OFFLINE: '1'
       TOKENIZERS_PARALLELISM: 'false'
+      # torch mặc định mở số luồng = số vCPU (8): một lượt mã hóa chiếm cả máy.
+      OMP_NUM_THREADS: '2'
+      MKL_NUM_THREADS: '2'
     # ml/models bị gitignore: đồng bộ bằng scripts/deploy/sync_ml_models.sh.
     volumes:
       - ./ml/models:/models:ro
     pids_limit: 128
-    mem_limit: 3g
+    cpus: 2
+    # e5-base nằm sẵn trong RAM: đo cục bộ 25/11 ~0,9 GB lúc rảnh sau khi nạp mô
+    # hình; phần còn lại cho batch mã hóa + healthcheck. Đo lại khi rehearsal
+    # (`docker stats` lúc chạy matching_backfill) rồi chỉnh.
+    mem_limit: 1792m
     stop_grace_period: 40s
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
+    healthcheck:
+      <<: *celery-healthcheck
+      # Nạp mô hình trước khi nhận task (MATCHING_PRELOAD_MODEL).
+      start_period: 180s
+    depends_on: *backend-depends
 
   beat:
     <<: *backend
-    command: celery -A config beat --loglevel=info --schedule=/tmp/celerybeat-schedule
+    # Lịch (lần chạy cuối của từng job) nằm trên volume: deploy/khởi động lại
+    # không làm mất mốc, job crontab hằng ngày bị lỡ được chạy bù khi beat lên lại.
+    command: celery -A config beat --loglevel=info --schedule=/app/var/celerybeat/schedule
+    volumes:
+      - beat_schedule:/app/var/celerybeat
     pids_limit: 64
+    # ~140 MB lúc rảnh (đo cục bộ 25/11).
     mem_limit: 256m
     depends_on:
-      redis:
+      redis-broker:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
@@ -285,11 +323,16 @@ services:
         VITE_SITE_FAVICON_URL: ${VITE_SITE_FAVICON_URL:-}
         VITE_COOKIE_CONSENT_ENABLED: ${VITE_COOKIE_CONSENT_ENABLED:-true}
         VITE_ANNOUNCEMENT_ROLLOUT_SURFACES: ${VITE_ANNOUNCEMENT_ROLLOUT_SURFACES:-}
+        VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
+        VITE_SENTRY_ENVIRONMENT: ${VITE_SENTRY_ENVIRONMENT:-}
     ports:
-      - '80:80'
-      - '443:443'
+      # Chỉ IPv4: Cloudflare nối origin qua bản ghi A. Cổng IPv6 do docker-proxy
+      # mở sẽ đi vòng qua rule DOCKER-USER chỉ-cho-Cloudflare của bootstrap_vps.sh.
+      - '0.0.0.0:80:80'
+      - '0.0.0.0:443:443'
     volumes:
-      # Cloudflare Origin Certificate: origin.pem + origin.key (không commit).
+      # origin.pem + origin.key (Cloudflare Origin Certificate, không commit) và
+      # cloudflare-origin-pull-ca.pem (CA công khai của Authenticated Origin Pulls).
       - ./deploy/certs:/etc/nginx/certs:ro
     mem_limit: 128m
     healthcheck:
@@ -314,7 +357,11 @@ networks:
     ipam:
       config:
         - subnet: 172.28.0.0/24
+          # IP động chỉ cấp từ nửa trên: container thứ 9 trở đi không còn chiếm
+          # 172.28.0.10 cố định của web (lỗi "Address already in use" khi up).
+          ip_range: 172.28.0.128/25
 
 volumes:
   pgdata:
-  redisdata:
+  redis_broker_data:
+  beat_schedule:
