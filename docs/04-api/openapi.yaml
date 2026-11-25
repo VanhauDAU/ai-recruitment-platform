@@ -8785,7 +8785,6 @@ paths:
   /api/candidate/conversations/:
     get:
       operationId: candidate_conversations_list
-      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
       summary: Danh sách hội thoại ProCV Connect, mới nhất trước
       parameters:
       - in: query
@@ -8814,7 +8813,6 @@ paths:
           description: ''
     post:
       operationId: candidate_conversations_create
-      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
       summary: Mở (hoặc lấy lại) hội thoại về một tin tuyển dụng
       tags:
       - messaging
@@ -8852,7 +8850,6 @@ paths:
   /api/candidate/conversations/{public_id}/:
     get:
       operationId: candidate_conversations_retrieve
-      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
       summary: 'Một hội thoại: ngữ cảnh tin, hồ sơ, quyền gửi'
       parameters:
       - in: path
@@ -8875,7 +8872,6 @@ paths:
   /api/candidate/conversations/{public_id}/messages/:
     get:
       operationId: candidate_conversations_messages_retrieve
-      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
       summary: 'Tin nhắn theo seq: trang cũ hơn (before) hoặc bù tin (after)'
       parameters:
       - in: query
@@ -8914,7 +8910,6 @@ paths:
           description: ''
     post:
       operationId: candidate_conversations_messages_create
-      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
       summary: 'Gửi tin: chữ/emoji, thẻ tin (NTD), CV (ứng viên) hoặc tệp (multipart)'
       parameters:
       - in: path
@@ -8952,7 +8947,6 @@ paths:
   /api/candidate/conversations/{public_id}/messages/{message_id}/file/:
     get:
       operationId: candidate_conversations_messages_file_retrieve
-      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
       summary: Tệp, ảnh hoặc CV dạng tệp của một tin; ?download=1 để tải về
       parameters:
       - in: path
@@ -8980,7 +8974,6 @@ paths:
   /api/candidate/conversations/{public_id}/read/:
     post:
       operationId: candidate_conversations_read_create
-      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
       summary: Đánh dấu đã đọc tới seq
       parameters:
       - in: path
@@ -9010,7 +9003,6 @@ paths:
   /api/candidate/conversations/applied-jobs/:
     get:
       operationId: candidate_conversations_applied_jobs_retrieve
-      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
       summary: Tin đã ứng tuyển (cột phải ProCV Connect) kèm hội thoại đã có
       tags:
       - messaging
@@ -9027,7 +9019,6 @@ paths:
   /api/candidate/conversations/shareable-cvs/:
     get:
       operationId: candidate_conversations_shareable_cvs_retrieve
-      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
       summary: CV của tôi có thể gửi trong hội thoại
       tags:
       - messaging
@@ -9044,7 +9035,6 @@ paths:
   /api/candidate/conversations/unread-count/:
     get:
       operationId: candidate_conversations_unread_count_retrieve
-      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
       summary: Số hội thoại có tin chưa đọc (badge)
       tags:
       - messaging
@@ -9981,7 +9971,6 @@ paths:
   /api/candidate/interviews/{public_id}/respond/:
     post:
       operationId: candidate_interviews_respond_create
-      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
       summary: Ứng viên nhận, từ chối hoặc xin đổi giờ phỏng vấn
       parameters:
       - in: path
@@ -13475,7 +13464,6 @@ paths:
   /api/employer/conversations/:
     get:
       operationId: employer_conversations_list
-      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
       summary: Danh sách hội thoại ProCV Connect, mới nhất trước
       parameters:
       - in: query
@@ -13504,7 +13492,6 @@ paths:
           description: ''
     post:
       operationId: employer_conversations_create
-      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
       summary: Mở (hoặc lấy lại) hội thoại về một tin tuyển dụng
       tags:
       - messaging
@@ -13542,7 +13529,6 @@ paths:
   /api/employer/conversations/{public_id}/:
     get:
       operationId: employer_conversations_retrieve
-      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
       summary: 'Một hội thoại: ngữ cảnh tin, hồ sơ, quyền gửi'
       parameters:
       - in: path
@@ -13565,7 +13551,6 @@ paths:
   /api/employer/conversations/{public_id}/interviews/:
     post:
       operationId: employer_conversations_interviews_create
-      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
       summary: NTD đề xuất lịch phỏng vấn trong hội thoại
       parameters:
       - in: path
@@ -13600,7 +13585,6 @@ paths:
   /api/employer/conversations/{public_id}/messages/:
     get:
       operationId: employer_conversations_messages_retrieve
-      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
       summary: 'Tin nhắn theo seq: trang cũ hơn (before) hoặc bù tin (after)'
       parameters:
       - in: query
@@ -13639,7 +13623,6 @@ paths:
           description: ''
     post:
       operationId: employer_conversations_messages_create
-      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
       summary: 'Gửi tin: chữ/emoji, thẻ tin (NTD), CV (ứng viên) hoặc tệp (multipart)'
       parameters:
       - in: path
@@ -13677,7 +13660,6 @@ paths:
   /api/employer/conversations/{public_id}/messages/{message_id}/cv-export/:
     post:
       operationId: employer_conversations_messages_cv_export_create
-      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
       summary: NTD yêu cầu PDF của CV dựng bằng trình tạo CV được gửi trong hội thoại
       parameters:
       - in: path
@@ -13712,7 +13694,6 @@ paths:
   /api/employer/conversations/{public_id}/messages/{message_id}/cv-export/{export_id}/:
     get:
       operationId: employer_conversations_messages_cv_export_retrieve
-      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
       summary: Trạng thái PDF CV được gửi trong hội thoại
       parameters:
       - in: path
@@ -13745,7 +13726,6 @@ paths:
   /api/employer/conversations/{public_id}/messages/{message_id}/cv-export/{export_id}/download/:
     get:
       operationId: employer_conversations_messages_cv_export_download_retrieve
-      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
       summary: Tải PDF CV được gửi trong hội thoại
       parameters:
       - in: path
@@ -13778,7 +13758,6 @@ paths:
   /api/employer/conversations/{public_id}/messages/{message_id}/file/:
     get:
       operationId: employer_conversations_messages_file_retrieve
-      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
       summary: Tệp, ảnh hoặc CV dạng tệp của một tin; ?download=1 để tải về
       parameters:
       - in: path
@@ -13806,7 +13785,6 @@ paths:
   /api/employer/conversations/{public_id}/read/:
     post:
       operationId: employer_conversations_read_create
-      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
       summary: Đánh dấu đã đọc tới seq
       parameters:
       - in: path
@@ -13836,7 +13814,6 @@ paths:
   /api/employer/conversations/shareable-jobs/:
     get:
       operationId: employer_conversations_shareable_jobs_retrieve
-      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
       summary: Tin đang tuyển của công ty có thể gửi cho ứng viên
       tags:
       - messaging
@@ -13853,7 +13830,6 @@ paths:
   /api/employer/conversations/unread-count/:
     get:
       operationId: employer_conversations_unread_count_retrieve
-      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
       summary: Số hội thoại có tin chưa đọc (badge)
       tags:
       - messaging
@@ -13952,7 +13928,6 @@ paths:
   /api/employer/interviews/{public_id}/cancel/:
     post:
       operationId: employer_interviews_cancel_create
-      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
       summary: NTD hủy lịch phỏng vấn
       parameters:
       - in: path
@@ -13986,7 +13961,6 @@ paths:
   /api/employer/interviews/{public_id}/complete/:
     post:
       operationId: employer_interviews_complete_create
-      description: 'Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``.'
       summary: NTD đánh dấu đã phỏng vấn
       parameters:
       - in: path

@@ -8,6 +8,7 @@ from rest_framework.test import APITestCase
 
 from apps.applications.models import Application, CandidateBlock, CandidateSearchInvitation
 from apps.applications.services import withdraw_application
+from apps.employers.services import profiles as employer_profiles
 
 from ..domain import Role
 from ..models import Conversation, Message
@@ -340,3 +341,61 @@ class MessagingTests(ConnectFixture, APITestCase):
 
     def test_role_values_match_the_contract(self):
         self.assertEqual([str(role) for role in Role], ['candidate', 'recruiter', 'system'])
+
+
+class RecruiterDataAccessTests(ConnectFixture, APITestCase):
+    """NTD mất xác thực/DPA sau khi đã mở hội thoại thì không đọc, gửi hay nhận tin nữa."""
+
+    def setUp(self):
+        super().setUp()
+        self.login(self.candidate)
+        self.conversation_id = self.client.post(
+            reverse('candidate-conversation-list'), {'job': self.job.public_id}, format='json'
+        ).data['public_id']
+        real = employer_profiles.recruiter_readiness_state
+
+        def blocked(user, **kwargs):
+            recruiter, readiness = real(user, **kwargs)
+            return recruiter, {**readiness, 'candidate_data_access': False}
+
+        for target in (
+            'apps.employers.services.profiles.recruiter_readiness_state',
+            'apps.messaging.services.realtime.recruiter_readiness_state',
+        ):
+            patcher = patch(target, side_effect=blocked)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def test_every_recruiter_endpoint_is_refused(self):
+        self.login(self.recruiter)
+        urls = [
+            reverse('employer-conversation-list'),
+            reverse('employer-conversation-unread-count'),
+            reverse('employer-conversation-detail', args=[self.conversation_id]),
+            reverse('employer-conversation-messages', args=[self.conversation_id]),
+        ]
+
+        for url in urls:
+            with self.subTest(url=url):
+                self.assertEqual(self.client.get(url).status_code, 403)
+        sent = self.client.post(
+            reverse('employer-conversation-messages', args=[self.conversation_id]),
+            {'client_id': str(uuid.uuid4()), 'body': 'hi'},
+            format='json',
+        )
+        self.assertEqual(sent.status_code, 403)
+        self.assertFalse(Message.objects.filter(kind='text').exists())
+
+    def test_candidate_messages_are_not_pushed_to_the_recruiter(self):
+        self.layer.sent.clear()
+        self.login(self.candidate)
+
+        response = self.client.post(
+            reverse('candidate-conversation-messages', args=[self.conversation_id]),
+            {'client_id': str(uuid.uuid4()), 'body': 'Chào anh chị'},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(self.events(self.recruiter), [])
+        self.assertEqual(self.events(self.candidate)[-1]['type'], 'chat.message.created')
