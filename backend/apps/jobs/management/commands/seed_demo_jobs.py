@@ -5,7 +5,7 @@ from io import BytesIO
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 from django.utils.text import slugify
 from PIL import Image, ImageDraw, ImageFont
@@ -131,6 +131,10 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        # Tài khoản demo dùng mật khẩu có trong repo công khai. Production chỉ được
+        # dọn (--clear), không được tạo.
+        if settings.IS_PRODUCTION and not options['clear']:
+            raise CommandError('Không seed dữ liệu demo trên production.')
         removed = User.objects.filter(email__endswith=DEMO_DOMAIN).delete()[0]
         self.stdout.write(f'Removed old demo data ({removed} rows).')
         if options['clear']:

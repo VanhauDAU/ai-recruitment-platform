@@ -94,7 +94,7 @@ const DYNAMIC_EMPLOYER_TITLES = [
 const EXACT_ADMIN_TITLES = new Map([
   [adminPath('/login'), 'Đăng nhập quản trị'],
   [adminPath('/invitation'), 'Hoàn tất tài khoản quản trị'],
-  [adminPath('/reset-password'), 'Đặt lại mật khẩu quản trị'],
+  [adminPath('/reset-password'), m.account_reset_title_admin()],
   ...ADMIN_ROUTES
     .filter((route) => !route.segment.includes(':'))
     .map((route) => [adminPath(route.segment), route.title]),

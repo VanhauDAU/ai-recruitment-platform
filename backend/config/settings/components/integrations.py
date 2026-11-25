@@ -51,7 +51,7 @@ EMAIL_BACKEND = config('EMAIL_BACKEND', default='') or (
 # `or` để dòng .env bỏ trống (EMAIL_FROM_ADDRESS=) vẫn rơi về địa chỉ hợp lệ.
 EMAIL_FROM_NAME = config('EMAIL_FROM_NAME', default='') or 'ProCV'
 EMAIL_FROM_ADDRESS = (
-    config('EMAIL_FROM_ADDRESS', default='') or EMAIL_HOST_USER or 'no-reply@procv.vn'
+    config('EMAIL_FROM_ADDRESS', default='') or EMAIL_HOST_USER or 'no-reply@procv.site'
 )
 DEFAULT_FROM_EMAIL = (
     config('DEFAULT_FROM_EMAIL', default='') or f'{EMAIL_FROM_NAME} <{EMAIL_FROM_ADDRESS}>'

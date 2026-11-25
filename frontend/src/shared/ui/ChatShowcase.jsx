@@ -120,11 +120,11 @@ export default function ChatShowcase({
 }
 
 function Avatar({ from }) {
-  const isCandidate = from === 'candidate'
+  const isUser = from === 'user'
   return (
     <div
       className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] text-white ${
-        isCandidate ? 'bg-[var(--brand-primary)]' : 'bg-gray-400/20'
+        isUser ? 'bg-[var(--brand-primary)]' : 'bg-gray-400/20'
       }`}
     >
       <UserOutlined className="text-[11px]" />
@@ -133,13 +133,13 @@ function Avatar({ from }) {
 }
 
 function Bubble({ from, text, dark }) {
-  const isCandidate = from === 'candidate'
+  const isUser = from === 'user'
   return (
-    <div className={`chat-in flex items-end gap-2 ${isCandidate ? 'flex-row-reverse' : 'flex-row'}`}>
+    <div className={`chat-in flex items-end gap-2 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
       <Avatar from={from} />
       <div
         className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-[13px] leading-snug shadow-sm ${
-          isCandidate
+          isUser
             ? 'rounded-br-sm bg-[var(--brand-primary)] text-white'
             : dark
             ? 'rounded-bl-sm bg-white/12 text-green-50'
@@ -153,13 +153,13 @@ function Bubble({ from, text, dark }) {
 }
 
 function TypingBubble({ side, dark }) {
-  const isCandidate = side === 'candidate'
+  const isUser = side === 'user'
   return (
-    <div className={`chat-in flex items-end gap-2 ${isCandidate ? 'flex-row-reverse' : 'flex-row'}`}>
+    <div className={`chat-in flex items-end gap-2 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
       <Avatar from={side} />
       <div
         className={`flex items-center gap-1 rounded-2xl px-3.5 py-3 ${
-          isCandidate
+          isUser
             ? 'rounded-br-sm bg-[var(--brand-primary)]/80'
             : dark
             ? 'rounded-bl-sm bg-white/12'

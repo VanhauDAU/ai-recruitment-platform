@@ -91,6 +91,13 @@ export const ADMIN_ROUTES = [
     showInNav: true,
   },
   {
+    id: 'privacyRequests',
+    segment: '/privacy-requests',
+    lazyKey: 'AdminDataRequestsPage',
+    title: 'Yêu cầu dữ liệu cá nhân',
+    showInNav: true,
+  },
+  {
     id: 'blog',
     segment: '/blog',
     lazyKey: 'AdminBlogManagementPage',

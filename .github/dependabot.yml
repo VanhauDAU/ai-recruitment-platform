@@ -1,0 +1,44 @@
+# Cập nhật phụ thuộc định kỳ. PR nhắm `dev` như mọi nhánh tính năng (main chỉ
+# nhận PR "Dev"). Gom bản minor/patch thành một PR mỗi hệ sinh thái để đỡ nhiễu;
+# bản vá bảo mật vẫn được Dependabot mở riêng ngay khi có cảnh báo.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /backend
+    target-branch: dev
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Asia/Ho_Chi_Minh
+    open-pull-requests-limit: 5
+    groups:
+      backend-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /frontend
+    target-branch: dev
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Asia/Ho_Chi_Minh
+    open-pull-requests-limit: 5
+    groups:
+      frontend-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: docker
+    directories: [/backend, /frontend]
+    target-branch: dev
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ['*']

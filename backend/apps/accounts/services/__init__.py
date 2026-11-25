@@ -1,6 +1,7 @@
 """Account-domain use cases and integrations."""
 
 from .access import is_account_accessible, lock_account_for_write
+from .account_erasure import anonymize_account
 from .account_recovery import confirm_account_email, ensure_account_recovery_allowed
 from .account_resource_holds import confirm_release_account_resource_holds
 from .account_security_actions import confirm_revoke_account_sessions, queue_account_security_email
@@ -33,6 +34,7 @@ from .verification_delivery import (
 )
 
 __all__ = [
+    'anonymize_account',
     'AdminPermissionDenied',
     'AdminResourceChanged',
     'RegistrationClosed',

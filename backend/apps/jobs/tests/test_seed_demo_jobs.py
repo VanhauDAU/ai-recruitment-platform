@@ -1,8 +1,8 @@
 from io import StringIO
 
 from django.core.cache import cache
-from django.core.management import call_command
-from django.test import TestCase
+from django.core.management import CommandError, call_command
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from apps.employers.models import Company
@@ -43,3 +43,13 @@ class SeedDemoJobsTests(TestCase):
         self.assertEqual(Company.objects.count(), 8)
         for slug in Company.objects.values_list('slug', flat=True):
             self.assertContains(sitemap, f'/cong-ty/{slug}<')
+
+
+class SeedDemoJobsProductionGuardTests(TestCase):
+    @override_settings(IS_PRODUCTION=True)
+    def test_refuses_to_seed_on_production_but_still_clears(self):
+        with self.assertRaises(CommandError):
+            call_command('seed_demo_jobs', stdout=StringIO())
+
+        call_command('seed_demo_jobs', clear=True, stdout=StringIO())
+        self.assertFalse(Job.objects.exists())

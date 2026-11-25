@@ -6,7 +6,7 @@ from math import ceil
 from django.db.models import Exists, OuterRef, Q
 
 from apps.cvs.models import UserCv
-from common.db.search import search_q
+from common.db.search import folded_search_q, search_q
 
 from ..alerts import CandidateJobDigestItem, CandidateJobEmailSuppression
 from ..core import Job
@@ -54,7 +54,7 @@ def _ranking_candidates(
     for label in context['position_query_labels']:
         label = str(label or '').strip()
         if label:
-            signal_filter |= search_q('title', label)
+            signal_filter |= folded_search_q('title_search', label)
     if not signal_filter:
         return []
 

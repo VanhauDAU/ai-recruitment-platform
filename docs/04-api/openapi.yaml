@@ -6752,6 +6752,124 @@ paths:
           description: Thiếu permission quản trị.
         '409':
           description: Xung đột trạng thái hoặc revision token cũ.
+  /api/admin/privacy/requests/:
+    get:
+      operationId: admin_privacy_requests_list
+      summary: Hàng chờ yêu cầu của chủ thể dữ liệu
+      parameters:
+      - in: query
+        name: kind
+        schema:
+          enum:
+          - erasure
+          - export
+          - ''
+          type: string
+        description: |-
+          * `erasure` - Xóa tài khoản
+          * `export` - Xuất dữ liệu
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          enum:
+          - pending
+          - completed
+          - rejected
+          - cancelled
+          - ''
+          type: string
+        description: |-
+          * `pending` - Chờ xử lý
+          * `completed` - Đã xử lý
+          * `rejected` - Từ chối
+          * `cancelled` - Đã hủy
+      tags:
+      - privacy
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdminDataRequestList'
+          description: ''
+  /api/admin/privacy/requests/{public_id}/complete/:
+    post:
+      operationId: admin_privacy_requests_complete_create
+      summary: 'Hoàn tất yêu cầu (xóa tài khoản: ẩn danh hóa và xóa CV)'
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - privacy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminDataRequestDecisionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminDataRequestDecisionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminDataRequestDecisionRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminDataRequest'
+          description: ''
+  /api/admin/privacy/requests/{public_id}/reject/:
+    post:
+      operationId: admin_privacy_requests_reject_create
+      summary: Từ chối yêu cầu kèm lý do
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - privacy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminDataRequestDecisionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AdminDataRequestDecisionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AdminDataRequestDecisionRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminDataRequest'
+          description: ''
   /api/admin/site/announcements/:
     get:
       operationId: admin_site_announcements_list
@@ -11641,9 +11759,8 @@ paths:
   /api/employer/campaigns/{public_id}/report/export/:
     get:
       operationId: employer_campaigns_report_export_retrieve
-      description: Excel or PDF report of the campaign; aggregates only, no candidate
-        data.
-      summary: Tải báo cáo chiến dịch (Excel hoặc PDF)
+      description: Excel report of the campaign; aggregates only, no candidate data.
+      summary: 'Tải báo cáo chiến dịch dạng Excel (PDF: xếp hàng qua report/export/pdf/)'
       parameters:
       - in: path
         name: public_id
@@ -11655,7 +11772,6 @@ paths:
         schema:
           type: string
           enum:
-          - pdf
           - xlsx
       tags:
       - campaigns
@@ -11668,6 +11784,59 @@ paths:
               schema:
                 type: string
                 format: binary
+          description: ''
+  /api/employer/campaigns/{public_id}/report/export/pdf/:
+    post:
+      operationId: employer_campaigns_report_export_pdf_create
+      summary: Xếp hàng tạo PDF báo cáo chiến dịch (trả token để hỏi kết quả)
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - campaigns
+      security:
+      - jwtAuth: []
+      responses:
+        '202':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/employer/campaigns/{public_id}/report/export/pdf/{token}/:
+    get:
+      operationId: employer_campaigns_report_export_pdf_retrieve
+      summary: Trạng thái PDF báo cáo chiến dịch; ?download=1 tải tệp khi đã xong
+      parameters:
+      - in: query
+        name: download
+        schema:
+          type: boolean
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: token
+        schema:
+          type: string
+        required: true
+      tags:
+      - campaigns
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
             application/pdf:
               schema:
                 type: string
@@ -15958,6 +16127,92 @@ paths:
                 items:
                   $ref: '#/components/schemas/SkillGroup'
           description: ''
+  /api/shared/privacy/requests/:
+    get:
+      operationId: shared_privacy_requests_list
+      summary: Yêu cầu xóa tài khoản / xuất dữ liệu của tôi
+      tags:
+      - privacy
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DataRequest'
+          description: ''
+    post:
+      operationId: shared_privacy_requests_create
+      summary: Gửi yêu cầu xóa tài khoản hoặc xuất dữ liệu
+      tags:
+      - privacy
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataRequestCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DataRequestCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DataRequestCreateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataRequest'
+          description: ''
+  /api/shared/privacy/requests/{public_id}/cancel/:
+    post:
+      operationId: shared_privacy_requests_cancel_create
+      summary: Hủy yêu cầu đang chờ xử lý
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - privacy
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataRequest'
+          description: ''
+  /api/shared/privacy/requests/{public_id}/export/:
+    get:
+      operationId: shared_privacy_requests_export_retrieve
+      summary: Tải bản xuất dữ liệu cá nhân (JSON)
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - privacy
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
   /api/shared/realtime/ticket/:
     post:
       operationId: shared_realtime_ticket_create
@@ -17739,6 +17994,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/CompanyDomainClaimStatusEnum'
           readOnly: true
+          default: pending
         txt_name:
           type: string
           readOnly: true
@@ -17899,6 +18155,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/CompanyDomainClaimStatusEnum'
           readOnly: true
+          default: pending
         txt_name:
           type: string
           readOnly: true
@@ -19132,6 +19389,74 @@ components:
       - compliance_holds_active
       - job_reports
       - restricted_accounts
+    AdminDataRequest:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        kind:
+          allOf:
+          - $ref: '#/components/schemas/DataSubjectRequestKindEnum'
+          readOnly: true
+        kind_label:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/DataSubjectRequestStatusEnum'
+          readOnly: true
+          default: pending
+        status_label:
+          type: string
+          readOnly: true
+        note:
+          type: string
+          readOnly: true
+        resolution_note:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        handled_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        export_available_until:
+          type: string
+          nullable: true
+          readOnly: true
+        account:
+          allOf:
+          - $ref: '#/components/schemas/DataRequestAccount'
+          readOnly: true
+        handled_by_email:
+          type: string
+          format: email
+          readOnly: true
+          nullable: true
+      required:
+      - account
+      - created_at
+      - export_available_until
+      - handled_at
+      - handled_by_email
+      - kind
+      - kind_label
+      - note
+      - public_id
+      - resolution_note
+      - status
+      - status_label
+    AdminDataRequestDecisionRequest:
+      type: object
+      properties:
+        note:
+          type: string
+          maxLength: 1000
     AdminIndustry:
       type: object
       properties:
@@ -24985,6 +25310,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/CompanyDomainClaimStatusEnum'
           readOnly: true
+          default: pending
         txt_name:
           type: string
           readOnly: true
@@ -27466,6 +27792,107 @@ components:
       - template_renderer_version
       - version_kind
       - version_number
+    DataRequest:
+      type: object
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        kind:
+          allOf:
+          - $ref: '#/components/schemas/DataSubjectRequestKindEnum'
+          readOnly: true
+        kind_label:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/DataSubjectRequestStatusEnum'
+          readOnly: true
+        status_label:
+          type: string
+          readOnly: true
+        note:
+          type: string
+          readOnly: true
+        resolution_note:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        handled_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        export_available_until:
+          type: string
+          nullable: true
+          readOnly: true
+      required:
+      - created_at
+      - export_available_until
+      - handled_at
+      - kind
+      - kind_label
+      - note
+      - public_id
+      - resolution_note
+      - status
+      - status_label
+    DataRequestAccount:
+      type: object
+      properties:
+        public_id:
+          type: string
+        email:
+          type: string
+          format: email
+        full_name:
+          type: string
+        role:
+          type: string
+        is_deleted:
+          type: boolean
+      required:
+      - email
+      - full_name
+      - is_deleted
+      - public_id
+      - role
+    DataRequestCreateRequest:
+      type: object
+      properties:
+        kind:
+          $ref: '#/components/schemas/DataSubjectRequestKindEnum'
+        note:
+          type: string
+          default: ''
+          maxLength: 1000
+      required:
+      - kind
+    DataSubjectRequestKindEnum:
+      enum:
+      - erasure
+      - export
+      type: string
+      description: |-
+        * `erasure` - Xóa tài khoản
+        * `export` - Xuất dữ liệu
+    DataSubjectRequestStatusEnum:
+      enum:
+      - pending
+      - completed
+      - rejected
+      - cancelled
+      type: string
+      description: |-
+        * `pending` - Chờ xử lý
+        * `completed` - Đã xử lý
+        * `rejected` - Từ chối
+        * `cancelled` - Đã hủy
     DeadlineRequest:
       type: object
       properties:
@@ -33187,6 +33614,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/AdminCv'
+    PaginatedAdminDataRequestList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminDataRequest'
     PaginatedAdminInvitationList:
       type: object
       required:

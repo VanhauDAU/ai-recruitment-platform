@@ -217,7 +217,7 @@ jobs:
         # Keep UNIT_TEST_SHARDS in the `coverage` job equal to this list's length.
         # Vitest splits by file, not duration, so four shards ranged from 3 to
         # 6 minutes; a fifth keeps the slowest one inside the 5-minute budget.
-        shard: [1, 2, 3, 4, 5]
+        shard: [1, 2, 3, 4, 5, 6, 7]
     defaults:
       run:
         working-directory: frontend
@@ -326,7 +326,7 @@ jobs:
         id: coverage_tests
         shell: bash
         env:
-          UNIT_TEST_SHARDS: 5
+          UNIT_TEST_SHARDS: 7
         run: |
           set -o pipefail
           ls -l .vitest-reports

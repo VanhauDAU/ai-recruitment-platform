@@ -108,6 +108,24 @@ ASGI_APPLICATION = 'config.asgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# Giới hạn thời gian câu lệnh chỉ đặt cho tiến trình web (biến môi trường của
+# service backend trong docker-compose.prod.yml): một truy vấn chậm không được
+# giữ một trong số ít slot gunicorn. Worker Celery và migrate để 0 = không giới
+# hạn vì có việc dài hợp lệ (backfill, rebuild index).
+DB_STATEMENT_TIMEOUT_MS = config('DB_STATEMENT_TIMEOUT_MS', default=0, cast=int)
+DB_IDLE_IN_TRANSACTION_TIMEOUT_MS = config('DB_IDLE_IN_TRANSACTION_TIMEOUT_MS', default=0, cast=int)
+# JIT của PostgreSQL (bật mặc định từ v11) biên dịch các query có biểu thức
+# CASE/subquery lớn — danh sách tin của admin tốn ~160ms chỉ để biên dịch dù đọc
+# vài dòng (348ms → 42ms/request khi tắt). Workload OLTP của Django không có
+# query phân tích dài để JIT bù lại chi phí.
+_DB_SESSION_OPTIONS = ['-c jit=off']
+if DB_STATEMENT_TIMEOUT_MS > 0:
+    _DB_SESSION_OPTIONS.append(f'-c statement_timeout={DB_STATEMENT_TIMEOUT_MS}')
+if DB_IDLE_IN_TRANSACTION_TIMEOUT_MS > 0:
+    _DB_SESSION_OPTIONS.append(
+        f'-c idle_in_transaction_session_timeout={DB_IDLE_IN_TRANSACTION_TIMEOUT_MS}'
+    )
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -116,11 +134,12 @@ DATABASES = {
         'PASSWORD': config('DB_PASSWORD', default='postgres'),
         'HOST': config('DB_HOST', default='localhost'),
         'PORT': config('DB_PORT', default='5432'),
-        # JIT của PostgreSQL (bật mặc định từ v11) biên dịch các query có biểu
-        # thức CASE/subquery lớn — danh sách tin của admin tốn ~160ms chỉ để
-        # biên dịch dù đọc vài dòng (348ms → 42ms/request khi tắt). Workload
-        # OLTP của Django không có query phân tích dài để JIT bù lại chi phí.
-        'OPTIONS': {'options': '-c jit=off'},
+        # Giữ kết nối giữa các request thay vì mở mới mỗi lần (~vài ms + một
+        # backend process của Postgres). Health check bỏ kết nối đã chết (DB
+        # restart) trước khi dùng lại.
+        'CONN_MAX_AGE': config('DB_CONN_MAX_AGE', default=60, cast=int),
+        'CONN_HEALTH_CHECKS': True,
+        'OPTIONS': {'options': ' '.join(_DB_SESSION_OPTIONS)},
     }
 }
 

@@ -18,6 +18,10 @@ vi.mock('@/features/common/account/session-management', () => ({
   SessionManager: () => <span>Quản lý phiên</span>,
 }))
 
+vi.mock('@/features/common/privacy/data-requests', () => ({
+  DataRequestsPanel: () => <span>Quyền dữ liệu cá nhân</span>,
+}))
+
 vi.mock('@/widgets/employer/account-settings', () => ({
   EmployerAccountSettingsShell: ({ children }) => <main>{children}</main>,
 }))

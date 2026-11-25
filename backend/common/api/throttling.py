@@ -51,3 +51,22 @@ class SuffixedScopedRateThrottleMixin:
         self.rate = self.get_rate()
         self.num_requests, self.duration = self.parse_rate(self.rate)
         return SimpleRateThrottle.allow_request(self, request, view)
+
+
+class PublicApiAnonRateThrottle(SimpleRateThrottle):
+    """Trần chung cho khách chưa đăng nhập gọi ``/api/public/*``, theo IP đã kiểm chứng.
+
+    Nằm trong ``DEFAULT_THROTTLE_CLASSES`` nên chỉ áp cho view KHÔNG tự khai
+    ``throttle_classes``: view đã có throttle riêng (thường chặt hơn) giữ
+    nguyên. Người đã đăng nhập không tính vào đây để văn phòng chung một IP
+    không chặn lẫn nhau; các cổng có xác thực tự giới hạn theo tài khoản.
+    """
+
+    scope = 'public_api_anon'
+    path_prefix = '/api/public/'
+
+    def get_cache_key(self, request, view):
+        if not request.path.startswith(self.path_prefix) or request.user.is_authenticated:
+            return None
+        ident = client_ip(request) or self.get_ident(request)
+        return self.cache_format % {'scope': self.scope, 'ident': ident}

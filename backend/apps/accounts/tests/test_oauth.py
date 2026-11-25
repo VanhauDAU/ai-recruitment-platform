@@ -12,7 +12,7 @@ from rest_framework.test import APITestCase
 from apps.accounts.services import oauth
 
 from ..models import AuthEmailJob, SocialAccount, User
-from .factories import GOOGLE_PROFILE
+from .factories import GOOGLE_PROFILE, oauth_state_for
 
 
 @override_settings(
@@ -29,7 +29,7 @@ class OAuthFlowTests(APITestCase):
 
     def _callback(self, provider='google', portal='main', profile=None, next_path=''):
         """Chạy bước callback với provider đã mock, trả về response redirect."""
-        state = oauth.create_state(provider, portal, next_path)
+        state = oauth_state_for(self.client, provider, portal, next_path)
         with (
             patch.object(oauth, 'exchange_code', return_value='provider-token'),
             patch.object(oauth, 'fetch_profile', return_value=profile or dict(GOOGLE_PROFILE)),
@@ -57,7 +57,15 @@ class OAuthFlowTests(APITestCase):
         query = parse_qs(parsed.query)
         self.assertEqual(query['client_id'], ['test-client-id'])
         state_data = cache.get(f'oauth:state:{query["state"][0]}')
-        self.assertEqual(state_data, {'provider': 'google', 'portal': 'main', 'next': '/viec-lam'})
+        self.assertEqual(
+            {key: state_data[key] for key in ('provider', 'portal', 'next')},
+            {'provider': 'google', 'portal': 'main', 'next': '/viec-lam'},
+        )
+        binding = response.cookies[oauth.OAUTH_BROWSER_COOKIE]
+        self.assertTrue(binding['httponly'])
+        self.assertEqual(binding['samesite'], 'Lax')
+        self.assertEqual(binding['path'], reverse('auth-oauth-callback', args=['google']))
+        self.assertNotEqual(state_data['browser'], binding.value)
 
     @override_settings(OAUTH_FACEBOOK_CLIENT_ID='', OAUTH_FACEBOOK_CLIENT_SECRET='')
     def test_start_unconfigured_provider_redirects_with_error(self):
@@ -249,8 +257,27 @@ class OAuthFlowTests(APITestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn('error=invalid_state', response.url)
 
+    def test_state_from_another_browser_is_rejected(self):
+        # Kẻ tấn công tự bắt đầu luồng rồi gửi URL callback cho nạn nhân.
+        attacker = self.client_class()
+        state = oauth_state_for(attacker)
+        with (
+            patch.object(oauth, 'exchange_code', return_value='provider-token') as exchange,
+            patch.object(oauth, 'fetch_profile', return_value=dict(GOOGLE_PROFILE)),
+        ):
+            response = self.client.get(
+                reverse('auth-oauth-callback', args=['google']),
+                {'code': 'attacker-code', 'state': state},
+            )
+        self.assertIn('error=invalid_state', response.url)
+        exchange.assert_not_called()
+
+    def test_callback_clears_the_browser_binding_cookie(self):
+        response = self._callback()
+        self.assertEqual(response.cookies[oauth.OAUTH_BROWSER_COOKIE].value, '')
+
     def test_state_cannot_be_reused(self):
-        state = oauth.create_state('google', 'main', '')
+        state = oauth_state_for(self.client)
         with (
             patch.object(oauth, 'exchange_code', return_value='provider-token'),
             patch.object(oauth, 'fetch_profile', return_value=dict(GOOGLE_PROFILE)),
@@ -275,7 +302,7 @@ class OAuthFlowTests(APITestCase):
         self.assertEqual(second.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_provider_denied_redirects_with_error(self):
-        state = oauth.create_state('google', 'main', '')
+        state = oauth_state_for(self.client)
         response = self.client.get(
             reverse('auth-oauth-callback', args=['google']),
             {'error': 'access_denied', 'state': state},

@@ -10,6 +10,7 @@ from drf_spectacular.utils import (
 from rest_framework import generics, serializers, status
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import IsCandidate
@@ -156,6 +157,9 @@ class CvOwnerVersionView(CandidateCvMixin, APIView):
 
 class CvSourceFileView(CandidateCvMixin, APIView):
     """Owner-only inline PDF of an uploaded CV's original file."""
+
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'office_file_preview'
 
     @extend_schema(
         summary='Xem tệp gốc của CV tải lên (PDF)',

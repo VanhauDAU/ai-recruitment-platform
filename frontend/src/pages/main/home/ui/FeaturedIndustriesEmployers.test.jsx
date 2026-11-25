@@ -62,7 +62,7 @@ describe('FeaturedIndustriesEmployers', () => {
 
     const panel = await screen.findByRole('region', { name: 'Công ty nổi bật' })
     expect(within(panel).getByText('Công ty từ danh bạ công khai')).toBeVisible()
-    expect(within(panel).getByText('7 Việc làm')).toBeVisible()
+    expect(within(panel).getByText('7 việc làm')).toBeVisible()
     expect(within(panel).getByText('Công nghệ')).toBeVisible()
     expect(screen.queryByText('Công ty từ job stats')).not.toBeInTheDocument()
     expect(getPublicCompanies).toHaveBeenCalledWith(

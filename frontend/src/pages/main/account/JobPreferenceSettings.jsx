@@ -64,11 +64,16 @@ export default function JobPreferenceSettings() {
   return (
     <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="w-full overflow-hidden">
-        <img
-          src="/images/candidate/job-preference-banner.png"
-          alt="Cập nhật thông tin gợi ý việc làm"
-          className="h-auto w-full object-cover"
-        />
+        <picture>
+          <source srcSet="/images/candidate/job-preference-banner.webp" type="image/webp" />
+          <img
+            src="/images/candidate/job-preference-banner.png"
+            alt="Cập nhật thông tin gợi ý việc làm"
+            width={1024}
+            height={341}
+            className="h-auto w-full object-cover"
+          />
+        </picture>
       </div>
       <div className="p-4 sm:p-5">
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">

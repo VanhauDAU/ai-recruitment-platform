@@ -297,6 +297,17 @@ export default function JobList() {
     />
   )
 
+  const hanoiChip = !selectedLocations.length && hanoiSuggest?.count > 0 ? (
+    <button
+      type="button"
+      onClick={() => filters.setLocationParam([hanoiSuggest.id])}
+      className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1 text-[13px] text-gray-700 transition hover:border-[var(--brand-primary)]"
+    >
+      Có <b>{formatNumber(hanoiSuggest.count)}</b> việc làm tại Hà Nội.
+      <span className="font-semibold text-[var(--brand-primary)]">Xem ngay →</span>
+    </button>
+  ) : null
+
   return (
     <div>
       <JobSearchBar
@@ -319,7 +330,7 @@ export default function JobList() {
         selectedLocations={selectedLocations}
       />
 
-      <div className="max-w-6xl mx-auto px-4 py-5">
+      <div className="max-w-6xl mx-auto px-4 py-4">
         <JobListHeader
           catChain={catChain}
           activeSearchKeyword={searchLabel}
@@ -341,16 +352,6 @@ export default function JobList() {
           updateLabel={updateLabel}
         />
 
-        {!selectedLocations.length && hanoiSuggest?.count > 0 && (
-          <button
-            type="button"
-            onClick={() => filters.setLocationParam([hanoiSuggest.id])}
-            className="mt-3 inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm text-gray-700 shadow-sm transition hover:border-[var(--brand-primary)]"
-          >
-            Có <b>{formatNumber(hanoiSuggest.count)}</b> việc làm tại Hà Nội.
-            <span className="font-semibold text-[var(--brand-primary)]">Xem ngay →</span>
-          </button>
-        )}
 
         {showQuickExplore && (
           <QuickExplore
@@ -369,8 +370,11 @@ export default function JobList() {
             searchParams={searchParams}
             selectedCategories={selectedCategories}
             sidebarLoading={sidebarLoading}
+            extraChip={hanoiChip}
           />
         )}
+
+        {!showQuickExplore && hanoiChip && <div className="mt-2">{hanoiChip}</div>}
 
         {showMergeNotice && (
           <LocationMergeNotice

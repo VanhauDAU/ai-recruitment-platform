@@ -5,7 +5,9 @@ needs the workspace gate but not candidate-data access.
 """
 
 from io import BytesIO
+from uuid import uuid4
 
+from django.core.cache import cache
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -32,6 +34,52 @@ REPORT_CONTENT_TYPES = {
     'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'pdf': 'application/pdf',
 }
+
+
+# PDF chạy Chromium trong worker (queue cv-export), không trong request
+# gunicorn; trạng thái và tệp nằm trong cache theo token, gắn với chiến dịch.
+REPORT_PDF_TTL_SECONDS = 15 * 60
+
+
+def _pdf_job_key(token):
+    return f'campaign-report-pdf:{token}'
+
+
+def request_campaign_report_pdf(campaign):
+    """Mark a PDF report as pending and return its polling token.
+
+    The API view queues ``render_campaign_report_pdf`` after commit: the task
+    reads selectors, which services may not import (import-linter layers).
+    """
+    token = uuid4().hex
+    cache.set(
+        _pdf_job_key(token),
+        {'status': 'pending', 'campaign_id': campaign.pk},
+        REPORT_PDF_TTL_SECONDS,
+    )
+    return token
+
+
+def campaign_report_pdf_job(campaign, token):
+    """``{'status', ...}`` of a queued PDF of ``campaign``, or ``None`` if unknown/expired."""
+    job = cache.get(_pdf_job_key(token))
+    return job if job and job['campaign_id'] == campaign.pk else None
+
+
+def finish_campaign_report_pdf(token, campaign_id, pdf):
+    cache.set(
+        _pdf_job_key(token),
+        {'status': 'ready', 'campaign_id': campaign_id, 'pdf': pdf},
+        REPORT_PDF_TTL_SECONDS,
+    )
+
+
+def fail_campaign_report_pdf(token, campaign_id):
+    cache.set(
+        _pdf_job_key(token),
+        {'status': 'failed', 'campaign_id': campaign_id},
+        REPORT_PDF_TTL_SECONDS,
+    )
 
 
 def _period(campaign):

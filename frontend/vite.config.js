@@ -123,14 +123,20 @@ export default defineConfig(({ mode }) => {
           'src/test/**',
           'src/main.jsx',
           'src/App.jsx',
+          // Output Paraglide sinh từ messages/*.json (~6 MB, hàng chục nghìn hàm):
+          // không phải code viết tay, và remap coverage của nó chiếm hơn nửa thời
+          // gian mỗi shard CI.
+          'src/shared/config/i18n/paraglide/**',
           // Barrel re-export không có logic
           'src/**/index.js',
         ],
+        // 25/11: bỏ output Paraglide khỏi phép đo → số thật 61,0 / 58,5 / 54,9 / 63,5;
+        // trần đặt thấp hơn ~1 điểm để chênh lệch nhỏ giữa máy không làm đỏ CI.
         thresholds: {
-          statements: 33,
-          branches: 29,
-          functions: 28,
-          lines: 35,
+          statements: 60,
+          branches: 57,
+          functions: 54,
+          lines: 62,
         },
       },
     },

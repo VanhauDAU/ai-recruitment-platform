@@ -8,6 +8,11 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | Hạng mục | Trạng thái |
 | --- | --- |
 | [Trang Danh mục dữ liệu cho admin](#trang-danh-mục-dữ-liệu-cho-admin-2026-11-25) | 🟨 Cả 3 GĐ + dọn dẹp xong trên nhánh `feat/admin-catalog`, chờ PR |
+| [Chuẩn bị deploy: GĐ5 pháp lý và dữ liệu cá nhân](#chuẩn-bị-deploy-gđ5-pháp-lý-và-dữ-liệu-cá-nhân-2026-11-25) | ✅ Đã gộp dev (#348, 25/11); kiểm trên VPS ở GĐ6 rehearsal. |
+| [Chuẩn bị deploy: GĐ4 hiệu năng và chịu tải](#chuẩn-bị-deploy-gđ4-hiệu-năng-và-chịu-tải-2026-11-25) | ✅ Đã gộp dev (#349, 25/11); kiểm trên VPS ở GĐ6 rehearsal. Số đo k6 thật ở GĐ6. |
+| [Chuẩn bị deploy: GĐ3 sao lưu và khôi phục](#chuẩn-bị-deploy-gđ3-sao-lưu-và-khôi-phục-2026-11-25) | ✅ Đã gộp dev (#350, 25/11); kiểm trên VPS ở GĐ6 rehearsal. |
+| [Chuẩn bị deploy: GĐ2 hạ tầng, giám sát, chịu lỗi](#chuẩn-bị-deploy-gđ2-hạ-tầng-giám-sát-chịu-lỗi-2026-11-25) | ✅ Đã gộp dev (#351, 25/11); kiểm trên VPS ở GĐ6 rehearsal. |
+| [Chuẩn bị deploy: GĐ1 bảo mật ứng dụng](#chuẩn-bị-deploy-gđ1-bảo-mật-ứng-dụng-2026-11-25) | ✅ Đã gộp dev (#347, 25/11); kiểm trên VPS ở GĐ6 rehearsal. |
 | [Việc làm gần tôi: bản đồ, bán kính, tọa độ nơi làm việc (ADR-0029)](#việc-làm-gần-tôi-bản-đồ-bán-kính-tọa-độ-nơi-làm-việc-adr-0029-2026-11-25) | 🟨 PR #344 (nhánh `feat/nearby-jobs`), chờ gộp |
 | [Thông báo thời gian thực qua WebSocket, hoàn tác 15 giây (ADR-0028)](#thông-báo-thời-gian-thực-qua-websocket-hoàn-tác-15-giây-adr-0028-2026-11-25) | ✅ Đã gộp dev (#340); sửa socket rớt mỗi 5 giây trên nhánh `fix/realtime-redis-timeout` |
 | [Phễu tuyển dụng trên trang chủ NTD](#phễu-tuyển-dụng-trên-trang-chủ-ntd-2026-11-25) | 🟨 PR #338 (nhánh `feat/employer-recruitment-funnel`), chờ gộp |
@@ -15,7 +20,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Huy hiệu Sấm Chớp tính từ mức phản hồi thật (ADR-0027)](#huy-hiệu-sấm-chớp-tính-từ-mức-phản-hồi-thật-adr-0027-2026-11-25) | ✅ Đã gộp dev (#334) |
 | [Làm lại khối Việc làm nổi bật trang chủ](#làm-lại-khối-việc-làm-nổi-bật-trang-chủ-2026-11-25) | ✅ Đã gộp dev (#333) |
 | [Mã tin và mã công ty dễ đọc](#mã-tin-và-mã-công-ty-dễ-đọc-2026-11-25) | 🟨 Xong trên nhánh `feat/readable-record-codes`, chờ gộp PR |
-| [Bộ file triển khai production procv.site](#bộ-file-triển-khai-production-procvsite-2026-11-24) | 🟨 Xong trên nhánh `feat/production-deploy`, chờ gộp PR; chưa lên VPS |
+| [Bộ file triển khai production procv.site](#bộ-file-triển-khai-production-procvsite-2026-11-24) | ✅ Đã gộp dev; hardening ở các mục "Chuẩn bị deploy" GĐ1–GĐ5, chưa lên VPS |
 | [Làm lại trang công ty phía ứng viên](#làm-lại-trang-công-ty-phía-ứng-viên-2026-11-24) | 🟨 Xong trên nhánh `feat/company-page-jobs-layout`, chờ gộp PR |
 | [Mã tài khoản dạng số cho 3 cổng](#mã-tài-khoản-dạng-số-cho-3-cổng-2026-11-22) | 🟨 Xong trên nhánh `feat/numeric-user-id`, chờ gộp PR |
 | [Làm lại trang Thông tin tài khoản NTD](#làm-lại-trang-thông-tin-tài-khoản-ntd-2026-11-22) | 🟨 Xong trên nhánh `feat/employer-account-info-redesign`, chờ gộp |
@@ -72,6 +77,135 @@ Kế hoạch: [`ke-hoach-quan-ly-danh-muc.md`](01-phan-tich/ke-hoach-quan-ly-dan
   Vitest feature `manage-catalog`; E2E `admin-catalog.spec.js` (`@responsive`, 3 khung).
 - **Lưu ý:** `seed_job_categories` chỉ chạy lúc dựng DB trống; chạy lại sẽ ẩn mục admin
   thêm và hiện lại mục admin đã ẩn.
+
+## Chuẩn bị deploy: GĐ1 bảo mật ứng dụng (2026-11-25)
+
+Kế hoạch 6 giai đoạn (bảo mật, hạ tầng/giám sát, backup/khôi phục, hiệu năng,
+pháp lý, rehearsal): [`ke-hoach-chuan-bi-deploy.md`](06-deployment/ke-hoach-chuan-bi-deploy.md).
+
+- **Phụ thuộc:** Django 5.1.5 (hết hỗ trợ) → 5.2.19 LTS; DRF 3.18.3, simplejwt 5.5.1,
+  cryptography 50.0.2, Pillow 13.0.0, pypdf 6.21.4, requests 2.34.2, daphne 4.2.3
+  (ghim twisted/autobahn/pyOpenSSL đã vá), channels, dnspython, idna — `pip-audit` sạch.
+- **LibreOffice (DOCX→PDF):** tiến trình chuyển đổi chỉ nhận env tối thiểu (không còn
+  thấy SECRET_KEY/DB/R2); PDF đã dựng giữ 10 phút trong cache; throttle
+  `cv_shared_file` (link chia sẻ ẩn danh, theo IP) và `office_file_preview`.
+- **Tài khoản demo:** `seed_admin_account_demo`/`seed_demo_jobs` từ chối chạy trên
+  production; lệnh mới `purge_demo_accounts [--confirm]` dọn `@demo.local` sau khi
+  khôi phục dump từ dev.
+- **OAuth:** state gắn với cookie HttpOnly của trình duyệt bắt đầu đăng nhập (chặn
+  login CSRF); reCAPTCHA kiểm `hostname` ở production; throttle đổi mật khẩu và
+  lời mời admin; production bắt buộc `API_DOCS_ENABLED=False`.
+- **nginx:** CSP (Report-Only, bật chặn sau rehearsal), Permissions-Policy, COOP,
+  HSTS includeSubDomains, `X-Frame-Options: DENY`; chặn tệp ẩn (`/.vite/manifest.json`);
+  nginx 1.28; canonical mặc định `procv.site`.
+- **CI:** workflow `security-ci.yml` (pip-audit, gitleaks, nạp `config.settings.production`
+  + `check --deploy`, shellcheck `scripts/deploy`); Dependabot nhắm `dev`.
+
+## Chuẩn bị deploy: GĐ2 hạ tầng, giám sát, chịu lỗi (2026-11-25)
+
+Theo [kế hoạch](06-deployment/ke-hoach-chuan-bi-deploy.md); vận hành ở
+[runbook](06-deployment/huong-dan-deployment.md) mục 1.4, 2, 6, 9.
+
+- **Redis tách hai:** `redis-broker` (noeviction, AOF: Celery + channel layer
+  WebSocket) và `redis-cache` (allkeys-lru 384 MB, không lưu đĩa). Cache có timeout
+  socket 2 giây; channel layer giữ 15 giây (sửa #342). Dev vẫn một Redis.
+- **Beat:** lịch trên volume `beat_schedule`; job hằng ngày chạy crontab giờ Việt Nam
+  01:00–02:35 lệch nhau, mọi lịch có `expires`; thêm `flushexpiredtokens`,
+  `clearsessions`, xóa `AuthSession` kết thúc quá 90 ngày (giữ phiên là bằng chứng
+  DPA), outbox `AuthEmailJob` xong quá 30 ngày (giữ welcome); quét lease AI sinh tin
+  sang queue `default`.
+- **Tài nguyên:** tổng `mem_limit` ~6,9 GB (7,2 GB khi gộp `email-worker` của GĐ4),
+  cân theo RAM đo trên stack prod cục bộ; ml-worker 1,75 GB (~0,9 GB lúc rảnh) +
+  `cpus: 2` + `OMP/MKL_NUM_THREADS=2` — **đo lại khi rehearsal**; mạng `procv` chỉ cấp
+  IP động từ `.128/25` (container thứ 9 từng chiếm IP cố định `.10` của web);
+  gunicorn `--worker-tmp-dir /dev/shm`, bỏ access log; healthcheck
+  `celery inspect ping` cho worker/ai-worker/ml-worker.
+- **Log + Sentry:** `LOGGING` một dòng JSON ra stdout (`django.request` từ ERROR);
+  `sentry-sdk` backend chỉ khi có `SENTRY_DSN` (không PII, cắt body/query/cookie/
+  header xác thực, traces 5%); frontend `@sentry/browser` nạp lười khi có
+  `VITE_SENTRY_DSN` — bundle khởi tạo không đổi (331,6 KiB).
+- **Health:** `/api/health/ready/` kiểm DB + 2 Redis (503 + trạng thái từng phụ
+  thuộc, không lộ host); healthcheck backend dùng endpoint này (deploy.sh của GĐ3 cũng vậy).
+- **Khóa origin:** nginx Authenticated Origin Pulls (403 khi không có chứng chỉ
+  client của Cloudflare); `bootstrap_vps.sh` chặn 80/443 ngoài dải IP Cloudflare ở
+  `DOCKER-USER` (unit systemd, sống qua reboot), SSH chỉ `deploy` bằng key + sudo,
+  tự vá + reboot 04:30, Docker `live-restore`.
+- **nginx:** upstream `resolve` qua DNS Docker (deploy không còn 502 do IP cũ), trang
+  bảo trì `50x.html` + JSON 503 cho `/api/`, `/images/` cache 1 ngày; cổng chỉ IPv4.
+- **Chống nhầm dev/prod:** `docker-compose.yml` ghim `name: ai-recruitment-platform`
+  (giữ volume DB local); lệnh vận hành production trong `van-hanh-va-kill-switch.md`
+  đi qua `scripts/deploy/compose.sh`.
+- **Còn mở:** tải CA AOP + bật AOP trên Cloudflare (GĐ0/GĐ6); tạo project Sentry +
+  UptimeRobot; đo RAM thật khi rehearsal; GĐ4 (`email-worker`) phải đổi `depends_on`
+  `redis` → `*backend-depends` khi rebase lên nhánh này.
+
+## Chuẩn bị deploy: GĐ3 sao lưu và khôi phục (2026-11-25)
+
+Runbook mới [`sao-luu-va-khoi-phuc.md`](06-deployment/sao-luu-va-khoi-phuc.md): RPO 24 h
+(DB, file riêng tư), RTO mục tiêu 2 h, khôi phục toàn phần lên VPS mới, diễn tập hằng
+quý trên VPS tạm, xử lý xóa nhầm / migration hỏng / mất VPS / lộ key R2 / mất khóa age.
+
+- **`backup_db.sh`:** `flock`, kiểm dung lượng trống, tên file có giây, từ chối dump
+  < 100 KB hoặc `pg_restore --list` lỗi, mã hóa `age` (khóa riêng không nằm trên VPS),
+  đẩy R2 `daily/` + `weekly/` + `monthly/` (không bao giờ xóa trên R2 — Bucket Lock +
+  lifecycle), giữ cục bộ 7 ngày + 4 tuần + 6 tháng chỉ bản mã hóa, ping healthchecks.io,
+  xoay `backup.log`.
+- **Mới:** `backup_files.sh` (bucket private → `procv-backups-files`, `copy
+  --ignore-existing`, cron 03:30), `restore_files.sh` (`--dry-run`, `--prefix`),
+  `backup_secrets.sh` (`.env` + cert → `age` → R2, chạy tay khi đổi), `lib.sh` (hàm chung).
+- **`restore_db.sh`:** giải mã `.age`, dump an toàn trước khi ghi đè, giữ `web` chạy khi
+  bảo trì, `dropdb`/`createdb` + `pg_restore --exit-on-error --single-transaction`,
+  FLUSHALL mọi `redis*`, chờ `/api/health/ready/` (lùi về `/api/health/`), đối soát
+  policy hold, `--from-dev` dọn tài khoản demo.
+- **`deploy.sh`:** `flock`; build trong worktree tạm rồi mới checkout; tag image theo
+  commit, giữ 3 bản → rollback `--skip-build <sha>` không build; tự sao lưu khi có
+  migration mới; `--dry-run`; ghi cả lần thất bại vào `history.log`.
+- Kiểm chứng trên stack giả (db + 2 redis + backend dev): backup → restore vào DB mới
+  khớp số dòng, giải mã sai khóa, dump quá nhỏ → `/fail`, `pg_restore` lỗi giữa chừng,
+  xoay vòng 7/4/6, khóa đồng thời. Chưa chạy trên VPS/R2 thật.
+
+## Chuẩn bị deploy: GĐ4 hiệu năng và chịu tải (2026-11-25)
+
+Mục tiêu: 200 người đồng thời, p95 < 800 ms, lỗi < 1 %.
+
+- **Thống kê trang chủ** (`/api/public/jobs/stats/`): ~235 truy vấn → ≤ 6 (cây danh mục
+  dựng một lần, `Count(filter=...)`), payload cache 5 phút, throttle `job_stats`; khóa
+  ngân sách trong `test_query_budget.py`.
+- **DB**: `CONN_MAX_AGE=60` + health check (realtime/ASGI giữ 0); `statement_timeout=15s`,
+  `idle_in_transaction_session_timeout=30s` chỉ cho gunicorn; Postgres nạp
+  `pg_stat_statements`, `random_page_cost=1.1`, log câu > 500 ms.
+- **Tìm kiếm việc làm**: cột `title_search` (gấp dấu) + GIN trigram (`jobs 0008`); gợi ý
+  giới hạn 50 trong SQL + throttle `job_suggest`.
+- **Impression**: một lô ghi bằng một `UPDATE … FROM (VALUES …)` + upsert bảng theo ngày.
+- **Throttle chung** `/api/public/*` cho khách (600/phút/IP, `PUBLIC_API_THROTTLE_RATE`);
+  view có throttle riêng giữ nguyên. `THROTTLE_RATE_OVERRIDES` chỉ dùng khi đo tải.
+- **Cache ngắn 120 s** (`common.api.caching.cache_public_get`, khóa chỉ gồm tham số view
+  đọc): việc làm tốt nhất/địa điểm, công ty nổi bật, danh mục, địa điểm, sitemap.
+- **PDF báo cáo chiến dịch** chuyển sang queue `cv-export` + polling (không còn Chromium
+  trong gunicorn). **`email-worker`** riêng cho `auth-email`/`auth-sms` (concurrency 1).
+- **Frontend**: banner xác thực SĐT (1,19 MB) và sở thích việc làm (565 KB) có bản WebP.
+- **Kiểm thử tải** [`scripts/loadtest/`](../scripts/loadtest/README.md): kịch bản k6 trộn
+  khách/ứng viên/NTD (trang chủ, tìm kiếm, chi tiết SEO + API, gợi ý, impression, gần tôi,
+  đăng nhập/refresh, gợi ý việc làm, danh sách hồ sơ NTD, WebSocket); override compose
+  nới throttle + reCAPTCHA thử cho buổi đo.
+- Chưa có: số đo k6 thật (GĐ6, chạy trên VPS qua Cloudflare); tổng `mem_limit` vẫn
+  ~9,4 GB, GĐ2 hạ `ml-worker` theo RAM đo được.
+
+## Chuẩn bị deploy: GĐ5 pháp lý và dữ liệu cá nhân (2026-11-25)
+
+- **Điều khoản + Chính sách quyền riêng tư ứng viên:** hai bài trong Trung tâm trợ giúp
+  (chuyên mục mới "Điều khoản và chính sách", migration `knowledgebase 0005`), admin sửa
+  bằng trình biên tập sẵn có; `legal_terms_url`/`legal_privacy_url` mặc định trỏ tới hai
+  bài (DB cũ đang rỗng được điền bởi `sitecontent 0010`); chân trang có link.
+- **Mẫu thông báo xử lý dữ liệu ứng viên của ProCV** thay file mẫu TopCV trong
+  `frontend/public/documents/`; key mới `employer_dpa_template_url`.
+- **Quyền chủ thể dữ liệu:** app `privacy` thêm `DataSubjectRequest` (xuất dữ liệu / xóa
+  tài khoản, một yêu cầu chờ mỗi loại); ứng viên và NTD gửi/hủy ở trang bảo mật; admin
+  duyệt/từ chối ở `/admin/privacy-requests` + hàng chờ dashboard, có audit log. Xuất dữ
+  liệu: JSON tải trong 7 ngày. Xóa: xóa cứng CV thư viện + hồ sơ ứng viên, ẩn danh hóa
+  tài khoản (`anonymize_account`), chặn chủ công ty còn thành viên.
+- **Gemini:** runbook ghi rõ dùng project đã bật thanh toán (không dùng dữ liệu huấn luyện).
+- Để sau: tự phục vụ xóa/xuất ngay không qua admin; xuất kèm file CV gốc.
 
 ## Việc làm gần tôi: bản đồ, bán kính, tọa độ nơi làm việc (ADR-0029) (2026-11-25)
 

@@ -1,0 +1,25 @@
+# Đã rà soát: dương tính giả của gitleaks (mật khẩu/khóa giả trong test, renderer_key
+# của mẫu CV, SECRET_KEY giả của CI). Thêm dòng mới chỉ sau khi xác nhận không phải secret thật.
+1878f62e65bdb910ab939adec48b9f5ebfe037d0:.github/workflows/backend-ci.yml:generic-api-key:291
+1878f62e65bdb910ab939adec48b9f5ebfe037d0:backend/apps/employers/tests/test_phone_sms.py:generic-api-key:575
+201e2829877e97b42a4b72fecaeeeaf3eba2150c:backend/apps/employers/tests/test_phone_sms.py:generic-api-key:418
+203add8cc18772a10271ab33c1033a4917ac7100:frontend/src/features/two-factor/ui/TwoFactorMethodsPanel.test.jsx:generic-api-key:60
+24e4b92711d4176f410f8df9028c428843b4f61c:.github/workflows/backend-ci.yml:generic-api-key:54
+36400f405d044e8187823081c528f0de1718342e:frontend/src/widgets/employer-account-settings/ui/EmployerGeneralSettings.test.jsx:generic-api-key:64
+448aebe08dee7596902a6232137172e41a5e8b5c:backend/apps/cv_templates/tests/test_seed_cv_templates.py:generic-api-key:93
+9c4b70ae0bd6390cada249828c0d614c4e677b83:backend/apps/cv_templates/tests/test_admin_portal.py:generic-api-key:202
+ad0aca26805b7599e48ebd92336738211814335a:frontend/src/features/edit-cv-draft/ui/canvas/CvEditableCanvas.jsx:generic-api-key:275
+b64b5ba6e7f16d9179b869511ffebadb9aa57eb4:backend/apps/cv_templates/renderers.py:generic-api-key:40
+b64b5ba6e7f16d9179b869511ffebadb9aa57eb4:frontend/src/entities/cv/model/renderer-contracts.js:generic-api-key:6
+b64b5ba6e7f16d9179b869511ffebadb9aa57eb4:frontend/src/entities/cv/ui/CvDocumentPreview.jsx:generic-api-key:95
+c912c1a255a445faade9a5b3f2e38ed3c5398394:backend/apps/accounts/tests/test_account_management_g3.py:generic-api-key:35
+c912c1a255a445faade9a5b3f2e38ed3c5398394:backend/apps/accounts/tests/test_account_management_g3.py:generic-api-key:422
+c912c1a255a445faade9a5b3f2e38ed3c5398394:frontend/src/entities/admin-account/api/admin-account.api.test.js:generic-api-key:112
+c912c1a255a445faade9a5b3f2e38ed3c5398394:frontend/src/entities/admin-account/api/admin-account.api.test.js:generic-api-key:113
+c912c1a255a445faade9a5b3f2e38ed3c5398394:frontend/src/entities/admin-account/api/admin-account.api.test.js:generic-api-key:124
+c912c1a255a445faade9a5b3f2e38ed3c5398394:frontend/src/entities/admin-account/api/admin-account.api.test.js:generic-api-key:125
+c912c1a255a445faade9a5b3f2e38ed3c5398394:frontend/src/features/accept-admin-invitation/ui/AcceptAdminInvitation.test.jsx:generic-api-key:79
+c912c1a255a445faade9a5b3f2e38ed3c5398394:frontend/src/features/accept-admin-invitation/ui/AcceptAdminInvitation.test.jsx:generic-api-key:80
+d13d016b6e4bddb4c6beaa3f2edcf1f9907aabad:backend/apps/cv_templates/management/commands/_cv_template_catalog.py:generic-api-key:200
+d13d016b6e4bddb4c6beaa3f2edcf1f9907aabad:frontend/src/entities/cv/ui/CvDocumentPreview.test.jsx:generic-api-key:136
+d7c13cdded77df6c4bd0bb9474103ab32d928820:.github/workflows/backend-ci.yml:generic-api-key:291

@@ -10,6 +10,7 @@ from apps.employers.selectors import (
     seo_company_by_slug,
 )
 from apps.sitecontent.services import resolved_seo_settings, seo_page_title
+from common.api.caching import cache_public_get
 from common.html.plain_text import html_plain_text
 from common.seo import (
     SeoMetadata,
@@ -145,6 +146,7 @@ class CompanySeoShellView(View):
         )
 
 
+@cache_public_get()
 class CompanySitemapView(View):
     def get(self, request):
         items = (

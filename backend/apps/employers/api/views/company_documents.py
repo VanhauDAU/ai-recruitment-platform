@@ -14,6 +14,7 @@ from rest_framework import generics, parsers, serializers, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 
 from apps.accounts.api.permissions import IsEmployer
 from common.files.office_preview import render_office_document_preview
@@ -272,6 +273,8 @@ class CompanyDocumentContentView(generics.GenericAPIView):
     """Authorized private-file download for the employer's own documents."""
 
     permission_classes = [IsEmployer]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'office_file_preview'
 
     def get(self, request, pk):
         recruiter = existing_recruiter_profile(request.user)

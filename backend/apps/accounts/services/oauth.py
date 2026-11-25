@@ -9,6 +9,7 @@ provider gọi lại `/auth/oauth/<provider>/callback/` → backend verify state
 State + one_time_code đều lưu Redis (cache mặc định) tự hết hạn — không cần bảng.
 """
 
+import hashlib
 import secrets
 from urllib.parse import urlencode
 
@@ -123,20 +124,46 @@ def safe_next(next_path):
 # ---- State (chống CSRF) + one_time_code (đổi JWT), đều one-shot qua Redis ----
 
 
-def create_state(provider, portal, next_path):
+# State chỉ chống giả mạo khi nó gắn với đúng trình duyệt đã bấm "Đăng nhập":
+# nếu không, kẻ tấn công tự bắt đầu luồng rồi gửi URL callback (code + state của
+# mình) cho nạn nhân, nạn nhân bị đăng nhập vào tài khoản kẻ tấn công (login CSRF).
+# Trình duyệt giữ một nonce trong cookie HttpOnly; Redis chỉ giữ bản băm.
+OAUTH_BROWSER_COOKIE = 'procv_oauth_browser'
+
+
+def new_browser_binding():
+    return secrets.token_urlsafe(32)
+
+
+def _binding_digest(browser_binding):
+    return hashlib.sha256(browser_binding.encode()).hexdigest()
+
+
+def create_state(provider, portal, next_path, browser_binding):
     state = secrets.token_urlsafe(32)
     cache.set(
         f'{_STATE_PREFIX}{state}',
-        {'provider': provider, 'portal': portal, 'next': next_path},
+        {
+            'provider': provider,
+            'portal': portal,
+            'next': next_path,
+            'browser': _binding_digest(browser_binding),
+        },
         settings.OAUTH_STATE_TTL,
     )
     return state
 
 
-def pop_state(state):
-    if not state:
+def pop_state(state, browser_binding):
+    """State one-shot, chỉ hợp lệ khi đến từ trình duyệt đã tạo ra nó."""
+    if not state or not browser_binding:
         return None
-    return atomic_pop(f'{_STATE_PREFIX}{state}')
+    data = atomic_pop(f'{_STATE_PREFIX}{state}')
+    if not isinstance(data, dict) or not secrets.compare_digest(
+        data.get('browser', ''), _binding_digest(browser_binding)
+    ):
+        return None
+    return data
 
 
 def create_one_time_code(user):

@@ -164,5 +164,11 @@
   "candidate_job_detail_not_found_title": "Job posting not found",
   "candidate_nearby_near": "near {place}",
   "candidate_nearby_searching_at": "Searching around: {place}",
-  "candidate_title_saved_jobs": "Saved jobs"
+  "candidate_title_saved_jobs": "Saved jobs",
+  "candidate_hotline_chat_candidate_name": "ProCV career advisor",
+  "candidate_hotline_chat_employer_name": "ProCV hiring advisor",
+  "candidate_home_industries_subtitle": "Fields with the most open positions",
+  "candidate_home_industries_view_all": "View all",
+  "candidate_footer_terms": "Terms of use",
+  "candidate_footer_privacy": "Privacy policy"
 }
