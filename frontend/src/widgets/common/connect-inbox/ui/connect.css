@@ -56,8 +56,10 @@
   background: var(--pc-paper);
 }
 
-.pc-inbox--medium { grid-template-columns: 300px minmax(0, 1fr); }
-.pc-inbox--wide { grid-template-columns: 320px minmax(0, 1fr) 300px; }
+/* Hai cột bên nở theo bề rộng của chính hộp thư (% của lưới, không theo cửa sổ: trang NTD
+   có thêm sidebar) để khung chat không thành một vùng trống quá rộng. */
+.pc-inbox--medium { grid-template-columns: clamp(260px, 34%, 380px) minmax(0, 1fr); }
+.pc-inbox--wide { grid-template-columns: clamp(280px, 25%, 440px) minmax(0, 1fr) clamp(280px, 24%, 420px); }
 .pc-inbox--state { display: flex; align-items: center; justify-content: center; padding: 24px; }
 .pc-inbox__list, .pc-inbox__thread, .pc-inbox__context { min-height: 0; min-width: 0; }
 .pc-inbox--medium .pc-inbox__list { border-right: 1px solid var(--pc-line); }
@@ -360,10 +362,10 @@ a.pc-conv--active::before { position: absolute; top: 0; bottom: 0; left: 0; widt
 }
 
 .pc-thread { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; }
-.pc-thread__column { display: flex; min-height: 100%; width: 100%; max-width: 720px; flex-direction: column; margin: 0 auto; padding: 12px 12px 8px; }
+.pc-thread__column { display: flex; min-height: 100%; width: 100%; flex-direction: column; padding: 12px 12px 8px; }
 
 @media (min-width: 768px) {
-  .pc-thread__column { padding: 16px 20px 10px; }
+  .pc-thread__column { padding: 16px 24px 10px; }
 }
 
 .pc-thread__sentinel { height: 1px; flex: none; }
@@ -383,7 +385,8 @@ a.pc-conv--active::before { position: absolute; top: 0; bottom: 0; left: 0; widt
 
 .pc-msg__bubble {
   display: flex;
-  max-width: 72%;
+  /* Khung chat dùng hết bề ngang; giới hạn bong bóng để dòng chữ không quá dài. */
+  max-width: min(72%, 640px);
   flex-direction: column;
   padding: 8px 12px;
   border-radius: 16px 16px 16px 6px;
