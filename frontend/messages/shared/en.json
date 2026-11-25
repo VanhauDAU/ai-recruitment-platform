@@ -664,5 +664,6 @@
   "fit_profile_section_interests": "Interests",
   "notification_sound_turn_off": "Mute notification sound",
   "notification_sound_turn_on": "Unmute notification sound",
-  "notification_open": "View"
+  "notification_open": "View",
+  "ui_sheet_close": "Close"
 }

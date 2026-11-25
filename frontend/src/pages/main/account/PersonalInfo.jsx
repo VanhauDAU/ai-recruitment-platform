@@ -9,7 +9,7 @@ import { message } from '@/shared/lib/toast'
 // Số điện thoại VN: 0 hoặc +84 rồi 9-10 chữ số (khớp validate backend).
 const PHONE_PATTERN = /^(0|\+84)\d{9,10}$/
 
-// Trang "Cài đặt thông tin cá nhân": sửa họ tên + SĐT nhiều lần; email khoá
+// Trang "Hồ sơ cá nhân": sửa họ tên + SĐT nhiều lần; email khoá
 // (đổi email đi qua luồng xác thực riêng). Card trắng trên nền xám của layout.
 export default function PersonalInfo() {
   const { user, setCurrentUser } = useSession()
@@ -46,7 +46,7 @@ export default function PersonalInfo() {
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-      <h1 className="text-lg font-bold text-slate-900 sm:text-xl">Cài đặt thông tin cá nhân</h1>
+      <h1 className="text-lg font-bold text-slate-900 sm:text-xl">Hồ sơ cá nhân</h1>
       <p className="mt-1 text-sm text-slate-500">
         <span className="font-semibold text-red-500">(*)</span> Các thông tin bắt buộc
       </p>

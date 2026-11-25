@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Thanh tab dưới và thông báo trên mobile cho ứng viên](#thanh-tab-dưới-và-thông-báo-trên-mobile-cho-ứng-viên-2026-11-25) | 🟨 PR #354 (nhánh `feat/mobile-tab-bar`), chờ gộp |
 | [Lời mời kết nối của NTD cho ứng viên](#lời-mời-kết-nối-của-ntd-cho-ứng-viên-2026-11-25) | 🟨 PR #356 (nhánh `feat/employer-connections`), chờ gộp; nhắn tin chưa làm |
 | [Thứ tự và nhãn tin tuyển dụng công bằng (ADR-0030)](#thứ-tự-và-nhãn-tin-tuyển-dụng-công-bằng-adr-0030-2026-11-25) | 🟨 Nhánh `feat/fair-job-listing`, chờ PR |
 | [Trang Danh mục dữ liệu cho admin](#trang-danh-mục-dữ-liệu-cho-admin-2026-11-25) | 🟨 Cả 3 GĐ + dọn dẹp xong trên nhánh `feat/admin-catalog`, chờ PR |
@@ -62,6 +63,37 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
 
+
+## Thanh tab dưới và thông báo trên mobile cho ứng viên (2026-11-25)
+
+- Màn < md: header cổng ứng viên còn logo, nút "Danh mục" (mở drawer menu cũ),
+  nút tìm việc và chuông; avatar, tin nhắn, nút đăng nhập/đăng ký chuyển xuống
+  thanh tab dưới `MobileTabBar` (Trang chủ, Việc làm, **Tạo CV** nổi ở giữa trên
+  phần cong, Cẩm nang, Tài khoản). Tab Tài khoản mở tấm trượt: ứng viên thấy menu
+  tài khoản (tách `CandidateAccountPanel` dùng chung với dropdown desktop), khách
+  thấy Đăng nhập/Đăng ký, vai trò khác thấy Trang quản lý.
+- Chuông thông báo: nút tròn có badge; mobile mở tấm trượt từ đáy (`shared/ui/BottomSheet`),
+  desktop giữ popover; tiêu đề kèm số chưa đọc, trạng thái rỗng mới.
+- Thanh tab gắn `body.has-mobile-tab-bar` (biến `--page-bottom-bar-height` 4rem)
+  để nút nổi và dock so sánh tự nâng lên; trang có thanh hành động riêng
+  (`has-bottom-action-bar`: chi tiết tin, mẫu CV, trang công ty) thì thanh tab ẩn.
+  Chi tiết tin chỉ gắn class này dưới md. Trang soạn CV không có thanh tab.
+- Hủy đăng nhập: nút Đăng nhập ở tab Tài khoản mở popup tại chỗ (đóng là về đúng trang
+  đang xem); trang `/login`, `/sign-up` có nút ✕ cạnh nút đổi giao diện, về trang trước
+  trong app hoặc trang chủ khi vào thẳng (không hiện ở cổng admin).
+- Cụm nút nổi (♥ / Góp ý / Hỗ trợ) dưới md gom vào một nút tròn trắng; bấm thì các
+  nút bung lên lần lượt (speed dial), nút đổi thành ✕; bấm ra ngoài, Escape hoặc đổi
+  trang thì thu lại. Badge số tin đã lưu hiện trên nút gom. Desktop giữ nguyên cụm.
+- Menu tài khoản đổi "Cài đặt thông tin cá nhân" → "Hồ sơ cá nhân". Trang Cài đặt bảo mật
+  làm lại: thẻ tổng quan (email đã/chưa xác thực, mật khẩu đã/chưa đặt kèm nút hành động),
+  thẻ thiết bị (icon theo loại máy, tô nổi thiết bị hiện tại), thẻ quyền dữ liệu.
+- Tài khoản mạng xã hội chưa có mật khẩu: bỏ bước đăng nhập lại Google/Facebook, thay bằng
+  mã 6 số qua email (`POST /api/auth/password/setup-code/`, trường `email_code`; mã sinh
+  trong worker, cache chỉ giữ HMAC, 10 phút, 5 lần sai, gửi lại sau 60 giây, throttle
+  5/giờ). Gỡ `requires_oauth_reauthentication`, `OAuthReauthRequired`, `startOAuthReauth`;
+  đổi email của tài khoản chưa có mật khẩu vẫn dùng mốc xác thực lại OAuth như cũ.
+- Kiểm: `MobileTabBar.test.jsx`, test chuông mobile, E2E `mobile-tab-bar.spec.js`,
+  `candidate-security.spec.js` (@responsive), `PasswordSetupCodeTests` (backend).
 
 ## Lời mời kết nối của NTD cho ứng viên (2026-11-25)
 

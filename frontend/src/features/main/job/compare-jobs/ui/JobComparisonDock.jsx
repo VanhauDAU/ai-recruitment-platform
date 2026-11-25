@@ -4,20 +4,17 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router'
 import { useConsent } from '@/entities/system/consent'
 import { companyInitial } from '@/entities/job/job'
-import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import { useVisualViewportBottomInset } from '@/shared/hooks/use-visual-viewport-bottom-inset'
 import { buildJobComparisonPath } from '../model/comparison-url'
 import useJobComparison from '../model/use-job-comparison'
 
 const JOB_ROUTE_PATTERN = /^\/(?:viec-lam(?:\/|$)|jobs(?:\/|$)|viec-lam-da-luu\/?$)/
 
-function useDockBottom(pathname) {
+function useDockBottom() {
   const { isDecided, isEnabled } = useConsent()
-  const isMobile = useMediaQuery('(max-width: 767px)')
   const visualViewportInset = useVisualViewportBottomInset()
   const [cookieHeight, setCookieHeight] = useState(0)
   const cookieVisible = isEnabled && !isDecided
-  const jobDetailMobile = isMobile && /^\/viec-lam\/[^/]+\/?$/.test(pathname)
 
   useEffect(() => {
     if (!cookieVisible) {
@@ -36,8 +33,9 @@ function useDockBottom(pathname) {
     }
   }, [cookieVisible])
 
-  const base = cookieVisible ? cookieHeight + 16 : jobDetailMobile ? 84 : 16
-  return `calc(${base}px + ${visualViewportInset}px + env(safe-area-inset-bottom, 0px))`
+  // Banner cookie phủ cả thanh đáy; ngoài ra nhường chỗ cho thanh tab/thanh hành động.
+  const bottomBar = cookieVisible ? `${cookieHeight + 16}px` : 'calc(16px + var(--page-bottom-bar-height, 0px))'
+  return `calc(${bottomBar} + ${visualViewportInset}px + env(safe-area-inset-bottom, 0px))`
 }
 
 function JobLogo({ item }) {
@@ -84,7 +82,7 @@ export default function JobComparisonDock() {
   } = useJobComparison()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const visible = items.length > 0 && JOB_ROUTE_PATTERN.test(pathname) && pathname !== '/so-sanh-viec-lam'
-  const bottom = useDockBottom(pathname)
+  const bottom = useDockBottom()
 
   useEffect(() => setDrawerOpen(false), [pathname])
 

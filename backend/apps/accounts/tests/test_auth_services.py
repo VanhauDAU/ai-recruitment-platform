@@ -10,7 +10,7 @@ from rest_framework.exceptions import NotFound, ValidationError
 from ..models import AuthEmailJob, AuthSession, User
 from ..services import email_verification, password_reset
 from ..services.auth_sessions import revoke_other_sessions, revoke_own_session
-from ..services.exceptions import OAuthReauthRequired, VerificationCooldown
+from ..services.exceptions import PasswordSetupCodeCooldown, VerificationCooldown
 from ..services.profile import update_own_profile
 from ..services.registration import register_account
 from ..services.tokens import issue_tokens
@@ -144,18 +144,12 @@ class AccountServiceTests(AuthServiceTestCase):
         self.user.refresh_from_db()
         self.assertEqual((self.user.full_name, self.user.phone), ('Lê Văn A', '0912345678'))
 
-    def test_reauth_required_payload_names_the_provider(self):
-        error = OAuthReauthRequired('google')
+    def test_password_setup_cooldown_payload_tells_when_to_retry(self):
+        error = PasswordSetupCodeCooldown(42)
 
-        self.assertEqual(error.status_code, 403)
-        self.assertEqual(
-            error.payload(),
-            {
-                'detail': 'Hãy xác thực lại bằng mạng xã hội trước khi tạo mật khẩu.',
-                'code': 'reauth_required',
-                'reauth_provider': 'google',
-            },
-        )
+        self.assertEqual(error.status_code, 429)
+        self.assertEqual(error.payload()['code'], 'password_setup_code_cooldown')
+        self.assertEqual(error.payload()['retry_after'], 42)
 
 
 class SessionServiceTests(AuthServiceTestCase):

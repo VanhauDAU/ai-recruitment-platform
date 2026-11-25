@@ -5,7 +5,6 @@ import EmployerPasswordLogin from './PasswordLogin'
 
 vi.mock('@/features/common/account/auth', () => ({
   getReturnUrl: (params) => params.get('returnUrl') || '',
-  startOAuthReauth: vi.fn(),
 }))
 
 vi.mock('@/features/common/account/change-password', () => ({

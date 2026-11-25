@@ -8,6 +8,7 @@ import ChangePasswordForm from './ChangePasswordForm'
 const mocks = vi.hoisted(() => ({
   changeCurrentPassword: vi.fn(),
   getPasswordSetupRequirements: vi.fn(),
+  sendPasswordSetupCode: vi.fn(),
   message: { error: vi.fn(), success: vi.fn() },
   onSetCurrentUser: vi.fn(),
   setTokens: vi.fn(),
@@ -17,6 +18,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('../api/change-password.api', () => ({
   changeCurrentPassword: mocks.changeCurrentPassword,
   getPasswordSetupRequirements: mocks.getPasswordSetupRequirements,
+  sendPasswordSetupCode: mocks.sendPasswordSetupCode,
 }))
 vi.mock('@/entities/account/session', () => ({
   useSession: () => ({
@@ -55,10 +57,11 @@ describe('ChangePasswordForm', () => {
     mocks.getPasswordSetupRequirements.mockReset()
     mocks.getPasswordSetupRequirements.mockResolvedValue({
       has_usable_password: false,
-      requires_reauth: false,
-      reauth_provider: null,
-      reauth_max_age_seconds: 300,
+      requires_email_code: true,
+      email_code_ttl_seconds: 600,
+      resend_after_seconds: 0,
     })
+    mocks.sendPasswordSetupCode.mockReset()
     mocks.message.error.mockReset()
     mocks.message.success.mockReset()
     mocks.onSetCurrentUser.mockReset()
@@ -111,20 +114,48 @@ describe('ChangePasswordForm', () => {
     expect(onSuccess).toHaveBeenCalledWith(result)
   })
 
-  it('uses neutral first-password copy for an account without a usable password', async () => {
-    mocks.user = {
-      email: 'candidate@example.com',
-      has_usable_password: false,
-    }
+  it('asks an account without a password for an emailed code instead of a provider sign-in', async () => {
+    mocks.user = { email: 'candidate@example.com', has_usable_password: false }
+    mocks.sendPasswordSetupCode.mockResolvedValue({ resend_after_seconds: 60 })
+    mocks.changeCurrentPassword.mockResolvedValue({ user: mocks.user, tokens: { access: 'a' } })
 
     renderForm({ showEmail: true })
 
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveTextContent('Tài khoản chưa có mật khẩu đăng nhập')
-    expect(alert).toHaveTextContent('đăng nhập trực tiếp bằng email')
-    expect(screen.queryByText(/Google|xác thực số điện thoại/i)).not.toBeInTheDocument()
+    expect(alert).toHaveTextContent('candidate@example.com')
+    expect(alert).toHaveTextContent('10 phút')
+    expect(screen.queryByText(/Xác thực với|Google/)).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Mật khẩu hiện tại')).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Tạo mật khẩu' })).toBeEnabled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Gửi mã' }))
+    await waitFor(() => expect(mocks.sendPasswordSetupCode).toHaveBeenCalledTimes(1))
+    expect(await screen.findByRole('button', { name: /Gửi lại sau \d+s/ })).toBeDisabled()
+
+    fireEvent.change(screen.getByLabelText('Mã xác minh qua email'), { target: { value: '123456' } })
+    fireEvent.change(screen.getByLabelText('Mật khẩu mới'), { target: { value: 'CareerFlow872' } })
+    fireEvent.change(screen.getByLabelText('Nhập lại mật khẩu mới'), { target: { value: 'CareerFlow872' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Tạo mật khẩu' }))
+
+    await waitFor(() => expect(mocks.changeCurrentPassword).toHaveBeenCalled())
+    expect(mocks.changeCurrentPassword.mock.calls[0][0]).toMatchObject({ email_code: '123456', password: 'CareerFlow872' })
+  })
+
+  it('shows a wrong or expired code on the code field', async () => {
+    mocks.user = { email: 'candidate@example.com', has_usable_password: false }
+    mocks.changeCurrentPassword.mockRejectedValue({
+      response: { status: 400, data: { email_code: ['Mã xác minh không đúng hoặc đã hết hạn.'] } },
+    })
+
+    renderForm({ showEmail: true })
+
+    await screen.findByRole('alert')
+    fireEvent.change(screen.getByLabelText('Mã xác minh qua email'), { target: { value: '000000' } })
+    fireEvent.change(screen.getByLabelText('Mật khẩu mới'), { target: { value: 'CareerFlow872' } })
+    fireEvent.change(screen.getByLabelText('Nhập lại mật khẩu mới'), { target: { value: 'CareerFlow872' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Tạo mật khẩu' }))
+
+    expect(await screen.findByText('Mã xác minh không đúng hoặc đã hết hạn.')).toBeInTheDocument()
   })
 
   it('keeps the employer success redirect when the caller provides it', async () => {
@@ -199,71 +230,5 @@ describe('ChangePasswordForm', () => {
         logout_all_sessions: true,
       })
     })
-  })
-
-  it('warns before the user fills the form when the OAuth session is no longer fresh', async () => {
-    mocks.user = { email: 'candidate@example.com', has_usable_password: false }
-    mocks.getPasswordSetupRequirements.mockResolvedValue({
-      has_usable_password: false,
-      requires_reauth: true,
-      reauth_provider: 'google',
-      reauth_max_age_seconds: 300,
-    })
-    const onReauth = vi.fn()
-
-    renderForm({ showEmail: true, onReauth })
-
-    expect(await screen.findByText('Xác thực lại với Google để tạo mật khẩu')).toBeInTheDocument()
-    expect(screen.getByRole('alert')).toHaveTextContent('trong vòng 5 phút')
-    // Chặn ngay ở nút lưu: người dùng không điền xong rồi mới nhận 403.
-    expect(screen.getByRole('button', { name: 'Tạo mật khẩu' })).toBeDisabled()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Xác thực với Google' }))
-    expect(onReauth).toHaveBeenCalledWith('google')
-    expect(mocks.changeCurrentPassword).not.toHaveBeenCalled()
-  })
-
-  it('falls back to the same reauthentication banner when the session expires mid-form', async () => {
-    mocks.user = { email: 'candidate@example.com', has_usable_password: false }
-    mocks.changeCurrentPassword.mockRejectedValue({
-      response: {
-        status: 403,
-        data: {
-          detail: 'Hãy xác thực lại bằng mạng xã hội trước khi tạo mật khẩu.',
-          code: 'reauth_required',
-          reauth_provider: 'facebook',
-        },
-      },
-    })
-    const onReauth = vi.fn()
-
-    renderForm({ showEmail: true, onReauth })
-
-    await screen.findByRole('alert')
-    fireEvent.change(screen.getByLabelText('Mật khẩu mới'), { target: { value: 'CareerFlow872' } })
-    fireEvent.change(screen.getByLabelText('Nhập lại mật khẩu mới'), {
-      target: { value: 'CareerFlow872' },
-    })
-    fireEvent.click(screen.getByRole('button', { name: 'Tạo mật khẩu' }))
-
-    expect(await screen.findByText('Xác thực lại với Facebook để tạo mật khẩu')).toBeInTheDocument()
-    expect(screen.queryByText('reauth_required')).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Xác thực với Facebook' }))
-    expect(onReauth).toHaveBeenCalledWith('facebook')
-  })
-
-  it('points to email recovery when there is no linked provider to reauthenticate with', async () => {
-    mocks.user = { email: 'candidate@example.com', has_usable_password: false }
-    mocks.getPasswordSetupRequirements.mockResolvedValue({
-      has_usable_password: false,
-      requires_reauth: true,
-      reauth_provider: null,
-      reauth_max_age_seconds: 300,
-    })
-
-    renderForm({ showEmail: true, onReauth: vi.fn() })
-
-    expect(await screen.findByRole('alert')).toHaveTextContent('Quên mật khẩu')
-    expect(screen.queryByRole('button', { name: /Xác thực với/ })).not.toBeInTheDocument()
   })
 })

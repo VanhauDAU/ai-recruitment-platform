@@ -42,7 +42,7 @@ test.describe('candidate account features', () => {
     await authenticateCandidate(page)
     await page.goto('/tai-khoan/thong-tin-ca-nhan')
 
-    await expect(page.getByRole('heading', { name: 'Cài đặt thông tin cá nhân' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Hồ sơ cá nhân' })).toBeVisible()
     await page.getByLabel('Số điện thoại').fill('0912345678')
     await page.getByRole('button', { name: 'Lưu', exact: true }).click()
     await expect(page.getByText('Đã lưu thông tin cá nhân.')).toBeVisible()
