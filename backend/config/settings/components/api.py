@@ -52,7 +52,7 @@ REST_FRAMEWORK = {
         'account_write_sustained_admin': '10000/hour',
         # Thao tác ghi rủi ro cao (WriteScopedRateThrottle, theo tài khoản, chỉ tính ghi).
         'skill_create': '20/hour',
-        'company_create': '5/day',
+        'company_create': '20/day',
         'company_media_upload': '30/hour',
         'company_update_request': '10/hour',
         'company_join': '10/hour',
@@ -71,7 +71,7 @@ REST_FRAMEWORK = {
         'cv_export': '20/hour',
         'cv_asset_upload': '60/hour',
         'avatar_upload': '20/hour',
-        'privacy_data_request': '5/day',
+        'privacy_data_request': '10/day',
         'login': '5/min',
         'register': '5/min',
         'register_email_check': '12/min',

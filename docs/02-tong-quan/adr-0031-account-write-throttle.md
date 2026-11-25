@@ -51,7 +51,7 @@ khoảng 40 view đã có throttle riêng (đăng nhập, OTP, upload…) vẫn 
 | `account_write_burst_admin` | 300/phút | tài khoản quản trị |
 | `account_write_sustained_admin` | 10000/giờ | tài khoản quản trị |
 | `skill_create` | 20/giờ | kỹ năng NTD tạo vào catalog công khai ngay |
-| `company_create` | 5/ngày | tạo công ty |
+| `company_create` | 20/ngày | tạo công ty (DRF đếm cả lượt nhập sai bị 400, nên chừa chỗ cho vài lần sửa form) |
 | `company_media_upload` | 30/giờ | logo, ảnh bìa, thư viện ảnh (chỉ POST) |
 | `company_update_request` | 10/giờ | yêu cầu cập nhật thông tin công ty |
 | `company_join` | 10/giờ | xin gia nhập công ty |
@@ -70,7 +70,7 @@ khoảng 40 view đã có throttle riêng (đăng nhập, OTP, upload…) vẫn 
 | `cv_export` | 20/giờ | xuất PDF CV + thử lại |
 | `cv_asset_upload` | 60/giờ | ảnh trong CV |
 | `avatar_upload` | 20/giờ | avatar (chỉ POST) |
-| `privacy_data_request` | 5/ngày | yêu cầu dữ liệu cá nhân |
+| `privacy_data_request` | 10/ngày | yêu cầu dữ liệu cá nhân |
 
 Hotfix trên production không cần deploy lại: `THROTTLE_RATE_OVERRIDES=scope=mức,...`.
 Kiểm thử tải nới hai scope trần chung trong `scripts/loadtest/docker-compose.loadtest.yml`.
