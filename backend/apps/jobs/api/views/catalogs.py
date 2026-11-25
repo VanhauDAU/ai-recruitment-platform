@@ -1,6 +1,7 @@
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import generics, permissions
 
+from common.api.caching import cache_public_get
 from common.api.params import parse_bool
 
 from ...selectors import (
@@ -23,6 +24,7 @@ from ..serializers import (
         OpenApiParameter('all', str, description='`1`/`true`: trả toàn bộ, không phân trang.'),
     ],
 )
+@cache_public_get(query_params=('category_type', 'all', 'page', 'page_size'))
 class JobCategoryListView(generics.ListAPIView):
     serializer_class = JobCategoryListSerializer
     permission_classes = [permissions.AllowAny]
@@ -41,6 +43,7 @@ class JobCategoryListView(generics.ListAPIView):
 
 
 @extend_schema(tags=['jobs'], summary='Danh mục quyền lợi')
+@cache_public_get()
 class BenefitListView(generics.ListAPIView):
     serializer_class = BenefitSerializer
     permission_classes = [permissions.AllowAny]
@@ -51,6 +54,7 @@ class BenefitListView(generics.ListAPIView):
 
 
 @extend_schema(tags=['jobs'], summary='Danh mục ngoại ngữ')
+@cache_public_get()
 class LanguageListView(generics.ListAPIView):
     serializer_class = LanguageSerializer
     permission_classes = [permissions.AllowAny]

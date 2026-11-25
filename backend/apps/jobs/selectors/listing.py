@@ -3,7 +3,7 @@ from django.db.models.functions import Coalesce
 from rest_framework.exceptions import ValidationError
 
 from apps.employers.models import CompanyPinnedJob
-from common.db.search import fold_accents, search_q
+from common.db.search import fold_accents, folded_search_q
 
 from ..models import Job, JobCategory
 from ..models.querysets import (
@@ -77,20 +77,36 @@ def active_job_tracking_queryset(slugs):
     return Job.objects.filter(publicly_available_job_filter(), slug__in=slugs).only('id', 'slug')
 
 
+# Autocomplete reads at most this many distinct terms, prefix matches first,
+# instead of every matching job title.
+SUGGEST_SCAN_LIMIT = 50
+
+
 def suggest_job_search_terms(query, search_by=None, limit=10):
     """Return de-duplicated autocomplete terms, prioritising prefix matches."""
     query = (query or '').strip()
     if not query:
         return []
 
-    field = 'company__company_name' if search_by == 'company' else 'title'
+    if search_by == 'company':
+        field, folded_field = 'company__company_name', 'company__company_name_search'
+    else:
+        field, folded_field = 'title', 'title_search'
+    normalized_query = fold_accents(query)
     values = (
         Job.objects.filter(publicly_available_job_filter())
-        .filter(search_q(field, query))
+        .filter(folded_search_q(folded_field, query))
+        .annotate(
+            suggest_rank=Case(
+                When(**{f'{folded_field}__startswith': normalized_query}, then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField(),
+            )
+        )
+        .order_by('suggest_rank', field)
         .values_list(field, flat=True)
-        .distinct()
+        .distinct()[:SUGGEST_SCAN_LIMIT]
     )
-    normalized_query = fold_accents(query)
     seen, starts, contains = set(), [], []
     for value in values:
         term = (value or '').strip()
@@ -142,13 +158,13 @@ def _filter_search(queryset, params):
     if not search:
         return queryset
     search_by = params.get('search_by', 'title')
+    title = folded_search_q('title_search', search)
+    company = folded_search_q('company__company_name_search', search)
     if search_by == 'company':
-        return queryset.filter(search_q('company__company_name', search))
+        return queryset.filter(company)
     if search_by == 'both':
-        return queryset.filter(
-            search_q('title', search) | search_q('company__company_name', search)
-        )
-    return queryset.filter(search_q('title', search))
+        return queryset.filter(title | company)
+    return queryset.filter(title)
 
 
 def _order_jobs(queryset, ordering, *, pinned_first=False):

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   changeCampaignStatus,
   createCampaign,
+  downloadCampaignReport,
   getCampaign,
   getCampaignActivities,
   getCampaignJobPerformance,
@@ -118,5 +119,46 @@ describe('campaign API', () => {
       '/employer/campaigns/camp_1/job-performance/',
       { params: { days: 30, job: 'job_1' } },
     )
+  })
+
+  it('downloads Excel directly and queues the PDF until the worker is done', async () => {
+    vi.useFakeTimers()
+    try {
+      const pdf = new Blob(['%PDF'])
+      get
+        .mockResolvedValueOnce({ data: 'xlsx' })
+        .mockResolvedValueOnce({ data: { status: 'pending' } })
+        .mockResolvedValueOnce({ data: { status: 'ready' } })
+        .mockResolvedValueOnce({ data: pdf })
+      post.mockResolvedValueOnce({ data: { token: 'tok', status: 'pending' } })
+
+      expect(await downloadCampaignReport('camp_1', 'xlsx')).toBe('xlsx')
+      const download = downloadCampaignReport('camp_1', 'pdf')
+      await vi.runAllTimersAsync()
+
+      expect(await download).toBe(pdf)
+      expect(post).toHaveBeenCalledWith('/employer/campaigns/camp_1/report/export/pdf/')
+      expect(get).toHaveBeenLastCalledWith('/employer/campaigns/camp_1/report/export/pdf/tok/', {
+        params: { download: 1 },
+        responseType: 'blob',
+      })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('rejects when the worker reports a failed PDF', async () => {
+    vi.useFakeTimers()
+    try {
+      post.mockResolvedValueOnce({ data: { token: 'tok' } })
+      get.mockResolvedValueOnce({ data: { status: 'failed' } })
+
+      const download = downloadCampaignReport('camp_1', 'pdf')
+      const assertion = expect(download).rejects.toThrow('failed')
+      await vi.runAllTimersAsync()
+      await assertion
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

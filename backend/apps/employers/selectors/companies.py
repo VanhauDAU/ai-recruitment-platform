@@ -1,5 +1,6 @@
 """Read-only company queries."""
 
+from django.core.cache import cache
 from django.db.models import (
     Case,
     Count,
@@ -7,7 +8,6 @@ from django.db.models import (
     IntegerField,
     Max,
     OuterRef,
-    Q,
     Subquery,
     Value,
     When,
@@ -15,7 +15,7 @@ from django.db.models import (
 from django.db.models.functions import Coalesce, Length, Trim
 
 from apps.jobs.models import Job
-from common.db.search import fold_accents, search_q
+from common.db.search import folded_search_q, search_q
 
 from ..models import Company, CompanyIndustry
 from ..models.representation import eligible_representatives_queryset
@@ -102,11 +102,21 @@ def _featured_public_job_metrics_queryset():
     )
 
 
+FEATURED_POOL_CACHE_KEY = 'employers:featured-pool:v1'
+FEATURED_POOL_CACHE_SECONDS = 120
+
+
 def featured_public_companies(*, limit=18):
     """Return the ranked, finite featured pool with one canonical aggregation."""
     if limit < 1:
         return []
-    metrics = list(_featured_public_job_metrics_queryset()[:limit])
+    # The ranking aggregate runs the canonical job predicate over every
+    # eligible company; the pool barely moves within two minutes.
+    metrics = cache.get_or_set(
+        f'{FEATURED_POOL_CACHE_KEY}:{limit}',
+        lambda: list(_featured_public_job_metrics_queryset()[:limit]),
+        FEATURED_POOL_CACHE_SECONDS,
+    )
     if not metrics:
         return []
 
@@ -191,14 +201,6 @@ def attach_active_public_job_counts(companies):
     return companies
 
 
-def _folded_company_search_q(field, text):
-    """Indexed equivalent of ``unaccent__icontains`` for folded name fields."""
-    query = Q()
-    for token in fold_accents(text).split():
-        query &= Q(**{f'{field}__contains': token})
-    return query
-
-
 def search_companies(text):
     text = (text or '').strip()
     # Không lọc theo trạng thái xác thực: mọi hồ sơ công ty hợp lệ đều có thể
@@ -223,7 +225,7 @@ def public_company_search_queryset(*, query):
     queryset = Company.objects.filter(content_policy_hold=False)
     if query:
         queryset = queryset.filter(
-            _folded_company_search_q('company_name_search', query)
-            | _folded_company_search_q('trade_name_search', query)
+            folded_search_q('company_name_search', query)
+            | folded_search_q('trade_name_search', query)
         )
     return public_company_projection(queryset).order_by('slug')

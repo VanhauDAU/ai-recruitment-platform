@@ -71,6 +71,8 @@ CELERY_TASK_ROUTES = {
     'apps.employers.tasks.phone_sms.*': {'queue': 'auth-sms'},
     'apps.employers.tasks.tax_lookup.*': {'queue': 'default'},
     'apps.employers.tasks.domain_claims.*': {'queue': 'default'},
+    # PDF báo cáo chiến dịch dùng Chromium như PDF CV: chung worker có /dev/shm lớn.
+    'apps.campaigns.tasks.render_campaign_report_pdf': {'queue': 'cv-export'},
     'apps.campaigns.tasks.*': {'queue': 'default'},
     'apps.cv_templates.tasks.template_assets.generate_cv_sample_content': {
         'queue': 'ai-generation'

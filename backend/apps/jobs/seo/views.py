@@ -5,6 +5,7 @@ from django.views import View
 from apps.jobs.models import Job
 from apps.jobs.selectors.seo import job_sitemap_rows, seo_job_by_slug, seo_location_by_slug
 from apps.sitecontent.services import resolved_seo_settings, seo_page_title
+from common.api.caching import cache_public_get
 from common.html.plain_text import html_plain_text
 from common.seo import (
     SeoMetadata,
@@ -273,6 +274,7 @@ class JobDetailSeoShellView(View):
         )
 
 
+@cache_public_get()
 class JobSitemapView(View):
     def get(self, request):
         items = (

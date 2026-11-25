@@ -106,6 +106,9 @@ services:
       -c work_mem=8MB
       -c maintenance_work_mem=128MB
       -c max_connections=100
+      -c shared_preload_libraries=pg_stat_statements
+      -c random_page_cost=1.1
+      -c log_min_duration_statement=500
     environment:
       POSTGRES_USER: ${DB_USER:?DB_USER chưa đặt trong backend/.env}
       POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD chưa đặt trong backend/.env}
@@ -176,6 +179,11 @@ services:
 
   backend:
     <<: *backend
+    environment:
+      <<: *prod-env
+      # Chỉ tiến trình web: một query chậm không được giữ slot gunicorn (8 slot).
+      DB_STATEMENT_TIMEOUT_MS: '15000'
+      DB_IDLE_IN_TRANSACTION_TIMEOUT_MS: '30000'
     command: >-
       gunicorn config.wsgi:application
       --bind 0.0.0.0:8000
@@ -209,6 +217,11 @@ services:
   # kết nối sống lâu không giữ worker HTTP. Sự kiện đến qua Redis channel layer.
   realtime:
     <<: *backend
+    environment:
+      <<: *prod-env
+      # Django khuyên tắt kết nối bền dưới ASGI: luồng của sync_to_async không
+      # nhận request_finished nên kết nối giữ lại sẽ rò.
+      DB_CONN_MAX_AGE: '0'
     command: >-
       daphne -b 0.0.0.0 -p 8001
       --proxy-headers
@@ -238,12 +251,24 @@ services:
     # -Q bắt buộc như dev: thiếu queue nào thì task của queue đó chết lặng.
     command: >-
       celery -A config worker --loglevel=info
-      -Q default,auth-email,auth-sms,cv-export,upload-scan,candidate-email
+      -Q default,cv-export,upload-scan,candidate-email
       --concurrency=3 --prefetch-multiplier=1 --max-tasks-per-child=200
     # Chromium headless (xuất PDF CV) cần /dev/shm lớn hơn mặc định 64 MB.
     shm_size: 512m
     pids_limit: 512
     mem_limit: 1152m
+    stop_grace_period: 30s
+    healthcheck: *celery-healthcheck
+    depends_on: *backend-depends
+
+  # Email/SMS xác thực (OTP, đặt lại mật khẩu) không xếp hàng sau PDF/quét file.
+  email-worker:
+    <<: *backend
+    command: >-
+      celery -A config worker --loglevel=info -Q auth-email,auth-sms
+      --concurrency=1 --prefetch-multiplier=1 --max-tasks-per-child=500
+    pids_limit: 64
+    mem_limit: 256m
     stop_grace_period: 30s
     healthcheck: *celery-healthcheck
     depends_on: *backend-depends

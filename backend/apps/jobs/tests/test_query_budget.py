@@ -36,6 +36,9 @@ JOB_LIST_QUERY_BUDGET = 5 + BADGE_QUERY_BUDGET + MAINTENANCE_CHECK_QUERIES
 HOMEPAGE_BEST_JOB_LIST_QUERY_BUDGET = JOB_LIST_QUERY_BUDGET + 2
 # Chip địa điểm: đếm theo tỉnh + đếm theo phường + 1 SELECT tên (kèm tỉnh cha).
 HOMEPAGE_BEST_JOB_LOCATIONS_QUERY_BUDGET = 3 + MAINTENANCE_CHECK_QUERIES
+# Dashboard thống kê trang chủ: tài khoản, tổng/tăng trưởng/lương (một aggregate),
+# danh mục gộp theo gốc, việc mới nhất + prefetch địa điểm, NTD nổi bật.
+JOB_STATS_QUERY_BUDGET = 6 + MAINTENANCE_CHECK_QUERIES
 ADMIN_JOB_LIST_QUERY_BUDGET = 2
 # +1 aggregate for the status-tab counts and +1 category prefetch (one query
 # each whatever the page size).
@@ -120,6 +123,32 @@ class JobListQueryBudgetTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['provinces'][0]['job_count'], 5)
         self.assertEqual(len(response.data['wards']), 5)
+
+    def test_job_stats_query_count_is_flat_and_cached(self):
+        root = JobCategory.objects.create(name='Công nghệ', slug='qb-root')
+        child = JobCategory.objects.create(name='Phần mềm', slug='qb-child', parent=root)
+        leaf = JobCategory.objects.create(name='Backend', slug='qb-leaf', parent=child)
+        province = Location.objects.create(code='qb-sp', level=Location.Level.PROVINCE, name='P')
+        for index, job in enumerate(Job.objects.all()):
+            category = (root, child, leaf)[index % 3]
+            JobCategoryAssignment.objects.create(job=job, category=category)
+            ward = Location.objects.create(
+                code=f'qb-sw{index}', level=Location.Level.WARD, name=f'W{index}', parent=province
+            )
+            JobLocation.objects.create(job=job, location=ward)
+
+        with self.assertNumQueries(JOB_STATS_QUERY_BUDGET):
+            response = self.client.get(reverse('job-stats'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Cache-Control'], 'public, max-age=60')
+        self.assertEqual(response.data['active_jobs'], 5)
+        self.assertEqual([item['count'] for item in response.data['demand']], [5])
+        self.assertEqual(len(response.data['latest_jobs']), 5)
+        self.assertEqual(response.data['latest_jobs'][0]['location_names'], ['P'])
+        # Lần sau đọc payload từ cache: chỉ còn query của middleware bảo trì.
+        with self.assertNumQueries(MAINTENANCE_CHECK_QUERIES):
+            self.assertEqual(self.client.get(reverse('job-stats')).data, response.data)
 
 
 class EmployerJobListQueryBudgetTests(APITestCase):

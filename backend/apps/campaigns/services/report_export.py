@@ -5,11 +5,14 @@ needs the workspace gate but not candidate-data access.
 """
 
 from io import BytesIO
+from uuid import uuid4
 
+from django.core.cache import cache
+from django.db import transaction
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.translation import get_language, gettext_lazy
 from django.utils.translation import gettext as _
-from django.utils.translation import gettext_lazy
 from rest_framework.exceptions import ValidationError
 
 from common.pdf.browser import PdfRenderingError, render_html_pdf
@@ -32,6 +35,56 @@ REPORT_CONTENT_TYPES = {
     'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'pdf': 'application/pdf',
 }
+
+
+# PDF chạy Chromium trong worker (queue cv-export), không trong request
+# gunicorn; trạng thái và tệp nằm trong cache theo token, gắn với chiến dịch.
+REPORT_PDF_TTL_SECONDS = 15 * 60
+
+
+def _pdf_job_key(token):
+    return f'campaign-report-pdf:{token}'
+
+
+def request_campaign_report_pdf(campaign):
+    """Queue the PDF report in the requester's language; returns the polling token."""
+    token = uuid4().hex
+    cache.set(
+        _pdf_job_key(token),
+        {'status': 'pending', 'campaign_id': campaign.pk},
+        REPORT_PDF_TTL_SECONDS,
+    )
+    language = get_language()
+
+    def dispatch():
+        from ..tasks.report_pdf import render_campaign_report_pdf
+
+        render_campaign_report_pdf.delay(token, campaign.pk, language)
+
+    transaction.on_commit(dispatch)
+    return token
+
+
+def campaign_report_pdf_job(campaign, token):
+    """``{'status', ...}`` of a queued PDF of ``campaign``, or ``None`` if unknown/expired."""
+    job = cache.get(_pdf_job_key(token))
+    return job if job and job['campaign_id'] == campaign.pk else None
+
+
+def finish_campaign_report_pdf(token, campaign_id, pdf):
+    cache.set(
+        _pdf_job_key(token),
+        {'status': 'ready', 'campaign_id': campaign_id, 'pdf': pdf},
+        REPORT_PDF_TTL_SECONDS,
+    )
+
+
+def fail_campaign_report_pdf(token, campaign_id):
+    cache.set(
+        _pdf_job_key(token),
+        {'status': 'failed', 'campaign_id': campaign_id},
+        REPORT_PDF_TTL_SECONDS,
+    )
 
 
 def _period(campaign):

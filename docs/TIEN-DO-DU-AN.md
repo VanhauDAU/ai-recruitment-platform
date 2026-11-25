@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Chuẩn bị deploy: GĐ4 hiệu năng và chịu tải](#chuẩn-bị-deploy-gđ4-hiệu-năng-và-chịu-tải-2026-11-25) | 🟨 Nhánh `perf/load-readiness`, chờ gộp PR; số đo k6 thật làm ở GĐ6 rehearsal |
 | [Chuẩn bị deploy: GĐ3 sao lưu và khôi phục](#chuẩn-bị-deploy-gđ3-sao-lưu-và-khôi-phục-2026-11-25) | 🟨 Nhánh `feat/predeploy-backup` (trên GĐ1), chờ PR; diễn tập khôi phục thật ở GĐ6 |
 | [Chuẩn bị deploy: GĐ2 hạ tầng, giám sát, chịu lỗi](#chuẩn-bị-deploy-gđ2-hạ-tầng-giám-sát-chịu-lỗi-2026-11-25) | 🟨 Nhánh `feat/predeploy-ops` (dựng trên GĐ1), chờ PR; chưa lên VPS |
 | [Chuẩn bị deploy: GĐ1 bảo mật ứng dụng](#chuẩn-bị-deploy-gđ1-bảo-mật-ứng-dụng-2026-11-25) | 🟨 Nhánh `feat/predeploy-security`, chờ PR; GĐ2–GĐ6 theo [kế hoạch](06-deployment/ke-hoach-chuan-bi-deploy.md) |
@@ -143,6 +144,33 @@ quý trên VPS tạm, xử lý xóa nhầm / migration hỏng / mất VPS / lộ
 - Kiểm chứng trên stack giả (db + 2 redis + backend dev): backup → restore vào DB mới
   khớp số dòng, giải mã sai khóa, dump quá nhỏ → `/fail`, `pg_restore` lỗi giữa chừng,
   xoay vòng 7/4/6, khóa đồng thời. Chưa chạy trên VPS/R2 thật.
+
+## Chuẩn bị deploy: GĐ4 hiệu năng và chịu tải (2026-11-25)
+
+Mục tiêu: 200 người đồng thời, p95 < 800 ms, lỗi < 1 %.
+
+- **Thống kê trang chủ** (`/api/public/jobs/stats/`): ~235 truy vấn → ≤ 6 (cây danh mục
+  dựng một lần, `Count(filter=...)`), payload cache 5 phút, throttle `job_stats`; khóa
+  ngân sách trong `test_query_budget.py`.
+- **DB**: `CONN_MAX_AGE=60` + health check (realtime/ASGI giữ 0); `statement_timeout=15s`,
+  `idle_in_transaction_session_timeout=30s` chỉ cho gunicorn; Postgres nạp
+  `pg_stat_statements`, `random_page_cost=1.1`, log câu > 500 ms.
+- **Tìm kiếm việc làm**: cột `title_search` (gấp dấu) + GIN trigram (`jobs 0008`); gợi ý
+  giới hạn 50 trong SQL + throttle `job_suggest`.
+- **Impression**: một lô ghi bằng một `UPDATE … FROM (VALUES …)` + upsert bảng theo ngày.
+- **Throttle chung** `/api/public/*` cho khách (600/phút/IP, `PUBLIC_API_THROTTLE_RATE`);
+  view có throttle riêng giữ nguyên. `THROTTLE_RATE_OVERRIDES` chỉ dùng khi đo tải.
+- **Cache ngắn 120 s** (`common.api.caching.cache_public_get`, khóa chỉ gồm tham số view
+  đọc): việc làm tốt nhất/địa điểm, công ty nổi bật, danh mục, địa điểm, sitemap.
+- **PDF báo cáo chiến dịch** chuyển sang queue `cv-export` + polling (không còn Chromium
+  trong gunicorn). **`email-worker`** riêng cho `auth-email`/`auth-sms` (concurrency 1).
+- **Frontend**: banner xác thực SĐT (1,19 MB) và sở thích việc làm (565 KB) có bản WebP.
+- **Kiểm thử tải** [`scripts/loadtest/`](../scripts/loadtest/README.md): kịch bản k6 trộn
+  khách/ứng viên/NTD (trang chủ, tìm kiếm, chi tiết SEO + API, gợi ý, impression, gần tôi,
+  đăng nhập/refresh, gợi ý việc làm, danh sách hồ sơ NTD, WebSocket); override compose
+  nới throttle + reCAPTCHA thử cho buổi đo.
+- Chưa có: số đo k6 thật (GĐ6, chạy trên VPS qua Cloudflare); tổng `mem_limit` vẫn
+  ~9,4 GB, GĐ2 hạ `ml-worker` theo RAM đo được.
 
 ## Việc làm gần tôi: bản đồ, bán kính, tọa độ nơi làm việc (ADR-0029) (2026-11-25)
 

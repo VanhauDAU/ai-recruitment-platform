@@ -18,7 +18,12 @@ from ..views.channels import (
     CampaignChannelListView,
     CampaignChannelReportView,
 )
-from ..views.health import CampaignHealthView, CampaignReportExportView
+from ..views.health import (
+    CampaignHealthView,
+    CampaignReportExportView,
+    CampaignReportPdfResultView,
+    CampaignReportPdfView,
+)
 from ..views.launch import CampaignLaunchView
 from ..views.social import (
     ChannelPostDetailView,
@@ -160,5 +165,15 @@ urlpatterns = [
         'campaigns/<str:public_id>/report/export/',
         CampaignReportExportView.as_view(),
         name='employer-campaign-report-export',
+    ),
+    path(
+        'campaigns/<str:public_id>/report/export/pdf/',
+        CampaignReportPdfView.as_view(),
+        name='employer-campaign-report-pdf',
+    ),
+    path(
+        'campaigns/<str:public_id>/report/export/pdf/<str:token>/',
+        CampaignReportPdfResultView.as_view(),
+        name='employer-campaign-report-pdf-result',
     ),
 ]

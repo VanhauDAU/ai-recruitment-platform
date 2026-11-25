@@ -177,3 +177,15 @@ def django_db_setup(
             request.node.warn(
                 pytest.PytestWarning(f'Error when trying to teardown test databases: {exc!r}')
             )
+
+
+@pytest.fixture(autouse=True)
+def _isolated_cache():
+    """Cache test là LocMem dùng chung trong một process: xóa trước mỗi test.
+
+    Payload công khai được cache (thống kê trang chủ, danh mục, sitemap...) và
+    bucket throttle không được rò từ test này sang test khác.
+    """
+    from django.core.cache import cache
+
+    cache.clear()

@@ -3,6 +3,8 @@
 from datetime import timedelta
 from unittest.mock import ANY, patch
 
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
@@ -55,6 +57,36 @@ class JobSuggestionApiTests(APITestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['suggestions'], ['Nhân viên chăm sóc khách hàng'])
+
+    def test_folded_title_follows_renames_and_drives_search(self):
+        user = User.objects.create_user(
+            email='folded-title@example.com', password='Password@123', role=User.Role.EMPLOYER
+        )
+        company = Company.objects.create(company_name='Đông Á', created_by=user)
+        make_employer_ready(user, company=company, candidate_data=True)
+        job = Job.objects.create(
+            posted_by=user,
+            company=company,
+            title='Kế toán tổng hợp',
+            description='Description',
+            status=Job.Status.ACTIVE,
+            **open_visibility_window(),
+        )
+        job.title = 'Trưởng phòng Đào tạo'
+        job.save(update_fields=['title'])
+        job.refresh_from_db()
+        self.assertEqual(job.title_search, 'truong phong dao tao')
+
+        def search(**params):
+            response = self.client.get(reverse('job-list'), params)
+            return [item['slug'] for item in response.data['results']]
+
+        self.assertEqual(search(search='ĐÀO tạo'), [job.slug])
+        self.assertEqual(search(search='ke toan'), [])
+        self.assertEqual(search(search='dong a', search_by='company'), [job.slug])
+        self.assertEqual(search(search='dao dong', search_by='both'), [])
+        suggestions = self.client.get(reverse('job-suggest'), {'q': 'dao', 'search_by': 'title'})
+        self.assertEqual(suggestions.data['suggestions'], ['Trưởng phòng Đào tạo'])
 
 
 class JobViewTrackingApiTests(APITestCase):
@@ -210,7 +242,10 @@ class JobViewTrackingApiTests(APITestCase):
         self.job.refresh_from_db()
         self.assertEqual(self.job.view_count, 0)
 
-    @patch('apps.jobs.services.engagement._claim_first_view', return_value=True)
+    @patch(
+        'apps.jobs.services.engagement._claim_first_views',
+        side_effect=lambda groups: [True] * len(groups),
+    )
     def test_first_consented_view_increments_once_and_sets_viewer_cookie(self, _claim_first_view):
         self.client.post(
             reverse('privacy-consent'),
@@ -242,7 +277,10 @@ class JobViewTrackingApiTests(APITestCase):
         self.job.refresh_from_db()
         self.assertEqual(self.job.impression_count, 0)
 
-    @patch('apps.jobs.services.engagement._claim_first_view', return_value=True)
+    @patch(
+        'apps.jobs.services.engagement._claim_first_views',
+        side_effect=lambda groups: [True] * len(groups),
+    )
     def test_consented_impression_batch_increments_lifetime_and_daily_counters(self, _claim):
         self.client.post(
             reverse('privacy-consent'),
@@ -270,7 +308,10 @@ class JobViewTrackingApiTests(APITestCase):
         daily = JobEngagementDaily.objects.get(job=self.job)
         self.assertEqual(daily.impression_count, 1)
 
-    @patch('apps.jobs.services.engagement._claim_first_view', return_value=None)
+    @patch(
+        'apps.jobs.services.engagement._claim_first_views',
+        side_effect=lambda groups: [None] * len(groups),
+    )
     def test_redis_failure_does_not_increment_impression(self, _claim):
         self.client.post(
             reverse('privacy-consent'),
@@ -289,7 +330,10 @@ class JobViewTrackingApiTests(APITestCase):
         self.assertEqual(self.job.impression_count, 0)
         self.assertFalse(JobEngagementDaily.objects.filter(job=self.job).exists())
 
-    @patch('apps.jobs.services.engagement._claim_first_view', return_value=False)
+    @patch(
+        'apps.jobs.services.engagement._claim_first_views',
+        side_effect=lambda groups: [False] * len(groups),
+    )
     def test_duplicate_impression_does_not_increment_counters(self, _claim):
         self.client.post(
             reverse('privacy-consent'),
@@ -306,6 +350,54 @@ class JobViewTrackingApiTests(APITestCase):
         self.assertEqual(response.data['results'][0]['reason'], 'duplicate')
         self.job.refresh_from_db()
         self.assertEqual(self.job.impression_count, 0)
+
+    @patch(
+        'apps.jobs.services.engagement._claim_first_views',
+        side_effect=lambda groups: [True] * len(groups),
+    )
+    def test_impression_batch_writes_a_fixed_number_of_statements(self, _claim):
+        self.client.post(
+            reverse('privacy-consent'),
+            {'preferences': False, 'analytics': True, 'marketing': False},
+            format='json',
+        )
+        jobs = [self.job] + [
+            Job.objects.create(
+                posted_by=self.user,
+                company=self.company,
+                title=f'Batch job {index}',
+                description='Description',
+                status=Job.Status.ACTIVE,
+                **open_visibility_window(),
+            )
+            for index in range(5)
+        ]
+        slugs = [job.slug for job in jobs]
+
+        def post(batch):
+            return self.client.post(
+                reverse('job-impression-batch-create'), {'slugs': batch}, format='json'
+            )
+
+        with CaptureQueriesContext(connection) as small:
+            post(slugs[:1])
+        with CaptureQueriesContext(connection) as large:
+            post(slugs)
+
+        self.assertEqual(len(large.captured_queries), len(small.captured_queries))
+        # The second batch hits the existing daily row of the first job (upsert).
+        self.assertEqual(
+            dict(JobEngagementDaily.objects.values_list('job__slug', 'impression_count')),
+            {slugs[0]: 2, **dict.fromkeys(slugs[1:], 1)},
+        )
+        self.assertEqual(
+            set(
+                Job.objects.filter(pk__in=[job.pk for job in jobs]).values_list(
+                    'impression_count', flat=True
+                )
+            ),
+            {1, 2},
+        )
 
     def test_impression_batch_accepts_at_most_fifty_slugs(self):
         response = self.client.post(
@@ -507,3 +599,37 @@ class JobSalaryBucketFilterTests(APITestCase):
                 'updated_at',
             }.isdisjoint(item)
         )
+
+
+class EngagementDedupePipelineTests(APITestCase):
+    def test_one_pipeline_claims_every_group_and_fails_closed_on_redis_errors(self):
+        from redis.exceptions import RedisError
+
+        from ..services import engagement
+
+        class Pipeline:
+            def __init__(self, results):
+                self.calls, self.results = [], results
+
+            def eval(self, script, key_count, *args):
+                self.calls.append(args[:key_count])
+
+            def execute(self):
+                if isinstance(self.results, Exception):
+                    raise self.results
+                return self.results
+
+        def fake_cache(pipeline):
+            client = type('Client', (), {'pipeline': lambda self, transaction: pipeline})()
+            backend = type('Backend', (), {'get_client': lambda self, write: client})()
+            return type(
+                'Cache', (), {'client': backend, 'make_key': staticmethod(lambda key: f'k:{key}')}
+            )()
+
+        pipeline = Pipeline([1, 0])
+        with patch.object(engagement, 'cache', fake_cache(pipeline)):
+            self.assertEqual(engagement._claim_first_views([['a'], ['b', 'c']]), [True, False])
+        self.assertEqual(pipeline.calls, [('k:a',), ('k:b', 'k:c')])
+
+        with patch.object(engagement, 'cache', fake_cache(Pipeline(RedisError()))):
+            self.assertEqual(engagement._claim_first_views([['a'], ['b']]), [None, None])
