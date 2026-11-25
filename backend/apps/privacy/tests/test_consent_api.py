@@ -138,3 +138,19 @@ class ConsentApiTests(APITestCase):
             ]
 
         self.assertEqual(statuses, [200, 200, 429])
+
+    @override_settings(DEBUG=False)
+    def test_consent_reads_do_not_use_the_write_quota(self):
+        cache.clear()
+        self.addCleanup(cache.clear)
+        url = reverse('privacy-consent')
+        with mock.patch.dict(ScopedRateThrottle.THROTTLE_RATES, {'consent': '2/hour'}, clear=False):
+            reads = [self.client.get(url).status_code for _ in range(5)]
+            writes = [self.client.post(url, {}, format='json').status_code for _ in range(3)]
+            read_after_limit = self.client.get(url)
+
+        self.assertEqual(reads, [200] * 5)
+        self.assertEqual(writes, [200, 200, 429])
+        # Hết lượt ghi vẫn đọc được lựa chọn đã lưu, nên banner không hiện lại.
+        self.assertEqual(read_after_limit.status_code, 200)
+        self.assertIsNotNone(read_after_limit.data['consent'])
