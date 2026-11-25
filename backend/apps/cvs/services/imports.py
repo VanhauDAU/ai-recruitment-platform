@@ -1,7 +1,6 @@
 from datetime import timedelta
 from hashlib import sha256
 from uuid import uuid4
-from zipfile import BadZipFile, ZipFile
 
 from django.conf import settings
 from django.core.files.storage import default_storage
@@ -9,7 +8,8 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.sitecontent.selectors import retention_days
-from common.files.signatures import SIGNATURE_WINDOW_BYTES, has_pdf_header
+from common.files.docx import LEGACY_DOCX_LIMITS, UnsafeDocxContainer, validate_docx_container
+from common.files.signatures import SIGNATURE_WINDOW_BYTES, ZIP_SIGNATURE, has_pdf_header
 
 from ..models import CvImportJob, UserCv
 from .lifecycle import create_user_cv
@@ -20,6 +20,7 @@ from .upload_claims import (
 )
 
 MAX_IMPORT_BYTES = 5 * 1024 * 1024
+INVALID_IMPORT_FILE = 'Tệp phải là PDF hoặc DOCX hợp lệ.'
 
 
 class InvalidCvImport(ValueError):
@@ -41,18 +42,14 @@ def validate_import_upload(upload):
     upload.seek(0)
     if extension == 'pdf' and has_pdf_header(signature):
         return extension
-    if extension == 'docx' and signature.startswith(b'PK'):
+    if extension == 'docx' and signature.startswith(ZIP_SIGNATURE):
+        # python-docx giải nén đồng bộ khi trích xuất: chặn zip-bomb từ vỏ ZIP.
         try:
-            with ZipFile(upload) as archive:
-                names = set(archive.namelist())
-                if '[Content_Types].xml' in names and 'word/document.xml' in names:
-                    upload.seek(0)
-                    return extension
-        except BadZipFile:
-            pass
-        finally:
-            upload.seek(0)
-    raise InvalidCvImport('Tệp phải là PDF hoặc DOCX hợp lệ.')
+            validate_docx_container(upload, LEGACY_DOCX_LIMITS)
+        except UnsafeDocxContainer as error:
+            raise InvalidCvImport(INVALID_IMPORT_FILE) from error
+        return extension
+    raise InvalidCvImport(INVALID_IMPORT_FILE)
 
 
 def _checksum(upload):

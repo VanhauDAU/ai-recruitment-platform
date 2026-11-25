@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import IsEmployer
+from common.api.throttling import WriteScopedRateThrottle, with_default_throttles
 
 from ...selectors import (
     company_join_requests_for_owner,
@@ -38,6 +39,8 @@ class JoinCompanyView(APIView):
     chỉnh sửa công ty. Hai nghiệp vụ sau có workflow duyệt riêng.
     """
 
+    throttle_classes = with_default_throttles(WriteScopedRateThrottle)
+    throttle_scope = 'company_join'
     permission_classes = [IsEmployer]
     parser_classes = [parsers.MultiPartParser, parsers.JSONParser]
 

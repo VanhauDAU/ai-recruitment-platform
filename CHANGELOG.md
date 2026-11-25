@@ -14,6 +14,51 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   (`/documents/procv-thoa-thuan-xu-ly-dlcn-nha-tuyen-dung-2026-11.html`, phiên bản `2026-11`)
   thay cho URL tạm của TopCV trong `.env`. Hướng dẫn deploy ghi sẵn URL và SHA-256.
 
+#### Security — Gia cố xử lý file tải lên
+
+- DOCX ở nhập CV và DPA của NTD (đường upload trực tiếp) bị kiểm vỏ ZIP trước khi
+  parse: ≤300 mục, ≤30 MB giải nén, `word/document.xml` ≤10 MB, tỉ lệ nén ≤100.
+  Bộ kiểm dùng chung ở `common/files/docx.py`.
+- Giấy tờ NTD tải trực tiếp được kiểm cấu trúc như đường phiên quét: PDF phải mở được
+  ở chế độ strict, không mã hóa, tối đa 50 trang; ảnh phải giải mã được. Không còn nhận
+  Word `.doc`; tệp `.doc` cũ không còn được dựng bản xem trước, chỉ tải về.
+- Ảnh công khai luôn được mã hóa lại: bỏ EXIF/GPS, xoay đúng chiều, giữ hồ sơ màu;
+  từ chối ảnh vượt 10.000 px mỗi cạnh, 40 MP hoặc 100 frame.
+- LibreOffice dựng bản xem trước chạy với giới hạn bộ nhớ 2 GiB, CPU 30 s, bị giết cả
+  nhóm tiến trình khi quá giờ; tối đa 2 lượt cùng lúc, hết chỗ thì trả tệp gốc.
+
+#### Security — Trần ghi theo tài khoản cho mọi API ghi (ADR-0031)
+
+- Mọi request ghi của người đã đăng nhập có trần theo tài khoản: 90/phút và 3000/giờ
+  (admin 300/phút, 10000/giờ). Lượt đọc và khách không tính. Vượt trần trả 429 và log
+  WARNING gồm scope + `user.pk`.
+- View đã tự khai throttle giữ throttle cũ và gắn thêm trần (`with_account_write_cap`); 21
+  thao tác rủi ro cao có scope riêng chỉ tính lượt ghi (tạo kỹ năng 20/giờ, tạo công ty
+  20/ngày, nộp đơn 30/giờ, nhắc NTD 10/giờ, phát hành chiến dịch 10/giờ, yêu cầu dữ liệu cá
+  nhân 10/ngày…).
+- Miễn trần: lượt xem/hiển thị tin, sự kiện thông báo, vé WebSocket.
+- Throttle ảnh bài đăng và xuất báo cáo chiến dịch không còn dùng chung một bucket.
+- Test mới quét mọi route ghi: thiếu trần, sai scope hay scope chưa có rate đều làm CI đỏ.
+
+#### Added — Sao lưu media công khai và báo cáo CSP qua Sentry
+
+- `scripts/deploy/backup_files.sh` sao lưu thêm bucket `procv-public-media` sang
+  `procv-backups-public-media` khi có `BACKUP_PUBLIC_FILES_REMOTE` (trống thì cảnh báo,
+  bỏ qua); `restore_files.sh --bucket private|public`; `lib.sh` tách `_set_r2_remote`,
+  thêm `set_public_remote`.
+- Image `web` dựng `report-uri`/`report-to` + `Reporting-Endpoints` của CSP từ
+  `VITE_SENTRY_DSN` lúc build (`frontend/docker/nginx/render-csp.sh`); CSP vẫn Report-Only.
+  CI shellcheck thêm script này.
+
+#### Changed — Mô tả site setting xác thực NTD và runbook go-live
+
+- `employer_require_approved_verification`: nhãn/mô tả/trợ giúp nói đúng phạm vi (chỉ bước
+  checklist onboarding; đăng tin công khai luôn cần hồ sơ đã duyệt + DPA). Chạy
+  `seed_sitecontent` sau deploy để đồng bộ.
+- Runbook deploy: Cloudflare Access cho `/admin*`, `/api/admin/*` (email OTP) + kiểm
+  WebSocket admin, quota/inbound filter Sentry cho báo cáo CSP; runbook sao lưu: bucket
+  `procv-backups-public-media`, token, khôi phục `--bucket public`.
+
 #### Changed — Tải trang đầu nhẹ hơn
 
 - Bundle đầu còn 9 file JS, 252 KiB gzip (trước 78 file, 333 KiB): thư viện trang đầu gom
@@ -248,6 +293,12 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - "Mã NTD" ở dashboard và email NTD dùng mã tài khoản thay cho mã hồ sơ NTD `rec_…`;
   API dashboard NTD đổi `account.recruiter_public_id` thành `account.public_id`.
 - Ô tìm kiếm tài khoản của admin chấp nhận mã gõ theo nhóm ("4826 1937").
+
+#### Fixed — Ảnh đại diện khi đăng nhập Google
+
+- Ảnh Google/Facebook/LinkedIn được tải về storage nội bộ lúc đăng nhập thay vì lưu URL
+  ngoài (Google chặn ảnh khi trình duyệt gửi Referer). Không ghi đè ảnh người dùng tự tải
+  lên; tài khoản cũ có URL Google được sửa ở lần đăng nhập kế tiếp.
 
 ### 2026-11-21
 

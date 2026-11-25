@@ -63,6 +63,8 @@ first, preventing a storage outage from becoming an unbounded-byte bypass.
 - DOCX validation reads only bounded ZIP central-directory metadata. Generic,
   encrypted, traversal, duplicate-entry and high-expansion archives are
   rejected before quarantine; Office content is never extracted before scan.
+  The check lives in `common/files/docx.py` and also guards the legacy direct
+  uploads (CV import, employer DPA) with tighter `LEGACY_DOCX_LIMITS`.
 
 PDF and image pre-scan checks currently validate only the declared MIME, size
 and file signature. Parser-specific structural validation for those formats is

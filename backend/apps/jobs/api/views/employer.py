@@ -6,6 +6,7 @@ from rest_framework.response import Response
 
 from apps.accounts.api.permissions import IsEmployer
 from apps.employers.services import ensure_recruiter_job_workspace
+from common.api.throttling import WriteScopedRateThrottle, with_default_throttles
 
 from ...models import JobState
 from ...selectors import (
@@ -220,6 +221,8 @@ class FreshJobDetailMixin:
     responses=EmployerJobDetailSerializer,
 )
 class EmployerJobSubmitView(FreshJobDetailMixin, generics.GenericAPIView):
+    throttle_classes = with_default_throttles(WriteScopedRateThrottle)
+    throttle_scope = 'job_submit'
     permission_classes = [IsEmployer]
 
     def post(self, request, public_id):
@@ -302,6 +305,8 @@ class EmployerJobExtendView(FreshJobDetailMixin, generics.GenericAPIView):
 class EmployerJobResubmitView(FreshJobDetailMixin, generics.GenericAPIView):
     """Send a job fixed after a change request back to the review queue."""
 
+    throttle_classes = with_default_throttles(WriteScopedRateThrottle)
+    throttle_scope = 'job_submit'
     permission_classes = [IsEmployer]
 
     def post(self, request, public_id):

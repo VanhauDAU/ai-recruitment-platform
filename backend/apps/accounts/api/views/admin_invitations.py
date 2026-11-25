@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import AdminPortalPermission
-from common.api.throttling import ClientIPScopedRateThrottle
+from common.api.throttling import ClientIPScopedRateThrottle, with_account_write_cap
 
 from ...selectors import (
     invitation_queryset,
@@ -144,7 +144,7 @@ class AdminInvitationValidateView(APIView):
 )
 class AdminInvitationAcceptView(APIView):
     permission_classes = [permissions.AllowAny]
-    throttle_classes = [ClientIPScopedRateThrottle]
+    throttle_classes = with_account_write_cap(ClientIPScopedRateThrottle)
     throttle_scope = 'admin_invitation'
 
     def post(self, request):

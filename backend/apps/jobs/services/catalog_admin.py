@@ -2,10 +2,10 @@
 
 from django.db import transaction
 from django.utils.translation import gettext
-from PIL import Image
 from rest_framework.exceptions import ValidationError
 
 from apps.accounts.services import record_admin_action
+from common.files.images import UnsafeImage, open_bounded_image
 from common.storage.media import delete_local_media_url, save_image_upload, validate_image_upload
 
 from ..models import Benefit, JobCategory, JobCategoryLocalization
@@ -105,10 +105,10 @@ def upload_category_icon(*, upload, request=None):
         raise ValidationError({'file': gettext('Ảnh tối đa 512 KB.')})
     validate_image_upload(upload)
     try:
-        with Image.open(upload) as image:
+        with open_bounded_image(upload) as image:
             width, height = image.size
             is_gif = image.format == 'GIF'
-    except OSError as error:
+    except UnsafeImage as error:
         raise ValidationError({'file': gettext('Không đọc được file ảnh.')}) from error
     finally:
         upload.seek(0)

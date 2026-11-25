@@ -3,6 +3,7 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 
 from apps.accounts.api.permissions import IsEmployer
+from common.api.throttling import WriteScopedRateThrottle, with_default_throttles
 
 from ...models import Skill
 from ...selectors import active_skill_groups_queryset, skill_lookup_queryset
@@ -34,6 +35,8 @@ class SkillGroupListView(generics.ListAPIView):
 )
 @extend_schema(tags=['skills'])
 class SkillListView(generics.ListCreateAPIView):
+    throttle_classes = with_default_throttles(WriteScopedRateThrottle)
+    throttle_scope = 'skill_create'
     serializer_class = SkillSerializer
     pagination_class = None
 

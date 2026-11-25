@@ -246,7 +246,7 @@ Quy tắc nội dung:
 | Uy tín | `employer_badge_min_account_months` | Tuổi tài khoản tối thiểu cho dấu tick (tháng) | number | 6 |  |
 | Trang giới thiệu nhà tuyển dụng | `employer_stats` | Số liệu trang NTD | json | [{"value": "60.000+", "label_vi": "vi… | ✓ |
 | Trang giới thiệu nhà tuyển dụng | `employer_partners` | Khách hàng tiêu biểu (trang NTD) | json | [] | ✓ |
-| Xác thực & uy tín | `employer_require_approved_verification` | Bắt buộc duyệt hồ sơ xác thực | boolean | false |  |
+| Xác thực & uy tín | `employer_require_approved_verification` | Checklist: tính xác thực theo hồ sơ đã duyệt | boolean | false |  |
 | Xác thực & uy tín | `employer_badge_policy_mode` | Chế độ dấu tick xác thực | select | "" |  |
 | Xác thực & uy tín | `employer_verification_max_rejections` | Số lần từ chối tối đa | number | 3 |  |
 | Xác thực & uy tín | `employer_trust_report_reasons` | Lý do báo cáo làm mất dấu tick | multiselect | ["fake_company", "scam", "wrong_info"] |  |

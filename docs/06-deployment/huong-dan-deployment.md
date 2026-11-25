@@ -96,10 +96,18 @@ chạy**: `UPLOAD_QUARANTINE_ENABLED=False`.
    riêng chỉ có quyền trên bucket đó — production từ chối khởi động nếu dùng chung
    bucket hoặc credential ([cloudflare-r2-media.md](cloudflare-r2-media.md)).
    Bucket quarantine bắt buộc có dù chưa bật ClamAV.
-6. **Backup**: thêm bucket `procv-backups` (DB, gói bí mật) và `procv-backups-files`
-   (bản sao file riêng tư), bật Bucket Lock + lifecycle, mỗi bucket một token *Object
-   Read & Write* riêng — chi tiết ở [sao-luu-va-khoi-phuc.md](sao-luu-va-khoi-phuc.md).
-7. Đăng ký domain `procv.site` ở reCAPTCHA admin; thêm callback OAuth:
+6. **Backup**: thêm bucket `procv-backups` (DB, gói bí mật), `procv-backups-files`
+   (bản sao file riêng tư) và `procv-backups-public-media` (bản sao media công khai),
+   bật Bucket Lock + lifecycle, mỗi bucket một token *Object Read & Write* riêng — chi
+   tiết ở [sao-luu-va-khoi-phuc.md](sao-luu-va-khoi-phuc.md).
+7. **Cloudflare Access cho cổng quản trị** (Zero Trust → Access → Applications →
+   *Self-hosted*): một application với hai đường dẫn `procv.site/admin*` và
+   `procv.site/api/admin/*`, policy *Allow* chỉ email quản trị, đăng nhập bằng
+   *One-time PIN* (email OTP), session 24 h. Access chặn ở edge trước khi request tới
+   origin, bù cho việc admin chưa có MFA trong ứng dụng (TOTP để sau go-live). Không
+   đưa `/api/auth/*`, `/api/health/*` hay `/ws/*` vào application: cổng ứng viên/NTD
+   dùng chung các đường đó.
+8. Đăng ký domain `procv.site` ở reCAPTCHA admin; thêm callback OAuth:
    - Google/Facebook/LinkedIn đăng nhập: `https://procv.site/oauth/callback` và
      `https://procv.site/tuyendung/app/oauth/callback`;
    - đăng bài mạng xã hội (nếu bật):
@@ -161,7 +169,7 @@ cd /srv/procv && cp backend/.env.example backend/.env && cp frontend/.env.exampl
 | `AI_MODEL_PRICING_USD` | **Giá thật** của model đang bật — mẫu `0/0` làm production từ chối khởi động |
 | `EMPLOYER_DPA_POLICY_VERSION`, `EMPLOYER_DPA_DOCUMENT_URL`, `EMPLOYER_DPA_DOCUMENT_SHA256` | DPA giữa ProCV và NTD là tệp cố định `frontend/public/documents/procv-thoa-thuan-xu-ly-dlcn-nha-tuyen-dung-2026-11.html`: `2026-11`, `https://procv.site/documents/procv-thoa-thuan-xu-ly-dlcn-nha-tuyen-dung-2026-11.html`, `72301aa2d066f5318ec23893268a8bec901cca90c99170d68559afca86bd03cb`. Sửa nội dung thì tạo tệp + phiên bản mới, tính lại `sha256sum` ([employer-dpa-evidence-rollout.md](employer-dpa-evidence-rollout.md)). Đừng nhầm với mẫu "Văn bản thông báo và cam kết xử lý DLCN ứng viên" `procv-mau-thong-bao-xu-ly-dlcn-ung-vien.docx` (doanh nghiệp điền, ký đóng dấu rồi tải lên; ứng viên không ký) (key `employer_dpa_template_url`) |
 | `EMPLOYER_SMS_OTP_ENABLED` | Giữ `False` khi chưa có nhà cung cấp SMS — bật lên thì production đòi đủ `EMPLOYER_SMS_*` |
-| `REQUIRE_APPROVED_EMPLOYER_VERIFICATION` | Mẫu đặt `False`; đặt `True` nếu muốn NTD phải được admin xác thực mới dùng đủ tính năng |
+| `REQUIRE_APPROVED_EMPLOYER_VERIFICATION` | Mẫu đặt `False`. Chỉ đổi điều kiện bước "Hoàn tất xác thực" trong checklist onboarding NTD (cộng dồn với site setting `employer_require_approved_verification`); đăng tin công khai **luôn** cần hồ sơ xác thực đã duyệt + DPA hiện hành, bất kể khóa này |
 | `OAUTH_*_CLIENT_ID/SECRET` | Nếu bật đăng nhập mạng xã hội |
 | `CAMPAIGN_SOCIAL_*`, `FACEBOOK_APP_*`, `THREADS_*`, `LINKEDIN_SOCIAL_*` | Nếu bật đăng bài; `CAMPAIGN_SOCIAL_TOKEN_ENCRYPTION_KEY` là Fernet key riêng |
 | `SENTRY_DSN` (+ `SENTRY_RELEASE` tùy chọn) | DSN project Sentry **backend**; trống = không gửi lỗi. Không gửi PII, body, query, cookie, header xác thực; đo hiệu năng 5% request |
@@ -174,6 +182,8 @@ scripts/deploy/compose.sh run --rm --no-deps backend python -c "from cryptograph
 
 **Phải điền trong `frontend/.env`:** `VITE_RECAPTCHA_SITE_KEY` (site key public);
 nên điền `VITE_SENTRY_DSN` (DSN project Sentry **frontend**; SDK chỉ nạp lười khi có).
+Cùng DSN đó, lúc build image `web` nginx dựng endpoint báo cáo CSP của Sentry
+(`report-uri` + `report-to`, mục 9).
 `VITE_API_BASE_URL` và `VITE_PUBLIC_ASSET_BASE_URL` do compose đặt sẵn
 (`/api`, `https://media.procv.site`). Mọi `VITE_*` bị nhúng vào JS lúc build:
 đổi giá trị thì phải build lại image `web`.
@@ -275,16 +285,31 @@ scripts/deploy/compose.sh exec ml-worker python manage.py matching_backfill --in
   (`celery inspect ping`); `logs beat` liệt kê lịch, file lịch nằm trên volume
   `beat_schedule` nên deploy lại không làm lỡ job hằng ngày.
 - **CSP:** mở đủ ba cổng (đăng nhập, đăng tin, xem CV, bản đồ, reCAPTCHA, video
-  nhúng) với DevTools mở; khi console không còn vi phạm CSP, đổi
-  `Content-Security-Policy-Report-Only` thành `Content-Security-Policy` trong
-  `frontend/docker/nginx/snippets/csp.conf` rồi deploy lại để bắt đầu chặn.
+  nhúng) với DevTools mở; khi console và mục *Security* của project Sentry frontend
+  không còn vi phạm CSP, đổi `Content-Security-Policy-Report-Only` thành
+  `Content-Security-Policy` trong `frontend/docker/nginx/snippets/csp.conf` rồi deploy
+  lại để bắt đầu chặn. Có `VITE_SENTRY_DSN` thì
+  `curl -sI https://procv.site/viec-lam` phải thấy `report-uri https://<host>/api/<id>/security/...`
+  cuối header CSP và `Reporting-Endpoints: csp-endpoint="..."`.
+- **Cloudflare Access (admin):** cửa sổ ẩn danh mở `https://procv.site/admin/login`
+  phải hiện trang đăng nhập Access (email OTP) trước trang của ProCV;
+  `curl -sI https://procv.site/api/admin/` trả 302/403 từ Access, không phải JSON của
+  Django. Sau khi qua Access, đăng nhập admin và kiểm **thông báo realtime** chạy
+  (DevTools → *Network* → *WS*: `wss://procv.site/ws/notifications/` ở trạng thái 101,
+  thông báo mới hiện không cần tải lại). `/ws/*` nằm ngoài Access nên WebSocket không
+  bị chặn; nếu sau này đưa `/ws/*` vào Access thì phải kiểm lại vì cookie
+  `CF_Authorization` khi đó là bắt buộc cho cả cổng ứng viên/NTD.
+- **Site settings:** sau mỗi deploy có sửa `backend/apps/sitecontent/seed_data/settings.json`
+  chạy `scripts/deploy/compose.sh exec backend python manage.py seed_sitecontent` —
+  lệnh idempotent, đồng bộ nhãn/mô tả/nút "?" (`label`, `description`, `help`,
+  `options`…) của key đã có nhưng **không** ghi đè giá trị admin đã chỉnh.
 
 ## 7. Sao lưu
 
 Toàn bộ sao lưu, khôi phục và diễn tập nằm ở runbook riêng
 [sao-luu-va-khoi-phuc.md](sao-luu-va-khoi-phuc.md): tạo khóa `age` (giữ trong password
-manager, không đặt trên VPS), bucket `procv-backups` + `procv-backups-files` có Bucket
-Lock, hai remote rclone, healthchecks.io và cron:
+manager, không đặt trên VPS), bucket `procv-backups` + `procv-backups-files` +
+`procv-backups-public-media` có Bucket Lock, ba remote rclone, healthchecks.io và cron:
 
 ```cron
 0 3 * * * /srv/procv/scripts/deploy/backup_db.sh >/dev/null 2>>/srv/procv/backups/cron-errors.log
@@ -344,7 +369,19 @@ và `scripts/deploy/bootstrap_vps.sh` lấy từ `https://www.cloudflare.com/ips
   scripts/deploy/compose.sh logs --no-log-prefix --since 1h backend | grep '"level": "ERROR"'
   ```
 - **Sentry** (free): hai project backend/frontend; DSN ở `SENTRY_DSN` và
-  `VITE_SENTRY_DSN`. Thử sau deploy rồi xem sự kiện trên Sentry:
+  `VITE_SENTRY_DSN`. Báo cáo vi phạm CSP đi vào project **frontend** (mục *Security* /
+  issue loại *CSP*): `frontend/docker/nginx/render-csp.sh` đổi DSN
+  `https://KEY@HOST/PROJECT` thành `https://HOST/api/PROJECT/security/?sentry_key=KEY&sentry_environment=ENV`
+  lúc build image `web` (DSN trống thì không có `report-uri`). Mỗi lượt xem trang vi
+  phạm gửi một báo cáo, tính vào quota lỗi của gói free (Developer: 5k lỗi/tháng,
+  dùng chung với lỗi JS). Trước rehearsal, trong project frontend: *Project Settings →
+  Security Headers → CSP* bật *Use default ignored sources* (bỏ báo cáo do extension
+  trình duyệt) và thêm nguồn rác khác gặp phải vào *Additional ignored sources*;
+  *Inbound Filters* bật lọc *browser extensions*, *web crawlers*, *legacy browsers*;
+  *Client Keys (DSN) → Rate limiting* đặt trần (ví dụ 300 sự kiện/giờ) để một trang vi
+  phạm hàng loạt không đốt hết quota; giữ *Spike Protection* của tổ chức. Khi CSP đã
+  chuyển sang chặn và hết vi phạm thật, giữ `report-uri` để phát hiện hồi quy. Thử sau
+  deploy rồi xem sự kiện trên Sentry:
 
   ```bash
   scripts/deploy/compose.sh exec backend python -c "import django; django.setup(); import sentry_sdk; sentry_sdk.capture_message('procv smoke'); sentry_sdk.flush()"

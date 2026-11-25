@@ -32,12 +32,46 @@ REST_FRAMEWORK = {
     # mặc định của DRF (None) lấy nguyên chuỗi X-Forwarded-For làm khoá, tức là
     # để client tự chọn bucket cho mình.
     'NUM_PROXIES': TRUSTED_PROXY_HOPS,
-    # Trần chung cho /api/public/* (khách chưa đăng nhập, theo IP). View tự khai
-    # throttle_classes thay thế danh sách này nên giữ nguyên throttle riêng.
-    'DEFAULT_THROTTLE_CLASSES': ('common.api.throttling.PublicApiAnonRateThrottle',),
+    # Trần chung cho /api/public/* (khách chưa đăng nhập, theo IP) và trần ghi
+    # theo tài khoản (ADR-0031). View tự khai throttle_classes THAY THẾ danh sách
+    # này nên phải bọc with_account_write_cap(...) — test_throttle_coverage soát.
+    'DEFAULT_THROTTLE_CLASSES': (
+        'common.api.throttling.PublicApiAnonRateThrottle',
+        'common.api.throttling.AccountWriteBurstThrottle',
+        'common.api.throttling.AccountWriteSustainedThrottle',
+    ),
     'DEFAULT_THROTTLE_RATES': {
         # Kiểm thử tải tạm nới bằng PUBLIC_API_THROTTLE_RATE (scripts/loadtest/README.md).
         'public_api_anon': config('PUBLIC_API_THROTTLE_RATE', default='600/min'),
+        # Trần ghi của mọi tài khoản đã đăng nhập (ADR-0031): đủ rộng cho người
+        # thật (autosave CV, kéo thả bố cục), chặn script/vòng lặp. Admin thao
+        # tác hàng loạt nên có scope riêng. Hotfix bằng THROTTLE_RATE_OVERRIDES.
+        'account_write_burst': '90/min',
+        'account_write_sustained': '3000/hour',
+        'account_write_burst_admin': '300/min',
+        'account_write_sustained_admin': '10000/hour',
+        # Thao tác ghi rủi ro cao (WriteScopedRateThrottle, theo tài khoản, chỉ tính ghi).
+        'skill_create': '20/hour',
+        'company_create': '20/day',
+        'company_media_upload': '30/hour',
+        'company_update_request': '10/hour',
+        'company_join': '10/hour',
+        'company_document_upload': '20/hour',
+        'job_submit': '30/hour',
+        'application_create': '30/hour',
+        'application_remind': '10/hour',
+        'review_link_create': '30/hour',
+        'talent_pool_invite': '40/hour',
+        'application_cv_export': '30/hour',
+        'campaign_launch': '10/hour',
+        'campaign_social_post': '30/hour',
+        'campaign_ai_content': '20/hour',
+        'cv_share_link': '30/hour',
+        'cv_publish': '30/hour',
+        'cv_export': '20/hour',
+        'cv_asset_upload': '60/hour',
+        'avatar_upload': '20/hour',
+        'privacy_data_request': '10/day',
         'login': '5/min',
         'register': '5/min',
         'register_email_check': '12/min',

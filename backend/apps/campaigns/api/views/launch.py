@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import IsEmployer
 from apps.employers.services import ensure_recruiter_job_workspace
+from common.api.throttling import WriteScopedRateThrottle, with_default_throttles
 
 from ...selectors import owned_campaign_queryset
 from ...services import campaign_launch_overview, launch_campaign, save_launch_selection
@@ -17,6 +18,9 @@ from ..serializers.launch import LaunchRequestSerializer, LaunchSelectionSeriali
 class CampaignLaunchView(APIView):
     """Wizard job and review steps: read the checklist, pick jobs, go live."""
 
+    throttle_classes = with_default_throttles(WriteScopedRateThrottle)
+    throttle_scope = 'campaign_launch'
+    throttle_scope_methods = ('POST',)
     permission_classes = [IsEmployer]
 
     def _campaign(self, request, public_id):

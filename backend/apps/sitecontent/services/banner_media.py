@@ -1,9 +1,9 @@
 """Upload ảnh banner (carousel trang chủ và các vị trí banner khác)."""
 
 from django.utils.translation import gettext as _
-from PIL import Image
 from rest_framework.exceptions import ValidationError
 
+from common.files.images import UnsafeImage, open_bounded_image
 from common.storage.media import save_image_upload, validate_image_upload
 
 from ..models import Banner
@@ -37,10 +37,10 @@ def upload_banner_image(*, upload, placement, kind, request=None):
 
     upload.seek(0)
     try:
-        with Image.open(upload) as image:
+        with open_bounded_image(upload) as image:
             width, height = image.size
             is_gif = image.format == 'GIF'
-    except OSError as error:
+    except UnsafeImage as error:
         raise ValidationError({'file': _('Không đọc được file ảnh.')}) from error
     finally:
         upload.seek(0)

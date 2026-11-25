@@ -7,6 +7,10 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Gia cố xử lý file tải lên (không antivirus)](#gia-cố-xử-lý-file-tải-lên-không-antivirus-2026-11-25) | 🟨 Nhánh `fix/file-handling-hardening`, chờ PR |
+| [Lưu ảnh đại diện Google vào storage](#lưu-ảnh-đại-diện-google-vào-storage-2026-11-22) | ✅ Đã gộp dev (#359, 25/11) |
+| [Chuẩn bị deploy: trần ghi theo tài khoản (ADR-0031)](#chuẩn-bị-deploy-trần-ghi-theo-tài-khoản-adr-0031-2026-11-25) | 🟨 Nhánh `feat/account-write-throttle`, chờ PR; chỉnh mức ở GĐ6 rehearsal |
+| [Chuẩn bị deploy: lấp chỗ hở vận hành và cấu hình](#chuẩn-bị-deploy-lấp-chỗ-hở-vận-hành-và-cấu-hình-2026-11-25) | ✅ Đã gộp dev (#360) |
 | [Tối ưu tải trang đầu frontend](#tối-ưu-tải-trang-đầu-frontend-2026-11-25) | 🟨 PR #358 (nhánh `perf/initial-load`), chờ gộp |
 | [Sửa API công khai có cache trả 500 với Redis](#sửa-api-công-khai-có-cache-trả-500-với-redis-2026-11-25) | 🟨 Nhánh `fix/public-cache-redis`, chờ gộp |
 | [Thanh tab dưới và thông báo trên mobile cho ứng viên](#thanh-tab-dưới-và-thông-báo-trên-mobile-cho-ứng-viên-2026-11-25) | 🟨 PR #354 (nhánh `feat/mobile-tab-bar`), chờ gộp |
@@ -65,6 +69,36 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
 
+
+## Gia cố xử lý file tải lên (không antivirus) (2026-11-25)
+
+ClamAV tắt vì RAM, nên đường upload cũ (multipart trực tiếp) production đang dùng
+phải tự chặn file độc hại ở tầng parser.
+
+- **DOCX:** kiểm vỏ ZIP chuyển sang `common/files/docx.py` (`validate_docx_container`,
+  lỗi `UnsafeDocxContainer`), thêm trần riêng cho `word/document.xml`. Pipeline upload
+  giữ wrapper cũ. Đường cũ dùng `LEGACY_DOCX_LIMITS` (≤300 mục, ≤30 MB giải nén,
+  `document.xml` ≤10 MB, tỉ lệ nén ≤100) cho nhập CV (trước khi python-docx mở) và DPA.
+- **Giấy tờ NTD đường cũ:** `_save_document_file` chạy cùng kiểm cấu trúc với đường
+  phiên quét: PDF pypdf strict, không mã hóa, có trang, ≤50 trang; ảnh mở có giới hạn
+  rồi `verify()`; DOCX qua vỏ ZIP. **Bỏ `.doc` (OLE2)** khỏi DPA, bản xem trước
+  LibreOffice và trang giấy tờ admin.
+- **Ảnh:** `common/files/images.py` — `open_bounded_image` (≤10.000 px mỗi cạnh,
+  ≤40 MP, ≤100 frame, tổng điểm ảnh các frame ≤100 triệu; `Image.MAX_IMAGE_PIXELS`)
+  và `reencode_image` (xoay theo EXIF rồi bỏ EXIF/GPS/XMP, giữ ICC; JPEG q88 progressive,
+  PNG optimize, WebP q85; GIF/WebP động giữ frame, thời lượng, vòng lặp).
+  `save_image_upload` luôn mã hóa lại, không lưu byte gốc. Avatar CV, ảnh nền CV, ảnh
+  bài đăng mạng xã hội, banner, nền dải thông báo, icon nhóm nghề và giấy tờ NTD mở ảnh
+  qua `open_bounded_image`.
+- **LibreOffice:** chạy qua shim `python -I -S -c` đặt `RLIMIT_AS` 2 GiB, CPU 30 s,
+  FSIZE 100 MB, NOFILE 256, CORE 0, `oom_score_adj=1000` rồi `exec` soffice;
+  `Popen(start_new_session=True)`, quá 30 s thì `killpg(SIGKILL)` cả nhóm; tối đa 2
+  lượt render cùng lúc (khóa cache `office-preview:slot:<n>`), hết chỗ thì trả tệp gốc.
+  Đo trong image backend: mẫu DPA thật chuyển được từ 0,5 GiB (lỗi ở 0,25 GiB), giữ
+  2 GiB; ép timeout không còn `soffice.bin` (container chạy với `init: true`).
+- Kiểm tra: test mới `common/tests/test_docx_container.py`, `test_media_images.py`,
+  zip-bomb DOCX ở nhập CV, PDF mã hóa / >50 trang / PNG hỏng / `.doc` / zip-bomb ở
+  giấy tờ NTD đường cũ; fixture PDF/DOCX giả trong test employers thay bằng tệp thật.
 
 ## Sửa API công khai có cache trả 500 với Redis (2026-11-25)
 
@@ -164,6 +198,52 @@ Kế hoạch: [`ke-hoach-quan-ly-danh-muc.md`](01-phan-tich/ke-hoach-quan-ly-dan
   Vitest feature `manage-catalog`; E2E `admin-catalog.spec.js` (`@responsive`, 3 khung).
 - **Lưu ý:** `seed_job_categories` chỉ chạy lúc dựng DB trống; chạy lại sẽ ẩn mục admin
   thêm và hiện lại mục admin đã ẩn.
+
+## Chuẩn bị deploy: trần ghi theo tài khoản (ADR-0031, 2026-11-25)
+
+Rà lại `dev` sau GĐ1–GĐ5: khoảng 90 endpoint ghi của người đã đăng nhập không có throttle
+nào. Quyết định: [ADR-0031](02-tong-quan/adr-0031-account-write-throttle.md).
+
+- **Trần chung:** `DEFAULT_THROTTLE_CLASSES` thêm `AccountWriteBurstThrottle` (90/phút)
+  và `AccountWriteSustainedThrottle` (3000/giờ), theo `user.pk`, chỉ tính POST/PUT/PATCH/DELETE;
+  admin 300/phút, 10000/giờ. Bị chặn thì log WARNING (scope + `user.pk`).
+- **View đã có throttle riêng** (đăng nhập/đăng ký/OTP/đặt lại mật khẩu, OAuth, lời mời
+  admin, upload session, nhập CV, tên miền công ty, trang công ty, theo dõi/báo cáo công
+  ty, báo cáo tin, AI viết tin, phân tích CV, mời từ Tìm CV, góp ý, cookie đồng ý, ảnh bài
+  đăng và PDF báo cáo chiến dịch) bọc `with_account_write_cap(...)`.
+- **Scope riêng cho 21 thao tác rủi ro cao** (`WriteScopedRateThrottle`): tạo kỹ năng
+  20/giờ, tạo công ty 20/ngày, nộp đơn 30/giờ, nhắc NTD 10/giờ, phát hành chiến dịch
+  10/giờ, yêu cầu dữ liệu cá nhân 10/ngày… (bảng đủ trong ADR).
+- **Miễn trần:** lượt xem/hiển thị tin, sự kiện/runtime thông báo, vé realtime.
+- **Test quét route** `common/tests/test_throttle_coverage.py`: route ghi thiếu trần, scope
+  sai hoặc scope không có rate thì CI đỏ.
+- **Còn mở:** đo 429 thật trong GĐ6 rehearsal (log WARNING) rồi chỉnh mức qua
+  `THROTTLE_RATE_OVERRIDES`.
+
+## Chuẩn bị deploy: lấp chỗ hở vận hành và cấu hình (2026-11-25)
+
+Đợt bổ sung sau GĐ1–GĐ5 của [kế hoạch](06-deployment/ke-hoach-chuan-bi-deploy.md).
+
+- **Sao lưu media công khai:** `backup_files.sh` chép thêm `procv-public-media` →
+  `procv-backups-public-media` (Bucket Lock 30 ngày, lifecycle 45 ngày) khi đặt
+  `BACKUP_PUBLIC_FILES_REMOTE`; trống thì cảnh báo và bỏ qua. Một bucket lỗi không chặn
+  bucket kia. `restore_files.sh --bucket private|public`; `lib.sh` dựng remote R2 chung
+  (`_set_r2_remote`, khóa qua `RCLONE_CONFIG_*`, không lên argv). `--metadata` giữ
+  `Cache-Control` của object. Runbook [sao lưu](06-deployment/sao-luu-va-khoi-phuc.md).
+- **Báo cáo CSP qua Sentry:** `frontend/docker/nginx/render-csp.sh` chạy lúc build image
+  `web`, đổi `VITE_SENTRY_DSN` thành endpoint security của Sentry, thêm `report-uri`,
+  `report-to` + header `Reporting-Endpoints`; DSN trống thì không báo cáo, DSN sai dạng
+  thì build lỗi. Vẫn Report-Only. Runbook mục 9: lọc nguồn rác, rate limit DSN để giữ quota.
+- **Site setting `employer_require_approved_verification`:** sửa nhãn/mô tả/trợ giúp —
+  công tắc chỉ đổi bước "Hoàn tất xác thực" của checklist onboarding và cờ báo cáo
+  tương thích; đăng tin công khai luôn cần hồ sơ đã duyệt + DPA. Chạy `seed_sitecontent`
+  sau deploy để đồng bộ mô tả (không ghi đè giá trị).
+- **Cloudflare Access cho admin** (chỉ tài liệu): bước 1.7 + checklist mục 6 của
+  [runbook deploy](06-deployment/huong-dan-deployment.md), GĐ6 của kế hoạch; TOTP trong
+  ứng dụng để sau go-live.
+- **Kiểm chứng:** shellcheck; backup/restore public bằng remote rclone `local` (kể cả
+  nhánh bỏ qua, lỗi một bucket, `--dry-run`); build image `web` có/không DSN + `nginx -t`;
+  pytest `apps/sitecontent`. Chưa chạy với R2/Sentry/Cloudflare thật.
 
 ## Chuẩn bị deploy: GĐ1 bảo mật ứng dụng (2026-11-25)
 
@@ -541,6 +621,21 @@ một danh sách phân trang (timeline antd), không lọc được và lịch s
   vấn mỗi dòng khi tính người thực hiện (đọc `actor_id` thay vì `actor`).
 - CSS dùng chung chuyển sang `frontend/src/shared/ui/workspace-list/workspace-list.css`
   để widget cũng dùng được.
+
+## Lưu ảnh đại diện Google vào storage (2026-11-22)
+
+Ứng viên đăng nhập Google không thấy ảnh: DB lưu thẳng URL
+`lh3.googleusercontent.com`, mà Google chặn ảnh khi trình duyệt gửi Referer của site.
+Tài khoản có sẵn rồi mới liên kết Google cũng không được gán ảnh.
+
+- Sau khi đăng nhập social, backend tải ảnh của provider (Google xin bản 256px) rồi
+  lưu vào `users/avatars/<public_id>/` như ảnh tự tải lên
+  (`apps/accounts/services/social_avatar.py`), ngoài transaction của `resolve_user`.
+- Chỉ chạy khi tài khoản chưa có ảnh trong storage: không ghi đè ảnh tự tải lên;
+  URL Google cũ trong DB được thay ở lần đăng nhập kế tiếp.
+- Chỉ tải từ CDN ảnh của provider (Google, Facebook, LinkedIn), chỉ https, không theo
+  redirect, giới hạn `IMAGE_UPLOAD_MAX_SIZE`; lỗi tải chỉ ghi log, không chặn đăng nhập.
+- Kiểm tra: pytest `apps/accounts` 212 passed (7 test mới), ruff, import-linter, layering.
 
 ## Làm lại trang công ty phía ứng viên (2026-11-24)
 

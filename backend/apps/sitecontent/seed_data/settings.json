@@ -1043,14 +1043,14 @@
   },
   {
     "key": "employer_require_approved_verification",
-    "label": "Bắt buộc duyệt hồ sơ xác thực",
+    "label": "Checklist: tính xác thực theo hồ sơ đã duyệt",
     "group": "employer",
     "section": "Xác thực & uy tín",
     "value_type": "boolean",
     "value": false,
     "is_public": false,
-    "description": "Nhà tuyển dụng phải được duyệt hồ sơ xác thực trước khi đăng tin và dùng các chức năng tuyển dụng.",
-    "help": "Máy chủ production luôn bắt buộc (REQUIRE_APPROVED_EMPLOYER_VERIFICATION). Công tắc này chỉ siết thêm được ở môi trường máy chủ chưa bắt buộc; không tắt được yêu cầu của máy chủ.",
+    "description": "Bước \"Hoàn tất xác thực\" trong checklist onboarding NTD chỉ được tính khi hồ sơ xác thực đã được admin duyệt. Không đổi quyền đăng tin: tin công khai luôn cần hồ sơ xác thực đã duyệt và DPA hiện hành.",
+    "help": "Tắt: bước xác thực của checklist xong khi NTD đủ tài khoản, điện thoại, công ty, giấy tờ, DPA ứng viên và DPA của ProCV. Bật: cần thêm hồ sơ đã duyệt. Đăng tin công khai và hạn mức 100 tin luôn kiểm hồ sơ đã duyệt + DPA, bất kể công tắc. Cộng dồn với cờ máy chủ REQUIRE_APPROVED_EMPLOYER_VERIFICATION; không tắt được cờ đó.",
     "options": {
       "applies_to": [
         "Cổng nhà tuyển dụng"

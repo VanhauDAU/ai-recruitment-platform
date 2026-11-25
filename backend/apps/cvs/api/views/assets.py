@@ -16,9 +16,12 @@ from apps.cvs.api.serializers import CvAssetSerializer, CvAssetUploadSerializer
 from apps.cvs.models import CvAsset
 from apps.cvs.services import create_avatar_asset, create_avatar_asset_from_session, readable_asset
 from apps.uploads.services import UploadServiceError
+from common.api.throttling import WriteScopedRateThrottle, with_default_throttles
 
 
 class CvAssetUploadView(APIView):
+    throttle_classes = with_default_throttles(WriteScopedRateThrottle)
+    throttle_scope = 'cv_asset_upload'
     permission_classes = [IsCandidate]
     parser_classes = [parsers.MultiPartParser, parsers.FormParser]
 

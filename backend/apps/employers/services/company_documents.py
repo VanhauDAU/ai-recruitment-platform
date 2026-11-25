@@ -33,18 +33,17 @@ from .company_update_revisions import snapshot_company_update_request
 from .upload_validation import (
     EmployerUploadSessionRejected,
     EmployerUploadStructureError,
+    validate_employer_document_file,
     validate_employer_upload_structure,
 )
 from .verification import get_or_create_verification_case, record_verification_upload
 
-# Only the DPA copy still accepts legacy Word (.doc, an OLE2 compound file), so
-# its signature stays here rather than in the shared table.
-OLE2_SIGNATURE = b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1'
+# Word cũ (.doc, OLE2) không được nhận: không kiểm cấu trúc được như DOCX và là
+# định dạng LibreOffice phải parse sâu nhất khi dựng bản xem trước.
 DOCUMENT_SIGNATURES = {
     'jpg': (JPEG_SIGNATURE, {'image/jpeg'}),
     'png': (PNG_SIGNATURE, {'image/png'}),
     'pdf': (PDF_SIGNATURE, {'application/pdf'}),
-    'doc': (OLE2_SIGNATURE, {'application/msword'}),
     'docx': (
         ZIP_SIGNATURE,
         {'application/vnd.openxmlformats-officedocument.wordprocessingml.document'},
@@ -82,8 +81,14 @@ def _matches_signature(extension, header, signature):
 
 def _allowed_extensions(doc_type):
     if doc_type == CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT:
-        return {'pdf', 'doc', 'docx'}
+        return {'pdf', 'docx'}
     return {'jpg', 'png', 'pdf'}
+
+
+def _allowed_label(doc_type):
+    if doc_type == CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT:
+        return _('PDF hoặc DOCX')
+    return _('JPG, PNG hoặc PDF')
 
 
 def _save_document_file(upload, directory, doc_type):
@@ -103,14 +108,18 @@ def _save_document_file(upload, directory, doc_type):
         None,
     )
     if extension is None:
-        allowed = (
-            _('PDF, DOC hoặc DOCX')
-            if doc_type == CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT
-            else _('JPG, PNG hoặc PDF')
-        )
         raise ValidationError(
-            {'file': _('Chỉ chấp nhận tệp %(allowed)s hợp lệ.') % {'allowed': allowed}}
+            {
+                'file': _('Chỉ chấp nhận tệp %(allowed)s hợp lệ.')
+                % {'allowed': _allowed_label(doc_type)}
+            }
         )
+    try:
+        validate_employer_document_file(upload, upload.content_type)
+    except EmployerUploadStructureError as error:
+        raise ValidationError(
+            {'file': _('Nội dung tệp bị lỗi hoặc không đúng định dạng khai báo.')}
+        ) from error
 
     safe_directory = str(PurePosixPath(directory.strip('/')))
     return private_media_storage().save(f'{safe_directory}/{uuid4().hex}.{extension}', upload)
@@ -131,15 +140,10 @@ def _claim_scanned_document(*, user, upload_session_public_id, doc_type, for_upd
         raise ValidationError({'upload_session': _('Giấy tờ phải nhỏ hơn 5 MB.')})
     allowed_content_types = DOCUMENT_CONTENT_TYPES.get(doc_type, DEFAULT_DOCUMENT_CONTENT_TYPES)
     if upload_asset.content_type not in allowed_content_types:
-        allowed = (
-            _('PDF hoặc DOCX')
-            if doc_type == CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT
-            else _('JPG, PNG hoặc PDF')
-        )
         raise ValidationError(
             {
                 'upload_session': _('Chỉ chấp nhận tệp %(allowed)s đã quét an toàn.')
-                % {'allowed': allowed}
+                % {'allowed': _allowed_label(doc_type)}
             }
         )
     try:

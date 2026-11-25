@@ -33,6 +33,7 @@ from apps.privacy.services import (
     reject_data_request,
     submit_data_request,
 )
+from common.api.throttling import WriteScopedRateThrottle, with_default_throttles
 
 ACCOUNT_HOLDER = [IsCandidate | IsEmployer]
 
@@ -42,6 +43,8 @@ def _own_request(request, public_id):
 
 
 class OwnDataRequestListCreateView(APIView):
+    throttle_classes = with_default_throttles(WriteScopedRateThrottle)
+    throttle_scope = 'privacy_data_request'
     permission_classes = ACCOUNT_HOLDER
 
     @extend_schema(

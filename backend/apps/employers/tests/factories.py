@@ -6,10 +6,13 @@ readiness gates without walking through every onboarding endpoint.
 
 import tempfile
 from datetime import timedelta
+from io import BytesIO
+from zipfile import ZIP_DEFLATED, ZipFile
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from pypdf import PdfWriter
 
 from apps.accounts.models import User
 from apps.accounts.services import issue_tokens
@@ -31,8 +34,30 @@ PNG_BYTES = (
     b'\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01'
     b'\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82'
 )
-PDF_BYTES = b'%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\n%%EOF'
-DOCX_BYTES = b'PK\x03\x04' + (b'\x00' * 64)
+
+
+def pdf_bytes(*, pages=1, password=''):
+    """A PDF that passes the employer structure check (pypdf strict)."""
+    writer = PdfWriter()
+    for _ in range(pages):
+        writer.add_blank_page(width=200, height=200)
+    if password:
+        writer.encrypt(password)
+    output = BytesIO()
+    writer.write(output)
+    return output.getvalue()
+
+
+def docx_bytes():
+    output = BytesIO()
+    with ZipFile(output, 'w', compression=ZIP_DEFLATED) as archive:
+        archive.writestr('[Content_Types].xml', b'<Types/>')
+        archive.writestr('word/document.xml', b'<w:document/>')
+    return output.getvalue()
+
+
+PDF_BYTES = pdf_bytes()
+DOCX_BYTES = docx_bytes()
 TEST_MEDIA_ROOT = tempfile.mkdtemp()
 VALID_COMPANY_DESCRIPTION = 'A' * 500
 

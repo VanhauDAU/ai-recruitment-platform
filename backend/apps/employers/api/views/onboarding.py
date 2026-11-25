@@ -13,7 +13,7 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import IsEmployer
-from common.api.throttling import ClientIPScopedRateThrottle
+from common.api.throttling import ClientIPScopedRateThrottle, with_account_write_cap
 from common.http.client_ip import client_ip
 
 from ...services import (
@@ -88,7 +88,7 @@ class PhoneAvailabilityView(APIView):
 
 class SendPhoneOtpView(APIView):
     permission_classes = [IsEmployer]
-    throttle_classes = [ClientIPScopedRateThrottle]
+    throttle_classes = with_account_write_cap(ClientIPScopedRateThrottle)
     throttle_scope = 'employer_phone_send'
 
     @extend_schema(
@@ -166,7 +166,7 @@ class PhoneChallengeView(APIView):
 
 class VerifyPhoneOtpView(APIView):
     permission_classes = [IsEmployer]
-    throttle_classes = [ClientIPScopedRateThrottle]
+    throttle_classes = with_account_write_cap(ClientIPScopedRateThrottle)
     throttle_scope = 'employer_phone_verify'
 
     @extend_schema(
