@@ -10,6 +10,7 @@ State + one_time_code đều lưu Redis (cache mặc định) tự hết hạn �
 """
 
 import hashlib
+import re
 import secrets
 from urllib.parse import urlencode
 
@@ -130,6 +131,26 @@ def safe_next(next_path):
     return next_path
 
 
+# Đăng nhập trong cửa sổ popup (desktop): trang callback frontend phát kết quả
+# cho cửa sổ gốc qua BroadcastChannel, nonce do cửa sổ gốc tạo để nhận đúng thư.
+OAUTH_POPUP_MODE = 'popup'
+_POPUP_NONCE_RE = re.compile(r'[A-Za-z0-9_-]{1,64}')
+
+
+def popup_nonce(mode, nonce):
+    """Nonce hợp lệ khi bắt đầu ở chế độ popup; sai định dạng thì coi như chuyển trang."""
+    if mode != OAUTH_POPUP_MODE or not isinstance(nonce, str):
+        return ''
+    return nonce if _POPUP_NONCE_RE.fullmatch(nonce) else ''
+
+
+def frontend_redirect_url(portal, params, nonce=''):
+    """URL trang callback frontend; chế độ popup thêm ``popup=1&nonce=``."""
+    if nonce:
+        params = {**params, 'popup': '1', 'nonce': nonce}
+    return f'{frontend_callback_url(portal)}?{urlencode(params)}'
+
+
 # ---- State (chống CSRF) + one_time_code (đổi JWT), đều one-shot qua Redis ----
 
 
@@ -148,7 +169,7 @@ def _binding_digest(browser_binding):
     return hashlib.sha256(browser_binding.encode()).hexdigest()
 
 
-def create_state(provider, portal, next_path, browser_binding):
+def create_state(provider, portal, next_path, browser_binding, *, nonce=''):
     state = secrets.token_urlsafe(32)
     cache.set(
         f'{_STATE_PREFIX}{state}',
@@ -157,6 +178,8 @@ def create_state(provider, portal, next_path, browser_binding):
             'portal': portal,
             'next': next_path,
             'browser': _binding_digest(browser_binding),
+            'mode': OAUTH_POPUP_MODE if nonce else '',
+            'nonce': nonce,
         },
         settings.OAUTH_STATE_TTL,
     )

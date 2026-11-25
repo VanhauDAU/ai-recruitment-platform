@@ -8,6 +8,14 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-25
 
+#### Changed — Đăng nhập mạng xã hội mở cửa sổ popup trên desktop
+
+- Google/Facebook/LinkedIn trên máy tính mở cửa sổ đăng nhập riêng, trang đang xem
+  (kể cả modal đăng nhập ở trang việc làm) không bị tải lại. Mobile hoặc khi trình
+  duyệt chặn popup vẫn chuyển trang như trước.
+- `GET /api/auth/oauth/<provider>/start/` nhận thêm `mode=popup&nonce=`; trang callback
+  frontend nhận thêm `popup=1&nonce=` ở chế độ này.
+
 #### Security — Đăng nhập admin phải qua Cloudflare Access, production chặn cấu hình mẫu
 
 - Khi đặt `CLOUDFLARE_ACCESS_TEAM_DOMAIN` + `CLOUDFLARE_ACCESS_AUD`, đăng nhập và làm mới

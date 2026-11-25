@@ -20,7 +20,7 @@ export default function CandidateLoginContent({ onSuccess }) {
 
       {/* Social login */}
       <div className="login-field mb-5">
-        <SocialLoginButtons portal="main" action={m.account_social_action_login()} />
+        <SocialLoginButtons portal="main" action={m.account_social_action_login()} onSuccess={onSuccess} />
       </div>
 
       {/* Divider */}

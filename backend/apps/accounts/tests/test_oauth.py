@@ -27,9 +27,9 @@ class OAuthFlowTests(APITestCase):
 
     # ---- helpers ----
 
-    def _callback(self, provider='google', portal='main', profile=None, next_path=''):
+    def _callback(self, provider='google', portal='main', profile=None, next_path='', nonce=''):
         """Chạy bước callback với provider đã mock, trả về response redirect."""
-        state = oauth_state_for(self.client, provider, portal, next_path)
+        state = oauth_state_for(self.client, provider, portal, next_path, nonce=nonce)
         with (
             patch.object(oauth, 'exchange_code', return_value='provider-token'),
             patch.object(oauth, 'fetch_profile', return_value=profile or dict(GOOGLE_PROFILE)),
@@ -311,3 +311,62 @@ class OAuthFlowTests(APITestCase):
             {'error': 'access_denied', 'state': state},
         )
         self.assertIn('error=access_denied', response.url)
+
+    # ---- popup (desktop) ----
+
+    def _start_state(self, **params):
+        response = self.client.get(
+            reverse('auth-oauth-start', args=['google']), {'portal': 'main', **params}
+        )
+        state = parse_qs(urlparse(response.url).query)['state'][0]
+        return cache.get(f'oauth:state:{state}')
+
+    def test_start_in_popup_mode_keeps_mode_and_nonce_in_state(self):
+        state_data = self._start_state(mode='popup', nonce='Ab_9-xyz')
+        self.assertEqual((state_data['mode'], state_data['nonce']), ('popup', 'Ab_9-xyz'))
+
+    def test_start_ignores_a_malformed_popup_nonce(self):
+        for nonce in ('', 'bad nonce', 'x' * 65, '<script>'):
+            with self.subTest(nonce=nonce):
+                state_data = self._start_state(mode='popup', nonce=nonce)
+                self.assertEqual((state_data['mode'], state_data['nonce']), ('', ''))
+
+    def test_start_without_popup_mode_ignores_the_nonce(self):
+        state_data = self._start_state(nonce='abc')
+        self.assertEqual((state_data['mode'], state_data['nonce']), ('', ''))
+
+    def test_popup_callback_adds_popup_flag_and_nonce(self):
+        response = self._callback(next_path='/viec-lam', nonce='n0nce')
+        query = parse_qs(urlparse(response.url).query)
+        self.assertEqual(query['popup'], ['1'])
+        self.assertEqual(query['nonce'], ['n0nce'])
+        self.assertEqual(query['next'], ['/viec-lam'])
+        self.assertEqual(self._complete(response.url).status_code, 200)
+
+    def test_redirect_callback_has_no_popup_flag(self):
+        query = parse_qs(urlparse(self._callback().url).query)
+        self.assertNotIn('popup', query)
+        self.assertNotIn('nonce', query)
+
+    def test_popup_errors_keep_the_nonce(self):
+        state = oauth_state_for(self.client, nonce='n0nce')
+        response = self.client.get(
+            reverse('auth-oauth-callback', args=['google']),
+            {'error': 'access_denied', 'state': state},
+        )
+        query = parse_qs(urlparse(response.url).query)
+        self.assertEqual(
+            (query['error'], query['popup'], query['nonce']), (['access_denied'], ['1'], ['n0nce'])
+        )
+
+    @override_settings(OAUTH_FACEBOOK_CLIENT_ID='', OAUTH_FACEBOOK_CLIENT_SECRET='')
+    def test_popup_start_error_keeps_the_nonce(self):
+        response = self.client.get(
+            reverse('auth-oauth-start', args=['facebook']),
+            {'portal': 'main', 'mode': 'popup', 'nonce': 'n0nce'},
+        )
+        query = parse_qs(urlparse(response.url).query)
+        self.assertEqual(
+            (query['error'], query['popup'], query['nonce']),
+            (['provider_not_configured'], ['1'], ['n0nce']),
+        )
