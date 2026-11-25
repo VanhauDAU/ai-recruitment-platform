@@ -119,6 +119,8 @@
   "employer_job_ai_input_requirements_placeholder": "Ví dụ: Có 3 năm kinh nghiệm với Python",
   "employer_job_ai_input_preferred_skills": "Kỹ năng ưu tiên",
   "employer_job_ai_input_preferred_skills_placeholder": "Ví dụ: Biết triển khai trên Google Cloud",
+  "employer_job_ai_input_benefits": "Quyền lợi",
+  "employer_job_ai_input_benefits_placeholder": "Ví dụ: Thưởng tháng 13, bảo hiểm sức khỏe cao cấp",
   "employer_job_ai_input_position": "Vị trí cần tuyển",
   "employer_job_ai_input_position_placeholder": "Ví dụ: Kỹ sư Backend Python",
   "employer_job_ai_input_position_level": "Cấp bậc gợi ý",

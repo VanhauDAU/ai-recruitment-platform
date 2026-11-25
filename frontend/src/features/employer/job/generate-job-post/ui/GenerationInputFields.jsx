@@ -19,6 +19,7 @@ export function GuidedBriefFields({ draft, onDraftChange }) {
     ['responsibilities', m.employer_job_ai_input_responsibilities(), m.employer_job_ai_input_responsibilities_placeholder()],
     ['requirements', m.employer_job_ai_input_requirements(), m.employer_job_ai_input_requirements_placeholder()],
     ['preferred_skills', m.employer_job_ai_input_preferred_skills(), m.employer_job_ai_input_preferred_skills_placeholder()],
+    ['benefits', m.employer_job_ai_input_benefits(), m.employer_job_ai_input_benefits_placeholder()],
   ]
 
   return (
