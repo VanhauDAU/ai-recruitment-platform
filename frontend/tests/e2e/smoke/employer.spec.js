@@ -1634,6 +1634,12 @@ test('employer applications: grouped CV workspace is clear across responsive lay
       body: JSON.stringify({ count: 2, next: null, previous: null, results: applications }),
     })
   })
+  await page.route(/http:\/\/localhost:8000\/api\/employer\/jobs\/(?:\?.*)?$/, async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ count: 1, next: null, previous: null, results: [{ public_id: 'jb_987ecf21d547', title: 'Senior Frontend Developer' }] }),
+    })
+  })
   await page.route('http://localhost:8000/api/employer/applications/app_befb3400ade3/ai-match/', async (route) => {
     await route.fulfill({
       contentType: 'application/json',
@@ -1770,12 +1776,16 @@ test('employer applications: grouped CV workspace is clear across responsive lay
   const backToJobButton = page.getByRole('button', { name: 'Quay lại chi tiết tin tuyển dụng' })
   await expect(backToJobButton).toBeVisible()
   await expect(candidateList).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Thu gọn hồ sơ của Lê Văn Hậu' })).toBeVisible()
-  await expect(candidateList.getByText(/^2 CV ·/)).toBeVisible()
+  await expect(candidateList.getByRole('combobox', { name: 'Lọc theo tin tuyển dụng' })).toBeVisible()
+  await expect(candidateList.getByRole('list', { name: 'Các CV của Lê Văn Hậu' })).toBeVisible()
   await expect(candidateList.getByRole('button', { name: 'Xem CV Frontend 2026 của Lê Văn Hậu' })).toBeVisible()
   await expect(candidateList.getByRole('button', { name: 'Xem CV Frontend bản đầu của Lê Văn Hậu' })).toBeVisible()
   await expect(cvPreview.getByLabel('Xem trước CV single_column_v1 trang 1')).toBeVisible()
   await expect(cvPreview.getByRole('button', { name: /Nhắn tin/ })).toBeDisabled()
+  const zoom = cvPreview.getByRole('group', { name: 'Thu phóng CV' })
+  await zoom.getByRole('button', { name: 'Phóng to' }).click()
+  await zoom.getByRole('button', { name: 'Vừa khung' }).click()
+  await expect(zoom.getByRole('button', { name: 'Vừa khung' })).toBeDisabled()
   const download = page.waitForEvent('download')
   await cvPreview.getByRole('button', { name: /Tải PDF/ }).click()
   expect((await download).suggestedFilename()).toBe('CV - Lê Văn Hậu.pdf')

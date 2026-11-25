@@ -10,8 +10,9 @@ const VIEWER_PARAMS = '#toolbar=0&navpanes=0&scrollbar=0&view=FitH'
  * Tệp gốc (PDF; DOCX đã được máy chủ đổi sang PDF) của một CV tải lên.
  * Chủ CV đọc theo `publicId`; người xem link chia sẻ đọc theo `shareToken`.
  * Nguồn khác (vd. nhà tuyển dụng đọc tệp của một hồ sơ) truyền `source = { queryKey, load }`.
+ * `style` cho phép nơi dùng đặt bề rộng (vd. để thu phóng).
  */
-export default function UploadedCvPreview({ publicId, shareToken, source, title, className = '' }) {
+export default function UploadedCvPreview({ publicId, shareToken, source, title, className = '', style }) {
   const ownSource = shareToken
     ? { queryKey: ['cv', 'shared-source-file', shareToken], load: () => getSharedCvFile(shareToken) }
     : { queryKey: ['cv', 'source-file', publicId], load: () => getUploadedCvFile(publicId) }
@@ -28,14 +29,14 @@ export default function UploadedCvPreview({ publicId, shareToken, source, title,
 
   if (isError) {
     return (
-      <div className={`flex items-center justify-center p-4 text-center text-xs font-semibold text-slate-400 ${className}`}>
+      <div className={`flex items-center justify-center p-4 text-center text-xs font-semibold text-slate-400 ${className}`} style={style}>
         Không thể hiển thị tệp CV
       </div>
     )
   }
   if (isLoading || !url) {
     return (
-      <div className={`p-4 ${className}`}>
+      <div className={`p-4 ${className}`} style={style}>
         <Skeleton active paragraph={{ rows: 12 }} />
       </div>
     )
@@ -45,6 +46,7 @@ export default function UploadedCvPreview({ publicId, shareToken, source, title,
       title={title || 'CV tải lên'}
       src={`${url}${VIEWER_PARAMS}`}
       className={`block border-0 bg-white ${className}`}
+      style={style}
     />
   )
 }

@@ -10,12 +10,15 @@ const PENDING_COPY = {
 
 /**
  * Mức phù hợp của một hồ sơ trên một dòng: điểm + mức, hoặc lý do chưa có điểm.
- * `status` rỗng (tính năng tắt) thì không hiện gì.
+ * `status` rỗng (tính năng tắt) thì không hiện gì. `compact` chỉ hiện con số (danh
+ * sách hẹp); nhãn mức và lý do nằm trong chú thích khi rê chuột.
  */
-export default function FitScoreChip({ status, score, level, className = '' }) {
+export default function FitScoreChip({ status, score, level, compact = false, className = '' }) {
   if (!status) return null
+  const size = compact ? ' fit-chip--compact' : ''
   if (status !== 'ready') {
     const copy = PENDING_COPY[status] || PENDING_COPY.pending
+    if (compact) return <span className={`fit-chip-empty ${className}`} title={`${copy.label()}: ${copy.hint()}`} aria-label={copy.label()}>—</span>
     return (
       <span className={`fit-chip fit-chip--muted ${className}`} title={copy.hint()}>
         {copy.label()}
@@ -23,10 +26,11 @@ export default function FitScoreChip({ status, score, level, className = '' }) {
     )
   }
   const label = fitLevelLabel(level)
+  const hint = m.fit_chip_ready_hint({ score, label })
   return (
-    <span className={`fit-chip fit-chip--${level} ${className}`} title={m.fit_chip_ready_hint({ score, label })}>
+    <span className={`fit-chip fit-chip--${level}${size} ${className}`} title={hint} aria-label={compact ? hint : undefined}>
       <strong>{score}</strong>
-      <span>{label}</span>
+      {!compact && <span>{label}</span>}
     </span>
   )
 }
