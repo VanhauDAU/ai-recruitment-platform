@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { expectAnimatedLoginButton, mockPublicApi } from './helpers'
+import { chooseSelectOption, expectAnimatedLoginButton, mockPublicApi } from './helpers'
 
 async function expectNoHorizontalOverflow(page) {
   await expect.poll(() => page.evaluate(() => {
@@ -451,11 +451,9 @@ test('employer auth: verified session completes recruitment need before dashboar
   await expect(page.getByRole('heading', { name: /Xin chào, Nguyễn An/ })).toBeVisible()
   await expect(page.getByText('Nhu cầu tuyển dụng', { exact: true })).toBeVisible()
   await expect(page.getByText('Bạn đang tuyển dụng vị trí chuyên môn nào?')).toBeVisible()
-  await page.getByRole('combobox', { name: /Bạn đang tuyển dụng vị trí chuyên môn nào/ }).click()
-  await page.locator('.ant-select-dropdown:visible').getByText('Kinh doanh phần mềm').click()
+  await chooseSelectOption(page, page.getByRole('combobox', { name: /Bạn đang tuyển dụng vị trí chuyên môn nào/ }), 'Kinh doanh phần mềm')
   await page.getByRole('checkbox', { name: 'Tuyển liên tục' }).check()
-  await page.getByRole('combobox', { name: /Bạn có nhu cầu cần tư vấn kỹ hơn/ }).click()
-  await page.locator('.ant-select-dropdown:visible').getByText('Tôi muốn tìm hiểu thêm về các gói dịch vụ').click()
+  await chooseSelectOption(page, page.getByRole('combobox', { name: /Bạn có nhu cầu cần tư vấn kỹ hơn/ }), 'Tôi muốn tìm hiểu thêm về các gói dịch vụ')
   await page.getByRole('button', { name: 'Hoàn thành' }).click()
 
   await expect.poll(() => submittedNeed).toMatchObject({
@@ -1226,8 +1224,7 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
   }
   await page.keyboard.press('Escape')
   await expect(page.getByRole('heading', { name: 'Thông tin chung' })).toBeVisible()
-  await page.getByRole('combobox', { name: 'Cách hiển thị thu nhập' }).click()
-  await page.locator('.ant-select-dropdown:visible').getByText('Thu nhập khi đạt 100% KPI', { exact: true }).click()
+  await chooseSelectOption(page, page.getByRole('combobox', { name: 'Cách hiển thị thu nhập' }), /^Thu nhập khi đạt 100% KPI$/)
   await page.getByLabel('Đến mức').fill('7000000')
   await expect(page.locator('#description').getByRole('heading', { name: 'Mô tả công việc' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Kỳ vọng về ứng viên' })).toBeVisible()
@@ -1242,10 +1239,8 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
   await expect(page.getByRole('button', { name: 'Thêm lý do (0/3)' })).toBeVisible()
   await expect(page.locator('.company-rich-editor__content')).toHaveCount(3)
   await expect(page.locator('.company-rich-editor__content').first()).toHaveCSS('min-height', '230px')
-  await page.getByLabel(/Khu vực 1 - Tỉnh\/thành phố/).click()
-  await page.locator('.ant-select-dropdown:visible').getByText('Đà Nẵng', { exact: true }).click()
-  await page.getByRole('combobox', { name: /Phường\/xã 1/ }).click()
-  await page.locator('.ant-select-dropdown:visible').getByText('Phường Hải Châu', { exact: true }).click()
+  await chooseSelectOption(page, page.getByLabel(/Khu vực 1 - Tỉnh\/thành phố/), /^Đà Nẵng$/)
+  await chooseSelectOption(page, page.getByRole('combobox', { name: /Phường\/xã 1/ }), /^Phường Hải Châu$/)
   await page.getByLabel('Địa điểm chi tiết').fill('123 đường Nguyễn Huệ')
   await page.getByRole('button', { name: 'Thêm phường/xã' }).click()
   const wardPicker = page.locator('.ant-popover:visible')
@@ -2130,8 +2125,7 @@ test('employer campaign detail: TopCV-style workspace is responsive and uses API
   const compactCampaignTabs = page.viewportSize().width < 640
   const chooseCampaignTab = async (label) => {
     if (compactCampaignTabs) {
-      await page.getByRole('combobox', { name: 'Chọn nội dung chiến dịch' }).click()
-      await page.locator('.ant-select-dropdown:visible').getByText(label, { exact: false }).click()
+      await chooseSelectOption(page, page.getByRole('combobox', { name: 'Chọn nội dung chiến dịch' }), label)
       return
     }
     await page.getByRole('tab', { name: label }).click()
@@ -2207,8 +2201,7 @@ test('employer campaign detail: TopCV-style workspace is responsive and uses API
   await expect(applicationsMetric).toContainText('1')
 
   const requestsBeforeStatusFilter = performanceRequestCount
-  await page.getByRole('combobox', { name: 'Lọc bảng theo trạng thái' }).click()
-  await page.locator('.ant-select-dropdown:visible').getByText('Đang tuyển', { exact: true }).click()
+  await chooseSelectOption(page, page.getByRole('combobox', { name: 'Lọc bảng theo trạng thái' }), /^Đang tuyển$/)
   await expect(performanceTable.getByRole('link', { name: 'Kỹ sư Frontend', exact: true })).toBeVisible()
   await expect(performanceTable.getByRole('link', { name: 'Backend Engineer', exact: true })).toHaveCount(0)
   expect(performanceRequestCount).toBe(requestsBeforeStatusFilter)

@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { ADMIN_ROUTES } from '../../../src/app/router/admin/admin-routes.config.js'
-import { API_ROUTE, expectAnimatedLoginButton, mockPublicApi } from './helpers'
+import { API_ROUTE, chooseSelectOption, expectAnimatedLoginButton, mockPublicApi } from './helpers'
 
 test('admin smoke: login loads and dashboard stays role-protected', { tag: '@responsive' }, async ({ page }) => {
   // One full navigation per admin route (23 and growing): the budget has to
@@ -1132,8 +1132,7 @@ test('admin job management: list, detail and revision-bound hide workflow', { ta
 
   await page.getByRole('button', { name: 'Tạm ẩn tin' }).click()
   const dialog = page.getByRole('dialog')
-  await dialog.getByRole('combobox', { name: 'Căn cứ xử lý' }).click()
-  await page.locator('.ant-select-dropdown:visible').getByText('Có dấu hiệu lừa đảo', { exact: true }).click()
+  await chooseSelectOption(page, dialog.getByRole('combobox', { name: 'Căn cứ xử lý' }), 'Có dấu hiệu lừa đảo')
   await dialog.getByRole('textbox', { name: 'Ghi chú tạm ẩn' }).fill('Cần xác minh lại nội dung.')
   await dialog.getByRole('button', { name: 'Tạm ẩn tin' }).click()
 
