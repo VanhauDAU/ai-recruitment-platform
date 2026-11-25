@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Trang Danh mục dữ liệu cho admin](#trang-danh-mục-dữ-liệu-cho-admin-2026-11-25) | 🟨 Cả 3 GĐ + dọn dẹp xong trên nhánh `feat/admin-catalog`, chờ PR |
 | [Việc làm gần tôi: bản đồ, bán kính, tọa độ nơi làm việc (ADR-0029)](#việc-làm-gần-tôi-bản-đồ-bán-kính-tọa-độ-nơi-làm-việc-adr-0029-2026-11-25) | 🟨 PR #344 (nhánh `feat/nearby-jobs`), chờ gộp |
 | [Thông báo thời gian thực qua WebSocket, hoàn tác 15 giây (ADR-0028)](#thông-báo-thời-gian-thực-qua-websocket-hoàn-tác-15-giây-adr-0028-2026-11-25) | ✅ Đã gộp dev (#340); sửa socket rớt mỗi 5 giây trên nhánh `fix/realtime-redis-timeout` |
 | [Phễu tuyển dụng trên trang chủ NTD](#phễu-tuyển-dụng-trên-trang-chủ-ntd-2026-11-25) | 🟨 PR #338 (nhánh `feat/employer-recruitment-funnel`), chờ gộp |
@@ -54,6 +55,23 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
 
+
+## Trang Danh mục dữ liệu cho admin (2026-11-25)
+
+Kế hoạch: [`ke-hoach-quan-ly-danh-muc.md`](01-phan-tich/ke-hoach-quan-ly-danh-muc.md).
+
+- **Kỹ năng (GĐ1):** lọc chưa có nhóm / có thể trùng / nguồn, gán nhóm tại chỗ và hàng loạt,
+  gộp kỹ năng (superuser) chuyển tin, CV, nhu cầu tìm việc và `profile_json` đối sánh qua
+  tín hiệu `skill_merged`; khóa nhóm "Phẩm chất cá nhân", "Tên vị trí".
+- **Ngành nghề (GĐ2):** bảng cây, cấp suy ra từ mục cha, tên tiếng Anh bắt buộc cho vị trí
+  chuyên môn (bộ chọn vị trí của CV cần), icon nhóm nghề.
+- **Phúc lợi, Lĩnh vực công ty, Ngôn ngữ (GĐ3):** một bảng dùng chung, sắp thứ tự phúc lợi.
+- **Dọn dẹp:** gỡ trang Django admin trùng lặp của các danh mục; `unique_slug`,
+  `related_count` về `common/db`; nhánh bắt lỗi slug đã chết trong importer.
+- **Kiểm tra:** pytest các app skills, jobs (danh mục, import), employers, matching liên quan;
+  Vitest feature `manage-catalog`; E2E `admin-catalog.spec.js` (`@responsive`, 3 khung).
+- **Lưu ý:** `seed_job_categories` chỉ chạy lúc dựng DB trống; chạy lại sẽ ẩn mục admin
+  thêm và hiện lại mục admin đã ẩn.
 
 ## Việc làm gần tôi: bản đồ, bán kính, tọa độ nơi làm việc (ADR-0029) (2026-11-25)
 

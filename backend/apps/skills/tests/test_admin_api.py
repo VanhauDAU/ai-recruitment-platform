@@ -75,7 +75,7 @@ class AdminSkillListTests(AdminSkillApiTestCase):
 
         self.assertEqual(
             response.data,
-            {'total': 3, 'ungrouped': 2, 'duplicates': 2, 'employer': 1, 'hidden': 1},
+            {'ungrouped': 2, 'duplicates': 2},
         )
 
     def test_list_query_count_stays_flat(self):
@@ -109,7 +109,7 @@ class AdminSkillWriteTests(AdminSkillApiTestCase):
         response = self.client.post(reverse('admin-skill-list'), {'name': 'C++'}, format='json')
 
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data['slug'], 'c-2')
+        self.assertEqual(Skill.objects.get(pk=response.data['id']).slug, 'c-2')
 
     def test_alias_already_owned_by_another_skill_is_rejected(self):
         Skill.objects.create(name='React', aliases=['ReactJS'])

@@ -15,10 +15,8 @@ class AdminJobCategorySerializer(serializers.ModelSerializer):
         model = JobCategory
         fields = [
             'id',
-            'public_id',
             'name',
             'name_en',
-            'slug',
             'description',
             'category_type',
             'parent',

@@ -3,19 +3,19 @@ import { API_ROUTE, mockPublicApi, selectTab } from './helpers'
 
 const usage = (jobs, cvs = 0, candidates = 0) => ({ usage: { jobs, cvs, candidates }, usage_total: jobs + cvs + candidates })
 const SKILLS = [
-  { id: 1, name: 'ReactJS', slug: 'reactjs', aliases: ['React.js', 'React', 'ReactJS 18'], group: null, group_name: '', description: '', source: 'employer', is_active: true, created_at: '2026-11-20T03:00:00Z', ...usage(12, 30, 4) },
-  { id: 2, name: 'React.js', slug: 'react-js', aliases: [], group: null, group_name: '', description: '', source: 'import', is_active: true, created_at: '2026-11-21T03:00:00Z', ...usage(3) },
-  { id: 3, name: 'Django', slug: 'django', aliases: ['Django REST'], group: 5, group_name: 'Backend', description: '', source: 'seed', is_active: true, created_at: '2026-11-01T03:00:00Z', ...usage(9, 2) },
-  { id: 4, name: 'Kế toán thuế', slug: 'ke-toan-thue', aliases: ['Tax accounting'], group: 6, group_name: 'Kế toán', description: '', source: 'seed', is_active: true, created_at: '2026-11-01T03:00:00Z', ...usage(21, 8) },
+  { id: 1, name: 'ReactJS', aliases: ['React.js', 'React', 'ReactJS 18'], group: null, group_name: '', description: '', source: 'employer', is_active: true, created_at: '2026-11-20T03:00:00Z', ...usage(12, 30, 4) },
+  { id: 2, name: 'React.js', aliases: [], group: null, group_name: '', description: '', source: 'import', is_active: true, created_at: '2026-11-21T03:00:00Z', ...usage(3) },
+  { id: 3, name: 'Django', aliases: ['Django REST'], group: 5, group_name: 'Backend', description: '', source: 'seed', is_active: true, created_at: '2026-11-01T03:00:00Z', ...usage(9, 2) },
+  { id: 4, name: 'Kế toán thuế', aliases: ['Tax accounting'], group: 6, group_name: 'Kế toán', description: '', source: 'seed', is_active: true, created_at: '2026-11-01T03:00:00Z', ...usage(21, 8) },
 ]
 const GROUPS = [
-  { id: 5, name: 'Backend', slug: 'backend', parent: null, is_active: true, skill_count: 1, is_system: false },
-  { id: 6, name: 'Kế toán', slug: 'ke-toan', parent: null, is_active: true, skill_count: 1, is_system: false },
-  { id: 7, name: 'Phẩm chất cá nhân', slug: 'pham-chat-ca-nhan', parent: null, is_active: true, skill_count: 0, is_system: true },
+  { id: 5, name: 'Backend', parent: null, is_active: true, skill_count: 1, is_system: false },
+  { id: 6, name: 'Kế toán', parent: null, is_active: true, skill_count: 1, is_system: false },
+  { id: 7, name: 'Phẩm chất cá nhân', parent: null, is_active: true, skill_count: 0, is_system: true },
 ]
 
 const category = (id, name, category_type, parent, extra = {}) => ({
-  id, public_id: `jobcat_${id}`, name, name_en: '', slug: `c-${id}`, description: '', category_type, parent,
+  id, name, name_en: '', description: '', category_type, parent,
   status: 'active', logo_url: '', logo_preview: null, job_count: 0, child_count: 0, ...extra,
 })
 const CATEGORIES = [
@@ -42,7 +42,7 @@ async function routeCatalogApi(page, { onUpdate, onCategoryCreate } = {}) {
       })
     }
     if (path === '/api/admin/skills/summary/') {
-      return route.fulfill({ json: { total: 4, ungrouped: 2, duplicates: 2, employer: 1, hidden: 0 } })
+      return route.fulfill({ json: { ungrouped: 2, duplicates: 2 } })
     }
     if (path === '/api/admin/skills/groups/') return route.fulfill({ json: GROUPS })
     if (path === '/api/admin/jobs/categories/' && request.method() === 'GET') return route.fulfill({ json: CATEGORIES })

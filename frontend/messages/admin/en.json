@@ -678,5 +678,7 @@
   "admin_catalog_usage_benefit": "{jobs} jobs · {companies} companies",
   "admin_catalog_usage_companies": "{count} companies",
   "admin_catalog_move_up": "Move {name} up",
-  "admin_catalog_move_down": "Move {name} down"
+  "admin_catalog_move_down": "Move {name} down",
+  "admin_catalog_name_en_required_help": "Specializations need an English name to appear in the CV position picker.",
+  "admin_catalog_name_en_required": "Enter the English name."
 }

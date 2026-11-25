@@ -678,5 +678,7 @@
   "admin_catalog_usage_benefit": "{jobs} tin · {companies} công ty",
   "admin_catalog_usage_companies": "{count} công ty",
   "admin_catalog_move_up": "Đưa {name} lên",
-  "admin_catalog_move_down": "Đưa {name} xuống"
+  "admin_catalog_move_down": "Đưa {name} xuống",
+  "admin_catalog_name_en_required_help": "Vị trí chuyên môn cần tên tiếng Anh để hiện trong bộ chọn vị trí của CV.",
+  "admin_catalog_name_en_required": "Nhập tên tiếng Anh."
 }

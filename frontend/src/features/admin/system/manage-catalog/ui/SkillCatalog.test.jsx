@@ -34,7 +34,7 @@ describe('SkillCatalog', () => {
     vi.clearAllMocks()
     vi.spyOn(Grid, 'useBreakpoint').mockReturnValue({ md: true })
     api.getAdminSkills.mockResolvedValue({ count: 2, results: skills })
-    api.getAdminSkillSummary.mockResolvedValue({ total: 2, ungrouped: 1, duplicates: 0, employer: 1, hidden: 0 })
+    api.getAdminSkillSummary.mockResolvedValue({ ungrouped: 1, duplicates: 0 })
     api.getAdminSkillGroups.mockResolvedValue([{ id: 5, name: 'Backend', is_active: true, skill_count: 1, is_system: false, parent: null }])
     api.updateAdminSkill.mockResolvedValue({})
     api.bulkUpdateAdminSkills.mockResolvedValue({})

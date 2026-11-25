@@ -1,6 +1,21 @@
 # Kế hoạch trang Quản lý danh mục (admin)
 
-> Trạng thái: **chờ duyệt (25/11/2026)**. Lộ trình 3 giai đoạn, mỗi giai đoạn một PR vào `dev`.
+> Trạng thái: **đã làm xong cả 3 giai đoạn (25/11/2026)** trên nhánh `feat/admin-catalog`,
+> gộp thành một PR vào `dev` (mỗi giai đoạn một commit) theo thói quen một PR cho trọn việc.
+>
+> Điều chỉnh khi làm:
+> - **Bộ lọc "NTD thêm 7 ngày" thành bộ lọc Nguồn.** Dải "Cần dọn" chỉ còn hai chip tự hết
+>   việc được: chưa có nhóm, có thể trùng.
+> - **Gộp kỹ năng không dựng lại vector.** CV không tự dựng lại vì hash nội dung không gồm
+>   danh mục, nên `skill_merged` sửa thẳng `profile_json`; tin tự dựng lại vì hash có kỹ năng.
+> - **Vị trí chuyên môn bắt buộc tên tiếng Anh**, giữ đúng quy tắc của form Django admin cũ
+>   (bộ chọn vị trí của CV lọc theo ngôn ngữ).
+> - **Bộ lọc loại ngành nghề là Select**, không dùng Segmented (tràn ngang trên điện thoại).
+> - **Phúc lợi sắp thứ tự bằng nút ↑↓**, không kéo thả: 23 mục, nút dùng được cả bàn phím.
+> - **Gỡ trang Django admin** của các danh mục này; JobCategory giữ bản chỉ-xem để ô
+>   autocomplete của trang blog và nội dung vị trí CV vẫn chạy.
+> - **`seed_job_categories` chỉ chạy lúc dựng DB trống** (xem `huong-dan-deployment.md`);
+>   chạy lại sẽ ẩn mục admin thêm.
 
 ## Context
 
@@ -9,7 +24,7 @@ Danh mục dùng chung đang không có chỗ để admin quản lý (số liệ
 | Danh mục | Model | Số mục | Ai tạo | Vấn đề |
 |---|---|---|---|---|
 | Kỹ năng | `skills.Skill` + `SkillGroup` | 348 / 11 nhóm | Seed, nhập JD, **NTD tự thêm** qua `POST /skills/` | 270 kỹ năng chưa có nhóm. Chỉ chặn trùng khi tên viết giống hệt, nên "ReactJS" và "React.js" thành hai kỹ năng. Muốn gộp phải chạy lệnh `apply_skill_merge` với file JSON. |
-| Ngành nghề | `jobs.JobCategory` (cây, 3 loại) + `JobCategoryLocalization` | 8 nhóm nghề / 24 kiến thức chuyên ngành / 61 vị trí chuyên môn | Seed | Chỉ sửa được qua Django admin, kể cả tên tiếng Anh và icon. |
+| Ngành nghề | `jobs.JobCategory` (cây, 3 loại) + `JobCategoryLocalization` | 8 nhóm nghề / 24 kiến thức chuyên ngành / 61 vị trí chuyên môn | Seed | Chỉ sửa được qua Django admin (chỉ bật ở dev), kể cả tên tiếng Anh và icon. |
 | Phúc lợi | `jobs.Benefit` | 23 | Seed | Như trên. |
 | Lĩnh vực công ty | `employers.Industry` | 47 | Seed | Như trên, và chưa có `is_active`. |
 | Ngôn ngữ | `jobs.Language` | 5 | Seed | Như trên. |

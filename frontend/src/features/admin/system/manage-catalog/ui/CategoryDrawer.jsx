@@ -91,7 +91,12 @@ export default function CategoryDrawer({ category, categories, onClose }) {
         <Form.Item name="name" label={m.admin_catalog_name_vi()} validateTrigger="onBlur" rules={[{ required: true, whitespace: true, message: m.admin_catalog_name_required() }]}>
           <Input maxLength={255} autoFocus={!editing} />
         </Form.Item>
-        <Form.Item name="name_en" label={m.admin_catalog_name_en()} extra={m.admin_catalog_name_en_help()}>
+        <Form.Item
+          name="name_en"
+          label={m.admin_catalog_name_en()}
+          extra={type === 'specialization' ? m.admin_catalog_name_en_required_help() : m.admin_catalog_name_en_help()}
+          rules={type === 'specialization' ? [{ required: true, whitespace: true, message: m.admin_catalog_name_en_required() }] : []}
+        >
           <Input maxLength={255} />
         </Form.Item>
         {editing && type !== 'occupation_group' ? (

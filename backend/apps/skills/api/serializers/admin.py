@@ -22,7 +22,6 @@ class AdminSkillSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'name',
-            'slug',
             'aliases',
             'group',
             'group_name',
@@ -74,11 +73,8 @@ class SkillMergePreviewSerializer(serializers.Serializer):
 
 
 class SkillSummarySerializer(serializers.Serializer):
-    total = serializers.IntegerField()
     ungrouped = serializers.IntegerField()
     duplicates = serializers.IntegerField()
-    employer = serializers.IntegerField()
-    hidden = serializers.IntegerField()
 
 
 class AdminSkillGroupSerializer(serializers.ModelSerializer):
@@ -87,7 +83,7 @@ class AdminSkillGroupSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SkillGroup
-        fields = ['id', 'name', 'slug', 'parent', 'is_active', 'skill_count', 'is_system']
+        fields = ['id', 'name', 'parent', 'is_active', 'skill_count', 'is_system']
 
     def get_is_system(self, group) -> bool:
         return group.name in UNCOUNTED_GROUPS

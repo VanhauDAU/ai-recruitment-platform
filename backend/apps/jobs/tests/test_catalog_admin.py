@@ -53,13 +53,21 @@ class AdminJobCategoryApiTests(APITestCase):
             {'vi-VN': 'Lập trình viên Go', 'en-US': 'Go Developer'},
         )
 
+    def test_specialization_needs_an_english_name(self):
+        response = self.client.post(
+            self.list_url, {'name': 'Lập trình viên Rust', 'parent': self.domain.pk}, format='json'
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('name_en', response.data)
+
     def test_specialization_cannot_have_children(self):
         position = JobCategory.objects.create(
             name='Backend', parent=self.domain, category_type=Type.SPECIALIZATION
         )
 
         response = self.client.post(
-            self.list_url, {'name': 'Con', 'parent': position.pk}, format='json'
+            self.list_url, {'name': 'Con', 'name_en': 'Child', 'parent': position.pk}, format='json'
         )
 
         self.assertEqual(response.status_code, 400)
@@ -110,7 +118,7 @@ class AdminJobCategoryApiTests(APITestCase):
 
         self.assertEqual(wide.status_code, 400)
         self.assertEqual(square.status_code, 201)
-        self.assertTrue(square.data['path'].startswith('jobs/category-icons/'))
+        self.assertTrue(square.data['path'].startswith('jobs/categories/logos/'))
 
 
 class AdminBenefitAndLanguageApiTests(APITestCase):

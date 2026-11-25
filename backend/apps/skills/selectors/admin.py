@@ -57,15 +57,11 @@ def admin_skills_queryset(params):
 
 
 def admin_skill_summary():
-    """Số đếm cho dải "Cần dọn" và các chip lọc."""
+    """Số đếm cho dải "Cần dọn": kỹ năng đang hiện chưa có nhóm và có thể trùng."""
     active = Skill.objects.filter(is_active=True)
-    duplicates = possible_duplicate_ids()
     return {
-        'total': Skill.objects.count(),
         'ungrouped': active.filter(group__isnull=True).count(),
-        'duplicates': active.filter(pk__in=duplicates).count(),
-        'employer': active.filter(source=Skill.Source.EMPLOYER).count(),
-        'hidden': Skill.objects.filter(is_active=False).count(),
+        'duplicates': active.filter(pk__in=possible_duplicate_ids()).count(),
     }
 
 

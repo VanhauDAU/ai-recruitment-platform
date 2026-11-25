@@ -6,7 +6,7 @@ from PIL import Image
 from rest_framework.exceptions import ValidationError
 
 from apps.accounts.services import record_admin_action
-from common.storage.media import save_image_upload, validate_image_upload
+from common.storage.media import delete_local_media_url, save_image_upload, validate_image_upload
 
 from ..models import Benefit, JobCategory, JobCategoryLocalization
 
@@ -20,7 +20,7 @@ CHILD_TYPE = {
     Type.DOMAIN: Type.SPECIALIZATION,
 }
 
-ICON_DIRECTORY = 'jobs/category-icons'
+ICON_DIRECTORY = 'jobs/categories/logos'
 ICON_MAX_BYTES = 512 * 1024
 ICON_MIN_SIDE = 64
 ICON_MAX_SIDE = 512
@@ -61,6 +61,7 @@ def save_job_category(*, actor, category=None, name_en=None, **changes):
     """Tạo (khi `category` là None) hoặc sửa một mục ngành nghề."""
     creating = category is None
     category = category or JobCategory()
+    name_en = None if name_en is None else _clean(name_en)
     if creating or 'parent' in changes:
         kind = _child_type(changes.get('parent'))
         if not creating and kind != category.category_type:
@@ -68,16 +69,23 @@ def save_job_category(*, actor, category=None, name_en=None, **changes):
                 {'parent': gettext('Chỉ chuyển được sang một mục cùng cấp với mục cha hiện tại.')}
             )
         changes['category_type'] = kind
+    # Bộ chọn vị trí của CV hiển thị theo ngôn ngữ, nên vị trí chuyên môn luôn cần tên tiếng Anh.
+    kind = changes.get('category_type', category.category_type)
+    if kind == Type.SPECIALIZATION and (name_en == '' or (creating and not name_en)):
+        raise ValidationError({'name_en': gettext('Vị trí chuyên môn cần có tên tiếng Anh.')})
     if 'name' in changes:
         changes['name'] = _clean(changes['name'])
         parent = changes.get('parent', category.parent)
         siblings = JobCategory.objects.filter(parent=parent, name__iexact=changes['name'])
         if siblings.exclude(pk=category.pk).exists():
             raise ValidationError({'name': gettext('Đã có mục cùng tên ở cùng cấp.')})
+    old_logo = category.logo_url
     for field, value in changes.items():
         setattr(category, field, value)
     category.save()
-    _sync_localizations(category, None if name_en is None else _clean(name_en))
+    if old_logo and old_logo != category.logo_url:
+        transaction.on_commit(lambda: delete_local_media_url(old_logo))
+    _sync_localizations(category, name_en)
     fields = sorted({*changes, *(['name_en'] if name_en is not None else [])})
     record_admin_action(
         actor=actor,

@@ -19450,19 +19450,12 @@ components:
         id:
           type: integer
           readOnly: true
-        public_id:
-          type: string
-          readOnly: true
         name:
           type: string
           maxLength: 255
         name_en:
           type: string
           readOnly: true
-        slug:
-          type: string
-          maxLength: 255
-          pattern: ^[-a-zA-Z0-9_]+$
         description:
           type: string
         category_type:
@@ -19493,7 +19486,6 @@ components:
       - logo_preview
       - name
       - name_en
-      - public_id
     AdminJobDecisionActionEnum:
       enum:
       - hide
@@ -20662,10 +20654,6 @@ components:
         name:
           type: string
           maxLength: 255
-        slug:
-          type: string
-          maxLength: 255
-          pattern: ^[-a-zA-Z0-9_]+$
         aliases:
           description: Alternate names for keyword matching, e.g. ["ReactJS", "React.js"]
         group:
@@ -20708,10 +20696,6 @@ components:
         name:
           type: string
           maxLength: 255
-        slug:
-          type: string
-          maxLength: 255
-          pattern: ^[-a-zA-Z0-9_]+$
         parent:
           type: integer
           nullable: true
@@ -38742,21 +38726,12 @@ components:
     SkillSummary:
       type: object
       properties:
-        total:
-          type: integer
         ungrouped:
           type: integer
         duplicates:
           type: integer
-        employer:
-          type: integer
-        hidden:
-          type: integer
       required:
       - duplicates
-      - employer
-      - hidden
-      - total
       - ungrouped
     SkillUsage:
       type: object

@@ -12,7 +12,6 @@ from .models import (
     EmployerCompanyLinkEvent,
     EmployerNotification,
     EmployerPhoneVerificationEvent,
-    Industry,
     RecruiterProfile,
     RecruitmentNeed,
 )
@@ -53,13 +52,6 @@ class WorkflowReadOnlyInline:
 
     def has_delete_permission(self, request, obj=None):
         return False
-
-
-@admin.register(Industry)
-class IndustryAdmin(admin.ModelAdmin):
-    list_display = ['name', 'slug']
-    search_fields = ['name']
-    prepopulated_fields = {'slug': ('name',)}
 
 
 class CompanyIndustryInline(WorkflowReadOnlyInline, admin.TabularInline):

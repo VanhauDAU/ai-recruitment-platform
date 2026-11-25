@@ -770,6 +770,9 @@ msgstr "You can create at most %(limit)s job alerts."
 msgid "Vị trí chuyên môn là cấp cuối, không chứa mục con."
 msgstr "A specialization is the last level and can't have children."
 
+msgid "Vị trí chuyên môn cần có tên tiếng Anh."
+msgstr "A specialization needs an English name."
+
 msgid "Chọn file ảnh."
 msgstr "Choose an image file."
 
