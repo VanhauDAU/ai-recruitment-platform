@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Đăng nhập mạng xã hội bằng cửa sổ popup](#đăng-nhập-mạng-xã-hội-bằng-cửa-sổ-popup-2026-11-25) | 🟨 Nhánh `feat/oauth-popup-login`, chờ gộp PR |
 | [Gia cố xử lý file tải lên (không antivirus)](#gia-cố-xử-lý-file-tải-lên-không-antivirus-2026-11-25) | 🟨 Nhánh `fix/file-handling-hardening`, chờ PR |
 | [Lưu ảnh đại diện Google vào storage](#lưu-ảnh-đại-diện-google-vào-storage-2026-11-22) | ✅ Đã gộp dev (#359, 25/11) |
 | [Chuẩn bị deploy: trần ghi theo tài khoản (ADR-0031)](#chuẩn-bị-deploy-trần-ghi-theo-tài-khoản-adr-0031-2026-11-25) | 🟨 Nhánh `feat/account-write-throttle`, chờ PR; chỉnh mức ở GĐ6 rehearsal |
@@ -69,6 +70,28 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
 
+
+## Đăng nhập mạng xã hội bằng cửa sổ popup (2026-11-25)
+
+Google/Facebook/LinkedIn trên desktop (`(pointer: fine) and (min-width: 768px)`) mở
+cửa sổ popup 500×640 thay vì chuyển cả trang; mobile, màn hẹp hoặc popup bị chặn giữ
+luồng chuyển trang cũ. Không thêm thư viện, không đổi CSP/COOP.
+
+- **Backend:** `OAuthStartView` nhận `mode=popup` + `nonce` (`[A-Za-z0-9_-]{1,64}`, sai
+  thì bỏ qua và coi như chuyển trang). State Redis lưu `mode`/`nonce`; callback và các
+  lỗi sau khi có state thêm `popup=1&nonce=` vào URL trang callback frontend, giữ
+  nguyên `code`/`error`/`next`. State hỏng/giả không biết chế độ nên popup tự báo lỗi.
+- **Frontend:** `model/oauth-popup.js` (kênh `BroadcastChannel('procv-oauth')`, nonce,
+  mở popup, `relayOAuthResult`) + `use-oauth-popup-login`. Cửa sổ gốc chỉ nhận thư có
+  đúng nonce, trả ack, đổi code lấy phiên; modal đăng nhập (`onSuccess`) ở lại trang,
+  còn lại điều hướng theo `getAuthDestination`. Lỗi hiện toast qua `getOAuthErrorMessage`.
+  `OAuthCallback` ở chế độ popup phát kết quả, chờ ack 1,5 s rồi `window.close()`;
+  không ack thì tự đăng nhập trong popup như cũ.
+- **Giới hạn:** COOP `same-origin` của backend có thể làm `popup.closed` báo true ngay
+  khi popup sang provider — chỉ tắt biểu tượng chờ, kênh vẫn nghe tới khi có kết quả.
+- **Kiểm thử:** pytest popup (7 ca), vitest nút/callback/helper, e2e smoke
+  `candidate-auth.spec.js` mở popup thật bằng `context.waitForEvent('page')`.
+- **Còn lại:** thử thật với Google/Facebook/LinkedIn trên `procv.site` sau deploy.
 
 ## Gia cố xử lý file tải lên (không antivirus) (2026-11-25)
 

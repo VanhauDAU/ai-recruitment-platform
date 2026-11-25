@@ -1,7 +1,5 @@
 """Social login (OAuth Authorization Code Flow) — logic provider ở ../oauth.py."""
 
-from urllib.parse import urlencode
-
 from django.conf import settings
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -18,8 +16,8 @@ from ...services.tokens import issue_tokens
 from ..serializers import SessionUserSerializer
 
 
-def _oauth_error_redirect(portal, error_code):
-    return redirect(f'{oauth.frontend_callback_url(portal)}?{urlencode({"error": error_code})}')
+def _oauth_error_redirect(portal, error_code, nonce=''):
+    return redirect(oauth.frontend_redirect_url(portal, {'error': error_code}, nonce))
 
 
 def _callback_path(provider):
@@ -50,24 +48,26 @@ class OAuthStartView(APIView):
     throttle_scope = 'oauth'
 
     def get(self, request, provider):
-        portal = request.query_params.get('portal', 'main')
+        params = request.query_params
+        nonce = oauth.popup_nonce(params.get('mode'), params.get('nonce'))
+        portal = params.get('portal', 'main')
         if portal not in oauth.PORTAL_PROVIDERS:  # admin & giá trị lạ: không có social login
-            return _oauth_error_redirect('main', 'portal_not_supported')
+            return _oauth_error_redirect('main', 'portal_not_supported', nonce)
         if provider not in oauth.portal_providers(portal):
-            return _oauth_error_redirect(portal, 'provider_not_allowed')
+            return _oauth_error_redirect(portal, 'provider_not_allowed', nonce)
 
-        next_path = oauth.safe_next(request.query_params.get('next', ''))
+        next_path = oauth.safe_next(params.get('next', ''))
         try:
             redirect_uri = request.build_absolute_uri(_callback_path(provider))
             binding = oauth.new_browser_binding()
-            state = oauth.create_state(provider, portal, next_path, binding)
+            state = oauth.create_state(provider, portal, next_path, binding, nonce=nonce)
             return _bind_browser(
                 redirect(oauth.build_authorize_url(provider, redirect_uri, state)),
                 provider,
                 binding,
             )
         except oauth.OAuthError as exc:
-            return _oauth_error_redirect(portal, exc.code)
+            return _oauth_error_redirect(portal, exc.code, nonce)
 
 
 @extend_schema(exclude=True)
@@ -88,26 +88,28 @@ class OAuthCallbackView(APIView):
             request.query_params.get('state'),
             request.COOKIES.get(oauth.OAUTH_BROWSER_COOKIE, ''),
         )
+        # State hỏng/giả không cho biết chế độ popup: trang callback tự báo lỗi tại chỗ.
         if not state_data or state_data.get('provider') != provider:
             return _oauth_error_redirect('main', 'invalid_state')
 
         portal = state_data['portal']
+        nonce = state_data.get('nonce', '')
         if request.query_params.get('error'):  # user bấm Huỷ/Từ chối ở provider
-            return _oauth_error_redirect(portal, 'access_denied')
+            return _oauth_error_redirect(portal, 'access_denied', nonce)
         code = request.query_params.get('code')
         if not code:
-            return _oauth_error_redirect(portal, 'invalid_state')
+            return _oauth_error_redirect(portal, 'invalid_state', nonce)
 
         try:
             redirect_uri = request.build_absolute_uri(_callback_path(provider))
             one_time_code = oauth.complete_provider_login(provider, code, redirect_uri, portal)
         except oauth.OAuthError as exc:
-            return _oauth_error_redirect(portal, exc.code)
+            return _oauth_error_redirect(portal, exc.code, nonce)
 
         params = {'code': one_time_code}
         if state_data.get('next'):
             params['next'] = state_data['next']
-        return redirect(f'{oauth.frontend_callback_url(portal)}?{urlencode(params)}')
+        return redirect(oauth.frontend_redirect_url(portal, params, nonce))
 
 
 @extend_schema(

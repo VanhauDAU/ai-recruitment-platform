@@ -42,3 +42,35 @@ test('candidate auth mascot clings to the card and follows credential privacy st
   await page.getByPlaceholder('Nhập mật khẩu', { exact: true }).focus()
   await expect(page.locator('.auth-mascot-stage .procv-mascot')).toHaveAttribute('data-pose', 'coverEyes')
 })
+
+test('candidate social login runs in a popup on desktop and signs in the opener window', async ({ page, context, baseURL }) => {
+  // Mock ở mức context để popup (trang mới) cũng dùng chung.
+  await mockPublicApi(context)
+  await context.route('http://localhost:8000/api/auth/oauth/google/start/**', (route) => {
+    const start = new URL(route.request().url())
+    expect(start.searchParams.get('mode')).toBe('popup')
+    const callback = new URL('/oauth/callback', baseURL)
+    callback.search = new URLSearchParams({ code: 'e2e-code', popup: '1', nonce: start.searchParams.get('nonce') }).toString()
+    return route.fulfill({ status: 302, headers: { location: callback.toString() } })
+  })
+  let completedCode = null
+  await page.route('http://localhost:8000/api/auth/oauth/complete/', (route) => {
+    completedCode = route.request().postDataJSON().code
+    return route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        access: 'e2e-access',
+        user: { public_id: 'c1', role: 'candidate', email: 'an@example.com', full_name: 'Nguyễn An', email_verified: true, job_preferences_configured: true },
+      }),
+    })
+  })
+  await page.goto('/login')
+
+  const popupOpened = context.waitForEvent('page')
+  await page.getByRole('button', { name: 'Đăng nhập bằng Google' }).click()
+  const popup = await popupOpened
+  await popup.waitForEvent('close')
+
+  await expect(page).toHaveURL(new URL('/', baseURL).toString())
+  expect(completedCode).toBe('e2e-code')
+})

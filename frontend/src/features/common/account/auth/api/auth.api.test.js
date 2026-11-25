@@ -133,6 +133,8 @@ describe('auth API session storage', () => {
 
     expect(oauthStartUrl('google', { portal: 'employer', next: '/tuyendung/app/dashboard' }))
       .toBe('http://localhost:8000/api/auth/oauth/google/start/?portal=employer&next=%2Ftuyendung%2Fapp%2Fdashboard')
+    expect(oauthStartUrl('linkedin', { mode: 'popup', nonce: 'n0nce' }))
+      .toBe('http://localhost:8000/api/auth/oauth/linkedin/start/?portal=main&mode=popup&nonce=n0nce')
     await completeOAuth('one-time-code', 'admin')
 
     expect(post).toHaveBeenCalledWith('/auth/oauth/complete/', { code: 'one-time-code' })

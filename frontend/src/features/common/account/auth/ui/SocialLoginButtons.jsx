@@ -1,5 +1,8 @@
+import { LoadingOutlined } from '@ant-design/icons'
+import { useState } from 'react'
 import { oauthStartUrl } from '../api/auth.api'
 import { getReturnUrl } from '../model/return-url'
+import useOAuthPopupLogin from '../model/use-oauth-popup-login'
 import { useSiteSettings } from '@/entities/system/site-settings'
 import { m } from '@/shared/config/i18n'
 
@@ -52,9 +55,11 @@ function defaultNext() {
 }
 
 /**
- * Cụm nút đăng nhập mạng xã hội, full-page redirect sang backend OAuth start.
+ * Cụm nút đăng nhập mạng xã hội: desktop mở popup OAuth, mobile hoặc popup bị
+ * chặn thì chuyển cả trang sang backend OAuth start.
  * - `portal`: 'main' (Google/Facebook/LinkedIn) hoặc 'employer' (chỉ Google).
  * - `action`: chữ trên aria-label ("Đăng nhập" / "Đăng ký").
+ * - `onSuccess(user)`: login nhúng trong modal — ở lại trang thay vì điều hướng.
  */
 export default function SocialLoginButtons({
   portal = 'main',
@@ -64,8 +69,11 @@ export default function SocialLoginButtons({
   disabled = false,
   next,
   onBeforeRedirect,
+  onSuccess,
 }) {
   const { settings } = useSiteSettings()
+  const popupLogin = useOAuthPopupLogin({ portal, onSuccess })
+  const [activeKey, setActiveKey] = useState(null)
   // Admin có thể tắt bớt nhà cung cấp theo cổng (oauth_providers_*); backend chặn tương tự.
   const enabled = settings[portal === 'employer' ? 'oauth_providers_employer' : 'oauth_providers_candidate']
   const supported = portal === 'employer' ? ['google'] : ['google', 'facebook', 'linkedin']
@@ -81,6 +89,7 @@ export default function SocialLoginButtons({
       `}</style>
       {keys.map((key, index) => {
         const { label, Icon, border } = PROVIDERS[key]
+        const busy = popupLogin.pending && activeKey === key
         // Nút đầu chiếm cả hàng, các nút sau chia đôi (3 nút = 1 full + 2 nửa).
         const span = index === 0 ? 'col-span-12' : 'col-span-12 sm:col-span-6'
         return (
@@ -89,13 +98,17 @@ export default function SocialLoginButtons({
             type="button"
             disabled={disabled}
             aria-label={m.account_social_aria({ action, provider: label })}
+            aria-busy={busy || undefined}
             onClick={() => {
               onBeforeRedirect?.()
-              window.location.assign(oauthStartUrl(key, { portal, next: next ?? defaultNext() }))
+              const options = { portal, next: next ?? defaultNext() }
+              setActiveKey(key)
+              if (popupLogin.start((nonce) => oauthStartUrl(key, { ...options, mode: 'popup', nonce }))) return
+              window.location.assign(oauthStartUrl(key, options))
             }}
             className={`social-oauth-btn ${span} flex h-11 items-center justify-center gap-2 border px-4 text-sm font-medium cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 ${appearanceClasses} ${border}`}
           >
-            <Icon />
+            {busy ? <LoadingOutlined aria-hidden="true" /> : <Icon />}
             <span>{appearance === 'employer' ? m.account_social_button({ action, provider: label }) : label}</span>
           </button>
         )
