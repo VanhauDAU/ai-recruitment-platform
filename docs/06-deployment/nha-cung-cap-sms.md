@@ -169,3 +169,21 @@ Xác nhận rendered Compose trước rollout:
 docker compose config
 docker compose config | grep 'default,auth-email,auth-sms,cv-export,upload-scan'
 ```
+
+## 7. Xác minh thủ công khi SMS còn tắt
+
+Khi `EMPLOYER_SMS_OTP_ENABLED=False`, nhà tuyển dụng mới không tự chứng minh được số
+điện thoại, nên hồ sơ xác thực không duyệt được (`phone_verified` là điều kiện bắt
+buộc). Quản trị viên gọi đến đúng số NTD khai, xác nhận người nghe là chủ tài khoản
+(không hỏi mật khẩu hay OTP), rồi ghi nhận:
+
+```bash
+scripts/deploy/compose.sh exec backend python manage.py verify_employer_phone <email-ntd> --phone 09xxxxxxxx --reason "Gọi xác nhận ngày ... với ..." --actor-email <email-admin>
+```
+
+- Ghi giống một lần xác thực SMS thành công: số liên hệ, số đã xác thực và số đăng
+  nhập thành cùng một số chuẩn `+84…`, nên mọi cổng chặn vẫn dùng
+  `RecruiterProfile.has_verified_phone`. Số đã được NTD khác xác thực bị từ chối.
+- Ghi `EmployerPhoneVerificationEvent` (`reason_code=admin_attested`) và nhật ký quản
+  trị `employer_phone_verified_by_admin` (actor, lý do, 3 số cuối — không lưu cả số).
+- Lệnh **từ chối chạy khi SMS đã bật**: lúc đó NTD tự xác thực bằng OTP.
