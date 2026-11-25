@@ -151,7 +151,7 @@ test('employer smoke: marketing pages render', { tag: '@responsive' }, async ({ 
 
   await page.goto('/tuyendung/lien-he')
   await expect(page.getByRole('heading', { level: 2, name: 'Thông tin liên hệ' })).toBeVisible()
-  await expect(page.locator('main').getByRole('link', { name: /support@aicareercoach\.vn/ })).toBeVisible()
+  await expect(page.locator('main').getByRole('link', { name: /support@procv\.site/ })).toBeVisible()
   await expect(page.getByLabel('Họ và tên')).toHaveCount(0)
   await expectNoHorizontalOverflow(page)
 

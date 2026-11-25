@@ -332,7 +332,7 @@
     "group": "contact",
     "section": "Kênh hỗ trợ",
     "value_type": "email",
-    "value": "support@aicareercoach.vn",
+    "value": "support@procv.site",
     "is_public": true,
     "description": "Email hỗ trợ; cũng là địa chỉ nhận trả lời (reply-to) của email hệ thống.",
     "help": "Người dùng bấm trả lời email hệ thống sẽ gửi về địa chỉ này.",
