@@ -16,6 +16,11 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Nội dung tin lấy từ `EMPLOYER_SMS_CONTENT_TEMPLATE` (không dấu, ≤ 160 ký tự, chỉ
   `{code}`/`{ttl_minutes}`); readiness báo sai mẫu. Production chấp nhận `http`
   hoặc `speedsms`; mã lỗi SpeedSMS (hết số dư, số sai, lỗi tạm) ra reason code riêng.
+#### Changed — Tiêu đề trang chủ gõ chữ trên điện thoại
+
+- Màn dưới 768px: dưới tên trang lần lượt gõ rồi xóa "Tạo CV", "Tìm việc làm",
+  "Tuyển dụng hiệu quả", có con trỏ nhấp nháy. Thẻ h1 vẫn giữ nguyên câu đầy đủ cho
+  SEO và trình đọc màn hình; desktop và người bật giảm chuyển động thấy câu tĩnh.
 
 #### Changed — Tắt ClamAV trên production
 
