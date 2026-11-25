@@ -1,5 +1,4 @@
 from django.db.models import BooleanField, Case, F, IntegerField, OuterRef, Q, Subquery, Value, When
-from django.db.models.functions import Coalesce
 from rest_framework.exceptions import ValidationError
 
 from apps.employers.models import CompanyPinnedJob
@@ -10,6 +9,7 @@ from ..models.querysets import (
     SALARY_BUCKETS,
     active_jobs_queryset,
     filter_salary_bucket_queryset,
+    listing_recency,
     publicly_available_job_filter,
     stopped_job_filter,
 )
@@ -23,7 +23,7 @@ __all__ = [
 ]
 
 TRUTHY_VALUES = {'1', 'true', 'True'}
-JOB_LIST_ORDERINGS = {'newest', 'salary_desc', 'urgent'}
+JOB_LIST_ORDERINGS = {'newest', 'salary_desc', 'closing_soon'}
 
 
 def filter_salary_bucket(queryset, bucket_key):
@@ -168,35 +168,25 @@ def _filter_search(queryset, params):
 
 
 def _order_jobs(queryset, ordering, *, pinned_first=False):
-    """``pinned_first`` puts a company's pinned jobs ahead of the default feed
-    order; an explicit ``ordering`` always wins over the pins."""
+    """Organic order only (ADR-0030): newest first by first publication.
+
+    ``pinned_first`` puts a company's pinned jobs ahead of the default order on
+    its own page; an explicit ``ordering`` always wins over the pins.
+    """
     if ordering and ordering not in JOB_LIST_ORDERINGS:
         raise ValidationError({'ordering': 'Invalid ordering.'})
 
-    queryset = queryset.annotate(
-        lifecycle_recency=Coalesce('first_approved_at', 'published_at', 'created_at')
-    )
-    if ordering == 'newest':
-        return queryset.order_by('-lifecycle_recency', '-created_at', '-id')
+    queryset = queryset.annotate(listing_recency=listing_recency())
+    newest = ['-listing_recency', '-created_at', '-id']
     if ordering == 'salary_desc':
-        return queryset.order_by(
-            F('salary_max').desc(nulls_last=True), '-lifecycle_recency', '-created_at', '-id'
-        )
-    if ordering == 'urgent':
-        return queryset.order_by('-is_urgent', '-lifecycle_recency', '-created_at', '-id')
-    tier_weight = Case(
-        When(tier=Job.Tier.TOP, then=2),
-        When(tier=Job.Tier.FEATURED, then=1),
-        default=0,
-        output_field=IntegerField(),
-    )
-    queryset = queryset.annotate(tier_weight=tier_weight)
-    default_order = ['-tier_weight', '-lifecycle_recency', '-created_at', '-id']
-    if not pinned_first:
-        return queryset.order_by(*default_order)
+        return queryset.order_by(F('salary_max').desc(nulls_last=True), *newest)
+    if ordering == 'closing_soon':
+        return queryset.order_by(F('deadline').asc(nulls_last=True), *newest)
+    if ordering or not pinned_first:
+        return queryset.order_by(*newest)
     pin = CompanyPinnedJob.objects.filter(job_id=OuterRef('pk'), company_id=OuterRef('company_id'))
     return queryset.annotate(pin_order=Subquery(pin.values('sort_order')[:1])).order_by(
-        F('pin_order').asc(nulls_last=True), *default_order
+        F('pin_order').asc(nulls_last=True), *newest
     )
 
 

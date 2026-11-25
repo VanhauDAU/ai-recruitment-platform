@@ -96,8 +96,6 @@ def admin_job_management_queryset(*, params=None):
         queryset = queryset.filter(company__public_id=company)
     if employer := params.get('employer'):
         queryset = queryset.filter(posted_by__public_id=employer)
-    if tier := params.get('tier'):
-        queryset = queryset.filter(tier=tier)
     if policy_hold := params.get('policy_hold'):
         queryset = queryset.filter(policy_hold=policy_hold)
     if moderation_hold := params.get('moderation_hold'):

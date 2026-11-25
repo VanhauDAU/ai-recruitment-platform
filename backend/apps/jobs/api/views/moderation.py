@@ -43,7 +43,6 @@ def _job_detail_response(job, user):
         OpenApiParameter('status', str),
         OpenApiParameter('company', str),
         OpenApiParameter('employer', str),
-        OpenApiParameter('tier', str),
         OpenApiParameter('policy_hold', str),
         OpenApiParameter('moderation_hold', str),
         OpenApiParameter('has_reports', bool),

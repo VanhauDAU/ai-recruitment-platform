@@ -120,8 +120,8 @@ dùng `fold_accents` (bỏ dấu tiếng Việt, chữ thường).
    gửi hoặc đang nằm trong digest chưa gửi xong.
 3. Lấy tối đa `MAX_SCORING_CANDIDATES = 500` tin mới nhất, chấm điểm trong bộ
    nhớ.
-4. Sắp xếp theo điểm, rồi `tier` (`top` > `featured`), thời điểm đăng, `pk`.
-   `tier` là nhãn admin gán, chỉ dùng làm tie-break, không cộng điểm.
+4. Sắp xếp theo điểm, rồi lần đăng đầu (`listing_recency`), `pk`. Không có hạng
+   trả phí hay nhãn gán tay nào chen vào thứ tự (ADR-0030).
 
 `strategy` trả về: `profile-rule-v2` (by-cv) và
 `candidate-preference-rule-v2` (feed). Lane inline hiển thị cho khoảng 40%

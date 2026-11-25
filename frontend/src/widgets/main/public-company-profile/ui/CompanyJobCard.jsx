@@ -6,7 +6,6 @@ import {
   formatJobPostedLabel,
   formatLocations,
   formatSalary,
-  jobCardToneClass,
   jobDetailPath,
   JobPresentationLabels,
   VerifiedEmployerBadge,
@@ -23,7 +22,7 @@ function Chip({ children }) {
 
 /**
  * Thẻ tin trong trang công ty, cùng bố cục với thẻ ở danh sách việc làm (logo,
- * tên công ty, nền theo gói hiển thị). `pinned` gắn nhãn "Nổi bật" cho tin ghim.
+ * tên công ty, nhãn hệ thống). `pinned` gắn nhãn "Nổi bật" cho tin chủ trang ghim.
  */
 export default function CompanyJobCard({ job, pinned = false }) {
   const { isAuthenticated, user } = useSession()
@@ -49,7 +48,7 @@ export default function CompanyJobCard({ job, pinned = false }) {
     <JobImpressionBoundary
       as="article"
       slug={job.slug}
-      className={`company-job-card ${jobCardToneClass(job)}`}
+      className="company-job-card border-slate-200 bg-white"
     >
       <CompanyLogo
         company={{ trade_name: job.company_name, logo_url: job.company_logo_url }}

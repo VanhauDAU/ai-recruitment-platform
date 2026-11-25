@@ -37,6 +37,15 @@ SALARY_BUCKETS = [
 ]
 
 
+def listing_recency():
+    """Mốc xếp hạng duy nhất trên mọi bề mặt công khai: lần đăng đầu (ADR-0030).
+
+    ``published_at`` đổi khi mở lại tin nên không dùng để xếp hạng; bản Python
+    là ``Job.listing_recency_at``.
+    """
+    return Coalesce('first_approved_at', 'published_at', 'created_at')
+
+
 class JobState(models.TextChoices):
     """Effective state of a job as candidates experience it."""
 

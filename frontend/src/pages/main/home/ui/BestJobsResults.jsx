@@ -9,7 +9,7 @@ import {
   jobDetailPath,
   JobPreviewPanel,
   JobPresentationLabels,
-  resolveJobPresentation,
+  jobLabels,
   SavedJobTooltipContent,
   stripCompanyPrefix,
 } from '@/entities/job/job'
@@ -18,7 +18,6 @@ import { useSession } from '@/entities/account/session'
 import { useSavedJobs } from '@/features/main/job/saved-jobs'
 import { JobImpressionBoundary } from '@/features/main/job/track-job-engagement'
 import { m } from '@/shared/config/i18n'
-import { bestJobCardClass, isTopEmployerJob } from '../lib/best-job-card-presentation'
 import { BEST_JOBS_PAGE_SIZE, BEST_JOBS_PREVIEW_DELAY_MS } from '../lib/best-jobs-config'
 
 function LoadingGrid({ count }) {
@@ -92,8 +91,7 @@ export default function BestJobsResults({ animKey, jobs, loading, pageSize = BES
         ]
         const locationLabel = formatLocations(job)
         const isSaved = savedIds.has(job.public_id)
-        const isTopEmployer = isTopEmployerJob(job)
-        const hasLabels = isTopEmployer || Boolean(resolveJobPresentation(job).labels?.length)
+        const hasLabels = jobLabels(job).length > 0
 
         return (
           <JobImpressionBoundary
@@ -102,12 +100,13 @@ export default function BestJobsResults({ animKey, jobs, loading, pageSize = BES
             className="relative h-full"
             onMouseLeave={() => closePreview(160)}
           >
+            {/* Thẻ là <a>: reset của antd (ngoài layer) xóa nền utility thường nên phải dùng `!bg-`. */}
             <a
               href={jobDetailPath(job)}
               target="_blank"
               rel="noreferrer"
               style={{ '--i': index }}
-              className={`best-job-card group border ${bestJobCardClass(job)}`}
+              className="best-job-card group border border-gray-200 !bg-white"
             >
               <div className="best-job-card__logo">
                 {company.charAt(0) || '?'}
@@ -125,15 +124,6 @@ export default function BestJobsResults({ animKey, jobs, loading, pageSize = BES
               <div className="flex min-w-0 flex-1 flex-col">
                 {hasLabels && (
                   <div data-best-job-labels className="mb-0.5 flex flex-wrap items-center gap-1">
-                    {isTopEmployer && (
-                      <span
-                        data-job-label="top-employer"
-                        title="Nhà tuyển dụng có trang thương hiệu nổi bật"
-                        className="inline-flex items-center rounded-full border border-[var(--brand-primary)]/20 bg-[var(--brand-primary-soft)] px-1.5 py-0.5 text-[10px] font-extrabold leading-none tracking-wide text-[var(--brand-primary-hover)]"
-                      >
-                        TOP
-                      </span>
-                    )}
                     <JobPresentationLabels job={job} compact />
                   </div>
                 )}

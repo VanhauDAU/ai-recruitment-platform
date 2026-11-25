@@ -165,7 +165,7 @@ export default function FlashBadge({ responseRate = 80, responseHours = 72 }) {
         <div className="flex flex-col justify-center">
           <div className="mb-3 flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-[0.12em] text-green-50/60">
-              Tin nổi bật
+              Tin phản hồi nhanh
             </span>
             <span className="flex items-center gap-1.5 text-[10px] text-green-50/50">
               <span className="w-1.5 h-1.5 rounded-full bg-[#5dffa3] animate-pulse inline-block" />

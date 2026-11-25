@@ -169,8 +169,8 @@ Quy tắc nội dung:
 | Khối trang chủ | `home_show_banner` | Hiện carousel banner | boolean | true | ✓ |
 | Khối trang chủ | `home_show_stats` | Hiện khối thống kê thị trường | boolean | true | ✓ |
 | Khối trang chủ | `home_show_categories` | Hiện menu ngành nghề | boolean | true | ✓ |
-| Khối trang chủ | `home_show_featured_jobs` | Hiện khối việc làm tốt nhất | boolean | true | ✓ |
-| Khối trang chủ | `home_featured_jobs_count` | Số tin ở khối việc làm tốt nhất | number | 12 | ✓ |
+| Khối trang chủ | `home_show_featured_jobs` | Hiện khối Việc làm nổi bật | boolean | true | ✓ |
+| Khối trang chủ | `home_featured_jobs_count` | Số tin ở khối Việc làm nổi bật | number | 12 | ✓ |
 | Khối trang chủ | `home_show_cv_templates` | Hiện khối mẫu CV | boolean | true | ✓ |
 | Điều hướng | `home_show_popular_searches` | Hiện khối Tra cứu phổ biến | boolean | true | ✓ |
 
@@ -262,6 +262,7 @@ Quy tắc nội dung:
 | Hạn tin | `job_max_deadline_days` | Hạn nhận hồ sơ tối đa (ngày) | number | 90 |  |
 | Hạn tin | `job_max_public_lifetime_days` | Thời gian hiển thị tối đa (ngày) | number | 90 |  |
 | Hạn tin | `job_renewal_grace_days` | Thời gian cho gia hạn tin hết hạn (ngày) | number | 30 |  |
+| Hạn tin | `job_closing_soon_days` | Nhãn "Sắp hết hạn" (ngày, 1–30) | number | 7 |  |
 | Thống kê | `job_view_dedup_hours` | Gộp lượt xem trùng (giờ) | number | 24 |  |
 | Việc làm gần bạn | `nearby_jobs_default_radius_km` | Bán kính mặc định (km) | number | 10 | ✓ |
 | Việc làm gần bạn | `nearby_jobs_max_radius_km` | Bán kính tối đa (km) | number | 50 | ✓ |

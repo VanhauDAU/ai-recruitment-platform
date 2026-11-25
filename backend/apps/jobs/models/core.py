@@ -132,18 +132,6 @@ class Job(models.Model):
         # Fixable content: the owner may edit, then resubmits for review.
         CHANGES_REQUESTED = 'changes_requested', gettext_lazy('Tạm ẩn, cần chỉnh sửa theo yêu cầu')
 
-    class Tier(models.TextChoices):
-        """Hạng hiển thị của tin — quyết định nền card + thứ tự ưu tiên trong danh sách.
-
-        Admin gán qua Django admin; về sau (giai đoạn gói dịch vụ NTD) sẽ gán
-        tự động theo gói đã mua. Tách riêng khỏi các nhãn HOT/GẤP vì hạng là
-        single-choice còn nhãn gắn kèm được nhiều cái cùng lúc.
-        """
-
-        STANDARD = 'standard', gettext_lazy('Tin thường')
-        FEATURED = 'featured', gettext_lazy('Tin nổi bật')
-        TOP = 'top', gettext_lazy('Tin TOP')
-
     public_id = models.CharField(max_length=50, unique=True, editable=False)
     # Mã đọc qua điện thoại cho hỗ trợ/tra cứu (xem domain/job_code).
     code = models.CharField(max_length=JOB_CODE_LENGTH, unique=True, editable=False)
@@ -250,11 +238,8 @@ class Job(models.Model):
         default=DEFAULT_AUTO_REJECTION_EMAIL,
         help_text='Nội dung email gửi ứng viên ba ngày sau khi hồ sơ bị tự động từ chối.',
     )
-    # Hạng tin + nhãn dịch vụ (admin gán). Nhãn "xác thực" không lưu ở đây vì
-    # được tính từ các tiêu chí của recruiter đăng tin; nhãn thời gian tính từ ngày.
-    tier = models.CharField(max_length=20, choices=Tier.choices, default=Tier.STANDARD)
-    is_hot = models.BooleanField(default=False, help_text='Nhãn HOT (đỏ) trên card')
-    is_urgent = models.BooleanField(default=False, help_text='Nhãn GẤP / tuyển gấp (cam) trên card')
+    # Nhãn tin chỉ do hệ thống tính từ dữ liệu thật (ADR-0030): không có hạng
+    # trả phí hay nhãn gán tay.
     # Huy hiệu Sấm Chớp do task định kỳ tính từ mức phản hồi của người đăng
     # (ADR-0027, apps.applications.services.refresh_flash_badges), không ai sửa tay.
     has_flash_badge = models.BooleanField(
@@ -438,6 +423,15 @@ class Job(models.Model):
             or self.visibility_ends_at is None
             or self.visibility_ends_at <= now
         )
+
+    @property
+    def listing_recency_at(self):
+        """Mốc xếp hạng duy nhất của tin: lần đăng đầu (ADR-0030).
+
+        Sửa, đóng/mở lại, gia hạn hay khôi phục sau kiểm duyệt không đổi mốc này,
+        nên không có cách "làm mới" tin để chen lên đầu. Khớp ``listing_recency()``.
+        """
+        return self.first_approved_at or self.published_at or self.created_at
 
     @property
     def stopped_at(self):

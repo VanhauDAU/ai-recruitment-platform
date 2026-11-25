@@ -16,6 +16,7 @@ import {
   replaceCommaParam,
   replaceLocationParams,
 } from '../lib/job-list-params'
+import { normalizeJobSort } from '../lib/job-sort-options'
 
 // Toàn bộ state bộ lọc của trang việc làm sống trên URL (share link được,
 // back/forward đúng). Hook này là nơi duy nhất đọc/ghi các param đó;
@@ -32,7 +33,7 @@ export default function useJobListFilters(provinces) {
   const selectedLocations = getLocationIds(searchParams)
   const selectedCategories = getCommaList(searchParams, 'cat').map(Number)
   const searchBy = searchParams.get('search_by') || 'title'
-  const ordering = searchParams.get('sort') || ''
+  const ordering = normalizeJobSort(searchParams.get('sort'))
   const expYears = getCommaList(searchParams, 'exp')
   const searchParamKeyword = searchParams.get('search') || ''
   const hasFilters = FILTER_KEYS.some((key) => searchParams.has(key))

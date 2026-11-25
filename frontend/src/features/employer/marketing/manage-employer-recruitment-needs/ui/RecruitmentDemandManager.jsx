@@ -18,7 +18,6 @@ import { getIntlLocale, m } from '@/shared/config/i18n'
 const MIN_BUDGET = 1_000_000
 const CONSULTATION_OPTIONS = [
   { value: 'free_posting', label: m.employer_account_need_topic_free_posting() },
-  { value: 'service_packages', label: m.employer_account_need_topic_service_packages_short() },
   { value: 'promotions', label: m.employer_account_need_topic_promotions_short() },
   { value: 'other', label: m.employer_account_need_topic_other() },
 ]

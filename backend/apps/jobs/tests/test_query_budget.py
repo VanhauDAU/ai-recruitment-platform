@@ -31,7 +31,11 @@ MAINTENANCE_CHECK_QUERIES = 1
 # recruiter + correlated legal/report evidence, và active domain claims. Các
 # query chạy một lần cho cả response nên tổng vẫn phẳng theo số bản ghi.
 BADGE_QUERY_BUDGET = 3
-JOB_LIST_QUERY_BUDGET = 5 + BADGE_QUERY_BUDGET + MAINTENANCE_CHECK_QUERIES
+# +1 cho ngưỡng nhãn "Sắp hết hạn" (`job_closing_soon_days`, ADR-0030): đọc một lần
+# cho cả trang; giống MAINTENANCE_CHECK_QUERIES, production đọc từ cache.
+LABEL_SETTING_QUERIES = 1
+CARD_QUERIES = BADGE_QUERY_BUDGET + LABEL_SETTING_QUERIES + MAINTENANCE_CHECK_QUERIES
+JOB_LIST_QUERY_BUDGET = 5 + CARD_QUERIES
 # Homepage preview adds two relation prefetches (benefits + schedules).
 HOMEPAGE_BEST_JOB_LIST_QUERY_BUDGET = JOB_LIST_QUERY_BUDGET + 2
 # Chip địa điểm: đếm theo tỉnh + đếm theo phường + 1 SELECT tên (kèm tỉnh cha).
@@ -43,8 +47,8 @@ ADMIN_JOB_LIST_QUERY_BUDGET = 2
 # +1 aggregate for the status-tab counts and +1 category prefetch (one query
 # each whatever the page size).
 EMPLOYER_JOB_LIST_QUERY_BUDGET = 7 + MAINTENANCE_CHECK_QUERIES
-SAVED_JOB_SIMILARITY_QUERY_BUDGET = 8 + BADGE_QUERY_BUDGET + MAINTENANCE_CHECK_QUERIES
-SAVED_JOB_FALLBACK_QUERY_BUDGET = 9 + BADGE_QUERY_BUDGET + MAINTENANCE_CHECK_QUERIES
+SAVED_JOB_SIMILARITY_QUERY_BUDGET = 8 + CARD_QUERIES
+SAVED_JOB_FALLBACK_QUERY_BUDGET = 9 + CARD_QUERIES
 
 
 class JobListQueryBudgetTests(APITestCase):

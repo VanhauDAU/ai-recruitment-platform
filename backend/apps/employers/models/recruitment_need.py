@@ -19,10 +19,6 @@ class RecruitmentNeed(models.Model):
 
     class ConsultationTopic(models.TextChoices):
         FREE_POSTING = 'free_posting', gettext_lazy('Tôi muốn được đăng tin miễn phí')
-        SERVICE_PACKAGES = (
-            'service_packages',
-            gettext_lazy('Tôi muốn tìm hiểu thêm về các gói dịch vụ'),
-        )
         PROMOTIONS = 'promotions', gettext_lazy('Tôi muốn biết thêm về các chương trình ưu đãi')
         OTHER = 'other', gettext_lazy('Khác')
 

@@ -475,6 +475,18 @@ class StrictJobAlertSelectorTests(TestCase):
         )
         return job
 
+    def test_reopened_job_is_not_sent_again_as_new(self):
+        new = self._job('Python New', category=self.leaf)
+        self._job(
+            'Python Reopened',
+            category=self.leaf,
+            first_approved_at=self.now - timedelta(days=20),
+        )
+
+        results = list(strict_job_alert_matches(self.alert, published_before=self.now))
+
+        self.assertEqual([job.pk for job in results], [new.pk])
+
     def test_categories_are_or_with_descendants_and_other_criteria_remain_and(self):
         matching_descendant = self._job('Python Engineer', category=self.leaf)
         matching_other_selection = self._job('Python Sales', category=self.other_root)

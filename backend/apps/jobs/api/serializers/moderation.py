@@ -88,7 +88,6 @@ class AdminJobManagementListSerializer(serializers.ModelSerializer):
     company_role_label = serializers.SerializerMethodField()
     recruiter_profile_created_at = serializers.SerializerMethodField()
     status_label = serializers.CharField(source='get_status_display', read_only=True)
-    tier_label = serializers.CharField(source='get_tier_display', read_only=True)
     policy_hold_label = serializers.CharField(source='get_policy_hold_display', read_only=True)
     moderation_hold_label = serializers.CharField(
         source='get_moderation_hold_display', read_only=True
@@ -125,10 +124,6 @@ class AdminJobManagementListSerializer(serializers.ModelSerializer):
             'policy_hold_label',
             'moderation_hold',
             'moderation_hold_label',
-            'tier',
-            'tier_label',
-            'is_hot',
-            'is_urgent',
             'has_flash_badge',
             'deadline',
             'created_at',
