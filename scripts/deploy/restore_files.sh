@@ -1,23 +1,29 @@
 #!/usr/bin/env bash
-# Chép ngược file riêng tư từ bucket sao lưu về bucket production. Không xóa gì ở
-# đích: file mới tạo sau lần sao lưu vẫn giữ nguyên; file thiếu được chép lại, file
-# khác nội dung bị thay bằng bản sao lưu.
+# Chép ngược file từ bucket sao lưu về bucket production (riêng tư hoặc media công
+# khai). Không xóa gì ở đích: file mới tạo sau lần sao lưu vẫn giữ nguyên; file thiếu
+# được chép lại, file khác nội dung bị thay bằng bản sao lưu.
 #   scripts/deploy/restore_files.sh --dry-run                   # xem sẽ chép những gì
 #   scripts/deploy/restore_files.sh --prefix cvs/2026/11/       # chỉ một tiền tố
 #   scripts/deploy/restore_files.sh --from r2-backup-read:procv-backups-files
+#   scripts/deploy/restore_files.sh --bucket public --dry-run   # media công khai
 #
 # Tùy chọn:
-#   --from REMOTE:BUCKET  nguồn; mặc định BACKUP_FILES_REMOTE. Dùng khi khôi phục qua một
+#   --bucket private|public  bucket cần khôi phục (mặc định private).
+#                         private: nguồn BACKUP_FILES_REMOTE → bucket R2_PRIVATE_BUCKET
+#                         (đích dựng từ R2_PRIVATE_*; BACKUP_FILES_SOURCE ghi đè).
+#                         public: nguồn BACKUP_PUBLIC_FILES_REMOTE → bucket R2_PUBLIC_BUCKET
+#                         (đích dựng từ R2_PUBLIC_*; BACKUP_PUBLIC_FILES_SOURCE ghi đè).
+#   --from REMOTE:BUCKET  nguồn, thay mặc định của --bucket. Dùng khi khôi phục qua một
 #                         remote khác (VPS mới, token tạm tạo trên dashboard; xem runbook).
 #   --prefix ĐƯỜNG_DẪN    chỉ khôi phục object có tiền tố này (xóa nhầm một phần).
 #   --dry-run             chỉ liệt kê, không chép.
 #   --yes                 không hỏi xác nhận.
-# Đích dựng từ R2_* trong backend/.env (như backup_files.sh); BACKUP_FILES_SOURCE ghi đè.
 set -euo pipefail
 # shellcheck source=scripts/deploy/lib.sh
 . "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 SOURCE=""
+BUCKET=private
 PREFIX=""
 DRY_RUN=false
 ASSUME_YES=false
@@ -25,6 +31,10 @@ while (($#)); do
   case "$1" in
     --from)
       SOURCE="${2:?--from cần remote:bucket}"
+      shift 2
+      ;;
+    --bucket)
+      BUCKET="${2:?--bucket cần private hoặc public}"
       shift 2
       ;;
     --prefix)
@@ -42,16 +52,27 @@ while (($#)); do
 done
 
 command -v rclone >/dev/null || die "Thiếu rclone: sudo apt-get install -y rclone"
-SOURCE="${SOURCE:-$(env_get BACKUP_FILES_REMOTE)}"
-[[ -n "$SOURCE" ]] || die "Chưa có nguồn: --from remote:bucket hoặc BACKUP_FILES_REMOTE."
+case "$BUCKET" in
+  private) source_key=BACKUP_FILES_REMOTE ;;
+  public) source_key=BACKUP_PUBLIC_FILES_REMOTE ;;
+  *) die "--bucket chỉ nhận private hoặc public (nhận: $BUCKET)." ;;
+esac
+SOURCE="${SOURCE:-$(env_get "$source_key")}"
+[[ -n "$SOURCE" ]] || die "Chưa có nguồn: --from remote:bucket hoặc $source_key."
 [[ "$PREFIX" != *..* ]] || die "--prefix không được chứa '..'."
 PREFIX="${PREFIX#/}"
-set_private_remote
+if [[ "$BUCKET" == public ]]; then
+  set_public_remote
+  TARGET="$PUBLIC_REMOTE"
+else
+  set_private_remote
+  TARGET="$PRIVATE_REMOTE"
+fi
 acquire_lock files
 
 src="$SOURCE${PREFIX:+/$PREFIX}"
-dst="$PRIVATE_REMOTE${PREFIX:+/$PREFIX}"
-args=(copy "$src" "$dst" --s3-no-check-bucket --fast-list --transfers 8 --checkers 16)
+dst="$TARGET${PREFIX:+/$PREFIX}"
+args=(copy "$src" "$dst" --metadata --s3-no-check-bucket --fast-list --transfers 8 --checkers 16)
 
 if [[ "$DRY_RUN" == true ]]; then
   log "==> Thử (không chép): $src → ${dst#*:}"
@@ -60,7 +81,7 @@ if [[ "$DRY_RUN" == true ]]; then
 fi
 
 if [[ "$ASSUME_YES" == false ]]; then
-  read -r -p "Chép $src vào bucket production ${dst#*:} (thay file khác nội dung)? Gõ 'procv' để tiếp tục: " answer
+  read -r -p "Chép $src vào bucket production ($BUCKET) ${dst#*:} (thay file khác nội dung)? Gõ 'procv' để tiếp tục: " answer
   [[ "$answer" == procv ]] || die "Đã hủy."
 fi
 log "==> Khôi phục $src → ${dst#*:}"
