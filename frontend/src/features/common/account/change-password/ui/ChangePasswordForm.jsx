@@ -143,7 +143,8 @@ function EmailCodeField({ email, initialWait = 0 }) {
  * Form đặt/đổi mật khẩu dùng chung hai cổng.
  *
  * Tài khoản OAuth chưa có mật khẩu không có mật khẩu hiện tại để đối chiếu nên
- * nhập mã gửi qua email (`email_code`) để chứng minh là chủ tài khoản.
+ * nhập mã gửi qua email (`email_code`) để chứng minh là chủ tài khoản. Phiên vừa
+ * đăng nhập Google được miễn mã; server quyết định, form chỉ ẩn/hiện theo đó.
  */
 export default function ChangePasswordForm({
   defaultLogoutAllSessions = false,
@@ -157,13 +158,21 @@ export default function ChangePasswordForm({
   const hasPassword = Boolean(user?.has_usable_password)
   const passwordValue = Form.useWatch('password', form) || ''
   const [passwordFocused, setPasswordFocused] = useState(false)
-  // Hỏi trước khi người dùng điền form; chỉ tài khoản chưa có mật khẩu mới cần mã.
+  // Hỏi trước khi người dùng điền form xem phiên này có cần mã không.
   const requirements = useQuery({
     queryKey: ['change-password', 'requirements'],
     queryFn: getPasswordSetupRequirements,
     enabled: !hasPassword,
     staleTime: 0,
+    // Quyết định gắn với phiên và thời điểm: không dùng lại câu trả lời cũ.
+    gcTime: 0,
   })
+  // Cửa sổ miễn mã có thể hết trong lúc form đang mở: lỗi `email_code` khi lưu bật lại ô mã.
+  const [codeDemanded, setCodeDemanded] = useState(false)
+  const checking = !hasPassword && requirements.isPending
+  // Không hỏi được server thì coi như cần mã.
+  const needsCode = !hasPassword && !checking
+    && (codeDemanded || requirements.data?.requires_email_code !== false)
   const codeMinutes = Math.max(1, Math.round((requirements.data?.email_code_ttl_seconds || 600) / 60))
   const mutation = useMutation({
     mutationFn: changeCurrentPassword,
@@ -176,7 +185,12 @@ export default function ChangePasswordForm({
       onSuccess?.(result)
       if (successRedirect) navigate(successRedirect, { replace: true })
     },
-    onError: (error) => {
+    onError: (error, payload) => {
+      if (!hasPassword && !payload.email_code && error.response?.data?.email_code) {
+        setCodeDemanded(true)
+        message.warning(m.account_password_google_expired())
+        return
+      }
       const fields = error.response?.data && typeof error.response.data === 'object'
         ? Object.entries(error.response.data)
           .filter(([name]) => ['current_password', 'email_code', 'password'].includes(name))
@@ -190,7 +204,7 @@ export default function ChangePasswordForm({
   function submit(values) {
     mutation.mutate({
       current_password: values.current_password || '',
-      ...(hasPassword ? {} : { email_code: values.email_code || '' }),
+      ...(needsCode ? { email_code: values.email_code || '' } : {}),
       password: values.password,
       logout_all_sessions: Boolean(values.logout_all_sessions),
     })
@@ -198,16 +212,18 @@ export default function ChangePasswordForm({
 
   return (
     <div className="w-full">
-      {!hasPassword && requirements.isPending && (
+      {checking && (
         <Skeleton active title={false} paragraph={{ rows: 2 }} className="!mb-4" />
       )}
-      {!hasPassword && !requirements.isPending && (
+      {!hasPassword && !checking && (
         <Alert
           type="info"
           showIcon
           className="!mb-5 rounded-xl border-sky-200 bg-sky-50/70"
           title={m.account_password_no_password_title()}
-          description={m.account_password_code_desc({ email: user?.email || '', minutes: codeMinutes })}
+          description={needsCode
+            ? m.account_password_code_desc({ email: user?.email || '', minutes: codeMinutes })
+            : m.account_password_google_recent_desc()}
         />
       )}
       <Form
@@ -252,7 +268,7 @@ export default function ChangePasswordForm({
             />
           </Form.Item>
         )}
-        {!hasPassword && (
+        {needsCode && (
           <EmailCodeField email={user?.email || ''} initialWait={requirements.data?.resend_after_seconds || 0} />
         )}
         <div className="relative">
@@ -318,6 +334,7 @@ export default function ChangePasswordForm({
             htmlType="submit"
             size="middle"
             loading={mutation.isPending}
+            disabled={checking}
             className="!h-10 min-w-28 !rounded-lg !bg-[var(--brand-primary)] font-semibold text-white shadow-sm hover:!bg-[var(--brand-primary-hover)] !border-[var(--brand-primary)]"
           >
             {hasPassword ? m.account_password_submit_update() : m.account_password_submit_create()}

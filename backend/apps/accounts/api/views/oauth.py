@@ -129,9 +129,9 @@ class OAuthCompleteView(APIView):
     throttle_scope = 'oauth'
 
     def post(self, request):
-        user = oauth.redeem_one_time_code(request.data.get('code'))
+        user, provider = oauth.redeem_one_time_code(request.data.get('code'))
         # Social providers have completed their own identity verification.
         user_data = SessionUserSerializer(user, context={'request': request}).data
-        tokens = issue_tokens(user, request, auth_method='oauth')
+        tokens = issue_tokens(user, request, auth_method='oauth', oauth_provider=provider)
         response = Response({'user': user_data, 'access': tokens['access']})
         return set_refresh_cookie(response, tokens['refresh'], user=user)

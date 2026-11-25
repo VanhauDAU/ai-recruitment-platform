@@ -185,6 +185,10 @@ EMAIL_VERIFICATION_RESEND_COOLDOWN = config(
 PASSWORD_RESET_TTL = config('PASSWORD_RESET_TTL', default=60 * 30, cast=int)
 PASSWORD_RESET_RESEND_COOLDOWN = config('PASSWORD_RESET_RESEND_COOLDOWN', default=60, cast=int)
 PASSWORD_SETUP_CODE_TTL = config('PASSWORD_SETUP_CODE_TTL', default=60 * 10, cast=int)
+# Phiên vừa đăng nhập Google trong khoảng này được tạo mật khẩu không cần mã.
+PASSWORD_SETUP_GOOGLE_MAX_AGE_SECONDS = config(
+    'PASSWORD_SETUP_GOOGLE_MAX_AGE_SECONDS', default=60 * 10, cast=int
+)
 PASSWORD_SETUP_CODE_RESEND_COOLDOWN = config(
     'PASSWORD_SETUP_CODE_RESEND_COOLDOWN', default=60, cast=int
 )

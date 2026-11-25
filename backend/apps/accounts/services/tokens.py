@@ -28,7 +28,7 @@ def build_refresh_token(user):
     return token
 
 
-def issue_tokens(user, request=None, *, auth_method='password'):
+def issue_tokens(user, request=None, *, auth_method='password', oauth_provider=''):
     if user.is_admin_role:
         # Mọi luồng phát phiên admin (đăng nhập, đổi mật khẩu...) đều qua đây.
         cf_access.require_access(request)
@@ -42,7 +42,9 @@ def issue_tokens(user, request=None, *, auth_method='password'):
         update_last_login(None, user)
         refresh = build_refresh_token(user)
         # Tạo phiên thiết bị và gắn claim `sid` TRƯỚC khi serialize access/refresh.
-        session = auth_sessions.start_session(user, refresh, request, auth_method=auth_method)
+        session = auth_sessions.start_session(
+            user, refresh, request, auth_method=auth_method, oauth_provider=oauth_provider
+        )
         # Refresh JWT hết hạn cùng lúc với phiên của cổng, không theo trần chung.
         refresh['exp'] = datetime_to_epoch(session.expires_at)
         access = refresh.access_token

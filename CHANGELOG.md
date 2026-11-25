@@ -8,6 +8,14 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Changed — Vừa đăng nhập Google thì tạo mật khẩu không cần mã email
+
+- Tài khoản chưa có mật khẩu, trong 10 phút sau lần đăng nhập Google của phiên
+  (`PASSWORD_SETUP_GOOGLE_MAX_AGE_SECONDS`), tạo mật khẩu không cần mã; quá hạn hoặc
+  đăng nhập bằng Facebook/LinkedIn vẫn cần mã. Refresh token không làm mới mốc này.
+- Migration `accounts.0007`: `AuthSession.oauth_provider`; phiên đang mở trước khi
+  triển khai vẫn cần mã.
+
 #### Added — Ảnh đại diện bài cẩm nang lấy từ đường dẫn
 
 - Trình soạn bài có ô "Dán link ảnh": backend tải ảnh về media (mã hóa lại như ảnh
