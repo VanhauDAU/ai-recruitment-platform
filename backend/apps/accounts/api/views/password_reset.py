@@ -7,7 +7,7 @@ from rest_framework import permissions, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from common.api.throttling import ClientIPScopedRateThrottle
+from common.api.throttling import ClientIPScopedRateThrottle, with_account_write_cap
 
 from ...services import password_reset as pr
 from ...services import verify_request_captcha
@@ -29,7 +29,7 @@ _RESET_SENT_DETAIL = gettext_lazy(
 )
 class PasswordResetRequestView(APIView):
     permission_classes = [permissions.AllowAny]
-    throttle_classes = [ClientIPScopedRateThrottle]
+    throttle_classes = with_account_write_cap(ClientIPScopedRateThrottle)
     throttle_scope = 'password_reset'
 
     def post(self, request):
@@ -88,7 +88,7 @@ class PasswordResetValidateView(APIView):
 )
 class PasswordResetConfirmView(APIView):
     permission_classes = [permissions.AllowAny]
-    throttle_classes = [ClientIPScopedRateThrottle]
+    throttle_classes = with_account_write_cap(ClientIPScopedRateThrottle)
     throttle_scope = 'password_reset_confirm'
 
     def post(self, request):

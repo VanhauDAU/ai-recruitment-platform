@@ -21,6 +21,7 @@ from apps.cvs.services import (
 )
 from apps.employers.services import ensure_recruiter_candidate_data_access
 from common.api.params import parse_bool
+from common.api.throttling import WriteScopedRateThrottle, with_default_throttles
 from common.storage.r2 import private_media_storage
 
 from ...models import Application
@@ -64,6 +65,8 @@ def _payload(request, application, export):
     responses={200: RecruiterCvExportSerializer, 201: RecruiterCvExportSerializer},
 )
 class RecruiterApplicationCvExportView(APIView):
+    throttle_classes = with_default_throttles(WriteScopedRateThrottle)
+    throttle_scope = 'application_cv_export'
     permission_classes = [IsEmployer]
 
     def post(self, request, public_id):

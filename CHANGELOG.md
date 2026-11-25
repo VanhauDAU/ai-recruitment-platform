@@ -21,6 +21,19 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - LibreOffice dựng bản xem trước chạy với giới hạn bộ nhớ 2 GiB, CPU 30 s, bị giết cả
   nhóm tiến trình khi quá giờ; tối đa 2 lượt cùng lúc, hết chỗ thì trả tệp gốc.
 
+#### Security — Trần ghi theo tài khoản cho mọi API ghi (ADR-0031)
+
+- Mọi request ghi của người đã đăng nhập có trần theo tài khoản: 90/phút và 3000/giờ
+  (admin 300/phút, 10000/giờ). Lượt đọc và khách không tính. Vượt trần trả 429 và log
+  WARNING gồm scope + `user.pk`.
+- View đã tự khai throttle giữ throttle cũ và gắn thêm trần (`with_account_write_cap`); 21
+  thao tác rủi ro cao có scope riêng chỉ tính lượt ghi (tạo kỹ năng 20/giờ, tạo công ty
+  20/ngày, nộp đơn 30/giờ, nhắc NTD 10/giờ, phát hành chiến dịch 10/giờ, yêu cầu dữ liệu cá
+  nhân 10/ngày…).
+- Miễn trần: lượt xem/hiển thị tin, sự kiện thông báo, vé WebSocket.
+- Throttle ảnh bài đăng và xuất báo cáo chiến dịch không còn dùng chung một bucket.
+- Test mới quét mọi route ghi: thiếu trần, sai scope hay scope chưa có rate đều làm CI đỏ.
+
 #### Added — Sao lưu media công khai và báo cáo CSP qua Sentry
 
 - `scripts/deploy/backup_files.sh` sao lưu thêm bucket `procv-public-media` sang

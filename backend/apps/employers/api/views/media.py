@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import IsEmployer
+from common.api.throttling import WriteScopedRateThrottle, with_default_throttles
 from common.storage.media import validate_image_upload
 
 from ...models import CompanyImage
@@ -80,6 +81,9 @@ def _media_response(request, company, update_request):
 class CompanyImageUploadView(APIView):
     """Upload ảnh cho công ty: logo, cover hoặc ảnh giới thiệu (`kind`)."""
 
+    throttle_classes = with_default_throttles(WriteScopedRateThrottle)
+    throttle_scope = 'company_media_upload'
+    throttle_scope_methods = ('POST',)
     permission_classes = [IsEmployer]
     parser_classes = [parsers.JSONParser, parsers.MultiPartParser]
     kind = ''  # 'logo' | 'cover' | 'gallery'

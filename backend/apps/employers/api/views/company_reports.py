@@ -7,6 +7,7 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import IsCandidate
+from common.api.throttling import with_account_write_cap
 
 from ...services import submit_company_report
 from ..serializers import CompanyReportCreatedSerializer, CompanyReportCreateSerializer
@@ -17,7 +18,7 @@ class CompanyReportCreateView(APIView):
     # Signed-in candidates only: an anonymous report cannot be traced or
     # deduplicated, and employers must not report their competitors.
     permission_classes = [IsCandidate]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = with_account_write_cap(ScopedRateThrottle)
     throttle_scope = 'company_report'
 
     @extend_schema(

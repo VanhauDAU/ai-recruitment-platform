@@ -8,7 +8,7 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import AdminPortalPermission, IsCandidate
-from common.api.throttling import ClientIPScopedRateThrottle
+from common.api.throttling import ClientIPScopedRateThrottle, with_account_write_cap
 
 from ...models import JobReport
 from ...selectors import job_report_queryset, public_jobs_queryset
@@ -35,7 +35,7 @@ class JobReportCreateView(APIView):
     permission_classes = [IsCandidate]
     # Separate account and trusted-IP buckets prevent both one-account spam and
     # one-origin account rotation.
-    throttle_classes = [ScopedRateThrottle, ClientIPScopedRateThrottle]
+    throttle_classes = with_account_write_cap(ScopedRateThrottle, ClientIPScopedRateThrottle)
     throttle_scope = 'job_report'
 
     def post(self, request, public_id):

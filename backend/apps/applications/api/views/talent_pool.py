@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import IsCandidate, IsEmployer
 from apps.employers.services import ensure_recruiter_candidate_data_access
+from common.api.throttling import WriteScopedRateThrottle, with_default_throttles
 
 from ...selectors import (
     candidate_talent_pool_queryset,
@@ -120,6 +121,8 @@ class RecruiterTalentSuggestionView(APIView):
     responses={204: None},
 )
 class RecruiterTalentPoolInviteView(APIView):
+    throttle_classes = with_default_throttles(WriteScopedRateThrottle)
+    throttle_scope = 'talent_pool_invite'
     permission_classes = [IsEmployer]
 
     def post(self, request, public_id):

@@ -11,7 +11,11 @@ from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import IsEmployer
 from apps.employers.services import ensure_recruiter_candidate_data_access
-from common.api.throttling import ClientIPScopedRateThrottle
+from common.api.throttling import (
+    ClientIPScopedRateThrottle,
+    WriteScopedRateThrottle,
+    with_default_throttles,
+)
 
 from ...selectors import (
     employer_application_queryset,
@@ -44,6 +48,8 @@ def _application(request, public_id):
 
 @extend_schema(tags=['applications'])
 class RecruiterReviewLinkListCreateView(APIView):
+    throttle_classes = with_default_throttles(WriteScopedRateThrottle)
+    throttle_scope = 'review_link_create'
     permission_classes = [IsEmployer]
 
     @extend_schema(

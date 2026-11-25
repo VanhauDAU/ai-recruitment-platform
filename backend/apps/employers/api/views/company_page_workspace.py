@@ -10,6 +10,7 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import IsEmployer
+from common.api.throttling import with_account_write_cap
 
 from ...models.page_access import resolve_company_page_access
 from ...selectors import (
@@ -44,7 +45,7 @@ class CompanyPageWorkspaceAPIView(APIView):
     """Resolves the caller's company and page policy once per request."""
 
     permission_classes = [IsEmployer]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = with_account_write_cap(ScopedRateThrottle)
     # ``CompanyPageAccess`` flag the view requires; empty for the read-only workspace.
     required_capability = ''
 
