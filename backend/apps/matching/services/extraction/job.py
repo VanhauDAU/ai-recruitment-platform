@@ -13,9 +13,9 @@ Hai loại câu không thành chunk:
 import re
 
 from apps.jobs.models import Job
+from apps.skills.domain import UNCOUNTED_GROUPS
 from common.html.plain_text import html_plain_text
 
-from ..skills import UNCOUNTED_GROUPS
 from .profile import MAX_JOB_CHUNKS, MIN_JOB_TEXT_CHARS, ExtractionError, make_chunks
 from .text import detect_language, normalize_text, split_sentences
 

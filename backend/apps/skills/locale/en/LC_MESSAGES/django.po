@@ -1,0 +1,38 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: procv\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Cần chọn nhóm hoặc trạng thái để cập nhật."
+msgstr "Choose a group or a status to update."
+
+msgid "Hệ thống"
+msgstr "System"
+
+msgid "Nhập dữ liệu"
+msgstr "Data import"
+
+msgid "Nhà tuyển dụng"
+msgstr "Employer"
+
+msgid "Quản trị viên"
+msgstr "Administrator"
+
+msgid "Hãy chọn một kỹ năng khác để gộp vào."
+msgstr "Choose a different skill to merge into."
+
+msgid "“%(name)s” đã thuộc kỹ năng “%(owner)s”."
+msgstr "“%(name)s” already belongs to the skill “%(owner)s”."
+
+msgid "Nhóm “%(name)s” do hệ thống đối sánh dùng nên không đổi tên hay ẩn được."
+msgstr "The group “%(name)s” is used by the matching system, so it can't be renamed or hidden."
+
+msgid "Đã có nhóm cùng tên."
+msgstr "A group with this name already exists."
+
+msgid "Nhóm cha không được là chính nhóm này hay nhóm con của nó."
+msgstr "The parent group can't be this group or one of its subgroups."

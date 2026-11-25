@@ -190,6 +190,8 @@ SPECTACULAR_SETTINGS = {
         # work_type và work_types (danh sách) dùng chung một tập lựa chọn.
         'JobWorkTypeEnum': 'apps.jobs.models.Job.WorkType',
         'JobCategoryTypeEnum': 'apps.jobs.models.JobCategory.CategoryType',
+        'JobCategoryStatusEnum': 'apps.jobs.models.JobCategory.Status',
+        'BenefitCategoryEnum': 'apps.jobs.models.Benefit.Category',
         'JobAiGenerationModeEnum': 'apps.jobs.models.JobAiGeneration.Mode',
         'JobAiGenerationStatusEnum': 'apps.jobs.models.JobAiGeneration.Status',
         'JobAiFeedbackReasonEnum': 'apps.jobs.models.JobAiGeneration.FeedbackReason',

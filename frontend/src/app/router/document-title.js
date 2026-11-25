@@ -25,7 +25,7 @@ const EXACT_MAIN_TITLES = new Map([
   ['/jobs', 'Tuyển dụng việc làm mới nhất'],
   ['/viec-lam-gan-ban', m.candidate_nearby_title()],
   ['/so-sanh-viec-lam', 'So sánh việc làm'],
-  ['/viec-lam-da-luu', 'Việc làm đã lưu'],
+  ['/viec-lam-da-luu', m.candidate_title_saved_jobs()],
   ['/tai-cv-len', 'Tải CV lên'],
   ['/chinh-sach-cookie', 'Chính sách cookie'],
   ['/tai-khoan/xac-thuc-email', 'Xác thực email'],

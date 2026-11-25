@@ -767,6 +767,36 @@ msgstr "The selected job category is no longer active."
 msgid "Bạn chỉ có thể tạo tối đa %(limit)s thông báo việc làm."
 msgstr "You can create at most %(limit)s job alerts."
 
+msgid "Vị trí chuyên môn là cấp cuối, không chứa mục con."
+msgstr "A specialization is the last level and can't have children."
+
+msgid "Vị trí chuyên môn cần có tên tiếng Anh."
+msgstr "A specialization needs an English name."
+
+msgid "Chọn file ảnh."
+msgstr "Choose an image file."
+
+msgid "Ảnh tối đa 512 KB."
+msgstr "The image can be at most 512 KB."
+
+msgid "Chỉ nhận ảnh JPEG, PNG hoặc WebP."
+msgstr "Only JPEG, PNG or WebP images are accepted."
+
+msgid "Icon cần gần vuông và tối thiểu 64×64 px."
+msgstr "The icon must be roughly square and at least 64×64 px."
+
+msgid "Danh sách phải gồm đủ mọi phúc lợi, mỗi mục một lần."
+msgstr "The list must contain every benefit exactly once."
+
+msgid "Chỉ chuyển được sang một mục cùng cấp với mục cha hiện tại."
+msgstr "It can only move under an item on the same level as its current parent."
+
+msgid "Đã có mục cùng tên ở cùng cấp."
+msgstr "An item with this name already exists on this level."
+
+msgid "Không đọc được file ảnh."
+msgstr "Couldn't read the image file."
+
 msgid "Tiêu đề tin"
 msgstr "Posting title"
 

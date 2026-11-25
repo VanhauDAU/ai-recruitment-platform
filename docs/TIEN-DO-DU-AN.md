@@ -7,7 +7,8 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Thanh tab dưới và thông báo trên mobile cho ứng viên](#thanh-tab-dưới-và-thông-báo-trên-mobile-cho-ứng-viên-2026-11-25) | 🟨 Xong trên nhánh `feat/mobile-tab-bar`, chưa commit/PR |
+| [Thanh tab dưới và thông báo trên mobile cho ứng viên](#thanh-tab-dưới-và-thông-báo-trên-mobile-cho-ứng-viên-2026-11-25) | 🟨 PR #354 (nhánh `feat/mobile-tab-bar`), chờ gộp |
+| [Trang Danh mục dữ liệu cho admin](#trang-danh-mục-dữ-liệu-cho-admin-2026-11-25) | 🟨 Cả 3 GĐ + dọn dẹp xong trên nhánh `feat/admin-catalog`, chờ PR |
 | [Chuẩn bị deploy: GĐ5 pháp lý và dữ liệu cá nhân](#chuẩn-bị-deploy-gđ5-pháp-lý-và-dữ-liệu-cá-nhân-2026-11-25) | ✅ Đã gộp dev (#348, 25/11); kiểm trên VPS ở GĐ6 rehearsal. |
 | [Chuẩn bị deploy: GĐ4 hiệu năng và chịu tải](#chuẩn-bị-deploy-gđ4-hiệu-năng-và-chịu-tải-2026-11-25) | ✅ Đã gộp dev (#349, 25/11); kiểm trên VPS ở GĐ6 rehearsal. Số đo k6 thật ở GĐ6. |
 | [Chuẩn bị deploy: GĐ3 sao lưu và khôi phục](#chuẩn-bị-deploy-gđ3-sao-lưu-và-khôi-phục-2026-11-25) | ✅ Đã gộp dev (#350, 25/11); kiểm trên VPS ở GĐ6 rehearsal. |
@@ -82,6 +83,23 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
   nút bung lên lần lượt (speed dial), nút đổi thành ✕; bấm ra ngoài, Escape hoặc đổi
   trang thì thu lại. Badge số tin đã lưu hiện trên nút gom. Desktop giữ nguyên cụm.
 - Kiểm: `MobileTabBar.test.jsx`, test chuông mobile, E2E `mobile-tab-bar.spec.js` (@responsive).
+
+## Trang Danh mục dữ liệu cho admin (2026-11-25)
+
+Kế hoạch: [`ke-hoach-quan-ly-danh-muc.md`](01-phan-tich/ke-hoach-quan-ly-danh-muc.md).
+
+- **Kỹ năng (GĐ1):** lọc chưa có nhóm / có thể trùng / nguồn, gán nhóm tại chỗ và hàng loạt,
+  gộp kỹ năng (superuser) chuyển tin, CV, nhu cầu tìm việc và `profile_json` đối sánh qua
+  tín hiệu `skill_merged`; khóa nhóm "Phẩm chất cá nhân", "Tên vị trí".
+- **Ngành nghề (GĐ2):** bảng cây, cấp suy ra từ mục cha, tên tiếng Anh bắt buộc cho vị trí
+  chuyên môn (bộ chọn vị trí của CV cần), icon nhóm nghề.
+- **Phúc lợi, Lĩnh vực công ty, Ngôn ngữ (GĐ3):** một bảng dùng chung, sắp thứ tự phúc lợi.
+- **Dọn dẹp:** gỡ trang Django admin trùng lặp của các danh mục; `unique_slug`,
+  `related_count` về `common/db`; nhánh bắt lỗi slug đã chết trong importer.
+- **Kiểm tra:** pytest các app skills, jobs (danh mục, import), employers, matching liên quan;
+  Vitest feature `manage-catalog`; E2E `admin-catalog.spec.js` (`@responsive`, 3 khung).
+- **Lưu ý:** `seed_job_categories` chỉ chạy lúc dựng DB trống; chạy lại sẽ ẩn mục admin
+  thêm và hiện lại mục admin đã ẩn.
 
 ## Chuẩn bị deploy: GĐ1 bảo mật ứng dụng (2026-11-25)
 

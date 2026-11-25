@@ -22,6 +22,31 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Thanh tab tự ẩn ở trang có thanh hành động riêng (chi tiết tin, mẫu CV, trang công ty);
   nút nổi và dock so sánh việc làm nâng lên theo `--page-bottom-bar-height`.
 
+#### Added — Trang Danh mục dữ liệu cho admin
+
+- `/admin/app/catalog` (mục Nội dung), 5 tab: Kỹ năng, Ngành nghề, Phúc lợi, Lĩnh vực công ty,
+  Ngôn ngữ. Bảng + ngăn kéo sửa; ẩn/hiện áp dụng ngay kèm Hoàn tác 15 giây; số tin/CV/công ty
+  đang dùng trên từng dòng; danh sách thẻ trên điện thoại; chuỗi vi/en.
+- Kỹ năng: dải "Cần dọn" (chưa có nhóm, có thể trùng), gán nhóm ngay trên dòng và hàng loạt,
+  "Lưu & tiếp", gộp kỹ năng có xem trước (chỉ superuser; chuyển tin, CV, nhu cầu tìm việc và
+  `profile_json` của tài liệu đối sánh), quản lý nhóm kỹ năng (khóa hai nhóm hệ thống).
+- Ngành nghề: bảng cây ba cấp, tìm không dấu tự mở nhánh, cấp suy ra từ mục cha, tên tiếng
+  Anh (`JobCategoryLocalization`), icon nhóm nghề.
+- API `/api/admin/skills/`, `/api/admin/skills/groups/`, `/api/admin/jobs/categories/`
+  (+ `icon/`), `/api/admin/jobs/benefits/` (+ `reorder/`), `/api/admin/jobs/languages/`,
+  `/api/admin/industries/`; mọi thao tác ghi audit.
+- `Skill.source`, `Industry.is_active` (ô chọn lĩnh vực của hồ sơ công ty chỉ còn mục đang mở).
+
+#### Removed — Trang Django admin trùng lặp của danh mục
+
+- Gỡ trang Django admin của Skill, SkillGroup, Benefit, Language, Industry và form sửa
+  JobCategory (giữ bản chỉ-xem cho autocomplete); sửa danh mục giờ chỉ qua cổng quản trị.
+
+#### Fixed — Slug danh mục trùng nhau
+
+- Tên cho cùng slug ("C", "C++", "C#") không còn làm lỗi 500 khi NTD hoặc admin thêm kỹ
+  năng, ngành nghề, lĩnh vực: slug tự thêm hậu tố (`common/db/slugs.py`).
+
 #### Added — Việc làm gần tôi (ADR-0029)
 
 - Trang `/viec-lam-gan-ban`: bản đồ (MapLibre, nạp lazy) + danh sách sắp theo khoảng cách,

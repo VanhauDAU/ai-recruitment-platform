@@ -1,6 +1,10 @@
 from django.urls import path
+from rest_framework.routers import SimpleRouter
 
 from ..views import (
+    AdminBenefitViewSet,
+    AdminJobCategoryIconUploadView,
+    AdminJobCategoryViewSet,
     AdminJobDecisionView,
     AdminJobModerationDetailView,
     AdminJobModerationListView,
@@ -8,9 +12,21 @@ from ..views import (
     AdminJobReportListView,
     AdminJobReportResolveView,
     AdminJobReportReverseView,
+    AdminLanguageViewSet,
 )
 
+catalog = SimpleRouter()
+catalog.register('categories', AdminJobCategoryViewSet, basename='admin-job-category')
+catalog.register('benefits', AdminBenefitViewSet, basename='admin-benefit')
+catalog.register('languages', AdminLanguageViewSet, basename='admin-language')
+
 urlpatterns = [
+    path(
+        'categories/icon/',
+        AdminJobCategoryIconUploadView.as_view(),
+        name='admin-job-category-icon',
+    ),
+    *catalog.urls,
     path('moderation/', AdminJobModerationListView.as_view(), name='admin-job-moderation-list'),
     path(
         'moderation/summary/',
