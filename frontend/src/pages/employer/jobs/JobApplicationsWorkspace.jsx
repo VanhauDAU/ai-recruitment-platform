@@ -11,6 +11,8 @@ import {
   getRecruiterApplicationPage,
   RECRUITER_APPLICATION_STATUS_LABELS,
 } from '@/entities/application/application'
+import { FitScoreChip } from '@/entities/application/job-fit'
+import { useSiteSettings } from '@/entities/system/site-settings'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { employerAppPath } from '@/shared/config/portals'
 import useDebouncedValue from '@/shared/hooks/use-debounced-value'
@@ -31,6 +33,35 @@ const ORDERING_OPTIONS = [
   { value: 'oldest', label: m.employer_job_cv_sort_oldest() },
   { value: 'name', label: m.employer_job_cv_sort_name() },
 ]
+const AI_ORDERING_OPTION = { value: 'ai_match', label: m.employer_job_cv_sort_ai_match() }
+// Cách sắp xếp nhà tuyển dụng chọn lần trước; mặc định vẫn là mới nhất.
+const ORDERING_STORAGE_KEY = 'procv_employer_cv_ordering'
+
+function storedOrdering() {
+  try {
+    return window.localStorage.getItem(ORDERING_STORAGE_KEY) || 'newest'
+  } catch {
+    return 'newest'
+  }
+}
+
+function storeOrdering(value) {
+  try {
+    window.localStorage.setItem(ORDERING_STORAGE_KEY, value)
+  } catch {
+    // Trình duyệt chặn lưu: chỉ mất việc nhớ lựa chọn.
+  }
+}
+
+function Fit({ application }) {
+  return (
+    <FitScoreChip
+      status={application.ai_match_status}
+      score={application.ai_match_score}
+      level={application.ai_match_level}
+    />
+  )
+}
 
 function StatusPill({ status }) {
   return (
@@ -68,7 +99,11 @@ function AppliedAt({ value }) {
 export default function JobApplicationsWorkspace({ jobPublicId, summary, filter, onFilterChange, publicUrl }) {
   const [keywordInput, setKeywordInput] = useState('')
   const keyword = useDebouncedValue(keywordInput.trim(), 400)
-  const [ordering, setOrdering] = useState('newest')
+  const rankingEnabled = useSiteSettings().settings.ai_application_ranking_enabled === true
+  const [chosenOrdering, setChosenOrdering] = useState(storedOrdering)
+  // Lựa chọn "Phù hợp nhất" đã lưu không còn hiệu lực khi tính năng tắt.
+  const ordering = chosenOrdering === 'ai_match' && !rankingEnabled ? 'newest' : chosenOrdering
+  const orderingOptions = rankingEnabled ? [AI_ORDERING_OPTION, ...ORDERING_OPTIONS] : ORDERING_OPTIONS
   // The page belongs to one filter combination, so any filter change starts at page 1.
   const signature = `${filter}|${keyword}|${ordering}`
   const [pageState, setPageState] = useState({ signature, page: 1 })
@@ -102,6 +137,11 @@ export default function JobApplicationsWorkspace({ jobPublicId, summary, filter,
     return employerAppPath(`/applications?${query}`)
   }
 
+  function changeOrdering(value) {
+    setChosenOrdering(value)
+    storeOrdering(value)
+  }
+
   function resetFilters() {
     setKeywordInput('')
     onFilterChange('all')
@@ -128,6 +168,9 @@ export default function JobApplicationsWorkspace({ jobPublicId, summary, filter,
         <span className="line-clamp-1 text-sm text-slate-700">{item.submitted_cv_title || item.cv_title || m.employer_job_cv_cv_fallback()}</span>
       ),
     },
+    ...(rankingEnabled
+      ? [{ title: m.employer_job_cv_col_fit(), key: 'fit', width: 190, render: (_, item) => <Fit application={item} /> }]
+      : []),
     { title: m.employer_job_cv_col_status(), key: 'status', width: 150, render: (_, item) => <StatusPill status={item.status} /> },
     { title: m.employer_job_cv_col_applied_at(), key: 'applied_at', width: 130, render: (_, item) => <AppliedAt value={item.applied_at} /> },
     {
@@ -158,8 +201,8 @@ export default function JobApplicationsWorkspace({ jobPublicId, summary, filter,
           aria-label={m.employer_job_cv_sort_aria()}
           className="min-w-0"
           value={ordering}
-          options={ORDERING_OPTIONS}
-          onChange={setOrdering}
+          options={orderingOptions}
+          onChange={changeOrdering}
         />
         <Tooltip title={m.employer_job_cv_export_tooltip()}>
           <Button
@@ -201,6 +244,10 @@ export default function JobApplicationsWorkspace({ jobPublicId, summary, filter,
           )
         })}
       </div>
+
+      {ordering === 'ai_match' && (
+        <p className="px-4 pb-3 text-xs leading-5 text-slate-500 sm:px-5">{m.employer_job_cv_fit_order_note()}</p>
+      )}
 
       {applicationsQuery.isError ? (
         <div className="px-4 pb-4 sm:px-5">
@@ -246,6 +293,11 @@ export default function JobApplicationsWorkspace({ jobPublicId, summary, filter,
                     <span className="shrink-0 text-slate-300">·</span>
                     <span className="shrink-0">{formatRelativeDay(application.applied_at)}</span>
                   </p>
+                  {application.ai_match_status && (
+                    <p className="mt-2">
+                      <Fit application={application} />
+                    </p>
+                  )}
                 </Link>
               </li>
             ))}

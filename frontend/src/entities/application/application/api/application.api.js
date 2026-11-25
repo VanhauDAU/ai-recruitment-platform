@@ -124,6 +124,12 @@ export async function getRecruiterApplicationSnapshot(publicId) {
   return data
 }
 
+/** Mức phù hợp do AI chấm cho một hồ sơ: `{status, analysed_at, error_code, result}`. */
+export async function getRecruiterApplicationMatch(publicId) {
+  const { data } = await api.get(`/employer/applications/${publicId}/ai-match/`)
+  return data
+}
+
 export async function getApplicationHistory(publicId) {
   const { data } = await api.get(`/employer/applications/${publicId}/history/`)
   return data.results || data

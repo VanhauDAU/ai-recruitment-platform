@@ -706,6 +706,14 @@ pages/main/jobs/JobDetail (placement="sidebar": slot dưới thông tin công ty
   để không tăng CSS khởi tạo. Chuyển động tắt theo `prefers-reduced-motion`.
 - `CvChoice` thuộc `entities/cv/cv/ui`, dùng chung cho `apply-for-job` và
   `analyze-job-fit` (feature không import nhau).
+- Từ vựng của mức phù hợp nằm ở `entities/application/job-fit` và dùng chung cho hai
+  cổng: bốn mức và mốc điểm (`FIT_BANDS`, `bandOf`), nhãn tiêu chí, nhãn độ tin cậy,
+  câu tóm tắt tiêu chí dựng từ `components[].detail` (`criterionSummary`, dịch được).
+  Entity còn có `FitScoreChip` (điểm + mức trên một dòng, hoặc lý do chưa có điểm) và
+  `FitBreakdown` (bản chi tiết gọn một cột). Hộp thoại của ứng viên giữ phần trình bày
+  riêng (mascot, thước bốn dải, gợi ý sửa CV) nhưng lấy nhãn từ entity này. Chuỗi ở
+  `messages/shared` với tiền tố `fit_`; style `job-fit.css` tiền tố `fit-`, một màu
+  nhấn thương hiệu, hổ phách chỉ cho kỹ năng bắt buộc còn thiếu, mức thể hiện bằng chữ.
 - Trang lưu CV thành công chỉ hiện nhãn "Phù hợp/Rất phù hợp" của đối sánh theo
   luật, không hiện phần trăm: điểm số duy nhất ứng viên thấy là của phân tích AI.
 
@@ -741,6 +749,17 @@ pages/employer/candidates/ApplicationList
   invalidate key này. Các mục còn lại là "Sắp mở" theo lộ trình.
 - Style riêng nằm ở `application-workspace.css` và `application-decision.css`
   (lazy theo route) để không tăng CSS khởi tạo.
+- Mức phù hợp do AI chấm (cờ `ai_application_ranking_enabled`): danh sách lấy
+  `ai_match_score/level/status` ngay trong dòng hồ sơ và hiện bằng `FitScoreChip` của
+  `entities/application/job-fit` (bảng "CV ứng tuyển" của một tin ở
+  `pages/employer/jobs/JobApplicationsWorkspace`, thẻ hồ sơ ở `CandidateGroup`). Bảng
+  có lựa chọn sắp xếp "Phù hợp nhất" (`ordering=ai_match`); mặc định vẫn là mới nhất,
+  lựa chọn được nhớ ở localStorage `procv_employer_cv_ordering`. Panel bên phải chia
+  ba tab: **Đánh giá** (`ApplicationFitSection` gọi `/ai-match/`, hỏi lại mỗi 5 giây khi
+  đang phân tích; đánh giá sao và ghi chú của NTD), **Thông tin** (liên hệ, thông tin
+  ứng tuyển, lần nộp trước), **Hoạt động** (nhận xét, lịch sử). Thanh quyết định nằm
+  trên tab nên luôn thấy. Hồ sơ không có điểm luôn kèm lý do (đang phân tích, ứng viên
+  không tham gia AI, không đọc được CV); giao diện không tự suy điểm.
 
 ## Ownership map — Thông báo của ứng viên
 

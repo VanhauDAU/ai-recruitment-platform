@@ -69,6 +69,10 @@
   display: flex; align-items: center; gap: 8px; margin: 0 0 10px;
   font-size: 13px; font-weight: 800; color: #1e293b;
 }
+/* Tab của panel hồ sơ: Đánh giá | Thông tin | Hoạt động. */
+.aw-tabs > .ant-tabs-nav { margin: 0; padding: 0 16px; }
+.aw-tabs .ant-tabs-tab { padding: 10px 0; font-size: 13px; font-weight: 600; }
+
 .aw-hero { padding: 16px; border-bottom: 1px solid #f1f5f9; background: linear-gradient(180deg, #f8fafc, #fff); }
 
 /* History timeline */

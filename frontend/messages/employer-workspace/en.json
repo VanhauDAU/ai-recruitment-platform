@@ -637,5 +637,18 @@
   "employer_workspace_announcement_kind_info": "Information",
   "employer_workspace_announcement_kind_success": "Done",
   "employer_workspace_announcement_kind_event": "Event",
-  "employer_workspace_announcement_kind_feature": "New feature"
+  "employer_workspace_announcement_kind_feature": "New feature",
+  "employer_workspace_app_tab_assessment": "Assessment",
+  "employer_workspace_app_tab_info": "Details",
+  "employer_workspace_app_tab_activity": "Activity",
+  "employer_workspace_app_tabs_aria": "Application content",
+  "employer_workspace_app_fit_title": "Match (AI)",
+  "employer_workspace_app_fit_disclaimer": "AI only suggests an order from the submitted CV and the job posting. The decision is yours.",
+  "employer_workspace_app_fit_pending": "This application is being analysed. The result will appear here in a few minutes.",
+  "employer_workspace_app_fit_not_consented": "The candidate did not opt in to AI analysis when applying, so this application has no score. Review the CV as usual.",
+  "employer_workspace_app_fit_failed": "This application could not be scored.",
+  "employer_workspace_app_fit_failed_cv": "The text in the CV file could not be read (it may be a scan).",
+  "employer_workspace_app_fit_failed_job": "The job posting does not have enough content to compare.",
+  "employer_workspace_app_fit_load_failed": "Could not load the match details.",
+  "employer_workspace_app_fit_retry": "Retry"
 }

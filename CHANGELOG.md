@@ -8,6 +8,16 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-25
 
+#### Added — Mức phù hợp của hồ sơ ở cổng nhà tuyển dụng (giao diện)
+
+- Bảng "CV ứng tuyển" của một tin có cột **Phù hợp** và lựa chọn sắp xếp "Phù hợp nhất"
+  (mặc định vẫn là mới nhất, lựa chọn được nhớ). Hồ sơ chưa có điểm ghi rõ lý do.
+- Màn xử lý hồ sơ: thẻ hồ sơ có chip điểm; panel bên phải chia ba tab Đánh giá | Thông
+  tin | Hoạt động, tab Đánh giá hiện điểm tổng, năm tiêu chí, kỹ năng có/thiếu kèm câu
+  trích từ CV và dòng "quyết định là của bạn".
+- Bộ hiển thị dùng chung `entities/application/job-fit` cho cả hai cổng; hộp thoại "Xem độ
+  phù hợp" của ứng viên dùng chung nhãn. Một màu nhấn, mức phù hợp thể hiện bằng chữ.
+
 #### Added — AI xếp hạng hồ sơ ứng tuyển cho nhà tuyển dụng (backend)
 
 - Hồ sơ ứng viên đồng ý phân tích AI được chấm trên **bản CV đã nộp** ngay sau khi nộp

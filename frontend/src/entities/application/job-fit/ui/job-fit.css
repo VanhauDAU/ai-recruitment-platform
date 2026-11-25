@@ -1,0 +1,47 @@
+/* Mức phù hợp CV–tin (chip điểm và bảng chi tiết). Nạp cùng chunk của màn hình dùng nó,
+   không vào CSS khởi tạo. Một màu nhấn là màu thương hiệu, còn lại là thang xám; hổ phách
+   chỉ dùng cho kỹ năng bắt buộc còn thiếu. Mức phù hợp thể hiện bằng chữ và độ dài thanh. */
+.fit-chip {
+  display: inline-flex; align-items: baseline; gap: 5px; max-width: 100%;
+  padding: 2px 8px; border: 1px solid #e2e8f0; border-radius: 999px; background: #fff;
+  font-size: 12px; line-height: 18px; color: #475569; white-space: nowrap;
+}
+.fit-chip strong { font-size: 13px; font-weight: 800; color: #0f172a; font-variant-numeric: tabular-nums; }
+.fit-chip--high, .fit-chip--very_high {
+  border-color: color-mix(in srgb, var(--brand-primary) 35%, #fff);
+  background: var(--brand-primary-soft);
+}
+.fit-chip--high strong, .fit-chip--very_high strong { color: var(--brand-primary-hover); }
+.fit-chip--muted { border-style: dashed; background: transparent; color: #94a3b8; }
+
+.fit-breakdown { display: flex; flex-direction: column; gap: 14px; font-size: 13px; line-height: 1.5; color: #334155; }
+.fit-verdict { display: flex; align-items: center; gap: 12px; }
+.fit-verdict__score { margin: 0; white-space: nowrap; color: #94a3b8; font-size: 12px; }
+.fit-verdict__score strong { font-size: 30px; line-height: 1; font-weight: 800; color: #0f172a; font-variant-numeric: tabular-nums; }
+.fit-verdict__main { min-width: 0; flex: 1; }
+.fit-verdict__label { margin: 0 0 6px; font-size: 14px; font-weight: 800; color: #0f172a; }
+.fit-verdict__label--high, .fit-verdict__label--very_high { color: var(--brand-primary-hover); }
+
+.fit-meter { display: block; height: 4px; overflow: hidden; border-radius: 2px; background: #eef2f6; }
+.fit-meter--lg { height: 6px; border-radius: 3px; }
+.fit-meter > span { display: block; height: 100%; border-radius: inherit; background: var(--brand-primary); }
+
+.fit-criteria, .fit-skills, .fit-chips { margin: 0; padding: 0; list-style: none; }
+.fit-criteria { display: flex; flex-direction: column; gap: 10px; }
+.fit-criterion__head { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 4px; font-weight: 600; color: #0f172a; }
+.fit-criterion__score { font-variant-numeric: tabular-nums; }
+.fit-criterion__status { font-size: 12px; font-weight: 500; color: #94a3b8; }
+.fit-criterion__summary { margin: 4px 0 0; font-size: 12px; color: #64748b; }
+
+.fit-subheading { margin: 0 0 6px; font-size: 12px; font-weight: 700; color: #64748b; }
+.fit-skills { display: flex; flex-direction: column; gap: 8px; }
+.fit-skill__name { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-weight: 600; color: #0f172a; }
+.fit-tag { padding: 0 6px; border-radius: 4px; background: #f1f5f9; font-size: 11px; font-weight: 500; color: #64748b; }
+.fit-quote {
+  display: block; margin-top: 3px; padding-left: 8px; border-left: 2px solid #e2e8f0;
+  font-size: 12px; color: #64748b; quotes: '“' '”'; overflow-wrap: anywhere;
+}
+.fit-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.fit-missing { padding: 1px 9px; border: 1px solid #e2e8f0; border-radius: 999px; font-size: 12px; color: #64748b; }
+.fit-missing--required { border-color: #f5d9a8; background: #fef3e2; color: #b45309; }
+.fit-empty, .fit-note { margin: 0; font-size: 12px; color: #94a3b8; }

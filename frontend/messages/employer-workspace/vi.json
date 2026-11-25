@@ -441,5 +441,18 @@
   "employer_workspace_announcement_kind_info": "Thông tin",
   "employer_workspace_announcement_kind_success": "Hoàn tất",
   "employer_workspace_announcement_kind_event": "Sự kiện",
-  "employer_workspace_announcement_kind_feature": "Tính năng mới"
+  "employer_workspace_announcement_kind_feature": "Tính năng mới",
+  "employer_workspace_app_tab_assessment": "Đánh giá",
+  "employer_workspace_app_tab_info": "Thông tin",
+  "employer_workspace_app_tab_activity": "Hoạt động",
+  "employer_workspace_app_tabs_aria": "Nội dung hồ sơ",
+  "employer_workspace_app_fit_title": "Mức độ phù hợp (AI)",
+  "employer_workspace_app_fit_disclaimer": "AI chỉ gợi ý thứ tự dựa trên CV đã nộp và nội dung tin. Quyết định là của bạn.",
+  "employer_workspace_app_fit_pending": "Hệ thống đang phân tích hồ sơ này. Kết quả sẽ hiện ở đây sau ít phút.",
+  "employer_workspace_app_fit_not_consented": "Ứng viên không chọn phân tích bằng AI khi nộp hồ sơ, nên hồ sơ này không có điểm. Hãy xem CV như bình thường.",
+  "employer_workspace_app_fit_failed": "Chưa chấm được hồ sơ này.",
+  "employer_workspace_app_fit_failed_cv": "Không đọc được chữ trong tệp CV (có thể là bản scan).",
+  "employer_workspace_app_fit_failed_job": "Tin tuyển dụng không đủ nội dung để so sánh.",
+  "employer_workspace_app_fit_load_failed": "Chưa tải được mức độ phù hợp.",
+  "employer_workspace_app_fit_retry": "Thử lại"
 }

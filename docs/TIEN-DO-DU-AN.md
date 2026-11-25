@@ -1253,7 +1253,7 @@ một commit, một PR vào `dev` khi xong GĐ E.
 | --- | --- | --- |
 | A | Công thức `hybrid-v2` phần không cần huấn luyện: bỏ địa điểm, tắt khớp kỹ năng viết khác tên, hệ số liên quan; đo trên validation | ✅ Commit trên nhánh (25/11) |
 | B | Đường ống xếp hạng hồ sơ ứng tuyển (backend): chấm bản CV đã nộp khi ứng viên đồng ý, queue `ai-matching-batch`, `ordering=ai_match`, endpoint chi tiết | ✅ Commit trên nhánh (25/11); test tự động viết ở bước kiểm tra cuối |
-| C | Giao diện xếp hạng ở cổng NTD: cột "Phù hợp", tab Đánh giá, bộ hiển thị dùng chung | ⬜ |
+| C | Giao diện xếp hạng ở cổng NTD: cột "Phù hợp", tab Đánh giá, bộ hiển thị dùng chung | ✅ Commit trên nhánh (25/11); chưa chụp màn hình, chưa có test giao diện |
 | D | Một CV được bật cho NTD tìm kiếm + "Hồ sơ NTD nhìn thấy" phía ứng viên | ⬜ |
 | E | Tìm CV: tìm ứng viên ẩn danh theo tin, xem nhanh, mời ứng tuyển | ⬜ |
 
@@ -1287,6 +1287,26 @@ xuất ẩn danh và tìm theo một tin đang tuyển; bước tiếp là mời
   `flags.relevance_discount_applied`; không còn `location` trong `components`. Kết quả cũ
   (`hybrid-v1`) trong cache không dùng lại vì khóa cache có phiên bản công thức.
 - Test `apps/matching` (100 test) đạt; phần test của tập vàng chưa chạy.
+
+</details>
+<details><summary>Ghi chú GĐ C (phần NTD)</summary>
+
+- `entities/application/job-fit`: từ vựng (bốn mức, nhãn tiêu chí, độ tin cậy, câu tóm tắt
+  dựng từ `components[].detail`), `FitScoreChip`, `FitBreakdown`, `job-fit.css`. Chuỗi song
+  ngữ ở `messages/shared` (`fit_*`). Hộp thoại của ứng viên lấy nhãn từ entity này.
+- Bảng "CV ứng tuyển" của một tin: cột Phù hợp, sắp xếp "Phù hợp nhất" (nhớ ở localStorage),
+  dòng chú thích khi sắp theo AI rằng hồ sơ chưa có điểm nằm cuối không phải vì kém phù hợp.
+  Kế hoạch ghi một chip "N hồ sơ không tham gia phân tích AI" để lọc riêng; chưa làm vì cần
+  thêm số đếm và tham số lọc ở API, thay bằng dòng chú thích và nhãn lý do trên từng hồ sơ.
+- Màn xử lý hồ sơ: chip điểm trên thẻ hồ sơ; panel phải chia tab Đánh giá | Thông tin | Hoạt
+  động, thanh quyết định ghim phía trên. Tab Đánh giá gọi `/ai-match/`, hỏi lại mỗi 5 giây khi
+  đang phân tích.
+- Không hiện mục "yêu cầu của tin đạt/chưa thấy" cho NTD: với mô hình chưa fine-tune phép so
+  từng câu yêu cầu không đáng tin (AUC 0,588); chờ cross-encoder.
+- "Hồ sơ trích xuất tóm tắt" ở tab Đánh giá hiện được thể hiện qua câu tóm tắt từng tiêu chí
+  (số năm, bậc học, cấp bậc đọc từ CV); khối hồ sơ trích xuất đầy đủ làm cùng GĐ D.
+- Đã chạy: `npm run lint` (0 lỗi), `npm run check:architecture`. Chưa làm: chụp màn hình
+  desktop/mobile (trình duyệt tự động chưa đăng nhập được cổng NTD), test đơn vị và e2e smoke.
 
 </details>
 <details><summary>Ghi chú GĐ B (phần NTD)</summary>

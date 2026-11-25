@@ -7,6 +7,7 @@ export const applicationKeys = {
   // Kept outside `recruiterLists()` so list cache patches never touch it.
   recruiterUnreadCount: () => ['applications', 'recruiter-unread-count'],
   recruiterSnapshot: (publicId) => ['applications', 'recruiter-snapshot', publicId],
+  recruiterMatch: (publicId) => ['applications', 'recruiter-match', publicId],
   history: (publicId) => ['applications', 'history', publicId],
   submissions: (publicId) => ['applications', 'submissions', publicId],
   reviewLinks: (publicId) => ['applications', 'review-links', publicId],
