@@ -642,16 +642,10 @@
   "employer_workspace_app_fit_load_failed": "Could not load the match details.",
   "employer_workspace_app_fit_retry": "Retry",
   "employer_workspace_title_candidate_search": "Find CVs",
-  "employer_workspace_search_page_intro": "Pick an open job to see candidates who allow recruiter search, ranked by how well they match it. Profiles stay anonymous until the candidate applies.",
+  "employer_workspace_search_page_intro": "Pick an open job: candidates who let employers find them are ranked by how well they fit it. Profiles stay anonymous — title, career timeline, education and languages only — until a candidate accepts your connection request.",
   "employer_workspace_search_job_aria": "Job to search against",
   "employer_workspace_search_job_placeholder": "Choose an open job",
-  "employer_workspace_search_keyword_aria": "Filter by job title",
-  "employer_workspace_search_keyword_placeholder": "Job title, e.g. Accountant",
-  "employer_workspace_search_experience_aria": "Minimum experience",
-  "employer_workspace_search_experience_placeholder": "Experience",
-  "employer_workspace_search_min_experience": "{years}+ years",
-  "employer_workspace_search_education_aria": "Minimum education",
-  "employer_workspace_search_education_placeholder": "Education",
+  "employer_workspace_search_keyword_placeholder": "For example: ReactJS, tax accounting",
   "employer_workspace_search_min_education": "{level} or higher",
   "employer_workspace_search_pick_job": "Choose an open job to start finding matching candidates.",
   "employer_workspace_search_load_failed": "Could not load the search results.",
@@ -660,16 +654,13 @@
   "employer_workspace_search_empty": "No searchable candidate is close enough to this job yet.",
   "employer_workspace_search_no_match": "No candidate matches the filters.",
   "employer_workspace_search_clear_filters": "Clear filters",
-  "employer_workspace_search_count": "{count} matching candidates, best match first",
   "employer_workspace_search_title_unknown": "Job title could not be determined",
-  "employer_workspace_search_no_facts": "Experience and education could not be read",
   "employer_workspace_search_matched_skills": "Matches {matched} of {total} job skills:",
   "employer_workspace_search_applied": "Applied",
   "employer_workspace_search_invited": "Awaiting reply",
   "employer_workspace_search_connected": "Connected",
   "employer_workspace_search_declined": "Declined",
   "employer_workspace_search_message": "Message",
-  "employer_workspace_search_quick_view": "Quick view",
   "employer_workspace_search_quick_view_title": "Candidate {code}",
   "employer_workspace_search_profile_heading": "Profile extracted from the CV",
   "employer_workspace_search_fit_heading": "Match with the job",
@@ -708,5 +699,128 @@
   "employer_workspace_app_zoom_out": "Zoom out",
   "employer_workspace_app_zoom_fit": "Fit to width",
   "employer_workspace_app_zoom_hint": "Hold Ctrl/⌘ and scroll to zoom",
-  "employer_workspace_app_status_placeholder": "Status"
+  "employer_workspace_app_status_placeholder": "Status",
+  "employer_workspace_search_results_title": "Matching candidates",
+  "employer_workspace_search_filters_title": "Filters",
+  "employer_workspace_search_filters_count": "Filters ({count})",
+  "employer_workspace_search_submit": "Search CVs",
+  "employer_workspace_search_group_keywords": "Keywords",
+  "employer_workspace_search_group_profile": "Profile",
+  "employer_workspace_search_keyword_label": "Keyword",
+  "employer_workspace_search_keyword_hint": "Searches the title and the CV content you can see (experience, projects, education, skills…).",
+  "employer_workspace_search_tags_placeholder": "Type a keyword and press Enter",
+  "employer_workspace_search_all_keywords": "CV has all of these keywords",
+  "employer_workspace_search_all_keywords_hint": "Keeps only CVs that contain every keyword here.",
+  "employer_workspace_search_any_keywords": "CV has any of these keywords",
+  "employer_workspace_search_any_keywords_hint": "Keeps CVs that contain at least one keyword here.",
+  "employer_workspace_search_none_keywords": "CV has none of these keywords",
+  "employer_workspace_search_none_keywords_hint": "Drops CVs that contain any keyword here.",
+  "employer_workspace_search_province": "Preferred work province",
+  "employer_workspace_search_province_hint": "Where the candidate wants to work, from their job preferences.",
+  "employer_workspace_search_all_provinces": "All provinces",
+  "employer_workspace_search_category": "Industry",
+  "employer_workspace_search_category_hint": "From the specializations the candidate wants.",
+  "employer_workspace_search_all_categories": "All industries",
+  "employer_workspace_search_language": "Language and level",
+  "employer_workspace_search_language_level": "Level",
+  "employer_workspace_search_at_least": "{level} or above",
+  "employer_workspace_search_any": "Any",
+  "employer_workspace_search_years": "Years of experience",
+  "employer_workspace_search_years_hint": "Counted from the dates in the CV.",
+  "employer_workspace_search_years_to": "Maximum years of experience",
+  "employer_workspace_search_from": "From",
+  "employer_workspace_search_to": "To",
+  "employer_workspace_search_position_level": "Position level",
+  "employer_workspace_search_education": "Education",
+  "employer_workspace_search_title_label": "Current title",
+  "employer_workspace_search_title_hint": "Matched against the CV title only.",
+  "employer_workspace_search_title_placeholder": "For example: General accountant",
+  "employer_workspace_search_school": "School",
+  "employer_workspace_search_school_placeholder": "For example: Duy Tan University",
+  "employer_workspace_search_select_all": "Select all",
+  "employer_workspace_search_select_one": "Select candidate {code}",
+  "employer_workspace_search_matches": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "1 matching CV",
+        "countPlural=other": "{count} matching CVs"
+      }
+    }
+  ],
+  "employer_workspace_search_selected": "{count} selected",
+  "employer_workspace_search_page_size": "Show",
+  "employer_workspace_search_wants": "Wants: {positions}",
+  "employer_workspace_search_updated": "CV updated {time}",
+  "employer_workspace_search_experience_heading": "Experience ({duration})",
+  "employer_workspace_search_no_experience": "No work experience yet.",
+  "employer_workspace_search_no_timeline": "This CV has no dates per job. Open the details to read it.",
+  "employer_workspace_search_more_jobs": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "1 more job",
+        "countPlural=other": "{count} more jobs"
+      }
+    }
+  ],
+  "employer_workspace_search_details": "Details",
+  "employer_workspace_search_bulk_title": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "Invite 1 candidate to connect?",
+        "countPlural=other": "Invite {count} candidates to connect?"
+      }
+    }
+  ],
+  "employer_workspace_search_bulk_description": "Each candidate gets one request about the selected job. Once they accept you can message them; their identity shows only when they apply.",
+  "employer_workspace_search_bulk_sent": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "Request sent to 1 candidate.",
+        "countPlural=other": "Requests sent to {count} candidates."
+      }
+    }
+  ],
+  "employer_workspace_search_bulk_failed": [
+    {
+      "declarations": [
+        "input count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": [
+        "countPlural"
+      ],
+      "match": {
+        "countPlural=one": "Could not send the request to 1 candidate.",
+        "countPlural=other": "Could not send requests to {count} candidates."
+      }
+    }
+  ]
 }

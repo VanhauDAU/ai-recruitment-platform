@@ -23,6 +23,8 @@ thể) và services (tìm ứng viên) cùng dùng.
 OWNER = 'owner'
 RECRUITER_SEARCH = 'recruiter_search'
 REDACTED_NAME = '[ứng viên]'
+CARD_EXPERIENCE_ITEMS = 3
+CARD_EDUCATION_ITEMS = 2
 
 
 def _skill_groups(skills):
@@ -95,3 +97,40 @@ def redact_name(shown, full_name):
         for section in shown['sections']
     ]
     return {**shown, 'title': clean(shown['title']), 'sections': sections}
+
+
+def _section_items(shown, key):
+    return next((section['items'] for section in shown['sections'] if section['key'] == key), [])
+
+
+def search_card(shown):
+    """Tóm tắt cho thẻ ứng viên trong danh sách Tìm CV, từ hồ sơ đã ẩn danh.
+
+    Kinh nghiệm chỉ gồm chức danh và mốc thời gian, **không** có tên công ty (`subtitle`):
+    danh sách không ghi nhật ký truy cập như màn xem chi tiết. Việc mới nhất trước; CV tải
+    lên không có mục con theo công việc nên không có mốc. Học vấn lấy bằng cấp và trường
+    (CV tải lên: dòng đầu của khối học vấn).
+    """
+    jobs = [item for item in _section_items(shown, 'experience') if item['title']]
+    # Đang làm (có ngày bắt đầu, chưa có ngày kết thúc) trước, rồi theo ngày kết thúc giảm dần.
+    jobs.sort(
+        key=lambda item: (
+            item['end'] is None and bool(item['start']),
+            item['end'] or '',
+            item['start'] or '',
+        ),
+        reverse=True,
+    )
+    schools = []
+    for item in _section_items(shown, 'education'):
+        title = item['title'] or next(iter(item['lines']), '')
+        if title:
+            schools.append({'title': title, 'subtitle': item['subtitle']})
+    return {
+        'experience': [
+            {'title': item['title'], 'start': item['start'], 'end': item['end']}
+            for item in jobs[:CARD_EXPERIENCE_ITEMS]
+        ],
+        'experience_count': len(jobs),
+        'education': schools[:CARD_EDUCATION_ITEMS],
+    }

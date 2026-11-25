@@ -13,7 +13,7 @@ from .features import (
     FEATURE_FLAGS,
     SEMANTIC_RECOMMENDATION_FLAG,
 )
-from .profile_view import OWNER, RECRUITER_SEARCH, public_cv_profile, redact_name
+from .profile_view import OWNER, RECRUITER_SEARCH, public_cv_profile, redact_name, search_card
 from .versions import EXTRACTOR_VERSION, HASHING_MODEL_VERSION, SCORING_VERSION, model_version
 
 __all__ = [
@@ -22,6 +22,7 @@ __all__ = [
     'RECRUITER_SEARCH',
     'public_cv_profile',
     'redact_name',
+    'search_card',
     'APPLICATION_RANKING_FLAG',
     'CANDIDATE_FIT_FLAG',
     'FEATURE_FLAGS',

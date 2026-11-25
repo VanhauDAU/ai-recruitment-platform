@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Thiết kế lại trang Tìm CV của NTD](#thiết-kế-lại-trang-tìm-cv-của-ntd-2026-11-26) | 🟨 Nhánh `feat/candidate-search-redesign`, chờ gộp PR |
 | [Hạn phiên đăng nhập riêng theo cổng (ADR-0033)](#hạn-phiên-đăng-nhập-riêng-theo-cổng-adr-0033-2026-11-26) | 🟨 Nhánh `feat/per-portal-session-policy`, chờ PR |
 | [Cổng quản trị cập nhật hàng chờ realtime](#cổng-quản-trị-cập-nhật-hàng-chờ-realtime-2026-11-26) | 🟨 Nhánh `feat/admin-realtime`, chờ gộp PR |
 | [Đăng tin xong mở thẻ Thông tin tuyển dụng](#đăng-tin-xong-mở-thẻ-thông-tin-tuyển-dụng-2026-11-26) | 🟨 Nhánh `feat/job-publish-info-tab`, chờ PR |
@@ -76,6 +77,27 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
 
+
+## Thiết kế lại trang Tìm CV của NTD (2026-11-26)
+
+Trang `/tuyendung/app/candidate-search` theo bố cục "kho ứng viên": cột lọc bên trái (dính,
+thân cuộn, chân "Xóa bộ lọc / Tìm CV"; màn < 1200px thành ngăn kéo), danh sách thẻ bên phải.
+Vẫn ẩn danh như trước.
+
+- **Thẻ ứng viên:** vòng điểm phù hợp ở chỗ avatar; chức danh, mã UV, cấp bậc, vị trí và
+  tỉnh/thành muốn làm, thời điểm cập nhật CV; "Kinh nghiệm (N năm)" dạng mốc (chức danh +
+  thời gian, **không** tên công ty), học vấn (bằng + trường), ngoại ngữ + mức, kỹ năng khớp
+  tin; "Chi tiết" mở màn xem nhanh có ghi nhật ký như cũ (Mời kết nối / Nhắn tin giữ nguyên).
+- **Chọn nhiều:** "Chọn tất cả · N CV phù hợp · Đã chọn" + mời kết nối hàng loạt (gọi tuần
+  tự endpoint mời từng người nên vẫn chịu giới hạn 40 lời mời/giờ); chọn 10/20/50 dòng/trang.
+- **Backend:** bộ lọc mới có test: từ khóa trong chức danh + nội dung CV được hiển thị (không
+  quét mục `other`), có tất cả / một trong / không có từ khóa, chức danh, trường, kinh nghiệm
+  từ–đến, cấp bậc, ngoại ngữ kèm mức tối thiểu, ngành nghề (theo vị trí mong muốn, khớp cả
+  nhóm/lĩnh vực cha), `page_size`. `matching.domain.search_card` dựng tóm tắt thẻ; service chỉ
+  đọc cờ mời và nhu cầu tìm việc cho trang được trả.
+- **Kiểm chứng:** pytest matching + applications 257 passed; ruff, import-linter, OpenAPI sạch;
+  vitest feature, lint, check:architecture, build + bundle budget (CSS khởi tạo không đổi);
+  e2e `employer-candidate-search.spec.js` (@responsive) qua ở desktop/tablet/mobile.
 
 ## Hạn phiên đăng nhập riêng theo cổng (ADR-0033, 2026-11-26)
 
