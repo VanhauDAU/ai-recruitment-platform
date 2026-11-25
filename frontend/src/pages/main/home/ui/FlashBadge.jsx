@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router'
 import { companyInitial, formatNumber as fmt, getJobs, jobDetailPath } from '@/entities/job/job'
 import { JobImpressionBoundary } from '@/features/main/job/track-job-engagement'
 import { useCountUp } from '@/shared/hooks/use-count-up'
-import { legacyAsset } from '@/shared/config/assets'
 import { m } from '@/shared/config/i18n'
 
 const VISIBLE = 3
@@ -12,8 +11,8 @@ const ROTATE_MS = 3500
 const ITEM_H = 72   // height của mỗi card (px)
 const GAP    = 8    // khoảng cách giữa các card (px)
 const SLOT   = ITEM_H + GAP
-const FLASH_BADGE_COVER_URL = legacyAsset('welcome/flash-badge-cover.png')
-const FLASH_BADGE_INTRO_URL = legacyAsset('welcome/flash-badge-intro.png')
+const FLASH_BADGE_COVER_URL = '/images/home/flash-badge-cover.webp'
+const FLASH_BADGE_INTRO_URL = '/images/home/flash-badge-intro.webp'
 // The flash badge is computed hourly from how recruiters answer applications (ADR-0027).
 const FLASH_BADGE_FILTER_PATH = '/viec-lam?fast=1'
 
@@ -245,6 +244,8 @@ export default function FlashBadge({ responseRate = 80, responseHours = 72 }) {
             <div className="absolute inset-0 rounded-full bg-[#5dffa3]/25 blur-2xl scale-110" />
             <img
               src={FLASH_BADGE_INTRO_URL}
+              width={384}
+              height={324}
               alt="Huy hiệu Sấm Chớp"
               className="relative z-10 h-auto w-48 max-w-full drop-shadow-[0_16px_32px_rgba(0,0,0,0.28)]"
               loading="lazy"

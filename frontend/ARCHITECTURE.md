@@ -194,12 +194,23 @@ dụng`, `Quản trị ProCV`. Riêng trang chủ dùng nguyên `seo_default_tit
   `npm run check:bundle-budget` dùng manifest này để ghi mọi JavaScript chunk
   vào `dist/bundle-stats.json`, gồm static import, dynamic import và stylesheet
   trực tiếp của chunk.
-- Hai budget initial vẫn là gate fail build: JavaScript gzip `328,5 KiB`, CSS
-  gzip `38,5 KiB`. Trần JavaScript tăng từ 320 lên 322 KiB ngày 11/10/2026 sau
-  khi cập nhật Axios/Tiptap lên bản vá bảo mật (CI đo 320,3 KiB), rồi lên
-  328,5 KiB ngày 13/11/2026 sau `npm audit fix` cho DOMPurify, Vite, undici và
-  follow-redirects (CI đo JavaScript 326,9 KiB, CSS 38,1 KiB, không đổi code ứng
-  dụng). Đây là khoảng đệm hẹp, không phải tiền lệ nới budget cho code tính năng.
+- Hai budget initial vẫn là gate fail build: JavaScript gzip `256 KiB`, CSS
+  gzip `35 KiB`. Ngày 25/11/2026 trần hạ từ 334/38,5 KiB sau khi build đo còn
+  252,1/33,6 KiB (xem hai mục dưới). Không nới trần cho code tính năng; thứ chỉ
+  một route dùng phải nằm sau dynamic import.
+- Thư viện mà bundle đầu import tĩnh gom vào một chunk `vendor`
+  (`codeSplitting.groups` với tag `$initial` trong `vite.config.js`), React ở
+  chunk `react` riêng. Antd của route lazy vẫn để bundler tự tách: gom chung theo
+  số route dùng làm Home nặng gấp đôi (đã thử 25/11).
+- `index.js` của slice trong `features`, `entities`, `widgets` được khai báo
+  không có side effect, nên bundler đi thẳng tới module được dùng thay vì kéo cả
+  barrel: guard chỉ cần `withReturnUrl` không còn kéo form đăng nhập vào bundle
+  đầu. Hệ quả: barrel chỉ được export, không gọi hàm, gán hay import trần lúc
+  import; `check:architecture` chặn các dòng như vậy.
+- Image production nén sẵn `dist/` bằng gzip mức 9
+  (`scripts/precompress-dist.mjs`); nginx bật `gzip_static` để gửi file `.gz`.
+- Ảnh trang trí đặt trong `public/images` dưới dạng WebP, thu nhỏ theo cỡ hiển
+  thị ×2; không dùng PNG gốc trên R2 cho ảnh nền hay minh họa lớn.
 - `dynamicRoutes` đo chi phí tăng thêm của từng lazy entry trong `src/pages`:
   JavaScript/CSS của entry và toàn bộ static import transitively, trừ asset đã
   có trong initial HTML. Asset nhị phân được liệt kê để audit nhưng không cộng

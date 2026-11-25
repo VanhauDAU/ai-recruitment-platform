@@ -10,7 +10,6 @@ import {
   jobDetailPath,
 } from '@/entities/job/job'
 import { JobImpressionBoundary } from '@/features/main/job/track-job-engagement'
-import { legacyAsset } from '@/shared/config/assets'
 import { DEMAND_COLORS } from '../lib/market-stats-palette'
 import { useLatestJobsFeed } from '../model/use-latest-jobs-feed'
 import { getIntlLocale } from '@/shared/config/i18n'
@@ -59,7 +58,9 @@ function Mascot() {
   return (
     <div className="flex justify-center">
       <img
-        src={legacyAsset('welcome/procv-ai-robot-market-v2.png')}
+        src="/images/home/procv-ai-robot-market.webp"
+        width={520}
+        height={260}
         alt="Thị trường việc làm"
         className="h-auto w-full max-w-[260px] object-contain drop-shadow-md"
         loading="lazy"

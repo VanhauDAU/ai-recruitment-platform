@@ -8,6 +8,15 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-25
 
+#### Changed — Tải trang đầu nhẹ hơn
+
+- Bundle đầu còn 9 file JS, 252 KiB gzip (trước 78 file, 333 KiB): thư viện trang đầu gom
+  vào chunk `vendor`, barrel `index.js` của slice khai báo không side effect nên form đăng
+  nhập không còn nằm trong bundle đầu. Ngân sách hạ về 256 KiB JS, 35 KiB CSS.
+- 7 ảnh PNG lớn trên R2 (trang chủ, blog, onboarding, CV online; ~3,1 MB) chuyển sang
+  WebP trong `public/images` (177 KB).
+- Nginx gửi file `.gz` nén sẵn mức 9 (`gzip_static`); Vite dev biên dịch sẵn trang chủ khi khởi động.
+
 #### Fixed — API công khai có cache trả 500 khi chạy với Redis
 
 - `cache_public_get` (#349) lưu cache bằng callback sau render trả về kết quả `cache.set`;

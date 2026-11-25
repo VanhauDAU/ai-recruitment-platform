@@ -3,7 +3,6 @@ import { Alert, Skeleton } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
 import { FittedCvPreview, UploadedCvPreview } from '@/entities/cv/cv'
 import { message } from '@/shared/lib/toast'
-import { legacyAsset } from '@/shared/config/assets'
 
 export const VIEWER_ACTION_CLASS = 'inline-flex cursor-pointer items-center gap-1.5 rounded border-0 bg-transparent px-2.5 py-1.5 text-xs font-semibold !text-white transition hover:bg-white/15 disabled:cursor-wait disabled:opacity-60'
 
@@ -68,7 +67,7 @@ function CvVersionReadOnly({ load, inaccessibleMessage, shareToken, renderAction
   return (
     <div
       className="min-h-dvh w-full bg-cover bg-fixed bg-center"
-      style={{ backgroundImage: `url('${legacyAsset('cv-builder/bg-5.png')}')` }}
+      style={{ backgroundImage: `url('${'/images/cv-builder/bg-5.webp'}')` }}
     >
       <header className="sticky top-0 z-20 flex h-12 items-center justify-between gap-3 bg-[#10242b]/85 px-3 text-white shadow-[0_2px_10px_rgba(0,0,0,0.15)] backdrop-blur-sm sm:px-5">
         <h1 className="min-w-0 truncate text-[13px] font-medium text-slate-100">

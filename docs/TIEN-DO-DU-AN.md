@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Tối ưu tải trang đầu frontend](#tối-ưu-tải-trang-đầu-frontend-2026-11-25) | 🟨 PR #358 (nhánh `perf/initial-load`), chờ gộp |
 | [Sửa API công khai có cache trả 500 với Redis](#sửa-api-công-khai-có-cache-trả-500-với-redis-2026-11-25) | 🟨 Nhánh `fix/public-cache-redis`, chờ gộp |
 | [Thanh tab dưới và thông báo trên mobile cho ứng viên](#thanh-tab-dưới-và-thông-báo-trên-mobile-cho-ứng-viên-2026-11-25) | 🟨 PR #354 (nhánh `feat/mobile-tab-bar`), chờ gộp |
 | [Lời mời kết nối của NTD cho ứng viên](#lời-mời-kết-nối-của-ntd-cho-ứng-viên-2026-11-25) | 🟨 PR #356 (nhánh `feat/employer-connections`), chờ gộp; nhắn tin chưa làm |
@@ -249,6 +250,36 @@ quý trên VPS tạm, xử lý xóa nhầm / migration hỏng / mất VPS / lộ
 - Kiểm chứng trên stack giả (db + 2 redis + backend dev): backup → restore vào DB mới
   khớp số dòng, giải mã sai khóa, dump quá nhỏ → `/fail`, `pg_restore` lỗi giữa chừng,
   xoay vòng 7/4/6, khóa đồng thời. Chưa chạy trên VPS/R2 thật.
+
+## Tối ưu tải trang đầu frontend (2026-11-25)
+
+Bản build production, trang chủ khách chưa đăng nhập:
+
+| Chỉ số | Trước | Sau |
+| --- | --- | --- |
+| File JS chặn render ban đầu | 78 | 9 |
+| JS khởi tạo (gzip) | 332,8 KiB | 252,1 KiB |
+| CSS khởi tạo (gzip) | 35,3 KiB | 33,6 KiB |
+| Toàn trang chủ sau khi cuộn hết: file JS / dung lượng | 198 / 608 KB | 167 / 539 KB |
+| Ảnh trang trí trang chủ | ~1,5 MB PNG từ R2 | 85 KB WebP |
+
+- **Chunk `vendor` cho bundle đầu**: `codeSplitting.groups` gom mọi thư viện mà trang
+  đầu import tĩnh (tag `$initial`) thay vì ~60 mảnh nhỏ; React giữ chunk riêng.
+- **Barrel không side effect**: `index.js` của slice khai báo `sideEffects: false`, nên
+  guard chỉ dùng `withReturnUrl`/`getAuthDestination` không kéo form đăng nhập, antd
+  Form và hồ sơ NTD vào bundle đầu. `check:architecture` chặn barrel có lệnh chạy lúc import.
+- **Ảnh**: 7 ảnh PNG trên R2 (robot thị trường 725 KB, banner blog 1,1 MB, nền hotline,
+  flash badge, onboarding, CV builder; tổng ~3,1 MB) thành WebP trong `public/images`
+  (177 KB) theo cỡ hiển thị ×2; ảnh có `width`/`height` để tránh nhảy bố cục.
+- **Locale antd** lấy bản ESM (`antd/es/locale/vi_VN`), bỏ bản CommonJS trùng lặp.
+- **Nginx**: image production nén sẵn `dist/` gzip mức 9 (`scripts/precompress-dist.mjs`),
+  bật `gzip_static`, phản hồi động nén mức 5 thay cho mặc định 1.
+- **Dev**: `server.warmup` biên dịch sẵn shell + trang chủ khi Vite khởi động. Số request
+  lớn ở dev (hàng trăm module, ảnh mascot trả 304) là đặc thù Vite dev, không có ở production.
+- **Ngân sách**: JS khởi tạo 334 → 256 KiB, CSS 38,5 → 35 KiB.
+- Đã thử và bỏ: nhóm thư viện dùng chung theo số route (Home 153 → 331 KiB) và
+  `experimentalInlineCommonChunks` (bật `strictExecutionOrder`, gộp toàn bộ chuỗi i18n
+  vào bundle đầu, 465 KiB).
 
 ## Chuẩn bị deploy: GĐ4 hiệu năng và chịu tải (2026-11-25)
 
