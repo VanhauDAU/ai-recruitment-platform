@@ -1,5 +1,9 @@
 # Chạy dự án local bằng Docker Compose
 
+File này chỉ nói về `docker-compose.yml` (môi trường dev). Production dùng
+`docker-compose.prod.yml` qua `scripts/deploy/compose.sh`, xem
+[huong-dan-deployment.md](huong-dan-deployment.md).
+
 ## Máy mới chỉ cần Docker
 
 ```bash
@@ -37,7 +41,7 @@ thay đổi; không cần sửa `VITE_API_BASE_URL`, CORS hoặc `ALLOWED_HOSTS`
   trong `backend/.env` (mặc định `5432` = Postgres local).
 - Service: `db` (PostgreSQL 16 + pgvector, image `pgvector/pgvector:pg16-trixie`), `redis`, `backend` (runserver + auto migrate),
   `worker` (Celery tác vụ chung), `ai-worker` (chỉ queue `ai-generation`,
-  concurrency 2), `ml-worker` (chỉ queue `ai-matching`, xem dưới), `beat`
+  concurrency 2), `ml-worker` (queue `ai-matching` và `ai-matching-batch`, xem dưới), `beat`
   (Celery beat) và `frontend` (vite).
 - **`ml-worker`** chạy đối sánh CV–JD bằng mô hình local: image riêng
   `ai-recruitment-platform-ml-worker` (Dockerfile target `ml`, có torch CPU và
@@ -72,6 +76,7 @@ docker compose exec backend sh -c "\
   python manage.py seed_skills && \
   python manage.py seed_locations && \
   python manage.py seed_province_merges && \
+  python manage.py seed_location_coordinates && \
   python manage.py seed_job_categories && \
   python manage.py seed_sitecontent && \
   python manage.py seed_cv_catalog && \

@@ -17,6 +17,8 @@ import {
 } from '@/entities/application/application'
 import { campaignKeys, getCampaignReport } from '@/entities/campaign/campaign'
 import { getEmployerJobs, jobKeys } from '@/entities/job/job'
+import { useSiteSettings } from '@/entities/system/site-settings'
+import { ApplicationMatchButton } from '@/features/employer/candidate/view-application-match'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { employerAppPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
@@ -67,6 +69,7 @@ export default function CampaignApplyCvPanel({ publicId }) {
   const [job, setJob] = useState('')
   const [scope, setScope] = useState('')
   const [status, setStatus] = useState('')
+  const rankingEnabled = useSiteSettings().settings.ai_application_ranking_enabled === true
   const [ordering, setOrdering] = useState('newest')
   const [page, setPage] = useState(1)
   const params = useMemo(() => ({
@@ -185,6 +188,7 @@ export default function CampaignApplyCvPanel({ publicId }) {
               aria-label={m.employer_campaign_cv_sort_aria()}
               value={ordering}
               options={[
+                ...(rankingEnabled ? [{ value: 'ai_match', label: m.fit_sort_best() }] : []),
                 { value: 'newest', label: m.employer_campaign_cv_sort_newest() },
                 { value: 'oldest', label: m.employer_campaign_cv_sort_oldest() },
                 { value: 'name', label: m.employer_campaign_cv_sort_name() },
@@ -296,6 +300,12 @@ export default function CampaignApplyCvPanel({ publicId }) {
                   </span>
                 ),
               },
+              ...(rankingEnabled
+                ? [{
+                    title: m.fit_column_title(),
+                    render: (_, application) => <ApplicationMatchButton application={application} />,
+                  }]
+                : []),
               {
                 title: m.employer_campaign_cv_col_applied_at(),
                 render: (_, application) => (

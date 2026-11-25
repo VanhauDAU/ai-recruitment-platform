@@ -7,14 +7,15 @@ import {
 } from './application-workspace'
 
 describe('application workspace model', () => {
-  it('groups candidate emails case-insensitively and keeps newest CV first', () => {
+  it('groups candidate emails case-insensitively and keeps the server ranking', () => {
     const groups = groupApplicationsByCandidate([
-      { public_id: 'app_old', candidate_email: 'hau@example.com', applied_at: '2026-07-01' },
-      { public_id: 'app_new', candidate_email: 'HAU@example.com', applied_at: '2026-08-01' },
+      { public_id: 'app_best', candidate_email: 'hau@example.com', applied_at: '2026-07-01' },
+      { public_id: 'app_other', candidate_email: 'an@example.com', applied_at: '2026-09-01' },
+      { public_id: 'app_second', candidate_email: 'HAU@example.com', applied_at: '2026-08-01' },
     ])
 
-    expect(groups).toHaveLength(1)
-    expect(groups[0].applications.map((item) => item.public_id)).toEqual(['app_new', 'app_old'])
+    expect(groups.map((group) => group.candidateEmail)).toEqual(['hau@example.com', 'an@example.com'])
+    expect(groups[0].applications.map((item) => item.public_id)).toEqual(['app_best', 'app_second'])
   })
 
   it('exposes only the decision the recruiter can still undo', () => {

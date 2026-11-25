@@ -9374,6 +9374,31 @@ paths:
               schema:
                 $ref: '#/components/schemas/AnalysisError'
           description: ''
+  /api/candidate/matching/cv-profiles/{cv_public_id}/:
+    get:
+      operationId: candidate_matching_cv_profiles_retrieve
+      description: '`status`: `ready` (có `profile`), `pending` (CV vừa lưu, chưa
+        trích xuất xong), `failed` (không đọc được CV, kèm `error_code`). Chỉ đọc;
+        không chứa chữ nguyên văn ngoài các mục liệt kê.'
+      summary: Hồ sơ trích xuất từ CV của ứng viên
+      parameters:
+      - in: path
+        name: cv_public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - Matching
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
   /api/candidate/notifications/:
     get:
       operationId: candidate_notifications_list
@@ -9692,6 +9717,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/Application'
           description: ''
+  /api/employer/applications/{public_id}/ai-match/:
+    get:
+      operationId: employer_applications_ai_match_retrieve
+      description: '`status`: `ready` (có `result`), `pending` (đang phân tích), `failed`,
+        `not_consented` (ứng viên không tham gia phân tích AI), hoặc null khi tính
+        năng tắt. Kết quả chấm trên bản CV đã nộp; không có gợi ý sửa CV dành cho
+        ứng viên.'
+      summary: Mức phù hợp do AI chấm cho một hồ sơ (chi tiết từng tiêu chí)
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
   /api/employer/applications/{public_id}/cv/:
     get:
       operationId: employer_applications_cv_retrieve
@@ -9814,6 +9865,32 @@ paths:
               schema:
                 type: string
                 format: binary
+          description: ''
+  /api/employer/applications/{public_id}/extracted-profile/:
+    get:
+      operationId: employer_applications_extracted_profile_retrieve
+      description: '`status`: `ready` (có `profile`), `pending`, `failed`, hoặc `not_consented`
+        khi ứng viên không tham gia phân tích AI. `profile` gồm chức danh, kinh nghiệm,
+        học vấn, cấp bậc, ngoại ngữ, kỹ năng theo nhóm và nội dung từng mục của CV
+        (`sections`).'
+      summary: Hồ sơ trích xuất từ bản CV đã nộp của một hồ sơ
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
           description: ''
   /api/employer/applications/{public_id}/history/:
     get:
@@ -11042,6 +11119,150 @@ paths:
               schema:
                 $ref: '#/components/schemas/CandidateBlock'
           description: ''
+  /api/employer/candidate-search/:
+    get:
+      operationId: employer_candidate_search_retrieve
+      description: 'Kết quả ẩn danh: mã ứng viên, chức danh, kinh nghiệm, học vấn,
+        cấp bậc, ngoại ngữ, kỹ năng trùng với tin, điểm và mức phù hợp. Không có tên,
+        liên hệ, tệp CV hay tên công ty.'
+      summary: 'Tìm CV: ứng viên đang bật tìm kiếm, xếp theo mức phù hợp với một tin'
+      parameters:
+      - in: query
+        name: education
+        schema:
+          enum:
+          - none
+          - middle_school
+          - high_school
+          - intermediate
+          - college
+          - university
+          - postgraduate
+          - ''
+          type: string
+          default: ''
+        description: |-
+          * `none` - none
+          * `middle_school` - middle_school
+          * `high_school` - high_school
+          * `intermediate` - intermediate
+          * `college` - college
+          * `university` - university
+          * `postgraduate` - postgraduate
+      - in: query
+        name: job
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 50
+        required: true
+      - in: query
+        name: language
+        schema:
+          type: string
+          default: ''
+          maxLength: 5
+      - in: query
+        name: min_months
+        schema:
+          type: integer
+          maximum: 600
+          minimum: 0
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - in: query
+        name: province
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: q
+        schema:
+          type: string
+          default: ''
+          maxLength: 80
+      - in: query
+        name: skills
+        schema:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 10
+      tags:
+      - applications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/employer/candidate-search/{ref}/:
+    get:
+      operationId: employer_candidate_search_detail
+      description: Mỗi lần mở được ghi `CvAccessLog` kênh `recruiter_search`.
+      summary: 'Tìm CV: hồ sơ trích xuất ẩn danh và mức phù hợp chi tiết của một ứng
+        viên'
+      parameters:
+      - in: query
+        name: job
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: ref
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/employer/candidate-search/{ref}/invite/:
+    post:
+      operationId: employer_candidate_search_invite_create
+      summary: 'Tìm CV: mời một ứng viên ứng tuyển vào một tin đang tuyển'
+      parameters:
+      - in: path
+        name: ref
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateSearchInviteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CandidateSearchInviteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CandidateSearchInviteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/employer/company/:
     get:
       operationId: employer_company_retrieve
@@ -14276,6 +14497,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedPublicJobPreviewList'
           description: ''
+  /api/public/jobs/best/locations/:
+    get:
+      operationId: public_jobs_best_locations_retrieve
+      description: Locations that currently have public jobs, for the Best Jobs filter
+        chips.
+      summary: Tỉnh và phường/xã đang có việc làm (bộ lọc Việc làm nổi bật)
+      tags:
+      - jobs
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HomepageBestJobLocations'
+          description: ''
   /api/public/jobs/categories/:
     get:
       operationId: public_jobs_categories_list
@@ -14360,6 +14599,118 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Language'
+          description: ''
+  /api/public/jobs/nearby/:
+    get:
+      operationId: public_jobs_nearby_list
+      summary: Việc làm gần một vị trí (sắp theo khoảng cách)
+      parameters:
+      - in: query
+        name: include_province_wide
+        schema:
+          type: boolean
+        description: Gồm tin tuyển khắp tỉnh
+      - in: query
+        name: include_remote
+        schema:
+          type: boolean
+        description: Gồm tin chỉ làm từ xa
+      - in: query
+        name: lat
+        schema:
+          type: number
+          format: double
+        description: Vĩ độ (làm tròn 3 chữ số)
+        required: true
+      - in: query
+        name: lng
+        schema:
+          type: number
+          format: double
+        description: Kinh độ (làm tròn 3 chữ số)
+        required: true
+      - in: query
+        name: ordering
+        schema:
+          type: string
+          enum:
+          - distance
+          - newest
+          - salary_desc
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: radius_km
+        schema:
+          type: integer
+        description: Bán kính, kẹp theo cấu hình (mặc định 10)
+      tags:
+      - jobs
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPublicNearbyJobList'
+          description: ''
+  /api/public/jobs/nearby/map/:
+    get:
+      operationId: public_jobs_nearby_map_retrieve
+      summary: Điểm việc làm trên bản đồ quanh một vị trí
+      parameters:
+      - in: query
+        name: include_province_wide
+        schema:
+          type: boolean
+        description: Gồm tin tuyển khắp tỉnh
+      - in: query
+        name: include_remote
+        schema:
+          type: boolean
+        description: Gồm tin chỉ làm từ xa
+      - in: query
+        name: lat
+        schema:
+          type: number
+          format: double
+        description: Vĩ độ (làm tròn 3 chữ số)
+        required: true
+      - in: query
+        name: lng
+        schema:
+          type: number
+          format: double
+        description: Kinh độ (làm tròn 3 chữ số)
+        required: true
+      - in: query
+        name: radius_km
+        schema:
+          type: integer
+        description: Bán kính, kẹp theo cấu hình (mặc định 10)
+      tags:
+      - jobs
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NearbyJobMap'
           description: ''
   /api/public/jobs/stats/:
     get:
@@ -14530,6 +14881,85 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/LocationLookup'
+          description: ''
+  /api/public/locations/geo/autocomplete/:
+    get:
+      operationId: public_locations_geo_autocomplete_list
+      summary: 'Gợi ý vị trí: phường/xã có sẵn rồi địa chỉ từ nhà cung cấp bản đồ'
+      parameters:
+      - in: query
+        name: lat
+        schema:
+          type: number
+          format: double
+        description: Ưu tiên gợi ý gần điểm này
+      - in: query
+        name: lng
+        schema:
+          type: number
+          format: double
+      - in: query
+        name: q
+        schema:
+          type: string
+        required: true
+      tags:
+      - locations
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GeoSuggestion'
+          description: ''
+  /api/public/locations/geo/place/:
+    get:
+      operationId: public_locations_geo_place_retrieve
+      summary: Tọa độ của một gợi ý địa chỉ
+      parameters:
+      - in: query
+        name: ref
+        schema:
+          type: string
+        required: true
+      tags:
+      - locations
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeoPoint'
+          description: ''
+  /api/public/locations/geo/wards/{slug}/:
+    get:
+      operationId: public_locations_geo_wards_retrieve
+      summary: Phường/xã theo slug (gốc tìm việc gần chia sẻ được qua URL)
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - locations
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeoPlaceLabel'
           description: ''
   /api/public/privacy/consent/:
     get:
@@ -14847,6 +15277,23 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/SkillGroup'
+          description: ''
+  /api/shared/realtime/ticket/:
+    post:
+      operationId: shared_realtime_ticket_create
+      description: Any signed-in portal account; the JWT authentication already enforced
+        its session.
+      summary: Cấp vé kết nối WebSocket thông báo (dùng một lần, 30 giây)
+      tags:
+      - realtime
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealtimeTicket'
           description: ''
   /api/shared/site/announcements/{public_id}/state/:
     put:
@@ -16429,6 +16876,9 @@ components:
         public_id:
           type: string
           readOnly: true
+        code:
+          type: string
+          readOnly: true
         company_name:
           type: string
           maxLength: 255
@@ -16531,6 +16981,7 @@ components:
           readOnly: true
       required:
       - business_type_label
+      - code
       - company_name
       - company_size_label
       - created_at
@@ -17001,6 +17452,9 @@ components:
         public_id:
           type: string
           readOnly: true
+        code:
+          type: string
+          readOnly: true
         company_name:
           type: string
           maxLength: 255
@@ -17055,6 +17509,7 @@ components:
           readOnly: true
       required:
       - business_type_label
+      - code
       - company_name
       - created_at
       - has_eligible_owner
@@ -18279,6 +18734,9 @@ components:
         public_id:
           type: string
           readOnly: true
+        code:
+          type: string
+          readOnly: true
         slug:
           type: string
           readOnly: true
@@ -18370,7 +18828,7 @@ components:
         has_flash_badge:
           type: boolean
           readOnly: true
-          description: Huy hiệu Sấm Chớp — NTD tương tác nhanh
+          description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         deadline:
           type: string
           format: date
@@ -18600,6 +19058,7 @@ components:
       - blocked_reasons
       - can_view_sensitive_contact
       - category_assignments
+      - code
       - company_name
       - company_public_id
       - company_role
@@ -18654,6 +19113,9 @@ components:
       type: object
       properties:
         public_id:
+          type: string
+          readOnly: true
+        code:
           type: string
           readOnly: true
         slug:
@@ -18747,7 +19209,7 @@ components:
         has_flash_badge:
           type: boolean
           readOnly: true
-          description: Huy hiệu Sấm Chớp — NTD tương tác nhanh
+          description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         deadline:
           type: string
           format: date
@@ -18797,6 +19259,7 @@ components:
       required:
       - application_count
       - approved_at
+      - code
       - company_name
       - company_public_id
       - company_role
@@ -21512,6 +21975,18 @@ components:
           type: string
           format: date-time
           readOnly: true
+        ai_match_score:
+          type: integer
+          readOnly: true
+          nullable: true
+        ai_match_level:
+          type: string
+          readOnly: true
+          nullable: true
+        ai_match_status:
+          type: string
+          nullable: true
+          readOnly: true
         viewed_at:
           type: string
           format: date-time
@@ -21544,6 +22019,9 @@ components:
       required:
       - accepted_at
       - acquisition_channel
+      - ai_match_level
+      - ai_match_score
+      - ai_match_status
       - applied_at
       - available_decisions
       - campaign_channel_label
@@ -23100,6 +23578,15 @@ components:
           type: integer
       required:
       - updated
+    CandidateSearchInviteRequest:
+      type: object
+      properties:
+        job:
+          type: string
+          minLength: 1
+          maxLength: 50
+      required:
+      - job
     CandidateTalentPool:
       type: object
       description: 'What the candidate sees: who keeps their profile and until when.'
@@ -23277,6 +23764,9 @@ components:
         public_id:
           type: string
           readOnly: true
+        code:
+          type: string
+          readOnly: true
         slug:
           type: string
           readOnly: true
@@ -23360,6 +23850,7 @@ components:
           readOnly: true
       required:
       - address
+      - code
       - company_name
       - company_size
       - cover_image_url
@@ -24394,6 +24885,26 @@ components:
         * `ai` - AI soạn
         * `template` - Mẫu có sẵn
         * `manual` - Tự soạn
+    CoordinatePrecisionEnum:
+      enum:
+      - exact
+      - ward
+      - province
+      type: string
+      description: |-
+        * `exact` - Exact address
+        * `ward` - Ward centroid
+        * `province` - Whole province
+    CoordinateSourceEnum:
+      enum:
+      - employer_pin
+      - geocoder
+      - ward_centroid
+      type: string
+      description: |-
+        * `employer_pin` - Employer pin
+        * `geocoder` - Geocoded address
+        * `ward_centroid` - Ward centroid
     CurrencyEnum:
       enum:
       - VND
@@ -26288,6 +26799,8 @@ components:
           $ref: '#/components/schemas/EmployerDashboardAccount'
         summary:
           $ref: '#/components/schemas/EmployerDashboardSummary'
+        funnel:
+          $ref: '#/components/schemas/EmployerDashboardFunnel'
         application_activity:
           type: array
           items:
@@ -26295,6 +26808,10 @@ components:
         recruitment_need:
           allOf:
           - $ref: '#/components/schemas/RecruitmentNeedSummary'
+          nullable: true
+        flash_badge:
+          allOf:
+          - $ref: '#/components/schemas/FlashBadgeState'
           nullable: true
         recent_jobs:
           type: array
@@ -26307,6 +26824,8 @@ components:
       required:
       - account
       - application_activity
+      - flash_badge
+      - funnel
       - recent_applications
       - recent_jobs
       - recruitment_need
@@ -26338,6 +26857,25 @@ components:
       - recruiter_verification_status
       - verification
       - work_location_name
+    EmployerDashboardFunnel:
+      type: object
+      properties:
+        received:
+          type: integer
+        shortlisted:
+          type: integer
+        interviewed:
+          type: integer
+        accepted:
+          type: integer
+        rejected:
+          type: integer
+      required:
+      - accepted
+      - interviewed
+      - received
+      - rejected
+      - shortlisted
     EmployerDashboardSummary:
       type: object
       properties:
@@ -26428,6 +26966,9 @@ components:
         candidate, so they stay readable while candidate-data access is blocked.
       properties:
         public_id:
+          type: string
+          readOnly: true
+        code:
           type: string
           readOnly: true
         slug:
@@ -26621,7 +27162,7 @@ components:
         has_flash_badge:
           type: boolean
           readOnly: true
-          description: Huy hiệu Sấm Chớp — NTD tương tác nhanh
+          description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         presentation:
           type: object
           additionalProperties: {}
@@ -26725,6 +27266,7 @@ components:
       - brand_slug
       - campaign_name
       - category
+      - code
       - company_cover_url
       - company_logo_url
       - company_name
@@ -26762,6 +27304,9 @@ components:
         time.
       properties:
         public_id:
+          type: string
+          readOnly: true
+        code:
           type: string
           readOnly: true
         slug:
@@ -26955,7 +27500,7 @@ components:
         has_flash_badge:
           type: boolean
           readOnly: true
-          description: Huy hiệu Sấm Chớp — NTD tương tác nhanh
+          description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         presentation:
           type: object
           additionalProperties: {}
@@ -27051,6 +27596,7 @@ components:
       - brand_slug
       - campaign_name
       - category
+      - code
       - company_cover_url
       - company_logo_url
       - company_name
@@ -27264,6 +27810,9 @@ components:
         public_id:
           type: string
           readOnly: true
+        code:
+          type: string
+          readOnly: true
         slug:
           type: string
           readOnly: true
@@ -27427,6 +27976,7 @@ components:
       - candidate_previews
       - category_name
       - closes_on
+      - code
       - company_name
       - created_at
       - currency
@@ -27816,6 +28366,9 @@ components:
       - application_received
       - application_withdrawn
       - application_awaiting_reply
+      - flash_badge_granted
+      - flash_badge_lost
+      - flash_badge_at_risk
       - job_changes_requested
       - company_join_requested
       - company_join_approved
@@ -27848,6 +28401,9 @@ components:
         * `application_received` - Có hồ sơ ứng tuyển mới
         * `application_withdrawn` - Ứng viên đã rút hồ sơ
         * `application_awaiting_reply` - Hồ sơ đang chờ phản hồi
+        * `flash_badge_granted` - Bạn đã đạt Huy hiệu Sấm Chớp
+        * `flash_badge_lost` - Bạn đã mất Huy hiệu Sấm Chớp
+        * `flash_badge_at_risk` - Huy hiệu Sấm Chớp sắp bị gỡ
         * `job_changes_requested` - Tin tuyển dụng cần chỉnh sửa
         * `company_join_requested` - Có yêu cầu tham gia công ty
         * `company_join_approved` - Yêu cầu tham gia công ty đã được duyệt
@@ -28332,6 +28888,80 @@ components:
         * `select` - Chọn một
         * `multi_select` - Chọn nhiều
         * `tags` - Thẻ
+    FlashBadgeCriterion:
+      type: object
+      properties:
+        code:
+          $ref: '#/components/schemas/FlashBadgeCriterionCodeEnum'
+        met:
+          type: boolean
+        value:
+          nullable: true
+        target:
+          type: integer
+      required:
+      - code
+      - met
+      - target
+      - value
+    FlashBadgeCriterionCodeEnum:
+      enum:
+      - enough_applications
+      - response_rate
+      - recent_activity
+      - no_overdue
+      type: string
+      description: |-
+        * `enough_applications` - enough_applications
+        * `response_rate` - response_rate
+        * `recent_activity` - recent_activity
+        * `no_overdue` - no_overdue
+    FlashBadgeState:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        qualified:
+          type: boolean
+        qualified_since:
+          type: string
+          format: date-time
+          nullable: true
+        response_rate:
+          type: integer
+          nullable: true
+        avg_response_hours:
+          type: number
+          format: double
+          nullable: true
+        criteria:
+          type: array
+          items:
+            $ref: '#/components/schemas/FlashBadgeCriterion'
+        overdue_count:
+          type: integer
+        at_risk_count:
+          type: integer
+        response_hours:
+          type: integer
+        window_days:
+          type: integer
+        computed_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - at_risk_count
+      - avg_response_hours
+      - computed_at
+      - criteria
+      - enabled
+      - overdue_count
+      - qualified
+      - qualified_since
+      - response_hours
+      - response_rate
+      - window_days
     FollowedCompany:
       type: object
       description: Directory card of a followed company plus the candidate's own follow.
@@ -28473,6 +29103,88 @@ components:
         * `any` - Không yêu cầu
         * `male` - Nam
         * `female` - Nữ
+    GeoPlaceLabel:
+      type: object
+      properties:
+        ward_id:
+          type: integer
+        ward_name:
+          type: string
+        ward_slug:
+          type: string
+        province_id:
+          type: integer
+        province_name:
+          type: string
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+      required:
+      - latitude
+      - longitude
+      - province_id
+      - province_name
+      - ward_id
+      - ward_name
+      - ward_slug
+    GeoPoint:
+      type: object
+      properties:
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        label:
+          type: string
+      required:
+      - label
+      - latitude
+      - longitude
+    GeoSuggestion:
+      type: object
+      description: |-
+        One autocomplete option: a ward (coordinates known locally) or a provider
+        place that needs ``/geo/place/`` to resolve its coordinates.
+      properties:
+        type:
+          $ref: '#/components/schemas/GeoSuggestionTypeEnum'
+        ref:
+          type: string
+        label:
+          type: string
+        secondary:
+          type: string
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
+        slug:
+          type: string
+      required:
+      - label
+      - latitude
+      - longitude
+      - ref
+      - secondary
+      - slug
+      - type
+    GeoSuggestionTypeEnum:
+      enum:
+      - ward
+      - place
+      type: string
+      description: |-
+        * `ward` - ward
+        * `place` - place
     GroupEnum:
       enum:
       - campaign
@@ -28525,6 +29237,44 @@ components:
       description: |-
         * `manual_review` - manual_review
         * `confirmed_violation` - confirmed_violation
+    HomepageBestJobLocations:
+      type: object
+      properties:
+        provinces:
+          type: array
+          items:
+            $ref: '#/components/schemas/HomepageBestJobProvince'
+        wards:
+          type: array
+          items:
+            $ref: '#/components/schemas/HomepageBestJobWard'
+      required:
+      - provinces
+      - wards
+    HomepageBestJobProvince:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        job_count:
+          type: integer
+      required:
+      - id
+      - job_count
+      - name
+    HomepageBestJobWard:
+      type: object
+      properties:
+        parent_id:
+          type: integer
+          nullable: true
+        parent_name:
+          type: string
+      required:
+      - parent_id
+      - parent_name
     ImportanceEnum:
       enum:
       - required
@@ -29419,6 +30169,11 @@ components:
           type: object
           additionalProperties: {}
           readOnly: true
+        flash_badge_stats:
+          allOf:
+          - $ref: '#/components/schemas/JobFlashBadgeStats'
+          nullable: true
+          readOnly: true
         job_locations:
           type: array
           items:
@@ -29537,6 +30292,7 @@ components:
       - employment_type
       - experience_years
       - first_approved_at
+      - flash_badge_stats
       - gender_requirement
       - income_display_type
       - is_hot
@@ -29567,6 +30323,26 @@ components:
       - work_type
       - work_types
       - workplace_groups
+    JobFlashBadgeStats:
+      type: object
+      description: Số liệu thật sau Huy hiệu Sấm Chớp của người đăng tin (ADR-0027).
+      properties:
+        response_rate:
+          type: integer
+        avg_response_hours:
+          type: number
+          format: double
+          nullable: true
+        matured_count:
+          type: integer
+        computed_at:
+          type: string
+          format: date-time
+      required:
+      - avg_response_hours
+      - computed_at
+      - matured_count
+      - response_rate
     JobImpressionBatchRequest:
       type: object
       properties:
@@ -29675,7 +30451,25 @@ components:
           type: integer
           maximum: 32767
           minimum: 0
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
+        coordinate_precision:
+          allOf:
+          - $ref: '#/components/schemas/CoordinatePrecisionEnum'
+          readOnly: true
+        coordinate_source:
+          allOf:
+          - $ref: '#/components/schemas/CoordinateSourceEnum'
+          readOnly: true
       required:
+      - coordinate_precision
+      - coordinate_source
       - id
       - location
       - location_level
@@ -29694,6 +30488,14 @@ components:
           type: integer
           maximum: 32767
           minimum: 0
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
       required:
       - location
     JobModerationEvent:
@@ -30474,9 +31276,21 @@ components:
           nullable: true
         merged_from:
           readOnly: true
+        latitude:
+          type: number
+          format: double
+          readOnly: true
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          readOnly: true
+          nullable: true
       required:
       - id
+      - latitude
       - level
+      - longitude
       - merged_from
       - name
       - parent
@@ -30863,6 +31677,156 @@ components:
         * `manual_review` - Tạm ẩn để rà soát nội dung
         * `confirmed_violation` - Tạm ẩn do vi phạm đã xác nhận
         * `changes_requested` - Tạm ẩn, cần chỉnh sửa theo yêu cầu
+    NearbyJobMap:
+      type: object
+      properties:
+        origin:
+          $ref: '#/components/schemas/NearbyJobMapOrigin'
+        points:
+          type: array
+          items:
+            $ref: '#/components/schemas/NearbyMarker'
+        truncated:
+          type: boolean
+      required:
+      - origin
+      - points
+      - truncated
+    NearbyJobMapOrigin:
+      type: object
+      properties:
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        radius_km:
+          type: integer
+        ward:
+          allOf:
+          - $ref: '#/components/schemas/NearbyOriginPlace'
+          nullable: true
+      required:
+      - latitude
+      - longitude
+      - radius_km
+      - ward
+    NearbyMarker:
+      type: object
+      properties:
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        precision:
+          type: string
+        distance_km:
+          type: number
+          format: double
+          readOnly: true
+        label:
+          type: string
+          description: Tên phường/xã của điểm
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/NearbyMarkerJob'
+      required:
+      - distance_km
+      - jobs
+      - label
+      - latitude
+      - longitude
+      - precision
+    NearbyMarkerJob:
+      type: object
+      properties:
+        slug:
+          type: string
+        title:
+          type: string
+        company_name:
+          type: string
+        company_logo_url:
+          type: string
+          nullable: true
+          readOnly: true
+        salary_type:
+          type: string
+        salary_min:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          nullable: true
+        salary_max:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          nullable: true
+        currency:
+          type: string
+        workplace:
+          type: string
+          readOnly: true
+      required:
+      - company_logo_url
+      - company_name
+      - currency
+      - salary_max
+      - salary_min
+      - salary_type
+      - slug
+      - title
+      - workplace
+    NearbyOriginPlace:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        province_id:
+          type: integer
+        province_name:
+          type: string
+      required:
+      - id
+      - name
+      - province_id
+      - province_name
+      - slug
+    NearbyWorkplace:
+      type: object
+      properties:
+        id:
+          type: integer
+        display:
+          type: string
+          readOnly: true
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        precision:
+          type: string
+        distance_km:
+          type: number
+          format: double
+          readOnly: true
+      required:
+      - display
+      - distance_km
+      - id
+      - latitude
+      - longitude
+      - precision
     NetworkEnum:
       enum:
       - facebook_page
@@ -32012,6 +32976,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PublicJobPreview'
+    PaginatedPublicNearbyJobList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicNearbyJob'
     PaginatedRecruitmentCampaignList:
       type: object
       required:
@@ -33910,7 +34897,7 @@ components:
         has_flash_badge:
           type: boolean
           readOnly: true
-          description: Huy hiệu Sấm Chớp — NTD tương tác nhanh
+          description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         presentation:
           type: object
           additionalProperties: {}
@@ -33984,7 +34971,20 @@ components:
         address_detail:
           type: string
           maxLength: 500
+        latitude:
+          type: number
+          format: double
+          nullable: true
+        longitude:
+          type: number
+          format: double
+          nullable: true
+        coordinate_precision:
+          allOf:
+          - $ref: '#/components/schemas/CoordinatePrecisionEnum'
+          readOnly: true
       required:
+      - coordinate_precision
       - id
       - location
       - location_level
@@ -34133,7 +35133,7 @@ components:
         has_flash_badge:
           type: boolean
           readOnly: true
-          description: Huy hiệu Sấm Chớp — NTD tương tác nhanh
+          description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         presentation:
           type: object
           additionalProperties: {}
@@ -34270,6 +35270,228 @@ components:
           maxLength: 500
       required:
       - id
+    PublicNearbyJob:
+      type: object
+      description: Search card plus how close the job is to the candidate's chosen
+        point.
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        title:
+          type: string
+          readOnly: true
+        company_name:
+          type: string
+          readOnly: true
+        company_slug:
+          type: string
+          nullable: true
+          readOnly: true
+        company_logo_url:
+          type: string
+          nullable: true
+          readOnly: true
+        brand_slug:
+          type: string
+          nullable: true
+          readOnly: true
+        company_verified:
+          type: boolean
+          readOnly: true
+        category:
+          type: integer
+          nullable: true
+          readOnly: true
+        locations_detail:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
+        job_skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/JobListSkill'
+          readOnly: true
+        work_type:
+          allOf:
+          - $ref: '#/components/schemas/JobWorkTypeEnum'
+          readOnly: true
+        work_types:
+          readOnly: true
+          description: Các hình thức làm việc được áp dụng; work_type giữ giá trị
+            đầu tiên để tương thích bộ lọc cũ.
+        employment_type:
+          allOf:
+          - $ref: '#/components/schemas/EmploymentTypeEnum'
+          readOnly: true
+        education_level:
+          allOf:
+          - $ref: '#/components/schemas/EducationLevelEnum'
+          readOnly: true
+        experience_years:
+          allOf:
+          - $ref: '#/components/schemas/ExperienceYearsEnum'
+          readOnly: true
+          description: |-
+            Số năm kinh nghiệm yêu cầu (bộ lọc "Kinh nghiệm")
+
+            * `none` - Không yêu cầu
+            * `under_1` - Dưới 1 năm
+            * `1` - 1 năm
+            * `2` - 2 năm
+            * `3` - 3 năm
+            * `4` - 4 năm
+            * `5` - 5 năm
+            * `over_5` - Trên 5 năm
+        position_level:
+          allOf:
+          - $ref: '#/components/schemas/JobPositionLevelEnum'
+          readOnly: true
+          description: |-
+            Cấp bậc tuyển dụng (bộ lọc "Cấp bậc")
+
+            * `employee` - Nhân viên
+            * `team_lead` - Trưởng nhóm
+            * `manager` - Trưởng/Phó phòng
+            * `supervisor` - Quản lý / Giám sát
+            * `branch_manager` - Trưởng chi nhánh
+            * `vice_director` - Phó giám đốc
+            * `director` - Giám đốc
+            * `intern` - Thực tập sinh
+        age_min:
+          type: integer
+          readOnly: true
+          nullable: true
+        age_max:
+          type: integer
+          readOnly: true
+          nullable: true
+        salary_type:
+          readOnly: true
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/SalaryTypeEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        salary_min:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        salary_max:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        income_display_type:
+          allOf:
+          - $ref: '#/components/schemas/IncomeDisplayTypeEnum'
+          readOnly: true
+        currency:
+          allOf:
+          - $ref: '#/components/schemas/CurrencyEnum'
+          readOnly: true
+        tier:
+          allOf:
+          - $ref: '#/components/schemas/TierEnum'
+          readOnly: true
+        is_hot:
+          type: boolean
+          readOnly: true
+          description: Nhãn HOT (đỏ) trên card
+        is_urgent:
+          type: boolean
+          readOnly: true
+          description: Nhãn GẤP / tuyển gấp (cam) trên card
+        has_flash_badge:
+          type: boolean
+          readOnly: true
+          description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
+        presentation:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+        first_approved_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          description: Mốc duyệt đầu tiên bất biến của public cycle hiện tại.
+        published_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        deadline:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        distance_km:
+          type: number
+          format: double
+          nullable: true
+          readOnly: true
+        match_kind:
+          type: string
+          readOnly: true
+        nearest_workplace:
+          allOf:
+          - $ref: '#/components/schemas/NearbyWorkplace'
+          nullable: true
+          readOnly: true
+        nearby_workplace_count:
+          type: integer
+          readOnly: true
+      required:
+      - age_max
+      - age_min
+      - brand_slug
+      - category
+      - company_logo_url
+      - company_name
+      - company_slug
+      - company_verified
+      - created_at
+      - currency
+      - deadline
+      - distance_km
+      - education_level
+      - employment_type
+      - experience_years
+      - first_approved_at
+      - has_flash_badge
+      - income_display_type
+      - is_hot
+      - is_urgent
+      - job_skills
+      - locations_detail
+      - match_kind
+      - nearby_workplace_count
+      - nearest_workplace
+      - position_level
+      - presentation
+      - public_id
+      - published_at
+      - salary_max
+      - salary_min
+      - salary_type
+      - slug
+      - tier
+      - title
+      - work_type
+      - work_types
     PublicSimilarCompanies:
       type: object
       properties:
@@ -34294,6 +35516,16 @@ components:
       required:
       - revision_number
       - revision_token
+    RealtimeTicket:
+      type: object
+      properties:
+        ticket:
+          type: string
+        expires_in:
+          type: integer
+      required:
+      - expires_in
+      - ticket
     ReasonCodeEnum:
       enum:
       - incomplete_content
@@ -34618,7 +35850,7 @@ components:
         has_flash_badge:
           type: boolean
           readOnly: true
-          description: Huy hiệu Sấm Chớp — NTD tương tác nhanh
+          description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         presentation:
           type: object
           additionalProperties: {}
@@ -35897,7 +37129,7 @@ components:
         has_flash_badge:
           type: boolean
           readOnly: true
-          description: Huy hiệu Sấm Chớp — NTD tương tác nhanh
+          description: Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD
         presentation:
           type: object
           additionalProperties: {}

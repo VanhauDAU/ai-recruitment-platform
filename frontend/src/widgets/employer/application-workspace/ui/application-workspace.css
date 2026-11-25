@@ -23,43 +23,95 @@
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   min-height: 56px; padding: 10px 16px; border-bottom: 1px solid #f1f5f9;
 }
-.aw-panel-title { margin: 0; font-size: 15px; font-weight: 800; color: #0f172a; }
+.aw-panel-title { margin: 0; font-size: 15px; font-weight: 700; color: #0f172a; }
 .aw-panel-sub { margin: 2px 0 0; font-size: 12px; color: #64748b; }
+.aw-panel-meta { font-size: 12px; color: #64748b; white-space: nowrap; }
 .aw-count {
   padding: 2px 8px; border-radius: 999px; background: #f1f5f9; color: #475569;
   font-size: 11px; font-weight: 700; white-space: nowrap;
 }
 
-/* Search and status filter share one row. */
-.aw-filters { display: grid; grid-template-columns: minmax(0, 1fr) 116px; gap: 6px; }
+/* Bộ lọc: tìm kiếm và tin tuyển dụng chiếm cả hàng; trạng thái + sắp xếp chung một hàng. */
+.aw-filters {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;
+  padding: 12px; border-bottom: 1px solid #f1f5f9;
+}
+.aw-filters__wide { grid-column: 1 / -1; }
 
-/* Candidate groups */
-.aw-group { border: 1px solid #e2e8f0; border-radius: 14px; background: #fff; overflow: hidden; }
-.aw-group.is-active { border-color: color-mix(in srgb, var(--brand-primary) 45%, #fff); box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 8%, transparent); }
+/* Danh sách ứng viên: dòng phẳng, ngăn bằng đường kẻ mảnh. */
+.aw-list, .aw-group__items { margin: 0; padding: 0; list-style: none; }
+.aw-list > li + li { border-top: 1px solid #f1f5f9; }
 .aw-avatar {
   display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
-  width: 38px; height: 38px; border-radius: 12px; background: var(--brand-primary-soft); color: var(--brand-primary-hover);
-  font-size: 13px; font-weight: 800;
+  width: 32px; height: 32px; border-radius: 999px; background: #f1f5f9; color: #475569;
+  font-size: 12px; font-weight: 700;
 }
-.aw-new-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; flex-shrink: 0; }
-.aw-application {
-  display: block; width: 100%; padding: 10px; border: 1px solid transparent; border-radius: 10px;
-  background: transparent; text-align: left; cursor: pointer; transition: background .15s, border-color .15s;
+.aw-row {
+  position: relative; display: flex; align-items: flex-start; gap: 10px; width: 100%;
+  padding: 10px 12px; border: 0; background: transparent; text-align: left; cursor: pointer;
+  transition: background-color .15s;
 }
-.aw-application:hover { background: #fff; border-color: #e2e8f0; }
-.aw-application[aria-current='true'] { background: #fff; border-color: var(--brand-primary); box-shadow: 0 1px 2px rgb(15 23 42 / .06); }
-.aw-application.is-unread .aw-application__title { color: #0f172a; font-weight: 800; }
-.aw-application__title { font-size: 12px; font-weight: 600; color: #334155; line-height: 18px; }
+.aw-row:hover { background: #f8fafc; }
+.aw-row:focus-visible { outline: 2px solid var(--brand-primary); outline-offset: -2px; }
+.aw-row[aria-current='true'] { background: var(--brand-primary-soft); }
+.aw-row[aria-current='true']::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--brand-primary);
+}
+.aw-row[aria-current='true'] .aw-avatar { background: #fff; color: var(--brand-primary-hover); }
+.aw-row__body { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 2px; }
+.aw-row__top { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.aw-row__top > .fit-chip, .aw-row__top > .fit-chip-empty { flex-shrink: 0; margin-left: auto; }
+.aw-row__name, .aw-row__title {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 13px; line-height: 20px; color: #1e293b;
+}
+.aw-row__name { font-weight: 600; }
+.aw-row__title { font-weight: 500; }
+.aw-row__sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: #64748b; }
+.aw-row__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; font-size: 11px; color: #94a3b8; }
+.aw-status { display: inline-flex; align-items: center; gap: 5px; color: #475569; font-weight: 500; }
+.aw-status::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--aw-dot); }
+/* Hồ sơ chưa xem: tên đậm và chấm màu thương hiệu trước tên. */
+.aw-row.is-unread .aw-row__name, .aw-row.is-unread .aw-row__title,
+.aw-group__head.is-unread .aw-row__name { font-weight: 700; color: #0f172a; }
+.aw-row.is-unread .aw-row__name::after, .aw-row.is-unread .aw-row__title::after {
+  content: ''; display: inline-block; width: 6px; height: 6px; margin-left: 6px; border-radius: 50%;
+  vertical-align: middle; background: var(--brand-primary);
+}
 
-/* Actions on the CV, on their own bar so the title never gets squeezed. */
+/* Ứng viên nộp nhiều CV: tên một lần, các CV thụt vào thẳng dưới tên. */
+.aw-group__head { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 10px 12px 4px; }
+.aw-group__count { margin-left: auto; flex-shrink: 0; font-size: 11px; color: #94a3b8; }
+.aw-group__items .aw-row { padding-left: 54px; }
+.aw-group__items .aw-row::after {
+  content: ''; position: absolute; left: 27px; top: 0; bottom: 0; width: 1px; background: #e2e8f0;
+}
+
+/* Thao tác với CV, trên thanh riêng để tiêu đề không bị ép. */
 .aw-actionbar {
   display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
-  padding: 8px 16px; border-bottom: 1px solid #f1f5f9; background: #fcfdfe;
+  padding: 8px 16px; border-bottom: 1px solid #f1f5f9;
 }
-.aw-actionbar__end { margin-left: auto; }
-.aw-source {
-  display: inline-flex; padding: 1px 8px; border-radius: 999px; background: #f1f5f9;
-  color: #475569; font-size: 11px; font-weight: 600;
+.aw-zoom { display: inline-flex; align-items: center; gap: 2px; margin-left: auto; }
+.aw-zoom__value {
+  min-width: 44px; text-align: center; font-size: 12px; font-weight: 600; color: #475569;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Khung xem CV: cuộn hai chiều khi phóng to; trang căn giữa khi nhỏ hơn khung. */
+.aw-cv-viewport {
+  flex: 1; min-height: 24rem; overflow: auto; padding: 16px; background: #f1f5f9;
+  overscroll-behavior: contain;
+}
+.aw-cv-stage { display: flex; justify-content: center; width: max-content; min-width: 100%; }
+.aw-cv-page {
+  height: fit-content; overflow: hidden; border-radius: 2px; background: #fff;
+  box-shadow: 0 1px 3px rgb(15 23 42 / .08), 0 8px 24px rgb(15 23 42 / .06);
+}
+.aw-cv-page--loading { width: 100%; max-width: 48rem; margin: 0 auto; padding: 32px; }
+.aw-cv-placeholder {
+  display: flex; align-items: center; justify-content: center; min-height: 22rem;
+  border: 1px dashed #cbd5e1; border-radius: 12px; background: #fff;
 }
 
 /* Inspector */
@@ -69,7 +121,19 @@
   display: flex; align-items: center; gap: 8px; margin: 0 0 10px;
   font-size: 13px; font-weight: 800; color: #1e293b;
 }
-.aw-hero { padding: 16px; border-bottom: 1px solid #f1f5f9; background: linear-gradient(180deg, #f8fafc, #fff); }
+/* Thông tin dạng nhãn – giá trị. */
+.aw-info-list { display: flex; flex-direction: column; gap: 8px; margin: 0; }
+.aw-info { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 10px; font-size: 12px; line-height: 20px; }
+.aw-info dt { color: #64748b; }
+.aw-info dd { margin: 0; overflow-wrap: anywhere; font-weight: 500; color: #1e293b; }
+.aw-info--block { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+.aw-info dd.aw-info__text { padding: 8px 10px; border-radius: 8px; background: #f8fafc; white-space: pre-wrap; font-weight: 400; color: #475569; }
+
+/* Hồ sơ trích xuất đặt ở cột giữa, thay cho CV gốc khi chọn "Hồ sơ trích xuất". */
+.aw-profile { max-width: 760px; margin: 0 auto; padding: 18px 20px 24px; }
+.aw-profile__note { margin: 0 0 14px; padding: 8px 12px; border-radius: 10px; background: #f8fafc; font-size: 12px; line-height: 1.6; color: #64748b; }
+
+.aw-hero { padding: 16px; border-bottom: 1px solid #f1f5f9; }
 
 /* History timeline */
 .aw-timeline { margin: 0; padding: 0; list-style: none; }
@@ -95,7 +159,7 @@
 /* Mobile panel switcher */
 .aw-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; }
 .aw-tab { border: 0; border-radius: 9px; padding: 8px 12px; background: transparent; color: #64748b; font-size: 13px; font-weight: 700; cursor: pointer; }
-.aw-tab[aria-selected='true'] { background: #0f172a; color: #fff; }
+.aw-tab[aria-selected='true'] { background: var(--brand-primary-soft); color: var(--brand-primary-hover); }
 @media (min-width: 768px) { .aw-tabs { display: none; } }
 
 .aw-review-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
@@ -104,13 +168,12 @@
 .aw-secondary-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .aw-secondary-actions .ant-btn { height: 34px; border-radius: 10px; font-size: 12px; font-weight: 600; }
 
-/* Tệp CV ứng viên tải lên, hiện nguyên bản trong khung xem trước. */
+/* Tệp CV ứng viên tải lên, hiện nguyên bản; bề rộng do mức thu phóng quyết định. */
 .aw-cv-file {
-  width: 100%;
-  max-width: 48rem;
   height: 78vh;
   min-height: 24rem;
-  margin: 0 auto;
   border-radius: 2px;
-  box-shadow: 0 20px 25px -5px rgb(15 23 42 / 0.1);
+  box-shadow: 0 1px 3px rgb(15 23 42 / .08), 0 8px 24px rgb(15 23 42 / .06);
 }
+/* Ở màn rộng cột có chiều cao cố định: tệp lấp đầy khung xem. */
+@media (min-width: 1280px) { .aw-cv-stage--file, .aw-cv-file { height: 100%; } }

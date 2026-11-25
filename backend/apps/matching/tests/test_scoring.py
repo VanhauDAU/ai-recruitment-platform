@@ -1,4 +1,4 @@
-"""Công thức `hybrid-v1` và phần giải thích, chạy với `HashingEncoder` (không cần torch).
+"""Công thức `hybrid-v2` và phần giải thích, chạy với `HashingEncoder` (không cần torch).
 
 Ngoài kiểm tra từng tiêu chí, có ba nhóm test chống hồi quy theo kế hoạch mục 6b:
 - golden: điểm của các cặp cố định không được đổi ngầm (đổi công thức thì đổi
@@ -153,8 +153,7 @@ class CriteriaTests(SimpleTestCase):
         cv['education']['level'] = ''
         result = run(cv, job_profile())
         self.assertEqual(components(result)['education'], (None, 'insufficient_data'))
-        self.assertEqual(components(result)['location'], (None, 'insufficient_data'))
-        self.assertEqual(result['overall']['confidence'], 'low')
+        self.assertEqual(result['overall']['confidence'], 'medium')
         self.assertIn('missing_education_info', [s['code'] for s in result['suggestions']])
 
     def test_missing_required_language_caps_the_overall_score(self):
@@ -168,12 +167,39 @@ class CriteriaTests(SimpleTestCase):
         )
         self.assertEqual(components(run(with_language, job))['languages'], (100, 'ok'))
 
-    def test_location_is_left_out_when_comparing_with_human_labels(self):
-        keys = [
-            c['key']
-            for c in run(frontend_cv(), job_profile(), include_location=False)['components']
-        ]
-        self.assertNotIn('location', keys)
+    def test_location_is_not_a_scored_criterion(self):
+        result = run(frontend_cv(), job_profile())
+        self.assertEqual(
+            [c['key'] for c in result['components']],
+            ['skills', 'experience', 'education', 'position_level', 'languages'],
+        )
+        self.assertAlmostEqual(sum(c['weight'] for c in result['components']), 1.0)
+        self.assertEqual(result['schema_version'], 2)
+
+    def test_skill_written_differently_only_counts_when_semantic_matching_is_on(self):
+        # CV không khai "Kiểm thử giao diện web" nhưng có câu gần như trùng chữ.
+        job = job_profile(
+            skills=[
+                {
+                    'skill_id': 9,
+                    'name': 'test tự động cho giao diện web',
+                    'importance': 'required',
+                    'weight': 1.0,
+                    'counted': True,
+                }
+            ]
+        )
+        default = run(frontend_cv(), job)
+        self.assertEqual(default['skills']['matched'], [])
+        self.assertEqual(components(default)['skills'], (0, 'ok'))
+
+        enabled = run(frontend_cv(), job, ablation=('semantic_skills',))
+        self.assertEqual([s['match_type'] for s in enabled['skills']['matched']], ['semantic'])
+        self.assertEqual(components(enabled)['skills'], (100, 'ok'))
+
+    def test_unknown_ablation_is_rejected(self):
+        with self.assertRaises(ValueError):
+            run(frontend_cv(), job_profile(), ablation=('typo',))
 
     def test_cv_without_skills_or_experience_is_refused(self):
         empty = cv_profile(builder_document(section('education', {'degree': 'Cử nhân'})), catalog())
@@ -231,28 +257,7 @@ class StabilityTests(SimpleTestCase):
         cases = {
             'strong': (frontend_cv(), job_profile()),
             'junior_for_senior': (frontend_cv(months_start='2026-05'), senior_job),
-            'other_field': (
-                cv_profile(
-                    builder_document(
-                        section(
-                            'experience',
-                            {
-                                'role': 'Kế toán viên',
-                                'company': 'Công ty C',
-                                'start_date': '2022-01',
-                                'end_date': '2025-12',
-                                'description': rich(
-                                    'Lập báo cáo thuế hằng quý và đối chiếu công nợ.'
-                                ),
-                            },
-                        ),
-                        section('education', {'degree': 'Cử nhân Kế toán', 'institution': 'ĐH D'}),
-                    ),
-                    catalog(),
-                    today=TODAY,
-                ),
-                job_profile(),
-            ),
+            'other_field': (accountant_cv(), job_profile()),
         }
         scores = {name: run(cv, job)['overall']['score'] for name, (cv, job) in cases.items()}
         self.assertEqual(scores, GOLDEN_SCORES)
@@ -260,4 +265,58 @@ class StabilityTests(SimpleTestCase):
         self.assertGreater(scores['junior_for_senior'], scores['other_field'])
 
 
-GOLDEN_SCORES = {'strong': 84, 'junior_for_senior': 71, 'other_field': 39}
+GOLDEN_SCORES = {'strong': 84, 'junior_for_senior': 71, 'other_field': 0}
+
+
+def accountant_cv():
+    return cv_profile(
+        builder_document(
+            section(
+                'experience',
+                {
+                    'role': 'Kế toán viên',
+                    'company': 'Công ty C',
+                    'start_date': '2022-01',
+                    'end_date': '2025-12',
+                    'description': rich('Lập báo cáo thuế hằng quý và đối chiếu công nợ.'),
+                },
+            ),
+            section('education', {'degree': 'Cử nhân Kế toán', 'institution': 'ĐH D'}),
+            headline='Kế toán viên',
+        ),
+        catalog(),
+        today=TODAY,
+    )
+
+
+class RelevanceDiscountTests(SimpleTestCase):
+    """Học vấn, cấp bậc, ngoại ngữ chỉ được tính đủ khi CV đúng lĩnh vực của tin."""
+
+    def test_other_field_keeps_true_component_scores_but_a_lower_total(self):
+        discounted = run(accountant_cv(), job_profile())
+        plain = run(accountant_cv(), job_profile(), ablation=('no_relevance_discount',))
+
+        self.assertTrue(discounted['flags']['relevance_discount_applied'])
+        self.assertFalse(plain['flags']['relevance_discount_applied'])
+        # Điểm từng tiêu chí là giá trị thật: đủ bậc học vẫn là 100 ở cả hai.
+        self.assertEqual(components(discounted)['education'], (100, 'ok'))
+        self.assertEqual(components(discounted), components(plain))
+        self.assertLess(discounted['overall']['score'], plain['overall']['score'])
+        self.assertLess(discounted['overall']['relevance'], 50)
+        summaries = {c['key']: c['summary'] for c in discounted['components']}
+        self.assertIn('chỉ được tính một phần', summaries['education'])
+        self.assertNotIn('chỉ được tính một phần', summaries['skills'])
+        self.assertNotIn(
+            'chỉ được tính một phần',
+            {c['key']: c['summary'] for c in plain['components']}['education'],
+        )
+
+    def test_related_cv_is_not_discounted(self):
+        result = run(frontend_cv(), job_profile())
+        self.assertFalse(result['flags']['relevance_discount_applied'])
+        self.assertEqual(
+            result['overall']['score'],
+            run(frontend_cv(), job_profile(), ablation=('no_relevance_discount',))['overall'][
+                'score'
+            ],
+        )

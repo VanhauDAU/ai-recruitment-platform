@@ -49,7 +49,7 @@ describe('EmployerDashboardOverview', () => {
             company_linked: true,
             business_doc_current: true,
             candidate_dpa_submitted: true,
-            dpa_accepted: true,
+            dpa_accepted: false,
           }}
         />
       </MemoryRouter>,
@@ -57,6 +57,26 @@ describe('EmployerDashboardOverview', () => {
 
     expect(within(screen.getByLabelText('Các bước xác thực')).getAllByRole('link')).toHaveLength(5)
     expect(screen.getByLabelText('Đăng tin tuyển dụng đầu tiên')).toHaveAttribute('href', '/tuyendung/app/jobs/new')
+  })
+
+  it('hides the workspace checklist once every verification step is done', () => {
+    render(
+      <MemoryRouter>
+        <DashboardVerificationJourney
+          hasPassword
+          jobWorkspaceReady
+          verification={{
+            phone_verified: true,
+            company_linked: true,
+            business_doc_current: true,
+            candidate_dpa_submitted: true,
+            dpa_accepted: true,
+          }}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(screen.queryByRole('heading', { name: 'Hoàn thiện workspace tuyển dụng' })).not.toBeInTheDocument()
   })
 
   it('renders server-backed summary, progress and priority need', async () => {
@@ -86,6 +106,7 @@ describe('EmployerDashboardOverview', () => {
         applications_interviewed: 1,
         job_views: 240,
       },
+      funnel: { received: 12, shortlisted: 4, interviewed: 2, accepted: 1, rejected: 3 },
       application_activity: Array.from({ length: 7 }, (_, index) => ({ date: `2026-07-${String(12 + index).padStart(2, '0')}`, count: index })),
       recruitment_need: {
         position_category_name: 'Kinh doanh phần mềm',
@@ -109,14 +130,15 @@ describe('EmployerDashboardOverview', () => {
 
     expect(await screen.findByRole('heading', { name: /Xin chào, Nguyễn An/ })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Xu hướng hồ sơ ứng tuyển' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Trạng thái hồ sơ' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Phễu tuyển dụng' })).toBeInTheDocument()
     expect(screen.getByRole('img', { name: /Biểu đồ đường cong hồ sơ ứng tuyển 7 ngày/ })).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: 'Biểu đồ pipeline gồm 12 hồ sơ' })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Phễu tuyển dụng: Nhận hồ sơ: 12, Phù hợp: 4, Phỏng vấn: 2, Trúng tuyển: 1, Không phù hợp: 3' })).toBeInTheDocument()
     expect(screen.getByText('Xác thực số điện thoại', { exact: true })).toBeInTheDocument()
     expect(screen.queryByText('Xác thực địa chỉ email')).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Hoàn thiện workspace tuyển dụng' })).toBeInTheDocument()
     expect(screen.getByText('Công ty Acme')).toBeInTheDocument()
-    expect(screen.getByText(/Mã NTD: 48261937/)).toBeInTheDocument()
+    expect(screen.getByText('48261937')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Sao chép mã 48261937' })).toBeInTheDocument()
     expect(screen.getByText('Kinh doanh phần mềm')).toBeInTheDocument()
     expect(screen.getByText('240')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Xác thực số điện thoại/ })).toHaveAttribute('target', '_blank')

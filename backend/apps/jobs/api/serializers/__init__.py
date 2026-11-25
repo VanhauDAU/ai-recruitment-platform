@@ -33,7 +33,13 @@ from .posting_context import (
     EmployerJobPostingContextSerializer,
     JobResponsibilityAcknowledgementSerializer,
 )
-from .public_jobs import JobDetailSerializer, PublicJobListSerializer, PublicJobPreviewSerializer
+from .public_jobs import (
+    JobDetailSerializer,
+    NearbyMarkerSerializer,
+    PublicJobListSerializer,
+    PublicJobPreviewSerializer,
+    PublicNearbyJobSerializer,
+)
 from .recommendations import (
     CandidateJobRecommendationResponseSerializer,
     CvJobRecommendationResponseSerializer,
@@ -123,6 +129,8 @@ __all__ = [
     'PublicJobListSerializer',
     'PublicJobLocationSerializer',
     'PublicJobPreviewSerializer',
+    'PublicNearbyJobSerializer',
+    'NearbyMarkerSerializer',
     'PublicJobWorkScheduleSerializer',
     'RecommendationPermissionDeniedSerializer',
     'SavedJobRecommendationResponseSerializer',

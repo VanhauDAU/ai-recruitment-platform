@@ -18,7 +18,7 @@ describe('EmployerWorkspaceNavigation', () => {
     ])
     const cv = items.find((item) => item.key === CV_MANAGEMENT_MENU_KEY)
     expect(cv.children.map((item) => item.title))
-      .toEqual(['CV ứng tuyển', 'Kho ứng viên tiềm năng', 'Danh sách đen'])
+      .toEqual(['CV ứng tuyển', 'Tìm CV', 'Kho ứng viên tiềm năng', 'Danh sách đen'])
     expect(items.flatMap((item) => item.children || [item]).some((item) => item.disabled)).toBe(false)
     expect(items.some((item) => item.children && item.key !== CV_MANAGEMENT_MENU_KEY)).toBe(false)
   })

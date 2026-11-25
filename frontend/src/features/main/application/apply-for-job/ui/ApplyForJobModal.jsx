@@ -191,7 +191,7 @@ export default function ApplyForJobModal({
       <div className="af-footer">
         <div className="af-consents">
           <Checkbox checked={form.allowAiAnalysis} onChange={(event) => form.setAllowAiAnalysis(event.target.checked)}>
-            Cho phép {siteName} sử dụng <span className="af-underline">công nghệ AI</span> để phân tích độ phù hợp CV của bạn
+            Cho phép {siteName} sử dụng <span className="af-underline">công nghệ AI</span> để phân tích độ phù hợp CV của bạn với tin này và hiển thị kết quả cho nhà tuyển dụng
           </Checkbox>
           <Checkbox
             checked={form.dataProcessingConsent}

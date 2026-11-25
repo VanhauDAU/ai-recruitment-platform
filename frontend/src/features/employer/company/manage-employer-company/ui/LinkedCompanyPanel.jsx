@@ -14,6 +14,7 @@ import { sanitizeHtml } from '@/shared/lib/sanitize-html'
 import { message } from '@/shared/lib/toast'
 import ConfirmAction from '@/shared/ui/confirm-action/ConfirmAction'
 import CompanyForm from './CompanyForm'
+import CodeBadge from '@/shared/ui/code-badge/CodeBadge'
 import { getIntlLocale, m } from '@/shared/config/i18n'
 
 const UPDATE_REQUEST_STATUS = {
@@ -230,6 +231,7 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
         </header>
 
         <dl className="linked-company-details">
+          {company.code && <Detail label={m.ui_code_company()}><CodeBadge code={company.code} /></Detail>}
           <Detail label={m.employer_company_tax_code()} value={company.tax_code} />
           <Detail label="Website" value={company.has_no_website ? m.employer_company_no_website() : company.website_url} link={!company.has_no_website} />
           <Detail label={m.employer_company_industries()} value={(company.industries_detail || []).map((item) => item.name).join(', ')} />

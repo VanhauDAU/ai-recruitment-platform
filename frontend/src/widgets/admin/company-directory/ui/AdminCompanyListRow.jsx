@@ -2,6 +2,7 @@ import { EyeOutlined, FileSyncOutlined } from '@ant-design/icons'
 import { Tooltip } from 'antd'
 import { recruiterVerificationMeta } from '@/entities/company/admin-company'
 import { getIntlLocale, m } from '@/shared/config/i18n'
+import CodeBadge from '@/shared/ui/code-badge/CodeBadge'
 import CompanyLogo from './CompanyLogo'
 
 // antd tag colors of recruiterVerificationMeta → `.ws-tone-*` dots.
@@ -30,12 +31,12 @@ export default function AdminCompanyListRow({ company, onOpen, onOpenUpdates }) 
   return (
     <article data-testid={`admin-company-row-${company.public_id}`} className="wt-row">
       <div className="wt-cell wt-cell--main">
-        <button type="button" className="acl-identity" onClick={() => onOpen(company)}>
+        <div className="acl-identity">
           <CompanyLogo company={company} size={40} />
           <span className="acl-identity__text">
-            <span className="wt-title">{company.company_name}</span>
+            <button type="button" className="wt-title acl-open" onClick={() => onOpen(company)}>{company.company_name}</button>
             <span className="wt-meta">
-              <span className="acl-code">{company.public_id}</span>
+              <CodeBadge code={company.code} />
               {company.tax_code && <span>{m.admin_company_list_tax_code({ code: company.tax_code })}</span>}
               {company.business_type_label && <span>{company.business_type_label}</span>}
             </span>
@@ -43,7 +44,7 @@ export default function AdminCompanyListRow({ company, onOpen, onOpenUpdates }) 
               <span className="wt-meta"><span className="ws-muted">{company.trade_name}</span></span>
             )}
           </span>
-        </button>
+        </div>
       </div>
       <Stat label={m.admin_company_list_col_owner()}>
         <span className="ws-strong ws-strong--sm acl-truncate">

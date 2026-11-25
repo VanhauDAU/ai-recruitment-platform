@@ -2,7 +2,7 @@
 
 from .analysis import MatchAnalysis
 from .documents import EMBEDDING_DIMENSIONS, MatchChunk, MatchDocument
-from .queries import analysis_for_run, jobs_for_profile
+from .queries import analysis_for_run, current_documents, jobs_for_profile, title_vectors
 
 __all__ = [
     'EMBEDDING_DIMENSIONS',
@@ -10,5 +10,7 @@ __all__ = [
     'MatchChunk',
     'MatchDocument',
     'analysis_for_run',
+    'current_documents',
     'jobs_for_profile',
+    'title_vectors',
 ]

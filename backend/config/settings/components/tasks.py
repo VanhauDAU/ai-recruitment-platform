@@ -14,6 +14,31 @@ CACHES = {
     }
 }
 
+# Channel layer của WebSocket thông báo: web, worker và beat cùng đẩy sự kiện vào
+# Redis, process `realtime` (daphne) chuyển tới socket đang mở. Prefix riêng để
+# không đụng key cache/Celery.
+# redis-py 8 mặc định chờ đọc 5 giây, bằng đúng thời gian channels_redis chặn ở
+# BZPOPMIN (`brpop_timeout = 5`), nên mỗi socket rảnh sẽ lỗi TimeoutError và bị
+# ngắt sau ~5 giây. Thời gian chờ đọc phải dài hơn khoảng chặn đó.
+CHANNEL_LAYER_SOCKET_TIMEOUT = 15
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [
+                {
+                    # Để trống = dùng chung REDIS_URL.
+                    'address': config('CHANNEL_LAYER_REDIS_URL', default='') or REDIS_URL,
+                    'socket_timeout': CHANNEL_LAYER_SOCKET_TIMEOUT,
+                }
+            ],
+            'prefix': 'procv-realtime',
+            'capacity': 200,
+            'expiry': 30,
+        },
+    }
+}
+
 # Celery dùng cùng Redis nhưng queue riêng cho email auth. Chạy worker và beat
 # tách process khỏi web server để SMTP không làm chậm request đăng ký/login.
 CELERY_BROKER_URL = config('CELERY_BROKER_URL', default=REDIS_URL)
@@ -35,7 +60,12 @@ CELERY_TASK_ROUTES = {
     'apps.cvs.tasks.*': {'queue': 'cv-export'},
     'apps.uploads.tasks.*': {'queue': 'upload-scan'},
     'apps.jobs.tasks.ai_generation.*': {'queue': 'ai-generation'},
+    # Chấm hồ sơ ứng tuyển chạy nền, tách khỏi lượt ứng viên đang đợi kết quả.
+    'apps.matching.tasks.score_application': {'queue': 'ai-matching-batch'},
+    'apps.matching.tasks.rescore_job_applications': {'queue': 'ai-matching-batch'},
     'apps.matching.tasks.*': {'queue': 'ai-matching'},
+    # Geocode địa chỉ nơi làm việc (ADR-0029): gọi provider ngoài, không chặn hàng email.
+    'apps.jobs.tasks.geocoding.*': {'queue': 'default'},
     'apps.jobs.tasks.*': {'queue': 'candidate-email'},
     'apps.applications.tasks.*': {'queue': 'candidate-email'},
     'apps.candidates.tasks.*': {'queue': 'candidate-email'},
@@ -55,6 +85,11 @@ EMPLOYER_DOMAIN_RECHECK_BATCH_SIZE = config(
     'EMPLOYER_DOMAIN_RECHECK_BATCH_SIZE', default=100, cast=int
 )
 CELERY_BEAT_SCHEDULE = {
+    # Việc làm gần tôi (ADR-0029): geocode các địa chỉ nơi làm việc còn chờ.
+    'geocode-pending-job-locations': {
+        'task': 'apps.jobs.tasks.geocoding.geocode_pending_job_locations',
+        'schedule': 600.0,
+    },
     'purge-expired-ai-runtime-metadata': {
         'task': 'apps.ai_core.tasks.purge_expired_ai_metadata',
         'schedule': 86400.0,
@@ -77,6 +112,11 @@ CELERY_BEAT_SCHEDULE = {
     },
     'send-unanswered-application-reminders': {
         'task': 'apps.applications.tasks.send_unanswered_application_reminders',
+        'schedule': 3600.0,
+    },
+    # Huy hiệu Sấm Chớp (ADR-0027): đo lại mức phản hồi của NTD và nhãn trên tin.
+    'refresh-flash-badges': {
+        'task': 'apps.applications.tasks.refresh_flash_badges',
         'schedule': 3600.0,
     },
     'purge-lapsed-talent-pool-entries': {

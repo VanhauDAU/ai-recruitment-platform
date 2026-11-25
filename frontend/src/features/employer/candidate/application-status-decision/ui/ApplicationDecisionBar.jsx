@@ -5,9 +5,9 @@ import {
   TeamOutlined,
   TrophyOutlined,
 } from '@ant-design/icons'
-import { formatClockTime } from '@/shared/lib/date-time'
 import { m } from '@/shared/config/i18n'
 import useApplicationDecision from '../model/use-application-decision'
+import useUndoCountdown from '../model/use-undo-countdown'
 import './application-decision.css'
 
 const DECISIONS = [
@@ -22,10 +22,13 @@ const DECISIONS = [
  * (`can_undo`): its notice has not reached the candidate yet.
  */
 export default function ApplicationDecisionBar({ application, candidateName, pendingNotice }) {
-  const { confirmationModal, decide, deciding, undo, undoing } = useApplicationDecision(
+  const { confirmationModal, decide, deciding, refreshHistory, undo, undoing } = useApplicationDecision(
     application,
     candidateName,
   )
+  // Hidden the moment the window closes: the server would refuse the undo anyway.
+  const undoSeconds = useUndoCountdown(pendingNotice?.deliver_at, refreshHistory)
+  const canUndo = Boolean(pendingNotice) && undoSeconds > 0
   const allowed = application?.available_decisions || []
   const final = allowed.length === 0
 
@@ -49,18 +52,16 @@ export default function ApplicationDecisionBar({ application, candidateName, pen
           )
         })}
       </div>
-      {pendingNotice && (
+      {canUndo && (
         <div className="ad-pending" role="status">
           <ClockCircleOutlined aria-hidden />
-          <span>
-            {m.employer_workspace_decision_notice_at()} <strong>{formatClockTime(pendingNotice.deliver_at)}</strong>
-          </span>
+          <span>{m.employer_workspace_decision_notice_in({ seconds: undoSeconds })}</span>
           <button type="button" className="ad-pending__undo" disabled={undoing} onClick={undo}>
             {m.employer_workspace_decision_undo()}
           </button>
         </div>
       )}
-      {final && !pendingNotice && <p className="ad-bar__hint">{m.employer_workspace_decision_final()}</p>}
+      {final && !canUndo && <p className="ad-bar__hint">{m.employer_workspace_decision_final()}</p>}
       {confirmationModal}
     </div>
   )

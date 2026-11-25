@@ -1,18 +1,10 @@
-import {
-  CalendarOutlined,
-  CheckCircleOutlined,
-  EnvironmentOutlined,
-  HistoryOutlined,
-  LockOutlined,
-  MailOutlined,
-  PhoneOutlined,
-  SolutionOutlined,
-} from '@ant-design/icons'
+import { HistoryOutlined, LockOutlined } from '@ant-design/icons'
 import { Alert, Empty, Skeleton } from 'antd'
 import { Link } from 'react-router'
 import { ApplicationDecisionBar } from '@/features/employer/candidate/application-status-decision'
 import { BlockCandidateButton } from '@/features/employer/candidate/block-candidate'
 import { SaveToTalentPoolButton } from '@/features/employer/candidate/save-to-talent-pool'
+import { ApplicationMatchCard } from '@/features/employer/candidate/view-application-match'
 import { employerAppPath } from '@/shared/config/portals'
 import { m } from '@/shared/config/i18n'
 import { formatApplicationDate, initialsOf, pendingNoticeOf } from '../model/application-workspace'
@@ -28,25 +20,21 @@ const SOURCE_LABELS = {
   invited: m.employer_workspace_app_source_invited(),
 }
 
-function InfoRow({ icon, label, children }) {
+/** Một dòng nhãn – giá trị; nhãn cột trái cố định để mắt dò theo cột giá trị. */
+function InfoRow({ label, children }) {
   return (
-    <div className="flex items-start gap-2.5">
-      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
-        {icon}
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="text-[11px] font-medium text-slate-400">{label}</p>
-        <div className="mt-0.5 break-words text-xs font-semibold leading-5 text-slate-700">{children || '—'}</div>
-      </div>
+    <div className="aw-info">
+      <dt>{label}</dt>
+      <dd>{children || '—'}</dd>
     </div>
   )
 }
 
 function TextBlock({ label, children }) {
   return (
-    <div>
-      <p className="text-[11px] font-medium text-slate-400">{label}</p>
-      <p className="mt-1 whitespace-pre-wrap rounded-xl bg-slate-50 p-2.5 text-xs leading-5 text-slate-600">{children}</p>
+    <div className="aw-info aw-info--block">
+      <dt>{label}</dt>
+      <dd className="aw-info__text">{children}</dd>
     </div>
   )
 }
@@ -139,48 +127,52 @@ export default function ApplicationInspectorPanel({
             <CandidateTrust application={selectedApplication} candidateName={candidateName} />
           </section>
 
-          <section className="aw-section space-y-3">
+          <ApplicationMatchCard application={selectedApplication} />
+
+          <section className="aw-section">
             <h3 className="aw-section__title">{m.employer_workspace_app_contact()}</h3>
             {!snapshot && <Skeleton active paragraph={{ rows: 3 }} />}
             {snapshot && (
-              <>
-                <InfoRow icon={<MailOutlined aria-hidden />} label="Email">
+              <dl className="aw-info-list">
+                <InfoRow label="Email">
                   {candidateEmail ? <a className="text-slate-700 underline decoration-slate-300" href={`mailto:${candidateEmail}`}>{candidateEmail}</a> : '—'}
                 </InfoRow>
-                <InfoRow icon={<PhoneOutlined aria-hidden />} label={m.employer_workspace_app_phone()}>
+                <InfoRow label={m.employer_workspace_app_phone()}>
                   {snapshot.contact_phone ? <a className="text-slate-700 underline decoration-slate-300" href={`tel:${snapshot.contact_phone}`}>{snapshot.contact_phone}</a> : '—'}
                 </InfoRow>
-                <InfoRow icon={<EnvironmentOutlined aria-hidden />} label={m.employer_workspace_app_preferred_location()}>
+                <InfoRow label={m.employer_workspace_app_preferred_location()}>
                   {snapshot.preferred_location_names?.join(', ') || m.employer_workspace_app_no_requirement()}
                 </InfoRow>
-              </>
+              </dl>
             )}
           </section>
 
-          <section className="aw-section space-y-3">
+          <section className="aw-section">
             <h3 className="aw-section__title">{m.employer_workspace_app_application_info()}</h3>
-            <InfoRow icon={<SolutionOutlined aria-hidden />} label={m.employer_workspace_app_job()}>
-              {selectedApplication.job_title}
-            </InfoRow>
-            <InfoRow icon={<CalendarOutlined aria-hidden />} label={m.employer_workspace_app_applied_date()}>
-              {formatApplicationDate(selectedApplication.applied_at, true)}
-              {` · ${m.employer_workspace_app_submission({ number: selectedApplication.submission_number || 1 })}`}
-            </InfoRow>
-            {selectedApplication.last_reminded_at && (
-              <InfoRow icon={<HistoryOutlined aria-hidden />} label={m.employer_workspace_app_awaiting_response()}>
-                {m.employer_workspace_app_reminded({ date: formatApplicationDate(selectedApplication.last_reminded_at, true) })}
+            <dl className="aw-info-list">
+              <InfoRow label={m.employer_workspace_app_job()}>
+                {selectedApplication.job_title}
               </InfoRow>
-            )}
-            <InfoRow icon={<CheckCircleOutlined aria-hidden />} label={m.employer_workspace_app_source()}>
-              {selectedApplication.campaign_channel_label
-                ? m.employer_workspace_app_campaign_channel({ channel: selectedApplication.campaign_channel_label })
-                : SOURCE_LABELS[selectedApplication.source] || selectedApplication.source || m.employer_workspace_app_source_direct()}
-            </InfoRow>
-            <InfoRow icon={<CheckCircleOutlined aria-hidden />} label={m.employer_workspace_app_ai_analysis()}>
-              {snapshot?.allow_ai_analysis ? m.employer_workspace_app_ai_consented() : m.employer_workspace_app_ai_no_consent()}
-            </InfoRow>
-            {selectedApplication.cover_letter && <TextBlock label={m.employer_workspace_app_cover_letter()}>{selectedApplication.cover_letter}</TextBlock>}
-            {selectedApplication.candidate_note && <TextBlock label={m.employer_workspace_app_candidate_note()}>{selectedApplication.candidate_note}</TextBlock>}
+              <InfoRow label={m.employer_workspace_app_applied_date()}>
+                {formatApplicationDate(selectedApplication.applied_at, true)}
+                {` · ${m.employer_workspace_app_submission({ number: selectedApplication.submission_number || 1 })}`}
+              </InfoRow>
+              {selectedApplication.last_reminded_at && (
+                <InfoRow label={m.employer_workspace_app_awaiting_response()}>
+                  {m.employer_workspace_app_reminded({ date: formatApplicationDate(selectedApplication.last_reminded_at, true) })}
+                </InfoRow>
+              )}
+              <InfoRow label={m.employer_workspace_app_source()}>
+                {selectedApplication.campaign_channel_label
+                  ? m.employer_workspace_app_campaign_channel({ channel: selectedApplication.campaign_channel_label })
+                  : SOURCE_LABELS[selectedApplication.source] || selectedApplication.source || m.employer_workspace_app_source_direct()}
+              </InfoRow>
+              <InfoRow label={m.employer_workspace_app_ai_analysis()}>
+                {snapshot?.allow_ai_analysis ? m.employer_workspace_app_ai_consented() : m.employer_workspace_app_ai_no_consent()}
+              </InfoRow>
+              {selectedApplication.cover_letter && <TextBlock label={m.employer_workspace_app_cover_letter()}>{selectedApplication.cover_letter}</TextBlock>}
+              {selectedApplication.candidate_note && <TextBlock label={m.employer_workspace_app_candidate_note()}>{selectedApplication.candidate_note}</TextBlock>}
+            </dl>
           </section>
 
           <PreviousSubmissions application={selectedApplication} />

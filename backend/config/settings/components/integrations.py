@@ -146,6 +146,14 @@ CAMPAIGN_SOCIAL_HTTP_TIMEOUT_SECONDS = config(
     'CAMPAIGN_SOCIAL_HTTP_TIMEOUT_SECONDS', default=10.0, cast=float
 )
 
+# Geocoding cho "Việc làm gần bạn" (ADR-0029): vietmap (production) | goong |
+# nominatim (chỉ dev, không key) | disabled. Key là bí mật phía server; key tile
+# bản đồ công khai nằm trong site setting `map_style_url`.
+GEOCODING_PROVIDER = config('GEOCODING_PROVIDER', default='disabled').strip().lower()
+GEOCODING_API_KEY = config('GEOCODING_API_KEY', default='').strip()
+GEOCODING_TIMEOUT_SECONDS = config('GEOCODING_TIMEOUT_SECONDS', default=5.0, cast=float)
+GEOCODING_USER_AGENT = config('GEOCODING_USER_AGENT', default='ProCV/1.0 (+https://procv.site)')
+
 # Provider-neutral employer phone verification. Production remains disabled
 # until Ops/Product explicitly select a gateway, sender and approved template.
 EMPLOYER_SMS_OTP_ENABLED = config('EMPLOYER_SMS_OTP_ENABLED', default=False, cast=bool)

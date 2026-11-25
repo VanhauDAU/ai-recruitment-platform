@@ -31,6 +31,24 @@ CV_SECTION_PRIORITY = (
 )
 
 
+# Nội dung CV theo mục, để hiển thị "hồ sơ trích xuất" (không dùng để chấm điểm).
+DISPLAY_SECTION_ORDER = (
+    'summary',
+    'experience',
+    'projects',
+    'education',
+    'skills',
+    'certifications',
+    'awards',
+    'activities',
+    'languages',
+    'interests',
+    'other',
+)
+MAX_DISPLAY_LINES = 400
+MAX_DISPLAY_LINE_CHARS = 800
+
+
 class ExtractionError(ValueError):
     """Tài liệu không đủ nội dung để phân tích; `code` là mã lỗi trả cho người dùng."""
 
@@ -63,12 +81,67 @@ def make_chunks(entries, limit, priority=CV_SECTION_PRIORITY):
     ]
 
 
+def display_item(*, title='', subtitle='', start=None, end=None, lines=()):
+    """Một mục con để hiển thị: một công việc, một bằng cấp, một dự án, hoặc khối chữ của một mục.
+
+    `start`/`end` dạng 'YYYY-MM' (CV tạo trên hệ thống); `end = None` kèm `start` là "đến nay".
+    """
+    return {
+        'title': title,
+        'subtitle': subtitle,
+        'start': start or None,
+        'end': end or None,
+        'lines': list(lines),
+    }
+
+
+def make_sections(blocks):
+    """[(mục, display_item)] → [{key, items}] theo `DISPLAY_SECTION_ORDER`.
+
+    Khác `chunks` (đầu vào của bước chấm, tối đa 40 câu): đây là nội dung đầy đủ của CV
+    theo từng mục để người xem đọc, chỉ bỏ email/số điện thoại và dòng rỗng. Giới hạn
+    tổng số dòng để một tệp bất thường không làm phình hồ sơ.
+    """
+    grouped, budget = {}, MAX_DISPLAY_LINES
+    for section, item in blocks:
+        key = section if section in DISPLAY_SECTION_ORDER else 'other'
+        lines = []
+        for line in item['lines']:
+            text = ' '.join(scrub_contacts(str(line)).split())[:MAX_DISPLAY_LINE_CHARS]
+            # "Email:" còn lại sau khi bỏ địa chỉ email là nhãn rỗng, không phải nội dung.
+            if text.endswith(':') and word_count(text) <= 3:
+                continue
+            if text and budget > 0:
+                lines.append(text)
+                budget -= 1
+        cleaned = {
+            **item,
+            'title': ' '.join(scrub_contacts(item['title']).split())[:MAX_DISPLAY_LINE_CHARS],
+            'subtitle': ' '.join(scrub_contacts(item['subtitle']).split())[:MAX_DISPLAY_LINE_CHARS],
+            'lines': lines,
+        }
+        if cleaned['title'] or cleaned['subtitle'] or lines:
+            grouped.setdefault(key, []).append(cleaned)
+    return [{'key': key, 'items': grouped[key]} for key in DISPLAY_SECTION_ORDER if key in grouped]
+
+
 def cv_profile_json(
-    *, source, language, title, skills, experience, education, position, languages, chunks
+    *,
+    source,
+    language,
+    title,
+    skills,
+    experience,
+    education,
+    position,
+    languages,
+    chunks,
+    sections,
 ):
     """Lắp `profile_json` của CV và liệt kê tiêu chí thiếu dữ liệu.
 
     `experience` là {months, basis, items}; `months = None` nghĩa là không xác định.
+    `sections` (từ `make_sections`) là nội dung đầy đủ theo mục để hiển thị.
     """
     months = experience['months']
     present = {
@@ -93,6 +166,7 @@ def cv_profile_json(
         'languages': languages,
         'locations': [],
         'chunks': chunks,
+        'sections': sections,
         'quality': {
             'char_count': sum(len(chunk['text']) for chunk in chunks),
             'chunk_count': len(chunks),

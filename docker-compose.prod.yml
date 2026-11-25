@@ -1,0 +1,320 @@
+# Môi trường PRODUCTION (procv.site) trên một VPS. Không dùng trực tiếp: luôn gọi
+# qua scripts/deploy/compose.sh, script này nạp backend/.env và frontend/.env để
+# Compose nội suy ${...} bên dưới (mật khẩu DB, site key reCAPTCHA).
+#
+# Nguồn cấu hình:
+#   - backend/.env (chỉ trên VPS, không commit): bí mật và giá trị tùy chỉnh.
+#   - x-prod-env bên dưới: giá trị cố định theo domain/topology, GHI ĐÈ backend/.env
+#     để một dòng sót từ mẫu dev (localhost, DEBUG...) không lọt vào production.
+# Hướng dẫn đầy đủ: docs/06-deployment/huong-dan-deployment.md.
+
+name: procv
+
+x-default-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: 20m
+    max-file: '5'
+
+x-prod-env: &prod-env
+  ENVIRONMENT: production
+  DJANGO_SETTINGS_MODULE: config.settings.production
+  DEBUG: 'False'
+  DJANGO_ADMIN_ENABLED: 'False'
+  API_DOCS_ENABLED: 'False'
+  ALLOWED_HOSTS: procv.site,www.procv.site
+  CORS_ALLOWED_ORIGINS: https://procv.site
+  CSRF_TRUSTED_ORIGINS: https://procv.site
+  FRONTEND_URL: https://procv.site
+  EMPLOYER_FRONTEND_URL: https://procv.site
+  ADMIN_FRONTEND_URL: https://procv.site
+  # Cổng nội bộ của container web (dist thuần, không qua route SEO).
+  FRONTEND_SHELL_URL: http://web:8080/
+  CV_PRINT_URL: http://web:8080/cv-print.html
+  OAUTH_MAIN_CALLBACK_URL: https://procv.site/oauth/callback
+  OAUTH_EMPLOYER_CALLBACK_URL: https://procv.site/tuyendung/app/oauth/callback
+  FACEBOOK_OAUTH_REDIRECT_URI: https://procv.site/api/employer/social/facebook/callback/
+  THREADS_OAUTH_REDIRECT_URI: https://procv.site/api/employer/social/threads/callback/
+  LINKEDIN_OAUTH_REDIRECT_URI: https://procv.site/api/employer/social/linkedin/callback/
+  # Cloudflare -> nginx (container web, IP cố định) -> gunicorn (HTTP) / daphne (WebSocket).
+  SECURE_SSL_REDIRECT: 'True'
+  SECURE_PROXY_SSL_HEADER_ENABLED: 'True'
+  SESSION_COOKIE_SECURE: 'True'
+  CSRF_COOKIE_SECURE: 'True'
+  AUTH_REFRESH_COOKIE_SECURE: 'True'
+  SECURE_HSTS_SECONDS: '31536000'
+  TRUSTED_PROXY_IPS: 172.28.0.10
+  TRUSTED_PROXY_HOPS: '1'
+  DB_HOST: db
+  DB_PORT: '5432'
+  REDIS_URL: redis://redis:6379/1
+  CELERY_BROKER_URL: redis://redis:6379/1
+  # Media nằm trên R2; các root local chỉ còn là chỗ tạm trong container.
+  R2_PUBLIC_BASE_URL: https://media.procv.site
+  PUBLIC_MEDIA_ROOT: /app/var/public-media
+  PRIVATE_MEDIA_ROOT: /app/var/private-media
+  UPLOAD_QUARANTINE_ROOT: /app/var/quarantine
+  # Chưa chạy ClamAV (giữ 3-4 GB RAM): upload session tắt, luồng upload cũ giữ nguyên.
+  UPLOAD_QUARANTINE_ENABLED: 'False'
+  EMPLOYER_UPLOAD_SESSION_REQUIRED: 'False'
+  CANDIDATE_UPLOAD_SESSION_REQUIRED: 'False'
+  MATCHING_ENCODER_BACKEND: sentence_transformers
+  MATCHING_MODEL_PATH: /models/multilingual-e5-base/zs-v1
+
+x-backend: &backend
+  image: procv-backend:prod
+  env_file: ./backend/.env
+  environment: *prod-env
+  init: true
+  restart: unless-stopped
+  logging: *default-logging
+  networks: [procv]
+
+services:
+  db:
+    # Cùng image với dev (pgvector, Debian trixie) để dump/restore giữa hai bên
+    # không lệch collation.
+    image: pgvector/pgvector:pg16-trixie
+    command: >-
+      postgres
+      -c shared_buffers=512MB
+      -c effective_cache_size=2GB
+      -c work_mem=8MB
+      -c maintenance_work_mem=128MB
+      -c max_connections=100
+    environment:
+      POSTGRES_USER: ${DB_USER:?DB_USER chưa đặt trong backend/.env}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD chưa đặt trong backend/.env}
+      POSTGRES_DB: ${DB_NAME:?DB_NAME chưa đặt trong backend/.env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    shm_size: 256m
+    mem_limit: 1536m
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+    logging: *default-logging
+    networks: [procv]
+
+  redis:
+    # Broker Celery + cache: AOF để không mất task đang chờ khi khởi động lại.
+    image: redis:7
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy noeviction
+    volumes:
+      - redisdata:/data
+    mem_limit: 384m
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+    logging: *default-logging
+    networks: [procv]
+
+  # Áp migration một lần trước khi web/worker khởi động (thay cho
+  # `migrate && runserver` của dev). deploy.sh chạy service này riêng trước.
+  migrate:
+    <<: *backend
+    build:
+      context: ./backend
+      target: runtime
+    command: python manage.py migrate --noinput
+    restart: 'no'
+    depends_on:
+      db:
+        condition: service_healthy
+
+  backend:
+    <<: *backend
+    command: >-
+      gunicorn config.wsgi:application
+      --bind 0.0.0.0:8000
+      --workers 4 --threads 2
+      --timeout 90 --graceful-timeout 30
+      --max-requests 1000 --max-requests-jitter 100
+      --access-logfile -
+    pids_limit: 256
+    mem_limit: 1536m
+    healthcheck:
+      # Host + proto như request đi qua nginx; không thì ALLOWED_HOSTS trả 400
+      # và SECURE_SSL_REDIRECT trả 301.
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import urllib.request as u;
+          u.urlopen(u.Request('http://127.0.0.1:8000/api/health/',
+          headers={'Host': 'procv.site', 'X-Forwarded-Proto': 'https'}), timeout=3)
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  # WebSocket thông báo (/ws/notifications/, apps.realtime). Tách khỏi gunicorn:
+  # kết nối sống lâu không giữ worker HTTP. Sự kiện đến qua Redis channel layer.
+  realtime:
+    <<: *backend
+    command: >-
+      daphne -b 0.0.0.0 -p 8001
+      --proxy-headers
+      --ping-interval 20 --ping-timeout 30
+      --application-close-timeout 10
+      config.asgi:application
+    pids_limit: 128
+    mem_limit: 384m
+    stop_grace_period: 15s
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import urllib.request as u;
+          u.urlopen(u.Request('http://127.0.0.1:8001/api/health/',
+          headers={'Host': 'procv.site', 'X-Forwarded-Proto': 'https'}), timeout=3)
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  worker:
+    <<: *backend
+    # -Q bắt buộc như dev: thiếu queue nào thì task của queue đó chết lặng.
+    command: >-
+      celery -A config worker --loglevel=info
+      -Q default,auth-email,auth-sms,cv-export,upload-scan,candidate-email
+      --concurrency=3 --prefetch-multiplier=1 --max-tasks-per-child=200
+    # Chromium headless (xuất PDF CV) cần /dev/shm lớn hơn mặc định 64 MB.
+    shm_size: 512m
+    pids_limit: 512
+    mem_limit: 1536m
+    stop_grace_period: 30s
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  ai-worker:
+    <<: *backend
+    command: >-
+      celery -A config worker --loglevel=info -Q ai-generation
+      --concurrency=2 --prefetch-multiplier=1 --max-tasks-per-child=100
+    pids_limit: 128
+    mem_limit: 512m
+    stop_grace_period: 100s
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  ml-worker:
+    <<: *backend
+    image: procv-ml-worker:prod
+    build:
+      context: ./backend
+      target: ml
+    command: >-
+      celery -A config worker --loglevel=info -Q ai-matching,ai-matching-batch
+      --concurrency=1 --prefetch-multiplier=1 --max-tasks-per-child=500
+    environment:
+      <<: *prod-env
+      MATCHING_PRELOAD_MODEL: '1'
+      HF_HUB_OFFLINE: '1'
+      TRANSFORMERS_OFFLINE: '1'
+      TOKENIZERS_PARALLELISM: 'false'
+    # ml/models bị gitignore: đồng bộ bằng scripts/deploy/sync_ml_models.sh.
+    volumes:
+      - ./ml/models:/models:ro
+    pids_limit: 128
+    mem_limit: 3g
+    stop_grace_period: 40s
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  beat:
+    <<: *backend
+    command: celery -A config beat --loglevel=info --schedule=/tmp/celerybeat-schedule
+    pids_limit: 64
+    mem_limit: 256m
+    depends_on:
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  web:
+    image: procv-web:prod
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: /api
+        VITE_PUBLIC_ASSET_BASE_URL: https://media.procv.site
+        VITE_RECAPTCHA_SITE_KEY: ${VITE_RECAPTCHA_SITE_KEY:?VITE_RECAPTCHA_SITE_KEY chưa đặt trong frontend/.env}
+        VITE_SITE_LOGO_URL: ${VITE_SITE_LOGO_URL:-}
+        VITE_SITE_LOGO_MARK_URL: ${VITE_SITE_LOGO_MARK_URL:-}
+        VITE_SITE_FAVICON_URL: ${VITE_SITE_FAVICON_URL:-}
+        VITE_COOKIE_CONSENT_ENABLED: ${VITE_COOKIE_CONSENT_ENABLED:-true}
+        VITE_ANNOUNCEMENT_ROLLOUT_SURFACES: ${VITE_ANNOUNCEMENT_ROLLOUT_SURFACES:-}
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      # Cloudflare Origin Certificate: origin.pem + origin.key (không commit).
+      - ./deploy/certs:/etc/nginx/certs:ro
+    mem_limit: 128m
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://127.0.0.1:8080/nginx-health']
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      procv:
+        # Django chỉ tin X-Forwarded-For từ đúng địa chỉ này (TRUSTED_PROXY_IPS).
+        ipv4_address: 172.28.0.10
+    depends_on:
+      backend:
+        condition: service_healthy
+      realtime:
+        condition: service_healthy
+
+networks:
+  procv:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
+
+volumes:
+  pgdata:
+  redisdata:

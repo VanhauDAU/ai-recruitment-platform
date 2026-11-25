@@ -38,13 +38,17 @@ from .profile import (
     MIN_CV_TEXT_CHARS,
     ExtractionError,
     cv_profile_json,
+    display_item,
     make_chunks,
+    make_sections,
 )
 from .text import BULLET, detect_language, normalize_text, reflow_lines, split_sentences, word_count
 
 # Mục không đưa vào chunk: thông tin cá nhân, người tham chiếu, sở thích.
 SKIPPED_SECTIONS = ('personal', 'references', 'interests')
+DISPLAY_SKIPPED_SECTIONS = ('header', 'personal', 'references')
 MAX_HEADING_WORDS = 5
+MAX_SKILL_LABEL_WORDS = 4
 MAX_TITLE_WORDS = 10
 _LIST_SEPARATORS = re.compile(r'[,;|•·]')
 # Số dòng quanh dòng ngày của một việc có thể ghi chức danh (mẫu CV in chức danh trên
@@ -75,12 +79,37 @@ def _heading(line):
     return heading_section(line)
 
 
+# Dòng không thuộc nội dung CV: chân trang của công cụ tạo CV, số trang.
+_NOISE_LINE = re.compile(
+    r'^(?:©|\(c\)\s)|\btopcv\.vn\b|^(?:trang|page)\s*\d+(?:\s*/\s*\d+)?$', re.IGNORECASE
+)
+
+
+def _continues_section(line, section, current):
+    """Dòng trông như tiêu đề nhưng thật ra là nội dung của mục đang đọc.
+
+    - Cùng mục với mục đang đọc: "Kỹ năng giao tiếp" dưới tiêu đề "Kỹ năng" là một kỹ
+      năng, không phải tiêu đề lặp lại.
+    - Trong mục kỹ năng, dòng mở đầu bằng chữ "Kỹ năng" vẫn là một kỹ năng dù có từ
+      khóa của mục khác ("Kỹ năng ngoại ngữ").
+    """
+    if section == current:
+        return True
+    return current == 'skills' and heading_section(' '.join(line.split()[:2])) == 'skills'
+
+
 def read_layout(text):
     segments = [('header', [])]
     for line in (raw.strip() for raw in normalize_text(text).split('\n')):
-        if not line:
+        if not line or _NOISE_LINE.search(line):
             continue
         section = _heading(line)
+        if section and _continues_section(line, section, segments[-1][0]):
+            # "Tools: Git, Docker" trong mục kỹ năng: nhãn con, nội dung là phần sau dấu hai chấm.
+            label, _, value = line.partition(':')
+            if value.strip() and heading_section(label) == section:
+                line = value.strip()
+            section = None
         if section:
             segments.append((section, []))
             if ':' in line and line.split(':', 1)[1].strip():
@@ -281,6 +310,10 @@ def _declared_names(lines, catalog):
     """Tên kỹ năng khai ở mục kỹ năng. "CI/CD", "UI/UX" là một tên; "Java/Kotlin" là hai."""
     names = []
     for line in lines:
+        # "Tools: Git, Docker": nhãn con ngắn đứng trước dấu hai chấm không phải tên kỹ năng.
+        label, colon, rest = line.partition(':')
+        if colon and rest.strip() and word_count(label) <= MAX_SKILL_LABEL_WORDS:
+            line = rest
         for name in (part.strip() for part in _LIST_SEPARATORS.split(line)):
             if '/' in name and catalog.resolve(name) is None:
                 names += [part.strip() for part in name.split('/')]
@@ -331,4 +364,11 @@ def text_cv_profile(text, catalog, *, today=None):
         position=facts.position_level(' | '.join([title, *latest_titles]), experience['months']),
         languages=facts.cv_languages(_language_lines(layout)),
         chunks=chunks,
+        # Mỗi mục của tệp là một khối chữ theo thứ tự đọc. Phần đầu trang (tên, liên hệ),
+        # thông tin cá nhân và người tham chiếu không đưa vào hồ sơ hiển thị.
+        sections=make_sections(
+            (section, display_item(lines=lines))
+            for section, lines in layout.segments
+            if section not in DISPLAY_SKIPPED_SECTIONS
+        ),
     )

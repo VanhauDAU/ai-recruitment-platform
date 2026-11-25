@@ -75,8 +75,8 @@ describe('manual job form values', () => {
     expect(values.work_areas).toEqual([{
       province_id: 1,
       workplaces: [
-        { location: 2, address_detail: '12 Nguyễn Huệ' },
-        { location: 3, address_detail: '20 Lê Lợi' },
+        { location: 2, address_detail: '12 Nguyễn Huệ', pin: null },
+        { location: 3, address_detail: '20 Lê Lợi', pin: null },
       ],
     }])
     expect(values.application_contact.emails).toEqual(['HR@Example.com'])
@@ -312,5 +312,24 @@ describe('manual job form values', () => {
     })
 
     expect(payload).not.toHaveProperty('ai_generation_public_id')
+  })
+
+  it('round-trips only the employer pin, never server-derived coordinates', () => {
+    const values = createJobFormValues({
+      job_locations: [
+        { province_id: 1, location: 2, address_detail: '1 Tràng Tiền', latitude: 21.02, longitude: 105.85, coordinate_source: 'employer_pin' },
+        { province_id: 1, location: 3, address_detail: '', latitude: 21.03, longitude: 105.84, coordinate_source: 'ward_centroid' },
+      ],
+    })
+    expect(values.work_areas[0].workplaces.map((item) => item.pin)).toEqual([
+      { latitude: 21.02, longitude: 105.85 },
+      null,
+    ])
+
+    const payload = buildJobPayload({ ...values, work_types: ['onsite'] })
+    expect(payload.job_locations).toEqual([
+      { location: 2, address_detail: '1 Tràng Tiền', latitude: 21.02, longitude: 105.85, sort_order: 0 },
+      { location: 3, address_detail: '', sort_order: 1 },
+    ])
   })
 })

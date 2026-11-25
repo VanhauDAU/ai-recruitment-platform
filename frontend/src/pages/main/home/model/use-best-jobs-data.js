@@ -1,31 +1,12 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
-import { getHomepageBestJobs, jobKeys } from '@/entities/job/job'
-import { getProvinces, getWardsByParents } from '@/entities/system/location'
+import { getHomepageBestJobLocations, getHomepageBestJobs, jobKeys } from '@/entities/job/job'
 import {
   BEST_JOBS_PAGE_SIZE,
-  BEST_JOBS_ROTATE_MS,
   EMPTY_BEST_JOBS_FILTERS,
   buildBestJobsChips,
   buildBestJobsParams,
 } from '../lib/best-jobs-config'
-
-const PRIORITY_PROVINCES = ['Hà Nội', 'Hồ Chí Minh', 'Đà Nẵng', 'Hải Phòng', 'Cần Thơ']
-
-async function loadFeaturedLocations() {
-  const provinces = await getProvinces()
-  const prioritized = [
-    ...PRIORITY_PROVINCES
-      .map((name) => provinces.find((province) => province.name.includes(name)))
-      .filter(Boolean),
-    ...provinces,
-  ]
-  const uniqueProvinces = Array.from(
-    new Map(prioritized.map((province) => [province.id, province])).values(),
-  ).slice(0, 5)
-  const wards = await getWardsByParents(uniqueProvinces.map((province) => province.id)).catch(() => [])
-  return { provinces, featuredWards: wards.slice(0, 15) }
-}
 
 export default function useBestJobsData(categories, pageSize = BEST_JOBS_PAGE_SIZE) {
   const [dimension, setDimension] = useState('location')
@@ -34,22 +15,20 @@ export default function useBestJobsData(categories, pageSize = BEST_JOBS_PAGE_SI
   const [animKey, setAnimKey] = useState(0)
   const [paused, setPaused] = useState(false)
 
-  const locationsQuery = useQuery({
-    queryKey: ['locations', 'featured'],
-    queryFn: loadFeaturedLocations,
+  // Chỉ tỉnh/phường đang có tin công khai, nhiều tin trước — chip nào cũng ra kết quả.
+  const { data: locations } = useQuery({
+    queryKey: jobKeys.homepageBestLocations(),
+    queryFn: getHomepageBestJobLocations,
     staleTime: 5 * 60_000,
   })
-  const locationsData = locationsQuery.data
-  const provinces = useMemo(() => locationsData?.provinces ?? [], [locationsData])
-  const featuredWards = useMemo(() => locationsData?.featuredWards ?? [], [locationsData])
 
   const parents = useMemo(
     () => categories.filter((category) => category.parent == null),
     [categories],
   )
   const chips = useMemo(
-    () => buildBestJobsChips(dimension, { featuredWards, parents, provinces }),
-    [dimension, featuredWards, parents, provinces],
+    () => buildBestJobsChips(dimension, { locations, parents }),
+    [dimension, locations, parents],
   )
 
   const jobsQuery = useQuery({
@@ -69,14 +48,11 @@ export default function useBestJobsData(categories, pageSize = BEST_JOBS_PAGE_SI
 
   const totalPages = Math.max(1, Math.ceil(count / pageSize))
 
-  useEffect(() => {
-    if (paused || totalPages <= 1) return undefined
-    const timer = setInterval(
-      () => setPage((current) => (current % totalPages) + 1),
-      BEST_JOBS_ROTATE_MS,
-    )
-    return () => clearInterval(timer)
-  }, [paused, totalPages])
+  // Tự chuyển trang do thanh tiến trình điều khiển (BestJobs gọi khi animation
+  // chạy hết), nên thời gian, trạng thái dừng khi rê chuột và thanh luôn khớp nhau.
+  function nextPage() {
+    setPage((current) => (current % totalPages) + 1)
+  }
 
   function changeDimension(nextDimension) {
     setDimension(nextDimension)
@@ -101,8 +77,10 @@ export default function useBestJobsData(categories, pageSize = BEST_JOBS_PAGE_SI
     jobs,
     loading,
     page,
+    paused,
     totalPages,
     changeDimension,
+    nextPage,
     setPage,
     setPaused,
     toggleFilter,

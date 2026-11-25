@@ -9,7 +9,10 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
 
 from common.db.public_id import generate_public_id
+from common.db.readable_code import new_unique_code
 from common.vietnam_time import vietnam_day_start, vietnam_today
+
+from ..domain.job_code import JOB_CODE_LENGTH, JOB_CODE_REGEX, random_job_code
 
 
 def validate_application_reasons(value):
@@ -140,6 +143,8 @@ class Job(models.Model):
         TOP = 'top', gettext_lazy('Tin TOP')
 
     public_id = models.CharField(max_length=50, unique=True, editable=False)
+    # Mã đọc qua điện thoại cho hỗ trợ/tra cứu (xem domain/job_code).
+    code = models.CharField(max_length=JOB_CODE_LENGTH, unique=True, editable=False)
     # Tin thuộc về công ty; posted_by là HR cụ thể đã đăng (nhiều HR/công ty).
     posted_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='posted_jobs'
@@ -245,8 +250,10 @@ class Job(models.Model):
     tier = models.CharField(max_length=20, choices=Tier.choices, default=Tier.STANDARD)
     is_hot = models.BooleanField(default=False, help_text='Nhãn HOT (đỏ) trên card')
     is_urgent = models.BooleanField(default=False, help_text='Nhãn GẤP / tuyển gấp (cam) trên card')
+    # Huy hiệu Sấm Chớp do task định kỳ tính từ mức phản hồi của người đăng
+    # (ADR-0027, apps.applications.services.refresh_flash_badges), không ai sửa tay.
     has_flash_badge = models.BooleanField(
-        default=False, help_text='Huy hiệu Sấm Chớp — NTD tương tác nhanh'
+        default=False, help_text='Huy hiệu Sấm Chớp — hệ thống tính từ mức phản hồi của NTD'
     )
     status = models.CharField(max_length=50, choices=Status.choices, default=Status.DRAFT)
     policy_hold = models.CharField(
@@ -326,6 +333,9 @@ class Job(models.Model):
         ]
         constraints = [
             models.CheckConstraint(
+                condition=models.Q(code__regex=JOB_CODE_REGEX), name='chk_jobs_code_format'
+            ),
+            models.CheckConstraint(
                 condition=models.Q(status__in=['draft', 'active', 'closed']),
                 name='chk_jobs_status',
             ),
@@ -389,6 +399,8 @@ class Job(models.Model):
     def save(self, *args, **kwargs):
         if not self.public_id:
             self.public_id = generate_public_id('jb')
+        if not self.code:
+            self.code = new_unique_code(Job.objects, 'code', random_job_code)
         if not self.slug:
             base_slug = slugify(self.title)
             self.slug = f'{base_slug}-{self.public_id}'

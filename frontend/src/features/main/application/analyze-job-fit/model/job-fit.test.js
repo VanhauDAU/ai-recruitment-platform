@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest'
-import { analysisErrorCopy, bandOf, isAnalysisActive, requestErrorCopy } from './job-fit'
+import { bandOf } from '@/entities/application/job-fit'
+import { analysisErrorCopy, isAnalysisActive, requestErrorCopy } from './job-fit'
 
 describe('job fit model', () => {
   it('polls only while the analysis is queued or processing', () => {

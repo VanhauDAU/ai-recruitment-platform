@@ -10,7 +10,7 @@ describe('best job card presentation', () => {
     }
 
     expect(isTopEmployerJob(job)).toBe(false)
-    expect(bestJobCardClass(job)).toContain('bg-white')
+    expect(bestJobCardClass(job)).toContain('!bg-white')
     expect(bestJobCardClass(job)).not.toContain('border-l-4')
   })
 
@@ -18,7 +18,7 @@ describe('best job card presentation', () => {
     const job = { brand_slug: 'cong-ty-kim-cuong' }
 
     expect(isTopEmployerJob(job)).toBe(true)
-    expect(bestJobCardClass(job)).toContain('bg-[var(--brand-primary-soft)]')
-    expect(bestJobCardClass(job)).toContain('border-l-[var(--brand-primary)]')
+    expect(bestJobCardClass(job)).toContain('!bg-[var(--brand-primary-soft)]')
+    expect(bestJobCardClass(job)).not.toContain('border-l-4')
   })
 })

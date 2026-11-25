@@ -246,7 +246,7 @@ class StatusDecisionNotificationTests(TestCase):
         before = timezone.now()
         _application, notice = self.decide(Status.SHORTLISTED)
 
-        self.assertGreaterEqual(notice.deliver_after, before + timedelta(minutes=5))
+        self.assertGreaterEqual(notice.deliver_after, before + timedelta(seconds=15))
         self.assertEqual(release_due_candidate_notifications(), 0)
         self.assertEqual(
             release_due_candidate_notifications(now=notice.deliver_after + timedelta(seconds=1)), 1

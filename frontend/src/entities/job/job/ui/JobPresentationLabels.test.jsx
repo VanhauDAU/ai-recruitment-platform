@@ -25,6 +25,10 @@ describe('JobPresentationLabels', () => {
     )
     expect(screen.getByText('GẤP')).toBeVisible()
     expect(screen.getByText('Phản hồi nhanh')).toBeVisible()
+    expect(screen.getByText('Phản hồi nhanh')).toHaveAttribute(
+      'title',
+      expect.stringContaining('phản hồi hồ sơ đúng hạn'),
+    )
   })
 
   it('gives commercial and urgency labels distinct, high-contrast treatments', () => {

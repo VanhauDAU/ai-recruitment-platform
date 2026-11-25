@@ -1,12 +1,12 @@
-import { ArrowRightOutlined, ThunderboltFilled } from '@ant-design/icons'
+import { ArrowRightOutlined, CheckCircleFilled, ThunderboltFilled } from '@ant-design/icons'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { companyInitial, formatNumber as fmt, getJobs, jobDetailPath } from '@/entities/job/job'
 import { JobImpressionBoundary } from '@/features/main/job/track-job-engagement'
 import { useCountUp } from '@/shared/hooks/use-count-up'
 import { legacyAsset } from '@/shared/config/assets'
+import { m } from '@/shared/config/i18n'
 
-const CYCLE_HOURS = 4
 const VISIBLE = 3
 const ROTATE_MS = 3500
 const ITEM_H = 72   // height của mỗi card (px)
@@ -14,25 +14,8 @@ const GAP    = 8    // khoảng cách giữa các card (px)
 const SLOT   = ITEM_H + GAP
 const FLASH_BADGE_COVER_URL = legacyAsset('welcome/flash-badge-cover.png')
 const FLASH_BADGE_INTRO_URL = legacyAsset('welcome/flash-badge-intro.png')
-const pad = (n) => String(n).padStart(2, '0')
-
-function useCountdown() {
-  const [left, setLeft] = useState({ h: 0, m: 0, s: 0 })
-  useEffect(() => {
-    const tick = () => {
-      const now = new Date()
-      const next = new Date(now)
-      const nextHour = (Math.floor(now.getHours() / CYCLE_HOURS) + 1) * CYCLE_HOURS
-      next.setHours(nextHour, 0, 0, 0)
-      const diff = Math.max(0, Math.floor((next - now) / 1000))
-      setLeft({ h: Math.floor(diff / 3600), m: Math.floor((diff % 3600) / 60), s: diff % 60 })
-    }
-    tick()
-    const id = setInterval(tick, 1000)
-    return () => clearInterval(id)
-  }, [])
-  return left
-}
+// The flash badge is computed hourly from how recruiters answer applications (ADR-0027).
+const FLASH_BADGE_FILTER_PATH = '/viec-lam?fast=1'
 
 /**
  * useJobQueue – quản lý danh sách hiển thị theo slot position.
@@ -93,12 +76,11 @@ function useJobQueue(jobs) {
   return items
 }
 
-export default function FlashBadge() {
+export default function FlashBadge({ responseRate = 80, responseHours = 72 }) {
   const navigate = useNavigate()
   const [jobs, setJobs] = useState([])
   const [count, setCount] = useState(0)
   const [loaded, setLoaded] = useState(false)
-  const { h, m, s } = useCountdown()
   const displayCount = useCountUp(count)
   const items = useJobQueue(jobs)
 
@@ -164,33 +146,19 @@ export default function FlashBadge() {
             <div>
               <span className="text-2xl font-bold tabular-nums leading-none">{fmt(displayCount)}</span>
               <p className="text-[11px] text-green-50/75 leading-tight mt-0.5 max-w-[190px]">
-                tin đăng được NTD tương tác trong 24 giờ qua
+                {m.candidate_flash_badge_count({ rate: responseRate, hours: responseHours })}
               </p>
             </div>
           </div>
 
-          <div className="mt-5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-green-50/60 mb-2">
-              Tự động cập nhật sau
-            </p>
-            <div className="flex items-center gap-1.5">
-              {[
-                { v: h, u: 'Giờ' },
-                { v: m, u: 'Phút' },
-                { v: s, u: 'Giây' },
-              ].map((seg, i) => (
-                <div key={seg.u} className="flex items-center gap-1.5">
-                  {i > 0 && <span className="text-lg font-bold text-[#ffe27a]/80 mb-3">:</span>}
-                  <div className="flex flex-col items-center">
-                    <span className="flex h-10 w-11 items-center justify-center rounded-lg bg-white text-xl font-extrabold tabular-nums text-[var(--brand-primary-hover)] shadow-md ring-1 ring-black/10">
-                      {pad(seg.v)}
-                    </span>
-                    <span className="mt-1 text-[10px] text-green-50/70">{seg.u}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <ul className="mt-5 space-y-1.5 text-xs text-green-50/80">
+            {[m.candidate_flash_badge_point_real(), m.candidate_flash_badge_point_hourly()].map((text) => (
+              <li key={text} className="flex items-center gap-2">
+                <CheckCircleFilled className="text-[#ffe27a]" aria-hidden="true" />
+                {text}
+              </li>
+            ))}
+          </ul>
         </div>
 
         {/* ── Cột giữa: Job feed ── */}
@@ -289,7 +257,7 @@ export default function FlashBadge() {
             <span className="font-bold text-white">Huy hiệu Sấm Chớp</span>
           </p>
           <button
-            onClick={() => navigate('/viec-lam')}
+            onClick={() => navigate(FLASH_BADGE_FILTER_PATH)}
             className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-semibold text-[var(--brand-primary-hover)] shadow-md transition-all hover:bg-[var(--brand-primary-soft)] hover:shadow-lg hover:-translate-y-px active:scale-95 cursor-pointer"
           >
             Xem ngay <ArrowRightOutlined className="text-xs" />

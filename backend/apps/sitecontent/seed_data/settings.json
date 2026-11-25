@@ -1309,6 +1309,98 @@
     }
   },
   {
+    "key": "nearby_jobs_default_radius_km",
+    "label": "Bán kính mặc định (km)",
+    "group": "jobs",
+    "section": "Việc làm gần bạn",
+    "value_type": "number",
+    "value": 10,
+    "is_public": true,
+    "description": "Bán kính chọn sẵn khi ứng viên mở trang Việc làm gần bạn.",
+    "help": "Ứng viên đổi được trong các mức 3, 5, 10, 20, 50 km (không vượt bán kính tối đa).",
+    "options": {
+      "applies_to": [
+        "Tìm việc"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 50
+    }
+  },
+  {
+    "key": "nearby_jobs_max_radius_km",
+    "label": "Bán kính tối đa (km)",
+    "group": "jobs",
+    "section": "Việc làm gần bạn",
+    "value_type": "number",
+    "value": 50,
+    "is_public": true,
+    "description": "Bán kính lớn nhất ứng viên được chọn; máy chủ kẹp mọi yêu cầu vượt mức này.",
+    "help": "Bán kính lớn làm truy vấn nặng hơn và kết quả kém \"gần\". Trần cứng 100 km.",
+    "options": {
+      "applies_to": [
+        "Tìm việc"
+      ],
+      "integer": true,
+      "min": 5,
+      "max": 100
+    }
+  },
+  {
+    "key": "nearby_jobs_max_markers",
+    "label": "Số điểm tối đa trên bản đồ",
+    "group": "jobs",
+    "section": "Việc làm gần bạn",
+    "value_type": "number",
+    "value": 300,
+    "is_public": false,
+    "description": "Số nơi làm việc gần nhất được vẽ lên bản đồ trong một lần tìm.",
+    "help": "Danh sách bên cạnh vẫn phân trang đầy đủ; bản đồ báo \"chỉ hiện N điểm gần nhất\" khi bị cắt.",
+    "options": {
+      "applies_to": [
+        "Tìm việc"
+      ],
+      "integer": true,
+      "min": 50,
+      "max": 1000
+    }
+  },
+  {
+    "key": "map_style_url",
+    "label": "Style bản đồ (MapLibre)",
+    "group": "jobs",
+    "section": "Bản đồ",
+    "value_type": "url",
+    "value": "",
+    "is_public": true,
+    "description": "Link style.json của bản đồ nền, ví dụ VietMap https://maps.vietmap.vn/maps/styles/tm/style.json?apikey=…",
+    "help": "Dùng key tile công khai của VietMap (giới hạn domain trong console VietMap), không dùng key geocoding của máy chủ. Để trống: bản đồ nền OpenFreeMap/OpenStreetMap chỉ dành cho môi trường dev (không theo chuẩn bản đồ Việt Nam).",
+    "options": {
+      "applies_to": [
+        "Tìm việc",
+        "Đăng tin"
+      ]
+    }
+  },
+  {
+    "key": "map_attribution",
+    "label": "Ghi công bản đồ",
+    "group": "jobs",
+    "section": "Bản đồ",
+    "value_type": "text",
+    "value": "© VIETMAP",
+    "is_public": true,
+    "description": "Dòng ghi nguồn dữ liệu hiện ở góc bản đồ theo điều khoản nhà cung cấp.",
+    "help": "Khi chưa cấu hình style, bản đồ dev tự ghi công OpenFreeMap và OpenStreetMap.",
+    "options": {
+      "applies_to": [
+        "Tìm việc",
+        "Đăng tin"
+      ],
+      "max_length": 200
+    }
+  },
+  {
     "key": "application_max_per_job",
     "label": "Số lần nộp tối đa mỗi tin",
     "group": "applications",
@@ -1425,15 +1517,15 @@
     }
   },
   {
-    "key": "candidate_status_notify_delay_minutes",
-    "label": "Chờ trước khi báo đổi trạng thái (phút)",
+    "key": "candidate_status_notify_delay_seconds",
+    "label": "Thời gian hoàn tác quyết định (giây)",
     "group": "applications",
     "section": "Thông báo cho ứng viên",
     "value_type": "number",
-    "value": 5,
+    "value": 15,
     "is_public": false,
-    "description": "Quyết định của nhà tuyển dụng chỉ báo cho ứng viên sau khoảng này.",
-    "help": "Để nhà tuyển dụng kịp hoàn tác bấm nhầm; nhiều thay đổi liên tiếp gộp thành một thông báo.",
+    "description": "Quyết định của nhà tuyển dụng chỉ báo cho ứng viên sau khoảng này; trong lúc đó nhà tuyển dụng bấm Hoàn tác được.",
+    "help": "Chỉ để sửa bấm nhầm (tối đa 60 giây); nhiều thay đổi liên tiếp trong khoảng này gộp thành một thông báo.",
     "options": {
       "applies_to": [
         "Cổng ứng viên",
@@ -1543,6 +1635,134 @@
       "integer": true,
       "min": 1,
       "max": 90
+    }
+  },
+  {
+    "key": "flash_badge_enabled",
+    "label": "Bật Huy hiệu Sấm Chớp",
+    "group": "applications",
+    "section": "Huy hiệu Sấm Chớp",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "Hệ thống tự gắn huy hiệu cho tin của nhà tuyển dụng phản hồi hồ sơ đúng hạn, đều đặn. Tắt thì gỡ huy hiệu khỏi mọi tin ở lần tính kế tiếp.",
+    "help": "Huy hiệu được tính lại mỗi giờ.",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng",
+        "Trang chủ",
+        "Tin tuyển dụng"
+      ]
+    }
+  },
+  {
+    "key": "flash_badge_window_days",
+    "label": "Cửa sổ xét (ngày)",
+    "group": "applications",
+    "section": "Huy hiệu Sấm Chớp",
+    "value_type": "number",
+    "value": 30,
+    "is_public": true,
+    "description": "Xét các hồ sơ nộp trong bấy nhiêu ngày gần nhất.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng",
+        "Trang chủ",
+        "Tin tuyển dụng"
+      ],
+      "integer": true,
+      "min": 7,
+      "max": 180,
+      "depends_on": "flash_badge_enabled"
+    }
+  },
+  {
+    "key": "flash_badge_response_hours",
+    "label": "Hạn phản hồi (giờ)",
+    "group": "applications",
+    "section": "Huy hiệu Sấm Chớp",
+    "value_type": "number",
+    "value": 72,
+    "is_public": true,
+    "description": "Hồ sơ phải có quyết định (phù hợp, phỏng vấn, nhận, từ chối) trong bấy nhiêu giờ từ lúc nộp mới tính là phản hồi đúng hạn.",
+    "help": "Mở xem CV hay hệ thống tự từ chối không tính là phản hồi.",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng",
+        "Trang chủ",
+        "Tin tuyển dụng"
+      ],
+      "integer": true,
+      "min": 4,
+      "max": 336,
+      "depends_on": "flash_badge_enabled"
+    }
+  },
+  {
+    "key": "flash_badge_min_applications",
+    "label": "Số hồ sơ tối thiểu",
+    "group": "applications",
+    "section": "Huy hiệu Sấm Chớp",
+    "value_type": "number",
+    "value": 5,
+    "is_public": true,
+    "description": "Cần ít nhất bấy nhiêu hồ sơ đã đến hạn trong cửa sổ xét để được xét huy hiệu.",
+    "help": "Tránh cấp huy hiệu từ một hai hồ sơ.",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng",
+        "Trang chủ",
+        "Tin tuyển dụng"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 100,
+      "depends_on": "flash_badge_enabled"
+    }
+  },
+  {
+    "key": "flash_badge_min_response_rate",
+    "label": "Tỷ lệ phản hồi đúng hạn tối thiểu (%)",
+    "group": "applications",
+    "section": "Huy hiệu Sấm Chớp",
+    "value_type": "number",
+    "value": 80,
+    "is_public": true,
+    "description": "Phần trăm hồ sơ phải được quyết định trong hạn phản hồi.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng",
+        "Trang chủ",
+        "Tin tuyển dụng"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 100,
+      "depends_on": "flash_badge_enabled"
+    }
+  },
+  {
+    "key": "flash_badge_active_days",
+    "label": "Hoạt động gần đây (ngày)",
+    "group": "applications",
+    "section": "Huy hiệu Sấm Chớp",
+    "value_type": "number",
+    "value": 7,
+    "is_public": false,
+    "description": "Nhà tuyển dụng phải có ít nhất một quyết định cho hồ sơ trong bấy nhiêu ngày gần nhất để giữ huy hiệu.",
+    "help": "",
+    "options": {
+      "applies_to": [
+        "Cổng nhà tuyển dụng",
+        "Trang chủ",
+        "Tin tuyển dụng"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 60,
+      "depends_on": "flash_badge_enabled"
     }
   },
   {
@@ -1865,6 +2085,39 @@
     }
   },
   {
+    "key": "ai_application_ranking_enabled",
+    "label": "AI xếp hạng hồ sơ ứng tuyển cho nhà tuyển dụng",
+    "group": "ai",
+    "section": "Đối sánh CV–JD (mô hình nội bộ)",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "Chấm mức phù hợp của hồ sơ ứng tuyển để nhà tuyển dụng sắp xếp và tham khảo.",
+    "help": "Chỉ chấm hồ sơ ứng viên đồng ý phân tích AI, trên bản CV đã nộp. Không tự loại hồ sơ theo điểm.",
+    "options": {
+      "applies_to": [
+        "CV ứng tuyển (cổng nhà tuyển dụng)",
+        "Form ứng tuyển"
+      ]
+    }
+  },
+  {
+    "key": "ai_candidate_search_enabled",
+    "label": "Tìm CV: nhà tuyển dụng tìm ứng viên theo tin",
+    "group": "ai",
+    "section": "Đối sánh CV–JD (mô hình nội bộ)",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "Cho nhà tuyển dụng tìm ứng viên đang bật \"cho phép NTD tìm kiếm\", xếp theo mức phù hợp với một tin đang tuyển.",
+    "help": "Kết quả ẩn danh (không tên, liên hệ, tệp CV). Nhà tuyển dụng chỉ có thể mời ứng tuyển.",
+    "options": {
+      "applies_to": [
+        "Tìm CV (cổng nhà tuyển dụng)"
+      ]
+    }
+  },
+  {
     "key": "ai_data_policy_url",
     "label": "Chính sách xử lý dữ liệu bằng AI",
     "group": "ai",
@@ -2174,6 +2427,23 @@
         "SEO"
       ],
       "depends_on": "knowledgebase_public_enabled"
+    }
+  },
+  {
+    "key": "nearby_jobs_enabled",
+    "label": "Bật Việc làm gần bạn",
+    "group": "features",
+    "section": "Việc làm gần bạn",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "Hiện trang /viec-lam-gan-ban, lối vào ở header/trang chủ và API tìm theo khoảng cách.",
+    "help": "Tắt để ẩn tính năng khi chưa có key bản đồ hoặc nhà cung cấp gặp sự cố.",
+    "options": {
+      "applies_to": [
+        "Cổng ứng viên"
+      ],
+      "risky": "off"
     }
   },
   {

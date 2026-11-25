@@ -20,6 +20,7 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from apps.applications.models import Application
+from common.db.readable_code import code_search_q
 from common.vietnam_time import VIETNAM_TZ, vietnam_today
 
 from ..models import Job, JobCategoryAssignment, JobModerationEvent, JobState
@@ -173,8 +174,8 @@ def _employer_jobs(user, *, campaign=None, q=None):
     queryset = Job.objects.filter(posted_by=user)
     if campaign:
         queryset = queryset.filter(campaign__public_id=campaign)
-    if q:
-        queryset = queryset.filter(title__icontains=q.strip())
+    if q := (q or '').strip():
+        queryset = queryset.filter(Q(title__icontains=q) | code_search_q('code', q))
     return queryset
 
 

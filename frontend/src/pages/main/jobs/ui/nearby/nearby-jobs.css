@@ -1,0 +1,424 @@
+/* Việc làm gần tôi (ADR-0029). CSS lazy của trang — không thêm utility Tailwind
+   vào CSS khởi tạo (ngân sách 38,5 KiB). */
+.nearby-page {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 16px 16px 40px;
+}
+
+.nearby-page__breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #475569;
+}
+
+.nearby-page__breadcrumb a {
+  color: #1d4f91 !important;
+}
+
+.nearby-page__breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+.nearby-page__title {
+  margin: 18px 0 16px;
+  font-size: clamp(22px, 3.2vw, 28px);
+  font-weight: 700;
+  line-height: 1.25;
+  color: #0f172a;
+}
+
+.nearby-page__hint {
+  margin: 8px 2px 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.nearby-page__layout {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.nearby-page__selected {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #fff7ed;
+  font-size: 13px;
+  font-weight: 600;
+  color: #9a3412;
+}
+
+.nearby-page__selected button {
+  border: 0;
+  background: none;
+  color: #1d4f91;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (min-width: 1024px) {
+  .nearby-page__layout {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .nearby-map {
+    position: sticky;
+    top: 80px;
+  }
+}
+
+/* ---- Thanh lọc ---- */
+.nearby-filter {
+  display: grid;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.nearby-filter__origin {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.nearby-filter__locate {
+  flex: none;
+  font-weight: 600;
+}
+
+.nearby-filter__or {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.nearby-filter__place {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.nearby-filter__error {
+  margin: 0;
+  font-size: 13px;
+  color: #b91c1c;
+}
+
+.nearby-filter__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+
+.nearby-filter__label {
+  font-size: 13px;
+  color: #475569;
+}
+
+.nearby-filter__radius {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.nearby-chip {
+  min-width: 52px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #fff;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.nearby-chip:hover {
+  border-color: var(--brand-primary);
+}
+
+.nearby-chip--active {
+  border-color: var(--brand-primary);
+  background: var(--brand-primary);
+  color: #fff;
+}
+
+.nearby-chip:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.nearby-filter__select {
+  width: 200px;
+  max-width: 100%;
+}
+
+.nearby-filter__submit {
+  font-weight: 600;
+}
+
+@media (max-width: 639px) {
+  .nearby-filter__select,
+  .nearby-filter__submit,
+  .nearby-filter__locate {
+    width: 100%;
+  }
+
+  .nearby-filter__or {
+    display: none;
+  }
+}
+
+.nearby-suggestion {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.nearby-suggestion__kind {
+  flex: none;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 11px;
+}
+
+.nearby-suggestion__text {
+  display: grid;
+  min-width: 0;
+}
+
+.nearby-suggestion__label,
+.nearby-suggestion__secondary {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nearby-suggestion__secondary {
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* ---- Bản đồ ---- */
+.nearby-map__canvas {
+  height: min(62vh, 560px);
+  min-height: 320px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+@media (max-width: 1023px) {
+  .nearby-map__canvas {
+    height: 340px;
+    min-height: 0;
+  }
+}
+
+.nearby-map__placeholder {
+  height: 100%;
+}
+
+.nearby-map__note {
+  margin: 8px 2px 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* ---- Danh sách ---- */
+.nearby-results {
+  display: grid;
+  gap: 10px;
+}
+
+.nearby-results__summary {
+  margin: 0;
+  font-size: 15px;
+  color: #334155;
+}
+
+.nearby-results__summary strong {
+  color: #0f172a;
+}
+
+.nearby-results__group {
+  margin: 8px 0 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.nearby-results__pagination {
+  margin-top: 8px;
+  text-align: center;
+}
+
+.nearby-card {
+  display: flex;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.nearby-card:hover,
+.nearby-card--active {
+  border-color: var(--brand-primary);
+  box-shadow: 0 4px 14px rgb(15 23 42 / 0.08);
+}
+
+.nearby-card__logo {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--brand-primary);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.nearby-card__logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.nearby-card__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.nearby-card__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.nearby-card__title a {
+  color: #0f172a !important;
+}
+
+.nearby-card__title a:hover {
+  text-decoration: underline;
+}
+
+.nearby-card__urgent {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.nearby-card__company {
+  margin: 4px 0 0;
+  overflow: hidden;
+  font-size: 13px;
+  color: #64748b;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nearby-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: #475569;
+}
+
+.nearby-card__salary {
+  font-weight: 700;
+  color: #15803d;
+}
+
+.nearby-card__distance {
+  align-self: flex-start;
+  flex: none;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #e8f0fb;
+  color: #1d4f91;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.nearby-card__distance--province_wide,
+.nearby-card__distance--remote {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.nearby-empty {
+  padding: 28px 20px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  background: #fff;
+  text-align: center;
+  color: #475569;
+}
+
+.nearby-empty h2 {
+  margin: 8px 0 6px;
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.nearby-empty p {
+  margin: 0 auto 12px;
+  max-width: 34rem;
+  font-size: 14px;
+}
+
+.nearby-empty .nearby-empty__place {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 13px;
+}
+
+.nearby-results__near {
+  color: #64748b;
+}
+
+.nearby-empty__icon {
+  font-size: 28px;
+  color: var(--brand-primary);
+}

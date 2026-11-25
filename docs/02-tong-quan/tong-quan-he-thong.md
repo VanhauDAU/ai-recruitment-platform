@@ -127,7 +127,8 @@ onboarding ứng viên đặc tả trong [`dac-ta-onboarding-ung-vien.md`](../01
 
 - Hậu kiểm tin: xử lý báo cáo, tạm ẩn (`moderation_hold`) có lý do và khôi phục.
   Không có duyệt tin trước khi đăng.
-- Gán nhãn hiển thị `tier`, `is_hot`, `is_urgent`, `has_flash_badge` cho tin.
+- Gán nhãn hiển thị `tier`, `is_hot`, `is_urgent` cho tin. Huy hiệu Sấm Chớp
+  (`has_flash_badge`) do hệ thống tự tính (ADR-0027); admin chỉ chỉnh ngưỡng.
   Không có gói dịch vụ, tin tài trợ hay remarketing
   ([ADR-0015](./adr-0015-remove-commercial-services.md)).
 - Duyệt xác thực doanh nghiệp và yêu cầu cập nhật công ty.

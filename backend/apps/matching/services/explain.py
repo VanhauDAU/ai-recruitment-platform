@@ -9,9 +9,16 @@ Mỗi gợi ý có `code` cố định để giao diện dịch hoặc đổi c�
 
 from apps.jobs.models import Job, JobLanguageRequirement
 
+from .scoring import GENERIC_CRITERIA
+
 DISCLAIMER = (
     'Kết quả là ước lượng tự động dựa trên nội dung CV và tin tuyển dụng, '
     'không phải quyết định tuyển dụng.'
+)
+# Ghép vào tóm tắt của học vấn, cấp bậc, ngoại ngữ khi hệ số liên quan nhỏ hơn 1.
+RELEVANCE_DISCOUNT_NOTE = (
+    'Chuyên môn trong CV khác lĩnh vực của tin nên tiêu chí này chỉ được tính một phần vào '
+    'điểm tổng.'
 )
 MAX_SUGGESTIONS = 6
 MAX_LISTED = 3
@@ -46,7 +53,6 @@ def _summary(component):
             'experience': 'Chưa xác định được thời gian làm việc từ CV.',
             'education': 'CV chưa ghi bậc học.',
             'position_level': 'Chưa xác định được cấp bậc từ chức danh trong CV.',
-            'location': 'Chưa có nơi làm việc mong muốn để so sánh.',
         }.get(key, 'Chưa đủ dữ liệu.')
     if key == 'skills':
         matched, missing = len(detail['matched']), len(detail['missing'])
@@ -84,12 +90,6 @@ def _summary(component):
                 + '.'
             )
         return 'CV đáp ứng yêu cầu ngoại ngữ của tin.'
-    if key == 'location':
-        return (
-            'Tin cho làm việc từ xa.'
-            if detail.get('remote')
-            else 'So sánh theo tỉnh/thành làm việc.'
-        )
     return ''
 
 
@@ -174,10 +174,16 @@ def _suggestions(result):
     return suggestions[:MAX_SUGGESTIONS]
 
 
+def _with_discount_note(component, discounted):
+    summary = _summary(component)
+    if discounted and component['key'] in GENERIC_CRITERIA and component['score']:
+        summary = f'{summary} {RELEVANCE_DISCOUNT_NOTE}'
+    return {**component, 'summary': summary}
+
+
 def explain(result):
     """Thêm `summary` cho từng tiêu chí và danh sách `suggestions` vào kết quả chấm."""
-    components = [
-        {**component, 'summary': _summary(component)} for component in result['components']
-    ]
+    discounted = result['flags'].get('relevance_discount_applied', False)
+    components = [_with_discount_note(component, discounted) for component in result['components']]
     explained = {**result, 'components': components}
     return {**explained, 'suggestions': _suggestions(explained), 'disclaimer': DISCLAIMER}

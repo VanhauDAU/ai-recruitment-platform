@@ -44,6 +44,14 @@ class EmployerDashboardSummarySerializer(serializers.Serializer):
     applications_interviewed = serializers.IntegerField()
 
 
+class EmployerDashboardFunnelSerializer(serializers.Serializer):
+    received = serializers.IntegerField()
+    shortlisted = serializers.IntegerField()
+    interviewed = serializers.IntegerField()
+    accepted = serializers.IntegerField()
+    rejected = serializers.IntegerField()
+
+
 class ApplicationActivitySerializer(serializers.Serializer):
     date = serializers.DateField()
     count = serializers.IntegerField()
@@ -81,11 +89,37 @@ class RecentApplicationSerializer(serializers.Serializer):
     applied_at = serializers.DateTimeField()
 
 
+class FlashBadgeCriterionSerializer(serializers.Serializer):
+    code = serializers.ChoiceField(
+        choices=['enough_applications', 'response_rate', 'recent_activity', 'no_overdue']
+    )
+    met = serializers.BooleanField()
+    # Số (hồ sơ, phần trăm) hoặc thời điểm quyết định gần nhất, tùy tiêu chí.
+    value = serializers.JSONField(allow_null=True)
+    target = serializers.IntegerField()
+
+
+class FlashBadgeStateSerializer(serializers.Serializer):
+    enabled = serializers.BooleanField()
+    qualified = serializers.BooleanField()
+    qualified_since = serializers.DateTimeField(allow_null=True)
+    response_rate = serializers.IntegerField(allow_null=True)
+    avg_response_hours = serializers.FloatField(allow_null=True)
+    criteria = FlashBadgeCriterionSerializer(many=True)
+    overdue_count = serializers.IntegerField()
+    at_risk_count = serializers.IntegerField()
+    response_hours = serializers.IntegerField()
+    window_days = serializers.IntegerField()
+    computed_at = serializers.DateTimeField(allow_null=True)
+
+
 class EmployerDashboardSerializer(serializers.Serializer):
     account = EmployerDashboardAccountSerializer()
     summary = EmployerDashboardSummarySerializer()
+    funnel = EmployerDashboardFunnelSerializer()
     application_activity = ApplicationActivitySerializer(many=True)
     recruitment_need = RecruitmentNeedSummarySerializer(allow_null=True)
+    flash_badge = FlashBadgeStateSerializer(allow_null=True)
     recent_jobs = RecentJobSerializer(many=True)
     recent_applications = RecentApplicationSerializer(many=True)
 

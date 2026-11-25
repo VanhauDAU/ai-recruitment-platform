@@ -50,6 +50,11 @@ REST_FRAMEWORK = {
         'feedback': '5/min',
         'consultation': '5/min',
         'consent': '20/hour',
+        # Mỗi lần (re)connect WebSocket một vé; backoff phía client giữ dưới mức này.
+        'realtime_ticket': '30/min',
+        # Việc làm gần bạn: mỗi lần đổi bán kính/bộ lọc gọi danh sách + bản đồ.
+        'nearby_jobs': '120/min',
+        'geo_lookup': '60/min',
         'job_view': '120/hour',
         'job_impression': '240/hour',
         'job_report': '10/hour',
@@ -58,6 +63,9 @@ REST_FRAMEWORK = {
         'cv_import': '10/hour',
         'ai_job_generation': '3/min',
         'match_analysis': '20/hour',
+        # Tìm CV: mỗi lượt tìm chấm lại tới 200 CV; lời mời gửi thông báo cho ứng viên.
+        'candidate_search': '240/hour',
+        'candidate_search_invite': '40/hour',
         'knowledgebase_public': '120/min',
         'public_companies': '120/min',
         # Invited reviewers: open the CV and save a scorecard a few times.

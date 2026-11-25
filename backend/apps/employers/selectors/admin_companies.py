@@ -12,6 +12,8 @@ from django.db.models import (
     When,
 )
 
+from common.db.readable_code import code_search_q
+
 from ..models import (
     ADMIN_PENDING_COMPANY_UPDATE_STATUSES,
     Company,
@@ -126,6 +128,7 @@ def admin_companies_queryset(*, params=None):
     if query:
         queryset = queryset.filter(
             Q(public_id__icontains=query)
+            | code_search_q('code', query)
             | Q(company_name__icontains=query)
             | Q(trade_name__icontains=query)
             | Q(tax_code__icontains=query)

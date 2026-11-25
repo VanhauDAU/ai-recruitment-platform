@@ -23,6 +23,7 @@ const EXACT_MAIN_TITLES = new Map([
   [COMPANY_SEARCH_PATH, 'Tìm kiếm công ty'],
   ['/viec-lam', 'Tuyển dụng việc làm mới nhất'],
   ['/jobs', 'Tuyển dụng việc làm mới nhất'],
+  ['/viec-lam-gan-ban', m.candidate_nearby_title()],
   ['/so-sanh-viec-lam', 'So sánh việc làm'],
   ['/viec-lam-da-luu', 'Việc làm đã lưu'],
   ['/tai-cv-len', 'Tải CV lên'],
@@ -77,6 +78,7 @@ const EXACT_EMPLOYER_TITLES = new Map([
   [employerAppPath('/applications'), m.employer_workspace_title_applications()],
   [employerAppPath('/candidate-blocks'), m.employer_workspace_title_candidate_blocks()],
   [employerAppPath('/talent-pool'), m.employer_workspace_title_talent_pool()],
+  [employerAppPath('/candidate-search'), m.employer_workspace_title_candidate_search()],
 ])
 
 // Thứ tự quan trọng: mẫu cụ thể (…/edit, …/setup) đứng trước mẫu chi tiết.

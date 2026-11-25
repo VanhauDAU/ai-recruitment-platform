@@ -201,7 +201,7 @@ export default function AdminJobList() {
               <AdminDataActions
                 iconOnly
                 columns={[
-                  { key: 'public_id', label: m.admin_job_list_csv_code() },
+                  { key: 'code', label: m.admin_job_list_csv_code() },
                   { key: 'title', label: m.admin_job_list_col_job() },
                   { key: 'company_name', label: m.admin_job_list_csv_company() },
                   { label: m.admin_job_list_col_status(), value: (row) => row.status_label || row.status },

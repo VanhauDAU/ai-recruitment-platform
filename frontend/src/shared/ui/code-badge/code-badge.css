@@ -1,0 +1,51 @@
+/* Nhãn mã dùng chung (CodeBadge): đọc rõ qua điện thoại, sao chép một chạm. */
+.code-badge {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #f8fafc;
+  padding: 0 0 0 6px;
+  color: #334155;
+  line-height: 1.6;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.code-badge__label { color: #64748b; font-size: 11px; }
+
+.code-badge__value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.code-badge__copy {
+  display: inline-flex;
+  min-width: 22px;
+  align-self: stretch;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-left: 1px solid #e2e8f0;
+  border-radius: 0 5px 5px 0;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.code-badge__copy:hover { background: #eef2ff; color: var(--brand-primary, #4f46e5); }
+.code-badge__copy:focus-visible { outline: 2px solid var(--brand-primary, #4f46e5); outline-offset: 1px; }
+
+.code-badge--md { padding-left: 8px; }
+.code-badge--md .code-badge__value { font-size: 13px; }
+.code-badge--md .code-badge__copy { min-width: 28px; font-size: 12px; }
+
+/* Màn hình cảm ứng: vùng bấm nút sao chép tối thiểu ~32px. */
+@media (pointer: coarse) {
+  .code-badge__copy { min-width: 32px; min-height: 28px; }
+}

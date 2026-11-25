@@ -1,5 +1,9 @@
 import { EnvironmentOutlined, GiftOutlined, GlobalOutlined, ToolOutlined } from '@ant-design/icons'
 import { useEffect, useRef, useState } from 'react'
+import { readNearbyOrigin } from '@/entities/system/location'
+import { getIntlLocale, m } from '@/shared/config/i18n'
+import { formatDistance, haversineKm } from '@/shared/lib/geo'
+import WorkplaceMap from './WorkplaceMap'
 
 // Các khối hiển thị nhỏ của "Chi tiết tin tuyển dụng" — nhận view-model đã
 // nhóm sẵn từ API detail (requirement_tags, benefit_tags, workplace_groups…)
@@ -127,8 +131,14 @@ export function LanguageRequirementList({ items }) {
   )
 }
 
+function distanceFromOrigin(origin, address) {
+  if (!origin || !Number.isFinite(address.latitude)) return ''
+  return m.candidate_nearby_distance_from_you({ distance: formatDistance(haversineKm(origin, address), getIntlLocale()) })
+}
+
 export function WorkplaceGroups({ groups }) {
   const [expanded, setExpanded] = useState(false)
+  const [origin] = useState(readNearbyOrigin)
   if (!groups?.length) return null
   let remaining = MAX_VISIBLE_WORKPLACES
   const visibleGroups = groups
@@ -152,6 +162,11 @@ export function WorkplaceGroups({ groups }) {
             <span>
               <strong className="font-semibold text-slate-800">{group.province_name}:</strong>{' '}
               {workplaceAddressLabel(address, group.province_name) || group.province_name}
+              {distanceFromOrigin(origin, address) && (
+                <span className="ml-2 whitespace-nowrap text-xs font-semibold text-[var(--brand-primary)]">
+                  {distanceFromOrigin(origin, address)}
+                </span>
+              )}
             </span>
           </p>
         )))}
@@ -165,6 +180,7 @@ export function WorkplaceGroups({ groups }) {
           </button>
         )}
       </div>
+      <WorkplaceMap addresses={groups.flatMap((group) => group.addresses || [])} origin={origin} />
     </section>
   )
 }

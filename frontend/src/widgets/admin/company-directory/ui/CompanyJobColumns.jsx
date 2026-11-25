@@ -1,5 +1,6 @@
 import { EyeOutlined } from '@ant-design/icons'
 import { Button, Space, Tag } from 'antd'
+import CodeBadge from '@/shared/ui/code-badge/CodeBadge'
 import {
   adminJobStatusMeta,
   formatAdminJobDate,
@@ -22,16 +23,16 @@ export function createCompanyJobColumns({ ordering, openJob }) {
       sortOrder: sorterOrder(ordering, 'title'),
       width: 280,
       render: (title, job) => (
-        <button
-          className="company-directory__company-button"
-          onClick={() => openJob(job)}
-          type="button"
-        >
-          <div className="min-w-0 text-left">
-            <div className="truncate font-semibold text-slate-900">{title}</div>
-            <div className="mt-1 font-mono text-xs text-slate-500">{job.public_id}</div>
-          </div>
-        </button>
+        <div className="min-w-0">
+          <button
+            className="company-directory__company-button"
+            onClick={() => openJob(job)}
+            type="button"
+          >
+            <span className="truncate font-semibold text-slate-900">{title}</span>
+          </button>
+          <CodeBadge code={job.code} className="mt-1" />
+        </div>
       ),
     },
     {

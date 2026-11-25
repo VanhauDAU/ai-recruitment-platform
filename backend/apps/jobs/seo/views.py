@@ -214,6 +214,24 @@ class JobListSeoShellView(View):
         )
 
 
+class NearbyJobsSeoShellView(View):
+    """/viec-lam-gan-ban: static metadata, results depend on the visitor's location."""
+
+    def get(self, request):
+        return render_seo_shell(
+            request,
+            _metadata(
+                request,
+                title='Việc làm gần tôi',
+                description=(
+                    'Tìm việc làm gần nhà hoặc gần vị trí hiện tại trên bản đồ, chọn bán kính '
+                    '3–50 km và lọc theo ngành nghề, mức lương trên ProCV.'
+                ),
+                canonical_path='/viec-lam-gan-ban',
+            ),
+        )
+
+
 class JobDetailSeoShellView(View):
     def get(self, request, slug, company_slug=None):
         job = seo_job_by_slug(slug)

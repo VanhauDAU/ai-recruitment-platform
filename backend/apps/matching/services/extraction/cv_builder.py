@@ -11,7 +11,7 @@ from common.vietnam_time import vietnam_today
 
 from ..skills import cv_skills
 from . import facts
-from .profile import MAX_CV_CHUNKS, cv_profile_json, make_chunks
+from .profile import MAX_CV_CHUNKS, cv_profile_json, display_item, make_chunks, make_sections
 from .text import detect_language, join_parts, plain_text, split_sentences
 
 
@@ -23,6 +23,87 @@ def _item_entries(section, heading, description):
     return [(section, heading)] + [
         (section, line) for line in split_sentences(plain_text(description))
     ]
+
+
+def _lines(value):
+    """Các dòng của một ô mô tả (rich text), giữ từng gạch đầu dòng như ứng viên viết."""
+    return [line.strip() for line in plain_text(value).split('\n') if line.strip()]
+
+
+def _display_blocks(content_json):
+    """Nội dung CV theo mục để hiển thị: mỗi công việc, bằng cấp, dự án là một mục con."""
+    blocks = []
+    for item in enabled_items(content_json, 'summary'):
+        blocks.append(('summary', display_item(lines=_lines(item.get('value')))))
+    for item in enabled_items(content_json, 'experience'):
+        blocks.append(
+            (
+                'experience',
+                display_item(
+                    title=_field(item, 'role'),
+                    subtitle=_field(item, 'company'),
+                    start=item.get('start_date'),
+                    end=item.get('end_date'),
+                    lines=_lines(item.get('description')),
+                ),
+            )
+        )
+    for item in enabled_items(content_json, 'projects'):
+        blocks.append(
+            (
+                'projects',
+                display_item(
+                    title=_field(item, 'name'),
+                    subtitle=_field(item, 'role') or _field(item, 'value'),
+                    start=item.get('start_date'),
+                    end=item.get('end_date'),
+                    lines=_lines(item.get('description')),
+                ),
+            )
+        )
+    for item in enabled_items(content_json, 'education'):
+        blocks.append(
+            (
+                'education',
+                display_item(
+                    title=_field(item, 'degree'),
+                    subtitle=_field(item, 'institution'),
+                    start=item.get('start_date'),
+                    end=item.get('end_date'),
+                    lines=_lines(item.get('description')),
+                ),
+            )
+        )
+    for section in ('certifications', 'awards', 'activities'):
+        for item in enabled_items(content_json, section):
+            blocks.append(
+                (
+                    section,
+                    display_item(
+                        title=_field(item, 'name'),
+                        subtitle=_field(item, 'value'),
+                        lines=_lines(item.get('description')),
+                    ),
+                )
+            )
+    declared = [name for name, _ in declared_skills(content_json).values()]
+    if declared:
+        blocks.append(('skills', display_item(lines=[', '.join(declared)])))
+    for item in enabled_items(content_json, 'languages'):
+        blocks.append(
+            ('languages', display_item(title=_field(item, 'name'), subtitle=_field(item, 'value')))
+        )
+    for item in enabled_items(content_json, 'interests'):
+        blocks.append(
+            (
+                'interests',
+                display_item(
+                    title=_field(item, 'name'),
+                    lines=_lines(item.get('value')) + _lines(item.get('description')),
+                ),
+            )
+        )
+    return blocks
 
 
 def _latest_role(experience_items):
@@ -113,4 +194,5 @@ def cv_profile(content_json, catalog, *, today=None):
         position=facts.position_level(join_parts(role, headline), months),
         languages=facts.cv_languages(language_lines),
         chunks=chunks,
+        sections=make_sections(_display_blocks(content_json)),
     )

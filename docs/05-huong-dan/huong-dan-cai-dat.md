@@ -62,6 +62,7 @@ python manage.py migrate
 python manage.py seed_skills
 python manage.py seed_locations
 python manage.py seed_province_merges
+python manage.py seed_location_coordinates  # tâm phường/tỉnh cho "Việc làm gần bạn" (không gọi mạng)
 python manage.py seed_job_categories
 python manage.py seed_sitecontent
 python manage.py seed_cv_catalog     # hồ sơ vị trí CV + nội dung mẫu (chung 4 nhóm kinh nghiệm, riêng 9 vị trí) + bảng màu

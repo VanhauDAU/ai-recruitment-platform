@@ -4,7 +4,9 @@ from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
+from apps.applications.selectors import flash_badge_stats_for_job
 from common.html.plain_text import html_plain_text
+from common.storage.media import media_url_from_value
 
 from ...models import Benefit, Job, JobCategoryAssignment, JobSkill
 from .jobs import JobListSkillSerializer, JobSerializer, JobVerificationSerializer
@@ -83,6 +85,15 @@ class PublicJobPreviewSerializer(PublicJobListSerializer):
         ]
 
 
+class JobFlashBadgeStatsSerializer(serializers.Serializer):
+    """Số liệu thật sau Huy hiệu Sấm Chớp của người đăng tin (ADR-0027)."""
+
+    response_rate = serializers.IntegerField()
+    avg_response_hours = serializers.FloatField(allow_null=True)
+    matured_count = serializers.IntegerField()
+    computed_at = serializers.DateTimeField()
+
+
 class JobDetailSerializer(JobSerializer):
     """Extended public detail without internal application-recipient data.
 
@@ -114,6 +125,7 @@ class JobDetailSerializer(JobSerializer):
     # A stopped job stays readable but shows "Hết hạn ứng tuyển" instead of apply.
     accepting_applications = serializers.BooleanField(read_only=True, default=True)
     stopped_at = serializers.DateTimeField(read_only=True)
+    flash_badge_stats = serializers.SerializerMethodField()
 
     class Meta(JobSerializer.Meta):
         model = Job
@@ -160,6 +172,7 @@ class JobDetailSerializer(JobSerializer):
             'is_hot',
             'is_urgent',
             'presentation',
+            'flash_badge_stats',
             'job_locations',
             'work_schedules',
             'language_requirements',
@@ -184,6 +197,10 @@ class JobDetailSerializer(JobSerializer):
     @extend_schema_field(JobVerificationSerializer)
     def get_company_verification(self, obj):
         return self._badge_payload(obj)
+
+    @extend_schema_field(JobFlashBadgeStatsSerializer(allow_null=True))
+    def get_flash_badge_stats(self, obj):
+        return flash_badge_stats_for_job(obj)
 
     def get_category_name(self, obj) -> str:
         assignment = self._primary_assignment(obj)
@@ -231,6 +248,9 @@ class JobDetailSerializer(JobSerializer):
                     'ward_name': ward_name,
                     'address_detail': item.address_detail,
                     'display': display or province.name,
+                    'latitude': item.latitude,
+                    'longitude': item.longitude,
+                    'coordinate_precision': item.coordinate_precision,
                 }
             )
         return list(groups.values())
@@ -285,3 +305,90 @@ class JobDetailSerializer(JobSerializer):
             for category in Benefit.Category
             if names_by_category.get(category.value)
         ]
+
+
+def _workplace_display(item):
+    ward = item.location
+    province = ward.parent
+    parts = [item.address_detail, ward.name if province else '', (province or ward).name]
+    return ', '.join(part for part in parts if part)
+
+
+class NearbyWorkplaceSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    display = serializers.SerializerMethodField()
+    latitude = serializers.FloatField()
+    longitude = serializers.FloatField()
+    precision = serializers.CharField(source='coordinate_precision')
+    distance_km = serializers.SerializerMethodField()
+
+    def get_display(self, obj) -> str:
+        return _workplace_display(obj)
+
+    def get_distance_km(self, obj) -> float:
+        return round(obj.distance_km, 2)
+
+
+class PublicNearbyJobSerializer(PublicJobListSerializer):
+    """Search card plus how close the job is to the candidate's chosen point."""
+
+    distance_km = serializers.SerializerMethodField()
+    match_kind = serializers.CharField(read_only=True)
+    nearest_workplace = serializers.SerializerMethodField()
+    nearby_workplace_count = serializers.SerializerMethodField()
+
+    class Meta(PublicJobListSerializer.Meta):
+        fields = [
+            *PublicJobListSerializer.Meta.fields,
+            'deadline',
+            'distance_km',
+            'match_kind',
+            'nearest_workplace',
+            'nearby_workplace_count',
+        ]
+        read_only_fields = fields
+
+    def get_distance_km(self, obj) -> float | None:
+        return None if obj.distance_km is None else round(obj.distance_km, 2)
+
+    @extend_schema_field(NearbyWorkplaceSerializer(allow_null=True))
+    def get_nearest_workplace(self, obj):
+        workplaces = getattr(obj, 'nearby_workplaces', [])
+        return NearbyWorkplaceSerializer(workplaces[0]).data if workplaces else None
+
+    def get_nearby_workplace_count(self, obj) -> int:
+        return len(getattr(obj, 'nearby_workplaces', []))
+
+
+class NearbyMarkerJobSerializer(serializers.Serializer):
+    slug = serializers.CharField(source='job.slug')
+    title = serializers.CharField(source='job.title')
+    company_name = serializers.CharField(source='job.company.company_name')
+    company_logo_url = serializers.SerializerMethodField()
+    salary_type = serializers.CharField(source='job.salary_type')
+    salary_min = serializers.DecimalField(
+        source='job.salary_min', max_digits=14, decimal_places=2, allow_null=True
+    )
+    salary_max = serializers.DecimalField(
+        source='job.salary_max', max_digits=14, decimal_places=2, allow_null=True
+    )
+    currency = serializers.CharField(source='job.currency')
+    workplace = serializers.SerializerMethodField()
+
+    def get_company_logo_url(self, obj) -> str | None:
+        return media_url_from_value(obj.job.company.logo_url, request=self.context.get('request'))
+
+    def get_workplace(self, obj) -> str:
+        return _workplace_display(obj)
+
+
+class NearbyMarkerSerializer(serializers.Serializer):
+    latitude = serializers.FloatField()
+    longitude = serializers.FloatField()
+    precision = serializers.CharField()
+    distance_km = serializers.SerializerMethodField()
+    label = serializers.CharField(help_text='Tên phường/xã của điểm')
+    jobs = NearbyMarkerJobSerializer(source='workplaces', many=True)
+
+    def get_distance_km(self, obj) -> float:
+        return round(obj['distance_km'], 2)

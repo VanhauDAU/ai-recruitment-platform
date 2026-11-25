@@ -708,7 +708,9 @@ Mã lỗi ổn định gồm `JOB_AI_DAILY_QUOTA_EXCEEDED` (429),
 | POST | `/api/employer/jobs/{public_id}/submit/` | Đăng một tin nháp: tin công khai ngay (`active`). Body `{responsibility_statement_version}`; thiếu hoặc khác phiên bản đang có hiệu lực trả `400 JOB_RESPONSIBILITY_REQUIRED`. Trả `400 JOB_PUBLICATION_BLOCKED` kèm `blocked_reasons[]` khi nhà tuyển dụng chưa đạt điều kiện đăng. Gọi lại với tin đã `active` là idempotent và không cần cam kết. |
 | POST | `/api/employer/jobs/{public_id}/close/`, `/reopen/`, `/extend/`, `/duplicate/` | Đóng, mở lại (tin `active` ngay, body `{deadline, responsibility_statement_version}`, cùng cam kết và điều kiện đăng), gia hạn tin active hoặc tạo nháp sao chép. Tin đang bị tạm ẩn trả `400 RECRUITMENT_HOLD_ACTIVE` cho sửa, mở lại, gia hạn và sao chép. |
 | GET/POST | `/api/candidate/applications/` | Candidate application V2. POST bắt buộc `job_public_id`, `cv_public_id`, `version_public_id`; backend từ chối tin hết hạn, CV đang phân tích hoặc CV thiếu họ tên / liên hệ / nội dung (`400 {cv_public_id}`), tạo snapshot CV bất biến. `campaign_ref` (tùy chọn) là mã `?ref=` của link kênh chiến dịch: hợp lệ thì hồ sơ ghi `campaign_channel`; sai, hết hạn hoặc thuộc chiến dịch khác thì coi là tự nhiên, không bao giờ chặn việc nộp. GET trả `status`, `candidate_status` và timeline **đã công bố**: quyết định còn trong cửa sổ hoàn tác của NTD chưa hiện. |
-| GET | `/api/employer/applications/?job=&status=&campaign=&q=` | Hồ sơ của các tin do caller tạo; yêu cầu `candidate_data_access=true`, filter theo tin/pipeline/chiến dịch/tên-email. |
+| GET | `/api/employer/applications/?job=&status=&campaign=&q=&ordering=` | Hồ sơ của các tin do caller tạo; yêu cầu `candidate_data_access=true`, filter theo tin/pipeline/chiến dịch/tên-email. `ordering` ∈ `newest` (mặc định), `oldest`, `name`, `ai_match` (điểm cao trước, hồ sơ chưa có điểm đứng sau). Mỗi dòng có `ai_match_score` (0–100), `ai_match_level` (`low`/`medium`/`high`/`very_high`) và `ai_match_status` ∈ `ready`/`pending`/`failed`/`not_consented`; cả ba là `null` khi cờ `ai_application_ranking_enabled` tắt. Điểm chấm trên bản CV đã nộp và chỉ có với hồ sơ ứng viên đồng ý phân tích AI. |
+| GET | `/api/employer/applications/{public_id}/extracted-profile/` | Hồ sơ trích xuất từ bản CV đã nộp: `{status, error_code, profile}`, `status` ∈ `ready`/`pending`/`failed`/`not_consented`. `profile.sections[]` là nội dung từng mục của CV: `{key, items[{title, subtitle, start, end, lines[]}]}`. |
+| GET | `/api/employer/applications/{public_id}/ai-match/` | Chi tiết mức phù hợp của một hồ sơ: `{status, analysed_at, error_code, result}`. `result` (khi `status=ready`) là kết quả chấm `schema_version = 2` gồm `overall {score, level, confidence, relevance}`, `components[] {key, score, weight, status, detail}`, `skills {matched, missing, extra}`, `requirements[]`, `flags`, `meta`; không có gợi ý sửa CV dành cho ứng viên. Cùng phạm vi quyền với danh sách. |
 | PATCH | `/api/employer/applications/{public_id}/` | Chỉ `{employer_note?, employer_rating?}` nội bộ; không nhận `status`. Owner-scope, candidate-data gate và canonical lock order được recheck trong transaction. |
 | POST | `/api/employer/applications/{public_id}/status/` | `{status}` ∈ `shortlisted`/`interviewed`/`accepted`/`rejected` (phải nằm trong `available_decisions` của list). Trả `{application, candidate_notice_at}`: ứng viên nhận thông báo vào thời điểm đó (mặc định +5 phút), không ngay lập tức. `400 {status}` khi chuyển không hợp lệ. |
 | POST | `/api/employer/applications/{public_id}/status/undo/` | Hoàn tác quyết định gần nhất của chính caller khi thông báo chưa giao; trả hồ sơ đã khôi phục, `409 {code: STATUS_UNDO_UNAVAILABLE, message}` khi đã giao hoặc không có gì để hoàn tác. |
@@ -723,6 +725,9 @@ Mã lỗi ổn định gồm `JOB_AI_DAILY_QUOTA_EXCEEDED` (429),
 | POST | `/api/employer/candidate-blocks/{public_id}/lift/` | Gỡ chặn. List hồ sơ của NTD có thêm `candidate_blocked` và `mass_apply_signal {jobs, window_days}` khi ứng viên nộp ≥ 5 tin của caller trong 14 ngày. |
 | GET/POST | `/api/employer/talent-pool/?q=&tag=` | Kho ứng viên tiềm năng của NTD. POST `{application_public_id, note?, tags? (≤5)}` lưu ứng viên đứng sau hồ sơ và báo ứng viên (`talent_pool_saved`); trùng → 400. Mục tự hết hạn sau 12 tháng; beat hằng ngày xóa mục hết hạn hoặc đã đóng quá 30 ngày. |
 | PATCH/DELETE | `/api/employer/talent-pool/{id}/` | Sửa ghi chú/nhãn; bỏ khỏi kho. |
+| GET | `/api/employer/candidate-search/?job=&q=&min_months=&education=&language=&province=&skills=&page=` | Tìm CV. `job` là tin đang công khai của caller. Trả `{count, page_size, results}`; mỗi dòng: `ref` (mã ẩn danh, HMAC theo công ty), `code`, `score`, `level`, `title`, `experience_months`, `education_level`, `position_level`, `languages`, `matched_skills`, `matched_skill_count`, `job_skill_count`, `cv_updated_at`, `applied`, `invited`. Chỉ gồm ứng viên đang bật một CV cho NTD tìm kiếm, còn đồng ý, không bị công ty chặn. Không có tên, liên hệ, tệp CV. `409 {code: feature_disabled}` khi cờ `ai_candidate_search_enabled` tắt, `409 {code: job_not_ready}` khi tin chưa có vector. |
+| GET | `/api/employer/candidate-search/{ref}/?job=` | Xem nhanh: thêm `profile` (hồ sơ trích xuất ẩn danh) và `result` (kết quả chấm `hybrid-v2` không có câu trích). Ghi `CvAccessLog` kênh `recruiter_search`. |
+| POST | `/api/employer/candidate-search/{ref}/invite/` | Body `{job}`. Mời ứng viên ứng tuyển, một lần cho mỗi tin; ứng viên nhận thông báo `job_invitation`. `409 {code: invitation_conflict}` khi đã mời hoặc đã ứng tuyển. |
 | GET | `/api/employer/talent-pool/suggestions/?job=` | Người trong kho xếp theo độ tương đồng giữa tin họ từng nộp và tin chọn (`score`, `reasons`, `already_invited`); loại người đã nộp tin đó hoặc đang bị chặn. |
 | POST | `/api/employer/talent-pool/{id}/invite/` | `{job_public_id}` (tin đang công khai của caller) gửi lời mời ứng tuyển (`job_invitation`, theo kênh `employer_invitation_*`); mỗi tin một lần (lần hai 400). |
 | GET/POST | `/api/candidate/talent-pools/mine/`, `…/mine/{id}/withdraw/` | Ứng viên xem NTD nào đang lưu hồ sơ và rút khỏi kho. |
@@ -749,6 +754,7 @@ tin, phiên bản mô hình, phiên bản công thức): sửa CV hay tin thì t
 | POST | `/api/candidate/matching/analyses/` | Body `{job: <slug tin>, cv: <public_id CV>}`. `200` kèm `cached: true` nếu đã có kết quả, `202` nếu phải tính (task ở `ml-worker`). |
 | GET | `/api/candidate/matching/analyses/{public_id}/` | Poll trạng thái `queued`/`processing`/`succeeded`/`failed`; `result` khi hoàn tất. |
 | GET | `/api/candidate/matching/analyses/?job=<slug>` | Tối đa 10 lần phân tích gần nhất của chính người dùng cho tin. |
+| GET | `/api/candidate/matching/cv-profiles/{cv_public_id}/` | Hồ sơ trích xuất từ một CV của chính ứng viên ("Hồ sơ NTD nhìn thấy"): `{status, error_code, profile}`, `status` ∈ `ready`/`pending`/`failed`. `profile`: `title`, `skill_groups`, `experience {months, band, estimated, item_count}`, `education_level`, `position_level`, `languages`, `sections[] {key, items[{title, subtitle, start, end, lines[]}]}` (nội dung đầy đủ từng mục của CV, đã bỏ email/số điện thoại), `missing`. Chỉ đọc. |
 
 Mã lỗi: `feature_disabled` (403), `job_not_active` (404, tin không còn hiển
 thị), `cv_not_owned` (404), `job_text_too_short` (422), `throttled` (429). Lỗi lúc
@@ -763,6 +769,22 @@ chứng, `missing` kỹ năng cần có trước, `extra`), `requirements` (từ
 cầu: `met`/`partial`/`unmet`, câu CV làm bằng chứng), `suggestions` (`code`,
 `priority`, `section`, `message`, `params`), `flags`, `disclaimer`, `meta`
 (phiên bản mô hình, công thức, trích xuất, `latency_ms`).
+
+### Việc làm gần tôi (ADR-0029)
+
+| Method | Endpoint | Ghi chú |
+| --- | --- | --- |
+| GET | `/api/public/jobs/nearby/?lat=&lng=&radius_km=` | Phân trang như `/public/jobs/`, nhận mọi bộ lọc của nó; thêm `include_province_wide` (1), `include_remote` (0), `ordering=distance\|newest\|salary_desc`. Mỗi tin có `distance_km`, `match_kind` (`distance`/`province_wide`/`remote`), `nearest_workplace`, `nearby_workplace_count`, `deadline`; gốc có `origin` và `expand_suggestion` (khi rỗng). |
+| GET | `/api/public/jobs/nearby/map/` | Cùng tham số, không phân trang: `points[]` gom theo tọa độ (`label` = tên phường, `jobs[]`), `truncated`. |
+| GET | `/api/public/locations/geo/autocomplete/?q=&lat=&lng=` | Phường/xã cục bộ (`type=ward`, có tọa độ) + địa chỉ của nhà cung cấp (`type=place`, `ref`). |
+| GET | `/api/public/locations/geo/place/?ref=` | Tọa độ của một gợi ý; 404 nếu không xác định được. |
+| GET | `/api/public/locations/geo/wards/<slug>/` | Tâm + tỉnh của phường (URL chia sẻ `?gan=`). |
+
+Tọa độ được làm tròn 3 chữ số (~110 m), không lưu. Ngoài VN hoặc sai định dạng → 400;
+`nearby_jobs_enabled` tắt → 404. Throttle ẩn danh `nearby_jobs` 120/phút, `geo_lookup`
+60/phút. Form NTD gửi ghim tùy chọn ở `job_locations[].latitude/longitude` (đủ cả hai,
+trong VN, đúng tỉnh), trả lại kèm `coordinate_precision`, `coordinate_source`.
+`/api/public/locations/` trả thêm `latitude`, `longitude` (tâm phường/tỉnh).
 
 ### Employer readiness và mã lỗi ER-2
 

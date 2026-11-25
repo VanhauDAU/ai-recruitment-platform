@@ -23,13 +23,34 @@ describe('homepage Best Jobs configuration', () => {
   })
 
   it('names the unfiltered location option Ngẫu nhiên', () => {
+    const chips = buildBestJobsChips('location', { locations: undefined })
+
+    expect(chips).toEqual([{ value: null, label: 'Ngẫu nhiên' }])
+  })
+
+  it('builds location chips only from places that have jobs, provinces first', () => {
     const chips = buildBestJobsChips('location', {
-      featuredWards: [],
-      parents: [],
-      provinces: [],
+      locations: {
+        provinces: [
+          { id: 1, name: 'Thành phố Hà Nội', job_count: 12 },
+          { id: 2, name: 'Tỉnh Quảng Ninh', job_count: 3 },
+        ],
+        wards: [{ id: 10, name: 'Phường Ba Đình', parent_id: 1, parent_name: 'Thành phố Hà Nội', job_count: 5 }],
+      },
     })
 
-    expect(chips[0]).toEqual({ value: null, label: 'Ngẫu nhiên' })
+    expect(chips.slice(1)).toEqual([
+      { value: 1, label: 'Hà Nội', count: 12 },
+      { value: 2, label: 'Quảng Ninh', count: 3 },
+      { value: 10, label: 'Ba Đình, Hà Nội', count: 5 },
+    ])
+  })
+
+  it('caps the location chip strip', () => {
+    const provinces = Array.from({ length: 40 }, (_, id) => ({ id, name: `Tỉnh ${id}`, job_count: 1 }))
+    const chips = buildBestJobsChips('location', { locations: { provinces, wards: [] } })
+
+    expect(chips).toHaveLength(21)
   })
 
   it('requests the configured number of best jobs per page', () => {

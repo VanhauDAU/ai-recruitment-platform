@@ -212,8 +212,12 @@ def main():
         'CV builder': [
             (row['code'], row['profile']) for row in load('cv') if row['cv_type'] == 'builder'
         ],
+        # Đọc thẳng 15 tệp PDF hệ thống trên đĩa (`export_profiles.py` xuất `pdf_system`): bản
+        # tải lên trong DB dev phụ thuộc kho tệp cục bộ, có thể không còn sau khi dựng lại.
         'CV tải lên (PDF hệ thống)': [
-            (row['code'], row['profile']) for row in load('cv') if row['cv_type'] == 'uploaded'
+            (row['file'].removesuffix('.pdf'), row['profile'])
+            for row in load('pdf_system')
+            if 'profile' in row
         ],
         'PDF TopCV': [
             (row['file'].removesuffix('.pdf'), row['profile'])

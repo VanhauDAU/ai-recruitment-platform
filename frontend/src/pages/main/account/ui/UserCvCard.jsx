@@ -14,6 +14,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { CvDocumentPreview, getCvOwnerView } from '@/entities/cv/cv'
 import { CvRecruiterSearchSwitch } from '@/features/main/cv/update-recruiter-visibility'
+import { RecruiterProfileButton } from '@/features/main/cv/view-recruiter-profile'
 import { usePreviewFitZoom } from '@/shared/hooks/use-preview-fit-zoom'
 import ConfirmActionModal from '@/shared/ui/confirm-action/ConfirmActionModal'
 import { useCvCardActions } from '../model/use-cv-card-actions'
@@ -224,6 +225,7 @@ export default function UserCvCard({ cv, onRefresh }) {
           Cập nhật {formattedDate}
         </p>
         <CvRecruiterSearchSwitch cv={cv} />
+        {cv.recruiter_searchable && <RecruiterProfileButton cv={cv} className="mt-1" />}
       </div>
 
       {/* Modal Rename */}

@@ -13,6 +13,7 @@ from .applications import (
     recruiter_review_links_queryset,
     recruiter_reviews_queryset,
 )
+from .flash_badge import flash_badge_stats_for_job, recruiter_flash_badge_state
 from .talent_pool import (
     candidate_talent_pool_queryset,
     recruiter_talent_pool_jobs_queryset,
@@ -21,6 +22,8 @@ from .talent_pool import (
 )
 
 __all__ = [
+    'flash_badge_stats_for_job',
+    'recruiter_flash_badge_state',
     'previous_submissions_queryset',
     'candidate_talent_pool_queryset',
     'recruiter_talent_pool_jobs_queryset',

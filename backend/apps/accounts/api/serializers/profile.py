@@ -233,6 +233,6 @@ class ChangeEmailSerializer(serializers.Serializer):
         # phải tính cả email đã được một danh tính OAuth cùng cổng sở hữu.
         if User.objects.email_claimed_for_role(value, user.role, exclude_user_id=user.pk):
             raise serializers.ValidationError(
-                _('Email này đã được sử dụng cho một tài khoản cùng loại.')
+                _('Email này đã được sử dụng cho một tài khoản khác.')
             )
         return value

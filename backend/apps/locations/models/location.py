@@ -39,6 +39,11 @@ class Location(models.Model):
     slug = models.SlugField(max_length=255, unique=True, blank=True)
     is_active = models.BooleanField(default=True)
     effective_from = models.DateField(null=True, blank=True)
+    # Tâm hành chính (ADR-0029): tâm hình học của ranh giới, nạp bằng
+    # `seed_location_coordinates` từ seed_data/centroids.json — không gọi mạng lúc chạy.
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+    centroid_source = models.CharField(max_length=20, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -47,6 +52,7 @@ class Location(models.Model):
         indexes = [
             models.Index(fields=['level']),
             models.Index(fields=['name']),
+            models.Index(fields=['latitude', 'longitude'], name='loc_location_lat_lng_idx'),
         ]
 
     def __str__(self):

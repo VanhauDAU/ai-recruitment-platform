@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { CANDIDATE_MENU } from '@/entities/account/account'
 import { CandidateNotificationBell } from '@/features/main/account/view-candidate-notifications'
+import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import { message } from '@/shared/lib/toast'
 
 const SECTIONS = CANDIDATE_MENU
@@ -70,6 +71,8 @@ export default function CandidateUserMenu({ user, logout }) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const [open, setOpen] = useState(false)
+  // Chạm trên màn cảm ứng sinh cả mouseenter lẫn click: hover mở rồi click đóng ngay.
+  const canHover = useMediaQuery('(hover: hover)')
   const [openKey, setOpenKey] = useState(
     () => SECTIONS.find((section) => section.items.some((item) => item.path === pathname))?.key || 'search',
   )
@@ -86,8 +89,7 @@ export default function CandidateUserMenu({ user, logout }) {
 
   function handleItem(it) {
     setOpen(false)
-    if (it.blank) window.open(it.path, '_blank', 'noopener')
-    else navigate(it.path)
+    navigate(it.path)
   }
 
   const userPanel = (
@@ -135,7 +137,7 @@ export default function CandidateUserMenu({ user, logout }) {
         <MessageOutlined />
       </button>
 
-      <Dropdown open={open} onOpenChange={setOpen} trigger={['hover', 'click']} placement="bottomRight" popupRender={() => userPanel}>
+      <Dropdown open={open} onOpenChange={setOpen} trigger={canHover ? ['hover', 'click'] : ['click']} placement="bottomRight" popupRender={() => userPanel}>
         <button type="button" aria-label="Mở menu tài khoản" aria-expanded={open} className="flex cursor-pointer items-center gap-1">
           <Avatar size={38} src={user?.avatar_url || undefined} icon={<IdcardOutlined />} />
           <CaretRightOutlined className={`text-xs text-gray-400 transition-transform duration-300 ${open ? '-rotate-90' : 'rotate-90'}`} />

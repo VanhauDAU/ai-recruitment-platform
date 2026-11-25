@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { getJobDetail, getJobs, jobDetailPath, jobKeys } from '@/entities/job/job'
 import { useJobView } from '@/features/main/job/track-job-engagement'
+import { m } from '@/shared/config/i18n'
 import { useDocumentMetadata } from '@/shared/hooks/use-document-metadata'
 import { buildJobDetailTitle } from '../lib/job-page-title'
 
@@ -40,7 +41,7 @@ export default function useJobDetailPageData({ slug, companySlug, navigate }) {
           pageType: 'website',
         }
       : jobQuery.isError
-        ? { title: 'Không tìm thấy tin tuyển dụng', robots: 'noindex, nofollow' }
+        ? { title: m.candidate_job_detail_not_found_title(), robots: 'noindex, nofollow' }
         : null,
   )
 

@@ -169,14 +169,14 @@ msgstr "Always-visible blocks cannot be hidden: %(keys)s."
 msgid "Vui lòng mô tả cụ thể ít nhất 10 ký tự khi chọn \"Lý do khác\"."
 msgstr "Please describe the issue in at least 10 characters when choosing \"Other reason\"."
 
-msgid "Quản trị viên"
-msgstr "Administrator"
-
 msgid "Hệ thống"
 msgstr "System"
 
 msgid "Bạn"
 msgstr "You"
+
+msgid "Quản trị viên"
+msgstr "Administrator"
 
 msgid "Chưa nộp"
 msgstr "Not submitted"
@@ -816,6 +816,15 @@ msgstr "Candidate withdrew an application"
 
 msgid "Hồ sơ đang chờ phản hồi"
 msgstr "Application awaiting your reply"
+
+msgid "Bạn đã đạt Huy hiệu Sấm Chớp"
+msgstr "You earned the Flash badge"
+
+msgid "Bạn đã mất Huy hiệu Sấm Chớp"
+msgstr "You lost the Flash badge"
+
+msgid "Huy hiệu Sấm Chớp sắp bị gỡ"
+msgstr "Your Flash badge is at risk"
 
 msgid "Tin tuyển dụng cần chỉnh sửa"
 msgstr "Job posting needs changes"

@@ -1,9 +1,4 @@
 import { getIntlLocale, m } from '@/shared/config/i18n'
-function timestampOf(application) {
-  const value = application.applied_at
-  const timestamp = value ? new Date(value).getTime() : 0
-  return Number.isNaN(timestamp) ? 0 : timestamp
-}
 
 function candidateKey(application) {
   const email = application.candidate_email?.trim().toLocaleLowerCase('vi-VN')
@@ -13,6 +8,11 @@ function candidateKey(application) {
   return email ? `email:${email}` : `application:${application.public_id}`
 }
 
+/**
+ * Groups CVs by candidate in the order the server returned them: a candidate
+ * sits where their first CV ranks (newest, best AI match…), and their CVs keep
+ * that order inside the group.
+ */
 export function groupApplicationsByCandidate(applications = []) {
   const groups = new Map()
 
@@ -22,7 +22,7 @@ export function groupApplicationsByCandidate(applications = []) {
       key,
       candidateName: application.candidate_name || application.candidate_email || m.employer_workspace_app_candidate_fallback(),
       candidateEmail: application.candidate_email || '',
-      restricted: Boolean(application.candidate_account_restricted),
+      restricted: false,
       applications: [],
     }
     current.applications.push(application)
@@ -31,11 +31,6 @@ export function groupApplicationsByCandidate(applications = []) {
   })
 
   return [...groups.values()]
-    .map((group) => ({
-      ...group,
-      applications: [...group.applications].sort((left, right) => timestampOf(right) - timestampOf(left)),
-    }))
-    .sort((left, right) => timestampOf(right.applications[0]) - timestampOf(left.applications[0]))
 }
 
 export function documentFromVersion(version) {

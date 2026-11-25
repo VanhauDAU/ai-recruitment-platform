@@ -132,6 +132,7 @@ def duplicate_job(job, user):
     duplicate.pk = None
     duplicate.id = None
     duplicate.public_id = ''
+    duplicate.code = ''
     duplicate.slug = ''
     duplicate.status = Job.Status.DRAFT
     duplicate.submitted_at = None

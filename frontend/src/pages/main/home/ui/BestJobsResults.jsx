@@ -17,6 +17,7 @@ import { useLoginPrompt } from '@/features/common/account/auth'
 import { useSession } from '@/entities/account/session'
 import { useSavedJobs } from '@/features/main/job/saved-jobs'
 import { JobImpressionBoundary } from '@/features/main/job/track-job-engagement'
+import { m } from '@/shared/config/i18n'
 import { bestJobCardClass, isTopEmployerJob } from '../lib/best-job-card-presentation'
 import { BEST_JOBS_PAGE_SIZE, BEST_JOBS_PREVIEW_DELAY_MS } from '../lib/best-jobs-config'
 
@@ -24,7 +25,7 @@ function LoadingGrid({ count }) {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: count }).map((_, index) => (
-        <div key={index} className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+        <div key={index} className="rounded-xl border border-gray-100 bg-white p-4">
           <Skeleton avatar active paragraph={{ rows: 2 }} />
         </div>
       ))}
@@ -83,20 +84,14 @@ export default function BestJobsResults({ animKey, jobs, loading, pageSize = BES
   }
 
   return (
-    <div
-      key={animKey}
-      className="grid animate-fade-slide grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"
-      style={{ alignItems: 'stretch' }}
-    >
-      {jobs.map((job) => {
+    <div key={animKey} className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      {jobs.map((job, index) => {
         const company = stripCompanyPrefix(job.company_name)
         const [logoBackground, logoColor] = JOB_LOGO_TINTS[
           company.length % JOB_LOGO_TINTS.length
         ]
         const locationLabel = formatLocations(job)
-        const salaryLabel = formatSalary(job)
         const isSaved = savedIds.has(job.public_id)
-        const isPending = pendingJobIds.has(job.public_id)
         const isTopEmployer = isTopEmployerJob(job)
         const hasLabels = isTopEmployer || Boolean(resolveJobPresentation(job).labels?.length)
 
@@ -111,89 +106,66 @@ export default function BestJobsResults({ animKey, jobs, loading, pageSize = BES
               href={jobDetailPath(job)}
               target="_blank"
               rel="noreferrer"
-              className={`group relative flex h-full flex-col rounded-2xl border p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:shadow-lg ${bestJobCardClass(job)}`}
+              style={{ '--i': index }}
+              className={`best-job-card group border ${bestJobCardClass(job)}`}
             >
-              {/* Row 1: Logo + tiêu đề/công ty cùng hàng */}
-              <div className="flex min-w-0 items-start gap-3">
-                {/* Logo */}
-                <div
-                  className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl border border-gray-100 text-lg font-bold shadow-sm"
-                  style={{ background: logoBackground, color: logoColor }}
-                >
-                  {job.company_logo_url ? (
-                    <img
-                      src={job.company_logo_url}
-                      alt={job.company_name}
-                      className="h-full w-full rounded-xl bg-white object-contain p-1"
-                      loading="lazy"
-                    />
-                  ) : (
-                    company.charAt(0) || '?'
-                  )}
-                </div>
-
-                {/* Tiêu đề + tên công ty — chiếm hết chỗ trống */}
-                <div className="min-w-0 flex-1">
-                  {hasLabels && (
-                    <div data-best-job-labels className="mb-1.5 flex flex-wrap items-center gap-1.5">
-                      {isTopEmployer && (
-                        <span
-                          data-job-label="top-employer"
-                          title="Nhà tuyển dụng có trang thương hiệu nổi bật"
-                          className="inline-flex items-center rounded-full border border-[var(--brand-primary)]/20 bg-[var(--brand-primary-soft)] px-1.5 py-0.5 text-[10px] font-extrabold leading-none tracking-wide text-[var(--brand-primary-hover)]"
-                        >
-                          TOP
-                        </span>
-                      )}
-                      <JobPresentationLabels job={job} compact />
-                    </div>
-                  )}
-                  <h3
-                    onMouseEnter={(event) =>
-                      showPreview(job.public_id, event.currentTarget.getBoundingClientRect())
-                    }
-                    onMouseLeave={() => clearTimeout(previewTimer.current)}
-                    className="line-clamp-2 cursor-pointer text-sm font-semibold leading-snug text-gray-800 transition-colors group-hover:text-[var(--brand-primary)]"
-                  >
-                    {job.title}
-                  </h3>
-                  <p className="mt-0.5 truncate text-xs text-gray-500">{job.company_name}</p>
-                </div>
+              <div className="best-job-card__logo">
+                {company.charAt(0) || '?'}
+                {job.company_logo_url && (
+                  <img
+                    src={job.company_logo_url}
+                    alt={job.company_name}
+                    loading="lazy"
+                    onError={(event) => { event.currentTarget.hidden = true }}
+                  />
+                )}
               </div>
 
-              {/* Row 2: Badges + Heart cùng 1 hàng ở dưới */}
-              <div className="mt-auto pt-3 flex items-center justify-between gap-2">
-                <div className="flex min-w-0 items-center gap-1.5">
-                  {/* Lương */}
-                  <span className="inline-flex shrink-0 items-center rounded-full bg-[#EDEFF0] px-2.5 py-0.5 text-xs font-medium text-gray-700">
-                    {salaryLabel}
-                  </span>
-                  {/* Địa điểm */}
-                  {locationLabel && (
-                    <span className="inline-flex min-w-0 items-center rounded-full bg-[#EDEFF0] px-2.5 py-0.5 text-xs font-medium text-gray-700">
-                      <span className="truncate">{locationLabel}</span>
-                    </span>
-                  )}
-                </div>
-
-                {/* Nút lưu việc */}
-                <Tooltip
-                  title={isSaved ? <SavedJobTooltipContent /> : 'Lưu việc làm'}
-                  placement="top"
-                >
-                  <button
-                    onClick={(event) => toggleSave(event, job.public_id)}
-                    disabled={isPending}
-                    aria-label={isSaved ? 'Đã lưu việc làm' : 'Lưu việc làm'}
-                    className="flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-full border border-gray-100 bg-gray-50 text-gray-400 transition-all duration-150 hover:border-pink-200 hover:bg-pink-50 hover:text-pink-500 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {isSaved ? (
-                      <HeartFilled style={{ fontSize: 13, color: 'var(--brand-primary)' }} />
-                    ) : (
-                      <HeartOutlined style={{ fontSize: 13 }} />
+              {/* Một cột cạnh logo: không chừa khoảng trống dưới logo, thẻ thấp hơn. */}
+              <div className="flex min-w-0 flex-1 flex-col">
+                {hasLabels && (
+                  <div data-best-job-labels className="mb-0.5 flex flex-wrap items-center gap-1">
+                    {isTopEmployer && (
+                      <span
+                        data-job-label="top-employer"
+                        title="Nhà tuyển dụng có trang thương hiệu nổi bật"
+                        className="inline-flex items-center rounded-full border border-[var(--brand-primary)]/20 bg-[var(--brand-primary-soft)] px-1.5 py-0.5 text-[10px] font-extrabold leading-none tracking-wide text-[var(--brand-primary-hover)]"
+                      >
+                        TOP
+                      </span>
                     )}
-                  </button>
-                </Tooltip>
+                    <JobPresentationLabels job={job} compact />
+                  </div>
+                )}
+                <h3
+                  onMouseEnter={(event) =>
+                    showPreview(job.public_id, event.currentTarget.getBoundingClientRect())
+                  }
+                  onMouseLeave={() => clearTimeout(previewTimer.current)}
+                  className="best-job-card__title line-clamp-2"
+                >
+                  {job.title}
+                </h3>
+                <p className="best-job-card__company">{job.company_name}</p>
+
+                <div className="mt-auto flex items-center justify-between gap-2 pt-1.5">
+                  <div className="flex min-w-0 items-center gap-1">
+                    <span className="best-job-card__pill shrink-0">{formatSalary(job)}</span>
+                    {locationLabel && <span className="best-job-card__pill min-w-0">{locationLabel}</span>}
+                  </div>
+                  <Tooltip title={isSaved ? <SavedJobTooltipContent /> : m.candidate_best_jobs_save()} placement="top">
+                    <button
+                      type="button"
+                      onClick={(event) => toggleSave(event, job.public_id)}
+                      disabled={pendingJobIds.has(job.public_id)}
+                      aria-pressed={isSaved}
+                      aria-label={isSaved ? m.candidate_best_jobs_saved() : m.candidate_best_jobs_save()}
+                      className="best-job-card__save"
+                    >
+                      {isSaved ? <HeartFilled /> : <HeartOutlined />}
+                    </button>
+                  </Tooltip>
+                </div>
               </div>
             </a>
 

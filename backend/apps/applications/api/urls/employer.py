@@ -3,6 +3,11 @@ from django.urls import path
 from apps.applications.api.views.applications import RecruiterApplicationSnapshotView
 
 from ..views.blocks import RecruiterCandidateBlockLiftView, RecruiterCandidateBlockListCreateView
+from ..views.candidate_search import (
+    RecruiterCandidateSearchDetailView,
+    RecruiterCandidateSearchInviteView,
+    RecruiterCandidateSearchView,
+)
 from ..views.cv_exports import (
     RecruiterApplicationCvExportDetailView,
     RecruiterApplicationCvExportDownloadView,
@@ -10,7 +15,9 @@ from ..views.cv_exports import (
     RecruiterApplicationCvFileView,
 )
 from ..views.employer import (
+    EmployerApplicationAiMatchView,
     EmployerApplicationAssessmentView,
+    EmployerApplicationCvProfileView,
     EmployerApplicationDecisionUndoView,
     EmployerApplicationDecisionView,
     EmployerApplicationExportView,
@@ -65,6 +72,21 @@ urlpatterns = [
         'talent-pool/<str:public_id>/invite/',
         RecruiterTalentPoolInviteView.as_view(),
         name='recruiter-talent-pool-invite',
+    ),
+    path(
+        'candidate-search/',
+        RecruiterCandidateSearchView.as_view(),
+        name='recruiter-candidate-search',
+    ),
+    path(
+        'candidate-search/<str:ref>/',
+        RecruiterCandidateSearchDetailView.as_view(),
+        name='recruiter-candidate-search-detail',
+    ),
+    path(
+        'candidate-search/<str:ref>/invite/',
+        RecruiterCandidateSearchInviteView.as_view(),
+        name='recruiter-candidate-search-invite',
     ),
     path(
         'applications/export/',
@@ -125,6 +147,16 @@ urlpatterns = [
         'applications/<str:public_id>/reviews/',
         RecruiterApplicationReviewListView.as_view(),
         name='recruiter-application-reviews',
+    ),
+    path(
+        'applications/<str:public_id>/extracted-profile/',
+        EmployerApplicationCvProfileView.as_view(),
+        name='recruiter-application-cv-profile',
+    ),
+    path(
+        'applications/<str:public_id>/ai-match/',
+        EmployerApplicationAiMatchView.as_view(),
+        name='recruiter-application-ai-match',
     ),
     path(
         'applications/<str:public_id>/submissions/',

@@ -270,6 +270,96 @@ class UploadedProfileTests(SimpleTestCase):
             next(chunk['text'] for chunk in profile['chunks'] if chunk['section'] == 'summary'),
         )
 
+    def test_lines_that_look_like_headings_stay_in_their_section(self):
+        layout = read_layout(
+            'Nguyễn An\nKỹ năng\nKỹ năng giao tiếp\nKỹ năng ngoại ngữ\nKỹ năng: Git, Docker\n'
+            'Người giới thiệu\nTrần Bình\n© topcv.vn\nHoạt động\nTình nguyện viên'
+        )
+
+        # Dòng mở đầu bằng "Kỹ năng" dưới tiêu đề Kỹ năng là một kỹ năng; nhãn con chỉ giữ giá trị.
+        self.assertEqual(
+            layout.section('skills'), ['Kỹ năng giao tiếp', 'Kỹ năng ngoại ngữ', 'Git, Docker']
+        )
+        self.assertEqual(layout.section('references'), ['Trần Bình'])
+        self.assertEqual(layout.section('activities'), ['Tình nguyện viên'])
+
+    def test_free_form_closing_section_is_not_part_of_the_section_above(self):
+        layout = read_layout(
+            'Nguyễn An\nDanh hiệu và giải thưởng\n2025 Giải Nhất cuộc thi lập trình\n'
+            '✏ Thông tin thêm\nCó khả năng tự học và chủ động tìm hiểu.'
+        )
+
+        self.assertEqual(layout.section('awards'), ['2025 Giải Nhất cuộc thi lập trình'])
+        self.assertEqual(layout.section('other'), ['Có khả năng tự học và chủ động tìm hiểu.'])
+        self.assertEqual(
+            _declared_names(['Professional skills: ReactJS, Java', 'Tools: Git'], catalog()),
+            ['ReactJS', 'Java', 'Git'],
+        )
+
+    def test_display_sections_keep_the_whole_cv_without_contacts_or_references(self):
+        text = (
+            (
+                'Nguyễn An\nan@example.com\n0901234567\n'
+                'Mục tiêu nghề nghiệp\nTìm vị trí lập trình viên frontend lâu dài.\n'
+                'Kinh nghiệm làm việc\nFrontend Developer 06/2023 - Nay\nCông ty A\n'
+                '• Xây dựng trang thanh toán bằng ReactJS, liên hệ an@example.com khi cần.\n'
+                'Kỹ năng\nKỹ năng giao tiếp\nKỹ năng làm việc nhóm\n'
+                'Sở thích\nĐọc sách về phát triển bản thân\n'
+                'Người giới thiệu\nTrần Bình, Trưởng nhóm tại Công ty A\nEmail: binh@example.com\n'
+            )
+            + 'Chứng chỉ\nChứng chỉ AWS Cloud Practitioner năm 2024\n' * 1
+            + 'x ' * 150
+        )
+        profile = text_cv_profile(text, catalog(), today=TODAY)
+        sections = {section['key']: section['items'][0]['lines'] for section in profile['sections']}
+
+        self.assertEqual(
+            list(sections), ['summary', 'experience', 'skills', 'certifications', 'interests']
+        )
+        self.assertEqual(sections['skills'], ['Kỹ năng giao tiếp', 'Kỹ năng làm việc nhóm'])
+        self.assertIn('Công ty A', sections['experience'])
+        shown = json.dumps(profile['sections'], ensure_ascii=False)
+        for hidden in ('example.com', '0901234567', 'Trần Bình', 'Nguyễn An'):
+            self.assertNotIn(hidden, shown)
+        self.assertEqual(schema_errors(profile), [])
+
+    def test_builder_sections_are_structured_items(self):
+        profile = cv_profile(
+            builder_document(
+                section(
+                    'experience',
+                    {
+                        'role': 'Frontend Developer',
+                        'company': 'Công ty A',
+                        'start_date': '2024-06',
+                        'end_date': None,
+                        'description': rich('Xây dựng trang thanh toán.', 'Viết test bằng Jest.'),
+                    },
+                ),
+                section('education', {'degree': 'Cử nhân CNTT', 'institution': 'ĐH B'}),
+                section('skills', {'name': 'ReactJS', 'level': 4}),
+            ),
+            catalog(),
+            today=TODAY,
+        )
+        sections = {item['key']: item['items'] for item in profile['sections']}
+
+        self.assertEqual(
+            sections['experience'],
+            [
+                {
+                    'title': 'Frontend Developer',
+                    'subtitle': 'Công ty A',
+                    'start': '2024-06',
+                    'end': None,
+                    'lines': ['Xây dựng trang thanh toán.', 'Viết test bằng Jest.'],
+                }
+            ],
+        )
+        self.assertEqual(sections['education'][0]['subtitle'], 'ĐH B')
+        self.assertEqual(sections['skills'][0]['lines'], ['ReactJS'])
+        self.assertEqual(schema_errors(profile), [])
+
     def test_profiles_follow_the_published_schema(self):
         uploaded = text_cv_profile(UPLOADED_CV, catalog(), today=TODAY)
         self.assertEqual(schema_errors(uploaded), [])

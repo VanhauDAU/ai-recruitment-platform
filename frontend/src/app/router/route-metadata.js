@@ -5,12 +5,14 @@ import {
 } from '@/entities/company/company'
 import { employerAppPath, employerMarketingPath } from '@/shared/config/portals'
 import { NOT_FOUND_TITLE } from '@/shared/config/document-title'
+import { m } from '@/shared/config/i18n'
 import { resolveRouteTitle } from './document-title'
 
 const MAIN_PUBLIC_EXACT_PATHS = new Set([
   '/',
   COMPANY_DIRECTORY_PATH,
   '/viec-lam',
+  '/viec-lam-gan-ban',
   '/jobs',
   '/blog',
   '/chinh-sach-cookie',
@@ -30,6 +32,7 @@ const ROUTE_DESCRIPTIONS = new Map([
   [COMPANY_DIRECTORY_PATH, 'Khám phá danh sách công ty, tìm hiểu doanh nghiệp và các cơ hội việc làm đang tuyển dụng.'],
   [COMPANY_SEARCH_PATH, 'Tìm kiếm công ty theo tên và khám phá các vị trí đang tuyển dụng.'],
   ['/viec-lam', 'Tìm kiếm việc làm mới nhất theo ngành nghề, địa điểm và kinh nghiệm.'],
+  ['/viec-lam-gan-ban', m.candidate_nearby_meta_description()],
   ['/jobs', 'Tìm kiếm việc làm mới nhất theo ngành nghề, địa điểm và kinh nghiệm.'],
   ['/blog', 'Kiến thức tìm việc, viết CV, phỏng vấn và phát triển sự nghiệp.'],
   ['/tro-giup', 'Tìm câu trả lời và hướng dẫn sử dụng ProCV dành cho ứng viên.'],

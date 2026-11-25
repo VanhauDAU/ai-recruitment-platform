@@ -263,6 +263,14 @@ Quy tắc nội dung:
 | Hạn tin | `job_max_public_lifetime_days` | Thời gian hiển thị tối đa (ngày) | number | 90 |  |
 | Hạn tin | `job_renewal_grace_days` | Thời gian cho gia hạn tin hết hạn (ngày) | number | 30 |  |
 | Thống kê | `job_view_dedup_hours` | Gộp lượt xem trùng (giờ) | number | 24 |  |
+| Việc làm gần bạn | `nearby_jobs_default_radius_km` | Bán kính mặc định (km) | number | 10 | ✓ |
+| Việc làm gần bạn | `nearby_jobs_max_radius_km` | Bán kính tối đa (km) | number | 50 | ✓ |
+| Việc làm gần bạn | `nearby_jobs_max_markers` | Số điểm tối đa trên bản đồ | number | 300 |  |
+| Bản đồ | `map_style_url` | Style bản đồ (MapLibre) | url | "" (dev: OpenFreeMap) | ✓ |
+| Bản đồ | `map_attribution` | Ghi công bản đồ | text | © VIETMAP | ✓ |
+
+`map_style_url` dùng **key tile công khai** của VietMap (giới hạn domain trong console),
+khác key geocoding bí mật `GEOCODING_API_KEY` ở `backend/.env` (ADR-0029).
 
 ### Ứng tuyển & SLA (`applications`)
 
@@ -273,12 +281,18 @@ Quy tắc nội dung:
 | Tự động từ chối | `auto_reject_default_days` | Thời hạn tự từ chối gợi ý | select | 21 |  |
 | Tự động từ chối | `auto_reject_min_notice_days` | Nhắc trước khi tự từ chối (ngày) | number | 3 |  |
 | Tự động từ chối | `auto_reject_email_grace_days` | Chờ trước khi báo ứng viên (ngày) | number | 3 |  |
-| Thông báo cho ứng viên | `candidate_status_notify_delay_minutes` | Chờ trước khi báo đổi trạng thái (phút) | number | 5 |  |
+| Thông báo cho ứng viên | `candidate_status_notify_delay_seconds` | Thời gian hoàn tác quyết định (giây) | number | 15 |  |
 | Nhắc nhà tuyển dụng | `recruiter_reminder_days` | Mốc nhắc nhà tuyển dụng (ngày) | json | [3, 7] |  |
 | Ứng viên nhắc nhà tuyển dụng | `candidate_reminder_after_days` | Ứng viên được nhắc sau (ngày) | number | 3 | ✓ |
 | Ứng viên nhắc nhà tuyển dụng | `candidate_reminder_interval_days` | Khoảng cách giữa hai lần nhắc (ngày) | number | 3 | ✓ |
 | Ứng viên nhắc nhà tuyển dụng | `candidate_reminder_max` | Số lần nhắc tối đa | number | 2 | ✓ |
 | Chia sẻ hồ sơ ứng tuyển | `review_link_max_days` | Hạn link xem hồ sơ cho đồng nghiệp (ngày) | number | 30 |  |
+| Huy hiệu Sấm Chớp | `flash_badge_enabled` | Bật Huy hiệu Sấm Chớp | boolean | true | ✓ |
+| Huy hiệu Sấm Chớp | `flash_badge_window_days` | Cửa sổ xét (ngày) | number | 30 | ✓ |
+| Huy hiệu Sấm Chớp | `flash_badge_response_hours` | Hạn phản hồi (giờ) | number | 72 | ✓ |
+| Huy hiệu Sấm Chớp | `flash_badge_min_applications` | Số hồ sơ tối thiểu | number | 5 | ✓ |
+| Huy hiệu Sấm Chớp | `flash_badge_min_response_rate` | Tỷ lệ phản hồi đúng hạn tối thiểu (%) | number | 80 | ✓ |
+| Huy hiệu Sấm Chớp | `flash_badge_active_days` | Hoạt động gần đây (ngày) | number | 7 |  |
 
 ### Hồ sơ & CV (`cv`)
 
@@ -345,6 +359,7 @@ Quy tắc nội dung:
 |---|---|---|---|---|---|
 | Trung tâm trợ giúp | `knowledgebase_public_enabled` | Mở Trung tâm trợ giúp công khai | boolean | true |  |
 | Trung tâm trợ giúp | `knowledgebase_search_index_enabled` | Cho Google lập chỉ mục Trung tâm trợ giúp | boolean | true |  |
+| Việc làm gần bạn | `nearby_jobs_enabled` | Bật Việc làm gần bạn | boolean | true | ✓ |
 | Thông báo đa cổng | `announcement_surfaces` | Nơi hiển thị thông báo đa cổng | multiselect | ["candidate", "employer_marketing", "… |  |
 
 ### Vận hành (`operations`)

@@ -1,0 +1,328 @@
+/* Khối "Việc làm nổi bật" trang chủ. File nằm trong chunk lazy của Home nên style
+   riêng của khối không làm phình CSS khởi tạo (ngân sách initial CSS).
+   Tông trung tính; màu thương hiệu chỉ dùng cho tiêu đề, chip đang chọn và hover. */
+
+.best-jobs {
+  --bj-ink: #1f2937;
+  --bj-muted: #6b7280;
+  --bj-line: #e5e7eb;
+  --bj-pill: #f3f4f6;
+}
+
+/* ── Tiêu đề ── */
+.best-jobs__title {
+  color: var(--brand-primary);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .best-jobs__title {
+    font-size: 22px;
+  }
+}
+
+.best-jobs__see-all {
+  color: var(--bj-muted);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.15s;
+}
+
+.best-jobs__see-all:hover {
+  color: var(--brand-primary);
+}
+
+/* ── Hàng lọc ── */
+.best-jobs__filter {
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--bj-line);
+  border-radius: 8px;
+  color: var(--bj-muted);
+  cursor: pointer;
+  display: flex;
+  font-size: 13px;
+  gap: 6px;
+  height: 34px;
+  padding: 0 10px;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .best-jobs__filter {
+    flex: none;
+    width: 220px;
+  }
+}
+
+.best-jobs__filter:hover,
+.best-jobs__filter[aria-expanded='true'] {
+  border-color: var(--brand-primary);
+}
+
+.best-jobs__filter strong {
+  color: var(--bj-ink);
+  font-weight: 600;
+}
+
+.best-jobs__chips {
+  cursor: grab;
+  display: flex;
+  flex: 1;
+  gap: 6px;
+  min-width: 0;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  user-select: none;
+}
+
+.best-jobs__chips::-webkit-scrollbar {
+  display: none;
+}
+
+.best-jobs__chips:active {
+  cursor: grabbing;
+}
+
+.best-jobs__chip {
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--bj-line);
+  border-radius: 999px;
+  color: var(--bj-ink);
+  cursor: pointer;
+  display: inline-flex;
+  flex: none;
+  font-size: 13px;
+  gap: 5px;
+  height: 34px;
+  padding: 0 12px;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+  white-space: nowrap;
+}
+
+.best-jobs__chip:hover {
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+}
+
+.best-jobs__chip[aria-pressed='true'] {
+  background: var(--brand-primary);
+  border-color: var(--brand-primary);
+  color: #fff;
+}
+
+.best-jobs__chip-count {
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+.best-jobs__chip[aria-pressed='true'] .best-jobs__chip-count {
+  color: rgb(255 255 255 / 0.75);
+}
+
+/* ── Gợi ý ── */
+.best-jobs__hint {
+  align-items: center;
+  color: var(--bj-muted);
+  display: flex;
+  font-size: 13px;
+  gap: 6px;
+}
+
+.best-jobs__hint strong {
+  color: var(--bj-ink);
+  font-weight: 600;
+}
+
+.best-jobs__hint-icon {
+  color: #f59e0b;
+  flex: none;
+}
+
+.best-jobs__hint-close {
+  color: #9ca3af;
+  cursor: pointer;
+  display: inline-flex;
+  flex: none;
+  padding: 2px;
+  transition: color 0.15s;
+}
+
+.best-jobs__hint-close:hover {
+  color: var(--bj-ink);
+}
+
+/* ── Thanh tiến trình tự chuyển trang ── */
+.best-jobs__progress {
+  background: var(--bj-line);
+  border-radius: 999px;
+  height: 2px;
+  overflow: hidden;
+}
+
+.best-jobs__progress-bar {
+  animation: best-jobs-progress var(--bj-rotate, 8000ms) linear both;
+  background: var(--brand-primary);
+  height: 100%;
+  transform-origin: left center;
+}
+
+.best-jobs[data-paused='true'] .best-jobs__progress-bar {
+  animation-play-state: paused;
+}
+
+/* ── Thẻ việc làm ── */
+.best-job-card {
+  animation: best-job-card-in 0.35s ease-out backwards;
+  animation-delay: calc(var(--i, 0) * 30ms);
+  border-radius: 10px;
+  display: flex;
+  gap: 10px;
+  height: 100%;
+  padding: 10px 12px;
+  position: relative;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.best-job-card:hover {
+  border-color: var(--brand-primary);
+  box-shadow: 0 6px 18px -12px rgb(15 23 42 / 0.35);
+}
+
+.best-job-card__logo {
+  align-items: center;
+  background: #f9fafb;
+  border: 1px solid var(--bj-line, #e5e7eb);
+  border-radius: 8px;
+  color: #9ca3af;
+  display: flex;
+  flex: none;
+  font-size: 16px;
+  font-weight: 700;
+  height: 48px;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  width: 48px;
+}
+
+/* Ảnh phủ lên chữ cái dự phòng; ảnh lỗi thì ẩn để lộ chữ cái. */
+.best-job-card__logo img {
+  background: #fff;
+  height: 100%;
+  inset: 0;
+  object-fit: contain;
+  padding: 4px;
+  position: absolute;
+  width: 100%;
+}
+
+.best-job-card__title {
+  color: var(--bj-ink, #1f2937);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  transition: color 0.15s;
+}
+
+.best-job-card:hover .best-job-card__title {
+  color: var(--brand-primary);
+}
+
+.best-job-card__company {
+  color: var(--bj-muted, #6b7280);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.best-job-card__pill {
+  background: var(--bj-pill, #f3f4f6);
+  border-radius: 999px;
+  color: #374151;
+  font-size: 12px;
+  line-height: 22px;
+  overflow: hidden;
+  padding: 0 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.best-job-card__save {
+  align-items: center;
+  border-radius: 999px;
+  color: #9ca3af;
+  cursor: pointer;
+  display: flex;
+  flex: none;
+  font-size: 15px;
+  height: 28px;
+  justify-content: center;
+  transition: color 0.15s, background-color 0.15s;
+  width: 28px;
+}
+
+.best-job-card__save:hover:not(:disabled) {
+  background: var(--bj-pill, #f3f4f6);
+  color: var(--brand-primary);
+}
+
+.best-job-card__save:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.best-job-card__save[aria-pressed='true'] {
+  animation: best-job-heart-pop 0.35s ease;
+  color: var(--brand-primary);
+}
+
+/* ── Phân trang ── */
+.best-jobs__pager {
+  color: var(--bj-muted);
+  font-size: 13px;
+}
+
+.best-jobs__pager strong {
+  color: var(--brand-primary);
+}
+
+@keyframes best-jobs-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes best-job-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes best-job-heart-pop {
+  40% {
+    transform: scale(1.25);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .best-job-card,
+  .best-job-card__save[aria-pressed='true'] {
+    animation: none;
+  }
+}

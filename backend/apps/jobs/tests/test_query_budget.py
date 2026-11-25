@@ -14,9 +14,10 @@ from apps.applications.models import Application
 from apps.cvs.models import CvVersion, UserCv
 from apps.employers.models import Company, CompanyPinnedJob
 from apps.employers.tests.factories import make_employer_ready
+from apps.locations.models import Location
 from apps.skills.models import Skill
 
-from ..models import Job, JobCategory, JobCategoryAssignment, JobSkill, SavedJob
+from ..models import Job, JobCategory, JobCategoryAssignment, JobLocation, JobSkill, SavedJob
 from .factories import open_visibility_window
 
 # +1 cho mỗi request vào API cổng ứng viên/NTD/công khai: middleware bảo trì đọc
@@ -33,6 +34,8 @@ BADGE_QUERY_BUDGET = 3
 JOB_LIST_QUERY_BUDGET = 5 + BADGE_QUERY_BUDGET + MAINTENANCE_CHECK_QUERIES
 # Homepage preview adds two relation prefetches (benefits + schedules).
 HOMEPAGE_BEST_JOB_LIST_QUERY_BUDGET = JOB_LIST_QUERY_BUDGET + 2
+# Chip địa điểm: đếm theo tỉnh + đếm theo phường + 1 SELECT tên (kèm tỉnh cha).
+HOMEPAGE_BEST_JOB_LOCATIONS_QUERY_BUDGET = 3 + MAINTENANCE_CHECK_QUERIES
 ADMIN_JOB_LIST_QUERY_BUDGET = 2
 # +1 aggregate for the status-tab counts and +1 category prefetch (one query
 # each whatever the page size).
@@ -102,6 +105,21 @@ class JobListQueryBudgetTests(APITestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.data['results']), 5)
+
+    def test_homepage_best_job_locations_query_count_is_flat(self):
+        province = Location.objects.create(code='qb-p', level=Location.Level.PROVINCE, name='P')
+        for index, job in enumerate(Job.objects.all()):
+            ward = Location.objects.create(
+                code=f'qb-w{index}', level=Location.Level.WARD, name=f'W{index}', parent=province
+            )
+            JobLocation.objects.create(job=job, location=ward)
+
+        with self.assertNumQueries(HOMEPAGE_BEST_JOB_LOCATIONS_QUERY_BUDGET):
+            response = self.client.get(reverse('homepage-best-job-locations'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['provinces'][0]['job_count'], 5)
+        self.assertEqual(len(response.data['wards']), 5)
 
 
 class EmployerJobListQueryBudgetTests(APITestCase):

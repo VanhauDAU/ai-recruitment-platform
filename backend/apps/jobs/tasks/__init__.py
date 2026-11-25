@@ -10,8 +10,11 @@ from .alerts import (
     prepare_due_candidate_job_digests,
     purge_candidate_job_digest_history,
 )
+from .geocoding import geocode_job_locations, geocode_pending_job_locations
 
 __all__ = [
+    'geocode_job_locations',
+    'geocode_pending_job_locations',
     'deliver_candidate_job_digest',
     'dispatch_pending_candidate_job_digests',
     'generate_job_post',

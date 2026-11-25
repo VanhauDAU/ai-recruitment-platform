@@ -8,5 +8,6 @@ class LocationLookupSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Location
-        fields = ['id', 'name', 'level', 'parent', 'merged_from']
+        # latitude/longitude: tâm phường/tỉnh để form NTD đặt ghim ban đầu (ADR-0029).
+        fields = ['id', 'name', 'level', 'parent', 'merged_from', 'latitude', 'longitude']
         read_only_fields = fields

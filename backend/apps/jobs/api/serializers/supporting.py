@@ -1,7 +1,9 @@
 from django.utils.translation import gettext as _
 from rest_framework import serializers
 
+from apps.locations.domain import is_in_vietnam
 from apps.locations.models import Location
+from apps.locations.selectors import province_of_point
 from common.storage.media import media_url_from_value
 
 from ...models import (
@@ -83,6 +85,10 @@ class JobLocationSerializer(serializers.ModelSerializer):
     location_level = serializers.CharField(source='location.level', read_only=True)
     province_id = serializers.SerializerMethodField()
     province_name = serializers.SerializerMethodField()
+    # Ghim của NTD (tùy chọn, ADR-0029): gửi cả hai hoặc không gửi; bỏ trống thì hệ
+    # thống tự geocode địa chỉ hoặc dùng tâm phường. Khi trả về là tọa độ đang dùng.
+    latitude = serializers.FloatField(required=False, allow_null=True)
+    longitude = serializers.FloatField(required=False, allow_null=True)
 
     class Meta:
         model = JobLocation
@@ -95,7 +101,12 @@ class JobLocationSerializer(serializers.ModelSerializer):
             'province_name',
             'address_detail',
             'sort_order',
+            'latitude',
+            'longitude',
+            'coordinate_precision',
+            'coordinate_source',
         ]
+        read_only_fields = ['coordinate_precision', 'coordinate_source']
 
     def validate_location(self, location):
         is_province = location.level == Location.Level.PROVINCE and not location.parent_id
@@ -110,6 +121,32 @@ class JobLocationSerializer(serializers.ModelSerializer):
 
     def validate_address_detail(self, address_detail):
         return address_detail.strip()
+
+    def validate(self, attrs):
+        lat, lng = attrs.pop('latitude', None), attrs.pop('longitude', None)
+        if lat is None and lng is None:
+            return attrs
+        if lat is None or lng is None:
+            raise serializers.ValidationError(
+                {'latitude': _('Ghim vị trí cần đủ cả vĩ độ và kinh độ.')}
+            )
+        if not is_in_vietnam(lat, lng):
+            raise serializers.ValidationError(
+                {'latitude': _('Ghim vị trí phải nằm trong lãnh thổ Việt Nam.')}
+            )
+        location = attrs.get('location')
+        province_id = location.parent_id or location.pk if location else None
+        province = province_of_point(lat, lng)
+        if province_id and province is not None and province.pk != province_id:
+            raise serializers.ValidationError(
+                {'latitude': _('Ghim vị trí nằm ngoài tỉnh/thành đã chọn.')}
+            )
+        attrs.update(
+            latitude=round(lat, 6),
+            longitude=round(lng, 6),
+            coordinate_source=JobLocation.CoordinateSource.EMPLOYER_PIN,
+        )
+        return attrs
 
     def get_province_id(self, obj) -> int:
         return obj.location.parent_id or obj.location_id
@@ -129,6 +166,9 @@ class PublicJobLocationSerializer(JobLocationSerializer):
             'location_level',
             'province_name',
             'address_detail',
+            'latitude',
+            'longitude',
+            'coordinate_precision',
         ]
 
 

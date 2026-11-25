@@ -87,7 +87,13 @@ describe('CandidateJobRecommendations home surface', () => {
     const firstSlideGrid = container.querySelector('.min-w-full > .grid')
     expect(firstSlideGrid).toHaveClass('sm:grid-cols-2')
     expect(firstSlideGrid).not.toHaveClass('lg:grid-cols-4')
-    expect(screen.getByRole('link', { name: 'Job 1' })).toHaveClass('!text-black')
+    expect(screen.getByText('việc làm hợp với bạn', { exact: false })).toHaveTextContent('8 việc làm hợp với bạn')
+    expect(screen.getByRole('button', { name: 'Trang gợi ý trước' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Trang gợi ý sau' })).toBeEnabled()
+    expect(screen.getByRole('link', { name: /Tùy chỉnh gợi ý/ })).toHaveAttribute(
+      'href',
+      '/tai-khoan/cai-dat-goi-y-viec-lam',
+    )
     expect(screen.getByRole('link', { name: /Xem tất cả/ })).toHaveAttribute(
       'href',
       '/tai-khoan/viec-lam-phu-hop',

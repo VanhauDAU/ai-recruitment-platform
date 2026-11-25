@@ -12,7 +12,10 @@ Chạy trong container `ml-worker` (nơi có torch và mô hình):
 
 Không truyền `--model-path` thì dùng mô hình đang cấu hình cho sản phẩm.
 `--no-prefix` dành cho mô hình không thuộc họ E5. `--rule-baseline` thêm điểm của
-bộ gợi ý theo luật `profile-rule-v2` để làm mốc so sánh.
+bộ gợi ý theo luật `profile-rule-v2` để làm mốc so sánh. `--detail` kèm nguyên kết
+quả chấm của từng cặp (kỹ năng khớp/thiếu, chi tiết tiêu chí) để phân tích lỗi.
+`--ablation tên` (lặp lại được) tắt một thay đổi của công thức để đo riêng phần
+đóng góp của nó: `semantic_skills`, `no_relevance_discount`.
 """
 
 import json
@@ -29,6 +32,7 @@ from ...selectors import cvs_for_profile
 from ...services import SkillCatalog, get_encoder
 from ...services.encoder import SentenceTransformerEncoder
 from ...services.evaluation import evaluate_pairs
+from ...services.scoring import ABLATIONS
 
 
 def _encoder(model_path, model_version, no_prefix):
@@ -53,6 +57,8 @@ class Command(BaseCommand):
         )
         parser.add_argument('--email-domain', default=SYNTHETIC_EMAIL_DOMAIN)
         parser.add_argument('--rule-baseline', action='store_true')
+        parser.add_argument('--detail', action='store_true', help='Kèm nguyên kết quả chấm.')
+        parser.add_argument('--ablation', action='append', choices=ABLATIONS, default=[])
 
     def handle(self, *args, source, cv_type, email_domain, rule_baseline, **options):
         try:
@@ -78,6 +84,8 @@ class Command(BaseCommand):
             [(jobs[pair['jd']], cvs[pair['cv']]) for pair in known],
             encoder=encoder,
             catalog=SkillCatalog.load(),
+            detail=options['detail'],
+            ablation=tuple(options['ablation']),
         )
         rule_scores = {}
         for pair, row in zip(known, rows, strict=True):

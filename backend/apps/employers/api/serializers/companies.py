@@ -57,6 +57,7 @@ class CompanySerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'public_id',
+            'code',
             'slug',
             'business_type',
             'tax_code',
@@ -90,6 +91,7 @@ class CompanySerializer(serializers.ModelSerializer):
         read_only_fields = [
             'id',
             'public_id',
+            'code',
             'slug',
             'has_brand_page',
             'created_at',

@@ -6,6 +6,7 @@ from django.db.models import Count, Q, Sum, Value
 from django.db.models.functions import Coalesce, TruncDate
 
 from apps.applications.models import Application
+from apps.applications.selectors import recruiter_flash_badge_state
 from apps.employers.models import RecruiterProfile
 from apps.employers.selectors import build_employer_onboarding_steps, build_employer_readiness
 from apps.jobs.models import Job, JobState, job_effective_state_expression, job_state_counts
@@ -32,6 +33,18 @@ def _summary(jobs, applications):
         'applications_shortlisted': application_counts['shortlisted'],
         'applications_interviewed': application_counts['interviewed'],
     }
+
+
+def _funnel(applications):
+    # Reached counts: an application that was interviewed and later rejected
+    # still counts at every step it went through.
+    return applications.aggregate(
+        received=Count('id'),
+        shortlisted=Count('id', filter=Q(shortlisted_at__isnull=False)),
+        interviewed=Count('id', filter=Q(interviewed_at__isnull=False)),
+        accepted=Count('id', filter=Q(accepted_at__isnull=False)),
+        rejected=Count('id', filter=Q(status=Application.Status.REJECTED)),
+    )
 
 
 def _application_activity(applications):
@@ -124,6 +137,7 @@ def build_employer_dashboard(user):
             'verification': verification,
         },
         'summary': _summary(jobs, applications),
+        'funnel': _funnel(applications),
         'application_activity': _application_activity(applications),
         'recruitment_need': None
         if need is None
@@ -135,6 +149,10 @@ def build_employer_dashboard(user):
             'is_continuous': need.is_continuous,
             'headcount': need.headcount,
         },
+        # Huy hiệu Sấm Chớp (ADR-0027): tiến độ của chính người đăng tin tại công ty này.
+        'flash_badge': recruiter_flash_badge_state(company_id=company.pk, user_id=user.pk)
+        if company
+        else None,
         'recent_jobs': _recent_jobs(jobs),
         'recent_applications': (
             _recent_applications(applications) if readiness['candidate_data_access'] else []

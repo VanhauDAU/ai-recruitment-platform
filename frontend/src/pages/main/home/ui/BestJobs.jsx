@@ -1,14 +1,15 @@
-import { BulbOutlined, CloseOutlined, DownOutlined, FilterOutlined } from '@ant-design/icons'
+import { BulbFilled, CloseOutlined, DownOutlined, FilterOutlined } from '@ant-design/icons'
 import { Dropdown } from 'antd'
 import { useRef, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { Link } from 'react-router'
+import { m } from '@/shared/config/i18n'
 import ArrowButton from '@/shared/ui/ArrowButton'
 import BestJobsResults from './BestJobsResults'
-import { BEST_JOBS_DIMENSIONS } from '../lib/best-jobs-config'
+import { BEST_JOBS_DIMENSIONS, BEST_JOBS_ROTATE_MS } from '../lib/best-jobs-config'
 import useBestJobsData from '../model/use-best-jobs-data'
+import './best-jobs.css'
 
 export default function BestJobs({ categories = [], pageSize }) {
-  const navigate = useNavigate()
   const [showHint, setShowHint] = useState(true)
   const chipStrip = useRef(null)
   const dragState = useRef({
@@ -23,12 +24,13 @@ export default function BestJobs({ categories = [], pageSize }) {
     animKey,
     chips,
     dimension,
-    filters,
     jobs,
     loading,
     page,
+    paused,
     totalPages,
     changeDimension,
+    nextPage,
     setPage,
     setPaused,
     toggleFilter,
@@ -39,18 +41,10 @@ export default function BestJobs({ categories = [], pageSize }) {
     chipStrip.current?.scrollTo({ left: 0, behavior: 'smooth' })
   }
 
-  function selectChip(chip) {
-    if (chip.action === 'openLocations') navigate('/viec-lam')
-    else toggleFilter(chip.value)
-  }
-
   function scrollChips(direction) {
     const node = chipStrip.current
     if (!node) return
-    node.scrollTo({
-      left: direction < 0 ? 0 : node.scrollWidth - node.clientWidth,
-      behavior: 'smooth',
-    })
+    node.scrollBy({ left: direction * node.clientWidth * 0.8, behavior: 'smooth' })
   }
 
   function startChipDrag(event) {
@@ -83,34 +77,27 @@ export default function BestJobs({ categories = [], pageSize }) {
   }
 
   const dimensionLabel = BEST_JOBS_DIMENSIONS.find((item) => item.key === dimension)?.label
-  const activeFilterCount = Object.values(filters).filter(Boolean).length
+  const goPrev = () => setPage((current) => Math.max(1, current - 1))
+  const goNext = () => setPage((current) => Math.min(totalPages, current + 1))
 
   return (
     <div
+      className="best-jobs"
+      data-paused={paused}
+      style={{ '--bj-rotate': `${BEST_JOBS_ROTATE_MS}ms` }}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      {/* ── Header row ── */}
-      <div className="mb-5 flex items-center gap-3">
-        <div className="flex items-center gap-2.5">
-          <h2 className="text-xl font-bold text-gray-900 md:text-2xl">Việc làm tốt nhất</h2>
-        </div>
-
+      <div className="mb-3 flex items-center gap-3">
+        <h2 className="best-jobs__title">{m.candidate_best_jobs_title()}</h2>
         <div className="ml-auto flex items-center gap-2">
-          <button
-            onClick={() => navigate('/viec-lam')}
-            className="cursor-pointer rounded-full border border-(--brand-primary) px-3.5 py-1 text-sm font-medium text-(--brand-primary) transition hover:bg-(--brand-primary) hover:text-white"
-          >
-            Xem tất cả
-          </button>
-          <ArrowButton dir="left" disabled={page <= 1} onClick={() => setPage((current) => Math.max(1, current - 1))} />
-          <ArrowButton dir="right" disabled={page >= totalPages} onClick={() => setPage((current) => Math.min(totalPages, current + 1))} />
+          <Link to="/viec-lam" className="best-jobs__see-all mr-1">{m.candidate_best_jobs_see_all()}</Link>
+          <ArrowButton dir="left" aria-label={m.candidate_best_jobs_prev_page()} disabled={page <= 1} onClick={goPrev} />
+          <ArrowButton dir="right" aria-label={m.candidate_best_jobs_next_page()} disabled={page >= totalPages} onClick={goNext} />
         </div>
       </div>
 
-      {/* ── Filter chips row ── */}
-      <div className="mb-4 flex items-center gap-2">
-        {/* Dimension picker */}
+      <div className="mb-3 flex flex-col gap-2 md:flex-row md:items-center">
         <Dropdown
           trigger={['click']}
           menu={{
@@ -119,78 +106,71 @@ export default function BestJobs({ categories = [], pageSize }) {
             selectedKeys: [dimension],
           }}
         >
-          <button className="flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3.5 text-sm font-medium text-gray-600 shadow-sm transition hover:border-(--brand-primary) hover:text-(--brand-primary)">
-            <FilterOutlined className="text-gray-400" style={{ fontSize: 12 }} />
-            <span className="hidden sm:inline">Lọc:</span>
-            <span className="text-(--brand-primary)">{dimensionLabel}</span>
-            {activeFilterCount > 0 && (
-              <span className="ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-(--brand-primary) px-1 text-[10px] font-bold text-white">
-                {activeFilterCount}
-              </span>
-            )}
-            <DownOutlined style={{ fontSize: 9 }} className="text-gray-400" />
+          <button type="button" className="best-jobs__filter">
+            <FilterOutlined />
+            <span>{m.candidate_best_jobs_filter_by()}</span>
+            <strong className="flex-1 text-left">{dimensionLabel}</strong>
+            <DownOutlined className="text-xs" />
           </button>
         </Dropdown>
 
-        {/* Chip scroll left */}
-        <ArrowButton dir="left" onClick={() => scrollChips(-1)} />
-
-        {/* Scrollable chips */}
-        <div
-          ref={chipStrip}
-          onPointerDown={startChipDrag}
-          onPointerMove={moveChipDrag}
-          onPointerUp={endChipDrag}
-          onPointerCancel={endChipDrag}
-          className="flex flex-1 cursor-grab select-none items-center gap-2 overflow-x-auto scroll-smooth [scrollbar-width:none] active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
-        >
-          {chips.map((chip) => {
-            const active = activeChip === chip.value
-            return (
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <ArrowButton dir="left" aria-label={m.candidate_best_jobs_scroll_left()} className="max-md:hidden" onClick={() => scrollChips(-1)} />
+          <div
+            ref={chipStrip}
+            onPointerDown={startChipDrag}
+            onPointerMove={moveChipDrag}
+            onPointerUp={endChipDrag}
+            onPointerCancel={endChipDrag}
+            className="best-jobs__chips"
+          >
+            {chips.map((chip) => (
               <button
                 key={`${chip.value ?? 'all'}-${chip.label}`}
+                type="button"
+                aria-pressed={activeChip === chip.value}
                 onClick={() => {
-                  if (Date.now() >= dragState.current.suppressClickUntil) selectChip(chip)
+                  if (Date.now() >= dragState.current.suppressClickUntil) toggleFilter(chip.value)
                 }}
-                className={`h-9 shrink-0 cursor-pointer whitespace-nowrap rounded-full border px-4 text-sm font-medium transition-all duration-150 ${active
-                    ? 'border-(--brand-primary) bg-(--brand-primary) text-white shadow-sm shadow-[var(--brand-primary)]/25'
-                    : 'border-gray-200 bg-white text-gray-600 hover:border-(--brand-primary) hover:text-(--brand-primary)'
-                  }`}
+                className="best-jobs__chip"
               >
                 {chip.label}
+                {chip.count != null && <span className="best-jobs__chip-count">{chip.count}</span>}
               </button>
-            )
-          })}
+            ))}
+          </div>
+          <ArrowButton dir="right" aria-label={m.candidate_best_jobs_scroll_right()} className="max-md:hidden" onClick={() => scrollChips(1)} />
         </div>
-
-        {/* Chip scroll right */}
-        <ArrowButton dir="right" onClick={() => scrollChips(1)} />
       </div>
 
-      {/* ── Hint bar ── */}
       {showHint && (
-        <div className="mb-4 flex items-center gap-2 rounded-xl border border-(--brand-primary)/20 bg-linear-to-r from-(--brand-primary-soft) to-[var(--brand-primary-soft)] px-4 py-2.5 text-sm text-gray-600">
-          <BulbOutlined className="shrink-0 text-(--brand-primary)" />
-          <span className="flex-1">Ưu tiên tin công khai mức lương, mới đăng và có nhãn HOT/GẤP; các tin cùng mức được luân phiên, F5 sẽ tạo một lượt hiển thị khác.</span>
-          <CloseOutlined
-            className="shrink-0 cursor-pointer text-gray-400 transition hover:text-gray-600"
-            onClick={() => setShowHint(false)}
-          />
+        <div className="best-jobs__hint mb-2 max-md:hidden">
+          <BulbFilled className="best-jobs__hint-icon" />
+          <span className="flex-1">
+            <strong>{m.candidate_best_jobs_hint_label()}</strong> {m.candidate_best_jobs_hint()}
+          </span>
+          <button type="button" aria-label={m.candidate_best_jobs_hide_hint()} className="best-jobs__hint-close" onClick={() => setShowHint(false)}>
+            <CloseOutlined className="text-xs" />
+          </button>
         </div>
       )}
 
-      {/* ── Job cards grid ── */}
+      {/* Thanh chạy hết thì sang trang; key theo lượt dữ liệu để chạy lại từ đầu. */}
+      {totalPages > 1 && (
+        <div className="best-jobs__progress mb-3" aria-hidden="true">
+          <div key={animKey} className="best-jobs__progress-bar" onAnimationEnd={nextPage} />
+        </div>
+      )}
+
       <BestJobsResults animKey={animKey} jobs={jobs} loading={loading} pageSize={pageSize} />
 
-      {/* ── Bottom pagination ── */}
       {totalPages > 1 && (
-        <div className="mt-6 flex items-center justify-center gap-4">
-          <ArrowButton dir="left" disabled={page <= 1} onClick={() => setPage((current) => Math.max(1, current - 1))} />
-          <span className="text-sm text-gray-500">
-            <span className="font-bold text-(--brand-primary)">{page}</span>
-            {' '}/ {totalPages} trang
+        <div className="best-jobs__pager mt-4 flex items-center justify-center gap-4">
+          <ArrowButton dir="left" aria-label={m.candidate_best_jobs_prev_page()} disabled={page <= 1} onClick={goPrev} />
+          <span aria-live="polite">
+            <strong>{page}</strong> {m.candidate_best_jobs_page_total({ total: totalPages })}
           </span>
-          <ArrowButton dir="right" disabled={page >= totalPages} onClick={() => setPage((current) => Math.min(totalPages, current + 1))} />
+          <ArrowButton dir="right" aria-label={m.candidate_best_jobs_next_page()} disabled={page >= totalPages} onClick={goNext} />
         </div>
       )}
     </div>

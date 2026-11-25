@@ -7,6 +7,14 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Việc làm gần tôi: bản đồ, bán kính, tọa độ nơi làm việc (ADR-0029)](#việc-làm-gần-tôi-bản-đồ-bán-kính-tọa-độ-nơi-làm-việc-adr-0029-2026-11-25) | 🟨 PR #344 (nhánh `feat/nearby-jobs`), chờ gộp |
+| [Thông báo thời gian thực qua WebSocket, hoàn tác 15 giây (ADR-0028)](#thông-báo-thời-gian-thực-qua-websocket-hoàn-tác-15-giây-adr-0028-2026-11-25) | ✅ Đã gộp dev (#340); sửa socket rớt mỗi 5 giây trên nhánh `fix/realtime-redis-timeout` |
+| [Phễu tuyển dụng trên trang chủ NTD](#phễu-tuyển-dụng-trên-trang-chủ-ntd-2026-11-25) | 🟨 PR #338 (nhánh `feat/employer-recruitment-funnel`), chờ gộp |
+| [Làm lại khối Gợi ý việc làm phù hợp trang chủ](#làm-lại-khối-gợi-ý-việc-làm-phù-hợp-trang-chủ-2026-11-25) | 🟨 Xong trên nhánh `feat/home-recommendations-redesign`, chưa commit/PR |
+| [Huy hiệu Sấm Chớp tính từ mức phản hồi thật (ADR-0027)](#huy-hiệu-sấm-chớp-tính-từ-mức-phản-hồi-thật-adr-0027-2026-11-25) | ✅ Đã gộp dev (#334) |
+| [Làm lại khối Việc làm nổi bật trang chủ](#làm-lại-khối-việc-làm-nổi-bật-trang-chủ-2026-11-25) | ✅ Đã gộp dev (#333) |
+| [Mã tin và mã công ty dễ đọc](#mã-tin-và-mã-công-ty-dễ-đọc-2026-11-25) | 🟨 Xong trên nhánh `feat/readable-record-codes`, chờ gộp PR |
+| [Bộ file triển khai production procv.site](#bộ-file-triển-khai-production-procvsite-2026-11-24) | 🟨 Xong trên nhánh `feat/production-deploy`, chờ gộp PR; chưa lên VPS |
 | [Làm lại trang công ty phía ứng viên](#làm-lại-trang-công-ty-phía-ứng-viên-2026-11-24) | 🟨 Xong trên nhánh `feat/company-page-jobs-layout`, chờ gộp PR |
 | [Mã tài khoản dạng số cho 3 cổng](#mã-tài-khoản-dạng-số-cho-3-cổng-2026-11-22) | 🟨 Xong trên nhánh `feat/numeric-user-id`, chờ gộp PR |
 | [Làm lại trang Thông tin tài khoản NTD](#làm-lại-trang-thông-tin-tài-khoản-ntd-2026-11-22) | 🟨 Xong trên nhánh `feat/employer-account-info-redesign`, chờ gộp |
@@ -30,7 +38,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Ảnh đại diện dùng chung 3 cổng](#ảnh-đại-diện-dùng-chung-3-cổng-2026-11-16) | 🟨 Xong trên nhánh `feat/avatar-editor`, chưa mở PR |
 | [Dọn mâu thuẫn còn lại sau thống nhất luồng](#dọn-mâu-thuẫn-còn-lại-sau-thống-nhất-luồng-2026-11-16) | ✅ Cả 3 GĐ đã gộp (#222, #223, #224); dọn phần còn hở trên nhánh `fix/flow-loose-ends` |
 | [Thống nhất luồng đăng tin, hiển thị, ứng tuyển, công ty](#thống-nhất-luồng-đăng-tin-hiển-thị-ứng-tuyển-công-ty-2026-11-15) | ✅ Cả 6 giai đoạn đã gộp (#208–#215); hoàn thiện luồng nhắc NTD và lịch sử nộp trên nhánh `feat/application-reminders` |
-| [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Bản demo đã gộp (#207, #230–#233); kế hoạch bản 3 (20/11): GĐ 1 đo lường ở PR #274; GĐ 2 `extract-v3` xong trên nhánh `feat/ai-extract-v3` |
+| [Đối sánh ngữ nghĩa CV–JD chạy local](#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15) | 🟨 Bản demo, GĐ 1, 2, 4 của bản 3 đã ở `dev`; từ 25/11 làm phần NTD (xếp hạng hồ sơ, hồ sơ trích xuất, Tìm CV) trên nhánh `feat/recruiter-ranking`: GĐ A `hybrid-v2` xong |
 | [CV tải lên: tệp gốc, tiêu chuẩn upload, giới hạn CV, NTD tìm kiếm](#cv-tải-lên-tệp-gốc-tiêu-chuẩn-upload-giới-hạn-cv-ntd-tìm-kiếm-2026-11-15) | ✅ Gộp vào `dev` (#203) |
 | [Việc làm tốt nhất xếp theo chất lượng tin](#việc-làm-tốt-nhất-xếp-theo-chất-lượng-tin-2026-11-15) | ✅ Gộp vào `dev` (#204) |
 | [Thiết kế lại quản lý tin tuyển dụng của NTD](#thiết-kế-lại-quản-lý-tin-tuyển-dụng-của-ntd-2026-11-15) | ✅ Gộp vào `dev` (nhánh `feat/employer-job-workspace`) |
@@ -45,6 +53,125 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Các epic đã hoàn tất](#các-epic-đã-hoàn-tất) | ✅ |
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
+
+
+## Việc làm gần tôi: bản đồ, bán kính, tọa độ nơi làm việc (ADR-0029) (2026-11-25)
+
+Đặc tả: [`dac-ta-tim-viec-gan-day.md`](01-phan-tich/dac-ta-tim-viec-gan-day.md).
+
+- **Dữ liệu:** tâm 34 tỉnh + 3.321 phường/xã tính từ ranh giới sau sáp nhập
+  (`seed_data/centroids.json`, phủ 100%); sửa lỗi mã phường trùng mã tỉnh làm mất
+  5 phường trung tâm Hà Nội (đệm mã 5 chữ số). `JobLocation` có tọa độ + độ chính xác;
+  `GeocodeCache`; adapter geocoding VietMap/Goong/Nominatim; Celery geocode nền.
+- **NTD:** ghim tùy chọn cho từng phường/xã trong form đăng tin (gợi ý từ địa chỉ, kiểm
+  đúng tỉnh); không ghim thì tự geocode hoặc dùng tâm phường.
+- **Ứng viên:** trang `/viec-lam-gan-ban` (GPS / chọn phường / nhập địa chỉ / bấm bản đồ,
+  bán kính 3–50 km, ngành nghề, lương, việc từ xa, nhóm "Tuyển khắp tỉnh", gợi ý mở rộng
+  bán kính), lối vào ở header + trang chủ, "Cách bạn x km" và bản đồ ở chi tiết tin.
+- **Kiểm tra:** pytest đủ bộ 2.117 qua (coverage 91%), Vitest + E2E `nearby-jobs.spec.js`
+  (`@responsive`), bundle khởi tạo không đổi (MapLibre chỉ ở chunk lazy).
+- **PR:** #344 vào `dev`.
+- **Còn lại:** cấp key VietMap (server + tile) và đặt `map_style_url` trước khi lên
+  production; sau deploy chạy `seed_location_coordinates` rồi `refresh_job_coordinates`.
+
+## Phễu tuyển dụng trên trang chủ NTD (2026-11-25)
+
+- Thẻ donut "Trạng thái hồ sơ" thay bằng phễu 3D vẽ SVG: Nhận hồ sơ → Phù hợp →
+  Phỏng vấn → Trúng tuyển, thêm tầng Không phù hợp; nhãn bên trái kèm tỉ lệ so với
+  tổng hồ sơ nhận được.
+- API `GET /api/employer/dashboard/` thêm `funnel` (received, shortlisted,
+  interviewed, accepted, rejected): đếm hồ sơ hiện có **đã tới** từng bước (theo
+  `*_at`), nên hồ sơ phỏng vấn rồi bị loại vẫn tính ở bước phỏng vấn.
+- Khối "Hoàn thiện workspace tuyển dụng" ẩn khi đủ 5 bước xác thực (bỏ huy hiệu
+  "Đã hoàn tất").
+## Thông báo thời gian thực qua WebSocket, hoàn tác 15 giây (ADR-0028, 2026-11-25)
+
+Chuông ứng viên/NTD trước đây polling 60–120 giây; quyết định của NTD tới ứng viên sau 5
+phút + tối đa 60 giây chờ beat. Chi tiết quyết định ở
+[ADR-0028](02-tong-quan/adr-0028-realtime-notifications.md).
+
+| Hạng mục | Trạng thái |
+| --- | --- |
+| App `apps.realtime`: vé một lần 30 giây, consumer `/ws/notifications/`, kiểm lại phiên mỗi 60 giây (không kéo dài idle), chặn Origin lạ | ✅ |
+| Đẩy `notification.created`/`notification.read` sau commit từ `emit_employer_event` và lúc phát hành thông báo ứng viên (tôn trọng tắt kênh website) | ✅ |
+| Cửa sổ hoàn tác 15 giây (`candidate_status_notify_delay_seconds`, migration xóa key phút), phát hành đúng hạn bằng task riêng, email gửi ngay | ✅ |
+| Frontend: socket dùng chung, ping 25 giây, nối lại có backoff, polling chỉ khi socket đóng; hồ sơ mới làm mới danh sách hồ sơ NTD ngay | ✅ |
+| Âm thanh thông báo mới (một tab kêu), nút bật/tắt chuông; toast + thanh "Hoàn tác" đếm ngược đúng thời gian còn lại | ✅ |
+| Triển khai: service `realtime` (daphne) trong compose prod, nginx route `/ws/notifications/`, Vite proxy `/ws` | ✅ code; chưa lên VPS |
+| Admin realtime (badge hàng chờ) | ⬜ Chưa làm, vẫn polling 30 giây |
+| Sửa socket rớt mỗi ~5 giây: redis-py 8 chờ đọc mặc định 5 giây, bằng khoảng BZPOPMIN của channels_redis; đặt `socket_timeout` 15 giây cho channel layer + test hồi quy | 🟨 Nhánh `fix/realtime-redis-timeout`, chờ gộp |
+
+Sau khi pull: build lại image backend **và** `ml-worker` (`docker compose build backend
+ml-worker`) vì có gói mới `channels`, `channels-redis`, `daphne`; `INSTALLED_APPS` có
+`daphne`/`channels` nên image cũ không khởi động được.
+
+## Huy hiệu Sấm Chớp tính từ mức phản hồi thật (ADR-0027, 2026-11-25)
+
+Trước đây `has_flash_badge` do admin tick tay, seed bật ngẫu nhiên. Banner trang chủ có
+đồng hồ đếm ngược giả và câu "tương tác trong 24 giờ qua" không đúng số liệu.
+
+| Hạng mục | Trạng thái |
+| --- | --- |
+| Luật thuần `applications/domain/flash_badge.py`; ảnh chụp `RecruiterResponsiveness`; service `refresh_flash_badges` + beat mỗi giờ; chiếu xuống `Job.has_flash_badge` bằng `update()` | ✅ |
+| 6 key `flash_badge_*` (nhóm Ứng tuyển & SLA); Django admin chỉ xem cờ; seed demo bỏ bật ngẫu nhiên | ✅ |
+| Thông báo NTD: đạt, mất (kèm lý do), sắp mất (hồ sơ sắp quá hạn 24 giờ) | ✅ |
+| Dashboard NTD: thẻ tiến độ 4 tiêu chí + số hồ sơ quá hạn/sắp quá hạn đo trực tiếp | ✅ |
+| Ứng viên: banner bỏ đếm ngược, câu theo ngưỡng thật, nút dẫn tới `/viec-lam?fast=1`; bộ lọc "NTD phản hồi nhanh"; tooltip nhãn; số thật ở chi tiết tin; +2 điểm "Việc làm tốt nhất" | ✅ |
+| Dữ liệu demo có huy hiệu (cần hồ sơ + quyết định thật, seed hiện không tạo hồ sơ) | ⬜ Chưa làm |
+
+Đặc tả: [huy-hieu-sam-chop.md](07-algorithms/huy-hieu-sam-chop.md).
+
+## Làm lại khối Gợi ý việc làm phù hợp trang chủ (2026-11-25)
+
+- Khối đặt trong một tấm nền nhạt (pha từ `--brand-*`, lưới chấm mờ) để tách khỏi "Việc làm
+  nổi bật" nhưng dùng chung ngôn ngữ: thẻ trắng gọn, pill lương/địa điểm, `ArrowButton`.
+- Desktop: cột trái có maskcot `ProcvMascot` (ôm bảng checklist) kèm bong bóng tổng số việc
+  phù hợp, tiêu đề, "Xem tất cả" và "Tùy chỉnh gợi ý"; mobile thu thành một hàng ngang.
+- Thẻ gọn hơn (logo 46px, lý do phù hợp ở chân thẻ); nút ẩn tin chỉ hiện khi rê/focus trên
+  máy có chuột. Tự chuyển trang theo thanh chạy trong chấm phân trang (`animationend`,
+  dừng khi rê chuột, tắt khi giảm chuyển động); trang ẩn dùng `inert`.
+- Tách `HomeRecommendations.jsx` + `home-recommendations.css` (chunk lazy); chuỗi vào
+  `messages/candidate` (`candidate_reco_home_*`), trần i18n `widgets/main` hạ còn 300.
+
+## Làm lại khối Việc làm nổi bật trang chủ (2026-11-25)
+
+- Khối "Việc làm tốt nhất" đổi tên thành "Việc làm nổi bật", giao diện theo mẫu: tông trung
+  tính, thẻ gọn (logo cạnh một cột nội dung), ô "Lọc theo", chip trượt ngang, gợi ý (ẩn
+  trên mobile), phân trang "x / N trang". Thanh tiến trình 2px điều khiển tự chuyển trang
+  (dừng khi rê chuột); thẻ hiện so le; logo lỗi ảnh lộ chữ cái dự phòng.
+- Chip địa điểm chỉ gồm tỉnh/phường đang có tin công khai, kèm số tin: API mới
+  `GET /api/public/jobs/best/locations/` (`homepage_best_job_locations`, 3 query phẳng).
+  Bỏ chip "Các phường/xã còn lại" và `getWardsByParents` không còn dùng.
+- Thẻ là thẻ `<a>` nên nền dùng `!bg-` (reset antd ngoài layer); chuỗi mới vào
+  `messages/candidate` (`candidate_best_jobs_*`), trần i18n `pages/main` hạ còn 778.
+- Bỏ 2 tab "Việc văn phòng/phổ thông" của mẫu vì tin chưa có trường phân loại này.
+
+## Mã tin và mã công ty dễ đọc (2026-11-25)
+
+Mã cũ `jb_<12 hex>`/`co_<12 hex>` khó đọc qua điện thoại. Thêm trường `code` riêng, giữ
+`public_id` làm khóa API và trong slug SEO.
+
+| Hạng mục | Trạng thái |
+| --- | --- |
+| `Job.code` = `J` + 7 chữ số, `Company.code` = `C` + 6 chữ số; ngẫu nhiên, chữ số đầu ≠ 0, unique + check constraint; helper chung `common/db/readable_code.py` | ✅ |
+| Migration `jobs.0003–0004`, `employers.0007–0008`: gán mã cho dữ liệu cũ rồi mới bắt buộc; nhân bản tin sinh mã mới | ✅ |
+| Tìm theo mã (bỏ dấu cách/chấm/gạch/`#`, không phân biệt hoa thường) ở danh sách tin và công ty admin, danh sách tin NTD; CSV admin xuất mã mới | ✅ |
+| `shared/ui/code-badge/CodeBadge`: nhãn monospace + nút sao chép; gắn ở list/chi tiết tin và công ty admin, header và list tin NTD, công ty NTD, cảnh báo tạm dừng chiến dịch, Mã NTD trên dashboard | ✅ |
+| Hiện mã tin trên trang tin công khai để ứng viên báo lỗi | ⬜ Chưa làm |
+
+## Bộ file triển khai production procv.site (2026-11-24)
+
+Một VPS (BKNS MMO7 8 vCPU/8 GB), Docker Compose, Cloudflare proxy + R2, một domain theo
+đường dẫn. Runbook: [huong-dan-deployment.md](06-deployment/huong-dan-deployment.md).
+
+| Hạng mục | Trạng thái |
+| --- | --- |
+| `docker-compose.prod.yml`: db/redis không lộ cổng, `migrate` chạy một lần trước backend/worker, gunicorn, 3 worker Celery + beat, giới hạn RAM từng service, giá trị theo domain ghi đè `.env` | ✅ |
+| `frontend/Dockerfile` + nginx: route SEO/API/`/r` về Django, SPA còn lại, cổng nội bộ 8080 cho SEO shell và in CV, IP thật qua Cloudflare | ✅ |
+| `scripts/deploy/`: `compose.sh`, `deploy.sh` (rollback theo commit), `backup_db.sh` (cron + R2), `restore_db.sh`, `bootstrap_vps.sh`, `sync_ml_models.sh` | ✅ |
+| Runbook Cloudflare/R2, env cần điền, dữ liệu ban đầu, checklist sau deploy | ✅ |
+| Thuê VPS, DNS, Origin Certificate, điền secret, DPA của ProCV, callback OAuth/reCAPTCHA cho `procv.site` | ⬜ Người dùng làm |
+| ClamAV + upload session ở production | ⬜ Chưa bật (thiếu RAM) |
 
 ## Nội dung trang theo màu chủ đạo của hệ thống (2026-11-24)
 
@@ -1151,15 +1278,192 @@ làm gợi ý" theo ngữ nghĩa, và nhà tuyển dụng xếp hạng hồ sơ 
 
 | GĐ | Hạng mục | Trạng thái |
 | --- | --- | --- |
-| 1 | Đo lường: lệnh `matching_evaluate` (chấm bằng đúng mã sản phẩm), `ml/scripts/evaluate.py`, bảng số trên validation; mở rộng tập vàng lên 30 tin; tải mô hình và dữ liệu công khai | 🟨 PR #274 chờ gộp |
-| 2 | `extract-v3`: PDF hai cột, chức danh CV tải lên, sửa các luật nhận ngày/bằng cấp/kỹ năng, schema `profile_json` | 🟨 Xong trên nhánh `feat/ai-extract-v3`, chờ PR |
+| 1 | Đo lường: lệnh `matching_evaluate` (chấm bằng đúng mã sản phẩm), `ml/scripts/evaluate.py`, bảng số trên validation; mở rộng tập vàng lên 30 tin; tải mô hình và dữ liệu công khai | ✅ Đã ở `dev` |
+| 2 | `extract-v3`: PDF hai cột, chức danh CV tải lên, sửa các luật nhận ngày/bằng cấp/kỹ năng, schema `profile_json` | ✅ Đã ở `dev` |
 | 3 | Dữ liệu huấn luyện, cổng chất lượng, fine-tune bi-encoder và cross-encoder, ablation | ⬜ |
-| 4 | Việc làm gợi ý theo ngữ nghĩa (pgvector) | 🟨 Xong trên nhánh `feat/ai-semantic-recommendations`, chờ PR |
-| 5 | `hybrid-v2`, cross-encoder vào `ml-worker`, `result_json` bản 2 (M2) | ⬜ |
-| 6 | Nhà tuyển dụng xếp hạng hồ sơ ứng tuyển | ⬜ |
+| 4 | Việc làm gợi ý theo ngữ nghĩa (pgvector) | ✅ Đã ở `dev` |
+| 5 | `hybrid-v2`, cross-encoder vào `ml-worker`, `result_json` bản 2 (M2) | 🟨 Phần không cần huấn luyện xong ở GĐ A bên dưới; cross-encoder chưa làm |
+| 6 | Nhà tuyển dụng xếp hạng hồ sơ ứng tuyển | 🟨 Làm sớm, tách thành GĐ B–C bên dưới |
 | 7 | Chạy tập test một lần, hiệu năng, nghiệm thu TC-01…30, kappa 30 cặp (M3) | ⬜ |
 | 8 | Báo cáo, slide, diễn tập demo | ⬜ |
 
+Kế hoạch phần nhà tuyển dụng (duyệt 25/11): kéo GĐ 6 lên trước, thêm hồ sơ trích xuất
+và Tìm CV. Cả năm giai đoạn làm trên một nhánh `feat/recruiter-ranking`, mỗi giai đoạn
+một commit, một PR vào `dev` khi xong GĐ E.
+
+| GĐ | Hạng mục | Trạng thái |
+| --- | --- | --- |
+| A | Công thức `hybrid-v2` phần không cần huấn luyện: bỏ địa điểm, tắt khớp kỹ năng viết khác tên, hệ số liên quan; đo trên validation | ✅ Commit trên nhánh (25/11) |
+| B | Đường ống xếp hạng hồ sơ ứng tuyển (backend): chấm bản CV đã nộp khi ứng viên đồng ý, queue `ai-matching-batch`, `ordering=ai_match`, endpoint chi tiết | ✅ Commit trên nhánh (25/11); test tự động viết ở bước kiểm tra cuối |
+| C | Giao diện xếp hạng ở cổng NTD: cột "Phù hợp", tab Đánh giá, bộ hiển thị dùng chung | ✅ Commit trên nhánh (25/11); chưa chụp màn hình, chưa có test giao diện |
+| D | Một CV được bật cho NTD tìm kiếm + "Hồ sơ NTD nhìn thấy" phía ứng viên | ✅ Commit trên nhánh (25/11); chưa chụp màn hình, chưa có test |
+| E | Tìm CV: tìm ứng viên ẩn danh theo tin, xem nhanh, mời ứng tuyển | ✅ Commit trên nhánh (25/11); chưa chụp màn hình, test viết ở bước kiểm tra cuối |
+| E+ | Làm lại trang "CV ứng tuyển" (3 cột): cột Ứng viên lọc theo tin/trạng thái (gộp "Chưa phản hồi"), sắp xếp (gồm "Phù hợp nhất (AI)" khi bật), dòng phẳng có điểm AI gọn, nhóm giữ thứ tự máy chủ; khung CV phóng to/thu nhỏ (nút, Ctrl/⌘ + cuộn, "Vừa khung", cả tệp PDF tải lên); panel phải dạng nhãn–giá trị | 🟨 PR #341 (nhánh `feat/cv-workspace-redesign`), chờ gộp; chưa thử thu phóng tệp PDF thật trên trình duyệt |
+
+Quyết định đã chốt: chỉ chấm hồ sơ ứng viên đồng ý (ô đồng ý tự chọn, nhớ lần trước);
+sắp xếp mặc định vẫn là mới nhất; không tự loại theo điểm; Tìm CV chỉ hiện hồ sơ trích
+xuất ẩn danh và tìm theo một tin đang tuyển; bước tiếp là mời ứng tuyển vào tin.
+
+<details><summary>Ghi chú GĐ A (phần NTD)</summary>
+
+- `hybrid-v2` (`apps/matching/services/scoring/`): bỏ tiêu chí địa điểm; tắt khớp kỹ năng
+  "viết khác tên" cho mô hình zero-shot (`Calibration.semantic_skills`); học vấn, cấp bậc,
+  ngoại ngữ nhân `min(1, R/50)` khi cộng vào điểm tổng (hệ số liên quan), điểm hiển thị giữ
+  giá trị thật và tóm tắt ghi rõ "chỉ được tính một phần".
+- Kế hoạch viết là "chặn trần điểm tổng theo R". Đo cho thấy trần không hạ được trung vị cặp
+  khác ngành nếu không cắt cả cặp đúng nghề có R thấp, nên đổi sang hệ số liên quan.
+- Validation (100 cặp, 10 tin; `ml/reports/eval_validation.md`):
+
+  | Phương án | Spearman | NDCG@5 | Kappa mức | Nhãn 0: trung vị / cao nhất / từ 50 điểm |
+  | --- | ---: | ---: | ---: | --- |
+  | `hybrid-v1` | 0,603 | 0,815 | 0,511 | 28 / 65 / 6 cặp |
+  | Bật lại khớp kỹ năng viết khác tên | 0,626 | 0,821 | 0,535 | 17 / 57 / 5 cặp |
+  | Bỏ hệ số liên quan | 0,692 | 0,857 | 0,672 | 27 / 48 / 0 |
+  | `hybrid-v2` | 0,699 | 0,857 | 0,663 | 11 / 46 / 0 |
+
+  Đạt điều kiện bật điểm cho NTD (nhãn 0 trung vị ≤ 20, không cặp nào ≥ 50). `hybrid-v2`
+  lần đầu hơn bộ luật `profile-rule-v2` về Spearman (0,699 so với 0,628); NDCG@5 ngang
+  (0,857 so với 0,874), khoảng tin cậy còn chồng nhau.
+- `matching_evaluate --detail` (kèm nguyên kết quả chấm) và `--ablation` (tắt một thay đổi
+  của công thức); `ml/scripts/evaluate.py --ablation` thêm ba dòng vào bảng.
+- `result_json.schema_version = 2`: thêm `overall.relevance`,
+  `flags.relevance_discount_applied`; không còn `location` trong `components`. Kết quả cũ
+  (`hybrid-v1`) trong cache không dùng lại vì khóa cache có phiên bản công thức.
+- Test `apps/matching` (100 test) đạt; phần test của tập vàng chưa chạy.
+
+</details>
+<details><summary>Ghi chú đợt sửa theo phản hồi (25/11, sau GĐ E)</summary>
+
+- Panel "Xử lý hồ sơ": bỏ bản chia ba tab (làm ẩn liên hệ, thông tin ứng tuyển, lịch sử), trả
+  lại các mục cũ; mức phù hợp là một khối ở đầu panel với nút "Xem vì sao".
+- `features/employer/candidate/view-application-match`: chip bấm được + Drawer giải thích
+  (điểm, từng tiêu chí kèm câu lý do, kỹ năng có/thiếu kèm câu trích, cách tính điểm). Dùng ở
+  bảng CV của tin, bảng CV của chiến dịch (thêm cột và sắp xếp theo mức phù hợp), panel hồ sơ.
+- `extract-v4`: `profile_json.sections` giữ nội dung đầy đủ từng mục của CV để hiển thị (không
+  dùng để chấm; `chunks` không đổi nên điểm không đổi). CV tạo trên hệ thống cho mục con có cấu
+  trúc (vai trò, công ty, thời gian, từng dòng mô tả); CV tải lên cho khối chữ theo mục.
+  `domain/profile_view.py`: chủ CV và NTD có hồ sơ ứng tuyển thấy đủ; NTD ở Tìm CV không thấy
+  mục "Thông tin thêm" và họ tên trong câu văn bị che. Kế hoạch ban đầu ẩn cả tên công ty cũ ở
+  Tìm CV; theo phản hồi "thông tin quá mơ hồ" đã hiện lại nội dung kinh nghiệm (lời đồng ý của
+  ứng viên chỉ hứa ẩn họ tên, ảnh, điện thoại, email, địa chỉ).
+- Cột giữa màn xử lý hồ sơ có nút chuyển "CV gốc | Hồ sơ trích xuất"
+  (`/api/employer/applications/{id}/extracted-profile/`; chỉ có khi ứng viên đồng ý phân tích).
+- Bộ đọc PDF tải lên (`apps/cvs/services/{pdf_layout,cv_document}.py`,
+  `matching/services/extraction/cv_upload.py`): dòng cùng mục không còn bị coi là tiêu đề (mất
+  4/5 kỹ năng ở mẫu TopCV có cột bên); tiêu đề ngắt hai dòng; thêm từ khóa "Danh hiệu", "Người
+  giới thiệu", "Thông tin thêm"; `page_blocks` + `continue_columns` ghép phần tiếp của một cột
+  qua trang theo vị trí ngang; tên/chức danh ở đầu cột phải về đầu tài liệu; bỏ chân trang, nhãn
+  rỗng. Đo lại (`ml/reports/extraction_check.md`): PDF hệ thống kinh nghiệm 93% → 100%; PDF
+  TopCV chức danh 29 → 32/36, kỹ năng 98,9%, kinh nghiệm 100%, học vấn 97%, ngoại ngữ 94%
+  (không đổi).
+- Giới hạn còn lại của bộ đọc theo luật: ô bảng quá hẹp khiến chính tệp PDF ngắt giữa từ
+  ("Cod e", "III/20 23") chưa ghép lại được; tiêu đề mục không có trong bảng từ khóa vẫn dính
+  vào mục phía trên; trong CV tải lên, mỗi mục là khối chữ chứ chưa tách thành từng công việc.
+- Sửa lỗi: nhật ký `recruiter_search` chặn ứng viên xóa CV (`ProtectedError`); nay nhật ký gắn
+  với CV và bị xóa cùng CV, có test.
+- `matching_backfill --only applications` dựng lại hồ sơ trích xuất của bản CV đã nộp khi đổi
+  bộ trích xuất. Đã chạy lại cho DB dev.
+- Kiểm tra đã chạy: backend 1.983 test đạt (2 test migration mã tin/mã công ty chỉ trượt khi
+  chạy song song, chạy riêng đạt), ruff, layering, import, OpenAPI; frontend lint,
+  check:architecture, test đơn vị các vùng đã sửa, e2e smoke của cổng NTD (12 lượt, 3 khung
+  hình). Chưa chạy: toàn bộ e2e smoke, coverage, ngân sách bundle.
+
+</details>
+<details><summary>Ghi chú GĐ E (phần NTD)</summary>
+
+- `apps/matching/services/candidate_search.py::rank_cvs_for_job`: lọc theo hồ sơ trích xuất
+  (tra cứu JSON), lấy 200 CV gần vector của tin nhất, chấm bằng `score_match` (`hybrid-v2`) mà
+  không cần mô hình trong tiến trình web, bỏ CV dưới 30 điểm, ẩn danh kết quả. Danh sách trắng
+  trường chuyển sang `domain/profile_view.py` để cả selectors và services dùng; truy vấn tài
+  liệu hiện hành và vector chức danh chuyển sang `models/queries.py`.
+- `apps/applications/services/candidate_search.py`: điều kiện được tìm thấy kiểm lại ở mỗi lần
+  truy vấn (CV đang bật, còn đồng ý, tài khoản hoạt động, không bị công ty chặn); mã ẩn danh là
+  HMAC của (công ty, ứng viên); xem nhanh ghi `CvAccessLog` kênh `recruiter_search`; mời ứng
+  tuyển qua model mới `CandidateSearchInvitation` (migration `applications.0006`, `cvs.0004`),
+  dùng lại thông báo `JOB_INVITATION`. Kế hoạch định sửa `TalentPoolInvitation`; đã tách model
+  riêng để không đụng ràng buộc của kho ứng viên.
+- API `/api/employer/candidate-search/` (danh sách phân trang 20, chi tiết, mời); giới hạn
+  `candidate_search` 240 lượt/giờ, `candidate_search_invite` 40 lượt/giờ; cờ
+  `ai_candidate_search_enabled`.
+- Frontend: feature `features/employer/candidate/search-candidates` (thanh chọn tin + ba bộ lọc
+  chức danh/kinh nghiệm/học vấn, danh sách, Drawer xem nhanh tải trễ), trang
+  `pages/employer/candidates/CandidateSearch`, route `/candidate-search`, nút Tìm CV trên header
+  và mục ở thanh bên đã mở.
+- Chạy thử trên DB dev (bật tạm 100 CV tổng hợp trong một transaction rồi hoàn tác): tin Backend
+  ra 14 ứng viên, tin Marketing 3, mỗi lượt 0,02–0,06 giây; kết quả không có câu trích nào.
+- Chưa làm so với kế hoạch: bộ lọc kỹ năng, ngoại ngữ, tỉnh/thành ở giao diện (API đã nhận);
+  thông báo "NTD đã xem hồ sơ" cho ứng viên; ẩn mục Tìm CV khi cờ tắt (hiện trang báo tính năng
+  đang tắt); test tự động; chụp màn hình.
+
+</details>
+<details><summary>Ghi chú GĐ D (phần NTD)</summary>
+
+- `UserCv`: ràng buộc duy nhất có điều kiện `uq_user_searchable_cv` + data migration
+  `cvs.0003` (giữ CV chính nếu đang bật, không thì CV cập nhật gần nhất).
+  `update_cv_metadata` bật một CV thì tắt CV đang bật trước đó, trong cùng khóa hàng người dùng.
+  Tách khỏi "CV chính" (`is_default`, dùng cho gợi ý việc làm).
+- `apps/matching/selectors/extracted_profile.py`: `public_cv_profile(profile, audience)` là
+  danh sách trắng trường của `profile_json`. Chủ CV thấy cả tên công ty và dòng chữ của CV
+  tải lên; bản cho NTD tìm kiếm (`recruiter_search`, dùng ở GĐ E) bỏ hai thứ đó. Không bao
+  giờ trả `chunks` hay câu bằng chứng. API ứng viên `cv-profiles/<cv_public_id>/` trả
+  `ready` / `pending` / `failed` kèm mã lỗi (ví dụ PDF scan).
+- Frontend: `ExtractedProfile` đặt ở `entities/application/job-fit` (dùng lại cho GĐ E);
+  feature mới `features/main/cv/view-recruiter-profile` (nút + hộp thoại tải trễ, hai cột từ
+  992 px, hai tab ở màn hẹp); `update-recruiter-visibility` chuyển sang chọn một. Kế hoạch ghi
+  hộp xác nhận "CV X sẽ thay CV Y"; đã làm thành thông báo sau khi bật (thao tác đảo lại được
+  bằng một lần gạt), không chặn bằng hộp thoại.
+- Chuỗi mới đều ở `messages/candidate` và `messages/shared` (vi/en); mức trần chữ viết cứng
+  của `features/main`, `pages/main` giảm và đã khóa lại.
+- Đã chạy: lint, check:architecture, migration trên DB dev. Chưa làm: test, chụp màn hình.
+
+</details>
+<details><summary>Ghi chú GĐ C (phần NTD)</summary>
+
+- `entities/application/job-fit`: từ vựng (bốn mức, nhãn tiêu chí, độ tin cậy, câu tóm tắt
+  dựng từ `components[].detail`), `FitScoreChip`, `FitBreakdown`, `job-fit.css`. Chuỗi song
+  ngữ ở `messages/shared` (`fit_*`). Hộp thoại của ứng viên lấy nhãn từ entity này.
+- Bảng "CV ứng tuyển" của một tin: cột Phù hợp, sắp xếp "Phù hợp nhất" (nhớ ở localStorage),
+  dòng chú thích khi sắp theo AI rằng hồ sơ chưa có điểm nằm cuối không phải vì kém phù hợp.
+  Kế hoạch ghi một chip "N hồ sơ không tham gia phân tích AI" để lọc riêng; chưa làm vì cần
+  thêm số đếm và tham số lọc ở API, thay bằng dòng chú thích và nhãn lý do trên từng hồ sơ.
+- Màn xử lý hồ sơ: chip điểm trên thẻ hồ sơ; panel phải chia tab Đánh giá | Thông tin | Hoạt
+  động, thanh quyết định ghim phía trên. Tab Đánh giá gọi `/ai-match/`, hỏi lại mỗi 5 giây khi
+  đang phân tích.
+- Không hiện mục "yêu cầu của tin đạt/chưa thấy" cho NTD: với mô hình chưa fine-tune phép so
+  từng câu yêu cầu không đáng tin (AUC 0,588); chờ cross-encoder.
+- "Hồ sơ trích xuất tóm tắt" ở tab Đánh giá hiện được thể hiện qua câu tóm tắt từng tiêu chí
+  (số năm, bậc học, cấp bậc đọc từ CV); khối hồ sơ trích xuất đầy đủ làm cùng GĐ D.
+- Đã chạy: `npm run lint` (0 lỗi), `npm run check:architecture`. Chưa làm: chụp màn hình
+  desktop/mobile (trình duyệt tự động chưa đăng nhập được cổng NTD), test đơn vị và e2e smoke.
+
+</details>
+<details><summary>Ghi chú GĐ B (phần NTD)</summary>
+
+- `MatchAnalysis.purpose` (`candidate_self` | `application_ranking`, migration
+  `matching.0003`). Không thêm FK tới hồ sơ và không đổi khóa cache: mỗi hồ sơ có một
+  `CvVersion` bản chụp riêng, nên nối bằng `Application.submitted_cv_version`.
+- `services/application_ranking.py`: chỉ chấm hồ sơ hiện hành có `allow_ai_analysis`; hàng
+  phân tích được tạo ngay trong task nên hồ sơ chưa tới lượt hiện "đang phân tích". Task
+  `score_application`, `rescore_job_applications` ở queue `ai-matching-batch`; `ml-worker`
+  nghe cả hai queue. Hạn chờ 10 phút và gửi lại sau 30 giây chỉ còn áp cho lượt ứng viên tự
+  xem; hàng xếp hạng kẹt được gửi lại sau 5 phút.
+- Kích hoạt: hồ sơ vừa tạo (signal, sau commit); tin đổi nội dung (trong task `embed_job`,
+  chỉ gửi task cho hồ sơ chưa có kết quả với nội dung mới); `matching_backfill --only
+  applications`. Vector được tính sẵn khi bất kỳ cờ đối sánh nào bật (trước đây chỉ theo
+  `ai_job_match_enabled`).
+- `cv_source` đọc tệp đã nộp (`source_file_key`) cho bản chụp của CV tải lên và không còn
+  cần `cv_version.cv` (rỗng khi ứng viên đã xóa CV).
+- API: cột `ai_match_*` gắn bằng truy vấn con trong `employer_applications_queryset`; điểm
+  lấy từ lần chấm thành công gần nhất, nên khi tin đang được chấm lại danh sách vẫn hiện
+  điểm cũ. Chi tiết ở `/ai-match/`, đã bỏ gợi ý sửa CV và câu tóm tắt viết cho ứng viên;
+  giao diện tự dựng câu từ `components[].detail` để dịch được. Ứng viên không thấy bản chấm
+  này (`selectors/analyses.py` lọc `candidate_self`).
+- Chạy thử trên DB dev: 4 hồ sơ có đồng ý, 2 chấm được (3 và 15 điểm, đúng là khác nghề), 2
+  báo lỗi có mã (`job_text_too_short`, `cv_text_unavailable` với PDF không có lớp chữ).
+- Chưa làm: test tự động cho GĐ B (viết ở bước kiểm tra cuối theo yêu cầu không chạy test
+  giữa các giai đoạn); bảng điều khiển admin vẫn đếm chung hai loại phân tích.
+
+</details>
 <details><summary>Ghi chú GĐ 1 (bản 3)</summary>
 
 - Ngày 19/11 DB dev được dựng lại từ baseline migration (đại tu backend GĐ6), nên
@@ -1601,7 +1905,7 @@ Lộ trình 6 giai đoạn của workspace `/tuyendung/app/applications`; mỗi 
 | 4 | Danh sách đen + phát hiện ứng tuyển hàng loạt | ✅ Đã gộp vào dev (#197) |
 | 5 | Kho ứng viên tiềm năng + gợi ý lại khi đăng tin mới | ✅ Đã gộp vào dev (#198) |
 | 6 | Gợi ý kỹ năng còn thiếu cho ứng viên bị từ chối | ⬜ |
-| Sau | Nhắn tin ứng viên (nút đã đặt sẵn), hẹn lịch phỏng vấn | ⬜ |
+| Sau | Hẹn lịch phỏng vấn | ⬜ |
 
 <details><summary>Ghi chú giai đoạn 1</summary>
 
@@ -1860,7 +2164,7 @@ production, staging và soak (ER-8). Lệnh kiểm tra chỉ đọc:
 | 4 — CV nâng cao | 🟨 | Còn import LinkedIn, AI writer, review CV bằng AI |
 | 5 — Tuyển dụng nâng cao | ✅ | Việc đã lưu, lịch sử trạng thái hồ sơ, notification center của nhà tuyển dụng |
 | 6 — Thương mại & quản trị | ✅ | Quản trị (hai cấp superuser/admin theo ADR-0018), blog, marketing. Gói đăng ký và quota trả phí (6.1, 6.2) bỏ khỏi phạm vi theo ADR-0015 |
-| 7 — Deployment | 🟨 | Docker Compose local có; cấu hình production đã bỏ ở P3, chưa triển khai |
+| 7 — Deployment | 🟨 | Có bộ file production cho procv.site (compose prod, nginx, script deploy/backup); chưa lên VPS |
 
 ## Việc còn mở
 

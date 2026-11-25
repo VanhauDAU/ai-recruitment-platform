@@ -81,7 +81,7 @@ tại; lịch sử kế hoạch và bằng chứng triển khai nằm trong git 
 | Tài liệu | Nội dung |
 | --- | --- |
 | [docker-compose.md](06-deployment/docker-compose.md) | Chạy toàn bộ dự án bằng Docker Compose |
-| [huong-dan-deployment.md](06-deployment/huong-dan-deployment.md) | Định hướng triển khai production (chưa triển khai) và tách static, media |
+| [huong-dan-deployment.md](06-deployment/huong-dan-deployment.md) | Runbook triển khai production procv.site (VPS + Compose + Cloudflare/R2), tách static, media, route SEO |
 | [van-hanh-va-kill-switch.md](06-deployment/van-hanh-va-kill-switch.md) | Cờ tính năng, giá trị an toàn, lệnh kiểm tra và rollback |
 | [cloudflare-r2-media.md](06-deployment/cloudflare-r2-media.md) | Chính sách lưu media trên Cloudflare R2 |
 | [employer-upload-storage-boundary-runbook.md](06-deployment/employer-upload-storage-boundary-runbook.md) | Ranh giới lưu trữ public, private, quarantine của upload (chưa rollout xong) |
