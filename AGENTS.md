@@ -49,6 +49,14 @@ Không tạo `utils` chung không có owner. Component chỉ dùng một page/fe
 6. Protected route phải theo thứ tự `AuthGuard` rồi `RoleGuard`.
 7. Bổ sung unit/regression test và E2E cho route hoặc workflow bị ảnh hưởng.
 
+## Tài liệu và tiến độ
+
+- Chỉ mục: `docs/README.md` (mọi tài liệu trong `docs/` phải có dòng ở đây, CI kiểm).
+  Quyết định kiến trúc: `docs/adr/`; kế hoạch và audit đã xong: `docs/archive/`.
+- Mỗi PR một mục `CHANGELOG.md` (Keep a Changelog, nhóm theo ngày dưới `[Unreleased]`).
+- `docs/TIEN-DO-DU-AN.md` là ảnh chụp trạng thái theo module và việc đang mở, không
+  phải nhật ký: chỉ sửa khi trạng thái đổi.
+
 ## Agent skills (`.claude/skills/`, khóa ở `skills-lock.json`)
 
 Cài bằng `npx skills add <repo> --skill <name> -a claude-code -y`; cập nhật bằng

@@ -1300,7 +1300,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Quyền admin `job_moderation.approve` và `job_moderation.reject`.
 - Site setting `job_auto_approve` chưa từng được dùng.
 
-#### Migration — Chuyển đổi dữ liệu duyệt tin
+#### Changed — Chuyển đổi dữ liệu duyệt tin (migration)
 
 - `jobs.0046` đưa mọi tin `pending` và `rejected` về `draft` kèm một dòng lịch
   sử trạng thái; `jobs.0047` xóa hai trạng thái và cột `rejected_reason`.
@@ -2160,7 +2160,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Chuẩn hoá mọi lỗi thiếu quyền thành `403 admin_permission_denied`; frontend
   revalidate session có cooldown khi nhận chùm 403.
 
-#### Documentation & Verification
+#### Changed — Tài liệu và kiểm chứng
 
 - Bổ sung thiết kế database RBAC, ma trận seed, runbook hai release, cảnh báo
   endpoint dashboard/blog còn legacy và gate chống lệch registry backend/frontend.
@@ -2194,7 +2194,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   thể lưu tin nháp/đóng bằng public ID; kỹ năng nhiễu hoặc từ chức danh chung
   không đủ để biến một công việc khác chuyên môn thành “tương tự”.
 
-#### Documentation & Verification
+#### Changed — Tài liệu và kiểm chứng
 
 - Bổ sung tài liệu thuật toán recommendation, schema email preference, contract API/frontend, ownership map FSD, tiến độ và OpenAPI.
 - Ghi lại khảo sát TopCV ở trạng thái 0 và 3 tin đã lưu, tài liệu hóa trọng số,
@@ -2217,7 +2217,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Mô tả/phúc lợi được lưu dưới HTML allowlist (`p`, `br`, `strong`, `em`, `u`, `ul`, `ol`, `li`), bỏ thuộc tính/script/style nguy hiểm và giới hạn theo 10.000 ký tự nhìn thấy; API chi tiết việc làm tiếp tục trả mô tả công ty dạng plain text.
 - Owner gửi thay đổi qua `CompanyUpdateRequest`; đổi tên/MST bắt buộc lý do, loại hồ sơ và tài liệu gắn đúng request trước khi admin có thể duyệt. Member chỉ xem, request pending thứ hai tiếp tục bị chặn.
 
-#### Verification — Trang thông tin công ty
+#### Changed — Kiểm chứng trang thông tin công ty
 
 - Thêm regression backend cho catalogue, validation, rich-text XSS, gallery và update-request proof; unit frontend cho mapping/diff/media cùng option cards/recent list.
 - Thêm Playwright smoke riêng chạy xanh desktop, tablet `834×1112` và Pixel mobile, kiểm tra không tràn ngang và nhãn động Hộ kinh doanh.
@@ -2322,7 +2322,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Khi chọn **Chỉnh sửa**, giữ liên kết xem tệp đã nộp và hiển thị tên tệp thay thế ngay trong ô tải lên. Sau khi lưu, tên hiển thị chuẩn của tài liệu là **Thỏa thuận xử lý DLCN**, không dùng tên gốc của tệp tải lên.
 - API ưu tiên văn bản DLCN mới gắn recruiter trước bản DLCN lịch sử theo company, tránh mở nhầm PDF cũ khi hai bản cùng tồn tại. DOC/DOCX tại URL HTTPS storage công khai/S3 có chữ ký mở qua Google Docs Viewer; PDF và URL localhost mở trực tiếp. Hover liên kết tệp dùng màu thương hiệu cấu hình của hệ thống.
 
-#### Documentation
+#### Changed — Tài liệu
 
 - Cập nhật hướng dẫn xác thực employer, tiến độ EMP-P8/EMP-P9 và regression test desktop/mobile cho layout/asset GPKD cùng DLCN; chuẩn hóa thông báo toàn ứng dụng qua Sonner.
 
@@ -2374,7 +2374,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Sửa hồ sơ company rỗng do luồng đăng ký cũ bị hiểu nhầm là đã hoàn tất; vẫn cho phép người dùng thay thế bằng thao tác tìm/tạo công ty thật.
 - Sửa upload giấy tờ dùng validator ảnh cho file PDF; ĐKDN nay nhận JPG/PNG/PDF còn thỏa thuận `candidate_dpa` nhận PDF/DOC/DOCX với kiểm tra MIME, chữ ký file và giới hạn 5 MB.
 
-#### Documentation
+#### Changed — Tài liệu
 
 - Ghi rõ boundary i18n chỉ thuộc chunk employer marketing, ownership FSD cho domain dịch vụ/lead và cập nhật tiến độ dự án.
 - Thêm tài liệu state machine/validation/API cho auth employer, email xác thực/chào mừng, khảo sát nhu cầu, checklist và dashboard; kiểm chứng 85 backend test `accounts/employers/dashboard`, 220 frontend test với coverage 86,96%, lint/architecture/build và 38 Playwright smoke test desktop/mobile. Full backend có 229 test, còn 5 lỗi legacy độc lập ở `apps.applications.tests_migrations` do schema migration thiếu cột `contact_name`.
@@ -2429,7 +2429,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - CTA “Ứng tuyển ngay” mở workflow chọn CV/version bất biến, ưu tiên bản published, cảnh báo khi chưa publish và chỉ gửi payload V2 sau bước xác nhận.
 - V1 `/api/cvs/` và `/api/cv-templates/` giữ hoạt động trong thời gian cutover nhưng mọi response đã có `Deprecation`, `Sunset`, `Link: rel="successor-version"` và event telemetry endpoint-level không ghi URL, user-agent hay định danh người dùng.
 
-#### Documentation
+#### Changed — Tài liệu
 
 - Cập nhật kiến trúc, API, database inventory, tiến độ và kế hoạch CV Builder theo nguồn dữ liệu category/color mới, V1→V2 cutover, các biến môi trường deprecation/sunset và phần còn lại của workflow clone/restore/import analysis.
 
@@ -2663,6 +2663,6 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Backend: gom toàn bộ 12 Django app (`accounts`, `skills`, `candidates`, `employers`, `locations`, `cv_templates`, `cvs`, `jobs`, `applications`, `interviews`, `ai_core`, `dashboard`) vào `backend/apps/`, giữ `backend/config/` (settings/urls) và `backend/common/` (tiện ích dùng chung) ở ngoài vì không phải app. Cập nhật `AppConfig.name`, `INSTALLED_APPS`, toàn bộ import chéo giữa các app và `include()` trong `config/urls.py` sang `apps.<tên_app>`. Không phát sinh migration mới (app_label giữ nguyên), đã test lại toàn bộ API sau khi đổi.
 - Frontend: đổi `src/services/` thành `src/api/` (chứa `api.js` và `authService.js`), cập nhật import ở `hooks/useAuth.jsx` và `pages/auth/Register.jsx`. Build và test đăng nhập lại thành công.
 
-### Removed
+#### Removed
 
 - Gỡ `backend/venv` cũ (thiết lập FastAPI/Alembic bị vô tình commit vào git) do đổi hướng backend sang Django.

@@ -255,7 +255,7 @@ Phần AI tự xây của đồ án: ứng viên chọn một CV và một tin �
 kỹ năng khớp/thiếu và gợi ý cải thiện CV. Mô hình chạy và fine-tune trên máy
 local, không gọi API ngoài; phạm vi ở
 [phân tích yêu cầu](../01-phan-tich/phan-tich-yeu-cau.md#phạm-vi-ai-đã-chốt),
-lộ trình ở [tiến độ dự án](../TIEN-DO-DU-AN.md#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15).
+trạng thái ở [tiến độ dự án](../TIEN-DO-DU-AN.md#aiml-chạy-local), nhật ký thực nghiệm từng giai đoạn ở [bản lưu trữ](../archive/snapshot/tien-do-den-2026-11-26.md#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15).
 
 Đã có:
 
