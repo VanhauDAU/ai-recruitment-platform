@@ -55,6 +55,30 @@ def production_env():
     return env
 
 
+# Cấu hình sai phải làm production.py từ chối khởi động (mỗi ca đổi một biến).
+REJECTED_CASES = [
+    ('SECRET_KEY mẫu trong .env.example', {'SECRET_KEY': 'django-insecure-local-only-' + 'x' * 40}),
+    ('ALLOWED_HOSTS chứa *', {'ALLOWED_HOSTS': 'procv.site,*'}),
+    ('CORS origin http://', {'CORS_ALLOWED_ORIGINS': 'http://procv.site'}),
+]
+
+
+def rejected_cases_failures(base):
+    failures = []
+    for label, overrides in REJECTED_CASES:
+        result = subprocess.run(
+            [sys.executable, '-c', 'import config.settings.production'],
+            cwd=ROOT / 'backend',
+            env={**base, **production_env(), **overrides},
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode == 0 or 'ImproperlyConfigured' not in result.stderr:
+            failures.append(label)
+    return failures
+
+
 def main():
     # Chỉ giữ biến hệ thống cần để chạy Python; mọi cấu hình còn lại do script cấp.
     base = {key: os.environ[key] for key in ('PATH', 'HOME', 'LANG') if key in os.environ}
@@ -64,7 +88,12 @@ def main():
         env={**base, **production_env()},
         check=False,
     )
-    return result.returncode
+    if result.returncode:
+        return result.returncode
+    failures = rejected_cases_failures(base)
+    for label in failures:
+        print(f'production.py không chặn cấu hình sai: {label}', file=sys.stderr)
+    return 1 if failures else 0
 
 
 if __name__ == '__main__':

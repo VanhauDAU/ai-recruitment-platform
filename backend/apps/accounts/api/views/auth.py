@@ -14,7 +14,7 @@ from common.api.throttling import (
 )
 
 from ...models import User
-from ...services import verify_request_captcha
+from ...services import cf_access, verify_request_captcha
 from ...services.profile import remove_avatar, replace_avatar, update_own_profile
 from ...services.refresh_cookies import set_refresh_cookie
 from ...services.registration import register_account
@@ -114,6 +114,9 @@ class LoginView(APIView):
     throttle_scope = 'login'
 
     def post(self, request, *args, **kwargs):
+        if request.data.get('portal') == 'admin':
+            # Chặn trước khi thử mật khẩu: ngoài Access không dò được mật khẩu admin.
+            cf_access.require_access(request)
         verify_request_captcha(request, 'login')
         serializer = self.serializer_class(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)

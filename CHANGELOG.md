@@ -16,6 +16,16 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - `GET /api/auth/oauth/<provider>/start/` nhận thêm `mode=popup&nonce=`; trang callback
   frontend nhận thêm `popup=1&nonce=` ở chế độ này.
 
+#### Security — Đăng nhập admin phải qua Cloudflare Access, production chặn cấu hình mẫu
+
+- Khi đặt `CLOUDFLARE_ACCESS_TEAM_DOMAIN` + `CLOUDFLARE_ACCESS_AUD`, đăng nhập và làm mới
+  phiên admin đòi JWT Cloudflare Access hợp lệ (lộ mật khẩu admin không đủ đăng nhập từ
+  ngoài Access).
+- `production.py` từ chối `SECRET_KEY` dạng `django-insecure…`, `*` trong `ALLOWED_HOSTS`,
+  origin CORS không phải HTTPS. `safe_next` chặn `/\…`; reCAPTCHA production đòi `hostname`.
+- Runbook sửa redirect URI OAuth, thêm hướng dẫn email (Resend/Brevo, DMARC) và tinh chỉnh
+  Cloudflare; checklist go-live 2/12 (`docs/06-deployment/checklist-go-live-2-12.md`).
+
 #### Fixed — Thỏa thuận xử lý DLCN ProCV–NTD không còn trỏ sang TopCV
 
 - Link "Xem nội dung đầy đủ" ở bước Bảo vệ dữ liệu mở văn bản DPA của ProCV

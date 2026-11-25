@@ -212,6 +212,12 @@ OAUTH_EMPLOYER_CALLBACK_URL = config(
 OAUTH_STATE_TTL = config('OAUTH_STATE_TTL', default=600, cast=int)  # state chống CSRF: 10 phút
 OAUTH_CODE_TTL = config('OAUTH_CODE_TTL', default=60, cast=int)  # one_time_code đổi JWT: 60s
 
+# Cloudflare Access làm MFA cho admin (apps/accounts/services/cf_access.py): khi đặt
+# đủ hai giá trị, đăng nhập/làm mới phiên admin bắt buộc có JWT Access hợp lệ.
+# Team domain dạng `<team>.cloudflareaccess.com`; AUD lấy ở Access application.
+CLOUDFLARE_ACCESS_TEAM_DOMAIN = config('CLOUDFLARE_ACCESS_TEAM_DOMAIN', default='').strip()
+CLOUDFLARE_ACCESS_AUD = config('CLOUDFLARE_ACCESS_AUD', default='').strip()
+
 # API docs hữu ích ở local/staging, nhưng không public mặc định ở production.
 API_DOCS_ENABLED = config('API_DOCS_ENABLED', default=DEBUG, cast=bool)
 

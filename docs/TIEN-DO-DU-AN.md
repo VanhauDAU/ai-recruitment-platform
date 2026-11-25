@@ -7,7 +7,8 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Đăng nhập mạng xã hội bằng cửa sổ popup](#đăng-nhập-mạng-xã-hội-bằng-cửa-sổ-popup-2026-11-25) | 🟨 Nhánh `feat/oauth-popup-login`, chờ gộp PR |
+| [Đăng nhập mạng xã hội bằng cửa sổ popup](#đăng-nhập-mạng-xã-hội-bằng-cửa-sổ-popup-2026-11-25) | 🟨 PR #380 (nhánh `feat/oauth-popup-login`), chờ gộp |
+| [Chuẩn bị deploy: khóa admin bằng Access, vá cấu hình, checklist 2/12](#chuẩn-bị-deploy-khóa-admin-bằng-access-vá-cấu-hình-checklist-212-2026-11-25) | ✅ Đã gộp dev (#378); việc phía user theo checklist |
 | [Gia cố xử lý file tải lên (không antivirus)](#gia-cố-xử-lý-file-tải-lên-không-antivirus-2026-11-25) | 🟨 Nhánh `fix/file-handling-hardening`, chờ PR |
 | [Lưu ảnh đại diện Google vào storage](#lưu-ảnh-đại-diện-google-vào-storage-2026-11-22) | ✅ Đã gộp dev (#359, 25/11) |
 | [Chuẩn bị deploy: trần ghi theo tài khoản (ADR-0031)](#chuẩn-bị-deploy-trần-ghi-theo-tài-khoản-adr-0031-2026-11-25) | 🟨 Nhánh `feat/account-write-throttle`, chờ PR; chỉnh mức ở GĐ6 rehearsal |
@@ -92,6 +93,39 @@ luồng chuyển trang cũ. Không thêm thư viện, không đổi CSP/COOP.
 - **Kiểm thử:** pytest popup (7 ca), vitest nút/callback/helper, e2e smoke
   `candidate-auth.spec.js` mở popup thật bằng `context.waitForEvent('page')`.
 - **Còn lại:** thử thật với Google/Facebook/LinkedIn trên `procv.site` sau deploy.
+
+## Chuẩn bị deploy: khóa admin bằng Access, vá cấu hình, checklist 2/12 (2026-11-25)
+
+Rà soát sẵn sàng deploy lần cuối trước VPS ngày 2/12. Danh sách việc theo ngày:
+[checklist-go-live-2-12.md](06-deployment/checklist-go-live-2-12.md).
+
+- **Đăng nhập admin phải qua Cloudflare Access:** Access chỉ che `/admin*` +
+  `/api/admin/*`, còn đăng nhập/làm mới phiên admin đi `/api/auth/*`. Khi đặt
+  `CLOUDFLARE_ACCESS_TEAM_DOMAIN` + `CLOUDFLARE_ACCESS_AUD`, backend đòi JWT Access
+  (`CF_Authorization` / `Cf-Access-Jwt-Assertion`, RS256, kiểm aud/iss/exp, khóa ký
+  tải từ team domain) ở `LoginView` (`portal=admin`, trước khi thử mật khẩu),
+  `issue_tokens` cho mọi tài khoản admin và refresh `portal=admin`
+  (`apps/accounts/services/cf_access.py`). Không tải được khóa → từ chối. Chưa đặt
+  thì bỏ qua (dev/test). Production báo lỗi nếu chỉ đặt một trong hai.
+- **`production.py` chặn thêm:** `SECRET_KEY` bắt đầu `django-insecure` (giá trị mẫu
+  của `.env.example` trước đây lọt qua), `*` trong `ALLOWED_HOSTS`, origin CORS không
+  phải `https://`. `scripts/check_production_settings.py` chạy thêm 3 ca sai, mỗi ca
+  phải bị từ chối.
+- **Nhỏ:** `safe_next` chặn `\` và ký tự điều khiển (`/\evil.com`, tab); reCAPTCHA ở
+  production từ chối token không có `hostname`; `security-ci.yml` pip-audit thêm
+  `requirements-ml.txt` (`--no-deps`, không cài torch).
+- **Tài liệu:** runbook sửa redirect URI OAuth (provider gọi
+  `/api/auth/oauth/<provider>/callback/`, không phải `/oauth/callback`), thêm callback
+  Instagram, mục 1.9 tinh chỉnh zone (tắt Rocket Loader/Email Obfuscation, Browser
+  Cache TTL, rate-limit Free), mục 1.10 email (Resend/Brevo, DMARC, Email Routing),
+  ghi rõ gộp `dev` → `main` trước `deploy.sh` và script không chạy trên macOS.
+  `.env.example` thêm ví dụ SMTP Resend/Brevo/Gmail, cảnh báo `AI_RUNTIME_ENABLED`.
+- **CI:** trần JS khởi tạo 256 → 268 KiB: Dependabot #373 nâng React 19.3.1 (+~8,5 KiB chunk `react`) và antd/Tiptap/Sentry (+~4 KiB `vendor`), không đổi code; đo local 252,1 → 265,1, CI 265,9 KiB.
+- **Để sau go-live:** cache bảo mật (login guard, token một lần) tách khỏi
+  `redis-cache` LRU; gia cố container.
+- **Kiểm chứng:** pytest `test_cf_access`, `test_captcha`, `test_oauth`,
+  `test_security`; `check_production_settings.py` (ca hợp lệ + 3 ca sai); pip-audit
+  file ML. Chưa thử với Cloudflare Access thật.
 
 ## Gia cố xử lý file tải lên (không antivirus) (2026-11-25)
 
