@@ -14,6 +14,21 @@ CACHES = {
     }
 }
 
+# Channel layer của WebSocket thông báo: web, worker và beat cùng đẩy sự kiện vào
+# Redis, process `realtime` (daphne) chuyển tới socket đang mở. Prefix riêng để
+# không đụng key cache/Celery.
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [config('CHANNEL_LAYER_REDIS_URL', default=REDIS_URL)],
+            'prefix': 'procv-realtime',
+            'capacity': 200,
+            'expiry': 30,
+        },
+    }
+}
+
 # Celery dùng cùng Redis nhưng queue riêng cho email auth. Chạy worker và beat
 # tách process khỏi web server để SMTP không làm chậm request đăng ký/login.
 CELERY_BROKER_URL = config('CELERY_BROKER_URL', default=REDIS_URL)

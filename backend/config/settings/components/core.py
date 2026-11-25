@@ -27,6 +27,8 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv(
 # Application definition
 
 INSTALLED_APPS = [
+    # Trước staticfiles: `runserver` phục vụ ASGI (HTTP + WebSocket) như production.
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -40,6 +42,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'drf_spectacular',
     'corsheaders',
+    'channels',
     # Local apps
     'apps.accounts',
     'apps.skills',
@@ -59,6 +62,7 @@ INSTALLED_APPS = [
     'apps.privacy',
     'apps.knowledgebase',
     'apps.uploads',
+    'apps.realtime',
 ]
 
 MIDDLEWARE = [
@@ -97,6 +101,8 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
+# WebSocket thông báo (apps.realtime); HTTP production vẫn chạy gunicorn/WSGI.
+ASGI_APPLICATION = 'config.asgi.application'
 
 
 # Database

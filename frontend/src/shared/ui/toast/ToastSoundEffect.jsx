@@ -77,6 +77,7 @@ export default function ToastSoundEffect() {
       if (!audioContext) return
 
       const soundName = getToastSoundName(toast)
+      if (!soundName) return
       const ready = audioContext.state === 'running'
         ? Promise.resolve()
         : audioContext.resume().catch(() => {})

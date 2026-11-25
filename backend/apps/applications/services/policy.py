@@ -34,8 +34,12 @@ def auto_rejection_min_notice():
 
 
 def candidate_status_notification_delay():
-    """Khoảng chờ hoàn tác trước khi ứng viên nhận thông báo đổi trạng thái."""
-    return timedelta(minutes=_int('candidate_status_notify_delay_minutes', 5, 0, 60))
+    """Khoảng chờ hoàn tác trước khi ứng viên nhận thông báo đổi trạng thái.
+
+    Ngắn có chủ đích (mặc định 15 giây): đủ để sửa một cú bấm nhầm, không đủ để
+    giữ quyết định khỏi ứng viên.
+    """
+    return timedelta(seconds=_int('candidate_status_notify_delay_seconds', 15, 0, 60))
 
 
 def system_reminder_days():

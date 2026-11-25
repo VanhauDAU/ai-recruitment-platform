@@ -15087,6 +15087,23 @@ paths:
                 items:
                   $ref: '#/components/schemas/SkillGroup'
           description: ''
+  /api/shared/realtime/ticket/:
+    post:
+      operationId: shared_realtime_ticket_create
+      description: Any signed-in portal account; the JWT authentication already enforced
+        its session.
+      summary: Cấp vé kết nối WebSocket thông báo (dùng một lần, 30 giây)
+      tags:
+      - realtime
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RealtimeTicket'
+          description: ''
   /api/shared/site/announcements/{public_id}/state/:
     put:
       operationId: shared_site_announcements_state_update
@@ -34760,6 +34777,16 @@ components:
       required:
       - revision_number
       - revision_token
+    RealtimeTicket:
+      type: object
+      properties:
+        ticket:
+          type: string
+        expires_in:
+          type: integer
+      required:
+      - expires_in
+      - ticket
     ReasonCodeEnum:
       enum:
       - incomplete_content

@@ -81,7 +81,7 @@ của NTD đều mang huy hiệu.
 | --- | --- |
 | NTD chỉ mở xem CV | Không tính là phản hồi |
 | NTD quyết định rồi hoàn tác | Dòng hoàn tác bị loại; tính lại theo quyết định kế tiếp |
-| Quyết định đang trong 5 phút chờ hoàn tác | Chưa tính, lần chạy sau sẽ tính |
+| Quyết định đang trong cửa sổ hoàn tác (mặc định 15 giây) | Chưa tính, lần chạy sau sẽ tính |
 | Ứng viên rút hồ sơ trong hạn, chưa có quyết định | Loại khỏi phép tính |
 | Hồ sơ cũ bị thay bằng lần nộp lại (`is_current = false`) | Không tính; tính lần nộp mới |
 | Một tin để hồ sơ chờ quá hạn | Riêng tin đó mất huy hiệu; tin khác vẫn giữ |

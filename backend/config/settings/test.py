@@ -57,6 +57,7 @@ STORAGES = {
 }
 
 # Tests must not depend on a developer's Redis, SMTP server, or Celery worker.
+CHANNEL_LAYERS = {'default': {'BACKEND': 'channels.layers.InMemoryChannelLayer'}}
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',

@@ -7,7 +7,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 COMPOSE="$ROOT/scripts/deploy/compose.sh"
 DUMP="${1:?Cách dùng: restore_db.sh <file.dump>}"
-APP_SERVICES=(web backend worker ai-worker ml-worker beat)
+APP_SERVICES=(web backend realtime worker ai-worker ml-worker beat)
 
 [[ -f "$DUMP" ]] || { echo "Không thấy $DUMP" >&2; exit 1; }
 

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { candidateNotificationTone } from '@/entities/notification/candidate-notification'
 import NotificationListItem from '@/shared/ui/NotificationListItem'
+import NotificationSoundToggle from '@/shared/ui/NotificationSoundToggle'
 import useCandidateNotifications from '../model/use-candidate-notifications'
 
 const NOTIFICATION_SETTINGS_PATH = '/tai-khoan/cai-dat-nhan-email'
@@ -17,11 +18,14 @@ export default function CandidateNotificationBell() {
     <div className="w-[340px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl bg-white">
       <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
         <strong className="text-sm text-slate-800">Thông báo</strong>
-        {notifications.unreadCount > 0 && (
-          <Button type="link" size="small" loading={notifications.markingAll} onClick={notifications.markAllRead}>
-            Đánh dấu đã đọc
-          </Button>
-        )}
+        <div className="flex items-center gap-1">
+          {notifications.unreadCount > 0 && (
+            <Button type="link" size="small" loading={notifications.markingAll} onClick={notifications.markAllRead}>
+              Đánh dấu đã đọc
+            </Button>
+          )}
+          <NotificationSoundToggle />
+        </div>
       </div>
       <div className="max-h-[420px] overflow-y-auto">
         {isPending && <div className="p-4"><Skeleton active paragraph={{ rows: 3 }} /></div>}

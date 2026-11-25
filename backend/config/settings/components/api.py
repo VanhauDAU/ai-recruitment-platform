@@ -50,6 +50,8 @@ REST_FRAMEWORK = {
         'feedback': '5/min',
         'consultation': '5/min',
         'consent': '20/hour',
+        # Mỗi lần (re)connect WebSocket một vé; backoff phía client giữ dưới mức này.
+        'realtime_ticket': '30/min',
         'job_view': '120/hour',
         'job_impression': '240/hour',
         'job_report': '10/hour',

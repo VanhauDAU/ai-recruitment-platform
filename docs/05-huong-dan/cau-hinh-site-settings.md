@@ -273,7 +273,7 @@ Quy tắc nội dung:
 | Tự động từ chối | `auto_reject_default_days` | Thời hạn tự từ chối gợi ý | select | 21 |  |
 | Tự động từ chối | `auto_reject_min_notice_days` | Nhắc trước khi tự từ chối (ngày) | number | 3 |  |
 | Tự động từ chối | `auto_reject_email_grace_days` | Chờ trước khi báo ứng viên (ngày) | number | 3 |  |
-| Thông báo cho ứng viên | `candidate_status_notify_delay_minutes` | Chờ trước khi báo đổi trạng thái (phút) | number | 5 |  |
+| Thông báo cho ứng viên | `candidate_status_notify_delay_seconds` | Thời gian hoàn tác quyết định (giây) | number | 15 |  |
 | Nhắc nhà tuyển dụng | `recruiter_reminder_days` | Mốc nhắc nhà tuyển dụng (ngày) | json | [3, 7] |  |
 | Ứng viên nhắc nhà tuyển dụng | `candidate_reminder_after_days` | Ứng viên được nhắc sau (ngày) | number | 3 | ✓ |
 | Ứng viên nhắc nhà tuyển dụng | `candidate_reminder_interval_days` | Khoảng cách giữa hai lần nhắc (ngày) | number | 3 | ✓ |

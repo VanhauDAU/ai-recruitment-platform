@@ -1425,15 +1425,15 @@
     }
   },
   {
-    "key": "candidate_status_notify_delay_minutes",
-    "label": "Chờ trước khi báo đổi trạng thái (phút)",
+    "key": "candidate_status_notify_delay_seconds",
+    "label": "Thời gian hoàn tác quyết định (giây)",
     "group": "applications",
     "section": "Thông báo cho ứng viên",
     "value_type": "number",
-    "value": 5,
+    "value": 15,
     "is_public": false,
-    "description": "Quyết định của nhà tuyển dụng chỉ báo cho ứng viên sau khoảng này.",
-    "help": "Để nhà tuyển dụng kịp hoàn tác bấm nhầm; nhiều thay đổi liên tiếp gộp thành một thông báo.",
+    "description": "Quyết định của nhà tuyển dụng chỉ báo cho ứng viên sau khoảng này; trong lúc đó nhà tuyển dụng bấm Hoàn tác được.",
+    "help": "Chỉ để sửa bấm nhầm (tối đa 60 giây); nhiều thay đổi liên tiếp trong khoảng này gộp thành một thông báo.",
     "options": {
       "applies_to": [
         "Cổng ứng viên",

@@ -38,6 +38,8 @@ ALLOWED_METRICS = {
     'candidate_job_digest',
     'candidate_notification_event',
     'candidate_notification_email',
+    'realtime_push',
+    'realtime_connection',
     'ai_generation_request',
     'ai_generation_completion',
     'ai_generation_latency_ms',

@@ -445,5 +445,8 @@
   "fit_profile_section_languages": "Ngoại ngữ",
   "fit_profile_section_other": "Thông tin khác",
   "fit_profile_sections_empty": "Chưa đọc được nội dung các mục của CV.",
-  "fit_profile_section_interests": "Sở thích"
+  "fit_profile_section_interests": "Sở thích",
+  "notification_sound_turn_off": "Tắt âm thanh thông báo",
+  "notification_sound_turn_on": "Bật âm thanh thông báo",
+  "notification_open": "Xem"
 }

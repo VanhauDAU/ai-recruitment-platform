@@ -51,6 +51,10 @@ class NewApplicationAlertFixture:
         with self.captureOnCommitCallbacks(execute=True):
             return create_application_record(candidate=self.candidate, job=self.job, cv=self.cv)
 
+    def recruiter_mail(self):
+        # The candidate's own "application received" email goes out at once too.
+        return [message for message in mail.outbox if message.to != [self.candidate.email]]
+
 
 class NewApplicationAlertTests(NewApplicationAlertFixture, TestCase):
     def test_job_contacts_get_an_email_without_the_candidate_name(self):
@@ -65,11 +69,11 @@ class NewApplicationAlertTests(NewApplicationAlertFixture, TestCase):
         application = self.apply()
 
         self.assertEqual(
-            sorted(message.to[0] for message in mail.outbox),
+            sorted(message.to[0] for message in self.recruiter_mail()),
             ['hr@alert.example', 'lead@alert.example'],
         )
-        body = mail.outbox[0].alternatives[0][0]
-        self.assertIn('QA Engineer', mail.outbox[0].subject)
+        body = self.recruiter_mail()[0].alternatives[0][0]
+        self.assertIn('QA Engineer', self.recruiter_mail()[0].subject)
         self.assertIn(application.public_id, body)
         self.assertNotIn('Bí Mật Tên', body)
         notice = EmployerNotification.objects.get(
@@ -80,19 +84,21 @@ class NewApplicationAlertTests(NewApplicationAlertFixture, TestCase):
     def test_poster_is_the_fallback_recipient(self):
         self.apply()
 
-        self.assertEqual([message.to[0] for message in mail.outbox], [self.employer.email])
+        self.assertEqual(
+            [message.to[0] for message in self.recruiter_mail()], [self.employer.email]
+        )
 
     def test_preference_and_site_switch_stop_the_email_but_keep_the_bell(self):
         EmployerNotificationPreference.objects.create(
             recipient=self.employer, new_application_email=False
         )
         self.apply()
-        self.assertEqual(mail.outbox, [])
+        self.assertEqual(self.recruiter_mail(), [])
 
         EmployerNotificationPreference.objects.update(new_application_email=True)
         SiteSetting.objects.create(key='email_notify_new_application', value=False)
         self.apply_again()
-        self.assertEqual(mail.outbox, [])
+        self.assertEqual(self.recruiter_mail(), [])
         self.assertEqual(
             EmployerNotification.objects.filter(
                 event_type=EmployerNotification.EventType.APPLICATION_RECEIVED
@@ -125,7 +131,7 @@ class RecruiterAlertLanguageTests(NewApplicationAlertFixture, TestCase):
     def test_email_and_bell_use_the_recruiter_language(self):
         self.apply()
 
-        message = mail.outbox[0]
+        message = self.recruiter_mail()[0]
         html = message.alternatives[0][0]
         self.assertTrue(message.subject.startswith('New application for QA Engineer · '))
         self.assertIn('Hello Alert Co hiring team,', message.body)
