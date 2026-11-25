@@ -24,6 +24,9 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Thêm `seed_blog_posts` (30 bài Cẩm nang nghề nghiệp, 6 chuyên mục) và
   `seed_knowledgebase` (48 bài Trợ giúp cho ứng viên và nhà tuyển dụng), đi qua service
   biên tập như admin, chạy lại không nhân bản.
+- Thêm `verify_employer_phone`: khi SMS OTP còn tắt, quản trị viên gọi xác nhận rồi ghi
+  nhận số điện thoại cho NTD (ghi audit, chỉ lưu 3 số cuối; từ chối chạy khi SMS đã bật).
+  Trước đó NTD mới không có cách nào xác thực số nên hồ sơ xác thực không duyệt được.
 
 #### Removed — `featured_employers` khỏi `GET /api/public/jobs/stats/`
 

@@ -76,7 +76,9 @@ ARTICLES = [
   <li>Tài khoản tạo bằng Google cần đặt mật khẩu đăng nhập trước khi xác minh số điện thoại.</li>
   <li>Khi đổi số, số cũ vẫn giữ hiệu lực cho tới khi số mới xác minh thành công.</li>
 </ul>
-<p>Không chia sẻ mã OTP cho bất kỳ ai, kể cả người tự nhận là nhân viên ProCV.</p>""",
+<h2>Khi chưa gửi được SMS</h2>
+<p>Nếu màn hình báo "Xác thực SMS hiện chưa sẵn sàng", hãy liên hệ bộ phận hỗ trợ của ProCV kèm email tài khoản và số di động cần xác minh. Quản trị viên sẽ gọi đến đúng số đó để xác nhận bạn là chủ tài khoản, rồi ghi nhận số đã xác minh; thao tác này được lưu vào nhật ký quản trị.</p>
+<p>Không chia sẻ mã OTP cho bất kỳ ai, kể cả người tự nhận là nhân viên ProCV. Khi xác minh qua cuộc gọi, quản trị viên không bao giờ hỏi mật khẩu hay mã OTP của bạn.</p>""",
     },
     {
         'category': 'ntd-dang-ky-va-xac-thuc',
