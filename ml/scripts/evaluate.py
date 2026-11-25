@@ -4,6 +4,7 @@ Chạy từ thư mục gốc của repo, khi Docker Compose đang bật:
 
     ml/.venv/bin/python ml/scripts/evaluate.py
     ml/.venv/bin/python ml/scripts/evaluate.py --model e5-small=multilingual-e5-small/zs-v1
+    ml/.venv/bin/python ml/scripts/evaluate.py --ablation
     ml/.venv/bin/python ml/scripts/evaluate.py --split test --final
 
 Mặc định đo trên phần validation. Phần test chỉ chạy một lần ở giai đoạn nghiệm
@@ -13,8 +14,10 @@ Phương án được đo:
 - TF-IDF và BM25 trên văn bản thô (`baseline.py`).
 - Các dòng còn lại lấy từ lệnh `matching_evaluate` chạy trong container `ml-worker`,
   tức đúng mã trích xuất, mã hóa và chấm điểm của sản phẩm: điểm của bộ gợi ý theo
-  luật `profile-rule-v2`, cosine toàn văn của bi-encoder, và điểm `hybrid` (địa
-  điểm tắt vì rubric không xét).
+  luật `profile-rule-v2`, cosine toàn văn của bi-encoder, và điểm `hybrid` (công
+  thức đang chạy, hiện là `hybrid-v2`).
+- `--ablation` thêm ba dòng: `hybrid` với từng thay đổi của `hybrid-v2` bị tắt (khớp
+  kỹ năng gần nghĩa bật lại, bỏ hệ số liên quan) và tắt cả hai, tức `hybrid-v1`.
 - `--model tên=thư_mục[:noprefix]` thêm một bi-encoder khác trong `ml/models/` (chỉ
   lấy cosine toàn văn, vì mốc quy đổi điểm của `hybrid` là theo từng mô hình).
 
@@ -22,8 +25,8 @@ Chỉ số (mọi khoảng tin cậy là bootstrap 95%, lấy mẫu lại theo t
 - Spearman giữa điểm và nhãn 0–4, gộp mọi cặp.
 - NDCG@5 trung bình theo tin, độ lợi 2^nhãn − 1; kèm mức của xếp ngẫu nhiên.
 - Số tin mà phương án có NDCG@5 cao hơn BM25.
-- Riêng `hybrid`: kappa bậc hai giữa mức hiển thị và nhãn, và điểm của các cặp
-  nhãn 0 (khác ngành).
+- Riêng các dòng `hybrid`: kappa bậc hai giữa mức hiển thị và nhãn, và điểm của các
+  cặp nhãn 0 (khác ngành).
 
 Kết quả: `ml/reports/eval_<phần>.md` và `.json`; điểm từng cặp ở `ml/data/eval/`.
 """
@@ -49,6 +52,12 @@ TOP_K = 5
 BAND_THRESHOLDS = (50, 65, 80)
 LABEL_BAND = {0: 0, 1: 0, 2: 1, 3: 2, 4: 3}
 HYBRID = 'hybrid'
+# (tên dòng, các thay đổi của công thức bị tắt): xem `scoring.ABLATIONS` ở backend.
+ABLATION_RUNS = (
+    ('hybrid, bật khớp kỹ năng gần nghĩa', ('semantic_skills',)),
+    ('hybrid, bỏ hệ số liên quan', ('no_relevance_discount',)),
+    ('hybrid, tắt cả hai (công thức `hybrid-v1`)', ('semantic_skills', 'no_relevance_discount')),
+)
 BM25 = 'BM25'
 
 
@@ -221,14 +230,20 @@ def report(split, pairs, results, floor, quality, errors, cross):
             f'| {name} | {number(result["spearman"])} | {spread(result["spearman_ci"])} | '
             f'{number(result["ndcg"])} | {spread(result["ndcg_ci"])} | {beats} |'
         )
+    unrelated = next(iter(quality.values()))['unrelated_pairs']
     lines += [
         '',
         f'## Thang điểm của `{HYBRID}`',
         '',
-        f'- Kappa bậc hai giữa mức hiển thị và nhãn: {number(quality["band_kappa"])}.',
-        f'- {quality["unrelated_pairs"]} cặp nhãn 0 (khác ngành): trung vị '
-        f'{number(quality["unrelated_median"], 0)} điểm, cao nhất {number(quality["unrelated_max"], 0)}, '
-        f'{quality["unrelated_at_least_50"]} cặp từ 50 điểm trở lên.',
+        f'Kappa bậc hai giữa mức hiển thị và nhãn; điểm của {unrelated} cặp nhãn 0 (khác ngành).',
+        '',
+        '| Phương án | Kappa mức hiển thị | Nhãn 0: trung vị | Nhãn 0: cao nhất | Nhãn 0: từ 50 điểm |',
+        '| --- | ---: | ---: | ---: | ---: |',
+    ]
+    lines += [
+        f'| {name} | {number(row["band_kappa"])} | {number(row["unrelated_median"], 0)} | '
+        f'{number(row["unrelated_max"], 0)} | {row["unrelated_at_least_50"]} |'
+        for name, row in quality.items()
     ]
     if cross:
         lines += ['', '## Cặp khác ngôn ngữ (tin và CV một Việt một Anh)', '']
@@ -245,6 +260,7 @@ def main():
     parser.add_argument('--split', choices=['validation', 'test', 'all'], default='validation')
     parser.add_argument('--final', action='store_true', help='Xác nhận đây là lần chạy test duy nhất.')
     parser.add_argument('--model', action='append', type=parse_model, default=[], metavar='TÊN=THƯ_MỤC')
+    parser.add_argument('--ablation', action='store_true', help='Đo thêm hybrid với từng thay đổi bị tắt.')
     options = parser.parse_args()
     if options.split != 'validation' and not options.final:
         raise SystemExit('Phần test chỉ chạy một lần ở giai đoạn nghiệm thu. Thêm --final nếu đúng lúc đó.')
@@ -264,6 +280,11 @@ def main():
     collect('Luật `profile-rule-v2`', rows, 'rule_score')
     collect(f'Bi-encoder `{version}` (cosine toàn văn)', rows, 'document_similarity')
     collect(HYBRID, rows, 'score')
+    hybrids = [HYBRID]
+    for index, (name, names) in enumerate(ABLATION_RUNS if options.ablation else ()):
+        flags = [flag for item in names for flag in ('--ablation', item)]
+        collect(name, product_rows(pairs, f'ablation_{index}', flags), 'score')
+        hybrids.append(name)
     for name, path, no_prefix in options.model:
         flags = ['--model-path', f'/models/{path}', '--model-version', name]
         rows = product_rows(pairs, name, flags + (['--no-prefix'] if no_prefix else []))
@@ -279,7 +300,7 @@ def main():
         if len(different) >= 10
         else {}
     )
-    quality = score_quality(pairs, scores[HYBRID])
+    quality = {name: score_quality(pairs, scores[name]) for name in hybrids}
     floor = random_ndcg(pairs, rng)
     text = report(options.split, pairs, results, floor, quality, errors, cross)
 
@@ -290,7 +311,8 @@ def main():
         'pairs': len(pairs),
         'random_ndcg': floor,
         'systems': results,
-        'hybrid_quality': quality,
+        'hybrid_quality': quality[HYBRID],
+        'hybrid_ablation_quality': {name: quality[name] for name in hybrids[1:]},
         'cross_language': {name: {'pairs': count, 'spearman': rho} for name, (count, rho) in cross.items()},
     }
     (REPORTS_DIR / f'eval_{options.split}.json').write_text(

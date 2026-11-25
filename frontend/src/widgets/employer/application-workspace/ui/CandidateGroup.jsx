@@ -1,4 +1,5 @@
 import { DownOutlined, LockOutlined, StopOutlined } from '@ant-design/icons'
+import { FitScoreChip } from '@/entities/application/job-fit'
 import { m } from '@/shared/config/i18n'
 import { formatApplicationDate, initialsOf } from '../model/application-workspace'
 import ApplicationStatusBadge from './ApplicationStatusBadge'
@@ -62,6 +63,15 @@ export default function CandidateGroup({ group, expanded, selectedPublicId, onTo
                     {formatApplicationDate(application.applied_at)}
                   </span>
                 </span>
+                {application.ai_match_status && (
+                  <span className="mt-1.5 block">
+                    <FitScoreChip
+                      status={application.ai_match_status}
+                      score={application.ai_match_score}
+                      level={application.ai_match_level}
+                    />
+                  </span>
+                )}
               </button>
             )
           })}

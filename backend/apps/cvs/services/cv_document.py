@@ -7,7 +7,7 @@ file is accepted or rejected for the same reasons everywhere.
 import re
 import unicodedata
 
-from .pdf_layout import page_text
+from .pdf_layout import continue_columns, page_blocks
 
 MAX_CV_PAGES = 20
 # A CV rarely exceeds a few pages; reports and theses are far longer.
@@ -44,12 +44,20 @@ _CV_SECTION_GROUPS = {
     'summary': ('muc tieu', 'gioi thieu ban than', 'objective', 'summary', 'profile'),
     'projects': ('du an', 'project'),
     'certifications': ('chung chi', 'bang cap', 'certific', 'license'),
-    'awards': ('giai thuong', 'thanh tich', 'award', 'achievement'),
+    'awards': ('giai thuong', 'danh hieu', 'thanh tich', 'award', 'achievement'),
     'activities': ('hoat dong', 'activit', 'volunteer'),
     'interests': ('so thich', 'interest', 'hobbies'),
-    'references': ('nguoi tham chieu', 'tham khao', 'reference'),
+    'references': ('nguoi tham chieu', 'nguoi gioi thieu', 'tham khao', 'reference'),
     'languages': ('ngoai ngu', 'language'),
     'personal': ('thong tin ca nhan', 'personal'),
+    # Mục tự do cuối CV ("Thông tin thêm"): không thuộc mục nào ở trên.
+    'other': (
+        'thong tin them',
+        'thong tin khac',
+        'thong tin bo sung',
+        'additional info',
+        'other info',
+    ),
 }
 _EMAIL = re.compile(r'[\w.+-]+@[\w-]+(?:\.[\w-]+)+')
 _PHONE = re.compile(r'(?<!\d)\+?\d(?:[\s.\-()]*\d){8,13}(?!\d)')
@@ -62,7 +70,7 @@ class CvDocumentRejected(ValueError):
 
 
 def _page_chars(page):
-    """`(char, left, top, right, bottom)` of each character, y pointing down, for `page_text`."""
+    """`(char, left, top, right, bottom)` of each character, y pointing down, for `pdf_layout`."""
     textpage = page.get_textpage()
     height = page.get_height()
     for index in range(textpage.count_chars()):
@@ -76,8 +84,10 @@ def _read_pdf_text(source):
     pypdf splits Vietnamese words with diacritics ("Ứ ng viên") in about 9% of
     words, pypdfium2 split none across 51 test CVs (`ml/reports/extract_check.md`).
     pypdfium2 returns text in drawing order, so the lines are put back in reading
-    order from the character positions (`pdf_layout.page_text`): two-column
-    templates otherwise detach section headings from their content.
+    order from the character positions (`pdf_layout`): two-column templates otherwise
+    detach section headings from their content. A heading wrapped over two lines in a
+    narrow column is joined back, and text that continues a column on the next page
+    is moved to the end of that column (`continue_columns`).
     """
     import pypdfium2
     from pypdf import PdfReader
@@ -90,7 +100,13 @@ def _read_pdf_text(source):
     source.seek(0)
     document = pypdfium2.PdfDocument(source.read())
     try:
-        return '\n'.join(page_text(_page_chars(page)) for page in document)
+        pages = []
+        for page in document:
+            blocks = page_blocks(_page_chars(page))
+            for block in blocks:
+                block.lines = _join_split_headings(block.lines)
+            pages.append(blocks)
+        return '\n'.join(continue_columns(pages, _is_heading_line))
     finally:
         document.close()
 
@@ -166,11 +182,8 @@ def _heading_key(line):
 MAX_HEADING_EXTRA_CHARS = 15
 
 
-def heading_section(line):
-    """CV section a heading line names (`'experience'`, `'skills'`…), or None.
-
-    When several sections match ("Trình độ ngoại ngữ"), the longest keyword wins.
-    """
+def _heading_match(line):
+    """`(section, matched keyword length)` of a heading line, or `(None, 0)`."""
     head = _heading_key(line)
     matches = [
         (len(key), -order, section)
@@ -179,9 +192,52 @@ def heading_section(line):
         if head and key in head
     ]
     if not matches:
-        return None
+        return None, 0
     length, _, section = max(matches)
-    return section if len(head) - length <= MAX_HEADING_EXTRA_CHARS else None
+    return (section, length) if len(head) - length <= MAX_HEADING_EXTRA_CHARS else (None, 0)
+
+
+def heading_section(line):
+    """CV section a heading line names (`'experience'`, `'skills'`…), or None.
+
+    When several sections match ("Trình độ ngoại ngữ"), the longest keyword wins.
+    """
+    return _heading_match(line)[0]
+
+
+# Một tiêu đề mục dài nhất chừng này từ ("Danh hiệu và giải thưởng").
+MAX_HEADING_LINE_WORDS = 6
+
+
+def _is_heading_line(line):
+    words = line.split()
+    return 0 < len(words) <= MAX_HEADING_LINE_WORDS and heading_section(line) is not None
+
+
+def _join_split_headings(lines):
+    """Nối tiêu đề mục bị cột hẹp ngắt thành hai dòng ("Danh hiệu và giải" + "thưởng").
+
+    Dòng sau được nối khi nó ngắn, tự nó không phải tiêu đề, và nối vào thì khớp một từ
+    khóa mục dài hơn so với dòng trước đứng một mình.
+    """
+    joined, index = [], 0
+    while index < len(lines):
+        line = lines[index]
+        following = lines[index + 1] if index + 1 < len(lines) else ''
+        if (
+            following
+            and len(following.split()) <= 2
+            and len(line.split()) < MAX_HEADING_LINE_WORDS
+            and heading_section(following) is None
+            and _is_heading_line(f'{line} {following}')
+            and _heading_match(f'{line} {following}')[1] > _heading_match(line)[1]
+        ):
+            joined.append(f'{line} {following}')
+            index += 2
+            continue
+        joined.append(line)
+        index += 1
+    return joined
 
 
 def looks_like_cv(text):

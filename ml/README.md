@@ -115,7 +115,7 @@ liệu cần Docker Compose đang chạy; mặc định chỉ chạy thử, thê
    resume-job-description-fit) vào `data/public/` và các mô hình gốc; ghi nguồn, mã
    commit, ngày tải vào `data/public/SOURCES.md`.
 10. `scripts/evaluate.py`: đo các phương án trên tập vàng (TF-IDF, BM25, luật
-    `profile-rule-v2`, bi-encoder, `hybrid`) → `reports/eval_validation.md`. Các dòng
+    `profile-rule-v2`, bi-encoder, `hybrid`; `--ablation` đo thêm từng thay đổi của `hybrid-v2`) → `reports/eval_validation.md`. Các dòng
     của sản phẩm do lệnh `matching_evaluate` chạy trong container `ml-worker`, tức
     đúng mã đang phục vụ ứng viên. Phần test chỉ chạy một lần ở giai đoạn nghiệm
     thu (`--split test --final`).

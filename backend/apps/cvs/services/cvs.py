@@ -77,8 +77,11 @@ def permanently_delete_cv(*, cv, actor):
     storage_keys.extend(exports.values_list('storage_key', flat=True))
 
     # These rows protect immutable versions at the database layer; remove
-    # library-owned artifacts before deleting their owning aggregate.
+    # library-owned artifacts before deleting their owning aggregate. Access
+    # logs keyed by a library version only (``cv`` NULL) go too; logs of
+    # application snapshots stay with the snapshot.
     CvAccessLog.objects.filter(cv=locked_cv).delete()
+    CvAccessLog.objects.filter(version__cv=locked_cv).exclude(version_id__in=snapshot_ids).delete()
     CvSharedLink.objects.filter(cv=locked_cv).delete()
     exports.delete()
 
@@ -252,8 +255,9 @@ def update_cv_metadata(
     """Update the small mutable CV aggregate owned by the candidate.
 
     Draft document changes intentionally stay on the optimistic-locking draft
-    endpoint.  The account library only needs a title and one active default
-    CV, so this service makes those invariants explicit.  The target position
+    endpoint.  The account library only needs a title, one active default CV
+    and at most one CV open to recruiter search, so this service makes those
+    invariants explicit.  The target position
     (`JobCategory`, ``None`` clears it) and desired `Job.PositionLevel` are the
     candidate-chosen matching fields of CVT-3; they are never printed on the CV.
     """
@@ -261,10 +265,11 @@ def update_cv_metadata(
     if locked_cv.user_id != actor.pk:
         raise ValueError('Only the CV owner can update its metadata.')
 
-    if is_default is True:
-        # Serialise updates across a candidate's CVs.  The database constraint
-        # below remains the final guard if this service is ever bypassed.
+    if is_default is True or recruiter_searchable is True:
+        # Serialise updates across a candidate's CVs.  The database constraints
+        # remain the final guard if this service is ever bypassed.
         actor.__class__.objects.select_for_update().get(pk=actor.pk)
+    if is_default is True:
         UserCv.objects.filter(user_id=actor.pk, is_deleted=False, is_default=True).exclude(
             pk=locked_cv.pk,
         ).update(is_default=False)
@@ -285,6 +290,12 @@ def update_cv_metadata(
     if recruiter_searchable is not None and locked_cv.recruiter_searchable != recruiter_searchable:
         if recruiter_searchable and not recruiter_visibility_granted(actor):
             raise RecruiterConsentRequired()
+        if recruiter_searchable:
+            # Only one CV per candidate is searchable: turning this one on turns
+            # the previous one off (constraint ``uq_user_searchable_cv``).
+            UserCv.objects.filter(user_id=actor.pk, recruiter_searchable=True).exclude(
+                pk=locked_cv.pk
+            ).update(recruiter_searchable=False)
         locked_cv.recruiter_searchable = recruiter_searchable
         update_fields.append('recruiter_searchable')
     if update_fields:

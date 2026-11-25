@@ -16,6 +16,11 @@ from .blocks import (
     is_candidate_blocked_for_job,
     lift_candidate_block,
 )
+from .candidate_search import (
+    candidate_detail,
+    invite_candidate,
+    search_candidates,
+)
 from .flash_badge import refresh_flash_badges
 from .locking import RecruitmentResourceChanged
 from .policy import candidate_reminder_policy
@@ -61,6 +66,9 @@ from .talent_pool import (
 )
 
 __all__ = [
+    'candidate_detail',
+    'invite_candidate',
+    'search_candidates',
     'application_rules',
     'candidate_reminder_available_at',
     'candidate_reminder_policy',

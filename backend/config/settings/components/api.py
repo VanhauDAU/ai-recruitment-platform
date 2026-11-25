@@ -58,6 +58,9 @@ REST_FRAMEWORK = {
         'cv_import': '10/hour',
         'ai_job_generation': '3/min',
         'match_analysis': '20/hour',
+        # Tìm CV: mỗi lượt tìm chấm lại tới 200 CV; lời mời gửi thông báo cho ứng viên.
+        'candidate_search': '240/hour',
+        'candidate_search_invite': '40/hour',
         'knowledgebase_public': '120/min',
         'public_companies': '120/min',
         # Invited reviewers: open the CV and save a scorecard a few times.

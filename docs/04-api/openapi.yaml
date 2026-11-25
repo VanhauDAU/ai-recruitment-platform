@@ -9374,6 +9374,31 @@ paths:
               schema:
                 $ref: '#/components/schemas/AnalysisError'
           description: ''
+  /api/candidate/matching/cv-profiles/{cv_public_id}/:
+    get:
+      operationId: candidate_matching_cv_profiles_retrieve
+      description: '`status`: `ready` (có `profile`), `pending` (CV vừa lưu, chưa
+        trích xuất xong), `failed` (không đọc được CV, kèm `error_code`). Chỉ đọc;
+        không chứa chữ nguyên văn ngoài các mục liệt kê.'
+      summary: Hồ sơ trích xuất từ CV của ứng viên
+      parameters:
+      - in: path
+        name: cv_public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - Matching
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
   /api/candidate/notifications/:
     get:
       operationId: candidate_notifications_list
@@ -9692,6 +9717,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/Application'
           description: ''
+  /api/employer/applications/{public_id}/ai-match/:
+    get:
+      operationId: employer_applications_ai_match_retrieve
+      description: '`status`: `ready` (có `result`), `pending` (đang phân tích), `failed`,
+        `not_consented` (ứng viên không tham gia phân tích AI), hoặc null khi tính
+        năng tắt. Kết quả chấm trên bản CV đã nộp; không có gợi ý sửa CV dành cho
+        ứng viên.'
+      summary: Mức phù hợp do AI chấm cho một hồ sơ (chi tiết từng tiêu chí)
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
   /api/employer/applications/{public_id}/cv/:
     get:
       operationId: employer_applications_cv_retrieve
@@ -9814,6 +9865,32 @@ paths:
               schema:
                 type: string
                 format: binary
+          description: ''
+  /api/employer/applications/{public_id}/extracted-profile/:
+    get:
+      operationId: employer_applications_extracted_profile_retrieve
+      description: '`status`: `ready` (có `profile`), `pending`, `failed`, hoặc `not_consented`
+        khi ứng viên không tham gia phân tích AI. `profile` gồm chức danh, kinh nghiệm,
+        học vấn, cấp bậc, ngoại ngữ, kỹ năng theo nhóm và nội dung từng mục của CV
+        (`sections`).'
+      summary: Hồ sơ trích xuất từ bản CV đã nộp của một hồ sơ
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
           description: ''
   /api/employer/applications/{public_id}/history/:
     get:
@@ -11042,6 +11119,150 @@ paths:
               schema:
                 $ref: '#/components/schemas/CandidateBlock'
           description: ''
+  /api/employer/candidate-search/:
+    get:
+      operationId: employer_candidate_search_retrieve
+      description: 'Kết quả ẩn danh: mã ứng viên, chức danh, kinh nghiệm, học vấn,
+        cấp bậc, ngoại ngữ, kỹ năng trùng với tin, điểm và mức phù hợp. Không có tên,
+        liên hệ, tệp CV hay tên công ty.'
+      summary: 'Tìm CV: ứng viên đang bật tìm kiếm, xếp theo mức phù hợp với một tin'
+      parameters:
+      - in: query
+        name: education
+        schema:
+          enum:
+          - none
+          - middle_school
+          - high_school
+          - intermediate
+          - college
+          - university
+          - postgraduate
+          - ''
+          type: string
+          default: ''
+        description: |-
+          * `none` - none
+          * `middle_school` - middle_school
+          * `high_school` - high_school
+          * `intermediate` - intermediate
+          * `college` - college
+          * `university` - university
+          * `postgraduate` - postgraduate
+      - in: query
+        name: job
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 50
+        required: true
+      - in: query
+        name: language
+        schema:
+          type: string
+          default: ''
+          maxLength: 5
+      - in: query
+        name: min_months
+        schema:
+          type: integer
+          maximum: 600
+          minimum: 0
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+      - in: query
+        name: province
+        schema:
+          type: integer
+          minimum: 1
+      - in: query
+        name: q
+        schema:
+          type: string
+          default: ''
+          maxLength: 80
+      - in: query
+        name: skills
+        schema:
+          type: array
+          items:
+            type: integer
+            minimum: 1
+          maxItems: 10
+      tags:
+      - applications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/employer/candidate-search/{ref}/:
+    get:
+      operationId: employer_candidate_search_detail
+      description: Mỗi lần mở được ghi `CvAccessLog` kênh `recruiter_search`.
+      summary: 'Tìm CV: hồ sơ trích xuất ẩn danh và mức phù hợp chi tiết của một ứng
+        viên'
+      parameters:
+      - in: query
+        name: job
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: ref
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/employer/candidate-search/{ref}/invite/:
+    post:
+      operationId: employer_candidate_search_invite_create
+      summary: 'Tìm CV: mời một ứng viên ứng tuyển vào một tin đang tuyển'
+      parameters:
+      - in: path
+        name: ref
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateSearchInviteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CandidateSearchInviteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CandidateSearchInviteRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/employer/company/:
     get:
       operationId: employer_company_retrieve
@@ -21546,6 +21767,18 @@ components:
           type: string
           format: date-time
           readOnly: true
+        ai_match_score:
+          type: integer
+          readOnly: true
+          nullable: true
+        ai_match_level:
+          type: string
+          readOnly: true
+          nullable: true
+        ai_match_status:
+          type: string
+          nullable: true
+          readOnly: true
         viewed_at:
           type: string
           format: date-time
@@ -21578,6 +21811,9 @@ components:
       required:
       - accepted_at
       - acquisition_channel
+      - ai_match_level
+      - ai_match_score
+      - ai_match_status
       - applied_at
       - available_decisions
       - campaign_channel_label
@@ -23134,6 +23370,15 @@ components:
           type: integer
       required:
       - updated
+    CandidateSearchInviteRequest:
+      type: object
+      properties:
+        job:
+          type: string
+          minLength: 1
+          maxLength: 50
+      required:
+      - job
     CandidateTalentPool:
       type: object
       description: 'What the candidate sees: who keeps their profile and until when.'

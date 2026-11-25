@@ -13,6 +13,10 @@ tọa độ từng ký tự (không phụ thuộc thư viện đọc PDF nào):
    trống rộng nhất, cuối cùng mới đọc từng hàng từ trên xuống.
 3. Cột hẹp chỉ gồm ngày tháng (mẫu CV ghi thời gian bên lề từng việc) không phải
    một cột nội dung: ngày được ghép vào dòng cùng hàng ở cột bên cạnh.
+4. `page_blocks` + `continue_columns`: CV hai cột dài hơn một trang. Phần đầu một cột
+   ở trang sau, trước tiêu đề mục đầu tiên, là phần tiếp của chính cột đó ở trang
+   trước. Đọc lần lượt "trang 2 cột trái rồi cột phải" sẽ gắn phần tiếp ấy vào mục
+   cuối của cột trái; `continue_columns` đưa nó về cuối cột tương ứng của trang trước.
 
 Đơn vị là point của PDF; trục y hướng xuống (top < bottom).
 """
@@ -203,3 +207,77 @@ def reading_order(segments):
 def page_text(chars):
     """Văn bản của một trang theo thứ tự đọc, mỗi dòng một hàng."""
     return '\n'.join(line.text for line in reading_order(build_segments(chars)))
+
+
+@dataclass
+class Block:
+    """Một khối cột của trang: khoảng ngang nó chiếm và các dòng theo thứ tự đọc."""
+
+    left: float
+    right: float
+    lines: list
+
+    def overlap(self, other):
+        return max(0.0, min(self.right, other.right) - max(self.left, other.left))
+
+
+def _block(segments):
+    return Block(
+        min(segment.left for segment in segments),
+        max(segment.right for segment in segments),
+        [line.text for line in reading_order(segments)],
+    )
+
+
+def page_blocks(chars):
+    """Các khối cột của một trang theo thứ tự đọc.
+
+    Trang hai cột không có dòng nào chạy ngang qua khe cho hai khối (trái, phải); mọi
+    trường hợp khác là một khối với đúng thứ tự của `page_text`.
+    """
+    segments = build_segments(chars)
+    if not segments:
+        return []
+    if len(segments) >= 2:
+        gutter = _gutter(segments)
+        if gutter is not None and not gutter[1]:
+            middle = gutter[0]
+            left = [segment for segment in segments if segment.right <= middle]
+            right = [segment for segment in segments if segment.left >= middle]
+            if left and right and not (_is_date_column(left) or _is_date_column(right)):
+                return [_block(left), _block(right)]
+    return [_block(segments)]
+
+
+def continue_columns(pages, is_heading):
+    """Ghép phần tiếp của từng cột qua trang; trả các dòng của tài liệu theo thứ tự đọc.
+
+    `pages` là kết quả `page_blocks` của từng trang; `is_heading(dòng)` cho biết một
+    dòng có phải tiêu đề mục. Các dòng đứng trước tiêu đề đầu tiên của một khối:
+
+    - ở trang đầu, khối không phải khối đầu tiên: là phần đầu trang (tên, chức danh) đặt
+      trên cột bên phải, được đưa lên đầu tài liệu thay vì dính vào mục cuối của cột trái;
+    - ở trang sau: là phần tiếp của khối **nằm cùng vị trí ngang** ở trang trước (khối
+      chồng lên nó nhiều nhất), không phải của khối vừa đọc xong.
+
+    Tài liệu một cột không đổi thứ tự.
+    """
+    heading_lines, ordered, previous = [], [], []
+    for page_number, blocks in enumerate(pages):
+        current = []
+        for index, block in enumerate(blocks):
+            lines = list(block.lines)
+            first_heading = next(
+                (position for position, line in enumerate(lines) if is_heading(line)), len(lines)
+            )
+            if first_heading and previous:
+                target = max(previous, key=lambda earlier: earlier.overlap(block))
+                target.lines.extend(lines[:first_heading])
+                lines = lines[first_heading:]
+            elif first_heading and page_number == 0 and index > 0:
+                heading_lines += lines[:first_heading]
+                lines = lines[first_heading:]
+            current.append(Block(block.left, block.right, lines))
+        ordered += current
+        previous = current
+    return heading_lines + [line for block in ordered for line in block.lines]

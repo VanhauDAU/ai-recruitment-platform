@@ -706,6 +706,20 @@ pages/main/jobs/JobDetail (placement="sidebar": slot dưới thông tin công ty
   để không tăng CSS khởi tạo. Chuyển động tắt theo `prefers-reduced-motion`.
 - `CvChoice` thuộc `entities/cv/cv/ui`, dùng chung cho `apply-for-job` và
   `analyze-job-fit` (feature không import nhau).
+- Từ vựng của mức phù hợp nằm ở `entities/application/job-fit` và dùng chung cho hai
+  cổng: bốn mức và mốc điểm (`FIT_BANDS`, `bandOf`), nhãn tiêu chí, nhãn độ tin cậy,
+  câu tóm tắt tiêu chí dựng từ `components[].detail` (`criterionSummary`, dịch được).
+  Entity còn có `FitScoreChip` (điểm + mức trên một dòng, hoặc lý do chưa có điểm) và
+  `FitBreakdown` (bản chi tiết gọn một cột). Hộp thoại của ứng viên giữ phần trình bày
+  riêng (mascot, thước bốn dải, gợi ý sửa CV) nhưng lấy nhãn từ entity này. Chuỗi ở
+  `messages/shared` với tiền tố `fit_`; style `job-fit.css` tiền tố `fit-`, một màu
+  nhấn thương hiệu, hổ phách chỉ cho kỹ năng bắt buộc còn thiếu, mức thể hiện bằng chữ.
+- Cùng entity có `ExtractedProfile`: hồ sơ trích xuất từ một CV (chức danh, kinh nghiệm,
+  học vấn, cấp bậc, ngoại ngữ, kỹ năng theo nhóm), chỉ đọc. Ứng viên xem qua
+  `features/main/cv/view-recruiter-profile` ("Hồ sơ NTD nhìn thấy", hộp thoại tải trễ hai
+  cột CV | hồ sơ, API `/api/candidate/matching/cv-profiles/{cv}/`); nút nằm trên thẻ CV
+  đang bật và ở thanh bên tài khoản. Mỗi ứng viên chỉ bật một CV cho NTD tìm kiếm
+  (`features/main/cv/update-recruiter-visibility`): bật CV khác thì CV cũ tự tắt.
 - Trang lưu CV thành công chỉ hiện nhãn "Phù hợp/Rất phù hợp" của đối sánh theo
   luật, không hiện phần trăm: điểm số duy nhất ứng viên thấy là của phân tích AI.
 
@@ -741,6 +755,28 @@ pages/employer/candidates/ApplicationList
   invalidate key này. Các mục còn lại là "Sắp mở" theo lộ trình.
 - Style riêng nằm ở `application-workspace.css` và `application-decision.css`
   (lazy theo route) để không tăng CSS khởi tạo.
+- Tìm CV (`/tuyendung/app/candidate-search`, nút "Tìm CV" trên header và mục ở nhóm "Quản lý
+  CV"): `pages/employer/candidates/CandidateSearch` →
+  `features/employer/candidate/search-candidates` → `entities/application/job-fit`
+  (`FitScoreChip`, `ExtractedProfile`, `FitBreakdown showEvidence={false}`),
+  `entities/job/job` (tin đang tuyển). Feature sở hữu API `/api/employer/candidate-search/`;
+  tin làm mốc nằm ở URL (`?job=`). Xem nhanh là Drawer tải trễ (phải từ 768 px, đáy ở màn
+  hẹp); chi tiết không tự gọi lại ở nền vì mỗi lần gọi được ghi nhật ký truy cập. Kết quả ẩn
+  danh: giao diện không có chỗ nào hiện tên, liên hệ hay tệp CV.
+- Mức phù hợp do AI chấm (cờ `ai_application_ranking_enabled`): danh sách lấy
+  `ai_match_score/level/status` ngay trong dòng hồ sơ và hiện bằng `FitScoreChip` của
+  `entities/application/job-fit` (bảng "CV ứng tuyển" của một tin ở
+  `pages/employer/jobs/JobApplicationsWorkspace`, thẻ hồ sơ ở `CandidateGroup`). Bảng
+  có lựa chọn sắp xếp "Phù hợp nhất" (`ordering=ai_match`); mặc định vẫn là mới nhất,
+  lựa chọn được nhớ ở localStorage `procv_employer_cv_ordering`. Chi tiết "vì sao có
+  điểm này" thuộc `features/employer/candidate/view-application-match`:
+  `ApplicationMatchButton` (chip bấm được, dùng ở bảng CV của tin và bảng CV của chiến
+  dịch) và `ApplicationMatchCard` (khối đầu panel "Xử lý hồ sơ") cùng mở một Drawer tải
+  trễ gọi `/ai-match/`, hỏi lại mỗi 5 giây khi đang phân tích. Panel bên phải giữ nguyên
+  các mục cũ bên dưới khối đó. Cột giữa có nút chuyển "CV gốc | Hồ sơ trích xuất"
+  (`ApplicationExtractedProfile`, API `/extracted-profile/`). Hồ sơ không có điểm luôn kèm
+  lý do (đang phân tích, ứng viên không tham gia AI, không đọc được CV); giao diện không
+  tự suy điểm.
 
 ## Ownership map — Thông báo của ứng viên
 

@@ -159,6 +159,18 @@ msgstr "You cannot apply for this job posting right now."
 msgid "Ứng viên này đã ở trong danh sách chặn của công ty."
 msgstr "This candidate is already on the company block list."
 
+msgid "Tính năng Tìm CV đang tắt."
+msgstr "CV search is turned off."
+
+msgid "Tin này chưa được phân tích xong. Thử lại sau ít phút hoặc chọn tin khác."
+msgstr "This job posting has not been analysed yet. Try again in a few minutes or choose another one."
+
+msgid "Ứng viên này đã ứng tuyển tin này."
+msgstr "This candidate has already applied for this job posting."
+
+msgid "Bạn đã mời ứng viên này ứng tuyển tin này."
+msgstr "You have already invited this candidate to apply for this job posting."
+
 msgid "Bạn chưa đưa ra quyết định nào cho hồ sơ trong %(days)s ngày gần nhất."
 msgstr "You have not decided on any application in the last %(days)s days."
 
@@ -224,9 +236,6 @@ msgstr "Cannot move the application from \"%(from)s\" to \"%(to)s\"."
 
 msgid "Ứng viên đã có trong kho của bạn."
 msgstr "This candidate is already in your talent pool."
-
-msgid "Bạn đã mời ứng viên này ứng tuyển tin này."
-msgstr "You have already invited this candidate to apply for this job posting."
 
 msgid "Bạn có hồ sơ ứng tuyển mới"
 msgstr "You have a new application"

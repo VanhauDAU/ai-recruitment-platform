@@ -543,8 +543,9 @@ class CandidateProfileApiTests(TestCase):
             recruiter_searchable=True,
         )
 
-    def test_revoking_recruiter_visibility_withdraws_every_cv_from_search(self):
-        own_cvs = [self.searchable_cv(self.user, f'CV {index}') for index in range(2)]
+    def test_revoking_recruiter_visibility_withdraws_the_cv_from_search(self):
+        # Mỗi ứng viên chỉ bật một CV cho NTD tìm kiếm (`uq_user_searchable_cv`).
+        own_cvs = [self.searchable_cv(self.user, 'CV 0')]
         other = get_user_model().objects.create_user(
             email='other@example.com', password='password', role='candidate'
         )

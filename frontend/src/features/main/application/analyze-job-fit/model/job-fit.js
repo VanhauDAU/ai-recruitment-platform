@@ -7,33 +7,8 @@ export function isAnalysisActive(analysis) {
   return ACTIVE_STATUSES.has(analysis?.status)
 }
 
-// Bốn mức theo điểm tổng; `from` là điểm thấp nhất của mức.
-export const FIT_BANDS = [
-  { key: 'low', label: 'Chưa phù hợp', from: 0 },
-  { key: 'medium', label: 'Tương đối phù hợp', from: 50 },
-  { key: 'high', label: 'Phù hợp', from: 65 },
-  { key: 'very_high', label: 'Rất phù hợp', from: 80 },
-]
-
-export const CRITERIA_LABELS = {
-  skills: 'Kỹ năng',
-  experience: 'Kinh nghiệm',
-  education: 'Học vấn',
-  position_level: 'Cấp bậc',
-  languages: 'Ngoại ngữ',
-  location: 'Địa điểm',
-}
-
-export const CONFIDENCE_COPY = {
-  high: 'CV có đủ thông tin cho các tiêu chí.',
-  medium: 'Một tiêu chí thiếu dữ liệu hoặc chỉ ước lượng được, kết quả có thể lệch.',
-  low: 'Nhiều tiêu chí thiếu dữ liệu, kết quả chỉ mang tính tham khảo.',
-}
-
-export const STATUS_COPY = {
-  insufficient_data: 'Chưa đủ dữ liệu',
-  not_required: 'Tin không yêu cầu',
-}
+// Mức, nhãn tiêu chí, độ tin cậy: `entities/application/job-fit` (dùng chung với cổng
+// nhà tuyển dụng).
 
 const ANALYSIS_ERROR_COPY = {
   cv_text_unavailable: 'Không đọc được chữ trong tệp CV (có thể là bản scan). Hãy tải lên PDF có thể bôi đen chữ hoặc dùng CV tạo trên hệ thống.',
@@ -61,6 +36,3 @@ export function requestErrorCopy(error) {
   return REQUEST_ERROR_COPY[error?.response?.data?.code] || 'Chưa gửi được yêu cầu phân tích. Thử lại sau.'
 }
 
-export function bandOf(score) {
-  return [...FIT_BANDS].reverse().find((band) => score >= band.from) || FIT_BANDS[0]
-}

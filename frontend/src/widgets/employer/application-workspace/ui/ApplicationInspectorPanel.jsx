@@ -13,6 +13,7 @@ import { Link } from 'react-router'
 import { ApplicationDecisionBar } from '@/features/employer/candidate/application-status-decision'
 import { BlockCandidateButton } from '@/features/employer/candidate/block-candidate'
 import { SaveToTalentPoolButton } from '@/features/employer/candidate/save-to-talent-pool'
+import { ApplicationMatchCard } from '@/features/employer/candidate/view-application-match'
 import { employerAppPath } from '@/shared/config/portals'
 import { m } from '@/shared/config/i18n'
 import { formatApplicationDate, initialsOf, pendingNoticeOf } from '../model/application-workspace'
@@ -138,6 +139,8 @@ export default function ApplicationInspectorPanel({
             />
             <CandidateTrust application={selectedApplication} candidateName={candidateName} />
           </section>
+
+          <ApplicationMatchCard application={selectedApplication} />
 
           <section className="aw-section space-y-3">
             <h3 className="aw-section__title">{m.employer_workspace_app_contact()}</h3>

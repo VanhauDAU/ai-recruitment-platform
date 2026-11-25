@@ -594,5 +594,8 @@
   "employer_job_list_col_views": "Lượt xem",
   "employer_job_list_col_closes": "Hạn nộp",
   "employer_job_list_window_ends": "Tin hết thời gian hiển thị vào ngày này",
-  "employer_job_list_attention_expiring_hint": "Tin đang tuyển hết hạn trong 7 ngày tới"
+  "employer_job_list_attention_expiring_hint": "Tin đang tuyển hết hạn trong 7 ngày tới",
+  "employer_job_cv_sort_ai_match": "Phù hợp nhất",
+  "employer_job_cv_col_fit": "Phù hợp",
+  "employer_job_cv_fit_order_note": "Hồ sơ chưa có điểm (đang phân tích hoặc ứng viên không tham gia phân tích AI) nằm cuối danh sách, không phải vì kém phù hợp. Điểm chỉ để tham khảo, quyết định là của bạn."
 }

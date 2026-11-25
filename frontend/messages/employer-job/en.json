@@ -734,5 +734,8 @@
   "employer_job_list_col_views": "Views",
   "employer_job_list_col_closes": "Deadline",
   "employer_job_list_window_ends": "The job stops being displayed on this day",
-  "employer_job_list_attention_expiring_hint": "Live jobs closing within the next 7 days"
+  "employer_job_list_attention_expiring_hint": "Live jobs closing within the next 7 days",
+  "employer_job_cv_sort_ai_match": "Best match",
+  "employer_job_cv_col_fit": "Match",
+  "employer_job_cv_fit_order_note": "Applications without a score (still being analysed, or the candidate opted out of AI analysis) come last, not because they are a weaker match. Scores are a guide; the decision is yours."
 }

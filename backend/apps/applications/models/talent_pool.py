@@ -87,3 +87,33 @@ class TalentPoolInvitation(models.Model):
 
     def __str__(self):
         return f'{self.entry_id} → {self.job_id}'
+
+
+class CandidateSearchInvitation(models.Model):
+    """Lời mời ứng tuyển gửi từ Tìm CV: mỗi ứng viên chỉ được mời một lần cho một tin.
+
+    Tách khỏi `TalentPoolInvitation`: kho ứng viên chỉ chứa người từng ứng tuyển vào tin
+    của nhà tuyển dụng, còn Tìm CV mời người chưa từng liên hệ, dựa trên việc họ bật
+    "cho phép NTD tìm kiếm".
+    """
+
+    recruiter = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='candidate_search_invitations',
+    )
+    candidate = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='job_search_invitations'
+    )
+    job = models.ForeignKey('jobs.Job', on_delete=models.CASCADE, related_name='+')
+    invited_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['candidate', 'job'], name='uniq_candidate_search_invitation'
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.candidate_id} → {self.job_id}'

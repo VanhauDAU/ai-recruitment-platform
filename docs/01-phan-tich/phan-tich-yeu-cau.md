@@ -48,9 +48,9 @@ cột "Gồm" hoặc mục cuối.
 | Nhà tuyển dụng | Quản lý trang công ty và thành viên | Biên tập trang (khi có quyền); quản lý công ty duyệt tham gia, cấp/thu quyền biên tập, chuyển quyền, gỡ thành viên, giao tin và chiến dịch | ✅ |
 | Nhà tuyển dụng | Quản lý chiến dịch tuyển dụng | Thiết lập đợt tuyển (thời gian, ngân sách, các tin; chỉ tiêu = tổng số lượng tuyển của các tin); kích hoạt ngay hoặc lên lịch qua wizard; tự kích hoạt/tự kết thúc theo ngày (đóng tin); phân phối đa kênh (link theo dõi + QR + nội dung soạn bằng AI, chi phí theo kênh, đăng tự động lên Fanpage Facebook theo giờ hẹn và tự gỡ khi kết thúc), ghi nhận nguồn hồ sơ, trang tuyển dụng công khai; so sánh hiệu quả theo nguồn; theo dõi sức khỏe (dự báo so với chỉ tiêu, cảnh báo), email báo cáo tuần, xuất Excel/PDF | ✅ |
 | Nhà tuyển dụng | Quản lý tin tuyển dụng | Gia hạn, mở lại, sửa và gửi lại khi bị yêu cầu sửa | ✅ |
-| Nhà tuyển dụng | Tìm kiếm hồ sơ ứng viên («include» Đối sánh ngữ nghĩa CV–JD) | | ⬜ |
+| Nhà tuyển dụng | Tìm kiếm hồ sơ ứng viên («include» Đối sánh ngữ nghĩa CV–JD) | Tìm CV: chọn một tin đang tuyển, xem ứng viên đang bật "cho phép NTD tìm kiếm" xếp theo mức phù hợp; hồ sơ trích xuất ẩn danh, xem nhanh có ghi nhật ký, mời ứng tuyển | ✅ |
 | Nhà tuyển dụng | Quản lý hồ sơ ứng tuyển | Đổi trạng thái, chặn ứng viên theo công ty | ✅ |
-| Nhà tuyển dụng | Sàng lọc và xếp hạng hồ sơ ứng tuyển bằng AI («extend» Quản lý hồ sơ ứng tuyển, «include» Đối sánh ngữ nghĩa CV–JD) | | ⬜ |
+| Nhà tuyển dụng | Sàng lọc và xếp hạng hồ sơ ứng tuyển bằng AI («extend» Quản lý hồ sơ ứng tuyển, «include» Đối sánh ngữ nghĩa CV–JD) | Chấm bản CV đã nộp của hồ sơ ứng viên đồng ý phân tích; cột mức phù hợp, sắp xếp "Phù hợp nhất", chi tiết theo tiêu chí; không tự loại theo điểm | ✅ |
 | Quản trị viên | Quản lý tài khoản | | ✅ |
 | Quản trị viên | Duyệt xác thực nhà tuyển dụng | | ✅ |
 | Quản trị viên | Quản lý doanh nghiệp | Duyệt yêu cầu cập nhật, xử lý báo cáo công ty; duyệt tham gia và chỉ định quản lý khi công ty chưa có quản lý đủ điều kiện | ✅ |
@@ -97,9 +97,11 @@ nguyên. Lộ trình ở [tiến độ dự án](../TIEN-DO-DU-AN.md#đối-sán
   còn thiếu, giải thích kèm bằng chứng trong CV, và gợi ý cải thiện CV sinh bằng
   luật (không dùng LLM). Xử lý được tin tiếng Việt và tiếng Anh. Việc làm gợi ý
   dùng chung module này.
-- Nhà tuyển dụng: Sàng lọc và xếp hạng hồ sơ ứng tuyển theo điểm. Tìm kiếm hồ sơ
-  ứng viên chọn một tin của NTD rồi xếp ứng viên theo độ phù hợp, chỉ gồm ứng
-  viên đã cho phép NTD tìm thấy hồ sơ.
+- Nhà tuyển dụng: Sàng lọc và xếp hạng hồ sơ ứng tuyển theo điểm, chỉ với hồ sơ ứng
+  viên đồng ý phân tích AI và trên đúng bản CV đã nộp; hệ thống không tự loại hồ sơ.
+  Tìm kiếm hồ sơ ứng viên chọn một tin của NTD rồi xếp ứng viên theo độ phù hợp, chỉ
+  gồm ứng viên đã cho phép NTD tìm thấy hồ sơ; mỗi ứng viên bật một CV, NTD chỉ thấy
+  hồ sơ trích xuất ẩn danh và có thể mời ứng tuyển.
 - Nhập CV từ tệp, AI tạo tin tuyển dụng (thuộc Quản lý tin tuyển dụng) và AI
   sinh nội dung CV mẫu vẫn gọi dịch vụ AI bên ngoài; sơ đồ vẽ như use case
   thường.

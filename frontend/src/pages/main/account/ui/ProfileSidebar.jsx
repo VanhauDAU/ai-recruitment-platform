@@ -12,6 +12,7 @@ import { m } from '@/shared/config/i18n'
 import { useSession } from '@/entities/account/session'
 import { AvatarEditorModal } from '@/features/common/account/edit-profile'
 import { RecruiterSearchListModal } from '@/features/main/cv/update-recruiter-visibility'
+import { RecruiterProfileButton } from '@/features/main/cv/view-recruiter-profile'
 import { DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/system/site-settings'
 
 // Cột phải của layout tài khoản (theo ảnh mẫu): thẻ chào + trạng thái tìm việc,
@@ -104,26 +105,28 @@ function SuggestionToggleRow() {
 function RecruiterSearchBlock() {
   // Công tắc trên thẻ CV làm mới ['my-cvs'] nên số này cập nhật ngay.
   const { data: cvs = [] } = useQuery({ queryKey: ['my-cvs', 'recruiter-searchable'], queryFn: getMyCvs })
-  const cvCount = cvs.filter((cv) => cv.recruiter_searchable).length
+  const searchableCv = cvs.find((cv) => cv.recruiter_searchable)
   const [listOpen, setListOpen] = useState(false)
 
   return (
     <div className="border-t border-slate-100 px-4 py-3">
       <h3 className="text-sm font-bold text-slate-800">Cho phép NTD tìm kiếm hồ sơ</h3>
       <p className="mt-1 text-sm text-slate-600">
-        Có <b>{cvCount} CV</b> đang bật cho phép NTD tìm kiếm
+        {searchableCv
+          ? <>{m.candidate_recruiter_search_current()} <b>{searchableCv.title}</b></>
+          : m.candidate_recruiter_search_none()}
       </p>
+      {searchableCv && <RecruiterProfileButton cv={searchableCv} className="mt-1" />}
       <button
         type="button"
         onClick={() => setListOpen(true)}
         className="mt-2 inline-flex cursor-pointer rounded-full border border-[var(--brand-primary)] bg-white px-4 py-1.5 text-sm font-semibold text-[var(--brand-primary)] transition-colors hover:bg-[var(--brand-primary-soft)]"
       >
-        Quản lý danh sách
+        {searchableCv ? m.candidate_recruiter_search_change() : m.candidate_recruiter_search_choose()}
       </button>
       <RecruiterSearchListModal open={listOpen} onClose={() => setListOpen(false)} />
       <div className="mt-3 rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-500">
-        Tính năng NTD tìm kiếm ứng viên sắp ra mắt. Khi đó, NTD chỉ tìm thấy những CV bạn bật
-        tại đây; tắt đồng ý sẽ gỡ toàn bộ CV khỏi tìm kiếm.
+        {m.candidate_recruiter_search_hint()}
       </div>
     </div>
   )

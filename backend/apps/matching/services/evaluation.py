@@ -2,9 +2,8 @@
 
 Dùng cho thực nghiệm ở `ml/` (lệnh `matching_evaluate`). Các bước giống hệt lúc
 ứng viên bấm "Xem độ phù hợp": trích xuất hồ sơ → mã hóa → `score_match`. Khác ở
-hai điểm: kết quả được trả về thay vì lưu, và tiêu chí địa điểm tắt vì rubric gán
-nhãn không xét địa điểm. Nhờ vậy số liệu trong báo cáo đo đúng thứ đang chạy, và
-muốn thử mô hình khác chỉ cần truyền encoder khác.
+một điểm: kết quả được trả về thay vì lưu. Nhờ vậy số liệu trong báo cáo đo đúng
+thứ đang chạy, và muốn thử mô hình khác chỉ cần truyền encoder khác.
 """
 
 from apps.cvs.services import CvDocumentRejected
@@ -27,13 +26,15 @@ def _cv_profile(cv, catalog):
     return cv_source(cv.latest_version)[1](catalog)
 
 
-def evaluate_pairs(pairs, *, encoder, catalog):
+def evaluate_pairs(pairs, *, encoder, catalog, detail=False, ablation=()):
     """Sinh một dòng kết quả cho mỗi cặp `(job, cv)`.
 
     `job` nạp bằng `models.jobs_for_profile`, `cv` bằng `selectors.cvs_for_profile`.
     Mỗi tin và mỗi CV chỉ được trích xuất và mã hóa một lần. Dòng kết quả có điểm
     tổng, điểm từng tiêu chí và hai cosine thô (toàn văn, chức danh); cặp không
-    chấm được mang `error` là mã lỗi.
+    chấm được mang `error` là mã lỗi. `detail=True` kèm nguyên kết quả của
+    `score_match` (kỹ năng khớp/thiếu, chi tiết từng tiêu chí) để phân tích lỗi.
+    `ablation` tắt từng thay đổi của công thức (`scoring.ABLATIONS`) để đo riêng.
     """
     sides = {}
 
@@ -63,7 +64,7 @@ def evaluate_pairs(pairs, *, encoder, catalog):
                 cv_document_vector=cv_side['embedding'],
                 job_document_vector=job_side['embedding'],
                 model_version=encoder.version,
-                include_location=False,
+                ablation=ablation,
             )
         except ScoringError as error:
             yield {'error': error.code}
@@ -77,4 +78,5 @@ def evaluate_pairs(pairs, *, encoder, catalog):
             'components': {key: component['score'] for key, component in components.items()},
             'document_similarity': relevance.get('document_similarity'),
             'title_similarity': relevance.get('title_similarity'),
+            **({'result': result} if detail else {}),
         }

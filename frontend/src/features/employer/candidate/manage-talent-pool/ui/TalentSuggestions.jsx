@@ -58,7 +58,7 @@ export default function TalentSuggestions({ jobPublicId, onJobChange }) {
                   <p className="truncate text-sm font-semibold text-slate-800">{entry.candidate_name}</p>
                   <p className="truncate text-[11px] text-slate-500">{m.employer_workspace_pool_applied_before({ job: entry.source_job_title })}</p>
                 </div>
-                <Tag color="green">{m.employer_workspace_pool_score({ score })}</Tag>
+                <Tag>{m.employer_workspace_pool_score({ score })}</Tag>
               </div>
               <div className="mt-2 flex flex-wrap gap-1">{reasons.map((reason) => <Tag key={reason}>{reason}</Tag>)}</div>
               <Button

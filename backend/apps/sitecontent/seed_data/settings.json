@@ -1993,6 +1993,39 @@
     }
   },
   {
+    "key": "ai_application_ranking_enabled",
+    "label": "AI xếp hạng hồ sơ ứng tuyển cho nhà tuyển dụng",
+    "group": "ai",
+    "section": "Đối sánh CV–JD (mô hình nội bộ)",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "Chấm mức phù hợp của hồ sơ ứng tuyển để nhà tuyển dụng sắp xếp và tham khảo.",
+    "help": "Chỉ chấm hồ sơ ứng viên đồng ý phân tích AI, trên bản CV đã nộp. Không tự loại hồ sơ theo điểm.",
+    "options": {
+      "applies_to": [
+        "CV ứng tuyển (cổng nhà tuyển dụng)",
+        "Form ứng tuyển"
+      ]
+    }
+  },
+  {
+    "key": "ai_candidate_search_enabled",
+    "label": "Tìm CV: nhà tuyển dụng tìm ứng viên theo tin",
+    "group": "ai",
+    "section": "Đối sánh CV–JD (mô hình nội bộ)",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "Cho nhà tuyển dụng tìm ứng viên đang bật \"cho phép NTD tìm kiếm\", xếp theo mức phù hợp với một tin đang tuyển.",
+    "help": "Kết quả ẩn danh (không tên, liên hệ, tệp CV). Nhà tuyển dụng chỉ có thể mời ứng tuyển.",
+    "options": {
+      "applies_to": [
+        "Tìm CV (cổng nhà tuyển dụng)"
+      ]
+    }
+  },
+  {
     "key": "ai_data_policy_url",
     "label": "Chính sách xử lý dữ liệu bằng AI",
     "group": "ai",

@@ -12,7 +12,10 @@ const { useSession, getAiRecommendation, updateAiRecommendation } = vi.hoisted((
 
 vi.mock('@/entities/account/session', () => ({ useSession }))
 vi.mock('@/entities/cv/cv', () => ({
-  getMyCvs: vi.fn().mockResolvedValue([{ recruiter_searchable: true }, { recruiter_searchable: false }]),
+  getMyCvs: vi.fn().mockResolvedValue([
+    { public_id: 'cv_on', title: 'CV Frontend', recruiter_searchable: true },
+    { public_id: 'cv_off', title: 'CV khác', recruiter_searchable: false },
+  ]),
 }))
 vi.mock('@/entities/system/site-settings', () => ({
   DEFAULT_SITE_SETTINGS: { site_name: 'ProCV' },
@@ -66,10 +69,12 @@ describe('CandidateAccountLayout', () => {
     expect(screen.getByText('Ứng viên thử nghiệm')).toBeInTheDocument()
   })
 
-  it('counts the CVs opened to recruiter search', async () => {
+  it('names the one CV opened to recruiter search and offers its extracted profile', async () => {
     renderAccount()
 
-    expect(await screen.findByText('1 CV')).toBeInTheDocument()
+    expect(await screen.findByText('CV Frontend')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Xem hồ sơ NTD nhìn thấy' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Đổi CV' })).toBeInTheDocument()
   })
 
   it('keeps the root account route redirect working', () => {

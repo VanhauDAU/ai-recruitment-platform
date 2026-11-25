@@ -8,6 +8,85 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-25
 
+#### Changed — Hồ sơ trích xuất đầy đủ (`extract-v4`) và giải thích mức phù hợp
+
+- `profile_json` thêm `sections`: nội dung đầy đủ từng mục của CV (tóm tắt, từng công việc kèm
+  mô tả, dự án, học vấn, kỹ năng, chứng chỉ, giải thưởng, hoạt động, ngoại ngữ, sở thích, thông
+  tin thêm), đã bỏ email, số điện thoại, phần đầu trang và người tham chiếu. Hiển thị ở "Hồ sơ
+  NTD nhìn thấy", ở cột giữa màn xử lý hồ sơ (chuyển "CV gốc | Hồ sơ trích xuất", API
+  `/api/employer/applications/{id}/extracted-profile/`) và ở xem nhanh của Tìm CV (che họ tên
+  trong câu văn, không có mục "Thông tin thêm").
+- Bộ đọc PDF tải lên: dòng "Kỹ năng …" dưới tiêu đề Kỹ năng là một kỹ năng (trước bị coi là
+  tiêu đề nên mất); nhận thêm tiêu đề "Danh hiệu và giải thưởng", "Người giới thiệu", "Thông
+  tin thêm", kể cả khi tiêu đề bị ngắt hai dòng; phần nội dung của một cột chạy sang trang sau
+  được ghép về đúng cột; tên/chức danh đặt trên cột phải được đưa về đầu tài liệu; bỏ dòng chân
+  trang. Trên 51 PDF mẫu: kinh nghiệm PDF hệ thống 93% → 100%, chức danh PDF TopCV 29 → 32/36,
+  các chỉ số khác giữ nguyên.
+- Cổng NTD: chip mức phù hợp bấm được, mở bảng "vì sao" (điểm từng tiêu chí kèm lý do, kỹ năng
+  có/thiếu kèm câu trích, cách tính điểm) ở bảng CV của tin, bảng CV của chiến dịch (thêm cột và
+  sắp xếp "Phù hợp nhất") và đầu panel "Xử lý hồ sơ". Panel này giữ nguyên các mục cũ (liên hệ,
+  thông tin ứng tuyển, đánh giá, lịch sử); bản chia ba tab đã bỏ.
+- Sửa: ứng viên không xóa được CV sau khi NTD xem hồ sơ ở Tìm CV (nhật ký truy cập chặn việc
+  xóa phiên bản CV).
+
+#### Added — Tìm CV: nhà tuyển dụng tìm ứng viên theo một tin
+
+- Nút **Tìm CV** trên header và mục "Tìm CV" ở thanh bên cổng NTD mở trang
+  `/tuyendung/app/candidate-search`: chọn tin đang tuyển, lọc theo chức danh, kinh nghiệm, học
+  vấn; danh sách ứng viên ẩn danh xếp theo mức phù hợp (`hybrid-v2`); **Xem nhanh** hiện hồ sơ
+  trích xuất và mức phù hợp theo tiêu chí; **Mời ứng tuyển** gửi thông báo cho ứng viên.
+- API `/api/employer/candidate-search/` (danh sách, chi tiết, mời). Chỉ gồm ứng viên đang bật
+  một CV cho NTD tìm kiếm, còn đồng ý, không bị công ty chặn. Không trả tên, liên hệ, tệp CV,
+  tên công ty cũ hay câu trích. Mỗi lần xem nhanh ghi `CvAccessLog` kênh `recruiter_search`.
+- Model `CandidateSearchInvitation` (một lời mời cho mỗi ứng viên và tin); cờ
+  `ai_candidate_search_enabled`; giới hạn tần suất tìm và mời.
+
+#### Changed — Mỗi ứng viên chỉ bật một CV cho NTD tìm kiếm; thêm "Hồ sơ NTD nhìn thấy"
+
+- Ràng buộc `uq_user_searchable_cv` (migration `cvs.0003`): ứng viên đang bật nhiều CV thì giữ
+  CV chính nếu nó đang bật, không thì CV cập nhật gần nhất. Bật CV khác thì CV cũ tự tắt.
+- `GET /api/candidate/matching/cv-profiles/{cv_public_id}/`: hồ sơ trích xuất từ CV (chức
+  danh, kỹ năng theo nhóm, kinh nghiệm, học vấn, cấp bậc, ngoại ngữ), qua danh sách trắng
+  trường; không trả chữ nguyên văn ngoài các mục liệt kê.
+- Trang "CV của tôi" và thanh bên tài khoản: chọn một CV, nút "Xem hồ sơ NTD nhìn thấy" mở
+  hộp thoại hai cột CV | hồ sơ trích xuất (màn hẹp: hai tab). Hồ sơ chỉ đọc.
+
+#### Added — Mức phù hợp của hồ sơ ở cổng nhà tuyển dụng (giao diện)
+
+- Bảng "CV ứng tuyển" của một tin có cột **Phù hợp** và lựa chọn sắp xếp "Phù hợp nhất"
+  (mặc định vẫn là mới nhất, lựa chọn được nhớ). Hồ sơ chưa có điểm ghi rõ lý do.
+- Màn xử lý hồ sơ: thẻ hồ sơ có chip điểm; panel bên phải chia ba tab Đánh giá | Thông
+  tin | Hoạt động, tab Đánh giá hiện điểm tổng, năm tiêu chí, kỹ năng có/thiếu kèm câu
+  trích từ CV và dòng "quyết định là của bạn".
+- Bộ hiển thị dùng chung `entities/application/job-fit` cho cả hai cổng; hộp thoại "Xem độ
+  phù hợp" của ứng viên dùng chung nhãn. Một màu nhấn, mức phù hợp thể hiện bằng chữ.
+
+#### Added — AI xếp hạng hồ sơ ứng tuyển cho nhà tuyển dụng (backend)
+
+- Hồ sơ ứng viên đồng ý phân tích AI được chấm trên **bản CV đã nộp** ngay sau khi nộp
+  (queue nền `ai-matching-batch`, cùng `ml-worker`); tin đổi nội dung thì các hồ sơ của tin
+  được chấm lại. `MatchAnalysis.purpose` tách bản chấm cho NTD khỏi lượt ứng viên tự xem.
+- `GET /api/employer/applications/` thêm `ai_match_score`, `ai_match_level`,
+  `ai_match_status` và `ordering=ai_match`; endpoint chi tiết
+  `/api/employer/applications/{id}/ai-match/`. Sắp xếp mặc định vẫn là mới nhất, không có
+  bước nào tự loại hồ sơ theo điểm.
+- Cờ `ai_application_ranking_enabled` (nhóm AI); lệnh `matching_backfill --only applications`.
+- Form ứng tuyển: ô đồng ý ghi rõ kết quả hiện cho nhà tuyển dụng, giữ lựa chọn của lần
+  ứng tuyển gần nhất.
+- Sửa: bản chụp của CV tải lên được đọc từ tệp đã nộp, không phải tệp hiện tại trong thư
+  viện; CV đã bị xóa khỏi thư viện vẫn chấm được.
+
+#### Changed — Công thức chấm độ phù hợp `hybrid-v2`
+
+- Bỏ tiêu chí địa điểm; tắt khớp kỹ năng "viết khác tên" với mô hình chưa fine-tune; học
+  vấn, cấp bậc, ngoại ngữ chỉ được tính đủ vào điểm tổng khi CV đúng lĩnh vực của tin (hệ số
+  liên quan `min(1, R/50)`). Điểm từng tiêu chí vẫn hiện giá trị thật.
+- Trên validation: Spearman 0,603 → 0,699, NDCG@5 0,815 → 0,857; cặp khác ngành trung vị
+  28 → 11 điểm, cao nhất 65 → 46, không còn cặp nào từ 50 điểm.
+- `result_json` thêm `schema_version = 2`, `overall.relevance`,
+  `flags.relevance_discount_applied`; không còn mục `location` trong `components`.
+- `matching_evaluate --detail` và `--ablation`; `ml/scripts/evaluate.py --ablation`.
+
 #### Changed — Phễu tuyển dụng trên trang chủ NTD
 
 - Thẻ donut "Trạng thái hồ sơ" thay bằng phễu 3D (SVG): Nhận hồ sơ → Phù hợp → Phỏng vấn

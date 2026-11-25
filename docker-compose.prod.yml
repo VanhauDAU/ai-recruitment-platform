@@ -205,7 +205,7 @@ services:
       context: ./backend
       target: ml
     command: >-
-      celery -A config worker --loglevel=info -Q ai-matching
+      celery -A config worker --loglevel=info -Q ai-matching,ai-matching-batch
       --concurrency=1 --prefetch-multiplier=1 --max-tasks-per-child=500
     environment:
       <<: *prod-env
