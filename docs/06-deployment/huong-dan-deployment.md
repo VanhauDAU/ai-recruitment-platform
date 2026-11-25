@@ -46,22 +46,26 @@ quản trị `/admin`. Không tách frontend sang Vercel vì Django dựng SEO s
 | `db` | 1,25 GB | `shared_buffers=512MB` |
 | `redis-broker` | 256 MB | `maxmemory 192mb`, `noeviction`, AOF — hàng đợi Celery + channel layer WebSocket |
 | `redis-cache` | 448 MB | `maxmemory 384mb`, `allkeys-lru`, không lưu đĩa — cache, token xác thực, throttle |
-| `backend` | 1 GB | gunicorn 4 worker × 2 thread |
-| `realtime` | 256 MB | daphne, chỉ `/ws/` |
+| `backend` | 1,25 GB | gunicorn 4 worker × 2 thread |
+| `realtime` | 384 MB | daphne, chỉ `/ws/` |
 | `worker` | 1,125 GB | concurrency 3: `default`, `cv-export` (Chromium xuất PDF CV + báo cáo chiến dịch), `upload-scan`, `candidate-email` |
-| `email-worker` | 256 MB | concurrency 1: `auth-email`, `auth-sms` — OTP/đặt lại mật khẩu không chờ sau PDF |
+| `email-worker` | 512 MB | concurrency 1: `auth-email`, `auth-sms` — OTP/đặt lại mật khẩu không chờ sau PDF |
 | `ai-worker` | 512 MB | queue `ai-generation` |
 | `ml-worker` | 1,75 GB | e5-base nằm sẵn trong RAM (~0,9 GB lúc rảnh); `cpus: 2`, `OMP/MKL_NUM_THREADS=2` |
-| `beat`, `web` | 256 MB, 128 MB | |
+| `clamav` | 4 GB | quét upload session (`UPLOAD_QUARANTINE_ENABLED=True`); ~1,2–1,5 GB lúc rảnh, ~3 GB khi nạp lại bộ nhận diện |
+| `beat`, `web` | 384 MB, 128 MB | |
 
-Tổng trần ~7,2 GB (gồm `email-worker`) trên máy 8 GB, chừa ~0,8 GB cho
-hệ điều hành, Docker và page cache; bootstrap tạo thêm 4 GB swap. Đo trên stack
-prod cục bộ lúc rảnh (25/11): backend ~515 MB, worker ~340 MB, ai-worker ~245 MB,
-ml-worker ~920 MB, beat/realtime ~140 MB, mỗi lần healthcheck `celery inspect
-ping` thêm ~75 MB trong vài giây. **Đo lại khi rehearsal** (`docker stats
---no-stream` lúc chạy k6 và `matching_backfill`) rồi chỉnh `mem_limit` — nhất là
-`ml-worker`, `worker` (nhiều PDF cùng lúc) và `backend`. ClamAV (3–4 GB) **không
-chạy**: `UPLOAD_QUARANTINE_ENABLED=False`.
+Tổng trần ~12,4 GB: cần máy **≥ 12–16 GB RAM** (bootstrap tạo thêm 4 GB swap).
+Máy 8 GB thì bỏ service `clamav` và đặt lại `UPLOAD_QUARANTINE_ENABLED: 'False'`
+trong `x-prod-env` (tổng ~8 GB, sát trần). Đo trên VPS 16 GB lúc rảnh sau khi nạp
+dữ liệu (26/11): backend ~920 MB, worker ~560 MB, ai-worker ~355 MB, ml-worker
+~725 MB, email-worker ~280 MB, beat ~245 MB, realtime ~235 MB; mỗi lần healthcheck
+`celery inspect ping` thêm ~75 MB trong vài giây — trần 256 MB cũ của
+email-worker làm healthcheck không chạy nổi và container khởi động lại liên tục.
+**Đo lại khi rehearsal** (`docker stats --no-stream` lúc chạy k6 và
+`matching_backfill`) rồi chỉnh `mem_limit`. Sau lần bật ClamAV đầu tiên, chờ
+`clamav` nạp xong bộ nhận diện (vài phút) rồi kiểm:
+`scripts/deploy/compose.sh exec backend python manage.py check_upload_scanner_readiness`.
 Ổ đĩa: image backend + ml ~6 GB, nhân 3 vì deploy.sh (GĐ 3) giữ 3 tag
 `procv-*:<sha12>` mỗi image để rollback; mô hình 1,1 GB; DB; tối đa ~17 bản dump DB
 đã mã hóa trên VPS (7 ngày + 4 tuần + 6 tháng).

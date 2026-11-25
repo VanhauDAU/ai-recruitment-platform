@@ -23,11 +23,14 @@
     <meta data-seo-default name="twitter:image" content="https://procv.site/images/og/procv-default.jpg" />
     <title data-seo-default>ProCV - Việc làm &amp; Tạo CV cùng AI</title>
     <script>
-      // Apply the stored/system color scheme before paint to avoid a light/dark flash.
+      // Giao diện tối chỉ có ở các trang dùng AuthLayout (đăng nhập, đăng ký, quên/đặt
+      // lại mật khẩu, lời mời admin) và chỉ khi người dùng đã tự chọn
+      // (use-consented-color-scheme.js). Không suy từ giao diện hệ điều hành: trang
+      // khác chỉ có nền sáng, `.dark` sót lại làm popup đăng nhập chữ trắng trên nền trắng.
       (function () {
-        var stored = localStorage.getItem('color-scheme')
-        var dark = stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches
-        document.documentElement.classList.toggle('dark', dark)
+        var authPage = /^(\/admin)?(\/app)?\/(login|sign-up|register|forgot-password|reset-password|invitation)\/?$/
+          .test(window.location.pathname)
+        document.documentElement.classList.toggle('dark', authPage && localStorage.getItem('color-scheme') === 'dark')
       })()
     </script>
   </head>

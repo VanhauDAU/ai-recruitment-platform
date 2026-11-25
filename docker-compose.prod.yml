@@ -58,8 +58,12 @@ x-prod-env: &prod-env
   PUBLIC_MEDIA_ROOT: /app/var/public-media
   PRIVATE_MEDIA_ROOT: /app/var/private-media
   UPLOAD_QUARANTINE_ROOT: /app/var/quarantine
-  # Chưa chạy ClamAV (giữ 3-4 GB RAM): upload session tắt, luồng upload cũ giữ nguyên.
-  UPLOAD_QUARANTINE_ENABLED: 'False'
+  # ClamAV (service clamav) quét file qua upload session trước khi nhận. Hai cờ
+  # *_REQUIRED vẫn tắt: luồng upload cũ còn nhận file trong lúc chuyển dần sang
+  # session (bật sau khi rehearsal ổn định).
+  UPLOAD_QUARANTINE_ENABLED: 'True'
+  CLAMAV_HOST: clamav
+  CLAMAV_PORT: '3310'
   EMPLOYER_UPLOAD_SESSION_REQUIRED: 'False'
   CANDIDATE_UPLOAD_SESSION_REQUIRED: 'False'
   MATCHING_ENCODER_BACKEND: sentence_transformers
@@ -194,7 +198,8 @@ services:
     # Không bật access log của gunicorn: nginx đã ghi mỗi request một lần.
     # --worker-tmp-dir /dev/shm: heartbeat của worker không chặn khi đĩa chậm.
     pids_limit: 256
-    mem_limit: 1024m
+    # Đo trên VPS 26/11 sau khi nạp dữ liệu: ~920 MB (sát trần 1 GB cũ).
+    mem_limit: 1280m
     healthcheck:
       # Readiness (DB + 2 Redis): deploy.sh chờ healthy nghĩa là sẵn sàng phục vụ.
       # Host + proto như request đi qua nginx; không thì ALLOWED_HOSTS trả 400
@@ -229,7 +234,8 @@ services:
       --application-close-timeout 10
       config.asgi:application
     pids_limit: 128
-    mem_limit: 256m
+    # Đo trên VPS 26/11: ~235 MB lúc rảnh, trần 256 MB cũ không còn chỗ.
+    mem_limit: 384m
     stop_grace_period: 15s
     healthcheck:
       test:
@@ -268,7 +274,9 @@ services:
       celery -A config worker --loglevel=info -Q auth-email,auth-sms
       --concurrency=1 --prefetch-multiplier=1 --max-tasks-per-child=500
     pids_limit: 64
-    mem_limit: 256m
+    # Đo trên VPS 26/11: ~250–280 MB lúc rảnh. Trần 256 MB cũ làm healthcheck
+    # (`celery inspect ping`, thêm ~75 MB) không chạy nổi, container khởi động lại liên tục.
+    mem_limit: 512m
     stop_grace_period: 30s
     healthcheck: *celery-healthcheck
     depends_on: *backend-depends
@@ -327,13 +335,32 @@ services:
     volumes:
       - beat_schedule:/app/var/celerybeat
     pids_limit: 64
-    # ~140 MB lúc rảnh (đo cục bộ 25/11).
-    mem_limit: 256m
+    # ~140 MB lúc rảnh cục bộ 25/11, ~245 MB trên VPS 26/11 (Sentry SDK + cấu hình đủ).
+    mem_limit: 384m
     depends_on:
       redis-broker:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
+
+  # Quét virus cho upload session (queue upload-scan của worker). Nạp bộ nhận diện
+  # mất vài phút sau lần khởi động đầu; trong lúc đó task quét tự thử lại nên
+  # không chặn stack. Không publish 3310 ra host. Cần máy >= 12 GB RAM.
+  clamav:
+    image: clamav/clamav:1.4_base
+    environment:
+      CLAMAV_NO_MILTERD: 'true'
+      CLAMD_STARTUP_TIMEOUT: 900
+      FRESHCLAM_CHECKS: 12
+    volumes:
+      - clamav_db:/var/lib/clamav
+    # ~1,2–1,5 GB lúc rảnh, lên ~3 GB trong lúc nạp lại bộ nhận diện.
+    mem_limit: 4g
+    cpus: 2
+    init: true
+    restart: unless-stopped
+    logging: *default-logging
+    networks: [procv]
 
   web:
     image: procv-web:prod
@@ -390,3 +417,4 @@ volumes:
   pgdata:
   redis_broker_data:
   beat_schedule:
+  clamav_db:

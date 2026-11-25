@@ -49,7 +49,8 @@ export default function LoginPromptProvider({ children }) {
         destroyOnHidden
         styles={{
           container: { borderRadius: 28, padding: 0, overflow: 'hidden' },
-          body: { padding: '40px 48px 36px' },
+          // Co theo màn hình: mobile ~20px, desktop giữ 40/48/36px như trước.
+          body: { padding: 'clamp(20px, 6vw, 40px) clamp(18px, 6vw, 48px) clamp(18px, 5vw, 36px)' },
         }}
       >
         <Suspense fallback={<Skeleton active paragraph={{ rows: 6 }} />}>

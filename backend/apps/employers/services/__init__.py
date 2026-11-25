@@ -132,6 +132,7 @@ from .phone_challenges import (
     normalize_vietnamese_mobile,
     phone_challenge_snapshot,
     start_sms_phone_verification,
+    verify_phone_by_admin,
     verify_sms_phone_challenge,
 )
 from .profiles import (
@@ -312,6 +313,7 @@ __all__ = [
     'reverse_company_report',
     'submit_company_report',
     'unfollow_company',
+    'verify_phone_by_admin',
     'verify_sms_phone_challenge',
     'validate_employer_upload_structure',
     'EmployerUploadSessionRejected',
