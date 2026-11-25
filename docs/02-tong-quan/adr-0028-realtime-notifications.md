@@ -71,4 +71,23 @@ và `apps.employers` sở hữu
   chính sách đã định.
 - Email "Hồ sơ đã được tiếp nhận" và email quyết định gửi ngay khi phát hành thay vì chờ
   beat.
-- Admin chưa có thông báo realtime: badge hàng chờ quản trị vẫn polling 30 giây.
+- Cổng quản trị dùng cùng socket cho hàng chờ (bổ sung 26/11/2026, xem dưới).
+
+## Bổ sung 26/11/2026: hàng chờ quản trị realtime
+
+- **Nhóm thứ hai chỉ cho admin.** Vé ghi `is_admin` lúc tiêu (đọc từ DB); socket của tài
+  khoản admin vào thêm nhóm `role.admin`. Kiểm lại phiên mỗi 60 giây cũng so vai trò, đổi
+  vai trò thì đóng `4401`.
+- **Sự kiện chỉ nêu tên hàng chờ:** `{"type": "admin.queue.changed", "queue": "<khóa>"}`,
+  khóa đúng như `/api/admin/dashboard/queues/` (mọi admin vốn đọc được số đếm đó), không
+  kèm mã, tên hay nội dung bản ghi.
+- **Phát ở một chỗ:** `apps/dashboard/signals/receivers.py` nghe `post_save`/`post_delete`
+  của mọi model nuôi hàng chờ (hồ sơ xác thực, giấy tờ, tên miền, yêu cầu cập nhật/tham
+  gia, thay đổi trang công ty, báo cáo tin/công ty, yêu cầu dữ liệu cá nhân, lời mời admin)
+  và của `Job` khi trường kiểm duyệt đổi. Ai ghi cũng được báo: UV, NTD, worker, admin khác.
+  Các chỗ `.update()` hàng loạt (không phát signal) gọi `notify_admin_queue` trực tiếp.
+  Vẫn chỉ gửi sau commit.
+- **Frontend:** `useAdminQueueRealtime` (layout admin) gom sự kiện 400 ms rồi invalidate số
+  đếm, bảng điều khiển và query danh sách của hàng chờ đó; khi socket mở, badge (30 giây),
+  bảng điều khiển (60 giây) và trang tên miền (10 giây) tắt polling, socket đóng thì polling
+  quay lại.

@@ -1,4 +1,6 @@
 from .channels import (
+    ADMIN_GROUP,
+    ADMIN_QUEUE_CHANGED,
     CLOSE_UNAUTHORIZED,
     MAX_CLIENT_MESSAGE_BYTES,
     REVALIDATE_SECONDS,
@@ -7,6 +9,8 @@ from .channels import (
 )
 
 __all__ = [
+    'ADMIN_GROUP',
+    'ADMIN_QUEUE_CHANGED',
     'CLOSE_UNAUTHORIZED',
     'MAX_CLIENT_MESSAGE_BYTES',
     'REVALIDATE_SECONDS',

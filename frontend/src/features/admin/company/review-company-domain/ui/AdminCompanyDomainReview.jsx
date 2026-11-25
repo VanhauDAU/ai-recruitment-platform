@@ -30,6 +30,7 @@ import useImpactConfirmation from '@/shared/ui/confirm-action/use-impact-confirm
 import AdminCompanyDomainDetailDrawer from './AdminCompanyDomainDetailDrawer'
 import AdminCompanyDomainSummaryCards from './AdminCompanyDomainSummaryCards'
 import { getIntlLocale } from '@/shared/config/i18n'
+import { useRealtimeOpen } from '@/shared/api/use-realtime'
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Tất cả trạng thái' },
@@ -187,17 +188,18 @@ export default function AdminCompanyDomainReview() {
     search: deferredSearch,
     page: filters.page,
   }).filter(([, value]) => value !== '' && value != null && value !== 1)), [deferredSearch, filters])
+  const live = useRealtimeOpen()
   const claimsQuery = useQuery({
     queryKey: adminCompanyDomainClaimKeys.list(params),
     queryFn: ({ signal }) => getAdminCompanyDomainClaims(params, { signal }),
-    refetchInterval: 10_000,
+    refetchInterval: live ? false : 10_000,
     refetchOnWindowFocus: 'always',
     staleTime: 0,
   })
   const summaryQuery = useQuery({
     queryKey: adminCompanyDomainClaimKeys.summary,
     queryFn: ({ signal }) => getAdminCompanyDomainClaimSummary({ signal }),
-    refetchInterval: 10_000,
+    refetchInterval: live ? false : 10_000,
     refetchOnWindowFocus: 'always',
     staleTime: 0,
   })

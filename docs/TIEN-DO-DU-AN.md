@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Cổng quản trị cập nhật hàng chờ realtime](#cổng-quản-trị-cập-nhật-hàng-chờ-realtime-2026-11-26) | 🟨 Nhánh `feat/admin-realtime`, chờ gộp PR |
 | [Đăng tin xong mở thẻ Thông tin tuyển dụng](#đăng-tin-xong-mở-thẻ-thông-tin-tuyển-dụng-2026-11-26) | 🟨 Nhánh `feat/job-publish-info-tab`, chờ PR |
 | [AI tạo tin: đủ quyền lợi, ngoại ngữ, lương/số lượng từ JD](#ai-tạo-tin-đủ-quyền-lợi-ngoại-ngữ-lươngsố-lượng-từ-jd-2026-11-26) | ✅ Đã gộp dev (#385) |
 | [AI chạy được bằng Claude (Anthropic) bên cạnh Gemini](#ai-chạy-được-bằng-claude-anthropic-bên-cạnh-gemini-2026-11-26) | ✅ Đã gộp dev (#382, #383) |
@@ -74,6 +75,27 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
 
+
+## Cổng quản trị cập nhật hàng chờ realtime (2026-11-26)
+
+Bổ sung [ADR-0028](02-tong-quan/adr-0028-realtime-notifications.md): admin không còn phải tải
+lại hay chờ polling 30 giây mới thấy việc mới.
+
+- **Backend:** socket của tài khoản admin vào thêm nhóm `role.admin` (vai trò đọc lúc tiêu vé,
+  kiểm lại mỗi 60 giây). `apps/dashboard/signals/receivers.py` phát
+  `admin.queue.changed` kèm đúng khóa hàng chờ khi có ghi vào hồ sơ xác thực, giấy tờ, tên
+  miền, yêu cầu cập nhật/tham gia công ty, thay đổi trang công ty, báo cáo tin/công ty, yêu
+  cầu dữ liệu cá nhân, lời mời admin, và khi trường kiểm duyệt của tin đổi (gửi duyệt lại).
+  Chỗ hủy hàng loạt bằng `.update()` gọi `notify_admin_queue` trực tiếp. Không lộ mã/nội dung.
+- **Frontend:** `useAdminQueueRealtime` trong layout admin gom sự kiện 400 ms rồi invalidate
+  số đếm sidebar/chuông, bảng điều khiển và danh sách của hàng chờ đó; nối lại thì làm mới hết.
+  Socket mở thì badge, bảng điều khiển, trang xác minh tên miền tắt polling; đóng thì polling
+  quay lại như cũ.
+- **Kiểm chứng:** pytest toàn bộ 2307 passed (coverage 91,67%; 1 lỗi `ai_job_generation_model`
+  do env local đặt model Claude, không liên quan); test mới cho receivers, consumer, vé. Chạy
+  thật trên Redis channel layer: socket admin nhận sự kiện, socket thường không. Vitest layout
+  + trang admin liên quan 50 passed; lint, kiến trúc, build, ngân sách bundle (JS 266/268 KiB)
+  sạch. Chưa thử trên trình duyệt vì container dev chạy checkout chính ở nhánh khác.
 
 ## Đăng tin xong mở thẻ Thông tin tuyển dụng (2026-11-26)
 

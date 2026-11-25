@@ -5,6 +5,7 @@ from django.conf import settings
 from django.db.models import Q
 from django.utils import timezone
 
+from apps.realtime.services import notify_admin_queue
 from common.metrics import record_metric
 
 from ..models import CompanyDomainClaim, CompanyDomainClaimEvent
@@ -79,6 +80,7 @@ def reconcile_company_domain_claims():
                 claim=claim,
                 event_type=CompanyDomainClaimEvent.EventType.EXPIRED,
             )
+            notify_admin_queue('domain_verification')
             processed += 1
     record_metric(
         'employer_domain_claim_reconciliation',
