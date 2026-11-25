@@ -326,7 +326,7 @@ jobs:
         id: coverage_tests
         shell: bash
         env:
-          UNIT_TEST_SHARDS: 5
+          UNIT_TEST_SHARDS: 7
         run: |
           set -o pipefail
           ls -l .vitest-reports
