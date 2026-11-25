@@ -18685,6 +18685,7 @@ components:
           allOf:
           - $ref: '#/components/schemas/DataSubjectRequestStatusEnum'
           readOnly: true
+          default: pending
         status_label:
           type: string
           readOnly: true
