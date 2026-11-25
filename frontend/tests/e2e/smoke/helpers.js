@@ -56,7 +56,6 @@ export async function mockPublicApi(page) {
               demand: [],
               salary_demand: [],
               latest_jobs: [],
-              featured_employers: [],
             }
       : path === '/api/public/site/banners/'
         ? []

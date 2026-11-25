@@ -37,12 +37,6 @@ describe('FeaturedIndustriesEmployers', () => {
       candidates: 30,
       demand: [],
       employers: 10,
-      featured_employers: [{
-        public_id: 'legacy-company',
-        company_name: 'Công ty từ job stats',
-        company_logo_url: '/legacy.png',
-        job_count: 99,
-      }],
     })
     getPublicCompanies.mockResolvedValue({
       next: null,
@@ -64,7 +58,6 @@ describe('FeaturedIndustriesEmployers', () => {
     expect(within(panel).getByText('Công ty từ danh bạ công khai')).toBeVisible()
     expect(within(panel).getByText('7 việc làm')).toBeVisible()
     expect(within(panel).getByText('Công nghệ')).toBeVisible()
-    expect(screen.queryByText('Công ty từ job stats')).not.toBeInTheDocument()
     expect(getPublicCompanies).toHaveBeenCalledWith(
       {},
       { signal: expect.any(AbortSignal) },

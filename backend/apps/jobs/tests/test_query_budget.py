@@ -41,8 +41,8 @@ HOMEPAGE_BEST_JOB_LIST_QUERY_BUDGET = JOB_LIST_QUERY_BUDGET + 2
 # Chip địa điểm: đếm theo tỉnh + đếm theo phường + 1 SELECT tên (kèm tỉnh cha).
 HOMEPAGE_BEST_JOB_LOCATIONS_QUERY_BUDGET = 3 + MAINTENANCE_CHECK_QUERIES
 # Dashboard thống kê trang chủ: tài khoản, tổng/tăng trưởng/lương (một aggregate),
-# danh mục gộp theo gốc, việc mới nhất + prefetch địa điểm, NTD nổi bật.
-JOB_STATS_QUERY_BUDGET = 6 + MAINTENANCE_CHECK_QUERIES
+# danh mục gộp theo gốc, việc mới nhất + prefetch địa điểm.
+JOB_STATS_QUERY_BUDGET = 5 + MAINTENANCE_CHECK_QUERIES
 ADMIN_JOB_LIST_QUERY_BUDGET = 2
 # +1 aggregate for the status-tab counts and +1 category prefetch (one query
 # each whatever the page size).

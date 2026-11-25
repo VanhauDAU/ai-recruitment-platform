@@ -33317,17 +33317,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/JobStatsLatest'
-        featured_employers:
-          type: array
-          items:
-            $ref: '#/components/schemas/JobStatsFeaturedEmployer'
       required:
       - active_jobs
       - candidates
       - companies
       - demand
       - employers
-      - featured_employers
       - growth
       - latest_jobs
       - new_jobs_24h
@@ -33350,31 +33345,6 @@ components:
       - id
       - logo_url
       - name
-      - slug
-    JobStatsFeaturedEmployer:
-      type: object
-      properties:
-        id:
-          type: integer
-        public_id:
-          type: string
-        company_name:
-          type: string
-        slug:
-          type: string
-        company_logo_url:
-          type: string
-        industry:
-          type: string
-        job_count:
-          type: integer
-      required:
-      - company_logo_url
-      - company_name
-      - id
-      - industry
-      - job_count
-      - public_id
       - slug
     JobStatsGrowth:
       type: object
