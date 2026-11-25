@@ -76,5 +76,5 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v5
-      - name: shellcheck scripts/deploy
-        run: shellcheck --severity=warning scripts/deploy/*.sh
+      - name: shellcheck scripts/deploy + script build image web
+        run: shellcheck --severity=warning scripts/deploy/*.sh frontend/docker/nginx/*.sh
