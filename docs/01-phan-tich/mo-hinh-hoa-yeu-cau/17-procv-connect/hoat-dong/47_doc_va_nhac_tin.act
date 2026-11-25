@@ -1,0 +1,22 @@
+title Sơ đồ hoạt động chức năng xem lịch sử, đánh dấu đã đọc và nhắc tin chưa đọc
+Người dùng mở một hội thoại
+Hệ thống trả 30 tin mới nhất theo seq
+while Người dùng cuộn lên đầu khung chat? | Có | Không
+  Hệ thống trả trang tin cũ hơn
+endwhile
+Giao diện gửi seq lớn nhất đã hiển thị
+Hệ thống ghi đã đọc tới seq, đặt số chưa đọc về 0
+fork
+  Các tab khác của người dùng giảm badge
+again
+  Bên kia thấy "Đã xem" ở tin cuối
+endfork
+Bộ lập lịch chạy tác vụ nhắc mỗi 5 phút
+while Còn thành viên có tin chưa đọc quá thời gian chờ? | Có | Không
+  if Đã email từ lần đọc trước hoặc tắt nhắc?
+  case Có
+  case Không
+    Worker gửi email báo số tin mới, không kèm nội dung
+    Worker ghi mốc đã nhắc
+  endif
+endwhile

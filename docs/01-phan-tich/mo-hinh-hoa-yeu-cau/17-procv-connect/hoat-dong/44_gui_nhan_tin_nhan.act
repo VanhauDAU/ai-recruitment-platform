@@ -1,0 +1,35 @@
+title Sơ đồ hoạt động chức năng gửi và nhận tin nhắn ProCV Connect
+Người gửi soạn tin, chọn emoji hoặc đính kèm
+Giao diện báo "Đang soạn tin…" cho người nhận qua socket
+Người gửi bấm Gửi
+Giao diện sinh client_id, hiện bong bóng "Đang gửi"
+Hệ thống kiểm tra thành viên, trạng thái hội thoại, giới hạn gửi
+if Hợp lệ?
+case Không
+  Giao diện hiện "Gửi lỗi – Thử lại"
+  stop
+case Có
+endif
+if Trùng client_id?
+case Có
+  Hệ thống trả tin đã lưu
+case Không
+  Hệ thống khóa hội thoại, cấp seq, lưu tin nhắn
+  Hệ thống tăng số chưa đọc của người nhận
+endif
+fork
+  Giao diện người gửi đánh dấu "Đã gửi"
+again
+  Kênh realtime đẩy tin tới các tab của hai bên
+  if Người nhận đang trực tuyến?
+  case Có
+    if Hụt seq?
+    case Có
+      Giao diện người nhận tải các tin còn thiếu
+    case Không
+    endif
+    Giao diện người nhận hiện tin, phát âm báo
+  case Không
+    Worker gửi email nhắc tin chưa đọc sau thời gian chờ
+  endif
+endfork

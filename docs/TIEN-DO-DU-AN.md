@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [ProCV Connect: nhắn tin NTD ↔ ứng viên (ADR-0032)](#procv-connect-nhắn-tin-ntd--ứng-viên-adr-0032-2026-11-26) | 🟨 GĐ0 thiết kế + sơ đồ trên nhánh `docs/procv-connect`; GĐ1–5 chưa làm |
 | [AI chạy được bằng Claude (Anthropic) bên cạnh Gemini](#ai-chạy-được-bằng-claude-anthropic-bên-cạnh-gemini-2026-11-26) | 🟨 Nhánh `feat/ai-provider-claude`, chờ PR |
 | [Đăng nhập mạng xã hội bằng cửa sổ popup](#đăng-nhập-mạng-xã-hội-bằng-cửa-sổ-popup-2026-11-25) | 🟨 PR #380 (nhánh `feat/oauth-popup-login`), chờ gộp |
 | [Chuẩn bị deploy: khóa admin bằng Access, vá cấu hình, checklist 2/12](#chuẩn-bị-deploy-khóa-admin-bằng-access-vá-cấu-hình-checklist-212-2026-11-25) | ✅ Đã gộp dev (#378); việc phía user theo checklist |
@@ -72,6 +73,25 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
 
+
+## ProCV Connect: nhắn tin NTD ↔ ứng viên (ADR-0032, 2026-11-26)
+
+Đặc tả: [`dac-ta-procv-connect.md`](01-phan-tich/dac-ta-procv-connect.md); sơ đồ
+`mo-hinh-hoa-yeu-cau/17-procv-connect/` (chức năng 43–47).
+
+- Chốt 26/11: hội thoại theo cặp (tin, ứng viên), phía NTD là người phụ trách tin;
+  ứng viên mở khi có hồ sơ hiện hành, NTD mở với người đã nộp hoặc đã nhận lời mời kết
+  nối; gửi qua REST (`client_id`), nhận qua socket chung kèm nguyên tin, bù tin theo
+  `seq`; `typing` là tin duy nhất client gửi lên socket; emoji tự dựng, sticker để sau.
+
+| GĐ | Hạng mục | Trạng thái |
+| --- | --- | --- |
+| 0 | ADR-0032, đặc tả, sơ đồ use case/tuần tự/hoạt động | 🟨 Nhánh `docs/procv-connect` |
+| 1 | Backend lõi: app `messaging`, mở/gửi/đọc/badge, typing, signal chặn/bàn giao | ⬜ |
+| 2 | Frontend lõi: inbox 3 cột responsive, realtime + bù seq, nút vào chat | ⬜ |
+| 3 | Gửi CV, thẻ tin, tệp/ảnh | ⬜ |
+| 4 | Lịch hẹn phỏng vấn, nhắc 24h/1h, email `.ics` | ⬜ |
+| 5 | Email nhắc tin chưa đọc, xuất dữ liệu cá nhân, xóa khi xóa tài khoản | ⬜ |
 
 ## AI chạy được bằng Claude (Anthropic) bên cạnh Gemini (2026-11-26)
 
@@ -2352,7 +2372,7 @@ Lộ trình 6 giai đoạn của workspace `/tuyendung/app/applications`; mỗi 
 | 4 | Danh sách đen + phát hiện ứng tuyển hàng loạt | ✅ Đã gộp vào dev (#197) |
 | 5 | Kho ứng viên tiềm năng + gợi ý lại khi đăng tin mới | ✅ Đã gộp vào dev (#198) |
 | 6 | Gợi ý kỹ năng còn thiếu cho ứng viên bị từ chối | ⬜ |
-| Sau | Hẹn lịch phỏng vấn | ⬜ |
+| Sau | Hẹn lịch phỏng vấn | ⬜ Gộp vào ProCV Connect GĐ4 (ADR-0032) |
 
 <details><summary>Ghi chú giai đoạn 1</summary>
 
