@@ -190,27 +190,30 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="mt-4 max-w-6xl mx-auto flex items-center gap-2 overflow-x-auto pb-1 text-left md:flex-wrap md:justify-center md:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <span className="shrink-0 px-2 text-sm font-semibold home-hero-muted">Gợi ý:</span>
-            {show('nearby_jobs_enabled') && (
-              <Link
-                to="/viec-lam-gan-ban"
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/70 bg-white px-4 py-2 text-sm font-semibold !text-[var(--brand-primary-hover)] shadow-sm transition hover:-translate-y-0.5 hover:border-white hover:bg-green-50 hover:shadow-md"
-              >
-                <EnvironmentOutlined aria-hidden />
-                {m.candidate_nearby_hero_link()}
-              </Link>
-            )}
-            {SUGGESTED_JOBS.map((job) => (
-              <button
-                key={job}
-                type="button"
-                onClick={() => handleSuggestedJob(job)}
-                className="shrink-0 cursor-pointer rounded-full border border-white/70 bg-white px-4 py-2 text-sm font-semibold text-[var(--brand-primary-hover)] shadow-sm transition hover:-translate-y-0.5 hover:border-white hover:bg-green-50 hover:shadow-md"
-              >
-                {job}
-              </button>
-            ))}
+          {/* Một hàng: vừa thì canh giữa, chật thì vuốt ngang (không xuống dòng). */}
+          <div className="mt-4 max-w-6xl mx-auto overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="mx-auto flex w-max items-center gap-1.5 text-left">
+              <span className="shrink-0 px-1 text-sm font-semibold home-hero-muted">Gợi ý:</span>
+              {show('nearby_jobs_enabled') && (
+                <Link
+                  to="/viec-lam-gan-ban"
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-amber-200 !bg-amber-300 px-3 py-1.5 text-[13px] font-bold !text-emerald-950 shadow-sm transition hover:-translate-y-0.5 hover:!bg-amber-200 hover:shadow-md"
+                >
+                  <EnvironmentOutlined aria-hidden />
+                  {m.candidate_nearby_hero_link()}
+                </Link>
+              )}
+              {SUGGESTED_JOBS.map((job) => (
+                <button
+                  key={job}
+                  type="button"
+                  onClick={() => handleSuggestedJob(job)}
+                  className="shrink-0 cursor-pointer rounded-full border border-white/70 bg-white px-3 py-1.5 text-[13px] font-semibold text-[var(--brand-primary-hover)] shadow-sm transition hover:-translate-y-0.5 hover:border-white hover:bg-green-50 hover:shadow-md"
+                >
+                  {job}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </section>
