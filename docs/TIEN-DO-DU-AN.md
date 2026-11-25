@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Chuẩn bị deploy: GĐ5 pháp lý và dữ liệu cá nhân](#chuẩn-bị-deploy-gđ5-pháp-lý-và-dữ-liệu-cá-nhân-2026-11-25) | 🟨 Nhánh `feat/legal-privacy-dsr`, chờ gộp PR |
 | [Chuẩn bị deploy: GĐ4 hiệu năng và chịu tải](#chuẩn-bị-deploy-gđ4-hiệu-năng-và-chịu-tải-2026-11-25) | 🟨 Nhánh `perf/load-readiness`, chờ gộp PR; số đo k6 thật làm ở GĐ6 rehearsal |
 | [Chuẩn bị deploy: GĐ3 sao lưu và khôi phục](#chuẩn-bị-deploy-gđ3-sao-lưu-và-khôi-phục-2026-11-25) | 🟨 Nhánh `feat/predeploy-backup` (trên GĐ1), chờ PR; diễn tập khôi phục thật ở GĐ6 |
 | [Chuẩn bị deploy: GĐ2 hạ tầng, giám sát, chịu lỗi](#chuẩn-bị-deploy-gđ2-hạ-tầng-giám-sát-chịu-lỗi-2026-11-25) | 🟨 Nhánh `feat/predeploy-ops` (dựng trên GĐ1), chờ PR; chưa lên VPS |
@@ -171,6 +172,22 @@ Mục tiêu: 200 người đồng thời, p95 < 800 ms, lỗi < 1 %.
   nới throttle + reCAPTCHA thử cho buổi đo.
 - Chưa có: số đo k6 thật (GĐ6, chạy trên VPS qua Cloudflare); tổng `mem_limit` vẫn
   ~9,4 GB, GĐ2 hạ `ml-worker` theo RAM đo được.
+
+## Chuẩn bị deploy: GĐ5 pháp lý và dữ liệu cá nhân (2026-11-25)
+
+- **Điều khoản + Chính sách quyền riêng tư ứng viên:** hai bài trong Trung tâm trợ giúp
+  (chuyên mục mới "Điều khoản và chính sách", migration `knowledgebase 0005`), admin sửa
+  bằng trình biên tập sẵn có; `legal_terms_url`/`legal_privacy_url` mặc định trỏ tới hai
+  bài (DB cũ đang rỗng được điền bởi `sitecontent 0010`); chân trang có link.
+- **Mẫu thông báo xử lý dữ liệu ứng viên của ProCV** thay file mẫu TopCV trong
+  `frontend/public/documents/`; key mới `employer_dpa_template_url`.
+- **Quyền chủ thể dữ liệu:** app `privacy` thêm `DataSubjectRequest` (xuất dữ liệu / xóa
+  tài khoản, một yêu cầu chờ mỗi loại); ứng viên và NTD gửi/hủy ở trang bảo mật; admin
+  duyệt/từ chối ở `/admin/privacy-requests` + hàng chờ dashboard, có audit log. Xuất dữ
+  liệu: JSON tải trong 7 ngày. Xóa: xóa cứng CV thư viện + hồ sơ ứng viên, ẩn danh hóa
+  tài khoản (`anonymize_account`), chặn chủ công ty còn thành viên.
+- **Gemini:** runbook ghi rõ dùng project đã bật thanh toán (không dùng dữ liệu huấn luyện).
+- Để sau: tự phục vụ xóa/xuất ngay không qua admin; xuất kèm file CV gốc.
 
 ## Việc làm gần tôi: bản đồ, bán kính, tọa độ nơi làm việc (ADR-0029) (2026-11-25)
 

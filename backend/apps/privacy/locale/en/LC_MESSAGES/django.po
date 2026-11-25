@@ -1,0 +1,50 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: procv\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Xóa tài khoản"
+msgstr "Delete account"
+
+msgid "Xuất dữ liệu"
+msgstr "Export data"
+
+msgid "Chờ xử lý"
+msgstr "Pending"
+
+msgid "Đã xử lý"
+msgstr "Completed"
+
+msgid "Từ chối"
+msgstr "Rejected"
+
+msgid "Đã hủy"
+msgstr "Cancelled"
+
+msgid "Bạn đang quản lý công ty có thành viên khác. Hãy chuyển quyền quản lý công ty trước khi yêu cầu xóa tài khoản."
+msgstr "You manage a company that has other members. Transfer company ownership before requesting account deletion."
+
+msgid "Chỉ tài khoản ứng viên hoặc nhà tuyển dụng gửi được yêu cầu này."
+msgstr "Only candidate or employer accounts can submit this request."
+
+msgid "Yêu cầu này đã được xử lý."
+msgstr "This request has already been handled."
+
+msgid "Không tìm thấy yêu cầu."
+msgstr "Request not found."
+
+msgid "Bản xuất dữ liệu không còn khả dụng."
+msgstr "The data export is no longer available."
+
+msgid "Vui lòng nhập ghi chú."
+msgstr "Please enter a note."
+
+msgid "Ghi chú tối đa 1000 ký tự."
+msgstr "Notes can be at most 1000 characters."
+
+msgid "Bạn đã có một yêu cầu cùng loại đang chờ xử lý."
+msgstr "You already have a pending request of this type."
