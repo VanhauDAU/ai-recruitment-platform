@@ -286,7 +286,7 @@ describe('PublicCompanyProfile', () => {
     })
     renderProfile('/cong-ty/fpt-software?tab=viec-lam&q=react&location=1&page=2')
 
-    expect(await screen.findByRole('heading', { level: 2, name: 'Tin tuyển dụng tại FPT Software' })).toBeVisible()
+    expect(await screen.findByRole('heading', { level: 2, name: 'Việc làm tại FPT Software' })).toBeVisible()
     const jobs = await screen.findByRole('region', { name: 'Tin tuyển dụng' })
     expect(await within(jobs).findAllByRole('article')).toHaveLength(10)
     expect(requests('/public/jobs/')).toEqual([[

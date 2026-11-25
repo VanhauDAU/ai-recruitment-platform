@@ -3,9 +3,10 @@
 import re
 from unittest.mock import patch
 
-from django.db import IntegrityError, connection
-from django.db.migrations.executor import MigrationExecutor
-from django.test import TestCase, TransactionTestCase
+from django.db import IntegrityError
+from django.test import TestCase
+
+from common.tests.migration_case import MigrationTestCase
 
 from ..domain.company_code import COMPANY_CODE_REGEX
 from ..models import Company
@@ -53,20 +54,9 @@ class CompanyCodeTests(TestCase):
             self.assertEqual(list(found.values_list('pk', flat=True)), [company.pk], query)
 
 
-class CompanyCodeMigrationTests(TransactionTestCase):
-    serialized_rollback = True
+class CompanyCodeMigrationTests(MigrationTestCase):
     before = [('employers', '0006_company_follow_notify_since')]
     after = [('employers', '0008_company_code_required')]
-
-    def migrate(self, targets):
-        executor = MigrationExecutor(connection)
-        executor.loader.build_graph()
-        executor.migrate(targets)
-        return executor.loader.project_state(targets).apps
-
-    def tearDown(self):
-        self.migrate(MigrationExecutor(connection).loader.graph.leaf_nodes())
-        super().tearDown()
 
     def test_existing_companies_receive_distinct_codes(self):
         employer = make_employer('legacy-company@example.com')

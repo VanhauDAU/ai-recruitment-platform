@@ -3,11 +3,11 @@
 import re
 from unittest.mock import patch
 
-from django.db import IntegrityError, connection
-from django.db.migrations.executor import MigrationExecutor
-from django.test import TestCase, TransactionTestCase
+from django.db import IntegrityError
+from django.test import TestCase
 
 from apps.employers.tests.factories import make_company, make_employer, publish_job
+from common.tests.migration_case import MigrationTestCase
 
 from ..domain.job_code import JOB_CODE_REGEX
 from ..models import Job
@@ -55,20 +55,9 @@ class JobCodeTests(TestCase):
             self.assertEqual(list(mine.values_list('pk', flat=True)), [job.pk], query)
 
 
-class JobCodeMigrationTests(TransactionTestCase):
-    serialized_rollback = True
+class JobCodeMigrationTests(MigrationTestCase):
     before = [('jobs', '0002_reference_data')]
     after = [('jobs', '0004_job_code_required')]
-
-    def migrate(self, targets):
-        executor = MigrationExecutor(connection)
-        executor.loader.build_graph()
-        executor.migrate(targets)
-        return executor.loader.project_state(targets).apps
-
-    def tearDown(self):
-        self.migrate(MigrationExecutor(connection).loader.graph.leaf_nodes())
-        super().tearDown()
 
     def test_existing_jobs_receive_distinct_codes(self):
         employer = make_employer('legacy-job@example.com')
