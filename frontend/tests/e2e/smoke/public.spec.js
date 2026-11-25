@@ -976,6 +976,9 @@ test('public smoke: CV template colors change preview and detail offers the crea
   // Vị trí mặc định không ghi lên URL; chọn vị trí khác thì URL, H1, <title> đổi theo.
   await expect(page).toHaveURL(/\/mau-cv\/chi-tiet\/modern$/)
   const mobileSheet = page.getByRole('button', { name: /Nhân viên CSKH/ })
+  const sidePanelPicker = page.locator('aside').getByRole('combobox')
+  // isVisible() không chờ: runner chậm có lúc kiểm trước khi panel/nút sheet render.
+  await expect(mobileSheet.or(sidePanelPicker).first()).toBeVisible()
   if (await mobileSheet.isVisible()) await mobileSheet.click()
   const options = page.getByRole('dialog', { name: 'Bạn muốn tạo CV từ?' }).or(page.locator('aside'))
   await options.getByRole('combobox').click()
@@ -986,7 +989,8 @@ test('public smoke: CV template colors change preview and detail offers the crea
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/)
   await page.reload()
   await expect(page.getByRole('heading', { level: 1, name: /Frontend Developer/ })).toBeVisible()
-  // Đo một lần ngay khi tiêu đề hiện thì bố cục tablet chưa ổn định (chập chờn trên CI).
+  // Trang CV xem trước co theo khung sau khi render; đo tràn ngang khi nó đã hiện.
+  await expect(page.locator('[data-cv-page="1"]')).toBeVisible()
   await expectNoHorizontalOverflow(page)
 })
 
