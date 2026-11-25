@@ -36,6 +36,8 @@ from ..services.sms_provider import (
     SmsMessage,
     SmsProviderPermanentError,
     SmsProviderTemporaryError,
+    SpeedSmsProvider,
+    get_sms_provider,
     sms_configuration_errors,
 )
 from ..tasks.phone_sms import dispatch_employer_sms_challenge
@@ -560,6 +562,118 @@ class HttpSmsProviderTests(TestCase):
         self.assertEqual(str(permanent.exception), 'provider_rejected')
         self.assertNotIn('+84912345678', str(permanent.exception))
         self.assertNotIn('123456', str(permanent.exception))
+
+
+SPEEDSMS_SETTINGS = {
+    'EMPLOYER_SMS_API_TOKEN': 'speedsms-access-token',
+    'EMPLOYER_SMS_SPEEDSMS_TYPE': 4,
+    'EMPLOYER_SMS_CONTENT_TEMPLATE': 'ProCV: ma {code}, het han sau {ttl_minutes} phut.',
+    'EMPLOYER_SMS_CONNECT_TIMEOUT_SECONDS': 2,
+    'EMPLOYER_SMS_READ_TIMEOUT_SECONDS': 5,
+}
+
+
+@override_settings(**SPEEDSMS_SETTINGS)
+class SpeedSmsProviderTests(TestCase):
+    message = HttpSmsProviderTests.message
+
+    def _session(self, status_code=200, payload=None):
+        response = Mock(status_code=status_code)
+        response.json.return_value = payload
+        session = Mock()
+        session.post.return_value = response
+        return session
+
+    def test_sends_rendered_content_with_basic_auth_and_returns_transaction_id(self):
+        session = self._session(
+            payload={'status': 'success', 'code': '00', 'data': {'tranId': 987654}}
+        )
+
+        receipt = SpeedSmsProvider(session=session).send(self.message)
+
+        self.assertEqual(receipt.message_id, 'speedsms-987654')
+        request = session.post.call_args
+        self.assertEqual(request.args[0], 'https://api.speedsms.vn/index.php/sms/send')
+        self.assertEqual(request.kwargs['auth'], ('speedsms-access-token', 'x'))
+        self.assertEqual(
+            request.kwargs['json'],
+            {
+                'to': ['84912345678'],
+                'content': 'ProCV: ma 123456, het han sau 10 phut.',
+                'sms_type': 4,
+                'sender': '',
+            },
+        )
+        self.assertFalse(request.kwargs['allow_redirects'])
+
+    def test_classifies_vendor_errors_without_leaking_payload(self):
+        cases = (
+            (
+                {'status': 'error', 'code': '500', 'message': 'x'},
+                SmsProviderTemporaryError,
+                'provider_unavailable',
+            ),
+            (
+                {'status': 'error', 'code': '300', 'message': 'x'},
+                SmsProviderPermanentError,
+                'provider_insufficient_balance',
+            ),
+            (
+                {'status': 'error', 'code': '105', 'invalidPhone': ['84912345678']},
+                SmsProviderPermanentError,
+                'provider_invalid_destination',
+            ),
+            ({'status': 'error', 'code': '009'}, SmsProviderPermanentError, 'provider_rejected'),
+            (
+                {'status': 'success', 'data': {}},
+                SmsProviderPermanentError,
+                'provider_invalid_response',
+            ),
+        )
+        for payload, error_class, reason in cases:
+            with self.subTest(code=payload.get('code')):
+                with self.assertRaises(error_class) as raised:
+                    SpeedSmsProvider(session=self._session(payload=payload)).send(self.message)
+                self.assertEqual(str(raised.exception), reason)
+                self.assertNotIn('84912345678', str(raised.exception))
+
+    def test_transport_and_http_status_errors(self):
+        session = Mock()
+        session.post.side_effect = requests.ConnectionError('+84912345678')
+        with self.assertRaises(SmsProviderTemporaryError):
+            SpeedSmsProvider(session=session).send(self.message)
+        with self.assertRaises(SmsProviderTemporaryError):
+            SpeedSmsProvider(session=self._session(status_code=503)).send(self.message)
+        with self.assertRaises(SmsProviderPermanentError):
+            SpeedSmsProvider(session=self._session(status_code=401)).send(self.message)
+
+    @override_settings(**{**SMS_SETTINGS, **SPEEDSMS_SETTINGS, 'EMPLOYER_SMS_PROVIDER': 'speedsms'})
+    def test_speedsms_is_selectable_and_allowed_in_production(self):
+        self.assertIsInstance(get_sms_provider(), SpeedSmsProvider)
+        with override_settings(IS_PRODUCTION=True):
+            errors = sms_configuration_errors(require_enabled=True)
+        self.assertFalse(any('Production chỉ cho phép' in error for error in errors))
+        self.assertFalse(any('ENDPOINT_URL' in error for error in errors))
+
+    @override_settings(**{**SMS_SETTINGS, 'EMPLOYER_SMS_PROVIDER': 'speedsms'})
+    def test_speedsms_readiness_rejects_bad_token_type_and_template(self):
+        invalid_templates = {
+            'ProCV {code} ' + 'x' * 160: 'dài quá',
+            'Mã ProCV {code}': 'không dấu',
+            'ProCV: xac minh tai khoan': 'phải chứa {code}',
+            'ProCV {code} {phone}': 'chỉ được dùng',
+        }
+        for template, expected in invalid_templates.items():
+            with self.subTest(expected=expected):
+                with override_settings(
+                    EMPLOYER_SMS_API_TOKEN='',
+                    EMPLOYER_SMS_SPEEDSMS_TYPE=3,
+                    EMPLOYER_SMS_CONTENT_TEMPLATE=template,
+                ):
+                    errors = sms_configuration_errors(require_enabled=True)
+                self.assertTrue(any('API_TOKEN' in error for error in errors))
+                self.assertTrue(any('SPEEDSMS_TYPE' in error for error in errors))
+                self.assertTrue(any(expected in error for error in errors), errors)
 
 
 class SmsReadinessTests(TestCase):

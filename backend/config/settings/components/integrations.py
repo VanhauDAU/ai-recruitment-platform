@@ -158,6 +158,14 @@ EMPLOYER_SMS_ENDPOINT_URL = config('EMPLOYER_SMS_ENDPOINT_URL', default='').stri
 EMPLOYER_SMS_API_TOKEN = config('EMPLOYER_SMS_API_TOKEN', default='').strip()
 EMPLOYER_SMS_SENDER = config('EMPLOYER_SMS_SENDER', default='').strip()
 EMPLOYER_SMS_TEMPLATE_ID = config('EMPLOYER_SMS_TEMPLATE_ID', default='').strip()
+# Provider `speedsms`: EMPLOYER_SMS_API_TOKEN là access token SpeedSMS; sms_type 4
+# = brandname "Verify" (không cần đăng ký), 2 = đầu số ngẫu nhiên. Nội dung không
+# dấu và <= 160 ký tự để đi trọn một tin.
+EMPLOYER_SMS_SPEEDSMS_TYPE = config('EMPLOYER_SMS_SPEEDSMS_TYPE', default=4, cast=int)
+EMPLOYER_SMS_CONTENT_TEMPLATE = config('EMPLOYER_SMS_CONTENT_TEMPLATE', default='').strip() or (
+    'ProCV: Ma xac minh cua ban la {code}. Ma het han sau {ttl_minutes} phut. '
+    'Khong chia se ma nay voi bat ky ai.'
+)
 EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY = config(
     'EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY', default=''
 ).strip()

@@ -8,6 +8,15 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Added — SMS OTP nhà tuyển dụng qua SpeedSMS
+
+- Provider `EMPLOYER_SMS_PROVIDER=speedsms` gọi thẳng API SpeedSMS.vn (Basic auth
+  bằng access token), mặc định brandname "Verify" (`EMPLOYER_SMS_SPEEDSMS_TYPE=4`,
+  750đ/tin, không cần đăng ký brandname); `2` là đầu số ngẫu nhiên (250–300đ/tin).
+- Nội dung tin lấy từ `EMPLOYER_SMS_CONTENT_TEMPLATE` (không dấu, ≤ 160 ký tự, chỉ
+  `{code}`/`{ttl_minutes}`); readiness báo sai mẫu. Production chấp nhận `http`
+  hoặc `speedsms`; mã lỗi SpeedSMS (hết số dư, số sai, lỗi tạm) ra reason code riêng.
+
 #### Changed — Tắt ClamAV trên production
 
 - `docker-compose.prod.yml`: `UPLOAD_QUARANTINE_ENABLED: 'False'`, service `clamav`
