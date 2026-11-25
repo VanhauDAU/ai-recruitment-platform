@@ -31,6 +31,7 @@
     "@fontsource/inter": "5.3.0",
     "@fontsource/lora": "5.3.0",
     "@fontsource/roboto": "5.3.0",
+    "@sentry/browser": "11.11.0",
     "@tanstack/react-query": "^5.101.2",
     "@tiptap/extension-character-count": "^3.31.4",
     "@tiptap/extension-image": "^3.31.4",

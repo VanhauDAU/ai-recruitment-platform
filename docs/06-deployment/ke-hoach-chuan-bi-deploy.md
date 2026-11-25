@@ -38,6 +38,12 @@ Bộ file production đã nằm trên `dev` (docker-compose.prod.yml, frontend/d
 - Kiểm chứng: test mới cho throttle/OAuth state/seed guard; e2e smoke đăng nhập OAuth không vỡ; build web rồi `curl -I` kiểm header CSP và trang có reCAPTCHA vẫn chạy.
 
 ## GĐ 2 — Hạ tầng, giám sát, chịu lỗi (PR `feat/predeploy-ops`)
+> Trạng thái 25/11: đã làm (xem `docs/TIEN-DO-DU-AN.md`). Khác kế hoạch ban đầu:
+> frontend dùng `@sentry/browser` thay `@sentry/react` (bản react làm rolldown chia lại
+> chunk khởi tạo +1,2 KiB); khóa origin dùng `ssl_verify_client optional` + 403 để
+> deploy.sh vẫn gọi thử từ chính VPS; nginx dùng `server ... resolve` trong upstream
+> (nginx 1.28) thay cho biến trong `proxy_pass`, giữ keepalive và URI; CA Authenticated
+> Origin Pulls tải trên VPS theo runbook, không commit.
 - **Redis tách 2 instance** (`docker-compose.prod.yml`, `config/settings/components/tasks.py`): `redis-broker` (noeviction, AOF — Celery + channel layer) và `redis-cache` (`allkeys-lru`/`volatile-lru`, 384 MB, không AOF). Thêm `SOCKET_TIMEOUT`/`SOCKET_CONNECT_TIMEOUT` cho django_redis; `expires` cho mọi entry beat.
 - **Beat**: lịch lưu trên volume; chuyển job hằng ngày sang `crontab()` giờ thấp điểm, so le; thêm `flushexpiredtokens`, purge `AuthSession` cũ, purge outbox `AuthEmailJob`, `clearsessions`. Chuyển `recover-stale-job-ai-generations` sang queue `default` + `expires`.
 - **Tài nguyên**: ml-worker `cpus: 2` + `OMP_NUM_THREADS=2`/`MKL_NUM_THREADS=2`, đo RAM thật rồi hạ `mem_limit` (~2 GB); cân lại tổng ≤ ~7 GB; sửa bảng RAM trong runbook. gunicorn `--worker-tmp-dir /dev/shm`. Healthcheck `celery inspect ping` cho worker/ai-worker/ml-worker.

@@ -59,8 +59,10 @@ RUN playwright install --with-deps --only-shell chromium \
     && chmod -R a+rX "$PLAYWRIGHT_BROWSERS_PATH" \
     && rm -rf /var/lib/apt/lists/*
 
-# Chạy bằng user thường, không phải root.
-RUN useradd --create-home --uid 1000 appuser
+# Chạy bằng user thường, không phải root. /app/var/celerybeat có sẵn với chủ
+# appuser để volume lịch beat (compose prod) nhận đúng quyền khi mount lần đầu.
+RUN useradd --create-home --uid 1000 appuser \
+    && install -d -o appuser -g appuser /app/var /app/var/celerybeat
 COPY --chown=appuser:appuser . .
 USER appuser
 
