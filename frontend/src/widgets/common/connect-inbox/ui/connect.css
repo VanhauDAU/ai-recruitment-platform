@@ -252,6 +252,7 @@ a.pc-link--strong { font-size: 13px; font-weight: 600; }
 
 .pc-popover__panel--start { left: 0; }
 .pc-popover__panel--end { right: 0; }
+.pc-popover__panel--bottom { top: calc(100% + 4px); bottom: auto; }
 .pc-menu { display: flex; flex-direction: column; }
 
 .pc-menu__item {
@@ -337,6 +338,17 @@ a.pc-conv {
 }
 
 a.pc-conv:hover, a.pc-conv--active { background: var(--pc-mist); color: var(--pc-ink); }
+/* Nút 3 chấm: hiện khi rê/focus (luôn hiện trên màn cảm ứng), che chỗ giờ của dòng. */
+.pc-conv-item { position: relative; }
+.pc-conv-item__menu { position: absolute; top: 6px; right: 6px; opacity: 0; transition: opacity 120ms; }
+.pc-conv-item:hover .pc-conv-item__menu, .pc-conv-item:focus-within .pc-conv-item__menu, .pc-conv-item__menu--open { opacity: 1; }
+.pc-conv-item:hover .pc-conv__time, .pc-conv-item:focus-within .pc-conv__time { visibility: hidden; }
+.pc-conv-item__menu .pc-icon-btn { background: var(--pc-paper); }
+@media (hover: none) {
+  .pc-conv-item__menu { opacity: 1; }
+  .pc-conv-item .pc-conv__time { visibility: hidden; }
+}
+@media (prefers-reduced-motion: reduce) { .pc-conv-item__menu { transition: none; } }
 a.pc-conv--active::before { position: absolute; top: 0; bottom: 0; left: 0; width: 2px; background: var(--pc-accent); content: ''; }
 .pc-conv__body { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 1px; }
 .pc-conv__line { display: flex; align-items: center; gap: 8px; }
@@ -482,7 +494,7 @@ a.pc-card--link:hover { background: var(--pc-mist); color: var(--pc-ink); }
 
 /* Khung soạn */
 .pc-composer { flex: none; padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--pc-line); }
-.pc-composer--locked { margin: 0; padding: 18px 16px calc(18px + env(safe-area-inset-bottom, 0px)); color: var(--pc-slate); font-size: 13px; text-align: center; }
+.pc-composer--locked { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin: 0; padding: 18px 16px calc(18px + env(safe-area-inset-bottom, 0px)); color: var(--pc-slate); font-size: 13px; text-align: center; }
 .pc-composer__hint { margin: 0 0 6px; color: var(--pc-slate); font-size: 12px; }
 .pc-composer__row { display: flex; min-height: 40px; align-items: flex-end; gap: 2px; }
 .pc-composer__row > .pc-popover, .pc-composer__row > .pc-icon-btn { margin-bottom: 4px; }

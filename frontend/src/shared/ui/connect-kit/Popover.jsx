@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'react'
 
 /**
- * Anchored panel opening above its trigger. Closes on outside click and on
+ * Anchored panel opening above (`side="top"`) or below its trigger. Closes on outside click and on
  * Escape (focus goes back to the trigger); the first focusable item gets focus.
  * `trigger` renders the button and receives `{ open, toggle }`.
  */
-export default function Popover({ open, onOpenChange, trigger, children, align = 'start', label, className = '' }) {
+export default function Popover({ open, onOpenChange, trigger, children, align = 'start', side = 'top', label, className = '' }) {
   const rootRef = useRef(null)
   const panelRef = useRef(null)
 
@@ -35,7 +35,7 @@ export default function Popover({ open, onOpenChange, trigger, children, align =
     <div ref={rootRef} className="pc-popover">
       {trigger({ open, toggle: () => onOpenChange(!open) })}
       {open && (
-        <div ref={panelRef} role="dialog" aria-label={label} className={`pc-popover__panel pc-popover__panel--${align} ${className}`.trim()}>
+        <div ref={panelRef} role="dialog" aria-label={label} className={`pc-popover__panel pc-popover__panel--${align} pc-popover__panel--${side} ${className}`.trim()}>
           {children}
         </div>
       )}

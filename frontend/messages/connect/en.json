@@ -160,5 +160,18 @@
   "connect_interview_decide_reject_title": "Mark as not a fit?",
   "connect_interview_decide_text": "{name}'s result is saved to the application and sent to the candidate after a few seconds (you can still undo it in CV management).",
   "connect_interview_decided_accepted": "Updated: hired.",
-  "connect_interview_decided_rejected": "Updated: not a fit."
+  "connect_interview_decided_rejected": "Updated: not a fit.",
+  "connect_menu_label": "Conversation options",
+  "connect_menu_delete": "Delete conversation",
+  "connect_menu_block": "Block messages",
+  "connect_menu_unblock": "Unblock",
+  "connect_delete_title": "Delete this conversation?",
+  "connect_delete_text": "Messages are deleted only for you; {name} keeps them. The conversation comes back if a new message arrives.",
+  "connect_block_title": "Block messages with {name}?",
+  "connect_block_text": "Neither side can send messages in this conversation until you unblock. The application is not affected.",
+  "connect_deleted": "Conversation deleted.",
+  "connect_blocked_done": "Messages blocked.",
+  "connect_unblocked_done": "Unblocked.",
+  "connect_action_failed": "That did not work. Try again later.",
+  "connect_locked_blocked_by_me": "You blocked messages in this conversation."
 }

@@ -58,7 +58,17 @@ email nhắc cho tới khi đủ điều kiện lại.
 | Tài khoản bị khóa | Khóa; mở lại khi tài khoản được mở |
 | Xóa tài khoản | Xóa nội dung và tệp của người đó, hiện "Tài khoản đã xóa", khóa vĩnh viễn |
 
-### 3.4 Quyền riêng tư
+### 3.4 Menu 3 chấm trên dòng hội thoại (chốt 26/11)
+
+- **Xóa cuộc trò chuyện** chỉ phía mình: ẩn hội thoại và mọi tin hiện có khỏi danh sách và luồng
+  của người xóa (`*_cleared_seq`); bên kia giữ nguyên. Bên kia nhắn tin mới thì hội thoại hiện lại
+  với các tin mới.
+- **Chặn tin nhắn** trong hội thoại: không bên nào gửi được (kể cả đặt lịch) tới khi người chặn bỏ
+  chặn; bên bị chặn thấy câu trung lập "Cuộc trò chuyện hiện không nhận tin nhắn", không báo là bị
+  chặn; "đang soạn tin" cũng dừng. Không ảnh hưởng hồ sơ ứng tuyển và khác với chặn ứng viên theo
+  công ty. Người chặn bỏ chặn ở menu hoặc ngay tại khung soạn.
+
+### 3.5 Quyền riêng tư
 
 - Admin không có màn hình đọc hội thoại. Báo cáo tin nhắn vi phạm để giai đoạn sau.
 - Email nhắc chỉ ghi số tin mới, người gửi và tin tuyển dụng; không kèm nội dung.

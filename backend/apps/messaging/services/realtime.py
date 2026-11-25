@@ -50,3 +50,10 @@ def push_read(conversation, role):
     }
     for _role, user_id in participants(conversation):
         push_to_user(user_id, event)
+
+
+def push_conversation_changed(conversation):
+    """Trạng thái hội thoại đổi (chặn/gỡ chặn): hai phía tải lại ngữ cảnh, khung soạn."""
+    event = {'type': 'chat.conversation.updated', 'conversation': conversation.public_id}
+    for _role, user_id in participants(conversation):
+        push_to_user(user_id, event)

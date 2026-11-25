@@ -21,6 +21,7 @@ ID luôn là `public_id` (`cnv_…`, `msg_…`, `itv_…`). Thời gian ISO 8601
   "last_seq": 12,
   "unread_count": 2,
   "peer_last_read_seq": 10,
+  "blocked_by_me": false,
   "can_send": true,
   "locked_reason": "",
   "candidate_limit_remaining": null,
@@ -33,7 +34,8 @@ ID luôn là `public_id` (`cnv_…`, `msg_…`, `itv_…`). Thời gian ISO 8601
   Ứng viên thấy trạng thái **đã công bố**; NTD thấy trạng thái thật.
 - `locked_reason`: `""` (mở) · `"unavailable"` (ứng viên: bị chặn/không khả dụng — câu trung lập) ·
   `"blocked"` (NTD: ứng viên đang bị công ty chặn) · `"withdrawn"` (ứng viên đã rút hồ sơ) ·
-  `"account"` (tài khoản bên kia không còn hoạt động) · `"disabled"` (admin tắt ProCV Connect).
+  `"account"` (tài khoản bên kia không còn hoạt động) · `"disabled"` (admin tắt ProCV Connect) ·
+  `"blocked_by_me"` (chính mình đã chặn nhắn tin; bên bị chặn thấy `"unavailable"`).
 - `candidate_limit_remaining`: chỉ với ứng viên khi NTD chưa trả lời lần nào (số tin còn được gửi), ngược lại `null`.
 - `last_message.preview` của tin không phải chữ là chuỗi rỗng; giao diện tự hiển thị theo `kind`.
 
@@ -47,6 +49,8 @@ ID luôn là `public_id` (`cnv_…`, `msg_…`, `itv_…`). Thời gian ISO 8601
 | GET | `/{portal}/conversations/{id}/messages/?before=<seq>&after=<seq>&limit=30` | `{"results": [Message…] (seq tăng dần), "has_more": bool}`; `before` lấy trang cũ hơn, `after` bù tin |
 | POST | `/{portal}/conversations/{id}/messages/` | JSON `{"client_id": uuid, "kind": "text", "body": "…"}` · `{"client_id", "kind": "job", "job": "job_x"}` (NTD) · `{"client_id", "kind": "cv", "cv": "cv_x"}` (ứng viên) · multipart `client_id`, `file` (PDF/DOCX/PNG/JPG/WEBP) → kind `file` hoặc `image`. 201 tin mới, 200 khi trùng `client_id` |
 | POST | `/{portal}/conversations/{id}/read/` `{"seq": 12}` | 204 |
+| POST | `/{portal}/conversations/{id}/clear/` | 204 — xóa phía mình: ẩn mọi tin hiện có khỏi danh sách và luồng của người gọi; tin mới hiện lại hội thoại |
+| POST | `/{portal}/conversations/{id}/block/` `{"blocked": bool}` | Chặn / gỡ chặn nhắn tin; trả `ConversationSerializer` (chỉ người chặn gỡ được) |
 | GET | `/{portal}/conversations/{id}/messages/{msg}/file/?download=1` | Stream tệp/ảnh/CV tệp; `Cache-Control: private, no-store` |
 | POST | `/employer/conversations/{id}/messages/{msg}/cv-export/` | CV dựng bằng trình tạo CV: yêu cầu PDF → `{"public_id","status":"pending|processing|completed|failed","download_url": str|null}` |
 | GET | `/employer/conversations/{id}/messages/{msg}/cv-export/{export}/` | Trạng thái như trên |
@@ -102,6 +106,7 @@ Server → client:
 {"type": "chat.message.created", "conversation": "cnv_x", "message": {Message theo góc nhìn người nhận}, "unread_count": 2}
 {"type": "chat.message.updated", "conversation": "cnv_x", "message": {…}}
 {"type": "chat.read", "conversation": "cnv_x", "role": "candidate|recruiter", "last_read_seq": 12}
+{"type": "chat.conversation.updated", "conversation": "cnv_x"}   // chặn / gỡ chặn: tải lại ngữ cảnh
 {"type": "chat.typing", "conversation": "cnv_x", "role": "candidate|recruiter"}
 ```
 

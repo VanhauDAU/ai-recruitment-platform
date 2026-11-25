@@ -39,7 +39,11 @@ def _base():
 def conversations_for(user, role, *, query=''):
     # Bấm "Nhắn tin" mà chưa gửi gì thì hội thoại chưa có hoạt động: không hiện ở danh
     # sách hai bên (vẫn mở được theo mã để soạn tin đầu tiên).
-    queryset = _base().filter(_owned(role, user), last_message_at__isnull=False)
+    cleared = 'candidate_cleared_seq' if role == Role.CANDIDATE else 'recruiter_cleared_seq'
+    # Đã "xóa phía mình" thì chỉ hiện lại khi có tin mới hơn mốc xóa.
+    queryset = _base().filter(
+        _owned(role, user), last_message_at__isnull=False, last_seq__gt=F(cleared)
+    )
     query = (query or '').strip()
     if query:
         other = (
@@ -70,9 +74,11 @@ def current_applications(conversations):
     return {(item.job_id, item.candidate_id): item for item in applications}
 
 
-def messages_page(conversation, *, before=None, after=None, limit=30):
+def messages_page(conversation, *, role, before=None, after=None, limit=30):
     limit = max(1, min(int(limit or 30), MESSAGE_PAGE_MAX))
-    queryset = conversation.messages.select_related('interview__application', 'cv_version')
+    queryset = conversation.messages.select_related('interview__application', 'cv_version').filter(
+        seq__gt=conversation.cleared_seq(role)
+    )
     if after is not None:
         rows = list(queryset.filter(seq__gt=after).order_by('seq')[: limit + 1])
         return rows[:limit], len(rows) > limit
@@ -82,12 +88,13 @@ def messages_page(conversation, *, before=None, after=None, limit=30):
     return list(reversed(rows[:limit])), len(rows) > limit
 
 
-def message_for(conversation, public_id):
-    return (
-        Message.objects.select_related('cv_version', 'interview__application')
-        .filter(conversation=conversation, public_id=public_id)
-        .first()
+def message_for(conversation, public_id, role=None):
+    queryset = Message.objects.select_related('cv_version', 'interview__application').filter(
+        conversation=conversation, public_id=public_id
     )
+    if role is not None:
+        queryset = queryset.filter(seq__gt=conversation.cleared_seq(role))
+    return queryset.first()
 
 
 def unread_conversation_count(user, role):

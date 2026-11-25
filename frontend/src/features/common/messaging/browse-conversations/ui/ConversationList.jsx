@@ -9,6 +9,7 @@ import useDebouncedValue from '@/shared/hooks/use-debounced-value'
 import { useIntersection } from '@/shared/hooks/use-intersection'
 import { Avatar, Button, Skeleton } from '@/shared/ui/connect-kit'
 import { formatConversationTime } from '../lib/conversation-time'
+import ConversationMenu from './ConversationMenu'
 
 const FALLBACK_POLL_MS = 60_000
 
@@ -16,7 +17,7 @@ function ConversationRow({ portal, conversation, active }) {
   const { counterpart = {}, job = {}, unread_count: unread } = conversation
   const name = counterpart.name || m.connect_counterpart_fallback()
   return (
-    <li>
+    <li className="pc-conv-item">
       <Link
         to={connectPath(portal, conversation.public_id)}
         aria-current={active ? 'page' : undefined}
@@ -37,6 +38,7 @@ function ConversationRow({ portal, conversation, active }) {
           </span>
         </span>
       </Link>
+      <ConversationMenu portal={portal} conversation={conversation} active={active} />
     </li>
   )
 }

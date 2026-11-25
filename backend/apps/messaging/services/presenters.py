@@ -107,6 +107,7 @@ def present_conversation(
         'last_seq': conversation.last_seq,
         'unread_count': conversation.unread(role),
         'peer_last_read_seq': conversation.last_read_seq(peer),
+        'blocked_by_me': conversation.blocked_by(role),
         'can_send': not lock,
         'locked_reason': str(lock),
         'candidate_limit_remaining': limit_remaining,

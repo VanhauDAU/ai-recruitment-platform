@@ -26,6 +26,7 @@ LOCK_MESSAGES = {
     LockedReason.UNAVAILABLE: gettext_lazy('Cuộc trò chuyện hiện không nhận tin nhắn.'),
     LockedReason.BLOCKED: gettext_lazy('Ứng viên này đang bị công ty chặn.'),
     LockedReason.WITHDRAWN: gettext_lazy('Hồ sơ ứng tuyển đã được rút nên không gửi được tin.'),
+    LockedReason.BLOCKED_BY_ME: gettext_lazy('Bạn đã chặn tin nhắn trong cuộc trò chuyện này.'),
     LockedReason.ACCOUNT: gettext_lazy('Tài khoản bên kia không còn hoạt động.'),
     LockedReason.DISABLED: gettext_lazy('ProCV Connect đang tạm tắt.'),
 }

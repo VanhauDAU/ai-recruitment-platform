@@ -55,6 +55,9 @@ msgstr "This candidate is blocked by your company."
 msgid "Hồ sơ ứng tuyển đã được rút nên không gửi được tin."
 msgstr "The application was withdrawn, so messages cannot be sent."
 
+msgid "Bạn đã chặn tin nhắn trong cuộc trò chuyện này."
+msgstr "You blocked messages in this conversation."
+
 msgid "Tài khoản bên kia không còn hoạt động."
 msgstr "The other account is no longer active."
 

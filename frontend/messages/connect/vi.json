@@ -160,5 +160,18 @@
   "connect_interview_decide_reject_title": "Báo không phù hợp?",
   "connect_interview_decide_text": "Kết quả của {name} được lưu vào hồ sơ ứng tuyển và báo cho ứng viên sau ít giây (bạn vẫn hoàn tác được ở Quản lý CV).",
   "connect_interview_decided_accepted": "Đã cập nhật: Trúng tuyển.",
-  "connect_interview_decided_rejected": "Đã cập nhật: Không phù hợp."
+  "connect_interview_decided_rejected": "Đã cập nhật: Không phù hợp.",
+  "connect_menu_label": "Tùy chọn cuộc trò chuyện",
+  "connect_menu_delete": "Xóa cuộc trò chuyện",
+  "connect_menu_block": "Chặn tin nhắn",
+  "connect_menu_unblock": "Bỏ chặn",
+  "connect_delete_title": "Xóa cuộc trò chuyện?",
+  "connect_delete_text": "Tin nhắn chỉ bị xóa ở phía bạn; {name} vẫn giữ nguyên. Nếu có tin mới, cuộc trò chuyện sẽ hiện lại.",
+  "connect_block_title": "Chặn tin nhắn với {name}?",
+  "connect_block_text": "Cả hai bên sẽ không gửi được tin trong cuộc trò chuyện này cho tới khi bạn bỏ chặn. Hồ sơ ứng tuyển không bị ảnh hưởng.",
+  "connect_deleted": "Đã xóa cuộc trò chuyện.",
+  "connect_blocked_done": "Đã chặn tin nhắn.",
+  "connect_unblocked_done": "Đã bỏ chặn.",
+  "connect_action_failed": "Không thực hiện được, thử lại sau.",
+  "connect_locked_blocked_by_me": "Bạn đã chặn tin nhắn trong cuộc trò chuyện này."
 }

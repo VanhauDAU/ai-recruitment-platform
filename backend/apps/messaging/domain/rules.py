@@ -22,6 +22,8 @@ class LockedReason(StrEnum):
     UNAVAILABLE = 'unavailable'
     BLOCKED = 'blocked'
     WITHDRAWN = 'withdrawn'
+    # Chính mình chặn nhắn tin trong hội thoại (gỡ được); bị bên kia chặn thì thấy UNAVAILABLE.
+    BLOCKED_BY_ME = 'blocked_by_me'
     ACCOUNT = 'account'
     DISABLED = 'disabled'
 

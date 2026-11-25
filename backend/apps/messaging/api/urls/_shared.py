@@ -3,6 +3,8 @@
 from django.urls import path
 
 from ..views.conversations import (
+    ConversationBlockView,
+    ConversationClearView,
     ConversationDetailView,
     ConversationListCreateView,
     ConversationMessageFileView,
@@ -41,6 +43,16 @@ def conversation_routes(portal, role, permission):
             'conversations/<str:public_id>/read/',
             view(ConversationReadView),
             name=f'{portal}-conversation-read',
+        ),
+        path(
+            'conversations/<str:public_id>/clear/',
+            view(ConversationClearView),
+            name=f'{portal}-conversation-clear',
+        ),
+        path(
+            'conversations/<str:public_id>/block/',
+            view(ConversationBlockView),
+            name=f'{portal}-conversation-block',
         ),
         path(
             'conversations/<str:public_id>/messages/<str:message_id>/file/',

@@ -48,6 +48,17 @@ export async function markConversationRead(portal, publicId, seq) {
   await api.post(`${base(portal)}/${publicId}/read/`, { seq })
 }
 
+/** Xóa phía mình: bên kia giữ nguyên, tin mới hiện lại hội thoại. */
+export async function clearConversation(portal, publicId) {
+  await api.post(`${base(portal)}/${publicId}/clear/`)
+}
+
+/** Chặn / gỡ chặn nhắn tin trong hội thoại; trả hội thoại đã cập nhật. */
+export async function setConversationBlocked(portal, publicId, blocked) {
+  const { data } = await api.post(`${base(portal)}/${publicId}/block/`, { blocked })
+  return data
+}
+
 /** Attachment, image or CV file of a message, through the member-checked stream. */
 export async function getMessageFile(portal, publicId, messageId, { download = false } = {}) {
   const { data } = await api.get(`${base(portal)}/${publicId}/messages/${messageId}/file/`, {

@@ -22,6 +22,7 @@ const LOCKED_REASONS = {
   unavailable: m.connect_locked_unavailable,
   blocked: m.connect_locked_blocked,
   withdrawn: m.connect_locked_withdrawn,
+  blocked_by_me: m.connect_locked_blocked_by_me,
   account: m.connect_locked_account,
   disabled: m.connect_locked_disabled,
 }

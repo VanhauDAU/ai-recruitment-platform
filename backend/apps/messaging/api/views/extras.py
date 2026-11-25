@@ -96,7 +96,7 @@ class ShareableJobsView(PortalView):
 
 def _cv_message(request, role, public_id, message_id):
     conversation = get_conversation(request, role, public_id)
-    message = message_for(conversation, message_id)
+    message = message_for(conversation, message_id, role)
     if message is None or message.kind != Message.Kind.CV or message.cv_version is None:
         raise Http404
     ensure_recruiter_candidate_data_access(request.user)
