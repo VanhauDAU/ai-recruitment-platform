@@ -1,4 +1,4 @@
-import { CalendarOutlined, CheckOutlined, DownOutlined, FileTextOutlined, InfoCircleOutlined, LeftOutlined, MessageOutlined, RightOutlined, StopOutlined } from '@ant-design/icons'
+import { CalendarOutlined, CheckOutlined, DownOutlined, FileTextOutlined, InfoCircleOutlined, LeftOutlined, RightOutlined, StopOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Empty, Skeleton, Tooltip } from 'antd'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -153,9 +153,6 @@ function ApplicationCard({ application, expanded, onToggle }) {
         </p>
         <div className="applied-job__actions">
           <CandidateApplicationActions application={application} />
-          <Tooltip title="Nhắn tin với nhà tuyển dụng sẽ được mở trong giai đoạn tiếp theo">
-            <span aria-disabled="true" className="applied-job__message"><MessageOutlined /> Nhắn tin</span>
-          </Tooltip>
         </div>
       </div>
 

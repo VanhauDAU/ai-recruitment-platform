@@ -356,8 +356,6 @@
   "employer_workspace_app_cv_preview": "CV preview",
   "employer_workspace_app_cv_actions": "CV actions",
   "employer_workspace_app_share_disabled_uploaded": "This CV is a file uploaded by the candidate, so contact details can't be hidden for sharing.",
-  "employer_workspace_app_message_coming_soon": "Messaging candidates is coming soon",
-  "employer_workspace_app_message": "Message",
   "employer_workspace_app_select_cv_left": "Select a CV on the left to view the submitted version",
   "employer_workspace_app_cv_load_error": "Couldn't load the submitted CV",
   "employer_workspace_try_again_later": "Please try again later.",
