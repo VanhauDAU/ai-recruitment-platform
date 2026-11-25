@@ -8,6 +8,13 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Changed — Tắt ClamAV trên production
+
+- `docker-compose.prod.yml`: `UPLOAD_QUARANTINE_ENABLED: 'False'`, service `clamav`
+  chuyển vào profile `scanner` nên `up` mặc định không chạy (trên VPS nó không chạy
+  được ổn định). Upload session trả `UPLOAD_PIPELINE_DISABLED`, frontend tự quay về
+  luồng upload cũ. Bật lại: đặt cờ `'True'` và chạy compose với `--profile scanner`.
+
 #### Changed — Vừa đăng nhập Google thì tạo mật khẩu không cần mã email
 
 - Tài khoản chưa có mật khẩu, trong 10 phút sau lần đăng nhập Google của phiên
