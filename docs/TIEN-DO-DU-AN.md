@@ -97,6 +97,7 @@ Rà soát sẵn sàng deploy lần cuối trước VPS ngày 2/12. Danh sách vi
   Cache TTL, rate-limit Free), mục 1.10 email (Resend/Brevo, DMARC, Email Routing),
   ghi rõ gộp `dev` → `main` trước `deploy.sh` và script không chạy trên macOS.
   `.env.example` thêm ví dụ SMTP Resend/Brevo/Gmail, cảnh báo `AI_RUNTIME_ENABLED`.
+- **CI:** trần JS khởi tạo 256 → 268 KiB: Dependabot #373 nâng React 19.3.1 (+~8,5 KiB chunk `react`) và antd/Tiptap/Sentry (+~4 KiB `vendor`), không đổi code; đo local 252,1 → 265,1, CI 265,9 KiB.
 - **Để sau go-live:** cache bảo mật (login guard, token một lần) tách khỏi
   `redis-cache` LRU; gia cố container.
 - **Kiểm chứng:** pytest `test_cf_access`, `test_captcha`, `test_oauth`,

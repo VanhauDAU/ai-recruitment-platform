@@ -16,7 +16,11 @@ const MANIFEST_PATH = path.join(DIST_DIR, '.vite/manifest.json')
 // 2026-11-25: one initial vendor chunk plus side-effect-free slice barrels
 // (vite.config.js) took the local build from 332.8 to 252.1 KiB. The cap drops
 // to lock that in, keeping ~1 KiB for the CI gap plus a small margin.
-const INITIAL_JS_GZIP_BUDGET = 256 * 1024
+// 2026-11-25 (#373, Dependabot frontend-minor-patch): React/React DOM
+// 19.2.7 → 19.3.1 alone adds ~8.5 KiB to the `react` chunk, antd/Tiptap/Sentry
+// minors ~4 KiB to `vendor`; no application code changed. Local 252.1 → 265.1,
+// CI 265.9 KiB; the cap follows with a ~2 KiB margin.
+const INITIAL_JS_GZIP_BUDGET = 268 * 1024
 // Shared account-setting styles now ship with the initial shell. The same
 // 2026-11-13 toolchain update moved the measured CSS from under 38.0 to
 // 38.1 KiB; keep a 0.4 KiB allowance while retaining a real cap.
