@@ -9,6 +9,7 @@ from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.employers.services import ensure_recruiter_candidate_data_access
 from common.api.pagination import StandardPagination
 from common.api.params import parse_bool
 from common.api.throttling import WriteScopedRateThrottle, with_account_write_cap
@@ -47,10 +48,17 @@ from ..serializers import (
 PAGE_SIZE = 20
 
 
+# Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``. Không dùng
+# docstring: drf-spectacular sẽ đưa ghi chú nội bộ vào mô tả API công khai.
 class PortalView(APIView):
-    """Khai ở urls: ``View.as_view(role=Role.X, permission_classes=[...])``."""
-
     role = None
+
+    def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
+        # Phía NTD mọi thao tác (đọc lẫn gửi) đều chạm dữ liệu ứng viên: kiểm cổng
+        # xác thực + DPA ở mỗi request, không chỉ lúc mở hội thoại.
+        if self.role == Role.RECRUITER:
+            ensure_recruiter_candidate_data_access(request.user)
 
 
 def present_conversations(rows, role, *, detail=False):

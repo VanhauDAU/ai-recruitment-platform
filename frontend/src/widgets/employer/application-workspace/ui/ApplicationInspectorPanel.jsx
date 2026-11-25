@@ -1,8 +1,6 @@
-import { HistoryOutlined, LockOutlined, MessageOutlined } from '@ant-design/icons'
-import { Alert, Button, Empty, Skeleton } from 'antd'
+import { HistoryOutlined, LockOutlined } from '@ant-design/icons'
+import { Alert, Empty, Skeleton } from 'antd'
 import { Link } from 'react-router'
-import { useStartConversation } from '@/entities/messaging/conversation'
-import { useSiteSettings } from '@/entities/system/site-settings'
 import { ApplicationDecisionBar } from '@/features/employer/candidate/application-status-decision'
 import { BlockCandidateButton } from '@/features/employer/candidate/block-candidate'
 import { SaveToTalentPoolButton } from '@/features/employer/candidate/save-to-talent-pool'
@@ -41,18 +39,6 @@ function TextBlock({ label, children }) {
   )
 }
 
-/** Opens (or reopens) the ProCV Connect conversation of this application. */
-function MessageCandidateButton({ application }) {
-  const start = useStartConversation('employer')
-  const enabled = useSiteSettings().settings.connect_enabled === true
-  if (!enabled || application.status === 'withdrawn') return null
-  return (
-    <Button block icon={<MessageOutlined />} style={{ gridColumn: '1 / -1' }} loading={start.isPending} onClick={() => start.mutate({ application: application.public_id })}>
-      {m.connect_message_action()}
-    </Button>
-  )
-}
-
 /** Blocklist state, or the mass-apply signal that suggests blocking. */
 function CandidateTrust({ application, candidateName }) {
   if (application.candidate_blocked) {
@@ -79,7 +65,6 @@ function CandidateTrust({ application, candidateName }) {
   }
   return (
     <div className="aw-secondary-actions">
-      <MessageCandidateButton application={application} />
       <SaveToTalentPoolButton application={application} candidateName={candidateName} block />
       <BlockCandidateButton application={application} candidateName={candidateName} block label={m.employer_workspace_app_block()} />
     </div>

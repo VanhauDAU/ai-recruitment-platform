@@ -9,6 +9,7 @@ from ..domain import Role
 from ..models import Conversation, InterviewAppointment
 from .notifications import notify_interview_reminder, send_unread_digest
 from .policy import unread_email_delay
+from .realtime import recruiter_may_receive
 
 BATCH = 200
 
@@ -38,6 +39,8 @@ def send_unread_message_emails(now=None):
             Conversation.objects.filter(pk=conversation.pk).update(
                 **{f'{prefix}_emailed_seq': conversation.last_seq}
             )
+            if role == Role.RECRUITER and not recruiter_may_receive(user):
+                continue
             if send_unread_digest(conversation, role, user, conversation.unread(role)):
                 sent += 1
     return sent
