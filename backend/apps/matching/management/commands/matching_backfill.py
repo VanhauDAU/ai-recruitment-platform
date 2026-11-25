@@ -24,6 +24,7 @@ from ...services import (
     get_encoder,
     jobs_with_rankable_applications,
     score_application,
+    snapshots_missing_profile,
 )
 from ...tasks import embed_cv_version, embed_job
 from ...tasks import score_application as score_application_task
@@ -76,5 +77,14 @@ class Command(BaseCommand):
                 else:
                     score_application_task.delay(application_id)
                 scored += 1
+        # Điểm còn nhưng hồ sơ trích xuất của bản CV đã nộp thuộc phiên bản cũ: dựng lại.
+        rebuilt = 0
+        for version in snapshots_missing_profile():
+            if inline:
+                ensure_cv_document(version, encoder=encoder, catalog=catalog)
+                rebuilt += 1
         mode = 'đã chấm' if inline else 'đã gửi task cho'
-        self.stdout.write(f'{mode} {scored} hồ sơ ứng tuyển; không chấm được: {failed}.')
+        self.stdout.write(
+            f'{mode} {scored} hồ sơ ứng tuyển; không chấm được: {failed}; '
+            f'dựng lại hồ sơ trích xuất: {rebuilt}.'
+        )

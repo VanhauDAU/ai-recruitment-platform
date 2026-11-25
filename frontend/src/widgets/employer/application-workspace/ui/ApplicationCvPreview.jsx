@@ -1,5 +1,6 @@
 import { FileTextOutlined, MessageOutlined } from '@ant-design/icons'
-import { Alert, Button, Empty, Skeleton, Tooltip } from 'antd'
+import { Alert, Button, Empty, Segmented, Skeleton, Tooltip } from 'antd'
+import { useState } from 'react'
 import { applicationKeys, getApplicationCvFile } from '@/entities/application/application'
 import { CvDocumentPreview, UploadedCvPreview } from '@/entities/cv/cv'
 import { DownloadApplicationCvButton } from '@/features/employer/candidate/download-application-cv'
@@ -8,6 +9,7 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { usePreviewFitZoom } from '@/shared/hooks/use-preview-fit-zoom'
 import { m } from '@/shared/config/i18n'
 import { documentFromVersion } from '../model/application-workspace'
+import ApplicationExtractedProfile from './ApplicationExtractedProfile'
 
 const SOURCE_LABELS = {
   builder: m.employer_workspace_app_cv_source_builder(),
@@ -25,6 +27,10 @@ export default function ApplicationCvPreview({
   onRetry,
   className = '',
 }) {
+  // 'cv': CV gốc; 'profile': hồ sơ trích xuất từ CV đó (chỉ khi tính năng phân tích AI bật).
+  const [view, setView] = useState('cv')
+  const profileAvailable = Boolean(selectedApplication?.ai_match_status)
+  const showProfile = profileAvailable && view === 'profile'
   // CV tải lên được nộp bằng tệp gốc: hiện đúng tệp đó thay cho bản dựng từ nội dung.
   const sourceFile = Boolean(snapshot?.cv?.has_source_file)
   const previewDocument = sourceFile ? null : documentFromVersion(snapshot?.cv)
@@ -47,7 +53,20 @@ export default function ApplicationCvPreview({
           </h2>
           {selectedPublicId && <p className="aw-panel-sub truncate">{cvTitle}</p>}
         </div>
-        {previewDocument && <span className="aw-count">{Math.round(previewZoom * 100)}%</span>}
+        {profileAvailable && selectedPublicId ? (
+          <Segmented
+            size="small"
+            aria-label={m.employer_workspace_app_mode_aria()}
+            value={view}
+            onChange={setView}
+            options={[
+              { value: 'cv', label: m.employer_workspace_app_mode_cv() },
+              { value: 'profile', label: m.employer_workspace_app_mode_profile() },
+            ]}
+          />
+        ) : (
+          previewDocument && <span className="aw-count">{Math.round(previewZoom * 100)}%</span>
+        )}
       </header>
       {selectedPublicId && (
         <div className="aw-actionbar" role="toolbar" aria-label={m.employer_workspace_app_cv_actions()}>
@@ -66,7 +85,12 @@ export default function ApplicationCvPreview({
         </div>
       )}
 
-      <div className="min-h-96 flex-1 overflow-y-auto overflow-x-hidden bg-slate-100 p-3 sm:p-4">
+      {showProfile && selectedPublicId && (
+        <div className="min-h-96 flex-1 overflow-y-auto bg-white">
+          <ApplicationExtractedProfile key={selectedPublicId} publicId={selectedPublicId} />
+        </div>
+      )}
+      <div className={`min-h-96 flex-1 overflow-y-auto overflow-x-hidden bg-slate-100 p-3 sm:p-4${showProfile ? ' hidden' : ''}`}>
         {!selectedPublicId && (
           <div className="flex min-h-96 items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white">
             <Empty

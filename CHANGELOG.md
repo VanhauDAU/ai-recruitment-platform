@@ -8,6 +8,27 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-25
 
+#### Changed — Hồ sơ trích xuất đầy đủ (`extract-v4`) và giải thích mức phù hợp
+
+- `profile_json` thêm `sections`: nội dung đầy đủ từng mục của CV (tóm tắt, từng công việc kèm
+  mô tả, dự án, học vấn, kỹ năng, chứng chỉ, giải thưởng, hoạt động, ngoại ngữ, sở thích, thông
+  tin thêm), đã bỏ email, số điện thoại, phần đầu trang và người tham chiếu. Hiển thị ở "Hồ sơ
+  NTD nhìn thấy", ở cột giữa màn xử lý hồ sơ (chuyển "CV gốc | Hồ sơ trích xuất", API
+  `/api/employer/applications/{id}/extracted-profile/`) và ở xem nhanh của Tìm CV (che họ tên
+  trong câu văn, không có mục "Thông tin thêm").
+- Bộ đọc PDF tải lên: dòng "Kỹ năng …" dưới tiêu đề Kỹ năng là một kỹ năng (trước bị coi là
+  tiêu đề nên mất); nhận thêm tiêu đề "Danh hiệu và giải thưởng", "Người giới thiệu", "Thông
+  tin thêm", kể cả khi tiêu đề bị ngắt hai dòng; phần nội dung của một cột chạy sang trang sau
+  được ghép về đúng cột; tên/chức danh đặt trên cột phải được đưa về đầu tài liệu; bỏ dòng chân
+  trang. Trên 51 PDF mẫu: kinh nghiệm PDF hệ thống 93% → 100%, chức danh PDF TopCV 29 → 32/36,
+  các chỉ số khác giữ nguyên.
+- Cổng NTD: chip mức phù hợp bấm được, mở bảng "vì sao" (điểm từng tiêu chí kèm lý do, kỹ năng
+  có/thiếu kèm câu trích, cách tính điểm) ở bảng CV của tin, bảng CV của chiến dịch (thêm cột và
+  sắp xếp "Phù hợp nhất") và đầu panel "Xử lý hồ sơ". Panel này giữ nguyên các mục cũ (liên hệ,
+  thông tin ứng tuyển, đánh giá, lịch sử); bản chia ba tab đã bỏ.
+- Sửa: ứng viên không xóa được CV sau khi NTD xem hồ sơ ở Tìm CV (nhật ký truy cập chặn việc
+  xóa phiên bản CV).
+
 #### Added — Tìm CV: nhà tuyển dụng tìm ứng viên theo một tin
 
 - Nút **Tìm CV** trên header và mục "Tìm CV" ở thanh bên cổng NTD mở trang

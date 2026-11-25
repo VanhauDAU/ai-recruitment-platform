@@ -77,3 +77,22 @@ export function deadlineBounds(job, action, policy, today = dayjs().startOf('day
     latest: maximumByVisibility.isBefore(maximumByPolicy, 'day') ? maximumByVisibility : maximumByPolicy,
   }
 }
+
+// Cách sắp xếp hồ sơ nhà tuyển dụng chọn lần trước; mặc định vẫn là mới nhất.
+const ORDERING_STORAGE_KEY = 'procv_employer_cv_ordering'
+
+export function storedOrdering() {
+  try {
+    return window.localStorage.getItem(ORDERING_STORAGE_KEY) || 'newest'
+  } catch {
+    return 'newest'
+  }
+}
+
+export function storeOrdering(value) {
+  try {
+    window.localStorage.setItem(ORDERING_STORAGE_KEY, value)
+  } catch {
+    // Trình duyệt chặn lưu: chỉ mất việc nhớ lựa chọn.
+  }
+}

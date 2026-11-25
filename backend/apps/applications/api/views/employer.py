@@ -12,7 +12,7 @@ from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import IsEmployer
 from apps.employers.services import ensure_recruiter_candidate_data_access
-from apps.matching.selectors import application_match_detail
+from apps.matching.selectors import application_cv_profile, application_match_detail
 
 from ...selectors import (
     employer_application_queryset,
@@ -134,6 +134,23 @@ class EmployerApplicationAiMatchView(APIView):
 
     def get(self, request, public_id):
         return Response(application_match_detail(_recruiter_application(request, public_id)))
+
+
+@extend_schema(
+    tags=['applications'],
+    summary='Hồ sơ trích xuất từ bản CV đã nộp của một hồ sơ',
+    description=(
+        '`status`: `ready` (có `profile`), `pending`, `failed`, hoặc `not_consented` khi ứng viên '
+        'không tham gia phân tích AI. `profile` gồm chức danh, kinh nghiệm, học vấn, cấp bậc, '
+        'ngoại ngữ, kỹ năng theo nhóm và nội dung từng mục của CV (`sections`).'
+    ),
+    responses={200: OpenApiTypes.OBJECT},
+)
+class EmployerApplicationCvProfileView(APIView):
+    permission_classes = [IsEmployer]
+
+    def get(self, request, public_id):
+        return Response(application_cv_profile(_recruiter_application(request, public_id)))
 
 
 @extend_schema(

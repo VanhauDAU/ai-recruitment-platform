@@ -468,7 +468,17 @@ phép NTD tìm kiếm" (mỗi ứng viên một CV) theo mức phù hợp (`serv
 3. Chấm từng CV bằng `score_match` (`hybrid-v2`). Vector đã tính sẵn nên tiến trình web không
    cần mô hình; chỉ truyền chunk chức danh, vì phần so từng câu yêu cầu không ảnh hưởng điểm.
 4. Bỏ CV dưới 30 điểm (cặp khác ngành có trung vị 11 điểm), ẩn danh kết quả: hồ sơ qua danh
-   sách trắng `domain/profile_view.py`, không câu trích, không tên công ty cũ.
+   sách trắng `domain/profile_view.py` (nội dung từng mục của CV, không email, số điện thoại,
+   phần đầu trang, mục "Thông tin thêm"; họ tên trong câu văn bị che), kết quả chấm không kèm
+   câu trích.
+
+**Hồ sơ trích xuất để hiển thị (`extract-v4`).** Ngoài các trường dùng để chấm, `profile_json`
+có `sections`: nội dung đầy đủ từng mục của CV. `chunks` (đầu vào của bước chấm, tối đa 40 câu)
+không đổi nên điểm không đổi. Với PDF tải lên, thứ tự đọc và việc chia mục dựa trên luật
+(`apps/cvs/services/pdf_layout.py`, `cv_document.py`, `extraction/cv_upload.py`): tìm khe giữa
+hai cột, ghép phần tiếp của một cột qua trang theo vị trí ngang, nhận tiêu đề mục theo bảng từ
+khóa (kể cả tiêu đề ngắt hai dòng), coi dòng cùng mục dưới một tiêu đề là nội dung. Giới hạn:
+ô quá hẹp khiến tệp ngắt giữa từ, tiêu đề lạ không có trong bảng từ khóa.
 
 Không tìm bằng câu tự do: so ngữ nghĩa một câu truy vấn cần mã hóa nó bằng mô hình, mà tiến
 trình web không có mô hình; tin tuyển dụng là "câu truy vấn" đã được mã hóa sẵn. Đo trên DB

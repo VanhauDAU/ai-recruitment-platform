@@ -130,6 +130,12 @@ export async function getRecruiterApplicationMatch(publicId) {
   return data
 }
 
+/** Hồ sơ trích xuất từ bản CV đã nộp: `{status, error_code, profile}`. */
+export async function getRecruiterApplicationCvProfile(publicId) {
+  const { data } = await api.get(`/employer/applications/${publicId}/extracted-profile/`)
+  return data
+}
+
 export async function getApplicationHistory(publicId) {
   const { data } = await api.get(`/employer/applications/${publicId}/history/`)
   return data.results || data

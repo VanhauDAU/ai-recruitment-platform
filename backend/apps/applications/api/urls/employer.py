@@ -17,6 +17,7 @@ from ..views.cv_exports import (
 from ..views.employer import (
     EmployerApplicationAiMatchView,
     EmployerApplicationAssessmentView,
+    EmployerApplicationCvProfileView,
     EmployerApplicationDecisionUndoView,
     EmployerApplicationDecisionView,
     EmployerApplicationExportView,
@@ -146,6 +147,11 @@ urlpatterns = [
         'applications/<str:public_id>/reviews/',
         RecruiterApplicationReviewListView.as_view(),
         name='recruiter-application-reviews',
+    ),
+    path(
+        'applications/<str:public_id>/extracted-profile/',
+        EmployerApplicationCvProfileView.as_view(),
+        name='recruiter-application-cv-profile',
     ),
     path(
         'applications/<str:public_id>/ai-match/',

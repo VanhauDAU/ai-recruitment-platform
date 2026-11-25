@@ -86,6 +86,8 @@ class RecruiterCandidateSearchDetailView(APIView):
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = 'candidate_search'
 
+    # Cùng tiền tố URL với danh sách: đặt tên thao tác riêng để schema không trùng.
+    @extend_schema(operation_id='employer_candidate_search_detail')
     def get(self, request, ref):
         job = _job(request, request.query_params.get('job', ''))
         return Response(candidate_detail(request.user, job, ref, request=request))

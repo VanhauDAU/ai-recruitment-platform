@@ -31,13 +31,7 @@ def cv_profile_document(cv):
     )
 
 
-def owner_cv_profile(cv):
-    """Hồ sơ trích xuất của CV cho chính chủ: `{status, error_code, profile}`.
-
-    `pending`: CV vừa lưu, chưa trích xuất xong. `failed`: không đọc được CV (ví dụ PDF
-    scan), kèm mã lỗi. `ready`: có `profile`.
-    """
-    document = cv_profile_document(cv)
+def _profile_state(document):
     if document is None:
         return {'status': 'pending', 'error_code': '', 'profile': None}
     if document.status != MatchDocument.Status.READY:
@@ -47,3 +41,34 @@ def owner_cv_profile(cv):
         'error_code': '',
         'profile': public_cv_profile(document.profile_json, audience=OWNER),
     }
+
+
+def application_cv_profile(application):
+    """Hồ sơ trích xuất từ bản CV đã nộp của một hồ sơ ứng tuyển, cho nhà tuyển dụng.
+
+    Chỉ có khi ứng viên đồng ý phân tích AI (`not_consented` nếu không): trích xuất là một
+    phần của việc phân tích. Nhà tuyển dụng đã có CV và liên hệ của người ứng tuyển, nên
+    xem cùng phạm vi với chủ CV. `application` đã qua kiểm tra quyền của app `applications`.
+    """
+    if not application.allow_ai_analysis:
+        return {'status': 'not_consented', 'error_code': '', 'profile': None}
+    document = (
+        MatchDocument.objects.filter(
+            kind=MatchDocument.Kind.CV,
+            cv_version_id=application.submitted_cv_version_id,
+            extractor_version=EXTRACTOR_VERSION,
+            model_version=model_version(),
+        )
+        .order_by('-pk')
+        .first()
+    )
+    return _profile_state(document)
+
+
+def owner_cv_profile(cv):
+    """Hồ sơ trích xuất của CV cho chính chủ: `{status, error_code, profile}`.
+
+    `pending`: CV vừa lưu, chưa trích xuất xong. `failed`: không đọc được CV (ví dụ PDF
+    scan), kèm mã lỗi. `ready`: có `profile`.
+    """
+    return _profile_state(cv_profile_document(cv))

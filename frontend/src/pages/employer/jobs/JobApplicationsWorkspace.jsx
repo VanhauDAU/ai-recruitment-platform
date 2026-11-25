@@ -12,6 +12,7 @@ import {
   RECRUITER_APPLICATION_STATUS_LABELS,
 } from '@/entities/application/application'
 import { FitScoreChip } from '@/entities/application/job-fit'
+import { ApplicationMatchButton } from '@/features/employer/candidate/view-application-match'
 import { useSiteSettings } from '@/entities/system/site-settings'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { employerAppPath } from '@/shared/config/portals'
@@ -23,6 +24,8 @@ import {
   applicationFilterChips,
   applicationFilterParams,
   formatRelativeDay,
+  storedOrdering,
+  storeOrdering,
 } from './job-detail-presentation'
 import { candidateInitials, formatCount } from './job-list-presentation'
 import { m } from '@/shared/config/i18n'
@@ -34,25 +37,6 @@ const ORDERING_OPTIONS = [
   { value: 'name', label: m.employer_job_cv_sort_name() },
 ]
 const AI_ORDERING_OPTION = { value: 'ai_match', label: m.employer_job_cv_sort_ai_match() }
-// Cách sắp xếp nhà tuyển dụng chọn lần trước; mặc định vẫn là mới nhất.
-const ORDERING_STORAGE_KEY = 'procv_employer_cv_ordering'
-
-function storedOrdering() {
-  try {
-    return window.localStorage.getItem(ORDERING_STORAGE_KEY) || 'newest'
-  } catch {
-    return 'newest'
-  }
-}
-
-function storeOrdering(value) {
-  try {
-    window.localStorage.setItem(ORDERING_STORAGE_KEY, value)
-  } catch {
-    // Trình duyệt chặn lưu: chỉ mất việc nhớ lựa chọn.
-  }
-}
-
 function Fit({ application }) {
   return (
     <FitScoreChip
@@ -169,7 +153,7 @@ export default function JobApplicationsWorkspace({ jobPublicId, summary, filter,
       ),
     },
     ...(rankingEnabled
-      ? [{ title: m.employer_job_cv_col_fit(), key: 'fit', width: 190, render: (_, item) => <Fit application={item} /> }]
+      ? [{ title: m.employer_job_cv_col_fit(), key: 'fit', width: 190, render: (_, item) => <ApplicationMatchButton application={item} /> }]
       : []),
     { title: m.employer_job_cv_col_status(), key: 'status', width: 150, render: (_, item) => <StatusPill status={item.status} /> },
     { title: m.employer_job_cv_col_applied_at(), key: 'applied_at', width: 130, render: (_, item) => <AppliedAt value={item.applied_at} /> },

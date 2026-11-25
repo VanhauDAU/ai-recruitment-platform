@@ -8,16 +8,16 @@ import {
   PhoneOutlined,
   SolutionOutlined,
 } from '@ant-design/icons'
-import { Alert, Empty, Skeleton, Tabs } from 'antd'
+import { Alert, Empty, Skeleton } from 'antd'
 import { Link } from 'react-router'
 import { ApplicationDecisionBar } from '@/features/employer/candidate/application-status-decision'
 import { BlockCandidateButton } from '@/features/employer/candidate/block-candidate'
 import { SaveToTalentPoolButton } from '@/features/employer/candidate/save-to-talent-pool'
+import { ApplicationMatchCard } from '@/features/employer/candidate/view-application-match'
 import { employerAppPath } from '@/shared/config/portals'
 import { m } from '@/shared/config/i18n'
 import { formatApplicationDate, initialsOf, pendingNoticeOf } from '../model/application-workspace'
 import ApplicationAssessmentSection from './ApplicationAssessmentSection'
-import ApplicationFitSection from './ApplicationFitSection'
 import ApplicationHistoryTimeline from './ApplicationHistoryTimeline'
 import ApplicationReviewsSection from './ApplicationReviewsSection'
 import ApplicationStatusBadge from './ApplicationStatusBadge'
@@ -140,98 +140,69 @@ export default function ApplicationInspectorPanel({
             <CandidateTrust application={selectedApplication} candidateName={candidateName} />
           </section>
 
-          <Tabs
-            key={selectedApplication.public_id}
-            size="small"
-            className="aw-tabs"
-            aria-label={m.employer_workspace_app_tabs_aria()}
-            items={[
-              {
-                key: 'assessment',
-                label: m.employer_workspace_app_tab_assessment(),
-                children: (
-                  <>
-                    {selectedApplication.ai_match_status && <ApplicationFitSection application={selectedApplication} />}
-                    <ApplicationAssessmentSection key={selectedApplication.public_id} application={selectedApplication} />
-                  </>
-                ),
-              },
-              {
-                key: 'info',
-                label: m.employer_workspace_app_tab_info(),
-                children: (
-                  <>
-                    <section className="aw-section space-y-3">
-                      <h3 className="aw-section__title">{m.employer_workspace_app_contact()}</h3>
-                      {!snapshot && <Skeleton active paragraph={{ rows: 3 }} />}
-                      {snapshot && (
-                        <>
-                          <InfoRow icon={<MailOutlined aria-hidden />} label="Email">
-                            {candidateEmail ? <a className="text-slate-700 underline decoration-slate-300" href={`mailto:${candidateEmail}`}>{candidateEmail}</a> : '—'}
-                          </InfoRow>
-                          <InfoRow icon={<PhoneOutlined aria-hidden />} label={m.employer_workspace_app_phone()}>
-                            {snapshot.contact_phone ? <a className="text-slate-700 underline decoration-slate-300" href={`tel:${snapshot.contact_phone}`}>{snapshot.contact_phone}</a> : '—'}
-                          </InfoRow>
-                          <InfoRow icon={<EnvironmentOutlined aria-hidden />} label={m.employer_workspace_app_preferred_location()}>
-                            {snapshot.preferred_location_names?.join(', ') || m.employer_workspace_app_no_requirement()}
-                          </InfoRow>
-                        </>
-                      )}
-                    </section>
+          <ApplicationMatchCard application={selectedApplication} />
 
-                    <section className="aw-section space-y-3">
-                      <h3 className="aw-section__title">{m.employer_workspace_app_application_info()}</h3>
-                      <InfoRow icon={<SolutionOutlined aria-hidden />} label={m.employer_workspace_app_job()}>
-                        {selectedApplication.job_title}
-                      </InfoRow>
-                      <InfoRow icon={<CalendarOutlined aria-hidden />} label={m.employer_workspace_app_applied_date()}>
-                        {formatApplicationDate(selectedApplication.applied_at, true)}
-                        {` · ${m.employer_workspace_app_submission({ number: selectedApplication.submission_number || 1 })}`}
-                      </InfoRow>
-                      {selectedApplication.last_reminded_at && (
-                        <InfoRow icon={<HistoryOutlined aria-hidden />} label={m.employer_workspace_app_awaiting_response()}>
-                          {m.employer_workspace_app_reminded({ date: formatApplicationDate(selectedApplication.last_reminded_at, true) })}
-                        </InfoRow>
-                      )}
-                      <InfoRow icon={<CheckCircleOutlined aria-hidden />} label={m.employer_workspace_app_source()}>
-                        {selectedApplication.campaign_channel_label
-                          ? m.employer_workspace_app_campaign_channel({ channel: selectedApplication.campaign_channel_label })
-                          : SOURCE_LABELS[selectedApplication.source] || selectedApplication.source || m.employer_workspace_app_source_direct()}
-                      </InfoRow>
-                      <InfoRow icon={<CheckCircleOutlined aria-hidden />} label={m.employer_workspace_app_ai_analysis()}>
-                        {snapshot?.allow_ai_analysis ? m.employer_workspace_app_ai_consented() : m.employer_workspace_app_ai_no_consent()}
-                      </InfoRow>
-                      {selectedApplication.cover_letter && <TextBlock label={m.employer_workspace_app_cover_letter()}>{selectedApplication.cover_letter}</TextBlock>}
-                      {selectedApplication.candidate_note && <TextBlock label={m.employer_workspace_app_candidate_note()}>{selectedApplication.candidate_note}</TextBlock>}
-                    </section>
+          <section className="aw-section space-y-3">
+            <h3 className="aw-section__title">{m.employer_workspace_app_contact()}</h3>
+            {!snapshot && <Skeleton active paragraph={{ rows: 3 }} />}
+            {snapshot && (
+              <>
+                <InfoRow icon={<MailOutlined aria-hidden />} label="Email">
+                  {candidateEmail ? <a className="text-slate-700 underline decoration-slate-300" href={`mailto:${candidateEmail}`}>{candidateEmail}</a> : '—'}
+                </InfoRow>
+                <InfoRow icon={<PhoneOutlined aria-hidden />} label={m.employer_workspace_app_phone()}>
+                  {snapshot.contact_phone ? <a className="text-slate-700 underline decoration-slate-300" href={`tel:${snapshot.contact_phone}`}>{snapshot.contact_phone}</a> : '—'}
+                </InfoRow>
+                <InfoRow icon={<EnvironmentOutlined aria-hidden />} label={m.employer_workspace_app_preferred_location()}>
+                  {snapshot.preferred_location_names?.join(', ') || m.employer_workspace_app_no_requirement()}
+                </InfoRow>
+              </>
+            )}
+          </section>
 
-                    <PreviousSubmissions application={selectedApplication} />
-                  </>
-                ),
-              },
-              {
-                key: 'activity',
-                label: m.employer_workspace_app_tab_activity(),
-                children: (
-                  <>
-                    <ApplicationReviewsSection publicId={selectedApplication.public_id} />
+          <section className="aw-section space-y-3">
+            <h3 className="aw-section__title">{m.employer_workspace_app_application_info()}</h3>
+            <InfoRow icon={<SolutionOutlined aria-hidden />} label={m.employer_workspace_app_job()}>
+              {selectedApplication.job_title}
+            </InfoRow>
+            <InfoRow icon={<CalendarOutlined aria-hidden />} label={m.employer_workspace_app_applied_date()}>
+              {formatApplicationDate(selectedApplication.applied_at, true)}
+              {` · ${m.employer_workspace_app_submission({ number: selectedApplication.submission_number || 1 })}`}
+            </InfoRow>
+            {selectedApplication.last_reminded_at && (
+              <InfoRow icon={<HistoryOutlined aria-hidden />} label={m.employer_workspace_app_awaiting_response()}>
+                {m.employer_workspace_app_reminded({ date: formatApplicationDate(selectedApplication.last_reminded_at, true) })}
+              </InfoRow>
+            )}
+            <InfoRow icon={<CheckCircleOutlined aria-hidden />} label={m.employer_workspace_app_source()}>
+              {selectedApplication.campaign_channel_label
+                ? m.employer_workspace_app_campaign_channel({ channel: selectedApplication.campaign_channel_label })
+                : SOURCE_LABELS[selectedApplication.source] || selectedApplication.source || m.employer_workspace_app_source_direct()}
+            </InfoRow>
+            <InfoRow icon={<CheckCircleOutlined aria-hidden />} label={m.employer_workspace_app_ai_analysis()}>
+              {snapshot?.allow_ai_analysis ? m.employer_workspace_app_ai_consented() : m.employer_workspace_app_ai_no_consent()}
+            </InfoRow>
+            {selectedApplication.cover_letter && <TextBlock label={m.employer_workspace_app_cover_letter()}>{selectedApplication.cover_letter}</TextBlock>}
+            {selectedApplication.candidate_note && <TextBlock label={m.employer_workspace_app_candidate_note()}>{selectedApplication.candidate_note}</TextBlock>}
+          </section>
 
-                    <section className="aw-section">
-                      <h3 className="aw-section__title">
-                        <HistoryOutlined className="text-[var(--brand-primary)]" aria-hidden /> {m.employer_workspace_app_history()}
-                      </h3>
-                      <ApplicationHistoryTimeline
-                        items={history}
-                        loading={historyLoading}
-                        error={historyError}
-                        onRetry={onRetryHistory}
-                      />
-                    </section>
-                  </>
-                ),
-              },
-            ]}
-          />
+          <PreviousSubmissions application={selectedApplication} />
+
+          <ApplicationReviewsSection publicId={selectedApplication.public_id} />
+
+          <ApplicationAssessmentSection key={selectedApplication.public_id} application={selectedApplication} />
+
+          <section className="aw-section">
+            <h3 className="aw-section__title">
+              <HistoryOutlined className="text-[var(--brand-primary)]" aria-hidden /> {m.employer_workspace_app_history()}
+            </h3>
+            <ApplicationHistoryTimeline
+              items={history}
+              loading={historyLoading}
+              error={historyError}
+              onRetry={onRetryHistory}
+            />
+          </section>
         </div>
       )}
     </aside>

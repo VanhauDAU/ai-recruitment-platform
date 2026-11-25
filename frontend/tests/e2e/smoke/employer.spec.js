@@ -1615,6 +1615,7 @@ test('employer applications: grouped CV workspace is clear across responsive lay
       available_decisions: ['shortlisted', 'interviewed', 'accepted', 'rejected'],
       cover_letter: 'Tôi mong muốn đồng hành cùng đội ngũ sản phẩm.',
       applied_at: '2026-08-02T09:20:00+07:00',
+      ai_match_score: 72, ai_match_level: 'high', ai_match_status: 'ready',
     },
     {
       public_id: 'app_previous', candidate_name: 'Lê Văn Hậu',
@@ -1624,12 +1625,69 @@ test('employer applications: grouped CV workspace is clear across responsive lay
       source: 'applied', status: 'submitted', employer_note: '', employer_rating: null,
       available_decisions: ['shortlisted', 'interviewed', 'accepted', 'rejected'],
       applied_at: '2026-07-28T08:00:00+07:00',
+      ai_match_score: null, ai_match_level: null, ai_match_status: 'not_consented',
     },
   ]
   await page.route(/http:\/\/localhost:8000\/api\/employer\/applications\/(?:\?.*)?$/, async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({ count: 2, next: null, previous: null, results: applications }),
+    })
+  })
+  await page.route('http://localhost:8000/api/employer/applications/app_befb3400ade3/ai-match/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        status: 'ready', analysed_at: '2026-08-02T09:21:00+07:00', error_code: '',
+        result: {
+          schema_version: 2,
+          overall: { score: 72, level: 'high', label: 'Phù hợp', confidence: 'high', relevance: 81 },
+          components: [
+            { key: 'skills', score: 67, weight: 0.4, status: 'ok', detail: { matched: [{}, {}], missing: [{}] } },
+            { key: 'experience', score: 78, weight: 0.3, status: 'ok', detail: { cv_months: 72, required_band: '3', relevance_score: 81 } },
+            { key: 'education', score: 100, weight: 0.1, status: 'ok', detail: { required: 'university', cv: 'university' } },
+            { key: 'position_level', score: 70, weight: 0.1, status: 'ok', detail: { required: 'team_lead', cv: 'employee' } },
+            { key: 'languages', score: null, weight: 0.1, status: 'not_required', detail: {} },
+          ],
+          skills: {
+            matched: [
+              { name: 'ReactJS', importance: 'required', match_type: 'exact', evidence: 'Xây dựng design system bằng React cho 4 sản phẩm.' },
+              { name: 'TypeScript', importance: 'preferred', match_type: 'exact', evidence: '' },
+            ],
+            missing: [{ name: 'GraphQL', importance: 'required' }],
+            extra: ['Figma'],
+          },
+          requirements: [],
+          flags: { relevance_discount_applied: false, language_cap_applied: false, experience_estimated: false },
+        },
+      }),
+    })
+  })
+  await page.route('http://localhost:8000/api/employer/applications/app_befb3400ade3/extracted-profile/', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        status: 'ready', error_code: '',
+        profile: {
+          source: 'builder', language: 'vi', title: 'Senior Frontend Developer',
+          skill_groups: [{ group: 'Frontend', skills: ['ReactJS', 'TypeScript'] }, { group: '', skills: ['Figma'] }],
+          experience: { months: 72, band: 'over_5', estimated: false, item_count: 2 },
+          education_level: 'university', position_level: 'employee',
+          languages: [{ code: 'en', level: 'working' }],
+          sections: [
+            { key: 'summary', items: [{ title: '', subtitle: '', start: null, end: null, lines: ['6 năm xây dựng sản phẩm React cho thương mại điện tử.'] }] },
+            {
+              key: 'experience',
+              items: [
+                { title: 'Senior Frontend Developer', subtitle: 'Công ty Sao Mai', start: '2022-03', end: null, lines: ['Xây dựng design system bằng React cho 4 sản phẩm.', 'Giảm 35% thời gian tải trang thanh toán.'] },
+                { title: 'Frontend Developer', subtitle: 'Công ty Biển Xanh', start: '2019-06', end: '2022-02', lines: ['Phát triển trang quản trị đơn hàng.'] },
+              ],
+            },
+            { key: 'education', items: [{ title: 'Kỹ sư Công nghệ thông tin', subtitle: 'Đại học Đà Nẵng', start: '2015-09', end: '2019-06', lines: [] }] },
+          ],
+          missing: [],
+        },
+      }),
     })
   })
   await page.route('http://localhost:8000/api/employer/applications/app_befb3400ade3/cv/', async (route) => {
@@ -1720,6 +1778,15 @@ test('employer applications: grouped CV workspace is clear across responsive lay
   await cvPreview.getByRole('button', { name: /Tải PDF/ }).click()
   expect((await download).suggestedFilename()).toBe('CV - Lê Văn Hậu.pdf')
 
+  // Hồ sơ trích xuất từ CV đã nộp, xem thay cho CV gốc để đối chiếu.
+  await cvPreview.getByText('Hồ sơ trích xuất', { exact: true }).click()
+  await expect(cvPreview.getByRole('heading', { name: /Kinh nghiệm/ })).toBeVisible()
+  await expect(cvPreview.getByText('Công ty Sao Mai')).toBeVisible()
+  await expect(cvPreview.getByText('03/2022 – nay')).toBeVisible()
+  await expect(cvPreview.getByText('Giảm 35% thời gian tải trang thanh toán.')).toBeVisible()
+  await cvPreview.getByText('CV gốc', { exact: true }).click()
+  await expect(cvPreview.getByLabel('Xem trước CV single_column_v1 trang 1')).toBeVisible()
+
   const viewportWidth = page.viewportSize().width
   if (viewportWidth < 768) {
     await expect(inspector).toBeHidden()
@@ -1730,6 +1797,17 @@ test('employer applications: grouped CV workspace is clear across responsive lay
   await expect(inspector.getByText('levanhaum@gmail.com', { exact: true }).first()).toBeVisible()
   await expect(inspector.getByText('Đà Nẵng, Làm việc từ xa')).toBeVisible()
   await expect(inspector.getByText(/Đã báo ứng viên/)).toBeVisible()
+
+  // Mức phù hợp do AI chấm: điểm ở đầu panel, bấm "Xem vì sao" mở bảng giải thích.
+  await expect(inspector.getByRole('heading', { name: 'Mức độ phù hợp (AI)' })).toBeVisible()
+  await expect(inspector.getByText('72').first()).toBeVisible()
+  await inspector.getByRole('button', { name: /Xem vì sao/ }).click()
+  const matchDrawer = page.getByRole('dialog').filter({ hasText: 'Điểm được tính thế nào' })
+  await expect(matchDrawer).toContainText('Đáp ứng 2/3 kỹ năng tin yêu cầu.')
+  await expect(matchDrawer).toContainText('Xây dựng design system bằng React cho 4 sản phẩm.')
+  await expect(matchDrawer).toContainText('GraphQL')
+  await page.keyboard.press('Escape')
+  await expect(matchDrawer).toBeHidden()
 
   const decisionBar = inspector.getByRole('group', { name: 'Quyết định cho hồ sơ' })
   await decisionBar.getByRole('button', { name: 'Phù hợp', exact: true }).click()

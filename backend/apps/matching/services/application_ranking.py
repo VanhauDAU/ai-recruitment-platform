@@ -23,8 +23,8 @@ from django.utils import timezone
 from apps.applications.models import Application
 from apps.sitecontent.selectors import get_bool_setting
 
-from ..domain import APPLICATION_RANKING_FLAG, SCORING_VERSION
-from ..models import MatchAnalysis, jobs_for_profile
+from ..domain import APPLICATION_RANKING_FLAG, EXTRACTOR_VERSION, SCORING_VERSION
+from ..models import MatchAnalysis, MatchDocument, jobs_for_profile
 from .analyses import execute_analysis, reset_failed_analysis
 from .documents import job_document_hash
 from .encoder import model_version
@@ -117,6 +117,27 @@ def applications_needing_score(job, digest=None):
         .order_by('pk')
         .values_list('pk', flat=True)
     )
+
+
+def snapshots_missing_profile():
+    """Bản CV đã nộp của các hồ sơ được chấm mà chưa có hồ sơ trích xuất ở phiên bản hiện hành.
+
+    Xảy ra sau khi đổi bộ trích xuất: điểm cũ vẫn còn nhưng "Hồ sơ trích xuất" của hồ sơ
+    ứng tuyển cần được dựng lại.
+    """
+    current = MatchDocument.objects.filter(
+        kind=MatchDocument.Kind.CV,
+        cv_version_id=OuterRef('submitted_cv_version_id'),
+        extractor_version=EXTRACTOR_VERSION,
+        model_version=model_version(),
+    )
+    return [
+        application.submitted_cv_version
+        for application in _eligible_applications()
+        .exclude(Exists(current))
+        .select_related('submitted_cv_version__cv')
+        .order_by('pk')
+    ]
 
 
 def jobs_with_rankable_applications():

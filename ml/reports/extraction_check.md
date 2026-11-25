@@ -18,12 +18,11 @@ Chức danh: số CV có chức danh trùng đúng headline của CV gốc; tron
 | Nguồn | Số CV | Recall kỹ năng | Kỹ năng không in trong tệp | Kỹ năng khai báo ngoài manifest | Kinh nghiệm đúng | Học vấn đúng | Ngôn ngữ đúng | Chức danh | Bằng chứng không có trong CV |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | CV builder | 100 | 100.0% (508/508) | 1 | 0 | 100% | 100% | 100% | 100/100 (có 100) | 0 |
-| CV tải lên (PDF hệ thống) | 15 | 96.2% (76/79) | 0 | 0 | 93% | 100% | 100% | 15/15 (có 15) | 0 |
-| PDF TopCV | 36 | 98.9% (180/182) | 41 | 0 | 100% | 97% | 94% | 29/36 (có 34) | 0 |
+| CV tải lên (PDF hệ thống) | 15 | 96.2% (76/79) | 0 | 0 | 100% | 100% | 100% | 15/15 (có 15) | 0 |
+| PDF TopCV | 36 | 98.9% (180/182) | 41 | 0 | 100% | 97% | 94% | 32/36 (có 35) | 0 |
 
-## Lệch ở CV tải lên (PDF hệ thống) (3 CV)
+## Lệch ở CV tải lên (PDF hệ thống) (2 CV)
 
-- `CV-045`: tháng None (đúng 0, theo —)
 - `CV-056`: sót kỹ năng: quản lý dự án
 - `CV-059`: sót kỹ năng: logistic, xử lý tình huống
 
@@ -39,7 +38,7 @@ Chức danh: số CV có chức danh trùng đúng headline của CV gốc; tron
 - 100/100 tin trích xuất được; lỗi: 0.
 - Ngôn ngữ nhận diện khác ngôn ngữ ghi lúc nhập: 0 [].
 - Tin không có chunk yêu cầu: 0 [].
-- Kỹ năng được đếm mỗi tin: trung bình 5.98; 44 kỹ năng nhóm "Phẩm chất cá nhân" bị loại khỏi điểm.
+- Kỹ năng được đếm mỗi tin: trung bình 5.99; 44 kỹ năng nhóm "Phẩm chất cá nhân" bị loại khỏi điểm.
 - Chunk mỗi tin: trung bình 24.8.
 - Tiêu chí tin không khai: không có.
 

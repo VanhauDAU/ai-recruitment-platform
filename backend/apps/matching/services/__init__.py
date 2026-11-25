@@ -22,6 +22,7 @@ from .application_ranking import (
     fail_application_score,
     jobs_with_rankable_applications,
     score_application,
+    snapshots_missing_profile,
     stale_application_ids,
 )
 from .candidate_search import ProfileFilters, candidate_search_enabled, rank_cvs_for_job
@@ -39,6 +40,7 @@ __all__ = [
     'jobs_with_rankable_applications',
     'precompute_enabled',
     'score_application',
+    'snapshots_missing_profile',
     'stale_application_ids',
     'MatchingRequestError',
     'SkillCatalog',

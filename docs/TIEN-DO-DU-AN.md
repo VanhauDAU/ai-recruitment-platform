@@ -1289,6 +1289,43 @@ xuất ẩn danh và tìm theo một tin đang tuyển; bước tiếp là mời
 - Test `apps/matching` (100 test) đạt; phần test của tập vàng chưa chạy.
 
 </details>
+<details><summary>Ghi chú đợt sửa theo phản hồi (25/11, sau GĐ E)</summary>
+
+- Panel "Xử lý hồ sơ": bỏ bản chia ba tab (làm ẩn liên hệ, thông tin ứng tuyển, lịch sử), trả
+  lại các mục cũ; mức phù hợp là một khối ở đầu panel với nút "Xem vì sao".
+- `features/employer/candidate/view-application-match`: chip bấm được + Drawer giải thích
+  (điểm, từng tiêu chí kèm câu lý do, kỹ năng có/thiếu kèm câu trích, cách tính điểm). Dùng ở
+  bảng CV của tin, bảng CV của chiến dịch (thêm cột và sắp xếp theo mức phù hợp), panel hồ sơ.
+- `extract-v4`: `profile_json.sections` giữ nội dung đầy đủ từng mục của CV để hiển thị (không
+  dùng để chấm; `chunks` không đổi nên điểm không đổi). CV tạo trên hệ thống cho mục con có cấu
+  trúc (vai trò, công ty, thời gian, từng dòng mô tả); CV tải lên cho khối chữ theo mục.
+  `domain/profile_view.py`: chủ CV và NTD có hồ sơ ứng tuyển thấy đủ; NTD ở Tìm CV không thấy
+  mục "Thông tin thêm" và họ tên trong câu văn bị che. Kế hoạch ban đầu ẩn cả tên công ty cũ ở
+  Tìm CV; theo phản hồi "thông tin quá mơ hồ" đã hiện lại nội dung kinh nghiệm (lời đồng ý của
+  ứng viên chỉ hứa ẩn họ tên, ảnh, điện thoại, email, địa chỉ).
+- Cột giữa màn xử lý hồ sơ có nút chuyển "CV gốc | Hồ sơ trích xuất"
+  (`/api/employer/applications/{id}/extracted-profile/`; chỉ có khi ứng viên đồng ý phân tích).
+- Bộ đọc PDF tải lên (`apps/cvs/services/{pdf_layout,cv_document}.py`,
+  `matching/services/extraction/cv_upload.py`): dòng cùng mục không còn bị coi là tiêu đề (mất
+  4/5 kỹ năng ở mẫu TopCV có cột bên); tiêu đề ngắt hai dòng; thêm từ khóa "Danh hiệu", "Người
+  giới thiệu", "Thông tin thêm"; `page_blocks` + `continue_columns` ghép phần tiếp của một cột
+  qua trang theo vị trí ngang; tên/chức danh ở đầu cột phải về đầu tài liệu; bỏ chân trang, nhãn
+  rỗng. Đo lại (`ml/reports/extraction_check.md`): PDF hệ thống kinh nghiệm 93% → 100%; PDF
+  TopCV chức danh 29 → 32/36, kỹ năng 98,9%, kinh nghiệm 100%, học vấn 97%, ngoại ngữ 94%
+  (không đổi).
+- Giới hạn còn lại của bộ đọc theo luật: ô bảng quá hẹp khiến chính tệp PDF ngắt giữa từ
+  ("Cod e", "III/20 23") chưa ghép lại được; tiêu đề mục không có trong bảng từ khóa vẫn dính
+  vào mục phía trên; trong CV tải lên, mỗi mục là khối chữ chứ chưa tách thành từng công việc.
+- Sửa lỗi: nhật ký `recruiter_search` chặn ứng viên xóa CV (`ProtectedError`); nay nhật ký gắn
+  với CV và bị xóa cùng CV, có test.
+- `matching_backfill --only applications` dựng lại hồ sơ trích xuất của bản CV đã nộp khi đổi
+  bộ trích xuất. Đã chạy lại cho DB dev.
+- Kiểm tra đã chạy: backend 1.983 test đạt (2 test migration mã tin/mã công ty chỉ trượt khi
+  chạy song song, chạy riêng đạt), ruff, layering, import, OpenAPI; frontend lint,
+  check:architecture, test đơn vị các vùng đã sửa, e2e smoke của cổng NTD (12 lượt, 3 khung
+  hình). Chưa chạy: toàn bộ e2e smoke, coverage, ngân sách bundle.
+
+</details>
 <details><summary>Ghi chú GĐ E (phần NTD)</summary>
 
 - `apps/matching/services/candidate_search.py::rank_cvs_for_job`: lọc theo hồ sơ trích xuất

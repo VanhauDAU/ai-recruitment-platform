@@ -77,8 +77,11 @@ def permanently_delete_cv(*, cv, actor):
     storage_keys.extend(exports.values_list('storage_key', flat=True))
 
     # These rows protect immutable versions at the database layer; remove
-    # library-owned artifacts before deleting their owning aggregate.
+    # library-owned artifacts before deleting their owning aggregate. Access
+    # logs keyed by a library version only (``cv`` NULL) go too; logs of
+    # application snapshots stay with the snapshot.
     CvAccessLog.objects.filter(cv=locked_cv).delete()
+    CvAccessLog.objects.filter(version__cv=locked_cv).exclude(version_id__in=snapshot_ids).delete()
     CvSharedLink.objects.filter(cv=locked_cv).delete()
     exports.delete()
 

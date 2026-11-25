@@ -768,12 +768,15 @@ pages/employer/candidates/ApplicationList
   `entities/application/job-fit` (bảng "CV ứng tuyển" của một tin ở
   `pages/employer/jobs/JobApplicationsWorkspace`, thẻ hồ sơ ở `CandidateGroup`). Bảng
   có lựa chọn sắp xếp "Phù hợp nhất" (`ordering=ai_match`); mặc định vẫn là mới nhất,
-  lựa chọn được nhớ ở localStorage `procv_employer_cv_ordering`. Panel bên phải chia
-  ba tab: **Đánh giá** (`ApplicationFitSection` gọi `/ai-match/`, hỏi lại mỗi 5 giây khi
-  đang phân tích; đánh giá sao và ghi chú của NTD), **Thông tin** (liên hệ, thông tin
-  ứng tuyển, lần nộp trước), **Hoạt động** (nhận xét, lịch sử). Thanh quyết định nằm
-  trên tab nên luôn thấy. Hồ sơ không có điểm luôn kèm lý do (đang phân tích, ứng viên
-  không tham gia AI, không đọc được CV); giao diện không tự suy điểm.
+  lựa chọn được nhớ ở localStorage `procv_employer_cv_ordering`. Chi tiết "vì sao có
+  điểm này" thuộc `features/employer/candidate/view-application-match`:
+  `ApplicationMatchButton` (chip bấm được, dùng ở bảng CV của tin và bảng CV của chiến
+  dịch) và `ApplicationMatchCard` (khối đầu panel "Xử lý hồ sơ") cùng mở một Drawer tải
+  trễ gọi `/ai-match/`, hỏi lại mỗi 5 giây khi đang phân tích. Panel bên phải giữ nguyên
+  các mục cũ bên dưới khối đó. Cột giữa có nút chuyển "CV gốc | Hồ sơ trích xuất"
+  (`ApplicationExtractedProfile`, API `/extracted-profile/`). Hồ sơ không có điểm luôn kèm
+  lý do (đang phân tích, ứng viên không tham gia AI, không đọc được CV); giao diện không
+  tự suy điểm.
 
 ## Ownership map — Thông báo của ứng viên
 

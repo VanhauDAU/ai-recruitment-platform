@@ -35,7 +35,7 @@ from rest_framework.exceptions import NotFound
 from apps.candidates.models import CandidateConsent, CandidateNotification
 from apps.candidates.services import emit_candidate_notification
 from apps.cvs.models import CvAccessLog, UserCv
-from apps.cvs.services import record_application_snapshot_access
+from apps.cvs.services import record_cv_access
 from apps.matching.services import ProfileFilters, candidate_search_enabled, rank_cvs_for_job
 from common.errors import DomainError
 
@@ -202,11 +202,15 @@ def candidate_detail(recruiter, job, ref, *, request):
     ranked = _ranked(job, searchable_cvs(recruiter, job).filter(pk=cv.pk), None, min_score=0)
     if not ranked:
         raise NotFound
-    record_application_snapshot_access(
+    # Gắn với CV trong thư viện (không phải bản chụp hồ sơ ứng tuyển): ứng viên xóa CV thì
+    # nhật ký này bị xóa cùng, như mọi dữ liệu thuộc CV đó.
+    record_cv_access(
+        cv=cv,
         version=cv.latest_version,
-        actor=recruiter,
+        actor_type=CvAccessLog.ActorType.RECRUITER,
+        access_channel=CvAccessLog.AccessChannel.RECRUITER_SEARCH,
         request=request,
-        channel=CvAccessLog.AccessChannel.RECRUITER_SEARCH,
+        actor_user=recruiter,
     )
     applied, invited = candidate_job_flags(job, [cv.user_id])
     return _row(job, cv, ranked[0], applied=applied, invited=invited, detail=True)

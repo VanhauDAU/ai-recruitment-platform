@@ -9,6 +9,7 @@ from .application_ranking import (
 from .extracted_profile import (
     OWNER,
     RECRUITER_SEARCH,
+    application_cv_profile,
     cv_profile_document,
     owner_cv_profile,
     public_cv_profile,
@@ -32,6 +33,7 @@ from .recommendations import (
 )
 
 __all__ = [
+    'application_cv_profile',
     'OWNER',
     'RECRUITER_SEARCH',
     'cv_profile_document',

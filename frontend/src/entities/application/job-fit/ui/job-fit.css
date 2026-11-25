@@ -52,9 +52,35 @@
 .fit-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; margin: 0; }
 .fit-fact dt { font-size: 11px; font-weight: 600; color: #94a3b8; }
 .fit-fact dd { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 2px 0 0; font-weight: 600; color: #0f172a; }
-.fit-profile__items { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
-.fit-profile__items li { padding-left: 10px; border-left: 2px solid #e2e8f0; overflow-wrap: anywhere; }
-.fit-profile__items strong { color: #0f172a; }
-.fit-profile__period { display: block; font-size: 12px; color: #94a3b8; }
 .fit-profile__group + .fit-profile__group { margin-top: 8px; }
 .fit-profile__group-name { margin: 0 0 4px; font-size: 12px; color: #64748b; }
+
+/* Chip bấm được và bảng giải thích mức phù hợp (cổng nhà tuyển dụng). */
+.fit-chip-button { padding: 0; border: 0; background: none; cursor: pointer; border-radius: 999px; }
+.fit-chip-button:hover .fit-chip { border-color: color-mix(in srgb, var(--brand-primary) 55%, #fff); }
+.fit-chip-button:focus-visible { outline: 2px solid var(--brand-primary); outline-offset: 2px; }
+.fit-card { padding: 12px 16px; border-bottom: 1px solid #f1f5f9; }
+.fit-card__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.fit-card__head h3 { margin: 0; font-size: 13px; font-weight: 800; color: #0f172a; }
+.fit-card__link {
+  display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; padding: 0; border: 0; background: none;
+  font-size: 12px; font-weight: 600; color: var(--brand-primary-hover); cursor: pointer;
+}
+.fit-card__link:hover { text-decoration: underline; }
+.fit-card__link .anticon { font-size: 9px; }
+.fit-drawer__job { margin: 0 0 14px; font-size: 13px; color: #64748b; }
+.fit-drawer__note { margin: 0; font-size: 13px; line-height: 1.6; color: #64748b; }
+.fit-drawer__how { margin-top: 20px; padding: 12px 14px; border-radius: 12px; background: #f8fafc; }
+.fit-drawer__how h3 { margin: 0 0 6px; font-size: 13px; font-weight: 700; color: #0f172a; }
+.fit-drawer__how ul { display: flex; flex-direction: column; gap: 6px; margin: 0; padding-left: 16px; font-size: 12px; line-height: 1.6; color: #64748b; }
+
+/* Nội dung từng mục của CV trong hồ sơ trích xuất. */
+.fit-section { padding-top: 14px; border-top: 1px solid #f1f5f9; }
+.fit-section__title { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; font-size: 14px; font-weight: 800; color: #0f172a; }
+.fit-section__count { padding: 0 7px; border-radius: 999px; background: #f1f5f9; font-size: 11px; font-weight: 600; color: #64748b; }
+.fit-section__items { display: flex; flex-direction: column; gap: 14px; margin: 0; padding: 0; list-style: none; }
+.fit-entry__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; margin: 0; color: #0f172a; overflow-wrap: anywhere; }
+.fit-entry__sub { font-weight: 600; color: var(--brand-primary-hover); }
+.fit-entry__period { margin: 2px 0 0; font-size: 12px; color: #94a3b8; font-variant-numeric: tabular-nums; }
+.fit-entry__lines { display: flex; flex-direction: column; gap: 4px; margin: 6px 0 0; padding: 0; list-style: none; color: #475569; }
+.fit-entry__lines li { overflow-wrap: anywhere; }

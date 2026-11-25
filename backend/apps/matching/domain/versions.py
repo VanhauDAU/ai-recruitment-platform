@@ -8,7 +8,7 @@ from django.conf import settings
 
 # Đổi khi quy tắc trích xuất đổi: hồ sơ và vector cũ không được dùng lại.
 # Cấu trúc của hồ sơ: `services/extraction/profile.schema.json`.
-EXTRACTOR_VERSION = 'extract-v3'
+EXTRACTOR_VERSION = 'extract-v4'
 HASHING_MODEL_VERSION = 'hashing-v1'
 # Đổi khi công thức chấm đổi (`services/scoring/`): kết quả cũ không được dùng lại.
 SCORING_VERSION = 'hybrid-v2'

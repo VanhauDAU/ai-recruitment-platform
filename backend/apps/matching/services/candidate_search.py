@@ -10,8 +10,9 @@ còn đồng ý, không bị chặn. Module này quyết định **thứ tự** 
    tin và CV đã tính sẵn, nên tiến trình web không cần nạp mô hình. Chỉ truyền chunk
    chức danh: phần so từng câu yêu cầu không ảnh hưởng tới điểm và không được hiển thị
    ở đây.
-4. Trả kết quả đã ẩn danh: hồ sơ qua `public_cv_profile(audience=recruiter_search)`,
-   không có câu trích nguyên văn nào của CV.
+4. Trả kết quả đã ẩn danh: hồ sơ qua `public_cv_profile(audience=recruiter_search)` (nội
+   dung từng mục của CV, không có email, số điện thoại, phần đầu trang hay mục chưa phân
+   loại) và che họ tên xuất hiện trong câu văn; kết quả chấm không kèm câu bằng chứng.
 
 Không tìm bằng câu tự do: muốn so ngữ nghĩa một câu truy vấn phải mã hóa nó bằng mô
 hình, mà tiến trình web không có mô hình. Tin tuyển dụng là "câu truy vấn" đã mã hóa sẵn.
@@ -25,7 +26,7 @@ from pgvector.django import CosineDistance
 from apps.cvs.services import EDUCATION_ORDER
 from apps.sitecontent.selectors import get_bool_setting
 
-from ..domain import CANDIDATE_SEARCH_FLAG, RECRUITER_SEARCH, public_cv_profile
+from ..domain import CANDIDATE_SEARCH_FLAG, RECRUITER_SEARCH, public_cv_profile, redact_name
 from ..models import MatchDocument, current_documents, title_vectors
 from .extraction.facts import looks_like_job_title
 from .scoring import ScoringError, score_match
@@ -91,9 +92,13 @@ def _anonymised_result(result):
     }
 
 
-def _search_profile(profile):
-    """Hồ sơ ẩn danh; chức danh của CV tải lên chỉ giữ khi đúng là một chức danh nghề."""
-    shown = public_cv_profile(profile, audience=RECRUITER_SEARCH)
+def _search_profile(profile, full_name):
+    """Hồ sơ ẩn danh: không có mục `other`, họ tên trong câu văn bị che.
+
+    Chức danh của CV tải lên chỉ giữ khi đúng là một chức danh nghề (dòng đầu trang có thể
+    là tên người).
+    """
+    shown = redact_name(public_cv_profile(profile, audience=RECRUITER_SEARCH), full_name)
     if profile.get('source') == 'upload' and not looks_like_job_title(shown['title']):
         shown['title'] = ''
     return shown
@@ -119,7 +124,9 @@ def rank_cvs_for_job(job, cv_version_ids, *, filters=None, min_score=MIN_SEARCH_
     rows = list(
         documents.annotate(distance=CosineDistance('embedding', job_vector))
         .order_by('distance', 'pk')
-        .values('pk', 'cv_version_id', 'profile_json', 'embedding')[:SEARCH_POOL]
+        .values(
+            'pk', 'cv_version_id', 'profile_json', 'embedding', 'cv_version__cv__user__full_name'
+        )[:SEARCH_POOL]
     )
     titles = title_vectors([job_document.pk, *(row['pk'] for row in rows)])
     job_chunks, job_vectors = _title_chunk(titles.get(job_document.pk))
@@ -154,7 +161,9 @@ def rank_cvs_for_job(job, cv_version_ids, *, filters=None, min_score=MIN_SEARCH_
                 ],
                 'matched_skill_count': len(result['skills']['matched']),
                 'job_skill_count': job_skill_count,
-                'profile': _search_profile(row['profile_json']),
+                'profile': _search_profile(
+                    row['profile_json'], row['cv_version__cv__user__full_name']
+                ),
                 'result': _anonymised_result(result),
             }
         )
