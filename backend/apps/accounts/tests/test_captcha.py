@@ -68,3 +68,7 @@ class CaptchaHostnameTests(SimpleTestCase):
     def test_rejects_a_token_issued_on_another_site(self):
         with self.assertRaises(ValidationError):
             self._verify('copycat.example')
+
+    def test_rejects_a_token_without_hostname(self):
+        with self.assertRaises(ValidationError):
+            self._verify(None)

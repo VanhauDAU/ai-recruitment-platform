@@ -11,6 +11,7 @@ from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.views import TokenRefreshView
 
+from ...services import cf_access
 from ...services.refresh_cookies import (
     PORTAL_ROLE_BY_NAME,
     VALID_PORTALS,
@@ -50,6 +51,8 @@ class AccountTokenRefreshView(TokenRefreshView):
         is_session_probe = request.headers.get('X-Session-Probe') == '1'
         if portal not in VALID_PORTALS:
             raise ValidationError({'portal': _('Cổng đăng nhập không hợp lệ.')})
+        if portal == 'admin':
+            cf_access.require_access(request)
         refresh = refresh_from_request(request, portal=portal)
         if not refresh:
             response = Response(

@@ -565,6 +565,9 @@ msgstr "Captcha verification failed (low confidence score)."
 msgid "Không thể xác thực captcha, vui lòng thử lại."
 msgstr "Could not verify the captcha, please try again."
 
+msgid "Cần xác thực Cloudflare Access trước khi đăng nhập trang quản trị."
+msgstr "Sign in through Cloudflare Access before logging in to the admin portal."
+
 msgid "Ứng viên"
 msgstr "Candidate"
 

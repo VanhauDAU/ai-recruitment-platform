@@ -13,7 +13,7 @@ from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, Ou
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
 from ..models import User
-from . import auth_sessions
+from . import auth_sessions, cf_access
 from .access import is_account_accessible
 from .refresh_cookies import portal_for_user
 
@@ -28,6 +28,9 @@ def build_refresh_token(user):
 
 
 def issue_tokens(user, request=None, *, auth_method='password'):
+    if user.is_admin_role:
+        # Mọi luồng phát phiên admin (đăng nhập, đổi mật khẩu...) đều qua đây.
+        cf_access.require_access(request)
     expected_revision = user.auth_revision
     with transaction.atomic():
         user = User.objects.select_for_update().get(pk=user.pk)

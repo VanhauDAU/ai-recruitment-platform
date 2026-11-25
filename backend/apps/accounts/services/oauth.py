@@ -116,10 +116,18 @@ def frontend_callback_url(portal):
 
 
 def safe_next(next_path):
-    """Chỉ chấp nhận path nội bộ ('/...'), chặn absolute/protocol-relative URL."""
-    if isinstance(next_path, str) and next_path.startswith('/') and not next_path.startswith('//'):
-        return next_path
-    return ''
+    """Chỉ chấp nhận path nội bộ ('/...'), chặn absolute/protocol-relative URL.
+
+    Trình duyệt coi '\\' như '/' và bỏ qua tab/xuống dòng trong URL, nên
+    '/\\evil.com' hay '/<tab>/evil.com' cũng thành protocol-relative.
+    """
+    if not isinstance(next_path, str) or not next_path.startswith('/'):
+        return ''
+    if '\\' in next_path or any(ord(char) < 0x20 or ord(char) == 0x7F for char in next_path):
+        return ''
+    if next_path.startswith('//'):
+        return ''
+    return next_path
 
 
 # ---- State (chống CSRF) + one_time_code (đổi JWT), đều one-shot qua Redis ----
