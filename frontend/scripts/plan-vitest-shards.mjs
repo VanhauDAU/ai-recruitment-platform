@@ -3,7 +3,7 @@
 //
 //   node scripts/plan-vitest-shards.mjs --shard 2 --total 7        # in danh sách file của shard 2
 //   node scripts/plan-vitest-shards.mjs --total 7 --summary        # in tổng giây từng shard
-//   node scripts/plan-vitest-shards.mjs --from-junit vitest-results.xml   # ghi lại bảng thời lượng
+//   node scripts/plan-vitest-shards.mjs --from-blobs .vitest-reports    # ghi lại bảng thời lượng
 //
 // `vitest --shard` chia theo số file nên shard chậm nhất từng gấp đôi shard nhanh
 // nhất (128s so với 272s). Script này đọc thời lượng từng file ở
@@ -14,7 +14,6 @@ import { readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
-import { parseJunit } from '../../scripts/ci/check_test_budgets.mjs'
 
 const FRONTEND_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const DURATIONS_PATH = path.join(FRONTEND_DIR, 'tests/vitest-durations.json')
@@ -51,11 +50,44 @@ export function planShards(files, durations, total) {
   return shards
 }
 
-function writeFromJunit(reports) {
+// Blob report của vitest được tuần tự hóa bằng flatted: mảng phẳng, mọi chuỗi trong
+// object/mảng là chỉ số trỏ tới phần tử khác. Đọc thẳng blob (thay vì JUnit của bước
+// gộp) để vẫn có số đo khi bước gộp coverage đỏ.
+function parseFlatted(text) {
+  const input = JSON.parse(text)
+  const known = new Map()
+  const revive = (index) => {
+    if (known.has(index)) return known.get(index)
+    const value = input[index]
+    if (value === null || typeof value !== 'object') {
+      known.set(index, value)
+      return value
+    }
+    const out = Array.isArray(value) ? [] : {}
+    known.set(index, out)
+    for (const [key, item] of Object.entries(value)) out[key] = typeof item === 'string' ? revive(Number(item)) : item
+    return out
+  }
+  return revive(0)
+}
+
+// Thời lượng một file như shard thấy: thu thập + setup + môi trường + chạy test.
+function fileSeconds(file) {
+  const ms = ['collectDuration', 'setupDuration', 'prepareDuration', 'environmentLoad']
+    .reduce((total, key) => total + (file[key] || 0), file.result?.duration || 0)
+  return Number((ms / 1000).toFixed(2))
+}
+
+function writeFromBlobs(dir) {
   const perFile = {}
-  for (const report of reports) {
-    for (const item of parseJunit(readFileSync(report, 'utf8'))) {
-      if (item.group) perFile[item.group] = (perFile[item.group] ?? 0) + item.seconds
+  for (const name of readdirSync(dir).filter((entry) => entry.endsWith('.json'))) {
+    const root = parseFlatted(readFileSync(path.join(dir, name), 'utf8'))
+    const files = root.find((item) => Array.isArray(item) && item[0]?.filepath) || []
+    for (const file of files) {
+      const marker = `${path.sep}frontend${path.sep}`
+      const start = file.filepath.lastIndexOf(marker)
+      const relative = start === -1 ? path.relative(FRONTEND_DIR, file.filepath) : file.filepath.slice(start + marker.length)
+      perFile[relative.split(path.sep).join('/')] = fileSeconds(file)
     }
   }
   const sorted = Object.fromEntries(
@@ -71,9 +103,9 @@ function argument(name) {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const junit = argument('--from-junit')
-  if (junit) {
-    writeFromJunit(process.argv.slice(process.argv.indexOf('--from-junit') + 1).filter((arg) => !arg.startsWith('--')))
+  const blobs = argument('--from-blobs')
+  if (blobs) {
+    writeFromBlobs(blobs)
   } else {
     const total = Number(argument('--total'))
     if (!Number.isInteger(total) || total < 1) throw new Error('--total <số shard> là bắt buộc')

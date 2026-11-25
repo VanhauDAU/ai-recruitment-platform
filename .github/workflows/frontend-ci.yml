@@ -208,7 +208,7 @@ jobs:
         # Files are assigned by measured duration (scripts/plan-vitest-shards.mjs,
         # tests/vitest-durations.json): `vitest --shard` splits by file count and
         # left the slowest of seven shards at 272s against 128s for the fastest.
-        shard: [1, 2, 3, 4, 5, 6, 7, 8]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     defaults:
       run:
         working-directory: frontend
@@ -238,6 +238,9 @@ jobs:
           # interaction tests exceed their per-test timeout under coverage.
           # Parallelism comes from separate runners instead of extra workers.
           #
+          # Without --shard Vitest names every blob `blob.json`; the explicit
+          # name keeps the eight uploads from overwriting each other on merge.
+          #
           # A single shard only sees part of the suite, so the ratchet in
           # vite.config.js cannot be evaluated here. Thresholds are zeroed for
           # the shard and enforced once on the merged report by `coverage`.
@@ -249,6 +252,7 @@ jobs:
               --maxWorkers=1 \
               --reporter=verbose \
               --reporter=blob \
+              --outputFile.blob=".vitest-reports/blob-${SHARD}-${SHARD_TOTAL}.json" \
               --coverage.thresholds.statements=0 \
               --coverage.thresholds.branches=0 \
               --coverage.thresholds.functions=0 \
@@ -280,6 +284,9 @@ jobs:
     if: ${{ needs.changes.result == 'success' && needs.changes.outputs.frontend == 'true' && !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      # Keep equal to the coverage-shard matrix length.
+      UNIT_TEST_SHARDS: 10
     defaults:
       run:
         working-directory: frontend
@@ -318,8 +325,6 @@ jobs:
       - name: Merge shards and enforce coverage gate
         id: coverage_tests
         shell: bash
-        env:
-          UNIT_TEST_SHARDS: 8
         run: |
           set -o pipefail
           ls -l .vitest-reports
@@ -339,8 +344,8 @@ jobs:
       - name: Export per-file durations for shard planning
         if: ${{ always() }}
         run: |
-          node scripts/plan-vitest-shards.mjs --from-junit vitest-results.xml
-          node scripts/plan-vitest-shards.mjs --total 8 --summary | tee -a "$GITHUB_STEP_SUMMARY"
+          node scripts/plan-vitest-shards.mjs --from-blobs .vitest-reports
+          node scripts/plan-vitest-shards.mjs --total "$UNIT_TEST_SHARDS" --summary | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Upload per-file durations
         if: ${{ always() }}
@@ -450,12 +455,16 @@ jobs:
       matrix:
         # Must list every project in frontend/playwright.config.js; the
         # e2e-smoke job below fails if the two lists drift apart. Desktop runs
-        # the whole suite (tablet/mobile only @responsive), so it gets two shards.
+        # all ~120 tests, tablet and mobile the ~90 @responsive ones; one shard
+        # of the latter took 230s. Playwright shards by test count.
         include:
-          - { project: desktop-chromium, shard: 1/2 }
-          - { project: desktop-chromium, shard: 2/2 }
-          - { project: tablet-chromium, shard: 1/1 }
-          - { project: mobile-chromium, shard: 1/1 }
+          - { project: desktop-chromium, shard: 1/3 }
+          - { project: desktop-chromium, shard: 2/3 }
+          - { project: desktop-chromium, shard: 3/3 }
+          - { project: tablet-chromium, shard: 1/2 }
+          - { project: tablet-chromium, shard: 2/2 }
+          - { project: mobile-chromium, shard: 1/2 }
+          - { project: mobile-chromium, shard: 2/2 }
     env:
       # E2E mocks intercept this stable backend origin. Without an explicit
       # value, CI has no gitignored frontend/.env and Vite falls back to its
