@@ -23,6 +23,7 @@ from rest_framework.exceptions import ValidationError
 from apps.accounts.models import SocialAccount, User
 from apps.accounts.services.access import is_account_accessible
 from apps.accounts.services.registration import registration_open
+from apps.accounts.services.social_avatar import import_provider_avatar
 from apps.accounts.services.token_cache import atomic_pop
 from apps.sitecontent.selectors import get_setting
 
@@ -305,6 +306,8 @@ def complete_provider_login(provider, code, redirect_uri, portal):
     token = exchange_code(provider, code, redirect_uri)
     profile = fetch_profile(provider, token)
     user, created = resolve_user(provider, profile, portal, include_created=True)
+    # Tải ảnh ngoài transaction của resolve_user: không giữ khóa hàng khi chờ mạng.
+    import_provider_avatar(user, provider, profile.get('avatar'))
     if created:
         queue_welcome_email(user, context={'registration_method': provider})
     return create_one_time_code(user)
@@ -379,7 +382,6 @@ def resolve_user(provider, profile, portal, *, include_created=False):
                 password=None,  # password unusable — chỉ đăng nhập qua social
                 role=role,
                 full_name=profile.get('name', ''),
-                avatar_url=profile.get('avatar', ''),
                 email_verified=True,
             )
             created = True

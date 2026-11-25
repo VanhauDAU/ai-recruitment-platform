@@ -8,6 +8,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | Hạng mục | Trạng thái |
 | --- | --- |
 | [Chuẩn bị deploy: lấp chỗ hở vận hành và cấu hình](#chuẩn-bị-deploy-lấp-chỗ-hở-vận-hành-và-cấu-hình-2026-11-25) | 🟨 Nhánh `chore/predeploy-ops-gaps`, chờ PR; kiểm trên VPS/R2/Cloudflare thật ở GĐ6 rehearsal |
+| [Lưu ảnh đại diện Google vào storage](#lưu-ảnh-đại-diện-google-vào-storage-2026-11-22) | ✅ Đã gộp dev (#359) |
 | [Tối ưu tải trang đầu frontend](#tối-ưu-tải-trang-đầu-frontend-2026-11-25) | 🟨 PR #358 (nhánh `perf/initial-load`), chờ gộp |
 | [Sửa API công khai có cache trả 500 với Redis](#sửa-api-công-khai-có-cache-trả-500-với-redis-2026-11-25) | 🟨 Nhánh `fix/public-cache-redis`, chờ gộp |
 | [Thanh tab dưới và thông báo trên mobile cho ứng viên](#thanh-tab-dưới-và-thông-báo-trên-mobile-cho-ứng-viên-2026-11-25) | 🟨 PR #354 (nhánh `feat/mobile-tab-bar`), chờ gộp |
@@ -563,6 +564,21 @@ một danh sách phân trang (timeline antd), không lọc được và lịch s
   vấn mỗi dòng khi tính người thực hiện (đọc `actor_id` thay vì `actor`).
 - CSS dùng chung chuyển sang `frontend/src/shared/ui/workspace-list/workspace-list.css`
   để widget cũng dùng được.
+
+## Lưu ảnh đại diện Google vào storage (2026-11-22)
+
+Ứng viên đăng nhập Google không thấy ảnh: DB lưu thẳng URL
+`lh3.googleusercontent.com`, mà Google chặn ảnh khi trình duyệt gửi Referer của site.
+Tài khoản có sẵn rồi mới liên kết Google cũng không được gán ảnh.
+
+- Sau khi đăng nhập social, backend tải ảnh của provider (Google xin bản 256px) rồi
+  lưu vào `users/avatars/<public_id>/` như ảnh tự tải lên
+  (`apps/accounts/services/social_avatar.py`), ngoài transaction của `resolve_user`.
+- Chỉ chạy khi tài khoản chưa có ảnh trong storage: không ghi đè ảnh tự tải lên;
+  URL Google cũ trong DB được thay ở lần đăng nhập kế tiếp.
+- Chỉ tải từ CDN ảnh của provider (Google, Facebook, LinkedIn), chỉ https, không theo
+  redirect, giới hạn `IMAGE_UPLOAD_MAX_SIZE`; lỗi tải chỉ ghi log, không chặn đăng nhập.
+- Kiểm tra: pytest `apps/accounts` 212 passed (7 test mới), ruff, import-linter, layering.
 
 ## Làm lại trang công ty phía ứng viên (2026-11-24)
 
