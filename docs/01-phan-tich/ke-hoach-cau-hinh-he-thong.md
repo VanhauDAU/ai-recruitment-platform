@@ -298,7 +298,7 @@ Hai key `candidate_max_applications_per_day` và `job_expiry_days` bị xoá, th
 |---|---|
 | Mật khẩu | 8–25 ký tự, bắt buộc mật khẩu mạnh |
 | Đăng nhập | `LOGIN_BACKOFF_FREE_ATTEMPTS/MAX_SECONDS/WINDOW` |
-| Phiên | `AUTH_SESSION_IDLE_TIMEOUT_SECONDS`; JWT access/refresh; access của admin |
+| Phiên | Hạn access / không hoạt động / tối đa của từng cổng (`AUTH_<CỔNG>_*`, ADR-0033) |
 | reCAPTCHA | đã cấu hình chưa, có bắt buộc ở production không |
 | Upload | `IMAGE_UPLOAD_MAX_SIZE`, `MAX_IMPORT_BYTES`, định dạng CV, `UPLOAD_MAX_BYTES` |
 | Trần cứng | trần 90 ngày của hạn tin, trần dung lượng/số phiên upload, các mức sàn lưu trữ, trần quota AI (để admin thấy giới hạn của các setting ở §1b) |

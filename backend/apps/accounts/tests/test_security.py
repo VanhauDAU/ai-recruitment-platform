@@ -25,7 +25,6 @@ from .factories import GOOGLE_PROFILE, oauth_state_for, refresh_session
     RECAPTCHA_SECRET_KEY='',
     DEBUG=True,
     CACHES={'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}},
-    ADMIN_ACCESS_TOKEN_MINUTES=5,
 )
 class AdminAuthenticationPolicyTests(APITestCase):
     def setUp(self):

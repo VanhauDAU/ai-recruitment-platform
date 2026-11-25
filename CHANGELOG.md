@@ -8,6 +8,16 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Changed — Hạn phiên đăng nhập riêng theo cổng (ADR-0033)
+
+- Theo NIST SP 800-63B-4: ứng viên giữ đăng nhập tối đa 30 ngày (tự đăng xuất sau 7 ngày
+  không hoạt động), NTD 24 giờ (1 giờ), admin 12 giờ (15 phút, access 5 phút). Hạn tối đa
+  tính từ lần đăng nhập, refresh không gia hạn.
+- Sửa lỗi ngưỡng không hoạt động không bao giờ chạy: refresh giờ cũng kiểm idle.
+- Env: chín khóa `AUTH_<CỔNG>_{ACCESS_MINUTES,IDLE_MINUTES,MAX_AGE_HOURS}` thay cho
+  `JWT_ACCESS_TOKEN_MINUTES`, `JWT_REFRESH_TOKEN_DAYS`, `ADMIN_ACCESS_TOKEN_MINUTES`,
+  `AUTH_SESSION_IDLE_TIMEOUT_SECONDS`.
+
 #### Changed — AI tạo tin điền đủ hơn
 
 - Quyền lợi khi tạo bằng brief lấy từ ô *Quyền lợi* mới, ghi chú, hồ sơ công ty và quyền lợi

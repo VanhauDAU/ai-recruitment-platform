@@ -1,8 +1,7 @@
 """JWT issuance and revocation workflows."""
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 
-from django.conf import settings
 from django.contrib.auth.models import update_last_login
 from django.db import transaction
 from django.utils.translation import gettext as _
@@ -11,11 +10,13 @@ from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
+from rest_framework_simplejwt.utils import datetime_to_epoch
 
 from ..models import User
 from . import auth_sessions, cf_access
 from .access import is_account_accessible
 from .refresh_cookies import portal_for_user
+from .session_policy import policy_for
 
 
 def build_refresh_token(user):
@@ -41,15 +42,16 @@ def issue_tokens(user, request=None, *, auth_method='password'):
         update_last_login(None, user)
         refresh = build_refresh_token(user)
         # Tạo phiên thiết bị và gắn claim `sid` TRƯỚC khi serialize access/refresh.
-        auth_sessions.start_session(user, refresh, request, auth_method=auth_method)
+        session = auth_sessions.start_session(user, refresh, request, auth_method=auth_method)
+        # Refresh JWT hết hạn cùng lúc với phiên của cổng, không theo trần chung.
+        refresh['exp'] = datetime_to_epoch(session.expires_at)
         access = refresh.access_token
-        if user.is_admin_role:
-            # ``access_token`` kế thừa ``iat`` của refresh. Dùng đúng mốc đó để
-            # thời hạn 5 phút của admin không bị lệch một giây khi qua boundary.
-            access.set_exp(
-                from_time=datetime.fromtimestamp(access['iat'], tz=UTC),
-                lifetime=timedelta(minutes=settings.ADMIN_ACCESS_TOKEN_MINUTES),
-            )
+        # ``access_token`` kế thừa ``iat`` của refresh. Dùng đúng mốc đó để hạn
+        # access của cổng không bị lệch một giây khi qua boundary.
+        access.set_exp(
+            from_time=datetime.fromtimestamp(access['iat'], tz=UTC),
+            lifetime=policy_for(user.role).access_lifetime,
+        )
         return {'access': str(access), 'refresh': str(refresh)}
 
 
@@ -85,7 +87,7 @@ def refresh_session_tokens(raw_refresh, *, portal, rotate):
     with transaction.atomic():
         session = auth_sessions.locked_refresh_session(
             sid=refresh.get(auth_sessions.SID_CLAIM),
-            user_id=user.pk,
+            user=user,
             refresh_jti=old_jti,
             auth_revision=auth_revision,
         )
@@ -95,6 +97,11 @@ def refresh_session_tokens(raw_refresh, *, portal, rotate):
             # live session and is rejected instead of creating a second branch.
             data = rotate()
             if data.get('refresh'):
+                # simplejwt đặt hạn token mới = now + trần chung; kéo về đúng
+                # hạn tuyệt đối của phiên để xoay vòng không gia hạn phiên.
+                rotated = RefreshToken(data['refresh'])
+                rotated['exp'] = datetime_to_epoch(session.expires_at)
+                data['refresh'] = str(rotated)
                 auth_sessions.rotate_session(session, data['refresh'])
 
     if session is None:
@@ -103,9 +110,9 @@ def refresh_session_tokens(raw_refresh, *, portal, rotate):
         auth_sessions.revoke_reused_refresh(raw_refresh)
         raise InvalidToken({'detail': _('Phiên đăng nhập đã hết hạn hoặc bị thu hồi.')})
 
-    if user.is_admin_role and data.get('access'):
+    if data.get('access'):
         access = AccessToken(data['access'])
-        access.set_exp(lifetime=timedelta(minutes=settings.ADMIN_ACCESS_TOKEN_MINUTES))
+        access.set_exp(lifetime=policy_for(user.role).access_lifetime)
         data['access'] = str(access)
     data['user'] = user
     return data

@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Hạn phiên đăng nhập riêng theo cổng (ADR-0033)](#hạn-phiên-đăng-nhập-riêng-theo-cổng-adr-0033-2026-11-26) | 🟨 Nhánh `feat/per-portal-session-policy`, chờ PR |
 | [Cổng quản trị cập nhật hàng chờ realtime](#cổng-quản-trị-cập-nhật-hàng-chờ-realtime-2026-11-26) | 🟨 Nhánh `feat/admin-realtime`, chờ gộp PR |
 | [Đăng tin xong mở thẻ Thông tin tuyển dụng](#đăng-tin-xong-mở-thẻ-thông-tin-tuyển-dụng-2026-11-26) | 🟨 Nhánh `feat/job-publish-info-tab`, chờ PR |
 | [AI tạo tin: đủ quyền lợi, ngoại ngữ, lương/số lượng từ JD](#ai-tạo-tin-đủ-quyền-lợi-ngoại-ngữ-lươngsố-lượng-từ-jd-2026-11-26) | ✅ Đã gộp dev (#385) |
@@ -75,6 +76,22 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
 
+
+## Hạn phiên đăng nhập riêng theo cổng (ADR-0033, 2026-11-26)
+
+[ADR-0033](02-tong-quan/adr-0033-portal-session-policy.md): ba cổng không còn chung một bộ
+hạn phiên.
+
+- **Mức theo NIST SP 800-63B-4:** ứng viên (AAL1) access 15 phút, rảnh 7 ngày, tối đa
+  30 ngày; NTD (AAL2) 15 phút / 1 giờ / 24 giờ; admin (AAL3) 5 phút / 15 phút / 12 giờ.
+- **Backend:** `services/session_policy.py` là nguồn duy nhất; `AuthSession.expires_at`,
+  `exp` của refresh JWT (kể cả khi xoay vòng) và `max-age` cookie cùng một mốc tính từ lần
+  đăng nhập. `locked_refresh_session` kiểm idle. Trước đây refresh bỏ qua idle nên
+  ngưỡng 30 phút cũ không bao giờ chạy. Trang Cấu hình hệ thống hiện một dòng mỗi cổng.
+- **Env:** `AUTH_<CỔNG>_{ACCESS_MINUTES,IDLE_MINUTES,MAX_AGE_HOURS}` thay bốn khóa cũ;
+  `backend/.env` cục bộ cần chạy `scripts/sync_local_env.py`.
+- **Kiểm chứng:** pytest accounts + realtime + sitecontent API + config 298 passed (test mới
+  `test_session_policy.py`); ruff, import-linter, kiểm env template sạch.
 
 ## Cổng quản trị cập nhật hàng chờ realtime (2026-11-26)
 
