@@ -6,7 +6,7 @@ Tài liệu này mô tả hạ tầng provider-neutral và live workflow SMS. Co
 endpoint/UI phone verification sang exact challenge; production vẫn tắt cho tới
 khi hoàn tất gateway sandbox và rollout gate. Cụ thể:
 
-- không chọn hoặc khóa cứng một nhà cung cấp trả phí;
+- adapter `http` trung lập, cộng adapter `speedsms` (SpeedSMS.vn) gọi thẳng API của nhà cung cấp;
 - endpoint/UI dùng challenge ID; employer account PATCH không được đổi phone;
 - production giữ `EMPLOYER_SMS_OTP_ENABLED=False` cho tới khi Product/Ops duyệt
   gateway, sender và template;
@@ -93,6 +93,29 @@ cũ bị invalidated.
 
 Không ghi provider response body vào log vì body có thể phản chiếu phone/OTP.
 
+### Adapter `speedsms` (SpeedSMS.vn)
+
+Chọn bằng `EMPLOYER_SMS_PROVIDER=speedsms`. Backend gọi thẳng
+`POST https://api.speedsms.vn/index.php/sms/send`, Basic auth
+`<EMPLOYER_SMS_API_TOKEN>:x` (access token lấy ở connect.speedsms.vn → Settings →
+Profile):
+
+```json
+{"to": ["84912345678"], "content": "<EMPLOYER_SMS_CONTENT_TEMPLATE đã điền>", "sms_type": 4, "sender": ""}
+```
+
+- `EMPLOYER_SMS_SPEEDSMS_TYPE`: `4` = brandname mặc định "Verify" (750đ/tin, không
+  đăng ký brandname); `2` = đầu số ngẫu nhiên (250–300đ/tin). Giá tra 26/11/2026,
+  đã gồm VAT.
+- `EMPLOYER_SMS_CONTENT_TEMPLATE`: chỉ dùng `{code}`, `{ttl_minutes}`; phải không dấu
+  và ≤ 160 ký tự sau khi điền (một tin). Readiness báo lỗi nếu sai.
+- `ENDPOINT_URL`, `SENDER`, `TEMPLATE_ID` không dùng cho adapter này.
+- Response `status=success` → `message_id = speedsms-<tranId>`. Mã lỗi `500` là
+  lỗi tạm (retry); `300` (hết số dư) → `provider_insufficient_balance`, `105` (số
+  sai) → `provider_invalid_destination`, còn lại `provider_rejected`.
+- SpeedSMS không có idempotency key: lần retry sau lỗi tạm có thể tạo tin trùng,
+  nhưng cùng mã OTP nên không làm hỏng xác thực.
+
 ## 4. Cấu hình
 
 ```dotenv
@@ -102,6 +125,8 @@ EMPLOYER_SMS_ENDPOINT_URL=
 EMPLOYER_SMS_API_TOKEN=
 EMPLOYER_SMS_SENDER=
 EMPLOYER_SMS_TEMPLATE_ID=
+EMPLOYER_SMS_SPEEDSMS_TYPE=4
+EMPLOYER_SMS_CONTENT_TEMPLATE=
 EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY=
 EMPLOYER_SMS_CHALLENGE_HMAC_KEY=
 EMPLOYER_SMS_CONNECT_TIMEOUT_SECONDS=2
@@ -111,9 +136,8 @@ EMPLOYER_SMS_DISPATCH_STALE_SECONDS=300
 
 Yêu cầu production khi bật flag:
 
-- provider phải là `http`; `fake` chỉ dùng development/test;
-- endpoint phải dùng HTTPS;
-- token, sender, template đều không rỗng;
+- provider phải là `http` hoặc `speedsms`; `fake`/`console` chỉ dùng development/test;
+- token không rỗng; riêng `http` còn cần endpoint HTTPS, sender, template;
 - encryption key là Fernet key riêng;
 - HMAC key riêng có ít nhất 32 ký tự;
 - không dùng lại `SECRET_KEY` hoặc JWT signing key.
