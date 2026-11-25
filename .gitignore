@@ -34,7 +34,9 @@ ml/data/
 .import_linter_cache/
 htmlcov/
 backend/coverage.json
-backend/pytest-results.xml
+backend/pytest-results*.xml
+backend/.coverage.group*
+backend/.testdb-template.dump
 
 # Node
 node_modules/
