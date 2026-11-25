@@ -8,6 +8,15 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Changed — Trang Tìm CV của NTD theo bố cục kho ứng viên
+
+- Cột lọc trái (từ khóa có tất cả / một trong / không có, tỉnh, ngành nghề, ngoại ngữ + trình
+  độ, kinh nghiệm từ–đến, cấp bậc, học vấn, chức danh, trường) và thẻ ứng viên ẩn danh: vòng
+  điểm, mốc kinh nghiệm không tên công ty, học vấn, ngoại ngữ, kỹ năng khớp tin.
+- Chọn nhiều để mời kết nối hàng loạt; chọn số dòng mỗi trang.
+- API `GET /api/employer/candidate-search/` thêm tham số lọc, `page_size` và trường thẻ
+  (`experience`, `experience_count`, `education`, `desired_positions`, `provinces`).
+
 #### Changed — Hạn phiên đăng nhập riêng theo cổng (ADR-0033)
 
 - Theo NIST SP 800-63B-4: ứng viên giữ đăng nhập tối đa 30 ngày (tự đăng xuất sau 7 ngày

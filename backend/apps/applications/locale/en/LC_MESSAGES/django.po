@@ -43,6 +43,9 @@ msgstr "ProCV reminded the employer to respond to your CV"
 msgid "CV chưa đủ thông tin để ứng tuyển: thiếu %(issues)s. Hãy cập nhật CV trước khi nộp."
 msgstr "Your CV is missing information needed to apply: %(issues)s. Please update your CV before applying."
 
+msgid "Số năm kinh nghiệm \"đến\" phải lớn hơn hoặc bằng \"từ\"."
+msgstr "The \"to\" years of experience must be greater than or equal to \"from\"."
+
 msgid "Ứng viên"
 msgstr "Candidate"
 

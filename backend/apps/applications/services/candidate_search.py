@@ -6,8 +6,11 @@ viên) bằng khóa bí mật của máy chủ. Mã ổn định với một cô
 ứng viên bằng cách tính mã cho các CV đang được phép tìm thấy, nên một mã chỉ còn
 dùng được chừng nào ứng viên còn cho phép.
 
-Nhà tuyển dụng không nhận tên, liên hệ, tệp CV, tên công ty cũ hay câu trích nào: chỉ
-hồ sơ trích xuất ẩn danh và mức phù hợp (`apps.matching.services.rank_cvs_for_job`).
+Danh sách không có tên, liên hệ, tệp CV, tên công ty cũ hay câu trích nào: chỉ hồ sơ
+trích xuất ẩn danh (kinh nghiệm theo chức danh và mốc thời gian, học vấn, ngoại ngữ), nhu
+cầu tìm việc (vị trí mong muốn, tỉnh/thành muốn làm) và mức phù hợp
+(`apps.matching.services.rank_cvs_for_job`). Nội dung từng mục của CV chỉ có ở màn xem
+chi tiết, nơi mỗi lần mở được ghi nhật ký.
 Bước tiếp theo duy nhất là gửi lời mời kết nối gắn với một tin. Ứng viên đồng ý thì NTD
 được kết nối (nhắn tin, sẽ làm sau) với ứng viên; từ chối thì lời mời đóng lại. Cả hai
 trường hợp NTD chỉ nhận thông báo kèm mã ẩn danh, không có danh tính ứng viên.
@@ -29,12 +32,17 @@ from http import HTTPStatus
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
-from django.db.models import Exists, OuterRef
+from django.db.models import Exists, F, OuterRef, Q
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from rest_framework.exceptions import NotFound
 
-from apps.candidates.models import CandidateConsent, CandidateNotification
+from apps.candidates.models import (
+    CandidateConsent,
+    CandidateDesiredSpecialization,
+    CandidateJobPreference,
+    CandidateNotification,
+)
 from apps.candidates.services import emit_candidate_notification
 from apps.cvs.models import CvAccessLog, UserCv
 from apps.cvs.services import record_cv_access
@@ -50,14 +58,16 @@ REF_LENGTH = 24
 CODE_LENGTH = 6
 CONNECTIONS_PATH = '/tai-khoan/nha-tuyen-dung-muon-ket-noi'
 CANDIDATE_SEARCH_PATH = '/tuyendung/app/candidate-search'
+CARD_PREFERENCE_ITEMS = 3
 User = get_user_model()
 
 
-def searchable_cvs(recruiter, job, *, province_id=None):
+def searchable_cvs(recruiter, job, *, province_id=None, category_id=None):
     """CV đang bật tìm kiếm mà `recruiter` được thấy khi tìm cho `job`.
 
     `province_id`: chỉ ứng viên có tỉnh/thành này trong nơi làm việc mong muốn (CV không
-    mang địa điểm).
+    mang địa điểm). `category_id`: chỉ ứng viên có vị trí mong muốn thuộc ngành nghề này
+    (chính nó, hoặc nhóm/lĩnh vực cha của vị trí).
     """
     consented = CandidateConsent.objects.filter(
         candidate_profile__user_id=OuterRef('user_id'),
@@ -87,7 +97,38 @@ def searchable_cvs(recruiter, job, *, province_id=None):
         cvs = cvs.filter(
             user__candidate_profile__job_preference__preferred_provinces__location_id=province_id
         )
+    if category_id is not None:
+        wanted = CandidateDesiredSpecialization.objects.filter(
+            job_preference__candidate_profile__user_id=OuterRef('user_id')
+        ).filter(
+            Q(job_category_id=category_id)
+            | Q(job_category__parent_id=category_id)
+            | Q(job_category__parent__parent_id=category_id)
+        )
+        cvs = cvs.filter(Exists(wanted))
     return cvs
+
+
+def _preferences(user_ids):
+    """id ứng viên → `{desired_positions, provinces}` (tên, tối đa vài mục mỗi loại)."""
+    preferences = CandidateJobPreference.objects.filter(
+        candidate_profile__user_id__in=user_ids
+    ).prefetch_related(
+        'desired_specializations__job_category',
+        'desired_position_others',
+        'preferred_provinces__location',
+    )
+    found = {}
+    for preference in preferences.annotate(user_id=F('candidate_profile__user_id')):
+        positions = [item.job_category.name for item in preference.desired_specializations.all()]
+        positions += [item.name for item in preference.desired_position_others.all()]
+        found[preference.user_id] = {
+            'desired_positions': positions[:CARD_PREFERENCE_ITEMS],
+            'provinces': [item.location.name for item in preference.preferred_provinces.all()][
+                :CARD_PREFERENCE_ITEMS
+            ],
+        }
+    return found
 
 
 def candidate_job_flags(job, candidate_ids):
@@ -148,9 +189,10 @@ def candidate_ref(company_id, candidate_id):
     return digest[:REF_LENGTH]
 
 
-def _row(job, cv, ranked, *, applied, invited, detail=False):
+def _row(job, cv, ranked, *, applied, invited, preferences, detail=False):
     ref = candidate_ref(job.company_id, cv.user_id)
     profile = ranked['profile']
+    empty = {'desired_positions': [], 'provinces': []}
     row = {
         'ref': ref,
         'code': candidate_code(job.company_id, cv.user_id),
@@ -164,6 +206,10 @@ def _row(job, cv, ranked, *, applied, invited, detail=False):
         'matched_skills': ranked['matched_skills'],
         'matched_skill_count': ranked['matched_skill_count'],
         'job_skill_count': ranked['job_skill_count'],
+        'experience': ranked['card']['experience'],
+        'experience_count': ranked['card']['experience_count'],
+        'education': ranked['card']['education'],
+        **preferences.get(cv.user_id, empty),
         'cv_updated_at': cv.updated_at,
         'applied': cv.user_id in applied,
         'invited': cv.user_id in invited,
@@ -188,20 +234,32 @@ def _ranked(job, cvs, filters, *, min_score=None):
     return ranked
 
 
-def search_candidates(recruiter, job, *, filters=None, province_id=None):
-    """Ứng viên phù hợp với `job`, điểm cao trước, đã ẩn danh. `job` là tin của `recruiter`."""
+def search_candidates(
+    recruiter, job, *, filters=None, province_id=None, category_id=None, page=1, page_size=20
+):
+    """Một trang ứng viên phù hợp với `job`, điểm cao trước, đã ẩn danh: `(tổng số, các dòng)`.
+
+    `job` là tin của `recruiter`. Cờ ứng tuyển/mời và nhu cầu tìm việc chỉ đọc cho trang
+    được trả, nên số truy vấn không tăng theo số kết quả.
+    """
     ensure_candidate_search_enabled()
-    cvs = searchable_cvs(recruiter, job, province_id=province_id)
+    cvs = searchable_cvs(recruiter, job, province_id=province_id, category_id=category_id)
     ranked = _ranked(job, cvs, filters)
     by_version = {
         cv.latest_version_id: cv
         for cv in cvs.filter(latest_version_id__in=[item['cv_version_id'] for item in ranked])
     }
-    applied, invited = candidate_job_flags(job, [cv.user_id for cv in by_version.values()])
-    return [
-        _row(job, by_version[item['cv_version_id']], item, applied=applied, invited=invited)
-        for item in ranked
-        if item['cv_version_id'] in by_version
+    ranked = [item for item in ranked if item['cv_version_id'] in by_version]
+    start = (page - 1) * page_size
+    shown = [
+        (by_version[item['cv_version_id']], item) for item in ranked[start : start + page_size]
+    ]
+    user_ids = [cv.user_id for cv, _item in shown]
+    applied, invited = candidate_job_flags(job, user_ids)
+    preferences = _preferences(user_ids)
+    return len(ranked), [
+        _row(job, cv, item, applied=applied, invited=invited, preferences=preferences)
+        for cv, item in shown
     ]
 
 
@@ -231,7 +289,15 @@ def candidate_detail(recruiter, job, ref, *, request):
         actor_user=recruiter,
     )
     applied, invited = candidate_job_flags(job, [cv.user_id])
-    row = _row(job, cv, ranked[0], applied=applied, invited=invited, detail=True)
+    row = _row(
+        job,
+        cv,
+        ranked[0],
+        applied=applied,
+        invited=invited,
+        preferences=_preferences([cv.user_id]),
+        detail=True,
+    )
     # Lời mời đã được nhận: NTD mở ProCV Connect bằng mã lời mời (ADR-0032).
     row['invitation_public_id'] = (
         CandidateSearchInvitation.objects.filter(
