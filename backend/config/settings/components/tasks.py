@@ -27,7 +27,8 @@ CHANNEL_LAYERS = {
         'CONFIG': {
             'hosts': [
                 {
-                    'address': config('CHANNEL_LAYER_REDIS_URL', default=REDIS_URL),
+                    # Để trống = dùng chung REDIS_URL.
+                    'address': config('CHANNEL_LAYER_REDIS_URL', default='') or REDIS_URL,
                     'socket_timeout': CHANNEL_LAYER_SOCKET_TIMEOUT,
                 }
             ],
