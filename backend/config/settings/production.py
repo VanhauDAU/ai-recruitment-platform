@@ -42,10 +42,14 @@ if API_DOCS_ENABLED:
     _errors.append(
         'API_DOCS_ENABLED phải là False khi ENVIRONMENT=production (lộ toàn bộ schema API).'
     )
-if SECRET_KEY == _DEFAULT_SECRET_KEY:
+# Mọi key 'django-insecure-…' (default trong code lẫn giá trị mẫu của
+# backend/.env.example) đều công khai trên repo.
+if SECRET_KEY == _DEFAULT_SECRET_KEY or SECRET_KEY.startswith('django-insecure'):
     _errors.append('SECRET_KEY production phải được cấu hình qua biến môi trường.')
 if set(ALLOWED_HOSTS).issubset({'localhost', '127.0.0.1'}):
     _errors.append('ALLOWED_HOSTS production phải chứa domain hợp lệ.')
+if '*' in ALLOWED_HOSTS:
+    _errors.append('ALLOWED_HOSTS production không được chứa "*" (Host header giả mạo).')
 if not RECAPTCHA_SECRET_KEY:
     _errors.append('RECAPTCHA_SECRET_KEY là bắt buộc ở production.')
 if EMPLOYER_BADGE_POLICY_MODE not in {'shadow', 'enforce'}:
@@ -121,8 +125,22 @@ elif len(jwt_signing_key) < 32:
 if DATABASES['default']['PASSWORD'] in {'', 'postgres'}:
     _errors.append('DB_PASSWORD production không được để trống hoặc dùng default "postgres".')
 
+if bool(CLOUDFLARE_ACCESS_TEAM_DOMAIN) != bool(CLOUDFLARE_ACCESS_AUD):
+    _errors.append(
+        'CLOUDFLARE_ACCESS_TEAM_DOMAIN và CLOUDFLARE_ACCESS_AUD phải đặt cùng nhau '
+        '(thiếu một trong hai thì khóa Access cho admin không bật).'
+    )
+
 if not CORS_ALLOWED_ORIGINS:
     _errors.append('CORS_ALLOWED_ORIGINS là bắt buộc ở production (origin frontend).')
+_insecure_origins = [origin for origin in CORS_ALLOWED_ORIGINS if not origin.startswith('https://')]
+if _insecure_origins:
+    # Các origin này còn được guard WebSocket và cookie refresh tin cậy.
+    _errors.append(
+        'CORS_ALLOWED_ORIGINS production chỉ nhận origin https://: '
+        + ', '.join(_insecure_origins)
+        + '.'
+    )
 
 if not TRUSTED_PROXY_IPS:
     # Production luôn chạy sau reverse proxy, nên REMOTE_ADDR là địa chỉ của

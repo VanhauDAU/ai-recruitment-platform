@@ -120,6 +120,9 @@ class OAuthFlowTests(APITestCase):
     def test_absolute_next_url_is_dropped(self):
         self.assertEqual(oauth.safe_next('https://evil.com/phish'), '')
         self.assertEqual(oauth.safe_next('//evil.com'), '')
+        self.assertEqual(oauth.safe_next('/\\evil.com'), '')
+        self.assertEqual(oauth.safe_next('/\t/evil.com'), '')
+        self.assertEqual(oauth.safe_next('/viec-lam\n'), '')
         self.assertEqual(oauth.safe_next('/viec-lam?cat=1'), '/viec-lam?cat=1')
 
     # ---- callback + complete ----

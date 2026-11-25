@@ -94,7 +94,9 @@ Bộ file production đã nằm trên `dev` (docker-compose.prod.yml, frontend/d
 6. Go-live: bật proxied DNS công khai, gỡ Access toàn site (giữ cho /admin), theo dõi Sentry/log 48 h đầu, đóng băng tính năng mới 1 tuần.
 
 ## Để sau go-live (ghi vào docs, không chặn)
-WAL archiving (wal-g → R2) nếu cần RPO < 24 h; MFA TOTP cho admin trong app (Cloudflare Access thay tạm); HNSW cho tìm ứng viên khi CV > ~50k; cột `lifecycle_recency` có index cho sắp xếp việc làm; build image trong CI + GHCR; Trivy quét image; tự phục vụ xuất/xóa dữ liệu đầy đủ.
+WAL archiving (wal-g → R2) nếu cần RPO < 24 h; MFA TOTP cho admin trong app (Cloudflare Access thay tạm); HNSW cho tìm ứng viên khi CV > ~50k; cột `lifecycle_recency` có index cho sắp xếp việc làm; build image trong CI + GHCR; Trivy quét image; tự phục vụ xuất/xóa dữ liệu đầy đủ; tách cache bảo mật (login guard, token một lần, OAuth state) sang Redis không eviction; gia cố container (`cap_drop`, `no-new-privileges`).
+
+Checklist theo ngày cho VPS 2/12: [checklist-go-live-2-12.md](checklist-go-live-2-12.md).
 
 ## Kiểm chứng chung mỗi PR (AGENTS.md)
 - Backend: `ruff check . && ruff format --check .`, `lint-imports`, `bash ../scripts/check_backend_layering.sh`, `python ../scripts/check_backend_imports.py`, `python manage.py makemigrations --check --dry-run`, `bash ../scripts/check_openapi_schema.sh`, `pytest --ds=config.settings.test --cov --cov-fail-under=84` (qua docker exec, không chạy manage.py trên host).
