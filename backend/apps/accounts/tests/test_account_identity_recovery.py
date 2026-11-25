@@ -90,7 +90,7 @@ class AccountIdentityRecoveryApiTests(APITestCase):
         )
         tokens = issue_tokens(self.target)
         reset_token = password_reset.issue_token(self.target)
-        oauth_code = oauth.create_one_time_code(self.target)
+        oauth_code = oauth.create_one_time_code(self.target, 'google')
         for kind in (
             AuthEmailJob.Kind.VERIFICATION,
             AuthEmailJob.Kind.PASSWORD_RESET,

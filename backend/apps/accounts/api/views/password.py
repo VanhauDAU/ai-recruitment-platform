@@ -28,7 +28,8 @@ class PasswordChangeView(APIView):
         summary='Điều kiện cần để đặt hoặc thay đổi mật khẩu ở phiên hiện tại',
         description=(
             'Tài khoản chưa có mật khẩu (đăng nhập mạng xã hội) phải nhập mã gửi '
-            'qua email; client biết trước để hiện ô nhập mã thay vì nhận lỗi sau khi lưu.'
+            'qua email, trừ khi phiên hiện tại vừa đăng nhập Google; client biết trước '
+            'để ẩn/hiện ô nhập mã thay vì nhận lỗi sau khi lưu.'
         ),
         responses=inline_serializer(
             'PasswordSetupRequirements',
@@ -47,7 +48,9 @@ class PasswordChangeView(APIView):
         return Response(
             {
                 'has_usable_password': has_password,
-                'requires_email_code': not has_password,
+                'requires_email_code': password_setup_code.is_required(
+                    user, auth_sessions.current_session(request, user)
+                ),
                 'email_code_ttl_seconds': settings.PASSWORD_SETUP_CODE_TTL,
                 'resend_after_seconds': 0
                 if has_password
@@ -74,10 +77,12 @@ class PasswordChangeView(APIView):
         tags=['auth'],
     )
     def post(self, request):
-        serializer = PasswordChangeSerializer(data=request.data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
         user = request.user
         session = auth_sessions.current_session(request, user)
+        serializer = PasswordChangeSerializer(
+            data=request.data, context={'request': request, 'session': session}
+        )
+        serializer.is_valid(raise_exception=True)
         if session is None:
             raise ValidationError({'detail': _('Cần phiên refresh hiện tại để đổi mật khẩu.')})
         tokens = change_password(

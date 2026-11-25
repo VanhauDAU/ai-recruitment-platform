@@ -1,13 +1,15 @@
 """Tầng HTTP: đổi mật khẩu và yêu cầu thiết lập mật khẩu."""
 
+from datetime import timedelta
 from unittest.mock import patch
 
 from django.core.cache import cache
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from ..models import AuthEmailJob, User
+from ..models import AuthEmailJob, AuthSession, User
 from ..services import password_setup_code
 from ..services.refresh_cookies import cookie_name
 from ..services.tokens import issue_tokens
@@ -285,3 +287,75 @@ class PasswordSetupCodeTests(APITestCase):
         self.assertTrue(password_setup_code.verify_code(self.user, code))
         # Mã chỉ dùng một lần.
         self.assertFalse(password_setup_code.verify_code(self.user, code))
+
+
+class PasswordSetupRecentGoogleTests(APITestCase):
+    """Phiên vừa đăng nhập Google được tạo mật khẩu không cần mã email."""
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(
+            email='google-candidate@example.com', password=None, role=User.Role.CANDIDATE
+        )
+
+    def _sign_in(self, provider='google', *, age_seconds=0):
+        tokens = issue_tokens(self.user, auth_method='oauth', oauth_provider=provider)
+        AuthSession.objects.filter(user=self.user).update(
+            reauthenticated_at=timezone.now() - timedelta(seconds=age_seconds)
+        )
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + tokens['access'])
+        set_refresh_cookie(self.client, 'main', tokens['refresh'])
+
+    def _requires_code(self):
+        return self.client.get(reverse('auth-password-change')).data['requires_email_code']
+
+    def _create_password(self, **extra):
+        return self.client.post(
+            reverse('auth-password-change'),
+            {'password': 'NewPassword@123', **extra},
+            format='json',
+        )
+
+    def test_recent_google_sign_in_creates_the_password_without_a_code(self):
+        self._sign_in(age_seconds=9 * 60)
+
+        self.assertFalse(self._requires_code())
+        response = self._create_password()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password('NewPassword@123'))
+
+    def test_old_google_sign_in_needs_a_code_even_after_a_token_refresh(self):
+        self._sign_in(age_seconds=10 * 60 + 1)
+        refreshed = refresh_session(self.client, 'main')
+        self.assertEqual(refreshed.status_code, status.HTTP_200_OK)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + refreshed.data['access'])
+
+        self.assertTrue(self._requires_code())
+        # Client không tự khai được mình còn mới.
+        missing = self._create_password(
+            requires_email_code=False, reauthenticated_at=timezone.now().isoformat()
+        )
+        self.assertEqual(missing.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('email_code', missing.data)
+
+        response = self._create_password(email_code=password_setup_code.issue_code(self.user))
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+
+    def test_other_providers_still_need_a_code(self):
+        for provider in ('facebook', 'linkedin', ''):
+            with self.subTest(provider=provider):
+                self._sign_in(provider)
+
+                self.assertTrue(self._requires_code())
+                self.assertIn('email_code', self._create_password().data)
+
+    def test_recent_google_access_token_alone_is_not_enough(self):
+        self._sign_in()
+        self.client.cookies.clear()
+
+        self.assertTrue(self._requires_code())
+        self.assertEqual(self._create_password().status_code, status.HTTP_400_BAD_REQUEST)
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.has_usable_password())

@@ -11,7 +11,7 @@ from rest_framework.test import APITestCase
 
 from apps.accounts.services import oauth
 
-from ..models import AuthEmailJob, SocialAccount, User
+from ..models import AuthEmailJob, AuthSession, SocialAccount, User
 from .factories import GOOGLE_PROFILE, oauth_state_for
 
 
@@ -300,6 +300,8 @@ class OAuthFlowTests(APITestCase):
         redirect_url = self._callback().url
         first = self._complete(redirect_url)
         self.assertEqual(first.status_code, 200)
+        session = AuthSession.objects.get()
+        self.assertEqual((session.auth_method, session.oauth_provider), ('oauth', 'google'))
         query = parse_qs(urlparse(redirect_url).query)
         second = self.client.post(reverse('auth-oauth-complete'), {'code': query['code'][0]})
         self.assertEqual(second.status_code, status.HTTP_400_BAD_REQUEST)
