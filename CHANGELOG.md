@@ -8,6 +8,11 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Fixed — Thiếu bản dịch tiếng Anh cho thông báo xác minh SĐT nhà tuyển dụng
+
+- Bổ sung 3 bản dịch en trong `apps/employers` của `verify_employer_phone` (#402);
+  `test_locale_catalogs[employers]` xanh trở lại.
+
 #### Fixed — Giao diện mobile: ô chat Connect trên iPhone, banner cookie, ô Địa điểm
 
 - ProCV Connect: ô nhập trên màn hình cảm ứng dùng chữ 16px để iOS (Safari, Chrome)
