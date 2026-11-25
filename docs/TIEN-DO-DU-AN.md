@@ -7,7 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Việc làm gần tôi: bản đồ, bán kính, tọa độ nơi làm việc (ADR-0029)](#việc-làm-gần-tôi-bản-đồ-bán-kính-tọa-độ-nơi-làm-việc-adr-0029-2026-11-25) | 🟨 PR vào `dev` (nhánh `feat/nearby-jobs`), chờ gộp |
+| [Việc làm gần tôi: bản đồ, bán kính, tọa độ nơi làm việc (ADR-0029)](#việc-làm-gần-tôi-bản-đồ-bán-kính-tọa-độ-nơi-làm-việc-adr-0029-2026-11-25) | 🟨 PR #344 (nhánh `feat/nearby-jobs`), chờ gộp |
 | [Thông báo thời gian thực qua WebSocket, hoàn tác 15 giây (ADR-0028)](#thông-báo-thời-gian-thực-qua-websocket-hoàn-tác-15-giây-adr-0028-2026-11-25) | ✅ Đã gộp dev (#340); sửa socket rớt mỗi 5 giây trên nhánh `fix/realtime-redis-timeout` |
 | [Phễu tuyển dụng trên trang chủ NTD](#phễu-tuyển-dụng-trên-trang-chủ-ntd-2026-11-25) | 🟨 PR #338 (nhánh `feat/employer-recruitment-funnel`), chờ gộp |
 | [Làm lại khối Gợi ý việc làm phù hợp trang chủ](#làm-lại-khối-gợi-ý-việc-làm-phù-hợp-trang-chủ-2026-11-25) | 🟨 Xong trên nhánh `feat/home-recommendations-redesign`, chưa commit/PR |
@@ -70,6 +70,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
   bán kính), lối vào ở header + trang chủ, "Cách bạn x km" và bản đồ ở chi tiết tin.
 - **Kiểm tra:** pytest đủ bộ 2.117 qua (coverage 91%), Vitest + E2E `nearby-jobs.spec.js`
   (`@responsive`), bundle khởi tạo không đổi (MapLibre chỉ ở chunk lazy).
+- **PR:** #344 vào `dev`.
 - **Còn lại:** cấp key VietMap (server + tile) và đặt `map_style_url` trước khi lên
   production; sau deploy chạy `seed_location_coordinates` rồi `refresh_job_coordinates`.
 
