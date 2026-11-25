@@ -645,5 +645,20 @@
   "fit_skill_listed_only": "listed only",
   "fit_note_relevance_discount": "The CV is in a different field from the job, so education, level and languages count only partly toward the total.",
   "fit_note_language_cap": "A required language is missing, so the total is capped.",
-  "fit_note_experience_estimated": "Working time could only be read approximately from the CV file."
+  "fit_note_experience_estimated": "Working time could only be read approximately from the CV file.",
+  "fit_language_level_basic": "basic",
+  "fit_language_level_conversational": "conversational",
+  "fit_language_level_working": "working",
+  "fit_language_level_professional": "professional",
+  "fit_language_level_native": "native",
+  "fit_profile_unknown": "Unknown",
+  "fit_profile_present": "present",
+  "fit_profile_role_unknown": "Role not stated",
+  "fit_profile_title_unknown": "Job title could not be determined",
+  "fit_profile_estimated": "estimated",
+  "fit_profile_experience_heading": "Work history",
+  "fit_profile_experience_count": "{count} experience entries in the CV.",
+  "fit_profile_experience_empty": "The CV has no experience section.",
+  "fit_profile_skills_heading": "Skills",
+  "fit_profile_skills_empty": "No catalogue skills were recognised."
 }

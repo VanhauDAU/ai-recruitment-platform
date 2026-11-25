@@ -421,5 +421,20 @@
   "fit_skill_listed_only": "chỉ liệt kê",
   "fit_note_relevance_discount": "Chuyên môn trong CV khác lĩnh vực của tin nên học vấn, cấp bậc, ngoại ngữ chỉ được tính một phần vào điểm tổng.",
   "fit_note_language_cap": "CV thiếu ngoại ngữ bắt buộc nên điểm tổng bị giới hạn.",
-  "fit_note_experience_estimated": "Thời gian làm việc chỉ đọc được gần đúng từ tệp CV."
+  "fit_note_experience_estimated": "Thời gian làm việc chỉ đọc được gần đúng từ tệp CV.",
+  "fit_language_level_basic": "cơ bản",
+  "fit_language_level_conversational": "giao tiếp",
+  "fit_language_level_working": "làm việc được",
+  "fit_language_level_professional": "thành thạo",
+  "fit_language_level_native": "bản ngữ",
+  "fit_profile_unknown": "Chưa xác định",
+  "fit_profile_present": "nay",
+  "fit_profile_role_unknown": "Chưa ghi vị trí",
+  "fit_profile_title_unknown": "Chưa xác định được chức danh",
+  "fit_profile_estimated": "ước lượng",
+  "fit_profile_experience_heading": "Việc đã làm",
+  "fit_profile_experience_count": "{count} mục kinh nghiệm trong CV.",
+  "fit_profile_experience_empty": "CV chưa có mục kinh nghiệm.",
+  "fit_profile_skills_heading": "Kỹ năng",
+  "fit_profile_skills_empty": "Chưa nhận ra kỹ năng nào trong danh mục."
 }

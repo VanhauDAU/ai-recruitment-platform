@@ -1254,7 +1254,7 @@ một commit, một PR vào `dev` khi xong GĐ E.
 | A | Công thức `hybrid-v2` phần không cần huấn luyện: bỏ địa điểm, tắt khớp kỹ năng viết khác tên, hệ số liên quan; đo trên validation | ✅ Commit trên nhánh (25/11) |
 | B | Đường ống xếp hạng hồ sơ ứng tuyển (backend): chấm bản CV đã nộp khi ứng viên đồng ý, queue `ai-matching-batch`, `ordering=ai_match`, endpoint chi tiết | ✅ Commit trên nhánh (25/11); test tự động viết ở bước kiểm tra cuối |
 | C | Giao diện xếp hạng ở cổng NTD: cột "Phù hợp", tab Đánh giá, bộ hiển thị dùng chung | ✅ Commit trên nhánh (25/11); chưa chụp màn hình, chưa có test giao diện |
-| D | Một CV được bật cho NTD tìm kiếm + "Hồ sơ NTD nhìn thấy" phía ứng viên | ⬜ |
+| D | Một CV được bật cho NTD tìm kiếm + "Hồ sơ NTD nhìn thấy" phía ứng viên | ✅ Commit trên nhánh (25/11); chưa chụp màn hình, chưa có test |
 | E | Tìm CV: tìm ứng viên ẩn danh theo tin, xem nhanh, mời ứng tuyển | ⬜ |
 
 Quyết định đã chốt: chỉ chấm hồ sơ ứng viên đồng ý (ô đồng ý tự chọn, nhớ lần trước);
@@ -1287,6 +1287,27 @@ xuất ẩn danh và tìm theo một tin đang tuyển; bước tiếp là mời
   `flags.relevance_discount_applied`; không còn `location` trong `components`. Kết quả cũ
   (`hybrid-v1`) trong cache không dùng lại vì khóa cache có phiên bản công thức.
 - Test `apps/matching` (100 test) đạt; phần test của tập vàng chưa chạy.
+
+</details>
+<details><summary>Ghi chú GĐ D (phần NTD)</summary>
+
+- `UserCv`: ràng buộc duy nhất có điều kiện `uq_user_searchable_cv` + data migration
+  `cvs.0003` (giữ CV chính nếu đang bật, không thì CV cập nhật gần nhất).
+  `update_cv_metadata` bật một CV thì tắt CV đang bật trước đó, trong cùng khóa hàng người dùng.
+  Tách khỏi "CV chính" (`is_default`, dùng cho gợi ý việc làm).
+- `apps/matching/selectors/extracted_profile.py`: `public_cv_profile(profile, audience)` là
+  danh sách trắng trường của `profile_json`. Chủ CV thấy cả tên công ty và dòng chữ của CV
+  tải lên; bản cho NTD tìm kiếm (`recruiter_search`, dùng ở GĐ E) bỏ hai thứ đó. Không bao
+  giờ trả `chunks` hay câu bằng chứng. API ứng viên `cv-profiles/<cv_public_id>/` trả
+  `ready` / `pending` / `failed` kèm mã lỗi (ví dụ PDF scan).
+- Frontend: `ExtractedProfile` đặt ở `entities/application/job-fit` (dùng lại cho GĐ E);
+  feature mới `features/main/cv/view-recruiter-profile` (nút + hộp thoại tải trễ, hai cột từ
+  992 px, hai tab ở màn hẹp); `update-recruiter-visibility` chuyển sang chọn một. Kế hoạch ghi
+  hộp xác nhận "CV X sẽ thay CV Y"; đã làm thành thông báo sau khi bật (thao tác đảo lại được
+  bằng một lần gạt), không chặn bằng hộp thoại.
+- Chuỗi mới đều ở `messages/candidate` và `messages/shared` (vi/en); mức trần chữ viết cứng
+  của `features/main`, `pages/main` giảm và đã khóa lại.
+- Đã chạy: lint, check:architecture, migration trên DB dev. Chưa làm: test, chụp màn hình.
 
 </details>
 <details><summary>Ghi chú GĐ C (phần NTD)</summary>

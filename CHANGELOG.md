@@ -8,6 +8,16 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-25
 
+#### Changed — Mỗi ứng viên chỉ bật một CV cho NTD tìm kiếm; thêm "Hồ sơ NTD nhìn thấy"
+
+- Ràng buộc `uq_user_searchable_cv` (migration `cvs.0003`): ứng viên đang bật nhiều CV thì giữ
+  CV chính nếu nó đang bật, không thì CV cập nhật gần nhất. Bật CV khác thì CV cũ tự tắt.
+- `GET /api/candidate/matching/cv-profiles/{cv_public_id}/`: hồ sơ trích xuất từ CV (chức
+  danh, kỹ năng theo nhóm, kinh nghiệm, học vấn, cấp bậc, ngoại ngữ), qua danh sách trắng
+  trường; không trả chữ nguyên văn ngoài các mục liệt kê.
+- Trang "CV của tôi" và thanh bên tài khoản: chọn một CV, nút "Xem hồ sơ NTD nhìn thấy" mở
+  hộp thoại hai cột CV | hồ sơ trích xuất (màn hẹp: hai tab). Hồ sơ chỉ đọc.
+
 #### Added — Mức phù hợp của hồ sơ ở cổng nhà tuyển dụng (giao diện)
 
 - Bảng "CV ứng tuyển" của một tin có cột **Phù hợp** và lựa chọn sắp xếp "Phù hợp nhất"

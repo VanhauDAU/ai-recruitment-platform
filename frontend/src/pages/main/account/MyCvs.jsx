@@ -9,10 +9,11 @@ export default function MyCvs() {
   const { siteName } = useSiteSettings()
   const navigate = useNavigate()
   const { builderCvs, uploadedCvs, loading, refresh } = useMyCvsData()
-  // CV mới nhất chưa bật tìm việc; ẩn khối khi mọi CV đã bật.
-  const cvToPromote = [...builderCvs, ...uploadedCvs]
-    .filter((cv) => !cv.recruiter_searchable)
-    .sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')))[0]
+  // Mỗi ứng viên chỉ bật một CV cho NTD tìm kiếm: chỉ mời bật (CV mới nhất) khi chưa bật CV nào.
+  const allCvs = [...builderCvs, ...uploadedCvs]
+  const cvToPromote = allCvs.some((cv) => cv.recruiter_searchable)
+    ? null
+    : allCvs.sort((a, b) => String(b.updated_at || '').localeCompare(String(a.updated_at || '')))[0]
 
   return (
     <div className="space-y-6">

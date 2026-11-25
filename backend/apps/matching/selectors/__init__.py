@@ -6,6 +6,13 @@ from .application_ranking import (
     application_match_detail,
     match_status,
 )
+from .extracted_profile import (
+    OWNER,
+    RECRUITER_SEARCH,
+    cv_profile_document,
+    owner_cv_profile,
+    public_cv_profile,
+)
 from .profiles import (
     cvs_for_profile,
     latest_cv_versions,
@@ -25,6 +32,11 @@ from .recommendations import (
 )
 
 __all__ = [
+    'OWNER',
+    'RECRUITER_SEARCH',
+    'cv_profile_document',
+    'owner_cv_profile',
+    'public_cv_profile',
     'application_match_annotations',
     'application_match_detail',
     'match_status',

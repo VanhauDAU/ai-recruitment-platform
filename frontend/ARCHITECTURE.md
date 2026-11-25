@@ -714,6 +714,12 @@ pages/main/jobs/JobDetail (placement="sidebar": slot dưới thông tin công ty
   riêng (mascot, thước bốn dải, gợi ý sửa CV) nhưng lấy nhãn từ entity này. Chuỗi ở
   `messages/shared` với tiền tố `fit_`; style `job-fit.css` tiền tố `fit-`, một màu
   nhấn thương hiệu, hổ phách chỉ cho kỹ năng bắt buộc còn thiếu, mức thể hiện bằng chữ.
+- Cùng entity có `ExtractedProfile`: hồ sơ trích xuất từ một CV (chức danh, kinh nghiệm,
+  học vấn, cấp bậc, ngoại ngữ, kỹ năng theo nhóm), chỉ đọc. Ứng viên xem qua
+  `features/main/cv/view-recruiter-profile` ("Hồ sơ NTD nhìn thấy", hộp thoại tải trễ hai
+  cột CV | hồ sơ, API `/api/candidate/matching/cv-profiles/{cv}/`); nút nằm trên thẻ CV
+  đang bật và ở thanh bên tài khoản. Mỗi ứng viên chỉ bật một CV cho NTD tìm kiếm
+  (`features/main/cv/update-recruiter-visibility`): bật CV khác thì CV cũ tự tắt.
 - Trang lưu CV thành công chỉ hiện nhãn "Phù hợp/Rất phù hợp" của đối sánh theo
   luật, không hiện phần trăm: điểm số duy nhất ứng viên thấy là của phân tích AI.
 

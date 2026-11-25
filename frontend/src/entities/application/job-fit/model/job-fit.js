@@ -81,7 +81,31 @@ const LANGUAGES = {
   vi: () => m.fit_language_vi(),
 }
 
-function durationText(months) {
+export function positionLevelLabel(level) {
+  return LEVELS[level]?.() || ''
+}
+
+export function educationLevelLabel(level) {
+  return EDUCATION[level]?.() || ''
+}
+
+export function languageLabel(code) {
+  return LANGUAGES[code]?.() || code
+}
+
+const LANGUAGE_LEVELS = {
+  basic: () => m.fit_language_level_basic(),
+  conversational: () => m.fit_language_level_conversational(),
+  working: () => m.fit_language_level_working(),
+  professional: () => m.fit_language_level_professional(),
+  native: () => m.fit_language_level_native(),
+}
+
+export function languageLevelLabel(level) {
+  return LANGUAGE_LEVELS[level]?.() || ''
+}
+
+export function durationText(months) {
   if (months < 12) return m.fit_duration_months({ count: months })
   const years = Math.floor(months / 12)
   const rest = months % 12

@@ -6,9 +6,21 @@ import {
   updateRecruiterVisibility,
 } from '@/entities/job/candidate-preferences'
 import { cvApiErrorMessage, setCvRecruiterSearchable } from '@/entities/cv/cv'
+import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
 
-/** Bật/tắt cho NTD tìm thấy một CV; lần bật đầu tiên xin đồng ý ở mức hồ sơ. */
+// CV khác của ứng viên đang bật tìm kiếm, đọc từ các danh sách CV đã tải.
+function otherSearchableCv(queryClient, cv) {
+  return queryClient
+    .getQueriesData({ queryKey: ['my-cvs'] })
+    .flatMap(([, data]) => (Array.isArray(data) ? data : []))
+    .find((item) => item.recruiter_searchable && item.public_id !== cv.public_id)
+}
+
+/**
+ * Bật/tắt cho NTD tìm thấy một CV; lần bật đầu tiên xin đồng ý ở mức hồ sơ. Mỗi ứng
+ * viên chỉ có một CV được bật: bật CV này thì máy chủ tắt CV đang bật trước đó.
+ */
 export function useCvRecruiterSearch(cv, { source = 'cv_library' } = {}) {
   const queryClient = useQueryClient()
   const [enabled, setEnabled] = useState(Boolean(cv?.recruiter_searchable))
@@ -21,10 +33,13 @@ export function useCvRecruiterSearch(cv, { source = 'cv_library' } = {}) {
   async function save(next) {
     setUpdating(true)
     try {
+      const replaced = next ? otherSearchableCv(queryClient, cv) : null
       const saved = await setCvRecruiterSearchable(cv.public_id, next)
       setEnabled(Boolean(saved.recruiter_searchable))
       queryClient.invalidateQueries({ queryKey: ['my-cvs'] })
-      message.success(next ? 'NTD đã có thể tìm thấy CV này.' : 'Đã ẩn CV này khỏi tìm kiếm của NTD.')
+      if (!next) message.success('Đã ẩn CV này khỏi tìm kiếm của NTD.')
+      else if (replaced) message.success(m.candidate_recruiter_search_replaced({ title: replaced.title }))
+      else message.success('NTD đã có thể tìm thấy CV này.')
     } catch (error) {
       message.error(cvApiErrorMessage(error, 'Không thể cập nhật quyền tìm kiếm CV lúc này.'))
     } finally {
