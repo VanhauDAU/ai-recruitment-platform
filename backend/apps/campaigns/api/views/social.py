@@ -17,6 +17,11 @@ from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import IsEmployer
 from apps.employers.services import ensure_recruiter_job_workspace
+from common.api.throttling import (
+    WriteScopedRateThrottle,
+    with_account_write_cap,
+    with_default_throttles,
+)
 
 from ...domain.social_networks import FACEBOOK_PAGE, NETWORKS
 from ...selectors import (
@@ -175,6 +180,9 @@ class SocialConnectionDetailView(APIView):
 
 @extend_schema(tags=['campaigns'])
 class ChannelPostListView(CampaignScopedView):
+    throttle_classes = with_default_throttles(WriteScopedRateThrottle)
+    throttle_scope = 'campaign_social_post'
+
     @extend_schema(summary='Bài tự đăng của kênh', responses=ScheduledPostSerializer(many=True))
     def get(self, request, public_id, channel_id):
         posts = channel_posts_queryset(self.channel())
@@ -223,6 +231,8 @@ class ChannelPostDetailView(CampaignScopedView):
 
 
 class PostImageThrottle(UserRateThrottle):
+    # Scope riêng để không dùng chung bucket "user" với throttle xuất báo cáo.
+    scope = 'campaign_post_image'
     rate = '60/hour'
 
 
@@ -233,7 +243,9 @@ class ChannelPostImageView(CampaignScopedView):
     parser_classes = [MultiPartParser]
 
     def get_throttles(self):
-        return [PostImageThrottle()] if self.request.method == 'POST' else super().get_throttles()
+        if self.request.method == 'POST':
+            return [throttle() for throttle in with_account_write_cap(PostImageThrottle)]
+        return super().get_throttles()
 
     @extend_schema(summary='Ảnh có sẵn của công ty', responses=OpenApiTypes.OBJECT)
     def get(self, request, public_id, channel_id):

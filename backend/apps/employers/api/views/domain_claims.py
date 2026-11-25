@@ -7,7 +7,11 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import IsEmployer
-from common.api.throttling import ClientIPScopedRateThrottle, SuffixedScopedRateThrottleMixin
+from common.api.throttling import (
+    ClientIPScopedRateThrottle,
+    SuffixedScopedRateThrottleMixin,
+    with_account_write_cap,
+)
 
 from ...selectors import company_domain_claims_queryset, existing_recruiter_profile
 from ...services import (
@@ -50,7 +54,9 @@ class _DomainClaimThrottledView(APIView):
     def get_throttles(self):
         # Apply independent account and trusted-client-IP buckets. The custom
         # IP throttle overrides DRF's authenticated-user key selection.
-        self.throttle_classes = [_DomainClaimAccountThrottle, _DomainClaimIPThrottle]
+        self.throttle_classes = with_account_write_cap(
+            _DomainClaimAccountThrottle, _DomainClaimIPThrottle
+        )
         return super().get_throttles()
 
 

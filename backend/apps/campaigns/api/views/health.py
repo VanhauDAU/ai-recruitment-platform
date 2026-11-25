@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 
 from common.api.params import parse_bool
+from common.api.throttling import with_account_write_cap
 
 from ...selectors import (
     campaign_channel_report,
@@ -44,6 +45,8 @@ class CampaignHealthView(CampaignScopedView):
 
 
 class ExportThrottle(UserRateThrottle):
+    # Excel + PDF dùng chung 20 lượt/giờ, tách khỏi bucket "user" của ảnh bài đăng.
+    scope = 'campaign_report_export'
     rate = '20/hour'
 
 
@@ -89,7 +92,7 @@ def _attachment(content, content_type, filename):
     responses={202: OpenApiTypes.OBJECT},
 )
 class CampaignReportPdfView(CampaignScopedView):
-    throttle_classes = [ExportThrottle]
+    throttle_classes = with_account_write_cap(ExportThrottle)
 
     def post(self, request, public_id):
         campaign = self.campaign()

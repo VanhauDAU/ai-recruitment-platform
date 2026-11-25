@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 from apps.accounts.api.permissions import IsCandidate, IsEmployer
 from apps.employers.services import ensure_recruiter_candidate_data_access
 from apps.matching.services import ProfileFilters
+from common.api.throttling import with_account_write_cap
 
 from ...selectors import (
     candidate_search_invitations_queryset,
@@ -111,7 +112,7 @@ class RecruiterCandidateSearchDetailView(APIView):
 )
 class RecruiterCandidateSearchInviteView(APIView):
     permission_classes = [IsEmployer]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = with_account_write_cap(ScopedRateThrottle)
     throttle_scope = 'candidate_search_invite'
 
     def post(self, request, ref):

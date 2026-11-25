@@ -29,6 +29,7 @@ from apps.cvs.services import (
     validate_import_upload,
 )
 from apps.uploads.services import UploadServiceError
+from common.api.throttling import with_account_write_cap
 
 from .base import CandidateCvMixin
 
@@ -38,7 +39,7 @@ class CvImportView(APIView):
 
     permission_classes = [IsCandidate]
     parser_classes = [parsers.MultiPartParser]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = with_account_write_cap(ScopedRateThrottle)
     throttle_scope = 'cv_import'
 
     @extend_schema(
@@ -107,7 +108,7 @@ class CvImportView(APIView):
 
 
 class CvImportRetryView(CandidateCvMixin, APIView):
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = with_account_write_cap(ScopedRateThrottle)
     throttle_scope = 'cv_import'
 
     @extend_schema(
