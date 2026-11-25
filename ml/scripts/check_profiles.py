@@ -1,4 +1,4 @@
-"""Đối chiếu `profile_json` đã xuất với đáp án của kho CV tổng hợp (kế hoạch mục 10a).
+"""Đối chiếu `profile_json` đã xuất với đáp án của kho CV tổng hợp.
 
 Đáp án: `manifest.json` (kỹ năng, số tháng kinh nghiệm, bậc học, ngoại ngữ do
 script sinh CV quyết định) và nội dung JSON gốc của từng CV.
@@ -11,7 +11,7 @@ script sinh CV quyết định) và nội dung JSON gốc của từng CV.
   builder, chữ đọc từ chính tệp PDF với CV tải lên).
 
 Chạy sau `export_profiles.py`: ml/.venv/bin/python ml/scripts/check_profiles.py
-Kết quả: ml/reports/extraction_check.md
+Kết quả: ml/reports/check_profiles.md
 """
 
 import json
@@ -283,7 +283,7 @@ def main():
     extras = sorted({skill for rows in results.values() for row in rows for skill in row['declared_extra']})
     lines += ['', 'Kỹ năng khai báo ngoài manifest (để rà nhận nhầm):', '', ', '.join(extras) or '—']
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
-    (REPORTS_DIR / 'extraction_check.md').write_text('\n'.join(lines) + '\n', encoding='utf-8')
+    (REPORTS_DIR / 'check_profiles.md').write_text('\n'.join(lines) + '\n', encoding='utf-8')
     print('\n'.join(lines))
 
 

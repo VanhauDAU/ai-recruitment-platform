@@ -1,4 +1,4 @@
-"""Baseline từ vựng: xếp hạng CV cho từng JD bằng TF-IDF và BM25 (kế hoạch mục 9, 10a).
+"""Baseline từ vựng: xếp hạng CV cho từng JD bằng TF-IDF và BM25.
 
 Token là âm tiết/từ viết thường kèm bigram âm tiết (`corpus.tokenize`), nên cụm
 nhiều âm tiết tiếng Việt ("kế toán", "phân tích") vẫn được khớp như một đơn vị.

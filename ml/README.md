@@ -1,7 +1,14 @@
 # ml/ — dữ liệu, huấn luyện và đánh giá đối sánh CV–JD
 
-Phần chạy trên máy host (macOS, MPS), ngoài Django. Kế hoạch tổng và tiến độ:
-`docs/TIEN-DO-DU-AN.md`, mục AI lõi.
+Phần chạy trên máy host (macOS, MPS), ngoài Django. Thuật toán và công thức:
+[`docs/07-algorithms/thuat-toan-ai.md`](../docs/07-algorithms/thuat-toan-ai.md) mục 7.
+Trạng thái từng giai đoạn: [tiến độ dự án](../docs/TIEN-DO-DU-AN.md#aiml-chạy-local);
+nhật ký thực nghiệm theo ngày (số đo, quyết định, phát hiện):
+[bản lưu trữ](../docs/archive/snapshot/tien-do-den-2026-11-26.md#đối-sánh-ngữ-nghĩa-cvjd-chạy-local-2026-11-15).
+
+`requirements.txt` ghim cùng phiên bản `torch`, `sentence-transformers`,
+`transformers` với `backend/requirements-ml.txt` (image `ml-worker`), để vector tính
+lúc huấn luyện và lúc phục vụ khớp nhau. Đổi một bên thì đổi cả hai.
 
 ## Cấu trúc
 
@@ -25,6 +32,10 @@ ml/
     check_profiles.py     đối chiếu profile_json với manifest, kiểm tra "không bịa"
     calibrate.py          AUC và mốc hiệu chuẩn cosine → điểm của từng phép so
     export_model.py       lưu mô hình vào models/<tên>/<phiên bản>/ cho ml-worker
+    fetch_public.py       tải dữ liệu và mô hình công khai, ghi nguồn vào data/public/SOURCES.md
+    merge_gold_passes.py  gộp hai lượt gán nhãn độc lập của đợt 2 tập vàng
+    evaluate.py           đo các phương án trên tập vàng (validation; test chỉ một lần)
+    evaluate_recommendations.py  đo gợi ý việc làm CV → tin trên nhãn yếu
   labeling/               tài liệu gán nhãn (commit)
     rubric.md             thang chấm 0–4 đã chốt
     gold_pairs.xlsx       phiếu chấm 150 cặp (tab Chấm), kèm nội dung JD và CV
@@ -47,12 +58,18 @@ ml/
       pdf/topcv/          36 PDF xuất từ TopCV, nhiều mẫu khác nhau
     labels/gold_pool.json nguồn ghép cặp và phép chia validation/test (không xem khi chấm)
     profiles/             profile_json xuất từ hệ thống (*.jsonl)
-  reports/                bảng số liệu (commit, đưa vào báo cáo)
+    pairs/                cặp huấn luyện
+    public/               dữ liệu công khai (VietJobs, resume-job-description-fit)
+  reports/                bảng số liệu (commit, đưa vào báo cáo); tên = script sinh ra nó
+    extract_check.md      pypdf và pypdfium2 trên 51 PDF          (extract_check.py)
+    baseline_weak_labels.md  TF-IDF, BM25 trên nhãn yếu           (baseline.py)
+    label_agreement.md, gold_batch2_agreement.md  đồng thuận nhãn (agreement.py, merge_gold_passes.py)
+    check_profiles.md     trích xuất profile_json so với đáp án   (check_profiles.py)
+    calibration_<mô hình>.md  AUC và mốc hiệu chuẩn               (calibrate.py)
+    eval_validation.{md,json}  bảng đo trên validation            (evaluate.py)
+    recommendations.{md,json}  đo gợi ý việc làm                  (evaluate_recommendations.py)
   models/                 KHÔNG commit; mô hình cho ml-worker (mount /models), kèm model_card.json
 ```
-
-Thư mục cho giai đoạn sau (tạo khi cần, khai báo thêm vào `paths.py`):
-`data/pairs/` cặp huấn luyện.
 
 ## Kho CV
 

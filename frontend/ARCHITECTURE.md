@@ -41,7 +41,7 @@ danh từ nghiệp vụ (`account`, `job`, `company`, `cv`, `campaign`…).
 
 | Layer | Cấu trúc | Nhóm cấp 1 |
 | --- | --- | --- |
-| `pages` | `pages/<cổng>/<mục>/<Page>.jsx` | `main`, `employer`, `admin` |
+| `pages` | `pages/<cổng>/<mục>/<Page>.jsx` | `main`, `employer`, `admin`, `common` (trang dùng chung mọi cổng, vd. 404) |
 | `widgets` | `widgets/<cổng>/<widget>/index.js` | `main`, `employer`, `admin`, `common` |
 | `features` | `features/<cổng>/<module>/<slice>/index.js` | `main`, `employer`, `admin`, `common` |
 | `entities` | `entities/<domain>/<entity>/index.js` | `account`, `job`, `company`, `cv`, `application`, `campaign`, `content`, `notification`, `dashboard`, `system`, `messaging` |

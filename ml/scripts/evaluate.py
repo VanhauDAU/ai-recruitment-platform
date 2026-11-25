@@ -1,4 +1,4 @@
-"""Đo các phương án đối sánh CV–tin trên tập vàng (kế hoạch bản 3, mục 8).
+"""Đo các phương án đối sánh CV–tin trên tập vàng.
 
 Chạy từ thư mục gốc của repo, khi Docker Compose đang bật:
 
