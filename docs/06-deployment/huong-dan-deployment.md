@@ -157,9 +157,9 @@ cd /srv/procv && cp backend/.env.example backend/.env && cp frontend/.env.exampl
 | `EMAIL_HOST*`, `EMAIL_FROM_ADDRESS`, `DEFAULT_FROM_EMAIL` | SMTP thật (ví dụ Gmail app password) |
 | `RECAPTCHA_SECRET_KEY` | Secret key của site đã đăng ký `procv.site` |
 | `R2_ENDPOINT_URL`, 3 cặp `R2_*_ACCESS_KEY_ID/SECRET_ACCESS_KEY`, 3 `R2_*_BUCKET` | Theo bước 1.5 |
-| `GEMINI_API_KEY`, `AI_JOB_GENERATION_MODEL*` | Key AI Studio |
+| `GEMINI_API_KEY`, `AI_JOB_GENERATION_MODEL*` | Key AI Studio của project **đã bật thanh toán** (tier trả phí): Google không dùng prompt/kết quả để huấn luyện; tier miễn phí thì có, không dùng cho dữ liệu tin tuyển dụng/CV thật |
 | `AI_MODEL_PRICING_USD` | **Giá thật** của model đang bật — mẫu `0/0` làm production từ chối khởi động |
-| `EMPLOYER_DPA_POLICY_VERSION`, `EMPLOYER_DPA_DOCUMENT_URL`, `EMPLOYER_DPA_DOCUMENT_SHA256` | Văn bản DPA **của ProCV** (không dùng mẫu TopCV trong `frontend/public/documents`), URL HTTPS, `sha256sum` lowercase của đúng file ([employer-dpa-evidence-rollout.md](employer-dpa-evidence-rollout.md)) |
+| `EMPLOYER_DPA_POLICY_VERSION`, `EMPLOYER_DPA_DOCUMENT_URL`, `EMPLOYER_DPA_DOCUMENT_SHA256` | Văn bản DPA **của ProCV** (mẫu thông báo NTD gửi ứng viên giờ là `procv-mau-thong-bao-xu-ly-dlcn-ung-vien.docx`, key `employer_dpa_template_url`; DPA giữa ProCV và NTD vẫn là văn bản riêng), URL HTTPS, `sha256sum` lowercase của đúng file ([employer-dpa-evidence-rollout.md](employer-dpa-evidence-rollout.md)) |
 | `EMPLOYER_SMS_OTP_ENABLED` | Giữ `False` khi chưa có nhà cung cấp SMS — bật lên thì production đòi đủ `EMPLOYER_SMS_*` |
 | `REQUIRE_APPROVED_EMPLOYER_VERIFICATION` | Mẫu đặt `False`; đặt `True` nếu muốn NTD phải được admin xác thực mới dùng đủ tính năng |
 | `OAUTH_*_CLIENT_ID/SECRET` | Nếu bật đăng nhập mạng xã hội |
@@ -367,6 +367,19 @@ và `scripts/deploy/bootstrap_vps.sh` lấy từ `https://www.cloudflare.com/ips
 - **Tắt khóa origin khẩn cấp** (ví dụ Cloudflare đổi CA, mọi request nhận 403): bỏ
   hai dòng `include /etc/nginx/snippets/origin-pull.conf;` trong `procv.conf`
   rồi deploy lại; rule DOCKER-USER vẫn giữ chỉ IP Cloudflare vào được.
+
+## Yêu cầu dữ liệu cá nhân (Nghị định 13/2023)
+
+- Ứng viên (Cài đặt bảo mật) và NTD (Đăng nhập & bảo mật) tự gửi yêu cầu **xuất
+  dữ liệu** hoặc **xóa tài khoản**; mỗi loại chỉ một yêu cầu chờ xử lý.
+- Admin xử lý ở `Quản trị → Yêu cầu dữ liệu cá nhân` (có badge trong hàng chờ
+  dashboard). Mục tiêu phản hồi: **72 giờ** như đã ghi trong Chính sách quyền riêng tư.
+- Duyệt xuất dữ liệu: người dùng tải bản JSON trong 7 ngày. Duyệt xóa: CV trong thư
+  viện bị xóa cứng, hồ sơ ứng viên bị xóa, tài khoản ẩn danh hóa
+  (`deleted+<mã>@deleted.invalid`, thu hồi mọi phiên); bản chụp CV đã nộp vẫn thuộc
+  hồ sơ tuyển dụng của NTD. Chủ công ty còn thành viên khác phải chuyển quyền trước.
+- Nội dung Điều khoản sử dụng / Chính sách quyền riêng tư nằm trong Trung tâm trợ
+  giúp (chuyên mục "Điều khoản và chính sách"); rà soát pháp lý trước go-live.
 
 ## Static và storage media tách quyền
 

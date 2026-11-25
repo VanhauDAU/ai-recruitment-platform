@@ -43,6 +43,11 @@ export const QUEUE_CONFIG = {
     hint: 'Sửa hồ sơ công ty chờ thẩm định, gồm đổi tên và mã số thuế',
     to: adminPath('/companies?tab=updates'),
   },
+  privacy_requests: {
+    label: m.admin_nav_queue_privacy_requests(),
+    hint: m.admin_queue_privacy_requests_hint(),
+    to: adminPath('/privacy-requests'),
+  },
 }
 
 const QUEUE_ORDER = Object.keys(QUEUE_CONFIG)

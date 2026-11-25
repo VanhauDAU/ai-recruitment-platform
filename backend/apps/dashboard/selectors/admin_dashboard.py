@@ -51,6 +51,7 @@ from apps.jobs.models import (
 from apps.jobs.selectors import admin_job_management_summary
 from apps.knowledgebase.selectors import admin_article_summary
 from apps.matching.models import MatchAnalysis
+from apps.privacy.selectors import pending_data_requests
 from apps.sitecontent.selectors import moderation_sla_hours, report_sla_hours
 from common.vietnam_time import VIETNAM_TZ, vietnam_day_start, vietnam_today
 
@@ -183,6 +184,7 @@ def _queues(now, job_summary):
             'created_at',
             now,
         ),
+        _queue('privacy_requests', pending_data_requests(), 'created_at', now),
         _queue(
             'job_resubmissions',
             Job.objects.filter(

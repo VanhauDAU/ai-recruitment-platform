@@ -80,6 +80,7 @@ api_portal_patterns = [
                 ('site/', 'apps.sitecontent.api.urls.admin'),
                 ('blog/', 'apps.blog.api.urls.admin'),
                 ('knowledgebase/', 'apps.knowledgebase.api.urls.admin'),
+                ('privacy/', 'apps.privacy.api.urls.admin'),
             )
         ),
     ),
@@ -90,6 +91,7 @@ api_portal_patterns = [
                 ('uploads/', 'apps.uploads.api.urls.shared'),
                 ('site/', 'apps.sitecontent.api.urls.shared'),
                 ('realtime/', 'apps.realtime.api.urls.shared'),
+                ('privacy/', 'apps.privacy.api.urls.shared'),
             )
         ),
     ),

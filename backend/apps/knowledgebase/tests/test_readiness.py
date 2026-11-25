@@ -16,8 +16,8 @@ class KnowledgebaseReadinessCommandTests(TestCase):
 
         report = json.loads(output.getvalue())
         self.assertTrue(report['ready'])
-        self.assertEqual(report['counts']['active_categories'], 7)
-        self.assertGreaterEqual(report['counts']['public_articles'], 7)
+        self.assertEqual(report['counts']['active_categories'], 8)
+        self.assertGreaterEqual(report['counts']['public_articles'], 9)
         self.assertEqual(report['issues'], [])
 
     def test_missing_category_and_unknown_link_fail_closed(self):

@@ -16,6 +16,7 @@ export const AdminCvUserCvsPage = lazy(() => import('@/pages/admin/cvs/CvUserCvs
 export const AdminJobModerationPage = lazy(() => import('@/pages/admin/jobs/JobModeration'))
 export const AdminJobModerationDetailPage = lazy(() => import('@/pages/admin/jobs/JobModerationDetail'))
 export const AdminCompanyReportsPage = lazy(() => import('@/pages/admin/companies/CompanyReports'))
+export const AdminDataRequestsPage = lazy(() => import('@/pages/admin/accounts/DataRequests'))
 export const AdminBlogManagementPage = lazy(() => import('@/pages/admin/blog/BlogManagement'))
 export const AdminBlogNewPage = lazy(() => import('@/pages/admin/blog/BlogNew'))
 export const AdminBlogEditPage = lazy(() => import('@/pages/admin/blog/BlogEdit'))
@@ -48,6 +49,7 @@ export const ADMIN_PAGE_BY_KEY = {
   AdminJobModerationPage,
   AdminJobModerationDetailPage,
   AdminCompanyReportsPage,
+  AdminDataRequestsPage,
   AdminBlogManagementPage,
   AdminBlogNewPage,
   AdminBlogEditPage,

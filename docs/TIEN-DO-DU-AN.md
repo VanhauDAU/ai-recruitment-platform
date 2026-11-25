@@ -7,10 +7,11 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [Chuẩn bị deploy: GĐ4 hiệu năng và chịu tải](#chuẩn-bị-deploy-gđ4-hiệu-năng-và-chịu-tải-2026-11-25) | 🟨 Nhánh `perf/load-readiness`, chờ gộp PR; số đo k6 thật làm ở GĐ6 rehearsal |
-| [Chuẩn bị deploy: GĐ3 sao lưu và khôi phục](#chuẩn-bị-deploy-gđ3-sao-lưu-và-khôi-phục-2026-11-25) | 🟨 Nhánh `feat/predeploy-backup` (trên GĐ1), chờ PR; diễn tập khôi phục thật ở GĐ6 |
-| [Chuẩn bị deploy: GĐ2 hạ tầng, giám sát, chịu lỗi](#chuẩn-bị-deploy-gđ2-hạ-tầng-giám-sát-chịu-lỗi-2026-11-25) | 🟨 Nhánh `feat/predeploy-ops` (dựng trên GĐ1), chờ PR; chưa lên VPS |
-| [Chuẩn bị deploy: GĐ1 bảo mật ứng dụng](#chuẩn-bị-deploy-gđ1-bảo-mật-ứng-dụng-2026-11-25) | 🟨 Nhánh `feat/predeploy-security`, chờ PR; GĐ2–GĐ6 theo [kế hoạch](06-deployment/ke-hoach-chuan-bi-deploy.md) |
+| [Chuẩn bị deploy: GĐ5 pháp lý và dữ liệu cá nhân](#chuẩn-bị-deploy-gđ5-pháp-lý-và-dữ-liệu-cá-nhân-2026-11-25) | ✅ Đã gộp dev (#348, 25/11); kiểm trên VPS ở GĐ6 rehearsal. |
+| [Chuẩn bị deploy: GĐ4 hiệu năng và chịu tải](#chuẩn-bị-deploy-gđ4-hiệu-năng-và-chịu-tải-2026-11-25) | ✅ Đã gộp dev (#349, 25/11); kiểm trên VPS ở GĐ6 rehearsal. Số đo k6 thật ở GĐ6. |
+| [Chuẩn bị deploy: GĐ3 sao lưu và khôi phục](#chuẩn-bị-deploy-gđ3-sao-lưu-và-khôi-phục-2026-11-25) | ✅ Đã gộp dev (#350, 25/11); kiểm trên VPS ở GĐ6 rehearsal. |
+| [Chuẩn bị deploy: GĐ2 hạ tầng, giám sát, chịu lỗi](#chuẩn-bị-deploy-gđ2-hạ-tầng-giám-sát-chịu-lỗi-2026-11-25) | ✅ Đã gộp dev (#351, 25/11); kiểm trên VPS ở GĐ6 rehearsal. |
+| [Chuẩn bị deploy: GĐ1 bảo mật ứng dụng](#chuẩn-bị-deploy-gđ1-bảo-mật-ứng-dụng-2026-11-25) | ✅ Đã gộp dev (#347, 25/11); kiểm trên VPS ở GĐ6 rehearsal. |
 | [Việc làm gần tôi: bản đồ, bán kính, tọa độ nơi làm việc (ADR-0029)](#việc-làm-gần-tôi-bản-đồ-bán-kính-tọa-độ-nơi-làm-việc-adr-0029-2026-11-25) | 🟨 PR #344 (nhánh `feat/nearby-jobs`), chờ gộp |
 | [Thông báo thời gian thực qua WebSocket, hoàn tác 15 giây (ADR-0028)](#thông-báo-thời-gian-thực-qua-websocket-hoàn-tác-15-giây-adr-0028-2026-11-25) | ✅ Đã gộp dev (#340); sửa socket rớt mỗi 5 giây trên nhánh `fix/realtime-redis-timeout` |
 | [Phễu tuyển dụng trên trang chủ NTD](#phễu-tuyển-dụng-trên-trang-chủ-ntd-2026-11-25) | 🟨 PR #338 (nhánh `feat/employer-recruitment-funnel`), chờ gộp |
@@ -18,7 +19,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Huy hiệu Sấm Chớp tính từ mức phản hồi thật (ADR-0027)](#huy-hiệu-sấm-chớp-tính-từ-mức-phản-hồi-thật-adr-0027-2026-11-25) | ✅ Đã gộp dev (#334) |
 | [Làm lại khối Việc làm nổi bật trang chủ](#làm-lại-khối-việc-làm-nổi-bật-trang-chủ-2026-11-25) | ✅ Đã gộp dev (#333) |
 | [Mã tin và mã công ty dễ đọc](#mã-tin-và-mã-công-ty-dễ-đọc-2026-11-25) | 🟨 Xong trên nhánh `feat/readable-record-codes`, chờ gộp PR |
-| [Bộ file triển khai production procv.site](#bộ-file-triển-khai-production-procvsite-2026-11-24) | 🟨 Xong trên nhánh `feat/production-deploy`, chờ gộp PR; chưa lên VPS |
+| [Bộ file triển khai production procv.site](#bộ-file-triển-khai-production-procvsite-2026-11-24) | ✅ Đã gộp dev; hardening ở các mục "Chuẩn bị deploy" GĐ1–GĐ5, chưa lên VPS |
 | [Làm lại trang công ty phía ứng viên](#làm-lại-trang-công-ty-phía-ứng-viên-2026-11-24) | 🟨 Xong trên nhánh `feat/company-page-jobs-layout`, chờ gộp PR |
 | [Mã tài khoản dạng số cho 3 cổng](#mã-tài-khoản-dạng-số-cho-3-cổng-2026-11-22) | 🟨 Xong trên nhánh `feat/numeric-user-id`, chờ gộp PR |
 | [Làm lại trang Thông tin tài khoản NTD](#làm-lại-trang-thông-tin-tài-khoản-ntd-2026-11-22) | 🟨 Xong trên nhánh `feat/employer-account-info-redesign`, chờ gộp |
@@ -171,6 +172,22 @@ Mục tiêu: 200 người đồng thời, p95 < 800 ms, lỗi < 1 %.
   nới throttle + reCAPTCHA thử cho buổi đo.
 - Chưa có: số đo k6 thật (GĐ6, chạy trên VPS qua Cloudflare); tổng `mem_limit` vẫn
   ~9,4 GB, GĐ2 hạ `ml-worker` theo RAM đo được.
+
+## Chuẩn bị deploy: GĐ5 pháp lý và dữ liệu cá nhân (2026-11-25)
+
+- **Điều khoản + Chính sách quyền riêng tư ứng viên:** hai bài trong Trung tâm trợ giúp
+  (chuyên mục mới "Điều khoản và chính sách", migration `knowledgebase 0005`), admin sửa
+  bằng trình biên tập sẵn có; `legal_terms_url`/`legal_privacy_url` mặc định trỏ tới hai
+  bài (DB cũ đang rỗng được điền bởi `sitecontent 0010`); chân trang có link.
+- **Mẫu thông báo xử lý dữ liệu ứng viên của ProCV** thay file mẫu TopCV trong
+  `frontend/public/documents/`; key mới `employer_dpa_template_url`.
+- **Quyền chủ thể dữ liệu:** app `privacy` thêm `DataSubjectRequest` (xuất dữ liệu / xóa
+  tài khoản, một yêu cầu chờ mỗi loại); ứng viên và NTD gửi/hủy ở trang bảo mật; admin
+  duyệt/từ chối ở `/admin/privacy-requests` + hàng chờ dashboard, có audit log. Xuất dữ
+  liệu: JSON tải trong 7 ngày. Xóa: xóa cứng CV thư viện + hồ sơ ứng viên, ẩn danh hóa
+  tài khoản (`anonymize_account`), chặn chủ công ty còn thành viên.
+- **Gemini:** runbook ghi rõ dùng project đã bật thanh toán (không dùng dữ liệu huấn luyện).
+- Để sau: tự phục vụ xóa/xuất ngay không qua admin; xuất kèm file CV gốc.
 
 ## Việc làm gần tôi: bản đồ, bán kính, tọa độ nơi làm việc (ADR-0029) (2026-11-25)
 

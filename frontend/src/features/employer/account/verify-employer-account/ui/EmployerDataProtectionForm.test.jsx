@@ -35,7 +35,7 @@ vi.mock('@/entities/account/employer-profile', () => ({
 }))
 vi.mock('@/entities/system/site-settings', async (importOriginal) => ({
   ...await importOriginal(),
-  useSiteSettings: () => ({ settings: { employer_dpa_guide_url: '/tro-giup/thoa-thuan-du-lieu' }, siteName: 'TopCV' }),
+  useSiteSettings: () => ({ settings: { employer_dpa_guide_url: '/tro-giup/thoa-thuan-du-lieu' }, siteName: 'ProCV' }),
 }))
 vi.mock('@/shared/lib/toast', () => ({ message }))
 
@@ -97,7 +97,7 @@ describe('EmployerDataProtectionForm', () => {
     // Link hướng dẫn lấy từ cấu hình employer_dpa_guide_url (ADR-0026), không trỏ ra site khác.
     expect(screen.getByRole('link', { name: 'Tại đây' })).toHaveAttribute('href', '/tro-giup/thoa-thuan-du-lieu')
     expect(screen.getByRole('link', { name: 'Tại đây' })).toHaveClass('!text-[var(--brand-primary)]')
-    expect(screen.getByText('Tải mẫu văn bản').closest('a')).toHaveAttribute('href', '/documents/topcv-mau-van-ban-thong-bao-dong-y-xu-ly-dlcn.docx')
+    expect(screen.getByText('Tải mẫu văn bản').closest('a')).toHaveAttribute('href', '/documents/procv-mau-thong-bao-xu-ly-dlcn-ung-vien.docx')
     expect(screen.getByRole('link', { name: /Tải mẫu văn bản/ })).toHaveClass('!text-[var(--brand-primary)]')
     expect(screen.getByRole('link', { name: /Xem nội dung đầy đủ của văn bản/ })).toHaveClass('!text-[var(--brand-primary)]')
     expect(screen.getByRole('button', { name: 'Lưu' })).toBeDisabled()
@@ -109,7 +109,7 @@ describe('EmployerDataProtectionForm', () => {
     await user.click(screen.getByRole('button', { name: 'Lưu' }))
     await waitFor(() => expect(uploadEmployerDataProcessingAgreement).toHaveBeenCalledTimes(1))
     expect(message.success).toHaveBeenCalledWith('Thông báo', {
-      description: 'Cập nhật thành công. TopCV đã nhận được giấy tờ của bạn và tiến hành xử lý sớm.',
+      description: 'Cập nhật thành công. ProCV đã nhận được giấy tờ của bạn và tiến hành xử lý sớm.',
     })
 
     await user.click(screen.getByRole('checkbox', { name: /Xác nhận đồng ý với các điều khoản/i }))

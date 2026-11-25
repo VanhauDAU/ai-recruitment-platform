@@ -157,6 +157,8 @@ SPECTACULAR_SETTINGS = {
         'EmployerNotificationEventTypeEnum': 'apps.employers.models.EmployerNotification.EventType',
         'RecruitmentNeedPositionLevelEnum': 'apps.employers.models.choices.PositionLevel',
         'UserCvSourceEnum': 'apps.cvs.models.UserCv.Source',
+        'DataSubjectRequestKindEnum': 'apps.privacy.models.DataSubjectRequest.Kind',
+        'DataSubjectRequestStatusEnum': 'apps.privacy.models.DataSubjectRequest.Status',
         'CvCategoryTypeEnum': 'apps.cv_templates.models.CvCategory.CategoryType',
         'ExperienceBandEnum': 'apps.cv_templates.models.ExperienceBand',
         'ReportResolutionEnum': [('upheld', 'upheld'), ('dismissed', 'dismissed')],

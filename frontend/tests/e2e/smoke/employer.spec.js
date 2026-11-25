@@ -580,7 +580,7 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
 
   await page.goto('/tuyendung/app/account/settings/personal-data-protection')
   await expect(page.getByRole('heading', { name: /giữa Ứng viên - Nhà tuyển dụng/i })).toBeVisible()
-  await expect(page.getByRole('link', { name: /Tải mẫu văn bản/ })).toHaveAttribute('href', '/documents/topcv-mau-van-ban-thong-bao-dong-y-xu-ly-dlcn.docx')
+  await expect(page.getByRole('link', { name: /Tải mẫu văn bản/ })).toHaveAttribute('href', '/documents/procv-mau-thong-bao-xu-ly-dlcn-ung-vien.docx')
   const dpaFileInput = page.locator('input[type="file"]')
   await dpaFileInput.setInputFiles({
     name: 'thoa-thuan.pdf',
