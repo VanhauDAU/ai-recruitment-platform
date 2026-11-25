@@ -11,6 +11,7 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
+from rest_framework.throttling import SimpleRateThrottle
 
 from common.storage.r2 import private_media_storage
 
@@ -165,6 +166,8 @@ class CompanyCreateTests(APITestCase):
         self.assertIn('description', response.data)
         self.assertIn('500', str(response.data['description']))
 
+    # 7 lượt tạo của cùng một tài khoản vượt scope company_create (5/ngày, ADR-0031).
+    @patch.dict(SimpleRateThrottle.THROTTLE_RATES, {'company_create': '100/day'})
     def test_tax_code_accepts_only_10_or_13_digits(self):
         for invalid_tax_code in (
             '010123456A',

@@ -6,7 +6,7 @@ from rest_framework import permissions, serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from common.api.throttling import ClientIPScopedRateThrottle
+from common.api.throttling import ClientIPScopedRateThrottle, with_account_write_cap
 
 from ...services.verification import (
     change_unverified_email,
@@ -30,7 +30,7 @@ from ..serializers import ChangeEmailSerializer, SessionUserSerializer
 )
 class VerificationSendView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    throttle_classes = [ClientIPScopedRateThrottle]
+    throttle_classes = with_account_write_cap(ClientIPScopedRateThrottle)
     throttle_scope = 'verify_email'
 
     def post(self, request):
@@ -51,7 +51,7 @@ class VerificationSendView(APIView):
 )
 class VerificationConfirmView(APIView):
     permission_classes = [permissions.AllowAny]
-    throttle_classes = [ClientIPScopedRateThrottle]
+    throttle_classes = with_account_write_cap(ClientIPScopedRateThrottle)
     throttle_scope = 'verify_email_confirm'
 
     def post(self, request):
@@ -67,7 +67,7 @@ class VerificationConfirmView(APIView):
 )
 class ChangeEmailView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    throttle_classes = [ClientIPScopedRateThrottle]
+    throttle_classes = with_account_write_cap(ClientIPScopedRateThrottle)
     throttle_scope = 'change_email'
 
     def post(self, request):

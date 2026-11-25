@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.services import oauth
-from common.api.throttling import ClientIPScopedRateThrottle
+from common.api.throttling import ClientIPScopedRateThrottle, with_account_write_cap
 
 from ...services.refresh_cookies import set_refresh_cookie
 from ...services.tokens import issue_tokens
@@ -123,7 +123,7 @@ class OAuthCallbackView(APIView):
 )
 class OAuthCompleteView(APIView):
     permission_classes = [permissions.AllowAny]
-    throttle_classes = [ClientIPScopedRateThrottle]
+    throttle_classes = with_account_write_cap(ClientIPScopedRateThrottle)
     throttle_scope = 'oauth'
 
     def post(self, request):

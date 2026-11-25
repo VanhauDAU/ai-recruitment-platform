@@ -16,7 +16,11 @@ from apps.cvs.services import (
     resolve_shared_link,
     revoke_shared_link,
 )
-from common.api.throttling import ClientIPScopedRateThrottle
+from common.api.throttling import (
+    ClientIPScopedRateThrottle,
+    WriteScopedRateThrottle,
+    with_default_throttles,
+)
 
 from .base import (
     CandidateCvMixin,
@@ -28,6 +32,9 @@ from .base import (
 
 class CvSharedLinkListCreateView(CandidateCvMixin, APIView):
     """Owner-scoped shared-link management; raw token is returned exactly once."""
+
+    throttle_classes = with_default_throttles(WriteScopedRateThrottle)
+    throttle_scope = 'cv_share_link'
 
     @extend_schema(
         summary='Danh sách link chia sẻ của CV',

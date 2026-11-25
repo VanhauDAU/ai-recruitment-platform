@@ -9,6 +9,8 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
+from common.api.throttling import with_account_write_cap
+
 from ...services import auth_sessions, password_setup_code
 from ...services.password import change_password
 from ...services.refresh_cookies import set_refresh_cookie
@@ -19,7 +21,7 @@ class PasswordChangeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     # current_password là một lần đoán mật khẩu: token access bị lộ không được
     # dùng để dò mật khẩu không giới hạn.
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = with_account_write_cap(ScopedRateThrottle)
     throttle_scope = 'password_change'
 
     @extend_schema(
@@ -99,7 +101,7 @@ class PasswordSetupCodeView(APIView):
     """Gửi mã xác minh qua email để tài khoản chưa có mật khẩu tạo mật khẩu."""
 
     permission_classes = [permissions.IsAuthenticated]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = with_account_write_cap(ScopedRateThrottle)
     throttle_scope = 'password_setup_code'
 
     @extend_schema(

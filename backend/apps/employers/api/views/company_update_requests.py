@@ -8,6 +8,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from apps.accounts.api.permissions import IsEmployer
+from common.api.throttling import WriteScopedRateThrottle, with_default_throttles
 
 from ...models import CompanyUpdateRequest
 from ...models.page_access import resolve_company_page_access
@@ -31,6 +32,8 @@ class CompanyUpdateRequestListCreateView(generics.ListCreateAPIView):
     luôn độc lập.
     """
 
+    throttle_classes = with_default_throttles(WriteScopedRateThrottle)
+    throttle_scope = 'company_update_request'
     serializer_class = CompanyUpdateRequestSerializer
     permission_classes = [IsEmployer]
     pagination_class = None

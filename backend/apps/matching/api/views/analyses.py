@@ -6,6 +6,7 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import IsCandidate
+from common.api.throttling import with_account_write_cap
 
 from ...models import MatchAnalysis
 from ...selectors import (
@@ -26,7 +27,9 @@ class AnalysisListCreateView(APIView):
 
     def get_throttles(self):
         # Chỉ giới hạn lượt yêu cầu phân tích; xem lại kết quả không tốn lượt.
-        return [ScopedRateThrottle()] if self.request.method == 'POST' else []
+        if self.request.method != 'POST':
+            return []
+        return [throttle() for throttle in with_account_write_cap(ScopedRateThrottle)]
 
     @extend_schema(
         parameters=[OpenApiParameter('job', str, required=True)],

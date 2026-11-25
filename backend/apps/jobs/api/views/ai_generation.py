@@ -6,6 +6,7 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import IsEmployer
+from common.api.throttling import with_account_write_cap
 
 from ...selectors import employer_job_ai_generation_queryset
 from ...services import (
@@ -25,7 +26,7 @@ from ..serializers import (
 
 class EmployerJobAiGenerationCreateView(APIView):
     permission_classes = [IsEmployer]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = with_account_write_cap(ScopedRateThrottle)
     throttle_scope = 'ai_job_generation'
 
     @extend_schema(

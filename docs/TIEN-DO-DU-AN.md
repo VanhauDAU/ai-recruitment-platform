@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Chuẩn bị deploy: trần ghi theo tài khoản (ADR-0031)](#chuẩn-bị-deploy-trần-ghi-theo-tài-khoản-adr-0031-2026-11-25) | 🟨 Nhánh `feat/account-write-throttle`, chờ PR; chỉnh mức ở GĐ6 rehearsal |
 | [Tối ưu tải trang đầu frontend](#tối-ưu-tải-trang-đầu-frontend-2026-11-25) | 🟨 PR #358 (nhánh `perf/initial-load`), chờ gộp |
 | [Sửa API công khai có cache trả 500 với Redis](#sửa-api-công-khai-có-cache-trả-500-với-redis-2026-11-25) | 🟨 Nhánh `fix/public-cache-redis`, chờ gộp |
 | [Thanh tab dưới và thông báo trên mobile cho ứng viên](#thanh-tab-dưới-và-thông-báo-trên-mobile-cho-ứng-viên-2026-11-25) | 🟨 PR #354 (nhánh `feat/mobile-tab-bar`), chờ gộp |
@@ -164,6 +165,27 @@ Kế hoạch: [`ke-hoach-quan-ly-danh-muc.md`](01-phan-tich/ke-hoach-quan-ly-dan
   Vitest feature `manage-catalog`; E2E `admin-catalog.spec.js` (`@responsive`, 3 khung).
 - **Lưu ý:** `seed_job_categories` chỉ chạy lúc dựng DB trống; chạy lại sẽ ẩn mục admin
   thêm và hiện lại mục admin đã ẩn.
+
+## Chuẩn bị deploy: trần ghi theo tài khoản (ADR-0031, 2026-11-25)
+
+Rà lại `dev` sau GĐ1–GĐ5: khoảng 90 endpoint ghi của người đã đăng nhập không có throttle
+nào. Quyết định: [ADR-0031](02-tong-quan/adr-0031-account-write-throttle.md).
+
+- **Trần chung:** `DEFAULT_THROTTLE_CLASSES` thêm `AccountWriteBurstThrottle` (90/phút)
+  và `AccountWriteSustainedThrottle` (3000/giờ), theo `user.pk`, chỉ tính POST/PUT/PATCH/DELETE;
+  admin 300/phút, 10000/giờ. Bị chặn thì log WARNING (scope + `user.pk`).
+- **View đã có throttle riêng** (đăng nhập/đăng ký/OTP/đặt lại mật khẩu, OAuth, lời mời
+  admin, upload session, nhập CV, tên miền công ty, trang công ty, theo dõi/báo cáo công
+  ty, báo cáo tin, AI viết tin, phân tích CV, mời từ Tìm CV, góp ý, cookie đồng ý, ảnh bài
+  đăng và PDF báo cáo chiến dịch) bọc `with_account_write_cap(...)`.
+- **Scope riêng cho 21 thao tác rủi ro cao** (`WriteScopedRateThrottle`): tạo kỹ năng
+  20/giờ, tạo công ty 5/ngày, nộp đơn 30/giờ, nhắc NTD 10/giờ, phát hành chiến dịch
+  10/giờ, yêu cầu dữ liệu cá nhân 5/ngày… (bảng đủ trong ADR).
+- **Miễn trần:** lượt xem/hiển thị tin, sự kiện/runtime thông báo, vé realtime.
+- **Test quét route** `common/tests/test_throttle_coverage.py`: route ghi thiếu trần, scope
+  sai hoặc scope không có rate thì CI đỏ.
+- **Còn mở:** đo 429 thật trong GĐ6 rehearsal (log WARNING) rồi chỉnh mức qua
+  `THROTTLE_RATE_OVERRIDES`.
 
 ## Chuẩn bị deploy: GĐ1 bảo mật ứng dụng (2026-11-25)
 

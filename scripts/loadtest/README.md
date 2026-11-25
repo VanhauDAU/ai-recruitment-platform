@@ -24,7 +24,12 @@ Ngưỡng áp cho toàn bộ request và cho từng luồng (`flow:home`, `flow:
    trước khi máy chủ chịu tải). File [`docker-compose.loadtest.yml`](docker-compose.loadtest.yml)
    ghi đè cho riêng service `backend`: `PUBLIC_API_THROTTLE_RATE`, `THROTTLE_RATE_OVERRIDES`,
    secret reCAPTCHA thử của Google và thêm `testkey.google.com` vào `ALLOWED_HOSTS` (token
-   từ khóa thử trả về hostname đó). Secret thử công khai nằm trong
+   từ khóa thử trả về hostname đó). Hai tài khoản thử dùng chung cho mọi VU nên trần ghi
+   theo tài khoản (`account_write_burst` 90/phút, `account_write_sustained` 3000/giờ —
+   ADR-0031) cũng được nới trong `THROTTLE_RATE_OVERRIDES`: hiện chỉ vé realtime (miễn trần)
+   là request ghi có đăng nhập, nhưng kịch bản ghi thêm sau này sẽ trả 429 ngay phút đầu nếu
+   thiếu. Scope ghi rủi ro cao (`application_create`…) không nới: kịch bản tải không được
+   tạo dữ liệu thật hàng loạt. Secret thử công khai nằm trong
    [FAQ reCAPTCHA của Google](https://developers.google.com/recaptcha/docs/faq#id-like-to-run-automated-tests-with-recaptcha.-what-should-i-do).
 
    ```bash

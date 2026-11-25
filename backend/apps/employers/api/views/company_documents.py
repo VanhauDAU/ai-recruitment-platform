@@ -17,6 +17,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 
 from apps.accounts.api.permissions import IsEmployer
+from common.api.throttling import WriteScopedRateThrottle, with_default_throttles
 from common.files.office_preview import render_office_document_preview
 from common.storage.r2 import private_media_storage
 
@@ -41,6 +42,8 @@ from ..serializers import CompanyDocumentSerializer
 class CompanyDocumentListCreateView(generics.ListCreateAPIView):
     """Giấy tờ của công ty tôi, gồm file và URL chứng minh tên thương mại."""
 
+    throttle_classes = with_default_throttles(WriteScopedRateThrottle)
+    throttle_scope = 'company_document_upload'
     serializer_class = CompanyDocumentSerializer
     # Tài liệu vẫn thuộc phiên employer đang đăng nhập, không bắt buộc xác thực
     # lại: mọi tệp đều quay về trạng thái chờ duyệt khi được thay.

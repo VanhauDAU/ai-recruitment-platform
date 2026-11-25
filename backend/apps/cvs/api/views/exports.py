@@ -19,6 +19,7 @@ from apps.cvs.services import (
     request_cv_export,
     retry_cv_export,
 )
+from common.api.throttling import WriteScopedRateThrottle, with_default_throttles
 from common.storage.r2 import private_media_storage
 
 from .base import CandidateCvMixin, validation_detail
@@ -26,6 +27,9 @@ from .base import CandidateCvMixin, validation_detail
 
 class CvExportListCreateView(CandidateCvMixin, APIView):
     """Owner-only PDF jobs sourced from immutable versions, never drafts."""
+
+    throttle_classes = with_default_throttles(WriteScopedRateThrottle)
+    throttle_scope = 'cv_export'
 
     @extend_schema(
         summary='Danh sách job export PDF',
@@ -77,6 +81,9 @@ class CvExportDetailView(CandidateCvMixin, APIView):
 
 
 class CvExportRetryView(CandidateCvMixin, APIView):
+    throttle_classes = with_default_throttles(WriteScopedRateThrottle)
+    throttle_scope = 'cv_export'
+
     @extend_schema(
         summary='Thử lại job export',
         request=None,

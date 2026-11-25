@@ -11,6 +11,7 @@ from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import AdminPortalPermission
 from apps.accounts.selectors import audit_logs_queryset
+from common.api.throttling import with_account_write_cap
 from common.storage.media import media_url_from_value
 
 from ...selectors import (
@@ -213,7 +214,7 @@ class FeedbackCreateView(generics.CreateAPIView):
 
     serializer_class = FeedbackSerializer
     permission_classes = [permissions.AllowAny]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = with_account_write_cap(ScopedRateThrottle)
     throttle_scope = 'feedback'
 
     def perform_create(self, serializer):

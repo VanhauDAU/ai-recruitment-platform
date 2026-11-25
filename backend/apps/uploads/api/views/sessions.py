@@ -22,11 +22,12 @@ from apps.uploads.services import (
     store_quarantined_upload,
     upload_error,
 )
+from common.api.throttling import with_account_write_cap
 
 
 class UploadSessionCreateView(APIView):
     parser_classes = [JSONParser]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = with_account_write_cap(ScopedRateThrottle)
     throttle_scope = 'upload_session'
 
     @extend_schema(
@@ -73,7 +74,7 @@ class UploadSessionDetailView(APIView):
 
 class UploadSessionContentView(APIView):
     parser_classes = [MultiPartParser]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = with_account_write_cap(ScopedRateThrottle)
     throttle_scope = 'upload_content'
 
     @extend_schema(
@@ -103,7 +104,7 @@ class UploadSessionContentView(APIView):
 
 
 class UploadSessionCancelView(APIView):
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = with_account_write_cap(ScopedRateThrottle)
     throttle_scope = 'upload_session'
 
     @extend_schema(
@@ -122,7 +123,7 @@ class UploadSessionCancelView(APIView):
 
 
 class UploadSessionRetryView(APIView):
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = with_account_write_cap(ScopedRateThrottle)
     throttle_scope = 'upload_session'
 
     @extend_schema(
