@@ -2,7 +2,7 @@
 
 Chuẩn bắt buộc cho mọi test trong repo: đặt test ở đâu, viết thế nào để đáng tin,
 được phép chạy bao lâu, và CI kiểm những gì. Mục tiêu là CI **xanh ổn định**,
-**wall-clock mỗi PR ≤ 8 phút** và mỗi job ≤ 5 phút, mà không hạ chất lượng.
+**wall-clock mỗi PR ≤ 5 phút** (mục tiêu 3,5 phút) và mỗi job ≤ 5 phút, mà không hạ chất lượng.
 
 ## 1. Kim tự tháp: test đặt ở tầng nào
 
@@ -24,7 +24,7 @@ Chuẩn bắt buộc cho mọi test trong repo: đặt test ở đâu, viết th
 
 ## 2. Ngân sách thời gian
 
-CI kiểm tự động bằng `scripts/check_test_budgets.mjs`, đọc báo cáo JUnit sau khi
+CI kiểm tự động bằng `scripts/ci/check_test_budgets.mjs`, đọc báo cáo JUnit sau khi
 test pass. Vượt **ngưỡng mềm** thì có cảnh báo trên PR, nên sửa. Vượt **ngưỡng
 cứng** thì fail CI, phải sửa hoặc tách test. Không có whitelist.
 
@@ -35,7 +35,7 @@ cứng** thì fail CI, phải sửa hoặc tách test. Không có whitelist.
 | Frontend unit, mỗi file | 10s | 30s | |
 | E2E, mỗi test | 15s | 90s | Timeout Playwright 30s; `test.slow()` ×3 |
 | Job CI | 4 phút | 5 phút | `timeout-minutes` của job đặt sát ngân sách |
-| Wall-clock một PR | 6 phút | 8 phút | |
+| Wall-clock một PR | 3,5 phút | 5 phút | Thời gian của workflow chậm nhất |
 
 Test mới phải nằm dưới **ngưỡng mềm**. Ngưỡng cứng hiện chừa chỗ cho vài test cũ
 đang chậm, và chỉ được hạ dần, không được nới. Nới ngưỡng hoặc timeout phải có lý
@@ -119,7 +119,28 @@ Cục bộ chỉ chạy test liên quan tới phần sửa. CI của PR là lầ
 | Toàn bộ backend song song (~1 phút) | `docker compose exec -T backend pytest -n auto --dist load` |
 | Toàn bộ, khớp CI | `./scripts/check_all.sh` |
 
-Trên CI: `backend-checks` chạy ~3 phút, 7 shard unit frontend mỗi shard ≤ 4 phút (mỗi shard chạy coverage một worker; 25/11 tăng 5 → 7 khi shard chạm trần 8 phút),
-E2E chạy trong image `mcr.microsoft.com/playwright` đúng phiên bản lockfile. Job
-nào vượt 5 phút là tín hiệu cần chia nhỏ hoặc tối ưu, không phải lý do để tăng
-timeout.
+### Cách CI chia việc
+
+| Workflow | Job song song | Job tổng hợp (required check giữ nguyên tên) |
+| --- | --- | --- |
+| Backend | `backend-static` (ruff, import-linter, layering, `check`, migration, OpenAPI; không cần DB) và `backend-tests` 3 shard | `backend-checks`: gộp coverage, ratchet 84%, ngân sách thời gian → `quality` |
+| Frontend | `static-quality` (lint, kiến trúc, build, bundle), `coverage-shard` 8 shard, `e2e-smoke-shard` 4 shard (desktop chia đôi, tablet, mobile) | `coverage`, `e2e-smoke`, `build`, `bundle-budget` → `frontend-final-gate` |
+
+Shard được cân theo thời lượng đã đo, không theo số file:
+
+- Backend: `pytest-split` đọc `backend/.test_durations`, thuật toán
+  `duration_based_chunks` (giữ thứ tự TestCase trước TransactionTestCase).
+- Frontend: `frontend/scripts/plan-vitest-shards.mjs` đọc
+  `frontend/tests/vitest-durations.json`, xếp tham lam file lâu nhất vào shard nhẹ nhất.
+
+Test mới chưa có số đo được tính bằng trung bình (backend) hoặc trung vị (frontend),
+nên không cần cập nhật bảng mỗi PR. Khi bản tóm tắt của job `coverage` hoặc
+`backend-checks` cho thấy shard lệch nhau hơn 30 giây, tải artifact
+`vitest-durations-*` / `backend-test-durations-*` của lần chạy mới nhất trên `dev`
+và chép đè lên hai tệp trên, kèm vào PR kế tiếp.
+
+Thêm shard: tăng danh sách `matrix` và biến `UNIT_TEST_SHARDS` /
+`BACKEND_TEST_GROUPS` của job tổng hợp cùng lúc; job tổng hợp fail nếu số kết quả
+không khớp. E2E chạy trong image `mcr.microsoft.com/playwright` đúng phiên bản
+lockfile. Job nào vượt 5 phút là tín hiệu cần chia nhỏ hoặc tối ưu, không phải lý
+do để tăng timeout.

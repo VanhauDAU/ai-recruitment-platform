@@ -1,8 +1,8 @@
 # Đặc tả: ProCV Connect (nhắn tin NTD ↔ ứng viên)
 
-> Quyết định kiến trúc: [ADR-0032](../02-tong-quan/adr-0032-procv-connect-messaging.md).
+> Quyết định kiến trúc: [ADR-0032](../adr/adr-0032-procv-connect-messaging.md).
 > Sơ đồ use case, tuần tự, hoạt động: [`mo-hinh-hoa-yeu-cau/17-procv-connect/`](mo-hinh-hoa-yeu-cau/17-procv-connect/)
-> (chức năng 43–47). Hợp đồng API: [`procv-connect-contract.md`](../04-api/procv-connect-contract.md).
+> (chức năng 43–47). Hợp đồng API: [`hop-dong-api-procv-connect.md`](../04-api/hop-dong-api-procv-connect.md).
 > Cập nhật 26/11/2026.
 
 ## 1. Mục tiêu

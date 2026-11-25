@@ -1,4 +1,4 @@
-"""So sánh thư viện đọc PDF trên kho CV: `pypdf` và `pypdfium2` (kế hoạch mục 4, 10a).
+"""So sánh thư viện đọc PDF trên kho CV: `pypdf` và `pypdfium2`.
 
 Mỗi PDF trong `pdf/system/` và `pdf/topcv/` có bản JSON gốc cùng mã, nên từ vựng
 của JSON là đáp án. Với mỗi cách đọc, đo:

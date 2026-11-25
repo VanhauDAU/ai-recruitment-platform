@@ -143,7 +143,7 @@ Kết quả (18/11/2026): 150 nhãn, phân bố 0: 38, 1: 61, 2: 29, 3: 14, 4: 8
 
 ## Đợt 2: thêm 15 tin (20/11/2026)
 
-Tập vàng mở rộng thêm 15 tin × 10 CV (cặp 151–300; kế hoạch bản 3) để tập test đủ
+Tập vàng mở rộng thêm 15 tin × 10 CV (cặp 151–300) để tập test đủ
 lớn. Không đổi định nghĩa các mức và các quy tắc A–D. Mỗi cặp được hai lượt gán
 độc lập chấm (đều là Claude, mỗi lượt một phiên riêng, chỉ đọc rubric này cùng nội
 dung tin và CV). Hai lượt trùng nhau 142/150 cặp, lệch không quá một mức ở cả 150

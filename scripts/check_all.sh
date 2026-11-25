@@ -4,7 +4,7 @@
 #
 # Docs: kiểm tra link Markdown nội bộ trên các file được Git track.
 # Backend: ruff + architecture + system check + migration state + coverage gate.
-# Frontend: env-sync + boundary + lint + architecture + coverage + build/budget + E2E smoke.
+# Frontend: env-sync + lint + architecture + coverage + build/budget + E2E smoke.
 # Backend chạy qua venv local nếu có; không có venv thì fallback Docker Compose.
 
 set -euo pipefail
@@ -77,16 +77,10 @@ step "Env: .env.example đồng bộ với code"
 "$ROOT/scripts/check_env_sync.sh"
 
 # ---- Frontend ----
-step "Frontend: ranh giới API (axios chỉ trong shared/api)"
-"$ROOT/scripts/check_api_boundary.sh"
-
-step "Frontend: ranh giới feature (không deep-import feature khác)"
-"$ROOT/scripts/check_feature_boundary.sh"
-
 step "Frontend: lint"
 npm --prefix frontend run lint
 
-step "Frontend: kiến trúc (dependency-cruiser)"
+step "Frontend: kiến trúc (dependency-cruiser + ranh giới axios)"
 npm --prefix frontend run check:architecture
 
 step "Frontend: unit test + coverage"

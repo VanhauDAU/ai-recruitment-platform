@@ -197,20 +197,6 @@ class PhoneOtpTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['code'], 'PHONE_REAUTH_FAILED')
 
-    def test_phone_availability_does_not_disclose_taken_numbers(self):
-        other_user, other = make_recruiter('other@example.com', phone_verified=False)
-        other.verified_phone = '0912345678'
-        other.phone_verified_at = timezone.now()
-        other.save()
-
-        taken = self.client.get(reverse('employer-phone-check'), {'phone': '0912345678'})
-        self.assertEqual(taken.status_code, status.HTTP_200_OK)
-        self.assertTrue(taken.data['available'])
-
-        free = self.client.get(reverse('employer-phone-check'), {'phone': '0987654321'})
-        self.assertEqual(free.status_code, status.HTTP_200_OK)
-        self.assertTrue(free.data['available'])
-
     def test_oauth_account_without_password_must_create_password_first(self):
         self.user.set_unusable_password()
         self.user.save(update_fields=['password', 'updated_at'])

@@ -6,7 +6,7 @@ import AppToast from '@/shared/ui/toast/AppToast'
 import CvDraftEditor from '../CvDraftEditor'
 
 // Dữ liệu và cách dựng chung cho các file test CvDraftEditor.*.test.jsx (tách file để mỗi
-// file nằm trong ngân sách thời gian của scripts/check_test_budgets.mjs). vi.mock phải khai
+// file nằm trong ngân sách thời gian của scripts/ci/check_test_budgets.mjs). vi.mock phải khai
 // ở từng file test; file test truyền mock của mình vào primeEditorMocks.
 
 export function draft() {

@@ -110,5 +110,7 @@
   "cookie_policy_views_body": "When you allow analytics cookies, ProCV may create a random ID that contains no email, name or profile content. It limits each posting to one view per 24 hours so the numbers are not inflated.",
   "cookie_policy_change_title": "Changing your choice",
   "cookie_policy_change_body": "Open Cookie settings in the footer at any time to turn categories on or off or withdraw consent. With Preferences off, theme, search history, saved filters and the comparison list last only for the current tab; with Analytics off, ProCV deletes the de-duplication ID and the campaign channel code. The matching browser data is deleted as soon as you save your choice.",
-  "cookie_policy_back_home": "← Back to home"
+  "cookie_policy_back_home": "← Back to home",
+  "common_not_found_description": "The page you are looking for does not exist.",
+  "common_not_found_home": "Back to home"
 }

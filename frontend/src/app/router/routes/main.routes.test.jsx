@@ -2,10 +2,10 @@ import { describe, expect, it, vi } from 'vitest'
 import { CANDIDATE_MENU, findActiveAccountItem } from '@/entities/account/account'
 import AuthGuard from '../guards/AuthGuard'
 import RoleGuard from '../guards/RoleGuard'
-import { CandidateAccountLayout, CandidateConnectPage, FollowedCompaniesPage } from '../lazy/main.pages'
+import { CandidateAccountLayout, CandidateConnectPage, FollowedCompaniesPage } from '../lazy/main.pages.js'
 import { mainRoutes } from './main.routes'
 
-vi.mock('../lazy/layouts', () => ({ AuthLayout: () => null, MainLayout: () => null, OnboardingLayout: () => null }))
+vi.mock('../lazy/layouts.js', () => ({ AuthLayout: () => null, MainLayout: () => null, OnboardingLayout: () => null }))
 
 const FOLLOWED_COMPANIES_PATH = '/tai-khoan/cong-ty-dang-theo-doi'
 

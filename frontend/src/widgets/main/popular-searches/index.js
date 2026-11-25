@@ -1,1 +1,1 @@
-export { default as PopularSearches } from './PopularSearches'
+export { default as PopularSearches } from './ui/PopularSearches'

@@ -148,7 +148,7 @@ flowchart LR
 
 - **Backend** chia theo app nghiệp vụ trong `backend/apps/`, mỗi app cùng một bố
   cục `api → services/selectors → models → domain`, được `import-linter` kiểm tra
-  ([ADR-0022](docs/02-tong-quan/adr-0022-backend-structure.md)).
+  ([ADR-0022](docs/adr/adr-0022-backend-structure.md)).
 - **Frontend** theo Feature-Sliced Design rút gọn
   `app → pages → widgets → features → entities → shared`, tách theo cổng
   ([`frontend/ARCHITECTURE.md`](frontend/ARCHITECTURE.md)).
@@ -179,15 +179,21 @@ ai-recruitment-platform/
 │   └── apps/           accounts, candidates, employers, campaigns, jobs,
 │                       applications, cvs, cv_templates, matching, ai_core,
 │                       uploads, privacy, sitecontent, knowledgebase, blog,
-│                       dashboard, skills, locations
+│                       dashboard, skills, locations, messaging, realtime
 ├── frontend/           React SPA
 │   ├── src/            app · pages · widgets · features · entities · shared
 │   ├── messages/       chuỗi giao diện vi/en
 │   └── tests/e2e/      Playwright
 ├── ml/                 dữ liệu, huấn luyện và đánh giá mô hình đối sánh
-├── docs/               tài liệu phân tích, kiến trúc, API, hướng dẫn
-├── scripts/            kiểm tra chất lượng, dựng DB local, bảo trì
-└── docker-compose.yml
+├── docs/               tài liệu phân tích, kiến trúc, ADR, API, hướng dẫn
+├── scripts/            check_*: cổng chất lượng (CI và check_all.sh)
+│   │                   bootstrap_backend, reset_local_db, clean_artifacts: máy dev
+│   ├── ci/             tiện ích riêng của GitHub Actions
+│   ├── deploy/         lệnh chạy trên VPS: deploy, sao lưu, khôi phục
+│   └── loadtest/       kịch bản k6
+├── deploy/certs/       chứng chỉ origin trên VPS (không commit)
+├── docker-compose.yml  môi trường dev
+└── docker-compose.prod.yml
 ```
 
 ## Bắt đầu nhanh

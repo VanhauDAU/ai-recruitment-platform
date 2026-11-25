@@ -7,7 +7,7 @@ queue ML ML Worker\n(Celery ai-matching)
 participant M Mô hình e5-base\n(chạy local)
 participant BEAT Bộ lập lịch\n(Celery Beat)
 group CV có phiên bản mới
-UV -> BE : Lưu CV (POST /api/v2/cvs/{cv}/save-version/)
+UV -> BE : Lưu CV (POST /api/candidate/cvs/{cv}/save-version/)
 BE -> DB : Tạo CvVersion
 BE ->> ML : embed_cv_version (tín hiệu post_save, khi bật ai_job_match_enabled và tính trước)
 ML -> DB : Tìm MatchDocument cùng (nguồn, hash nội dung, extract-v2, phiên bản mô hình)

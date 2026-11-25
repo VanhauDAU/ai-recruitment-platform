@@ -6,7 +6,7 @@ database DB CSDL\n(PostgreSQL)
 actor NTD Nhà tuyển dụng
 group Theo dõi hồ sơ
 UV -> FE : Mở "Việc làm đã ứng tuyển"
-FE -> BE : GET /api/v2/applications/
+FE -> BE : GET /api/candidate/applications/
 BE -> DB : Lấy hồ sơ, lịch sử trạng thái đã công bố, lượt nhắc
 DB --> BE : Danh sách hồ sơ
 BE -> BE : Tính trạng thái ứng viên được thấy và thao tác hợp lệ (rút, nộp lại, nhắc)
@@ -15,7 +15,7 @@ FE --> UV : Hiển thị trạng thái, tiến trình từng hồ sơ
 end
 group Rút hồ sơ
 UV -> FE : Bấm "Rút hồ sơ" và xác nhận
-FE -> BE : POST /api/v2/applications/{id}/withdraw/
+FE -> BE : POST /api/candidate/applications/{id}/withdraw/
 BE -> DB : Khóa hồ sơ hiện hành (is_current)
 alt Không tìm thấy hồ sơ hiện hành
 BE --> FE : 404
@@ -32,7 +32,7 @@ end
 end
 group Nhắc nhà tuyển dụng
 UV -> FE : Bấm "Nhắc NTD"
-FE -> BE : POST /api/v2/applications/{id}/remind/
+FE -> BE : POST /api/candidate/applications/{id}/remind/
 BE -> BE : Kiểm tra hồ sơ chưa được phản hồi, tin chưa dừng, đã qua 3 ngày từ lúc nộp hoặc lần nhắc trước, tối đa 2 lần
 alt Chưa đủ điều kiện
 BE --> FE : 400 "Bạn có thể nhắc từ HH:MM dd/mm/yyyy"

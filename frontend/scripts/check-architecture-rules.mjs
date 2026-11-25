@@ -132,6 +132,31 @@ if (impureBarrels.length > 0) {
   throw new Error(`Barrel index.js chỉ được export, không chạy lệnh lúc import:\n${impureBarrels.join('\n')}`)
 }
 
+// Mọi HTTP đi qua client chung ở shared/api (interceptor auth, refresh, lỗi).
+// dependency-cruiser chỉ dựng đồ thị trong src/ nên không thấy import 'axios'.
+const AXIOS_USAGE = /axios\.create|from\s+['"]axios['"]/
+const SHARED_API_DIR = path.join(SRC_DIR, 'shared', 'api')
+const axiosViolations = []
+const walkSources = (dir) => {
+  for (const entry of listEntries(dir)) {
+    const entryPath = path.join(dir, entry.name)
+    if (entry.isDirectory()) {
+      if (entryPath !== SHARED_API_DIR) walkSources(entryPath)
+    } else if (/\.jsx?$/.test(entry.name)) {
+      readFileSync(entryPath, 'utf8').split('\n').forEach((line, index) => {
+        if (AXIOS_USAGE.test(line)) {
+          axiosViolations.push(`${path.relative(SRC_DIR, entryPath)}:${index + 1}: ${line.trim()}`)
+        }
+      })
+    }
+  }
+}
+walkSources(SRC_DIR)
+
+if (axiosViolations.length > 0) {
+  throw new Error(`axios chỉ được dùng trong src/shared/api:\n${axiosViolations.join('\n')}`)
+}
+
 console.log(
   `Architecture rule fixtures: ${[...expectedRuleNames].join(', ')} detected`,
 )

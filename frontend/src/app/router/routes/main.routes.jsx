@@ -56,8 +56,8 @@ import {
   TemplateCatalogPage,
   TemplateDetailPage,
   VerifyEmailPage,
-} from '../lazy/main.pages'
-import { AuthLayout, MainLayout, OnboardingLayout } from '../lazy/layouts'
+} from '../lazy/main.pages.js'
+import { AuthLayout, MainLayout, OnboardingLayout } from '../lazy/layouts.js'
 
 // Trang tài khoản đã xây thật, map theo item.key trong candidate-menu.
 const ACCOUNT_PAGE_BY_KEY = {

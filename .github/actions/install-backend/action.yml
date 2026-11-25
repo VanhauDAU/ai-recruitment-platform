@@ -1,0 +1,14 @@
+name: Install backend dependencies
+description: >-
+  Cài backend/requirements-dev.txt vào Python của runner bằng uv (song song, nhanh
+  hơn pip khoảng 4 lần). Gọi sau actions/setup-python.
+runs:
+  using: composite
+  steps:
+    - name: Install uv
+      shell: bash
+      run: python -m pip install --disable-pip-version-check --quiet uv==0.13.10
+
+    - name: Install requirements-dev.txt
+      shell: bash
+      run: uv pip install --system -r backend/requirements-dev.txt

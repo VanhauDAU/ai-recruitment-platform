@@ -12,6 +12,7 @@ import {
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { adminPath } from '@/shared/config/portals'
 import { getIntlLocale } from '@/shared/config/i18n'
+import { formatDateTime } from '@/shared/lib/date-time'
 
 const STATUS_OPTIONS = [
   { value: 'actionable', label: 'Cần xử lý' },
@@ -61,13 +62,7 @@ function verificationFiltersFromQuery(searchParams) {
   }
 }
 
-function formatDate(value) {
-  if (!value) return 'Chưa nộp'
-  return new Intl.DateTimeFormat(getIntlLocale(), {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  }).format(new Date(value))
-}
+const formatDate = (value) => formatDateTime(value, { fallback: 'Chưa nộp' })
 
 export default function VerificationQueuePanel() {
   const navigate = useNavigate()

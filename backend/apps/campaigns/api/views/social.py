@@ -108,7 +108,8 @@ class SocialConnectStartView(APIView):
 class SocialCallbackView(View):
     """Browser redirect from the network; the signed state identifies the recruiter."""
 
-    def get(self, request, network=FACEBOOK_PAGE):  # legacy route passes no network
+    # /social/facebook/callback/ (redirect URI đã khai với Meta) không có tham số network.
+    def get(self, request, network=FACEBOOK_PAGE):
         network = _network(network)
         code, state = request.GET.get('code'), request.GET.get('state', '')
         if not code:

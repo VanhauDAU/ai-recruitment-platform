@@ -1,1 +1,1 @@
-export { default as JobPreferencesReminder } from './JobPreferencesReminder'
+export { default as JobPreferencesReminder } from './ui/JobPreferencesReminder'

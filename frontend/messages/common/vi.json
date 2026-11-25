@@ -110,5 +110,7 @@
   "cookie_policy_views_body": "Khi bạn bật cookie hiệu năng, ProCV có thể tạo một mã ngẫu nhiên không chứa email, tên hoặc nội dung hồ sơ. Mã này giúp giới hạn một lượt xem cho mỗi tin trong 24 giờ, nhằm giảm số liệu trùng lặp.",
   "cookie_policy_change_title": "Thay đổi lựa chọn",
   "cookie_policy_change_body": "Bạn có thể mở Cài đặt cookie ở chân trang bất cứ lúc nào để bật, tắt hoặc rút lại sự đồng ý. Khi tắt nhóm Tùy chọn, giao diện, lịch sử tìm kiếm, bộ lọc đã lưu và danh sách so sánh chỉ còn trong tab hiện tại; khi tắt nhóm Hiệu năng, ProCV xóa mã chống đếm trùng và mã kênh chiến dịch. Dữ liệu tương ứng trong trình duyệt được xóa ngay khi bạn lưu lựa chọn.",
-  "cookie_policy_back_home": "← Quay về trang chủ"
+  "cookie_policy_back_home": "← Quay về trang chủ",
+  "common_not_found_description": "Trang bạn tìm không tồn tại.",
+  "common_not_found_home": "Về trang chủ"
 }

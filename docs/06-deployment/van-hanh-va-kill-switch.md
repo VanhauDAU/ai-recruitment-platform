@@ -79,7 +79,7 @@ scripts/deploy/compose.sh exec backend python manage.py reconcile_account_status
 
 ### Quy tắc vận hành còn hiệu lực
 
-- Hai cấp quản trị ([ADR-0018](../02-tong-quan/adr-0018-remove-admin-rbac.md)):
+- Hai cấp quản trị ([ADR-0018](../adr/adr-0018-remove-admin-rbac.md)):
   admin thường làm nghiệp vụ; superuser quản lý tài khoản quản trị, lời mời,
   site settings, cấu hình AI, cấm tài khoản và gỡ policy hold. Duy trì tối
   thiểu hai superuser độc lập với mật khẩu mạnh, không dùng chung.
@@ -87,7 +87,7 @@ scripts/deploy/compose.sh exec backend python manage.py reconcile_account_status
   do workflow quản trị phát hành.
 - Khôi phục danh tính (đổi email, gửi reset mật khẩu) và đổi trạng
   thái tài khoản đều theo preview → confirm có lý do/evidence, nghiệp vụ chi tiết
-  xem [`flow-audit-2026-07.md`](../02-tong-quan/flow-audit-2026-07.md) và
+  xem [`flow-audit-2026-07.md`](../archive/audit/flow-audit-2026-07.md) và
   [`thiet-ke-database.md`](../03-database/thiet-ke-database.md). Không bao giờ
   mở `BANNED → ACTIVE` trực tiếp: phải qua `INACTIVE`, gỡ hold, rồi mở lại.
 - Break-glass khi mất toàn bộ superuser: người có quyền máy chủ chạy
@@ -201,12 +201,12 @@ lỗi hệ thống), `cv_snapshot_duration_ms`, `cv_snapshot_failure`, tuổi qu
   Fernet `EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY` và
   `EMPLOYER_SMS_CHALLENGE_HMAC_KEY` ≥ 32 ký tự, hai khóa không trùng secret khác.
   Worker phải nghe `auth-sms`. Chi tiết:
-  [`employer-sms-provider-adapter.md`](./employer-sms-provider-adapter.md).
+  [`nha-cung-cap-sms.md`](nha-cung-cap-sms.md).
 - `EMPLOYER_EVENT_RETENTION_DAYS` (mặc định 730): audit chặn nếu < 730.
 
 Ranh giới lưu trữ upload xem
-[`employer-upload-storage-boundary-runbook.md`](./employer-upload-storage-boundary-runbook.md);
-DPA xem [`employer-dpa-evidence-rollout.md`](./employer-dpa-evidence-rollout.md).
+[`ranh-gioi-luu-tru-upload.md`](ranh-gioi-luu-tru-upload.md);
+DPA xem [`trien-khai-bang-chung-dpa.md`](trien-khai-bang-chung-dpa.md).
 
 ### Lệnh (`backend/apps/employers`, `backend/apps/uploads`)
 
@@ -286,7 +286,7 @@ Không gọi dịch vụ ngoài; mô hình chạy trong service `ml-worker`.
 
 ## AI tạo tin tuyển dụng
 
-Kiến trúc xem [`ai-job-post-generation.md`](../07-algorithms/ai-job-post-generation.md)
+Kiến trúc xem [`ai-tao-tin-tuyen-dung.md`](../07-algorithms/ai-tao-tin-tuyen-dung.md)
 và [`thuat-toan-ai.md`](../07-algorithms/thuat-toan-ai.md).
 
 ### Hai lớp switch

@@ -8,7 +8,7 @@ participant PW Trình duyệt ẩn\n(Playwright)
 actor NX Người xem\nliên kết
 group Tải CV dạng PDF
 UV -> FE : Bấm "Tải PDF"
-FE -> BE : POST /api/v2/cvs/{cv}/exports/
+FE -> BE : POST /api/candidate/cvs/{cv}/exports/
 BE -> DB : Tìm CvExport cùng phiên bản và cấu hình hiển thị
 alt Đã có bản xuất hợp lệ
 BE --> FE : 200 {status: completed}
@@ -24,12 +24,12 @@ else Lỗi kết xuất
 WK -> DB : CvExport = failed (render_failed)
 end
 loop Mỗi 2 giây khi đang pending/processing
-FE -> BE : GET /api/v2/cvs/{cv}/exports/{id}/
+FE -> BE : GET /api/candidate/cvs/{cv}/exports/{id}/
 BE --> FE : Trạng thái
 end
 end
 alt completed
-FE -> BE : GET /api/v2/cvs/{cv}/exports/{id}/download/
+FE -> BE : GET /api/candidate/cvs/{cv}/exports/{id}/download/
 BE --> FE : Tệp PDF
 FE --> UV : Lưu tệp về máy
 else failed
@@ -38,7 +38,7 @@ end
 end
 group Chia sẻ CV bằng liên kết
 UV -> FE : Tạo liên kết chia sẻ (tùy chọn ngày hết hạn)
-FE -> BE : POST /api/v2/cvs/{cv}/shared-links/
+FE -> BE : POST /api/candidate/cvs/{cv}/shared-links/
 alt Email chưa xác minh hoặc CV bị khóa kiểm duyệt
 BE --> FE : 403
 else Hợp lệ
@@ -46,7 +46,7 @@ BE -> DB : Lưu sha256 của mã, không lưu mã gốc
 BE --> FE : 201 Liên kết (mã chỉ trả một lần)
 FE --> UV : Sao chép liên kết
 end
-NX -> BE : GET /api/v2/cvs/shares/{token}/
+NX -> BE : GET /api/public/cvs/shares/{token}/
 alt Mã sai, hết hạn hoặc đã thu hồi
 BE --> NX : 404
 else Hợp lệ

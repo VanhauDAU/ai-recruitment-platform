@@ -3,10 +3,10 @@ import AuthGuard from '../guards/AuthGuard'
 import EmployerOnboardingGuard from '../guards/EmployerOnboardingGuard'
 import RoleGuard from '../guards/RoleGuard'
 import CandidateDataGuard from '../guards/CandidateDataGuard'
-import { EmployerCompanyWorkspacePage, EmployerConnectPage } from '../lazy/employer.pages'
+import { EmployerCompanyWorkspacePage, EmployerConnectPage } from '../lazy/employer.pages.js'
 import { employerRoutes } from './employer.routes'
 
-vi.mock('../lazy/layouts', () => ({
+vi.mock('../lazy/layouts.js', () => ({
   DashboardLayout: () => null,
   EmployerAuthLayout: () => null,
   EmployerMarketingLayout: () => null,

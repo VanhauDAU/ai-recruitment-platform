@@ -1,1 +1,1 @@
-export { default as EmployerFooter } from './EmployerFooter'
+export { default as EmployerFooter } from './ui/EmployerFooter'

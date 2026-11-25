@@ -1,6 +1,6 @@
 # Sao lưu và khôi phục production (procv.site)
 
-Runbook GĐ3 của [kế hoạch chuẩn bị deploy](ke-hoach-chuan-bi-deploy.md). Triển khai
+Runbook sao lưu và khôi phục (GĐ3 của [kế hoạch chuẩn bị deploy](../archive/ke-hoach/ke-hoach-chuan-bi-deploy.md), đã lưu trữ). Triển khai
 chung xem [huong-dan-deployment.md](huong-dan-deployment.md). Mọi lệnh chạy trên VPS
 bằng user `deploy` trong `/srv/procv`, trừ khi ghi "máy cá nhân".
 

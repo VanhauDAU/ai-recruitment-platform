@@ -59,7 +59,6 @@ from .notifications import (
 )
 from .onboarding import (
     AcceptDpaView,
-    PhoneAvailabilityView,
     PhoneChallengeView,
     RecruiterMeView,
     SendPhoneOtpView,
@@ -120,7 +119,6 @@ __all__ = [
     'EmployerNotificationReadAllView',
     'EmployerNotificationReadView',
     'EmployerNotificationUnreadCountView',
-    'PhoneAvailabilityView',
     'PhoneChallengeView',
     'RecruiterMeView',
     'RecruitmentNeedView',

@@ -76,4 +76,4 @@ widget của một cổng chỉ dùng feature/widget của cổng đó hoặc `c
 - File trên 300 dòng bị lint cảnh báo; không để file đang vượt ngưỡng dài thêm.
 
 Tài liệu runtime riêng: [dải thông báo đa cổng](dai-thong-bao-da-cong.md),
-[quản lý tin tuyển dụng quản trị](admin-job-management.md).
+[quản lý tin tuyển dụng quản trị](quan-ly-tin-cong-quan-tri.md).

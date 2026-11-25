@@ -158,8 +158,8 @@ docker stats
 # Dung lượng image, volume và build cache
 docker system df -v
 
-# Giữ Buildx cache hữu ích trong ngân sách 5GB, không đụng image/volume
-sh scripts/docker_maintenance.sh
+# Giữ Buildx cache trong ngân sách 5GB; không prune image, container, network hay volume
+docker buildx prune --all --force --max-used-space 5gb
 ```
 
 Không chạy `docker system prune --volumes` trên máy đang giữ dữ liệu local: lệnh

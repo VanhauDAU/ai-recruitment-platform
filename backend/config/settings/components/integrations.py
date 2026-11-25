@@ -111,14 +111,10 @@ REQUIRE_APPROVED_EMPLOYER_VERIFICATION = config(
 # Chiến dịch tự đăng bài lên mạng xã hội của NTD (ADR-0025). Mạng có trong
 # CAMPAIGN_SOCIAL_LIVE_NETWORKS gọi API thật; mạng còn lại dùng provider giả lập,
 # chạy trọn luồng kết nối/đăng/gỡ mà không gọi ra ngoài (dev, CI, demo). Xem
-# docs/06-deployment/social-integrations.md. CAMPAIGN_SOCIAL_PROVIDER=facebook là
-# cách bật cũ, tương đương CAMPAIGN_SOCIAL_LIVE_NETWORKS=facebook_page.
-_legacy_live_networks = (
-    'facebook_page' if config('CAMPAIGN_SOCIAL_PROVIDER', default='fake') == 'facebook' else ''
-)
+# docs/06-deployment/tich-hop-mang-xa-hoi.md.
 CAMPAIGN_SOCIAL_LIVE_NETWORKS = [
     network.strip()
-    for network in config('CAMPAIGN_SOCIAL_LIVE_NETWORKS', default=_legacy_live_networks).split(',')
+    for network in config('CAMPAIGN_SOCIAL_LIVE_NETWORKS', default='').split(',')
     if network.strip()
 ]
 FACEBOOK_APP_ID = config('FACEBOOK_APP_ID', default='')
@@ -133,7 +129,7 @@ THREADS_APP_ID = config('THREADS_APP_ID', default='')
 THREADS_APP_SECRET = config('THREADS_APP_SECRET', default='')
 THREADS_GRAPH_API_VERSION = config('THREADS_GRAPH_API_VERSION', default='v1.0')
 # Mặc định {FRONTEND_URL}/api/employer/social/threads/callback/. Threads chỉ nhận
-# HTTPS: máy cục bộ khai https://localhost:5173/... (xem social-integrations.md).
+# HTTPS: máy cục bộ khai https://localhost:5173/... (xem tich-hop-mang-xa-hoi.md).
 THREADS_OAUTH_REDIRECT_URI = config('THREADS_OAUTH_REDIRECT_URI', default='')
 # LinkedIn: app có sản phẩm "Share on LinkedIn" và "Sign In with LinkedIn using
 # OpenID Connect". Mặc định dùng lại app đăng nhập LinkedIn (OAUTH_LINKEDIN_*).

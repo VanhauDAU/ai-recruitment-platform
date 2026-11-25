@@ -30,7 +30,6 @@ export {
 } from './api/admin-employer-verification.keys'
 export {
   documentStatusMeta,
-  EMPLOYER_VERIFICATION_STATUS,
   verificationStatusMeta,
   VERIFICATION_CHECK_LABELS,
 } from './model/presentation'

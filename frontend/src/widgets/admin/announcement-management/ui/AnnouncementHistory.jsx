@@ -5,7 +5,7 @@ import {
 } from '@ant-design/icons'
 import { Empty, Tag, Timeline } from 'antd'
 import { KIND_LABELS, SURFACE_LABELS } from '../model/announcement-options'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { formatDateTime, VN_TIME_ZONE } from '@/shared/lib/date-time'
 
 const AUDIT_LABELS = {
   announcement_create: 'Tạo thông báo',
@@ -20,14 +20,8 @@ const AUDIT_LABELS = {
   announcement_create_from_duplicate: 'Tạo từ bản sao',
 }
 
-function formatDate(value) {
-  if (!value) return 'Chưa ghi nhận'
-  return new Intl.DateTimeFormat(getIntlLocale(), {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-    timeZone: 'Asia/Ho_Chi_Minh',
-  }).format(new Date(value))
-}
+const formatDate = (value) =>
+  formatDateTime(value, { dateStyle: 'medium', timeZone: VN_TIME_ZONE, fallback: 'Chưa ghi nhận' })
 
 export function RevisionHistory({ revisions = [] }) {
   if (!revisions.length) return <Empty description="Chưa có revision" />

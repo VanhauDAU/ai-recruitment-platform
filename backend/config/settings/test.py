@@ -1,5 +1,7 @@
 """Fast, isolated settings for Django's test runner and CI."""
 
+import atexit
+import shutil
 import tempfile
 from pathlib import Path
 
@@ -29,6 +31,7 @@ PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
 # Test files must never land in a developer's real media roots. Each run gets
 # its own temporary tree; the roots stay distinct and non-nested like production.
 _TEST_MEDIA_BASE = Path(tempfile.mkdtemp(prefix='procv-test-media-'))
+atexit.register(shutil.rmtree, _TEST_MEDIA_BASE, ignore_errors=True)
 PUBLIC_MEDIA_ROOT = _TEST_MEDIA_BASE / 'public-media'
 MEDIA_ROOT = PUBLIC_MEDIA_ROOT
 PRIVATE_MEDIA_ROOT = _TEST_MEDIA_BASE / 'private-media'

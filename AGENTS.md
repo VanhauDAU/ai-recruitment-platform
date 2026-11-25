@@ -43,11 +43,19 @@ Không tạo `utils` chung không có owner. Component chỉ dùng một page/fe
 1. Xác định portal và owner bằng bảng trên trước khi tạo file.
 2. Thêm page trong portal sở hữu; page chỉ compose UI và lấy route params.
 3. Đặt action/domain/UI tái sử dụng vào feature, entity, widget hoặc shared.
-4. Thêm dynamic loader tại `src/app/router/lazy/<portal>.pages.jsx`.
+4. Thêm dynamic loader tại `src/app/router/lazy/<portal>.pages.js`.
 5. Đăng ký route ở `src/app/router/routes/<portal>.routes.jsx`; không import
    page trực tiếp vào `AppRouter`.
 6. Protected route phải theo thứ tự `AuthGuard` rồi `RoleGuard`.
 7. Bổ sung unit/regression test và E2E cho route hoặc workflow bị ảnh hưởng.
+
+## Tài liệu và tiến độ
+
+- Chỉ mục: `docs/README.md` (mọi tài liệu trong `docs/` phải có dòng ở đây, CI kiểm).
+  Quyết định kiến trúc: `docs/adr/`; kế hoạch và audit đã xong: `docs/archive/`.
+- Mỗi PR một mục `CHANGELOG.md` (Keep a Changelog, nhóm theo ngày dưới `[Unreleased]`).
+- `docs/TIEN-DO-DU-AN.md` là ảnh chụp trạng thái theo module và việc đang mở, không
+  phải nhật ký: chỉ sửa khi trạng thái đổi.
 
 ## Agent skills (`.claude/skills/`, khóa ở `skills-lock.json`)
 
@@ -88,7 +96,7 @@ quy tắc, portal hoặc mô hình ownership có tác động lâu dài.
 
 ## Backend (ADR-0022)
 
-Nguồn chi tiết: `docs/02-tong-quan/adr-0022-backend-structure.md`. Mọi Django
+Nguồn chi tiết: `docs/adr/adr-0022-backend-structure.md`. Mọi Django
 app trong `backend/apps/` theo đúng một layout:
 
 ```text

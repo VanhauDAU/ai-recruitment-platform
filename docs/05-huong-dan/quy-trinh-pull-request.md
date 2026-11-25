@@ -42,6 +42,10 @@ Ruleset `Protect main` (Settings → Rules → Rulesets) đang bật với:
 Đổi tên hai job tổng phải cập nhật required checks trong ruleset cùng lúc, nếu
 không mọi PR vào `main` sẽ bị chặn vì chờ check không bao giờ chạy.
 
+Nhánh `dev` cần ruleset tương tự với cùng hai required check. Không có nó, PR đỏ
+vẫn gộp được vào `dev` và CI của mọi PR sau đó đỏ theo.
+
+
 ## CODEOWNERS
 
 Các vùng có rủi ro kiến trúc được khai báo tại
@@ -84,6 +88,15 @@ không liên quan và migration vào cùng một commit nghiệp vụ.
   export qua `index.js` khi dùng liên-layer.
 - Test mới nằm dưới ngưỡng mềm của [tiêu chuẩn kiểm thử](tieu-chuan-kiem-thu.md);
   không thêm test flaky; không nới timeout hay ngưỡng nếu không có số đo.
+
+### Tài liệu
+
+- Thêm một mục vào `CHANGELOG.md` dưới `[Unreleased]` → `### <ngày>`, loại là
+  một trong Added / Changed / Deprecated / Removed / Fixed / Security.
+- Sửa `docs/TIEN-DO-DU-AN.md` chỉ khi trạng thái một module đổi hoặc một việc đang
+  mở được thêm/xong. Không viết mô tả tính năng hay danh sách PR vào đó.
+- Đổi hành vi thì sửa tài liệu nguồn của chủ đề (đặc tả, ADR mới, runbook) trong
+  cùng PR. Tài liệu mới phải có dòng trong `docs/README.md`.
 
 ### Pull Request
 

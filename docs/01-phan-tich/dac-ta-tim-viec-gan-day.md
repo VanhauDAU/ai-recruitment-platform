@@ -1,6 +1,6 @@
 # Đặc tả: Việc làm gần tôi (tìm việc theo khoảng cách)
 
-> Quyết định kiến trúc: [ADR-0029](../02-tong-quan/adr-0029-nearby-jobs-geo.md).
+> Quyết định kiến trúc: [ADR-0029](../adr/adr-0029-nearby-jobs-geo.md).
 > Trang ứng viên: `/viec-lam-gan-ban`. Cập nhật 25/11/2026.
 
 ## 1. Mục tiêu

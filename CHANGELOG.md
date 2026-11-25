@@ -8,6 +8,32 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Changed — Tổ chức lại tài liệu, dọn code tương thích, CI chia shard theo thời lượng
+
+- Tài liệu: ADR sang `docs/adr/` (có chỉ mục và trạng thái thay thế), kế hoạch đã
+  xong, audit và decision log sang `docs/archive/`, 16 tài liệu đổi tên tiếng Việt.
+  `docs/README.md` liệt kê đủ mọi tài liệu và CI chặn tài liệu mồ côi.
+  `TIEN-DO-DU-AN.md` thành bảng trạng thái theo module, đối chiếu với PR đã gộp;
+  bản cũ lưu nguyên ở archive.
+- Frontend: bỏ 46 export thừa khỏi public API của slice, `formatDateTime` dùng chung
+  thay 12 bản chép lại, 7 widget phẳng về `ui/`/`model/`, trang 404 vào lazy
+  registry, `ARCHITECTURE.md` tách phần bản đồ sở hữu ra `docs/08-frontend/`.
+- CI: backend tách `backend-static` và 3 shard `backend-tests` (pytest-split), cài
+  dependency bằng uv. Unit test frontend chia 8 shard cân theo thời lượng từng file,
+  E2E desktop chia đôi. Required check giữ nguyên tên.
+- `scripts/`: kiểm tra axios chỉ trong `shared/api` chuyển vào
+  `npm run check:architecture`; script riêng của CI vào `scripts/ci/`.
+
+#### Removed — Endpoint và field tương thích không còn ai dùng
+
+- `GET /api/employer/phone/check/` (giao diện đã không gọi từ lâu).
+- `free_publish_limit`, `free_publish_remain` trong posting context (dùng
+  `publish_limit`, `publish_remain`) và `onboarding_completed` trong tài khoản do
+  admin quản lý (dùng `initial_onboarding.completed`).
+- Biến môi trường cũ `CAMPAIGN_SOCIAL_PROVIDER=facebook`; dùng
+  `CAMPAIGN_SOCIAL_LIVE_NETWORKS=facebook_page`.
+- Bốn spec E2E ở gốc `tests/e2e/` không chạy trong CI; `router.spec.js` chuyển vào smoke.
+
 #### Changed — Trang Tìm CV của NTD theo bố cục kho ứng viên
 
 - Cột lọc trái (từ khóa có tất cả / một trong / không có, tỉnh, ngành nghề, ngoại ngữ + trình
@@ -57,7 +83,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - `production.py` từ chối `SECRET_KEY` dạng `django-insecure…`, `*` trong `ALLOWED_HOSTS`,
   origin CORS không phải HTTPS. `safe_next` chặn `/\…`; reCAPTCHA production đòi `hostname`.
 - Runbook sửa redirect URI OAuth, thêm hướng dẫn email (Resend/Brevo, DMARC) và tinh chỉnh
-  Cloudflare; checklist go-live 2/12 (`docs/06-deployment/checklist-go-live-2-12.md`).
+  Cloudflare; checklist go-live 2/12 (`docs/06-deployment/go-live.md`).
 
 #### Fixed — Thỏa thuận xử lý DLCN ProCV–NTD không còn trỏ sang TopCV
 
@@ -684,7 +710,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Mọi endpoint chuyển sang `/api/{auth,public,candidate,employer,admin,shared}/`;
   bỏ `/api/v2/`. Ví dụ `/api/jobs/mine/` → `/api/employer/jobs/`,
   `/api/v2/cvs/` → `/api/candidate/cvs/`, `/api/blog/admin/` → `/api/admin/blog/`.
-  Bảng đầy đủ: `docs/04-api/url-map-2026-11.md`. Không giữ alias cũ.
+  Bảng đầy đủ: `docs/archive/snapshot/url-map-2026-11.md`. Không giữ alias cũ.
 - Frontend đổi cùng lúc (API client, mock unit test và E2E).
 - Gỡ API-root của DRF router và route SEO legacy `/jobs`, `/jobs/<slug>`.
 - Bỏ tên `v2` ở module, lớp, tên route và tag OpenAPI.
@@ -791,7 +817,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   dịch tạm dừng, tự gỡ khi chiến dịch hoàn tất hoặc bị hủy; lỗi tạm thời được
   thử lại, token hết hạn thì báo NTD.
 - `CAMPAIGN_SOCIAL_PROVIDER=fake` chạy toàn bộ luồng không cần Meta; hướng dẫn
-  tạo Meta App ở `docs/06-deployment/social-integrations.md`.
+  tạo Meta App ở `docs/06-deployment/tich-hop-mang-xa-hoi.md`.
 
 #### Added — Chiến dịch: phân phối đa kênh và ghi nhận nguồn (GĐ2)
 
@@ -1095,7 +1121,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 #### Removed — Phòng ban, chức danh và nhân viên quản trị (ADR-0018)
 
-- Theo [ADR-0018](docs/02-tong-quan/adr-0018-remove-admin-rbac.md): cổng quản
+- Theo [ADR-0018](docs/adr/adr-0018-remove-admin-rbac.md): cổng quản
   trị còn hai cấp superuser và admin thường. Admin thường dùng mọi chức năng
   nghiệp vụ; superuser thêm tài khoản quản trị, lời mời, site settings, cấu
   hình AI, cấm tài khoản, gỡ policy hold và audit toàn hệ thống.
@@ -1143,8 +1169,8 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 #### Added — Nền móng trang công ty (CP-0)
 
-- Theo [ADR-0017](docs/02-tong-quan/adr-0017-company-page.md) và
-  [kế hoạch trang công ty](docs/01-phan-tich/ke-hoach-trang-cong-ty.md).
+- Theo [ADR-0017](docs/adr/adr-0017-company-page.md) và
+  [kế hoạch trang công ty](docs/archive/ke-hoach/ke-hoach-trang-cong-ty.md).
 - `GET /api/jobs/` nhận `company=<company_public_id>` (khớp chính xác, không
   thêm query); card và chi tiết tin trả `company_slug`.
 - `Company.public_headquarters` là nguồn duy nhất cho địa chỉ công khai.
@@ -1160,7 +1186,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 #### Removed — Gỡ xác thực hai bước (2FA/MFA) ở cả ba cổng
 
-- Theo [ADR-0016](docs/02-tong-quan/adr-0016-remove-two-factor-auth.md): bỏ mã
+- Theo [ADR-0016](docs/adr/adr-0016-remove-two-factor-auth.md): bỏ mã
   email, ứng dụng xác thực (TOTP), mã dự phòng và challenge khi đăng nhập. Đăng
   nhập mật khẩu/OAuth cấp token ngay; `/api/auth/me/` không còn
   `two_factor_*`.
@@ -1300,7 +1326,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Quyền admin `job_moderation.approve` và `job_moderation.reject`.
 - Site setting `job_auto_approve` chưa từng được dùng.
 
-#### Migration — Chuyển đổi dữ liệu duyệt tin
+#### Changed — Chuyển đổi dữ liệu duyệt tin (migration)
 
 - `jobs.0046` đưa mọi tin `pending` và `rejected` về `draft` kèm một dòng lịch
   sử trạng thái; `jobs.0047` xóa hai trạng thái và cột `rejected_reason`.
@@ -2160,7 +2186,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Chuẩn hoá mọi lỗi thiếu quyền thành `403 admin_permission_denied`; frontend
   revalidate session có cooldown khi nhận chùm 403.
 
-#### Documentation & Verification
+#### Changed — Tài liệu và kiểm chứng
 
 - Bổ sung thiết kế database RBAC, ma trận seed, runbook hai release, cảnh báo
   endpoint dashboard/blog còn legacy và gate chống lệch registry backend/frontend.
@@ -2194,7 +2220,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   thể lưu tin nháp/đóng bằng public ID; kỹ năng nhiễu hoặc từ chức danh chung
   không đủ để biến một công việc khác chuyên môn thành “tương tự”.
 
-#### Documentation & Verification
+#### Changed — Tài liệu và kiểm chứng
 
 - Bổ sung tài liệu thuật toán recommendation, schema email preference, contract API/frontend, ownership map FSD, tiến độ và OpenAPI.
 - Ghi lại khảo sát TopCV ở trạng thái 0 và 3 tin đã lưu, tài liệu hóa trọng số,
@@ -2217,7 +2243,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Mô tả/phúc lợi được lưu dưới HTML allowlist (`p`, `br`, `strong`, `em`, `u`, `ul`, `ol`, `li`), bỏ thuộc tính/script/style nguy hiểm và giới hạn theo 10.000 ký tự nhìn thấy; API chi tiết việc làm tiếp tục trả mô tả công ty dạng plain text.
 - Owner gửi thay đổi qua `CompanyUpdateRequest`; đổi tên/MST bắt buộc lý do, loại hồ sơ và tài liệu gắn đúng request trước khi admin có thể duyệt. Member chỉ xem, request pending thứ hai tiếp tục bị chặn.
 
-#### Verification — Trang thông tin công ty
+#### Changed — Kiểm chứng trang thông tin công ty
 
 - Thêm regression backend cho catalogue, validation, rich-text XSS, gallery và update-request proof; unit frontend cho mapping/diff/media cùng option cards/recent list.
 - Thêm Playwright smoke riêng chạy xanh desktop, tablet `834×1112` và Pixel mobile, kiểm tra không tràn ngang và nhãn động Hộ kinh doanh.
@@ -2322,7 +2348,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Khi chọn **Chỉnh sửa**, giữ liên kết xem tệp đã nộp và hiển thị tên tệp thay thế ngay trong ô tải lên. Sau khi lưu, tên hiển thị chuẩn của tài liệu là **Thỏa thuận xử lý DLCN**, không dùng tên gốc của tệp tải lên.
 - API ưu tiên văn bản DLCN mới gắn recruiter trước bản DLCN lịch sử theo company, tránh mở nhầm PDF cũ khi hai bản cùng tồn tại. DOC/DOCX tại URL HTTPS storage công khai/S3 có chữ ký mở qua Google Docs Viewer; PDF và URL localhost mở trực tiếp. Hover liên kết tệp dùng màu thương hiệu cấu hình của hệ thống.
 
-#### Documentation
+#### Changed — Tài liệu
 
 - Cập nhật hướng dẫn xác thực employer, tiến độ EMP-P8/EMP-P9 và regression test desktop/mobile cho layout/asset GPKD cùng DLCN; chuẩn hóa thông báo toàn ứng dụng qua Sonner.
 
@@ -2374,7 +2400,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Sửa hồ sơ company rỗng do luồng đăng ký cũ bị hiểu nhầm là đã hoàn tất; vẫn cho phép người dùng thay thế bằng thao tác tìm/tạo công ty thật.
 - Sửa upload giấy tờ dùng validator ảnh cho file PDF; ĐKDN nay nhận JPG/PNG/PDF còn thỏa thuận `candidate_dpa` nhận PDF/DOC/DOCX với kiểm tra MIME, chữ ký file và giới hạn 5 MB.
 
-#### Documentation
+#### Changed — Tài liệu
 
 - Ghi rõ boundary i18n chỉ thuộc chunk employer marketing, ownership FSD cho domain dịch vụ/lead và cập nhật tiến độ dự án.
 - Thêm tài liệu state machine/validation/API cho auth employer, email xác thực/chào mừng, khảo sát nhu cầu, checklist và dashboard; kiểm chứng 85 backend test `accounts/employers/dashboard`, 220 frontend test với coverage 86,96%, lint/architecture/build và 38 Playwright smoke test desktop/mobile. Full backend có 229 test, còn 5 lỗi legacy độc lập ở `apps.applications.tests_migrations` do schema migration thiếu cột `contact_name`.
@@ -2429,7 +2455,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - CTA “Ứng tuyển ngay” mở workflow chọn CV/version bất biến, ưu tiên bản published, cảnh báo khi chưa publish và chỉ gửi payload V2 sau bước xác nhận.
 - V1 `/api/cvs/` và `/api/cv-templates/` giữ hoạt động trong thời gian cutover nhưng mọi response đã có `Deprecation`, `Sunset`, `Link: rel="successor-version"` và event telemetry endpoint-level không ghi URL, user-agent hay định danh người dùng.
 
-#### Documentation
+#### Changed — Tài liệu
 
 - Cập nhật kiến trúc, API, database inventory, tiến độ và kế hoạch CV Builder theo nguồn dữ liệu category/color mới, V1→V2 cutover, các biến môi trường deprecation/sunset và phần còn lại của workflow clone/restore/import analysis.
 
@@ -2547,7 +2573,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Endpoints mới: `GET /api/auth/oauth/<provider>/start/?portal&next` (redirect sang provider), `GET /api/auth/oauth/<provider>/callback/` (verify state → tạo/liên kết user → redirect frontend kèm code), `POST /api/auth/oauth/complete/` (đổi one_time_code lấy `{user, access, refresh}`, throttle 10/min).
 - Luật tài khoản: có `SocialAccount` → đăng nhập luôn; email trùng **cùng vai trò** → tự liên kết (đánh dấu `email_verified=True`, giữ mật khẩu cũ); email trùng **khác vai trò** → chặn "Tài khoản không thuộc cổng này"; user mới → vai trò theo cổng, `email_verified=True`, mật khẩu unusable. Tham số `next` chỉ nhận path nội bộ (chặn absolute/`//`).
 - Frontend: component chung `SocialLoginButtons` (full-page redirect sang start URL, `next` = trang hiện tại trừ trang auth), trang `OAuthCallback` dùng chung 2 cổng (`/oauth/callback`, `/tuyendung/app/oauth/callback`; guard chống StrictMode gọi effect 2 lần vì code one-shot), lưu token đúng portal key, lỗi → quay về trang login của cổng kèm `?oauth_error=` hiển thị trong Alert (map mã lỗi → tiếng Việt ở `errorMessage.js`). Login/Register cổng NTD thêm nút Google + divider.
-- Cấu hình `.env`: `OAUTH_{GOOGLE,FACEBOOK,LINKEDIN}_CLIENT_ID/SECRET`, `OAUTH_FACEBOOK_GRAPH_VERSION`, `OAUTH_MAIN/EMPLOYER_CALLBACK_URL`, `OAUTH_STATE_TTL`, `OAUTH_CODE_TTL`. Hướng dẫn lấy key từng provider: `docs/05-huong-dan/social-login.md`.
+- Cấu hình `.env`: `OAUTH_{GOOGLE,FACEBOOK,LINKEDIN}_CLIENT_ID/SECRET`, `OAUTH_FACEBOOK_GRAPH_VERSION`, `OAUTH_MAIN/EMPLOYER_CALLBACK_URL`, `OAUTH_STATE_TTL`, `OAUTH_CODE_TTL`. Hướng dẫn lấy key từng provider: `docs/05-huong-dan/dang-nhap-mang-xa-hoi.md`.
 - Test: 13 test OAuth backend (portal rules, tạo/liên kết/chặn theo vai trò, state one-shot, one_time_code one-shot, chặn `next` absolute).
 
 #### Changed — Media lưu storage key thay vì URL tuyệt đối
@@ -2663,6 +2689,6 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Backend: gom toàn bộ 12 Django app (`accounts`, `skills`, `candidates`, `employers`, `locations`, `cv_templates`, `cvs`, `jobs`, `applications`, `interviews`, `ai_core`, `dashboard`) vào `backend/apps/`, giữ `backend/config/` (settings/urls) và `backend/common/` (tiện ích dùng chung) ở ngoài vì không phải app. Cập nhật `AppConfig.name`, `INSTALLED_APPS`, toàn bộ import chéo giữa các app và `include()` trong `config/urls.py` sang `apps.<tên_app>`. Không phát sinh migration mới (app_label giữ nguyên), đã test lại toàn bộ API sau khi đổi.
 - Frontend: đổi `src/services/` thành `src/api/` (chứa `api.js` và `authService.js`), cập nhật import ở `hooks/useAuth.jsx` và `pages/auth/Register.jsx`. Build và test đăng nhập lại thành công.
 
-### Removed
+#### Removed
 
 - Gỡ `backend/venv` cũ (thiết lập FastAPI/Alembic bị vô tình commit vào git) do đổi hướng backend sang Django.

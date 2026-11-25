@@ -1,9 +1,9 @@
 # 05 - Hướng dẫn cài đặt & chạy local
 
 ## Yêu cầu
-- Python 3.11, khóa qua `.python-version` ở gốc repo và `backend/.python-version`;
+- Python 3.11, khóa qua `.python-version` ở gốc repo (pyenv/uv tự tìm lên thư mục cha);
   local và CI (`.github/workflows/backend-ci.yml`) phải cùng major.minor. Có thể
-  dựng backend bằng `./scripts/bootstrap-backend.sh` (tự kiểm tra Python 3.11) hoặc
+  dựng backend bằng `./scripts/bootstrap_backend.sh` (tự kiểm tra Python 3.11) hoặc
   `pyenv install 3.11`.
 - Node.js 20.19+ hoặc 22.12+ (Vite 8 yêu cầu các bản này)
 - PostgreSQL 16 có extension [pgvector](https://github.com/pgvector/pgvector)
@@ -103,7 +103,7 @@ Ghi chú:
 - `seed_locations` lấy dữ liệu tỉnh/xã từ `provinces.open-api.vn`, nên cần có internet khi chạy lần đầu.
 - Các lệnh seed hiện tại đều có thể chạy lại. Riêng `seed_demo_jobs` sẽ xoá dữ liệu demo cũ có email `@demo.local` rồi tạo lại.
 - Nếu chưa cấu hình Google reCAPTCHA, có thể để trống `RECAPTCHA_SECRET_KEY` ở backend và `VITE_RECAPTCHA_SITE_KEY` ở frontend trong môi trường local.
-- Social login (`OAUTH_*`) có thể để trống — nút đăng nhập mạng xã hội chỉ báo "chưa cấu hình" khi bấm. Cách lấy key từng provider: [social-login.md](social-login.md).
+- Social login (`OAUTH_*`) có thể để trống — nút đăng nhập mạng xã hội chỉ báo "chưa cấu hình" khi bấm. Cách lấy key từng provider: [dang-nhap-mang-xa-hoi.md](dang-nhap-mang-xa-hoi.md).
 - Media upload cần `Pillow` (đã có trong `requirements.txt`) để resize favicon/ảnh.
 
 Khi đã cài xong từ trước, chỉ cần chạy:
