@@ -19,7 +19,7 @@ Bộ file production đã nằm trên `dev` (docker-compose.prod.yml, frontend/d
 ## GĐ 0 — Việc phía user (song song, không code)
 1. **Ký gửi secret**: lưu `backend/.env`, `frontend/.env`, origin cert, khóa riêng `age` (giải mã backup) vào password manager; ghi rõ "không có = không khôi phục được".
 2. **Cloudflare**: Access policy (email OTP) cho `procv.site/admin*` và `procv.site/api/admin/*`; rate-limit rule cho `/api/` (vd 300 req/phút/IP, chặt hơn cho `/api/auth/*`); bật Authenticated Origin Pulls; Cache Rule cho `/sitemap*.xml`.
-3. **R2**: bucket `procv-backups` (DB) + `procv-backups-files` (bản sao CV) bật **Bucket Lock** (retention 30 ngày); token VPS chỉ *Object Write* (không xóa); token đọc giữ ngoài VPS.
+3. **R2**: bucket `procv-backups` (DB) + `procv-backups-files` (bản sao CV) + `procv-backups-public-media` (bản sao avatar/logo/banner) bật **Bucket Lock** (retention 30 ngày); token VPS chỉ *Object Write* (không xóa); token đọc giữ ngoài VPS.
 4. **Tài khoản giám sát**: Sentry (2 project: backend, frontend), UptimeRobot (monitor `https://procv.site/api/health/ready/` + `/`), healthchecks.io (2 check: backup DB, backup file) — báo qua email/Telegram.
 5. **Pháp lý**: viết DPA của ProCV thay mẫu TopCV; nội dung Điều khoản + Chính sách quyền riêng tư cho ứng viên.
 
@@ -86,6 +86,9 @@ Bộ file production đã nằm trên `dev` (docker-compose.prod.yml, frontend/d
 1. Bootstrap VPS bằng script mới; deploy theo runbook; truy cập qua `/etc/hosts` (hoặc DNS chưa proxied tạm, chặn bằng Cloudflare Access toàn site).
 2. Nạp dữ liệu (DB trống + seed nền, hoặc dump dev → `purge_demo_accounts`); tạo superuser mới, mật khẩu mạnh.
 3. Checklist mục 6 runbook + kiểm: header CSP/HSTS, `/.vite/manifest.json` 404, truy cập IP VPS trực tiếp bị từ chối, Sentry nhận lỗi thử, UptimeRobot xanh, healthchecks nhận ping backup.
+   - **Cloudflare Access cho admin** (runbook deploy bước 1.7): một application *Self-hosted* cho `procv.site/admin*` và `procv.site/api/admin/*`, policy email quản trị, đăng nhập email OTP. Kiểm: cửa sổ ẩn danh vào `/admin/login` gặp trang Access trước; `curl -sI https://procv.site/api/admin/` không trả JSON của Django; sau khi qua Access, thông báo realtime của admin (`wss://procv.site/ws/notifications/`, 101) vẫn chạy. MFA TOTP trong ứng dụng để **sau go-live** (Access thay tạm).
+   - **CSP report**: build `web` với `VITE_SENTRY_DSN`, header CSP có `report-uri`/`report-to`; cấu hình lọc/rate limit Sentry trước khi mở rehearsal (runbook mục 9). Đổi sang chặn khi Sentry hết vi phạm thật.
+   - `seed_sitecontent` sau deploy để đồng bộ mô tả site setting (không ghi đè giá trị).
 4. Chạy k6 200 VU từ máy ngoài (qua Cloudflare); đọc `pg_stat_statements`, `docker stats`, Redis memory; chỉnh gunicorn workers nếu RAM còn dư.
 5. **Diễn tập khôi phục**: restore bản backup mã hóa vào VPS tạm theo runbook, đo RTO thực tế, ghi vào runbook.
 6. Go-live: bật proxied DNS công khai, gỡ Access toàn site (giữ cho /admin), theo dõi Sentry/log 48 h đầu, đóng băng tính năng mới 1 tuần.

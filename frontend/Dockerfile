@@ -42,6 +42,12 @@ FROM nginx:1.28-alpine AS runtime
 RUN rm /etc/nginx/conf.d/default.conf
 COPY docker/nginx/procv.conf /etc/nginx/conf.d/procv.conf
 COPY docker/nginx/snippets/ /etc/nginx/snippets/
+# Endpoint báo cáo CSP (Sentry security) dựng từ DSN frontend; DSN trống thì CSP không
+# báo cáo. ARG phải khai lại trong stage này (ARG không truyền giữa các stage).
+ARG VITE_SENTRY_DSN=
+ARG VITE_SENTRY_ENVIRONMENT=
+RUN --mount=type=bind,source=docker/nginx/render-csp.sh,target=/tmp/render-csp.sh \
+    sh /tmp/render-csp.sh /etc/nginx/snippets/csp.conf "$VITE_SENTRY_DSN" "$VITE_SENTRY_ENVIRONMENT"
 # Trang bảo trì khi backend không trả lời (502/503/504 do nginx sinh ra).
 COPY docker/nginx/errors/ /usr/share/nginx/errors/
 COPY --from=build /app/dist /usr/share/nginx/procv

@@ -84,25 +84,43 @@ age_recipient_args() {
 # Remote rclone của bucket sao lưu DB/secret. RCLONE_REMOTE là tên cũ, vẫn nhận.
 backup_remote() { env_get BACKUP_RCLONE_REMOTE "$(env_get RCLONE_REMOTE)"; }
 
-# set_private_remote: đặt PRIVATE_REMOTE = remote rclone của bucket file riêng tư (CV,
-# tài liệu). Mặc định dựng từ R2_* sẵn có trong backend/.env qua biến RCLONE_CONFIG_*:
-# khóa không hiện trên dòng lệnh và không phải chép thêm vào rclone.conf.
-# BACKUP_FILES_SOURCE (remote:bucket đã cấu hình) ghi đè, dùng khi diễn tập/kiểm thử.
+# _set_r2_remote TÊN_BIẾN TÊN_REMOTE BIẾN_GHI_ĐÈ TIỀN_TỐ_R2 BUCKET_MẶC_ĐỊNH: gán cho
+# biến TÊN_BIẾN remote rclone `TÊN_REMOTE:<bucket>` của một bucket ứng dụng. Remote dựng
+# từ R2_ENDPOINT_URL + <TIỀN_TỐ_R2>_ACCESS_KEY_ID/_SECRET_ACCESS_KEY sẵn có trong
+# backend/.env qua biến RCLONE_CONFIG_<TÊN_REMOTE>_*: khóa không hiện trên dòng lệnh
+# (argv, `ps`) và không phải chép thêm vào rclone.conf. BIẾN_GHI_ĐÈ (remote:bucket đã
+# cấu hình) thắng, dùng khi diễn tập/kiểm thử.
+_set_r2_remote() {
+  local var="$1" remote="$2" override_key="$3" prefix="$4" default_bucket="$5"
+  local value endpoint key secret upper
+  value="$(env_get "$override_key")"
+  if [[ -z "$value" ]]; then
+    endpoint="$(env_get R2_ENDPOINT_URL)"
+    key="$(env_get "${prefix}_ACCESS_KEY_ID")"
+    secret="$(env_get "${prefix}_SECRET_ACCESS_KEY")"
+    [[ -n "$endpoint" && -n "$key" && -n "$secret" ]] \
+      || die "Thiếu R2_ENDPOINT_URL / ${prefix}_ACCESS_KEY_ID / ${prefix}_SECRET_ACCESS_KEY trong backend/.env."
+    upper="${remote^^}"
+    export "RCLONE_CONFIG_${upper}_TYPE=s3" "RCLONE_CONFIG_${upper}_PROVIDER=Cloudflare"
+    export "RCLONE_CONFIG_${upper}_ENDPOINT=$endpoint"
+    export "RCLONE_CONFIG_${upper}_ACCESS_KEY_ID=$key"
+    export "RCLONE_CONFIG_${upper}_SECRET_ACCESS_KEY=$secret"
+    export "RCLONE_CONFIG_${upper}_NO_CHECK_BUCKET=true"
+    value="$remote:$(env_get "${prefix}_BUCKET" "$default_bucket")"
+  fi
+  printf -v "$var" '%s' "$value"
+}
+
+# set_private_remote: PRIVATE_REMOTE = bucket file riêng tư (CV, tài liệu công ty, bản
+# xuất). BACKUP_FILES_SOURCE ghi đè.
 set_private_remote() {
-  local endpoint key secret
-  PRIVATE_REMOTE="$(env_get BACKUP_FILES_SOURCE)"
-  [[ -z "$PRIVATE_REMOTE" ]] || return 0
-  endpoint="$(env_get R2_ENDPOINT_URL)"
-  key="$(env_get R2_PRIVATE_ACCESS_KEY_ID)"
-  secret="$(env_get R2_PRIVATE_SECRET_ACCESS_KEY)"
-  [[ -n "$endpoint" && -n "$key" && -n "$secret" ]] \
-    || die "Thiếu R2_ENDPOINT_URL / R2_PRIVATE_ACCESS_KEY_ID / R2_PRIVATE_SECRET_ACCESS_KEY trong backend/.env."
-  export RCLONE_CONFIG_PROCVPRIVATE_TYPE=s3 RCLONE_CONFIG_PROCVPRIVATE_PROVIDER=Cloudflare
-  export RCLONE_CONFIG_PROCVPRIVATE_ENDPOINT="$endpoint"
-  export RCLONE_CONFIG_PROCVPRIVATE_ACCESS_KEY_ID="$key"
-  export RCLONE_CONFIG_PROCVPRIVATE_SECRET_ACCESS_KEY="$secret"
-  export RCLONE_CONFIG_PROCVPRIVATE_NO_CHECK_BUCKET=true
-  PRIVATE_REMOTE="procvprivate:$(env_get R2_PRIVATE_BUCKET procv-private-files)"
+  _set_r2_remote PRIVATE_REMOTE procvprivate BACKUP_FILES_SOURCE R2_PRIVATE procv-private-files
+}
+
+# set_public_remote: PUBLIC_REMOTE = bucket media công khai (avatar, logo, banner, ảnh
+# bài đăng). BACKUP_PUBLIC_FILES_SOURCE ghi đè.
+set_public_remote() {
+  _set_r2_remote PUBLIC_REMOTE procvpublic BACKUP_PUBLIC_FILES_SOURCE R2_PUBLIC procv-public-media
 }
 
 # Dịch vụ compose. Danh sách lấy từ file compose thay vì viết cứng để mọi nhánh
