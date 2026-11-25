@@ -35,7 +35,8 @@ ID luôn là `public_id` (`cnv_…`, `msg_…`, `itv_…`). Thời gian ISO 8601
 - `locked_reason`: `""` (mở) · `"unavailable"` (ứng viên: bị chặn/không khả dụng — câu trung lập) ·
   `"blocked"` (NTD: ứng viên đang bị công ty chặn) · `"withdrawn"` (ứng viên đã rút hồ sơ) ·
   `"account"` (tài khoản bên kia không còn hoạt động) · `"disabled"` (admin tắt ProCV Connect) ·
-  `"blocked_by_me"` (chính mình đã chặn nhắn tin; bên bị chặn thấy `"unavailable"`).
+  `"blocked_by_me"` (chính mình đã chặn nhắn tin; bên bị chặn thấy `"unavailable"`) ·
+  `"closed"` (hồ sơ "Không phù hợp" đã báo ứng viên: hai bên chỉ xem lịch sử; nộp lại thì mở).
 - `candidate_limit_remaining`: chỉ với ứng viên khi NTD chưa trả lời lần nào (số tin còn được gửi), ngược lại `null`.
 - `last_message.preview` của tin không phải chữ là chuỗi rỗng; giao diện tự hiển thị theo `kind`.
 

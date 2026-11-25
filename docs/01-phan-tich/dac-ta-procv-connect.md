@@ -55,6 +55,8 @@ email nhắc cho tới khi đủ điều kiện lại.
 | Công ty chặn ứng viên | Khóa mọi hội thoại của ứng viên với công ty; ứng viên thấy "Cuộc trò chuyện hiện không nhận tin nhắn" |
 | Gỡ chặn / chặn hết hạn | Mở lại |
 | Bàn giao tin cho thành viên khác | Phía NTD là người phụ trách mới ngay (đọc từ `job.posted_by`), lịch sử giữ nguyên |
+| Hồ sơ "Không phù hợp" đã báo ứng viên | Đóng gửi tin cả hai bên, vẫn xem lịch sử; không mở hội thoại mới cho hồ sơ đó. Tính theo trạng thái đã báo nên trong 15 giây hoàn tác chưa đóng. Trúng tuyển vẫn nhắn được (trao đổi ngày đi làm, giấy tờ) |
+| Ứng viên nộp lại vào tin | Hội thoại mở lại |
 | Tài khoản bị khóa | Khóa; mở lại khi tài khoản được mở |
 | Xóa tài khoản | Xóa nội dung và tệp của người đó, hiện "Tài khoản đã xóa", khóa vĩnh viễn |
 

@@ -71,7 +71,7 @@ def present_conversations(rows, role, *, detail=False):
         application = applications.get((conversation.job_id, conversation.candidate_id))
         visible = (
             application.candidate_visible_status(application.status_history.all())
-            if application is not None and role == Role.CANDIDATE
+            if application is not None
             else None
         )
         results.append(
@@ -85,6 +85,7 @@ def present_conversations(rows, role, *, detail=False):
                     role,
                     application=application,
                     blocked=getattr(conversation, 'is_blocked', None),
+                    status=visible,
                 ),
                 limit_remaining=candidate_limit_remaining(conversation, role) if detail else None,
             )

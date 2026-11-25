@@ -11,12 +11,14 @@ from apps.applications.services import is_candidate_blocked
 from apps.employers.services import ensure_recruiter_candidate_data_access
 from apps.jobs.models import Job
 
-from ..domain import Role, SystemEvent
+from ..domain import LockedReason, Role, SystemEvent
 from ..models import Conversation, Message
-from .access import NOT_ALLOWED
-from .messages import append_message
+from .access import NOT_ALLOWED, visible_status
+from .messages import LOCK_MESSAGES, append_message
 from .policy import connect_enabled
 from .realtime import push_conversation_changed, push_read
+
+CLOSED_MESSAGE = LOCK_MESSAGES[LockedReason.CLOSED]
 
 
 def _current_application(job, candidate):
@@ -67,6 +69,8 @@ def start_candidate_conversation(candidate, job_public_id):
     application = _current_application(job, candidate)
     if application is None or application.status == Application.Status.WITHDRAWN:
         raise PermissionDenied(NOT_ALLOWED)
+    if visible_status(application) == Application.Status.REJECTED:
+        raise PermissionDenied(CLOSED_MESSAGE)
     _ensure_open(job, candidate, Role.CANDIDATE)
     conversation, created = _get_or_create(
         job, candidate, Conversation.Origin.APPLICATION, Role.CANDIDATE
@@ -97,6 +101,10 @@ def start_recruiter_conversation(recruiter, *, application_public_id='', invitat
         origin = Conversation.Origin.INVITATION
     if source is None:
         raise NotFound(NOT_ALLOWED)
+    if origin == Conversation.Origin.APPLICATION and visible_status(source) == (
+        Application.Status.REJECTED
+    ):
+        raise PermissionDenied(CLOSED_MESSAGE)
     job, candidate = source.job, source.candidate
     _ensure_open(job, candidate, Role.RECRUITER)
     conversation, created = _get_or_create(job, candidate, origin, Role.RECRUITER)

@@ -173,5 +173,6 @@
   "connect_blocked_done": "Đã chặn tin nhắn.",
   "connect_unblocked_done": "Đã bỏ chặn.",
   "connect_action_failed": "Không thực hiện được, thử lại sau.",
-  "connect_locked_blocked_by_me": "Bạn đã chặn tin nhắn trong cuộc trò chuyện này."
+  "connect_locked_blocked_by_me": "Bạn đã chặn tin nhắn trong cuộc trò chuyện này.",
+  "connect_locked_closed": "Hồ sơ đã có kết quả nên cuộc trò chuyện đã đóng."
 }

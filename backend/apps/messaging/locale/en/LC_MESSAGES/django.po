@@ -58,6 +58,9 @@ msgstr "The application was withdrawn, so messages cannot be sent."
 msgid "Bạn đã chặn tin nhắn trong cuộc trò chuyện này."
 msgstr "You blocked messages in this conversation."
 
+msgid "Hồ sơ đã có kết quả nên cuộc trò chuyện đã đóng."
+msgstr "This application has a result, so the conversation is closed."
+
 msgid "Tài khoản bên kia không còn hoạt động."
 msgstr "The other account is no longer active."
 

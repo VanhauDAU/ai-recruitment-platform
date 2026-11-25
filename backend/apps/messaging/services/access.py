@@ -12,10 +12,18 @@ from .policy import candidate_unanswered_limit, connect_enabled
 NOT_ALLOWED = gettext_lazy('Bạn chưa thể nhắn tin về tin tuyển dụng này.')
 
 
-def lock_reason(conversation, role, *, application=None, blocked=None):
+def visible_status(application, published_history=None):
+    """Trạng thái hồ sơ ứng viên đã được báo; quyết định còn trong cửa sổ hoàn tác chưa tính."""
+    if application is None:
+        return None
+    return application.candidate_visible_status(published_history)
+
+
+def lock_reason(conversation, role, *, application=None, blocked=None, status=None):
     """Lý do một phía không gửi được tin; '' khi gửi được.
 
-    ``blocked`` nhận giá trị đã annotate ở selector để danh sách không truy vấn thêm.
+    ``blocked`` nhận giá trị đã annotate ở selector để danh sách không truy vấn thêm;
+    ``status`` là trạng thái hồ sơ đã báo ứng viên (tính sẵn ở danh sách).
     """
     if not connect_enabled():
         return LockedReason.DISABLED
@@ -37,6 +45,12 @@ def lock_reason(conversation, role, *, application=None, blocked=None):
         return LockedReason.UNAVAILABLE
     if application is not None and application.status == Application.Status.WITHDRAWN:
         return LockedReason.WITHDRAWN
+    if application is not None:
+        # Theo trạng thái đã báo ứng viên, nên NTD vẫn hoàn tác được trong 15 giây
+        # mà hội thoại không đóng sớm.
+        status = status or visible_status(application)
+        if status == Application.Status.REJECTED:
+            return LockedReason.CLOSED
     return LockedReason.NONE
 
 
