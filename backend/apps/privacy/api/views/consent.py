@@ -7,13 +7,14 @@ from rest_framework.views import APIView
 
 from apps.privacy.api.serializers.consent import ConsentSerializer
 from apps.privacy.services import build_consent, load_consent, set_consent_cookie
+from common.api.throttling import with_account_write_cap
 
 
 class ConsentView(APIView):
     """Read or replace the signed, first-party consent cookie."""
 
     permission_classes = [permissions.AllowAny]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = with_account_write_cap(ScopedRateThrottle)
     throttle_scope = 'consent'
 
     def get_throttles(self):

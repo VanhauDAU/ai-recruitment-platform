@@ -33,6 +33,7 @@ from apps.applications.services import (
 )
 from apps.campaigns.services import resolve_campaign_attribution
 from apps.employers.services import ensure_recruiter_candidate_data_access
+from common.api.throttling import WriteScopedRateThrottle, with_default_throttles
 
 
 @extend_schema_view(
@@ -45,6 +46,8 @@ from apps.employers.services import ensure_recruiter_candidate_data_access
 )
 @extend_schema(tags=['applications'])
 class CandidateApplicationListCreateView(generics.ListCreateAPIView):
+    throttle_classes = with_default_throttles(WriteScopedRateThrottle)
+    throttle_scope = 'application_create'
     permission_classes = [IsCandidate]
 
     def get_queryset(self):
@@ -127,6 +130,8 @@ class CandidateApplicationWithdrawView(APIView):
     tags=['applications'],
 )
 class CandidateApplicationRemindView(APIView):
+    throttle_classes = with_default_throttles(WriteScopedRateThrottle)
+    throttle_scope = 'application_remind'
     permission_classes = [IsCandidate]
 
     def post(self, request, public_id):

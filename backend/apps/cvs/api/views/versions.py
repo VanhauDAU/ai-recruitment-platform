@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 from apps.cvs.api.serializers import CvVersionSerializer, CvVersionSummarySerializer
 from apps.cvs.selectors import candidate_cv_versions_queryset
 from apps.cvs.services import CvLifecyclePolicyError, StaleDraftError, save_draft_as_version
+from common.api.throttling import WriteScopedRateThrottle, with_default_throttles
 
 from .base import CandidateCvMixin, draft_conflict_response, expected_lock_version
 
@@ -39,6 +40,8 @@ class CvSaveVersionView(CandidateCvMixin, APIView):
 
 
 class CvPublishView(CvSaveVersionView):
+    throttle_classes = with_default_throttles(WriteScopedRateThrottle)
+    throttle_scope = 'cv_publish'
     publish = True
 
 

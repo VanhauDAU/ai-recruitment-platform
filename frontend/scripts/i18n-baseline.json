@@ -4,15 +4,15 @@
   "features/admin": 1097,
   "features/common": 221,
   "features/employer": 0,
-  "features/main": 642,
+  "features/main": 636,
   "pages": 2,
   "pages/admin": 10,
   "pages/employer": 0,
-  "pages/main": 763,
+  "pages/main": 760,
   "shared": 25,
   "src": 0,
   "widgets/admin": 1543,
   "widgets/common": 16,
   "widgets/employer": 0,
-  "widgets/main": 300
+  "widgets/main": 299
 }

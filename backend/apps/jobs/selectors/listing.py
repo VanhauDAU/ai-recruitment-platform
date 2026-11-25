@@ -1,15 +1,15 @@
 from django.db.models import BooleanField, Case, F, IntegerField, OuterRef, Q, Subquery, Value, When
-from django.db.models.functions import Coalesce
 from rest_framework.exceptions import ValidationError
 
 from apps.employers.models import CompanyPinnedJob
-from common.db.search import fold_accents, search_q
+from common.db.search import fold_accents, folded_search_q
 
 from ..models import Job, JobCategory
 from ..models.querysets import (
     SALARY_BUCKETS,
     active_jobs_queryset,
     filter_salary_bucket_queryset,
+    listing_recency,
     publicly_available_job_filter,
     stopped_job_filter,
 )
@@ -23,7 +23,7 @@ __all__ = [
 ]
 
 TRUTHY_VALUES = {'1', 'true', 'True'}
-JOB_LIST_ORDERINGS = {'newest', 'salary_desc', 'urgent'}
+JOB_LIST_ORDERINGS = {'newest', 'salary_desc', 'closing_soon'}
 
 
 def filter_salary_bucket(queryset, bucket_key):
@@ -77,20 +77,36 @@ def active_job_tracking_queryset(slugs):
     return Job.objects.filter(publicly_available_job_filter(), slug__in=slugs).only('id', 'slug')
 
 
+# Autocomplete reads at most this many distinct terms, prefix matches first,
+# instead of every matching job title.
+SUGGEST_SCAN_LIMIT = 50
+
+
 def suggest_job_search_terms(query, search_by=None, limit=10):
     """Return de-duplicated autocomplete terms, prioritising prefix matches."""
     query = (query or '').strip()
     if not query:
         return []
 
-    field = 'company__company_name' if search_by == 'company' else 'title'
+    if search_by == 'company':
+        field, folded_field = 'company__company_name', 'company__company_name_search'
+    else:
+        field, folded_field = 'title', 'title_search'
+    normalized_query = fold_accents(query)
     values = (
         Job.objects.filter(publicly_available_job_filter())
-        .filter(search_q(field, query))
+        .filter(folded_search_q(folded_field, query))
+        .annotate(
+            suggest_rank=Case(
+                When(**{f'{folded_field}__startswith': normalized_query}, then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField(),
+            )
+        )
+        .order_by('suggest_rank', field)
         .values_list(field, flat=True)
-        .distinct()
+        .distinct()[:SUGGEST_SCAN_LIMIT]
     )
-    normalized_query = fold_accents(query)
     seen, starts, contains = set(), [], []
     for value in values:
         term = (value or '').strip()
@@ -142,45 +158,35 @@ def _filter_search(queryset, params):
     if not search:
         return queryset
     search_by = params.get('search_by', 'title')
+    title = folded_search_q('title_search', search)
+    company = folded_search_q('company__company_name_search', search)
     if search_by == 'company':
-        return queryset.filter(search_q('company__company_name', search))
+        return queryset.filter(company)
     if search_by == 'both':
-        return queryset.filter(
-            search_q('title', search) | search_q('company__company_name', search)
-        )
-    return queryset.filter(search_q('title', search))
+        return queryset.filter(title | company)
+    return queryset.filter(title)
 
 
 def _order_jobs(queryset, ordering, *, pinned_first=False):
-    """``pinned_first`` puts a company's pinned jobs ahead of the default feed
-    order; an explicit ``ordering`` always wins over the pins."""
+    """Organic order only (ADR-0030): newest first by first publication.
+
+    ``pinned_first`` puts a company's pinned jobs ahead of the default order on
+    its own page; an explicit ``ordering`` always wins over the pins.
+    """
     if ordering and ordering not in JOB_LIST_ORDERINGS:
         raise ValidationError({'ordering': 'Invalid ordering.'})
 
-    queryset = queryset.annotate(
-        lifecycle_recency=Coalesce('first_approved_at', 'published_at', 'created_at')
-    )
-    if ordering == 'newest':
-        return queryset.order_by('-lifecycle_recency', '-created_at', '-id')
+    queryset = queryset.annotate(listing_recency=listing_recency())
+    newest = ['-listing_recency', '-created_at', '-id']
     if ordering == 'salary_desc':
-        return queryset.order_by(
-            F('salary_max').desc(nulls_last=True), '-lifecycle_recency', '-created_at', '-id'
-        )
-    if ordering == 'urgent':
-        return queryset.order_by('-is_urgent', '-lifecycle_recency', '-created_at', '-id')
-    tier_weight = Case(
-        When(tier=Job.Tier.TOP, then=2),
-        When(tier=Job.Tier.FEATURED, then=1),
-        default=0,
-        output_field=IntegerField(),
-    )
-    queryset = queryset.annotate(tier_weight=tier_weight)
-    default_order = ['-tier_weight', '-lifecycle_recency', '-created_at', '-id']
-    if not pinned_first:
-        return queryset.order_by(*default_order)
+        return queryset.order_by(F('salary_max').desc(nulls_last=True), *newest)
+    if ordering == 'closing_soon':
+        return queryset.order_by(F('deadline').asc(nulls_last=True), *newest)
+    if ordering or not pinned_first:
+        return queryset.order_by(*newest)
     pin = CompanyPinnedJob.objects.filter(job_id=OuterRef('pk'), company_id=OuterRef('company_id'))
     return queryset.annotate(pin_order=Subquery(pin.values('sort_order')[:1])).order_by(
-        F('pin_order').asc(nulls_last=True), *default_order
+        F('pin_order').asc(nulls_last=True), *newest
     )
 
 

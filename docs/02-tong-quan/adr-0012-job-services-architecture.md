@@ -1,6 +1,6 @@
 # ADR-0012: Vòng đời tin và dịch vụ gia tăng tuyển dụng
 
-**Trạng thái:** Thay thế một phần — phần duyệt tin bởi [ADR-0014](adr-0014-job-post-moderation.md), phần dịch vụ thương mại bởi [ADR-0015](adr-0015-remove-commercial-services.md); phần vòng đời hiển thị còn hiệu lực
+**Trạng thái:** Thay thế một phần — phần duyệt tin bởi [ADR-0014](adr-0014-job-post-moderation.md), phần dịch vụ thương mại bởi [ADR-0015](adr-0015-remove-commercial-services.md), §2.5 presentation và ranking bởi [ADR-0030](adr-0030-fair-job-listing.md); phần vòng đời hiển thị còn hiệu lực
 **Ngày:** 12/08/2026  
 **Owner:** Jobs, Employer Services, Candidate Discovery  
 **Nhánh:** `docs/job-services-architecture`
@@ -110,6 +110,8 @@ Không phải capability thương mại:
 - nhãn RED.
 
 ### 2.5. Presentation và ranking
+
+> Đã thay bằng [ADR-0030](adr-0030-fair-job-listing.md): không còn hạng tin, nhãn chỉ do hệ thống tính.
 
 Candidate clients chỉ đọc projection ổn định từ backend:
 

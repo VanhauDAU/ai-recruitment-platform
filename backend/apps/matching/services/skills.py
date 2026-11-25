@@ -14,11 +14,9 @@ import re
 import unicodedata
 from dataclasses import dataclass
 
+from apps.skills.domain import UNCOUNTED_GROUPS
 from apps.skills.selectors import active_skill_terms
 
-TRAIT_GROUP = 'Phẩm chất cá nhân'
-POSITION_GROUP = 'Tên vị trí'
-UNCOUNTED_GROUPS = (TRAIT_GROUP, POSITION_GROUP)
 # Tên rất ngắn ("AI", "C#") dễ trùng chữ thường trong câu, nên phải đúng hoa thường.
 CASE_SENSITIVE_MAX_CHARS = 2
 # Ký tự được xem là một phần của tên công nghệ: không cắt "C#" khỏi "C#.NET",

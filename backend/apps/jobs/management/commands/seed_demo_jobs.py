@@ -5,7 +5,7 @@ from io import BytesIO
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 from django.utils.text import slugify
 from PIL import Image, ImageDraw, ImageFont
@@ -131,6 +131,10 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        # Tài khoản demo dùng mật khẩu có trong repo công khai. Production chỉ được
+        # dọn (--clear), không được tạo.
+        if settings.IS_PRODUCTION and not options['clear']:
+            raise CommandError('Không seed dữ liệu demo trên production.')
         removed = User.objects.filter(email__endswith=DEMO_DOMAIN).delete()[0]
         self.stdout.write(f'Removed old demo data ({removed} rows).')
         if options['clear']:
@@ -228,12 +232,6 @@ class Command(BaseCommand):
                 work_type = rnd.choice(WORK_TYPES)
                 days_ago = rnd.choice(day_slots)
                 published = now - timedelta(days=days_ago, hours=rnd.randint(0, 23))
-                # Hạng tin + nhãn demo: tỉ lệ mô phỏng danh sách thật (đa số tin thường,
-                # một ít nổi bật/TOP) để trang danh sách thể hiện đủ các biến thể card.
-                tier = rnd.choices(
-                    [Job.Tier.STANDARD, Job.Tier.FEATURED, Job.Tier.TOP],
-                    weights=[65, 25, 10],
-                )[0]
                 job = Job.objects.create(
                     posted_by=user,
                     company=company,
@@ -256,9 +254,6 @@ class Command(BaseCommand):
                     salary_type=salary_type,
                     salary_min=smin,
                     salary_max=smax,
-                    tier=tier,
-                    is_hot=rnd.random() < 0.18,
-                    is_urgent=rnd.random() < 0.18,
                     deadline=(published + timedelta(days=rnd.choice([7, 15, 30, 45]))).date(),
                     status=Job.Status.ACTIVE,
                     published_at=published,

@@ -6,11 +6,12 @@ from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import permissions, serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from ...selectors import linked_oauth_provider
-from ...services import auth_sessions
-from ...services.exceptions import OAuthReauthRequired
+from common.api.throttling import with_account_write_cap
+
+from ...services import auth_sessions, password_setup_code
 from ...services.password import change_password
 from ...services.refresh_cookies import set_refresh_cookie
 from ..serializers import PasswordChangeSerializer, SessionUserSerializer
@@ -18,34 +19,39 @@ from ..serializers import PasswordChangeSerializer, SessionUserSerializer
 
 class PasswordChangeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    # current_password là một lần đoán mật khẩu: token access bị lộ không được
+    # dùng để dò mật khẩu không giới hạn.
+    throttle_classes = with_account_write_cap(ScopedRateThrottle)
+    throttle_scope = 'password_change'
 
     @extend_schema(
         summary='Điều kiện cần để đặt hoặc thay đổi mật khẩu ở phiên hiện tại',
         description=(
-            'Cho phép client hiển thị yêu cầu xác thực lại TRƯỚC khi người dùng '
-            'điền form, thay vì để họ nhận 403 sau khi bấm lưu.'
+            'Tài khoản chưa có mật khẩu (đăng nhập mạng xã hội) phải nhập mã gửi '
+            'qua email; client biết trước để hiện ô nhập mã thay vì nhận lỗi sau khi lưu.'
         ),
         responses=inline_serializer(
             'PasswordSetupRequirements',
             fields={
                 'has_usable_password': serializers.BooleanField(),
-                'requires_reauth': serializers.BooleanField(),
-                'reauth_provider': serializers.CharField(allow_null=True),
-                'reauth_max_age_seconds': serializers.IntegerField(),
+                'requires_email_code': serializers.BooleanField(),
+                'email_code_ttl_seconds': serializers.IntegerField(),
+                'resend_after_seconds': serializers.IntegerField(),
             },
         ),
         tags=['auth'],
     )
     def get(self, request):
         user = request.user
-        session = auth_sessions.current_session(request, user)
-        requires_reauth = auth_sessions.requires_oauth_reauthentication(user, session)
+        has_password = user.has_usable_password()
         return Response(
             {
-                'has_usable_password': user.has_usable_password(),
-                'requires_reauth': requires_reauth,
-                'reauth_provider': linked_oauth_provider(user) if requires_reauth else None,
-                'reauth_max_age_seconds': settings.AUTH_REAUTH_MAX_AGE_SECONDS,
+                'has_usable_password': has_password,
+                'requires_email_code': not has_password,
+                'email_code_ttl_seconds': settings.PASSWORD_SETUP_CODE_TTL,
+                'resend_after_seconds': 0
+                if has_password
+                else password_setup_code.cooldown_remaining(user),
             }
         )
 
@@ -74,9 +80,6 @@ class PasswordChangeView(APIView):
         session = auth_sessions.current_session(request, user)
         if session is None:
             raise ValidationError({'detail': _('Cần phiên refresh hiện tại để đổi mật khẩu.')})
-        if auth_sessions.requires_oauth_reauthentication(user, session):
-            raise OAuthReauthRequired(linked_oauth_provider(user))
-
         tokens = change_password(
             user,
             session,
@@ -92,3 +95,37 @@ class PasswordChangeView(APIView):
             }
         )
         return set_refresh_cookie(response, tokens['refresh'], user=user)
+
+
+class PasswordSetupCodeView(APIView):
+    """Gửi mã xác minh qua email để tài khoản chưa có mật khẩu tạo mật khẩu."""
+
+    permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = with_account_write_cap(ScopedRateThrottle)
+    throttle_scope = 'password_setup_code'
+
+    @extend_schema(
+        summary='Gửi mã xác minh tạo mật khẩu tới email tài khoản',
+        request=None,
+        responses=inline_serializer(
+            'PasswordSetupCodeResponse',
+            fields={
+                'detail': serializers.CharField(),
+                'resend_after_seconds': serializers.IntegerField(),
+            },
+        ),
+        tags=['auth'],
+    )
+    def post(self, request):
+        user = request.user
+        if user.has_usable_password():
+            raise ValidationError(
+                {'detail': _('Tài khoản đã có mật khẩu, hãy dùng mật khẩu hiện tại.')}
+            )
+        resend_after = password_setup_code.request_code(user)
+        return Response(
+            {
+                'detail': _('Đã gửi mã xác minh tới %(email)s.') % {'email': user.email},
+                'resend_after_seconds': resend_after,
+            }
+        )

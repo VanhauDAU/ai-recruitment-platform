@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import IsEmployer
 from apps.employers.services import ensure_recruiter_job_workspace
+from common.api.throttling import WriteScopedRateThrottle, with_default_throttles
 
 from ...selectors import (
     campaign_channel_report,
@@ -112,6 +113,9 @@ class CampaignChannelDetailView(CampaignScopedView):
     responses=CampaignChannelSerializer,
 )
 class CampaignChannelContentView(CampaignScopedView):
+    throttle_classes = with_default_throttles(WriteScopedRateThrottle)
+    throttle_scope = 'campaign_ai_content'
+
     def post(self, request, public_id, channel_id):
         try:
             channel, fallback = generate_channel_content(channel=self.channel(), user=request.user)

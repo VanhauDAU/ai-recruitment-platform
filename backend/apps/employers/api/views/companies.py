@@ -8,7 +8,11 @@ from rest_framework.pagination import CursorPagination, PageNumberPagination
 from rest_framework.response import Response
 
 from apps.accounts.api.permissions import IsEmployer
-from common.api.throttling import ClientIPScopedRateThrottle
+from common.api.throttling import (
+    ClientIPScopedRateThrottle,
+    WriteScopedRateThrottle,
+    with_default_throttles,
+)
 
 from ...selectors import (
     attach_active_public_job_counts,
@@ -40,6 +44,8 @@ class MyCompanyView(generics.RetrieveAPIView):
 class CreateCompanyView(generics.CreateAPIView):
     """Tạo hồ sơ công ty mới (thẻ 2) — có hiệu lực ngay, người tạo là owner."""
 
+    throttle_classes = with_default_throttles(WriteScopedRateThrottle)
+    throttle_scope = 'company_create'
     serializer_class = CompanySerializer
     permission_classes = [IsEmployer]
 

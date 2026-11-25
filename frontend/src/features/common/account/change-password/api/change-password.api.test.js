@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { changeCurrentPassword, getPasswordSetupRequirements } from './change-password.api'
+import { changeCurrentPassword, getPasswordSetupRequirements, sendPasswordSetupCode } from './change-password.api'
 
 const { get, post } = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn() }))
 
@@ -12,13 +12,20 @@ describe('change password API', () => {
     localStorage.clear()
   })
 
-  it('reads the reauthentication requirement of the current session before showing the form', async () => {
+  it('reads whether an emailed code is needed before showing the form', async () => {
     get.mockResolvedValue({
-      data: { requires_reauth: true, reauth_provider: 'google', reauth_max_age_seconds: 300 },
+      data: { has_usable_password: false, requires_email_code: true, email_code_ttl_seconds: 600, resend_after_seconds: 0 },
     })
 
-    await expect(getPasswordSetupRequirements()).resolves.toMatchObject({ requires_reauth: true })
+    await expect(getPasswordSetupRequirements()).resolves.toMatchObject({ requires_email_code: true })
     expect(get).toHaveBeenCalledWith('/auth/password/')
+  })
+
+  it('asks the backend to email a password setup code', async () => {
+    post.mockResolvedValue({ data: { detail: 'sent', resend_after_seconds: 60 } })
+
+    await expect(sendPasswordSetupCode()).resolves.toMatchObject({ resend_after_seconds: 60 })
+    expect(post).toHaveBeenCalledWith('/auth/password/setup-code/')
   })
 
   it('relies on the HttpOnly refresh cookie instead of exposing refresh in the payload', async () => {

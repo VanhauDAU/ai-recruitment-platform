@@ -24,15 +24,18 @@ EXPECTED_CATEGORY_SLUGS = {
     'cv-va-mau-cv',
     'tim-viec-an-toan',
     'lien-he-ho-tro',
+    'dieu-khoan-va-chinh-sach',
 }
 
 # Registry nhỏ này là contract của các route frontend được phép xuất hiện trong
 # nội dung. Prefix động vẫn phải bắt đầu từ một route canonical đã biết.
 KNOWN_INTERNAL_PATHS = {
+    '/chinh-sach-cookie',
     '/forgot-password',
     '/login',
     '/mau-cv',
     '/sign-up',
+    '/tai-khoan/cai-dat-bao-mat',
     '/tai-khoan/cai-dat-goi-y-viec-lam',
     '/tai-khoan/cv-cua-toi',
     '/tai-khoan/doi-mat-khau',

@@ -100,8 +100,11 @@ msgstr "%(network)s returned an error (%(code)s). Try posting again."
 msgid "Đã dùng hết lượt soạn bằng AI hôm nay."
 msgstr "You have used all of today's AI drafts."
 
-msgid "Chọn xlsx hoặc pdf."
-msgstr "Choose xlsx or pdf."
+msgid "Chọn xlsx; PDF được tạo qua hàng đợi."
+msgstr "Choose xlsx; PDF reports are generated through the queue."
+
+msgid "Kết quả đã hết hạn, hãy tạo lại báo cáo."
+msgstr "This result has expired. Please generate the report again."
 
 msgid "Chọn một ảnh."
 msgstr "Choose an image."

@@ -1,9 +1,9 @@
 """Upload ảnh nền strip thông báo (AN-V2)."""
 
 from django.core.exceptions import ValidationError
-from PIL import Image
 from rest_framework.exceptions import ValidationError as DrfValidationError
 
+from common.files.images import UnsafeImage, open_bounded_image
 from common.storage.media import save_image_upload, validate_image_upload
 
 ANNOUNCEMENT_BG_MAX_BYTES = 1 * 1024 * 1024
@@ -33,9 +33,9 @@ def upload_announcement_background(*, upload, request=None):
 
     upload.seek(0)
     try:
-        with Image.open(upload) as image:
+        with open_bounded_image(upload) as image:
             width, height = image.size
-    except OSError as error:
+    except UnsafeImage as error:
         raise DrfValidationError({'file': 'Không đọc được file ảnh.'}) from error
     finally:
         upload.seek(0)

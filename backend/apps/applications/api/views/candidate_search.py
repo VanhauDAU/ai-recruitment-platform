@@ -1,18 +1,29 @@
 from django.shortcuts import get_object_or_404
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
-from rest_framework import status
+from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from apps.accounts.api.permissions import IsEmployer
+from apps.accounts.api.permissions import IsCandidate, IsEmployer
 from apps.employers.services import ensure_recruiter_candidate_data_access
 from apps.matching.services import ProfileFilters
+from common.api.throttling import with_account_write_cap
 
-from ...selectors import recruiter_talent_pool_jobs_queryset
-from ...services import candidate_detail, invite_candidate, search_candidates
+from ...selectors import (
+    candidate_search_invitations_queryset,
+    recruiter_talent_pool_jobs_queryset,
+)
+from ...services import (
+    candidate_detail,
+    invite_candidate,
+    respond_to_search_invitation,
+    search_candidates,
+)
 from ..serializers.candidate_search import (
+    CandidateSearchInvitationResponseSerializer,
+    CandidateSearchInvitationSerializer,
     CandidateSearchInviteSerializer,
     CandidateSearchQuerySerializer,
 )
@@ -95,13 +106,13 @@ class RecruiterCandidateSearchDetailView(APIView):
 
 @extend_schema(
     tags=['applications'],
-    summary='Tìm CV: mời một ứng viên ứng tuyển vào một tin đang tuyển',
+    summary='Tìm CV: gửi lời mời kết nối về một tin đang tuyển cho một ứng viên',
     request=CandidateSearchInviteSerializer,
     responses={204: None},
 )
 class RecruiterCandidateSearchInviteView(APIView):
     permission_classes = [IsEmployer]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = with_account_write_cap(ScopedRateThrottle)
     throttle_scope = 'candidate_search_invite'
 
     def post(self, request, ref):
@@ -109,3 +120,34 @@ class RecruiterCandidateSearchInviteView(APIView):
         serializer.is_valid(raise_exception=True)
         invite_candidate(request.user, _job(request, serializer.validated_data['job']), ref)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema(tags=['applications'], summary='Lời mời kết nối của nhà tuyển dụng gửi cho tôi')
+class CandidateSearchInvitationListView(generics.ListAPIView):
+    permission_classes = [IsCandidate]
+    serializer_class = CandidateSearchInvitationSerializer
+
+    def get_queryset(self):
+        return candidate_search_invitations_queryset(self.request.user)
+
+
+@extend_schema(
+    tags=['applications'],
+    summary='Đồng ý hoặc từ chối một lời mời kết nối',
+    request=CandidateSearchInvitationResponseSerializer,
+    responses={200: CandidateSearchInvitationSerializer},
+)
+class CandidateSearchInvitationRespondView(APIView):
+    permission_classes = [IsCandidate]
+
+    def post(self, request, public_id):
+        serializer = CandidateSearchInvitationResponseSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        invitation = respond_to_search_invitation(
+            candidate=request.user,
+            public_id=public_id,
+            accept=serializer.validated_data['accept'],
+        )
+        return Response(
+            CandidateSearchInvitationSerializer(invitation, context={'request': request}).data
+        )

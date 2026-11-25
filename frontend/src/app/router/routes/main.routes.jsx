@@ -20,6 +20,7 @@ import {
   CompanyListPage,
   CompanySearchPage,
   EmailNotificationSettingsPage,
+  EmployerConnectionsPage,
   FollowedCompaniesPage,
   ForgotPasswordPage,
   HomePage,
@@ -69,6 +70,7 @@ const ACCOUNT_PAGE_BY_KEY = {
   'job-notifications': JobAlertSettingsPage,
   'matching-jobs': MatchingJobsPage,
   'talent-pools': TalentPoolsPage,
+  'employer-connections': EmployerConnectionsPage,
   security: SecuritySettingsPage,
 }
 

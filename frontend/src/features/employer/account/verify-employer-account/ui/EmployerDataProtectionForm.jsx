@@ -26,7 +26,6 @@ import { getIntlLocale, m } from '@/shared/config/i18n'
 
 const CANDIDATE_AGREEMENT_DOCUMENT_NAME = m.employer_account_dpa_document_name()
 const OFFICE_EXTENSION_BY_TYPE = {
-  'application/msword': '.doc',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
 }
 const DOCUMENT_STATUS = {

@@ -1,10 +1,10 @@
 """Taxonomy ngành nghề/chuyên môn dùng để lọc tin và bản địa hóa tên hiển thị."""
 
 from django.db import models
-from django.utils.text import slugify
 from django.utils.translation import gettext_lazy
 
 from common.db.public_id import generate_public_id
+from common.db.slugs import unique_slug
 
 
 class JobCategory(models.Model):
@@ -49,7 +49,7 @@ class JobCategory(models.Model):
         if not self.public_id:
             self.public_id = generate_public_id('jobcat')
         if not self.slug:
-            self.slug = slugify(self.name)
+            self.slug = unique_slug(JobCategory, self.name, exclude_pk=self.pk)
         super().save(*args, **kwargs)
 
 

@@ -129,10 +129,17 @@ class CampaignRecipientLanguageTests(HealthFixtures, TestCase):
         workbook = load_workbook(
             BytesIO(self.client.get(self.report_url(), {'type': 'xlsx'}, **EN).content)
         )
-        with patch(
-            'apps.campaigns.services.report_export.render_html_pdf', return_value=b'%PDF-1.7'
-        ) as render:
-            self.client.get(self.report_url(), {'type': 'pdf'}, **EN)
+        pdf_url = reverse(
+            'employer-campaign-report-pdf', kwargs={'public_id': self.campaign.public_id}
+        )
+        with (
+            patch(
+                'apps.campaigns.services.report_export.render_html_pdf', return_value=b'%PDF-1.7'
+            ) as render,
+            self.captureOnCommitCallbacks(execute=True),
+        ):
+            # The worker renders in the language of the request that queued it.
+            self.client.post(pdf_url, **EN)
 
         self.assertEqual(
             workbook.sheetnames,

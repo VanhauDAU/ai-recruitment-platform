@@ -7,8 +7,9 @@ from django.db import transaction
 from django.utils.text import slugify
 from rest_framework.exceptions import ValidationError
 
+from apps.skills.domain import normalize_skill_name
 from apps.skills.models import Skill
-from apps.skills.selectors import normalize_skill_name, skills_by_names
+from apps.skills.selectors import skills_by_names
 from apps.skills.services import create_skill
 from common.vietnam_time import vietnam_today
 
@@ -31,14 +32,9 @@ FALLBACK_PHONE = '0000000000'
 
 
 def _create_or_reuse_skill(name):
-    """Tạo kỹ năng mới; cách viết khác của kỹ năng đã có (trùng slug) thì dùng lại mục cũ."""
-    try:
-        skill, _created = create_skill(name)
-    except Skill.DoesNotExist:
-        skill = Skill.objects.filter(slug=slugify(name)).first()
-        if skill is None:
-            raise RowRejected([f'Không tạo được kỹ năng: {name}.']) from None
-    return skill
+    """Cách viết khác của kỹ năng đã có (trùng slug, như "Python!") thì dùng lại mục cũ."""
+    existing = Skill.objects.filter(slug=slugify(name)).first()
+    return existing or create_skill(name, source=Skill.Source.IMPORT)[0]
 
 
 def _job_skills(resolved, *, create_missing_skills):

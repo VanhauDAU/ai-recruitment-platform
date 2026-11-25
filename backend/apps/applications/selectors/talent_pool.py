@@ -5,7 +5,13 @@ from django.db.models import Exists, OuterRef, Q
 from apps.jobs.models import Job
 from apps.jobs.selectors import job_similarity_scores, publicly_available_job_filter
 
-from ..models import Application, CandidateBlock, TalentPoolEntry, TalentPoolInvitation
+from ..models import (
+    Application,
+    CandidateBlock,
+    CandidateSearchInvitation,
+    TalentPoolEntry,
+    TalentPoolInvitation,
+)
 
 MIN_SUGGESTION_SCORE = 20
 
@@ -41,6 +47,15 @@ def candidate_talent_pool_queryset(candidate):
         TalentPoolEntry.objects.filter(TalentPoolEntry.active_q(), candidate=candidate)
         .select_related('source_application__job__company')
         .order_by('-created_at', '-id')
+    )
+
+
+def candidate_search_invitations_queryset(candidate):
+    """Lời mời kết nối ứng viên nhận được từ Tìm CV, mới nhất trước."""
+    return (
+        CandidateSearchInvitation.objects.filter(candidate=candidate)
+        .select_related('job__company')
+        .order_by('-invited_at', '-id')
     )
 
 

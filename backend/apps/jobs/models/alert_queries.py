@@ -2,11 +2,11 @@
 
 from django.db.models import Exists, F, OuterRef, Q
 
-from common.db.search import search_q
+from common.db.search import folded_search_q
 
 from .alerts import CandidateJobDigestItem, CandidateJobEmailSuppression, JobAlert
 from .categories import JobCategory
-from .querysets import active_jobs_queryset, filter_alert_salary_bucket_queryset
+from .querysets import active_jobs_queryset, filter_alert_salary_bucket_queryset, listing_recency
 
 
 def _category_graph():
@@ -68,9 +68,11 @@ def _unsent_candidate_jobs(candidate, *, published_before, job_ids=None, exclude
     )
     if exclude_digest_id is not None:
         in_flight = in_flight.exclude(digest_id=exclude_digest_id)
+    # "Tin mới" theo lần đăng đầu (ADR-0030): mở lại tin không gửi lại như tin mới.
     queryset = (
         active_jobs_queryset()
-        .filter(published_at__lte=published_before)
+        .annotate(listing_recency=listing_recency())
+        .filter(listing_recency__lte=published_before)
         .exclude(applications__candidate=candidate)
         .exclude(saved_by__candidate=candidate)
         .annotate(already_emailed=Exists(emailed_job))
@@ -105,11 +107,11 @@ def followed_company_job_matches(
         company__content_policy_hold=False,
         company__follows__candidate=candidate,
         company__follows__notify_new_jobs=True,
-        company__follows__notify_since__lt=F('published_at'),
+        company__follows__notify_since__lt=F('listing_recency'),
     )
     if published_after is not None:
-        queryset = queryset.filter(published_at__gt=published_after)
-    queryset = queryset.order_by('-published_at', '-created_at', '-pk')
+        queryset = queryset.filter(listing_recency__gt=published_after)
+    queryset = queryset.order_by('-listing_recency', '-created_at', '-pk')
     return queryset[:limit] if limit is not None else queryset
 
 
@@ -130,10 +132,10 @@ def strict_job_alert_matches(
         exclude_digest_id=exclude_digest_id,
     )
     if not ignore_cursor:
-        queryset = queryset.filter(published_at__gt=alert.cursor_at)
+        queryset = queryset.filter(listing_recency__gt=alert.cursor_at)
 
-    title_query = search_q('title', alert.keyword)
-    company_query = search_q('company__company_name', alert.keyword)
+    title_query = folded_search_q('title_search', alert.keyword)
+    company_query = folded_search_q('company__company_name_search', alert.keyword)
     if alert.keyword_scope == JobAlert.KeywordScope.COMPANY:
         queryset = queryset.filter(company_query)
     elif alert.keyword_scope == JobAlert.KeywordScope.BOTH:
@@ -162,5 +164,5 @@ def strict_job_alert_matches(
     if alert.employment_type:
         queryset = queryset.filter(employment_type=alert.employment_type)
 
-    queryset = queryset.distinct().order_by('-published_at', '-created_at', '-pk')
+    queryset = queryset.distinct().order_by('-listing_recency', '-created_at', '-pk')
     return queryset[:limit] if limit is not None else queryset

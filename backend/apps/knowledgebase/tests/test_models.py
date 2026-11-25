@@ -11,7 +11,7 @@ from apps.knowledgebase.models import (
 
 class KnowledgebaseFoundationTests(TestCase):
     def test_taxonomy_is_seeded(self):
-        self.assertEqual(KnowledgeCategory.objects.count(), 7)
+        self.assertEqual(KnowledgeCategory.objects.count(), 8)
         self.assertEqual(
             list(KnowledgeCategory.objects.values_list('slug', flat=True)),
             [
@@ -22,14 +22,16 @@ class KnowledgebaseFoundationTests(TestCase):
                 'cv-va-mau-cv',
                 'tim-viec-an-toan',
                 'lien-he-ho-tro',
+                'dieu-khoan-va-chinh-sach',
             ],
         )
 
     def test_reference_help_content_is_public_in_every_category(self):
         articles = KnowledgeArticle.objects.all()
 
-        self.assertEqual(articles.count(), 7)
-        self.assertEqual(articles.values('category_id').distinct().count(), 7)
+        # 7 bài trợ giúp gốc + Điều khoản sử dụng và Chính sách quyền riêng tư.
+        self.assertEqual(articles.count(), 9)
+        self.assertEqual(articles.values('category_id').distinct().count(), 8)
         self.assertFalse(articles.filter(published_revision__isnull=True).exists())
         self.assertFalse(
             articles.exclude(

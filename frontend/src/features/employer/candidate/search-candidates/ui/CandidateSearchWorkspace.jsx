@@ -9,6 +9,7 @@ import { m } from '@/shared/config/i18n'
 import useDebouncedValue from '@/shared/hooks/use-debounced-value'
 import { MascotEmpty } from '@/shared/ui/mascot'
 import { candidateSearchKeys, searchCandidates } from '../api/candidate-search.api'
+import { candidateStateLabel } from '../model/invitation-state'
 import './candidate-search.css'
 
 const CandidateQuickView = lazy(() => import('./CandidateQuickView'))
@@ -27,6 +28,7 @@ function CandidateRow({ candidate, onOpen }) {
     candidate.experience_months != null && durationText(candidate.experience_months),
     educationLevelLabel(candidate.education_level),
   ].filter(Boolean)
+  const stateLabel = candidateStateLabel(candidate)
   return (
     <li className="cs-row">
       <div className="cs-row__main">
@@ -47,9 +49,9 @@ function CandidateRow({ candidate, onOpen }) {
       </div>
       <div className="cs-row__side">
         <FitScoreChip status="ready" score={candidate.score} level={candidate.level} />
-        {(candidate.applied || candidate.invited) && (
-          <span className="cs-state">
-            {candidate.applied ? m.employer_workspace_search_applied() : m.employer_workspace_search_invited()}
+        {stateLabel && (
+          <span className="cs-state" data-state={candidate.applied ? 'applied' : candidate.invitation_status}>
+            {stateLabel}
           </span>
         )}
         <Button size="small" onClick={() => onOpen(candidate)}>{m.employer_workspace_search_quick_view()}</Button>
@@ -60,7 +62,8 @@ function CandidateRow({ candidate, onOpen }) {
 
 /**
  * Tìm CV: chọn một tin đang tuyển, hệ thống xếp các ứng viên đang bật "cho phép NTD tìm
- * kiếm" theo mức phù hợp với tin. Kết quả ẩn danh; bước tiếp theo là mời ứng tuyển.
+ * kiếm" theo mức phù hợp với tin. Kết quả ẩn danh; bước tiếp theo là gửi lời mời kết nối,
+ * ứng viên đồng ý thì NTD nhắn tin được (nhắn tin chưa làm).
  */
 export default function CandidateSearchWorkspace({ jobPublicId, onJobChange }) {
   const [keywordInput, setKeywordInput] = useState('')

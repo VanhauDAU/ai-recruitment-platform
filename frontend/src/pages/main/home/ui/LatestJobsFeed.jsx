@@ -7,11 +7,9 @@ import {
   companyInitial,
   formatNumber as fmt,
   formatSalary,
-  JobPresentationLabels,
   jobDetailPath,
 } from '@/entities/job/job'
 import { JobImpressionBoundary } from '@/features/main/job/track-job-engagement'
-import { legacyAsset } from '@/shared/config/assets'
 import { DEMAND_COLORS } from '../lib/market-stats-palette'
 import { useLatestJobsFeed } from '../model/use-latest-jobs-feed'
 import { getIntlLocale } from '@/shared/config/i18n'
@@ -60,7 +58,9 @@ function Mascot() {
   return (
     <div className="flex justify-center">
       <img
-        src={legacyAsset('welcome/procv-ai-robot-market-v2.png')}
+        src="/images/home/procv-ai-robot-market.webp"
+        width={520}
+        height={260}
         alt="Thị trường việc làm"
         className="h-auto w-full max-w-[260px] object-contain drop-shadow-md"
         loading="lazy"
@@ -118,7 +118,6 @@ export default function LatestJobsFeed({ jobs, enabled }) {
               <div className="min-w-0">
                 <p className="text-sm font-medium truncate">{item.job.title}</p>
                 <p className="text-xs text-green-100/70 truncate">{item.job.company_name}</p>
-                <JobPresentationLabels job={item.job} compact className="mt-1" />
               </div>
             </JobImpressionBoundary>
           </Tooltip>

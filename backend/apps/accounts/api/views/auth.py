@@ -6,7 +6,12 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from common.api.throttling import ClientIPScopedRateThrottle
+from common.api.throttling import (
+    ClientIPScopedRateThrottle,
+    WriteScopedRateThrottle,
+    with_account_write_cap,
+    with_default_throttles,
+)
 
 from ...models import User
 from ...services import verify_request_captcha
@@ -37,7 +42,7 @@ from ..serializers import (
 class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
-    throttle_classes = [ClientIPScopedRateThrottle]
+    throttle_classes = with_account_write_cap(ClientIPScopedRateThrottle)
     throttle_scope = 'register'
 
     def create(self, request, *args, **kwargs):
@@ -73,7 +78,7 @@ class RegisterEmailAvailabilityView(APIView):
     """Rate-limited UX pre-check; RegisterSerializer remains the final authority."""
 
     permission_classes = [permissions.AllowAny]
-    throttle_classes = [ClientIPScopedRateThrottle]
+    throttle_classes = with_account_write_cap(ClientIPScopedRateThrottle)
     throttle_scope = 'register_email_check'
 
     def post(self, request):
@@ -105,7 +110,7 @@ class RegisterEmailAvailabilityView(APIView):
 class LoginView(APIView):
     serializer_class = LoginCredentialsSerializer
     permission_classes = [permissions.AllowAny]
-    throttle_classes = [ClientIPScopedRateThrottle]
+    throttle_classes = with_account_write_cap(ClientIPScopedRateThrottle)
     throttle_scope = 'login'
 
     def post(self, request, *args, **kwargs):
@@ -152,6 +157,9 @@ class MeView(generics.RetrieveUpdateAPIView):
 
 
 class AvatarUploadView(APIView):
+    throttle_classes = with_default_throttles(WriteScopedRateThrottle)
+    throttle_scope = 'avatar_upload'
+    throttle_scope_methods = ('POST',)
     permission_classes = [permissions.IsAuthenticated]
     parser_classes = [parsers.MultiPartParser]
 

@@ -266,7 +266,7 @@ class RecruitmentNeedTests(APITestCase):
             'budget_min': 5_000_000,
             'budget_max': 10_000_000,
             'budget_source': RecruitmentNeed.BudgetSource.COMPANY,
-            'consultation_topics': [RecruitmentNeed.ConsultationTopic.SERVICE_PACKAGES],
+            'consultation_topics': [RecruitmentNeed.ConsultationTopic.PROMOTIONS],
         }
         self.client.force_authenticate(user=self.user)
 

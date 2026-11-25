@@ -37,6 +37,15 @@ SALARY_BUCKETS = [
 ]
 
 
+def listing_recency():
+    """Mốc xếp hạng duy nhất trên mọi bề mặt công khai: lần đăng đầu (ADR-0030).
+
+    ``published_at`` đổi khi mở lại tin nên không dùng để xếp hạng; bản Python
+    là ``Job.listing_recency_at``.
+    """
+    return Coalesce('first_approved_at', 'published_at', 'created_at')
+
+
 class JobState(models.TextChoices):
     """Effective state of a job as candidates experience it."""
 
@@ -288,23 +297,34 @@ def job_state_counts(queryset, *, at=None):
     )
 
 
-def filter_salary_bucket_queryset(queryset, bucket_key):
-    """Preserve the public homepage bucket contract based on displayed upper salary."""
+def salary_bucket_condition(bucket_key):
+    """``Q`` of one homepage salary band over the ``salary_bucket_value`` annotation.
+
+    The band is judged on the displayed upper salary (``salary_max``, else
+    ``salary_min``); negotiable and undisclosed salaries belong to no band.
+    Annotate the queryset with ``SALARY_BUCKET_VALUE`` before using it, which
+    lets one aggregate count every band at once.
+    """
     bucket = next((item for item in SALARY_BUCKETS if item[0] == bucket_key), None)
     if not bucket:
         raise ValueError('Invalid salary bucket.')
 
     _, _, lower, upper = bucket
-    queryset = (
-        queryset.exclude(salary_type=Job.SalaryType.NEGOTIABLE)
-        .exclude(salary_min__isnull=True, salary_max__isnull=True)
-        .annotate(salary_bucket_value=Coalesce('salary_max', 'salary_min'))
-    )
+    condition = ~Q(salary_type=Job.SalaryType.NEGOTIABLE) & Q(salary_bucket_value__isnull=False)
     if lower is not None:
-        queryset = queryset.filter(salary_bucket_value__gt=lower)
+        condition &= Q(salary_bucket_value__gt=lower)
     if upper is not None:
-        queryset = queryset.filter(salary_bucket_value__lte=upper)
-    return queryset
+        condition &= Q(salary_bucket_value__lte=upper)
+    return condition
+
+
+SALARY_BUCKET_VALUE = Coalesce('salary_max', 'salary_min')
+
+
+def filter_salary_bucket_queryset(queryset, bucket_key):
+    """Preserve the public homepage bucket contract based on displayed upper salary."""
+    condition = salary_bucket_condition(bucket_key)
+    return queryset.annotate(salary_bucket_value=SALARY_BUCKET_VALUE).filter(condition)
 
 
 def filter_alert_salary_bucket_queryset(queryset, bucket_key):

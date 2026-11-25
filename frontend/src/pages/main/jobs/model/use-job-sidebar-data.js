@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { getIndustries, getJobCategories, getJobStats, getJobs, jobKeys } from '@/entities/job/job'
+import { getIndustries, getJobCategories, getJobStats, jobKeys } from '@/entities/job/job'
 import { getProvinces } from '@/entities/system/location'
 
 // Dữ liệu tĩnh của sidebar (danh mục, tỉnh thành, ngành) đổi rất chậm —
@@ -28,12 +28,6 @@ export default function useJobSidebarData() {
     queryFn: getIndustries,
     staleTime: SIDEBAR_STALE_MS,
   })
-  const noExpQuery = useQuery({
-    queryKey: jobKeys.list({ experience_years: 'none', page_size: 1 }),
-    queryFn: () => getJobs({ experience_years: 'none', page_size: 1 }),
-    staleTime: SIDEBAR_STALE_MS,
-    select: (items) => items.count ?? (items.results || items).length,
-  })
 
   const settled = [categoriesQuery, statsQuery, provincesQuery, industriesQuery]
     .every((query) => !query.isLoading)
@@ -44,6 +38,5 @@ export default function useJobSidebarData() {
     provinces: provincesQuery.data ?? [],
     industries: industriesQuery.data ?? [],
     sidebarLoading: !settled,
-    noExpCount: noExpQuery.data ?? null,
   }
 }

@@ -92,6 +92,16 @@ EVENTS = {
         web_switch='employer_invitation_web',
         action_label='Xem việc làm và ứng tuyển',
     ),
+    Event.CONNECTION_INVITATION: EventSpec(
+        title='{company_name} muốn kết nối với bạn',
+        message=(
+            '{company_name} thấy hồ sơ của bạn phù hợp với vị trí {job_title}. '
+            'Đồng ý để nhà tuyển dụng liên hệ trao đổi với bạn, hoặc từ chối nếu chưa phù hợp.'
+        ),
+        email_switch='employer_invitation_email',
+        web_switch='employer_invitation_web',
+        action_label='Xem lời mời',
+    ),
 }
 
 

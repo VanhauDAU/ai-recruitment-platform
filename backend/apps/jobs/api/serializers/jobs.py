@@ -6,18 +6,20 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from common.storage.media import media_url_from_value
+from common.vietnam_time import vietnam_today
 
+from ...domain import job_presentation
 from ...models import (
     Job,
     JobCategoryAssignment,
     JobSkill,
 )
-from ...selectors.presentation import job_presentation
 from ...selectors.verification_badge import (
     BADGE_CACHE_KEY,
     badge_criteria_payload,
     prime_badge_cache,
 )
+from ...services import job_closing_soon_days
 from .supporting import (
     JobBenefitSerializer,
     JobCategoryAssignmentSerializer,
@@ -37,6 +39,16 @@ class JobVerificationCriterionSerializer(serializers.Serializer):
 class JobVerificationSerializer(serializers.Serializer):
     verified = serializers.BooleanField()
     criteria = JobVerificationCriterionSerializer(many=True)
+
+
+class JobPresentationLabelSerializer(serializers.Serializer):
+    code = serializers.ChoiceField(choices=['closing_soon', 'fast_response'])
+    text = serializers.CharField()
+    tone = serializers.CharField()
+
+
+class JobPresentationSerializer(serializers.Serializer):
+    labels = JobPresentationLabelSerializer(many=True)
 
 
 class JobListSkillSerializer(serializers.ModelSerializer):
@@ -136,9 +148,6 @@ class JobSerializer(serializers.ModelSerializer):
             'visibility_ends_at',
             'status',
             'view_count',
-            'tier',
-            'is_hot',
-            'is_urgent',
             'has_flash_badge',
             'presentation',
             'company_verified',
@@ -166,9 +175,6 @@ class JobSerializer(serializers.ModelSerializer):
             'brand_slug',
             'company_verified',
             'status',
-            'tier',
-            'is_hot',
-            'is_urgent',
             'has_flash_badge',
             'presentation',
             'requested_visibility_days',
@@ -357,5 +363,14 @@ class JobSerializer(serializers.ModelSerializer):
     def get_short_description(self, obj) -> str:
         return strip_tags(obj.description).strip()[:240]
 
-    def get_presentation(self, obj) -> dict:
-        return job_presentation(obj)
+    @extend_schema_field(JobPresentationSerializer)
+    def get_presentation(self, obj):
+        # Đọc ngưỡng và ngày một lần cho cả trang; context dùng chung giữa các tin.
+        if 'closing_soon_days' not in self.context:
+            self.context['closing_soon_days'] = job_closing_soon_days()
+            self.context['vietnam_today'] = vietnam_today()
+        return job_presentation(
+            obj,
+            closing_soon_within=self.context['closing_soon_days'],
+            today=self.context['vietnam_today'],
+        )

@@ -111,15 +111,9 @@
   }
 
   .job-quick-explore__card {
-    gap: 6px;
-    padding: 10px 6px;
-    width: 104px;
-  }
-
-  .job-quick-explore__icon {
-    font-size: 16px;
-    height: 36px;
-    width: 36px;
+    gap: 4px;
+    padding: 8px 6px;
+    width: 96px;
   }
 
   .job-quick-explore__arrow {
@@ -127,8 +121,7 @@
   }
 
   .job-list-chip {
-    font-size: 13px;
-    padding: 5px 12px;
+    padding: 4px 12px;
   }
 
   .job-results-toolbar {

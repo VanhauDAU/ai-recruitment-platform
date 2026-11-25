@@ -332,7 +332,7 @@
     "group": "contact",
     "section": "Kênh hỗ trợ",
     "value_type": "email",
-    "value": "support@aicareercoach.vn",
+    "value": "support@procv.site",
     "is_public": true,
     "description": "Email hỗ trợ; cũng là địa chỉ nhận trả lời (reply-to) của email hệ thống.",
     "help": "Người dùng bấm trả lời email hệ thống sẽ gửi về địa chỉ này.",
@@ -1043,14 +1043,14 @@
   },
   {
     "key": "employer_require_approved_verification",
-    "label": "Bắt buộc duyệt hồ sơ xác thực",
+    "label": "Checklist: tính xác thực theo hồ sơ đã duyệt",
     "group": "employer",
     "section": "Xác thực & uy tín",
     "value_type": "boolean",
     "value": false,
     "is_public": false,
-    "description": "Nhà tuyển dụng phải được duyệt hồ sơ xác thực trước khi đăng tin và dùng các chức năng tuyển dụng.",
-    "help": "Máy chủ production luôn bắt buộc (REQUIRE_APPROVED_EMPLOYER_VERIFICATION). Công tắc này chỉ siết thêm được ở môi trường máy chủ chưa bắt buộc; không tắt được yêu cầu của máy chủ.",
+    "description": "Bước \"Hoàn tất xác thực\" trong checklist onboarding NTD chỉ được tính khi hồ sơ xác thực đã được admin duyệt. Không đổi quyền đăng tin: tin công khai luôn cần hồ sơ xác thực đã duyệt và DPA hiện hành.",
+    "help": "Tắt: bước xác thực của checklist xong khi NTD đủ tài khoản, điện thoại, công ty, giấy tờ, DPA ứng viên và DPA của ProCV. Bật: cần thêm hồ sơ đã duyệt. Đăng tin công khai và hạn mức 100 tin luôn kiểm hồ sơ đã duyệt + DPA, bất kể công tắc. Cộng dồn với cờ máy chủ REQUIRE_APPROVED_EMPLOYER_VERIFICATION; không tắt được cờ đó.",
     "options": {
       "applies_to": [
         "Cổng nhà tuyển dụng"
@@ -1287,6 +1287,26 @@
       "integer": true,
       "min": 0,
       "max": 90
+    }
+  },
+  {
+    "key": "job_closing_soon_days",
+    "label": "Nhãn \"Sắp hết hạn\" (ngày)",
+    "group": "jobs",
+    "section": "Hạn tin",
+    "value_type": "number",
+    "value": 7,
+    "is_public": false,
+    "description": "Tin còn tối đa số ngày này tới hạn nộp hồ sơ thì hiện nhãn \"Sắp hết hạn\".",
+    "help": "Nhãn do hệ thống tính, áp dụng như nhau cho mọi tin.",
+    "options": {
+      "applies_to": [
+        "Tìm việc",
+        "Trang chi tiết việc làm"
+      ],
+      "integer": true,
+      "min": 1,
+      "max": 30
     }
   },
   {
@@ -2277,10 +2297,10 @@
     "group": "legal",
     "section": "Văn bản pháp lý",
     "value_type": "url",
-    "value": "",
+    "value": "/tro-giup/dieu-khoan-va-chinh-sach/dieu-khoan-su-dung",
     "is_public": true,
     "description": "Trang điều khoản ứng viên đồng ý khi đăng ký.",
-    "help": "Dán link trang điều khoản của chính nền tảng (vd một bài trong Trung tâm trợ giúp). Để trống thì form đăng ký chỉ hiện chữ, không có link. Trang điều khoản nhà tuyển dụng nằm ở cổng nhà tuyển dụng.",
+    "help": "Mặc định trỏ tới bài Điều khoản sử dụng trong Trung tâm trợ giúp (sửa nội dung ở Trung tâm FAQ & hướng dẫn). Để trống thì form đăng ký và chân trang chỉ hiện chữ, không có link. Trang điều khoản nhà tuyển dụng nằm ở cổng nhà tuyển dụng.",
     "options": {
       "applies_to": [
         "Đăng ký ứng viên"
@@ -2293,13 +2313,29 @@
     "group": "legal",
     "section": "Văn bản pháp lý",
     "value_type": "url",
-    "value": "",
+    "value": "/tro-giup/dieu-khoan-va-chinh-sach/chinh-sach-quyen-rieng-tu",
     "is_public": true,
     "description": "Trang chính sách bảo mật ứng viên đồng ý khi đăng ký.",
-    "help": "Để trống thì form đăng ký chỉ hiện chữ, không có link. Chính sách cookie có trang riêng (/chinh-sach-cookie).",
+    "help": "Mặc định trỏ tới bài Chính sách quyền riêng tư trong Trung tâm trợ giúp. Để trống thì form đăng ký và chân trang chỉ hiện chữ, không có link. Chính sách cookie có trang riêng (/chinh-sach-cookie).",
     "options": {
       "applies_to": [
         "Đăng ký ứng viên"
+      ]
+    }
+  },
+  {
+    "key": "employer_dpa_template_url",
+    "label": "Mẫu văn bản thông báo xử lý dữ liệu ứng viên",
+    "group": "legal",
+    "section": "Văn bản pháp lý",
+    "value_type": "url",
+    "value": "/documents/procv-mau-thong-bao-xu-ly-dlcn-ung-vien.docx",
+    "is_public": true,
+    "description": "File mẫu nhà tuyển dụng tải về ở bước \"Bảo vệ dữ liệu\" khi xác thực tài khoản.",
+    "help": "Mặc định là mẫu DOCX của ProCV. Đổi sang link file đã được luật sư rà soát nếu có. Để trống thì dùng lại mẫu mặc định.",
+    "options": {
+      "applies_to": [
+        "Xác thực nhà tuyển dụng"
       ]
     }
   },

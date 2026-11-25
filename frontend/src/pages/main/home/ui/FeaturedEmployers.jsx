@@ -1,4 +1,9 @@
-import { SolutionOutlined, TeamOutlined, UserOutlined } from '@ant-design/icons'
+import {
+  ArrowRightOutlined,
+  SolutionOutlined,
+  TeamOutlined,
+  UserOutlined,
+} from '@ant-design/icons'
 import { useMemo } from 'react'
 import { Link } from 'react-router'
 import { COMPANY_DIRECTORY_PATH, companyDetailPath } from '@/entities/company/company'
@@ -8,6 +13,7 @@ import { logoUrlFor } from '../lib/logo-url'
 import { chunkItems, usePagedDrag } from '../model/use-paged-drag'
 import EmployerLogoBelt from './EmployerLogoBelt'
 import { PagedTrack } from './PagedCarousel'
+import './home-showcase.css'
 
 const EMPLOYERS_PER_PAGE = 6
 
@@ -89,35 +95,38 @@ function PlatformStatistics({ stats }) {
 export default function FeaturedEmployers({ employers, navigate, stats }) {
   const groups = useMemo(() => chunkItems(employers, EMPLOYERS_PER_PAGE), [employers])
   const carousel = usePagedDrag(groups.length)
-
   if (employers.length === 0) return null
 
   return (
     <div className="mt-8" data-testid="featured-employers-block">
       <PlatformStatistics stats={stats} />
 
-      <section aria-labelledby="featured-employers-title" className="mt-8 rounded-2xl border border-[var(--brand-primary)]/20 bg-[var(--brand-primary-soft)] px-4 py-5 sm:px-5">
-        <div className="mb-3 flex items-center justify-between gap-4">
+      <section
+        aria-labelledby="featured-employers-title"
+        className="home-showcase mt-8"
+      >
+        <div className="home-showcase__header">
           <div className="min-w-0">
-            <h2 id="featured-employers-title" className="text-xl font-extrabold text-[var(--brand-primary-hover)]">
-              Công ty nổi bật
-            </h2>
-            <p className="mt-1 hidden text-sm text-slate-500 sm:block">Khám phá doanh nghiệp đang có nhiều cơ hội tuyển dụng</p>
+            <h2 id="featured-employers-title" className="home-showcase__title">Công ty nổi bật</h2>
+            <p className="home-showcase__subtitle">Khám phá doanh nghiệp đang có nhiều cơ hội tuyển dụng</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="home-showcase__actions">
+            <Link to={COMPANY_DIRECTORY_PATH} className="home-showcase__more">
+              Xem tất cả <ArrowRightOutlined aria-hidden="true" />
+            </Link>
             <ArrowButton
               dir="left"
               disabled={!carousel.canPrev}
               onClick={carousel.goPrev}
               aria-label="Nhóm công ty trước"
-              className="!h-9 !w-9 enabled:!border-[var(--brand-primary)]/20 enabled:!bg-white enabled:!text-[var(--brand-primary)] enabled:hover:!border-[var(--brand-primary)] enabled:hover:!bg-[var(--brand-primary)] enabled:hover:!text-white enabled:hover:!shadow-sm"
+              className="home-showcase__nav"
             />
             <ArrowButton
               dir="right"
               disabled={!carousel.canNext}
               onClick={carousel.goNext}
               aria-label="Nhóm công ty tiếp theo"
-              className="!h-9 !w-9 enabled:!border-[var(--brand-primary)]/20 enabled:!bg-white enabled:!text-[var(--brand-primary)] enabled:hover:!border-[var(--brand-primary)] enabled:hover:!bg-[var(--brand-primary)] enabled:hover:!text-white enabled:hover:!shadow-sm"
+              className="home-showcase__nav"
             />
           </div>
         </div>
@@ -139,25 +148,17 @@ export default function FeaturedEmployers({ employers, navigate, stats }) {
                     key={employer.public_id}
                     type="button"
                     onClick={() => navigate(companyDetailPath(employer))}
-                    className="featured-employer-card group flex min-h-[220px] min-w-0 cursor-pointer flex-col items-center rounded-xl border border-[var(--brand-primary)]/20 bg-white px-3 py-3 text-center transition duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:shadow-[0_8px_24px_color-mix(in_srgb,var(--brand-primary)_12%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2"
+                    className="featured-employer-card home-showcase__card featured-employers__card"
                   >
-                    <span className="flex h-[92px] w-full max-w-[120px] items-center justify-center overflow-hidden">
-                      <img
-                        src={logoUrlFor(employer)}
-                        alt=""
-                        className="h-full w-full object-contain transition-transform duration-200 group-hover:scale-105"
-                        loading="lazy"
-                        draggable={false}
-                      />
+                    <span className="featured-employers__logo">
+                      <img src={logoUrlFor(employer)} alt="" loading="lazy" draggable={false} />
                     </span>
-                    <span className="mt-3 line-clamp-2 min-h-10 w-full text-sm font-bold leading-5 text-slate-800" title={employer.company_name}>
+                    <span className="home-showcase__name" title={employer.company_name}>
                       {employer.company_name}
                     </span>
-                    <span className="mt-1 line-clamp-1 min-h-4 w-full text-xs text-slate-500">
-                      {industryLabel(employer)}
-                    </span>
-                    <span className="mt-2 inline-flex min-h-8 items-center rounded-md bg-[var(--brand-primary-soft)] px-3 py-2 text-sm font-semibold leading-none text-[var(--brand-primary-hover)]">
-                      {formatNumber(employer.active_public_job_count)} Việc làm
+                    <span className="featured-employers__industry">{industryLabel(employer)}</span>
+                    <span className="home-showcase__count">
+                      {formatNumber(employer.active_public_job_count)} việc làm
                     </span>
                   </button>
                 ))}
@@ -166,24 +167,17 @@ export default function FeaturedEmployers({ employers, navigate, stats }) {
           </PagedTrack>
         </div>
 
-        <div className="mt-2 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-          <span aria-hidden="true" />
-          <div className="flex items-center justify-center gap-3" role="status" aria-label={`Trang ${carousel.page + 1} trên ${groups.length}`}>
+        {groups.length > 1 && (
+          <div className="home-showcase__dots" role="status" aria-label={`Trang ${carousel.page + 1} trên ${groups.length}`}>
             {groups.map((_, index) => (
               <span
                 key={index}
-                className={`h-2.5 w-2.5 rounded-full transition-colors ${index === carousel.page ? 'bg-[var(--brand-primary)]' : 'bg-[var(--brand-primary)]/20'}`}
+                className={`home-showcase__dot${index === carousel.page ? ' is-active' : ''}`}
                 aria-hidden="true"
               />
             ))}
           </div>
-          <Link
-            to={COMPANY_DIRECTORY_PATH}
-            className="justify-self-end cursor-pointer text-sm font-semibold text-[var(--brand-primary)] transition hover:text-[var(--brand-primary-hover)] hover:underline focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
-          >
-            Xem tất cả
-          </Link>
-        </div>
+        )}
       </section>
 
       <EmployerLogoBelt employers={employers} navigate={navigate} />

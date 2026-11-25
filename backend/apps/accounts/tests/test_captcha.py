@@ -1,9 +1,10 @@
 from unittest import mock
 
 from django.test import SimpleTestCase, override_settings
+from rest_framework.exceptions import ValidationError
 from rest_framework.test import APIRequestFactory
 
-from apps.accounts.services.captcha import verify_request_captcha
+from apps.accounts.services.captcha import verify_recaptcha, verify_request_captcha
 
 
 def _verified_response():
@@ -41,3 +42,29 @@ class CaptchaRemoteIpTests(SimpleTestCase):
         )
 
         self.assertEqual(remote_ip, '198.51.100.9')
+
+
+@override_settings(
+    RECAPTCHA_SECRET_KEY='test-secret',
+    RECAPTCHA_SCORE_THRESHOLD=0.5,
+    IS_PRODUCTION=True,
+    ALLOWED_HOSTS=['procv.site', 'www.procv.site'],
+)
+class CaptchaHostnameTests(SimpleTestCase):
+    def _verify(self, hostname):
+        response = mock.Mock()
+        response.json.return_value = {
+            'success': True,
+            'action': 'login',
+            'score': 0.9,
+            'hostname': hostname,
+        }
+        with mock.patch('apps.accounts.services.captcha.requests.post', return_value=response):
+            verify_recaptcha('token', 'login')
+
+    def test_accepts_a_token_issued_for_the_site(self):
+        self._verify('procv.site')
+
+    def test_rejects_a_token_issued_on_another_site(self):
+        with self.assertRaises(ValidationError):
+            self._verify('copycat.example')

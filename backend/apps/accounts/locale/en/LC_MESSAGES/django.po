@@ -49,6 +49,12 @@ msgstr "This email is already associated with an account."
 msgid "Mật khẩu phải bao gồm chữ hoa, chữ thường và ký tự số."
 msgstr "Password must contain uppercase letters, lowercase letters and digits."
 
+msgid "Nhập mã xác minh gửi tới email."
+msgstr "Enter the verification code sent to your email."
+
+msgid "Mã xác minh không đúng hoặc đã hết hạn."
+msgstr "The verification code is incorrect or has expired."
+
 msgid "Nhập mật khẩu hiện tại."
 msgstr "Enter your current password."
 
@@ -120,6 +126,12 @@ msgstr "Password updated successfully."
 
 msgid "Cần phiên refresh hiện tại để đổi mật khẩu."
 msgstr "The current refresh session is required to change your password."
+
+msgid "Tài khoản đã có mật khẩu, hãy dùng mật khẩu hiện tại."
+msgstr "This account already has a password; use your current password."
+
+msgid "Đã gửi mã xác minh tới %(email)s."
+msgstr "A verification code has been sent to %(email)s."
 
 msgid "Nếu email này đã đăng ký tài khoản, chúng tôi đã gửi liên kết đặt lại mật khẩu. Vui lòng kiểm tra hòm thư (kể cả mục Spam)."
 msgstr "If this email is registered, we have sent a password reset link. Please check your inbox (including the Spam folder)."
@@ -541,6 +553,9 @@ msgstr "Please complete the captcha."
 msgid "Xác thực captcha thất bại."
 msgstr "Captcha verification failed."
 
+msgid "Captcha không hợp lệ cho trang này."
+msgstr "The captcha is not valid for this site."
+
 msgid "Captcha không hợp lệ cho hành động này."
 msgstr "The captcha is not valid for this action."
 
@@ -694,14 +709,14 @@ msgstr "Your employer account has been registered successfully with the email %(
 msgid "Kính gửi %(name)s - Mã NTD %(code)s,"
 msgstr "Dear %(name)s - Employer ID %(code)s,"
 
-msgid "Hãy xác thực lại bằng mạng xã hội trước khi tạo mật khẩu."
-msgstr "Please re-authenticate with your social account before creating a password."
-
 msgid "Hệ thống đang tạm dừng đăng ký tài khoản mới. Vui lòng quay lại sau."
 msgstr "New sign-ups are paused. Please come back later."
 
 msgid "Vui lòng chờ %(seconds)ss trước khi gửi lại."
 msgstr "Please wait %(seconds)ss before resending."
+
+msgid "Vui lòng chờ %(seconds)ss trước khi gửi lại mã."
+msgstr "Please wait %(seconds)ss before requesting a new code."
 
 msgid "Bạn không có quyền thực hiện hành động này."
 msgstr "You do not have permission to perform this action."
@@ -744,6 +759,21 @@ msgstr "Open the link below to create a new password:"
 
 msgid "Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản %(email)s."
 msgstr "We received a request to reset the password of the account %(email)s."
+
+msgid "Nếu bạn không yêu cầu tạo mật khẩu, hãy bỏ qua email này."
+msgstr "If you did not ask to create a password, you can ignore this email."
+
+msgid "Dùng mã dưới đây để tạo mật khẩu đăng nhập cho tài khoản của bạn:"
+msgstr "Use the code below to create a sign-in password for your account:"
+
+msgid "Mã có hiệu lực trong %(minutes)s phút. Không chia sẻ mã này với bất kỳ ai."
+msgstr "The code is valid for %(minutes)s minutes. Do not share it with anyone."
+
+msgid "%(code)s là mã xác minh tạo mật khẩu %(site_name)s"
+msgstr "%(code)s is your %(site_name)s password setup code"
+
+msgid "Mã xác minh tạo mật khẩu"
+msgstr "Password setup code"
 
 msgid "Refresh token không thuộc cổng này."
 msgstr "This refresh token does not belong to this portal."

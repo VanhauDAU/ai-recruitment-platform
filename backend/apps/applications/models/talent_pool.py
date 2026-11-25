@@ -97,6 +97,12 @@ class CandidateSearchInvitation(models.Model):
     "cho phép NTD tìm kiếm".
     """
 
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Pending'
+        ACCEPTED = 'accepted', 'Accepted'
+        DECLINED = 'declined', 'Declined'
+
+    public_id = models.CharField(max_length=50, unique=True, editable=False)
     recruiter = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -107,6 +113,9 @@ class CandidateSearchInvitation(models.Model):
     )
     job = models.ForeignKey('jobs.Job', on_delete=models.CASCADE, related_name='+')
     invited_at = models.DateTimeField(auto_now_add=True)
+    # Đồng ý = NTD được kết nối (nhắn tin) với ứng viên; từ chối thì lời mời đóng lại.
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING)
+    responded_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         constraints = [
@@ -114,6 +123,14 @@ class CandidateSearchInvitation(models.Model):
                 fields=['candidate', 'job'], name='uniq_candidate_search_invitation'
             ),
         ]
+        indexes = [
+            models.Index(fields=['candidate', '-invited_at'], name='search_invite_candidate_idx')
+        ]
 
     def __str__(self):
         return f'{self.candidate_id} → {self.job_id}'
+
+    def save(self, *args, **kwargs):
+        if not self.public_id:
+            self.public_id = generate_public_id('csi')
+        super().save(*args, **kwargs)

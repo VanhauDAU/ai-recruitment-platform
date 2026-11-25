@@ -8,6 +8,7 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.accounts.api.permissions import IsCandidate
+from common.api.throttling import with_account_write_cap
 
 from ...selectors import (
     attach_active_public_job_counts,
@@ -38,7 +39,7 @@ class CompanyFollowView(APIView):
     """Read, set or drop the caller's follow; PUT and DELETE are idempotent."""
 
     permission_classes = [IsCandidate]
-    throttle_classes = [ScopedRateThrottle]
+    throttle_classes = with_account_write_cap(ScopedRateThrottle)
     throttle_scope = 'company_follow'
 
     def get_throttles(self):

@@ -16,6 +16,11 @@ from apps.cvs.services import (
     resolve_shared_link,
     revoke_shared_link,
 )
+from common.api.throttling import (
+    ClientIPScopedRateThrottle,
+    WriteScopedRateThrottle,
+    with_default_throttles,
+)
 
 from .base import (
     CandidateCvMixin,
@@ -27,6 +32,9 @@ from .base import (
 
 class CvSharedLinkListCreateView(CandidateCvMixin, APIView):
     """Owner-scoped shared-link management; raw token is returned exactly once."""
+
+    throttle_classes = with_default_throttles(WriteScopedRateThrottle)
+    throttle_scope = 'cv_share_link'
 
     @extend_schema(
         summary='Danh sách link chia sẻ của CV',
@@ -111,6 +119,9 @@ class CvSharedSourceFileView(APIView):
 
     permission_classes = [permissions.AllowAny]
     authentication_classes = []
+    # Ẩn danh và có thể kích hoạt LibreOffice (DOCX): giới hạn theo IP thật.
+    throttle_classes = [ClientIPScopedRateThrottle]
+    throttle_scope = 'cv_shared_file'
 
     @extend_schema(
         summary='Tệp gốc của CV tải lên qua link chia sẻ (PDF)',

@@ -5,7 +5,7 @@ from django.db import IntegrityError, transaction
 from ..models import Skill, SkillGroup
 
 
-def create_skill(name):
+def create_skill(name, *, source):
     """Create a skill once, or return its existing canonical record."""
     cleaned_name = ' '.join(name.split())
     normalized_name = cleaned_name.lower()
@@ -14,7 +14,7 @@ def create_skill(name):
         with transaction.atomic():
             return Skill.objects.get_or_create(
                 normalized_name=normalized_name,
-                defaults={'name': cleaned_name},
+                defaults={'name': cleaned_name, 'source': source},
             )
     except IntegrityError:
         return Skill.objects.get(normalized_name=normalized_name), False
@@ -49,7 +49,7 @@ def apply_skill_merge(merge):
         'conflicts': [],
     }
     for canonical, names in merge.get('split', {}).items():
-        skill, created = create_skill(canonical)
+        skill, created = create_skill(canonical, source=Skill.Source.IMPORT)
         report['skills_created'] += created
         kept = [
             alias
@@ -61,13 +61,13 @@ def apply_skill_merge(merge):
             skill.aliases = kept
             skill.save(update_fields=['aliases'])
         for name in names:
-            separate, created = create_skill(name)
+            separate, created = create_skill(name, source=Skill.Source.IMPORT)
             report['skills_created'] += created
             if created and skill.group_id:
                 separate.group = skill.group
                 separate.save(update_fields=['group'])
     for canonical, variants in merge.get('aliases', {}).items():
-        skill, created = create_skill(canonical)
+        skill, created = create_skill(canonical, source=Skill.Source.IMPORT)
         report['skills_created'] += created
         aliases = list(skill.aliases or [])
         for variant in variants:
@@ -85,7 +85,7 @@ def apply_skill_merge(merge):
         group, created = SkillGroup.objects.get_or_create(name=group_name)
         report['groups_created'] += created
         for name in names:
-            skill, created = create_skill(name)
+            skill, created = create_skill(name, source=Skill.Source.IMPORT)
             report['skills_created'] += created
             if skill.group_id != group.pk:
                 skill.group = group

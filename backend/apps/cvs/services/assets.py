@@ -1,16 +1,15 @@
 import json
 import logging
 from hashlib import sha256
-from io import BytesIO
 
 from django.core import signing
 from django.core.files.base import ContentFile
 from django.db import transaction
 from django.urls import reverse
-from PIL import Image, ImageOps
 from rest_framework.exceptions import ValidationError
 
 from common.db.public_id import generate_public_id
+from common.files.images import UnsafeImage, open_bounded_image, reencode_image
 from common.storage.r2 import private_media_storage
 
 from ..domain import CV_IMAGE_FORMATS, MAX_CV_IMAGE_BYTES
@@ -31,26 +30,15 @@ def _encode_avatar(upload):
     if upload.size > MAX_CV_IMAGE_BYTES:
         raise ValidationError({'file': 'Image must be 5 MB or smaller.'})
     try:
-        upload.seek(0)
-        image = Image.open(upload)
-        detected_format = image.format
-        image.verify()
-        upload.seek(0)
-        image = Image.open(upload)
-        image = ImageOps.exif_transpose(image)
-        image.load()
-    except (OSError, ValueError) as error:
+        with open_bounded_image(upload) as image:
+            if image.format not in CV_IMAGE_FORMATS:
+                raise ValidationError({'file': 'Only JPEG, PNG, or WebP images are supported.'})
+            encoded = reencode_image(image, max_size=(512, 512))
+    except UnsafeImage as error:
         raise ValidationError({'file': 'Invalid image file.'}) from error
-    if detected_format not in CV_IMAGE_FORMATS:
-        raise ValidationError({'file': 'Only JPEG, PNG, or WebP images are supported.'})
-    extension, content_type = CV_IMAGE_FORMATS[detected_format]
-    image.thumbnail((512, 512), Image.Resampling.LANCZOS)
-    if detected_format == 'JPEG' and image.mode not in {'RGB', 'L'}:
-        image = image.convert('RGB')
-    buffer = BytesIO()
-    image.save(buffer, format=detected_format, optimize=True)
-    payload = buffer.getvalue()
-    return payload, extension, content_type, image.width, image.height
+    extension, content_type = CV_IMAGE_FORMATS[encoded.format]
+    payload = encoded.data
+    return payload, extension, content_type, encoded.width, encoded.height
 
 
 def create_avatar_asset(*, actor, upload):

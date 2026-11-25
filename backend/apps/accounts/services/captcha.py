@@ -18,6 +18,16 @@ def verify_request_captcha(request, action):
     verify_recaptcha(token, action, client_ip(request))
 
 
+def _hostname_allowed(hostname):
+    """Production chỉ nhận token phát cho đúng tên miền trong ALLOWED_HOSTS."""
+    if not settings.IS_PRODUCTION or not hostname:
+        return True
+    return any(
+        hostname == host or (host.startswith('.') and hostname.endswith(host))
+        for host in settings.ALLOWED_HOSTS
+    )
+
+
 def verify_recaptcha(token, action, remote_ip=None):
     if not settings.RECAPTCHA_SECRET_KEY:
         if settings.DEBUG:
@@ -41,6 +51,9 @@ def verify_recaptcha(token, action, remote_ip=None):
 
     if not result.get('success'):
         raise ValidationError({'captcha_token': _('Xác thực captcha thất bại.')})
+    if not _hostname_allowed(result.get('hostname')):
+        # Token xin được ở một site khác dùng chung site key (bị sao chép).
+        raise ValidationError({'captcha_token': _('Captcha không hợp lệ cho trang này.')})
     if 'action' in result and result.get('action') != action:
         raise ValidationError({'captcha_token': _('Captcha không hợp lệ cho hành động này.')})
     if 'score' in result and result.get('score', 0) < settings.RECAPTCHA_SCORE_THRESHOLD:

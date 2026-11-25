@@ -51,7 +51,7 @@ EMAIL_BACKEND = config('EMAIL_BACKEND', default='') or (
 # `or` để dòng .env bỏ trống (EMAIL_FROM_ADDRESS=) vẫn rơi về địa chỉ hợp lệ.
 EMAIL_FROM_NAME = config('EMAIL_FROM_NAME', default='') or 'ProCV'
 EMAIL_FROM_ADDRESS = (
-    config('EMAIL_FROM_ADDRESS', default='') or EMAIL_HOST_USER or 'no-reply@procv.vn'
+    config('EMAIL_FROM_ADDRESS', default='') or EMAIL_HOST_USER or 'no-reply@procv.site'
 )
 DEFAULT_FROM_EMAIL = (
     config('DEFAULT_FROM_EMAIL', default='') or f'{EMAIL_FROM_NAME} <{EMAIL_FROM_ADDRESS}>'
@@ -188,6 +188,10 @@ EMAIL_VERIFICATION_RESEND_COOLDOWN = config(
 # được tài khoản; cooldown chặn spam gửi lại tới cùng một hòm thư.
 PASSWORD_RESET_TTL = config('PASSWORD_RESET_TTL', default=60 * 30, cast=int)
 PASSWORD_RESET_RESEND_COOLDOWN = config('PASSWORD_RESET_RESEND_COOLDOWN', default=60, cast=int)
+PASSWORD_SETUP_CODE_TTL = config('PASSWORD_SETUP_CODE_TTL', default=60 * 10, cast=int)
+PASSWORD_SETUP_CODE_RESEND_COOLDOWN = config(
+    'PASSWORD_SETUP_CODE_RESEND_COOLDOWN', default=60, cast=int
+)
 
 # Social login (OAuth Authorization Code Flow qua backend callback).
 # Chưa điền client id/secret -> nút social báo "chưa cấu hình" (không crash).

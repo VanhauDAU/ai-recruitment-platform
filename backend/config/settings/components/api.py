@@ -32,7 +32,46 @@ REST_FRAMEWORK = {
     # mặc định của DRF (None) lấy nguyên chuỗi X-Forwarded-For làm khoá, tức là
     # để client tự chọn bucket cho mình.
     'NUM_PROXIES': TRUSTED_PROXY_HOPS,
+    # Trần chung cho /api/public/* (khách chưa đăng nhập, theo IP) và trần ghi
+    # theo tài khoản (ADR-0031). View tự khai throttle_classes THAY THẾ danh sách
+    # này nên phải bọc with_account_write_cap(...) — test_throttle_coverage soát.
+    'DEFAULT_THROTTLE_CLASSES': (
+        'common.api.throttling.PublicApiAnonRateThrottle',
+        'common.api.throttling.AccountWriteBurstThrottle',
+        'common.api.throttling.AccountWriteSustainedThrottle',
+    ),
     'DEFAULT_THROTTLE_RATES': {
+        # Kiểm thử tải tạm nới bằng PUBLIC_API_THROTTLE_RATE (scripts/loadtest/README.md).
+        'public_api_anon': config('PUBLIC_API_THROTTLE_RATE', default='600/min'),
+        # Trần ghi của mọi tài khoản đã đăng nhập (ADR-0031): đủ rộng cho người
+        # thật (autosave CV, kéo thả bố cục), chặn script/vòng lặp. Admin thao
+        # tác hàng loạt nên có scope riêng. Hotfix bằng THROTTLE_RATE_OVERRIDES.
+        'account_write_burst': '90/min',
+        'account_write_sustained': '3000/hour',
+        'account_write_burst_admin': '300/min',
+        'account_write_sustained_admin': '10000/hour',
+        # Thao tác ghi rủi ro cao (WriteScopedRateThrottle, theo tài khoản, chỉ tính ghi).
+        'skill_create': '20/hour',
+        'company_create': '20/day',
+        'company_media_upload': '30/hour',
+        'company_update_request': '10/hour',
+        'company_join': '10/hour',
+        'company_document_upload': '20/hour',
+        'job_submit': '30/hour',
+        'application_create': '30/hour',
+        'application_remind': '10/hour',
+        'review_link_create': '30/hour',
+        'talent_pool_invite': '40/hour',
+        'application_cv_export': '30/hour',
+        'campaign_launch': '10/hour',
+        'campaign_social_post': '30/hour',
+        'campaign_ai_content': '20/hour',
+        'cv_share_link': '30/hour',
+        'cv_publish': '30/hour',
+        'cv_export': '20/hour',
+        'cv_asset_upload': '60/hour',
+        'avatar_upload': '20/hour',
+        'privacy_data_request': '10/day',
         'login': '5/min',
         'register': '5/min',
         'register_email_check': '12/min',
@@ -46,6 +85,9 @@ REST_FRAMEWORK = {
         # Bucket riêng cho bước confirm: gõ sai mật khẩu mới vài lần không được
         # phép khoá luôn việc xin link (và ngược lại) — chung IP, chung quota.
         'password_reset_confirm': '10/min',
+        'password_change': '10/hour',
+        'password_setup_code': '5/hour',
+        'admin_invitation': '20/min',
         'oauth': '10/min',
         'feedback': '5/min',
         'consultation': '5/min',
@@ -55,12 +97,19 @@ REST_FRAMEWORK = {
         # Việc làm gần bạn: mỗi lần đổi bán kính/bộ lọc gọi danh sách + bản đồ.
         'nearby_jobs': '120/min',
         'geo_lookup': '60/min',
+        # Trang chủ gọi một lần mỗi lượt xem; payload đã cache 5 phút.
+        'job_stats': '120/min',
+        # Ô tìm kiếm gợi ý theo từng lần gõ (đã debounce phía client).
+        'job_suggest': '240/min',
         'job_view': '120/hour',
         'job_impression': '240/hour',
         'job_report': '10/hour',
         'announcement_event': '240/hour',
         'announcement_runtime': '60/hour',
         'cv_import': '10/hour',
+        # Mở tệp gốc CV/giấy tờ: DOCX phải qua LibreOffice (tới 30 giây/lần).
+        'cv_shared_file': '30/min',
+        'office_file_preview': '60/min',
         'ai_job_generation': '3/min',
         'match_analysis': '20/hour',
         # Tìm CV: mỗi lượt tìm chấm lại tới 200 CV; lời mời gửi thông báo cho ứng viên.
@@ -91,6 +140,14 @@ REST_FRAMEWORK = {
         'employer_domain_claim_manual_ip': '30/hour',
     },
 }
+
+# Chỉ khi kiểm thử tải (scripts/loadtest/README.md): nới tạm một số scope, dạng
+# "login=600/min,job_impression=100000/hour". Bỏ trống ở vận hành thường.
+REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'].update(
+    item.split('=', 1)
+    for item in config('THROTTLE_RATE_OVERRIDES', default='', cast=Csv())
+    if '=' in item
+)
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(
@@ -135,6 +192,8 @@ SPECTACULAR_SETTINGS = {
         'EmployerNotificationEventTypeEnum': 'apps.employers.models.EmployerNotification.EventType',
         'RecruitmentNeedPositionLevelEnum': 'apps.employers.models.choices.PositionLevel',
         'UserCvSourceEnum': 'apps.cvs.models.UserCv.Source',
+        'DataSubjectRequestKindEnum': 'apps.privacy.models.DataSubjectRequest.Kind',
+        'DataSubjectRequestStatusEnum': 'apps.privacy.models.DataSubjectRequest.Status',
         'CvCategoryTypeEnum': 'apps.cv_templates.models.CvCategory.CategoryType',
         'ExperienceBandEnum': 'apps.cv_templates.models.ExperienceBand',
         'ReportResolutionEnum': [('upheld', 'upheld'), ('dismissed', 'dismissed')],
@@ -166,6 +225,8 @@ SPECTACULAR_SETTINGS = {
         # work_type và work_types (danh sách) dùng chung một tập lựa chọn.
         'JobWorkTypeEnum': 'apps.jobs.models.Job.WorkType',
         'JobCategoryTypeEnum': 'apps.jobs.models.JobCategory.CategoryType',
+        'JobCategoryStatusEnum': 'apps.jobs.models.JobCategory.Status',
+        'BenefitCategoryEnum': 'apps.jobs.models.Benefit.Category',
         'JobAiGenerationModeEnum': 'apps.jobs.models.JobAiGeneration.Mode',
         'JobAiGenerationStatusEnum': 'apps.jobs.models.JobAiGeneration.Status',
         'JobAiFeedbackReasonEnum': 'apps.jobs.models.JobAiGeneration.FeedbackReason',

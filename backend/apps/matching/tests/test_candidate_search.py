@@ -12,6 +12,7 @@ from apps.candidates.services import set_recruiter_visibility
 from apps.cv_templates.models import CvTemplate
 from apps.cvs.models import CvAccessLog, UserCv
 from apps.cvs.services import create_user_cv, permanently_delete_cv, update_cv_metadata
+from apps.employers.models import EmployerNotification
 from apps.sitecontent.models import SiteSetting
 
 from ..domain import RECRUITER_SEARCH, public_cv_profile, redact_name
@@ -212,10 +213,58 @@ class CandidateSearchTests(SearchBase):
         self.assertTrue(
             CandidateNotification.objects.filter(
                 recipient=self.candidate,
-                event_type=CandidateNotification.EventType.JOB_INVITATION,
+                event_type=CandidateNotification.EventType.CONNECTION_INVITATION,
+                action_path='/tai-khoan/nha-tuyen-dung-muon-ket-noi',
             ).exists()
         )
-        self.assertTrue(self.only_candidate()['invited'])
+        row = self.only_candidate()
+        self.assertEqual((row['invited'], row['invitation_status']), (True, 'pending'))
+
+    def invite_and_open_as_candidate(self):
+        row = self.only_candidate()
+        url = reverse('recruiter-candidate-search-invite', args=[row['ref']])
+        self.client.post(url, {'job': self.job.public_id}, format='json')
+        self.client.force_authenticate(self.candidate)
+        listed = self.client.get(reverse('candidate-connection-invitations')).data['results']
+        self.assertEqual(len(listed), 1)
+        self.assertEqual(
+            (listed[0]['status'], listed[0]['job_title'], listed[0]['company_name']),
+            ('pending', self.job.title, self.job.company.company_name),
+        )
+        return row, reverse(
+            'candidate-connection-invitation-respond', args=[listed[0]['public_id']]
+        )
+
+    def test_candidate_accepts_once_and_the_recruiter_learns_only_the_code(self):
+        row, url = self.invite_and_open_as_candidate()
+
+        accepted = self.client.post(url, {'accept': True}, format='json')
+        again = self.client.post(url, {'accept': False}, format='json')
+
+        self.assertEqual((accepted.status_code, again.status_code), (200, 409))
+        self.assertEqual(accepted.data['status'], 'accepted')
+        notice = EmployerNotification.objects.get(recipient=self.employer)
+        self.assertEqual(
+            notice.event_type, EmployerNotification.EventType.SEARCH_INVITATION_ACCEPTED
+        )
+        self.assertIn(row['code'], notice.message)
+        self.assertNotIn(self.candidate.email, notice.message)
+        self.client.force_authenticate(self.employer)
+        self.assertEqual(self.only_candidate()['invitation_status'], 'accepted')
+
+    def test_candidate_declines_and_others_cannot_answer(self):
+        _row, url = self.invite_and_open_as_candidate()
+        self.client.force_authenticate(self.other)
+        self.assertEqual(self.client.post(url, {'accept': True}, format='json').status_code, 404)
+
+        self.client.force_authenticate(self.candidate)
+        declined = self.client.post(url, {'accept': False}, format='json')
+
+        self.assertEqual(declined.data['status'], 'declined')
+        self.assertEqual(
+            EmployerNotification.objects.get(recipient=self.employer).event_type,
+            EmployerNotification.EventType.SEARCH_INVITATION_DECLINED,
+        )
 
     def test_unknown_code_and_foreign_job_are_not_found(self):
         url = reverse('recruiter-candidate-search-detail', args=['0' * 24])

@@ -4,7 +4,6 @@ import { Link } from 'react-router'
 import {
   formatLocations,
   formatSalary,
-  jobCardToneClass,
   jobDetailPath,
   JobPresentationLabels,
   VerifiedEmployerBadge,
@@ -25,7 +24,7 @@ export default function CandidateRecommendationCard({ hidePending, job, onHide }
 
   return (
     <JobImpressionBoundary slug={job.slug} className="h-full">
-      <article className={`reco-card ${jobCardToneClass(job)}`}>
+      <article className="reco-card border-slate-200 bg-white">
         <div className="flex min-w-0 gap-2.5">
           <Link to={detailPath} aria-label={m.candidate_reco_home_logo_link({ title: job.title })} className="reco-card__logo">
             {job.company_logo_url ? (

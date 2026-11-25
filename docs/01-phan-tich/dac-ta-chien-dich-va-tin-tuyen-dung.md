@@ -350,8 +350,8 @@ Không đạt thì tin vẫn là nháp và API trả `JOB_PUBLICATION_BLOCKED` k
 | `campaign_inactive` | Tin thuộc chiến dịch không ở trạng thái `active`. |
 
 Ngoài ra: chiến dịch bị `policy_hold` hoặc đã kết thúc trả
-`RECRUITMENT_HOLD_ACTIVE`/lỗi `campaign`; cửa sổ hiển thị đã hết (chế độ
-`enforce`) trả `JOB_VISIBILITY_EXPIRED`.
+`RECRUITMENT_HOLD_ACTIVE`/lỗi `campaign`; cửa sổ hiển thị đã hết trả
+`JOB_VISIBILITY_EXPIRED`.
 
 ### Quota đăng tin
 
@@ -374,8 +374,7 @@ dùng một predicate duy nhất `publicly_available_job_filter`
   compliance hold active trên tin;
 - tài khoản người đăng `active`, chưa xóa, vẫn thuộc đúng công ty của tin, hồ
   sơ xác thực (nếu có) cùng công ty;
-- hạn nhận hồ sơ chưa qua; ở chế độ `enforce` thêm điều kiện
-  `visibility_starts_at <= now < visibility_ends_at`;
+- hạn nhận hồ sơ chưa qua và `visibility_starts_at <= now < visibility_ends_at`;
 - không thuộc chiến dịch, hoặc chiến dịch `active`, không `policy_hold`, không
   compliance hold và chủ chiến dịch còn hoạt động.
 
@@ -390,7 +389,7 @@ Ba mốc thời gian độc lập, không suy mốc này từ mốc khác:
 | --- | --- | --- |
 | Nhận hồ sơ | `deadline` (API: `application_deadline`) | Ngày cuối nhận ứng tuyển. |
 | Công khai | `first_approved_at`, `visibility_starts_at`, `visibility_ends_at`, `requested_visibility_days` | Chu kỳ hiển thị bắt đầu từ lần đăng đầu, mặc định 30 ngày, tối đa 90. |
-| Sắp xếp | `published_at` | Mốc lần đăng gần nhất; sửa tin không đổi. |
+| Sắp xếp | `listing_recency` = `first_approved_at` (dự phòng `published_at`, `created_at`) | Lần đăng đầu; sửa, đóng/mở lại, gia hạn, khôi phục đều không đổi ([ADR-0030](../02-tong-quan/adr-0030-fair-job-listing.md)). `published_at` chỉ ghi lần đăng gần nhất, không dùng xếp hạng. |
 
 - Cửa sổ hiển thị luôn chặn công khai cùng hạn nhận hồ sơ (cờ
   `JOB_LIFECYCLE_V2_MODE` đã gỡ, xem
@@ -532,9 +531,12 @@ cáo hoặc phát hiện vi phạm.
 | `Application`, `ApplicationStatusHistory` | Hồ sơ ứng tuyển và timeline. |
 
 Chi tiết cột ở [thiet-ke-database.md](../03-database/thiet-ke-database.md).
-Nhãn hiển thị `tier`, `is_hot`, `is_urgent` vẫn do admin gán, không gắn với gói
-dịch vụ nào. `has_flash_badge` (Huy hiệu Sấm Chớp) do hệ thống tính mỗi giờ từ việc
-người đăng tin quyết định hồ sơ đúng hạn ([ADR-0027](../02-tong-quan/adr-0027-flash-badge-responsiveness.md)).
+Không có hạng tin hay nhãn gán tay ([ADR-0030](../02-tong-quan/adr-0030-fair-job-listing.md)).
+Nhãn trên thẻ tin chỉ do hệ thống tính: "Sắp hết hạn" (hạn nộp còn ≤
+`job_closing_soon_days` ngày) và "Phản hồi nhanh" — `has_flash_badge` (Huy hiệu Sấm
+Chớp) do hệ thống tính mỗi giờ từ việc người đăng tin quyết định hồ sơ đúng hạn
+([ADR-0027](../02-tong-quan/adr-0027-flash-badge-responsiveness.md)). Danh sách xếp mới
+đăng trước; ứng viên có thể chọn "Lương cao nhất" hoặc "Sắp hết hạn nộp".
 
 ## 10. Việc còn mở
 

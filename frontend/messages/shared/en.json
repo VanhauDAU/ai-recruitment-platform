@@ -115,9 +115,6 @@
       }
     }
   ],
-  "job_label_sponsored": "Sponsored",
-  "job_label_urgent": "URGENT",
-  "job_label_fast_response": "Fast response",
   "job_label_fast_response_hint": "The employer regularly answers applications on time. Recalculated every hour.",
   "job_weekday_mon": "Mon",
   "job_weekday_tue": "Tue",
@@ -667,5 +664,6 @@
   "fit_profile_section_interests": "Interests",
   "notification_sound_turn_off": "Mute notification sound",
   "notification_sound_turn_on": "Unmute notification sound",
-  "notification_open": "View"
+  "notification_open": "View",
+  "ui_sheet_close": "Close"
 }

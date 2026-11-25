@@ -1,4 +1,4 @@
-import { MenuOutlined } from '@ant-design/icons'
+import { AppstoreOutlined, SearchOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
@@ -11,8 +11,9 @@ import CandidateUserMenu from './CandidateUserMenu'
 import { DesktopNavigation, MobileNavigation } from './HeaderNavigation'
 import { HEADER_NAVIGATION, navigationForCapabilities } from './header-navigation-config'
 import { useHeaderNavigationSources } from './use-header-navigation-sources'
+import { m } from '@/shared/config/i18n'
 
-function GuestActions({ mobile = false, onSelect, navigate }) {
+function GuestActions({ mobile = false, compactMobile = false, onSelect, navigate }) {
   // Đăng nhập chuyển sang trang /login.
   function handleLogin() {
     onSelect?.()
@@ -29,8 +30,8 @@ function GuestActions({ mobile = false, onSelect, navigate }) {
   }
   return (
     <>
-      <Link to="/sign-up" className="hidden cursor-pointer sm:inline-block"><Button className="cursor-pointer" shape="round">Đăng ký</Button></Link>
-      <Button className="cursor-pointer" type="primary" shape="round" onClick={handleLogin}>Đăng nhập</Button>
+      <Link to="/sign-up" className={`hidden cursor-pointer ${compactMobile ? 'md:inline-block' : 'sm:inline-block'}`}><Button className="cursor-pointer" shape="round">Đăng ký</Button></Link>
+      <Button className={`cursor-pointer ${compactMobile ? '!hidden md:!inline-flex' : ''}`} type="primary" shape="round" onClick={handleLogin}>Đăng nhập</Button>
       <a href={EMPLOYER_PORTAL_URL} className="hidden cursor-pointer lg:inline-block">
         <Button className="cursor-pointer" ghost type="primary" shape="round">Đăng tuyển &amp; tìm hồ sơ</Button>
       </a>
@@ -38,12 +39,12 @@ function GuestActions({ mobile = false, onSelect, navigate }) {
   )
 }
 
-function HeaderActions({ isAuthenticated, logout, navigate, user }) {
-  if (!isAuthenticated) return <GuestActions navigate={navigate} />
+function HeaderActions({ compactMobile, isAuthenticated, logout, navigate, user }) {
+  if (!isAuthenticated) return <GuestActions compactMobile={compactMobile} navigate={navigate} />
   if (user?.role === 'candidate') {
     return (
       <>
-        <CandidateUserMenu user={user} logout={logout} />
+        <CandidateUserMenu user={user} logout={logout} compactMobile={compactMobile} />
         <div className="hidden border-l border-gray-200 pl-4 leading-tight lg:block">
           <p className="text-xs text-gray-500">Bạn là nhà tuyển dụng?</p>
           <a href={EMPLOYER_PORTAL_URL} className="text-sm font-semibold !text-[var(--brand-primary)] transition-colors hover:!text-[var(--brand-primary-hover)] hover:underline">
@@ -54,10 +55,10 @@ function HeaderActions({ isAuthenticated, logout, navigate, user }) {
     )
   }
   return (
-    <>
+    <div className={compactMobile ? 'hidden gap-2 md:flex' : 'flex gap-2'}>
       <Button className="cursor-pointer" onClick={() => navigate(HOME_BY_ROLE[user?.role] || '/')}>Trang quản lý</Button>
       <Button className="cursor-pointer" onClick={logout}>Đăng xuất</Button>
-    </>
+    </div>
   )
 }
 
@@ -118,16 +119,16 @@ export default function Header({ editorMode = false }) {
 
   return (
     <header aria-label={editorMode ? 'Header website' : undefined} className={`sticky top-0 z-50 shrink-0 border-b border-gray-200 bg-white transition-transform duration-300 ${editorMode ? 'border-t-2 border-t-slate-800' : ''} ${shouldShowHeader ? 'translate-y-0' : '-translate-y-full'}`}>
-      <div className="flex h-16 w-full items-center gap-3 px-4 sm:px-6 md:gap-8">
+      <div className="flex h-16 w-full items-center gap-2 px-4 sm:px-6 md:gap-8">
+        <BrandLogo variant="full" className="shrink-0 cursor-pointer whitespace-nowrap" imageClassName="h-7 max-w-[112px] sm:h-9 sm:max-w-[190px]" />
         <button
           type="button"
-          aria-label="Mở menu"
+          aria-label={m.candidate_header_open_categories()}
           onClick={() => setMobileOpen(true)}
-          className="-ml-1 flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-lg text-xl text-gray-600 hover:bg-gray-100 md:hidden"
+          className="flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-[var(--brand-primary-soft)] px-3 text-sm font-semibold text-[var(--brand-primary)] transition active:scale-95 md:hidden"
         >
-          <MenuOutlined />
+          <AppstoreOutlined aria-hidden /> {m.candidate_header_categories()}
         </button>
-        <BrandLogo variant="full" className="cursor-pointer whitespace-nowrap" imageClassName="h-8 max-w-[150px] sm:h-9 sm:max-w-[190px]" />
         <DesktopNavigation
           menus={menus}
           openKey={openKey}
@@ -135,8 +136,17 @@ export default function Header({ editorMode = false }) {
           onOpen={setOpenKey}
           onSelect={handleItem}
         />
-        <div className="ml-auto flex items-center gap-4">
+        <div className="ml-auto flex items-center gap-1 md:gap-4">
+          <button
+            type="button"
+            aria-label={m.candidate_header_search_jobs()}
+            onClick={() => navigate('/viec-lam')}
+            className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-xl text-slate-600 transition hover:bg-slate-100 md:hidden"
+          >
+            <SearchOutlined />
+          </button>
           <HeaderActions
+            compactMobile={!editorMode}
             isAuthenticated={isAuthenticated}
             logout={logout}
             navigate={navigate}

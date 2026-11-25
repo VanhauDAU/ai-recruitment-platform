@@ -8,6 +8,137 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-25
 
+#### Fixed — Thỏa thuận xử lý DLCN ProCV–NTD không còn trỏ sang TopCV
+
+- Link "Xem nội dung đầy đủ" ở bước Bảo vệ dữ liệu mở văn bản DPA của ProCV
+  (`/documents/procv-thoa-thuan-xu-ly-dlcn-nha-tuyen-dung-2026-11.html`, phiên bản `2026-11`)
+  thay cho URL tạm của TopCV trong `.env`. Hướng dẫn deploy ghi sẵn URL và SHA-256.
+
+#### Security — Gia cố xử lý file tải lên
+
+- DOCX ở nhập CV và DPA của NTD (đường upload trực tiếp) bị kiểm vỏ ZIP trước khi
+  parse: ≤300 mục, ≤30 MB giải nén, `word/document.xml` ≤10 MB, tỉ lệ nén ≤100.
+  Bộ kiểm dùng chung ở `common/files/docx.py`.
+- Giấy tờ NTD tải trực tiếp được kiểm cấu trúc như đường phiên quét: PDF phải mở được
+  ở chế độ strict, không mã hóa, tối đa 50 trang; ảnh phải giải mã được. Không còn nhận
+  Word `.doc`; tệp `.doc` cũ không còn được dựng bản xem trước, chỉ tải về.
+- Ảnh công khai luôn được mã hóa lại: bỏ EXIF/GPS, xoay đúng chiều, giữ hồ sơ màu;
+  từ chối ảnh vượt 10.000 px mỗi cạnh, 40 MP hoặc 100 frame.
+- LibreOffice dựng bản xem trước chạy với giới hạn bộ nhớ 2 GiB, CPU 30 s, bị giết cả
+  nhóm tiến trình khi quá giờ; tối đa 2 lượt cùng lúc, hết chỗ thì trả tệp gốc.
+
+#### Security — Trần ghi theo tài khoản cho mọi API ghi (ADR-0031)
+
+- Mọi request ghi của người đã đăng nhập có trần theo tài khoản: 90/phút và 3000/giờ
+  (admin 300/phút, 10000/giờ). Lượt đọc và khách không tính. Vượt trần trả 429 và log
+  WARNING gồm scope + `user.pk`.
+- View đã tự khai throttle giữ throttle cũ và gắn thêm trần (`with_account_write_cap`); 21
+  thao tác rủi ro cao có scope riêng chỉ tính lượt ghi (tạo kỹ năng 20/giờ, tạo công ty
+  20/ngày, nộp đơn 30/giờ, nhắc NTD 10/giờ, phát hành chiến dịch 10/giờ, yêu cầu dữ liệu cá
+  nhân 10/ngày…).
+- Miễn trần: lượt xem/hiển thị tin, sự kiện thông báo, vé WebSocket.
+- Throttle ảnh bài đăng và xuất báo cáo chiến dịch không còn dùng chung một bucket.
+- Test mới quét mọi route ghi: thiếu trần, sai scope hay scope chưa có rate đều làm CI đỏ.
+
+#### Added — Sao lưu media công khai và báo cáo CSP qua Sentry
+
+- `scripts/deploy/backup_files.sh` sao lưu thêm bucket `procv-public-media` sang
+  `procv-backups-public-media` khi có `BACKUP_PUBLIC_FILES_REMOTE` (trống thì cảnh báo,
+  bỏ qua); `restore_files.sh --bucket private|public`; `lib.sh` tách `_set_r2_remote`,
+  thêm `set_public_remote`.
+- Image `web` dựng `report-uri`/`report-to` + `Reporting-Endpoints` của CSP từ
+  `VITE_SENTRY_DSN` lúc build (`frontend/docker/nginx/render-csp.sh`); CSP vẫn Report-Only.
+  CI shellcheck thêm script này.
+
+#### Changed — Mô tả site setting xác thực NTD và runbook go-live
+
+- `employer_require_approved_verification`: nhãn/mô tả/trợ giúp nói đúng phạm vi (chỉ bước
+  checklist onboarding; đăng tin công khai luôn cần hồ sơ đã duyệt + DPA). Chạy
+  `seed_sitecontent` sau deploy để đồng bộ.
+- Runbook deploy: Cloudflare Access cho `/admin*`, `/api/admin/*` (email OTP) + kiểm
+  WebSocket admin, quota/inbound filter Sentry cho báo cáo CSP; runbook sao lưu: bucket
+  `procv-backups-public-media`, token, khôi phục `--bucket public`.
+
+#### Changed — Tải trang đầu nhẹ hơn
+
+- Bundle đầu còn 9 file JS, 252 KiB gzip (trước 78 file, 333 KiB): thư viện trang đầu gom
+  vào chunk `vendor`, barrel `index.js` của slice khai báo không side effect nên form đăng
+  nhập không còn nằm trong bundle đầu. Ngân sách hạ về 256 KiB JS, 35 KiB CSS.
+- 7 ảnh PNG lớn trên R2 (trang chủ, blog, onboarding, CV online; ~3,1 MB) chuyển sang
+  WebP trong `public/images` (177 KB).
+- Nginx gửi file `.gz` nén sẵn mức 9 (`gzip_static`); Vite dev biên dịch sẵn trang chủ khi khởi động.
+
+#### Fixed — API công khai có cache trả 500 khi chạy với Redis
+
+- `cache_public_get` (#349) lưu cache bằng callback sau render trả về kết quả `cache.set`;
+  Django thay response bằng giá trị đó, và django-redis trả `True`, nên danh mục nghề,
+  địa điểm, địa điểm việc làm tốt nhất… trả 500 ở môi trường dùng Redis (dev docker,
+  production). Callback giờ không trả giá trị; thêm test với cache trả `True`.
+
+#### Changed — Điều hướng cổng ứng viên trên mobile
+
+- Thanh tab dưới (Trang chủ, Việc làm, Tạo CV nổi ở giữa, Cẩm nang, Tài khoản) thay cụm
+  avatar/tin nhắn/đăng nhập trên header ở màn < 768px; header mobile còn logo, nút
+  "Danh mục", tìm việc và chuông. Tab Tài khoản mở tấm trượt từ đáy.
+- Chuông thông báo ứng viên mở dạng tấm trượt từ đáy trên mobile, popover làm lại trên
+  desktop (số chưa đọc ở tiêu đề, trạng thái rỗng mới).
+- Hủy được đăng nhập trên mobile: tab Tài khoản mở popup đăng nhập tại chỗ; trang
+  đăng nhập/đăng ký ứng viên có nút ✕ quay lại trang trước (hoặc trang chủ).
+- Cụm nút nổi Việc làm đã lưu/Góp ý/Hỗ trợ trên mobile gom thành một nút, bấm mới bung
+  lên có hiệu ứng; desktop không đổi.
+- Trang Cài đặt bảo mật ứng viên làm lại (tổng quan email/mật khẩu, thiết bị, quyền dữ liệu);
+  mục menu "Cài đặt thông tin cá nhân" đổi tên thành "Hồ sơ cá nhân".
+- Tài khoản đăng nhập bằng mạng xã hội tạo mật khẩu lần đầu bằng mã 6 số gửi qua email thay
+  cho đăng nhập lại Google/Facebook (`POST /api/auth/password/setup-code/`, `email_code`).
+- Thanh tab tự ẩn ở trang có thanh hành động riêng (chi tiết tin, mẫu CV, trang công ty);
+  nút nổi và dock so sánh việc làm nâng lên theo `--page-bottom-bar-height`.
+
+#### Added — Lời mời kết nối của NTD cho ứng viên
+
+- Tìm CV: nút đổi thành "Mời kết nối"; ứng viên đồng ý hoặc từ chối ở trang mới
+  `/tai-khoan/nha-tuyen-dung-muon-ket-noi` (menu Quản lý CV). NTD nhận thông báo kèm mã ẩn danh
+  và thấy "Đã kết nối"/"Đã từ chối"; nút "Nhắn tin" giữ chỗ, chưa hoạt động.
+- API `GET /api/candidate/connection-invitations/`,
+  `POST /api/candidate/connection-invitations/<public_id>/respond/`; trường `status`,
+  `responded_at`, `public_id` cho `CandidateSearchInvitation`; thông báo `connection_invitation`
+  (ứng viên), `search_invitation_accepted`/`search_invitation_declined` (NTD).
+#### Changed — Thứ tự và nhãn tin tuyển dụng công bằng (ADR-0030)
+
+- Bỏ hạng tin `tier` và nhãn gán tay HOT/GẤP/"Tài trợ" cùng thẻ tô màu; chỉ còn nhãn hệ
+  thống "Sắp hết hạn" (`job_closing_soon_days`) và "Phản hồi nhanh".
+- Mọi bề mặt xếp theo một mốc là lần đăng đầu; mở lại tin không còn đẩy tin lên trang
+  chủ, gợi ý hay email báo việc.
+- `/viec-lam`: sắp xếp Mới đăng / Lương cao nhất / Sắp hết hạn nộp (`ordering=closing_soon`,
+  bỏ `urgent`); thêm ô "Việc không cần kinh nghiệm" và nút "Tìm việc gần tôi".
+- **Breaking API:** `tier`, `is_hot`, `is_urgent`, `tier_label` và các trường
+  `presentation.sponsored/card_tone/display_reason/placement/active_until` bị gỡ;
+  `presentation` chỉ còn `labels`. Bỏ chủ đề tư vấn `service_packages`.
+
+#### Added — Trang Danh mục dữ liệu cho admin
+
+- `/admin/app/catalog` (mục Nội dung), 5 tab: Kỹ năng, Ngành nghề, Phúc lợi, Lĩnh vực công ty,
+  Ngôn ngữ. Bảng + ngăn kéo sửa; ẩn/hiện áp dụng ngay kèm Hoàn tác 15 giây; số tin/CV/công ty
+  đang dùng trên từng dòng; danh sách thẻ trên điện thoại; chuỗi vi/en.
+- Kỹ năng: dải "Cần dọn" (chưa có nhóm, có thể trùng), gán nhóm ngay trên dòng và hàng loạt,
+  "Lưu & tiếp", gộp kỹ năng có xem trước (chỉ superuser; chuyển tin, CV, nhu cầu tìm việc và
+  `profile_json` của tài liệu đối sánh), quản lý nhóm kỹ năng (khóa hai nhóm hệ thống).
+- Ngành nghề: bảng cây ba cấp, tìm không dấu tự mở nhánh, cấp suy ra từ mục cha, tên tiếng
+  Anh (`JobCategoryLocalization`), icon nhóm nghề.
+- API `/api/admin/skills/`, `/api/admin/skills/groups/`, `/api/admin/jobs/categories/`
+  (+ `icon/`), `/api/admin/jobs/benefits/` (+ `reorder/`), `/api/admin/jobs/languages/`,
+  `/api/admin/industries/`; mọi thao tác ghi audit.
+- `Skill.source`, `Industry.is_active` (ô chọn lĩnh vực của hồ sơ công ty chỉ còn mục đang mở).
+
+#### Removed — Trang Django admin trùng lặp của danh mục
+
+- Gỡ trang Django admin của Skill, SkillGroup, Benefit, Language, Industry và form sửa
+  JobCategory (giữ bản chỉ-xem cho autocomplete); sửa danh mục giờ chỉ qua cổng quản trị.
+
+#### Fixed — Slug danh mục trùng nhau
+
+- Tên cho cùng slug ("C", "C++", "C#") không còn làm lỗi 500 khi NTD hoặc admin thêm kỹ
+  năng, ngành nghề, lĩnh vực: slug tự thêm hậu tố (`common/db/slugs.py`).
+
 #### Added — Việc làm gần tôi (ADR-0029)
 
 - Trang `/viec-lam-gan-ban`: bản đồ (MapLibre, nạp lazy) + danh sách sắp theo khoảng cách,
@@ -162,6 +293,12 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - "Mã NTD" ở dashboard và email NTD dùng mã tài khoản thay cho mã hồ sơ NTD `rec_…`;
   API dashboard NTD đổi `account.recruiter_public_id` thành `account.public_id`.
 - Ô tìm kiếm tài khoản của admin chấp nhận mã gõ theo nhóm ("4826 1937").
+
+#### Fixed — Ảnh đại diện khi đăng nhập Google
+
+- Ảnh Google/Facebook/LinkedIn được tải về storage nội bộ lúc đăng nhập thay vì lưu URL
+  ngoài (Google chặn ảnh khi trình duyệt gửi Referer). Không ghi đè ảnh người dùng tự tải
+  lên; tài khoản cũ có URL Google được sửa ở lần đăng nhập kế tiếp.
 
 ### 2026-11-21
 

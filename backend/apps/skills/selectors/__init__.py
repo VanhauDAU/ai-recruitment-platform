@@ -1,7 +1,12 @@
+from .admin import (
+    admin_skill_groups_queryset,
+    admin_skill_summary,
+    admin_skills_queryset,
+    with_usage,
+)
 from .lookup import (
     active_skill_groups_queryset,
     active_skill_terms,
-    normalize_skill_name,
     skill_lookup_queryset,
     skills_by_names,
 )
@@ -9,7 +14,10 @@ from .lookup import (
 __all__ = [
     'active_skill_groups_queryset',
     'active_skill_terms',
-    'normalize_skill_name',
+    'admin_skill_groups_queryset',
+    'admin_skill_summary',
+    'admin_skills_queryset',
     'skill_lookup_queryset',
     'skills_by_names',
+    'with_usage',
 ]

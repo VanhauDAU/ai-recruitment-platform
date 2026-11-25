@@ -6,11 +6,10 @@ from math import ceil
 from django.db.models import Exists, OuterRef, Q
 
 from apps.cvs.models import UserCv
-from common.db.search import search_q
+from common.db.search import folded_search_q, search_q
 
 from ..alerts import CandidateJobDigestItem, CandidateJobEmailSuppression
-from ..core import Job
-from ..querysets import active_jobs_queryset
+from ..querysets import active_jobs_queryset, listing_recency
 from .context import (
     ai_recommendation_allowed,
     candidate_context,
@@ -54,7 +53,7 @@ def _ranking_candidates(
     for label in context['position_query_labels']:
         label = str(label or '').strip()
         if label:
-            signal_filter |= search_q('title', label)
+            signal_filter |= folded_search_q('title_search', label)
     if not signal_filter:
         return []
 
@@ -79,12 +78,15 @@ def _ranking_candidates(
             ).filter(already_emailed=False, already_claimed=False)
     if excluded_public_ids:
         queryset = queryset.exclude(public_id__in=excluded_public_ids)
+    queryset = queryset.annotate(listing_recency=listing_recency())
     if published_after is not None:
-        queryset = queryset.filter(published_at__gt=published_after)
+        queryset = queryset.filter(listing_recency__gt=published_after)
     if published_before is not None:
-        queryset = queryset.filter(published_at__lte=published_before)
+        queryset = queryset.filter(listing_recency__lte=published_before)
     return list(
-        queryset.distinct().order_by('-published_at', '-created_at', '-pk')[:MAX_SCORING_CANDIDATES]
+        queryset.distinct().order_by('-listing_recency', '-created_at', '-pk')[
+            :MAX_SCORING_CANDIDATES
+        ]
     )
 
 
@@ -102,14 +104,8 @@ def _rank_jobs(context, *, user=None, **candidate_filters):
                 'match_reasons': presentation_match_reasons(details),
             }
         )
-    tier_rank = {Job.Tier.TOP: 2, Job.Tier.FEATURED: 1}
     ranked.sort(
-        key=lambda item: (
-            item['match_score'],
-            tier_rank.get(item['job'].tier, 0),
-            item['job'].published_at or item['job'].created_at,
-            item['job'].pk,
-        ),
+        key=lambda item: (item['match_score'], item['job'].listing_recency_at, item['job'].pk),
         reverse=True,
     )
     return ranked
@@ -176,7 +172,11 @@ def recommend_latest_jobs_for_candidate(user, *, page=1, page_size=10):
 
     Không đọc CV hay nhu cầu, không chấm điểm (`latest-v1`).
     """
-    jobs = list(recommendable_jobs(user).order_by('-published_at', '-pk')[:MAX_SCORING_CANDIDATES])
+    jobs = list(
+        recommendable_jobs(user)
+        .annotate(listing_recency=listing_recency())
+        .order_by('-listing_recency', '-pk')[:MAX_SCORING_CANDIDATES]
+    )
     ranked = [
         {'job': job, 'match_score': 0, 'match_details': [], 'match_reasons': []} for job in jobs
     ]

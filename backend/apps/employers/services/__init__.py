@@ -4,6 +4,7 @@ from ..models.company_update import (
     ACTIVE_COMPANY_UPDATE_STATUSES,
     REQUESTER_EDITABLE_COMPANY_UPDATE_STATUSES,
 )
+from .catalog_admin import save_industry
 from .companies import (
     COMPANY_DESCRIPTION_MIN_LENGTH,
     SENSITIVE_FIELDS,
@@ -185,6 +186,7 @@ from .verification import (
 )
 
 __all__ = [
+    'save_industry',
     'mark_company_content_changes_reviewed',
     'publish_company_page_content',
     'publish_content_change_image',

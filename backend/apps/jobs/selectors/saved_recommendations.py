@@ -6,9 +6,9 @@ from django.db.models import Prefetch, Q
 from django.utils.translation import gettext as _
 from django.utils.translation import ngettext
 
-from common.db.search import fold_accents, search_q
+from common.db.search import fold_accents, folded_search_q
 
-from ..models import Job, JobCategoryAssignment, JobLocation, JobSkill, SavedJob
+from ..models import Job, JobCategoryAssignment, JobLocation, JobSkill, SavedJob, listing_recency
 from ..models.recommendation_queries import EXPERIENCE_RANK, MAX_SCORING_CANDIDATES
 from .listing import active_jobs_queryset
 
@@ -174,7 +174,7 @@ def _source_signal_filter(source_contexts):
             category_assignments__role=JobCategoryAssignment.Role.PRIMARY_SPECIALIZATION,
         )
     for token in sorted(title_tokens):
-        signals |= search_q('title', token)
+        signals |= folded_search_q('title_search', token)
     return signals
 
 
@@ -197,10 +197,10 @@ def _available_jobs(user):
             ),
         )
     )
-    return queryset.exclude(
-        saved_by__candidate=user,
-    ).exclude(
-        applications__candidate=user,
+    return (
+        queryset.exclude(saved_by__candidate=user)
+        .exclude(applications__candidate=user)
+        .annotate(listing_recency=listing_recency())
     )
 
 
@@ -212,13 +212,13 @@ def _similarity_candidates(user, source_contexts):
         _available_jobs(user)
         .filter(signals)
         .distinct()
-        .order_by('-published_at', '-created_at', '-pk')[:MAX_SCORING_CANDIDATES]
+        .order_by('-listing_recency', '-created_at', '-pk')[:MAX_SCORING_CANDIDATES]
     )
 
 
 def _recent_active_fallback(user, limit):
     return list(
-        _available_jobs(user).distinct().order_by('-published_at', '-created_at', '-pk')[:limit]
+        _available_jobs(user).distinct().order_by('-listing_recency', '-created_at', '-pk')[:limit]
     )
 
 
@@ -325,7 +325,7 @@ def _rank_similar_jobs(jobs, source_contexts):
     ranked.sort(
         key=lambda item: (
             item['similarity_score'],
-            item['job'].published_at or item['job'].created_at,
+            item['job'].listing_recency_at,
             item['job'].pk,
         ),
         reverse=True,
@@ -416,6 +416,6 @@ def similar_jobs_for_job(user, job, *, limit=5):
         .exclude(hidden_by_candidates__candidate=user)
         .filter(signals)
         .distinct()
-        .order_by('-published_at', '-created_at', '-pk')[:MAX_SCORING_CANDIDATES]
+        .order_by('-listing_recency', '-created_at', '-pk')[:MAX_SCORING_CANDIDATES]
     )
     return [item['job'] for item in _rank_similar_jobs(pool, [source])[:limit]]

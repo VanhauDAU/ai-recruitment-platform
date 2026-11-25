@@ -2,19 +2,18 @@ import {
   ExclamationCircleFilled,
   LockOutlined,
   MailOutlined,
+  SafetyCertificateOutlined,
 } from '@ant-design/icons'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Alert, Button, Checkbox, Form, Input, Skeleton } from 'antd'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useSession } from '@/entities/account/session'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { setTokens } from '@/shared/api/token-store'
 import { message } from '@/shared/lib/toast'
-import { changeCurrentPassword, getPasswordSetupRequirements } from '../api/change-password.api'
+import { changeCurrentPassword, getPasswordSetupRequirements, sendPasswordSetupCode } from '../api/change-password.api'
 import { m } from '@/shared/config/i18n'
-
-const PROVIDER_LABELS = { google: 'Google', facebook: 'Facebook', linkedin: 'LinkedIn' }
 
 const PASSWORD_CHECKS = [
   { label: m.account_password_check_length(), test: (value) => value.length >= 8 && value.length <= 25 },
@@ -73,17 +72,82 @@ function PasswordStrengthGuide({ value }) {
   )
 }
 
+// Ô nhập mã + nút gửi có đếm ngược theo `resend_after_seconds` từ backend.
+function EmailCodeField({ email, initialWait = 0 }) {
+  const [wait, setWait] = useState(initialWait)
+  const [sent, setSent] = useState(false)
+  useEffect(() => setWait(initialWait), [initialWait])
+  useEffect(() => {
+    if (wait <= 0) return undefined
+    const timer = window.setTimeout(() => setWait((value) => value - 1), 1000)
+    return () => window.clearTimeout(timer)
+  }, [wait])
+  const send = useMutation({
+    mutationFn: sendPasswordSetupCode,
+    onSuccess: (data) => {
+      setSent(true)
+      setWait(data.resend_after_seconds || 60)
+      message.success(m.account_password_code_sent({ email }))
+    },
+    onError: (error) => {
+      const retryAfter = error.response?.data?.retry_after
+      if (retryAfter) setWait(retryAfter)
+      message.error(getApiErrorMessage(error, m.account_password_code_send_failed()))
+    },
+  })
+  const label = wait > 0
+    ? m.account_password_code_wait({ seconds: wait })
+    : sent ? m.account_password_code_resend() : m.account_password_code_send()
+
+  return (
+    <Form.Item
+      label={(
+        <span>
+          {m.account_password_code_label()}
+          <span className="mr-1 font-bold text-red-500"> *</span>
+        </span>
+      )}
+      required
+    >
+      <div className="flex gap-2">
+        <Form.Item
+          noStyle
+          name="email_code"
+          rules={[{ required: true, message: m.account_password_code_required() }]}
+        >
+          <Input
+            aria-label={m.account_password_code_label()}
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={6}
+            placeholder={m.account_password_code_placeholder()}
+            prefix={<SafetyCertificateOutlined className="mr-1.5 text-slate-400" />}
+            className="!h-10 flex-1 !rounded-lg tracking-widest"
+          />
+        </Form.Item>
+        <Button
+          htmlType="button"
+          onClick={() => send.mutate()}
+          loading={send.isPending}
+          disabled={wait > 0}
+          className="!h-10 shrink-0 !rounded-lg font-semibold"
+        >
+          {label}
+        </Button>
+      </div>
+    </Form.Item>
+  )
+}
+
 /**
  * Form đặt/đổi mật khẩu dùng chung hai cổng.
  *
- * `onReauth(provider)` do page truyền: tài khoản OAuth chưa có mật khẩu phải
- * xác thực lại với provider trước khi đặt mật khẩu lần đầu (không có mật khẩu
- * hiện tại để đối chiếu). Page sở hữu URL OAuth và đường quay lại của cổng.
+ * Tài khoản OAuth chưa có mật khẩu không có mật khẩu hiện tại để đối chiếu nên
+ * nhập mã gửi qua email (`email_code`) để chứng minh là chủ tài khoản.
  */
 export default function ChangePasswordForm({
   defaultLogoutAllSessions = false,
   successRedirect,
-  onReauth,
   onSuccess,
   showEmail = false,
 }) {
@@ -93,22 +157,14 @@ export default function ChangePasswordForm({
   const hasPassword = Boolean(user?.has_usable_password)
   const passwordValue = Form.useWatch('password', form) || ''
   const [passwordFocused, setPasswordFocused] = useState(false)
-  // Provider trả kèm 403 — chỉ dùng khi phiên hết hạn ngay giữa lúc điền form.
-  const [reauthFromError, setReauthFromError] = useState(null)
-  // Hỏi trước khi người dùng điền form; chỉ tài khoản chưa có mật khẩu mới vướng.
+  // Hỏi trước khi người dùng điền form; chỉ tài khoản chưa có mật khẩu mới cần mã.
   const requirements = useQuery({
     queryKey: ['change-password', 'requirements'],
     queryFn: getPasswordSetupRequirements,
     enabled: !hasPassword,
     staleTime: 0,
   })
-  const needsReauth = reauthFromError !== null || requirements.data?.requires_reauth === true
-  const reauthProvider = requirements.data?.reauth_provider || reauthFromError || null
-  const providerLabel = PROVIDER_LABELS[reauthProvider] || m.account_password_social_fallback()
-  const reauthMinutes = Math.max(
-    1,
-    Math.round((requirements.data?.reauth_max_age_seconds || 300) / 60),
-  )
+  const codeMinutes = Math.max(1, Math.round((requirements.data?.email_code_ttl_seconds || 600) / 60))
   const mutation = useMutation({
     mutationFn: changeCurrentPassword,
     onSuccess: (result) => {
@@ -121,13 +177,9 @@ export default function ChangePasswordForm({
       if (successRedirect) navigate(successRedirect, { replace: true })
     },
     onError: (error) => {
-      if (error.response?.data?.code === 'reauth_required') {
-        setReauthFromError(error.response.data.reauth_provider || '')
-        return
-      }
       const fields = error.response?.data && typeof error.response.data === 'object'
         ? Object.entries(error.response.data)
-          .filter(([name]) => ['current_password', 'password'].includes(name))
+          .filter(([name]) => ['current_password', 'email_code', 'password'].includes(name))
           .map(([name, errors]) => ({ name, errors: Array.isArray(errors) ? errors.map(String) : [String(errors)] }))
         : []
       if (fields.length) form.setFields(fields)
@@ -136,9 +188,9 @@ export default function ChangePasswordForm({
   })
 
   function submit(values) {
-    setReauthFromError(null)
     mutation.mutate({
       current_password: values.current_password || '',
+      ...(hasPassword ? {} : { email_code: values.email_code || '' }),
       password: values.password,
       logout_all_sessions: Boolean(values.logout_all_sessions),
     })
@@ -149,33 +201,13 @@ export default function ChangePasswordForm({
       {!hasPassword && requirements.isPending && (
         <Skeleton active title={false} paragraph={{ rows: 2 }} className="!mb-4" />
       )}
-      {needsReauth && (
-        <Alert
-          type="warning"
-          showIcon
-          className="!mb-5 rounded-xl border-amber-200 bg-amber-50/70"
-          title={m.account_password_reauth_title({ provider: providerLabel })}
-          description={
-            reauthProvider
-              ? m.account_password_reauth_desc({ provider: providerLabel, minutes: reauthMinutes })
-              : m.account_password_no_social_desc()
-          }
-          action={
-            reauthProvider && onReauth ? (
-              <Button type="primary" onClick={() => onReauth(reauthProvider)} className="!rounded-lg !bg-amber-600 hover:!bg-amber-700 !border-amber-600">
-                {m.account_password_reauth_button({ provider: providerLabel })}
-              </Button>
-            ) : null
-          }
-        />
-      )}
-      {!hasPassword && !needsReauth && !requirements.isPending && (
+      {!hasPassword && !requirements.isPending && (
         <Alert
           type="info"
           showIcon
           className="!mb-5 rounded-xl border-sky-200 bg-sky-50/70"
           title={m.account_password_no_password_title()}
-          description={m.account_password_no_password_desc()}
+          description={m.account_password_code_desc({ email: user?.email || '', minutes: codeMinutes })}
         />
       )}
       <Form
@@ -219,6 +251,9 @@ export default function ChangePasswordForm({
               className="!h-10 !rounded-lg"
             />
           </Form.Item>
+        )}
+        {!hasPassword && (
+          <EmailCodeField email={user?.email || ''} initialWait={requirements.data?.resend_after_seconds || 0} />
         )}
         <div className="relative">
           <Form.Item
@@ -283,7 +318,6 @@ export default function ChangePasswordForm({
             htmlType="submit"
             size="middle"
             loading={mutation.isPending}
-            disabled={needsReauth}
             className="!h-10 min-w-28 !rounded-lg !bg-[var(--brand-primary)] font-semibold text-white shadow-sm hover:!bg-[var(--brand-primary-hover)] !border-[var(--brand-primary)]"
           >
             {hasPassword ? m.account_password_submit_update() : m.account_password_submit_create()}

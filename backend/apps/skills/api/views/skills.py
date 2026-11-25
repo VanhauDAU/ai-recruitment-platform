@@ -3,7 +3,9 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 
 from apps.accounts.api.permissions import IsEmployer
+from common.api.throttling import WriteScopedRateThrottle, with_default_throttles
 
+from ...models import Skill
 from ...selectors import active_skill_groups_queryset, skill_lookup_queryset
 from ...services import create_skill
 from ..serializers import SkillCreateSerializer, SkillGroupSerializer, SkillSerializer
@@ -33,6 +35,8 @@ class SkillGroupListView(generics.ListAPIView):
 )
 @extend_schema(tags=['skills'])
 class SkillListView(generics.ListCreateAPIView):
+    throttle_classes = with_default_throttles(WriteScopedRateThrottle)
+    throttle_scope = 'skill_create'
     serializer_class = SkillSerializer
     pagination_class = None
 
@@ -46,7 +50,9 @@ class SkillListView(generics.ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         input_serializer = SkillCreateSerializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
-        skill, created = create_skill(input_serializer.validated_data['name'])
+        skill, created = create_skill(
+            input_serializer.validated_data['name'], source=Skill.Source.EMPLOYER
+        )
         return Response(
             SkillSerializer(skill).data,
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,

@@ -18,6 +18,11 @@ from .components.core import _DEFAULT_SECRET_KEY
 
 _errors: list[str] = []
 
+# HSTS preload là cam kết khó rút lại (trình duyệt nhúng sẵn domain): chỉ bật khi
+# đã chạy HTTPS ổn định một thời gian, nên không để check --deploy coi là lỗi.
+if not SECURE_HSTS_PRELOAD:
+    SILENCED_SYSTEM_CHECKS = [*SILENCED_SYSTEM_CHECKS, 'security.W021']
+
 # Production defaults to the enforced workflow. Operators may still use an
 # explicit false value for a controlled rollback.
 REQUIRE_APPROVED_EMPLOYER_VERIFICATION = config(
@@ -33,6 +38,10 @@ if DEBUG:
     _errors.append('DEBUG phải là False khi ENVIRONMENT=production.')
 if DJANGO_ADMIN_ENABLED:
     _errors.append('DJANGO_ADMIN_ENABLED phải là False khi ENVIRONMENT=production.')
+if API_DOCS_ENABLED:
+    _errors.append(
+        'API_DOCS_ENABLED phải là False khi ENVIRONMENT=production (lộ toàn bộ schema API).'
+    )
 if SECRET_KEY == _DEFAULT_SECRET_KEY:
     _errors.append('SECRET_KEY production phải được cấu hình qua biến môi trường.')
 if set(ALLOWED_HOSTS).issubset({'localhost', '127.0.0.1'}):

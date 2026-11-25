@@ -178,10 +178,11 @@ stateDiagram-v2
 - **Lớp phủ hiển thị:** `policy_hold` (trạng thái tài khoản), `moderation_hold`
   (`manual_review`/`confirmed_violation` — admin tạm ẩn/khôi phục tin active sau
   báo cáo). Không đổi `status`.
-- **Nhãn admin gán:** `tier` standard/featured/top, `is_hot`, `is_urgent`.
-  `has_flash_badge` (Huy hiệu Sấm Chớp) do task mỗi giờ tính từ mức phản hồi của
-  người đăng tin (ADR-0027), không ai sửa tay. Nhà tuyển dụng không ghi được các
-  field này, cũng như counter và mốc vòng đời.
+- **Nhãn:** không có hạng tin hay nhãn gán tay (`tier`, `is_hot`, `is_urgent` đã xóa
+  ở `jobs.0009`, ADR-0030). `has_flash_badge` (Huy hiệu Sấm Chớp) do task mỗi giờ tính
+  từ mức phản hồi của người đăng tin (ADR-0027), không ai sửa tay; nhãn "Sắp hết hạn"
+  tính lúc trả API từ `deadline`. Nhà tuyển dụng không ghi được các field này, cũng như
+  counter và mốc vòng đời.
 - **Counter:** `view_count`, `impression_count`, `application_count`; số liệu
   theo ngày ở `JobEngagementDaily`.
 - **Ràng buộc DB:** `chk_jobs_status`, tuổi trong 15–100 và `age_max ≥ age_min`,

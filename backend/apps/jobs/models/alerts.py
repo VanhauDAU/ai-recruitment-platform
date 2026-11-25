@@ -1,3 +1,5 @@
+from urllib.parse import urlsplit
+
 from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy
@@ -258,7 +260,9 @@ class CandidateJobDigest(models.Model):
         if not self.public_id:
             self.public_id = generate_public_id('jdi')
         if not self.message_id:
-            self.message_id = f'<job-alert.{self.public_id}@procv.vn>'
+            # Phần sau @ theo tên miền của site để Message-ID thuộc domain gửi thư.
+            domain = urlsplit(settings.FRONTEND_URL).hostname or 'localhost'
+            self.message_id = f'<job-alert.{self.public_id}@{domain}>'
         super().save(*args, **kwargs)
 
 
