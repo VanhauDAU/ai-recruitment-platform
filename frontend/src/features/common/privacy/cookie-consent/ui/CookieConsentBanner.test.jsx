@@ -20,8 +20,8 @@ describe('CookieConsentBanner', () => {
       </MemoryRouter>,
     )
 
-    fireEvent.click(screen.getByRole('button', { name: 'Chỉ cookie thiết yếu' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Tùy chỉnh cookie' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Chỉ thiết yếu' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Tùy chỉnh' }))
     fireEvent.click(screen.getByRole('button', { name: 'Chấp nhận tất cả' }))
 
     expect(onRejectOptional).toHaveBeenCalledOnce()

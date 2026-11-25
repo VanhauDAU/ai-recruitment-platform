@@ -8,13 +8,35 @@ khi production cần được bộ phận pháp lý xác nhận.
 | Key | Nơi lưu | Mục đích | Nhóm | Thời hạn/cleanup | Owner |
 | --- | --- | --- | --- | --- | --- |
 | `procv_consent` | Signed HttpOnly cookie | Nguồn quyết định consent | Thiết yếu | 180 ngày | `apps.privacy` |
-| `procv_consent_v1` | localStorage | Mirror không nhạy cảm để render UI | Thiết yếu | Xóa khi cookie không hợp lệ | `entities/system/consent` |
-| `color-scheme` | localStorage | Ghi nhớ giao diện sáng/tối | Tùy chọn | Xóa khi tắt Preferences | `entities/system/consent` |
-| `search_history` | localStorage | Lịch sử tìm việc | Tùy chọn | Không đọc/ghi và tự xóa khi tắt Preferences | `features/main/job/search-jobs` |
-| `procv_viewer_id` | Signed HttpOnly cookie | Chống đếm trùng lượt xem | Analytics | 365 ngày; xóa khi rút Analytics | `apps.jobs` |
-| `procv_campaign_ref_v1` | localStorage | Nhớ kênh chiến dịch đã đưa ứng viên tới (`?ref=` có ký) để ghi nguồn khi ứng tuyển, lần bấm cuối thắng | Analytics | 30 ngày; xóa khi rút Analytics. Không có consent thì chỉ giữ trong bộ nhớ của phiên SPA | `entities/campaign/campaign`, `features/main/job/track-campaign-ref` |
+| `procv_consent_v1` | localStorage | Mirror không nhạy cảm để render UI | Thiết yếu | Xóa khi cookie không hợp lệ hoặc gọi API consent lỗi | `entities/system/consent` |
+| `procv_refresh_<portal>` | HttpOnly cookie, path `/api/` | Refresh JWT; access token chỉ nằm trong bộ nhớ | Thiết yếu | Theo hạn phiên | `apps.accounts` |
+| `procv_auth_logout_<portal>`, `auth_logout_marker_<portal>` | Cookie + localStorage | Đồng bộ đăng xuất giữa tab/subdomain | Thiết yếu | 1 năm | `shared/api/token-store` |
+| `procv_oauth_browser` | HttpOnly cookie | Gắn state OAuth với trình duyệt (chống CSRF) | Thiết yếu | `OAUTH_STATE_TTL` (10 phút) | `apps.accounts` |
+| `procv_lang` | localStorage | Ngôn ngữ người dùng chọn | Thiết yếu (chức năng người dùng yêu cầu) | Đến khi đổi | `shared/config/i18n` |
+| `announcement-strip:*` | localStorage | Nhớ thông báo đã đóng | Thiết yếu (người dùng yêu cầu) | Theo phiên bản thông báo | `widgets/common/announcement-strip` |
+| `procv:notification-sound`, `procv:notice-claim:*` | localStorage | Tắt âm báo; một tab báo mỗi sự kiện | Thiết yếu | Đến khi bật lại / 60 giây | `shared/lib/incoming-notice` |
+| `job-quality-feedback:*` | localStorage | Nhớ đã đánh giá tin | Thiết yếu (người dùng yêu cầu) | Đến khi xóa dữ liệu | `pages/main/jobs` |
+| `procv.nearby_origin`, `employer_registration_consent` | sessionStorage | Vị trí "Việc làm gần tôi"; bước đăng ký NTD | Thiết yếu | Đóng tab | `entities/system/location`, `pages/employer/auth` |
 | Django session/CSRF | Cookie | Bảo mật và vận hành Django admin | Thiết yếu | Theo Django | Django |
-| access/refresh token | localStorage | Phiên JWT hiện tại | Thiết yếu trong phạm vi auth hiện hữu | Theo luồng auth | `shared/api/token-store` |
+| `color-scheme` | localStorage | Ghi nhớ giao diện sáng/tối | Tùy chọn | Xóa khi tắt Preferences | `entities/system/consent` |
+| `search_history` | localStorage | Lịch sử tìm việc | Tùy chọn | Không đọc/ghi khi tắt Preferences | `features/main/job/search-jobs` |
+| `saved_job_filter` | localStorage | Bộ lọc việc làm bấm lưu | Tùy chọn | Không ghi khi tắt Preferences | `pages/main/jobs` |
+| `procv_job_comparison_v1` | localStorage | Danh sách so sánh việc làm | Tùy chọn | Chỉ giữ trong bộ nhớ khi tắt Preferences | `features/main/job/compare-jobs` |
+| `procv_employer_cv_ordering`, `procv_admin_sidebar_collapsed`, `procv_admin_nav_open` | localStorage | Sắp xếp hồ sơ NTD; thanh bên admin | Tùy chọn | Không ghi khi tắt Preferences | `pages/employer/jobs`, `app/layouts` |
+| `procv_viewer_id` | Signed HttpOnly cookie | Chống đếm trùng lượt xem tin và sự kiện thông báo | Analytics | 365 ngày; xóa khi rút Analytics | `apps.jobs`, `apps.sitecontent` |
+| `procv_campaign_ref_v1` | localStorage | Nhớ kênh chiến dịch đã đưa ứng viên tới (`?ref=` có ký) để ghi nguồn khi ứng tuyển, lần bấm cuối thắng | Analytics | 30 ngày; xóa khi rút Analytics. Không có consent thì chỉ giữ trong bộ nhớ của phiên SPA | `entities/campaign/campaign`, `features/main/job/track-campaign-ref` |
+
+`ConsentProvider` gọi `purgeWithdrawnStorage` ngay khi biết lựa chọn (tải từ máy
+chủ, lưu mới hoặc API lỗi) để xóa mọi khóa Tùy chọn/Analytics của nhóm chưa
+đồng ý, kể cả khi màn hình sở hữu khóa chưa mở. Thêm khóa tùy chọn mới thì phải
+thêm vào `OPTIONAL_STORAGE_KEYS` (`entities/system/consent/lib/consent-storage.js`)
+và bảng ở trang `/chinh-sach-cookie`. Khi consent còn `loading`, không quyết định
+lưu lâu dài theo mirror localStorage (mirror có thể đã cũ).
+
+Bên thứ ba: reCAPTCHA v3 chỉ nạp trong `AuthLayout`, `EmployerAuthLayout` và
+modal đăng nhập (bảo mật, thiết yếu). Video công ty và bản đồ trang Liên hệ NTD
+là mặt tiền nhấp-để-tải; YouTube dùng `youtube-nocookie.com`. Sentry không gửi
+cookie/body/query. Nhóm Marketing chưa có tích hợp nào.
 
 Không tạo `procv_viewer_id`, không gọi endpoint tracking và không dùng dữ liệu
 Analytics khi người dùng chưa chọn hoặc đã tắt Analytics.

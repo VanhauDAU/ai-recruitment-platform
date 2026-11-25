@@ -1,6 +1,7 @@
 import dayjs from '@/shared/lib/dayjs'
 import { APPLICATION_STATUS_TONES, RECRUITER_APPLICATION_STATUS_LABELS } from '@/entities/application/application'
 import { jobDetailPath } from '@/entities/job/job'
+import { hasPreferenceConsent } from '@/entities/system/consent'
 import { MAIN_PORTAL_URL } from '@/shared/config/portals'
 import { m } from '@/shared/config/i18n'
 
@@ -90,6 +91,7 @@ export function storedOrdering() {
 }
 
 export function storeOrdering(value) {
+  if (!hasPreferenceConsent()) return
   try {
     window.localStorage.setItem(ORDERING_STORAGE_KEY, value)
   } catch {

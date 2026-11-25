@@ -1,7 +1,7 @@
 # Tiến độ dự án
 
 Ảnh chụp trạng thái hiện tại, đối chiếu với `dev` ngày **26/11/2026** (commit
-`19743621`, PR mới nhất #395). File này trả lời câu hỏi "cái gì đã chạy, cái gì còn
+`a3ea5d5d`, PR mới nhất #397). File này trả lời câu hỏi "cái gì đã chạy, cái gì còn
 mở". Nó không phải nhật ký:
 
 - chi tiết từng thay đổi nằm ở [`CHANGELOG.md`](../CHANGELOG.md);
@@ -28,6 +28,7 @@ Ký hiệu: ✅ chạy trên `dev` · 🟨 một phần (ghi rõ phần còn thi
 | Thông báo realtime, hoàn tác 15 giây, tab bar và thông báo trên mobile | ✅ | [ADR-0028](adr/adr-0028-realtime-notifications.md) |
 | ProCV Connect: lời mời kết nối, nhắn tin, lịch phỏng vấn | ✅ | [ADR-0032](adr/adr-0032-procv-connect-messaging.md), [đặc tả](01-phan-tich/dac-ta-procv-connect.md) |
 | Trung tâm trợ giúp, blog cẩm nang (có đọc bằng giọng nói) | ✅ | [đặc tả trợ giúp](01-phan-tich/dac-ta-trung-tam-tro-giup.md) |
+| Đồng ý cookie: chỉ đo lường và lưu tùy chọn khi được phép, trang chính sách cookie, mở lại cài đặt ở cả hai cổng | ✅ | [cookie consent và lượt xem](04-api/dong-y-cookie-va-luot-xem-tin.md) |
 | Yêu cầu xóa tài khoản và dữ liệu cá nhân | 🟨 | Gửi yêu cầu vào hàng chờ admin; tự phục vụ xuất/xóa để sau go-live |
 | Song ngữ vi/en | 🟨 | Nền tảng xong; còn 1.694 dòng chữ viết cứng ở `pages/main`, `features/main`, `widgets/main` (`frontend/scripts/i18n-baseline.json`) |
 | Chatbot FAQ | ⬜ | [đặc tả](07-algorithms/chatbot-ung-vien-faq.md), chưa xếp lịch |
@@ -104,6 +105,7 @@ Sắp theo hạn. Khi xong một việc, xóa dòng ở đây và sửa trạng 
 | Kích hoạt ER-3, bằng chứng DPA, gateway SMS | Khi có nhà cung cấp production | [vận hành](06-deployment/van-hanh-va-kill-switch.md) |
 | Sửa lời cảnh báo email tên miền ở trang đăng ký NTD | Không chặn | Câu `employer_account_register_domain_warning` hứa giới hạn "mua hoặc sử dụng" không tồn tại |
 | Thông báo nộp lại hồ sơ theo cấu hình | Không chặn | Câu báo lỗi ghi cứng "5 phút", "2 lượt" ở `apps/applications/services/applications.py`, trong khi giới hạn thật đọc từ cấu hình (`policy.reapply_cooldown`, `max_applications_per_job`) |
+| Bộ lọc việc làm đã lưu và đánh giá chất lượng tin | Không chặn | "Lưu bộ lọc" ghi `saved_job_filter` nhưng không nơi nào đọc lại; đánh giá chất lượng tin chỉ nằm trong localStorage, không gửi về máy chủ |
 | Song ngữ cổng ứng viên và quản trị | Không chặn | Giảm dần số trong `i18n-baseline.json`, CI chặn tăng |
 
 ## Quy tắc cập nhật
