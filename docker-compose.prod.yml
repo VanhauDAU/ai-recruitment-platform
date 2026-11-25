@@ -58,10 +58,10 @@ x-prod-env: &prod-env
   PUBLIC_MEDIA_ROOT: /app/var/public-media
   PRIVATE_MEDIA_ROOT: /app/var/private-media
   UPLOAD_QUARANTINE_ROOT: /app/var/quarantine
-  # ClamAV (service clamav) quét file qua upload session trước khi nhận. Hai cờ
-  # *_REQUIRED vẫn tắt: luồng upload cũ còn nhận file trong lúc chuyển dần sang
-  # session (bật sau khi rehearsal ổn định).
-  UPLOAD_QUARANTINE_ENABLED: 'True'
+  # ClamAV đang tắt (service clamav nằm trong profile `scanner`): upload session
+  # trả UPLOAD_PIPELINE_DISABLED, frontend tự quay về luồng upload cũ. Bật lại:
+  # đặt 'True' và chạy compose với --profile scanner.
+  UPLOAD_QUARANTINE_ENABLED: 'False'
   CLAMAV_HOST: clamav
   CLAMAV_PORT: '3310'
   EMPLOYER_UPLOAD_SESSION_REQUIRED: 'False'
@@ -346,8 +346,10 @@ services:
   # Quét virus cho upload session (queue upload-scan của worker). Nạp bộ nhận diện
   # mất vài phút sau lần khởi động đầu; trong lúc đó task quét tự thử lại nên
   # không chặn stack. Không publish 3310 ra host. Cần máy >= 12 GB RAM.
+  # Tắt mặc định: chỉ chạy khi gọi compose với --profile scanner.
   clamav:
     image: clamav/clamav:1.4_base
+    profiles: [scanner]
     environment:
       CLAMAV_NO_MILTERD: 'true'
       CLAMD_STARTUP_TIMEOUT: 900
