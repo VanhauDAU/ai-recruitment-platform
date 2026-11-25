@@ -53,5 +53,7 @@
   "privacy_history_cancel": "Cancel request",
   "privacy_history_cancelled": "Request cancelled.",
   "privacy_cancel_failed": "Could not cancel the request. Please try again.",
-  "privacy_download_failed": "Could not download the data. Please try again."
+  "privacy_download_failed": "Could not download the data. Please try again.",
+  "common_not_found_description": "The page you are looking for does not exist.",
+  "common_not_found_home": "Back to home"
 }

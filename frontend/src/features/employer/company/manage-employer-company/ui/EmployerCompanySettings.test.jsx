@@ -50,6 +50,8 @@ vi.mock('@/shared/ui/rich-text/RichTextEditor', () => ({
   ),
 }))
 
+const hasFieldError = (control) => control.closest('.ant-form-item').classList.contains('ant-form-item-has-error')
+
 describe('EmployerCompanySettings', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -162,15 +164,19 @@ describe('EmployerCompanySettings', () => {
 
     expect(await screen.findByText('Mã số thuế chỉ được gồm chữ số.')).toBeInTheDocument()
     expect(await screen.findByText(/Mô tả công ty phải có ít nhất 500 ký tự/)).toBeInTheDocument()
+    expect(hasFieldError(taxCode)).toBe(true)
+    expect(hasFieldError(description)).toBe(true)
     expect(api.createEmployerCompany).not.toHaveBeenCalled()
 
     fireEvent.change(taxCode, { target: { value: '0101234567890' } })
     fireEvent.change(description, { target: { value: 'a'.repeat(500) } })
     fireEvent.click(submit)
 
+    // antd giữ dòng lỗi cũ trong DOM suốt hiệu ứng ẩn (lâu hơn khi CI chậm), nên
+    // kiểm trạng thái hợp lệ của chính ô nhập thay vì chờ dòng chữ biến mất.
     await waitFor(() => {
-      expect(screen.queryByText('Mã số thuế chỉ được gồm chữ số.')).not.toBeInTheDocument()
-      expect(screen.queryByText(/Mô tả công ty phải có ít nhất 500 ký tự/)).not.toBeInTheDocument()
+      expect(hasFieldError(taxCode)).toBe(false)
+      expect(hasFieldError(description)).toBe(false)
     })
   })
 

@@ -53,5 +53,7 @@
   "privacy_history_cancel": "Hủy yêu cầu",
   "privacy_history_cancelled": "Đã hủy yêu cầu.",
   "privacy_cancel_failed": "Chưa hủy được yêu cầu. Vui lòng thử lại.",
-  "privacy_download_failed": "Không tải được dữ liệu. Vui lòng thử lại."
+  "privacy_download_failed": "Không tải được dữ liệu. Vui lòng thử lại.",
+  "common_not_found_description": "Trang bạn tìm không tồn tại.",
+  "common_not_found_home": "Về trang chủ"
 }
