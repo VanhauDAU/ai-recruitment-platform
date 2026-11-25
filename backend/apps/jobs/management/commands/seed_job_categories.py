@@ -1,6 +1,25 @@
+from pathlib import Path
+
+from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
 
 from apps.jobs.models import JobCategory, JobCategoryLocalization
+from common.storage.media import public_media_storage
+
+GROUP_ICON_DIR = Path(__file__).resolve().parents[2] / 'seed_data' / 'category_icons'
+GROUP_ICON_STORAGE_DIR = 'jobs/categories/logos'
+# Icon mặc định cho nhóm nghề (Fluent Emoji 3D, MIT). Chỉ gán khi nhóm chưa có
+# logo, nên logo admin đã upload không bị ghi đè.
+GROUP_ICONS = {
+    'Kinh doanh/Bán hàng': 'chart_increasing',
+    'Marketing/PR/Quảng cáo': 'megaphone',
+    'Chăm sóc khách hàng': 'headphone',
+    'Nhân sự/Hành chính/Pháp chế': 'clipboard',
+    'Công nghệ thông tin': 'laptop',
+    'Kế toán/Kiểm toán/Thuế': 'abacus',
+    'Thiết kế/Sáng tạo': 'artist_palette',
+    'Lao động phổ thông': 'hammer_and_wrench',
+}
 
 # 3-level taxonomy: nhóm nghề -> nghề -> vị trí chuyên môn
 SEED_CATEGORIES = {
@@ -206,11 +225,30 @@ POSITION_LOCALIZATIONS = {
 }
 
 
+def assign_default_group_icon(group):
+    """Đưa icon mặc định vào kho media (key cố định, upload một lần) rồi gán logo_url."""
+    stem = GROUP_ICONS.get(group.name)
+    if group.logo_url or not stem:
+        return False
+    storage = public_media_storage()
+    key = f'{GROUP_ICON_STORAGE_DIR}/default-{stem}.webp'
+    if not storage.exists(key):
+        icon = ContentFile((GROUP_ICON_DIR / f'{stem}.webp').read_bytes(), name=f'{stem}.webp')
+        # Gắn rõ loại file: mimetypes của một số bản Python không biết đuôi .webp,
+        # khi đó S3/R2 lưu thành application/octet-stream.
+        icon.content_type = 'image/webp'
+        key = storage.save(key, icon)
+    group.logo_url = key
+    group.save(update_fields=['logo_url'])
+    return True
+
+
 class Command(BaseCommand):
     help = 'Seed job_categories with a 3-level taxonomy (nhóm nghề -> nghề -> vị trí chuyên môn).'
 
     def handle(self, *args, **options):
         count = 0
+        icons = 0
         seen = []
         for group_name, jobs in SEED_CATEGORIES.items():
             group, created = JobCategory.objects.update_or_create(
@@ -222,6 +260,7 @@ class Command(BaseCommand):
                 },
             )
             count += created
+            icons += assign_default_group_icon(group)
             seen.append(group_name)
             for job_name, positions in jobs.items():
                 job, created = JobCategory.objects.update_or_create(
@@ -260,4 +299,8 @@ class Command(BaseCommand):
         retired = JobCategory.objects.exclude(name__in=seen).update(
             status=JobCategory.Status.INACTIVE
         )
-        self.stdout.write(self.style.SUCCESS(f'Seeded: {count} created, {retired} retired.'))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f'Seeded: {count} created, {icons} icons assigned, {retired} retired.'
+            )
+        )

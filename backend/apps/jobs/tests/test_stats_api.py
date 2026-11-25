@@ -5,7 +5,7 @@ from apps.accounts.models import User
 from apps.employers.models import Company
 from apps.employers.tests.factories import make_employer_ready
 
-from ..models import Job
+from ..models import Job, JobCategory, JobCategoryAssignment
 from .factories import open_visibility_window
 
 
@@ -69,3 +69,41 @@ class JobStatsApiTests(APITestCase):
             [item['slug'] for item in response.data['featured_employers']],
             [companies['Visible Co'].slug],
         )
+
+    def test_category_demand_rolls_descendants_up_to_top_groups(self):
+        employer = User.objects.create_user(
+            email='demand-stats@example.com',
+            password='Password@123',
+            role=User.Role.EMPLOYER,
+        )
+        company = Company.objects.create(company_name='Demand Co', created_by=employer)
+        make_employer_ready(employer, company=company, candidate_data=True)
+        it = JobCategory.objects.create(name='CNTT', logo_url='jobs/categories/logos/it.webp')
+        web = JobCategory.objects.create(name='Web', parent=it)
+        backend = JobCategory.objects.create(name='Backend', parent=web)
+        sales = JobCategory.objects.create(name='Sales')
+        JobCategory.objects.create(name='Empty group')
+
+        def job(title, *categories):
+            created = Job.objects.create(
+                posted_by=employer,
+                company=company,
+                title=title,
+                description='Description',
+                status=Job.Status.ACTIVE,
+                **open_visibility_window(),
+            )
+            for category in categories:
+                JobCategoryAssignment.objects.create(job=created, category=category)
+
+        job('Backend dev', backend, web)  # two IT categories, counted once
+        job('IT lead', it)
+        job('Sales rep', sales)
+
+        response = self.client.get(reverse('job-stats'))
+
+        demand = {item['name']: item for item in response.data['demand']}
+        self.assertEqual(list(demand), ['CNTT', 'Sales'])
+        self.assertEqual(demand['CNTT']['count'], 2)
+        self.assertEqual(demand['Sales']['count'], 1)
+        self.assertTrue(demand['CNTT']['logo_url'].endswith('/jobs/categories/logos/it.webp'))

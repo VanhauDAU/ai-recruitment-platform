@@ -1,15 +1,20 @@
 import {
   AppstoreOutlined,
   DollarOutlined,
-  FieldTimeOutlined,
   LaptopOutlined,
-  ReadOutlined,
   RightOutlined,
   RocketOutlined,
 } from '@ant-design/icons'
 import { Skeleton } from 'antd'
 import ArrowButton from '@/shared/ui/ArrowButton'
 import { formatNumber } from '@/entities/job/job'
+
+// Icon 3D (Fluent Emoji, MIT) cho các lối tắt không phải ngành; ảnh ngành lấy từ logo_url.
+const SHORTCUT_ICON = {
+  intern: '/images/categories/graduation_cap.webp',
+  partTime: '/images/categories/alarm_clock.webp',
+  allCategories: '/images/categories/card_index_dividers.webp',
+}
 
 function ShortcutCard({ icon, img, label, active, onClick }) {
   return (
@@ -25,7 +30,7 @@ function ShortcutCard({ icon, img, label, active, onClick }) {
           img ? 'bg-white ring-1 ring-gray-100' : active ? 'bg-[var(--brand-primary)] text-white' : 'bg-[var(--brand-primary-soft)] text-[var(--brand-primary)]'
         }`}
       >
-        {img ? <img src={img} alt="" className="h-7 w-7 object-contain" loading="lazy" /> : icon}
+        {img ? <img src={img} alt="" className="h-8 w-8 object-contain" loading="lazy" /> : icon}
       </span>
       <span className="line-clamp-2 h-8 text-xs font-medium leading-snug text-gray-700">{label}</span>
     </button>
@@ -53,14 +58,14 @@ export default function QuickExplore({
     {
       key: 'intern',
       label: 'Việc thực tập sinh',
-      icon: <ReadOutlined />,
+      img: SHORTCUT_ICON.intern,
       active: searchParams.get('level') === 'intern',
       onClick: () => onToggleParam('level', 'intern'),
     },
     {
       key: 'part-time',
       label: 'Part-time, thời vụ',
-      icon: <FieldTimeOutlined />,
+      img: SHORTCUT_ICON.partTime,
       active: searchParams.get('et') === 'part_time',
       onClick: () => onToggleParam('et', 'part_time'),
     },
@@ -111,7 +116,7 @@ export default function QuickExplore({
                 {shortcutSpecials.map((shortcut) => (
                   <ShortcutCard
                     key={shortcut.key}
-                    icon={shortcut.icon}
+                    img={shortcut.img}
                     label={shortcut.label}
                     active={shortcut.active}
                     onClick={shortcut.onClick}
@@ -127,7 +132,7 @@ export default function QuickExplore({
                     onClick={() => onToggleCategory(group.id)}
                   />
                 ))}
-                <ShortcutCard icon={<AppstoreOutlined />} label="Xem tất cả ngành nghề" onClick={onOpenAllCategories} />
+                <ShortcutCard img={SHORTCUT_ICON.allCategories} label="Xem tất cả ngành nghề" onClick={onOpenAllCategories} />
               </>
             )}
         </div>

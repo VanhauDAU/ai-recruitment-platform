@@ -321,7 +321,7 @@ test('public smoke: featured companies keep platform stats, the company page lin
 
   const firstCompanyCard = featuredBlock.locator('.featured-employer-card').filter({ hasText: 'Công ty Alpha & Đối tác' })
   await expect(firstCompanyCard).toBeVisible()
-  await expect(firstCompanyCard.getByText('12 Việc làm', { exact: true })).toBeVisible()
+  await expect(firstCompanyCard.getByText('12 việc làm', { exact: true })).toBeVisible()
   await expect(featuredBlock.locator('.employer-logo-full-bleed-marquee')).toHaveCSS(
     'animation-name',
     'employerLogoFullBleedMarquee',
