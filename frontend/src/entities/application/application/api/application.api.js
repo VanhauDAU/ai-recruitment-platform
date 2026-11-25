@@ -219,3 +219,14 @@ export async function getMyTalentPools() {
 export async function withdrawFromTalentPool(publicId) {
   await api.post(`/candidate/talent-pools/mine/${publicId}/withdraw/`)
 }
+
+// Connection requests employers send from candidate search.
+export async function getMyConnectionInvitations() {
+  const { data } = await api.get('/candidate/connection-invitations/')
+  return data.results || data
+}
+
+export async function respondToConnectionInvitation(publicId, accept) {
+  const { data } = await api.post(`/candidate/connection-invitations/${publicId}/respond/`, { accept })
+  return data
+}

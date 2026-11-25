@@ -8721,6 +8721,67 @@ paths:
               schema:
                 $ref: '#/components/schemas/CandidateApplication'
           description: ''
+  /api/candidate/connection-invitations/:
+    get:
+      operationId: candidate_connection_invitations_list
+      summary: Lời mời kết nối của nhà tuyển dụng gửi cho tôi
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - applications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCandidateSearchInvitationList'
+          description: ''
+  /api/candidate/connection-invitations/{public_id}/respond/:
+    post:
+      operationId: candidate_connection_invitations_respond_create
+      summary: Đồng ý hoặc từ chối một lời mời kết nối
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - applications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateSearchInvitationResponseRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CandidateSearchInvitationResponseRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CandidateSearchInvitationResponseRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateSearchInvitation'
+          description: ''
   /api/candidate/cvs/:
     get:
       operationId: candidate_cvs_list
@@ -12100,7 +12161,7 @@ paths:
   /api/employer/candidate-search/{ref}/invite/:
     post:
       operationId: employer_candidate_search_invite_create
-      summary: 'Tìm CV: mời một ứng viên ứng tuyển vào một tin đang tuyển'
+      summary: 'Tìm CV: gửi lời mời kết nối về một tin đang tuyển cho một ứng viên'
       parameters:
       - in: path
         name: ref
@@ -24738,6 +24799,7 @@ components:
       - application_rejected
       - talent_pool_saved
       - job_invitation
+      - connection_invitation
       type: string
       description: |-
         * `application_submitted` - Hồ sơ đã được tiếp nhận
@@ -24749,6 +24811,7 @@ components:
         * `application_rejected` - Chưa phù hợp
         * `talent_pool_saved` - Được lưu vào kho ứng viên tiềm năng
         * `job_invitation` - Lời mời ứng tuyển
+        * `connection_invitation` - Lời mời kết nối
     CandidatePreferredProvinceRead:
       type: object
       properties:
@@ -24798,6 +24861,79 @@ components:
           type: integer
       required:
       - updated
+    CandidateSearchInvitation:
+      type: object
+      description: 'Lời mời kết nối ứng viên nhận được: công ty, tin và trạng thái
+        phản hồi.'
+      properties:
+        public_id:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/CandidateSearchInvitationStatusEnum'
+          readOnly: true
+        invited_at:
+          type: string
+          format: date-time
+          readOnly: true
+        responded_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        company_name:
+          type: string
+          readOnly: true
+        company_slug:
+          type: string
+          readOnly: true
+        company_logo_url:
+          type: string
+          nullable: true
+          readOnly: true
+        job_public_id:
+          type: string
+          readOnly: true
+        job_title:
+          type: string
+          readOnly: true
+        job_slug:
+          type: string
+          readOnly: true
+        job_stopped_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - company_logo_url
+      - company_name
+      - company_slug
+      - invited_at
+      - job_public_id
+      - job_slug
+      - job_stopped_at
+      - job_title
+      - public_id
+      - responded_at
+      - status
+    CandidateSearchInvitationResponseRequest:
+      type: object
+      properties:
+        accept:
+          type: boolean
+      required:
+      - accept
+    CandidateSearchInvitationStatusEnum:
+      enum:
+      - pending
+      - accepted
+      - declined
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `accepted` - Accepted
+        * `declined` - Declined
     CandidateSearchInviteRequest:
       type: object
       properties:
@@ -29673,6 +29809,8 @@ components:
       - company_content_reverted
       - application_received
       - application_withdrawn
+      - search_invitation_accepted
+      - search_invitation_declined
       - application_awaiting_reply
       - flash_badge_granted
       - flash_badge_lost
@@ -29708,6 +29846,8 @@ components:
         * `company_content_reverted` - Nội dung trang công ty đã bị hoàn tác
         * `application_received` - Có hồ sơ ứng tuyển mới
         * `application_withdrawn` - Ứng viên đã rút hồ sơ
+        * `search_invitation_accepted` - Ứng viên đồng ý kết nối
+        * `search_invitation_declined` - Ứng viên từ chối lời mời kết nối
         * `application_awaiting_reply` - Hồ sơ đang chờ phản hồi
         * `flash_badge_granted` - Bạn đã đạt Huy hiệu Sấm Chớp
         * `flash_badge_lost` - Bạn đã mất Huy hiệu Sấm Chớp
@@ -33969,6 +34109,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CandidateNotification'
+    PaginatedCandidateSearchInvitationList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CandidateSearchInvitation'
     PaginatedCandidateTalentPoolList:
       type: object
       required:

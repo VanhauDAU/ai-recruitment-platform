@@ -814,6 +814,12 @@ msgstr "New application received"
 msgid "Ứng viên đã rút hồ sơ"
 msgstr "Candidate withdrew an application"
 
+msgid "Ứng viên đồng ý kết nối"
+msgstr "Candidate accepted connection"
+
+msgid "Ứng viên từ chối lời mời kết nối"
+msgstr "Candidate declined connection"
+
 msgid "Hồ sơ đang chờ phản hồi"
 msgstr "Application awaiting your reply"
 
