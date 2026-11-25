@@ -15696,9 +15696,12 @@ paths:
       - in: query
         name: q
         schema:
-          type: string
-          maxLength: 120
-          minLength: 2
+          oneOf:
+          - type: string
+            maxLength: 120
+            minLength: 2
+          - type: string
+            maxLength: 0
       - in: query
         name: type
         schema:
@@ -16835,10 +16838,13 @@ components:
           minLength: 1
           maxLength: 500
         enforcement_evidence:
-          type: string
-          default: ''
-          maxLength: 500
-          minLength: 20
+          oneOf:
+          - type: string
+            default: ''
+            maxLength: 500
+            minLength: 20
+          - type: string
+            maxLength: 0
         violation_category:
           default: ''
           oneOf:
@@ -16873,10 +16879,13 @@ components:
           default: ''
           maxLength: 500
         enforcement_evidence:
-          type: string
-          default: ''
-          maxLength: 500
-          minLength: 20
+          oneOf:
+          - type: string
+            default: ''
+            maxLength: 500
+            minLength: 20
+          - type: string
+            maxLength: 0
         violation_category:
           default: ''
           oneOf:
@@ -20719,10 +20728,13 @@ components:
           type: string
           maxLength: 255
         slug:
-          type: string
           description: URL /blog/<slug>; auto từ tiêu đề, sửa tay được để tối ưu SEO
-          maxLength: 255
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 255
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         thumbnail_url:
           type: string
           readOnly: true
@@ -20839,10 +20851,13 @@ components:
           type: string
           maxLength: 255
         slug:
-          type: string
           description: URL /blog/<slug>; auto từ tiêu đề, sửa tay được để tối ưu SEO
-          maxLength: 255
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 255
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         thumbnail_url:
           type: string
           readOnly: true
@@ -21096,9 +21111,12 @@ components:
           type: string
           maxLength: 100
         slug:
-          type: string
-          maxLength: 120
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 120
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         is_active:
           type: boolean
           description: Ẩn thẻ khỏi phía ứng viên và form chọn thẻ
@@ -21135,9 +21153,12 @@ components:
           minLength: 1
           maxLength: 100
         slug:
-          type: string
-          maxLength: 120
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 120
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         is_active:
           type: boolean
           description: Ẩn thẻ khỏi phía ứng viên và form chọn thẻ
@@ -23842,9 +23863,12 @@ components:
           type: string
           maxLength: 255
         slug:
-          type: string
-          maxLength: 255
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 255
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         icon:
           type: string
           maxLength: 100
@@ -24074,9 +24098,12 @@ components:
           readOnly: true
           nullable: true
         posted_url:
-          type: string
-          format: uri
-          maxLength: 500
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 500
+          - type: string
+            maxLength: 0
         clicks:
           type: integer
           readOnly: true
@@ -24364,8 +24391,11 @@ components:
           type: string
           maxLength: 255
         contact_email:
-          type: string
-          format: email
+          oneOf:
+          - type: string
+            format: email
+          - type: string
+            maxLength: 0
         contact_phone:
           type: string
           maxLength: 20
@@ -24408,8 +24438,11 @@ components:
           type: string
           maxLength: 255
         contact_email:
-          type: string
-          format: email
+          oneOf:
+          - type: string
+            format: email
+          - type: string
+            maxLength: 0
         contact_phone:
           type: string
           maxLength: 20
@@ -25171,9 +25204,12 @@ components:
         has_no_website:
           type: boolean
         email:
-          type: string
-          format: email
-          maxLength: 254
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
         phone:
           type: string
           maxLength: 20
@@ -25926,9 +25962,12 @@ components:
         has_no_website:
           type: boolean
         email:
-          type: string
-          format: email
-          maxLength: 254
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
         phone:
           type: string
           maxLength: 20
@@ -27441,9 +27480,12 @@ components:
           type: string
           maxLength: 255
         slug:
-          type: string
-          maxLength: 255
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 255
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         display_name_vi:
           type: string
           maxLength: 255
@@ -27515,9 +27557,12 @@ components:
           minLength: 1
           maxLength: 255
         slug:
-          type: string
-          maxLength: 255
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 255
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         display_name_vi:
           type: string
           maxLength: 255
@@ -28405,8 +28450,11 @@ components:
         document_sha256:
           type: string
         document_url:
-          type: string
-          format: uri
+          oneOf:
+          - type: string
+            format: uri
+          - type: string
+            maxLength: 0
       required:
       - available
       - document_sha256
@@ -30237,10 +30285,13 @@ components:
           description: Số điện thoại nhận phản hồi (khách)
           maxLength: 20
         email:
-          type: string
-          format: email
           description: Email nhận phản hồi (để trống nếu không cần phản hồi)
-          maxLength: 254
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
         page_url:
           type: string
           description: Trang người dùng đang xem lúc gửi
@@ -30306,10 +30357,13 @@ components:
           description: Số điện thoại nhận phản hồi (khách)
           maxLength: 20
         email:
-          type: string
-          format: email
           description: Email nhận phản hồi (để trống nếu không cần phản hồi)
-          maxLength: 254
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
         page_url:
           type: string
           description: Trang người dùng đang xem lúc gửi
@@ -30749,9 +30803,12 @@ components:
           type: string
           maxLength: 255
         slug:
-          type: string
-          maxLength: 255
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 255
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
       required:
       - id
       - name
@@ -32643,9 +32700,12 @@ components:
           type: string
           maxLength: 20
         slug:
-          type: string
-          maxLength: 120
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 120
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
       required:
       - code
       - id
@@ -34824,14 +34884,23 @@ components:
           type: string
           maxLength: 50
         portfolio_url:
-          type: string
-          format: uri
+          oneOf:
+          - type: string
+            format: uri
+          - type: string
+            maxLength: 0
         github_url:
-          type: string
-          format: uri
+          oneOf:
+          - type: string
+            format: uri
+          - type: string
+            maxLength: 0
         linkedin_url:
-          type: string
-          format: uri
+          oneOf:
+          - type: string
+            format: uri
+          - type: string
+            maxLength: 0
         position_title:
           type: string
           maxLength: 255
@@ -34956,9 +35025,12 @@ components:
           minLength: 1
           maxLength: 100
         slug:
-          type: string
-          maxLength: 120
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 120
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         is_active:
           type: boolean
           description: Ẩn thẻ khỏi phía ứng viên và form chọn thẻ
@@ -35080,9 +35152,12 @@ components:
           type: boolean
           writeOnly: true
         posted_url:
-          type: string
-          format: uri
-          maxLength: 500
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 500
+          - type: string
+            maxLength: 0
     PatchedCandidateEmailNotificationSettingsRequest:
       type: object
       description: Candidate-owned notification channels (email + website).
@@ -35327,9 +35402,12 @@ components:
           minLength: 1
           maxLength: 255
         slug:
-          type: string
-          maxLength: 255
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 255
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         display_name_vi:
           type: string
           maxLength: 255
@@ -35621,9 +35699,12 @@ components:
           minLength: 1
           maxLength: 255
         phone:
-          type: string
-          pattern: ^(0|\+84)\d{9,10}$
-          maxLength: 20
+          oneOf:
+          - type: string
+            pattern: ^(0|\+84)\d{9,10}$
+            maxLength: 20
+          - type: string
+            maxLength: 0
         preferred_language:
           $ref: '#/components/schemas/PreferredLanguageEnum'
     PatchedRecruiterProfileRequest:
@@ -35887,10 +35968,13 @@ components:
           type: string
           maxLength: 150
         slug:
-          type: string
           description: Dùng cho URL /blog/danh-muc/<slug> và SEO
-          maxLength: 160
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 160
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         description:
           type: string
           description: Mô tả ngắn, dùng cho meta description trang danh mục
@@ -35913,10 +35997,13 @@ components:
           type: string
           maxLength: 255
         slug:
-          type: string
           description: URL /blog/<slug>; auto từ tiêu đề, sửa tay được để tối ưu SEO
-          maxLength: 255
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 255
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         thumbnail_url:
           type: string
           readOnly: true
@@ -35989,10 +36076,13 @@ components:
           type: string
           maxLength: 255
         slug:
-          type: string
           description: URL /blog/<slug>; auto từ tiêu đề, sửa tay được để tối ưu SEO
-          maxLength: 255
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 255
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         excerpt:
           type: string
           readOnly: true
@@ -39139,9 +39229,12 @@ components:
           type: string
           maxLength: 255
         slug:
-          type: string
-          maxLength: 255
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 255
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         aliases:
           description: Alternate names for keyword matching, e.g. ["ReactJS", "React.js"]
         group:
@@ -39190,9 +39283,12 @@ components:
           type: string
           maxLength: 255
         slug:
-          type: string
-          maxLength: 255
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 255
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
         parent:
           type: integer
           nullable: true
@@ -39436,9 +39532,12 @@ components:
           type: string
           maxLength: 100
         slug:
-          type: string
-          maxLength: 120
-          pattern: ^[-a-zA-Z0-9_]+$
+          oneOf:
+          - type: string
+            maxLength: 120
+            pattern: ^[-a-zA-Z0-9_]+$
+          - type: string
+            maxLength: 0
       required:
       - name
     TalentPoolAddRequest:
