@@ -8,6 +8,13 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-25
 
+#### Fixed — API công khai có cache trả 500 khi chạy với Redis
+
+- `cache_public_get` (#349) lưu cache bằng callback sau render trả về kết quả `cache.set`;
+  Django thay response bằng giá trị đó, và django-redis trả `True`, nên danh mục nghề,
+  địa điểm, địa điểm việc làm tốt nhất… trả 500 ở môi trường dùng Redis (dev docker,
+  production). Callback giờ không trả giá trị; thêm test với cache trả `True`.
+
 #### Changed — Điều hướng cổng ứng viên trên mobile
 
 - Thanh tab dưới (Trang chủ, Việc làm, Tạo CV nổi ở giữa, Cẩm nang, Tài khoản) thay cụm
