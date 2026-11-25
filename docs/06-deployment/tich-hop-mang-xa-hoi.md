@@ -3,8 +3,8 @@
 Kênh chiến dịch có mạng tự đăng (Fanpage Facebook, Instagram, Threads, LinkedIn) đăng bài lên tài
 khoản mạng xã hội của nhà tuyển dụng (NTD) đúng giờ hẹn, rồi tự gỡ bài khi
 chiến dịch kết thúc. Thiết kế nằm ở
-[ADR-0021](../02-tong-quan/adr-0021-campaign-facebook-page.md) và
-[ADR-0025](../02-tong-quan/adr-0025-campaign-social-networks.md).
+[ADR-0021](../adr/adr-0021-campaign-facebook-page.md) và
+[ADR-0025](../adr/adr-0025-campaign-social-networks.md).
 
 ## Thật hay giả lập, đặt theo từng mạng
 
@@ -89,7 +89,7 @@ chỉ công khai (ví dụ đường hầm HTTPS) để link theo dõi của kê
 ## Instagram doanh nghiệp
 
 Instagram kết nối qua **Facebook Login**, dùng cùng Meta App với Fanpage
-([ADR-0025](../02-tong-quan/adr-0025-campaign-social-networks.md)). Tài khoản
+([ADR-0025](../adr/adr-0025-campaign-social-networks.md)). Tài khoản
 Instagram phải là tài khoản chuyên nghiệp (doanh nghiệp hoặc nhà sáng tạo) và
 **đã liên kết với một Fanpage**. Fanpage nào chưa liên kết Instagram sẽ không
 hiện trong danh sách chọn. ProCV lưu Page token của Fanpage đó. Token này không

@@ -38,6 +38,14 @@ EXPLICIT_ANCHOR_RE = re.compile(
     re.IGNORECASE | re.VERBOSE,
 )
 SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
+HTML_LINK_RE = re.compile(
+    r"""<(?:a|img|source)\b[^>]*\b(?:href|src)\s*=\s*(?:"([^"]+)"|'([^']+)')""",
+    re.IGNORECASE,
+)
+# Mỗi tài liệu sống trong docs/ phải có lối vào từ một chỉ mục.
+DOCS_INDEXES = ("docs/README.md", "docs/adr/README.md")
+# Thư mục tự có README riêng và không bắt buộc liệt kê từng file.
+DOCS_INDEX_EXEMPT = ("docs/archive/", "docs/01-phan-tich/mo-hinh-hoa-yeu-cau/")
 MARKDOWN_ESCAPE_RE = re.compile(r"\\([!\"#$%&'()*+,\-./:;<=>?@\[\\\]^_`{|}~ ])")
 
 
@@ -416,6 +424,16 @@ def document_links(
                 )
             )
 
+        for match in HTML_LINK_RE.finditer(line):
+            destinations.append(
+                LinkDestination(
+                    source=source,
+                    line=index + 1,
+                    destination=html.unescape(match.group(1) or match.group(2)),
+                    kind="HTML link",
+                )
+            )
+
         usage_line = replace_ranges_with_spaces(
             line, [(start, end) for start, end, _ in extracted_inline]
         )
@@ -660,6 +678,34 @@ class MarkdownLinkChecker:
         return self.anchor_cache[markdown_path]
 
 
+def resolve_target(source: str, destination: str) -> str:
+    path = unquote(urlsplit(destination.strip()).path)
+    return posixpath.normpath(posixpath.join(posixpath.dirname(source), path))
+
+
+def orphan_docs(markdown_paths: list[str], indexed_targets: set[str]) -> list[Issue]:
+    """Tài liệu trong docs/ không có link từ chỉ mục nào thì người đọc không tìm thấy."""
+    issues = []
+    for path in markdown_paths:
+        if (
+            not path.startswith("docs/")
+            or path in DOCS_INDEXES
+            or path.startswith(DOCS_INDEX_EXEMPT)
+            or path == "docs/TIEN-DO-DU-AN.md"
+        ):
+            continue
+        if path not in indexed_targets:
+            issues.append(
+                Issue(
+                    source=path,
+                    line=1,
+                    destination=path,
+                    message=f"document is not listed in {' or '.join(DOCS_INDEXES)}",
+                )
+            )
+    return issues
+
+
 def main() -> int:
     try:
         tracked_paths = git_worktree_paths()
@@ -673,6 +719,7 @@ def main() -> int:
     checker = MarkdownLinkChecker(tracked_paths)
     stats = CheckStats(markdown_files=len(markdown_paths))
     issues: list[Issue] = []
+    indexed_targets: set[str] = set()
 
     for markdown_path in markdown_paths:
         source_path = REPOSITORY_ROOT / markdown_path
@@ -695,6 +742,8 @@ def main() -> int:
         issues.extend(document_issues)
         stats.reference_uses += reference_uses
         for destination in destinations:
+            if markdown_path in DOCS_INDEXES:
+                indexed_targets.add(resolve_target(markdown_path, destination.destination))
             stats.destinations += 1
             raw_destination = destination.destination.strip()
             if (
@@ -708,6 +757,8 @@ def main() -> int:
             issue = checker.check_destination(destination)
             if issue is not None:
                 issues.append(issue)
+
+    issues.extend(orphan_docs(markdown_paths, indexed_targets))
 
     if issues:
         for issue in sorted(

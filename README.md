@@ -148,7 +148,7 @@ flowchart LR
 
 - **Backend** chia theo app nghiệp vụ trong `backend/apps/`, mỗi app cùng một bố
   cục `api → services/selectors → models → domain`, được `import-linter` kiểm tra
-  ([ADR-0022](docs/02-tong-quan/adr-0022-backend-structure.md)).
+  ([ADR-0022](docs/adr/adr-0022-backend-structure.md)).
 - **Frontend** theo Feature-Sliced Design rút gọn
   `app → pages → widgets → features → entities → shared`, tách theo cổng
   ([`frontend/ARCHITECTURE.md`](frontend/ARCHITECTURE.md)).

@@ -1,10 +1,10 @@
 # Kế hoạch: Trang chi tiết công ty `/cong-ty/:slug` và không gian tuỳ biến cho nhà tuyển dụng
 
 > **Trạng thái:** chủ dự án duyệt ngày 14/11/2026. Quyết định kiến trúc ghi tại
-> [ADR-0017](../02-tong-quan/adr-0017-company-page.md); quyết định sản phẩm ghi
+> [ADR-0017](../../adr/adr-0017-company-page.md); quyết định sản phẩm ghi
 > tại ER-D58 đến ER-D64 trong
-> [decision log](../02-tong-quan/employer-remediation-decision-log.md). Tiến độ
-> từng giai đoạn nằm ở [TIEN-DO-DU-AN.md](../TIEN-DO-DU-AN.md).
+> [decision log](../decision-log/employer-remediation-decision-log.md). Tiến độ
+> từng giai đoạn nằm ở [TIEN-DO-DU-AN.md](../../TIEN-DO-DU-AN.md).
 
 ## 1. Bối cảnh
 

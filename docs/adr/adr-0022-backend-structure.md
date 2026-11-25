@@ -126,7 +126,7 @@ Một phiên bản API duy nhất, không tiền tố version:
 - `config/urls.py` ghép theo cổng (`api_portal_patterns`); mỗi app khai
   `api/urls/<cổng>.py` với route **không** lặp lại tên cổng (không `admin/…`,
   `mine/…` trong file). Router dùng `SimpleRouter` (không API-root). Bảng ánh xạ
-  từ URL cũ: [`docs/04-api/url-map-2026-11.md`](../04-api/url-map-2026-11.md).
+  từ URL cũ: [`docs/archive/snapshot/url-map-2026-11.md`](../archive/snapshot/url-map-2026-11.md).
 - URL SEO ngoài `/api` (`/viec-lam`, `/cong-ty`…) giữ ổn định vì đã được index.
 
 ### 4. Tầng HTTP

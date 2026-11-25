@@ -2,8 +2,8 @@
 
 Trang quản trị `/admin/app/settings` (chỉ superuser) đọc và ghi các row `SiteSetting`
 của app `sitecontent`. Hợp đồng của kho cấu hình nằm ở
-[ADR-0026](../02-tong-quan/adr-0026-settings-contract.md). Kế hoạch làm lại trang nằm ở
-[ke-hoach-cau-hinh-he-thong.md](../01-phan-tich/ke-hoach-cau-hinh-he-thong.md).
+[ADR-0026](../adr/adr-0026-settings-contract.md). Kế hoạch làm lại trang nằm ở
+[ke-hoach-cau-hinh-he-thong.md](../archive/ke-hoach/ke-hoach-cau-hinh-he-thong.md).
 
 ## Nguyên tắc
 

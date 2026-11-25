@@ -1,6 +1,6 @@
 # Huy hiệu Sấm Chớp: thuật toán
 
-Quyết định kiến trúc nằm ở [ADR-0027](../02-tong-quan/adr-0027-flash-badge-responsiveness.md).
+Quyết định kiến trúc nằm ở [ADR-0027](../adr/adr-0027-flash-badge-responsiveness.md).
 Mã nguồn:
 - `backend/apps/applications/domain/flash_badge.py`: luật thuần;
 - `services/flash_badge.py`: tính và ghi;

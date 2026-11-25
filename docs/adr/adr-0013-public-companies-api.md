@@ -114,4 +114,4 @@ tên" ở trên: quản trị viên tạm ẩn trang công ty thì công ty rờ
 bật lẫn kết quả tìm kiếm, `count` của trang search đầu cũng không tính công ty
 đó. Các điều kiện khác của hai chế độ giữ nguyên, ngân sách query không đổi vì
 điều kiện mới là một cột có index trên chính bảng `Company`. Xem
-[ADR-0017](./adr-0017-company-page.md).
+[ADR-0017](adr-0017-company-page.md).

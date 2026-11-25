@@ -1,4 +1,4 @@
-# ER-3 storage-boundary rollout runbook
+# Runbook rollout ranh giới lưu trữ upload (ER-3)
 
 This runbook activates the P0 public/private/quarantine boundary and the
 employer/candidate upload-session consumers. Raw DOC/DOCX pre-submit preview

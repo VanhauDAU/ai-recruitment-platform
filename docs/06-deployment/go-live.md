@@ -1,11 +1,12 @@
-# Checklist go-live procv.site (VPS ngày 2/12/2026)
+# Go-live procv.site (VPS ngày 2/12/2026)
 
 Danh sách việc theo ngày, đánh dấu khi xong. Chi tiết từng bước ở
-[huong-dan-deployment.md](huong-dan-deployment.md) (runbook),
-[sao-luu-va-khoi-phuc.md](sao-luu-va-khoi-phuc.md) và kế hoạch
-[ke-hoach-chuan-bi-deploy.md](ke-hoach-chuan-bi-deploy.md) (GĐ0, GĐ6).
+[huong-dan-deployment.md](huong-dan-deployment.md) (runbook) và
+[sao-luu-va-khoi-phuc.md](sao-luu-va-khoi-phuc.md). Kế hoạch hardening 6 giai đoạn
+đã thực hiện (bối cảnh, quyết định tải 200 người đồng thời / p95 < 800 ms / lỗi < 1%)
+được lưu ở [archive](../archive/ke-hoach/ke-hoach-chuan-bi-deploy.md).
 
-Code đã sẵn (dev @ 25/11): compose prod, nginx, script deploy/backup/restore,
+Code đã sẵn trên `dev`: compose prod, nginx, script deploy/backup/restore,
 Sentry, `/api/health/ready/`, throttle, CSP (Report-Only), khóa Access cho đăng
 nhập admin. Phần còn lại là **tài khoản và cấu hình bên ngoài** dưới đây.
 
@@ -25,7 +26,7 @@ nhập admin. Phần còn lại là **tài khoản và cấu hình bên ngoài**
 - [ ] Rate limiting rule (gói Free chỉ một rule): `/api/auth/*`, 60 req/10 giây/IP → Block.
 - [ ] **Chưa** tạo bản ghi `A @`/`A www`: làm ngày 2/12 khi đã có IP VPS.
 
-**Cloudflare R2** ([cloudflare-r2-media.md](cloudflare-r2-media.md))
+**Cloudflare R2** ([luu-tru-media-cloudflare-r2.md](luu-tru-media-cloudflare-r2.md))
 - [ ] 3 bucket ứng dụng: `procv-public-media` (custom domain `media.procv.site`),
   `procv-private-files`, `procv-upload-quarantine`. Mỗi bucket một API token riêng.
 - [ ] 3 bucket backup: `procv-backups`, `procv-backups-files`,
@@ -113,6 +114,14 @@ nhập admin. Phần còn lại là **tài khoản và cấu hình bên ngoài**
 - [ ] Theo dõi Sentry/log 48 giờ đầu. Đóng băng tính năng mới 1 tuần.
 - [ ] Khi Sentry hết vi phạm CSP thật: chuyển CSP từ Report-Only sang chặn (runbook mục 9).
 - [ ] DMARC `p=none` → `p=quarantine` khi báo cáo sạch vài tuần.
-- [ ] Việc để sau: MFA TOTP trong app, cache bảo mật tách Redis không eviction,
-  gia cố container (`cap_drop`, `no-new-privileges`), WAL archiving
-  ([ke-hoach-chuan-bi-deploy.md](ke-hoach-chuan-bi-deploy.md) mục "Để sau go-live").
+- [ ] Cắt phiên bản đầu trong `CHANGELOG.md`: đổi `## [Unreleased]` thành
+  `## [1.0.0] - 2026-12-02`, mở `[Unreleased]` mới, gắn tag `v1.0.0` trên `main`.
+
+## Để sau go-live (không chặn)
+
+- MFA TOTP cho admin trong ứng dụng (Cloudflare Access thay tạm).
+- WAL archiving (wal-g → R2) nếu cần RPO < 24 giờ.
+- Tách cache bảo mật (login guard, token một lần, OAuth state) sang Redis không eviction.
+- Gia cố container: `cap_drop`, `no-new-privileges`. Build image trong CI + GHCR, Trivy quét image.
+- HNSW cho tìm ứng viên khi CV vượt ~50k; cột `lifecycle_recency` có index cho sắp xếp việc làm.
+- Tự phục vụ xuất/xóa dữ liệu cá nhân đầy đủ (hiện là yêu cầu qua hàng chờ admin).

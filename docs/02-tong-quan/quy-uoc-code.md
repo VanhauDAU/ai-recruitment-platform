@@ -40,7 +40,7 @@ pages/main/jobs/
 ## Backend
 
 Bố cục, luật phụ thuộc và URL theo cổng là quyết định của
-[ADR-0022](adr-0022-backend-structure.md). Tóm tắt:
+[ADR-0022](../adr/adr-0022-backend-structure.md). Tóm tắt:
 
 ```text
 apps/jobs/

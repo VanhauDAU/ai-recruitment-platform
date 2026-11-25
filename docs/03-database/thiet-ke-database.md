@@ -8,11 +8,11 @@ và ràng buộc — không liệt kê đủ mọi cột.
 Tài liệu liên quan:
 
 - Quy tắc nghiệp vụ tin/chiến dịch: [đặc tả chiến dịch và tin tuyển dụng](../01-phan-tich/dac-ta-chien-dich-va-tin-tuyen-dung.md),
-  [ADR-0014](../02-tong-quan/adr-0014-job-post-moderation.md),
-  [ADR-0015](../02-tong-quan/adr-0015-remove-commercial-services.md).
+  [ADR-0014](../adr/adr-0014-job-post-moderation.md),
+  [ADR-0015](../adr/adr-0015-remove-commercial-services.md).
 - Nhà tuyển dụng/công ty: [đặc tả nhà tuyển dụng](../01-phan-tich/dac-ta-nha-tuyen-dung.md),
-  [decision log](../02-tong-quan/employer-remediation-decision-log.md).
-- CV Builder: [kiến trúc CV Builder](../02-tong-quan/cv-builder-architecture-foundation.md).
+  [decision log](../archive/decision-log/employer-remediation-decision-log.md).
+- CV Builder: [kiến trúc CV Builder](../02-tong-quan/kien-truc-cv-builder.md).
 - Media/storage key và API: [tài liệu API](../04-api/tai-lieu-api.md).
 
 ## 1. Quy ước chung
@@ -79,7 +79,7 @@ erDiagram
 ### 3.1. Hai cấp quản trị
 
 - Không còn phòng ban/chức danh/mã quyền
-  ([ADR-0018](../02-tong-quan/adr-0018-remove-admin-rbac.md)). Mọi tài khoản
+  ([ADR-0018](../adr/adr-0018-remove-admin-rbac.md)). Mọi tài khoản
   `role=admin` còn truy cập được dùng chức năng nghiệp vụ; `is_superuser=True`
   thêm thao tác nhạy cảm (tài khoản quản trị, lời mời, site settings, cấu hình
   AI, cấm tài khoản, gỡ policy hold, audit toàn hệ thống). Ranh giới bảo mật là
@@ -193,7 +193,7 @@ stateDiagram-v2
 
 **Bất biến công khai.** Mọi đường candidate-facing (danh sách, chi tiết, lưu,
 gợi ý, email, tracking) dùng một predicate `publicly_available_job_filter`
-(`jobs/models/querysets.py`, xem [ADR-0019](../02-tong-quan/adr-0019-job-effective-state.md)):
+(`jobs/models/querysets.py`, xem [ADR-0019](../adr/adr-0019-job-effective-state.md)):
 tin `active`, không `policy_hold`/`moderation_hold`, không compliance hold
 active (tin, NTD, chiến dịch); người đăng active, chưa xóa, vẫn thuộc đúng
 `company` của tin, có verification case **đã duyệt** cho company đó và DPA hiện
@@ -241,7 +241,7 @@ Quyền đọc: nhà tuyển dụng chỉ thấy application của tin mình đ�
 ## 7. CV và mẫu CV (`cvs`, `cv_templates`)
 
 Chi tiết contract document, renderer và API ở
-[kiến trúc CV Builder](../02-tong-quan/cv-builder-architecture-foundation.md).
+[kiến trúc CV Builder](../02-tong-quan/kien-truc-cv-builder.md).
 
 | Bảng (model) | Mục đích và ràng buộc |
 | --- | --- |
@@ -341,7 +341,7 @@ Quy tắc chi tiết: [đặc tả thông báo đa cổng](../01-phan-tich/dac-t
 
 App `privacy` **không có bảng**: consent cookie (necessary/preferences/
 analytics/marketing) lưu trong cookie ký (`django.core.signing`) và đọc
-fail-closed; xem [cookie consent và job view tracking](../04-api/cookie-consent-va-job-view-tracking.md).
+fail-closed; xem [cookie consent và job view tracking](../04-api/dong-y-cookie-va-luot-xem-tin.md).
 Consent nghiệp vụ của ứng viên nằm ở `candidate_consents` (mục 8).
 
 ### 11.1. Đối sánh ngữ nghĩa CV–JD (`matching`)

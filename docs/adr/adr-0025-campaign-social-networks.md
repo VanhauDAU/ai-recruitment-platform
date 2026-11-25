@@ -3,7 +3,7 @@
 **Trạng thái:** Đã chấp nhận
 **Ngày:** 20/11/2026
 **Owner:** Chiến dịch tuyển dụng (`apps.campaigns`)
-**Mở rộng:** [ADR-0021](./adr-0021-campaign-facebook-page.md)
+**Mở rộng:** [ADR-0021](adr-0021-campaign-facebook-page.md)
 
 ## Bối cảnh
 
@@ -76,7 +76,7 @@ năng lực khác nhau, chẳng hạn Instagram bắt buộc có ảnh.
 - Thông báo và nhãn hoạt động không còn nhắc "Fanpage" khi không đúng với mọi
   mạng. Mã lỗi `graph_*` vẫn là của Meta.
 - Thêm mạng cần cập nhật danh sách mạng hợp lệ trong `config/settings/production.py`
-  và mục hướng dẫn trong `docs/06-deployment/social-integrations.md`.
+  và mục hướng dẫn trong `docs/06-deployment/tich-hop-mang-xa-hoi.md`.
 
 ## Bổ sung: Instagram (PR2)
 

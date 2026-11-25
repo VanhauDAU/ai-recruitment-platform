@@ -5,7 +5,7 @@ Ubuntu 24.04) bằng Docker Compose, sau Cloudflare, media trên Cloudflare R2.
 Dev vẫn dùng `docker-compose.yml` ([docker-compose.md](docker-compose.md)); file
 này chỉ nói về production.
 Việc cần chuẩn bị theo ngày (tài khoản, DNS, email, OAuth...):
-[checklist-go-live-2-12.md](checklist-go-live-2-12.md).
+[go-live.md](go-live.md).
 
 ## Kiến trúc
 
@@ -96,7 +96,7 @@ chạy**: `UPLOAD_QUARANTINE_ENABLED=False`.
 5. **R2**: ba bucket `procv-public-media` (custom domain `media.procv.site`),
    `procv-private-files`, `procv-upload-quarantine`, mỗi bucket một API token
    riêng chỉ có quyền trên bucket đó — production từ chối khởi động nếu dùng chung
-   bucket hoặc credential ([cloudflare-r2-media.md](cloudflare-r2-media.md)).
+   bucket hoặc credential ([luu-tru-media-cloudflare-r2.md](luu-tru-media-cloudflare-r2.md)).
    Bucket quarantine bắt buộc có dù chưa bật ClamAV.
 6. **Backup**: thêm bucket `procv-backups` (DB, gói bí mật), `procv-backups-files`
    (bản sao file riêng tư) và `procv-backups-public-media` (bản sao media công khai),
@@ -221,7 +221,7 @@ cd /srv/procv && cp backend/.env.example backend/.env && cp frontend/.env.exampl
 | `GEMINI_API_KEY`, `AI_JOB_GENERATION_MODEL*` | Backend Gemini: key AI Studio của project **đã bật thanh toán** (tier trả phí): Google không dùng prompt/kết quả để huấn luyện; tier miễn phí thì có, không dùng cho dữ liệu tin tuyển dụng/CV thật |
 | `ANTHROPIC_API_KEY`, `AI_ANTHROPIC_EFFORT` | Backend `anthropic`: key ở console Anthropic (dữ liệu API không dùng để huấn luyện). `AI_JOB_GENERATION_MODEL` + allowlist ví dụ `claude-opus-5-5` (giá `{"input":"4","output":"20"}`) hoặc `claude-haiku-5-5` (`{"input":"0.10","output":"0.50"}`). `AI_ANTHROPIC_EFFORT=low` để câu trả lời JSON nằm trong trần 40 giây của `AI_PROVIDER_TIMEOUT_SECONDS`. Hết credit (HTTP 402) → `provider_quota_exhausted`: nhập CV đọc bằng quy tắc, bài đăng chiến dịch dùng mẫu, AI soạn tin/CV mẫu báo không khả dụng. **Sau khi đổi backend**, vào admin → Cấu hình hệ thống → AI: chọn lại *Model tạo tin tuyển dụng* và sửa *Model allowlist cho tạo tin* (dữ liệu seed là `gemini-3.5-flash-lite`; allowlist site chỉ thu hẹp allowlist env, không trùng model nào thì AI soạn tin tắt) |
 | `AI_MODEL_PRICING_USD` | **Giá thật** của model đang bật — mẫu `0/0` làm production từ chối khởi động |
-| `EMPLOYER_DPA_POLICY_VERSION`, `EMPLOYER_DPA_DOCUMENT_URL`, `EMPLOYER_DPA_DOCUMENT_SHA256` | DPA giữa ProCV và NTD là tệp cố định `frontend/public/documents/procv-thoa-thuan-xu-ly-dlcn-nha-tuyen-dung-2026-11.html`: `2026-11`, `https://procv.site/documents/procv-thoa-thuan-xu-ly-dlcn-nha-tuyen-dung-2026-11.html`, `72301aa2d066f5318ec23893268a8bec901cca90c99170d68559afca86bd03cb`. Sửa nội dung thì tạo tệp + phiên bản mới, tính lại `sha256sum` ([employer-dpa-evidence-rollout.md](employer-dpa-evidence-rollout.md)). Đừng nhầm với mẫu "Văn bản thông báo và cam kết xử lý DLCN ứng viên" `procv-mau-thong-bao-xu-ly-dlcn-ung-vien.docx` (doanh nghiệp điền, ký đóng dấu rồi tải lên; ứng viên không ký) (key `employer_dpa_template_url`) |
+| `EMPLOYER_DPA_POLICY_VERSION`, `EMPLOYER_DPA_DOCUMENT_URL`, `EMPLOYER_DPA_DOCUMENT_SHA256` | DPA giữa ProCV và NTD là tệp cố định `frontend/public/documents/procv-thoa-thuan-xu-ly-dlcn-nha-tuyen-dung-2026-11.html`: `2026-11`, `https://procv.site/documents/procv-thoa-thuan-xu-ly-dlcn-nha-tuyen-dung-2026-11.html`, `72301aa2d066f5318ec23893268a8bec901cca90c99170d68559afca86bd03cb`. Sửa nội dung thì tạo tệp + phiên bản mới, tính lại `sha256sum` ([trien-khai-bang-chung-dpa.md](trien-khai-bang-chung-dpa.md)). Đừng nhầm với mẫu "Văn bản thông báo và cam kết xử lý DLCN ứng viên" `procv-mau-thong-bao-xu-ly-dlcn-ung-vien.docx` (doanh nghiệp điền, ký đóng dấu rồi tải lên; ứng viên không ký) (key `employer_dpa_template_url`) |
 | `EMPLOYER_SMS_OTP_ENABLED` | Giữ `False` khi chưa có nhà cung cấp SMS — bật lên thì production đòi đủ `EMPLOYER_SMS_*` |
 | `REQUIRE_APPROVED_EMPLOYER_VERIFICATION` | Mẫu đặt `False`. Chỉ đổi điều kiện bước "Hoàn tất xác thực" trong checklist onboarding NTD (cộng dồn với site setting `employer_require_approved_verification`); đăng tin công khai **luôn** cần hồ sơ xác thực đã duyệt + DPA hiện hành, bất kể khóa này |
 | `OAUTH_*_CLIENT_ID/SECRET` | Nếu bật đăng nhập mạng xã hội (redirect URI theo bước 1.8) |
@@ -489,7 +489,7 @@ và `scripts/deploy/bootstrap_vps.sh` lấy từ `https://www.cloudflare.com/ips
 - Database tiếp tục chỉ lưu **storage key**, không lưu filesystem path,
   credential hoặc signed URL. `MEDIA_PUBLIC_BASE_URL` chỉ áp dụng cho public
   media; không được dùng để tạo URL private.
-- Làm theo [ER-3 storage-boundary runbook](employer-upload-storage-boundary-runbook.md)
+- Làm theo [ER-3 storage-boundary runbook](ranh-gioi-luu-tru-upload.md)
   trước khi bật upload session (cần ClamAV) ở môi trường mới.
 
 ## Route SEO do Django phục vụ

@@ -4,7 +4,7 @@ Phạm vi:
 - Danh sách endpoint theo module (auth, candidate, employer, cv, jobs, applications, ai)
 - Request/response mẫu, mã lỗi
 
-Contract field theo từng màn hình: [frontend-response-contracts.md](frontend-response-contracts.md).
+Contract field theo từng màn hình: [hop-dong-du-lieu-frontend.md](hop-dong-du-lieu-frontend.md).
 
 
 > **Chế độ bảo trì (ADR-0026).** Khi admin bật `maintenance_mode`, mọi request tới

@@ -101,7 +101,7 @@ Vẫn ẩn danh như trước.
 
 ## Hạn phiên đăng nhập riêng theo cổng (ADR-0033, 2026-11-26)
 
-[ADR-0033](02-tong-quan/adr-0033-portal-session-policy.md): ba cổng không còn chung một bộ
+[ADR-0033](adr/adr-0033-portal-session-policy.md): ba cổng không còn chung một bộ
 hạn phiên.
 
 - **Mức theo NIST SP 800-63B-4:** ứng viên (AAL1) access 15 phút, rảnh 7 ngày, tối đa
@@ -117,7 +117,7 @@ hạn phiên.
 
 ## Cổng quản trị cập nhật hàng chờ realtime (2026-11-26)
 
-Bổ sung [ADR-0028](02-tong-quan/adr-0028-realtime-notifications.md): admin không còn phải tải
+Bổ sung [ADR-0028](adr/adr-0028-realtime-notifications.md): admin không còn phải tải
 lại hay chờ polling 30 giây mới thấy việc mới.
 
 - **Backend:** socket của tài khoản admin vào thêm nhóm `role.admin` (vai trò đọc lúc tiêu vé,
@@ -206,7 +206,7 @@ luồng chuyển trang cũ. Không thêm thư viện, không đổi CSP/COOP.
 ## Chuẩn bị deploy: khóa admin bằng Access, vá cấu hình, checklist 2/12 (2026-11-25)
 
 Rà soát sẵn sàng deploy lần cuối trước VPS ngày 2/12. Danh sách việc theo ngày:
-[checklist-go-live-2-12.md](06-deployment/checklist-go-live-2-12.md).
+[go-live.md](06-deployment/go-live.md).
 
 - **Đăng nhập admin phải qua Cloudflare Access:** Access chỉ che `/admin*` +
   `/api/admin/*`, còn đăng nhập/làm mới phiên admin đi `/api/auth/*`. Khi đặt
@@ -332,7 +332,7 @@ thêm trang cho ứng viên trả lời.
 
 Không còn gói dịch vụ (ADR-0015) nhưng tin vẫn mang hạng TOP/Nổi bật, HOT, GẤP do admin
 gán tay hoặc seed gán ngẫu nhiên, thẻ tô màu và hạng TOP xếp đầu `/viec-lam`. Chi tiết ở
-[ADR-0030](02-tong-quan/adr-0030-fair-job-listing.md).
+[ADR-0030](adr/adr-0030-fair-job-listing.md).
 
 - **Nhãn:** xóa `tier`, `is_hot`, `is_urgent` (`jobs.0009`), nhãn "Tài trợ", thẻ màu.
   Chỉ còn nhãn hệ thống: "Sắp hết hạn" (cấu hình `job_closing_soon_days`, mặc định 7)
@@ -350,7 +350,7 @@ gán tay hoặc seed gán ngẫu nhiên, thẻ tô màu và hạng TOP xếp đ�
 
 ## Trang Danh mục dữ liệu cho admin (2026-11-25)
 
-Kế hoạch: [`ke-hoach-quan-ly-danh-muc.md`](01-phan-tich/ke-hoach-quan-ly-danh-muc.md).
+Kế hoạch: [`ke-hoach-quan-ly-danh-muc.md`](archive/ke-hoach/ke-hoach-quan-ly-danh-muc.md).
 
 - **Kỹ năng (GĐ1):** lọc chưa có nhóm / có thể trùng / nguồn, gán nhóm tại chỗ và hàng loạt,
   gộp kỹ năng (superuser) chuyển tin, CV, nhu cầu tìm việc và `profile_json` đối sánh qua
@@ -368,7 +368,7 @@ Kế hoạch: [`ke-hoach-quan-ly-danh-muc.md`](01-phan-tich/ke-hoach-quan-ly-dan
 ## Chuẩn bị deploy: trần ghi theo tài khoản (ADR-0031, 2026-11-25)
 
 Rà lại `dev` sau GĐ1–GĐ5: khoảng 90 endpoint ghi của người đã đăng nhập không có throttle
-nào. Quyết định: [ADR-0031](02-tong-quan/adr-0031-account-write-throttle.md).
+nào. Quyết định: [ADR-0031](adr/adr-0031-account-write-throttle.md).
 
 - **Trần chung:** `DEFAULT_THROTTLE_CLASSES` thêm `AccountWriteBurstThrottle` (90/phút)
   và `AccountWriteSustainedThrottle` (3000/giờ), theo `user.pk`, chỉ tính POST/PUT/PATCH/DELETE;
@@ -388,7 +388,7 @@ nào. Quyết định: [ADR-0031](02-tong-quan/adr-0031-account-write-throttle.m
 
 ## Chuẩn bị deploy: lấp chỗ hở vận hành và cấu hình (2026-11-25)
 
-Đợt bổ sung sau GĐ1–GĐ5 của [kế hoạch](06-deployment/ke-hoach-chuan-bi-deploy.md).
+Đợt bổ sung sau GĐ1–GĐ5 của [kế hoạch](archive/ke-hoach/ke-hoach-chuan-bi-deploy.md).
 
 - **Sao lưu media công khai:** `backup_files.sh` chép thêm `procv-public-media` →
   `procv-backups-public-media` (Bucket Lock 30 ngày, lifecycle 45 ngày) khi đặt
@@ -414,7 +414,7 @@ nào. Quyết định: [ADR-0031](02-tong-quan/adr-0031-account-write-throttle.m
 ## Chuẩn bị deploy: GĐ1 bảo mật ứng dụng (2026-11-25)
 
 Kế hoạch 6 giai đoạn (bảo mật, hạ tầng/giám sát, backup/khôi phục, hiệu năng,
-pháp lý, rehearsal): [`ke-hoach-chuan-bi-deploy.md`](06-deployment/ke-hoach-chuan-bi-deploy.md).
+pháp lý, rehearsal): [`ke-hoach-chuan-bi-deploy.md`](archive/ke-hoach/ke-hoach-chuan-bi-deploy.md).
 
 - **Phụ thuộc:** Django 5.1.5 (hết hỗ trợ) → 5.2.19 LTS; DRF 3.18.3, simplejwt 5.5.1,
   cryptography 50.0.2, Pillow 13.0.0, pypdf 6.21.4, requests 2.34.2, daphne 4.2.3
@@ -436,7 +436,7 @@ pháp lý, rehearsal): [`ke-hoach-chuan-bi-deploy.md`](06-deployment/ke-hoach-ch
 
 ## Chuẩn bị deploy: GĐ2 hạ tầng, giám sát, chịu lỗi (2026-11-25)
 
-Theo [kế hoạch](06-deployment/ke-hoach-chuan-bi-deploy.md); vận hành ở
+Theo [kế hoạch](archive/ke-hoach/ke-hoach-chuan-bi-deploy.md); vận hành ở
 [runbook](06-deployment/huong-dan-deployment.md) mục 1.4, 2, 6, 9.
 
 - **Redis tách hai:** `redis-broker` (noeviction, AOF: Celery + channel layer
@@ -607,7 +607,7 @@ Mục tiêu: 200 người đồng thời, p95 < 800 ms, lỗi < 1 %.
 
 Chuông ứng viên/NTD trước đây polling 60–120 giây; quyết định của NTD tới ứng viên sau 5
 phút + tối đa 60 giây chờ beat. Chi tiết quyết định ở
-[ADR-0028](02-tong-quan/adr-0028-realtime-notifications.md).
+[ADR-0028](adr/adr-0028-realtime-notifications.md).
 
 | Hạng mục | Trạng thái |
 | --- | --- |
@@ -911,8 +911,8 @@ nhập qua Django admin. Nay:
 
 ## Làm lại trang Cấu hình hệ thống (ADR-0026, 2026-11-21)
 
-Kế hoạch: [ke-hoach-cau-hinh-he-thong.md](01-phan-tich/ke-hoach-cau-hinh-he-thong.md).
-Quyết định: [ADR-0026](02-tong-quan/adr-0026-settings-contract.md).
+Kế hoạch: [ke-hoach-cau-hinh-he-thong.md](archive/ke-hoach/ke-hoach-cau-hinh-he-thong.md).
+Quyết định: [ADR-0026](adr/adr-0026-settings-contract.md).
 
 Rà soát 120 key: khoảng 60 key không có code đọc, khoảng 25 key chạy sai, 8 key seed
 ghi ngược với code.
@@ -961,7 +961,7 @@ upload phía frontend (cần sửa chuỗi "5MB" trong i18n nhiều vùng); file
 ## Song ngữ vi/en cho 3 cổng (ADR-0023, 2026-11-19)
 
 Lý do: một số NTD là người nước ngoài. Quyết định và lộ trình nằm ở
-[ADR-0023](02-tong-quan/adr-0023-i18n-vi-en.md).
+[ADR-0023](adr/adr-0023-i18n-vi-en.md).
 
 | GĐ | Phạm vi | Trạng thái |
 |---|---|---|
@@ -1013,7 +1013,7 @@ mục "Tiêu đề trang" của `frontend/ARCHITECTURE.md`.
 Vấn đề: sau ADR-0018 mọi admin đủ quyền, nên FAQ/hướng dẫn (4 bước gửi duyệt →
 duyệt → xuất bản) và blog (gửi duyệt → xuất bản) chỉ còn là tự duyệt bài của
 chính mình; trạng thái hiển thị sai sau khi xuất bản và có hai hàng chờ giả.
-Quyết định: [ADR-0024](02-tong-quan/adr-0024-content-publish-without-review.md).
+Quyết định: [ADR-0024](adr/adr-0024-content-publish-without-review.md).
 Một PR, nhánh `feat/content-publish-flow`.
 
 | Phần | Nội dung |
@@ -1041,7 +1041,7 @@ lối vào trên sidebar. Một PR, nhánh `feat/admin-sidebar-ia`.
 
 ## Hậu kiểm nội dung trang công ty (2026-11-19)
 
-Quyết định: ER-D65 đến ER-D68, [ADR-0017](02-tong-quan/adr-0017-company-page.md)
+Quyết định: ER-D65 đến ER-D68, [ADR-0017](adr/adr-0017-company-page.md)
 quyết định 3 (sửa). Nội dung trang công ty chuyển từ duyệt trước sang đăng ngay
 rồi hậu kiểm; duyệt trước chỉ còn cho thay đổi pháp lý, form hồ sơ và công ty bị
 quản trị viên bật duyệt trước.
@@ -1086,7 +1086,7 @@ mỗi workflow). Mục tiêu: wall-clock mỗi PR ≤ 8 phút, mỗi job ≤ 5 p
 
 Rà soát toàn bộ `backend/` (18 app, ~140 nghìn dòng): khung ADR-0010 bị lệch,
 luật không còn được CI kiểm. Quyết định ở
-[ADR-0022](02-tong-quan/adr-0022-backend-structure.md); làm qua 7 giai đoạn, mỗi
+[ADR-0022](adr/adr-0022-backend-structure.md); làm qua 7 giai đoạn, mỗi
 GĐ một PR về `dev`. Cả 7 GĐ cùng bản sửa E2E chiến dịch (#250) đã gộp vào `dev` ngày 19/11/2026.
 
 | GĐ | Nội dung | Trạng thái |
@@ -1095,7 +1095,7 @@ GĐ một PR về `dev`. Cả 7 GĐ cùng bản sửa E2E chiến dịch (#250) 
 | 1 | Bố cục chuẩn: 30 module gốc app về đúng tầng (thêm tầng `domain/`), URL tách theo cổng vào `api/urls/<cổng>.py`, view SEO vào `seo/`, `signals/` + `tasks/` thành package, code trong `__init__` ra module riêng, `common/` chia `api/http/storage/html/pdf/files/db`; baseline import 148 → 33 | ✅ #249 |
 | 2 | Model + máy trạng thái + API chiến dịch sang `campaigns` (3 migration chỉ đổi state, ContentType chuyển theo); `cv_templates` thành engine tài liệu CV (schema, composition, in PDF), engine Chromium vào `common/pdf/`; bỏ lazy export của accounts; gỡ route trùng `/api/candidate/cvs/backgrounds/`; import chéo app 33 → 0, gỡ baseline | ✅ #251 |
 | 3 | Exception handler chung + `DomainError` (gỡ `_call`, `_run_mutation`…); ORM/transaction/`.delay()` ra khỏi view và `create/update` của serializer ở 4 cụm app; GET không còn tạo hồ sơ NTD; `@extend_schema` cho mọi view, OpenAPI từ 70 lỗi/340 cảnh báo về **0/0** (cổng siết không baseline); `parse_bool`/`parse_int` dùng chung; Browsable API chỉ khi DEBUG | ✅ #252 |
-| 4 | API theo cổng `/api/{auth,public,candidate,employer,admin,shared}/` (237 route đổi, bảng [url-map](04-api/url-map-2026-11.md)), bỏ `/api/v2/` và tên `v2` ở module/lớp/route, router `SimpleRouter`, gỡ route SEO legacy `/jobs`; frontend: 51 API client + mock unit/E2E | ✅ #253 |
+| 4 | API theo cổng `/api/{auth,public,candidate,employer,admin,shared}/` (237 route đổi, bảng [url-map](archive/snapshot/url-map-2026-11.md)), bỏ `/api/v2/` và tên `v2` ở module/lớp/route, router `SimpleRouter`, gỡ route SEO legacy `/jobs`; frontend: 51 API client + mock unit/E2E | ✅ #253 |
 | 5 | Không còn module production > 500 dòng: settings tách 8 component (giá trị không đổi), `verification`/`digests`/`pipeline`/`ai_generation`/`account_management`/`posting`… thành package; gộp trùng: `common/outbox.py`, `common/errors.py`, một bộ HTML→text, một bảng chữ ký file, chính sách AI một nguồn (`jobs/domain/ai_policy.py`); sửa 2 chỗ lấy IP client giả mạo được (captcha, audit CV); gỡ chuỗi legacy media, 9 lệnh chạy một lần, kênh OTP email cũ, font CV cũ; bật ruff DJ001/007/008/012; thêm test privacy/skills/locations, tách file test > 1000 dòng | ✅ #254 |
 | 6 | 274 migration → baseline `0001_initial` (+`0002_initial` khi FK vòng) và `00xx_reference_data` nạp JSON qua `common/db/reference_data.py`; schema mới khớp schema cũ (trừ 4 cột mồ côi của `employers_company` đã dọn và bảng chiến dịch sang `campaigns_*`); gỡ 8 test migration và job CI `backend-migration-tests`; `scripts/reset_local_db.sh` (pg_dump → migrate → seed) | ✅ #255 |
 
@@ -1247,7 +1247,7 @@ GĐ1 đã làm:
     token hỏng thì kết nối "Hết hạn" và báo NTD;
   - frontend: trang "Kết nối mạng xã hội" trong Cài đặt tài khoản; khối "Đăng
     tự động lên Fanpage" trong thẻ kênh Fanpage;
-  - hướng dẫn Meta App ở `docs/06-deployment/social-integrations.md`,
+  - hướng dẫn Meta App ở `docs/06-deployment/tich-hop-mang-xa-hoi.md`,
     ADR-0021.
   - Chưa thử với Meta App thật; cần user tạo app ở Development mode.
 - GĐ4 đã làm (#241), công thức ở
@@ -1690,7 +1690,7 @@ thật trong hạng mục AI.
   hoặc yêu cầu sửa tiếp. Hàng chờ admin có bộ lọc "Chờ duyệt lại", ô tổng hợp
   đếm số tin chờ.
 - Lý do nặng (bị cấm, lừa đảo, báo cáo đã xác nhận) vẫn khóa cứng. Cập nhật
-  [ADR-0014](02-tong-quan/adr-0014-job-post-moderation.md).
+  [ADR-0014](adr/adr-0014-job-post-moderation.md).
 
 </details>
 
@@ -1742,7 +1742,7 @@ thật trong hạng mục AI.
 <details><summary>Ghi chú GĐ1</summary>
 
 - Nguồn duy nhất ở `apps/jobs/models/querysets.py` (xem
-  [ADR-0019](02-tong-quan/adr-0019-job-effective-state.md)): danh sách điều kiện
+  [ADR-0019](adr/adr-0019-job-effective-state.md)): danh sách điều kiện
   công khai có mã, nhãn, hành động khắc phục; `JobState` gồm nháp, đang tuyển,
   bị ẩn, hết hạn, đã đóng. Danh sách tin NTD, chiến dịch, dashboard, admin và
   lý do chặn ở trang kiểm duyệt đều đọc từ đây, luôn theo lịch Việt Nam
@@ -2512,7 +2512,7 @@ mở lại CB-P2 phải dựng UI mới.
 
 ## Gỡ phòng ban, chức danh, nhân viên quản trị (ADR-0018, 2026-11-14)
 
-Quyết định: [`adr-0018-remove-admin-rbac.md`](02-tong-quan/adr-0018-remove-admin-rbac.md).
+Quyết định: [`adr-0018-remove-admin-rbac.md`](adr/adr-0018-remove-admin-rbac.md).
 Còn hai cấp quản trị: superuser và admin thường. Xóa phòng ban, chức danh, gán
 nhân viên, phạm vi cấp tài khoản và danh mục 56 mã quyền (backend, frontend,
 docs); trang `/access-control` và bước CI đồng bộ quyền bị gỡ. Superuser mời
@@ -2540,8 +2540,8 @@ Kiểm chứng:
 
 ## Trang công ty và quyền biên tập (CP, 2026-11-14)
 
-Kế hoạch: [`ke-hoach-trang-cong-ty.md`](01-phan-tich/ke-hoach-trang-cong-ty.md).
-Quyết định: [ADR-0017](02-tong-quan/adr-0017-company-page.md), ER-D58 đến ER-D64.
+Kế hoạch: [`ke-hoach-trang-cong-ty.md`](archive/ke-hoach/ke-hoach-trang-cong-ty.md).
+Quyết định: [ADR-0017](adr/adr-0017-company-page.md), ER-D58 đến ER-D64.
 
 | Giai đoạn | Nội dung | Trạng thái |
 | --- | --- | --- |
@@ -2557,7 +2557,7 @@ Quyết định: [ADR-0017](02-tong-quan/adr-0017-company-page.md), ER-D58 đế
 
 ## Làm lại Template CV (CVT-v3, 2026-11-13)
 
-Kế hoạch: [`ke-hoach-cv-template-v3.md`](01-phan-tich/ke-hoach-cv-template-v3.md)
+Kế hoạch: [`ke-hoach-cv-template-v3.md`](archive/ke-hoach/ke-hoach-cv-template-v3.md)
 (gồm mục 5.6 — dữ liệu CV cùng từ vựng với JD để làm matching sau này).
 
 | Giai đoạn | Nội dung | Trạng thái |
@@ -2574,7 +2574,7 @@ Kế hoạch: [`ke-hoach-cv-template-v3.md`](01-phan-tich/ke-hoach-cv-template-v
 
 ## Gỡ xác thực hai bước (ADR-0016, 2026-11-13)
 
-Quyết định: [`adr-0016-remove-two-factor-auth.md`](02-tong-quan/adr-0016-remove-two-factor-auth.md).
+Quyết định: [`adr-0016-remove-two-factor-auth.md`](adr/adr-0016-remove-two-factor-auth.md).
 Gỡ 2FA/MFA ở cả ba cổng (backend, frontend, docs); `bootstrap_admin_mfa` thay
 bằng `verify_admin_email`. Migration `accounts.0030` và `knowledgebase.0004` đã
 chạy trên DB local (có bản `pg_dump` trước khi chạy). Cổng `check_all.sh` xanh:
@@ -2583,8 +2583,8 @@ pytest 1155 passed (87,48%), vitest 1190, E2E smoke 258 passed.
 ## Epic hậu kiểm tin, gỡ dịch vụ thương mại và dọn docs (PM, 2026-11-13)
 
 Quyết định:
-[`adr-0014-job-post-moderation.md`](02-tong-quan/adr-0014-job-post-moderation.md),
-[`adr-0015-remove-commercial-services.md`](02-tong-quan/adr-0015-remove-commercial-services.md).
+[`adr-0014-job-post-moderation.md`](adr/adr-0014-job-post-moderation.md),
+[`adr-0015-remove-commercial-services.md`](adr/adr-0015-remove-commercial-services.md).
 
 Các nhánh nối tiếp nhau, chưa push; gộp theo thứ tự:
 
@@ -2655,7 +2655,7 @@ Việc còn mở:
 Đặc tả canonical:
 [`dac-ta-nha-tuyen-dung.md`](01-phan-tich/dac-ta-nha-tuyen-dung.md).
 Decision log:
-[`employer-remediation-decision-log.md`](02-tong-quan/employer-remediation-decision-log.md).
+[`employer-remediation-decision-log.md`](archive/decision-log/employer-remediation-decision-log.md).
 
 Code đã hoàn tất cho ER-0 đến ER-8. Còn lại là việc kích hoạt: upload strict
 mode và Chrome QA (ER-3), DPA cần bản pháp lý chính xác, SMS cần gateway
@@ -2680,9 +2680,9 @@ production, staging và soak (ER-8). Lệnh kiểm tra chỉ đọc:
 | --- | --- | --- | --- |
 | FAQ và hướng dẫn sử dụng (KB-P0…P6) | 2026-08 | Trung tâm trợ giúp public, workspace quản trị có revision | [đặc tả](01-phan-tich/dac-ta-trung-tam-tro-giup.md) |
 | Thông báo đa cổng (AN-P0…P5) và visual theme (AN-V0…V3) | 2026-07 → 08 | Dải thông báo ba cổng, targeting, analytics, theme và ảnh nền | [đặc tả](01-phan-tich/dac-ta-thong-bao-da-cong.md) |
-| Hoàn thiện CV Builder (CVB-P0…P6, CVB-8) | 2026-07 | Canonical document, catalogue, import PDF/DOCX, editor WYSIWYG A4 | [kiến trúc](02-tong-quan/cv-builder-architecture-foundation.md) |
+| Hoàn thiện CV Builder (CVB-P0…P6, CVB-8) | 2026-07 | Canonical document, catalogue, import PDF/DOCX, editor WYSIWYG A4 | [kiến trúc](02-tong-quan/kien-truc-cv-builder.md) |
 | Dọn dẹp frontend (FE-P1…P6) | 2026-07 | Enforcement FSD, TanStack Query, tách file lớn, tối ưu asset | [`frontend/ARCHITECTURE.md`](../frontend/ARCHITECTURE.md) |
-| Audit và refactor toàn dự án (AR-P0…P8) | 2026-07 | Layout ADR-0010, import-linter, coverage gate 84%, xóa API v1 | [audit](02-tong-quan/flow-audit-2026-07.md) |
+| Audit và refactor toàn dự án (AR-P0…P8) | 2026-07 | Layout ADR-0010, import-linter, coverage gate 84%, xóa API v1 | [audit](archive/audit/flow-audit-2026-07.md) |
 | Onboarding ứng viên dạng hội thoại | 2026-08 | Một trang hội thoại năm câu hỏi | [đặc tả](01-phan-tich/dac-ta-onboarding-ung-vien.md) |
 | Account status enforcement, vá xác thực admin và OAuth | 2026-07 | Khóa, tạm khóa, hold tài nguyên; MFA admin | [database](03-database/thiet-ke-database.md) |
 | Trang chủ, cổng marketing nhà tuyển dụng | 2026-07 | Trang chủ ứng viên, 4 trang marketing VI/EN | [tổng quan](02-tong-quan/tong-quan-he-thong.md) |

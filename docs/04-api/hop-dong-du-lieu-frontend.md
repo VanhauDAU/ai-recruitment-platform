@@ -1,4 +1,4 @@
-# Frontend response contracts
+# Hợp đồng dữ liệu response cho frontend
 
 Tài liệu này ghi lại kết quả đối chiếu các API với consumer thực tế trong
 `frontend/src`. Mục tiêu là response theo use case, không phản chiếu nguyên model

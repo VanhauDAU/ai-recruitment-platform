@@ -2,11 +2,11 @@
 
 Tài liệu mô tả hành vi hiện tại của workspace nhà tuyển dụng: chiến dịch tuyển
 dụng, vòng đời tin, điều kiện công khai, pipeline hồ sơ và hậu kiểm tin của
-quản trị viên. Quyết định nền: [ADR-0014](../02-tong-quan/adr-0014-job-post-moderation.md)
+quản trị viên. Quyết định nền: [ADR-0014](../adr/adr-0014-job-post-moderation.md)
 (hậu kiểm thay cho duyệt trước), phần vòng đời hiển thị của
-[ADR-0012](../02-tong-quan/adr-0012-job-services-architecture.md) và
-[ADR-0015](../02-tong-quan/adr-0015-remove-commercial-services.md) (gỡ dịch vụ
-thương mại). Giao diện admin: [admin-job-management.md](../08-frontend/admin-job-management.md).
+[ADR-0012](../adr/adr-0012-job-services-architecture.md) và
+[ADR-0015](../adr/adr-0015-remove-commercial-services.md) (gỡ dịch vụ
+thương mại). Giao diện admin: [quan-ly-tin-cong-quan-tri.md](../08-frontend/quan-ly-tin-cong-quan-tri.md).
 
 Code chính: `backend/apps/jobs/services/posting/`, `services/moderation.py`,
 `services/reports.py`, `models/core.py`, `models/categories.py`, `models/querysets.py`;
@@ -198,7 +198,7 @@ thêm kênh sau khi chiến dịch chạy cũng được.
 - **Đăng thành công**: kênh tự đánh dấu "Đã đăng" (kèm link bài) và ghi
   `CampaignActivity`.
 - **Môi trường**: `CAMPAIGN_SOCIAL_PROVIDER=fake` chạy toàn bộ luồng không cần
-  Meta. Đăng thật theo `docs/06-deployment/social-integrations.md`.
+  Meta. Đăng thật theo `docs/06-deployment/tich-hop-mang-xa-hoi.md`.
 
 ### Trạng thái chiến dịch
 
@@ -389,11 +389,11 @@ Ba mốc thời gian độc lập, không suy mốc này từ mốc khác:
 | --- | --- | --- |
 | Nhận hồ sơ | `deadline` (API: `application_deadline`) | Ngày cuối nhận ứng tuyển. |
 | Công khai | `first_approved_at`, `visibility_starts_at`, `visibility_ends_at`, `requested_visibility_days` | Chu kỳ hiển thị bắt đầu từ lần đăng đầu, mặc định 30 ngày, tối đa 90. |
-| Sắp xếp | `listing_recency` = `first_approved_at` (dự phòng `published_at`, `created_at`) | Lần đăng đầu; sửa, đóng/mở lại, gia hạn, khôi phục đều không đổi ([ADR-0030](../02-tong-quan/adr-0030-fair-job-listing.md)). `published_at` chỉ ghi lần đăng gần nhất, không dùng xếp hạng. |
+| Sắp xếp | `listing_recency` = `first_approved_at` (dự phòng `published_at`, `created_at`) | Lần đăng đầu; sửa, đóng/mở lại, gia hạn, khôi phục đều không đổi ([ADR-0030](../adr/adr-0030-fair-job-listing.md)). `published_at` chỉ ghi lần đăng gần nhất, không dùng xếp hạng. |
 
 - Cửa sổ hiển thị luôn chặn công khai cùng hạn nhận hồ sơ (cờ
   `JOB_LIFECYCLE_V2_MODE` đã gỡ, xem
-  [ADR-0019](../02-tong-quan/adr-0019-job-effective-state.md)).
+  [ADR-0019](../adr/adr-0019-job-effective-state.md)).
 - Anchor chu kỳ (`first_approved_at`, `visibility_starts_at`) bất biến: đóng/mở
   lại không reset. Tin đã đăng không đổi `requested_visibility_days` qua form
   sửa, chỉ qua `extend/`.
@@ -513,7 +513,7 @@ cáo hoặc phát hiện vi phạm.
   `moderation_hold`.
 - Verification compliance hold (ER-5) gắn theo recruiter và liên kết tới
   campaign/job; không đổi business status và không ghi đè hai loại hold trên.
-  Xem [employer-remediation-decision-log.md](../02-tong-quan/employer-remediation-decision-log.md).
+  Xem [employer-remediation-decision-log.md](../archive/decision-log/employer-remediation-decision-log.md).
 - Write transaction khóa theo thứ tự `User → Recruiter → Verification →
   Campaign → Job → Application`; nếu chiến dịch của tin đổi giữa lúc đọc và
   lúc khóa, service trả `RECRUITMENT_RESOURCE_CHANGED`.
@@ -531,11 +531,11 @@ cáo hoặc phát hiện vi phạm.
 | `Application`, `ApplicationStatusHistory` | Hồ sơ ứng tuyển và timeline. |
 
 Chi tiết cột ở [thiet-ke-database.md](../03-database/thiet-ke-database.md).
-Không có hạng tin hay nhãn gán tay ([ADR-0030](../02-tong-quan/adr-0030-fair-job-listing.md)).
+Không có hạng tin hay nhãn gán tay ([ADR-0030](../adr/adr-0030-fair-job-listing.md)).
 Nhãn trên thẻ tin chỉ do hệ thống tính: "Sắp hết hạn" (hạn nộp còn ≤
 `job_closing_soon_days` ngày) và "Phản hồi nhanh" — `has_flash_badge` (Huy hiệu Sấm
 Chớp) do hệ thống tính mỗi giờ từ việc người đăng tin quyết định hồ sơ đúng hạn
-([ADR-0027](../02-tong-quan/adr-0027-flash-badge-responsiveness.md)). Danh sách xếp mới
+([ADR-0027](../adr/adr-0027-flash-badge-responsiveness.md)). Danh sách xếp mới
 đăng trước; ứng viên có thể chọn "Lương cao nhất" hoặc "Sắp hết hạn nộp".
 
 ## 10. Việc còn mở

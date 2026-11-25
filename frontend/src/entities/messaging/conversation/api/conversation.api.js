@@ -1,6 +1,6 @@
 import api from '@/shared/api/client'
 
-// Hợp đồng: docs/04-api/procv-connect-contract.md. `portal` = 'candidate' | 'employer'.
+// Hợp đồng: docs/04-api/hop-dong-api-procv-connect.md. `portal` = 'candidate' | 'employer'.
 const base = (portal) => `/${portal}/conversations`
 const messagesPath = (portal, publicId) => `${base(portal)}/${publicId}/messages/`
 

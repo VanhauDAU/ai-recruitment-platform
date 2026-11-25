@@ -1,4 +1,4 @@
-# Employer SMS verification — adapter và live workflow ER-6A
+# Xác thực SĐT nhà tuyển dụng: adapter SMS và quy trình bật thật (ER-6A)
 
 ## 1. Phạm vi và trạng thái
 

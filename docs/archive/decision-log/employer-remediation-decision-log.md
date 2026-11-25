@@ -3,7 +3,7 @@
 > **Tài liệu sống:** cập nhật trước khi triển khai một thay đổi mới về luồng,
 > quyền, dữ liệu hoặc rollout.  
 > **Đặc tả canonical:**
-> [Đặc tả nhà tuyển dụng](../01-phan-tich/dac-ta-nha-tuyen-dung.md)  
+> [Đặc tả nhà tuyển dụng](../../01-phan-tich/dac-ta-nha-tuyen-dung.md)  
 > **Ngày khóa gate ER-0:** 2026-08-10
 
 ## Nguyên tắc
@@ -245,8 +245,8 @@ ER-D49 cụ thể hóa tiêu chí “account/company relation còn clean” củ
 | ER-D64 | Mọi công ty không bị tạm ẩn đều có trang chi tiết; chỉ index và vào sitemap khi có người đại diện hợp lệ, có lĩnh vực, và có mô tả hoặc tin đang tuyển | Tạm ẩn trả 404 thật và loại công ty khỏi danh bạ, sitemap, gợi ý |
 
 Chủ dự án xác nhận ER-D58 đến ER-D64 ngày 14/11/2026. Kiến trúc tương ứng ghi tại
-[ADR-0017](./adr-0017-company-page.md); lộ trình tại
-[kế hoạch trang công ty](../01-phan-tich/ke-hoach-trang-cong-ty.md).
+[ADR-0017](../../adr/adr-0017-company-page.md); lộ trình tại
+[kế hoạch trang công ty](../ke-hoach/ke-hoach-trang-cong-ty.md).
 
 ## Session 2026-11-19 — Hậu kiểm nội dung trang công ty
 
@@ -267,7 +267,7 @@ tập, trong khi tin tuyển dụng (rủi ro cao hơn) đã hậu kiểm.
 | ER-D68 | Form hồ sơ công ty chỉ thay các trường của chính nó trong yêu cầu đang mở; nội dung trang đang chờ duyệt trong cùng yêu cầu được giữ | Trước đây gửi form hồ sơ xoá mất khẩu hiệu, văn hoá, phúc lợi, văn phòng… đang chờ duyệt mà không báo |
 
 Chủ dự án chọn hướng hậu kiểm theo rủi ro ngày 19/11/2026; ER-D66 theo khuyến
-nghị kèm theo. Kiến trúc cập nhật tại [ADR-0017](./adr-0017-company-page.md)
+nghị kèm theo. Kiến trúc cập nhật tại [ADR-0017](../../adr/adr-0017-company-page.md)
 (quyết định 3).
 
 ## Tài liệu/mô tả bị thay thế

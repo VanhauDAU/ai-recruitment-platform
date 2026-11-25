@@ -92,4 +92,4 @@ này nó mang nghĩa "được phép đưa tin lên công khai".
   khóa tài khoản vi phạm bằng `policy_hold`.
 - Thay thế các phần về duyệt tin trong
   [`dac-ta-chien-dich-va-tin-tuyen-dung.md`](../01-phan-tich/dac-ta-chien-dich-va-tin-tuyen-dung.md)
-  và [`admin-job-management.md`](../08-frontend/admin-job-management.md).
+  và [`quan-ly-tin-cong-quan-tri.md`](../08-frontend/quan-ly-tin-cong-quan-tri.md).

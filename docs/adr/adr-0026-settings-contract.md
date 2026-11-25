@@ -3,7 +3,7 @@
 **Trạng thái:** Đã chấp nhận
 **Ngày:** 21/11/2026
 **Owner:** Nội dung site (`apps.sitecontent`)
-**Kế hoạch:** [ke-hoach-cau-hinh-he-thong.md](../01-phan-tich/ke-hoach-cau-hinh-he-thong.md)
+**Kế hoạch:** [ke-hoach-cau-hinh-he-thong.md](../archive/ke-hoach/ke-hoach-cau-hinh-he-thong.md)
 
 ## Bối cảnh
 

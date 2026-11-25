@@ -64,4 +64,4 @@ dùng chung toàn hệ thống), impact token cho thao tác tài khoản nguy hi
 - Không còn phân tách quyền giữa người soạn và người duyệt (blog, trợ giúp,
   mẫu CV); quy trình trạng thái nội dung vẫn giữ, mọi thao tác có audit. Blog và
   trợ giúp sau đó bỏ hẳn bước tự duyệt
-  ([ADR-0024](./adr-0024-content-publish-without-review.md)).
+  ([ADR-0024](adr-0024-content-publish-without-review.md)).

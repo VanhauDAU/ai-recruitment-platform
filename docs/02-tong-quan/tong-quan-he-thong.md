@@ -25,7 +25,7 @@ cho mỗi role (ràng buộc `(lower(email), role)`), mật khẩu riêng, phiê
   frontend/pypdfium2 (render PDF và ảnh CV), pypdf/python-docx (trích text import), `google-genai` (AI).
 - **Dữ liệu**: PostgreSQL 16 (tìm kiếm không dấu bằng `unaccent`), Redis 7
   (cache, throttle, broker Celery), lưu file local hoặc Cloudflare R2
-  ([`cloudflare-r2-media.md`](../06-deployment/cloudflare-r2-media.md)).
+  ([`luu-tru-media-cloudflare-r2.md`](../06-deployment/luu-tru-media-cloudflare-r2.md)).
 - **Frontend**: React 19, Vite, React Router, TanStack Query, Ant Design,
   Tailwind CSS.
 - **Hạ tầng dev/deploy**: Docker Compose, chi tiết ở
@@ -50,28 +50,35 @@ trong `backend/config/settings/base.py`.
 
 ## Bản đồ app backend
 
-Mọi app trong `backend/apps/` theo layout `api/ · models/ · services/ ·
-selectors/ · tasks/ · tests/`, phụ thuộc `api → services/selectors → models`
-và được `import-linter` kiểm tra ([`AGENTS.md`](../../AGENTS.md),
-[`quy-uoc-code.md`](./quy-uoc-code.md)). Miền CV dùng tiền tố `/api/v2/`, app
-khác dùng `/api/<app>/`.
+Mọi app trong `backend/apps/` theo layout của
+[ADR-0022](../adr/adr-0022-backend-structure.md): `api/ · seo/ · models/ · domain/ ·
+selectors/ · services/ · tasks/ · signals/ · tests/`, phụ thuộc
+`api → services/selectors → models → domain`, được `import-linter` và
+`scripts/check_backend_imports.py` kiểm tra ([`AGENTS.md`](../../AGENTS.md),
+[`quy-uoc-code.md`](./quy-uoc-code.md)). URL chia theo cổng rồi mới đến tài nguyên:
+`/api/{auth,public,candidate,employer,admin,shared}/<tài nguyên>/`
+(`backend/config/urls.py`); mỗi app khai một module `api/urls/<cổng>.py`.
 
 | App | Trách nhiệm |
 | --- | --- |
-| `accounts` | User theo role, đăng nhập/đăng ký, social login, JWT + `AuthSession`, outbox email xác thực, hai cấp quản trị, lời mời admin, trạng thái tài khoản (`/api/auth/`, `/api/admin/`) |
-| `candidates` | Hồ sơ ứng viên, onboarding, nhu cầu công việc, consent, cài đặt email (`/api/candidate/`) |
-| `employers` | Công ty, recruiter, xác thực doanh nghiệp, DPA, OTP SMS, chiến dịch tuyển dụng, compliance hold, domain claim, thông báo NTD, API công ty công khai (`/api/employer/`, `/api/public/companies/`) |
-| `jobs` | Tin tuyển dụng và vòng đời, tìm kiếm, tin đã lưu/ẩn, báo cáo tin và tạm ẩn, gợi ý việc làm, digest email, AI tạo tin (`/api/public/jobs/`, `/api/ai/`) |
-| `applications` | Hồ sơ ứng tuyển, snapshot CV, lịch sử trạng thái, tự động từ chối (`/api/v2/`) |
-| `cvs` | CV của ứng viên, draft/version, import, export PDF, chia sẻ, điểm hoàn thiện (`/api/candidate/cvs/`) |
-| `cv_templates` | Catalogue mẫu CV, phiên bản, taxonomy, thumbnail (`/api/v2/`) |
-| `ai_core` | Runtime AI trung lập provider, invocation log, usage, retention |
-| `uploads` | Upload session, quarantine, quét ClamAV, claim file sạch (`/api/shared/uploads/`) |
-| `privacy` | Cookie consent và định danh người xem ẩn danh (`/api/public/privacy/`) |
-| `sitecontent` | Site settings, thông báo đa cổng, SEO shell/sitemap, media (`/api/public/site/`) |
-| `knowledgebase` | Trung tâm trợ giúp FAQ/hướng dẫn có revision (`/api/public/knowledgebase/`) |
-| `blog` | Cẩm nang nghề nghiệp (`/api/public/blog/`) |
-| `dashboard` | Số liệu tổng quan cho admin (`/api/dashboard/`) |
+| `accounts` | User theo role, đăng nhập/đăng ký, social login, JWT + `AuthSession`, outbox email xác thực, hai cấp quản trị, lời mời admin, trạng thái tài khoản |
+| `candidates` | Hồ sơ ứng viên, onboarding, nhu cầu công việc, consent, cài đặt email |
+| `employers` | Công ty, recruiter, xác thực doanh nghiệp, DPA, OTP SMS, compliance hold, domain claim, thông báo NTD, API công ty công khai |
+| `campaigns` | Chiến dịch tuyển dụng: vòng đời, kênh và nguồn, tự đăng mạng xã hội, sức khỏe chiến dịch ([ADR-0020](../adr/adr-0020-campaign-lifecycle-and-distribution.md), [ADR-0025](../adr/adr-0025-campaign-social-networks.md)) |
+| `jobs` | Tin tuyển dụng và vòng đời, tìm kiếm, tin đã lưu/ẩn, báo cáo tin và tạm ẩn, gợi ý việc làm, digest email, AI tạo tin |
+| `applications` | Hồ sơ ứng tuyển, snapshot CV, lịch sử trạng thái, tự động từ chối |
+| `cvs` | CV của ứng viên, draft/version, import, export PDF, chia sẻ, điểm hoàn thiện |
+| `cv_templates` | Catalogue mẫu CV, phiên bản, taxonomy, thumbnail |
+| `matching` | Đối sánh ngữ nghĩa CV–tin bằng mô hình local (pgvector), gợi ý việc làm, NTD xếp hạng hồ sơ |
+| `ai_core` | Runtime AI trung lập provider (Gemini, Claude), invocation log, usage, retention |
+| `uploads` | Upload session, quarantine, quét ClamAV, claim file sạch |
+| `privacy` | Cookie consent và định danh người xem ẩn danh |
+| `sitecontent` | Site settings, thông báo đa cổng, SEO shell/sitemap, media |
+| `knowledgebase` | Trung tâm trợ giúp FAQ/hướng dẫn có revision |
+| `blog` | Cẩm nang nghề nghiệp |
+| `dashboard` | Số liệu tổng quan cho admin |
+| `messaging` | ProCV Connect: lời mời kết nối, hội thoại NTD ↔ ứng viên ([ADR-0032](../adr/adr-0032-procv-connect-messaging.md)) |
+| `realtime` | WebSocket thông báo và hàng chờ admin, vé kết nối một lần ([ADR-0028](../adr/adr-0028-realtime-notifications.md)) |
 | `skills`, `locations` | Danh mục kỹ năng, tỉnh/thành (kèm sáp nhập tỉnh) |
 
 Lược đồ dữ liệu: [`thiet-ke-database.md`](../03-database/thiet-ke-database.md).
@@ -85,7 +92,7 @@ shared`; page tách theo portal `main`, `employer`, `admin`; route đăng ký qu
 lazy loader của từng portal và guard `AuthGuard` → `RoleGuard`. Quy tắc đầy đủ
 ở [`frontend/ARCHITECTURE.md`](../../frontend/ARCHITECTURE.md), cấu trúc thư
 mục ở [`cau-truc-frontend.md`](../08-frontend/cau-truc-frontend.md), contract
-response ở [`frontend-response-contracts.md`](../04-api/frontend-response-contracts.md).
+response ở [`hop-dong-du-lieu-frontend.md`](../04-api/hop-dong-du-lieu-frontend.md).
 
 ## Luồng nghiệp vụ chính
 
@@ -113,8 +120,8 @@ response ở [`frontend-response-contracts.md`](../04-api/frontend-response-cont
    tạo bản nháp.
 4. Đăng tin: tin công khai ngay khi qua các điều kiện (xác thực, DPA, không
    hold, hạn hợp lệ) và NTD xác nhận cam kết trách nhiệm; vòng đời
-   `draft → active → closed` ([ADR-0014](./adr-0014-job-post-moderation.md),
-   vòng đời hiển thị theo [ADR-0012](./adr-0012-job-services-architecture.md)).
+   `draft → active → closed` ([ADR-0014](../adr/adr-0014-job-post-moderation.md),
+   vòng đời hiển thị theo [ADR-0012](../adr/adr-0012-job-services-architecture.md)).
 5. Xử lý hồ sơ: hệ thống ghi `submitted → viewed`, NTD quyết định
    `shortlisted → interviewed → accepted | rejected`; ứng viên được báo (chuông
    + email) sau một cửa sổ hoàn tác, có lịch sử và quy tắc tự động từ chối.
@@ -130,7 +137,7 @@ onboarding ứng viên đặc tả trong [`dac-ta-onboarding-ung-vien.md`](../01
 - Gán nhãn hiển thị `tier`, `is_hot`, `is_urgent` cho tin. Huy hiệu Sấm Chớp
   (`has_flash_badge`) do hệ thống tự tính (ADR-0027); admin chỉ chỉnh ngưỡng.
   Không có gói dịch vụ, tin tài trợ hay remarketing
-  ([ADR-0015](./adr-0015-remove-commercial-services.md)).
+  ([ADR-0015](../adr/adr-0015-remove-commercial-services.md)).
 - Duyệt xác thực doanh nghiệp và yêu cầu cập nhật công ty.
 - Quản lý tài khoản (khóa, cấm, khôi phục), nội dung (blog, trợ giúp, mẫu CV),
   thông báo đa cổng ([`dac-ta-thong-bao-da-cong.md`](../01-phan-tich/dac-ta-thong-bao-da-cong.md)),
@@ -140,7 +147,7 @@ onboarding ứng viên đặc tả trong [`dac-ta-onboarding-ung-vien.md`](../01
 
 ### Xác thực và phiên
 
-- Hạn phiên riêng theo cổng ([ADR-0033](adr-0033-portal-session-policy.md)):
+- Hạn phiên riêng theo cổng ([ADR-0033](../adr/adr-0033-portal-session-policy.md)):
   ứng viên tối đa 30 ngày (rảnh 7 ngày thì đăng xuất), NTD 24 giờ (1 giờ), admin
   12 giờ (15 phút). Hạn tối đa tính từ lần đăng nhập, refresh không gia hạn.
 - Access JWT ngắn hạn (15 phút; admin 5 phút) gửi qua header
@@ -153,12 +160,12 @@ onboarding ứng viên đặc tả trong [`dac-ta-onboarding-ung-vien.md`](../01
 - `auth_revision` của tài khoản/phiên làm vô hiệu mọi token và link reset
   phát trước khi đổi email hay đổi trạng thái.
 - Chống dò mật khẩu bằng backoff theo tài khoản. Không có xác thực hai bước
-  ([ADR-0016](./adr-0016-remove-two-factor-auth.md)). Social login:
-  [`social-login.md`](../05-huong-dan/social-login.md).
+  ([ADR-0016](../adr/adr-0016-remove-two-factor-auth.md)). Social login:
+  [`dang-nhap-mang-xa-hoi.md`](../05-huong-dan/dang-nhap-mang-xa-hoi.md).
 
 ### Phân quyền admin (hai cấp)
 
-Không có phòng ban/chức danh ([ADR-0018](./adr-0018-remove-admin-rbac.md)).
+Không có phòng ban/chức danh ([ADR-0018](../adr/adr-0018-remove-admin-rbac.md)).
 Admin thường dùng mọi chức năng nghiệp vụ; superuser thêm quản lý tài khoản
 quản trị, mời quản trị viên, site settings, cấu hình AI, cấm tài khoản và
 audit toàn hệ thống. `AdminPortalPermission` kiểm tra ở backend, từ chối bằng
@@ -178,7 +185,7 @@ hold có rà soát.
 - Consent ứng viên (`ai_recommendation`, `recruiter_visibility`) có lịch sử
   `CandidateConsentEvent`; gợi ý cá nhân hóa kiểm consent trước khi đọc dữ liệu.
 - Cookie consent và định danh người xem ký số, dùng cho đếm lượt xem tin
-  ([`cookie-consent-va-job-view-tracking.md`](../04-api/cookie-consent-va-job-view-tracking.md)).
+  ([`dong-y-cookie-va-luot-xem-tin.md`](../04-api/dong-y-cookie-va-luot-xem-tin.md)).
 - AI không nhận PII liên hệ; log và metric chỉ có enum/bucket.
 
 ### Upload và quét file
@@ -186,7 +193,7 @@ hold có rà soát.
 File nhạy cảm (hồ sơ xác thực, cập nhật công ty, CV import) đi qua upload
 session: ghi vào quarantine, quét ClamAV trên queue `upload-scan`, chỉ được
 claim khi `clean`. Bắt buộc theo domain bằng cờ `*_UPLOAD_SESSION_REQUIRED`.
-Ranh giới storage: [`employer-upload-storage-boundary-runbook.md`](../06-deployment/employer-upload-storage-boundary-runbook.md).
+Ranh giới storage: [`ranh-gioi-luu-tru-upload.md`](../06-deployment/ranh-gioi-luu-tru-upload.md).
 
 ### Tác vụ bất đồng bộ
 
@@ -202,16 +209,16 @@ fail-fast khi cấu hình sai. Cờ rollout và cách tắt khẩn cấp:
 
 ## Quyết định kiến trúc
 
-- [ADR-0012](./adr-0012-job-services-architecture.md): vòng đời hiển thị tin (phần còn hiệu lực).
-- [ADR-0013](./adr-0013-public-companies-api.md): API công khai cho danh bạ công ty.
-- [ADR-0014](./adr-0014-job-post-moderation.md): hậu kiểm tin thay cho duyệt trước.
-- [ADR-0015](./adr-0015-remove-commercial-services.md): gỡ dịch vụ thương mại.
-- [ADR-0016](./adr-0016-remove-two-factor-auth.md): gỡ xác thực hai bước.
-- [ADR-0017](./adr-0017-company-page.md): trang công ty công khai và quyền biên tập.
-- [ADR-0018](./adr-0018-remove-admin-rbac.md): gỡ phòng ban/chức danh, còn hai cấp quản trị.
-- [`cv-builder-architecture-foundation.md`](./cv-builder-architecture-foundation.md): kiến trúc CV Builder.
-- [`employer-remediation-decision-log.md`](./employer-remediation-decision-log.md),
-  [`chatbot-local-decision-log.md`](./chatbot-local-decision-log.md): nhật ký quyết định theo mảng.
+- [ADR-0012](../adr/adr-0012-job-services-architecture.md): vòng đời hiển thị tin (phần còn hiệu lực).
+- [ADR-0013](../adr/adr-0013-public-companies-api.md): API công khai cho danh bạ công ty.
+- [ADR-0014](../adr/adr-0014-job-post-moderation.md): hậu kiểm tin thay cho duyệt trước.
+- [ADR-0015](../adr/adr-0015-remove-commercial-services.md): gỡ dịch vụ thương mại.
+- [ADR-0016](../adr/adr-0016-remove-two-factor-auth.md): gỡ xác thực hai bước.
+- [ADR-0017](../adr/adr-0017-company-page.md): trang công ty công khai và quyền biên tập.
+- [ADR-0018](../adr/adr-0018-remove-admin-rbac.md): gỡ phòng ban/chức danh, còn hai cấp quản trị.
+- [`kien-truc-cv-builder.md`](kien-truc-cv-builder.md): kiến trúc CV Builder.
+- [`employer-remediation-decision-log.md`](../archive/decision-log/employer-remediation-decision-log.md),
+  [`chatbot-local-decision-log.md`](../archive/decision-log/chatbot-local-decision-log.md): nhật ký quyết định theo mảng.
 
 Cài đặt môi trường dev: [`huong-dan-cai-dat.md`](../05-huong-dan/huong-dan-cai-dat.md).
 Tiến độ: [`TIEN-DO-DU-AN.md`](../TIEN-DO-DU-AN.md).

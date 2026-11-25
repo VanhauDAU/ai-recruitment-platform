@@ -28,14 +28,14 @@ end
 end
 group Bật tìm kiếm cho một CV
 UV -> FE : Bật "Cho NTD tìm thấy CV này"
-FE -> BE : PATCH /api/v2/cvs/{cv}/ {recruiter_searchable: true}
+FE -> BE : PATCH /api/candidate/cvs/{cv}/ {recruiter_searchable: true}
 alt Chưa đồng ý cho phép NTD tìm thấy hồ sơ
 BE --> FE : 409 RECRUITER_CONSENT_REQUIRED
 FE --> UV : Mở hộp thoại xin đồng ý
 UV -> FE : Xác nhận đồng ý
 FE -> BE : PATCH /api/candidate/recruiter-visibility/ {enabled, confirmed, policy_version}
 BE -> DB : Lưu đồng ý và sự kiện
-FE -> BE : PATCH /api/v2/cvs/{cv}/ {recruiter_searchable: true}
+FE -> BE : PATCH /api/candidate/cvs/{cv}/ {recruiter_searchable: true}
 end
 BE -> DB : Cập nhật UserCv
 BE --> FE : 200

@@ -1,6 +1,6 @@
 name: Security CI
 
-# Kiểm tra trước khi lên production (docs/06-deployment/ke-hoach-chuan-bi-deploy.md):
+# Kiểm tra trước khi lên production (docs/06-deployment/go-live.md):
 # lỗ hổng phụ thuộc Python, secret lọt vào commit, cấu hình production nạp được,
 # script triển khai sạch shellcheck. Chạy lại hằng tuần vì CVE mới xuất hiện cả
 # khi code không đổi.

@@ -88,7 +88,7 @@ quy tắc, portal hoặc mô hình ownership có tác động lâu dài.
 
 ## Backend (ADR-0022)
 
-Nguồn chi tiết: `docs/02-tong-quan/adr-0022-backend-structure.md`. Mọi Django
+Nguồn chi tiết: `docs/adr/adr-0022-backend-structure.md`. Mọi Django
 app trong `backend/apps/` theo đúng một layout:
 
 ```text

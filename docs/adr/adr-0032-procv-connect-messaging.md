@@ -1,6 +1,6 @@
 # ADR-0032: ProCV Connect — nhắn tin NTD ↔ ứng viên qua REST + WebSocket
 
-**Trạng thái:** Đã chấp nhận (thiết kế; xây dựng theo GĐ1–GĐ5 ở đặc tả)
+**Trạng thái:** Đã chấp nhận (đã xây dựng, PR #388)
 **Ngày:** 26/11/2026
 **Owner:** Messaging (`apps.messaging`, app mới, gồm cả lịch hẹn phỏng vấn)
 **Đặc tả:** [dac-ta-procv-connect.md](../01-phan-tich/dac-ta-procv-connect.md)

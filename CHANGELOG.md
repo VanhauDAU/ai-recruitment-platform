@@ -57,7 +57,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - `production.py` từ chối `SECRET_KEY` dạng `django-insecure…`, `*` trong `ALLOWED_HOSTS`,
   origin CORS không phải HTTPS. `safe_next` chặn `/\…`; reCAPTCHA production đòi `hostname`.
 - Runbook sửa redirect URI OAuth, thêm hướng dẫn email (Resend/Brevo, DMARC) và tinh chỉnh
-  Cloudflare; checklist go-live 2/12 (`docs/06-deployment/checklist-go-live-2-12.md`).
+  Cloudflare; checklist go-live 2/12 (`docs/06-deployment/go-live.md`).
 
 #### Fixed — Thỏa thuận xử lý DLCN ProCV–NTD không còn trỏ sang TopCV
 
@@ -684,7 +684,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Mọi endpoint chuyển sang `/api/{auth,public,candidate,employer,admin,shared}/`;
   bỏ `/api/v2/`. Ví dụ `/api/jobs/mine/` → `/api/employer/jobs/`,
   `/api/v2/cvs/` → `/api/candidate/cvs/`, `/api/blog/admin/` → `/api/admin/blog/`.
-  Bảng đầy đủ: `docs/04-api/url-map-2026-11.md`. Không giữ alias cũ.
+  Bảng đầy đủ: `docs/archive/snapshot/url-map-2026-11.md`. Không giữ alias cũ.
 - Frontend đổi cùng lúc (API client, mock unit test và E2E).
 - Gỡ API-root của DRF router và route SEO legacy `/jobs`, `/jobs/<slug>`.
 - Bỏ tên `v2` ở module, lớp, tên route và tag OpenAPI.
@@ -791,7 +791,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   dịch tạm dừng, tự gỡ khi chiến dịch hoàn tất hoặc bị hủy; lỗi tạm thời được
   thử lại, token hết hạn thì báo NTD.
 - `CAMPAIGN_SOCIAL_PROVIDER=fake` chạy toàn bộ luồng không cần Meta; hướng dẫn
-  tạo Meta App ở `docs/06-deployment/social-integrations.md`.
+  tạo Meta App ở `docs/06-deployment/tich-hop-mang-xa-hoi.md`.
 
 #### Added — Chiến dịch: phân phối đa kênh và ghi nhận nguồn (GĐ2)
 
@@ -1095,7 +1095,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 #### Removed — Phòng ban, chức danh và nhân viên quản trị (ADR-0018)
 
-- Theo [ADR-0018](docs/02-tong-quan/adr-0018-remove-admin-rbac.md): cổng quản
+- Theo [ADR-0018](docs/adr/adr-0018-remove-admin-rbac.md): cổng quản
   trị còn hai cấp superuser và admin thường. Admin thường dùng mọi chức năng
   nghiệp vụ; superuser thêm tài khoản quản trị, lời mời, site settings, cấu
   hình AI, cấm tài khoản, gỡ policy hold và audit toàn hệ thống.
@@ -1143,8 +1143,8 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 #### Added — Nền móng trang công ty (CP-0)
 
-- Theo [ADR-0017](docs/02-tong-quan/adr-0017-company-page.md) và
-  [kế hoạch trang công ty](docs/01-phan-tich/ke-hoach-trang-cong-ty.md).
+- Theo [ADR-0017](docs/adr/adr-0017-company-page.md) và
+  [kế hoạch trang công ty](docs/archive/ke-hoach/ke-hoach-trang-cong-ty.md).
 - `GET /api/jobs/` nhận `company=<company_public_id>` (khớp chính xác, không
   thêm query); card và chi tiết tin trả `company_slug`.
 - `Company.public_headquarters` là nguồn duy nhất cho địa chỉ công khai.
@@ -1160,7 +1160,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 #### Removed — Gỡ xác thực hai bước (2FA/MFA) ở cả ba cổng
 
-- Theo [ADR-0016](docs/02-tong-quan/adr-0016-remove-two-factor-auth.md): bỏ mã
+- Theo [ADR-0016](docs/adr/adr-0016-remove-two-factor-auth.md): bỏ mã
   email, ứng dụng xác thực (TOTP), mã dự phòng và challenge khi đăng nhập. Đăng
   nhập mật khẩu/OAuth cấp token ngay; `/api/auth/me/` không còn
   `two_factor_*`.
@@ -2547,7 +2547,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Endpoints mới: `GET /api/auth/oauth/<provider>/start/?portal&next` (redirect sang provider), `GET /api/auth/oauth/<provider>/callback/` (verify state → tạo/liên kết user → redirect frontend kèm code), `POST /api/auth/oauth/complete/` (đổi one_time_code lấy `{user, access, refresh}`, throttle 10/min).
 - Luật tài khoản: có `SocialAccount` → đăng nhập luôn; email trùng **cùng vai trò** → tự liên kết (đánh dấu `email_verified=True`, giữ mật khẩu cũ); email trùng **khác vai trò** → chặn "Tài khoản không thuộc cổng này"; user mới → vai trò theo cổng, `email_verified=True`, mật khẩu unusable. Tham số `next` chỉ nhận path nội bộ (chặn absolute/`//`).
 - Frontend: component chung `SocialLoginButtons` (full-page redirect sang start URL, `next` = trang hiện tại trừ trang auth), trang `OAuthCallback` dùng chung 2 cổng (`/oauth/callback`, `/tuyendung/app/oauth/callback`; guard chống StrictMode gọi effect 2 lần vì code one-shot), lưu token đúng portal key, lỗi → quay về trang login của cổng kèm `?oauth_error=` hiển thị trong Alert (map mã lỗi → tiếng Việt ở `errorMessage.js`). Login/Register cổng NTD thêm nút Google + divider.
-- Cấu hình `.env`: `OAUTH_{GOOGLE,FACEBOOK,LINKEDIN}_CLIENT_ID/SECRET`, `OAUTH_FACEBOOK_GRAPH_VERSION`, `OAUTH_MAIN/EMPLOYER_CALLBACK_URL`, `OAUTH_STATE_TTL`, `OAUTH_CODE_TTL`. Hướng dẫn lấy key từng provider: `docs/05-huong-dan/social-login.md`.
+- Cấu hình `.env`: `OAUTH_{GOOGLE,FACEBOOK,LINKEDIN}_CLIENT_ID/SECRET`, `OAUTH_FACEBOOK_GRAPH_VERSION`, `OAUTH_MAIN/EMPLOYER_CALLBACK_URL`, `OAUTH_STATE_TTL`, `OAUTH_CODE_TTL`. Hướng dẫn lấy key từng provider: `docs/05-huong-dan/dang-nhap-mang-xa-hoi.md`.
 - Test: 13 test OAuth backend (portal rules, tạo/liên kết/chặn theo vai trò, state one-shot, one_time_code one-shot, chặn `next` absolute).
 
 #### Changed — Media lưu storage key thay vì URL tuyệt đối

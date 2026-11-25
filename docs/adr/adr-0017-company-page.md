@@ -6,7 +6,7 @@
 
 ## Bối cảnh
 
-[ADR-0013](./adr-0013-public-companies-api.md) đã mở danh bạ công ty công khai,
+[ADR-0013](adr-0013-public-companies-api.md) đã mở danh bạ công ty công khai,
 nhưng thẻ công ty chỉ dẫn về tìm việc theo tên dạng văn bản
 (`/viec-lam?search=<tên>&search_by=company`). Chưa có trang chi tiết, và nhà
 tuyển dụng không có nơi trình bày thương hiệu ngoài form hồ sơ pháp lý.
@@ -61,7 +61,7 @@ Hai ràng buộc có sẵn định hình lời giải:
    `/cong-ty/tim-kiem` là route tìm kiếm của danh bạ.
 
 Không hiển thị huy hiệu xác thực cấp công ty và không có gói trả phí
-([ADR-0015](./adr-0015-remove-commercial-services.md)).
+([ADR-0015](adr-0015-remove-commercial-services.md)).
 
 ## Hệ quả
 
@@ -74,4 +74,4 @@ Không hiển thị huy hiệu xác thực cấp công ty và không có gói tr
   so với ADR-0013, được ghi khi giai đoạn CP-1 triển khai.
 
 Lộ trình, mô hình dữ liệu và kiểm chứng từng giai đoạn nằm tại
-[kế hoạch trang công ty](../01-phan-tich/ke-hoach-trang-cong-ty.md).
+[kế hoạch trang công ty](../archive/ke-hoach/ke-hoach-trang-cong-ty.md).

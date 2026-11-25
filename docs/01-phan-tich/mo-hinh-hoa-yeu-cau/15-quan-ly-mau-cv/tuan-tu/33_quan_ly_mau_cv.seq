@@ -5,18 +5,18 @@ participant BE Máy chủ API\n(Django REST)
 database DB CSDL\n(PostgreSQL)
 queue WK Worker xuất PDF\n(Celery cv-export)
 QTV -> FE : Tạo mẫu mới (tên, danh mục, bộ dựng giao diện)
-FE -> BE : POST /api/v2/admin/cv-templates/
+FE -> BE : POST /api/admin/cv-templates/
 BE -> DB : Tạo CvTemplate (draft) và phiên bản nháp
 BE --> FE : 201
 QTV -> FE : Cấu hình theo từng bước (bố cục, mục, màu, phông chữ)
-FE -> BE : PATCH /api/v2/admin/cv-templates/{id}/versions/{v}/config/
+FE -> BE : PATCH /api/admin/cv-templates/{id}/versions/{v}/config/
 BE -> DB : Lưu cấu hình phiên bản
 QTV -> FE : Bấm "Xuất PDF thử"
 FE -> BE : POST .../versions/{v}/test-pdf/
 BE ->> WK : render_template_test_pdf
 BE --> FE : 202 {token}
 loop Mỗi 1,5 giây
-FE -> BE : GET /api/v2/admin/cv-templates/test-pdf/{token}/
+FE -> BE : GET /api/admin/cv-templates/test-pdf/{token}/
 BE --> FE : Trạng thái / tệp PDF
 end
 QTV -> FE : Bấm "Xuất bản"

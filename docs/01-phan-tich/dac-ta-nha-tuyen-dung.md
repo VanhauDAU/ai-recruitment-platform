@@ -5,7 +5,7 @@ onboarding, mô hình công ty/recruiter, yêu cầu cập nhật công ty, hồ
 và compliance hold, DPA, xác minh số điện thoại bằng SMS, upload quarantine, gỡ
 liên kết công ty, thông báo/activity, danh bạ công ty và các cổng quyền của
 workspace. Lý do của từng quyết định nằm ở
-[biên bản quyết định employer](../02-tong-quan/employer-remediation-decision-log.md);
+[biên bản quyết định employer](../archive/decision-log/employer-remediation-decision-log.md);
 tài liệu này chỉ dẫn ID khi quy tắc phụ thuộc vào nó.
 
 Owner code: app `apps.employers` (model, service, selector, API
@@ -276,7 +276,7 @@ Hai mốc độc lập trên trang `/account/settings/personal-data-protection`:
   tháng; admin không sửa trực tiếp phone đã xác minh (ER-D33).
 - `EMPLOYER_SMS_OTP_ENABLED` tắt ⇒ dispatch fail closed, không fallback email
   (ER-D34). Cấu hình provider/sender/template:
-  [employer-sms-provider-adapter.md](../06-deployment/employer-sms-provider-adapter.md).
+  [nha-cung-cap-sms.md](../06-deployment/nha-cung-cap-sms.md).
 
 ## 8. Upload session, quarantine và malware scan
 
@@ -310,7 +310,7 @@ uploading → quarantined → scanning → clean | rejected | error (retry → s
   công khai (ER-D30). Flag: `UPLOAD_QUARANTINE_ENABLED`,
   `EMPLOYER_UPLOAD_SESSION_REQUIRED`, `CANDIDATE_UPLOAD_SESSION_REQUIRED`;
   production từ chối bật strict khi quarantine chưa bật. Vận hành:
-  [employer-upload-storage-boundary-runbook.md](../06-deployment/employer-upload-storage-boundary-runbook.md).
+  [ranh-gioi-luu-tru-upload.md](../06-deployment/ranh-gioi-luu-tru-upload.md).
 
 ## 9. Gỡ liên kết công ty chọn nhầm
 
@@ -369,7 +369,7 @@ nhưng luôn khóa dữ liệu ứng viên và đăng tin.
   applications và CV asset dùng cổng candidate-data (`CANDIDATE_DATA_BLOCKED`).
   Khi bị khóa vẫn trả số tổng hợp không định danh; tên, email, avatar, CV, link
   và activity ứng viên bị ẩn (ER-D29).
-- Theo [ADR-0014](../02-tong-quan/adr-0014-job-post-moderation.md), tin công
+- Theo [ADR-0014](../adr/adr-0014-job-post-moderation.md), tin công
   khai ngay khi NTD đăng; capability `job_approval` giữ tên cũ nhưng nghĩa là
   "được phép đưa tin lên công khai". Lúc đăng, backend khóa recruiter/company và
   tính lại blocker; không đạt thì tin ở `draft` và API trả
@@ -386,7 +386,7 @@ chạy và PII đã cache bị xóa.
 
 ## 12. Danh bạ công ty công khai
 
-Theo [ADR-0013](../02-tong-quan/adr-0013-public-companies-api.md):
+Theo [ADR-0013](../adr/adr-0013-public-companies-api.md):
 `GET /api/public/companies/` (anonymous) có hai chế độ: không `q` trả tối đa 18 công
 ty nổi bật đã lọc theo recruiter approved, giấy tờ đủ, có logo, ảnh bìa, lĩnh
 vực và tin công khai, xáo thứ tự mỗi lần (`Cache-Control: no-store`); có `q` thì
@@ -402,8 +402,8 @@ canonical `/viec-lam/:slug`; `/brand/:companySlug/tuyen-dung/:slug` chỉ còn �
 tương thích và SEO shell phát canonical về `/viec-lam/:slug`.
 
 Trang chi tiết công ty, quyền biên tập trang, theo dõi và báo cáo đang được
-triển khai theo [kế hoạch trang công ty](./ke-hoach-trang-cong-ty.md)
-([ADR-0017](../02-tong-quan/adr-0017-company-page.md)). Địa chỉ công ty trên
+triển khai theo [kế hoạch trang công ty](../archive/ke-hoach/ke-hoach-trang-cong-ty.md)
+([ADR-0017](../adr/adr-0017-company-page.md)). Địa chỉ công ty trên
 mọi bề mặt công khai đọc từ `Company.public_headquarters`: hộ kinh doanh luôn
 trả chuỗi rỗng, kể cả ở `company_address` của chi tiết tin.
 
@@ -412,7 +412,7 @@ trả chuỗi rỗng, kể cả ở `company_address` của chi tiết tin.
 - `company/search/` của cổng NTD trả cả danh mục khi `q` rỗng và trả `tax_code`
   đầy đủ; `GET /api/employer/company/` trả hồ sơ đầy đủ cho member. Đây là
   accepted risk, xem
-  [employer-flow-security-audit-2026-08.md](../02-tong-quan/employer-flow-security-audit-2026-08.md).
+  [employer-flow-security-audit-2026-08.md](../archive/audit/employer-flow-security-audit-2026-08.md).
 - Hành động bảo mật NTD tự thực hiện (đổi mật khẩu, thu hồi phiên) chưa
   ghi audit log.
 - Tra cứu MST không phải nguồn quyết định pháp lý.
@@ -434,12 +434,12 @@ trả chuỗi rỗng, kể cả ở `company_address` của chi tiết tin.
 - **DPA**: chưa có văn bản pháp lý chính thức được pháp chế duyệt để chốt
   `EMPLOYER_DPA_POLICY_VERSION`/hash; mẫu văn bản DLCN và link vẫn trỏ tài liệu
   tham khảo bên ngoài. Xem
-  [employer-dpa-evidence-rollout.md](../06-deployment/employer-dpa-evidence-rollout.md).
+  [trien-khai-bang-chung-dpa.md](../06-deployment/trien-khai-bang-chung-dpa.md).
 - **SMS**: chưa chọn gateway/sender/template; production giữ
   `EMPLOYER_SMS_OTP_ENABLED=False` cho tới khi qua sandbox smoke.
 - **Copy cảnh báo domain ở trang đăng ký**: `Register.jsx` cảnh báo đăng ký bằng
   email không thuộc tên miền công ty có thể bị giới hạn quyền mua hoặc sử dụng
   dịch vụ. Giới hạn này không tồn tại: email domain chỉ ảnh hưởng dấu tick, và
-  sau [ADR-0015](../02-tong-quan/adr-0015-remove-commercial-services.md) không
+  sau [ADR-0015](../adr/adr-0015-remove-commercial-services.md) không
   còn gì để mua. Cần sửa lại câu chữ.
 - Hết hạn xác thực tự động (TTL/scheduler) chờ chính sách thời hạn pháp lý riêng.

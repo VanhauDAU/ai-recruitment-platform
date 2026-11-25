@@ -5,7 +5,7 @@
 | Ngày lập | 2026-11-13 |
 | Trạng thái | 📝 Đề xuất — chờ duyệt trước khi triển khai |
 | Phạm vi | Cổng ứng viên (kho mẫu, trang chi tiết mẫu, tạo CV, upload và trích xuất), cổng quản trị (quản lý template, vị trí, nội dung mẫu, CV ứng viên), backend `cv_templates`, `cvs`, `ai_core` |
-| Tài liệu nền | [Kiến trúc CV Builder](../02-tong-quan/cv-builder-architecture-foundation.md), [Thiết kế database mục 7](../03-database/thiet-ke-database.md), [`AGENTS.md`](../../AGENTS.md), [`frontend/ARCHITECTURE.md`](../../frontend/ARCHITECTURE.md) |
+| Tài liệu nền | [Kiến trúc CV Builder](../../02-tong-quan/kien-truc-cv-builder.md), [Thiết kế database mục 7](../../03-database/thiet-ke-database.md), [`AGENTS.md`](../../../AGENTS.md), [`frontend/ARCHITECTURE.md`](../../../frontend/ARCHITECTURE.md) |
 | Mã giai đoạn | `CVT-0` … `CVT-7` (mục 13) |
 
 ---
@@ -734,7 +734,7 @@ Hoặc `./scripts/check_all.sh`. Lệnh `manage.py` chạy qua `docker exec` đ�
 
 ## 15. Tài liệu cần cập nhật khi hoàn tất
 
-- `docs/02-tong-quan/cv-builder-architecture-foundation.md`: layout registry, ngôn ngữ enum, vị trí, import có rà soát, PDF.
+- `docs/02-tong-quan/kien-truc-cv-builder.md`: layout registry, ngôn ngữ enum, vị trí, import có rà soát, PDF.
 - ADR mới `adr-0017-cv-template-v3.md`: lý do bỏ locale động, bỏ dữ liệu cũ, phương án PDF.
 - `docs/03-database/thiet-ke-database.md` mục 7.
 - `docs/04-api/openapi.yaml`, `tai-lieu-api.md`.

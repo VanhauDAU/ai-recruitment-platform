@@ -3,7 +3,7 @@
 Màn hình vận hành để quản trị viên hậu kiểm tin tuyển dụng: tìm kiếm, lọc, xem
 đầy đủ nội dung và thay đổi sau khi đăng, xử lý báo cáo vi phạm, tạm ẩn và khôi
 phục hiển thị. Tin công khai ngay khi nhà tuyển dụng đăng
-([ADR-0014](../02-tong-quan/adr-0014-job-post-moderation.md)); module **không**
+([ADR-0014](../adr/adr-0014-job-post-moderation.md)); module **không**
 có thao tác duyệt/từ chối. Quy tắc nghiệp vụ đầy đủ ở
 [dac-ta-chien-dich-va-tin-tuyen-dung.md](../01-phan-tich/dac-ta-chien-dich-va-tin-tuyen-dung.md).
 

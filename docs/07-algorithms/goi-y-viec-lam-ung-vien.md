@@ -12,7 +12,7 @@ Tài liệu này mô tả đúng phiên bản rule-based đang chạy cho:
   trên các bề mặt cá nhân hóa.
 
 Gợi ý riêng từ lịch sử lưu dùng contract và trọng số khác, xem
-[`saved-job-recommendations.md`](./saved-job-recommendations.md).
+[`goi-y-tu-viec-da-luu.md`](goi-y-tu-viec-da-luu.md).
 
 TopCV được dùng để khảo sát nhu cầu sản phẩm, không phải nguồn cho công thức nội
 bộ. [FAQ TopCV](https://www.topcv.vn/faqs/find-job-and-apply/cai-dat-thong-bao-viec-lam-cai-dat-goi-y-viec-lam-phu-hop-nhu-the-nao.html)
@@ -148,8 +148,9 @@ xếp hạng đầu, cùng `after_result_index` zero-based trong khoảng 3–7.
 định với cùng candidate/seed/page và không phụ thuộc filter/sort của lane public.
 
 Inline loại các ID canonical client gửi, tin đã ứng tuyển và tin đã ẩn trước cap.
-Job dùng nguyên `PublicJobListSerializer`, vì vậy `presentation` (nhãn `tier`,
-HOT, GẤP, phản hồi nhanh) giống hệt danh sách việc làm.
+Job dùng nguyên `PublicJobListSerializer`, vì vậy `presentation` (nhãn hệ thống
+tính từ dữ liệu thật, xem [ADR-0030](../adr/adr-0030-fair-job-listing.md)) giống hệt
+danh sách việc làm.
 
 `POST /api/candidate/jobs/recommendations/hidden/` nhận `job_public_id` và `source` thuộc
 `matching|homepage|inline`. Unique `(candidate, job)` làm POST idempotent.

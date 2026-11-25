@@ -9,7 +9,7 @@
 FAQ/hướng dẫn (`knowledgebase`) đi bốn bước `DRAFT → IN_REVIEW → APPROVED/REJECTED
 → publish`, blog đi `draft → pending → published`. Hai luồng này được thiết kế
 cho phân quyền người soạn/người duyệt (`knowledgebase.manage/review/publish`,
-`blog.can_publish_post`). [ADR-0018](./adr-0018-remove-admin-rbac.md) đã gỡ phân
+`blog.can_publish_post`). [ADR-0018](adr-0018-remove-admin-rbac.md) đã gỡ phân
 quyền đó: mọi admin dùng được mọi chức năng nội dung. Kết quả là một người tự
 gửi duyệt, tự duyệt rồi tự xuất bản bài của chính mình.
 

@@ -57,7 +57,7 @@
 
 ## Context
 
-Trang `/admin/app/settings` ([Settings.jsx](../../frontend/src/pages/admin/settings/Settings.jsx)) đang hiển thị **120 key / 15 tab** (DB local; seed có 115). Rà soát từng key cho thấy trang **nói sai về hệ thống**:
+Trang `/admin/app/settings` ([Settings.jsx](../../../frontend/src/pages/admin/settings/Settings.jsx)) đang hiển thị **120 key / 15 tab** (DB local; seed có 115). Rà soát từng key cho thấy trang **nói sai về hệ thống**:
 
 | Tình trạng | Số key | Ví dụ |
 |---|---|---|

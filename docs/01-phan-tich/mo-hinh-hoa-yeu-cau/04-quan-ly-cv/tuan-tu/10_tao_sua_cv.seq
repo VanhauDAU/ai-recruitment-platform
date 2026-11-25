@@ -7,7 +7,7 @@ database DB CSDL\n(PostgreSQL)
 queue Q Hàng đợi\n(Celery)
 group Tạo CV
 UV -> FE : Chọn mẫu CV, ngôn ngữ, vị trí, số năm kinh nghiệm
-FE -> BE : POST /api/v2/cvs/ (Idempotency-Key) {title, template, language, position}
+FE -> BE : POST /api/candidate/cvs/ (Idempotency-Key) {title, template, language, position}
 BE -> RD : Giữ khóa chống tạo trùng
 alt Gửi lại cùng khóa
 BE --> FE : 200 CV đã tạo trước đó
@@ -26,14 +26,14 @@ group Chỉnh sửa và lưu
 UV -> FE : Sửa các mục (thông tin, kinh nghiệm, học vấn, kỹ năng), đổi màu, đổi mẫu
 FE -> FE : Kiểm tra cấu trúc tài liệu, xem trước ngay trên trình duyệt
 UV -> FE : Bấm "Lưu CV"
-FE -> BE : PUT /api/v2/cvs/{cv}/draft/ (If-Match: lock_version)
+FE -> BE : PUT /api/candidate/cvs/{cv}/draft/ (If-Match: lock_version)
 alt Bản nháp đã bị sửa ở nơi khác
 BE --> FE : 409 {current_lock_version}
 FE --> UV : Báo xung đột, đề nghị tải lại
 else Khớp phiên bản
 BE -> DB : Cập nhật CvDraft, tăng lock_version
 BE --> FE : 200 + ETag mới
-FE -> BE : POST /api/v2/cvs/{cv}/save-version/ (If-Match)
+FE -> BE : POST /api/candidate/cvs/{cv}/save-version/ (If-Match)
 BE -> DB : Tạo CvVersion (manual_save)
 BE ->> Q : generate_cv_thumbnail (hàng đợi cv-export)
 opt Bật đối sánh ngữ nghĩa

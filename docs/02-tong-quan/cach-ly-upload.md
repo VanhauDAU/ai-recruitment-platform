@@ -1,4 +1,4 @@
-# Shared upload quarantine core
+# Lõi upload cách ly dùng chung
 
 This app owns temporary untrusted bytes and the scanner evidence needed by
 employer and candidate workflows. It does not import either domain and it does
