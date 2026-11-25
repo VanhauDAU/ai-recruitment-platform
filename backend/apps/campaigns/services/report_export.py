@@ -8,11 +8,10 @@ from io import BytesIO
 from uuid import uuid4
 
 from django.core.cache import cache
-from django.db import transaction
 from django.template.loader import render_to_string
 from django.utils import timezone
-from django.utils.translation import get_language, gettext_lazy
 from django.utils.translation import gettext as _
+from django.utils.translation import gettext_lazy
 from rest_framework.exceptions import ValidationError
 
 from common.pdf.browser import PdfRenderingError, render_html_pdf
@@ -47,21 +46,17 @@ def _pdf_job_key(token):
 
 
 def request_campaign_report_pdf(campaign):
-    """Queue the PDF report in the requester's language; returns the polling token."""
+    """Mark a PDF report as pending and return its polling token.
+
+    The API view queues ``render_campaign_report_pdf`` after commit: the task
+    reads selectors, which services may not import (import-linter layers).
+    """
     token = uuid4().hex
     cache.set(
         _pdf_job_key(token),
         {'status': 'pending', 'campaign_id': campaign.pk},
         REPORT_PDF_TTL_SECONDS,
     )
-    language = get_language()
-
-    def dispatch():
-        from ..tasks.report_pdf import render_campaign_report_pdf
-
-        render_campaign_report_pdf.delay(token, campaign.pk, language)
-
-    transaction.on_commit(dispatch)
     return token
 
 

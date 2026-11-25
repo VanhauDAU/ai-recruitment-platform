@@ -1,4 +1,6 @@
+from django.db import transaction
 from django.http import HttpResponse
+from django.utils.translation import get_language
 from django.utils.translation import gettext as _
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
@@ -22,6 +24,7 @@ from ...services import (
     campaign_report_pdf_job,
     request_campaign_report_pdf,
 )
+from ...tasks import render_campaign_report_pdf
 from .channels import CampaignScopedView
 
 
@@ -89,7 +92,13 @@ class CampaignReportPdfView(CampaignScopedView):
     throttle_classes = [ExportThrottle]
 
     def post(self, request, public_id):
-        token = request_campaign_report_pdf(self.campaign())
+        campaign = self.campaign()
+        token = request_campaign_report_pdf(campaign)
+        # Render in the requester's language, in the cv-export worker (Chromium).
+        language = get_language()
+        transaction.on_commit(
+            lambda: render_campaign_report_pdf.delay(token, campaign.pk, language)
+        )
         return Response({'token': token, 'status': 'pending'}, status=status.HTTP_202_ACCEPTED)
 
 
