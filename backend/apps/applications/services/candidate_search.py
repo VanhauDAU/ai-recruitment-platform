@@ -231,7 +231,16 @@ def candidate_detail(recruiter, job, ref, *, request):
         actor_user=recruiter,
     )
     applied, invited = candidate_job_flags(job, [cv.user_id])
-    return _row(job, cv, ranked[0], applied=applied, invited=invited, detail=True)
+    row = _row(job, cv, ranked[0], applied=applied, invited=invited, detail=True)
+    # Lời mời đã được nhận: NTD mở ProCV Connect bằng mã lời mời (ADR-0032).
+    row['invitation_public_id'] = (
+        CandidateSearchInvitation.objects.filter(
+            job=job, candidate_id=cv.user_id, status=CandidateSearchInvitation.Status.ACCEPTED
+        )
+        .values_list('public_id', flat=True)
+        .first()
+    )
+    return row
 
 
 @transaction.atomic

@@ -7,7 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
-| [ProCV Connect: nhắn tin NTD ↔ ứng viên (ADR-0032)](#procv-connect-nhắn-tin-ntd--ứng-viên-adr-0032-2026-11-26) | 🟨 GĐ0 thiết kế + sơ đồ trên nhánh `docs/procv-connect`; GĐ1–5 chưa làm |
+| [ProCV Connect: nhắn tin NTD ↔ ứng viên (ADR-0032)](#procv-connect-nhắn-tin-ntd--ứng-viên-adr-0032-2026-11-26) | 🟨 GĐ0–5 xong trên nhánh `feat/procv-connect`, chờ PR; GĐ0 riêng ở PR #384 |
 | [AI chạy được bằng Claude (Anthropic) bên cạnh Gemini](#ai-chạy-được-bằng-claude-anthropic-bên-cạnh-gemini-2026-11-26) | 🟨 Nhánh `feat/ai-provider-claude`, chờ PR |
 | [Đăng nhập mạng xã hội bằng cửa sổ popup](#đăng-nhập-mạng-xã-hội-bằng-cửa-sổ-popup-2026-11-25) | 🟨 PR #380 (nhánh `feat/oauth-popup-login`), chờ gộp |
 | [Chuẩn bị deploy: khóa admin bằng Access, vá cấu hình, checklist 2/12](#chuẩn-bị-deploy-khóa-admin-bằng-access-vá-cấu-hình-checklist-212-2026-11-25) | ✅ Đã gộp dev (#378); việc phía user theo checklist |
@@ -86,12 +86,21 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | GĐ | Hạng mục | Trạng thái |
 | --- | --- | --- |
-| 0 | ADR-0032, đặc tả, sơ đồ use case/tuần tự/hoạt động | 🟨 Nhánh `docs/procv-connect` |
-| 1 | Backend lõi: app `messaging`, mở/gửi/đọc/badge, typing, signal chặn/bàn giao | ⬜ |
-| 2 | Frontend lõi: inbox 3 cột responsive, realtime + bù seq, nút vào chat | ⬜ |
-| 3 | Gửi CV, thẻ tin, tệp/ảnh | ⬜ |
-| 4 | Lịch hẹn phỏng vấn, nhắc 24h/1h, email `.ics` | ⬜ |
-| 5 | Email nhắc tin chưa đọc, xuất dữ liệu cá nhân, xóa khi xóa tài khoản | ⬜ |
+| 0 | ADR-0032, đặc tả, sơ đồ use case/tuần tự/hoạt động | ✅ PR #384 |
+| 1 | Backend lõi: app `messaging`, mở/gửi/đọc/badge, typing qua socket, khóa khi chặn/rút/tắt | ✅ `feat/procv-connect` |
+| 2 | Frontend lõi: hộp thư 3 cột responsive, realtime + bù seq, badge, nút vào chat | ✅ `feat/procv-connect` |
+| 3 | Gửi CV (bản chụp, NTD xuất PDF), thẻ tin, tệp/ảnh | ✅ `feat/procv-connect` |
+| 4 | Lịch hẹn phỏng vấn, nhắc 24h/1h, email `.ics` | ✅ `feat/procv-connect` |
+| 5 | Email nhắc tin chưa đọc, xuất dữ liệu cá nhân, xóa khi xóa tài khoản | ✅ `feat/procv-connect` |
+
+- Giao diện tự thiết kế (không dùng dáng antd): bộ `shared/ui/connect-kit` (Button, Pill, Avatar,
+  Dialog `<dialog>` gốc, Popover, SidePanel, StatusText), CSS lazy `connect.css`; thẻ lịch hẹn dạng
+  cuống lịch. Màu thương hiệu chỉ cho nút gửi, viên "Nhắn tin", chấm chưa đọc.
+- Sau deploy chạy `seed_sitecontent` để có 4 key `connect_*` (giao diện mặc định ẩn ProCV Connect
+  khi chưa có `connect_enabled`).
+- Đính kèm chưa qua quét virus (ClamAV chưa bật ở production): kiểm chữ ký + cấu trúc như giấy tờ NTD.
+- Kiểm tay 26/11 trên DB riêng `procv_connect`: gửi/nhận realtime hai tab, "Đã xem", nhận lịch
+  phỏng vấn cập nhật thẻ và chuông phía NTD, mobile 375px, bảng emoji.
 
 ## AI chạy được bằng Claude (Anthropic) bên cạnh Gemini (2026-11-26)
 
@@ -2372,7 +2381,7 @@ Lộ trình 6 giai đoạn của workspace `/tuyendung/app/applications`; mỗi 
 | 4 | Danh sách đen + phát hiện ứng tuyển hàng loạt | ✅ Đã gộp vào dev (#197) |
 | 5 | Kho ứng viên tiềm năng + gợi ý lại khi đăng tin mới | ✅ Đã gộp vào dev (#198) |
 | 6 | Gợi ý kỹ năng còn thiếu cho ứng viên bị từ chối | ⬜ |
-| Sau | Hẹn lịch phỏng vấn | ⬜ Gộp vào ProCV Connect GĐ4 (ADR-0032) |
+| Sau | Hẹn lịch phỏng vấn | ✅ ProCV Connect GĐ4 (ADR-0032) |
 
 <details><summary>Ghi chú giai đoạn 1</summary>
 

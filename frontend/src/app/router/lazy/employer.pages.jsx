@@ -35,3 +35,4 @@ export const EmployerJobListPage = lazy(() => import('@/pages/employer/jobs/JobL
 export const EmployerJobFormPage = lazy(() => import('@/pages/employer/jobs/JobForm'))
 export const EmployerJobDetailPage = lazy(() => import('@/pages/employer/jobs/JobDetail'))
 export const EmployerApplicationListPage = lazy(() => import('@/pages/employer/candidates/ApplicationList'))
+export const EmployerConnectPage = lazy(() => import('@/pages/employer/connect/ConnectPage'))

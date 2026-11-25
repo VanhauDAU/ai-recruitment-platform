@@ -44,15 +44,15 @@ danh từ nghiệp vụ (`account`, `job`, `company`, `cv`, `campaign`…).
 | `pages` | `pages/<cổng>/<mục>/<Page>.jsx` | `main`, `employer`, `admin` |
 | `widgets` | `widgets/<cổng>/<widget>/index.js` | `main`, `employer`, `admin`, `common` |
 | `features` | `features/<cổng>/<module>/<slice>/index.js` | `main`, `employer`, `admin`, `common` |
-| `entities` | `entities/<domain>/<entity>/index.js` | `account`, `job`, `company`, `cv`, `application`, `campaign`, `content`, `notification`, `dashboard`, `system` |
+| `entities` | `entities/<domain>/<entity>/index.js` | `account`, `job`, `company`, `cv`, `application`, `campaign`, `content`, `notification`, `dashboard`, `system`, `messaging` |
 | `shared` | `shared/<segment>/…` | `api`, `config`, `hooks`, `lib`, `ui` |
 
 ```text
 features   cổng      module (số slice)
-           main      job (9) · application (4) · cv (5) · company (2) · account (3)
-           employer  account (5) · company (4) · job (2) · candidate (8) · campaign (4) · marketing (3)
+           main      job (9) · application (4) · cv (5) · company (2) · account (3) · messaging (3)
+           employer  account (5) · company (4) · job (2) · candidate (8) · campaign (4) · marketing (3) · messaging (3)
            admin     account (5) · company (4) · job (2) · content (7) · system (2)
-           common    account (4) · cv (1) · privacy (1)
+           common    account (4) · cv (1) · privacy (1) · messaging (2)
 ```
 
 - **Cổng** (`features`, `widgets`): đặt slice vào cổng duy nhất đang dùng nó
@@ -1170,6 +1170,31 @@ app/router (employerAppPath('/company-page'), trong DashboardLayout)
 - Trang công khai: `widgets/main/public-company-profile` gắn nhãn "Nổi bật" cho tin
   có `public_id` thuộc `pinned_job_public_ids` của khối việc làm; thứ tự do
   `GET /api/public/jobs/?company=` quyết định, frontend không tự xếp lại.
+
+## Ownership map — ProCV Connect (nhắn tin NTD ↔ ứng viên, ADR-0032)
+
+```text
+pages/main/connect/ConnectPage (/procv-connect[/:id], layout gọn riêng)
+pages/employer/connect/ConnectPage (/tuyendung/app/connect[/:id], trong workspace)
+  → widgets/common/connect-inbox (3 cột responsive, slot theo cổng, connect.css lazy)
+    → features/common/messaging/browse-conversations (danh sách, tìm, cuộn tải thêm)
+    → features/common/messaging/chat-conversation (luồng tin, khung soạn, emoji lazy,
+      đánh dấu đã đọc, đồng bộ sự kiện chat.* + bù seq)
+  → features/main/messaging/{share-cv, respond-interview, browse-applied-jobs}
+  → features/employer/messaging/{share-job, manage-interview, export-shared-cv}
+    → entities/messaging/conversation (API, query key, gộp tin theo seq/client_id,
+      gửi lạc quan, badge chưa đọc + toast, mở hội thoại)
+```
+
+- Lối vào (header ứng viên, Việc làm đã ứng tuyển, lời mời kết nối, panel hồ sơ NTD,
+  Tìm CV, sidebar NTD) chỉ dùng entity (`useStartConversation`,
+  `useConnectUnreadCount`) và ẩn khi `connect_enabled` tắt.
+- Toast/chuông tin mới chỉ phát từ `useConnectUnreadCount`; hội thoại đang mở và
+  đang hiển thị (`setActiveConversation`) không kêu.
+- Phần riêng cổng (gửi CV/tin, lịch hẹn, xuất PDF CV) vào widget qua slot
+  `attachItems`, `renderContext`, `renderCvActions`, `renderInterviewActions`.
+- Style của cả cụm nằm trong một tệp `widgets/common/connect-inbox/ui/connect.css`
+  (lazy theo trang); feature con chỉ dùng class `pc-*`, không thêm utility Tailwind.
 
 ## i18n vi/en (ADR-0023)
 

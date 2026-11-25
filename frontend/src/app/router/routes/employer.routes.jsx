@@ -22,6 +22,7 @@ import {
   EmployerCampaignDetailPage,
   EmployerCampaignSetupPage,
   EmployerCampaignListPage,
+  EmployerConnectPage,
   EmployerContactPage,
   EmployerConsultingNeedPage,
   EmployerDashboardPage,
@@ -139,6 +140,8 @@ export function employerRoutes() {
                 <Route path={employerAppPath('/candidate-blocks')} element={<EmployerCandidateBlocksPage />} />
                 <Route path={employerAppPath('/talent-pool')} element={<EmployerTalentPoolPage />} />
                 <Route path={employerAppPath('/candidate-search')} element={<EmployerCandidateSearchPage />} />
+                <Route path={employerAppPath('/connect')} element={<EmployerConnectPage />} />
+                <Route path={employerAppPath('/connect/:conversationId')} element={<EmployerConnectPage />} />
               </Route>
             </Route>
           </Route>

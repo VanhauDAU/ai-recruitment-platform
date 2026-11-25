@@ -4,6 +4,7 @@ import {
   COMPANY_SEARCH_PATH,
   isCompanyDetailPath,
 } from '@/entities/company/company'
+import { CANDIDATE_CONNECT_PATH } from '@/entities/messaging/conversation'
 import { NOT_FOUND_TITLE } from '@/shared/config/document-title'
 import { m } from '@/shared/config/i18n'
 import {
@@ -38,6 +39,7 @@ const EXACT_MAIN_TITLES = new Map([
   ['/blog', 'Cẩm nang nghề nghiệp'],
   ['/tro-giup', 'Câu hỏi thường gặp - Trung tâm trợ giúp'],
   ['/oauth/callback', 'Đang xác thực tài khoản'],
+  [CANDIDATE_CONNECT_PATH, m.connect_title()],
 ])
 
 // Trang marketing tự đặt tiêu đề theo ngôn ngữ đang chọn (EmployerMarketingLayout,
@@ -79,6 +81,7 @@ const EXACT_EMPLOYER_TITLES = new Map([
   [employerAppPath('/candidate-blocks'), m.employer_workspace_title_candidate_blocks()],
   [employerAppPath('/talent-pool'), m.employer_workspace_title_talent_pool()],
   [employerAppPath('/candidate-search'), m.employer_workspace_title_candidate_search()],
+  [employerAppPath('/connect'), m.connect_title()],
 ])
 
 // Thứ tự quan trọng: mẫu cụ thể (…/edit, …/setup) đứng trước mẫu chi tiết.
@@ -87,6 +90,8 @@ const DYNAMIC_EMPLOYER_TITLES = [
   [new RegExp(`^${employerAppPath('/jobs/')}[^/]+$`), m.employer_workspace_title_job_detail()],
   [new RegExp(`^${employerAppPath('/campaigns/')}[^/]+/setup$`), m.employer_workspace_title_campaign_setup()],
   [new RegExp(`^${employerAppPath('/campaigns/')}[^/]+$`), m.employer_workspace_title_campaign_detail()],
+  // Hội thoại: tiêu đề chung, không đưa tên ứng viên/công ty vào tab.
+  [new RegExp(`^${employerAppPath('/connect/')}[^/]+$`), m.connect_title()],
   // Link mời đánh giá: không đưa tên ứng viên vào tiêu đề (lịch sử trình duyệt, chia sẻ tab).
   [new RegExp(`^${employerMarketingPath('/danh-gia-ho-so/')}[^/]+$`), m.employer_workspace_title_application_review()],
 ]
@@ -137,6 +142,7 @@ function mainTitle(pathname) {
     return 'Mẫu CV xin việc chuyên nghiệp'
   }
   if (pathname.startsWith('/cv/share/')) return 'CV được chia sẻ'
+  if (pathname.startsWith(`${CANDIDATE_CONNECT_PATH}/`)) return m.connect_title()
   return NOT_FOUND_TITLE
 }
 

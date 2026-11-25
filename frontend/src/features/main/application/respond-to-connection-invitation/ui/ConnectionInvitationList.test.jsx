@@ -3,6 +3,7 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { DEFAULT_SITE_SETTINGS, SiteSettingsContext } from '@/entities/system/site-settings'
 import ConnectionInvitationList from './ConnectionInvitationList'
 
 const api = vi.hoisted(() => ({ getMyConnectionInvitations: vi.fn(), respondToConnectionInvitation: vi.fn() }))
@@ -15,10 +16,13 @@ const invitation = (publicId, status = 'pending') => ({
   job_public_id: 'job_1', job_title: 'Backend Developer', job_slug: 'backend-developer', job_stopped_at: null,
 })
 
-function renderList() {
+function renderList({ connectEnabled = true } = {}) {
+  const settings = { ...DEFAULT_SITE_SETTINGS, connect_enabled: connectEnabled }
   return render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-      <MemoryRouter><ConnectionInvitationList /></MemoryRouter>
+      <SiteSettingsContext.Provider value={{ settings, loading: false, error: null, retry: () => {} }}>
+        <MemoryRouter><ConnectionInvitationList /></MemoryRouter>
+      </SiteSettingsContext.Provider>
     </QueryClientProvider>,
   )
 }
@@ -36,7 +40,7 @@ describe('ConnectionInvitationList', () => {
     expect(await screen.findByText('Bạn chưa có lời mời kết nối nào')).toBeInTheDocument()
   })
 
-  it('đồng ý thì hiện nút Nhắn tin, từ chối phải xác nhận', async () => {
+  it('đồng ý thì hiện lối Nhắn tin vào ProCV Connect, từ chối phải xác nhận', async () => {
     const user = userEvent.setup()
     api.getMyConnectionInvitations.mockResolvedValue([invitation('csi_a'), invitation('csi_b')])
     renderList()
@@ -44,12 +48,19 @@ describe('ConnectionInvitationList', () => {
     await screen.findByText('Công ty csi_a')
     const [first, second] = screen.getAllByRole('listitem')
     await user.click(within(first).getByRole('button', { name: 'Đồng ý' }))
-    expect(await within(first).findByRole('button', { name: /Nhắn tin/ })).toBeDisabled()
+    expect(await within(first).findByRole('link', { name: /Nhắn tin/ })).toHaveAttribute('href', '/procv-connect')
     expect(api.respondToConnectionInvitation).toHaveBeenCalledWith('csi_a', true)
 
     await user.click(within(second).getByRole('button', { name: 'Từ chối' }))
     await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Từ chối' }))
     await waitFor(() => expect(api.respondToConnectionInvitation).toHaveBeenCalledWith('csi_b', false))
     expect(await within(second).findByText('Đã từ chối')).toBeInTheDocument()
+  })
+
+  it('ẩn lối Nhắn tin khi ProCV Connect đang tắt', async () => {
+    api.getMyConnectionInvitations.mockResolvedValue([invitation('csi_a', 'accepted')])
+    renderList({ connectEnabled: false })
+    await screen.findByText('Công ty csi_a')
+    expect(screen.queryByRole('link', { name: /Nhắn tin/ })).not.toBeInTheDocument()
   })
 })
