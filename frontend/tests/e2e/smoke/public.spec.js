@@ -441,8 +441,9 @@ async function mockCompanyPage(page, { profile = companyPageProfile(), jobCount 
   return jobRequests
 }
 
+// Chờ bố cục ổn định (ảnh, font, panel lazy) thay vì đo đúng một khoảnh khắc.
 async function expectNoHorizontalOverflow(page) {
-  expect(await page.evaluate(
+  await expect.poll(() => page.evaluate(
     () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
   )).toBe(false)
 }
@@ -985,8 +986,8 @@ test('public smoke: CV template colors change preview and detail offers the crea
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /noindex/)
   await page.reload()
   await expect(page.getByRole('heading', { level: 1, name: /Frontend Developer/ })).toBeVisible()
-  const noHorizontalScroll = await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)
-  expect(noHorizontalScroll).toBe(true)
+  // Đo một lần ngay khi tiêu đề hiện thì bố cục tablet chưa ổn định (chập chờn trên CI).
+  await expectNoHorizontalOverflow(page)
 })
 
 test('public smoke: a shared CV link renders its immutable version', async ({ page }) => {
