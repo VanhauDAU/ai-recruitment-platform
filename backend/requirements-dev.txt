@@ -5,4 +5,8 @@ import-linter==2.17
 pytest==9.2.0
 pytest-django==4.14.0
 pytest-cov==7.1.0
+# Ghim để job backend-checks gộp coverage các shard bằng đúng phiên bản đã đo.
+coverage==7.17.5
 pytest-xdist==3.8.0
+# Chia bộ test thành các shard CI cân theo backend/.test_durations.
+pytest-split==0.11.0

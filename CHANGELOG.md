@@ -8,6 +8,32 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Changed — Tổ chức lại tài liệu, dọn code tương thích, CI chia shard theo thời lượng
+
+- Tài liệu: ADR sang `docs/adr/` (có chỉ mục và trạng thái thay thế), kế hoạch đã
+  xong, audit và decision log sang `docs/archive/`, 16 tài liệu đổi tên tiếng Việt.
+  `docs/README.md` liệt kê đủ mọi tài liệu và CI chặn tài liệu mồ côi.
+  `TIEN-DO-DU-AN.md` thành bảng trạng thái theo module, đối chiếu với PR đã gộp;
+  bản cũ lưu nguyên ở archive.
+- Frontend: bỏ 46 export thừa khỏi public API của slice, `formatDateTime` dùng chung
+  thay 12 bản chép lại, 7 widget phẳng về `ui/`/`model/`, trang 404 vào lazy
+  registry, `ARCHITECTURE.md` tách phần bản đồ sở hữu ra `docs/08-frontend/`.
+- CI: backend tách `backend-static` và 3 shard `backend-tests` (pytest-split), cài
+  dependency bằng uv. Unit test frontend chia 8 shard cân theo thời lượng từng file,
+  E2E desktop chia đôi. Required check giữ nguyên tên.
+- `scripts/`: kiểm tra axios chỉ trong `shared/api` chuyển vào
+  `npm run check:architecture`; script riêng của CI vào `scripts/ci/`.
+
+#### Removed — Endpoint và field tương thích không còn ai dùng
+
+- `GET /api/employer/phone/check/` (giao diện đã không gọi từ lâu).
+- `free_publish_limit`, `free_publish_remain` trong posting context (dùng
+  `publish_limit`, `publish_remain`) và `onboarding_completed` trong tài khoản do
+  admin quản lý (dùng `initial_onboarding.completed`).
+- Biến môi trường cũ `CAMPAIGN_SOCIAL_PROVIDER=facebook`; dùng
+  `CAMPAIGN_SOCIAL_LIVE_NETWORKS=facebook_page`.
+- Bốn spec E2E ở gốc `tests/e2e/` không chạy trong CI; `router.spec.js` chuyển vào smoke.
+
 #### Changed — Trang Tìm CV của NTD theo bố cục kho ứng viên
 
 - Cột lọc trái (từ khóa có tất cả / một trong / không có, tỉnh, ngành nghề, ngoại ngữ + trình

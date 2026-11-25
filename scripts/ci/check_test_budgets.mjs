@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Kiểm ngân sách thời gian test từ báo cáo JUnit (chuẩn: docs/05-huong-dan/tieu-chuan-kiem-thu.md).
 //
-//   node scripts/check_test_budgets.mjs --suite <backend|frontend-unit|e2e> <junit.xml>...
+//   node scripts/ci/check_test_budgets.mjs --suite <backend|frontend-unit|e2e> <junit.xml>...
 //
 // - Vượt ngưỡng mềm: cảnh báo trên PR (::warning) — nên sửa, chưa chặn merge.
 // - Vượt ngưỡng cứng: lỗi (::error), exit 1 — phải sửa hoặc tách test.

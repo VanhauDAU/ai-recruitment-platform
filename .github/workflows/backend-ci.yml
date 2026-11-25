@@ -43,7 +43,7 @@ jobs:
           BEFORE_SHA: ${{ github.event.before || '' }}
         run: |
           set -o pipefail
-          bash scripts/ci_changed_areas.sh | tee -a "$GITHUB_OUTPUT"
+          bash scripts/ci/changed_areas.sh | tee -a "$GITHUB_OUTPUT"
 
       - name: Publish change summary
         env:
@@ -68,74 +68,31 @@ jobs:
             echo "| Deploy | ${DEPLOY:-unknown} |"
           } >> "$GITHUB_STEP_SUMMARY"
 
-  backend-checks:
-    name: backend-checks
+  # Static gates need no database and finish in well under a minute, so they
+  # run beside the test shards instead of in front of them.
+  backend-static:
+    name: backend-static
     needs: changes
     if: ${{ needs.changes.outputs.backend == 'true' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 8
     defaults:
       run:
         working-directory: backend
-    services:
-      postgres:
-        image: pgvector/pgvector:pg16-trixie
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: ai_career_coach
-        ports: ['5432:5432']
-        # CI data is thrown away with the job: keep the cluster in RAM.
-        options: >-
-          --tmpfs /var/lib/postgresql/data:rw
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
     env:
-      DB_NAME: ai_career_coach
-      DB_USER: postgres
-      DB_PASSWORD: postgres
-      DB_HOST: localhost
-      DB_PORT: '5432'
       SECRET_KEY: ci-secret-key-at-least-32-characters-long-xxx
       DEBUG: 'True'
       DJANGO_SETTINGS_MODULE: config.settings.test
-      # pytest-xdist worker count. Each worker owns a separate test database
-      # (test_<name>_gwN). Set to '0' to fall back to the serial run.
-      PYTEST_WORKERS: auto
     steps:
-      - name: Start job timer
-        id: timer
-        working-directory: .
-        run: echo "epoch=$(date +%s)" >> "$GITHUB_OUTPUT"
-
       - uses: actions/checkout@v7
 
       - name: Setup Python
         uses: actions/setup-python@v7
         with:
           python-version: '3.11'
-          cache: pip
-          cache-dependency-path: |
-            backend/requirements.txt
-            backend/requirements-dev.txt
 
       - name: Install dependencies
-        run: python -m pip install --disable-pip-version-check -r requirements-dev.txt
-
-      - name: Tune PostgreSQL for throwaway CI data
-        working-directory: .
-        env:
-          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
-        run: |
-          # Durability is irrelevant for a database that dies with the job.
-          # All three settings are reloadable, so no restart is needed.
-          docker exec "$POSTGRES_CONTAINER" psql -U postgres -v ON_ERROR_STOP=1 \
-            -c "ALTER SYSTEM SET fsync = off" \
-            -c "ALTER SYSTEM SET synchronous_commit = off" \
-            -c "ALTER SYSTEM SET full_page_writes = off" \
-            -c "SELECT pg_reload_conf()"
+        uses: ./.github/actions/install-backend
 
       - name: Lint (ruff)
         run: ruff check .
@@ -168,108 +125,222 @@ jobs:
         working-directory: .
         run: bash scripts/check_openapi_schema.sh
 
-      - name: Test suite + coverage gate (ratchet — chỉ được tăng)
+  backend-tests:
+    name: backend-tests (${{ matrix.group }}/${{ strategy.job-total }})
+    needs: changes
+    if: ${{ needs.changes.outputs.backend == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        # pytest-split balances groups by backend/.test_durations. Keep
+        # BACKEND_TEST_GROUPS in `backend-checks` equal to this list's length.
+        group: [1, 2, 3]
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16-trixie
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ai_career_coach
+        ports: ['5432:5432']
+        # CI data is thrown away with the job: keep the cluster in RAM.
+        options: >-
+          --tmpfs /var/lib/postgresql/data:rw
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DB_NAME: ai_career_coach
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: localhost
+      DB_PORT: '5432'
+      SECRET_KEY: ci-secret-key-at-least-32-characters-long-xxx
+      DEBUG: 'True'
+      DJANGO_SETTINGS_MODULE: config.settings.test
+      # pytest-xdist worker count. Each worker owns a separate test database
+      # (test_<name>_gwN). Set to '0' to fall back to the serial run.
+      PYTEST_WORKERS: auto
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        uses: ./.github/actions/install-backend
+
+      - name: Tune PostgreSQL for throwaway CI data
+        working-directory: .
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          # Durability is irrelevant for a database that dies with the job.
+          # All three settings are reloadable, so no restart is needed.
+          docker exec "$POSTGRES_CONTAINER" psql -U postgres -v ON_ERROR_STOP=1 \
+            -c "ALTER SYSTEM SET fsync = off" \
+            -c "ALTER SYSTEM SET synchronous_commit = off" \
+            -c "ALTER SYSTEM SET full_page_writes = off" \
+            -c "SELECT pg_reload_conf()"
+
+      - name: Test shard ${{ matrix.group }}/${{ strategy.job-total }}
         id: pytest
         shell: bash
+        env:
+          GROUP: ${{ matrix.group }}
+          SHARD_TOTAL: ${{ strategy.job-total }}
         run: |
           set -o pipefail
-          # Stop pytest before the job-level timeout so always() diagnostics
-          # still have time to publish the active test and faulthandler output.
-          # --dist load hands tests to workers in collection order.
-          # pytest-django sorts every TestCase before every
-          # TransactionTestCase, so each worker reaches the transactional
-          # tests (which TRUNCATE migration-seeded rows) only after its
-          # ordinary tests. --dist loadfile broke that invariant: a module
-          # containing a TransactionTestCase wiped the seed data for the
-          # modules that followed it on the same worker (89 failures, 29
-          # errors on run 2). Do not switch to loadfile or worksteal.
+          # duration_based_chunks keeps collection order inside each group.
+          # pytest-django sorts every TestCase before every TransactionTestCase
+          # (which TRUNCATE migration-seeded rows), and --dist load hands tests
+          # to workers in that order. Algorithms that reorder tests (least_duration)
+          # or --dist loadfile/worksteal break that invariant: a module with a
+          # TransactionTestCase wiped the seed data of the modules after it
+          # (89 failures, 29 errors). Do not change either option.
           #
           # faulthandler_timeout (120s in pyproject.toml) also counts fixture
-          # setup, so the first test on every worker dumped stacks while the
-          # test database was still being built. Workers died seconds after
-          # such a dump ("node down: Not properly terminated") with plenty of
-          # free memory. In CI the job-level `timeout` below catches real
-          # hangs; the watchdog only fires for a test stuck for 10 minutes.
-          timeout --signal=TERM --kill-after=30s 12m pytest -vv \
+          # setup, so workers dumped stacks while the test database was still
+          # being built and then died. The job-level `timeout` catches real hangs.
+          # Coverage is combined and gated once in `backend-checks`.
+          timeout --signal=TERM --kill-after=30s 8m pytest -vv \
+            --splits "$SHARD_TOTAL" --group "$GROUP" \
+            --splitting-algorithm duration_based_chunks \
             -n "$PYTEST_WORKERS" --dist load \
             -o faulthandler_timeout=600 \
-            --cov \
-            --cov-fail-under=84 \
-            --cov-report=term-missing \
-            --cov-report=json:coverage.json \
-            --junitxml=pytest-results.xml \
+            --cov --cov-report= \
+            --junitxml="pytest-results-$GROUP.xml" \
             -o junit_duration_report=call \
             2>&1 | tee pytest.log
+          mv .coverage ".coverage.group$GROUP"
+
+      - name: Upload shard results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-tests-${{ matrix.group }}
+          path: |
+            backend/.coverage.group*
+            backend/pytest-results-*.xml
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Upload shard diagnostics
+        if: ${{ always() && steps.pytest.outcome != 'success' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-diagnostics-${{ matrix.group }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: backend/pytest.log
+          if-no-files-found: ignore
+          retention-days: 5
+
+  # Keeps the `backend-checks` context: combines the shards, applies the
+  # coverage ratchet and the time budget once over the whole suite.
+  backend-checks:
+    name: backend-checks
+    needs: [changes, backend-static, backend-tests]
+    if: ${{ needs.changes.outputs.backend == 'true' && !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Require static gates and every test shard to pass
+        working-directory: .
+        env:
+          STATIC_RESULT: ${{ needs.backend-static.result }}
+          TESTS_RESULT: ${{ needs.backend-tests.result }}
+        run: |
+          echo "backend-static: $STATIC_RESULT, backend-tests: $TESTS_RESULT"
+          [[ "$STATIC_RESULT" == success && "$TESTS_RESULT" == success ]]
+
+      - uses: actions/checkout@v7
+
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+
+      - name: Install coverage
+        run: python -m pip install --disable-pip-version-check "$(grep -E '^coverage==' requirements-dev.txt)"
+
+      - name: Download shard results
+        uses: actions/download-artifact@v8
+        with:
+          pattern: backend-tests-*
+          path: backend
+          merge-multiple: true
+
+      - name: Combine coverage and enforce the ratchet
+        env:
+          BACKEND_TEST_GROUPS: 3
+        run: |
+          [[ "$(ls .coverage.group* | wc -l)" -eq "$BACKEND_TEST_GROUPS" ]]
+          python -m coverage combine .coverage.group*
+          python -m coverage report --skip-covered --skip-empty --fail-under=84 | tail -n 25
+          python -m coverage json -o coverage.json --quiet
 
       - name: Test time budget (docs/05-huong-dan/tieu-chuan-kiem-thu.md)
-        if: ${{ steps.pytest.outcome == 'success' }}
         working-directory: .
-        run: node scripts/check_test_budgets.mjs --suite backend backend/pytest-results.xml
+        run: node scripts/ci/check_test_budgets.mjs --suite backend backend/pytest-results-*.xml
+
+      - name: Export test durations for pytest-split
+        if: ${{ always() }}
+        working-directory: .
+        run: python scripts/ci/pytest_durations.py backend-test-durations.json backend/pytest-results-*.xml
+
+      - name: Upload test durations
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-test-durations-${{ github.run_id }}
+          path: backend-test-durations.json
+          if-no-files-found: ignore
+          retention-days: 14
 
       - name: Publish backend metrics
         if: ${{ always() }}
-        env:
-          JOB_STATUS: ${{ job.status }}
-          STARTED_AT: ${{ steps.timer.outputs.epoch }}
         run: |
           python - <<'PY'
           import json
           import os
-          import time
           import xml.etree.ElementTree as ET
           from pathlib import Path
 
-          tests = failures = errors = skipped = 'n/a'
-          test_duration = 'n/a'
-          junit_path = Path('pytest-results.xml')
-          if junit_path.exists():
+          cases = []
+          for report in sorted(Path('.').glob('pytest-results-*.xml')):
               try:
-                  root = ET.parse(junit_path).getroot()
-                  cases = root.findall('.//testcase')
-                  tests = str(len(cases))
-                  failures = str(sum(case.find('failure') is not None for case in cases))
-                  errors = str(sum(case.find('error') is not None for case in cases))
-                  skipped = str(sum(case.find('skipped') is not None for case in cases))
-                  test_duration = f"{sum(float(case.attrib.get('time', 0)) for case in cases):.2f}"
-              except (OSError, ET.ParseError, TypeError, ValueError):
+                  cases.extend(ET.parse(report).getroot().iter('testcase'))
+              except ET.ParseError:
                   pass
+          failures = sum(case.find('failure') is not None for case in cases)
+          errors = sum(case.find('error') is not None for case in cases)
+          skipped = sum(case.find('skipped') is not None for case in cases)
+          duration = sum(float(case.get('time') or 0) for case in cases)
 
           coverage = 'n/a'
-          coverage_path = Path('coverage.json')
-          if coverage_path.exists():
-              try:
-                  payload = json.loads(coverage_path.read_text())
-                  value = payload.get('totals', {}).get('percent_covered')
-                  if value is not None:
-                      coverage = f'{float(value):.2f}%'
-              except (AttributeError, OSError, ValueError, TypeError):
-                  pass
+          if Path('coverage.json').exists():
+              value = json.loads(Path('coverage.json').read_text()).get('totals', {}).get('percent_covered')
+              if value is not None:
+                  coverage = f'{float(value):.2f}%'
 
-          started_at = int(os.environ.get('STARTED_AT') or time.time())
-          elapsed = max(0, int(time.time()) - started_at)
-          summary = Path(os.environ['GITHUB_STEP_SUMMARY'])
-          with summary.open('a') as stream:
-              stream.write('## Backend checks\n\n')
-              stream.write('| Metric | Value |\n| --- | --- |\n')
-              stream.write(f"| Result | {os.environ.get('JOB_STATUS', 'unknown')} |\n")
-              stream.write(f'| Tests | {tests} |\n')
+          with Path(os.environ['GITHUB_STEP_SUMMARY']).open('a') as stream:
+              stream.write('## Backend checks (shards merged)\n\n| Metric | Value |\n| --- | --- |\n')
+              stream.write(f'| Tests | {len(cases)} |\n')
               stream.write(f'| Failures / errors / skipped | {failures} / {errors} / {skipped} |\n')
               stream.write(f'| Coverage | {coverage} |\n')
-              stream.write(f'| Pytest duration | {test_duration}s |\n')
-              stream.write(f'| Measured steps elapsed | {elapsed}s |\n')
+              stream.write(f'| Sum of test call time | {duration:.0f}s |\n')
           PY
-
-      - name: Upload backend diagnostics
-        if: ${{ always() && steps.pytest.outcome != 'success' }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: backend-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            backend/pytest.log
-            backend/pytest-results.xml
-            backend/coverage.json
-          if-no-files-found: ignore
-          retention-days: 5
 
   quality:
     name: quality

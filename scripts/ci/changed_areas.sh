@@ -90,11 +90,11 @@ classify_path() {
       ci=true
       frontend_audit=true
       ;;
-    scripts/check_env_sync.sh|scripts/check_all.sh|scripts/ci_changed_areas.sh)
+    scripts/check_env_sync.sh|scripts/check_all.sh|scripts/ci/changed_areas.sh)
       backend=true
       frontend=true
       ci=true
-      if [[ "$changed_path" == scripts/ci_changed_areas.sh ]]; then
+      if [[ "$changed_path" == scripts/ci/changed_areas.sh ]]; then
         frontend_audit=true
       fi
       ;;
