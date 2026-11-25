@@ -2,6 +2,8 @@
 
 import shutil
 import tempfile
+from io import BytesIO
+from zipfile import ZIP_DEFLATED, ZipFile
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
@@ -35,7 +37,7 @@ from ..services import (
     save_company_website_proof,
     submit_validated_company_update,
 )
-from .factories import PDF_BYTES, PNG_BYTES, make_recruiter
+from .factories import PDF_BYTES, PNG_BYTES, make_recruiter, pdf_bytes
 
 TEST_MEDIA_ROOT = tempfile.mkdtemp()
 
@@ -194,6 +196,61 @@ class CompanyDocumentServiceTests(_CompanyOwnerTestCase):
         self.assertEqual(
             registration.verification_case,
             EmployerVerificationCase.objects.get(recruiter=self.recruiter),
+        )
+
+
+@override_settings(MEDIA_ROOT=TEST_MEDIA_ROOT)
+class LegacyDocumentUploadStructureTests(_CompanyOwnerTestCase):
+    """Multipart trực tiếp (không qua phiên quét) vẫn phải qua kiểm cấu trúc."""
+
+    def _save(self, name, payload, content_type, doc_type=None):
+        return save_company_document(
+            user=self.user,
+            recruiter=self.recruiter,
+            company=self.company,
+            doc_type=doc_type or CompanyDocument.DocType.BUSINESS_REGISTRATION,
+            upload=SimpleUploadedFile(name, payload, content_type=content_type),
+        )
+
+    def assertRejected(self, *args, **kwargs):
+        with self.assertRaises(ValidationError) as raised:
+            self._save(*args, **kwargs)
+        self.assertIn('file', raised.exception.detail)
+        self.assertFalse(CompanyDocument.objects.filter(company=self.company).exists())
+
+    def test_encrypted_pdf_is_rejected(self):
+        self.assertRejected('gpkd.pdf', pdf_bytes(password='secret'), 'application/pdf')
+
+    def test_pdf_with_more_than_fifty_pages_is_rejected(self):
+        self.assertRejected('gpkd.pdf', pdf_bytes(pages=51), 'application/pdf')
+
+    def test_pdf_with_fifty_pages_is_accepted(self):
+        document = self._save('gpkd.pdf', pdf_bytes(pages=50), 'application/pdf')
+
+        self.assertTrue(document.is_current)
+
+    def test_corrupt_png_is_rejected(self):
+        self.assertRejected('gpkd.png', PNG_BYTES[:40], 'image/png')
+
+    def test_legacy_word_document_is_rejected_for_the_dpa(self):
+        ole2 = b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1' + b'\x00' * 512
+        self.assertRejected(
+            'thoa-thuan.doc',
+            ole2,
+            'application/msword',
+            doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
+        )
+
+    def test_zip_bomb_docx_is_rejected_for_the_dpa(self):
+        bomb = BytesIO()
+        with ZipFile(bomb, 'w', compression=ZIP_DEFLATED) as archive:
+            archive.writestr('[Content_Types].xml', b'<Types/>')
+            archive.writestr('word/document.xml', b'0' * (2 * 1024 * 1024))
+        self.assertRejected(
+            'thoa-thuan.docx',
+            bomb.getvalue(),
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            doc_type=CompanyDocument.DocType.DATA_PROCESSING_AGREEMENT,
         )
 
 

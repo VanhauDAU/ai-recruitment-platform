@@ -2,6 +2,7 @@
 
 from io import BytesIO
 from unittest.mock import patch
+from zipfile import ZIP_DEFLATED, ZipFile
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
@@ -200,6 +201,25 @@ class CvUploadApiTests(CvApiTestCase):
         response = self.client.post(reverse('cv-import'), {'file': upload}, format='multipart')
 
         self.assertEqual(response.status_code, 400)
+        self.assertFalse(UserCv.objects.filter(user=self.candidate).exists())
+
+    def test_import_rejects_a_zip_bomb_docx_before_python_docx_opens_it(self):
+        bomb = BytesIO()
+        with ZipFile(bomb, 'w', compression=ZIP_DEFLATED) as archive:
+            archive.writestr('[Content_Types].xml', b'<Types/>')
+            # ~4 MB XML nén còn vài KB: tỉ lệ vượt 100 lần.
+            archive.writestr('word/document.xml', b'<w:t>' + b'0' * (4 * 1024 * 1024))
+        upload = SimpleUploadedFile(
+            'bomb.docx',
+            bomb.getvalue(),
+            content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        )
+
+        with patch('docx.Document') as python_docx:
+            response = self.client.post(reverse('cv-import'), {'file': upload}, format='multipart')
+
+        self.assertEqual(response.status_code, 400)
+        python_docx.assert_not_called()
         self.assertFalse(UserCv.objects.filter(user=self.candidate).exists())
 
     def test_import_accepts_a_pdf_header_after_a_valid_leading_preamble(self):

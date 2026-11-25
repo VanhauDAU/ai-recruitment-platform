@@ -658,7 +658,7 @@ class JoinCompanyTests(APITestCase):
         self.assertEqual(preview['Content-Type'], 'application/pdf')
         self.assertEqual(b''.join(preview.streaming_content), b'%PDF-private-preview')
 
-    @patch('common.files.office_preview.subprocess.run')
+    @patch('common.files.office_preview.subprocess.Popen')
     def test_raw_word_agreement_preview_requires_scan_without_running_office(self, soffice_run):
         upload = SimpleUploadedFile(
             'thoa-thuan.docx',

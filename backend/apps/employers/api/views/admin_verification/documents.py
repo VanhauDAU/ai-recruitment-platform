@@ -26,7 +26,6 @@ CONTENT_TYPES_BY_EXTENSION = {
     'avif': 'image/avif',
     'bmp': 'image/bmp',
     'csv': 'text/csv',
-    'doc': 'application/msword',
     'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'gif': 'image/gif',
     'heic': 'image/heic',
