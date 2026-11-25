@@ -83,6 +83,8 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 - **Tách vòng retry dùng chung** sang `providers/base.py`; Gemini chỉ còn phần gọi SDK.
   `providers/registry.py` chọn adapter theo backend. Lỗi mạng (`*Connection*`) giờ được
   thử lại một lần cho cả hai provider.
+- **Admin AI hiển thị đúng provider:** `AiRuntimeConfig.provider_name` / `credentials_configured`
+  thay cho chuỗi `'gemini'` viết cứng ở dashboard AI và số liệu quota (`apps/jobs`).
 - **Hết credit/chưa thanh toán (402)** → mã `provider_quota_exhausted`, không retry; nhập
   CV coi như AI không khả dụng và đọc bằng quy tắc.
 - `production.py` nhận backend `anthropic`, bắt buộc key khi bật, kiểm giá trị effort.

@@ -7,7 +7,7 @@ import logging
 from django.conf import settings
 from django.db import DatabaseError, transaction
 
-from apps.ai_core.services import record_ai_quota_rejection
+from apps.ai_core.services import provider_name_for, record_ai_quota_rejection
 from apps.employers.services import ensure_recruiter_job_workspace
 from apps.sitecontent.selectors import get_settings_map
 from common.vietnam_time import vietnam_today
@@ -45,7 +45,7 @@ def _record_quota_rejection(*, model):
     try:
         record_ai_quota_rejection(
             use_case=USE_CASE,
-            provider='gemini',
+            provider=provider_name_for(settings.AI_PROVIDER_BACKEND),
             provider_backend=settings.AI_PROVIDER_BACKEND,
             model=model or settings.AI_JOB_GENERATION_MODEL,
         )

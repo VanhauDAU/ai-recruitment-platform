@@ -34,10 +34,7 @@ def _usage_window(days):
 
 def _runtime_overview(policy):
     config = AiRuntimeConfig.from_django_settings(model=policy['model'])
-    if config.provider_backend == 'vertex':
-        credential_configured = bool(config.google_cloud_project and config.google_cloud_location)
-    else:
-        credential_configured = bool(config.gemini_api_key)
+    credential_configured = config.credentials_configured
     if not config.enabled:
         status = 'disabled'
     elif not credential_configured or not policy['model_allowed']:
@@ -47,7 +44,7 @@ def _runtime_overview(policy):
     return {
         'status': status,
         'enabled': config.enabled,
-        'provider': 'gemini',
+        'provider': config.provider_name,
         'provider_backend': config.provider_backend,
         'model': config.model,
         'credential_configured': credential_configured,
