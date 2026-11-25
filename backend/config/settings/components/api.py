@@ -32,7 +32,12 @@ REST_FRAMEWORK = {
     # mặc định của DRF (None) lấy nguyên chuỗi X-Forwarded-For làm khoá, tức là
     # để client tự chọn bucket cho mình.
     'NUM_PROXIES': TRUSTED_PROXY_HOPS,
+    # Trần chung cho /api/public/* (khách chưa đăng nhập, theo IP). View tự khai
+    # throttle_classes thay thế danh sách này nên giữ nguyên throttle riêng.
+    'DEFAULT_THROTTLE_CLASSES': ('common.api.throttling.PublicApiAnonRateThrottle',),
     'DEFAULT_THROTTLE_RATES': {
+        # Kiểm thử tải tạm nới bằng PUBLIC_API_THROTTLE_RATE (scripts/loadtest/README.md).
+        'public_api_anon': config('PUBLIC_API_THROTTLE_RATE', default='600/min'),
         'login': '5/min',
         'register': '5/min',
         'register_email_check': '12/min',
@@ -57,6 +62,10 @@ REST_FRAMEWORK = {
         # Việc làm gần bạn: mỗi lần đổi bán kính/bộ lọc gọi danh sách + bản đồ.
         'nearby_jobs': '120/min',
         'geo_lookup': '60/min',
+        # Trang chủ gọi một lần mỗi lượt xem; payload đã cache 5 phút.
+        'job_stats': '120/min',
+        # Ô tìm kiếm gợi ý theo từng lần gõ (đã debounce phía client).
+        'job_suggest': '240/min',
         'job_view': '120/hour',
         'job_impression': '240/hour',
         'job_report': '10/hour',
@@ -96,6 +105,14 @@ REST_FRAMEWORK = {
         'employer_domain_claim_manual_ip': '30/hour',
     },
 }
+
+# Chỉ khi kiểm thử tải (scripts/loadtest/README.md): nới tạm một số scope, dạng
+# "login=600/min,job_impression=100000/hour". Bỏ trống ở vận hành thường.
+REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'].update(
+    item.split('=', 1)
+    for item in config('THROTTLE_RATE_OVERRIDES', default='', cast=Csv())
+    if '=' in item
+)
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(

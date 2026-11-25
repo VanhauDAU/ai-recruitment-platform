@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from django.conf import settings
+from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
@@ -10,6 +11,7 @@ from django.utils.translation import gettext_lazy
 
 from common.db.public_id import generate_public_id
 from common.db.readable_code import new_unique_code
+from common.db.search import fold_accents
 from common.vietnam_time import vietnam_day_start, vietnam_today
 
 from ..domain.job_code import JOB_CODE_LENGTH, JOB_CODE_REGEX, random_job_code
@@ -158,6 +160,9 @@ class Job(models.Model):
         related_name='jobs',
     )
     title = models.CharField(max_length=255)
+    # fold_accents(title), set in save(): lets search use a GIN trigram index
+    # instead of scanning every row with unaccent(title) ILIKE.
+    title_search = models.CharField(max_length=255, blank=True, editable=False)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
     description = models.TextField()
     requirements = models.TextField(blank=True)
@@ -330,6 +335,11 @@ class Job(models.Model):
                 fields=['company', 'status', '-created_at'], name='jobs_job_company_status_idx'
             ),
             models.Index(fields=['campaign', 'status'], name='jobs_job_campaign_status_idx'),
+            GinIndex(
+                fields=['title_search'],
+                name='jobs_job_title_trgm_idx',
+                opclasses=['gin_trgm_ops'],
+            ),
         ]
         constraints = [
             models.CheckConstraint(
@@ -404,6 +414,10 @@ class Job(models.Model):
         if not self.slug:
             base_slug = slugify(self.title)
             self.slug = f'{base_slug}-{self.public_id}'
+        self.title_search = fold_accents(self.title)
+        update_fields = kwargs.get('update_fields')
+        if update_fields is not None and 'title' in update_fields:
+            kwargs['update_fields'] = {*update_fields, 'title_search'}
         super().save(*args, **kwargs)
 
     @classmethod

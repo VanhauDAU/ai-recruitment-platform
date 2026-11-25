@@ -1,0 +1,14 @@
+# CHỈ dùng trong buổi đo tải (rehearsal, DNS chưa mở công khai). Ghép sau file prod:
+#   LOADTEST_RECAPTCHA_SECRET_KEY=... scripts/deploy/compose.sh -f scripts/loadtest/docker-compose.loadtest.yml up -d backend
+# Đo xong chạy lại `scripts/deploy/compose.sh up -d backend` để bỏ override.
+services:
+  backend:
+    environment:
+      # Mọi VU của k6 đi ra từ vài IP: nới trần theo IP để đo năng lực máy chủ, không đo throttle.
+      PUBLIC_API_THROTTLE_RATE: 100000/min
+      THROTTLE_RATE_OVERRIDES: >-
+        login=6000/min,job_impression=1000000/hour,job_view=1000000/hour,job_stats=100000/min,job_suggest=100000/min,nearby_jobs=100000/min,geo_lookup=100000/min,realtime_ticket=100000/min,consent=1000000/hour,public_companies=100000/min
+      # Secret key thử công khai của Google (xem README): mọi token đều hợp lệ, hostname
+      # trả về là testkey.google.com. Truyền qua biến shell để không lưu khóa trong repo.
+      RECAPTCHA_SECRET_KEY: ${LOADTEST_RECAPTCHA_SECRET_KEY:?Đặt LOADTEST_RECAPTCHA_SECRET_KEY theo scripts/loadtest/README.md}
+      ALLOWED_HOSTS: procv.site,www.procv.site,testkey.google.com

@@ -10961,9 +10961,8 @@ paths:
   /api/employer/campaigns/{public_id}/report/export/:
     get:
       operationId: employer_campaigns_report_export_retrieve
-      description: Excel or PDF report of the campaign; aggregates only, no candidate
-        data.
-      summary: Tải báo cáo chiến dịch (Excel hoặc PDF)
+      description: Excel report of the campaign; aggregates only, no candidate data.
+      summary: 'Tải báo cáo chiến dịch dạng Excel (PDF: xếp hàng qua report/export/pdf/)'
       parameters:
       - in: path
         name: public_id
@@ -10975,7 +10974,6 @@ paths:
         schema:
           type: string
           enum:
-          - pdf
           - xlsx
       tags:
       - campaigns
@@ -10988,6 +10986,59 @@ paths:
               schema:
                 type: string
                 format: binary
+          description: ''
+  /api/employer/campaigns/{public_id}/report/export/pdf/:
+    post:
+      operationId: employer_campaigns_report_export_pdf_create
+      summary: Xếp hàng tạo PDF báo cáo chiến dịch (trả token để hỏi kết quả)
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - campaigns
+      security:
+      - jwtAuth: []
+      responses:
+        '202':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/employer/campaigns/{public_id}/report/export/pdf/{token}/:
+    get:
+      operationId: employer_campaigns_report_export_pdf_retrieve
+      summary: Trạng thái PDF báo cáo chiến dịch; ?download=1 tải tệp khi đã xong
+      parameters:
+      - in: query
+        name: download
+        schema:
+          type: boolean
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: token
+        schema:
+          type: string
+        required: true
+      tags:
+      - campaigns
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
             application/pdf:
               schema:
                 type: string

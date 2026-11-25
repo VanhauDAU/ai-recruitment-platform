@@ -2,7 +2,7 @@
 
 from django.db.models import Exists, F, OuterRef, Q
 
-from common.db.search import search_q
+from common.db.search import folded_search_q
 
 from .alerts import CandidateJobDigestItem, CandidateJobEmailSuppression, JobAlert
 from .categories import JobCategory
@@ -132,8 +132,8 @@ def strict_job_alert_matches(
     if not ignore_cursor:
         queryset = queryset.filter(published_at__gt=alert.cursor_at)
 
-    title_query = search_q('title', alert.keyword)
-    company_query = search_q('company__company_name', alert.keyword)
+    title_query = folded_search_q('title_search', alert.keyword)
+    company_query = folded_search_q('company__company_name_search', alert.keyword)
     if alert.keyword_scope == JobAlert.KeywordScope.COMPANY:
         queryset = queryset.filter(company_query)
     elif alert.keyword_scope == JobAlert.KeywordScope.BOTH:

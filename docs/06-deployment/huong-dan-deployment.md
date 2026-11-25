@@ -46,13 +46,13 @@ quản trị `/admin`. Không tách frontend sang Vercel vì Django dựng SEO s
 | `redis-cache` | 448 MB | `maxmemory 384mb`, `allkeys-lru`, không lưu đĩa — cache, token xác thực, throttle |
 | `backend` | 1 GB | gunicorn 4 worker × 2 thread |
 | `realtime` | 256 MB | daphne, chỉ `/ws/` |
-| `worker` | 1,125 GB | concurrency 3, Chromium xuất PDF |
+| `worker` | 1,125 GB | concurrency 3: `default`, `cv-export` (Chromium xuất PDF CV + báo cáo chiến dịch), `upload-scan`, `candidate-email` |
+| `email-worker` | 256 MB | concurrency 1: `auth-email`, `auth-sms` — OTP/đặt lại mật khẩu không chờ sau PDF |
 | `ai-worker` | 512 MB | queue `ai-generation` |
 | `ml-worker` | 1,75 GB | e5-base nằm sẵn trong RAM (~0,9 GB lúc rảnh); `cpus: 2`, `OMP/MKL_NUM_THREADS=2` |
 | `beat`, `web` | 256 MB, 128 MB | |
-| `email-worker` | 256 MB | GĐ 4 (PR #349): queue `auth-email`, `auth-sms` tách khỏi `worker` |
 
-Tổng trần ~6,9 GB (7,2 GB khi có `email-worker`) trên máy 8 GB, chừa ~0,8 GB cho
+Tổng trần ~7,2 GB (gồm `email-worker`) trên máy 8 GB, chừa ~0,8 GB cho
 hệ điều hành, Docker và page cache; bootstrap tạo thêm 4 GB swap. Đo trên stack
 prod cục bộ lúc rảnh (25/11): backend ~515 MB, worker ~340 MB, ai-worker ~245 MB,
 ml-worker ~920 MB, beat/realtime ~140 MB, mỗi lần healthcheck `celery inspect

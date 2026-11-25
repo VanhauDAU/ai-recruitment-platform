@@ -30,6 +30,7 @@ import EmployerPhoneChallengeForm from './EmployerPhoneChallengeForm'
 import { m } from '@/shared/config/i18n'
 
 const BANNER_SRC = '/images/employer/phone-verify-banner.png'
+const BANNER_WEBP_SRC = '/images/employer/phone-verify-banner.webp'
 const PASSWORD_SETTINGS_FROM_PHONE_URL = getPasswordSetupFromPhoneUrl(
   EMPLOYER_PASSWORD_SETTINGS_URL,
   EMPLOYER_PHONE_VERIFY_URL,
@@ -56,12 +57,17 @@ function VerificationBanner() {
   // nền hai nửa trùng màu mép trái/phải của ảnh (chỗ nối nằm sau ảnh) nên hai bên liền mạch.
   return (
     <div className="bg-[linear-gradient(90deg,#f9f9f9_50%,#edeef0_50%)]">
-      <img
-        src={BANNER_SRC}
-        alt={m.employer_account_phone_banner_alt()}
-        className="block max-h-44 w-full object-contain sm:max-h-60"
-        loading="lazy"
-      />
+      <picture>
+        <source srcSet={BANNER_WEBP_SRC} type="image/webp" />
+        <img
+          src={BANNER_SRC}
+          alt={m.employer_account_phone_banner_alt()}
+          width={1870}
+          height={841}
+          className="block h-auto max-h-44 w-full object-contain sm:max-h-60"
+          loading="lazy"
+        />
+      </picture>
     </div>
   )
 }

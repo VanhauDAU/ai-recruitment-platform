@@ -6,7 +6,7 @@ from django.db.models import Prefetch, Q
 from django.utils.translation import gettext as _
 from django.utils.translation import ngettext
 
-from common.db.search import fold_accents, search_q
+from common.db.search import fold_accents, folded_search_q
 
 from ..models import Job, JobCategoryAssignment, JobLocation, JobSkill, SavedJob
 from ..models.recommendation_queries import EXPERIENCE_RANK, MAX_SCORING_CANDIDATES
@@ -174,7 +174,7 @@ def _source_signal_filter(source_contexts):
             category_assignments__role=JobCategoryAssignment.Role.PRIMARY_SPECIALIZATION,
         )
     for token in sorted(title_tokens):
-        signals |= search_q('title', token)
+        signals |= folded_search_q('title_search', token)
     return signals
 
 

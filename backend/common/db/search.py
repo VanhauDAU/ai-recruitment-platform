@@ -13,6 +13,18 @@ def search_q(field, text):
     return query
 
 
+def folded_search_q(field, text):
+    """Indexed twin of ``search_q`` for a column that stores ``fold_accents(value)``.
+
+    ``unaccent(col) ILIKE`` cannot use an index; a folded column with a GIN
+    trigram index answers the same ``LIKE '%token%'`` from the index.
+    """
+    query = Q()
+    for token in fold_accents(text).split():
+        query &= Q(**{f'{field}__contains': token})
+    return query
+
+
 def fold_accents(text):
     """Normalize Vietnamese text for in-memory ranking."""
     text = text.replace('đ', 'd').replace('Đ', 'D')
