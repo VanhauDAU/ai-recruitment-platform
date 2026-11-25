@@ -1796,7 +1796,7 @@ paths:
   /api/admin/blog/thumbnails/:
     post:
       operationId: admin_blog_thumbnails_create
-      summary: Tải ảnh đại diện (thumbnail) cho bài viết
+      summary: Tải ảnh đại diện (thumbnail) cho bài viết từ tệp hoặc đường dẫn
       tags:
       - blog
       requestBody:
@@ -1806,6 +1806,10 @@ paths:
               type: object
               additionalProperties: {}
           application/x-www-form-urlencoded:
+            schema:
+              type: object
+              additionalProperties: {}
+          application/json:
             schema:
               type: object
               additionalProperties: {}
