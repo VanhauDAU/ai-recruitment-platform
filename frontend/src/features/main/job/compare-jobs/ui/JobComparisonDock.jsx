@@ -11,10 +11,10 @@ import useJobComparison from '../model/use-job-comparison'
 const JOB_ROUTE_PATTERN = /^\/(?:viec-lam(?:\/|$)|jobs(?:\/|$)|viec-lam-da-luu\/?$)/
 
 function useDockBottom() {
-  const { isDecided, isEnabled } = useConsent()
+  const { isBannerVisible } = useConsent()
   const visualViewportInset = useVisualViewportBottomInset()
   const [cookieHeight, setCookieHeight] = useState(0)
-  const cookieVisible = isEnabled && !isDecided
+  const cookieVisible = isBannerVisible
 
   useEffect(() => {
     if (!cookieVisible) {

@@ -8,12 +8,14 @@ describe('CookieConsentBanner', () => {
     const onAcceptAll = vi.fn()
     const onCustomize = vi.fn()
     const onRejectOptional = vi.fn()
+    const onDismiss = vi.fn()
 
     render(
       <MemoryRouter>
         <CookieConsentBanner
           onAcceptAll={onAcceptAll}
           onCustomize={onCustomize}
+          onDismiss={onDismiss}
           onRejectOptional={onRejectOptional}
           saving={false}
         />
@@ -23,10 +25,12 @@ describe('CookieConsentBanner', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Chỉ thiết yếu' }))
     fireEvent.click(screen.getByRole('button', { name: 'Tùy chỉnh' }))
     fireEvent.click(screen.getByRole('button', { name: 'Chấp nhận tất cả' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Đóng thông báo cookie' }))
 
     expect(onRejectOptional).toHaveBeenCalledOnce()
     expect(onCustomize).toHaveBeenCalledOnce()
     expect(onAcceptAll).toHaveBeenCalledOnce()
+    expect(onDismiss).toHaveBeenCalledOnce()
     expect(screen.getByRole('link', { name: 'Tìm hiểu thêm' })).toHaveAttribute('href', '/chinh-sach-cookie')
   })
 })

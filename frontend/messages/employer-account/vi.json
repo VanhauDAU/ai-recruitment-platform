@@ -508,6 +508,7 @@
   "account_cookie_settings": "Cài đặt cookie",
   "account_cookie_settings_desc": "Bạn có thể chọn các nhóm cookie tùy chọn. Cookie thiết yếu luôn được bật để website hoạt động.",
   "account_cookie_close_settings": "Đóng cài đặt cookie",
+  "account_cookie_dismiss_banner": "Đóng thông báo cookie",
   "account_cookie_footer_before": "Bạn có thể thay đổi hoặc rút lại lựa chọn bất cứ lúc nào trong phần chân trang. Xem ",
   "account_cookie_policy": "Chính sách cookie",
   "account_cookie_confirm": "Xác nhận lựa chọn",

@@ -512,6 +512,17 @@ a.pc-card--link:hover { background: var(--pc-mist); color: var(--pc-ink); }
   font-size: 14px;
   line-height: 20px;
   resize: none;
+  /* Tự giãn theo nội dung không cần đo bằng JS (Composer chỉ đo khi thiếu). */
+  field-sizing: content;
+  min-height: 40px;
+  max-height: 116px;
+  overflow-y: auto;
+}
+
+/* iOS (Safari và Chrome cùng WebKit) phóng to trang khi chạm ô nhập chữ dưới
+   16px: khung chat bị lệch, ô soạn trượt dưới thanh công cụ và gõ bị giật. */
+@media (pointer: coarse) {
+  .pc-search__input, .pc-input, .pc-composer__input { font-size: 16px; }
 }
 
 .pc-composer__send:not(:disabled) { color: var(--pc-accent); }

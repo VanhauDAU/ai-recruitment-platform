@@ -17,9 +17,13 @@ const ACCEPTED_FILES = '.pdf,.docx,.png,.jpg,.jpeg,.webp'
 const ACCEPTED_EXTENSIONS = new Set(ACCEPTED_FILES.split(','))
 const DEFAULT_ATTACHMENT_MB = 10
 
-function autosize(element) {
-  if (!element) return
-  element.style.height = 'auto'
+const FIELD_SIZING = typeof CSS !== 'undefined' && Boolean(CSS.supports?.('field-sizing', 'content'))
+
+// Chỉ thu về `auto` khi chữ ngắn đi: co rồi giãn ở mỗi phím làm iOS cuộn lại
+// theo con trỏ và gõ bị giật. Trình duyệt có `field-sizing` thì CSS tự lo.
+function autosize(element, { shrink = false } = {}) {
+  if (!element || FIELD_SIZING) return
+  if (shrink) element.style.height = 'auto'
   element.style.height = `${Math.min(element.scrollHeight, MAX_TEXTAREA_PX)}px`
 }
 
@@ -68,13 +72,13 @@ export default function Composer({ portal, conversation, attachItems = [] }) {
       return
     }
     setText('')
-    window.requestAnimationFrame(() => autosize(textareaRef.current))
+    window.requestAnimationFrame(() => autosize(textareaRef.current, { shrink: true }))
     send({ kind: 'text', body })
   }
 
   const handleChange = (event) => {
     setText(event.target.value)
-    autosize(event.target)
+    autosize(event.target, { shrink: event.target.value.length < text.length })
     const now = Date.now()
     if (event.target.value && shouldSendTyping(typingSentRef.current, now)) {
       typingSentRef.current = now

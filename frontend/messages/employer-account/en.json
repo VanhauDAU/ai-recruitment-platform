@@ -564,6 +564,7 @@
   "account_cookie_settings": "Cookie settings",
   "account_cookie_settings_desc": "Choose which optional cookie groups to allow. Essential cookies are always on so the website works.",
   "account_cookie_close_settings": "Close cookie settings",
+  "account_cookie_dismiss_banner": "Close cookie notice",
   "account_cookie_footer_before": "You can change or withdraw your choice at any time from the footer. See the ",
   "account_cookie_policy": "Cookie policy",
   "account_cookie_confirm": "Confirm choices",

@@ -25,7 +25,23 @@ function seedOptionalStorage() {
 describe('ConsentProvider', () => {
   afterEach(() => {
     localStorage.clear()
+    sessionStorage.clear()
     vi.clearAllMocks()
+  })
+
+  it('hides the banner for this session without recording a choice', async () => {
+    api.getConsent.mockResolvedValue(null)
+    render(<ConsentProvider><Probe /></ConsentProvider>)
+    await waitFor(() => expect(context.status).toBe('ready'))
+    expect(context.isBannerVisible).toBe(true)
+
+    act(() => context.dismissBanner())
+
+    expect(context.isBannerVisible).toBe(false)
+    expect(context.isDecided).toBe(false)
+    expect(context.consent).toEqual(ALL_OFF)
+    expect(api.saveConsent).not.toHaveBeenCalled()
+    expect(sessionStorage.getItem('procv_cookie_banner_dismissed')).toBe('1')
   })
 
   it('purges optional storage the server-side consent does not allow', async () => {

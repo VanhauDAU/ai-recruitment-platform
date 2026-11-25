@@ -8,6 +8,16 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Fixed — Giao diện mobile: ô chat Connect trên iPhone, banner cookie, ô Địa điểm
+
+- ProCV Connect: ô nhập trên màn hình cảm ứng dùng chữ 16px để iOS (Safari, Chrome)
+  không tự phóng to khi chạm — phóng to làm ô soạn trượt dưới thanh công cụ trình
+  duyệt và gõ bị giật. Ô soạn tự giãn bằng `field-sizing: content`; trình duyệt
+  chưa hỗ trợ thì chỉ thu chiều cao khi chữ ngắn đi, không co/giãn ở mỗi phím.
+- Banner cookie có nút ✕ trên điện thoại: ẩn trong phiên, không ghi lựa chọn
+  (cookie tùy chọn vẫn tắt); dock so sánh việc làm hạ xuống theo.
+- Viền ô "Địa điểm" ở tìm kiếm trang chủ đậm hơn trên mobile.
+
 #### Removed — `featured_employers` khỏi `GET /api/public/jobs/stats/`
 
 - Trang chủ đã lấy "Công ty nổi bật" từ danh bạ công khai; trường này không còn ai
