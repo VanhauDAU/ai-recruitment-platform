@@ -44,7 +44,7 @@ body {
 
 @media (max-width: 640px) {
   .cookie-consent-banner .ant-btn {
-    flex: 1 1 100%;
+    flex: 1 1 0;
   }
 
   .cookie-preferences-modal {

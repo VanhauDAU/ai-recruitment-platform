@@ -135,6 +135,8 @@
   "marketing_contact_chat_zalo": "Chat on Zalo",
   "marketing_contact_chat_messenger": "Messenger",
   "marketing_contact_map_title": "Map",
+  "marketing_contact_map_show": "Show map",
+  "marketing_contact_map_note": "The map is provided by Google Maps, which may set cookies once you open it.",
   "marketing_legal_terms_1_title": "1. Scope of service",
   "marketing_legal_terms_1_body": "The employer portal lets businesses create a company profile, post jobs, manage candidates and use the hiring tools published for each service package.",
   "marketing_legal_terms_2_title": "2. Account responsibility",

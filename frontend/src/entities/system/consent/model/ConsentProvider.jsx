@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { getConsent, saveConsent } from '../api/consent.api'
-import { EMPTY_CONSENT, clearConsentMirror, normalizeConsent, readConsentMirror, writeConsentMirror } from '../lib/consent-storage'
+import {
+  EMPTY_CONSENT,
+  clearConsentMirror,
+  normalizeConsent,
+  purgeWithdrawnStorage,
+  readConsentMirror,
+  writeConsentMirror,
+} from '../lib/consent-storage'
 import { ConsentContext } from './consent-context'
 
 const COOKIE_CONSENT_ENABLED = import.meta.env.VITE_COOKIE_CONSENT_ENABLED !== 'false'
@@ -27,12 +34,16 @@ export default function ConsentProvider({ children }) {
           clearConsentMirror()
           setIsDecided(false)
         }
+        purgeWithdrawnStorage(normalized)
         setStatus('ready')
       })
       .catch(() => {
         if (!active) return
-        // Fail closed: a stale UI mirror must never enable Analytics.
+        // Fail closed: a stale UI mirror must never enable optional storage
+        // (hasPreferenceConsent reads it) or Analytics.
         setConsent(EMPTY_CONSENT)
+        clearConsentMirror()
+        purgeWithdrawnStorage(EMPTY_CONSENT)
         setStatus('error')
         setIsDecided(false)
       })
@@ -46,6 +57,7 @@ export default function ConsentProvider({ children }) {
     if (!saved) throw new Error('Không thể lưu lựa chọn cookie.')
     setConsent(saved)
     writeConsentMirror(saved)
+    purgeWithdrawnStorage(saved)
     setIsDecided(true)
     setStatus('ready')
     return saved

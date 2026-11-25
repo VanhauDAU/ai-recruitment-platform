@@ -11,6 +11,9 @@ vi.mock('@/entities/system/site-settings', async (importOriginal) => ({
   useSiteSettings: () => ({ settings: site.settings, siteName: 'ProCV' }),
 }))
 
+const openSettings = vi.hoisted(() => vi.fn())
+vi.mock('@/entities/system/consent', () => ({ useConsent: () => ({ isEnabled: true, openSettings }) }))
+
 const renderFooter = () => render(<MemoryRouter><EmployerFooter /></MemoryRouter>)
 
 describe('EmployerFooter', () => {
@@ -37,5 +40,14 @@ describe('EmployerFooter', () => {
 
     expect(screen.getByLabelText('Facebook')).toBeInTheDocument()
     expect(screen.getByText('hotro@procv.vn')).toBeInTheDocument()
+  })
+
+  it('lets visitors reopen cookie settings and read the cookie policy', () => {
+    site.settings = {}
+    renderFooter()
+
+    screen.getByRole('button', { name: 'Cài đặt cookie' }).click()
+    expect(openSettings).toHaveBeenCalledOnce()
+    expect(screen.getByRole('link', { name: 'Chính sách cookie' })).toHaveAttribute('href', '/chinh-sach-cookie')
   })
 })

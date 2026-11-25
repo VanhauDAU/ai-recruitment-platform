@@ -8,10 +8,14 @@ import { useConsent } from '@/entities/system/consent'
 export function useCaptureCampaignRef() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { consent } = useConsent()
-  const analytics = consent?.analytics === true
+  const { consent, status } = useConsent()
+  // Khi đang tải, `consent` còn là bản sao localStorage có thể đã cũ: chờ máy
+  // chủ xác nhận rồi mới quyết định có lưu lâu dài hay không.
+  const settled = status !== 'loading'
+  const analytics = status === 'ready' && consent?.analytics === true
 
   useEffect(() => {
+    if (!settled) return
     const params = new URLSearchParams(location.search)
     const ref = params.get('ref')
     if (!ref) return
@@ -19,11 +23,11 @@ export function useCaptureCampaignRef() {
     params.delete('ref')
     const search = params.toString()
     navigate({ pathname: location.pathname, search: search ? `?${search}` : '', hash: location.hash }, { replace: true })
-  }, [analytics, location.hash, location.pathname, location.search, navigate])
+  }, [analytics, location.hash, location.pathname, location.search, navigate, settled])
 
   useEffect(() => {
-    if (!analytics) clearStoredCampaignRef()
-  }, [analytics])
+    if (settled && !analytics) clearStoredCampaignRef()
+  }, [analytics, settled])
 }
 
 export function CampaignRefCapture() {

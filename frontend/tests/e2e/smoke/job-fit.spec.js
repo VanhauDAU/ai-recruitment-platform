@@ -80,7 +80,7 @@ async function mockApi(page) {
 test('candidate smoke: job fit analyses a CV and explains the result with evidence', { tag: '@responsive' }, async ({ page }, testInfo) => {
   await mockApi(page)
   await page.goto(`/viec-lam/${JOB.slug}`)
-  await page.getByRole('button', { name: 'Chỉ cookie thiết yếu' }).click()
+  await page.getByRole('button', { name: 'Chỉ thiết yếu' }).click()
 
   // Mỗi màn hình đúng một thẻ: cột phải từ 1024 px, dưới thông tin tin khi nhỏ hơn.
   const trigger = page.getByRole('button', { name: /Xem độ phù hợp với CV của bạn/ })
