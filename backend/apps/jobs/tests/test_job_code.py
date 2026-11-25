@@ -7,7 +7,7 @@ from django.db import IntegrityError
 from django.test import TestCase
 
 from apps.employers.tests.factories import make_company, make_employer, publish_job
-from common.tests.migration_case import MigrationTestCase
+from common.tests.migration_case import drop_not_null, run_data_migration
 
 from ..domain.job_code import JOB_CODE_REGEX
 from ..models import Job
@@ -55,27 +55,22 @@ class JobCodeTests(TestCase):
             self.assertEqual(list(mine.values_list('pk', flat=True)), [job.pk], query)
 
 
-class JobCodeMigrationTests(MigrationTestCase):
-    before = [('jobs', '0002_reference_data')]
-    after = [('jobs', '0004_job_code_required')]
-
-    def test_existing_jobs_receive_distinct_codes(self):
+class JobCodeMigrationTests(TestCase):
+    def test_existing_jobs_receive_distinct_codes_and_coded_jobs_keep_theirs(self):
         employer = make_employer('legacy-job@example.com')
         company = make_company(employer, name='Công ty cũ')
-        apps = self.migrate(self.before)
-        OldJob = apps.get_model('jobs', 'Job')
-        for index in range(3):
-            OldJob.objects.create(
-                public_id=f'jb_legacy{index}',
-                slug=f'legacy-{index}',
-                posted_by_id=employer.pk,
-                company_id=company.pk,
-                title='Tin cũ',
-                description='Mô tả',
-            )
+        kept = publish_job(company, employer, title='Tin đã có mã')
+        Job.objects.filter(pk=kept.pk).update(code='J4829173')
+        legacy = [publish_job(company, employer, title=f'Tin cũ {index}') for index in range(3)]
+        drop_not_null(Job, 'code')
+        Job.objects.filter(pk__in=[job.pk for job in legacy]).update(code=None)
 
-        self.migrate(self.after)
+        run_data_migration('apps.jobs.migrations.0003_job_code', 'assign_codes')
 
-        codes = set(Job.objects.filter(company=company).values_list('code', flat=True))
+        codes = set(
+            Job.objects.filter(pk__in=[job.pk for job in legacy]).values_list('code', flat=True)
+        )
         self.assertEqual(len(codes), 3)
         self.assertTrue(all(CODE.match(code) for code in codes), codes)
+        self.assertNotIn('J4829173', codes)
+        self.assertEqual(Job.objects.get(pk=kept.pk).code, 'J4829173')

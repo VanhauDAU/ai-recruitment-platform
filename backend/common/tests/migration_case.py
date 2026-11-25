@@ -1,9 +1,39 @@
-"""Lớp cơ sở cho test data migration (chạy ngược rồi tiến lại trên DB của worker)."""
+"""Công cụ test data migration.
 
+- ``run_data_migration``: gọi thẳng hàm RunPython trên schema hiện tại trong một
+  ``TestCase`` — nhanh, dùng khi chỉ cần kiểm logic điền dữ liệu.
+- ``MigrationTestCase``: chạy ngược rồi tiến lại thật trên DB của worker — chậm
+  (gỡ cả migration phụ thuộc ở app khác), chỉ dùng khi phải kiểm cả đổi schema.
+"""
+
+from importlib import import_module
+
+from django.apps import apps as django_apps
 from django.core.management import call_command
 from django.db import connection
 from django.db.migrations.executor import MigrationExecutor
 from django.test import TransactionTestCase
+
+
+def drop_not_null(model, field_name):
+    """Cho cột nhận NULL như trước migration bắt buộc giá trị.
+
+    Chỉ gọi trong ``TestCase``: PostgreSQL hoàn tác DDL cùng giao dịch của test.
+    """
+    quote = connection.ops.quote_name
+    column = model._meta.get_field(field_name).column
+    with connection.cursor() as cursor:
+        # Hàng vừa tạo trong test để lại trigger khóa ngoại deferred; ALTER TABLE sẽ
+        # báo "pending trigger events" nếu không kiểm chúng ngay.
+        cursor.execute('SET CONSTRAINTS ALL IMMEDIATE')
+        cursor.execute(
+            f'ALTER TABLE {quote(model._meta.db_table)} ALTER COLUMN {quote(column)} DROP NOT NULL'
+        )
+
+
+def run_data_migration(module_path, function_name):
+    """Chạy hàm RunPython của một migration với registry model hiện tại."""
+    getattr(import_module(module_path), function_name)(django_apps, None)
 
 
 class MigrationTestCase(TransactionTestCase):

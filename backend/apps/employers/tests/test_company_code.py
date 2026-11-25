@@ -6,7 +6,7 @@ from unittest.mock import patch
 from django.db import IntegrityError
 from django.test import TestCase
 
-from common.tests.migration_case import MigrationTestCase
+from common.tests.migration_case import drop_not_null, run_data_migration
 
 from ..domain.company_code import COMPANY_CODE_REGEX
 from ..models import Company
@@ -54,24 +54,23 @@ class CompanyCodeTests(TestCase):
             self.assertEqual(list(found.values_list('pk', flat=True)), [company.pk], query)
 
 
-class CompanyCodeMigrationTests(MigrationTestCase):
-    before = [('employers', '0006_company_follow_notify_since')]
-    after = [('employers', '0008_company_code_required')]
-
-    def test_existing_companies_receive_distinct_codes(self):
+class CompanyCodeMigrationTests(TestCase):
+    def test_existing_companies_receive_distinct_codes_and_coded_ones_keep_theirs(self):
         employer = make_employer('legacy-company@example.com')
-        apps = self.migrate(self.before)
-        OldCompany = apps.get_model('employers', 'Company')
-        for index in range(3):
-            OldCompany.objects.create(
-                public_id=f'co_legacy{index}',
-                slug=f'legacy-{index}',
-                company_name=f'Công ty cũ {index}',
-                created_by_id=employer.pk,
+        kept = make_company(employer, name='Đã có mã')
+        Company.objects.filter(pk=kept.pk).update(code='C305812')
+        legacy = [make_company(employer, name=f'Công ty cũ {index}') for index in range(3)]
+        drop_not_null(Company, 'code')
+        Company.objects.filter(pk__in=[company.pk for company in legacy]).update(code=None)
+
+        run_data_migration('apps.employers.migrations.0007_company_code', 'assign_codes')
+
+        codes = set(
+            Company.objects.filter(pk__in=[company.pk for company in legacy]).values_list(
+                'code', flat=True
             )
-
-        self.migrate(self.after)
-
-        codes = set(Company.objects.values_list('code', flat=True))
+        )
         self.assertEqual(len(codes), 3)
         self.assertTrue(all(CODE.match(code) for code in codes), codes)
+        self.assertNotIn('C305812', codes)
+        self.assertEqual(Company.objects.get(pk=kept.pk).code, 'C305812')
