@@ -42,6 +42,11 @@ def candidate_status_notification_delay():
     return timedelta(seconds=_int('candidate_status_notify_delay_seconds', 15, 0, 60))
 
 
+def interview_decision_reminder_delay():
+    """Sau buổi phỏng vấn bao lâu chưa có kết quả thì nhắc NTD (ứng viên cũng được nhắc từ đó)."""
+    return timedelta(days=_int('interview_decision_reminder_days', 3, 1, 30))
+
+
 def system_reminder_days():
     """Các mốc (ngày từ lúc nộp) hệ thống nhắc nhà tuyển dụng; tăng dần, không trùng."""
     value = get_setting('recruiter_reminder_days')

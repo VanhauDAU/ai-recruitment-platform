@@ -13,7 +13,7 @@ import { findCachedConversation } from './conversation-list'
 // Fallback khi socket đóng (mạng chặn WebSocket, server realtime bảo trì).
 const FALLBACK_POLL_MS = 60_000
 const TOAST_PREVIEW_CHARS = 80
-const BADGE_EVENTS = new Set(['chat.message.created', 'chat.read', 'chat.conversation.updated'])
+const BADGE_EVENTS = new Set(['chat.message.created', 'chat.read'])
 
 function counterpartName(queryClient, portal, conversationId) {
   for (const [, data] of queryClient.getQueriesData({ queryKey: conversationKeys.lists(portal) })) {

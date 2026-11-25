@@ -25,6 +25,7 @@ from ...selectors import (
 )
 from ...services import (
     candidate_limit_remaining,
+    clear_conversation,
     lock_reason,
     mark_read,
     open_message_file,
@@ -32,10 +33,12 @@ from ...services import (
     present_message,
     send_attachment,
     send_message,
+    set_conversation_block,
     start_candidate_conversation,
     start_recruiter_conversation,
 )
 from ..serializers import (
+    BlockSerializer,
     ConversationQuerySerializer,
     MessagesQuerySerializer,
     ReadSerializer,
@@ -191,6 +194,7 @@ class ConversationMessageListCreateView(PortalView):
         query.is_valid(raise_exception=True)
         rows, has_more = messages_page(
             conversation,
+            role=self.role,
             before=query.validated_data.get('before'),
             after=query.validated_data.get('after'),
             limit=query.validated_data['limit'],
@@ -261,7 +265,7 @@ class ConversationReadView(PortalView):
 class ConversationMessageFileView(PortalView):
     def get(self, request, public_id, message_id):
         conversation = get_conversation(request, self.role, public_id)
-        message = message_for(conversation, message_id)
+        message = message_for(conversation, message_id, self.role)
         if message is None:
             raise Http404
         stream, content_type, filename = open_message_file(
@@ -276,3 +280,34 @@ class ConversationMessageFileView(PortalView):
         response['Cache-Control'] = 'private, no-store'
         response['X-Content-Type-Options'] = 'nosniff'
         return response
+
+
+@extend_schema(
+    tags=['messaging'],
+    summary='Xóa cuộc trò chuyện phía mình (bên kia giữ nguyên; tin mới hiện lại)',
+    request=None,
+    responses={204: None},
+)
+class ConversationClearView(PortalView):
+    def post(self, request, public_id):
+        clear_conversation(get_conversation(request, self.role, public_id), self.role)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema(
+    tags=['messaging'],
+    summary='Chặn hoặc gỡ chặn nhắn tin trong cuộc trò chuyện',
+    request=BlockSerializer,
+    responses={200: OpenApiTypes.OBJECT},
+)
+class ConversationBlockView(PortalView):
+    def post(self, request, public_id):
+        serializer = BlockSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        set_conversation_block(
+            get_conversation(request, self.role, public_id),
+            self.role,
+            serializer.validated_data['blocked'],
+        )
+        conversation = get_conversation(request, self.role, public_id)
+        return Response(present_conversations([conversation], self.role, detail=True)[0])

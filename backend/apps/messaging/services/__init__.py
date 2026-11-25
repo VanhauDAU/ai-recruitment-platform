@@ -3,10 +3,15 @@
 from .access import candidate_limit_remaining, lock_reason
 from .attachments import open_message_file, send_attachment
 from .background import send_interview_reminders, send_unread_message_emails
-from .conversations import mark_read, start_candidate_conversation, start_recruiter_conversation
+from .conversations import (
+    clear_conversation,
+    mark_read,
+    set_conversation_block,
+    start_candidate_conversation,
+    start_recruiter_conversation,
+)
 from .interviews import (
     cancel_interview,
-    complete_interview,
     propose_interview,
     respond_to_interview,
 )
@@ -19,8 +24,8 @@ from .privacy import erase_user_messages, typing_target
 __all__ = [
     'attachment_max_bytes',
     'cancel_interview',
+    'clear_conversation',
     'candidate_limit_remaining',
-    'complete_interview',
     'connect_enabled',
     'erase_user_messages',
     'job_card',
@@ -36,6 +41,7 @@ __all__ = [
     'send_interview_reminders',
     'send_message',
     'send_unread_message_emails',
+    'set_conversation_block',
     'start_candidate_conversation',
     'start_recruiter_conversation',
     'typing_target',

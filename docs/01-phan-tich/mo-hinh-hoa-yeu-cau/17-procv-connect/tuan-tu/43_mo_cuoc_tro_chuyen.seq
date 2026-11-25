@@ -18,11 +18,10 @@ FE --> UV : "Bạn chưa thể nhắn tin về tin này"
 else Đủ điều kiện
 BE -> DB : get_or_create Conversation(job, candidate); phía NTD là người phụ trách tin (job.posted_by)
 opt Hội thoại mới tạo
-BE -> DB : Ghi tin hệ thống "Bắt đầu trao đổi về tin ..." (seq 1)
-BE ->> RT : push_to_user(NTD) chat.conversation.updated (sau commit)
-RT ->> NTD : Hội thoại mới hiện đầu danh sách, badge tăng
+BE -> DB : Ghi tin hệ thống "Cuộc trò chuyện đã bắt đầu" (seq 1), chưa tính là hoạt động
 end
 BE --> FE : 200 hoặc 201 hội thoại kèm ngữ cảnh tin và trạng thái hồ sơ đã công bố
 FE --> UV : Mở khung chat, hiện thẻ tin đang trao đổi
 end
+note over UV,NTD : Hội thoại chỉ hiện ở danh sách hai bên và tính chưa đọc khi có tin thật đầu tiên (sơ đồ 44)
 note over NTD,BE : NTD mở từ hồ sơ ứng tuyển hoặc ứng viên đã nhận lời mời kết nối: POST /api/employer/conversations/ {application | invitation}; kiểm tra là người phụ trách tin và quyền xem dữ liệu ứng viên

@@ -26,6 +26,7 @@ LOCK_MESSAGES = {
     LockedReason.UNAVAILABLE: gettext_lazy('Cuộc trò chuyện hiện không nhận tin nhắn.'),
     LockedReason.BLOCKED: gettext_lazy('Ứng viên này đang bị công ty chặn.'),
     LockedReason.WITHDRAWN: gettext_lazy('Hồ sơ ứng tuyển đã được rút nên không gửi được tin.'),
+    LockedReason.BLOCKED_BY_ME: gettext_lazy('Bạn đã chặn tin nhắn trong cuộc trò chuyện này.'),
     LockedReason.ACCOUNT: gettext_lazy('Tài khoản bên kia không còn hoạt động.'),
     LockedReason.DISABLED: gettext_lazy('ProCV Connect đang tạm tắt.'),
 }
@@ -52,12 +53,15 @@ def append_message(
     payload=None,
     reader_role=None,
     push=True,
+    activity=True,
     **fields,
 ):
     """Ghi một tin vào hội thoại đã ``select_for_update``; cập nhật seq, xem trước, chưa đọc.
 
     ``reader_role`` là phía coi như đã đọc tin này (người gửi; với tin hệ thống là
-    người gây ra sự kiện). Phía còn lại tăng số chưa đọc.
+    người gây ra sự kiện). Phía còn lại tăng số chưa đọc. ``activity=False`` (tin hệ
+    thống "bắt đầu trò chuyện"): chỉ ghi vào luồng, không đưa hội thoại lên danh sách,
+    không tính chưa đọc — hội thoại chỉ hiện khi có tin thật đầu tiên.
     """
     reader_role = reader_role or role
     now = timezone.now()
@@ -72,6 +76,11 @@ def append_message(
         payload=payload or {},
         **fields,
     )
+    if not activity:
+        conversation.save(update_fields=['last_seq'])
+        if push:
+            push_message(conversation, message)
+        return message
     conversation.last_message_at = now
     conversation.last_message_preview = message_preview(body) if kind == Message.Kind.TEXT else ''
     conversation.last_message_kind = kind
@@ -121,7 +130,7 @@ def _existing(user, client_id):
     if client_id is None:
         return None
     return (
-        Message.objects.select_related('interview', 'cv_version')
+        Message.objects.select_related('interview__application', 'cv_version')
         .filter(sender=user, client_id=client_id)
         .first()
     )

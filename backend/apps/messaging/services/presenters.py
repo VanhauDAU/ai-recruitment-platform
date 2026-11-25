@@ -4,6 +4,8 @@ Một nơi dựng payload nên tin đẩy qua socket không bao giờ chứa nhi
 đã cho người nhận đọc (ADR-0032, quyết định 3).
 """
 
+from datetime import timedelta
+
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.utils.translation import gettext_lazy
@@ -105,6 +107,7 @@ def present_conversation(
         'last_seq': conversation.last_seq,
         'unread_count': conversation.unread(role),
         'peer_last_read_seq': conversation.last_read_seq(peer),
+        'blocked_by_me': conversation.blocked_by(role),
         'can_send': not lock,
         'locked_reason': str(lock),
         'candidate_limit_remaining': limit_remaining,
@@ -116,6 +119,7 @@ def _interview(interview, role):
     if interview is None:
         return None
     now = timezone.now()
+    ended = now >= interview.starts_at + timedelta(minutes=interview.duration_minutes)
     is_open = interview.status == InterviewAppointment.Status.PROPOSED
     active = interview.status in (
         InterviewAppointment.Status.PROPOSED,
@@ -133,13 +137,21 @@ def _interview(interview, role):
         'status': interview.status,
         'candidate_note': interview.candidate_note,
         'responded_at': interview.responded_at,
+        'ended': ended,
         'actions': {
             'respond': role == Role.CANDIDATE and is_open and interview.starts_at > now,
-            'cancel': role == Role.RECRUITER and active,
-            'complete': role == Role.RECRUITER
+            'cancel': role == Role.RECRUITER and active and not ended,
+            # Ứng viên xin đổi giờ (hoặc NTD tự đổi trước giờ hẹn): mở form với chi tiết cũ.
+            'reschedule': role == Role.RECRUITER and active and not ended,
+            # Qua giờ hẹn đã nhận: NTD ra kết quả ngay trên thẻ (Trúng tuyển / Không phù hợp).
+            'decide': role == Role.RECRUITER
+            and ended
             and interview.status == InterviewAppointment.Status.ACCEPTED
-            and interview.starts_at <= now,
+            and interview.application.status == Application.Status.INTERVIEWED,
         },
+        'application_public_id': interview.application.public_id
+        if role == Role.RECRUITER
+        else None,
     }
 
 

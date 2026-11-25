@@ -58,7 +58,17 @@ email nhắc cho tới khi đủ điều kiện lại.
 | Tài khoản bị khóa | Khóa; mở lại khi tài khoản được mở |
 | Xóa tài khoản | Xóa nội dung và tệp của người đó, hiện "Tài khoản đã xóa", khóa vĩnh viễn |
 
-### 3.4 Quyền riêng tư
+### 3.4 Menu 3 chấm trên dòng hội thoại (chốt 26/11)
+
+- **Xóa cuộc trò chuyện** chỉ phía mình: ẩn hội thoại và mọi tin hiện có khỏi danh sách và luồng
+  của người xóa (`*_cleared_seq`); bên kia giữ nguyên. Bên kia nhắn tin mới thì hội thoại hiện lại
+  với các tin mới.
+- **Chặn tin nhắn** trong hội thoại: không bên nào gửi được (kể cả đặt lịch) tới khi người chặn bỏ
+  chặn; bên bị chặn thấy câu trung lập "Cuộc trò chuyện hiện không nhận tin nhắn", không báo là bị
+  chặn; "đang soạn tin" cũng dừng. Không ảnh hưởng hồ sơ ứng tuyển và khác với chặn ứng viên theo
+  công ty. Người chặn bỏ chặn ở menu hoặc ngay tại khung soạn.
+
+### 3.5 Quyền riêng tư
 
 - Admin không có màn hình đọc hội thoại. Báo cáo tin nhắn vi phạm để giai đoạn sau.
 - Email nhắc chỉ ghi số tin mới, người gửi và tin tuyển dụng; không kèm nội dung.
@@ -103,26 +113,38 @@ thoại), địa điểm hoặc link họp, ghi chú; ứng viên có thể kèm
 
 ```mermaid
 stateDiagram-v2
-    [*] --> proposed: NTD đề xuất
+    [*] --> proposed: NTD đề xuất (hồ sơ chuyển "Phỏng vấn")
     proposed --> accepted: UV chấp nhận
     proposed --> declined: UV từ chối
     proposed --> reschedule_requested: UV đề nghị giờ khác
-    proposed --> superseded: NTD đề xuất lịch mới
-    reschedule_requested --> superseded: NTD đề xuất lại
-    reschedule_requested --> cancelled: NTD hủy
+    proposed --> superseded: NTD đổi giờ
+    reschedule_requested --> superseded: NTD đổi giờ
+    accepted --> superseded: NTD đổi giờ trước giờ hẹn
     proposed --> cancelled: NTD hủy
-    accepted --> cancelled: Một bên hủy
-    accepted --> completed: Qua giờ hẹn, NTD đánh dấu
+    reschedule_requested --> cancelled: NTD hủy
+    accepted --> cancelled: NTD hủy trước giờ hẹn
     declined --> [*]
     cancelled --> [*]
     superseded --> [*]
-    completed --> [*]
+    accepted --> [*]: Qua giờ hẹn → NTD ra kết quả hồ sơ
 ```
 
+**Gắn với trạng thái hồ sơ** (chốt 26/11):
+- Gửi lịch là mời phỏng vấn: hồ sơ "Mới / Đã xem / Phù hợp" chuyển "Phỏng vấn" qua đúng
+  `change_application_status` (lịch sử, hoạt động chiến dịch) và báo ứng viên **ngay**, một thông
+  báo trỏ vào hội thoại (không qua cửa sổ hoàn tác vì lịch đã hiện trong chat). Hồ sơ đã ở
+  "Phỏng vấn" (lịch mới, đổi giờ) thì báo riêng về lịch hẹn. Nhờ vậy hồ sơ có lịch không còn bị
+  tính "chưa phản hồi" (không bị nhắc/tự từ chối nhầm).
+- Ứng viên xin đổi giờ → thẻ phía NTD có "Đổi giờ": form điền sẵn hình thức, địa điểm/link, ghi
+  chú và hiện ghi chú của ứng viên; gửi là lịch mới thay lịch cũ.
+- Qua giờ hẹn đã nhận: thẻ ghi "Đã diễn ra"; phía NTD có Trúng tuyển / Không phù hợp (quyết định
+  hồ sơ bình thường, có cửa sổ hoàn tác). Không còn trạng thái "đã phỏng vấn" riêng của lịch.
+- Chờ kết quả: mốc là lúc buổi hẹn kết thúc (`Application.interview_ended_at`), không có lịch thì
+  lúc mời phỏng vấn. Quá `interview_decision_reminder_days` (mặc định 3) chưa có kết quả → nhắc NTD
+  một lần (chuông + email, không dữ liệu cá nhân) và ứng viên được bấm "Nhắc NTD". **Không tự từ
+  chối** hồ sơ đã phỏng vấn.
 - Chấp nhận → email kèm tệp `.ics` cho hai bên; beat nhắc trước 24 giờ và 1 giờ.
-- Mỗi lần đổi trạng thái: tin hệ thống + thẻ cập nhật (`chat.message.updated`) + chuông.
-- Đánh dấu đã phỏng vấn không tự đổi trạng thái hồ sơ; NTD chọn "Phỏng vấn" vẫn đi qua
-  `change_application_status` (giữ cửa sổ hoàn tác).
+- Mỗi lần đổi trạng thái lịch: tin hệ thống + thẻ cập nhật (`chat.message.updated`) + chuông.
 
 ## 7. Kiến trúc
 

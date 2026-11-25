@@ -20,7 +20,6 @@ class InterviewAppointment(models.Model):
         RESCHEDULE_REQUESTED = 'reschedule_requested', 'Reschedule requested'
         CANCELLED = 'cancelled', 'Cancelled'
         SUPERSEDED = 'superseded', 'Superseded'
-        COMPLETED = 'completed', 'Completed'
 
     # Lịch còn "mở": NTD đề xuất lại thì lịch cũ ở các trạng thái này bị thay.
     OPEN_STATUSES = (Status.PROPOSED, Status.RESCHEDULE_REQUESTED)

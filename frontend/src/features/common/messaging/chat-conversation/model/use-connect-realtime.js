@@ -74,6 +74,7 @@ export function useConnectRealtime({ portal, activeId }) {
       return
     }
     if (event.type === 'chat.conversation.updated') {
+      // Chặn / gỡ chặn: tải lại ngữ cảnh để khung soạn khóa hoặc mở đúng lúc.
       queryClient.invalidateQueries(listFilter)
       queryClient.invalidateQueries({ queryKey: conversationKeys.detail(portal, conversationId) })
       return

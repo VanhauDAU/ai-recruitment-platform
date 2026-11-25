@@ -5,15 +5,24 @@ from datetime import timedelta
 from django.db import transaction
 from django.utils import timezone
 from django.utils.translation import gettext as _
-from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
+from rest_framework.exceptions import NotFound, ValidationError
 
 from apps.applications.models import Application
+from apps.applications.services import (
+    InvalidApplicationStatusTransition,
+    change_application_status,
+    record_interview_end,
+)
 from apps.employers.services import ensure_recruiter_candidate_data_access
 
 from ..domain import Role, SystemEvent
 from ..models import InterviewAppointment, Message
 from .messages import append_message, ensure_can_send, lock_conversation
-from .notifications import notify_candidate_interview, notify_recruiter_interview
+from .notifications import (
+    conversation_path,
+    notify_candidate_interview,
+    notify_recruiter_interview,
+)
 from .realtime import push_message
 
 Status = InterviewAppointment.Status
@@ -25,8 +34,12 @@ RESPONSES = {
 }
 
 
+def _ended(interview):
+    return timezone.now() >= interview.starts_at + timedelta(minutes=interview.duration_minutes)
+
+
 def _push_cards(conversation, interviews):
-    for message in Message.objects.select_related('interview').filter(
+    for message in Message.objects.select_related('interview__application').filter(
         interview__in=interviews, kind=Message.Kind.INTERVIEW
     ):
         push_message(conversation, message, updated=True)
@@ -43,6 +56,25 @@ def _system(conversation, event, actor_role, interview):
     )
 
 
+def _invite(application, recruiter, conversation):
+    """Gửi lịch là mời phỏng vấn: hồ sơ chưa ở "Phỏng vấn" thì chuyển qua đúng luồng
+    quyết định (lịch sử, hoạt động) và báo ứng viên ngay — một thông báo trỏ vào hội thoại.
+    Trả True khi vừa chuyển trạng thái."""
+    if application.status == Application.Status.INTERVIEWED:
+        return False
+    try:
+        change_application_status(
+            application,
+            changed_by=recruiter,
+            status=Application.Status.INTERVIEWED,
+            notify_now=True,
+            action_path=conversation_path(conversation, Role.CANDIDATE),
+        )
+    except InvalidApplicationStatusTransition as error:
+        raise ValidationError({'detail': str(error)}) from error
+    return True
+
+
 @transaction.atomic
 def propose_interview(recruiter, public_id, data):
     ensure_recruiter_candidate_data_access(recruiter)
@@ -56,11 +88,18 @@ def propose_interview(recruiter, public_id, data):
         raise ValidationError({'meeting_url': _('Hãy nhập link họp trực tuyến.')})
     if data['mode'] == InterviewAppointment.Mode.ONSITE and not data.get('location'):
         raise ValidationError({'location': _('Hãy nhập địa điểm phỏng vấn.')})
-    replaced = list(
-        InterviewAppointment.objects.select_for_update().filter(
-            application=application, status__in=InterviewAppointment.OPEN_STATUSES
+    invited = _invite(application, recruiter, conversation)
+    # Lịch mới thay lịch đang chờ/xin đổi giờ, và cả lịch đã nhận chưa diễn ra (đổi giờ).
+    replaced = [
+        item
+        for item in InterviewAppointment.objects.select_for_update().filter(
+            application=application,
+            status__in=(*InterviewAppointment.OPEN_STATUSES, Status.ACCEPTED),
         )
-    )
+        if item.status != Status.ACCEPTED or not _ended(item)
+    ]
+    if any(item.status == Status.ACCEPTED for item in replaced):
+        record_interview_end(application.pk, None)
     InterviewAppointment.objects.filter(pk__in=[item.pk for item in replaced]).update(
         status=Status.SUPERSEDED, updated_at=timezone.now()
     )
@@ -84,7 +123,9 @@ def propose_interview(recruiter, public_id, data):
     )
     if replaced:
         _push_cards(conversation, replaced)
-    notify_candidate_interview(conversation, interview, scheduled=True)
+    if not invited:
+        # Đã ở "Phỏng vấn" (lịch mới, đổi giờ): báo riêng về lịch hẹn.
+        notify_candidate_interview(conversation, interview, scheduled=True)
     return message
 
 
@@ -114,6 +155,11 @@ def respond_to_interview(candidate, public_id, action, note=''):
     interview.candidate_note = str(note or '').strip()[:1000]
     interview.responded_at = timezone.now()
     interview.save(update_fields=['status', 'candidate_note', 'responded_at', 'updated_at'])
+    if status == Status.ACCEPTED:
+        record_interview_end(
+            interview.application_id,
+            interview.starts_at + timedelta(minutes=interview.duration_minutes),
+        )
     _push_cards(conversation, [interview])
     _system(conversation, event, Role.CANDIDATE, interview)
     notify_recruiter_interview(conversation, interview, action)
@@ -131,6 +177,8 @@ def cancel_interview(recruiter, public_id, note=''):
     interview, conversation = _recruiter_interview(recruiter, public_id)
     if interview.status not in (*InterviewAppointment.OPEN_STATUSES, Status.ACCEPTED):
         raise ValidationError({'detail': _('Lịch hẹn này không thể hủy.')})
+    if interview.status == Status.ACCEPTED:
+        record_interview_end(interview.application_id, None)
     interview.status = Status.CANCELLED
     if note:
         interview.note = f'{interview.note}\n{str(note).strip()[:1000]}'.strip()
@@ -138,16 +186,4 @@ def cancel_interview(recruiter, public_id, note=''):
     _push_cards(conversation, [interview])
     _system(conversation, SystemEvent.INTERVIEW_CANCELLED, Role.RECRUITER, interview)
     notify_candidate_interview(conversation, interview, scheduled=False)
-    return interview
-
-
-@transaction.atomic
-def complete_interview(recruiter, public_id):
-    interview, conversation = _recruiter_interview(recruiter, public_id)
-    if interview.status != Status.ACCEPTED or interview.starts_at > timezone.now():
-        raise PermissionDenied(_('Chỉ đánh dấu được lịch đã nhận và đã tới giờ hẹn.'))
-    interview.status = Status.COMPLETED
-    interview.save(update_fields=['status', 'updated_at'])
-    _push_cards(conversation, [interview])
-    _system(conversation, SystemEvent.INTERVIEW_COMPLETED, Role.RECRUITER, interview)
     return interview

@@ -24,7 +24,6 @@ from ...models import Message
 from ...selectors import applied_jobs_for_candidate, message_for, shareable_cvs, shareable_jobs
 from ...services import (
     cancel_interview,
-    complete_interview,
     present_message,
     propose_interview,
     respond_to_interview,
@@ -97,7 +96,7 @@ class ShareableJobsView(PortalView):
 
 def _cv_message(request, role, public_id, message_id):
     conversation = get_conversation(request, role, public_id)
-    message = message_for(conversation, message_id)
+    message = message_for(conversation, message_id, role)
     if message is None or message.kind != Message.Kind.CV or message.cv_version is None:
         raise Http404
     ensure_recruiter_candidate_data_access(request.user)
@@ -203,7 +202,7 @@ class InterviewCreateView(_InterviewView):
 
 def _card(interview, role):
     message = (
-        interview.messages.select_related('interview', 'cv_version')
+        interview.messages.select_related('interview__application', 'cv_version')
         .filter(kind=Message.Kind.INTERVIEW)
         .first()
     )
@@ -241,14 +240,3 @@ class InterviewCancelView(_InterviewView):
         serializer.is_valid(raise_exception=True)
         interview = cancel_interview(request.user, public_id, serializer.validated_data['note'])
         return Response(_card(interview, self.role))
-
-
-@extend_schema(
-    tags=['messaging'],
-    summary='NTD đánh dấu đã phỏng vấn',
-    request=None,
-    responses={200: OpenApiTypes.OBJECT},
-)
-class InterviewCompleteView(_InterviewView):
-    def post(self, request, public_id):
-        return Response(_card(complete_interview(request.user, public_id), self.role))

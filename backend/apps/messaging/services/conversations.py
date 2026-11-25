@@ -1,6 +1,7 @@
 """Mở hội thoại, quyền gửi và đánh dấu đã đọc."""
 
 from django.db import IntegrityError, transaction
+from django.utils import timezone
 from django.utils.translation import gettext as _
 from rest_framework.exceptions import NotFound, PermissionDenied
 
@@ -44,6 +45,7 @@ def _get_or_create(job, candidate, origin, opened_by_role):
         payload={'event': SystemEvent.STARTED, 'actor_role': str(opened_by_role)},
         reader_role=opened_by_role,
         push=False,
+        activity=False,
     )
     return conversation, True
 
@@ -69,8 +71,6 @@ def start_candidate_conversation(candidate, job_public_id):
     conversation, created = _get_or_create(
         job, candidate, Conversation.Origin.APPLICATION, Role.CANDIDATE
     )
-    if created:
-        push_conversation_changed(conversation, [job.posted_by_id])
     return conversation, created
 
 
@@ -100,8 +100,6 @@ def start_recruiter_conversation(recruiter, *, application_public_id='', invitat
     job, candidate = source.job, source.candidate
     _ensure_open(job, candidate, Role.RECRUITER)
     conversation, created = _get_or_create(job, candidate, origin, Role.RECRUITER)
-    if created:
-        push_conversation_changed(conversation, [candidate.pk])
     return conversation, created
 
 
@@ -124,4 +122,31 @@ def mark_read(conversation, role, seq):
     conversation.save(update_fields=fields)
     conversation.job = Job.objects.only('posted_by_id').get(pk=conversation.job_id)
     push_read(conversation, role)
+    return conversation
+
+
+@transaction.atomic
+def clear_conversation(conversation, role):
+    """Xóa phía mình: ẩn mọi tin hiện có; bên kia giữ nguyên, tin mới hiện lại hội thoại."""
+    conversation = Conversation.objects.select_for_update().get(pk=conversation.pk)
+    prefix = 'candidate' if role == Role.CANDIDATE else 'recruiter'
+    setattr(conversation, f'{prefix}_cleared_seq', conversation.last_seq)
+    setattr(conversation, f'{prefix}_last_read_seq', conversation.last_seq)
+    setattr(conversation, f'{prefix}_unread', 0)
+    conversation.save(
+        update_fields=[f'{prefix}_cleared_seq', f'{prefix}_last_read_seq', f'{prefix}_unread']
+    )
+    return conversation
+
+
+@transaction.atomic
+def set_conversation_block(conversation, role, blocked):
+    """Chặn hoặc gỡ chặn nhắn tin trong hội thoại; chỉ người chặn gỡ được."""
+    conversation = Conversation.objects.select_for_update().get(pk=conversation.pk)
+    field = 'candidate_blocked_at' if role == Role.CANDIDATE else 'recruiter_blocked_at'
+    if bool(getattr(conversation, field)) != blocked:
+        setattr(conversation, field, timezone.now() if blocked else None)
+        conversation.save(update_fields=[field])
+        conversation.job = Job.objects.only('posted_by_id').get(pk=conversation.job_id)
+        push_conversation_changed(conversation)
     return conversation

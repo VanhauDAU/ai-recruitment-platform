@@ -1,4 +1,5 @@
 from .inputs import (
+    BlockSerializer,
     ConversationQuerySerializer,
     InterviewCancelSerializer,
     InterviewCreateSerializer,
@@ -12,6 +13,7 @@ from .inputs import (
 )
 
 __all__ = [
+    'BlockSerializer',
     'ConversationQuerySerializer',
     'InterviewCancelSerializer',
     'InterviewCreateSerializer',

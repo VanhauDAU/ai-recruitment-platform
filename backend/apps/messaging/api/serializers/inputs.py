@@ -71,3 +71,7 @@ class InterviewRespondSerializer(serializers.Serializer):
 
 class InterviewCancelSerializer(serializers.Serializer):
     note = serializers.CharField(required=False, allow_blank=True, max_length=1000, default='')
+
+
+class BlockSerializer(serializers.Serializer):
+    blocked = serializers.BooleanField()

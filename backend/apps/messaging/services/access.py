@@ -29,6 +29,12 @@ def lock_reason(conversation, role, *, application=None, blocked=None):
     if blocked:
         # Ứng viên không được biết mình bị chặn (luật chặn theo công ty).
         return LockedReason.UNAVAILABLE if role == Role.CANDIDATE else LockedReason.BLOCKED
+    if conversation.blocked_by(role):
+        return LockedReason.BLOCKED_BY_ME
+    peer = Role.RECRUITER if role == Role.CANDIDATE else Role.CANDIDATE
+    if conversation.blocked_by(peer):
+        # Bên bị chặn chỉ thấy câu trung lập, như chặn theo công ty.
+        return LockedReason.UNAVAILABLE
     if application is not None and application.status == Application.Status.WITHDRAWN:
         return LockedReason.WITHDRAWN
     return LockedReason.NONE

@@ -152,6 +152,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'apps.applications.tasks.send_unanswered_application_reminders',
         **_every(3600),
     },
+    'send-interview-decision-reminders': {
+        'task': 'apps.applications.tasks.send_interview_decision_reminders',
+        **_every(3600),
+    },
     # Huy hiệu Sấm Chớp (ADR-0027): đo lại mức phản hồi của NTD và nhãn trên tin.
     'refresh-flash-badges': {
         'task': 'apps.applications.tasks.refresh_flash_badges',

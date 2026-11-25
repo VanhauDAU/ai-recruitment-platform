@@ -1,0 +1,8 @@
+{% load i18n %}{% blocktranslate trimmed with company=company_name %}Xin chào nhà tuyển dụng {{ company }},{% endblocktranslate %}
+
+{% blocktranslate trimmed with job=job_title total=count %}{{ total }} ứng viên đã phỏng vấn vị trí {{ job }} chưa nhận được kết quả.{% endblocktranslate %}
+
+{% blocktranslate trimmed with url=action_url %}Cập nhật kết quả: {{ url }}{% endblocktranslate %}
+
+{% blocktranslate trimmed with url=email_settings_url %}Quản lý email & thông báo: {{ url }}{% endblocktranslate %}
+— {{ site_name }}

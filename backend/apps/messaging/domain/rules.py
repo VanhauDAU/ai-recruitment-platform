@@ -22,6 +22,8 @@ class LockedReason(StrEnum):
     UNAVAILABLE = 'unavailable'
     BLOCKED = 'blocked'
     WITHDRAWN = 'withdrawn'
+    # Chính mình chặn nhắn tin trong hội thoại (gỡ được); bị bên kia chặn thì thấy UNAVAILABLE.
+    BLOCKED_BY_ME = 'blocked_by_me'
     ACCOUNT = 'account'
     DISABLED = 'disabled'
 
@@ -32,7 +34,6 @@ class SystemEvent(StrEnum):
     INTERVIEW_DECLINED = 'interview_declined'
     INTERVIEW_RESCHEDULE_REQUESTED = 'interview_reschedule_requested'
     INTERVIEW_CANCELLED = 'interview_cancelled'
-    INTERVIEW_COMPLETED = 'interview_completed'
 
 
 def message_preview(body):

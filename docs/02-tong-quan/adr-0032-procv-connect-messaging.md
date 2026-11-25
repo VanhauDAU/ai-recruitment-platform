@@ -39,7 +39,7 @@
    giây trong consumer), bỏ nếu cách lần trước < 3 giây, chuyển tới người còn lại; không
    lưu DB.
 6. **Sự kiện:** `chat.message.created`, `chat.message.updated`, `chat.read`,
-   `chat.conversation.updated`, `chat.typing`. Quyết định trạng thái hồ sơ **không** sinh
+   `chat.typing`. Hội thoại vừa mở mà chưa có tin thật không hiện ở danh sách hai bên. Quyết định trạng thái hồ sơ **không** sinh
    tin hệ thống để không lộ quyết định trong cửa sổ hoàn tác 15 giây.
 7. **Đính kèm tải thẳng lên API** (PDF, DOCX, PNG, JPG, WEBP), kiểm chữ ký tệp và cấu
    trúc bằng cùng bộ kiểm giấy tờ NTD (`validate_employer_document_file`: pypdf strict,

@@ -41,6 +41,12 @@ class Conversation(models.Model):
     candidate_emailed_seq = models.PositiveIntegerField(default=0)
     recruiter_emailed_seq = models.PositiveIntegerField(default=0)
     recruiter_replied_at = models.DateTimeField(null=True, blank=True)
+    # "Xóa cuộc trò chuyện" chỉ phía mình: ẩn mọi tin tới seq này; tin mới hiện lại hội thoại.
+    candidate_cleared_seq = models.PositiveIntegerField(default=0)
+    recruiter_cleared_seq = models.PositiveIntegerField(default=0)
+    # Một phía chặn nhắn tin trong hội thoại này: không bên nào gửi được tới khi người chặn gỡ.
+    candidate_blocked_at = models.DateTimeField(null=True, blank=True)
+    recruiter_blocked_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -72,6 +78,15 @@ class Conversation(models.Model):
 
     def unread(self, role):
         return self.candidate_unread if role == Role.CANDIDATE else self.recruiter_unread
+
+    def cleared_seq(self, role):
+        return self.candidate_cleared_seq if role == Role.CANDIDATE else self.recruiter_cleared_seq
+
+    def blocked_by(self, role):
+        blocked_at = (
+            self.candidate_blocked_at if role == Role.CANDIDATE else self.recruiter_blocked_at
+        )
+        return blocked_at is not None
 
 
 class Message(models.Model):

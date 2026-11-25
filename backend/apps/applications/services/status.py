@@ -98,9 +98,12 @@ def available_status_decisions(application, *, now=None):
     return [status for status in Application.DECISION_STATUSES if status in allowed]
 
 
-def notify_candidate_of_status(application, history, *, deliver_after, send_email=True):
+def notify_candidate_of_status(
+    application, history, *, deliver_after, send_email=True, action_path=''
+):
     """Schedule the candidate notice for one history row (keyed by that row)."""
     is_decision = history.to_status in Application.DECISION_STATUSES
+    extra = {'action_path': action_path} if action_path else {}
     return emit_candidate_notification(
         recipient=application.candidate,
         event_type=NOTICE_EVENT[history.to_status],
@@ -116,6 +119,7 @@ def notify_candidate_of_status(application, history, *, deliver_after, send_emai
             'application_public_id': application.public_id,
             'job_public_id': application.job.public_id,
         },
+        **extra,
     )
 
 
@@ -147,8 +151,12 @@ def _lock_with_candidate(application, *, changed_by):
 
 
 @transaction.atomic
-def change_application_status(application, *, changed_by, status):
-    """Apply one recruiter decision; returns ``(application, candidate_notice)``."""
+def change_application_status(application, *, changed_by, status, notify_now=False, action_path=''):
+    """Apply one recruiter decision; returns ``(application, candidate_notice)``.
+
+    ``notify_now``: the decision is already visible to the candidate (a schedule sent
+    in ProCV Connect), so the notice skips the undo window; ``action_path`` points it there.
+    """
     application = _lock_with_candidate(application, changed_by=changed_by)
     now = timezone.now()
     if status not in available_status_decisions(application, now=now):
@@ -170,6 +178,7 @@ def change_application_status(application, *, changed_by, status):
         STATUS_TIMESTAMP_FIELD[status]: now,
         'status_updated_at': now,
         'auto_rejection_reminder_sent_at': None,
+        'decision_reminder_sent_at': None,
     }
     if _reversible_auto_rejection(application, now):
         changes.update(rejected_at=None, auto_rejected_at=None, auto_rejection_email_sent_at=None)
@@ -185,7 +194,8 @@ def change_application_status(application, *, changed_by, status):
     notice = notify_candidate_of_status(
         application,
         history,
-        deliver_after=now + candidate_status_notification_delay(),
+        deliver_after=now if notify_now else now + candidate_status_notification_delay(),
+        action_path=action_path,
     )
     _record_status_activity(
         application, actor=changed_by, from_status=previous_status, to_status=status

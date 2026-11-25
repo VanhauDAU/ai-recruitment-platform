@@ -41,10 +41,10 @@ def typing_target(user_id, public_id):
     """``(người nhận, vai người gõ)`` nếu ``user_id`` thuộc hội thoại; ngược lại None."""
     row = (
         Conversation.objects.filter(public_id=public_id)
-        .values('candidate_id', 'job__posted_by_id')
+        .values('candidate_id', 'job__posted_by_id', 'candidate_blocked_at', 'recruiter_blocked_at')
         .first()
     )
-    if row is None:
+    if row is None or row['candidate_blocked_at'] or row['recruiter_blocked_at']:
         return None
     if row['candidate_id'] == user_id:
         return row['job__posted_by_id'], Role.CANDIDATE

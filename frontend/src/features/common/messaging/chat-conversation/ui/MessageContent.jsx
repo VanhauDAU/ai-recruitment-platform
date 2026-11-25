@@ -117,7 +117,7 @@ function ImageMessage({ portal, conversationId, message, onLoad }) {
 function InterviewCard({ message, renderInterviewActions }) {
   const { interview } = message
   const date = interviewDateParts(interview.starts_at)
-  const status = interviewStatusTag(interview.status)
+  const status = interviewStatusTag(interview.status, { ended: interview.ended })
   const ModeIcon = MODE_ICONS[interview.mode] || EnvironmentOutlined
   return (
     <div className="pc-stub">

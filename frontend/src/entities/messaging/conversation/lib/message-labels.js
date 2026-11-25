@@ -22,6 +22,7 @@ const LOCKED_REASONS = {
   unavailable: m.connect_locked_unavailable,
   blocked: m.connect_locked_blocked,
   withdrawn: m.connect_locked_withdrawn,
+  blocked_by_me: m.connect_locked_blocked_by_me,
   account: m.connect_locked_account,
   disabled: m.connect_locked_disabled,
 }
@@ -41,7 +42,7 @@ export function interviewModeLabel(mode) {
   return MODE_LABELS[mode]?.() || mode || ''
 }
 
-// Chấm trạng thái: xám khi chờ/đã xong, màu nhấn khi đã nhận, đỏ trầm khi từ chối/hủy.
+// Chấm trạng thái: xám khi chờ/đã diễn ra, màu nhấn khi đã nhận, đỏ trầm khi từ chối/hủy.
 const INTERVIEW_STATUSES = {
   proposed: [m.connect_interview_status_proposed, 'fog'],
   accepted: [m.connect_interview_status_accepted, 'accent'],
@@ -49,11 +50,14 @@ const INTERVIEW_STATUSES = {
   reschedule_requested: [m.connect_interview_status_reschedule_requested, 'slate'],
   cancelled: [m.connect_interview_status_cancelled, 'danger'],
   superseded: [m.connect_interview_status_superseded, 'fog'],
-  completed: [m.connect_interview_status_completed, 'fog'],
 }
 
-/** `{ label, tone }` — tone is fog, accent, slate or danger (a 6px dot + text). */
-export function interviewStatusTag(status) {
+/**
+ * `{ label, tone }` — tone is fog, accent, slate or danger (a 6px dot + text). An
+ * accepted interview whose time is over reads "Đã diễn ra".
+ */
+export function interviewStatusTag(status, { ended = false } = {}) {
+  if (status === 'accepted' && ended) return { label: m.connect_interview_status_ended(), tone: 'fog' }
   const [label, tone] = INTERVIEW_STATUSES[status] || [() => status || '', 'fog']
   return { label: label(), tone }
 }
@@ -64,8 +68,6 @@ const SYSTEM_EVENTS = {
   interview_declined: (actor) => m.connect_system_interview_declined({ actor }),
   interview_reschedule_requested: (actor) => m.connect_system_interview_reschedule_requested({ actor }),
   interview_cancelled: (actor) => m.connect_system_interview_cancelled({ actor }),
-  interview_completed: (actor) => m.connect_system_interview_completed({ actor }),
-  handover: () => m.connect_system_handover(),
 }
 
 function actorLabel(actorRole, myRole) {

@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useId, useState } from 'react'
-import { cancelInterview, completeInterview, storeThreadMessage } from '@/entities/messaging/conversation'
+import { applicationKeys, decideApplicationStatus } from '@/entities/application/application'
+import { cancelInterview, conversationKeys, storeThreadMessage } from '@/entities/messaging/conversation'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { m } from '@/shared/config/i18n'
 import { formatDateTime } from '@/shared/lib/date-time'
@@ -10,19 +11,21 @@ import { Button, Dialog } from '@/shared/ui/connect-kit'
 const NOTE_MAX = 500
 
 /**
- * Cancel (with an optional note for the candidate) or mark done the interview
- * on a card, as its `actions` allow. The cancel dialog carries a form field, so
- * it stays here instead of the shared yes/no confirmation.
+ * Reschedule (form prefilled from this card), cancel (with an optional note for the
+ * candidate), or — once the
+ * accepted interview is over — record the result of the application right on the
+ * card (Trúng tuyển / Không phù hợp, the normal decision with its undo window).
  */
-export default function InterviewCardActions({ conversation, message }) {
+export default function InterviewCardActions({ conversation, message, onReschedule }) {
   const queryClient = useQueryClient()
   const noteId = useId()
   const [cancelling, setCancelling] = useState(false)
+  const [deciding, setDeciding] = useState(null)
   const [note, setNote] = useState('')
   const interview = message.interview
   const actions = interview.actions || {}
   const mutation = useMutation({
-    mutationFn: (action) => (action === 'cancel' ? cancelInterview(interview.public_id, note.trim()) : completeInterview(interview.public_id)),
+    mutationFn: () => cancelInterview(interview.public_id, note.trim()),
     onSuccess: (updated) => {
       storeThreadMessage(queryClient, 'employer', conversation.public_id, updated)
       setCancelling(false)
@@ -30,16 +33,48 @@ export default function InterviewCardActions({ conversation, message }) {
     },
     onError: (error) => toast.error(getApiErrorMessage(error, m.connect_interview_update_failed())),
   })
-  if (!actions.cancel && !actions.complete) return null
+  const decision = useMutation({
+    mutationFn: (status) => decideApplicationStatus(interview.application_public_id, status),
+    onSuccess: (_data, status) => {
+      setDeciding(null)
+      toast.success(status === 'accepted' ? m.connect_interview_decided_accepted() : m.connect_interview_decided_rejected())
+      queryClient.invalidateQueries({ queryKey: conversationKeys.messages('employer', conversation.public_id) })
+      queryClient.invalidateQueries({ queryKey: conversationKeys.detail('employer', conversation.public_id) })
+      queryClient.invalidateQueries({ queryKey: applicationKeys.all })
+    },
+    onError: (error) => toast.error(getApiErrorMessage(error, m.connect_interview_update_failed())),
+  })
+  if (!actions.cancel && !actions.decide && !actions.reschedule) return null
 
   return (
     <div className="pc-stub__actions">
-      {actions.complete && (
-        <Button variant="ink" loading={mutation.isPending && mutation.variables === 'complete'} onClick={() => mutation.mutate('complete')}>
-          {m.connect_interview_complete()}
+      {actions.decide && (
+        <>
+          <Button variant="accent" onClick={() => setDeciding('accepted')}>{m.connect_interview_decide_accept()}</Button>
+          <Button variant="danger" onClick={() => setDeciding('rejected')}>{m.connect_interview_decide_reject()}</Button>
+        </>
+      )}
+      {actions.reschedule && onReschedule && (
+        <Button variant={interview.status === 'reschedule_requested' ? 'accent' : 'ink'} onClick={() => onReschedule(interview)}>
+          {m.connect_interview_reschedule()}
         </Button>
       )}
       {actions.cancel && <Button variant="danger" onClick={() => setCancelling(true)}>{m.connect_interview_cancel()}</Button>}
+      <Dialog
+        open={Boolean(deciding)}
+        title={deciding === 'accepted' ? m.connect_interview_decide_accept_title() : m.connect_interview_decide_reject_title()}
+        onClose={() => setDeciding(null)}
+        footer={(
+          <>
+            <Button variant="ink" onClick={() => setDeciding(null)}>{m.connect_close()}</Button>
+            <Button variant="primary" loading={decision.isPending} onClick={() => decision.mutate(deciding)}>
+              {deciding === 'accepted' ? m.connect_interview_decide_accept() : m.connect_interview_decide_reject()}
+            </Button>
+          </>
+        )}
+      >
+        <p className="pc-dialog__hint">{m.connect_interview_decide_text({ name: conversation.counterpart?.name || '' })}</p>
+      </Dialog>
       <Dialog
         open={cancelling}
         title={m.connect_interview_cancel_title()}
@@ -47,7 +82,7 @@ export default function InterviewCardActions({ conversation, message }) {
         footer={(
           <>
             <Button variant="ink" onClick={() => setCancelling(false)}>{m.connect_close()}</Button>
-            <Button variant="danger" loading={mutation.isPending && mutation.variables === 'cancel'} onClick={() => mutation.mutate('cancel')}>
+            <Button variant="danger" loading={mutation.isPending} onClick={() => mutation.mutate()}>
               {m.connect_interview_cancel()}
             </Button>
           </>

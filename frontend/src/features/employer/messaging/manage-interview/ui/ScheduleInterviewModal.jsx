@@ -23,11 +23,28 @@ function Field({ id, label, error, children }) {
   )
 }
 
-/** Propose an interview time; the card it creates replaces any earlier proposal. */
-export default function ScheduleInterviewModal({ conversation, onClose }) {
+// Đổi giờ giữ nguyên hình thức, địa điểm, link và ghi chú của lịch cũ; chỉ chọn giờ mới.
+function initialValues(previous) {
+  if (!previous) return { startsAt: '', duration: '60', mode: 'onsite', location: '', meetingUrl: '', note: '' }
+  return {
+    startsAt: '',
+    duration: String(previous.duration_minutes || 60),
+    mode: previous.mode || 'onsite',
+    location: previous.location || '',
+    meetingUrl: previous.meeting_url || '',
+    note: previous.note || '',
+  }
+}
+
+/**
+ * Propose an interview time; the card it creates replaces any earlier proposal.
+ * `previous` (an interview card) turns it into "Đổi giờ": details prefilled, the
+ * candidate's request shown, the old card superseded on send.
+ */
+export default function ScheduleInterviewModal({ conversation, previous = null, onClose }) {
   const queryClient = useQueryClient()
   const formId = useId()
-  const [values, setValues] = useState({ startsAt: '', duration: '60', mode: 'onsite', location: '', meetingUrl: '', note: '' })
+  const [values, setValues] = useState(() => initialValues(previous))
   const [errors, setErrors] = useState({})
   const [minStart] = useState(() => toLocalInputValue(new Date()))
   const set = (key) => (event) => setValues((current) => ({ ...current, [key]: event.target.value }))
@@ -52,7 +69,7 @@ export default function ScheduleInterviewModal({ conversation, onClose }) {
   return (
     <Dialog
       open
-      title={m.connect_interview_schedule_title()}
+      title={previous ? m.connect_interview_reschedule_title() : m.connect_interview_schedule_title()}
       onClose={onClose}
       footer={(
         <>
@@ -64,6 +81,9 @@ export default function ScheduleInterviewModal({ conversation, onClose }) {
       <p className="pc-dialog__hint">
         {m.connect_interview_schedule_for({ name: conversation.counterpart?.name || '', job: conversation.job?.title || '' })}
       </p>
+      {previous?.candidate_note && (
+        <p className="pc-dialog__hint">{m.connect_interview_candidate_note({ note: previous.candidate_note })}</p>
+      )}
       <form id={formId} noValidate onSubmit={submit} className="pc-form">
         <Field id={`${formId}-start`} label={m.connect_interview_starts_at()} error={errorOf('startsAt')}>
           <input

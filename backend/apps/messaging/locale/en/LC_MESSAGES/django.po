@@ -25,9 +25,6 @@ msgstr "The file is damaged or not in the declared format."
 msgid "ProCV Connect đang tạm tắt."
 msgstr "ProCV Connect is temporarily turned off."
 
-msgid "Chỉ đánh dấu được lịch đã nhận và đã tới giờ hẹn."
-msgstr "Only an accepted interview whose time has come can be marked as done."
-
 msgid "Chỉ hẹn phỏng vấn với hồ sơ đang xét tuyển."
 msgstr "Interviews can only be scheduled for applications still under review."
 
@@ -57,6 +54,9 @@ msgstr "This candidate is blocked by your company."
 
 msgid "Hồ sơ ứng tuyển đã được rút nên không gửi được tin."
 msgstr "The application was withdrawn, so messages cannot be sent."
+
+msgid "Bạn đã chặn tin nhắn trong cuộc trò chuyện này."
+msgstr "You blocked messages in this conversation."
 
 msgid "Tài khoản bên kia không còn hoạt động."
 msgstr "The other account is no longer active."

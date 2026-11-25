@@ -121,23 +121,35 @@ export default function MessageThread({ portal, conversation, typing = false, re
                 onMediaLoad={handleMediaLoad}
               />
             )
+            const counterpart = conversation.counterpart || {}
+            const bubble = (
+              <div className={`pc-msg ${message.mine ? 'pc-msg--mine' : 'pc-msg--theirs'}${grouped ? ' pc-msg--grouped' : ''}`}>
+                {card ? (
+                  <>
+                    {content}
+                    {time}
+                  </>
+                ) : (
+                  <div className={`pc-msg__bubble${message.status === 'failed' ? ' pc-msg__bubble--failed' : ''}`}>
+                    <span className="pc-msg__text">{content}</span>
+                    {time}
+                  </div>
+                )}
+                {message.mine && <MessageStatus message={message} seen={message.seq === seenSeq} onRetry={retry} />}
+              </div>
+            )
             return (
               <Fragment key={key}>
                 {separator}
-                <div className={`pc-msg ${message.mine ? 'pc-msg--mine' : 'pc-msg--theirs'}${grouped ? ' pc-msg--grouped' : ''}`}>
-                  {card ? (
-                    <>
-                      {content}
-                      {time}
-                    </>
-                  ) : (
-                    <div className={`pc-msg__bubble${message.status === 'failed' ? ' pc-msg__bubble--failed' : ''}`}>
-                      <span className="pc-msg__text">{content}</span>
-                      {time}
-                    </div>
-                  )}
-                  {message.mine && <MessageStatus message={message} seen={message.seq === seenSeq} onRetry={retry} />}
-                </div>
+                {message.mine ? bubble : (
+                  // Tin bên kia: avatar ở tin đầu mỗi cụm, các tin sau chừa chỗ cho thẳng hàng.
+                  <div className={`pc-msg-row${grouped ? ' pc-msg-row--grouped' : ''}`}>
+                    {grouped
+                      ? <span className="pc-msg-row__spacer" aria-hidden />
+                      : <Avatar src={counterpart.avatar_url} name={counterpart.name} size={32} />}
+                    {bubble}
+                  </div>
+                )}
               </Fragment>
             )
           })}

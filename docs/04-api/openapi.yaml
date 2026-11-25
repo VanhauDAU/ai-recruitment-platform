@@ -8869,6 +8869,57 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
+  /api/candidate/conversations/{public_id}/block/:
+    post:
+      operationId: candidate_conversations_block_create
+      summary: Chặn hoặc gỡ chặn nhắn tin trong cuộc trò chuyện
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BlockRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BlockRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BlockRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/candidate/conversations/{public_id}/clear/:
+    post:
+      operationId: candidate_conversations_clear_create
+      summary: Xóa cuộc trò chuyện phía mình (bên kia giữ nguyên; tin mới hiện lại)
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/candidate/conversations/{public_id}/messages/:
     get:
       operationId: candidate_conversations_messages_retrieve
@@ -13654,6 +13705,57 @@ paths:
                 type: object
                 additionalProperties: {}
           description: ''
+  /api/employer/conversations/{public_id}/block/:
+    post:
+      operationId: employer_conversations_block_create
+      summary: Chặn hoặc gỡ chặn nhắn tin trong cuộc trò chuyện
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BlockRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BlockRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BlockRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/employer/conversations/{public_id}/clear/:
+    post:
+      operationId: employer_conversations_clear_create
+      summary: Xóa cuộc trò chuyện phía mình (bên kia giữ nguyên; tin mới hiện lại)
+      parameters:
+      - in: path
+        name: public_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - messaging
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/employer/conversations/{public_id}/interviews/:
     post:
       operationId: employer_conversations_interviews_create
@@ -14054,28 +14156,6 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/InterviewCancelRequest'
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties: {}
-          description: ''
-  /api/employer/interviews/{public_id}/complete/:
-    post:
-      operationId: employer_interviews_complete_create
-      summary: NTD đánh dấu đã phỏng vấn
-      parameters:
-      - in: path
-        name: public_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - messaging
       security:
       - jwtAuth: []
       responses:
@@ -24747,6 +24827,13 @@ components:
     BlankEnum:
       enum:
       - ''
+    BlockRequest:
+      type: object
+      properties:
+        blocked:
+          type: boolean
+      required:
+      - blocked
     BlogPostStatusEnum:
       enum:
       - draft

@@ -1,11 +1,11 @@
 import { PaperClipOutlined, PlusOutlined, SendOutlined, SmileOutlined } from '@ant-design/icons'
 import { lazy, Suspense, useRef, useState } from 'react'
-import { lockedReasonText, useSendMessage } from '@/entities/messaging/conversation'
+import { lockedReasonText, useConversationOptions, useSendMessage } from '@/entities/messaging/conversation'
 import { useSiteSettings } from '@/entities/system/site-settings'
 import { sendRealtime } from '@/shared/api/realtime-socket'
 import { m } from '@/shared/config/i18n'
 import { message as toast } from '@/shared/lib/toast'
-import { IconButton, MenuList, Popover } from '@/shared/ui/connect-kit'
+import { Button, IconButton, MenuList, Popover } from '@/shared/ui/connect-kit'
 import { shouldSendTyping } from '../model/realtime-sync'
 
 const EmojiPicker = lazy(() => import('./EmojiPicker'))
@@ -21,6 +21,16 @@ function autosize(element) {
   if (!element) return
   element.style.height = 'auto'
   element.style.height = `${Math.min(element.scrollHeight, MAX_TEXTAREA_PX)}px`
+}
+
+/** Người đã chặn gỡ ngay tại khung soạn. */
+function UnblockButton({ portal, conversationId }) {
+  const { block } = useConversationOptions(portal, conversationId)
+  return (
+    <Button variant="accent" loading={block.isPending} onClick={() => block.mutate(false)}>
+      {m.connect_menu_unblock()}
+    </Button>
+  )
 }
 
 /**
@@ -45,6 +55,7 @@ export default function Composer({ portal, conversation, attachItems = [] }) {
     return (
       <p className="pc-composer pc-composer--locked" role="status">
         {conversation.can_send ? m.connect_limit_reached() : lockedReasonText(conversation.locked_reason)}
+        {conversation.locked_reason === 'blocked_by_me' && <UnblockButton portal={portal} conversationId={conversationId} />}
       </p>
     )
   }
