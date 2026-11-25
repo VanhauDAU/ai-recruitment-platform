@@ -36,7 +36,7 @@ jobs:
       changed_count: ${{ steps.areas.outputs.changed_count }}
       playwright: ${{ steps.playwright.outputs.version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -110,12 +110,12 @@ jobs:
         working-directory: .
         run: echo "epoch=$(date +%s)" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         if: ${{ needs.changes.outputs.frontend == 'true' }}
 
       - name: Setup Node
         if: ${{ needs.changes.outputs.frontend == 'true' }}
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: npm
@@ -197,7 +197,7 @@ jobs:
 
       - name: Upload static diagnostics
         if: ${{ failure() && needs.changes.outputs.frontend == 'true' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: frontend-static-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
           path: frontend/dist/bundle-stats.json
@@ -222,10 +222,10 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: npm
@@ -264,7 +264,7 @@ jobs:
 
       - name: Upload blob report
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: vitest-blob-${{ matrix.shard }}
           path: frontend/.vitest-reports/
@@ -274,7 +274,7 @@ jobs:
 
       - name: Upload shard diagnostics
         if: ${{ always() && steps.coverage_tests.outcome != 'success' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: frontend-coverage-shard-${{ matrix.shard }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: frontend/coverage.log
@@ -299,14 +299,14 @@ jobs:
           echo "coverage-shard result: $SHARD_RESULT"
           [[ "$SHARD_RESULT" == success ]]
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Start job timer
         id: timer
         run: echo "epoch=$(date +%s)" >> "$GITHUB_OUTPUT"
 
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: npm
@@ -316,7 +316,7 @@ jobs:
         run: npm ci --prefer-offline --no-audit
 
       - name: Download blob reports
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: vitest-blob-*
           path: frontend/.vitest-reports
@@ -416,7 +416,7 @@ jobs:
 
       - name: Upload coverage diagnostics
         if: ${{ always() && steps.coverage_tests.outcome != 'success' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: frontend-coverage-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
@@ -456,14 +456,14 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Start job timer
         id: timer
         run: echo "epoch=$(date +%s)" >> "$GITHUB_OUTPUT"
 
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: npm
@@ -503,7 +503,7 @@ jobs:
 
       - name: Upload Playwright diagnostics
         if: ${{ always() && steps.e2e.outcome != 'success' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-smoke-report-${{ matrix.project }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
@@ -520,7 +520,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Matrix covers every Playwright project
         run: |
@@ -559,7 +559,7 @@ jobs:
           [[ "$CHANGES_RESULT" == success ]]
           [[ "$AUDIT_REQUIRED" == true || "$AUDIT_REQUIRED" == false ]]
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         if: ${{ needs.changes.outputs.audit == 'true' }}
 
       - name: Start job timer
@@ -570,7 +570,7 @@ jobs:
 
       - name: Setup Node
         if: ${{ needs.changes.outputs.audit == 'true' }}
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
 
