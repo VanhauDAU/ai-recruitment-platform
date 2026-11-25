@@ -14,6 +14,7 @@ import FeaturedIndustriesEmployers from './ui/FeaturedIndustriesEmployers'
 import FlashBadge from './ui/FlashBadge'
 import HotlineConsultation from './ui/HotlineConsultation'
 import HomeHeroMascot from './ui/HomeHeroMascot'
+import HeroTypingTitle from './ui/HeroTypingTitle'
 import { LocationFilter } from '@/entities/system/location'
 import MarketStats from './ui/MarketStats'
 import { SearchDropdown, saveHistory } from '@/features/main/job/search-jobs'
@@ -142,9 +143,7 @@ export default function Home() {
             {formatNumber(jobCount)} việc làm đang tuyển hôm nay
           </div>
 
-          <Typography.Title level={1} className="!text-white !mb-3 !mt-5 !text-3xl md:!text-4xl !font-extrabold">
-            {siteName} — Tạo CV, Tìm việc làm, Tuyển dụng hiệu quả
-          </Typography.Title>
+          <HeroTypingTitle siteName={siteName} />
           <Typography.Paragraph className="home-hero-muted !text-base md:!text-lg !mb-0">
             Tiếp lợi thế, nối thành công cùng nền tảng nhân sự ứng dụng AI.
           </Typography.Paragraph>

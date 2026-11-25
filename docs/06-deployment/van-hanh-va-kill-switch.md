@@ -197,7 +197,7 @@ lỗi hệ thống), `cv_snapshot_duration_ms`, `cv_snapshot_failure`, tuổi qu
   buộc upload qua session đã scan `clean`. Production fail-fast nếu bật mà
   quarantine tắt. Bật lần lượt từng domain, không bật cả hai cùng lúc.
 - `EMPLOYER_SMS_OTP_ENABLED`: khi `True`, production bắt buộc
-  `EMPLOYER_SMS_PROVIDER=http`, endpoint HTTPS, token, sender, template, khóa
+  `EMPLOYER_SMS_PROVIDER=http` (endpoint HTTPS, sender, template) hoặc `speedsms`, token, khóa
   Fernet `EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY` và
   `EMPLOYER_SMS_CHALLENGE_HMAC_KEY` ≥ 32 ký tự, hai khóa không trùng secret khác.
   Worker phải nghe `auth-sms`. Chi tiết:

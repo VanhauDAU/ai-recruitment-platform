@@ -231,6 +231,6 @@ class ConsoleSmsProviderTests(SimpleTestCase):
     )
     def test_production_refuses_the_console_provider(self):
         self.assertIn(
-            'Production chỉ cho phép EMPLOYER_SMS_PROVIDER=http.',
+            'Production chỉ cho phép EMPLOYER_SMS_PROVIDER=http hoặc speedsms.',
             sms_configuration_errors(require_enabled=True),
         )

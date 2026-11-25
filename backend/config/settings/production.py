@@ -173,18 +173,19 @@ if EMPLOYER_DPA_GRACE_DAYS != 30:
     _errors.append('EMPLOYER_DPA_GRACE_DAYS production phải đúng quyết định 30 ngày.')
 
 if EMPLOYER_SMS_OTP_ENABLED:
-    if EMPLOYER_SMS_PROVIDER != 'http':
-        _errors.append('EMPLOYER_SMS_PROVIDER production phải là http khi bật SMS.')
-    if not EMPLOYER_SMS_ENDPOINT_URL:
-        _errors.append('EMPLOYER_SMS_ENDPOINT_URL là bắt buộc khi bật SMS.')
-    elif urlparse(EMPLOYER_SMS_ENDPOINT_URL).scheme != 'https':
-        _errors.append('EMPLOYER_SMS_ENDPOINT_URL production phải dùng HTTPS.')
+    if EMPLOYER_SMS_PROVIDER not in {'http', 'speedsms'}:
+        _errors.append('EMPLOYER_SMS_PROVIDER production phải là http hoặc speedsms khi bật SMS.')
     if not EMPLOYER_SMS_API_TOKEN:
         _errors.append('EMPLOYER_SMS_API_TOKEN là bắt buộc khi bật SMS.')
-    if not EMPLOYER_SMS_SENDER:
-        _errors.append('EMPLOYER_SMS_SENDER là bắt buộc khi bật SMS.')
-    if not EMPLOYER_SMS_TEMPLATE_ID:
-        _errors.append('EMPLOYER_SMS_TEMPLATE_ID là bắt buộc khi bật SMS.')
+    if EMPLOYER_SMS_PROVIDER == 'http':
+        if not EMPLOYER_SMS_ENDPOINT_URL:
+            _errors.append('EMPLOYER_SMS_ENDPOINT_URL là bắt buộc khi bật SMS.')
+        elif urlparse(EMPLOYER_SMS_ENDPOINT_URL).scheme != 'https':
+            _errors.append('EMPLOYER_SMS_ENDPOINT_URL production phải dùng HTTPS.')
+        if not EMPLOYER_SMS_SENDER:
+            _errors.append('EMPLOYER_SMS_SENDER là bắt buộc khi bật SMS.')
+        if not EMPLOYER_SMS_TEMPLATE_ID:
+            _errors.append('EMPLOYER_SMS_TEMPLATE_ID là bắt buộc khi bật SMS.')
     if not EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY:
         _errors.append('EMPLOYER_SMS_PAYLOAD_ENCRYPTION_KEY là bắt buộc khi bật SMS.')
     else:
