@@ -28,7 +28,7 @@ from ..serializers.candidate_search import (
     CandidateSearchQuerySerializer,
 )
 
-PAGE_SIZE = 20
+LIST_PARAMS = ('skills', 'all_keywords', 'any_keywords', 'none_keywords')
 
 
 def _job(request, public_id):
@@ -40,10 +40,13 @@ def _job(request, public_id):
 
 def _query(request):
     data = request.query_params.dict()
-    if 'skills' in request.query_params:
-        data['skills'] = [
-            value for value in request.query_params.get('skills', '').split(',') if value
-        ]
+    for key in LIST_PARAMS:
+        if key in request.query_params:
+            data[key] = [
+                value.strip()
+                for value in request.query_params.get(key, '').split(',')
+                if value.strip()
+            ]
     serializer = CandidateSearchQuerySerializer(data=data)
     serializer.is_valid(raise_exception=True)
     return serializer.validated_data
@@ -53,8 +56,9 @@ def _query(request):
     tags=['applications'],
     summary='Tìm CV: ứng viên đang bật tìm kiếm, xếp theo mức phù hợp với một tin',
     description=(
-        'Kết quả ẩn danh: mã ứng viên, chức danh, kinh nghiệm, học vấn, cấp bậc, ngoại ngữ, kỹ '
-        'năng trùng với tin, điểm và mức phù hợp. Không có tên, liên hệ, tệp CV hay tên công ty.'
+        'Kết quả ẩn danh: mã ứng viên, chức danh, kinh nghiệm theo chức danh và mốc thời gian, '
+        'học vấn, cấp bậc, ngoại ngữ, vị trí và tỉnh/thành mong muốn, kỹ năng trùng với tin, điểm '
+        'và mức phù hợp. Không có tên, liên hệ, tệp CV hay tên công ty.'
     ),
     parameters=[CandidateSearchQuerySerializer],
     responses={200: OpenApiTypes.OBJECT},
@@ -67,22 +71,30 @@ class RecruiterCandidateSearchView(APIView):
     def get(self, request):
         params = _query(request)
         job = _job(request, params['job'])
-        rows = search_candidates(
+        count, rows = search_candidates(
             request.user,
             job,
             filters=ProfileFilters(
                 skill_ids=tuple(params['skills']),
                 min_months=params['min_months'],
+                max_months=params['max_months'],
                 education=params['education'],
+                position_level=params['position_level'],
                 language=params['language'],
+                language_level=params['language_level'],
                 keyword=params['q'].strip(),
+                title=params['title'].strip(),
+                school=params['school'].strip(),
+                all_keywords=tuple(params['all_keywords']),
+                any_keywords=tuple(params['any_keywords']),
+                none_keywords=tuple(params['none_keywords']),
             ),
             province_id=params['province'],
+            category_id=params['category'],
+            page=params['page'],
+            page_size=params['page_size'],
         )
-        start = (params['page'] - 1) * PAGE_SIZE
-        return Response(
-            {'count': len(rows), 'page_size': PAGE_SIZE, 'results': rows[start : start + PAGE_SIZE]}
-        )
+        return Response({'count': count, 'page_size': params['page_size'], 'results': rows})
 
 
 @extend_schema(

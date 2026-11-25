@@ -1,28 +1,487 @@
-/* Trang Tìm CV của nhà tuyển dụng: nạp cùng chunk trễ của trang. */
-.cs-workspace { display: flex; flex-direction: column; gap: 14px; }
-.cs-toolbar { display: grid; grid-template-columns: 1fr; gap: 8px; }
-.cs-count { margin: 0 0 8px; font-size: 12px; color: #64748b; }
-.cs-list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; border-top: 1px solid #f1f5f9; }
-.cs-row { display: flex; flex-direction: column; gap: 10px; padding: 12px 2px; border-bottom: 1px solid #f1f5f9; }
-.cs-row__main { min-width: 0; flex: 1; }
-.cs-row__title { margin: 0; font-size: 14px; font-weight: 700; color: #0f172a; overflow-wrap: anywhere; }
-.cs-row__code { margin-left: 8px; font-size: 11px; font-weight: 600; color: #94a3b8; font-variant-numeric: tabular-nums; }
-.cs-row__facts, .cs-row__skills { margin: 2px 0 0; font-size: 12px; line-height: 1.5; color: #64748b; }
-.cs-row__skills { color: #475569; }
-.cs-row__side { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.cs-state { font-size: 12px; font-weight: 600; color: #64748b; }
-.cs-state[data-state="accepted"] { color: var(--brand-primary, #00b14f); }
-.cs-muted { margin: 0; font-size: 13px; color: #64748b; }
+/*
+ * Tìm CV của nhà tuyển dụng — CSS lazy, nạp cùng chunk của trang (không vào CSS khởi tạo).
+ * Cùng họ với ProCV Connect: bề mặt trắng, đường kẻ 1px, không bóng đổ. Màu nhấn chỉ cho
+ * vòng điểm, nút "Tìm CV", ô đã chọn, kỹ năng khớp và viền focus. Danh tính bị ẩn nên vòng
+ * điểm phù hợp đứng ở chỗ avatar.
+ */
+:root {
+  --cs-paper: #ffffff;
+  --cs-mist: #f5f6f7;
+  --cs-line: #e4e6ea;
+  --cs-ink: #1c1f24;
+  --cs-slate: #5f6670;
+  --cs-fog: #9aa1ab;
+  --cs-accent: var(--brand-primary, #00b14f);
+  --cs-accent-text: color-mix(in srgb, var(--cs-accent) 78%, #000000);
+  --cs-accent-soft: color-mix(in srgb, var(--cs-accent) 9%, #ffffff);
+  --cs-amber: #b26a00;
+  --cs-radius: 10px;
+}
+
+.cs-workspace,
+.cs-drawer {
+  color: var(--cs-ink);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.cs-workspace :focus-visible,
+.cs-drawer :focus-visible {
+  outline: 2px solid var(--cs-accent);
+  outline-offset: 2px;
+}
+
+.cs-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (min-width: 1200px) {
+  .cs-workspace { grid-template-columns: 296px minmax(0, 1fr); }
+}
+
+/* ── Nút ─────────────────────────────────────────────── */
+.cs-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--cs-line);
+  border-radius: 8px;
+  background: var(--cs-paper);
+  color: var(--cs-ink);
+  font: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s, color 0.15s;
+}
+
+.cs-btn:hover:not(:disabled) { border-color: var(--cs-slate); }
+.cs-btn:disabled { cursor: not-allowed; color: var(--cs-fog); background: var(--cs-mist); }
+
+.cs-btn--primary {
+  border-color: var(--cs-accent);
+  background: var(--cs-accent);
+  color: #ffffff;
+}
+
+.cs-btn--primary:hover:not(:disabled) {
+  border-color: var(--brand-primary-hover, #008a3e);
+  background: var(--brand-primary-hover, #008a3e);
+}
+
+.cs-btn--accent:not(:disabled) { border-color: var(--cs-accent); color: var(--cs-accent-text); }
+.cs-btn--accent:hover:not(:disabled) { background: var(--cs-accent-soft); border-color: var(--cs-accent); }
+
+.cs-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--cs-accent-text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cs-link:hover { text-decoration: underline; }
+
+.cs-check {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--cs-accent);
+  cursor: pointer;
+}
+
+.cs-check:disabled { cursor: not-allowed; opacity: 0.4; }
+
+/* ── Cột lọc ─────────────────────────────────────────── */
+.cs-rail {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--cs-mist);
+}
+
+.cs-workspace > .cs-rail {
+  /* Dính trong vùng cuộn của workspace (thanh trên và thanh tiêu đề nằm ngoài vùng này). */
+  position: sticky;
+  top: 12px;
+  max-height: calc(var(--workspace-viewport, 100dvh) - 24px);
+  border: 1px solid var(--cs-line);
+  border-radius: var(--cs-radius);
+  overflow: hidden;
+}
+
+.cs-drawer .cs-rail { height: 100%; }
+.cs-drawer .ant-drawer-content-wrapper { max-width: calc(100vw - 16px); }
+
+.cs-rail__title {
+  margin: 0;
+  padding: 14px 16px 6px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.cs-rail__body {
+  flex: 1;
+  min-height: 0;
+  padding: 6px 16px 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.cs-rail__foot {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--cs-line);
+  background: var(--cs-paper);
+}
+
+.cs-filters { display: flex; flex-direction: column; gap: 18px; }
+
+.cs-group { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.cs-group + .cs-group { padding-top: 16px; border-top: 1px solid var(--cs-line); }
+.cs-group__title { margin: 0; font-size: 13px; font-weight: 700; color: var(--cs-slate); }
+
+.cs-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+
+.cs-field__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cs-ink);
+}
+
+.cs-field__hint { color: var(--cs-fog); font-size: 12px; cursor: help; }
+
+.cs-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+
+.cs-filters .ant-select,
+.cs-filters .ant-input-number { width: 100%; }
+
+.cs-filters .ant-input-affix-wrapper,
+.cs-filters .ant-input-number,
+.cs-filters .ant-select {
+  border-radius: 8px;
+  border-color: var(--cs-line);
+  box-shadow: none;
+}
+
+/* ── Danh sách ───────────────────────────────────────── */
+.cs-results {
+  min-width: 0;
+  border: 1px solid var(--cs-line);
+  border-radius: var(--cs-radius);
+  background: var(--cs-paper);
+  container-type: inline-size;
+}
+
+.cs-results__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 14px 16px;
+}
+
+.cs-results__title { margin: 0; font-size: 16px; font-weight: 700; }
+
+.cs-results__tools {
+  display: flex;
+  flex: 1 1 320px;
+  gap: 8px;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.cs-job { flex: 1 1 auto; min-width: 0; max-width: 420px; }
+
+.cs-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 8px 16px;
+  border-block: 1px solid var(--cs-line);
+  background: var(--cs-mist);
+  font-size: 13px;
+}
+
+.cs-bar__all { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer; }
+.cs-bar__count { font-weight: 700; font-variant-numeric: tabular-nums; }
+.cs-bar__picked { color: var(--cs-slate); font-variant-numeric: tabular-nums; }
+.cs-bar .cs-btn { min-height: 32px; margin-left: auto; }
+
+.cs-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  transition: opacity 0.15s;
+}
+
+.cs-list[data-stale] { opacity: 0.6; }
+
+.cs-pad { padding: 16px; }
+
+.cs-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 16px;
+  text-align: center;
+  color: var(--cs-slate);
+}
+
+.cs-empty p { max-width: 46ch; margin: 0; }
+
+.cs-pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--cs-line);
+}
+
+.cs-pager__size { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--cs-slate); }
+.cs-pager__size .ant-select { width: 72px; }
+
+/* ── Thẻ ứng viên ────────────────────────────────────── */
+.cs-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "check who"
+    "check body"
+    "check actions";
+  column-gap: 12px;
+  row-gap: 14px;
+  padding: 16px;
+  border-bottom: 1px solid var(--cs-line);
+}
+
+.cs-card:last-child { border-bottom: 0; }
+.cs-card[data-selected] { background: var(--cs-accent-soft); }
+.cs-card > .cs-check { grid-area: check; margin-top: 15px; }
+
+.cs-card__who {
+  grid-area: who;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  column-gap: 12px;
+  row-gap: 10px;
+  align-content: start;
+}
+
+.cs-card__id { min-width: 0; align-self: center; }
+
+.cs-card__title { margin: 0; font-size: 15px; font-weight: 700; line-height: 1.35; }
+
+.cs-card__title button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.cs-card__title button:hover { color: var(--cs-accent-text); }
+
+.cs-card__code {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin: 2px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cs-slate);
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-state {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--cs-mist);
+  color: var(--cs-slate);
+  font-size: 11px;
+}
+
+.cs-state[data-state="accepted"] { background: var(--cs-accent-soft); color: var(--cs-accent-text); }
+
+.cs-facts {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--cs-slate);
+}
+
+.cs-facts li { display: flex; gap: 8px; min-width: 0; }
+.cs-facts .anticon { flex: none; margin-top: 3px; color: var(--cs-fog); }
+.cs-facts span { min-width: 0; overflow-wrap: anywhere; }
+
+/* Vòng điểm phù hợp */
+.cs-ring {
+  --cs-ring: var(--cs-fog);
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+}
+
+.cs-ring[data-level="high"],
+.cs-ring[data-level="very_high"] { --cs-ring: var(--cs-accent); }
+.cs-ring[data-level="medium"] { --cs-ring: var(--cs-amber); }
+
+.cs-ring svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.cs-ring circle { fill: none; stroke-width: 4; }
+.cs-ring__track { stroke: var(--cs-line); }
+.cs-ring__value { stroke: var(--cs-ring); stroke-linecap: round; }
+
+.cs-ring strong {
+  font-size: 15px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--cs-ring) 80%, #000000);
+}
+
+.cs-card__body { grid-area: body; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+.cs-block h4 { margin: 0 0 6px; font-size: 13px; font-weight: 700; }
+.cs-block .cs-link { margin-top: 6px; }
+
+.cs-card__pair { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+
+.cs-timeline,
+.cs-lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+}
+
+/* Mốc kinh nghiệm: đường dọc nối các chấm, việc mới nhất ở trên. */
+.cs-timeline li {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0 12px;
+  padding: 0 0 8px 16px;
+}
+
+.cs-timeline li::before {
+  position: absolute;
+  top: 6px;
+  left: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cs-paper);
+  box-shadow: inset 0 0 0 2px var(--cs-fog);
+  content: "";
+}
+
+.cs-timeline li:first-child::before { box-shadow: inset 0 0 0 2px var(--cs-accent); }
+
+.cs-timeline li:not(:last-child)::after {
+  position: absolute;
+  top: 15px;
+  bottom: -2px;
+  left: 3px;
+  width: 1px;
+  background: var(--cs-line);
+  content: "";
+}
+
+.cs-timeline li:last-child { padding-bottom: 0; }
+
+.cs-timeline__when { color: var(--cs-slate); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cs-timeline__what { font-weight: 600; overflow-wrap: anywhere; }
+
+.cs-lines li { overflow-wrap: anywhere; }
+.cs-lines li + li { margin-top: 4px; }
+
+.cs-muted { margin: 0; font-size: 13px; color: var(--cs-slate); }
+
+.cs-skills { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; color: var(--cs-slate); }
+.cs-skills ul { display: contents; }
+
+.cs-skills li {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--cs-accent-soft);
+  color: var(--cs-accent-text);
+  font-weight: 600;
+  list-style: none;
+}
+
+.cs-card__actions { grid-area: actions; display: flex; }
+.cs-card__actions .cs-btn { flex: 1; }
+
+/* Danh sách đủ rộng: [tóm tắt | kinh nghiệm, học vấn, ngoại ngữ], nút dưới phần chi tiết;
+   rộng hơn nữa thì nút đứng thành cột riêng bên phải. */
+@container (min-width: 560px) {
+  .cs-card__pair { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .cs-timeline li { grid-template-columns: 128px minmax(0, 1fr); }
+  .cs-card__actions { justify-content: flex-end; }
+  .cs-card__actions .cs-btn { flex: none; }
+}
+
+@container (min-width: 680px) {
+  .cs-card {
+    grid-template-columns: auto 228px minmax(0, 1fr);
+    grid-template-areas:
+      "check who body"
+      "check who actions";
+    column-gap: 20px;
+  }
+}
+
+@container (min-width: 980px) {
+  .cs-card {
+    grid-template-columns: auto 248px minmax(0, 1fr) auto;
+    grid-template-areas: "check who body actions";
+  }
+
+  .cs-card__actions { align-items: flex-start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-btn,
+  .cs-list { transition: none; }
+}
+
+/* ── Xem nhanh (Drawer) ──────────────────────────────── */
 .cs-quick { display: flex; flex-direction: column; gap: 22px; }
-.cs-heading { margin: 0 0 10px; font-size: 12px; font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase; color: #64748b; }
+.cs-heading { margin: 0 0 10px; font-size: 13px; font-weight: 700; color: var(--cs-slate); }
 .cs-drawer-footer { display: flex; flex-direction: column; gap: 10px; }
-.cs-drawer-footer p { margin: 0; font-size: 12px; line-height: 1.5; color: #64748b; }
+.cs-drawer-footer p { margin: 0; font-size: 12px; line-height: 1.5; color: var(--cs-slate); }
+
 @media (min-width: 640px) {
-  .cs-row { flex-direction: row; align-items: center; }
-  .cs-row__side { flex: none; justify-content: flex-end; }
   .cs-drawer-footer { flex-direction: row; align-items: center; justify-content: space-between; }
   .cs-drawer-footer .ant-btn { flex: none; }
-}
-@media (min-width: 900px) {
-  .cs-toolbar { grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); }
 }
