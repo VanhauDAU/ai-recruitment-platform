@@ -164,7 +164,6 @@
   "employer_workspace_dash_candidate_data_protected": "Candidate data is protected",
   "employer_workspace_dash_candidate_data_default": "Complete verification to unlock access to candidate data.",
   "employer_workspace_dash_journey_title": "Complete your hiring workspace",
-  "employer_workspace_dash_journey_done": "Completed",
   "employer_workspace_dash_journey_progress": "{completed}/{total} verification steps · Protect your account and candidate data",
   "employer_workspace_dash_journey_steps": "Verification steps",
   "employer_workspace_dash_first_job": "Post your first job",
@@ -215,29 +214,13 @@
   ],
   "employer_workspace_dash_recent_applications_title": "Latest candidates",
   "employer_workspace_dash_recent_applications_description": "Applications by date applied",
-  "employer_workspace_dash_pipeline_new": "New",
-  "employer_workspace_dash_pipeline_shortlisted": "Shortlisted",
-  "employer_workspace_dash_pipeline_interviewed": "Interviewing",
-  "employer_workspace_dash_pipeline_other": "Other in progress",
-  "employer_workspace_dash_pipeline_empty": "No applications yet",
-  "employer_workspace_dash_application_count": [
-    {
-      "declarations": [
-        "input count",
-        "local countPlural = count: plural"
-      ],
-      "selectors": [
-        "countPlural"
-      ],
-      "match": {
-        "countPlural=one": "{count} application",
-        "countPlural=other": "{count} applications"
-      }
-    }
-  ],
-  "employer_workspace_dash_pipeline_title": "Application status",
-  "employer_workspace_dash_pipeline_description": "Breakdown across all current applications",
-  "employer_workspace_dash_pipeline_interview_rate": "{rate}% interviewed",
+  "employer_workspace_dash_funnel_title": "Hiring funnel",
+  "employer_workspace_dash_funnel_description": "Current applications that reached each hiring step",
+  "employer_workspace_dash_funnel_received": "Received",
+  "employer_workspace_dash_funnel_shortlisted": "Shortlisted",
+  "employer_workspace_dash_funnel_interviewed": "Interviewed",
+  "employer_workspace_dash_funnel_accepted": "Hired",
+  "employer_workspace_dash_funnel_rejected": "Rejected",
   "employer_workspace_dash_flash_title": "Flash badge",
   "employer_workspace_dash_flash_description": "Answer applications on time so your jobs carry the badge and rank higher.",
   "employer_workspace_dash_flash_earned": "Earned",
@@ -252,23 +235,7 @@
   "employer_workspace_dash_flash_at_risk": "Applications becoming overdue within 24 hours: {count}",
   "employer_workspace_dash_flash_reply": "Answer waiting applications",
   "employer_workspace_dash_flash_hourly": "Recalculated every hour. Only shortlist, interview, hire or reject decisions count as answers.",
-  "employer_workspace_dash_pipeline_chart": [
-    {
-      "declarations": [
-        "input count",
-        "local countPlural = count: plural"
-      ],
-      "selectors": [
-        "countPlural"
-      ],
-      "match": {
-        "countPlural=one": "Pipeline chart of {count} application",
-        "countPlural=other": "Pipeline chart of {count} applications"
-      }
-    }
-  ],
   "employer_workspace_dash_total_applications": "Total applications",
-  "employer_workspace_dash_view_all_applications": "View all applications",
   "employer_workspace_dash_active_jobs": "Active jobs",
   "employer_workspace_dash_hidden_jobs": [
     {

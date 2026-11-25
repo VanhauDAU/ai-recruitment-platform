@@ -124,6 +124,10 @@ class EmployerDashboardApiTests(APITestCase):
 
         blocked = self.client.get(reverse('employer-dashboard'))
         self.assertEqual(blocked.data['summary']['applications_total'], 1)
+        self.assertEqual(
+            blocked.data['funnel'],
+            {'received': 1, 'shortlisted': 0, 'interviewed': 0, 'accepted': 0, 'rejected': 0},
+        )
         self.assertEqual(blocked.data['recent_applications'], [])
 
         make_employer_ready(
