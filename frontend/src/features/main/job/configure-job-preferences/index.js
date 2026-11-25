@@ -4,7 +4,6 @@ export {
   desiredPositionValidationError,
   MAX_CUSTOM_DESIRED_POSITIONS,
   MAX_DESIRED_SPECIALIZATIONS,
-  MAX_PREFERRED_SKILLS,
   normalizeDesiredPositionOthers,
 } from './model/specialization-limit'
 export { useJobPreferenceCatalog } from './model/use-job-preference-catalog'

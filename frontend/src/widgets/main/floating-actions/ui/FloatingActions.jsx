@@ -22,7 +22,7 @@ import { FeedbackModal } from '@/features/main/account/submit-feedback'
 import { useVisualViewportBottomInset } from '@/shared/hooks/use-visual-viewport-bottom-inset'
 import { m } from '@/shared/config/i18n'
 import { message } from '@/shared/lib/toast'
-import { knowledgebaseSupportLinks } from './knowledgebase-support-links'
+import { knowledgebaseSupportLinks } from '../model/knowledgebase-support-links'
 
 const MENU_ID = 'floating-actions-menu'
 

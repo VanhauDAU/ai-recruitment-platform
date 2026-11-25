@@ -13,7 +13,7 @@ import { Drawer, Tag } from 'antd'
 import { useEffect, useState } from 'react'
 import { blogCategoryPath, blogPostPath, getBlogCategories, getBlogHome } from '@/entities/content/blog'
 import { BrandLogo } from '@/entities/system/site-settings'
-import { flattenMenuItems, isMenuActive } from './header-navigation-config'
+import { flattenMenuItems, isMenuActive } from '../model/header-navigation-config'
 
 const HANDBOOK_ICONS = [CompassOutlined, BulbOutlined, DollarOutlined, ReadOutlined, RocketOutlined, LineChartOutlined]
 

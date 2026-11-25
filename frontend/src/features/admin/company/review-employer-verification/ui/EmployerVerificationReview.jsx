@@ -47,20 +47,14 @@ import VerificationDocumentBoard from './VerificationDocumentBoard'
 import VerificationFinalDecisionPanel from './VerificationFinalDecisionPanel'
 import VerificationJourney from './VerificationJourney'
 import './employer-verification-review.css'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { formatDateTime } from '@/shared/lib/date-time'
 
 const DOCUMENT_DECISION_LABELS = {
   changes_requested: 'Yêu cầu bổ sung',
   rejected: 'Từ chối giấy tờ',
 }
 
-function formatDate(value) {
-  if (!value) return 'Chưa có'
-  return new Intl.DateTimeFormat(getIntlLocale(), {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  }).format(new Date(value))
-}
+const formatDate = (value) => formatDateTime(value, { fallback: 'Chưa có' })
 
 function DocumentPreview({ verificationCase, document }) {
   const queryClient = useQueryClient()

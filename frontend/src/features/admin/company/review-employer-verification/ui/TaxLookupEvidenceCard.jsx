@@ -10,7 +10,7 @@ import {
   Typography,
 } from 'antd'
 import { getTaxReviewState } from '../model/tax-review-state'
-import { getIntlLocale } from '@/shared/config/i18n'
+import { formatDateTime } from '@/shared/lib/date-time'
 
 const STATUS_META = {
   pending: { color: 'processing', label: 'Đang tra cứu' },
@@ -26,13 +26,7 @@ const COMPARISON_META = {
   unavailable: { color: 'default', label: 'Chưa đối chiếu' },
 }
 
-function formatDate(value) {
-  if (!value) return 'Chưa hoàn tất'
-  return new Intl.DateTimeFormat(getIntlLocale(), {
-    dateStyle: 'short',
-    timeStyle: 'short',
-  }).format(new Date(value))
-}
+const formatDate = (value) => formatDateTime(value, { fallback: 'Chưa hoàn tất' })
 
 function ComparisonTag({ value }) {
   const meta = COMPARISON_META[value] || COMPARISON_META.unavailable

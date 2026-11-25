@@ -10,7 +10,7 @@ import { useSession } from '@/entities/account/session'
 import { EMPLOYER_PORTAL_URL, HOME_BY_ROLE } from '@/shared/config/portals'
 import BottomSheet from '@/shared/ui/BottomSheet'
 import { CandidateAccountPanel } from './CandidateUserMenu'
-import { HEADER_NAVIGATION, isMenuActive } from './header-navigation-config'
+import { HEADER_NAVIGATION, isMenuActive } from '../model/header-navigation-config'
 import { m } from '@/shared/config/i18n'
 
 const [JOBS_MENU, CV_MENU] = HEADER_NAVIGATION

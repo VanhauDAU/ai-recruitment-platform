@@ -43,20 +43,15 @@ import { CompanyPanel } from './CompanyPanel'
 import CompanyPublicPage from './CompanyPublicPage'
 import RecruiterStatusTag from './RecruiterStatusTag'
 import '../admin-company-directory.css'
-import { getIntlLocale, m } from '@/shared/config/i18n'
+import { m } from '@/shared/config/i18n'
+import { formatDateTime } from '@/shared/lib/date-time'
 
 const EMPTY_PAGE = { count: 0, results: [] }
 const TAB_KEYS = new Set([
   'overview', 'recruiters', 'verification', 'updates', 'content-changes', 'join-requests', 'jobs', 'public-page',
 ])
 
-function formatDate(value) {
-  if (!value) return '—'
-  return new Intl.DateTimeFormat(getIntlLocale(), {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(value))
-}
+const formatDate = (value) => formatDateTime(value, { dateStyle: 'medium' })
 
 function personInitials(name = '') {
   const words = name.trim().split(/\s+/).filter(Boolean)

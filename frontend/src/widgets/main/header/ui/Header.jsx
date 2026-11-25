@@ -9,8 +9,8 @@ import { useHideOnScroll } from '@/shared/hooks/use-hide-on-scroll'
 import { BrandLogo, useSiteSettings } from '@/entities/system/site-settings'
 import CandidateUserMenu from './CandidateUserMenu'
 import { DesktopNavigation, MobileNavigation } from './HeaderNavigation'
-import { HEADER_NAVIGATION, navigationForCapabilities } from './header-navigation-config'
-import { useHeaderNavigationSources } from './use-header-navigation-sources'
+import { HEADER_NAVIGATION, navigationForCapabilities } from '../model/header-navigation-config'
+import { useHeaderNavigationSources } from '../model/use-header-navigation-sources'
 import { m } from '@/shared/config/i18n'
 
 function GuestActions({ mobile = false, compactMobile = false, onSelect, navigate }) {

@@ -6,12 +6,18 @@ function toDate(value) {
   return Number.isNaN(date.getTime()) ? null : date
 }
 
-/** "15/11/2026, 09:30" — short Vietnamese date and time; "—" when absent. */
-export function formatDateTime(value) {
+/** Múi giờ cố định cho lịch do admin đặt (thông báo đa cổng). */
+export const VN_TIME_ZONE = 'Asia/Ho_Chi_Minh'
+
+/**
+ * "15/11/2026, 09:30" — date and time in the UI language; `fallback` ("—") when
+ * absent or unparsable. `dateStyle: 'medium'` gives "15 thg 11, 2026, 09:30".
+ */
+export function formatDateTime(value, { dateStyle = 'short', timeZone, fallback = '—' } = {}) {
   const date = toDate(value)
   return date
-    ? new Intl.DateTimeFormat(getIntlLocale(), { dateStyle: 'short', timeStyle: 'short' }).format(date)
-    : '—'
+    ? new Intl.DateTimeFormat(getIntlLocale(), { dateStyle, timeStyle: 'short', timeZone }).format(date)
+    : fallback
 }
 
 /** "09:30" — clock time only. */
