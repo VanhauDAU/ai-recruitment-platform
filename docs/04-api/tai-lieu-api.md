@@ -724,6 +724,9 @@ Mã lỗi ổn định gồm `JOB_AI_DAILY_QUOTA_EXCEEDED` (429),
 | POST | `/api/employer/candidate-blocks/{public_id}/lift/` | Gỡ chặn. List hồ sơ của NTD có thêm `candidate_blocked` và `mass_apply_signal {jobs, window_days}` khi ứng viên nộp ≥ 5 tin của caller trong 14 ngày. |
 | GET/POST | `/api/employer/talent-pool/?q=&tag=` | Kho ứng viên tiềm năng của NTD. POST `{application_public_id, note?, tags? (≤5)}` lưu ứng viên đứng sau hồ sơ và báo ứng viên (`talent_pool_saved`); trùng → 400. Mục tự hết hạn sau 12 tháng; beat hằng ngày xóa mục hết hạn hoặc đã đóng quá 30 ngày. |
 | PATCH/DELETE | `/api/employer/talent-pool/{id}/` | Sửa ghi chú/nhãn; bỏ khỏi kho. |
+| GET | `/api/employer/candidate-search/?job=&q=&min_months=&education=&language=&province=&skills=&page=` | Tìm CV. `job` là tin đang công khai của caller. Trả `{count, page_size, results}`; mỗi dòng: `ref` (mã ẩn danh, HMAC theo công ty), `code`, `score`, `level`, `title`, `experience_months`, `education_level`, `position_level`, `languages`, `matched_skills`, `matched_skill_count`, `job_skill_count`, `cv_updated_at`, `applied`, `invited`. Chỉ gồm ứng viên đang bật một CV cho NTD tìm kiếm, còn đồng ý, không bị công ty chặn. Không có tên, liên hệ, tệp CV. `409 {code: feature_disabled}` khi cờ `ai_candidate_search_enabled` tắt, `409 {code: job_not_ready}` khi tin chưa có vector. |
+| GET | `/api/employer/candidate-search/{ref}/?job=` | Xem nhanh: thêm `profile` (hồ sơ trích xuất ẩn danh) và `result` (kết quả chấm `hybrid-v2` không có câu trích). Ghi `CvAccessLog` kênh `recruiter_search`. |
+| POST | `/api/employer/candidate-search/{ref}/invite/` | Body `{job}`. Mời ứng viên ứng tuyển, một lần cho mỗi tin; ứng viên nhận thông báo `job_invitation`. `409 {code: invitation_conflict}` khi đã mời hoặc đã ứng tuyển. |
 | GET | `/api/employer/talent-pool/suggestions/?job=` | Người trong kho xếp theo độ tương đồng giữa tin họ từng nộp và tin chọn (`score`, `reasons`, `already_invited`); loại người đã nộp tin đó hoặc đang bị chặn. |
 | POST | `/api/employer/talent-pool/{id}/invite/` | `{job_public_id}` (tin đang công khai của caller) gửi lời mời ứng tuyển (`job_invitation`, theo kênh `employer_invitation_*`); mỗi tin một lần (lần hai 400). |
 | GET/POST | `/api/candidate/talent-pools/mine/`, `…/mine/{id}/withdraw/` | Ứng viên xem NTD nào đang lưu hồ sơ và rút khỏi kho. |
@@ -750,6 +753,7 @@ tin, phiên bản mô hình, phiên bản công thức): sửa CV hay tin thì t
 | POST | `/api/candidate/matching/analyses/` | Body `{job: <slug tin>, cv: <public_id CV>}`. `200` kèm `cached: true` nếu đã có kết quả, `202` nếu phải tính (task ở `ml-worker`). |
 | GET | `/api/candidate/matching/analyses/{public_id}/` | Poll trạng thái `queued`/`processing`/`succeeded`/`failed`; `result` khi hoàn tất. |
 | GET | `/api/candidate/matching/analyses/?job=<slug>` | Tối đa 10 lần phân tích gần nhất của chính người dùng cho tin. |
+| GET | `/api/candidate/matching/cv-profiles/{cv_public_id}/` | Hồ sơ trích xuất từ một CV của chính ứng viên ("Hồ sơ NTD nhìn thấy"): `{status, error_code, profile}`, `status` ∈ `ready`/`pending`/`failed`. `profile`: `title`, `skill_groups`, `experience {months, band, estimated, item_count, items}`, `education_level`, `position_level`, `languages`, `missing`. Chỉ đọc. |
 
 Mã lỗi: `feature_disabled` (403), `job_not_active` (404, tin không còn hiển
 thị), `cv_not_owned` (404), `job_text_too_short` (422), `throttled` (429). Lỗi lúc

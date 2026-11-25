@@ -755,6 +755,14 @@ pages/employer/candidates/ApplicationList
   invalidate key này. Các mục còn lại là "Sắp mở" theo lộ trình.
 - Style riêng nằm ở `application-workspace.css` và `application-decision.css`
   (lazy theo route) để không tăng CSS khởi tạo.
+- Tìm CV (`/tuyendung/app/candidate-search`, nút "Tìm CV" trên header và mục ở nhóm "Quản lý
+  CV"): `pages/employer/candidates/CandidateSearch` →
+  `features/employer/candidate/search-candidates` → `entities/application/job-fit`
+  (`FitScoreChip`, `ExtractedProfile`, `FitBreakdown showEvidence={false}`),
+  `entities/job/job` (tin đang tuyển). Feature sở hữu API `/api/employer/candidate-search/`;
+  tin làm mốc nằm ở URL (`?job=`). Xem nhanh là Drawer tải trễ (phải từ 768 px, đáy ở màn
+  hẹp); chi tiết không tự gọi lại ở nền vì mỗi lần gọi được ghi nhật ký truy cập. Kết quả ẩn
+  danh: giao diện không có chỗ nào hiện tên, liên hệ hay tệp CV.
 - Mức phù hợp do AI chấm (cờ `ai_application_ranking_enabled`): danh sách lấy
   `ai_match_score/level/status` ngay trong dòng hồ sơ và hiện bằng `FitScoreChip` của
   `entities/application/job-fit` (bảng "CV ứng tuyển" của một tin ở

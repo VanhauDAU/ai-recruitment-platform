@@ -10,6 +10,13 @@ CANDIDATE_FIT_FLAG = 'ai_job_match_enabled'
 SEMANTIC_RECOMMENDATION_FLAG = 'ai_job_recommendation_semantic_enabled'
 # Nhà tuyển dụng thấy mức phù hợp của hồ sơ ứng tuyển (chỉ hồ sơ ứng viên đồng ý).
 APPLICATION_RANKING_FLAG = 'ai_application_ranking_enabled'
+# Nhà tuyển dụng tìm ứng viên đang bật "cho phép NTD tìm kiếm" theo một tin (Tìm CV).
+CANDIDATE_SEARCH_FLAG = 'ai_candidate_search_enabled'
 
 # Bật bất kỳ cờ nào thì vector của CV và tin được tính sẵn.
-FEATURE_FLAGS = (CANDIDATE_FIT_FLAG, SEMANTIC_RECOMMENDATION_FLAG, APPLICATION_RANKING_FLAG)
+FEATURE_FLAGS = (
+    CANDIDATE_FIT_FLAG,
+    SEMANTIC_RECOMMENDATION_FLAG,
+    APPLICATION_RANKING_FLAG,
+    CANDIDATE_SEARCH_FLAG,
+)

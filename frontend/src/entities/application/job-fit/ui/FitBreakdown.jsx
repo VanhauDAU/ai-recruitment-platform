@@ -33,8 +33,9 @@ function Criterion({ component }) {
 /**
  * Chi tiết mức phù hợp của một CV với một tin: điểm tổng, từng tiêu chí, kỹ năng có và
  * còn thiếu (kèm câu trích nguyên văn của CV). Bản gọn, một cột, cho panel hẹp.
+ * `showEvidence={false}` cho kết quả ẩn danh (Tìm CV): không có câu trích để hiện.
  */
-export default function FitBreakdown({ result }) {
+export default function FitBreakdown({ result, showEvidence = true }) {
   const { overall, components, skills, flags = {} } = result
   const notes = [
     confidenceLabel(overall.confidence),
@@ -71,9 +72,9 @@ export default function FitBreakdown({ result }) {
                 <span className="fit-skill__name">
                   {skill.name}
                   {skill.importance === 'preferred' && <span className="fit-tag">{m.fit_skill_preferred()}</span>}
-                  {!skill.evidence && <span className="fit-tag">{m.fit_skill_listed_only()}</span>}
+                  {showEvidence && !skill.evidence && <span className="fit-tag">{m.fit_skill_listed_only()}</span>}
                 </span>
-                {skill.evidence && <q className="fit-quote">{skill.evidence}</q>}
+                {showEvidence && skill.evidence && <q className="fit-quote">{skill.evidence}</q>}
               </li>
             ))}
           </ul>

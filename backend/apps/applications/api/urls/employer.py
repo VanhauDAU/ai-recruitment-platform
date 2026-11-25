@@ -3,6 +3,11 @@ from django.urls import path
 from apps.applications.api.views.applications import RecruiterApplicationSnapshotView
 
 from ..views.blocks import RecruiterCandidateBlockLiftView, RecruiterCandidateBlockListCreateView
+from ..views.candidate_search import (
+    RecruiterCandidateSearchDetailView,
+    RecruiterCandidateSearchInviteView,
+    RecruiterCandidateSearchView,
+)
 from ..views.cv_exports import (
     RecruiterApplicationCvExportDetailView,
     RecruiterApplicationCvExportDownloadView,
@@ -66,6 +71,21 @@ urlpatterns = [
         'talent-pool/<str:public_id>/invite/',
         RecruiterTalentPoolInviteView.as_view(),
         name='recruiter-talent-pool-invite',
+    ),
+    path(
+        'candidate-search/',
+        RecruiterCandidateSearchView.as_view(),
+        name='recruiter-candidate-search',
+    ),
+    path(
+        'candidate-search/<str:ref>/',
+        RecruiterCandidateSearchDetailView.as_view(),
+        name='recruiter-candidate-search-detail',
+    ),
+    path(
+        'candidate-search/<str:ref>/invite/',
+        RecruiterCandidateSearchInviteView.as_view(),
+        name='recruiter-candidate-search-invite',
     ),
     path(
         'applications/export/',

@@ -24,11 +24,15 @@ from .application_ranking import (
     score_application,
     stale_application_ids,
 )
+from .candidate_search import ProfileFilters, candidate_search_enabled, rank_cvs_for_job
 from .documents import ensure_cv_document, ensure_job_document
 from .encoder import get_encoder
 from .skills import SkillCatalog
 
 __all__ = [
+    'ProfileFilters',
+    'candidate_search_enabled',
+    'rank_cvs_for_job',
     'application_ranking_enabled',
     'applications_needing_score',
     'fail_application_score',

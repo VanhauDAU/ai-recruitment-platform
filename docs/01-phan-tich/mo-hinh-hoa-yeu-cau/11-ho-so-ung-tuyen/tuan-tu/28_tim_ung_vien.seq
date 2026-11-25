@@ -1,28 +1,35 @@
-title Sơ đồ tuần tự chức năng tìm kiếm hồ sơ ứng viên (dự kiến)
+title Sơ đồ tuần tự chức năng tìm kiếm hồ sơ ứng viên (Tìm CV)
 actor NTD Nhà tuyển dụng
 participant FE Giao diện web\n(React)
 participant BE Máy chủ API\n(Django REST)
 database DB CSDL\n(PostgreSQL + pgvector)
 actor UV Ứng viên
-NTD -> FE : Chọn một tin đang tuyển, bấm "Tìm ứng viên phù hợp"
-FE -> BE : GET /api/matching/candidate-search/?job=&page= (dự kiến)
-BE -> BE : Kiểm tra NTD sở hữu tin, có quyền đọc dữ liệu ứng viên
-alt Không đủ quyền
-BE --> FE : 403 CANDIDATE_DATA_BLOCKED
+UV -> FE : Bật "Cho phép NTD tìm kiếm" trên một CV (mỗi ứng viên một CV)
+FE -> BE : PATCH /api/candidate/cvs/{id}/ {recruiter_searchable: true}
+BE -> DB : Bật CV này, tắt CV đang bật trước đó
+NTD -> FE : Bấm "Tìm CV", chọn một tin đang tuyển, thêm bộ lọc
+FE -> BE : GET /api/employer/candidate-search/?job=&q=&min_months=&education=
+BE -> BE : Kiểm tra NTD sở hữu tin đang công khai, có quyền đọc dữ liệu ứng viên, cờ ai_candidate_search_enabled bật
+alt Không đủ quyền hoặc tính năng tắt
+BE --> FE : 403 hoặc 409 feature_disabled
 else Hợp lệ
-BE -> DB : Lấy vector của tin (đã tính khi tin chuyển sang active)
-BE -> DB : Truy vấn CV có recruiter_searchable = true của ứng viên bật "Cho phép NTD tìm thấy hồ sơ"
-BE -> DB : Tìm K CV gần nhất theo cosine bằng pgvector
-DB --> BE : Danh sách ứng viên ứng cử
-BE -> BE : Chấm lại theo công thức hybrid-v1, sắp xếp, ẩn thông tin liên hệ
-BE --> FE : 200 Danh sách ứng viên kèm điểm và lý do phù hợp
-FE --> NTD : Hiển thị kết quả
-opt Xem chi tiết một CV
-NTD -> FE : Bấm xem CV
-FE -> BE : GET /api/matching/candidate-search/{cv}/ (dự kiến)
-BE -> DB : Kiểm tra lại đồng ý của ứng viên, ghi CvAccessLog
-BE --> FE : CV (theo phạm vi ứng viên cho phép)
-BE ->> UV : Thông báo "NTD đã xem CV của bạn"
+BE -> DB : CV đang bật của ứng viên còn đồng ý, tài khoản hoạt động, không bị công ty chặn
+BE -> DB : Lọc theo hồ sơ trích xuất, lấy các CV gần vector của tin nhất (pgvector)
+BE -> BE : Chấm từng CV bằng công thức hybrid-v2, bỏ CV dưới ngưỡng, ẩn danh kết quả
+BE --> FE : Danh sách: mã ứng viên, chức danh, kinh nghiệm, học vấn, kỹ năng trùng, điểm và mức
+FE --> NTD : Ứng viên ẩn danh, điểm cao trước
+opt Xem nhanh một ứng viên
+NTD -> FE : Bấm "Xem nhanh"
+FE -> BE : GET /api/employer/candidate-search/{mã}/?job=
+BE -> DB : Kiểm tra lại điều kiện của ứng viên, ghi CvAccessLog kênh recruiter_search
+BE --> FE : Hồ sơ trích xuất ẩn danh và mức phù hợp theo tiêu chí
+end
+opt Mời ứng tuyển
+NTD -> FE : Bấm "Mời ứng tuyển"
+FE -> BE : POST /api/employer/candidate-search/{mã}/invite/ {job}
+BE -> DB : Lưu lời mời (một lần cho mỗi ứng viên và tin)
+BE ->> UV : Thông báo "Lời mời ứng tuyển"
+BE --> FE : 204
 end
 end
-note over NTD,UV : Ứng viên tắt quyền tìm thấy thì CV lập tức không còn xuất hiện trong kết quả
+note over NTD,UV : NTD không thấy họ tên, liên hệ, tệp CV hay tên công ty cũ; ứng viên ứng tuyển thì hồ sơ đi vào luồng CV ứng tuyển. Ứng viên tắt quyền tìm kiếm thì biến mất khỏi kết quả ở lần tìm sau

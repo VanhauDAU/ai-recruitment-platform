@@ -1255,7 +1255,7 @@ một commit, một PR vào `dev` khi xong GĐ E.
 | B | Đường ống xếp hạng hồ sơ ứng tuyển (backend): chấm bản CV đã nộp khi ứng viên đồng ý, queue `ai-matching-batch`, `ordering=ai_match`, endpoint chi tiết | ✅ Commit trên nhánh (25/11); test tự động viết ở bước kiểm tra cuối |
 | C | Giao diện xếp hạng ở cổng NTD: cột "Phù hợp", tab Đánh giá, bộ hiển thị dùng chung | ✅ Commit trên nhánh (25/11); chưa chụp màn hình, chưa có test giao diện |
 | D | Một CV được bật cho NTD tìm kiếm + "Hồ sơ NTD nhìn thấy" phía ứng viên | ✅ Commit trên nhánh (25/11); chưa chụp màn hình, chưa có test |
-| E | Tìm CV: tìm ứng viên ẩn danh theo tin, xem nhanh, mời ứng tuyển | ⬜ |
+| E | Tìm CV: tìm ứng viên ẩn danh theo tin, xem nhanh, mời ứng tuyển | ✅ Commit trên nhánh (25/11); chưa chụp màn hình, test viết ở bước kiểm tra cuối |
 
 Quyết định đã chốt: chỉ chấm hồ sơ ứng viên đồng ý (ô đồng ý tự chọn, nhớ lần trước);
 sắp xếp mặc định vẫn là mới nhất; không tự loại theo điểm; Tìm CV chỉ hiện hồ sơ trích
@@ -1287,6 +1287,33 @@ xuất ẩn danh và tìm theo một tin đang tuyển; bước tiếp là mời
   `flags.relevance_discount_applied`; không còn `location` trong `components`. Kết quả cũ
   (`hybrid-v1`) trong cache không dùng lại vì khóa cache có phiên bản công thức.
 - Test `apps/matching` (100 test) đạt; phần test của tập vàng chưa chạy.
+
+</details>
+<details><summary>Ghi chú GĐ E (phần NTD)</summary>
+
+- `apps/matching/services/candidate_search.py::rank_cvs_for_job`: lọc theo hồ sơ trích xuất
+  (tra cứu JSON), lấy 200 CV gần vector của tin nhất, chấm bằng `score_match` (`hybrid-v2`) mà
+  không cần mô hình trong tiến trình web, bỏ CV dưới 30 điểm, ẩn danh kết quả. Danh sách trắng
+  trường chuyển sang `domain/profile_view.py` để cả selectors và services dùng; truy vấn tài
+  liệu hiện hành và vector chức danh chuyển sang `models/queries.py`.
+- `apps/applications/services/candidate_search.py`: điều kiện được tìm thấy kiểm lại ở mỗi lần
+  truy vấn (CV đang bật, còn đồng ý, tài khoản hoạt động, không bị công ty chặn); mã ẩn danh là
+  HMAC của (công ty, ứng viên); xem nhanh ghi `CvAccessLog` kênh `recruiter_search`; mời ứng
+  tuyển qua model mới `CandidateSearchInvitation` (migration `applications.0006`, `cvs.0004`),
+  dùng lại thông báo `JOB_INVITATION`. Kế hoạch định sửa `TalentPoolInvitation`; đã tách model
+  riêng để không đụng ràng buộc của kho ứng viên.
+- API `/api/employer/candidate-search/` (danh sách phân trang 20, chi tiết, mời); giới hạn
+  `candidate_search` 240 lượt/giờ, `candidate_search_invite` 40 lượt/giờ; cờ
+  `ai_candidate_search_enabled`.
+- Frontend: feature `features/employer/candidate/search-candidates` (thanh chọn tin + ba bộ lọc
+  chức danh/kinh nghiệm/học vấn, danh sách, Drawer xem nhanh tải trễ), trang
+  `pages/employer/candidates/CandidateSearch`, route `/candidate-search`, nút Tìm CV trên header
+  và mục ở thanh bên đã mở.
+- Chạy thử trên DB dev (bật tạm 100 CV tổng hợp trong một transaction rồi hoàn tác): tin Backend
+  ra 14 ứng viên, tin Marketing 3, mỗi lượt 0,02–0,06 giây; kết quả không có câu trích nào.
+- Chưa làm so với kế hoạch: bộ lọc kỹ năng, ngoại ngữ, tỉnh/thành ở giao diện (API đã nhận);
+  thông báo "NTD đã xem hồ sơ" cho ứng viên; ẩn mục Tìm CV khi cờ tắt (hiện trang báo tính năng
+  đang tắt); test tự động; chụp màn hình.
 
 </details>
 <details><summary>Ghi chú GĐ D (phần NTD)</summary>

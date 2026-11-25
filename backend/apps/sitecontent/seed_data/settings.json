@@ -2010,6 +2010,22 @@
     }
   },
   {
+    "key": "ai_candidate_search_enabled",
+    "label": "Tìm CV: nhà tuyển dụng tìm ứng viên theo tin",
+    "group": "ai",
+    "section": "Đối sánh CV–JD (mô hình nội bộ)",
+    "value_type": "boolean",
+    "value": true,
+    "is_public": true,
+    "description": "Cho nhà tuyển dụng tìm ứng viên đang bật \"cho phép NTD tìm kiếm\", xếp theo mức phù hợp với một tin đang tuyển.",
+    "help": "Kết quả ẩn danh (không tên, liên hệ, tệp CV). Nhà tuyển dụng chỉ có thể mời ứng tuyển.",
+    "options": {
+      "applies_to": [
+        "Tìm CV (cổng nhà tuyển dụng)"
+      ]
+    }
+  },
+  {
     "key": "ai_data_policy_url",
     "label": "Chính sách xử lý dữ liệu bằng AI",
     "group": "ai",

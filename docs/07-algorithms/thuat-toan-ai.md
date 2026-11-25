@@ -445,6 +445,35 @@ lại"/"bỏ" đo bằng `matching_evaluate --ablation` (`evaluate.py --ablation
 mã sản phẩm với một thay đổi bị tắt. Chi tiết ở `ml/reports/eval_validation.md`. Phần
 test chỉ chạy một lần ở giai đoạn nghiệm thu.
 
+**Xếp hạng hồ sơ ứng tuyển cho nhà tuyển dụng (25/11).** Cùng bộ máy, khác đầu vào và cách
+chạy (`services/application_ranking.py`):
+
+- Chỉ chấm hồ sơ hiện hành mà ứng viên đồng ý (`Application.allow_ai_analysis`), trên bản
+  chụp CV đã nộp (`submitted_cv_version`; CV tải lên đọc tệp đã nộp, không đọc tệp hiện tại
+  trong thư viện).
+- Chạy nền ở queue `ai-matching-batch` trên cùng `ml-worker`: khi hồ sơ được tạo, khi tin đổi
+  nội dung (chỉ các hồ sơ chưa có kết quả với nội dung mới), và bằng
+  `matching_backfill --only applications`. Kết quả là `MatchAnalysis` với
+  `purpose = application_ranking`; ứng viên không xem được bản này.
+- Danh sách hồ sơ của NTD lấy điểm bằng truy vấn con (số truy vấn không tăng theo số hồ sơ);
+  sắp xếp mặc định vẫn là mới nhất, "Phù hợp nhất" là lựa chọn. Hồ sơ không có điểm luôn kèm
+  lý do. Không nơi nào đổi trạng thái hồ sơ theo điểm.
+
+**Tìm CV (25/11).** Nhà tuyển dụng chọn một tin đang tuyển; hệ thống xếp các CV đang bật "cho
+phép NTD tìm kiếm" (mỗi ứng viên một CV) theo mức phù hợp (`services/candidate_search.py`):
+
+1. Lọc theo hồ sơ trích xuất (kỹ năng, số tháng kinh nghiệm, học vấn, ngoại ngữ, từ khóa chức
+   danh) bằng tra cứu JSON trên `MatchDocument.profile_json`.
+2. Lấy 200 CV gần vector của tin nhất bằng pgvector (tìm chính xác).
+3. Chấm từng CV bằng `score_match` (`hybrid-v2`). Vector đã tính sẵn nên tiến trình web không
+   cần mô hình; chỉ truyền chunk chức danh, vì phần so từng câu yêu cầu không ảnh hưởng điểm.
+4. Bỏ CV dưới 30 điểm (cặp khác ngành có trung vị 11 điểm), ẩn danh kết quả: hồ sơ qua danh
+   sách trắng `domain/profile_view.py`, không câu trích, không tên công ty cũ.
+
+Không tìm bằng câu tự do: so ngữ nghĩa một câu truy vấn cần mã hóa nó bằng mô hình, mà tiến
+trình web không có mô hình; tin tuyển dụng là "câu truy vấn" đã được mã hóa sẵn. Đo trên DB
+dev với 100 CV tổng hợp bật tìm kiếm: một lượt tìm khoảng 0,02–0,06 giây.
+
 Chưa có: fine-tune bi-encoder, cross-encoder cho từng yêu cầu (kế hoạch bản 3, GĐ 3
 và phần còn lại của GĐ 5).
 

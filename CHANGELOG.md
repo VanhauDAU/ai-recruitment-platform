@@ -8,6 +8,18 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-25
 
+#### Added — Tìm CV: nhà tuyển dụng tìm ứng viên theo một tin
+
+- Nút **Tìm CV** trên header và mục "Tìm CV" ở thanh bên cổng NTD mở trang
+  `/tuyendung/app/candidate-search`: chọn tin đang tuyển, lọc theo chức danh, kinh nghiệm, học
+  vấn; danh sách ứng viên ẩn danh xếp theo mức phù hợp (`hybrid-v2`); **Xem nhanh** hiện hồ sơ
+  trích xuất và mức phù hợp theo tiêu chí; **Mời ứng tuyển** gửi thông báo cho ứng viên.
+- API `/api/employer/candidate-search/` (danh sách, chi tiết, mời). Chỉ gồm ứng viên đang bật
+  một CV cho NTD tìm kiếm, còn đồng ý, không bị công ty chặn. Không trả tên, liên hệ, tệp CV,
+  tên công ty cũ hay câu trích. Mỗi lần xem nhanh ghi `CvAccessLog` kênh `recruiter_search`.
+- Model `CandidateSearchInvitation` (một lời mời cho mỗi ứng viên và tin); cờ
+  `ai_candidate_search_enabled`; giới hạn tần suất tìm và mời.
+
 #### Changed — Mỗi ứng viên chỉ bật một CV cho NTD tìm kiếm; thêm "Hồ sơ NTD nhìn thấy"
 
 - Ràng buộc `uq_user_searchable_cv` (migration `cvs.0003`): ứng viên đang bật nhiều CV thì giữ

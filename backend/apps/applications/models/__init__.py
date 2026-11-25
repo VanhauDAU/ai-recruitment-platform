@@ -6,7 +6,7 @@ from .history import ApplicationStatusHistory
 from .reminder import ApplicationReminder
 from .responsiveness import RecruiterResponsiveness
 from .review import ApplicationReview, ApplicationReviewLink
-from .talent_pool import TalentPoolEntry, TalentPoolInvitation
+from .talent_pool import CandidateSearchInvitation, TalentPoolEntry, TalentPoolInvitation
 
 __all__ = [
     'Application',
@@ -15,6 +15,7 @@ __all__ = [
     'ApplicationReviewLink',
     'ApplicationStatusHistory',
     'CandidateBlock',
+    'CandidateSearchInvitation',
     'RecruiterResponsiveness',
     'TalentPoolEntry',
     'TalentPoolInvitation',

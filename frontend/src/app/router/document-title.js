@@ -77,6 +77,7 @@ const EXACT_EMPLOYER_TITLES = new Map([
   [employerAppPath('/applications'), m.employer_workspace_title_applications()],
   [employerAppPath('/candidate-blocks'), m.employer_workspace_title_candidate_blocks()],
   [employerAppPath('/talent-pool'), m.employer_workspace_title_talent_pool()],
+  [employerAppPath('/candidate-search'), m.employer_workspace_title_candidate_search()],
 ])
 
 // Thứ tự quan trọng: mẫu cụ thể (…/edit, …/setup) đứng trước mẫu chi tiết.

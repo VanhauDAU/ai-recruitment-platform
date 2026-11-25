@@ -208,7 +208,7 @@ export default function EmployerWorkspaceLayout() {
         <div className="flex items-center gap-2">
           <TopbarAction icon={<BarChartOutlined />} label={m.employer_workspace_topbar_market_survey()} prominent />
           <TopbarAction icon={<FileTextOutlined />} label={m.employer_workspace_topbar_post_job()} to={employerAppPath('/jobs/new')} />
-          <TopbarAction icon={<SearchOutlined />} label={m.employer_workspace_topbar_search_cv()} />
+          <TopbarAction icon={<SearchOutlined />} label={m.employer_workspace_topbar_search_cv()} to={employerAppPath('/candidate-search')} />
           <TopbarAction icon={<MessageOutlined />} label="Connect" />
           <LanguageSwitcher className="!border-white/20 !text-white/80 hover:!text-white" />
           <EmployerNotificationBell />
