@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [AI tạo tin: đủ quyền lợi, ngoại ngữ, lương/số lượng từ JD](#ai-tạo-tin-đủ-quyền-lợi-ngoại-ngữ-lươngsố-lượng-từ-jd-2026-11-26) | 🟨 Nhánh `feat/ai-job-generation-fields`, chờ PR |
 | [AI chạy được bằng Claude (Anthropic) bên cạnh Gemini](#ai-chạy-được-bằng-claude-anthropic-bên-cạnh-gemini-2026-11-26) | 🟨 Nhánh `feat/ai-provider-claude`, chờ PR |
 | [Đăng nhập mạng xã hội bằng cửa sổ popup](#đăng-nhập-mạng-xã-hội-bằng-cửa-sổ-popup-2026-11-25) | 🟨 PR #380 (nhánh `feat/oauth-popup-login`), chờ gộp |
 | [Chuẩn bị deploy: khóa admin bằng Access, vá cấu hình, checklist 2/12](#chuẩn-bị-deploy-khóa-admin-bằng-access-vá-cấu-hình-checklist-212-2026-11-25) | ✅ Đã gộp dev (#378); việc phía user theo checklist |
@@ -72,6 +73,25 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
 
+
+## AI tạo tin: đủ quyền lợi, ngoại ngữ, lương/số lượng từ JD (2026-11-26)
+
+- **Quyền lợi chế độ brief không còn trống:** form brief thêm ô *Quyền lợi*; nguồn hợp lệ
+  gồm ô đó, ghi chú, quyền lợi trong hồ sơ công ty và 3 quyền lợi bắt buộc theo luật
+  (BHXH/BHYT/BHTN, phép năm ≥ 12 ngày, nghỉ lễ Tết) — chỉ khi loại hình là toàn thời gian,
+  bán thời gian, hợp đồng hoặc chưa chọn. Câu AI diễn đạt lại một quyền lợi nguồn vẫn được
+  giữ; quyền lợi bịa vẫn bị loại.
+- **Ngoại ngữ:** schema có `language_requirements`, khớp danh mục `Language` + mức thành thạo.
+- **Lương và số lượng tuyển chỉ từ JD:** AI chép con số JD ghi rõ; code đối chiếu lại với các
+  số có trong JD (hiểu 15 triệu, 15.000.000, 1,500, 2k) trước khi giữ, sai thì bỏ và cảnh
+  báo. Chế độ brief không bao giờ điền. `manual_fields` chỉ còn trường AI chưa điền.
+- **Kỹ năng hiện ID:** danh sách kỹ năng của form chỉ tải 100/348 mục; form ghép tên kỹ năng
+  từ gợi ý AI và tin đang sửa vào lựa chọn. Prompt gửi đủ danh mục kỹ năng (trần 600).
+- Prompt/schema `job-post-v3`; không đưa lương vào mục quyền lợi.
+- **Kiểm chứng:** pytest `apps/jobs` + `apps/ai_core` (439 passed, 9 test mới); vitest form
+  đăng tin + AI (67 passed); lint, kiến trúc, OpenAPI sạch. Chạy thật với Claude Opus 5.5 trên
+  dev: brief và JD (~10 giây, ~0,04 USD/lần) cho quyền lợi, ngoại ngữ, lương 18–25 triệu và
+  3 người đúng như JD.
 
 ## AI chạy được bằng Claude (Anthropic) bên cạnh Gemini (2026-11-26)
 

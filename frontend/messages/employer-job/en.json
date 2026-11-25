@@ -133,6 +133,8 @@
   "employer_job_ai_input_requirements_placeholder": "E.g. 3 years of experience with Python",
   "employer_job_ai_input_preferred_skills": "Nice-to-have skills",
   "employer_job_ai_input_preferred_skills_placeholder": "E.g. Experience deploying on Google Cloud",
+  "employer_job_ai_input_benefits": "Benefits",
+  "employer_job_ai_input_benefits_placeholder": "E.g. 13th-month bonus, premium health insurance",
   "employer_job_ai_input_position": "Position to hire",
   "employer_job_ai_input_position_placeholder": "E.g. Python Backend Engineer",
   "employer_job_ai_input_position_level": "Suggested level",

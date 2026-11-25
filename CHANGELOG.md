@@ -8,6 +8,12 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Changed — AI tạo tin điền đủ hơn
+
+- Quyền lợi khi tạo bằng brief lấy từ ô *Quyền lợi* mới, ghi chú, hồ sơ công ty và quyền lợi
+  bắt buộc theo luật; AI gợi ý thêm yêu cầu ngoại ngữ; tạo bằng JD tự điền lương và số lượng
+  tuyển khi JD ghi rõ (đối chiếu con số với JD). Sửa ô kỹ năng hiện ID thay vì tên.
+
 #### Added — AI chạy được bằng Claude
 
 - `AI_PROVIDER_BACKEND=anthropic` + `ANTHROPIC_API_KEY`: AI soạn tin, nhập CV, bài đăng

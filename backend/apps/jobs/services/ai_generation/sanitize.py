@@ -61,7 +61,7 @@ def sanitize_generation_input(validated_data):
                 max_length=2000 if key == 'notes' else 255,
             )
     sanitized['work_types'] = list(brief.get('work_types') or [])
-    for key in ('responsibilities', 'requirements', 'preferred_skills'):
+    for key in ('responsibilities', 'requirements', 'preferred_skills', 'benefits'):
         sanitized[key] = [
             plain_text(item, max_length=120) for item in brief.get(key, []) if str(item).strip()
         ][:10]
