@@ -8,6 +8,12 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-25
 
+#### Fixed — Thỏa thuận xử lý DLCN ProCV–NTD không còn trỏ sang TopCV
+
+- Link "Xem nội dung đầy đủ" ở bước Bảo vệ dữ liệu mở văn bản DPA của ProCV
+  (`/documents/procv-thoa-thuan-xu-ly-dlcn-nha-tuyen-dung-2026-11.html`, phiên bản `2026-11`)
+  thay cho URL tạm của TopCV trong `.env`. Hướng dẫn deploy ghi sẵn URL và SHA-256.
+
 #### Security — Gia cố xử lý file tải lên
 
 - DOCX ở nhập CV và DPA của NTD (đường upload trực tiếp) bị kiểm vỏ ZIP trước khi

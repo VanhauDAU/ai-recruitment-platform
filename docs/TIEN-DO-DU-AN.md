@@ -396,6 +396,10 @@ Mục tiêu: 200 người đồng thời, p95 < 800 ms, lỗi < 1 %.
   bài (DB cũ đang rỗng được điền bởi `sitecontent 0010`); chân trang có link.
 - **Mẫu thông báo xử lý dữ liệu ứng viên của ProCV** thay file mẫu TopCV trong
   `frontend/public/documents/`; key mới `employer_dpa_template_url`.
+- **DPA ProCV–NTD (sửa 25/11, nhánh `fix/employer-dpa-document`):** link "Xem nội dung
+  đầy đủ" ở bước Bảo vệ dữ liệu trỏ sang TopCV do `.env` dùng URL tạm; thêm văn bản cố
+  định `procv-thoa-thuan-xu-ly-dlcn-nha-tuyen-dung-2026-11.html`, phiên bản `2026-11`,
+  hash mới (xác nhận cũ thành `outdated`). Nội dung là bản nháp, cần rà soát pháp lý.
 - **Quyền chủ thể dữ liệu:** app `privacy` thêm `DataSubjectRequest` (xuất dữ liệu / xóa
   tài khoản, một yêu cầu chờ mỗi loại); ứng viên và NTD gửi/hủy ở trang bảo mật; admin
   duyệt/từ chối ở `/admin/privacy-requests` + hàng chờ dashboard, có audit log. Xuất dữ
