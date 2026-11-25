@@ -65,7 +65,7 @@
     "@vitejs/plugin-react": "^6.0.3",
     "@vitest/coverage-v8": "^4.1.11",
     "dependency-cruiser": "^17.4.3",
-    "jsdom": "^29.1.1",
+    "jsdom": "^31.0.1",
     "oxlint": "^1.71.0",
     "postcss": "^8.5.23",
     "rollup-plugin-visualizer": "^7.0.1",
