@@ -8,6 +8,16 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-25
 
+#### Changed — Điều hướng cổng ứng viên trên mobile
+
+- Thanh tab dưới (Trang chủ, Việc làm, Tạo CV nổi ở giữa, Cẩm nang, Tài khoản) thay cụm
+  avatar/tin nhắn/đăng nhập trên header ở màn < 768px; header mobile còn logo, nút
+  "Danh mục", tìm việc và chuông. Tab Tài khoản mở tấm trượt từ đáy.
+- Chuông thông báo ứng viên mở dạng tấm trượt từ đáy trên mobile, popover làm lại trên
+  desktop (số chưa đọc ở tiêu đề, trạng thái rỗng mới).
+- Thanh tab tự ẩn ở trang có thanh hành động riêng (chi tiết tin, mẫu CV, trang công ty);
+  nút nổi và dock so sánh việc làm nâng lên theo `--page-bottom-bar-height`.
+
 #### Added — Việc làm gần tôi (ADR-0029)
 
 - Trang `/viec-lam-gan-ban`: bản đồ (MapLibre, nạp lazy) + danh sách sắp theo khoảng cách,

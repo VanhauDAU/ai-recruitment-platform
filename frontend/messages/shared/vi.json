@@ -443,5 +443,6 @@
   "fit_profile_section_interests": "Sở thích",
   "notification_sound_turn_off": "Tắt âm thanh thông báo",
   "notification_sound_turn_on": "Bật âm thanh thông báo",
-  "notification_open": "Xem"
+  "notification_open": "Xem",
+  "ui_sheet_close": "Đóng"
 }

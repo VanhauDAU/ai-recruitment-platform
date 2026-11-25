@@ -7,6 +7,7 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 
 | Hạng mục | Trạng thái |
 | --- | --- |
+| [Thanh tab dưới và thông báo trên mobile cho ứng viên](#thanh-tab-dưới-và-thông-báo-trên-mobile-cho-ứng-viên-2026-11-25) | 🟨 Xong trên nhánh `feat/mobile-tab-bar`, chưa commit/PR |
 | [Chuẩn bị deploy: GĐ5 pháp lý và dữ liệu cá nhân](#chuẩn-bị-deploy-gđ5-pháp-lý-và-dữ-liệu-cá-nhân-2026-11-25) | ✅ Đã gộp dev (#348, 25/11); kiểm trên VPS ở GĐ6 rehearsal. |
 | [Chuẩn bị deploy: GĐ4 hiệu năng và chịu tải](#chuẩn-bị-deploy-gđ4-hiệu-năng-và-chịu-tải-2026-11-25) | ✅ Đã gộp dev (#349, 25/11); kiểm trên VPS ở GĐ6 rehearsal. Số đo k6 thật ở GĐ6. |
 | [Chuẩn bị deploy: GĐ3 sao lưu và khôi phục](#chuẩn-bị-deploy-gđ3-sao-lưu-và-khôi-phục-2026-11-25) | ✅ Đã gộp dev (#350, 25/11); kiểm trên VPS ở GĐ6 rehearsal. |
@@ -59,6 +60,22 @@ File này giữ trạng thái hiện tại và việc còn mở. Chi tiết từ
 | [Lộ trình theo PRD](#lộ-trình-theo-prd) | 🟨 Phần AI lõi (giai đoạn 2–3) còn mở |
 | [Việc còn mở](#việc-còn-mở) | |
 
+
+## Thanh tab dưới và thông báo trên mobile cho ứng viên (2026-11-25)
+
+- Màn < md: header cổng ứng viên còn logo, nút "Danh mục" (mở drawer menu cũ),
+  nút tìm việc và chuông; avatar, tin nhắn, nút đăng nhập/đăng ký chuyển xuống
+  thanh tab dưới `MobileTabBar` (Trang chủ, Việc làm, **Tạo CV** nổi ở giữa trên
+  phần cong, Cẩm nang, Tài khoản). Tab Tài khoản mở tấm trượt: ứng viên thấy menu
+  tài khoản (tách `CandidateAccountPanel` dùng chung với dropdown desktop), khách
+  thấy Đăng nhập/Đăng ký, vai trò khác thấy Trang quản lý.
+- Chuông thông báo: nút tròn có badge; mobile mở tấm trượt từ đáy (`shared/ui/BottomSheet`),
+  desktop giữ popover; tiêu đề kèm số chưa đọc, trạng thái rỗng mới.
+- Thanh tab gắn `body.has-mobile-tab-bar` (biến `--page-bottom-bar-height` 4rem)
+  để nút nổi và dock so sánh tự nâng lên; trang có thanh hành động riêng
+  (`has-bottom-action-bar`: chi tiết tin, mẫu CV, trang công ty) thì thanh tab ẩn.
+  Chi tiết tin chỉ gắn class này dưới md. Trang soạn CV không có thanh tab.
+- Kiểm: `MobileTabBar.test.jsx`, test chuông mobile, E2E `mobile-tab-bar.spec.js` (@responsive).
 
 ## Chuẩn bị deploy: GĐ1 bảo mật ứng dụng (2026-11-25)
 

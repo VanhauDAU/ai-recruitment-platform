@@ -9,7 +9,7 @@ import { AnnouncementStrip } from '@/widgets/common/announcement-strip'
 import { FloatingActions } from '@/widgets/main/floating-actions'
 import { Footer } from '@/widgets/main/footer'
 import { JobPreferencesReminder } from '@/widgets/main/job-preferences-reminder'
-import { Header } from '@/widgets/main/header'
+import { Header, MobileTabBar } from '@/widgets/main/header'
 import { PopularSearches } from '@/widgets/main/popular-searches'
 
 export default function MainLayout() {
@@ -73,6 +73,7 @@ export default function MainLayout() {
             <Footer />
             <JobComparisonDock />
             <FloatingActions />
+            <MobileTabBar />
           </div>
         </LoginPromptProvider>
       </SavedJobsProvider>
