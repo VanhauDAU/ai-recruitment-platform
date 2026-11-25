@@ -13,7 +13,9 @@ from .contracts import AiGenerationError
 
 GEMINI_DEVELOPER = 'gemini_developer'
 VERTEX = 'vertex'
-SUPPORTED_PROVIDER_BACKENDS = frozenset({GEMINI_DEVELOPER, VERTEX})
+ANTHROPIC = 'anthropic'
+SUPPORTED_PROVIDER_BACKENDS = frozenset({GEMINI_DEVELOPER, VERTEX, ANTHROPIC})
+ANTHROPIC_EFFORTS = frozenset({'low', 'medium', 'high', 'xhigh', 'max'})
 
 
 def _decimal(value: Any) -> Decimal:
@@ -49,6 +51,9 @@ class AiRuntimeConfig:
     gemini_api_key: str = ''
     google_cloud_project: str = ''
     google_cloud_location: str = 'global'
+    anthropic_api_key: str = ''
+    # Rỗng = mặc định của model Claude; chỉ provider anthropic dùng.
+    anthropic_effort: str = ''
     api_version: str = 'v1'
     timeout_seconds: float = 40.0
     max_attempts: int = 2
@@ -73,6 +78,8 @@ class AiRuntimeConfig:
             gemini_api_key=settings.GEMINI_API_KEY.strip(),
             google_cloud_project=settings.GOOGLE_CLOUD_PROJECT.strip(),
             google_cloud_location=settings.GOOGLE_CLOUD_LOCATION.strip() or 'global',
+            anthropic_api_key=settings.ANTHROPIC_API_KEY.strip(),
+            anthropic_effort=settings.AI_ANTHROPIC_EFFORT.strip(),
             api_version=settings.AI_PROVIDER_API_VERSION.strip() or 'v1',
             timeout_seconds=_positive_float(settings.AI_PROVIDER_TIMEOUT_SECONDS, 40),
             # The product budget is at most two provider calls per request, whatever the env says.
@@ -99,6 +106,8 @@ class AiRuntimeConfig:
         if self.provider_backend == VERTEX and (
             not self.google_cloud_project or not self.google_cloud_location
         ):
+            raise AiGenerationError('provider_not_configured')
+        if self.provider_backend == ANTHROPIC and not self.anthropic_api_key:
             raise AiGenerationError('provider_not_configured')
 
     def cost_for(self, usage):
