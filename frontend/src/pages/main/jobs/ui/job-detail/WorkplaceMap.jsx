@@ -21,7 +21,7 @@ export default function WorkplaceMap({ addresses, origin }) {
   return (
     <div className="job-workplace-map" role="region" aria-label={m.candidate_nearby_map_label()}>
       <Suspense fallback={<div className="map-view" />}>
-        <MapView key={basemap.styleUrl} styleUrl={basemap.styleUrl} attribution={basemap.attribution} origin={origin} points={points} fitPoints />
+        <MapView key={basemap.id} mapStyle={basemap.style} attribution={basemap.attribution} origin={origin} points={points} fitPoints />
       </Suspense>
     </div>
   )
