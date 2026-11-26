@@ -613,7 +613,7 @@ class CompanyPageEditorTests(CompanyPageWorkspaceTestCase):
             EmployerNotification.EventType.COMPANY_PAGE_EDITOR_GRANTED,
         )
         self.assertEqual(notification.title, 'Bạn được cấp quyền biên tập trang công ty')
-        self.assertEqual(notification.action_path, '/tuyendung/app/company-page')
+        self.assertEqual(notification.action_path, '/tuyendung/app/trang-cong-ty')
         self.assertEqual(notification.metadata, {'company_public_id': self.company.public_id})
         activity = EmployerActivity.objects.get(recipient=self.member)
         self.assertEqual(

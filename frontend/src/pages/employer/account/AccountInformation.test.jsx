@@ -26,7 +26,7 @@ const renderAt = (url) => render(
 describe('EmployerAccountInformationPage', () => {
   it('opens the tab named in the URL and keeps the URL in sync', async () => {
     const user = userEvent.setup()
-    renderAt('/tuyendung/app/account/settings/account-info?tab=domain')
+    renderAt('/tuyendung/app/cai-dat/thong-tin-tai-khoan?tab=domain')
     expect(screen.getByRole('tab', { name: 'Tên miền công ty' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByText('Thẻ tên miền')).toBeInTheDocument()
 
@@ -40,7 +40,7 @@ describe('EmployerAccountInformationPage', () => {
   })
 
   it('falls back to the account tab for an unknown tab', () => {
-    renderAt('/tuyendung/app/account/settings/account-info?tab=khac')
+    renderAt('/tuyendung/app/cai-dat/thong-tin-tai-khoan?tab=khac')
     expect(screen.getByRole('tab', { name: 'Tài khoản' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.getByText('Thẻ thông tin')).toBeInTheDocument()
   })

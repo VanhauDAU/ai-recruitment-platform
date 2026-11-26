@@ -21,7 +21,7 @@ function TemplateCard({ template, sortable, onAction }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: template.public_id, disabled: !sortable })
   const status = STATUS_TAGS[template.lifecycle_status] || STATUS_TAGS.draft
   const rendererKey = currentRendererKey(template)
-  const href = adminPath(`/cv/templates/${template.public_id}`)
+  const href = adminPath(`/cv/mau-cv/${template.public_id}`)
   const published = template.lifecycle_status === 'published'
   return <article ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }} className={`group relative flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:border-[var(--brand-primary)]/40 hover:shadow-md ${isDragging ? 'z-10 opacity-60 shadow-lg' : ''}`}>
     <Link to={href} tabIndex={-1} aria-hidden="true" className="block !bg-slate-50 px-6 pb-0 pt-4">
@@ -64,7 +64,7 @@ export default function AdminCvTemplates() {
     },
     onSuccess: (result, { action }) => {
       queryClient.invalidateQueries({ queryKey: ['admin-cv-templates'] })
-      if (action === 'duplicate') navigate(adminPath(`/cv/templates/${result.public_id}`))
+      if (action === 'duplicate') navigate(adminPath(`/cv/mau-cv/${result.public_id}`))
     },
     onError: (error) => {
       queryClient.invalidateQueries({ queryKey: ['admin-cv-templates'] })

@@ -115,7 +115,7 @@ export default function AdminJobReviewPanels({ job, tab }) {
         { key: 'role', label: 'Vai trò công ty', value: job.company_role_label },
         { key: 'status', label: 'Tình trạng', value: adminJobEnumLabel(job.employer_account_status) },
       ]} />
-      <Link className="admin-job-inline-link" to={adminPath(`/recruiters/${job.employer_public_id}`)}>
+      <Link className="admin-job-inline-link" to={adminPath(`/nha-tuyen-dung/${job.employer_public_id}`)}>
         <UserOutlined /> Xem hồ sơ nhà tuyển dụng
       </Link>
     </AdminJobPanel>

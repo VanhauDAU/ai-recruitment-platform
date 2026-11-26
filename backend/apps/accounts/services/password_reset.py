@@ -192,7 +192,7 @@ def send_password_reset_email(user, *, expected_email=None, expected_auth_revisi
             if is_admin
             else settings.EMPLOYER_PASSWORD_RESET_PATH
             if is_employer
-            else '/reset-password'
+            else '/dat-lai-mat-khau'
         ),
         base_url=(
             settings.ADMIN_FRONTEND_URL

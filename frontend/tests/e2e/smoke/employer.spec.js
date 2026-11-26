@@ -177,7 +177,7 @@ test('employer smoke: language switcher renders English copy', { tag: '@responsi
 
 test('employer smoke: login loads and dashboard stays role-protected', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
-  await page.goto('/tuyendung/app/login')
+  await page.goto('/tuyendung/app/dang-nhap')
   await expect(page.getByRole('heading', { name: 'Chào mừng bạn quay trở lại' })).toBeVisible()
   const googleLogin = page.getByRole('button', { name: 'Đăng nhập bằng Google' })
   await page.locator('html').evaluate((root) => root.classList.add('dark'))
@@ -190,8 +190,8 @@ test('employer smoke: login loads and dashboard stays role-protected', { tag: '@
   await expectAnimatedLoginButton(page)
   await expectNoHorizontalOverflow(page)
 
-  await page.goto('/tuyendung/app/dashboard')
-  await expect(page).toHaveURL(/\/tuyendung\/app\/login\?returnUrl=/)
+  await page.goto('/tuyendung/app/tong-quan')
+  await expect(page).toHaveURL(/\/tuyendung\/app\/dang-nhap\?returnUrl=/)
 })
 
 test('employer auth: registration has employer fields and consent-gated Google signup', { tag: '@responsive' }, async ({ page }) => {
@@ -199,7 +199,7 @@ test('employer auth: registration has employer fields and consent-gated Google s
   await page.route('http://localhost:8000/api/auth/register/email-availability/', async (route) => {
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify({ available: true }) })
   })
-  await page.goto('/tuyendung/app/register')
+  await page.goto('/tuyendung/app/dang-ky')
 
   await expect(page.getByRole('heading', { name: 'Đăng ký tài khoản Nhà tuyển dụng' })).toBeVisible()
   await expectNoHorizontalOverflow(page)
@@ -243,9 +243,9 @@ test('employer auth: registration has employer fields and consent-gated Google s
   await expect(page.getByRole('button', { name: 'Quay lại' })).toBeVisible()
   await expectNoHorizontalOverflow(page)
 
-  await page.goto('/tuyendung/app/forgot-password')
+  await page.goto('/tuyendung/app/quen-mat-khau')
   await expect(page.getByRole('heading', { name: 'Quên mật khẩu?' })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Quay lại đăng nhập' }).last()).toHaveAttribute('href', '/tuyendung/app/login')
+  await expect(page.getByRole('link', { name: 'Quay lại đăng nhập' }).last()).toHaveAttribute('href', '/tuyendung/app/dang-nhap')
   await expectNoHorizontalOverflow(page)
 })
 
@@ -327,7 +327,7 @@ test('employer domain verification creates a one-time DNS challenge responsively
     await route.fulfill({ contentType: 'application/json', body: '[]' })
   })
 
-  await page.goto('/tuyendung/app/account/settings/account-info?tab=domain')
+  await page.goto('/tuyendung/app/cai-dat/thong-tin-tai-khoan?tab=domain')
 
   await expect(page.getByRole('heading', { name: 'Xác minh tên miền công ty' })).toBeVisible()
   await expect(page.getByText('Tên miền công ty chưa được xác minh')).toBeVisible()
@@ -372,7 +372,7 @@ test('employer social connections list one card per network responsively', { tag
     }]) })
   })
 
-  await page.goto('/tuyendung/app/account/settings/integrations')
+  await page.goto('/tuyendung/app/cai-dat/tich-hop')
 
   const card = page.getByRole('region', { name: 'Fanpage Facebook' })
   await expect(card).toBeVisible()
@@ -386,9 +386,9 @@ test('employer auth: unverified session is redirected to account verification', 
   await mockPublicApi(page)
   await setEmployerSession(page)
 
-  await page.goto('/tuyendung/app/dashboard')
+  await page.goto('/tuyendung/app/tong-quan')
 
-  await expect(page).toHaveURL(/\/tuyendung\/app\/account\/verify$/)
+  await expect(page).toHaveURL(/\/tuyendung\/app\/xac-thuc-email$/)
   await expect(page.getByRole('heading', { name: 'Xác thực địa chỉ email' })).toBeVisible()
   await expect(page.getByText('hr@example.com')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Gửi email xác thực' })).toBeVisible()
@@ -405,9 +405,9 @@ test('employer auth: legacy verification link keeps its token', async ({ page })
     })
   })
 
-  await page.goto('/tuyendung/app/xac-thuc-email?token=legacy-email-token')
+  await page.goto('/tuyendung/app/account/verify?token=legacy-email-token')
 
-  await expect(page).toHaveURL(/\/tuyendung\/app\/account\/verify\?token=legacy-email-token$/)
+  await expect(page).toHaveURL(/\/tuyendung\/app\/xac-thuc-email\?token=legacy-email-token$/)
   await expect.poll(() => submittedToken).toBe('legacy-email-token')
   await expect(page.getByRole('heading', { name: 'Xác thực thành công!' })).toBeVisible()
 })
@@ -445,9 +445,9 @@ test('employer auth: verified session completes recruitment need before dashboar
     await route.fulfill({ contentType: 'application/json', body: 'null' })
   })
 
-  await page.goto('/tuyendung/app/dashboard')
+  await page.goto('/tuyendung/app/tong-quan')
 
-  await expect(page).toHaveURL(/\/tuyendung\/app\/consulting-need$/)
+  await expect(page).toHaveURL(/\/tuyendung\/app\/khai-bao-nhu-cau$/)
   await expect(page.getByRole('heading', { name: /Xin chào, Nguyễn An/ })).toBeVisible()
   await expect(page.getByText('Nhu cầu tuyển dụng', { exact: true })).toBeVisible()
   await expect(page.getByText('Bạn đang tuyển dụng vị trí chuyên môn nào?')).toBeVisible()
@@ -464,12 +464,12 @@ test('employer auth: verified session completes recruitment need before dashboar
     budget_source: 'company',
     consultation_topics: ['promotions'],
   })
-  await expect(page).toHaveURL(/\/tuyendung\/app\/employer-verify$/)
+  await expect(page).toHaveURL(/\/tuyendung\/app\/xac-thuc-tai-khoan$/)
   await expect(page.getByRole('heading', { name: 'Xác thực thông tin' })).toBeVisible()
   await expect(page.getByText('Xác thực số điện thoại', { exact: true })).toBeVisible()
 
-  await page.goto('/tuyendung/app/consulting-need')
-  await expect(page).toHaveURL(/\/tuyendung\/app\/dashboard$/)
+  await page.goto('/tuyendung/app/khai-bao-nhu-cau')
+  await expect(page).toHaveURL(/\/tuyendung\/app\/tong-quan$/)
   await expect(page.getByRole('heading', { name: /Xin chào, Nguyễn An/ })).toBeVisible()
 })
 
@@ -513,7 +513,7 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
     await route.fulfill({ contentType: 'application/json', body: '[]' })
   })
 
-  await page.goto('/tuyendung/app/employer-verify')
+  await page.goto('/tuyendung/app/xac-thuc-tai-khoan')
 
   const workspace = page.getByTestId('employer-workspace')
   await expect(workspace).toBeVisible()
@@ -533,16 +533,16 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
   await page.getByRole('button', { name: 'Cập nhật Xác thực số điện thoại' }).click()
   await expect(page.getByRole('dialog')).toContainText('Tài khoản của bạn chưa có mật khẩu do được đăng ký bằng Google')
   await page.getByRole('button', { name: 'Cập nhật mật khẩu tại đây' }).click()
-  await expect(page).toHaveURL(/\/tuyendung\/app\/account\/settings\/password-login$/)
+  await expect(page).toHaveURL(/\/tuyendung\/app\/cai-dat\/mat-khau$/)
   await expect(page).toHaveTitle('Thay đổi mật khẩu | ProCV cho Nhà tuyển dụng')
   await expectNoHorizontalOverflow(page)
 
-  await page.goto('/tuyendung/app/account/settings/company?update=true')
+  await page.goto('/tuyendung/app/cai-dat/cong-ty?update=true')
   await expect(page.getByRole('tab', { name: /Tìm kiếm thông tin công ty/ })).toBeVisible()
   await expect(page.getByRole('tab', { name: /Tạo công ty mới/ })).toBeVisible()
   await expectNoHorizontalOverflow(page)
 
-  await page.goto('/tuyendung/app/account/settings/gpkd')
+  await page.goto('/tuyendung/app/cai-dat/giay-phep-kinh-doanh')
   const businessRegistrationRadio = page.getByRole('radio', { name: 'Giấy đăng ký doanh nghiệp hoặc Giấy tờ tương đương khác' })
   const authorizationRadio = page.getByRole('radio', { name: 'Giấy ủy quyền và Giấy tờ định danh' })
   await expect(businessRegistrationRadio).toBeChecked()
@@ -578,7 +578,7 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
   await expect(page.getByRole('button', { name: 'Lưu' })).toBeDisabled()
   await expectNoHorizontalOverflow(page)
 
-  await page.goto('/tuyendung/app/account/settings/personal-data-protection')
+  await page.goto('/tuyendung/app/cai-dat/bao-ve-du-lieu-ca-nhan')
   await expect(page.getByRole('heading', { name: /giữa Ứng viên - Nhà tuyển dụng/i })).toBeVisible()
   await expect(page.getByRole('link', { name: /Tải mẫu văn bản/ })).toHaveAttribute('href', '/documents/procv-mau-thong-bao-xu-ly-dlcn-ung-vien.docx')
   const dpaFileInput = page.locator('input[type="file"]')
@@ -596,15 +596,15 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
   await expect(page.getByRole('button', { name: 'Xác nhận' })).toBeEnabled()
   await expectNoHorizontalOverflow(page)
 
-  await page.goto('/tuyendung/app/account/settings/recruitment-demand')
+  await page.goto('/tuyendung/app/cai-dat/nhu-cau-tuyen-dung')
   await expect(page.getByRole('button', { name: 'Thêm nhu cầu' })).toBeVisible()
   await expectNoHorizontalOverflow(page)
 
-  await page.goto('/tuyendung/app/account/settings/general-setting')
+  await page.goto('/tuyendung/app/cai-dat/chung')
   await expect(page.getByText('Thông báo CV ứng tuyển', { exact: true })).toBeVisible()
   await expectNoHorizontalOverflow(page)
 
-  await page.goto('/tuyendung/app/dashboard')
+  await page.goto('/tuyendung/app/tong-quan')
   await expect(page.getByRole('heading', { name: /Xin chào, Nguyễn An/ })).toBeVisible()
   await expectNoHorizontalOverflow(page)
 
@@ -612,9 +612,9 @@ test('employer workspace: verification actions stay inside the 100vh app shell',
     await page.getByRole('button', { name: 'Mở menu quản trị' }).click()
   }
   const sidebarAccountLink = page.getByTestId('employer-sidebar').getByRole('link', { name: 'Thông tin tài khoản' })
-  await expect(sidebarAccountLink).toHaveAttribute('href', '/tuyendung/app/account/settings/account-info')
+  await expect(sidebarAccountLink).toHaveAttribute('href', '/tuyendung/app/cai-dat/thong-tin-tai-khoan')
   await sidebarAccountLink.click()
-  await expect(page).toHaveURL(/\/tuyendung\/app\/account\/settings\/account-info$/)
+  await expect(page).toHaveURL(/\/tuyendung\/app\/cai-dat\/thong-tin-tai-khoan$/)
   await expect(page).toHaveTitle('Thông tin tài khoản | ProCV cho Nhà tuyển dụng')
   await expect(page.getByRole('heading', { name: 'Thông tin tài khoản', exact: true })).toBeVisible()
   await expect(page.getByLabel('Họ và tên')).toHaveValue('Nguyễn An')
@@ -649,7 +649,7 @@ test('employer dashboard: charts and action buttons stay visible and responsive'
     })
   })
 
-  await page.goto('/tuyendung/app/dashboard')
+  await page.goto('/tuyendung/app/tong-quan')
 
   await expect(page.getByRole('heading', { name: /Xin chào, Nguyễn An/ })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Xu hướng hồ sơ ứng tuyển' })).toBeVisible()
@@ -713,7 +713,7 @@ test('employer company settings: a new member sees only the personal request sta
     })
   })
 
-  await page.goto('/tuyendung/app/account/settings/company')
+  await page.goto('/tuyendung/app/cai-dat/cong-ty')
 
   const mineRequest = page.getByRole('region', { name: 'Yêu cầu của tôi' })
   await expect(mineRequest.getByRole('button', { name: /Tạo yêu cầu/ })).toBeEnabled()
@@ -771,7 +771,7 @@ test('employer business license: personal scope keeps the summary and displayed 
     })
   })
 
-  await page.goto('/tuyendung/app/account/settings/gpkd')
+  await page.goto('/tuyendung/app/cai-dat/giay-phep-kinh-doanh')
 
   await expect.poll(() => requestedScope).toBe('mine')
   await expect(page.getByText('Đã duyệt')).toHaveCount(2)
@@ -851,7 +851,7 @@ test('employer company settings: document revision request shows reason and repl
     })
   })
 
-  await page.goto('/tuyendung/app/account/settings/company?update=true')
+  await page.goto('/tuyendung/app/cai-dat/cong-ty?update=true')
 
   await expect(page.getByText('Quản trị viên yêu cầu bổ sung giấy tờ')).toBeVisible()
   await expect(page.getByText('Ảnh bị mờ, vui lòng tải bản rõ đủ bốn góc.')).toBeVisible()
@@ -891,9 +891,9 @@ test('employer workspace: completed verification redirects away from the checkli
     })
   })
 
-  await page.goto('/tuyendung/app/employer-verify')
+  await page.goto('/tuyendung/app/xac-thuc-tai-khoan')
 
-  await expect(page).toHaveURL(/\/tuyendung\/app\/dashboard$/)
+  await expect(page).toHaveURL(/\/tuyendung\/app\/tong-quan$/)
   await expect(page.getByRole('heading', { name: /Xin chào, Nguyễn An/ })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Xác thực thông tin' })).toHaveCount(0)
   await expect(page.getByLabel('Các bước xác thực').getByRole('link')).toHaveCount(5)
@@ -926,15 +926,15 @@ test('employer workspace: an incomplete account cannot access recruitment operat
     })
   })
 
-  await page.goto('/tuyendung/app/jobs')
+  await page.goto('/tuyendung/app/tin-tuyen-dung')
 
-  await expect(page).toHaveURL(/\/tuyendung\/app\/employer-verify$/)
+  await expect(page).toHaveURL(/\/tuyendung\/app\/xac-thuc-tai-khoan$/)
   await expect(page.getByText('Xác thực thông tin')).toBeVisible()
   await expect(page.getByText('Workspace tuyển dụng chưa sẵn sàng')).toHaveCount(0)
 
-  await page.goto('/tuyendung/app/campaigns')
+  await page.goto('/tuyendung/app/chien-dich')
 
-  await expect(page).toHaveURL(/\/tuyendung\/app\/employer-verify$/)
+  await expect(page).toHaveURL(/\/tuyendung\/app\/xac-thuc-tai-khoan$/)
   await expect(page.getByText('Xác thực thông tin')).toBeVisible()
   await expect(page.getByText('Workspace tuyển dụng chưa sẵn sàng')).toHaveCount(0)
   await expectNoHorizontalOverflow(page)
@@ -1022,11 +1022,11 @@ test('employer jobs: compact list keeps candidate previews and contextual action
     })
   })
 
-  await page.goto('/tuyendung/app/jobs')
+  await page.goto('/tuyendung/app/tin-tuyen-dung')
 
   await expect(page.getByRole('link', { name: 'Đăng tin tuyển dụng' })).toHaveAttribute(
     'href',
-    '/tuyendung/app/jobs/new',
+    '/tuyendung/app/tin-tuyen-dung/tao-moi',
   )
   const activeJob = page.getByTestId('job-list-item-jb_compact')
   await expect(activeJob.getByRole('link', { name: 'Kỹ sư Frontend React' })).toBeVisible()
@@ -1034,7 +1034,7 @@ test('employer jobs: compact list keeps candidate previews and contextual action
   await expect(activeJob.getByText('Tuyển đội ngũ sản phẩm')).toBeVisible()
   await expect(activeJob.getByRole('link', { name: '2 ứng viên' })).toBeVisible()
   await expect(activeJob.getByRole('link', { name: '1 hồ sơ chưa xem' }))
-    .toHaveAttribute('href', '/tuyendung/app/applications?job=jb_compact&scope=unread')
+    .toHaveAttribute('href', '/tuyendung/app/ho-so-ung-tuyen?job=jb_compact&scope=unread')
   // Phones keep the count and the unread badge; avatars start at 640px.
   const viewportWidth = page.viewportSize().width
   if (viewportWidth >= 640) {
@@ -1176,7 +1176,7 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
     page.waitForResponse((response) => new URL(response.url()).pathname === '/api/public/locations/' && response.status() === 200),
   ])
 
-  await page.goto('/tuyendung/app/jobs/new?campaign=camp_q3')
+  await page.goto('/tuyendung/app/tin-tuyen-dung/tao-moi?campaign=camp_q3')
   await expect(page.getByRole('heading', { name: 'Bạn muốn bắt đầu theo cách nào?' })).toBeVisible()
   await expect(page.getByRole('button', { name: /Mở form/ })).toBeVisible()
   await expect(page.getByRole('button', { name: /Tạo với AI/ })).toBeVisible()
@@ -1284,7 +1284,7 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
       { location: 3, address_detail: '', sort_order: 1 },
     ],
   })
-  await expect(page).toHaveURL(/\/tuyendung\/app\/jobs\/job_draft\/edit$/)
+  await expect(page).toHaveURL(/\/tuyendung\/app\/tin-tuyen-dung\/job_draft\/chinh-sua$/)
   await expect(page.getByLabel('Từ mức thu nhập')).toHaveValue('')
   await expect(page.getByLabel('Đến mức')).toHaveValue('7.000.000')
   await expect(page.getByLabel('Từ thứ')).toHaveCount(0)
@@ -1408,19 +1408,19 @@ test('employer jobs: direct AI modes preserve campaign, resume generation and at
     })
   })
 
-  await page.goto('/tuyendung/app/jobs/new?mode=manual&campaign=camp_ai')
+  await page.goto('/tuyendung/app/tin-tuyen-dung/tao-moi?mode=manual&campaign=camp_ai')
   await expect(page.getByLabel('Tiêu đề tin')).toBeVisible()
   await expect(page).toHaveURL(/mode=manual/)
   await expect(page).toHaveURL(/campaign=camp_ai/)
   await expectNoHorizontalOverflow(page)
 
-  await page.goto('/tuyendung/app/jobs/new?mode=jd_text&campaign=camp_ai')
+  await page.goto('/tuyendung/app/tin-tuyen-dung/tao-moi?mode=jd_text&campaign=camp_ai')
   await expect(page.getByLabel('Nội dung JD hiện có')).toBeVisible()
   await expect(page).toHaveURL(/mode=jd_text/)
   await expect(page).toHaveURL(/campaign=camp_ai/)
   await expectNoHorizontalOverflow(page)
 
-  await page.goto('/tuyendung/app/jobs/new?mode=ai_brief&campaign=camp_ai')
+  await page.goto('/tuyendung/app/tin-tuyen-dung/tao-moi?mode=ai_brief&campaign=camp_ai')
   await page.getByLabel('Vị trí cần tuyển').fill('Kỹ sư Backend')
   await page.getByRole('button', { name: 'Tạo bản nháp bằng AI' }).click()
   await expect.poll(() => createdGenerationPayload).toMatchObject({
@@ -1531,12 +1531,12 @@ test('employer jobs: detail workspace is compact, actionable and responsive', { 
     })
   })
 
-  await page.goto('/tuyendung/app/jobs/jb_workspace')
+  await page.goto('/tuyendung/app/tin-tuyen-dung/jb_workspace')
 
   await expect(page).toHaveTitle('Chi tiết tin tuyển dụng | ProCV cho Nhà tuyển dụng')
   await expect(page.getByRole('heading', { name: 'Kỹ sư Frontend React' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Mở chiến dịch Tuyển đội ngũ sản phẩm' }))
-    .toHaveAttribute('href', '/tuyendung/app/campaigns/camp_product?active_tab=job')
+    .toHaveAttribute('href', '/tuyendung/app/chien-dich/camp_product?active_tab=job')
   await expect(page.getByRole('button', { name: /Chỉnh sửa/ })).toBeVisible()
   await page.getByRole('button', { name: 'Gia hạn' }).click()
   const extensionDialog = page.getByRole('dialog', { name: 'Gia hạn tin tuyển dụng' })
@@ -1576,7 +1576,7 @@ test('employer jobs: detail workspace is compact, actionable and responsive', { 
   await expect(page.getByText('Bảo hiểm sức khỏe', { exact: true })).toBeVisible()
   await expectNoHorizontalOverflow(page)
 
-  await page.goto('/tuyendung/app/jobs/jb_workspace?active_tab=viewed_job')
+  await page.goto('/tuyendung/app/tin-tuyen-dung/jb_workspace?active_tab=viewed_job')
   await expect(page.getByTestId('job-funnel-impressions')).toContainText('240')
   await expect(page.getByTestId('job-funnel-views')).toContainText('Chuyển đổi 15%')
   await expectNoHorizontalOverflow(page)
@@ -1763,7 +1763,7 @@ test('employer applications: grouped CV workspace is clear across responsive lay
     await route.fulfill({ contentType: 'application/pdf', body: '%PDF-1.4 snapshot' })
   })
 
-  await page.goto('/tuyendung/app/applications?job=jb_987ecf21d547&q=levanhaum%40gmail.com&application=app_befb3400ade3')
+  await page.goto('/tuyendung/app/ho-so-ung-tuyen?job=jb_987ecf21d547&q=levanhaum%40gmail.com&application=app_befb3400ade3')
 
   const candidateList = page.getByTestId('application-candidate-list')
   const cvPreview = page.getByTestId('application-cv-preview')
@@ -1849,7 +1849,7 @@ test('employer applications: grouped CV workspace is clear across responsive lay
   }
   await expectNoHorizontalOverflow(page)
   await backToJobButton.click()
-  await expect(page).toHaveURL('/tuyendung/app/jobs/jb_987ecf21d547')
+  await expect(page).toHaveURL('/tuyendung/app/tin-tuyen-dung/jb_987ecf21d547')
 })
 
 test('employer campaigns: status tabs and one next action per row', { tag: '@responsive' }, async ({ page }) => {
@@ -1902,7 +1902,7 @@ test('employer campaigns: status tabs and one next action per row', { tag: '@res
     await route.fulfill({ contentType: 'application/json', body: '[]' })
   })
 
-  await page.goto('/tuyendung/app/campaigns')
+  await page.goto('/tuyendung/app/chien-dich')
   const statusTabs = page.getByRole('group', { name: 'Lọc chiến dịch theo trạng thái' })
   await expect(statusTabs.getByRole('button', { name: 'Tất cả 1' })).toHaveAttribute('aria-pressed', 'true')
   await expect(statusTabs.getByRole('button', { name: 'Nháp 0' })).toBeVisible()
@@ -1911,11 +1911,11 @@ test('employer campaigns: status tabs and one next action per row', { tag: '@res
   await expect(attention.getByRole('button', { name: /Có tin hết hạn\s*0/ })).toBeDisabled()
   await expect(page.getByRole('combobox', { name: 'Sắp xếp chiến dịch' })).toBeVisible()
   const row = page.getByTestId('campaign-row-camp_frontend')
-  await expect(row.getByRole('link', { name: 'Tuyển Frontend' })).toHaveAttribute('href', '/tuyendung/app/campaigns/camp_frontend')
+  await expect(row.getByRole('link', { name: 'Tuyển Frontend' })).toHaveAttribute('href', '/tuyendung/app/chien-dich/camp_frontend')
   await expect(row.getByText('Đã tuyển 1/2')).toBeVisible()
   await expect(row.getByText('Nhận CV ứng tuyển')).toBeVisible()
   // Mỗi dòng chỉ một hành động kế tiếp; không còn công tắc, nút hover hay nút sửa tên.
-  await expect(row.getByRole('link', { name: 'Xem 1 CV mới' })).toHaveAttribute('href', '/tuyendung/app/campaigns/camp_frontend?active_tab=apply_cv')
+  await expect(row.getByRole('link', { name: 'Xem 1 CV mới' })).toHaveAttribute('href', '/tuyendung/app/chien-dich/camp_frontend?active_tab=apply_cv')
   await expect(page.getByRole('switch')).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Sửa chiến dịch' })).toHaveCount(0)
   await expectNoHorizontalOverflow(page)
@@ -1930,7 +1930,7 @@ test('employer campaigns: status tabs and one next action per row', { tag: '@res
   await expect.poll(() => listRequests.at(-1)?.get('scope')).toBe('needs_review')
 
   // Tạo chiến dịch đi qua wizard thiết lập, không còn hộp thoại chỉ nhập tên.
-  await expect(page.getByRole('link', { name: 'Thêm chiến dịch mới' })).toHaveAttribute('href', '/tuyendung/app/campaigns/new')
+  await expect(page.getByRole('link', { name: 'Thêm chiến dịch mới' })).toHaveAttribute('href', '/tuyendung/app/chien-dich/tao-moi')
 })
 
 test('employer campaign detail: TopCV-style workspace is responsive and uses API data', { tag: '@responsive' }, async ({ page }) => {
@@ -2131,14 +2131,14 @@ test('employer campaign detail: TopCV-style workspace is responsive and uses API
     await page.getByRole('tab', { name: label }).click()
   }
 
-  await page.goto('/tuyendung/app/campaigns/camp_frontend')
+  await page.goto('/tuyendung/app/chien-dich/camp_frontend')
 
   await expect(page.getByRole('main').getByRole('heading', { name: 'Tuyển Frontend' })).toBeVisible()
   await expect(page.getByTestId('campaign-hero')).toContainText('camp_frontend')
   await expect(page.getByRole('button', { name: 'Sửa thông tin' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Thao tác khác' })).toBeVisible()
   await expect(page.getByTestId('campaign-hero')).toContainText('Cần 2 người (tổng 2 tin)')
-  await expect(page.getByRole('link', { name: 'Đăng thêm tin' })).toHaveAttribute('href', '/tuyendung/app/jobs/new?campaign=camp_frontend')
+  await expect(page.getByRole('link', { name: 'Đăng thêm tin' })).toHaveAttribute('href', '/tuyendung/app/tin-tuyen-dung/tao-moi?campaign=camp_frontend')
   await expect(page.getByText('Ứng viên duy nhất', { exact: true })).toBeVisible()
   await expect(page.getByText('Hồ sơ mới / chưa xem')).toBeVisible()
   await expect(page.getByText('Phân bổ trạng thái hồ sơ')).toBeVisible()
@@ -2281,7 +2281,7 @@ test('employer company settings: recent catalogue and full create form are respo
     })
   })
 
-  await page.goto('/tuyendung/app/account/settings/company')
+  await page.goto('/tuyendung/app/cai-dat/cong-ty')
 
   await expect(page.getByText('Lưu ý!')).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Công ty mới tạo' })).toBeVisible()
@@ -2394,7 +2394,7 @@ test('employer company settings: pending values remain editable without creating
     await route.fulfill({ contentType: 'application/json', body: '[]' })
   })
 
-  await page.goto('/tuyendung/app/account/settings/company')
+  await page.goto('/tuyendung/app/cai-dat/cong-ty')
   const mineRequest = page.getByRole('region', { name: 'Yêu cầu của tôi' })
   await expect(mineRequest.getByText('Đang xử lý', { exact: true })).toBeVisible()
   await expect(mineRequest.getByText('Bị từ chối', { exact: true })).toHaveCount(0)
@@ -2479,7 +2479,7 @@ test('employer company page: hiding a section updates the preview and saves the 
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(workspace()) })
   })
 
-  await page.goto('/tuyendung/app/company-page')
+  await page.goto('/tuyendung/app/trang-cong-ty')
 
   await expect(page.getByRole('heading', { level: 1, name: 'Trang công ty' })).toBeVisible()
   await expect(page.getByRole('link', { name: /Xem trang công khai/ })).toHaveAttribute('href', '/cong-ty/acme')
@@ -2580,7 +2580,7 @@ test('employer company page: saving the headline publishes it at once', { tag: '
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify([{ id: 7, name: 'Bảo hiểm sức khoẻ', icon: '', category: 'welfare' }]) })
   })
 
-  await page.goto('/tuyendung/app/company-page')
+  await page.goto('/tuyendung/app/trang-cong-ty')
 
   await expect(page.getByRole('progressbar', { name: 'Độ hoàn thiện' })).toHaveAttribute('aria-valuenow', '10')
   await page.getByRole('tab', { name: 'Nội dung' }).click()
@@ -2672,7 +2672,7 @@ test('employer blocklist: blocked candidates are listed and can be lifted', { ta
     await route.fulfill({ contentType: 'application/json', body: '{}' })
   })
 
-  await page.goto('/tuyendung/app/candidate-blocks')
+  await page.goto('/tuyendung/app/ung-vien-bi-chan')
   await expect(page.getByRole('heading', { name: 'Danh sách đen' })).toBeVisible()
   await expect(page.getByText('Nguyễn Spam')).toBeVisible()
   await expectNoHorizontalOverflow(page)
@@ -2718,7 +2718,7 @@ test('employer talent pool: suggestions for a job and an invitation', { tag: '@r
     await route.fulfill({ status: 204, body: '' })
   })
 
-  await page.goto('/tuyendung/app/talent-pool?job=jb_new')
+  await page.goto('/tuyendung/app/kho-ung-vien?job=jb_new')
   await expect(page.getByRole('heading', { name: 'Kho ứng viên tiềm năng' })).toBeVisible()
   await expect(page.getByText('Lê Tiềm Năng').first()).toBeVisible()
   await expect(page.getByText('58 điểm')).toBeVisible()

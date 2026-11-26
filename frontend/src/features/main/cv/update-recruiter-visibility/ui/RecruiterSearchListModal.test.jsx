@@ -47,7 +47,7 @@ describe('RecruiterSearchListModal', () => {
   it('lists every CV type and saves consent before the changed CVs only', async () => {
     const onClose = renderModal()
 
-    expect(await screen.findByRole('link', { name: 'CV online A' })).toHaveAttribute('href', '/cvs/cv_1/view')
+    expect(await screen.findByRole('link', { name: 'CV online A' })).toHaveAttribute('href', '/cv/cv_1/xem')
     expect(screen.getByText(/CV tải lên/)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('switch', { name: 'Cho phép NTD tìm kiếm CV online A' }))
 

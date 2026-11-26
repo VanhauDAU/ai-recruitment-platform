@@ -72,7 +72,7 @@ describe('EmployerJobEditor', () => {
   beforeEach(() => mocks.createJobFormValues.mockClear())
 
   it('opens the destination chooser and preserves campaign when selecting an AI mode', () => {
-    renderEditor('/tuyendung/app/jobs/new?campaign=campaign_1')
+    renderEditor('/tuyendung/app/tin-tuyen-dung/tao-moi?campaign=campaign_1')
 
     expect(screen.getByRole('heading', { name: 'Bạn muốn bắt đầu theo cách nào?' })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /Tạo với AI/ }))
@@ -83,7 +83,7 @@ describe('EmployerJobEditor', () => {
   })
 
   it('shows the form only after a completed AI result and keeps attribution outside form values', () => {
-    const { onSaveDraft } = renderEditor('/tuyendung/app/jobs/new?mode=ai_brief&campaign=campaign_1')
+    const { onSaveDraft } = renderEditor('/tuyendung/app/tin-tuyen-dung/tao-moi?mode=ai_brief&campaign=campaign_1')
 
     expect(screen.queryByTestId('post-job-form')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Hoàn tất AI' }))
@@ -98,7 +98,7 @@ describe('EmployerJobEditor', () => {
   })
 
   it('switches a completed generation to the manual form when the fallback callback is used', () => {
-    renderEditor('/tuyendung/app/jobs/new?mode=ai_brief&campaign=campaign_1')
+    renderEditor('/tuyendung/app/tin-tuyen-dung/tao-moi?mode=ai_brief&campaign=campaign_1')
 
     fireEvent.click(screen.getByRole('button', { name: 'Tiếp tục chỉnh sửa' }))
 
@@ -110,7 +110,7 @@ describe('EmployerJobEditor', () => {
   })
 
   it('switches a failed or active generation to a clean manual form', () => {
-    renderEditor('/tuyendung/app/jobs/new?mode=ai_brief&generation=generation_old&campaign=campaign_1')
+    renderEditor('/tuyendung/app/tin-tuyen-dung/tao-moi?mode=ai_brief&generation=generation_old&campaign=campaign_1')
 
     fireEvent.click(screen.getByRole('button', { name: 'Dùng thủ công' }))
 
@@ -121,7 +121,7 @@ describe('EmployerJobEditor', () => {
   })
 
   it('forces existing edit routes to the manual form even when AI query parameters are present', () => {
-    renderEditor('/tuyendung/app/jobs/job_1/edit?mode=ai_brief&generation=generation_1', { isEditing: true })
+    renderEditor('/tuyendung/app/tin-tuyen-dung/job_1/chinh-sua?mode=ai_brief&generation=generation_1', { isEditing: true })
 
     expect(screen.getByTestId('post-job-form')).toBeInTheDocument()
     expect(screen.queryByTestId('ai-panel')).not.toBeInTheDocument()
@@ -130,7 +130,7 @@ describe('EmployerJobEditor', () => {
 
   it('reports unsaved edits to the page until the parent confirms a save', () => {
     const view = render(
-      <MemoryRouter initialEntries={['/tuyendung/app/jobs/job_1/edit']}>
+      <MemoryRouter initialEntries={['/tuyendung/app/tin-tuyen-dung/job_1/chinh-sua']}>
         <EmployerJobEditor initialValues={{}} isEditing onPublish={vi.fn()} onSaveDraft={vi.fn()} />
       </MemoryRouter>,
     )
@@ -140,7 +140,7 @@ describe('EmployerJobEditor', () => {
     expect(hasUnsavedChanges()).toBe(true)
 
     view.rerender(
-      <MemoryRouter initialEntries={['/tuyendung/app/jobs/job_1/edit']}>
+      <MemoryRouter initialEntries={['/tuyendung/app/tin-tuyen-dung/job_1/chinh-sua']}>
         <EmployerJobEditor initialValues={{}} isEditing onPublish={vi.fn()} onSaveDraft={vi.fn()} savedAt={1} />
       </MemoryRouter>,
     )

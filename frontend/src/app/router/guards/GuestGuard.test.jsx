@@ -18,12 +18,12 @@ describe('GuestGuard', () => {
     })
 
     render(
-      <MemoryRouter initialEntries={['/login']}>
+      <MemoryRouter initialEntries={['/dang-nhap']}>
         <Routes>
           <Route path="/" element={<p>Candidate home</p>} />
           <Route element={<GuestGuard allowedRoles={['candidate']} />}>
-            <Route path="/login" element={<p>Login page</p>} />
-            <Route path="/sign-up" element={<p>Sign-up page</p>} />
+            <Route path="/dang-nhap" element={<p>Login page</p>} />
+            <Route path="/dang-ky" element={<p>Sign-up page</p>} />
           </Route>
         </Routes>
       </MemoryRouter>,
@@ -41,11 +41,11 @@ describe('GuestGuard', () => {
     })
 
     render(
-      <MemoryRouter initialEntries={['/sign-up']}>
+      <MemoryRouter initialEntries={['/dang-ky']}>
         <Routes>
-          <Route path="/onboard-user" element={<p>Candidate onboarding</p>} />
+          <Route path="/hoan-thien-ho-so" element={<p>Candidate onboarding</p>} />
           <Route element={<GuestGuard allowedRoles={['candidate']} />}>
-            <Route path="/sign-up" element={<p>Sign-up page</p>} />
+            <Route path="/dang-ky" element={<p>Sign-up page</p>} />
           </Route>
         </Routes>
       </MemoryRouter>,
@@ -62,10 +62,10 @@ describe('GuestGuard', () => {
     })
 
     render(
-      <MemoryRouter initialEntries={['/tuyendung/app/login']}>
+      <MemoryRouter initialEntries={['/tuyendung/app/dang-nhap']}>
         <Routes>
           <Route element={<GuestGuard allowedRoles={['employer']} />}>
-            <Route path="/tuyendung/app/login" element={<p>Employer login</p>} />
+            <Route path="/tuyendung/app/dang-nhap" element={<p>Employer login</p>} />
           </Route>
         </Routes>
       </MemoryRouter>,

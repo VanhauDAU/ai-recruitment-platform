@@ -21,6 +21,6 @@ describe('admin queue model', () => {
     ])
     expect(result.cleared.map((item) => item.key)).toEqual(['company_reports'])
     expect(result).toMatchObject({ total: 7, overdue: 1 })
-    expect(result.pending[0].to).toBe('/admin/app/job-moderation?tab=reports')
+    expect(result.pending[0].to).toBe('/admin/app/duyet-tin?tab=reports')
   })
 })

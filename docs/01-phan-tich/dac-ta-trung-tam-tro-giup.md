@@ -17,9 +17,9 @@ hữu ích không", ticket/live chat và tự động xuất bản nội dung do
 | Trang help center | `/tro-giup` | Sidebar chuyên mục + danh sách câu hỏi |
 | Danh sách chuyên mục | `/tro-giup/:categorySlug` | URL là nguồn chuẩn cho category và `page` |
 | Chi tiết bài | `/tro-giup/:categorySlug/:articleSlug` | Breadcrumb, nội dung, trước/sau, liên quan |
-| Workspace quản trị | `/admin/app/knowledgebase` | Mọi admin (ADR-0018) |
-| Tạo bài | `/admin/app/knowledgebase/new` | Mọi admin |
-| Editor/lịch sử | `/admin/app/knowledgebase/:publicId` | Mọi admin |
+| Workspace quản trị | `/admin/app/tro-giup` | Mọi admin (ADR-0018) |
+| Tạo bài | `/admin/app/tro-giup/tao-moi` | Mọi admin |
+| Editor/lịch sử | `/admin/app/tro-giup/:publicId` | Mọi admin |
 
 Không đặt dưới `/blog` vì đây là nội dung hỗ trợ sản phẩm, khác cẩm nang nghề
 nghiệp. Ba route public nằm trong `MainLayout`, lazy-load và có trạng thái

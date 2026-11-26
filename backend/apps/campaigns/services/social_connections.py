@@ -25,7 +25,7 @@ from ..models import ScheduledSocialPost, SocialAccountConnection
 from .social import SocialProviderError, decrypt_token, encrypt_token, get_provider
 
 logger = logging.getLogger(__name__)
-INTEGRATIONS_PATH = '/tuyendung/app/account/settings/integrations'
+INTEGRATIONS_PATH = '/tuyendung/app/cai-dat/tich-hop'
 # Refresh a token this long before it expires; the daily task gets several tries.
 REFRESH_AHEAD = timedelta(days=10)
 

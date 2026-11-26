@@ -57,10 +57,10 @@ export default function JobForm() {
       message.success(job.status === 'draft' ? m.employer_job_edit_draft_saved() : m.employer_job_edit_changes_saved())
       // Opened from the campaign setup wizard: go back to its job step.
       if (returnToSetup && job.campaign) {
-        navigate(employerAppPath(`/campaigns/${job.campaign}/setup?step=jobs`))
+        navigate(employerAppPath(`/chien-dich/${job.campaign}/thiet-lap?step=jobs`))
         return
       }
-      navigate(employerAppPath(`/jobs/${job.public_id}/edit`), { replace: true })
+      navigate(employerAppPath(`/tin-tuyen-dung/${job.public_id}/chinh-sua`), { replace: true })
     },
     onError: (error) => message.error(
       getApiErrorMessage(error, m.employer_job_edit_draft_save_failed()),
@@ -79,7 +79,7 @@ export default function JobForm() {
           : m.employer_job_edit_updated(),
       )
       // Vừa đăng/cập nhật: mở thẻ Thông tin tuyển dụng để NTD soát lại tin, chưa có CV để xem.
-      navigate(employerAppPath(`/jobs/${job.public_id}?active_tab=job`))
+      navigate(employerAppPath(`/tin-tuyen-dung/${job.public_id}?active_tab=job`))
     },
     onError: (error) => message.error(
       jobMutationErrorMessage(error, m.employer_job_edit_publish_failed()),
@@ -127,7 +127,7 @@ export default function JobForm() {
     return (
       <section className="space-y-4">
         <JobVisibilityHoldAlert hold={detailQuery.data.visibility_hold} />
-        <Link className="inline-block text-sm font-semibold" to={employerAppPath(`/jobs/${publicId}`)}>
+        <Link className="inline-block text-sm font-semibold" to={employerAppPath(`/tin-tuyen-dung/${publicId}`)}>
           {m.employer_job_edit_back_to_detail()}
         </Link>
       </section>

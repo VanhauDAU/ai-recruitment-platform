@@ -62,7 +62,7 @@ export default function AdminCompanyJoinRequestQueue({ companyPublicId }) {
       title: 'Công ty',
       key: 'company',
       render: (_, row) => (
-        <Link className="font-medium text-[var(--brand-primary-hover)]" to={adminPath(`/companies/${row.company_public_id}?tab=join-requests`)}>
+        <Link className="font-medium text-[var(--brand-primary-hover)]" to={adminPath(`/cong-ty/${row.company_public_id}?tab=join-requests`)}>
           {row.company_name}
         </Link>
       ),

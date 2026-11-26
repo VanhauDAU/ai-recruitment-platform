@@ -45,7 +45,7 @@ describe('JobDetailHeader', () => {
     expect(props.onSelectFilter.mock.calls).toEqual([['submitted'], ['unanswered']])
     expect(screen.getByRole('link', { name: /Xem tin đăng/ })).toHaveAttribute('href', '/viec-lam/ky-su-frontend')
     expect(screen.getByRole('link', { name: 'Mở chiến dịch Đội sản phẩm' }))
-      .toHaveAttribute('href', '/tuyendung/app/campaigns/camp_1?active_tab=job')
+      .toHaveAttribute('href', '/tuyendung/app/chien-dich/camp_1?active_tab=job')
   })
 
   it('keeps closing behind the overflow menu', async () => {

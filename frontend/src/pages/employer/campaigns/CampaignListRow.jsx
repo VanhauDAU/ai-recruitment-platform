@@ -24,7 +24,7 @@ const JOB_STATES = [
   { key: 'draft_job_count', label: m.employer_campaign_jobs_status_draft(), tone: 'slate' },
 ]
 
-const detailPath = (campaign, suffix = '') => employerAppPath(`/campaigns/${campaign.public_id}${suffix}`)
+const detailPath = (campaign, suffix = '') => employerAppPath(`/chien-dich/${campaign.public_id}${suffix}`)
 const shortDate = (value) => (value ? dayjs(value).format('DD/MM/YYYY') : '')
 const count = (value) => Number(value) || 0
 const formatCount = (value) => count(value).toLocaleString(getIntlLocale())
@@ -45,7 +45,7 @@ function initials(name) {
 // The most useful next step for the row's state; "Xem chi tiết" is always there.
 function nextAction(campaign, candidateDataAccess) {
   if (CAMPAIGN_SETUP_STATUSES.includes(campaign.status)) {
-    return { label: m.employer_campaign_list_action_setup(), to: detailPath(campaign, '/setup') }
+    return { label: m.employer_campaign_list_action_setup(), to: detailPath(campaign, '/thiet-lap') }
   }
   const unviewed = count(campaign.unviewed_count ?? campaign.unviewed_application_count)
   if (candidateDataAccess && unviewed > 0) {

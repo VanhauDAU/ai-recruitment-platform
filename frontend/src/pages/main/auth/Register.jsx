@@ -142,7 +142,7 @@ export default function Register() {
     return (
       <div className="w-full">
         <AuthLogo className="mb-4" />
-        <RegistrationClosedNotice loginPath="/login" />
+        <RegistrationClosedNotice loginPath="/dang-nhap" />
       </div>
     )
   }
@@ -422,7 +422,7 @@ export default function Register() {
       <div className="reg-field mt-4 text-center">
         <p className="text-sm text-gray-500 dark:text-gray-400">
           Đã có tài khoản?{' '}
-          <Link to={`/login${searchParams.toString() ? `?${searchParams.toString()}` : ''}`} className="font-semibold text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)] hover:underline transition-colors">
+          <Link to={`/dang-nhap${searchParams.toString() ? `?${searchParams.toString()}` : ''}`} className="font-semibold text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)] hover:underline transition-colors">
             Đăng nhập ngay
           </Link>
         </p>

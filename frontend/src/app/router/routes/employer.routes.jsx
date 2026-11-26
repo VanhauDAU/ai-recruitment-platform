@@ -6,7 +6,6 @@ import EmployerOnboardingGuard from '../guards/EmployerOnboardingGuard'
 import GuestGuard from '../guards/GuestGuard'
 import JobWorkspaceGuard from '../guards/JobWorkspaceGuard'
 import RoleGuard from '../guards/RoleGuard'
-import EmployerLegacyVerifyRedirect from '../redirects/EmployerLegacyVerifyRedirect'
 import {
   EmployerAboutPage,
   EmployerActivitiesPage,
@@ -67,81 +66,79 @@ export function employerRoutes() {
 
     <Route key="employer-auth" element={<EmployerAuthLayout />}>
       <Route element={<GuestGuard allowedRoles={['employer']} />}>
-        <Route path={employerAppPath('/login')} element={<EmployerLoginPage />} />
-        <Route path={employerAppPath('/register')} element={<EmployerRegisterPage />} />
+        <Route path={employerAppPath('/dang-nhap')} element={<EmployerLoginPage />} />
+        <Route path={employerAppPath('/dang-ky')} element={<EmployerRegisterPage />} />
       </Route>
-      <Route path={employerAppPath('/forgot-password')} element={<ForgotPasswordPage loginPath={employerAppPath('/login')} />} />
-      <Route path={employerAppPath('/reset-password')} element={<ResetPasswordPage requestPath={employerAppPath('/forgot-password')} />} />
+      <Route path={employerAppPath('/quen-mat-khau')} element={<ForgotPasswordPage loginPath={employerAppPath('/dang-nhap')} />} />
+      <Route path={employerAppPath('/dat-lai-mat-khau')} element={<ResetPasswordPage requestPath={employerAppPath('/quen-mat-khau')} />} />
     </Route>,
 
     <Route key="employer-email-verification" element={<EmployerSetupLayout />}>
       <Route
-        path={employerAppPath('/account/verify')}
+        path={employerAppPath('/xac-thuc-email')}
         element={(
           <VerifyEmailPage
-            homePath={employerAppPath('/consulting-need')}
-            loginPath={employerAppPath('/login')}
-            verificationPath={employerAppPath('/account/verify')}
+            homePath={employerAppPath('/khai-bao-nhu-cau')}
+            loginPath={employerAppPath('/dang-nhap')}
+            verificationPath={employerAppPath('/xac-thuc-email')}
             successActionLabel="Tiếp tục khai báo nhu cầu tuyển dụng"
             verifiedActionLabel="Khai báo nhu cầu tuyển dụng"
           />
         )}
       />
-      <Route path={employerAppPath('/xac-thuc-email')} element={<EmployerLegacyVerifyRedirect />} />
     </Route>,
 
     <Route
       key="employer-oauth-callback"
       path={employerAppPath('/oauth/callback')}
-      element={<OAuthCallbackPage portal="employer" loginPath={employerAppPath('/login')} />}
+      element={<OAuthCallbackPage portal="employer" loginPath={employerAppPath('/dang-nhap')} />}
     />,
 
-    <Route key="employer-redirect-login" path={employerMarketingPath('/login')} element={<Navigate to={employerAppPath('/login')} replace />} />,
-    <Route key="employer-redirect-register" path={employerMarketingPath('/register')} element={<Navigate to={employerAppPath('/register')} replace />} />,
-    <Route key="employer-redirect-dashboard" path={employerMarketingPath('/dashboard')} element={<Navigate to={employerAppPath('/dashboard')} replace />} />,
-    <Route key="employer-app-root" path={employerAppPath('')} element={<Navigate to={employerAppPath('/login')} replace />} />,
+    <Route key="employer-redirect-login" path={employerMarketingPath('/login')} element={<Navigate to={employerAppPath('/dang-nhap')} replace />} />,
+    <Route key="employer-redirect-register" path={employerMarketingPath('/register')} element={<Navigate to={employerAppPath('/dang-ky')} replace />} />,
+    <Route key="employer-redirect-dashboard" path={employerMarketingPath('/dashboard')} element={<Navigate to={employerAppPath('/tong-quan')} replace />} />,
+    <Route key="employer-app-root" path={employerAppPath('')} element={<Navigate to={employerAppPath('/dang-nhap')} replace />} />,
 
-    <Route key="employer-authenticated" element={<AuthGuard loginPath={employerAppPath('/login')} />}>
-      <Route element={<RoleGuard allowedRoles={['employer']} loginPath={employerAppPath('/login')} />}>
+    <Route key="employer-authenticated" element={<AuthGuard loginPath={employerAppPath('/dang-nhap')} />}>
+      <Route element={<RoleGuard allowedRoles={['employer']} loginPath={employerAppPath('/dang-nhap')} />}>
         <Route element={<EmployerAuthLayout />}>
-          <Route path={employerAppPath('/account/complete-profile')} element={<EmployerOnboardingPage />} />
-          <Route path={employerAppPath('/onboarding')} element={<EmployerOnboardingPage />} />
+          <Route path={employerAppPath('/hoan-thien-ho-so')} element={<EmployerOnboardingPage />} />
         </Route>
         <Route element={<EmployerSetupLayout />}>
-          <Route path={employerAppPath('/consulting-need')} element={<EmployerConsultingNeedPage />} />
+          <Route path={employerAppPath('/khai-bao-nhu-cau')} element={<EmployerConsultingNeedPage />} />
         </Route>
         <Route element={<EmployerOnboardingGuard />}>
           <Route element={<DashboardLayout />}>
-            <Route path={employerAppPath('/employer-verify')} element={<EmployerVerifyPage />} />
-            <Route path={employerAppPath('/account/phone-verify')} element={<EmployerPhoneVerifyPage />} />
-            <Route path={employerAppPath('/account/settings/account-info')} element={<EmployerAccountInformationPage />} />
-            <Route path={employerAppPath('/account/settings/password-login')} element={<EmployerPasswordLoginPage />} />
-            <Route path={employerAppPath('/account/settings/company')} element={<EmployerCompanySettingsPage />} />
-            <Route path={employerAppPath('/account/settings/gpkd')} element={<EmployerBusinessLicensePage />} />
-            <Route path={employerAppPath('/account/settings/personal-data-protection')} element={<EmployerPersonalDataProtectionPage />} />
-            <Route path={employerAppPath('/account/settings/recruitment-demand')} element={<EmployerRecruitmentDemandPage />} />
-            <Route path={employerAppPath('/account/settings/general-setting')} element={<EmployerGeneralSettingsPage />} />
-            <Route path={employerAppPath('/account/settings/integrations')} element={<EmployerIntegrationsPage />} />
-            <Route path={employerAppPath('/dashboard')} element={<EmployerDashboardPage />} />
-            <Route path={employerAppPath('/notifications')} element={<EmployerNotificationsPage />} />
-            <Route path={employerAppPath('/activities')} element={<EmployerActivitiesPage />} />
-            <Route path={employerAppPath('/company-page')} element={<EmployerCompanyWorkspacePage />} />
+            <Route path={employerAppPath('/xac-thuc-tai-khoan')} element={<EmployerVerifyPage />} />
+            <Route path={employerAppPath('/xac-thuc-so-dien-thoai')} element={<EmployerPhoneVerifyPage />} />
+            <Route path={employerAppPath('/cai-dat/thong-tin-tai-khoan')} element={<EmployerAccountInformationPage />} />
+            <Route path={employerAppPath('/cai-dat/mat-khau')} element={<EmployerPasswordLoginPage />} />
+            <Route path={employerAppPath('/cai-dat/cong-ty')} element={<EmployerCompanySettingsPage />} />
+            <Route path={employerAppPath('/cai-dat/giay-phep-kinh-doanh')} element={<EmployerBusinessLicensePage />} />
+            <Route path={employerAppPath('/cai-dat/bao-ve-du-lieu-ca-nhan')} element={<EmployerPersonalDataProtectionPage />} />
+            <Route path={employerAppPath('/cai-dat/nhu-cau-tuyen-dung')} element={<EmployerRecruitmentDemandPage />} />
+            <Route path={employerAppPath('/cai-dat/chung')} element={<EmployerGeneralSettingsPage />} />
+            <Route path={employerAppPath('/cai-dat/tich-hop')} element={<EmployerIntegrationsPage />} />
+            <Route path={employerAppPath('/tong-quan')} element={<EmployerDashboardPage />} />
+            <Route path={employerAppPath('/thong-bao')} element={<EmployerNotificationsPage />} />
+            <Route path={employerAppPath('/lich-su-hoat-dong')} element={<EmployerActivitiesPage />} />
+            <Route path={employerAppPath('/trang-cong-ty')} element={<EmployerCompanyWorkspacePage />} />
             <Route element={<JobWorkspaceGuard />}>
-              <Route path={employerAppPath('/campaigns')} element={<EmployerCampaignListPage />} />
-              <Route path={employerAppPath('/campaigns/new')} element={<EmployerCampaignSetupPage />} />
-              <Route path={employerAppPath('/campaigns/:publicId/setup')} element={<EmployerCampaignSetupPage />} />
-              <Route path={employerAppPath('/campaigns/:publicId')} element={<EmployerCampaignDetailPage />} />
-              <Route path={employerAppPath('/jobs')} element={<EmployerJobListPage />} />
-              <Route path={employerAppPath('/jobs/new')} element={<EmployerJobFormPage />} />
-              <Route path={employerAppPath('/jobs/:publicId/edit')} element={<EmployerJobFormPage />} />
-              <Route path={employerAppPath('/jobs/:publicId')} element={<EmployerJobDetailPage />} />
+              <Route path={employerAppPath('/chien-dich')} element={<EmployerCampaignListPage />} />
+              <Route path={employerAppPath('/chien-dich/tao-moi')} element={<EmployerCampaignSetupPage />} />
+              <Route path={employerAppPath('/chien-dich/:publicId/thiet-lap')} element={<EmployerCampaignSetupPage />} />
+              <Route path={employerAppPath('/chien-dich/:publicId')} element={<EmployerCampaignDetailPage />} />
+              <Route path={employerAppPath('/tin-tuyen-dung')} element={<EmployerJobListPage />} />
+              <Route path={employerAppPath('/tin-tuyen-dung/tao-moi')} element={<EmployerJobFormPage />} />
+              <Route path={employerAppPath('/tin-tuyen-dung/:publicId/chinh-sua')} element={<EmployerJobFormPage />} />
+              <Route path={employerAppPath('/tin-tuyen-dung/:publicId')} element={<EmployerJobDetailPage />} />
               <Route element={<CandidateDataGuard />}>
-                <Route path={employerAppPath('/applications')} element={<EmployerApplicationListPage />} />
-                <Route path={employerAppPath('/candidate-blocks')} element={<EmployerCandidateBlocksPage />} />
-                <Route path={employerAppPath('/talent-pool')} element={<EmployerTalentPoolPage />} />
-                <Route path={employerAppPath('/candidate-search')} element={<EmployerCandidateSearchPage />} />
-                <Route path={employerAppPath('/connect')} element={<EmployerConnectPage />} />
-                <Route path={employerAppPath('/connect/:conversationId')} element={<EmployerConnectPage />} />
+                <Route path={employerAppPath('/ho-so-ung-tuyen')} element={<EmployerApplicationListPage />} />
+                <Route path={employerAppPath('/ung-vien-bi-chan')} element={<EmployerCandidateBlocksPage />} />
+                <Route path={employerAppPath('/kho-ung-vien')} element={<EmployerTalentPoolPage />} />
+                <Route path={employerAppPath('/tim-ung-vien')} element={<EmployerCandidateSearchPage />} />
+                <Route path={employerAppPath('/procv-connect')} element={<EmployerConnectPage />} />
+                <Route path={employerAppPath('/procv-connect/:conversationId')} element={<EmployerConnectPage />} />
               </Route>
             </Route>
           </Route>

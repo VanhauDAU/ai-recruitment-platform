@@ -29,7 +29,7 @@ function EmptyState({ type }) {
       <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-xl text-slate-300 shadow-sm">{job ? <FileSearchOutlined /> : <InboxOutlined />}</span>
       <strong className="mt-3 text-sm text-slate-700">{job ? m.employer_workspace_dash_empty_jobs_title() : m.employer_workspace_dash_empty_applications_title()}</strong>
       <p className="mt-1 max-w-xs text-xs leading-5 text-slate-400">{job ? m.employer_workspace_dash_empty_jobs_text() : m.employer_workspace_dash_empty_applications_text()}</p>
-      {job && <Link to={employerAppPath('/jobs/new')} className="mt-3 inline-flex h-9 items-center gap-1.5 rounded-lg border employer-dash-button px-3 text-xs font-bold shadow-sm transition"><PlusOutlined /> {m.employer_workspace_dash_new_job()}</Link>}
+      {job && <Link to={employerAppPath('/tin-tuyen-dung/tao-moi')} className="mt-3 inline-flex h-9 items-center gap-1.5 rounded-lg border employer-dash-button px-3 text-xs font-bold shadow-sm transition"><PlusOutlined /> {m.employer_workspace_dash_new_job()}</Link>}
     </div>
   )
 }
@@ -50,13 +50,13 @@ function SectionHeader({ title, description, icon, to, actionLabel }) {
 export function RecentJobsCard({ jobs = [] }) {
   return (
     <section className="rounded-[20px] border border-slate-200/80 bg-white p-5 shadow-[0_12px_35px_-26px_rgba(15,23,42,.45)] sm:p-6">
-      <SectionHeader title={m.employer_workspace_dash_recent_jobs_title()} description={m.employer_workspace_dash_recent_jobs_description()} icon={FileSearchOutlined} to={employerAppPath('/jobs')} actionLabel={m.employer_workspace_dash_view_all()} />
+      <SectionHeader title={m.employer_workspace_dash_recent_jobs_title()} description={m.employer_workspace_dash_recent_jobs_description()} icon={FileSearchOutlined} to={employerAppPath('/tin-tuyen-dung')} actionLabel={m.employer_workspace_dash_view_all()} />
       {!jobs.length ? <EmptyState type="jobs" /> : (
         <div className="divide-y divide-slate-100">
           {jobs.map((job) => {
             const status = JOB_STATUS[job.status] || { label: job.status_label || job.status, className: 'bg-slate-100 text-slate-600' }
             return (
-              <Link to={`${employerAppPath('/jobs')}/${job.public_id}`} key={job.public_id} className="group flex flex-col gap-3 py-4 first:pt-1 last:pb-0 sm:flex-row sm:items-center">
+              <Link to={`${employerAppPath('/tin-tuyen-dung')}/${job.public_id}`} key={job.public_id} className="group flex flex-col gap-3 py-4 first:pt-1 last:pb-0 sm:flex-row sm:items-center">
                 <div className="min-w-0 flex-1"><h3 className="truncate text-sm font-bold text-slate-900 transition employer-dash-hover-text">{job.title}</h3><p className="mt-1 text-[11px] text-slate-400">{m.employer_workspace_dash_job_created({ date: dateFormatter.format(new Date(job.created_at)) })}</p></div>
                 <div className="flex items-center justify-between gap-4 sm:justify-end">
                   <div className="flex items-center gap-4 text-[11px] text-slate-500"><span><strong className="text-slate-800">{job.application_count}</strong> {m.employer_workspace_dash_applications_unit({ count: job.application_count })}</span><span><strong className="text-slate-800">{job.view_count}</strong> {m.employer_workspace_dash_views_unit({ count: job.view_count })}</span></div>
@@ -75,7 +75,7 @@ export function RecentJobsCard({ jobs = [] }) {
 export function RecentApplicationsCard({ applications = [] }) {
   return (
     <section className="rounded-[20px] border border-slate-200/80 bg-white p-5 shadow-[0_12px_35px_-26px_rgba(15,23,42,.45)] sm:p-6">
-      <SectionHeader title={m.employer_workspace_dash_recent_applications_title()} description={m.employer_workspace_dash_recent_applications_description()} icon={UserOutlined} to={employerAppPath('/applications')} actionLabel={m.employer_workspace_dash_view_all()} />
+      <SectionHeader title={m.employer_workspace_dash_recent_applications_title()} description={m.employer_workspace_dash_recent_applications_description()} icon={UserOutlined} to={employerAppPath('/ho-so-ung-tuyen')} actionLabel={m.employer_workspace_dash_view_all()} />
       {!applications.length ? <EmptyState type="applications" /> : (
         <div className="divide-y divide-slate-100">
           {applications.map((application) => {
@@ -84,7 +84,7 @@ export function RecentApplicationsCard({ applications = [] }) {
               className: APPLICATION_STATUS_CLASSES[application.status] || 'bg-slate-100 text-slate-600',
             }
             return (
-              <Link to={`${employerAppPath('/applications')}?job=${encodeURIComponent(application.job_public_id)}`} key={application.public_id} className="group flex items-center gap-3 py-3.5 first:pt-1 last:pb-0">
+              <Link to={`${employerAppPath('/ho-so-ung-tuyen')}?job=${encodeURIComponent(application.job_public_id)}`} key={application.public_id} className="group flex items-center gap-3 py-3.5 first:pt-1 last:pb-0">
                 <Avatar className="!shrink-0 employer-dash-icon !font-bold">{application.candidate_name?.trim()?.charAt(0)?.toUpperCase() || 'U'}</Avatar>
                 <div className="min-w-0 flex-1"><h3 className="truncate text-sm font-bold text-slate-900 transition employer-dash-hover-text">{application.candidate_name}</h3><p className="mt-1 truncate text-[11px] text-slate-500">{application.job_title} · {dateFormatter.format(new Date(application.applied_at))}</p></div>
                 <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold ${status.className}`}>{status.label}</span>

@@ -31,7 +31,7 @@ function JobRow({ job, checked, onToggle, badge, targetDate }) {
         )}
       </span>
       <Link
-        to={employerAppPath(`/jobs/${job.public_id}/edit`)}
+        to={employerAppPath(`/tin-tuyen-dung/${job.public_id}/chinh-sua`)}
         className="cl-job__edit"
         onClick={(event) => event.stopPropagation()}
       >
@@ -109,7 +109,7 @@ export default function CampaignJobSelection({ campaign, overview, onSaved }) {
 
   return (
     <div className="cl-step">
-      <Link to={`${employerAppPath('/jobs/new')}?campaign=${campaign.public_id}&return=setup`} className="cl-create">
+      <Link to={`${employerAppPath('/tin-tuyen-dung/tao-moi')}?campaign=${campaign.public_id}&return=setup`} className="cl-create">
         <span className="cl-create__icon"><FileAddOutlined aria-hidden /></span>
         <span>
           <span className="cl-create__title">{m.employer_campaign_select_create_title()}</span>

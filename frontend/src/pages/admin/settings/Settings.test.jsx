@@ -73,7 +73,7 @@ const GROUPS = [
   },
 ]
 
-const renderPage = (url = '/admin/app/settings') => render(
+const renderPage = (url = '/admin/app/cau-hinh') => render(
   <MemoryRouter initialEntries={[url]}>
     <AdminSettings />
   </MemoryRouter>,
@@ -89,7 +89,7 @@ describe('AdminSettings', () => {
 
   it('groups the sidebar by area, opens a legacy group link and explains a setting', async () => {
     const user = userEvent.setup()
-    renderPage('/admin/app/settings?group=general')
+    renderPage('/admin/app/cau-hinh?group=general')
 
     expect(await screen.findByText('Giao diện & nội dung')).toBeInTheDocument()
     expect(screen.getByText('Tuân thủ & vận hành')).toBeInTheDocument()
@@ -142,7 +142,7 @@ describe('AdminSettings', () => {
       errors: { maintenance_message: 'Tối đa 5 ký tự.' },
       values: { maintenance_mode: true },
     })
-    renderPage('/admin/app/settings?group=operations')
+    renderPage('/admin/app/cau-hinh?group=operations')
 
     fireEvent.click(await screen.findByRole('switch'))
     await user.type(screen.getByDisplayValue('Đang bảo trì'), '!')

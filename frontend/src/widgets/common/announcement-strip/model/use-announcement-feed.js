@@ -18,6 +18,9 @@ export function useAnnouncementFeed({
       path,
       surface,
     }, { signal }),
+    // Khoá theo path: mỗi lần đổi trang là một request. Thông báo ít khi đổi, quay
+    // lại trang đã xem trong 5 phút thì dùng cache.
+    staleTime: 5 * 60_000,
     retry: 1,
     retryDelay: 250,
   })

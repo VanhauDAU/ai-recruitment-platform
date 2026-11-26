@@ -127,5 +127,5 @@ export function employerJobApplicationsPath(job, { applicationId, scope } = {}) 
   const params = new URLSearchParams({ job: job.public_id })
   if (scope) params.set('scope', scope)
   if (applicationId) params.set('application', applicationId)
-  return employerAppPath(`/applications?${params}`)
+  return employerAppPath(`/ho-so-ung-tuyen?${params}`)
 }

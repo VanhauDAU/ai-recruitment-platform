@@ -39,12 +39,12 @@ export default function CampaignSetupWizard({ publicId }) {
   })
   const launchQuery = useCampaignLaunch(publicId)
   const channelsQuery = useCampaignChannels(publicId)
-  const workspacePath = isNew ? employerAppPath('/campaigns') : employerAppPath(`/campaigns/${publicId}`)
+  const workspacePath = isNew ? employerAppPath('/chien-dich') : employerAppPath(`/chien-dich/${publicId}`)
   const requested = searchParams.get('step')
   const current = !isNew && SETUP_STEPS.some((step) => step.key === requested) ? requested : 'goal'
   const goTo = (key) => setSearchParams({ step: key }, { replace: true })
   const handleInfoSaved = (saved) => (isNew
-    ? navigate(employerAppPath(`/campaigns/${saved.public_id}/setup?step=jobs`), { replace: true })
+    ? navigate(employerAppPath(`/chien-dich/${saved.public_id}/thiet-lap?step=jobs`), { replace: true })
     : goTo('jobs'))
 
   if (!isNew && (campaignQuery.isLoading || launchQuery.isLoading)) {

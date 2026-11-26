@@ -56,7 +56,7 @@ describe('EmployerDashboardOverview', () => {
     )
 
     expect(within(screen.getByLabelText('Các bước xác thực')).getAllByRole('link')).toHaveLength(5)
-    expect(screen.getByLabelText('Đăng tin tuyển dụng đầu tiên')).toHaveAttribute('href', '/tuyendung/app/jobs/new')
+    expect(screen.getByLabelText('Đăng tin tuyển dụng đầu tiên')).toHaveAttribute('href', '/tuyendung/app/tin-tuyen-dung/tao-moi')
   })
 
   it('hides the workspace checklist once every verification step is done', () => {
@@ -142,9 +142,9 @@ describe('EmployerDashboardOverview', () => {
     expect(screen.getByText('Kinh doanh phần mềm')).toBeInTheDocument()
     expect(screen.getByText('240')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Xác thực số điện thoại/ })).toHaveAttribute('target', '_blank')
-    expect(screen.getByLabelText('Đăng tin tuyển dụng đầu tiên')).toHaveAttribute('href', '/tuyendung/app/jobs/new')
-    expect(screen.getAllByRole('link', { name: /Đăng tin mới/ })[0]).toHaveAttribute('href', '/tuyendung/app/jobs/new')
-    expect(screen.getByRole('link', { name: /Quản lý hồ sơ/ })).toHaveAttribute('href', '/tuyendung/app/applications')
+    expect(screen.getByLabelText('Đăng tin tuyển dụng đầu tiên')).toHaveAttribute('href', '/tuyendung/app/tin-tuyen-dung/tao-moi')
+    expect(screen.getAllByRole('link', { name: /Đăng tin mới/ })[0]).toHaveAttribute('href', '/tuyendung/app/tin-tuyen-dung/tao-moi')
+    expect(screen.getByRole('link', { name: /Quản lý hồ sơ/ })).toHaveAttribute('href', '/tuyendung/app/ho-so-ung-tuyen')
   })
 
   it('opens the recruiter-verification surface from an approved recruiter status', async () => {
@@ -170,7 +170,7 @@ describe('EmployerDashboardOverview', () => {
     )
 
     expect(await screen.findByRole('link', { name: /Nhà tuyển dụng đã xác thực/ }))
-      .toHaveAttribute('href', '/tuyendung/app/employer-verify')
+      .toHaveAttribute('href', '/tuyendung/app/xac-thuc-tai-khoan')
   })
 
   it('shows a visible warning after recruiter verification is revoked', async () => {

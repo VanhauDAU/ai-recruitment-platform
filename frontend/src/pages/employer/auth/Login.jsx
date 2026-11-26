@@ -40,7 +40,7 @@ export default function EmployerLogin() {
         <p className="text-sm text-gray-500">
           {m.employer_account_login_no_account()}{' '}
           <Link
-            to={employerAppPath('/register')}
+            to={employerAppPath('/dang-ky')}
             className="font-semibold text-[var(--brand-primary)] transition-colors hover:text-[var(--brand-primary-hover)] hover:underline"
           >
             {m.employer_account_login_register_now()}

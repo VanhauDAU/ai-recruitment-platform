@@ -1,8 +1,9 @@
 import { EnvironmentOutlined, FireOutlined, SearchOutlined } from '@ant-design/icons'
 import { Button, Input, Typography } from 'antd'
+import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { formatNumber, getJobCategories, getJobs } from '@/entities/job/job'
+import { formatNumber, getJobCategories, getJobStats, jobKeys } from '@/entities/job/job'
 import { getBanners, HOME_HERO_PLACEMENT } from '@/entities/content/banner'
 import { useSiteSettings } from '@/entities/system/site-settings'
 import BannerCarousel from '@/shared/ui/BannerCarousel'
@@ -69,17 +70,16 @@ export default function Home() {
   const [searchBy, setSearchBy] = useState('title')
   const [locationIds, setLocationIds] = useState([])
   const [categories, setCategories] = useState([])
-  const [jobCount, setJobCount] = useState(0)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [banners, setBanners] = useState([])
   const searchBoxRef = useRef(null)
   const recommendationSummary = useHomeRecommendationSummary()
+  // Dùng chung cache với MarketStats: không tải cả một trang tin chỉ để lấy tổng số.
+  const { data: stats } = useQuery({ queryKey: jobKeys.stats, queryFn: getJobStats, staleTime: 5 * 60_000 })
+  const jobCount = stats?.active_jobs ?? 0
 
   useEffect(() => {
     getJobCategories().then(setCategories).catch(() => {})
-    getJobs()
-      .then((data) => setJobCount(data.count ?? (data.results || data).length))
-      .catch(() => {})
     getBanners(HOME_HERO_PLACEMENT).then(setBanners).catch(() => {})
   }, [])
 

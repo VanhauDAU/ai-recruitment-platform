@@ -83,12 +83,12 @@ export function bannerBackgroundStyle(theme) {
   return { backgroundImage: bannerTheme(theme).background }
 }
 
-/** Đổi đường dẫn cũ (/jobs, /register) nhập trong admin sang route tiếng Việt hiện hành. */
+/** Đổi đường dẫn cũ (/jobs, /register, /sign-up) nhập trong admin sang route tiếng Việt hiện hành. */
 export function normalizePublicUrl(url = '') {
   if (url === '/jobs') return '/viec-lam'
   if (url.startsWith('/jobs?')) return url.replace('/jobs?', '/viec-lam?')
   if (url.startsWith('/jobs/')) return url.replace('/jobs/', '/viec-lam/')
-  if (url === '/register') return '/sign-up'
+  if (url === '/register' || url === '/sign-up') return '/dang-ky'
   return url
 }
 

@@ -26,7 +26,7 @@ describe('ADMIN_ROUTES contract', () => {
 
   it('keeps site settings as the only superuser-only route', () => {
     expect(ADMIN_ROUTES.filter((route) => route.requireSuperuser)).toEqual([
-      expect.objectContaining({ segment: '/settings' }),
+      expect.objectContaining({ segment: '/cau-hinh' }),
     ])
   })
 

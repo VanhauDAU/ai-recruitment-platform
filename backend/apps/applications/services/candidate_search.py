@@ -57,7 +57,7 @@ from ..models import Application, CandidateBlock, CandidateSearchInvitation, Tal
 REF_LENGTH = 24
 CODE_LENGTH = 6
 CONNECTIONS_PATH = '/tai-khoan/nha-tuyen-dung-muon-ket-noi'
-CANDIDATE_SEARCH_PATH = '/tuyendung/app/candidate-search'
+CANDIDATE_SEARCH_PATH = '/tuyendung/app/tim-ung-vien'
 CARD_PREFERENCE_ITEMS = 3
 User = get_user_model()
 

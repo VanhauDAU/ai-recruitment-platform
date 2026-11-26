@@ -70,12 +70,12 @@ export default function AdminCvPositions() {
       </span>
     </div>
     <Table size="middle" rowKey="position_public_id" loading={positions.isLoading} dataSource={rows} pagination={{ pageSize: 20, hideOnSinglePage: true, showSizeChanger: false }} scroll={{ x: 640 }} columns={[
-      { title: 'Vị trí', dataIndex: 'position_name', render: (name, row) => <Link to={adminPath(`/cv/positions/${row.public_id}`)}><span className="block font-semibold">{name}</span><span className="block text-xs !text-slate-500">{row.industry_name}</span></Link> },
+      { title: 'Vị trí', dataIndex: 'position_name', render: (name, row) => <Link to={adminPath(`/cv/vi-tri/${row.public_id}`)}><span className="block font-semibold">{name}</span><span className="block text-xs !text-slate-500">{row.industry_name}</span></Link> },
       { title: 'Các mục', dataIndex: 'section_preset', render: (preset) => (preset?.length ? `Đã chọn ${preset.length} mục` : <span className="text-slate-400">Mặc định</span>), responsive: ['lg'] },
       { title: 'Thông tin riêng', dataIndex: 'field_count', render: (count) => (count ? `${count} câu hỏi` : <span className="text-slate-400">Chưa có</span>), responsive: ['md'] },
       { title: 'Nội dung gợi ý', dataIndex: 'coverage', render: (value) => <ContentStatus coverage={value} /> },
       { title: 'Ứng viên chọn được', dataIndex: 'is_active', render: (active) => (active ? <Tag color="green">Có</Tag> : <Tag>Đang ẩn</Tag>), responsive: ['lg'] },
-      { title: '', width: 120, render: (_, row) => <Link to={adminPath(`/cv/positions/${row.public_id}`)}><Button size="small">Thiết lập <RightOutlined /></Button></Link> },
+      { title: '', width: 120, render: (_, row) => <Link to={adminPath(`/cv/vi-tri/${row.public_id}`)}><Button size="small">Thiết lập <RightOutlined /></Button></Link> },
     ]} />
   </AdminPanel>
 

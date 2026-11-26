@@ -68,7 +68,7 @@ test.beforeEach(async ({ page }) => {
           event_type: 'verification_changes_requested',
           title: 'Hồ sơ xác thực cần bổ sung',
           message: 'Vui lòng bổ sung giấy đăng ký doanh nghiệp.',
-          action_path: '/tuyendung/app/employer-verify',
+          action_path: '/tuyendung/app/xac-thuc-tai-khoan',
           metadata: { case_public_id: 'evc_1' },
           is_read: false,
           read_at: null,
@@ -110,7 +110,7 @@ test.beforeEach(async ({ page }) => {
           public_id: 'eac_1',
           category: 'company',
           actor_kind: 'admin',
-          action_path: '/tuyendung/app/employer-verify',
+          action_path: '/tuyendung/app/xac-thuc-tai-khoan',
           event_type: 'verification_changes_requested',
           summary: 'Hồ sơ xác thực cần bổ sung',
           subject_public_id: 'evc_1',
@@ -124,11 +124,11 @@ test.beforeEach(async ({ page }) => {
 })
 
 test('employer notification and activity routes are usable and responsive', { tag: '@responsive' }, async ({ page }) => {
-  await page.goto('/tuyendung/app/notifications')
+  await page.goto('/tuyendung/app/thong-bao')
   await expect(page.getByRole('heading', { name: 'Thông báo hệ thống' })).toBeAttached()
   const groups = page.getByRole('group', { name: 'Lọc theo nhóm' })
   await expect(groups.getByRole('button', { name: /Công ty & xác thực\s*1/ })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Hồ sơ xác thực cần bổ sung' }).first()).toHaveAttribute('href', '/tuyendung/app/employer-verify')
+  await expect(page.getByRole('link', { name: 'Hồ sơ xác thực cần bổ sung' }).first()).toHaveAttribute('href', '/tuyendung/app/xac-thuc-tai-khoan')
   await expect(page.getByRole('button', { name: 'Đánh dấu đã đọc' })).toBeVisible()
   await expect(page.locator('.ant-badge-count')).toContainText('1')
   await expect(page.getByRole('region', { name: 'Từ hệ thống' }).getByText('Hệ thống bảo trì từ 22:00 đến 23:00 tối nay.')).toBeVisible()
@@ -137,9 +137,9 @@ test('employer notification and activity routes are usable and responsive', { ta
   await page.getByRole('button', { name: /Chỉ chưa đọc/ }).click()
   await expect(page).toHaveURL(/unread=true/)
 
-  await page.goto('/tuyendung/app/activities')
+  await page.goto('/tuyendung/app/lich-su-hoat-dong')
   await expect(page.getByRole('heading', { name: 'Lịch sử hoạt động' })).toBeAttached()
-  await expect(page.getByRole('link', { name: 'Hồ sơ xác thực cần bổ sung' })).toHaveAttribute('href', '/tuyendung/app/employer-verify')
+  await expect(page.getByRole('link', { name: 'Hồ sơ xác thực cần bổ sung' })).toHaveAttribute('href', '/tuyendung/app/xac-thuc-tai-khoan')
   await expect(page.getByText('Quản trị viên')).toBeVisible()
   await page.getByRole('button', { name: '30 ngày' }).click()
   await expect(page).toHaveURL(/days=30/)

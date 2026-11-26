@@ -219,7 +219,7 @@ function RecruiterRoster({ company }) {
           type="button"
           className="company-directory__company-button"
           onClick={() => navigate(
-            adminPath(`/recruiters/${recruiter.account.public_id}`),
+            adminPath(`/nha-tuyen-dung/${recruiter.account.public_id}`),
             {
               state: {
                 origin: {
@@ -335,7 +335,7 @@ function RecruiterRoster({ company }) {
           type="link"
           icon={<EyeOutlined />}
           onClick={() => navigate(
-            adminPath(`/recruiters/${recruiter.account.public_id}`),
+            adminPath(`/nha-tuyen-dung/${recruiter.account.public_id}`),
             {
               state: {
                 origin: {
@@ -495,7 +495,7 @@ function RecruiterVerification({ company }) {
         })}
         <Link
           className="inline-flex pt-2 font-semibold text-[var(--brand-primary-hover)]"
-          to={`${adminPath('/recruiters')}?tab=verification&company=${company.public_id}`}
+          to={`${adminPath('/nha-tuyen-dung')}?tab=verification&company=${company.public_id}`}
         >
           Mở hàng chờ xác thực NTD
         </Link>
@@ -514,7 +514,7 @@ export default function AdminCompanyDetail({ publicId }) {
   const safeOrigin = origin?.pathname?.startsWith(adminPath('/')) ? origin : null
   const backTarget = safeOrigin
     ? `${safeOrigin.pathname}${safeOrigin.search || ''}`
-    : adminPath('/companies')
+    : adminPath('/cong-ty')
   const backLabel = safeOrigin?.label || 'Danh sách công ty'
   const companyQuery = useQuery({
     queryKey: adminCompanyKeys.detail(publicId),
@@ -566,7 +566,7 @@ export default function AdminCompanyDetail({ publicId }) {
         <CompanyPanel title="Yêu cầu cập nhật thông tin">
           <Link
             className="inline-flex font-semibold text-[var(--brand-primary-hover)]"
-            to={`${adminPath('/companies')}?tab=updates&company=${company.public_id}`}
+            to={`${adminPath('/cong-ty')}?tab=updates&company=${company.public_id}`}
           >
             Xem yêu cầu cập nhật của công ty
           </Link>

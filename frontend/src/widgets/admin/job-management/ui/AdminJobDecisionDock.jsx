@@ -31,7 +31,7 @@ export default function AdminJobDecisionDock({ job }) {
         {canOpenEmployerVerification && (
           <Link
             className="text-sm font-medium"
-            to={`${adminPath(`/recruiters/${job.employer_public_id}`)}?tab=verification`}
+            to={`${adminPath(`/nha-tuyen-dung/${job.employer_public_id}`)}?tab=verification`}
           >
             Mở hồ sơ xác thực
           </Link>

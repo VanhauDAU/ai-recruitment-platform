@@ -192,7 +192,7 @@ test('admin blog: list is responsive, public links open a new tab and article sl
   await expect(page.getByText('Nhân viên Sales là gì?').filter({ visible: true })).toBeVisible()
   await expect(page.getByText('/blog/nhan-vien-sales-la-gi').filter({ visible: true })).toHaveCount(1)
   const adminTitleLink = page.getByRole('link', { name: 'Mở bài “Nhân viên Sales là gì?” trong trang admin', exact: true }).filter({ visible: true })
-  await expect(adminTitleLink).toHaveAttribute('href', '/admin/app/blog/ps_sales/edit')
+  await expect(adminTitleLink).toHaveAttribute('href', '/admin/app/blog/ps_sales/chinh-sua')
   await expect(adminTitleLink).not.toHaveAttribute('target', '_blank')
   await expect(page.getByRole('link', { name: 'Mở URL /blog/nhan-vien-sales-la-gi ở trang public' })).toHaveCount(0)
   const publicUrlLink = page.getByRole('link', { name: 'Mở URL /blog/kinh-nghiem-phong-van ở trang public' }).filter({ visible: true })
@@ -237,7 +237,7 @@ test('admin blog: list is responsive, public links open a new tab and article sl
   await expect(page.getByText('Đã gỡ', { exact: true }).filter({ visible: true }).first()).toBeVisible()
 
   await page.getByRole('button', { name: 'Tạo bài viết' }).click()
-  await expect(page).toHaveURL('/admin/app/blog/new')
+  await expect(page).toHaveURL('/admin/app/blog/tao-moi')
   await expect(page.getByLabel('Tiêu đề bài viết')).toBeVisible()
   await expect(page.getByLabel('Slug URL')).toHaveCount(0)
   await expect(page.getByText(/Đường dẫn ngắn gọn được hệ thống tự tạo/)).toBeVisible()
@@ -334,7 +334,7 @@ test('admin blog: list is responsive, public links open a new tab and article sl
   await expect(pinPanel.locator('.ant-spin-spinning')).toHaveCount(0)
   await expect(page.getByText('Đã cập nhật thứ tự bài ghim.')).toBeVisible()
 
-  await page.goto('/admin/app/blog/ps_sales/edit')
+  await page.goto('/admin/app/blog/ps_sales/chinh-sua')
   await expect(page.getByText('/blog/nhan-vien-sales-la-gi', { exact: true }).first()).toBeVisible()
   await expect(page.locator('#admin-main').getByText('Biên tập viên', { exact: true })).toBeVisible()
   await expect(page.getByLabel('Sapo / mô tả ngắn')).toHaveValue('Tổng quan đầy đủ về nghề Sales và lộ trình phát triển.')

@@ -44,7 +44,7 @@ describe('EmployerAccountInformation', () => {
     expect(screen.getByText('+84816548150')).toBeInTheDocument()
     expect(screen.getAllByText('Đã xác thực')).toHaveLength(2)
     expect(screen.getByText('Thành phố Đà Nẵng')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /ABC/ })).toHaveAttribute('href', '/tuyendung/app/account/settings/company')
+    expect(screen.getByRole('link', { name: /ABC/ })).toHaveAttribute('href', '/tuyendung/app/cai-dat/cong-ty')
     expect(screen.getByRole('button', { name: 'Lưu thay đổi' })).toBeDisabled()
   })
 

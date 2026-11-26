@@ -18,6 +18,6 @@ export function resolveAdminDestination(user, returnUrl) {
     return returnUrl
   }
   const firstRoute = firstAccessibleAdminRoute(ADMIN_ROUTES, adminAccess)
-  // `/account` mở cho mọi quản trị viên nên luôn là đích hạ cánh an toàn.
-  return adminPath(firstRoute?.segment || '/account')
+  // `/tai-khoan-cua-toi` mở cho mọi quản trị viên nên luôn là đích hạ cánh an toàn.
+  return adminPath(firstRoute?.segment || '/tai-khoan-cua-toi')
 }

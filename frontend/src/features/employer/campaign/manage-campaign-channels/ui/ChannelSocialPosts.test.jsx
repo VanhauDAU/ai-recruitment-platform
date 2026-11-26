@@ -249,7 +249,7 @@ describe('ChannelSocialPosts', () => {
     const drawer = await screen.findByRole('dialog')
 
     expect(await within(drawer).findByRole('link', { name: 'Cài đặt tài khoản' }))
-      .toHaveAttribute('href', '/tuyendung/app/account/settings/integrations')
+      .toHaveAttribute('href', '/tuyendung/app/cai-dat/tich-hop')
     await user.click(within(drawer).getByRole('button', { name: /Lưu và sao chép/ }))
     await waitFor(() => expect(writeText).toHaveBeenCalledWith('Tuyển gấp'))
     expect(mocks.scheduleChannelPost).not.toHaveBeenCalled()

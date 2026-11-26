@@ -72,10 +72,10 @@ export default function EmployerMarketingLayout() {
     </Button>
   ) : (
     <>
-      <Link to={employerAppPath('/login')} onClick={closeMenu}>
+      <Link to={employerAppPath('/dang-nhap')} onClick={closeMenu}>
         <Button shape="round">{m.marketing_nav_login()}</Button>
       </Link>
-      <Link to={employerAppPath('/register')} onClick={closeMenu}>
+      <Link to={employerAppPath('/dang-ky')} onClick={closeMenu}>
         <Button type="primary" shape="round">{m.marketing_nav_post_job()}</Button>
       </Link>
     </>

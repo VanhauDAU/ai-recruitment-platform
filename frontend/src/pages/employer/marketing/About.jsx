@@ -28,7 +28,7 @@ export default function EmployerAbout() {
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-gray-600">{m.marketing_about_hero_subtitle()}</p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row [&_a]:w-full sm:[&_a]:w-auto [&_.ant-btn]:w-full sm:[&_.ant-btn]:w-auto">
-            <Link to={employerAppPath('/register')}>
+            <Link to={employerAppPath('/dang-ky')}>
               <Button type="primary" size="large" shape="round" className="!h-12 !px-7">{m.marketing_common_register()}</Button>
             </Link>
             <Link to={employerMarketingPath('/lien-he')}>

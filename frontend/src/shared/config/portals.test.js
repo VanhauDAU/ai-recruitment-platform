@@ -21,8 +21,8 @@ describe('employer app paths', () => {
     expect(IS_EMPLOYER_HOST).toBe(true)
     expect(IS_MAIN_HOST).toBe(false)
     expect(employerAppPath('')).toBe('/app')
-    expect(employerAppPath('/jobs/job_123?tab=applications')).toBe(
-      '/app/jobs/job_123?tab=applications',
+    expect(employerAppPath('/tin-tuyen-dung/job_123?tab=applications')).toBe(
+      '/app/tin-tuyen-dung/job_123?tab=applications',
     )
   })
 
@@ -34,8 +34,8 @@ describe('employer app paths', () => {
     expect(IS_EMPLOYER_HOST).toBe(false)
     expect(IS_MAIN_HOST).toBe(true)
     expect(employerAppPath('')).toBe('/tuyendung/app')
-    expect(employerAppPath('/jobs/job_123?tab=applications')).toBe(
-      '/tuyendung/app/jobs/job_123?tab=applications',
+    expect(employerAppPath('/tin-tuyen-dung/job_123?tab=applications')).toBe(
+      '/tuyendung/app/tin-tuyen-dung/job_123?tab=applications',
     )
   })
 })

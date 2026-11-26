@@ -12,7 +12,7 @@ import { templateHeading } from './model/template-selection-params'
 import { useTemplateSelection } from './model/use-template-selection'
 
 const DETAIL_STALE_MS = 5 * 60_000
-const editorPath = (cv) => `/cvs/${cv.public_id}/edit?mode=create`
+const editorPath = (cv) => `/cv/${cv.public_id}/chinh-sua?mode=create`
 
 // Phần trang cần mẫu đã tải: lựa chọn (URL) → nội dung, tiêu đề, preview, tạo CV.
 function TemplateWorkspace({ template, colors, locale, basePath, selection, update, hasQuery }) {

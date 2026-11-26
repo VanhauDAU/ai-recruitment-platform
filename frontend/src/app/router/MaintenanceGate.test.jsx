@@ -34,7 +34,7 @@ describe('MaintenanceGate', () => {
   it('lets administrators through', () => {
     site.settings = { maintenance_mode: true }
 
-    renderAt('/admin/app/settings')
+    renderAt('/admin/app/cau-hinh')
     expect(screen.getByText('Nội dung trang')).toBeInTheDocument()
   })
 

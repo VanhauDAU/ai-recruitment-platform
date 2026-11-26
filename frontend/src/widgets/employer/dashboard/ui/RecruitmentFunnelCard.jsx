@@ -55,7 +55,7 @@ export default function RecruitmentFunnelCard({ funnel = {} }) {
           <h2 id="funnel-title" className="text-lg font-black text-slate-900">{m.employer_workspace_dash_funnel_title()}</h2>
           <p className="mt-1 text-xs leading-5 text-slate-500">{m.employer_workspace_dash_funnel_description()}</p>
         </div>
-        <Link to={employerAppPath('/applications')} className="flex shrink-0 items-center gap-1 text-xs font-bold employer-dash-text">
+        <Link to={employerAppPath('/ho-so-ung-tuyen')} className="flex shrink-0 items-center gap-1 text-xs font-bold employer-dash-text">
           {m.employer_workspace_dash_view_all()} <ArrowRightOutlined />
         </Link>
       </div>
