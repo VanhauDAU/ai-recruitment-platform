@@ -128,7 +128,7 @@ function LatestApplicationNotice({ application }) {
     <p className="mt-2 text-xs leading-5 text-slate-500">
       Bạn đã gửi CV cho vị trí này ngày: <strong className="text-slate-700">{formattedDate}.</strong>{' '}
       {application.cv_public_id
-        ? <Link to={`/cvs/${application.cv_public_id}/view`} target="_blank" rel="noreferrer" className="font-semibold text-[var(--brand-primary)] hover:underline">Xem CV đã nộp</Link>
+        ? <Link to={`/cv/${application.cv_public_id}/xem`} target="_blank" rel="noreferrer" className="font-semibold text-[var(--brand-primary)] hover:underline">Xem CV đã nộp</Link>
         : <span className="font-semibold text-slate-700">Xem CV đã nộp</span>}
     </p>
   )

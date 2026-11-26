@@ -89,17 +89,17 @@ function renderWithApp(element, initialEntry) {
     <QueryClientProvider client={client}>
       <MemoryRouter initialEntries={[initialEntry]}>
         <Routes>
-          <Route path="/admin/app/companies" element={element} />
+          <Route path="/admin/app/cong-ty" element={element} />
           <Route
-            path="/admin/app/companies/:publicId"
+            path="/admin/app/cong-ty/:publicId"
             element={<><AdminCompanyDetail publicId="co_alpha" /><LocationProbe /></>}
           />
           <Route
-            path="/admin/app/recruiters/:publicId"
+            path="/admin/app/nha-tuyen-dung/:publicId"
             element={<LocationProbe />}
           />
           <Route
-            path="/admin/app/job-moderation/:publicId"
+            path="/admin/app/duyet-tin/:publicId"
             element={<LocationProbe />}
           />
         </Routes>
@@ -125,7 +125,7 @@ describe('admin company directory', () => {
   it('shows recruiter verification without company verification controls', async () => {
     renderWithApp(
       <AdminCompanyDirectory />,
-      '/admin/app/companies?verification_status=pending',
+      '/admin/app/cong-ty?verification_status=pending',
     )
 
     expect(await screen.findByText('Công ty Alpha')).toBeInTheDocument()
@@ -149,7 +149,7 @@ describe('admin company directory', () => {
       pending_update_requests: 6,
       companies_without_single_owner: 2,
     })
-    renderWithApp(<AdminCompanyDirectory />, '/admin/app/companies')
+    renderWithApp(<AdminCompanyDirectory />, '/admin/app/cong-ty')
 
     expect(await screen.findByText('Công ty Alpha')).toBeInTheDocument()
     expect(screen.getByLabelText('Tóm tắt công ty')).toHaveTextContent('47')
@@ -160,7 +160,7 @@ describe('admin company directory', () => {
 
   it('filters companies that need a manager check from the summary tile', async () => {
     const user = userEvent.setup()
-    renderWithApp(<AdminCompanyDirectory />, '/admin/app/companies')
+    renderWithApp(<AdminCompanyDirectory />, '/admin/app/cong-ty')
 
     await screen.findByText('Công ty Alpha')
     await user.click(within(screen.getByLabelText('Tóm tắt công ty')).getByRole('button', { name: /Cần kiểm tra quản lý/ }))
@@ -173,7 +173,7 @@ describe('admin company directory', () => {
 
   it('opens the read-only company detail', async () => {
     const user = userEvent.setup()
-    const { container } = renderWithApp(<AdminCompanyDirectory />, '/admin/app/companies')
+    const { container } = renderWithApp(<AdminCompanyDirectory />, '/admin/app/cong-ty')
 
     await user.click(await screen.findByRole('button', { name: /Công ty Alpha/ }))
 
@@ -182,12 +182,12 @@ describe('admin company directory', () => {
     expect(screen.getByText('công nghệ')).toBeInTheDocument()
     expect(container.querySelector('.company-directory__rich-text script')).toBeNull()
     expect(screen.queryByText(/<p>|<strong>|<script>/)).not.toBeInTheDocument()
-    expect(screen.getByTestId('location')).toHaveTextContent('/admin/app/companies/co_alpha')
+    expect(screen.getByTestId('location')).toHaveTextContent('/admin/app/cong-ty/co_alpha')
   })
 
   it('debounces company search before requesting new results', async () => {
     const user = userEvent.setup()
-    renderWithApp(<AdminCompanyDirectory />, '/admin/app/companies')
+    renderWithApp(<AdminCompanyDirectory />, '/admin/app/cong-ty')
 
     await screen.findByText('Công ty Alpha')
     const initialCalls = getAdminCompanies.mock.calls.length
@@ -232,7 +232,7 @@ describe('admin company directory', () => {
     })
     renderWithApp(
       <AdminCompanyDetail publicId="co_alpha" />,
-      '/admin/app/companies/co_alpha',
+      '/admin/app/cong-ty/co_alpha',
     )
 
     fireEvent.click(await screen.findByRole('tab', { name: /Nhà tuyển dụng/ }))
@@ -249,14 +249,14 @@ describe('admin company directory', () => {
     // up to <body> under antd's injected CSS (2.7s here in jsdom).
     fireEvent.click(within(row).getByText('Chi tiết').closest('button'))
     expect(screen.getByTestId('location')).toHaveTextContent(
-      '/admin/app/recruiters/usr_owner',
+      '/admin/app/nha-tuyen-dung/usr_owner',
     )
   })
 
   it('keeps the verification tab scoped to recruiter cases', async () => {
     renderWithApp(
       <AdminCompanyDetail publicId="co_alpha" />,
-      '/admin/app/companies/co_alpha?tab=verification',
+      '/admin/app/cong-ty/co_alpha?tab=verification',
     )
 
     expect(await screen.findByRole('tab', { name: 'Xác thực NTD' })).toHaveAttribute(
@@ -294,7 +294,7 @@ describe('admin company directory', () => {
     })
     renderWithApp(
       <AdminCompanyDetail publicId="co_alpha" />,
-      '/admin/app/companies/co_alpha',
+      '/admin/app/cong-ty/co_alpha',
     )
 
     expect(getAdminJobs).not.toHaveBeenCalled()
@@ -317,7 +317,7 @@ describe('admin company directory', () => {
 
     await user.click(screen.getByText('Backend Engineer'))
     expect(screen.getByTestId('location')).toHaveTextContent(
-      '/admin/app/job-moderation/job_alpha',
+      '/admin/app/duyet-tin/job_alpha',
     )
   })
 })

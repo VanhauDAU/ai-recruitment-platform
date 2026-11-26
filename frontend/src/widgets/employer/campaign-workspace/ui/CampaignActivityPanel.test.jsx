@@ -105,14 +105,14 @@ describe('CampaignActivityPanel', () => {
     expect(within(previousDay).getByText('2 hoạt động')).toBeInTheDocument()
     expect(within(latestDay).getByText('Nguyễn An, Kỹ sư Frontend')).toHaveAttribute(
       'href',
-      '/tuyendung/app/applications?campaign=camp_1&application=app_1',
+      '/tuyendung/app/ho-so-ung-tuyen?campaign=camp_1&application=app_1',
     )
     expect(within(latestDay).getByLabelText(
       'Chuyển trạng thái từ Mới sang Đã xem',
     )).toBeInTheDocument()
     expect(within(latestDay).getByText('Kỹ sư Backend')).toHaveAttribute(
       'href',
-      '/tuyendung/app/jobs/job_1',
+      '/tuyendung/app/tin-tuyen-dung/job_1',
     )
     expect(within(latestDay).getByText('31/08/2026')).toBeInTheDocument()
     expect(within(previousDay).getByText('Tạm giữ theo trạng thái tài khoản')).toBeInTheDocument()

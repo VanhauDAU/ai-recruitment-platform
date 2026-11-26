@@ -57,7 +57,7 @@ export default function CompanyJobs({ company, enabled }) {
   }
 
   function openJob(job) {
-    navigate(adminPath(`/job-moderation/${job.public_id}`), {
+    navigate(adminPath(`/duyet-tin/${job.public_id}`), {
       state: {
         origin: {
           pathname: location.pathname,

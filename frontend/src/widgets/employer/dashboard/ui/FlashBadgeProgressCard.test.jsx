@@ -33,7 +33,7 @@ describe('FlashBadgeProgressCard', () => {
     expect(screen.getByText('1 hồ sơ sẽ quá hạn trong 24 giờ tới')).toBeVisible()
     expect(screen.getByRole('link', { name: /Trả lời hồ sơ đang chờ/ })).toHaveAttribute(
       'href',
-      '/tuyendung/app/applications',
+      '/tuyendung/app/ho-so-ung-tuyen',
     )
   })
 

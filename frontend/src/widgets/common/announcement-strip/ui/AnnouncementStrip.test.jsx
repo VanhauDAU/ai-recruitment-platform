@@ -194,7 +194,7 @@ describe('AnnouncementStrip runtime', () => {
     )).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Cập nhật nhu cầu/ })).toHaveAttribute(
       'href',
-      '/onboard-user',
+      '/hoan-thien-ho-so',
     )
     expect(screen.queryByRole('button', { name: 'Tạm ẩn thông báo' })).not.toBeInTheDocument()
   })

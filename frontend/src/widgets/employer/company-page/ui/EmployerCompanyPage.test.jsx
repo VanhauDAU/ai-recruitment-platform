@@ -112,7 +112,7 @@ describe('EmployerCompanyPage', () => {
     }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent(message)
-    expect(screen.getByRole('link', { name: 'Xác thực tài khoản' })).toHaveAttribute('href', '/tuyendung/app/employer-verify')
+    expect(screen.getByRole('link', { name: 'Xác thực tài khoản' })).toHaveAttribute('href', '/tuyendung/app/xac-thuc-tai-khoan')
     expect(screen.getAllByText(message)).toHaveLength(2)
     screen.getAllByRole('switch').forEach((control) => expect(control).toBeDisabled())
     screen.getAllByRole('radio').forEach((control) => expect(control).toBeDisabled())
@@ -218,7 +218,7 @@ describe('EmployerCompanyPage', () => {
     render(withQueryClient(<MemoryRouter><EmployerCompanyPage /></MemoryRouter>))
 
     expect(await screen.findByText(/chưa liên kết với công ty nào/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Cập nhật thông tin công ty' })).toHaveAttribute('href', '/tuyendung/app/account/settings/company')
+    expect(screen.getByRole('link', { name: 'Cập nhật thông tin công ty' })).toHaveAttribute('href', '/tuyendung/app/cai-dat/cong-ty')
     expect(api.getEmployerCompanyPage).toHaveBeenCalledTimes(1)
   })
 

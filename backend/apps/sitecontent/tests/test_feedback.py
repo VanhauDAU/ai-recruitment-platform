@@ -29,7 +29,7 @@ class FeedbackApiTests(APITestCase):
             {
                 'category': 'bug',
                 'content': 'Bấm Lưu CV trên iPhone không phản hồi gì cả.',
-                'page_url': '/cvs/cv_1/edit?mode=create',
+                'page_url': '/cv/cv_1/chinh-sua?mode=create',
                 'client_info': {
                     'viewport': '390x844',
                     'standalone': True,
@@ -121,7 +121,7 @@ class FeedbackTelegramTests(APITestCase):
         return Feedback.objects.create(
             category=Feedback.Category.BUG,
             content='Nút <Lưu> & chữ "đè" nhau trên iPhone.',
-            page_url='/cvs/cv_1/edit',
+            page_url='/cv/cv_1/chinh-sua',
             client_info={'viewport': '390x844', 'standalone': True},
             **extra,
         )
@@ -130,7 +130,7 @@ class FeedbackTelegramTests(APITestCase):
         text = feedback_message(self._bug(phone='0909123456'))
 
         self.assertIn('🐞 <b>Báo lỗi</b>', text)
-        self.assertIn('https://procv.site/cvs/cv_1/edit', text)
+        self.assertIn('https://procv.site/cv/cv_1/chinh-sua', text)
         self.assertIn('màn 390x844 · web app', text)
         self.assertIn('Nút &lt;Lưu&gt; &amp; chữ &quot;đè&quot;', text)
         self.assertIn('0909123456', text)

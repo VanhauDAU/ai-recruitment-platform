@@ -49,7 +49,7 @@ function campaignFacts(campaign) {
 function PrimaryAction({ campaign }) {
   if (CAMPAIGN_SETUP_STATUSES.includes(campaign.status)) {
     return (
-      <Link to={employerAppPath(`/campaigns/${campaign.public_id}/setup`)}>
+      <Link to={employerAppPath(`/chien-dich/${campaign.public_id}/thiet-lap`)}>
         <Button type="primary" icon={<SettingOutlined aria-hidden />}>
           {campaign.status === 'scheduled' ? m.employer_campaign_hero_view_schedule() : m.employer_campaign_hero_continue_setup()}
         </Button>
@@ -58,7 +58,7 @@ function PrimaryAction({ campaign }) {
   }
   if (campaign.status === 'active') {
     return (
-      <Link to={`${employerAppPath('/jobs/new')}?campaign=${campaign.public_id}`}>
+      <Link to={`${employerAppPath('/tin-tuyen-dung/tao-moi')}?campaign=${campaign.public_id}`}>
         <Button type="primary" icon={<PlusOutlined aria-hidden />}>{m.employer_campaign_hero_post_more()}</Button>
       </Link>
     )

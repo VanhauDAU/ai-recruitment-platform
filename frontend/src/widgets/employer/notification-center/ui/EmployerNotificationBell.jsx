@@ -66,7 +66,7 @@ export default function EmployerNotificationBell() {
       <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
         <strong className="text-sm text-slate-800">{m.employer_workspace_notifications_heading()}</strong>
         <div className="flex items-center gap-1">
-          <Link to={employerAppPath('/notifications')} className="text-xs font-semibold text-[var(--brand-primary)]">{m.employer_workspace_dash_view_all()}</Link>
+          <Link to={employerAppPath('/thong-bao')} className="text-xs font-semibold text-[var(--brand-primary)]">{m.employer_workspace_dash_view_all()}</Link>
           <NotificationSoundToggle />
         </div>
       </div>

@@ -50,11 +50,11 @@ export default function AdminTopbar({
 }) {
   const navigate = useNavigate()
   const createItems = [
-    { key: '/blog/new', icon: <FileAddOutlined />, label: 'Bài viết cẩm nang' },
-    { key: '/knowledgebase/new', icon: <ReadOutlined />, label: 'Nội dung FAQ & hướng dẫn' },
-    { key: '/announcements', icon: <NotificationOutlined />, label: 'Thông báo đa cổng' },
+    { key: '/blog/tao-moi', icon: <FileAddOutlined />, label: 'Bài viết cẩm nang' },
+    { key: '/tro-giup/tao-moi', icon: <ReadOutlined />, label: 'Nội dung FAQ & hướng dẫn' },
+    { key: '/thong-bao', icon: <NotificationOutlined />, label: 'Thông báo đa cổng' },
     ...(isSuperuser
-      ? [{ key: '/accounts?tab=invitations', icon: <UserAddOutlined />, label: 'Mời quản trị viên' }]
+      ? [{ key: '/tai-khoan?tab=invitations', icon: <UserAddOutlined />, label: 'Mời quản trị viên' }]
       : []),
     { type: 'divider' },
     { key: 'job-on-behalf', icon: <ThunderboltOutlined />, label: soon('Đăng tin hộ NTD'), disabled: true },
@@ -71,9 +71,9 @@ export default function AdminTopbar({
       ),
     },
     { type: 'divider' },
-    { key: '/account', icon: <UserOutlined />, label: 'Hồ sơ của tôi' },
-    { key: '/account?tab=security', icon: <SafetyCertificateOutlined />, label: 'Bảo mật và phiên đăng nhập' },
-    { key: '/account?tab=activity', icon: <HistoryOutlined />, label: 'Nhật ký hoạt động' },
+    { key: '/tai-khoan-cua-toi', icon: <UserOutlined />, label: 'Hồ sơ của tôi' },
+    { key: '/tai-khoan-cua-toi?tab=security', icon: <SafetyCertificateOutlined />, label: 'Bảo mật và phiên đăng nhập' },
+    { key: '/tai-khoan-cua-toi?tab=activity', icon: <HistoryOutlined />, label: 'Nhật ký hoạt động' },
   ]
   const go = ({ key }) => navigate(adminPath(key))
 

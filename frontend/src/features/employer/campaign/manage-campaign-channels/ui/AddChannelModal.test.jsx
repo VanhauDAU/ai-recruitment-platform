@@ -77,7 +77,7 @@ describe('AddChannelModal', () => {
 
     expect(screen.getByRole('status')).toHaveTextContent('Chưa kết nối Threads: tới khi kết nối')
     expect(screen.getByRole('link', { name: 'Kết nối ngay' }))
-      .toHaveAttribute('href', '/tuyendung/app/account/settings/integrations')
+      .toHaveAttribute('href', '/tuyendung/app/cai-dat/tich-hop')
     await user.click(screen.getByRole('radio', { name: /Fanpage Facebook/ }))
     expect(screen.queryByRole('link', { name: 'Kết nối ngay' })).not.toBeInTheDocument()
   })

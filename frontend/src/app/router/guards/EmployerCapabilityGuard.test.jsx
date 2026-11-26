@@ -19,7 +19,7 @@ function CurrentLocation() {
   return <output data-testid="current-location">{location.pathname}{location.search}</output>
 }
 
-function renderGuard(Guard, path = '/tuyendung/app/applications?job=job_1') {
+function renderGuard(Guard, path = '/tuyendung/app/ho-so-ung-tuyen?job=job_1') {
   render(
     <MemoryRouter initialEntries={[path]}>
       <CurrentLocation />
@@ -73,7 +73,7 @@ describe('employer capability route guards', () => {
       canAccessCandidateData: false,
     }))
 
-    renderGuard(JobWorkspaceGuard, '/tuyendung/app/jobs')
+    renderGuard(JobWorkspaceGuard, '/tuyendung/app/tin-tuyen-dung')
 
     expect(screen.getByText('Protected resource mounted')).toBeInTheDocument()
   })
@@ -100,7 +100,7 @@ describe('employer capability route guards', () => {
 
     expect(screen.queryByText('Protected resource mounted')).not.toBeInTheDocument()
     expect(screen.getByTestId('current-location')).toHaveTextContent(
-      '/tuyendung/app/employer-verify',
+      '/tuyendung/app/xac-thuc-tai-khoan',
     )
     expect(screen.queryByText('Dữ liệu ứng viên đang được bảo vệ')).not.toBeInTheDocument()
   })
@@ -124,11 +124,11 @@ describe('employer capability route guards', () => {
       },
     }))
 
-    renderGuard(JobWorkspaceGuard, '/tuyendung/app/jobs')
+    renderGuard(JobWorkspaceGuard, '/tuyendung/app/tin-tuyen-dung')
 
     expect(screen.queryByText('Protected resource mounted')).not.toBeInTheDocument()
     expect(screen.getByTestId('current-location')).toHaveTextContent(
-      '/tuyendung/app/employer-verify',
+      '/tuyendung/app/xac-thuc-tai-khoan',
     )
     expect(screen.queryByText('Workspace tuyển dụng chưa sẵn sàng')).not.toBeInTheDocument()
   })

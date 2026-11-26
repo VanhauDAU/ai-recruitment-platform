@@ -15,7 +15,7 @@ export default function EmployerConsultingNeed() {
     return <Navigate to={EMPLOYER_ACCOUNT_VERIFY_URL} replace />
   }
   if (user?.employer_onboarding_step === 'complete' && !isCompleting) {
-    return <Navigate to={employerAppPath('/dashboard')} replace />
+    return <Navigate to={employerAppPath('/tong-quan')} replace />
   }
 
   return <EmployerConsultingNeedPanel onCompleted={() => setIsCompleting(true)} />

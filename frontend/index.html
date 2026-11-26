@@ -31,10 +31,21 @@
       // (use-consented-color-scheme.js). Không suy từ giao diện hệ điều hành: trang
       // khác chỉ có nền sáng, `.dark` sót lại làm popup đăng nhập chữ trắng trên nền trắng.
       (function () {
-        var authPage = /^(\/admin)?(\/app)?\/(login|sign-up|register|forgot-password|reset-password|invitation)\/?$/
+        var authPage = /^(\/admin|\/tuyendung)?(\/app)?\/(dang-nhap|dang-ky|quen-mat-khau|dat-lai-mat-khau|loi-moi)\/?$/
           .test(window.location.pathname)
         document.documentElement.classList.toggle('dark', authPage && localStorage.getItem('color-scheme') === 'dark')
       })()
+    </script>
+    <script>
+      // Deploy mới xóa chunk cũ: tab đang mở bấm sang route lazy sẽ lỗi tải module.
+      // Tải lại để lấy bản mới, tối đa một lần mỗi phút. Đặt inline (không trong
+      // main.jsx) để không tính vào ngân sách JS khởi tạo.
+      window.addEventListener('vite:preloadError', function (event) {
+        if (Date.now() - Number(sessionStorage.getItem('chunk-reload-at')) < 60000) return
+        sessionStorage.setItem('chunk-reload-at', String(Date.now()))
+        event.preventDefault()
+        window.location.reload()
+      })
     </script>
   </head>
   <body>

@@ -23,7 +23,7 @@ export default function ConversationContext({ conversation, onSchedule }) {
       <dl className="pc-pairs">
         <Pair label={m.connect_context_candidate()}>{counterpart.name}</Pair>
         <Pair label={m.connect_context_job()}>
-          <Link to={employerAppPath(`/jobs/${job.public_id}`)} className="pc-pair__link">{job.title}</Link>
+          <Link to={employerAppPath(`/tin-tuyen-dung/${job.public_id}`)} className="pc-pair__link">{job.title}</Link>
         </Pair>
         {job.salary_text && <Pair label={m.connect_context_salary()}>{job.salary_text}</Pair>}
         {job.location_text && <Pair label={m.connect_context_location()}>{job.location_text}</Pair>}
@@ -36,7 +36,7 @@ export default function ConversationContext({ conversation, onSchedule }) {
         </Pair>
       </dl>
       {application && (
-        <Link to={`${employerAppPath('/applications')}?application=${encodeURIComponent(application.public_id)}`} className="pc-link pc-link--strong">
+        <Link to={`${employerAppPath('/ho-so-ung-tuyen')}?application=${encodeURIComponent(application.public_id)}`} className="pc-link pc-link--strong">
           {m.connect_context_open_application()}
         </Link>
       )}

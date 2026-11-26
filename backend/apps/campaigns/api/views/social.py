@@ -56,9 +56,7 @@ logger = logging.getLogger(__name__)
 
 
 def integrations_url(**query):
-    base = (
-        f'{settings.EMPLOYER_FRONTEND_URL.rstrip("/")}/tuyendung/app/account/settings/integrations'
-    )
+    base = f'{settings.EMPLOYER_FRONTEND_URL.rstrip("/")}/tuyendung/app/cai-dat/tich-hop'
     return f'{base}?{urlencode(query)}' if query else base
 
 

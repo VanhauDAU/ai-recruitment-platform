@@ -20,9 +20,9 @@ const PERMISSION_DENIED_COOLDOWN_MS = 5_000
 
 function loginPathForCurrentPortal() {
   const portal = getCurrentPortal()
-  if (portal === 'employer') return employerAppPath('/login')
-  if (portal === 'admin') return adminPath('/login')
-  return '/login'
+  if (portal === 'employer') return employerAppPath('/dang-nhap')
+  if (portal === 'admin') return adminPath('/dang-nhap')
+  return '/dang-nhap'
 }
 
 export default function SessionProvider({ children }) {

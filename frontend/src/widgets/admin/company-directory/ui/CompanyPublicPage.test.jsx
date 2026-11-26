@@ -65,7 +65,7 @@ function renderTab({ tab = 'public-page' } = {}) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[`/admin/app/companies/co_alpha${tab ? `?tab=${tab}` : ''}`]}>
+      <MemoryRouter initialEntries={[`/admin/app/cong-ty/co_alpha${tab ? `?tab=${tab}` : ''}`]}>
         <AdminCompanyDetail publicId="co_alpha" />
       </MemoryRouter>
     </QueryClientProvider>,

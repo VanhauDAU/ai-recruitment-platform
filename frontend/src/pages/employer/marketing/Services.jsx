@@ -68,7 +68,7 @@ export default function EmployerServices() {
           <h1 className="mx-auto mt-6 max-w-4xl text-3xl font-black leading-tight text-slate-950 sm:text-5xl">{m.marketing_services_page_title()}</h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-600">{m.marketing_services_page_subtitle()}</p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row [&_a]:w-full sm:[&_a]:w-auto [&_.ant-btn]:w-full sm:[&_.ant-btn]:w-auto">
-            <Link to={employerAppPath('/register')}><Button type="primary" size="large" shape="round" className="!h-12 !px-7">{m.marketing_common_start_now()}</Button></Link>
+            <Link to={employerAppPath('/dang-ky')}><Button type="primary" size="large" shape="round" className="!h-12 !px-7">{m.marketing_common_start_now()}</Button></Link>
             <Link to={employerMarketingPath('/lien-he')}><Button size="large" shape="round" className="!h-12 !px-7">{m.marketing_nav_contact()}</Button></Link>
           </div>
         </div>
@@ -93,7 +93,7 @@ export default function EmployerServices() {
       <section className="bg-slate-950 px-4 py-14 text-white">
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-6 text-center md:flex-row md:text-left">
           <div><h2 className="text-2xl font-bold">{m.marketing_services_page_cta_title()}</h2><p className="mt-2 text-white/60">{m.marketing_services_page_cta_desc()}</p></div>
-          <div className="flex w-full shrink-0 flex-col gap-3 sm:w-auto sm:flex-row [&_a]:w-full sm:[&_a]:w-auto [&_.ant-btn]:w-full sm:[&_.ant-btn]:w-auto"><Link to={employerAppPath('/register')}><Button type="primary" size="large" shape="round">{m.marketing_common_register()}</Button></Link><Link to={employerMarketingPath('/lien-he')}><Button ghost size="large" shape="round">{m.marketing_nav_contact()}</Button></Link></div>
+          <div className="flex w-full shrink-0 flex-col gap-3 sm:w-auto sm:flex-row [&_a]:w-full sm:[&_a]:w-auto [&_.ant-btn]:w-full sm:[&_.ant-btn]:w-auto"><Link to={employerAppPath('/dang-ky')}><Button type="primary" size="large" shape="round">{m.marketing_common_register()}</Button></Link><Link to={employerMarketingPath('/lien-he')}><Button ghost size="large" shape="round">{m.marketing_nav_contact()}</Button></Link></div>
         </div>
       </section>
     </>

@@ -103,7 +103,7 @@ def send_due_application_reminders(*, now=None, batch_size=200):
         recipients = list(dict.fromkeys(recipients or [job.posted_by.email]))
         count = len(applications)
         action_url = (
-            f'{settings.EMPLOYER_FRONTEND_URL.rstrip("/")}/tuyendung/app/applications'
+            f'{settings.EMPLOYER_FRONTEND_URL.rstrip("/")}/tuyendung/app/ho-so-ung-tuyen'
             f'?job={job.public_id}'
         )
         # Contact addresses may not be accounts; the job's poster sets the language.

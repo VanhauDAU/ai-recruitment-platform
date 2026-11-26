@@ -100,7 +100,7 @@ test('employer searches anonymous CVs with filters and invites from the list', {
     return route.fulfill({ status: 204, body: '' })
   })
 
-  await page.goto('/tuyendung/app/candidate-search?job=jb_php')
+  await page.goto('/tuyendung/app/tim-ung-vien?job=jb_php')
   await expect(page.getByRole('heading', { name: 'Ứng viên phù hợp' })).toBeVisible()
   await expect(page.getByText('3 CV phù hợp')).toBeVisible()
   const first = page.locator('.cs-card').first()

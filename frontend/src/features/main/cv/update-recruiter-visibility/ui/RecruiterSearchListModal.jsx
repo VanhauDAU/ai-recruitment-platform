@@ -113,7 +113,7 @@ export default function RecruiterSearchListModal({ open, onClose }) {
               />
               <div className="min-w-0">
                 <Link
-                  to={`/cvs/${cv.public_id}/view`}
+                  to={`/cv/${cv.public_id}/xem`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block truncate text-sm font-bold !text-slate-800 hover:!text-[var(--brand-primary)]"

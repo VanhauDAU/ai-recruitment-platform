@@ -85,7 +85,7 @@ function jobPreferences() {
     message: 'Thêm vị trí, mức lương mong muốn để gợi ý việc làm sát hướng bạn muốn hơn.',
     cta: {
       label: 'Cập nhật nhu cầu',
-      url: '/onboard-user',
+      url: '/hoan-thien-ho-so',
       external: false,
     },
     animation: ANNOUNCEMENT_ANIMATIONS.FADE,

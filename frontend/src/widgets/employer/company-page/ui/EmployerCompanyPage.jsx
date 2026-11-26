@@ -128,7 +128,7 @@ export default function EmployerCompanyPage() {
     return (
       <div className="employer-company-page__panel">
         <Empty description={m.employer_company_page_not_linked()}>
-          <Link to={employerAppPath('/account/settings/company')} className="text-sm font-semibold !text-[var(--brand-primary)] hover:underline">
+          <Link to={employerAppPath('/cai-dat/cong-ty')} className="text-sm font-semibold !text-[var(--brand-primary)] hover:underline">
             {m.employer_company_update_info()}
           </Link>
         </Empty>

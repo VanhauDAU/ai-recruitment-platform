@@ -28,6 +28,7 @@ from ..models import (
     AnnouncementRevision,
     AnnouncementUserState,
 )
+from .legacy_paths import modernize_path_prefix
 from .settings import get_setting
 
 PRIORITY_TIER_BY_KIND = {
@@ -63,6 +64,8 @@ def normalize_request_path(path):
 def path_prefix_matches(path, prefix):
     if prefix == '/':
         return True
+    # Revision cũ có thể lưu prefix route tiếng Anh trước khi đổi sang path tiếng Việt.
+    prefix = modernize_path_prefix(prefix)
     return path == prefix or path.startswith(f'{prefix}/')
 
 

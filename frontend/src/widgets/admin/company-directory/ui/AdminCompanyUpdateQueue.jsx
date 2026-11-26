@@ -106,7 +106,7 @@ export default function AdminCompanyUpdateQueue() {
             company_update: row.public_id,
           })
           navigate(
-            `${adminPath(`/recruiters/${row.requested_by_public_id}`)}?${detailParams}`,
+            `${adminPath(`/nha-tuyen-dung/${row.requested_by_public_id}`)}?${detailParams}`,
             {
               state: {
                 origin: {

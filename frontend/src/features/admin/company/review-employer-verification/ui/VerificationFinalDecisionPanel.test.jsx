@@ -138,7 +138,7 @@ describe('VerificationFinalDecisionPanel', () => {
     expect(onChanged).toHaveBeenCalledTimes(1)
 
     await user.click(await screen.findByRole('button', { name: 'Hồ sơ tiếp theo (còn 4)' }))
-    expect(navigate).toHaveBeenCalledWith('/admin/app/recruiters/usr_next?tab=verification', { state: null })
+    expect(navigate).toHaveBeenCalledWith('/admin/app/nha-tuyen-dung/usr_next?tab=verification', { state: null })
   })
 
   it('waits for the manual tax confirmation and requires its reason', async () => {

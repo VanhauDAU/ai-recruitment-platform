@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { initErrorReporting, scrubEvent } from './error-reporting'
+import { IGNORED_ERRORS, initErrorReporting, scrubEvent } from './error-reporting'
 
 describe('initErrorReporting', () => {
   it('does nothing without a DSN', () => {
@@ -28,8 +28,16 @@ describe('initErrorReporting', () => {
       dsn: 'https://key@example.ingest.sentry.io/1',
       environment: 'staging',
       sendDefaultPii: false,
+      ignoreErrors: IGNORED_ERRORS,
       beforeSend: scrubEvent,
     })
+  })
+
+  it('ignores errors thrown by scripts that in-app browsers inject', () => {
+    const ignored = (message) => IGNORED_ERRORS.some((pattern) => pattern.test(message))
+    expect(ignored("ReferenceError: Can't find variable: zaloJSV2")).toBe(true)
+    expect(ignored('ReferenceError: zaloJSV2 is not defined')).toBe(true)
+    expect(ignored("TypeError: Cannot read properties of undefined (reading 'title')")).toBe(false)
   })
 })
 

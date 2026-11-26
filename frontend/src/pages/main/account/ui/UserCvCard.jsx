@@ -55,7 +55,7 @@ export default function UserCvCard({ cv, onRefresh }) {
   }, [version])
 
   const handleDownload = () => {
-    window.open(`/cvs/${cv.public_id}/view`, '_blank', 'noopener,noreferrer')
+    window.open(`/cv/${cv.public_id}/xem`, '_blank', 'noopener,noreferrer')
   }
 
   const dropdownMenuItems = [
@@ -98,7 +98,7 @@ export default function UserCvCard({ cv, onRefresh }) {
   // Mở CV ở tab mới khi click vào card
   const handleCardClick = () => {
     if (isUploaded || (!loading && documentData)) {
-      window.open(`/cvs/${cv.public_id}/view`, '_blank')
+      window.open(`/cv/${cv.public_id}/xem`, '_blank')
     }
   }
 
@@ -187,7 +187,7 @@ export default function UserCvCard({ cv, onRefresh }) {
                 <DownloadOutlined /> Xem
               </button>
               {!isUploaded && <Link
-                to={`/cvs/${cv.public_id}/edit`}
+                to={`/cv/${cv.public_id}/chinh-sua`}
                 onClick={(e) => e.stopPropagation()}
                 className="flex items-center gap-1 rounded-full px-2.5 py-1.5 text-[11px] font-bold text-black hover:text-[var(--brand-primary)] transition shadow-sm cursor-pointer border border-slate-100 hover:scale-105"
                 style={{ backgroundColor: '#ffffff' }}

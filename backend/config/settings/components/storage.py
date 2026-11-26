@@ -134,11 +134,19 @@ STORAGES = {
     'staticfiles': {'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
 }
 if R2_ENABLED:
+    from botocore.config import Config as BotoConfig
+
     _R2_COMMON_OPTIONS = {
         'endpoint_url': R2_ENDPOINT_URL,
         'region_name': R2_REGION_NAME,
         'default_acl': None,
         'file_overwrite': False,
+        # boto3 mặc định chờ 60 s mỗi lần + 4 lần thử: R2 chậm là luồng gunicorn treo vài phút.
+        'client_config': BotoConfig(
+            connect_timeout=5,
+            read_timeout=30,
+            retries={'max_attempts': 3, 'mode': 'standard'},
+        ),
     }
     STORAGES['default'] = {
         'BACKEND': 'common.storage.private.PrivateS3Storage',

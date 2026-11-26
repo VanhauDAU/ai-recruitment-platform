@@ -4,10 +4,10 @@ import { resolveEmployerRouteTitle, resolveRouteTitle } from './document-title'
 
 describe('resolveEmployerRouteTitle', () => {
   it('uses a specific title for each employer job workflow route', () => {
-    expect(resolveEmployerRouteTitle(employerAppPath('/jobs'))).toBe('Tin tuyển dụng')
-    expect(resolveEmployerRouteTitle(employerAppPath('/jobs/new'))).toBe('Đăng tin tuyển dụng')
-    expect(resolveEmployerRouteTitle(employerAppPath('/jobs/job_123/edit'))).toBe('Chỉnh sửa tin tuyển dụng')
-    expect(resolveEmployerRouteTitle(employerAppPath('/jobs/job_123'))).toBe('Chi tiết tin tuyển dụng')
+    expect(resolveEmployerRouteTitle(employerAppPath('/tin-tuyen-dung'))).toBe('Tin tuyển dụng')
+    expect(resolveEmployerRouteTitle(employerAppPath('/tin-tuyen-dung/tao-moi'))).toBe('Đăng tin tuyển dụng')
+    expect(resolveEmployerRouteTitle(employerAppPath('/tin-tuyen-dung/job_123/chinh-sua'))).toBe('Chỉnh sửa tin tuyển dụng')
+    expect(resolveEmployerRouteTitle(employerAppPath('/tin-tuyen-dung/job_123'))).toBe('Chi tiết tin tuyển dụng')
   })
 
   it('does not fall back to the marketing title for unknown workspace routes', () => {
@@ -15,17 +15,17 @@ describe('resolveEmployerRouteTitle', () => {
   })
 
   it('titles campaign and application workspace routes consistently', () => {
-    expect(resolveEmployerRouteTitle(employerAppPath('/campaigns'))).toBe('Chiến dịch tuyển dụng')
-    expect(resolveEmployerRouteTitle(employerAppPath('/campaigns/campaign_123'))).toBe('Chi tiết chiến dịch tuyển dụng')
-    expect(resolveEmployerRouteTitle(employerAppPath('/campaigns/campaign_123/setup'))).toBe('Thiết lập chiến dịch tuyển dụng')
-    expect(resolveEmployerRouteTitle(employerAppPath('/campaigns/new'))).toBe('Tạo chiến dịch tuyển dụng')
-    expect(resolveEmployerRouteTitle(employerAppPath('/applications'))).toBe('CV ứng tuyển')
+    expect(resolveEmployerRouteTitle(employerAppPath('/chien-dich'))).toBe('Chiến dịch tuyển dụng')
+    expect(resolveEmployerRouteTitle(employerAppPath('/chien-dich/campaign_123'))).toBe('Chi tiết chiến dịch tuyển dụng')
+    expect(resolveEmployerRouteTitle(employerAppPath('/chien-dich/campaign_123/thiet-lap'))).toBe('Thiết lập chiến dịch tuyển dụng')
+    expect(resolveEmployerRouteTitle(employerAppPath('/chien-dich/tao-moi'))).toBe('Tạo chiến dịch tuyển dụng')
+    expect(resolveEmployerRouteTitle(employerAppPath('/ho-so-ung-tuyen'))).toBe('CV ứng tuyển')
   })
 
   it('titles workspace pages that used to fall through to the missing-page title', () => {
-    expect(resolveEmployerRouteTitle(employerAppPath('/notifications'))).toBe('Thông báo hệ thống')
-    expect(resolveEmployerRouteTitle(employerAppPath('/activities'))).toBe('Lịch sử hoạt động')
-    expect(resolveEmployerRouteTitle(employerAppPath('/company-page'))).toBe('Trang công ty')
+    expect(resolveEmployerRouteTitle(employerAppPath('/thong-bao'))).toBe('Thông báo hệ thống')
+    expect(resolveEmployerRouteTitle(employerAppPath('/lich-su-hoat-dong'))).toBe('Lịch sử hoạt động')
+    expect(resolveEmployerRouteTitle(employerAppPath('/trang-cong-ty'))).toBe('Trang công ty')
     expect(resolveEmployerRouteTitle(employerMarketingPath('/danh-gia-ho-so/tok_123'))).toBe('Đánh giá hồ sơ ứng viên')
   })
 
@@ -37,19 +37,19 @@ describe('resolveEmployerRouteTitle', () => {
 
 describe('admin route titles', () => {
   it('derives job moderation and access titles from the admin route config', () => {
-    window.history.replaceState({}, '', adminPath('/job-moderation'))
-    expect(resolveRouteTitle(adminPath('/job-moderation'))).toBe('Quản lý tin tuyển dụng')
-    expect(resolveRouteTitle(adminPath('/job-moderation/job_123'))).toBe('Chi tiết tin tuyển dụng')
-    expect(resolveRouteTitle(adminPath('/account'))).toBe('Tài khoản của tôi')
-    expect(resolveRouteTitle(adminPath('/companies'))).toBe('Quản lý công ty')
-    expect(resolveRouteTitle(adminPath('/company-reports'))).toBe('Báo cáo công ty')
+    window.history.replaceState({}, '', adminPath('/duyet-tin'))
+    expect(resolveRouteTitle(adminPath('/duyet-tin'))).toBe('Quản lý tin tuyển dụng')
+    expect(resolveRouteTitle(adminPath('/duyet-tin/job_123'))).toBe('Chi tiết tin tuyển dụng')
+    expect(resolveRouteTitle(adminPath('/tai-khoan-cua-toi'))).toBe('Tài khoản của tôi')
+    expect(resolveRouteTitle(adminPath('/cong-ty'))).toBe('Quản lý công ty')
+    expect(resolveRouteTitle(adminPath('/bao-cao-cong-ty'))).toBe('Báo cáo công ty')
   })
 
   it('titles public admin workflows and account details instead of treating them as missing routes', () => {
-    window.history.replaceState({}, '', adminPath('/reset-password'))
-    expect(resolveRouteTitle(adminPath('/invitation'))).toBe('Hoàn tất tài khoản quản trị')
-    expect(resolveRouteTitle(adminPath('/reset-password'))).toBe('Đặt lại mật khẩu quản trị')
-    expect(resolveRouteTitle(adminPath('/accounts/48261937'))).toBe('Chi tiết tài khoản')
+    window.history.replaceState({}, '', adminPath('/dat-lai-mat-khau'))
+    expect(resolveRouteTitle(adminPath('/loi-moi'))).toBe('Hoàn tất tài khoản quản trị')
+    expect(resolveRouteTitle(adminPath('/dat-lai-mat-khau'))).toBe('Đặt lại mật khẩu quản trị')
+    expect(resolveRouteTitle(adminPath('/tai-khoan/48261937'))).toBe('Chi tiết tài khoản')
   })
 })
 
@@ -86,8 +86,8 @@ describe('candidate route titles', () => {
 
 describe('ProCV Connect titles', () => {
   it('uses one product title for the inbox and every conversation, never a person name', () => {
-    expect(resolveEmployerRouteTitle(employerAppPath('/connect'))).toBe('ProCV Connect')
-    expect(resolveEmployerRouteTitle(employerAppPath('/connect/cnv_123'))).toBe('ProCV Connect')
+    expect(resolveEmployerRouteTitle(employerAppPath('/procv-connect'))).toBe('ProCV Connect')
+    expect(resolveEmployerRouteTitle(employerAppPath('/procv-connect/cnv_123'))).toBe('ProCV Connect')
     window.history.replaceState({}, '', '/procv-connect')
     expect(resolveRouteTitle('/procv-connect')).toBe('ProCV Connect')
     expect(resolveRouteTitle('/procv-connect/cnv_123')).toBe('ProCV Connect')

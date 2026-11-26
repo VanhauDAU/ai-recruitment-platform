@@ -268,7 +268,7 @@ export default function JobList() {
             </div>
           ) : (
             <MascotEmpty className="py-12" description={m.employer_job_list_empty()}>
-              <Link className={primaryLinkClass} to={employerAppPath('/jobs/new')}>
+              <Link className={primaryLinkClass} to={employerAppPath('/tin-tuyen-dung/tao-moi')}>
                 <PlusOutlined /> {m.employer_job_list_post_first()}
               </Link>
             </MascotEmpty>

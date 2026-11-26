@@ -10,7 +10,7 @@ import { resolveEmployerSessionWorkspaceReady } from '@/entities/account/employe
 // All successful auth flows use this policy. An unconfigured candidate must
 // finish onboarding before returning to a requested page or the homepage.
 export function getAuthDestination({ user, returnUrl }) {
-  if (user?.role === 'candidate' && !user.job_preferences_configured) return '/onboard-user'
+  if (user?.role === 'candidate' && !user.job_preferences_configured) return '/hoan-thien-ho-so'
   if (user?.role === 'employer') {
     if (user.employer_onboarding_required) {
       const destinations = {

@@ -54,7 +54,7 @@ export function companyReportColumns({
           <Link
             className="font-semibold !text-slate-900 hover:!text-[var(--brand-primary)]"
             state={{ origin }}
-            to={`${adminPath(`/companies/${company.public_id}`)}?tab=public-page`}
+            to={`${adminPath(`/cong-ty/${company.public_id}`)}?tab=public-page`}
           >
             {company.display_name}
           </Link>

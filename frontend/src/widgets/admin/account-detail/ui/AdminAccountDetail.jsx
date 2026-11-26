@@ -306,7 +306,7 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
   })
 
   const activeTab = searchParams.get('tab') || 'overview'
-  const fallbackPath = adminPath(routeScope === 'recruiters' ? '/recruiters' : '/accounts')
+  const fallbackPath = adminPath(routeScope === 'recruiters' ? '/nha-tuyen-dung' : '/tai-khoan')
   const origin = location.state?.origin
   const safeOrigin = (
     origin?.pathname?.startsWith(adminPath('/'))
@@ -417,8 +417,9 @@ export default function AdminAccountDetail({ publicId, routeScope = 'users' }) {
   )) : tabs
   const nextAction = account?.role === 'employer' ? recruiterNextAction(account) : null
   const validActiveTab = resolveActiveAdminAccountTab(currentTabs, activeTab)
-  const canonicalScope = account?.role === 'employer' ? 'recruiters' : 'accounts'
-  const currentScope = routeScope === 'recruiters' ? 'recruiters' : 'accounts'
+  // Giá trị là segment URL của danh sách tương ứng.
+  const canonicalScope = account?.role === 'employer' ? 'nha-tuyen-dung' : 'tai-khoan'
+  const currentScope = routeScope === 'recruiters' ? 'nha-tuyen-dung' : 'tai-khoan'
   const hasCanonicalMismatch = Boolean(account && canonicalScope !== currentScope)
 
   useEffect(() => {

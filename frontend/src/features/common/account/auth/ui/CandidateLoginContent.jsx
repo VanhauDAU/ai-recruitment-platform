@@ -44,7 +44,7 @@ export default function CandidateLoginContent({ onSuccess }) {
         <p className="text-sm text-gray-500 dark:text-gray-400">
           {m.account_auth_no_account()}{' '}
           <Link
-            to="/sign-up"
+            to="/dang-ky"
             className="font-semibold text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)] hover:underline transition-colors"
           >
             {m.account_auth_register_now()}

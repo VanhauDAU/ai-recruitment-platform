@@ -99,7 +99,7 @@ http://localhost:8000/api/auth/oauth/linkedin/callback/
    # Ctrl+C rồi chạy lại
    backend/venv/bin/python backend/manage.py runserver 8000
    ```
-2. Mở trang đăng nhập ứng viên `/login` (hoặc NTD `/tuyendung/app/login`), bấm nút provider.
+2. Mở trang đăng nhập ứng viên `/dang-nhap` (hoặc NTD `/tuyendung/app/dang-nhap`), bấm nút provider.
 3. Luồng: chọn tài khoản ở provider → quay lại app đã đăng nhập.
 
 ## Kiểm tra nhanh không cần điền key
@@ -116,10 +116,10 @@ nghĩa là luồng redirect đang hoạt động, chỉ thiếu credential.
   viên) → bị chặn với thông báo "Tài khoản không thuộc cổng này".
 - Tài khoản social mới → tạo với vai trò theo cổng, `email_verified=True`, không có
   mật khẩu. Candidate đi theo onboarding preference; employer đi tới
-  `/tuyendung/app/account/complete-profile` để bổ sung người liên hệ, công ty và
-  consent, rồi khai báo nhu cầu tại `/tuyendung/app/consulting-need`. Muốn
-  đăng nhập bằng mật khẩu thì dùng "Quên mật khẩu?" (`/forgot-password` cho
-  candidate, `/tuyendung/app/forgot-password` cho employer) để đặt mật khẩu lần
+  `/tuyendung/app/hoan-thien-ho-so` để bổ sung người liên hệ, công ty và
+  consent, rồi khai báo nhu cầu tại `/tuyendung/app/khai-bao-nhu-cau`. Muốn
+  đăng nhập bằng mật khẩu thì dùng "Quên mật khẩu?" (`/quen-mat-khau` cho
+  candidate, `/tuyendung/app/quen-mat-khau` cho employer) để đặt mật khẩu lần
   đầu — backend chấp nhận cả tài khoản `has_usable_password() == False`.
 
 ## Đặt mật khẩu lần đầu từ trang tài khoản

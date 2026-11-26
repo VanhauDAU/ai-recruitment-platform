@@ -35,26 +35,26 @@ function renderPage(path) {
 
 describe('EmployerPasswordLogin', () => {
   it('stays on password settings after a normal password update', () => {
-    renderPage('/tuyendung/app/account/settings/password-login')
+    renderPage('/tuyendung/app/cai-dat/mat-khau')
 
     expect(screen.getByTestId('success-redirect')).toHaveTextContent('none')
   })
 
   it('returns to phone verification only when that flow requested it', () => {
     renderPage(
-      '/tuyendung/app/account/settings/password-login'
-      + '?returnUrl=%2Ftuyendung%2Fapp%2Faccount%2Fphone-verify',
+      '/tuyendung/app/cai-dat/mat-khau'
+      + '?returnUrl=%2Ftuyendung%2Fapp%2Fxac-thuc-so-dien-thoai',
     )
 
     expect(screen.getByTestId('success-redirect')).toHaveTextContent(
-      '/tuyendung/app/account/phone-verify',
+      '/tuyendung/app/xac-thuc-so-dien-thoai',
     )
   })
 
   it('ignores unrelated return destinations', () => {
     renderPage(
-      '/tuyendung/app/account/settings/password-login'
-      + '?returnUrl=%2Ftuyendung%2Fapp%2Fdashboard',
+      '/tuyendung/app/cai-dat/mat-khau'
+      + '?returnUrl=%2Ftuyendung%2Fapp%2Ftong-quan',
     )
 
     expect(screen.getByTestId('success-redirect')).toHaveTextContent('none')

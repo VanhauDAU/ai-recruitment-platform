@@ -22,7 +22,7 @@ const ACCOUNT_VERIFICATION_LEVEL_STEPS = [
   {
     key: 'business_doc_approved',
     label: m.employer_workspace_verification_step_business_doc(),
-    to: employerAppPath('/account/settings/gpkd'),
+    to: employerAppPath('/cai-dat/giay-phep-kinh-doanh'),
   },
 ]
 

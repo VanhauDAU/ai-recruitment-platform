@@ -14,10 +14,10 @@ const route = {
 
 function renderGuard() {
   return render(
-    <MemoryRouter initialEntries={['/admin/app/settings']}>
+    <MemoryRouter initialEntries={['/admin/app/cau-hinh']}>
       <Routes>
         <Route
-          path="/admin/app/settings"
+          path="/admin/app/cau-hinh"
           element={(
             <PermissionGuard route={route}>
               <p>Settings page</p>
@@ -25,7 +25,7 @@ function renderGuard() {
           )}
         />
         <Route
-          path="/admin/app/access-denied"
+          path="/admin/app/khong-co-quyen"
           element={<p>Access denied</p>}
         />
       </Routes>

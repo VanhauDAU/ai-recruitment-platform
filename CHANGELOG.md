@@ -25,6 +25,51 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Dải thông báo chỉ gọi lại API khi quay lại tab nếu dữ liệu đã quá một chu kỳ poll
   (trước đây mỗi lần đổi tab là một request).
 
+#### Fixed — Bớt email Sentry nhiễu và request API thừa
+
+- CSP: hash script giao diện sáng/tối trong `index.html` đã cũ nên mọi lượt tải trang
+  gửi một báo cáo "Blocked 'script' from 'inline:'" lên Sentry; cập nhật hash, thêm test
+  `src/app/csp-inline-script-hash.test.js` so hash với `index.html`. Cho phép beacon
+  Cloudflare Web Analytics (`static.cloudflareinsights.com`) và thêm `'report-sample'`.
+- Sentry SDK bỏ qua lỗi `zaloJSV2` do trình duyệt trong app Zalo tự chèn script.
+- Tab cũ sau deploy gặp lỗi tải chunk (`vite:preloadError`) thì tự tải lại, tối đa một
+  lần mỗi phút (script inline trong `index.html`, không tốn ngân sách JS khởi tạo).
+- Script giao diện tối trong `index.html` nhận path đăng nhập mới (`/dang-nhap`,
+  `/dang-ky`…, gồm cổng `/tuyendung`) sau khi chuẩn hoá path.
+- Trang chủ lấy tổng số việc làm từ `/public/jobs/stats/` (dùng chung cache với khối
+  thống kê) thay vì tải cả một trang tin; thông báo hệ thống cache 5 phút theo trang.
+
+#### Changed — Path URL frontend thống nhất tiếng Việt không dấu
+
+- Cổng ứng viên: `/dang-nhap`, `/dang-ky`, `/quen-mat-khau`, `/dat-lai-mat-khau`,
+  `/hoan-thien-ho-so`, `/cv/:id/chinh-sua`, `/cv/:id/xem`, `/cv/:id/da-luu`,
+  `/cv/chia-se/:token` (thay `/login`, `/sign-up`, `/register`, `/cvs/:id/edit`…).
+- Workspace NTD `/tuyendung/app/…` và admin `/admin/app/…` đổi toàn bộ segment tiếng Anh
+  (vd. `employer-verify` → `xac-thuc-tai-khoan`, `account/settings/gpkd` →
+  `cai-dat/giay-phep-kinh-doanh`, `jobs/:id/edit` → `tin-tuyen-dung/:id/chinh-sua`,
+  `job-moderation` → `duyet-tin`). Giữ nguyên tiền tố `app`, `/oauth/callback` (đã khai
+  với Google/Facebook/LinkedIn) và `/procv-connect`; workspace NTD dùng `/procv-connect`
+  thay `/connect`.
+- Path cũ redirect giữ tham số, query và hash qua bảng
+  `app/router/redirects/legacy-paths.js` để link trong email, thông báo đã lưu và link
+  đã chia sẻ vẫn mở được; test khóa mọi đích redirect là route có thật.
+- Backend phát link mới trong email/thông báo; mặc định `ADMIN_INVITATION_PATH`,
+  `ADMIN_PASSWORD_RESET_PATH`, `EMPLOYER_EMAIL_VERIFICATION_PATH`,
+  `EMPLOYER_PASSWORD_RESET_PATH` đổi theo (prod có đặt trong `.env` thì sửa lại).
+- Thông báo đa cổng: revision đã xuất bản giữ prefix route cũ vẫn khớp path mới
+  (`sitecontent.selectors.legacy_paths`); migration `sitecontent.0013` đổi link footer và
+  CTA banner đã lưu sang path mới.
+
+#### Fixed — Trang "CV của tôi" tải chậm / treo trên production
+
+- `GET /api/candidate/cvs/` gọi `default_storage.exists()` (HEAD tới R2, ~100 ms) hai lần
+  cho mỗi CV chỉ để tính `thumbnail_url`/`thumbnail_status`; R2 chậm là request treo,
+  trình duyệt bỏ (nginx 499). Danh sách giờ chỉ so khoá ảnh trong DB
+  (`thumbnail_matches_latest_version`, worker chỉ ghi khoá sau khi lưu file xong);
+  endpoint ảnh một CV vẫn kiểm tra storage.
+- Client R2 (boto3) có timeout kết nối 5 s, đọc 30 s, tối đa 3 lần thử thay cho mặc định
+  60 s × 4 lần.
+
 #### Added — Góp ý / báo lỗi gửi sang Telegram
 
 - Góp ý mới được task `apps.sitecontent.tasks.notify_feedback_telegram` (queue `default`,

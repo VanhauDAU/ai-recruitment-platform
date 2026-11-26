@@ -18,29 +18,29 @@ export function adminRoutes() {
   return [
     <Route key="admin-auth" element={<AuthLayout />}>
       <Route
-        path={adminPath('/invitation')}
+        path={adminPath('/loi-moi')}
         element={<AdminInvitationAcceptPage />}
       />
       <Route
-        path={adminPath('/reset-password')}
+        path={adminPath('/dat-lai-mat-khau')}
         element={<AdminPasswordResetPage />}
       />
       <Route element={<GuestGuard allowedRoles={['admin']} />}>
         <Route
-          path={adminPath('/login')}
+          path={adminPath('/dang-nhap')}
           element={<AdminLoginPage destinationResolver={resolveAdminDestination} />}
         />
       </Route>
     </Route>,
 
-    <Route key="admin-redirect-root" path="/admin" element={<Navigate to={adminPath('/login')} replace />} />,
-    <Route key="admin-redirect-login" path="/admin/login" element={<Navigate to={adminPath('/login')} replace />} />,
-    <Route key="admin-redirect-dashboard" path="/admin/dashboard" element={<Navigate to={adminPath('/dashboard')} replace />} />,
-    <Route key="admin-redirect-settings" path="/admin/settings" element={<Navigate to={adminPath('/settings')} replace />} />,
-    <Route key="admin-app-root" path={adminPath('')} element={<Navigate to={adminPath('/login')} replace />} />,
+    <Route key="admin-redirect-root" path="/admin" element={<Navigate to={adminPath('/dang-nhap')} replace />} />,
+    <Route key="admin-redirect-login" path="/admin/login" element={<Navigate to={adminPath('/dang-nhap')} replace />} />,
+    <Route key="admin-redirect-dashboard" path="/admin/dashboard" element={<Navigate to={adminPath('/tong-quan')} replace />} />,
+    <Route key="admin-redirect-settings" path="/admin/settings" element={<Navigate to={adminPath('/cau-hinh')} replace />} />,
+    <Route key="admin-app-root" path={adminPath('')} element={<Navigate to={adminPath('/dang-nhap')} replace />} />,
 
-    <Route key="admin-authenticated" element={<AuthGuard loginPath={adminPath('/login')} />}>
-      <Route element={<RoleGuard allowedRoles={['admin']} loginPath={adminPath('/login')} />}>
+    <Route key="admin-authenticated" element={<AuthGuard loginPath={adminPath('/dang-nhap')} />}>
+      <Route element={<RoleGuard allowedRoles={['admin']} loginPath={adminPath('/dang-nhap')} />}>
         <Route element={<DashboardLayout />}>
           {ADMIN_ROUTES.map((route) => {
             const Page = ADMIN_PAGE_BY_KEY[route.lazyKey]

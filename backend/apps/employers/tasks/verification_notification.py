@@ -31,7 +31,7 @@ def _render(job, site_name):
     }
     title = labels.get(job.event_type) or _('Trạng thái xác thực đã thay đổi')
     reason = str(job.context.get('reason', '')).strip()
-    action_url = f'{settings.EMPLOYER_FRONTEND_URL.rstrip("/")}/tuyendung/app/employer-verify'
+    action_url = f'{settings.EMPLOYER_FRONTEND_URL.rstrip("/")}/tuyendung/app/xac-thuc-tai-khoan'
     unlocked = (
         _(
             'Bạn đã có thể gửi tin tuyển dụng sang kiểm duyệt và sử dụng các workflow '

@@ -155,7 +155,7 @@ function ApplicationCard({ application, expanded, onToggle }) {
             <span>
               <FileTextOutlined />{' '}
               {application.cv_public_id
-                ? <Link to={`/cvs/${application.cv_public_id}/view`}>{application.submitted_cv_title}</Link>
+                ? <Link to={`/cv/${application.cv_public_id}/xem`}>{application.submitted_cv_title}</Link>
                 : application.submitted_cv_title}
             </span>
           </p>

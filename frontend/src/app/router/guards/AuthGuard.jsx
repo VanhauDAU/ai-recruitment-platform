@@ -4,7 +4,7 @@ import { useSession } from '@/entities/account/session'
 import PageLoading from '@/shared/ui/PageLoading'
 
 // Chỉ quyết định trạng thái session. Role/portal được giao cho RoleGuard.
-export default function AuthGuard({ loginPath = '/login', children }) {
+export default function AuthGuard({ loginPath = '/dang-nhap', children }) {
   const { loading, isAuthenticated } = useSession()
   const location = useLocation()
 

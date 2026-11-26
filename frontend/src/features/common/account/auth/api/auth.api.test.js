@@ -31,7 +31,7 @@ describe('auth API session storage', () => {
     get.mockReset()
     clearAllPortalSessions()
     localStorage.clear()
-    window.history.replaceState({}, '', '/login')
+    window.history.replaceState({}, '', '/dang-nhap')
   })
 
   it('stores tokens in the requested portal without replacing another portal session', async () => {
@@ -59,7 +59,7 @@ describe('auth API session storage', () => {
     localStorage.setItem('employer_access_token', 'employer-access')
     localStorage.setItem('employer_refresh_token', 'employer-refresh')
 
-    // beforeEach đặt path '/login' -> cổng hiện tại là 'main'.
+    // beforeEach đặt path '/dang-nhap' -> cổng hiện tại là 'main'.
     logout()
 
     expect(localStorage.getItem('main_access_token')).toBeNull()
@@ -131,8 +131,8 @@ describe('auth API session storage', () => {
   it('builds OAuth URLs and persists OAuth tokens for the requested portal', async () => {
     post.mockResolvedValue({ data: { access: 'access-token', refresh: 'refresh-token' } })
 
-    expect(oauthStartUrl('google', { portal: 'employer', next: '/tuyendung/app/dashboard' }))
-      .toBe('http://localhost:8000/api/auth/oauth/google/start/?portal=employer&next=%2Ftuyendung%2Fapp%2Fdashboard')
+    expect(oauthStartUrl('google', { portal: 'employer', next: '/tuyendung/app/tong-quan' }))
+      .toBe('http://localhost:8000/api/auth/oauth/google/start/?portal=employer&next=%2Ftuyendung%2Fapp%2Ftong-quan')
     expect(oauthStartUrl('linkedin', { mode: 'popup', nonce: 'n0nce' }))
       .toBe('http://localhost:8000/api/auth/oauth/linkedin/start/?portal=main&mode=popup&nonce=n0nce')
     await completeOAuth('one-time-code', 'admin')

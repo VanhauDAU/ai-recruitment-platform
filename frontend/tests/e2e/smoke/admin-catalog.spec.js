@@ -70,7 +70,7 @@ async function routeCatalogApi(page, { onUpdate, onCategoryCreate } = {}) {
 test('admin catalog: clean up skills from the cleanup strip and the drawer', { tag: '@responsive' }, async ({ page }) => {
   let updated
   await routeCatalogApi(page, { onUpdate: (payload) => { updated = payload } })
-  await page.goto('/admin/app/catalog')
+  await page.goto('/admin/app/danh-muc-du-lieu')
   await expect(page.getByRole('heading', { name: 'Danh mục dữ liệu' })).toBeVisible()
   await expect(page.getByText('Kế toán thuế')).toBeVisible()
 
@@ -90,7 +90,7 @@ test('admin catalog: clean up skills from the cleanup strip and the drawer', { t
 test('admin catalog: job category tree and benefits', { tag: '@responsive' }, async ({ page }) => {
   let created
   await routeCatalogApi(page, { onCategoryCreate: (payload) => { created = payload } })
-  await page.goto('/admin/app/catalog?tab=categories')
+  await page.goto('/admin/app/danh-muc-du-lieu?tab=categories')
   await expect(page.getByText('Công nghệ thông tin')).toBeVisible()
   // Thanh công cụ của bảng cây từng đẩy trang tràn ngang ở mọi độ rộng.
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
