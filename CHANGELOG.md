@@ -21,6 +21,19 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   phần đang xem; hai nút Lưu nháp / Đăng tin chung một hàng ở đáy.
 - Bàn phím đúng loại (số cho lương, tuổi, số lượng; điện thoại cho SĐT), ô hạn nhận hồ sơ
   chỉ mở lịch không bật bàn phím; cặp ô ngắn (tuổi, lương, ngày/giờ làm) chung một hàng.
+#### Added — Âm thanh chúc mừng ở mốc thành công và tiếng tin nhắn riêng
+
+- Hiệu ứng `celebrate` (`public/audio/effects/celebrate.mp3`, 11 KB, từ file gốc 68 KB:
+  cắt lặng, mono 48 kbps, chuẩn hóa −20 LUFS như các tiếng sẵn có) phát cùng toast khi:
+  nộp hồ sơ ứng tuyển, đăng ký tài khoản ứng viên/NTD, hoàn tất hồ sơ NTD, xác thực số
+  điện thoại NTD lần đầu, đăng tin lần đầu (cập nhật tin giữ toast thường) và kích hoạt
+  hoặc lên lịch chiến dịch. Cổng quản trị không phát vì thao tác duyệt lặp lại liên tục.
+- Hiệu ứng `message` (`message.mp3`, 6 KB, từ 51 KB) thay tiếng chuông cho toast tin nhắn
+  ProCV Connect mới; `announceNotice` nhận tham số `sound`.
+- Hai tiếng mới không tải sẵn khi người dùng chạm lần đầu, chỉ fetch ở lần phát đầu; tiếng
+  chúc mừng im theo công tắc chuông thông báo (`procv:notification-sound`, nay khai ở
+  `shared/lib/sound-effects`). Trình duyệt chặn phát hay tải lỗi thì bỏ qua, không ảnh
+  hưởng luồng.
 
 #### Changed — Cổng nhà tuyển dụng và quản trị chuyển sang subdomain riêng
 

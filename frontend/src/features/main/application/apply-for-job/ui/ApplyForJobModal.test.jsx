@@ -82,7 +82,7 @@ describe('ApplyForJobModal', () => {
       contactPhone: '',
       campaignRef: '',
     }))
-    expect(message.success).toHaveBeenCalledWith('Chúc mừng bạn đã ứng tuyển thành công!')
+    expect(message.success).toHaveBeenCalledWith('Chúc mừng bạn đã ứng tuyển thành công!', { className: 'app-toast--sound-celebrate' })
     expect(onClose).toHaveBeenCalledOnce()
   })
 

@@ -35,10 +35,19 @@ describe('incoming notice', () => {
     expect(mocks.info.mock.calls[1][1].action).toBeUndefined()
   })
 
+  it('uses the sound the caller names', async () => {
+    const { announceNotice } = await load()
+    announceNotice({ id: 'msg_1', title: 'Tin nhắn mới', sound: 'message' })
+    await vi.advanceTimersByTimeAsync(100)
+
+    expect(mocks.info.mock.calls[0][1].className).toBe('app-toast--sound-message')
+  })
+
   it('stays silent after the user mutes notifications', async () => {
-    const { announceNotice, isNotificationSoundOn, setNotificationSoundOn } = await load()
+    const { announceNotice, setNotificationSoundOn } = await load()
+    const { isSoundOn } = await import('./sound-effects')
     setNotificationSoundOn(false)
-    expect(isNotificationSoundOn()).toBe(false)
+    expect(isSoundOn()).toBe(false)
 
     announceNotice({ id: 'cno_1', title: 'Kết quả ứng tuyển' })
     await vi.advanceTimersByTimeAsync(100)
