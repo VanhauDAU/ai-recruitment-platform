@@ -24,7 +24,7 @@ from ..services import (
     get_geocoding_provider,
     resolve_place,
 )
-from ..services.geocoding import GeoapifyProvider, NominatimProvider, VietMapProvider
+from ..services.geocoding import GeoapifyProvider, NominatimProvider
 
 HANOI = (21.0285, 105.8542)
 HCMC = (10.7769, 106.7009)
@@ -140,30 +140,34 @@ class FakeSession:
         return response
 
 
-@override_settings(GEOCODING_PROVIDER='vietmap', GEOCODING_API_KEY='test-key')
+def geoapify_results(*items):
+    return FakeResponse({'results': list(items)})
+
+
+@override_settings(GEOCODING_PROVIDER='geoapify', GEOCODING_API_KEY='test-key')
 class GeocodingServiceTests(TestCase):
-    def test_geocode_searches_then_resolves_place_and_caches(self):
+    def test_geocode_searches_vietnam_and_caches(self):
         session = FakeSession(
-            FakeResponse([{'ref_id': 'old', 'data_new': {'ref_id': 'new-ref'}}]),
-            FakeResponse({'lat': 21.03, 'lng': 105.85, 'display': '1 Tràng Tiền, Hoàn Kiếm'}),
+            geoapify_results({'lat': 21.03, 'lon': 105.85, 'formatted': '1 Tràng Tiền'})
         )
-        provider = VietMapProvider(session=session)
+        provider = GeoapifyProvider(session=session)
 
         point = geocode_address('1 Tràng Tiền, Phường Hoàn Kiếm', provider=provider)
         again = geocode_address('1 trang tien, phuong hoan kiem', provider=provider)
 
-        self.assertEqual((point.latitude, point.longitude), (21.03, 105.85))
+        url, params = session.calls[0]
+        self.assertTrue(url.endswith('/search'))
+        self.assertEqual((params['filter'], params['lang']), ('countrycode:vn', 'vi'))
+        self.assertEqual(
+            (point.latitude, point.longitude, point.label), (21.03, 105.85, '1 Tràng Tiền')
+        )
         self.assertEqual(again, point)
-        self.assertEqual(len(session.calls), 2)  # second lookup served from cache
-        self.assertEqual(session.calls[1][1]['refid'], 'new-ref')
+        self.assertEqual(len(session.calls), 1)  # second lookup served from cache
         self.assertEqual(GeocodeCache.objects.get().status, GeocodeCache.Status.FOUND)
 
     def test_not_found_and_out_of_country_results_are_cached_as_misses(self):
-        session = FakeSession(
-            FakeResponse([{'ref_id': 'r1'}]),
-            FakeResponse({'lat': 13.75, 'lng': 100.5}),  # Bangkok: rejected
-        )
-        provider = VietMapProvider(session=session)
+        session = FakeSession(geoapify_results({'lat': 13.75, 'lon': 100.5}))  # Bangkok
+        provider = GeoapifyProvider(session=session)
         self.assertIsNone(geocode_address('Nowhere', provider=provider))
         self.assertIsNone(geocode_address('nowhere', provider=provider))
         self.assertEqual(GeocodeCache.objects.get().status, GeocodeCache.Status.NOT_FOUND)
@@ -172,83 +176,30 @@ class GeocodingServiceTests(TestCase):
         GeocodeCache.objects.create(
             query_key=normalize_geocode_key('Stale'),
             status=GeocodeCache.Status.NOT_FOUND,
-            provider='vietmap',
+            provider='geoapify',
             expires_at=timezone.now() - timedelta(days=1),
         )
-        session = FakeSession(FakeResponse([]))
-        self.assertIsNone(geocode_address('Stale', provider=VietMapProvider(session=session)))
+        session = FakeSession(geoapify_results())
+        self.assertIsNone(geocode_address('Stale', provider=GeoapifyProvider(session=session)))
         self.assertEqual(len(session.calls), 1)
 
     def test_transient_errors_raise_unavailable_without_caching(self):
         for failure in (requests.Timeout(), FakeResponse({}, status=429), FakeResponse({}, 503)):
-            provider = VietMapProvider(session=FakeSession(failure))
+            provider = GeoapifyProvider(session=FakeSession(failure))
             with self.assertRaises(GeocodingUnavailable):
                 geocode_address('Địa chỉ', provider=provider)
         self.assertFalse(GeocodeCache.objects.exists())
 
-    def test_autocomplete_prefixes_refs_and_place_resolves_them(self):
-        session = FakeSession(
-            FakeResponse(
-                [
-                    {
-                        'ref_id': 'old',
-                        'data_new': {
-                            'ref_id': 'abc',
-                            'name': '197 Trần Phú',
-                            'address': 'Chợ Quán',
-                        },
-                    }
-                ]
-            ),
-            FakeResponse({'lat': 10.759, 'lng': 106.676, 'display': '197 Trần Phú'}),
-        )
-        provider = VietMapProvider(session=session)
-
-        [suggestion] = autocomplete_places('197 tran phu', (10.7, 106.6), provider=provider)
-        point = resolve_place(suggestion.ref, provider=provider)
-
-        self.assertEqual(suggestion.ref, 'vietmap:abc')
-        self.assertEqual(session.calls[0][1]['focus'], '10.7,106.6')
-        self.assertEqual((point.latitude, point.longitude), (10.759, 106.676))
-        self.assertIsNone(resolve_place('goong:xyz', provider=provider))
-
-    def test_autocomplete_and_place_swallow_provider_failures(self):
-        provider = VietMapProvider(session=FakeSession(requests.ConnectionError()))
-        self.assertEqual(autocomplete_places('abc', None, provider=provider), [])
-        provider = VietMapProvider(session=FakeSession(requests.ConnectionError()))
-        self.assertIsNone(resolve_place('vietmap:abc', provider=provider))
-
-    @override_settings(GEOCODING_API_KEY='')
-    def test_keyless_commercial_provider_falls_back_to_disabled(self):
-        provider = get_geocoding_provider()
-        self.assertEqual(provider.name, 'disabled')
-        with self.assertRaises(GeocodingDisabled):
-            geocode_address('abc')
-        self.assertEqual(autocomplete_places('abc'), [])
-
-    @override_settings(GEOCODING_PROVIDER='nominatim')
-    def test_nominatim_never_autocompletes(self):
-        provider = get_geocoding_provider()
-        self.assertIsInstance(provider, NominatimProvider)
-        self.assertEqual(provider.autocomplete('abc', None), [])
-
-
-@override_settings(GEOCODING_PROVIDER='geoapify', GEOCODING_API_KEY='test-key')
-class GeoapifyProviderTests(TestCase):
     def test_autocomplete_stays_in_vietnam_and_resolves_without_a_second_request(self):
         session = FakeSession(
-            FakeResponse(
+            geoapify_results(
                 {
-                    'results': [
-                        {
-                            'lat': 10.759,
-                            'lon': 106.676,
-                            'address_line1': '197 Trần Phú',
-                            'address_line2': 'Phường Chợ Quán, Thành phố Hồ Chí Minh',
-                        },
-                        {'lat': 13.75, 'lon': 100.5, 'address_line1': 'Bangkok'},
-                    ]
-                }
+                    'lat': 10.759,
+                    'lon': 106.676,
+                    'address_line1': '197 Trần Phú',
+                    'address_line2': 'Phường Chợ Quán, Thành phố Hồ Chí Minh',
+                },
+                {'lat': 13.75, 'lon': 100.5, 'address_line1': 'Bangkok'},
             )
         )
         provider = GeoapifyProvider(session=session)
@@ -260,32 +211,35 @@ class GeoapifyProviderTests(TestCase):
         self.assertTrue(url.endswith('/autocomplete'))
         self.assertEqual(params['filter'], 'countrycode:vn')
         self.assertEqual(params['bias'], 'proximity:106.6,10.7')  # lon,lat
-        self.assertEqual(params['lang'], 'vi')
         self.assertEqual(suggestion.ref, 'geoapify:10.759000,106.676000')
         self.assertEqual(suggestion.secondary, 'Phường Chợ Quán, Thành phố Hồ Chí Minh')
         self.assertEqual((point.latitude, point.longitude), (10.759, 106.676))
         self.assertEqual(len(session.calls), 1)
         self.assertIsNone(resolve_place('geoapify:13.75,100.5', provider=provider))
         self.assertIsNone(resolve_place('geoapify:junk', provider=provider))
+        self.assertIsNone(resolve_place('other:xyz', provider=provider))
 
-    def test_geocode_uses_search_and_caches(self):
-        session = FakeSession(
-            FakeResponse({'results': [{'lat': 21.03, 'lon': 105.85, 'formatted': '1 Tràng Tiền'}]})
-        )
-        provider = GeoapifyProvider(session=session)
-
-        point = geocode_address('1 Tràng Tiền, Hoàn Kiếm', provider=provider)
-        geocode_address('1 trang tien, hoan kiem', provider=provider)
-
-        self.assertEqual(
-            (point.latitude, point.longitude, point.label), (21.03, 105.85, '1 Tràng Tiền')
-        )
-        self.assertTrue(session.calls[0][0].endswith('/search'))
-        self.assertEqual(len(session.calls), 1)
+    def test_autocomplete_swallows_provider_failures(self):
+        provider = GeoapifyProvider(session=FakeSession(requests.ConnectionError()))
+        self.assertEqual(autocomplete_places('abc', None, provider=provider), [])
 
     @override_settings(GEOCODING_API_KEY='')
-    def test_needs_a_key(self):
+    def test_keyless_provider_falls_back_to_disabled(self):
+        provider = get_geocoding_provider()
+        self.assertEqual(provider.name, 'disabled')
+        with self.assertRaises(GeocodingDisabled):
+            geocode_address('abc')
+        self.assertEqual(autocomplete_places('abc'), [])
+
+    @override_settings(GEOCODING_PROVIDER='vietmap')
+    def test_unknown_provider_is_disabled(self):
         self.assertEqual(get_geocoding_provider().name, 'disabled')
+
+    @override_settings(GEOCODING_PROVIDER='nominatim')
+    def test_nominatim_never_autocompletes(self):
+        provider = get_geocoding_provider()
+        self.assertIsInstance(provider, NominatimProvider)
+        self.assertEqual(provider.autocomplete('abc', None), [])
 
 
 class SeedCoordinatesCommandTests(TestCase):

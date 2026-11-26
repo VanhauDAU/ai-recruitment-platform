@@ -16,7 +16,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   西沙区", "Nansha 南沙区", "Yongxing 永兴镇", "Zhubi 渚碧岛". Zoom 8 thêm hàng chục tên
   đáy biển tiếng Trung, còn đảo Ba Bình có đường biên quốc gia gắn Đài Loan.
 - `useBasemap()` mới (`entities/system/site-settings`) chỉ nhận style https của nhà cung
-  cấp bản đồ Việt Nam (`maps.vietmap.vn`, `tiles.goong.io`). `MapView` không còn style dự
+  cấp bản đồ Việt Nam (hiện chỉ `maps.vietmap.vn`). `MapView` không còn style dự
   phòng, kể cả ở dev.
 - Chưa có style hợp lệ thì các trang ẩn bản đồ. "Việc làm gần tôi" vẫn tìm theo GPS hoặc
   phường/xã, danh sách chiếm cả hàng. Chi tiết tin không hiện bản đồ nhỏ. Form đăng tin ẩn
@@ -37,8 +37,9 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   chọn, nút "Bộ lọc" (có số bộ lọc đang bật) và nút chuyển danh sách/bản đồ dạng biểu
   tượng. Ngành nghề, mức lương, "Gồm việc làm từ xa" nằm trong bảng trượt từ dưới lên, có
   nút "Xem kết quả".
-- Thêm nhà cung cấp tìm địa chỉ `geoapify` (`GEOCODING_PROVIDER=geoapify`) và dùng cho
-  production: gói miễn phí 3.000 request/ngày, đăng ký không cần thẻ. API tìm kiếm của
+- Tìm địa chỉ chuyển sang `geoapify` (`GEOCODING_PROVIDER=geoapify`) cho production và gỡ
+  hai adapter `vietmap`, `goong` cùng test của chúng; giá trị cũ giờ rơi về `disabled`.
+  Lý do chọn Geoapify: gói miễn phí 3.000 request/ngày, đăng ký không cần thẻ. API tìm kiếm của
   VietMap trả phí, còn tài khoản Goong mới phải chờ kích hoạt. Kết quả lọc
   `countrycode:vn` và bằng tiếng Việt. Ref gợi ý mang sẵn tọa độ nên chọn gợi ý không gọi
   thêm API. Khi gợi ý đến từ Geoapify, danh sách ghi công Geoapify và © OpenStreetMap như

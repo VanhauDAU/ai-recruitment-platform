@@ -5,7 +5,7 @@ import { useSiteSetting } from './use-site-settings'
 // OpenStreetMap (OpenFreeMap, MapTiler…) gán tên Trung Quốc cho hai quần đảo nên bị
 // loại, kể cả ở môi trường dev; thiếu style hợp lệ thì các màn hình ẩn bản đồ.
 // Thêm nhà cung cấp mới: thêm host vào đây sau khi đã soát vùng Biển Đông.
-export const VN_BASEMAP_HOSTS = ['maps.vietmap.vn', 'tiles.goong.io']
+export const VN_BASEMAP_HOSTS = ['maps.vietmap.vn']
 
 export function isVietnameseBasemap(url) {
   try {

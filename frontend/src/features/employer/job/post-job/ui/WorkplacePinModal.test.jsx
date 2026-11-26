@@ -32,7 +32,7 @@ describe('WorkplacePinModal', () => {
   })
 
   it('suggests a pin from the typed address and saves the chosen point', async () => {
-    mocks.searchGeoPlaces.mockResolvedValue([{ type: 'ward', ref: 'ward:x' }, { type: 'place', ref: 'vietmap:1' }])
+    mocks.searchGeoPlaces.mockResolvedValue([{ type: 'ward', ref: 'ward:x' }, { type: 'place', ref: 'geoapify:21.0245,105.857' }])
     mocks.resolveGeoPlace.mockResolvedValue({ latitude: 21.0245, longitude: 105.857, label: '1 Tràng Tiền' })
     const onSave = vi.fn()
     render(<WorkplacePinModal open address="1 Tràng Tiền" ward={WARD} onSave={onSave} onClose={vi.fn()} />)

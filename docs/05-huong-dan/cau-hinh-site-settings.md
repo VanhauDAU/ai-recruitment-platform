@@ -272,7 +272,7 @@ Quy tắc nội dung:
 
 `map_style_url` dùng **key tile công khai** của VietMap (giới hạn domain trong console),
 khác key geocoding bí mật `GEOCODING_API_KEY` ở `backend/.env` (ADR-0029). Chỉ nhận style
-https trên `maps.vietmap.vn` hoặc `tiles.goong.io`. Với link khác hoặc để trống, mọi màn
+https trên `maps.vietmap.vn`. Với link khác hoặc để trống, mọi màn
 hình ẩn bản đồ. Style dựng từ OpenStreetMap (OpenFreeMap, MapTiler…) bị loại vì thể hiện
 sai chủ quyền Hoàng Sa, Trường Sa.
 

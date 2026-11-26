@@ -1394,7 +1394,7 @@
     "value": "",
     "is_public": true,
     "description": "Link style.json của bản đồ nền, ví dụ VietMap https://maps.vietmap.vn/maps/styles/tm/style.json?apikey=…",
-    "help": "Dùng key tile công khai của VietMap (giới hạn domain trong console VietMap), không dùng key geocoding của máy chủ. Chỉ nhận link https của maps.vietmap.vn hoặc tiles.goong.io; để trống hoặc link khác (OpenStreetMap, OpenFreeMap…) thì các trang ẩn bản đồ, vì những bản đồ đó thể hiện sai chủ quyền Hoàng Sa, Trường Sa.",
+    "help": "Dùng key tile công khai của VietMap (giới hạn domain trong console VietMap), không dùng key geocoding của máy chủ. Chỉ nhận link https của maps.vietmap.vn; để trống hoặc link khác (OpenStreetMap, OpenFreeMap…) thì các trang ẩn bản đồ, vì những bản đồ đó thể hiện sai chủ quyền Hoàng Sa, Trường Sa.",
     "options": {
       "applies_to": [
         "Tìm việc",
@@ -1411,7 +1411,7 @@
     "value": "© VIETMAP",
     "is_public": true,
     "description": "Dòng ghi nguồn dữ liệu hiện ở góc bản đồ theo điều khoản nhà cung cấp.",
-    "help": "Ghi theo điều khoản của nhà cung cấp đang dùng, ví dụ © VIETMAP hoặc © Goong.",
+    "help": "Ghi theo điều khoản của VietMap, mặc định © VIETMAP.",
     "options": {
       "applies_to": [
         "Tìm việc",

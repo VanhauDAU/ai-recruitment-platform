@@ -25,7 +25,7 @@ viết ADR mới và cập nhật cột "Thay thế bởi" ở bảng dưới.
 | [0026](adr-0026-settings-contract.md) | Hợp đồng cấu hình hệ thống (SiteSetting) | Chấp nhận | |
 | [0027](adr-0027-flash-badge-responsiveness.md) | Huy hiệu Sấm Chớp tính từ mức phản hồi thật | Chấp nhận | |
 | [0028](adr-0028-realtime-notifications.md) | Thông báo thời gian thực qua WebSocket, hoàn tác 15 giây | Chấp nhận | |
-| [0029](adr-0029-nearby-jobs-geo.md) | Việc làm gần bạn: tọa độ không PostGIS, geocoding qua VietMap | Chấp nhận | |
+| [0029](adr-0029-nearby-jobs-geo.md) | Việc làm gần bạn: tọa độ không PostGIS, geocoding qua adapter (Geoapify) | Chấp nhận | |
 | [0030](adr-0030-fair-job-listing.md) | Thứ tự và nhãn tin tuyển dụng công bằng | Chấp nhận | |
 | [0031](adr-0031-account-write-throttle.md) | Trần ghi theo tài khoản cho mọi API ghi | Chấp nhận | |
 | [0032](adr-0032-procv-connect-messaging.md) | ProCV Connect: nhắn tin NTD ↔ ứng viên qua REST + WebSocket | Chấp nhận | |
