@@ -5,6 +5,7 @@ import {
   SALARY_CURRENCY_OPTIONS,
   WORK_TYPE_LABELS,
 } from '@/entities/job/job'
+import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import { capitalizeTitleWords } from '../model/job-form-values'
 import JobSpecializationCascader from './JobSpecializationCascader'
 import { m } from '@/shared/config/i18n'
@@ -22,6 +23,8 @@ export default function JobGeneralFields({ form, categories }) {
   const salaryType = Form.useWatch('salary_type', form)
   const incomeDisplayType = Form.useWatch('income_display_type', form) || 'income'
   const currency = Form.useWatch('currency', form) || 'VND'
+  // Điện thoại hiện đủ mọi lựa chọn đã chọn thay vì gom thành "+N" khó kiểm tra.
+  const isPhone = useMediaQuery('(max-width: 639px)')
   const showsSalaryMinimum = ['range', 'fixed', 'from'].includes(salaryType)
   const showsSalaryMaximum = ['range', 'up_to'].includes(salaryType)
   const domainOptions = categories
@@ -58,7 +61,7 @@ export default function JobGeneralFields({ form, categories }) {
           allowClear
           showSearch
           optionFilterProp="label"
-          maxTagCount="responsive"
+          maxTagCount={isPhone ? undefined : 'responsive'}
           options={domainOptions}
           placeholder={m.employer_job_form_domains_placeholder()}
         />
@@ -71,12 +74,12 @@ export default function JobGeneralFields({ form, categories }) {
           <Select options={CREATE_EMPLOYMENT_TYPES.map((value) => ({ value, label: EMPLOYMENT_TYPE_LABELS[value] }))} placeholder={m.employer_job_form_employment_type_placeholder()} />
         </Form.Item>
         <Form.Item name="work_types" label={m.employer_job_progress_work_type()} rules={[{ required: true, message: m.employer_job_form_work_types_required() }]}>
-          <Select mode="multiple" maxTagCount={1} className="post-job-oneline-select" options={toOptions(WORK_TYPE_LABELS)} placeholder={m.employer_job_form_work_types_placeholder()} />
+          <Select mode="multiple" maxTagCount={isPhone ? undefined : 1} className="post-job-oneline-select" options={toOptions(WORK_TYPE_LABELS)} placeholder={m.employer_job_form_work_types_placeholder()} />
         </Form.Item>
       </div>
       <Form.Item name="salary_type" hidden><Input /></Form.Item>
       <div className="border-t border-slate-200 pt-4">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div className="post-job-salary-options flex flex-wrap items-center gap-x-4 gap-y-2">
           <Form.Item name="income_display_type" noStyle>
             <Select
               aria-label={m.employer_job_form_income_display_aria()}
@@ -107,14 +110,14 @@ export default function JobGeneralFields({ form, categories }) {
           </Checkbox>
         </div>
         {salaryType !== 'negotiable' && (
-          <div className="mt-3 flex flex-wrap gap-x-4">
+          <div className="post-job-salary-amounts mt-3 flex flex-wrap gap-x-4">
             {showsSalaryMinimum && (
               <Form.Item
                 name="salary_min"
                 label={salaryType === 'fixed' ? m.employer_job_form_salary_fixed() : incomeDisplayType === 'income_at_kpi' ? m.employer_job_form_salary_from_income() : m.employer_job_form_salary_from()}
                 rules={salaryType === 'range' ? [] : [{ required: true, message: m.employer_job_form_salary_required() }]}
               >
-                <InputNumber min={0} step={currency === 'VND' ? 1_000_000 : 100} className="!w-[210px]" suffix={currency} formatter={formatAmount} parser={parseAmount} placeholder={currency === 'VND' ? '10.000.000' : '1,000'} />
+                <InputNumber inputMode="numeric" min={0} step={currency === 'VND' ? 1_000_000 : 100} className="post-job-salary-input" suffix={currency} formatter={formatAmount} parser={parseAmount} placeholder={currency === 'VND' ? '10.000.000' : '1,000'} />
               </Form.Item>
             )}
             {showsSalaryMaximum && (
@@ -136,7 +139,7 @@ export default function JobGeneralFields({ form, categories }) {
                   }),
                 ]}
               >
-                <InputNumber min={0} step={currency === 'VND' ? 1_000_000 : 100} className="!w-[210px]" suffix={currency} formatter={formatAmount} parser={parseAmount} placeholder={currency === 'VND' ? '30.000.000' : '2,000'} />
+                <InputNumber inputMode="numeric" min={0} step={currency === 'VND' ? 1_000_000 : 100} className="post-job-salary-input" suffix={currency} formatter={formatAmount} parser={parseAmount} placeholder={currency === 'VND' ? '30.000.000' : '2,000'} />
               </Form.Item>
             )}
           </div>

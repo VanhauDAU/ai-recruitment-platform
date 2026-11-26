@@ -12,7 +12,7 @@ import {
 } from '@ant-design/icons'
 import { Modal } from 'antd'
 import dayjs from '@/shared/lib/dayjs'
-import { useMemo, useState } from 'react'
+import { memo, useMemo, useState } from 'react'
 import {
   EDUCATION_LEVEL_LABELS,
   EMPLOYMENT_TYPE_LABELS,
@@ -398,7 +398,7 @@ function JobDetailPreview({ data, full = false }) {
   )
 }
 
-export default function JobFormPreview({
+function JobFormPreview({
   values,
   companyName,
   categoryName,
@@ -501,3 +501,6 @@ export default function JobFormPreview({
     </aside>
   )
 }
+
+// Bản xem trước nhận giá trị đã hoãn (useDeferredValue): memo để lần vẽ khẩn cấp khi gõ bỏ qua nó.
+export default memo(JobFormPreview)

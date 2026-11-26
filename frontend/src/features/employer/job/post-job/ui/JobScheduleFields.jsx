@@ -31,7 +31,7 @@ export default function JobScheduleFields() {
         {(fields, { add, remove }) => (
           <div className="space-y-3">
             {fields.map((field, index) => (
-              <div key={field.key} className="grid gap-x-3 rounded-lg border border-slate-200 bg-white p-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1.1fr_1.1fr_auto]">
+              <div key={field.key} className="grid grid-cols-2 gap-x-3 rounded-lg border border-slate-200 bg-white p-3 lg:grid-cols-[1fr_1fr_1.1fr_1.1fr_auto]">
                 <Form.Item name={[field.name, 'weekday_from']} label={m.employer_job_schedule_from_day()} rules={[{ required: true, message: m.employer_job_schedule_from_day_required() }]}> 
                   <Select options={WEEKDAYS} />
                 </Form.Item>
@@ -58,7 +58,7 @@ export default function JobScheduleFields() {
                   <TimePicker {...TIME_PICKER_PROPS} className="!w-full" placeholder="17:30" />
                 </Form.Item>
                 <Button
-                  className="self-center sm:col-span-2 lg:col-span-1 lg:mt-2"
+                  className="col-span-2 self-center lg:col-span-1 lg:mt-2"
                   danger
                   type="text"
                   icon={<DeleteOutlined />}

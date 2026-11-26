@@ -9,6 +9,7 @@ import {
   jobKeys,
 } from '@/entities/job/job'
 import { getProvinces } from '@/entities/system/location'
+import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import { message } from '@/shared/lib/toast'
 import {
   buildJobPayload,
@@ -20,13 +21,18 @@ import ApplicationInfoFields from './ApplicationInfoFields'
 import AutomaticApplicationStatusFields from './AutomaticApplicationStatusFields'
 import CandidateExpectationFields from './CandidateExpectationFields'
 import JobDescriptionFields from './JobDescriptionFields'
-import JobFormPreview from './JobFormPreview'
 import JobFormProgress from './JobFormProgress'
 import JobFormSection from './JobFormSection'
 import JobGeneralFields from './JobGeneralFields'
+import LiveJobFormPreview from './LiveJobFormPreview'
 import PostingQuotaNotice from './PostingQuotaNotice'
 import './post-job-form.css'
 import { m } from '@/shared/config/i18n'
+
+// Selector ổn định cho Form.useWatch: form gốc chỉ vẽ lại khi số mục hoàn tất đổi,
+// không phải mỗi phím gõ (useWatch so sánh kết quả đã stringify).
+const selectProgress = (values) => getJobFormProgress(values)
+const sameKeys = (left, right) => left.size === right.size && [...left].every((key) => right.has(key))
 
 export default function PostJobForm({
   aiSuggestion,
@@ -63,10 +69,11 @@ export default function PostJobForm({
   const benefitsQuery = useQuery({ queryKey: jobKeys.benefits, queryFn: getJobBenefits })
   const languagesQuery = useQuery({ queryKey: jobKeys.languages, queryFn: getJobLanguages })
   const skillsQuery = useQuery({ queryKey: jobKeys.skills, queryFn: () => getSkills() })
-  const values = Form.useWatch([], form) || createJobFormValues(initialValues, { defaultDeadlineDays })
+  const sections = Form.useWatch(selectProgress, form)
+  // Bản xem trước chỉ hiện từ 2xl; màn nhỏ hơn không mount để khỏi tính lại khi gõ.
+  const showsPreview = useMediaQuery('(min-width: 1536px)')
   // Making a job public requires accepting the commitment the backend has in force.
   const responsibilityStatement = postingContext?.responsibility_statement
-  const sections = useMemo(() => getJobFormProgress(values), [values])
   // Danh mục kỹ năng chỉ tải 100 mục đầu: kỹ năng của tin đang sửa hoặc AI gợi ý nằm ngoài
   // đó vẫn cần tên để ô chọn không hiện ID.
   const skills = useMemo(() => {
@@ -110,15 +117,6 @@ export default function PostJobForm({
     initialValues,
     onAiSuggestionApplied,
   ])
-
-  const primaryCategory = categories.find((item) => item.id === values.category_assignments?.[0]?.category)
-  const domainNames = categories
-    .filter((item) => values.domain_category_ids?.includes(item.id))
-    .map((item) => item.name)
-  const selectedCampaign = campaigns.find((item) => item.public_id === values.campaign)
-  const benefitNames = (benefitsQuery.data || [])
-    .filter((item) => values.benefit_ids?.includes(item.id))
-    .map((item) => item.name)
 
   function selectSection(key) {
     setActiveSection(key)
@@ -178,8 +176,9 @@ export default function PostJobForm({
         nextFieldNames.add((Array.isArray(field.name) ? field.name : [field.name]).join('.'))
       }
     })
-    setInvalidSections(next)
-    setInvalidFieldNames(nextFieldNames)
+    // Gọi mỗi phím gõ: giữ nguyên Set cũ khi không đổi để form không vẽ lại.
+    setInvalidSections((current) => (sameKeys(current, next) ? current : next))
+    setInvalidFieldNames((current) => (sameKeys(current, nextFieldNames) ? current : nextFieldNames))
   }, [])
 
   const handleFinishFailed = useCallback(({ errorFields = [] }) => {
@@ -302,7 +301,7 @@ export default function PostJobForm({
             </div>
           )}
 
-          <div className="sticky bottom-3 z-10 flex flex-col-reverse gap-2 rounded-lg border border-slate-200 bg-white/95 p-3 backdrop-blur sm:flex-row sm:justify-end">
+          <div className="post-job-actions">
             <Button
               size="large"
               icon={<SaveOutlined />}
@@ -314,6 +313,7 @@ export default function PostJobForm({
             <Button
               size="large"
               type="primary"
+              className="post-job-actions__submit"
               htmlType="submit"
               icon={<SendOutlined />}
               loading={submitting}
@@ -327,17 +327,18 @@ export default function PostJobForm({
           </div>
         </main>
 
-        <JobFormPreview
-          values={values}
-          companyName={initialValues?.company_name}
-          categoryName={primaryCategory?.name}
-          domainNames={domainNames}
-          campaignName={selectedCampaign?.name}
-          provinces={provincesQuery.data || []}
-          skills={skills}
-          languages={languagesQuery.data || []}
-          benefitNames={benefitNames}
-        />
+        {showsPreview && (
+          <LiveJobFormPreview
+            form={form}
+            categories={categories}
+            campaigns={campaigns}
+            benefits={benefitsQuery.data || []}
+            companyName={initialValues?.company_name}
+            provinces={provincesQuery.data || []}
+            skills={skills}
+            languages={languagesQuery.data || []}
+          />
+        )}
       </div>
     </Form>
   )

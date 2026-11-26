@@ -76,6 +76,7 @@ export default function JobSpecializationCascader({ categories, value, onChange,
         value={path}
         options={options}
         changeOnSelect={false}
+        classNames={{ popup: { root: 'post-job-cascader-popup' } }}
         displayRender={(labels) => labels.at(-1)}
         onChange={(selectedPath) => {
           const selected = selectedPath?.at(-1)

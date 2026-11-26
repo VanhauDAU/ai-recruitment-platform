@@ -7,6 +7,7 @@ import PostJobForm from './PostJobForm'
 const toastMocks = vi.hoisted(() => ({
   message: { warning: vi.fn() },
 }))
+const sectionRenders = vi.hoisted(() => ({ count: 0 }))
 
 vi.mock('@/entities/job/job', () => ({
   getJobBenefits: vi.fn().mockResolvedValue([]),
@@ -40,7 +41,12 @@ vi.mock('./JobGeneralFields', async () => {
     ),
   }
 })
-vi.mock('./JobFormSection', () => ({ default: ({ children }) => <section>{children}</section> }))
+vi.mock('./JobFormSection', () => ({
+  default: ({ children }) => {
+    sectionRenders.count += 1
+    return <section>{children}</section>
+  },
+}))
 vi.mock('./ApplicationInfoFields', () => ({ default: () => null }))
 vi.mock('./AutomaticApplicationStatusFields', () => ({ default: () => null }))
 vi.mock('./CandidateExpectationFields', () => ({ default: () => null }))
@@ -138,6 +144,24 @@ describe('PostJobForm AI initialization', () => {
       { duration: 5000, id: 'post-job-validation-error' },
     ))
     expect(onPublish).not.toHaveBeenCalled()
+  })
+})
+
+describe('PostJobForm typing performance', () => {
+  it('does not re-render the four sections on every keystroke', async () => {
+    renderForm({ isDraft: true })
+    const title = screen.getByLabelText('Tiêu đề tin')
+    await waitFor(() => expect(title).toHaveValue('Kỹ sư Backend'))
+    sectionRenders.count = 0
+
+    'Senior'.split('').reduce((text, char) => {
+      fireEvent.change(title, { target: { value: `${text}${char}` } })
+      return `${text}${char}`
+    }, 'Kỹ sư Backend ')
+
+    expect(title).toHaveValue('Kỹ sư Backend Senior')
+    // Tiến độ không đổi nên form gốc không vẽ lại (trước đây 4 phần × 6 phím).
+    expect(sectionRenders.count).toBe(0)
   })
 })
 
