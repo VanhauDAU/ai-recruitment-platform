@@ -3,6 +3,7 @@ import { EmailVerificationBanner, LoginPromptProvider } from '@/features/common/
 import { SavedJobsProvider } from '@/features/main/job/saved-jobs'
 import { JobComparisonDock, JobComparisonProvider } from '@/features/main/job/compare-jobs'
 import { CampaignRefCapture } from '@/features/main/job/track-campaign-ref'
+import { FeedbackLauncher } from '@/features/main/account/submit-feedback'
 import { ANNOUNCEMENT_SURFACES } from '@/entities/content/announcement'
 import { AnnouncementStrip } from '@/widgets/common/announcement-strip'
 import { FloatingActions } from '@/widgets/main/floating-actions'
@@ -35,6 +36,7 @@ export default function MainLayout() {
               <main className="min-h-0 flex-1">
                 <Outlet />
               </main>
+              <FeedbackLauncher placement="editor" />
             </div>
           </LoginPromptProvider>
         </SavedJobsProvider>
@@ -70,6 +72,7 @@ export default function MainLayout() {
             <Footer />
             <JobComparisonDock />
             <FloatingActions />
+            <FeedbackLauncher />
             <MobileTabBar />
           </div>
         </LoginPromptProvider>

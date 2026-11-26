@@ -316,6 +316,7 @@ class Feedback(models.Model):
     """
 
     class Category(models.TextChoices):
+        BUG = 'bug', 'Báo lỗi'
         UI_UX = 'ui_ux', 'Giao diện, trải nghiệm'
         FEATURE = 'feature', 'Tính năng sản phẩm'
         JOB_QUALITY = 'job_quality', 'Chất lượng tin tuyển dụng'
@@ -364,6 +365,11 @@ class Feedback(models.Model):
     )
     page_url = models.CharField(
         max_length=500, blank=True, help_text='Trang người dùng đang xem lúc gửi'
+    )
+    client_info = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text='Thiết bị lúc gửi (cỡ màn hình, trình duyệt, web app…) để tái hiện lỗi',
     )
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.NEW)
     created_at = models.DateTimeField(auto_now_add=True)

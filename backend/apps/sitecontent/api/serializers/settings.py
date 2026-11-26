@@ -64,6 +64,10 @@ class LinkGroupSerializer(serializers.ModelSerializer):
         return resolve_link_group_items(obj)
 
 
+FEEDBACK_CLIENT_INFO_MAX_KEYS = 20
+FEEDBACK_CLIENT_INFO_MAX_VALUE = 300
+
+
 class FeedbackSerializer(serializers.ModelSerializer):
     class Meta:
         model = Feedback
@@ -75,6 +79,7 @@ class FeedbackSerializer(serializers.ModelSerializer):
             'phone',
             'email',
             'page_url',
+            'client_info',
             'created_at',
         ]
         read_only_fields = ['id', 'created_at']
@@ -86,3 +91,15 @@ class FeedbackSerializer(serializers.ModelSerializer):
         if len(value.strip()) < 10:
             raise serializers.ValidationError('Mô tả góp ý cần ít nhất 10 ký tự.')
         return value.strip()
+
+    def validate_client_info(self, value):
+        # Chỉ là ngữ cảnh để tái hiện lỗi: giữ tối đa 20 khóa giá trị đơn, cắt chuỗi dài.
+        if not isinstance(value, dict):
+            raise serializers.ValidationError('Thông tin thiết bị không hợp lệ.')
+        cleaned = {}
+        for key, item in list(value.items())[:FEEDBACK_CLIENT_INFO_MAX_KEYS]:
+            if isinstance(item, bool | int | float) or item is None:
+                cleaned[str(key)[:40]] = item
+            elif isinstance(item, str):
+                cleaned[str(key)[:40]] = item[:FEEDBACK_CLIENT_INFO_MAX_VALUE]
+        return cleaned

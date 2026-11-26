@@ -139,6 +139,7 @@ class FeedbackAdmin(admin.ModelAdmin):
         'phone',
         'email',
         'page_url',
+        'client_info',
         'created_at',
     ]
 
