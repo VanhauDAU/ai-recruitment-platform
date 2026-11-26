@@ -17,6 +17,14 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - `services/company_media.py`: trần kích thước theo loại (`MEDIA_MAX_DIMENSIONS`),
   logo 800×800 thay vì 2400×1600.
 
+#### Changed — Trang chủ trên điện thoại
+
+- Ô tìm kiếm: từ khoá một hàng, địa điểm + nút kính lúp chung hàng dưới; tiêu đề gõ
+  chữ mở đầu bằng "Tạo CV chuyên nghiệp".
+- Cụm "Website của chúng tôi có" xếp ba cột (icon / số / nhãn) thay vì ba dòng cao.
+- Nút nổi giữa thanh tab dưới chỉ còn chữ "CV" trắng (bỏ icon và nhãn "Tạo CV";
+  tên đầy đủ vẫn có qua `aria-label`).
+
 #### Added — SMS OTP nhà tuyển dụng qua SpeedSMS
 
 - Provider `EMPLOYER_SMS_PROVIDER=speedsms` gọi thẳng API SpeedSMS.vn (Basic auth
