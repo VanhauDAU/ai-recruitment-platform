@@ -328,8 +328,11 @@
 }
 
 /* ---- Danh sách ---- */
+/* Cột minmax(0, 1fr): tên công ty trong thẻ không xuống dòng (nowrap); với cột `auto`
+   tên dài đẩy thẻ rộng hơn màn hình điện thoại và bị lớp cha cắt mất. */
 .nearby-results {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 10px;
 }
 

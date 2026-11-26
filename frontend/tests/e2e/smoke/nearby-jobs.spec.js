@@ -14,7 +14,7 @@ function job(slug, title, distance) {
     public_id: slug,
     slug,
     title,
-    company_name: 'Cơ Sở Trứng Gia Cầm Thành Đạt',
+    company_name: 'CÔNG TY TNHH THƯƠNG MẠI DỊCH VỤ VÀ SẢN XUẤT RAINSCALES VIỆT NAM',
     company_logo_url: '',
     locations_detail: [{ id: 2, name: 'Thành phố Đà Nẵng', level: 'province' }],
     salary_type: 'from',
@@ -84,6 +84,13 @@ test('candidate finds jobs near the current location and widens the radius', { t
   }
   const overflow = () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
   await expect.poll(overflow).toBe(0)
+  // Phần tràn có thể bị lớp cha cắt (trang không cuộn ngang) nên đo trực tiếp: thẻ việc
+  // làm không được rộng hơn khung lọc phía trên (tên công ty dài, không xuống dòng).
+  const cardOverhang = () => page.evaluate(() => {
+    const frame = document.querySelector('.nearby-filter').getBoundingClientRect().right
+    return Math.max(...[...document.querySelectorAll('.nearby-card')].map((card) => card.getBoundingClientRect().right - frame))
+  })
+  await expect.poll(cardOverhang).toBeLessThanOrEqual(0.5)
 
   // Dưới lg danh sách và bản đồ là hai chế độ xem; canvas bản đồ không được đẩy trang rộng ra.
   const mapView = page.getByTitle('Bản đồ', { exact: true })
