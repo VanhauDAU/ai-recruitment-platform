@@ -8,6 +8,16 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Fixed — Trình chỉnh sửa CV trên điện thoại
+
+- Thanh trên: tên CV một dòng cắt "…", ẩn icon trang; "Xem trước" chỉ còn icon (trước
+  đó `hidden` bị style antd Button đè nên vẫn hiện và đè lên tên CV).
+- Header site trong trình chỉnh sửa bỏ "Danh mục" và kính lúp trên điện thoại (avatar
+  bị tràn 20px).
+- Thanh công cụ dưới đủ 7 cột một hàng, chừa vùng an toàn đáy iPhone.
+- Zoom vừa màn tính theo bề ngang cửa sổ (`fitZoom`), thay 48% cố định làm trang A4
+  tràn mép phải ở 390px.
+- Nút "Thêm nội dung" chỉ hiện khi đang chọn mục (như desktop), không đè dòng cuối.
 #### Fixed — Điện thoại vẫn mở tin ở tab mới
 
 - Áp `useNewTabLinkProps` cho các link nội bộ còn sót: tiêu đề tin trong `JobCard`
