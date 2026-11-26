@@ -15,9 +15,10 @@ Phương án được đo:
 - Các dòng còn lại lấy từ lệnh `matching_evaluate` chạy trong container `ml-worker`,
   tức đúng mã trích xuất, mã hóa và chấm điểm của sản phẩm: điểm của bộ gợi ý theo
   luật `profile-rule-v2`, cosine toàn văn của bi-encoder, và điểm `hybrid` (công
-  thức đang chạy, hiện là `hybrid-v2`).
-- `--ablation` thêm ba dòng: `hybrid` với từng thay đổi của `hybrid-v2` bị tắt (khớp
-  kỹ năng gần nghĩa bật lại, bỏ hệ số liên quan) và tắt cả hai, tức `hybrid-v1`.
+  thức đang chạy, hiện là `hybrid-v3`).
+- `--ablation` thêm bốn dòng: `hybrid` với từng thay đổi bị tắt (bỏ nhóm kỹ năng thay
+  thế, tức `hybrid-v2`; khớp kỹ năng gần nghĩa bật lại; bỏ hệ số liên quan) và tắt cả
+  ba, tức `hybrid-v1`.
 - `--model tên=thư_mục[:noprefix]` thêm một bi-encoder khác trong `ml/models/` (chỉ
   lấy cosine toàn văn, vì mốc quy đổi điểm của `hybrid` là theo từng mô hình).
 
@@ -57,9 +58,13 @@ LABEL_BAND = {0: 0, 1: 0, 2: 1, 3: 2, 4: 3}
 HYBRID = 'hybrid'
 # (tên dòng, các thay đổi của công thức bị tắt): xem `scoring.ABLATIONS` ở backend.
 ABLATION_RUNS = (
+    ('hybrid, bỏ nhóm kỹ năng thay thế (công thức `hybrid-v2`)', ('no_skill_groups',)),
     ('hybrid, bật khớp kỹ năng gần nghĩa', ('semantic_skills',)),
     ('hybrid, bỏ hệ số liên quan', ('no_relevance_discount',)),
-    ('hybrid, tắt cả hai (công thức `hybrid-v1`)', ('semantic_skills', 'no_relevance_discount')),
+    (
+        'hybrid, tắt cả ba (công thức `hybrid-v1`)',
+        ('no_skill_groups', 'semantic_skills', 'no_relevance_discount'),
+    ),
 )
 BM25 = 'BM25'
 

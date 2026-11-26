@@ -64,6 +64,7 @@ def evaluate_pairs(pairs, *, encoder, catalog, detail=False, ablation=()):
                 cv_document_vector=cv_side['embedding'],
                 job_document_vector=job_side['embedding'],
                 model_version=encoder.version,
+                catalog=catalog,
                 ablation=ablation,
             )
         except ScoringError as error:

@@ -1,4 +1,4 @@
-"""Chấm điểm một cặp CV–tin (công thức ``hybrid-v2``); chi tiết ở ``engine``."""
+"""Chấm điểm một cặp CV–tin (công thức ``hybrid-v3``); chi tiết ở ``engine``."""
 
 from ...domain import SCORING_VERSION
 from .engine import (

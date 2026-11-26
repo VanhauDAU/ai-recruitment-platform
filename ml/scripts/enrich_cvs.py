@@ -158,6 +158,10 @@ def main():
     manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
     for code, facts in manifest.items():
         path = output_dir / f'{code}.json'
+        if not path.exists():
+            # Manifest ghi trước khi sinh xong: CV sinh hỏng có dòng trong manifest mà không có tệp.
+            print(f'{code} BỎ QUA: không có tệp CV.', flush=True)
+            continue
         data = json.loads(path.read_text(encoding='utf-8'))
         if 'languages' in data:
             continue

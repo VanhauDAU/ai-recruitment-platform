@@ -214,6 +214,7 @@ def execute_analysis(analysis_id, *, job, encoder, catalog):
                 cv_document_vector=_vector(cv_document),
                 job_document_vector=_vector(job_document),
                 model_version=encoder.version,
+                catalog=catalog,
             )
         )
     except Exception as error:  # noqa: BLE001 - không để hàng kẹt ở `processing`

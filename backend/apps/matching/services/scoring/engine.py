@@ -1,9 +1,10 @@
-"""Bước 4 của đối sánh: chấm điểm một cặp CV–tin theo công thức `hybrid-v2`.
+"""Bước 4 của đối sánh: chấm điểm một cặp CV–tin theo công thức `hybrid-v3`.
 
 | Tệp | Việc |
 | --- | --- |
 | `semantic.py` | Cosine, hiệu chuẩn cosine → 0–100, MaxSim cho câu bằng chứng |
 | `criteria.py` | Năm tiêu chí (kỹ năng, kinh nghiệm, học vấn, cấp bậc, ngoại ngữ) |
+| `skill_groups.py` | Nhóm kỹ năng thay thế nhau của tin ("một trong", "hoặc") |
 | `engine.py` | Mức liên quan (toàn văn + chức danh), ghép câu bằng chứng, cộng điểm có trọng số, mức và độ tin cậy |
 
 Điểm tổng là trung bình có trọng số của các tiêu chí tính được; tiêu chí thiếu
@@ -19,9 +20,13 @@ dữ liệu hoặc tin không yêu cầu bị loại và trọng số được c
 - **Trần ngoại ngữ.** Thiếu ngoại ngữ bắt buộc thì điểm tổng tối đa 64 (mức
   "Tương đối phù hợp").
 
-Khác `hybrid-v1` (số đo ở `ml/reports/eval_validation.md`): bỏ tiêu chí địa điểm
-(CV không mang địa điểm, rubric không xét), tắt khớp kỹ năng "viết khác tên" với
-mô hình chưa fine-tune (xem `domain/calibration.py`), thêm hệ số liên quan.
+Các bản công thức (số đo ở `ml/reports/eval_validation.md`):
+- `hybrid-v2` khác `hybrid-v1`: bỏ tiêu chí địa điểm (CV không mang địa điểm, rubric
+  không xét), tắt khớp kỹ năng "viết khác tên" với mô hình chưa fine-tune (xem
+  `domain/calibration.py`), thêm hệ số liên quan.
+- `hybrid-v3` khác `hybrid-v2`: kỹ năng tin viết dạng lựa chọn được chấm theo nhóm
+  (`skill_groups.py`), CV có một kỹ năng trong nhóm là đạt cả nhóm.
+
 `ABLATIONS` cho phép tắt từng thay đổi để đo riêng phần đóng góp của nó; sản phẩm
 luôn chạy với `ablation=()`.
 """
@@ -29,6 +34,7 @@ luôn chạy với `ablation=()`.
 from . import criteria
 from .criteria import EXPERIENCE_SECTIONS, MatchInput
 from .semantic import best_matches, calibration_for, cosine, requirement_status, to_score
+from .skill_groups import alternative_groups
 
 RESULT_SCHEMA_VERSION = 2
 WEIGHTS = {
@@ -43,8 +49,8 @@ GENERIC_CRITERIA = ('education', 'position_level', 'languages')
 # Mức liên quan R từ đó ba tiêu chí trên được tính đủ: giữa thang hiệu chuẩn (0 là
 # trung vị cặp khác ngành, 100 là phân vị 90 cặp khớp mạnh). Chọn trên validation.
 RELEVANCE_FULL = 50
-# Tên các thay đổi của `hybrid-v2` có thể tắt khi đo (lệnh `matching_evaluate`).
-ABLATIONS = ('semantic_skills', 'no_relevance_discount')
+# Tên các thay đổi của công thức có thể tắt khi đo (lệnh `matching_evaluate`).
+ABLATIONS = ('semantic_skills', 'no_relevance_discount', 'no_skill_groups')
 LANGUAGE_REQUIRED_CAP = 64
 LEVELS = (
     (80, 'very_high', 'Rất phù hợp'),
@@ -123,14 +129,17 @@ def score_match(
     cv_document_vector,
     job_document_vector,
     model_version,
+    catalog=None,
     ablation=(),
 ):
     """Chấm một cặp CV–tin.
 
     `cv`/`job` là `profile_json`; chunk là {section, text} kèm ma trận vector cùng
-    thứ tự; vector tài liệu là vector toàn văn (có thể None). `ablation` chỉ dùng
-    khi đo: `semantic_skills` bật lại khớp kỹ năng viết khác tên,
-    `no_relevance_discount` bỏ hệ số liên quan.
+    thứ tự; vector tài liệu là vector toàn văn (có thể None). `catalog` là danh mục
+    kỹ năng (`SkillCatalog`) để nhận nhóm kỹ năng thay thế trong câu yêu cầu của tin;
+    không truyền thì mọi kỹ năng được chấm riêng. `ablation` chỉ dùng khi đo:
+    `semantic_skills` bật lại khớp kỹ năng viết khác tên, `no_relevance_discount` bỏ
+    hệ số liên quan, `no_skill_groups` bỏ nhóm kỹ năng thay thế.
     """
     unknown = set(ablation) - set(ABLATIONS)
     if unknown:
@@ -152,6 +161,8 @@ def score_match(
     relevance, relevance_detail = _relevance(
         cv_chunks, cv_vectors, job_chunks, job_vectors, cv_document_vector, job_document_vector, calibration
     )  # fmt: skip
+    requirement_texts = [chunk['text'] for chunk in job_chunks if chunk['section'] == 'requirement']
+    grouped = catalog is not None and 'no_skill_groups' not in ablation
     data = MatchInput(
         cv,
         job,
@@ -160,6 +171,9 @@ def score_match(
         relevance,
         relevance_detail,
         semantic_skills=calibration.semantic_skills or 'semantic_skills' in ablation,
+        skill_groups=tuple(alternative_groups(job['skills'], requirement_texts, catalog))
+        if grouped
+        else (),
     )
     components = [rule(data) for rule in criteria.CRITERIA]
 

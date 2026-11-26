@@ -11,7 +11,7 @@ from django.conf import settings
 EXTRACTOR_VERSION = 'extract-v4'
 HASHING_MODEL_VERSION = 'hashing-v1'
 # Đổi khi công thức chấm đổi (`services/scoring/`): kết quả cũ không được dùng lại.
-SCORING_VERSION = 'hybrid-v2'
+SCORING_VERSION = 'hybrid-v3'
 
 
 def model_version():

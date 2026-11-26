@@ -1,4 +1,4 @@
-"""Công thức `hybrid-v2` và phần giải thích, chạy với `HashingEncoder` (không cần torch).
+"""Công thức `hybrid-v3` và phần giải thích, chạy với `HashingEncoder` (không cần torch).
 
 Ngoài kiểm tra từng tiêu chí, có ba nhóm test chống hồi quy theo kế hoạch mục 6b:
 - golden: điểm của các cặp cố định không được đổi ngầm (đổi công thức thì đổi
@@ -18,6 +18,7 @@ from ..services.explain import explain
 from ..services.extraction import cv_profile
 from ..services.scoring import LANGUAGE_REQUIRED_CAP, ScoringError, score_match
 from ..services.scoring.criteria import _years_score, position_level
+from ..services.scoring.skill_groups import alternative_groups
 from .test_extraction import TODAY, builder_document, rich, section
 from .test_skills import catalog
 
@@ -320,3 +321,56 @@ class RelevanceDiscountTests(SimpleTestCase):
                 'score'
             ],
         )
+
+
+class SkillGroupTests(SimpleTestCase):
+    """Kỹ năng tin viết dạng lựa chọn ("một trong", "hoặc") được chấm theo nhóm."""
+
+    def job(self, *requirements):
+        skills = [
+            {'skill_id': pk, 'name': name, 'importance': 'required', 'weight': 1.0, 'counted': True}
+            for pk, name in ((1, 'ReactJS'), (2, 'Java'), (7, 'C#'))
+        ]
+        job = job_profile(skills=skills)
+        start = len(job['chunks'])
+        job['chunks'] += [
+            {'index': start + offset, 'section': 'requirement', 'text': text}
+            for offset, text in enumerate(requirements)
+        ]
+        return job
+
+    def test_one_skill_of_an_alternative_group_is_enough(self):
+        job = self.job('Thành thạo ít nhất một trong các ngôn ngữ: Java, C#.')
+        cv = frontend_cv(section('skills', {'name': 'Java', 'level': 3}))
+        grouped = run(cv, job, catalog=catalog())
+        # Hai đơn vị chấm: ReactJS và nhóm (Java, C#); CV có ReactJS và Java.
+        self.assertEqual(components(grouped)['skills'], (100, 'ok'))
+        self.assertEqual(grouped['skills']['missing'], [])
+        self.assertIn('2/2 kỹ năng', grouped['components'][0]['summary'])
+        for plain in (run(cv, job), run(cv, job, catalog=catalog(), ablation=('no_skill_groups',))):
+            self.assertEqual(components(plain)['skills'], (67, 'ok'))
+            self.assertEqual([skill['name'] for skill in plain['skills']['missing']], ['C#'])
+
+    def test_unmet_group_is_one_requirement_and_is_named_as_a_choice(self):
+        job = self.job('Có kinh nghiệm với Java hoặc C#.')
+        result = run(frontend_cv(), job, catalog=catalog())
+        self.assertEqual(components(result)['skills'], (50, 'ok'))
+        self.assertEqual(
+            result['skills']['missing'],
+            [
+                {'name': 'Java', 'importance': 'required', 'group': 1},
+                {'name': 'C#', 'importance': 'required', 'group': 1},
+            ],
+        )
+        self.assertIn('1/2 kỹ năng', result['components'][0]['summary'])
+        suggestion = next(
+            s for s in result['suggestions'] if s['code'] == 'missing_required_skills'
+        )
+        self.assertIn('Java hoặc C#', suggestion['message'])
+
+    def test_skill_required_on_its_own_elsewhere_is_not_grouped(self):
+        # ReactJS đã được đòi riêng ở một câu khác, nên "ReactJS hoặc Java" không gom được.
+        job = self.job('Dùng ReactJS hoặc Java đều được.')
+        result = run(frontend_cv(), job, catalog=catalog())
+        self.assertEqual(components(result)['skills'], (33, 'ok'))
+        self.assertEqual(alternative_groups(job['skills'], ['Chỉ nhắc Java, C#.'], catalog()), [])

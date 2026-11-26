@@ -8,7 +8,7 @@ còn đồng ý, không bị chặn. Module này quyết định **thứ tự** 
    trên `MatchDocument.profile_json`. Từ khóa chỉ quét chức danh và các mục được hiển
    thị cho NTD (không quét mục `other`), để không dò được phần bị ẩn.
 2. Lấy `SEARCH_POOL` CV gần vector của tin nhất bằng pgvector (tìm chính xác).
-3. Chấm từng CV bằng đúng công thức đang chạy (`score_match`, `hybrid-v2`). Vector của
+3. Chấm từng CV bằng đúng công thức đang chạy (`score_match`, `hybrid-v3`). Vector của
    tin và CV đã tính sẵn, nên tiến trình web không cần nạp mô hình. Chỉ truyền chunk
    chức danh: phần so từng câu yêu cầu không ảnh hưởng tới điểm và không được hiển thị
    ở đây.
