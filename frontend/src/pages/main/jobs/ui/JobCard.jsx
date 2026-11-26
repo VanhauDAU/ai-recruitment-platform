@@ -24,6 +24,7 @@ import { useSavedJob } from '@/features/main/job/saved-jobs'
 import { useJobImpression } from '@/features/main/job/track-job-engagement'
 import './job-card.css'
 import { getIntlLocale } from '@/shared/config/i18n'
+import { useNewTabLinkProps } from '@/shared/hooks/use-new-tab-link-props'
 
 function savedLabel(value) {
   const savedAt = new Date(value)
@@ -87,6 +88,7 @@ export default function JobCard({
   comparisonEnabled = true,
 }) {
   const navigate = useNavigate()
+  const newTab = useNewTabLinkProps()
   const [saved, toggleSaved, savePending] = useSavedJob(job.public_id, job)
   const [hovered, setHovered] = useState(false)
   const impressionRef = useJobImpression(job.slug)
@@ -175,8 +177,7 @@ export default function JobCard({
           <h3 className="min-w-0 font-semibold leading-snug text-slate-950 line-clamp-2">
             <Link
               to={jobDetailPath(job)}
-              target="_blank"
-              rel="noopener noreferrer"
+              {...newTab}
               onClick={(e) => e.stopPropagation()}
               className="!text-slate-950 no-underline transition-colors hover:!text-slate-950 hover:underline underline-offset-2 focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]/40"
             >

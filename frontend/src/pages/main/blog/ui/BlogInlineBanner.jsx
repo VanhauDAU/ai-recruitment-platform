@@ -1,5 +1,6 @@
 import { ArrowRightOutlined } from '@ant-design/icons'
 import { Link } from 'react-router'
+import { useNewTabLinkProps } from '@/shared/hooks/use-new-tab-link-props'
 
 const GRADIENTS = {
   green: 'from-[var(--brand-primary)] via-[var(--brand-primary)] to-[var(--brand-primary-hover)]',
@@ -11,6 +12,7 @@ const GRADIENTS = {
 // bấm đâu cũng chuyển trang). Có ảnh thì dùng ảnh; chưa có thì nền gradient
 // + nút giả (span) để giữ đúng hành vi.
 export default function BlogInlineBanner({ banner, className = '' }) {
+  const newTab = useNewTabLinkProps()
   if (!banner) return null
   const inner = banner.image_url ? (
     <img src={banner.image_url} alt={banner.title} loading="lazy" className="h-full w-full object-cover" />
@@ -41,5 +43,5 @@ export default function BlogInlineBanner({ banner, className = '' }) {
   if (external) {
     return <a href={url} target="_blank" rel="noopener noreferrer" className={`group block h-full ${className}`}>{frame}</a>
   }
-  return <Link to={url || '/'} target="_blank" rel="noopener" className={`group block h-full ${className}`}>{frame}</Link>
+  return <Link to={url || '/'} {...newTab} className={`group block h-full ${className}`}>{frame}</Link>
 }

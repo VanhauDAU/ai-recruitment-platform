@@ -1,5 +1,6 @@
 import { ArrowUpOutlined } from '@ant-design/icons'
 import { Tooltip } from 'antd'
+import { useNavigate } from 'react-router'
 import {
   EMPLOYMENT_TYPE_LABELS,
   EXPERIENCE_YEARS_LABELS,
@@ -13,6 +14,7 @@ import { JobImpressionBoundary } from '@/features/main/job/track-job-engagement'
 import { DEMAND_COLORS } from '../lib/market-stats-palette'
 import { useLatestJobsFeed } from '../model/use-latest-jobs-feed'
 import { getIntlLocale } from '@/shared/config/i18n'
+import { useNewTabLinkProps } from '@/shared/hooks/use-new-tab-link-props'
 
 function formatDate(value) {
   if (!value) return null
@@ -72,6 +74,8 @@ function Mascot() {
 // Cột trái MarketStats: mascot + danh sách việc mới trượt vào theo chu kỳ.
 export default function LatestJobsFeed({ jobs, enabled }) {
   const feed = useLatestJobsFeed(jobs, enabled)
+  const navigate = useNavigate()
+  const newTab = useNewTabLinkProps()
 
   return (
     <div>
@@ -88,7 +92,11 @@ export default function LatestJobsFeed({ jobs, enabled }) {
             <JobImpressionBoundary
               as="li"
               slug={item.job.slug}
-              onClick={() => !item.exiting && window.open(jobDetailPath(item.job), '_blank', 'noopener,noreferrer')}
+              onClick={() => {
+                if (item.exiting) return
+                if (newTab.target) window.open(jobDetailPath(item.job), '_blank', 'noopener,noreferrer')
+                else navigate(jobDetailPath(item.job))
+              }}
               className={`relative flex items-center gap-3 rounded-lg bg-white/5 hover:bg-white/10 p-2.5 cursor-pointer transition ${
                 item.exiting
                   ? 'animate-job-exit pointer-events-none'
