@@ -45,11 +45,16 @@ ml/
     build_train_pairs.py  bộ ba huấn luyện bi-encoder, có chống rò rỉ sang tập vàng
     build_calibration_pairs.py  ghép cặp tập hiệu chỉnh (14 tin, phiếu mù), gộp nhãn và đối chiếu với nhãn yếu
     build_requirement_pairs.py  cặp (câu yêu cầu, câu CV) huấn luyện cross-encoder
+    build_requirement_eval.py  cặp yêu cầu–câu CV thật để đo cross-encoder (phiếu mù, gộp hai lượt nhãn)
+    evaluate_reranker.py  đo cross-encoder và các mốc so sánh trên cặp thật, chọn hai ngưỡng
+    evaluate_public.py    chuẩn ngoài resume-job-description-fit cho các bi-encoder
     train.py              fine-tune bi-encoder E5 trên MPS
     train_reranker.py     fine-tune cross-encoder phán từng yêu cầu
     run_training.sh       chạy nối các bước dữ liệu → huấn luyện → đo
   labeling/               tài liệu gán nhãn (commit)
     rubric.md             thang chấm 0–4 đã chốt
+    requirement_rubric.md  quy tắc gán nhãn cặp yêu cầu–câu CV (đạt / có liên quan / không đạt)
+    requirement_labels.json  nhãn 358 cặp yêu cầu–câu CV thật (hai lượt gán, phiếu mù)
     gold_pairs.xlsx       phiếu chấm 150 cặp (tab Chấm), kèm nội dung JD và CV
     gold_pairs_claude.xlsx  nhãn 150 cặp do Claude gán (annotator = claude)
     gold_pairs_2.xlsx     phiếu chấm mù của đợt 2 (cặp 151–300)
