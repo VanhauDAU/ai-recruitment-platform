@@ -30,4 +30,10 @@ urlpatterns = [
         StaticSeoShellView.as_view(),
         name='seo-employer-marketing',
     ),
+    # Cùng các trang trên ở gốc subdomain NTD (tuyendung.procv.site/dich-vu).
+    re_path(
+        r'^(?:gioi-thieu|dich-vu|lien-he|dieu-khoan-dich-vu|chinh-sach-quyen-rieng)$',
+        StaticSeoShellView.as_view(),
+        name='seo-employer-marketing-host',
+    ),
 ]

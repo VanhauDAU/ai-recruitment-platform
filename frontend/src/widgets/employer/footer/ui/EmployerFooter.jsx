@@ -11,7 +11,7 @@ import { useMemo } from 'react'
 import { Link } from 'react-router'
 import { CookieSettingsButton } from '@/features/common/privacy/cookie-consent'
 import { BrandLogo, DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/system/site-settings'
-import { employerAppPath, employerMarketingPath, MAIN_PORTAL_URL } from '@/shared/config/portals'
+import { employerAppPath, employerMarketingPath, MAIN_PORTAL_URL, mainSitePath } from '@/shared/config/portals'
 import { m } from '@/shared/config/i18n'
 
 function FooterLink({ href, children }) {
@@ -56,7 +56,7 @@ export default function EmployerFooter() {
   ]
   const candidateLinks = [
     { label: m.marketing_footer_candidate_portal(), href: MAIN_PORTAL_URL },
-    { label: m.marketing_footer_create_cv(), href: MAIN_PORTAL_URL === '/' ? '/mau-cv' : `${MAIN_PORTAL_URL}mau-cv` },
+    { label: m.marketing_footer_create_cv(), href: mainSitePath('/mau-cv') },
   ]
 
   const socials = useMemo(() => [
@@ -138,7 +138,7 @@ export default function EmployerFooter() {
           {businessLicense && <p className="mt-1 whitespace-pre-line">{businessLicense}</p>}
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
             <p>{copyright}</p>
-            <a href={`${MAIN_PORTAL_URL}chinh-sach-cookie`} className="font-semibold text-slate-600 hover:text-[var(--brand-primary)]">{m.account_cookie_policy()}</a>
+            <a href={mainSitePath('/chinh-sach-cookie')} className="font-semibold text-slate-600 hover:text-[var(--brand-primary)]">{m.account_cookie_policy()}</a>
             <CookieSettingsButton />
           </div>
         </div>

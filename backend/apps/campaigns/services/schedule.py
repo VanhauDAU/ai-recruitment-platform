@@ -14,6 +14,7 @@ from apps.campaigns.models import CampaignActivity, RecruitmentCampaign
 from apps.employers.models import EmployerNotification
 from apps.employers.services import emit_employer_event, ensure_recruiter_job_workspace
 from common.i18n import recipient_language
+from common.portal_paths import employer_app_path
 from common.vietnam_time import vietnam_today
 
 from ..models import CampaignLaunchPlan
@@ -26,7 +27,7 @@ ENDING_SOON_DAYS = 3
 
 
 def _campaign_path(campaign):
-    return f'/tuyendung/app/chien-dich/{campaign.public_id}'
+    return employer_app_path(f'/chien-dich/{campaign.public_id}')
 
 
 def _notify(campaign, event_type, dedupe_key, message, **params):

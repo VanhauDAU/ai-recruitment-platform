@@ -20,12 +20,13 @@ from rest_framework.exceptions import ValidationError
 from apps.employers.models import EmployerNotification, RecruiterProfile
 from apps.employers.services import emit_employer_event
 from common.i18n import recipient_language
+from common.portal_paths import employer_app_path
 
 from ..models import ScheduledSocialPost, SocialAccountConnection
 from .social import SocialProviderError, decrypt_token, encrypt_token, get_provider
 
 logger = logging.getLogger(__name__)
-INTEGRATIONS_PATH = '/tuyendung/app/cai-dat/tich-hop'
+INTEGRATIONS_PATH = employer_app_path('/cai-dat/tich-hop')
 # Refresh a token this long before it expires; the daily task gets several tries.
 REFRESH_AHEAD = timedelta(days=10)
 

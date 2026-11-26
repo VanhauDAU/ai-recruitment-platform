@@ -22,17 +22,19 @@ x-prod-env: &prod-env
   DEBUG: 'False'
   DJANGO_ADMIN_ENABLED: 'False'
   API_DOCS_ENABLED: 'False'
-  ALLOWED_HOSTS: procv.site,www.procv.site
-  CORS_ALLOWED_ORIGINS: https://procv.site
-  CSRF_TRUSTED_ORIGINS: https://procv.site
+  ALLOWED_HOSTS: procv.site,www.procv.site,tuyendung.procv.site,quantri.procv.site
+  CORS_ALLOWED_ORIGINS: https://procv.site,https://tuyendung.procv.site,https://quantri.procv.site
+  CSRF_TRUSTED_ORIGINS: https://procv.site,https://tuyendung.procv.site,https://quantri.procv.site
+  # Cổng NTD/quản trị trên subdomain riêng (khớp VITE_*_HOST của web bên dưới và
+  # server_name trong frontend/docker/nginx/procv.conf).
   FRONTEND_URL: https://procv.site
-  EMPLOYER_FRONTEND_URL: https://procv.site
-  ADMIN_FRONTEND_URL: https://procv.site
+  EMPLOYER_FRONTEND_URL: https://tuyendung.procv.site
+  ADMIN_FRONTEND_URL: https://quantri.procv.site
   # Cổng nội bộ của container web (dist thuần, không qua route SEO).
   FRONTEND_SHELL_URL: http://web:8080/
   CV_PRINT_URL: http://web:8080/cv-print.html
   OAUTH_MAIN_CALLBACK_URL: https://procv.site/oauth/callback
-  OAUTH_EMPLOYER_CALLBACK_URL: https://procv.site/tuyendung/app/oauth/callback
+  OAUTH_EMPLOYER_CALLBACK_URL: https://tuyendung.procv.site/app/oauth/callback
   FACEBOOK_OAUTH_REDIRECT_URI: https://procv.site/api/employer/social/facebook/callback/
   THREADS_OAUTH_REDIRECT_URI: https://procv.site/api/employer/social/threads/callback/
   LINKEDIN_OAUTH_REDIRECT_URI: https://procv.site/api/employer/social/linkedin/callback/
@@ -379,6 +381,9 @@ services:
         VITE_ANNOUNCEMENT_ROLLOUT_SURFACES: ${VITE_ANNOUNCEMENT_ROLLOUT_SURFACES:-}
         VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
         VITE_SENTRY_ENVIRONMENT: ${VITE_SENTRY_ENVIRONMENT:-}
+        VITE_MAIN_HOST: procv.site
+        VITE_EMPLOYER_HOST: tuyendung.procv.site
+        VITE_ADMIN_HOST: quantri.procv.site
     ports:
       # Chỉ IPv4: Cloudflare nối origin qua bản ghi A. Cổng IPv6 do docker-proxy
       # mở sẽ đi vòng qua rule DOCKER-USER chỉ-cho-Cloudflare của bootstrap_vps.sh.

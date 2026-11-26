@@ -4,7 +4,6 @@ import html
 import logging
 
 from celery import shared_task
-from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
@@ -14,6 +13,7 @@ from apps.sitecontent.selectors import email_sender, get_string_setting
 from common.email import send_html_email
 from common.i18n import recipient_language
 from common.outbox import MAX_DELIVERY_ATTEMPTS, is_sending_fresh, stale_sending_before
+from common.portal_paths import employer_app_url
 
 from ..models import EmployerVerificationNotification
 
@@ -31,7 +31,7 @@ def _render(job, site_name):
     }
     title = labels.get(job.event_type) or _('Trạng thái xác thực đã thay đổi')
     reason = str(job.context.get('reason', '')).strip()
-    action_url = f'{settings.EMPLOYER_FRONTEND_URL.rstrip("/")}/tuyendung/app/xac-thuc-tai-khoan'
+    action_url = employer_app_url('/xac-thuc-tai-khoan')
     unlocked = (
         _(
             'Bạn đã có thể gửi tin tuyển dụng sang kiểm duyệt và sử dụng các workflow '

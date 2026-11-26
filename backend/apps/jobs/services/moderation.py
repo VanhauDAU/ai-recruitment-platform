@@ -19,6 +19,7 @@ from apps.accounts.services import (
 from apps.employers.models import EmployerNotification
 from apps.employers.services import emit_employer_event
 from common.i18n import recipient_language
+from common.portal_paths import employer_app_path
 
 from ..models import Job, JobModerationEvent
 from ..models.querysets import job_visibility_issues
@@ -341,7 +342,7 @@ def request_job_changes(*, job, user, reason_code, note, review_token, source_re
         dedupe_key=f'job-changes-requested:{job.public_id}:{fingerprint[:16]}',
         message=message,
         subject_public_id=job.public_id,
-        action_path=f'/tuyendung/app/tin-tuyen-dung/{job.public_id}',
+        action_path=employer_app_path(f'/tin-tuyen-dung/{job.public_id}'),
     )
     return job
 

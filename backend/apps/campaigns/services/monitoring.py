@@ -6,7 +6,6 @@ Celery beat runs both every hour; both are idempotent per Vietnam day/week.
 import logging
 from datetime import date, timedelta
 
-from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.db.models import Count, Q
 from django.template.loader import render_to_string
@@ -20,6 +19,7 @@ from apps.employers.services import campaign_weekly_report_email_enabled, emit_e
 from apps.sitecontent.selectors import business_emails_enabled, email_sender
 from common.email import send_html_email
 from common.i18n import recipient_language
+from common.portal_paths import employer_app_path, employer_app_url
 from common.vietnam_time import vietnam_now, vietnam_today
 
 from ..models import CampaignChannel, CampaignHealthSnapshot, CampaignReportDelivery
@@ -87,7 +87,9 @@ def snapshot_campaign(campaign, *, now=None):
                     message=_alert_message(rule, campaign, health),
                     subject_public_id=campaign.public_id,
                     metadata={'campaign_public_id': campaign.public_id, 'rule': rule},
-                    action_path=f'/tuyendung/app/chien-dich/{campaign.public_id}?active_tab=health',
+                    action_path=employer_app_path(
+                        f'/chien-dich/{campaign.public_id}?active_tab=health'
+                    ),
                 )
             entry['notified'] = today.isoformat()
         open_alerts[rule] = entry
@@ -130,10 +132,7 @@ def weekly_report_context(campaign, health, *, now):
         ).count(),
         'top_channels': _top_channels(campaign),
         'backlog_alert': health['response']['backlog'] >= BACKLOG_ALERT,
-        'campaign_url': (
-            f'{settings.EMPLOYER_FRONTEND_URL.rstrip("/")}'
-            f'/tuyendung/app/chien-dich/{campaign.public_id}?active_tab=health'
-        ),
+        'campaign_url': employer_app_url(f'/chien-dich/{campaign.public_id}?active_tab=health'),
     }
 
 

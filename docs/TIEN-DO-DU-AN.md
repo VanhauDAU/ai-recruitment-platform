@@ -60,7 +60,7 @@ Ký hiệu: ✅ chạy trên `dev` · 🟨 một phần (ghi rõ phần còn thi
 | Cấu hình hệ thống | ✅ | [ADR-0026](adr/adr-0026-settings-contract.md), [danh mục key](05-huong-dan/cau-hinh-site-settings.md) |
 | Nội dung: FAQ, hướng dẫn, blog, banner, thông báo đa cổng | ✅ | [ADR-0024](adr/adr-0024-content-publish-without-review.md), [thông báo đa cổng](01-phan-tich/dac-ta-thong-bao-da-cong.md) |
 | Mẫu CV và CV người dùng | ✅ | |
-| Bảo vệ đăng nhập admin | 🟨 | Cloudflare Access trước `/quan-tri*` (và `/admin*` cũ); MFA trong ứng dụng để sau go-live. 2FA cũ ➖ theo [ADR-0016](adr/adr-0016-remove-two-factor-auth.md) |
+| Bảo vệ đăng nhập admin | 🟨 | Cloudflare Access trước `quantri.procv.site` (và `procv.site/quan-tri*`, `/admin*` cũ); MFA trong ứng dụng để sau go-live. 2FA cũ ➖ theo [ADR-0016](adr/adr-0016-remove-two-factor-auth.md) |
 | Phòng ban, chức danh, nhân viên quản trị | ➖ | Còn hai cấp superuser/admin theo [ADR-0018](adr/adr-0018-remove-admin-rbac.md) |
 | Song ngữ vi/en | 🟨 | Còn 2.650 dòng chữ viết cứng ở `features/admin`, `widgets/admin`, `pages/admin` |
 

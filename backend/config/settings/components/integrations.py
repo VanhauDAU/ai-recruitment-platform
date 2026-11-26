@@ -1,5 +1,7 @@
 """Email, URL frontend, chính sách NTD, mạng xã hội, SMS, OAuth, reCAPTCHA, VietQR."""
 
+from urllib.parse import urlsplit
+
 from config.env import config
 
 from .core import DEBUG, IS_PRODUCTION
@@ -62,6 +64,29 @@ SERVER_EMAIL = DEFAULT_FROM_EMAIL
 FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5173')
 EMPLOYER_FRONTEND_URL = config('EMPLOYER_FRONTEND_URL', default=FRONTEND_URL)
 ADMIN_FRONTEND_URL = config('ADMIN_FRONTEND_URL', default=FRONTEND_URL)
+
+
+def _hostname(url):
+    return (urlsplit(url).hostname or '').lower()
+
+
+# Cổng NTD/quản trị chạy chung domain với site ứng viên theo đường dẫn (/tuyendung,
+# /quan-tri) hoặc trên subdomain riêng (tuyendung.procv.site, quantri.procv.site).
+# Suy ra từ *_FRONTEND_URL: khác host với FRONTEND_URL là subdomain riêng — khớp
+# VITE_EMPLOYER_HOST / VITE_ADMIN_HOST và frontend/src/shared/config/portals.js.
+EMPLOYER_HOST = (
+    _hostname(EMPLOYER_FRONTEND_URL)
+    if _hostname(EMPLOYER_FRONTEND_URL) != _hostname(FRONTEND_URL)
+    else ''
+)
+ADMIN_HOST = (
+    _hostname(ADMIN_FRONTEND_URL)
+    if _hostname(ADMIN_FRONTEND_URL) != _hostname(FRONTEND_URL)
+    else ''
+)
+EMPLOYER_MARKETING_BASE = '' if EMPLOYER_HOST else '/tuyendung'
+EMPLOYER_APP_BASE = f'{EMPLOYER_MARKETING_BASE}/app'
+ADMIN_APP_BASE = '' if ADMIN_HOST else '/quan-tri'
 # SEO shell fetches the built Vite document from the internal frontend service,
 # then injects route-specific head tags without rendering the React body.
 FRONTEND_SHELL_URL = config('FRONTEND_SHELL_URL', default=FRONTEND_URL).rstrip('/') + '/'
@@ -88,16 +113,10 @@ KNOWLEDGEBASE_SEARCH_INDEX_ENABLED = config(
     default=False,
     cast=bool,
 )
-ADMIN_INVITATION_PATH = config('ADMIN_INVITATION_PATH', default='/quan-tri/loi-moi')
-ADMIN_PASSWORD_RESET_PATH = config(
-    'ADMIN_PASSWORD_RESET_PATH', default='/quan-tri/dat-lai-mat-khau'
-)
-EMPLOYER_EMAIL_VERIFICATION_PATH = config(
-    'EMPLOYER_EMAIL_VERIFICATION_PATH', default='/tuyendung/app/xac-thuc-email'
-)
-EMPLOYER_PASSWORD_RESET_PATH = config(
-    'EMPLOYER_PASSWORD_RESET_PATH', default='/tuyendung/app/dat-lai-mat-khau'
-)
+ADMIN_INVITATION_PATH = f'{ADMIN_APP_BASE}/loi-moi'
+ADMIN_PASSWORD_RESET_PATH = f'{ADMIN_APP_BASE}/dat-lai-mat-khau'
+EMPLOYER_EMAIL_VERIFICATION_PATH = f'{EMPLOYER_APP_BASE}/xac-thuc-email'
+EMPLOYER_PASSWORD_RESET_PATH = f'{EMPLOYER_APP_BASE}/dat-lai-mat-khau'
 EMPLOYER_TERMS_POLICY_VERSION = config('EMPLOYER_TERMS_POLICY_VERSION', default='2026-07-18')
 EMPLOYER_DPA_POLICY_VERSION = config('EMPLOYER_DPA_POLICY_VERSION', default='').strip()
 EMPLOYER_DPA_DOCUMENT_SHA256 = config('EMPLOYER_DPA_DOCUMENT_SHA256', default='').strip().lower()
@@ -217,7 +236,8 @@ OAUTH_MAIN_CALLBACK_URL = config(
     'OAUTH_MAIN_CALLBACK_URL', default=f'{FRONTEND_URL}/oauth/callback'
 )
 OAUTH_EMPLOYER_CALLBACK_URL = config(
-    'OAUTH_EMPLOYER_CALLBACK_URL', default=f'{FRONTEND_URL}/tuyendung/app/oauth/callback'
+    'OAUTH_EMPLOYER_CALLBACK_URL',
+    default=f'{EMPLOYER_FRONTEND_URL.rstrip("/")}{EMPLOYER_APP_BASE}/oauth/callback',
 )
 OAUTH_STATE_TTL = config('OAUTH_STATE_TTL', default=600, cast=int)  # state chống CSRF: 10 phút
 OAUTH_CODE_TTL = config('OAUTH_CODE_TTL', default=60, cast=int)  # one_time_code đổi JWT: 60s
