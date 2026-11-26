@@ -57,6 +57,22 @@ describe('CV document preview', () => {
     })
   })
 
+  it('stops re-measuring when page breaks keep flipping instead of crashing the page', () => {
+    // Chiều cao section phụ thuộc số trang đang vẽ: một trang → quá cao, hai trang
+    // → vừa một trang. Không có chốt chặn, đo/chia trang lặp tới lỗi React #185.
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function offsetHeight() {
+      if (!this.dataset?.sectionId) return 0
+      return globalThis.document.querySelectorAll('[data-cv-page]').length === 1 ? 500 : 100
+    })
+    const flipping = JSON.parse(JSON.stringify(document))
+    flipping.content_json.sections.push({ instance_id: 'education_1', section_key: 'education', title: 'Học vấn', enabled: true, items: [{ item_id: 'education_item_1', name: 'Đại học' }] })
+    flipping.layout_json.regions = [{ id: 'main', width_percent: 100, section_instance_ids: ['summary_1', 'skills_1', 'education_1'] }]
+
+    render(<CvDocumentPreview document={flipping} rendererKey="single_column_v1" />)
+
+    expect(screen.getByText('Đại học')).toBeInTheDocument()
+  })
+
   it('exposes A4 page breaks without showing an overflow warning to the reader', () => {
     const longDocument = JSON.parse(JSON.stringify(document))
     longDocument.content_json.sections.push(...Array.from({ length: 6 }, (_, index) => ({

@@ -6,6 +6,15 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ## [Unreleased]
 
+### 2026-11-27
+
+#### Fixed — Trắng trang ở tab "Bản AI chờ duyệt" (React #185)
+
+- Xem trước CV đo chiều cao section kèm margin, nhưng section cuối vùng có `last:mb-0`
+  nên đo thấp hơn 20px; CV dài sát một trang A4 bị chia trang đổi qua lại (đo → chia →
+  đo lại) tới khi React ném "Maximum update depth exceeded". Giờ mọi section cộng cùng
+  một khoảng cách, và phép đo dừng sau 12 lượt đổi của cùng một document.
+
 ### 2026-11-26
 
 #### Fixed — Gõ chữ mượt hơn ở ô góp ý/báo lỗi, ô nhắn tin trên iPhone; CI bundle xanh lại
