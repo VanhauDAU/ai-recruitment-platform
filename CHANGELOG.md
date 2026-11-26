@@ -8,6 +8,13 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-27
 
+#### Added — Link "Trạng thái hệ thống" ở footer
+
+- Migration `sitecontent.0014` thêm link tới Status page UptimeRobot vào cụm footer "Về
+  ProCV" (mở tab mới); seed `link_groups.json` có link này cho bản cài mới.
+- Sửa checklist go-live: bước "Admin → cụm link `footer_nav`" không làm được vì
+  production tắt Django admin, cụm link chưa có màn sửa trong trang quản trị.
+
 #### Docs — Trang trạng thái hệ thống bằng UptimeRobot
 
 - Checklist go-live thêm 3 monitor (trang chủ, `/api/health/ready/`, cổng NTD), tạo trang
