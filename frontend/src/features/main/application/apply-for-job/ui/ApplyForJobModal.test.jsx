@@ -176,6 +176,38 @@ describe('ApplyForJobModal', () => {
     })))
   })
 
+  it('keeps typed contact details across file choices and sends the typed cover letter', async () => {
+    const user = userEvent.setup()
+    cvApi.getMySavedCvs.mockResolvedValue([{
+      public_id: 'cv_up', title: 'CV tải lên.pdf', is_default: true, cv_type: 'uploaded',
+      latest_version_public_id: 'cvv_up', application_ready: true, is_complete: true,
+    }])
+    applicationApi.submitJobApplication.mockResolvedValue({ public_id: 'app_up' })
+
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+      <MemoryRouter>
+        <ApplyForJobModal open onClose={vi.fn()} jobPublicId="job_1" candidateName="Lê Văn Hậu" candidateEmail="hau@example.com" />
+      </MemoryRouter>
+      </QueryClientProvider>,
+    )
+
+    await user.type(await screen.findByRole('textbox', { name: 'Số điện thoại ứng tuyển' }), '0909000000')
+    // Ô liên hệ dựng lại dưới lựa chọn khác nhưng vẫn giữ chữ vừa gõ.
+    await user.click(screen.getByRole('radio', { name: 'Tải CV từ máy tính' }))
+    expect(screen.getByRole('textbox', { name: 'Số điện thoại ứng tuyển' })).toHaveValue('0909000000')
+    await user.click(screen.getByRole('radio', { name: /CV tải lên.pdf/ }))
+    await user.type(screen.getByRole('textbox', { name: 'Thư giới thiệu' }), '  Xin chào  ')
+    await user.click(screen.getByRole('checkbox', { name: /Tôi đã đọc và đồng ý/ }))
+    await user.click(screen.getByRole('button', { name: 'Nộp hồ sơ ứng tuyển' }))
+
+    await waitFor(() => expect(applicationApi.submitJobApplication).toHaveBeenCalledWith(expect.objectContaining({
+      cvPublicId: 'cv_up',
+      coverLetter: 'Xin chào',
+      contactPhone: '0909000000',
+    })))
+  })
+
   it('locks a CV that cannot be submitted and starts on the last CV applied with', async () => {
     const user = userEvent.setup()
     cvApi.getMySavedCvs.mockResolvedValue([
