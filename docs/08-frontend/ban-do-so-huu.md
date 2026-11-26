@@ -210,7 +210,7 @@ pages/admin/companies/CompanyReports
   khối do nền tảng sinh ra (`share`, `similar_companies`). Từ chối cả báo cáo
   (HTTP 400 `{"detail": "<chuỗi>"}`, ví dụ còn một báo cáo đang chờ) hiện ở đầu
   form thay vì toast.
-- `features/admin/company/review-company-reports` sở hữu hàng chờ `/admin/app/bao-cao-cong-ty`
+- `features/admin/company/review-company-reports` sở hữu hàng chờ `/quan-tri/bao-cao-cong-ty`
   (mọi quản trị viên đều xem, kết luận và gỡ kết luận). Bộ lọc `status|reason|q|company`, `ordering` và
   `page` là trạng thái URL; mọi cột dữ liệu sort phía server theo whitelist
   `company_name, reason, detail, reporter_email, status, created_at`, nên phần
@@ -306,8 +306,8 @@ app/layouts/OnboardingLayout + pages/main/onboarding
 - URL là nguồn chuẩn cho tab, filter, ordering và page. Lời mời quản trị dùng
   namespace `invite_*`, hàng chờ xác thực NTD dùng `verify_*`; tham số không
   tương thích phải được bỏ khi chuyển tab.
-- `/admin/app/tai-khoan/:publicId` là route canonical của ứng viên/admin;
-  `/admin/app/nha-tuyen-dung/:publicId` là route canonical của NTD. Route chi tiết
+- `/quan-tri/tai-khoan/:publicId` là route canonical của ứng viên/admin;
+  `/quan-tri/nha-tuyen-dung/:publicId` là route canonical của NTD. Route chi tiết
   phải chuyển bằng `replace` khi role không khớp và giữ `pathname + search` của
   nguồn điều hướng nội bộ để nút quay lại khôi phục đúng workspace.
 - Summary tài khoản, NTD và công ty là aggregate phía server theo cấp quản trị,
@@ -1009,7 +1009,7 @@ pages/admin/announcements/Announcements
 - `widgets/admin/announcement-management` sở hữu bảng, editor, preview,
   conflict simulator và dashboard metrics 7/30/90 ngày lấy aggregate phía
   server. Page admin chỉ compose widget; route/lazy registry vẫn thuộc `app`.
-- Workspace `/admin/app/thong-bao` dùng URL làm nguồn chuẩn cho filter,
+- Workspace `/quan-tri/thong-bao` dùng URL làm nguồn chuẩn cho filter,
   ordering và page. Mọi cột dữ liệu sort phía server; action column là ngoại
   lệ. Quyền route là `announcement.view`; `manage` và `publish` chỉ điều khiển
   mutation tương ứng, backend vẫn fail-closed khi gọi API trực tiếp.

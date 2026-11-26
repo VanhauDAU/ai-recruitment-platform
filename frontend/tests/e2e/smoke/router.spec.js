@@ -57,7 +57,7 @@ test.describe('portal route registries', () => {
 
     await page.goto('/tuyendung/app/dang-nhap')
     await expect(page.getByRole('heading', { name: 'Chào mừng bạn quay trở lại' })).toBeVisible()
-    await page.goto('/admin/app/dang-nhap')
+    await page.goto('/quan-tri/dang-nhap')
     await expect(page.getByRole('heading', { name: 'Đăng nhập quản trị' })).toBeVisible()
     expect(pageErrors).toEqual([])
   })
@@ -71,8 +71,8 @@ test.describe('portal route registries', () => {
     await page.goto('/tuyendung/app/tong-quan')
     await expect(page).toHaveURL(/\/tuyendung\/app\/dang-nhap\?returnUrl=/)
 
-    await page.goto('/admin/app/tong-quan')
-    await expect(page).toHaveURL(/\/admin\/app\/dang-nhap\?returnUrl=/)
+    await page.goto('/quan-tri/tong-quan')
+    await expect(page).toHaveURL(/\/quan-tri\/dang-nhap\?returnUrl=/)
   })
 
   test('sends legacy English URLs from old emails to the Vietnamese routes', async ({ page }) => {
@@ -83,7 +83,7 @@ test.describe('portal route registries', () => {
     await expect(page).toHaveURL(/\/tuyendung\/app\/dang-nhap\?returnUrl=%2Ftuyendung%2Fapp%2Fxac-thuc-tai-khoan$/)
 
     await page.goto('/admin/app/job-moderation/jb_1')
-    await expect(page).toHaveURL(/\/admin\/app\/dang-nhap\?returnUrl=%2Fadmin%2Fapp%2Fduyet-tin%2Fjb_1$/)
+    await expect(page).toHaveURL(/\/quan-tri\/dang-nhap\?returnUrl=%2Fquan-tri%2Fduyet-tin%2Fjb_1$/)
   })
 
   test('redirects an authenticated candidate away from login and sign-up', async ({ page }) => {

@@ -58,7 +58,7 @@ test('admin settings: grouped sidebar, search, help and confirmed risky save', {
   })
   const noHorizontalScroll = async () => expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0)
 
-  await page.goto('/admin/app/cau-hinh?group=general')
+  await page.goto('/quan-tri/cau-hinh?group=general')
   const nav = page.getByRole('navigation', { name: 'Nhóm cấu hình' })
   await expect(nav.getByRole('button', { name: 'Thương hiệu' })).toHaveAttribute('aria-current', 'page')
   await expect(page.getByText('Chữ trắng trên màu chính', { exact: false })).toBeVisible()

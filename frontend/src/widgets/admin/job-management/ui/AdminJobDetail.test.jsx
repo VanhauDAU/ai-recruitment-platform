@@ -125,7 +125,7 @@ describe('AdminJobDetail', () => {
     )
 
     const link = await screen.findByRole('link', { name: 'Mở hồ sơ xác thực' })
-    expect(link).toHaveAttribute('href', '/admin/app/nha-tuyen-dung/usr_employer?tab=verification')
+    expect(link).toHaveAttribute('href', '/quan-tri/nha-tuyen-dung/usr_employer?tab=verification')
     expect(screen.queryByRole('button', { name: 'Duyệt tin' })).not.toBeInTheDocument()
   })
 })

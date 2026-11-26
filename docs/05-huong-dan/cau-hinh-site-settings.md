@@ -1,6 +1,6 @@
 # Cấu hình hệ thống (SiteSetting)
 
-Trang quản trị `/admin/app/cau-hinh` (chỉ superuser) đọc và ghi các row `SiteSetting`
+Trang quản trị `/quan-tri/cau-hinh` (chỉ superuser) đọc và ghi các row `SiteSetting`
 của app `sitecontent`. Hợp đồng của kho cấu hình nằm ở
 [ADR-0026](../adr/adr-0026-settings-contract.md). Kế hoạch làm lại trang nằm ở
 [ke-hoach-cau-hinh-he-thong.md](../archive/ke-hoach/ke-hoach-cau-hinh-he-thong.md).
@@ -133,7 +133,7 @@ Cột "Mặc định" là giá trị trong seed. Dấu ✓ nghĩa là key đư�
 | Logo & biểu tượng | `brand_favicon_url` | Favicon | image | "/favicon-32.png" | ✓ |
 | Màu sắc | `brand_primary_color` | Màu thương hiệu chính | color | "#00b14f" | ✓ |
 
-### Banner quảng bá (trang quản trị `/admin/app/banner`)
+### Banner quảng bá (trang quản trị `/quan-tri/banner`)
 
 Banner không phải site setting; công tắc `home_show_banner` chỉ ẩn/hiện cả carousel.
 Nội dung nhập ở trang **Banner quảng bá**, chạy xoay vòng theo thứ tự, mỗi banner có

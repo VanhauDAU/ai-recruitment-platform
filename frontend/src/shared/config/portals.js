@@ -4,7 +4,7 @@
 // Dev cùng host:
 //   /tuyendung      -> landing nhà tuyển dụng
 //   /tuyendung/app  -> vùng app nhà tuyển dụng
-//   /admin/app      -> vùng app quản trị
+//   /quan-tri       -> vùng app quản trị (URL cũ /admin/app/... chuyển hướng về đây)
 //
 // Production subdomain:
 //   tuyendung.domain.vn/      -> landing nhà tuyển dụng
@@ -43,11 +43,17 @@ export const AUTH_SYNC_COOKIE_DOMAIN = (
 
 const EMPLOYER_MARKETING_BASE = IS_EMPLOYER_HOST ? '' : '/tuyendung'
 const EMPLOYER_APP_BASE = `${EMPLOYER_MARKETING_BASE}/app`
-const ADMIN_APP_BASE = IS_ADMIN_HOST ? '/app' : '/admin/app'
+const ADMIN_APP_BASE = IS_ADMIN_HOST ? '/app' : '/quan-tri'
 
 export const employerMarketingPath = (p = '') => `${EMPLOYER_MARKETING_BASE}${p}` || '/'
 export const employerAppPath = (p = '') => `${EMPLOYER_APP_BASE}${p}` || '/'
 export const adminPath = (p = '') => `${ADMIN_APP_BASE}${p}` || '/'
+
+// `/admin/...` là URL cũ của cổng quản trị (email, bookmark): vẫn tính là cổng admin
+// để trang chuyển hướng dùng đúng token và không bị màn bảo trì chặn.
+const ADMIN_PATH_PREFIXES = [ADMIN_APP_BASE, '/admin']
+export const isAdminPath = (path) => IS_ADMIN_HOST
+  || ADMIN_PATH_PREFIXES.some((base) => path === base || path.startsWith(`${base}/`))
 
 // Link từ site chính sang cổng NTD: absolute URL khi đã có subdomain, path nội bộ khi dev.
 export const EMPLOYER_PORTAL_URL = import.meta.env.VITE_EMPLOYER_HOST
@@ -98,7 +104,7 @@ export function getCurrentPortal() {
   if (IS_EMPLOYER_HOST || path === EMPLOYER_MARKETING_BASE || path.startsWith(`${EMPLOYER_MARKETING_BASE}/`)) {
     return 'employer'
   }
-  if (IS_ADMIN_HOST || path === '/admin' || path.startsWith('/admin/')) {
+  if (isAdminPath(path)) {
     return 'admin'
   }
   return 'main'

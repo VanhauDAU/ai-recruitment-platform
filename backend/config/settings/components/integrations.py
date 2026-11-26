@@ -88,9 +88,9 @@ KNOWLEDGEBASE_SEARCH_INDEX_ENABLED = config(
     default=False,
     cast=bool,
 )
-ADMIN_INVITATION_PATH = config('ADMIN_INVITATION_PATH', default='/admin/app/loi-moi')
+ADMIN_INVITATION_PATH = config('ADMIN_INVITATION_PATH', default='/quan-tri/loi-moi')
 ADMIN_PASSWORD_RESET_PATH = config(
-    'ADMIN_PASSWORD_RESET_PATH', default='/admin/app/dat-lai-mat-khau'
+    'ADMIN_PASSWORD_RESET_PATH', default='/quan-tri/dat-lai-mat-khau'
 )
 EMPLOYER_EMAIL_VERIFICATION_PATH = config(
     'EMPLOYER_EMAIL_VERIFICATION_PATH', default='/tuyendung/app/xac-thuc-email'

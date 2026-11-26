@@ -60,7 +60,7 @@ describe('AccountList (recruiters)', () => {
     expect(screen.getByText('Hồ sơ xác thực chờ duyệt')).toBeInTheDocument()
     expect(screen.getByText('Chưa hoạt động')).toBeInTheDocument()
     expect(screen.getByText('Duyệt xác thực').closest('a'))
-      .toHaveAttribute('href', '/admin/app/nha-tuyen-dung/usr_recruiter?tab=verification')
+      .toHaveAttribute('href', '/quan-tri/nha-tuyen-dung/usr_recruiter?tab=verification')
 
     fireEvent.click(screen.getByText('Việc cần làm', { selector: '.ws-sort' }))
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ ordering: 'next_action' }))

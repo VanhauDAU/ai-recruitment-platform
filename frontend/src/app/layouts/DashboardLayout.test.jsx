@@ -99,7 +99,7 @@ describe('DashboardLayout admin access', () => {
       logout: vi.fn(),
     })
     renderDashboard(
-      <MemoryRouter initialEntries={['/admin/app/duyet-tin']}>
+      <MemoryRouter initialEntries={['/quan-tri/duyet-tin']}>
         <DashboardLayout />
       </MemoryRouter>,
     )
@@ -119,7 +119,7 @@ describe('DashboardLayout admin access', () => {
     const user = userEvent.setup()
     useSession.mockReturnValue({ user: superuser(), logout: vi.fn() })
     renderDashboard(
-      <MemoryRouter initialEntries={['/admin/app/tong-quan']}>
+      <MemoryRouter initialEntries={['/quan-tri/tong-quan']}>
         <DashboardLayout />
       </MemoryRouter>,
     )
@@ -129,15 +129,15 @@ describe('DashboardLayout admin access', () => {
       + within(navigation).getAllByRole('button', { expanded: true }).length).toBe(6)
     expect(within(navigation).queryByText('Vận hành')).not.toBeInTheDocument()
     const home = within(navigation).getByRole('link', { name: 'Tổng quan' })
-    expect(home).toHaveAttribute('href', '/admin/app/tong-quan')
+    expect(home).toHaveAttribute('href', '/quan-tri/tong-quan')
     expect(home).toHaveAttribute('aria-current', 'page')
     expect(within(navigation).getByRole('button', { name: 'Cần xử lý' }))
       .toHaveAttribute('aria-expanded', 'true')
     expect(within(navigation).getByRole('link', { name: 'Hậu kiểm nội dung' }))
-      .toHaveAttribute('href', '/admin/app/cong-ty?tab=content-changes')
+      .toHaveAttribute('href', '/quan-tri/cong-ty?tab=content-changes')
     await user.click(within(navigation).getByRole('button', { name: 'Nội dung' }))
     expect(within(navigation).getByRole('link', { name: 'Mẫu CV' }))
-      .toHaveAttribute('href', '/admin/app/cv/tong-quan')
+      .toHaveAttribute('href', '/quan-tri/cv/tong-quan')
     expect(within(navigation).queryByText('Tài khoản cá nhân')).not.toBeInTheDocument()
   })
 
@@ -145,7 +145,7 @@ describe('DashboardLayout admin access', () => {
     const user = userEvent.setup()
     useSession.mockReturnValue({ user: superuser(), logout: vi.fn() })
     const view = renderDashboard(
-      <MemoryRouter initialEntries={['/admin/app/tong-quan']}>
+      <MemoryRouter initialEntries={['/quan-tri/tong-quan']}>
         <DashboardLayout />
       </MemoryRouter>,
     )
@@ -158,7 +158,7 @@ describe('DashboardLayout admin access', () => {
     view.unmount()
 
     renderDashboard(
-      <MemoryRouter initialEntries={['/admin/app/tong-quan']}>
+      <MemoryRouter initialEntries={['/quan-tri/tong-quan']}>
         <DashboardLayout />
       </MemoryRouter>,
     )
@@ -170,7 +170,7 @@ describe('DashboardLayout admin access', () => {
     const user = userEvent.setup()
     useSession.mockReturnValue({ user: superuser(), logout: vi.fn() })
     const view = renderDashboard(
-      <MemoryRouter initialEntries={['/admin/app/tong-quan']}>
+      <MemoryRouter initialEntries={['/quan-tri/tong-quan']}>
         <DashboardLayout />
       </MemoryRouter>,
     )
@@ -184,7 +184,7 @@ describe('DashboardLayout admin access', () => {
     view.unmount()
 
     renderDashboard(
-      <MemoryRouter initialEntries={['/admin/app/tong-quan']}>
+      <MemoryRouter initialEntries={['/quan-tri/tong-quan']}>
         <DashboardLayout />
       </MemoryRouter>,
     )
@@ -195,7 +195,7 @@ describe('DashboardLayout admin access', () => {
     const user = userEvent.setup()
     useSession.mockReturnValue({ user: superuser(), logout: vi.fn() })
     renderDashboard(
-      <MemoryRouter initialEntries={['/admin/app/tong-quan']}>
+      <MemoryRouter initialEntries={['/quan-tri/tong-quan']}>
         <DashboardLayout />
       </MemoryRouter>,
     )
@@ -224,7 +224,7 @@ describe('DashboardLayout admin access', () => {
   it('shows the active queue in the workspace header', () => {
     useSession.mockReturnValue({ user: superuser(), logout: vi.fn() })
     renderDashboard(
-      <MemoryRouter initialEntries={['/admin/app/cong-ty?tab=updates']}>
+      <MemoryRouter initialEntries={['/quan-tri/cong-ty?tab=updates']}>
         <DashboardLayout />
       </MemoryRouter>,
     )
@@ -239,7 +239,7 @@ describe('DashboardLayout admin access', () => {
     const user = userEvent.setup()
     useSession.mockReturnValue({ user: superuser(), logout: vi.fn() })
     renderDashboard(
-      <MemoryRouter initialEntries={['/admin/app/tong-quan']}>
+      <MemoryRouter initialEntries={['/quan-tri/tong-quan']}>
         <Routes>
           <Route path="*" element={<DashboardLayout />}>
             <Route path="*" element={<LocationProbe />} />
@@ -256,7 +256,7 @@ describe('DashboardLayout admin access', () => {
     await user.keyboard('{Enter}')
 
     expect(screen.getByTestId('location')).toHaveTextContent(
-      '/admin/app/nha-tuyen-dung?tab=domain-verification',
+      '/quan-tri/nha-tuyen-dung?tab=domain-verification',
     )
   })
 

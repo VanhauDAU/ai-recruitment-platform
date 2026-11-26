@@ -1,7 +1,7 @@
 # Hướng dẫn quản trị thông báo đa cổng
 
 Tài liệu này dành cho quản trị viên sử dụng route
-`/admin/app/thong-bao`. Workspace quản trị là một phần của AN-P3 và dùng
+`/quan-tri/thong-bao`. Workspace quản trị là một phần của AN-P3 và dùng
 trực tiếp contract revision/lifecycle của backend; không lưu bản nháp giả trong
 trình duyệt.
 

@@ -169,7 +169,7 @@ cho lý do ngoại lệ. Không tạo bridge/re-export tạm thời để né ru
 ## Quy ước URL
 
 - Path người dùng nhìn thấy viết tiếng Việt không dấu, nối bằng gạch ngang, kể cả trong
-  workspace (`/tuyendung/app/tin-tuyen-dung/:id/chinh-sua`, `/admin/app/duyet-tin`).
+  workspace (`/tuyendung/app/tin-tuyen-dung/:id/chinh-sua`, `/quan-tri/duyet-tin`).
   Hành động dùng `tao-moi`, `chinh-sua`, `thiet-lap`, `xem`. Ngoại lệ có chủ đích: tiền
   tố `app`, `/oauth/callback` (đã khai với nhà cung cấp OAuth), `/blog`, tên thương hiệu
   `/procv-connect`. Query param giữ nguyên (`?tab=…`).
