@@ -5,6 +5,11 @@ import { SALARY_RANGES } from '@/entities/job/job'
 import { searchGeoPlaces } from '@/entities/system/location'
 import { m } from '@/shared/config/i18n'
 
+// Gói miễn phí của Geoapify (GEOCODING_PROVIDER=geoapify) bắt buộc ghi công cạnh
+// kết quả; nhận ra qua tiền tố ref của gợi ý nên đổi nhà cung cấp không phải sửa đây.
+const PLACE_CREDITS = {
+  geoapify: [['https://www.geoapify.com/', 'Geoapify'], ['https://www.openstreetmap.org/copyright', '© OpenStreetMap']],
+}
 const SEARCH_DELAY_MS = 300
 const MIN_QUERY = 2
 
@@ -78,6 +83,7 @@ export default function NearbyFilterBar({
   const [sheetOpen, setSheetOpen] = useState(false)
   const [draft, setDraft] = useState(filters)
   const suggestions = usePlaceSuggestions(query, focus)
+  const credits = PLACE_CREDITS[suggestions.options.find((option) => option.type === 'place')?.ref.split(':')[0]]
   // Đồng bộ bản nháp khi URL đổi (nút quay lại, mở rộng bán kính…).
   const [synced, setSynced] = useState(filters)
   if (synced !== filters) {
@@ -139,6 +145,19 @@ export default function NearbyFilterBar({
           onSearch={setQuery}
           searchValue={query}
           loading={suggestions.loading}
+          popupRender={(menu) => (
+            <>
+              {menu}
+              {credits && (
+                <p className="nearby-filter__credit">
+                  {m.candidate_nearby_place_credit()}
+                  {credits.map(([href, label]) => (
+                    <a key={href} href={href} target="_blank" rel="noopener noreferrer">{label}</a>
+                  ))}
+                </p>
+              )}
+            </>
+          )}
           notFoundContent={suggestions.searched
             ? <p className="nearby-filter__empty">{m.candidate_nearby_place_not_found()}</p>
             : null}

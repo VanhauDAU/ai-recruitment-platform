@@ -1,9 +1,10 @@
 """Provider-neutral geocoding boundary (ADR-0029).
 
-VietMap is the production provider (Vietnamese data after the 07/2025 merger,
-maps that comply with Vietnamese law); Goong is a drop-in alternative and
-Nominatim is for development without a key. Every provider call goes through
-``GeocodeCache`` so re-saving a job or re-selecting a suggestion costs nothing.
+Geoapify is the production provider: self-serve key, free daily quota, Vietnam-only
+filter. VietMap and Goong are drop-in alternatives once a paid or activated key
+exists; Nominatim is for development without a key. Every provider call goes
+through ``GeocodeCache`` so re-saving a job or re-selecting a suggestion costs
+nothing.
 """
 
 from __future__ import annotations
@@ -214,6 +215,59 @@ class GoongProvider(_HttpProvider):
         return _point(location.get('lat'), location.get('lng'), result.get('formatted_address'))
 
 
+class GeoapifyProvider(_HttpProvider):
+    """https://apidocs.geoapify.com/docs/geocoding — Geocoding and Address Autocomplete.
+
+    ``filter=countrycode:vn`` keeps only features OpenStreetMap places in Vietnam.
+    Autocomplete items already carry coordinates, so the ref encodes them and
+    ``place`` resolves without a second billed request.
+    """
+
+    name = 'geoapify'
+    base_url = 'https://api.geoapify.com/v1/geocode'
+
+    def _params(self, text, **extra):
+        return {
+            'text': text,
+            'apiKey': settings.GEOCODING_API_KEY,
+            'filter': 'countrycode:vn',
+            'lang': 'vi',
+            'format': 'json',
+            **extra,
+        }
+
+    def geocode(self, text):
+        results = (self._get(f'{self.base_url}/search', self._params(text, limit=1)) or {}).get(
+            'results'
+        ) or []
+        if not results:
+            return None
+        return _point(results[0].get('lat'), results[0].get('lon'), results[0].get('formatted'))
+
+    def autocomplete(self, text, focus):
+        params = self._params(text, limit=AUTOCOMPLETE_LIMIT)
+        if focus:
+            params['bias'] = f'proximity:{focus[1]},{focus[0]}'
+        data = self._get(f'{self.base_url}/autocomplete', params)
+        suggestions = []
+        for item in (data or {}).get('results') or []:
+            point = _point(item.get('lat'), item.get('lon'))
+            if point is None:
+                continue
+            suggestions.append(
+                PlaceSuggestion(
+                    ref=f'{self.name}:{point.latitude:.6f},{point.longitude:.6f}',
+                    label=item.get('address_line1') or item.get('formatted', ''),
+                    secondary=item.get('address_line2', ''),
+                )
+            )
+        return suggestions[:AUTOCOMPLETE_LIMIT]
+
+    def place(self, ref):
+        lat, _, lng = ref.removeprefix(f'{self.name}:').partition(',')
+        return _point(lat, lng)
+
+
 class NominatimProvider(_HttpProvider):
     """Development only. The OSM usage policy forbids autocomplete and allows at
     most one request per second, so autocomplete returns nothing here."""
@@ -251,6 +305,7 @@ _PROVIDERS = {
     'disabled': DisabledProvider,
     'vietmap': VietMapProvider,
     'goong': GoongProvider,
+    'geoapify': GeoapifyProvider,
     'nominatim': NominatimProvider,
 }
 
@@ -260,7 +315,7 @@ def get_geocoding_provider() -> GeocodingProvider:
     if name not in _PROVIDERS:
         logger.error('Unknown GEOCODING_PROVIDER %r, geocoding disabled', name)
         name = 'disabled'
-    if name in {'vietmap', 'goong'} and not settings.GEOCODING_API_KEY:
+    if name in {'vietmap', 'goong', 'geoapify'} and not settings.GEOCODING_API_KEY:
         name = 'disabled'
     return _PROVIDERS[name]()
 

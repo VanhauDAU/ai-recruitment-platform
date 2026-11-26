@@ -314,8 +314,9 @@ mọi lỗi cấu hình thành một thông báo — xem bằng
 Việc làm gần tôi (ADR-0029): khi DB đã có tin (khôi phục từ dump), chạy một lần
 `seed_location_coordinates` rồi `refresh_job_coordinates` để gán tọa độ cho nơi làm
 việc cũ. Có hai key riêng:
-- Tìm địa chỉ phía máy chủ: đặt `GEOCODING_PROVIDER=goong` và `GEOCODING_API_KEY` trong
-  `backend/.env`. Dùng key Goong loại "API Key", giới hạn IP máy chủ.
+- Tìm địa chỉ phía máy chủ: đặt `GEOCODING_PROVIDER=geoapify` và `GEOCODING_API_KEY` trong
+  `backend/.env`. Tạo key ở myprojects.geoapify.com, giới hạn IP máy chủ. Gói miễn phí cho
+  3.000 request/ngày, và trang tìm việc tự ghi công Geoapify, OpenStreetMap như gói này yêu cầu.
 - Bản đồ nền: site setting `map_style_url`, dùng style VietMap kèm key tile giới hạn domain
   procv.site.
 

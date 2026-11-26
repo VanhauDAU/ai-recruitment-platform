@@ -159,6 +159,7 @@
   "candidate_nearby_place_failed": "Không lấy được toạ độ của địa chỉ này. Thử gợi ý khác.",
   "candidate_nearby_locating": "Đang lấy vị trí hiện tại…",
   "candidate_nearby_place_not_found": "Không tìm thấy địa điểm. Thử nhập tên phường/xã, ví dụ “Hoàn Kiếm”.",
+  "candidate_nearby_place_credit": "Gợi ý địa chỉ:",
   "candidate_nearby_map_point": "Điểm đã chọn trên bản đồ",
   "candidate_nearby_view_list": "Danh sách",
   "candidate_nearby_view_list_count": "Danh sách ({count})",

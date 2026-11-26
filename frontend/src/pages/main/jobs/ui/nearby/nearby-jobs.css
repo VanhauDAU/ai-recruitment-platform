@@ -133,6 +133,21 @@
   font-weight: 600;
 }
 
+.nearby-filter__credit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+  margin: 4px 0 0;
+  padding: 6px 12px 2px;
+  border-top: 1px solid #f1f5f9;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.nearby-filter__credit a {
+  color: #64748b;
+}
+
 .nearby-filter__empty {
   margin: 0;
   padding: 6px 4px;

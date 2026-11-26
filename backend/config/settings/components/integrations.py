@@ -163,7 +163,7 @@ CAMPAIGN_SOCIAL_HTTP_TIMEOUT_SECONDS = config(
     'CAMPAIGN_SOCIAL_HTTP_TIMEOUT_SECONDS', default=10.0, cast=float
 )
 
-# Geocoding cho "Việc làm gần bạn" (ADR-0029): vietmap (production) | goong |
+# Geocoding cho "Việc làm gần bạn" (ADR-0029): geoapify (production) | vietmap | goong |
 # nominatim (chỉ dev, không key) | disabled. Key là bí mật phía server; key tile
 # bản đồ công khai nằm trong site setting `map_style_url`.
 GEOCODING_PROVIDER = config('GEOCODING_PROVIDER', default='disabled').strip().lower()

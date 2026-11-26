@@ -66,7 +66,7 @@ nhập admin. Phần còn lại là **tài khoản và cấu hình bên ngoài**
   `AI_RUNTIME_ENABLED=False`. Sau 13/12 nếu chưa nạp thêm: đổi backend hoặc tắt AI.
   Mỗi lần đổi model/backend: admin → Cấu hình hệ thống → AI, chọn lại model tạo tin và allowlist.
   Hoặc đặt `AI_RUNTIME_ENABLED=False` nếu chưa dùng.
-- [ ] Key tile VietMap trong site setting `map_style_url`; key Goong (`GEOCODING_PROVIDER=goong`) cho tìm địa chỉ (nếu bật "Việc làm gần tôi").
+- [ ] Key tile VietMap trong site setting `map_style_url`; key Geoapify (`GEOCODING_PROVIDER=geoapify`) cho tìm địa chỉ (nếu bật "Việc làm gần tôi").
 
 **Giám sát và bí mật**
 - [ ] Sentry: 2 project (backend, frontend) → `SENTRY_DSN`, `VITE_SENTRY_DSN`.

@@ -37,10 +37,14 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   chọn, nút "Bộ lọc" (có số bộ lọc đang bật) và nút chuyển danh sách/bản đồ dạng biểu
   tượng. Ngành nghề, mức lương, "Gồm việc làm từ xa" nằm trong bảng trượt từ dưới lên, có
   nút "Xem kết quả".
-- Tìm địa chỉ production chuyển sang Goong (`GEOCODING_PROVIDER=goong`, key loại "API Key"
-  giới hạn IP máy chủ) vì API tìm kiếm của VietMap trả phí; VietMap chỉ cấp tile bản đồ.
-  Cập nhật chú thích trong `backend/.env.example`, ADR-0029, hướng dẫn deploy và
-  checklist go-live.
+- Thêm nhà cung cấp tìm địa chỉ `geoapify` (`GEOCODING_PROVIDER=geoapify`) và dùng cho
+  production: gói miễn phí 3.000 request/ngày, đăng ký không cần thẻ. API tìm kiếm của
+  VietMap trả phí, còn tài khoản Goong mới phải chờ kích hoạt. Kết quả lọc
+  `countrycode:vn` và bằng tiếng Việt. Ref gợi ý mang sẵn tọa độ nên chọn gợi ý không gọi
+  thêm API. Khi gợi ý đến từ Geoapify, danh sách ghi công Geoapify và © OpenStreetMap như
+  gói miễn phí yêu cầu. VietMap chỉ cấp tile bản đồ.
+- Cập nhật chú thích `GEOCODING_*` trong `backend/.env.example`, ADR-0029, hướng dẫn
+  deploy và checklist go-live.
 - E2E `nearby-jobs` chạy với style VietMap giả nên bản đồ hiện thật. Test kiểm tra ô vị trí
   được điền, bảng bộ lọc trên điện thoại và trang không cuộn ngang ở cả chế độ bản đồ trên
   tablet và điện thoại.

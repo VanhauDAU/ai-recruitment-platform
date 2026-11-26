@@ -159,6 +159,7 @@
   "candidate_nearby_place_failed": "Could not locate this address. Try another suggestion.",
   "candidate_nearby_locating": "Getting your current location…",
   "candidate_nearby_place_not_found": "No place found. Try a ward or commune name, e.g. “Hoan Kiem”.",
+  "candidate_nearby_place_credit": "Address suggestions:",
   "candidate_nearby_map_point": "Point picked on the map",
   "candidate_nearby_view_list": "List",
   "candidate_nearby_view_list_count": "List ({count})",
