@@ -37,10 +37,25 @@
   color: #64748b;
 }
 
+/* minmax(0, 1fr): canvas MapLibre có bề rộng cố định theo pixel; cột `auto` bị nó
+   đẩy rộng hơn màn hình điện thoại (trang lệch, cuộn ngang). */
 .nearby-page__layout {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   margin-top: 16px;
+}
+
+.nearby-page__views {
+  margin-top: 12px;
+}
+
+/* Dưới lg: danh sách và bản đồ là hai chế độ xem, không xếp chồng. */
+@media (max-width: 1023px) {
+  .nearby-page__layout[data-view='list'] > .nearby-map,
+  .nearby-page__layout[data-view='map'] > .nearby-page__list {
+    display: none;
+  }
 }
 
 .nearby-page__selected {
@@ -71,15 +86,26 @@
     align-items: start;
   }
 
+  /* Hai class: thắng `.ant-segmented-block` (CSS-in-JS chèn sau CSS trang). */
+  .nearby-page .nearby-page__views {
+    display: none;
+  }
+
   .nearby-map {
     position: sticky;
     top: 80px;
+  }
+
+  /* Chưa cấu hình bản đồ Việt Nam (useBasemap): danh sách chiếm cả hàng. */
+  .nearby-page__layout:not(:has(> .nearby-map)) {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
 /* ---- Thanh lọc ---- */
 .nearby-filter {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   padding: 14px 16px;
   border: 1px solid #e2e8f0;
@@ -89,9 +115,17 @@
 
 .nearby-filter__origin {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+}
+
+.nearby-filter__place {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.nearby-filter__place .ant-select-prefix {
+  color: #94a3b8;
 }
 
 .nearby-filter__locate {
@@ -99,14 +133,28 @@
   font-weight: 600;
 }
 
-.nearby-filter__or {
-  font-size: 13px;
+.nearby-filter__credit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+  margin: 4px 0 0;
+  padding: 6px 12px 2px;
+  border-top: 1px solid #f1f5f9;
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.nearby-filter__credit a {
   color: #64748b;
 }
 
-.nearby-filter__place {
-  flex: 1 1 280px;
-  min-width: 0;
+.nearby-filter__empty {
+  margin: 0;
+  padding: 6px 4px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #64748b;
+  white-space: normal;
 }
 
 .nearby-filter__error {
@@ -171,14 +219,52 @@
   font-weight: 600;
 }
 
+/* Điện thoại (chế độ compact của NearbyFilterBar): ô vị trí + một hàng gồm bán kính,
+   nút "Bộ lọc" (ngành nghề, lương, từ xa trong bảng trượt) và chuyển danh sách/bản đồ. */
+.nearby-filter__compact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nearby-filter__radius-select {
+  width: 92px;
+  flex: none;
+}
+
+.nearby-filter__compact .nearby-view-switch {
+  margin-left: auto;
+}
+
+.nearby-filter__sheet {
+  display: grid;
+  gap: 12px;
+}
+
+.nearby-filter__sheet .nearby-filter__select {
+  width: 100%;
+}
+
+.nearby-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 @media (max-width: 639px) {
-  .nearby-filter__select,
-  .nearby-filter__submit,
-  .nearby-filter__locate {
-    width: 100%;
+  .nearby-filter {
+    padding: 12px;
   }
 
-  .nearby-filter__or {
+  .nearby-filter__locate {
+    width: 40px;
+    padding-inline: 0;
+  }
+
+  .nearby-filter__locate-text {
     display: none;
   }
 }
@@ -226,8 +312,8 @@
 
 @media (max-width: 1023px) {
   .nearby-map__canvas {
-    height: 340px;
-    min-height: 0;
+    height: min(70vh, 560px);
+    min-height: 320px;
   }
 }
 

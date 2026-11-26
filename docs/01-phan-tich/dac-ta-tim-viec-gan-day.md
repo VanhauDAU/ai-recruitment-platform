@@ -60,8 +60,7 @@ flowchart LR
     T --> GS
     GS --> PRV{Adapter}
   end
-  PRV --> VM[VietMap]
-  PRV --> GO[Goong]
+  PRV --> GA[Geoapify]
   PRV --> NO[Nominatim - dev]
   SEL --> DB[(Location / JobLocation lat,lng)]
   LP --> GEO
@@ -109,7 +108,7 @@ flowchart TD
   G2 -- OK --> G3{Trong VN?}
   G3 -- Không --> E4[Chỉ hỗ trợ trong VN]
   G3 -- Có --> ACC[Sai số > 1 km → ghi chú]
-  CH -->|Gõ tên| AC[Gợi ý: phường/xã cục bộ trước, địa chỉ VietMap sau]
+  CH -->|Gõ tên| AC[Gợi ý: phường/xã cục bộ trước, địa chỉ Geoapify sau]
   AC -->|phường| Q
   AC -->|địa chỉ| PL[/geo/place → tọa độ/] --> Q
   CH -->|Bấm/kéo ghim trên bản đồ| Q

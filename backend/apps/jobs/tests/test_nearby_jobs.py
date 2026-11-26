@@ -212,7 +212,7 @@ class NearbyJobMapTests(NearbyFixture, APITestCase):
 
 class GeoLookupApiTests(NearbyFixture, APITestCase):
     def test_autocomplete_lists_local_wards_before_provider_places(self):
-        suggestion = PlaceSuggestion('vietmap:abc', '1 Tràng Tiền', 'Hoàn Kiếm, Hà Nội')
+        suggestion = PlaceSuggestion('geoapify:21.024,105.853', '1 Tràng Tiền', 'Hoàn Kiếm, Hà Nội')
         with mock.patch(
             'apps.locations.api.views.geo.autocomplete_places', return_value=[suggestion]
         ) as provider:
@@ -232,7 +232,7 @@ class GeoLookupApiTests(NearbyFixture, APITestCase):
         ward = self.client.get(url, {'ref': f'ward:{self.ba_dinh.slug}'})
         self.assertEqual(ward.data['latitude'], 21.0385)
         with mock.patch('apps.locations.api.views.geo.resolve_place', return_value=None):
-            self.assertEqual(self.client.get(url, {'ref': 'vietmap:nope'}).status_code, 404)
+            self.assertEqual(self.client.get(url, {'ref': 'geoapify:nope'}).status_code, 404)
 
     def test_ward_lookup_uses_local_centroids(self):
         by_slug = self.client.get(reverse('geo-ward', args=[self.ben_thanh.slug]))

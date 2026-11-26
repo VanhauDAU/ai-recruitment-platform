@@ -1,4 +1,4 @@
-# ADR-0029: Việc làm gần bạn — tọa độ không PostGIS, geocoding qua adapter VietMap
+# ADR-0029: Việc làm gần bạn — tọa độ không PostGIS, geocoding qua adapter
 
 **Trạng thái:** Đã chấp nhận
 **Ngày:** 25/11/2026
@@ -36,15 +36,31 @@
    "Tất cả" (cả tỉnh) và dòng tỉnh cũ không có điểm; tìm gần khớp chúng khi vị trí ứng
    viên thuộc tỉnh đó ("Tuyển khắp tỉnh", xếp sau tin có km).
 5. **Geocoding qua adapter, cache theo khóa địa chỉ chuẩn hóa.** `GEOCODING_PROVIDER`
-   = `vietmap` (production: dữ liệu sau sáp nhập, bản đồ theo chuẩn Việt Nam, gợi ý
-   tiếng Việt) | `goong` | `nominatim` (chỉ dev, 1 req/s, không autocomplete) |
+   = `geoapify` (production) | `nominatim` (chỉ dev, 1 req/s, không autocomplete) |
    `disabled`. Key là bí mật phía server; trình duyệt chỉ gọi `/api/public/locations/geo/*`.
    `GeocodeCache` giữ kết quả 180 ngày (không thấy: 7 ngày) vì `job_locations` bị
    xóa-tạo-lại mỗi lần lưu tin. Địa chỉ chưa có trong cache được geocode nền bằng
    Celery sau commit; trong lúc chờ, nơi làm việc dùng tâm phường.
+   *Sửa 27/11/2026:* bản đầu chọn `vietmap` (thêm `goong` dự phòng). Khi triển khai thì
+   API tìm kiếm của VietMap trả phí, còn tài khoản Goong mới phải chờ kích hoạt mới tạo
+   được key, nên hai adapter này đã bị gỡ. LocationIQ không được chọn vì gói miễn phí chỉ
+   cho cache 48 giờ.
+   Geoapify miễn phí 3.000 request/ngày, đăng ký không cần thẻ, được dùng thương mại nếu
+   ghi công Geoapify và OpenStreetMap. Kết quả lọc `countrycode:vn` nên không lẫn đối tượng
+   OSM gán cho nước khác ở Hoàng Sa. Ref gợi ý mang sẵn tọa độ, nên chọn gợi ý không tốn
+   thêm request. Key tile VietMap chỉ dùng cho bản đồ nền (mục 6).
 6. **Bản đồ: MapLibre GL, nạp lazy.** Style lấy từ site setting `map_style_url` (style
-   VietMap kèm key tile công khai); để trống thì dùng OpenFreeMap — chỉ cho dev. Thư viện
-   ~300 KB gzip chỉ nằm trong chunk của trang dùng bản đồ, bundle khởi tạo không đổi.
+   VietMap kèm key tile công khai). Thư viện ~300 KB gzip chỉ nằm trong chunk của trang
+   dùng bản đồ, bundle khởi tạo không đổi.
+   *Sửa 27/11/2026:* bỏ style dự phòng OpenFreeMap. Tile OpenStreetMap trong vùng Biển
+   Đông gán tên Trung Quốc cho hai quần đảo (từ zoom 7 có "Sansha 三沙市", "Xisha 西沙区",
+   "Nansha 南沙区", "Yongxing 永兴镇"; zoom 8 thêm hàng chục tên đáy biển tiếng Trung),
+   nhãn biển ghi "South China Sea 南海", còn đảo Ba Bình có đường biên quốc gia gắn Đài
+   Loan. Như vậy là vi phạm khoản 4 Điều 6 Luật Đo đạc và bản đồ 2018.
+   `useBasemap()` (`entities/system/site-settings`) chỉ nhận style https của nhà cung cấp
+   bản đồ Việt Nam (hiện chỉ `maps.vietmap.vn`). Nếu không hợp lệ, trang ẩn bản
+   đồ: danh sách việc làm gần vẫn chạy, NTD không ghim tay mà dùng tọa độ geocode hoặc
+   tâm phường. Thêm nhà cung cấp khác thì phải soát vùng Biển Đông trước.
 7. **Quyền riêng tư:** chỉ hỏi vị trí khi ứng viên bấm nút; tọa độ làm tròn 3 chữ số
    (~110 m) trước khi gửi, server làm tròn lại, không lưu; tọa độ GPS không lên URL
    (chỉ sessionStorage), URL chỉ mang slug phường khi gốc là phường/xã.

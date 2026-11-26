@@ -79,7 +79,7 @@ class GeoFixture:
             status=GeocodeCache.Status.FOUND if point else GeocodeCache.Status.NOT_FOUND,
             latitude=point[0] if point else None,
             longitude=point[1] if point else None,
-            provider='vietmap',
+            provider='geoapify',
             expires_at='2099-01-01T00:00:00Z',
         )
 
@@ -149,7 +149,7 @@ class AssignCoordinatesTests(GeoFixture, TestCase):
         self.assertEqual(rows[1].latitude, 10.7713)
 
 
-@override_settings(GEOCODING_PROVIDER='vietmap', GEOCODING_API_KEY='k')
+@override_settings(GEOCODING_PROVIDER='geoapify', GEOCODING_API_KEY='k')
 class BackgroundGeocodingTests(GeoFixture, TestCase):
     def _pending_job(self, address='12 Hàng Bài'):
         job = self.make_job()
@@ -164,7 +164,7 @@ class BackgroundGeocodingTests(GeoFixture, TestCase):
     def test_uncached_address_is_geocoded_after_commit(self):
         job, callbacks = self._pending_job()
         with mock.patch(
-            'apps.locations.services.geocoding.VietMapProvider.geocode',
+            'apps.locations.services.geocoding.GeoapifyProvider.geocode',
             return_value=GeoPoint(21.0240, 105.8530, '12 Hàng Bài'),
         ) as geocode:
             for callback in callbacks:
@@ -178,7 +178,7 @@ class BackgroundGeocodingTests(GeoFixture, TestCase):
         job, _ = self._pending_job()
         with (
             mock.patch(
-                'apps.locations.services.geocoding.VietMapProvider.geocode',
+                'apps.locations.services.geocoding.GeoapifyProvider.geocode',
                 side_effect=GeocodingUnavailable(),
             ),
             self.assertRaises(GeocodingUnavailable),

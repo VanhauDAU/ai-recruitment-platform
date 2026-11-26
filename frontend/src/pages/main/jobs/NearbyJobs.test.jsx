@@ -9,7 +9,9 @@ const mocks = vi.hoisted(() => ({
   getNearbyJobs: vi.fn(),
   getNearbyJobMap: vi.fn(),
   getGeoWard: vi.fn(),
+  searchGeoPlaces: vi.fn(),
   settings: {},
+  basemap: { styleUrl: 'https://maps.vietmap.vn/style.json', attribution: '' },
 }))
 
 vi.mock('@/entities/job/job', async (importOriginal) => ({
@@ -22,12 +24,13 @@ vi.mock('@/entities/job/job', async (importOriginal) => ({
 vi.mock('@/entities/system/location', async (importOriginal) => ({
   ...(await importOriginal()),
   getGeoWard: mocks.getGeoWard,
-  searchGeoPlaces: async () => [],
+  searchGeoPlaces: mocks.searchGeoPlaces,
 }))
 
 vi.mock('@/entities/system/site-settings', () => ({
   useSiteSettings: () => ({ settings: mocks.settings }),
   useSiteSetting: () => '',
+  useBasemap: () => mocks.basemap,
 }))
 
 vi.mock('@/shared/ui/map/MapView', () => ({
@@ -80,6 +83,8 @@ describe('NearbyJobs page', () => {
     sessionStorage.clear()
     Element.prototype.scrollIntoView = vi.fn() // jsdom không có
     mocks.settings = {}
+    mocks.searchGeoPlaces.mockResolvedValue([])
+    mocks.basemap = { styleUrl: 'https://maps.vietmap.vn/style.json', attribution: '' }
     mocks.getGeoWard.mockResolvedValue({ ward_name: 'Phường Điện Bàn', latitude: 16.0, longitude: 108.2 })
     mocks.getNearbyJobMap.mockResolvedValue({ origin: ORIGIN, points: [], truncated: false })
     mocks.getNearbyJobs.mockResolvedValue({ count: 0, results: [], origin: ORIGIN, expand_suggestion: null })
@@ -110,6 +115,15 @@ describe('NearbyJobs page', () => {
     expect(Object.fromEntries(params)).toEqual({ lat: '16', lng: '108.2', radius_km: '10' })
   })
 
+  it('hides the map but keeps the list when no Vietnamese basemap is configured', async () => {
+    mocks.basemap = null
+    mocks.getNearbyJobs.mockResolvedValue({ count: 1, results: [job('a')], origin: ORIGIN, expand_suggestion: null })
+    renderPage()
+
+    expect(await screen.findByText('Việc a')).toBeInTheDocument()
+    expect(screen.queryByTestId('map')).not.toBeInTheDocument()
+  })
+
   it('offers the next radius when nothing is close and applies it', async () => {
     mocks.getNearbyJobs.mockResolvedValue({ count: 0, results: [], origin: ORIGIN, expand_suggestion: { radius_km: 20, count: 4 } })
     renderPage()
@@ -130,6 +144,27 @@ describe('NearbyJobs page', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'pin P. Điện Bàn' }))
     expect(screen.getByText('1 việc tại P. Điện Bàn')).toBeInTheDocument()
     expect(document.querySelector('[data-job-slug="a"]')).toHaveClass('nearby-card--active')
+  })
+
+  it('fills the location box with the current position and its nearest ward', async () => {
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: { getCurrentPosition: (ok) => ok({ coords: { latitude: 16.0001, longitude: 108.2001, accuracy: 30 } }) },
+    })
+    renderPage('/viec-lam-gan-ban')
+    await userEvent.click(screen.getByRole('button', { name: /Dùng vị trí của tôi/ }))
+
+    expect(await screen.findByTitle('Vị trí của bạn · P. Điện Bàn, Đà Nẵng')).toBeInTheDocument()
+  })
+
+  it('credits Geoapify and OpenStreetMap under address suggestions from Geoapify', async () => {
+    mocks.searchGeoPlaces.mockResolvedValue([{ type: 'place', ref: 'geoapify:16.06,108.22', label: '12 Bạch Đằng', secondary: 'Đà Nẵng' }])
+    renderPage('/viec-lam-gan-ban')
+    await userEvent.type(screen.getByRole('combobox', { name: 'Nhập phường/xã hoặc địa chỉ' }), '12 bach dang')
+
+    expect(await screen.findByText('12 Bạch Đằng')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Geoapify' })).toHaveAttribute('href', 'https://www.geoapify.com/')
+    expect(screen.getByRole('link', { name: '© OpenStreetMap' })).toBeInTheDocument()
   })
 
   it('shows a clear message when location access is denied', async () => {

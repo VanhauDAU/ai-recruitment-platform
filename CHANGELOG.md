@@ -8,6 +8,48 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-27
 
+#### Fixed — Việc làm gần tôi: bỏ bản đồ nền sai chủ quyền Hoàng Sa, Trường Sa; làm lại ô vị trí và bố cục điện thoại
+
+- Production để trống `map_style_url` nên các trang "Việc làm gần tôi", chi tiết tin và
+  ghim nơi làm việc dùng style OpenFreeMap. Tile vector của style này ghi "South China
+  Sea 南海" và từ zoom 7 gán tên Trung Quốc cho hai quần đảo: "Sansha 三沙市", "Xisha
+  西沙区", "Nansha 南沙区", "Yongxing 永兴镇", "Zhubi 渚碧岛". Zoom 8 thêm hàng chục tên
+  đáy biển tiếng Trung, còn đảo Ba Bình có đường biên quốc gia gắn Đài Loan.
+- `useBasemap()` mới (`entities/system/site-settings`) chỉ nhận style https của nhà cung
+  cấp bản đồ Việt Nam (hiện chỉ `maps.vietmap.vn`). `MapView` không còn style dự
+  phòng, kể cả ở dev.
+- Chưa có style hợp lệ thì các trang ẩn bản đồ. "Việc làm gần tôi" vẫn tìm theo GPS hoặc
+  phường/xã, danh sách chiếm cả hàng. Chi tiết tin không hiện bản đồ nhỏ. Form đăng tin ẩn
+  nút "Ghim trên bản đồ" và dùng tọa độ geocode hoặc tâm phường.
+- Cập nhật ADR-0029, hướng dẫn site settings và mô tả `map_style_url`/`map_attribution`
+  trong seed. Bật lại bản đồ: tạo key tile VietMap giới hạn domain procv.site rồi dán
+  `https://maps.vietmap.vn/maps/styles/tm/style.json?apikey=<key>` vào cấu hình hệ thống.
+- Ô vị trí gộp tìm kiếm và định vị. Nút ngắm nằm cạnh ô, trên điện thoại chỉ còn biểu
+  tượng. Bấm nút sẽ điền "Vị trí của bạn · P. X, Tỉnh Y" vào ô; bấm bản đồ thì ghi "Điểm đã
+  chọn trên bản đồ". Đang định vị thì ô báo "Đang lấy vị trí hiện tại…". Tìm không thấy thì
+  gợi ý nhập tên phường/xã, không còn danh sách trống.
+- Sửa lỗi bản đồ tràn khỏi màn hình điện thoại làm lệch trang (khung 434px trên màn
+  375px): lưới trang và thanh lọc dùng `minmax(0, 1fr)` nên canvas MapLibre không đẩy
+  cột rộng ra.
+- Dưới 1024px, danh sách và bản đồ chuyển bằng nút "Danh sách (n) | Bản đồ" thay vì xếp
+  chồng; bấm ghim trên bản đồ sẽ quay về danh sách các việc ở điểm đó.
+- Điện thoại (dưới 640px) chỉ còn hai hàng: ô vị trí kèm nút định vị, rồi bán kính dạng ô
+  chọn, nút "Bộ lọc" (có số bộ lọc đang bật) và nút chuyển danh sách/bản đồ dạng biểu
+  tượng. Ngành nghề, mức lương, "Gồm việc làm từ xa" nằm trong bảng trượt từ dưới lên, có
+  nút "Xem kết quả".
+- Tìm địa chỉ chuyển sang `geoapify` (`GEOCODING_PROVIDER=geoapify`) cho production và gỡ
+  hai adapter `vietmap`, `goong` cùng test của chúng; giá trị cũ giờ rơi về `disabled`.
+  Lý do chọn Geoapify: gói miễn phí 3.000 request/ngày, đăng ký không cần thẻ. API tìm kiếm của
+  VietMap trả phí, còn tài khoản Goong mới phải chờ kích hoạt. Kết quả lọc
+  `countrycode:vn` và bằng tiếng Việt. Ref gợi ý mang sẵn tọa độ nên chọn gợi ý không gọi
+  thêm API. Khi gợi ý đến từ Geoapify, danh sách ghi công Geoapify và © OpenStreetMap như
+  gói miễn phí yêu cầu. VietMap chỉ cấp tile bản đồ.
+- Cập nhật chú thích `GEOCODING_*` trong `backend/.env.example`, ADR-0029, hướng dẫn
+  deploy và checklist go-live.
+- E2E `nearby-jobs` chạy với style VietMap giả nên bản đồ hiện thật. Test kiểm tra ô vị trí
+  được điền, bảng bộ lọc trên điện thoại và trang không cuộn ngang ở cả chế độ bản đồ trên
+  tablet và điện thoại.
+
 #### Fixed — Trắng trang ở tab "Bản AI chờ duyệt" (React #185)
 
 - Xem trước CV đo chiều cao section kèm margin, nhưng section cuối vùng có `last:mb-0`
