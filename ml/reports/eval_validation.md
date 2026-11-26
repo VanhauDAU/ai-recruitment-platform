@@ -29,6 +29,38 @@ Kappa bậc hai giữa mức hiển thị và nhãn; điểm của 33 cặp nhã
 | hybrid, bỏ hệ số liên quan | 0,672 | 27 | 48 | 0 |
 | hybrid, tắt cả hai (công thức `hybrid-v1`) | 0,511 | 28 | 65 | 6 |
 
+Điểm trung bình theo nhãn (KHÔNG tăng dần):
+
+| Nhãn 0 | Nhãn 1 | Nhãn 2 | Nhãn 3 | Nhãn 4 |
+| ---: | ---: | ---: | ---: | ---: |
+| 16 | 34 | 55 | 71 | 65 |
+
+Số cặp theo mức hiển thị và nhãn (mức đúng của nhãn: 0–1 chưa phù hợp, 2 tương đối, 3 phù hợp, 4 rất phù hợp):
+
+| Mức hiển thị | Nhãn 0 | Nhãn 1 | Nhãn 2 | Nhãn 3 | Nhãn 4 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Chưa phù hợp | 33 | 34 | 7 | 0 | 1 |
+| Tương đối phù hợp | 0 | 8 | 3 | 4 | 0 |
+| Phù hợp | 0 | 0 | 2 | 2 | 1 |
+| Rất phù hợp | 0 | 0 | 2 | 2 | 1 |
+
+## So với `hybrid` (bootstrap ghép cặp)
+
+Hiệu số phương án trừ `hybrid`, đo trên cùng bộ tin ở mỗi vòng bootstrap. In đậm khi khoảng
+tin cậy 95% không chứa 0; còn lại là chưa kết luận được.
+
+| Phương án | Δ Spearman | Khoảng tin cậy | Δ NDCG@5 | Khoảng tin cậy |
+| --- | ---: | --- | ---: | --- |
+| TF-IDF | **-0,421** | -0,605 đến -0,192 | **-0,217** | -0,344 đến -0,096 |
+| BM25 | **-0,483** | -0,746 đến -0,174 | **-0,178** | -0,322 đến -0,050 |
+| Luật `profile-rule-v2` | -0,071 | -0,198 đến 0,045 | +0,016 | -0,097 đến 0,147 |
+| Bi-encoder `e5-base-zs-v1` (cosine toàn văn) | **-0,149** | -0,281 đến -0,008 | **-0,099** | -0,211 đến -0,002 |
+| hybrid, bật khớp kỹ năng gần nghĩa | **-0,073** | -0,170 đến -0,003 | -0,036 | -0,100 đến 0,000 |
+| hybrid, bỏ hệ số liên quan | -0,007 | -0,069 đến 0,053 | -0,000 | -0,011 đến 0,011 |
+| hybrid, tắt cả hai (công thức `hybrid-v1`) | **-0,096** | -0,225 đến -0,007 | -0,042 | -0,112 đến 0,000 |
+| Bi-encoder `e5-small-zs-v1` (cosine toàn văn) | **-0,242** | -0,408 đến -0,060 | **-0,155** | -0,279 đến -0,039 |
+| Bi-encoder `minilm-l12-zs-v1` (cosine toàn văn) | -0,169 | -0,330 đến 0,005 | **-0,194** | -0,341 đến -0,061 |
+
 ## Cặp khác ngôn ngữ (tin và CV một Việt một Anh)
 
 | Phương án | Số cặp | Spearman |

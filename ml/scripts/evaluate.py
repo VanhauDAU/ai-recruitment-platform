@@ -26,7 +26,10 @@ Chỉ số (mọi khoảng tin cậy là bootstrap 95%, lấy mẫu lại theo t
 - NDCG@5 trung bình theo tin, độ lợi 2^nhãn − 1; kèm mức của xếp ngẫu nhiên.
 - Số tin mà phương án có NDCG@5 cao hơn BM25.
 - Riêng các dòng `hybrid`: kappa bậc hai giữa mức hiển thị và nhãn, và điểm của các
-  cặp nhãn 0 (khác ngành).
+  cặp nhãn 0 (khác ngành). Với `hybrid` đang chạy còn có điểm trung bình theo nhãn
+  (phải tăng dần) và bảng mức hiển thị theo nhãn.
+- Hiệu số của từng phương án so với `hybrid`, bootstrap ghép cặp: hai phương án đo
+  trên cùng bộ tin ở mỗi vòng, nên biết được chênh lệch có vượt nhiễu hay không.
 
 Kết quả: `ml/reports/eval_<phần>.md` và `.json`; điểm từng cặp ở `ml/data/eval/`.
 """
@@ -171,6 +174,32 @@ def measure(pairs, scores, rng):
     }
 
 
+def paired_difference(pairs, scores, reference):
+    """Hiệu số (phương án − mốc) của Spearman và NDCG@5, bootstrap ghép cặp.
+
+    Mỗi vòng rút một bộ tin rồi đo cả hai phương án trên đúng bộ đó, nên nhiễu do tin
+    dễ hay khó triệt tiêu nhau. Khoảng tin cậy không chứa 0 mới kết luận được là hơn/kém.
+    """
+    rng = np.random.default_rng(SEED)  # cùng dãy rút cho mọi phép so, để các dòng so được với nhau
+    gold = np.array([pair['label'] for pair in pairs])
+    jobs = list(dict.fromkeys(pair['jd'] for pair in pairs))
+    members = {jd: [i for i, pair in enumerate(pairs) if pair['jd'] == jd] for jd in jobs}
+    ndcg, ndcg_reference = ndcg_by_job(pairs, scores), ndcg_by_job(pairs, reference)
+    scored = [jd for jd in jobs if jd in ndcg and jd in ndcg_reference]
+    rhos, ndcgs = [], []
+    for _ in range(BOOTSTRAP_ROUNDS):
+        drawn = rng.choice(jobs, size=len(jobs), replace=True)
+        rows = [index for jd in drawn for index in members[jd]]
+        rhos.append(spearman(scores[rows], gold[rows]) - spearman(reference[rows], gold[rows]))
+        ndcgs.append(np.mean([ndcg[jd] - ndcg_reference[jd] for jd in drawn if jd in scored]))
+    return {
+        'spearman': spearman(scores, gold) - spearman(reference, gold),
+        'spearman_ci': interval(rhos),
+        'ndcg': float(np.mean([ndcg[jd] - ndcg_reference[jd] for jd in scored])),
+        'ndcg_ci': interval(ndcgs),
+    }
+
+
 def band(score):
     return sum(score >= threshold for threshold in BAND_THRESHOLDS)
 
@@ -179,7 +208,15 @@ def score_quality(pairs, scores):
     """Chỉ cho phương án có thang 0–100: mức hiển thị so với nhãn, và điểm cặp khác ngành."""
     gold = [LABEL_BAND[pair['label']] for pair in pairs]
     unrelated = [score for pair, score in zip(pairs, scores, strict=True) if pair['label'] == 0]
+    by_label = [[s for pair, s in zip(pairs, scores, strict=True) if pair['label'] == label] for label in range(5)]
+    means = [float(np.mean(group)) if group else None for group in by_label]
+    known = [mean for mean in means if mean is not None]
     return {
+        # Điểm trung bình theo nhãn 0–4: thang điểm đúng thì phải tăng dần.
+        'mean_by_label': means,
+        'monotonic': all(low < high for low, high in zip(known, known[1:], strict=False)),
+        # Số cặp theo (mức hiển thị, nhãn): mỗi mức hiển thị gồm những nhãn nào.
+        'band_by_label': [[int(sum(band(s) == level for s in group)) for group in by_label] for level in range(4)],
         'band_kappa': float(
             cohen_kappa_score(gold, [band(s) for s in scores], weights='quadratic', labels=[0, 1, 2, 3])
         ),  # fmt: skip
@@ -206,7 +243,39 @@ def spread(ci):
     return '–' if ci is None else f'{number(ci[0])} đến {number(ci[1])}'
 
 
-def report(split, pairs, results, floor, quality, errors, cross):
+BAND_NAMES = ('Chưa phù hợp', 'Tương đối phù hợp', 'Phù hợp', 'Rất phù hợp')
+
+
+def difference(value, ci):
+    """Hiệu số có dấu; in đậm khi khoảng tin cậy không chứa 0."""
+    text = f'{value:+.3f}'.replace('.', ',')
+    return f'**{text}**' if ci and (ci[0] > 0 or ci[1] < 0) else text
+
+
+def scale_report(row):
+    """Hai bảng kiểm tra thang điểm của `hybrid`: điểm theo nhãn, mức hiển thị theo nhãn."""
+    means = ' | '.join(number(mean, 0) for mean in row['mean_by_label'])
+    lines = [
+        '',
+        f'Điểm trung bình theo nhãn ({"tăng dần" if row["monotonic"] else "KHÔNG tăng dần"}):',
+        '',
+        '| Nhãn 0 | Nhãn 1 | Nhãn 2 | Nhãn 3 | Nhãn 4 |',
+        '| ---: | ---: | ---: | ---: | ---: |',
+        f'| {means} |',
+        '',
+        'Số cặp theo mức hiển thị và nhãn (mức đúng của nhãn: 0–1 chưa phù hợp, 2 tương đối, 3 phù hợp, 4 rất phù hợp):',
+        '',
+        '| Mức hiển thị | Nhãn 0 | Nhãn 1 | Nhãn 2 | Nhãn 3 | Nhãn 4 |',
+        '| --- | ---: | ---: | ---: | ---: | ---: |',
+    ]
+    lines += [
+        f'| {name} | ' + ' | '.join(str(count) for count in counts) + ' |'
+        for name, counts in zip(BAND_NAMES, row['band_by_label'], strict=True)
+    ]
+    return lines
+
+
+def report(split, pairs, results, floor, quality, errors, cross, differences):
     jobs = len(dict.fromkeys(pair['jd'] for pair in pairs))
     counts = np.bincount([pair['label'] for pair in pairs], minlength=5)
     lines = [
@@ -244,6 +313,22 @@ def report(split, pairs, results, floor, quality, errors, cross):
         f'| {name} | {number(row["band_kappa"])} | {number(row["unrelated_median"], 0)} | '
         f'{number(row["unrelated_max"], 0)} | {row["unrelated_at_least_50"]} |'
         for name, row in quality.items()
+    ]
+    lines += scale_report(quality[HYBRID])
+    lines += [
+        '',
+        f'## So với `{HYBRID}` (bootstrap ghép cặp)',
+        '',
+        f'Hiệu số phương án trừ `{HYBRID}`, đo trên cùng bộ tin ở mỗi vòng bootstrap. In đậm khi khoảng',
+        'tin cậy 95% không chứa 0; còn lại là chưa kết luận được.',
+        '',
+        '| Phương án | Δ Spearman | Khoảng tin cậy | Δ NDCG@5 | Khoảng tin cậy |',
+        '| --- | ---: | --- | ---: | --- |',
+    ]
+    lines += [
+        f'| {name} | {difference(row["spearman"], row["spearman_ci"])} | {spread(row["spearman_ci"])} | '
+        f'{difference(row["ndcg"], row["ndcg_ci"])} | {spread(row["ndcg_ci"])} |'
+        for name, row in differences.items()
     ]
     if cross:
         lines += ['', '## Cặp khác ngôn ngữ (tin và CV một Việt một Anh)', '']
@@ -302,7 +387,10 @@ def main():
     )
     quality = {name: score_quality(pairs, scores[name]) for name in hybrids}
     floor = random_ndcg(pairs, rng)
-    text = report(options.split, pairs, results, floor, quality, errors, cross)
+    differences = {
+        name: paired_difference(pairs, values, scores[HYBRID]) for name, values in scores.items() if name != HYBRID
+    }
+    text = report(options.split, pairs, results, floor, quality, errors, cross, differences)
 
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     (REPORTS_DIR / f'eval_{options.split}.md').write_text(text, encoding='utf-8')
@@ -313,6 +401,7 @@ def main():
         'systems': results,
         'hybrid_quality': quality[HYBRID],
         'hybrid_ablation_quality': {name: quality[name] for name in hybrids[1:]},
+        'difference_from_hybrid': differences,
         'cross_language': {name: {'pairs': count, 'spearman': rho} for name, (count, rho) in cross.items()},
     }
     (REPORTS_DIR / f'eval_{options.split}.json').write_text(

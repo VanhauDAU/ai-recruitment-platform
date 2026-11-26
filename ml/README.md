@@ -36,6 +36,13 @@ ml/
     merge_gold_passes.py  gộp hai lượt gán nhãn độc lập của đợt 2 tập vàng
     evaluate.py           đo các phương án trên tập vàng (validation; test chỉ một lần)
     evaluate_recommendations.py  đo gợi ý việc làm CV → tin trên nhãn yếu
+    error_analysis.py     soi lỗi của công thức đang chạy trên validation (tín hiệu, cosine theo nhãn, cặp lệch mức)
+    quality_gate.py       cổng chất lượng cho CV huấn luyện (generate_cvs.py --train), phiếu soát 40 CV
+    build_train_pairs.py  bộ ba huấn luyện bi-encoder, có chống rò rỉ sang tập vàng
+    build_requirement_pairs.py  cặp (câu yêu cầu, câu CV) huấn luyện cross-encoder
+    train.py              fine-tune bi-encoder E5 trên MPS
+    train_reranker.py     fine-tune cross-encoder phán từng yêu cầu
+    run_training.sh       chạy nối các bước dữ liệu → huấn luyện → đo
   labeling/               tài liệu gán nhãn (commit)
     rubric.md             thang chấm 0–4 đã chốt
     gold_pairs.xlsx       phiếu chấm 150 cặp (tab Chấm), kèm nội dung JD và CV
@@ -54,6 +61,7 @@ ml/
     cv/
       cv_inventory.xlsx   sổ theo dõi kho CV
       synthetic/          CV-001…CV-100.json + manifest.json (nhãn yếu)
+      train/              CV huấn luyện TR-<tin>-<số>.json neo vào 70 tin ngoài tập vàng + manifest.json
       pdf/system/         15 PDF do hệ thống xuất (bản tải lên của CV tổng hợp)
       pdf/topcv/          36 PDF xuất từ TopCV, nhiều mẫu khác nhau
     labels/gold_pool.json nguồn ghép cặp và phép chia validation/test (không xem khi chấm)
@@ -68,6 +76,7 @@ ml/
     check_profiles.md     trích xuất profile_json so với đáp án   (check_profiles.py)
     calibration_<mô hình>.md  AUC và mốc hiệu chuẩn               (calibrate.py)
     eval_validation.{md,json}  bảng đo trên validation            (evaluate.py)
+    error_analysis_validation.md  lỗi của công thức đang chạy     (error_analysis.py)
     recommendations.{md,json}  đo gợi ý việc làm                  (evaluate_recommendations.py)
   models/                 KHÔNG commit; mô hình cho ml-worker (mount /models), kèm model_card.json
 ```

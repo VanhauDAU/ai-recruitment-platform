@@ -25,7 +25,14 @@ Quy tắc chống bịa dữ liệu (kế hoạch mục 6b):
 
 from .cv_builder import cv_profile
 from .cv_upload import text_cv_profile
-from .job import job_profile
+from .job import job_profile, job_text_chunks
 from .profile import EXTRACTOR_VERSION, ExtractionError
 
-__all__ = ['EXTRACTOR_VERSION', 'ExtractionError', 'cv_profile', 'job_profile', 'text_cv_profile']
+__all__ = [
+    'EXTRACTOR_VERSION',
+    'ExtractionError',
+    'cv_profile',
+    'job_profile',
+    'job_text_chunks',
+    'text_cv_profile',
+]

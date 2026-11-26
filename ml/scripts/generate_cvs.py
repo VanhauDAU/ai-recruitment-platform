@@ -12,6 +12,14 @@ huấn luyện. Nhãn này KHÔNG thay cho điểm người chấm của tập v
 
 Kết quả: `ml/data/cv/synthetic/CV-xxx.json` và `manifest.json`. Chạy lại thì bỏ
 qua CV đã có tệp, nên dừng giữa chừng rồi chạy tiếp được.
+
+`--train` sinh kho CV huấn luyện (kế hoạch bản 3, mục 3.2): mỗi tin NGOÀI tập vàng
+được `--per-job` CV (mặc định 8: 4 khớp mạnh, 2 khớp một phần, 2 vị trí gần; tỷ lệ giữ nguyên khi tăng), lưu ở
+`ml/data/cv/train/TR-<tin>-<thứ tự>.json`. Tin của tập vàng không bao giờ làm tin neo, để
+dữ liệu huấn luyện không rò rỉ sang tập đánh giá.
+
+    ml/.venv/bin/python ml/scripts/generate_cvs.py --train --limit 2    # thử
+    ml/.venv/bin/python ml/scripts/generate_cvs.py --train --per-job 16 # 1.120 CV, khoảng 16 giờ
 """
 
 import argparse
@@ -24,8 +32,7 @@ import urllib.request
 from collections import defaultdict
 
 from openpyxl import load_workbook
-from paths import CV_MANIFEST, JD_INPUT
-from paths import SYNTHETIC_CV_DIR as OUTPUT_DIR
+from paths import CV_MANIFEST, JD_INPUT, SYNTHETIC_CV_DIR, TRAIN_CV_DIR, TRAIN_CV_MANIFEST
 
 OLLAMA_URL = 'http://127.0.0.1:11434/api/chat'
 
@@ -37,6 +44,51 @@ def has_foreign_script(value):
         char.isalpha() and not unicodedata.name(char, '').startswith('LATIN')
         for char in json.dumps(value, ensure_ascii=False)
     )
+
+
+# Tên bằng mà mô hình phải ghi cho từng bậc học. Đợt sinh đầu không ràng buộc chỗ này
+# nên 53/100 CV có tên bằng lệch với bậc học script đã chọn.
+DEGREE_LABELS = {
+    'vi': {
+        'high_school': 'Trung học phổ thông',
+        'intermediate': 'Trung cấp',
+        'college': 'Cao đẳng',
+        'university': 'Cử nhân',
+        'postgraduate': 'Thạc sĩ',
+    },
+    'en': {
+        'high_school': 'High School Diploma',
+        'intermediate': 'Vocational Certificate',
+        'college': 'College Diploma',
+        'university': 'Bachelor',
+        'postgraduate': 'Master',
+    },
+}
+_DEGREE_PATTERNS = (
+    ('postgraduate', r'thạc sĩ|master'),
+    ('college', r'cao đẳng|college diploma|associate'),
+    ('intermediate', r'trung cấp|vocational'),
+    ('high_school', r'trung học phổ thông|high school'),
+    ('university', r'cử nhân|kỹ sư|bachelor|đại học'),
+)
+MAX_SHORT_FIELD_CHARS = 120
+# Tin neo cho kho huấn luyện: 4 CV khớp mạnh, 2 khớp một phần, 2 vị trí gần.
+TRAIN_LEVELS = ['strong', 'partial', 'strong', 'adjacent', 'strong', 'partial', 'strong', 'adjacent']
+
+
+def degree_level_of(degree):
+    """Bậc học mà tên bằng nói ra, hoặc None nếu không rõ."""
+    folded = degree.casefold()
+    return next((level for level, pattern in _DEGREE_PATTERNS if re.search(pattern, folded)), None)
+
+
+def has_runaway_text(data):
+    """Ô ngắn (chức danh, tên công ty, tên bằng…) bị mô hình viết thành cả đoạn."""
+    education = data.get('education') or {}
+    short = [data.get('headline', ''), education.get('degree', ''), education.get('institution', '')]
+    short += [job.get(key, '') for job in data.get('experience', []) for key in ('role', 'company')]
+    short += [project.get(key, '') for project in data.get('projects', []) for key in ('name', 'role')]
+    return any(len(str(value)) > MAX_SHORT_FIELD_CHARS for value in short)
 
 
 TODAY_MONTH = (2026, 10)
@@ -180,6 +232,30 @@ def build_plan(jobs, extra, seed):
     return plan
 
 
+def build_train_plan(jobs, gold_codes, per_job, seed):
+    """Kho huấn luyện: mỗi tin ngoài tập vàng làm tin neo cho `per_job` CV.
+
+    Mã CV gắn với tin neo và thứ tự trong tin (`TR-05-03` là CV thứ tư của JD-05), nên
+    tăng `per_job` ở lần chạy sau chỉ thêm CV mới, không làm lệch CV đã sinh.
+    """
+    rng = random.Random(seed)
+    plan = []
+    for number, job in enumerate(job for job in jobs if job['code'] not in gold_codes):
+        for index in range(per_job):
+            plan.append(
+                {
+                    'code': f'TR-{job["code"][3:]}-{index:02d}',
+                    'cluster': job['group'] or 'Khác',
+                    'anchor': job,
+                    'level': TRAIN_LEVELS[index % len(TRAIN_LEVELS)],
+                    'band': BAND_PLAN[(number + index) % len(BAND_PLAN)],
+                    'language': 'en' if random.Random(f'{seed}-{job["code"]}-{index}').random() < 0.3 else 'vi',
+                }
+            )
+    rng.shuffle(plan)  # sinh xen kẽ các tin: dừng giữa chừng vẫn có CV cho mọi nghề
+    return plan
+
+
 def pick_skills(item, jobs, rng):
     anchor = item['anchor']
     low, high = MATCH_LEVELS[item['level']]
@@ -234,7 +310,7 @@ def timeline(months, jobs_count, rng):
     return list(reversed(ranges))
 
 
-def prompt_for(item, skills, months, jobs_count, rng):
+def prompt_for(item, skills, months, jobs_count, rng, degree_label):
     anchor = item['anchor']
     language = 'tiếng Anh' if item['language'] == 'en' else 'tiếng Việt'
     role = item.get('adjacent_role') or anchor['specialization']
@@ -249,6 +325,7 @@ Hồ sơ cần viết:
 - Vị trí đã/đang làm: {role}; {years}; số công việc đã làm: {jobs_count}.
 - Từng làm ở {rng.choice(COMPANY_KINDS)} tại {rng.choice(CITIES)}. Tên công ty phải là tên tự đặt, không dùng tên công ty có thật.
 - Kỹ năng thật sự có (chỉ dùng các kỹ năng này, không thêm kỹ năng chuyên môn khác): {', '.join(skills) or 'kỹ năng văn phòng cơ bản'}.
+- Bậc học cao nhất: {degree_label}. Ô "education.degree" phải bắt đầu bằng đúng cụm "{degree_label}" rồi tới ngành học.
 
 Yêu cầu:
 - Mỗi công việc có 3–5 gạch đầu dòng mô tả việc đã làm và kết quả cụ thể (con số, quy mô); mỗi kỹ năng ở trên xuất hiện tự nhiên trong ít nhất một gạch đầu dòng.
@@ -306,10 +383,12 @@ def generate(item, jobs, model, seed, previous):
     months = rng.randint(*EXPERIENCE_BANDS[item['band']])
     jobs_count = 0 if months == 0 else (1 if months < 18 else rng.randint(2, 3))
     ranges = timeline(months, jobs_count, rng) if jobs_count else []
+    level, start, end = education_for(item, rng, months)
+    degree_label = DEGREE_LABELS[item['language']][level]
+    problems = []
     for attempt in range(3):
-        data = call_model(
-            model, prompt_for(item, skills, months, max(jobs_count, 1), rng), seed + attempt
-        )
+        prompt = prompt_for(item, skills, months, max(jobs_count, 1), rng, degree_label)
+        data = call_model(model, prompt, seed + attempt)
         if not jobs_count:
             # Chưa đi làm: phần "kinh nghiệm" mô hình viết thành dự án học tập.
             data['projects'] = [
@@ -319,20 +398,39 @@ def generate(item, jobs, model, seed, previous):
             data['experience'] = []
         data['experience'] = data['experience'][: len(ranges)]
         similarity = max((jaccard(words(data), other) for other in previous), default=0)
-        if similarity < 0.45 and not has_foreign_script(data):
+        problems = [
+            name
+            for name, failed in (
+                ('trùng nội dung với CV khác', similarity >= 0.45),
+                ('lẫn chữ không phải Latin', has_foreign_script(data)),
+                ('ô ngắn bị viết thành đoạn', has_runaway_text(data)),
+                ('tên bằng lệch bậc học', degree_level_of(data['education'].get('degree', '')) != level),
+            )
+            if failed
+        ]
+        if not problems:
             break
-    else:
-        raise RuntimeError('Sau 3 lần sinh vẫn trùng nội dung hoặc lẫn chữ không phải Latin.')
-    for job, (start, end) in zip(data['experience'], ranges, strict=False):
-        job['start_date'], job['end_date'] = start, end
-    level, start, end = education_for(item, rng, months)
+    if problems == ['tên bằng lệch bậc học']:
+        # Lỗi duy nhất còn lại sửa được mà không cần mô hình: đặt đúng cụm chỉ bậc học lên đầu.
+        data['education']['degree'] = f'{degree_label} {data["education"].get("degree", "")}'.strip()
+    elif problems:
+        raise RuntimeError(f'Sau 3 lần sinh vẫn lỗi: {", ".join(problems)}.')
+    for job, (job_start, job_end) in zip(data['experience'], ranges, strict=False):
+        job['start_date'], job['end_date'] = job_start, job_end
     data['education'].update(degree_level=level, start_date=start, end_date=end)
     data['skills'] = [{'name': name, 'level': rng.randint(3, 5)} for name in skills]
+    body = ' '.join(
+        [data['summary']]
+        + [line for job in data['experience'] for line in job['highlights']]
+        + [line for project in data['projects'] for line in project['highlights']]
+    ).casefold()
     return data, {
         'skills': skills,
         'experience_months': months,
         'education_level': level,
         'max_similarity': round(similarity, 3),
+        # Tỷ lệ kỹ năng script chọn mà phần chữ có nhắc tên; cổng chất lượng dùng số này.
+        'skills_in_text': round(sum(name.casefold() in body for name in skills) / max(1, len(skills)), 2),
     }
 
 
@@ -344,29 +442,46 @@ def main():
     )
     parser.add_argument('--limit', type=int, default=0, help='Chỉ sinh N CV đầu (để thử).')
     parser.add_argument('--seed', type=int, default=42)
+    parser.add_argument('--train', action='store_true', help='Sinh kho CV huấn luyện.')
+    parser.add_argument('--per-job', type=int, default=8, help='Số CV mỗi tin neo (với --train).')
     options = parser.parse_args()
 
     jobs = load_jobs()
-    plan = build_plan(jobs, options.extra, options.seed)
+    if options.train:
+        from build_gold_pairs import EXTENSION_JDS, GOLD_JDS
+
+        plan = build_train_plan(jobs, {*GOLD_JDS, *EXTENSION_JDS}, options.per_job, options.seed)
+        output_dir, manifest_path = TRAIN_CV_DIR, TRAIN_CV_MANIFEST
+    else:
+        plan = build_plan(jobs, options.extra, options.seed)
+        output_dir, manifest_path = SYNTHETIC_CV_DIR, CV_MANIFEST
     if options.limit:
         plan = plan[: options.limit]
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    manifest_path = CV_MANIFEST
+    output_dir.mkdir(parents=True, exist_ok=True)
     manifest = (
         json.loads(manifest_path.read_text(encoding='utf-8')) if manifest_path.exists() else {}
     )
     previous = [
-        words(json.loads((OUTPUT_DIR / f'{code}.json').read_text(encoding='utf-8')))
+        words(json.loads((output_dir / f'{code}.json').read_text(encoding='utf-8')))
         for code in manifest
-        if (OUTPUT_DIR / f'{code}.json').exists()
+        if (output_dir / f'{code}.json').exists()
     ]
 
+    failed = 0
     for number, item in enumerate(plan, start=1):
-        path = OUTPUT_DIR / f'{item["code"]}.json'
+        path = output_dir / f'{item["code"]}.json'
         if path.exists():
             continue
         started = time.perf_counter()
-        data, facts = generate(item, jobs, options.model, options.seed * 1000 + number, previous)
+        # Kho huấn luyện: seed theo mã CV, nên thứ tự sinh không đổi kết quả của từng CV.
+        seed = sum(map(ord, item['code'])) * 7919 if options.train else options.seed * 1000 + number
+        try:
+            data, facts = generate(item, jobs, options.model, seed, previous)
+        except (RuntimeError, OSError, ValueError, KeyError) as error:
+            # Một CV hỏng không dừng cả đợt chạy qua đêm; chạy lại sẽ thử lại CV này.
+            failed += 1
+            print(f'{item["code"]} BỎ QUA: {error}', flush=True)
+            continue
         previous.append(words(data))
         path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding='utf-8')
         manifest[item['code']] = {
@@ -389,7 +504,7 @@ def main():
             f'{time.perf_counter() - started:5.1f}s sim={facts["max_similarity"]}',
             flush=True,
         )
-    print(f'Xong: {len(manifest)} CV trong {OUTPUT_DIR}')
+    print(f'Xong: {len(manifest)} CV trong {output_dir}; {failed} CV bị bỏ qua lần này.')
 
 
 if __name__ == '__main__':
