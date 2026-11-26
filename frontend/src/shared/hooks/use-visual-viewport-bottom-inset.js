@@ -1,5 +1,13 @@
 import { useEffect, useState } from 'react'
 
+// Bàn phím ảo đang mở khi một ô gõ chữ có focus: khung nhìn co lại và Safari cuộn
+// nó theo con trỏ ở gần như mỗi phím. Khoảng hụt lúc đó là bàn phím, không phải
+// thanh trình duyệt, nên giữ giá trị cũ thay vì vẽ lại cả cây mỗi phím gõ.
+function isEditing() {
+  const element = document.activeElement
+  return Boolean(element && (element.isContentEditable || element.matches?.('input, textarea, select')))
+}
+
 function measureBottomInset() {
   if (typeof window === 'undefined' || !window.visualViewport) return 0
 
@@ -25,6 +33,7 @@ export function useVisualViewportBottomInset() {
     let frameId = null
     const update = () => {
       frameId = null
+      if (isEditing()) return
       const nextInset = measureBottomInset()
       setBottomInset((current) => (current === nextInset ? current : nextInset))
     }
@@ -37,12 +46,15 @@ export function useVisualViewportBottomInset() {
     viewport.addEventListener('resize', scheduleUpdate)
     viewport.addEventListener('scroll', scheduleUpdate)
     window.addEventListener('resize', scheduleUpdate)
+    // Rời ô gõ (bàn phím đóng) thì đo lại một lần.
+    document.addEventListener('focusout', scheduleUpdate)
 
     return () => {
       if (frameId !== null) window.cancelAnimationFrame(frameId)
       viewport.removeEventListener('resize', scheduleUpdate)
       viewport.removeEventListener('scroll', scheduleUpdate)
       window.removeEventListener('resize', scheduleUpdate)
+      document.removeEventListener('focusout', scheduleUpdate)
     }
   }, [])
 
