@@ -20,8 +20,13 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   liên quan" của tin đã ngừng tuyển mở thẳng tab Việc liên quan. Thanh neo mục trên cùng
   ẩn trên mobile vì thanh tab đã thay thế.
 - Thẻ "Xem độ phù hợp" trên điện thoại thành nút nổi gọn: mascot đứng + nhãn AI + bong
-  bóng chữ "Xem độ phù hợp CV", ở góc phải ngay trên nút Góp ý. Máy tính bảng và desktop
-  giữ thẻ đầy đủ.
+  bóng chữ "Xem độ phù hợp CV", ở góc phải ngay trên nút Góp ý. Mascot đứng yên, khoảng
+  9 giây mới nhún nhẹ + vẫy tay một lần. Máy tính bảng và desktop giữ thẻ đầy đủ.
+- Tab **Công ty** thêm "Giới thiệu công ty" (mô tả, lĩnh vực, website) và dải "Việc làm
+  cùng công ty" vuốt ngang (mỗi lần một tin, hé tin sau; chỉ tải khi mở tab). API chi tiết
+  tin thêm `company_public_id` để lọc `?company=` mà không phải gọi trang công ty.
+- Trên mobile, khối đầu tin và các khối trong tab tràn sát mép, góc vuông, cách nhau dải
+  xám 8px; thanh tab liền ngay dưới khối đầu tin.
 
 #### Changed — Trang bảo trì theo thiết kế mới, bánh răng xoay
 

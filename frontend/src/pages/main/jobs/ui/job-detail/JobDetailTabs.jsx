@@ -38,7 +38,7 @@ export default function JobDetailTabs({ active, onChange, relatedCount = 0, pane
         </div>
       </div>
       {TABS.map(([key]) => (
-        <div key={key} role="tabpanel" id={`job-tabpanel-${key}`} aria-labelledby={`job-tab-${key}`} hidden={active !== key} className="space-y-5">
+        <div key={key} role="tabpanel" id={`job-tabpanel-${key}`} aria-labelledby={`job-tab-${key}`} hidden={active !== key}>
           {panels[key]}
         </div>
       ))}

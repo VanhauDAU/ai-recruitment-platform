@@ -139,6 +139,7 @@ class JobViewTrackingApiTests(APITestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['company_slug'], self.company.slug)
+        self.assertEqual(response.data['company_public_id'], self.company.public_id)
         self.assertEqual(response.data['company_address'], '12 Lý Thường Kiệt, Hà Nội')
 
     def test_held_company_takes_its_jobs_off_the_public_site(self):

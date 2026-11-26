@@ -16,7 +16,8 @@ import { buildJobDetailAlertPrefill } from './lib/job-detail-alert-prefill'
 import JobDetailContent, { RelatedJobs } from './ui/job-detail/JobDetailContent'
 import { JobBreadcrumbs, JobDetailSkeleton, JobHero } from './ui/job-detail/JobDetailOverview'
 import JobDetailSearchBar from './ui/job-detail/JobDetailSearchBar'
-import JobDetailSidebar, { CompanyCard, JobGeneralInfo, RelatedTopics } from './ui/job-detail/JobDetailSidebar'
+import JobCompanyTab from './ui/job-detail/JobCompanyTab'
+import JobDetailSidebar, { JobGeneralInfo, RelatedTopics } from './ui/job-detail/JobDetailSidebar'
 import JobDetailStickyBar from './ui/job-detail/JobDetailStickyBar'
 import JobDetailTabs from './ui/job-detail/JobDetailTabs'
 import JobQualityRating from './ui/job-detail/JobQualityRating'
@@ -188,7 +189,7 @@ export default function JobDetail() {
                       relatedCount={relatedJobs.length}
                       panels={{
                         info: <><JobGeneralInfo job={job} />{details}<JobQualityRating jobId={job.public_id} /><JobSafetyTips /><JobSidebarPromos /></>,
-                        company: <CompanyCard job={job} />,
+                        company: <JobCompanyTab job={job} active={activeTab === 'company'} isAuthenticated={isAuthenticated} onRequireLogin={promptLogin} />,
                         related: <>{relatedJobs.length ? related : <EmptyRelatedJobs />}<RelatedTopics job={job} /></>,
                       }}
                     />

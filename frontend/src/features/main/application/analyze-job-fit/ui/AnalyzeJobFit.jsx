@@ -27,7 +27,7 @@ export default function AnalyzeJobFit({ job, beforeOpen = () => true, onApply, p
             <button type="button" className="jf-fab" aria-label={label} onClick={openDialog}>
               <span className="jf-fab__label" aria-hidden="true">Xem độ phù hợp CV</span>
               <span className="jf-fab__robot">
-                <ProcvMascot blink float emotion="happy" pose="wave" size={64} />
+                <ProcvMascot blink emotion="happy" pose="wave" size={64} />
                 <span className="jf-fab__badge" aria-hidden="true">AI</span>
               </span>
             </button>

@@ -134,3 +134,30 @@
   line-height: 15px;
   letter-spacing: 0.02em;
 }
+
+/* Đứng yên phần lớn thời gian; khoảng 9 giây mới nhún nhẹ + vẫy tay + bong bóng
+   nảy một lần, để gợi chú ý mà không lắc liên tục. Cùng chu kỳ nên ba chuyển động khớp nhau. */
+.jf-fab__robot { animation: jf-fab-hop 9s cubic-bezier(0.37, 0, 0.63, 1) 2.5s infinite; }
+.jf-fab .procv-mascot__arm-wave { animation: jf-fab-wave 9s ease-in-out 2.5s infinite; }
+.jf-fab__label { animation: jf-fab-nudge 9s ease-in-out 2.5s infinite; transform-origin: right bottom; }
+
+@keyframes jf-fab-hop {
+  0%, 80%, 100% { transform: translateY(0); }
+  84% { transform: translateY(-5px); }
+  88% { transform: translateY(0); }
+  91% { transform: translateY(-2px); }
+  94% { transform: translateY(0); }
+}
+@keyframes jf-fab-wave {
+  0%, 80%, 96%, 100% { transform: rotate(0); }
+  83%, 89% { transform: rotate(-10deg); }
+  86%, 92% { transform: rotate(12deg); }
+}
+@keyframes jf-fab-nudge {
+  0%, 82%, 92%, 100% { transform: scale(1); }
+  86% { transform: scale(1.05); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jf-fab__robot, .jf-fab__label { animation: none; }
+}
