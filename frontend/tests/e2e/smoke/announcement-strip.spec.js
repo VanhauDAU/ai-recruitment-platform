@@ -70,14 +70,11 @@ async function expectHealthyStrip(page, message, header) {
     document.documentElement.scrollWidth - document.documentElement.clientWidth
   ))).toBeLessThanOrEqual(1)
 
-  const messageStyle = await strip.locator('.announcement-strip__message').evaluate(
-    (element) => ({
-      lineClamp: getComputedStyle(element).webkitLineClamp,
-      whiteSpace: getComputedStyle(element).whiteSpace,
-    }),
+  // Mọi kích thước đều một dòng; câu dài hơn khung thì chạy chữ (AnnouncementMessage).
+  const whiteSpace = await strip.locator('.announcement-strip__message').evaluate(
+    (element) => getComputedStyle(element).whiteSpace,
   )
-  if (page.viewportSize().width < 768) expect(messageStyle.lineClamp).toBe('2')
-  else expect(messageStyle.whiteSpace).toBe('nowrap')
+  expect(whiteSpace).toBe('nowrap')
 
   const motionStyle = await strip.locator('.announcement-strip__content').evaluate(
     (element) => {
