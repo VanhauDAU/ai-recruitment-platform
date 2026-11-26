@@ -112,8 +112,9 @@ nhập admin. Phần còn lại là **tài khoản và cấu hình bên ngoài**
    - [ ] POST `/api/auth/login/` với `portal=admin` từ ngoài Access nhận 403.
    - [ ] Sentry nhận lỗi thử. UptimeRobot xanh, không monitor nào báo 403 (nếu có:
      Cloudflare Security Events → rule Skip cho user-agent `UptimeRobot`).
-   - [ ] Admin → cụm link `footer_nav`: thêm "Trạng thái hệ thống" trỏ tới URL trang
-     trạng thái; mở footer kiểm link chạy.
+   - [ ] Footer cụm "Về ProCV" có link "Trạng thái hệ thống" (migration
+     `sitecontent.0014` thêm sẵn, production không có màn sửa cụm link vì tắt Django
+     admin). Đổi URL Status page thì sửa bằng migration mới.
 9. [ ] Backup: cài cron `backup_db.sh` + `backup_files.sh`; healthchecks nhận ping lần đầu.
 10. [ ] k6 200 VU từ máy ngoài (`scripts/loadtest/README.md`). Diễn tập khôi phục,
     ghi RTO vào `sao-luu-va-khoi-phuc.md`.
