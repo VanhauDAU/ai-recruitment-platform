@@ -178,7 +178,7 @@ export default function JobDetail() {
                 savePending={savePending}
               />
               {isAcceptingApplications(job) && (
-                <AnalyzeJobFit job={job} beforeOpen={requireCandidate} onApply={handleApply} placement="inline" />
+                <AnalyzeJobFit job={job} beforeOpen={requireCandidate} onApply={handleApply} placement={isMobile ? 'floating' : 'inline'} />
               )}
               {isMobile
                 ? (

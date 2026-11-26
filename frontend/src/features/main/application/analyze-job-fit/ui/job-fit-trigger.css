@@ -83,3 +83,54 @@
 @media (prefers-reduced-motion: reduce) {
   .jf-trigger, .jf-trigger__mascot, .jf-trigger__go { animation: none; transition: none; }
 }
+
+/* Điện thoại: chỉ mascot đứng + nhãn AI, nổi ở góc phải ngay trên nút Góp ý
+   (cùng công thức `bottom` với FeedbackLauncher, cộng chiều cao nút đó + khoảng hở). */
+.jf-fab {
+  position: fixed;
+  right: 4px;
+  bottom: calc(clamp(1.25rem, 3vw, 2rem) + var(--page-bottom-bar-height, 0px) + env(safe-area-inset-bottom, 0px) + 2.5rem);
+  z-index: 30;
+  display: flex;
+  align-items: flex-end;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.jf-fab:active { transform: scale(0.96); }
+.jf-fab:focus-visible { outline: 2px solid var(--brand-primary); outline-offset: 2px; border-radius: 12px; }
+
+/* Bong bóng chữ bên trái mascot, ngang thân robot: nói AI sẽ làm gì. */
+.jf-fab__label {
+  margin: 0 -4px 26px 0;
+  padding: 6px 10px;
+  border: 1px solid color-mix(in srgb, var(--brand-primary) 25%, transparent);
+  border-radius: 999px 999px 4px 999px;
+  background: #fff;
+  color: var(--brand-primary);
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-shadow: 0 6px 16px -6px rgb(15 23 42 / 25%);
+}
+.jf-fab__robot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  filter: drop-shadow(0 6px 10px rgb(15 23 42 / 18%));
+}
+.jf-fab__badge {
+  margin-top: -10px;
+  padding: 1px 8px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: linear-gradient(100deg, var(--brand-primary), #22b8a5);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 15px;
+  letter-spacing: 0.02em;
+}

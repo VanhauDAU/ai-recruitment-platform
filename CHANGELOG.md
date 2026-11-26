@@ -19,6 +19,9 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   nên giữ trạng thái khi đổi tab; sang tin khác tự về tab Thông tin. Nút "Xem việc làm
   liên quan" của tin đã ngừng tuyển mở thẳng tab Việc liên quan. Thanh neo mục trên cùng
   ẩn trên mobile vì thanh tab đã thay thế.
+- Thẻ "Xem độ phù hợp" trên điện thoại thành nút nổi gọn: mascot đứng + nhãn AI + bong
+  bóng chữ "Xem độ phù hợp CV", ở góc phải ngay trên nút Góp ý. Máy tính bảng và desktop
+  giữ thẻ đầy đủ.
 
 #### Changed — Trang bảo trì theo thiết kế mới, bánh răng xoay
 
