@@ -42,6 +42,18 @@ CALIBRATIONS = {
         requirement_met=0.855,
         requirement_partial=0.838,
     ),
+    # Bi-encoder fine-tune lượt đầu (27/11). Mốc toàn văn và chức danh đo trên 321 cặp có
+    # nhãn của tập hiệu chỉnh (`ml/reports/calibration_set_e5-base-ft-v1.md`): sau fine-tune
+    # cosine trải từ khoảng 0,13 tới 0,81 thay vì dồn trong 0,82–0,89. Ba ngưỡng theo câu
+    # (kỹ năng, yêu cầu) mới là tạm tính theo vị trí trong khoảng toàn văn, chưa đo riêng;
+    # trạng thái từng yêu cầu sẽ do cross-encoder quyết định.
+    'e5-base-ft-v1': Calibration(
+        document=(0.132, 0.809),
+        title=(0.338, 0.840),
+        skill=0.80,
+        requirement_met=0.64,
+        requirement_partial=0.47,
+    ),
 }
 DEFAULT_CALIBRATION = CALIBRATIONS['e5-base-zs-v1']
 

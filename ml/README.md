@@ -32,6 +32,7 @@ ml/
     export_profiles.py    xuất profile_json từ hệ thống (lệnh matching_export_dataset)
     check_profiles.py     đối chiếu profile_json với manifest, kiểm tra "không bịa"
     calibrate.py          AUC và mốc hiệu chuẩn cosine → điểm của từng phép so
+    calibrate_labeled.py  mốc quy đổi cosine → điểm của một bi-encoder, đo trên tập hiệu chỉnh có nhãn
     export_model.py       lưu mô hình vào models/<tên>/<phiên bản>/ cho ml-worker
     fetch_public.py       tải dữ liệu và mô hình công khai, ghi nguồn vào data/public/SOURCES.md
     merge_gold_passes.py  gộp hai lượt gán nhãn độc lập của đợt 2 tập vàng
@@ -82,6 +83,9 @@ ml/
     label_agreement.md, gold_batch2_agreement.md  đồng thuận nhãn (agreement.py, merge_gold_passes.py)
     check_profiles.md     trích xuất profile_json so với đáp án   (check_profiles.py)
     calibration_<mô hình>.md  AUC và mốc hiệu chuẩn               (calibrate.py)
+    calibration_set_<mô hình>.md  mốc và độ tách nhãn trên tập hiệu chỉnh (calibrate_labeled.py)
+    calibration_labels.md  nhãn tập hiệu chỉnh, đối chiếu nhãn yếu  (build_calibration_pairs.py merge)
+    train_cv_gate.md, train_pairs.md, reranker_pairs.md  dữ liệu huấn luyện (quality_gate.py, build_train_pairs.py, build_requirement_pairs.py)
     eval_validation.{md,json}  bảng đo trên validation            (evaluate.py)
     error_analysis_validation.md  lỗi của công thức đang chạy     (error_analysis.py)
     recommendations.{md,json}  đo gợi ý việc làm                  (evaluate_recommendations.py)

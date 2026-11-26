@@ -21,6 +21,8 @@ Phương án được đo:
   ba, tức `hybrid-v1`.
 - `--model tên=thư_mục[:noprefix]` thêm một bi-encoder khác trong `ml/models/` (chỉ
   lấy cosine toàn văn, vì mốc quy đổi điểm của `hybrid` là theo từng mô hình).
+- `--hybrid-model tên=thư_mục` dành cho bi-encoder đã có mốc trong `CALIBRATIONS` của
+  backend: đo cả cosine toàn văn lẫn điểm `hybrid` chạy với mô hình đó.
 
 Chỉ số (mọi khoảng tin cậy là bootstrap 95%, lấy mẫu lại theo tin):
 - Spearman giữa điểm và nhãn 0–4, gộp mọi cặp.
@@ -351,6 +353,10 @@ def main():
     parser.add_argument('--final', action='store_true', help='Xác nhận đây là lần chạy test duy nhất.')
     parser.add_argument('--model', action='append', type=parse_model, default=[], metavar='TÊN=THƯ_MỤC')
     parser.add_argument('--ablation', action='store_true', help='Đo thêm hybrid với từng thay đổi bị tắt.')
+    parser.add_argument(
+        '--hybrid-model', action='append', type=parse_model, default=[], metavar='TÊN=THƯ_MỤC',
+        help='Bi-encoder đã có mốc trong CALIBRATIONS: đo cả cosine lẫn điểm hybrid với mô hình này.',
+    )  # fmt: skip
     options = parser.parse_args()
     if options.split != 'validation' and not options.final:
         raise SystemExit('Phần test chỉ chạy một lần ở giai đoạn nghiệm thu. Thêm --final nếu đúng lúc đó.')
@@ -379,6 +385,12 @@ def main():
         flags = ['--model-path', f'/models/{path}', '--model-version', name]
         rows = product_rows(pairs, name, flags + (['--no-prefix'] if no_prefix else []))
         collect(f'Bi-encoder `{name}` (cosine toàn văn)', rows, 'document_similarity')
+    for name, path, no_prefix in options.hybrid_model:
+        flags = ['--model-path', f'/models/{path}', '--model-version', name]
+        rows = product_rows(pairs, name, flags + (['--no-prefix'] if no_prefix else []))
+        collect(f'Bi-encoder `{name}` (cosine toàn văn)', rows, 'document_similarity')
+        collect(f'hybrid với `{name}`', rows, 'score')
+        hybrids.append(f'hybrid với `{name}`')
 
     rng = np.random.default_rng(SEED)
     scores = {name: filled(values) for name, values in systems.items()}
