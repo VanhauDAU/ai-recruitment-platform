@@ -210,6 +210,50 @@ body {
   }
 }
 
+/* Nút "Góp ý" góc phải dưới (FeedbackLauncher): pill xanh thương hiệu; màn hẹp chỉ còn icon. */
+.feedback-launcher {
+  display: inline-flex;
+  height: 2.5rem;
+  min-width: 2.5rem;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  padding: 0 0.875rem;
+  background: linear-gradient(135deg, var(--brand-primary), var(--brand-primary-hover));
+  color: #fff;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--brand-primary) 35%, transparent);
+  transition:
+    bottom 0.3s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.feedback-launcher:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--brand-primary) 22%, transparent);
+}
+
+.feedback-launcher:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+@media (max-width: 767.98px) {
+  .feedback-launcher {
+    padding: 0;
+    font-size: 1.0625rem;
+  }
+
+  .feedback-launcher__label {
+    display: none;
+  }
+}
+
 /* Thanh tab ẩn khi cuộn xuống: trượt hẳn khỏi màn, kể cả nút CV nhô lên trên. */
 .mobile-tab-bar--fixed {
   transition: transform 0.3s ease;

@@ -5,9 +5,11 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { submitFeedback } from '../api/submit-feedback.api'
 import { useSession } from '@/entities/account/session'
 import { useSiteSettings } from '@/entities/system/site-settings'
+import { m } from '@/shared/config/i18n'
 
 // Chủ đề góp ý — khớp Feedback.Category ở backend.
 const FEEDBACK_TOPICS = [
+  { value: 'bug', label: m.candidate_feedback_topic_bug() },
   { value: 'ui_ux', label: 'Giao diện, trải nghiệm' },
   { value: 'feature', label: 'Tính năng sản phẩm' },
   { value: 'job_quality', label: 'Chất lượng tin tuyển dụng' },
@@ -25,7 +27,21 @@ const SATISFACTIONS = [
   { value: 'very_satisfied', emoji: '😍', label: 'Tuyệt vời' },
 ]
 
-// Form góp ý sản phẩm (mở từ cụm nút nổi). Chủ đề + mức hài lòng là state
+// Ngữ cảnh gửi kèm để tái hiện lỗi (không chứa dữ liệu cá nhân ngoài trình duyệt).
+function clientInfo() {
+  const standalone = globalThis.matchMedia?.('(display-mode: standalone)').matches || globalThis.navigator?.standalone === true
+  return {
+    viewport: `${window.innerWidth}x${window.innerHeight}`,
+    screen: `${window.screen?.width}x${window.screen?.height}`,
+    dpr: window.devicePixelRatio,
+    standalone: Boolean(standalone),
+    touch: globalThis.matchMedia?.('(pointer: coarse)').matches ?? false,
+    language: navigator.language,
+    user_agent: navigator.userAgent,
+  }
+}
+
+// Form góp ý sản phẩm (mở từ cụm nút nổi hoặc nút góp ý góc phải). Chủ đề + mức hài lòng là state
 // ngoài AntD Form (UI dạng chip/emoji) nên validate chủ đề thủ công.
 export default function FeedbackModal({ open, onClose }) {
   const { isAuthenticated } = useSession()
@@ -58,7 +74,8 @@ export default function FeedbackModal({ open, onClose }) {
         satisfaction: satisfaction || '',
         phone: values.phone || '',
         email: values.email || '',
-        page_url: window.location.pathname,
+        page_url: `${window.location.pathname}${window.location.search}`.slice(0, 500),
+        client_info: clientInfo(),
       })
       message.success('Cảm ơn bạn đã góp ý! Chúng tôi sẽ xem xét sớm nhất.')
       onClose()
@@ -118,7 +135,9 @@ export default function FeedbackModal({ open, onClose }) {
             rows={4}
             maxLength={2000}
             showCount
-            placeholder={`Mô tả góp ý của bạn giúp ${siteName} cải tiến sản phẩm, hỗ trợ bạn tốt hơn`}
+            placeholder={topic === 'bug'
+              ? m.candidate_feedback_bug_placeholder()
+              : `Mô tả góp ý của bạn giúp ${siteName} cải tiến sản phẩm, hỗ trợ bạn tốt hơn`}
           />
         </Form.Item>
 
