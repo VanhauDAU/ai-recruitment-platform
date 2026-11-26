@@ -56,4 +56,6 @@
 @media (max-width: 639px) {
   .af-scroll { padding: 12px 16px 14px; }
   .af-footer { padding: 10px 16px 14px; }
+  /* iOS Safari phóng to trang khi focus ô nhập chữ dưới 16px. */
+  .af-scroll .ant-input { font-size: 16px; }
 }

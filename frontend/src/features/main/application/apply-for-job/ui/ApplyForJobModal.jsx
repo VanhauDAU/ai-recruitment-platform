@@ -146,6 +146,7 @@ export default function ApplyForJobModal({
               onOpenChange={form.setLocationDropdownOpen}
               onSelect={() => form.setLocationDropdownOpen(false)}
               options={form.locationOptions}
+              showSearch={false}
               maxTagCount="responsive"
               placeholder="Chọn địa điểm bạn muốn làm việc"
             />
