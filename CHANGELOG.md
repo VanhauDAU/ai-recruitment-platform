@@ -8,6 +8,27 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Added — Góp ý / báo lỗi gửi sang Telegram
+
+- Góp ý mới được task `apps.sitecontent.tasks.notify_feedback_telegram` (queue `default`,
+  sau commit, thử lại khi Telegram lỗi mạng/429/5xx) gửi sang Telegram: chủ đề, người gửi,
+  link trang, thiết bị, nội dung (HTML đã escape).
+- Bật bằng `TELEGRAM_BOT_TOKEN` + `TELEGRAM_FEEDBACK_CHAT_ID` trong `backend/.env`; để trống
+  thì không gửi.
+- Form góp ý: 5 mức hài lòng dùng emoji động Noto như khối đánh giá tin (bản động khi
+  rê/chọn); `RatingEmoji` tách thành `shared/ui/AnimatedEmoji.jsx` dùng chung.
+#### Added — 100 tin tuyển dụng demo viết tay
+
+- `seed_data/demo_job_catalog.py`: 100 tin cho 8 công ty demo, đúng ngành từng công ty
+  (outsource phần mềm, viễn thông, game, ngân hàng, ví điện tử, thương mại điện tử,
+  bất động sản/khách sạn/ô tô, nhà máy điện tử). Mỗi tin có mô tả, yêu cầu, phúc lợi,
+  kỹ năng bắt buộc/ưu tiên, ngoại ngữ, cấp bậc, đủ loại hợp đồng (thực tập, bán thời
+  gian, thời vụ, freelance, làm tại nhà), lương VND/USD đủ 5 kiểu, ca xoay/đêm/cuối tuần.
+- `seed_demo_jobs` tạo thêm bộ này sau 30 tin ngẫu nhiên; cờ `--catalog-only` chỉ tạo
+  lại 100 tin trên công ty demo đang có, không xoá tin khác, và ký lại DPA hiện hành
+  cho chủ công ty demo (đổi phiên bản DPA làm tin demo cũ bị ẩn). Cờ này chạy được
+  trên production vì không tạo tài khoản; seed đầy đủ vẫn bị chặn ở đó.
+
 #### Changed — Trang danh sách việc làm trên điện thoại
 
 - Header chỉ hiện khi ở đầu trang danh sách việc làm; lướt xuống ẩn, lướt lên giữa trang

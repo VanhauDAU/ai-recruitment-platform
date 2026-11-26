@@ -7,6 +7,7 @@ from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
+from django.utils.html import escape
 from django.utils.text import slugify
 from PIL import Image, ImageDraw, ImageFont
 
@@ -33,6 +34,7 @@ from apps.locations.models import Location
 from apps.skills.models import Skill
 from common.storage.r2 import public_media_storage
 
+from ...seed_data.demo_job_catalog import CATALOG_JOBS, CATALOG_SCHEDULES, COMPANY_PERKS
 from ...seed_data.demo_jobs import (
     BRAND_COMPANY_INDEXES,
     COMPANIES,
@@ -71,6 +73,16 @@ def save_demo_image(name, size, colour, text=''):
     return storage.save(path, ContentFile(buffer.getvalue()))
 
 
+def accept_current_dpa(recruiter, now):
+    """Đổi phiên bản DPA làm tin đã seed bị ẩn; ký lại bản hiện hành để tin hiện lại."""
+    recruiter.dpa_accepted_at = now
+    recruiter.dpa_policy_version = settings.EMPLOYER_DPA_POLICY_VERSION
+    recruiter.dpa_document_sha256 = settings.EMPLOYER_DPA_DOCUMENT_SHA256
+    recruiter.save(
+        update_fields=['dpa_accepted_at', 'dpa_policy_version', 'dpa_document_sha256', 'updated_at']
+    )
+
+
 def approve_demo_representative(recruiter, now):
     """Give the owner the evidence of legal representation.
 
@@ -79,12 +91,7 @@ def approve_demo_representative(recruiter, now):
     public jobs also require the current candidate-data DPA.
     """
     company = recruiter.company
-    recruiter.dpa_accepted_at = now
-    recruiter.dpa_policy_version = settings.EMPLOYER_DPA_POLICY_VERSION
-    recruiter.dpa_document_sha256 = settings.EMPLOYER_DPA_DOCUMENT_SHA256
-    recruiter.save(
-        update_fields=['dpa_accepted_at', 'dpa_policy_version', 'dpa_document_sha256', 'updated_at']
-    )
+    accept_current_dpa(recruiter, now)
     verification_case = EmployerVerificationCase.objects.create(
         recruiter=recruiter,
         company=company,
@@ -122,19 +129,216 @@ def _demo_pin(ward, jitter):
     }
 
 
+def _assign_category(job, category):
+    JobCategoryAssignment.objects.create(
+        job=job, category=category, role=JobCategoryAssignment.Role.PRIMARY_SPECIALIZATION
+    )
+    # Chuyên môn thuộc một "kiến thức chuyên ngành" -> gắn thêm tag domain.
+    if category.parent and category.parent.category_type == JobCategory.CategoryType.DOMAIN:
+        JobCategoryAssignment.objects.create(
+            job=job, category=category.parent, role=JobCategoryAssignment.Role.DOMAIN_KNOWLEDGE
+        )
+
+
+def _visibility(published):
+    return {
+        'status': Job.Status.ACTIVE,
+        'published_at': published,
+        'requested_visibility_days': DEMO_VISIBILITY_DAYS,
+        'first_approved_at': published,
+        'visibility_starts_at': published,
+        'visibility_ends_at': published + timedelta(days=DEMO_VISIBILITY_DAYS),
+    }
+
+
+def _html_list(items):
+    return '<ul>' + ''.join(f'<li>{escape(item)}</li>' for item in items) + '</ul>'
+
+
+def _catalog_salary(spec):
+    """``('range', 15, 25)`` (triệu VND hoặc USD) -> (salary_type, salary_min, salary_max)."""
+    kind, *amounts = spec['salary']
+    unit = 1 if spec.get('currency') == Job.Currency.USD else 1_000_000
+    amounts = [amount * unit for amount in amounts]
+    if kind == Job.SalaryType.RANGE:
+        return kind, amounts[0], amounts[1]
+    if kind == Job.SalaryType.UP_TO:
+        return kind, None, amounts[0]
+    if kind == Job.SalaryType.NEGOTIABLE:
+        return kind, None, None
+    return kind, amounts[0], None  # fixed / from
+
+
+def existing_demo_companies(now):
+    emails = [f'company{i + 1}{DEMO_DOMAIN}' for i in range(len(COMPANIES))]
+    owners = {
+        recruiter.user.email: recruiter
+        for recruiter in RecruiterProfile.objects.filter(user__email__in=emails).select_related(
+            'user', 'company'
+        )
+    }
+    if len(owners) != len(emails):
+        raise CommandError('Chưa đủ công ty demo; chạy seed_demo_jobs không kèm cờ trước.')
+    for recruiter in owners.values():
+        accept_current_dpa(recruiter, now)
+    return [(owners[email].user, owners[email].company) for email in emails]
+
+
+def seed_catalog_jobs(companies, now):
+    """Tạo các tin viết tay của ``CATALOG_JOBS``; tên kỹ năng/ngành/phúc lợi lạ bị bỏ qua."""
+    rnd = random.Random(2026)
+    jitter = random.Random(11)
+    skills = {skill.name: skill for skill in Skill.objects.all()}
+    benefits = {benefit.name: benefit for benefit in Benefit.objects.filter(is_active=True)}
+    languages = {language.code: language for language in Language.objects.all()}
+    categories = {
+        c.name: c
+        for c in JobCategory.objects.filter(parent__isnull=False, status='active').select_related(
+            'parent'
+        )
+    }
+    wards_by_province = {}
+
+    for spec in CATALOG_JOBS:
+        user, company = companies[spec['company']]
+        salary_type, salary_min, salary_max = _catalog_salary(spec)
+        work_types = spec.get('work', [Job.WorkType.ONSITE])
+        schedule = CATALOG_SCHEDULES[spec.get('schedule', 'office')]
+        age_min, age_max = spec.get('age', (None, None))
+        published = now - timedelta(days=rnd.randint(0, 20), hours=rnd.randint(0, 23))
+        job = Job.objects.create(
+            posted_by=user,
+            company=company,
+            title=spec['title'],
+            description=f'<p>{escape(spec["summary"])}</p>{_html_list(spec["tasks"])}',
+            requirements=_html_list(spec['requirements']),
+            benefits=_html_list(spec.get('perks', []) + COMPANY_PERKS[spec['company']]),
+            application_reasons=spec.get('reasons', []),
+            work_schedule_note=schedule.get('note', ''),
+            work_type=work_types[0],
+            work_types=work_types,
+            employment_type=spec.get('employment', Job.EmploymentType.FULL_TIME),
+            experience_years=spec['experience'],
+            position_level=spec.get('level', Job.PositionLevel.EMPLOYEE),
+            education_level=spec.get('education', Job.EducationLevel.UNIVERSITY),
+            gender_requirement=spec.get('gender', Job.GenderRequirement.ANY),
+            age_min=age_min,
+            age_max=age_max,
+            number_of_vacancies=spec.get('vacancies', 1),
+            salary_type=salary_type,
+            salary_min=salary_min,
+            salary_max=salary_max,
+            income_display_type=spec.get('income', Job.IncomeDisplayType.INCOME),
+            currency=spec.get('currency', Job.Currency.VND),
+            deadline=(now + timedelta(days=rnd.choice([10, 20, 30, 45]))).date(),
+            **_visibility(published),
+        )
+        if category := categories.get(spec['category']):
+            _assign_category(job, category)
+
+        locations = []
+        for province in spec['provinces']:
+            if province not in wards_by_province:
+                wards_by_province[province] = list(
+                    Location.objects.filter(
+                        level='ward', parent__name__endswith=f' {province}'
+                    ).only('id', 'latitude', 'longitude')
+                )
+            if wards := wards_by_province[province]:
+                ward = rnd.choice(wards)
+                locations.append(
+                    JobLocation(
+                        job=job,
+                        location=ward,
+                        address_detail=f'Tầng {rnd.randint(1, 20)}, số {rnd.randint(1, 300)} đường Trung Tâm',
+                        **_demo_pin(ward, jitter),
+                    )
+                )
+        JobLocation.objects.bulk_create(locations)
+        JobWorkSchedule.objects.bulk_create(
+            [
+                JobWorkSchedule(
+                    job=job,
+                    weekday_from=day_from,
+                    weekday_to=day_to,
+                    start_time=start,
+                    end_time=end,
+                    is_overnight=end < start,
+                    note=note,
+                    sort_order=index,
+                )
+                for index, (day_from, day_to, start, end, note) in enumerate(schedule['slots'])
+            ]
+        )
+        JobBenefit.objects.bulk_create(
+            [
+                JobBenefit(job=job, benefit=benefits[name], sort_order=index)
+                for index, name in enumerate(spec['benefits'])
+                if name in benefits
+            ]
+        )
+        JobSkill.objects.bulk_create(
+            [
+                JobSkill(job=job, skill=skills[name], importance=importance)
+                for importance, key in (
+                    (JobSkill.Importance.REQUIRED, 'skills'),
+                    (JobSkill.Importance.PREFERRED, 'preferred_skills'),
+                )
+                for name in spec.get(key, [])
+                if name in skills
+            ]
+        )
+        JobLanguageRequirement.objects.bulk_create(
+            [
+                JobLanguageRequirement(
+                    job=job,
+                    language=languages[code],
+                    proficiency_level=level,
+                    certificate=certificate,
+                    is_required=required,
+                    sort_order=index,
+                )
+                for index, (code, level, certificate, required) in enumerate(
+                    spec.get('languages', [])
+                )
+                if code in languages
+            ]
+        )
+    return len(CATALOG_JOBS)
+
+
 class Command(BaseCommand):
     help = 'Seed demo companies + active jobs (spread over recent days) for the homepage dashboard/demo. Re-runnable.'
 
     def add_arguments(self, parser):
-        parser.add_argument(
+        mode = parser.add_mutually_exclusive_group()
+        mode.add_argument(
             '--clear', action='store_true', help='Only remove demo data, do not reseed.'
+        )
+        mode.add_argument(
+            '--catalog-only',
+            action='store_true',
+            help='Chỉ tạo lại các tin của CATALOG_JOBS trên công ty demo đang có, giữ dữ liệu khác.',
         )
 
     def handle(self, *args, **options):
-        # Tài khoản demo dùng mật khẩu có trong repo công khai. Production chỉ được
-        # dọn (--clear), không được tạo.
-        if settings.IS_PRODUCTION and not options['clear']:
+        # Tài khoản demo dùng mật khẩu có trong repo công khai. Production không được
+        # tạo tài khoản: chỉ dọn (--clear) hoặc thêm tin cho công ty demo đã có
+        # (--catalog-only, không tạo user nào).
+        if settings.IS_PRODUCTION and not (options['clear'] or options['catalog_only']):
             raise CommandError('Không seed dữ liệu demo trên production.')
+        now = timezone.now()
+        if options['catalog_only']:
+            companies = existing_demo_companies(now)
+            removed = Job.objects.filter(
+                posted_by__email__endswith=DEMO_DOMAIN,
+                title__in=[spec['title'] for spec in CATALOG_JOBS],
+            ).delete()[0]
+            created = seed_catalog_jobs(companies, now)
+            self.stdout.write(
+                self.style.SUCCESS(f'Removed {removed} rows, seeded {created} catalog jobs.')
+            )
+            return
         removed = User.objects.filter(email__endswith=DEMO_DOMAIN).delete()[0]
         self.stdout.write(f'Removed old demo data ({removed} rows).')
         if options['clear']:
@@ -171,7 +375,6 @@ class Command(BaseCommand):
             specializations = list(JobCategory.objects.filter(parent__in=domains, status='active'))
             children_of[name] = specializations or domains or [cat]
 
-        now = timezone.now()
         rnd = random.Random(42)
         # Riêng một bộ sinh số cho tọa độ để không xáo trộn dữ liệu demo cũ (seed 42).
         jitter = random.Random(7)
@@ -255,29 +458,10 @@ class Command(BaseCommand):
                     salary_min=smin,
                     salary_max=smax,
                     deadline=(published + timedelta(days=rnd.choice([7, 15, 30, 45]))).date(),
-                    status=Job.Status.ACTIVE,
-                    published_at=published,
-                    requested_visibility_days=DEMO_VISIBILITY_DAYS,
-                    first_approved_at=published,
-                    visibility_starts_at=published,
-                    visibility_ends_at=published + timedelta(days=DEMO_VISIBILITY_DAYS),
+                    **_visibility(published),
                 )
                 if category:
-                    JobCategoryAssignment.objects.create(
-                        job=job,
-                        category=category,
-                        role=JobCategoryAssignment.Role.PRIMARY_SPECIALIZATION,
-                    )
-                    # Chuyên môn thuộc một "kiến thức chuyên ngành" -> gắn thêm tag domain.
-                    if (
-                        category.parent
-                        and category.parent.category_type == JobCategory.CategoryType.DOMAIN
-                    ):
-                        JobCategoryAssignment.objects.create(
-                            job=job,
-                            category=category.parent,
-                            role=JobCategoryAssignment.Role.DOMAIN_KNOWLEDGE,
-                        )
+                    _assign_category(job, category)
 
                 # Tin remote demo tối đa 1 văn phòng; tin thường 1-3 địa điểm.
                 max_locations = 1 if work_type == 'remote' else min(3, len(wards))
@@ -369,6 +553,7 @@ class Command(BaseCommand):
                     )
                 job_count += 1
 
+        job_count += seed_catalog_jobs(companies, now)
         self.stdout.write(
             self.style.SUCCESS(
                 f'Seeded {len(companies)} demo companies and {job_count} active jobs.'

@@ -80,6 +80,8 @@ CELERY_TASK_ROUTES = {
     'apps.cv_templates.tasks.template_assets.render_template_test_pdf': {'queue': 'cv-export'},
     'apps.cvs.tasks.*': {'queue': 'cv-export'},
     'apps.uploads.tasks.*': {'queue': 'upload-scan'},
+    # Gọi Telegram (dịch vụ ngoài): không xếp chung hàng email ứng viên.
+    'apps.sitecontent.tasks.*': {'queue': 'default'},
     # Quét lease kẹt mỗi 5 giây: không xếp sau lượt gọi Gemini dài ~85 giây.
     'apps.jobs.tasks.ai_generation.recover_stale_job_generations': {'queue': 'default'},
     'apps.jobs.tasks.ai_generation.*': {'queue': 'ai-generation'},
