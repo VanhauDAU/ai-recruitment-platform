@@ -8,6 +8,23 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Fixed — Rà soát production (PageSpeed/console): LCP, soft 404, a11y
+
+- CSP Report-Only bỏ `upgrade-insecure-requests` (Chrome bỏ qua chỉ thị này ở chế độ
+  Report-Only và ghi lỗi console ở mọi trang, Lighthouse trừ điểm Best Practices).
+- Nginx: đường dẫn có đuôi file tĩnh (`.png`, `.txt`, `.json`…) không tồn tại trả 404 thật
+  thay vì `index.html` 200 (soft 404 cho `/favicon.ico`, `/llms.txt`, `/.well-known/*`);
+  `/favicon.ico` phục vụ `favicon-32.png`.
+- LCP trang chủ: SEO shell `/` thêm `<link rel="preload" as="image" fetchpriority="high">`
+  cho ảnh slide đầu carousel (trước đây chỉ biết sau khi tải JS + gọi API, trễ ~1,5 s
+  trên 4G chậm); ảnh slide đầu thêm `fetchpriority="high"`.
+- Footer: nút App Store/Google Play mất nền tối (antd reset nền/chữ thẻ `a`) nên hiện chữ
+  xanh trên nền trắng, dòng "DOWNLOAD ON THE" gần như vô hình — dùng `!bg-`/`!text-`.
+- A11y theo Lighthouse: tab Hotline có `role="tablist"`; link "Xem tất cả" công ty có tên
+  riêng; chip "Sắp ra mắt" đủ tương phản; chấm chọn màu mẫu CV giãn cách ≥ 24 px.
+- Dải thông báo chỉ gọi lại API khi quay lại tab nếu dữ liệu đã quá một chu kỳ poll
+  (trước đây mỗi lần đổi tab là một request).
+
 #### Fixed — Bớt email Sentry nhiễu và request API thừa
 
 - CSP: hash script giao diện sáng/tối trong `index.html` đã cũ nên mọi lượt tải trang

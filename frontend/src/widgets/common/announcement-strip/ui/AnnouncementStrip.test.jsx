@@ -110,6 +110,21 @@ describe('AnnouncementStrip runtime', () => {
     expect(getActiveAnnouncements).not.toHaveBeenCalled()
   })
 
+  it('does not refetch the feed when the tab becomes visible again shortly after loading', async () => {
+    getActiveAnnouncements.mockResolvedValue({
+      items: [remoteItem()],
+      nextTransitionAt: null,
+      remoteEnabled: true,
+    })
+    renderStrip()
+    await screen.findByText('Khám phá tính năng mới.')
+
+    document.dispatchEvent(new Event('visibilitychange'))
+
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(getActiveAnnouncements).toHaveBeenCalledTimes(1)
+  })
+
   it('keeps the email security label when the remote feed fails', async () => {
     useSession.mockReturnValue({
       loading: false,

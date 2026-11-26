@@ -6,8 +6,9 @@ export default function TemplateColorSwatches({
   sizeClass = 'h-4.5 w-4.5',
   ariaLabel = 'Chọn màu mẫu CV',
 }) {
+  // gap-3: tâm hai chấm màu cách nhau ≥ 24px (WCAG 2.5.8) kể cả với chấm 12px.
   return (
-    <div className="flex items-center gap-1.5" role="radiogroup" aria-label={ariaLabel}>
+    <div className="flex items-center gap-3" role="radiogroup" aria-label={ariaLabel}>
       {colors.map((color) => {
         const key = color.public_id || color.slug || color.hex_code
         const active = selectedKey === key || selectedKey === color.hex_code || selectedKey === color.slug
