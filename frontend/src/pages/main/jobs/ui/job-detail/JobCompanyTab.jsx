@@ -3,17 +3,17 @@ import { Skeleton } from 'antd'
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { COMPANY_JOBS_TAB, companyDetailPath, jobCompanyPath } from '@/entities/company/company'
-import JobCard from '../JobCard'
+import { EXPERIENCE_YEARS_LABELS, formatLocations, formatSalary, jobDetailPath } from '@/entities/job/job'
 import useCompanyOtherJobs from '../../model/use-company-other-jobs'
 import { CompanyCard } from './JobDetailSidebar'
 
 /** Tab "Công ty" trên mobile: thẻ công ty, giới thiệu, dải việc làm cùng công ty cuộn ngang. */
-export default function JobCompanyTab({ job, active, isAuthenticated, onRequireLogin }) {
+export default function JobCompanyTab({ job, active }) {
   return (
     <>
       <CompanyCard job={job} />
       <CompanyAbout job={job} />
-      <CompanyJobsRail job={job} enabled={active} isAuthenticated={isAuthenticated} onRequireLogin={onRequireLogin} />
+      <CompanyJobsRail job={job} enabled={active} />
     </>
   )
 }
@@ -51,7 +51,7 @@ function CompanyAbout({ job }) {
   )
 }
 
-function CompanyJobsRail({ job, enabled, isAuthenticated, onRequireLogin }) {
+function CompanyJobsRail({ job, enabled }) {
   const { jobs, total, isPending } = useCompanyOtherJobs(job, { enabled })
   if (!isPending && !jobs.length) return null
   return (
@@ -66,13 +66,21 @@ function CompanyJobsRail({ job, enabled, isAuthenticated, onRequireLogin }) {
       </div>
       <div className="job-company-rail" aria-label="Việc làm cùng công ty, vuốt ngang để xem thêm">
         {isPending
-          ? <div className="job-company-rail__item rounded-2xl border border-gray-200 p-4"><Skeleton active avatar paragraph={{ rows: 2 }} /></div>
-          : jobs.map((item) => (
-              <div key={item.public_id} className="job-company-rail__item">
-                <JobCard job={item} isAuthenticated={isAuthenticated} onRequireLogin={onRequireLogin} showQuickView={false} />
-              </div>
-            ))}
+          ? <div className="job-company-rail__item job-company-mini"><Skeleton active title={false} paragraph={{ rows: 3 }} /></div>
+          : jobs.map((item) => <CompanyJobMini key={item.public_id} job={item} />)}
       </div>
     </section>
+  )
+}
+
+// Thẻ thấp cho dải ngang: cùng công ty nên bỏ logo/tên công ty, chỉ còn tiêu đề, lương, nơi làm · kinh nghiệm.
+function CompanyJobMini({ job }) {
+  const meta = [formatLocations(job), EXPERIENCE_YEARS_LABELS[job.experience_years]].filter(Boolean).join(' · ')
+  return (
+    <Link to={jobDetailPath(job)} className="job-company-rail__item job-company-mini">
+      <span className="job-company-mini__title">{job.title}</span>
+      <span className="job-company-mini__salary">{formatSalary(job)}</span>
+      {meta && <span className="job-company-mini__meta">{meta}</span>}
+    </Link>
   )
 }

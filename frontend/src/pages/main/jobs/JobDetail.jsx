@@ -189,7 +189,7 @@ export default function JobDetail() {
                       relatedCount={relatedJobs.length}
                       panels={{
                         info: <><JobGeneralInfo job={job} />{details}<JobQualityRating jobId={job.public_id} /><JobSafetyTips /><JobSidebarPromos /></>,
-                        company: <JobCompanyTab job={job} active={activeTab === 'company'} isAuthenticated={isAuthenticated} onRequireLogin={promptLogin} />,
+                        company: <JobCompanyTab job={job} active={activeTab === 'company'} />,
                         related: <>{relatedJobs.length ? related : <EmptyRelatedJobs />}<RelatedTopics job={job} /></>,
                       }}
                     />
