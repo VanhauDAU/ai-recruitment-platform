@@ -15,6 +15,8 @@ kém phù hợp hơn. Văn bản lấy đúng như sản phẩm đưa vào mô h
 | K1 cùng vị trí | tin | CV khớp mạnh của tin khác cùng vị trí chuyên môn | CV khớp mạnh của vị trí khác cùng nhóm ngành |
 | K2 VietJobs | tiêu đề + yêu cầu | mô tả của chính tin | mô tả của tin khác cùng ngành |
 | K4 resume–JD fit | mô tả tin (tiếng Anh) | CV "Good Fit" | CV "No Fit" của cùng tin |
+| K6 theo bậc (`--ordinal`) | tin neo | CV khớp một phần | CV vị trí gần của chính tin đó |
+| K5 âm khó (`--mined`) | tin neo | CV khớp mạnh | CV của tin khác vị trí mà mô hình xếp gần tin nhất |
 
 Chống rò rỉ sang tập đánh giá:
 - 30 tin của tập vàng không bao giờ làm tin neo; 100 CV tổng hợp đầu (đều dùng trong
@@ -43,7 +45,9 @@ Kết quả: `ml/data/pairs/train.jsonl`, `graded.jsonl`, `dev.json` (tin hiệu
 của chúng, để chọn checkpoint), `ml/reports/train_pairs.md`.
 """
 
+import argparse
 import json
+import os
 import random
 import re
 import subprocess
@@ -70,6 +74,9 @@ MIN_CALIBRATION_CVS = 8
 # Tin có ô "Kinh nghiệm yêu cầu" được sửa sau khi CV huấn luyện đã sinh (rubric.md, 26/11).
 EXPERIENCE_CHANGED = {'JD-63', 'JD-65', 'JD-67', 'JD-68', 'JD-70', 'JD-88'}
 GRADES = {'strong': 1.0, 'partial': 0.6, 'adjacent': 0.3}
+# Âm khó do mô hình tìm (`--mined`): với mỗi tin, lấy trong số CV đứng đầu theo cosine
+# những CV của tin khác vị trí chuyên môn; mỗi CV khớp mạnh ghép với vài CV như vậy.
+MINED_TOP, MINED_PER_POSITIVE = 8, 2
 # Mục của CV huấn luyện không đưa vào văn bản (hay vô nghĩa, không mang tín hiệu đối sánh).
 DROPPED_CV_SECTIONS = ('activities', 'awards', 'interests')
 # Dữ liệu công khai chỉ bổ trợ: CV huấn luyện neo vào tin thật vẫn là phần lớn.
@@ -208,6 +215,60 @@ def k4_rows(rng):
     return rows[:RESUME_FIT_ROWS]
 
 
+def ordinal_rows(jobs, cvs, anchors, rng):
+    """Bộ ba theo bậc: CV khớp một phần đứng trên CV vị trí gần của cùng tin.
+
+    K3 đã dạy "khớp mạnh trên khớp một phần và vị trí gần". Thêm bậc giữa để cả ba mức
+    xếp đúng thứ tự: khớp mạnh > khớp một phần > vị trí gần. Bỏ các tin đã đổi ô kinh
+    nghiệm, vì mức "khớp một phần" của chúng dựa trên số năm cũ.
+    """
+    rows = []
+    for anchor in anchors:
+        if anchor in EXPERIENCE_CHANGED:
+            continue
+        own = defaultdict(list)
+        for code, cv in cvs.items():
+            if cv['anchor_job'] == anchor:
+                own[cv['intended_match']].append(code)
+        for partial in own['partial']:
+            for adjacent in rng.sample(own['adjacent'], min(2, len(own['adjacent']))):
+                rows.append({'anchor': jobs[anchor]['text'], 'positive': cvs[partial]['text'], 'negative': cvs[adjacent]['text'], 'source': 'K6-ordinal'})  # fmt: skip
+    return rows
+
+
+def mined_rows(jobs, cvs, anchors, specialization, model_dir, rng):
+    """Bộ ba với mẫu âm khó do chính bi-encoder tìm ra.
+
+    Mẫu âm của K3 là CV yếu hơn của cùng tin; ở đây mẫu âm là CV của tin khác mà mô hình
+    hiện tại vẫn xếp gần tin này nhất, tức đúng những chỗ mô hình đang nhầm. CV của tin
+    cùng vị trí chuyên môn bị loại, vì chúng có thể phù hợp thật (K1 coi chúng là dương).
+    """
+    os.environ.setdefault('HF_HUB_OFFLINE', '1')
+    os.environ.setdefault('PYTORCH_MPS_HIGH_WATERMARK_RATIO', '0.6')
+    os.environ.setdefault('PYTORCH_MPS_LOW_WATERMARK_RATIO', '0.4')
+    import numpy as np
+    from paths import MODELS_DIR
+    from sentence_transformers import SentenceTransformer
+
+    model = SentenceTransformer(str(MODELS_DIR / model_dir), device='mps')
+    model.max_seq_length = 512
+    pool = [code for code, cv in cvs.items() if cv['anchor_job'] in anchors]
+    cv_vectors = model.encode(['passage: ' + cvs[code]['text'] for code in pool], batch_size=8, normalize_embeddings=True)
+    job_vectors = model.encode(['query: ' + jobs[anchor]['text'] for anchor in anchors], batch_size=8, normalize_embeddings=True)
+    rows = []
+    for anchor, vector in zip(anchors, job_vectors, strict=True):
+        ranked = [pool[index] for index in np.argsort(-(cv_vectors @ vector))]
+        hard = [
+            code for code in ranked
+            if cvs[code]['anchor_job'] != anchor and specialization[cvs[code]['anchor_job']] != specialization[anchor]
+        ][:MINED_TOP]  # fmt: skip
+        strong = [code for code in pool if cvs[code]['anchor_job'] == anchor and cvs[code]['intended_match'] == 'strong']
+        for positive in strong:
+            for negative in rng.sample(hard, min(MINED_PER_POSITIVE, len(hard))):
+                rows.append({'anchor': jobs[anchor]['text'], 'positive': cvs[positive]['text'], 'negative': cvs[negative]['text'], 'source': 'K5-mined'})  # fmt: skip
+    return rows
+
+
 def calibration_jobs(anchors, cvs, group, language):
     """14 tin hiệu chỉnh; chọn một lần rồi đọc lại từ `calibration_jobs.json`."""
     if CALIBRATION_JOBS.exists():
@@ -273,6 +334,10 @@ def dev_set(jobs, cvs, anchors):
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument('--mined', metavar='THƯ_MỤC', help='Mô hình trong ml/models dùng để tìm mẫu âm khó, ví dụ multilingual-e5-base/wise-v1.')
+    parser.add_argument('--ordinal', action='store_true', help='Thêm bộ ba theo bậc (khớp một phần trên vị trí gần).')
+    options = parser.parse_args()
     rng = random.Random(SEED)
     jobs = job_texts()
     cvs = train_cvs()
@@ -289,6 +354,10 @@ def main():
     train_anchors = sorted(set(anchors) - set(dev_anchors))
     rows = k3_rows(jobs, cvs, train_anchors, rng)
     rows += k1_rows(jobs, cvs, train_anchors, specialization, group, rng)
+    if options.ordinal:
+        rows += ordinal_rows(jobs, cvs, train_anchors, rng)
+    if options.mined:
+        rows += mined_rows(jobs, cvs, train_anchors, specialization, options.mined, rng)
     gold_texts = [jobs[code]['text'] for code in GOLD]
     gold_roles = {jobs[code]['title'].casefold() for code in GOLD}
     vietjobs, leaked = k2_rows(gold_texts, gold_roles, rng)
@@ -317,7 +386,7 @@ def main():
         '',
         '| Nguồn | Số bộ ba |',
         '| --- | ---: |',
-        *[f'| {source} | {counts[source]} |' for source in ('K3', 'K3-title', 'K1', 'K2', 'K4')],
+        *[f'| {source} | {counts[source]} |' for source in ('K3', 'K3-title', 'K1', 'K2', 'K4', 'K6-ordinal', 'K5-mined') if counts[source]],
         '',
         f'Chống rò rỉ: 30 tin vàng không làm tin neo, 100 CV của tập vàng không dùng; {leaked} tin '
         'VietJobs bị loại vì giống một tin vàng.',
