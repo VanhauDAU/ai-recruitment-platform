@@ -8,6 +8,12 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Fixed — Form ứng tuyển không phóng to trên iPhone
+
+- Ô địa điểm làm việc bỏ ô tìm kiếm (danh sách ngắn) nên chạm vào không bật bàn phím,
+  không zoom; ô nhập chữ của form dùng 16px trên màn hình hẹp.
+- Tin chỉ có một tỉnh/thành thì chọn sẵn tỉnh đó.
+
 #### Changed — Gọn giao diện cổng ứng viên trên điện thoại
 
 - Hero trang chủ: điện thoại bỏ huy hiệu số việc làm và câu phụ, ô tìm kiếm lên trên fold.

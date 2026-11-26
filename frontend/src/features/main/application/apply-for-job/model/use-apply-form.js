@@ -77,6 +77,8 @@ export function useApplyForm({
     value: group.province_id,
     label: group.province_name,
   }))
+  // Tin chỉ có một tỉnh/thành: chọn sẵn, ứng viên không phải mở danh sách.
+  const onlyProvinceId = workplaceGroups.length === 1 ? workplaceGroups[0].province_id : null
 
   useEffect(() => {
     if (!open) return undefined
@@ -87,7 +89,7 @@ export function useApplyForm({
     setAllowAiAnalysis(false)
     setDataProcessingConsent(false)
     setLocationDropdownOpen(false)
-    setPreferredLocationIds([])
+    setPreferredLocationIds(onlyProvinceId == null ? [] : [onlyProvinceId])
     setContactName(candidateName)
     setContactEmail(candidateEmail)
     setContactPhone(candidatePhone)
@@ -118,7 +120,7 @@ export function useApplyForm({
         if (active) setLoadingCvs(false)
       })
     return () => { active = false }
-  }, [open, jobPublicId, candidateName, candidateEmail, candidatePhone])
+  }, [open, jobPublicId, onlyProvinceId, candidateName, candidateEmail, candidatePhone])
 
   function selectUploadFile(file) {
     if (!file) return
