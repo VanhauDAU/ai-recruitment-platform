@@ -44,7 +44,7 @@ test('admin CV portal: one-page template editor, publish checklist and position 
   })
   const noHorizontalScroll = async () => expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0)
 
-  await page.goto('/admin/app/cv/overview')
+  await page.goto('/admin/app/cv/tong-quan')
   const nav = page.getByRole('navigation', { name: 'Các trang Mẫu CV' })
   await expect(nav).toBeVisible()
   await expect(page.getByText('Bản AI viết chờ duyệt')).toBeVisible()
@@ -52,7 +52,7 @@ test('admin CV portal: one-page template editor, publish checklist and position 
   await noHorizontalScroll()
 
   await nav.getByRole('link', { name: /Mẫu CV/ }).click()
-  await expect(page).toHaveURL(/\/admin\/app\/cv\/templates$/)
+  await expect(page).toHaveURL(/\/admin\/app\/cv\/mau-cv$/)
   await page.getByRole('button', { name: 'Tạo mẫu' }).click()
   const create = page.getByRole('dialog', { name: 'Tạo mẫu CV' })
   await expect(create.getByRole('radiogroup', { name: 'Bố cục' })).toBeVisible()

@@ -31,13 +31,13 @@ beforeEach(() => {
 
 it('remounts editor state when the route changes to another CV resource', async () => {
   const router = createMemoryRouter(
-    [{ path: '/cvs/:publicId/edit', element: <CvEditor /> }],
-    { initialEntries: ['/cvs/cv_a/edit'] },
+    [{ path: '/cv/:publicId/chinh-sua', element: <CvEditor /> }],
+    { initialEntries: ['/cv/cv_a/chinh-sua'] },
   )
   render(<RouterProvider router={router} />)
   await screen.findByText('Editor cv_a')
 
-  await act(() => router.navigate('/cvs/cv_b/edit'))
+  await act(() => router.navigate('/cv/cv_b/chinh-sua'))
 
   expect(await screen.findByText('Editor cv_b')).toBeInTheDocument()
   expect(lifecycle.mounts).toEqual(['cv_a', 'cv_b'])

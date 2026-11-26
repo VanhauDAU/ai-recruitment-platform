@@ -22,6 +22,27 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Trang chủ lấy tổng số việc làm từ `/public/jobs/stats/` (dùng chung cache với khối
   thống kê) thay vì tải cả một trang tin; thông báo hệ thống cache 5 phút theo trang.
 
+#### Changed — Path URL frontend thống nhất tiếng Việt không dấu
+
+- Cổng ứng viên: `/dang-nhap`, `/dang-ky`, `/quen-mat-khau`, `/dat-lai-mat-khau`,
+  `/hoan-thien-ho-so`, `/cv/:id/chinh-sua`, `/cv/:id/xem`, `/cv/:id/da-luu`,
+  `/cv/chia-se/:token` (thay `/login`, `/sign-up`, `/register`, `/cvs/:id/edit`…).
+- Workspace NTD `/tuyendung/app/…` và admin `/admin/app/…` đổi toàn bộ segment tiếng Anh
+  (vd. `employer-verify` → `xac-thuc-tai-khoan`, `account/settings/gpkd` →
+  `cai-dat/giay-phep-kinh-doanh`, `jobs/:id/edit` → `tin-tuyen-dung/:id/chinh-sua`,
+  `job-moderation` → `duyet-tin`). Giữ nguyên tiền tố `app`, `/oauth/callback` (đã khai
+  với Google/Facebook/LinkedIn) và `/procv-connect`; workspace NTD dùng `/procv-connect`
+  thay `/connect`.
+- Path cũ redirect giữ tham số, query và hash qua bảng
+  `app/router/redirects/legacy-paths.js` để link trong email, thông báo đã lưu và link
+  đã chia sẻ vẫn mở được; test khóa mọi đích redirect là route có thật.
+- Backend phát link mới trong email/thông báo; mặc định `ADMIN_INVITATION_PATH`,
+  `ADMIN_PASSWORD_RESET_PATH`, `EMPLOYER_EMAIL_VERIFICATION_PATH`,
+  `EMPLOYER_PASSWORD_RESET_PATH` đổi theo (prod có đặt trong `.env` thì sửa lại).
+- Thông báo đa cổng: revision đã xuất bản giữ prefix route cũ vẫn khớp path mới
+  (`sitecontent.selectors.legacy_paths`); migration `sitecontent.0013` đổi link footer và
+  CTA banner đã lưu sang path mới.
+
 #### Fixed — Trang "CV của tôi" tải chậm / treo trên production
 
 - `GET /api/candidate/cvs/` gọi `default_storage.exists()` (HEAD tới R2, ~100 ms) hai lần

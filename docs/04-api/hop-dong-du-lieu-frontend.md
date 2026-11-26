@@ -357,7 +357,7 @@ hiển thị các thao tác backend sẽ từ chối (sửa, gia hạn, mở l�
 Ở trang chi tiết tin của admin, `blocked_reasons[]` giải thích vì sao tin đang
 không hiển thị với ứng viên. Frontend map allowlist
 `verification_required|dpa_outdated` tới deep-link
-`/admin/app/recruiters/{employer_public_id}?tab=verification` chỉ khi actor có
+`/admin/app/nha-tuyen-dung/{employer_public_id}?tab=verification` chỉ khi actor có
 `employer_verification.view`; không suy route từ message hoặc company.
 
 ## Query strategy

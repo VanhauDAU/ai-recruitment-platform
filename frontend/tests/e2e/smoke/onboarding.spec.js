@@ -65,7 +65,7 @@ test.describe('onboarding trò chuyện với robot', () => {
   test('cả cuộc trò chuyện diễn ra trên một trang rồi chốt bằng nhu cầu vừa lưu', async ({ page }) => {
     await mockOnboardingApi(page)
 
-    await page.goto('/onboard-user')
+    await page.goto('/hoan-thien-ho-so')
     await expect(botTranscript(page).first()).toContainText('Chào Nguyễn An!')
     await page.getByRole('button', { name: 'Bắt đầu thôi!' }).click()
 
@@ -96,7 +96,7 @@ test.describe('onboarding trò chuyện với robot', () => {
     await page.getByRole('button', { name: 'Hoàn tất' }).click()
 
     // Không nhảy trang nào trong cả luồng.
-    await expect(page).toHaveURL('/onboard-user')
+    await expect(page).toHaveURL('/hoan-thien-ho-so')
     await expect(botTranscript(page).last()).toContainText('Xong rồi Nguyễn An!', { timeout: 15_000 })
     await expect(botTranscript(page).last()).toContainText('Lập trình viên')
     await expect(botTranscript(page).last()).toContainText('Đà Nẵng')
@@ -110,7 +110,7 @@ test.describe('onboarding trò chuyện với robot', () => {
   test('robot nhắc ngay trong hội thoại khi chưa trả lời và cho bỏ qua onboarding', async ({ page }) => {
     await mockOnboardingApi(page)
 
-    await page.goto('/onboard-user')
+    await page.goto('/hoan-thien-ho-so')
     await page.getByRole('button', { name: 'Bắt đầu thôi!' }).click()
     await expect(page.getByText('Câu 1/5')).toBeVisible()
 
@@ -136,7 +136,7 @@ test.describe('onboarding trò chuyện với robot', () => {
 
     await page.goto('/onboard-user-setting')
 
-    await expect(page).toHaveURL('/onboard-user')
+    await expect(page).toHaveURL('/hoan-thien-ho-so')
     await expect(botTranscript(page).first()).toContainText('Chào Nguyễn An!')
   })
 })

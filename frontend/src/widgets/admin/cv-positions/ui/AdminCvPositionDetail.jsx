@@ -43,7 +43,7 @@ export default function AdminCvPositionDetail() {
   if (isError) return <Alert type="error" showIcon message="Không tải được vị trí." />
   return <div className="space-y-4">
     <header className="flex flex-wrap items-center gap-x-3 gap-y-2">
-      <Link to={adminPath('/cv/positions')}><Button size="small" type="text" icon={<ArrowLeftOutlined />}>Vị trí</Button></Link>
+      <Link to={adminPath('/cv/vi-tri')}><Button size="small" type="text" icon={<ArrowLeftOutlined />}>Vị trí</Button></Link>
       <div className="order-3 min-w-0 basis-full sm:order-2 sm:basis-0 sm:flex-1">
         <h1 className="truncate text-lg font-bold text-slate-900 sm:text-xl">{profile.position_name}</h1>
         {profile.industry_name && <p className="text-xs text-slate-500">{profile.industry_name}</p>}

@@ -134,7 +134,7 @@ describe('AnnouncementEditor', () => {
   })
 
   it('warns when a guest-facing cross-portal CTA requires login', async () => {
-    render(<CtaFieldsHarness ctaUrl="/tuyendung/app/jobs/new" />)
+    render(<CtaFieldsHarness ctaUrl="/tuyendung/app/tin-tuyen-dung/tao-moi" />)
 
     expect(await screen.findByText('Một phần người xem sẽ phải đăng nhập'))
       .toBeInTheDocument()

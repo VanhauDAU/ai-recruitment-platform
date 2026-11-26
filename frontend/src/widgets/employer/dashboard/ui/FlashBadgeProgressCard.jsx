@@ -59,7 +59,7 @@ export default function FlashBadgeProgressCard({ badge }) {
       )}
 
       {needsReply && (
-        <Link to={employerAppPath('/applications')} className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold !text-[var(--brand-primary)]">
+        <Link to={employerAppPath('/ho-so-ung-tuyen')} className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold !text-[var(--brand-primary)]">
           {m.employer_workspace_dash_flash_reply()} <ArrowRightOutlined className="text-xs" />
         </Link>
       )}

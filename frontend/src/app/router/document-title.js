@@ -30,12 +30,11 @@ const EXACT_MAIN_TITLES = new Map([
   ['/tai-cv-len', 'Tải CV lên'],
   ['/chinh-sach-cookie', 'Chính sách cookie'],
   ['/tai-khoan/xac-thuc-email', 'Xác thực email'],
-  ['/onboard-user', 'Cá nhân hóa gợi ý việc làm'],
-  ['/login', 'Đăng nhập tài khoản ứng viên'],
-  ['/sign-up', 'Đăng ký tài khoản ứng viên'],
-  ['/register', 'Đăng ký tài khoản ứng viên'],
-  ['/forgot-password', 'Quên mật khẩu'],
-  ['/reset-password', 'Đặt lại mật khẩu'],
+  ['/hoan-thien-ho-so', 'Cá nhân hóa gợi ý việc làm'],
+  ['/dang-nhap', 'Đăng nhập tài khoản ứng viên'],
+  ['/dang-ky', 'Đăng ký tài khoản ứng viên'],
+  ['/quen-mat-khau', 'Quên mật khẩu'],
+  ['/dat-lai-mat-khau', 'Đặt lại mật khẩu'],
   ['/blog', 'Cẩm nang nghề nghiệp'],
   ['/tro-giup', 'Câu hỏi thường gặp - Trung tâm trợ giúp'],
   ['/oauth/callback', 'Đang xác thực tài khoản'],
@@ -50,56 +49,55 @@ const EMPLOYER_MARKETING_PATHS = new Set(
 )
 
 const EXACT_EMPLOYER_TITLES = new Map([
-  [employerAppPath('/login'), m.employer_workspace_title_login()],
-  [employerAppPath('/register'), m.employer_workspace_title_register()],
-  [employerAppPath('/forgot-password'), m.employer_workspace_title_forgot_password()],
-  [employerAppPath('/reset-password'), m.employer_workspace_title_reset_password()],
-  [employerAppPath('/account/verify'), m.employer_workspace_title_verify_email()],
-  [employerAppPath('/account/complete-profile'), m.employer_workspace_title_complete_profile()],
-  [employerAppPath('/onboarding'), m.employer_workspace_title_complete_profile()],
-  [employerAppPath('/consulting-need'), m.employer_workspace_title_recruitment_demand()],
-  [employerAppPath('/employer-verify'), m.employer_workspace_title_account_verification()],
-  [employerAppPath('/account/phone-verify'), m.employer_workspace_title_phone_verify()],
-  [employerAppPath('/account/settings/account-info'), m.employer_workspace_title_account_info()],
-  [employerAppPath('/account/settings/password-login'), m.employer_workspace_title_change_password()],
-  [employerAppPath('/account/settings/company'), m.employer_workspace_title_company_info()],
-  [employerAppPath('/account/settings/gpkd'), m.employer_workspace_title_business_registration()],
-  [employerAppPath('/account/settings/personal-data-protection'), m.employer_workspace_title_personal_data_protection()],
-  [employerAppPath('/account/settings/recruitment-demand'), m.employer_workspace_title_recruitment_demand()],
-  [employerAppPath('/account/settings/general-setting'), m.employer_workspace_title_general_settings()],
-  [employerAppPath('/account/settings/integrations'), m.employer_workspace_title_integrations()],
+  [employerAppPath('/dang-nhap'), m.employer_workspace_title_login()],
+  [employerAppPath('/dang-ky'), m.employer_workspace_title_register()],
+  [employerAppPath('/quen-mat-khau'), m.employer_workspace_title_forgot_password()],
+  [employerAppPath('/dat-lai-mat-khau'), m.employer_workspace_title_reset_password()],
+  [employerAppPath('/xac-thuc-email'), m.employer_workspace_title_verify_email()],
+  [employerAppPath('/hoan-thien-ho-so'), m.employer_workspace_title_complete_profile()],
+  [employerAppPath('/khai-bao-nhu-cau'), m.employer_workspace_title_recruitment_demand()],
+  [employerAppPath('/xac-thuc-tai-khoan'), m.employer_workspace_title_account_verification()],
+  [employerAppPath('/xac-thuc-so-dien-thoai'), m.employer_workspace_title_phone_verify()],
+  [employerAppPath('/cai-dat/thong-tin-tai-khoan'), m.employer_workspace_title_account_info()],
+  [employerAppPath('/cai-dat/mat-khau'), m.employer_workspace_title_change_password()],
+  [employerAppPath('/cai-dat/cong-ty'), m.employer_workspace_title_company_info()],
+  [employerAppPath('/cai-dat/giay-phep-kinh-doanh'), m.employer_workspace_title_business_registration()],
+  [employerAppPath('/cai-dat/bao-ve-du-lieu-ca-nhan'), m.employer_workspace_title_personal_data_protection()],
+  [employerAppPath('/cai-dat/nhu-cau-tuyen-dung'), m.employer_workspace_title_recruitment_demand()],
+  [employerAppPath('/cai-dat/chung'), m.employer_workspace_title_general_settings()],
+  [employerAppPath('/cai-dat/tich-hop'), m.employer_workspace_title_integrations()],
   [employerAppPath('/oauth/callback'), m.employer_workspace_title_oauth_callback()],
-  [employerAppPath('/dashboard'), m.employer_workspace_title_dashboard()],
-  [employerAppPath('/notifications'), m.employer_workspace_title_notifications()],
-  [employerAppPath('/activities'), m.employer_workspace_title_activities()],
-  [employerAppPath('/company-page'), m.employer_workspace_title_company_page()],
-  [employerAppPath('/campaigns'), m.employer_workspace_title_campaigns()],
-  [employerAppPath('/campaigns/new'), m.employer_workspace_title_campaign_new()],
-  [employerAppPath('/jobs'), m.employer_workspace_title_jobs()],
-  [employerAppPath('/jobs/new'), m.employer_workspace_title_job_new()],
-  [employerAppPath('/applications'), m.employer_workspace_title_applications()],
-  [employerAppPath('/candidate-blocks'), m.employer_workspace_title_candidate_blocks()],
-  [employerAppPath('/talent-pool'), m.employer_workspace_title_talent_pool()],
-  [employerAppPath('/candidate-search'), m.employer_workspace_title_candidate_search()],
-  [employerAppPath('/connect'), m.connect_title()],
+  [employerAppPath('/tong-quan'), m.employer_workspace_title_dashboard()],
+  [employerAppPath('/thong-bao'), m.employer_workspace_title_notifications()],
+  [employerAppPath('/lich-su-hoat-dong'), m.employer_workspace_title_activities()],
+  [employerAppPath('/trang-cong-ty'), m.employer_workspace_title_company_page()],
+  [employerAppPath('/chien-dich'), m.employer_workspace_title_campaigns()],
+  [employerAppPath('/chien-dich/tao-moi'), m.employer_workspace_title_campaign_new()],
+  [employerAppPath('/tin-tuyen-dung'), m.employer_workspace_title_jobs()],
+  [employerAppPath('/tin-tuyen-dung/tao-moi'), m.employer_workspace_title_job_new()],
+  [employerAppPath('/ho-so-ung-tuyen'), m.employer_workspace_title_applications()],
+  [employerAppPath('/ung-vien-bi-chan'), m.employer_workspace_title_candidate_blocks()],
+  [employerAppPath('/kho-ung-vien'), m.employer_workspace_title_talent_pool()],
+  [employerAppPath('/tim-ung-vien'), m.employer_workspace_title_candidate_search()],
+  [employerAppPath('/procv-connect'), m.connect_title()],
 ])
 
-// Thứ tự quan trọng: mẫu cụ thể (…/edit, …/setup) đứng trước mẫu chi tiết.
+// Thứ tự quan trọng: mẫu cụ thể (…/chinh-sua, …/thiet-lap) đứng trước mẫu chi tiết.
 const DYNAMIC_EMPLOYER_TITLES = [
-  [new RegExp(`^${employerAppPath('/jobs/')}[^/]+/edit$`), m.employer_workspace_title_job_edit()],
-  [new RegExp(`^${employerAppPath('/jobs/')}[^/]+$`), m.employer_workspace_title_job_detail()],
-  [new RegExp(`^${employerAppPath('/campaigns/')}[^/]+/setup$`), m.employer_workspace_title_campaign_setup()],
-  [new RegExp(`^${employerAppPath('/campaigns/')}[^/]+$`), m.employer_workspace_title_campaign_detail()],
+  [new RegExp(`^${employerAppPath('/tin-tuyen-dung/')}[^/]+/chinh-sua$`), m.employer_workspace_title_job_edit()],
+  [new RegExp(`^${employerAppPath('/tin-tuyen-dung/')}[^/]+$`), m.employer_workspace_title_job_detail()],
+  [new RegExp(`^${employerAppPath('/chien-dich/')}[^/]+/thiet-lap$`), m.employer_workspace_title_campaign_setup()],
+  [new RegExp(`^${employerAppPath('/chien-dich/')}[^/]+$`), m.employer_workspace_title_campaign_detail()],
   // Hội thoại: tiêu đề chung, không đưa tên ứng viên/công ty vào tab.
-  [new RegExp(`^${employerAppPath('/connect/')}[^/]+$`), m.connect_title()],
+  [new RegExp(`^${employerAppPath('/procv-connect/')}[^/]+$`), m.connect_title()],
   // Link mời đánh giá: không đưa tên ứng viên vào tiêu đề (lịch sử trình duyệt, chia sẻ tab).
   [new RegExp(`^${employerMarketingPath('/danh-gia-ho-so/')}[^/]+$`), m.employer_workspace_title_application_review()],
 ]
 
 const EXACT_ADMIN_TITLES = new Map([
-  [adminPath('/login'), 'Đăng nhập quản trị'],
-  [adminPath('/invitation'), 'Hoàn tất tài khoản quản trị'],
-  [adminPath('/reset-password'), m.account_reset_title_admin()],
+  [adminPath('/dang-nhap'), 'Đăng nhập quản trị'],
+  [adminPath('/loi-moi'), 'Hoàn tất tài khoản quản trị'],
+  [adminPath('/dat-lai-mat-khau'), m.account_reset_title_admin()],
   ...ADMIN_ROUTES
     .filter((route) => !route.segment.includes(':'))
     .map((route) => [adminPath(route.segment), route.title]),
@@ -111,8 +109,10 @@ function normalizePath(pathname) {
 }
 
 function cvTitle(pathname) {
-  if (pathname.endsWith('/edit')) return 'Chỉnh sửa CV'
-  if (pathname.endsWith('/view')) return 'Xem CV'
+  if (pathname.startsWith('/cv/chia-se/')) return 'CV được chia sẻ'
+  if (pathname.endsWith('/chinh-sua')) return 'Chỉnh sửa CV'
+  if (pathname.endsWith('/xem')) return 'Xem CV'
+  if (pathname.endsWith('/da-luu')) return 'Lưu CV thành công'
   return NOT_FOUND_TITLE
 }
 
@@ -123,8 +123,7 @@ function mainTitle(pathname) {
   const accountItem = findActiveAccountItem(pathname)
   if (accountItem) return accountItem.label
   if (isCompanyDetailPath(pathname)) return 'Hồ sơ công ty'
-  if (pathname.startsWith('/cvs/')) return cvTitle(pathname)
-  if (pathname.startsWith('/save-cv-success/')) return 'Lưu CV thành công'
+  if (pathname.startsWith('/cv/')) return cvTitle(pathname)
   if (pathname.startsWith('/viec-lam/tai/')) return 'Tuyển dụng việc làm theo địa điểm'
   if (pathname.startsWith('/viec-lam/') || pathname.startsWith('/jobs/') || pathname.startsWith('/brand/')) {
     return 'Chi tiết việc làm'
@@ -141,7 +140,6 @@ function mainTitle(pathname) {
     if (pathname.includes('/chi-tiet/') || pathname.match(/^\/cv-templates\/[^/]+$/)) return 'Chi tiết mẫu CV'
     return 'Mẫu CV xin việc chuyên nghiệp'
   }
-  if (pathname.startsWith('/cv/share/')) return 'CV được chia sẻ'
   if (pathname.startsWith(`${CANDIDATE_CONNECT_PATH}/`)) return m.connect_title()
   return NOT_FOUND_TITLE
 }

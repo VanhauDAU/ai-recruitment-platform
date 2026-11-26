@@ -22,7 +22,7 @@ describe('UploadCv', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Tải lên' }))
 
     const link = screen.getByRole('link', { name: 'Xem CV tải lên của tôi' })
-    expect(link).toHaveAttribute('href', '/cvs/cv_new/view')
+    expect(link).toHaveAttribute('href', '/cv/cv_new/xem')
     expect(link).toHaveAttribute('target', '_blank')
   })
 })

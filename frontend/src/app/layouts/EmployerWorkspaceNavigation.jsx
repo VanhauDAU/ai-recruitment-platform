@@ -58,11 +58,11 @@ export const CV_MANAGEMENT_MENU_KEY = 'cv-management'
  */
 export function employerNavItems({ unreadApplications = 0 } = {}) {
   return [
-    iconLink('/dashboard', DashboardOutlined, m.employer_workspace_title_dashboard()),
+    iconLink('/tong-quan', DashboardOutlined, m.employer_workspace_title_dashboard()),
     { type: 'divider', key: 'divider-work' },
-    iconLink('/campaigns', ThunderboltOutlined, m.employer_workspace_title_campaigns()),
-    iconLink('/jobs', FileTextOutlined, m.employer_workspace_title_jobs()),
-    iconLink('/company-page', LayoutOutlined, m.employer_workspace_title_company_page()),
+    iconLink('/chien-dich', ThunderboltOutlined, m.employer_workspace_title_campaigns()),
+    iconLink('/tin-tuyen-dung', FileTextOutlined, m.employer_workspace_title_jobs()),
+    iconLink('/trang-cong-ty', LayoutOutlined, m.employer_workspace_title_company_page()),
     {
       key: CV_MANAGEMENT_MENU_KEY,
       icon: <TeamOutlined />,
@@ -70,19 +70,19 @@ export function employerNavItems({ unreadApplications = 0 } = {}) {
       title: m.employer_workspace_nav_cv_management(),
       children: [
         link(
-          '/applications',
+          '/ho-so-ung-tuyen',
           m.employer_workspace_title_applications(),
           countLabel(m.employer_workspace_title_applications(), unreadApplications),
         ),
-        link('/candidate-search', m.employer_workspace_title_candidate_search()),
-        link('/talent-pool', m.employer_workspace_title_talent_pool()),
-        link('/candidate-blocks', m.employer_workspace_title_candidate_blocks()),
+        link('/tim-ung-vien', m.employer_workspace_title_candidate_search()),
+        link('/kho-ung-vien', m.employer_workspace_title_talent_pool()),
+        link('/ung-vien-bi-chan', m.employer_workspace_title_candidate_blocks()),
       ],
     },
     { type: 'divider', key: 'divider-account' },
-    iconLink('/activities', HistoryOutlined, m.employer_workspace_title_activities()),
-    iconLink('/account/settings/account-info', SettingOutlined, m.employer_workspace_nav_account_settings()),
-    iconLink('/notifications', NotificationOutlined, m.employer_workspace_title_notifications()),
+    iconLink('/lich-su-hoat-dong', HistoryOutlined, m.employer_workspace_title_activities()),
+    iconLink('/cai-dat/thong-tin-tai-khoan', SettingOutlined, m.employer_workspace_nav_account_settings()),
+    iconLink('/thong-bao', NotificationOutlined, m.employer_workspace_title_notifications()),
   ]
 }
 
@@ -99,17 +99,17 @@ export function employerRouteTitle(pathname) {
 }
 
 const SECTION_PATHS = [
-  '/dashboard', '/campaigns', '/jobs', '/company-page', '/applications',
-  '/talent-pool', '/candidate-search', '/candidate-blocks', '/notifications', '/activities',
+  '/tong-quan', '/chien-dich', '/tin-tuyen-dung', '/trang-cong-ty', '/ho-so-ung-tuyen',
+  '/kho-ung-vien', '/tim-ung-vien', '/ung-vien-bi-chan', '/thong-bao', '/lich-su-hoat-dong',
 ].map((path) => employerAppPath(path))
 
 /** Detail and form pages keep their section lit (a job's editor lights "Tin tuyển dụng"). */
 export function employerSelectedMenuKey(pathname) {
   if (
-    pathname.startsWith(employerAppPath('/account/settings')) ||
-    pathname === employerAppPath('/account/phone-verify')
+    pathname.startsWith(employerAppPath('/cai-dat')) ||
+    pathname === employerAppPath('/xac-thuc-so-dien-thoai')
   ) {
-    return employerAppPath('/account/settings/account-info')
+    return employerAppPath('/cai-dat/thong-tin-tai-khoan')
   }
   return SECTION_PATHS.find((path) => pathname === path || pathname.startsWith(`${path}/`)) || pathname
 }

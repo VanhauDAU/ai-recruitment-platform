@@ -63,13 +63,13 @@ export default function DashboardHeader({
       </div>
 
       <div className="relative mt-6 flex flex-wrap gap-x-6 gap-y-2 border-t border-white/10 pt-4 text-xs text-slate-200/80">
-        <Link to={employerAppPath('/jobs')} className="group inline-flex items-center gap-2 !text-inherit hover:!text-white">
+        <Link to={employerAppPath('/tin-tuyen-dung')} className="group inline-flex items-center gap-2 !text-inherit hover:!text-white">
           {m.employer_workspace_title_jobs()} <ArrowRightOutlined className="text-[10px] transition group-hover:translate-x-0.5" />
         </Link>
-        <Link to={employerAppPath('/campaigns')} className="group inline-flex items-center gap-2 !text-inherit hover:!text-white">
+        <Link to={employerAppPath('/chien-dich')} className="group inline-flex items-center gap-2 !text-inherit hover:!text-white">
           {m.employer_workspace_title_campaigns()} <ArrowRightOutlined className="text-[10px] transition group-hover:translate-x-0.5" />
         </Link>
-        <Link to={employerAppPath('/activities')} className="group inline-flex items-center gap-2 !text-inherit hover:!text-white">
+        <Link to={employerAppPath('/lich-su-hoat-dong')} className="group inline-flex items-center gap-2 !text-inherit hover:!text-white">
           {m.employer_workspace_title_activities()} <ArrowRightOutlined className="text-[10px] transition group-hover:translate-x-0.5" />
         </Link>
       </div>

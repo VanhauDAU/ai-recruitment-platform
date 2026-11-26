@@ -298,7 +298,7 @@ test('candidate job alerts: route remains protected for guests', async ({ page }
   await page.goto('/tai-khoan/cai-dat-thong-bao-viec-lam')
 
   await expect(page).toHaveURL(
-    /\/login\?returnUrl=%2Ftai-khoan%2Fcai-dat-thong-bao-viec-lam$/,
+    /\/dang-nhap\?returnUrl=%2Ftai-khoan%2Fcai-dat-thong-bao-viec-lam$/,
   )
 })
 

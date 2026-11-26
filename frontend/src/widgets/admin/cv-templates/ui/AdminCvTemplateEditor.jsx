@@ -86,7 +86,7 @@ export default function AdminCvTemplateEditor() {
   const config = (payload) => save.mutate({ kind: 'config', payload })
   return <div className="space-y-4">
     <header className="flex flex-wrap items-center gap-x-3 gap-y-2">
-      <Link to={adminPath('/cv/templates')}><Button size="small" type="text" icon={<ArrowLeftOutlined />}>Mẫu CV</Button></Link>
+      <Link to={adminPath('/cv/mau-cv')}><Button size="small" type="text" icon={<ArrowLeftOutlined />}>Mẫu CV</Button></Link>
       <div className="order-3 flex min-w-0 basis-full flex-wrap items-center gap-2 sm:order-2 sm:basis-0 sm:flex-1">
         <h1 className="min-w-0 truncate text-lg font-bold text-slate-900 sm:text-xl">{template.name}</h1>
         {status && <Tag color={status[0]} className="!mr-0">{status[1]}</Tag>}

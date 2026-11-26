@@ -13,7 +13,7 @@ from .mailing import frontend_link, send_html_email
 
 def _candidate_welcome(user):
     brand_color = email_brand_color()
-    destination = frontend_link('/onboard-user')
+    destination = frontend_link('/hoan-thien-ho-so')
     site_name = get_string_setting('site_name', 'ProCV')
     support_email = get_string_setting('support_email', '')
     name = user.full_name or user.email
@@ -63,7 +63,7 @@ def _employer_welcome(user, context):
     hotline = get_string_setting('hotline', '')
     zalo_url = get_string_setting('contact_zalo_url', '')
     destination = frontend_link(
-        '/tuyendung/app/employer-verify',
+        '/tuyendung/app/xac-thuc-tai-khoan',
         base_url=settings.EMPLOYER_FRONTEND_URL,
     )
     name = user.full_name or user.email

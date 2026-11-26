@@ -912,7 +912,7 @@ nhập qua Django admin. Nay:
   hiện carousel khung 2:1 phía trên danh mục (trước đây bị ẩn).
 - Đợt 2: hộp cắt ảnh khóa tỉ lệ (`react-easy-crop`), mức ảnh tối thiểu 960×360, 8 tông
   gradient dùng chung cho mọi vị trí banner (migration `sitecontent.0008`).
-- Hướng dẫn nội dung: [cau-hinh-site-settings.md](../../05-huong-dan/cau-hinh-site-settings.md#banner-quảng-bá-trang-quản-trị-adminappbanners).
+- Hướng dẫn nội dung: [cau-hinh-site-settings.md](../../05-huong-dan/cau-hinh-site-settings.md#banner-quảng-bá-trang-quản-trị-adminappbanner).
 
 ## Làm lại trang Cấu hình hệ thống (ADR-0026, 2026-11-21)
 

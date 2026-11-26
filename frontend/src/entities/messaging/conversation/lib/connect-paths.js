@@ -1,7 +1,7 @@
 import { employerAppPath } from '@/shared/config/portals'
 
 export const CANDIDATE_CONNECT_PATH = '/procv-connect'
-export const EMPLOYER_CONNECT_SEGMENT = '/connect'
+export const EMPLOYER_CONNECT_SEGMENT = '/procv-connect'
 
 /** Inbox route of a portal, optionally opened on one conversation. */
 export function connectPath(portal, conversationId = '') {

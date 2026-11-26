@@ -10,12 +10,12 @@ const api = vi.hoisted(() => ({
 
 vi.mock('../api/auth.api', () => api)
 
-function renderForm(path = '/admin/app/reset-password?token=admin-token') {
+function renderForm(path = '/admin/app/dat-lai-mat-khau?token=admin-token') {
   return render(
     <MemoryRouter initialEntries={[path]}>
       <PasswordResetForm
         portal="admin"
-        requestPath="/admin/app/login"
+        requestPath="/admin/app/dang-nhap"
         invalidActionLabel="Quay về đăng nhập"
       />
     </MemoryRouter>,
@@ -49,6 +49,6 @@ describe('PasswordResetForm', () => {
     renderForm()
 
     expect(await screen.findByRole('link', { name: 'Quay về đăng nhập' }))
-      .toHaveAttribute('href', '/admin/app/login')
+      .toHaveAttribute('href', '/admin/app/dang-nhap')
   })
 })

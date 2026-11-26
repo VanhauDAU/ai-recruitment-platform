@@ -202,7 +202,7 @@ export default function EmployerRegister() {
     return (
       <div className="w-full">
         <AuthLogo className="!mx-0 mb-4 !h-12 !w-12 !rounded-xl" />
-        <RegistrationClosedNotice loginPath={employerAppPath('/login')} />
+        <RegistrationClosedNotice loginPath={employerAppPath('/dang-nhap')} />
       </div>
     )
   }
@@ -331,7 +331,7 @@ export default function EmployerRegister() {
 
       <p className="login-field mt-6 text-center text-sm text-slate-500">
         {m.employer_account_register_have_account()}{' '}
-        <Link to={employerAppPath('/login')} className="font-semibold !text-[var(--brand-primary-hover)] hover:underline">{m.employer_account_register_login_now()}</Link>
+        <Link to={employerAppPath('/dang-nhap')} className="font-semibold !text-[var(--brand-primary-hover)] hover:underline">{m.employer_account_register_login_now()}</Link>
       </p>
     </div>
   )

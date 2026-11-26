@@ -226,7 +226,7 @@ export default function LinkedCompanyPanel({ profile, catalogs, industries, onRe
             <div className="linked-company-card__name"><h2>{company.company_name}</h2></div>
             <p>{company.address || m.employer_company_address_unknown()} <span aria-hidden="true">|</span> {company.company_size ? m.employer_company_size_employees({ size: company.company_size }) : m.employer_company_size_unknown()}</p>
             <p className="linked-company-card__fixed-note">{m.employer_company_linked_fixed_note()}</p>
-            <Link to={employerAppPath('/company-page')} className="company-setting-link">{m.employer_company_customize_public_page()}</Link>
+            <Link to={employerAppPath('/trang-cong-ty')} className="company-setting-link">{m.employer_company_customize_public_page()}</Link>
           </div>
         </header>
 

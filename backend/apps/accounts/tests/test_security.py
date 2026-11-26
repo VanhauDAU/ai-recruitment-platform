@@ -285,9 +285,9 @@ class LastLoginTests(APITestCase):
     FRONTEND_URL='https://main.example.test',
     EMPLOYER_FRONTEND_URL='https://employer.example.test',
     ADMIN_FRONTEND_URL='https://admin.example.test',
-    ADMIN_PASSWORD_RESET_PATH='/app/reset-password',
-    EMPLOYER_EMAIL_VERIFICATION_PATH='/app/account/verify',
-    EMPLOYER_PASSWORD_RESET_PATH='/app/reset-password',
+    ADMIN_PASSWORD_RESET_PATH='/app/dat-lai-mat-khau',
+    EMPLOYER_EMAIL_VERIFICATION_PATH='/app/xac-thuc-email',
+    EMPLOYER_PASSWORD_RESET_PATH='/app/dat-lai-mat-khau',
 )
 class AuthSecurityAndEmailTests(APITestCase):
     def setUp(self):
@@ -360,7 +360,7 @@ class AuthSecurityAndEmailTests(APITestCase):
 
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn(
-            'https://employer.example.test/app/account/verify?token=', mail.outbox[0].body
+            'https://employer.example.test/app/xac-thuc-email?token=', mail.outbox[0].body
         )
         self.assertIn('Mã NTD', mail.outbox[0].body)
         self.assertIn('Xác thực tài khoản', mail.outbox[0].alternatives[0][0])
@@ -376,7 +376,7 @@ class AuthSecurityAndEmailTests(APITestCase):
 
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn(
-            'https://employer.example.test/app/reset-password?token=', mail.outbox[0].body
+            'https://employer.example.test/app/dat-lai-mat-khau?token=', mail.outbox[0].body
         )
 
     def test_admin_password_reset_email_uses_admin_portal_link_and_label(self):
@@ -393,7 +393,7 @@ class AuthSecurityAndEmailTests(APITestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn('Đặt lại mật khẩu tài khoản Quản trị ProCV', mail.outbox[0].subject)
         self.assertIn(
-            'https://admin.example.test/app/reset-password?token=',
+            'https://admin.example.test/app/dat-lai-mat-khau?token=',
             mail.outbox[0].body,
         )
         self.assertIn('portal=admin', mail.outbox[0].body)
@@ -546,5 +546,7 @@ class AuthSecurityAndEmailTests(APITestCase):
         )
         self.assertIn(f'Mã NTD {user.public_id}', message.body)
         self.assertIn('Google đã xác thực địa chỉ email', message.body)
-        self.assertIn('https://employer.example.test/tuyendung/app/employer-verify', message.body)
+        self.assertIn(
+            'https://employer.example.test/tuyendung/app/xac-thuc-tai-khoan', message.body
+        )
         self.assertIn('Tiếp tục thiết lập tài khoản', message.alternatives[0][0])

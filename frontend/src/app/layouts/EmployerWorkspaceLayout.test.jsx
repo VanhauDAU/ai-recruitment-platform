@@ -79,10 +79,10 @@ describe('EmployerWorkspaceLayout', () => {
     })
 
     render(
-      <MemoryRouter initialEntries={['/tuyendung/app/dashboard']}>
+      <MemoryRouter initialEntries={['/tuyendung/app/tong-quan']}>
         <Routes>
           <Route element={<EmployerWorkspaceLayout />}>
-            <Route path="/tuyendung/app/dashboard" element={<p>Bảng tin</p>} />
+            <Route path="/tuyendung/app/tong-quan" element={<p>Bảng tin</p>} />
           </Route>
         </Routes>
       </MemoryRouter>,
@@ -111,10 +111,10 @@ describe('EmployerWorkspaceLayout', () => {
     })
 
     render(
-      <MemoryRouter initialEntries={['/tuyendung/app/dashboard']}>
+      <MemoryRouter initialEntries={['/tuyendung/app/tong-quan']}>
         <Routes>
           <Route element={<EmployerWorkspaceLayout />}>
-            <Route path="/tuyendung/app/dashboard" element={<p>Bảng tin</p>} />
+            <Route path="/tuyendung/app/tong-quan" element={<p>Bảng tin</p>} />
           </Route>
         </Routes>
       </MemoryRouter>,
@@ -135,10 +135,10 @@ describe('EmployerWorkspaceLayout', () => {
     })
 
     render(
-      <MemoryRouter initialEntries={['/tuyendung/app/dashboard']}>
+      <MemoryRouter initialEntries={['/tuyendung/app/tong-quan']}>
         <Routes>
           <Route element={<EmployerWorkspaceLayout />}>
-            <Route path="/tuyendung/app/dashboard" element={<p>Bảng tin</p>} />
+            <Route path="/tuyendung/app/tong-quan" element={<p>Bảng tin</p>} />
           </Route>
         </Routes>
       </MemoryRouter>,
@@ -170,10 +170,10 @@ describe('EmployerWorkspaceLayout', () => {
     }
 
     render(
-      <MemoryRouter initialEntries={['/tuyendung/app/dashboard']}>
+      <MemoryRouter initialEntries={['/tuyendung/app/tong-quan']}>
         <Routes>
           <Route element={<EmployerWorkspaceLayout />}>
-            <Route path="/tuyendung/app/dashboard" element={<p>Bảng tin</p>} />
+            <Route path="/tuyendung/app/tong-quan" element={<p>Bảng tin</p>} />
           </Route>
         </Routes>
       </MemoryRouter>,
@@ -206,10 +206,10 @@ describe('EmployerWorkspaceLayout', () => {
     profileQueryState.data.verification_case = { status: 'revoked' }
 
     render(
-      <MemoryRouter initialEntries={['/tuyendung/app/dashboard']}>
+      <MemoryRouter initialEntries={['/tuyendung/app/tong-quan']}>
         <Routes>
           <Route element={<EmployerWorkspaceLayout />}>
-            <Route path="/tuyendung/app/dashboard" element={<p>Bảng tin</p>} />
+            <Route path="/tuyendung/app/tong-quan" element={<p>Bảng tin</p>} />
           </Route>
         </Routes>
       </MemoryRouter>,
@@ -226,18 +226,18 @@ describe('EmployerWorkspaceLayout', () => {
     })
 
     render(
-      <MemoryRouter initialEntries={['/tuyendung/app/dashboard']}>
+      <MemoryRouter initialEntries={['/tuyendung/app/tong-quan']}>
         <Routes>
           <Route element={<EmployerWorkspaceLayout />}>
-            <Route path="/tuyendung/app/dashboard" element={<p>Bảng tin</p>} />
-            <Route path="/tuyendung/app/account/settings/account-info" element={<p>Thông tin tài khoản đang mở</p>} />
+            <Route path="/tuyendung/app/tong-quan" element={<p>Bảng tin</p>} />
+            <Route path="/tuyendung/app/cai-dat/thong-tin-tai-khoan" element={<p>Thông tin tài khoản đang mở</p>} />
           </Route>
         </Routes>
       </MemoryRouter>,
     )
 
     const accountLink = screen.getByRole('link', { name: 'Thông tin tài khoản' })
-    expect(accountLink).toHaveAttribute('href', '/tuyendung/app/account/settings/account-info')
+    expect(accountLink).toHaveAttribute('href', '/tuyendung/app/cai-dat/thong-tin-tai-khoan')
     expect(accountLink).toHaveTextContent('Mã NTD: 48261937')
     fireEvent.click(accountLink)
 
@@ -251,10 +251,10 @@ describe('EmployerWorkspaceLayout', () => {
     })
 
     render(
-      <MemoryRouter initialEntries={['/tuyendung/app/dashboard']}>
+      <MemoryRouter initialEntries={['/tuyendung/app/tong-quan']}>
         <Routes>
           <Route element={<EmployerWorkspaceLayout />}>
-            <Route path="/tuyendung/app/dashboard" element={<p>Bảng tin</p>} />
+            <Route path="/tuyendung/app/tong-quan" element={<p>Bảng tin</p>} />
           </Route>
         </Routes>
       </MemoryRouter>,
@@ -274,10 +274,10 @@ describe('EmployerWorkspaceLayout', () => {
     })
 
     render(
-      <MemoryRouter initialEntries={['/tuyendung/app/campaigns/camp_123']}>
+      <MemoryRouter initialEntries={['/tuyendung/app/chien-dich/camp_123']}>
         <Routes>
           <Route element={<EmployerWorkspaceLayout />}>
-            <Route path="/tuyendung/app/campaigns/:publicId" element={<p>Chi tiết chiến dịch</p>} />
+            <Route path="/tuyendung/app/chien-dich/:publicId" element={<p>Chi tiết chiến dịch</p>} />
           </Route>
         </Routes>
       </MemoryRouter>,
@@ -295,11 +295,11 @@ describe('EmployerWorkspaceLayout', () => {
     })
 
     render(
-      <MemoryRouter initialEntries={['/tuyendung/app/applications?job=jb_123&application=app_1']}>
+      <MemoryRouter initialEntries={['/tuyendung/app/ho-so-ung-tuyen?job=jb_123&application=app_1']}>
         <Routes>
           <Route element={<EmployerWorkspaceLayout />}>
-            <Route path="/tuyendung/app/applications" element={<p>Hồ sơ đang mở</p>} />
-            <Route path="/tuyendung/app/jobs/:publicId" element={<p>Chi tiết tin đang mở</p>} />
+            <Route path="/tuyendung/app/ho-so-ung-tuyen" element={<p>Hồ sơ đang mở</p>} />
+            <Route path="/tuyendung/app/tin-tuyen-dung/:publicId" element={<p>Chi tiết tin đang mở</p>} />
           </Route>
         </Routes>
       </MemoryRouter>,
@@ -317,11 +317,11 @@ describe('EmployerWorkspaceLayout', () => {
     })
 
     render(
-      <MemoryRouter initialEntries={['/tuyendung/app/applications?campaign=camp_123&application=app_1']}>
+      <MemoryRouter initialEntries={['/tuyendung/app/ho-so-ung-tuyen?campaign=camp_123&application=app_1']}>
         <Routes>
           <Route element={<EmployerWorkspaceLayout />}>
-            <Route path="/tuyendung/app/applications" element={<p>Hồ sơ đang mở</p>} />
-            <Route path="/tuyendung/app/campaigns/:publicId" element={<CampaignDestination />} />
+            <Route path="/tuyendung/app/ho-so-ung-tuyen" element={<p>Hồ sơ đang mở</p>} />
+            <Route path="/tuyendung/app/chien-dich/:publicId" element={<CampaignDestination />} />
           </Route>
         </Routes>
       </MemoryRouter>,
@@ -339,10 +339,10 @@ describe('EmployerWorkspaceLayout', () => {
     })
 
     render(
-      <MemoryRouter initialEntries={['/tuyendung/app/applications']}>
+      <MemoryRouter initialEntries={['/tuyendung/app/ho-so-ung-tuyen']}>
         <Routes>
           <Route element={<EmployerWorkspaceLayout />}>
-            <Route path="/tuyendung/app/applications" element={<p>Hộp CV</p>} />
+            <Route path="/tuyendung/app/ho-so-ung-tuyen" element={<p>Hộp CV</p>} />
           </Route>
         </Routes>
       </MemoryRouter>,

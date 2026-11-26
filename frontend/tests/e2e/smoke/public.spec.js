@@ -1013,7 +1013,7 @@ test('public smoke: a shared CV link renders its immutable version', async ({ pa
     })
   })
 
-  await page.goto('/cv/share/share-token')
+  await page.goto('/cv/chia-se/share-token')
   await expect(page.getByRole('heading', { name: 'CV được chia sẻ' })).toBeVisible()
   await expect(page.getByText('Nguyễn Chia sẻ')).toBeVisible()
   await expect(page.getByLabel('Xem trước CV single_column_v1 trang 1')).toBeVisible()

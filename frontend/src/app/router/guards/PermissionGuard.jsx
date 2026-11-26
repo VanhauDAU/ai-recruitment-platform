@@ -37,7 +37,7 @@ export default function PermissionGuard({ route, children }) {
 
   if (decision === 'checking') return <PageLoading />
   if (decision === 'deny') {
-    return <Navigate to={adminPath('/access-denied')} replace />
+    return <Navigate to={adminPath('/khong-co-quyen')} replace />
   }
   return children || <Outlet />
 }

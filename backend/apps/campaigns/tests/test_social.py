@@ -819,7 +819,7 @@ class ThreadsConnectionTests(SocialFixtures, TestCase):
         notice = EmployerNotification.objects.get(
             event_type=EmployerNotification.EventType.SOCIAL_CONNECTION_EXPIRED
         )
-        self.assertEqual(notice.action_path, '/tuyendung/app/account/settings/integrations')
+        self.assertEqual(notice.action_path, '/tuyendung/app/cai-dat/tich-hop')
 
     def test_a_transient_refresh_failure_leaves_the_connection_for_the_next_run(self):
         connection = self.connect_threads()

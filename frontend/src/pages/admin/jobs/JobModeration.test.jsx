@@ -19,7 +19,7 @@ vi.mock('@/features/admin/job/review-job-reports', () => ({
   JobReportQueue: () => <div>Mock report queue</div>,
 }))
 
-function renderPage(initialEntry = '/admin/app/job-moderation') {
+function renderPage(initialEntry = '/admin/app/duyet-tin') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={queryClient}>
@@ -81,7 +81,7 @@ describe('JobModeration', () => {
   })
 
   it('sends table ordering to the server and resets to page one', async () => {
-    renderPage('/admin/app/job-moderation?job_page=3')
+    renderPage('/admin/app/duyet-tin?job_page=3')
     await screen.findByText('Backend Engineer')
 
     fireEvent.click(screen.getByRole('button', { name: 'Tin tuyển dụng' }))
@@ -107,7 +107,7 @@ describe('JobModeration', () => {
   })
 
   it('narrows the list to jobs with pending reports from the deep-linked scope', async () => {
-    renderPage('/admin/app/job-moderation?job_scope=reported')
+    renderPage('/admin/app/duyet-tin?job_scope=reported')
     await screen.findByText('Backend Engineer')
 
     expect(getAdminJobs).toHaveBeenCalledWith(
@@ -117,7 +117,7 @@ describe('JobModeration', () => {
   })
 
   it('opens the report queue from the existing deep-linked tab', () => {
-    renderPage('/admin/app/job-moderation?tab=reports')
+    renderPage('/admin/app/duyet-tin?tab=reports')
 
     expect(screen.getByRole('tab', { name: 'Báo cáo vi phạm' })).toHaveAttribute(
       'aria-selected',

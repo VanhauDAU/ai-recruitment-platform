@@ -19,7 +19,7 @@ import PageLoading from '@/shared/ui/PageLoading'
  * Chế độ popup (`?popup=1&nonce=`): chuyển kết quả cho cửa sổ gốc rồi tự đóng;
  * cửa sổ gốc không xác nhận (đã đóng/chuyển trang) thì xử lý ngay tại popup.
  */
-export default function OAuthCallback({ portal = 'main', loginPath = '/login' }) {
+export default function OAuthCallback({ portal = 'main', loginPath = '/dang-nhap' }) {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const { setCurrentUser } = useSession()

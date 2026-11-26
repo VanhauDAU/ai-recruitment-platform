@@ -20,7 +20,7 @@ describe('incoming notice', () => {
   it('rings with the incoming sound and links only to in-app paths', async () => {
     const { announceNotice } = await load()
     const onOpen = vi.fn()
-    const shown = announceNotice({ id: 'eno_1', title: 'Có hồ sơ mới', path: '/tuyendung/app/applications', onOpen })
+    const shown = announceNotice({ id: 'eno_1', title: 'Có hồ sơ mới', path: '/tuyendung/app/ho-so-ung-tuyen', onOpen })
     await vi.advanceTimersByTimeAsync(100)
 
     expect(await shown).toBe(true)
@@ -28,7 +28,7 @@ describe('incoming notice', () => {
     expect(title).toBe('Có hồ sơ mới')
     expect(options.className).toBe('app-toast--sound-incoming')
     options.action.onClick()
-    expect(onOpen).toHaveBeenCalledWith('/tuyendung/app/applications')
+    expect(onOpen).toHaveBeenCalledWith('/tuyendung/app/ho-so-ung-tuyen')
 
     announceNotice({ id: 'eno_2', title: 'x', path: '//evil.example', onOpen })
     await vi.advanceTimersByTimeAsync(100)

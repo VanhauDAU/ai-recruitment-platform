@@ -7,7 +7,7 @@ import { AdminCvOverview } from '@/widgets/admin/cv-overview'
 
 export default function AdminCvOverviewPage() {
   return (
-    <AdminCvShell actions={<Link to={adminPath('/cv/templates?new=1')}><Button type="primary" icon={<PlusOutlined />}>Tạo mẫu CV</Button></Link>}>
+    <AdminCvShell actions={<Link to={adminPath('/cv/mau-cv?new=1')}><Button type="primary" icon={<PlusOutlined />}>Tạo mẫu CV</Button></Link>}>
       <AdminCvOverview />
     </AdminCvShell>
   )

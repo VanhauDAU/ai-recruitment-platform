@@ -210,7 +210,7 @@ pages/admin/companies/CompanyReports
   khối do nền tảng sinh ra (`share`, `similar_companies`). Từ chối cả báo cáo
   (HTTP 400 `{"detail": "<chuỗi>"}`, ví dụ còn một báo cáo đang chờ) hiện ở đầu
   form thay vì toast.
-- `features/admin/company/review-company-reports` sở hữu hàng chờ `/admin/app/company-reports`
+- `features/admin/company/review-company-reports` sở hữu hàng chờ `/admin/app/bao-cao-cong-ty`
   (mọi quản trị viên đều xem, kết luận và gỡ kết luận). Bộ lọc `status|reason|q|company`, `ordering` và
   `page` là trạng thái URL; mọi cột dữ liệu sort phía server theo whitelist
   `company_name, reason, detail, reporter_email, status, created_at`, nên phần
@@ -306,8 +306,8 @@ app/layouts/OnboardingLayout + pages/main/onboarding
 - URL là nguồn chuẩn cho tab, filter, ordering và page. Lời mời quản trị dùng
   namespace `invite_*`, hàng chờ xác thực NTD dùng `verify_*`; tham số không
   tương thích phải được bỏ khi chuyển tab.
-- `/admin/app/accounts/:publicId` là route canonical của ứng viên/admin;
-  `/admin/app/recruiters/:publicId` là route canonical của NTD. Route chi tiết
+- `/admin/app/tai-khoan/:publicId` là route canonical của ứng viên/admin;
+  `/admin/app/nha-tuyen-dung/:publicId` là route canonical của NTD. Route chi tiết
   phải chuyển bằng `replace` khi role không khớp và giữ `pathname + search` của
   nguồn điều hướng nội bộ để nút quay lại khôi phục đúng workspace.
 - Summary tài khoản, NTD và công ty là aggregate phía server theo cấp quản trị,
@@ -433,7 +433,7 @@ pages/employer/candidates/ApplicationList
 - Trang `pages/employer/candidates` → `features/employer/candidate/manage-talent-pool` (danh sách,
   gợi ý theo tin, mời ứng tuyển). Ứng viên: `pages/main/account/TalentPools` →
   `features/main/application/withdraw-from-talent-pool`.
-- Trang `pages/employer/candidates` (`/tuyendung/app/candidate-blocks`) →
+- Trang `pages/employer/candidates` (`/tuyendung/app/ung-vien-bi-chan`) →
   `features/employer/candidate/manage-candidate-blocks` (liệt kê, gỡ chặn).
 - Trang công khai `pages/employer/review/ApplicationReview` (`/tuyendung/danh-gia-ho-so/:token`,
   không layout, không session) → `features/employer/candidate/submit-application-review`.
@@ -448,7 +448,7 @@ pages/employer/candidates/ApplicationList
   invalidate key này. Các mục còn lại là "Sắp mở" theo lộ trình.
 - Style riêng nằm ở `application-workspace.css` và `application-decision.css`
   (lazy theo route) để không tăng CSS khởi tạo.
-- Tìm CV (`/tuyendung/app/candidate-search`, nút "Tìm CV" trên header và mục ở nhóm "Quản lý
+- Tìm CV (`/tuyendung/app/tim-ung-vien`, nút "Tìm CV" trên header và mục ở nhóm "Quản lý
   CV"): `pages/employer/candidates/CandidateSearch` →
   `features/employer/candidate/search-candidates` → `entities/application/job-fit`
   (`FitScoreChip`, `ExtractedProfile`, `FitBreakdown showEvidence={false}`),
@@ -776,7 +776,7 @@ pages/employer/campaigns/CampaignSetup
 ## Workspace "Trang công ty" của nhà tuyển dụng
 
 ```text
-app/router (employerAppPath('/company-page'), trong DashboardLayout)
+app/router (employerAppPath('/trang-cong-ty'), trong DashboardLayout)
   → pages/employer/company/CompanyPage
     → widgets/employer/company-page
       → features/employer/company/customize-company-page, edit-company-page-content,
@@ -857,7 +857,7 @@ app/router (employerAppPath('/company-page'), trong DashboardLayout)
 
 ```text
 pages/main/connect/ConnectPage (/procv-connect[/:id], layout gọn riêng)
-pages/employer/connect/ConnectPage (/tuyendung/app/connect[/:id], trong workspace)
+pages/employer/connect/ConnectPage (/tuyendung/app/procv-connect[/:id], trong workspace)
   → widgets/common/connect-inbox (3 cột responsive, slot theo cổng, connect.css lazy)
     → features/common/messaging/browse-conversations (danh sách, tìm, cuộn tải thêm)
     → features/common/messaging/chat-conversation (luồng tin, khung soạn, emoji lazy,
@@ -1009,7 +1009,7 @@ pages/admin/announcements/Announcements
 - `widgets/admin/announcement-management` sở hữu bảng, editor, preview,
   conflict simulator và dashboard metrics 7/30/90 ngày lấy aggregate phía
   server. Page admin chỉ compose widget; route/lazy registry vẫn thuộc `app`.
-- Workspace `/admin/app/announcements` dùng URL làm nguồn chuẩn cho filter,
+- Workspace `/admin/app/thong-bao` dùng URL làm nguồn chuẩn cho filter,
   ordering và page. Mọi cột dữ liệu sort phía server; action column là ngoại
   lệ. Quyền route là `announcement.view`; `manage` và `publish` chỉ điều khiển
   mutation tương ứng, backend vẫn fail-closed khi gọi API trực tiếp.

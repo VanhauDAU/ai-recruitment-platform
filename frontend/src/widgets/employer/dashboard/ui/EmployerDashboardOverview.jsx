@@ -66,11 +66,11 @@ export default function EmployerDashboardOverview() {
     EMPLOYER_CAPABILITIES.JOB_WORKSPACE,
   )[0]
   const candidateActionTarget = canAccessCandidateData
-    ? employerAppPath('/applications')
+    ? employerAppPath('/ho-so-ung-tuyen')
     : employerReadinessAction(candidateBlocker?.action).to
   const jobWorkspaceReady = !readinessChecking && !readinessError && readiness.jobWorkspaceReady
   const jobActionTarget = jobWorkspaceReady
-    ? employerAppPath('/jobs/new')
+    ? employerAppPath('/tin-tuyen-dung/tao-moi')
     : employerReadinessAction(jobBlocker?.action).to
 
   return (

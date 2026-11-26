@@ -87,7 +87,7 @@ def snapshot_campaign(campaign, *, now=None):
                     message=_alert_message(rule, campaign, health),
                     subject_public_id=campaign.public_id,
                     metadata={'campaign_public_id': campaign.public_id, 'rule': rule},
-                    action_path=f'/tuyendung/app/campaigns/{campaign.public_id}?active_tab=health',
+                    action_path=f'/tuyendung/app/chien-dich/{campaign.public_id}?active_tab=health',
                 )
             entry['notified'] = today.isoformat()
         open_alerts[rule] = entry
@@ -132,7 +132,7 @@ def weekly_report_context(campaign, health, *, now):
         'backlog_alert': health['response']['backlog'] >= BACKLOG_ALERT,
         'campaign_url': (
             f'{settings.EMPLOYER_FRONTEND_URL.rstrip("/")}'
-            f'/tuyendung/app/campaigns/{campaign.public_id}?active_tab=health'
+            f'/tuyendung/app/chien-dich/{campaign.public_id}?active_tab=health'
         ),
     }
 

@@ -15,10 +15,10 @@ describe('EmployerConsultingNeed', () => {
     useSession.mockReturnValue({ user: { employer_onboarding_step: 'complete' } })
 
     render(
-      <MemoryRouter initialEntries={['/tuyendung/app/consulting-need']}>
+      <MemoryRouter initialEntries={['/tuyendung/app/khai-bao-nhu-cau']}>
         <Routes>
-          <Route path="/tuyendung/app/consulting-need" element={<EmployerConsultingNeed />} />
-          <Route path="/tuyendung/app/dashboard" element={<p>Employer dashboard</p>} />
+          <Route path="/tuyendung/app/khai-bao-nhu-cau" element={<EmployerConsultingNeed />} />
+          <Route path="/tuyendung/app/tong-quan" element={<p>Employer dashboard</p>} />
         </Routes>
       </MemoryRouter>,
     )

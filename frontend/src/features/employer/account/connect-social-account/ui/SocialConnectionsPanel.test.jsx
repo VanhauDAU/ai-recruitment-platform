@@ -26,7 +26,7 @@ const facebook = {
   simulated: true,
 }
 
-function renderPanel(entry = '/tuyendung/app/account/settings/integrations') {
+function renderPanel(entry = '/tuyendung/app/cai-dat/tich-hop') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
   return render(
     <QueryClientProvider client={queryClient}>
@@ -69,7 +69,7 @@ describe('SocialConnectionsPanel', () => {
     mocks.getSocialConnections.mockResolvedValue([])
     mocks.getPendingSocialAccounts.mockResolvedValue([{ id: 'page_1', name: 'Tuyển dụng ProCV', picture_url: '' }])
     mocks.selectSocialAccount.mockResolvedValue({ public_id: 'soc_1', account_name: 'Tuyển dụng ProCV' })
-    renderPanel('/tuyendung/app/account/settings/integrations?network=facebook_page&social_select=nonce1')
+    renderPanel('/tuyendung/app/cai-dat/tich-hop?network=facebook_page&social_select=nonce1')
 
     const picker = await screen.findByRole('dialog')
     await user.click(await within(picker).findByRole('radio', { name: /Tuyển dụng ProCV/ }))
@@ -81,7 +81,7 @@ describe('SocialConnectionsPanel', () => {
 
   it('explains a failed return from the network', async () => {
     mocks.getSocialConnections.mockResolvedValue([])
-    renderPanel('/tuyendung/app/account/settings/integrations?network=facebook_page&social_error=denied')
+    renderPanel('/tuyendung/app/cai-dat/tich-hop?network=facebook_page&social_error=denied')
 
     expect(await screen.findByText('Bạn chưa cấp quyền cho ProCV trên Facebook nên chưa kết nối được.')).toBeInTheDocument()
   })

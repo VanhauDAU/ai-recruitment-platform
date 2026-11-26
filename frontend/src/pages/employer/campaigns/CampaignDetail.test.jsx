@@ -30,14 +30,14 @@ vi.mock('@/features/employer/campaign/manage-campaigns', () => ({
   CampaignLifecycleActions: () => <button type="button">Dừng</button>,
 }))
 
-function renderPage(initialEntry = '/tuyendung/app/campaigns/camp_frontend') {
+function renderPage(initialEntry = '/tuyendung/app/chien-dich/camp_frontend') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[initialEntry]}>
         <Routes>
-          <Route path="/tuyendung/app/campaigns/:publicId" element={<CampaignDetail />} />
-          <Route path="/tuyendung/app/campaigns" element={<p>Danh sách chiến dịch</p>} />
+          <Route path="/tuyendung/app/chien-dich/:publicId" element={<CampaignDetail />} />
+          <Route path="/tuyendung/app/chien-dich" element={<p>Danh sách chiến dịch</p>} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,

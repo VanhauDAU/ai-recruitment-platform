@@ -127,16 +127,16 @@ export function mainRoutes() {
       <Route path="/mau-cv/ngon-ngu/*" element={<Navigate to="/mau-cv" replace />} />
       <Route path="/cv-templates" element={<TemplateCatalogPage />} />
       <Route path="/cv-templates/:slug" element={<TemplateDetailPage />} />
-      <Route path="/cv/share/:token" element={<CvSharedViewPage />} />
+      <Route path="/cv/chia-se/:token" element={<CvSharedViewPage />} />
 
       {/* Cụm trang tài khoản ứng viên — layout 3 cột, chỉ candidate đã đăng
           nhập. Chỉ item có page thật trong registry mới được tạo route. */}
       <Route element={<AuthGuard />}>
         <Route element={<RoleGuard allowedRoles={['candidate']} />}>
-          <Route path="/cvs/:publicId/edit" element={<CvEditorPage />} />
-          <Route path="/save-cv-success/:publicId" element={<CvSaveSuccessPage />} />
+          <Route path="/cv/:publicId/chinh-sua" element={<CvEditorPage />} />
+          <Route path="/cv/:publicId/da-luu" element={<CvSaveSuccessPage />} />
           <Route path="/tai-cv-len" element={<UploadCvPage />} />
-          <Route path="/cvs/:publicId/view" element={<CvOwnerViewPage />} />
+          <Route path="/cv/:publicId/xem" element={<CvOwnerViewPage />} />
           <Route element={<CandidateAccountLayout />}>
             <Route path={ACCOUNT_ROOT} element={<Navigate to={ACCOUNT_DEFAULT_PATH} replace />} />
             {ACCOUNT_ROUTES.map(({ item, Page }) => {
@@ -164,27 +164,24 @@ export function mainRoutes() {
     <Route key="candidate-onboarding" element={<AuthGuard />}>
       <Route element={<RoleGuard allowedRoles={['candidate']} />}>
         <Route element={<OnboardingLayout />}>
-          <Route path="/onboard-user" element={<OnboardUserPage />} />
-          {/* Onboarding gộp về một trang; URL cũ giữ lại cho link đã phát ra. */}
-          <Route path="/onboard-user-setting" element={<Navigate to="/onboard-user" replace />} />
+          <Route path="/hoan-thien-ho-so" element={<OnboardUserPage />} />
         </Route>
       </Route>
     </Route>,
 
     <Route key="auth" element={<AuthLayout />}>
       <Route element={<GuestGuard allowedRoles={['candidate']} />}>
-        <Route path="/login" element={<MainLoginPage />} />
-        <Route path="/sign-up" element={<MainRegisterPage />} />
-        <Route path="/register" element={<MainRegisterPage />} />
+        <Route path="/dang-nhap" element={<MainLoginPage />} />
+        <Route path="/dang-ky" element={<MainRegisterPage />} />
       </Route>
       {/* Dùng chung cho cả 3 cổng: link trong email luôn trỏ về host chính. */}
-      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-      <Route path="/reset-password" element={<ResetPasswordPage />} />
+      <Route path="/quen-mat-khau" element={<ForgotPasswordPage />} />
+      <Route path="/dat-lai-mat-khau" element={<ResetPasswordPage />} />
     </Route>,
 
-    <Route key="oauth-callback" path="/oauth/callback" element={<OAuthCallbackPage portal="main" loginPath="/login" />} />,
+    <Route key="oauth-callback" path="/oauth/callback" element={<OAuthCallbackPage portal="main" loginPath="/dang-nhap" />} />,
 
-    <Route key="employer-redirect" path="/employer/dashboard" element={<Navigate to={employerAppPath('/dashboard')} replace />} />,
+    <Route key="employer-redirect" path="/employer/dashboard" element={<Navigate to={employerAppPath('/tong-quan')} replace />} />,
   ]
 }
 

@@ -71,7 +71,7 @@ function renderPage(activeTab) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
-  const initialEntry = `/tuyendung/app/campaigns/camp_1?active_tab=${activeTab}`
+  const initialEntry = `/tuyendung/app/chien-dich/camp_1?active_tab=${activeTab}`
   const view = render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[initialEntry]}>

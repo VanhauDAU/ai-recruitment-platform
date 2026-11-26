@@ -25,23 +25,23 @@ function wrappersOf(path, routes = employerRoutes(), ancestors = []) {
 
 describe('employer company page route', () => {
   it('is lazy and guarded like its sibling workspace pages, without the job-workspace gate', () => {
-    const wrappers = wrappersOf('/tuyendung/app/company-page')
+    const wrappers = wrappersOf('/tuyendung/app/trang-cong-ty')
     const types = wrappers.map((element) => element.type)
 
     expect(types.slice(0, 3)).toEqual([AuthGuard, RoleGuard, EmployerOnboardingGuard])
     expect(wrappers[1].props.allowedRoles).toEqual(['employer'])
     expect(types.at(-1)).toBe(EmployerCompanyWorkspacePage)
-    expect(types).toEqual(wrappersOf('/tuyendung/app/activities').map((element) => element.type).with(-1, EmployerCompanyWorkspacePage))
+    expect(types).toEqual(wrappersOf('/tuyendung/app/lich-su-hoat-dong').map((element) => element.type).with(-1, EmployerCompanyWorkspacePage))
   })
 })
 
 describe('employer ProCV Connect routes', () => {
   it('sit with the other candidate-data pages of the workspace', () => {
-    for (const path of ['/tuyendung/app/connect', '/tuyendung/app/connect/:conversationId']) {
+    for (const path of ['/tuyendung/app/procv-connect', '/tuyendung/app/procv-connect/:conversationId']) {
       const types = wrappersOf(path).map((element) => element.type)
       expect(types.slice(0, 3)).toEqual([AuthGuard, RoleGuard, EmployerOnboardingGuard])
       expect(types).toContain(CandidateDataGuard)
-      expect(types).toEqual(wrappersOf('/tuyendung/app/applications').map((element) => element.type).with(-1, EmployerConnectPage))
+      expect(types).toEqual(wrappersOf('/tuyendung/app/ho-so-ung-tuyen').map((element) => element.type).with(-1, EmployerConnectPage))
     }
   })
 })

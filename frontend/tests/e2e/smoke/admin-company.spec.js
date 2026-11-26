@@ -150,7 +150,7 @@ test('admin company directory: sidebar navigation, detail and owner roster', { t
     })
   })
 
-  await page.goto('/admin/app/companies')
+  await page.goto('/admin/app/cong-ty')
   await expect(page.getByRole('heading', { name: 'Công ty', exact: true })).toBeVisible()
   await expect(page.getByRole('tab', { name: 'Danh sách công ty' })).toHaveAttribute(
     'aria-selected',
@@ -173,7 +173,7 @@ test('admin company directory: sidebar navigation, detail and owner roster', { t
   await companyListLink.click()
 
   await page.getByRole('button', { name: /Công ty Alpha/ }).click()
-  await expect(page).toHaveURL('/admin/app/companies/co_alpha')
+  await expect(page).toHaveURL('/admin/app/cong-ty/co_alpha')
   await expect(page.getByRole('heading', { name: 'Công ty Alpha' })).toBeVisible()
   await expect(page.locator('.company-directory__rich-text strong')).toHaveText('công nghệ')
   await expect(page.locator('.company-directory__rich-text script')).toHaveCount(0)
@@ -195,7 +195,7 @@ test('admin company directory: sidebar navigation, detail and owner roster', { t
     'descending',
   )
 
-  await page.goto('/admin/app/companies?tab=updates&company=co_alpha')
+  await page.goto('/admin/app/cong-ty?tab=updates&company=co_alpha')
   await expect(page.getByRole('tab', { name: 'Yêu cầu cập nhật' })).toHaveAttribute(
     'aria-selected',
     'true',

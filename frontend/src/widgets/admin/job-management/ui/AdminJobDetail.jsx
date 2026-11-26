@@ -43,7 +43,7 @@ export default function AdminJobDetail({ publicId }) {
   const jobPublicId = job?.public_id
   const changeCount = job?.content_changes?.changed_count || 0
   const pendingReportCount = job?.pending_report_count || 0
-  const fallback = adminPath('/job-moderation')
+  const fallback = adminPath('/duyet-tin')
   const origin = location.state?.origin
   const backTarget = origin?.pathname?.startsWith(adminPath(''))
     ? `${origin.pathname}${origin.search || ''}`

@@ -52,7 +52,7 @@ export default function EmployerFooter() {
     { label: m.marketing_nav_about(), href: employerMarketingPath('/gioi-thieu') },
     { label: m.marketing_nav_services(), href: employerMarketingPath('/dich-vu') },
     { label: m.marketing_nav_contact(), href: employerMarketingPath('/lien-he') },
-    { label: m.marketing_nav_post_job(), href: employerAppPath('/register') },
+    { label: m.marketing_nav_post_job(), href: employerAppPath('/dang-ky') },
   ]
   const candidateLinks = [
     { label: m.marketing_footer_candidate_portal(), href: MAIN_PORTAL_URL },

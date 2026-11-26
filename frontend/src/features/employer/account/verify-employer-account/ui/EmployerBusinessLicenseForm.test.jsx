@@ -109,7 +109,7 @@ describe('EmployerBusinessLicenseForm', () => {
     expect(await screen.findByRole('heading', { name: /Giấy đăng ký doanh nghiệp hoặc Giấy tờ tương đương khác/ })).toBeVisible()
     expect(screen.getByRole('radio', { name: 'Giấy đăng ký doanh nghiệp hoặc Giấy tờ tương đương khác' })).toBeChecked()
     expect(screen.getByRole('button', { name: 'Lưu' })).toBeDisabled()
-    expect(screen.getByRole('link', { name: 'cập nhật thông tin công ty' })).toHaveAttribute('href', '/tuyendung/app/account/settings/company?update=true')
+    expect(screen.getByRole('link', { name: 'cập nhật thông tin công ty' })).toHaveAttribute('href', '/tuyendung/app/cai-dat/cong-ty?update=true')
   })
 
   it('uploads a business registration document after a company is linked', async () => {

@@ -118,7 +118,7 @@ export default function JobApplicationsWorkspace({ jobPublicId, summary, filter,
     const query = new URLSearchParams({ job: jobPublicId })
     if (application?.candidate_email) query.set('q', application.candidate_email)
     if (application?.public_id) query.set('application', application.public_id)
-    return employerAppPath(`/applications?${query}`)
+    return employerAppPath(`/ho-so-ung-tuyen?${query}`)
   }
 
   function changeOrdering(value) {

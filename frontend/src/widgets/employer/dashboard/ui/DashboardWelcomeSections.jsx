@@ -105,7 +105,7 @@ export function DashboardVerificationJourney({
       </div>
 
       <Link
-        to={jobWorkspaceReady ? employerAppPath('/jobs/new') : EMPLOYER_VERIFY_URL}
+        to={jobWorkspaceReady ? employerAppPath('/tin-tuyen-dung/tao-moi') : EMPLOYER_VERIFY_URL}
         aria-label={m.employer_workspace_dash_first_job()}
         className="mt-3 flex items-center gap-3 rounded-xl border border-dashed border-slate-300 !bg-slate-50/80 px-3 py-3 text-xs font-bold !text-slate-600 transition employer-dash-hover-tint"
       >

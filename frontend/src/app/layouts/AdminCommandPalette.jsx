@@ -25,7 +25,7 @@ function useSettingsDestinations(enabled) {
     key: `settings-${group.key}`,
     label: group.label,
     breadcrumb: [m.admin_nav_settings(), group.label],
-    href: adminPath(`/settings?group=${group.key}`),
+    href: adminPath(`/cau-hinh?group=${group.key}`),
   })), [settings.data])
 }
 

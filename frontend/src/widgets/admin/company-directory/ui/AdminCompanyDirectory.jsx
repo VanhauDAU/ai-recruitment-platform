@@ -114,7 +114,7 @@ export default function AdminCompanyDirectory({ onOpenTab }) {
   }
 
   function openCompany(company) {
-    navigate(adminPath(`/companies/${company.public_id}`), {
+    navigate(adminPath(`/cong-ty/${company.public_id}`), {
       state: {
         origin: {
           pathname: location.pathname,
@@ -126,7 +126,7 @@ export default function AdminCompanyDirectory({ onOpenTab }) {
   }
 
   function openUpdates(company) {
-    navigate(adminPath(`/companies?tab=updates&company=${encodeURIComponent(company.public_id)}`))
+    navigate(adminPath(`/cong-ty?tab=updates&company=${encodeURIComponent(company.public_id)}`))
   }
 
   const sortBy = (value) => patchParams({ ordering: value === DEFAULT_ORDERING ? null : value })

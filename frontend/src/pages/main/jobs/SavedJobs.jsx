@@ -77,7 +77,7 @@ export default function SavedJobs() {
   if (!authLoading && !isCandidate) {
     return (
       <Navigate
-        to="/login"
+        to="/dang-nhap"
         replace
         state={{
           from: '/viec-lam-da-luu',

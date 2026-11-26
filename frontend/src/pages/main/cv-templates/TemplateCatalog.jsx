@@ -172,7 +172,7 @@ export default function TemplateCatalog() {
         themeColor={selection?.color}
         open={Boolean(selection)}
         onClose={() => setSelection(null)}
-        onCreated={(cv) => navigate(`/cvs/${cv.public_id}/edit?mode=create`)}
+        onCreated={(cv) => navigate(`/cv/${cv.public_id}/chinh-sua?mode=create`)}
         locale={locale}
         onRequireLogin={promptLogin}
       />
