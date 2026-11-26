@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
@@ -54,5 +54,28 @@ describe('AppliedJobs', () => {
 
     await user.click(within(tabs).getByRole('tab', { name: 'Trúng tuyển' }))
     expect(screen.getByText('Không có hồ sơ nào ở trạng thái này')).toBeInTheDocument()
+  })
+
+  it('shows six applications per page and returns to page 1 when the filter changes', async () => {
+    getCandidateApplications.mockResolvedValue(Array.from({ length: 8 }, (_, index) => application({
+      public_id: `app_${index}`,
+      job_title: `Việc ${index + 1}`,
+      status: index === 7 ? 'submitted' : 'viewed',
+    })))
+    const user = userEvent.setup()
+    render(withQueryClient(<MemoryRouter initialEntries={['/tai-khoan/viec-lam-da-ung-tuyen?page=2']}><AppliedJobs /></MemoryRouter>))
+
+    expect(await screen.findAllByRole('article')).toHaveLength(2)
+    expect(screen.getByText('Việc 7')).toBeInTheDocument()
+
+    await user.click(within(screen.getByTitle('1')).getByRole('button'))
+    await waitFor(() => expect(screen.getAllByRole('article')).toHaveLength(6))
+    expect(screen.getByText('Việc 1')).toBeInTheDocument()
+
+    await user.click(within(screen.getByTitle('2')).getByRole('button'))
+    await waitFor(() => expect(screen.getAllByRole('article')).toHaveLength(2))
+    await user.click(screen.getByRole('tab', { name: 'Tiếp nhận' }))
+    await waitFor(() => expect(screen.getAllByRole('article')).toHaveLength(1))
+    expect(screen.queryByTitle('2')).not.toBeInTheDocument()
   })
 })
