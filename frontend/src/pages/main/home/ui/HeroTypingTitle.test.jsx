@@ -18,7 +18,7 @@ describe('HeroTypingTitle', () => {
     mockMedia({ phone: true })
     const { container } = render(<HeroTypingTitle siteName="ProCV" />)
 
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('ProCV — Tạo CV chuyên nghiệp, Tìm việc làm, Tuyển dụng hiệu quả')
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('ProCV — Tạo CV chuyên nghiệp, Tìm việc nhanh chóng, Tuyển dụng hiệu quả')
     const typed = () => container.querySelector('.home-typing-text').textContent
     expect(typed()).toBe('Tạo CV chuyên nghiệp')
 
@@ -30,8 +30,8 @@ describe('HeroTypingTitle', () => {
     tick(32, 20)
     expect(typed()).toBe('')
     tick(350, 1)
-    tick(130, 12)
-    expect(typed()).toBe('Tìm việc làm')
+    tick(130, 20)
+    expect(typed()).toBe('Tìm việc nhanh chóng')
   })
 
   it('shows the static title on desktop and with reduced motion', () => {
@@ -42,6 +42,6 @@ describe('HeroTypingTitle', () => {
 
     mockMedia({ phone: false })
     render(<HeroTypingTitle siteName="ProCV" />)
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('ProCV — Tạo CV chuyên nghiệp, Tìm việc làm, Tuyển dụng hiệu quả')
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('ProCV — Tạo CV chuyên nghiệp, Tìm việc nhanh chóng, Tuyển dụng hiệu quả')
   })
 })

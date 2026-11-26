@@ -3,9 +3,11 @@ import { EnvironmentOutlined } from '@ant-design/icons'
 import { Link, useNavigate } from 'react-router'
 import { companyInitial, formatLocations, formatSalary, getJobs, JOB_LOGO_TINTS, jobDetailPath, JobPresentationLabels, JobPreviewPanel, stripCompanyPrefix } from '@/entities/job/job'
 import { JobImpressionBoundary } from '@/features/main/job/track-job-engagement'
+import { useNewTabLinkProps } from '@/shared/hooks/use-new-tab-link-props'
 
 // Khối "Danh sách việc làm ..." trong bài, lấy theo danh mục nghề liên quan.
 export default function BlogRelatedJobs({ jobCategory }) {
+  const newTab = useNewTabLinkProps()
   const navigate = useNavigate()
   const [jobs, setJobs] = useState([])
   const [preview, setPreview] = useState({ job: null, anchor: null })
@@ -61,8 +63,7 @@ export default function BlogRelatedJobs({ jobCategory }) {
           >
             <Link
               to={jobDetailPath(job)}
-              target="_blank"
-              rel="noopener"
+              {...newTab}
               className={`group flex items-center gap-3 rounded-xl border p-3 transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--brand-primary)] hover:shadow-md border-slate-200 bg-white`}
             >
               <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-100 bg-slate-50 text-sm font-bold text-slate-500">
@@ -96,8 +97,7 @@ export default function BlogRelatedJobs({ jobCategory }) {
       )}
       <Link
         to={`/viec-lam?category=${jobCategory.id}`}
-        target="_blank"
-        rel="noopener"
+        {...newTab}
         className="mt-3 block w-full rounded-lg border border-[var(--brand-primary)] py-2 text-center text-sm font-semibold text-[var(--brand-primary)] transition-colors duration-200 hover:bg-[var(--brand-primary-soft)]"
       >
         Xem tất cả việc làm {jobCategory.name}

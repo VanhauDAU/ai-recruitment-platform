@@ -8,6 +8,16 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Changed — Điều hướng trên điện thoại
+
+- Trang chi tiết tin / mẫu CV / công ty: header có nút ←; không có trang trước trong
+  app (link chia sẻ, tab mới) thì về danh sách tương ứng (`model/detail-back.js`).
+- Thẻ việc làm ở trang chủ và blog chỉ mở tab mới trên máy có chuột
+  (`useNewTabLinkProps`); điện thoại mở ngay trong tab, web app không bị đẩy ra Safari.
+- Thanh tab dưới ẩn khi cuộn xuống, hiện khi cuộn lên; nút nổi hạ xuống theo.
+- Header luôn dính trên điện thoại (trước đây ẩn khi cuộn ở các trang `/viec-lam`).
+- Sửa test `HeroTypingTitle` theo vế "Tìm việc nhanh chóng".
+
 #### Fixed — Web app trên iPhone và thanh tab dưới
 
 - Icon "Thêm vào Màn hình chính": `apple-touch-icon.png` dựng lại nền trắng (bản cũ nền

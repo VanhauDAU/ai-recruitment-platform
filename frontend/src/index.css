@@ -204,6 +204,19 @@ body {
   body.has-mobile-tab-bar {
     --page-bottom-bar-height: 4rem;
   }
+
+  body.has-mobile-tab-bar.mobile-tab-bar-hidden {
+    --page-bottom-bar-height: 0px;
+  }
+}
+
+/* Thanh tab ẩn khi cuộn xuống: trượt hẳn khỏi màn, kể cả nút CV nhô lên trên. */
+.mobile-tab-bar--fixed {
+  transition: transform 0.3s ease;
+}
+
+.mobile-tab-bar--fixed.is-hidden {
+  transform: translateY(calc(100% + 2rem));
 }
 
 /* Tab đang chọn: viên kính bo tròn, hơi trong, nằm sau icon + nhãn. */
