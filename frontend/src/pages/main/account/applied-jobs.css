@@ -113,6 +113,13 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  scroll-margin-top: 80px;
+}
+
+.applied-jobs__pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
 }
 
 .applied-job {

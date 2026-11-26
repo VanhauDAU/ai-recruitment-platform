@@ -8,6 +8,12 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Changed — Việc làm đã ứng tuyển chia trang, 6 việc mỗi trang
+
+- Trang `/tai-khoan/viec-lam-da-ung-tuyen` hiện 6 hồ sơ mỗi trang; số trang nằm trên
+  URL (`?page=`) để quay lại từ tin tuyển dụng vẫn đúng trang, đổi bộ lọc trạng thái
+  thì về trang 1.
+
 #### Fixed — Gõ chữ không còn giật ở form ứng tuyển và ProCV Connect
 
 - Thư giới thiệu và ô liên hệ (họ tên, email, SĐT) tự giữ chữ đang gõ; mỗi phím không
