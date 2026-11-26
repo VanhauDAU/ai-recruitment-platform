@@ -322,9 +322,10 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        # Tài khoản demo dùng mật khẩu có trong repo công khai. Production chỉ được
-        # dọn (--clear), không được tạo.
-        if settings.IS_PRODUCTION and not options['clear']:
+        # Tài khoản demo dùng mật khẩu có trong repo công khai. Production không được
+        # tạo tài khoản: chỉ dọn (--clear) hoặc thêm tin cho công ty demo đã có
+        # (--catalog-only, không tạo user nào).
+        if settings.IS_PRODUCTION and not (options['clear'] or options['catalog_only']):
             raise CommandError('Không seed dữ liệu demo trên production.')
         now = timezone.now()
         if options['catalog_only']:

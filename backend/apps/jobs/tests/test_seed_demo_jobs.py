@@ -1,5 +1,6 @@
 from io import StringIO
 
+from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.core.management import CommandError, call_command
 from django.test import SimpleTestCase, TestCase, override_settings
@@ -12,6 +13,8 @@ from ..models import Job
 from ..models.core import validate_application_reasons
 from ..seed_data.demo_job_catalog import CATALOG_JOBS, CATALOG_SCHEDULES, COMPANY_PERKS
 from ..seed_data.demo_jobs import COMPANIES, JOBS_BY_CATEGORY
+
+User = get_user_model()
 
 
 class SeedDemoJobsTests(TestCase):
@@ -65,6 +68,20 @@ class SeedDemoJobsTests(TestCase):
         self.assertFalse(job.job_locations.exists())
         hanoi_job = Job.objects.get(title='Kỹ sư AI thị giác máy tính (Camera AI)')
         self.assertEqual(hanoi_job.job_locations.get().location.name, 'Phường Ba Đình')
+
+    def test_catalog_only_is_allowed_on_production(self):
+        call_command('seed_demo_jobs', stdout=StringIO())
+        users = User.objects.count()
+
+        with override_settings(IS_PRODUCTION=True):
+            with self.assertRaises(CommandError):
+                call_command('seed_demo_jobs', stdout=StringIO())
+            call_command('seed_demo_jobs', catalog_only=True, stdout=StringIO())
+
+        self.assertEqual(User.objects.count(), users)
+        self.assertEqual(
+            Job.objects.filter(title__in=[spec['title'] for spec in CATALOG_JOBS]).count(), 100
+        )
 
     def test_catalog_only_requires_seeded_companies(self):
         with self.assertRaises(CommandError):

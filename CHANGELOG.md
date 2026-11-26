@@ -17,7 +17,8 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   gian, thời vụ, freelance, làm tại nhà), lương VND/USD đủ 5 kiểu, ca xoay/đêm/cuối tuần.
 - `seed_demo_jobs` tạo thêm bộ này sau 30 tin ngẫu nhiên; cờ `--catalog-only` chỉ tạo
   lại 100 tin trên công ty demo đang có, không xoá tin khác, và ký lại DPA hiện hành
-  cho chủ công ty demo (đổi phiên bản DPA làm tin demo cũ bị ẩn).
+  cho chủ công ty demo (đổi phiên bản DPA làm tin demo cũ bị ẩn). Cờ này chạy được
+  trên production vì không tạo tài khoản; seed đầy đủ vẫn bị chặn ở đó.
 
 #### Changed — Trang danh sách việc làm trên điện thoại
 
