@@ -1,8 +1,8 @@
-"""Celery tasks của sitecontent."""
+"""Gửi góp ý / báo lỗi mới sang Telegram."""
 
 from celery import shared_task
 
-from .services.feedback_telegram import TelegramDeliveryError, send_feedback_to_telegram
+from ..services.feedback_telegram import TelegramDeliveryError, send_feedback_to_telegram
 
 
 @shared_task(bind=True, max_retries=3)
