@@ -1,11 +1,10 @@
 // Toast + chuông cho một thông báo vừa đến qua realtime. Hạ tầng thuần: nhận
 // tiêu đề/hành động đã dựng sẵn, không biết loại sự kiện nghiệp vụ.
 import { useSyncExternalStore } from 'react'
-import { SILENT_TOAST_CLASS, toastSoundOptions } from './sound-effects'
+import { isSoundOn, SILENT_TOAST_CLASS, SOUND_PREFERENCE_KEY, toastSoundOptions } from './sound-effects'
 import { message } from './toast'
 import { m } from '@/shared/config/i18n'
 
-const SOUND_KEY = 'procv:notification-sound'
 const CLAIM_PREFIX = 'procv:notice-claim:'
 const CLAIM_TTL_MS = 60_000
 // Tab đang hiển thị giành trước; tab ẩn chỉ nhận khi không tab nào đang mở.
@@ -32,18 +31,14 @@ function writeStorage(key, value) {
   }
 }
 
-export function isNotificationSoundOn() {
-  return readStorage(SOUND_KEY) !== 'off'
-}
-
 export function setNotificationSoundOn(on) {
-  writeStorage(SOUND_KEY, on ? null : 'off')
+  writeStorage(SOUND_PREFERENCE_KEY, on ? null : 'off')
   soundListeners.forEach((listener) => listener())
 }
 
 function subscribeSound(listener) {
   soundListeners.add(listener)
-  const onStorage = (event) => event.key === SOUND_KEY && listener()
+  const onStorage = (event) => event.key === SOUND_PREFERENCE_KEY && listener()
   window.addEventListener('storage', onStorage)
   return () => {
     soundListeners.delete(listener)
@@ -53,7 +48,7 @@ function subscribeSound(listener) {
 
 /** Trạng thái chuông, đồng bộ giữa các tab. */
 export function useNotificationSound() {
-  const on = useSyncExternalStore(subscribeSound, isNotificationSoundOn, () => true)
+  const on = useSyncExternalStore(subscribeSound, isSoundOn, () => true)
   return [on, setNotificationSoundOn]
 }
 
@@ -79,15 +74,15 @@ export function isInternalPath(path) {
 }
 
 /**
- * Hiện toast cho thông báo `id`, kèm chuông nếu người dùng bật; `onOpen(path)`
- * chạy khi bấm "Xem". Trả về `false` khi một tab khác đã báo thông báo này.
+ * Hiện toast cho thông báo `id`, kèm tiếng `sound` nếu người dùng bật chuông;
+ * `onOpen(path)` chạy khi bấm "Xem". Trả về `false` khi một tab khác đã báo thông báo này.
  */
-export async function announceNotice({ id, title, path, onOpen }) {
+export async function announceNotice({ id, title, path, onOpen, sound = 'incoming' }) {
   if (!(await claimNotice(id))) return false
-  const sound = isNotificationSoundOn() ? toastSoundOptions('incoming') : { className: SILENT_TOAST_CLASS }
+  const soundOptions = isSoundOn() ? toastSoundOptions(sound) : { className: SILENT_TOAST_CLASS }
   const action = onOpen && isInternalPath(path)
     ? { label: m.notification_open(), onClick: () => onOpen(path) }
     : undefined
-  message.info(title, { ...sound, id, action, duration: 6_000 })
+  message.info(title, { ...soundOptions, id, action, duration: 6_000 })
   return true
 }

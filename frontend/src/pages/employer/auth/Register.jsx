@@ -182,7 +182,7 @@ export default function EmployerRegister() {
         captcha_token: captchaToken,
       })
       setCurrentUser(result.user)
-      message.success(m.employer_account_register_success(), toastSoundOptions('done'))
+      message.success(m.employer_account_register_success(), toastSoundOptions('celebrate'))
       sessionStorage.removeItem('employer_registration_consent')
       navigate(`${EMPLOYER_ACCOUNT_VERIFY_URL}?registered=1`, { replace: true })
     } catch (err) {

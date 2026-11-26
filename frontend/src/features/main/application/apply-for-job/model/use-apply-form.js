@@ -6,6 +6,7 @@ import { readCampaignRef } from '@/entities/campaign/campaign'
 import { candidateNotificationKeys } from '@/entities/notification/candidate-notification'
 import { getMySavedCvs, importCvFile, isCvApplicationReady } from '@/entities/cv/cv'
 import { message } from '@/shared/lib/toast'
+import { toastSoundOptions } from '@/shared/lib/sound-effects'
 
 export const INITIAL_VISIBLE_CVS = 5
 export const UPLOAD_CHOICE_ID = '__upload_from_computer__'
@@ -197,7 +198,7 @@ export function useApplyForm({
         contactPhone: contact.phone.trim(),
         campaignRef: readCampaignRef(),
       })
-      message.success('Chúc mừng bạn đã ứng tuyển thành công!')
+      message.success('Chúc mừng bạn đã ứng tuyển thành công!', toastSoundOptions('celebrate'))
       // The confirmation notice is already in the inbox; refresh the bell now.
       queryClient.invalidateQueries({ queryKey: candidateNotificationKeys.all })
       onSubmitted?.(application)

@@ -25,7 +25,7 @@ function counterpartName(queryClient, portal, conversationId) {
 
 /**
  * Number of conversations with unread messages, for the header/sidebar badge.
- * Also the one place that toasts (with the bell sound) for an incoming message,
+ * Also the one place that toasts (with the message sound) for an incoming message,
  * except for the conversation the user is looking at; `announceNotice` keeps it
  * to one tab and one toast per message.
  */
@@ -53,6 +53,7 @@ export function useConnectUnreadCount(portal, { enabled = true } = {}) {
       title: name ? m.connect_toast_message({ name, text }) : m.connect_toast_message_generic({ text }),
       path: connectPath(portal, event.conversation),
       onOpen: navigate,
+      sound: 'message',
     })
   }, { enabled })
 

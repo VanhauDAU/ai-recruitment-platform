@@ -124,7 +124,7 @@ export default function Register() {
       const result = await register({ ...payload, role: 'candidate', captcha_token: captchaToken, portal: 'main' })
       // Đăng ký xong đăng nhập luôn; email chưa xác thực -> banner nhắc xác thực ở layout.
       setCurrentUser(result.user)
-      message.success('Đăng ký thành công.', toastSoundOptions('done'))
+      message.success('Đăng ký thành công.', toastSoundOptions('celebrate'))
       navigate(getAuthDestination({ user: result.user, returnUrl: getReturnUrl(searchParams) }), { replace: true })
     } catch (err) {
       clearPasswords()

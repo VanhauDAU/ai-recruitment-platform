@@ -16,6 +16,7 @@ import {
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { employerAppPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
+import { toastSoundOptions } from '@/shared/lib/sound-effects'
 import { EmployerJobEditor } from '@/widgets/employer/job-editor'
 import JobVisibilityHoldAlert from './JobVisibilityHoldAlert'
 import { m } from '@/shared/config/i18n'
@@ -73,11 +74,12 @@ export default function JobForm() {
     ),
     onSuccess: (job) => {
       queryClient.invalidateQueries({ queryKey: ['jobs'] })
-      message.success(
-        !publicId || detailQuery.data?.status === 'draft'
-          ? m.employer_job_edit_published()
-          : m.employer_job_edit_updated(),
-      )
+      // Chỉ lần đăng đầu là mốc ăn mừng; cập nhật tin đang chạy giữ toast thường.
+      if (!publicId || detailQuery.data?.status === 'draft') {
+        message.success(m.employer_job_edit_published(), toastSoundOptions('celebrate'))
+      } else {
+        message.success(m.employer_job_edit_updated())
+      }
       // Vừa đăng/cập nhật: mở thẻ Thông tin tuyển dụng để NTD soát lại tin, chưa có CV để xem.
       navigate(employerAppPath(`/tin-tuyen-dung/${job.public_id}?active_tab=job`))
     },
