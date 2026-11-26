@@ -82,6 +82,9 @@ function MobileActions({ isAuthenticated, navigate, onClose, user }) {
   )
 }
 
+// Danh sách việc làm (kể cả theo địa điểm), không gồm trang chi tiết tin.
+const JOB_LIST_PATH = /^\/(viec-lam(\/tai\/[^/]+)?|jobs)\/?$/
+
 export default function Header({ editorMode = false }) {
   const { user, isAuthenticated, logout } = useSession()
   const { promptLogin } = useLoginPrompt()
@@ -91,10 +94,12 @@ export default function Header({ editorMode = false }) {
   const [openKey, setOpenKey] = useState(null)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [mobileKey, setMobileKey] = useState(null)
-  const headerVisible = useHideOnScroll()
-  // Điện thoại: header luôn dính (giữ nút quay lại, tìm kiếm); thanh tab dưới mới là
-  // thứ ẩn khi cuộn xuống. Desktop vẫn ẩn header trên trang danh sách / chi tiết tin.
+  // Điện thoại: trang danh sách việc làm chỉ hiện header ở đầu trang (nhường chỗ cho
+  // kết quả); trang chi tiết giữ header luôn dính vì có nút quay lại. Desktop: ẩn khi
+  // cuộn xuống, hiện khi cuộn lên trên các trang việc làm.
   const isPhone = useMediaQuery('(max-width: 767.98px)')
+  const isJobList = JOB_LIST_PATH.test(location.pathname)
+  const headerVisible = useHideOnScroll(96, { topOnly: isPhone && isJobList })
   const [menuTouched, setMenuTouched] = useState(false)
   if (!menuTouched && (openKey || mobileOpen)) setMenuTouched(true)
   const sources = useHeaderNavigationSources(menuTouched)
@@ -120,7 +125,7 @@ export default function Header({ editorMode = false }) {
     if (location.key === 'default') navigate(backFallback)
     else navigate(-1)
   }
-  const shouldShowHeader = editorMode || (!isCvRoute && (isPhone || !hideOnScroll || headerVisible))
+  const shouldShowHeader = editorMode || (!isCvRoute && ((isPhone && !isJobList) || !hideOnScroll || headerVisible))
 
   function handleItem(item) {
     setOpenKey(null)
@@ -164,7 +169,7 @@ export default function Header({ editorMode = false }) {
           {!editorMode && <button
             type="button"
             aria-label={m.candidate_header_search_jobs()}
-            onClick={() => navigate('/viec-lam')}
+            onClick={() => navigate('/viec-lam', { state: { focusSearch: Date.now() } })}
             className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-xl text-slate-600 transition hover:bg-slate-100 md:hidden"
           >
             <SearchOutlined />

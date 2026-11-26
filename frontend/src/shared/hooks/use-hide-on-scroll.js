@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 
 // Ẩn thanh (header) khi cuộn xuống, hiện lại khi cuộn lên hoặc ở gần đỉnh trang.
 // Trả về true = nên hiển thị. `threshold` = khoảng cách tối thiểu từ đỉnh trước khi bắt đầu ẩn.
-export function useHideOnScroll(threshold = 96) {
+// `topOnly`: chỉ hiện khi ở gần đỉnh, cuộn lên giữa trang vẫn ẩn.
+export function useHideOnScroll(threshold = 96, { topOnly = false } = {}) {
   const [visible, setVisible] = useState(true)
 
   useEffect(() => {
@@ -13,7 +14,7 @@ export function useHideOnScroll(threshold = 96) {
       const y = window.scrollY
       if (y < threshold) setVisible(true)
       else if (y > last + 6) setVisible(false) // cuộn xuống rõ rệt -> ẩn
-      else if (y < last - 6) setVisible(true) // cuộn lên rõ rệt -> hiện
+      else if (!topOnly && y < last - 6) setVisible(true) // cuộn lên rõ rệt -> hiện
       last = y
       ticking = false
     }
@@ -27,7 +28,7 @@ export function useHideOnScroll(threshold = 96) {
 
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
-  }, [threshold])
+  }, [threshold, topOnly])
 
   return visible
 }

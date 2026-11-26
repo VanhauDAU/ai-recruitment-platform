@@ -8,6 +8,14 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Changed — Trang danh sách việc làm trên điện thoại
+
+- Header chỉ hiện khi ở đầu trang danh sách việc làm; lướt xuống ẩn, lướt lên giữa trang
+  vẫn ẩn (`useHideOnScroll(…, { topOnly })`). Trang chi tiết tin giữ header dính.
+- Cụm tìm kiếm gọn hơn: từ khóa + nút tìm một hàng (40px); "Ngành nghề" và "Địa điểm"
+  thành chip kính 34px, chip đang lọc nền trắng chữ xanh và hiện giá trị.
+- Nút kính lúp ở header: về đầu trang danh sách và đặt con trỏ vào ô từ khóa (trước đây
+  đứng ở `/viec-lam` bấm không có gì xảy ra).
 #### Added — Nút góp ý & báo lỗi phía ứng viên
 
 - Nút xanh nhỏ góc phải dưới mọi trang ứng viên (`FeedbackLauncher`; trong trình chỉnh

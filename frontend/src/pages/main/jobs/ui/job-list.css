@@ -31,16 +31,15 @@
     position: static;
   }
 
+  /* Hàng 1: từ khóa + nút tìm (40px). Hàng 2: hai chip kính "Danh mục nghề" /
+     "Địa điểm" (34px) — gọn hơn hai ô trắng 44px cũ; chip có bộ lọc chuyển nền trắng. */
   .job-search-bar__inner {
     display: grid;
     gap: 8px;
-    /* Hàng dưới chia đôi đều: cột 1 = cột 2 + gap + cột nút. */
-    grid-template-columns: minmax(0, 1fr) calc(50% - 56px) 44px;
-    padding-bottom: 14px;
-    padding-top: 12px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 40px;
+    padding: 10px 12px 12px;
   }
 
-  /* Ô từ khóa + nút tìm một hàng, danh mục + địa điểm hàng dưới. */
   .job-search-bar__box {
     display: contents;
   }
@@ -48,13 +47,16 @@
   .job-search-bar__keyword {
     grid-column: 1 / 3;
     grid-row: 1;
+    height: 40px;
   }
 
   .job-search-bar__submit {
     grid-column: 3;
     grid-row: 1;
+    width: 40px;
+    height: 40px !important;
     padding: 0 !important;
-    width: 44px;
+    border: 1px solid rgb(255 255 255 / 0.55) !important;
   }
 
   .job-search-bar__submit-label {
@@ -71,6 +73,47 @@
     grid-column: 2 / 4;
     grid-row: 2;
     min-width: 0;
+  }
+
+  .job-search-bar__category button[aria-haspopup],
+  .job-search-bar__location > button {
+    height: 34px !important;
+    min-height: 34px !important;
+    gap: 6px !important;
+    border: 1px solid rgb(255 255 255 / 0.38) !important;
+    border-radius: 999px !important;
+    padding: 0 12px !important;
+    background: rgb(255 255 255 / 0.14) !important;
+    color: #fff !important;
+    font-size: 13px !important;
+    box-shadow: none !important;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+
+  .job-search-bar__category button[aria-haspopup] *,
+  .job-search-bar__location > button * {
+    color: inherit !important;
+  }
+
+  /* Ô nền icon địa điểm (màu nhạt) không cần trên chip kính. */
+  .job-search-bar__location > button > span:first-child {
+    width: auto;
+    height: auto;
+    background: transparent;
+  }
+
+  .job-search-bar__category.is-active button[aria-haspopup],
+  .job-search-bar__location.is-active > button {
+    border-color: #fff !important;
+    background: #fff !important;
+    color: var(--brand-primary-hover) !important;
+    font-weight: 700;
+  }
+
+  /* Nút xóa danh mục nằm ngoài chip (absolute) — giữ màu theo chip. */
+  .job-search-bar__category button:not([aria-haspopup]) {
+    color: var(--brand-primary-hover) !important;
   }
 
   .job-list-title {
