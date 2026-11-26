@@ -15,9 +15,17 @@ loại khỏi dữ liệu huấn luyện (không sửa tay):
 - không gần trùng một CV khác của cùng tin neo (Jaccard từ ≥ 0,6);
 - đã được bổ sung mục ngoại ngữ và các mục phụ (`enrich_cvs.py --train`).
 
+Ba kiểm tra thêm sau lượt đọc kiểm đầu (26/11, `train_cv_review_round1.md`):
+- CV "vị trí gần" không được mang chính chức danh của tin neo: mô hình hay chép tên
+  vị trí của tin thay vì viết nghề gần, làm nhãn yếu sai và hỏng bộ ba chức danh;
+- không có gạch đầu dòng lặp nguyên văn trong cùng một CV (mục dự án chép mục kinh nghiệm);
+- không có chữ dính lẫn hai ngôn ngữ ("tăng cườngAwareness", "công nghệ.amiliar").
+
 Kết quả: `ml/data/cv/train/gate.json` ({mã CV: [lý do bị loại]}, rỗng là qua) và
 `ml/reports/train_cv_gate.md`. Kèm `ml/labeling/train_cv_review.md`: 40 CV chọn
-ngẫu nhiên trong số CV qua cổng để người làm đồ án đọc bằng mắt và ghi tỷ lệ lỗi.
+ngẫu nhiên trong số CV qua cổng (trừ những CV đã đọc ở lượt trước) để người làm đồ án
+đọc bằng mắt. Phiếu chia hai mức lỗi: lỗi nặng làm sai nghề hoặc sai mức khớp so với
+tin, hoặc làm hỏng câu chữ; lỗi nhẹ là văn phong và số liệu phóng đại.
 """
 
 import json
@@ -34,6 +42,36 @@ NEAR_DUPLICATE = 0.6
 MIN_SKILLS_IN_TEXT = 0.5
 MAX_ADJACENT_REQUIRED_SHARE = 0.5
 MONTH_TOLERANCE = 1
+# Phần từ của chức danh CV nằm trong tên vị trí của tin neo, từ đó coi là cùng chức danh.
+SAME_TITLE_SHARE = 0.75
+_VIETNAMESE = 'àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ'
+# Chữ tiếng Việt dính liền một từ tiếng Anh viết hoa, hoặc dấu chấm dính chữ thường.
+_GLUED = re.compile(rf'[{_VIETNAMESE}][A-Z][a-z]|[{_VIETNAMESE}]\w*\.[a-z]{{3,}}')
+REVIEWED = LABELING_DIR / 'train_cv_review_round1.md'
+
+
+def role_of(title):
+    """Tên vị trí trong tiêu đề tin, bỏ phần lương và quảng cáo sau dấu ngăn."""
+    return re.split(r'[|(\[–—]| - | I ', title)[0]
+
+
+def title_words(text):
+    return set(re.findall(r'\w+', str(text).casefold()))
+
+
+def same_title(headline, title):
+    head = title_words(headline)
+    return bool(head) and len(head & title_words(role_of(title))) / len(head) >= SAME_TITLE_SHARE
+
+
+def repeated_bullets(data):
+    lines = [
+        line.strip().casefold()
+        for section in ('experience', 'projects', 'activities')
+        for item in data.get(section, [])
+        for line in item.get('highlights', [])
+    ]
+    return len(lines) != len(set(lines))
 
 
 def months_of(data):
@@ -66,7 +104,40 @@ def problems_of(data, facts, job):
         shared = len({name.casefold() for name in facts['skills']} & {name.casefold() for name in job['required']})
         if shared / len(job['required']) > MAX_ADJACENT_REQUIRED_SHARE:
             found.append('CV vị trí gần có quá nửa kỹ năng của tin neo')
+    if facts['intended_match'] == 'adjacent' and same_title(data.get('headline', ''), job['title']):
+        found.append('CV vị trí gần mang chức danh của tin neo')
+    if repeated_bullets(data):
+        found.append('gạch đầu dòng lặp nguyên văn')
+    if _GLUED.search(cv_text(data)):
+        found.append('chữ dính, lẫn hai ngôn ngữ')
     return found
+
+
+SECTIONS = (
+    ('Kinh nghiệm', 'experience', ('role', 'company')),
+    ('Dự án', 'projects', ('name', 'role')),
+    ('Hoạt động', 'activities', ('name', 'organization')),
+)
+
+
+def review_text(data):
+    """CV có tên từng mục, để người đọc biết đoạn nào là kinh nghiệm, đoạn nào là dự án."""
+    education = data.get('education') or {}
+    lines = [data.get('headline', ''), data.get('summary', '')]
+    for title, key, head in SECTIONS:
+        for item in data.get(key, []):
+            dates = f' ({item["start_date"]} – {item.get("end_date") or "nay"})' if item.get('start_date') else ''
+            lines.append(f'[{title}] ' + ' – '.join(str(item.get(name, '')) for name in head) + dates)
+            lines += [f'  • {line}' for line in item.get('highlights', [])]
+    lines.append(f'[Học vấn] {education.get("degree", "")} – {education.get("institution", "")}')
+    lines.append('[Kỹ năng] ' + ', '.join(skill['name'] for skill in data.get('skills', [])))
+    for title, key in (('Chứng chỉ', 'certifications'), ('Giải thưởng', 'awards'), ('Sở thích', 'interests')):
+        if data.get(key):
+            lines.append(f'[{title}] ' + '; '.join(map(str, data[key])))
+    languages = [' '.join(filter(None, (item['language'], item.get('level'), item.get('certificate')))) for item in data.get('languages', [])]  # fmt: skip
+    if languages:
+        lines.append('[Ngoại ngữ] ' + '; '.join(languages))
+    return '\n'.join(line for line in lines if str(line).strip())
 
 
 def main():
@@ -103,26 +174,60 @@ def main():
         '| --- | ---: |',
         *[f'| {reason} | {count} |' for reason, count in reasons.most_common()],
     ]
+    if REVIEWED.exists():
+        # Lượt đọc kiểm đầu được làm trên kho trước khi có ba kiểm tra thêm.
+        marks = re.findall(r'^## (TR-[\d-]+):.*\n\n- \[(.)\] Ổn   - \[(.)\] Có lỗi', REVIEWED.read_text(encoding='utf-8'), re.M)
+        flagged = [code for code, _, error in marks if error.strip()]
+        caught = [code for code in flagged if gate.get(code)]
+        lines += [
+            '',
+            '## Đọc kiểm bằng mắt, lượt 1',
+            '',
+            f'Người làm đồ án đọc {len(marks)} CV rút ngẫu nhiên từ kho đã qua cổng lúc đó và ghi mọi lỗi nhìn thấy, kể cả',
+            f'lỗi văn phong: {len(flagged)} CV có ít nhất một lỗi ({len(flagged) / max(1, len(marks)):.0%}), {len(marks) - len(flagged)} CV ổn',
+            '(`ml/labeling/train_cv_review_round1.md`). Từ các lỗi này cổng được thêm ba kiểm tra (chức danh của CV',
+            f'vị trí gần, gạch đầu dòng lặp, chữ dính); {len(caught)} trong {len(flagged)} CV có lỗi nay bị cổng loại. Các lỗi còn lại chủ',
+            'yếu là số liệu phóng đại, tự nhận quá tầm, chứng chỉ và giải thưởng đáng ngờ: đặc điểm của CV do mô',
+            'hình ngôn ngữ viết, cổng không lọc được.',
+        ]
     REPORTS_DIR.joinpath('train_cv_gate.md').write_text('\n'.join(lines) + '\n', encoding='utf-8')
 
-    sample = sorted(random.Random(2026).sample(passed, min(REVIEW_SAMPLE, len(passed))))
+    seen = set(re.findall(r'^## (TR-[\d-]+):', REVIEWED.read_text(encoding='utf-8'), re.M)) if REVIEWED.exists() else set()
+    fresh = [code for code in passed if code not in seen]
+    sample = sorted(random.Random(2027).sample(fresh, min(REVIEW_SAMPLE, len(fresh))))
+    meaning = {
+        'strong': 'khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm',
+        'partial': 'khớp một phần: đúng nghề của tin nhưng thiếu kỹ năng hoặc kinh nghiệm',
+        'adjacent': 'vị trí gần: nghề khác nhưng cùng mảng với tin',
+    }
     review = [
-        '# Đọc kiểm 40 CV huấn luyện',
+        '# Đọc kiểm 40 CV huấn luyện (lượt 2)',
         '',
-        'Chọn ngẫu nhiên trong số CV đã qua `quality_gate.py`. Với mỗi CV, đánh dấu một ô',
-        'và ghi lỗi nếu có (bịa số liệu vô lý, sai nghề so với chức danh, câu vô nghĩa, lặp',
-        'ý, lời thoại của mô hình…). Tỷ lệ lỗi được ghi vào báo cáo.',
+        'Chọn ngẫu nhiên trong số CV đã qua `quality_gate.py`, trừ những CV đã đọc ở lượt 1.',
+        'Mỗi CV kèm tên vị trí của tin mà nó được viết cho và mức khớp máy định sẵn. Đánh dấu một ô:',
+        '',
+        '- **Lỗi nặng:** nghề hoặc mức khớp không đúng như dòng "Máy định viết"; câu chữ hỏng',
+        '  (dính chữ, lẫn ngôn ngữ, vô nghĩa); nội dung lặp lại; lời thoại của mô hình.',
+        '- **Lỗi nhẹ:** số liệu phóng đại, tự nhận quá tầm, chứng chỉ hay giải thưởng đáng ngờ,',
+        '  dùng từ vụng. CV vẫn đúng nghề và đúng mức khớp.',
+        '- **Ổn:** không thuộc hai loại trên.',
+        '',
+        'Lưu ý: CV chưa có kinh nghiệm (0 tháng) vẫn có thể có mục [Dự án]; đó không phải mâu thuẫn.',
         '',
     ]
     for code in sample:
         facts = manifest[code]
         review += [
-            f'## {code}: {facts["role_written"]} ({facts["intended_match"]}, {facts["experience_months"]} tháng)',
+            f'## {code}',
             '',
-            '- [ ] Ổn   - [ ] Có lỗi: ',
+            f'- Tin: {role_of(jobs[facts["anchor_job"]]["title"]).strip()}',
+            f'- Máy định viết: nghề "{facts["role_written"]}", {meaning[facts["intended_match"]]}, '
+            f'{facts["experience_months"]} tháng kinh nghiệm',
+            '',
+            '- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: ',
             '',
             '```text',
-            cv_text(data[code]),
+            review_text(data[code]),
             '```',
             '',
         ]
