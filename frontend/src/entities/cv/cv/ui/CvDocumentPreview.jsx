@@ -169,24 +169,37 @@ function A4Page({ page, document, contract, assets, renderRegion, renderHeader, 
   )
 }
 
-function outerHeight(element, edge) {
-  const style = globalThis.getComputedStyle(element)
-  return element.offsetHeight + (Number.parseFloat(style[edge]) || 0)
+function margin(element, edge) {
+  return Number.parseFloat(globalThis.getComputedStyle(element)[edge]) || 0
 }
+
+function outerHeight(element, edge) {
+  return element.offsetHeight + margin(element, edge)
+}
+
+// Đo → chia trang → đo lại phải hội tụ. Nếu chiều cao đo được vẫn phụ thuộc vị trí
+// trên trang, hai cách chia trang có thể đổi qua lại mãi; dừng sau vài lượt đổi
+// của cùng một document thay vì lặp tới khi React ném lỗi #185 (trắng trang).
+const MAX_MEASUREMENT_CHANGES = 12
 
 export default function CvDocumentPreview({ document, rendererKey, assets = {}, renderRegion, renderHeader, pageAriaLabel, className = '', paginateItems = true, editorChrome = true, pageLabelVariant = 'heading' }) {
   const projection = projectDocumentForRenderer(document, rendererKey)
   const contract = getRendererContract(rendererKey)
   const previewRef = useRef(null)
+  const changes = useRef({ document: null, count: 0, last: '' })
   const [measurements, setMeasurements] = useState({ sections: {}, items: {} })
   const pages = useMemo(() => paginateMeasuredProjection(projection, measurements, { page: measurements.page, firstPageReserved: measurements.reserved }), [measurements, projection])
   useLayoutEffect(() => {
     const preview = previewRef.current
     if (!preview) return undefined
     const measure = () => {
+      // Section cuối vùng không có margin (`last:mb-0`): cộng cùng một khoảng cách
+      // cho mọi section để chiều cao không đổi khi section chuyển trang.
+      const sectionElements = [...preview.querySelectorAll('[data-section-id]')]
+      const gap = Math.max(0, ...sectionElements.map((element) => margin(element, 'marginBottom')))
       const sections = {}
-      for (const element of preview.querySelectorAll('[data-section-id]')) {
-        sections[element.dataset.sectionId] = (sections[element.dataset.sectionId] || 0) + Math.ceil(outerHeight(element, 'marginBottom'))
+      for (const element of sectionElements) {
+        sections[element.dataset.sectionId] = (sections[element.dataset.sectionId] || 0) + Math.ceil(element.offsetHeight + gap)
       }
       // Sức chứa đo trên chính trang A4 (cùng hệ toạ độ với section, đúng cả khi
       // preview bị thu phóng); phần trên thân CV ở trang 1 được trừ ra.
@@ -201,7 +214,12 @@ export default function CvDocumentPreview({ document, rendererKey, assets = {}, 
         // Hàng thân tràn mép (lề âm) có offsetTop < lề trang: không có gì chiếm chỗ.
         reserved: firstBody ? Math.max(0, Math.ceil(firstBody.offsetTop - padding)) : 0,
       }
-      setMeasurements((current) => JSON.stringify(current) === JSON.stringify(next) ? current : next)
+      const tracker = changes.current
+      if (tracker.document !== document) Object.assign(tracker, { document, count: 0, last: '' })
+      const serialized = JSON.stringify(next)
+      if (serialized === tracker.last || tracker.count >= MAX_MEASUREMENT_CHANGES) return
+      Object.assign(tracker, { count: tracker.count + 1, last: serialized })
+      setMeasurements(next)
     }
     measure()
     const Observer = globalThis.ResizeObserver
