@@ -1,5 +1,67 @@
 import { CheckOutlined, ExclamationOutlined } from '@ant-design/icons'
+import { useEffect, useState } from 'react'
+import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import { m } from '@/shared/config/i18n'
+
+function scrollToSection(key) {
+  requestAnimationFrame(() => document.getElementById(key)?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+}
+
+// Mốc (tính từ đỉnh màn hình) ngay dưới header + dải bước.
+const STEP_MARK_PX = 200
+
+// Dưới xl (điện thoại, tablet): một dải bốn bước dính đầu vùng cuộn thay cho thẻ
+// tiến độ cao gần nửa màn hình; nhãn đầy đủ của bước đang mở hiện ở dòng trên.
+function CompactJobFormProgress({ sections, activeSection, percent, onSelect }) {
+  // Bước sáng theo phần đang nằm dưới dải khi cuộn, không chỉ phần vừa bấm.
+  const [visibleKey, setVisibleKey] = useState(activeSection)
+  const sectionKeys = sections.map((section) => section.key).join(',')
+  useEffect(() => {
+    if (typeof IntersectionObserver !== 'function') return undefined
+    const elements = sectionKeys.split(',').map((key) => document.getElementById(key)).filter(Boolean)
+    // Mép phần chạm dải theo dõi là lúc đáp án đổi; khi đó lấy phần cuối đã cuộn qua mốc.
+    const observer = new IntersectionObserver(() => {
+      const current = elements.findLast((element) => element.getBoundingClientRect().top <= STEP_MARK_PX) || elements[0]
+      if (current) setVisibleKey(current.id)
+    }, { rootMargin: `-${STEP_MARK_PX}px 0px -60% 0px` })
+    elements.forEach((element) => observer.observe(element))
+    return () => observer.disconnect()
+  }, [sectionKeys])
+  const currentKey = visibleKey || activeSection
+  const active = sections.find((section) => section.key === currentKey) || sections[0]
+  return (
+    <nav aria-label={m.employer_job_form_progress_aria()} className="post-job-steps">
+      <div className="post-job-steps__head">
+        <span className="post-job-steps__title">{active?.label}</span>
+        <span className="post-job-steps__percent">{percent}%</span>
+      </div>
+      <div className="post-job-steps__bar"><span style={{ width: `${percent}%` }} /></div>
+      <ol className="post-job-steps__list">
+        {sections.map((section, index) => {
+          const complete = section.total > 0 && section.completed === section.total
+          return (
+            <li key={section.key}>
+              <button
+                type="button"
+                aria-label={`${section.label} ${section.completed}/${section.total}`}
+                aria-current={currentKey === section.key ? 'step' : undefined}
+                className={`post-job-steps__step${complete ? ' is-complete' : ''}`}
+                onClick={() => {
+                  onSelect(section.key)
+                  setVisibleKey(section.key)
+                  scrollToSection(section.key)
+                }}
+              >
+                <span className="post-job-steps__number">{complete ? <CheckOutlined /> : index + 1}</span>
+                <span>{section.completed}/{section.total}</span>
+              </button>
+            </li>
+          )
+        })}
+      </ol>
+    </nav>
+  )
+}
 
 function itemHasError(item, invalidFieldNames) {
   return item.errorFields?.some((fieldName) => (
@@ -11,6 +73,11 @@ export default function JobFormProgress({ sections, activeSection, openSections,
   const completed = sections.reduce((total, item) => total + item.completed, 0)
   const total = sections.reduce((sum, item) => sum + item.total, 0)
   const percent = total ? Math.round((completed / total) * 100) : 0
+  const compact = useMediaQuery('(max-width: 1279px)')
+
+  if (compact) {
+    return <CompactJobFormProgress sections={sections} activeSection={activeSection} percent={percent} onSelect={onSelect} />
+  }
 
   return (
     <nav aria-label={m.employer_job_form_progress_aria()} className="rounded-lg border border-slate-200 bg-white p-4">
@@ -21,7 +88,7 @@ export default function JobFormProgress({ sections, activeSection, openSections,
       <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100">
         <div className="h-full rounded-full bg-[var(--brand-primary)] transition-all" style={{ width: `${percent}%` }} />
       </div>
-      <ol className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
+      <ol className="mt-4 grid gap-2">
         {sections.map((section, index) => {
           const complete = section.total > 0 && section.completed === section.total
           return (
@@ -30,7 +97,7 @@ export default function JobFormProgress({ sections, activeSection, openSections,
                 type="button"
                 onClick={() => {
                   onSelect(section.key)
-                  requestAnimationFrame(() => document.getElementById(section.key)?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+                  scrollToSection(section.key)
                 }}
                 aria-current={activeSection === section.key ? 'step' : undefined}
                 className={`group block w-full min-w-0 rounded-xl px-2 py-2 text-left text-sm transition ${activeSection === section.key ? 'bg-[var(--brand-primary-soft)] !text-[var(--brand-primary-hover)]' : '!text-slate-600 hover:bg-[var(--brand-primary-soft)] hover:!text-[var(--brand-primary-hover)]'}`}
