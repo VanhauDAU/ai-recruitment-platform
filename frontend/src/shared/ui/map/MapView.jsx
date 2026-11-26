@@ -8,8 +8,8 @@ import { circleBounds, circlePolygon, VIETNAM_CENTER } from '@/shared/lib/geo'
 import './map.css'
 
 // File này chỉ được import qua React.lazy (MapLibre ~200 KB gzip): không vào bundle
-// khởi tạo. `styleUrl` bắt buộc, lấy từ `useBasemap()` (chỉ style của nhà cung cấp
-// bản đồ Việt Nam, ADR-0029); không còn style dự phòng dựng từ OpenStreetMap.
+// khởi tạo. `mapStyle` bắt buộc, lấy từ `useBasemap()` (tile VietMap, ADR-0029); không
+// còn style dự phòng dựng từ OpenStreetMap.
 const RADIUS_SOURCE = 'radius'
 
 setWorkerUrl(workerUrl)
@@ -43,7 +43,7 @@ function radiusData(origin, radiusKm) {
 }
 
 export default function MapView({
-  styleUrl,
+  mapStyle,
   attribution,
   origin,
   radiusKm,
@@ -69,7 +69,7 @@ export default function MapView({
       const center = origin || VIETNAM_CENTER
       instance = new MapLibreMap({
         container: containerRef.current,
-        style: styleUrl,
+        style: mapStyle,
         center: [center.longitude, center.latitude],
         zoom: origin ? 12 : initialZoom,
         attributionControl: false,
@@ -101,7 +101,7 @@ export default function MapView({
       instance?.remove()
       setMap(null)
     }
-    // Bản đồ tạo một lần; style/attribution đổi thì trang tự remount bằng `key`.
+    // Bản đồ tạo một lần; cấu hình bản đồ đổi thì trang tự remount bằng `key`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

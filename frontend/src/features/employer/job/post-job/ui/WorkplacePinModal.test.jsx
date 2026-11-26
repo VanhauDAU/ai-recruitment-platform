@@ -13,7 +13,7 @@ vi.mock('@/entities/system/location', () => ({
   resolveGeoPlace: mocks.resolveGeoPlace,
 }))
 
-vi.mock('@/entities/system/site-settings', () => ({ useBasemap: () => ({ styleUrl: 'https://maps.vietmap.vn/style.json', attribution: '' }) }))
+vi.mock('@/entities/system/site-settings', () => ({ useBasemap: () => ({ id: 'vietmap', style: {}, attribution: '' }) }))
 
 vi.mock('@/shared/ui/map/MapView', () => ({
   default: ({ origin, onOriginChange }) => (

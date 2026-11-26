@@ -69,8 +69,8 @@ export default function WorkplacePinModal({ open, pin, address, ward, onSave, on
         {open && point && basemap && (
           <Suspense fallback={<div className="map-view h-full" />}>
             <MapView
-              key={basemap.styleUrl}
-              styleUrl={basemap.styleUrl}
+              key={basemap.id}
+              mapStyle={basemap.style}
               attribution={basemap.attribution}
               origin={point}
               originLabel={address || ward?.name}

@@ -58,7 +58,12 @@
    nhãn biển ghi "South China Sea 南海", còn đảo Ba Bình có đường biên quốc gia gắn Đài
    Loan. Như vậy là vi phạm khoản 4 Điều 6 Luật Đo đạc và bản đồ 2018.
    `useBasemap()` (`entities/system/site-settings`) chỉ nhận style https của nhà cung cấp
-   bản đồ Việt Nam (hiện chỉ `maps.vietmap.vn`). Nếu không hợp lệ, trang ẩn bản
+   bản đồ Việt Nam (hiện chỉ `maps.vietmap.vn`). Tile vector trong style.json của VietMap
+   mã hoá theo định dạng riêng, chỉ SDK `vietmap-gl` đọc được; MapLibre chỉ vẽ ra màu nền.
+   Vì vậy frontend chuyển link style (`/maps/styles/<kiểu>/style.json?apikey=…`) thành
+   nguồn tile ảnh PNG cùng kiểu, cùng key (`/maps/tiles/<kiểu>/{z}/{x}/{y}[@2x].png`, tối
+   đa zoom 18). Ảnh tile ở zoom 5 ghi "Quần Đảo Hoàng Sa", "Quần Đảo Trường Sa", "Biển
+   Đông". Nếu không hợp lệ, trang ẩn bản
    đồ: danh sách việc làm gần vẫn chạy, NTD không ghim tay mà dùng tọa độ geocode hoặc
    tâm phường. Thêm nhà cung cấp khác thì phải soát vùng Biển Đông trước.
 7. **Quyền riêng tư:** chỉ hỏi vị trí khi ứng viên bấm nút; tọa độ làm tròn 3 chữ số
