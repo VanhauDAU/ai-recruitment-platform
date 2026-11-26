@@ -18,13 +18,19 @@ def thumbnail_key_for(cv, version):
     )
 
 
-def current_thumbnail_ready(cv):
+def thumbnail_matches_latest_version(cv):
+    """DB-only check: the worker writes the key only after the file is saved.
+
+    Use this for lists/serializers; it never calls storage (each R2 HEAD costs
+    ~100 ms and stalled the CV list on production).
+    """
     version = cv.latest_version
-    if version is None or not cv.thumbnail_url:
-        return False
-    return cv.thumbnail_url == thumbnail_key_for(cv, version) and default_storage.exists(
-        cv.thumbnail_url
-    )
+    return bool(version and cv.thumbnail_url) and cv.thumbnail_url == thumbnail_key_for(cv, version)
+
+
+def current_thumbnail_ready(cv):
+    """Also confirms the object still exists in storage: one network call."""
+    return thumbnail_matches_latest_version(cv) and default_storage.exists(cv.thumbnail_url)
 
 
 def schedule_cv_thumbnail(version):
