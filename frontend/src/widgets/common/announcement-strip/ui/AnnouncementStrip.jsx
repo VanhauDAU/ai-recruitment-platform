@@ -18,7 +18,7 @@ import { resolveAnnouncementQueue } from '../model/priority-resolver'
 import { buildSystemAnnouncements } from '../model/system-announcements'
 import { buildAnnouncementStripVisual } from '../model/strip-visual-style'
 import { useAnnouncementTracking } from '../model/use-announcement-tracking'
-import { useAnnouncementFeed } from '../model/use-announcement-feed'
+import { ANNOUNCEMENT_POLL_MS, useAnnouncementFeed } from '../model/use-announcement-feed'
 import { useReducedMotion } from '../model/use-reduced-motion'
 import AnnouncementCta from './AnnouncementCta'
 import AnnouncementIcon from './AnnouncementIcon'
@@ -49,7 +49,7 @@ function AnnouncementStripRuntime({
   const { consent, status: consentStatus } = useConsent()
   const analyticsEnabled = consentStatus === 'ready' && consent.analytics
   const audienceKey = announcementAudienceKey(user)
-  const { feed, refetchFeed } = useAnnouncementFeed({
+  const { feed, refetchFeed, refetchFeedIfStale } = useAnnouncementFeed({
     audienceKey,
     locale,
     path,
@@ -146,16 +146,16 @@ function AnnouncementStripRuntime({
       const hidden = document.visibilityState === 'hidden'
       setPageHidden(hidden)
       if (hidden) flushAnnouncementEvents()
-      if (!hidden) refetchFeed()
+      if (!hidden) refetchFeedIfStale()
     }
     document.addEventListener('visibilitychange', update)
     return () => document.removeEventListener('visibilitychange', update)
-  }, [refetchFeed])
+  }, [refetchFeedIfStale])
 
   useEffect(() => {
     const interval = window.setInterval(() => {
       if (document.visibilityState === 'visible') refetchFeed()
-    }, 60_000)
+    }, ANNOUNCEMENT_POLL_MS)
     return () => window.clearInterval(interval)
   }, [refetchFeed])
 

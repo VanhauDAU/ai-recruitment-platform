@@ -35,6 +35,11 @@ class SeoMetadata:
     locale: str = 'vi_VN'
     google_site_verification: str = ''
     structured_data: tuple[dict, ...] = ()
+    # Ảnh LCP mà SPA chỉ biết sau khi tải JS + gọi API: preload để trình duyệt tải
+    # song song với bundle. `preload_image_media` giới hạn theo media query khi ảnh
+    # chỉ hiện ở một số kích thước màn hình.
+    preload_image_url: str = ''
+    preload_image_media: str = ''
 
 
 def absolute_url(request, value):
@@ -123,6 +128,17 @@ def _head_markup(metadata):
                 f'<meta data-seo-managed="server" property="og:image" content="{image_url}">',
                 f'<meta data-seo-managed="server" name="twitter:image" content="{image_url}">',
             ]
+        )
+    if metadata.preload_image_url:
+        href = escape(metadata.preload_image_url, quote=True)
+        media = (
+            f' media="{escape(metadata.preload_image_media, quote=True)}"'
+            if metadata.preload_image_media
+            else ''
+        )
+        tags.append(
+            '<link data-seo-managed="server" rel="preload" as="image" '
+            f'href="{href}" fetchpriority="high"{media}>'
         )
     if metadata.google_site_verification:
         verification = escape(metadata.google_site_verification, quote=True)

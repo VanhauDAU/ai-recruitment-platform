@@ -67,11 +67,11 @@ function StoreButton({ href, icon, eyebrow, label }) {
   return (
     <SmartLink
       href={href}
-      className="inline-flex min-w-36 items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-700"
+      className="inline-flex min-w-36 items-center gap-2 rounded-lg !bg-slate-900 px-3 py-2 !text-white shadow-sm transition hover:-translate-y-0.5 hover:!bg-slate-700"
     >
       <span className="text-2xl leading-none">{icon}</span>
       <span className="leading-none">
-        <span className="block text-[9px] uppercase tracking-wide text-slate-300">{eyebrow}</span>
+        <span className="block text-[9px] uppercase tracking-wide !text-slate-300">{eyebrow}</span>
         <span className="mt-1 block text-sm font-semibold">{label}</span>
       </span>
     </SmartLink>

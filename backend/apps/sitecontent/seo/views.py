@@ -3,7 +3,12 @@
 from django.http import HttpResponse
 from django.views import View
 
-from apps.sitecontent.selectors import knowledgebase_search_index_enabled
+from apps.sitecontent.models import Banner
+from apps.sitecontent.selectors import (
+    active_banners,
+    get_bool_setting,
+    knowledgebase_search_index_enabled,
+)
 from apps.sitecontent.services import resolved_seo_settings, seo_page_title
 from common.seo import (
     SeoMetadata,
@@ -13,6 +18,7 @@ from common.seo import (
     sitemap_urlset,
     xml_response,
 )
+from common.storage.media import media_url_from_value
 
 STATIC_PAGE_METADATA = {
     # Trang chủ dùng seo_default_title / seo_default_description admin cấu hình.
@@ -58,6 +64,26 @@ def _title(path, label, settings):
     return seo_page_title(label, settings, employer=path.startswith('/tuyendung'))
 
 
+def _home_hero_preload(request):
+    """Ảnh của slide đầu carousel trang chủ (LCP trên điện thoại) và media query.
+
+    Khớp HeroSlide.jsx: slide ảnh và slide công ty phủ ảnh toàn khung; slide chữ
+    chỉ hiện ảnh từ `md`; slide AI không có ảnh.
+    """
+    if not get_bool_setting('home_show_banner', default=True):
+        return '', ''
+    banner = active_banners(Banner.Placement.HOME_HERO).first()
+    if banner is None or banner.kind == Banner.Kind.AI:
+        return '', ''
+    if banner.kind == Banner.Kind.COMPANY:
+        value, media = banner.company.cover_image_url, ''
+    else:
+        media = '' if banner.kind == Banner.Kind.IMAGE else '(min-width: 768px)'
+        value = banner.image_url
+    url = media_url_from_value(value, request=request) if value else ''
+    return (url, media) if url else ('', '')
+
+
 def _metadata(
     request,
     *,
@@ -66,6 +92,7 @@ def _metadata(
     canonical_path,
     structured_data=(),
     robots=None,
+    preload_image=('', ''),
 ):
     settings = resolved_seo_settings()
     image = settings['seo_og_image'] or settings['brand_logo_url']
@@ -81,6 +108,8 @@ def _metadata(
         image_url=absolute_url(request, image),
         google_site_verification=settings['seo_google_site_verification'],
         structured_data=tuple(structured_data),
+        preload_image_url=preload_image[0],
+        preload_image_media=preload_image[1],
     )
 
 
@@ -95,7 +124,9 @@ class StaticSeoShellView(View):
             ),
         )
         structured_data = ()
+        preload_image = ('', '')
         if path == '/':
+            preload_image = _home_hero_preload(request)
             settings = resolved_seo_settings()
             root_url = absolute_url(request, '/')
             logo_url = absolute_url(
@@ -126,6 +157,7 @@ class StaticSeoShellView(View):
                 description=description,
                 canonical_path=path,
                 structured_data=structured_data,
+                preload_image=preload_image,
             ),
         )
 
