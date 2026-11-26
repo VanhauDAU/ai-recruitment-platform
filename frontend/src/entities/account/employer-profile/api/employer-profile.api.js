@@ -1,5 +1,6 @@
 import api from '@/shared/api/client'
 import { prepareCleanUpload } from '@/shared/api/upload-session'
+import { shrinkImage } from '@/shared/lib/shrink-image'
 
 const LEGACY_UPLOAD_FALLBACK = Object.freeze({ legacy_file: true })
 
@@ -145,7 +146,15 @@ export async function createEmployerCompany(payload) {
   return data
 }
 
-async function uploadEmployerCompanyMedia(endpoint, file, options = {}) {
+// Trần kích thước server cũng áp (services/company_media.py: MEDIA_MAX_DIMENSIONS).
+const LOGO_MAX_SIZE = { maxWidth: 800, maxHeight: 800 }
+const PHOTO_MAX_SIZE = { maxWidth: 2400, maxHeight: 1600 }
+
+async function uploadEmployerCompanyMedia(endpoint, original, maxSize, options = {}) {
+  // Tệp đã nằm trong upload session thì không đổi được nữa.
+  const file = options.uploadSession && !options.uploadSession.legacy_file
+    ? original
+    : await shrinkImage(original, maxSize)
   const uploadSession = options.uploadSession || await prepareEmployerUpload(
     file,
     'employer_company_update',
@@ -164,15 +173,15 @@ async function uploadEmployerCompanyMedia(endpoint, file, options = {}) {
 }
 
 export function uploadEmployerCompanyLogo(file, options) {
-  return uploadEmployerCompanyMedia('/employer/company/logo/', file, options)
+  return uploadEmployerCompanyMedia('/employer/company/logo/', file, LOGO_MAX_SIZE, options)
 }
 
 export function uploadEmployerCompanyImage(file, options) {
-  return uploadEmployerCompanyMedia('/employer/company/images/', file, options)
+  return uploadEmployerCompanyMedia('/employer/company/images/', file, PHOTO_MAX_SIZE, options)
 }
 
 export function uploadEmployerCompanyCover(file, options) {
-  return uploadEmployerCompanyMedia('/employer/company/cover/', file, options)
+  return uploadEmployerCompanyMedia('/employer/company/cover/', file, PHOTO_MAX_SIZE, options)
 }
 
 export async function deleteEmployerCompanyCover() {

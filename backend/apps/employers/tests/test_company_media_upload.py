@@ -1,15 +1,18 @@
 """Company logo, cover and gallery uploads staged on update requests."""
 
+import io
 import shutil
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
+from PIL import Image
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from apps.accounts.models import User
+from common.storage.r2 import public_media_storage
 
 from .. import services
 from ..models import (
@@ -54,6 +57,21 @@ class CompanyImageUploadTests(APITestCase):
         self.assertTrue(self.company.logo_url.startswith('employers/'))
         self.assertNotIn('://', self.company.logo_url)
         self.assertFalse(self.company.has_no_logo)
+
+    def test_logo_is_downscaled_more_than_the_cover(self):
+        buffer = io.BytesIO()
+        Image.new('RGB', (2000, 1000), 'navy').save(buffer, format='PNG')
+
+        for name, kind, expected in (
+            ('employer-company-logo-upload', 'logo_url', (800, 400)),
+            ('employer-company-cover-upload', 'cover_image_url', (2000, 1000)),
+        ):
+            upload = SimpleUploadedFile('big.png', buffer.getvalue(), content_type='image/png')
+            response = self.client.post(reverse(name), {'file': upload}, format='multipart')
+            self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+            self.company.refresh_from_db()
+            with public_media_storage().open(getattr(self.company, kind)) as stored:
+                self.assertEqual(Image.open(stored).size, expected)
 
     def test_owner_can_upload_company_logo(self):
         upload = SimpleUploadedFile('logo.png', PNG_BYTES, content_type='image/png')

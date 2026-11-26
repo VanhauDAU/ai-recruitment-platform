@@ -8,6 +8,15 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Changed — Lưu logo/ảnh bìa công ty nhanh hơn
+
+- Trình duyệt thu nhỏ ảnh về trần server (logo 800 px, ảnh bìa/thư viện 2400×1600)
+  và mã hóa WebP trước khi tải (`shared/lib/shrink-image.js`): ảnh điện thoại vài MB
+  không còn đi nguyên qua mạng rồi lên R2. Logo và ảnh bìa tải song song; thư viện
+  vẫn lần lượt để giữ thứ tự.
+- `services/company_media.py`: trần kích thước theo loại (`MEDIA_MAX_DIMENSIONS`),
+  logo 800×800 thay vì 2400×1600.
+
 #### Added — SMS OTP nhà tuyển dụng qua SpeedSMS
 
 - Provider `EMPLOYER_SMS_PROVIDER=speedsms` gọi thẳng API SpeedSMS.vn (Basic auth
