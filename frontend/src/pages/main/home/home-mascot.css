@@ -1,6 +1,64 @@
 .home-search-stage {
-  margin-top: 1.75rem;
+  margin-top: 1.25rem;
   position: relative;
+}
+
+/* Cụm tìm kiếm: điện thoại xếp 2 hàng (từ khoá | địa điểm + nút), desktop một hàng. */
+.home-search-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.home-search-keyword {
+  flex: 1 0 100%;
+  height: 2.75rem !important;
+}
+
+.home-search-location {
+  align-items: center;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+
+.home-search-location > button,
+.home-search-submit {
+  height: 2.75rem !important;
+}
+
+.home-search-submit {
+  flex-shrink: 0;
+  min-width: 3rem;
+}
+
+@media (min-width: 768px) {
+  .home-search-stage {
+    margin-top: 1.75rem;
+  }
+
+  .home-search-row {
+    flex-wrap: nowrap;
+    gap: 0.625rem;
+  }
+
+  .home-search-keyword {
+    flex: 1;
+  }
+
+  .home-search-location {
+    flex: 0 0 20rem;
+  }
+
+  .home-search-keyword,
+  .home-search-location > button,
+  .home-search-submit {
+    height: 3rem !important;
+  }
+
+  .home-search-submit {
+    padding-inline: 2rem !important;
+  }
 }
 
 #section-header {
