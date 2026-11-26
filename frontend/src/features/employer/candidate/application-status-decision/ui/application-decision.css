@@ -1,39 +1,40 @@
-/* Lazy with the applications workspace; keeps new styles out of the initial CSS budget. */
-.ad-bar { display: grid; gap: 10px; container-type: inline-size; }
-.ad-bar__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.ad-decision {
-  --ad-fg: #334155; --ad-bg: #fff; --ad-ring: #e2e8f0;
+/* Không đặt tiền tố `ad-`: bộ lọc EasyList (`##.ad-bar`) của trình chặn quảng cáo ẩn cả cụm.
+   Lazy with the applications workspace; keeps new styles out of the initial CSS budget. */
+.decision-bar { display: grid; gap: 10px; container-type: inline-size; }
+.decision-bar__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.decision-btn {
+  --dc-fg: #334155; --dc-bg: #fff; --dc-ring: #e2e8f0;
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   min-height: 38px; padding: 6px 10px; border-radius: 10px;
-  border: 1px solid var(--ad-ring); background: var(--ad-bg); color: var(--ad-fg);
+  border: 1px solid var(--dc-ring); background: var(--dc-bg); color: var(--dc-fg);
   font-size: 13px; font-weight: 700; white-space: nowrap; cursor: pointer;
   transition: background .15s, border-color .15s, color .15s, box-shadow .15s;
 }
-.ad-decision:hover:not(:disabled) { border-color: var(--ad-accent); color: var(--ad-accent); box-shadow: 0 1px 2px rgb(15 23 42 / .06); }
-.ad-decision:focus-visible { outline: 2px solid var(--ad-accent); outline-offset: 2px; }
-.ad-decision:disabled { cursor: not-allowed; opacity: .45; }
-.ad-decision.is-current { opacity: 1; border-color: transparent; background: var(--ad-accent); color: #fff; }
-.ad-decision--shortlisted { --ad-accent: #059669; }
-.ad-decision--interviewed { --ad-accent: #7c3aed; }
-.ad-decision--accepted { --ad-accent: #0f766e; }
-.ad-decision--rejected { --ad-accent: #e11d48; }
-.ad-pending {
+.decision-btn:hover:not(:disabled) { border-color: var(--dc-accent); color: var(--dc-accent); box-shadow: 0 1px 2px rgb(15 23 42 / .06); }
+.decision-btn:focus-visible { outline: 2px solid var(--dc-accent); outline-offset: 2px; }
+.decision-btn:disabled { cursor: not-allowed; opacity: .45; }
+.decision-btn.is-current { opacity: 1; border-color: transparent; background: var(--dc-accent); color: #fff; }
+.decision-btn--shortlisted { --dc-accent: #059669; }
+.decision-btn--interviewed { --dc-accent: #7c3aed; }
+.decision-btn--accepted { --dc-accent: #0f766e; }
+.decision-btn--rejected { --dc-accent: #e11d48; }
+.decision-pending {
   display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px;
   padding: 8px 10px; border-radius: 10px; background: #fffbeb; color: #92400e;
   font-size: 12px; line-height: 1.4; text-align: left;
 }
-.ad-pending__undo {
+.decision-pending__undo {
   flex-shrink: 0; border: 0; border-radius: 8px; padding: 4px 10px;
   background: #fff; color: #b45309; font-weight: 700; cursor: pointer;
   box-shadow: inset 0 0 0 1px #fcd34d;
 }
-.ad-pending__undo:hover:not(:disabled) { background: #fef3c7; }
-.ad-bar__hint { margin: 0; font-size: 11px; color: #94a3b8; }
+.decision-pending__undo:hover:not(:disabled) { background: #fef3c7; }
+.decision-bar__hint { margin: 0; font-size: 11px; color: #94a3b8; }
 
 /* The inspector column is ~250px wide on 1280px screens. */
 @container (max-width: 280px) {
-  .ad-decision { gap: 4px; padding: 6px; font-size: 12px; }
-  .ad-decision .anticon { display: none; }
-  .ad-pending { grid-template-columns: auto 1fr; }
-  .ad-pending__undo { grid-column: 1 / -1; justify-self: start; }
+  .decision-btn { gap: 4px; padding: 6px; font-size: 12px; }
+  .decision-btn .anticon { display: none; }
+  .decision-pending { grid-template-columns: auto 1fr; }
+  .decision-pending__undo { grid-column: 1 / -1; justify-self: start; }
 }
