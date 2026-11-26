@@ -31171,6 +31171,7 @@ components:
           description: |-
             Chủ đề cần góp ý
 
+            * `bug` - Báo lỗi
             * `ui_ux` - Giao diện, trải nghiệm
             * `feature` - Tính năng sản phẩm
             * `job_quality` - Chất lượng tin tuyển dụng
@@ -31209,6 +31210,9 @@ components:
           type: string
           description: Trang người dùng đang xem lúc gửi
           maxLength: 500
+        client_info:
+          description: Thiết bị lúc gửi (cỡ màn hình, trình duyệt, web app…) để tái
+            hiện lỗi
         created_at:
           type: string
           format: date-time
@@ -31219,6 +31223,7 @@ components:
       - id
     FeedbackCategoryEnum:
       enum:
+      - bug
       - ui_ux
       - feature
       - job_quality
@@ -31227,6 +31232,7 @@ components:
       - other
       type: string
       description: |-
+        * `bug` - Báo lỗi
         * `ui_ux` - Giao diện, trải nghiệm
         * `feature` - Tính năng sản phẩm
         * `job_quality` - Chất lượng tin tuyển dụng
@@ -31242,6 +31248,7 @@ components:
           description: |-
             Chủ đề cần góp ý
 
+            * `bug` - Báo lỗi
             * `ui_ux` - Giao diện, trải nghiệm
             * `feature` - Tính năng sản phẩm
             * `job_quality` - Chất lượng tin tuyển dụng
@@ -31281,6 +31288,9 @@ components:
           type: string
           description: Trang người dùng đang xem lúc gửi
           maxLength: 500
+        client_info:
+          description: Thiết bị lúc gửi (cỡ màn hình, trình duyệt, web app…) để tái
+            hiện lỗi
       required:
       - content
     FieldTypeEnum:
