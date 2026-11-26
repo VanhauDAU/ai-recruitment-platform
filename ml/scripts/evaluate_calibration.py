@@ -11,8 +11,10 @@ Chấm 321 cặp có nhãn của tập hiệu chỉnh bằng công thức đầy
 - như trên, thêm độ phủ yêu cầu vào mức liên quan (`coverage_in_relevance`);
 - như trên nhưng không dùng cross-encoder để nhận kỹ năng (`no_ce_skills`).
 
-Cấu hình chỉ được nhận vào sản phẩm khi hơn trên tập này; validation của tập vàng chỉ
-để xác nhận (`evaluate.py --reranker`).
+Một cấu hình chỉ được nhận khi không kém trên tập này và hơn trên validation của tập vàng
+(`evaluate.py --reranker`). Lưu ý khi đọc số: CV của tập hiệu chỉnh do máy sinh viết với
+đúng tên kỹ năng của tin, nên khớp theo tên đã gần như đủ và tập này không cho thấy được
+lợi ích của việc nhận kỹ năng qua câu chứng minh; validation có những cặp CV viết khác tên.
 
 Kết quả: `ml/reports/eval_calibration.md`.
 """

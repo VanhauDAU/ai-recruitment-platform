@@ -34,6 +34,7 @@ ml/
     calibrate.py          AUC và mốc hiệu chuẩn cosine → điểm của từng phép so
     calibrate_labeled.py  mốc quy đổi cosine → điểm của một bi-encoder, đo trên tập hiệu chỉnh có nhãn
     calibrate_scale.py    dò mốc thang điểm bằng công thức đầy đủ của sản phẩm trên tập hiệu chỉnh
+    evaluate_calibration.py  công thức có và không có cross-encoder trên tập hiệu chỉnh
     interpolate_model.py  nội suy trọng số giữa bi-encoder gốc và bản fine-tune (WiSE-FT)
     export_model.py       lưu mô hình vào models/<tên>/<phiên bản>/ cho ml-worker
     fetch_public.py       tải dữ liệu và mô hình công khai, ghi nguồn vào data/public/SOURCES.md
@@ -92,6 +93,9 @@ ml/
     calibration_<mô hình>.md  AUC và mốc hiệu chuẩn               (calibrate.py)
     calibration_set_<mô hình>.md  mốc và độ tách nhãn trên tập hiệu chỉnh (calibrate_labeled.py)
     calibration_scale_<mô hình>.md  các bộ mốc thang điểm đã thử       (calibrate_scale.py)
+    eval_calibration.md   công thức có và không có cross-encoder   (evaluate_calibration.py)
+    requirement_labels.md, reranker_eval.md  nhãn và kết quả cross-encoder trên cặp thật (build_requirement_eval.py, evaluate_reranker.py)
+    eval_public.md        chuẩn ngoài tiếng Anh                    (evaluate_public.py)
     calibration_labels.md  nhãn tập hiệu chỉnh, đối chiếu nhãn yếu  (build_calibration_pairs.py merge)
     train_cv_gate.md, train_pairs.md, reranker_pairs.md  dữ liệu huấn luyện (quality_gate.py, build_train_pairs.py, build_requirement_pairs.py)
     eval_validation.{md,json}  bảng đo trên validation            (evaluate.py)
