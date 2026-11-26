@@ -8,6 +8,17 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Added — Nút góp ý & báo lỗi phía ứng viên
+
+- Nút xanh nhỏ góc phải dưới mọi trang ứng viên (`FeedbackLauncher`; trong trình chỉnh
+  sửa CV nằm trên cụm zoom) mở form góp ý sẵn có. Thêm chủ đề "🐞 Báo lỗi" (gợi ý cách
+  mô tả lỗi); form tự gửi kèm URL đầy đủ và `client_info` (cỡ màn hình, dpr, cảm ứng,
+  web app, ngôn ngữ, trình duyệt) để tái hiện lỗi.
+- `Feedback.client_info` + `Category.BUG` (migration `sitecontent.0012`).
+- Lệnh xuất: `python manage.py export_feedback` (Markdown, mặc định góp ý mới);
+  `--status all|new|in_progress|resolved`, `--category bug`, `--since YYYY-MM-DD`,
+  `--format csv`, `-o file`, `--mark-in-progress`.
+
 #### Fixed — Trình chỉnh sửa CV trên điện thoại
 
 - Thanh trên: tên CV một dòng cắt "…", ẩn icon trang; "Xem trước" chỉ còn icon (trước
