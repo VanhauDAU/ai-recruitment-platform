@@ -43,8 +43,17 @@
    xóa-tạo-lại mỗi lần lưu tin. Địa chỉ chưa có trong cache được geocode nền bằng
    Celery sau commit; trong lúc chờ, nơi làm việc dùng tâm phường.
 6. **Bản đồ: MapLibre GL, nạp lazy.** Style lấy từ site setting `map_style_url` (style
-   VietMap kèm key tile công khai); để trống thì dùng OpenFreeMap — chỉ cho dev. Thư viện
-   ~300 KB gzip chỉ nằm trong chunk của trang dùng bản đồ, bundle khởi tạo không đổi.
+   VietMap kèm key tile công khai). Thư viện ~300 KB gzip chỉ nằm trong chunk của trang
+   dùng bản đồ, bundle khởi tạo không đổi.
+   *Sửa 27/11/2026:* bỏ style dự phòng OpenFreeMap. Tile OpenStreetMap trong vùng Biển
+   Đông gán tên Trung Quốc cho hai quần đảo (từ zoom 7 có "Sansha 三沙市", "Xisha 西沙区",
+   "Nansha 南沙区", "Yongxing 永兴镇"; zoom 8 thêm hàng chục tên đáy biển tiếng Trung),
+   nhãn biển ghi "South China Sea 南海", còn đảo Ba Bình có đường biên quốc gia gắn Đài
+   Loan. Như vậy là vi phạm khoản 4 Điều 6 Luật Đo đạc và bản đồ 2018.
+   `useBasemap()` (`entities/system/site-settings`) chỉ nhận style https của nhà cung cấp
+   bản đồ Việt Nam (`maps.vietmap.vn`, `tiles.goong.io`). Nếu không hợp lệ, trang ẩn bản
+   đồ: danh sách việc làm gần vẫn chạy, NTD không ghim tay mà dùng tọa độ geocode hoặc
+   tâm phường. Thêm nhà cung cấp khác thì phải soát vùng Biển Đông trước.
 7. **Quyền riêng tư:** chỉ hỏi vị trí khi ứng viên bấm nút; tọa độ làm tròn 3 chữ số
    (~110 m) trước khi gửi, server làm tròn lại, không lưu; tọa độ GPS không lên URL
    (chỉ sessionStorage), URL chỉ mang slug phường khi gốc là phường/xã.

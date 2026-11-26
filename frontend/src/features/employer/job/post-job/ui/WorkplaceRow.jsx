@@ -1,6 +1,7 @@
 import { CloseOutlined, EnvironmentOutlined } from '@ant-design/icons'
 import { Button, Form, Input, Select } from 'antd'
 import { useRef, useState } from 'react'
+import { useBasemap } from '@/entities/system/site-settings'
 import { m } from '@/shared/config/i18n'
 import { focusAfterOpen, sameId } from '../lib/location-ids'
 import WorkplacePinModal from './WorkplacePinModal'
@@ -10,6 +11,8 @@ export default function WorkplaceRow({ form, areaIndex, index, wards, provinceId
   const basePath = ['work_areas', areaIndex, 'workplaces', index]
   const locationPath = [areaIndex, 'workplaces', index, 'location']
   const wardSelectRef = useRef(null)
+  // Chưa cấu hình bản đồ Việt Nam thì không ghim được: tọa độ lấy từ địa chỉ/tâm phường.
+  const canPin = Boolean(useBasemap())
   const [pinOpen, setPinOpen] = useState(false)
   const workplace = Form.useWatch(basePath, { form, preserve: true }) || {}
   // "Tất cả" (cả tỉnh) không có điểm trên bản đồ: chỉ ghim cho phường/xã cụ thể.
@@ -54,7 +57,7 @@ export default function WorkplaceRow({ form, areaIndex, index, wards, provinceId
         />
       </Form.Item>
       <Form.Item hidden name={[areaIndex, 'workplaces', index, 'pin']}><Input /></Form.Item>
-      {ward && (
+      {ward && canPin && (
         <div className="flex flex-wrap items-center gap-2 sm:col-span-2">
           <Button
             size="small"

@@ -8,10 +8,8 @@ import { circleBounds, circlePolygon, VIETNAM_CENTER } from '@/shared/lib/geo'
 import './map.css'
 
 // File này chỉ được import qua React.lazy (MapLibre ~200 KB gzip): không vào bundle
-// khởi tạo. Style bản đồ lấy từ site setting `map_style_url` (VietMap/Goong); để
-// trống thì dùng style OpenFreeMap (dữ liệu OpenStreetMap, không cần key, tự ghi công) — chỉ cho
-// môi trường dev: bản đồ production phải theo chuẩn bản đồ Việt Nam (ADR-0029).
-const DEV_STYLE = 'https://tiles.openfreemap.org/styles/positron'
+// khởi tạo. `styleUrl` bắt buộc, lấy từ `useBasemap()` (chỉ style của nhà cung cấp
+// bản đồ Việt Nam, ADR-0029); không còn style dự phòng dựng từ OpenStreetMap.
 const RADIUS_SOURCE = 'radius'
 
 setWorkerUrl(workerUrl)
@@ -71,14 +69,14 @@ export default function MapView({
       const center = origin || VIETNAM_CENTER
       instance = new MapLibreMap({
         container: containerRef.current,
-        style: styleUrl || DEV_STYLE,
+        style: styleUrl,
         center: [center.longitude, center.latitude],
         zoom: origin ? 12 : initialZoom,
         attributionControl: false,
       })
       instance.addControl(new NavigationControl({ showCompass: false }), 'bottom-right')
       instance.addControl(
-        new AttributionControl({ compact: true, customAttribution: (styleUrl && attribution) || undefined }),
+        new AttributionControl({ compact: true, customAttribution: attribution || undefined }),
         'bottom-right',
       )
       instance.on('load', () => {

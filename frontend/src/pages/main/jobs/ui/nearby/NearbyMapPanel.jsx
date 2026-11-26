@@ -1,5 +1,5 @@
 import { lazy, Suspense, useMemo } from 'react'
-import { useSiteSetting } from '@/entities/system/site-settings'
+import { useBasemap } from '@/entities/system/site-settings'
 import { m } from '@/shared/config/i18n'
 import { shortPlaceName } from '../../lib/nearby-params'
 
@@ -14,8 +14,7 @@ export default function NearbyMapPanel({
   onOriginChange,
   onPointClick,
 }) {
-  const styleUrl = useSiteSetting('map_style_url')
-  const attribution = useSiteSetting('map_attribution')
+  const basemap = useBasemap()
   const markers = useMemo(() => points.map((point) => ({
     ...point,
     key: `${point.latitude},${point.longitude}`,
@@ -25,14 +24,15 @@ export default function NearbyMapPanel({
     active: point.jobs.some((job) => activeSlugs.has(job.slug)),
   })), [points, activeSlugs])
 
+  if (!basemap) return null
   return (
     <div className="nearby-map">
       <div className="nearby-map__canvas" role="region" aria-label={m.candidate_nearby_map_label()}>
         <Suspense fallback={<div className="map-view nearby-map__placeholder" />}>
           <MapView
-            key={styleUrl}
-            styleUrl={styleUrl}
-            attribution={attribution}
+            key={basemap.styleUrl}
+            styleUrl={basemap.styleUrl}
+            attribution={basemap.attribution}
             origin={origin}
             radiusKm={origin ? radius : null}
             originLabel={origin?.label}

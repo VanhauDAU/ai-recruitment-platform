@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   getNearbyJobMap: vi.fn(),
   getGeoWard: vi.fn(),
   settings: {},
+  basemap: { styleUrl: 'https://maps.vietmap.vn/style.json', attribution: '' },
 }))
 
 vi.mock('@/entities/job/job', async (importOriginal) => ({
@@ -28,6 +29,7 @@ vi.mock('@/entities/system/location', async (importOriginal) => ({
 vi.mock('@/entities/system/site-settings', () => ({
   useSiteSettings: () => ({ settings: mocks.settings }),
   useSiteSetting: () => '',
+  useBasemap: () => mocks.basemap,
 }))
 
 vi.mock('@/shared/ui/map/MapView', () => ({
@@ -80,6 +82,7 @@ describe('NearbyJobs page', () => {
     sessionStorage.clear()
     Element.prototype.scrollIntoView = vi.fn() // jsdom không có
     mocks.settings = {}
+    mocks.basemap = { styleUrl: 'https://maps.vietmap.vn/style.json', attribution: '' }
     mocks.getGeoWard.mockResolvedValue({ ward_name: 'Phường Điện Bàn', latitude: 16.0, longitude: 108.2 })
     mocks.getNearbyJobMap.mockResolvedValue({ origin: ORIGIN, points: [], truncated: false })
     mocks.getNearbyJobs.mockResolvedValue({ count: 0, results: [], origin: ORIGIN, expand_suggestion: null })
@@ -108,6 +111,15 @@ describe('NearbyJobs page', () => {
     expect(screen.getAllByText('Phường Điện Bàn, Thành phố Đà Nẵng')).toHaveLength(2)
     const params = mocks.getNearbyJobs.mock.calls[0][0]
     expect(Object.fromEntries(params)).toEqual({ lat: '16', lng: '108.2', radius_km: '10' })
+  })
+
+  it('hides the map but keeps the list when no Vietnamese basemap is configured', async () => {
+    mocks.basemap = null
+    mocks.getNearbyJobs.mockResolvedValue({ count: 1, results: [job('a')], origin: ORIGIN, expand_suggestion: null })
+    renderPage()
+
+    expect(await screen.findByText('Việc a')).toBeInTheDocument()
+    expect(screen.queryByTestId('map')).not.toBeInTheDocument()
   })
 
   it('offers the next radius when nothing is close and applies it', async () => {

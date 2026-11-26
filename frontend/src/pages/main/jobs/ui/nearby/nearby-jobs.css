@@ -75,6 +75,11 @@
     position: sticky;
     top: 80px;
   }
+
+  /* Chưa cấu hình bản đồ Việt Nam (useBasemap): danh sách chiếm cả hàng. */
+  .nearby-page__layout:not(:has(> .nearby-map)) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* ---- Thanh lọc ---- */

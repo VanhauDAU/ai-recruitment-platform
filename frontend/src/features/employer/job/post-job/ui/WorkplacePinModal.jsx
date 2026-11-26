@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Button, Modal } from 'antd'
 import { resolveGeoPlace, searchGeoPlaces } from '@/entities/system/location'
-import { useSiteSetting } from '@/entities/system/site-settings'
+import { useBasemap } from '@/entities/system/site-settings'
 import { m } from '@/shared/config/i18n'
 import { haversineKm } from '@/shared/lib/geo'
 
@@ -24,8 +24,7 @@ async function suggestPin({ pin, address, ward }) {
 }
 
 export default function WorkplacePinModal({ open, pin, address, ward, onSave, onClose }) {
-  const styleUrl = useSiteSetting('map_style_url')
-  const attribution = useSiteSetting('map_attribution')
+  const basemap = useBasemap()
   const [state, setState] = useState({ point: null, source: null })
 
   useEffect(() => {
@@ -67,12 +66,12 @@ export default function WorkplacePinModal({ open, pin, address, ward, onSave, on
     >
       <p className={distanceFromWard > FAR_FROM_WARD_KM ? 'text-sm text-red-600' : 'text-sm text-slate-500'}>{note}</p>
       <div className="mt-3 h-[360px]" role="region" aria-label={m.employer_job_location_pin_map_label()}>
-        {open && point && (
+        {open && point && basemap && (
           <Suspense fallback={<div className="map-view h-full" />}>
             <MapView
-              key={styleUrl}
-              styleUrl={styleUrl}
-              attribution={attribution}
+              key={basemap.styleUrl}
+              styleUrl={basemap.styleUrl}
+              attribution={basemap.attribution}
               origin={point}
               originLabel={address || ward?.name}
               onOriginChange={(next) => setState({ point: next, source: 'pin' })}

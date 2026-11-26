@@ -8,6 +8,23 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-27
 
+#### Fixed — Bỏ bản đồ nền OpenStreetMap thể hiện sai chủ quyền Hoàng Sa, Trường Sa
+
+- Production để trống `map_style_url` nên các trang "Việc làm gần tôi", chi tiết tin và
+  ghim nơi làm việc dùng style OpenFreeMap. Tile vector của style này ghi "South China
+  Sea 南海" và từ zoom 7 gán tên Trung Quốc cho hai quần đảo: "Sansha 三沙市", "Xisha
+  西沙区", "Nansha 南沙区", "Yongxing 永兴镇", "Zhubi 渚碧岛". Zoom 8 thêm hàng chục tên
+  đáy biển tiếng Trung, còn đảo Ba Bình có đường biên quốc gia gắn Đài Loan.
+- `useBasemap()` mới (`entities/system/site-settings`) chỉ nhận style https của nhà cung
+  cấp bản đồ Việt Nam (`maps.vietmap.vn`, `tiles.goong.io`). `MapView` không còn style dự
+  phòng, kể cả ở dev.
+- Chưa có style hợp lệ thì các trang ẩn bản đồ. "Việc làm gần tôi" vẫn tìm theo GPS hoặc
+  phường/xã, danh sách chiếm cả hàng. Chi tiết tin không hiện bản đồ nhỏ. Form đăng tin ẩn
+  nút "Ghim trên bản đồ" và dùng tọa độ geocode hoặc tâm phường.
+- Cập nhật ADR-0029, hướng dẫn site settings và mô tả `map_style_url`/`map_attribution`
+  trong seed. Bật lại bản đồ: tạo key tile VietMap giới hạn domain procv.site rồi dán
+  `https://maps.vietmap.vn/maps/styles/tm/style.json?apikey=<key>` vào cấu hình hệ thống.
+
 #### Fixed — Trắng trang ở tab "Bản AI chờ duyệt" (React #185)
 
 - Xem trước CV đo chiều cao section kèm margin, nhưng section cuối vùng có `last:mb-0`

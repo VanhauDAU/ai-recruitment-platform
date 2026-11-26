@@ -267,11 +267,14 @@ Quy tắc nội dung:
 | Việc làm gần bạn | `nearby_jobs_default_radius_km` | Bán kính mặc định (km) | number | 10 | ✓ |
 | Việc làm gần bạn | `nearby_jobs_max_radius_km` | Bán kính tối đa (km) | number | 50 | ✓ |
 | Việc làm gần bạn | `nearby_jobs_max_markers` | Số điểm tối đa trên bản đồ | number | 300 |  |
-| Bản đồ | `map_style_url` | Style bản đồ (MapLibre) | url | "" (dev: OpenFreeMap) | ✓ |
+| Bản đồ | `map_style_url` | Style bản đồ (MapLibre) | url | "" (ẩn bản đồ) | ✓ |
 | Bản đồ | `map_attribution` | Ghi công bản đồ | text | © VIETMAP | ✓ |
 
 `map_style_url` dùng **key tile công khai** của VietMap (giới hạn domain trong console),
-khác key geocoding bí mật `GEOCODING_API_KEY` ở `backend/.env` (ADR-0029).
+khác key geocoding bí mật `GEOCODING_API_KEY` ở `backend/.env` (ADR-0029). Chỉ nhận style
+https trên `maps.vietmap.vn` hoặc `tiles.goong.io`. Với link khác hoặc để trống, mọi màn
+hình ẩn bản đồ. Style dựng từ OpenStreetMap (OpenFreeMap, MapTiler…) bị loại vì thể hiện
+sai chủ quyền Hoàng Sa, Trường Sa.
 
 ### Ứng tuyển & SLA (`applications`)
 
