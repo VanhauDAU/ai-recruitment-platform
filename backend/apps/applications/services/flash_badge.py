@@ -30,6 +30,7 @@ from apps.employers.services import emit_employer_event
 from apps.jobs.models import Job, publicly_available_job_filter
 from apps.sitecontent.selectors import get_settings_map
 from common.i18n import recipient_language
+from common.portal_paths import employer_app_path
 
 from ..domain.flash_badge import (
     AT_RISK_LEAD,
@@ -40,8 +41,8 @@ from ..domain.flash_badge import (
 )
 from ..models import Application, ApplicationStatusHistory, RecruiterResponsiveness
 
-APPLICATIONS_PATH = '/tuyendung/app/ho-so-ung-tuyen'
-DASHBOARD_PATH = '/tuyendung/app/tong-quan'
+APPLICATIONS_PATH = employer_app_path('/ho-so-ung-tuyen')
+DASHBOARD_PATH = employer_app_path('/tong-quan')
 
 SNAPSHOT_FIELDS = (
     'matured_count',

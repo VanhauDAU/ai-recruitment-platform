@@ -21,13 +21,14 @@ from apps.employers.services import emit_employer_event
 from apps.sitecontent.selectors import business_emails_enabled, email_sender
 from common.email import send_html_email
 from common.i18n import recipient_language
+from common.portal_paths import employer_app_path
 
 from ..domain import Role
 
 logger = logging.getLogger(__name__)
 
 CANDIDATE_CONNECT_PATH = '/procv-connect'
-EMPLOYER_CONNECT_PATH = '/tuyendung/app/procv-connect'
+EMPLOYER_CONNECT_PATH = employer_app_path('/procv-connect')
 
 
 def conversation_path(conversation, role):

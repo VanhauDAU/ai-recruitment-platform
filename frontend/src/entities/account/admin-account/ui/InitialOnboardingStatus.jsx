@@ -1,20 +1,21 @@
 import { Space, Tag, Tooltip } from 'antd'
+import { employerAppPath } from '@/shared/config/portals'
 
 const STEP_META = {
   registration_completed: {
     label: 'Hồ sơ đăng ký',
     pageLabel: 'Hoàn thiện hồ sơ',
-    path: '/tuyendung/app/hoan-thien-ho-so',
+    path: employerAppPath('/hoan-thien-ho-so'),
   },
   email_verified: {
     label: 'Xác minh email',
     pageLabel: 'Xác minh email',
-    path: '/tuyendung/app/xac-thuc-email',
+    path: employerAppPath('/xac-thuc-email'),
   },
   consulting_need_completed: {
     label: 'Nhu cầu tuyển dụng',
     pageLabel: 'Nhu cầu tư vấn',
-    path: '/tuyendung/app/khai-bao-nhu-cau',
+    path: employerAppPath('/khai-bao-nhu-cau'),
   },
 }
 

@@ -21,6 +21,7 @@ from apps.employers.services import company_owners, emit_employer_event
 from apps.jobs.models import Job, publicly_available_job_filter
 from apps.sitecontent.selectors import get_bool_setting
 from common.i18n import recipient_language
+from common.portal_paths import employer_app_path
 
 from ..models import Application, ApplicationReminder
 from .applications import ApplicationNotAllowed, _locked_current_application
@@ -34,7 +35,7 @@ from .policy import (
 # A system nudge right after the candidate's own one would remind twice in a day.
 SYSTEM_REMINDER_SKIP_AFTER_CANDIDATE = timedelta(hours=24)
 
-APPLICATIONS_PATH = '/tuyendung/app/ho-so-ung-tuyen'
+APPLICATIONS_PATH = employer_app_path('/ho-so-ung-tuyen')
 
 
 def candidate_reminder_available_at(application, *, now=None, visible_status=None, policy=None):

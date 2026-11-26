@@ -23,7 +23,7 @@ const SURFACE_CONFIG = Object.freeze({
     label: 'Workspace quản trị',
     host: import.meta.env.VITE_ADMIN_HOST,
     localBase: '/quan-tri',
-    deployedBase: '/app',
+    deployedBase: '',
   },
 })
 

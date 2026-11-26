@@ -20,8 +20,8 @@ cổng và trang chủ theo role. Dev chạy cùng host; production có thể t�
 | Cổng | Prefix | Người dùng |
 | --- | --- | --- |
 | `main` | `/` | Ứng viên và khách |
-| `employer` | `/tuyendung` (marketing), `/tuyendung/app` (workspace) | Nhà tuyển dụng |
-| `admin` | `/quan-tri` | Quản trị viên (superuser hoặc admin, ADR-0018) |
+| `employer` | `/tuyendung` (marketing), `/tuyendung/app` (workspace); production `tuyendung.procv.site`, `/app` | Nhà tuyển dụng |
+| `admin` | `/quan-tri`; production `quantri.procv.site` | Quản trị viên (superuser hoặc admin, ADR-0018) |
 
 ## Cấu trúc `src`
 

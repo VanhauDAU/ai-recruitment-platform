@@ -1,7 +1,6 @@
 import logging
 from urllib.parse import urlencode
 
-from django.conf import settings
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext as _
@@ -22,6 +21,7 @@ from common.api.throttling import (
     with_account_write_cap,
     with_default_throttles,
 )
+from common.portal_paths import employer_app_url
 
 from ...domain.social_networks import FACEBOOK_PAGE, NETWORKS
 from ...selectors import (
@@ -56,7 +56,7 @@ logger = logging.getLogger(__name__)
 
 
 def integrations_url(**query):
-    base = f'{settings.EMPLOYER_FRONTEND_URL.rstrip("/")}/tuyendung/app/cai-dat/tich-hop'
+    base = employer_app_url('/cai-dat/tich-hop')
     return f'{base}?{urlencode(query)}' if query else base
 
 

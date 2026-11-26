@@ -70,10 +70,11 @@ scripts/deploy/compose.sh exec backend python manage.py reconcile_account_status
 ### Cấu hình
 
 - `DJANGO_ADMIN_ENABLED`: production fail-fast nếu `True`; khi tắt, `/admin/`
-  trả 404. Mọi quản trị đi qua `/quan-tri`.
-- `ADMIN_FRONTEND_URL`, `ADMIN_INVITATION_PATH` (mặc định
-  `/quan-tri/loi-moi`), `ADMIN_PASSWORD_RESET_PATH` (mặc định
-  `/quan-tri/dat-lai-mat-khau`) dựng link trong email mời và đặt lại mật khẩu.
+  trả 404. Mọi quản trị đi qua cổng quản trị (`quantri.procv.site`, dev `/quan-tri`).
+- `EMPLOYER_FRONTEND_URL`, `ADMIN_FRONTEND_URL`: khác host với `FRONTEND_URL` thì
+  cổng đó chạy trên subdomain riêng; backend tự bỏ tiền tố `/tuyendung`, `/quan-tri`
+  khỏi mọi link email/thông báo (`common/portal_paths.py`). Đường dẫn email mời và
+  đặt lại mật khẩu suy ra từ đó, không còn biến riêng.
 - Worker phải nghe queue `auth-email` (lời mời, reset, thông báo bảo mật,
   `account_status_notice`).
 

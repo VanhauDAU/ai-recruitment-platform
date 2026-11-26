@@ -19,6 +19,7 @@ from apps.cvs.services import record_application_snapshot_access
 from apps.employers.models import EmployerNotification
 from apps.employers.services import emit_employer_event
 from common.i18n import recipient_language
+from common.portal_paths import employer_app_path
 
 from ..models import ApplicationReview, ApplicationReviewLink
 from .policy import review_link_max_days
@@ -161,8 +162,8 @@ def submit_review(raw_token, *, recommendation, rating=None, strengths='', conce
                 },
                 subject_public_id=link.application.public_id,
                 metadata={'application_public_id': link.application.public_id},
-                action_path=(
-                    f'/tuyendung/app/ho-so-ung-tuyen?job={link.application.job.public_id}'
+                action_path=employer_app_path(
+                    f'/ho-so-ung-tuyen?job={link.application.job.public_id}'
                     f'&application={link.application.public_id}'
                 ),
             )

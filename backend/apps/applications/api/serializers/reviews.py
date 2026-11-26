@@ -5,11 +5,12 @@ from django.utils.translation import gettext as _
 from rest_framework import serializers
 
 from apps.cvs.services import asset_map
+from common.portal_paths import employer_marketing_path
 
 from ...models import ApplicationReview, ApplicationReviewLink
 from ...services import deidentified_content
 
-REVIEW_PAGE_PATH = '/tuyendung/danh-gia-ho-so'
+REVIEW_PAGE_PATH = employer_marketing_path('/danh-gia-ho-so')
 
 
 def review_page_url(raw_token):

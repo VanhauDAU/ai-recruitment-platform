@@ -4,7 +4,6 @@ from collections import defaultdict
 from datetime import timedelta
 from html import escape
 
-from django.conf import settings
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
@@ -15,6 +14,7 @@ from apps.jobs.models import Job, JobApplicationContact
 from apps.sitecontent.selectors import business_emails_enabled, email_sender
 from common.email import send_html_email
 from common.i18n import recipient_language
+from common.portal_paths import employer_app_url
 
 from ..models import Application, ApplicationStatusHistory
 from .policy import auto_rejection_email_grace, auto_rejection_min_notice
@@ -102,10 +102,7 @@ def send_due_application_reminders(*, now=None, batch_size=200):
             recipients = []
         recipients = list(dict.fromkeys(recipients or [job.posted_by.email]))
         count = len(applications)
-        action_url = (
-            f'{settings.EMPLOYER_FRONTEND_URL.rstrip("/")}/tuyendung/app/ho-so-ung-tuyen'
-            f'?job={job.public_id}'
-        )
+        action_url = employer_app_url(f'/ho-so-ung-tuyen?job={job.public_id}')
         # Contact addresses may not be accounts; the job's poster sets the language.
         with recipient_language(job.posted_by):
             body = ngettext(

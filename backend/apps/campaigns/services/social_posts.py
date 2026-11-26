@@ -20,6 +20,7 @@ from apps.campaigns.signals import social_post_due
 from apps.employers.models import EmployerNotification
 from apps.employers.services import emit_employer_event
 from common.i18n import recipient_language
+from common.portal_paths import employer_app_path
 
 from ..domain.social_networks import network_for_channel_kind
 from ..models import ScheduledSocialPost, SocialAccountConnection
@@ -166,7 +167,7 @@ def _notify(campaign, event_type, dedupe_key, message, **params):
             message=str(message) % params,
             subject_public_id=campaign.public_id,
             metadata={'campaign_public_id': campaign.public_id},
-            action_path=f'/tuyendung/app/chien-dich/{campaign.public_id}?active_tab=channels',
+            action_path=employer_app_path(f'/chien-dich/{campaign.public_id}?active_tab=channels'),
         )
 
 

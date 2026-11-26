@@ -22,8 +22,13 @@ Trình duyệt ──https──> Cloudflare (proxied, SSL Full strict)
        ──> db (pgvector) · redis-broker (Celery + WebSocket) · redis-cache (cache)
 ```
 
-Một domain, ba cổng theo đường dẫn: ứng viên `/`, nhà tuyển dụng `/tuyendung`,
-quản trị `/quan-tri`. Không tách frontend sang Vercel vì Django dựng SEO shell từ
+Ba cổng trên ba host cùng một VPS và một image `web`: ứng viên `procv.site`, nhà
+tuyển dụng `tuyendung.procv.site` (giới thiệu ở `/`, khu làm việc ở `/app`), quản trị
+`quantri.procv.site`. Đường dẫn cũ `procv.site/tuyendung/*`, `/quan-tri/*`,
+`/admin/*` chuyển 301 sang subdomain (nginx). Host của từng cổng khai ở
+`docker-compose.prod.yml`: `EMPLOYER_FRONTEND_URL`/`ADMIN_FRONTEND_URL` (backend dựng
+link email, thông báo) và `VITE_*_HOST` (build frontend) phải khớp `server_name` trong
+`frontend/docker/nginx/procv.conf`. Không tách frontend sang Vercel vì Django dựng SEO shell từ
 `index.html` và worker in CV mở `cv-print.html` qua mạng nội bộ.
 
 | File | Vai trò |
@@ -108,13 +113,14 @@ email-worker làm healthcheck không chạy nổi và container khởi động l
    bật Bucket Lock + lifecycle, mỗi bucket một token *Object Read & Write* riêng — chi
    tiết ở [sao-luu-va-khoi-phuc.md](sao-luu-va-khoi-phuc.md).
 7. **Cloudflare Access cho cổng quản trị** (Zero Trust → Access → Applications →
-   *Self-hosted*): một application với ba đường dẫn `procv.site/quan-tri*`,
-   `procv.site/admin*` (URL cũ `/admin/app/...` còn chuyển hướng về `/quan-tri`) và
-   `procv.site/api/admin/*`, policy *Allow* chỉ email quản trị, đăng nhập bằng
+   *Self-hosted*): một application gồm toàn bộ `quantri.procv.site`, cùng
+   `procv.site/quan-tri*`, `procv.site/admin*` (URL cũ, nginx chuyển 301 sang
+   `quantri.`) và `procv.site/api/admin/*` (nginx trả 404 cho `/api/admin/` ngoài
+   `quantri.`), policy *Allow* chỉ email quản trị, đăng nhập bằng
    *One-time PIN* (email OTP), session 24 h. Access chặn ở edge trước khi request tới
    origin, bù cho việc admin chưa có MFA trong ứng dụng (TOTP để sau go-live). Không
    đưa `/api/auth/*`, `/api/health/*` hay `/ws/*` vào application: cổng ứng viên/NTD
-   dùng chung các đường đó.
+   của `procv.site`/`tuyendung.` dùng chung các đường đó.
 
    Đăng nhập/làm mới phiên admin lại đi qua `/api/auth/login/` và `/api/auth/refresh/`
    (`portal=admin`), nằm ngoài application. Để lộ mật khẩu admin không đủ đăng nhập
@@ -129,18 +135,22 @@ email-worker làm healthcheck không chạy nổi và container khởi động l
 
    Chỉ đặt hai khóa sau khi application đã chạy (đặt trước thì không ai vào được
    admin). Kiểm: cửa sổ ẩn danh gọi thẳng
-   `curl -s -X POST https://procv.site/api/auth/login/ -H 'Content-Type: application/json' -d '{"portal":"admin"}'`
-   phải nhận 403 `cloudflare_access_required`; qua `/quan-tri/dang-nhap` (đã qua Access) vẫn
+   `curl -s -X POST https://tuyendung.procv.site/api/auth/login/ -H 'Content-Type: application/json' -d '{"portal":"admin"}'`
+   phải nhận 403 `cloudflare_access_required`; qua `https://quantri.procv.site/dang-nhap` (đã qua Access) vẫn
    đăng nhập bình thường.
+
+   DNS của ba cổng: bản ghi *Proxied* `A @`, `CNAME www`, `CNAME tuyendung`, `CNAME
+   quantri` (hai bản ghi sau trỏ `procv.site`); chứng chỉ origin phải phủ `*.procv.site`.
 8. Đăng ký domain `procv.site` ở reCAPTCHA admin (v3); thêm redirect URI OAuth.
    Provider chuyển về **backend** (`OAuthCallbackView` đổi code), sau đó backend mới
    chuyển tiếp sang trang `/oauth/callback` của SPA — nên chỉ khai URI backend:
    - Google (Cloud Console → Credentials → OAuth client *Web*): *Authorized redirect
-     URI* `https://procv.site/api/auth/oauth/google/callback/`, *Authorized JavaScript
-     origin* `https://procv.site`; OAuth consent screen chuyển *In production* (để
+     URI* `https://procv.site/api/auth/oauth/google/callback/` và
+     `https://tuyendung.procv.site/api/auth/oauth/google/callback/` (backend dựng
+     redirect URI theo host đang đăng nhập), *Authorized JavaScript origin*
+     `https://procv.site`, `https://tuyendung.procv.site`; OAuth consent screen chuyển *In production* (để
      *Testing* thì chỉ test user đăng nhập được);
-   - Facebook: `https://procv.site/api/auth/oauth/facebook/callback/`;
-   - LinkedIn: `https://procv.site/api/auth/oauth/linkedin/callback/`;
+   - Facebook, LinkedIn: `https://{procv.site,tuyendung.procv.site}/api/auth/oauth/{facebook,linkedin}/callback/`;
    - đăng bài mạng xã hội (nếu bật):
      `https://procv.site/api/employer/social/{facebook,instagram,threads,linkedin}/callback/`.
 9. **Tinh chỉnh zone** (không có trong code, bấm trên dashboard):
@@ -328,7 +338,10 @@ scripts/deploy/compose.sh exec ml-worker python manage.py matching_backfill --in
 
 - `https://procv.site` hiển thị trang chủ; *View source* của `/viec-lam`,
   `/cong-ty/<slug>`, `/blog/<slug>` có `<title>`/meta riêng (đi qua Django).
-- `/tuyendung`, `/tuyendung/app/dang-nhap`, `/quan-tri/dang-nhap` mở được; đăng nhập đủ ba cổng.
+- `https://tuyendung.procv.site` (view source có `<title>` của trang giới thiệu),
+  `tuyendung.procv.site/app/dang-nhap`, `quantri.procv.site/dang-nhap` mở được; đăng
+  nhập đủ ba cổng. `procv.site/tuyendung/app/dang-nhap` và `procv.site/quan-tri` trả
+  301 sang subdomain; `tuyendung.procv.site/robots.txt` có `Disallow: /app/`.
 - Upload avatar/logo → ảnh có URL `https://media.procv.site/...`.
 - Đăng ký tài khoản mới nhận được email xác thực.
 - Xuất PDF một CV thành công (worker → `http://web:8080/cv-print.html`).
@@ -355,11 +368,11 @@ scripts/deploy/compose.sh exec ml-worker python manage.py matching_backfill --in
   lại để bắt đầu chặn. Có `VITE_SENTRY_DSN` thì
   `curl -sI https://procv.site/viec-lam` phải thấy `report-uri https://<host>/api/<id>/security/...`
   cuối header CSP và `Reporting-Endpoints: csp-endpoint="..."`.
-- **Cloudflare Access (admin):** cửa sổ ẩn danh mở `https://procv.site/quan-tri/dang-nhap`
+- **Cloudflare Access (admin):** cửa sổ ẩn danh mở `https://quantri.procv.site/dang-nhap`
   phải hiện trang đăng nhập Access (email OTP) trước trang của ProCV;
-  `curl -sI https://procv.site/api/admin/` trả 302/403 từ Access, không phải JSON của
+  `curl -sI https://quantri.procv.site/api/admin/` trả 302/403 từ Access, không phải JSON của
   Django. Sau khi qua Access, đăng nhập admin và kiểm **thông báo realtime** chạy
-  (DevTools → *Network* → *WS*: `wss://procv.site/ws/notifications/` ở trạng thái 101,
+  (DevTools → *Network* → *WS*: `wss://quantri.procv.site/ws/notifications/` ở trạng thái 101,
   thông báo mới hiện không cần tải lại). `/ws/*` nằm ngoài Access nên WebSocket không
   bị chặn; nếu sau này đưa `/ws/*` vào Access thì phải kiểm lại vì cookie
   `CF_Authorization` khi đó là bắt buộc cho cả cổng ứng viên/NTD.
