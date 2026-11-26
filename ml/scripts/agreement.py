@@ -4,8 +4,10 @@
 - nhãn của Claude: `gold_pairs_claude.xlsx` (đợt 1) và `gold_pairs_claude_2.xlsx` (đợt 2);
 - cặp kiểm chứng: `audit_pairs.json` (30 cặp đợt 1 rút ngẫu nhiên + 20 cặp đợt 2 rút
   phân tầng theo nhãn, xem `build_audit_page.py`);
-- nhãn của người: `audit_human.json` xuất từ trang chấm mù `audit_blind.html`; cặp
-  chưa có trong tệp đó thì lấy cột `label` của `gold_pairs.xlsx` (5 cặp chấm ngày 18/11).
+- nhãn của người: `audit_human.json` xuất từ trang chấm mù `audit_blind.html`. Cặp đã
+  có nhãn ở cột `label` của `gold_pairs.xlsx` (5 cặp chấm ngày 18/11) giữ nhãn của lượt
+  đó: báo cáo đồng thuận của 5 cặp này đã có từ 18/11, nên nhãn chấm lại sau đó không
+  còn là nhãn mù (rubric: không sửa nhãn sau khi đã xem kết quả).
 
 Đo: quadratic weighted kappa (thước đo chính của rubric, ngưỡng ≥ 0,70), tỷ lệ
 trùng khớp tuyệt đối và lệch không quá 1 mức, bảng nhầm lẫn, các cặp lệch ≥ 2.
@@ -59,12 +61,19 @@ def audit_numbers():
     return audit['stt'] + audit.get('extension', {}).get('stt', [])
 
 
+def human_note():
+    """Ghi chú về cách người chấm làm (khóa `human_pass` của `audit_pairs.json`)."""
+    return json.loads(AUDIT_PAIRS.read_text(encoding='utf-8')).get('human_pass', {}).get('note', '')
+
+
 def human_labels(claude):
     """Nhãn của người theo số thứ tự cặp, cùng dạng dòng với phiếu chấm (nhãn ở cột 4, lý do ở cột 6)."""
     rows = {stt: row for stt, row in labels(GOLD_SHEET).items() if row[4] is not None}
     if AUDIT_HUMAN.exists():
         for item in json.loads(AUDIT_HUMAN.read_text(encoding='utf-8'))['pairs']:
             stt = item['stt']
+            if stt in rows:
+                continue  # đã chấm ở lượt đầu (18/11): giữ nhãn mù của lượt đó
             if (item['jd'], item['cv']) != (claude[stt][1], claude[stt][3]):
                 raise SystemExit(f'audit_human.json: cặp #{stt} không khớp mã tin/CV của tập vàng.')
             rows[stt] = (stt, item['jd'], '', item['cv'], int(item['label']), item.get('confidence'), item.get('reason', ''))
@@ -90,6 +99,7 @@ def main():
         '',
         'Cặp kiểm chứng không rút hoàn toàn ngẫu nhiên: 20 cặp của đợt 2 được rút phân tầng theo nhãn',
         'của Claude để đủ các mức 3–4. Người chấm không biết nhãn, điểm hệ thống hay cách rút.',
+        *(['', human_note()] if human_note() else []),
         '',
         'Bảng nhầm lẫn (hàng: người, cột: Claude):',
         '',

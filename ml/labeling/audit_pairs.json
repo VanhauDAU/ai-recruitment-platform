@@ -58,5 +58,10 @@
       288,
       296
     ]
+  },
+  "human_pass": {
+    "date": "2026-11-26",
+    "pairs": 50,
+    "note": "Người làm đồ án chấm mù trên trang audit_blind.html, tự quyết định điểm và tự ghi lý do cho cả 50 cặp. Bảng tiêu chí trên trang được đánh dấu ở 5 cặp, các cặp còn lại chấm thẳng điểm kèm lý do. 5 cặp đã chấm ngày 18/11 giữ nhãn của lượt đó."
   }
 }

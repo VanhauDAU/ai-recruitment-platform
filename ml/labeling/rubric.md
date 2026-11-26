@@ -171,10 +171,20 @@ phần yêu cầu ghi tối thiểu 4 năm và bằng cử nhân) và JD-62 (v�
 
 Tập vàng (đợt 1: 150 cặp; đợt 2: thêm 150 cặp) do mô hình ngôn ngữ (Claude) gán theo rubric này, chỉ dựa trên
 nội dung tin và CV (không xem điểm hệ thống hay nguồn ghép cặp); các cặp phân vân
-được hỏi lại người làm đồ án. Người làm đồ án chấm mù 30 cặp (2 cặp mỗi tin) để đo
+được hỏi lại người làm đồ án. Người làm đồ án chấm mù một bộ cặp kiểm chứng để đo
 độ đồng thuận (quadratic weighted kappa). Báo cáo trình bày đúng như vậy.
 
-Kiểm chứng thực tế (18/11/2026): người làm đồ án chấm mù được 5/30 cặp dự kiến và
-quyết định dừng ở đó. Kết quả sơ bộ: trùng tuyệt đối 4/5, lệch không quá 1 mức 5/5
-(`ml/reports/label_agreement.md`); chưa đủ để tính kappa. Báo cáo phải nêu đây là
-giới hạn: nhãn tập vàng do mô hình ngôn ngữ gán, chỉ được người kiểm tra sơ bộ.
+Kiểm chứng thực tế:
+
+- **18/11/2026:** người làm đồ án chấm mù 5 cặp; trùng tuyệt đối 4/5, lệch không quá 1
+  mức 5/5.
+- **26/11/2026:** bộ kiểm chứng tăng lên 50 cặp (30 cặp đợt 1 rút ngẫu nhiên 2 cặp mỗi
+  tin, thêm 20 cặp đợt 2 rút phân tầng theo nhãn của Claude để đủ mức 3–4). Người làm đồ
+  án chấm mù cả 50 cặp trên trang `audit_blind.html` (`build_audit_page.py`), tự quyết
+  định điểm và tự ghi lý do; 5 cặp đã chấm ngày 18/11 giữ nhãn của lượt đó. Kết quả:
+  quadratic weighted kappa 0,915 (ngưỡng 0,70), trùng tuyệt đối 78%, lệch không quá 1
+  mức 98%, một cặp lệch hai mức (`ml/reports/label_agreement.md`). Nhãn người ở
+  `audit_human.json`.
+
+Báo cáo trình bày: nhãn tập vàng do mô hình ngôn ngữ gán, người làm đồ án kiểm chứng
+mù 50/300 cặp; phần 20 cặp thêm không rút hoàn toàn ngẫu nhiên.
