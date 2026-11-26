@@ -10,12 +10,14 @@ Ngoài kiểm tra từng tiêu chí, có ba nhóm test chống hồi quy theo k�
 import json
 
 import numpy as np
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, override_settings
 
+from ..domain import scoring_cache_version
 from ..services.documents import document_text
 from ..services.encoder import HASHING_MODEL_VERSION, HashingEncoder
 from ..services.explain import explain
 from ..services.extraction import cv_profile
+from ..services.reranker import HashingReranker
 from ..services.scoring import LANGUAGE_REQUIRED_CAP, ScoringError, score_match
 from ..services.scoring.criteria import _years_score, position_level
 from ..services.scoring.skill_groups import alternative_groups
@@ -175,7 +177,7 @@ class CriteriaTests(SimpleTestCase):
             ['skills', 'experience', 'education', 'position_level', 'languages'],
         )
         self.assertAlmostEqual(sum(c['weight'] for c in result['components']), 1.0)
-        self.assertEqual(result['schema_version'], 2)
+        self.assertEqual(result['schema_version'], 3)
 
     def test_skill_written_differently_only_counts_when_semantic_matching_is_on(self):
         # CV không khai "Kiểm thử giao diện web" nhưng có câu gần như trùng chữ.
@@ -374,3 +376,91 @@ class SkillGroupTests(SimpleTestCase):
         result = run(frontend_cv(), job, catalog=catalog())
         self.assertEqual(components(result)['skills'], (33, 'ok'))
         self.assertEqual(alternative_groups(job['skills'], ['Chỉ nhắc Java, C#.'], catalog()), [])
+
+
+class RerankerTests(SimpleTestCase):
+    """Cross-encoder phán từng yêu cầu và nhận kỹ năng CV không ghi đúng tên."""
+
+    def test_hashing_reranker_is_repeatable_and_bounded(self):
+        reranker = HashingReranker()
+        pairs = [('Viết test tự động', 'Viết test tự động bằng Jest'), ('Kế toán thuế', 'Bán hàng')]
+        scores = reranker.score(pairs)
+        self.assertEqual(scores.tolist(), [1.0, 0.0])
+        self.assertEqual(reranker.score(pairs).tolist(), scores.tolist())
+        self.assertEqual(reranker.score([]).shape, (0,))
+
+    def test_without_a_reranker_the_result_is_scored_as_before(self):
+        result = run(frontend_cv(), job_profile(), catalog=catalog())
+        self.assertFalse(result['flags']['reranker_used'])
+        self.assertIsNone(result['overall']['coverage'])
+        self.assertEqual(len(result['requirements']), 2)
+        self.assertNotIn('probability', result['requirements'][0])
+
+    def test_only_skill_requirements_are_judged_and_evidence_is_a_cv_sentence(self):
+        cv = frontend_cv()
+        result = run(cv, job_profile(), catalog=catalog(), reranker=HashingReranker())
+        self.assertTrue(result['flags']['reranker_used'])
+        # Câu "ít nhất 2 năm kinh nghiệm…" là yêu cầu về số năm: đã có tiêu chí kinh nghiệm.
+        self.assertEqual(
+            [row['text'] for row in result['requirements']],
+            ['Viết test tự động cho giao diện web.'],
+        )
+        row = result['requirements'][0]
+        self.assertEqual((row['kind'], row['status'], row['probability']), ('skill', 'met', 1.0))
+        self.assertIn(row['evidence'], {chunk['text'] for chunk in cv['chunks']})
+
+    def test_requirement_coverage_is_reported_but_stays_out_of_the_score(self):
+        options = {'catalog': catalog(), 'reranker': HashingReranker()}
+        result = run(frontend_cv(), job_profile(), **options)
+        measured = run(frontend_cv(), job_profile(), ablation=('coverage_in_relevance',), **options)
+        # Câu yêu cầu được phán không nhắc kỹ năng nào của tin nên được tính vào độ phủ.
+        self.assertEqual(result['overall']['coverage'], 100)
+        experience = {c['key']: c for c in result['components']}['experience']['detail']
+        self.assertNotIn('requirement_coverage', experience)
+        measured_detail = {c['key']: c for c in measured['components']}['experience']['detail']
+        self.assertEqual(measured_detail['requirement_coverage'], 100)
+
+    def test_skill_shown_by_a_sentence_counts_even_when_its_name_is_not_written(self):
+        skills = [
+            {
+                'skill_id': 8,
+                'name': 'CI/CD',
+                'importance': 'required',
+                'weight': 1.0,
+                'counted': True,
+            }
+        ]
+        cv = frontend_cv(
+            section(
+                'projects',
+                {
+                    'name': 'Hệ thống triển khai',
+                    'description': rich(
+                        'Có nhiều kinh nghiệm làm việc với quy trình CI và CD tự động.'
+                    ),
+                },
+            )
+        )
+        self.assertNotIn(8, {skill['skill_id'] for skill in cv['skills']})
+        job = job_profile(skills=skills)
+
+        judged = run(cv, job, catalog=catalog(), reranker=HashingReranker())
+        self.assertEqual(components(judged)['skills'], (100, 'ok'))
+        matched = judged['skills']['matched'][0]
+        self.assertEqual((matched['name'], matched['match_type']), ('CI/CD', 'semantic'))
+        self.assertIn(matched['evidence'], {chunk['text'] for chunk in cv['chunks']})
+
+        for plain in (
+            run(cv, job, catalog=catalog()),
+            run(cv, job, catalog=catalog(), reranker=HashingReranker(), ablation=('no_ce_skills',)),
+        ):
+            self.assertEqual(components(plain)['skills'], (0, 'ok'))
+
+    def test_the_reranker_is_part_of_the_stored_scoring_version(self):
+        self.assertEqual(scoring_cache_version(), 'hybrid-v3')
+        with override_settings(MATCHING_RERANKER_BACKEND='hashing'):
+            self.assertEqual(scoring_cache_version(), 'hybrid-v3+hashing-ce-v1')
+        with override_settings(
+            MATCHING_RERANKER_BACKEND='cross_encoder', MATCHING_RERANKER_VERSION='req-ce-v1'
+        ):
+            self.assertEqual(scoring_cache_version(), 'hybrid-v3+req-ce-v1')

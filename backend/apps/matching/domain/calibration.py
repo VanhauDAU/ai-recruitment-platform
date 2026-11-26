@@ -69,6 +69,20 @@ CALIBRATIONS = {
 DEFAULT_CALIBRATION = CALIBRATIONS['e5-base-zs-v1']
 
 
+# Ngưỡng xác suất của cross-encoder: (đạt, có liên quan). `req-ce-v1` chọn trên 215 cặp
+# yêu cầu–câu CV thật của tập hiệu chỉnh: ngưỡng "đạt" thấp nhất còn giữ precision từ 0,85
+# (`ml/reports/reranker_eval.md`; trên 143 cặp validation precision là 0,947).
+RERANKER_THRESHOLDS = {
+    'hashing-ce-v1': (0.6, 0.3),
+    'req-ce-v1': (0.853, 0.063),
+}
+
+
+def reranker_thresholds(version):
+    """Ngưỡng của một cross-encoder; phiên bản chưa đo thì báo lỗi thay vì đoán."""
+    return RERANKER_THRESHOLDS[version]
+
+
 def calibration_for(model_version):
     return CALIBRATIONS.get(model_version, DEFAULT_CALIBRATION)
 

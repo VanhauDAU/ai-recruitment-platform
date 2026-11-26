@@ -53,16 +53,14 @@ def candidates(version):
     return found
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument('--model-dir', required=True)
-    parser.add_argument('--version', required=True)
-    options = parser.parse_args()
+def product_rows(labels, model_dir, version, *, marks=None, flags=()):
+    """Chấm các cặp của tập hiệu chỉnh bằng `matching_evaluate`; trả [(cặp có nhãn, dòng kết quả)].
 
-    labels = json.loads((LABELING_DIR / 'calibration_labels.json').read_text(encoding='utf-8'))['pairs']
+    CV của tập hiệu chỉnh không nằm trong DB nên được gửi kèm; `marks` là các bộ mốc cần
+    chấm thêm, `flags` là cờ thêm cho lệnh (cross-encoder, ablation).
+    """
     manifest = json.loads(TRAIN_CV_MANIFEST.read_text(encoding='utf-8'))
     jobs = json.loads(JD_IMPORT_MAP.read_text(encoding='utf-8'))
-    marks = candidates(options.version)
     payload = {
         'pairs': [{'jd': jobs[row['jd']]['job_public_id'], 'cv': row['cv']} for row in labels],
         'cvs': [
@@ -70,17 +68,28 @@ def main():
              'data': {key: value for key, value in json.loads((TRAIN_CV_DIR / f'{code}.json').read_text(encoding='utf-8')).items() if key not in DROPPED_CV_SECTIONS}}
             for code in sorted({row['cv'] for row in labels})
         ],
-        'marks': marks,
+        **({'marks': marks} if marks else {}),
     }  # fmt: skip
     command = [
         'docker', 'compose', 'exec', '-T', 'ml-worker', 'python', 'manage.py', 'matching_evaluate', '-',
-        '--model-path', f'/models/{options.model_dir}', '--model-version', options.version,
+        '--model-path', f'/models/{model_dir}', '--model-version', version, *flags,
     ]  # fmt: skip
     result = subprocess.run(command, input=json.dumps(payload), capture_output=True, text=True, cwd=REPO_ROOT, check=False)
     if result.returncode != 0:
         raise SystemExit(f'matching_evaluate lỗi:\n{result.stderr.strip()[-2000:]}')
     rows = {(row['jd'], row['cv']): row for row in map(json.loads, (line for line in result.stdout.splitlines() if line.startswith('{')))}
-    scored = [(row, rows.get((jobs[row['jd']]['job_public_id'], row['cv']), {})) for row in labels]
+    return [(row, rows.get((jobs[row['jd']]['job_public_id'], row['cv']), {})) for row in labels]
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument('--model-dir', required=True)
+    parser.add_argument('--version', required=True)
+    options = parser.parse_args()
+
+    labels = json.loads((LABELING_DIR / 'calibration_labels.json').read_text(encoding='utf-8'))['pairs']
+    marks = candidates(options.version)
+    scored = product_rows(labels, options.model_dir, options.version, marks=marks)
     failed = [f'{row["jd"]} × {row["cv"]}' for row, out in scored if 'variants' not in out]
     pairs = [{'jd': row['jd'], 'cv': row['cv'], 'label': row['label']} for row, out in scored if 'variants' in out]
     gold = np.array([pair['label'] for pair in pairs])

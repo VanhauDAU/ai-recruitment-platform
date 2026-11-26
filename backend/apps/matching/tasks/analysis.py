@@ -30,6 +30,7 @@ from ..services import (
     fail_analysis,
     fail_application_score,
     get_encoder,
+    get_reranker,
     stale_application_ids,
 )
 from ..services import (
@@ -46,6 +47,7 @@ logger = logging.getLogger(__name__)
 def preload_model(**kwargs):
     if os.environ.get('MATCHING_PRELOAD_MODEL') == '1':
         get_encoder()
+        get_reranker()
 
 
 @shared_task(name='apps.matching.tasks.run_analysis', soft_time_limit=25, time_limit=30)
@@ -55,7 +57,13 @@ def run_analysis(analysis_id):
         return None
     job = jobs_for_profile(statuses=None).filter(pk=analysis.job_id).first()
     try:
-        execute_analysis(analysis_id, job=job, encoder=get_encoder(), catalog=SkillCatalog.load())
+        execute_analysis(
+            analysis_id,
+            job=job,
+            encoder=get_encoder(),
+            catalog=SkillCatalog.load(),
+            reranker=get_reranker(),
+        )
     except SoftTimeLimitExceeded:
         fail_analysis(analysis_id, 'analysis_timeout')
     return analysis_id
@@ -96,7 +104,12 @@ def _enqueue_scores(application_ids):
 def score_application(application_id):
     """Chấm bản CV đã nộp của một hồ sơ ứng tuyển (queue `ai-matching-batch`)."""
     try:
-        run_application_score(application_id, encoder=get_encoder(), catalog=SkillCatalog.load())
+        run_application_score(
+            application_id,
+            encoder=get_encoder(),
+            catalog=SkillCatalog.load(),
+            reranker=get_reranker(),
+        )
     except SoftTimeLimitExceeded:
         fail_application_score(application_id, 'analysis_timeout')
     return application_id

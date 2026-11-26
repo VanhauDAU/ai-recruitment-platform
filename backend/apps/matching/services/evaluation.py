@@ -49,7 +49,9 @@ def _cv_profile(cv, catalog):
     return cv_source(cv.latest_version)[1](catalog)
 
 
-def evaluate_pairs(pairs, *, encoder, catalog, detail=False, ablation=(), marks=None):
+def evaluate_pairs(
+    pairs, *, encoder, catalog, detail=False, ablation=(), marks=None, reranker=None
+):
     """Sinh một dòng kết quả cho mỗi cặp `(job, cv)`.
 
     `job` nạp bằng `models.jobs_for_profile`, `cv` bằng `selectors.cvs_for_profile`.
@@ -61,6 +63,7 @@ def evaluate_pairs(pairs, *, encoder, catalog, detail=False, ablation=(), marks=
     `cv` có thể là `InlineCv` để chấm CV không có trong DB. `marks` là
     `{tên: {'document': (low, high), 'title': (low, high)}}`: mỗi bộ mốc quy đổi cosine
     được chấm thêm một lượt trên cùng vector, kết quả nằm ở `variants` (dùng khi dò mốc).
+    `reranker` là cross-encoder; không truyền thì chấm như khi không có nó.
     """
     variants = {
         name: replace(calibration_for(encoder.version), document=tuple(value['document']), title=tuple(value['title']))
@@ -93,6 +96,7 @@ def evaluate_pairs(pairs, *, encoder, catalog, detail=False, ablation=(), marks=
             'model_version': encoder.version,
             'catalog': catalog,
             'ablation': ablation,
+            'reranker': reranker,
         }
         try:
             result = score_match(cv_side['profile'], job_side['profile'], **inputs)

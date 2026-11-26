@@ -32,6 +32,7 @@ from ...selectors import cvs_for_profile
 from ...services import SkillCatalog, get_encoder
 from ...services.encoder import SentenceTransformerEncoder
 from ...services.evaluation import InlineCv, evaluate_pairs, inline_cv
+from ...services.reranker import CrossEncoderReranker
 from ...services.scoring import ABLATIONS
 
 
@@ -52,6 +53,10 @@ class Command(BaseCommand):
         parser.add_argument('--model-path', help='Thư mục mô hình; mặc định là mô hình sản phẩm.')
         parser.add_argument('--model-version', help='Tên phiên bản đi kèm --model-path.')
         parser.add_argument('--no-prefix', action='store_true', help='Không thêm tiền tố E5.')
+        parser.add_argument(
+            '--reranker-path', help='Thư mục cross-encoder; không có thì không dùng.'
+        )
+        parser.add_argument('--reranker-version', help='Tên phiên bản đi kèm --reranker-path.')
         parser.add_argument(
             '--cv-type', choices=UserCv.CvType.values, default=UserCv.CvType.BUILDER.value
         )
@@ -88,6 +93,11 @@ class Command(BaseCommand):
         cvs.update({item['id']: inline_cv(item) for item in inline})
         known = [pair for pair in requested if pair['jd'] in jobs and pair['cv'] in cvs]
         encoder = _encoder(options['model_path'], options['model_version'], options['no_prefix'])
+        reranker = None
+        if options['reranker_path']:
+            if not options['reranker_version']:
+                raise CommandError('--reranker-path phải đi kèm --reranker-version.')
+            reranker = CrossEncoderReranker(options['reranker_path'], options['reranker_version'])
         rows = evaluate_pairs(
             [(jobs[pair['jd']], cvs[pair['cv']]) for pair in known],
             encoder=encoder,
@@ -95,6 +105,7 @@ class Command(BaseCommand):
             detail=options['detail'],
             ablation=tuple(options['ablation']),
             marks=marks,
+            reranker=reranker,
         )
         rule_scores = {}
         for pair, row in zip(known, rows, strict=True):

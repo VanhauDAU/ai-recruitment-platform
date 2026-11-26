@@ -23,6 +23,9 @@ Phương án được đo:
   lấy cosine toàn văn, vì mốc quy đổi điểm của `hybrid` là theo từng mô hình).
 - `--hybrid-model tên=thư_mục` dành cho bi-encoder đã có mốc trong `CALIBRATIONS` của
   backend: đo cả cosine toàn văn lẫn điểm `hybrid` chạy với mô hình đó.
+- `--reranker tên=thư_mục` đo thêm mỗi `--hybrid-model` khi chạy kèm cross-encoder, và
+  hai ablation của nó (thêm độ phủ yêu cầu vào mức liên quan; không dùng cross-encoder để
+  nhận kỹ năng).
 
 Chỉ số (mọi khoảng tin cậy là bootstrap 95%, lấy mẫu lại theo tin):
 - Spearman giữa điểm và nhãn 0–4, gộp mọi cặp.
@@ -357,6 +360,10 @@ def main():
         '--hybrid-model', action='append', type=parse_model, default=[], metavar='TÊN=THƯ_MỤC',
         help='Bi-encoder đã có mốc trong CALIBRATIONS: đo cả cosine lẫn điểm hybrid với mô hình này.',
     )  # fmt: skip
+    parser.add_argument(
+        '--reranker', type=parse_model, metavar='TÊN=THƯ_MỤC',
+        help='Cross-encoder trong ml/models: đo thêm mỗi --hybrid-model khi chạy kèm cross-encoder này.',
+    )  # fmt: skip
     options = parser.parse_args()
     if options.split != 'validation' and not options.final:
         raise SystemExit('Phần test chỉ chạy một lần ở giai đoạn nghiệm thu. Thêm --final nếu đúng lúc đó.')
@@ -391,6 +398,17 @@ def main():
         collect(f'Bi-encoder `{name}` (cosine toàn văn)', rows, 'document_similarity')
         collect(f'hybrid với `{name}`', rows, 'score')
         hybrids.append(f'hybrid với `{name}`')
+        if options.reranker:
+            reranker, folder, _ = options.reranker
+            judged = [*flags, '--reranker-path', f'/models/{folder}', '--reranker-version', reranker]
+            for label, extra in (
+                (f'hybrid với `{name}` và `{reranker}`', []),
+                (f'hybrid với `{name}` và `{reranker}`, thêm độ phủ yêu cầu vào mức liên quan', ['--ablation', 'coverage_in_relevance']),
+                (f'hybrid với `{name}` và `{reranker}`, không dùng để nhận kỹ năng', ['--ablation', 'no_ce_skills']),
+            ):
+                key = f'{name}+{reranker}' + ''.join(extra[1:])
+                collect(label, product_rows(pairs, key, judged + extra), 'score')
+                hybrids.append(label)
 
     rng = np.random.default_rng(SEED)
     scores = {name: filled(values) for name, values in systems.items()}

@@ -8,7 +8,7 @@ Tiêu chí trả `status`:
 
 | Tiêu chí | Cách tính |
 | --- | --- |
-| Kỹ năng | `Σ(w·m)/Σw` trên các đơn vị chấm; đơn vị là một kỹ năng đứng riêng hoặc một nhóm kỹ năng thay thế nhau ("một trong", "hoặc"; xem `skill_groups.py`); w = trọng số kỹ năng × (1 cần có / 0,5 nên có), m = 1 khi CV có kỹ năng (theo danh mục), với nhóm là có ít nhất một kỹ năng trong nhóm; khớp theo câu gần nghĩa chỉ bật khi `Calibration.semantic_skills` |
+| Kỹ năng | `Σ(w·m)/Σw` trên các đơn vị chấm; đơn vị là một kỹ năng đứng riêng hoặc một nhóm kỹ năng thay thế nhau ("một trong", "hoặc"; xem `skill_groups.py`); w = trọng số kỹ năng × (1 cần có / 0,5 nên có), m = 1 khi CV có kỹ năng (theo danh mục, hoặc cross-encoder xác nhận một câu của CV cho thấy kỹ năng đó, xem `requirements.py`), với nhóm là có ít nhất một kỹ năng trong nhóm; khớp theo cosine của bi-encoder chỉ bật khi `Calibration.semantic_skills` |
 | Kinh nghiệm | `0,4·Y·R/100 + 0,6·R`; Y theo số năm (đủ 100, thiếu 1 bậc 60, thiếu ≥ 2 bậc 20); R = mức liên quan (trung bình điểm toàn văn và điểm chức danh, xem `semantic.py`). Y nhân R/100: năm làm việc khác nghề không được tính |
 | Học vấn | Đủ hoặc vượt 100, thấp 1 bậc 50, thấp ≥ 2 bậc 0 |
 | Cấp bậc | Lệch 0/1/2/≥3 bậc: 100/70/40/10, tính cả hai chiều |
@@ -68,6 +68,8 @@ class MatchInput:
     semantic_skills: bool = False
     # Nhóm kỹ năng thay thế nhau của tin: [(skill_id, ...)] (xem `skill_groups.py`).
     skill_groups: tuple = ()
+    # Kỹ năng CV không ghi tên nhưng cross-encoder xác nhận: {skill_id: (xác suất, câu CV)}.
+    skill_evidence: dict = field(default_factory=dict)
 
 
 def _skill_match(data, skill, cv_skills):
@@ -75,6 +77,10 @@ def _skill_match(data, skill, cv_skills):
     own = cv_skills.get(skill['skill_id'])
     if own is not None:
         return {'match_type': 'exact', 'similarity': None, 'evidence': own['evidence']}
+    # Cross-encoder xác nhận một câu của CV cho thấy kỹ năng này dù CV không ghi đúng tên.
+    if skill['skill_id'] in data.skill_evidence:
+        probability, sentence = data.skill_evidence[skill['skill_id']]
+        return {'match_type': 'semantic', 'similarity': probability, 'evidence': sentence}
     similarity, sentence = data.skill_hits.get(skill['name'], (0.0, ''))
     if data.semantic_skills and sentence and similarity >= data.calibration.skill:
         return {'match_type': 'semantic', 'similarity': similarity, 'evidence': sentence}

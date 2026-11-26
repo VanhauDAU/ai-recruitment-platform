@@ -28,6 +28,7 @@ from .application_ranking import (
 from .candidate_search import ProfileFilters, candidate_search_enabled, rank_cvs_for_job
 from .documents import ensure_cv_document, ensure_job_document, reassign_document_skill
 from .encoder import get_encoder
+from .reranker import get_reranker
 from .skills import SkillCatalog
 
 __all__ = [
@@ -50,6 +51,7 @@ __all__ = [
     'execute_analysis',
     'fail_analysis',
     'get_encoder',
+    'get_reranker',
     'matching_enabled',
     'reassign_document_skill',
     'recover_stale_analyses',
