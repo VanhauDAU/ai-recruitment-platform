@@ -37,6 +37,20 @@ describe('MobileTabBar', () => {
     expect(document.body).not.toHaveClass('has-mobile-tab-bar')
   })
 
+  it('scrolls back to the top when the current tab is tapped again', () => {
+    const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation(() => {})
+    renderTabBar('/')
+    const nav = screen.getByRole('navigation', { name: 'Điều hướng nhanh' })
+
+    fireEvent.click(within(nav).getByRole('link', { name: 'Trang chủ' }))
+    expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' })
+
+    scrollTo.mockClear()
+    fireEvent.click(within(nav).getByRole('link', { name: 'Việc làm' }))
+    expect(scrollTo).not.toHaveBeenCalled()
+    scrollTo.mockRestore()
+  })
+
   it('opens the in-place login popup for guests', async () => {
     renderTabBar()
     fireEvent.click(screen.getByRole('button', { name: 'Tài khoản' }))
