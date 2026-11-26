@@ -8,6 +8,18 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Fixed — Bớt email Sentry nhiễu và request API thừa
+
+- CSP: hash script giao diện sáng/tối trong `index.html` đã cũ nên mọi lượt tải trang
+  gửi một báo cáo "Blocked 'script' from 'inline:'" lên Sentry; cập nhật hash, thêm test
+  `src/app/csp-inline-script-hash.test.js` so hash với `index.html`. Cho phép beacon
+  Cloudflare Web Analytics (`static.cloudflareinsights.com`) và thêm `'report-sample'`.
+- Sentry SDK bỏ qua lỗi `zaloJSV2` do trình duyệt trong app Zalo tự chèn script.
+- Tab cũ sau deploy gặp lỗi tải chunk (`vite:preloadError`) thì tự tải lại, tối đa một
+  lần mỗi phút.
+- Trang chủ lấy tổng số việc làm từ `/public/jobs/stats/` (dùng chung cache với khối
+  thống kê) thay vì tải cả một trang tin; thông báo hệ thống cache 5 phút theo trang.
+
 #### Added — Góp ý / báo lỗi gửi sang Telegram
 
 - Góp ý mới được task `apps.sitecontent.tasks.notify_feedback_telegram` (queue `default`,
