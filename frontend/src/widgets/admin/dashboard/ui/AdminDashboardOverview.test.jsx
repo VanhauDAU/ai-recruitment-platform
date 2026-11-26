@@ -48,7 +48,7 @@ const payload = {
   },
 }
 
-function renderDashboard(url = '/admin/app/tong-quan?period=7') {
+function renderDashboard(url = '/quan-tri/tong-quan?period=7') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={client}>
@@ -73,13 +73,13 @@ describe('AdminDashboardOverview', () => {
     expect(screen.getByText('75%')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /tin đang hiển thị cho ứng viên/ })).toHaveAttribute(
       'href',
-      '/admin/app/duyet-tin?job_scope=active',
+      '/quan-tri/duyet-tin?job_scope=active',
     )
   })
 
   it('offers a retry when the dashboard cannot load', async () => {
     getAdminDashboard.mockRejectedValue(new Error('down'))
-    renderDashboard('/admin/app/tong-quan?period=12')
+    renderDashboard('/quan-tri/tong-quan?period=12')
 
     expect(await screen.findByText('Không tải được số liệu bảng điều khiển.')).toBeInTheDocument()
     expect(getAdminDashboard).toHaveBeenLastCalledWith(30, expect.anything())

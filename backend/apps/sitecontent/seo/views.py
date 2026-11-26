@@ -189,6 +189,7 @@ class RobotsView(View):
             lines = [
                 'User-agent: *',
                 'Allow: /',
+                'Disallow: /quan-tri/',
                 'Disallow: /admin/',
                 'Disallow: /api/',
                 'Disallow: /cvs/',

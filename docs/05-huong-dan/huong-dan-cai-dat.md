@@ -77,7 +77,7 @@ python manage.py createsuperuser
 # Tùy chọn: đánh dấu email admin đã xác thực từ CLI tin cậy.
 python manage.py verify_admin_email <email-admin> --actor-email <email-superuser>
 
-# Admin thường: superuser mời qua email tại /admin/app/tai-khoan?tab=invitations.
+# Admin thường: superuser mời qua email tại /quan-tri/tai-khoan?tab=invitations.
 # Không có mạng gửi mail thì tạo từ CLI (hỏi mật khẩu, is_superuser=False):
 python manage.py create_admin_user <email-quan-tri> \
   --actor-email <email-superuser>

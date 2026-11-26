@@ -78,13 +78,17 @@ _ADMIN = {
     '/access-denied': '/khong-co-quyen',
 }
 
-# Base path từng cổng: chạy chung domain (/tuyendung/app, /admin/app) hoặc subdomain (/app).
+# Base path từng cổng: chạy chung domain (/tuyendung/app, /quan-tri) hoặc subdomain (/app).
 _PORTALS = (
     ('/tuyendung/app', _EMPLOYER),
-    ('/admin/app', _ADMIN),
+    ('/quan-tri', _ADMIN),
     ('/app', {**_ADMIN, **_EMPLOYER}),
     ('', _MAIN),
 )
+
+# Base cũ của cổng quản trị khi chạy chung domain, trước khi đổi sang /quan-tri.
+_LEGACY_ADMIN_BASE = '/admin/app'
+_ADMIN_BASE = '/quan-tri'
 
 
 def _replace_prefix(path, mapping):
@@ -97,6 +101,8 @@ def _replace_prefix(path, mapping):
 
 def modernize_path_prefix(prefix):
     """Dịch prefix route cũ sang route hiện hành; prefix không thuộc bảng giữ nguyên."""
+    if prefix == _LEGACY_ADMIN_BASE or prefix.startswith(f'{_LEGACY_ADMIN_BASE}/'):
+        prefix = _ADMIN_BASE + prefix[len(_LEGACY_ADMIN_BASE) :]
     for base, mapping in _PORTALS:
         if base and not prefix.startswith(f'{base}/'):
             continue

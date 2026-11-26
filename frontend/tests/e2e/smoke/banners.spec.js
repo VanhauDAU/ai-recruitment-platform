@@ -65,7 +65,7 @@ test('home carousel shows admin banners on desktop and phone', { tag: '@responsi
 test('admin banners: list homepage slides and create a promo slide', { tag: '@responsive' }, async ({ page }) => {
   let created
   await routeBannerApi(page, { onCreate: (payload) => { created = payload } })
-  await page.goto('/admin/app/banner')
+  await page.goto('/quan-tri/banner')
   await expect(page.getByRole('heading', { name: 'Banner quảng bá' })).toBeVisible()
   await expect(page.getByText('Banner Ánh Dương')).toBeVisible()
 

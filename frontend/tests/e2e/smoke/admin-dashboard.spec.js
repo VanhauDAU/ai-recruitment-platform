@@ -109,7 +109,7 @@ test('admin dashboard: urgent queues first, period filter and no horizontal over
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })
 
-  await page.goto('/admin/app/tong-quan')
+  await page.goto('/quan-tri/tong-quan')
   await expect(page.getByRole('heading', { level: 1, name: /Lê Minh Quản/ })).toBeVisible()
 
   const queue = page.getByRole('region', { name: 'Cần xử lý' })
@@ -117,7 +117,7 @@ test('admin dashboard: urgent queues first, period filter and no horizontal over
   await expect(rows).toHaveCount(5)
   await expect(rows.first()).toContainText('Báo cáo tin tuyển dụng')
   await expect(rows.first()).toContainText('1 quá hạn')
-  await expect(rows.first().getByRole('link')).toHaveAttribute('href', '/admin/app/duyet-tin?tab=reports')
+  await expect(rows.first().getByRole('link')).toHaveAttribute('href', '/quan-tri/duyet-tin?tab=reports')
   await expect(queue).toContainText('Đã xử lý hết: Xác minh tên miền thủ công, Báo cáo công ty')
 
   await expect(page.getByText('Mới trong kỳ, 30 ngày trước chưa có')).toBeVisible()
@@ -125,7 +125,7 @@ test('admin dashboard: urgent queues first, period filter and no horizontal over
   const bell = page.getByRole('button', { name: '11 mục cần xử lý, 1 quá hạn' })
   await bell.click()
   await expect(page.locator('.admin-bell').getByRole('link', { name: /Báo cáo tin tuyển dụng/ }))
-    .toHaveAttribute('href', '/admin/app/duyet-tin?tab=reports')
+    .toHaveAttribute('href', '/quan-tri/duyet-tin?tab=reports')
   await page.keyboard.press('Escape')
 
   if (page.viewportSize().width < 1024) {

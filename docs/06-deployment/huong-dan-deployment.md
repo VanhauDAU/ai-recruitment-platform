@@ -23,7 +23,7 @@ Trình duyệt ──https──> Cloudflare (proxied, SSL Full strict)
 ```
 
 Một domain, ba cổng theo đường dẫn: ứng viên `/`, nhà tuyển dụng `/tuyendung`,
-quản trị `/admin`. Không tách frontend sang Vercel vì Django dựng SEO shell từ
+quản trị `/quan-tri`. Không tách frontend sang Vercel vì Django dựng SEO shell từ
 `index.html` và worker in CV mở `cv-print.html` qua mạng nội bộ.
 
 | File | Vai trò |
@@ -108,7 +108,8 @@ email-worker làm healthcheck không chạy nổi và container khởi động l
    bật Bucket Lock + lifecycle, mỗi bucket một token *Object Read & Write* riêng — chi
    tiết ở [sao-luu-va-khoi-phuc.md](sao-luu-va-khoi-phuc.md).
 7. **Cloudflare Access cho cổng quản trị** (Zero Trust → Access → Applications →
-   *Self-hosted*): một application với hai đường dẫn `procv.site/admin*` và
+   *Self-hosted*): một application với ba đường dẫn `procv.site/quan-tri*`,
+   `procv.site/admin*` (URL cũ `/admin/app/...` còn chuyển hướng về `/quan-tri`) và
    `procv.site/api/admin/*`, policy *Allow* chỉ email quản trị, đăng nhập bằng
    *One-time PIN* (email OTP), session 24 h. Access chặn ở edge trước khi request tới
    origin, bù cho việc admin chưa có MFA trong ứng dụng (TOTP để sau go-live). Không
@@ -129,7 +130,7 @@ email-worker làm healthcheck không chạy nổi và container khởi động l
    Chỉ đặt hai khóa sau khi application đã chạy (đặt trước thì không ai vào được
    admin). Kiểm: cửa sổ ẩn danh gọi thẳng
    `curl -s -X POST https://procv.site/api/auth/login/ -H 'Content-Type: application/json' -d '{"portal":"admin"}'`
-   phải nhận 403 `cloudflare_access_required`; qua `/admin/login` (đã qua Access) vẫn
+   phải nhận 403 `cloudflare_access_required`; qua `/quan-tri/dang-nhap` (đã qua Access) vẫn
    đăng nhập bình thường.
 8. Đăng ký domain `procv.site` ở reCAPTCHA admin (v3); thêm redirect URI OAuth.
    Provider chuyển về **backend** (`OAuthCallbackView` đổi code), sau đó backend mới
@@ -327,7 +328,7 @@ scripts/deploy/compose.sh exec ml-worker python manage.py matching_backfill --in
 
 - `https://procv.site` hiển thị trang chủ; *View source* của `/viec-lam`,
   `/cong-ty/<slug>`, `/blog/<slug>` có `<title>`/meta riêng (đi qua Django).
-- `/tuyendung`, `/tuyendung/app/dang-nhap`, `/admin/login` mở được; đăng nhập đủ ba cổng.
+- `/tuyendung`, `/tuyendung/app/dang-nhap`, `/quan-tri/dang-nhap` mở được; đăng nhập đủ ba cổng.
 - Upload avatar/logo → ảnh có URL `https://media.procv.site/...`.
 - Đăng ký tài khoản mới nhận được email xác thực.
 - Xuất PDF một CV thành công (worker → `http://web:8080/cv-print.html`).
@@ -354,7 +355,7 @@ scripts/deploy/compose.sh exec ml-worker python manage.py matching_backfill --in
   lại để bắt đầu chặn. Có `VITE_SENTRY_DSN` thì
   `curl -sI https://procv.site/viec-lam` phải thấy `report-uri https://<host>/api/<id>/security/...`
   cuối header CSP và `Reporting-Endpoints: csp-endpoint="..."`.
-- **Cloudflare Access (admin):** cửa sổ ẩn danh mở `https://procv.site/admin/login`
+- **Cloudflare Access (admin):** cửa sổ ẩn danh mở `https://procv.site/quan-tri/dang-nhap`
   phải hiện trang đăng nhập Access (email OTP) trước trang của ProCV;
   `curl -sI https://procv.site/api/admin/` trả 302/403 từ Access, không phải JSON của
   Django. Sau khi qua Access, đăng nhập admin và kiểm **thông báo realtime** chạy

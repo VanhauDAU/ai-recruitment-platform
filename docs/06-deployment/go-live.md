@@ -93,8 +93,8 @@ nhập admin. Phần còn lại là **tài khoản và cấu hình bên ngoài**
    `purge_demo_accounts`. Tạo superuser mới, mật khẩu mạnh. Chạy `seed_sitecontent`.
 6. [ ] Cloudflare: tạo `A @` + `A www` → IP VPS, *Proxied*. Bật Authenticated
    Origin Pulls.
-7. [ ] Cloudflare Access: application *Self-hosted* cho `procv.site/admin*` +
-   `procv.site/api/admin/*`, policy email quản trị, One-time PIN. Sau khi vào được
+7. [ ] Cloudflare Access: application *Self-hosted* cho `procv.site/quan-tri*`,
+   `procv.site/admin*` (URL cũ, còn chuyển hướng) + `procv.site/api/admin/*`, policy email quản trị, One-time PIN. Sau khi vào được
    admin qua Access, đặt `CLOUDFLARE_ACCESS_TEAM_DOMAIN` + `CLOUDFLARE_ACCESS_AUD`
    rồi `deploy.sh --skip-build` (runbook bước 1.7).
 8. [ ] Kiểm sau deploy (runbook mục 6):

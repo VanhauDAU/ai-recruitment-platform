@@ -47,6 +47,15 @@ describe.each(PORTALS)('legacy paths of the %s portal', (_portal, pairs, buildRo
   })
 })
 
+describe('old /admin/app base of the admin portal', () => {
+  it('moves to /quan-tri, translating old English segments in the same step', () => {
+    expect(resolveLegacyPath('/admin/app')).toBe('/quan-tri')
+    expect(resolveLegacyPath('/admin/app/dang-nhap')).toBe('/quan-tri/dang-nhap')
+    expect(resolveLegacyPath('/admin/app/accounts/usr_1')).toBe('/quan-tri/tai-khoan/usr_1')
+    expect(resolveLegacyPath('/admin/application')).toBeNull()
+  })
+})
+
 function CurrentUrl() {
   const { pathname, search, hash } = useLocation()
   return <p>{`${pathname}${search}${hash}`}</p>
@@ -57,6 +66,7 @@ function renderAt(url) {
     <MemoryRouter initialEntries={[url]}>
       <Routes>
         <Route path="/tuyendung/app/tin-tuyen-dung/:publicId/chinh-sua" element={<CurrentUrl />} />
+        <Route path="/quan-tri/loi-moi" element={<CurrentUrl />} />
         <Route path="*" element={<LegacyPathFallback />} />
       </Routes>
     </MemoryRouter>,
@@ -68,6 +78,12 @@ describe('LegacyPathFallback', () => {
     renderAt('/tuyendung/app/jobs/jb_1/edit?tab=info#salary')
 
     expect(screen.getByText('/tuyendung/app/tin-tuyen-dung/jb_1/chinh-sua?tab=info#salary')).toBeInTheDocument()
+  })
+
+  it('keeps the token of an old admin invitation link', () => {
+    renderAt('/admin/app/loi-moi?token=signed')
+
+    expect(screen.getByText('/quan-tri/loi-moi?token=signed')).toBeInTheDocument()
   })
 
   it('shows the 404 page for an unknown URL', () => {

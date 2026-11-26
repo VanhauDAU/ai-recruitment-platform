@@ -114,11 +114,11 @@ test('admin blog: an admin can edit another employee article', async ({ page }) 
     'published_with_draft',
   )
 
-  await page.goto('/admin/app/blog')
+  await page.goto('/quan-tri/blog')
   await expect(page.getByText('Bài viết của đồng nghiệp khác').filter({ visible: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Tạo bài viết' })).toBeVisible()
 
-  await page.goto('/admin/app/blog/ps_other/chinh-sua')
+  await page.goto('/quan-tri/blog/ps_other/chinh-sua')
   await expect(page.getByLabel('Tiêu đề bài viết')).toBeEnabled()
   await expect(page.getByRole('button', { name: 'Lưu ngay' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Văn bản thường' })).toBeEnabled()
@@ -132,11 +132,11 @@ test('admin blog: an admin can edit another employee article', async ({ page }) 
 test('admin blog: an article the server allows no action on opens read-only', async ({ page }) => {
   await mockBlogApi(page, [])
 
-  await page.goto('/admin/app/blog')
+  await page.goto('/quan-tri/blog')
   await expect(page.getByText('Bài viết của đồng nghiệp khác').filter({ visible: true })).toBeVisible()
   await expect(page.getByRole('button', { name: /Đổi trạng thái bài/ })).toHaveCount(0)
 
-  await page.goto('/admin/app/blog/ps_other/chinh-sua')
+  await page.goto('/quan-tri/blog/ps_other/chinh-sua')
   await expect(page.getByText('Chỉ xem nội dung')).toBeVisible()
   await expect(page.getByLabel('Tiêu đề bài viết')).toBeDisabled()
   await expect(page.getByRole('button', { name: 'Lưu ngay' })).toHaveCount(0)
@@ -155,7 +155,7 @@ for (const access of [
       { isSuperuser: access.isSuperuser },
     )
 
-    await page.goto('/admin/app/blog/ps_other/chinh-sua')
+    await page.goto('/quan-tri/blog/ps_other/chinh-sua')
     await expect(page.getByText('Chỉ xem nội dung')).toBeVisible()
     await expect(page.getByLabel('Tiêu đề bài viết')).toBeDisabled()
     const restoreButton = page.getByRole('button', { name: 'Khôi phục về nháp' })

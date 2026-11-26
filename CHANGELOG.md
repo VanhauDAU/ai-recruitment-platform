@@ -8,6 +8,19 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Changed — Cổng quản trị đổi đường dẫn sang `/quan-tri`
+
+- Cổng quản trị chạy chung domain đổi từ `/admin/app/…` sang `/quan-tri/…`
+  (ví dụ `/quan-tri/dang-nhap`), đồng nhất với các đường dẫn tiếng Việt còn lại.
+  Subdomain riêng (`VITE_ADMIN_HOST`) vẫn dùng `/app`.
+- Link cũ `/admin/app/…` trong email mời, email đặt lại mật khẩu, thông báo và
+  bookmark tự chuyển sang đường dẫn mới, giữ nguyên query (token) và hash; prefix
+  thông báo đã xuất bản lưu path cũ vẫn khớp.
+- Mặc định `ADMIN_INVITATION_PATH`, `ADMIN_PASSWORD_RESET_PATH` đổi theo;
+  `robots.txt` chặn thêm `/quan-tri/`.
+- Vận hành: thêm `procv.site/quan-tri*` vào application Cloudflare Access của cổng
+  quản trị (giữ `procv.site/admin*` cho link cũ).
+
 #### Changed — Việc làm đã ứng tuyển chia trang, 6 việc mỗi trang
 
 - Trang `/tai-khoan/viec-lam-da-ung-tuyen` hiện 6 hồ sơ mỗi trang; số trang nằm trên
