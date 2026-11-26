@@ -23,8 +23,9 @@ const TABS = [
   { key: 'handbook', label: m.candidate_tab_handbook(), to: '/blog', icon: <ReadOutlined />, activeIcon: <ReadFilled />, isActive: (path) => path.startsWith('/blog') },
 ]
 
-const tabClass = (active) => `flex h-full flex-col items-center justify-center gap-0.5 text-[11px] leading-4 transition-colors ${
-  active ? 'font-semibold !text-[var(--brand-primary)]' : 'font-medium !text-slate-500'
+// `mobile-tab--active` vẽ viên kính bo tròn sau icon + nhãn (index.css).
+const tabClass = (active) => `mobile-tab flex h-full flex-col items-center justify-center gap-0.5 text-[11px] leading-4 transition-colors ${
+  active ? 'mobile-tab--active font-semibold !text-[var(--brand-primary)]' : 'font-medium !text-slate-500'
 }`
 
 // Bấm tab của chính trang đang mở: URL không đổi nên ScrollRestorationGuard (App.jsx)
@@ -36,7 +37,7 @@ function scrollToTopIfCurrent(to, pathname) {
 function FeaturedTab({ tab, active, pathname }) {
   return (
     // Nút nổi chỉ có chữ "CV"; tên đầy đủ ("Tạo CV") cho trình đọc màn hình qua aria-label.
-    <Link to={tab.to} aria-label={tab.label} aria-current={active ? 'page' : undefined} onClick={() => scrollToTopIfCurrent(tab.to, pathname)} className={tabClass(active)}>
+    <Link to={tab.to} aria-label={tab.label} aria-current={active ? 'page' : undefined} onClick={() => scrollToTopIfCurrent(tab.to, pathname)} className={tabClass(false)}>
       <span aria-hidden className="absolute -top-[18px] left-1/2 flex h-14 w-14 -translate-x-1/2 items-center justify-center rounded-full border-4 border-white bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-primary-hover)] text-xl font-extrabold tracking-tight text-white shadow-lg shadow-[var(--brand-primary)]/40 transition active:scale-95">
         CV
       </span>

@@ -15,6 +15,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   "ProCV", icon 192/512 + maskable trong `public/icons/`), `apple-mobile-web-app-title`,
   `theme-color`. nginx trả manifest với `application/manifest+json`.
 - Bấm lại tab của chính trang đang mở ở thanh tab dưới thì cuộn mượt lên đầu.
+- Tab đang chọn có viên kính bo tròn hơi trong suốt phía sau icon + nhãn (`.mobile-tab--active` trong `index.css`).
 
 #### Changed — Lưu logo/ảnh bìa công ty nhanh hơn
 
