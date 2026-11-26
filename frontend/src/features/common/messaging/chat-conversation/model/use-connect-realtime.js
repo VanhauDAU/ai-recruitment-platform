@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   applyIncomingMessage,
   conversationKeys,
@@ -19,11 +19,21 @@ import { fillThreadGap } from './thread-sync'
  */
 export function useConnectRealtime({ portal, activeId }) {
   const queryClient = useQueryClient()
+  // Chỉ giữ id hội thoại trong state; hạn hiển thị nằm ở ref. Bên kia gõ liên tục
+  // thì mỗi tín hiệu chỉ gia hạn ref, không vẽ lại cả hộp thư (danh sách, toàn bộ
+  // tin nhắn, ô soạn) — trước đây làm ô soạn của mình giật khi hai bên cùng gõ.
   const [typing, setTyping] = useState(null)
+  const typingUntilRef = useRef(0)
 
   useEffect(() => {
     if (!typing) return undefined
-    const timer = window.setTimeout(() => setTyping(null), Math.max(0, typing.until - Date.now()))
+    let timer
+    const expire = () => {
+      const left = typingUntilRef.current - Date.now()
+      if (left > 0) timer = window.setTimeout(expire, left)
+      else setTyping(null)
+    }
+    expire()
     return () => window.clearTimeout(timer)
   }, [typing])
 
@@ -52,7 +62,7 @@ export function useConnectRealtime({ portal, activeId }) {
       // Tin của bên kia có thể mở khóa/giới hạn gửi (NTD trả lời lần đầu).
       if (!event.message.mine) {
         queryClient.invalidateQueries({ queryKey: conversationKeys.detail(portal, conversationId) })
-        setTyping((current) => (current?.conversation === conversationId ? null : current))
+        setTyping((current) => (current === conversationId ? null : current))
       }
       return
     }
@@ -80,9 +90,10 @@ export function useConnectRealtime({ portal, activeId }) {
       return
     }
     if (event.type === 'chat.typing') {
-      setTyping({ conversation: conversationId, until: Date.now() + TYPING_VISIBLE_MS })
+      typingUntilRef.current = Date.now() + TYPING_VISIBLE_MS
+      setTyping(conversationId)
     }
   })
 
-  return typing?.conversation || null
+  return typing
 }

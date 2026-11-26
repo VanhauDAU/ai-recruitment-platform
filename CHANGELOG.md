@@ -8,6 +8,21 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Fixed — Gõ chữ không còn giật ở form ứng tuyển và ProCV Connect
+
+- Thư giới thiệu và ô liên hệ (họ tên, email, SĐT) tự giữ chữ đang gõ; mỗi phím không
+  còn vẽ lại cả modal (danh sách CV, chọn địa điểm, ô đồng ý). Đo trên Chromium giảm CPU
+  6×: 41–44 → 7–9 ms/ký tự.
+- Tín hiệu "đang gõ" của bên kia chỉ gia hạn thời hạn hiển thị, không vẽ lại cả hộp thư ở
+  mỗi tín hiệu.
+
+#### Fixed — Cụm nút quyết định hồ sơ bị trình chặn quảng cáo ẩn
+
+- Phù hợp / Phỏng vấn / Trúng tuyển / Không phù hợp mất khỏi panel "Xử lý hồ sơ" khi
+  trình duyệt bật uBlock/AdBlock: class `ad-bar` trúng quy tắc `##.ad-bar` của EasyList.
+  Đổi tiền tố `ad-` sang `decision-`; đã đối chiếu mọi class frontend với EasyList và
+  ABPVN, không còn class nào trúng.
+
 #### Fixed — Form ứng tuyển không phóng to trên iPhone
 
 - Ô địa điểm làm việc bỏ ô tìm kiếm (danh sách ngắn) nên chạm vào không bật bàn phím,

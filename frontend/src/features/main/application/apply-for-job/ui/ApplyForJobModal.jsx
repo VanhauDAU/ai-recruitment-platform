@@ -1,11 +1,12 @@
 // Modal ứng tuyển: compose UI từ model hook + các section component.
 // Nghiệp vụ (load CV, upload, validate, submit) nằm ở ../model/use-apply-form.
-import { DownOutlined, FolderFilled, FormOutlined, SafetyCertificateOutlined } from '@ant-design/icons'
-import { Alert, Button, Checkbox, Input, Modal, Select, Spin } from 'antd'
+import { DownOutlined, FolderFilled, SafetyCertificateOutlined } from '@ant-design/icons'
+import { Alert, Button, Checkbox, Modal, Select, Spin } from 'antd'
 import { CvChoice } from '@/entities/cv/cv'
 import { DEFAULT_SITE_SETTINGS, settingText, useSiteSettings } from '@/entities/system/site-settings'
 import { INITIAL_VISIBLE_CVS, UPLOAD_CHOICE_ID, useApplyForm } from '../model/use-apply-form'
 import ContactFields from './ContactFields'
+import CoverLetterField from './CoverLetterField'
 import UploadChoice from './UploadChoice'
 import './apply-form.css'
 
@@ -38,12 +39,9 @@ export default function ApplyForJobModal({
   // Một form liên hệ duy nhất, hiện ngay trong lựa chọn CV dạng tệp đang được chọn.
   const contactFields = (
     <ContactFields
-      name={form.contactName}
-      email={form.contactEmail}
-      phone={form.contactPhone}
-      onNameChange={form.setContactName}
-      onEmailChange={form.setContactEmail}
-      onPhoneChange={form.setContactPhone}
+      key={form.fieldsKey}
+      valuesRef={form.contactRef}
+      onCompleteChange={form.setContactComplete}
     />
   )
 
@@ -153,27 +151,7 @@ export default function ApplyForJobModal({
           </section>
         )}
 
-        <section className="af-section" aria-labelledby="cover-letter-heading">
-          <div className="af-cover-head">
-            <h3 id="cover-letter-heading" className="af-heading">
-              <FormOutlined className="af-heading__icon" /> Thư giới thiệu
-            </h3>
-            {form.lastCoverLetter && form.coverLetter.trim() !== form.lastCoverLetter && (
-              <button type="button" className="af-link" onClick={() => form.setCoverLetter(form.lastCoverLetter)}>
-                Sử dụng thư giới thiệu gần nhất
-              </button>
-            )}
-          </div>
-          <Input.TextArea
-            aria-label="Thư giới thiệu"
-            className="af-control"
-            value={form.coverLetter}
-            onChange={(event) => form.setCoverLetter(event.target.value)}
-            maxLength={10000}
-            rows={3}
-            placeholder="Giới thiệu ngắn gọn về bản thân (điểm mạnh, điểm yếu) và lý do bạn muốn ứng tuyển vị trí này. Không bắt buộc."
-          />
-        </section>
+        <CoverLetterField key={form.fieldsKey} valueRef={form.coverLetterRef} lastCoverLetter={form.lastCoverLetter} />
 
         <section className="af-notice" aria-labelledby="application-notice-heading">
           <p id="application-notice-heading" className="af-notice__title">
