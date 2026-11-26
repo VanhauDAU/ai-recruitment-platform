@@ -53,7 +53,7 @@ ml/
     gold_pairs_2_passes.json  nhãn và lý do của hai lượt gán độc lập, phần phân xử
     education_key.json    bậc học theo chữ in ở tên bằng của 100 CV (đáp án khi kiểm tra trích xuất PDF)
     audit_pairs.json      50 cặp kiểm chứng cố định: 30 cặp đợt 1 + 20 cặp đợt 2 rút phân tầng
-    audit_blind.template.html  mẫu trang chấm mù; audit_blind.html là trang đã đổ nội dung tin và CV
+    audit_blind.template.html  mẫu trang chấm mù; build_audit_page.py đổ nội dung tin và CV thành audit_blind.html (không commit)
     audit_human.json      nhãn người chấm, xuất từ trang chấm mù (có khi người chấm xong)
     skill_merge.json      gộp kỹ năng trùng nghĩa khi nhập tin
   data/                   KHÔNG commit (.gitignore)
