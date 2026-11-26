@@ -18,16 +18,16 @@ describe('HeroTypingTitle', () => {
     mockMedia({ phone: true })
     const { container } = render(<HeroTypingTitle siteName="ProCV" />)
 
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('ProCV — Tạo CV, Tìm việc làm, Tuyển dụng hiệu quả')
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('ProCV — Tạo CV chuyên nghiệp, Tìm việc làm, Tuyển dụng hiệu quả')
     const typed = () => container.querySelector('.home-typing-text').textContent
-    expect(typed()).toBe('Tạo CV')
+    expect(typed()).toBe('Tạo CV chuyên nghiệp')
 
     // Mỗi bước là một timer mới sau render: đẩy đồng hồ từng nhịp.
     const tick = (ms, times) => {
       for (let i = 0; i < times; i += 1) act(() => vi.advanceTimersByTime(ms))
     }
     tick(1800, 1)
-    tick(32, 6)
+    tick(32, 20)
     expect(typed()).toBe('')
     tick(350, 1)
     tick(130, 12)
@@ -42,6 +42,6 @@ describe('HeroTypingTitle', () => {
 
     mockMedia({ phone: false })
     render(<HeroTypingTitle siteName="ProCV" />)
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('ProCV — Tạo CV, Tìm việc làm, Tuyển dụng hiệu quả')
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('ProCV — Tạo CV chuyên nghiệp, Tìm việc làm, Tuyển dụng hiệu quả')
   })
 })

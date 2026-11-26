@@ -33,7 +33,8 @@ from .upload_validation import (
 
 EMPLOYER_MEDIA_PURPOSE = 'employer_company_update'
 EMPLOYER_MEDIA_CLAIM_SCOPE = 'employer_company_media'
-IMAGE_MAX_DIMENSIONS = (2400, 1600)
+# Logo chỉ hiện nhỏ; ảnh bìa và thư viện giữ đủ nét cho màn hình mật độ cao.
+MEDIA_MAX_DIMENSIONS = {'logo': (800, 800), 'cover': (2400, 1600), 'gallery': (2400, 1600)}
 UPDATE_REQUEST_JUST_PROCESSED = {
     'update_request': gettext_lazy('Yêu cầu cập nhật này vừa được xử lý.')
 }
@@ -76,7 +77,7 @@ def _save_scanned_image_derivative(*, user, company, update_request, kind, publi
         saved = save_image_upload(
             upload,
             f'employers/{company.public_id}/{kind}s',
-            max_dimensions=IMAGE_MAX_DIMENSIONS,
+            max_dimensions=MEDIA_MAX_DIMENSIONS[kind],
         )
 
     CompanyMediaUpload.objects.create(
@@ -174,7 +175,7 @@ def save_company_image(
                 saved = save_image_upload(
                     upload,
                     f'employers/{company.public_id}/{kind}s',
-                    max_dimensions=IMAGE_MAX_DIMENSIONS,
+                    max_dimensions=MEDIA_MAX_DIMENSIONS[kind],
                 )
 
             if content_change is not None:

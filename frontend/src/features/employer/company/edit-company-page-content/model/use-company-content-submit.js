@@ -27,16 +27,18 @@ export function useCompanyContentSubmit() {
         ...(gallery.length ? { gallery_pending: true } : {}),
       })
       setPage(page)
-      const uploads = [
+      const slots = [
         files.logo && [uploadEmployerCompanyLogo, files.logo],
         files.cover && [uploadEmployerCompanyCover, files.cover],
-        ...gallery.map((file) => [uploadEmployerCompanyImage, file]),
       ].filter(Boolean)
-      if (!uploads.length) return page
+      if (!slots.length && !gallery.length) return page
 
       const target = contentChange ? { contentChange } : { updateRequest: page.content_form?.request?.public_id }
       try {
-        for (const [upload, file] of uploads) await upload(file, target)
+        // Logo và ảnh bìa tải song song (server khoá thay đổi khi ghi); ảnh thư viện
+        // đi lần lượt để giữ đúng thứ tự đã chọn.
+        await Promise.all(slots.map(([upload, file]) => upload(file, target)))
+        for (const file of gallery) await uploadEmployerCompanyImage(file, target)
       } catch (cause) {
         throw Object.assign(new Error('Company media upload failed.'), { mediaFailed: true, cause })
       }

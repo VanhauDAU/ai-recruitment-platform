@@ -64,6 +64,7 @@ export default function Home() {
   const navigate = useNavigate()
   // Linh vật chỉ hiện từ desktop (home-mascot.css); không dựng ở màn nhỏ để khỏi tải ảnh.
   const showMascot = useMediaQuery('(min-width: 1024px)')
+  const compactSearch = useMediaQuery('(max-width: 767px)')
   const [keyword, setKeyword] = useState('')
   const [searchBy, setSearchBy] = useState('title')
   const [locationIds, setLocationIds] = useState([])
@@ -118,6 +119,7 @@ export default function Home() {
     searchWith(locationIds, job)
   }
 
+  const searchLabel = 'Tìm kiếm'
   const searchPlaceholder =
     searchBy === 'company' ? 'Tên công ty' : searchBy === 'both' ? 'Vị trí tuyển dụng, tên công ty' : 'Vị trí tuyển dụng'
 
@@ -154,7 +156,8 @@ export default function Home() {
               ref={searchBoxRef}
               className="relative z-40 rounded-2xl border border-white/20 bg-white/95 p-2.5 shadow-2xl shadow-slate-900/15 backdrop-blur"
             >
-              <div className="flex flex-col md:flex-row gap-2.5">
+              {/* Điện thoại: từ khoá một hàng, địa điểm + nút kính lúp chung hàng dưới (home-mascot.css). */}
+              <div className="home-search-row">
                 <Input
                   size="large"
                   variant="borderless"
@@ -164,19 +167,21 @@ export default function Home() {
                   onChange={(e) => setKeyword(e.target.value)}
                   onFocus={() => setDropdownOpen(true)}
                   onPressEnter={handleSearch}
-                  className="flex-1 !h-12 !rounded-xl !bg-gray-50 !px-3 !text-base"
+                  className="home-search-keyword !rounded-xl !bg-gray-50 !px-3 !text-base"
                 />
                 <div className="hidden md:block w-px bg-gray-200 my-2" />
-                <div className="md:w-80 flex items-center [&>button]:!h-12 [&>button]:!rounded-xl [&>button]:!border-gray-200 max-md:[&>button]:!border-gray-300">
+                <div className="home-search-location [&>button]:!rounded-xl [&>button]:!border-gray-200 max-md:[&>button]:!border-gray-300">
                   <LocationFilter value={locationIds} onChange={handleLocationApply} size="large" />
                 </div>
                 <Button
                   type="primary"
                   size="large"
+                  aria-label={searchLabel}
+                  icon={compactSearch ? <SearchOutlined /> : null}
                   onClick={handleSearch}
-                  className="!h-12 !rounded-xl !px-8 !font-bold !bg-[var(--brand-primary)] hover:!bg-[var(--brand-primary-hover)] !shadow-lg"
+                  className="home-search-submit !rounded-xl !font-bold !bg-[var(--brand-primary)] hover:!bg-[var(--brand-primary-hover)] !shadow-lg"
                 >
-                  Tìm kiếm
+                  {compactSearch ? null : searchLabel}
                 </Button>
               </div>
 

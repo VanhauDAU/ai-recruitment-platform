@@ -2,7 +2,7 @@ import { Typography } from 'antd'
 import { useEffect, useState } from 'react'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
 
-const TAGLINES = ['Tạo CV', 'Tìm việc làm', 'Tuyển dụng hiệu quả']
+const TAGLINES = ['Tạo CV chuyên nghiệp', 'Tìm việc làm', 'Tuyển dụng hiệu quả']
 const PHRASES = TAGLINES.map((phrase) => Array.from(phrase))
 const HOLD_MS = 1800
 const GAP_MS = 350
