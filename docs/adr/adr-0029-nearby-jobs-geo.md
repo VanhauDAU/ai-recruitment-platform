@@ -42,6 +42,8 @@
    `GeocodeCache` giữ kết quả 180 ngày (không thấy: 7 ngày) vì `job_locations` bị
    xóa-tạo-lại mỗi lần lưu tin. Địa chỉ chưa có trong cache được geocode nền bằng
    Celery sau commit; trong lúc chờ, nơi làm việc dùng tâm phường.
+   *Sửa 27/11/2026:* production dùng `goong` vì API tìm kiếm của VietMap trả phí. Key
+   tile VietMap chỉ dùng cho bản đồ nền (mục 6).
 6. **Bản đồ: MapLibre GL, nạp lazy.** Style lấy từ site setting `map_style_url` (style
    VietMap kèm key tile công khai). Thư viện ~300 KB gzip chỉ nằm trong chunk của trang
    dùng bản đồ, bundle khởi tạo không đổi.
