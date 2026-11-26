@@ -35,9 +35,9 @@ Ngoài bộ ba còn có `graded.jsonl`: cặp (tin, CV, điểm) cho loss dạy 
 từ nhãn yếu (khớp mạnh 1,0; khớp một phần 0,6; vị trí gần 0,3; CV của nhóm ngành khác
 0,0).
 
-Mục Giải thưởng và Sở thích của CV huấn luyện bị bỏ trước khi dựng văn bản: lượt đọc
-kiểm ngày 26/11 cho thấy hai mục này hay vô nghĩa hoặc lạc nghề, và chúng không mang
-tín hiệu đối sánh.
+Ba mục do bước bổ sung viết (Hoạt động, Giải thưởng, Sở thích) bị bỏ khỏi CV huấn luyện
+trước khi dựng văn bản: hai lượt đọc kiểm ngày 26/11 cho thấy chúng hay vô nghĩa, lạc
+nghề hoặc lẫn ngôn ngữ, và chúng không mang tín hiệu đối sánh.
 
 Kết quả: `ml/data/pairs/train.jsonl`, `graded.jsonl`, `dev.json` (tin hiệu chỉnh và CV
 của chúng, để chọn checkpoint), `ml/reports/train_pairs.md`.
@@ -71,7 +71,7 @@ MIN_CALIBRATION_CVS = 8
 EXPERIENCE_CHANGED = {'JD-63', 'JD-65', 'JD-67', 'JD-68', 'JD-70', 'JD-88'}
 GRADES = {'strong': 1.0, 'partial': 0.6, 'adjacent': 0.3}
 # Mục của CV huấn luyện không đưa vào văn bản (hay vô nghĩa, không mang tín hiệu đối sánh).
-DROPPED_CV_SECTIONS = ('awards', 'interests')
+DROPPED_CV_SECTIONS = ('activities', 'awards', 'interests')
 # Dữ liệu công khai chỉ bổ trợ: CV huấn luyện neo vào tin thật vẫn là phần lớn.
 VIETJOBS_ROWS = 3000
 RESUME_FIT_ROWS = 1500

@@ -19,7 +19,13 @@ Ba kiểm tra thêm sau lượt đọc kiểm đầu (26/11, `train_cv_review_ro
 - CV "vị trí gần" không được mang chính chức danh của tin neo: mô hình hay chép tên
   vị trí của tin thay vì viết nghề gần, làm nhãn yếu sai và hỏng bộ ba chức danh;
 - không có hai gạch đầu dòng gần trùng nhau trong cùng một CV (mục dự án chép mục kinh nghiệm);
-- không có chữ dính lẫn hai ngôn ngữ ("tăng cườngAwareness", "công nghệ.amiliar").
+- không có chữ dính lẫn hai ngôn ngữ ("tăng cườngAwareness", "công nghệ.amiliar"), và
+  CV tiếng Việt không có cụm tiếng Anh nằm giữa câu.
+
+Lượt đọc kiểm thứ hai (`train_cv_review_round2.md`) chia lỗi nặng và lỗi nhẹ; sau lượt
+này ngưỡng gạch đầu dòng gần trùng hạ từ 0,7 xuống 0,6, và ba mục do bước bổ sung viết
+(Hoạt động, Giải thưởng, Sở thích) bị bỏ khỏi văn bản huấn luyện ở `build_train_pairs.py`
+vì gần nửa số lỗi nặng nằm ở đó.
 
 Kết quả: `ml/data/cv/train/gate.json` ({mã CV: [lý do bị loại]}, rỗng là qua) và
 `ml/reports/train_cv_gate.md`. Kèm `ml/labeling/train_cv_review.md`: 40 CV chọn
@@ -48,9 +54,18 @@ _VIETNAMESE = 'àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêề�
 # Chữ tiếng Việt dính liền một từ tiếng Anh viết hoa, hoặc dấu chấm dính chữ thường.
 _GLUED = re.compile(rf'[{_VIETNAMESE}][a-z{_VIETNAMESE}]*[A-Z][a-z]|[{_VIETNAMESE}]\w*\.[a-z]{{3,}}')
 # Hai gạch đầu dòng trùng từ chừng này trở lên là một ý viết hai lần.
-REPEATED_LINE = 0.7
+REPEATED_LINE = 0.6
 MIN_LINE_WORDS = 6
 REVIEWED = LABELING_DIR / 'train_cv_review_round1.md'
+REVIEWED_2 = LABELING_DIR / 'train_cv_review_round2.md'
+# Trong CV tiếng Việt: một cụm tiếng Anh có hư từ nằm giữa câu ("Giao tiếp fluently in both English").
+_ENGLISH_RUN = re.compile(r'\b[a-z]{2,} (?:and|the|of|with|for|both|from) [A-Za-z]{2,}\b')
+
+
+def english_in_vietnamese(data):
+    lines = [data.get('summary', '')]
+    lines += [line for key in ('experience', 'projects') for item in data.get(key, []) for line in item.get('highlights', [])]
+    return any(_ENGLISH_RUN.search(str(line)) for line in lines)
 
 
 def role_of(title):
@@ -117,7 +132,7 @@ def problems_of(data, facts, job):
         found.append('CV vị trí gần mang chức danh của tin neo')
     if repeated_bullets(data):
         found.append('gạch đầu dòng lặp ý')
-    if _GLUED.search(cv_text(data)):
+    if _GLUED.search(cv_text(data)) or (facts['language'] == 'vi' and english_in_vietnamese(data)):
         found.append('chữ dính, lẫn hai ngôn ngữ')
     return found
 
@@ -199,9 +214,35 @@ def main():
             'yếu là số liệu phóng đại, tự nhận quá tầm, chứng chỉ và giải thưởng đáng ngờ: đặc điểm của CV do mô',
             'hình ngôn ngữ viết, cổng không lọc được.',
         ]
+    if REVIEWED_2.exists():
+        marks = re.findall(
+            r'^## (TR-[\d-]+)\n(?:.*\n)*?- \[(.)\] Ổn\s+- \[(.)\] Lỗi nhẹ\s+- \[(.)\] Lỗi nặng',
+            REVIEWED_2.read_text(encoding='utf-8'), re.M,
+        )  # fmt: skip
+        severe = [code for code, _, _, mark in marks if mark.strip()]
+        minor = [code for code, _, mark, heavy in marks if mark.strip() and not heavy.strip()]
+        caught = [code for code in severe if gate.get(code)]
+        lines += [
+            '',
+            '## Đọc kiểm bằng mắt, lượt 2',
+            '',
+            f'Đọc {len(marks)} CV khác, rút từ kho sau ba kiểm tra thêm, chia hai mức lỗi: {len(severe)} CV lỗi nặng',
+            f'({len(severe) / max(1, len(marks)):.1%}), {len(minor)} CV lỗi nhẹ, {len(marks) - len(severe) - len(minor)} CV ổn',
+            '(`ml/labeling/train_cv_review_round2.md`). Lỗi nặng theo ghi chú của người đọc: lẫn ngôn ngữ hoặc',
+            'chữ hỏng (7 CV, trong đó 4 CV chỉ hỏng ở mục Hoạt động, Giải thưởng, Sở thích), lặp ý giữa các việc',
+            '(2 CV), sai mức khớp hoặc nội dung trái nghề (2 CV). Xử lý: bỏ ba mục phụ khỏi văn bản huấn luyện,',
+            f'hạ ngưỡng lặp, thêm kiểm tra cụm tiếng Anh giữa câu tiếng Việt; {len(caught)} trong {len(severe)} CV lỗi nặng nay bị',
+            'cổng loại. Phần còn lại (chữ hỏng không theo mẫu, chức danh vô nghĩa, sai mức khớp) cổng không bắt',
+            'được; ước khoảng 15% CV của kho còn lỗi nặng, trong đó khoảng 5% là sai nhãn yếu.',
+        ]
     REPORTS_DIR.joinpath('train_cv_gate.md').write_text('\n'.join(lines) + '\n', encoding='utf-8')
 
-    seen = set(re.findall(r'^## (TR-[\d-]+):', REVIEWED.read_text(encoding='utf-8'), re.M)) if REVIEWED.exists() else set()
+    seen = {
+        code
+        for path in (REVIEWED, REVIEWED_2)
+        if path.exists()
+        for code in re.findall(r'^## (TR-[\d-]+)', path.read_text(encoding='utf-8'), re.M)
+    }
     fresh = [code for code in passed if code not in seen]
     sample = sorted(random.Random(2027).sample(fresh, min(REVIEW_SAMPLE, len(fresh))))
     meaning = {
@@ -210,9 +251,9 @@ def main():
         'adjacent': 'vị trí gần: nghề khác nhưng cùng mảng với tin',
     }
     review = [
-        '# Đọc kiểm 40 CV huấn luyện (lượt 2)',
+        '# Đọc kiểm 40 CV huấn luyện (lượt kế tiếp)',
         '',
-        'Chọn ngẫu nhiên trong số CV đã qua `quality_gate.py`, trừ những CV đã đọc ở lượt 1.',
+        'Chọn ngẫu nhiên trong số CV đã qua `quality_gate.py`, trừ những CV đã đọc ở các lượt trước.',
         'Mỗi CV kèm tên vị trí của tin mà nó được viết cho và mức khớp máy định sẵn. Đánh dấu một ô:',
         '',
         '- **Lỗi nặng:** nghề hoặc mức khớp không đúng như dòng "Máy định viết"; câu chữ hỏng',
