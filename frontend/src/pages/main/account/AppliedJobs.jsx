@@ -1,8 +1,8 @@
 import { CalendarOutlined, CheckOutlined, DownOutlined, FileTextOutlined, InfoCircleOutlined, LeftOutlined, MessageOutlined, RightOutlined, StopOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { Button, Empty, Skeleton, Tooltip } from 'antd'
+import { Button, Empty, Pagination, Skeleton, Tooltip } from 'antd'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { CANDIDATE_APPLICATION_FILTERS, applicationKeys, getCandidateApplications, useApplicationRules } from '@/entities/application/application'
 import { useStartConversation } from '@/entities/messaging/conversation'
 import { useSiteSettings } from '@/entities/system/site-settings'
@@ -20,6 +20,7 @@ import {
 import './applied-jobs.css'
 
 const FILTERS = [['all', 'Tất cả'], ...CANDIDATE_APPLICATION_FILTERS]
+const PAGE_SIZE = 6
 
 function RemindBanner() {
   const rules = useApplicationRules()
@@ -201,6 +202,8 @@ function ApplicationCard({ application, expanded, onToggle }) {
 export default function AppliedJobs() {
   const applicationsQuery = useQuery({ queryKey: applicationKeys.candidateList, queryFn: getCandidateApplications })
   const [statusFilter, setStatusFilter] = useState('all')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const listRef = useRef(null)
   // Chỉ tin đầu tiên mở sẵn; các tin sau đóng cho tới khi người dùng bấm mở.
   const [toggledIds, setToggledIds] = useState(() => new Set())
 
@@ -211,6 +214,28 @@ export default function AppliedJobs() {
   const visible = statusFilter === 'all'
     ? applications
     : applications.filter((item) => item.status === statusFilter)
+  // Trang trên URL để quay lại từ tin tuyển dụng vẫn đúng trang; trang vượt quá thì về trang cuối.
+  const pageCount = Math.max(1, Math.ceil(visible.length / PAGE_SIZE))
+  const page = Math.min(Math.max(1, Number.parseInt(searchParams.get('page'), 10) || 1), pageCount)
+  const pageItems = visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
+  function goToPage(next) {
+    setSearchParams((params) => {
+      if (next > 1) params.set('page', String(next))
+      else params.delete('page')
+      return params
+    }, { replace: next === 1 })
+  }
+
+  function changePage(next) {
+    goToPage(next)
+    listRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' })
+  }
+
+  function changeFilter(status) {
+    setStatusFilter(status)
+    goToPage(1)
+  }
 
   function toggle(publicId) {
     const next = new Set(toggledIds)
@@ -228,9 +253,9 @@ export default function AppliedJobs() {
       ) : (
         <>
           <RemindBanner />
-          <StatusFilters value={statusFilter} onChange={setStatusFilter} />
-          <div className="applied-jobs__list">
-            {visible.map((application, index) => (
+          <StatusFilters value={statusFilter} onChange={changeFilter} />
+          <div ref={listRef} className="applied-jobs__list">
+            {pageItems.map((application, index) => (
               <ApplicationCard
                 key={application.public_id}
                 application={application}
@@ -240,6 +265,16 @@ export default function AppliedJobs() {
             ))}
             {!visible.length && <Empty description="Không có hồ sơ nào ở trạng thái này" />}
           </div>
+          {visible.length > PAGE_SIZE && (
+            <Pagination
+              className="applied-jobs__pagination"
+              current={page}
+              pageSize={PAGE_SIZE}
+              total={visible.length}
+              onChange={changePage}
+              showSizeChanger={false}
+            />
+          )}
         </>
       )}
     </section>
