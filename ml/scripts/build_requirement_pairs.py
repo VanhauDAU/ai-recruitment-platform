@@ -10,9 +10,12 @@ dùng: bậc học, số năm, ngoại ngữ đã có tiêu chí riêng, phẩm 
 được từ CV.
 
 Bước `generate`: với mỗi câu yêu cầu của 70 tin ngoài tập vàng và một mẫu tin
-VietJobs, mô hình local viết ba câu CV: `met` đáp ứng yêu cầu mà không lặp lại câu
-chữ của nó, `met_other` cùng ý bằng ngôn ngữ còn lại (Việt/Anh), `near_miss` cùng
-nghề nhưng chưa đáp ứng. Câu chép lại yêu cầu (Jaccard từ ≥ 0,5) bị sinh lại.
+VietJobs, mô hình local viết ba câu CV: `met` đáp ứng yêu cầu, giữ tên riêng yêu cầu
+nêu (công cụ, chứng chỉ…) nhưng không chép cấu trúc câu; `met_other` cùng ý bằng ngôn
+ngữ còn lại (Việt/Anh); `near_miss` cùng nghề nhưng chưa đáp ứng (công cụ khác cùng
+loại, quy mô nhỏ hơn). Câu chép lại yêu cầu (Jaccard từ ≥ 0,5) bị sinh lại. Bản đầu
+của lời nhắc cấm dùng lại từ của yêu cầu, làm câu `met` né luôn tên chứng chỉ và công
+cụ nên không còn đáp ứng thật; đã sửa trước khi sinh dữ liệu.
 Lưu ở `ml/data/pairs/requirements.jsonl`; chạy lại thì bỏ qua câu đã có.
 
 Bước `pairs` ghép nhãn, với ba cách chống việc mô hình học văn phong của máy sinh:
@@ -103,15 +106,25 @@ def requirement_pool():
     return pool
 
 
-def prompt_for(requirement):
+# Động từ mở đầu do script chọn ngẫu nhiên từ cùng một danh sách cho cả câu đạt và câu
+# gần đạt. Để mô hình tự chọn thì câu gần đạt luôn mở đầu "Tham gia", "Hỗ trợ": chữ mở
+# đầu lộ nhãn.
+OPENERS = {
+    'tiếng Việt': ('Xây dựng', 'Triển khai', 'Thực hiện', 'Quản lý', 'Phụ trách', 'Thiết kế', 'Phân tích', 'Vận hành', 'Lập', 'Tham gia', 'Phối hợp', 'Chịu trách nhiệm'),
+    'tiếng Anh': ('Built', 'Implemented', 'Delivered', 'Managed', 'Led', 'Designed', 'Analyzed', 'Operated', 'Prepared', 'Worked on', 'Coordinated', 'Handled'),
+}  # fmt: skip
+
+
+def prompt_for(requirement, rng):
     language, other = ('tiếng Việt', 'tiếng Anh') if is_vietnamese(requirement) else ('tiếng Anh', 'tiếng Việt')
+    first, second = rng.choice(OPENERS[language]), rng.choice(OPENERS[language])
     return f"""Một tin tuyển dụng có câu yêu cầu sau:
 "{requirement}"
 
-Viết ba câu, mỗi câu là một gạch đầu dòng trong mục Kinh nghiệm của một CV hư cấu (kể việc đã làm, có kết quả cụ thể, 15–35 từ, không tên người, không tên công ty có thật):
-- "met": viết bằng {language}, cho thấy rõ người này ĐÁP ỨNG yêu cầu trên. Không chép lại câu chữ của yêu cầu; diễn đạt bằng việc cụ thể đã làm, dùng từ khác.
+Viết ba câu, mỗi câu là MỘT gạch đầu dòng (một dòng duy nhất, không xuống dòng) trong mục Kinh nghiệm của một CV hư cấu (kể việc đã làm, có kết quả cụ thể, 15–35 từ, không tên người, không tên công ty có thật):
+- "met": viết bằng {language}, mở đầu bằng "{first}", cho thấy rõ người này ĐÁP ỨNG yêu cầu trên. Giữ đúng tên riêng mà yêu cầu nêu (công cụ, phần mềm, ngôn ngữ lập trình, chứng chỉ, tiêu chuẩn); yêu cầu cho nhiều lựa chọn thì dùng một lựa chọn. Phần còn lại diễn đạt bằng việc cụ thể đã làm, không chép cấu trúc câu của yêu cầu.
 - "met_other": cùng ý với "met" nhưng viết bằng {other}.
-- "near_miss": viết bằng {language}, cùng nghề và nghe có vẻ liên quan nhưng KHÔNG đáp ứng yêu cầu (làm bằng công cụ khác, quy mô nhỏ hơn hẳn, chỉ hỗ trợ người khác…). Viết như một CV thật, chỉ kể điều đã làm; tuyệt đối không dùng từ phủ định (không, chưa, chẳng, not, never, without, no) và không mở đầu bằng "Hỗ trợ", "Giúp", "Assisted", "Helped"."""
+- "near_miss": viết bằng {language}, mở đầu bằng "{second}", cùng nghề và nghe có vẻ liên quan nhưng KHÔNG đáp ứng yêu cầu (làm bằng công cụ hoặc chứng chỉ khác cùng loại, quy mô nhỏ hơn hẳn, chỉ làm một phần việc…). Không nhắc tên công cụ hay chứng chỉ mà yêu cầu nêu. Viết như một CV thật, chỉ kể điều đã làm; tuyệt đối không dùng từ phủ định (không, chưa, chẳng, not, never, without, no)."""
 
 
 def call_model(model, prompt, seed):
@@ -127,8 +140,6 @@ def call_model(model, prompt, seed):
 # CV thật không kể điều mình chưa làm; câu "chưa đáp ứng" có phủ định là dấu vết của máy sinh.
 _NEGATION = re.compile(r'(?<!\w)(?:không|chưa|chẳng|not|never|without|no)(?!\w)', re.IGNORECASE)
 _BULLET = re.compile(r'^\s*[-–—•*·]+\s*')
-# Câu "chưa đáp ứng" mở đầu cùng một kiểu thì văn phong lộ nhãn.
-_HELPER_START = re.compile(r'(?:hỗ trợ|giúp|assisted|helped)\b', re.IGNORECASE)
 
 
 def clean(text):
@@ -136,17 +147,18 @@ def clean(text):
     return _BULLET.sub('', str(text).replace('%0A', ' ')).strip()
 
 
-def acceptable(requirement, written):
+def rejection(requirement, written):
+    """Lý do một bộ ba câu bị loại, hoặc None khi dùng được."""
     texts = [written[key] for key in ('met', 'met_other', 'near_miss')]
-    return (
-        all(len(text.split()) >= 6 for text in texts)
-        and not _NEGATION.search(written['near_miss'])
-        and not _HELPER_START.match(written['near_miss'])
-        and not has_foreign_script(written)
-        and jaccard(requirement, written['met']) < COPY_JACCARD
-        and is_vietnamese(written['met']) == is_vietnamese(requirement)
-        and is_vietnamese(written['met_other']) != is_vietnamese(requirement)
-    )
+    checks = (
+        ('câu quá ngắn hoặc nhiều dòng', any(len(text.split()) < 6 or '\n' in text for text in texts)),
+        ('câu gần đạt có từ phủ định', bool(_NEGATION.search(written['near_miss']))),
+        ('lẫn chữ ngoài Latin', has_foreign_script(written)),
+        ('chép lại câu yêu cầu', jaccard(requirement, written['met']) >= COPY_JACCARD),
+        ('sai ngôn ngữ', is_vietnamese(written['met']) != is_vietnamese(requirement)
+         or is_vietnamese(written['met_other']) == is_vietnamese(requirement)),
+    )  # fmt: skip
+    return next((reason for reason, failed in checks if failed), None)
 
 
 def generate(options):
@@ -155,18 +167,22 @@ def generate(options):
         pool = pool[: options.limit]
     PAIRS_DIR.mkdir(parents=True, exist_ok=True)
     done = {json.loads(line)['id'] for line in OUTPUT.read_text(encoding='utf-8').splitlines()} if OUTPUT.exists() else set()  # fmt: skip
-    skipped = 0
+    skipped, reasons = 0, Counter()
     with OUTPUT.open('a', encoding='utf-8') as output:
         for number, item in enumerate(pool):
             if item['id'] in done:
                 continue
             for attempt in range(3):
+                seed = SEED * 1000 + number * 3 + attempt
                 try:
-                    written = call_model(options.model, prompt_for(item['text']), SEED * 1000 + number * 3 + attempt)
+                    written = call_model(options.model, prompt_for(item['text'], random.Random(seed)), seed)
                     written = {key: clean(written[key]) for key in RESPONSE_SCHEMA['required']}
                 except (OSError, ValueError, KeyError):
+                    reasons['mô hình trả lời hỏng'] += 1
                     continue
-                if acceptable(item['text'], written):
+                reason = rejection(item['text'], written)
+                reasons[reason] += reason is not None
+                if reason is None:
                     output.write(json.dumps({**item, **{key: written[key].strip() for key in RESPONSE_SCHEMA['required']}}, ensure_ascii=False) + '\n')  # fmt: skip
                     output.flush()
                     break
@@ -174,7 +190,7 @@ def generate(options):
                 skipped += 1
             if number % 25 == 0:
                 print(f'{number + 1}/{len(pool)} câu yêu cầu, bỏ {skipped}', flush=True)
-    print(f'Xong: {OUTPUT}; bỏ {skipped} câu không sinh được sau 3 lần.')
+    print(f'Xong: {OUTPUT}; bỏ {skipped} câu không sinh được sau 3 lần. Lượt sinh bị loại theo lý do: {dict(reasons)}')
 
 
 def train_cv_sentences():
