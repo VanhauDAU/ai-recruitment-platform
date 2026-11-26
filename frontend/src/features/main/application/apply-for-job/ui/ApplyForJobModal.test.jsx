@@ -65,9 +65,7 @@ describe('ApplyForJobModal', () => {
     await waitFor(() => expect(cvApi.getMySavedCvs).toHaveBeenCalledOnce())
     expect(screen.getByRole('radio', { name: /CV chính/ })).toBeChecked()
     expect(screen.getByRole('link', { name: /Xem/ })).toHaveAttribute('href', '/cv/cv_1/xem')
-    const locationSelect = screen.getByRole('combobox', { name: 'Địa điểm làm việc mong muốn' })
-    await user.click(locationSelect)
-    await user.click(await screen.findByText('Bình Dương', { selector: '.ant-select-item-option-content' }))
+    // Tin chỉ một tỉnh/thành: đã chọn sẵn, không cần mở danh sách địa điểm.
     await user.click(screen.getByRole('checkbox', { name: /Tôi đã đọc và đồng ý/ }))
     await user.click(screen.getByRole('button', { name: 'Nộp hồ sơ ứng tuyển' }))
 
