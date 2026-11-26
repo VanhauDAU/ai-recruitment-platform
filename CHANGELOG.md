@@ -8,6 +8,12 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Fixed — Điện thoại vẫn mở tin ở tab mới
+
+- Áp `useNewTabLinkProps` cho các link nội bộ còn sót: tiêu đề tin trong `JobCard`
+  (trang Việc làm…), feed tin mới ở trang chủ, nút "Xem trang công ty" ở trang tin, thẻ
+  blog, bài ghim và banner nội bộ ở blog. Link ra site ngoài vẫn mở tab mới.
+
 #### Changed — Điều hướng trên điện thoại
 
 - Trang chi tiết tin / mẫu CV / công ty: header có nút ←; không có trang trước trong

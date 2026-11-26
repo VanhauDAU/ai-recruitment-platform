@@ -11,6 +11,7 @@ import {
 } from '@/entities/job/job'
 import JobSafetyTips from './JobSafetyTips'
 import JobSidebarPromos from './JobSidebarPromos'
+import { useNewTabLinkProps } from '@/shared/hooks/use-new-tab-link-props'
 
 export default function JobDetailSidebar({ job, fitAction = null }) {
   // Không lặp "Kinh nghiệm" ở đây — đã có ở Hero và tag Yêu cầu.
@@ -26,6 +27,7 @@ export default function JobDetailSidebar({ job, fitAction = null }) {
 }
 
 function CompanyCard({ job }) {
+  const newTab = useNewTabLinkProps()
   const size = job.company_size && !/nhân viên/i.test(job.company_size) ? `${job.company_size} nhân viên` : job.company_size
   return (
     <section className="job-company-card rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -45,7 +47,7 @@ function CompanyCard({ job }) {
         <CompanyInfo icon={<BankOutlined />} label="Địa điểm" value={job.company_address} />
       </div>
       {/* Nền/chữ phải dùng `!`: reset của antd đặt style thẻ `a` ngoài layer nên thắng utility thường. */}
-      <Link to={jobCompanyPath(job)} target="_blank" rel="noopener noreferrer" className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[var(--brand-primary)] !bg-white text-sm font-semibold !text-[var(--brand-primary)] transition hover:!bg-[var(--brand-primary-soft)]">
+      <Link to={jobCompanyPath(job)} {...newTab} className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[var(--brand-primary)] !bg-white text-sm font-semibold !text-[var(--brand-primary)] transition hover:!bg-[var(--brand-primary-soft)]">
         Xem trang công ty<ExportOutlined />
       </Link>
     </section>
