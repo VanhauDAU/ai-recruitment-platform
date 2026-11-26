@@ -7,13 +7,13 @@ của `evaluate.py`.
 
 | Tín hiệu | Số cặp có giá trị | Spearman với nhãn |
 | --- | ---: | ---: |
-| Điểm tổng | 100 | 0,706 |
+| Điểm tổng | 100 | 0,705 |
 | Luật `profile-rule-v2` | 100 | 0,628 |
 | Cosine toàn văn | 100 | 0,550 |
 | Cosine chức danh | 100 | 0,599 |
 | Tiêu chí `skills` | 100 | 0,578 |
 | Tiêu chí `experience` | 100 | 0,670 |
-| Tiêu chí `education` | 100 | -0,038 |
+| Tiêu chí `education` | 100 | -0,048 |
 | Tiêu chí `position_level` | 83 | 0,233 |
 | Tiêu chí `languages` | 50 | 0,201 |
 
