@@ -11,217 +11,139 @@ Mỗi CV kèm tên vị trí của tin mà nó được viết cho và mức kh�
 
 Lưu ý: CV chưa có kinh nghiệm (0 tháng) vẫn có thể có mục [Dự án]; đó không phải mâu thuẫn.
 
-## TR-04-01
+## TR-01-09
 
-- Tin: Trưởng Nhóm Kinh Doanh Mảng Giải Pháp Truyền Thông
-- Máy định viết: nghề "Sales Online", khớp một phần: đúng nghề của tin nhưng thiếu kỹ năng hoặc kinh nghiệm, 109 tháng kinh nghiệm
-
-- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
-
-```text
-Trưởng Nhóm Kinh Doanh
-Với 109 tháng kinh nghiệm trong lĩnh vực sales online, tôi tự tin mang đến giải pháp toàn diện cho vị trí Trưởng Nhóm Kinh Doanh Mảng Giải Pháp Truyền Thông. Đam mê giao tiếp, xử lý tình huống và tư vấn khách hàng, tôi đã đạt được nhiều thành tựu trong quá khứ.
-[Kinh nghiệm] Quản Lý Sale – Nguyễn Kim Truyền Thông (2017-10 – 2021-04)
-  • Đạt doanh thu 500 triệu đồng/tháng trong 3 tháng đầu tiên, vượt 100% chỉ tiêu doanh thu tháng.
-  • Hỗ trợ xây dựng chiến lược marketing và tăng doanh số bán hàng 20% so với năm trước.
-  • Giải quyết 150+ tình huống khách hàng khó tính, giúp tăng mức độ hài lòng của khách hàng.
-  • Chăm sóc và duy trì 200+ khách hàng quan trọng, tăng thời gian khách hàng ở lại trang web từ 20%.
-  • Hướng dẫn và đào tạo 10 nhân viên mới, giúp tăng năng suất 30% trong 6 tháng đầu.
-[Kinh nghiệm] Sale Online – Sunny Connect (2021-05 – 2024-06)
-  • Đạt 2000 đơn hàng/tháng, tăng 150% so với tháng đầu tiên, nhờ vào chiến lược tư vấn hiệu quả.
-  • Xử lý 100+ tình huống khó khăn, giúp giảm tỷ lệ khách hàng không hài lòng từ 15% xuống còn 5%.
-  • Hợp tác với 100+ nhà cung cấp, xây dựng mối quan hệ kinh doanh bền vững.
-  • Tăng lượng truy cập trang web từ 2000 lượt/tháng lên 5000 lượt/tháng, nhờ vào các chiến dịch marketing hiệu quả.
-  • Giảm thời gian xử lý đơn hàng từ 5 giờ xuống còn 2 giờ/ngày, nhờ vào quy trình làm việc hiệu quả.
-[Kinh nghiệm] Kinh Doanh Online – Sky Tech (2024-07 – nay)
-  • Đạt doanh thu 300 triệu đồng/tháng, tăng 200% so với tháng đầu tiên, nhờ vào kỹ năng tư vấn sản phẩm.
-  • Giải quyết 75+ vấn đề khách hàng, giúp tăng mức độ hài lòng của khách hàng từ 60% lên 85%.
-  • Hợp tác với 50+ nhà cung cấp, xây dựng mối quan hệ kinh doanh bền vững.
-  • Tăng lượt truy cập trang web từ 1000 lượt/tháng lên 3000 lượt/tháng, nhờ vào các chiến dịch marketing hiệu quả.
-  • Giảm thời gian xử lý đơn hàng từ 4 giờ xuống còn 2 giờ/ngày, nhờ vào quy trình làm việc hiệu quả.
-[Dự án] Tăng Doanh Thu Qua Cải Cách Quy Trình – Thực hiện quy trình kiểm soát doanh thu, tăng 25% trong 6 tháng đầu tiên
-  • Tối ưu hóa quy trình bán hàng, giảm thời gian xử lý đơn hàng từ 5 giờ xuống còn 2 giờ/ngày.
-  • Tăng mức độ hài lòng của khách hàng từ 60% lên 85% nhờ vào việc giải quyết nhanh chóng các vấn đề.
-  • Xây dựng và triển khai hệ thống quản lý khách hàng, giúp tăng thời gian khách hàng ở lại trang web từ 20%.
-[Hoạt động] Team Lead trong CLB Marketing Online – CLB Marketing Online Đại học Kinh tế Công nghệ
-  • Tăng trưởng thành viên CLB 20% qua các hoạt động tổ chức.
-  • Lãnh đạo đội nhóm thực hiện chiến dịch quảng cáo thành công, đạt doanh thu 300.000 USD.
-[Hoạt động] Nhân viên tình nguyện – Trung tâm Phát triển Cộng đồng Hành Tinh Xanh
-  • Tham gia các hoạt động giáo dục cộng đồng, tổ chức sự kiện hướng đến sự phát triển bền vững.
-  • Giúp đỡ các em học sinh vùng sâu vùng xa thông qua việc tổ chức các lớp học ngoại khóa.
-[Học vấn] Cao đẳng Marketing – Trường Đại Học Kinh Tế TP.HCM
-[Kỹ năng] Giao tiếp, Xử lý tình huống, Tư vấn, Chịu áp lực
-[Chứng chỉ] Chứng chỉ quản lý dự án cấp độ cơ bản; Chứng chỉ giao tiếp chuyên nghiệp
-[Giải thưởng] Giải Nhất Sáng kiến Marketing Đột phá; Giải Ba Công ty TNHH Truyền thông Số - Digital; Giải Nhì Cuộc thi Kỹ Năng Selling Trực Tuyến; Giải Khuyến Khích Hackathon Công nghệ Thông tin
-```
-
-## TR-04-10
-
-- Tin: Trưởng Nhóm Kinh Doanh Mảng Giải Pháp Truyền Thông
-- Máy định viết: nghề "Sales Online", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 23 tháng kinh nghiệm
+- Tin: Kế Toán Quản Trị
+- Máy định viết: nghề "Kế toán tổng hợp", khớp một phần: đúng nghề của tin nhưng thiếu kỹ năng hoặc kinh nghiệm, 89 tháng kinh nghiệm
 
 - [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
 
 ```text
-Trưởng nhóm kinh doanh
-Cử nhân Marketing với hơn 23 tháng kinh nghiệm trong ngành kinh doanh online. Có khả năng giao tiếp, xử lý tình huống và đàm phán hiệu quả. Đã quản lý và thúc đẩy doanh số tăng trưởng đáng kể tại hai công ty nhỏ tại TP. Hồ Chí Minh.
-[Kinh nghiệm] Trưởng nhóm kinh doanh – Công ty Truyền Thông Sáng Tạo (2024-12 – 2025-12)
-  • Đảm nhận vai trò quản lý nhóm kinh doanh, tăng doanh số từ 500 triệu đồng/tháng lên 800 triệu đồng/tháng trong 6 tháng đầu tiên.
-  • Xây dựng và duy trì mối quan hệ với 30 đối tác chiến lược trong lĩnh vực quảng cáo kỹ thuật số.
-  • Tối ưu hóa quy trình bán hàng và tăng hiệu quả tiếp thị, giúp tăng lưu lượng truy cập website lên 40%.
-  • Giao tiếp và đàm phán hợp đồng quảng cáo với các doanh nghiệp có quy mô từ 50 đến 300 nhân viên.
-[Kinh nghiệm] Bán hàng – Công ty Giải Pháp Truyền Thông (2026-01 – nay)
-  • Thực hiện các chiến lược bán hàng trực tuyến, đạt doanh số 300 triệu đồng/tháng trong 6 tháng đầu tiên, tăng trưởng 20% so với mục tiêu.
-  • Xử lý tình huống khách hàng một cách linh hoạt, cải thiện tỷ lệ hài lòng khách hàng lên 90%.
-  • Đàm phán các hợp đồng quảng cáo với các doanh nghiệp vừa và nhỏ, đóng góp vào doanh thu tổng cộng 500 triệu đồng trong 12 tháng.
-[Dự án] Khách hàng thân thiết – Đại diện nhóm
-  • Xây dựng chương trình khách hàng thân thiết, tăng lượt tương tác trung bình trên các nền tảng xã hội từ 20%.
-  • Tối ưu hóa hệ thống quản lý khách hàng, giảm thời gian phản hồi yêu cầu từ 24 giờ xuống còn 4 giờ.
-[Hoạt động] Team Leader – Volunteer Hub
-  • Lãnh đạo một đội tình nguyện 20 thành viên trong chương trình hỗ trợ khởi nghiệp online cho sinh viên
-  • Tăng trưởng doanh thu từ sự kiện trực tuyến lên 30% so với năm trước
-[Hoạt động] Sản xuất nội dung – Creative Writers
-  • Tạo nội dung video và blog về chiến lược bán hàng online cho cộng đồng doanh nhân
-  • Đóng góp cho hơn 50 bài viết và video, thu hút hơn 10.000 lượt xem
-[Học vấn] Cử nhân Marketing – Đại học Kinh tế TP. Hồ Chí Minh
-[Kỹ năng] Giao tiếp, Xử lý tình huống, Đàm phán
-[Chứng chỉ] Chứng chỉ quản lý bán hàng hiệu quả; Chứng chỉ giao tiếp kinh doanh
-[Giải thưởng] Giải thưởng Sáng tạo Kinh doanh; Giải thưởng Chăm chỉ và Nỗ lực trong Phát triển Cá nhân
-[Sở thích] Đọc sách kinh doanh và marketing; Xây dựng và tối ưu hóa trang web bán hàng; Đánh giá và so sánh sản phẩm công nghệ mới; Tham gia các cuộc thi kinh doanh và phát triển kỹ năng lãnh đạo
+Kế toán tổng hợp
+Việc làm nhiều năm trong lĩnh vực kế toán tổng hợp giúp tôi có kiến thức sâu rộng và kỹ năng thực tế. Với kỹ năng Excel tiên tiến và kinh nghiệm quản lý tài chính, tôi tự tin sẽ là một thành viên có ích cho tổ chức của bạn.
+[Kinh nghiệm] Kế toán tổng hợp – Nhà hàng Thanh Minh (2019-06 – 2024-01)
+  • Làm việc tại Nhà hàng Thanh Minh, một công ty F&B tại TP.HCM, tôi đã quản lý và phân tích báo cáo tài chính hàng tháng, giúp nâng cao hiệu suất hoạt động và giảm chi phí.
+  • Thực hiện phân tích tài chính theo dõi chi phí và doanh thu, giúp chủ doanh nghiệp đưa ra quyết định kinh doanh hiệu quả hơn.
+  • Sử dụng kỹ năng Excel để xây dựng và quản lý các mô hình tài chính, cung cấp dữ liệu chính xác cho quản lý về tình hình tài chính của nhà hàng.
+[Kinh nghiệm] Kế toán tổng hợp – Kinh Doanh Minh Phát (2024-02 – 2025-08)
+  • Làm việc tại Kinh Doanh Minh Phát, một công ty nhỏ nhưng năng động tại TP.HCM, tôi đã áp dụng kỹ năng Pivot và XLOOKUP trong Excel để quản lý và phân tích dữ liệu nhanh chóng và chính xác.
+  • Thiết lập và duy trì các quy trình kế toán để đảm bảo tính chính xác và tuân thủ các quy định tài chính.
+  • Tạo ra các báo cáo tài chính hàng quý và hàng năm, giúp quản lý có cái nhìn tổng thể về tình hình kinh doanh của công ty.
+[Kinh nghiệm] Kế toán tổng hợp – Công ty TNHH Dịch Vụ Đông Phương (2025-09 – nay)
+  • Thực hiện công việc tại Công ty TNHH Dịch Vụ Đông Phương, tôi đã sử dụng kỹ năng giao tiếp để làm việc hiệu quả với các bộ phận khác nhau, đảm bảo thông tin tài chính được chia sẻ một cách chính xác.
+  • Xây dựng các mô hình tài chính để hỗ trợ quản lý trong việc đưa ra các quyết định kinh doanh.
+  • Cập nhật và quản lý hệ thống phần mềm kế toán, đảm bảo dữ liệu được lưu trữ an toàn và chính xác.
+[Hoạt động] Hội Kiểm soát tài chính – Bộ phận kế toán
+  • Tham gia kiểm tra và lập báo cáo tài chính của các công ty nhỏ trong khu vực.
+  • Hỗ trợ đội ngũ trong việc phát hiện và khắc phục các vấn đề về quản lý tài chính.
+[Hoạt động] Câu lạc bộ Thanh tra viên – Trường đại học
+  • Tham gia các buổi huấn luyện về luật kế toán và pháp lý tài chính.
+  • Thực hiện các dự án nghiên cứu về quản lý tài chính bền vững tại địa phương.
+[Học vấn] Cao đẳng Kế toán – Trường Cao đẳng Tài chính Kế toán Nam Sài Gòn
+[Kỹ năng] Pivot, Dựng mô hình tài chính, XLOOKUP, Excel, Giao tiếp, Phần mềm kế toán
+[Chứng chỉ] Chứng chỉ Excel nâng cao; Chứng chỉ Kế toán tổng hợp
+[Sở thích] Đọc sách tài chính và quản trị kinh doanh.; Tham gia các khóa học online về công nghệ kế toán tiên tiến.; Hobby với các trò chơi chiến lược liên quan đến quản lý nguồn lực.; Thích du lịch và khám phá các văn hóa địa phương.
 [Ngoại ngữ] Tiếng Anh Giao tiếp
 ```
 
-## TR-100-04
+## TR-04-02
 
-- Tin: Nhân Viên An Ninh
-- Máy định viết: nghề "Bảo vệ", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 34 tháng kinh nghiệm
-
-- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
-
-```text
-Bảo Vệ
-Có kinh nghiệm làm việc trong lĩnh vực bảo vệ, đặc biệt là nghiệp vụ an ninh. Có khả năng làm việc theo ca và quản lý tình hình an ninh hiệu quả.
-[Kinh nghiệm] Bảo Vệ – Tín Bảo Vệ (2024-01 – 2025-10)
-  • Đảm bảo an ninh cho 10 cửa hàng trên địa bàn Nha Trang, giảm 20% vụ mất cắp trong 6 tháng đầu.
-  • Làm việc theo ca 3 ca/ngày, đảm bảo an ninh 24/7.
-  • Thực hiện nhiệm vụ tuần tra, kiểm soát các khu vực và xử lý tình huống phát sinh.
-[Kinh nghiệm] Bảo Vệ – An Bình Bảo Vệ (2025-11 – 2026-04)
-  • Cân nhắc 12 khu vực an ninh khác nhau, giảm 30% các vụ xâm nhập qua đêm.
-  • Tổ chức huấn luyện nghiệp vụ cho nhân viên mới và cập nhật các quy định mới.
-  • Lãnh đạo 5 nhân viên bảo vệ tại 2 khu công nghiệp lớn.
-[Kinh nghiệm] Bảo Vệ – Vạn Bảo Vệ (2026-05 – nay)
-  • Giám sát 500 nhân viên và 50 điểm bảo vệ tại các khu công nghiệp lớn của Nha Trang.
-  • Tăng cường an ninh tại các sự kiện lớn, giảm 25% nguy cơ sự cố.
-  • Tổ chức các buổi huấn luyện nghiệp vụ an ninh cho nhân viên.
-[Học vấn] Trung cấp An ninh – Trường An ninh Nam Trung Bộ
-[Kỹ năng] Làm việc theo ca, Nghiệp vụ an ninh
-[Chứng chỉ] Chứng chỉ nghiệp vụ bảo vệ; Chứng chỉ cứu hộ cơ bản
-[Ngoại ngữ] Tiếng Anh Cơ bản
-```
-
-## TR-14-09
-
-- Tin: IOS Developer Leader
-- Máy định viết: nghề "iOS Developer", khớp một phần: đúng nghề của tin nhưng thiếu kỹ năng hoặc kinh nghiệm, 94 tháng kinh nghiệm
+- Tin: Trưởng Nhóm Kinh Doanh Mảng Giải Pháp Truyền Thông
+- Máy định viết: nghề "Sales Online", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 39 tháng kinh nghiệm
 
 - [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
 
 ```text
-iOS Developer
-A highly skilled iOS developer with over 7 years of experience in developing and maintaining iOS applications, particularly in the banking sector. Proven track record in REST API integration, OOP, and Firebase implementation, ensuring robust and user-friendly applications. Skilled in sequence diagram design and adhering to MVVM architecture.
-[Kinh nghiệm] iOS Developer at TechPulse – TechPulse (2019-01 – 2019-03)
-  • Led the development of two banking applications, successfully integrating REST APIs for secure data exchange and Firebase for real-time data synchronization. Achieved a 95% user satisfaction rate with the applications.
-  • Implemented OOP principles to optimize code structure and enhance application performance, resulting in a 20% reduction in load times.
-  • Designed and utilized sequence diagrams to ensure clear and efficient application workflows, contributing to a 30% improvement in development efficiency.
-  • Worked closely with the product team to ensure the application met banking industry standards, particularly in terms of security and compliance.
-  • Managed the backend integration of applications, ensuring seamless user experience and data integrity.
-[Kinh nghiệm] iOS Developer Intern at iDevVentures – iDevVentures (2019-04 – nay)
-  • Contributed to the development of a mobile banking application, focusing on implementing Swift and OOP principles to create a secure and user-friendly interface.
-  • Participated in the development of REST APIs for application data exchange, ensuring efficient and reliable data transmission.
-  • Learned and applied Firebase for real-time data synchronization, enhancing application performance and user experience.
-  • Worked on sequence diagram design to streamline application workflows and improve development efficiency.
-  • Assisted in the implementation of MVVM architecture, which improved the overall structure and maintainability of the application.
-[Dự án] BankApp Integration Project – Developer
-  • Integrated multiple REST APIs for secure data exchange and real-time updates within the application.
-  • Implemented Firebase for real-time data synchronization, enhancing application performance and user experience.
-  • Designed and utilized sequence diagrams to ensure efficient application workflows.
-[Hoạt động] TechCrafters Club – Student Tech Community
-  • Organized monthly workshops on iOS development and mobile app design.
-  • Collaborated with fellow developers to create a budget-friendly budgeting app for college students.
-[Học vấn] Master of Science in Computer Science – InnoTech University
-[Kỹ năng] REST API, OOP, Swift, Sequence diagram, Nghiệp vụ ngân hàng, Firebase, MVVM
-[Chứng chỉ] Certified iOS Developer (Apple Inc.); Firebase Developer Certification
-[Sở thích] Exploring new coding challenges and open-source projects; Traveling and learning about different cultures; Photography and capturing the beauty of nature; Playing guitar and creating music
-[Ngoại ngữ] English Basic; Vietnamese Native
-```
-
-## TR-15-11
-
-- Tin: Mobile App Dev
-- Máy định viết: nghề "Data Engineer", vị trí gần: nghề khác nhưng cùng mảng với tin, 13 tháng kinh nghiệm
-
-- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
-
-```text
-Data Engineer
-Kinh nghiệm hơn 13 tháng làm việc trong lĩnh vực Data Engineering, có kiến thức sâu rộng về REST API, Firebase, MLOps và AWS. Từng đảm nhiệm vai trò kỹ sư dữ liệu tại một tập đoàn đa quốc gia và đã áp dụng công nghệ Apache Spark trong các dự án lớn.
-[Kinh nghiệm] Kỹ sư dữ liệu – TechPro Corporation (2025-10 – nay)
-  • Phân tích và triển khai REST API cho hệ thống quản lý dữ liệu lớn, tăng hiệu suất hệ thống lên 25%.
-  • Ứng dụng Firebase trong việc triển khai hệ thống lưu trữ và chia sẻ dữ liệu, giúp cải thiện trải nghiệm người dùng lên 30%.
-  • Có kinh nghiệm trong việc triển khai MLOps, giúp quá trình phát triển và triển khai mô hình AI được tự động hóa, rút ngắn thời gian triển khai lên 20%.
-  • Thực hiện các dự án sử dụng Apache Spark cho các công việc phân tích dữ liệu lớn, hỗ trợ quá trình đưa ra quyết định kinh doanh hiệu quả.
-  • Áp dụng Human Interface Guidelines trong việc thiết kế giao diện người dùng, đảm bảo trải nghiệm người dùng tích cực.
-[Hoạt động] Hội thảo Kỹ thuật Thông tin – Hội Kỹ thuật Viễn thông và Công nghệ Thông tin
-  • Tham gia trình bày dự án phân tích dữ liệu lớn của nhóm tại hội thảo
-  • Được nhận giải 'Sáng kiến Kỹ thuật Ưu tú'
-[Hoạt động] Báo cáo Khoa học Đại học – Hội Sinh viên Đại học Công nghệ
-  • Là thành viên ban tổ chức và báo cáo dự án phân tích dữ liệu của nhóm
-  • Giúp tổ chức thành công buổi báo cáo với sự tham gia của nhiều học giả
-[Học vấn] Cử nhân Khoa học máy tính – Trường ĐH Công nghệ Cần Thơ
-[Kỹ năng] REST API, Firebase, Human Interface Guidelines, Python, MLOps, AWS, Apache Spark
-[Chứng chỉ] AWS Certified Solutions Architect - Associate; MLOps Engineer Professional Certification
-[Sở thích] Chơi nhạc cụ điện tử; Cắm trại và khám phá thiên nhiên; Tham gia các buổi hackathon về công nghệ; Đọc sách về khoa học dữ liệu và công nghệ thông tin
-```
-
-## TR-15-12
-
-- Tin: Mobile App Dev
-- Máy định viết: nghề "iOS Developer", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 36 tháng kinh nghiệm
-
-- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
-
-```text
-iOS Developer
-Nhận xét tích cực về khả năng giải quyết vấn đề và kinh nghiệm phát triển ứng dụng di động. Có khả năng làm việc độc lập cũng như trong nhóm.
-[Kinh nghiệm] iOS Developer – TechSolutions Inc (2023-11 – 2025-12)
-  • Làm việc trong đội ngũ phát triển ứng dụng di động, tập trung phát triển ứng dụng iOS bằng ngôn ngữ Swift.
-  • Công tác trên 2 dự án lớn, quy mô từ 5-10 nhân sự, giúp tối ưu hóa quy trình phát triển thông qua việc áp dụng mô hình MVVM.
-  • Tham gia thiết kế và phát triển các tính năng mới cho ứng dụng, bao gồm chức năng gửi và nhận dữ liệu qua API REST.
-  • Lập trình theo các nguyên tắc lập trình đối tượng (OOP) và mô hình thiết kế, giúp tăng tính bảo vệ và tái sử dụng mã.
-  • Đối mặt và giải quyết các vấn đề liên quan đến hiệu suất và lỗi thông qua kỹ năng debug hiệu quả.
-[Kinh nghiệm] iOS Developer – AppCrafters (2026-01 – nay)
-  • Thực hiện các dự án cấp 3, quy mô từ 3-5 nhân sự, tập trung vào việc tối ưu hóa giao diện người dùng theo Human Interface Guidelines.
-  • Phát triển và triển khai ứng dụng iOS mới, với việc sử dụng Firebase để tích hợp các dịch vụ như lưu trữ và phân phối nội dung.
-  • Ứng dụng kiến thức về thiết kế mẫu (Design Pattern) để cải thiện chất lượng mã và khả năng bảo trì.
-  • Cải thiện chức năng của ứng dụng hiện có thông qua việc triển khai các tính năng mới, sử dụng mô hình phát triển ứng dụng di động (mobile development life cycle).
-[Dự án] Ứng dụng quản lý dự án – iOS Developer
-  • Phát triển ứng dụng iOS giúp quản lý và theo dõi tiến độ các dự án.
-  • Ứng dụng kiến thức về REST API để kết nối với server backend và thực hiện các giao dịch dữ liệu.
-  • Tối ưu hóa giao diện người dùng theo Human Interface Guidelines.
-[Hoạt động] Developer Meetup Group – iOS Developers Club
-  • Tham gia các buổi meet-up hàng tháng để chia sẻ kiến thức và thảo luận về xu hướng phát triển mới trong công nghệ.
-  • Giới thiệu các dự án và giải pháp kỹ thuật iOS cho cộng đồng phát triển.
-  • Tăng cường kỹ năng giao tiếp và xây dựng mạng lưới liên lạc với các chuyên gia iOS.
-[Hoạt động] Code for Good – Tech for Social Change
-  • Tham gia vào các dự án phát triển ứng dụng di động để hỗ trợ các tổ chức từ thiện địa phương.
-  • Giúp đỡ các nhóm phi lợi nhuận tối ưu hóa quy trình hoạt động thông qua ứng dụng công nghệ.
-  • Nâng cao nhận thức về tầm quan trọng của công nghệ trong việc giải quyết các vấn đề xã hội.
-[Học vấn] Cao đẳng Công nghệ thông tin – Trường Công nghệ Đô thị Huế
-[Kỹ năng] Swift, MVVM, OOP, REST API, Debugging, Design Pattern, Firebase, Human Interface Guidelines
-[Chứng chỉ] Firebase Certified Developer; Apple Certified iOS Developer
-[Giải thưởng] Second Place, iOS Innovation Challenge; Best Use of Swift Award, Local Tech Conference
-[Sở thích] Mê học hỏi và cập nhật những xu hướng mới trong phát triển ứng dụng iOS.; Đọc sách kỹ thuật và các bài viết chuyên ngành.; Thử nghiệm và phát triển các ứng dụng cá nhân để nâng cao kỹ năng và sáng tạo.; Tham gia các buổi diễn thuyết và chia sẻ kiến thức tại các buổi họp nhóm và sự kiện công nghệ.
+Trưởng Nhóm Kinh Doanh Mảng Giải Pháp Truyền Thông
+Tôi là một người có kinh nghiệm 39 tháng trong lĩnh vực kinh doanh trực tuyến, với 3 công việc đã làm. Tôi đã phát triển các kỹ năng giao tiếp, đàm phán và xử lý tình huống, đồng thời luôn trau dồi kiến thức về thị trường truyền thông và giải pháp quảng cáo.
+[Kinh nghiệm] Bán hàng Online – TechConnect (2023-08 – 2024-04)
+  • Tăng doanh thu 25% trong 6 tháng đầu công việc thông qua việc xây dựng và triển khai các chiến lược bán hàng hiệu quả.
+  • Đảm bảo giao tiếp hiệu quả với khách hàng và đối tác, giúp tăng cường mối quan hệ kinh doanh.
+  • Xử lý tình huống nhanh nhạy, giúp giải quyết các vấn đề về sản phẩm và dịch vụ với khách hàng.
+  • Quản lý một nhóm 10 nhân viên, hướng dẫn và đào tạo để nâng cao năng lực bán hàng.
+  • Cải thiện quy mô khách hàng tiềm năng từ 100 lên 300 trong 12 tháng.
+[Kinh nghiệm] Bán hàng Online – AdVision (2024-05 – 2026-04)
+  • Tăng doanh số bán hàng 30% qua việc tối ưu hóa các chiến dịch quảng cáo trực tuyến.
+  • Giao tiếp và đàm phán với các đối tác lớn, mở rộng mạng lưới khách hàng và các mối quan hệ kinh doanh.
+  • Xử lý tình huống khó khăn với khách hàng để đảm bảo hài lòng và giữ vững mối quan hệ kinh doanh.
+  • Giảm tỷ lệ hủy đơn hàng 15% thông qua việc tăng cường hỗ trợ khách hàng.
+  • Tăng cường quy mô khách hàng từ 200 lên 500 trong 18 tháng.
+[Kinh nghiệm] Bán hàng Online – NetMedia (2026-05 – nay)
+  • Giao tiếp và đàm phán với các doanh nghiệp vừa và nhỏ, phát triển thị trường và tăng cường doanh số.
+  • Tăng doanh thu 20% qua việc phát triển các chiến lược bán hàng và tối ưu hóa quy trình làm việc.
+  • Xử lý tình huống nhanh chóng và hiệu quả, giúp nâng cao hiệu quả làm việc và tăng cường mối quan hệ với khách hàng.
+  • Tối ưu hóa quy mô khách hàng từ 150 lên 350 trong 24 tháng.
+[Hoạt động] Mạng xã hội kỹ năng giao tiếp – Nhóm kỹ năng giao tiếp online
+  • Tham gia và phát triển kỹ năng giao tiếp qua mạng xã hội
+  • Giúp đỡ và trao đổi kinh nghiệm với các thành viên trong nhóm
+[Hoạt động] Khách hàng thân thiết – Klub Khách hàng thân thiết
+  • Tham gia tổ chức các sự kiện và hoạt động chăm sóc khách hàng
+  • Tạo lập mối quan hệ tốt với khách hàng và tăng độ trung thành
+[Học vấn] Cao đẳng Kinh tế – Trường ĐHKHTN Đà Nẵng
+[Kỹ năng] Xử lý tình huống, Giao tiếp, Đàm phán
+[Chứng chỉ] Chứng chỉ Quản lý bán hàng; Chứng chỉ Giao tiếp thương mại điện tử
 [Ngoại ngữ] Tiếng Anh Giao tiếp
+```
+
+## TR-17-06
+
+- Tin: Flutter Engineer
+- Máy định viết: nghề "React Native/Flutter", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 0 tháng kinh nghiệm
+
+- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
+
+```text
+Flutter Developer
+Fresh graduate with a strong background in frontend development, particularly in Flutter and React Native. Eager to bring innovative solutions to mobile applications and contribute to a dynamic team.
+[Dự án] React Native/Flutter Developer – TechCraft Nha Trang
+  • Leveraged Flutter and React Native to develop a cross-platform mobile application, enhancing user experience and streamlining development processes. Utilized REST API and Firebase for real-time data synchronization and user authentication, improving the app's performance and reliability.
+  • Implemented clean architecture principles and OOP practices, ensuring code modularity and maintainability. Developed a scalable application with a modular design, adhering to best practices in software development.
+  • Collaborated with the backend team to integrate GraphQL APIs, optimizing data fetching and reducing the number of API calls by 30%.
+[Dự án] E-commerce Mobile App – Frontend Developer
+  • Developed the mobile interface for an e-commerce platform using Flutter, ensuring a seamless user experience across both iOS and Android devices.
+  • Implemented clean architecture and OOP principles to manage state and ensure code reusability.
+[Hoạt động] TechCraft Hackathon – Local Tech Enthusiasts Group
+  • Participated in a hackathon focusing on mobile application development.
+  • Developed a cross-platform app using React Native that won the 'Best User Experience' award.
+[Hoạt động] Volunteer Developer – Community Tech Hub
+  • Volunteered for 6 months to support local startups with their app development projects.
+  • Helped a non-profit organization launch a mobile app that significantly improved their outreach.
+[Học vấn] Bachelor of Computer Science – National University of Technology, Ho Chi Minh City
+[Kỹ năng] REST API, Firebase, Flutter, GraphQL, OOP, Tư duy logic, Git, Clean Architecture
+[Chứng chỉ] Certified Firebase Developer, Google; Certified GraphQL Developer, GraphQL Academy
+[Giải thưởng] Best User Interface Design Award at the City Tech Meetup; Emerging Talent Award from the Regional Developer Network
+[Ngoại ngữ] English Working proficiency; Vietnamese Native
+```
+
+## TR-17-08
+
+- Tin: Flutter Engineer
+- Máy định viết: nghề "React Native/Flutter", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 46 tháng kinh nghiệm
+
+- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
+
+```text
+Flutter Engineer
+Có 46 tháng kinh nghiệm trong phát triển ứng dụng di động đa nền tảng, đặc biệt thành thạo Flutter và React Native. Có kinh nghiệm làm việc tại công ty ngân hàng tại Nha Trang và đã xây dựng nhiều dự án thành công.
+[Kinh nghiệm] Kỹ sư Flutter – TechPro Development (2023-01 – 2023-03)
+  • Lên kế hoạch và triển khai các dự án ứng dụng di động dựa trên yêu cầu của khách hàng, sử dụng Clean Architecture để đảm bảo chất lượng code.
+  • Hỗ trợ tích hợp Firebase cho các ứng dụng di động, giúp cải thiện tính năng và hiệu suất.
+  • Xây dựng và quản lý các RESTful APIs và GraphQL API, tối ưu hóa quá trình truy xuất dữ liệu từ backend.
+  • Áp dụng tư duy logic và OOP trong quá trình thiết kế và phát triển các ứng dụng, đảm bảo tính nhất quán và tính bảo trì.
+  • Tối ưu hóa quy trình quản lý mã nguồn bằng Git, giảm thời gian phát triển và tăng hiệu suất làm việc nhóm.
+[Kinh nghiệm] Kỹ sư React Native – BankTech Solutions (2023-04 – nay)
+  • Phát triển ứng dụng di động cho ngân hàng tại Nha Trang, giúp cải thiện trải nghiệm khách hàng thông qua các tính năng tiên tiến.
+  • Hỗ trợ tích hợp Firebase vào ứng dụng React Native, cải thiện khả năng lưu trữ và phân tích dữ liệu.
+  • Áp dụng kiến trúc Clean Architecture để xây dựng ứng dụng ổn định và dễ bảo trì.
+  • Tối ưu hóa quy trình quản lý mã nguồn với Git, giảm rủi ro code và tăng tính năng động của dự án.
+[Dự án] Ứng dụng quản lý tài chính cá nhân – Lập trình viên chính
+  • Phát triển ứng dụng di động giúp khách hàng quản lý tài chính một cách dễ dàng.
+  • Áp dụng kiến trúc Clean Architecture và OOP để đảm bảo chất lượng code và tính linh hoạt của ứng dụng.
+[Học vấn] Thạc sĩ Công nghệ thông tin – Institute of Advanced Technology
+[Kỹ năng] Clean Architecture, Git, Tư duy logic, Flutter, REST API, GraphQL, Firebase, OOP, React Native
+[Chứng chỉ] Certified React Native Developer; Git Fundamentals
+[Sở thích] Học về các công nghệ mới và phát triển ứng dụng di động.; Tham gia các hội thảo và workshop về phát triển ứng dụng di động.; Thử nghiệm các dự án cá nhân nhỏ về xây dựng ứng dụng cộng đồng.; Xem và tham gia thảo luận về các dự án nguồn mở trên GitHub.
+[Ngoại ngữ] Tiếng Anh Làm việc
 ```
 
 ## TR-17-10
@@ -248,32 +170,102 @@ Skilled developer with a strong background in React Native and Flutter, possessi
 [Ngoại ngữ] English Working proficiency; Vietnamese Native
 ```
 
-## TR-20-13
+## TR-19-03
 
-- Tin: Chuyên Viên Tổng Hợp Dữ Liệu Và Báo Cáo Quản Trị Thu Nhập 18
-- Máy định viết: nghề "Data Analyst", khớp một phần: đúng nghề của tin nhưng thiếu kỹ năng hoặc kinh nghiệm, 16 tháng kinh nghiệm
+- Tin: Chuyên Viên Phân Tích Dữ Liệu / Data Analyst
+- Máy định viết: nghề "Cloud Engineer", vị trí gần: nghề khác nhưng cùng mảng với tin, 22 tháng kinh nghiệm
 
 - [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
 
 ```text
-Chuyên Viên Tổng Hợp Dữ Liệu
-Cử nhân Kinh tế với 16 tháng kinh nghiệm làm Data Analyst tại ngân hàng. Có khả năng phân tích dữ liệu, lập báo cáo quản trị và sử dụng các công cụ như Power BI, Looker và SQL.
-[Kinh nghiệm] Data Analyst – Hàn Phong Bank (2025-07 – nay)
-  • Lãnh đạo nhóm phân tích dữ liệu tài chính, giúp ngân hàng tăng hiệu suất hoạt động 15% trong 6 tháng đầu tiên.
-  • Tạo và duy trì các báo cáo quản trị hàng tuần, giúp lãnh đạo nắm bắt nhanh chóng tình hình hoạt động kinh doanh.
-  • Phân tích dữ liệu khách hàng để tối ưu hóa sản phẩm và dịch vụ, tăng tỷ lệ khách hàng trung thành 10% trong vòng 12 tháng.
-  • Sử dụng SQL và Power Query để xử lý dữ liệu lớn và phức tạp, đảm bảo tính chính xác của dữ liệu đầu vào.
-  • Phát triển các báo cáo trực quan bằng Power BI và Looker, giúp bộ phận quản lý dễ dàng hiểu và đưa ra quyết định nhanh chóng.
-[Hoạt động] Kết Nối Dữ Liệu – Club của sinh viên
-  • Tham gia tổ chức sự kiện phân tích dữ liệu lớn
-  • Giải quyết vấn đề về hiệu suất của hệ thống phân tích
-[Hoạt động] Học viên Thông tin – Trung tâm Thông tin và Tri thức
-  • Tham gia dự án về phân tích xu hướng thị trường
-  • Giải quyết các thách thức kỹ thuật liên quan đến xử lý dữ liệu không cấu trúc
-[Học vấn] Cử nhân Kinh tế – Đại học Công nghệ Bách Khoa Đà Nẵng
-[Kỹ năng] Phân tích dữ liệu, Lập báo cáo quản trị, Power BI, Looker, SQL, Power Query
-[Chứng chỉ] Chứng chỉ Power BI Intermediate; Chứng chỉ SQL Advanced
-[Sở thích] Xây dựng mô hình máy học; Phân tích xu hướng công nghệ; Thị trường chứng khoán; Giải quyết vấn đề thông qua dữ liệu
+Cloud Engineer
+Experienced Cloud Engineer with a solid background in LLM, Python, Presale, and System Architecture. Skilled in delivering complex cloud solutions and presales strategies to clients in the retail sector. Adept at system architecture design and implementation, ensuring robust and scalable cloud infrastructure.
+[Kinh nghiệm] Cloud Engineer – TechFusion Solutions (2025-01 – 2026-03)
+  • Led the development of cloud solutions for a retail agency, improving system performance by 30% and reducing operational costs by 25%.
+  • Utilized Python and LLM to automate server monitoring and maintenance, enhancing system reliability and reducing manual intervention.
+  • Delivered comprehensive presale strategies for cloud services, resulting in a 40% increase in sales over two years.
+  • Designed and implemented a robust system architecture that improved data processing speed by 20% and enhanced user experience for online retail platforms.
+[Kinh nghiệm] Cloud Engineer – RetailTech Innovators (2026-04 – nay)
+  • Developed and deployed cloud solutions for a multinational retail company, contributing to a 20% increase in online sales.
+  • Applied Python scripting to optimize server configurations, reducing downtime by 15%.
+  • Engaged in presales with a focus on system architecture, securing contracts with key clients in the retail sector.
+  • Collaborated with the IT team to design a scalable cloud architecture, enabling the company to handle a 50% increase in traffic during peak seasons.
+[Dự án] Retail Cloud Transformation – Cloud Engineer
+  • Developed a cloud-based solution for a retail agency, enhancing system performance and data security.
+  • Implemented LLM and Python for automated server management, improving efficiency by 30%.
+[Hoạt động] Tech Innovators Club – Innovators Tech Hub
+  • Participated in bi-weekly workshops on the latest cloud computing technologies.
+  • Collaborated with peers to present case studies on cloud architecture optimization.
+[Hoạt động] Environmental Volunteer Group – Green Earth Volunteers
+  • Volunteered in community clean-up events focusing on reducing e-waste.
+  • Organized educational workshops on the environmental impact of cloud computing.
+[Học vấn] Bachelor of Science in Information Technology – National University of Technology
+[Kỹ năng] LLM, Python, Presale, System Architecture
+[Chứng chỉ] AWS Certified Solutions Architect - Associate; Google Cloud Certified Professional - Cloud Engineer
+[Giải thưởng] Outstanding Contribution Award; Best Cloud Architect Award, Innovators Tech Hub; Awarded for demonstrating exceptional skills in cloud infrastructure optimization and disaster recovery.
+[Ngoại ngữ] English Conversational; Vietnamese Native
+```
+
+## TR-20-08
+
+- Tin: Chuyên Viên Tổng Hợp Dữ Liệu Và Báo Cáo Quản Trị Thu Nhập 18
+- Máy định viết: nghề "Data Analyst", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 22 tháng kinh nghiệm
+
+- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
+
+```text
+Data Analyst
+Có hơn hai năm kinh nghiệm trong việc phân tích dữ liệu và xây dựng báo cáo quản trị, tôi luôn tìm cách tối ưu hóa quy trình làm việc và nâng cao hiệu suất thông qua các giải pháp công nghệ. Tôi tự tin có thể đóng góp cho một môi trường làm việc chuyên nghiệp và năng động.
+[Kinh nghiệm] Data Analyst – Vinmart Nha Trang (2025-01 – 2025-12)
+  • Phân tích dữ liệu bán hàng hàng ngày, giúp đội bán hàng tối ưu hóa chiến lược marketing, tăng doanh thu hơn 20% trong vòng 6 tháng.
+  • Sử dụng Tableau để tạo báo cáo trực quan hóa dữ liệu, giảm thời gian xử lý và báo cáo từ 12 giờ xuống chỉ còn 2 giờ mỗi tuần.
+  • Lập báo cáo quản trị hàng tháng, giúp ban quản lý nắm bắt tình hình kinh doanh và đưa ra quyết định kịp thời, giảm rủi ro tài chính 15%.
+  • Cải thiện quy trình nhập liệu thông qua Python, từ đó giảm lỗi nhập liệu từ 5% xuống 1%.
+  • Hỗ trợ đội ngũ IT trong việc cài đặt và cập nhật công cụ Power BI, nâng cao khả năng phân tích dữ liệu cho toàn bộ đội ngũ bán hàng.
+[Kinh nghiệm] Intern Data Analyst – Phuc Thuan Supermarket (2026-01 – nay)
+  • Tham gia vào dự án phân tích dữ liệu bán hàng, giúp đội ngũ quản lý hiểu rõ hơn về xu hướng tiêu dùng và đưa ra chiến lược marketing hiệu quả.
+  • Lập báo cáo quản trị hàng tuần, cung cấp thông tin kịp thời cho ban quản lý để họ có thể đưa ra quyết định nhanh chóng và chính xác.
+  • Phân tích dữ liệu từ các hệ thống bán lẻ, giúp cải thiện quy trình vận hành, tăng hiệu quả hoạt động của cửa hàng.
+[Dự án] Báo cáo kinh doanh trực quan – Tác giả chính
+  • Tạo báo cáo quản trị hàng tháng để cung cấp thông tin về doanh thu, chi phí và lợi nhuận cho ban quản lý.
+  • Sử dụng Tableau để tạo các biểu đồ và biểu đồ trực quan hóa dữ liệu, giúp dễ dàng hiểu và phân tích các số liệu.
+[Học vấn] Cao đẳng Quản trị Kinh doanh – Trường Đại học Nha Trang
+[Kỹ năng] Phân tích dữ liệu, Tableau, Power BI, Lập báo cáo quản trị, Excel, Python
+[Chứng chỉ] Microsoft Certified: Power BI Desktop; Tableau Desktop Professional
+[Sở thích] Học hỏi và nghiên cứu về công nghệ mới; Đọc sách về lịch sử và văn hóa; Chơi piano và nghe nhạc cổ điển; Bảo tồn thiên nhiên và tham gia các hoạt động ngoại khóa về bảo vệ môi trường
+```
+
+## TR-24-09
+
+- Tin: AI Engineer
+- Máy định viết: nghề "AI/Machine Learning Engineer", khớp một phần: đúng nghề của tin nhưng thiếu kỹ năng hoặc kinh nghiệm, 23 tháng kinh nghiệm
+
+- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
+
+```text
+AI/Machine Learning Engineer
+Tôi là một chuyên gia AI với 23 tháng kinh nghiệm, đã phát triển và quản lý các hệ thống tự động hóa và học máy hiệu quả. Với nền tảng kỹ năng vững chắc trong Python, LLM API, và tư duy logic, tôi luôn chủ động trong việc tìm kiếm giải pháp tối ưu cho các dự án.
+[Kinh nghiệm] AI/Machine Learning Engineer – Sáng Tạo Cầu Đảo (2024-12 – 2025-05)
+  • Tối ưu hóa quy trình sản xuất bằng cách triển khai các mô hình AI, giúp giảm 20% thời gian xử lý và tăng 15% hiệu suất.
+  • Phát triển và quản lý hệ thống tự động hóa dựa trên n8n, tối ưu hóa quy trình sản xuất từ 30%.
+  • Ứng dụng LLM API và Python để tạo ra agent AI có khả năng xử lý và phân loại dữ liệu lớn, góp phần tăng 25% độ chính xác trong phân loại sản phẩm.
+[Kinh nghiệm] AI/Machine Learning Engineer – Nhịp Tim Công Nghệ (2025-06 – 2025-07)
+  • Lãnh đạo dự án AI Agent, tạo ra giải pháp tự động hóa quy trình kiểm soát chất lượng, giúp tiết kiệm 30% thời gian kiểm tra.
+  • Sử dụng PyTorch để phát triển mô hình học sâu, nâng cao 10% chất lượng sản phẩm.
+  • Tư duy logic và tư duy hệ thống giúp tôi thiết kế và triển khai hệ thống multi-agent hiệu quả, tăng 20% năng suất tổng thể.
+[Kinh nghiệm] AI/Machine Learning Engineer – Định Hướng Tương Lai (2025-08 – nay)
+  • Triển khai hệ thống tự động hóa dựa trên API và LLM, giúp nâng cao 15% hiệu suất trong quá trình thu thập và xử lý dữ liệu.
+  • Ứng dụng Git để quản lý nguồn code, giúp đội ngũ phát triển làm việc hiệu quả hơn.
+  • Cải thiện quy trình sản xuất bằng cách tối ưu hóa hệ thống AI Agent, giảm 10% chi phí vận hành.
+[Dự án] Hệ thống tự động hóa sản xuất – Lãnh đạo dự án
+  • Triển khai n8n để tự động hóa quy trình sản xuất, giảm 40% thời gian xử lý.
+  • Phát triển API và LLM để tích hợp các hệ thống AI Agent, nâng cao 20% năng suất.
+[Học vấn] Cử nhân Công nghệ Thông tin – Đại Học Kỹ Thuật Địa Phận
+[Kỹ năng] LLM API, Git, Tư duy logic, Python, AI Agent, API, N8n, LLM, Multi-agent systems, PyTorch
+[Chứng chỉ] Chứng chỉ Python Developer; Chứng chỉ LLM API Expert
+[Giải thưởng] Giải thưởng Tự động hóa xuất sắc năm 2021; Giải thưởng Nhân tố tiên phong trong AI năm 2022
+[Sở thích] Đọc sách về trí tuệ nhân tạo và học thuật; Thử nghiệm và phát triển các dự án AI cá nhân; Tham gia các buổi tọa đàm về AI và xu hướng công nghệ tương lai; Học các ngôn ngữ lập trình mới để mở rộng kiến thức
+[Ngoại ngữ] Tiếng Anh Cơ bản
 ```
 
 ## TR-24-15
@@ -297,749 +289,822 @@ Với 11 tháng kinh nghiệm trong vai trò IT Helpdesk, tôi đã phát triể
 [Ngoại ngữ] Tiếng Anh Làm việc IELTS 6.0
 ```
 
-## TR-25-03
-
-- Tin: Agentic AI Expert
-- Máy định viết: nghề "Manual Tester", vị trí gần: nghề khác nhưng cùng mảng với tin, 22 tháng kinh nghiệm
-
-- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
-
-```text
-Manual Tester
-Có hơn hai năm kinh nghiệm trong việc kiểm thử phần mềm bằng tay, tôi đã thực hiện nhiều thử nghiệm và phát hiện ra nhiều vấn đề, góp phần cải thiện chất lượng sản phẩm. Thành thạo kỹ năng viết test case và sử dụng công cụ PyTorch.
-[Kinh nghiệm] Manual Tester – Công Ty TNHH Công Nghệ Hảo Vượng (2025-01 – 2025-12)
-  • Đã thực hiện kiểm thử phần mềm cho hệ thống quản lý bán lẻ với quy mô hơn 500 điểm bán trong 2 năm tại Nha Trang, phát hiện và báo cáo hơn 300 lỗi phần mềm.
-  • Viết và thực hiện test case cho các tính năng mới, đảm bảo tính tương thích và hiệu năng của hệ thống.
-  • Sử dụng công cụ PyTorch để phân tích các vấn đề phát sinh từ quá trình kiểm thử, góp phần cải thiện chất lượng phần mềm.
-[Kinh nghiệm] Manual Tester – Công Ty TNHH Dịch Vụ Công Nghệ Mới Mẻ (2026-01 – nay)
-  • Đã kiểm thử các ứng dụng di động trong 22 tháng, phát hiện và báo cáo hơn 200 lỗi, giúp nâng cao độ tin cậy của ứng dụng.
-  • Viết và thực hiện test case cho các tính năng mới, đảm bảo hệ thống hoạt động ổn định và đáp ứng yêu cầu của khách hàng.
-  • Sử dụng kỹ năng phân tích hệ thống để phát hiện các vấn đề kỹ thuật và đề xuất giải pháp hiệu quả.
-[Hoạt động] Nhóm Thử Nghiệm Đa Năng – Cộng đồng kỹ sư
-  • Tham gia thử nghiệm các sản phẩm công nghệ mới và cung cấp phản hồi cho nhóm phát triển.
-  • Làm việc nhóm, chia sẻ kinh nghiệm và cải thiện kỹ năng thử nghiệm.
-[Hoạt động] Tổng hợp lỗi – Dự án cộng đồng
-  • Góp phần vào quá trình tổng hợp và phân loại lỗi, giúp cải thiện chất lượng sản phẩm.
-  • Tham gia các buổi thảo luận và đề xuất giải pháp cho các vấn đề kỹ thuật.
-[Học vấn] Cao đẳng Công nghệ thông tin – Trường Cao đẳng Kỹ thuật Công nghệ Miền Trung
-[Kỹ năng] PyTorch, Viết test case, Manual Testing
-[Chứng chỉ] Giải thưởng Kiểm thử phần mềm xuất sắc 2022; Chứng chỉ viết test case hiệu quả
-[Giải thưởng] Giải Nhóm xuất sắc - Dự án thử nghiệm ứng dụng di động; Giải Tài năng mới - Công ty phần mềm XYZ
-[Sở thích] Công nghệ mới và xu hướng thử nghiệm tự động; Đọc sách về kỹ thuật phần mềm; Xây dựng và cải thiện quy trình thử nghiệm; Học tập và cập nhật kiến thức về bảo mật thông tin
-[Ngoại ngữ] Tiếng Anh Giao tiếp
-```
-
-## TR-29-10
+## TR-29-04
 
 - Tin: Brand Manager
-- Máy định viết: nghề "Quan hệ công chúng", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 72 tháng kinh nghiệm
+- Máy định viết: nghề "Quan hệ công chúng", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 67 tháng kinh nghiệm
 
 - [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
 
 ```text
-Quan hệ công chúng
-Có hơn 6 năm kinh nghiệm trong việc xây dựng và quản lý thương hiệu, với thành công trong việc định vị thương hiệu và thực hiện chiến lược marketing hiệu quả. Tự tin và linh hoạt, thích môi trường làm việc nhanh và đổi mới.
-[Kinh nghiệm] Quan hệ công chúng tại Công ty TNHH Phát triển Thịnh Vượng – Công ty TNHH Phát triển Thịnh Vượng (2020-11 – 2023-05)
-  • Xây dựng và triển khai Brand Guideline cho công ty, giúp tăng nhận biết thương hiệu từ 15% lên 30% trong vòng 6 tháng.
-  • Tổ chức và quản lý các sự kiện PR, giúp tăng doanh thu cho công ty 20% trong quý đầu tiên.
-  • Định vị thương hiệu mới cho công ty, giúp tăng độ nhận biết thương hiệu từ 25% lên 40% trong 12 tháng.
-[Kinh nghiệm] Quan hệ công chúng tại Công ty TNHH Phát triển Sáng Tạo – Công ty TNHH Phát triển Sáng Tạo (2023-06 – nay)
-  • Thực hiện chiến lược Brand Marketing, giúp công ty đạt doanh thu 150 triệu đồng/tháng sau 9 tháng.
-  • Tái định vị thương hiệu cho công ty, giúp tăng độ nhận biết thương hiệu từ 20% lên 35% trong 1 năm.
-  • Cải tiến và tối ưu hóa hệ thống Brand Guideline, giúp quy trình làm việc nhanh chóng và hiệu quả hơn.
-[Dự án] Xây dựng Brand Guideline cho Công ty TNHH Phát triển Thịnh Vượng – Tổng giám đốc Quan hệ công chúng
-  • Phân tích thị trường và đối thủ, xác định định vị thương hiệu phù hợp.
-  • Xây dựng và triển khai hệ thống Brand Guideline.
-  • Tăng độ nhận biết thương hiệu từ 15% lên 30% trong 6 tháng.
-[Hoạt động] Tổ Chức Sự Kiện Sinh Viên – Báo cáo sinh viên
-  • Họp báo giới thiệu về các sự kiện văn hóa trong khuôn viên trường.
-  • Lập kế hoạch và thực hiện các hoạt động cộng đồng để nâng cao ý thức xã hội về các vấn đề quan trọng.
-[Hoạt động] Giao Lưu Văn Hóa – Hội Sinh viên quốc tế
-  • Tổ chức các buổi gặp gỡ với các sinh viên quốc tế để chia sẻ về văn hóa của từng quốc gia.
-  • Lập kế hoạch tổ chức các buổi biểu diễn văn nghệ để quảng bá văn hóa các dân tộc trên thế giới.
-[Học vấn] Cao đẳng Quảng cáo và Truyền thông – Trường Cao đẳng Văn hóa Nghệ thuật Cần Thơ
-[Kỹ năng] Xây dựng định vị thương hiệu, Brand Guideline, Brand Marketing
-[Chứng chỉ] Thư viện chứng chỉ Marketing, Trường Cao đẳng Văn hóa Nghệ thuật Cần Thơ; Thư viện chứng chỉ Quan hệ công chúng, Trường Cao đẳng Văn hóa Nghệ thuật Cần Thơ
-[Ngoại ngữ] Tiếng Anh Làm việc; Tiếng Nhật Giao tiếp
+Brand Manager
+A seasoned Brand Manager with 6 years of experience in strategic brand management, brand marketing, and brand guideline development, driving successful brand positioning and growth. Proven track record in agency work with a focus on building strong brand identities and effective marketing strategies.
+[Kinh nghiệm] Brand Manager – BlueSky PR & Marketing (2021-04 – 2023-09)
+  • Developed and maintained comprehensive Brand Guidelines for a portfolio of local and international clients, ensuring consistent brand messaging across all platforms.
+  • Successfully repositioned the brand of a local coffee chain, increasing market share by 15% within 12 months through targeted marketing campaigns.
+  • Managed a team of 5 junior marketers, ensuring alignment with brand strategy and delivering measurable results.
+  • Created and executed a brand marketing campaign that led to a 20% increase in online engagement and a 10% boost in sales during the launch period.
+[Kinh nghiệm] Brand Strategist – Starlight PR Agency (2023-10 – nay)
+  • Crafted and implemented brand positioning strategies for a start-up e-commerce platform, resulting in a 30% increase in brand awareness within the first year.
+  • Utilized Brand Marketing principles to launch a new product line, achieving a 40% higher ROI compared to traditional marketing approaches.
+  • Generated a Brand Guideline document that was adopted by the client for internal and external communications, ensuring consistency and coherence in brand representation.
+[Dự án] Rebranding of a Local Coffee Chain – Project Manager
+  • Redesigned the brand identity and messaging framework, increasing customer recognition by 25% in the first quarter.
+  • Developed a series of marketing materials and events that contributed to a 15% increase in store foot traffic.
+[Hoạt động] Communication Club – College of Arts and Sciences
+  • Served as a Vice President for one year, organizing events and workshops that enhanced students' public speaking and interpersonal skills.
+  • Led a community outreach initiative, which increased the club's membership by 30%.
+[Học vấn] College Diploma in Public Relations – National Institute of Communication Arts
+[Kỹ năng] Brand Guideline, Xây dựng định vị thương hiệu, Brand Marketing
+[Chứng chỉ] Certified Brand Manager, American Marketing Association; Public Relations Professional, PRSA
+[Ngoại ngữ] English Working proficiency; Japanese Conversational; Vietnamese Native
 ```
 
-## TR-31-09
+## TR-32-08
 
-- Tin: Export Customer Services
-- Máy định viết: nghề "Nhân viên CSKH", khớp một phần: đúng nghề của tin nhưng thiếu kỹ năng hoặc kinh nghiệm, 120 tháng kinh nghiệm
-
-- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
-
-```text
-Nhân viên CSKH
-Kinh nghiệm làm việc trong lĩnh vực bán lẻ và chăm sóc khách hàng, với khả năng sắp xếp công việc và sử dụng các chứng chỉ xuất khẩu hiệu quả.
-[Kinh nghiệm] Nhân viên CSKH – Phước Lộc Thọ Logistics (2016-11 – 2024-12)
-  • Sử dụng kỹ năng giao tiếp và chăm sóc khách hàng để giải quyết hơn 1000 vụ việc khách hàng mỗi tháng, đảm bảo tỷ lệ hài lòng cao.
-  • Am hiểu và áp dụng Incoterms trong quá trình vận chuyển hàng hóa, giúp khách hàng hiểu rõ quy trình và giảm rủi ro trong giao dịch.
-  • Phát triển kỹ năng telesales để tăng hiệu quả tiếp cận khách hàng tiềm năng, giúp doanh thu tăng 15% trong 6 tháng đầu.
-  • Sử dụng chứng chỉ xuất khẩu để xử lý các thủ tục hải quan và vận chuyển hàng hóa quốc tế, đảm bảo đúng quy định pháp luật.
-  • Làm việc trong môi trường bán lẻ, quản lý hàng hóa và sắp xếp công việc hiệu quả, giúp giảm thời gian chờ đợi cho khách hàng từ 20%.
-[Kinh nghiệm] Nhân viên CSKH – Tiền Phong Logistics (2025-01 – nay)
-  • Tận dụng kỹ năng sắp xếp công việc và sử dụng phần mềm logistics để tối ưu hóa quy trình vận chuyển, giảm chi phí vận hành 10%.
-  • Ứng dụng chứng chỉ xuất khẩu để hỗ trợ các khách hàng nước ngoài, giúp họ hiểu rõ quy trình và thủ tục xuất nhập khẩu.
-  • Thực hiện giao dịch LCL với hơn 50 khách hàng quốc tế, tăng doanh thu từ xuất khẩu hàng hóa 20%.
-  • Xây dựng mối quan hệ tốt với khách hàng thông qua giao tiếp chuyên nghiệp và giải quyết vấn đề nhanh chóng, giúp tỷ lệ quay trở lại tăng 15%.
-  • Làm việc trong môi trường bán lẻ tại Cần Thơ, cung cấp dịch vụ chăm sóc khách hàng và hỗ trợ bán hàng hiệu quả.
-[Học vấn] Cử nhân Kinh tế - Quản trị Logistics – Đại học Cần Thơ
-[Kỹ năng] Chứng từ xuất khẩu, Phần mềm logistics, Sắp xếp công việc, Incoterms, Telesales, Giao tiếp, Chăm sóc khách hàng
-[Chứng chỉ] Chứng chỉ xuất khẩu quốc tế; Kỹ năng logistics và quản lý vận chuyển
-[Sở thích] Đọc sách về tâm lý và kỹ năng giao tiếp; Tham gia các hoạt động tình nguyện hỗ trợ cộng đồng; Xem phim hoạt hình và học hỏi từ những nhân vật chính; Tham gia các buổi thảo luận về công nghệ và xu hướng mới
-[Ngoại ngữ] Tiếng Anh Cơ bản
-```
-
-## TR-41-00
-
-- Tin: Quản Trị Hệ Thống
-- Máy định viết: nghề "System Admin", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 20 tháng kinh nghiệm
+- Tin: Cloud Architect
+- Máy định viết: nghề "Cloud Engineer", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 90 tháng kinh nghiệm
 
 - [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
 
 ```text
-System Admin
-Kỹ sư hệ thống với 20 tháng kinh nghiệm trong quản trị hệ thống, đặc biệt thành thạo VMWare, Backup/Restore và Troubleshooting. Có khả năng giải quyết vấn đề hiệu quả và đảm bảo hệ thống vận hành ổn định 24/7.
-[Kinh nghiệm] Quản trị Hệ thống – Công ty Công nghệ Minh Khoa (2025-03 – 2025-06)
-  • Tạo và quản lý hơn 100 VMWare ESXi trên vCenter để tối ưu hóa môi trường làm việc của công ty.
-  • Phân tích và giải quyết 90% các vấn đề mạng trong vòng 15 phút thông qua hiểu biết về TCP/IP, DNS và firewall.
-  • Đảm bảo hệ thống Linux luôn sẵn sàng với quy trình backup/restore định kỳ, giảm thiểu thời gian ngừng hoạt động lên tới 2 giờ/năm.
-[Kinh nghiệm] Quản trị viên Hệ thống – Công ty Giải pháp công nghệ Thanh Bình (2025-07 – 2026-01)
-  • Hỗ trợ triển khai ứng dụng mới cho 50 máy chủ Linux, giảm thời gian triển khai từ 5 ngày xuống còn 2 ngày.
-  • Thực hiện các phương pháp hardening trên hệ thống Linux và VMware ESXi, giảm thiểu nguy cơ tấn công DDoS lên 70%.
-  • Thiết lập và quản lý hệ thống monitoring 24/7 để đảm bảo hệ thống luôn hoạt động ổn định.
-[Kinh nghiệm] Quản trị viên Cơ sở dữ liệu – Công ty Phần mềm Việt Nam (2026-02 – nay)
-  • Hỗ trợ kỹ thuật và giải quyết 70% các vấn đề mạng thông qua hiểu biết về VLAN và routing.
-  • Thực hiện việc backup và restore hệ thống định kỳ, đảm bảo dữ liệu luôn được bảo vệ.
-  • Tối ưu hóa hiệu suất hệ thống Linux bằng cách tối thiểu hóa thời gian downtime và tối đa hóa thời gian hoạt động ổn định.
-[Dự án] Hệ thống Monitoring – Lập trình viên
-  • Thiết lập hệ thống monitoring cho 50 máy chủ Linux, giảm thời gian phát hiện và giải quyết vấn đề từ 2 giờ xuống còn 15 phút.
-[Hoạt động] ClubTech – Hội Sinh viên Khoa Công nghệ thông tin
-  • Tham gia tổ chức sự kiện về bảo mật thông tin và an toàn mạng.
-  • Phát triển và triển khai hệ thống quản lý thông tin thành viên.
-[Học vấn] Cử nhân Công nghệ thông tin – Trường Đại học Công nghệ Thành phố Hồ Chí Minh
-[Kỹ năng] VMWare, Backup/Restore, Troubleshooting, Linux
-[Chứng chỉ] VMware Certified Professional (VCP); Cisco Certified Network Associate (CCNA)
-[Giải thưởng] Giải nhất cuộc thi Hackathon cấp trường; Giải thưởng Khả năng giải quyết vấn đề xuất sắc
-[Ngoại ngữ] Tiếng Anh Giao tiếp
-```
-
-## TR-41-03
-
-- Tin: Quản Trị Hệ Thống
-- Máy định viết: nghề "IT Helpdesk", vị trí gần: nghề khác nhưng cùng mảng với tin, 120 tháng kinh nghiệm
-
-- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
-
-```text
-System Administrator
-Experienced IT professional with a strong background in Linux, Ansible, and Docker. Skilled in troubleshooting, log analysis, and Windows management. Proven ability to maintain and improve system performance and availability.
-[Kinh nghiệm] IT Helpdesk – TechVentures Co. Ltd (2016-11 – 2025-06)
-  • Managed and supported a network of over 300 Linux servers, ensuring high uptime and system stability.
-  • Deployed and maintained Docker containers for 10+ applications, enhancing deployment speed and reducing server load.
-  • Troubleshot and resolved complex issues, significantly reducing downtime and improving user satisfaction.
-  • Processed and analyzed log files to identify and fix system and application issues, improving system performance.
-  • Provided Windows support to 50+ users, implementing policies and security best practices to enhance system security.
-[Kinh nghiệm] IT Helpdesk – InnovateHub Solutions (2025-07 – nay)
-  • Managed a network of 200+ Linux servers, implementing Ansible playbooks to automate routine tasks and reduce manual errors.
-  • Deployed and maintained Docker containers for 5+ applications, improving application delivery and performance.
-  • Implemented and monitored system logs to identify and resolve issues, resulting in a 15% decrease in support tickets.
-  • Assisted in the deployment of new hardware and software, ensuring seamless integration and reduced downtime.
-  • Provided Windows support to 25+ users, implementing security policies to enhance system and data protection.
-[Dự án] Automation of IT Processes – Project Lead
-  • Developed and implemented Ansible playbooks to automate routine tasks, reducing manual errors and improving efficiency.
-  • Optimized server configurations and processes, resulting in a 20% increase in system performance.
-[Học vấn] Bachelor of Science in Computer Science – National University of Technology
-[Kỹ năng] Linux, Ansible, Docker, Xử lý tình huống, Đọc log, Phân tích lỗi, Windows
-[Chứng chỉ] Red Hat Certified Engineer (RHCE); Cisco Certified Network Associate (CCNA)
-[Giải thưởng] Best IT Support Award 2020; Outstanding Volunteer Service Award 2021
-[Ngoại ngữ] English Basic; Vietnamese Native
-```
-
-## TR-43-11
-
-- Tin: Quản Lý Kinh Doanh
-- Máy định viết: nghề "Telesales", vị trí gần: nghề khác nhưng cùng mảng với tin, 57 tháng kinh nghiệm
-
-- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
-
-```text
-Telesales Manager
-Năm kinh nghiệm quản lý đội ngũ telesales, với kỹ năng giao tiếp ấn tượng và xử lý phản hồi khách hàng. Thành công trong việc đạt và vượt chỉ tiêu doanh số, đồng thời phát triển đội ngũ và nâng cao chất lượng dịch vụ khách hàng.
-[Kinh nghiệm] Telesales Team Leader – VinaSales Solutions (2022-02 – 2026-03)
-  • Lãnh đạo 15 nhân viên, quản lý doanh thu hàng tháng đạt 30 tỷ đồng, tăng 20% so với năm trước.
-  • Giảm tỷ lệ từ chối cuộc gọi từ 25% xuống còn 15% qua việc tăng cường kỹ năng giao tiếp và xử lý phản hồi.
-  • Phân tích và tối ưu hóa quy trình làm việc, giúp đội ngũ đạt hiệu suất cao hơn 15%.
-[Kinh nghiệm] Telesales Executive – AsiaDirect Services (2026-04 – nay)
-  • Giao tiếp với hơn 500 khách hàng tiềm năng hàng tháng, đóng góp cho doanh thu cá nhân đạt 8 tỷ đồng/năm.
-  • Tham gia đàm phán với khách hàng lớn, giúp công ty đạt được các hợp đồng trị giá 100 triệu đồng.
-  • Xử lý phản hồi từ 200 khách hàng mỗi tháng, giảm tỷ lệ khách hàng không hài lòng từ 10% xuống còn 3%.
-[Dự án] Programmable Call Routing System – Developer
-  • Phát triển hệ thống định tuyến cuộc gọi tự động, giúp giảm thời gian chờ đợi cho khách hàng từ 2 phút xuống còn 30 giây.
-[Học vấn] Cử nhân Kinh doanh Quốc tế – Đại học Kinh tế TP. Hồ Chí Minh
-[Kỹ năng] Giao tiếp, Xử lý phản hồi khách hàng, Đàm phán
-[Chứng chỉ] Chứng chỉ NLP (Nghệ Thuật Xử Lý Ngôn Ngữ); Chứng chỉ Quản lý Doanh số
-[Ngoại ngữ] Tiếng Anh Giao tiếp
-```
-
-## TR-45-12
-
-- Tin: Fullstack Web Developer
-- Máy định viết: nghề "Fullstack Developer", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 58 tháng kinh nghiệm
-
-- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
-
-```text
-Fullstack Developer
-Experienced Fullstack Developer with a solid background in ReactJS, Node.js, and Java. Proven track record of delivering high-quality web applications with a focus on user experience and performance optimization.
-[Kinh nghiệm] Fullstack Developer – TechFusion Solutions (2022-01 – 2025-05)
-  • Implemented ReactJS-based user interfaces with React hooks and custom hooks, enhancing user engagement and reducing load times by 20%.
-  • Developed scalable Node.js APIs using Express.js and MongoDB, ensuring seamless integration with front-end applications.
-  • Contributed to the development of a Java-based backend using Spring Boot, optimizing database queries and improving application performance by 30%.
-  • Led a team of 3 developers and 2 interns, mentoring junior developers and providing technical guidance to improve code quality and project delivery.
-[Kinh nghiệm] Fullstack Developer – CodeCrafters (2025-06 – nay)
-  • Created responsive web applications using ReactJS, integrating with RESTful APIs built with Node.js and Express.js, resulting in a 15% improvement in user satisfaction.
-  • Developed and maintained a Java-based web application using Spring MVC and Hibernate, ensuring data integrity and security.
-  • Collaborated with cross-functional teams to deliver projects on time, contributing to the development of 5+ web applications and 30+ features during my tenure.
-[Dự án] E-commerce Platform – Fullstack Developer
-  • Developed a comprehensive e-commerce platform using ReactJS for the frontend and Node.js for the backend, integrating payment gateways and inventory management systems.
-[Hoạt động] Tech Innovators Club – InnovateTech
-  • Participated in and organized hackathons, focusing on developing innovative solutions for local community issues.
-  • Led a team in creating a mobile app that helps elderly users manage their daily routines and connect with local services.
-[Hoạt động] Code for Good – Community Tech Hub
-  • Volunteered to teach coding basics to underprivileged children, aiming to inspire future tech talents.
-  • Contributed to a project that developed a website for a local animal shelter, enhancing their online presence and adoption rates.
-[Học vấn] Bachelor of Science in Information Technology – National Technology University
-[Kỹ năng] ReactJS, Node.js, Java
-[Chứng chỉ] Certified JavaScript Developer - CodeCrafters; Spring Framework Certification - Spring.io
-[Sở thích] Problem-solving and tackling complex coding challenges; Reading tech blogs and attending webinars to stay updated with the latest industry trends; Participating in open-source projects to contribute to the community; Exploring new technologies and experimenting with different programming languages
-[Ngoại ngữ] English Conversational; Vietnamese Native
-```
-
-## TR-46-14
-
-- Tin: Kỹ Sư Lập Trình Nhúng C/C++
-- Máy định viết: nghề "Backend Developer", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 60 tháng kinh nghiệm
-
-- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
-
-```text
-Kỹ Sư Lập Trình Nhúng C/C++
-Tôi là một Kỹ sư Lập trình Nhúng có 60 tháng kinh nghiệm trong việc phát triển hệ thốngBackend cho các ứng dụng đa nền tảng. Với kỹ năng mạnh mẽ trong C/C++, Linux, và quy trình quản lý code, tôi tự tin đem lại giải pháp kỹ thuật hiệu quả cho các dự án mới.
-[Kinh nghiệm] Backend Developer – TechWave Nha Trang (2021-11 – 2022-10)
-  • Phát triển và tối ưu hóa hệ thống backend với ngôn ngữ C/C++, tích hợp thành công 500+ API cho ứng dụng di động và web.
-  • Ứng dụng kiến thức về TCP/UDP để thiết kế giao thức mạng hiệu quả, cải thiện tốc độ tải trang và hiệu suất hệ thống.
-  • Đánh giá và triển khai mô hình thiết kế với các pattern như Singleton, Factory, và Observer, giúp tăng tính bảo mật và dễ dàng maintain code.
-[Kinh nghiệm] Backend Developer – CodeCraft (2022-11 – 2024-04)
-  • Làm việc trong nhóm để phát triển hệ thống backend cho một dịch vụ thương mại điện tử, giúp tăng hiệu suất hệ thống từ 20% lên 30% thông qua tối ưu hóa thuật toán.
-  • Giải quyết các vấn đề kỹ thuật liên quan đến quản lý phiên và lưu trữ thông tin người dùng, góp phần nâng cao trải nghiệm người dùng.
-  • Áp dụng Git và CMake/Makefile để quản lý codebase, đảm bảo quy trình phát triển hiệu quả và minh bạch.
-[Kinh nghiệm] Backend Developer – DataLink Solutions (2024-05 – nay)
-  • Phát triển API RESTful cho một ứng dụng quản lý dữ liệu lớn, hỗ trợ 1000+ user đồng thời.
-  • Tối ưu hóa quy trình build và phát hành với CMake, giảm thời gian build từ 20 phút xuống còn 3 phút.
-  • Đảm bảo code chất lượng cao thông qua quy trình code review và thực hành Clean Code.
-[Dự án] Hệ thống Truy cứu Dữ liệu Địa lý – Kỹ sư Lập trình
-  • Phát triển API cho hệ thống truy cứu dữ liệu địa lý, hỗ trợ tìm kiếm, phân loại và hiển thị thông tin.
-  • Tối ưu hóa tốc độ phản hồi API từ 500ms xuống còn 200ms, cải thiện trải nghiệm người dùng.
-[Học vấn] Cử nhân Công nghệ thông tin – Trường Đại học Công nghệ Nha Trang
-[Kỹ năng] GDB, TCP/UDP, OOP, Git, STL, Design Pattern, C/C++, Linux, CMake/Makefile, Clean code, Multithreading
-[Chứng chỉ] Giấy chứng nhận chuyên môn lập trình C/C++; Chứng chỉ quản lý code và quy trình phát triển mềm
-[Giải thưởng] Giải nhất trong cuộc thi lập trình nội bộ tại công ty TechPro tháng 12 năm 2022.; Danh hiệu 'Sáng tạo Công nghệ' từ ban lãnh đạo công ty TechGuru năm 2021.
-[Sở thích] Đọc sách kỹ thuật và công nghệ để cập nhật xu hướng mới; Tham gia diễn đàn lập trình và chia sẻ kiến thức; Làm việc nhóm và hợp tác với các kỹ sư khác; Phát triển các dự án cá nhân liên quan đến công nghệ và lập trình
+Cloud Engineer
+Cử nhân chuyên ngành Công nghệ Thông tin, tôi có hơn 7.5 năm kinh nghiệm làm việc trong lĩnh vực Cloud Engineering. Với kinh nghiệm và kỹ năng chuyên môn của mình, tôi mong muốn tiếp tục phát triển sự nghiệp tại một công ty tiên phong trong ngành công nghệ.
+[Kinh nghiệm] Cloud Engineer – CloudTech Solutions (2019-05 – 2024-01)
+  • Làm việc với công ty đa quốc gia tại Đà Nẵng, vận hành và quản lý hệ thống hạ tầng-cloud AWS, giúp cải thiện hiệu suất hệ thống của công ty lên 30%.
+  • Phát triển và triển khai các script Linux để tối ưu hóa quy trình quản lý hệ thống, giảm thời gian vận hành từ 20% xuống còn 10%. 
+  • Hợp tác với đội ngũ kỹ thuật toàn cầu để giải quyết các vấn đề về an ninh mạng và bảo mật, đảm bảo hệ thống luôn hoạt động ổn định.
+[Kinh nghiệm] Cloud Engineer – TechCloud Ltd (2024-02 – nay)
+  • Cải thiện khả năng quản lý tài nguyên cloud AWS, giúp tiết kiệm chi phí vận hành lên 25%.
+  • Tối ưu hóa quy trình triển khai ứng dụng dựa trên kinh nghiệm về Linux system administration, giúp tăng hiệu suất hệ thống lên 15%.
+  • Phối hợp với đội ngũ kỹ thuật để triển khai các chiến lược về Infrastructure as Code (Terraform), nâng cao khả năng quản lý hạ tầng-cloud.
+[Dự án] Tối ưu hóa hạ tầng-cloud AWS – Cloud Engineer
+  • Tối ưu hóa cấu hình và quản lý tài nguyên cloud AWS, giúp cải thiện hiệu suất và giảm chi phí vận hành.
+  • Triển khai các script và công cụ quản lý để tăng cường khả năng quản lý hệ thống.
+[Hoạt động] Tech Innovators Club – College of Digital Innovators
+  • Tham gia tổ chức và thực hiện dự án phát triển một hệ thống quản lý tài nguyên đám mây cho tổ chức giáo dục địa phương.
+  • Giúp tăng hiệu quả quản lý tài nguyên công nghệ thông tin cho hơn 20 trường học trong khu vực.
+[Học vấn] Cử nhân Công nghệ Thông tin – Đại học Kỹ thuật Đa Nghiệp Đà Nẵng
+[Kỹ năng] AWS, Linux
+[Chứng chỉ] AWS Certified Solutions Architect - Associate; Linux Professional Institute (LPI) Certified System Administrator
+[Sở thích] Khám phá công nghệ mới và ứng dụng trong thực tế; Thiết kế và tối ưu hóa hệ thống mạng; Xây dựng các ứng dụng dựa trên đám mây; Đọc sách về công nghệ và quản trị đám mây
 [Ngoại ngữ] Tiếng Anh Làm việc
 ```
 
-## TR-48-00
+## TR-34-13
 
-- Tin: Sales Logistics With 2 Years Of Experience
-- Máy định viết: nghề "Sales Logistics", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 11 tháng kinh nghiệm
-
-- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
-
-```text
-Sales Logistics
-Với 11 tháng kinh nghiệm trong lĩnh vực Sales Logistics, tôi đã cống hiến cho việc xây dựng và thực hiện các chiến lược kinh doanh, giải quyết các vấn đề thương mại hàng hóa hiệu quả. Tôi tự hào với những thành công trong quá khứ và sẵn lòng tiếp tục phát triển sự nghiệp tại vị trí mới.
-[Kinh nghiệm] Sales Logistics – LogiTech Solutions (2025-12 – nay)
-  • Lãnh đạo một đội ngũ bán hàng với 5 thành viên, đạt chỉ tiêu doanh thu 150 triệu đồng/tháng.
-  • Giải quyết 30 vụ tranh chấp về hàng hóa mỗi tháng thông qua kỹ năng giao tiếp và lắng nghe khách hàng.
-  • Đàm phán thành công với các đối tác cung cấp và khách hàng, giúp tăng doanh thu 20% trong 6 tháng đầu tiên.
-  • Sử dụng Microsoft Office hiệu quả để quản lý dữ liệu khách hàng và báo cáo kinh doanh.
-  • Tăng cường hiệu quả vận chuyển bằng cách tối ưu hóa quy trình vận chuyển, giảm thời gian vận chuyển trung bình từ 5 ngày xuống còn 3 ngày.
-[Dự án] Tối ưu hóa quy trình vận chuyển – Lãnh đạo dự án
-  • Tổ chức và thực hiện nghiên cứu thị trường để cải tiến quy trình vận chuyển.
-  • Hợp tác với các bên liên quan để xây dựng giải pháp tối ưu.
-  • Giảm thời gian vận chuyển trung bình từ 5 ngày xuống còn 3 ngày, tăng hiệu quả hoạt động lên 20%.
-[Hoạt động] Mạng lưới Logistics Việt Nam – Nhóm Logistic Trẻ
-  • Tham gia tổ chức các buổi chia sẻ kinh nghiệm về quản lý chuỗi cung ứng trong ngành vận tải và lưu kho.
-  • Nghiên cứu và phát triển các chiến lược tối ưu hóa quá trình vận chuyển và giao hàng cho các công ty nhỏ và vừa trong khu vực.
-[Học vấn] Cao đẳng Kinh tế quốc tế – Trường Đại học Kinh tế Hà Nội
-[Kỹ năng] Lắng nghe, Giải quyết vấn đề, Đàm phán, Microsoft Office, Giao tiếp
-[Chứng chỉ] Microsoft Office Proficiency Certificate
-[Giải thưởng] Giải nhất cuộc thi Logistic sáng tạo; Học bổng kinh doanh xuất sắc từ Trường Quản lý Kinh tế và Logistics (tổ chức tự đặt)
-[Ngoại ngữ] Tiếng Anh Làm việc; Tiếng Trung Giao tiếp
-```
-
-## TR-49-04
-
-- Tin: Nhân Viên Telesales/ Chăm Sóc Khách Hàng
-- Máy định viết: nghề "Telesales", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 14 tháng kinh nghiệm
+- Tin: Thủ Kho Dược
+- Máy định viết: nghề "Nhân viên kho", khớp một phần: đúng nghề của tin nhưng thiếu kỹ năng hoặc kinh nghiệm, 44 tháng kinh nghiệm
 
 - [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
 
 ```text
-Telesales Representative
-A detail-oriented and customer-focused professional with 14 months of experience in telesales, delivering exceptional customer service and achieving high sales targets.
-[Kinh nghiệm] Telesales Representative – SunnySales Solutions (2025-09 – nay)
-  • Achieved a 95% customer satisfaction rate by actively listening and addressing customer needs.
-  • Increased monthly sales by 30% through effective communication and upselling techniques.
-  • Managed a CRM database of over 500 clients, ensuring accurate and up-to-date information.
-  • Utilized Excel for data analysis and report generation, providing insights for sales strategy improvement.
-  • Developed strong interpersonal skills through regular customer interactions and Zalo-based follow-ups.
-[Dự án] Customer Feedback Survey – Telesales Representative
-  • Conducted a comprehensive customer feedback survey across 300 clients, resulting in actionable insights for service improvement.
-[Hoạt động] Volunteer for Green Future – Local Environmental Club
-  • Assisted in organizing community clean-up events and waste management workshops.
-  • Collaborated with local businesses to implement recycling initiatives.
-  • Increased community awareness on sustainable practices through public speaking engagements.
-[Học vấn] Bachelor of Business Administration - Marketing – HCMC University of Economics and Finance
-[Kỹ năng] Telesales, Excel, Chăm sóc khách hàng, Zalo, CRM, Giao tiếp
-[Chứng chỉ] Customer Service Excellence Certification; Sales Leadership Training Program
-[Sở thích] Traveling to explore different cultures and cuisines.; Reading self-improvement books to enhance personal and professional growth.; Listening to motivational podcasts to stay inspired and positive.; Participating in online gaming communities to connect with people and develop teamwork skills.
-[Ngoại ngữ] English Working proficiency TOEIC 650; Vietnamese Native
+Thủ Kho Dược
+Có 44 tháng kinh nghiệm làm việc trong lĩnh vực kho dược, với khả năng quản lý kho, xử lý tình huống và giao tiếp hiệu quả. Kỹ năng trung thực và có trách nhiệm giúp tôi hoàn thành tốt công việc và góp phần vào sự phát triển của các công ty trước đây.
+[Kinh nghiệm] Nhân viên Kho – Công ty Vạn Dược (2023-03 – 2023-08)
+  • Có trách nhiệm trong việc kiểm kê và sắp xếp thuốc, đảm bảo kho được quản lý chặt chẽ.
+  • Đảm bảo quy trình quản lý kho tuân thủ theo quy định của Bộ Y Tế, với số lượng hàng tồn từ 5.000 - 10.000 đơn vị mỗi ngày.
+  • Trung thực trong công việc, không để xảy ra sai sót lớn nào trong 44 tháng làm việc.
+  • Giao tiếp hiệu quả với nhân viên và khách hàng, giải quyết các vấn đề nhanh chóng và hiệu quả.
+  • Xử lý tình huống khẩn cấp liên quan đến quản lý kho, như lỗi hàng, mất mát thuốc, với tỷ lệ giải quyết thành công là 98%.
+[Kinh nghiệm] Nhân viên Kho – Công ty Dược Thạnh Lợi (2023-09 – 2026-09)
+  • Kiểm kê và phân loại thuốc theo hướng dẫn của nhà sản xuất, đảm bảo thuốc được lưu trữ đúng quy định.
+  • Hỗ trợ trong việc quản lý quy trình nhập xuất kho, với số lượng thuốc trung bình mỗi ngày là 2.000 đơn vị.
+  • Trung thực trong việc ghi chép và báo cáo số lượng tồn kho, không để xảy ra sai sót.
+  • Có khả năng xử lý tình huống khẩn cấp như mất mát thuốc, với tỷ lệ giải quyết thành công là 95%.
+  • Xây dựng mối quan hệ tốt với nhân viên kho và khách hàng, đảm bảo giao tiếp thông suốt và hiệu quả.
+[Kinh nghiệm] Nhân viên Kho – Công ty Dược Phúc Lợi (2026-10 – nay)
+  • Quản lý và kiểm soát kho hàng, đảm bảo số lượng thuốc luôn đáp ứng nhu cầu bán hàng.
+  • Xử lý tình huống như kiểm kê sai số, mất mát thuốc nhanh chóng, với tỷ lệ giải quyết thành công là 99%.
+  • Giao tiếp hiệu quả với các bộ phận liên quan, như phòng kinh doanh và phòng quản lý chất lượng.
+  • Thực hiện việc sắp xếp và lưu trữ thuốc theo quy định, đảm bảo an toàn và tiện lợi trong quá trình lấy thuốc.
+  • Kiểm soát quy trình nhập xuất kho, đảm bảo tuân thủ các quy định về quản lý kho dược.
+[Dự án] Kiểm kê kho dược – Thủ Kho
+  • Lãnh đạo công việc kiểm kê kho hàng, đảm bảo số lượng và chất lượng thuốc được kiểm soát chặt chẽ.
+  • Phối hợp với đội ngũ nhân viên để thực hiện công việc kiểm kê nhanh chóng và chính xác.
+  • Xác minh và điều chỉnh số lượng thuốc khi cần thiết, đảm bảo sự chính xác của số liệu.
+[Học vấn] Trung cấp Dược – Trường Dược Cần Thơ
+[Kỹ năng] Trung thực, Có trách nhiệm, Kho dược, Xử lý tình huống, Quản lý kho, Giao tiếp
+[Chứng chỉ] Chứng chỉ quản lý kho dược; Chứng chỉ xử lý tình huống quản lý kho
+[Sở thích] Xem phim khoa học viễn tưởng; Đọc sách về quản lý logistics; Thử thách bản thân qua các trò chơi giải đố; Tham gia các lớp học trực tuyến về quản trị kho
 ```
 
-## TR-49-11
+## TR-38-06
 
-- Tin: Nhân Viên Telesales/ Chăm Sóc Khách Hàng
-- Máy định viết: nghề "Sales Logistics", vị trí gần: nghề khác nhưng cùng mảng với tin, 15 tháng kinh nghiệm
+- Tin: Thực Tập Sinh Kế Toán, Thu Nhập 10 Triệu Tại Long Biên, Hà Nội, Chỉ Tuyển Nữ 2005
+- Máy định viết: nghề "Kế toán nội bộ", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 21 tháng kinh nghiệm
 
 - [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
 
 ```text
-Telesales/ Customer Care Agent
-A proactive and detail-oriented professional with a Bachelor’s degree in Logistics Management, skilled in excellent communication, Microsoft Office, and freight forwarding. Adept at handling customer queries and ensuring satisfaction through clear and patient communication.
-[Kinh nghiệm] Sales Logistics Coordinator – LogiFlex Solutions (2025-08 – nay)
-  • Managed customer inquiries and provided solutions for logistical issues, resulting in a 20% increase in customer satisfaction scores.
-  • Processed over 200 shipping and forwarding requests per month, ensuring timely and accurate delivery of goods.
-  • Utilized Microsoft Office Suite to maintain customer databases and track shipment statuses, enhancing operational efficiency by 15%.
-  • Trained new team members on freight forwarding procedures, contributing to a 10% improvement in team performance.
-[Hoạt động] Logistics Leaders Club – Student Organization
-  • Organized bi-weekly workshops on logistics and supply chain management for students and professionals.
-  • Facilitated networking sessions with industry experts, helping to connect students with potential employers.
-[Hoạt động] Volunteer at Local Food Bank – Community Service
-  • Collected and distributed food and essential items to underprivileged families in the community.
-  • Participated in logistics planning and coordination for food distribution events.
-[Học vấn] Bachelor of Science in Logistics Management – Hanoi University of Science and Technology
-[Kỹ năng] Giao tiếp, Microsoft Office, Freight Forwarding
-[Chứng chỉ] Certified Logistics Associate (CLA); Microsoft Office Specialist - Expert
-[Ngoại ngữ] English Conversational; Vietnamese Native
+Kế toán nội bộ
+Có 21 tháng kinh nghiệm làm việc trong lĩnh vực kế toán nội bộ tại các công ty vừa và nhỏ ở Nha Trang. Tốt nghiệp Thạc sĩ Kế toán, luôn đảm bảo giao tiếp hiệu quả và làm việc nhanh nhẹn, cẩn thận.
+[Kinh nghiệm] Kế toán nội bộ – Công ty TNHH Dịch vụ Tài chính Nha Trang (2025-02 – 2025-08)
+  • Cân đối kế toán hàng tháng, đảm bảo chính xác và tuân thủ các quy định kế toán.
+  • Tích cực giao tiếp với các bộ phận liên quan để thu thập thông tin, giải quyết các vấn đề phát sinh.
+  • Lập báo cáo tài chính và hỗ trợ cho việc ra quyết định quản lý.
+  • Cẩn thận trong quá trình kiểm soát hồ sơ kế toán, đảm bảo không để xảy ra sai sót.
+[Kinh nghiệm] Kế toán nội bộ – Công ty TNHH Thương mại Quốc tế Nha Trang (2025-09 – 2026-03)
+  • Tham gia vào quá trình xây dựng và thực hiện các quy trình kế toán hiệu quả.
+  • Có kinh nghiệm làm việc với các công cụ kế toán như MISA và QuickBooks.
+  • Tổ chức và duy trì hệ thống tài liệu kế toán, đảm bảo lưu trữ an toàn và dễ dàng truy cứu.
+  • Nhanh nhẹn trong việc xử lý các yêu cầu từ bộ phận kế toán và các phòng ban khác.
+[Kinh nghiệm] Kế toán nội bộ – Công ty TNHH Dịch vụ Bất động sản Nha Trang (2026-04 – nay)
+  • Cân đối và kiểm soát ngân sách hàng tháng cho các dự án bất động sản.
+  • Hỗ trợ bộ phận kinh doanh trong việc quản lý chi phí và thu hồi khoản nợ.
+  • Cẩn thận trong việc xử lý hồ sơ kế toán và lưu trữ các tài liệu liên quan.
+  • Tham gia vào việc kiểm kê hàng tồn kho định kỳ.
+[Dự án] Xây dựng hệ thống quản lý tài chính tự động – Thành viên
+  • Tham gia thiết kế và triển khai hệ thống quản lý tài chính tự động, giúp cải thiện hiệu suất làm việc.
+  • Tạo ra các quy trình và hướng dẫn sử dụng hệ thống cho các thành viên trong nhóm.
+[Hoạt động] Clube de Contabilidade – Cộng đồng kế toán trẻ
+  • Tham gia tổ chức các buổi thảo luận về quy định mới trong lĩnh vực kế toán.
+  • Tham gia tổ chức sự kiện từ thiện giúp đỡ học sinh có hoàn cảnh khó khăn.
+[Học vấn] Thạc sĩ Kế toán - Kiểm toán – Đại học Tài chính - Kế toán Thành phố Hồ Chí Minh
+[Kỹ năng] Giao tiếp, Nhanh nhẹn, Cẩn thận
+[Chứng chỉ] Thực hành viên kế toán; Kiểm soát rủi ro tài chính cấp độ 1
+[Giải thưởng] Giải thưởng Kế toán xuất sắc 2021; Học viên xuất sắc trong lĩnh vực kiểm toán nội bộ năm 2020
+[Sở thích] Đọc sách về tài chính và quản trị doanh nghiệp; Tham gia các khóa học trực tuyến về công nghệ tài chính; Chơi guitar và tham gia các buổi biểu diễn văn nghệ; Đi dạo và chụp ảnh ở các công viên địa phương
 ```
 
-## TR-51-12
+## TR-42-14
 
-- Tin: Sales Admin & Supply Chain Planning
-- Máy định viết: nghề "Sales Admin", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 80 tháng kinh nghiệm
+- Tin: Technical Support
+- Máy định viết: nghề "IT Helpdesk", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 75 tháng kinh nghiệm
 
 - [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
 
 ```text
-Sales Admin
-Với hơn 80 tháng kinh nghiệm trong lĩnh vực quản lý bán hàng, tôi tự tin mang đến cho công ty của bạn sự kết hợp giữa kỹ năng giao tiếp xuất sắc, quản lý nhóm hiệu quả, và xử lý logistics chuyên nghiệp.
-[Kinh nghiệm] Sales Admin – ABC Marketing Solutions (2020-03 – 2022-05)
-  • Sử dụng Excel hiệu quả để quản lý đơn hàng, tăng doanh thu 20% trong năm đầu tiên.
-  • Lãnh đạo nhóm bán hàng nhỏ, đảm bảo mục tiêu hàng tháng đều được hoàn thành.
-  • Tối ưu hóa quy trình logistics, giúp giảm thời gian giao hàng từ 3 ngày xuống còn 2 ngày.
-[Kinh nghiệm] Sales Admin – DEF Business Hub (2022-06 – 2023-05)
-  • Cải thiện khả năng giao tiếp với khách hàng, giảm tỷ lệ khiếu nại 15%. 
-  • Tạo ra môi trường làm việc nhóm hiệu quả, tăng năng suất 10%.
-  • Sử dụng các công cụ tin học văn phòng hiệu quả trong quản lý thông tin khách hàng.
-[Kinh nghiệm] Sales Admin – GHI Logistics Services (2023-06 – nay)
-  • Tạo ra quy trình logistics mới, nâng cao hiệu suất vận chuyển lên 30%.
-  • Tổ chức các cuộc họp nhóm định kỳ, cung cấp thông tin cho khách hàng, tăng độ hài lòng 20%.
-  • Sử dụng Excel để lập báo cáo doanh thu, giúp quản lý tài chính hiệu quả hơn.
-[Dự án] Tăng cường quản lý bán hàng – Lãnh đạo
-  • Tổ chức các cuộc họp định kỳ để đánh giá và cải thiện quy trình bán hàng.
-  • Nâng cao kỹ năng giao tiếp với khách hàng, giảm tỷ lệ khiếu nại.
-[Học vấn] Cao đẳng Kinh tế Công nghiệp – Trường ĐH Công nghệ Bách Khoa Đà Nẵng
-[Kỹ năng] Excel, Làm việc nhóm, Giao tiếp, Tin học văn phòng, logistic
-[Chứng chỉ] Chứng chỉ Excel Advanced; Chứng chỉ Quản lý dự án
-[Sở thích] Học hỏi và cập nhật thông tin về công nghệ số trong ngành bán hàng.; Chơi thể thao, đặc biệt là bóng rổ, để giải tỏa stress sau giờ làm việc.; Thăm thú văn hóa địa phương và tìm hiểu về các nền văn hóa khác nhau.; Đọc sách về kỹ năng bán hàng và quản lý khách hàng
+IT Helpdesk Specialist
+Kinh nghiệm 7 năm trong lĩnh vực IT Support, chuyên xử lý sự cố máy tính và phần cứng, giải quyết vấn đề công nghệ thông tin nhanh chóng và hiệu quả. Có kỹ năng giao tiếp tốt và tinh thần làm việc nhóm tích cực.
+[Kinh nghiệm] IT Helpdesk – TechSupport Solutions (2020-08 – 2021-07)
+  • Quản lý và khắc phục sự cố máy tính cho 500 nhân viên, giảm thời gian mất công tác từ 4 giờ xuống còn 2 giờ trong vòng 6 tháng.
+  • Hỗ trợ 24/7, giải quyết vấn đề mạng và phần cứng cho các máy tính, bảng, và điện thoại di động của công ty.
+  • Tổ chức đào tạo cho đội ngũ kỹ thuật viên mới về các công cụ quản lý mạng và phần mềm hỗ trợ công nghệ.
+[Kinh nghiệm] IT Helpdesk – OnlineMart (2021-08 – 2023-09)
+  • Giải quyết các vấn đề về máy tính và phần cứng cho 300 nhân viên thương mại điện tử, cải thiện hiệu suất công việc lên 30%.
+  • Xây dựng và duy trì hệ thống quản lý sự cố (Incident Management System) để theo dõi và ghi chép các vấn đề kỹ thuật.
+  • Cải thiện chất lượng dịch vụ bằng cách tăng thời gian phản hồi từ 15 phút xuống còn 5 phút trong vòng 3 tháng.
+[Kinh nghiệm] IT Helpdesk – EcomTech (2023-10 – nay)
+  • Giải quyết các vấn đề về hệ điều hành Windows cho 200 nhân viên, giảm thời gian hỏng máy tính trung bình từ 3 ngày xuống còn 1 ngày.
+  • Phát triển quy trình giao tiếp rõ ràng để đảm bảo thông tin về vấn đề kỹ thuật được truyền đạt một cách hiệu quả.
+  • Thực hiện kiểm tra định kỳ cho hệ thống mạng và thiết bị mạng, đảm bảo hoạt động ổn định 99.9%.
+[Hoạt động] Cộng Đồng Công Nghệ – Dự án tự tạo
+  • Tổ chức các buổi seminar về công nghệ cho sinh viên và người dân địa phương.
+  • Lập trình ứng dụng nhỏ hỗ trợ quản lý rác thải trong cộng đồng.
+[Học vấn] Thạc sĩ Công nghệ thông tin – University of Information Technology
+[Kỹ năng] Khắc phục sự cố máy tính, Phần cứng máy tính, Giải quyết vấn đề, Giao tiếp, Windows
+[Chứng chỉ] Microsoft Certified: IT Pro; CompTIA A+
+[Sở thích] Đọc sách kỹ thuật và khoa học; Phát triển ứng dụng di động; Chơi game offline; Du lịch khám phá
+[Ngoại ngữ] Tiếng Anh Giao tiếp IELTS 5.5
 ```
 
-## TR-52-00
+## TR-44-03
 
-- Tin: Sales Admin
-- Máy định viết: nghề "Sales Admin", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 49 tháng kinh nghiệm
-
-- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
-
-```text
-Sales Admin
-Cử nhân Quản trị kinh doanh, với 49 tháng kinh nghiệm trong vai trò Sales Admin, tôi đã cống hiến cho 3 công ty bán lẻ ở Cần Thơ, luôn đảm bảo hiệu suất công việc cao và đạt được mục tiêu doanh số tốt.
-[Kinh nghiệm] Sales Admin – Tiếng Việt Xanh (2022-10 – 2023-08)
-  • Tối ưu hóa quy trình quản lý kho hàng, giảm thiểu thời gian xử lý đơn hàng lên tới 30%.
-  • Lập báo cáo doanh thu hàng tháng cho ban quản lý, hỗ trợ các quyết định kinh doanh.
-  • Lãnh đạo nhóm 10 nhân viên, đảm bảo tất cả công việc đều được sắp xếp và thực hiện theo đúng kế hoạch.
-[Kinh nghiệm] Sales Admin – Chuỗi Mộc (2023-09 – 2025-12)
-  • Phân tích dữ liệu bán hàng từ Excel, giúp nâng cao doanh số 15% trong ba tháng đầu tiên.
-  • Giao tiếp hiệu quả với khách hàng và nhân viên, đảm bảo việc đặt hàng và giao hàng được thực hiện nhanh chóng.
-  • Sắp xếp lịch trình làm việc và các sự kiện kinh doanh, giúp công ty tổ chức các sự kiện thành công.
-[Kinh nghiệm] Sales Admin – Tiếng Việt Rạng (2026-01 – nay)
-  • Lập và gửi báo cáo bán hàng hàng tuần cho các đối tác, tăng cường mối quan hệ hợp tác.
-  • Hỗ trợ trong việc triển khai các chiến dịch bán hàng mới, đảm bảo tất cả công việc đều được sắp xếp trước thời hạn.
-  • Cải thiện quy trình giao dịch, giúp thời gian xử lý đơn hàng giảm 20%.
-[Hoạt động] Volunteer Coordinator – Học Hội Sales
-  • Điều phối các hoạt động tình nguyện và sự kiện của Học Hội Sales, tập trung vào việc nâng cao nhận thức về quyền lợi của người tiêu dùng.
-  • Hợp tác với các tổ chức địa phương để tổ chức các buổi workshop về kỹ năng bán hàng và quản lý khách hàng.
-[Hoạt động] Tech Enthusiasts Club – Cộng đồng công nghệ địa phương
-  • Tạo và duy trì các dự án kỹ thuật dựa trên yêu cầu của người tiêu dùng, giúp họ hiểu rõ hơn về các công nghệ mới.
-  • Chia sẻ kiến thức kỹ thuật thông qua các buổi webinar định kỳ.
-[Học vấn] Cử nhân Quản trị kinh doanh – Trường Đại học Kinh tế Cần Thơ
-[Kỹ năng] Microsoft Office, Excel, Sắp xếp công việc, Giao tiếp
-[Chứng chỉ] Thư ký chuyên nghiệp; Học viện Kỹ năng quản lý
-[Ngoại ngữ] Tiếng Anh Làm việc TOEIC 750
-```
-
-## TR-57-14
-
-- Tin: Nhân Viên Chăm Sóc Khách Hàng/ Tư Vấn / Sales Căn Hộ
-- Máy định viết: nghề "Nhân viên CSKH", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 93 tháng kinh nghiệm
-
-- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
-
-```text
-Nhân viên CSKH
-Có hơn 9 năm kinh nghiệm trong lĩnh vực chăm sóc khách hàng, luôn sẵn lòng học hỏi và cải thiện kỹ năng của mình.
-[Kinh nghiệm] Nhân viên CSKH – TechCare Solutions (2019-02 – 2021-04)
-  • Chủ động hỗ trợ hơn 200 khách hàng mỗi ngày qua điện thoại, chat trực tuyến và email.
-  • Giải quyết 95% yêu cầu của khách hàng trong vòng 24 giờ, giảm thời gian phản hồi từ 3 giờ xuống còn 1 giờ.
-  • Hỗ trợ đội ngũ kỹ thuật trong việc giải quyết các vấn đề công nghệ thông qua điện thoại và trực tuyến.
-[Kinh nghiệm] Nhân viên CSKH – E-Service Hub (2021-05 – 2023-08)
-  • Ham học hỏi và áp dụng kiến thức mới vào công việc, giúp cải thiện độ hài lòng của khách hàng lên 90%.
-  • Tư vấn và hỗ trợ khách hàng mua sắm trực tuyến, tăng doanh số bán hàng tới 15%.
-  • Tạo và quản lý hồ sơ khách hàng, cập nhật thông tin mới thường xuyên.
-[Kinh nghiệm] Nhân viên CSKH – OnlineMart (2023-09 – nay)
-  • Chủ động lắng nghe và giải quyết các vấn đề của khách hàng, giúp tỷ lệ khách hàng quay lại tăng 20%.
-  • Hỗ trợ khách hàng trong việc lựa chọn sản phẩm phù hợp, từ đó tăng doanh thu cho công ty.
-  • Tham gia các khóa đào tạo kỹ năng giao tiếp và giải quyết vấn đề.
-[Học vấn] Trung học phổ thông - Kỹ thuật điện tử – Trường Trung học phổ thông Lương Định Của, Hà Nội
-[Kỹ năng] Chủ động, Ham học hỏi
-[Sở thích] Sách và văn hóa đọc; Du lịch khám phá các địa điểm mới; Quay video và chỉnh sửa clip; Tham gia các buổi cafe sách với bạn bè
-[Ngoại ngữ] Tiếng Anh Giao tiếp
-```
-
-## TR-58-06
-
-- Tin: Nhân Viên Kinh Doanh / Sale / Tư Vấn Bất Động Sản
-- Máy định viết: nghề "Môi giới bất động sản", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 0 tháng kinh nghiệm
-
-- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
-
-```text
-Kinh Doanh Bất Động Sản
-Tốt nghiệp Cao đẳng Marketing, tôi đã có kinh nghiệm giao tiếp và đàm phán qua thời gian làm việc tại một công ty bán lẻ tại Đà Nẵng. Mong muốn phát triển sự nghiệp trong lĩnh vực bất động sản tại Hà Nội.
-[Dự án] Phụ Trợ Kinh Doanh – Sunny Mart
-  • Công tác tại Sunny Mart, một chuỗi bán lẻ tại Đà Nẵng, tôi đã phát triển kỹ năng giao tiếp và đàm phán, giúp tăng doanh thu bán hàng 15% trong 6 tháng đầu làm việc.
-  • Tham gia vào quá trình tư vấn và hỗ trợ khách hàng, tôi đã giúp công ty tăng số lượng khách hàng tiềm năng lên 20%.
-  • Thực hiện các chiến dịch quảng cáo và giảm giá, giúp tăng doanh số bán hàng lên 25% trong các dịp cuối năm.
-[Dự án] Cải tiến quy trình bán hàng – Thực hiện
-  • Đề xuất và triển khai quy trình bán hàng mới, giúp giảm thời gian giao dịch của mỗi khách hàng từ 15 phút xuống còn 5 phút.
-  • Giúp tăng hiệu quả bán hàng và doanh thu cho cửa hàng.
-[Hoạt động] Tổng thư ký câu lạc bộ bất động sản trẻ – Hội sinh viên đại học XYZ
-  • Chịu trách nhiệm tổ chức các sự kiện giới thiệu về thị trường bất động sản cho sinh viên
-  • Tạo cầu nối giữa sinh viên và doanh nghiệp trong lĩnh vực bất động sản
-[Hoạt động] Thành viên nhóm tình nguyện  – Hội trợ sinh viên YYY
-  • Tham gia các hoạt động gây quỹ và thiện nguyện cho các dự án phát triển nhà ở cho người có thu nhập thấp
-  • Cung cấp thông tin và hỗ trợ tư vấn cho các gia đình có nhu cầu về nhà ở
-[Học vấn] Cao đẳng Marketing – Trường Đại Học Kinh Tế Đà Nẵng
-[Kỹ năng] Giao tiếp, Đàm phán
-[Chứng chỉ] Giải thưởng xuất sắc trong cuộc thi bán hàng; Chứng chỉ đào tạo kỹ năng giao tiếp hiệu quả
-[Sở thích] Đọc sách về đầu tư bất động sản; Thăm quan các dự án kiến trúc mới; Phân tích xu hướng thị trường bất động sản; Tập trung vào việc cải thiện kiến thức về luật bất động sản
-```
-
-## TR-63-11
-
-- Tin: Cloud Solution Architect AWS/Azure Senior, Middle
-- Máy định viết: nghề "Manual Tester", vị trí gần: nghề khác nhưng cùng mảng với tin, 113 tháng kinh nghiệm
-
-- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
-
-```text
-Manual Tester
-Có hơn 10 năm kinh nghiệm trong việc phát triển và bảo vệ chất lượng sản phẩm tại các chuỗi bán lẻ ở Hà Nội, với chuyên môn về kiểm thử thủ công và viết test case.
-[Kinh nghiệm] Manual Tester – TechVenture Retail (2017-06 – 2018-09)
-  • Đã thực hiện hơn 3000 test case trong giai đoạn phát triển sản phẩm mới, đảm bảo chất lượng sản phẩm trước khi đưa vào kinh doanh.
-  • Công việc này đã giúp TechVenture Retail tăng doanh số bán hàng 20% trong 12 tháng liên tiếp.
-  • Hỗ trợ đội ngũ kỹ thuật phát hiện và giải quyết hơn 500 lỗi trong các phiên bản sản phẩm, giảm thời gian ra mắt sản phẩm ra thị trường.
-  • Đã viết và thực hiện các test case cho 5 hệ thống khác nhau, giúp việc kiểm thử trở nên hiệu quả và chi tiết hơn.
-  • Tham gia vào quá trình cải tiến quy trình kiểm thử, giúp tiết kiệm 30% thời gian kiểm thử cho mỗi sản phẩm mới.
-[Kinh nghiệm] Manual Tester – RetailTech Innovations (2018-10 – nay)
-  • Đã thực hiện hơn 2500 test case cho 10 sản phẩm khác nhau, góp phần vào việc cải thiện chất lượng sản phẩm của công ty.
-  • Các test case mà tôi thực hiện đã giúp phát hiện hơn 350 lỗi, giảm chi phí sửa lỗi và nâng cao uy tín của công ty.
-  • Đã hỗ trợ đội ngũ phát triển phát hiện và giải quyết các vấn đề kỹ thuật, giảm thời gian ra mắt sản phẩm ra thị trường.
-  • Tham gia vào quá trình đào tạo và hỗ trợ các đồng nghiệp mới trong kỹ năng kiểm thử thủ công.
-  • Đã viết và thực hiện các test case cho 8 hệ thống khác nhau, giúp việc kiểm thử trở nên hiệu quả và chi tiết hơn.
-[Hoạt động] Club Tester – Hội Testing địa phương
-  • Tham gia tổ chức các buổi meet-up chia sẻ kinh nghiệm về kiểm thử phần mềm
-  • Lãnh đạo nhóm thực hiện dự án kiểm thử cho một ứng dụng di động
-  • Giúp đỡ các thành viên mới trong nhóm qua các bài kiểm thử cơ bản
-[Học vấn] Cử nhân Công nghệ thông tin – Đại học Công nghệ Hà Nội
-[Kỹ năng] Manual Testing, Viết test case
-[Sở thích] Đọc sách về kỹ thuật phần mềm; Tham gia các buổi diễn thử ứng dụng; Luyện tập sử dụng các công cụ kiểm thử tự động; Theo dõi các tin tức về công nghệ và phát triển phần mềm
-[Ngoại ngữ] Tiếng Anh Cơ bản
-```
-
-## TR-65-08
-
-- Tin: Senior Programmer QA Specialist DevOps, C#, .Net
-- Máy định viết: nghề "DevOps Engineer", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 0 tháng kinh nghiệm
+- Tin: Trưởng Nhóm Support Phần Mềm/Leader Support
+- Máy định viết: nghề "DevOps Engineer", vị trí gần: nghề khác nhưng cùng mảng với tin, 17 tháng kinh nghiệm
 
 - [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
 
 ```text
 DevOps Engineer
-Ứng viên đang tìm kiếm cơ hội phát triển sự nghiệp trong lĩnh vực DevOps Engineer. Với bằng Thạc sĩ về Công nghệ thông tin và kinh nghiệm làm việc trong lĩnh vực ngân hàng, ứng viên tự tin sẽ đóng góp vào sự phát triển của tổ chức.
-[Dự án] DevOps Engineer – TechSolutions
-  • Hỗ trợ triển khai hệ thống .NET và C# để cải thiện hiệu suất và độ tin cậy của dịch vụ ngân hàng tại TechSolutions.
-  • Tối ưu hóa quy trình quản lý dự án bằng cách sử dụng Jira để giám sát tiến trình phát triển và triển khai.
-  • Phát triển và duy trì các script và công cụ tự động hóa để tối ưu hóa quy trình vận hành IT.
-[Học vấn] Thạc sĩ Công nghệ thông tin – Học viện Công nghệ Đà Nẵng
-[Kỹ năng] .NET, DevOps, Jira, C#, jQuery, JavaScript
-[Chứng chỉ] Coursier Jira Certification; Certified .NET Developer
-[Ngoại ngữ] Tiếng Anh Thành thạo; Tiếng Pháp Làm việc
-```
-
-## TR-67-02
-
-- Tin: Bridge Software Engineer N2 JLPT
-- Máy định viết: nghề "Backend Developer", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 80 tháng kinh nghiệm
-
-- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
-
-```text
-Backend Developer
-Có kinh nghiệm làm việc 80 tháng với vị trí Backend Developer, với 3 dự án khác nhau. Chuyên về quản lý dự án, BrSE và lập trình Java, Python.
-[Kinh nghiệm] Backend Developer tại công ty ABC – ABC Software (2020-03 – 2020-11)
-  • Đã lãnh đạo 3 dự án với quy mô từ 10-15 người, giúp tăng hiệu suất làm việc 20%.
-  • Phát triển hệ thống quản lý dự án (Project Management System) bằng Java, giảm thời gian triển khai dự án 30%.
-  • Cải tiến quy trình BrSE, nâng cao chất lượng sản phẩm và giảm số lỗi phát sinh 15%.
-  • Hỗ trợ giao tiếp IT giữa các đội ngũ kỹ thuật và khách hàng tại Nhật Bản, hỗ trợ làm việc tại Nhật.
-  • Tham gia triển khai hệ thống tự động hóa kiểm thử (Automation Testing), tăng độ tin cậy của sản phẩm 10%.
-[Kinh nghiệm] Backend Developer tại công ty XYZ – XYZ Innovations (2020-12 – 2025-12)
-  • Làm việc với nhóm 15 người, quản lý một dự án có quy mô 500+ chức năng.
-  • Sử dụng Python để viết script tự động hóa quá trình tích hợp hệ thống, tăng hiệu suất 30%.
-  • Thực hiện giao tiếp IT tiếng Nhật, hỗ trợ giao tiếp với khách hàng tại Nhật Bản.
-  • Tối ưu hóa quy trình BrSE, giúp giảm thời gian phát triển sản phẩm 20%.
-[Kinh nghiệm] Backend Developer tại công ty PQR – PQR Technologies (2026-01 – nay)
-  • Đối tác với các đội ngũ phát triển tại Nhật Bản, hỗ trợ giao tiếp IT và giải quyết vấn đề kỹ thuật.
-  • Phát triển ứng dụng quản lý dự án sử dụng Java, giúp đội ngũ quản lý công việc một cách hiệu quả.
-  • Tối ưu hóa quy trình BrSE, nâng cao chất lượng sản phẩm và giảm thời gian phát triển 25%.
-[Dự án] Hệ thống quản lý dự án – Lãnh đạo dự án
-  • Phát triển hệ thống quản lý dự án sử dụng Java, giảm thời gian triển khai dự án 30%.
-[Học vấn] Thạc sĩ Kỹ thuật phần mềm – Trường ĐH Kỹ thuật Công nghệ A
-[Kỹ năng] Quản lý dự án, BrSE, Java, Giao tiếp IT tiếng Nhật, Python
-[Chứng chỉ] N2 JLPT - Chứng chỉ tiếng Nhật N2; PMP - Chứng chỉ quản lý dự án
-[Giải thưởng] Giải Ba Dự án Cao Cấp Công nghệ 2021; Học viên xuất sắc trong khóa đào tạo Backend Developer, Công ty Bằng Tự Thiết, năm 2020
-[Sở thích] Kode Wars - Trò chơi lập trình để rèn kỹ năng và nâng cao kiến thức công nghệ.; Đọc sách kỹ thuật và không kỹ thuật về công nghệ, đặc biệt là về phát triển phần mềm và quản lý dự án.; Viết blog về các chủ đề công nghệ và chia sẻ kiến thức với cộng đồng.; Xây dựng và bảo trì các dự án open-source cá nhân
-[Ngoại ngữ] Tiếng Nhật Thành thạo JLPT N2; Tiếng Anh Cơ bản
-```
-
-## TR-78-09
-
-- Tin: Graphic Designer
-- Máy định viết: nghề "Graphic Designer", khớp một phần: đúng nghề của tin nhưng thiếu kỹ năng hoặc kinh nghiệm, 40 tháng kinh nghiệm
-
-- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
-
-```text
-Thiết Kế Đồ Họa
-Có hơn 40 tháng kinh nghiệm trong lĩnh vực thiết kế đồ họa, với khả năng sáng tạo và tư duy linh hoạt. Tôi đã thực hiện nhiều dự án thiết kế hiệu quả, từ logo cho đến bao bì sản phẩm, đảm bảo đáp ứng đúng yêu cầu và tiêu chuẩn của khách hàng.
-[Kinh nghiệm] Thiết Kế Đồ Họa – Thiết Kế Xanh (2023-07 – 2023-09)
-  • Làm việc với 3ds Max và AI để tạo ra nội dung hình ảnh chất lượng cao cho các chiến dịch marketing của công ty.
-  • Chụp ảnh sản phẩm cho các cửa hàng nội thất, đảm bảo độ chi tiết và ánh sáng phù hợp.
-  • Sử dụng Video Production với CapCut để tạo các video giới thiệu sản phẩm cho các sự kiện trực tuyến.
-[Kinh nghiệm] Thiết Kế Đồ Họa – Sắc Mầu Xanh (2023-10 – 2025-09)
-  • Lãnh đạo một nhóm thiết kế đồ họa nhỏ, đảm bảo tiến độ và chất lượng công việc.
-  • Tích cực sử dụng Illustrator để thiết kế logo, bao bì sản phẩm và các ấn phẩm khác.
-  • Đóng vai trò quan trọng trong việc phát triển các chiến dịch marketing thông qua nội dung thiết kế đồ họa.
-[Kinh nghiệm] Thiết Kế Đồ Họa – Hue Design (2025-10 – nay)
-  • Trực tiếp thực hiện các dự án thiết kế cho các thương hiệu lớn tại TP. Hồ Chí Minh, đảm bảo chất lượng và thời gian giao hàng.
-  • Tham gia quá trình sáng tạo và chỉnh sửa hình ảnh, video cho các chiến dịch quảng cáo.
-  • Thiết kế và quản lý nội dung cho website và các ấn phẩm số của công ty.
-[Dự án] Logo và Bao Bì Sản Phẩm – Lãnh đạo dự án
-  • Tạo ra các logo và bao bì sản phẩm cho thương hiệu nội thất mới của công ty, tăng doanh số 30% trong 6 tháng đầu ra mắt.
-[Hoạt động] Phong Cách Studio – Hội Thầy Trò Mỹ Thuật
-  • Tham gia thiết kế poster và thiệp mời cho các sự kiện nghệ thuật địa phương.
-  • Tạo dựng mạng lưới kết nối với các nhà tạo mẫu và nhà xuất bản để tăng cơ hội hợp tác.
-[Học vấn] Thạc sĩ Thiết Kế Công Nghiệp – Học viện Nghệ Thuật Quốc Gia
-[Kỹ năng] Illustrator, 3ds Max, Video Production, Chụp ảnh, AI
-[Chứng chỉ] Chứng chỉ Adobe Creative Suite; Chứng chỉ Quản lý Dự Án
-[Sở thích] Thiết kế web và UI/UX; Hành trình khám phá các xu hướng thiết kế mới; Sáng tác nhạc cho các dự án cá nhân; Chụp ảnh và chỉnh sửa ảnh
-[Ngoại ngữ] Tiếng Anh Cơ bản
-```
-
-## TR-78-13
-
-- Tin: Graphic Designer
-- Máy định viết: nghề "Graphic Designer", khớp một phần: đúng nghề của tin nhưng thiếu kỹ năng hoặc kinh nghiệm, 0 tháng kinh nghiệm
-
-- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
-
-```text
-Thiết Kế Đồ Họa
-Tôi là một sinh viên mới tốt nghiệp Thạc sĩ ngành Thiết kế Đồ họa, với kinh nghiệm thiết kế và sản xuất video. Tôi đã thực hiện các dự án tại một ngân hàng ở Đà Nẵng, góp phần vào việc phát triển thương hiệu và quảng bá sản phẩm.
-[Dự án] Thiết Kế Đồ Họa – Ngân Hàng Việt.LinkedList
-  • Sử dụng CapCut để tạo các video quảng cáo ngân hàng, giúp tăng độ nhận diện thương hiệu lên 20%.
-  • Thiết kế các mẫu flyer, brochures và banners cho các sự kiện trong ngân hàng, đạt tỷ lệ chuyển đổi khách hàng tiềm năng lên 15%.
-  • Sáng tạo và thực hiện các chiến dịch truyền thông số, giúp tăng lưu lượng truy cập trang web của ngân hàng lên 30%.
-[Dự án] Dự Án Quảng Bá Trải Nghiệm Ngân Hàng – Thiết Kế Đồ Họa
-  • Sử dụng Adobe Illustrator và Photoshop để tạo các thiết kế ấn tượng cho các sự kiện trải nghiệm ngân hàng.
-  • Tạo video giới thiệu các sản phẩm mới với CapCut, giúp tăng sự quan tâm của khách hàng lên 25%.
-[Hoạt động] Thiết Kế Biển Quảng Cáo – Clay Art Community
-  • Tham gia thiết kế các biển quảng cáo cho các sự kiện trong cộng đồng địa phương, giúp nâng cao nhận thức về các vấn đề môi trường.
-  • Đạt sự đồng lòng và sự tham gia tích cực từ cộng đồng địa phương thông qua các chiến dịch quảng cáo thiết kế sáng tạo.
-[Học vấn] Thạc sĩ Thiết Kế Đồ Họa – Trường ĐH Kỹ Thuật Công Nghệ Đà Nẵng
-[Kỹ năng] CapCut, Thiết kế đồ họa, Video Production, AI
-[Chứng chỉ] Chứng chỉ Adobe Creative Suite; Chứng chỉ Video Production
-[Ngoại ngữ] Tiếng Anh Cơ bản
-```
-
-## TR-81-13
-
-- Tin: User Acquisition
-- Máy định viết: nghề "Quảng cáo Facebook/Google", khớp một phần: đúng nghề của tin nhưng thiếu kỹ năng hoặc kinh nghiệm, 54 tháng kinh nghiệm
-
-- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
-
-```text
-User Acquisition Specialist
-Experienced User Acquisition (UA) marketing professional with a proven track record of driving high-quality user growth for mobile apps through targeted digital campaigns. Proficient in running Facebook and Google Ads, as well as digital marketing and email marketing strategies.
-[Kinh nghiệm] Digital Marketing Specialist – TechFlare Solutions (2022-05 – 2023-01)
-  • Managed and optimized Facebook and Google Ads campaigns, achieving a 25% increase in app installs and a 30% reduction in cost per acquisition.
-  • Executed effective email marketing campaigns that resulted in a 20% increase in user engagement and a 15% rise in app retention rates.
-  • Developed and implemented a comprehensive digital marketing strategy that contributed to a 50% growth in user base over a 6-month period.
-[Kinh nghiệm] Marketing Coordinator – Ecomart Online (2023-02 – 2023-09)
-  • Responsible for planning and executing digital marketing campaigns, including Facebook Ads and Google Ads, which led to a 40% increase in website traffic and a 35% boost in conversion rates.
-  • Conducted copywriting for email marketing campaigns, ensuring compelling content that drove a 10% increase in open and click-through rates.
-  • Collaborated with cross-functional teams to ensure seamless campaign execution and achieved a 15% improvement in user acquisition cost.
-[Kinh nghiệm] Digital Marketing Manager – MobiTech Ventures (2023-10 – nay)
-  • Led the development and execution of Facebook and Google Ads campaigns, resulting in a 20% increase in app installs and a 25% reduction in cost per acquisition.
-  • Implemented effective email marketing campaigns that contributed to a 25% increase in user engagement and a 20% rise in app retention rates.
-  • Optimized digital marketing efforts to achieve a 30% improvement in user acquisition cost, driving sustainable growth and profitability.
-[Dự án] Ecomart Online's Spring Campaign – Digital Marketing Specialist
-  • Developed and executed a targeted email marketing campaign that led to a 20% increase in customer engagement and a 15% rise in conversion rates.
-[Hoạt động] Digital Marketing Club – Local University
-  • Organized monthly webinars on the latest trends in digital marketing.
-  • Collaborated with local businesses to run marketing campaigns.
-[Hoạt động] Volunteer for Tech for Good – Non-profit organization
-  • Developed and executed social media campaigns to raise awareness about environmental issues.
-  • Trained community members on using social media for personal and professional development.
-[Học vấn] Bachelor of Science in Marketing – University of Technology, Danang
-[Kỹ năng] Facebook Ads, Digital Marketing, Email marketing, Copywriting
-[Chứng chỉ] Google Ads Certification; HubSpot Inbound Marketing Certification
-[Giải thưởng] Best Creative Campaign Award; Innovative Use of Digital Marketing Techniques
-[Ngoại ngữ] English Working proficiency; Vietnamese Native
-```
-
-## TR-81-14
-
-- Tin: User Acquisition
-- Máy định viết: nghề "Quảng cáo Facebook/Google", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 19 tháng kinh nghiệm
-
-- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
-
-```text
-User Acquisition Specialist
-Một chuyên viên User Acquisition với hơn 19 tháng kinh nghiệm trong quảng cáo Facebook, Google và TikTok. Có khả năng sử dụng các công cụ phân tích và quy trình Agile để tối ưu hóa chiến dịch và tăng hiệu suất.
-[Kinh nghiệm] Quảng cáo Facebook/Google – Ngôi Thành Digital (2025-04 – 2025-04)
-  • Làm việc trong dự án User Acquisition cho một ứng dụng mobile với ngân sách trung bình hàng ngày đạt 150 triệu đồng, đạt mục tiêu tăng trưởng truy cập 30%.
-  • Phân tích dữ liệu từ các công cụ BI như Google Analytics và TikTok Analytics để đưa ra chiến lược quảng cáo hiệu quả.
-  • Áp dụng quy trình Agile để tối ưu hóa quá trình phát triển và triển khai chiến dịch, giúp tăng hiệu suất 20%.
-  • Tối ưu hóa chiến dịch quảng cáo trên TikTok Ads, đạt tỷ lệ chuyển đổi trung bình 2.5% so với mức trung bình ngành.
-  • Công ty sản xuất tại Nha Trang, quy mô 100-200 nhân viên.
-[Kinh nghiệm] Quảng cáo Facebook/Google – Tín Việt Marketing (2025-05 – nay)
-  • Đã hỗ trợ dự án User Acquisition cho một trò chơi di động với ngân sách trung bình hàng ngày đạt 200 triệu đồng, tăng 25% lượng truy cập trong 6 tháng.
-  • Đạt mục tiêu tối ưu hóa chi phí quảng cáo trên Google Ads và Facebook Ads, giảm 15% chi phí tổng cộng.
-  • Sử dụng các công cụ phân tích như Google BigQuery và Tableau để cung cấp báo cáo chi tiết cho quản lý.
-  • Áp dụng quy trình Agile trong quản lý dự án để đảm bảo tiến độ và chất lượng công việc.
-  • Công ty sản xuất tại Nha Trang, quy mô 200-300 nhân viên.
-[Dự án] Cải cách quy trình User Acquisition – Lãnh đạo
-  • Triển khai quy trình mới trong vòng 3 tháng, giúp tăng hiệu suất 20%.
-  • Tối ưu hóa ngân sách quảng cáo, giảm 15% chi phí tổng cộng.
-[Hoạt động] Nhóm Quảng cáo địa phương – Hội Quảng cáo địa phương
-  • Tham gia tổ chức các hội thảo về quảng cáo số
-  • Chia sẻ kiến thức về phân tích dữ liệu quảng cáo
-[Hoạt động] Lớp học về Google Ads – Trung tâm học liệu kỹ thuật số
-  • Thực hiện các dự án thực tế với Google Ads
-  • Tham gia thảo luận về chiến lược quảng cáo hiệu quả
-[Học vấn] Thạc sĩ Kinh doanh Quốc tế – Trường ĐH Kinh tế TP. HCM
-[Kỹ năng] TikTok Ads, Digital Marketing, Facebook Ads, Google Ads, BI tools, Agile
-[Chứng chỉ] Google Ads Certified; Facebook Blueprint Certified
-[Sở thích] Sử dụng công nghệ trong quảng cáo; Phân tích xu hướng thị trường số; Tối ưu hóa quảng cáo theo thời gian thực; Tạo nội dung hấp dẫn cho các chiến dịch quảng cáo
-[Ngoại ngữ] Tiếng Anh Thành thạo
-```
-
-## TR-85-04
-
-- Tin: Lễ Tân Nhà Hàng Buffe QOOQOO Hồ Chí Minh
-- Máy định viết: nghề "Lễ tân", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 21 tháng kinh nghiệm
-
-- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
-
-```text
-Lễ Tân
-Có 21 tháng kinh nghiệm làm việc trong lĩnh vực tiếp đón khách hàng tại các công ty vừa và nhỏ ở Nha Trang. Đã từng quản lý và hỗ trợ khách hàng trong các sự kiện, tạo ra một trải nghiệm tích cực và chuyên nghiệp cho khách hàng.
-[Kinh nghiệm] Lễ Tân – Nhà Hàng Sông Tinh (2025-02 – 2025-08)
-  • Giao tiếp hiệu quả với khách hàng, xử lý các yêu cầu thông qua cuộc trò chuyện thân thiện và chuyên nghiệp, đảm bảo sự hài lòng của khách hàng.
-  • Quan sát và hỗ trợ trong việc tổ chức các sự kiện đặc biệt, giúp việc quản lý khách hàng diễn ra suôn sẻ và hiệu quả.
-  • Trong vòng 2 năm, đã phục vụ hơn 2000 khách hàng mỗi tháng, duy trì sự hài lòng của khách hàng thông qua dịch vụ hỗ trợ nhanh chóng và nhiệt tình.
-[Kinh nghiệm] Lễ Tân – Nhà Hàng Hải Thiên (2025-09 – 2026-03)
-  • Giao tiếp với khách hàng từ nhiều nguồn gốc, đảm bảo dịch vụ khách hàng chuyên nghiệp và hiệu quả, đặc biệt trong môi trường đa ngôn ngữ.
-  • Quan sát và phân tích xu hướng dịch vụ, đề xuất các cải tiến nhỏ để nâng cao chất lượng phục vụ khách hàng.
-  • Trong 2 năm làm việc, đã quản lý hơn 1500 khách hàng mỗi tháng, duy trì sự hài lòng của khách hàng thông qua dịch vụ nhanh chóng và chuyên nghiệp.
-[Kinh nghiệm] Lễ Tân – Nhà Hàng Bích Châu (2026-04 – nay)
-  • Giao tiếp với khách hàng trong một môi trường đa ngôn ngữ, duy trì sự chuyên nghiệp và thân thiện, tạo ra một trải nghiệm tốt cho khách hàng.
-  • Quan sát và quản lý khách hàng trong các sự kiện đặc biệt, đảm bảo sự hài lòng và thoải mái của khách hàng.
-  • Trong 2 năm làm việc, đã phục vụ hơn 2000 khách hàng mỗi tháng, duy trì một mức độ hài lòng cao từ khách hàng.
-[Hoạt động]  CLUB HÀNH ĐỘNG – CLUB HÀNH ĐỘNG
-  • Tham gia tổ chức sự kiện từ thiện cho trẻ em khuyết tật.
-  • Lãnh đạo nhóm trong việc chuẩn bị cho các chương trình cộng đồng.
-[Học vấn] Thạc sĩ Quản trị Kinh doanh – Trường ĐH Kinh tế TP.HCM
-[Kỹ năng] Giao tiếp, Quan sát
-[Sở thích] Đọc sách văn học; Nghe nhạc cổ điển; Luyện tập yoga; Khám phá văn hóa địa phương
+Với 17 tháng kinh nghiệm làm việc trong lĩnh vực DevOps, tôi đã tích lũy được nhiều kinh nghiệm quý báu về quản lý và triển khai hệ thống, tối ưu hóa quy trình làm việc, cũng như cải thiện hiệu suất hoạt động cho tổ chức. Tôi có khả năng quản lý và hướng dẫn đội nhóm, đảm bảo rằng tất cả các công việc đều được thực hiện một cách hiệu quả.
+[Kinh nghiệm] DevOps Engineer – TechSolve Co., Ltd (2025-06 – nay)
+  • Công ty TechSolve Co., Ltd tại Hải Phòng, nơi tôi đã làm việc trong 17 tháng, là một môi trường làm việc chuyên nghiệp và năng động, tập trung vào việc sử dụng công nghệ để nâng cao hiệu suất hoạt động. Tôi đã đóng vai trò quan trọng trong việc triển khai và quản lý các dự án sử dụng Windows, AWS và Azure, giúp cải thiện khả năng tương tác API giữa các hệ thống.
+  • Nhờ kiến thức sâu rộng về Linux, tôi đã thực hiện việc tối ưu hóa hệ thống để giảm thời gian down time và tăng hiệu suất tổng thể của các dịch vụ. Đặc biệt, tôi đã sử dụng GitLab CI để tự động hóa quá trình xây dựng và triển khai code, giúp giảm thời gian phát triển sản phẩm từ 45 ngày xuống còn 15 ngày.
+  • Qua việc quản lý và triển khai các dự án sử dụng công nghệ, tôi đã giúp TechSolve Co., Ltd đạt được sự hài lòng cao từ khách hàng và nhân viên. Các công cụ và kỹ năng mà tôi đã sử dụng đã giúp nâng cao hiệu suất của các dịch vụ kỹ thuật số của công ty, đồng thời giảm thiểu rủi ro và tăng cường bảo mật hệ thống.
+[Dự án] Tối ưu hóa hệ thống mạng – Lead Developer
+  • Đã triển khuyễn và tối ưu hóa hệ thống mạng, giảm thời gian down time từ 15% xuống 2% qua việc sử dụng các công cụ quản lý mạng hiện đại như AWS và Azure.
+[Học vấn] Cử nhân Kỹ Thuật Phần Mềm – Đại Học Kỹ Thuật Hải Phòng
+[Kỹ năng] Windows, API, Linux, AWS, Azure, GitLab CI
+[Chứng chỉ] AWS Certified Solutions Architect - Associate; Azure DevOps Associate
 [Ngoại ngữ] Tiếng Anh Giao tiếp
 ```
 
-## TR-85-07
+## TR-46-11
 
-- Tin: Lễ Tân Nhà Hàng Buffe QOOQOO Hồ Chí Minh
-- Máy định viết: nghề "Pháp chế doanh nghiệp", vị trí gần: nghề khác nhưng cùng mảng với tin, 0 tháng kinh nghiệm
+- Tin: Kỹ Sư Lập Trình Nhúng C/C++
+- Máy định viết: nghề "iOS Developer", vị trí gần: nghề khác nhưng cùng mảng với tin, 59 tháng kinh nghiệm
 
 - [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
 
 ```text
-Pháp chế doanh nghiệp
-Có kinh nghiệm trong việc quản trị nhân sự và rà soát hợp đồng trong môi trường làm việc quốc tế, tôi hy vọng có thể đóng góp vào đội ngũ pháp chế doanh nghiệp.
-[Dự án] Pháp chế doanh nghiệp – Tập đoàn Quốc tế Minh Minh
-  • Công tác quản trị nhân sự, thực hiện các thủ tục hợp pháp cho nhân viên, đảm bảo tuân thủ quy định của pháp luật.
-  • Rà soát và soạn thảo các hợp đồng thương mại, góp phần đảm bảo hoạt động kinh doanh tuân thủ các quy định pháp lý.
-  • Tham gia các buổi đào tạo pháp lý cho nhân viên, nâng cao nhận thức về quyền lợi và nghĩa vụ pháp lý của doanh nghiệp.
-  • Hỗ trợ trong việc giải quyết các tranh chấp pháp lý, đảm bảo việc xử lý nhanh chóng và hiệu quả.
-[Dự án] Tư vấn pháp lý cho dự án đầu tư – Pháp chế doanh nghiệp
-  • Tư vấn về các quy định pháp lý liên quan đến đầu tư, góp phần hỗ trợ dự án phát triển một cách hiệu quả.
-[Hoạt động] Đoàn Luật Sư Pháp Luật Doanh Nhân – Hội Luật Gia
-  • Tham gia thảo luận và đóng góp ý kiến trong các cuộc họp của Đoàn.
-  • Tham gia tổ chức và thực hiện các buổi hội thảo về pháp luật doanh nghiệp.
-[Hoạt động] Phụ trách hoạt động từ thiện – Trung Tâm Hỗ Trợ Xã Hội
-  • Sáng lập và tổ chức các chiến dịch hỗ trợ pháp lý miễn phí cho các tổ chức nhỏ và doanh nghiệp tư nhân.
-  • Tổ chức các buổi đào tạo kỹ năng pháp lý miễn phí cho cộng đồng địa phương.
-[Học vấn] Cao đẳng Quản trị kinh doanh – Trường Cao đẳng Quốc tế Hạnh Phúc
-[Kỹ năng] Quản trị nhân sự, Rà soát hợp đồng
-[Chứng chỉ] Chứng chỉ tư vấn pháp lý do Trường Cao đẳng Quốc tế Hạnh Phúc cấp; Chứng chỉ quản trị nhân sự do Trường Cao đẳng Quốc tế Hạnh Phúc cấp
-[Giải thưởng] Giải Nhì cuộc thi tư vấn pháp lý doanh nghiệp; Bằng khen từ Hội Luật Gia Việt Nam về công trình nghiên cứu pháp lý doanh nghiệp
-[Sở thích] Đọc sách pháp lý và nghiên cứu về các xu hướng mới trong luật doanh nghiệp; Đi bộ và khám phá các địa điểm mới trong thành phố; Tham gia các lớp học về quản trị doanh nghiệp; Tham gia các buổi diễn đàn về phát triển bền vững
+iOS Developer
+With over 5 years of experience in iOS application development, I have successfully delivered high-quality, scalable applications using Swift and RxSwift. Possess a College Diploma in Computer Science and a proven track record of enhancing app functionalities with VoIP and GDB.
+[Kinh nghiệm] iOS Developer – TechMaven Solutions (2021-12 – 2024-11)
+  • Led a team of 5 developers in the development and maintenance of a VoIP application, resulting in a 20% increase in user retention.
+  • Implemented real-time communication features using Swift, RxSwift, and CocoaPods, improving the application’s performance by 30%.
+  • Designed and developed a modular UI/UX for an e-commerce app, which significantly boosted user engagement and conversion rates.
+  • Managed project timelines and delivered projects 10% ahead of schedule, contributing to TechMaven’s overall productivity.
+[Kinh nghiệm] iOS Developer – InnovatePro (2024-12 – nay)
+  • Developed and maintained an enterprise-level application using Swift and CocoaPods, handling over 10,000 daily active users.
+  • Utilized GDB for debugging and profiling, reducing application crashes by 25%.
+  • Implemented MVVM architecture, improving code readability and maintainability, and reducing development time by 15%.
+[Dự án] Personal Finance App – Developer
+  • Built a financial management application using Swift, RxSwift, and CocoaPods, providing users with a seamless and intuitive experience.
+  • Integrated GDB for debugging and optimization, ensuring the application runs smoothly.
+[Học vấn] College Diploma in Computer Science – Vanguard College
+[Kỹ năng] GDB, VoIP, Swift, RxSwift, CocoaPods, MVVM
+[Chứng chỉ] Apple Developer Program Member; Swift Programming Language Certification
+[Giải thưởng] Best Project Award; This award was given to the team for our innovative iOS app that improved user experience and accessibility.
+[Ngoại ngữ] English Conversational; Vietnamese Native
+```
+
+## TR-46-15
+
+- Tin: Kỹ Sư Lập Trình Nhúng C/C++
+- Máy định viết: nghề "iOS Developer", vị trí gần: nghề khác nhưng cùng mảng với tin, 0 tháng kinh nghiệm
+
+- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
+
+```text
+iOS Developer
+A recent Bachelor's degree graduate with a strong foundation in C/C++, Linux, Swift, and web development. Proven experience in collaborative development and a passion for technology and problem-solving.
+[Dự án] iOS Developer Intern – TechFusion
+  • Developed and maintained iOS applications using Swift, contributing to the TechFusion agency's portfolio.
+  • Implemented robust networking capabilities using C/C++, enhancing the app's functionality and user experience.
+  • Collaborated with a team of developers to design and implement features, ensuring the project was completed on time and within budget.
+  • Utilized Linux knowledge to optimize backend processes, improving application performance by 20%.
+  • Created responsive web interfaces using HTML/CSS, ensuring the applications were accessible and user-friendly on multiple devices.
+[Dự án] Budget Tracker App – Developer
+  • Designed and developed a budget tracking application using Swift and Core Data for iOS devices.
+  • Integrated a real-time data synchronization feature using RESTful APIs.
+[Học vấn] Bachelor of Science in Computer Science – National University of Technology
+[Kỹ năng] Linux, C/C++, Làm việc nhóm, Swift, HTML/CSS
+[Chứng chỉ] Certified iOS Developer; GitHub Certified Developer
+[Sở thích] Exploring new technologies and frameworks; Playing video games, especially strategy and puzzle games; Reading tech-related books and articles; Traveling and experiencing different cultures
+[Ngoại ngữ] English Working proficiency IELTS 6.5; Vietnamese Native
+```
+
+## TR-48-07
+
+- Tin: Sales Logistics With 2 Years Of Experience
+- Máy định viết: nghề "Sales Online", vị trí gần: nghề khác nhưng cùng mảng với tin, 50 tháng kinh nghiệm
+
+- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
+
+```text
+Sales Online
+Với 50 tháng kinh nghiệm trong lĩnh vực bán hàng trực tuyến, tôi đã xây dựng và phát triển các chiến lược kinh doanh hiệu quả, đồng thời duy trì doanh thu ổn định và tăng trưởng liên tục.
+[Kinh nghiệm] Trưởng phòng Sales Online – VINA-TRADING (2022-09 – 2024-12)
+  • Nhận trách nhiệm quản lý 20 nhân viên, tăng doanh thu của VINA-TRADING lên 30% trong vòng 1 năm.
+  • Giải quyết vấn đề về nguồn hàng, giúp công ty cung cấp sản phẩm chất lượng cao đến khách hàng trong 3 tháng.
+  • Phân tích dữ liệu khách hàng, giúp cải thiện chất lượng dịch vụ và tăng tỷ lệ chuyển đổi lên 15%.
+[Kinh nghiệm] Sản phẩm viên Sales Online – THẢI-TRADE (2025-01 – 2026-07)
+  • Xử lý từ chối từ 30% khách hàng tiềm năng hàng tháng, tăng tỷ lệ ký hợp đồng thành công lên 70%.
+  • Tăng trưởng doanh số bán hàng từ 150 triệu đồng/tháng lên 250 triệu đồng/tháng trong vòng 6 tháng.
+  • Phân tích dữ liệu bán hàng, phát triển các chiến lược tiếp thị hiệu quả.
+[Kinh nghiệm] Nhân viên Sales Online – SUN-TRUST (2026-08 – nay)
+  • Đạt 120% chỉ tiêu doanh số hàng tháng, giúp công ty tăng trưởng doanh thu 15% qua 3 tháng.
+  • Giải quyết vấn đề về cung cấp sản phẩm, đảm bảo khách hàng luôn hài lòng với dịch vụ.
+  • Phân tích dữ liệu khách hàng, đề xuất cải tiến về quy trình bán hàng và dịch vụ hỗ trợ khách hàng.
+[Dự án] Tăng trưởng doanh số bán hàng – Thực hiện
+  • Đưa ra các chiến lược tăng trưởng doanh số hiệu quả, giúp doanh số bán hàng tăng 20% trong vòng 6 tháng.
+[Học vấn] Cử nhân Kinh tế Thương mại – Trường Đại học Cần Thơ
+[Kỹ năng] Giải quyết vấn đề, Xử lý từ chối, Phân tích dữ liệu, Chịu áp lực doanh số
+[Chứng chỉ] Giải quyết vấn đề - Chứng chỉ cấp từ Công ty Dầu Khí; Phân tích dữ liệu - Chứng chỉ cấp từ Công ty VinaTech
+[Sở thích] Du lịch ảo: khám phá các địa điểm du lịch thông qua ấn phẩm và video.; Phim-documentary: đặc biệt quan tâm đến những câu chuyện truyền cảm về các doanh nhân thành đạt.; Thiết kế giao diện: làm việc với các công cụ thiết kế để sáng tạo các trang web và hình ảnh quảng cáo.; Công nghệ: cập nhật thông tin về xu hướng công nghệ mới và ứng dụng trong lĩnh vực sales.
+[Ngoại ngữ] Tiếng Anh Làm việc TOEIC 650
+```
+
+## TR-48-09
+
+- Tin: Sales Logistics With 2 Years Of Experience
+- Máy định viết: nghề "Sales Logistics", khớp một phần: đúng nghề của tin nhưng thiếu kỹ năng hoặc kinh nghiệm, 94 tháng kinh nghiệm
+
+- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
+
+```text
+Sales Logistics
+Sau 94 tháng kinh nghiệm, tôi đã tích lũy được kỹ năng giao tiếp xuất sắc và giải quyết vấn đề hiệu quả. Qua ba công ty khác nhau, tôi đã quản lý và tối ưu hóa quy trình logistics, giúp doanh nghiệp của mình tăng trưởng đáng kể.
+[Kinh nghiệm] Sale Logistics Manager – VinaLogistics (2019-01 – 2023-09)
+  • Đã thực hiện việc quản lý và giám sát quy trình logistics từ giai đoạn đặt hàng đến giao hàng, đảm bảo việc giao hàng đúng hẹn và an toàn.
+  • Giải quyết vấn đề về hàng hóa bị mất, hỏng, hoặc chậm trễ, giúp khách hàng luôn hài lòng và duy trì mối quan hệ lâu dài.
+  • Tối ưu hóa quy trình thông qua việc phân tích dữ liệu và cải tiến các quy trình hiện tại, giúp giảm chi phí và cải thiện hiệu suất.
+[Kinh nghiệm] Sales Coordinator – GlobalSupply (2023-10 – 2026-09)
+  • Giao tiếp hiệu quả với khách hàng quốc tế, thuyết phục họ lựa chọn dịch vụ logistics của chúng tôi và giải quyết các yêu cầu phức tạp.
+  • Phân tích hiệu suất của các quy trình hiện tại, tìm ra cách cải thiện và tối ưu hóa quy trình, giúp công ty tiết kiệm được 15% chi phí vận chuyển hàng năm.
+  • Xử lý từ chối từ khách hàng một cách chuyên nghiệp, duy trì mối quan hệ tốt với họ và thu hồi 70% số đơn hàng bị từ chối.
+[Kinh nghiệm] Sales Associate – QuickSupply (2026-10 – nay)
+  • Thực hiện công việc giao dịch, từ việc tư vấn khách hàng đến việc ký kết hợp đồng.
+  • Giải quyết vấn đề về hàng hóa bị chậm trễ, hỗ trợ khách hàng trong việc tìm kiếm giải pháp nhanh chóng.
+  • Tối ưu hóa quy trình bằng cách sử dụng các công cụ Microsoft Office để theo dõi và quản lý giao dịch.
+[Dự án] Tối ưu hóa quy trình giao hàng – Lãnh đạo
+  • Thông qua việc phân tích dữ liệu, tôi đã cải thiện quy trình giao hàng, giảm thời gian vận chuyển trung bình từ 4 đến 2 ngày.
+[Học vấn] Cao đẳng Kinh tế Quốc tế – Trường Quốc tế Sài Gòn
+[Kỹ năng] Giao tiếp, Giải quyết vấn đề, Microsoft Office, Phân tích hiệu suất, Thuyết phục, Xử lý từ chối, Phân tích dữ liệu
+[Chứng chỉ] Chứng chỉ Microsoft Office Specialist; Chứng chỉ Giao tiếp Quốc tế
+[Sở thích] Đọc sách về quản lý chuỗi cung ứng và vận chuyển; Tham gia các sự kiện thể thao để rèn luyện sức khỏe; Khám phá văn hóa địa phương qua các chuyến du lịch ngắn; Luyện tập các ngôn ngữ mới để mở rộng kiến thức về thị trường toàn cầu
+[Ngoại ngữ] Tiếng Anh Giao tiếp; Tiếng Trung Cơ bản
+```
+
+## TR-49-10
+
+- Tin: Nhân Viên Telesales/ Chăm Sóc Khách Hàng
+- Máy định viết: nghề "Telesales", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 19 tháng kinh nghiệm
+
+- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
+
+```text
+Telesales
+Cử nhân Kinh tế, với 19 tháng kinh nghiệm trong lĩnh vực telesales, tôi đã phát triển kỹ năng giao tiếp và chăm sóc khách hàng, mang lại doanh thu đáng kể cho công ty.
+[Kinh nghiệm] Telesales – Công ty TNHH Việt Nam Phong Đẹp (2025-04 – 2025-04)
+  • Làm việc cho công ty sản xuất tại Nha Trang, Việt Nam, tôi đã sử dụng Zalo và CRM để liên hệ và chăm sóc 500 khách hàng tiềm năng mỗi tháng, giúp tăng doanh thu lên 30% trong ba tháng đầu tiên.
+  • Đảm bảo giao tiếp hiệu quả và chăm sóc khách hàng, giúp giữ tỷ lệ khách hàng trung thành cao và giảm tỷ lệ chấm dứt hợp đồng.
+  • Sử dụng Excel để quản lý dữ liệu khách hàng và báo cáo doanh thu hàng ngày, giúp đội ngũ quản lý nắm bắt tình hình kinh doanh dễ dàng hơn.
+[Kinh nghiệm] Telesales – Nhà Hàng Sức Khỏe Việt (2025-05 – nay)
+  • Tiếp tục phát huy kỹ năng giao tiếp và chăm sóc khách hàng, tôi đã thực hiện 1.500 cuộc gọi hàng tháng, giúp tăng doanh thu của công ty lên 15%.
+  • Sử dụng CRM để theo dõi khách hàng tiềm năng và đã thực hiện 200 cuộc hẹn để giới thiệu sản phẩm, mang lại nhiều cơ hội kinh doanh.
+  • Sử dụng Excel để phân tích dữ liệu và cung cấp báo cáo cho quản lý, hỗ trợ trong việc ra quyết định về chiến lược kinh doanh.
+[Hoạt động] Nhóm Thúc đẩy Doanh nghiệp – ClubConnect
+  • Tăng cường kỹ năng giao tiếp qua điện thoại
+  • Hỗ trợ tổ chức các sự kiện kinh doanh cho các doanh nghiệp địa phương
+[Hoạt động] Nhóm Tình nguyện vì Môi trường – GreenFuture Volunteers
+  • Tham gia vào các chiến dịch bảo vệ môi trường tại địa phương
+  • Tăng cường ý thức bảo vệ môi trường trong cộng đồng
+[Học vấn] Cử nhân Kinh tế – Đại học Kinh tế Việt Nam
+[Kỹ năng] Zalo, Giao tiếp, Excel, Chăm sóc khách hàng, CRM
+[Ngoại ngữ] Tiếng Anh Làm việc TOEIC 650
+```
+
+## TR-51-09
+
+- Tin: Sales Admin & Supply Chain Planning
+- Máy định viết: nghề "Sales Admin", khớp một phần: đúng nghề của tin nhưng thiếu kỹ năng hoặc kinh nghiệm, 10 tháng kinh nghiệm
+
+- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
+
+```text
+Sales Admin
+An experienced Sales Admin with a strong background in sales administration and logistics, seeking to leverage my skills in team collaboration and customer service to contribute to a dynamic organization.
+[Kinh nghiệm] Sales Admin – GreenTech Solutions (2026-01 – nay)
+  • Managed sales administrative tasks and customer relations for a team of 12 sales representatives, ensuring smooth workflow and enhancing customer satisfaction by 25%.
+  • Coordinated with cross-functional teams, including logistics and finance departments, to streamline the order processing and shipment tracking processes.
+  • Utilized Microsoft Office Suite, particularly Word and Excel, to create comprehensive sales reports and maintain accurate records of transactions.
+  • Implemented a new customer communication strategy that improved response times by 30%, leading to an increase in customer retention rates.
+[Dự án] Customer Relationship Management Initiative – Team Member
+  • Designed and implemented a CRM system to manage customer interactions and improve service delivery.
+[Hoạt động] Tech4Future – Community Tech Club
+  • Volunteered in organizing tech workshops for local schools and communities.
+  • Facilitated sessions on sales strategies and digital marketing to empower young entrepreneurs.
+[Hoạt động] Eco-Savvy – Environmental Awareness Group
+  • Participated in weekly clean-up drives and awareness campaigns.
+  • Coordinated a fundraising event for a local conservation project.
+[Học vấn] Bachelor of Business Administration - Marketing – University of Technology, Ho Chi Minh City
+[Kỹ năng] Làm việc nhóm, Giao tiếp, logistic, Word, Microsoft Office
+[Chứng chỉ] Microsoft Office Specialist; Project Management Professional (PMP)
+[Sở thích] Reading business management books and articles to stay updated with industry trends.; Traveling to new places to experience different cultures and cuisines.; Playing chess to improve strategic thinking and problem-solving skills.; Attending networking events to expand professional connections and learn from industry experts.
+[Ngoại ngữ] English Basic; Vietnamese Native
+```
+
+## TR-52-07
+
+- Tin: Sales Admin
+- Máy định viết: nghề "Sales Online", vị trí gần: nghề khác nhưng cùng mảng với tin, 10 tháng kinh nghiệm
+
+- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
+
+```text
+Sales Online
+Với hơn 10 tháng kinh nghiệm trong lĩnh vực Sales Online, tôi đã tích lũy được nhiều kỹ năng quý giá, đặc biệt là khả năng tư vấn và chịu được áp lực công việc. Tôi đã từng góp phần quan trọng vào sự tăng trưởng của công ty, và mong muốn tiếp tục phát triển sự nghiệp tại một môi trường mới.
+[Kinh nghiệm] Sales Online – Thăng Long Digital (2026-01 – nay)
+  • Tăng trưởng doanh thu lên 30% trong vòng 6 tháng đầu năm, bằng cách tư vấn và xây dựng mối quan hệ với khách hàng tiềm năng.
+  • Có khả năng quản lý và theo dõi 50 đơn hàng đồng thời, sử dụng Microsoft Office để quản lý thông tin khách hàng và báo cáo bán hàng.
+  • Chịu áp lực công việc cao khi phải xử lý nhiều yêu cầu tư vấn từ khách hàng trong thời gian ngắn.
+[Dự án] Kế hoạch kinh doanh năm 2022 – Tác giả chính
+  • Lập kế hoạch kinh doanh cho năm tới, bao gồm các mục tiêu doanh thu và các chiến lược bán hàng.
+  • Sử dụng Excel để phân tích dữ liệu thị trường và đưa ra dự đoán doanh thu.
+[Hoạt động] Nhóm Marketing Online – CommunityConnect
+  • Tham gia tổ chức các chiến dịch quảng bá sản phẩm trực tuyến.
+  • Tạo nội dung marketing và phân tích hiệu quả các chiến dịch.
+[Hoạt động] Khách Sạn Trực Tuyến – TravelNest
+  • Hỗ trợ khách hàng đặt phòng trực tuyến cho các khách sạn địa phương.
+  • Cung cấp giải pháp tiếp thị trực tuyến cho các khách sạn nhỏ.
+[Học vấn] Cao đẳng Kinh tế Đối ngoại – Trường Đại học Kinh tế Đối ngoại Hải Phòng
+[Kỹ năng] Microsoft Office, Chịu áp lực, Tư vấn
+[Chứng chỉ] Microsoft Certified: Office Specialist; Chứng chỉ đào tạo tư vấn kinh doanh
+[Sở thích] Tham gia các buổi hội thảo trực tuyến về tiếp thị và bán hàng online.; Đọc sách về quản lý bán hàng và kỹ năng giao tiếp.; Cộng đồng mạng xã hội và mạng lưới liên kết.; Công nghệ mới và xu hướng thị trường bán hàng trực tuyến.
+```
+
+## TR-52-15
+
+- Tin: Sales Admin
+- Máy định viết: nghề "Telesales", vị trí gần: nghề khác nhưng cùng mảng với tin, 37 tháng kinh nghiệm
+
+- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
+
+```text
+Telesales
+Kinh nghiệm 37 tháng trong lĩnh vực telesales, đã làm việc tại 3 công ty khác nhau, đặc biệt thành thạo các kỹ năng thuyết phục, xử lý phản hồi khách hàng và đàm phán.
+[Kinh nghiệm] Telesales Representative – Vinmart Cần Thơ (2023-10 – 2024-09)
+  • Thuyết phục hơn 2,000 khách hàng mua sắm hàng tạp hóa qua điện thoại, tăng doanh thu 15% trong 6 tháng đầu tiên.
+  • Xử lý phản hồi khách hàng, giải quyết 95% các thắc mắc và khiếu nại trong 24 giờ, giữ mức độ hài lòng khách hàng ở mức 95%.
+  • Đàm phán giảm giá thành cho nhà cung cấp, giúp tiết kiệm 10% chi phí hàng tồn kho.
+[Kinh nghiệm] Telesales Manager – Maximart Cần Thơ (2024-10 – 2026-07)
+  • Lập kế hoạch và quản lý đội telesales, giúp đội đạt doanh thu trung bình 500 triệu đồng/tháng.
+  • Tăng hiệu suất làm việc của đội lên 30% thông qua việc tối ưu hóa quy trình làm việc.
+  • Giao tiếp và đàm phán với hơn 50 nhà cung cấp, đạt mục tiêu kinh doanh trong 6 tháng đầu tiên.
+[Kinh nghiệm] Telesales Consultant – Freshmart Cần Thơ (2026-08 – nay)
+  • Thuyết phục khách hàng mua sắm qua điện thoại, đạt doanh thu trung bình 300 triệu đồng/tháng.
+  • Xử lý phản hồi khách hàng và hỗ trợ giải quyết vấn đề, duy trì mức độ hài lòng khách hàng 90%.
+  • Đàm phán và đàm thoại với nhà cung cấp để cung cấp các sản phẩm chất lượng cao với giá cả cạnh tranh.
+[Hoạt động] Hội Sinh viên Kết nối Công nghệ – Hội Sinh viên Đại học Kinh tế
+  • Tham gia tổ chức hội thảo trực tuyến về công nghệ thông tin và kinh doanh trực tuyến
+  • Lãnh đạo đội nhóm thực hiện dự án marketing kỹ thuật số cho một công ty khởi nghiệp
+[Hoạt động] Chương trình tình nguyện Đất nước ơi – Câu lạc bộ Tình nguyện sinh viên
+  • Tổ chức và thực hiện các hoạt động quyên góp, bán hàng trực tuyến giúp đỡ người dân vùng bị thiên tai
+  • Lãnh đạo đội nhóm tổ chức ngày hội thiện nguyện tại địa phương
+[Học vấn] Cử nhân Kinh tế thương mại – Trường Đại học Cần Thơ
+[Kỹ năng] Thuyết phục, Xử lý phản hồi khách hàng, Đàm phán, Lập kế hoạch
+[Chứng chỉ] Kỹ năng thuyết phục; Xử lý phản hồi khách hàng hiệu quả
+[Giải thưởng] Giải thưởng Nhà trường xuất sắc năm 2021: Kỹ năng giao tiếp và tư duy phản biện; Giải ba cuộc thi marketing trực tuyến quốc gia 2020
+[Sở thích] Đọc sách về marketing và tâm lý học; Xem các video hướng dẫn về các chiến lược telesales; Học tiếng Anh và giao tiếp với người nước ngoài; Tham gia các buổi thảo luận trực tuyến về công nghệ và kinh doanh
+[Ngoại ngữ] Tiếng Anh Giao tiếp
+```
+
+## TR-54-06
+
+- Tin: Nhân Viên Kinh Doanh/ Telesales/ Sales Logistics
+- Máy định viết: nghề "Telesales", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 15 tháng kinh nghiệm
+
+- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
+
+```text
+Telesales
+Cử nhân Kinh tế Quốc tế với 15 tháng kinh nghiệm làm việc trong lĩnh vực Telesales tại agency tại Hải Phòng, tôi có khả năng lập kế hoạch hiệu quả, thuyết phục khách hàng và xử lý phản hồi một cách chuyên nghiệp.
+[Kinh nghiệm] Telesales – Hải Thanh Express (2025-08 – nay)
+  • Lập kế hoạch và triển khai chiến lược telesales, tăng doanh số lên 20% so với quý trước.
+  • Thuyết phục khách hàng chuyển đổi từ các dịch vụ truyền thống sang giải pháp logistics nhanh chóng và hiệu quả, giúp doanh nghiệp tiết kiệm chi phí vận chuyển lên đến 15%.
+  • Đàm phán và ký kết hợp đồng với 150 khách hàng mới trong vòng 6 tháng.
+  • Giao tiếp fluently in both English and Mandarin, contributing to a 10% increase in international sales.
+  • Xử lý phản hồi từ khách hàng, giải quyết vấn đề nhanh chóng và tận tình, duy trì mức độ hài lòng lên đến 95%.
+[Hoạt động] Hội Sinh viên Thông minh – Hội Sinh viên Trường Đại học Kỹ thuật
+  • Tham gia các buổi hội thảo về kỹ năng giao tiếp và bán hàng
+  • Tạo lập và duy trì các chiến lược quảng bá cho hội đoàn
+[Học vấn] Cử nhân Kinh tế Quốc tế – Trường Đại Học Kinh Tế Quốc Gia Hà Nội
+[Kỹ năng] Lập kế hoạch, Thuyết phục, Đàm phán, Giao tiếp, Xử lý phản hồi khách hàng
+[Chứng chỉ] Chứng chỉ Ngon Nghê Ngoại Ngữ TOEIC; Chứng chỉ Ngon Nghê Ngoại Ngữ HSK (Tiếng Trung)
+[Sở thích] Cộng đồng mạng xã hội; Luyện tập kỹ năng giao tiếp; Tham gia các chương trình tình nguyện địa phương; Đọc sách về kỹ thuật kinh doanh và quản lý
+[Ngoại ngữ] Tiếng Anh Giao tiếp; Tiếng Trung Giao tiếp
+```
+
+## TR-61-09
+
+- Tin: GRAPHIC DESIGNER
+- Máy định viết: nghề "Graphic Designer", khớp một phần: đúng nghề của tin nhưng thiếu kỹ năng hoặc kinh nghiệm, 24 tháng kinh nghiệm
+
+- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
+
+```text
+Graphic Designer
+Có kinh nghiệm 24 tháng trong lĩnh vực thiết kế đồ họa, tôi đã tạo ra nhiều dự án sáng tạo và hiệu quả cho các khách hàng trong ngành thực phẩm chức năng. Tôi am hiểu về các công cụ Adobe như Photoshop, Illustrator và After Effects, cùng với khả năng làm việc nhóm và giao tiếp tốt.
+[Kinh nghiệm] Graphic Designer – Tín Việt Design (2024-11 – 2024-12)
+  • Tạo ra hơn 50 thiết kế bao bì và ấn phẩm quảng cáo cho các sản phẩm thực phẩm chức năng, giúp tăng doanh số bán hàng của công ty.
+  • Sử dụng Photoshop và Illustrator để thiết kế các mẫu logo và brochure cho khách hàng.
+  • Đảm bảo việc chỉnh sửa video ngắn trên CapCut cho các chiến dịch marketing của công ty.
+  • Làm việc nhóm với đội ngũ phát triển sản phẩm để tạo ra các thiết kế phù hợp với nhu cầu thương hiệu.
+[Kinh nghiệm] Graphic Designer – Sáng Tạo Việt (2025-01 – nay)
+  • Thiết kế và thực hiện 15 dự án đồ họa cho các sản phẩm mỹ phẩm, bao gồm bao bì, ấn phẩm marketing và các tài liệu quảng cáo.
+  • Sử dụng After Effects để tạo hiệu ứng chuyển đổi và động tác cho các video quảng cáo sản phẩm.
+  • Hợp tác chặt chẽ với bộ phận phát triển sản phẩm để đảm bảo thiết kế đáp ứng các yêu cầu về thương hiệu.
+  • Tạo ra 10 video marketing ngắn trên CapCut cho các chiến dịch marketing của công ty.
+[Dự án] Dự án bao bì sản phẩm thực phẩm chức năng – Graphic Designer
+  • Tạo ra thiết kế bao bì cho 10 sản phẩm khác nhau, mỗi thiết kế được thực hiện trong 2 tuần.
+  • Sử dụng Photoshop để tạo hiệu ứng và chỉnh sửa hình ảnh.
+[Học vấn] Thạc sĩ Thiết kế đồ họa – Trường ĐH Sáng Tạo Việt Nam
+[Kỹ năng] photoshop, CapCut, After Effects, Dựng video, Illustrator
+[Chứng chỉ] Chứng chỉ thiết kế đồ họa cấp độ cao do công ty Sáng Tạo Việt Nam cấp; Chứng chỉ chỉnh sửa video từ trung tâm CapCut
+[Sở thích] Xem triển lãm nghệ thuật; Sáng tác nhạc cụ kỹ thuật số; Xây dựng logo cho các dự án cá nhân; Sưu tập sách thiết kế đồ họa
+```
+
+## TR-61-13
+
+- Tin: GRAPHIC DESIGNER
+- Máy định viết: nghề "Graphic Designer", khớp một phần: đúng nghề của tin nhưng thiếu kỹ năng hoặc kinh nghiệm, 39 tháng kinh nghiệm
+
+- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
+
+```text
+Graphic Designer
+A creative and detail-oriented graphic designer with 39 months of experience in visual content creation, specializing in video production and photography. Proven track record in designing impactful branding and marketing materials for e-commerce businesses.
+[Kinh nghiệm] Graphic Designer – VegaDesign (2023-08 – 2026-09)
+  • Developed and managed a comprehensive brand identity, resulting in a 30% increase in customer engagement within the first six months.
+  • Utilized Adobe CapCut and Cinema 4D to create engaging product videos for a popular e-commerce platform, driving a 40% increase in sales.
+  • Trained and mentored junior designers, enhancing team productivity and ensuring adherence to design standards.
+[Kinh nghiệm] Senior Graphic Designer – GlobeMart (2026-10 – nay)
+  • Led the design and implementation of visual merchandising campaigns, contributing to a 25% increase in online sales for GlobeMart's e-commerce store.
+  • Collaborated with cross-functional teams to create high-quality product images and videos, achieving a 60% reduction in production time.
+  • Managed a portfolio of clients, including local e-commerce brands, delivering customized solutions that met their business objectives.
+[Dự án] VegaDesign Brand Identity Project – Creative Director
+  • Developed a cohesive brand identity for a fast-growing e-commerce business, including logo design, packaging, and marketing collateral.
+  • Utilized Adobe Illustrator and AI to ensure consistency and scalability across all visual assets.
+[Học vấn] Master of Fine Arts in Visual Communication – University of Art and Design, Ho Chi Minh City
+[Kỹ năng] Sáng tạo, CapCut, Illustrator, AI, Cinema 4D, Video Production, Chụp ảnh
+[Chứng chỉ] Adobe Certified Expert in Photoshop and Illustrator; Certified Video Editor by Adobe
+[Ngoại ngữ] English Conversational; Vietnamese Native
+```
+
+## TR-63-00
+
+- Tin: Cloud Solution Architect AWS/Azure Senior, Middle
+- Máy định viết: nghề "Cloud Engineer", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 54 tháng kinh nghiệm
+
+- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
+
+```text
+Cloud Engineer
+Highly experienced Cloud Engineer with a solid background in Solution and System Architecture, Presale, and AWS cloud-native technologies. Proven track record in delivering large-scale cloud solutions and driving business growth through technical expertise and customer satisfaction.
+[Kinh nghiệm] Cloud Architect – TechVenture Solutions (2022-05 – 2023-12)
+  • Architected and implemented scalable cloud solutions for a 1200+ user B2B e-commerce platform, reducing operational costs by 40%.
+  • Led pre-sales activities and technical demonstrations for potential clients, resulting in the successful acquisition of a $2 million contract.
+  • Collaborated with cross-functional teams to design and deploy cloud-native applications, improving system resilience and efficiency.
+  • Managed a team of 5 engineers, mentoring junior staff and ensuring consistent application of best practices in cloud engineering.
+[Kinh nghiệm] Senior Cloud Engineer – EcomCloud (2024-01 – 2025-11)
+  • Developed and managed complex cloud architectures for a 500+ merchant marketplace, optimizing performance and security for over 5 million users.
+  • Provided technical consulting for strategic business partners, contributing to the design of innovative cloud solutions that increased adoption and satisfaction.
+  • Delivered cloud-native training programs for internal teams, enhancing technical capabilities and aligning with industry standards.
+  • Collaborated with DevOps teams to implement CI/CD pipelines, reducing deployment times by 30% and improving application reliability.
+[Kinh nghiệm] Cloud Engineer – NetSolutions (2025-12 – nay)
+  • Designed and deployed cloud-based solutions for a 100+ merchant e-commerce platform, achieving 99.95% uptime and 95% customer satisfaction.
+  • Conducted presales activities for potential clients, providing technical assessments and recommending optimal cloud strategies.
+  • Optimized existing cloud environments, reducing costs by 25% while maintaining or improving performance.
+  • Participated in the implementation of a new AWS region, contributing to the successful launch of 20+ new services and features.
+[Dự án] Hybrid Cloud Migration – Architect
+  • Migrated 30+ mission-critical applications to a hybrid cloud environment, improving data accessibility and disaster recovery capabilities.
+  • Developed a cloud-native architecture that supported real-time data processing and analytics, enhancing operational efficiency.
+[Hoạt động] Tech Innovators Club – Acme Tech Institute
+  • Led a project to automate cloud infrastructure setup for a local non-profit organization.
+  • Trained peers in Kubernetes and Docker container orchestration.
+[Học vấn] Bachelor of Science in Computer Science – University of Technology, Hue
+[Kỹ năng] Solution Architecture, System Architecture, Presale, AWS, Cloud-native Architecture
+[Chứng chỉ] AWS Certified Solutions Architect - Associate; Microsoft Certified: Azure Fundamentals
+[Sở thích] Cloud security and compliance; Machine learning and AI applications in cloud services; Open source contributions; Hiking and outdoor adventure
+[Ngoại ngữ] English Fluent; Korean Fluent; Vietnamese Native
+```
+
+## TR-63-01
+
+- Tin: Cloud Solution Architect AWS/Azure Senior, Middle
+- Máy định viết: nghề "Cloud Engineer", khớp một phần: đúng nghề của tin nhưng thiếu kỹ năng hoặc kinh nghiệm, 22 tháng kinh nghiệm
+
+- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
+
+```text
+Cloud Engineer
+Experienced Cloud Engineer with 22 months of hands-on experience in designing and implementing cloud-native architectures. Skilled in system architecture, pre-sales, and Linux operations. Adept at bridging technical and business requirements in B2B environments.
+[Kinh nghiệm] Cloud Engineer – Tech Innovate (2025-01 – 2025-12)
+  • Designed and deployed cloud-native architectures for a 100-store retail chain, enhancing system scalability and reducing maintenance costs by 30%.
+  • Provided pre-sales technical consultation to internal teams, resulting in a 25% increase in product adoption rate.
+  • Engineered and managed Linux-based systems, ensuring high availability and performance across multiple cloud environments.
+[Kinh nghiệm] Cloud Engineer – Digital Solutions (2026-01 – nay)
+  • Led the development of a cloud infrastructure for a 50-store retail chain, achieving a 40% reduction in IT operational costs.
+  • Presented complex cloud architecture concepts to both technical and non-technical stakeholders, driving successful project execution.
+  • Mentored junior engineers on best practices in cloud architecture and Linux operations, improving team efficiency by 20%.
+[Dự án] Retail Cloud Migration – Cloud Engineer
+  • Migrated 3,000+ retail store operations to a hybrid cloud environment, improving data accessibility and security.
+[Học vấn] College Diploma in Computer Science – Institute of Digital Technologies
+[Kỹ năng] System Architecture, Presale, Cloud-native Architecture, Linux
+[Chứng chỉ] AWS Certified Solutions Architect - Associate; Linux Foundation Certified System Administrator
+[Giải thưởng] Best Innovative Solution Award; Recognition for Excellence in Cloud Computing; Awarded for Outstanding Contribution to the TechNights Coding Club
+[Sở thích] Cloud automation and scripting; Open-source technologies; Sustainable cloud practices; Technology ethics and privacy
+[Ngoại ngữ] English Working proficiency; Korean Working proficiency; Vietnamese Native
+```
+
+## TR-64-15
+
+- Tin: QA Senior Specialist Automation Test/Selenium/TestNG
+- Máy định viết: nghề "Fullstack Developer", vị trí gần: nghề khác nhưng cùng mảng với tin, 0 tháng kinh nghiệm
+
+- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
+
+```text
+Fullstack Developer
+Seeking a role as a Fullstack Developer to leverage my skills in automation testing, ReactJS, and Java to contribute to the development of robust and user-friendly applications.
+[Dự án] Junior Developer – TechCraft Solutions
+  • Successfully implemented automation testing using Selenium and TestNG, reducing manual testing time by 30%.
+  • Developed and maintained ReactJS components for front-end applications, enhancing user interaction and performance.
+  • Collaborated with the team to integrate Java backend services with ReactJS front-end, resulting in a 20% improvement in application response time.
+  • Conducted unit and integration testing using JUnit, ensuring the quality and reliability of the application.
+  • Participated in the automation of CI/CD processes using Jenkins, facilitating faster deployment cycles.
+[Dự án] E-commerce Platform Redesign – Contributor
+  • Rebuilt the front-end using ReactJS to improve user experience and scalability.
+  • Integrated new backend functionalities using Java, enhancing the platform's functionality and performance.
+[Học vấn] Bachelor of Science in Computer Science – National University of Science and Technology
+[Kỹ năng] Automation Testing, ReactJS, Java
+[Chứng chỉ] Certified React Developer by React Training; Certified Selenium WebDriver Automation Tester by SoftUni
+[Sở thích] Exploring new programming languages and frameworks to expand knowledge and skills.; Participating in hackathons to solve real-world problems and collaborate with fellow developers.; Contributing to open-source projects to improve community-driven software and share knowledge.; Attending tech meetups and conferences to stay updated with the latest industry trends.
+[Ngoại ngữ] English Working proficiency IELTS 6.5; Vietnamese Native
+```
+
+## TR-70-02
+
+- Tin: Senior Data Engineer Databricks, MLops, AWS
+- Máy định viết: nghề "Data Engineer", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 17 tháng kinh nghiệm
+
+- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
+
+```text
+Data Engineer
+Driven and skilled data professional with 17 months of experience in building and maintaining data pipelines and systems, using advanced tools and technologies. Adept at MLOps and AWS, with a strong background in Python and Databricks, seeking a Senior Data Engineer role to utilize and expand these skills.
+[Kinh nghiệm] Data Engineer – TechCom Hue E-Commerce (2025-06 – nay)
+  • Managed the design and development of ETL pipelines using Apache Spark, processing over 1.5 million records daily.
+  • Utilized Python and Databricks to automate data transformation and analysis workflows, reducing manual effort by 40%.
+  • Implemented MLOps practices to streamline the deployment of machine learning models, achieving a 25% faster model release cycle.
+  • Developed and maintained AWS-based data systems, including S3 storage and EC2 instances, to support scalable data processing at a 20TB scale.
+  • Collaborated with cross-functional teams to ensure data integrity and consistency, leveraging git-based version control for seamless code integration.
+[Dự án] Customer Behavior Analysis – Lead Engineer
+  • Built and deployed a real-time data streaming pipeline using Spark Structured Streaming, processing over 100,000 events per minute.
+  • Designed and implemented ML models to predict customer churn, achieving a 90% accuracy rate.
+[Học vấn] Bachelor of Science in Computer Science – Hue University of Technology and Humanities
+[Kỹ năng] Python, Databricks, Apache Spark, SQL, MLOps, AWS
+[Chứng chỉ] AWS Certified Solutions Architect - Associate; Databricks Certified Data Engineer
+[Sở thích] Machine learning and its applications in real-world problems; Open-source software development; Reading technical literature and research papers; Participating in coding workshops and webinars
+[Ngoại ngữ] English Conversational; Vietnamese Native
+```
+
+## TR-72-06
+
+- Tin: Kế Toán Công Nợ Phải Trả / Accounts Payable Accountant
+- Máy định viết: nghề "Kế toán công nợ", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 35 tháng kinh nghiệm
+
+- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
+
+```text
+Kế Toán Công Nợ
+Cử nhân Kế toán với hơn 3 năm kinh nghiệm trong việc quản lý công nợ, sử dụng hiệu quả phần mềm VAS và Excel, chuyên về xử lý hồ sơ thanh toán và kiểm soát chi phí.
+[Kinh nghiệm] Kế Toán Công Nợ – Công Ty Cổ Phần Sản Xuất Dạ Tiệc Hoa Phượng (2023-12 – 2025-04)
+  • Đảm nhiệm việc xử lý hơn 500 hóa đơn nhập hàng mỗi tháng, giảm thời gian xử lý hóa đơn từ 3 ngày xuống còn 1 ngày nhờ sử dụng phần mềm VAS.
+  • Tạo lập và duy trì hồ sơ công nợ cho hơn 200 nhà cung cấp, đảm bảo thông tin chính xác và kịp thời.
+  • Kiểm soát và phân loại chi phí nhập kho hàng năm, giảm chi phí không hợp lý và tăng hiệu quả quản lý.
+  • Thực hiện kiểm kê hàng tháng, xác minh số lượng và giá trị tồn kho, giúp công ty tiết kiệm hơn 100 triệu đồng/năm.
+[Kinh nghiệm] Kế Toán Công Nợ – Công Ty Cổ Phần Sản Xuất Thủy Sản Biển Đông (2025-05 – nay)
+  • Xử lý và phân tích hơn 300 hóa đơn hàng tuần, đảm bảo tính chính xác và tuân thủ quy định kế toán.
+  • Sử dụng Excel để tạo báo cáo công nợ hàng tháng, giúp quản lý hiệu quả quan hệ với nhà cung cấp.
+  • Phối hợp với bộ phận mua sắm để kiểm soát và giảm chi phí mua hàng, đạt được tỷ lệ giảm chi phí 5% trong 12 tháng đầu công việc.
+  • Kiểm soát và thực hiện các giao dịch thanh toán cho các nhà cung cấp, đảm bảo tuân thủ các quy định về quản lý công nợ.
+[Dự án] Tối ưu hóa quy trình xử lý công nợ – Lãnh đạo dự án
+  • Áp dụng các công cụ quản lý công nợ vào hệ thống hiện có, giảm thời gian xử lý hồ sơ từ 2 ngày xuống còn 1 ngày.
+  • Phối hợp với bộ phận mua sắm và kho hàng để đảm bảo việc thanh toán được thực hiện nhanh chóng và chính xác.
+[Hoạt động] Team Accounting Leaders – Student Association
+  • Lãnh đạo nhóm tổ chức sự kiện tài chính cho sinh viên, giúp mọi người nâng cao kỹ năng quản lý tài chính cá nhân.
+  • Tạo ra các hướng dẫn tài chính dễ hiểu và áp dụng cho cuộc sống hàng ngày.
+[Học vấn] Cử nhân Kế toán – Trường Đại Học Kinh Tế TP. Hồ Chí Minh
+[Kỹ năng] Phần mềm kế toán, Kế toán công nợ, VAS, Excel
+[Chứng chỉ] Chứng chỉ Kế toán trưởng; Chứng chỉ quản lý công nợ
+[Giải thưởng] Second Place - Accounting Challenge; Certificate of Excellence - Best Project in Financial Management Competition
+[Ngoại ngữ] Tiếng Anh Cơ bản
+```
+
+## TR-72-11
+
+- Tin: Kế Toán Công Nợ Phải Trả / Accounts Payable Accountant
+- Máy định viết: nghề "Kế toán tổng hợp", vị trí gần: nghề khác nhưng cùng mảng với tin, 75 tháng kinh nghiệm
+
+- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
+
+```text
+Kế toán Tổng Hợp
+Có hơn 6 năm kinh nghiệm trong lĩnh vực kế toán tổng hợp, phân tích tài chính và thuế. Hiểu sâu sắc về quy trình quản lý tài chính và có khả năng đưa ra các báo cáo chi tiết.
+[Kinh nghiệm] Kế toán Tổng Hợp – Công ty TMĐT Linh Tường (2020-08 – 2021-07)
+  • Sản xuất báo cáo tài chính hàng quý cho 150 nhân viên và 5 chi nhánh, bao gồm tài sản, nợ, doanh thu và lợi nhuận.
+  • Phân tích dữ liệu tài chính hàng tháng để cung cấp báo cáo chi tiết cho quản lý, giúp cải thiện hiệu suất hoạt động.
+  • Xây dựng và duy trì hệ thống thuế hợp pháp cho công ty, đảm bảo tuân thủ các quy định thuế của địa phương và quốc gia.
+[Kinh nghiệm] Kế toán Tổng Hợp – Công ty TMĐT Minh Phong (2021-08 – 2023-09)
+  • Đóng vai trò chủ chốt trong việc quản lý tài chính, bao gồm lập báo cáo tài chính, quản lý ngân sách và kiểm soát chi tiêu.
+  • Cân nhắc các phương án thuế tối ưu để giảm chi phí và tối đa hóa lợi nhuận cho công ty.
+  • Công ty đã tăng doanh thu 15% và giảm chi phí quản lý tài chính 10% nhờ vào các giải pháp tài chính mà tôi đề xuất.
+[Kinh nghiệm] Kế toán Tổng Hợp – Công ty TMĐT Ánh Sáng (2023-10 – nay)
+  • Xây dựng và triển khai quy trình quản lý tài chính mới, giúp cải thiện hiệu quả công việc và tuân thủ quy định tài chính.
+  • Phân tích chi phí sản xuất và lập báo cáo chi tiết cho quản lý, giúp điều chỉnh các quy trình sản xuất.
+  • Giảm 12% chi phí quản lý tài chính thông qua việc tối ưu hóa quy trình và hệ thống hóa công việc.
+[Hoạt động] Nhóm Kế toán học thuật – Clube do Contabilista
+  • Tham gia tổ chức và thực hiện các hội thảo trực tuyến về tài chính và kế toán
+  • Làm việc nhóm trong việc chuẩn bị báo cáo tài chính cho các doanh nghiệp giả lập
+[Hoạt động] Nhóm tình nguyện tài chính – Quỹ Nhân ái địa phương
+  • Thực hiện khảo sát tài chính cho các gia đình có hoàn cảnh khó khăn trong địa phương
+  • Cung cấp tư vấn về quản lý tài chính cá nhân cho người dân địa phương
+[Học vấn] Thạc sĩ Tài chính – Trường Đại học Tài chính - MANAGEMENT
+[Kỹ năng] Kế toán tổng hợp, Phân tích tài chính, Thuế, Báo cáo tài chính
+[Chứng chỉ] Chứng chỉ thuế Việt Nam; Chứng chỉ quản lý tài chính
+[Sở thích] Đọc sách về tài chính và quản lý doanh nghiệp; Thực hành các bài toán kế toán phức tạp để nâng cao kỹ năng; Tập thể dục và giữ gìn sức khỏe; Xem các chương trình tài chính và kinh tế trên truyền hình
+[Ngoại ngữ] Tiếng Anh Cơ bản
+```
+
+## TR-72-14
+
+- Tin: Kế Toán Công Nợ Phải Trả / Accounts Payable Accountant
+- Máy định viết: nghề "Kế toán công nợ", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 17 tháng kinh nghiệm
+
+- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
+
+```text
+Accounts Payable Accountant
+With 17 months of experience in managing accounts payable processes, I have a proven track record of ensuring accurate and timely payments. My background in a startup environment has equipped me with the flexibility and adaptability needed in a dynamic work setting.
+[Kinh nghiệm] Accounts Payable Specialist – TechStart Ventures (2025-06 – nay)
+  • Managed the accounts payable department for a small tech startup based in Huế, ensuring all payments were made on time and within budget.
+  • Implemented VAS and Excel to streamline the payment process, reducing manual errors and increasing efficiency by 25%.
+  • Processed over 150 invoices monthly, maintaining a 99.5% accuracy rate in payment transactions.
+  • Collaborated with cross-functional teams to ensure timely payment of vendors and suppliers, contributing to the company's operational efficiency.
+[Dự án] Inventory Management System – Contributor
+  • Developed an Excel-based inventory management tool to track stock levels and reduce the time spent on manual inventory counts by 30%.
+[Hoạt động] Financial Literacy Club – University of Accounting Enthusiasts
+  • Organized monthly workshops on personal finance management for the campus community.
+  • Facilitated a seminar on the impact of economic policies on small businesses.
+[Học vấn] College Diploma in Business Administration - Accounting – Huế Business College
+[Kỹ năng] VAS, Phần mềm kế toán, Kế toán công nợ, Excel
+[Chứng chỉ] Certified Accounts Payable Professional (CAPP); Excel Advanced User
+[Giải thưởng] Top 3 in the National Accounting Challenge; Best Paper Award at the Regional Financial Management Symposium
+[Sở thích] Reading financial news and articles on economic trends; Attending seminars and webinars on accounting and finance; Participating in chess tournaments to enhance strategic thinking
+[Ngoại ngữ] English Working proficiency IELTS 6.5; Vietnamese Native
+```
+
+## TR-78-12
+
+- Tin: Graphic Designer
+- Máy định viết: nghề "Graphic Designer", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 42 tháng kinh nghiệm
+
+- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
+
+```text
+Graphic Designer
+Experienced graphic designer with a proven track record in creating visually stunning marketing materials and packaging designs. Skilled in Adobe Photoshop, Illustrator, and CapCut, with a portfolio showcasing a variety of projects from retail campaigns to product branding.
+[Kinh nghiệm] Graphic Designer – Mystic Retail Solutions (2023-05 – 2026-07)
+  • Designed and developed marketing campaigns for various retail products, increasing brand visibility by 20% in the first quarter.
+  • Utilized Adobe Illustrator to create packaging designs for a popular retail chain, reducing production time by 15% and maintaining high-quality standards.
+  • Created visually appealing product images and layouts for e-commerce platforms, resulting in a 10% increase in online sales within 6 months.
+[Kinh nghiệm] Junior Graphic Designer – Mystic Retail Solutions (2026-08 – 2026-09)
+  • Collaborated with marketing teams to conceptualize and implement brand identities for new retail stores, enhancing brand consistency across multiple locations.
+  • Managed multiple design projects simultaneously, ensuring deadlines were met and quality was maintained, working with a team of 10 designers.
+  • Employed CapCut to produce promotional videos for retail events, generating a 15% increase in customer engagement and event attendance.
+[Kinh nghiệm] Freelance Graphic Designer – N/A (2026-10 – nay)
+  • Worked on diverse projects for small to medium-sized businesses, including logo design, brochure creation, and event posters.
+  • Delivered projects ahead of schedule, exceeding client expectations and establishing a strong network of professional relationships.
+  • Continuously improved skills through online courses and workshops, staying updated with the latest design trends and techniques.
+[Dự án] Retail Store Identity System – Graphic Designer
+  • Developed a comprehensive identity system for a new retail store chain, including logos, signage, and promotional materials.
+  • Ensured consistency in design across all touchpoints, resulting in a cohesive brand image and improved customer recognition.
+[Hoạt động] Creative Circle – Student Association
+  • Participated in multiple design challenges and workshops, fostering my skills in graphic design and creativity.
+  • Contributed to the design of promotional materials for events and campaigns, gaining hands-on experience in team collaboration.
+[Học vấn] Bachelor of Arts in Visual Communication Design – Institute of Creative Arts
+[Kỹ năng] Thiết kế đồ họa, photoshop, CapCut, Illustrator
+[Chứng chỉ] Adobe Certified Expert - Photoshop; Adobe Certified Expert - Illustrator
+[Sở thích] Exploring new design trends and software; Photography and its integration with graphic design; Traveling and capturing scenic locations through photography; Reading about the history and evolution of design
+[Ngoại ngữ] English Conversational; Vietnamese Native
+```
+
+## TR-82-04
+
+- Tin: Chuyên Viên SEO Marketing Thị Trường Nước Ngoài
+- Máy định viết: nghề "SEO/SEM", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 0 tháng kinh nghiệm
+
+- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
+
+```text
+Chuyên viên SEO/SEM
+Cựu sinh viên với đam mê trong lĩnh vực SEO/SEM, có kỹ năng sử dụng Google Search Console, Ahrefs, Google Search Ads và GA4. Hoàn thành một dự án SEO, giúp cải thiện thứ hạng trang web lên vị trí top 10 trong các từ khóa liên quan.
+[Dự án] Sản xuất kỹ thuật số – TechFusion Co., Ltd
+  • Phân tích và tối ưu hóa trang web bằng Google Search Console, dẫn đến tăng 20% lượng truy cập từ công cụ tìm kiếm.
+  • Sử dụng Ahrefs để nghiên cứu và phân tích từ khóa, từ đó lập chiến lược SEO hiệu quả.
+  • Độc lập chạy Google Search Ads, giúp tăng doanh thu lên 15% trong 3 tháng đầu tiên.
+  • Tích hợp GA4 để theo dõi và phân tích hành vi người dùng trên trang web, từ đó đề xuất cải tiến để nâng cao trải nghiệm người dùng.
+[Dự án] SEO trang web TechFusion – Chuyên viên SEO
+  • Tăng hạng trang chủ lên vị trí thứ 3 trong Google.
+  • Tối ưu hóa 5 trang nội dung quan trọng, nâng cao thứ hạng từ khóa từ 10-30%.
+  • Tạo ra các chiến lược nội dung SEO hiệu quả và áp dụng cho các trang web mới.
+[Học vấn] Cử nhân Marketing Online – Đại học Công nghệ TP.HCM (HCMUT)
+[Kỹ năng] Google Search Console, Ahrefs, SEO, Google Search Ads, GA4
+[Chứng chỉ] Chứng chỉ Google Analytics
+[Sở thích] Đọc sách về công nghệ và xu hướng SEO; Tối ưu hóa trải nghiệm người dùng trên website; Theo dõi các kênh YouTube về SEO và kỹ thuật số; Tham gia các hội thảo trực tuyến về kỹ thuật số và SEO
+[Ngoại ngữ] Tiếng Trung Giao tiếp; Tiếng Anh Giao tiếp
+```
+
+## TR-82-14
+
+- Tin: Chuyên Viên SEO Marketing Thị Trường Nước Ngoài
+- Máy định viết: nghề "SEO/SEM", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 16 tháng kinh nghiệm
+
+- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
+
+```text
+SEO/SEM Specialist
+Experienced SEO/SEM specialist with 16 months of proven track record in optimizing online presence and driving organic traffic. Adept in utilizing Ahrefs, Google Search Console, and Semrush to achieve high search engine rankings and generate effective PPC campaigns.
+[Kinh nghiệm] SEO/SEM Specialist – TechOptimize Pro (2025-07 – nay)
+  • Successfully increased organic traffic by 40% through strategic keyword optimization and content creation using Ahrefs and Semrush.
+  • Implemented and managed Google Search Console and GA4 to monitor and improve site performance, resulting in a 25% reduction in bounce rate.
+  • Launched and managed Google Search Ads campaigns, achieving a 15% CTR and a 30% increase in conversion rates within 3 months.
+  • Utilized SEO techniques to boost website rankings on top search engines, reaching a top 5 position in key keyword searches for multiple clients.
+  • Collaborated with the content team to develop a comprehensive SEO strategy, leading to a 20% increase in backlinks and domain authority.
+[Dự án] TechOptimize Pro Client: International Expansion – Primary SEO Strategist
+  • Developed an SEO plan to increase international market share for a client expanding into Southeast Asian markets.
+  • Conducted competitor analysis using Ahrefs and Semrush, identifying key opportunities and threats.
+  • Optimized the client's website for local search engines, resulting in a 30% increase in international traffic within 6 months.
+[Học vấn] Bachelor of Science in Digital Marketing – Institute of Digital Innovation
+[Kỹ năng] Ahrefs, Google Search Console, Semrush, SEO, Google Search Ads, GA4
+[Chứng chỉ] Google Analytics Individual Qualification (GAIQ); SEMrush Professional Certification
+[Giải thưởng] Top SEO Practitioner Award; Best SEM Strategy Implementation Award
+[Sở thích] Reading tech blogs and articles; Participating in online SEO challenges; Attending webinars and conferences; Learning about the latest SEO trends and tools
+[Ngoại ngữ] Chinese Conversational; English Conversational; Vietnamese Native
 ```
 
 ## TR-86-14
@@ -1069,210 +1134,84 @@ Tôi đã có hơn 3 năm kinh nghiệm làm việc trong lĩnh vực lễ tân 
 [Ngoại ngữ] Tiếng Anh Giao tiếp
 ```
 
-## TR-87-04
+## TR-92-01
 
-- Tin: Thư Ký Chuyên Môn Phiên Dịch
-- Máy định viết: nghề "Thư ký/Trợ lý", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 50 tháng kinh nghiệm
-
-- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
-
-```text
-Thư Ký
-Với hơn 50 tháng kinh nghiệm làm việc trong lĩnh vực thư ký và trợ lý, tôi đã tích lũy được nhiều kỹ năng quý giá, đặc biệt là trong lĩnh vực xử lý tình huống, giao tiếp và tổ chức công việc. Tôi sẵn lòng ứng tuyển vào vị trí Thư Ký Chuyên Môn Phiên Dịch (Tiếng Trung) tại Vinmec Hòn Tre.
-[Kinh nghiệm] Trợ Lý Điều Hành – Nhị Thanh Công Ty (2022-09 – 2024-12)
-  • Cung cấp dịch vụ phiên dịch từ tiếng Trung sang Việt Nam cho các nhân viên và khách hàng.
-  • Xử lý tình huống nhanh chóng, giúp duy trì hoạt động làm việc hiệu quả.
-  • Giao tiếp với các đối tác quốc tế, tạo nên sự chuyên nghiệp và thiện cảm.
-  • Sử dụng Microsoft Office để tổ chức và quản lý thông tin, đảm bảo tính nhất quán trong công việc.
-  • Tham gia tổ chức và thực hiện nhiều sự kiện quan trọng, với quy mô lên đến 500 người tham dự.
-[Kinh nghiệm] Thư Ký Giám Đốc – Phong Vân Tập Đoàn Ngân Hàng (2025-01 – 2026-07)
-  • Phụ trách việc quản lý và sắp xếp lịch trình làm việc cho giám đốc, giúp tối ưu hóa thời gian.
-  • Xử lý các vấn đề phát sinh hàng ngày, đảm bảo công việc được thực hiện đúng tiến độ.
-  • Đề xuất giải pháp tổ chức công việc hiệu quả, giúp cải thiện hiệu suất làm việc.
-  • Tham gia phiên dịch văn bản kỹ thuật, hỗ trợ các cuộc họp với đối tác nước ngoài.
-  • Giao tiếp với nhiều bên liên quan, từ nhân viên đến khách hàng, duy trì mối quan hệ chặt chẽ.
-[Kinh nghiệm] Trợ Lý Kế Toán – Sóng Dài Ngân Hàng (2026-08 – nay)
-  • Hỗ trợ trong việc xử lý các giao dịch ngân hàng, đảm bảo tính chính xác và nhanh chóng.
-  • Giao tiếp với các nhân viên khác để tổng hợp và phân tích thông tin tài chính.
-  • Tham gia tổ chức các sự kiện kinh doanh, với quy mô từ 200 đến 300 người.
-  • Tổ chức và quản lý các dự án tài chính, giúp giảm thiểu rủi ro và tăng hiệu quả làm việc.
-  • Sử dụng Microsoft Office để chuẩn bị báo cáo tài chính, đảm bảo tính toàn vẹn của thông tin.
-[Dự án] Tổ Chức Sự Kiện Thụy Điển – Trợ Lý Tổ Chức
-  • Tham gia tổ chức sự kiện kinh doanh với đối tác Thụy Điển, quy mô 300 người tham dự.
-  • Hỗ trợ trong việc phiên dịch và giao tiếp với khách hàng nước ngoài.
-  • Tạo điều kiện thuận lợi cho quá trình giao lưu văn hóa và kinh doanh.
-[Hoạt động] BQT CLB Đọc Sách – Cộng đồng Học sinh
-  • Tổ chức các buổi thảo luận sách hàng tháng và giới thiệu các tác phẩm văn học mới.
-  • Tạo môi trường giao lưu văn hóa và trí tuệ cho các thành viên.
-[Hoạt động] Vận động viên Nhóm thể thao văn phòng – Cộng đồng Nhân viên
-  • Tham gia các hoạt động thể thao nội bộ như cầu lông, bóng rổ.
-  • Nâng cao tinh thần đồng đội và sức khỏe cho tập thể công ty.
-[Học vấn] Cao đẳng Ngôn Ngữ – Trường Đại Học Cần Thơ
-[Kỹ năng] Xử lý tình huống, Phiên dịch, Giao tiếp, Microsoft Office, Tổ chức công việc
-[Chứng chỉ] Kỹ năng Quản Lý Công Việc: Ứng dụng trong thực tế; Tiếng Trung cơ bản
-[Sở thích] Đọc sách văn học và tự truyện để mở rộng kiến thức và hiểu biết xã hội.; Tham gia các buổi trình diễn văn nghệ để nâng cao khả năng giao tiếp.; Tham gia các lớp học yoga và meditative practice để giữ gìn sức khỏe tinh thần.; Thực hiện các dự án thủ công như làm đồ trang trí nội thất để tạo không gian làm việc thoải mái.
-[Ngoại ngữ] Tiếng Trung Thành thạo
-```
-
-## TR-88-13
-
-- Tin: Chuyên Viên Quan Hệ Khách Hàng Tại Đồng Nai
-- Máy định viết: nghề "Sales Online", khớp một phần: đúng nghề của tin nhưng thiếu kỹ năng hoặc kinh nghiệm, 18 tháng kinh nghiệm
+- Tin: AI Creative Design Manager
+- Máy định viết: nghề "Graphic Designer", khớp một phần: đúng nghề của tin nhưng thiếu kỹ năng hoặc kinh nghiệm, 0 tháng kinh nghiệm
 
 - [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
 
 ```text
-Chuyên Viên Quan Hệ Khách Hàng
-Với hơn 18 tháng kinh nghiệm trong lĩnh vực sales online, tôi đã tích lũy được kỹ năng giao tiếp hiệu quả, khả năng xử lý tình huống và kinh nghiệm huấn luyện đội ngũ. Tôi đã thành công trong việc phát triển và duy trì mối quan hệ với khách hàng, đồng thời nâng cao năng suất của đội nhóm.
-[Kinh nghiệm] Sales Online – Phố Trải Nghiệm (2025-05 – 2026-09)
-  • Đã phát triển và duy trì một cơ sở khách hàng lớn với hơn 500 khách hàng trung thành trong 18 tháng làm việc, tăng doanh thu 20% so với năm trước.
-  • Giao tiếp hiệu quả với khách hàng trong và ngoài nước, xử lý 95% các vấn đề gặp phải của khách hàng trong vòng 24 giờ.
-  • Huấn luyện và nâng cao kỹ năng bán hàng cho 30 nhân viên mới gia nhập đội nhóm.
-[Kinh nghiệm] Sales Online – Thánh Phố Bán Hàng (2026-10 – nay)
-  • Nhận trách nhiệm quản lý và phát triển một nhóm bán hàng gồm 15 người, tăng doanh thu 30% trong 1 năm đầu tiên.
-  • Nghiệp vụ tín dụng: Đã đánh giá và phân loại hơn 200 đơn xin vay, hỗ trợ khách hàng hiểu rõ về quy trình tín dụng và các rủi ro liên quan.
-  • Xử lý tình huống: Hoàn thành việc giải quyết 80% các vấn đề khách hàng nhanh chóng và hiệu quả, giữ mức độ hài lòng khách hàng ở mức cao.
-[Hoạt động] Marketing và PR cho tổ chức từ thiện – Trái Tim Xanh
-  • Tham gia tổ chức các chiến dịch quảng bá trên mạng xã hội, giúp tăng độ phủ sóng cho các dự án của tổ chức.
-  • Công tác phối hợp với các nhà tài trợ và doanh nghiệp địa phương để triển khai các chương trình hỗ trợ cộng đồng.
-[Hoạt động] Hội thảo trực tuyến về kỹ năng bán hàng – Học viện Kỹ năng Online
-  • Nghiên cứu và chia sẻ kinh nghiệm trong ngành bán hàng trực tuyến.
-  • Giới thiệu các phương pháp mới nhằm cải thiện kỹ năng giao tiếp và xây dựng mối quan hệ khách hàng.
-[Học vấn] Cao đẳng Kinh tế Công nghiệp – Trường Đại học Công nghiệp Đà Nẵng
-[Kỹ năng] Giao tiếp, Huấn luyện, Nghiệp vụ tín dụng, Xử lý tình huống
-[Chứng chỉ] Khóa huấn luyện kỹ năng giao tiếp hiệu quả; Khóa nghiệp vụ tín dụng cấp chứng chỉ
-[Sở thích] Đọc sách về tâm lý bán hàng và tiếp thị; Theo dõi xu hướng thị trường công nghệ và thương mại điện tử; Tham gia các khóa học trực tuyến về kỹ năng mềm và giao tiếp; Thử nghiệm các công cụ phân tích dữ liệu để hiểu rõ khách hàng hơn
+Graphic Designer
+Có thể sáng tạo và phát triển các nội dung đa phương tiện, cùng với khả năng chụp ảnh và quay phim, tôi mong muốn được gia nhập một môi trường năng động để phát triển kỹ năng và cống hiến trong vai trò Designer.
+[Dự án] Multimedia Designer Intern – Vivace Media Solutions
+  • Thiết kế và phát triển nội dung đa phương tiện cho các chiến dịch quảng cáo của Vivace Media Solutions, bao gồm thiết kế đồ họa, quay phim và hậu kỳ video.
+  • Cùng đội ngũ thực hiện các dự án từ đầu đến cuối, từ quá trình sáng tạo ý tưởng đến việc chỉnh sửa cuối cùng.
+  • Học hỏi và áp dụng các kỹ năng như Photoshop, AI và Premiere Pro để tạo ra các sản phẩm chất lượng cao.
+[Dự án] Trailer Marketing – Multimedia Designer
+  • Tạo trailer marketing cho một chuỗi cửa hàng thời trang.
+  • Sử dụng Photoshop và AI để thiết kế logo và bối cảnh.
+  • Chụp ảnh và quay phim nội dung sản phẩm cho trailer.
+[Học vấn] Cao đẳng Thiết kế đồ họa – Hồng Nhung Academy of Art and Design
+[Kỹ năng] Multimedia design, Chụp ảnh, Quay phim, AI, photoshop, Sáng tạo, Dựng video
+[Chứng chỉ] Adobe Certified Expert - Photoshop; Adobe Certified Associate - Illustrator
 [Ngoại ngữ] Tiếng Anh Cơ bản
 ```
 
-## TR-93-01
+## TR-94-13
 
-- Tin: Senior Product UI/UX Designer
-- Máy định viết: nghề "UI/UX Designer", khớp một phần: đúng nghề của tin nhưng thiếu kỹ năng hoặc kinh nghiệm, 120 tháng kinh nghiệm
-
-- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
-
-```text
-Senior UI/UX Designer
-With over 10 years of experience in UI/UX design, I have successfully delivered innovative and user-centric solutions for both web and mobile platforms. Specializing in product design and user flow, I am adept at simplifying complex business processes and creating intuitive user experiences.
-[Kinh nghiệm] UI/UX Designer – InnovateRetail (2016-11 – 2024-12)
-  • Led the design of a streamlined user interface for a retail e-commerce platform, resulting in a 20% increase in user engagement and a 15% reduction in bounce rates.
-  • Developed user flow diagrams for key product pages, ensuring a seamless checkout process for over 10,000 daily active users.
-  • Utilized Blender for prototyping and Premiere Pro for creating product videos, contributing to a 30% improvement in user onboarding.
-[Kinh nghiệm] UI/UX Designer – RetailTech Solutions (2025-01 – nay)
-  • Designed and implemented a comprehensive product design system for a SaaS platform, reducing development time by 25% and improving design consistency across multiple projects.
-  • Conducted user research and created personas, informing the design of a user-friendly interface for a B2B application with over 500 enterprise users.
-  • Collaborated with cross-functional teams to improve user flow and reduce error rates in critical business processes, resulting in a 10% increase in customer satisfaction.
-[Dự án] Retail User Experience Audit – Lead UX Designer
-  • Conducted a thorough user experience audit of an existing retail e-commerce platform, identifying key areas for improvement and proposing a user-centric redesign.
-  • Created user journey maps and flow diagrams, contributing to a 12% increase in user retention and a 10% increase in conversion rates.
-[Học vấn] Master of Design – Institute of Creative Technologies
-[Kỹ năng] Product Design, User Flow, Blender, Premiere Pro
-[Chứng chỉ] Certified UX Researcher, Interaction Design Foundation; Advanced Blender for Product Design, Blender Guru
-[Giải thưởng] Design Excellence Award; Recognition for Outstanding User Experience Innovation; Awarded for Best Interactive Prototype in an annual student competition
-[Sở thích] Exploring new technologies and design tools; Attending design conferences and workshops; Reading about human-computer interaction and cognitive psychology; Participating in design challenges and hackathons
-[Ngoại ngữ] English Working proficiency TOEIC 550; Vietnamese Native
-```
-
-## TR-93-02
-
-- Tin: Senior Product UI/UX Designer
-- Máy định viết: nghề "UI/UX Designer", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 49 tháng kinh nghiệm
+- Tin: Nhân Viên VIDEO EDITOR
+- Máy định viết: nghề "Video Editor", khớp một phần: đúng nghề của tin nhưng thiếu kỹ năng hoặc kinh nghiệm, 43 tháng kinh nghiệm
 
 - [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
 
 ```text
-Senior UI/UX Designer
-With over 4 years of experience in designing user-centric solutions, I bring a strong background in Design System, User Flow, and Product Design. My expertise lies in creating seamless SaaS and B2B experiences, and I am dedicated to delivering intuitive and effective user interfaces.
-[Kinh nghiệm] UI/UX Designer – Tech Innovate Solutions (2022-10 – 2022-10)
-  • Developed and maintained a comprehensive Design System for SaaS applications, reducing design time by 25% and improving consistency across 10+ teams.
-  • Implemented user flow diagrams for 20+ projects, resulting in a 30% decrease in user bounce rate and improved user satisfaction.
-  • Designed and optimized product interfaces, contributing to a 20% increase in user engagement and conversion rates.
-[Kinh nghiệm] UI/UX Designer – InnovateTech Design (2022-11 – 2023-03)
-  • Created user-centered product designs for B2B applications, leading to a 15% increase in customer adoption and 10% reduction in support inquiries.
-  • Designed and refined user flows for 15+ projects, achieving a 40% decrease in task completion time and a 25% increase in user satisfaction.
-  • Contributed to the development of a Design System that improved overall project efficiency by 20%.
-[Kinh nghiệm] UI/UX Designer – NextGen Solutions (2023-04 – nay)
-  • Managed and optimized design processes, resulting in a 15% improvement in team productivity and a 20% decrease in development cycle time.
-  • Designed user interfaces for 12+ SaaS applications, contributing to a 10% increase in customer retention rates.
-  • Improved user flow for a flagship product, leading to a 25% increase in user engagement and 15% increase in user feedback.
-[Dự án] Smart Workspace SaaS – UI/UX Designer
-  • Designed and optimized user interfaces for a SaaS platform, resulting in a 20% increase in user engagement and 15% decrease in user onboarding time.
-[Học vấn] Master in Human-Computer Interaction – University of Nha Trang
-[Kỹ năng] Design System, User Flow, Product Design, UX/UI, SaaS/B2B
-[Chứng chỉ] Certified Interaction Designer (CID); UX Design Fundamentals
-[Sở thích] Exploring user-centered design principles to improve accessibility and inclusivity.; Participating in hackathons to create innovative solutions for social issues.; Attending workshops and webinars to stay updated with the latest design trends and technologies.; Reading books and articles on psychology and human-computer interaction.
-[Ngoại ngữ] English Conversational; Vietnamese Native
+Video Editor
+Experienced Video Editor with 43 months of professional experience, specializing in creating engaging content for various clients in Nha Trang. Skilled in visual design and storytelling, adept in using Photoshop and AutoCAD for post-production tasks.
+[Kinh nghiệm] Video Editor – Starlight Productions (2023-04 – 2025-12)
+  • Overhauled 150+ videos for local brands, increasing engagement by 20% through creative storytelling and visual design.
+  • Managed a team of 3 junior editors, ensuring quality control and project deadlines were met.
+  • Utilized Photoshop for color grading and AutoCAD for precision in project planning and layout design.
+[Kinh nghiệm] Video Editor – Breezy Films (2026-01 – nay)
+  • Created 120+ high-quality video clips for social media campaigns, driving an 18% increase in brand visibility.
+  • Leveraged AutoCAD to develop detailed storyboards for client projects, enhancing visual storytelling.
+  • Collaborated with clients to understand their brand voice and developed video concepts that resonated with target audiences.
+[Hoạt động] Video Editing Workshop – Creative Minds Society
+  • Participated in a series of workshops focused on advanced video editing techniques.
+  • Collaborated with peers to create a short film for a local charity event.
+[Hoạt động] Community Film Festival – Local Film Society
+  • Volunteered as a video editor for the festival, contributing to the production of a highlight reel.
+  • Contributed to the organization by helping in the setup and coordination of the event.
+[Học vấn] Master of Fine Arts in Visual Communication – Southern Nha Trang University of Arts
+[Kỹ năng] photoshop, AutoCAD
+[Chứng chỉ] Adobe Certified Expert - Photoshop; AutoCAD Certified Professional
+[Sở thích] Exploring new video editing software and techniques; Filmmaking and narrative storytelling; Traveling to different cities to experience local cultures; Photography and capturing moments through visuals
+[Ngoại ngữ] English Basic; Vietnamese Native
 ```
 
-## TR-93-05
-
-- Tin: Senior Product UI/UX Designer
-- Máy định viết: nghề "UI/UX Designer", khớp một phần: đúng nghề của tin nhưng thiếu kỹ năng hoặc kinh nghiệm, 43 tháng kinh nghiệm
-
-- [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
-
-```text
-UI/UX Designer
-Tôi là một UI/UX Designer có kinh nghiệm 43 tháng, đã thiết kế các sản phẩm kỹ thuật số cho các công ty thương mại điện tử. Tôi đặc biệt thành thạo trong việc tạo ra các trải nghiệm người dùng trực quan và hiệu quả, đặc biệt trong lĩnh vực SaaS/B2B.
-[Kinh nghiệm] UI/UX Designer – TechLinx (2023-04 – 2026-02)
-  • Cải tiến và thiết kế lại giao diện của ứng dụng thương mại điện tử, tăng tỷ lệ chuyển đổi lên 30%.
-  • Tạo ra user flow và thiết kế các biểu mẫu sao cho dễ hiểu và hạn chế sai sót, giảm thời gian thực hiện nhiệm vụ của người dùng từ 45 giây xuống còn 15 giây.
-  • Thiết kế các biểu đồ dữ liệu và bảng thông tin cho các B2B, cải thiện sự hiểu biết và sự tương tác với hệ thống.
-[Kinh nghiệm] UI/UX Designer – E-Commerce Innovate (2026-03 – nay)
-  • Phát triển UX/UI cho nền tảng thương mại điện tử mới, giúp cải thiện trải nghiệm người dùng và tăng doanh số bán hàng 25%.
-  • Tạo ra các thiết kế SaaS cho các doanh nghiệp nhỏ, hỗ trợ họ quản lý kinh doanh hiệu quả hơn.
-  • Sử dụng CapCut để tạo video hướng dẫn sử dụng sản phẩm, giúp giảm thời gian đào tạo người dùng từ 30 phút xuống còn 5 phút.
-[Dự án] Ứng dụng di động thương mại điện tử – UI/UX Designer
-  • Tạo ra giao diện người dùng trực quan, giúp tăng tỷ lệ chuyển đổi của ứng dụng lên 20%.
-  • Thiết kế các biểu đồ và biểu mẫu dễ hiểu, giúp người dùng dễ dàng quản lý đơn hàng và thông tin cá nhân.
-[Hoạt động] Thiết kế giao diện cho ứng dụng cộng đồng – Thiết kế cộng đồng
-  • Thiết kế giao diện người dùng cho ứng dụng di động nhằm cải thiện trải nghiệm người dùng.
-  • Hợp tác với các lập trình viên để đảm bảo các thiết kế phù hợp với kỹ thuật phát triển.
-[Hoạt động] Gói thực phẩm xanh – Gói thực phẩm xanh
-  • Tham gia vào việc thiết kế giao diện cho ứng dụng theo dõi chế độ ăn uống lành mạnh.
-  • Nghiên cứu và ứng dụng các xu hướng thiết kế mới vào sản phẩm.
-[Học vấn] Cử nhân Thiết kế đồ họa – Học viện Nghệ thuật Digilab
-[Kỹ năng] UX/UI, User Flow, SaaS/B2B, Illustrator, Thiết kế đồ họa, CapCut
-[Chứng chỉ] Certified UI/UX Designer, Digilab Academy; SaaS Design for B2B, TechLinx University
-[Giải thưởng] Giải thưởng Thiết kế UI/UX xuất sắc 2022; Giải thưởng Thiết kế User Experience xuất sắc 2021
-[Sở thích] Khám phá các xu hướng thiết kế mới; Sáng tạo và thực hiện các dự án thiết kế độc đáo; Tham gia các hội thảo trực tuyến về UI/UX; Đọc sách và bài viết về thiết kế người dùng và trải nghiệm người dùng
-```
-
-## TR-95-05
+## TR-95-06
 
 - Tin: Shopdrawing/Triển Khai Bản Vẽ Kỹ Thuật
-- Máy định viết: nghề "Thiết kế nội thất", khớp một phần: đúng nghề của tin nhưng thiếu kỹ năng hoặc kinh nghiệm, 107 tháng kinh nghiệm
+- Máy định viết: nghề "Thiết kế nội thất", khớp mạnh: đúng nghề của tin, đủ kỹ năng và kinh nghiệm, 30 tháng kinh nghiệm
 
 - [ ] Ổn   - [ ] Lỗi nhẹ   - [ ] Lỗi nặng: 
 
 ```text
 Thiết kế nội thất
-Với hơn 10 năm kinh nghiệm trong lĩnh vực thiết kế nội thất, tôi đã tham gia vào nhiều dự án thiết kế kiến trúc và nội thất quy mô lớn. Tôi đã tạo ra không gian sống tiện nghi và thẩm mỹ cho khách hàng của mình.
-[Kinh nghiệm] Thiết kế nội thất – Nhị Phong Thiết Kế (2017-12 – 2022-07)
-  • Tạo mẫu thiết kế nội thất cho 15 dự án quy mô lớn trong vòng 1 năm, đạt doanh thu 300 triệu đồng.
-  • Sử dụng các công cụ 3D như SketchUp để tạo mô hình 3D cho các dự án, giúp khách hàng hình dung không gian nội thất.
-  • Tối ưu hóa ánh sáng và màu sắc để tăng tính thẩm mỹ cho không gian nội thất, tạo cảm giác thoải mái cho khách hàng.
-[Kinh nghiệm] Thiết kế nội thất – Trung Mỹ Nội Thất (2022-08 – 2025-08)
-  • Thực hiện thiết kế nội thất cho 20 dự án chung cư và biệt thự, tạo ra không gian sống tiện nghi và ấm cúng.
-  • Làm việc trực tiếp với khách hàng để nắm bắt yêu cầu và tư vấn cho khách hàng về các lựa chọn thiết kế.
-  • Sử dụng Photoshop để tạo ra các bản vẽ kỹ thuật và phối cảnh 3D cho các dự án.
-[Kinh nghiệm] Thiết kế nội thất – Hưng Thịnh Nội Thất (2025-09 – nay)
-  • Đã tham gia thiết kế nội thất cho 10 dự án quy mô nhỏ, tạo ra không gian sống tiện nghi và ấm cúng.
-  • Tối ưu hóa ánh sáng và màu sắc trong các dự án, giúp không gian trở nên tươi sáng và hài hòa.
-  • Sử dụng SketchUp để tạo mô hình 3D cho các dự án, giúp khách hàng hiểu rõ về không gian thiết kế.
-[Dự án] Dự án biệt thự – Thiết kế nội thất
-  • Tạo ra không gian sống tiện nghi và ấm cúng cho biệt thự, đáp ứng đầy đủ yêu cầu của chủ nhà.
-  • Sử dụng ánh sáng và màu sắc phù hợp để tạo cảm giác thư thái và thoải mái cho không gian.
-[Hoạt động] Hội thảo Thiết kế Nội thất; – Hội Thợ Thiết Kế;
-  • Tham gia diễn thuyết về xu hướng thiết kế nội thất hiện đại;
-  • Tích cực trao đổi và học hỏi với các chuyên gia trong ngành.
-[Hoạt động] Phóng sự Nghệ thuật; – Tổng Hội Mỹ Thuật;
-  • Tạo ra các dự án thiết kế nội thất cho các tác phẩm nghệ thuật;
-  • Giúp nâng cao nhận thức về sự kết hợp giữa nghệ thuật và thiết kế nội thất.
-[Học vấn] Cao đẳng Thiết kế nội thất – Trường Cao Đẳng Kỹ Thuật Cần Thơ
-[Kỹ năng] photoshop, Thiết kế 3D, SketchUp, Ánh sáng và màu sắc
-[Chứng chỉ] Chứng chỉ thiết kế nội thất cấp bởi Hiệp hội Thiết kế nội thất Việt Nam; Chứng chỉ Photoshop cơ bản cấp bởi Adobe Systems
-[Sở thích] Du lịch và tìm hiểu về văn hóa địa phương qua không gian nội thất;; Nghệ thuật điêu khắc và việc tái tạo không gian;; Xây dựng các mô hình 3D để tham gia các hội thi thiết kế;; Tự làm các vật trang trí nội thất thủ công
-[Ngoại ngữ] Tiếng Anh Làm việc IELTS 6.0
+Tôi là một chuyên gia thiết kế nội thất với hơn 30 tháng kinh nghiệm trong ngành, đã làm việc thành công tại các dự án lớn nhỏ, từ triển khai bản vẽ kỹ thuật đến thiết kế không gian sống hài hòa.
+[Kinh nghiệm] Thiết kế nội thất – Ninh Phong Interior (2024-05 – 2026-07)
+  • Sử dụng AutoCAD để tạo bản vẽ kỹ thuật cho hơn 20 dự án nội thất khác nhau, từ nhà phố đến văn phòng.
+  • Ứng dụng Photoshop để xử lý hình ảnh, tạo ra các mẫu thiết kế nội thất ấn tượng và chuyên nghiệp.
+  • Chỉ đạo 3 nhân viên thiết kế nội thất khác trong việc triển khai các dự án.
+  • Kết quả đạt được: 100% dự án đều nhận được phản hồi tích cực từ khách hàng và chủ đầu tư, với tỷ lệ hoàn thành đúng hạn lên đến 95%.
+[Kinh nghiệm] Thiết kế nội thất – Tiếng Tức Studio (2026-08 – nay)
+  • Làm việc độc lập trong việc thiết kế và triển khai bản vẽ kỹ thuật cho các dự án nội thất quy mô nhỏ đến trung bình.
+  • Phát triển các mẫu thiết kế nội thất dựa trên yêu cầu của khách hàng, sử dụng Photoshop để tạo ra các bản vẽ concept.
+  • Hỗ trợ 2 nhân viên thiết kế nội thất khác trong quá trình thực hiện các dự án.
+  • Kết quả đạt được: 80% dự án đạt tiêu chuẩn về chất lượng thiết kế và triển khai, với tỷ lệ hoàn thành đúng hạn đạt 90%.
+[Học vấn] Cao đẳng thiết kế nội thất – Trường Cao đẳng Nghệ Thuật Nam Trung Bộ
+[Kỹ năng] photoshop, AutoCAD
+[Chứng chỉ] Khóa học AutoCAD chuyên sâu; Khóa học Photoshop nâng cao
+[Sở thích] Ngắm nhìn và nghiên cứu các tác phẩm kiến trúc và nội thất từ khắp nơi trên thế giới.; Tham gia các hội thảo trực tuyến về xu hướng mới trong thiết kế nội thất.; Đọc sách về lịch sử kiến trúc và nghệ thuật.; Tự tay sáng tạo các mẫu thiết kế nội thất nhỏ trong thời gian rảnh.
+[Ngoại ngữ] Tiếng Anh Giao tiếp
 ```

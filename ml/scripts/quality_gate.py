@@ -18,7 +18,7 @@ loại khỏi dữ liệu huấn luyện (không sửa tay):
 Ba kiểm tra thêm sau lượt đọc kiểm đầu (26/11, `train_cv_review_round1.md`):
 - CV "vị trí gần" không được mang chính chức danh của tin neo: mô hình hay chép tên
   vị trí của tin thay vì viết nghề gần, làm nhãn yếu sai và hỏng bộ ba chức danh;
-- không có gạch đầu dòng lặp nguyên văn trong cùng một CV (mục dự án chép mục kinh nghiệm);
+- không có hai gạch đầu dòng gần trùng nhau trong cùng một CV (mục dự án chép mục kinh nghiệm);
 - không có chữ dính lẫn hai ngôn ngữ ("tăng cườngAwareness", "công nghệ.amiliar").
 
 Kết quả: `ml/data/cv/train/gate.json` ({mã CV: [lý do bị loại]}, rỗng là qua) và
@@ -46,7 +46,10 @@ MONTH_TOLERANCE = 1
 SAME_TITLE_SHARE = 0.75
 _VIETNAMESE = 'àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ'
 # Chữ tiếng Việt dính liền một từ tiếng Anh viết hoa, hoặc dấu chấm dính chữ thường.
-_GLUED = re.compile(rf'[{_VIETNAMESE}][A-Z][a-z]|[{_VIETNAMESE}]\w*\.[a-z]{{3,}}')
+_GLUED = re.compile(rf'[{_VIETNAMESE}][a-z{_VIETNAMESE}]*[A-Z][a-z]|[{_VIETNAMESE}]\w*\.[a-z]{{3,}}')
+# Hai gạch đầu dòng trùng từ chừng này trở lên là một ý viết hai lần.
+REPEATED_LINE = 0.7
+MIN_LINE_WORDS = 6
 REVIEWED = LABELING_DIR / 'train_cv_review_round1.md'
 
 
@@ -65,13 +68,19 @@ def same_title(headline, title):
 
 
 def repeated_bullets(data):
-    lines = [
-        line.strip().casefold()
+    """Có hai gạch đầu dòng gần như trùng nhau (mục dự án chép mục kinh nghiệm, các việc chép nhau)."""
+    bags = [
+        title_words(line)
         for section in ('experience', 'projects', 'activities')
         for item in data.get(section, [])
         for line in item.get('highlights', [])
     ]
-    return len(lines) != len(set(lines))
+    bags = [bag for bag in bags if len(bag) >= MIN_LINE_WORDS]
+    return any(
+        len(bag & other) / len(bag | other) >= REPEATED_LINE
+        for index, bag in enumerate(bags)
+        for other in bags[:index]
+    )
 
 
 def months_of(data):
@@ -107,7 +116,7 @@ def problems_of(data, facts, job):
     if facts['intended_match'] == 'adjacent' and same_title(data.get('headline', ''), job['title']):
         found.append('CV vị trí gần mang chức danh của tin neo')
     if repeated_bullets(data):
-        found.append('gạch đầu dòng lặp nguyên văn')
+        found.append('gạch đầu dòng lặp ý')
     if _GLUED.search(cv_text(data)):
         found.append('chữ dính, lẫn hai ngôn ngữ')
     return found
