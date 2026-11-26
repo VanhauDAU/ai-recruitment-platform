@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
   getGeoWard: vi.fn(),
   searchGeoPlaces: vi.fn(),
   settings: {},
-  basemap: { styleUrl: 'https://maps.vietmap.vn/style.json', attribution: '' },
+  basemap: { id: 'vietmap', style: {}, attribution: '' },
 }))
 
 vi.mock('@/entities/job/job', async (importOriginal) => ({
@@ -84,7 +84,7 @@ describe('NearbyJobs page', () => {
     Element.prototype.scrollIntoView = vi.fn() // jsdom không có
     mocks.settings = {}
     mocks.searchGeoPlaces.mockResolvedValue([])
-    mocks.basemap = { styleUrl: 'https://maps.vietmap.vn/style.json', attribution: '' }
+    mocks.basemap = { id: 'vietmap', style: {}, attribution: '' }
     mocks.getGeoWard.mockResolvedValue({ ward_name: 'Phường Điện Bàn', latitude: 16.0, longitude: 108.2 })
     mocks.getNearbyJobMap.mockResolvedValue({ origin: ORIGIN, points: [], truncated: false })
     mocks.getNearbyJobs.mockResolvedValue({ count: 0, results: [], origin: ORIGIN, expand_suggestion: null })

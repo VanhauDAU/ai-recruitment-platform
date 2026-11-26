@@ -8,6 +8,19 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-27
 
+#### Fixed — Bản đồ VietMap chỉ hiện nền trơn ở "Việc làm gần tôi"
+
+- Sau khi dán link style VietMap vào `map_style_url`, bản đồ chỉ là nền be trơn: tile
+  vector của VietMap dùng định dạng riêng (byte đầu `01 01 01`, không phải MVT `1a`), chỉ
+  SDK `vietmap-gl` đọc được.
+- `useBasemap()` giờ chuyển link `…/maps/styles/<kiểu>/style.json?apikey=…` thành nguồn
+  tile ảnh PNG cùng kiểu, cùng key. Màn hình nét dùng ảnh `@2x`; zoom tối đa 18, vì từ
+  zoom 19 VietMap chỉ trả ảnh trống. Admin không phải đổi cấu hình.
+- Đã soát ảnh tile vùng Biển Đông: có "Quần Đảo Hoàng Sa", "Quần Đảo Trường Sa", "Biển
+  Đông".
+- `MapView` đổi prop `styleUrl` thành `mapStyle`. Cập nhật ADR-0029 và hướng dẫn site
+  settings. E2E giả tile ảnh và kiểm tra MapLibre gọi đúng đường `/maps/tiles/tm/…png`.
+
 #### Fixed — Thẻ việc làm ở "Việc làm gần tôi" tràn khỏi màn hình điện thoại
 
 - Lưới `.nearby-results` dùng cột ngầm định `auto` nên tên công ty dài (để `nowrap`) đẩy

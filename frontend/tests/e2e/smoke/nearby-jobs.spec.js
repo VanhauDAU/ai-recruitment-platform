@@ -33,7 +33,12 @@ async function mockNearbyApi(page) {
   await page.route('http://localhost:8000/api/public/site/settings/', (route) => route.fulfill({
     json: { map_style_url: 'https://maps.vietmap.vn/maps/styles/tm/style.json?apikey=e2e', map_attribution: '© VIETMAP' },
   }))
-  await page.route('https://maps.vietmap.vn/**', (route) => route.fulfill({ json: { version: 8, sources: {}, layers: [] } }))
+  // Tile ảnh VietMap giả: PNG 1×1 trong suốt, không gọi mạng thật.
+  const tiles = []
+  await page.route('https://maps.vietmap.vn/**', (route) => {
+    tiles.push(route.request().url())
+    return route.fulfill({ contentType: 'image/png', body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64') })
+  })
   const requests = []
   await page.route(/\/api\/public\/jobs\/nearby\/(?:\?.*)?$/, (route) => {
     const url = new URL(route.request().url())
@@ -49,13 +54,13 @@ async function mockNearbyApi(page) {
   await page.route(/\/api\/public\/jobs\/nearby\/map\/(?:\?.*)?$/, (route) => route.fulfill({
     json: { origin: ORIGIN, truncated: false, points: [] },
   }))
-  return requests
+  return { requests, tiles }
 }
 
 test('candidate finds jobs near the current location and widens the radius', { tag: '@responsive' }, async ({ page, context }) => {
   await context.grantPermissions(['geolocation'])
   await context.setGeolocation({ latitude: 15.8871, longitude: 108.2468 })
-  const requests = await mockNearbyApi(page)
+  const { requests, tiles } = await mockNearbyApi(page)
 
   await page.goto('/viec-lam-gan-ban?r=5')
   await expect(page.getByText('Chọn vị trí để xem việc làm quanh bạn')).toBeVisible()
@@ -98,6 +103,8 @@ test('candidate finds jobs near the current location and widens the radius', { t
   await expect(mapView).toBeVisible({ visible: !isDesktop })
   if (!isDesktop) await mapView.click()
   await expect(page.locator('.maplibregl-canvas')).toBeVisible()
+  // MapLibre lấy tile ảnh PNG của VietMap (tile vector của họ mã hoá riêng, MapLibre không đọc được).
+  await expect.poll(() => tiles.some((url) => /\/maps\/tiles\/tm\/\d+\/\d+\/\d+(@2x)?\.png\?apikey=e2e$/.test(url))).toBe(true)
   await expect.poll(overflow).toBe(0)
 })
 

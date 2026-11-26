@@ -30,8 +30,8 @@ export default function NearbyMapPanel({
       <div className="nearby-map__canvas" role="region" aria-label={m.candidate_nearby_map_label()}>
         <Suspense fallback={<div className="map-view nearby-map__placeholder" />}>
           <MapView
-            key={basemap.styleUrl}
-            styleUrl={basemap.styleUrl}
+            key={basemap.id}
+            mapStyle={basemap.style}
             attribution={basemap.attribution}
             origin={origin}
             radiusKm={origin ? radius : null}

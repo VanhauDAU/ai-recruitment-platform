@@ -1,18 +1,32 @@
 import { describe, expect, it } from 'vitest'
-import { isVietnameseBasemap } from './use-basemap'
+import { vietmapRasterStyle } from './use-basemap'
 
-describe('isVietnameseBasemap', () => {
-  it('accepts VietMap styles over https', () => {
-    expect(isVietnameseBasemap('https://maps.vietmap.vn/maps/styles/tm/style.json?apikey=k')).toBe(true)
+const TM = 'https://maps.vietmap.vn/maps/styles/tm/style.json?apikey=k%2B1'
+
+describe('vietmapRasterStyle', () => {
+  it('turns a VietMap style link into PNG tiles of the same map kind and key', () => {
+    const style = vietmapRasterStyle(TM)
+    expect(style.sources.vietmap).toMatchObject({
+      type: 'raster',
+      tiles: ['https://maps.vietmap.vn/maps/tiles/tm/{z}/{x}/{y}.png?apikey=k%2B1'],
+      tileSize: 256,
+      maxzoom: 18,
+    })
+    expect(style.layers).toEqual([{ id: 'vietmap', type: 'raster', source: 'vietmap' }])
+    expect(vietmapRasterStyle(TM.replace('/tm/', '/lm/'), 2).sources.vietmap.tiles[0])
+      .toBe('https://maps.vietmap.vn/maps/tiles/lm/{z}/{x}/{y}@2x.png?apikey=k%2B1')
   })
 
-  it('rejects OpenStreetMap-based styles, plain http and junk', () => {
-    expect(isVietnameseBasemap('https://tiles.openfreemap.org/styles/positron')).toBe(false)
-    expect(isVietnameseBasemap('https://tiles.goong.io/assets/goong_map_web.json?api_key=k')).toBe(false)
-    expect(isVietnameseBasemap('https://api.maptiler.com/maps/streets/style.json?key=k')).toBe(false)
-    expect(isVietnameseBasemap('https://maps.vietmap.vn.evil.example/style.json')).toBe(false)
-    expect(isVietnameseBasemap('http://maps.vietmap.vn/maps/styles/tm/style.json')).toBe(false)
-    expect(isVietnameseBasemap('')).toBe(false)
-    expect(isVietnameseBasemap('not a url')).toBe(false)
+  it('rejects anything that is not an https VietMap style with a key', () => {
+    for (const url of [
+      'https://tiles.openfreemap.org/styles/positron',
+      'https://tiles.goong.io/assets/goong_map_web.json?api_key=k',
+      'https://maps.vietmap.vn.evil.example/maps/styles/tm/style.json?apikey=k',
+      'http://maps.vietmap.vn/maps/styles/tm/style.json?apikey=k',
+      'https://maps.vietmap.vn/maps/styles/tm/style.json',
+      'https://maps.vietmap.vn/other/path.json?apikey=k',
+      '',
+      'not a url',
+    ]) expect(vietmapRasterStyle(url)).toBeNull()
   })
 })
