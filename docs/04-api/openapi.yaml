@@ -32532,6 +32532,9 @@ components:
           type: string
           nullable: true
           readOnly: true
+        company_public_id:
+          type: string
+          readOnly: true
         company_logo_url:
           type: string
           nullable: true
@@ -32804,6 +32807,7 @@ components:
       - company_industries
       - company_logo_url
       - company_name
+      - company_public_id
       - company_size
       - company_slug
       - company_verification

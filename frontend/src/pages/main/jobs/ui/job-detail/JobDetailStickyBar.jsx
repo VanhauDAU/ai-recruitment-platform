@@ -24,7 +24,7 @@ export default function JobDetailStickyBar({ job, relatedJobs, applicationStatus
 
   const visible = pastHero && !headerVisible
   return (
-    <div className={`fixed inset-x-0 top-0 z-40 border-b border-gray-200 bg-white/95 shadow-sm backdrop-blur transition-transform duration-200 ${visible ? 'translate-y-0' : '-translate-y-full'}`}>
+    <div className={`job-detail-anchors fixed inset-x-0 top-0 z-40 border-b border-gray-200 bg-white/95 shadow-sm backdrop-blur transition-transform duration-200 ${visible ? 'translate-y-0' : '-translate-y-full'}`}>
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-3 sm:h-16 sm:px-4">
         <div className="flex min-w-0 items-center gap-2 overflow-x-auto [scrollbar-width:none]">
           <AnchorButton target="job-detail-content" icon={<FileTextOutlined />}>Chi tiết tuyển dụng</AnchorButton>

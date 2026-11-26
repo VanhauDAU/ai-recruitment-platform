@@ -13,11 +13,16 @@ import { useSavedJob } from '@/features/main/job/saved-jobs'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import { message } from '@/shared/lib/toast'
 import { buildJobDetailAlertPrefill } from './lib/job-detail-alert-prefill'
-import JobDetailContent from './ui/job-detail/JobDetailContent'
+import JobDetailContent, { RelatedJobs } from './ui/job-detail/JobDetailContent'
 import { JobBreadcrumbs, JobDetailSkeleton, JobHero } from './ui/job-detail/JobDetailOverview'
 import JobDetailSearchBar from './ui/job-detail/JobDetailSearchBar'
-import JobDetailSidebar from './ui/job-detail/JobDetailSidebar'
+import JobCompanyTab from './ui/job-detail/JobCompanyTab'
+import JobDetailSidebar, { JobGeneralInfo, RelatedTopics } from './ui/job-detail/JobDetailSidebar'
 import JobDetailStickyBar from './ui/job-detail/JobDetailStickyBar'
+import JobDetailTabs from './ui/job-detail/JobDetailTabs'
+import JobQualityRating from './ui/job-detail/JobQualityRating'
+import JobSafetyTips from './ui/job-detail/JobSafetyTips'
+import JobSidebarPromos from './ui/job-detail/JobSidebarPromos'
 import { isAcceptingApplications } from './lib/job-detail-presentation'
 import JobApplicationClosed from './ui/job-detail/JobApplicationClosed'
 import JobShareRail from './ui/job-detail/JobShareRail'
@@ -34,6 +39,9 @@ export default function JobDetail() {
   const [applyOpen, setApplyOpen] = useState(false)
   const [createAlertOpen, setCreateAlertOpen] = useState(false)
   const [reportOpen, setReportOpen] = useState(false)
+  const isMobile = useMediaQuery('(max-width: 767.98px)')
+  // Tab gắn với id tin: sang tin khác (bấm việc liên quan) thì tự về tab Thông tin.
+  const [tabState, setTabState] = useState({ jobId: null, key: 'info' })
   const jobAlertInitialValues = useMemo(() => buildJobDetailAlertPrefill(job), [job])
   const canCreateJobAlert = !sessionLoading && (!isAuthenticated || user?.role === 'candidate')
   const applicationStatus = useJobApplicationStatus({
@@ -117,8 +125,38 @@ export default function JobDetail() {
     }
   }
 
+  const activeTab = tabState.jobId === job?.public_id ? tabState.key : 'info'
+  const setActiveTab = (key) => setTabState({ jobId: job?.public_id, key })
+
+  function showTab(key) {
+    setActiveTab(key)
+    // Đang đọc giữa panel dài: đưa đầu panel mới lên ngay dưới thanh tab.
+    const tabs = document.getElementById('job-detail-tabs')
+    if (tabs && tabs.getBoundingClientRect().top < 0) tabs.scrollIntoView({ block: 'start' })
+  }
+
+  function showRelatedTab() {
+    setActiveTab('related')
+    document.getElementById('job-detail-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
   if (loading) return <JobDetailSkeleton />
   if (notFound || !job) return <NotFoundState />
+
+  const details = (
+    <JobDetailContent
+      job={job}
+      saved={saved}
+      savePending={savePending}
+      applicationStatus={applicationStatus}
+      canCreateJobAlert={canCreateJobAlert}
+      onApply={handleApply}
+      onCreateJobAlert={handleCreateSimilarJobAlert}
+      onSave={handleSave}
+      onReport={handleReport}
+    />
+  )
+  const related = <RelatedJobs jobs={relatedJobs} isAuthenticated={isAuthenticated} onRequireLogin={promptLogin} />
 
   return (
     <>
@@ -141,34 +179,36 @@ export default function JobDetail() {
                 savePending={savePending}
               />
               {isAcceptingApplications(job) && (
-                <AnalyzeJobFit job={job} beforeOpen={requireCandidate} onApply={handleApply} placement="inline" />
+                <AnalyzeJobFit job={job} beforeOpen={requireCandidate} onApply={handleApply} placement={isMobile ? 'floating' : 'inline'} />
               )}
-              <JobDetailContent
-                job={job}
-                relatedJobs={relatedJobs}
-                saved={saved}
-                savePending={savePending}
-                isAuthenticated={isAuthenticated}
-                applicationStatus={applicationStatus}
-                canCreateJobAlert={canCreateJobAlert}
-                onApply={handleApply}
-                onCreateJobAlert={handleCreateSimilarJobAlert}
-                onSave={handleSave}
-                onReport={handleReport}
-                onRequireLogin={promptLogin}
-              />
+              {isMobile
+                ? (
+                    <JobDetailTabs
+                      active={activeTab}
+                      onChange={showTab}
+                      relatedCount={relatedJobs.length}
+                      panels={{
+                        info: <><JobGeneralInfo job={job} />{details}<JobQualityRating jobId={job.public_id} /><JobSafetyTips /><JobSidebarPromos /></>,
+                        company: <JobCompanyTab job={job} active={activeTab === 'company'} />,
+                        related: <>{relatedJobs.length ? related : <EmptyRelatedJobs />}<RelatedTopics job={job} /></>,
+                      }}
+                    />
+                  )
+                : <>{details}<JobQualityRating jobId={job.public_id} />{related}</>}
             </div>
-            <JobDetailSidebar
-              job={job}
-              fitAction={isAcceptingApplications(job) && (
-                <AnalyzeJobFit job={job} beforeOpen={requireCandidate} onApply={handleApply} />
-              )}
-            />
+            {!isMobile && (
+              <JobDetailSidebar
+                job={job}
+                fitAction={isAcceptingApplications(job) && (
+                  <AnalyzeJobFit job={job} beforeOpen={requireCandidate} onApply={handleApply} />
+                )}
+              />
+            )}
           </div>
         </div>
       </main>
 
-      <MobileActions job={job} saved={saved} applicationStatus={applicationStatus} onApply={handleApply} onSave={handleSave} savePending={savePending} />
+      <MobileActions isMobile={isMobile} onShowRelated={showRelatedTab} job={job} saved={saved} applicationStatus={applicationStatus} onApply={handleApply} onSave={handleSave} savePending={savePending} />
       <ApplyForJobModal
         open={applyOpen}
         onClose={() => setApplyOpen(false)}
@@ -201,13 +241,16 @@ function NotFoundState() {
   return <Result status="404" title="Không tìm thấy tin tuyển dụng" extra={<Link to="/viec-lam"><Button type="primary">Xem việc làm khác</Button></Link>} />
 }
 
+function EmptyRelatedJobs() {
+  return <p className="rounded-2xl border border-gray-200 bg-white p-5 text-sm text-slate-600">Chưa có việc làm liên quan. <Link to="/viec-lam" className="font-semibold !text-[var(--brand-primary)]">Xem tất cả việc làm</Link></p>
+}
+
 function ApplyButtonLabel({ status }) {
   return <>{status.isResubmission && <i className="fa-solid fa-arrow-rotate-right" aria-hidden="true" />} {status.applyLabel}</>
 }
 
-function MobileActions({ job, saved, applicationStatus, onApply, onSave, savePending }) {
+function MobileActions({ isMobile, onShowRelated, job, saved, applicationStatus, onApply, onSave, savePending }) {
   // Thanh chỉ hiện dưới md: báo cho thanh tab dưới nhường chỗ và nút nổi nâng lên.
-  const isMobile = useMediaQuery('(max-width: 767.98px)')
   useEffect(() => {
     if (!isMobile) return undefined
     document.body.classList.add('has-bottom-action-bar')
@@ -219,7 +262,7 @@ function MobileActions({ job, saved, applicationStatus, onApply, onSave, savePen
       <div className="mx-auto flex max-w-6xl gap-2">
         <JobCompareButton job={job} className="job-mobile-actions__compare" />
         <button type="button" onClick={onSave} disabled={savePending} aria-label={saved ? 'Bỏ lưu việc làm' : 'Lưu việc làm'} className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-[var(--brand-primary)] disabled:cursor-not-allowed disabled:opacity-60">{saved ? <HeartFilled /> : <HeartOutlined />}</button>
-        {isAcceptingApplications(job) ? <button type="button" onClick={onApply} disabled={applicationStatus.isLimitReached} className="inline-flex h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-[var(--brand-primary)] px-4 text-sm font-bold text-white shadow-sm transition hover:bg-[var(--brand-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60"><ApplyButtonLabel status={applicationStatus} /></button> : <JobApplicationClosed className="flex-1" />}
+        {isAcceptingApplications(job) ? <button type="button" onClick={onApply} disabled={applicationStatus.isLimitReached} className="inline-flex h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-[var(--brand-primary)] px-4 text-sm font-bold text-white shadow-sm transition hover:bg-[var(--brand-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60"><ApplyButtonLabel status={applicationStatus} /></button> : <JobApplicationClosed className="flex-1" onShowRelated={onShowRelated} />}
       </div>
     </div>
   )

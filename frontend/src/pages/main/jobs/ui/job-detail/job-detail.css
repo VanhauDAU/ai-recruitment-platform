@@ -207,9 +207,14 @@
     display: none;
   }
 
+  /* Khối tràn sát mép, vuông góc; khối đầu tin liền với thanh tab ngay dưới. */
   .job-hero {
-    border-radius: 16px;
-    padding: 16px;
+    border-inline: 0;
+    border-radius: 0;
+    box-shadow: none;
+    margin-block-end: 0;
+    margin-inline: -16px;
+    padding: 16px 16px 14px;
   }
 
   .job-hero__title,
@@ -217,36 +222,44 @@
     font-size: 19px;
   }
 
-  /* Ba cột hẹp: icon nằm trên chữ, giá trị xuống tối đa 2 dòng. */
+  /* Ba cột hẹp tốn ~200px chiều cao: chuyển thành 3 dòng "icon · nhãn · giá trị". */
   .job-hero__facts {
     gap: 8px;
-    margin-top: 14px;
+    grid-template-columns: minmax(0, 1fr);
+    margin-top: 12px;
   }
 
   .job-hero__fact {
     align-items: flex-start;
-    flex-direction: column;
-    gap: 6px;
+    gap: 8px;
   }
 
   .job-hero__fact-icon {
-    border-radius: 10px;
-    height: 36px;
-    padding: 8px;
-    width: 36px;
+    background: none;
+    border-radius: 0;
+    height: 18px;
+    padding: 0;
+    width: 18px;
+  }
+
+  .job-hero__fact > div {
+    display: flex;
+    flex: 1;
+    gap: 8px;
+  }
+
+  .job-hero__fact dt {
+    flex: 0 0 104px;
   }
 
   .job-hero__fact dd {
     -webkit-box-orient: vertical;
     display: -webkit-box;
+    flex: 1;
     -webkit-line-clamp: 2;
     font-size: 13px;
+    min-width: 0;
     white-space: normal;
-  }
-
-  .job-hero__fact-note {
-    display: block;
-    margin-left: 0;
   }
 
   .job-hero__meta .job-hero__views {
@@ -270,8 +283,8 @@
     display: none;
   }
 
-  /* Trùng tag "Chuyên môn" trong phần chi tiết. */
-  .job-related-topics {
+  /* Thanh neo mục: mobile đã có thanh tab dính thay thế. */
+  .job-detail-anchors {
     display: none;
   }
 
@@ -288,6 +301,195 @@
   .job-general-info dt {
     display: none;
   }
+}
+
+/* Mobile: tab Thông tin / Công ty / Việc liên quan, dính ngay dưới header
+ * (header điện thoại ở trang chi tiết luôn hiện: h-16 + viền 1px). */
+.job-tabs__bar {
+  background: #fff;
+  border-bottom: 1px solid #e8ecf0;
+  border-top: 1px solid #f1f5f9;
+  margin: 0 -16px 8px;
+  padding: 0 16px;
+  position: sticky;
+  top: 65px;
+  z-index: 30;
+}
+
+.job-tabs__list {
+  display: flex;
+  gap: 24px;
+}
+
+.job-tabs__tab {
+  align-items: center;
+  background: none;
+  border: 0;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  font-size: 15px;
+  font-weight: 600;
+  gap: 4px;
+  height: 46px;
+  padding: 0 2px;
+  position: relative;
+  transition: color .2s;
+  white-space: nowrap;
+}
+
+.job-tabs__tab[aria-selected="true"] {
+  color: var(--brand-primary);
+}
+
+.job-tabs__tab[aria-selected="true"]::after {
+  background: var(--brand-primary);
+  border-radius: 2px 2px 0 0;
+  bottom: 0;
+  content: "";
+  height: 2px;
+  inset-inline: 0;
+  position: absolute;
+}
+
+.job-tabs__tab:focus-visible {
+  border-radius: 6px;
+  outline: 2px solid var(--brand-primary);
+  outline-offset: -2px;
+}
+
+.job-tabs__count {
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Mỗi khối trong tab tràn sát mép, vuông góc, cách nhau một dải nền xám 8px. */
+.job-tabs [role="tabpanel"]:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.job-tabs [role="tabpanel"] > * {
+  border-inline: 0;
+  border-radius: 0;
+  box-shadow: none;
+  margin-block: 0;
+  margin-inline: -16px;
+}
+
+/* Tab Công ty (mobile): giới thiệu + dải việc làm cùng công ty vuốt ngang. */
+.job-company-about__text {
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.65;
+  margin: 10px 0 0;
+  white-space: pre-line;
+}
+
+.job-company-about__text.is-clamped {
+  -webkit-box-orient: vertical;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+}
+
+.job-company-about__toggle {
+  background: none;
+  border: 0;
+  color: var(--brand-primary);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 4px;
+  padding: 4px 0;
+}
+
+.job-company-about__meta {
+  color: #1e293b;
+  display: flex;
+  font-size: 14px;
+  gap: 12px;
+  margin: 10px 0 0;
+}
+
+.job-company-about__meta > span {
+  color: #64748b;
+  flex: 0 0 72px;
+}
+
+.job-company-about__link {
+  color: var(--brand-primary) !important;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.job-company-rail__all {
+  align-items: center;
+  color: var(--brand-primary) !important;
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 600;
+  gap: 4px;
+}
+
+/* Mỗi lần thấy một tin, hé mép tin sau để gợi ý vuốt. */
+.job-company-rail {
+  display: flex;
+  gap: 12px;
+  margin-top: 14px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding: 2px 20px 6px;
+  scroll-padding-inline: 20px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.job-company-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.job-company-rail__item {
+  flex: 0 0 82%;
+  min-width: 0;
+  scroll-snap-align: start;
+}
+
+.job-company-mini {
+  border: 1px solid #e8ecf0;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+}
+
+.job-company-mini__title {
+  -webkit-box-orient: vertical;
+  color: #1e293b;
+  display: -webkit-box;
+  font-size: 14px;
+  font-weight: 600;
+  -webkit-line-clamp: 2;
+  line-height: 1.4;
+  overflow: hidden;
+}
+
+.job-company-mini__salary {
+  color: var(--brand-primary);
+  font-size: 13.5px;
+  font-weight: 700;
+}
+
+.job-company-mini__meta {
+  color: #64748b;
+  font-size: 12.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Bản đồ nơi làm việc (ADR-0029) */

@@ -8,6 +8,28 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-27
 
+#### Changed — Trang chi tiết tin trên mobile: cụm thông tin chính gọn hơn, chia 3 tab
+
+- Trên mobile, Địa điểm / Kinh nghiệm / Hạn ứng tuyển ở đầu trang chi tiết tin chuyển từ
+  3 cột (ô icon 36px nằm trên chữ) sang 3 dòng "icon · nhãn · giá trị"; "Còn N ngày"
+  nằm cùng dòng với ngày hết hạn. Địa điểm dài cắt ở 2 dòng. Desktop giữ nguyên.
+- Phần dưới khối đầu tin trên mobile chia 3 tab gạch chân, dính ngay dưới header:
+  **Thông tin** (thông tin chung, chi tiết tin, đánh giá, bí kíp an toàn), **Công ty**
+  (thẻ công ty), **Việc liên quan** (danh sách + danh mục nghề). Panel ẩn bằng `hidden`
+  nên giữ trạng thái khi đổi tab; sang tin khác tự về tab Thông tin. Nút "Xem việc làm
+  liên quan" của tin đã ngừng tuyển mở thẳng tab Việc liên quan. Thanh neo mục trên cùng
+  ẩn trên mobile vì thanh tab đã thay thế.
+- Thẻ "Xem độ phù hợp" trên điện thoại thành nút nổi gọn: mascot đứng + nhãn AI + bong
+  bóng chữ "Xem độ phù hợp CV", ở góc phải ngay trên nút Góp ý. Bong bóng mặc định thu về
+  0 (không che nội dung); khoảng 12 giây trượt ra ~3 giây rồi thu vào, mascot nhún + vẫy
+  tay cùng lúc. Máy tính bảng và desktop giữ thẻ đầy đủ.
+- Tab **Công ty** thêm "Giới thiệu công ty" (mô tả, lĩnh vực, website) và dải "Việc làm
+  cùng công ty" vuốt ngang: tối đa 6 tin, thẻ thấp chỉ có tiêu đề/lương/nơi làm · kinh
+  nghiệm, mỗi lần một tin, hé tin sau; chỉ tải khi mở tab. API chi tiết
+  tin thêm `company_public_id` để lọc `?company=` mà không phải gọi trang công ty.
+- Trên mobile, khối đầu tin và các khối trong tab tràn sát mép, góc vuông, cách nhau dải
+  xám 8px; thanh tab liền ngay dưới khối đầu tin.
+
 #### Changed — Trang bảo trì theo thiết kế mới, bánh răng xoay
 
 - Màn bảo trì của SPA (`MaintenanceScreen`) và trang lỗi `50x.html` của nginx dùng chung
