@@ -16,7 +16,7 @@ vi.mock('@/entities/account/admin-account', () => ({
   validateAdminInvitation: api.validateAdminInvitation,
 }))
 
-function renderFeature(path = '/admin/app/invitation?token=signed-token') {
+function renderFeature(path = '/admin/app/loi-moi?token=signed-token') {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
@@ -77,7 +77,7 @@ describe('AcceptAdminInvitation', () => {
   })
 
   it('rejects a missing token before any API request', () => {
-    renderFeature('/admin/app/invitation')
+    renderFeature('/admin/app/loi-moi')
     expect(screen.getByText('Liên kết mời không còn hiệu lực')).toBeInTheDocument()
     expect(api.validateAdminInvitation).not.toHaveBeenCalled()
   })

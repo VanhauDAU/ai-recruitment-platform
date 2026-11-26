@@ -190,7 +190,7 @@ cho tới CVT-4.
 
 ## 6. Editor WYSIWYG
 
-Route `/cvs/:publicId/edit` (candidate sở hữu CV) là page mỏng `CvEditor`;
+Route `/cv/:publicId/chinh-sua` (candidate sở hữu CV) là page mỏng `CvEditor`;
 workflow nằm ở feature `edit-cv-draft`:
 
 ```text
@@ -234,7 +234,7 @@ response shared/recruiter; PDF worker đọc storage nội bộ.
 
 - Nút lưu cuối workflow: flush edit, `PUT draft`, rồi `POST save-version` đúng
   một lần. Sau commit, backend enqueue thumbnail WebP cho version đó; trang
-  `/save-cv-success/:publicId` poll metadata tới khi artifact sẵn sàng.
+  `/cv/:publicId/da-luu` poll metadata tới khi artifact sẵn sàng.
 - Tải PDF: POST export với `version_public_id`, poll job, GET download
   owner-only. `CvExport` unique theo version + `render_config`, `storage_key` chỉ
   nội bộ; không tải draft, không dùng URL storage trực tiếp, không tạo PDF trong

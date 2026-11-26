@@ -14,11 +14,11 @@ describe('EmployerOnboardingGuard', () => {
     useSession.mockReturnValue({ user: { role: 'employer', employer_onboarding_required: true, employer_onboarding_step: 'email_verification' } })
 
     render(
-      <MemoryRouter initialEntries={['/tuyendung/app/dashboard']}>
+      <MemoryRouter initialEntries={['/tuyendung/app/tong-quan']}>
         <Routes>
-          <Route path="/tuyendung/app/account/verify" element={<p>Employer onboarding</p>} />
+          <Route path="/tuyendung/app/xac-thuc-email" element={<p>Employer onboarding</p>} />
           <Route element={<EmployerOnboardingGuard />}>
-            <Route path="/tuyendung/app/dashboard" element={<p>Employer dashboard</p>} />
+            <Route path="/tuyendung/app/tong-quan" element={<p>Employer dashboard</p>} />
           </Route>
         </Routes>
       </MemoryRouter>,
@@ -32,10 +32,10 @@ describe('EmployerOnboardingGuard', () => {
     useSession.mockReturnValue({ user: { role: 'employer', employer_onboarding_required: false } })
 
     render(
-      <MemoryRouter initialEntries={['/tuyendung/app/dashboard']}>
+      <MemoryRouter initialEntries={['/tuyendung/app/tong-quan']}>
         <Routes>
           <Route element={<EmployerOnboardingGuard />}>
-            <Route path="/tuyendung/app/dashboard" element={<p>Employer dashboard</p>} />
+            <Route path="/tuyendung/app/tong-quan" element={<p>Employer dashboard</p>} />
           </Route>
         </Routes>
       </MemoryRouter>,

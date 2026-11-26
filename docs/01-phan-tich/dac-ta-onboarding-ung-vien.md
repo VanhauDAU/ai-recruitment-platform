@@ -19,18 +19,18 @@ Code chính: `backend/apps/candidates` (models `profile.py`, `services/profiles.
   └─ job_preferences_configured = true  ──> returnUrl an toàn hoặc trang chủ
 ```
 
-- Route `/onboard-user` nằm sau `AuthGuard` + `RoleGuard(['candidate'])`,
+- Route `/hoan-thien-ho-so` nằm sau `AuthGuard` + `RoleGuard(['candidate'])`,
   dùng `OnboardingLayout`. URL cũ `/onboard-user-setting` chuyển hướng về
-  `/onboard-user` để link đã phát ra vẫn chạy.
+  `/hoan-thien-ho-so` để link đã phát ra vẫn chạy.
 - Điểm đến sau đăng nhập do `getAuthDestination`
   (`features/common/account/auth/model/password-login-destination.js`) quyết định cho **mọi**
   luồng xác thực: đăng nhập mật khẩu, callback OAuth (`OAuthCallback.jsx`) và
-  `GuestGuard`. Ứng viên chưa cấu hình luôn được đưa tới `/onboard-user` trước
+  `GuestGuard`. Ứng viên chưa cấu hình luôn được đưa tới `/hoan-thien-ho-so` trước
   khi về `returnUrl`.
 - Bỏ qua ("Hoàn thiện sau") không lưu gì và không đổi cờ. Không có
   `OnboardingGuard`: ứng viên chưa cấu hình vẫn dùng site bình thường.
 - Khi cờ còn `false`, `JobPreferencesReminder` (trong `MainLayout`) và thông báo
-  hệ thống "Cập nhật nhu cầu" trên dải thông báo dẫn về `/onboard-user`. Lời
+  hệ thống "Cập nhật nhu cầu" trên dải thông báo dẫn về `/hoan-thien-ho-so`. Lời
   nhắc chỉ hiện sau khi email đã xác thực; banner xác thực email luôn ưu tiên.
 
 ### Trang onboarding

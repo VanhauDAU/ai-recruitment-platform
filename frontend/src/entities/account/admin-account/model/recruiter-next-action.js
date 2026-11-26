@@ -55,5 +55,5 @@ export function recruiterNextAction(account) {
 export function recruiterActionHref(publicId, cta) {
   const params = new URLSearchParams({ ...(cta?.tab && cta.tab !== 'overview' ? { tab: cta.tab } : {}), ...cta?.params })
   const query = params.toString()
-  return `${adminPath(`/recruiters/${publicId}`)}${query ? `?${query}` : ''}`
+  return `${adminPath(`/nha-tuyen-dung/${publicId}`)}${query ? `?${query}` : ''}`
 }

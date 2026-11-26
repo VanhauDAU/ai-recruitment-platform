@@ -14,11 +14,11 @@ describe('RoleGuard', () => {
     useSession.mockReturnValue({ user: { role: 'candidate' } })
 
     render(
-      <MemoryRouter initialEntries={['/admin/app/dashboard']}>
+      <MemoryRouter initialEntries={['/admin/app/tong-quan']}>
         <Routes>
-          <Route path="/admin/app/login" element={<p>Admin login</p>} />
-          <Route element={<RoleGuard allowedRoles={['admin']} loginPath="/admin/app/login" />}>
-            <Route path="/admin/app/dashboard" element={<p>Admin dashboard</p>} />
+          <Route path="/admin/app/dang-nhap" element={<p>Admin login</p>} />
+          <Route element={<RoleGuard allowedRoles={['admin']} loginPath="/admin/app/dang-nhap" />}>
+            <Route path="/admin/app/tong-quan" element={<p>Admin dashboard</p>} />
           </Route>
         </Routes>
       </MemoryRouter>,
@@ -31,10 +31,10 @@ describe('RoleGuard', () => {
     useSession.mockReturnValue({ user: { role: 'admin' } })
 
     render(
-      <MemoryRouter initialEntries={['/admin/app/dashboard']}>
+      <MemoryRouter initialEntries={['/admin/app/tong-quan']}>
         <Routes>
           <Route element={<RoleGuard allowedRoles={['admin']} />}>
-            <Route path="/admin/app/dashboard" element={<p>Admin dashboard</p>} />
+            <Route path="/admin/app/tong-quan" element={<p>Admin dashboard</p>} />
           </Route>
         </Routes>
       </MemoryRouter>,

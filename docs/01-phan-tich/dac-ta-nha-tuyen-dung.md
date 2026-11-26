@@ -162,7 +162,7 @@ thiếu quyền sensitive, binary cần cả view lẫn sensitive.
 
 ### 5.1 Checklist phía NTD
 
-`/tuyendung/app/employer-verify` là checklist có thể làm dần (không phải bước
+`/tuyendung/app/xac-thuc-tai-khoan` là checklist có thể làm dần (không phải bước
 onboarding): (1) xác thực số điện thoại; (2) chọn hoặc tạo công ty; (3) giấy
 đăng ký doanh nghiệp; (4) tải thỏa thuận DLCN với ứng viên; (5) đồng ý DPA nền
 tảng; (6) đăng tin đầu tiên (chỉ ghi nhận khi tin thực sự công khai). Trang chỉ
@@ -380,7 +380,7 @@ nhưng luôn khóa dữ liệu ứng viên và đăng tin.
 
 **Frontend**: `JobWorkspaceGuard` và `CandidateDataGuard` tách riêng. Route bị từ
 chối khi readiness đã tải thành công thì chuyển về
-`/tuyendung/app/employer-verify`; chỉ lỗi tải readiness mới giữ màn retry
+`/tuyendung/app/xac-thuc-tai-khoan`; chỉ lỗi tải readiness mới giữ màn retry
 fail-closed (ER-D42). Khi readiness chuyển `true → false`, query nhạy cảm ngừng
 chạy và PII đã cache bị xóa.
 

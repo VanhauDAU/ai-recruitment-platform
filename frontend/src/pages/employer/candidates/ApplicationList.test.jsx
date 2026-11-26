@@ -116,7 +116,7 @@ function LocationProbe() {
   return <output data-testid="location-search">{location.search}</output>
 }
 
-function renderPage(initialEntry = '/tuyendung/app/applications?job=jb_1&q=an%40example.com&application=app_1') {
+function renderPage(initialEntry = '/tuyendung/app/ho-so-ung-tuyen?job=jb_1&q=an%40example.com&application=app_1') {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { retry: false } },
   })
@@ -196,7 +196,7 @@ describe('EmployerApplicationList', () => {
   })
 
   it('flags mass applying with a block action', async () => {
-    renderPage('/tuyendung/app/applications?job=jb_1&application=app_2')
+    renderPage('/tuyendung/app/ho-so-ung-tuyen?job=jb_1&application=app_2')
 
     const inspector = await screen.findByTestId('application-inspector')
     expect(await within(inspector).findByText('Có dấu hiệu ứng tuyển hàng loạt')).toBeVisible()

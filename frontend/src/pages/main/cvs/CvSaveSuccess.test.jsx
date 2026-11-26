@@ -47,8 +47,8 @@ const savedVersion = {
 
 const PREVIEW_CAPTURE_TIMEOUT = 15_000
 
-function renderPage(initialEntry = '/save-cv-success/cv_1?type=create') {
-  return render(withQueryClient(<App><MemoryRouter initialEntries={[initialEntry]}><Routes><Route path="/save-cv-success/:publicId" element={<CvSaveSuccess />} /></Routes></MemoryRouter></App>))
+function renderPage(initialEntry = '/cv/cv_1/da-luu?type=create') {
+  return render(withQueryClient(<App><MemoryRouter initialEntries={[initialEntry]}><Routes><Route path="/cv/:publicId/da-luu" element={<CvSaveSuccess />} /></Routes></MemoryRouter></App>))
 }
 
 describe('CV save success page', () => {
@@ -82,12 +82,12 @@ describe('CV save success page', () => {
     // Không hiện điểm thành phần.
     expect(screen.queryByText('Khớp vị trí trên CV +24')).not.toBeInTheDocument()
     expect(screen.getByText('Ứng tuyển')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Chỉnh sửa/ })).toHaveAttribute('href', '/cvs/cv_1/edit?mode=edit')
+    expect(screen.getByRole('link', { name: /Chỉnh sửa/ })).toHaveAttribute('href', '/cv/cv_1/chinh-sua?mode=edit')
   })
 
   it('shows the save response immediately without waiting for another preview request', async () => {
     renderPage({
-      pathname: '/save-cv-success/cv_1', search: '?type=edit',
+      pathname: '/cv/cv_1/da-luu', search: '?type=edit',
       state: { savedCv: { title: 'Marketing', latest_version_public_id: 'cvv_2' }, savedVersion },
     })
 

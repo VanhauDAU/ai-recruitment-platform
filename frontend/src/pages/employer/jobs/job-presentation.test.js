@@ -50,7 +50,7 @@ describe('job list presentation', () => {
     expect(jobStatusMeta({ status: 'active', effective_state: 'hidden' }).label).toBe('Bị ẩn')
     expect(jobStatusMeta({ status: 'active', effective_state: 'expired' }).label).toBe('Hết hạn')
     expect(employerJobApplicationsPath({ public_id: 'jb_1' }, { scope: 'unread' }))
-      .toBe('/tuyendung/app/applications?job=jb_1&scope=unread')
+      .toBe('/tuyendung/app/ho-so-ung-tuyen?job=jb_1&scope=unread')
   })
 })
 

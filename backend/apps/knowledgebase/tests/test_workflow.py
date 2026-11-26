@@ -32,7 +32,7 @@ class KnowledgeWorkflowTests(TestCase):
             article_type=KnowledgeArticle.ArticleType.FAQ,
             title=title,
             body='<h2>Các bước</h2><p>Mở trang đăng nhập.</p>',
-            source_reference='/login',
+            source_reference='/dang-nhap',
         )
 
     def test_full_revision_lifecycle_keeps_published_pointer_stable(self):

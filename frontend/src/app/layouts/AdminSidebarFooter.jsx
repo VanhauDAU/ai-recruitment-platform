@@ -31,7 +31,7 @@ export default function AdminSidebarFooter({ user, logout, collapsed = false, on
     return (
       <div className="admin-sider-footer admin-sider-footer--collapsed">
         <Tooltip placement="right" title={`${name}, ${adminTierLabel(user?.admin_access)}`}>
-          <Link to={adminPath('/account')} aria-label="Tài khoản của tôi" className="admin-sider-footer__avatar-link">
+          <Link to={adminPath('/tai-khoan-cua-toi')} aria-label="Tài khoản của tôi" className="admin-sider-footer__avatar-link">
             <Avatar size={34} src={user?.avatar_url || undefined} icon={<UserOutlined />} className="admin-user__avatar" />
           </Link>
         </Tooltip>
@@ -50,7 +50,7 @@ export default function AdminSidebarFooter({ user, logout, collapsed = false, on
         </div>
         <Tooltip title="Tài khoản của tôi">
           <Link
-            to={adminPath('/account')}
+            to={adminPath('/tai-khoan-cua-toi')}
             className="admin-sider-footer__settings"
             aria-label="Tài khoản của tôi"
             onClick={onNavigate}

@@ -72,7 +72,7 @@ describe('campaign launch steps', () => {
     expect(screen.getByText('Đã chọn 2 tin')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Tạo tin mới cho chiến dịch/ })).toHaveAttribute(
       'href',
-      '/tuyendung/app/jobs/new?campaign=camp_1&return=setup',
+      '/tuyendung/app/tin-tuyen-dung/tao-moi?campaign=camp_1&return=setup',
     )
   })
 

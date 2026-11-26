@@ -32,10 +32,10 @@ function renderPage() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={client}>
-      <MemoryRouter initialEntries={['/tuyendung/app/employer-verify']}>
+      <MemoryRouter initialEntries={['/tuyendung/app/xac-thuc-tai-khoan']}>
         <Routes>
-          <Route path="/tuyendung/app/employer-verify" element={<EmployerVerificationPanel />} />
-          <Route path="/tuyendung/app/dashboard" element={<p>Dashboard đã mở</p>} />
+          <Route path="/tuyendung/app/xac-thuc-tai-khoan" element={<EmployerVerificationPanel />} />
+          <Route path="/tuyendung/app/tong-quan" element={<p>Dashboard đã mở</p>} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,

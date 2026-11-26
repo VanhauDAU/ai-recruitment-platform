@@ -42,15 +42,15 @@ function Search() {
   return <span data-testid="search">{useLocation().search}</span>
 }
 
-function renderWizard(entry = '/tuyendung/app/campaigns/camp_1/setup', publicId = 'camp_1') {
+function renderWizard(entry = '/tuyendung/app/chien-dich/camp_1/thiet-lap', publicId = 'camp_1') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[entry]}>
         <Routes>
-          <Route path="/tuyendung/app/campaigns/new" element={<CampaignSetupWizard />} />
+          <Route path="/tuyendung/app/chien-dich/tao-moi" element={<CampaignSetupWizard />} />
           <Route
-            path="/tuyendung/app/campaigns/:publicId/setup"
+            path="/tuyendung/app/chien-dich/:publicId/thiet-lap"
             element={<><CampaignSetupWizard publicId={publicId} /><Search /></>}
           />
         </Routes>
@@ -87,14 +87,14 @@ describe('CampaignSetupWizard', () => {
 
   it('opens the requested step and refuses setup once the campaign runs', async () => {
     mocks.getCampaign.mockResolvedValue({ public_id: 'camp_1', name: 'Tuyển Backend', status: 'active' })
-    renderWizard('/tuyendung/app/campaigns/camp_1/setup?step=launch')
+    renderWizard('/tuyendung/app/chien-dich/camp_1/thiet-lap?step=launch')
 
     expect(await screen.findByText('Chiến dịch đã chạy, không còn ở bước thiết lập.')).toBeInTheDocument()
     expect(screen.queryByText('Bước kích hoạt')).not.toBeInTheDocument()
   })
 
   it('creates a campaign from the first step before the other steps unlock', async () => {
-    renderWizard('/tuyendung/app/campaigns/new', undefined)
+    renderWizard('/tuyendung/app/chien-dich/tao-moi', undefined)
 
     expect(await screen.findByRole('heading', { name: 'Tạo chiến dịch tuyển dụng' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Lưu mục tiêu giả' })).toBeInTheDocument()

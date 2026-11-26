@@ -111,6 +111,18 @@ class ActiveAnnouncementApiTests(APITestCase):
         self.assertEqual(boundary_miss.data['items'], [])
         self.assertEqual(excluded.data['items'], [])
 
+    def test_legacy_english_prefix_matches_renamed_vietnamese_path(self):
+        self.publish(
+            internal_name='Legacy route targeting',
+            include_path_prefixes=['/login'],
+        )
+
+        renamed = self.client.get(self.url, {'surface': 'candidate', 'path': '/dang-nhap'})
+        other = self.client.get(self.url, {'surface': 'candidate', 'path': '/dang-ky'})
+
+        self.assertEqual(len(renamed.data['items']), 1)
+        self.assertEqual(other.data['items'], [])
+
     def test_scheduled_announcement_is_hidden_until_start_and_reports_boundary(self):
         starts_at = timezone.now() + timedelta(hours=2)
         self.publish(
@@ -328,7 +340,7 @@ class AnnouncementInboxApiTests(APITestCase):
             'Bảo trì',
             kind=AnnouncementRevision.Kind.MAINTENANCE,
             message_vi='Bảo trì tối nay.',
-            include_path_prefixes=['/tuyendung/app/jobs'],
+            include_path_prefixes=['/tuyendung/app/tin-tuyen-dung'],
         )
         archived = self.publish('Đã lưu trữ', message_vi='Thông báo cũ.')
         old = self.publish('Quá cũ', message_vi='Rất cũ.')

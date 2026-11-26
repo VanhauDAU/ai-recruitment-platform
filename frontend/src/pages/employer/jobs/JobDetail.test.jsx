@@ -74,9 +74,9 @@ function renderPage(activeTab = 'apply_cv') {
   })
   const view = render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[`/tuyendung/app/jobs/job_1?active_tab=${activeTab}`]}>
+      <MemoryRouter initialEntries={[`/tuyendung/app/tin-tuyen-dung/job_1?active_tab=${activeTab}`]}>
         <Routes>
-          <Route path="/tuyendung/app/jobs/:publicId" element={<><JobDetail /><LocationProbe /></>} />
+          <Route path="/tuyendung/app/tin-tuyen-dung/:publicId" element={<><JobDetail /><LocationProbe /></>} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -133,7 +133,7 @@ describe('JobDetail candidate-data boundary', () => {
     expect(await screen.findByRole('heading', { name: 'Kỹ sư Frontend' })).toBeInTheDocument()
     expect(mocks.getRecruiterApplicationPage).not.toHaveBeenCalled()
     expect(screen.getByTestId('job-detail-location')).toHaveTextContent(
-      '/tuyendung/app/jobs/job_1?active_tab=apply_cv',
+      '/tuyendung/app/tin-tuyen-dung/job_1?active_tab=apply_cv',
     )
     expect(screen.queryByText('Nguyễn Minh Anh')).not.toBeInTheDocument()
     expect(accessError
@@ -217,9 +217,9 @@ describe('JobDetail candidate-data boundary', () => {
     mocks.readinessState.readiness.candidateDataAccess = false
     page.rerender(
       <QueryClientProvider client={page.queryClient}>
-        <MemoryRouter initialEntries={['/tuyendung/app/jobs/job_1?active_tab=apply_cv']}>
+        <MemoryRouter initialEntries={['/tuyendung/app/tin-tuyen-dung/job_1?active_tab=apply_cv']}>
           <Routes>
-            <Route path="/tuyendung/app/jobs/:publicId" element={<><JobDetail /><LocationProbe /></>} />
+            <Route path="/tuyendung/app/tin-tuyen-dung/:publicId" element={<><JobDetail /><LocationProbe /></>} />
           </Routes>
         </MemoryRouter>
       </QueryClientProvider>,

@@ -27,7 +27,7 @@ from ..domain import Role
 logger = logging.getLogger(__name__)
 
 CANDIDATE_CONNECT_PATH = '/procv-connect'
-EMPLOYER_CONNECT_PATH = '/tuyendung/app/connect'
+EMPLOYER_CONNECT_PATH = '/tuyendung/app/procv-connect'
 
 
 def conversation_path(conversation, role):

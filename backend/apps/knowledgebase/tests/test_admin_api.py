@@ -30,7 +30,7 @@ class KnowledgeAdminApiTests(APITestCase):
                 'type': 'FAQ',
                 'title': 'Làm thế nào để đăng nhập?',
                 'body': '<h2>Các bước</h2><p>Mở trang đăng nhập.</p>',
-                'source_reference': '/login',
+                'source_reference': '/dang-nhap',
             },
             format='json',
         )

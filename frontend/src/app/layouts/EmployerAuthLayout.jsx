@@ -62,7 +62,7 @@ export default function EmployerAuthLayout() {
   const { pathname } = useLocation()
   const { settings, siteName } = useSiteSettings()
   const brandColor = settingText(settings.brand_primary_color, DEFAULT_SITE_SETTINGS.brand_primary_color)
-  const isWide = pathname.endsWith('/register') || pathname.endsWith('/complete-profile')
+  const isWide = pathname.endsWith('/dang-ky') || pathname.endsWith('/hoan-thien-ho-so')
 
   return (
     <ConfigProvider theme={{ token: { borderRadius: 10, colorPrimary: brandColor } }}>

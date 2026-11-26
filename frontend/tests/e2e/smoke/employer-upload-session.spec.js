@@ -110,7 +110,7 @@ test('employer legal document is scanned before it is attached', { tag: '@respon
     },
   )
 
-  await page.goto('/tuyendung/app/account/settings/gpkd')
+  await page.goto('/tuyendung/app/cai-dat/giay-phep-kinh-doanh')
   await page.locator('input[type="file"]').first().setInputFiles({
     name: 'business.pdf',
     mimeType: 'application/pdf',

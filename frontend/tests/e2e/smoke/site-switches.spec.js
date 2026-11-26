@@ -12,10 +12,10 @@ async function withSettings(page, settings) {
 
 test('closed candidate registration shows a notice instead of the form', async ({ page }) => {
   await withSettings(page, { candidate_allow_registration: false })
-  await page.goto('/register')
+  await page.goto('/dang-ky')
 
   await expect(page.getByRole('heading', { name: 'Tạm dừng đăng ký tài khoản mới' })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Đăng nhập' })).toHaveAttribute('href', '/login')
+  await expect(page.getByRole('link', { name: 'Đăng nhập' })).toHaveAttribute('href', '/dang-nhap')
   await expect(page.getByRole('button', { name: 'Đăng ký bằng email' })).toHaveCount(0)
 })
 

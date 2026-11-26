@@ -135,7 +135,7 @@ function canTransitionPost(post) {
 function AdminPostLink({ post, children, className = '', label }) {
   return (
     <Link
-      to={adminPath(`/blog/${post.public_id}/edit`)}
+      to={adminPath(`/blog/${post.public_id}/chinh-sua`)}
       className={className}
       aria-label={label || `Mở bài “${post.title}” trong trang admin`}
     >
@@ -335,7 +335,7 @@ function PostList() {
       width: 230,
       render: (_, row) => (
         <Space size={8}>
-          <Button icon={<EditOutlined />} onClick={() => navigate(adminPath(`/blog/${row.public_id}/edit`))}>{row.allowed_actions.includes('edit') ? 'Sửa' : 'Xem'}</Button>
+          <Button icon={<EditOutlined />} onClick={() => navigate(adminPath(`/blog/${row.public_id}/chinh-sua`))}>{row.allowed_actions.includes('edit') ? 'Sửa' : 'Xem'}</Button>
           <PostActionMenu post={row} onAction={openActionConfirmation} />
         </Space>
       ),
@@ -415,7 +415,7 @@ function PostList() {
               rows={rows}
             />
             {hasFilters && <Button onClick={clearFilters}>Xóa bộ lọc</Button>}
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(adminPath('/blog/new'))}>Tạo bài viết</Button>
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(adminPath('/blog/tao-moi'))}>Tạo bài viết</Button>
           </Space>
         </div>
         {postsQuery.isError && (
@@ -521,7 +521,7 @@ function PostList() {
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                   <Progress percent={row.completeness.score} size="small" className="min-w-32 flex-1" />
                   <Space size={8}>
-                    <Button icon={<EditOutlined />} onClick={() => navigate(adminPath(`/blog/${row.public_id}/edit`))}>Mở</Button>
+                    <Button icon={<EditOutlined />} onClick={() => navigate(adminPath(`/blog/${row.public_id}/chinh-sua`))}>Mở</Button>
                     <PostActionMenu post={row} onAction={openActionConfirmation} />
                   </Space>
                 </div>

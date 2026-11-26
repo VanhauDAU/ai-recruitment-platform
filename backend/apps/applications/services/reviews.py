@@ -162,7 +162,7 @@ def submit_review(raw_token, *, recommendation, rating=None, strengths='', conce
                 subject_public_id=link.application.public_id,
                 metadata={'application_public_id': link.application.public_id},
                 action_path=(
-                    f'/tuyendung/app/applications?job={link.application.job.public_id}'
+                    f'/tuyendung/app/ho-so-ung-tuyen?job={link.application.job.public_id}'
                     f'&application={link.application.public_id}'
                 ),
             )

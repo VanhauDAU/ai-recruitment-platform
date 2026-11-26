@@ -102,7 +102,7 @@ function LocationProbe() {
   return <output data-testid="location-search">{location.search}</output>
 }
 
-function renderPage(initialEntry = '/tuyendung/app/jobs') {
+function renderPage(initialEntry = '/tuyendung/app/tin-tuyen-dung') {
   const queryClient = new QueryClient({
     defaultOptions: {
       mutations: { retry: false },
@@ -162,7 +162,7 @@ describe('JobList', () => {
     page.rerender(
       <ConfigProvider theme={{ token: { motion: false } }} wave={{ disabled: true }}>
         <QueryClientProvider client={page.queryClient}>
-          <MemoryRouter initialEntries={['/tuyendung/app/jobs']}>
+          <MemoryRouter initialEntries={['/tuyendung/app/tin-tuyen-dung']}>
             <JobList />
             <LocationProbe />
           </MemoryRouter>
@@ -184,7 +184,7 @@ describe('JobList', () => {
     expect(screen.queryByRole('table')).not.toBeInTheDocument()
     expect(within(activeCard).getByRole('link', { name: 'Kỹ sư Frontend' })).toHaveAttribute(
       'href',
-      '/tuyendung/app/jobs/job_active',
+      '/tuyendung/app/tin-tuyen-dung/job_active',
     )
     expect(within(activeCard).getByText('Đang tuyển')).toBeInTheDocument()
     expect(within(activeCard).getByText('Đội sản phẩm Growth')).toBeInTheDocument()
@@ -201,7 +201,7 @@ describe('JobList', () => {
     const annaLink = within(activeCard).getByRole('link', { name: 'Mở hồ sơ Nguyễn Minh Anh' })
     expect(annaLink).toHaveAttribute(
       'href',
-      '/tuyendung/app/applications?job=job_active&application=app_anna',
+      '/tuyendung/app/ho-so-ung-tuyen?job=job_active&application=app_anna',
     )
     expect(annaLink.querySelector('img')).toHaveAttribute(
       'src',
@@ -211,11 +211,11 @@ describe('JobList', () => {
       .toHaveTextContent('HN')
     expect(within(activeCard).getByRole('link', { name: '3 ứng viên' })).toHaveAttribute(
       'href',
-      '/tuyendung/app/applications?job=job_active',
+      '/tuyendung/app/ho-so-ung-tuyen?job=job_active',
     )
     expect(within(activeCard).getByRole('link', { name: '2 hồ sơ chưa xem' })).toHaveAttribute(
       'href',
-      '/tuyendung/app/applications?job=job_active&scope=unread',
+      '/tuyendung/app/ho-so-ung-tuyen?job=job_active&scope=unread',
     )
 
     const draftCard = screen.getByTestId('job-list-item-job_draft')
@@ -224,7 +224,7 @@ describe('JobList', () => {
     expect(within(draftCard).getByText('Chưa đăng tin')).toBeInTheDocument()
     expect(within(draftCard).getByRole('link', { name: /Hoàn thiện/ })).toHaveAttribute(
       'href',
-      '/tuyendung/app/jobs/job_draft/edit',
+      '/tuyendung/app/tin-tuyen-dung/job_draft/chinh-sua',
     )
     expect(screen.getByText('Hiển thị 1–2 trên 2 tin')).toBeInTheDocument()
   })
@@ -237,7 +237,7 @@ describe('JobList', () => {
     const quickActions = within(activeCard).getByTestId('job-quick-actions')
     expect(within(quickActions).getAllByRole('link')).toHaveLength(2)
     expect(within(quickActions).getByRole('link', { name: 'Xem chi tiết' }))
-      .toHaveAttribute('href', '/tuyendung/app/jobs/job_active')
+      .toHaveAttribute('href', '/tuyendung/app/tin-tuyen-dung/job_active')
     expect(within(quickActions).getByRole('link', { name: 'Xem trang tuyển dụng' }).getAttribute('href'))
       .toMatch(/\/viec-lam\/ky-su-frontend$/)
     expect(within(quickActions).queryByRole('link', { name: 'Chỉnh sửa tin' })).not.toBeInTheDocument()
@@ -246,7 +246,7 @@ describe('JobList', () => {
     }))
     expect(await screen.findByRole('menuitem', { name: /Chỉnh sửa tin/ })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Xem hồ sơ ứng tuyển' }))
-      .toHaveAttribute('href', '/tuyendung/app/applications?job=job_active')
+      .toHaveAttribute('href', '/tuyendung/app/ho-so-ung-tuyen?job=job_active')
     expect(await screen.findByRole('menuitem', { name: /Sao chép thành bản nháp/ }))
       .toBeInTheDocument()
     expect(await screen.findByRole('menuitem', { name: /Ngừng tuyển/ })).toBeInTheDocument()
@@ -301,7 +301,7 @@ describe('JobList', () => {
 
   it('derives the API query from URL filters and removes the old page when the status tab changes', async () => {
     const user = userEvent.setup()
-    renderPage('/tuyendung/app/jobs?status=active&q=frontend&page=3')
+    renderPage('/tuyendung/app/tin-tuyen-dung?status=active&q=frontend&page=3')
 
     await waitFor(() => expect(mocks.getEmployerJobPage).toHaveBeenCalledWith({
       page: 3,
@@ -331,7 +331,7 @@ describe('JobList', () => {
 
   it('filters by attention chip, campaign and sort while keeping the order when filters clear', async () => {
     const user = userEvent.setup()
-    renderPage('/tuyendung/app/jobs?campaign=camp_growth')
+    renderPage('/tuyendung/app/tin-tuyen-dung?campaign=camp_growth')
 
     await waitFor(() => expect(mocks.getEmployerJobPage).toHaveBeenCalledWith({ page: 1, campaign: 'camp_growth' }))
     // The campaign name is loaded because the URL already filters by it.
@@ -362,7 +362,7 @@ describe('JobList', () => {
 
   it('searches after the user stops typing and starts again from the first page', async () => {
     const user = userEvent.setup()
-    renderPage('/tuyendung/app/jobs?status=draft&page=2')
+    renderPage('/tuyendung/app/tin-tuyen-dung?status=draft&page=2')
 
     await user.type(await screen.findByRole('searchbox', { name: 'Tìm tin tuyển dụng' }), ' kế toán ')
 
@@ -390,7 +390,7 @@ describe('JobList', () => {
     renderPage()
 
     expect(await screen.findByRole('link', { name: /Đăng tin đầu tiên/ }))
-      .toHaveAttribute('href', '/tuyendung/app/jobs/new')
+      .toHaveAttribute('href', '/tuyendung/app/tin-tuyen-dung/tao-moi')
     expect(screen.queryByText('Hiển thị', { exact: false })).not.toBeInTheDocument()
 
     await user.click(within(screen.getByRole('group', { name: 'Lọc theo trạng thái tin' }))

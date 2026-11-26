@@ -328,7 +328,7 @@ export default function CampaignApplyCvPanel({ publicId }) {
                 align: 'right',
                 render: (_, application) => (
                   <Link
-                    to={employerAppPath(`/applications?campaign=${publicId}&application=${application.public_id}`)}
+                    to={employerAppPath(`/ho-so-ung-tuyen?campaign=${publicId}&application=${application.public_id}`)}
                     className="inline-flex items-center gap-1 whitespace-nowrap font-semibold !text-[var(--brand-primary-hover)]"
                   >
                     <EyeOutlined /> {m.employer_campaign_cv_details()}

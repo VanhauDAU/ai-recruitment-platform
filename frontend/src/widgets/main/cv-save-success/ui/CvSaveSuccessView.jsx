@@ -145,7 +145,7 @@ function CvPreviewCard({ cv, version, publicId, previewError, onCaptureError, on
       </div>
       <h2 className="mt-5 text-center text-xl font-extrabold text-[#26384a]">{displayCvTitle(cv.title)}</h2>
       <div className="mt-4 flex flex-wrap justify-center gap-3 pb-2">
-        <Link to={`/cvs/${publicId}/edit?mode=edit`}>
+        <Link to={`/cv/${publicId}/chinh-sua?mode=edit`}>
           <Button shape="round" size="large" icon={<EditOutlined />} className="!border-[var(--brand-primary)] !font-bold !text-[var(--brand-primary)] hover:!bg-[var(--brand-primary-soft)]">
             Chỉnh sửa
           </Button>

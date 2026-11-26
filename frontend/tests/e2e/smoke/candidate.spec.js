@@ -115,7 +115,7 @@ test('candidate smoke: saved jobs remains protected', async ({ page }) => {
   await page.goto('/viec-lam-da-luu')
 
   await expect(page).toHaveURL(
-    /\/login\?returnUrl=%2Fviec-lam-da-luu$/,
+    /\/dang-nhap\?returnUrl=%2Fviec-lam-da-luu$/,
   )
 })
 
@@ -267,7 +267,7 @@ test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ 
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })
 
-  await page.goto('/cvs/cv_1/edit?mode=create')
+  await page.goto('/cv/cv_1/chinh-sua?mode=create')
   await expect(page.getByRole('banner', { name: 'Header website' })).toBeVisible()
   await expect(page.getByLabel('Thanh hành động CV')).toBeVisible()
   await expect(page.getByRole('textbox', { name: 'Tên CV' })).toHaveText('CV V2')
@@ -332,7 +332,7 @@ test('candidate smoke: WYSIWYG CV editor uses the V2 draft lifecycle', async ({ 
   expect(education.items.map((item) => item.item_id)).toEqual(['education_item_1', 'education_item_2'])
   expect(draftPayload.layout_json.item_orders.education_1).toEqual(['education_item_2', 'education_item_1'])
   expect(draftPayload.layout_json.regions[0].section_instance_ids).toContain('education_1')
-  await expect(page).toHaveURL('/save-cv-success/cv_1?type=create')
+  await expect(page).toHaveURL('/cv/cv_1/da-luu?type=create')
   await expect(page.getByRole('heading', { name: 'Lưu CV thành công!' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'CV V2' })).toBeVisible()
   await expect(page.getByRole('img', { name: 'Ảnh xem trước CV V2' })).toBeVisible()
@@ -369,13 +369,13 @@ test('candidate smoke: owner CV view renders an immutable V2 version, not a draf
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })
 
-  await page.goto('/cvs/cv_1/view')
+  await page.goto('/cv/cv_1/xem')
   await expect(page.getByRole('heading', { name: 'CV read-only' })).toBeVisible()
   await expect(page.getByText('Phiên bản bất biến')).toBeVisible()
   await expect(page.getByText('Nội dung đã lưu')).toBeVisible()
   await expect(page.getByLabel('Xem trước CV single_column_v1 trang 1')).toBeVisible()
   const exportRequest = page.waitForRequest((request) => request.url().endsWith('/api/candidate/cvs/cv_1/exports/') && request.method() === 'POST')
-  await expect(page.getByRole('link', { name: 'Sửa CV' })).toHaveAttribute('href', '/cvs/cv_1/edit')
+  await expect(page.getByRole('link', { name: 'Sửa CV' })).toHaveAttribute('href', '/cv/cv_1/chinh-sua')
   await expect(page.getByRole('button', { name: 'Copy CV' })).toBeVisible()
   await expect(page.getByLabel('Chọn phiên bản PDF')).toHaveCount(0)
   await page.getByRole('button', { name: 'Tải CV PDF' }).click()
@@ -545,7 +545,7 @@ test('candidate smoke: job application submits the selected immutable CV version
   // One current application per job: no resubmission while it is unanswered.
   await expect(page.getByRole('button', { name: 'Đã ứng tuyển', exact: true }).first()).toBeVisible()
   await expect(page.getByText(/Bạn đã gửi CV cho vị trí này ngày:/)).toContainText(`${appliedDateText}.`)
-  await expect(page.getByRole('link', { name: 'Xem CV đã nộp' })).toHaveAttribute('href', '/cvs/cv_1/view')
+  await expect(page.getByRole('link', { name: 'Xem CV đã nộp' })).toHaveAttribute('href', '/cv/cv_1/xem')
   expect(applicationPayload).toEqual({
     job_public_id: 'job_1',
     cv_public_id: 'cv_1',
@@ -731,7 +731,7 @@ test('candidate smoke: uploaded CVs show the original file, a recruiter-search s
   expect(imported).toBe(true)
 
   // Link chia sẻ của CV tải lên hiển thị tệp gốc thay vì version rỗng.
-  await page.goto('/cv/share/tok_up')
+  await page.goto('/cv/chia-se/tok_up')
   await expect(page.getByTitle('CV tải lên')).toBeAttached()
 })
 

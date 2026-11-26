@@ -116,7 +116,7 @@ describe('CampaignJobsPanel', () => {
     expect(screen.queryByRole('combobox', { name: 'Phạm vi báo cáo' })).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Thêm tin tuyển dụng' })).toHaveAttribute(
       'href',
-      '/tuyendung/app/jobs/new?campaign=camp_1',
+      '/tuyendung/app/tin-tuyen-dung/tao-moi?campaign=camp_1',
     )
     expect(screen.getByRole('img', { name: 'Biểu đồ lượt hiển thị, lượt xem và lượt ứng tuyển' })).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'Số lần hiển thị' })).toBeInTheDocument()
@@ -128,7 +128,7 @@ describe('CampaignJobsPanel', () => {
     expect(screen.getByRole('link', { name: 'Xem tin Kỹ sư Frontend' })).toHaveAttribute('target', '_blank')
     expect(screen.getByRole('link', { name: 'Chỉnh sửa Kỹ sư Frontend' })).toHaveAttribute(
       'href',
-      '/tuyendung/app/jobs/job_1/edit',
+      '/tuyendung/app/tin-tuyen-dung/job_1/chinh-sua',
     )
     expect(screen.getByRole('button', { name: 'Xem báo cáo Kỹ sư Frontend' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Xem báo cáo Backend Engineer' })).toBeInTheDocument()
@@ -224,7 +224,7 @@ describe('CampaignJobsPanel', () => {
     expect(await screen.findByText('Không thể tải báo cáo tin tuyển dụng')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Thêm tin tuyển dụng' })).toHaveAttribute(
       'href',
-      '/tuyendung/app/jobs/new?campaign=camp_1',
+      '/tuyendung/app/tin-tuyen-dung/tao-moi?campaign=camp_1',
     )
   })
 
@@ -235,7 +235,7 @@ describe('CampaignJobsPanel', () => {
     expect(await screen.findByText('Đang ẩn theo chiến dịch')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Thêm tin tuyển dụng' })).toHaveAttribute(
       'href',
-      '/tuyendung/app/jobs/new?campaign=camp_1',
+      '/tuyendung/app/tin-tuyen-dung/tao-moi?campaign=camp_1',
     )
     expect(await screen.findByRole('link', {
       name: 'Chỉnh sửa Kỹ sư Frontend',

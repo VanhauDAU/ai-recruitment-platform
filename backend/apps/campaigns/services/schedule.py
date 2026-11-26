@@ -26,7 +26,7 @@ ENDING_SOON_DAYS = 3
 
 
 def _campaign_path(campaign):
-    return f'/tuyendung/app/campaigns/{campaign.public_id}'
+    return f'/tuyendung/app/chien-dich/{campaign.public_id}'
 
 
 def _notify(campaign, event_type, dedupe_key, message, **params):

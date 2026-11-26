@@ -5,7 +5,7 @@ export default function AdminPasswordReset() {
   return (
     <PasswordResetForm
       portal="admin"
-      requestPath={adminPath('/login')}
+      requestPath={adminPath('/dang-nhap')}
       invalidActionLabel="Quay về đăng nhập"
     />
   )

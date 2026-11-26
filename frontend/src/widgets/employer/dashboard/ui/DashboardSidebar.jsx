@@ -69,7 +69,7 @@ export default function DashboardSidebar({
             label={m.employer_workspace_dash_unpublished_drafts({ count: numberFormatter.format(summary.jobs_draft || 0) })}
             detail={m.employer_workspace_dash_drafts_detail()}
             tone="bg-amber-50 text-amber-600"
-            to={jobWorkspaceReady ? employerAppPath('/jobs') : EMPLOYER_VERIFY_URL}
+            to={jobWorkspaceReady ? employerAppPath('/tin-tuyen-dung') : EMPLOYER_VERIFY_URL}
           />
           <PriorityAction
             icon={employerVerified ? CheckCircleFilled : FormOutlined}

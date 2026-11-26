@@ -40,7 +40,7 @@ export function MessageText({ text }) {
 }
 
 function JobCard({ portal, job }) {
-  const to = portal === 'employer' ? employerAppPath(`/jobs/${job.public_id}`) : jobDetailPath(job)
+  const to = portal === 'employer' ? employerAppPath(`/tin-tuyen-dung/${job.public_id}`) : jobDetailPath(job)
   return (
     <Link to={to} className="pc-card pc-card--link">
       <span className="pc-card__title">{job.title}</span>

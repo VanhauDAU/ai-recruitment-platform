@@ -67,7 +67,7 @@ function LocationProbe() {
   return <output data-testid="location-search">{location.search}</output>
 }
 
-function renderQueue(initialEntry = '/admin/app/job-moderation?tab=reports') {
+function renderQueue(initialEntry = '/admin/app/duyet-tin?tab=reports') {
   const client = new QueryClient({
     defaultOptions: {
       queries: { retry: false },
@@ -120,7 +120,7 @@ describe('JobReportQueue', () => {
 
   it('keeps filters, ordering and pagination in the namespaced URL', async () => {
     renderQueue(
-      '/admin/app/job-moderation?tab=reports&report_status=all&report_reason=scam&report_q=Acme&report_created_from=2026-07-01&report_created_to=2026-07-31&report_ordering=job_title&report_page=2',
+      '/admin/app/duyet-tin?tab=reports&report_status=all&report_reason=scam&report_q=Acme&report_created_from=2026-07-01&report_created_to=2026-07-31&report_ordering=job_title&report_page=2',
     )
 
     await waitFor(() => expect(mocks.getAdminJobReports).toHaveBeenCalledWith({
@@ -136,7 +136,7 @@ describe('JobReportQueue', () => {
   })
 
   it('makes every data column sortable and sends both directions to the server', async () => {
-    renderQueue('/admin/app/job-moderation?tab=reports&report_page=3')
+    renderQueue('/admin/app/duyet-tin?tab=reports&report_page=3')
     await screen.findByText('Backend Engineer')
 
     const sortableHeaders = document.querySelectorAll('th.ant-table-column-has-sorters')

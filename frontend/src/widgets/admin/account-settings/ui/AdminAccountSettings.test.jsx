@@ -11,7 +11,7 @@ vi.mock('./AdminProfilePanel', () => ({ default: () => <div>panel-profile</div> 
 vi.mock('./AdminSecurityPanel', () => ({ default: () => <div>panel-security</div> }))
 vi.mock('./AdminActivityPanel', () => ({ default: () => <div>panel-activity</div> }))
 
-function renderAt(initialEntry = '/admin/app/account') {
+function renderAt(initialEntry = '/admin/app/tai-khoan-cua-toi') {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <AdminAccountSettings />
@@ -45,14 +45,14 @@ describe('AdminAccountSettings', () => {
   })
 
   it('deep-links to a tab from the query string', () => {
-    renderAt('/admin/app/account?tab=activity')
+    renderAt('/admin/app/tai-khoan-cua-toi?tab=activity')
 
     expect(screen.getByText('panel-activity')).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: /Nhật ký hoạt động/ })).toHaveAttribute('aria-selected', 'true')
   })
 
   it('falls back to the profile tab for an unknown tab key', () => {
-    renderAt('/admin/app/account?tab=khong-ton-tai')
+    renderAt('/admin/app/tai-khoan-cua-toi?tab=khong-ton-tai')
 
     expect(screen.getByText('panel-profile')).toBeInTheDocument()
   })

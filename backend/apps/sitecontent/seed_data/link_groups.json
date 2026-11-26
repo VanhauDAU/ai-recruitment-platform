@@ -164,7 +164,7 @@
       },
       {
         "label": "Đăng nhập nhà tuyển dụng",
-        "url": "/tuyendung/app/login"
+        "url": "/tuyendung/app/dang-nhap"
       }
     ]
   }

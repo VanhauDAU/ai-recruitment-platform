@@ -27,13 +27,13 @@ describe('EmployerAccountVerificationCard', () => {
     expect(screen.getByText('Hoàn thành')).toHaveTextContent('Hoàn thành 0%')
     expect(screen.getByRole('link', { name: /Xác thực số điện thoại/ })).toHaveAttribute(
       'href',
-      '/tuyendung/app/account/phone-verify',
+      '/tuyendung/app/xac-thuc-so-dien-thoai',
     )
     expect(screen.getByText('Cập nhật thông tin công ty')).toBeInTheDocument()
     expect(screen.getByText('Xác thực Giấy đăng ký doanh nghiệp')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Tìm hiểu thêm' })).toHaveAttribute(
       'href',
-      '/tuyendung/app/employer-verify',
+      '/tuyendung/app/xac-thuc-tai-khoan',
     )
   })
 

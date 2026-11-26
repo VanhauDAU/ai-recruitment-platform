@@ -206,8 +206,8 @@ test('announcement admin: create, publish and stale conflict stay responsive', {
   page.on('pageerror', (error) => pageErrors.push(error.message))
   await routeAdminApi(page)
 
-  await page.goto('/admin/app/announcements')
-  await expect(page).toHaveURL('/admin/app/announcements')
+  await page.goto('/admin/app/thong-bao')
+  await expect(page).toHaveURL('/admin/app/thong-bao')
   await page.waitForLoadState('networkidle')
   expect(pageErrors).toEqual([])
   await expect(page.getByRole('heading', { name: 'Thông báo đa cổng' })).toBeVisible()

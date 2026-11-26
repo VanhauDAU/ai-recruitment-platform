@@ -40,7 +40,7 @@ function renderQueue() {
   return render(
     <App>
       <QueryClientProvider client={queryClient}>
-        <MemoryRouter initialEntries={['/admin/app/privacy-requests']}><DataRequestQueue /></MemoryRouter>
+        <MemoryRouter initialEntries={['/admin/app/yeu-cau-du-lieu-ca-nhan']}><DataRequestQueue /></MemoryRouter>
       </QueryClientProvider>
     </App>,
   )

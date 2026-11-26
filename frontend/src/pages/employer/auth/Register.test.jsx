@@ -56,7 +56,7 @@ function renderPage() {
   })
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/tuyendung/app/register']}>
+      <MemoryRouter initialEntries={['/tuyendung/app/dang-ky']}>
         <EmployerRegister />
       </MemoryRouter>
     </QueryClientProvider>,
