@@ -8,6 +8,15 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-27
 
+#### Fixed — Thẻ việc làm ở "Việc làm gần tôi" tràn khỏi màn hình điện thoại
+
+- Lưới `.nearby-results` dùng cột ngầm định `auto` nên tên công ty dài (để `nowrap`) đẩy
+  thẻ rộng hơn khung trang. Trên iPhone thẻ lòi ra mép phải và bị lớp cha cắt mất; trên
+  desktop, khi có bản đồ, trang cuộn ngang 30px. Giờ cột dùng `minmax(0, 1fr)` và tên
+  công ty bị cắt bằng "…".
+- E2E `nearby-jobs` dùng tên công ty dài và đo trực tiếp mép phải mỗi thẻ so với khung
+  lọc. Trước đây test chỉ so `scrollWidth`, nên không bắt được phần tràn bị cắt.
+
 #### Fixed — Việc làm gần tôi: bỏ bản đồ nền sai chủ quyền Hoàng Sa, Trường Sa; làm lại ô vị trí và bố cục điện thoại
 
 - Production để trống `map_style_url` nên các trang "Việc làm gần tôi", chi tiết tin và
