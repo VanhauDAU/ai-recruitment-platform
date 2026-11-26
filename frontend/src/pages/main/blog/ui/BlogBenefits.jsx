@@ -25,21 +25,41 @@ const BENEFITS = [
   },
 ]
 
+const HIDDEN_KEY = 'procv:blog-benefits-hidden'
+
+function readHidden() {
+  try {
+    return window.localStorage.getItem(HIDDEN_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
 // Section đầu trang chi tiết bài viết: ba lợi ích và CTA có cùng nhịp thị giác.
+// Điện thoại không hiện (ba thẻ xếp dọc che hết bài); đóng một lần thì nhớ cho mọi bài.
 export default function BlogBenefits() {
   const { settings } = useSiteSettings()
   const siteName = settingText(settings.site_name, DEFAULT_SITE_SETTINGS.site_name || 'ProCV')
-  const [visible, setVisible] = useState(true)
+  const [visible, setVisible] = useState(() => !readHidden())
+
+  function hide() {
+    setVisible(false)
+    try {
+      window.localStorage.setItem(HIDDEN_KEY, '1')
+    } catch {
+      // Chế độ riêng tư chặn storage: chỉ ẩn trong lượt xem này.
+    }
+  }
 
   if (!visible) return null
 
   return (
-    <section className="relative w-full border-y border-emerald-400/20 bg-[#005c49] py-6 text-white sm:py-10">
+    <section className="relative hidden w-full border-y border-emerald-400/20 bg-[#005c49] py-6 text-white sm:block sm:py-10">
       <button
         type="button"
         aria-label="Ẩn khối lợi ích"
         title="Ẩn khối lợi ích"
-        onClick={() => setVisible(false)}
+        onClick={hide}
         className="absolute right-2 top-2 z-20 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-black/10 text-sm text-[color-mix(in_srgb,var(--brand-primary)_40%,#fff)] transition hover:bg-black/20 hover:text-white sm:right-6 sm:top-5 sm:h-9 sm:w-9"
       >
         <CloseOutlined />

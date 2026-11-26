@@ -8,6 +8,21 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Changed — Gọn giao diện cổng ứng viên trên điện thoại
+
+- Hero trang chủ: điện thoại bỏ huy hiệu số việc làm và câu phụ, ô tìm kiếm lên trên fold.
+- Header: icon Danh mục, tìm kiếm, chuông, tin nhắn, quay lại đổi sang bộ nét Lucide
+  (ISC) vendor ở `src/shared/ui/icons/LineIcon.jsx`; nút tròn 40px đồng cỡ.
+- Dải thông báo luôn một dòng; câu dài hơn khung thì chạy chữ (dừng đầu/cuối) và giữ
+  thông báo đến khi chạy hết mới xoay; giảm chuyển động thì quay về dấu ba chấm.
+- Khối "Lợi ích khi sử dụng" ở bài viết ẩn trên điện thoại; đóng một lần thì nhớ cho
+  mọi bài (localStorage).
+
+#### Fixed — Kính lúp header không mở bàn phím trên iPhone
+
+- WebKit chỉ mở bàn phím khi `focus()` chạy trong thao tác chạm; nút giờ giữ focus bằng ô
+  ẩn (`src/shared/lib/hold-keyboard-focus.js`) trước khi chuyển sang `/viec-lam`.
+
 #### Added — Góp ý / báo lỗi gửi sang Telegram
 
 - Góp ý mới được task `apps.sitecontent.tasks.notify_feedback_telegram` (queue `default`,

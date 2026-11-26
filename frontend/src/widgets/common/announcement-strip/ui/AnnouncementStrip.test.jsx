@@ -207,6 +207,27 @@ describe('AnnouncementStrip runtime', () => {
     expect(strip).toHaveStyle('--announcement-motion-play-state: running')
   })
 
+  it('scrolls a message wider than the strip on one line and holds it until it finishes', async () => {
+    useSession.mockReturnValue({ loading: false, user: null })
+    getActiveAnnouncements.mockResolvedValue({
+      items: [remoteItem({ message: 'Thông báo rất dài cần chạy chữ để đọc hết.' })],
+      nextTransitionAt: null,
+    })
+    // Câu rộng 600px trong khung 320px: chạy 280px với 40px/s trong 70% thời lượng.
+    vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(600)
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(320)
+    renderStrip()
+
+    await screen.findByText('Thông báo rất dài cần chạy chữ để đọc hết.')
+    const strip = screen.getByRole('region', { name: 'Thông báo hệ thống' })
+    const message = strip.querySelector('.announcement-strip__message')
+    expect(message).toHaveAttribute('data-marquee', 'true')
+    expect(message).toHaveStyle('--announcement-marquee-distance: -280px')
+    expect(message).toHaveStyle('--announcement-marquee-duration: 10s')
+    await waitFor(() => expect(strip).toHaveStyle('--announcement-motion-period: 10s'))
+    vi.restoreAllMocks()
+  })
+
   it('allows a critical remote item to supersede email verification', async () => {
     useSession.mockReturnValue({
       loading: false,

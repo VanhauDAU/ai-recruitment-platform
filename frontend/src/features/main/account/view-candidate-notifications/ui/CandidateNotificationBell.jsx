@@ -5,6 +5,7 @@ import { Link } from 'react-router'
 import { candidateNotificationTone } from '@/entities/notification/candidate-notification'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import BottomSheet from '@/shared/ui/BottomSheet'
+import LineIcon from '@/shared/ui/icons/LineIcon'
 import NotificationListItem from '@/shared/ui/NotificationListItem'
 import NotificationSoundToggle from '@/shared/ui/NotificationSoundToggle'
 import useCandidateNotifications from '../model/use-candidate-notifications'
@@ -98,11 +99,11 @@ export default function CandidateNotificationBell() {
         aria-label={m.candidate_notifications_open()}
         aria-expanded={open}
         onClick={mobile ? () => setOpen(true) : undefined}
-        className={`flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-xl transition-colors hover:bg-slate-100 hover:text-[var(--brand-primary)] ${
-          open ? 'bg-slate-100 text-[var(--brand-primary)]' : 'text-slate-600'
+        className={`flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-[22px] transition hover:bg-slate-100 hover:text-[var(--brand-primary)] active:scale-95 ${
+          open ? 'bg-slate-100 text-[var(--brand-primary)]' : 'text-slate-700'
         }`}
       >
-        <BellOutlined />
+        <LineIcon name="bell" strokeWidth={1.8} />
       </button>
     </Badge>
   )
