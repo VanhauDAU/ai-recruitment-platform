@@ -16,7 +16,9 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   Cloudflare Web Analytics (`static.cloudflareinsights.com`) và thêm `'report-sample'`.
 - Sentry SDK bỏ qua lỗi `zaloJSV2` do trình duyệt trong app Zalo tự chèn script.
 - Tab cũ sau deploy gặp lỗi tải chunk (`vite:preloadError`) thì tự tải lại, tối đa một
-  lần mỗi phút.
+  lần mỗi phút (script inline trong `index.html`, không tốn ngân sách JS khởi tạo).
+- Script giao diện tối trong `index.html` nhận path đăng nhập mới (`/dang-nhap`,
+  `/dang-ky`…, gồm cổng `/tuyendung`) sau khi chuẩn hoá path.
 - Trang chủ lấy tổng số việc làm từ `/public/jobs/stats/` (dùng chung cache với khối
   thống kê) thay vì tải cả một trang tin; thông báo hệ thống cache 5 phút theo trang.
 
