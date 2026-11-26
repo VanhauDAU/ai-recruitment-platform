@@ -5,6 +5,8 @@ khớp route phải dịch prefix cũ sang path mới. Bảng cùng nội dung v
 `frontend/src/app/router/redirects/legacy-paths.js` (phần không có tham số động).
 """
 
+from django.conf import settings
+
 _MAIN = {
     '/login': '/dang-nhap',
     '/sign-up': '/dang-ky',
@@ -99,8 +101,28 @@ def _replace_prefix(path, mapping):
     return None
 
 
+def _configured_base(prefix):
+    """Base chung domain (/tuyendung/app, /quan-tri) → base đang cấu hình.
+
+    Trên subdomain riêng, cổng NTD/quản trị bỏ tiền tố nên prefix đã lưu phải đổi theo.
+    """
+    bases = (
+        ('/tuyendung/app', settings.EMPLOYER_APP_BASE),
+        ('/tuyendung', settings.EMPLOYER_MARKETING_BASE),
+        (_ADMIN_BASE, settings.ADMIN_APP_BASE),
+    )
+    for old, new in bases:
+        if prefix == old or prefix.startswith(f'{old}/'):
+            return (new + prefix[len(old) :]) or '/'
+    return prefix
+
+
 def modernize_path_prefix(prefix):
     """Dịch prefix route cũ sang route hiện hành; prefix không thuộc bảng giữ nguyên."""
+    return _configured_base(_translate_segments(prefix))
+
+
+def _translate_segments(prefix):
     if prefix == _LEGACY_ADMIN_BASE or prefix.startswith(f'{_LEGACY_ADMIN_BASE}/'):
         prefix = _ADMIN_BASE + prefix[len(_LEGACY_ADMIN_BASE) :]
     for base, mapping in _PORTALS:

@@ -6,5 +6,12 @@ import { resolveLegacyPath } from './legacy-paths'
 export default function LegacyPathFallback() {
   const { pathname, search, hash } = useLocation()
   const target = resolveLegacyPath(pathname)
-  return target ? <Navigate to={`${target}${search}${hash}`} replace /> : <NotFound />
+  if (!target) return <NotFound />
+  const url = `${target}${search}${hash}`
+  // Đích ở subdomain khác: tải lại trang tại đó (router chỉ điều hướng trong host).
+  if (/^https?:\/\//.test(target)) {
+    window.location.replace(url)
+    return null
+  }
+  return <Navigate to={url} replace />
 }

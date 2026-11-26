@@ -8,6 +8,23 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Changed — Cổng nhà tuyển dụng và quản trị chuyển sang subdomain riêng
+
+- Production: nhà tuyển dụng ở `tuyendung.procv.site` (giới thiệu ở `/`, khu làm việc
+  ở `/app`), quản trị ở `quantri.procv.site` (app ở gốc). Máy dev và e2e giữ đường dẫn
+  `/tuyendung`, `/quan-tri` khi không đặt `VITE_*_HOST`.
+- `procv.site/tuyendung/*`, `/quan-tri/*`, `/admin/*` chuyển 301 sang subdomain (giữ
+  query); trong SPA, link cũ đã lưu (thông báo, banner) cũng tự chuyển, và link từ cổng
+  NTD/quản trị sang trang tin, công ty, CV mở ở `procv.site`.
+- Backend dựng mọi link email/thông báo của NTD qua `common/portal_paths.py`, suy ra
+  từ `EMPLOYER_FRONTEND_URL`/`ADMIN_FRONTEND_URL`; bỏ biến `ADMIN_INVITATION_PATH`,
+  `ADMIN_PASSWORD_RESET_PATH`, `EMPLOYER_EMAIL_VERIFICATION_PATH`,
+  `EMPLOYER_PASSWORD_RESET_PATH`.
+- SEO: trang giới thiệu NTD có canonical, robots, sitemap riêng trên subdomain;
+  `quantri.` trả `Disallow: /`. nginx chỉ mở `/api/admin/` trên `quantri.`.
+- Vận hành: DNS `tuyendung`, `quantri`; Cloudflare Access thêm `quantri.procv.site`;
+  redirect URI OAuth (Google/Facebook/LinkedIn) thêm `tuyendung.procv.site`.
+
 #### Changed — Cổng quản trị đổi đường dẫn sang `/quan-tri`
 
 - Cổng quản trị chạy chung domain đổi từ `/admin/app/…` sang `/quan-tri/…`

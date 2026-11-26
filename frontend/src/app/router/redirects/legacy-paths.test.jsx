@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { createRoutesFromElements, generatePath, matchRoutes, MemoryRouter, Route, Routes, useLocation } from 'react-router'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { adminRoutes, employerRoutes, mainRoutes } from '../routes'
 import LegacyPathFallback from './LegacyPathFallback'
 import { LEGACY_ADMIN_PATHS, LEGACY_EMPLOYER_PATHS, LEGACY_MAIN_PATHS, resolveLegacyPath } from './legacy-paths'
@@ -52,7 +52,7 @@ describe('old /admin/app base of the admin portal', () => {
     expect(resolveLegacyPath('/admin/app')).toBe('/quan-tri')
     expect(resolveLegacyPath('/admin/app/dang-nhap')).toBe('/quan-tri/dang-nhap')
     expect(resolveLegacyPath('/admin/app/accounts/usr_1')).toBe('/quan-tri/tai-khoan/usr_1')
-    expect(resolveLegacyPath('/admin/application')).toBeNull()
+    expect(resolveLegacyPath('/admin/login')).toBe('/quan-tri/dang-nhap')
   })
 })
 
@@ -90,5 +90,43 @@ describe('LegacyPathFallback', () => {
     renderAt('/khong-ton-tai')
 
     expect(screen.getByText('404')).toBeInTheDocument()
+  })
+})
+
+describe('portals on their own subdomains', () => {
+  async function load(env) {
+    vi.resetModules()
+    for (const [key, value] of Object.entries(env)) vi.stubEnv(key, value)
+    return import('./legacy-paths')
+  }
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.resetModules()
+  })
+
+  it('sends old main-domain portal URLs to the subdomains', async () => {
+    const { resolveLegacyPath: resolve } = await load({
+      VITE_EMPLOYER_HOST: 'tuyendung.example.test',
+      VITE_ADMIN_HOST: 'quantri.example.test',
+    })
+
+    expect(resolve('/tuyendung/app/tin-tuyen-dung')).toBe('https://tuyendung.example.test/app/tin-tuyen-dung')
+    expect(resolve('/tuyendung')).toBe('https://tuyendung.example.test')
+    expect(resolve('/quan-tri/tai-khoan')).toBe('https://quantri.example.test/tai-khoan')
+    expect(resolve('/admin/app/loi-moi')).toBe('https://quantri.example.test/loi-moi')
+  })
+
+  it('drops the shared prefix and sends main-site pages back on the employer host', async () => {
+    const { resolveLegacyPath: resolve } = await load({
+      VITE_EMPLOYER_HOST: window.location.hostname,
+      VITE_ADMIN_HOST: 'quantri.example.test',
+      VITE_MAIN_HOST: 'main.example.test',
+    })
+
+    expect(resolve('/tuyendung/app/jobs/jb_1/edit')).toBe('/app/tin-tuyen-dung/jb_1/chinh-sua')
+    expect(resolve('/tuyendung/dich-vu')).toBe('/dich-vu')
+    expect(resolve('/viec-lam/ky-su-backend')).toBe('https://main.example.test/viec-lam/ky-su-backend')
+    expect(resolve('/khong-ton-tai')).toBeNull()
   })
 })

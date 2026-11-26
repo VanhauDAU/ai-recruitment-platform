@@ -12,8 +12,8 @@ tuyển. Yêu cầu nghiệp vụ gốc ở
 | Cổng | URL frontend | Người dùng | Chức năng chính |
 | --- | --- | --- | --- |
 | Ứng viên | `/` | khách, `candidate` | tìm việc, công ty, mẫu CV, CV builder, ứng tuyển, gợi ý việc làm, cẩm nang, trợ giúp |
-| Nhà tuyển dụng | `/tuyendung` (marketing), `/tuyendung/app` (workspace) | `employer` | xác thực công ty, DPA, chiến dịch, tin tuyển dụng, AI tạo tin, hồ sơ ứng tuyển, thông báo |
-| Quản trị | `/quan-tri` | `admin` | tài khoản (superuser quản lý quản trị viên), kiểm duyệt xác thực/báo cáo tin, nội dung, thông báo, cài đặt, tổng quan AI |
+| Nhà tuyển dụng | `tuyendung.procv.site` (marketing), `/app` (workspace); dev `/tuyendung`, `/tuyendung/app` | `employer` | xác thực công ty, DPA, chiến dịch, tin tuyển dụng, AI tạo tin, hồ sơ ứng tuyển, thông báo |
+| Quản trị | `quantri.procv.site`; dev `/quan-tri` | `admin` | tài khoản (superuser quản lý quản trị viên), kiểm duyệt xác thực/báo cáo tin, nội dung, thông báo, cài đặt, tổng quan AI |
 
 Mỗi cổng là một tài khoản độc lập: cùng email có thể có tối đa một tài khoản
 cho mỗi role (ràng buộc `(lower(email), role)`), mật khẩu riêng, phiên riêng.

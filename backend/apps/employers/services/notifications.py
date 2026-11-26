@@ -9,20 +9,21 @@ from django.utils.translation import gettext_lazy
 from apps.realtime.services import push_to_user
 from common.i18n import recipient_language
 from common.metrics import record_metric
+from common.portal_paths import employer_app_path
 
 from ..models import EmployerActivity, EmployerNotification, EmployerNotificationPreference
 
-VERIFY_PATH = '/tuyendung/app/xac-thuc-tai-khoan'
-COMPANY_PATH = '/tuyendung/app/cai-dat/cong-ty'
+VERIFY_PATH = employer_app_path('/xac-thuc-tai-khoan')
+COMPANY_PATH = employer_app_path('/cai-dat/cong-ty')
 COMPANY_MEMBERS_PATH = f'{COMPANY_PATH}?tab=members'
-COMPANY_PAGE_PATH = '/tuyendung/app/trang-cong-ty'
-JOBS_PATH = '/tuyendung/app/tin-tuyen-dung'
-APPLICATIONS_PATH = '/tuyendung/app/ho-so-ung-tuyen'
-CANDIDATE_SEARCH_PATH = '/tuyendung/app/tim-ung-vien'
-CONNECT_PATH = '/tuyendung/app/procv-connect'
-DASHBOARD_PATH = '/tuyendung/app/tong-quan'
-CAMPAIGNS_PATH = '/tuyendung/app/chien-dich'
-INTEGRATIONS_PATH = '/tuyendung/app/cai-dat/tich-hop'
+COMPANY_PAGE_PATH = employer_app_path('/trang-cong-ty')
+JOBS_PATH = employer_app_path('/tin-tuyen-dung')
+APPLICATIONS_PATH = employer_app_path('/ho-so-ung-tuyen')
+CANDIDATE_SEARCH_PATH = employer_app_path('/tim-ung-vien')
+CONNECT_PATH = employer_app_path('/procv-connect')
+DASHBOARD_PATH = employer_app_path('/tong-quan')
+CAMPAIGNS_PATH = employer_app_path('/chien-dich')
+INTEGRATIONS_PATH = employer_app_path('/cai-dat/tich-hop')
 
 EVENT_PRESENTATION = {
     EmployerNotification.EventType.VERIFICATION_APPROVED: (

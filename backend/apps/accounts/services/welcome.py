@@ -6,6 +6,7 @@ from django.utils.translation import gettext as _
 
 from apps.sitecontent.selectors import email_brand_color, get_string_setting
 from common.i18n import recipient_language
+from common.portal_paths import employer_app_path
 
 from ..models import User
 from .mailing import frontend_link, send_html_email
@@ -63,7 +64,7 @@ def _employer_welcome(user, context):
     hotline = get_string_setting('hotline', '')
     zalo_url = get_string_setting('contact_zalo_url', '')
     destination = frontend_link(
-        '/tuyendung/app/xac-thuc-tai-khoan',
+        employer_app_path('/xac-thuc-tai-khoan'),
         base_url=settings.EMPLOYER_FRONTEND_URL,
     )
     name = user.full_name or user.email

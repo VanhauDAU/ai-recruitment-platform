@@ -1,6 +1,7 @@
 """Public HTML shell, robots policy, and top-level sitemaps."""
 
-from django.http import HttpResponse
+from django.conf import settings as django_settings
+from django.http import Http404, HttpResponse, HttpResponsePermanentRedirect
 from django.views import View
 
 from apps.sitecontent.models import Banner
@@ -10,6 +11,7 @@ from apps.sitecontent.selectors import (
     knowledgebase_search_index_enabled,
 )
 from apps.sitecontent.services import resolved_seo_settings, seo_page_title
+from common.portal_paths import employer_marketing_url
 from common.seo import (
     SeoMetadata,
     absolute_url,
@@ -58,10 +60,34 @@ STATIC_PAGE_METADATA = {
 }
 
 
-def _title(path, label, settings):
-    if path == '/':
+EMPLOYER_MARKETING_PREFIX = '/tuyendung'
+# Trang giới thiệu NTD: khóa trong STATIC_PAGE_METADATA bỏ tiền tố /tuyendung.
+EMPLOYER_MARKETING_PATHS = tuple(
+    key[len(EMPLOYER_MARKETING_PREFIX) :] or '/'
+    for key in STATIC_PAGE_METADATA
+    if key == EMPLOYER_MARKETING_PREFIX or key.startswith(f'{EMPLOYER_MARKETING_PREFIX}/')
+)
+
+
+def _request_host(request):
+    return request.get_host().split(':', 1)[0].lower()
+
+
+def is_employer_host(request):
+    """Request tới subdomain riêng của cổng NTD (EMPLOYER_HOST suy từ EMPLOYER_FRONTEND_URL)."""
+    host = django_settings.EMPLOYER_HOST
+    return bool(host) and _request_host(request) == host
+
+
+def is_admin_host(request):
+    host = django_settings.ADMIN_HOST
+    return bool(host) and _request_host(request) == host
+
+
+def _title(path, label, settings, *, employer=False):
+    if path == '/' and not employer:
         return settings['seo_default_title']
-    return seo_page_title(label, settings, employer=path.startswith('/tuyendung'))
+    return seo_page_title(label, settings, employer=employer)
 
 
 def _home_hero_preload(request):
@@ -93,6 +119,7 @@ def _metadata(
     structured_data=(),
     robots=None,
     preload_image=('', ''),
+    employer=False,
 ):
     settings = resolved_seo_settings()
     image = settings['seo_og_image'] or settings['brand_logo_url']
@@ -100,7 +127,7 @@ def _metadata(
         'index, follow' if settings['seo_robots_index'] else 'noindex, nofollow'
     )
     return SeoMetadata(
-        title=_title(canonical_path, title, settings),
+        title=_title(canonical_path, title, settings, employer=employer),
         description=description or settings['seo_default_description'],
         canonical_url=absolute_url(request, canonical_path),
         site_name=settings['site_name'],
@@ -116,13 +143,15 @@ def _metadata(
 class StaticSeoShellView(View):
     def get(self, request):
         path = request.path.rstrip('/') or '/'
-        title, description = STATIC_PAGE_METADATA.get(
-            path,
-            (
-                '',
-                '',
-            ),
-        )
+        if is_employer_host(request):
+            return self._employer_page(request, path)
+        if path != '/' and path in EMPLOYER_MARKETING_PATHS:
+            raise Http404  # chỉ là route gốc trên subdomain NTD
+        if django_settings.EMPLOYER_HOST and path.startswith(EMPLOYER_MARKETING_PREFIX):
+            tail = path[len(EMPLOYER_MARKETING_PREFIX) :]
+            return HttpResponsePermanentRedirect(employer_marketing_url(tail))
+        title, description = STATIC_PAGE_METADATA.get(path, ('', ''))
+        employer = path.startswith(EMPLOYER_MARKETING_PREFIX)
         structured_data = ()
         preload_image = ('', '')
         if path == '/':
@@ -158,6 +187,23 @@ class StaticSeoShellView(View):
                 canonical_path=path,
                 structured_data=structured_data,
                 preload_image=preload_image,
+                employer=employer,
+            ),
+        )
+
+    def _employer_page(self, request, path):
+        if path not in EMPLOYER_MARKETING_PATHS:
+            raise Http404
+        key = EMPLOYER_MARKETING_PREFIX + ('' if path == '/' else path)
+        title, description = STATIC_PAGE_METADATA[key]
+        return render_seo_shell(
+            request,
+            _metadata(
+                request,
+                title=title,
+                description=description,
+                canonical_path=path,
+                employer=True,
             ),
         )
 
@@ -183,8 +229,10 @@ class CompanySearchSeoShellView(View):
 class RobotsView(View):
     def get(self, request):
         settings = resolved_seo_settings()
-        if not settings['seo_robots_index']:
+        if not settings['seo_robots_index'] or is_admin_host(request):
             lines = ['User-agent: *', 'Disallow: /']
+        elif is_employer_host(request):
+            lines = ['User-agent: *', 'Allow: /', 'Disallow: /app/', 'Disallow: /api/']
         else:
             lines = [
                 'User-agent: *',
@@ -204,6 +252,8 @@ class RobotsView(View):
 
 class SitemapIndexView(View):
     def get(self, request):
+        if is_employer_host(request):
+            return xml_response(sitemap_index([absolute_url(request, '/sitemaps/static.xml')]))
         seo_settings = resolved_seo_settings()
         urls = [
             absolute_url(request, '/sitemaps/static.xml'),
@@ -219,18 +269,20 @@ class SitemapIndexView(View):
 
 class StaticSitemapView(View):
     def get(self, request):
-        paths = [
-            '/',
-            '/cong-ty',
-            '/viec-lam',
-            '/viec-lam-gan-ban',
-            '/blog',
-            '/chinh-sach-cookie',
-            '/tuyendung',
-            '/tuyendung/gioi-thieu',
-            '/tuyendung/dich-vu',
-            '/tuyendung/lien-he',
-            '/tuyendung/dieu-khoan-dich-vu',
-            '/tuyendung/chinh-sach-quyen-rieng',
-        ]
+        if is_employer_host(request):
+            paths = list(EMPLOYER_MARKETING_PATHS)
+        else:
+            paths = [
+                '/',
+                '/cong-ty',
+                '/viec-lam',
+                '/viec-lam-gan-ban',
+                '/blog',
+                '/chinh-sach-cookie',
+            ]
+            # Trang giới thiệu NTD trên subdomain riêng nằm trong sitemap của subdomain đó.
+            if not django_settings.EMPLOYER_HOST:
+                paths += [
+                    EMPLOYER_MARKETING_PREFIX + p.rstrip('/') for p in EMPLOYER_MARKETING_PATHS
+                ]
         return xml_response(sitemap_urlset({'loc': absolute_url(request, path)} for path in paths))

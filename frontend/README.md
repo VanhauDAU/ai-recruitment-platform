@@ -18,8 +18,8 @@ npm run dev
 | Cổng | Dev (cùng host, `VITE_*_HOST` để trống) | Production (subdomain) |
 | --- | --- | --- |
 | Ứng viên | `http://localhost:5173/` | `VITE_MAIN_HOST` |
-| Nhà tuyển dụng | `http://localhost:5173/tuyendung` (app ở `/tuyendung/app`) | `VITE_EMPLOYER_HOST` |
-| Quản trị | `http://localhost:5173/quan-tri` | `VITE_ADMIN_HOST` |
+| Nhà tuyển dụng | `http://localhost:5173/tuyendung` (app ở `/tuyendung/app`) | `VITE_EMPLOYER_HOST` (production `tuyendung.procv.site`: giới thiệu ở `/`, app ở `/app`) |
+| Quản trị | `http://localhost:5173/quan-tri` | `VITE_ADMIN_HOST` (production `quantri.procv.site`, app ở `/`) |
 
 Biến môi trường chính: `VITE_API_BASE_URL` (để trống thì dùng proxy cùng origin),
 `VITE_RECAPTCHA_SITE_KEY`, `VITE_SENTRY_DSN`. Mọi biến `VITE_*` lộ ra JavaScript

@@ -1,5 +1,13 @@
 import { generatePath, matchPath } from 'react-router'
-import { adminPath, employerAppPath, IS_ADMIN_HOST, IS_EMPLOYER_HOST, IS_MAIN_HOST } from '@/shared/config/portals'
+import {
+  adminPath,
+  employerAppPath,
+  employerMarketingPath,
+  IS_MAIN_HOST,
+  mainSitePath,
+  SERVES_ADMIN,
+  SERVES_EMPLOYER,
+} from '@/shared/config/portals'
 
 // Path cũ (tiếng Anh) → path hiện hành. Email, thông báo đã lưu và link đã chia sẻ
 // vẫn trỏ về path cũ nên các cặp này phải giữ lâu dài, không phải shim tạm.
@@ -98,12 +106,23 @@ export const LEGACY_ADMIN_PATHS = Object.freeze([
 // Cùng điều kiện cổng với AppRouter: mỗi host chỉ nhận path cũ của cổng nó phục vụ.
 const PORTAL_PAIRS = [
   ...(IS_MAIN_HOST ? LEGACY_MAIN_PATHS : []),
-  ...(IS_ADMIN_HOST ? [] : LEGACY_EMPLOYER_PATHS),
-  ...(IS_EMPLOYER_HOST ? [] : LEGACY_ADMIN_PATHS),
+  ...(SERVES_EMPLOYER ? LEGACY_EMPLOYER_PATHS : []),
+  ...(SERVES_ADMIN ? LEGACY_ADMIN_PATHS : []),
 ]
 
-// Base cũ của cổng quản trị khi chạy chung domain; nay là `adminPath('')` (/quan-tri).
-const LEGACY_ADMIN_BASE = '/admin/app'
+// Base cũ của cổng khi chạy chung domain. `/admin/app` là base trước `/quan-tri`; khi cổng
+// có subdomain riêng, cả base chung domain cũng thành path cũ.
+const LEGACY_BASES = [
+  ['/admin/app', adminPath, SERVES_ADMIN],
+  ['/quan-tri', adminPath, SERVES_ADMIN],
+  ['/admin', adminPath, SERVES_ADMIN],
+  ['/tuyendung', employerMarketingPath, SERVES_EMPLOYER],
+]
+const MAIN_ORIGIN = mainSitePath('')
+// Trang của site ứng viên mà cổng NTD/quản trị hay trỏ tới (tin, công ty, CV, blog…).
+const MAIN_SITE_SEGMENTS = /^\/(viec-lam|cong-ty|cv|mau-cv|blog|tro-giup|brand|tuyen-dung|tai-khoan|chinh-sach-cookie)(\/|$)/
+
+const underBase = (pathname, base) => pathname === base || pathname.startsWith(`${base}/`)
 
 function matchPairs(pathname, pairs) {
   for (const [from, to] of pairs) {
@@ -113,12 +132,20 @@ function matchPairs(pathname, pairs) {
   return null
 }
 
-/** Path hiện hành cho một path cũ, hoặc `null` nếu không phải path cũ. */
+/**
+ * Path hiện hành cho một path cũ, hoặc `null` nếu không phải path cũ. Trả URL tuyệt
+ * đối khi đích nằm ở subdomain khác (cổng NTD/quản trị, site ứng viên).
+ */
 export function resolveLegacyPath(pathname, pairs = PORTAL_PAIRS) {
-  const legacyAdmin = !IS_ADMIN_HOST && !IS_EMPLOYER_HOST
-    && (pathname === LEGACY_ADMIN_BASE || pathname.startsWith(`${LEGACY_ADMIN_BASE}/`))
-  if (!legacyAdmin) return matchPairs(pathname, pairs)
-  // `/admin/app/accounts` → `/quan-tri/accounts` → `/quan-tri/tai-khoan` trong một bước.
-  const current = adminPath(pathname.slice(LEGACY_ADMIN_BASE.length))
-  return matchPairs(current, pairs) ?? current
+  for (const [base, toPath, served] of LEGACY_BASES) {
+    if (!underBase(pathname, base)) continue
+    const current = toPath(pathname.slice(base.length))
+    if (current === pathname) break
+    // `/admin/app/accounts` → `/quan-tri/accounts` → `/quan-tri/tai-khoan` trong một bước.
+    return (served && matchPairs(current, pairs)) || current
+  }
+  const translated = matchPairs(pathname, pairs)
+  if (translated) return translated
+  if (MAIN_ORIGIN && MAIN_SITE_SEGMENTS.test(pathname)) return `${MAIN_ORIGIN}${pathname}`
+  return null
 }

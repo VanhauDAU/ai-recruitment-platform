@@ -33,8 +33,8 @@ và chấm độ phù hợp CV–tin tuyển dụng bằng mô hình ngôn ngữ
 | Cổng | Đường dẫn | Dành cho |
 | --- | --- | --- |
 | 🎯 **Ứng viên** | `/` | Tìm việc, tạo và quản lý CV, ứng tuyển, xem độ phù hợp với tin |
-| 🏢 **Nhà tuyển dụng** | `/tuyendung` (giới thiệu) · `/tuyendung/app` (workspace) | Xác thực doanh nghiệp, trang công ty, chiến dịch, tin tuyển dụng, xử lý hồ sơ |
-| 🛡️ **Quản trị** | `/quan-tri` | Duyệt xác thực, hậu kiểm tin, quản lý tài khoản, nội dung và cấu hình |
+| 🏢 **Nhà tuyển dụng** | `tuyendung.procv.site` (giới thiệu) · `/app` (workspace); dev `/tuyendung`, `/tuyendung/app` | Xác thực doanh nghiệp, trang công ty, chiến dịch, tin tuyển dụng, xử lý hồ sơ |
+| 🛡️ **Quản trị** | `quantri.procv.site`; dev `/quan-tri` | Duyệt xác thực, hậu kiểm tin, quản lý tài khoản, nội dung và cấu hình |
 
 Mỗi cổng là một tài khoản riêng: cùng một email có thể có một tài khoản ứng viên
 và một tài khoản nhà tuyển dụng, mật khẩu và phiên đăng nhập tách biệt.
