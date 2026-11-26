@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chấm mù 50 cặp CV–JD</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --line: #e3e6eb; --text: #1b2330; --muted: #5d6878;
+    --accent: #0f6b5c; --accent-soft: #e3f2ef; --warn: #b45309; --warn-soft: #fef3e2; --bad: #b42318;
+    --radius: 10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12161c; --panel: #1a2029; --line: #2c3541; --text: #e6e9ee; --muted: #9aa5b4;
+      --accent: #4fc3ad; --accent-soft: #17332f; --warn: #f0b360; --warn-soft: #3a2a12; --bad: #f08a80;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: flex; flex-direction: column;
+  }
+  button, input, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  header {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px;
+    padding: 10px 16px; background: var(--panel); border-bottom: 1px solid var(--line);
+  }
+  header h1 { font-size: 16px; margin: 0; font-weight: 650; }
+  .progress { flex: 1 1 160px; min-width: 120px; }
+  .progress small { color: var(--muted); display: block; font-variant-numeric: tabular-nums; }
+  .bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .2s; }
+  .btn {
+    border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 6px 12px;
+  }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  @media (prefers-color-scheme: dark) { .btn.primary { color: #0c1512; } }
+  .tabs { display: none; gap: 6px; padding: 8px 16px 0; }
+  .tabs button { flex: 1; border: 1px solid var(--line); background: var(--panel); border-radius: 8px 8px 0 0; padding: 7px 4px; }
+  .tabs button[aria-selected="true"] { border-bottom-color: var(--panel); color: var(--accent); font-weight: 650; }
+  main {
+    flex: 1; min-height: 0; display: grid; gap: 12px; padding: 12px 16px 16px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 350px;
+  }
+  .pane {
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    overflow: auto; padding: 14px 16px 20px; min-height: 0;
+  }
+  .pane h2 { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+  .pane h3 { font-size: 17px; margin: 0 0 8px; line-height: 1.35; }
+  .pane h4 { font-size: 13px; margin: 16px 0 4px; color: var(--muted); font-weight: 650; }
+  .facts { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 0; }
+  .facts dt { color: var(--muted); }
+  .facts dd { margin: 0; font-weight: 550; }
+  .chips { display: flex; flex-wrap: wrap; gap: 5px; list-style: none; padding: 0; margin: 4px 0 0; }
+  .chips li { border: 1px solid var(--line); border-radius: 999px; padding: 1px 9px; font-size: 13px; }
+  .text { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; }
+  ul.plain { margin: 2px 0 0; padding-left: 18px; }
+  .entry { margin-top: 8px; }
+  .entry b { font-weight: 650; }
+  .entry span { color: var(--muted); }
+  fieldset { border: 0; padding: 0; margin: 0 0 14px; min-width: 0; }
+  legend { font-weight: 650; padding: 0; margin-bottom: 4px; }
+  legend small, .hint { color: var(--muted); font-weight: 400; font-size: 13px; }
+  .opts { display: flex; flex-direction: column; gap: 3px; }
+  .opts label { display: flex; gap: 8px; align-items: baseline; padding: 3px 6px; border-radius: 6px; cursor: pointer; }
+  .opts label:hover { background: var(--accent-soft); }
+  .skill { display: flex; align-items: center; gap: 8px; padding: 3px 0; border-bottom: 1px dashed var(--line); }
+  .skill span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; flex: none; }
+  .seg button { border: 0; background: transparent; padding: 2px 8px; font-size: 13px; }
+  .seg button + button { border-left: 1px solid var(--line); }
+  .seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+  .seg button[data-v="no"][aria-pressed="true"] { background: var(--warn); }
+  .seg button[data-v="skip"][aria-pressed="true"] { background: var(--muted); }
+  .suggest { border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 8px; padding: 8px 10px; margin: 0 0 14px; background: var(--accent-soft); }
+  .suggest b { font-size: 18px; }
+  .scores { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .scores button { border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 8px 0 6px; line-height: 1.2; }
+  .scores button b { display: block; font-size: 20px; }
+  .scores button small { color: var(--muted); font-size: 11px; }
+  .scores button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .scores button[aria-pressed="true"] small { color: inherit; }
+  textarea { width: 100%; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 6px 8px; resize: vertical; }
+  .nav { display: flex; gap: 8px; margin-top: 12px; }
+  .nav .btn { flex: 1; }
+  .note { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
+  .old { color: var(--warn); background: var(--warn-soft); border-radius: 6px; padding: 4px 8px; font-size: 13px; margin: 0 0 10px; }
+  dialog { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--text); max-width: min(860px, 94vw); padding: 18px 20px; }
+  dialog::backdrop { background: rgba(0, 0, 0, .45); }
+  dialog h2 { margin: 0 0 8px; font-size: 18px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { border: 1px solid var(--line); padding: 5px 8px; text-align: left; vertical-align: top; }
+  .tablewrap { overflow-x: auto; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)); gap: 6px; }
+  .grid button { border: 1px solid var(--line); background: var(--panel); border-radius: 7px; padding: 6px 0; font-variant-numeric: tabular-nums; }
+  .grid button.done { background: var(--accent-soft); border-color: var(--accent); }
+  .grid button.unsure { border-color: var(--warn); background: var(--warn-soft); }
+  .grid button.current { outline: 2px solid var(--accent); outline-offset: 1px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (max-width: 1099px) {
+    .tabs { display: flex; }
+    main { grid-template-columns: minmax(0, 1fr); padding-top: 0; }
+    .pane { display: none; border-top-left-radius: 0; border-top-right-radius: 0; }
+    .pane.show { display: block; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Chấm mù CV–JD</h1>
+  <div class="progress"><small id="count"></small><div class="bar"><i id="bar"></i></div></div>
+  <button class="btn" id="open-guide">Hướng dẫn</button>
+  <button class="btn" id="open-list">Danh sách cặp</button>
+  <button class="btn" id="import">Nhập lại</button>
+  <button class="btn primary" id="export">Xuất kết quả</button>
+  <input type="file" id="file" accept="application/json" hidden>
+  <p class="old" id="warn" hidden style="flex-basis:100%;margin:0">Trình duyệt này không lưu được tiến độ. Hãy bấm "Xuất kết quả" trước khi đóng trang.</p>
+</header>
+<div class="tabs" role="tablist">
+  <button role="tab" data-tab="jd" aria-selected="true">Tin tuyển dụng</button>
+  <button role="tab" data-tab="cv" aria-selected="false">CV</button>
+  <button role="tab" data-tab="score" aria-selected="false">Tiêu chí và điểm</button>
+</div>
+<main>
+  <section class="pane show" id="jd" data-pane="jd"></section>
+  <section class="pane" id="cv" data-pane="cv"></section>
+  <section class="pane" id="score" data-pane="score"></section>
+</main>
+
+<dialog id="guide">
+  <h2>Cách chấm</h2>
+  <p>Câu hỏi: nếu tôi là người sàng lọc hồ sơ cho đúng tin này, hồ sơ này đáng được xem xét đến mức nào, <b>chỉ xét về chuyên môn</b>? Không xét địa điểm, giới tính, tuổi, tên trường, cách trình bày, lương.</p>
+  <div class="tablewrap"><table>
+    <tr><th>Điểm</th><th>Mức</th><th>Điều kiện</th></tr>
+    <tr><td>4</td><td>Rất phù hợp</td><td>Đúng vị trí; thiếu nhiều nhất 1 kỹ năng cần có và không thiếu kỹ năng cốt lõi; đủ số năm, đúng loại công việc; cấp bậc khớp</td></tr>
+    <tr><td>3</td><td>Phù hợp</td><td>Đúng vị trí; thiếu 1–2 kỹ năng không cốt lõi, hoặc thiếu một bậc kinh nghiệm (thiếu chưa tới nửa số năm)</td></tr>
+    <tr><td>2</td><td>Phù hợp một phần</td><td>Vị trí gần (tối đa 2); hoặc đúng vị trí nhưng chỉ khoảng nửa kỹ năng, hoặc lệch rõ về kinh nghiệm hay cấp bậc</td></tr>
+    <tr><td>1</td><td>Ít phù hợp</td><td>Cùng nhóm ngành nhưng khác vị trí; hoặc đúng nghề mà vừa dưới nửa kỹ năng vừa thiếu từ nửa số năm</td></tr>
+    <tr><td>0</td><td>Không phù hợp</td><td>Khác ngành</td></tr>
+  </table></div>
+  <h4>Quy tắc hay dùng</h4>
+  <ul class="plain">
+    <li>Kỹ năng cốt lõi là kỹ năng định nghĩa vị trí (tiêu đề, yêu cầu chính). Thiếu kỹ năng cốt lõi thì tối đa 2. Word, Excel, kỹ năng mềm không phải cốt lõi.</li>
+    <li>Kỹ năng tương đương chỉ tính khi dùng thay nhau được ngay (MySQL ↔ PostgreSQL). ReactJS ↔ Vue, Java ↔ C# không tính.</li>
+    <li>Tin ghi "hoặc", "ít nhất một trong": có một lựa chọn là đáp ứng; đánh dấu "Không đếm" cho các lựa chọn còn lại.</li>
+    <li>Phẩm chất cá nhân (cẩn thận, chăm chỉ, chịu áp lực) không đếm.</li>
+    <li>Kỹ năng chỉ liệt kê, không có việc minh chứng: vẫn tính là có.</li>
+    <li>Kinh nghiệm chỉ tính mục Kinh nghiệm của CV; thiếu không quá 1 tháng coi như đủ.</li>
+    <li>Thừa trình độ từ 2 bậc, bậc học thấp hơn yêu cầu, thiếu ngoại ngữ bắt buộc: mỗi mục trừ nhiều nhất 1 điểm. CV cùng nhóm ngành không xuống 0.</li>
+    <li>Nhóm ngành: CNTT phần mềm; Kinh doanh – Marketing – CSKH – Telesales – Content; Kế toán – Kiểm toán – Thuế – Tài chính; Hành chính – Nhân sự – Lễ tân – Thư ký.</li>
+    <li>Phân vân giữa hai mức: chọn mức thấp hơn và đánh dấu "không chắc".</li>
+  </ul>
+  <p class="note">Mỗi phiên không nên quá 40 cặp. Phím tắt: 0–4 cho điểm, ← → chuyển cặp. Kết quả lưu tự động trong trình duyệt này; bấm "Xuất kết quả" để tải tệp <code>audit_human.json</code>.</p>
+  <form method="dialog"><button class="btn primary">Đóng</button></form>
+</dialog>
+
+<dialog id="list">
+  <h2>Danh sách cặp</h2>
+  <div class="grid" id="grid"></div>
+  <p class="note">Nền xanh: đã chấm. Viền cam: đã chấm, không chắc.</p>
+  <form method="dialog"><button class="btn primary">Đóng</button></form>
+</dialog>
+
+<script type="application/json" id="data">/*__DATA__*/</script>
+<script>
+(() => {
+  const DATA = JSON.parse(document.getElementById('data').textContent);
+  const KEY = 'procv-audit-' + DATA.version;
+  const LEVELS = ['Không phù hợp', 'Ít phù hợp', 'Một phần', 'Phù hợp', 'Rất phù hợp'];
+  const $ = (id) => document.getElementById(id);
+  const el = (tag, props = {}, children = []) => {
+    const node = Object.assign(document.createElement(tag), props);
+    for (const child of [].concat(children)) if (child != null) node.append(child);
+    return node;
+  };
+
+  // Trình duyệt chặn bộ nhớ cục bộ (chế độ riêng tư, trang xem trước) thì vẫn chấm được,
+  // nhưng phải xuất kết quả trước khi đóng trang.
+  const storage = {
+    get() { try { return localStorage.getItem(KEY); } catch { return null; } },
+    set(value) { try { localStorage.setItem(KEY, value); return true; } catch { return false; } },
+  };
+  const fresh = storage.get() == null;
+  // Thay nội dung một khung; bỏ qua phần tử rỗng (replaceChildren sẽ in chữ "null").
+  const fill = (node, children) => node.replaceChildren(...children.filter((child) => child != null));
+  let state = {};
+  try { state = JSON.parse(storage.get()) || {}; } catch { state = {}; }
+  // Các cặp đã chấm trước đây (trên bảng tính) được nạp sẵn, không ghi đè thứ đã có.
+  for (const [stt, old] of Object.entries(DATA.prefilled)) {
+    if (!state[stt]) state[stt] = { ...old, skills: {}, prefilled: true };
+  }
+  let current = Math.max(0, DATA.pairs.findIndex((pair) => (state[pair.stt] || {}).label == null));
+  const save = () => { $('warn').hidden = storage.set(JSON.stringify(state)); };
+  const entry = (stt) => (state[stt] ||= { skills: {} });
+
+  function suggestion(s, jd) {
+    if (!s.position) return null;
+    if (s.position === 'other') return { label: 0, why: 'Khác ngành.' };
+    if (s.position === 'group') return { label: 1, why: 'Cùng nhóm ngành nhưng khác vị trí.' };
+    const marks = jd.required.map((name) => (s.skills || {})[name]);
+    if (marks.some((mark) => !mark) || !s.experience || !s.level) return null;
+    const yes = marks.filter((mark) => mark === 'yes').length;
+    const no = marks.filter((mark) => mark === 'no').length;
+    const cover = yes + no ? yes / (yes + no) : 1;
+    const why = [];
+    let base;
+    if (s.position === 'near') {
+      base = cover < 0.5 && s.experience === 'far' ? 1 : 2;
+      why.push(base === 2 ? 'Vị trí gần: tối đa 2.' : 'Vị trí gần, vừa dưới nửa kỹ năng vừa thiếu rõ kinh nghiệm.');
+    } else if (cover < 0.5 || (cover === 0.5 && s.experience === 'far')) {
+      base = s.experience === 'far' ? 1 : 2;
+      why.push(base === 1 ? 'Đúng nghề nhưng vừa thiếu kỹ năng vừa thiếu từ nửa số năm.' : 'Đúng vị trí nhưng dưới một nửa kỹ năng cần có.');
+    } else if (s.experience === 'far' || s.level === 'under') {
+      base = 2;
+      why.push('Đủ kỹ năng nhưng lệch rõ về kinh nghiệm hoặc cấp bậc.');
+    } else {
+      const gaps = (no >= 2 ? 1 : 0) + (s.experience === 'one' ? 1 : 0) + (s.level === 'off' ? 1 : 0);
+      base = no >= 3 ? 2 : Math.max(2, 4 - gaps);
+      why.push(base === 4 ? 'Đúng vị trí, gần đủ kỹ năng, đủ kinh nghiệm, cấp bậc khớp.'
+        : base === 3 ? 'Đúng vị trí, có một điểm thiếu (kỹ năng không cốt lõi, một bậc kinh nghiệm hoặc cấp bậc).'
+        : 'Đúng vị trí nhưng cộng dồn nhiều điểm thiếu.');
+    }
+    if (s.core && base > 2) { base = 2; why.push('Thiếu kỹ năng cốt lõi: tối đa 2.'); }
+    const minus = [[s.level === 'over', 'thừa trình độ'], [s.edu, 'bậc học thấp hơn'], [s.lang, 'thiếu ngoại ngữ bắt buộc']]
+      .filter(([on]) => on).map(([, name]) => name);
+    if (minus.length) why.push('Trừ điểm: ' + minus.join(', ') + '.');
+    return { label: Math.max(1, base - minus.length), why: why.join(' '), cover: yes + no ? `${yes}/${yes + no}` : '' };
+  }
+
+  function block(title, body) {
+    return body ? [el('h4', { textContent: title }), body] : [];
+  }
+  const chips = (names) => names.length ? el('ul', { className: 'chips' }, names.map((name) => el('li', { textContent: name }))) : null;
+  const bullets = (lines) => lines && lines.length ? el('ul', { className: 'plain' }, lines.map((line) => el('li', { textContent: line }))) : null;
+
+  function renderJob(jd) {
+    const facts = el('dl', { className: 'facts' });
+    for (const [name, value] of jd.facts) if (value) facts.append(el('dt', { textContent: name }), el('dd', { textContent: value }));
+    fill($('jd'), [
+      el('h2', { textContent: `Tin tuyển dụng · ${jd.code}` }),
+      el('h3', { textContent: jd.title }),
+      facts,
+      ...block('Kỹ năng cần có', chips(jd.required)),
+      ...block('Kỹ năng nên có', chips(jd.preferred)),
+      ...block('Mô tả công việc', jd.description ? el('p', { className: 'text', textContent: jd.description }) : null),
+      ...block('Yêu cầu ứng viên', jd.requirements ? el('p', { className: 'text', textContent: jd.requirements }) : null),
+    ]);
+    $('jd').scrollTop = 0;
+  }
+
+  function period(item) {
+    return item.start_date || item.end_date ? ` (${item.start_date || '?'} – ${item.end_date || 'nay'})` : '';
+  }
+  function entries(items, head) {
+    if (!items || !items.length) return null;
+    return el('div', {}, items.map((item) => el('div', { className: 'entry' }, [
+      el('b', { textContent: head(item) }), el('span', { textContent: period(item) }), bullets(item.highlights),
+    ])));
+  }
+  function renderCv(code, cv) {
+    const education = [].concat(cv.education || []).filter((item) => item && (item.degree || item.institution));
+    const languages = (cv.languages || []).map((item) => [item.language, item.level, item.certificate].filter(Boolean).join(' · '));
+    fill($('cv'), [
+      el('h2', { textContent: `CV · ${code}` }),
+      el('h3', { textContent: cv.headline || '(không có chức danh)' }),
+      cv.summary ? el('p', { className: 'text', textContent: cv.summary }) : null,
+      ...block('Kinh nghiệm', entries(cv.experience, (item) => [item.role, item.company].filter(Boolean).join(' – '))),
+      ...block('Học vấn', entries(education, (item) => [item.degree, item.institution].filter(Boolean).join(' – '))),
+      ...block('Dự án', entries(cv.projects, (item) => [item.name, item.role].filter(Boolean).join(' – '))),
+      ...block('Kỹ năng', chips((cv.skills || []).map((skill) => skill.name))),
+      ...block('Chứng chỉ', bullets(cv.certifications)),
+      ...block('Ngoại ngữ', bullets(languages)),
+      ...block('Hoạt động', entries(cv.activities, (item) => [item.name, item.organization].filter(Boolean).join(' – '))),
+      ...block('Giải thưởng', bullets(cv.awards)),
+    ]);
+    $('cv').scrollTop = 0;
+  }
+
+  function radios(name, legend, hint, options, s) {
+    const box = el('div', { className: 'opts' }, options.map(([value, text]) => {
+      const input = el('input', { type: 'radio', name, value, checked: s[name] === value });
+      input.addEventListener('change', () => { s[name] = value; save(); renderScore(); });
+      return el('label', {}, [input, el('span', { textContent: text })]);
+    }));
+    return el('fieldset', {}, [el('legend', {}, [legend, hint ? el('small', { textContent: ' ' + hint }) : null]), box]);
+  }
+  function check(key, text, s) {
+    const input = el('input', { type: 'checkbox', checked: !!s[key] });
+    input.addEventListener('change', () => { s[key] = input.checked; save(); renderScore(); });
+    return el('label', {}, [input, el('span', { textContent: text })]);
+  }
+  function skillRows(jd, s) {
+    if (!jd.required.length) return el('p', { className: 'hint', textContent: 'Tin không liệt kê kỹ năng cần có; đọc phần yêu cầu để đánh giá.' });
+    return el('div', {}, jd.required.map((name) => {
+      const seg = el('div', { className: 'seg', role: 'group' }, [['yes', 'Có'], ['no', 'Thiếu'], ['skip', 'Không đếm']].map(([value, text]) => {
+        const button = el('button', { type: 'button', textContent: text });
+        button.dataset.v = value;
+        button.setAttribute('aria-pressed', String(s.skills[name] === value));
+        button.addEventListener('click', () => { s.skills[name] = s.skills[name] === value ? undefined : value; save(); renderScore(); });
+        return button;
+      }));
+      return el('div', { className: 'skill' }, [el('span', { textContent: name }), seg]);
+    }));
+  }
+
+  function setLabel(value) {
+    const pair = DATA.pairs[current], s = entry(pair.stt);
+    s.label = value;
+    s.confidence ||= 'chắc';
+    s.labeled_at = new Date().toISOString().slice(0, 10);
+    const hint = suggestion(s, DATA.jobs[pair.jd]);
+    s.suggested = hint ? hint.label : null;
+    save(); renderScore(); renderProgress();
+  }
+
+  function renderScore() {
+    const pair = DATA.pairs[current], jd = DATA.jobs[pair.jd], s = entry(pair.stt);
+    s.skills ||= {};
+    const keep = $('score').scrollTop;
+    const hint = suggestion(s, jd);
+    const reason = el('textarea', { rows: 2, value: s.reason || '', placeholder: 'Một dòng: thiếu gì, lệch gì' });
+    reason.addEventListener('input', () => { s.reason = reason.value; save(); });
+    const scores = el('div', { className: 'scores' }, LEVELS.map((text, value) => {
+      const button = el('button', { type: 'button' }, [el('b', { textContent: value }), el('small', { textContent: text })]);
+      button.setAttribute('aria-pressed', String(s.label === value));
+      button.addEventListener('click', () => setLabel(value));
+      return button;
+    }));
+    const sure = el('div', { className: 'opts' }, [['chắc', 'Chắc'], ['không chắc', 'Không chắc (đang phân vân giữa hai mức)']].map(([value, text]) => {
+      const input = el('input', { type: 'radio', name: 'confidence', value, checked: (s.confidence || 'chắc') === value });
+      input.addEventListener('change', () => { s.confidence = value; save(); renderProgress(); });
+      return el('label', {}, [input, el('span', { textContent: text })]);
+    }));
+    const previous = el('button', { className: 'btn', type: 'button', textContent: '← Cặp trước', disabled: current === 0 });
+    previous.addEventListener('click', () => go(current - 1));
+    const next = el('button', { className: 'btn primary', type: 'button', textContent: current === DATA.pairs.length - 1 ? 'Hết danh sách' : 'Cặp sau →', disabled: current === DATA.pairs.length - 1 });
+    next.addEventListener('click', () => go(current + 1));
+    fill($('score'), [
+      el('h2', { textContent: `Cặp ${current + 1}/${DATA.pairs.length} · tiêu chí` }),
+      s.prefilled ? el('p', { className: 'old', textContent: `Bạn đã chấm cặp này ngày ${s.labeled_at || 'trước đây'}. Giữ nguyên, không cần chấm lại.` }) : null,
+      radios('position', '1. Vị trí chuyên môn', '', [
+        ['same', 'Đúng vị trí của tin'], ['near', 'Vị trí gần, cùng mảng'],
+        ['group', 'Cùng nhóm ngành, khác vị trí'], ['other', 'Khác ngành'],
+      ], s),
+      el('fieldset', {}, [
+        el('legend', {}, ['2. Kỹ năng cần có ', el('small', { textContent: hint && hint.cover ? `(đáp ứng ${hint.cover})` : '(đánh dấu từng kỹ năng)' })]),
+        skillRows(jd, s),
+        el('div', { className: 'opts', style: 'margin-top:6px' }, [check('core', 'Thiếu kỹ năng cốt lõi của vị trí', s)]),
+      ]),
+      radios('experience', '3. Kinh nghiệm', jd.experience ? `(tin yêu cầu: ${jd.experience})` : '', [
+        ['ok', 'Đủ số năm, đúng loại công việc'], ['one', 'Thiếu một bậc (thiếu chưa tới nửa số năm)'],
+        ['far', 'Lệch rõ (thiếu từ nửa số năm, hoặc chưa có)'],
+      ], s),
+      radios('level', '4. Cấp bậc', jd.level ? `(tin yêu cầu: ${jd.level})` : '', [
+        ['ok', 'Khớp'], ['off', 'Lệch một bậc'], ['under', 'Thấp hơn từ hai bậc'], ['over', 'Thừa trình độ từ hai bậc'],
+      ], s),
+      el('fieldset', {}, [
+        el('legend', { textContent: '5. Điểm trừ' }),
+        el('div', { className: 'opts' }, [
+          check('edu', `Bậc học thấp hơn yêu cầu${jd.education ? ` (${jd.education})` : ''}`, s),
+          check('lang', `Không đạt ngoại ngữ bắt buộc${jd.language_required ? ` (${jd.language_required})` : ''}`, s),
+        ]),
+      ]),
+      el('div', { className: 'suggest' }, hint
+        ? [el('span', { textContent: 'Gợi ý theo rubric: ' }), el('b', { textContent: hint.label }), el('div', { className: 'hint', textContent: hint.why })]
+        : [el('span', { className: 'hint', textContent: 'Điền đủ mục 1–4 để xem mức gợi ý theo rubric. Điểm cuối cùng do bạn quyết định.' })]),
+      el('fieldset', {}, [el('legend', { textContent: 'Điểm của bạn' }), scores]),
+      el('fieldset', {}, [el('legend', { textContent: 'Mức chắc chắn' }), sure]),
+      el('fieldset', {}, [el('legend', { textContent: 'Lý do' }), reason]),
+      el('div', { className: 'nav' }, [previous, next]),
+    ]);
+    $('score').scrollTop = keep;
+  }
+
+  function renderProgress() {
+    const done = DATA.pairs.filter((pair) => (state[pair.stt] || {}).label != null).length;
+    $('count').textContent = `Đã chấm ${done}/${DATA.pairs.length} · đang xem cặp ${current + 1}`;
+    $('bar').style.width = `${(100 * done) / DATA.pairs.length}%`;
+    $('grid').replaceChildren(...DATA.pairs.map((pair, index) => {
+      const s = state[pair.stt] || {};
+      const button = el('button', { type: 'button', textContent: index + 1 });
+      button.className = [s.label != null ? (s.confidence === 'không chắc' ? 'unsure' : 'done') : '', index === current ? 'current' : ''].join(' ');
+      button.addEventListener('click', () => { $('list').close(); go(index); });
+      return button;
+    }));
+  }
+
+  function go(index) {
+    current = Math.min(Math.max(index, 0), DATA.pairs.length - 1);
+    const pair = DATA.pairs[current];
+    renderJob(DATA.jobs[pair.jd]);
+    renderCv(pair.cv, DATA.cvs[pair.cv]);
+    $('score').scrollTop = 0;
+    renderScore();
+    renderProgress();
+  }
+
+  function results() {
+    return {
+      version: DATA.version,
+      exported_at: new Date().toISOString(),
+      annotator: 'human',
+      pairs: DATA.pairs.filter((pair) => (state[pair.stt] || {}).label != null).map((pair) => {
+        const s = state[pair.stt];
+        return {
+          stt: pair.stt, jd: pair.jd, cv: pair.cv, label: s.label, confidence: s.confidence || 'chắc',
+          reason: s.reason || '', labeled_at: s.labeled_at || '', suggested: s.suggested ?? null,
+          criteria: { position: s.position || null, skills: s.skills || {}, core_missing: !!s.core, experience: s.experience || null, level: s.level || null, education_low: !!s.edu, language_missing: !!s.lang },
+        };
+      }),
+    };
+  }
+
+  $('export').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(results(), null, 2)], { type: 'application/json' });
+    const link = el('a', { href: URL.createObjectURL(blob), download: 'audit_human.json' });
+    document.body.append(link); link.click(); link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  });
+  $('import').addEventListener('click', () => $('file').click());
+  $('file').addEventListener('change', async () => {
+    const file = $('file').files[0];
+    if (!file) return;
+    try {
+      const loaded = JSON.parse(await file.text());
+      for (const row of loaded.pairs || []) {
+        const c = row.criteria || {};
+        state[row.stt] = {
+          label: row.label, confidence: row.confidence, reason: row.reason, labeled_at: row.labeled_at, suggested: row.suggested,
+          position: c.position, skills: c.skills || {}, core: c.core_missing, experience: c.experience, level: c.level, edu: c.education_low, lang: c.language_missing,
+        };
+      }
+      save(); go(current);
+    } catch { alert('Tệp không đọc được. Hãy chọn tệp audit_human.json đã xuất từ trang này.'); }
+    $('file').value = '';
+  });
+  $('open-guide').addEventListener('click', () => $('guide').showModal());
+  $('open-list').addEventListener('click', () => $('list').showModal());
+  for (const tab of document.querySelectorAll('.tabs button')) {
+    tab.addEventListener('click', () => {
+      for (const other of document.querySelectorAll('.tabs button')) other.setAttribute('aria-selected', String(other === tab));
+      for (const pane of document.querySelectorAll('.pane')) pane.classList.toggle('show', pane.dataset.pane === tab.dataset.tab);
+    });
+  }
+  document.addEventListener('keydown', (event) => {
+    if (event.target.matches('textarea') || event.metaKey || event.ctrlKey || event.altKey || document.querySelector('dialog[open]')) return;
+    if (/^[0-4]$/.test(event.key)) setLabel(Number(event.key));
+    else if (event.target.matches('input')) return; // mũi tên trong nhóm lựa chọn là để đổi lựa chọn
+    else if (event.key === 'ArrowRight') go(current + 1);
+    else if (event.key === 'ArrowLeft') go(current - 1);
+  });
+  go(current);
+  if (fresh) $('guide').showModal();
+})();
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 # Kiểm tra sơ bộ nhãn người – Claude
 
-Người làm đồ án chấm mù 5/30 cặp kiểm chứng dự kiến. Chưa đủ để tính
+Người làm đồ án chấm mù 5/50 cặp kiểm chứng dự kiến. Chưa đủ để tính
 kappa (cần từ 10 cặp), nên đây chỉ là kiểm tra sơ bộ: trùng tuyệt đối
 4/5, lệch không quá 1 mức 5/5. Tạo bằng `ml/scripts/agreement.py`.
 

@@ -30,6 +30,11 @@ GOLD_SHEET = LABELING_DIR / 'gold_pairs.xlsx'
 GOLD_SHEET_2 = LABELING_DIR / 'gold_pairs_2.xlsx'
 GOLD_CLAUDE_SHEETS = [LABELING_DIR / 'gold_pairs_claude.xlsx', LABELING_DIR / 'gold_pairs_claude_2.xlsx']
 SKILL_MERGE = LABELING_DIR / 'skill_merge.json'
+# Kiểm chứng nhãn: danh sách cặp cố định, trang chấm mù (sinh từ mẫu), kết quả người chấm xuất ra.
+AUDIT_PAIRS = LABELING_DIR / 'audit_pairs.json'
+AUDIT_TEMPLATE = LABELING_DIR / 'audit_blind.template.html'
+AUDIT_PAGE = LABELING_DIR / 'audit_blind.html'
+AUDIT_HUMAN = LABELING_DIR / 'audit_human.json'
 LABELS_DIR = DATA_DIR / 'labels'
 GOLD_POOL = LABELS_DIR / 'gold_pool.json'
 

@@ -28,6 +28,7 @@ ml/
     baseline.py           TF-IDF và BM25, kiểm tra trên nhãn yếu
     build_gold_pairs.py   ghép cặp tập vàng (BM25 + e5 + ngẫu nhiên), phiếu chấm; --extend cho đợt 2
     agreement.py          so nhãn người với nhãn Claude trên các cặp kiểm chứng
+    build_audit_page.py   sinh trang chấm mù 50 cặp cho người (audit_blind.html), có bảng tiêu chí theo rubric
     export_profiles.py    xuất profile_json từ hệ thống (lệnh matching_export_dataset)
     check_profiles.py     đối chiếu profile_json với manifest, kiểm tra "không bịa"
     calibrate.py          AUC và mốc hiệu chuẩn cosine → điểm của từng phép so
@@ -51,7 +52,9 @@ ml/
     gold_pairs_claude_2.xlsx  nhãn đợt 2, kèm nhãn của từng lượt gán
     gold_pairs_2_passes.json  nhãn và lý do của hai lượt gán độc lập, phần phân xử
     education_key.json    bậc học theo chữ in ở tên bằng của 100 CV (đáp án khi kiểm tra trích xuất PDF)
-    audit_pairs.json      30 cặp kiểm chứng cố định (người chấm mù 5 cặp)
+    audit_pairs.json      50 cặp kiểm chứng cố định: 30 cặp đợt 1 + 20 cặp đợt 2 rút phân tầng
+    audit_blind.template.html  mẫu trang chấm mù; audit_blind.html là trang đã đổ nội dung tin và CV
+    audit_human.json      nhãn người chấm, xuất từ trang chấm mù (có khi người chấm xong)
     skill_merge.json      gộp kỹ năng trùng nghĩa khi nhập tin
   data/                   KHÔNG commit (.gitignore)
     jd/
