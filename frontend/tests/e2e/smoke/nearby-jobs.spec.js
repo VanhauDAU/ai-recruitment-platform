@@ -71,13 +71,23 @@ test('candidate finds jobs near the current location and widens the radius', { t
   await page.getByRole('button', { name: 'Mở rộng 10 km (2 việc)' }).click()
   await expect(page.getByText('Nhân Viên Phụ Xe & Làm Kho')).toBeVisible()
   await expect(page.getByText('3,4 km').first()).toBeVisible()
-  await expect(page.getByRole('radio', { name: '10 km' })).toHaveAttribute('aria-checked', 'true')
+  const project = test.info().project.name
+  if (project.startsWith('mobile')) {
+    // Điện thoại: bán kính là ô chọn, bộ lọc phụ nằm trong bảng trượt.
+    await expect(page.locator('.nearby-filter__radius-select')).toContainText('10 km')
+    await page.getByRole('button', { name: 'Bộ lọc' }).click()
+    await expect(page.getByRole('checkbox', { name: 'Gồm việc làm từ xa' })).toBeVisible()
+    await page.getByRole('button', { name: 'Xem kết quả' }).click()
+    await expect(page.getByRole('button', { name: 'Xem kết quả' })).toBeHidden()
+  } else {
+    await expect(page.getByRole('radio', { name: '10 km' })).toHaveAttribute('aria-checked', 'true')
+  }
   const overflow = () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
   await expect.poll(overflow).toBe(0)
 
   // Dưới lg danh sách và bản đồ là hai chế độ xem; canvas bản đồ không được đẩy trang rộng ra.
-  const mapView = page.getByText('Bản đồ', { exact: true })
-  const isDesktop = test.info().project.name.startsWith('desktop')
+  const mapView = page.getByTitle('Bản đồ', { exact: true })
+  const isDesktop = project.startsWith('desktop')
   await expect(mapView).toBeVisible({ visible: !isDesktop })
   if (!isDesktop) await mapView.click()
   await expect(page.locator('.maplibregl-canvas')).toBeVisible()

@@ -32,11 +32,14 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   375px): lưới trang và thanh lọc dùng `minmax(0, 1fr)` nên canvas MapLibre không đẩy
   cột rộng ra.
 - Dưới 1024px, danh sách và bản đồ chuyển bằng nút "Danh sách (n) | Bản đồ" thay vì xếp
-  chồng; bấm ghim trên bản đồ sẽ quay về danh sách các việc ở điểm đó. Điện thoại: 5 mức
-  bán kính trên một hàng, hai bộ lọc chung hàng, "Gồm việc làm từ xa" chung hàng với nút
-  Tìm việc.
+  chồng; bấm ghim trên bản đồ sẽ quay về danh sách các việc ở điểm đó.
+- Điện thoại (dưới 640px) chỉ còn hai hàng: ô vị trí kèm nút định vị, rồi bán kính dạng ô
+  chọn, nút "Bộ lọc" (có số bộ lọc đang bật) và nút chuyển danh sách/bản đồ dạng biểu
+  tượng. Ngành nghề, mức lương, "Gồm việc làm từ xa" nằm trong bảng trượt từ dưới lên, có
+  nút "Xem kết quả".
 - E2E `nearby-jobs` chạy với style VietMap giả nên bản đồ hiện thật. Test kiểm tra ô vị trí
-  được điền và trang không cuộn ngang ở cả chế độ bản đồ trên tablet và điện thoại.
+  được điền, bảng bộ lọc trên điện thoại và trang không cuộn ngang ở cả chế độ bản đồ trên
+  tablet và điện thoại.
 
 #### Fixed — Trắng trang ở tab "Bản AI chờ duyệt" (React #185)
 

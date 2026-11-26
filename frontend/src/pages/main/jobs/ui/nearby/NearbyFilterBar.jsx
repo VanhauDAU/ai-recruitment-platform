@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { AimOutlined, SearchOutlined } from '@ant-design/icons'
-import { Button, Checkbox, Select } from 'antd'
+import { AimOutlined, FilterOutlined, SearchOutlined } from '@ant-design/icons'
+import { Badge, Button, Checkbox, Drawer, Select } from 'antd'
 import { SALARY_RANGES } from '@/entities/job/job'
 import { searchGeoPlaces } from '@/entities/system/location'
 import { m } from '@/shared/config/i18n'
@@ -71,8 +71,11 @@ export default function NearbyFilterBar({
   onPickPlace,
   onRadiusChange,
   onApply,
+  compact = false,
+  viewSwitch = null,
 }) {
   const [query, setQuery] = useState('')
+  const [sheetOpen, setSheetOpen] = useState(false)
   const [draft, setDraft] = useState(filters)
   const suggestions = usePlaceSuggestions(query, focus)
   // Đồng bộ bản nháp khi URL đổi (nút quay lại, mở rộng bán kính…).
@@ -91,6 +94,35 @@ export default function NearbyFilterBar({
     { value: '', label: m.candidate_nearby_all_categories() },
     ...categories.map((category) => ({ value: String(category.id), label: category.name })),
   ]
+
+  const activeFilters = [filters.category, filters.salary, filters.remote].filter(Boolean).length
+  // Ngành nghề, lương, từ xa: trên hàng lọc (máy tính) hoặc trong bảng trượt (điện thoại).
+  const fields = (
+    <>
+      <Select
+        className="nearby-filter__select"
+        value={draft.category}
+        options={categoryOptions}
+        onChange={(category) => setDraft((prev) => ({ ...prev, category }))}
+        aria-label={m.candidate_nearby_all_categories()}
+        popupMatchSelectWidth={false}
+      />
+      <Select
+        className="nearby-filter__select"
+        value={draft.salary}
+        options={salaryOptions}
+        onChange={(salary) => setDraft((prev) => ({ ...prev, salary }))}
+        aria-label={m.candidate_nearby_all_salaries()}
+      />
+      <Checkbox
+        className="nearby-filter__remote"
+        checked={draft.remote}
+        onChange={(event) => setDraft((prev) => ({ ...prev, remote: event.target.checked }))}
+      >
+        {m.candidate_nearby_include_remote()}
+      </Checkbox>
+    </>
+  )
 
   return (
     <section className="nearby-filter" aria-label={m.candidate_nearby_title()}>
@@ -135,48 +167,71 @@ export default function NearbyFilterBar({
         </Button>
       </div>
       {geoError && <p className="nearby-filter__error" role="alert">{GEO_ERROR_MESSAGES[geoError]?.()}</p>}
-      <div className="nearby-filter__row">
-        <span className="nearby-filter__label" aria-hidden>{m.candidate_nearby_radius()}</span>
-        <div className="nearby-filter__radius" role="radiogroup" aria-label={m.candidate_nearby_radius()}>
-          {radiusChoices.map((km) => (
-            <button
-              key={km}
-              type="button"
-              role="radio"
-              aria-checked={filters.radius === km}
-              className={`nearby-chip${filters.radius === km ? ' nearby-chip--active' : ''}`}
-              onClick={() => onRadiusChange(km)}
-            >
-              {m.candidate_nearby_radius_option({ km })}
-            </button>
-          ))}
+      {compact ? (
+        // Điện thoại: một hàng — bán kính, nút mở bộ lọc phụ, chuyển danh sách/bản đồ.
+        <div className="nearby-filter__compact">
+          <Select
+            className="nearby-filter__radius-select"
+            value={filters.radius}
+            options={radiusChoices.map((km) => ({ value: km, label: m.candidate_nearby_radius_option({ km }) }))}
+            onChange={onRadiusChange}
+            aria-label={m.candidate_nearby_radius()}
+            popupMatchSelectWidth={false}
+          />
+          <Badge count={activeFilters} size="small" color="var(--brand-primary)">
+            <Button icon={<FilterOutlined />} onClick={() => setSheetOpen(true)}>
+              {m.candidate_nearby_filters()}
+            </Button>
+          </Badge>
+          {viewSwitch}
         </div>
-        <Select
-          className="nearby-filter__select"
-          value={draft.category}
-          options={categoryOptions}
-          onChange={(category) => setDraft((prev) => ({ ...prev, category }))}
-          aria-label={m.candidate_nearby_all_categories()}
-          popupMatchSelectWidth={false}
-        />
-        <Select
-          className="nearby-filter__select"
-          value={draft.salary}
-          options={salaryOptions}
-          onChange={(salary) => setDraft((prev) => ({ ...prev, salary }))}
-          aria-label={m.candidate_nearby_all_salaries()}
-        />
-        <Checkbox
-          className="nearby-filter__remote"
-          checked={draft.remote}
-          onChange={(event) => setDraft((prev) => ({ ...prev, remote: event.target.checked }))}
+      ) : (
+        <div className="nearby-filter__row">
+          <span className="nearby-filter__label" aria-hidden>{m.candidate_nearby_radius()}</span>
+          <div className="nearby-filter__radius" role="radiogroup" aria-label={m.candidate_nearby_radius()}>
+            {radiusChoices.map((km) => (
+              <button
+                key={km}
+                type="button"
+                role="radio"
+                aria-checked={filters.radius === km}
+                className={`nearby-chip${filters.radius === km ? ' nearby-chip--active' : ''}`}
+                onClick={() => onRadiusChange(km)}
+              >
+                {m.candidate_nearby_radius_option({ km })}
+              </button>
+            ))}
+          </div>
+          {fields}
+          <Button type="primary" ghost className="nearby-filter__submit" onClick={() => onApply(draft)}>
+            {m.candidate_nearby_search()}
+          </Button>
+        </div>
+      )}
+      {compact && (
+        <Drawer
+          placement="bottom"
+          size="auto"
+          open={sheetOpen}
+          onClose={() => setSheetOpen(false)}
+          title={m.candidate_nearby_filters()}
+          footer={(
+            <Button
+              type="primary"
+              size="large"
+              block
+              onClick={() => {
+                setSheetOpen(false)
+                onApply(draft)
+              }}
+            >
+              {m.candidate_nearby_show_results()}
+            </Button>
+          )}
         >
-          {m.candidate_nearby_include_remote()}
-        </Checkbox>
-        <Button type="primary" ghost className="nearby-filter__submit" onClick={() => onApply(draft)}>
-          {m.candidate_nearby_search()}
-        </Button>
-      </div>
+          <div className="nearby-filter__sheet">{fields}</div>
+        </Drawer>
+      )}
     </section>
   )
 }

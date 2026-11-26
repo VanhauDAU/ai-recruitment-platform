@@ -204,8 +204,41 @@
   font-weight: 600;
 }
 
-/* Điện thoại: nút định vị chỉ còn biểu tượng cạnh ô; bán kính một hàng chia đều;
-   hai bộ lọc chung một hàng; "từ xa" và nút tìm chung hàng cuối. */
+/* Điện thoại (chế độ compact của NearbyFilterBar): ô vị trí + một hàng gồm bán kính,
+   nút "Bộ lọc" (ngành nghề, lương, từ xa trong bảng trượt) và chuyển danh sách/bản đồ. */
+.nearby-filter__compact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nearby-filter__radius-select {
+  width: 92px;
+  flex: none;
+}
+
+.nearby-filter__compact .nearby-view-switch {
+  margin-left: auto;
+}
+
+.nearby-filter__sheet {
+  display: grid;
+  gap: 12px;
+}
+
+.nearby-filter__sheet .nearby-filter__select {
+  width: 100%;
+}
+
+.nearby-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 @media (max-width: 639px) {
   .nearby-filter {
     padding: 12px;
@@ -218,36 +251,6 @@
 
   .nearby-filter__locate-text {
     display: none;
-  }
-
-  .nearby-filter__row {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .nearby-filter__label {
-    display: none;
-  }
-
-  .nearby-filter__radius {
-    display: grid;
-    grid-column: 1 / -1;
-    grid-auto-columns: minmax(0, 1fr);
-    grid-auto-flow: column;
-  }
-
-  .nearby-chip {
-    min-width: 0;
-    padding: 0 4px;
-  }
-
-  .nearby-filter__select {
-    width: 100%;
-  }
-
-  .nearby-filter__remote {
-    align-self: center;
   }
 }
 

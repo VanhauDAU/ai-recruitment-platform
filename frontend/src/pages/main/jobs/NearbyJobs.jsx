@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
+import { EnvironmentOutlined, UnorderedListOutlined } from '@ant-design/icons'
 import { Segmented } from 'antd'
 import { buildCategoryTree, getJobCategories, jobKeys } from '@/entities/job/job'
 import { resolveGeoPlace } from '@/entities/system/location'
 import { useBasemap, useSiteSettings } from '@/entities/system/site-settings'
 import { m } from '@/shared/config/i18n'
+import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import { isInVietnam } from '@/shared/lib/geo'
 import { mergeSearchParams } from './lib/job-list-params'
 import { radiusOptions, readNearbyFilters, shortPlaceName } from './lib/nearby-params'
@@ -42,6 +44,7 @@ export default function NearbyJobs() {
   // Điện thoại/tablet: xem danh sách hoặc bản đồ, không xếp chồng cả hai.
   const [view, setView] = useState('list')
   const hasMap = Boolean(useBasemap())
+  const compact = useMediaQuery('(max-width: 639px)')
   const search = useNearbySearch(origin, filters, { enabled })
   const categoriesQuery = useQuery({
     queryKey: jobKeys.categories,
@@ -109,6 +112,24 @@ export default function NearbyJobs() {
     first?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
   }
 
+  const listLabel = origin && search.count ? m.candidate_nearby_view_list_count({ count: search.count }) : m.candidate_nearby_view_list()
+  // Dưới lg: chuyển danh sách/bản đồ. Điện thoại chỉ hiện biểu tượng, nằm chung hàng bộ lọc.
+  const labelClass = compact ? 'nearby-sr' : undefined
+  const viewSwitch = hasMap && (
+    <Segmented
+      block={!compact}
+      size={compact ? 'middle' : 'large'}
+      className="nearby-view-switch"
+      value={view}
+      onChange={setView}
+      aria-label={m.candidate_nearby_view_label()}
+      options={[
+        { value: 'list', icon: <UnorderedListOutlined aria-hidden />, label: <span className={labelClass}>{listLabel}</span>, title: listLabel },
+        { value: 'map', icon: <EnvironmentOutlined aria-hidden />, label: <span className={labelClass}>{m.candidate_nearby_view_map()}</span>, title: m.candidate_nearby_view_map() },
+      ]}
+    />
+  )
+
   const geoError = placeError ? 'place' : position.error
   const accuracyKm = origin?.source === 'gps' && origin.accuracyKm > 1 ? Math.round(origin.accuracyKm) : null
 
@@ -138,6 +159,8 @@ export default function NearbyJobs() {
             onUseLocation={locateMe}
             onPickPlace={pickPlace}
             onRadiusChange={(radius) => updateParams({ r: radius })}
+            compact={compact}
+            viewSwitch={compact ? viewSwitch : null}
             onApply={(draft) => updateParams({
               cat: draft.category || null,
               salary: draft.salary || null,
@@ -146,18 +169,7 @@ export default function NearbyJobs() {
           />
           {accuracyKm && <p className="nearby-page__hint">{m.candidate_nearby_geo_inaccurate({ km: accuracyKm })}</p>}
 
-          {hasMap && (
-            <Segmented
-              block
-              className="nearby-page__views"
-              value={view}
-              onChange={setView}
-              options={[
-                { value: 'list', label: origin && search.count ? m.candidate_nearby_view_list_count({ count: search.count }) : m.candidate_nearby_view_list() },
-                { value: 'map', label: m.candidate_nearby_view_map() },
-              ]}
-            />
-          )}
+          {viewSwitch && !compact && <div className="nearby-page__views">{viewSwitch}</div>}
           <div className="nearby-page__layout" data-view={view}>
             <NearbyMapPanel
               origin={origin}
