@@ -33,13 +33,13 @@ fi
 step "Dừng container không cần khi huấn luyện"
 docker compose stop ml-worker worker ai-worker beat frontend >/dev/null 2>&1 || true
 step "Fine-tune bi-encoder e5-base"
-$PY ml/scripts/train.py --version ft-v1 | tail -30
+$PY ml/scripts/train.py --version ft-v1 2>&1 | grep -v "Loading weights" | tail -60
 step "Fine-tune cross-encoder"
-$PY ml/scripts/train_reranker.py | tail -20
+$PY ml/scripts/train_reranker.py 2>&1 | grep -v "Loading weights" | tail -40
 step "Bật lại ml-worker và đo trên validation"
 docker compose up -d ml-worker >/dev/null
 for _ in $(seq 1 30); do docker compose exec -T ml-worker true 2>/dev/null && break; sleep 5; done
-$PY ml/scripts/evaluate.py \
+$PY ml/scripts/evaluate.py --ablation \
   --model e5-small-zs-v1=multilingual-e5-small/zs-v1 \
   --model minilm-l12-zs-v1=paraphrase-multilingual-MiniLM-L12-v2/zs-v1:noprefix \
   --model e5-base-ft-v1=multilingual-e5-base/ft-v1 | head -20

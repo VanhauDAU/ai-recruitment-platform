@@ -13,6 +13,10 @@ Không chạy cùng lúc với sinh dữ liệu bằng Ollama: máy 16 GB không
   CV → tin cho "Việc làm gợi ý"). Sampler `NO_DUPLICATES` để một văn bản không vừa
   là dương vừa là âm trong cùng batch.
 - Tiền tố E5 như lúc chạy: tin là `query: `, CV là `passage: `.
+- Độ dài chuỗi 512 token như lúc chạy: văn bản CV có trung vị 409 token và 97% vượt
+  256 (đo 26/11), nên huấn luyện ở 256 sẽ cắt mất gần nửa CV. Mini-batch của GradCache
+  là 4 để vừa bộ nhớ MPS (8 vẫn tràn); kích thước batch (số mẫu âm trong batch) vẫn là 32. Bảng
+  embedding từ được đóng băng để vừa bộ nhớ (xem chú thích trong mã).
 - Theo dõi NDCG@10 trên tập dev (7 tin giữ riêng) và giữ checkpoint tốt nhất. Tập dev
   chỉ để chọn checkpoint; việc có dùng mô hình này hay không quyết định bằng
   `evaluate.py` trên validation của tập vàng.
@@ -81,8 +85,8 @@ def main():
     parser.add_argument('--version', default='ft-v1')
     parser.add_argument('--epochs', type=float, default=3)
     parser.add_argument('--batch-size', type=int, default=32)
-    parser.add_argument('--mini-batch-size', type=int, default=16)
-    parser.add_argument('--max-seq-length', type=int, default=256)
+    parser.add_argument('--mini-batch-size', type=int, default=4)
+    parser.add_argument('--max-seq-length', type=int, default=512)
     parser.add_argument('--learning-rate', type=float, default=2e-5)
     parser.add_argument('--eval-steps', type=int, default=50)
     parser.add_argument('--max-steps', type=int, default=-1, help='Giới hạn số bước (để chạy thử).')
@@ -105,6 +109,11 @@ def main():
 
     model = SentenceTransformer(options.base, device=device, **MPS_KWARGS)
     model.max_seq_length = options.max_seq_length
+    # Đóng băng bảng embedding từ (250 nghìn từ × 768 chiều): riêng gradient và hai bộ nhớ
+    # của AdamW cho bảng này đã chiếm hơn 2 GB, làm tràn bộ nhớ MPS ở 512 token. Các lớp
+    # transformer phía trên vẫn được huấn luyện; đây là cách làm quen thuộc khi fine-tune
+    # mô hình đa ngữ trên máy ít bộ nhớ.
+    model[0].auto_model.embeddings.word_embeddings.weight.requires_grad_(False)
     before = evaluator(model)
     loss = CachedMultipleNegativesRankingLoss(
         model,
@@ -162,6 +171,7 @@ def main():
         'hyperparameters': {key: getattr(options, key) for key in ('epochs', 'batch_size', 'mini_batch_size', 'max_seq_length', 'learning_rate', 'seed', 'max_steps')},  # fmt: skip
         'dev': {'metric': evaluator.primary_metric, 'before': round(before[evaluator.primary_metric], 4), 'after': round(after[evaluator.primary_metric], 4)},  # fmt: skip
         'best_checkpoint': trainer.state.best_model_checkpoint and os.path.basename(trainer.state.best_model_checkpoint),
+        'frozen': ['embeddings.word_embeddings'],
         'device': device,
         'minutes': round(minutes, 1),
         'dimensions': model.get_sentence_embedding_dimension(),
