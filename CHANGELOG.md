@@ -8,6 +8,15 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Added — Góp ý / báo lỗi gửi sang Telegram
+
+- Góp ý mới được task `apps.sitecontent.tasks.notify_feedback_telegram` (queue `default`,
+  sau commit, thử lại khi Telegram lỗi mạng/429/5xx) gửi sang Telegram: chủ đề, người gửi,
+  link trang, thiết bị, nội dung (HTML đã escape).
+- Bật bằng `TELEGRAM_BOT_TOKEN` + `TELEGRAM_FEEDBACK_CHAT_ID` trong `backend/.env`; để trống
+  thì không gửi.
+- Form góp ý: 5 mức hài lòng dùng emoji động Noto như khối đánh giá tin (bản động khi
+  rê/chọn); `RatingEmoji` tách thành `shared/ui/AnimatedEmoji.jsx` dùng chung.
 #### Added — 100 tin tuyển dụng demo viết tay
 
 - `seed_data/demo_job_catalog.py`: 100 tin cho 8 công ty demo, đúng ngành từng công ty

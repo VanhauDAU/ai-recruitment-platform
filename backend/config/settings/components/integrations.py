@@ -230,3 +230,9 @@ CLOUDFLARE_ACCESS_AUD = config('CLOUDFLARE_ACCESS_AUD', default='').strip()
 API_DOCS_ENABLED = config('API_DOCS_ENABLED', default=DEBUG, cast=bool)
 
 CV_IMPORT_SOURCE_RETENTION_DAYS = config('CV_IMPORT_SOURCE_RETENTION_DAYS', default=30, cast=int)
+
+# Góp ý / báo lỗi người dùng đẩy sang Telegram (bot của chủ dự án). Để trống một trong
+# hai giá trị thì không gửi. Token chỉ đặt ở .env, không ghi vào repo.
+TELEGRAM_BOT_TOKEN = config('TELEGRAM_BOT_TOKEN', default='').strip()
+TELEGRAM_FEEDBACK_CHAT_ID = config('TELEGRAM_FEEDBACK_CHAT_ID', default='').strip()
+TELEGRAM_TIMEOUT_SECONDS = config('TELEGRAM_TIMEOUT_SECONDS', default=5.0, cast=float)
