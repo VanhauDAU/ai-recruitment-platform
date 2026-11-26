@@ -8,6 +8,16 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Fixed — Trang "CV của tôi" tải chậm / treo trên production
+
+- `GET /api/candidate/cvs/` gọi `default_storage.exists()` (HEAD tới R2, ~100 ms) hai lần
+  cho mỗi CV chỉ để tính `thumbnail_url`/`thumbnail_status`; R2 chậm là request treo,
+  trình duyệt bỏ (nginx 499). Danh sách giờ chỉ so khoá ảnh trong DB
+  (`thumbnail_matches_latest_version`, worker chỉ ghi khoá sau khi lưu file xong);
+  endpoint ảnh một CV vẫn kiểm tra storage.
+- Client R2 (boto3) có timeout kết nối 5 s, đọc 30 s, tối đa 3 lần thử thay cho mặc định
+  60 s × 4 lần.
+
 #### Added — Góp ý / báo lỗi gửi sang Telegram
 
 - Góp ý mới được task `apps.sitecontent.tasks.notify_feedback_telegram` (queue `default`,
