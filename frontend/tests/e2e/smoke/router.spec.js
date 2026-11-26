@@ -42,7 +42,7 @@ test.describe('portal route registries', () => {
       '/cong-ty/tim-kiem?keyword=Alpha',
       '/viec-lam',
       '/viec-lam/frontend-job',
-      '/login',
+      '/dang-nhap',
       '/tuyendung',
     ]) {
       await page.goto(path)
@@ -55,24 +55,35 @@ test.describe('portal route registries', () => {
     await expect(page.getByRole('heading', { name: /Tìm kiếm thông tin công ty/ })).toBeVisible()
     expect(companyRequests).toBe(requestsBeforeBlankSearch)
 
-    await page.goto('/tuyendung/app/login')
+    await page.goto('/tuyendung/app/dang-nhap')
     await expect(page.getByRole('heading', { name: 'Chào mừng bạn quay trở lại' })).toBeVisible()
-    await page.goto('/admin/app/login')
+    await page.goto('/admin/app/dang-nhap')
     await expect(page.getByRole('heading', { name: 'Đăng nhập quản trị' })).toBeVisible()
     expect(pageErrors).toEqual([])
   })
 
   test('redirects protected portal routes to their existing login URLs', async ({ page }) => {
-    for (const protectedPath of ['/tai-khoan/thong-tin-ca-nhan', '/onboard-user', '/onboard-user-setting']) {
+    for (const protectedPath of ['/tai-khoan/thong-tin-ca-nhan', '/hoan-thien-ho-so', '/onboard-user-setting']) {
       await page.goto(protectedPath)
-      await expect(page).toHaveURL(/\/login\?returnUrl=/)
+      await expect(page).toHaveURL(/\/dang-nhap\?returnUrl=/)
     }
 
-    await page.goto('/tuyendung/app/dashboard')
-    await expect(page).toHaveURL(/\/tuyendung\/app\/login\?returnUrl=/)
+    await page.goto('/tuyendung/app/tong-quan')
+    await expect(page).toHaveURL(/\/tuyendung\/app\/dang-nhap\?returnUrl=/)
 
-    await page.goto('/admin/app/dashboard')
-    await expect(page).toHaveURL(/\/admin\/app\/login\?returnUrl=/)
+    await page.goto('/admin/app/tong-quan')
+    await expect(page).toHaveURL(/\/admin\/app\/dang-nhap\?returnUrl=/)
+  })
+
+  test('sends legacy English URLs from old emails to the Vietnamese routes', async ({ page }) => {
+    await page.goto('/sign-up?ref=email#form')
+    await expect(page).toHaveURL(/\/dang-ky\?ref=email#form$/)
+
+    await page.goto('/tuyendung/app/employer-verify')
+    await expect(page).toHaveURL(/\/tuyendung\/app\/dang-nhap\?returnUrl=%2Ftuyendung%2Fapp%2Fxac-thuc-tai-khoan$/)
+
+    await page.goto('/admin/app/job-moderation/jb_1')
+    await expect(page).toHaveURL(/\/admin\/app\/dang-nhap\?returnUrl=%2Fadmin%2Fapp%2Fduyet-tin%2Fjb_1$/)
   })
 
   test('redirects an authenticated candidate away from login and sign-up', async ({ page }) => {
@@ -95,9 +106,9 @@ test.describe('portal route registries', () => {
       await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
     })
 
-    await page.goto('/login')
+    await page.goto('/dang-nhap')
     await expect(page).toHaveURL('/')
-    await page.goto('/sign-up')
+    await page.goto('/dang-ky')
     await expect(page).toHaveURL('/')
   })
 
@@ -148,10 +159,10 @@ test.describe('portal route registries', () => {
       })
     })
 
-    await page.goto('/onboard-user')
+    await page.goto('/hoan-thien-ho-so')
     await expect(page.locator('.onboarding-chat__sr').first()).toContainText('Chào Ứng viên thử nghiệm!')
     await page.getByRole('button', { name: 'Bắt đầu thôi!' }).click()
-    await expect(page).toHaveURL('/onboard-user')
+    await expect(page).toHaveURL('/hoan-thien-ho-so')
     await expect(page.getByText('Câu 1/5')).toBeVisible()
     await page.getByRole('button', { name: 'Chọn danh mục vị trí chuyên môn' }).click()
     await expect(page.getByText('Công nghệ thông tin', { exact: true })).toBeVisible()

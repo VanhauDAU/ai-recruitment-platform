@@ -18,7 +18,7 @@ export default function BuilderTopBar({ editor, onPreview, onSave }) {
       <Button aria-label="Xem trước" icon={<EyeOutlined />} onClick={onPreview} className="rounded-full max-sm:!w-8 max-sm:!px-0"><span className="max-sm:!hidden">Xem trước</span></Button>
       <Button aria-label="Lưu CV" type="primary" shape="round" icon={<SaveOutlined />} loading={editor.phase === 'saving'} disabled={editor.phase === 'conflict'} onClick={onSave}>Lưu CV</Button>
       <Dropdown menu={{ items: [
-        { key: 'export', label: <Link to={`/cvs/${editor.cv.public_id}/view`}>Xuất PDF</Link>, icon: <DownloadOutlined /> },
+        { key: 'export', label: <Link to={`/cv/${editor.cv.public_id}/xem`}>Xuất PDF</Link>, icon: <DownloadOutlined /> },
       ] }}><Button type="text" aria-label="Thao tác khác" icon={<MoreOutlined />} /></Dropdown>
     </div>
   </header>

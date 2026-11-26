@@ -4,11 +4,11 @@ import { adminPath } from '@/shared/config/portals'
 
 // Mọi trang Mẫu CV dùng chung thanh điều hướng này để chuyển trang trong một chạm.
 const ITEMS = [
-  { to: '/cv/overview', label: 'Tổng quan', icon: <DashboardOutlined /> },
-  { to: '/cv/templates', label: 'Mẫu CV', icon: <FileTextOutlined /> },
-  { to: '/cv/positions', label: 'Nội dung theo vị trí', icon: <ApartmentOutlined /> },
-  { to: '/cv/library', label: 'Thư viện', icon: <BgColorsOutlined /> },
-  { to: '/cv/user-cvs', label: 'CV ứng viên', icon: <SolutionOutlined /> },
+  { to: '/cv/tong-quan', label: 'Tổng quan', icon: <DashboardOutlined /> },
+  { to: '/cv/mau-cv', label: 'Mẫu CV', icon: <FileTextOutlined /> },
+  { to: '/cv/vi-tri', label: 'Nội dung theo vị trí', icon: <ApartmentOutlined /> },
+  { to: '/cv/thu-vien', label: 'Thư viện', icon: <BgColorsOutlined /> },
+  { to: '/cv/cv-nguoi-dung', label: 'CV ứng viên', icon: <SolutionOutlined /> },
 ]
 
 export function AdminCvNav() {

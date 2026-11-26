@@ -36,7 +36,7 @@ const REPORT = {
   resolution_history: [],
   created_at: '2026-11-14T01:00:00Z',
 }
-const ROUTE = '/admin/app/company-reports'
+const ROUTE = '/admin/app/bao-cao-cong-ty'
 
 function listOf(...reports) {
   return { count: reports.length, next: null, previous: null, results: reports }
@@ -74,7 +74,7 @@ describe('CompanyReportQueue', () => {
     renderQueue()
 
     const company = within(await findTableRow('crp_1')).getByRole('link', { name: 'FPT Software' })
-    expect(company).toHaveAttribute('href', '/admin/app/companies/co_ab12?tab=public-page')
+    expect(company).toHaveAttribute('href', '/admin/app/cong-ty/co_ab12?tab=public-page')
     expect(screen.getByText('Mạo danh doanh nghiệp khác')).toBeVisible()
     expect(screen.getByText('Phần: Giới thiệu công ty')).toBeVisible()
     expect(screen.queryByText('Đang tạm ẩn')).not.toBeInTheDocument()

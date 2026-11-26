@@ -6,14 +6,14 @@ describe('authentication onboarding destination', () => {
     expect(getAuthDestination({
       user: { role: 'candidate', job_preferences_configured: false },
       returnUrl: '',
-    })).toBe('/onboard-user')
+    })).toBe('/hoan-thien-ho-so')
   })
 
   it('sends an unconfigured candidate to onboarding even with a safe return URL', () => {
     expect(getAuthDestination({
       user: { role: 'candidate', job_preferences_configured: false },
       returnUrl: '/viec-lam/react',
-    })).toBe('/onboard-user')
+    })).toBe('/hoan-thien-ho-so')
   })
 
   it('sends a configured candidate to the main home', () => {
@@ -24,13 +24,13 @@ describe('authentication onboarding destination', () => {
   })
 
   it.each([
-    ['registration', '/tuyendung/app/account/complete-profile'],
-    ['email_verification', '/tuyendung/app/account/verify'],
-    ['consulting_need', '/tuyendung/app/consulting-need'],
+    ['registration', '/tuyendung/app/hoan-thien-ho-so'],
+    ['email_verification', '/tuyendung/app/xac-thuc-email'],
+    ['consulting_need', '/tuyendung/app/khai-bao-nhu-cau'],
   ])('sends an employer at %s to the matching setup route', (step, destination) => {
     expect(getAuthDestination({
       user: { role: 'employer', employer_onboarding_required: true, employer_onboarding_step: step },
-      returnUrl: '/tuyendung/app/dashboard',
+      returnUrl: '/tuyendung/app/tong-quan',
     })).toBe(destination)
   })
 
@@ -42,7 +42,7 @@ describe('authentication onboarding destination', () => {
         employer_verification_completed: false,
       },
       returnUrl: '',
-    })).toBe('/tuyendung/app/employer-verify')
+    })).toBe('/tuyendung/app/xac-thuc-tai-khoan')
   })
 
   it('does not let a dashboard return URL skip unfinished employer verification', () => {
@@ -52,8 +52,8 @@ describe('authentication onboarding destination', () => {
         employer_onboarding_required: false,
         employer_verification_completed: false,
       },
-      returnUrl: '/tuyendung/app/dashboard',
-    })).toBe('/tuyendung/app/employer-verify')
+      returnUrl: '/tuyendung/app/tong-quan',
+    })).toBe('/tuyendung/app/xac-thuc-tai-khoan')
   })
 
   it('sends a fully verified employer directly to the dashboard', () => {
@@ -64,7 +64,7 @@ describe('authentication onboarding destination', () => {
         employer_verification_completed: true,
       },
       returnUrl: '',
-    })).toBe('/tuyendung/app/dashboard')
+    })).toBe('/tuyendung/app/tong-quan')
   })
 
   it('preserves a safe return URL for a fully verified employer', () => {
@@ -74,8 +74,8 @@ describe('authentication onboarding destination', () => {
         employer_onboarding_required: false,
         employer_verification_completed: true,
       },
-      returnUrl: '/tuyendung/app/account/settings/company?update=true',
-    })).toBe('/tuyendung/app/account/settings/company?update=true')
+      returnUrl: '/tuyendung/app/cai-dat/cong-ty?update=true',
+    })).toBe('/tuyendung/app/cai-dat/cong-ty?update=true')
   })
 
   it('uses canonical job-workspace readiness when the session exposes it', () => {
@@ -86,8 +86,8 @@ describe('authentication onboarding destination', () => {
         employer_job_workspace_ready: true,
         employer_verification_completed: false,
       },
-      returnUrl: '/tuyendung/app/jobs',
-    })).toBe('/tuyendung/app/jobs')
+      returnUrl: '/tuyendung/app/tin-tuyen-dung',
+    })).toBe('/tuyendung/app/tin-tuyen-dung')
   })
 
   it('fails closed when canonical session readiness is present but malformed', () => {
@@ -98,7 +98,7 @@ describe('authentication onboarding destination', () => {
         employer_job_workspace_ready: 'true',
         employer_verification_completed: true,
       },
-      returnUrl: '/tuyendung/app/jobs',
-    })).toBe('/tuyendung/app/employer-verify')
+      returnUrl: '/tuyendung/app/tin-tuyen-dung',
+    })).toBe('/tuyendung/app/xac-thuc-tai-khoan')
   })
 })

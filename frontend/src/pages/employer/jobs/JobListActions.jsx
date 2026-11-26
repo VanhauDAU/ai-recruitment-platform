@@ -22,11 +22,11 @@ const MAX_BUTTONS = 3
 
 // The backend refuses edits, extensions and copies while a job is held.
 function primaryAction(job) {
-  const editPath = employerAppPath(`/jobs/${job.public_id}/edit`)
+  const editPath = employerAppPath(`/tin-tuyen-dung/${job.public_id}/chinh-sua`)
   if (isJobEditableUnderHold(job)) return { key: 'resume', label: m.employer_job_list_edit_as_requested(), icon: <EditOutlined />, to: editPath }
   if (isJobHeld(job)) return null
   if (job.status === 'draft') return { key: 'complete', label: m.employer_job_list_complete(), icon: <EditOutlined />, to: editPath }
-  if (job.is_expired) return { key: 'extend', label: m.employer_job_list_extend(), icon: <SyncOutlined />, to: employerAppPath(`/jobs/${job.public_id}`) }
+  if (job.is_expired) return { key: 'extend', label: m.employer_job_list_extend(), icon: <SyncOutlined />, to: employerAppPath(`/tin-tuyen-dung/${job.public_id}`) }
   return null
 }
 
@@ -40,12 +40,12 @@ function linkActions(job, candidateDataAccess) {
   // The candidate count in the row already opens the applications.
   return [
     primary && { ...primary, primary: true },
-    { key: 'detail', label: m.employer_job_list_view_detail(), icon: <EyeOutlined />, to: employerAppPath(`/jobs/${job.public_id}`) },
+    { key: 'detail', label: m.employer_job_list_view_detail(), icon: <EyeOutlined />, to: employerAppPath(`/tin-tuyen-dung/${job.public_id}`) },
     publicUrl && { key: 'public', label: m.employer_job_list_view_public(), icon: <ExportOutlined />, href: publicUrl },
     candidateDataAccess && job.application_count > 0 && {
       key: 'applications', label: m.employer_job_list_view_applications(), icon: <TeamOutlined />, to: employerJobApplicationsPath(job),
     },
-    canEdit(job) && { key: 'edit', label: m.employer_job_list_edit(), icon: <EditOutlined />, to: employerAppPath(`/jobs/${job.public_id}/edit`) },
+    canEdit(job) && { key: 'edit', label: m.employer_job_list_edit(), icon: <EditOutlined />, to: employerAppPath(`/tin-tuyen-dung/${job.public_id}/chinh-sua`) },
   ].filter(Boolean)
 }
 

@@ -16,8 +16,8 @@ describe('AuthGuard', () => {
     render(
       <MemoryRouter initialEntries={['/tai-khoan/thong-tin-ca-nhan?tab=profile']}>
         <Routes>
-          <Route path="/login" element={<p>Login page</p>} />
-          <Route element={<AuthGuard loginPath="/login" />}>
+          <Route path="/dang-nhap" element={<p>Login page</p>} />
+          <Route element={<AuthGuard loginPath="/dang-nhap" />}>
             <Route path="/tai-khoan/thong-tin-ca-nhan" element={<p>Private page</p>} />
           </Route>
         </Routes>

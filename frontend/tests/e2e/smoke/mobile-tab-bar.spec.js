@@ -92,7 +92,7 @@ test('guests can cancel signing in from the tab bar and the login page', { tag: 
   }
 
   // Opened directly (no in-app history): closing falls back to the home page.
-  await page.goto('/login')
+  await page.goto('/dang-nhap')
   await page.getByRole('button', { name: 'Đóng, quay lại trang trước' }).click()
   await expect(page).toHaveURL(/127\.0\.0\.1:\d+\/$/)
 })

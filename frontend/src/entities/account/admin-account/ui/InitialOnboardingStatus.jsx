@@ -4,17 +4,17 @@ const STEP_META = {
   registration_completed: {
     label: 'Hồ sơ đăng ký',
     pageLabel: 'Hoàn thiện hồ sơ',
-    path: '/tuyendung/app/account/complete-profile',
+    path: '/tuyendung/app/hoan-thien-ho-so',
   },
   email_verified: {
     label: 'Xác minh email',
     pageLabel: 'Xác minh email',
-    path: '/tuyendung/app/account/verify',
+    path: '/tuyendung/app/xac-thuc-email',
   },
   consulting_need_completed: {
     label: 'Nhu cầu tuyển dụng',
     pageLabel: 'Nhu cầu tư vấn',
-    path: '/tuyendung/app/consulting-need',
+    path: '/tuyendung/app/khai-bao-nhu-cau',
   },
 }
 

@@ -14,9 +14,10 @@ import { PopularSearches } from '@/widgets/main/popular-searches'
 
 export default function MainLayout() {
   const { pathname } = useLocation()
-  const isCvRoute = pathname.startsWith('/cvs/') || pathname.startsWith('/cv/')
+  // Trình soạn CV dùng layout toàn màn hình; trang "đã lưu" vẫn có header/footer thường.
+  const isCvRoute = /^\/cv\/[^/]+\/chinh-sua\/?$/.test(pathname)
   // Trang xem CV (chủ sở hữu và link chia sẻ) tự có thanh thao tác toàn màn hình.
-  const isCvViewer = /^\/cvs\/[^/]+\/view\/?$/.test(pathname) || pathname.startsWith('/cv/share/')
+  const isCvViewer = /^\/cv\/[^/]+\/xem\/?$/.test(pathname) || pathname.startsWith('/cv/chia-se/')
 
   if (isCvViewer) return <Outlet />
 

@@ -27,7 +27,7 @@ export default function useNextVerificationCase(currentCaseId, { enabled }) {
   const { next, remaining } = pickNextCase(query.data, currentCaseId)
   const goNext = useCallback(() => {
     if (!next) return
-    navigate(`${adminPath(`/recruiters/${next.user_public_id}`)}?tab=verification`, {
+    navigate(`${adminPath(`/nha-tuyen-dung/${next.user_public_id}`)}?tab=verification`, {
       state: location.state,
     })
   }, [location.state, navigate, next])

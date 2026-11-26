@@ -29,7 +29,7 @@ function HeroSection() {
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">{m.marketing_landing_hero_subtitle()}</p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row [&_a]:w-full sm:[&_a]:w-auto [&_.ant-btn]:w-full sm:[&_.ant-btn]:w-auto">
-            <Link to={employerAppPath('/register')}><Button type="primary" size="large" shape="round" className="!h-12 !px-7">{m.marketing_landing_hero_primary_cta()} <ArrowRightOutlined /></Button></Link>
+            <Link to={employerAppPath('/dang-ky')}><Button type="primary" size="large" shape="round" className="!h-12 !px-7">{m.marketing_landing_hero_primary_cta()} <ArrowRightOutlined /></Button></Link>
             <Link to={employerMarketingPath('/dich-vu')}><Button size="large" shape="round" className="!h-12 !px-7">{m.marketing_landing_hero_secondary_cta()}</Button></Link>
           </div>
           <div className="mt-7 flex flex-col gap-3 text-sm font-semibold text-slate-600 sm:flex-row sm:flex-wrap sm:gap-x-5">

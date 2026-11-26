@@ -3,7 +3,7 @@ import { mockPublicApi } from './helpers'
 
 test('candidate auth mascot clings to the card and follows credential privacy states', { tag: '@responsive' }, async ({ page }) => {
   await mockPublicApi(page)
-  await page.goto('/login')
+  await page.goto('/dang-nhap')
 
   const mascotStage = page.locator('.auth-mascot-stage')
   const mascot = mascotStage.locator('.procv-mascot')
@@ -32,7 +32,7 @@ test('candidate auth mascot clings to the card and follows credential privacy st
     () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
   )).toBe(false)
 
-  await page.goto('/sign-up')
+  await page.goto('/dang-ky')
   await expect(page.locator('.auth-mascot-stage .procv-mascot')).toHaveAttribute('data-pose', 'frameGrip')
   await page.getByRole('button', { name: /Đăng ký bằng email/ }).click()
   await page.getByRole('button', { name: /^Đăng ký/ }).click()
@@ -64,7 +64,7 @@ test('candidate social login runs in a popup on desktop and signs in the opener 
       }),
     })
   })
-  await page.goto('/login')
+  await page.goto('/dang-nhap')
 
   const popupOpened = context.waitForEvent('page')
   await page.getByRole('button', { name: 'Đăng nhập bằng Google' }).click()

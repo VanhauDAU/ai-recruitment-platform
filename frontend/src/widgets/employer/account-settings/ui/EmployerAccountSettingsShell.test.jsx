@@ -6,7 +6,7 @@ import EmployerAccountSettingsShell from './EmployerAccountSettingsShell'
 describe('EmployerAccountSettingsShell', () => {
   it('marks the current settings tab and shows its heading', () => {
     render(
-      <MemoryRouter initialEntries={['/tuyendung/app/account/settings/password-login']}>
+      <MemoryRouter initialEntries={['/tuyendung/app/cai-dat/mat-khau']}>
         <EmployerAccountSettingsShell title="Thay đổi mật khẩu">
           <p>Nội dung tab</p>
         </EmployerAccountSettingsShell>

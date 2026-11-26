@@ -63,7 +63,7 @@ describe('CampaignApplyCvPanel', () => {
     expect(screen.getByText('Đã nhận offer')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /chi tiết/i })).toHaveAttribute(
       'href',
-      '/tuyendung/app/applications?campaign=camp_1&application=app_1',
+      '/tuyendung/app/ho-so-ung-tuyen?campaign=camp_1&application=app_1',
     )
     expect(screen.queryByLabelText('Cập nhật trạng thái hồ sơ')).not.toBeInTheDocument()
   })

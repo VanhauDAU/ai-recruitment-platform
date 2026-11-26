@@ -2,6 +2,7 @@ from io import StringIO
 
 from django.core.management import CommandError, call_command
 from django.test import TestCase, override_settings
+from django.utils import translation
 
 from apps.accounts.models import AdminAccessAuditLog, User
 
@@ -26,6 +27,9 @@ def run(email, *, phone='0912345678', reason='Gọi xác nhận với chủ tài
 @override_settings(EMPLOYER_SMS_OTP_ENABLED=False)
 class VerifyEmployerPhoneCommandTests(TestCase):
     def setUp(self):
+        # call_command không tự đặt ngôn ngữ: test chạy trước để lại 'en' thì thông báo
+        # lỗi ra tiếng Anh (fail theo thứ tự shard trên CI).
+        self.enterContext(translation.override('vi'))
         self.user, self.recruiter = make_recruiter('ntd@example.com', phone_verified=False)
         self.admin = User.objects.create_user(
             email='admin@example.com', password='Password@123', role=User.Role.ADMIN

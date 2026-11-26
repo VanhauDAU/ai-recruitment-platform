@@ -211,7 +211,7 @@ describe('employer readiness contract', () => {
   it('maps machine actions without accepting a backend URL', () => {
     expect(employerReadinessAction('verify_phone')).toEqual({
       label: 'Xác thực số điện thoại',
-      to: '/tuyendung/app/account/phone-verify',
+      to: '/tuyendung/app/xac-thuc-so-dien-thoai',
     })
     expect(employerReadinessAction('https://evil.example')).toEqual({
       label: 'Liên hệ hỗ trợ',

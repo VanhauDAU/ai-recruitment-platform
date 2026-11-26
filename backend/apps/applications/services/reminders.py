@@ -34,7 +34,7 @@ from .policy import (
 # A system nudge right after the candidate's own one would remind twice in a day.
 SYSTEM_REMINDER_SKIP_AFTER_CANDIDATE = timedelta(hours=24)
 
-APPLICATIONS_PATH = '/tuyendung/app/applications'
+APPLICATIONS_PATH = '/tuyendung/app/ho-so-ung-tuyen'
 
 
 def candidate_reminder_available_at(application, *, now=None, visible_status=None, policy=None):

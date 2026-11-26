@@ -10,7 +10,7 @@ export default function AccessDenied() {
         title="Không có quyền truy cập"
         subTitle="Khu vực này chỉ dành cho superuser."
         extra={(
-          <Link to={adminPath('/dashboard')}>
+          <Link to={adminPath('/tong-quan')}>
             <Button type="primary">Về bảng điều khiển</Button>
           </Link>
         )}

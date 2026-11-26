@@ -28,11 +28,11 @@ describe('route metadata', () => {
     expect(isIndexableRoute('/blog/huong-dan', 'main')).toBe(true)
     expect(isIndexableRoute('/tai-khoan/thong-tin', 'main')).toBe(false)
     expect(isIndexableRoute('/tai-khoan/cong-ty-dang-theo-doi', 'main')).toBe(false)
-    expect(isIndexableRoute('/admin/app/dashboard', 'admin')).toBe(false)
+    expect(isIndexableRoute('/admin/app/tong-quan', 'admin')).toBe(false)
 
     expect(resolveRouteMetadata({ pathname: '/blog', portal: 'main', settings }).robots)
       .toBe('index, follow')
-    expect(resolveRouteMetadata({ pathname: '/login', portal: 'main', settings }).robots)
+    expect(resolveRouteMetadata({ pathname: '/dang-nhap', portal: 'main', settings }).robots)
       .toBe('noindex, nofollow')
     expect(resolveRouteMetadata({ pathname: '/tro-giup', portal: 'main', settings }).robots)
       .toBe('noindex, nofollow')

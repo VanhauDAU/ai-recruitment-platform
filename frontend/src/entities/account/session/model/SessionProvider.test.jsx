@@ -111,7 +111,7 @@ describe('SessionProvider', () => {
     await act(async () => { await result.current.logout() })
 
     expect(result.current.isAuthenticated).toBe(false)
-    expect(navigate).toHaveBeenCalledWith('/login', {
+    expect(navigate).toHaveBeenCalledWith('/dang-nhap', {
       replace: true,
       state: {
         authWarning: 'Đã đăng xuất trên thiết bị này; chưa thể xác nhận thu hồi phiên trên máy chủ.',
@@ -154,7 +154,7 @@ describe('SessionProvider', () => {
   })
 
   it('sends an employer back to their portal login when the session expires', async () => {
-    window.history.replaceState({}, '', '/tuyendung/app/dashboard')
+    window.history.replaceState({}, '', '/tuyendung/app/tong-quan')
     getCurrentSessionUser.mockResolvedValue({ public_id: 'employer-1', role: 'employer' })
     const { result } = renderHook(() => useSession(), { wrapper })
     await waitFor(() => expect(result.current.isAuthenticated).toBe(true))
@@ -162,7 +162,7 @@ describe('SessionProvider', () => {
     act(() => notifySessionExpired())
 
     expect(result.current.isAuthenticated).toBe(false)
-    expect(navigate).toHaveBeenCalledWith('/tuyendung/app/login', { replace: true })
+    expect(navigate).toHaveBeenCalledWith('/tuyendung/app/dang-nhap', { replace: true })
     expect(message.warning).toHaveBeenCalledTimes(1)
   })
 
@@ -180,7 +180,7 @@ describe('SessionProvider', () => {
   })
 
   it('coalesces a burst of admin permission denials into one refresh and toast', async () => {
-    window.history.replaceState({}, '', '/admin/app/dashboard')
+    window.history.replaceState({}, '', '/admin/app/tong-quan')
     getCurrentSessionUser.mockResolvedValue({
       public_id: 'admin-1',
       role: 'admin',
@@ -201,7 +201,7 @@ describe('SessionProvider', () => {
 
   it('refreshes the visible admin session periodically after the admin tier changes', async () => {
     vi.useFakeTimers()
-    window.history.replaceState({}, '', '/admin/app/dashboard')
+    window.history.replaceState({}, '', '/admin/app/tong-quan')
     getCurrentSessionUser
       .mockResolvedValueOnce({
         public_id: 'admin-1',

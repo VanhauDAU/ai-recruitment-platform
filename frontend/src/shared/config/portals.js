@@ -55,27 +55,27 @@ export const EMPLOYER_PORTAL_URL = import.meta.env.VITE_EMPLOYER_HOST
   : employerMarketingPath('')
 
 export const EMPLOYER_LOGIN_URL = import.meta.env.VITE_EMPLOYER_HOST
-  ? `https://${import.meta.env.VITE_EMPLOYER_HOST}/app/login`
-  : employerAppPath('/login')
+  ? `https://${import.meta.env.VITE_EMPLOYER_HOST}/app/dang-nhap`
+  : employerAppPath('/dang-nhap')
 
-export const EMPLOYER_FORGOT_PASSWORD_URL = employerAppPath('/forgot-password')
-export const EMPLOYER_ACCOUNT_VERIFY_URL = employerAppPath('/account/verify')
-export const EMPLOYER_COMPLETE_PROFILE_URL = employerAppPath('/account/complete-profile')
-export const EMPLOYER_CONSULTING_NEED_URL = employerAppPath('/consulting-need')
-export const EMPLOYER_VERIFY_URL = employerAppPath('/employer-verify')
-export const EMPLOYER_PHONE_VERIFY_URL = employerAppPath('/account/phone-verify')
-export const EMPLOYER_ACCOUNT_SETTINGS_URL = employerAppPath('/account/settings/account-info')
-export const EMPLOYER_PASSWORD_SETTINGS_URL = employerAppPath('/account/settings/password-login')
-export const EMPLOYER_COMPANY_SETTINGS_URL = employerAppPath('/account/settings/company')
-export const EMPLOYER_BUSINESS_LICENSE_URL = employerAppPath('/account/settings/gpkd')
-export const EMPLOYER_DATA_PROTECTION_URL = employerAppPath('/account/settings/personal-data-protection')
-export const EMPLOYER_RECRUITMENT_DEMAND_URL = employerAppPath('/account/settings/recruitment-demand')
-export const EMPLOYER_GENERAL_SETTINGS_URL = employerAppPath('/account/settings/general-setting')
-export const EMPLOYER_INTEGRATIONS_URL = employerAppPath('/account/settings/integrations')
+export const EMPLOYER_FORGOT_PASSWORD_URL = employerAppPath('/quen-mat-khau')
+export const EMPLOYER_ACCOUNT_VERIFY_URL = employerAppPath('/xac-thuc-email')
+export const EMPLOYER_COMPLETE_PROFILE_URL = employerAppPath('/hoan-thien-ho-so')
+export const EMPLOYER_CONSULTING_NEED_URL = employerAppPath('/khai-bao-nhu-cau')
+export const EMPLOYER_VERIFY_URL = employerAppPath('/xac-thuc-tai-khoan')
+export const EMPLOYER_PHONE_VERIFY_URL = employerAppPath('/xac-thuc-so-dien-thoai')
+export const EMPLOYER_ACCOUNT_SETTINGS_URL = employerAppPath('/cai-dat/thong-tin-tai-khoan')
+export const EMPLOYER_PASSWORD_SETTINGS_URL = employerAppPath('/cai-dat/mat-khau')
+export const EMPLOYER_COMPANY_SETTINGS_URL = employerAppPath('/cai-dat/cong-ty')
+export const EMPLOYER_BUSINESS_LICENSE_URL = employerAppPath('/cai-dat/giay-phep-kinh-doanh')
+export const EMPLOYER_DATA_PROTECTION_URL = employerAppPath('/cai-dat/bao-ve-du-lieu-ca-nhan')
+export const EMPLOYER_RECRUITMENT_DEMAND_URL = employerAppPath('/cai-dat/nhu-cau-tuyen-dung')
+export const EMPLOYER_GENERAL_SETTINGS_URL = employerAppPath('/cai-dat/chung')
+export const EMPLOYER_INTEGRATIONS_URL = employerAppPath('/cai-dat/tich-hop')
 
 export const MAIN_LOGIN_URL = import.meta.env.VITE_MAIN_HOST
-  ? `https://${import.meta.env.VITE_MAIN_HOST}/login`
-  : '/login'
+  ? `https://${import.meta.env.VITE_MAIN_HOST}/dang-nhap`
+  : '/dang-nhap'
 
 // Link từ cổng NTD về trang ứng viên (trang chủ main).
 export const MAIN_PORTAL_URL = import.meta.env.VITE_MAIN_HOST
@@ -84,13 +84,13 @@ export const MAIN_PORTAL_URL = import.meta.env.VITE_MAIN_HOST
 
 // Link recovery của ứng viên. Employer có route và template email riêng ở trên.
 export const MAIN_FORGOT_PASSWORD_URL = import.meta.env.VITE_MAIN_HOST
-  ? `https://${import.meta.env.VITE_MAIN_HOST}/forgot-password`
-  : '/forgot-password'
+  ? `https://${import.meta.env.VITE_MAIN_HOST}/quen-mat-khau`
+  : '/quen-mat-khau'
 
 export const HOME_BY_ROLE = {
   candidate: '/',
-  employer: employerAppPath('/dashboard'),
-  admin: adminPath('/dashboard'),
+  employer: employerAppPath('/tong-quan'),
+  admin: adminPath('/tong-quan'),
 }
 
 export function getCurrentPortal() {

@@ -136,7 +136,7 @@ function CvWysiwygDraftEditor({ publicId, onSaved }) {
   if (editor.phase === 'loading' || !editor.document) return <div className="mx-auto max-w-7xl px-4 py-10"><Skeleton active paragraph={{ rows: 12 }} /></div>
   if (!editor.cv) return <div className="mx-auto max-w-3xl px-4 py-12"><Alert type="error" showIcon title="Không thể tải CV" description="Hãy thử tải lại trang hoặc kiểm tra quyền truy cập của bạn." /></div>
   // CV tải lên giữ nguyên tệp gốc; bản đọc từ tệp không phải để sửa tay.
-  if (editor.cv.cv_type === 'uploaded') return <Navigate to={`/cvs/${editor.cv.public_id}/view`} replace />
+  if (editor.cv.cv_type === 'uploaded') return <Navigate to={`/cv/${editor.cv.public_id}/xem`} replace />
 
   const { content_json: content } = editor.document
   const orderedSections = getOrderedSections(editor.document)

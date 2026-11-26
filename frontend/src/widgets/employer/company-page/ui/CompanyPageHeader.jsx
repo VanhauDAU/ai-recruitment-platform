@@ -49,7 +49,7 @@ export default function CompanyPageHeader({ page, completeness }) {
           type="warning"
           title={blocker.message}
           action={VERIFY_BLOCKERS.has(blocker.code) && (
-            <Link to={employerAppPath('/employer-verify')} className={ACTION_LINK}>{m.employer_company_verify_account()}</Link>
+            <Link to={employerAppPath('/xac-thuc-tai-khoan')} className={ACTION_LINK}>{m.employer_company_verify_account()}</Link>
           )}
         />
       )}

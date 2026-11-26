@@ -202,7 +202,7 @@ Theo cổng, không có `/v2/`. `{id}` là `public_id`.
 - **Ứng viên** `/procv-connect` (và `/procv-connect/:id`): layout riêng gọn, logo "ProCV
   Connect" + "Về trang chủ". Ba cột: danh sách hội thoại có ô tìm, khung chat, "Tin tuyển
   dụng đã ứng tuyển" với nút Nhắn tin.
-- **NTD** `/tuyendung/app/connect` trong workspace: danh sách hội thoại, khung chat, cột
+- **NTD** `/tuyendung/app/procv-connect` trong workspace: danh sách hội thoại, khung chat, cột
   phải tóm tắt hồ sơ ứng tuyển và nút Đặt lịch phỏng vấn.
 - **Responsive:** desktop 3 cột; tablet 2 cột, cột phải thành ngăn kéo; mobile danh sách
   ↔ khung chat theo route, ngữ cảnh tin trong bottom sheet.

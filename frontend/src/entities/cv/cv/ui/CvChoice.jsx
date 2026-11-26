@@ -63,7 +63,7 @@ export default function CvChoice({ cv, selected, onSelect, name = 'cv-choice', b
           )}
           {editable && (
             <Link
-              to={`/cvs/${cv.public_id}/edit`}
+              to={`/cv/${cv.public_id}/chinh-sua`}
               target="_blank"
               onClick={(event) => event.stopPropagation()}
               className="cvc__edit"
@@ -72,7 +72,7 @@ export default function CvChoice({ cv, selected, onSelect, name = 'cv-choice', b
             </Link>
           )}
           <Link
-            to={`/cvs/${cv.public_id}/view`}
+            to={`/cv/${cv.public_id}/xem`}
             target="_blank"
             onClick={(event) => event.stopPropagation()}
             className="cvc__view"

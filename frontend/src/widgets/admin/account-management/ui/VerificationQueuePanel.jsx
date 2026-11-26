@@ -309,7 +309,7 @@ export default function VerificationQueuePanel() {
                   type="link"
                   icon={<EyeOutlined />}
                   onClick={() => navigate(
-                    `${adminPath(`/recruiters/${row.user_public_id}`)}?tab=verification`,
+                    `${adminPath(`/nha-tuyen-dung/${row.user_public_id}`)}?tab=verification`,
                     {
                       state: {
                         origin: {

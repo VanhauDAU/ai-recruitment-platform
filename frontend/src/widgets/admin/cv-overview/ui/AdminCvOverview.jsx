@@ -8,11 +8,11 @@ import { AdminPanel, AdminStatCard } from '@/shared/ui/admin'
 
 // Việc cần làm: mỗi dòng nói rõ việc và dẫn tới đúng trang xử lý; dòng bằng 0 không hiện.
 const TODOS = [
-  { key: 'samples_in_review', label: 'Bản AI viết chờ duyệt', hint: 'Đọc và duyệt để ứng viên dùng được', to: '/cv/positions?tab=review' },
-  { key: 'positions_without_content', label: 'Vị trí chỉ có nội dung chung', hint: 'Ứng viên vẫn có nội dung; viết bản riêng sẽ sát nghề hơn', to: '/cv/positions' },
-  { key: 'stale_template_drafts', label: 'Bản nháp mẫu quá 7 ngày', hint: 'Xuất bản hoặc bỏ', to: '/cv/templates' },
-  { key: 'missing_thumbnails', label: 'Màu chưa có ảnh xem trước', hint: 'Ảnh tạo tự động sau khi xuất bản', to: '/cv/templates' },
-  { key: 'failed_generations_7d', label: 'Lần AI viết bị lỗi (7 ngày)', hint: 'Mở vị trí và nhờ AI viết lại', to: '/cv/positions?tab=review' },
+  { key: 'samples_in_review', label: 'Bản AI viết chờ duyệt', hint: 'Đọc và duyệt để ứng viên dùng được', to: '/cv/vi-tri?tab=review' },
+  { key: 'positions_without_content', label: 'Vị trí chỉ có nội dung chung', hint: 'Ứng viên vẫn có nội dung; viết bản riêng sẽ sát nghề hơn', to: '/cv/vi-tri' },
+  { key: 'stale_template_drafts', label: 'Bản nháp mẫu quá 7 ngày', hint: 'Xuất bản hoặc bỏ', to: '/cv/mau-cv' },
+  { key: 'missing_thumbnails', label: 'Màu chưa có ảnh xem trước', hint: 'Ảnh tạo tự động sau khi xuất bản', to: '/cv/mau-cv' },
+  { key: 'failed_generations_7d', label: 'Lần AI viết bị lỗi (7 ngày)', hint: 'Mở vị trí và nhờ AI viết lại', to: '/cv/vi-tri?tab=review' },
 ]
 
 const percent = (value) => (value === null || value === undefined ? '—' : `${value}%`)
@@ -37,7 +37,7 @@ export default function AdminCvOverview() {
       </AdminPanel>
       <AdminPanel title="Mẫu được dùng nhiều" padded={false}>
         <Table size="small" rowKey="public_id" pagination={false} dataSource={data.top_templates} scroll={{ x: 420 }} columns={[
-          { title: 'Mẫu', dataIndex: 'name', render: (name, row) => <Link to={adminPath(`/cv/templates/${row.public_id}`)}>{name}</Link> },
+          { title: 'Mẫu', dataIndex: 'name', render: (name, row) => <Link to={adminPath(`/cv/mau-cv/${row.public_id}`)}>{name}</Link> },
           { title: 'Lượt dùng', dataIndex: 'usage_count', align: 'right' },
           { title: 'CV mới (30 ngày)', dataIndex: 'cvs_30d', align: 'right' },
         ]} />

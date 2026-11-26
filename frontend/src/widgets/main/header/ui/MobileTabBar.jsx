@@ -65,7 +65,7 @@ function AccountSheetContent({ user, isAuthenticated, logout, onClose }) {
     <div className="flex flex-col gap-2 p-4">
       <p className="mb-1 text-sm text-slate-500">{m.candidate_account_guest_hint()}</p>
       <Button block size="large" shape="round" type="primary" onClick={() => { onClose(); promptLogin() }}>{m.candidate_account_sign_in()}</Button>
-      <Button block size="large" shape="round" onClick={() => go('/sign-up')}>{m.candidate_account_sign_up()}</Button>
+      <Button block size="large" shape="round" onClick={() => go('/dang-ky')}>{m.candidate_account_sign_up()}</Button>
       <a href={EMPLOYER_PORTAL_URL} className="mt-1 text-center text-sm font-semibold !text-[var(--brand-primary)]">
         {m.candidate_account_employer_cta()}
       </a>

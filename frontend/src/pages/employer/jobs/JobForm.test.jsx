@@ -69,7 +69,7 @@ function CurrentLocation() {
   return <p data-testid="current-location">{location.pathname + location.search}</p>
 }
 
-function renderPage(initialEntry = '/tuyendung/app/jobs/new') {
+function renderPage(initialEntry = '/tuyendung/app/tin-tuyen-dung/tao-moi') {
   const queryClient = new QueryClient({
     defaultOptions: {
       mutations: { retry: false },
@@ -80,9 +80,9 @@ function renderPage(initialEntry = '/tuyendung/app/jobs/new') {
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[initialEntry]}>
         <Routes>
-          <Route path="/tuyendung/app/jobs/new" element={<JobForm />} />
-          <Route path="/tuyendung/app/jobs/:publicId/edit" element={<JobForm />} />
-          <Route path="/tuyendung/app/jobs/:publicId" element={<CurrentLocation />} />
+          <Route path="/tuyendung/app/tin-tuyen-dung/tao-moi" element={<JobForm />} />
+          <Route path="/tuyendung/app/tin-tuyen-dung/:publicId/chinh-sua" element={<JobForm />} />
+          <Route path="/tuyendung/app/tin-tuyen-dung/:publicId" element={<CurrentLocation />} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -158,7 +158,7 @@ describe('JobForm submission feedback', () => {
       '2026-11',
     )
     expect(await screen.findByTestId('current-location')).toHaveTextContent(
-      '/tuyendung/app/jobs/job_1?active_tab=job',
+      '/tuyendung/app/tin-tuyen-dung/job_1?active_tab=job',
     )
   })
 
@@ -187,13 +187,13 @@ describe('JobForm submission feedback', () => {
         reason_label: 'Có dấu hiệu lừa đảo',
       },
     })
-    renderPage('/tuyendung/app/jobs/job_1/edit')
+    renderPage('/tuyendung/app/tin-tuyen-dung/job_1/chinh-sua')
 
     expect(await screen.findByTestId('job-visibility-hold'))
       .toHaveTextContent('Có dấu hiệu lừa đảo')
     expect(screen.queryByRole('button', { name: 'Mô phỏng đăng tin' })).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Quay lại chi tiết tin' }))
-      .toHaveAttribute('href', '/tuyendung/app/jobs/job_1')
+      .toHaveAttribute('href', '/tuyendung/app/tin-tuyen-dung/job_1')
   })
 
   it('shows a toast when saving a draft fails', async () => {

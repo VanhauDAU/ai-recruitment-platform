@@ -99,6 +99,6 @@ describe('announcement priority resolver', () => {
 
     expect(compliance.message).toBe('DPA cần được cập nhật theo phiên bản hiện hành.')
     expect(compliance.cta.label).toBe('Cập nhật DPA hiện hành')
-    expect(compliance.cta.url).toBe('/tuyendung/app/account/settings/personal-data-protection')
+    expect(compliance.cta.url).toBe('/tuyendung/app/cai-dat/bao-ve-du-lieu-ca-nhan')
   })
 })

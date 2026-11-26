@@ -66,13 +66,13 @@ test('candidate-data guard redirects a denied applications URL to verification a
     await route.fulfill({ contentType: 'application/json', body: '[]' })
   })
 
-  await page.goto('/tuyendung/app/applications?job=jb_private&application=app_private')
+  await page.goto('/tuyendung/app/ho-so-ung-tuyen?job=jb_private&application=app_private')
 
   // Since 7e4c7269 EmployerCapabilityGuard sends a denied route-level request
   // to the verification page instead of rendering the gate in place (see
   // EmployerCapabilityGuard.test.jsx). The security contract is unchanged:
   // the applications API is never called for a denied profile.
-  await expect(page).toHaveURL(/\/tuyendung\/app\/employer-verify$/)
+  await expect(page).toHaveURL(/\/tuyendung\/app\/xac-thuc-tai-khoan$/)
   await expect.poll(() => applicationCalls).toBe(0)
 })
 
@@ -111,9 +111,9 @@ test('job detail keeps aggregate CV count but does not request or render candida
     })
   })
 
-  await page.goto('/tuyendung/app/jobs/jb_private?active_tab=apply_cv')
+  await page.goto('/tuyendung/app/tin-tuyen-dung/jb_private?active_tab=apply_cv')
 
-  await expect(page).toHaveURL(/\/tuyendung\/app\/jobs\/jb_private\?active_tab=apply_cv$/)
+  await expect(page).toHaveURL(/\/tuyendung\/app\/tin-tuyen-dung\/jb_private\?active_tab=apply_cv$/)
   await expect(page.getByRole('heading', { name: 'Kỹ sư bảo mật' })).toBeVisible()
   await expect(page.getByTestId('job-metric-total-cvs')).toContainText('8')
   await expect(page.getByTestId('job-metric-unviewed-cvs')).toContainText('3')
@@ -153,7 +153,7 @@ test('campaign sensitive tabs keep their URLs without mounting Apply CV or Activ
     })
   })
 
-  await page.goto('/tuyendung/app/campaigns/camp_private?active_tab=apply_cv')
+  await page.goto('/tuyendung/app/chien-dich/camp_private?active_tab=apply_cv')
 
   await expect(page).toHaveURL(/active_tab=apply_cv$/)
   await expect(page.getByText('Dữ liệu ứng viên đang được bảo vệ')).toBeVisible()

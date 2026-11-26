@@ -34,7 +34,7 @@ export default function OwnerCvActions({ cv, version }) {
     try {
       const copy = await duplicateCv(cv.public_id)
       message.success('Đã tạo bản sao CV.')
-      navigate(`/cvs/${copy.public_id}/edit`)
+      navigate(`/cv/${copy.public_id}/chinh-sua`)
     } catch (error) {
       message.error(cvApiErrorMessage(error, 'Không thể tạo bản sao CV.'))
     } finally {
@@ -50,7 +50,7 @@ export default function OwnerCvActions({ cv, version }) {
         title={cv.title}
         renderTrigger={({ onClick }) => <button type="button" onClick={onClick} className={VIEWER_ACTION_CLASS}><DownloadOutlined /> Tải CV PDF</button>}
       />
-      <Link to={`/cvs/${cv.public_id}/edit`} className={VIEWER_ACTION_CLASS}><EditOutlined /> Sửa CV</Link>
+      <Link to={`/cv/${cv.public_id}/chinh-sua`} className={VIEWER_ACTION_CLASS}><EditOutlined /> Sửa CV</Link>
       <button type="button" disabled={copying} onClick={copyCv} className={VIEWER_ACTION_CLASS}><CopyOutlined /> Copy CV</button>
     </>
   )

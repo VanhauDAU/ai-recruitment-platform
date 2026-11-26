@@ -7,7 +7,7 @@ function admin(isSuperuser = false) {
 
 describe('resolveAdminDestination', () => {
   it('uses the first navigation route without a return URL', () => {
-    expect(resolveAdminDestination(admin())).toBe('/admin/app/dashboard')
+    expect(resolveAdminDestination(admin())).toBe('/admin/app/tong-quan')
   })
 
   it('keeps a return URL any admin may open', () => {
@@ -15,13 +15,13 @@ describe('resolveAdminDestination', () => {
   })
 
   it('rejects a settings return URL for a regular admin', () => {
-    expect(resolveAdminDestination(admin(), '/admin/app/settings')).toBe('/admin/app/dashboard')
+    expect(resolveAdminDestination(admin(), '/admin/app/cau-hinh')).toBe('/admin/app/tong-quan')
   })
 
   it('accepts a settings return URL for a superuser', () => {
     expect(resolveAdminDestination(
       admin(true),
-      '/admin/app/settings?tab=security',
-    )).toBe('/admin/app/settings?tab=security')
+      '/admin/app/cau-hinh?tab=security',
+    )).toBe('/admin/app/cau-hinh?tab=security')
   })
 })

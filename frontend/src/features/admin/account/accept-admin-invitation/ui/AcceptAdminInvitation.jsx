@@ -51,7 +51,7 @@ export default function AcceptAdminInvitation() {
         subTitle={token
           ? getApiErrorMessage(query.error, 'Liên kết đã hết hạn, bị thu hồi hoặc đã được sử dụng.')
           : 'Liên kết đang thiếu token xác thực.'}
-        extra={<Button href={adminPath('/login')}>Đến trang đăng nhập</Button>}
+        extra={<Button href={adminPath('/dang-nhap')}>Đến trang đăng nhập</Button>}
       />
     )
   }
@@ -68,7 +68,7 @@ export default function AcceptAdminInvitation() {
           icon={<CheckCircleFilled className="text-emerald-600" />}
           title="Tài khoản Admin đã sẵn sàng"
           subTitle="Mật khẩu đã được thiết lập. Đăng nhập cổng quản trị để bắt đầu làm việc."
-          extra={<Button type="primary" href={adminPath('/login')}>Đăng nhập Admin</Button>}
+          extra={<Button type="primary" href={adminPath('/dang-nhap')}>Đăng nhập Admin</Button>}
         />
       </div>
     )
@@ -139,7 +139,7 @@ export default function AcceptAdminInvitation() {
         </Button>
       </Form>
       <p className="mt-5 text-center text-xs text-slate-500">
-        Đã có tài khoản? <Link to={adminPath('/login')}>Đăng nhập Admin</Link>
+        Đã có tài khoản? <Link to={adminPath('/dang-nhap')}>Đăng nhập Admin</Link>
       </p>
     </div>
   )

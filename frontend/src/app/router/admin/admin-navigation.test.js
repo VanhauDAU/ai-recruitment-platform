@@ -64,25 +64,25 @@ describe('admin navigation tree', () => {
   })
 
   it('lights the queue for a queue tab and the directory for the plain list', () => {
-    expect(active('/admin/app/recruiters', '?tab=verification')).toBe('queue-recruiter-verification')
-    expect(active('/admin/app/recruiters', '?q=lan')).toBe('employer-list')
-    expect(active('/admin/app/recruiters/rp_1')).toBe('employer-list')
-    expect(active('/admin/app/companies', '?tab=updates&company=co_1')).toBe('queue-company-updates')
-    expect(active('/admin/app/companies/co_1')).toBe('company-list')
+    expect(active('/admin/app/nha-tuyen-dung', '?tab=verification')).toBe('queue-recruiter-verification')
+    expect(active('/admin/app/nha-tuyen-dung', '?q=lan')).toBe('employer-list')
+    expect(active('/admin/app/nha-tuyen-dung/rp_1')).toBe('employer-list')
+    expect(active('/admin/app/cong-ty', '?tab=updates&company=co_1')).toBe('queue-company-updates')
+    expect(active('/admin/app/cong-ty/co_1')).toBe('company-list')
     expect(active('/admin/app/blog', '?status=draft')).toBe('blog')
-    expect(active('/admin/app/knowledgebase', '?review_due=overdue')).toBe('queue-knowledge-overdue')
+    expect(active('/admin/app/tro-giup', '?review_due=overdue')).toBe('queue-knowledge-overdue')
   })
 
   it('lights the CV item on every CV sub-page', () => {
-    expect(active('/admin/app/cv/overview')).toBe('cv-templates')
-    expect(active('/admin/app/cv/templates/tpl_1')).toBe('cv-templates')
-    expect(active('/admin/app/cv/user-cvs')).toBe('cv-templates')
+    expect(active('/admin/app/cv/tong-quan')).toBe('cv-templates')
+    expect(active('/admin/app/cv/mau-cv/tpl_1')).toBe('cv-templates')
+    expect(active('/admin/app/cv/cv-nguoi-dung')).toBe('cv-templates')
   })
 
   it('keeps the dashboard as a direct top-level destination', () => {
     const dashboard = leaves(tree()).find((leaf) => leaf.key === 'dashboard')
     expect(dashboard).toMatchObject({
-      href: '/admin/app/dashboard',
+      href: '/admin/app/tong-quan',
       breadcrumb: ['Tổng quan'],
       ancestors: [],
     })

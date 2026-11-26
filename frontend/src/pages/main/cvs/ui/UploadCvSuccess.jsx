@@ -36,7 +36,7 @@ export default function UploadCvSuccess({ siteName, cvPublicId }) {
         <CheckCircleFilled className="text-5xl text-[#00b14f]" />
         <h1 className="mt-3 text-2xl font-extrabold text-[#00a848] md:text-3xl">Đã tải lên CV thành công!</h1>
         <div className="mt-5 flex flex-wrap justify-center gap-3">
-          <Link to={`/cvs/${cvPublicId}/view`} target="_blank" rel="noopener noreferrer" className="rounded-full border-2 border-[var(--brand-primary)] !bg-white px-6 py-2.5 font-bold !text-[var(--brand-primary)] transition hover:!bg-[var(--brand-primary-soft)]">
+          <Link to={`/cv/${cvPublicId}/xem`} target="_blank" rel="noopener noreferrer" className="rounded-full border-2 border-[var(--brand-primary)] !bg-white px-6 py-2.5 font-bold !text-[var(--brand-primary)] transition hover:!bg-[var(--brand-primary-soft)]">
             Xem CV tải lên của tôi
           </Link>
           <Link to="/viec-lam" className="rounded-full border-2 border-[var(--brand-primary)] !bg-[var(--brand-primary)] px-6 py-2.5 font-bold !text-white transition hover:!bg-[#009643]">

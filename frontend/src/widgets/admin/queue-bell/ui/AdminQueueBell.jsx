@@ -52,7 +52,7 @@ export default function AdminQueueBell({ summary }) {
           <CheckCircleFilled aria-hidden="true" /> Đã xử lý hết các hàng chờ.
         </p>
       )}
-      <Link to={adminPath('/dashboard')} className="admin-bell__footer" onClick={() => setOpen(false)}>
+      <Link to={adminPath('/tong-quan')} className="admin-bell__footer" onClick={() => setOpen(false)}>
         Mở bảng điều khiển
       </Link>
     </div>

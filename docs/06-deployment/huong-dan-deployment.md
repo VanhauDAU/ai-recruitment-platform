@@ -327,7 +327,7 @@ scripts/deploy/compose.sh exec ml-worker python manage.py matching_backfill --in
 
 - `https://procv.site` hiển thị trang chủ; *View source* của `/viec-lam`,
   `/cong-ty/<slug>`, `/blog/<slug>` có `<title>`/meta riêng (đi qua Django).
-- `/tuyendung`, `/tuyendung/app/login`, `/admin/login` mở được; đăng nhập đủ ba cổng.
+- `/tuyendung`, `/tuyendung/app/dang-nhap`, `/admin/login` mở được; đăng nhập đủ ba cổng.
 - Upload avatar/logo → ảnh có URL `https://media.procv.site/...`.
 - Đăng ký tài khoản mới nhận được email xác thực.
 - Xuất PDF một CV thành công (worker → `http://web:8080/cv-print.html`).

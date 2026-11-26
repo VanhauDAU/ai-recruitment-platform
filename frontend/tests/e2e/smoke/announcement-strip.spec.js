@@ -218,7 +218,7 @@ test('announcement strip: employer workspace keeps its measured 100dvh shell', {
   })
   await routeAnnouncementFeed(page)
 
-  await page.goto('/tuyendung/app/dashboard')
+  await page.goto('/tuyendung/app/tong-quan')
   await expectHealthyStrip(
     page,
     FEEDS.employer_workspace,
@@ -285,7 +285,7 @@ test('announcement strip: admin workspace remains below its responsive topbar', 
     })
   })
 
-  await page.goto('/admin/app/dashboard')
+  await page.goto('/admin/app/tong-quan')
   await expectHealthyStrip(
     page,
     FEEDS.admin_workspace,

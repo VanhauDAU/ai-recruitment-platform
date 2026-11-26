@@ -64,7 +64,7 @@ class EmployerNotificationApiTests(APITestCase):
             recipient=self.employer,
             event_type=EmployerNotification.EventType.APPLICATION_RECEIVED,
             dedupe_key='application:1',
-            action_path='/tuyendung/app/applications?application=app_1',
+            action_path='/tuyendung/app/ho-so-ung-tuyen?application=app_1',
         )
         _, old = emit_employer_event(
             recipient=self.employer,
@@ -89,7 +89,7 @@ class EmployerNotificationApiTests(APITestCase):
         self.assertEqual(row['public_id'], application.public_id)
         self.assertEqual(row['category'], 'applications')
         self.assertEqual(row['actor_kind'], 'system')
-        self.assertEqual(row['action_path'], '/tuyendung/app/applications?application=app_1')
+        self.assertEqual(row['action_path'], '/tuyendung/app/ho-so-ung-tuyen?application=app_1')
         self.assertEqual(recent.data['category_counts']['all'], 2)
         self.assertEqual(len(everything.data['daily_counts']), 14)
         self.assertEqual(everything.data['daily_counts'][-1]['count'], 2)
