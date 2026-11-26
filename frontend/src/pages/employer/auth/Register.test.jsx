@@ -112,7 +112,7 @@ describe('EmployerRegister', () => {
       captcha_token: 'captcha-token',
     }))
     expect(success).toHaveBeenCalledWith('Đăng ký thành công.', {
-      className: 'app-toast--sound-done',
+      className: 'app-toast--sound-celebrate',
     })
   })
 })

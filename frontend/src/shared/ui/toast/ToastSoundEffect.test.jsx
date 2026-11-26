@@ -88,4 +88,39 @@ describe('ToastSoundEffect', () => {
     await waitFor(() => expect(audio.sourceStart).toHaveBeenCalledTimes(1))
     expect(audio.fetch).toHaveBeenCalledWith('/audio/effects/notification.mp3')
   })
+
+  it('fetches the celebrate sound only when it first plays, not on unlock', async () => {
+    render(<ToastSoundEffect />)
+    act(() => window.dispatchEvent(new Event('pointerdown')))
+    await waitFor(() => expect(audio.fetch).toHaveBeenCalledWith('/audio/effects/done.mp3'))
+    expect(audio.fetch).not.toHaveBeenCalledWith('/audio/effects/celebrate.mp3')
+
+    appendToast('app-toast--sound-celebrate')
+
+    await waitFor(() => {
+      expect(audio.fetch).toHaveBeenCalledWith('/audio/effects/celebrate.mp3')
+      expect(audio.sourceStart).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  it('keeps the celebrate sound silent while the sound switch is off', async () => {
+    localStorage.setItem('procv:notification-sound', 'off')
+    render(<ToastSoundEffect />)
+    appendToast('app-toast--sound-celebrate')
+    appendToast('app-toast--sound-done')
+
+    await waitFor(() => expect(audio.sourceStart).toHaveBeenCalledTimes(1))
+    expect(audio.fetch).not.toHaveBeenCalledWith('/audio/effects/celebrate.mp3')
+    localStorage.removeItem('procv:notification-sound')
+  })
+
+  it('does not break the workflow when playback is blocked', async () => {
+    audio.resume.mockRejectedValueOnce(new Error('NotAllowedError'))
+    audio.fetch.mockRejectedValueOnce(new Error('offline'))
+    render(<ToastSoundEffect />)
+
+    expect(() => appendToast('app-toast--sound-celebrate')).not.toThrow()
+    await waitFor(() => expect(audio.fetch).toHaveBeenCalledWith('/audio/effects/celebrate.mp3'))
+    expect(audio.sourceStart).not.toHaveBeenCalled()
+  })
 })

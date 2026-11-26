@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { getSoundEffect, getToastSoundName, SOUND_EFFECTS } from '@/shared/lib/sound-effects'
+import { getSoundEffect, getToastSoundName, isSoundOn, SOUND_EFFECTS } from '@/shared/lib/sound-effects'
 
 const TOAST_SELECTOR = '[data-sonner-toast]'
 
@@ -52,7 +52,7 @@ export default function ToastSoundEffect() {
     const unlockAudio = () => {
       const audioContext = getAudioContext()
       if (audioContext?.state === 'suspended') audioContext.resume().catch(() => {})
-      Object.keys(SOUND_EFFECTS).forEach((name) => loadSound(name))
+      Object.entries(SOUND_EFFECTS).forEach(([name, effect]) => effect.preload !== false && loadSound(name))
     }
 
     const playSound = (name, buffer) => {
@@ -77,7 +77,7 @@ export default function ToastSoundEffect() {
       if (!audioContext) return
 
       const soundName = getToastSoundName(toast)
-      if (!soundName) return
+      if (!soundName || (getSoundEffect(soundName).followsMute && !isSoundOn())) return
       const ready = audioContext.state === 'running'
         ? Promise.resolve()
         : audioContext.resume().catch(() => {})

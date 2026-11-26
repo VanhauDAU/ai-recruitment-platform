@@ -24,6 +24,7 @@ import {
   EMPLOYER_PHONE_VERIFY_URL,
 } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
+import { toastSoundOptions } from '@/shared/lib/sound-effects'
 import { getPasswordSetupFromPhoneUrl } from '../model/phone-verification-navigation'
 import { isVietnameseMobile } from '../model/vietnamese-mobile'
 import EmployerPhoneChallengeForm from './EmployerPhoneChallengeForm'
@@ -117,11 +118,8 @@ export default function EmployerPhoneVerification() {
   const verifyMutation = useMutation({
     mutationFn: ({ code }) => verifyEmployerPhoneOtp(challenge.public_id, code),
     onSuccess: async () => {
-      message.success(
-        flowMode === 'phone_change'
-          ? m.employer_account_phone_new_verified()
-          : m.employer_account_phone_verified_toast(),
-      )
+      if (flowMode === 'phone_change') message.success(m.employer_account_phone_new_verified())
+      else message.success(m.employer_account_phone_verified_toast(), toastSoundOptions('celebrate'))
       // Load the verified state first: resetting the flow before the profile
       // refreshes showed the empty verification form again for a moment.
       await Promise.all([
