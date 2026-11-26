@@ -102,11 +102,23 @@ const PORTAL_PAIRS = [
   ...(IS_EMPLOYER_HOST ? [] : LEGACY_ADMIN_PATHS),
 ]
 
-/** Path hiện hành cho một path cũ, hoặc `null` nếu không phải path cũ. */
-export function resolveLegacyPath(pathname, pairs = PORTAL_PAIRS) {
+// Base cũ của cổng quản trị khi chạy chung domain; nay là `adminPath('')` (/quan-tri).
+const LEGACY_ADMIN_BASE = '/admin/app'
+
+function matchPairs(pathname, pairs) {
   for (const [from, to] of pairs) {
     const match = matchPath(from, pathname)
     if (match) return generatePath(to, match.params)
   }
   return null
+}
+
+/** Path hiện hành cho một path cũ, hoặc `null` nếu không phải path cũ. */
+export function resolveLegacyPath(pathname, pairs = PORTAL_PAIRS) {
+  const legacyAdmin = !IS_ADMIN_HOST && !IS_EMPLOYER_HOST
+    && (pathname === LEGACY_ADMIN_BASE || pathname.startsWith(`${LEGACY_ADMIN_BASE}/`))
+  if (!legacyAdmin) return matchPairs(pathname, pairs)
+  // `/admin/app/accounts` → `/quan-tri/accounts` → `/quan-tri/tai-khoan` trong một bước.
+  const current = adminPath(pathname.slice(LEGACY_ADMIN_BASE.length))
+  return matchPairs(current, pairs) ?? current
 }

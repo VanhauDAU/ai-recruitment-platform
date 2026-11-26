@@ -34,7 +34,7 @@ và chấm độ phù hợp CV–tin tuyển dụng bằng mô hình ngôn ngữ
 | --- | --- | --- |
 | 🎯 **Ứng viên** | `/` | Tìm việc, tạo và quản lý CV, ứng tuyển, xem độ phù hợp với tin |
 | 🏢 **Nhà tuyển dụng** | `/tuyendung` (giới thiệu) · `/tuyendung/app` (workspace) | Xác thực doanh nghiệp, trang công ty, chiến dịch, tin tuyển dụng, xử lý hồ sơ |
-| 🛡️ **Quản trị** | `/admin/app` | Duyệt xác thực, hậu kiểm tin, quản lý tài khoản, nội dung và cấu hình |
+| 🛡️ **Quản trị** | `/quan-tri` | Duyệt xác thực, hậu kiểm tin, quản lý tài khoản, nội dung và cấu hình |
 
 Mỗi cổng là một tài khoản riêng: cùng một email có thể có một tài khoản ứng viên
 và một tài khoản nhà tuyển dụng, mật khẩu và phiên đăng nhập tách biệt.
@@ -225,7 +225,7 @@ docker compose exec backend python manage.py createsuperuser
 | --- | --- |
 | Website | http://localhost:5173 |
 | Cổng nhà tuyển dụng | http://localhost:5173/tuyendung |
-| Cổng quản trị | http://localhost:5173/admin/app |
+| Cổng quản trị | http://localhost:5173/quan-tri |
 | API | http://localhost:8000/api |
 | Swagger UI / ReDoc | http://localhost:8000/api/docs/ · http://localhost:8000/api/redoc/ |
 | PostgreSQL (từ máy host) | `localhost:5433` · DB `ai_career_coach` |

@@ -282,7 +282,7 @@ test('announcement strip: admin workspace remains below its responsive topbar', 
     })
   })
 
-  await page.goto('/admin/app/tong-quan')
+  await page.goto('/quan-tri/tong-quan')
   await expectHealthyStrip(
     page,
     FEEDS.admin_workspace,

@@ -21,7 +21,7 @@ cổng và trang chủ theo role. Dev chạy cùng host; production có thể t�
 | --- | --- | --- |
 | `main` | `/` | Ứng viên và khách |
 | `employer` | `/tuyendung` (marketing), `/tuyendung/app` (workspace) | Nhà tuyển dụng |
-| `admin` | `/admin` | Quản trị viên (superuser hoặc admin, ADR-0018) |
+| `admin` | `/quan-tri` | Quản trị viên (superuser hoặc admin, ADR-0018) |
 
 ## Cấu trúc `src`
 

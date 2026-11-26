@@ -11,8 +11,8 @@ có thao tác duyệt/từ chối. Quy tắc nghiệp vụ đầy đủ ở
 
 | Route | Page | Quyền |
 | --- | --- | --- |
-| `/admin/app/duyet-tin` | `pages/admin/jobs/JobModeration.jsx` | `job_moderation.view` |
-| `/admin/app/duyet-tin/:publicId` | `pages/admin/jobs/JobModerationDetail.jsx` | `job_moderation.view` |
+| `/quan-tri/duyet-tin` | `pages/admin/jobs/JobModeration.jsx` | `job_moderation.view` |
+| `/quan-tri/duyet-tin/:publicId` | `pages/admin/jobs/JobModerationDetail.jsx` | `job_moderation.view` |
 
 Route đăng ký ở `app/router/admin/admin-routes.config.js`, loader lazy ở
 `app/router/lazy/admin.pages.js`. Mục menu "Quản lý tin tuyển dụng".

@@ -180,7 +180,7 @@ describe('SessionProvider', () => {
   })
 
   it('coalesces a burst of admin permission denials into one refresh and toast', async () => {
-    window.history.replaceState({}, '', '/admin/app/tong-quan')
+    window.history.replaceState({}, '', '/quan-tri/tong-quan')
     getCurrentSessionUser.mockResolvedValue({
       public_id: 'admin-1',
       role: 'admin',
@@ -201,7 +201,7 @@ describe('SessionProvider', () => {
 
   it('refreshes the visible admin session periodically after the admin tier changes', async () => {
     vi.useFakeTimers()
-    window.history.replaceState({}, '', '/admin/app/tong-quan')
+    window.history.replaceState({}, '', '/quan-tri/tong-quan')
     getCurrentSessionUser
       .mockResolvedValueOnce({
         public_id: 'admin-1',

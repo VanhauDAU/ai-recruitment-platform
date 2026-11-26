@@ -29,7 +29,7 @@ function LocationProbe() {
   return <output data-testid="location">{`${location.pathname}${location.search}`}</output>
 }
 
-function renderWorkspace({ initialEntry = '/admin/app/cong-ty' } = {}) {
+function renderWorkspace({ initialEntry = '/quan-tri/cong-ty' } = {}) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
@@ -37,7 +37,7 @@ function renderWorkspace({ initialEntry = '/admin/app/cong-ty' } = {}) {
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[initialEntry]}>
         <Routes>
-          <Route path="/admin/app/cong-ty" element={<AdminCompanyWorkspace />} />
+          <Route path="/quan-tri/cong-ty" element={<AdminCompanyWorkspace />} />
           <Route path="*" element={null} />
         </Routes>
         <LocationProbe />
@@ -59,7 +59,7 @@ describe('AdminCompanyWorkspace', () => {
   })
 
   it('opens the requested company update tab with its company filter', async () => {
-    renderWorkspace({ initialEntry: '/admin/app/cong-ty?tab=updates&company=co_alpha' })
+    renderWorkspace({ initialEntry: '/quan-tri/cong-ty?tab=updates&company=co_alpha' })
 
     expect(screen.getByRole('tab', { name: 'Yêu cầu cập nhật' })).toHaveAttribute(
       'aria-selected',
@@ -118,7 +118,7 @@ describe('AdminCompanyWorkspace', () => {
         created_at: '2026-07-01T08:00:00Z',
       }],
     })
-    renderWorkspace({ initialEntry: '/admin/app/cong-ty?tab=updates' })
+    renderWorkspace({ initialEntry: '/quan-tri/cong-ty?tab=updates' })
 
     expect(await screen.findByText('Công ty Alpha')).toBeInTheDocument()
     expect(screen.getByText('Tên pháp lý')).toBeInTheDocument()
@@ -136,7 +136,7 @@ describe('AdminCompanyWorkspace', () => {
     await user.click(open)
 
     expect(screen.getByTestId('location')).toHaveTextContent(
-      '/admin/app/nha-tuyen-dung/usr_owner?tab=verification&company_update=cur_alpha',
+      '/quan-tri/nha-tuyen-dung/usr_owner?tab=verification&company_update=cur_alpha',
     )
   })
 })

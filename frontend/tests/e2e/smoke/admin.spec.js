@@ -7,7 +7,7 @@ test('admin smoke: login loads and dashboard stays role-protected', { tag: '@res
   // scale with the route table instead of sharing a single 30s test timeout.
   test.slow()
   await mockPublicApi(page)
-  await page.goto('/admin/app/dang-nhap')
+  await page.goto('/quan-tri/dang-nhap')
   await expect(page.getByRole('heading', { name: 'Đăng nhập quản trị' })).toBeVisible()
   await expectAnimatedLoginButton(page)
   await expect(page.getByText(/quên mật khẩu\? liên hệ kỹ thuật/i)).toBeVisible()
@@ -18,8 +18,8 @@ test('admin smoke: login loads and dashboard stays role-protected', { tag: '@res
   )
 
   for (const route of ADMIN_ROUTES) {
-    await page.goto(`/admin/app${route.segment}`)
-    await expect(page).toHaveURL(/\/admin\/app\/dang-nhap\?returnUrl=/)
+    await page.goto(`/quan-tri${route.segment}`)
+    await expect(page).toHaveURL(/\/quan-tri\/dang-nhap\?returnUrl=/)
   }
 })
 
@@ -149,15 +149,15 @@ test('admin account management: filters, table actions and quick detail are resp
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })
 
-  await page.goto('/admin/app/tai-khoan')
-  await expect(page).toHaveURL('/admin/app/tai-khoan')
+  await page.goto('/quan-tri/tai-khoan')
+  await expect(page).toHaveURL('/quan-tri/tai-khoan')
   await expect.poll(() => pageErrors).toEqual([])
   if (usesNavigationDrawer) {
     await page.getByRole('button', { name: 'Mở điều hướng' }).click()
   }
   const adminNavigation = page.getByRole('navigation', { name: 'Điều hướng quản trị' })
   await expect(adminNavigation.getByRole('link', { name: 'Tổng quan' }))
-    .toHaveAttribute('href', '/admin/app/tong-quan')
+    .toHaveAttribute('href', '/quan-tri/tong-quan')
   // Accordion: the current page's group opens and closes the queues.
   await expect(adminNavigation.getByRole('button', { name: 'Cần xử lý' }))
     .toHaveAttribute('aria-expanded', 'false')
@@ -187,7 +187,7 @@ test('admin account management: filters, table actions and quick detail are resp
   await page.keyboard.press('Escape')
   await expect(quickDrawer).toBeHidden()
 
-  await page.goto('/admin/app/nha-tuyen-dung?tab=verification')
+  await page.goto('/quan-tri/nha-tuyen-dung?tab=verification')
   await expect(page.getByRole('heading', {
     name: 'Xác thực NTD',
     exact: true,
@@ -208,7 +208,7 @@ test('admin account management: filters, table actions and quick detail are resp
     await page.locator('html').evaluate((element) => element.clientWidth),
   )
 
-  await page.goto('/admin/app/nha-tuyen-dung?tab=domain-verification')
+  await page.goto('/quan-tri/nha-tuyen-dung?tab=domain-verification')
   const domainTab = page.getByRole('tab', { name: 'Xác minh domain' })
   await expect(domainTab).toHaveAttribute('aria-selected', 'true')
   await expect(page.getByText('company.vn', { exact: true })).toBeVisible()
@@ -293,7 +293,7 @@ test('admin recruiter workspace: segments, next action and quick view', { tag: '
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })
 
-  await page.goto('/admin/app/nha-tuyen-dung')
+  await page.goto('/quan-tri/nha-tuyen-dung')
   const segments = page.getByRole('group', { name: 'Tổng quan nhà tuyển dụng' })
   await expect(segments).toBeVisible({ timeout: 15_000 })
   await expect(page.getByPlaceholder('Tìm tên, email, công ty, MST hoặc số điện thoại…')).toBeVisible()
@@ -305,7 +305,7 @@ test('admin recruiter workspace: segments, next action and quick view', { tag: '
   expect(listRequests.at(-1)).toMatchObject({ next_action: 'admin_queue', ordering: 'next_action' })
 
   const cta = page.getByRole('link', { name: 'Duyệt xác thực' }).first()
-  await expect(cta).toHaveAttribute('href', '/admin/app/nha-tuyen-dung/usr_overdue?tab=verification')
+  await expect(cta).toHaveAttribute('href', '/quan-tri/nha-tuyen-dung/usr_overdue?tab=verification')
   await expect(page.getByText('Hồ sơ quá hạn 72 giờ').first()).toBeVisible()
 
   await page.getByRole('button', { name: 'Xem nhanh Trần Quá Hạn' }).click()
@@ -352,7 +352,7 @@ test('regular admin: candidate accounts only, no admin accounts, invitations or 
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })
 
-  await page.goto('/admin/app/tai-khoan?tab=invitations')
+  await page.goto('/quan-tri/tai-khoan?tab=invitations')
   await expect(page.getByRole('tab', { name: /Ứng viên/ })).toHaveAttribute('aria-selected', 'true', {
     timeout: 15_000,
   })
@@ -362,8 +362,8 @@ test('regular admin: candidate accounts only, no admin accounts, invitations or 
   await expect.poll(() => accountRequests).toContain('candidate')
   expect(accountRequests).not.toContain('admin')
 
-  await page.goto('/admin/app/cau-hinh')
-  await expect(page).toHaveURL('/admin/app/khong-co-quyen')
+  await page.goto('/quan-tri/cau-hinh')
+  await expect(page).toHaveURL('/quan-tri/khong-co-quyen')
 })
 
 test('superuser recovers email, then sends password reset', { tag: '@responsive' }, async ({ page }) => {
@@ -473,7 +473,7 @@ test('superuser recovers email, then sends password reset', { tag: '@responsive'
     })
   })
 
-  await page.goto('/admin/app/tai-khoan/usr_recovery?tab=security')
+  await page.goto('/quan-tri/tai-khoan/usr_recovery?tab=security')
   await expect(page.getByRole('heading', { name: 'Nguyễn Cần Hỗ Trợ' })).toBeVisible()
   // Tab Bảo mật xử lý theo tình huống; tiến trình khôi phục chỉ hiện sau khi đổi email.
   await expect(page.getByRole('heading', { name: 'Không đăng nhập được' })).toBeVisible()
@@ -832,7 +832,7 @@ test('admin employer detail: company media and compact verification comparison r
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })
 
-  await page.goto('/admin/app/nha-tuyen-dung/usr_employer')
+  await page.goto('/quan-tri/nha-tuyen-dung/usr_employer')
   await expect(page.getByLabel('Số liệu nhà tuyển dụng')).toBeVisible()
   await expect(page.getByLabel('Tóm tắt nhà tuyển dụng')).toContainText('FPT Software')
   await expect(page.getByRole('heading', { name: 'Hồ sơ nhà tuyển dụng' })).toBeVisible()
@@ -841,9 +841,9 @@ test('admin employer detail: company media and compact verification comparison r
     await page.locator('html').evaluate((element) => element.clientWidth),
   )
 
-  await page.goto('/admin/app/tai-khoan/usr_employer?tab=company')
+  await page.goto('/quan-tri/tai-khoan/usr_employer?tab=company')
 
-  await expect(page).toHaveURL(/\/admin\/app\/nha-tuyen-dung\/usr_employer\?tab=company$/)
+  await expect(page).toHaveURL(/\/quan-tri\/nha-tuyen-dung\/usr_employer\?tab=company$/)
   await expect(page.getByRole('tab', { name: 'Công ty' })).toHaveAttribute('aria-selected', 'true')
   await expect(page.getByRole('img', { name: 'Logo FPT Software' })).toBeVisible()
   await expect(page.getByRole('img', { name: 'Ảnh bìa FPT Software' })).toBeVisible()
@@ -855,10 +855,10 @@ test('admin employer detail: company media and compact verification comparison r
     await page.locator('html').evaluate((element) => element.clientWidth),
   )
 
-  await page.goto('/admin/app/tai-khoan/usr_employer?tab=verification&company_update=cur_1')
+  await page.goto('/quan-tri/tai-khoan/usr_employer?tab=verification&company_update=cur_1')
 
   await expect(page).toHaveURL(
-    /\/admin\/app\/nha-tuyen-dung\/usr_employer\?tab=verification&company_update=cur_1$/,
+    /\/quan-tri\/nha-tuyen-dung\/usr_employer\?tab=verification&company_update=cur_1$/,
   )
   await expect(page.getByRole('tab', { name: 'Xác thực' })).toHaveAttribute('aria-selected', 'true')
   await expect(page.getByRole('region', {
@@ -912,7 +912,7 @@ test('admin employer detail: company media and compact verification comparison r
   await page.keyboard.press('Escape')
 
   // Activity: grouped by day, clock times, filterable by category.
-  await page.goto('/admin/app/nha-tuyen-dung/usr_employer?tab=activity')
+  await page.goto('/quan-tri/nha-tuyen-dung/usr_employer?tab=activity')
   const timeline = page.getByRole('region', { name: 'Nhật ký hoạt động' })
   await expect(timeline.getByText('Hôm nay')).toBeVisible()
   await expect(timeline.getByText('Đăng nhập cổng NTD')).toBeVisible()
@@ -943,7 +943,7 @@ test('admin invitation acceptance activates the account with a password', async 
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })
 
-  await page.goto('/admin/app/loi-moi?token=signed-token')
+  await page.goto('/quan-tri/loi-moi?token=signed-token')
   await expect(page).toHaveTitle('Hoàn tất tài khoản quản trị | Quản trị ProCV')
   await expect(page.getByRole('heading', { name: 'Hoàn tất tài khoản quản trị' })).toBeVisible()
   await expect(page.getByText('new-admin@example.com')).toBeVisible()
@@ -977,7 +977,7 @@ test('admin password reset stays on the Admin portal', async ({ page }) => {
     })
   })
 
-  await page.goto('/admin/app/dat-lai-mat-khau?token=admin-reset-token')
+  await page.goto('/quan-tri/dat-lai-mat-khau?token=admin-reset-token')
   await expect(page).toHaveTitle('Đặt lại mật khẩu quản trị | Quản trị ProCV')
   await expect(page.getByRole('heading', { name: 'Đặt lại mật khẩu quản trị' })).toBeVisible()
   await page.getByLabel('Mật khẩu mới').fill('StrongPass123')
@@ -1101,10 +1101,10 @@ test('admin job management: list, detail and revision-bound hide workflow', { ta
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })
 
-  await page.goto('/admin/app/duyet-tin')
+  await page.goto('/quan-tri/duyet-tin')
   await expect(page.getByText('Backend Engineer', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Xem chi tiết' }).click()
-  await expect(page).toHaveURL('/admin/app/duyet-tin/job_active')
+  await expect(page).toHaveURL('/quan-tri/duyet-tin/job_active')
   await expect(page).toHaveTitle('Chi tiết tin tuyển dụng | Quản trị ProCV')
   const contentTab = page.getByRole('tab', { name: 'Nội dung', exact: true })
   const contactTab = page.getByRole('tab', { name: 'Nhận hồ sơ' })
@@ -1125,7 +1125,7 @@ test('admin job management: list, detail and revision-bound hide workflow', { ta
   await expect(page.getByRole('button', { name: 'Duyệt tin' })).toHaveCount(0)
   await expect(page.getByRole('link', { name: 'Mở hồ sơ xác thực' })).toHaveAttribute(
     'href',
-    '/admin/app/nha-tuyen-dung/usr_employer?tab=verification',
+    '/quan-tri/nha-tuyen-dung/usr_employer?tab=verification',
   )
 
   await page.getByRole('button', { name: 'Tạm ẩn tin' }).click()
@@ -1207,7 +1207,7 @@ test('admin job reports: deep link, filter and resolve workflow', { tag: '@respo
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })
 
-  await page.goto('/admin/app/duyet-tin?tab=reports')
+  await page.goto('/quan-tri/duyet-tin?tab=reports')
   await expect(page.getByRole('tab', { name: 'Báo cáo vi phạm' })).toHaveAttribute(
     'aria-selected',
     'true',
@@ -1288,11 +1288,11 @@ test('admin company reports: queue resolves a report and can hide the company pa
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })
 
-  await page.goto('/admin/app/bao-cao-cong-ty')
+  await page.goto('/quan-tri/bao-cao-cong-ty')
   await expect(page.getByRole('heading', { level: 1, name: 'Báo cáo công ty' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Alpha', exact: true })).toHaveAttribute(
     'href',
-    '/admin/app/cong-ty/co_alpha?tab=public-page',
+    '/quan-tri/cong-ty/co_alpha?tab=public-page',
   )
   await expect(page.getByText('Phần: Giới thiệu công ty')).toBeVisible()
   expect(listRequests[0]).toEqual({ status: 'pending', ordering: '-created_at', page: '1' })
@@ -1315,7 +1315,7 @@ test('admin company reports: queue resolves a report and can hide the company pa
 
   await page.getByRole('combobox', { name: 'Lọc trạng thái báo cáo' }).click()
   await page.locator('.ant-select-item-option-content', { hasText: 'Đã xác nhận vi phạm' }).click()
-  await expect(page).toHaveURL(/\/admin\/app\/bao-cao-cong-ty\?status=upheld$/)
+  await expect(page).toHaveURL(/\/quan-tri\/bao-cao-cong-ty\?status=upheld$/)
   await expect(page.getByText('Đang tạm ẩn')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Gỡ kết luận' })).toBeVisible()
   await expect(page.locator('html')).toHaveJSProperty(

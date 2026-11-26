@@ -3,7 +3,7 @@ import { useLocation } from 'react-router'
 import { settingText, useSiteSettings } from '@/entities/system/site-settings'
 import { subscribeToMaintenance } from '@/shared/api/maintenance-events'
 import { m } from '@/shared/config/i18n'
-import { adminPath, IS_ADMIN_HOST } from '@/shared/config/portals'
+import { isAdminPath } from '@/shared/config/portals'
 
 const MaintenanceScreen = lazy(() => import('./MaintenanceScreen'))
 
@@ -19,7 +19,7 @@ export default function MaintenanceGate({ children }) {
 
   useEffect(() => subscribeToMaintenance((message) => setReported(message)), [])
 
-  const isAdmin = IS_ADMIN_HOST || pathname.startsWith(adminPath('')) || pathname.startsWith('/admin')
+  const isAdmin = isAdminPath(pathname)
   if (isAdmin || (settings.maintenance_mode !== true && reported === null)) return children
 
   const message = reported || settingText(settings.maintenance_message, m.common_maintenance_default_message())

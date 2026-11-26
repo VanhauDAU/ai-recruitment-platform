@@ -7,21 +7,21 @@ function admin(isSuperuser = false) {
 
 describe('resolveAdminDestination', () => {
   it('uses the first navigation route without a return URL', () => {
-    expect(resolveAdminDestination(admin())).toBe('/admin/app/tong-quan')
+    expect(resolveAdminDestination(admin())).toBe('/quan-tri/tong-quan')
   })
 
   it('keeps a return URL any admin may open', () => {
-    expect(resolveAdminDestination(admin(), '/admin/app/blog')).toBe('/admin/app/blog')
+    expect(resolveAdminDestination(admin(), '/quan-tri/blog')).toBe('/quan-tri/blog')
   })
 
   it('rejects a settings return URL for a regular admin', () => {
-    expect(resolveAdminDestination(admin(), '/admin/app/cau-hinh')).toBe('/admin/app/tong-quan')
+    expect(resolveAdminDestination(admin(), '/quan-tri/cau-hinh')).toBe('/quan-tri/tong-quan')
   })
 
   it('accepts a settings return URL for a superuser', () => {
     expect(resolveAdminDestination(
       admin(true),
-      '/admin/app/cau-hinh?tab=security',
-    )).toBe('/admin/app/cau-hinh?tab=security')
+      '/quan-tri/cau-hinh?tab=security',
+    )).toBe('/quan-tri/cau-hinh?tab=security')
   })
 })

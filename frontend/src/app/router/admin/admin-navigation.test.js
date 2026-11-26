@@ -64,25 +64,25 @@ describe('admin navigation tree', () => {
   })
 
   it('lights the queue for a queue tab and the directory for the plain list', () => {
-    expect(active('/admin/app/nha-tuyen-dung', '?tab=verification')).toBe('queue-recruiter-verification')
-    expect(active('/admin/app/nha-tuyen-dung', '?q=lan')).toBe('employer-list')
-    expect(active('/admin/app/nha-tuyen-dung/rp_1')).toBe('employer-list')
-    expect(active('/admin/app/cong-ty', '?tab=updates&company=co_1')).toBe('queue-company-updates')
-    expect(active('/admin/app/cong-ty/co_1')).toBe('company-list')
-    expect(active('/admin/app/blog', '?status=draft')).toBe('blog')
-    expect(active('/admin/app/tro-giup', '?review_due=overdue')).toBe('queue-knowledge-overdue')
+    expect(active('/quan-tri/nha-tuyen-dung', '?tab=verification')).toBe('queue-recruiter-verification')
+    expect(active('/quan-tri/nha-tuyen-dung', '?q=lan')).toBe('employer-list')
+    expect(active('/quan-tri/nha-tuyen-dung/rp_1')).toBe('employer-list')
+    expect(active('/quan-tri/cong-ty', '?tab=updates&company=co_1')).toBe('queue-company-updates')
+    expect(active('/quan-tri/cong-ty/co_1')).toBe('company-list')
+    expect(active('/quan-tri/blog', '?status=draft')).toBe('blog')
+    expect(active('/quan-tri/tro-giup', '?review_due=overdue')).toBe('queue-knowledge-overdue')
   })
 
   it('lights the CV item on every CV sub-page', () => {
-    expect(active('/admin/app/cv/tong-quan')).toBe('cv-templates')
-    expect(active('/admin/app/cv/mau-cv/tpl_1')).toBe('cv-templates')
-    expect(active('/admin/app/cv/cv-nguoi-dung')).toBe('cv-templates')
+    expect(active('/quan-tri/cv/tong-quan')).toBe('cv-templates')
+    expect(active('/quan-tri/cv/mau-cv/tpl_1')).toBe('cv-templates')
+    expect(active('/quan-tri/cv/cv-nguoi-dung')).toBe('cv-templates')
   })
 
   it('keeps the dashboard as a direct top-level destination', () => {
     const dashboard = leaves(tree()).find((leaf) => leaf.key === 'dashboard')
     expect(dashboard).toMatchObject({
-      href: '/admin/app/tong-quan',
+      href: '/quan-tri/tong-quan',
       breadcrumb: ['Tổng quan'],
       ancestors: [],
     })
