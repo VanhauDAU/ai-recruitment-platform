@@ -58,6 +58,7 @@ ml/
     audit_human.json      nhãn người chấm, xuất từ trang chấm mù (có khi người chấm xong)
     skill_merge.json      gộp kỹ năng trùng nghĩa khi nhập tin
     calibration_jobs.json 14 tin của tập hiệu chỉnh (không vào huấn luyện; chọn bằng build_train_pairs.py)
+    calibration_labels.json  nhãn 0–4 của 321 cặp tập hiệu chỉnh (Claude gán theo rubric, phiếu mù)
     train_cv_review*.md   phiếu đọc kiểm CV huấn luyện bằng mắt (lượt 1 đã chấm, lượt 2 đang chờ)
   data/                   KHÔNG commit (.gitignore)
     jd/
