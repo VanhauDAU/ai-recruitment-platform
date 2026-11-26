@@ -1,4 +1,4 @@
-import { AppstoreOutlined, SearchOutlined } from '@ant-design/icons'
+import { AppstoreOutlined, ArrowLeftOutlined, SearchOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
@@ -6,10 +6,12 @@ import { EMPLOYER_PORTAL_URL, HOME_BY_ROLE } from '@/shared/config/portals'
 import { useLoginPrompt } from '@/features/common/account/auth'
 import { useSession } from '@/entities/account/session'
 import { useHideOnScroll } from '@/shared/hooks/use-hide-on-scroll'
+import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import { BrandLogo, useSiteSettings } from '@/entities/system/site-settings'
 import CandidateUserMenu from './CandidateUserMenu'
 import { DesktopNavigation, MobileNavigation } from './HeaderNavigation'
 import { HEADER_NAVIGATION, navigationForCapabilities } from '../model/header-navigation-config'
+import { detailBackFallback } from '../model/detail-back'
 import { useHeaderNavigationSources } from '../model/use-header-navigation-sources'
 import { m } from '@/shared/config/i18n'
 
@@ -90,6 +92,9 @@ export default function Header({ editorMode = false }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [mobileKey, setMobileKey] = useState(null)
   const headerVisible = useHideOnScroll()
+  // Điện thoại: header luôn dính (giữ nút quay lại, tìm kiếm); thanh tab dưới mới là
+  // thứ ẩn khi cuộn xuống. Desktop vẫn ẩn header trên trang danh sách / chi tiết tin.
+  const isPhone = useMediaQuery('(max-width: 767.98px)')
   const [menuTouched, setMenuTouched] = useState(false)
   if (!menuTouched && (openKey || mobileOpen)) setMenuTouched(true)
   const sources = useHeaderNavigationSources(menuTouched)
@@ -107,7 +112,15 @@ export default function Header({ editorMode = false }) {
     // while scrolling there so it cannot cover controls on small viewports.
     || location.pathname.startsWith('/cvs/')
   const isCvRoute = location.pathname.startsWith('/cvs/')
-  const shouldShowHeader = editorMode || (!isCvRoute && (!hideOnScroll || headerVisible))
+  const backFallback = editorMode ? null : detailBackFallback(location.pathname)
+
+  // `key === 'default'`: trang đầu tiên của phiên (link chia sẻ, tab mới) — không có
+  // trang trước trong app để lùi, về danh sách thay vì rời site.
+  function goBack() {
+    if (location.key === 'default') navigate(backFallback)
+    else navigate(-1)
+  }
+  const shouldShowHeader = editorMode || (!isCvRoute && (isPhone || !hideOnScroll || headerVisible))
 
   function handleItem(item) {
     setOpenKey(null)
@@ -120,6 +133,16 @@ export default function Header({ editorMode = false }) {
   return (
     <header aria-label={editorMode ? 'Header website' : undefined} className={`sticky top-0 z-50 shrink-0 border-b border-gray-200 bg-white transition-transform duration-300 ${editorMode ? 'border-t-2 border-t-slate-800' : ''} ${shouldShowHeader ? 'translate-y-0' : '-translate-y-full'}`}>
       <div className="flex h-16 w-full items-center gap-2 px-4 sm:px-6 md:gap-8">
+        {backFallback && (
+          <button
+            type="button"
+            aria-label={m.candidate_header_back()}
+            onClick={goBack}
+            className="-ml-2 flex h-10 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-xl text-slate-700 transition active:scale-95 md:hidden"
+          >
+            <ArrowLeftOutlined aria-hidden />
+          </button>
+        )}
         <BrandLogo variant="full" className="shrink-0 cursor-pointer whitespace-nowrap" imageClassName="h-7 max-w-[112px] sm:h-9 sm:max-w-[190px]" />
         <button
           type="button"

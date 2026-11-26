@@ -1,7 +1,7 @@
 import { HeartFilled, HeartOutlined } from '@ant-design/icons'
 import { Skeleton, Tooltip } from 'antd'
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import {
   formatLocations,
   formatSalary,
@@ -19,6 +19,7 @@ import { useSavedJobs } from '@/features/main/job/saved-jobs'
 import { JobImpressionBoundary } from '@/features/main/job/track-job-engagement'
 import { m } from '@/shared/config/i18n'
 import { BEST_JOBS_PAGE_SIZE, BEST_JOBS_PREVIEW_DELAY_MS } from '../lib/best-jobs-config'
+import { useNewTabLinkProps } from '@/shared/hooks/use-new-tab-link-props'
 
 function LoadingGrid({ count }) {
   return (
@@ -33,6 +34,7 @@ function LoadingGrid({ count }) {
 }
 
 export default function BestJobsResults({ animKey, jobs, loading, pageSize = BEST_JOBS_PAGE_SIZE }) {
+  const newTab = useNewTabLinkProps()
   const navigate = useNavigate()
   const { isAuthenticated } = useSession()
   const { promptLogin } = useLoginPrompt()
@@ -101,10 +103,9 @@ export default function BestJobsResults({ animKey, jobs, loading, pageSize = BES
             onMouseLeave={() => closePreview(160)}
           >
             {/* Thẻ là <a>: reset của antd (ngoài layer) xóa nền utility thường nên phải dùng `!bg-`. */}
-            <a
-              href={jobDetailPath(job)}
-              target="_blank"
-              rel="noreferrer"
+            <Link
+              to={jobDetailPath(job)}
+              {...newTab}
               style={{ '--i': index }}
               className="best-job-card group border border-gray-200 !bg-white"
             >
@@ -157,7 +158,7 @@ export default function BestJobsResults({ animKey, jobs, loading, pageSize = BES
                   </Tooltip>
                 </div>
               </div>
-            </a>
+            </Link>
 
             {preview.jobId === job.public_id && (
               <JobPreviewPanel
