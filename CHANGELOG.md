@@ -8,6 +8,20 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Fixed — Gõ chữ mượt hơn ở ô góp ý/báo lỗi, ô nhắn tin trên iPhone; CI bundle xanh lại
+
+- iPhone/iPad: mọi ô gõ chữ (input, textarea, select, ô soạn thảo, ô antd) cỡ chữ 16px
+  qua `@supports (-webkit-touch-callout: none)` nên Safari không phóng to trang khi chạm;
+  Android/desktop giữ cỡ chữ thiết kế.
+- `useVisualViewportBottomInset` bỏ qua thay đổi khung nhìn khi đang gõ (bàn phím ảo mở)
+  và đo lại khi rời ô: trước đây mỗi phím trên iOS vẽ lại cụm nút nổi cùng hộp góp ý, khung
+  chat onboarding và thanh so sánh việc làm. `FeedbackModal` bọc `memo`.
+- Trang chủ: dải logo nhà tuyển dụng chỉ lặp đủ phủ màn hình 2560px (216 → 54 logo, mỗi logo
+  một animation), dừng khi khuất màn hình, tắt khi giảm chuyển động. Gõ ô góp ý trên trang
+  chủ, CPU 6×: p75 40 → 24 ms, p95 64 → 32 ms.
+- `ToastSoundEffect` tải lười: JS khởi tạo 267,1 → 266,3 KiB (CI `main` từng vượt ngân
+  sách 268,1/268,0 KiB sau PR âm thanh).
+
 #### Changed — Form đăng tin tuyển dụng dễ nhập trên điện thoại, hết giật khi gõ
 
 - Gõ phím không còn vẽ lại cả form: form gốc chỉ theo dõi số mục hoàn tất, bản xem

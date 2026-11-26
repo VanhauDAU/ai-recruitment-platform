@@ -1,5 +1,5 @@
 import { Button, Form, Input, Modal } from 'antd'
-import { useEffect, useState } from 'react'
+import { memo, useEffect, useState } from 'react'
 import { message } from '@/shared/lib/toast'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { submitFeedback } from '../api/submit-feedback.api'
@@ -46,7 +46,7 @@ function clientInfo() {
 
 // Form góp ý sản phẩm (mở từ cụm nút nổi hoặc nút góp ý góc phải). Chủ đề + mức hài lòng là state
 // ngoài AntD Form (UI dạng chip/emoji) nên validate chủ đề thủ công.
-export default function FeedbackModal({ open, onClose }) {
+function FeedbackModal({ open, onClose }) {
   const { isAuthenticated } = useSession()
   const { siteName } = useSiteSettings()
   const [topic, setTopic] = useState(null)
@@ -205,3 +205,6 @@ export default function FeedbackModal({ open, onClose }) {
     </Modal>
   )
 }
+
+// Nơi mở (cụm nút nổi) vẽ lại theo cuộn/khung nhìn; memo để ô đang gõ không bị vẽ lại theo.
+export default memo(FeedbackModal)
