@@ -70,7 +70,12 @@ nhập admin. Phần còn lại là **tài khoản và cấu hình bên ngoài**
 
 **Giám sát và bí mật**
 - [ ] Sentry: 2 project (backend, frontend) → `SENTRY_DSN`, `VITE_SENTRY_DSN`.
-- [ ] UptimeRobot: monitor `https://procv.site/api/health/ready/` và `https://procv.site/`.
+- [ ] UptimeRobot: 3 monitor HTTP(s) `https://procv.site/`, `https://procv.site/api/health/ready/`
+  (503 khi DB/Redis lỗi), `https://tuyendung.procv.site/`. Không thêm `quantri.procv.site`
+  (trang trạng thái công khai sẽ lộ địa chỉ quản trị).
+- [ ] UptimeRobot → Status pages: tạo trang "ProCV — Trạng thái hệ thống" gồm 3 monitor
+  trên, ghi lại URL `stats.uptimerobot.com/…`. Gói Free không gắn tên miền riêng; celery
+  worker không có cổng HTTP nên không lên trang này.
 - [ ] healthchecks.io: 2 check (backup DB, backup file) → `HC_BACKUP_*_URL`.
 - [ ] Tạo cặp khóa `age` (giải mã backup). Khóa riêng chỉ giữ ngoài VPS.
 - [ ] Sinh `SECRET_KEY`, `JWT_SIGNING_KEY`, `DB_PASSWORD` (`openssl rand`). Không
@@ -105,7 +110,11 @@ nhập admin. Phần còn lại là **tài khoản và cấu hình bên ngoài**
    - [ ] `curl -sI https://procv.site` có CSP + HSTS. `/.vite/manifest.json` trả 404.
    - [ ] Gọi thẳng IP VPS (`curl -k https://<ip>`) bị chặn hoặc nhận 403.
    - [ ] POST `/api/auth/login/` với `portal=admin` từ ngoài Access nhận 403.
-   - [ ] Sentry nhận lỗi thử. UptimeRobot xanh.
+   - [ ] Sentry nhận lỗi thử. UptimeRobot xanh, không monitor nào báo 403 (nếu có:
+     Cloudflare Security Events → rule Skip cho user-agent `UptimeRobot`).
+   - [ ] Footer cụm "Về ProCV" có link "Trạng thái hệ thống" (migration
+     `sitecontent.0014` thêm sẵn, production không có màn sửa cụm link vì tắt Django
+     admin). Đổi URL Status page thì sửa bằng migration mới.
 9. [ ] Backup: cài cron `backup_db.sh` + `backup_files.sh`; healthchecks nhận ping lần đầu.
 10. [ ] k6 200 VU từ máy ngoài (`scripts/loadtest/README.md`). Diễn tập khôi phục,
     ghi RTO vào `sao-luu-va-khoi-phuc.md`.

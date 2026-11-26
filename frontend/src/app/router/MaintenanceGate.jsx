@@ -14,7 +14,7 @@ const MaintenanceScreen = lazy(() => import('./MaintenanceScreen'))
  */
 export default function MaintenanceGate({ children }) {
   const { pathname } = useLocation()
-  const { settings } = useSiteSettings()
+  const { settings, siteName } = useSiteSettings()
   const [reported, setReported] = useState(null)
 
   useEffect(() => subscribeToMaintenance((message) => setReported(message)), [])
@@ -22,7 +22,8 @@ export default function MaintenanceGate({ children }) {
   const isAdmin = isAdminPath(pathname)
   if (isAdmin || (settings.maintenance_mode !== true && reported === null)) return children
 
-  const message = reported || settingText(settings.maintenance_message, m.common_maintenance_default_message())
+  const message = reported
+    || settingText(settings.maintenance_message, m.common_maintenance_default_message({ site: siteName }))
   const contact = [settingText(settings.hotline), settingText(settings.support_email)].filter(Boolean).join(' · ')
   return (
     <Suspense fallback={null}>

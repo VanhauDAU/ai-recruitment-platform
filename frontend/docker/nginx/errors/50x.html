@@ -5,37 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>ProCV đang bảo trì</title>
-<style>
-  :root { color-scheme: light dark; --bg: #f5f7fb; --card: #fff; --text: #1f2937; --muted: #6b7280; --brand: #00b14f; --button: #007a37; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #0f172a; --card: #111827; --text: #e5e7eb; --muted: #9ca3af; }
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
-    padding: 16px; background: var(--bg); color: var(--text);
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  }
-  main {
-    width: 100%; max-width: 480px; padding: 32px 24px; border-radius: 16px;
-    background: var(--card); box-shadow: 0 10px 30px rgba(0, 0, 0, .08); text-align: center;
-  }
-  .brand { margin: 0 0 24px; font-size: 28px; font-weight: 800; color: var(--brand); letter-spacing: -.5px; }
-  h1 { margin: 0 0 12px; font-size: 20px; line-height: 1.4; }
-  p { margin: 0 0 20px; color: var(--muted); line-height: 1.6; }
-  a.button {
-    display: inline-block; padding: 10px 20px; border-radius: 8px; background: var(--button);
-    color: #fff; font-weight: 600; text-decoration: none;
-  }
-  a.button:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
-</style>
+<!-- Giao diện chung với màn bảo trì của SPA (frontend/public/maintenance). -->
+<link rel="stylesheet" href="/maintenance/maintenance.css">
 </head>
 <body>
-<main>
-  <p class="brand">ProCV</p>
-  <h1>Hệ thống đang bảo trì hoặc quá tải</h1>
-  <p>Chúng tôi đang cập nhật để phục vụ bạn tốt hơn. Vui lòng thử lại sau ít phút — dữ liệu của bạn vẫn được giữ nguyên.</p>
-  <a class="button" href="">Tải lại trang</a>
+<main class="maintenance">
+  <div class="maintenance__content">
+    <img class="maintenance__logo" src="/images/logo/logo-full.webp" alt="ProCV">
+    <img class="maintenance__art" src="/maintenance/gears.svg" alt="" width="410" height="345">
+    <h1 class="maintenance__title">Hệ thống đang <span>bảo trì</span></h1>
+    <p class="maintenance__message">ProCV đang nâng cấp để phục vụ bạn tốt hơn.
+Vui lòng quay lại sau ít phút. Cảm ơn bạn đã kiên nhẫn!</p>
+    <a class="maintenance__retry" href="">Tải lại trang</a>
+  </div>
 </main>
 </body>
 </html>

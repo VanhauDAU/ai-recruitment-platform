@@ -1,0 +1,130 @@
+/*
+ * Màn bảo trì dùng chung: MaintenanceScreen (SPA, khi admin bật bảo trì) và
+ * docker/nginx/errors/50x.html (backend không trả lời). Tệp tĩnh ngoài bundle
+ * để trang lỗi của nginx dùng được và CSS khởi tạo của SPA không phình.
+ */
+body {
+  margin: 0;
+}
+
+.maintenance {
+  --maintenance-navy: #18294b;
+  --maintenance-green: var(--brand-primary, #00b14f);
+  position: relative;
+  display: flex;
+  min-height: 100vh;
+  min-height: 100dvh;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 48px 20px;
+  background: linear-gradient(180deg, #ffffff 0%, #f3f8f5 60%, #eaf4ee 100%);
+  color: var(--maintenance-navy);
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  text-align: center;
+}
+
+/* Vòng tròn trang trí: góc trên phải màu xanh nhạt, góc dưới trái màu xám. */
+.maintenance::before,
+.maintenance::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.maintenance::before {
+  top: -160px;
+  right: -160px;
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle at 60% 40%, #cfe9db 0 48%, #dcefe4 49% 100%);
+}
+.maintenance::after {
+  bottom: -170px;
+  left: -170px;
+  width: 340px;
+  height: 340px;
+  background: radial-gradient(circle at 40% 60%, #c9d3d6 0 46%, #d9e0e2 47% 100%);
+  opacity: 0.8;
+}
+
+.maintenance__content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 760px;
+}
+
+.maintenance__logo {
+  display: block;
+  height: 44px;
+  width: auto;
+  margin: 0 auto;
+}
+
+.maintenance__art {
+  display: block;
+  width: min(300px, 72vw);
+  height: auto;
+  margin: 36px auto 28px;
+}
+
+.maintenance__title {
+  margin: 0;
+  font-size: clamp(28px, 6vw, 48px);
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--maintenance-navy);
+}
+.maintenance__title span {
+  color: var(--maintenance-green);
+}
+
+.maintenance__message {
+  margin: 16px auto 0;
+  max-width: 560px;
+  font-size: clamp(15px, 2.4vw, 19px);
+  line-height: 1.65;
+  color: #52627a;
+  white-space: pre-line;
+}
+
+.maintenance__contact {
+  margin: 16px 0 0;
+  font-size: 14px;
+  color: #6b7a90;
+}
+
+.maintenance__retry {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 28px;
+  padding: 10px 22px;
+  border: 1px solid #cdd8d2;
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--maintenance-navy);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.maintenance__retry:hover {
+  border-color: var(--maintenance-green);
+  color: var(--maintenance-green);
+}
+.maintenance__retry:focus-visible {
+  outline: 3px solid var(--maintenance-green);
+  outline-offset: 2px;
+}
+
+@media (min-width: 768px) {
+  .maintenance::before { top: -200px; right: -180px; width: 640px; height: 640px; }
+  .maintenance::after { bottom: -220px; left: -200px; width: 520px; height: 520px; }
+  .maintenance__logo { height: 56px; }
+  .maintenance__art { width: 340px; margin: 44px auto 36px; }
+}

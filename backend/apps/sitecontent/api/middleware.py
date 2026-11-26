@@ -1,14 +1,15 @@
 """Chế độ bảo trì (SiteSetting ``maintenance_mode``, ADR-0026).
 
-Khi bật, API của cổng ứng viên, nhà tuyển dụng và API công khai trả 503; các
-trang SEO do server render cũng trả 503 để công cụ tìm kiếm hiểu là gián đoạn
-tạm thời. Trang quản trị (``/api/admin/``), đăng nhập/làm mới phiên, cấu hình
-công khai (frontend cần nó để hiện màn bảo trì) và health check vẫn chạy.
+Khi bật, API của cổng ứng viên, nhà tuyển dụng và API công khai trả 503. Trang
+SEO do server render vẫn dựng như thường nhưng đổi mã sang 503 để công cụ tìm
+kiếm hiểu là gián đoạn tạm thời; trình duyệt nhận khung SPA, SPA thấy
+``maintenance_mode`` và hiện màn bảo trì (``MaintenanceScreen``). Trang quản trị
+(``/api/admin/``), đăng nhập/làm mới phiên, cấu hình công khai (frontend cần nó
+để hiện màn bảo trì) và health check vẫn chạy.
 Tác vụ nền (Celery) không bị ảnh hưởng.
 """
 
-from django.http import HttpResponse, JsonResponse
-from django.utils.html import escape
+from django.http import JsonResponse
 from django.utils.translation import gettext as _
 
 from ..selectors import get_bool_setting, get_string_setting
@@ -41,17 +42,14 @@ class MaintenanceModeMiddleware:
             response = JsonResponse({'code': 'maintenance', 'detail': _message()}, status=503)
             response['Retry-After'] = str(RETRY_AFTER_SECONDS)
             return response
-        return self.get_response(request)
+        response = self.get_response(request)
+        if getattr(request, '_maintenance_seo', False) and 200 <= response.status_code < 300:
+            response.status_code = 503
+            response['Retry-After'] = str(RETRY_AFTER_SECONDS)
+            response['X-Robots-Tag'] = 'noindex'
+            response['Cache-Control'] = 'no-store'
+        return response
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-        if not _is_seo_view(view_func) or not get_bool_setting('maintenance_mode'):
-            return None
-        message = escape(_message())
-        response = HttpResponse(
-            '<!doctype html><html><head><meta charset="utf-8">'
-            '<meta name="robots" content="noindex">'
-            f'<title>{message}</title></head><body><p>{message}</p></body></html>',
-            status=503,
-        )
-        response['Retry-After'] = str(RETRY_AFTER_SECONDS)
-        return response
+        if _is_seo_view(view_func) and get_bool_setting('maintenance_mode'):
+            request._maintenance_seo = True
