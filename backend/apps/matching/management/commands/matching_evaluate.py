@@ -31,7 +31,7 @@ from ...models import jobs_for_profile
 from ...selectors import cvs_for_profile
 from ...services import SkillCatalog, get_encoder
 from ...services.encoder import SentenceTransformerEncoder
-from ...services.evaluation import evaluate_pairs
+from ...services.evaluation import InlineCv, evaluate_pairs, inline_cv
 from ...services.scoring import ABLATIONS
 
 
@@ -68,6 +68,13 @@ class Command(BaseCommand):
         except (OSError, json.JSONDecodeError) as error:
             raise CommandError(f'Không đọc được danh sách cặp: {error}') from error
 
+        # Danh sách cặp có thể là một đối tượng `{pairs, cvs, marks}`: `cvs` là CV nằm ngoài
+        # DB (`{id, language, data}` như của `import_cv_documents`), `marks` là các bộ mốc quy
+        # đổi cosine cần chấm thêm (xem `evaluate_pairs`).
+        inline, marks = [], None
+        if isinstance(requested, dict):
+            inline, marks = requested.get('cvs', []), requested.get('marks')
+            requested = requested['pairs']
         jobs = {
             job.public_id: job
             for job in jobs_for_profile(statuses=None).filter(
@@ -78,6 +85,7 @@ class Command(BaseCommand):
             cv.user.email.split('@', 1)[0].upper(): cv
             for cv in cvs_for_profile(email_domain).filter(cv_type=cv_type)
         }
+        cvs.update({item['id']: inline_cv(item) for item in inline})
         known = [pair for pair in requested if pair['jd'] in jobs and pair['cv'] in cvs]
         encoder = _encoder(options['model_path'], options['model_version'], options['no_prefix'])
         rows = evaluate_pairs(
@@ -86,11 +94,12 @@ class Command(BaseCommand):
             catalog=SkillCatalog.load(),
             detail=options['detail'],
             ablation=tuple(options['ablation']),
+            marks=marks,
         )
         rule_scores = {}
         for pair, row in zip(known, rows, strict=True):
             row = {'jd': pair['jd'], 'cv': pair['cv'], 'model_version': encoder.version, **row}
-            if rule_baseline:
+            if rule_baseline and not isinstance(cvs[pair['cv']], InlineCv):
                 cv = cvs[pair['cv']]
                 if cv.pk not in rule_scores:
                     rule_scores[cv.pk] = rule_scores_for_cv(

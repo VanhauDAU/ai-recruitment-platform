@@ -3,7 +3,7 @@
 100 cặp của 10 tin; số cặp theo nhãn 0–4: 33, 42, 14, 8, 3. Nhãn do Claude gán theo `ml/labeling/rubric.md`.
 Khoảng tin cậy 95% là bootstrap lấy mẫu lại theo tin. Tạo bằng `ml/scripts/evaluate.py`.
 
-NDCG@5 khi xếp CV ngẫu nhiên là 0,445: mỗi tin chỉ có 10 CV nên mức sàn cao.
+NDCG@5 khi xếp CV ngẫu nhiên là 0,444: mỗi tin chỉ có 10 CV nên mức sàn cao.
 
 | Phương án | Spearman | Khoảng tin cậy | NDCG@5 | Khoảng tin cậy | Số tin hơn BM25 |
 | --- | ---: | --- | ---: | --- | ---: |
@@ -20,6 +20,8 @@ NDCG@5 khi xếp CV ngẫu nhiên là 0,445: mỗi tin chỉ có 10 CV nên mứ
 | Bi-encoder `minilm-l12-zs-v1` (cosine toàn văn) | 0,530 | 0,322 đến 0,727 | 0,663 | 0,477 đến 0,823 | 1/10 |
 | Bi-encoder `e5-base-ft-v1` (cosine toàn văn) | 0,764 | 0,602 đến 0,869 | 0,824 | 0,719 đến 0,916 | 6/10 |
 | hybrid với `e5-base-ft-v1` | 0,802 | 0,688 đến 0,884 | 0,869 | 0,792 đến 0,936 | 6/10 |
+| Bi-encoder `e5-base-wise-v1` (cosine toàn văn) | 0,803 | 0,666 đến 0,884 | 0,812 | 0,709 đến 0,912 | 5/10 |
+| hybrid với `e5-base-wise-v1` | 0,815 | 0,708 đến 0,884 | 0,874 | 0,785 đến 0,947 | 7/10 |
 
 ## Thang điểm của `hybrid`
 
@@ -33,6 +35,7 @@ Kappa bậc hai giữa mức hiển thị và nhãn; điểm của 33 cặp nhã
 | hybrid, bỏ hệ số liên quan | 0,704 | 27 | 50 | 1 |
 | hybrid, tắt cả ba (công thức `hybrid-v1`) | 0,511 | 28 | 65 | 6 |
 | hybrid với `e5-base-ft-v1` | 0,630 | 4 | 37 | 0 |
+| hybrid với `e5-base-wise-v1` | 0,708 | 6 | 36 | 0 |
 
 Điểm trung bình theo nhãn (KHÔNG tăng dần):
 
@@ -68,6 +71,8 @@ tin cậy 95% không chứa 0; còn lại là chưa kết luận được.
 | Bi-encoder `minilm-l12-zs-v1` (cosine toàn văn) | -0,175 | -0,334 đến 0,002 | **-0,207** | -0,351 đến -0,085 |
 | Bi-encoder `e5-base-ft-v1` (cosine toàn văn) | +0,059 | -0,086 đến 0,210 | -0,045 | -0,120 đến 0,018 |
 | hybrid với `e5-base-ft-v1` | **+0,096** | 0,002 đến 0,207 | -0,001 | -0,029 đến 0,028 |
+| Bi-encoder `e5-base-wise-v1` (cosine toàn văn) | +0,098 | -0,043 đến 0,240 | -0,057 | -0,159 đến 0,023 |
+| hybrid với `e5-base-wise-v1` | **+0,110** | 0,021 đến 0,212 | +0,005 | -0,028 đến 0,037 |
 
 ## Cặp khác ngôn ngữ (tin và CV một Việt một Anh)
 
@@ -86,3 +91,5 @@ tin cậy 95% không chứa 0; còn lại là chưa kết luận được.
 | Bi-encoder `minilm-l12-zs-v1` (cosine toàn văn) | 24 | 0,655 |
 | Bi-encoder `e5-base-ft-v1` (cosine toàn văn) | 24 | 0,747 |
 | hybrid với `e5-base-ft-v1` | 24 | 0,762 |
+| Bi-encoder `e5-base-wise-v1` (cosine toàn văn) | 24 | 0,748 |
+| hybrid với `e5-base-wise-v1` | 24 | 0,793 |

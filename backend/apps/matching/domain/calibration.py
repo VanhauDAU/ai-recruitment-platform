@@ -54,6 +54,17 @@ CALIBRATIONS = {
         requirement_met=0.64,
         requirement_partial=0.47,
     ),
+    # Nội suy trọng số 30% mô hình gốc + 70% `e5-base-ft-v1` (`ml/scripts/interpolate_model.py`).
+    # Mốc chọn bằng `ml/scripts/calibrate_scale.py` trên tập hiệu chỉnh: `low` là trung vị
+    # cosine của cặp nhãn 0, `high` là phân vị 90 của cặp nhãn 3–4. Ba ngưỡng theo câu là
+    # tạm tính như ở `e5-base-ft-v1`.
+    'e5-base-wise-v1': Calibration(
+        document=(0.204, 0.772),
+        title=(0.530, 0.851),
+        skill=0.80,
+        requirement_met=0.63,
+        requirement_partial=0.49,
+    ),
 }
 DEFAULT_CALIBRATION = CALIBRATIONS['e5-base-zs-v1']
 

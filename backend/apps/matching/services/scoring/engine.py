@@ -131,6 +131,7 @@ def score_match(
     model_version,
     catalog=None,
     ablation=(),
+    calibration=None,
 ):
     """Chấm một cặp CV–tin.
 
@@ -139,7 +140,8 @@ def score_match(
     kỹ năng (`SkillCatalog`) để nhận nhóm kỹ năng thay thế trong câu yêu cầu của tin;
     không truyền thì mọi kỹ năng được chấm riêng. `ablation` chỉ dùng khi đo:
     `semantic_skills` bật lại khớp kỹ năng viết khác tên, `no_relevance_discount` bỏ
-    hệ số liên quan, `no_skill_groups` bỏ nhóm kỹ năng thay thế.
+    hệ số liên quan, `no_skill_groups` bỏ nhóm kỹ năng thay thế. `calibration` thay mốc
+    quy đổi của `model_version` bằng một bộ mốc khác; chỉ dùng khi dò mốc.
     """
     unknown = set(ablation) - set(ABLATIONS)
     if unknown:
@@ -150,7 +152,7 @@ def score_match(
         and not any(chunk['section'] in EXPERIENCE_SECTIONS for chunk in cv_chunks)
     ):
         raise ScoringError('cv_insufficient_content')
-    calibration = calibration_for(model_version)
+    calibration = calibration or calibration_for(model_version)
     requirement_hits = _hits(
         job_chunks, job_vectors, cv_chunks, cv_vectors, section='requirement', cv_sections=EXPERIENCE_SECTIONS
     )  # fmt: skip
