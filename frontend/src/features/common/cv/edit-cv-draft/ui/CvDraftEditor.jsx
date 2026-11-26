@@ -36,7 +36,7 @@ import {
 import { useSiteSettings } from '@/entities/system/site-settings'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import useConfirmAction from '@/shared/ui/confirm-action/use-confirm-action'
-import { useBuilderUi } from '../model/use-builder-ui'
+import { fitZoom, useBuilderUi } from '../model/use-builder-ui'
 import { BUILDER_TOOLS } from '../model/builder-tools'
 import useCvDraftEditor from '../model/use-cv-draft-editor'
 import AddSectionsPanel from './panels/AddSectionsPanel'
@@ -98,7 +98,7 @@ function CvWysiwygDraftEditor({ publicId, onSaved }) {
   const { modal } = App.useApp()
   const editor = useCvDraftEditor(publicId)
   const isDesktop = useMediaQuery('(min-width: 1024px)')
-  const builderUi = useBuilderUi(isDesktop ? 0.8 : 0.48)
+  const builderUi = useBuilderUi(fitZoom(isDesktop))
   const { confirmationModal, requestConfirmation } = useConfirmAction()
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false)
   const [desktopPanelOpen, setDesktopPanelOpen] = useState(true)
@@ -430,7 +430,7 @@ function CvWysiwygDraftEditor({ publicId, onSaved }) {
           onSelect={selectContent}
           onAvatarUpload={uploadAvatar}
         />
-        <CanvasZoomControls zoom={builderUi.zoom} onIn={builderUi.zoomIn} onOut={builderUi.zoomOut} onFit={() => builderUi.fit(isDesktop ? 0.8 : 0.48)} />
+        <CanvasZoomControls zoom={builderUi.zoom} onIn={builderUi.zoomIn} onOut={builderUi.zoomOut} onFit={() => builderUi.fit(fitZoom(isDesktop))} />
       </main>
     </div>
     {!isDesktop && <div className="fixed inset-x-0 bottom-0 z-40"><ToolSidebar mobile activeTool={builderUi.activeTool} onChange={chooseTool} /></div>}

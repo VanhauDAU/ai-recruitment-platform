@@ -144,14 +144,15 @@ export default function Header({ editorMode = false }) {
           </button>
         )}
         <BrandLogo variant="full" className="shrink-0 cursor-pointer whitespace-nowrap" imageClassName="h-7 max-w-[112px] sm:h-9 sm:max-w-[190px]" />
-        <button
+        {/* Trình chỉnh sửa CV trên điện thoại cần chỗ cho chuông, tin nhắn, avatar. */}
+        {!editorMode && <button
           type="button"
           aria-label={m.candidate_header_open_categories()}
           onClick={() => setMobileOpen(true)}
           className="flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-[var(--brand-primary-soft)] px-3 text-sm font-semibold text-[var(--brand-primary-hover)] transition active:scale-95 md:hidden"
         >
           <AppstoreOutlined aria-hidden /> {m.candidate_header_categories()}
-        </button>
+        </button>}
         <DesktopNavigation
           menus={menus}
           openKey={openKey}
@@ -160,14 +161,14 @@ export default function Header({ editorMode = false }) {
           onSelect={handleItem}
         />
         <div className="ml-auto flex items-center gap-1 md:gap-4">
-          <button
+          {!editorMode && <button
             type="button"
             aria-label={m.candidate_header_search_jobs()}
             onClick={() => navigate('/viec-lam')}
             className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-xl text-slate-600 transition hover:bg-slate-100 md:hidden"
           >
             <SearchOutlined />
-          </button>
+          </button>}
           <HeaderActions
             compactMobile={!editorMode}
             isAuthenticated={isAuthenticated}
