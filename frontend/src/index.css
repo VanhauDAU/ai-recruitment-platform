@@ -17,6 +17,23 @@ body {
   outline: none;
 }
 
+/* iOS Safari phóng to trang khi focus ô gõ chữ dưới 16px rồi không thu lại, làm
+   gõ chữ bị giật và lệch khung. Chỉ WebKit trên iOS hiểu -webkit-touch-callout,
+   nên Android/desktop giữ cỡ chữ thiết kế. */
+@supports (-webkit-touch-callout: none) {
+  input:not([type='checkbox'], [type='radio'], [type='range'], [type='file']),
+  textarea,
+  select,
+  [contenteditable='true'],
+  .ant-input,
+  .ant-input-affix-wrapper,
+  .ant-input-number-input,
+  .ant-select,
+  .ant-picker-input > input {
+    font-size: 16px !important;
+  }
+}
+
 /* Tailwind v4 Preflight đặt cursor: default cho button; khôi phục con trỏ tay
    cho mọi nút bấm còn hoạt động (trừ nút bị disabled giữ nguyên not-allowed). */
 @layer base {

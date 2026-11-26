@@ -54,4 +54,28 @@ describe('useVisualViewportBottomInset', () => {
 
     expect(result.current).toBe(0)
   })
+
+  it('giữ nguyên khi bàn phím ảo mở lúc đang gõ, đo lại khi rời ô nhập', () => {
+    const input = document.createElement('textarea')
+    document.body.append(input)
+    const { result } = renderHook(() => useVisualViewportBottomInset())
+    act(() => animationFrameCallback(0))
+
+    input.focus()
+    visualViewport.height = 600
+    visualViewport.offsetTop = 120
+    act(() => {
+      visualViewport.dispatchEvent(new Event('scroll'))
+      animationFrameCallback(16)
+    })
+    expect(result.current).toBe(0)
+
+    input.blur()
+    act(() => {
+      document.dispatchEvent(new Event('focusout'))
+      animationFrameCallback(32)
+    })
+    expect(result.current).toBe(280)
+    input.remove()
+  })
 })

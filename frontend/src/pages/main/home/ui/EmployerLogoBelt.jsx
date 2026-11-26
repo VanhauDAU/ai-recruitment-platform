@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { companyDetailPath } from '@/entities/company/company'
 import { logoUrlFor } from '../lib/logo-url'
 
@@ -30,7 +31,10 @@ const BUBBLE_LAYOUT = [
 ]
 const BELT_HEIGHT = 246
 const BUBBLE_GAP = 34
-const MARQUEE_REPEATS_PER_HALF = 12
+// Nửa dải chỉ cần rộng hơn màn hình lớn nhất; trước đây lặp cố định 12 lần nên với
+// 9 công ty là 216 logo, mỗi logo một animation và một lớp compositing.
+const MIN_HALF_STRIP_PX = 2560
+const AVERAGE_BUBBLE_PX = 105 + BUBBLE_GAP
 
 function seededRand(seed) {
   // Simple deterministic pseudo-random: xorshift
@@ -40,9 +44,24 @@ function seededRand(seed) {
 
 // Dải logo nhà tuyển dụng trôi ngang toàn màn hình với hiệu ứng bồng bềnh.
 export default function EmployerLogoBelt({ employers, navigate }) {
-  if (!employers.length) return null
+  const beltRef = useRef(null)
+  const hasEmployers = employers.length > 0
 
-  const halfStrip = Array.from({ length: MARQUEE_REPEATS_PER_HALF }, (_, repeatIndex) =>
+  // Khuất màn hình thì dừng animation: không tốn khung hình khi người dùng gõ ở chỗ khác.
+  useEffect(() => {
+    const belt = beltRef.current
+    if (!belt || typeof IntersectionObserver !== 'function') return undefined
+    const observer = new IntersectionObserver(([entry]) => {
+      belt.classList.toggle('is-paused', !entry.isIntersecting)
+    })
+    observer.observe(belt)
+    return () => observer.disconnect()
+  }, [hasEmployers])
+
+  if (!hasEmployers) return null
+
+  const repeats = Math.max(1, Math.ceil(MIN_HALF_STRIP_PX / (employers.length * AVERAGE_BUBBLE_PX)))
+  const halfStrip = Array.from({ length: repeats }, (_, repeatIndex) =>
     employers.map((employer, employerIndex) => {
       const slot = repeatIndex * employers.length + employerIndex
       const layout = BUBBLE_LAYOUT[slot % BUBBLE_LAYOUT.length]
@@ -92,7 +111,8 @@ export default function EmployerLogoBelt({ employers, navigate }) {
 
   return (
     <div
-      className="relative left-1/2 mt-14 w-screen -translate-x-1/2 overflow-hidden bg-white"
+      ref={beltRef}
+      className="employer-logo-belt relative left-1/2 mt-14 w-screen -translate-x-1/2 overflow-hidden bg-white"
       style={{ height: BELT_HEIGHT }}
     >
       <style>{`
@@ -112,7 +132,14 @@ export default function EmployerLogoBelt({ employers, navigate }) {
           animation-name: employerLogoFloat;
           animation-timing-function: ease-in-out;
           animation-iteration-count: infinite;
-          will-change: transform;
+        }
+        .employer-logo-belt.is-paused .employer-logo-full-bleed-marquee,
+        .employer-logo-belt.is-paused .employer-logo-float {
+          animation-play-state: paused;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .employer-logo-full-bleed-marquee,
+          .employer-logo-float { animation: none; }
         }
       `}</style>
 

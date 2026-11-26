@@ -12,7 +12,7 @@ import {
   UpOutlined,
 } from '@ant-design/icons'
 import { Badge, Modal, Tooltip } from 'antd'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { useLoginPrompt } from '@/features/common/account/auth'
 import { useSession } from '@/entities/account/session'
@@ -45,6 +45,7 @@ export default function FloatingActions() {
   const [supportOpen, setSupportOpen] = useState(false)
   const [wantOpen, setWantOpen] = useState(false)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
+  const closeFeedback = useCallback(() => setFeedbackOpen(false), [setFeedbackOpen])
   const [saveNoticeOpen, setSaveNoticeOpen] = useState(false)
   const [heartPulseKey, setHeartPulseKey] = useState(0)
   const [showScrollTop, setShowScrollTop] = useState(false)
@@ -307,7 +308,7 @@ export default function FloatingActions() {
         </div>
       </Modal>
 
-      <FeedbackModal open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
+      <FeedbackModal open={feedbackOpen} onClose={closeFeedback} />
     </>
   )
 }
