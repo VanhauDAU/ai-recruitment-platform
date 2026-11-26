@@ -8,6 +8,11 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-27
 
+#### Fixed — Cổng i18n đỏ sau PR #464
+
+- Chuỗi mới của tab chi tiết tin, tab Công ty và nút AI nổi chuyển vào
+  `messages/candidate` (vi + en) và dùng `m.key()`; ratchet `features/main` khóa 625.
+
 #### Changed — Trang chi tiết tin trên mobile: cụm thông tin chính gọn hơn, chia 3 tab
 
 - Trên mobile, Địa điểm / Kinh nghiệm / Hạn ứng tuyển ở đầu trang chi tiết tin chuyển từ

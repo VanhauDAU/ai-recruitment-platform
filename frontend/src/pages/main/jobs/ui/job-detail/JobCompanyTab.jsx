@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { COMPANY_JOBS_TAB, companyDetailPath, jobCompanyPath } from '@/entities/company/company'
 import { EXPERIENCE_YEARS_LABELS, formatLocations, formatSalary, jobDetailPath } from '@/entities/job/job'
+import { m } from '@/shared/config/i18n'
 import useCompanyOtherJobs from '../../model/use-company-other-jobs'
 import { CompanyCard } from './JobDetailSidebar'
 
@@ -25,19 +26,19 @@ function CompanyAbout({ job }) {
   if (!description && !industries.length && !job.company_website_url) return null
   return (
     <section className="job-company-about rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-      <h2 className="text-base font-bold text-slate-800">Giới thiệu công ty</h2>
+      <h2 className="text-base font-bold text-slate-800">{m.candidate_job_company_about()}</h2>
       {description && (
         <>
           <p className={`job-company-about__text${expanded ? '' : ' is-clamped'}`}>{description}</p>
           {description.length > 220 && (
             <button type="button" onClick={() => setExpanded((value) => !value)} aria-expanded={expanded} className="job-company-about__toggle">
-              {expanded ? 'Thu gọn' : 'Xem thêm'}
+              {expanded ? m.candidate_job_company_show_less() : m.candidate_job_company_show_more()}
             </button>
           )}
         </>
       )}
       {industries.length > 0 && (
-        <p className="job-company-about__meta"><span>Lĩnh vực</span>{industries.join(', ')}</p>
+        <p className="job-company-about__meta"><span>{m.candidate_job_company_industries()}</span>{industries.join(', ')}</p>
       )}
       {job.company_website_url && (
         <p className="job-company-about__meta">
@@ -57,14 +58,14 @@ function CompanyJobsRail({ job, enabled }) {
   return (
     <section className="rounded-2xl border border-gray-200 bg-white py-5 shadow-sm">
       <div className="flex items-center justify-between gap-3 px-5">
-        <h2 className="text-base font-bold text-slate-800">Việc làm cùng công ty</h2>
+        <h2 className="text-base font-bold text-slate-800">{m.candidate_job_company_jobs()}</h2>
         {total > 0 && (
           <Link to={job.company_slug ? companyDetailPath(job.company_slug, { tab: COMPANY_JOBS_TAB }) : jobCompanyPath(job)} className="job-company-rail__all">
-            Xem tất cả ({total}) <RightOutlined aria-hidden="true" />
+            {m.candidate_job_company_jobs_all({ count: total })} <RightOutlined aria-hidden="true" />
           </Link>
         )}
       </div>
-      <div className="job-company-rail" aria-label="Việc làm cùng công ty, vuốt ngang để xem thêm">
+      <div className="job-company-rail" aria-label={m.candidate_job_company_jobs_swipe()}>
         {isPending
           ? <div className="job-company-rail__item job-company-mini"><Skeleton active title={false} paragraph={{ rows: 3 }} /></div>
           : jobs.map((item) => <CompanyJobMini key={item.public_id} job={item} />)}

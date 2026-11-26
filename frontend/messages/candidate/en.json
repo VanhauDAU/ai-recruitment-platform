@@ -243,5 +243,20 @@
   "candidate_connections_decline_title": "Decline connection request",
   "candidate_connections_decline_text": "{company} will learn you are not interested in {job} and cannot invite you again for this job.",
   "candidate_connections_load_failed": "Could not load invitations",
-  "candidate_connections_empty": "You have no connection requests yet"
+  "candidate_connections_empty": "You have no connection requests yet",
+  "candidate_job_tabs_aria": "Job posting content",
+  "candidate_job_tab_info": "Details",
+  "candidate_job_tab_company": "Company",
+  "candidate_job_tab_related": "Related jobs",
+  "candidate_job_related_empty": "No related jobs yet.",
+  "candidate_job_related_browse_all": "Browse all jobs",
+  "candidate_job_company_about": "About the company",
+  "candidate_job_company_show_more": "Show more",
+  "candidate_job_company_show_less": "Show less",
+  "candidate_job_company_industries": "Industry",
+  "candidate_job_company_jobs": "More jobs at this company",
+  "candidate_job_company_jobs_all": "View all ({count})",
+  "candidate_job_company_jobs_swipe": "More jobs at this company, swipe to see more",
+  "candidate_job_fit_open": "Check how well your CV fits this job",
+  "candidate_job_fit_bubble": "Check CV fit"
 }
