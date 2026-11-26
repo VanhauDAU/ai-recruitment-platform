@@ -8,14 +8,14 @@ function showRelatedJobs() {
 }
 
 /** Shown in place of the apply button once the employer stopped recruiting. */
-export default function JobApplicationClosed({ compact = false, className = '' }) {
+export default function JobApplicationClosed({ compact = false, className = '', onShowRelated = showRelatedJobs }) {
   return (
     <div className={`job-closed${compact ? ' job-closed--compact' : ''} ${className}`}>
       <span className="job-closed__badge">
         <ExclamationCircleFilled aria-hidden="true" className="job-closed__badge-icon" />
         Hết hạn ứng tuyển
       </span>
-      <button type="button" onClick={showRelatedJobs} className="job-closed__related">
+      <button type="button" onClick={onShowRelated} className="job-closed__related">
         <span className="job-closed__related-label">Xem việc làm liên quan</span>
         <DoubleRightOutlined aria-hidden="true" className="job-closed__related-icon" />
       </button>

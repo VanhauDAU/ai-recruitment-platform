@@ -2,8 +2,6 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import JobDetailContent from './JobDetailContent'
 
-vi.mock('./JobQualityRating', () => ({ default: () => null }))
-
 const job = {
   public_id: 'job_long_description',
   description: '<p>Mô tả công việc dài.</p>',
@@ -40,17 +38,14 @@ describe('JobDetailContent', () => {
     render(
       <JobDetailContent
         job={job}
-        relatedJobs={[]}
         saved={false}
         savePending={false}
-        isAuthenticated={false}
         applicationStatus={{ hasApplied: false, isLimitReached: false, applyLabel: 'Ứng tuyển ngay' }}
         canCreateJobAlert
         onApply={vi.fn()}
         onCreateJobAlert={onCreateJobAlert}
         onSave={vi.fn()}
         onReport={onReport}
-        onRequireLogin={vi.fn()}
       />,
     )
 

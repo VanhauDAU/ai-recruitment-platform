@@ -278,8 +278,8 @@
     display: none;
   }
 
-  /* Trùng tag "Chuyên môn" trong phần chi tiết. */
-  .job-related-topics {
+  /* Thanh neo mục: mobile đã có thanh tab dính thay thế. */
+  .job-detail-anchors {
     display: none;
   }
 
@@ -296,6 +296,66 @@
   .job-general-info dt {
     display: none;
   }
+}
+
+/* Mobile: tab Thông tin / Công ty / Việc liên quan, dính ngay dưới header
+ * (header điện thoại ở trang chi tiết luôn hiện: h-16 + viền 1px). */
+.job-tabs__bar {
+  background: #fff;
+  border-bottom: 1px solid #e8ecf0;
+  margin: 0 -16px 16px;
+  padding: 0 16px;
+  position: sticky;
+  top: 65px;
+  z-index: 30;
+}
+
+.job-tabs__list {
+  display: flex;
+  gap: 24px;
+}
+
+.job-tabs__tab {
+  align-items: center;
+  background: none;
+  border: 0;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  font-size: 15px;
+  font-weight: 600;
+  gap: 4px;
+  height: 46px;
+  padding: 0 2px;
+  position: relative;
+  transition: color .2s;
+  white-space: nowrap;
+}
+
+.job-tabs__tab[aria-selected="true"] {
+  color: var(--brand-primary);
+}
+
+.job-tabs__tab[aria-selected="true"]::after {
+  background: var(--brand-primary);
+  border-radius: 2px 2px 0 0;
+  bottom: 0;
+  content: "";
+  height: 2px;
+  inset-inline: 0;
+  position: absolute;
+}
+
+.job-tabs__tab:focus-visible {
+  border-radius: 6px;
+  outline: 2px solid var(--brand-primary);
+  outline-offset: -2px;
+}
+
+.job-tabs__count {
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 /* Bản đồ nơi làm việc (ADR-0029) */
