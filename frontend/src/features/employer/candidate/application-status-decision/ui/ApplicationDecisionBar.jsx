@@ -33,15 +33,15 @@ export default function ApplicationDecisionBar({ application, candidateName, pen
   const final = allowed.length === 0
 
   return (
-    <div className="ad-bar">
-      <div className="ad-bar__grid" role="group" aria-label={m.employer_workspace_decision_group()}>
+    <div className="decision-bar">
+      <div className="decision-bar__grid" role="group" aria-label={m.employer_workspace_decision_group()}>
         {DECISIONS.map(({ status, label, Icon }) => {
           const current = application?.status === status
           return (
             <button
               key={status}
               type="button"
-              className={`ad-decision ad-decision--${status}${current ? ' is-current' : ''}`}
+              className={`decision-btn decision-btn--${status}${current ? ' is-current' : ''}`}
               aria-pressed={current}
               disabled={current || deciding || !allowed.includes(status)}
               onClick={() => decide(status)}
@@ -53,15 +53,15 @@ export default function ApplicationDecisionBar({ application, candidateName, pen
         })}
       </div>
       {canUndo && (
-        <div className="ad-pending" role="status">
+        <div className="decision-pending" role="status">
           <ClockCircleOutlined aria-hidden />
           <span>{m.employer_workspace_decision_notice_in({ seconds: undoSeconds })}</span>
-          <button type="button" className="ad-pending__undo" disabled={undoing} onClick={undo}>
+          <button type="button" className="decision-pending__undo" disabled={undoing} onClick={undo}>
             {m.employer_workspace_decision_undo()}
           </button>
         </div>
       )}
-      {final && !canUndo && <p className="ad-bar__hint">{m.employer_workspace_decision_final()}</p>}
+      {final && !canUndo && <p className="decision-bar__hint">{m.employer_workspace_decision_final()}</p>}
       {confirmationModal}
     </div>
   )

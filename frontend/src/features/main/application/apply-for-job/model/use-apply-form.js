@@ -40,6 +40,14 @@ export function requestErrorMessage(error, fallback) {
   return fieldName === 'non_field_errors' ? errorText : `${fieldLabel}: ${errorText}`
 }
 
+function contactValues(name, email, phone) {
+  return { name: name || '', email: email || '', phone: phone || '' }
+}
+
+export function isContactComplete({ name, email, phone }) {
+  return Boolean(name.trim() && email.trim() && phone.trim())
+}
+
 export function useApplyForm({
   open,
   onClose,
@@ -58,12 +66,8 @@ export function useApplyForm({
   const [lastCoverLetter, setLastCoverLetter] = useState('')
   const [preferredLocationIds, setPreferredLocationIds] = useState([])
   const [locationDropdownOpen, setLocationDropdownOpen] = useState(false)
-  const [coverLetter, setCoverLetter] = useState('')
   const [allowAiAnalysis, setAllowAiAnalysis] = useState(false)
   const [dataProcessingConsent, setDataProcessingConsent] = useState(false)
-  const [contactName, setContactName] = useState(candidateName)
-  const [contactEmail, setContactEmail] = useState(candidateEmail)
-  const [contactPhone, setContactPhone] = useState(candidatePhone)
   const [uploadFile, setUploadFile] = useState(null)
   const [uploadedCv, setUploadedCv] = useState(null)
   const [showAllCvs, setShowAllCvs] = useState(false)
@@ -73,6 +77,13 @@ export function useApplyForm({
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const fileInputRef = useRef(null)
+  // Ô thư giới thiệu và ô liên hệ tự giữ chữ khi gõ (xem CoverLetterField,
+  // ContactFields): mỗi phím không vẽ lại cả modal. Form đọc ref lúc nộp, chỉ nhận
+  // `contactComplete` khi nó đổi; `fieldsKey` đổi mỗi lần mở để các ô dựng lại từ ref.
+  const coverLetterRef = useRef('')
+  const contactRef = useRef(contactValues(candidateName, candidateEmail, candidatePhone))
+  const [contactComplete, setContactComplete] = useState(() => isContactComplete(contactValues(candidateName, candidateEmail, candidatePhone)))
+  const [fieldsKey, setFieldsKey] = useState(0)
   const locationOptions = workplaceGroups.map((group) => ({
     value: group.province_id,
     label: group.province_name,
@@ -85,14 +96,14 @@ export function useApplyForm({
     let active = true
     setLoadingCvs(true)
     setError('')
-    setCoverLetter('')
+    coverLetterRef.current = ''
+    contactRef.current = contactValues(candidateName, candidateEmail, candidatePhone)
+    setContactComplete(isContactComplete(contactRef.current))
+    setFieldsKey((key) => key + 1)
     setAllowAiAnalysis(false)
     setDataProcessingConsent(false)
     setLocationDropdownOpen(false)
     setPreferredLocationIds(onlyProvinceId == null ? [] : [onlyProvinceId])
-    setContactName(candidateName)
-    setContactEmail(candidateEmail)
-    setContactPhone(candidatePhone)
     setUploadFile(null)
     setUploadedCv(null)
     setUploadState(null)
@@ -153,7 +164,8 @@ export function useApplyForm({
     if (isUploadChoice && !uploadFile && !uploadedCv) return
     if (!isUploadChoice && !targetCv?.latest_version_public_id) return
     const sendsFile = isUploadChoice || targetCv?.cv_type === 'uploaded'
-    if (sendsFile && (!contactName.trim() || !contactEmail.trim() || !contactPhone.trim())) return
+    const contact = contactRef.current
+    if (sendsFile && !isContactComplete(contact)) return
     if (!dataProcessingConsent) return
 
     setSubmitting(true)
@@ -176,13 +188,13 @@ export function useApplyForm({
         jobPublicId,
         cvPublicId: targetCv.public_id,
         versionPublicId: targetCv.latest_version_public_id,
-        coverLetter: coverLetter.trim(),
+        coverLetter: coverLetterRef.current.trim(),
         preferredLocationIds,
         allowAiAnalysis,
         dataProcessingConsent,
-        contactName: contactName.trim(),
-        contactEmail: contactEmail.trim(),
-        contactPhone: contactPhone.trim(),
+        contactName: contact.name.trim(),
+        contactEmail: contact.email.trim(),
+        contactPhone: contact.phone.trim(),
         campaignRef: readCampaignRef(),
       })
       message.success('Chúc mừng bạn đã ứng tuyển thành công!')
@@ -207,7 +219,6 @@ export function useApplyForm({
   const selectedCv = cvs.find((cv) => cv.public_id === selectedCvId)
   const isUploadChoice = selectedCvId === UPLOAD_CHOICE_ID
   const needsLocation = locationOptions.length > 0
-  const contactComplete = Boolean(contactName.trim() && contactEmail.trim() && contactPhone.trim())
   // CV dạng tệp (mới tải hoặc đã có trong thư viện) được nộp nguyên tệp, nên cần thông tin liên hệ.
   const needsContact = isUploadChoice || selectedCv?.cv_type === 'uploaded'
   const cvChosen = isUploadChoice
@@ -235,18 +246,14 @@ export function useApplyForm({
     setLocationDropdownOpen,
     locationOptions,
     needsLocation,
-    coverLetter,
-    setCoverLetter,
+    coverLetterRef,
+    fieldsKey,
     allowAiAnalysis,
     setAllowAiAnalysis,
     dataProcessingConsent,
     setDataProcessingConsent,
-    contactName,
-    setContactName,
-    contactEmail,
-    setContactEmail,
-    contactPhone,
-    setContactPhone,
+    contactRef,
+    setContactComplete,
     uploadFile,
     setUploadFile,
     setUploadedCv,

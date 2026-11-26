@@ -1,4 +1,6 @@
 import { Input } from 'antd'
+import { memo, useState } from 'react'
+import { isContactComplete } from '../model/use-apply-form'
 
 function Field({ label, children }) {
   return (
@@ -12,8 +14,18 @@ function Field({ label, children }) {
 /**
  * Thông tin liên hệ gửi kèm một CV dạng tệp: nhà tuyển dụng nhận nguyên tệp gốc
  * nên đây là họ tên, email, số điện thoại duy nhất hệ thống có ở dạng trường dữ liệu.
+ * Chữ đang gõ ở state riêng và `valuesRef` (dùng chung giữa các lựa chọn CV, đọc
+ * lúc nộp); modal chỉ vẽ lại khi `onCompleteChange` báo đủ/thiếu thay đổi.
  */
-export default function ContactFields({ name, email, phone, onNameChange, onEmailChange, onPhoneChange }) {
+function ContactFields({ valuesRef, onCompleteChange }) {
+  const [values, setValues] = useState(() => valuesRef.current)
+  const change = (field) => (event) => {
+    const next = { ...valuesRef.current, [field]: event.target.value }
+    valuesRef.current = next
+    setValues(next)
+    onCompleteChange(isContactComplete(next))
+  }
+
   return (
     <div onClick={(event) => event.stopPropagation()}>
       <div className="af-contact__head">
@@ -24,8 +36,8 @@ export default function ContactFields({ name, email, phone, onNameChange, onEmai
         <Input
           aria-label="Họ và tên ứng tuyển"
           autoComplete="name"
-          value={name}
-          onChange={(event) => onNameChange(event.target.value)}
+          value={values.name}
+          onChange={change('name')}
           placeholder="Họ tên hiển thị với Nhà tuyển dụng"
         />
       </Field>
@@ -35,8 +47,8 @@ export default function ContactFields({ name, email, phone, onNameChange, onEmai
             type="email"
             aria-label="Email ứng tuyển"
             autoComplete="email"
-            value={email}
-            onChange={(event) => onEmailChange(event.target.value)}
+            value={values.email}
+            onChange={change('email')}
             placeholder="Email hiển thị với Nhà tuyển dụng"
           />
         </Field>
@@ -45,8 +57,8 @@ export default function ContactFields({ name, email, phone, onNameChange, onEmai
             type="tel"
             aria-label="Số điện thoại ứng tuyển"
             autoComplete="tel"
-            value={phone}
-            onChange={(event) => onPhoneChange(event.target.value)}
+            value={values.phone}
+            onChange={change('phone')}
             placeholder="Số điện thoại hiển thị với Nhà tuyển dụng"
           />
         </Field>
@@ -54,3 +66,5 @@ export default function ContactFields({ name, email, phone, onNameChange, onEmai
     </div>
   )
 }
+
+export default memo(ContactFields)
