@@ -40,6 +40,7 @@ ml/
     error_analysis.py     soi lỗi của công thức đang chạy trên validation (tín hiệu, cosine theo nhãn, cặp lệch mức)
     quality_gate.py       cổng chất lượng cho CV huấn luyện (generate_cvs.py --train), phiếu đọc kiểm 40 CV (labeling/train_cv_review*.md)
     build_train_pairs.py  bộ ba huấn luyện bi-encoder, có chống rò rỉ sang tập vàng
+    build_calibration_pairs.py  ghép cặp tập hiệu chỉnh (14 tin, phiếu mù), gộp nhãn và đối chiếu với nhãn yếu
     build_requirement_pairs.py  cặp (câu yêu cầu, câu CV) huấn luyện cross-encoder
     train.py              fine-tune bi-encoder E5 trên MPS
     train_reranker.py     fine-tune cross-encoder phán từng yêu cầu
