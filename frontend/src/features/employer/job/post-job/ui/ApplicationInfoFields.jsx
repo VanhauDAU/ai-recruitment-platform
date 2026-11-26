@@ -1,6 +1,7 @@
 import { Button, DatePicker, Form, Input, InputNumber, Modal, Select } from 'antd'
 import dayjs from '@/shared/lib/dayjs'
 import { useState } from 'react'
+import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import { m } from '@/shared/config/i18n'
 
 const FALLBACK_MAX_DEADLINE_DAYS = 90
@@ -13,6 +14,8 @@ export default function ApplicationInfoFields({
 }) {
   const form = Form.useFormInstance()
   const [quickCreateOpen, setQuickCreateOpen] = useState(false)
+  // Điện thoại: chạm ô ngày chỉ mở lịch, không bật bàn phím che lịch.
+  const isPhone = useMediaQuery('(max-width: 639px)')
   const [quickCreateForm] = Form.useForm()
   const today = dayjs().startOf('day')
   const normalizedMaxDays = Number.isInteger(maxDeadlineDays) && maxDeadlineDays > 0
@@ -58,11 +61,12 @@ export default function ApplicationInfoFields({
               date.isBefore(today, 'day') || date.isAfter(latestDeadline, 'day')
             )}
             format="DD/MM/YYYY"
+            inputReadOnly={isPhone}
             placeholder={m.employer_job_form_deadline_placeholder()}
           />
         </Form.Item>
         <Form.Item name="number_of_vacancies" label={m.employer_job_form_vacancies()} rules={[{ required: true, type: 'number', min: 1, message: m.employer_job_form_vacancies_error() }]}>
-          <InputNumber min={1} className="!w-full" placeholder={m.employer_job_form_vacancies_placeholder()} />
+          <InputNumber inputMode="numeric" min={1} className="!w-full" placeholder={m.employer_job_form_vacancies_placeholder()} />
         </Form.Item>
       </div>
       <Form.Item name="campaign" label={m.employer_job_form_campaign()}>
@@ -97,7 +101,7 @@ export default function ApplicationInfoFields({
         <h3 className="text-sm font-extrabold text-slate-800">{m.employer_job_form_recipient()}</h3>
         <div className="mt-3 grid gap-x-4 md:grid-cols-2">
           <Form.Item name={['application_contact', 'recipient_name']} label={m.employer_job_form_recipient_name()} rules={[{ required: true, whitespace: true, message: m.employer_job_form_recipient_name_required() }]}>
-            <Input maxLength={255} placeholder={m.employer_job_form_recipient_name_placeholder()} />
+            <Input autoComplete="name" maxLength={255} placeholder={m.employer_job_form_recipient_name_placeholder()} />
           </Form.Item>
           <Form.Item
             name={['application_contact', 'phone']}
@@ -107,7 +111,7 @@ export default function ApplicationInfoFields({
               { pattern: /^[+\d][\d\s().-]{7,29}$/, message: m.employer_job_form_phone_invalid() },
             ]}
           >
-            <Input maxLength={30} placeholder={m.employer_job_form_phone_placeholder()} />
+            <Input type="tel" inputMode="tel" autoComplete="tel" maxLength={30} placeholder={m.employer_job_form_phone_placeholder()} />
           </Form.Item>
         </div>
         <Form.Item

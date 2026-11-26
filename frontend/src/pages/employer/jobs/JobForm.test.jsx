@@ -151,6 +151,7 @@ describe('JobForm submission feedback', () => {
 
     await waitFor(() => expect(mocks.message.success).toHaveBeenCalledWith(
       'Đã đăng tin. Ứng viên có thể xem tin ngay.',
+      { className: 'app-toast--sound-celebrate' },
     ))
     expect(mocks.publishEmployerJob).toHaveBeenCalledWith(
       { title: 'Backend Engineer' },

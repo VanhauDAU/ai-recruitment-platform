@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   DEFAULT_TOAST_SOUND,
+  isSoundOn,
   getSoundEffect,
   getToastSoundName,
   toastSoundOptions,
@@ -26,5 +27,25 @@ describe('sound effects registry', () => {
     const toast = document.createElement('li')
     toast.classList.add('app-toast--sound-done')
     expect(getToastSoundName(toast)).toBe('done')
+  })
+
+  it('registers celebrate as a lazy effect that follows the sound switch', () => {
+    expect(toastSoundOptions('celebrate')).toEqual({ className: 'app-toast--sound-celebrate' })
+    expect(getSoundEffect('celebrate')).toMatchObject({
+      src: '/audio/effects/celebrate.mp3',
+      preload: false,
+      followsMute: true,
+    })
+  })
+
+  it('registers a lazy message sound for Connect', () => {
+    expect(getSoundEffect('message')).toMatchObject({ src: '/audio/effects/message.mp3', preload: false })
+  })
+
+  it('reads the sound switch from storage', () => {
+    expect(isSoundOn()).toBe(true)
+    localStorage.setItem('procv:notification-sound', 'off')
+    expect(isSoundOn()).toBe(false)
+    localStorage.removeItem('procv:notification-sound')
   })
 })

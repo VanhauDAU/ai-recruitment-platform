@@ -4,6 +4,7 @@ import { Alert, Button, Form, Skeleton, Tag } from 'antd'
 import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router'
 import { message } from '@/shared/lib/toast'
+import { toastSoundOptions } from '@/shared/lib/sound-effects'
 import { EmployerConsentFields, EmployerRegistrationFields } from '@/features/employer/account/complete-employer-registration'
 import { completeEmployerRegistration, getEmployerProfile } from '@/entities/account/employer-profile'
 import { getProvinces } from '@/entities/system/location'
@@ -57,7 +58,7 @@ export default function EmployerOnboardingPanel() {
       sessionStorage.removeItem('employer_registration_consent')
       queryClient.setQueryData(['employer', 'profile'], profile)
       await refreshSession()
-      message.success(m.employer_account_onboarding_saved())
+      message.success(m.employer_account_onboarding_saved(), toastSoundOptions('celebrate'))
     },
     onError: (requestError) => {
       const data = requestError.response?.data

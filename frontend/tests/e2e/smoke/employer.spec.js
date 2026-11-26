@@ -1191,6 +1191,14 @@ test('employer jobs: creation chooser leads to the complete manual five-section 
   await expect(page.getByLabel('Tiêu đề tin')).toBeVisible()
   await expect(page.getByLabel('Tiêu đề tin')).toHaveAttribute('maxlength', '255')
   await expectJobFormTopBackground(page)
+  if (page.viewportSize().width < 640) {
+    // Ô gõ dưới 16px làm iOS phóng to trang; tiến độ là dải 4 bước, hai nút chung một hàng.
+    await expect(page.getByLabel('Tiêu đề tin')).toHaveCSS('font-size', '16px')
+    await expect(page.getByRole('button', { name: /^Thông tin chung \d+\/\d+$/ })).toBeVisible()
+    const draftBox = await page.getByRole('button', { name: /Lưu nháp/ }).boundingBox()
+    const postBox = await page.getByRole('button', { name: /Đăng tin/ }).boundingBox()
+    expect(Math.abs(draftBox.y - postBox.y)).toBeLessThan(2)
+  }
   if (hasDesktopPreview) {
     await expectJobPreviewPinned(page)
     const jobListPreview = page.getByRole('radio', { name: 'Danh sách việc làm' })

@@ -163,3 +163,239 @@
   outline: 2px solid var(--brand-primary);
   outline-offset: 1px;
 }
+
+/*
+ * Thanh Lưu nháp / Đăng tin dính đáy vùng cuộn. Điện thoại: một hàng, nút đăng
+ * chiếm phần rộng, cao ~64px thay vì hai nút chồng ~130px che form.
+ */
+.post-job-actions {
+  position: sticky;
+  bottom: 12px;
+  z-index: 10;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 0.95);
+  padding: 12px;
+  backdrop-filter: blur(8px);
+}
+
+.post-job-form .post-job-salary-input {
+  width: 210px;
+}
+
+/* Dải bốn bước thay thẻ tiến độ dưới xl. */
+.post-job-steps {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  padding: 8px 10px 8px;
+}
+
+.post-job-steps__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.post-job-steps__title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.post-job-steps__percent {
+  flex: none;
+  font-size: 12px;
+  color: var(--brand-primary);
+}
+
+.post-job-steps__bar {
+  margin-top: 6px;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #f1f5f9;
+}
+
+.post-job-steps__bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--brand-primary);
+  transition: width 0.2s ease;
+}
+
+.post-job-steps__list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.post-job-steps__step {
+  display: flex;
+  width: 100%;
+  min-height: 36px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #fff;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  touch-action: manipulation;
+}
+
+.post-job-steps__step[aria-current='step'] {
+  border-color: var(--brand-primary);
+  background: var(--brand-primary-soft);
+  color: var(--brand-primary-hover);
+}
+
+.post-job-steps__number {
+  display: flex;
+  height: 20px;
+  width: 20px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #f1f5f9;
+  font-size: 11px;
+}
+
+.post-job-steps__step.is-complete .post-job-steps__number {
+  background: var(--brand-primary);
+  color: #fff;
+}
+
+@media (max-width: 1279px) {
+  /* Dính đầu vùng cuộn để nhảy giữa các phần mà không phải cuộn ngược. */
+  .post-job-sticky-col {
+    position: sticky;
+    top: 0;
+    z-index: 11;
+  }
+
+  .post-job-steps {
+    box-shadow: 0 4px 12px rgb(15 23 42 / 0.06);
+  }
+}
+
+@media (max-width: 639px) {
+  .post-job-layout {
+    gap: 12px;
+  }
+
+  /*
+   * iOS Safari phóng to trang khi focus ô nhập chữ dưới 16px rồi không thu lại.
+   * Áp cho mọi ô gõ được của form (input, select tìm kiếm, ngày giờ, soạn thảo).
+   */
+  .post-job-form .ant-input,
+  .post-job-form .ant-input-affix-wrapper,
+  .post-job-form .ant-input-affix-wrapper > input.ant-input,
+  .post-job-form .ant-input-textarea-affix-wrapper > textarea.ant-input,
+  .post-job-form .ant-input-number-input,
+  .post-job-form .ant-select,
+  .post-job-form .ant-select-input,
+  .post-job-form .ant-cascader,
+  .post-job-form .ant-picker-input > input,
+  .post-job-form [contenteditable='true'],
+  .post-job-mobile-popup .ant-input {
+    font-size: 16px;
+  }
+
+  /*
+   * Cascader 3 cột (nhóm nghề / nghề / vị trí) rộng ~480px nên bị đẩy lệch trái,
+   * cột đầu ra ngoài màn hình. Chia đều bề ngang cho 3 cột, chữ dài xuống dòng.
+   */
+  .post-job-cascader-popup {
+    max-width: calc(100vw - 32px);
+  }
+
+  .post-job-cascader-popup .ant-cascader-menu {
+    width: calc((100vw - 48px) / 3);
+    min-width: 0;
+  }
+
+  .post-job-cascader-popup .ant-cascader-menu-item,
+  .post-job-cascader-popup .ant-cascader-menu-item-content {
+    overflow: visible;
+    white-space: normal;
+    text-overflow: clip;
+    line-height: 1.35;
+  }
+
+  /* Ô nhập cao hơn một chút cho dễ chạm. */
+  .post-job-form .ant-input-affix-wrapper,
+  .post-job-form .ant-input-number,
+  .post-job-form .ant-picker {
+    min-height: 40px;
+  }
+
+  .post-job-form .ant-select:not(.ant-select-sm):not(.ant-select-multiple) {
+    min-height: 40px;
+  }
+
+  /* Điện thoại hiện đủ mọi lựa chọn đã chọn (không còn "+N"), xuống dòng khi dài. */
+  .post-job-oneline-select .ant-select-content {
+    flex-wrap: wrap;
+  }
+
+  /* Giới tính cả hàng, tuổi từ/đến chung một hàng. */
+  .post-job-age-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .post-job-age-grid > :first-child {
+    grid-column: 1 / -1;
+  }
+
+  /* Cách hiển thị thu nhập giãn hết hàng; hai mức lương chia đôi bề ngang. */
+  .post-job-salary-options > .ant-select:first-child {
+    flex: 1 1 100%;
+  }
+
+  .post-job-salary-amounts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    gap: 0 12px;
+  }
+
+  .post-job-form .post-job-salary-input {
+    width: 100%;
+  }
+
+  /* Công tắc trong cột dọc không bị kéo giãn hết bề ngang. */
+  .post-job-form .ant-switch {
+    align-self: flex-start;
+  }
+
+  .post-job-actions {
+    bottom: 0;
+    margin-inline: -4px;
+    padding: 8px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    border-radius: 12px 12px 0 0;
+    box-shadow: 0 -6px 16px rgb(15 23 42 / 0.08);
+  }
+
+  .post-job-actions__submit {
+    flex: 1;
+  }
+
+  .post-job-actions .ant-btn {
+    height: 44px;
+  }
+}

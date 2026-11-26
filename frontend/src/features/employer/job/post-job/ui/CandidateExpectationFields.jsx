@@ -8,6 +8,7 @@ import {
   getSkills,
   jobKeys,
 } from '@/entities/job/job'
+import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import { message } from '@/shared/lib/toast'
 import { m } from '@/shared/config/i18n'
 
@@ -23,6 +24,8 @@ const PROFICIENCY_OPTIONS = [
 function SkillMultiSelect({ value = [], onChange, options, placeholder, onCreateSkill, disabledSkillIds = [] }) {
   const [searchValue, setSearchValue] = useState('')
   const [creating, setCreating] = useState(false)
+  // Điện thoại hiện đủ kỹ năng đã chọn thay vì gom thành "+N".
+  const isPhone = useMediaQuery('(max-width: 639px)')
   const normalizedSearch = searchValue.trim().replace(/\s+/g, ' ')
   const searchQuery = useQuery({
     queryKey: jobKeys.skillSearch(normalizedSearch),
@@ -56,7 +59,7 @@ function SkillMultiSelect({ value = [], onChange, options, placeholder, onCreate
       showSearch
       value={value}
       optionFilterProp="label"
-      maxTagCount="responsive"
+      maxTagCount={isPhone ? undefined : 'responsive'}
       options={mergedOptions}
       placeholder={placeholder}
       searchValue={searchValue}
@@ -96,7 +99,7 @@ export default function CandidateExpectationFields({ form, skills, languages, on
           <Select options={toOptions(EXPERIENCE_YEARS_LABELS)} placeholder={m.employer_job_form_experience_placeholder()} />
         </Form.Item>
       </div>
-      <div className="grid gap-x-4 md:grid-cols-3">
+      <div className="post-job-age-grid grid gap-x-4 md:grid-cols-3">
         <Form.Item name="gender_requirement" label={m.employer_job_preview_gender()}>
           <Select options={[
             { value: 'any', label: m.employer_job_preview_gender_any() },
@@ -105,7 +108,7 @@ export default function CandidateExpectationFields({ form, skills, languages, on
           ]} placeholder={m.employer_job_form_gender_placeholder()} />
         </Form.Item>
         <Form.Item name="age_min" label={m.employer_job_form_age_min()} rules={[{ type: 'number', min: 15, max: 100, message: m.employer_job_form_age_range_error() }]}> 
-          <InputNumber min={15} max={100} className="!w-full" placeholder={m.employer_job_form_age_min_placeholder()} />
+          <InputNumber inputMode="numeric" min={15} max={100} className="!w-full" placeholder={m.employer_job_form_age_min_placeholder()} />
         </Form.Item>
         <Form.Item
           name="age_max"
@@ -122,7 +125,7 @@ export default function CandidateExpectationFields({ form, skills, languages, on
             }),
           ]}
         >
-          <InputNumber min={15} max={100} className="!w-full" placeholder={m.employer_job_form_age_max_placeholder()} />
+          <InputNumber inputMode="numeric" min={15} max={100} className="!w-full" placeholder={m.employer_job_form_age_max_placeholder()} />
         </Form.Item>
       </div>
       <div className="grid gap-x-4 md:grid-cols-2">

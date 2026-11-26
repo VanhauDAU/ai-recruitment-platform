@@ -8,6 +8,7 @@ import { getJobPostingContext, jobKeys } from '@/entities/job/job'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { EMPLOYER_VERIFY_URL, employerAppPath } from '@/shared/config/portals'
 import { message } from '@/shared/lib/toast'
+import { toastSoundOptions } from '@/shared/lib/sound-effects'
 import { CHECK_STEP, jobSelection, SETUP_STEPS } from '../lib/setup-steps'
 import './launch-campaign.css'
 import { getIntlLocale, m } from '@/shared/config/i18n'
@@ -65,7 +66,7 @@ export default function CampaignLaunchReview({ campaign, overview, onLaunched, o
       queryClient.invalidateQueries({ queryKey: ['jobs'] })
       message.success(result.status === 'scheduled'
         ? m.employer_campaign_launch_scheduled_success({ date: formatDate(campaign.start_date) })
-        : m.employer_campaign_launch_success())
+        : m.employer_campaign_launch_success(), toastSoundOptions('celebrate'))
       onLaunched?.(result)
     },
     onError: (error) => message.error(getApiErrorMessage(error, m.employer_campaign_launch_error()), { duration: 6 }),

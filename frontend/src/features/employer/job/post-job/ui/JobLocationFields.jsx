@@ -52,6 +52,7 @@ function WardPicker({ open, wards, loading, allWardId, onOpenChange, onApply }) 
       trigger="click"
       placement="bottomLeft"
       title={m.employer_job_location_choose_ward()}
+      classNames={{ root: 'post-job-mobile-popup' }}
       onOpenChange={(nextOpen) => {
         if (nextOpen) {
           setSearch('')
