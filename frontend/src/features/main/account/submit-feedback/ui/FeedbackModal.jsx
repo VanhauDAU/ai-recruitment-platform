@@ -6,6 +6,8 @@ import { submitFeedback } from '../api/submit-feedback.api'
 import { useSession } from '@/entities/account/session'
 import { useSiteSettings } from '@/entities/system/site-settings'
 import { m } from '@/shared/config/i18n'
+import { useMediaQuery } from '@/shared/hooks/use-media-query'
+import AnimatedEmoji from '@/shared/ui/AnimatedEmoji'
 
 // Chủ đề góp ý — khớp Feedback.Category ở backend.
 const FEEDBACK_TOPICS = [
@@ -19,12 +21,13 @@ const FEEDBACK_TOPICS = [
 ]
 
 // Mức hài lòng — khớp Feedback.Satisfaction ở backend.
+// Emoji động giống khối đánh giá tin ở trang chi tiết (shared/ui/AnimatedEmoji).
 const SATISFACTIONS = [
-  { value: 'very_unsatisfied', emoji: '😖', label: 'Rất tệ' },
-  { value: 'unsatisfied', emoji: '🙁', label: 'Tệ' },
-  { value: 'neutral', emoji: '😐', label: 'Bình thường' },
-  { value: 'satisfied', emoji: '🙂', label: 'Tốt' },
-  { value: 'very_satisfied', emoji: '😍', label: 'Tuyệt vời' },
+  { value: 'very_unsatisfied', emoji: 'crying', label: 'Rất tệ' },
+  { value: 'unsatisfied', emoji: 'sad', label: 'Tệ' },
+  { value: 'neutral', emoji: 'neutral', label: 'Bình thường' },
+  { value: 'satisfied', emoji: 'happy', label: 'Tốt' },
+  { value: 'very_satisfied', emoji: 'star-struck', label: 'Tuyệt vời' },
 ]
 
 // Ngữ cảnh gửi kèm để tái hiện lỗi (không chứa dữ liệu cá nhân ngoài trình duyệt).
@@ -49,6 +52,8 @@ export default function FeedbackModal({ open, onClose }) {
   const [topic, setTopic] = useState(null)
   const [topicError, setTopicError] = useState(false)
   const [satisfaction, setSatisfaction] = useState(null)
+  const [hoveredSatisfaction, setHoveredSatisfaction] = useState(null)
+  const reduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
   const [submitting, setSubmitting] = useState(false)
   const [form] = Form.useForm()
 
@@ -151,17 +156,21 @@ export default function FeedbackModal({ open, onClose }) {
                 <button
                   key={option.value}
                   type="button"
+                  aria-label={option.label}
+                  aria-pressed={active}
                   onClick={() => setSatisfaction(active ? null : option.value)}
+                  onMouseEnter={() => setHoveredSatisfaction(option.value)}
+                  onMouseLeave={() => setHoveredSatisfaction(null)}
                   className="group flex cursor-pointer flex-col items-center gap-1.5"
                 >
                   <span
-                    className={`flex h-12 w-12 items-center justify-center rounded-full text-2xl transition-all duration-200 group-hover:scale-110 ${
+                    className={`flex h-14 w-14 items-center justify-center rounded-full transition-all duration-200 group-hover:scale-110 ${
                       active
-                        ? 'bg-[var(--brand-primary)] shadow-md shadow-[var(--brand-primary)]/30 ring-2 ring-[var(--brand-primary)]/15'
-                        : 'bg-gray-100 grayscale group-hover:bg-[var(--brand-primary-soft)] group-hover:grayscale-0'
+                        ? 'scale-110 bg-[var(--brand-primary-soft)] ring-2 ring-[var(--brand-primary)]'
+                        : `bg-gray-50 ${satisfaction ? 'opacity-60 grayscale group-hover:opacity-100 group-hover:grayscale-0' : ''}`
                     }`}
                   >
-                    {option.emoji}
+                    <AnimatedEmoji name={option.emoji} size={40} animated={!reduceMotion && (active || hoveredSatisfaction === option.value)} />
                   </span>
                   <span className={`text-[11px] transition ${active ? 'font-semibold text-[var(--brand-primary)]' : 'text-gray-500'}`}>
                     {option.label}

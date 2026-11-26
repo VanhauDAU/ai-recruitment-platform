@@ -1,10 +1,8 @@
 import { useState } from 'react'
 import { message } from '@/shared/lib/toast'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
+import AnimatedEmoji from '@/shared/ui/AnimatedEmoji'
 import './job-rating.css'
-
-// Emoji động Noto (CC BY 4.0) — nguồn và cách tạo file ở public/images/emoji/README.md.
-const EMOJI_DIR = '/images/emoji'
 
 const RATING_OPTIONS = [
   { value: 1, label: 'Không đáng tin cậy & rõ ràng', emoji: 'crying', tone: '#e11d48', toneText: '#be123c' },
@@ -16,14 +14,8 @@ const RATING_OPTIONS = [
 
 const toneStyle = (option) => option && { '--tone': option.tone, '--tone-text': option.toneText }
 
-// Bản tĩnh luôn hiện; bản động chỉ gắn khi cần để không tải 5 ảnh động cùng lúc.
 function RatingEmoji({ name, animated, className = 'job-rating__emoji' }) {
-  return (
-    <span className={className} aria-hidden="true">
-      <img src={`${EMOJI_DIR}/${name}-static.webp`} alt="" width={56} height={56} loading="lazy" decoding="async" />
-      {animated && <img src={`${EMOJI_DIR}/${name}.webp`} alt="" width={56} height={56} decoding="async" />}
-    </span>
-  )
+  return <AnimatedEmoji name={name} animated={animated} className={className} />
 }
 
 const ISSUE_OPTIONS = [
