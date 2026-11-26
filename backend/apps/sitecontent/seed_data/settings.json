@@ -2635,7 +2635,7 @@
     "group": "operations",
     "section": "Bảo trì",
     "value_type": "textarea",
-    "value": "Hệ thống đang bảo trì, vui lòng quay lại sau.",
+    "value": "ProCV đang nâng cấp để phục vụ bạn tốt hơn.\nVui lòng quay lại sau ít phút. Cảm ơn bạn đã kiên nhẫn!",
     "is_public": true,
     "description": "Nội dung hiển thị trên màn bảo trì.",
     "help": "Nội dung hiển thị trên màn bảo trì.",

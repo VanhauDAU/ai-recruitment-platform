@@ -8,6 +8,17 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-27
 
+#### Changed — Trang bảo trì theo thiết kế mới, bánh răng xoay
+
+- Màn bảo trì của SPA (`MaintenanceScreen`) và trang lỗi `50x.html` của nginx dùng chung
+  một giao diện: logo, cụm bánh răng xoay (tốc độ theo tỉ lệ số răng, tắt khi người dùng
+  bật giảm chuyển động), tiêu đề "Hệ thống đang **bảo trì**", vòng tròn trang trí, nút
+  tải lại. CSS và SVG nằm ở `frontend/public/maintenance/` nên không vào CSS khởi tạo.
+- Trước đây khi bật bảo trì, các trang SEO do Django dựng (trang chủ, `/viec-lam`…) chỉ
+  trả một dòng chữ trơn. Giờ middleware vẫn dựng khung SPA và chỉ đổi mã sang 503
+  (`Retry-After`, `X-Robots-Tag: noindex`), SPA tự hiện màn bảo trì.
+- Câu mặc định của `maintenance_message` trong seed đổi theo thiết kế. DB đang chạy giữ
+  giá trị cũ: sửa ở Cấu hình hệ thống → Vận hành → Bảo trì.
 #### Added — Link "Trạng thái hệ thống" ở footer
 
 - Migration `sitecontent.0014` thêm link tới Status page UptimeRobot vào cụm footer "Về
