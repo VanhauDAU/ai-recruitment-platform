@@ -1,10 +1,13 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
+import { EnvironmentOutlined, UnorderedListOutlined } from '@ant-design/icons'
+import { Segmented } from 'antd'
 import { buildCategoryTree, getJobCategories, jobKeys } from '@/entities/job/job'
 import { resolveGeoPlace } from '@/entities/system/location'
-import { useSiteSettings } from '@/entities/system/site-settings'
+import { useBasemap, useSiteSettings } from '@/entities/system/site-settings'
 import { m } from '@/shared/config/i18n'
+import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import { isInVietnam } from '@/shared/lib/geo'
 import { mergeSearchParams } from './lib/job-list-params'
 import { radiusOptions, readNearbyFilters, shortPlaceName } from './lib/nearby-params'
@@ -38,6 +41,10 @@ export default function NearbyJobs() {
   const [placeError, setPlaceError] = useState(false)
   const [hoveredSlug, setHoveredSlug] = useState(null)
   const [selectedPoint, setSelectedPoint] = useState(null)
+  // Điện thoại/tablet: xem danh sách hoặc bản đồ, không xếp chồng cả hai.
+  const [view, setView] = useState('list')
+  const hasMap = Boolean(useBasemap())
+  const compact = useMediaQuery('(max-width: 639px)')
   const search = useNearbySearch(origin, filters, { enabled })
   const categoriesQuery = useQuery({
     queryKey: jobKeys.categories,
@@ -55,12 +62,15 @@ export default function NearbyJobs() {
   const title = provinceName
     ? m.candidate_nearby_title_in({ place: shortPlaceName(provinceName) })
     : m.candidate_nearby_title()
-  const placeLabel = origin?.label || m.candidate_nearby_my_location()
+  const placeLabel = origin?.label
+    || (origin?.source === 'map' ? m.candidate_nearby_map_point() : m.candidate_nearby_my_location())
   // Mô tả nơi đang tra: phường/xã + tỉnh gần nhất (máy chủ suy từ tâm), không có thì tọa độ.
   const originWard = search.originInfo?.ward
   const nearLabel = originWard
     ? `${shortPlaceName(originWard.name)}, ${shortPlaceName(originWard.province_name)}`
     : origin && `${origin.latitude.toFixed(4)}, ${origin.longitude.toFixed(4)}`
+  // Chữ trong ô vị trí: tên phường/địa chỉ đã chọn; GPS hoặc bấm bản đồ thì kèm phường gần nhất.
+  const originText = origin?.label || (origin && (originWard ? `${placeLabel} · ${nearLabel}` : placeLabel))
 
   function updateParams(entries, options) {
     setSelectedPoint(null)
@@ -97,9 +107,28 @@ export default function NearbyJobs() {
 
   function selectPoint(point) {
     setSelectedPoint(point)
+    setView('list')
     const first = document.querySelector(`[data-job-slug="${CSS.escape(point.jobs[0].slug)}"]`)
     first?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
   }
+
+  const listLabel = origin && search.count ? m.candidate_nearby_view_list_count({ count: search.count }) : m.candidate_nearby_view_list()
+  // Dưới lg: chuyển danh sách/bản đồ. Điện thoại chỉ hiện biểu tượng, nằm chung hàng bộ lọc.
+  const labelClass = compact ? 'nearby-sr' : undefined
+  const viewSwitch = hasMap && (
+    <Segmented
+      block={!compact}
+      size={compact ? 'middle' : 'large'}
+      className="nearby-view-switch"
+      value={view}
+      onChange={setView}
+      aria-label={m.candidate_nearby_view_label()}
+      options={[
+        { value: 'list', icon: <UnorderedListOutlined aria-hidden />, label: <span className={labelClass}>{listLabel}</span>, title: listLabel },
+        { value: 'map', icon: <EnvironmentOutlined aria-hidden />, label: <span className={labelClass}>{m.candidate_nearby_view_map()}</span>, title: m.candidate_nearby_view_map() },
+      ]}
+    />
+  )
 
   const geoError = placeError ? 'place' : position.error
   const accuracyKm = origin?.source === 'gps' && origin.accuracyKm > 1 ? Math.round(origin.accuracyKm) : null
@@ -123,13 +152,15 @@ export default function NearbyJobs() {
             filters={filters}
             radiusChoices={radiusOptions(maxRadius)}
             categories={categoryGroups}
-            originLabel={origin?.label}
+            originLabel={originText}
             focus={origin}
             locating={position.locating}
             geoError={geoError}
             onUseLocation={locateMe}
             onPickPlace={pickPlace}
             onRadiusChange={(radius) => updateParams({ r: radius })}
+            compact={compact}
+            viewSwitch={compact ? viewSwitch : null}
             onApply={(draft) => updateParams({
               cat: draft.category || null,
               salary: draft.salary || null,
@@ -138,7 +169,8 @@ export default function NearbyJobs() {
           />
           {accuracyKm && <p className="nearby-page__hint">{m.candidate_nearby_geo_inaccurate({ km: accuracyKm })}</p>}
 
-          <div className="nearby-page__layout">
+          {viewSwitch && !compact && <div className="nearby-page__views">{viewSwitch}</div>}
+          <div className="nearby-page__layout" data-view={view}>
             <NearbyMapPanel
               origin={origin}
               radius={filters.radius}

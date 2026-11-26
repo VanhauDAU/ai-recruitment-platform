@@ -313,8 +313,15 @@ mọi lỗi cấu hình thành một thông báo — xem bằng
 
 Việc làm gần tôi (ADR-0029): khi DB đã có tin (khôi phục từ dump), chạy một lần
 `seed_location_coordinates` rồi `refresh_job_coordinates` để gán tọa độ cho nơi làm
-việc cũ. Đặt `GEOCODING_PROVIDER=vietmap` + `GEOCODING_API_KEY` trong `backend/.env`
-và site setting `map_style_url` (style VietMap kèm key tile giới hạn domain procv.site).
+việc cũ. Có hai key riêng:
+- Tìm địa chỉ phía máy chủ: đặt `GEOCODING_PROVIDER=geoapify` và `GEOCODING_API_KEY` trong
+  `backend/.env`. Tạo key ở myprojects.geoapify.com, chỉ đặt "Allowed IP addresses" là IP
+  máy chủ, để trống Referer/Origin (request từ máy chủ không gửi hai header này). Gói miễn phí cho
+  3.000 request/ngày, và trang tìm việc tự ghi công Geoapify, OpenStreetMap như gói này yêu cầu.
+- Bản đồ nền: site setting `map_style_url`, dùng style VietMap kèm key tile giới hạn domain
+  procv.site.
+
+Thiếu key tìm địa chỉ thì vẫn tìm được theo phường/xã. Thiếu key tile thì các trang ẩn bản đồ.
 
 ```bash
 scripts/deploy/compose.sh exec backend python manage.py seed_location_coordinates

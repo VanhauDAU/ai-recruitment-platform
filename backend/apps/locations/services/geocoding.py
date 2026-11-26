@@ -1,9 +1,10 @@
 """Provider-neutral geocoding boundary (ADR-0029).
 
-VietMap is the production provider (Vietnamese data after the 07/2025 merger,
-maps that comply with Vietnamese law); Goong is a drop-in alternative and
-Nominatim is for development without a key. Every provider call goes through
-``GeocodeCache`` so re-saving a job or re-selecting a suggestion costs nothing.
+Geoapify is the production provider: self-serve key, free daily quota, Vietnam-only
+filter. Nominatim is for development without a key. A new provider implements
+``GeocodingProvider`` and registers in ``_PROVIDERS``. Every provider call goes
+through ``GeocodeCache`` so re-saving a job or re-selecting a suggestion costs
+nothing.
 """
 
 from __future__ import annotations
@@ -120,98 +121,57 @@ class DisabledProvider:
         raise GeocodingDisabled()
 
 
-class VietMapProvider(_HttpProvider):
-    """https://maps.vietmap.vn/docs/map-api — Search/Autocomplete/Place v4."""
+class GeoapifyProvider(_HttpProvider):
+    """https://apidocs.geoapify.com/docs/geocoding — Geocoding and Address Autocomplete.
 
-    name = 'vietmap'
-    base_url = 'https://maps.vietmap.vn/api'
+    ``filter=countrycode:vn`` keeps only features OpenStreetMap places in Vietnam.
+    Autocomplete items already carry coordinates, so the ref encodes them and
+    ``place`` resolves without a second billed request.
+    """
 
-    def _params(self, **extra):
-        return {'apikey': settings.GEOCODING_API_KEY, 'display_type': 6, **extra}
+    name = 'geoapify'
+    base_url = 'https://api.geoapify.com/v1/geocode'
 
-    @staticmethod
-    def _new_format(item):
-        return item.get('data_new') or item
-
-    def geocode(self, text):
-        results = self._get(f'{self.base_url}/search/v4', self._params(text=text)) or []
-        if not isinstance(results, list) or not results:
-            return None
-        return self.place(self._new_format(results[0]).get('ref_id') or results[0].get('ref_id'))
-
-    def autocomplete(self, text, focus):
-        params = self._params(text=text)
-        if focus:
-            params['focus'] = f'{focus[0]},{focus[1]}'
-        results = self._get(f'{self.base_url}/autocomplete/v4', params) or []
-        suggestions = []
-        for item in results if isinstance(results, list) else []:
-            data = self._new_format(item)
-            ref = data.get('ref_id') or item.get('ref_id')
-            if ref:
-                suggestions.append(
-                    PlaceSuggestion(
-                        ref=f'{self.name}:{ref}',
-                        label=data.get('name') or data.get('display', ''),
-                        secondary=data.get('address', ''),
-                    )
-                )
-        return suggestions[:AUTOCOMPLETE_LIMIT]
-
-    def place(self, ref):
-        if not ref:
-            return None
-        ref = ref.removeprefix(f'{self.name}:')
-        data = self._get(
-            f'{self.base_url}/place/v4', {'apikey': settings.GEOCODING_API_KEY, 'refid': ref}
-        )
-        if not isinstance(data, dict):
-            return None
-        return _point(data.get('lat'), data.get('lng'), data.get('display', ''))
-
-
-class GoongProvider(_HttpProvider):
-    """https://docs.goong.io — Geocode, Place AutoComplete/Detail."""
-
-    name = 'goong'
-    base_url = 'https://rsapi.goong.io'
+    def _params(self, text, **extra):
+        return {
+            'text': text,
+            'apiKey': settings.GEOCODING_API_KEY,
+            'filter': 'countrycode:vn',
+            'lang': 'vi',
+            'format': 'json',
+            **extra,
+        }
 
     def geocode(self, text):
-        data = self._get(
-            f'{self.base_url}/geocode', {'address': text, 'api_key': settings.GEOCODING_API_KEY}
-        )
-        results = (data or {}).get('results') or []
+        results = (self._get(f'{self.base_url}/search', self._params(text, limit=1)) or {}).get(
+            'results'
+        ) or []
         if not results:
             return None
-        location = results[0].get('geometry', {}).get('location', {})
-        return _point(location.get('lat'), location.get('lng'), results[0].get('formatted_address'))
+        return _point(results[0].get('lat'), results[0].get('lon'), results[0].get('formatted'))
 
     def autocomplete(self, text, focus):
-        params = {'input': text, 'api_key': settings.GEOCODING_API_KEY, 'limit': AUTOCOMPLETE_LIMIT}
+        params = self._params(text, limit=AUTOCOMPLETE_LIMIT)
         if focus:
-            params['location'] = f'{focus[0]},{focus[1]}'
-        data = self._get(f'{self.base_url}/Place/AutoComplete', params)
+            params['bias'] = f'proximity:{focus[1]},{focus[0]}'
+        data = self._get(f'{self.base_url}/autocomplete', params)
         suggestions = []
-        for item in (data or {}).get('predictions') or []:
-            formatting = item.get('structured_formatting') or {}
-            if item.get('place_id'):
-                suggestions.append(
-                    PlaceSuggestion(
-                        ref=f'{self.name}:{item["place_id"]}',
-                        label=formatting.get('main_text') or item.get('description', ''),
-                        secondary=formatting.get('secondary_text', ''),
-                    )
+        for item in (data or {}).get('results') or []:
+            point = _point(item.get('lat'), item.get('lon'))
+            if point is None:
+                continue
+            suggestions.append(
+                PlaceSuggestion(
+                    ref=f'{self.name}:{point.latitude:.6f},{point.longitude:.6f}',
+                    label=item.get('address_line1') or item.get('formatted', ''),
+                    secondary=item.get('address_line2', ''),
                 )
+            )
         return suggestions[:AUTOCOMPLETE_LIMIT]
 
     def place(self, ref):
-        data = self._get(
-            f'{self.base_url}/Place/Detail',
-            {'place_id': ref.removeprefix(f'{self.name}:'), 'api_key': settings.GEOCODING_API_KEY},
-        )
-        result = (data or {}).get('result') or {}
-        location = result.get('geometry', {}).get('location', {})
-        return _point(location.get('lat'), location.get('lng'), result.get('formatted_address'))
+        lat, _, lng = ref.removeprefix(f'{self.name}:').partition(',')
+        return _point(lat, lng)
 
 
 class NominatimProvider(_HttpProvider):
@@ -249,8 +209,7 @@ class NominatimProvider(_HttpProvider):
 
 _PROVIDERS = {
     'disabled': DisabledProvider,
-    'vietmap': VietMapProvider,
-    'goong': GoongProvider,
+    'geoapify': GeoapifyProvider,
     'nominatim': NominatimProvider,
 }
 
@@ -260,7 +219,7 @@ def get_geocoding_provider() -> GeocodingProvider:
     if name not in _PROVIDERS:
         logger.error('Unknown GEOCODING_PROVIDER %r, geocoding disabled', name)
         name = 'disabled'
-    if name in {'vietmap', 'goong'} and not settings.GEOCODING_API_KEY:
+    if name == 'geoapify' and not settings.GEOCODING_API_KEY:
         name = 'disabled'
     return _PROVIDERS[name]()
 
