@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { mockPublicApi } from './helpers'
 
-// Việc làm gần tôi (ADR-0029): GPS giả lập, API giả lập, chặn tile bản đồ ngoài.
+// Việc làm gần tôi (ADR-0029): GPS giả lập, API giả lập, style VietMap giả (không tải tile thật).
 const ORIGIN = {
   latitude: 15.887,
   longitude: 108.247,
@@ -30,7 +30,10 @@ function job(slug, title, distance) {
 
 async function mockNearbyApi(page) {
   await mockPublicApi(page)
-  await page.route('https://tiles.openfreemap.org/**', (route) => route.fulfill({ json: { version: 8, sources: {}, layers: [] } }))
+  await page.route('http://localhost:8000/api/public/site/settings/', (route) => route.fulfill({
+    json: { map_style_url: 'https://maps.vietmap.vn/maps/styles/tm/style.json?apikey=e2e', map_attribution: '© VIETMAP' },
+  }))
+  await page.route('https://maps.vietmap.vn/**', (route) => route.fulfill({ json: { version: 8, sources: {}, layers: [] } }))
   const requests = []
   await page.route(/\/api\/public\/jobs\/nearby\/(?:\?.*)?$/, (route) => {
     const url = new URL(route.request().url())
@@ -59,6 +62,8 @@ test('candidate finds jobs near the current location and widens the radius', { t
 
   await page.getByRole('button', { name: /Dùng vị trí của tôi/ }).click()
   await expect(page.getByRole('heading', { name: 'Việc làm gần tôi tại Đà Nẵng' })).toBeVisible()
+  // Vị trí hiện tại được điền vào ô vị trí, kèm phường gần nhất.
+  await expect(page.getByTitle('Vị trí của bạn · P. Điện Bàn, Đà Nẵng')).toBeVisible()
   // Tọa độ được làm tròn ~110 m trước khi gửi và không lên URL.
   await expect.poll(() => requests.at(-1)).toMatchObject({ lat: '15.887', lng: '108.247', radius_km: '5' })
   expect(page.url()).not.toContain('15.88')
@@ -67,7 +72,16 @@ test('candidate finds jobs near the current location and widens the radius', { t
   await expect(page.getByText('Nhân Viên Phụ Xe & Làm Kho')).toBeVisible()
   await expect(page.getByText('3,4 km').first()).toBeVisible()
   await expect(page.getByRole('radio', { name: '10 km' })).toHaveAttribute('aria-checked', 'true')
-  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0)
+  const overflow = () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
+  await expect.poll(overflow).toBe(0)
+
+  // Dưới lg danh sách và bản đồ là hai chế độ xem; canvas bản đồ không được đẩy trang rộng ra.
+  const mapView = page.getByText('Bản đồ', { exact: true })
+  const isDesktop = test.info().project.name.startsWith('desktop')
+  await expect(mapView).toBeVisible({ visible: !isDesktop })
+  if (!isDesktop) await mapView.click()
+  await expect(page.locator('.maplibregl-canvas')).toBeVisible()
+  await expect.poll(overflow).toBe(0)
 })
 
 test('denied location access points the candidate to the ward picker', async ({ page, context }) => {

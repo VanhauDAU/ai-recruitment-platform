@@ -8,7 +8,7 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-27
 
-#### Fixed — Bỏ bản đồ nền OpenStreetMap thể hiện sai chủ quyền Hoàng Sa, Trường Sa
+#### Fixed — Việc làm gần tôi: bỏ bản đồ nền sai chủ quyền Hoàng Sa, Trường Sa; làm lại ô vị trí và bố cục điện thoại
 
 - Production để trống `map_style_url` nên các trang "Việc làm gần tôi", chi tiết tin và
   ghim nơi làm việc dùng style OpenFreeMap. Tile vector của style này ghi "South China
@@ -24,6 +24,19 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Cập nhật ADR-0029, hướng dẫn site settings và mô tả `map_style_url`/`map_attribution`
   trong seed. Bật lại bản đồ: tạo key tile VietMap giới hạn domain procv.site rồi dán
   `https://maps.vietmap.vn/maps/styles/tm/style.json?apikey=<key>` vào cấu hình hệ thống.
+- Ô vị trí gộp tìm kiếm và định vị. Nút ngắm nằm cạnh ô, trên điện thoại chỉ còn biểu
+  tượng. Bấm nút sẽ điền "Vị trí của bạn · P. X, Tỉnh Y" vào ô; bấm bản đồ thì ghi "Điểm đã
+  chọn trên bản đồ". Đang định vị thì ô báo "Đang lấy vị trí hiện tại…". Tìm không thấy thì
+  gợi ý nhập tên phường/xã, không còn danh sách trống.
+- Sửa lỗi bản đồ tràn khỏi màn hình điện thoại làm lệch trang (khung 434px trên màn
+  375px): lưới trang và thanh lọc dùng `minmax(0, 1fr)` nên canvas MapLibre không đẩy
+  cột rộng ra.
+- Dưới 1024px, danh sách và bản đồ chuyển bằng nút "Danh sách (n) | Bản đồ" thay vì xếp
+  chồng; bấm ghim trên bản đồ sẽ quay về danh sách các việc ở điểm đó. Điện thoại: 5 mức
+  bán kính trên một hàng, hai bộ lọc chung hàng, "Gồm việc làm từ xa" chung hàng với nút
+  Tìm việc.
+- E2E `nearby-jobs` chạy với style VietMap giả nên bản đồ hiện thật. Test kiểm tra ô vị trí
+  được điền và trang không cuộn ngang ở cả chế độ bản đồ trên tablet và điện thoại.
 
 #### Fixed — Trắng trang ở tab "Bản AI chờ duyệt" (React #185)
 

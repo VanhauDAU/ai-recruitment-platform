@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
+import { Segmented } from 'antd'
 import { buildCategoryTree, getJobCategories, jobKeys } from '@/entities/job/job'
 import { resolveGeoPlace } from '@/entities/system/location'
-import { useSiteSettings } from '@/entities/system/site-settings'
+import { useBasemap, useSiteSettings } from '@/entities/system/site-settings'
 import { m } from '@/shared/config/i18n'
 import { isInVietnam } from '@/shared/lib/geo'
 import { mergeSearchParams } from './lib/job-list-params'
@@ -38,6 +39,9 @@ export default function NearbyJobs() {
   const [placeError, setPlaceError] = useState(false)
   const [hoveredSlug, setHoveredSlug] = useState(null)
   const [selectedPoint, setSelectedPoint] = useState(null)
+  // Điện thoại/tablet: xem danh sách hoặc bản đồ, không xếp chồng cả hai.
+  const [view, setView] = useState('list')
+  const hasMap = Boolean(useBasemap())
   const search = useNearbySearch(origin, filters, { enabled })
   const categoriesQuery = useQuery({
     queryKey: jobKeys.categories,
@@ -55,12 +59,15 @@ export default function NearbyJobs() {
   const title = provinceName
     ? m.candidate_nearby_title_in({ place: shortPlaceName(provinceName) })
     : m.candidate_nearby_title()
-  const placeLabel = origin?.label || m.candidate_nearby_my_location()
+  const placeLabel = origin?.label
+    || (origin?.source === 'map' ? m.candidate_nearby_map_point() : m.candidate_nearby_my_location())
   // Mô tả nơi đang tra: phường/xã + tỉnh gần nhất (máy chủ suy từ tâm), không có thì tọa độ.
   const originWard = search.originInfo?.ward
   const nearLabel = originWard
     ? `${shortPlaceName(originWard.name)}, ${shortPlaceName(originWard.province_name)}`
     : origin && `${origin.latitude.toFixed(4)}, ${origin.longitude.toFixed(4)}`
+  // Chữ trong ô vị trí: tên phường/địa chỉ đã chọn; GPS hoặc bấm bản đồ thì kèm phường gần nhất.
+  const originText = origin?.label || (origin && (originWard ? `${placeLabel} · ${nearLabel}` : placeLabel))
 
   function updateParams(entries, options) {
     setSelectedPoint(null)
@@ -97,6 +104,7 @@ export default function NearbyJobs() {
 
   function selectPoint(point) {
     setSelectedPoint(point)
+    setView('list')
     const first = document.querySelector(`[data-job-slug="${CSS.escape(point.jobs[0].slug)}"]`)
     first?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
   }
@@ -123,7 +131,7 @@ export default function NearbyJobs() {
             filters={filters}
             radiusChoices={radiusOptions(maxRadius)}
             categories={categoryGroups}
-            originLabel={origin?.label}
+            originLabel={originText}
             focus={origin}
             locating={position.locating}
             geoError={geoError}
@@ -138,7 +146,19 @@ export default function NearbyJobs() {
           />
           {accuracyKm && <p className="nearby-page__hint">{m.candidate_nearby_geo_inaccurate({ km: accuracyKm })}</p>}
 
-          <div className="nearby-page__layout">
+          {hasMap && (
+            <Segmented
+              block
+              className="nearby-page__views"
+              value={view}
+              onChange={setView}
+              options={[
+                { value: 'list', label: origin && search.count ? m.candidate_nearby_view_list_count({ count: search.count }) : m.candidate_nearby_view_list() },
+                { value: 'map', label: m.candidate_nearby_view_map() },
+              ]}
+            />
+          )}
+          <div className="nearby-page__layout" data-view={view}>
             <NearbyMapPanel
               origin={origin}
               radius={filters.radius}

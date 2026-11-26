@@ -144,6 +144,17 @@ describe('NearbyJobs page', () => {
     expect(document.querySelector('[data-job-slug="a"]')).toHaveClass('nearby-card--active')
   })
 
+  it('fills the location box with the current position and its nearest ward', async () => {
+    Object.defineProperty(navigator, 'geolocation', {
+      configurable: true,
+      value: { getCurrentPosition: (ok) => ok({ coords: { latitude: 16.0001, longitude: 108.2001, accuracy: 30 } }) },
+    })
+    renderPage('/viec-lam-gan-ban')
+    await userEvent.click(screen.getByRole('button', { name: /Dùng vị trí của tôi/ }))
+
+    expect(await screen.findByTitle('Vị trí của bạn · P. Điện Bàn, Đà Nẵng')).toBeInTheDocument()
+  })
+
   it('shows a clear message when location access is denied', async () => {
     Object.defineProperty(navigator, 'geolocation', {
       configurable: true,

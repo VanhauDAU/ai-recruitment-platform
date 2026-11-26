@@ -37,10 +37,25 @@
   color: #64748b;
 }
 
+/* minmax(0, 1fr): canvas MapLibre có bề rộng cố định theo pixel; cột `auto` bị nó
+   đẩy rộng hơn màn hình điện thoại (trang lệch, cuộn ngang). */
 .nearby-page__layout {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   margin-top: 16px;
+}
+
+.nearby-page__views {
+  margin-top: 12px;
+}
+
+/* Dưới lg: danh sách và bản đồ là hai chế độ xem, không xếp chồng. */
+@media (max-width: 1023px) {
+  .nearby-page__layout[data-view='list'] > .nearby-map,
+  .nearby-page__layout[data-view='map'] > .nearby-page__list {
+    display: none;
+  }
 }
 
 .nearby-page__selected {
@@ -71,6 +86,11 @@
     align-items: start;
   }
 
+  /* Hai class: thắng `.ant-segmented-block` (CSS-in-JS chèn sau CSS trang). */
+  .nearby-page .nearby-page__views {
+    display: none;
+  }
+
   .nearby-map {
     position: sticky;
     top: 80px;
@@ -85,6 +105,7 @@
 /* ---- Thanh lọc ---- */
 .nearby-filter {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
   padding: 14px 16px;
   border: 1px solid #e2e8f0;
@@ -94,9 +115,17 @@
 
 .nearby-filter__origin {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+}
+
+.nearby-filter__place {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.nearby-filter__place .ant-select-prefix {
+  color: #94a3b8;
 }
 
 .nearby-filter__locate {
@@ -104,14 +133,13 @@
   font-weight: 600;
 }
 
-.nearby-filter__or {
+.nearby-filter__empty {
+  margin: 0;
+  padding: 6px 4px;
   font-size: 13px;
+  line-height: 1.45;
   color: #64748b;
-}
-
-.nearby-filter__place {
-  flex: 1 1 280px;
-  min-width: 0;
+  white-space: normal;
 }
 
 .nearby-filter__error {
@@ -176,15 +204,50 @@
   font-weight: 600;
 }
 
+/* Điện thoại: nút định vị chỉ còn biểu tượng cạnh ô; bán kính một hàng chia đều;
+   hai bộ lọc chung một hàng; "từ xa" và nút tìm chung hàng cuối. */
 @media (max-width: 639px) {
-  .nearby-filter__select,
-  .nearby-filter__submit,
+  .nearby-filter {
+    padding: 12px;
+  }
+
   .nearby-filter__locate {
+    width: 40px;
+    padding-inline: 0;
+  }
+
+  .nearby-filter__locate-text {
+    display: none;
+  }
+
+  .nearby-filter__row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .nearby-filter__label {
+    display: none;
+  }
+
+  .nearby-filter__radius {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+  }
+
+  .nearby-chip {
+    min-width: 0;
+    padding: 0 4px;
+  }
+
+  .nearby-filter__select {
     width: 100%;
   }
 
-  .nearby-filter__or {
-    display: none;
+  .nearby-filter__remote {
+    align-self: center;
   }
 }
 
@@ -231,8 +294,8 @@
 
 @media (max-width: 1023px) {
   .nearby-map__canvas {
-    height: 340px;
-    min-height: 0;
+    height: min(70vh, 560px);
+    min-height: 320px;
   }
 }
 

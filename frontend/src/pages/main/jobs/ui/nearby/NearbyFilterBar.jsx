@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { AimOutlined } from '@ant-design/icons'
+import { AimOutlined, SearchOutlined } from '@ant-design/icons'
 import { Button, Checkbox, Select } from 'antd'
 import { SALARY_RANGES } from '@/entities/job/job'
 import { searchGeoPlaces } from '@/entities/system/location'
@@ -41,7 +41,8 @@ function usePlaceSuggestions(query, focus) {
     }
   }, [text, lat, lng])
 
-  return text.length < MIN_QUERY ? { options: [], loading: false } : state
+  if (text.length < MIN_QUERY) return { options: [], loading: false, searched: false }
+  return { ...state, searched: state.query === text && !state.loading }
 }
 
 function SuggestionLabel({ option }) {
@@ -93,29 +94,22 @@ export default function NearbyFilterBar({
 
   return (
     <section className="nearby-filter" aria-label={m.candidate_nearby_title()}>
+      {/* Một ô vị trí: gõ tìm phường/xã, địa chỉ; nút ngắm bên phải điền vị trí hiện tại vào ô. */}
       <div className="nearby-filter__origin">
-        <Button
-          type="primary"
-          size="large"
-          icon={<AimOutlined />}
-          loading={locating}
-          onClick={onUseLocation}
-          className="nearby-filter__locate"
-        >
-          {m.candidate_nearby_use_location()}
-        </Button>
-        <span className="nearby-filter__or">{m.candidate_nearby_or()}</span>
         <Select
           showSearch
           size="large"
           className="nearby-filter__place"
+          prefix={<SearchOutlined aria-hidden />}
           value={originLabel || null}
-          placeholder={m.candidate_nearby_place_placeholder()}
+          placeholder={locating ? m.candidate_nearby_locating() : m.candidate_nearby_place_placeholder()}
           filterOption={false}
           onSearch={setQuery}
           searchValue={query}
           loading={suggestions.loading}
-          notFoundContent={null}
+          notFoundContent={suggestions.searched
+            ? <p className="nearby-filter__empty">{m.candidate_nearby_place_not_found()}</p>
+            : null}
           options={suggestions.options.map((option) => ({
             value: option.ref,
             label: <SuggestionLabel option={option} />,
@@ -127,10 +121,22 @@ export default function NearbyFilterBar({
           }}
           aria-label={m.candidate_nearby_place_placeholder()}
         />
+        <Button
+          type="primary"
+          size="large"
+          icon={<AimOutlined />}
+          loading={locating}
+          onClick={onUseLocation}
+          className="nearby-filter__locate"
+          aria-label={m.candidate_nearby_use_location()}
+          title={m.candidate_nearby_use_location()}
+        >
+          <span className="nearby-filter__locate-text">{m.candidate_nearby_use_location()}</span>
+        </Button>
       </div>
       {geoError && <p className="nearby-filter__error" role="alert">{GEO_ERROR_MESSAGES[geoError]?.()}</p>}
       <div className="nearby-filter__row">
-        <span className="nearby-filter__label">{m.candidate_nearby_radius()}</span>
+        <span className="nearby-filter__label" aria-hidden>{m.candidate_nearby_radius()}</span>
         <div className="nearby-filter__radius" role="radiogroup" aria-label={m.candidate_nearby_radius()}>
           {radiusChoices.map((km) => (
             <button
@@ -161,12 +167,13 @@ export default function NearbyFilterBar({
           aria-label={m.candidate_nearby_all_salaries()}
         />
         <Checkbox
+          className="nearby-filter__remote"
           checked={draft.remote}
           onChange={(event) => setDraft((prev) => ({ ...prev, remote: event.target.checked }))}
         >
           {m.candidate_nearby_include_remote()}
         </Checkbox>
-        <Button className="nearby-filter__submit" onClick={() => onApply(draft)}>
+        <Button type="primary" ghost className="nearby-filter__submit" onClick={() => onApply(draft)}>
           {m.candidate_nearby_search()}
         </Button>
       </div>
