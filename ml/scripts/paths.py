@@ -35,6 +35,8 @@ AUDIT_PAIRS = LABELING_DIR / 'audit_pairs.json'
 AUDIT_TEMPLATE = LABELING_DIR / 'audit_blind.template.html'
 AUDIT_PAGE = LABELING_DIR / 'audit_blind.html'
 AUDIT_HUMAN = LABELING_DIR / 'audit_human.json'
+# 14 tin của tập hiệu chỉnh (chọn checkpoint, đặt mốc điểm); chọn một lần bằng build_train_pairs.py.
+CALIBRATION_JOBS = LABELING_DIR / 'calibration_jobs.json'
 LABELS_DIR = DATA_DIR / 'labels'
 GOLD_POOL = LABELS_DIR / 'gold_pool.json'
 

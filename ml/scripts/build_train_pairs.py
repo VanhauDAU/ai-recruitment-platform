@@ -22,8 +22,25 @@ Chống rò rỉ sang tập đánh giá:
 - tin VietJobs giống một tin vàng (trùng tên vị trí hoặc Jaccard từ của mô tả ≥ 0,5)
   bị loại, vì hai nguồn cùng lấy từ các trang tuyển dụng Việt Nam.
 
-Tập dev (chọn checkpoint, không phải tập đánh giá): 7 tin neo giữ riêng cùng mọi CV của
-chúng. Kết quả: `ml/data/pairs/train.jsonl`, `dev.json`, `ml/reports/train_pairs.md`.
+- 14 tin hiệu chỉnh (`ml/labeling/calibration_jobs.json`) và mọi CV neo vào chúng cũng
+  không vào huấn luyện: chúng dùng để chọn checkpoint và đặt mốc quy đổi điểm.
+
+Tin hiệu chỉnh được chọn một lần rồi ghi cố định: rải theo nhóm ngành, có ít nhất ba
+tin tiếng Anh, mỗi tin còn từ 8 CV qua cổng chất lượng (ít nhất 2 CV khớp mạnh và 2 CV
+yếu hơn). Sáu tin có ô kinh nghiệm được sửa ngày 26/11 (xem `rubric.md`) không được
+chọn, và ở phần huấn luyện chúng chỉ góp bộ ba "khớp mạnh so với vị trí gần": CV của
+chúng được sinh theo số năm cũ nên thứ bậc theo kinh nghiệm không còn đúng.
+
+Ngoài bộ ba còn có `graded.jsonl`: cặp (tin, CV, điểm) cho loss dạy thứ bậc, điểm lấy
+từ nhãn yếu (khớp mạnh 1,0; khớp một phần 0,6; vị trí gần 0,3; CV của nhóm ngành khác
+0,0).
+
+Mục Giải thưởng và Sở thích của CV huấn luyện bị bỏ trước khi dựng văn bản: lượt đọc
+kiểm ngày 26/11 cho thấy hai mục này hay vô nghĩa hoặc lạc nghề, và chúng không mang
+tín hiệu đối sánh.
+
+Kết quả: `ml/data/pairs/train.jsonl`, `graded.jsonl`, `dev.json` (tin hiệu chỉnh và CV
+của chúng, để chọn checkpoint), `ml/reports/train_pairs.md`.
 """
 
 import json
@@ -35,6 +52,7 @@ from collections import Counter, defaultdict
 import pandas as pd
 from build_gold_pairs import EXTENSION_JDS, GOLD_JDS
 from paths import (
+    CALIBRATION_JOBS,
     JD_IMPORT_MAP,
     PAIRS_DIR,
     PROFILES_DIR,
@@ -46,7 +64,14 @@ from paths import (
 )
 
 SEED = 42
-DEV_ANCHORS = 7
+CALIBRATION_COUNT = 14
+MIN_ENGLISH_CALIBRATION = 3
+MIN_CALIBRATION_CVS = 8
+# Tin có ô "Kinh nghiệm yêu cầu" được sửa sau khi CV huấn luyện đã sinh (rubric.md, 26/11).
+EXPERIENCE_CHANGED = {'JD-63', 'JD-65', 'JD-67', 'JD-68', 'JD-70', 'JD-88'}
+GRADES = {'strong': 1.0, 'partial': 0.6, 'adjacent': 0.3}
+# Mục của CV huấn luyện không đưa vào văn bản (hay vô nghĩa, không mang tín hiệu đối sánh).
+DROPPED_CV_SECTIONS = ('awards', 'interests')
 # Dữ liệu công khai chỉ bổ trợ: CV huấn luyện neo vào tin thật vẫn là phần lớn.
 VIETJOBS_ROWS = 3000
 RESUME_FIT_ROWS = 1500
@@ -94,7 +119,7 @@ def train_cvs():
     passed = [code for code in manifest if code in gate and not gate[code]]
     items = [
         {'id': code, 'kind': 'cv', 'language': manifest[code]['language'],
-         'data': json.loads((TRAIN_CV_DIR / f'{code}.json').read_text(encoding='utf-8'))}
+         'data': {key: value for key, value in json.loads((TRAIN_CV_DIR / f'{code}.json').read_text(encoding='utf-8')).items() if key not in DROPPED_CV_SECTIONS}}
         for code in passed
     ]  # fmt: skip
     texts = export_texts(items)
@@ -108,7 +133,8 @@ def k3_rows(jobs, cvs, anchors, rng):
     rows = []
     for anchor in anchors:
         groups = by_anchor.get(anchor, {})
-        weaker = groups.get('partial', []) + groups.get('adjacent', [])
+        # Tin đã đổi số năm yêu cầu: chỉ còn chắc thứ bậc "đúng nghề hơn vị trí gần".
+        weaker = groups.get('adjacent', []) + ([] if anchor in EXPERIENCE_CHANGED else groups.get('partial', []))
         for strong in groups.get('strong', []):
             # Mọi cặp (CV mạnh, CV yếu hơn) của cùng tin: dạy thứ tự trong cùng một nghề.
             for negative in weaker:
@@ -182,6 +208,59 @@ def k4_rows(rng):
     return rows[:RESUME_FIT_ROWS]
 
 
+def calibration_jobs(anchors, cvs, group, language):
+    """14 tin hiệu chỉnh; chọn một lần rồi đọc lại từ `calibration_jobs.json`."""
+    if CALIBRATION_JOBS.exists():
+        return json.loads(CALIBRATION_JOBS.read_text(encoding='utf-8'))['jobs']
+    levels = defaultdict(Counter)
+    for cv in cvs.values():
+        levels[cv['anchor_job']][cv['intended_match']] += 1
+    eligible = [
+        code for code in anchors
+        if code not in EXPERIENCE_CHANGED and sum(levels[code].values()) >= MIN_CALIBRATION_CVS
+        and levels[code]['strong'] >= 2 and levels[code]['partial'] + levels[code]['adjacent'] >= 2
+    ]  # fmt: skip
+    rng = random.Random(SEED)
+    by_group = defaultdict(list)
+    for code in sorted(eligible):
+        by_group[group[code]].append(code)
+    for codes in by_group.values():
+        rng.shuffle(codes)
+    # Lấy lần lượt mỗi nhóm ngành một tin, nhóm đông tin trước, tới khi đủ.
+    chosen, order = [], sorted(by_group, key=lambda name: (-len(by_group[name]), name))
+    while len(chosen) < CALIBRATION_COUNT and any(by_group.values()):
+        for name in order:
+            if by_group[name] and len(chosen) < CALIBRATION_COUNT:
+                chosen.append(by_group[name].pop())
+    # Chưa đủ tin tiếng Anh thì đổi một tin tiếng Việt lấy tin tiếng Anh cùng nhóm ngành.
+    for name in order:
+        spare = [code for code in by_group[name] if language[code] == 'en']
+        swap = [code for code in chosen if group[code] == name and language[code] != 'en']
+        while spare and swap and sum(language[code] == 'en' for code in chosen) < MIN_ENGLISH_CALIBRATION:
+            chosen[chosen.index(swap.pop())] = spare.pop()
+    record = {
+        'seed': SEED,
+        'method': 'rải theo nhóm ngành trong các tin ngoài tập vàng còn đủ CV qua cổng; không lấy tin đã đổi ô kinh nghiệm',
+        'jobs': sorted(chosen),
+    }
+    CALIBRATION_JOBS.write_text(json.dumps(record, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    return record['jobs']
+
+
+def graded_rows(jobs, cvs, anchors, group, rng):
+    """Cặp (tin, CV, điểm) cho loss dạy thứ bậc; điểm từ nhãn yếu, 0 cho CV khác nhóm ngành."""
+    rows = []
+    for anchor in anchors:
+        if anchor in EXPERIENCE_CHANGED:
+            continue
+        own = [code for code, cv in cvs.items() if cv['anchor_job'] == anchor]
+        other = [code for code, cv in cvs.items() if cv['anchor_job'] in anchors and group[cv['anchor_job']] != group[anchor]]
+        scored = [(code, GRADES[cvs[code]['intended_match']]) for code in own]
+        scored += [(code, 0.0) for code in rng.sample(other, min(len(own), len(other)))]
+        rows += [{'anchor': jobs[anchor]['text'], 'text': cvs[code]['text'], 'score': score, 'job': anchor, 'cv': code} for code, score in scored]  # fmt: skip
+    return rows
+
+
 def dev_set(jobs, cvs, anchors):
     """Tập dev cho `InformationRetrievalEvaluator`: tin → CV khớp mạnh của chính tin đó."""
     corpus = {code: cv['text'] for code, cv in cvs.items() if cv['anchor_job'] in anchors}
@@ -203,12 +282,11 @@ def main():
     anchors = sorted({cv['anchor_job'] for cv in cvs.values()} - GOLD)
     if set(anchors) & GOLD or any(code.startswith('CV-') for code in cvs):
         raise SystemExit('Rò rỉ: tin vàng hoặc CV của tập vàng lọt vào dữ liệu huấn luyện.')
-    shuffled = anchors[:]
-    rng.shuffle(shuffled)
-    dev_anchors, train_anchors = sorted(shuffled[:DEV_ANCHORS]), sorted(shuffled[DEV_ANCHORS:])
-
     specialization = {code: sheet[code]['specialization'] for code in anchors}
     group = {code: sheet[code]['group'] for code in anchors}
+    language = {code: value['language'] for code, value in json.loads(JD_IMPORT_MAP.read_text(encoding='utf-8')).items()}
+    dev_anchors = calibration_jobs(anchors, cvs, group, language)
+    train_anchors = sorted(set(anchors) - set(dev_anchors))
     rows = k3_rows(jobs, cvs, train_anchors, rng)
     rows += k1_rows(jobs, cvs, train_anchors, specialization, group, rng)
     gold_texts = [jobs[code]['text'] for code in GOLD]
@@ -221,6 +299,10 @@ def main():
     with (PAIRS_DIR / 'train.jsonl').open('w', encoding='utf-8') as output:
         for row in rows:
             output.write(json.dumps(row, ensure_ascii=False) + '\n')
+    graded = graded_rows(jobs, cvs, train_anchors, group, rng)
+    with (PAIRS_DIR / 'graded.jsonl').open('w', encoding='utf-8') as output:
+        for row in graded:
+            output.write(json.dumps(row, ensure_ascii=False) + '\n')
     dev = dev_set(jobs, cvs, dev_anchors)
     (PAIRS_DIR / 'dev.json').write_text(json.dumps(dev, ensure_ascii=False), encoding='utf-8')
 
@@ -229,7 +311,7 @@ def main():
         '# Dữ liệu huấn luyện bi-encoder',
         '',
         f'{len(rows)} bộ ba (tin, dương, âm). {len(cvs)} CV huấn luyện qua cổng chất lượng, neo vào '
-        f'{len(train_anchors)} tin huấn luyện; {len(dev_anchors)} tin giữ riêng làm dev '
+        f'{len(train_anchors)} tin huấn luyện; {len(dev_anchors)} tin hiệu chỉnh giữ riêng '
         f'({len(dev["corpus"])} CV, {sum(map(len, dev["relevant"].values()))} cặp dương). '
         'Tạo bằng `ml/scripts/build_train_pairs.py`.',
         '',
@@ -239,7 +321,11 @@ def main():
         '',
         f'Chống rò rỉ: 30 tin vàng không làm tin neo, 100 CV của tập vàng không dùng; {leaked} tin '
         'VietJobs bị loại vì giống một tin vàng.',
-        f'Tin dev: {", ".join(dev_anchors)}.',
+        f'Tin hiệu chỉnh: {", ".join(dev_anchors)}.',
+        '',
+        f'Cặp có điểm bậc (`graded.jsonl`): {len(graded)} cặp, theo điểm: '
+        + ', '.join(f'{score:g}: {count}' for score, count in sorted(Counter(row['score'] for row in graded).items(), reverse=True))
+        + f'. Không lấy {len(EXPERIENCE_CHANGED & set(train_anchors))} tin đã đổi ô kinh nghiệm.',
     ]
     REPORTS_DIR.joinpath('train_pairs.md').write_text('\n'.join(lines) + '\n', encoding='utf-8')
     print('\n'.join(lines))

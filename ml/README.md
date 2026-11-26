@@ -56,6 +56,8 @@ ml/
     audit_blind.template.html  mẫu trang chấm mù; build_audit_page.py đổ nội dung tin và CV thành audit_blind.html (không commit)
     audit_human.json      nhãn người chấm, xuất từ trang chấm mù (có khi người chấm xong)
     skill_merge.json      gộp kỹ năng trùng nghĩa khi nhập tin
+    calibration_jobs.json 14 tin của tập hiệu chỉnh (không vào huấn luyện; chọn bằng build_train_pairs.py)
+    train_cv_review*.md   phiếu đọc kiểm CV huấn luyện bằng mắt (lượt 1 đã chấm, lượt 2 đang chờ)
   data/                   KHÔNG commit (.gitignore)
     jd/
       jd_input.xlsx       100 tin thật, người làm đồ án nhập tay
