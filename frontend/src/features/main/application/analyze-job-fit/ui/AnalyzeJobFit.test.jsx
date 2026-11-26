@@ -15,13 +15,13 @@ vi.mock('@/shared/ui/mascot', () => ({ ProcvMascot: () => <span data-testid="mas
 const JOB = { slug: 'frontend-jb_1', title: 'Frontend Developer' }
 const CVS = [{ public_id: 'cv_1', title: 'CV Frontend', cv_type: 'builder', is_default: true, updated_at: '2026-11-18T08:00:00Z' }]
 
-function renderButton({ enabled = true, beforeOpen } = {}) {
+function renderButton({ enabled = true, beforeOpen, placement } = {}) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
   return render(
     <QueryClientProvider client={client}>
       <SiteSettingsContext.Provider value={{ settings: { ai_job_match_enabled: enabled } }}>
         <MemoryRouter>
-          <AnalyzeJobFit job={JOB} beforeOpen={beforeOpen} />
+          <AnalyzeJobFit job={JOB} beforeOpen={beforeOpen} placement={placement} />
         </MemoryRouter>
       </SiteSettingsContext.Provider>
     </QueryClientProvider>,
@@ -47,6 +47,18 @@ describe('AnalyzeJobFit', () => {
     renderButton({ beforeOpen: () => false })
     fireEvent.click(screen.getByRole('button', { name: /Xem độ phù hợp/ }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('floats as a compact mascot with an AI tag and a short hint on phones', () => {
+    const beforeOpen = vi.fn(() => false)
+    renderButton({ placement: 'floating', beforeOpen })
+    const trigger = screen.getByRole('button', { name: 'Xem độ phù hợp với CV của bạn' })
+    expect(trigger).toHaveClass('jf-fab')
+    expect(trigger).toHaveTextContent('Xem độ phù hợp CV')
+    expect(trigger).toHaveTextContent('AI')
+    expect(screen.queryByText(/So CV của bạn với từng yêu cầu/)).not.toBeInTheDocument()
+    fireEvent.click(trigger)
+    expect(beforeOpen).toHaveBeenCalledOnce()
   })
 
   it('analyses the chosen CV, polls and shows the result', async () => {

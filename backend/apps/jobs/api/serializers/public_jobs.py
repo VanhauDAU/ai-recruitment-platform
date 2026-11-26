@@ -103,6 +103,8 @@ class JobDetailSerializer(JobSerializer):
     category_name = serializers.SerializerMethodField()
     # Legacy HTTP name paired with ``company_verified``; payload is recruiter-scoped.
     company_verification = serializers.SerializerMethodField()
+    # Mã công ty để lọc "việc làm cùng công ty" (?company=) mà không phải gọi trang công ty.
+    company_public_id = serializers.CharField(source='company.public_id', read_only=True)
     company_size = serializers.CharField(source='company.company_size', read_only=True)
     company_address = serializers.CharField(source='company.public_headquarters', read_only=True)
     company_description = serializers.SerializerMethodField()
@@ -134,6 +136,7 @@ class JobDetailSerializer(JobSerializer):
             'stopped_at',
             'company_name',
             'company_slug',
+            'company_public_id',
             'company_logo_url',
             'company_cover_url',
             'brand_slug',

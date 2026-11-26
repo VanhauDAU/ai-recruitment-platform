@@ -83,3 +83,85 @@
 @media (prefers-reduced-motion: reduce) {
   .jf-trigger, .jf-trigger__mascot, .jf-trigger__go { animation: none; transition: none; }
 }
+
+/* Điện thoại: chỉ mascot đứng + nhãn AI, nổi ở góc phải ngay trên nút Góp ý
+   (cùng công thức `bottom` với FeedbackLauncher, cộng chiều cao nút đó + khoảng hở). */
+.jf-fab {
+  position: fixed;
+  right: 4px;
+  bottom: calc(clamp(1.25rem, 3vw, 2rem) + var(--page-bottom-bar-height, 0px) + env(safe-area-inset-bottom, 0px) + 2.5rem);
+  z-index: 30;
+  display: flex;
+  align-items: flex-end;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.jf-fab:active { transform: scale(0.96); }
+.jf-fab:focus-visible { outline: 2px solid var(--brand-primary); outline-offset: 2px; border-radius: 12px; }
+
+/* Bong bóng chữ bên trái mascot: mặc định thu về 0 (không che, không chặn chạm),
+   thỉnh thoảng mới trượt ra nói AI làm gì rồi thu vào. */
+.jf-fab__label {
+  overflow: hidden;
+  max-width: 0;
+  margin: 0 -4px 26px 0;
+  padding: 6px 0;
+  border: 1px solid transparent;
+  border-radius: 999px 999px 4px 999px;
+  background: #fff;
+  color: var(--brand-primary);
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  opacity: 0;
+  box-shadow: 0 6px 16px -6px rgb(15 23 42 / 25%);
+}
+.jf-fab__robot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  filter: drop-shadow(0 6px 10px rgb(15 23 42 / 18%));
+}
+.jf-fab__badge {
+  margin-top: -10px;
+  padding: 1px 8px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: linear-gradient(100deg, var(--brand-primary), #22b8a5);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 15px;
+  letter-spacing: 0.02em;
+}
+
+/* Chu kỳ 12 giây: bong bóng trượt ra (~3 giây) rồi thu vào; mascot nhún + vẫy tay
+   đúng lúc bong bóng ra. Phần còn lại đứng yên. */
+.jf-fab__label { animation: jf-fab-say 12s 1.2s infinite; }
+.jf-fab__robot { animation: jf-fab-hop 12s 1.2s infinite; }
+.jf-fab .procv-mascot__arm-wave { animation: jf-fab-wave 12s ease-in-out 1.2s infinite; }
+
+@keyframes jf-fab-say {
+  0% { max-width: 0; padding-inline: 0; border-color: transparent; opacity: 0; animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+  5%, 30% { max-width: 180px; padding-inline: 10px; border-color: color-mix(in srgb, var(--brand-primary) 25%, transparent); opacity: 1; animation-timing-function: cubic-bezier(0.64, 0, 0.78, 0); }
+  35%, 100% { max-width: 0; padding-inline: 0; border-color: transparent; opacity: 0; }
+}
+@keyframes jf-fab-hop {
+  0%, 10%, 100% { transform: translateY(0); animation-timing-function: ease-in-out; }
+  3% { transform: translateY(-5px); }
+  6% { transform: translateY(0); }
+  8% { transform: translateY(-2px); }
+}
+@keyframes jf-fab-wave {
+  0%, 12%, 100% { transform: rotate(0); }
+  2%, 6% { transform: rotate(-10deg); }
+  4%, 8% { transform: rotate(12deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jf-fab__robot, .jf-fab__label { animation: none; }
+}

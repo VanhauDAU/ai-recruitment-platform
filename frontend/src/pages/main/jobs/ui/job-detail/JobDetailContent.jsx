@@ -15,7 +15,6 @@ import {
   WorkScheduleList,
 } from './JobDetailBlocks'
 import JobApplicationClosed from './JobApplicationClosed'
-import JobQualityRating from './JobQualityRating'
 
 const APPLY_GUIDE = 'Ứng viên nộp hồ sơ trực tuyến bằng cách bấm Ứng tuyển ngay dưới đây.'
 const CLOSED_GUIDE = 'Nhà tuyển dụng đã ngừng nhận hồ sơ cho vị trí này.'
@@ -24,17 +23,14 @@ const DESKTOP_COLLAPSED_HEIGHT = 640
 
 export default function JobDetailContent({
   job,
-  relatedJobs,
   saved,
   savePending,
-  isAuthenticated,
   applicationStatus,
   canCreateJobAlert = false,
   onApply,
   onCreateJobAlert,
   onSave,
   onReport,
-  onRequireLogin,
 }) {
   const [detailsExpanded, setDetailsExpanded] = useState(false)
   const [detailsOverflowing, setDetailsOverflowing] = useState(false)
@@ -64,72 +60,67 @@ export default function JobDetailContent({
   }, [job])
 
   return (
-    <>
-      <DetailSection
-        id="job-detail-content"
-        title="Chi tiết tin tuyển dụng"
-        action={canCreateJobAlert && (
-          <button
-            type="button"
-            aria-haspopup="dialog"
-            onClick={onCreateJobAlert}
-            className="job-detail-alert ml-auto inline-flex h-10 shrink-0 cursor-pointer items-center justify-end gap-1.5 rounded-md bg-white p-0 text-sm font-normal text-[var(--brand-primary)] transition-colors hover:text-[var(--brand-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 motion-reduce:transition-none"
-          >
-            <BellOutlined aria-hidden="true" className="text-[var(--brand-primary)]" />
-            <span>Gửi tôi việc làm tương tự</span>
-          </button>
-        )}
-      >
-        <div className="relative">
-          <div
-            ref={detailsRef}
-            id="job-detail-collapsible-content"
-            className={detailsExpanded ? 'space-y-6' : 'max-h-[520px] space-y-6 overflow-hidden sm:max-h-[640px]'}
-          >
-            <ApplicationReasons items={job.application_reasons} />
-            <div className="space-y-3">
-              <RequirementTags tags={job.requirement_tags} />
-              <SpecialtyTags primary={job.primary_specialization} domains={job.domain_knowledge} />
-            </div>
-            <JobText id="job-description" title="Mô tả công việc" content={job.description} />
-            <JobText title="Yêu cầu ứng viên" content={job.requirements}>
-              <JobSkills required={job.required_skills} preferred={job.preferred_skills} />
-            </JobText>
-            <JobText title="Quyền lợi" content={job.benefits}>
-              <AdditionalBenefits groups={job.benefit_groups} />
-            </JobText>
-            <LanguageRequirementList items={job.language_requirements} />
-            <WorkplaceGroups groups={job.workplace_groups} />
-            <WorkScheduleList schedules={job.work_schedules} note={job.work_schedule_note} />
-            <section>
-              <SectionHeading>Cách thức ứng tuyển</SectionHeading>
-              <p className="text-sm leading-6 text-slate-700">{isAcceptingApplications(job) ? APPLY_GUIDE : CLOSED_GUIDE}</p>
-            </section>
-            <JobClosingActions accepting={isAcceptingApplications(job)} deadline={job.deadline} saved={saved} savePending={savePending} applicationStatus={applicationStatus} onApply={onApply} onSave={onSave} onReport={onReport} />
+    <DetailSection
+      id="job-detail-content"
+      title="Chi tiết tin tuyển dụng"
+      action={canCreateJobAlert && (
+        <button
+          type="button"
+          aria-haspopup="dialog"
+          onClick={onCreateJobAlert}
+          className="job-detail-alert ml-auto inline-flex h-10 shrink-0 cursor-pointer items-center justify-end gap-1.5 rounded-md bg-white p-0 text-sm font-normal text-[var(--brand-primary)] transition-colors hover:text-[var(--brand-primary-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 motion-reduce:transition-none"
+        >
+          <BellOutlined aria-hidden="true" className="text-[var(--brand-primary)]" />
+          <span>Gửi tôi việc làm tương tự</span>
+        </button>
+      )}
+    >
+      <div className="relative">
+        <div
+          ref={detailsRef}
+          id="job-detail-collapsible-content"
+          className={detailsExpanded ? 'space-y-6' : 'max-h-[520px] space-y-6 overflow-hidden sm:max-h-[640px]'}
+        >
+          <ApplicationReasons items={job.application_reasons} />
+          <div className="space-y-3">
+            <RequirementTags tags={job.requirement_tags} />
+            <SpecialtyTags primary={job.primary_specialization} domains={job.domain_knowledge} />
           </div>
-          {detailsOverflowing && (
-            <div className={detailsExpanded
-              ? 'mt-5 flex justify-center'
-              : 'pointer-events-none absolute inset-x-0 bottom-0 flex h-36 items-end justify-center bg-gradient-to-b from-white/0 via-white/90 to-white pb-1'}
-            >
-              <button
-                type="button"
-                aria-controls="job-detail-collapsible-content"
-                aria-expanded={detailsExpanded}
-                onClick={() => setDetailsExpanded((current) => !current)}
-                className="pointer-events-auto inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)] bg-white px-5 text-sm font-semibold text-[var(--brand-primary)] shadow-[0_8px_24px_rgba(15,118,78,0.12)] transition-colors duration-200 hover:bg-[var(--brand-primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 motion-reduce:transition-none"
-              >
-                {detailsExpanded ? 'Thu gọn mô tả công việc' : 'Xem đầy đủ mô tả công việc'}
-                {detailsExpanded ? <UpOutlined aria-hidden="true" /> : <DownOutlined aria-hidden="true" />}
-              </button>
-            </div>
-          )}
+          <JobText id="job-description" title="Mô tả công việc" content={job.description} />
+          <JobText title="Yêu cầu ứng viên" content={job.requirements}>
+            <JobSkills required={job.required_skills} preferred={job.preferred_skills} />
+          </JobText>
+          <JobText title="Quyền lợi" content={job.benefits}>
+            <AdditionalBenefits groups={job.benefit_groups} />
+          </JobText>
+          <LanguageRequirementList items={job.language_requirements} />
+          <WorkplaceGroups groups={job.workplace_groups} />
+          <WorkScheduleList schedules={job.work_schedules} note={job.work_schedule_note} />
+          <section>
+            <SectionHeading>Cách thức ứng tuyển</SectionHeading>
+            <p className="text-sm leading-6 text-slate-700">{isAcceptingApplications(job) ? APPLY_GUIDE : CLOSED_GUIDE}</p>
+          </section>
+          <JobClosingActions accepting={isAcceptingApplications(job)} deadline={job.deadline} saved={saved} savePending={savePending} applicationStatus={applicationStatus} onApply={onApply} onSave={onSave} onReport={onReport} />
         </div>
-      </DetailSection>
-
-      <JobQualityRating jobId={job.public_id} />
-      <RelatedJobs jobs={relatedJobs} isAuthenticated={isAuthenticated} onRequireLogin={onRequireLogin} />
-    </>
+        {detailsOverflowing && (
+          <div className={detailsExpanded
+            ? 'mt-5 flex justify-center'
+            : 'pointer-events-none absolute inset-x-0 bottom-0 flex h-36 items-end justify-center bg-gradient-to-b from-white/0 via-white/90 to-white pb-1'}
+          >
+            <button
+              type="button"
+              aria-controls="job-detail-collapsible-content"
+              aria-expanded={detailsExpanded}
+              onClick={() => setDetailsExpanded((current) => !current)}
+              className="pointer-events-auto inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-full border border-[var(--brand-primary)] bg-white px-5 text-sm font-semibold text-[var(--brand-primary)] shadow-[0_8px_24px_rgba(15,118,78,0.12)] transition-colors duration-200 hover:bg-[var(--brand-primary-soft)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)] focus-visible:ring-offset-2 motion-reduce:transition-none"
+            >
+              {detailsExpanded ? 'Thu gọn mô tả công việc' : 'Xem đầy đủ mô tả công việc'}
+              {detailsExpanded ? <UpOutlined aria-hidden="true" /> : <DownOutlined aria-hidden="true" />}
+            </button>
+          </div>
+        )}
+      </div>
+    </DetailSection>
   )
 }
 
@@ -197,7 +188,7 @@ function JobClosingActions({ accepting, deadline, saved, savePending, applicatio
   )
 }
 
-function RelatedJobs({ jobs, isAuthenticated, onRequireLogin }) {
+export function RelatedJobs({ jobs, isAuthenticated, onRequireLogin }) {
   if (!jobs.length) return null
   return <section id="related-jobs" className="scroll-mt-20 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6"><h2 className="border-l-4 border-[var(--brand-primary)] pl-3 text-base font-bold text-slate-800 sm:text-lg">Việc làm liên quan</h2><div className="mt-5 space-y-3">{jobs.map((job) => <JobCard key={job.public_id} job={job} isAuthenticated={isAuthenticated} onRequireLogin={onRequireLogin} showQuickView={false} />)}</div></section>
 }
