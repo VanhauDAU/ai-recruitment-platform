@@ -73,10 +73,10 @@ export default function HotlineConsultation() {
       style={{ backgroundImage: `url("${HOTLINE_BG_URL}")` }}
     >
       <div className="mx-auto max-w-6xl px-4">
-        <h2 className="text-2xl font-extrabold text-white">Hotline Tư Vấn</h2>
+        <h2 id="hotline-consultation-title" className="text-2xl font-extrabold text-white">Hotline Tư Vấn</h2>
 
         <div className="mt-4">
-          <div className="flex items-end overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div role="tablist" aria-labelledby="hotline-consultation-title" className="flex items-end overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {HOTLINE_TABS.map((tab, index) => {
               const activeTab = tab.key === activeKey
               return (

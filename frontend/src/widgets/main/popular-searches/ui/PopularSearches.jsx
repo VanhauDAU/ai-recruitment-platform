@@ -28,7 +28,7 @@ function Chip({ url, children }) {
   if (!url) {
     return (
       <span
-        className={`${CHIP_BASE} cursor-not-allowed border-dashed border-slate-200 bg-slate-50 text-slate-400`}
+        className={`${CHIP_BASE} cursor-not-allowed border-dashed border-slate-200 bg-slate-50 text-slate-500`}
         title="Sắp ra mắt"
       >
         {children}
