@@ -14,6 +14,7 @@ const ALL_PROVINCES = ''
 
 // Cột phải trang chi tiết: tìm việc nhanh, tài liệu hỗ trợ, banner quảng cáo.
 export default function BlogSidebar() {
+  const newTab = useNewTabLinkProps()
   const { settings } = useSiteSettings()
   const [pinned, setPinned] = useState([])
   const [banner, setBanner] = useState(null)
@@ -39,8 +40,7 @@ export default function BlogSidebar() {
               <li key={item.slug}>
                 <Link
                   to={blogPostPath(item.slug)}
-                  target="_blank"
-                  rel="noopener"
+                  {...newTab}
                   className="group flex min-h-11 items-center gap-2 rounded-lg px-2 py-2 text-sm leading-5 !text-slate-950 transition-colors duration-200 hover:bg-[var(--brand-primary-soft)] hover:!text-[var(--brand-primary)] focus-visible:bg-[var(--brand-primary-soft)] focus-visible:!text-[var(--brand-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]"
                 >
                   <span aria-hidden="true" className="text-slate-950 transition duration-200 group-hover:translate-x-0.5 group-hover:text-[var(--brand-primary)] group-focus-visible:text-[var(--brand-primary)]">›</span>
@@ -177,6 +177,7 @@ function BlogSidebarBanner({ banner }) {
 }
 
 function BannerCta({ label, url, primary }) {
+  const newTab = useNewTabLinkProps()
   const className = 'inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-extrabold transition-all duration-200 hover:-translate-y-0.5 hover:brightness-105'
   const style = primary
     ? {
@@ -202,5 +203,5 @@ function BannerCta({ label, url, primary }) {
   if (external) {
     return <a href={url} className={className} style={style} target="_blank" rel="noopener noreferrer">{content}</a>
   }
-  return <Link to={url} target="_blank" rel="noopener" className={className} style={style}>{content}</Link>
+  return <Link to={url} {...newTab} className={className} style={style}>{content}</Link>
 }

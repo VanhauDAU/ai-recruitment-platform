@@ -1,6 +1,7 @@
 import { ArrowRightOutlined } from '@ant-design/icons'
 import { Link } from 'react-router'
 import { blogPostPath, formatBlogDate } from '@/entities/content/blog'
+import { useNewTabLinkProps } from '@/shared/hooks/use-new-tab-link-props'
 
 export function PostThumb({ post, className = '' }) {
   return (
@@ -23,8 +24,9 @@ export function PostThumb({ post, className = '' }) {
 
 // Card đứng: dùng trong lưới danh sách
 export default function BlogCard({ post }) {
+  const newTab = useNewTabLinkProps()
   return (
-    <Link to={blogPostPath(post.slug)} target="_blank" rel="noopener" className="group block">
+    <Link to={blogPostPath(post.slug)} {...newTab} className="group block">
       <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl group-hover:shadow-slate-200/80">
         <PostThumb post={post} className="aspect-[16/9]" />
         <div className="flex flex-1 flex-col gap-2 p-4">
@@ -53,11 +55,11 @@ export default function BlogCard({ post }) {
 
 // Card ngang: thumbnail nhỏ bên phải, text bên trái — dùng cho cột phải khối nổi bật
 export function BlogCardRow({ post, large = false, fill = false }) {
+  const newTab = useNewTabLinkProps()
   return (
     <Link
       to={blogPostPath(post.slug)}
-      target="_blank"
-      rel="noopener"
+      {...newTab}
       className={`group block ${fill ? 'lg:min-h-0 lg:flex-1' : ''}`}
     >
       <article className="flex h-full items-stretch overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition-all duration-300 group-hover:-translate-y-0.5 group-hover:shadow-lg group-hover:shadow-slate-200/80">
@@ -95,6 +97,7 @@ export function BlogCardRow({ post, large = false, fill = false }) {
 
 // Hero card: ảnh đầy + overlay gradient + text đè lên dưới — dùng cho khối nổi bật.
 export function BlogCardHero({ post, size = 'default' }) {
+  const newTab = useNewTabLinkProps()
   const heightClass = size === 'compact'
     ? 'min-h-[320px] sm:min-h-[380px]'
     : size === 'wide'
@@ -102,7 +105,7 @@ export function BlogCardHero({ post, size = 'default' }) {
       : 'min-h-[360px] sm:min-h-[420px]'
 
   return (
-    <Link to={blogPostPath(post.slug)} target="_blank" rel="noopener" className="group block h-full">
+    <Link to={blogPostPath(post.slug)} {...newTab} className="group block h-full">
       <article className={`relative flex h-full flex-col overflow-hidden rounded-2xl shadow-md transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-2xl group-hover:shadow-slate-300/60 ${heightClass}`}>
         {/* Full-bleed thumbnail */}
         <PostThumb post={post} className="absolute inset-0 h-full w-full" />

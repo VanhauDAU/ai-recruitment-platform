@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import JobDetailSidebar from './JobDetailSidebar'
 
 const JOB = {
@@ -17,8 +17,18 @@ function renderSidebar(job) {
   )
 }
 
+// Máy có chuột: link nội bộ mở tab mới; điện thoại mở ngay trong trang (useNewTabLinkProps).
+function stubPointer(fine) {
+  vi.stubGlobal('matchMedia', (query) => ({
+    matches: fine, media: query, addEventListener() {}, removeEventListener() {},
+  }))
+}
+
 describe('JobDetailSidebar company card', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
   it('shows a compact company card that opens the company page in a new tab', () => {
+    stubPointer(true)
     renderSidebar({
       ...JOB,
       company_slug: 'alpha-partners',
@@ -35,6 +45,13 @@ describe('JobDetailSidebar company card', () => {
     expect(screen.getByText('27 Trần Duy Hưng, Hà Nội')).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /Website công ty/ })).not.toBeInTheDocument()
     expect(screen.queryByText('Mô tả dài về công ty')).not.toBeInTheDocument()
+  })
+
+  it('opens the company page in the same tab on touch screens', () => {
+    stubPointer(false)
+    renderSidebar({ ...JOB, company_slug: 'alpha-partners' })
+
+    expect(screen.getByRole('link', { name: /Xem trang công ty/ })).not.toHaveAttribute('target')
   })
 
   it('falls back to the filtered public company directory when the company page is hidden', () => {
