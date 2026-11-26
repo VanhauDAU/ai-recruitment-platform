@@ -217,36 +217,44 @@
     font-size: 19px;
   }
 
-  /* Ba cột hẹp: icon nằm trên chữ, giá trị xuống tối đa 2 dòng. */
+  /* Ba cột hẹp tốn ~200px chiều cao: chuyển thành 3 dòng "icon · nhãn · giá trị". */
   .job-hero__facts {
     gap: 8px;
-    margin-top: 14px;
+    grid-template-columns: minmax(0, 1fr);
+    margin-top: 12px;
   }
 
   .job-hero__fact {
     align-items: flex-start;
-    flex-direction: column;
-    gap: 6px;
+    gap: 8px;
   }
 
   .job-hero__fact-icon {
-    border-radius: 10px;
-    height: 36px;
-    padding: 8px;
-    width: 36px;
+    background: none;
+    border-radius: 0;
+    height: 18px;
+    padding: 0;
+    width: 18px;
+  }
+
+  .job-hero__fact > div {
+    display: flex;
+    flex: 1;
+    gap: 8px;
+  }
+
+  .job-hero__fact dt {
+    flex: 0 0 104px;
   }
 
   .job-hero__fact dd {
     -webkit-box-orient: vertical;
     display: -webkit-box;
+    flex: 1;
     -webkit-line-clamp: 2;
     font-size: 13px;
+    min-width: 0;
     white-space: normal;
-  }
-
-  .job-hero__fact-note {
-    display: block;
-    margin-left: 0;
   }
 
   .job-hero__meta .job-hero__views {

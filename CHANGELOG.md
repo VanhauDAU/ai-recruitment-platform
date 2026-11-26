@@ -8,6 +8,12 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-27
 
+#### Changed — Cụm 3 thông tin chính của tin gọn hơn trên mobile
+
+- Trên mobile, Địa điểm / Kinh nghiệm / Hạn ứng tuyển ở đầu trang chi tiết tin chuyển từ
+  3 cột (ô icon 36px nằm trên chữ) sang 3 dòng "icon · nhãn · giá trị"; "Còn N ngày"
+  nằm cùng dòng với ngày hết hạn. Địa điểm dài cắt ở 2 dòng. Desktop giữ nguyên.
+
 #### Changed — Trang bảo trì theo thiết kế mới, bánh răng xoay
 
 - Màn bảo trì của SPA (`MaintenanceScreen`) và trang lỗi `50x.html` của nginx dùng chung
