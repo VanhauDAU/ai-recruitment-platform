@@ -18,7 +18,7 @@ from apps.cvs.services.completeness import (
     cv_completion_score,
     is_unsaved_builder_baseline,
 )
-from apps.cvs.services.thumbnails import current_thumbnail_ready
+from apps.cvs.services.thumbnails import thumbnail_matches_latest_version
 from apps.jobs.models import Job
 
 from .lookups import (
@@ -146,14 +146,14 @@ class CvSerializer(serializers.ModelSerializer):
         }
 
     def get_thumbnail_url(self, obj) -> str | None:
-        if not current_thumbnail_ready(obj):
+        if not thumbnail_matches_latest_version(obj):
             return None
         path = reverse('cv-thumbnail', kwargs={'public_id': obj.public_id})
         request = self.context.get('request')
         return request.build_absolute_uri(path) if request else path
 
     def get_thumbnail_status(self, obj) -> str:
-        return 'ready' if current_thumbnail_ready(obj) else 'pending'
+        return 'ready' if thumbnail_matches_latest_version(obj) else 'pending'
 
 
 class CvMetadataUpdateSerializer(serializers.Serializer):

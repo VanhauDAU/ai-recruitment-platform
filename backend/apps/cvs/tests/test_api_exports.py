@@ -301,3 +301,19 @@ class CvExportApiTests(CvApiTestCase):
             ).status_code,
             404,
         )
+
+    @patch('apps.cvs.tasks.exports.first_pdf_page_image', return_value=b'webp-preview')
+    @patch('apps.cvs.tasks.exports.render_cv_version_pdf', return_value=b'%PDF-1.4')
+    def test_cv_list_reports_thumbnail_without_storage_round_trips(self, _render, _raster):
+        # Mỗi exists() là một HEAD tới R2 (~100 ms); danh sách CV từng treo vì gọi 2 lần/CV.
+        cv = self.create_cv()
+        cv.refresh_from_db()
+        generate_cv_thumbnail(cv.latest_version_id)
+
+        with patch.object(default_storage, 'exists', side_effect=AssertionError('storage hit')):
+            response = self.client.get(reverse('cv-list-create'))
+
+        self.assertEqual(response.status_code, 200)
+        card = next(item for item in response.data['results'] if item['public_id'] == cv.public_id)
+        self.assertEqual(card['thumbnail_status'], 'ready')
+        self.assertTrue(card['thumbnail_url'].endswith(f'/{cv.public_id}/thumbnail/'))
