@@ -8,6 +8,12 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-27
 
+#### Docs — Trang trạng thái hệ thống bằng UptimeRobot
+
+- Checklist go-live thêm 3 monitor (trang chủ, `/api/health/ready/`, cổng NTD), tạo trang
+  Status page của UptimeRobot, xử lý 403 do Cloudflare và gắn link "Trạng thái hệ thống"
+  vào cụm `footer_nav` sau deploy. Không đổi code.
+
 #### Fixed — Bản đồ VietMap chỉ hiện nền trơn ở "Việc làm gần tôi"
 
 - Sau khi dán link style VietMap vào `map_style_url`, bản đồ chỉ là nền be trơn: tile
