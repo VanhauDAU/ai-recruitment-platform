@@ -7,6 +7,7 @@ import { Link, useLocation, useNavigate } from 'react-router'
 import { useLoginPrompt } from '@/features/common/account/auth'
 import { ACCOUNT_ROOT } from '@/entities/account/account'
 import { useSession } from '@/entities/account/session'
+import { useHideOnScroll } from '@/shared/hooks/use-hide-on-scroll'
 import { EMPLOYER_PORTAL_URL, HOME_BY_ROLE } from '@/shared/config/portals'
 import BottomSheet from '@/shared/ui/BottomSheet'
 import { CandidateAccountPanel } from './CandidateUserMenu'
@@ -15,6 +16,7 @@ import { m } from '@/shared/config/i18n'
 
 const [JOBS_MENU, CV_MENU] = HEADER_NAVIGATION
 const BODY_CLASS = 'has-mobile-tab-bar'
+const HIDDEN_BODY_CLASS = 'mobile-tab-bar-hidden'
 
 const TABS = [
   { key: 'home', label: m.candidate_tab_home(), to: '/', icon: <HomeOutlined />, activeIcon: <HomeFilled />, isActive: (path) => path === '/' },
@@ -81,6 +83,8 @@ export default function MobileTabBar() {
   const { user, isAuthenticated, logout } = useSession()
   const [accountOpen, setAccountOpen] = useState(false)
   const accountActive = accountOpen || pathname.startsWith(ACCOUNT_ROOT)
+  // Cuộn xuống thì thu thanh xuống dưới mép màn, cuộn lên thì hiện lại (như header).
+  const hidden = !useHideOnScroll() && !accountOpen
 
   useEffect(() => {
     document.body.classList.add(BODY_CLASS)
@@ -89,12 +93,18 @@ export default function MobileTabBar() {
 
   useEffect(() => setAccountOpen(false), [pathname])
 
+  // Nút nổi (góp ý, hỗ trợ, dock so sánh) hạ xuống theo qua --page-bottom-bar-height.
+  useEffect(() => {
+    document.body.classList.toggle(HIDDEN_BODY_CLASS, hidden)
+    return () => document.body.classList.remove(HIDDEN_BODY_CLASS)
+  }, [hidden])
+
   return (
     <>
       <div aria-hidden className="mobile-tab-bar h-16 md:hidden" />
       <nav
         aria-label={m.candidate_tab_nav_label()}
-        className="mobile-tab-bar fixed inset-x-0 bottom-0 z-40 bg-white pb-[env(safe-area-inset-bottom)] [filter:drop-shadow(0_-2px_8px_rgba(15,23,42,0.08))] md:hidden"
+        className={`mobile-tab-bar mobile-tab-bar--fixed${hidden ? ' is-hidden' : ''} fixed inset-x-0 bottom-0 z-40 bg-white pb-[env(safe-area-inset-bottom)] [filter:drop-shadow(0_-2px_8px_rgba(15,23,42,0.08))] md:hidden`}
       >
         <span aria-hidden className="absolute -top-[26px] left-1/2 h-[72px] w-[72px] -translate-x-1/2 rounded-full bg-white" />
         <ul className="relative grid h-16 grid-cols-5">

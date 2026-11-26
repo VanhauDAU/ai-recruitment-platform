@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 import { ArrowRightOutlined, SearchOutlined } from '@ant-design/icons'
 import { AutoComplete, Button, Select } from 'antd'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { bannerBackgroundStyle, getBanners } from '@/entities/content/banner'
 import { settingText, useSiteSettings } from '@/entities/system/site-settings'
 import { getJobSuggestions } from '@/entities/job/job'
 import { getProvinces } from '@/entities/system/location'
 import { blogPostPath, getBlogPinnedPosts } from '@/entities/content/blog'
 import useDebouncedValue from '@/shared/hooks/use-debounced-value'
+import { useNewTabLinkProps } from '@/shared/hooks/use-new-tab-link-props'
 
 const ALL_PROVINCES = ''
 
@@ -57,6 +58,8 @@ export default function BlogSidebar() {
 }
 
 function JobSearchCard() {
+  const navigate = useNavigate()
+  const newTab = useNewTabLinkProps()
   const [provinces, setProvinces] = useState([])
   const [keyword, setKeyword] = useState('')
   const [suggestions, setSuggestions] = useState([])
@@ -100,7 +103,9 @@ function JobSearchCard() {
     const text = (typeof value === 'string' ? value : keyword).trim()
     if (text) params.set('search', text)
     if (provinceId) params.set('locations', String(provinceId))
-    window.open(`/viec-lam${params.toString() ? `?${params}` : ''}`, '_blank', 'noopener')
+    const path = `/viec-lam${params.toString() ? `?${params}` : ''}`
+    if (newTab.target) window.open(path, '_blank', 'noopener')
+    else navigate(path)
   }
 
   function selectSuggestion(value) {
