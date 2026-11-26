@@ -27,10 +27,16 @@ const tabClass = (active) => `flex h-full flex-col items-center justify-center g
   active ? 'font-semibold !text-[var(--brand-primary)]' : 'font-medium !text-slate-500'
 }`
 
-function FeaturedTab({ tab, active }) {
+// Bấm tab của chính trang đang mở: URL không đổi nên ScrollRestorationGuard (App.jsx)
+// không chạy — tự cuộn lên đầu như thanh tab của app gốc.
+function scrollToTopIfCurrent(to, pathname) {
+  if (to === pathname) window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+function FeaturedTab({ tab, active, pathname }) {
   return (
     // Nút nổi chỉ có chữ "CV"; tên đầy đủ ("Tạo CV") cho trình đọc màn hình qua aria-label.
-    <Link to={tab.to} aria-label={tab.label} aria-current={active ? 'page' : undefined} className={tabClass(active)}>
+    <Link to={tab.to} aria-label={tab.label} aria-current={active ? 'page' : undefined} onClick={() => scrollToTopIfCurrent(tab.to, pathname)} className={tabClass(active)}>
       <span aria-hidden className="absolute -top-[18px] left-1/2 flex h-14 w-14 -translate-x-1/2 items-center justify-center rounded-full border-4 border-white bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-primary-hover)] text-xl font-extrabold tracking-tight text-white shadow-lg shadow-[var(--brand-primary)]/40 transition active:scale-95">
         CV
       </span>
@@ -95,8 +101,8 @@ export default function MobileTabBar() {
             const active = tab.isActive(pathname)
             return (
               <li key={tab.key} className="relative">
-                {tab.featured ? <FeaturedTab tab={tab} active={active} /> : (
-                  <Link to={tab.to} aria-current={active ? 'page' : undefined} className={tabClass(active)}>
+                {tab.featured ? <FeaturedTab tab={tab} active={active} pathname={pathname} /> : (
+                  <Link to={tab.to} aria-current={active ? 'page' : undefined} onClick={() => scrollToTopIfCurrent(tab.to, pathname)} className={tabClass(active)}>
                     <span aria-hidden className="text-xl leading-none">{active && tab.activeIcon ? tab.activeIcon : tab.icon}</span>
                     {tab.label}
                   </Link>

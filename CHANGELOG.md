@@ -8,6 +8,14 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Fixed — Web app trên iPhone và thanh tab dưới
+
+- Icon "Thêm vào Màn hình chính": `apple-touch-icon.png` dựng lại nền trắng (bản cũ nền
+  trong suốt, iOS tô đen nên logo gần như mất); thêm `manifest.webmanifest` (tên
+  "ProCV", icon 192/512 + maskable trong `public/icons/`), `apple-mobile-web-app-title`,
+  `theme-color`. nginx trả manifest với `application/manifest+json`.
+- Bấm lại tab của chính trang đang mở ở thanh tab dưới thì cuộn mượt lên đầu.
+
 #### Changed — Lưu logo/ảnh bìa công ty nhanh hơn
 
 - Trình duyệt thu nhỏ ảnh về trần server (logo 800 px, ảnh bìa/thư viện 2400×1600)
