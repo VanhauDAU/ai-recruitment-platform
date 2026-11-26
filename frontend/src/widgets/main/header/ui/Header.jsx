@@ -1,4 +1,3 @@
-import { AppstoreOutlined, ArrowLeftOutlined, SearchOutlined } from '@ant-design/icons'
 import { Button } from 'antd'
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
@@ -7,7 +6,9 @@ import { useLoginPrompt } from '@/features/common/account/auth'
 import { useSession } from '@/entities/account/session'
 import { useHideOnScroll } from '@/shared/hooks/use-hide-on-scroll'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
+import { holdKeyboardFocus } from '@/shared/lib/hold-keyboard-focus'
 import { BrandLogo, useSiteSettings } from '@/entities/system/site-settings'
+import LineIcon from '@/shared/ui/icons/LineIcon'
 import CandidateUserMenu from './CandidateUserMenu'
 import { DesktopNavigation, MobileNavigation } from './HeaderNavigation'
 import { HEADER_NAVIGATION, navigationForCapabilities } from '../model/header-navigation-config'
@@ -15,24 +16,26 @@ import { detailBackFallback } from '../model/detail-back'
 import { useHeaderNavigationSources } from '../model/use-header-navigation-sources'
 import { m } from '@/shared/config/i18n'
 
+const CV_EDITOR_PATH = /^\/cv\/[^/]+\/chinh-sua\/?$/
+
 function GuestActions({ mobile = false, compactMobile = false, onSelect, navigate }) {
   // Đăng nhập chuyển sang trang /login.
   function handleLogin() {
     onSelect?.()
-    navigate('/login')
+    navigate('/dang-nhap')
   }
   if (mobile) {
     return (
       <>
         <Button block type="primary" shape="round" onClick={handleLogin}>Đăng nhập</Button>
-        <Link to="/sign-up" onClick={onSelect}><Button block shape="round">Đăng ký</Button></Link>
+        <Link to="/dang-ky" onClick={onSelect}><Button block shape="round">Đăng ký</Button></Link>
         <a href={EMPLOYER_PORTAL_URL}><Button block ghost type="primary" shape="round">Đăng tuyển &amp; tìm hồ sơ</Button></a>
       </>
     )
   }
   return (
     <>
-      <Link to="/sign-up" className={`hidden cursor-pointer ${compactMobile ? 'md:inline-block' : 'sm:inline-block'}`}><Button className="cursor-pointer" shape="round">Đăng ký</Button></Link>
+      <Link to="/dang-ky" className={`hidden cursor-pointer ${compactMobile ? 'md:inline-block' : 'sm:inline-block'}`}><Button className="cursor-pointer" shape="round">Đăng ký</Button></Link>
       <Button className={`cursor-pointer ${compactMobile ? '!hidden md:!inline-flex' : ''}`} type="primary" shape="round" onClick={handleLogin}>Đăng nhập</Button>
       <a href={EMPLOYER_PORTAL_URL} className="hidden cursor-pointer lg:inline-block">
         <Button className="cursor-pointer" ghost type="primary" shape="round">Đăng tuyển &amp; tìm hồ sơ</Button>
@@ -115,8 +118,8 @@ export default function Header({ editorMode = false }) {
     || location.pathname.includes('/tuyen-dung/')
     // The CV editor has long, form-heavy pages. Hide the global sticky header
     // while scrolling there so it cannot cover controls on small viewports.
-    || location.pathname.startsWith('/cvs/')
-  const isCvRoute = location.pathname.startsWith('/cvs/')
+    || CV_EDITOR_PATH.test(location.pathname)
+  const isCvRoute = CV_EDITOR_PATH.test(location.pathname)
   const backFallback = editorMode ? null : detailBackFallback(location.pathname)
 
   // `key === 'default'`: trang đầu tiên của phiên (link chia sẻ, tab mới) — không có
@@ -145,7 +148,7 @@ export default function Header({ editorMode = false }) {
             onClick={goBack}
             className="-ml-2 flex h-10 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-xl text-slate-700 transition active:scale-95 md:hidden"
           >
-            <ArrowLeftOutlined aria-hidden />
+            <LineIcon name="arrowLeft" />
           </button>
         )}
         <BrandLogo variant="full" className="shrink-0 cursor-pointer whitespace-nowrap" imageClassName="h-7 max-w-[112px] sm:h-9 sm:max-w-[190px]" />
@@ -154,9 +157,9 @@ export default function Header({ editorMode = false }) {
           type="button"
           aria-label={m.candidate_header_open_categories()}
           onClick={() => setMobileOpen(true)}
-          className="flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-[var(--brand-primary-soft)] px-3 text-sm font-semibold text-[var(--brand-primary-hover)] transition active:scale-95 md:hidden"
+          className="flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-[var(--brand-primary-soft)] pl-2.5 pr-3 text-sm font-semibold text-[var(--brand-primary-hover)] transition active:scale-95 md:hidden"
         >
-          <AppstoreOutlined aria-hidden /> {m.candidate_header_categories()}
+          <LineIcon name="layoutGrid" className="text-base" /> {m.candidate_header_categories()}
         </button>}
         <DesktopNavigation
           menus={menus}
@@ -169,10 +172,13 @@ export default function Header({ editorMode = false }) {
           {!editorMode && <button
             type="button"
             aria-label={m.candidate_header_search_jobs()}
-            onClick={() => navigate('/viec-lam', { state: { focusSearch: Date.now() } })}
-            className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-xl text-slate-600 transition hover:bg-slate-100 md:hidden"
+            onClick={() => {
+              holdKeyboardFocus()
+              navigate('/viec-lam', { state: { focusSearch: Date.now() } })
+            }}
+            className="flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-[22px] text-slate-700 transition hover:bg-slate-100 active:scale-95 md:hidden"
           >
-            <SearchOutlined />
+            <LineIcon name="search" strokeWidth={1.8} />
           </button>}
           <HeaderActions
             compactMobile={!editorMode}

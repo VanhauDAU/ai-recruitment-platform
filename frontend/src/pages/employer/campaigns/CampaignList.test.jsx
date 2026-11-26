@@ -46,13 +46,13 @@ const CAMPAIGNS = [
   },
 ]
 
-function renderPage(initialEntry = '/tuyendung/app/campaigns') {
+function renderPage(initialEntry = '/tuyendung/app/chien-dich') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[initialEntry]}>
         <Routes>
-          <Route path="/tuyendung/app/campaigns" element={<CampaignList />} />
+          <Route path="/tuyendung/app/chien-dich" element={<CampaignList />} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -85,7 +85,7 @@ describe('CampaignList', () => {
   })
 
   it('toggles an attention chip inside the open tab and keeps the order when filters clear', async () => {
-    renderPage('/tuyendung/app/campaigns?ordering=name')
+    renderPage('/tuyendung/app/chien-dich?ordering=name')
 
     const chips = await screen.findByRole('group', { name: 'Lọc nhanh chiến dịch cần xử lý' })
     expect(await within(chips).findByRole('button', { name: /Có tin hết hạn\s*0/ })).toBeDisabled()
@@ -119,11 +119,11 @@ describe('CampaignList', () => {
     expect(live.getByText('01/12/2026 đến 31/12/2026')).toBeInTheDocument()
     expect(draft.getByText('Khi kích hoạt đến tuyển liên tục')).toBeInTheDocument()
     expect(live.getByRole('link', { name: 'Xem 3 CV mới' }))
-      .toHaveAttribute('href', '/tuyendung/app/campaigns/camp_live?active_tab=apply_cv')
+      .toHaveAttribute('href', '/tuyendung/app/chien-dich/camp_live?active_tab=apply_cv')
     expect(draft.getByRole('link', { name: 'Thiết lập' }))
-      .toHaveAttribute('href', '/tuyendung/app/campaigns/camp_draft/setup')
+      .toHaveAttribute('href', '/tuyendung/app/chien-dich/camp_draft/thiet-lap')
     expect(live.getByRole('link', { name: 'Tuyển Frontend' }))
-      .toHaveAttribute('href', '/tuyendung/app/campaigns/camp_live')
+      .toHaveAttribute('href', '/tuyendung/app/chien-dich/camp_live')
   })
 
   it('keeps aggregate counts but hides candidate previews without candidate access', async () => {
@@ -135,6 +135,6 @@ describe('CampaignList', () => {
     expect(live.queryByTitle('Nguyễn Minh Anh')).not.toBeInTheDocument()
     expect(live.queryByRole('link', { name: 'Xem 3 CV mới' })).not.toBeInTheDocument()
     expect(live.getByRole('link', { name: 'Xem chi tiết' }))
-      .toHaveAttribute('href', '/tuyendung/app/campaigns/camp_live')
+      .toHaveAttribute('href', '/tuyendung/app/chien-dich/camp_live')
   })
 })

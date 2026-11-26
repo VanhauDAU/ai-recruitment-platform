@@ -163,7 +163,7 @@ export default function CvSourcePanel({ cv, onBack, showActions = true }) {
                     <span className="block truncate text-sm font-semibold text-slate-800">{cv.title}</span>
                     <span className="block text-xs text-slate-500">{cv.updated_at ? new Date(cv.updated_at).toLocaleDateString(getIntlLocale()) : ''}</span>
                   </span>
-                  <Link to={`/cvs/${cv.public_id}/view`} target="_blank" className="shrink-0 text-xs font-medium text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)] cursor-pointer" onClick={(event) => event.stopPropagation()}>
+                  <Link to={`/cv/${cv.public_id}/xem`} target="_blank" className="shrink-0 text-xs font-medium text-[var(--brand-primary)] hover:text-[var(--brand-primary-hover)] cursor-pointer" onClick={(event) => event.stopPropagation()}>
                     (Xem CV)
                   </Link>
                 </button>

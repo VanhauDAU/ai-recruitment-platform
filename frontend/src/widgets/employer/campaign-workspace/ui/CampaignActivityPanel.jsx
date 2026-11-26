@@ -109,10 +109,10 @@ function activityText(activity) {
 function activityLink(publicId, activity) {
   if (!activity.subject_public_id) return null
   if (activity.group === 'job') {
-    return employerAppPath(`/jobs/${activity.subject_public_id}`)
+    return employerAppPath(`/tin-tuyen-dung/${activity.subject_public_id}`)
   }
   if (activity.group === 'application') {
-    return employerAppPath(`/applications?campaign=${publicId}&application=${activity.subject_public_id}`)
+    return employerAppPath(`/ho-so-ung-tuyen?campaign=${publicId}&application=${activity.subject_public_id}`)
   }
   return null
 }

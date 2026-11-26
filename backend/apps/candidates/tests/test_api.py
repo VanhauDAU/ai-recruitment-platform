@@ -496,7 +496,7 @@ class CandidateProfileApiTests(TestCase):
                 'confirmed': False,
                 'policy_version': 'v1',
                 'source': 'cv_save_success',
-                'source_path': '/save-cv-success/cv_1',
+                'source_path': '/cv/cv_1/da-luu',
             },
             format='json',
         )
@@ -510,7 +510,7 @@ class CandidateProfileApiTests(TestCase):
                 'confirmed': True,
                 'policy_version': 'v1',
                 'source': 'cv_save_success',
-                'source_path': '/save-cv-success/cv_1',
+                'source_path': '/cv/cv_1/da-luu',
             },
             format='json',
         )

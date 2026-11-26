@@ -42,7 +42,7 @@ tin (`headcount` trong API), không nhập tay (chốt với user 18/11/2026).
 - Liên kết `Job.campaign` là **tùy chọn**; một tin thuộc tối đa một chiến dịch,
   một chiến dịch có thể chứa nhiều tin (ràng buộc một tin/chiến dịch cũ đã bị
   gỡ ở migration `jobs.0028`).
-- "Thêm chiến dịch mới" mở thẳng wizard `/tuyendung/app/campaigns/new`: bước
+- "Thêm chiến dịch mới" mở thẳng wizard `/tuyendung/app/chien-dich/tao-moi`: bước
   Thông tin lưu lần đầu mới tạo chiến dịch ở **`draft`** rồi chuyển sang bước
   chọn tin, nên không còn nháp rỗng và không còn hộp "nhập tên" riêng
   (2026-11-18). Không cần liên kết công ty hay hoàn tất xác thực; `company` lấy
@@ -73,7 +73,7 @@ tin (`headcount` trong API), không nhập tay (chốt với user 18/11/2026).
 
 ### Thiết lập và kích hoạt (wizard)
 
-Trang `/tuyendung/app/campaigns/:id/setup?step=` có ba bước:
+Trang `/tuyendung/app/chien-dich/:id/thiet-lap?step=` có ba bước:
 
 Bên trái là thanh lộ trình. Mỗi bước hiện trạng thái suy ra từ dữ liệu, không
 theo thứ tự bước: "Đến 31/12, ngân sách tối đa …", "Chưa chọn tin nào", "2 tin

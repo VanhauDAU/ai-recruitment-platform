@@ -6,47 +6,47 @@ export const QUEUE_CONFIG = {
   job_reports: {
     label: 'Báo cáo tin tuyển dụng',
     hint: 'Ứng viên báo tin sai sự thật hoặc lừa đảo',
-    to: adminPath('/job-moderation?tab=reports'),
+    to: adminPath('/duyet-tin?tab=reports'),
   },
   company_reports: {
     label: 'Báo cáo công ty',
     hint: 'Phản ánh về thông tin, mạo danh doanh nghiệp',
-    to: adminPath('/company-reports'),
+    to: adminPath('/bao-cao-cong-ty'),
   },
   company_content_changes: {
     label: m.admin_queue_company_content_label(),
     hint: m.admin_queue_company_content_hint(),
-    to: adminPath('/companies?tab=content-changes'),
+    to: adminPath('/cong-ty?tab=content-changes'),
   },
   recruiter_verification: {
     label: 'Xác thực nhà tuyển dụng',
     hint: 'Hồ sơ pháp lý chờ duyệt để NTD được đăng tin',
-    to: adminPath('/recruiters?tab=verification'),
+    to: adminPath('/nha-tuyen-dung?tab=verification'),
   },
   job_resubmissions: {
     label: 'Tin đã sửa, chờ duyệt lại',
     hint: 'NTD đã chỉnh sửa tin bị tạm ẩn theo yêu cầu',
-    to: adminPath('/job-moderation?job_scope=resubmitted'),
+    to: adminPath('/duyet-tin?job_scope=resubmitted'),
   },
   domain_verification: {
     label: 'Xác minh tên miền thủ công',
     hint: 'Công ty không thể xác minh bằng bản ghi DNS',
-    to: adminPath('/recruiters?tab=domain-verification'),
+    to: adminPath('/nha-tuyen-dung?tab=domain-verification'),
   },
   company_join_requests: {
     label: 'Yêu cầu tham gia chờ quản trị viên',
     hint: 'Công ty chưa có owner đã xác thực để duyệt',
-    to: adminPath('/companies?tab=join-requests'),
+    to: adminPath('/cong-ty?tab=join-requests'),
   },
   company_updates: {
     label: 'Yêu cầu cập nhật công ty',
     hint: 'Sửa hồ sơ công ty chờ thẩm định, gồm đổi tên và mã số thuế',
-    to: adminPath('/companies?tab=updates'),
+    to: adminPath('/cong-ty?tab=updates'),
   },
   privacy_requests: {
     label: m.admin_nav_queue_privacy_requests(),
     hint: m.admin_queue_privacy_requests_hint(),
-    to: adminPath('/privacy-requests'),
+    to: adminPath('/yeu-cau-du-lieu-ca-nhan'),
   },
 }
 

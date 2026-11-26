@@ -8,6 +8,7 @@ import { useMemo } from 'react'
 import { Link } from 'react-router'
 import { COMPANY_DIRECTORY_PATH, companyDetailPath } from '@/entities/company/company'
 import { formatNumber } from '@/entities/job/job'
+import { m } from '@/shared/config/i18n'
 import ArrowButton from '@/shared/ui/ArrowButton'
 import { logoUrlFor } from '../lib/logo-url'
 import { chunkItems, usePagedDrag } from '../model/use-paged-drag'
@@ -107,7 +108,7 @@ export default function FeaturedEmployers({ employers, navigate, stats }) {
             <p className="home-showcase__subtitle">Khám phá doanh nghiệp đang có nhiều cơ hội tuyển dụng</p>
           </div>
           <div className="home-showcase__actions">
-            <Link to={COMPANY_DIRECTORY_PATH} className="home-showcase__more">
+            <Link to={COMPANY_DIRECTORY_PATH} className="home-showcase__more" aria-label={m.candidate_home_employers_view_all()}>
               Xem tất cả <ArrowRightOutlined aria-hidden="true" />
             </Link>
             <ArrowButton

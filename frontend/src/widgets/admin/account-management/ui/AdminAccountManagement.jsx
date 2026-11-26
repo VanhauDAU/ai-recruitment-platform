@@ -278,7 +278,7 @@ export default function AdminAccountManagement({ scope = 'accounts' }) {
 
   const openDetail = (account, tab = '') => {
     const recruiter = recruiterScope || account.role === 'employer'
-    const base = recruiter ? '/recruiters' : '/accounts'
+    const base = recruiter ? '/nha-tuyen-dung' : '/tai-khoan'
     navigate(`${adminPath(`${base}/${account.public_id}`)}${tab ? `?tab=${tab}` : ''}`, {
       state: listOrigin,
     })

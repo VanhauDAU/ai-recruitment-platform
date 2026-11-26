@@ -61,7 +61,7 @@ function CandidateTrust({ application, candidateName }) {
         tone="danger"
         icon={<StopOutlined />}
         title={m.employer_workspace_app_blocked_title()}
-        action={<Link to={employerAppPath('/candidate-blocks')} className="aw-flag__link">{m.employer_workspace_app_manage()}</Link>}
+        action={<Link to={employerAppPath('/ung-vien-bi-chan')} className="aw-flag__link">{m.employer_workspace_app_manage()}</Link>}
       />
     )
   }

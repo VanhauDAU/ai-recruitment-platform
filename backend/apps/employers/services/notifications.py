@@ -12,17 +12,17 @@ from common.metrics import record_metric
 
 from ..models import EmployerActivity, EmployerNotification, EmployerNotificationPreference
 
-VERIFY_PATH = '/tuyendung/app/employer-verify'
-COMPANY_PATH = '/tuyendung/app/account/settings/company'
+VERIFY_PATH = '/tuyendung/app/xac-thuc-tai-khoan'
+COMPANY_PATH = '/tuyendung/app/cai-dat/cong-ty'
 COMPANY_MEMBERS_PATH = f'{COMPANY_PATH}?tab=members'
-COMPANY_PAGE_PATH = '/tuyendung/app/company-page'
-JOBS_PATH = '/tuyendung/app/jobs'
-APPLICATIONS_PATH = '/tuyendung/app/applications'
-CANDIDATE_SEARCH_PATH = '/tuyendung/app/candidate-search'
-CONNECT_PATH = '/tuyendung/app/connect'
-DASHBOARD_PATH = '/tuyendung/app/dashboard'
-CAMPAIGNS_PATH = '/tuyendung/app/campaigns'
-INTEGRATIONS_PATH = '/tuyendung/app/account/settings/integrations'
+COMPANY_PAGE_PATH = '/tuyendung/app/trang-cong-ty'
+JOBS_PATH = '/tuyendung/app/tin-tuyen-dung'
+APPLICATIONS_PATH = '/tuyendung/app/ho-so-ung-tuyen'
+CANDIDATE_SEARCH_PATH = '/tuyendung/app/tim-ung-vien'
+CONNECT_PATH = '/tuyendung/app/procv-connect'
+DASHBOARD_PATH = '/tuyendung/app/tong-quan'
+CAMPAIGNS_PATH = '/tuyendung/app/chien-dich'
+INTEGRATIONS_PATH = '/tuyendung/app/cai-dat/tich-hop'
 
 EVENT_PRESENTATION = {
     EmployerNotification.EventType.VERIFICATION_APPROVED: (

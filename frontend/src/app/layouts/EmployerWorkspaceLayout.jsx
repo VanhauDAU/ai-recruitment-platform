@@ -112,18 +112,18 @@ export default function EmployerWorkspaceLayout() {
   const connectEnabled = useSiteSettings().settings.connect_enabled === true && Boolean(readiness.candidateDataAccess)
   const unreadConversations = useConnectUnreadCount('employer', { enabled: connectEnabled })
   const initials = (user?.full_name || user?.email || 'NTD').trim().charAt(0).toUpperCase()
-  const isCampaignList = pathname === employerAppPath('/campaigns')
+  const isCampaignList = pathname === employerAppPath('/chien-dich')
   const routeAction = isCampaignList
-    ? { to: '/campaigns/new', label: m.employer_workspace_add_campaign() }
-    : pathname === employerAppPath('/jobs')
-      ? { to: '/jobs/new', label: m.employer_job_list_post_job() }
+    ? { to: '/chien-dich/tao-moi', label: m.employer_workspace_add_campaign() }
+    : pathname === employerAppPath('/tin-tuyen-dung')
+      ? { to: '/tin-tuyen-dung/tao-moi', label: m.employer_job_list_post_job() }
       : null
-  const campaignDetailMatch = pathname.match(new RegExp(`^${employerAppPath('/campaigns')}/(?!new$)([^/]+)$`))
+  const campaignDetailMatch = pathname.match(new RegExp(`^${employerAppPath('/chien-dich')}/(?!tao-moi$)([^/]+)$`))
   const isCampaignDetail = Boolean(campaignDetailMatch)
-  const jobEditMatch = pathname.match(new RegExp(`^${employerAppPath('/jobs')}/([^/]+)/edit$`))
-  const isJobNew = pathname === employerAppPath('/jobs/new')
+  const jobEditMatch = pathname.match(new RegExp(`^${employerAppPath('/tin-tuyen-dung')}/([^/]+)/chinh-sua$`))
+  const isJobNew = pathname === employerAppPath('/tin-tuyen-dung/tao-moi')
   const isJobForm = isJobNew || Boolean(jobEditMatch)
-  const isApplicationWorkspace = pathname === employerAppPath('/applications')
+  const isApplicationWorkspace = pathname === employerAppPath('/ho-so-ung-tuyen')
   const applicationParams = new URLSearchParams(search)
   const applicationJobId = applicationParams.get('job')
   const applicationCampaignId = applicationParams.get('campaign')
@@ -136,15 +136,15 @@ export default function EmployerWorkspaceLayout() {
       navigate(-1)
       return
     }
-    navigate(jobEditMatch ? `${employerAppPath('/jobs')}/${jobEditMatch[1]}` : employerAppPath('/jobs'))
+    navigate(jobEditMatch ? `${employerAppPath('/tin-tuyen-dung')}/${jobEditMatch[1]}` : employerAppPath('/tin-tuyen-dung'))
   }
   const goBackFromApplications = () => {
     if (applicationJobId) {
-      navigate(`${employerAppPath('/jobs')}/${encodeURIComponent(applicationJobId)}`)
+      navigate(`${employerAppPath('/tin-tuyen-dung')}/${encodeURIComponent(applicationJobId)}`)
       return
     }
     if (applicationCampaignId) {
-      navigate(`${employerAppPath('/campaigns')}/${encodeURIComponent(applicationCampaignId)}?active_tab=apply_cv`)
+      navigate(`${employerAppPath('/chien-dich')}/${encodeURIComponent(applicationCampaignId)}?active_tab=apply_cv`)
     }
   }
   // Opened from the sidebar (no job/campaign) the page is a top-level inbox
@@ -202,7 +202,7 @@ export default function EmployerWorkspaceLayout() {
           />
           <BrandLogo
             dark
-            to={employerAppPath('/dashboard')}
+            to={employerAppPath('/tong-quan')}
             className="max-w-[138px]"
             imageClassName="h-7 max-w-[126px]"
             textClassName="text-sm"
@@ -211,12 +211,12 @@ export default function EmployerWorkspaceLayout() {
 
         <div className="flex items-center gap-2">
           <TopbarAction icon={<BarChartOutlined />} label={m.employer_workspace_topbar_market_survey()} prominent />
-          <TopbarAction icon={<FileTextOutlined />} label={m.employer_workspace_topbar_post_job()} to={employerAppPath('/jobs/new')} />
-          <TopbarAction icon={<SearchOutlined />} label={m.employer_workspace_topbar_search_cv()} to={employerAppPath('/candidate-search')} />
+          <TopbarAction icon={<FileTextOutlined />} label={m.employer_workspace_topbar_post_job()} to={employerAppPath('/tin-tuyen-dung/tao-moi')} />
+          <TopbarAction icon={<SearchOutlined />} label={m.employer_workspace_topbar_search_cv()} to={employerAppPath('/tim-ung-vien')} />
           {connectEnabled && (
             <Badge count={unreadConversations} size="small" overflowCount={99}>
               <Link
-                to={employerAppPath('/connect')}
+                to={employerAppPath('/procv-connect')}
                 aria-label={unreadConversations ? m.connect_open_inbox_unread({ count: unreadConversations }) : m.connect_open_inbox()}
                 className="rounded-full transition hover:opacity-90"
               >
@@ -335,7 +335,7 @@ export default function EmployerWorkspaceLayout() {
                   aria-label={isApplicationWorkspace ? applicationBackLabel : m.employer_workspace_back()}
                   title={isApplicationWorkspace ? applicationBackLabel : undefined}
                   onClick={isCampaignDetail
-                    ? () => navigate(employerAppPath('/campaigns'))
+                    ? () => navigate(employerAppPath('/chien-dich'))
                     : isApplicationWorkspace
                       ? goBackFromApplications
                       : goBackFromForm}

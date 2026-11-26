@@ -66,7 +66,7 @@ export default function EmployerVerificationPanel() {
 
   const resolvedProfile = profile || {}
   if (canAccessCandidateData) {
-    return <Navigate to={employerAppPath('/dashboard')} replace />
+    return <Navigate to={employerAppPath('/tong-quan')} replace />
   }
 
   return (
@@ -81,7 +81,7 @@ export default function EmployerVerificationPanel() {
         <div className="mt-8">
           <EmployerVerificationChecklist
             profile={resolvedProfile}
-            onContinue={() => navigate(employerAppPath('/dashboard'), { replace: true })}
+            onContinue={() => navigate(employerAppPath('/tong-quan'), { replace: true })}
           />
         </div>
       </section>

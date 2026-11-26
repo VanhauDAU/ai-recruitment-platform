@@ -22,7 +22,7 @@ describe('announcement route catalog', () => {
       .toEqual(expect.arrayContaining([
         expect.objectContaining({
           label: expect.stringContaining('Tạo tin tuyển dụng'),
-          value: '/tuyendung/app/jobs/new',
+          value: '/tuyendung/app/tin-tuyen-dung/tao-moi',
         }),
       ]))
   })

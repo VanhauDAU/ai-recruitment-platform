@@ -9,7 +9,7 @@ import { getApiErrorMessage } from '@/shared/api/error-mapper'
 // Bước 1: nhập email -> backend gửi link đặt lại. Backend luôn trả cùng một
 // thông điệp dù email có tồn tại hay không, nên màn hình này không được suy đoán
 // "email không tồn tại" — cứ hiện màn "đã gửi".
-export default function ForgotPassword({ loginPath = '/login' }) {
+export default function ForgotPassword({ loginPath = '/dang-nhap' }) {
   const { executeRecaptcha } = useGoogleReCaptcha()
   const [sentTo, setSentTo] = useState('')
   const [error, setError] = useState('')

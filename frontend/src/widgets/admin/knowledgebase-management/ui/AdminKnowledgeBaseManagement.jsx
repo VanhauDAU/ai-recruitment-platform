@@ -87,7 +87,7 @@ export default function AdminKnowledgeBaseManagement() {
   const pageSize = Number(params.page_size || 20)
   const ordering = params.ordering || DEFAULT_ORDERING
   const update = (patch) => setSearchParams(updateKnowledgeListParams(searchParams, patch))
-  const openArticle = (article) => navigate(adminPath(`/knowledgebase/${article.public_id}`))
+  const openArticle = (article) => navigate(adminPath(`/tro-giup/${article.public_id}`))
   const quickValue = CHIPS.find(([, , , key, value]) => params[key] === value)?.[0] || ''
 
   useEffect(() => setSearchInput(params.q || ''), [params.q])

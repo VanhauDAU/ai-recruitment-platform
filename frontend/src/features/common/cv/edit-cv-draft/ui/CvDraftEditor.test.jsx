@@ -39,10 +39,10 @@ describe('CV draft editor', () => {
     render(
       <App>
         <SiteSettingsContext.Provider value={{ settings: { ...DEFAULT_SITE_SETTINGS, cv_builder_wysiwyg_enabled: wysiwyg } }}>
-          <MemoryRouter initialEntries={['/cvs/cv_1/edit']}>
+          <MemoryRouter initialEntries={['/cv/cv_1/chinh-sua']}>
             <Routes>
-              <Route path="/cvs/:publicId/edit" element={<CvDraftEditor publicId="cv_1" />} />
-              <Route path="/cvs/:publicId/view" element={<p>Trang xem CV</p>} />
+              <Route path="/cv/:publicId/chinh-sua" element={<CvDraftEditor publicId="cv_1" />} />
+              <Route path="/cv/:publicId/xem" element={<p>Trang xem CV</p>} />
             </Routes>
           </MemoryRouter>
         </SiteSettingsContext.Provider>

@@ -166,6 +166,18 @@ cho lý do ngoại lệ. Không tạo bridge/re-export tạm thời để né ru
    URL contract hiện có hoặc bổ sung test redirect/404 khi contract mới.
 5. Chạy `npm run lint`, `npm run check:architecture`, unit tests và E2E phù hợp.
 
+## Quy ước URL
+
+- Path người dùng nhìn thấy viết tiếng Việt không dấu, nối bằng gạch ngang, kể cả trong
+  workspace (`/tuyendung/app/tin-tuyen-dung/:id/chinh-sua`, `/admin/app/duyet-tin`).
+  Hành động dùng `tao-moi`, `chinh-sua`, `thiet-lap`, `xem`. Ngoại lệ có chủ đích: tiền
+  tố `app`, `/oauth/callback` (đã khai với nhà cung cấp OAuth), `/blog`, tên thương hiệu
+  `/procv-connect`. Query param giữ nguyên (`?tab=…`).
+- Đổi path đang chạy phải thêm cặp `[cũ, mới]` vào `app/router/redirects/legacy-paths.js`
+  (redirect giữ tham số, query, hash); không xóa cặp cũ vì email và thông báo đã lưu vẫn
+  trỏ tới. Đồng bộ link backend (`apps/*/services`, setting `*_PATH`) và
+  `sitecontent.selectors.legacy_paths` nếu prefix thông báo đa cổng bị ảnh hưởng.
+
 ## Tiêu đề trang
 
 Mọi `<title>` có dạng `<nội dung trang> | <thương hiệu cổng>`, thương hiệu sinh

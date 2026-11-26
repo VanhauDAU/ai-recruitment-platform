@@ -29,7 +29,7 @@ class PublishedKnowledgeMixin:
             article_type=article_type,
             title=title,
             body=body,
-            source_reference='/login',
+            source_reference='/dang-nhap',
             order=order,
             seo_title=f'Hướng dẫn: {title}',
             seo_description='Hướng dẫn đã được kiểm duyệt.',

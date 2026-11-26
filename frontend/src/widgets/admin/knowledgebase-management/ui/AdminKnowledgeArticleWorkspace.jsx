@@ -32,7 +32,7 @@ export default function AdminKnowledgeArticleWorkspace({ publicId }) {
   const sync = (saved) => queryClient.setQueryData(adminKnowledgeKeys.article(saved.public_id), saved)
   const goBack = () => {
     if (!dirty) {
-      navigate(adminPath('/knowledgebase'))
+      navigate(adminPath('/tro-giup'))
       return
     }
     requestConfirmation({
@@ -40,7 +40,7 @@ export default function AdminKnowledgeArticleWorkspace({ publicId }) {
       confirmText: 'Rời khỏi trang',
       danger: true,
       description: 'Bạn có chắc muốn rời khỏi trang khi vẫn còn thay đổi chưa lưu? Bản khôi phục cục bộ sẽ được giữ để bạn có thể tiếp tục sau.',
-      onConfirm: () => navigate(adminPath('/knowledgebase')),
+      onConfirm: () => navigate(adminPath('/tro-giup')),
       title: 'Rời khỏi trình soạn thảo',
     })
   }

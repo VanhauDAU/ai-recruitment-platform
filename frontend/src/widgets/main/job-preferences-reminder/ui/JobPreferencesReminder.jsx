@@ -13,7 +13,7 @@ export default function JobPreferencesReminder() {
     <div className="border-b border-[var(--brand-primary)]/20 bg-[var(--brand-primary-soft)] text-emerald-950">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-3 gap-y-1 px-4 py-2.5 text-center text-sm">
         <span>Thêm vị trí, mức lương mong muốn để gợi ý việc làm sát hướng bạn muốn hơn.</span>
-        <Link to="/onboard-user" className="inline-flex items-center gap-1 font-semibold text-[var(--brand-primary)] hover:underline">
+        <Link to="/hoan-thien-ho-so" className="inline-flex items-center gap-1 font-semibold text-[var(--brand-primary)] hover:underline">
           Cập nhật nhu cầu công việc <ArrowRightOutlined className="text-xs" />
         </Link>
       </div>

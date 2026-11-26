@@ -10,7 +10,7 @@ const SKIPPED_CODES = new Set(['moderation_hold', 'account_hold'])
 function issueLink(issue, job) {
   if (issue.action === 'extend_deadline') return null
   if (issue.action === 'open_campaign') {
-    return job.campaign ? { label: m.employer_job_visibility_open_campaign(), to: employerAppPath(`/campaigns/${job.campaign}`) } : null
+    return job.campaign ? { label: m.employer_job_visibility_open_campaign(), to: employerAppPath(`/chien-dich/${job.campaign}`) } : null
   }
   return employerReadinessAction(issue.action)
 }

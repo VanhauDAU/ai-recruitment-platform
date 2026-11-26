@@ -32,7 +32,7 @@ export function useCvCardActions(cv, onRefresh) {
 
   const buildShareUrl = async () => {
     const { token } = await createCvSharedLink(cv.public_id)
-    return `${window.location.origin}/cv/share/${token}`
+    return `${window.location.origin}/cv/chia-se/${token}`
   }
 
   const copyLink = async () => {

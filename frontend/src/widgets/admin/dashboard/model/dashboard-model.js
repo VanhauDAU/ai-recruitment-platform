@@ -2,14 +2,14 @@ import { adminPath } from '@/shared/config/portals'
 import { getIntlLocale } from '@/shared/config/i18n'
 
 export const DASHBOARD_LINKS = {
-  activeJobs: adminPath('/job-moderation?job_scope=active'),
-  heldJobs: adminPath('/job-moderation?job_scope=held'),
-  restrictedCandidates: adminPath('/accounts?status=inactive,banned'),
-  restrictedRecruiters: adminPath('/recruiters?status=inactive,banned'),
-  knowledgeOverdue: adminPath('/knowledgebase?review_due=overdue'),
-  recruiters: adminPath('/recruiters'),
-  companies: adminPath('/companies'),
-  candidates: adminPath('/accounts?tab=candidate'),
+  activeJobs: adminPath('/duyet-tin?job_scope=active'),
+  heldJobs: adminPath('/duyet-tin?job_scope=held'),
+  restrictedCandidates: adminPath('/tai-khoan?status=inactive,banned'),
+  restrictedRecruiters: adminPath('/nha-tuyen-dung?status=inactive,banned'),
+  knowledgeOverdue: adminPath('/tro-giup?review_due=overdue'),
+  recruiters: adminPath('/nha-tuyen-dung'),
+  companies: adminPath('/cong-ty'),
+  candidates: adminPath('/tai-khoan?tab=candidate'),
 }
 
 export const ACTIVITY_METRICS = [

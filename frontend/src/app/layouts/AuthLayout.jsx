@@ -10,7 +10,7 @@ import { getCurrentPortal } from '@/shared/config/portals'
 export default function AuthLayout() {
   const [scheme, toggleScheme] = useConsentedColorScheme()
   const { pathname } = useLocation()
-  const isRegister = pathname.startsWith('/sign-up') || pathname.endsWith('/register')
+  const isRegister = pathname.endsWith('/dang-ky')
   const isAdmin = getCurrentPortal() === 'admin'
   const navigate = useNavigate()
 

@@ -64,7 +64,7 @@ describe('ApplyForJobModal', () => {
 
     await waitFor(() => expect(cvApi.getMySavedCvs).toHaveBeenCalledOnce())
     expect(screen.getByRole('radio', { name: /CV chính/ })).toBeChecked()
-    expect(screen.getByRole('link', { name: /Xem/ })).toHaveAttribute('href', '/cvs/cv_1/view')
+    expect(screen.getByRole('link', { name: /Xem/ })).toHaveAttribute('href', '/cv/cv_1/xem')
     const locationSelect = screen.getByRole('combobox', { name: 'Địa điểm làm việc mong muốn' })
     await user.click(locationSelect)
     await user.click(await screen.findByText('Bình Dương', { selector: '.ant-select-item-option-content' }))
@@ -124,7 +124,7 @@ describe('ApplyForJobModal', () => {
     const secondCv = await screen.findByRole('radio', { name: 'CV vận hành' })
     expect(screen.queryByText('Đã lưu')).not.toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: /Sửa CV/ })).toHaveLength(1)
-    expect(screen.getByRole('link', { name: /Sửa CV/ })).toHaveAttribute('href', '/cvs/cv_2/edit')
+    expect(screen.getByRole('link', { name: /Sửa CV/ })).toHaveAttribute('href', '/cv/cv_2/chinh-sua')
     await user.type(screen.getByRole('textbox', { name: 'Thư giới thiệu' }), 'Nội dung đang nhập')
     await user.click(secondCv)
 
@@ -160,7 +160,7 @@ describe('ApplyForJobModal', () => {
     expect(await screen.findByRole('radio', { name: /CV tải lên.pdf/ })).toBeChecked()
     expect(screen.queryByRole('link', { name: /Sửa CV/ })).not.toBeInTheDocument()
     expect(screen.queryByText('Có chỉnh sửa chưa lưu')).not.toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Xem' })).toHaveAttribute('href', '/cvs/cv_up/view')
+    expect(screen.getByRole('link', { name: 'Xem' })).toHaveAttribute('href', '/cv/cv_up/xem')
     expect(screen.getByRole('textbox', { name: 'Họ và tên ứng tuyển' })).toHaveValue('Lê Văn Hậu')
 
     // Thiếu số điện thoại: chưa nộp được dù đã đồng ý điều khoản.
@@ -203,7 +203,7 @@ describe('ApplyForJobModal', () => {
     expect(screen.getByText('CV ứng tuyển gần nhất')).toBeInTheDocument()
     expect(screen.getByRole('radio', { name: /CV thiếu/ })).toBeDisabled()
     expect(screen.getByText('Chưa đủ thông tin')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Sửa CV/ })).toHaveAttribute('href', '/cvs/cv_blank/edit')
+    expect(screen.getByRole('link', { name: /Sửa CV/ })).toHaveAttribute('href', '/cv/cv_blank/chinh-sua')
 
     await user.click(screen.getByRole('button', { name: 'Sử dụng thư giới thiệu gần nhất' }))
     expect(screen.getByRole('textbox', { name: 'Thư giới thiệu' })).toHaveValue('Thư lần trước')

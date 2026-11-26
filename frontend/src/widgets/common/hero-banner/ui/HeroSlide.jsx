@@ -17,6 +17,7 @@ function ImageSlide({ banner, eager }) {
         alt={banner.title}
         title={banner.title}
         loading={eager ? 'eager' : 'lazy'}
+        fetchPriority={eager ? 'high' : 'auto'}
         decoding="async"
         className="h-full w-full object-cover"
       />
@@ -49,6 +50,7 @@ function PromoSlide({ banner, eager }) {
           src={banner.image_url}
           alt=""
           loading={eager ? 'eager' : 'lazy'}
+          fetchPriority={eager ? 'high' : 'auto'}
           decoding="async"
           className="hidden h-full max-h-60 w-2/5 shrink-0 rounded-lg object-cover md:block"
         />
@@ -70,6 +72,7 @@ function CompanySlide({ banner, eager }) {
           src={company.cover_image_url}
           alt=""
           loading={eager ? 'eager' : 'lazy'}
+          fetchPriority={eager ? 'high' : 'auto'}
           decoding="async"
           className="absolute inset-0 h-full w-full object-cover"
         />

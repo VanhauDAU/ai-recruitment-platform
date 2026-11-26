@@ -44,7 +44,7 @@ const article = {
   updated_at: '2026-08-09T00:00:00Z',
 }
 
-function renderWidget(initialEntry = '/admin/app/knowledgebase') {
+function renderWidget(initialEntry = '/admin/app/tro-giup') {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   })
@@ -52,7 +52,7 @@ function renderWidget(initialEntry = '/admin/app/knowledgebase') {
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[initialEntry]}>
         <Routes>
-          <Route path="/admin/app/knowledgebase" element={<AdminKnowledgeBaseManagement />} />
+          <Route path="/admin/app/tro-giup" element={<AdminKnowledgeBaseManagement />} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -73,7 +73,7 @@ describe('AdminKnowledgeBaseManagement', () => {
   })
 
   it('shows aggregate KPIs returned by the server instead of current-page rows', async () => {
-    renderWidget('/admin/app/knowledgebase?q=dang+nhap&page=2')
+    renderWidget('/admin/app/tro-giup?q=dang+nhap&page=2')
 
     expect(await screen.findByText('Làm thế nào để đăng nhập?')).toBeInTheDocument()
     const metrics = screen.getByLabelText('Tổng quan nội dung')
@@ -88,7 +88,7 @@ describe('AdminKnowledgeBaseManagement', () => {
   })
 
   it('keeps category and editorial-status ordering controlled by the URL', async () => {
-    renderWidget('/admin/app/knowledgebase?page=3')
+    renderWidget('/admin/app/tro-giup?page=3')
     await screen.findByText('Làm thế nào để đăng nhập?')
 
     const header = (name) => screen.getByText(name, { selector: '.ws-sort' })
@@ -112,7 +112,7 @@ describe('AdminKnowledgeBaseManagement', () => {
   })
 
   it('filters published articles from the tile while keeping tile counts', async () => {
-    renderWidget('/admin/app/knowledgebase?q=dang+nhap')
+    renderWidget('/admin/app/tro-giup?q=dang+nhap')
     await screen.findByText('Làm thế nào để đăng nhập?')
 
     const tile = screen.getByText('Đã công khai', { selector: '.wt-tile__label' }).closest('button')

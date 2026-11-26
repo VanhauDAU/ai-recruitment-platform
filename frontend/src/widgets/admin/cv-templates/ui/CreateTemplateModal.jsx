@@ -19,7 +19,7 @@ export default function CreateTemplateModal({ open, onClose }) {
     onSuccess: (template) => {
       queryClient.invalidateQueries({ queryKey: ['admin-cv-templates'] })
       queryClient.setQueryData(['admin-cv-template', template.public_id], template)
-      navigate(adminPath(`/cv/templates/${template.public_id}`))
+      navigate(adminPath(`/cv/mau-cv/${template.public_id}`))
     },
     onError: (error) => message.error(getApiErrorMessage(error, 'Không tạo được mẫu.')),
   })

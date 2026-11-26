@@ -10,7 +10,7 @@ import { DEFAULT_SITE_SETTINGS, useSiteSetting, useSiteSettings } from '@/entiti
 // không có token -> màn gửi/gửi lại email xác thực cho tài khoản đang đăng nhập.
 export default function VerifyEmail({
   homePath = '/',
-  loginPath = '/login',
+  loginPath = '/dang-nhap',
   verificationPath = '/tai-khoan/xac-thuc-email',
   successActionLabel = 'Vào trang chủ',
   verifiedActionLabel = 'Vào trang chủ',

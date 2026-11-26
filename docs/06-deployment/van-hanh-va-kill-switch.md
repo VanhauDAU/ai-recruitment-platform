@@ -72,8 +72,8 @@ scripts/deploy/compose.sh exec backend python manage.py reconcile_account_status
 - `DJANGO_ADMIN_ENABLED`: production fail-fast nếu `True`; khi tắt, `/admin/`
   trả 404. Mọi quản trị đi qua `/admin/app`.
 - `ADMIN_FRONTEND_URL`, `ADMIN_INVITATION_PATH` (mặc định
-  `/admin/app/invitation`), `ADMIN_PASSWORD_RESET_PATH` (mặc định
-  `/admin/app/reset-password`) dựng link trong email mời và đặt lại mật khẩu.
+  `/admin/app/loi-moi`), `ADMIN_PASSWORD_RESET_PATH` (mặc định
+  `/admin/app/dat-lai-mat-khau`) dựng link trong email mời và đặt lại mật khẩu.
 - Worker phải nghe queue `auth-email` (lời mời, reset, thông báo bảo mật,
   `account_status_notice`).
 

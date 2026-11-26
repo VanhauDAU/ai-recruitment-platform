@@ -137,7 +137,7 @@ export default function BlogPostEditor({ publicId }) {
     mutationFn: createAdminBlogPost,
     onSuccess: (created) => {
       message.success('Đã tạo bản nháp bài viết.')
-      navigate(adminPath(`/blog/${created.public_id}/edit`), { replace: true })
+      navigate(adminPath(`/blog/${created.public_id}/chinh-sua`), { replace: true })
     },
     onError: () => message.error('Không thể tạo bản nháp. Hãy kiểm tra các trường bắt buộc.'),
   })

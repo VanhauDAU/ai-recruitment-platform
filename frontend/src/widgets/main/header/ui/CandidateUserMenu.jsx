@@ -1,6 +1,6 @@
 import {
   CaretRightOutlined, CheckCircleFilled, IdcardOutlined,
-  LogoutOutlined, MessageOutlined, WarningFilled,
+  LogoutOutlined, WarningFilled,
 } from '@ant-design/icons'
 import { Avatar, Badge, Dropdown } from 'antd'
 import { useEffect, useState } from 'react'
@@ -11,6 +11,7 @@ import { useSiteSettings } from '@/entities/system/site-settings'
 import { CandidateNotificationBell } from '@/features/main/account/view-candidate-notifications'
 import { m } from '@/shared/config/i18n'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
+import LineIcon from '@/shared/ui/icons/LineIcon'
 
 const SECTIONS = CANDIDATE_MENU
 
@@ -141,10 +142,10 @@ function ConnectShortcut() {
       to={connectPath('candidate')}
       aria-label={unread ? m.connect_open_inbox_unread({ count: unread }) : m.connect_open_inbox()}
       title={m.connect_title()}
-      className="flex text-xl !text-gray-500 transition-colors hover:!text-[var(--brand-primary)]"
+      className="flex h-10 w-10 items-center justify-center rounded-full text-[22px] !text-slate-700 transition hover:bg-slate-100 hover:!text-[var(--brand-primary)] active:scale-95"
     >
-      <Badge count={unread} size="small" overflowCount={99}>
-        <MessageOutlined className="text-xl text-gray-500" />
+      <Badge count={unread} size="small" overflowCount={99} offset={[2, -2]}>
+        <LineIcon name="messageCircleMore" strokeWidth={1.8} className="block text-[22px] text-current" />
       </Badge>
     </Link>
   )
@@ -162,7 +163,7 @@ export default function CandidateUserMenu({ user, logout, compactMobile = false 
   const connectEnabled = useSiteSettings().settings.connect_enabled === true
 
   return (
-    <div className="flex items-center gap-2 md:gap-4">
+    <div className="flex items-center gap-0.5 md:gap-3">
       <CandidateNotificationBell />
 
       {connectEnabled && <ConnectShortcut />}

@@ -125,7 +125,7 @@ function JobActions({
         <Tooltip title={m.employer_campaign_jobs_edit()}>
           <Link
             aria-label={m.employer_campaign_jobs_edit_aria({ title: job.title || m.employer_campaign_jobs_untitled_fallback() })}
-            to={employerAppPath(`/jobs/${job.public_id}/edit`)}
+            to={employerAppPath(`/tin-tuyen-dung/${job.public_id}/chinh-sua`)}
             className={actionClassName}
           >
             <EditOutlined />
@@ -146,7 +146,7 @@ function MetricValue({ value, available = true }) {
 function AddJobButton({ publicId }) {
   return (
     <Link
-      to={employerAppPath(`/jobs/new?campaign=${publicId}`)}
+      to={employerAppPath(`/tin-tuyen-dung/tao-moi?campaign=${publicId}`)}
       className="inline-flex h-10 shrink-0 items-center rounded-xl px-4 text-sm font-semibold !text-white shadow-md transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-primary)]/25 focus-visible:ring-offset-2"
       style={{ backgroundColor: 'var(--brand-primary)', color: '#fff' }}
     >
@@ -249,7 +249,7 @@ export default function CampaignJobsPanel({
           <div className="flex min-w-0 flex-wrap items-center gap-1.5">
             <span className="font-semibold">{m.employer_campaign_jobs_report_label()}</span>
             {selectedJob ? (
-              <Link to={employerAppPath(`/jobs/${selectedJob.public_id}`)} className="truncate font-semibold !text-[var(--brand-primary-hover)] hover:underline">
+              <Link to={employerAppPath(`/tin-tuyen-dung/${selectedJob.public_id}`)} className="truncate font-semibold !text-[var(--brand-primary-hover)] hover:underline">
                 {selectedJob.title || m.employer_campaign_untitled_draft()}
               </Link>
             ) : (
@@ -319,7 +319,7 @@ export default function CampaignJobsPanel({
           </p>
           {candidateDataAccess && (
             <Link
-              to={employerAppPath(`/applications?campaign=${publicId}`)}
+              to={employerAppPath(`/ho-so-ung-tuyen?campaign=${publicId}`)}
               className="mt-4 inline-flex h-9 items-center gap-2 rounded bg-[var(--brand-primary-soft)] px-3 text-sm font-semibold !text-[var(--brand-primary-hover)] hover:bg-[var(--brand-primary-soft)]"
             >
               <FileSearchOutlined /> {m.employer_campaign_jobs_check_cv()}
@@ -370,7 +370,7 @@ export default function CampaignJobsPanel({
               width: 250,
               render: (_, job) => (
                 <div className="min-w-48">
-                  <Link className="font-semibold !text-[var(--brand-primary-hover)] hover:underline" to={employerAppPath(`/jobs/${job.public_id}`)}>{job.title || m.employer_campaign_untitled_draft()}</Link>
+                  <Link className="font-semibold !text-[var(--brand-primary-hover)] hover:underline" to={employerAppPath(`/tin-tuyen-dung/${job.public_id}`)}>{job.title || m.employer_campaign_untitled_draft()}</Link>
                   <div className="mt-2 flex flex-wrap items-center gap-1.5"><JobStatus job={job} campaignPaused={campaign?.status === 'paused'} /><span className="text-xs text-slate-400">{m.employer_campaign_jobs_deadline({ date: formatDate(job.deadline) })}</span></div>
                 </div>
               ),
@@ -395,7 +395,7 @@ export default function CampaignJobsPanel({
               align: 'right',
               render: (_, job) => (
                 job.available && candidateDataAccess
-                  ? <Link to={employerAppPath(`/applications?job=${job.public_id}`)} className="font-semibold !text-[var(--brand-primary-hover)]">{formatNumber(job.applications)}</Link>
+                  ? <Link to={employerAppPath(`/ho-so-ung-tuyen?job=${job.public_id}`)} className="font-semibold !text-[var(--brand-primary-hover)]">{formatNumber(job.applications)}</Link>
                   : <span className={job.available ? 'font-semibold text-slate-700' : 'text-slate-400'}>{job.available ? formatNumber(job.applications) : '—'}</span>
               ),
             },

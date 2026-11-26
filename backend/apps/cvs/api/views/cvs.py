@@ -208,8 +208,10 @@ class CvThumbnailView(CandidateCvMixin, APIView):
         except (ValueError, CvVersion.DoesNotExist) as error:
             raise Http404 from error
         ready = current_thumbnail_ready(cv)
-        payload = CvSerializer(cv, context={'request': request}).data
+        thumbnail_url = (
+            CvSerializer(cv, context={'request': request}).data['thumbnail_url'] if ready else None
+        )
         return Response(
-            {'status': 'ready' if ready else 'pending', 'thumbnail_url': payload['thumbnail_url']},
+            {'status': 'ready' if ready else 'pending', 'thumbnail_url': thumbnail_url},
             status=status.HTTP_200_OK if ready else status.HTTP_202_ACCEPTED,
         )

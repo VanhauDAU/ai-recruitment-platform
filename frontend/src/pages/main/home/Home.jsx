@@ -1,8 +1,9 @@
 import { EnvironmentOutlined, FireOutlined, SearchOutlined } from '@ant-design/icons'
 import { Button, Input, Typography } from 'antd'
+import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { formatNumber, getJobCategories, getJobs } from '@/entities/job/job'
+import { formatNumber, getJobCategories, getJobStats, jobKeys } from '@/entities/job/job'
 import { getBanners, HOME_HERO_PLACEMENT } from '@/entities/content/banner'
 import { useSiteSettings } from '@/entities/system/site-settings'
 import BannerCarousel from '@/shared/ui/BannerCarousel'
@@ -69,17 +70,16 @@ export default function Home() {
   const [searchBy, setSearchBy] = useState('title')
   const [locationIds, setLocationIds] = useState([])
   const [categories, setCategories] = useState([])
-  const [jobCount, setJobCount] = useState(0)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [banners, setBanners] = useState([])
   const searchBoxRef = useRef(null)
   const recommendationSummary = useHomeRecommendationSummary()
+  // Dùng chung cache với MarketStats: không tải cả một trang tin chỉ để lấy tổng số.
+  const { data: stats } = useQuery({ queryKey: jobKeys.stats, queryFn: getJobStats, staleTime: 5 * 60_000 })
+  const jobCount = stats?.active_jobs ?? 0
 
   useEffect(() => {
     getJobCategories().then(setCategories).catch(() => {})
-    getJobs()
-      .then((data) => setJobCount(data.count ?? (data.results || data).length))
-      .catch(() => {})
     getBanners(HOME_HERO_PLACEMENT).then(setBanners).catch(() => {})
   }, [])
 
@@ -139,14 +139,15 @@ export default function Home() {
           <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.32)_1px,transparent_0)] bg-[length:30px_30px]" />
           <div className="absolute bottom-[-120px] right-[18%] h-72 w-72 rounded-full home-hero-glow blur-3xl" />
         </div>
-        <div className="relative z-10 max-w-6xl mx-auto px-4 pt-12 pb-16 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/12 px-4 py-1.5 text-sm font-semibold home-hero-muted shadow-sm backdrop-blur">
+        <div className="relative z-10 max-w-6xl mx-auto px-4 pt-6 sm:pt-12 pb-16 text-center">
+          {/* Điện thoại: bỏ huy hiệu số việc + câu phụ cho tiêu đề và ô tìm kiếm lên trên fold. */}
+          <div className="hidden sm:inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/12 px-4 py-1.5 text-sm font-semibold home-hero-muted shadow-sm backdrop-blur">
             <FireOutlined className="text-amber-200" />
             {formatNumber(jobCount)} việc làm đang tuyển hôm nay
           </div>
 
           <HeroTypingTitle siteName={siteName} />
-          <Typography.Paragraph className="home-hero-muted !text-base md:!text-lg !mb-0">
+          <Typography.Paragraph className="hidden sm:block home-hero-muted !text-base md:!text-lg !mb-0">
             Tiếp lợi thế, nối thành công cùng nền tảng nhân sự ứng dụng AI.
           </Typography.Paragraph>
 

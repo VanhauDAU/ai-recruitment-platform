@@ -182,7 +182,7 @@ export default function KnowledgeRevisionEditor({
       if (!article) message.success('Đã tạo bài viết mới.')
       else if (draftRevision) message.success('Đã lưu bản nháp.')
       else message.success('Đã tạo bản nháp mới. Bản đang công khai chưa thay đổi cho tới khi xuất bản.')
-      if (!article) navigate(adminPath(`/knowledgebase/${saved.public_id}`), { replace: true })
+      if (!article) navigate(adminPath(`/tro-giup/${saved.public_id}`), { replace: true })
     },
     onError: (error) => {
       if (isKnowledgeConflict(error)) setConflict(true)

@@ -341,7 +341,7 @@ def request_job_changes(*, job, user, reason_code, note, review_token, source_re
         dedupe_key=f'job-changes-requested:{job.public_id}:{fingerprint[:16]}',
         message=message,
         subject_public_id=job.public_id,
-        action_path=f'/tuyendung/app/jobs/{job.public_id}',
+        action_path=f'/tuyendung/app/tin-tuyen-dung/{job.public_id}',
     )
     return job
 

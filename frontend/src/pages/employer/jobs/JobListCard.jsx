@@ -115,7 +115,7 @@ export default function JobListCard({ job, candidateDataAccess = false, ...actio
         <Link
           className={`wt-title${job.title ? '' : ' is-untitled'}`}
           title={jobDisplayTitle(job)}
-          to={employerAppPath(`/jobs/${job.public_id}`)}
+          to={employerAppPath(`/tin-tuyen-dung/${job.public_id}`)}
         >
           {jobDisplayTitle(job)}
         </Link>
@@ -131,7 +131,7 @@ export default function JobListCard({ job, candidateDataAccess = false, ...actio
         <div className="wt-meta">
           <span><DollarOutlined aria-hidden />{formatSalary(job)}</span>
           {job.campaign_name && (
-            <Link className="ejl-row__campaign" to={employerAppPath(`/campaigns/${job.campaign}`)}>
+            <Link className="ejl-row__campaign" to={employerAppPath(`/chien-dich/${job.campaign}`)}>
               <ThunderboltOutlined aria-hidden />
               <span>{job.campaign_name}</span>
             </Link>

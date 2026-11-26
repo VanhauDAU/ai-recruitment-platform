@@ -2,7 +2,7 @@ from django.core.cache import cache
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from apps.sitecontent.models import SiteSetting
+from apps.sitecontent.models import Banner, SiteSetting
 
 SHELL = (
     '<!doctype html><html lang="en"><head><title data-seo-default>Old</title>'
@@ -26,6 +26,39 @@ class SiteSeoTests(TestCase):
         self.assertContains(sitemap, '/sitemaps/jobs.xml')
         self.assertContains(sitemap, '/sitemaps/companies.xml')
         self.assertContains(sitemap, '/sitemaps/blog.xml')
+
+    def test_home_preloads_first_hero_banner_image(self):
+        Banner.objects.create(
+            title='Sau', kind=Banner.Kind.IMAGE, image_url='site/banners/second.webp', order=2
+        )
+        Banner.objects.create(
+            title='Đầu', kind=Banner.Kind.IMAGE, image_url='site/banners/first.webp', order=1
+        )
+
+        response = self.client.get(reverse('seo-home'))
+
+        self.assertContains(response, 'rel="preload" as="image"', count=1)
+        self.assertContains(response, 'site/banners/first.webp" fetchpriority="high">')
+
+    def test_home_preloads_text_slide_image_only_on_wide_screens(self):
+        Banner.objects.create(
+            title='Chữ', kind=Banner.Kind.PROMO, image_url='site/banners/promo.webp'
+        )
+
+        response = self.client.get(reverse('seo-home'))
+
+        self.assertContains(
+            response, 'promo.webp" fetchpriority="high" media="(min-width: 768px)">'
+        )
+
+    def test_home_skips_preload_without_image_or_when_carousel_hidden(self):
+        Banner.objects.create(title='AI', kind=Banner.Kind.AI, image_url='site/banners/ai.webp')
+        self.assertNotContains(self.client.get(reverse('seo-home')), 'rel="preload"')
+
+        Banner.objects.update(kind=Banner.Kind.IMAGE)
+        SiteSetting.objects.update_or_create(key='home_show_banner', defaults={'value': False})
+        cache.clear()
+        self.assertNotContains(self.client.get(reverse('seo-home')), 'rel="preload"')
 
     def test_company_directory_has_indexable_metadata_and_static_sitemap_entry(self):
         response = self.client.get(reverse('seo-company-directory'))

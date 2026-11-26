@@ -65,7 +65,7 @@ export default function RecruitmentNeedForm({ onCompleted }) {
       onCompleted?.()
       await refreshSession()
       message.success(m.employer_account_need_saved())
-      navigate(employerAppPath('/employer-verify'), { replace: true })
+      navigate(employerAppPath('/xac-thuc-tai-khoan'), { replace: true })
     },
     onError: (error) => {
       const data = error.response?.data

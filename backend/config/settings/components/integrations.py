@@ -88,13 +88,15 @@ KNOWLEDGEBASE_SEARCH_INDEX_ENABLED = config(
     default=False,
     cast=bool,
 )
-ADMIN_INVITATION_PATH = config('ADMIN_INVITATION_PATH', default='/admin/app/invitation')
-ADMIN_PASSWORD_RESET_PATH = config('ADMIN_PASSWORD_RESET_PATH', default='/admin/app/reset-password')
+ADMIN_INVITATION_PATH = config('ADMIN_INVITATION_PATH', default='/admin/app/loi-moi')
+ADMIN_PASSWORD_RESET_PATH = config(
+    'ADMIN_PASSWORD_RESET_PATH', default='/admin/app/dat-lai-mat-khau'
+)
 EMPLOYER_EMAIL_VERIFICATION_PATH = config(
-    'EMPLOYER_EMAIL_VERIFICATION_PATH', default='/tuyendung/app/account/verify'
+    'EMPLOYER_EMAIL_VERIFICATION_PATH', default='/tuyendung/app/xac-thuc-email'
 )
 EMPLOYER_PASSWORD_RESET_PATH = config(
-    'EMPLOYER_PASSWORD_RESET_PATH', default='/tuyendung/app/reset-password'
+    'EMPLOYER_PASSWORD_RESET_PATH', default='/tuyendung/app/dat-lai-mat-khau'
 )
 EMPLOYER_TERMS_POLICY_VERSION = config('EMPLOYER_TERMS_POLICY_VERSION', default='2026-07-18')
 EMPLOYER_DPA_POLICY_VERSION = config('EMPLOYER_DPA_POLICY_VERSION', default='').strip()

@@ -13,14 +13,14 @@ import { m } from '@/shared/config/i18n'
 
 const LOGIN_URL_BY_ROLE = {
   employer: EMPLOYER_LOGIN_URL,
-  admin: adminPath('/login'),
+  admin: adminPath('/dang-nhap'),
 }
 const loginUrlFor = (role) => LOGIN_URL_BY_ROLE[role] || MAIN_LOGIN_URL
 
 /** Shared reset form; only the Admin route supplies the protected portal binding. */
 export default function PasswordResetForm({
   portal,
-  requestPath = '/forgot-password',
+  requestPath = '/quen-mat-khau',
   invalidActionLabel = m.account_reset_resend_link(),
 }) {
   const [params] = useSearchParams()

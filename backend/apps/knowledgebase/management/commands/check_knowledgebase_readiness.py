@@ -31,10 +31,10 @@ EXPECTED_CATEGORY_SLUGS = {
 # nội dung. Prefix động vẫn phải bắt đầu từ một route canonical đã biết.
 KNOWN_INTERNAL_PATHS = {
     '/chinh-sach-cookie',
-    '/forgot-password',
-    '/login',
+    '/quen-mat-khau',
+    '/dang-nhap',
     '/mau-cv',
-    '/sign-up',
+    '/dang-ky',
     '/tai-khoan/cai-dat-bao-mat',
     '/tai-khoan/cai-dat-goi-y-viec-lam',
     '/tai-khoan/cv-cua-toi',

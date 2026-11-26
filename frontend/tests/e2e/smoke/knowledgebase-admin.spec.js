@@ -41,7 +41,7 @@ test('knowledgebase admin: explicit save, publish, edit and discard a draft', { 
       seo_title: '',
       seo_description: '',
       change_summary: '',
-      source_reference: '/forgot-password',
+      source_reference: '/quen-mat-khau',
       created_by: { public_id: 'usr_editor', name: 'Biên tập viên' },
       created_at: '2026-08-05T07:00:00Z',
       updated_at: '2026-08-05T07:00:00Z',
@@ -133,16 +133,16 @@ test('knowledgebase admin: explicit save, publish, edit and discard a draft', { 
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) })
   })
 
-  await page.goto('/admin/app/knowledgebase')
+  await page.goto('/admin/app/tro-giup')
   await page.waitForTimeout(300)
   expect(pageErrors).toEqual([])
-  expect(page.url()).toContain('/admin/app/knowledgebase')
+  expect(page.url()).toContain('/admin/app/tro-giup')
   await expect(page.getByRole('heading', { name: 'FAQ & hướng dẫn' })).toBeVisible()
   await expect(page.getByText('Làm thế nào để đặt lại mật khẩu?', { exact: true })).toBeVisible()
   await expect(page.locator('html')).toHaveJSProperty('scrollWidth', await page.locator('html').evaluate((element) => element.clientWidth))
 
   await page.getByRole('button', { name: 'Làm thế nào để đặt lại mật khẩu?', exact: true }).click()
-  await expect(page).toHaveURL('/admin/app/knowledgebase/kba_reset')
+  await expect(page).toHaveURL('/admin/app/tro-giup/kba_reset')
   await expect(page.getByText('Chưa xuất bản', { exact: true })).toBeVisible()
   const publishButton = page.getByRole('button', { name: /Xuất bản r1/ })
   await expect(publishButton).toBeVisible()

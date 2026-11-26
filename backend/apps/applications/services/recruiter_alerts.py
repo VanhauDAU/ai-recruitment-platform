@@ -24,12 +24,12 @@ from common.i18n import recipient_language
 from ..models import Application
 
 logger = logging.getLogger(__name__)
-EMPLOYER_SETTINGS_PATH = '/tuyendung/app/notifications'
+EMPLOYER_SETTINGS_PATH = '/tuyendung/app/thong-bao'
 
 
 def _workspace_path(application):
     return (
-        f'/tuyendung/app/applications?job={application.job.public_id}'
+        f'/tuyendung/app/ho-so-ung-tuyen?job={application.job.public_id}'
         f'&application={application.public_id}'
     )
 
@@ -125,8 +125,8 @@ def _send_new_application_email(application):
         'applied_at_text': timezone.localtime(application.applied_at).strftime('%H:%M %d/%m/%Y'),
         'application_count': job.application_count,
         'action_url': f'{base}{_workspace_path(application)}',
-        'home_url': f'{base}/tuyendung/app/dashboard',
-        'header_cta_url': f'{base}/tuyendung/app/applications',
+        'home_url': f'{base}/tuyendung/app/tong-quan',
+        'header_cta_url': f'{base}/tuyendung/app/ho-so-ung-tuyen',
         'header_cta_label': _('Quản lý CV'),
         'email_settings_url': f'{base}{EMPLOYER_SETTINGS_PATH}',
     }
@@ -172,7 +172,7 @@ def send_interview_decision_email(job_id, application_ids):
                 'job_title': job.title,
                 'company_name': job.company.company_name,
                 'count': count,
-                'action_url': f'{base}/tuyendung/app/applications?job={job.public_id}',
+                'action_url': f'{base}/tuyendung/app/ho-so-ung-tuyen?job={job.public_id}',
                 'email_settings_url': f'{base}{EMPLOYER_SETTINGS_PATH}',
             }
             send_html_email(

@@ -198,7 +198,7 @@ export default function CampaignList() {
             </div>
           ) : (
             <MascotEmpty className="py-12" description={m.employer_campaign_list_empty()}>
-              <Link className={primaryLinkClass} to={employerAppPath('/campaigns/new')}>
+              <Link className={primaryLinkClass} to={employerAppPath('/chien-dich/tao-moi')}>
                 <PlusOutlined /> {m.employer_campaign_list_create_first()}
               </Link>
             </MascotEmpty>

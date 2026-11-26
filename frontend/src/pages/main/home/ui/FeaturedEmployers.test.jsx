@@ -99,7 +99,7 @@ describe('FeaturedEmployers', () => {
     await user.click(within(panel).getByRole('button', { name: /Công ty 2/ }))
     expect(navigate).toHaveBeenLastCalledWith('/cong-ty/tim-kiem?keyword=C%C3%B4ng+ty+2')
 
-    expect(within(panel).getByRole('link', { name: 'Xem tất cả' }))
+    expect(within(panel).getByRole('link', { name: 'Xem tất cả công ty' }))
       .toHaveAttribute('href', COMPANY_DIRECTORY_PATH)
     expect(navigate).toHaveBeenCalledTimes(2)
 

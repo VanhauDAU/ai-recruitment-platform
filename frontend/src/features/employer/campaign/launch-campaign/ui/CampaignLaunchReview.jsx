@@ -115,7 +115,7 @@ export default function CampaignLaunchReview({ campaign, overview, onLaunched, o
         <div key={job.public_id} className="cl-callout cl-callout--warn">
           <strong>{job.title || job.public_id}</strong>
           <span>{job.problems?.join(' ') || getApiErrorMessage({ response: { data: job.error } }, '')}</span>
-          <Link to={employerAppPath(`/jobs/${job.public_id}/edit`)} className="cl-fix-link">{m.employer_campaign_launch_edit_job()}</Link>
+          <Link to={employerAppPath(`/tin-tuyen-dung/${job.public_id}/chinh-sua`)} className="cl-fix-link">{m.employer_campaign_launch_edit_job()}</Link>
         </div>
       ))}
 

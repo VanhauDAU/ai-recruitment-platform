@@ -18,10 +18,11 @@ import { resolveAnnouncementQueue } from '../model/priority-resolver'
 import { buildSystemAnnouncements } from '../model/system-announcements'
 import { buildAnnouncementStripVisual } from '../model/strip-visual-style'
 import { useAnnouncementTracking } from '../model/use-announcement-tracking'
-import { useAnnouncementFeed } from '../model/use-announcement-feed'
+import { ANNOUNCEMENT_POLL_MS, useAnnouncementFeed } from '../model/use-announcement-feed'
 import { useReducedMotion } from '../model/use-reduced-motion'
 import AnnouncementCta from './AnnouncementCta'
 import AnnouncementIcon from './AnnouncementIcon'
+import AnnouncementMessage from './AnnouncementMessage'
 import AnnouncementStripBoundary from './AnnouncementStripBoundary'
 import './announcement-strip.css'
 
@@ -45,11 +46,12 @@ function AnnouncementStripRuntime({
   const [dismissals, setDismissals] = useState({})
   const [dismissalClock, setDismissalClock] = useState(Date.now())
   const [manualAnnouncement, setManualAnnouncement] = useState('')
+  const [marqueeSeconds, setMarqueeSeconds] = useState(0)
   const reducedMotion = useReducedMotion()
   const { consent, status: consentStatus } = useConsent()
   const analyticsEnabled = consentStatus === 'ready' && consent.analytics
   const audienceKey = announcementAudienceKey(user)
-  const { feed, refetchFeed } = useAnnouncementFeed({
+  const { feed, refetchFeed, refetchFeedIfStale } = useAnnouncementFeed({
     audienceKey,
     locale,
     path,
@@ -96,6 +98,8 @@ function AnnouncementStripRuntime({
   const visibleQueue = queue.filter((item) => (dismissals[item.id] || 0) <= dismissalClock)
   const active = visibleQueue[activeIndex % Math.max(visibleQueue.length, 1)]
   const paused = hovered || focused || pageHidden || reducedMotion
+  // Câu dài đang chạy chữ: giữ thông báo đến khi chạy hết rồi mới chuyển.
+  const displaySeconds = Math.max(active?.displaySeconds || 0, marqueeSeconds)
   const { persistDismissal, trackCta } = useAnnouncementTracking({
     active,
     analyticsEnabled,
@@ -126,10 +130,10 @@ function AnnouncementStripRuntime({
         setManualAnnouncement('')
         setActiveIndex((current) => (current + 1) % visibleQueue.length)
       },
-      active.displaySeconds * 1000,
+      displaySeconds * 1000,
     )
     return () => window.clearInterval(timer)
-  }, [active, paused, visibleQueue.length])
+  }, [active, displaySeconds, paused, visibleQueue.length])
 
   useEffect(() => {
     const transitionAt = Date.parse(feed?.nextTransitionAt)
@@ -146,16 +150,16 @@ function AnnouncementStripRuntime({
       const hidden = document.visibilityState === 'hidden'
       setPageHidden(hidden)
       if (hidden) flushAnnouncementEvents()
-      if (!hidden) refetchFeed()
+      if (!hidden) refetchFeedIfStale()
     }
     document.addEventListener('visibilitychange', update)
     return () => document.removeEventListener('visibilitychange', update)
-  }, [refetchFeed])
+  }, [refetchFeedIfStale])
 
   useEffect(() => {
     const interval = window.setInterval(() => {
       if (document.visibilityState === 'visible') refetchFeed()
-    }, 60_000)
+    }, ANNOUNCEMENT_POLL_MS)
     return () => window.clearInterval(interval)
   }, [refetchFeed])
 
@@ -225,7 +229,7 @@ function AnnouncementStripRuntime({
       ].filter(Boolean).join(' ')}
       style={{
         ...visual.style,
-        '--announcement-motion-period': `${active.displaySeconds}s`,
+        '--announcement-motion-period': `${displaySeconds}s`,
         '--announcement-motion-play-state': paused ? 'paused' : 'running',
         '--announcement-strip-sticky-top': stickyOffset,
       }}
@@ -256,7 +260,7 @@ function AnnouncementStripRuntime({
             <AnnouncementIcon name={active.icon} />
           </span>
           {active.badge && <span className="announcement-strip__badge">{active.badge}</span>}
-          <span className="announcement-strip__message">{active.message}</span>
+          <AnnouncementMessage text={active.message} onDuration={setMarqueeSeconds} />
           <AnnouncementCta
             cta={active.cta}
             onActivate={trackCta}

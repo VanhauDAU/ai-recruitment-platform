@@ -40,8 +40,8 @@ from ..domain.flash_badge import (
 )
 from ..models import Application, ApplicationStatusHistory, RecruiterResponsiveness
 
-APPLICATIONS_PATH = '/tuyendung/app/applications'
-DASHBOARD_PATH = '/tuyendung/app/dashboard'
+APPLICATIONS_PATH = '/tuyendung/app/ho-so-ung-tuyen'
+DASHBOARD_PATH = '/tuyendung/app/tong-quan'
 
 SNAPSHOT_FIELDS = (
     'matured_count',
