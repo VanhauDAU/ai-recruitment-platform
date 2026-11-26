@@ -70,20 +70,16 @@ function PlatformStatistics({ stats }) {
         <p className="mt-1 text-sm text-slate-500">Những kết nối đang hoạt động trên toàn nền tảng</p>
       </div>
 
-      <div className="relative mt-5 grid divide-y divide-[var(--brand-primary)]/15 sm:grid-cols-3 sm:divide-x sm:divide-y-0 lg:mt-0">
+      {/* Điện thoại: ba cột icon / số / nhãn; từ sm: icon cạnh số (home-showcase.css). */}
+      <div className="platform-stats relative">
         {items.map((item) => (
-          <div key={item.key} className="flex min-w-0 items-center justify-center gap-3 py-3 sm:px-4 sm:py-0">
-            <span
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg text-white shadow-sm ${item.iconClassName}`}
-              aria-hidden="true"
-            >
+          <div key={item.key} className="platform-stats__item">
+            <span className={`platform-stats__icon ${item.iconClassName}`} aria-hidden="true">
               {item.icon}
             </span>
-            <span className="min-w-0 text-left">
-              <strong className="block text-xl font-extrabold leading-tight tabular-nums text-slate-800">
-                {formatNumber(item.value)}
-              </strong>
-              <span className="mt-0.5 block text-sm text-slate-600">{item.label}</span>
+            <span className="platform-stats__text">
+              <strong className="platform-stats__value">{formatNumber(item.value)}</strong>
+              <span className="platform-stats__label">{item.label}</span>
             </span>
           </div>
         ))}

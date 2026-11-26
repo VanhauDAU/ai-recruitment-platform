@@ -1,5 +1,5 @@
 import {
-  FileAddOutlined, FileSearchOutlined, HomeFilled, HomeOutlined, ReadFilled, ReadOutlined, UserOutlined,
+  FileSearchOutlined, HomeFilled, HomeOutlined, ReadFilled, ReadOutlined, UserOutlined,
 } from '@ant-design/icons'
 import { Avatar, Button } from 'antd'
 import { useEffect, useState } from 'react'
@@ -29,11 +29,11 @@ const tabClass = (active) => `flex h-full flex-col items-center justify-center g
 
 function FeaturedTab({ tab, active }) {
   return (
-    <Link to={tab.to} aria-current={active ? 'page' : undefined} className={`${tabClass(active)} justify-end pb-[13px]`}>
-      <span aria-hidden className="absolute -top-[18px] left-1/2 flex h-14 w-14 -translate-x-1/2 items-center justify-center rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-primary-hover)] text-2xl text-white shadow-lg shadow-[var(--brand-primary)]/40 transition active:scale-95">
-        <FileAddOutlined />
+    // Nút nổi chỉ có chữ "CV"; tên đầy đủ ("Tạo CV") cho trình đọc màn hình qua aria-label.
+    <Link to={tab.to} aria-label={tab.label} aria-current={active ? 'page' : undefined} className={tabClass(active)}>
+      <span aria-hidden className="absolute -top-[18px] left-1/2 flex h-14 w-14 -translate-x-1/2 items-center justify-center rounded-full border-4 border-white bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-primary-hover)] text-xl font-extrabold tracking-tight text-white shadow-lg shadow-[var(--brand-primary)]/40 transition active:scale-95">
+        CV
       </span>
-      {tab.label}
     </Link>
   )
 }
