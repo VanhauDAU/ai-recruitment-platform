@@ -8,6 +8,20 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-26
 
+#### Fixed — Bớt email Sentry nhiễu và request API thừa
+
+- CSP: hash script giao diện sáng/tối trong `index.html` đã cũ nên mọi lượt tải trang
+  gửi một báo cáo "Blocked 'script' from 'inline:'" lên Sentry; cập nhật hash, thêm test
+  `src/app/csp-inline-script-hash.test.js` so hash với `index.html`. Cho phép beacon
+  Cloudflare Web Analytics (`static.cloudflareinsights.com`) và thêm `'report-sample'`.
+- Sentry SDK bỏ qua lỗi `zaloJSV2` do trình duyệt trong app Zalo tự chèn script.
+- Tab cũ sau deploy gặp lỗi tải chunk (`vite:preloadError`) thì tự tải lại, tối đa một
+  lần mỗi phút (script inline trong `index.html`, không tốn ngân sách JS khởi tạo).
+- Script giao diện tối trong `index.html` nhận path đăng nhập mới (`/dang-nhap`,
+  `/dang-ky`…, gồm cổng `/tuyendung`) sau khi chuẩn hoá path.
+- Trang chủ lấy tổng số việc làm từ `/public/jobs/stats/` (dùng chung cache với khối
+  thống kê) thay vì tải cả một trang tin; thông báo hệ thống cache 5 phút theo trang.
+
 #### Changed — Path URL frontend thống nhất tiếng Việt không dấu
 
 - Cổng ứng viên: `/dang-nhap`, `/dang-ky`, `/quen-mat-khau`, `/dat-lai-mat-khau`,

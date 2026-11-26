@@ -28,6 +28,10 @@ export function scrubEvent(event) {
   return event
 }
 
+// Lỗi từ script mà trình duyệt trong app (Zalo, Facebook…) tự chèn vào trang, không
+// phải mã của ProCV: gửi lên chỉ sinh email nhiễu.
+export const IGNORED_ERRORS = [/zaloJSV2/]
+
 // Lúc đang chờ mạng trình duyệt cũng "rảnh", nên đợi `load` rồi thêm vài giây để
 // SDK không tranh băng thông với nội dung đầu trang.
 const SDK_DELAY_MS = 4000
@@ -59,6 +63,7 @@ export function initErrorReporting({
           dsn,
           environment,
           sendDefaultPii: false,
+          ignoreErrors: IGNORED_ERRORS,
           beforeSend: scrubEvent,
           beforeBreadcrumb: (breadcrumb) => (breadcrumb.category === 'console' ? null : breadcrumb),
         })
