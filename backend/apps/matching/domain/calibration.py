@@ -1,8 +1,9 @@
 """Mốc quy đổi cosine thành điểm 0–100, theo từng phiên bản mô hình.
 
 Cosine của E5 dồn trong một khoảng hẹp, nên mỗi phép so được hiệu chuẩn tuyến tính
-giữa hai mốc: `low` (trung vị cặp khác ngành) → 0 điểm, `high` (phân vị 90 cặp khớp
-mạnh) → 100 điểm. Mốc đo bằng `ml/scripts/calibrate.py`.
+giữa hai mốc: `low` → 0 điểm, `high` → 100 điểm. Mô hình gốc đo theo nhãn yếu
+(`ml/scripts/calibrate.py`: trung vị cặp khác ngành, phân vị 90 cặp khớp mạnh); mô hình
+fine-tune đo trên tập hiệu chỉnh có nhãn (`ml/scripts/calibrate_scale.py`).
 """
 
 from dataclasses import dataclass

@@ -8,6 +8,18 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-27
 
+#### Changed — Dọn `ml/` sau đợt huấn luyện
+
+- `ml/scripts/run_training.sh` dựng lại đúng cấu hình đang dùng: thêm mini-batch 2, nội suy
+  `wise-v1`, hiệu chỉnh trên tập hiệu chỉnh, đo cross-encoder và đủ cờ của `evaluate.py`.
+- `ml/reports/train_pairs.md` sinh lại từ tập của `ft-v1` (5.936 bộ ba, khớp mã băm trong
+  `model_card.json`) thay vì tập thử `ft-v2`. Ghim `pandas`, `scipy` trong `ml/requirements.txt`.
+- Phiếu đọc kiểm lượt kế tiếp `ml/labeling/train_cv_review.md` thôi commit (sinh lại mỗi lần
+  chạy `quality_gate.py`); sửa chú thích lỗi thời trong `ml/README.md`, `calibrate.py`,
+  `domain/calibration.py`, `matching_evaluate`.
+- Settings test ghi đè `MATCHING_RERANKER_BACKEND = 'none'`: test không còn hỏng khi
+  `backend/.env` ở máy đã bật cross-encoder.
+
 #### Changed — Production dùng hai mô hình đối sánh đã huấn luyện
 
 - `docker-compose.prod.yml`: `MATCHING_MODEL_PATH`/`MATCHING_MODEL_VERSION` chuyển sang
