@@ -69,7 +69,7 @@ describe('AnalyzeJobFit', () => {
     const analyze = await screen.findByRole('button', { name: 'Xem độ phù hợp' })
     await waitFor(() => expect(analyze).toBeEnabled())
     fireEvent.click(analyze)
-    expect(await screen.findByText('Xây dựng trang thanh toán bằng ReactJS.', {}, { timeout: 3000 })).toBeInTheDocument()
+    expect(await screen.findByRole('img', { name: '72 điểm, mức Phù hợp' }, { timeout: 3000 })).toBeInTheDocument()
     expect(api.requestJobFit).toHaveBeenCalledWith({ jobSlug: 'frontend-jb_1', cvPublicId: 'cv_1' })
   })
 
