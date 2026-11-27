@@ -308,7 +308,12 @@ test('public smoke: featured companies keep platform stats, the company page lin
 
   await page.goto('/')
 
+  // Khối dưới màn đầu chỉ dựng khi cuộn tới (HomeSection): cuộn dần như người dùng.
   const featuredBlock = page.getByTestId('featured-employers-block')
+  await expect(async () => {
+    await page.mouse.wheel(0, 900)
+    await expect(featuredBlock).toBeAttached({ timeout: 300 })
+  }).toPass()
   await expect(featuredBlock.getByRole('heading', { name: 'Website của chúng tôi có' })).toBeVisible()
   await expect(featuredBlock.getByText('Ứng viên', { exact: true })).toBeVisible()
   await expect(featuredBlock.getByText('Việc làm', { exact: true })).toBeVisible()

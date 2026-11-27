@@ -59,7 +59,7 @@ export default function FeaturedIndustries({ industries, navigate }) {
           isDragging={carousel.isDragging}
         >
           {(group) => (
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <div data-reveal-stagger className="grid grid-cols-2 gap-4 lg:grid-cols-4">
               {group.map((category) => {
                 const logoUrl = categoryLogoUrlFor(category)
                 return (

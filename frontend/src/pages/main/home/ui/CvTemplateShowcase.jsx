@@ -67,8 +67,8 @@ export default function CvTemplateShowcase() {
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-white via-[var(--brand-primary)]/70 to-white py-14">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-24 top-10 h-72 w-72 rounded-full bg-[var(--brand-primary)]/10 blur-3xl" />
-        <div className="absolute -right-16 bottom-0 h-80 w-80 rounded-full bg-amber-200/25 blur-3xl" />
+        <div className="home-parallax absolute -left-24 top-10 h-72 w-72 rounded-full bg-[var(--brand-primary)]/10 blur-3xl" />
+        <div className="home-parallax home-parallax--reverse absolute -right-16 bottom-0 h-80 w-80 rounded-full bg-amber-200/25 blur-3xl" />
         <div className="absolute inset-0 opacity-[0.35] bg-[radial-gradient(circle_at_1px_1px,rgba(4,107,50,0.10)_1px,transparent_0)] bg-[length:26px_26px]" />
       </div>
 
@@ -86,7 +86,7 @@ export default function CvTemplateShowcase() {
             Chọn mẫu, đổi màu, điền nội dung — một chiếc CV chuyên nghiệp chỉ mất vài phút. Hoàn toàn miễn phí.
           </p>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <div data-reveal-stagger className="mt-6 grid gap-3 sm:grid-cols-2">
             {FEATURES.map((feature) => (
               <div key={feature.label} className="flex items-start gap-3 rounded-xl border border-slate-100 bg-white/85 p-3 shadow-sm backdrop-blur transition-shadow hover:shadow-md">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--brand-primary)]/10 text-base text-[var(--brand-primary)]">{feature.icon}</span>
@@ -110,7 +110,7 @@ export default function CvTemplateShowcase() {
         </div>
 
         {/* ── Cột phải: fan 3 mẫu CV thật ── */}
-        <div className="flex snap-x snap-mandatory items-center gap-4 overflow-x-auto pb-4 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:justify-center lg:gap-0 lg:overflow-visible lg:pb-0">
+        <div data-reveal-stagger className="flex snap-x snap-mandatory items-center gap-4 overflow-x-auto pb-4 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:justify-center lg:gap-0 lg:overflow-visible lg:pb-0">
           {templates.length > 0
             ? templates.map((template, index) => (
                 <ShowcaseCard key={template.public_id || template.slug} template={template} fanClass={FAN_LAYOUTS[templates.length]?.[index] || ''} />
