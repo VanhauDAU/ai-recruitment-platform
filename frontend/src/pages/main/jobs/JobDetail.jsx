@@ -117,15 +117,6 @@ export default function JobDetail() {
     setReportOpen(true)
   }
 
-  async function handleShare() {
-    try {
-      await navigator.clipboard.writeText(window.location.href)
-      message.success('Đã sao chép liên kết việc làm.')
-    } catch {
-      message.info('Bạn có thể sao chép liên kết trên thanh địa chỉ để chia sẻ.')
-    }
-  }
-
   const activeTab = tabState.jobId === job?.public_id ? tabState.key : 'info'
   const setActiveTab = (key) => setTabState({ jobId: job?.public_id, key })
 
@@ -176,7 +167,6 @@ export default function JobDetail() {
                 applicationStatus={applicationStatus}
                 onApply={handleApply}
                 onSave={handleSave}
-                onShare={handleShare}
                 savePending={savePending}
               />
               {isAcceptingApplications(job) && (
