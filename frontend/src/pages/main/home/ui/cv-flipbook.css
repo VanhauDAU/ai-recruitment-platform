@@ -1,5 +1,6 @@
 /* Cuốn sách mẫu CV trang chủ (CvFlipBook, chunk lazy của trang chủ).
-   - data-step="2" (từ 640px): mở hai trang, gáy ở giữa; data-step="1": một trang, gáy trái.
+   - data-step="2" (từ 640px): mở hai trang, gáy ở giữa. data-step="1" (điện thoại): vẫn mở
+     hai trang nhưng gáy lệch trái, trang đang đọc chiếm 78%, trang trái chỉ ló một dải.
    - Lá sách (.cv-book__leaf) chỉ dựng khi đang lật: mặt trước là trang đang lật, mặt sau
      là trang sẽ lộ ra; xoay quanh gáy bằng rotateY trong không gian 3D của .cv-book.
    - Cỡ chữ trong trang theo bề rộng trang (container query, đơn vị cqw).
@@ -26,10 +27,27 @@
 }
 
 .cv-book[data-step='1'] {
-  aspect-ratio: 3 / 4;
-  margin-inline: auto;
+  /* Trang phải rộng 78% với tỉ lệ 3:4 → khung sách 1 : 1,04. */
+  aspect-ratio: 25 / 26;
   transform: rotateX(5deg);
-  width: min(100%, 300px);
+}
+
+/* Điện thoại: cắt phần trang trái nằm ngoài khung; clip theo trục ngang để bóng dưới sách
+   không bị cắt và không làm dẹt không gian 3D như overflow: hidden. */
+.cv-book-stage:has(.cv-book[data-step='1']) {
+  overflow-x: clip;
+  width: min(100%, 360px);
+}
+
+.cv-book[data-step='1'] .cv-book__page--left {
+  left: -56%;
+  width: 78%;
+}
+
+.cv-book[data-step='1'] .cv-book__page--right {
+  left: 22%;
+  right: auto;
+  width: 78%;
 }
 
 /* Bóng của cuốn sách in xuống "mặt bàn". */
@@ -83,11 +101,6 @@
     6px 2px 0 var(--paper),
     7px 2px 0 var(--paper-edge),
     0 22px 34px -16px rgb(2 44 34 / 0.4);
-}
-
-.cv-book[data-step='1'] .cv-book__page--right {
-  border-radius: 3px 8px 8px 3px;
-  width: 100%;
 }
 
 /* Gáy sách: trang tối dần về phía nếp gấp. */
@@ -250,17 +263,12 @@
   background: var(--brand-primary-hover) !important;
 }
 
-/* Giấy có dòng kẻ mờ: trang trắng cuối sách và mặt sau lá sách trên điện thoại. */
-.cv-book__sheet--blank,
-.cv-book__sheet--back {
+/* Giấy có dòng kẻ mờ cho trang trắng cuối sách. */
+.cv-book__sheet--blank {
   background:
     repeating-linear-gradient(to bottom, transparent 0 7cqw, #efe9dc 7cqw calc(7cqw + 1px)),
     var(--paper);
   background-origin: content-box;
-}
-
-.cv-book__sheet--back {
-  transform: scaleX(-1);
 }
 
 /* ── Lá sách đang lật ── */
@@ -284,27 +292,15 @@
   transform-origin: right center;
 }
 
-.cv-book[data-step='1'] .cv-book__leaf {
-  left: auto;
-  right: 0;
-  transform-origin: left center;
-  width: 100%;
-}
-
 .cv-book[data-step='1'] .cv-book__leaf--next {
-  animation-name: cv-book-turn-single;
+  left: 22%;
+  right: auto;
+  width: 78%;
 }
 
 .cv-book[data-step='1'] .cv-book__leaf--prev {
-  animation: cv-book-turn-single var(--turn-ms) var(--book-ease) both reverse;
-}
-
-.cv-book[data-step='1'] .cv-book__face {
-  animation: cv-book-fade-late var(--turn-ms) var(--book-ease) both;
-}
-
-.cv-book[data-step='1'] .cv-book__leaf--prev .cv-book__face {
-  animation-direction: reverse;
+  left: -56%;
+  width: 78%;
 }
 
 .cv-book__face {
@@ -344,8 +340,7 @@
 
 /* Bóng lá sách đổ lên trang bên dưới. */
 .cv-book[data-turning='next'] .cv-book__page--right::before,
-.cv-book[data-turning='prev'][data-step='2'] .cv-book__page--left::before,
-.cv-book[data-turning='prev'][data-step='1'] .cv-book__page--right::before {
+.cv-book[data-turning='prev'] .cv-book__page--left::before {
   animation: cv-book-cast var(--turn-ms) var(--book-ease) both;
   content: '';
   inset: 0;
@@ -354,12 +349,11 @@
   z-index: 2;
 }
 
-.cv-book[data-turning='next'] .cv-book__page--right::before,
-.cv-book[data-step='1'] .cv-book__page--right::before {
+.cv-book[data-turning='next'] .cv-book__page--right::before {
   background: linear-gradient(to right, rgb(0 0 0 / 0.28), transparent 65%);
 }
 
-.cv-book[data-step='2'] .cv-book__page--left::before {
+.cv-book[data-turning='prev'] .cv-book__page--left::before {
   background: linear-gradient(to left, rgb(0 0 0 / 0.28), transparent 65%);
 }
 
@@ -373,20 +367,6 @@
   from { transform: translateZ(1px) rotateY(0deg); }
   50% { transform: translateZ(14px) rotateY(90deg); }
   to { transform: translateZ(1px) rotateY(180deg); }
-}
-
-/* Một trang: lá sách lật ra ngoài gáy trái rồi tan đi để lộ trang kế. Độ mờ đặt ở hai
-   mặt giấy, không ở lá sách: opacity trên phần tử preserve-3d làm dẹt không gian 3D và
-   mặt trước lộ ngược qua mặt sau. */
-@keyframes cv-book-turn-single {
-  0% { transform: translateZ(1px) rotateY(0deg); }
-  50% { transform: translateZ(18px) rotateY(-90deg); }
-  100% { transform: translateZ(1px) rotateY(-170deg); }
-}
-
-@keyframes cv-book-fade-late {
-  0%, 78% { opacity: 1; }
-  100% { opacity: 0; }
 }
 
 @keyframes cv-book-shade-rise {
@@ -507,8 +487,9 @@
   white-space: nowrap;
 }
 
+/* Điện thoại: lật bằng vuốt và tự lật, không cần thanh điều khiển. */
 @media (max-width: 639.98px) {
-  .cv-book__count {
-    min-width: 52px;
+  .cv-book__bar {
+    display: none;
   }
 }
