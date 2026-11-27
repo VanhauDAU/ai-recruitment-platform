@@ -1,6 +1,5 @@
 /* Cuốn sách mẫu CV trang chủ (CvFlipBook, chunk lazy của trang chủ).
-   - data-step="2" (từ 640px): mở hai trang, gáy ở giữa. data-step="1" (điện thoại): vẫn mở
-     hai trang nhưng gáy lệch trái, trang đang đọc chiếm 78%, trang trái chỉ ló một dải.
+   - Mọi cỡ màn hình: sách mở hai trang, gáy ở giữa, thu nhỏ theo bề ngang khung.
    - Lá sách (.cv-book__leaf) chỉ dựng khi đang lật: mặt trước là trang đang lật, mặt sau
      là trang sẽ lộ ra; xoay quanh gáy bằng rotateY trong không gian 3D của .cv-book.
    - Cỡ chữ trong trang theo bề rộng trang (container query, đơn vị cqw).
@@ -26,28 +25,11 @@
   user-select: none;
 }
 
-.cv-book[data-step='1'] {
-  /* Trang phải rộng 78% với tỉ lệ 3:4 → khung sách 1 : 1,04. */
-  aspect-ratio: 25 / 26;
-  transform: rotateX(5deg);
-}
-
-/* Điện thoại: cắt phần trang trái nằm ngoài khung; clip theo trục ngang để bóng dưới sách
-   không bị cắt và không làm dẹt không gian 3D như overflow: hidden. */
-.cv-book-stage:has(.cv-book[data-step='1']) {
-  overflow-x: clip;
-  width: min(100%, 360px);
-}
-
-.cv-book[data-step='1'] .cv-book__page--left {
-  left: -56%;
-  width: 78%;
-}
-
-.cv-book[data-step='1'] .cv-book__page--right {
-  left: 22%;
-  right: auto;
-  width: 78%;
+/* Điện thoại: sách nhỏ hơn nên nghiêng ít hơn để trang không bị bóp ở mép xa. */
+@media (max-width: 639.98px) {
+  .cv-book {
+    transform: rotateX(6deg);
+  }
 }
 
 /* Bóng của cuốn sách in xuống "mặt bàn". */
@@ -290,17 +272,6 @@
   animation: cv-book-turn-prev var(--turn-ms) var(--book-ease) both;
   left: 0;
   transform-origin: right center;
-}
-
-.cv-book[data-step='1'] .cv-book__leaf--next {
-  left: 22%;
-  right: auto;
-  width: 78%;
-}
-
-.cv-book[data-step='1'] .cv-book__leaf--prev {
-  left: -56%;
-  width: 78%;
 }
 
 .cv-book__face {

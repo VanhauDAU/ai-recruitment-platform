@@ -8,6 +8,12 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-27
 
+#### Fixed — Sách mẫu CV trên điện thoại mở đủ hai trang
+
+- Điện thoại không còn cắt trang trái: mọi cỡ màn hình dùng cùng cuốn sách mở hai trang, thu nhỏ
+  theo bề ngang (điện thoại nghiêng ít hơn). Gỡ chế độ một trang (step 1) khỏi hook và CSS.
+  Điện thoại vẫn không có thanh điều khiển, tự lật mỗi 5 giây.
+
 #### Fixed — Ảnh WebP trên R2 mang đúng Content-Type; sách mẫu CV trên điện thoại giữ dáng sách mở
 
 - Python 3.11 trong image backend không biết đuôi `.webp`, nên django-storages ghi

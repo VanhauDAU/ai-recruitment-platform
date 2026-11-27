@@ -65,14 +65,13 @@ function BookPage({ page, number, count }) {
 }
 
 /**
- * Mẫu CV trang chủ dạng cuốn sách đang lật, lá sách lật quanh gáy (chỉ dựng khi đang lật).
- * Từ sm mở hai trang mỗi lần (step 2). Điện thoại vẫn là sách mở nhưng mỗi lần lật một trang
- * (step 1): trang trái là trang vừa đọc, chỉ ló một dải ở mép trái (cv-flipbook.css).
+ * Mẫu CV trang chủ dạng cuốn sách mở hai trang, lá sách lật quanh gáy (chỉ dựng khi đang
+ * lật). Mọi cỡ màn hình cùng một cuốn sách, thu nhỏ theo bề ngang (cv-flipbook.css).
  */
 export default function CvFlipBook({ templates, loading }) {
   const pages = useMemo(() => buildPages(templates), [templates])
   const {
-    bookRef, bookProps, first, step, turning, playing, canTurn,
+    bookRef, bookProps, first, turning, playing, canTurn,
     next, prev, goTo, finishTurn, togglePlaying, holdAfterTouch,
   } = useFlipBook(loading ? 0 : pages.length)
   const total = pages.length
@@ -83,28 +82,27 @@ export default function CvFlipBook({ templates, loading }) {
 
   // Tải trước ảnh của lần mở kế tiếp để lá sách không lật ra trang trống.
   useEffect(() => {
-    for (let offset = step; offset < step * 3; offset += 1) {
+    for (let offset = 2; offset < 6; offset += 1) {
       const page = pages[wrapPage(first + offset, total)]
       if (page?.kind === 'template') new Image().src = templateImage(page.template)
     }
-  }, [first, step, pages, total])
+  }, [first, pages, total])
 
   // Hai trang đang mở; lật tới thì trang phải lật sang trái, lật lùi thì trang trái lật sang
   // phải. Mặt sau lá sách là trang sẽ nằm ở phía bên kia sau khi lật xong.
-  const left = step === 2 ? first : first - 1
-  const right = left + 1
-  const leftShown = turning === 'prev' ? left - step : left
-  const rightShown = turning === 'next' ? right + step : right
+  const left = first
+  const right = first + 1
+  const leftShown = turning === 'prev' ? left - 2 : left
+  const rightShown = turning === 'next' ? right + 2 : right
   const leafFront = turning === 'next' ? right : left
-  const leafBack = turning === 'next' ? right + step - 1 : left - (step - 1)
-  const progress = step === 2 ? `${first + 1}–${first + 2}` : `${first + 1}`
+  const leafBack = turning === 'next' ? right + 1 : left - 1
+  const progress = `${first + 1}–${first + 2}`
 
   return (
     <div className="cv-book-stage">
       <div
         ref={bookRef}
         className="cv-book"
-        data-step={step}
         data-turning={turning || undefined}
         role="region"
         aria-label={m.candidate_cv_book_label()}
@@ -133,14 +131,14 @@ export default function CvFlipBook({ templates, loading }) {
           type="range"
           className="cv-book__range"
           min={0}
-          max={Math.max(0, total - step)}
-          step={step}
+          max={Math.max(0, total - 2)}
+          step={2}
           value={first}
           disabled={!canTurn}
           onChange={(event) => { holdAfterTouch(); goTo(Number(event.target.value)) }}
           aria-label={m.candidate_cv_book_seek()}
           aria-valuetext={m.candidate_cv_book_progress({ current: progress, total })}
-          style={{ '--progress': `${total > step ? (first / (total - step)) * 100 : 0}%` }}
+          style={{ '--progress': `${total > 2 ? (first / (total - 2)) * 100 : 0}%` }}
         />
         <span className="cv-book__count">{m.candidate_cv_book_progress({ current: progress, total })}</span>
         <button type="button" className="cv-book__button" onClick={togglePlaying} disabled={!canTurn} aria-label={playing ? m.candidate_cv_book_pause() : m.candidate_cv_book_play()}>
