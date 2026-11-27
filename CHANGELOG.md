@@ -8,6 +8,18 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-27
 
+#### Changed — Mẫu CV trang chủ thành cuốn sách đang lật trang
+
+- Khối "Tạo CV ấn tượng" thay băng chuyền 3D bằng "Sổ tay mẫu CV": bìa → mỗi mẫu một trang
+  (bấm trang để xem chi tiết) → trang cuối "Xem tất cả mẫu CV". Từ 640px sách mở hai trang,
+  nghiêng nhẹ, mép giấy xếp lớp và bóng gáy; lá sách lật 3D quanh gáy, mặt trước tối dần,
+  mặt sau sáng dần, bóng đổ lên trang dưới. Điện thoại một trang, gáy trái, lật ra ngoài để
+  lộ trang kế; vuốt để lật. Chữ trong trang co theo bề rộng trang (container query).
+- Thanh điều khiển kiểu trình đọc sách: lật trước/sau, thanh kéo chọn trang, số trang, dừng/chạy
+  tự lật. Tự lật 4,2 giây/lần, dừng khi rê chuột/chạm, ngoài khung nhìn, tab ẩn hoặc bật giảm
+  chuyển động (lúc đó đổi trang tức thì). Tải trước ảnh của lần mở kế tiếp.
+- Gỡ băng chuyền cũ (`use-showcase-rotation`, CSS coverflow) và hai khóa i18n chấm trang.
+
 #### Changed — Băng chuyền mẫu CV trang chủ hiện tối đa 10 mẫu
 
 - Khối "Tạo CV ấn tượng" lấy tối đa 10 mẫu thay vì 3. Desktop: băng chuyền 3D 5 vị trí (thẻ giữa,

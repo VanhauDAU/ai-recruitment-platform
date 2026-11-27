@@ -1,0 +1,514 @@
+/* Cuốn sách mẫu CV trang chủ (CvFlipBook, chunk lazy của trang chủ).
+   - data-step="2" (từ 640px): mở hai trang, gáy ở giữa; data-step="1": một trang, gáy trái.
+   - Lá sách (.cv-book__leaf) chỉ dựng khi đang lật: mặt trước là trang đang lật, mặt sau
+     là trang sẽ lộ ra; xoay quanh gáy bằng rotateY trong không gian 3D của .cv-book.
+   - Cỡ chữ trong trang theo bề rộng trang (container query, đơn vị cqw).
+   - Bóng tối/sáng trên lá sách và bóng đổ lên trang bên dưới chạy cùng nhịp lật. */
+
+.cv-book-stage {
+  --book-ease: cubic-bezier(0.45, 0.05, 0.2, 1);
+  --turn-ms: 1100ms;
+  --paper: #fffdf8;
+  --paper-edge: #ddd5c6;
+  margin-inline: auto;
+  perspective: 2200px;
+  width: min(100%, 600px);
+}
+
+.cv-book {
+  aspect-ratio: 3 / 2;
+  position: relative;
+  touch-action: pan-y;
+  transform: rotateX(9deg);
+  transform-origin: 50% 100%;
+  transform-style: preserve-3d;
+  user-select: none;
+}
+
+.cv-book[data-step='1'] {
+  aspect-ratio: 3 / 4;
+  margin-inline: auto;
+  transform: rotateX(5deg);
+  width: min(100%, 300px);
+}
+
+/* Bóng của cuốn sách in xuống "mặt bàn". */
+.cv-book::after {
+  background: radial-gradient(closest-side, rgb(2 44 34 / 0.3), transparent);
+  bottom: -30px;
+  content: '';
+  filter: blur(6px);
+  height: 40px;
+  left: 3%;
+  pointer-events: none;
+  position: absolute;
+  right: 3%;
+  transform: translateZ(-2px);
+}
+
+.cv-book__page,
+.cv-book__face {
+  background: var(--paper);
+  bottom: 0;
+  container-type: inline-size;
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+}
+
+.cv-book__page {
+  width: 50%;
+}
+
+.cv-book__page--left {
+  border-radius: 6px 2px 2px 6px;
+  left: 0;
+  /* Mép các trang đã đọc xếp lớp ở cạnh ngoài. */
+  box-shadow:
+    -1px 0 0 var(--paper-edge),
+    -3px 1px 0 var(--paper),
+    -4px 1px 0 var(--paper-edge),
+    -6px 2px 0 var(--paper),
+    -7px 2px 0 var(--paper-edge),
+    0 22px 34px -16px rgb(2 44 34 / 0.4);
+}
+
+.cv-book__page--right {
+  border-radius: 2px 6px 6px 2px;
+  right: 0;
+  box-shadow:
+    1px 0 0 var(--paper-edge),
+    3px 1px 0 var(--paper),
+    4px 1px 0 var(--paper-edge),
+    6px 2px 0 var(--paper),
+    7px 2px 0 var(--paper-edge),
+    0 22px 34px -16px rgb(2 44 34 / 0.4);
+}
+
+.cv-book[data-step='1'] .cv-book__page--right {
+  border-radius: 3px 8px 8px 3px;
+  width: 100%;
+}
+
+/* Gáy sách: trang tối dần về phía nếp gấp. */
+.cv-book__page::after,
+.cv-book__face::after {
+  content: '';
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+  z-index: 3;
+}
+
+.cv-book__page--left::after {
+  background: linear-gradient(to left, rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.04) 6%, transparent 16%);
+}
+
+.cv-book__page--right::after,
+.cv-book__leaf--next .cv-book__face--front::after {
+  background: linear-gradient(to right, rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.04) 6%, transparent 16%);
+}
+
+/* ── Nội dung một trang ── */
+.cv-book__sheet {
+  color: #0f172a;
+  display: flex;
+  flex-direction: column;
+  inset: 0;
+  padding: 9cqw 10cqw;
+  position: absolute;
+}
+
+.cv-book__sheet--cv {
+  cursor: pointer;
+  padding: 5cqw 7cqw 0;
+}
+
+.cv-book__sheet--cv > div:first-child {
+  border-radius: 3px;
+  box-shadow: 0 1px 4px rgb(15 23 42 / 0.12);
+}
+
+.cv-book__caption {
+  align-items: center;
+  bottom: 3.6cqw;
+  display: flex;
+  gap: 2.4cqw;
+  left: 7cqw;
+  position: absolute;
+  right: 16cqw;
+}
+
+.cv-book__name {
+  font-size: max(11px, 4.4cqw);
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.2s;
+  white-space: nowrap;
+}
+
+.cv-book__sheet--cv:hover .cv-book__name {
+  color: var(--brand-primary);
+}
+
+.cv-book__premium {
+  background: #f59e0b;
+  border-radius: 999px;
+  color: #fff;
+  flex-shrink: 0;
+  font-size: max(8px, 2.8cqw);
+  font-weight: 800;
+  padding: 0.4cqw 2cqw;
+}
+
+.cv-book__folio {
+  bottom: 3.8cqw;
+  color: #94a3b8;
+  font-size: max(9px, 3.4cqw);
+  font-variant-numeric: tabular-nums;
+  position: absolute;
+  right: 7cqw;
+}
+
+.cv-book__sheet--cover {
+  background:
+    radial-gradient(90% 60% at 100% 100%, color-mix(in srgb, var(--brand-primary) 14%, transparent), transparent 70%),
+    var(--paper);
+  justify-content: center;
+}
+
+.cv-book__mark {
+  background: var(--brand-primary);
+  border-radius: 2px;
+  height: 1.4cqw;
+  width: 16cqw;
+}
+
+.cv-book__cover-title {
+  font-size: 12.5cqw;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+  margin: 6cqw 0 0;
+  text-wrap: balance;
+}
+
+.cv-book__cover-lead {
+  color: #475569;
+  font-size: max(11px, 4.6cqw);
+  line-height: 1.5;
+  margin: 5cqw 0 0;
+}
+
+.cv-book__cover-hint {
+  align-items: center;
+  bottom: 8cqw;
+  color: var(--brand-primary-hover);
+  display: inline-flex;
+  font-size: max(10px, 3.8cqw);
+  font-weight: 700;
+  gap: 1.6cqw;
+  position: absolute;
+}
+
+.cv-book__sheet--end {
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.cv-book__end-title {
+  font-size: 8cqw;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.cv-book__end-lead {
+  color: #475569;
+  font-size: max(11px, 4.4cqw);
+  line-height: 1.5;
+  margin: 4cqw 0 0;
+}
+
+.cv-book__end-cta {
+  align-items: center;
+  background: var(--brand-primary) !important;
+  border-radius: 999px;
+  color: #fff !important;
+  display: inline-flex;
+  font-size: max(11px, 4.2cqw);
+  font-weight: 700;
+  gap: 2cqw;
+  margin-top: 7cqw;
+  padding: 2.8cqw 5.5cqw;
+  transition: background-color 0.2s;
+}
+
+.cv-book__end-cta:hover {
+  background: var(--brand-primary-hover) !important;
+}
+
+/* Giấy có dòng kẻ mờ: trang trắng cuối sách và mặt sau lá sách trên điện thoại. */
+.cv-book__sheet--blank,
+.cv-book__sheet--back {
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 7cqw, #efe9dc 7cqw calc(7cqw + 1px)),
+    var(--paper);
+  background-origin: content-box;
+}
+
+.cv-book__sheet--back {
+  transform: scaleX(-1);
+}
+
+/* ── Lá sách đang lật ── */
+.cv-book__leaf {
+  bottom: 0;
+  position: absolute;
+  top: 0;
+  transform-style: preserve-3d;
+  width: 50%;
+}
+
+.cv-book__leaf--next {
+  animation: cv-book-turn-next var(--turn-ms) var(--book-ease) both;
+  right: 0;
+  transform-origin: left center;
+}
+
+.cv-book__leaf--prev {
+  animation: cv-book-turn-prev var(--turn-ms) var(--book-ease) both;
+  left: 0;
+  transform-origin: right center;
+}
+
+.cv-book[data-step='1'] .cv-book__leaf {
+  left: auto;
+  right: 0;
+  transform-origin: left center;
+  width: 100%;
+}
+
+.cv-book[data-step='1'] .cv-book__leaf--next {
+  animation-name: cv-book-turn-single;
+}
+
+.cv-book[data-step='1'] .cv-book__leaf--prev {
+  animation: cv-book-turn-single var(--turn-ms) var(--book-ease) both reverse;
+}
+
+.cv-book[data-step='1'] .cv-book__face {
+  animation: cv-book-fade-late var(--turn-ms) var(--book-ease) both;
+}
+
+.cv-book[data-step='1'] .cv-book__leaf--prev .cv-book__face {
+  animation-direction: reverse;
+}
+
+.cv-book__face {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  inset: 0;
+}
+
+.cv-book__face--back {
+  transform: rotateY(180deg);
+}
+
+/* Mặt trước tối dần khi dựng lên, mặt sau sáng dần khi hạ xuống. */
+.cv-book__face--front::before,
+.cv-book__face--back::before {
+  content: '';
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  z-index: 4;
+}
+
+.cv-book__face--front::before {
+  animation: cv-book-shade-rise var(--turn-ms) var(--book-ease) both;
+  background: linear-gradient(to left, rgb(0 0 0 / 0.32), rgb(0 0 0 / 0.08));
+}
+
+.cv-book__face--back::before {
+  animation: cv-book-shade-fall var(--turn-ms) var(--book-ease) both;
+  background: linear-gradient(to right, rgb(0 0 0 / 0.3), rgb(255 255 255 / 0.05) 70%);
+}
+
+.cv-book__leaf--prev .cv-book__face--front::before {
+  background: linear-gradient(to right, rgb(0 0 0 / 0.32), rgb(0 0 0 / 0.08));
+}
+
+/* Bóng lá sách đổ lên trang bên dưới. */
+.cv-book[data-turning='next'] .cv-book__page--right::before,
+.cv-book[data-turning='prev'][data-step='2'] .cv-book__page--left::before,
+.cv-book[data-turning='prev'][data-step='1'] .cv-book__page--right::before {
+  animation: cv-book-cast var(--turn-ms) var(--book-ease) both;
+  content: '';
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+  z-index: 2;
+}
+
+.cv-book[data-turning='next'] .cv-book__page--right::before,
+.cv-book[data-step='1'] .cv-book__page--right::before {
+  background: linear-gradient(to right, rgb(0 0 0 / 0.28), transparent 65%);
+}
+
+.cv-book[data-step='2'] .cv-book__page--left::before {
+  background: linear-gradient(to left, rgb(0 0 0 / 0.28), transparent 65%);
+}
+
+@keyframes cv-book-turn-next {
+  from { transform: translateZ(1px) rotateY(0deg); }
+  50% { transform: translateZ(14px) rotateY(-90deg); }
+  to { transform: translateZ(1px) rotateY(-180deg); }
+}
+
+@keyframes cv-book-turn-prev {
+  from { transform: translateZ(1px) rotateY(0deg); }
+  50% { transform: translateZ(14px) rotateY(90deg); }
+  to { transform: translateZ(1px) rotateY(180deg); }
+}
+
+/* Một trang: lá sách lật ra ngoài gáy trái rồi tan đi để lộ trang kế. Độ mờ đặt ở hai
+   mặt giấy, không ở lá sách: opacity trên phần tử preserve-3d làm dẹt không gian 3D và
+   mặt trước lộ ngược qua mặt sau. */
+@keyframes cv-book-turn-single {
+  0% { transform: translateZ(1px) rotateY(0deg); }
+  50% { transform: translateZ(18px) rotateY(-90deg); }
+  100% { transform: translateZ(1px) rotateY(-170deg); }
+}
+
+@keyframes cv-book-fade-late {
+  0%, 78% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes cv-book-shade-rise {
+  0% { opacity: 0; }
+  50% { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+@keyframes cv-book-shade-fall {
+  0% { opacity: 1; }
+  50% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes cv-book-cast {
+  0% { opacity: 0; }
+  40% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Sách mở ra khi khối trồi lên (HomeSection). */
+@media (prefers-reduced-motion: no-preference) {
+  .home-reveal.is-revealed .cv-book {
+    animation: cv-book-in 1.1s var(--book-ease) 0.15s backwards;
+  }
+}
+
+@keyframes cv-book-in {
+  from {
+    opacity: 0;
+    transform: rotateX(34deg) translateY(40px) scale(0.94);
+  }
+}
+
+/* ── Thanh điều khiển kiểu trình đọc sách ── */
+.cv-book__bar {
+  align-items: center;
+  backdrop-filter: blur(6px);
+  background: rgb(255 255 255 / 0.85);
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  box-shadow: 0 8px 20px -12px rgb(2 44 34 / 0.35);
+  display: flex;
+  gap: 6px;
+  margin: 30px auto 0;
+  padding: 4px 6px;
+  width: min(100%, 440px);
+}
+
+.cv-book__button {
+  align-items: center;
+  background: none;
+  border: 0;
+  border-radius: 999px;
+  color: #334155;
+  cursor: pointer;
+  display: flex;
+  flex-shrink: 0;
+  font-size: 13px;
+  height: 32px;
+  justify-content: center;
+  transition: background-color 0.2s, color 0.2s;
+  width: 32px;
+}
+
+.cv-book__button:hover:not(:disabled) {
+  background: var(--brand-primary-soft);
+  color: var(--brand-primary);
+}
+
+.cv-book__button:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.cv-book__button:focus-visible,
+.cv-book__range:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.cv-book__range {
+  appearance: none;
+  background:
+    linear-gradient(var(--brand-primary), var(--brand-primary)) 0 / var(--progress, 0%) 100% no-repeat,
+    #e2e8f0;
+  border-radius: 999px;
+  cursor: pointer;
+  flex: 1;
+  height: 4px;
+  min-width: 0;
+}
+
+.cv-book__range::-webkit-slider-thumb {
+  appearance: none;
+  background: #fff;
+  border: 2px solid var(--brand-primary);
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgb(2 44 34 / 0.25);
+  height: 14px;
+  width: 14px;
+}
+
+.cv-book__range::-moz-range-thumb {
+  background: #fff;
+  border: 2px solid var(--brand-primary);
+  border-radius: 50%;
+  height: 12px;
+  width: 12px;
+}
+
+.cv-book__count {
+  color: #475569;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  min-width: 70px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+@media (max-width: 639.98px) {
+  .cv-book__count {
+    min-width: 52px;
+  }
+}
