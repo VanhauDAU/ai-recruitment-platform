@@ -260,5 +260,13 @@
   "candidate_job_fit_trigger_label": "Xem độ phù hợp với CV của bạn",
   "candidate_job_fit_fab_label": "Xem độ phù hợp CV",
   "candidate_job_fit_trigger_title": "Xem độ phù hợp",
-  "candidate_job_fit_trigger_hint": "So CV của bạn với từng yêu cầu của tin, chỉ ra kỹ năng còn thiếu."
+  "candidate_job_fit_trigger_hint": "So CV của bạn với từng yêu cầu của tin, chỉ ra kỹ năng còn thiếu.",
+  "candidate_job_fit_tab_overview": "Tổng quan",
+  "candidate_job_fit_tab_skills": "Kỹ năng",
+  "candidate_job_fit_tab_requirements": "Yêu cầu",
+  "candidate_job_fit_tab_suggestions": "Gợi ý",
+  "candidate_job_fit_tabs_label": "Các phần của kết quả",
+  "candidate_job_fit_model": "Mô hình AI: {models}",
+  "candidate_job_fit_next_step": "Nên làm trước",
+  "candidate_job_fit_all_suggestions": "Xem cả {count} gợi ý"
 }

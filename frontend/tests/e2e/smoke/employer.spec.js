@@ -141,6 +141,8 @@ test('employer smoke: marketing pages render', { tag: '@responsive' }, async ({ 
 
   await page.goto('/tuyendung')
   await expect(page.locator('header')).toBeVisible()
+  // Mọi viewport đều thấy lối đăng nhập trên header, điện thoại không phải mở menu.
+  await expect(page.locator('header').getByRole('link', { name: 'Đăng nhập' })).toBeVisible()
   await expectActiveNav('Trang chủ')
   await expectNoHorizontalOverflow(page)
 
@@ -189,6 +191,11 @@ test('employer smoke: login loads and dashboard stays role-protected', { tag: '@
   }
   await expectAnimatedLoginButton(page)
   await expectNoHorizontalOverflow(page)
+  // Điện thoại: form email lên trước, Google xuống dưới.
+  if (page.viewportSize().width < 640) {
+    const [emailBox, googleBox] = await Promise.all([page.getByLabel('Email', { exact: true }).boundingBox(), googleLogin.boundingBox()])
+    expect(emailBox.y).toBeLessThan(googleBox.y)
+  }
 
   await page.goto('/tuyendung/app/tong-quan')
   await expect(page).toHaveURL(/\/tuyendung\/app\/dang-nhap\?returnUrl=/)
@@ -206,13 +213,15 @@ test('employer auth: registration has employer fields and consent-gated Google s
   await expect(page.getByLabel('Các bước tạo tài khoản')).toHaveCount(0)
   const rulesToggle = page.getByRole('button', { name: 'Quy định' })
   const rulesContent = page.getByText(/không cho phép một người dùng tạo nhiều tài khoản nhà tuyển dụng/)
-  await expect(rulesToggle).toHaveAttribute('aria-expanded', 'true')
-  await expect(rulesContent).toBeVisible()
+  // Điện thoại thu gọn quy định sẵn để form lên màn hình đầu.
+  const isPhone = page.viewportSize().width < 640
+  await expect(rulesToggle).toHaveAttribute('aria-expanded', isPhone ? 'false' : 'true')
+  await expect(rulesContent).toHaveCount(isPhone ? 0 : 1)
   await rulesToggle.click()
-  await expect(rulesToggle).toHaveAttribute('aria-expanded', 'false')
-  await expect(rulesContent).toHaveCount(0)
-  await rulesToggle.click()
-  await expect(rulesContent).toBeVisible()
+  await expect(rulesToggle).toHaveAttribute('aria-expanded', isPhone ? 'true' : 'false')
+  await expect(rulesContent).toHaveCount(isPhone ? 1 : 0)
+  await expect(page.getByRole('link', { name: 'Đăng nhập ngay' })).toBeVisible()
+  await expect(page.getByText('Bước 1/2')).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Tạo thông tin đăng nhập' })).toBeVisible()
   await expect(page.getByLabel('Họ và tên')).toHaveCount(0)
   await expect(page.getByText('Trường hợp bạn đăng ký tài khoản bằng email không phải email tên miền công ty, một số dịch vụ trên tài khoản có thể sẽ bị giới hạn quyền mua hoặc sử dụng.')).toBeVisible()
@@ -236,6 +245,7 @@ test('employer auth: registration has employer fields and consent-gated Google s
   await page.getByRole('button', { name: 'Tiếp tục' }).click()
 
   await expect(page.getByRole('heading', { name: 'Thông tin nhà tuyển dụng' })).toBeVisible()
+  await expect(page.getByText('Bước 2/2')).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Tạo thông tin đăng nhập' })).toHaveCount(0)
   await expect(page.getByLabel('Họ và tên')).toBeVisible()
   await expect(page.getByLabel('Số điện thoại cá nhân')).toBeVisible()

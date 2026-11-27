@@ -8,11 +8,11 @@ thuộc nhóm ngành khác) theo bốn phép đo, kèm AUC:
 - `MaxSim yêu cầu`: trung bình, trên các câu yêu cầu, của cosine lớn nhất với câu CV;
 - `kỹ năng`: cosine tên kỹ năng của tin ↔ câu CV gần nhất.
 
-Mốc đặt vào `CALIBRATIONS` (`apps/matching/services/scoring/semantic.py`):
+Mốc đặt vào `CALIBRATIONS` (`backend/apps/matching/domain/calibration.py`):
 `low` = trung vị cặp khác ngành (0 điểm), `high` = phân vị 90 cặp khớp mạnh
 (100 điểm); ngưỡng kỹ năng và ngưỡng "đạt" của từng yêu cầu lấy phân vị 95 của
-cặp khác ngành để ít nhận nhầm. Tuần 3 dùng nhãn yếu; tuần 6 chạy lại với nhãn
-người chấm.
+cặp khác ngành để ít nhận nhầm. Đây là nguồn mốc của `e5-base-zs-v1`; mô hình
+fine-tune đo mốc trên tập hiệu chỉnh có nhãn (`calibrate_labeled.py`, `calibrate_scale.py`).
 
 Chạy sau `export_profiles.py`: ml/.venv/bin/python ml/scripts/calibrate.py
 """

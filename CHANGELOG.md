@@ -8,6 +8,41 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-27
 
+#### Changed — Đăng nhập/đăng ký nhà tuyển dụng dễ dùng trên điện thoại
+
+- Header trang giới thiệu NTD luôn có nút "Đăng nhập" trên điện thoại (trước chỉ có trong menu,
+  nút nổi bật đều dẫn sang đăng ký).
+- Đăng nhập trên điện thoại: phần đầu gọn lại, form email lên trước, nút Google xuống dưới; cả
+  form nằm trong màn hình đầu. Desktop giữ bố cục cũ.
+- Đăng ký: thêm chỉ báo "Bước 1/2", trên điện thoại thu gọn sẵn khối Quy định, đưa link "Đăng nhập
+  ngay" lên đầu, không tự focus ô email, nút "Hoàn tất đăng ký" nằm trên "Quay lại".
+- Sửa lỗi desktop: panel bên phải trôi mất khi cuộn (`overflow-x-hidden` làm hỏng `sticky`) và
+  lỗi "Vui lòng nhập email" bị cảnh báo tên miền công ty đè lên.
+- Panel bên phải đổi từ số minh họa sang số liệu thật của nền tảng (`/public/jobs/stats/`): số
+  ứng viên, việc làm đang tuyển, công ty và biểu đồ việc làm mới 7 ngày; chỉ tải khi panel hiện.
+#### Changed — Hộp thoại "Xem độ phù hợp" gọn lại, nằm trọn trong màn hình, ghi tên mô hình
+
+- Hộp thoại không còn cao hơn màn hình: tiêu đề, phần kết luận (mức, điểm, thước bốn dải) và
+  chân hộp thoại đứng yên, chỉ nội dung ở giữa cuộn. Trên điện thoại hộp thoại chiếm trọn màn
+  hình. Chiều cao cố định khi có kết quả nên đổi phần xem không làm hộp thoại nhảy.
+- Kết quả chia bốn tab có số đếm: **Tổng quan** (năm tiêu chí, mỗi tiêu chí một dòng gồm tên,
+  thanh điểm, số; bấm để xem cách tính, tiêu chí yếu nhất mở sẵn; kèm việc nên làm trước),
+  **Kỹ năng**, **Yêu cầu** (có chú giải ba ký hiệu), **Gợi ý**. Đổi tab bằng phím mũi tên được.
+- Chân hộp thoại ghi mô hình đã chấm (`meta.model_version`, kèm `meta.reranker_version` nếu
+  có), ví dụ "Mô hình AI: e5-base-wise-v1 + req-ce-v1", cạnh nút "Ứng tuyển tin này".
+- Chuỗi mới nằm ở `messages/candidate` (vi/en); trần chữ viết cứng `features/main` còn 620.
+#### Changed — Dọn `ml/` sau đợt huấn luyện
+
+- `ml/scripts/run_training.sh` dựng lại đúng cấu hình đang dùng: thêm mini-batch 2, nội suy
+  `wise-v1`, hiệu chỉnh trên tập hiệu chỉnh, đo cross-encoder và đủ cờ của `evaluate.py`.
+- `ml/reports/train_pairs.md` sinh lại từ tập của `ft-v1` (5.936 bộ ba, khớp mã băm trong
+  `model_card.json`) thay vì tập thử `ft-v2`. Ghim `pandas`, `scipy` trong `ml/requirements.txt`.
+- Phiếu đọc kiểm lượt kế tiếp `ml/labeling/train_cv_review.md` thôi commit (sinh lại mỗi lần
+  chạy `quality_gate.py`); sửa chú thích lỗi thời trong `ml/README.md`, `calibrate.py`,
+  `domain/calibration.py`, `matching_evaluate`.
+- Settings test ghi đè `MATCHING_RERANKER_BACKEND = 'none'`: test không còn hỏng khi
+  `backend/.env` ở máy đã bật cross-encoder.
+
 #### Changed — Production dùng hai mô hình đối sánh đã huấn luyện
 
 - `docker-compose.prod.yml`: `MATCHING_MODEL_PATH`/`MATCHING_MODEL_VERSION` chuyển sang

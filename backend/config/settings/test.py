@@ -112,7 +112,9 @@ SECURE_HSTS_SECONDS = 0
 SECURE_HSTS_INCLUDE_SUBDOMAINS = False
 SECURE_HSTS_PRELOAD = False
 
-# Đối sánh CV–JD: mã hóa tất định không cần torch; không tự tính vector khi lưu
-# CV/tin (test tự gọi khi cần).
+# Đối sánh CV–JD: mã hóa tất định không cần torch, không cross-encoder (test cần thì tự bật
+# `hashing`), không tự tính vector khi lưu CV/tin (test tự gọi khi cần). Ghi đè cả giá trị
+# của backend/.env để test không phụ thuộc mô hình đang bật ở máy.
 MATCHING_ENCODER_BACKEND = 'hashing'
+MATCHING_RERANKER_BACKEND = 'none'
 MATCHING_PRECOMPUTE_ENABLED = False
