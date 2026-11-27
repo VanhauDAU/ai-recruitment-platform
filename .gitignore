@@ -26,6 +26,8 @@ ml/models/
 ml/data/
 # Trang chấm mù sinh từ mẫu (build_audit_page.py), chứa nguyên nội dung tin và CV
 ml/labeling/audit_blind.html
+# Phiếu đọc kiểm lượt kế tiếp, quality_gate.py sinh lại mỗi lần chạy
+ml/labeling/train_cv_review.md
 
 # Python tooling
 .coverage

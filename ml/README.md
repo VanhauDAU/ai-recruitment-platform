@@ -31,7 +31,7 @@ ml/
     build_audit_page.py   sinh trang chấm mù 50 cặp cho người (audit_blind.html), có bảng tiêu chí theo rubric
     export_profiles.py    xuất profile_json từ hệ thống (lệnh matching_export_dataset)
     check_profiles.py     đối chiếu profile_json với manifest, kiểm tra "không bịa"
-    calibrate.py          AUC và mốc hiệu chuẩn cosine → điểm của từng phép so
+    calibrate.py          AUC và mốc hiệu chuẩn theo nhãn yếu (nguồn mốc của e5-base-zs-v1)
     calibrate_labeled.py  mốc quy đổi cosine → điểm của một bi-encoder, đo trên tập hiệu chỉnh có nhãn
     calibrate_scale.py    dò mốc thang điểm bằng công thức đầy đủ của sản phẩm trên tập hiệu chỉnh
     evaluate_calibration.py  công thức có và không có cross-encoder trên tập hiệu chỉnh
@@ -52,7 +52,7 @@ ml/
     evaluate_public.py    chuẩn ngoài resume-job-description-fit cho các bi-encoder
     train.py              fine-tune bi-encoder E5 trên MPS
     train_reranker.py     fine-tune cross-encoder phán từng yêu cầu
-    run_training.sh       chạy nối các bước dữ liệu → huấn luyện → đo
+    run_training.sh       chạy nối các bước 12, 14–16 bên dưới: dữ liệu → huấn luyện → nội suy → hiệu chỉnh → đo
   labeling/               tài liệu gán nhãn (commit)
     rubric.md             thang chấm 0–4 đã chốt
     requirement_rubric.md  quy tắc gán nhãn cặp yêu cầu–câu CV (đạt / có liên quan / không đạt)
@@ -69,7 +69,8 @@ ml/
     skill_merge.json      gộp kỹ năng trùng nghĩa khi nhập tin
     calibration_jobs.json 14 tin của tập hiệu chỉnh (không vào huấn luyện; chọn bằng build_train_pairs.py)
     calibration_labels.json  nhãn 0–4 của 321 cặp tập hiệu chỉnh (Claude gán theo rubric, phiếu mù)
-    train_cv_review*.md   phiếu đọc kiểm CV huấn luyện bằng mắt (lượt 1 đã chấm, lượt 2 đang chờ)
+    train_cv_review_round{1,2}.md  phiếu đọc kiểm CV huấn luyện bằng mắt, hai lượt đã chấm; phiếu lượt
+                          kế tiếp `train_cv_review.md` do quality_gate.py sinh lại mỗi lần chạy (không commit)
   data/                   KHÔNG commit (.gitignore)
     jd/
       jd_input.xlsx       100 tin thật, người làm đồ án nhập tay
@@ -98,10 +99,12 @@ ml/
     requirement_labels.md, reranker_eval.md  nhãn và kết quả cross-encoder trên cặp thật (build_requirement_eval.py, evaluate_reranker.py)
     eval_public.md        chuẩn ngoài tiếng Anh                    (evaluate_public.py)
     calibration_labels.md  nhãn tập hiệu chỉnh, đối chiếu nhãn yếu  (build_calibration_pairs.py merge)
-    train_cv_gate.md, train_pairs.md, reranker_pairs.md  dữ liệu huấn luyện (quality_gate.py, build_train_pairs.py, build_requirement_pairs.py)
+    train_cv_gate.md, train_pairs.md, reranker_pairs.md  dữ liệu huấn luyện (quality_gate.py, build_train_pairs.py, build_requirement_pairs.py);
+                          train_pairs.md là tập của ft-v1 (chạy không kèm --mined/--ordinal)
     eval_validation.{md,json}  bảng đo trên validation            (evaluate.py)
     error_analysis_validation.md  lỗi của công thức đang chạy     (error_analysis.py)
-    recommendations.{md,json}  đo gợi ý việc làm                  (evaluate_recommendations.py)
+    recommendations.{md,json}  đo gợi ý việc làm; recommendations_<phiên bản>.{md,json} cho mô hình khác gốc (evaluate_recommendations.py)
+    score_floor.md        ngưỡng 30 điểm của gợi ý việc làm và Tìm CV khi đổi mô hình (check_score_floor.py)
   models/                 KHÔNG commit; mô hình cho ml-worker (mount /models), kèm model_card.json
 ```
 
@@ -160,13 +163,14 @@ liệu cần Docker Compose đang chạy; mặc định chỉ chạy thử, thê
 7. `scripts/export_profiles.py`, rồi `scripts/check_profiles.py`: kiểm tra trích xuất.
    Với PDF, đáp án chỉ gồm những gì thật sự in trong tệp (kỹ năng, ngoại ngữ, việc có
    ngày bắt đầu), và bậc học theo `labeling/education_key.json`.
-8. `scripts/export_model.py`: lưu mô hình cho ml-worker; `scripts/calibrate.py`: đo
-   mốc hiệu chuẩn, chép vào `CALIBRATIONS` của backend khi đổi mô hình.
+8. `scripts/export_model.py`: lưu mô hình cho ml-worker; `scripts/calibrate.py`: mốc
+   hiệu chuẩn theo nhãn yếu của mô hình gốc. Mô hình mới đo mốc theo bước 15 (tập hiệu
+   chỉnh có nhãn), không dùng `calibrate.py`.
 9. `scripts/fetch_public.py`: tải dữ liệu công khai (VietJobs,
    resume-job-description-fit) vào `data/public/` và các mô hình gốc; ghi nguồn, mã
    commit, ngày tải vào `data/public/SOURCES.md`.
 10. `scripts/evaluate.py`: đo các phương án trên tập vàng (TF-IDF, BM25, luật
-    `profile-rule-v2`, bi-encoder, `hybrid`; `--ablation` đo thêm từng thay đổi của `hybrid-v2`) → `reports/eval_validation.md`. Các dòng
+    `profile-rule-v2`, bi-encoder, `hybrid`; `--ablation` đo thêm từng thay đổi của công thức) → `reports/eval_validation.md`. Các dòng
     của sản phẩm do lệnh `matching_evaluate` chạy trong container `ml-worker`, tức
     đúng mã đang phục vụ ứng viên. Phần test chỉ chạy một lần ở giai đoạn nghiệm
     thu (`--split test --final`).

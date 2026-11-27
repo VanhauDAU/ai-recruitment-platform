@@ -15,7 +15,7 @@ Không truyền `--model-path` thì dùng mô hình đang cấu hình cho sản 
 bộ gợi ý theo luật `profile-rule-v2` để làm mốc so sánh. `--detail` kèm nguyên kết
 quả chấm của từng cặp (kỹ năng khớp/thiếu, chi tiết tiêu chí) để phân tích lỗi.
 `--ablation tên` (lặp lại được) tắt một thay đổi của công thức để đo riêng phần
-đóng góp của nó: `semantic_skills`, `no_relevance_discount`.
+đóng góp của nó (danh sách ở `scoring.ABLATIONS`).
 """
 
 import json

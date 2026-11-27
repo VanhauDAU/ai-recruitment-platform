@@ -10,6 +10,8 @@ accelerate==1.15.0
 openpyxl==3.1.5
 # Baseline từ vựng và đánh giá
 numpy==2.4.6
+pandas==3.1.1
+scipy==1.17.1
 scikit-learn==1.9.1
 rank-bm25==0.2.2
 # So thư viện đọc PDF (cùng phiên bản với backend/requirements.txt)
