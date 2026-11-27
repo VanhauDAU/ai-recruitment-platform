@@ -54,15 +54,27 @@ test('previous from the first spread wraps to the last one with the "see all" pa
   expect(screen.getAllByText('Trang 5–6/6').length).toBeGreaterThan(0)
 })
 
-test('phones show one page at a time; reduced motion turns instantly without a leaf', () => {
+test('phones keep an open book: the read page stays on the left, one page per turn', () => {
   media.spread = false
+  const { container } = renderBook()
+  const left = () => container.querySelector('.cv-book__page--left')
+  const right = () => container.querySelector('.cv-book__page--right')
+
+  expect(right()).toHaveTextContent('Sổ tay mẫu CV')
+  fireEvent.click(screen.getByRole('button', { name: 'Lật sang trang sau' }))
+  expect(leaf(container).querySelector('.cv-book__face--back')).toHaveTextContent('Sổ tay mẫu CV')
+  endTurn(container)
+
+  expect(left()).toHaveTextContent('Sổ tay mẫu CV')
+  expect(right()).toHaveTextContent('Thanh Lịch')
+  expect(screen.getAllByText('Trang 2/6').length).toBeGreaterThan(0)
+})
+
+test('reduced motion turns instantly without a leaf', () => {
   media.reduced = true
   const { container } = renderBook()
 
-  expect(container.querySelector('.cv-book__page--left')).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Lật sang trang sau' }))
-
   expect(leaf(container)).toBeNull()
-  expect(screen.getByRole('link', { name: 'Xem mẫu CV Thanh Lịch' })).toBeInTheDocument()
-  expect(screen.getAllByText('Trang 2/6').length).toBeGreaterThan(0)
+  expect(screen.getAllByText('Trang 3–4/6').length).toBeGreaterThan(0)
 })

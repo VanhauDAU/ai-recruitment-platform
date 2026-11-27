@@ -65,8 +65,9 @@ function BookPage({ page, number, count }) {
 }
 
 /**
- * Mẫu CV trang chủ dạng cuốn sách đang lật: từ sm mở hai trang, lá sách lật quanh gáy;
- * điện thoại một trang, gáy bên trái. Lá sách chỉ dựng khi đang lật (cv-flipbook.css).
+ * Mẫu CV trang chủ dạng cuốn sách đang lật, lá sách lật quanh gáy (chỉ dựng khi đang lật).
+ * Từ sm mở hai trang mỗi lần (step 2). Điện thoại vẫn là sách mở nhưng mỗi lần lật một trang
+ * (step 1): trang trái là trang vừa đọc, chỉ ló một dải ở mép trái (cv-flipbook.css).
  */
 export default function CvFlipBook({ templates, loading }) {
   const pages = useMemo(() => buildPages(templates), [templates])
@@ -88,11 +89,14 @@ export default function CvFlipBook({ templates, loading }) {
     }
   }, [first, step, pages, total])
 
-  const leftIndex = turning === 'prev' ? first - 2 : first
-  const rightIndex = step === 2
-    ? (turning === 'next' ? first + 3 : first + 1)
-    : (turning === 'next' ? first + 1 : first)
-  const leafFront = turning === 'next' ? (step === 2 ? first + 1 : first) : step === 2 ? first : first - 1
+  // Hai trang đang mở; lật tới thì trang phải lật sang trái, lật lùi thì trang trái lật sang
+  // phải. Mặt sau lá sách là trang sẽ nằm ở phía bên kia sau khi lật xong.
+  const left = step === 2 ? first : first - 1
+  const right = left + 1
+  const leftShown = turning === 'prev' ? left - step : left
+  const rightShown = turning === 'next' ? right + step : right
+  const leafFront = turning === 'next' ? right : left
+  const leafBack = turning === 'next' ? right + step - 1 : left - (step - 1)
   const progress = step === 2 ? `${first + 1}–${first + 2}` : `${first + 1}`
 
   return (
@@ -106,8 +110,8 @@ export default function CvFlipBook({ templates, loading }) {
         aria-label={m.candidate_cv_book_label()}
         {...bookProps}
       >
-        {step === 2 && <div className="cv-book__page cv-book__page--left">{render(leftIndex)}</div>}
-        <div className="cv-book__page cv-book__page--right">{render(rightIndex)}</div>
+        <div className="cv-book__page cv-book__page--left">{render(leftShown)}</div>
+        <div className="cv-book__page cv-book__page--right">{render(rightShown)}</div>
         {turning && (
           <div
             className={`cv-book__leaf cv-book__leaf--${turning}`}
@@ -116,11 +120,7 @@ export default function CvFlipBook({ templates, loading }) {
             inert
           >
             <div className="cv-book__face cv-book__face--front">{render(leafFront)}</div>
-            <div className="cv-book__face cv-book__face--back">
-              {step === 2
-                ? render(turning === 'next' ? first + 2 : first - 1)
-                : <div className="cv-book__sheet cv-book__sheet--back" />}
-            </div>
+            <div className="cv-book__face cv-book__face--back">{render(leafBack)}</div>
           </div>
         )}
       </div>
