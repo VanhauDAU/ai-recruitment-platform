@@ -1,0 +1,83 @@
+/*
+ * Đăng nhập/đăng ký NTD: style riêng trang, nạp cùng route lazy để không đẩy
+ * CSS khởi tạo. Trên điện thoại thu gọn phần đầu để form lên sát màn hình đầu.
+ */
+.employer-register .employer-auth-logo,
+.employer-register .employer-auth-logo > * {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+}
+
+.employer-register-step {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--brand-primary-hover);
+}
+
+.employer-register-step__bars {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.employer-register-step__bars i {
+  width: 1.75rem;
+  height: 0.25rem;
+  border-radius: 9999px;
+  background: #e2e8f0;
+}
+
+.employer-register-step__bars i[data-active='true'] {
+  background: var(--brand-primary);
+}
+
+.employer-register-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 639.98px) {
+  :is(.employer-login, .employer-register) .employer-auth-logo,
+  :is(.employer-login, .employer-register) .employer-auth-logo > * {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .employer-login .employer-auth-logo {
+    margin-bottom: 1rem;
+  }
+
+  .employer-auth-header {
+    margin-bottom: 1.25rem;
+  }
+
+  .employer-auth-title {
+    font-size: 1.625rem;
+    line-height: 1.2;
+  }
+
+  .employer-auth-subtitle {
+    margin-top: 0.5rem;
+  }
+
+  .employer-register-section-title {
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .employer-register-rules {
+    margin-bottom: 1.25rem;
+  }
+
+  /* Nút chính lên trên, dễ chạm bằng ngón cái; "Quay lại" xuống dưới. */
+  .employer-register-actions {
+    display: flex;
+    flex-direction: column-reverse;
+  }
+}

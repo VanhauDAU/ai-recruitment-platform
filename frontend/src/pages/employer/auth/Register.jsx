@@ -20,19 +20,38 @@ import { useSession } from '@/entities/account/session'
 import { settingText, useSiteSettings } from '@/entities/system/site-settings'
 import { getApiErrorMessage } from '@/shared/api/error-mapper'
 import { EMPLOYER_ACCOUNT_VERIFY_URL, EMPLOYER_COMPLETE_PROFILE_URL, employerAppPath } from '@/shared/config/portals'
+import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import { toastSoundOptions } from '@/shared/lib/sound-effects'
 import { message } from '@/shared/lib/toast'
 import { shouldSubmitRegistrationOnEnter } from './registration-keyboard'
 import { m } from '@/shared/config/i18n'
+import './employer-auth.css'
 
 const REGISTRATION_FIELDS = new Set([
   'email', 'password', 'full_name', 'gender', 'contact_phone',
   'work_location', 'terms_accepted', 'marketing_opt_in',
 ])
 
-function RegistrationSectionTitle({ title, description }) {
+const REGISTRATION_STEPS = 2
+
+function LoginPrompt({ className }) {
   return (
-    <div className="mb-6 border-b border-slate-100 pb-4">
+    <p className={`text-sm text-slate-500 ${className}`}>
+      {m.employer_account_register_have_account()}{' '}
+      <Link to={employerAppPath('/dang-nhap')} className="font-semibold !text-[var(--brand-primary-hover)] hover:underline">{m.employer_account_register_login_now()}</Link>
+    </p>
+  )
+}
+
+function RegistrationSectionTitle({ step, title, description }) {
+  return (
+    <div className="employer-register-section-title mb-6 border-b border-slate-100 pb-4">
+      <p className="employer-register-step">
+        <span className="employer-register-step__bars" aria-hidden="true">
+          {Array.from({ length: REGISTRATION_STEPS }, (_, index) => <i key={index} data-active={index < step} />)}
+        </span>
+        {m.employer_account_register_step_progress({ current: step, total: REGISTRATION_STEPS })}
+      </p>
       <h2 className="text-lg font-black tracking-tight text-slate-900 sm:text-xl">{title}</h2>
       <p className="mt-1 text-sm leading-6 text-slate-500">{description}</p>
     </div>
@@ -43,7 +62,7 @@ function RegistrationRules({ expanded, hotline, onToggle, siteName }) {
   const phoneHref = hotline ? `tel:${hotline.replace(/[^\d+]/g, '')}` : undefined
 
   return (
-    <section className="login-field mb-7 overflow-hidden rounded-xl border border-[var(--brand-primary)] bg-white" aria-labelledby="registration-rules-title">
+    <section className="employer-register-rules login-field mb-7 overflow-hidden rounded-xl border border-[var(--brand-primary)] bg-white" aria-labelledby="registration-rules-title">
       <button
         type="button"
         aria-controls="registration-rules-content"
@@ -90,7 +109,9 @@ export default function EmployerRegister() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [step, setStep] = useState(1)
-  const [rulesExpanded, setRulesExpanded] = useState(true)
+  // Điện thoại: thu gọn quy định và không tự focus email (bàn phím che form, trang nhảy xuống giữa).
+  const isDesktop = useMediaQuery('(min-width: 640px)')
+  const [rulesExpanded, setRulesExpanded] = useState(isDesktop)
   const [passwordFocused, setPasswordFocused] = useState(false)
   const hotline = settingText(settings.hotline)
   const password = Form.useWatch('password', form) || ''
@@ -208,17 +229,19 @@ export default function EmployerRegister() {
   }
 
   return (
-    <div className="w-full">
+    <div className="employer-register w-full">
       <AuthFormStyles />
-      <header className="login-card mb-6">
+      <header className="login-card employer-auth-header mb-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <AuthLogo className="!mx-0 !h-12 !w-12 !rounded-xl" />
+          <AuthLogo className="employer-auth-logo !mx-0" />
           <span className="rounded-full bg-[var(--brand-primary-soft)] px-3 py-1.5 text-xs font-bold text-[var(--brand-primary-hover)]">{m.employer_account_register_badge()}</span>
         </div>
-        <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">{m.employer_account_register_title()}</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+        <h1 className="employer-auth-title mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">{m.employer_account_register_title()}</h1>
+        <p className="employer-auth-subtitle mt-3 max-w-2xl text-sm leading-6 text-slate-600">
           {m.employer_account_register_subtitle()}
         </p>
+        {/* Điện thoại: người đã có tài khoản thấy lối đăng nhập ngay, không phải cuộn hết form. */}
+        {!isDesktop && <LoginPrompt className="mt-2" />}
       </header>
 
       <RegistrationRules
@@ -241,7 +264,7 @@ export default function EmployerRegister() {
       >
         {step === 1 ? (
           <section className="login-field">
-            <RegistrationSectionTitle title={m.employer_account_register_step1_title()} description={m.employer_account_register_step1_desc()} />
+            <RegistrationSectionTitle step={1} title={m.employer_account_register_step1_title()} description={m.employer_account_register_step1_desc()} />
             <div className="border-b border-slate-100 pb-5">
               <p className="mb-3 text-sm font-semibold text-slate-700">{m.employer_account_register_consent_prompt()}</p>
               <EmployerConsentFields compact />
@@ -265,6 +288,12 @@ export default function EmployerRegister() {
                 label={m.employer_account_register_email_label()}
                 validateTrigger="onBlur"
                 className="md:col-span-2"
+                extra={(
+                  <span className="mt-2 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-900">
+                    <InfoCircleOutlined className="mt-0.5 shrink-0 text-amber-600" aria-hidden="true" />
+                    <span>{m.employer_account_register_domain_warning()}</span>
+                  </span>
+                )}
                 rules={[
                   { required: true, message: m.employer_account_register_email_required() },
                   { type: 'email', message: m.employer_account_register_email_invalid() },
@@ -277,12 +306,8 @@ export default function EmployerRegister() {
                   },
                 ]}
               >
-                <Input autoFocus autoComplete="email" prefix={<MailOutlined className="text-[var(--brand-primary)]" />} placeholder="hr@congty.vn" className="!h-12 !rounded-lg !text-base" />
+                <Input autoFocus={isDesktop} autoComplete="email" prefix={<MailOutlined className="text-[var(--brand-primary)]" />} placeholder="hr@congty.vn" className="!h-12 !rounded-lg !text-base" />
               </Form.Item>
-              <p className="-mt-3 mb-5 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-900 md:col-span-2">
-                <InfoCircleOutlined className="mt-0.5 shrink-0 text-amber-600" aria-hidden="true" />
-                <span>{m.employer_account_register_domain_warning()}</span>
-              </p>
               <Form.Item name="password" label={m.employer_account_register_password_label()} rules={[{ required: true, message: m.employer_account_register_password_required() }, { validator: employerPasswordValidationRule }]} className="!mb-1">
                 <Input.Password
                   autoComplete="new-password"
@@ -317,9 +342,9 @@ export default function EmployerRegister() {
           </section>
         ) : (
           <section className="login-field">
-            <RegistrationSectionTitle title={m.employer_account_register_step2_title()} description={m.employer_account_register_step2_desc()} />
+            <RegistrationSectionTitle step={2} title={m.employer_account_register_step2_title()} description={m.employer_account_register_step2_desc()} />
             <EmployerRegistrationFields provinces={provincesQuery.data || []} locationsLoading={provincesQuery.isLoading} />
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            <div className="employer-register-actions">
               <button type="button" onClick={returnToAccount} className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 px-6 py-4 text-base font-bold text-slate-700 transition hover:border-[var(--brand-primary)]/40 hover:text-[var(--brand-primary-hover)]"><ArrowLeftOutlined />{m.employer_account_register_back()}</button>
               <button type="submit" disabled={loading} className="submit-btn flex cursor-pointer items-center justify-center gap-2.5 rounded-xl px-6 py-4 text-base font-bold text-white disabled:cursor-not-allowed disabled:opacity-70">
                 {loading ? m.employer_account_register_submitting() : <><span>{m.employer_account_register_submit()}</span><ArrowRightOutlined /></>}
@@ -329,10 +354,7 @@ export default function EmployerRegister() {
         )}
       </Form>
 
-      <p className="login-field mt-6 text-center text-sm text-slate-500">
-        {m.employer_account_register_have_account()}{' '}
-        <Link to={employerAppPath('/dang-nhap')} className="font-semibold !text-[var(--brand-primary-hover)] hover:underline">{m.employer_account_register_login_now()}</Link>
-      </p>
+      {isDesktop && <LoginPrompt className="login-field mt-6 text-center" />}
     </div>
   )
 }

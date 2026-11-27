@@ -101,6 +101,12 @@ export default function EmployerMarketingLayout() {
             )}
             <span className="hidden sm:block"><LanguageSwitcher /></span>
             <div className="hidden items-center gap-2 md:flex">{authButtons}</div>
+            {/* Điện thoại: lối đăng nhập luôn hiện, không phải mở menu mới thấy. */}
+            {!isEmployer && (
+              <Link to={employerAppPath('/dang-nhap')} className="md:hidden">
+                <Button shape="round">{m.marketing_nav_login()}</Button>
+              </Link>
+            )}
             <button
               type="button"
               aria-label={m.marketing_nav_open_menu()}
