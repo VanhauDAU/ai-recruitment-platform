@@ -1,9 +1,11 @@
-"""Bước 4 của đối sánh: chấm điểm một cặp CV–tin theo công thức `hybrid-v2`.
+"""Bước 4 của đối sánh: chấm điểm một cặp CV–tin theo công thức `hybrid-v3`.
 
 | Tệp | Việc |
 | --- | --- |
 | `semantic.py` | Cosine, hiệu chuẩn cosine → 0–100, MaxSim cho câu bằng chứng |
 | `criteria.py` | Năm tiêu chí (kỹ năng, kinh nghiệm, học vấn, cấp bậc, ngoại ngữ) |
+| `skill_groups.py` | Nhóm kỹ năng thay thế nhau của tin ("một trong", "hoặc") |
+| `requirements.py` | Cross-encoder phán từng yêu cầu và từng kỹ năng còn thiếu |
 | `engine.py` | Mức liên quan (toàn văn + chức danh), ghép câu bằng chứng, cộng điểm có trọng số, mức và độ tin cậy |
 
 Điểm tổng là trung bình có trọng số của các tiêu chí tính được; tiêu chí thiếu
@@ -19,18 +21,27 @@ dữ liệu hoặc tin không yêu cầu bị loại và trọng số được c
 - **Trần ngoại ngữ.** Thiếu ngoại ngữ bắt buộc thì điểm tổng tối đa 64 (mức
   "Tương đối phù hợp").
 
-Khác `hybrid-v1` (số đo ở `ml/reports/eval_validation.md`): bỏ tiêu chí địa điểm
-(CV không mang địa điểm, rubric không xét), tắt khớp kỹ năng "viết khác tên" với
-mô hình chưa fine-tune (xem `domain/calibration.py`), thêm hệ số liên quan.
+Các bản công thức (số đo ở `ml/reports/eval_validation.md`):
+- `hybrid-v2` khác `hybrid-v1`: bỏ tiêu chí địa điểm (CV không mang địa điểm, rubric
+  không xét), tắt khớp kỹ năng "viết khác tên" với mô hình chưa fine-tune (xem
+  `domain/calibration.py`), thêm hệ số liên quan.
+- `hybrid-v3` khác `hybrid-v2`: kỹ năng tin viết dạng lựa chọn được chấm theo nhóm
+  (`skill_groups.py`), CV có một kỹ năng trong nhóm là đạt cả nhóm. Khi có cross-encoder
+  (`requirements.py`): từng câu yêu cầu được phán đạt / có liên quan / chưa thấy, và kỹ
+  năng CV không ghi đúng tên được nhận qua câu chứng minh. Độ phủ yêu cầu được tính nhưng
+  không vào điểm: trên validation, đưa nó vào mức liên quan làm Spearman giảm từ 0,822
+  xuống 0,802 (`ml/reports/eval_validation.md`).
+
 `ABLATIONS` cho phép tắt từng thay đổi để đo riêng phần đóng góp của nó; sản phẩm
 luôn chạy với `ablation=()`.
 """
 
-from . import criteria
+from . import criteria, requirements
 from .criteria import EXPERIENCE_SECTIONS, MatchInput
 from .semantic import best_matches, calibration_for, cosine, requirement_status, to_score
+from .skill_groups import alternative_groups
 
-RESULT_SCHEMA_VERSION = 2
+RESULT_SCHEMA_VERSION = 3
 WEIGHTS = {
     'skills': 0.40,
     'experience': 0.30,
@@ -43,8 +54,14 @@ GENERIC_CRITERIA = ('education', 'position_level', 'languages')
 # Mức liên quan R từ đó ba tiêu chí trên được tính đủ: giữa thang hiệu chuẩn (0 là
 # trung vị cặp khác ngành, 100 là phân vị 90 cặp khớp mạnh). Chọn trên validation.
 RELEVANCE_FULL = 50
-# Tên các thay đổi của `hybrid-v2` có thể tắt khi đo (lệnh `matching_evaluate`).
-ABLATIONS = ('semantic_skills', 'no_relevance_discount')
+# Tên các thay đổi của công thức có thể tắt khi đo (lệnh `matching_evaluate`).
+ABLATIONS = (
+    'semantic_skills',
+    'no_relevance_discount',
+    'no_skill_groups',
+    'coverage_in_relevance',
+    'no_ce_skills',
+)
 LANGUAGE_REQUIRED_CAP = 64
 LEVELS = (
     (80, 'very_high', 'Rất phù hợp'),
@@ -92,9 +109,16 @@ def _title_index(chunks):
     return next((index for index, chunk in enumerate(chunks) if chunk['section'] == 'title'), None)
 
 
-def _relevance(cv_chunks, cv_vectors, job_chunks, job_vectors, cv_document_vector, job_document_vector, calibration):  # fmt: skip
-    """Mức liên quan 0–100: trung bình điểm toàn văn và điểm chức danh (phép nào so được)."""
+def _relevance(cv_chunks, cv_vectors, job_chunks, job_vectors, cv_document_vector, job_document_vector, calibration, coverage=None):  # fmt: skip
+    """Mức liên quan 0–100: trung bình điểm toàn văn và điểm chức danh (phép nào so được).
+
+    `coverage` (độ phủ yêu cầu của cross-encoder) chỉ được truyền vào khi đo phương án đưa nó
+    vào mức liên quan; sản phẩm không dùng.
+    """
     scores, detail = [], {}
+    if coverage is not None:
+        detail['requirement_coverage'] = round(coverage, 1)
+        scores.append(coverage)
     if cv_document_vector is not None and job_document_vector is not None:
         detail['document_similarity'] = cosine(job_document_vector, cv_document_vector)
         scores.append(to_score(detail['document_similarity'], calibration.document))
@@ -123,14 +147,23 @@ def score_match(
     cv_document_vector,
     job_document_vector,
     model_version,
+    catalog=None,
     ablation=(),
+    calibration=None,
+    reranker=None,
 ):
     """Chấm một cặp CV–tin.
 
     `cv`/`job` là `profile_json`; chunk là {section, text} kèm ma trận vector cùng
-    thứ tự; vector tài liệu là vector toàn văn (có thể None). `ablation` chỉ dùng
-    khi đo: `semantic_skills` bật lại khớp kỹ năng viết khác tên,
-    `no_relevance_discount` bỏ hệ số liên quan.
+    thứ tự; vector tài liệu là vector toàn văn (có thể None). `catalog` là danh mục
+    kỹ năng (`SkillCatalog`) để nhận nhóm kỹ năng thay thế trong câu yêu cầu của tin;
+    không truyền thì mọi kỹ năng được chấm riêng. `ablation` chỉ dùng khi đo:
+    `semantic_skills` bật lại khớp kỹ năng viết khác tên, `no_relevance_discount` bỏ
+    hệ số liên quan, `no_skill_groups` bỏ nhóm kỹ năng thay thế. `calibration` thay mốc
+    quy đổi của `model_version` bằng một bộ mốc khác; chỉ dùng khi dò mốc. `reranker` là
+    cross-encoder (`services/reranker.py`): có nó thì từng câu yêu cầu và từng kỹ năng còn
+    thiếu được phán bằng cross-encoder (`requirements.py`); `no_ce_skills` không dùng nó để
+    nhận kỹ năng, `coverage_in_relevance` thử đưa độ phủ yêu cầu vào mức liên quan.
     """
     unknown = set(ablation) - set(ABLATIONS)
     if unknown:
@@ -141,7 +174,7 @@ def score_match(
         and not any(chunk['section'] in EXPERIENCE_SECTIONS for chunk in cv_chunks)
     ):
         raise ScoringError('cv_insufficient_content')
-    calibration = calibration_for(model_version)
+    calibration = calibration or calibration_for(model_version)
     requirement_hits = _hits(
         job_chunks, job_vectors, cv_chunks, cv_vectors, section='requirement', cv_sections=EXPERIENCE_SECTIONS
     )  # fmt: skip
@@ -149,9 +182,27 @@ def score_match(
         name: (similarity, sentence)
         for name, similarity, sentence in _hits(job_chunks, job_vectors, cv_chunks, cv_vectors, section='skill')
     }  # fmt: skip
+    judged = None
+    if reranker is not None:
+        own = {skill['skill_id'] for skill in cv['skills']}
+        missing = [
+            skill
+            for skill in job['skills']
+            if skill['counted'] and skill['skill_id'] not in own and 'no_ce_skills' not in ablation
+        ]
+        judged = requirements.judge(
+            job, job_chunks, job_vectors, cv_chunks, cv_vectors,
+            reranker=reranker, catalog=catalog, missing_skills=missing,
+        )  # fmt: skip
+    coverage = judged.coverage if judged is not None else None
+    # Độ phủ yêu cầu chỉ là thông tin kèm theo: đưa nó vào mức liên quan làm điểm kém đi
+    # (câu yêu cầu chung chung kéo trung bình xuống), nên chỉ bật khi đo (`coverage_in_relevance`).
+    coverage_term = coverage if 'coverage_in_relevance' in ablation else None
     relevance, relevance_detail = _relevance(
-        cv_chunks, cv_vectors, job_chunks, job_vectors, cv_document_vector, job_document_vector, calibration
+        cv_chunks, cv_vectors, job_chunks, job_vectors, cv_document_vector, job_document_vector, calibration, coverage_term
     )  # fmt: skip
+    requirement_texts = [chunk['text'] for chunk in job_chunks if chunk['section'] == 'requirement']
+    grouped = catalog is not None and 'no_skill_groups' not in ablation
     data = MatchInput(
         cv,
         job,
@@ -160,6 +211,10 @@ def score_match(
         relevance,
         relevance_detail,
         semantic_skills=calibration.semantic_skills or 'semantic_skills' in ablation,
+        skill_groups=tuple(alternative_groups(job['skills'], requirement_texts, catalog))
+        if grouped
+        else (),
+        skill_evidence=judged.skills if judged is not None else {},
     )
     components = [rule(data) for rule in criteria.CRITERIA]
 
@@ -202,6 +257,7 @@ def score_match(
             'label': label,
             'confidence': confidence,
             'relevance': None if relevance is None else round(relevance),
+            'coverage': None if coverage is None else round(coverage),
         },
         'components': [
             {
@@ -221,7 +277,9 @@ def score_match(
             ),
             'extra': skills_detail.get('extra', []),
         },
-        'requirements': [
+        'requirements': judged.requirements
+        if judged is not None
+        else [
             {
                 'text': text,
                 'status': requirement_status(similarity, calibration),
@@ -241,6 +299,7 @@ def score_match(
             'experience_estimated': estimated,
             'language_cap_applied': language_cap,
             'relevance_discount_applied': discounted,
+            'reranker_used': judged is not None,
             'insufficient': insufficient,
         },
     }

@@ -1,0 +1,20 @@
+{
+  "seed": 42,
+  "method": "rải theo nhóm ngành trong các tin ngoài tập vàng còn đủ CV qua cổng; không lấy tin đã đổi ô kinh nghiệm",
+  "jobs": [
+    "JD-09",
+    "JD-31",
+    "JD-32",
+    "JD-37",
+    "JD-48",
+    "JD-50",
+    "JD-61",
+    "JD-64",
+    "JD-72",
+    "JD-82",
+    "JD-84",
+    "JD-86",
+    "JD-92",
+    "JD-98"
+  ]
+}

@@ -28,24 +28,48 @@ ml/
     baseline.py           TF-IDF và BM25, kiểm tra trên nhãn yếu
     build_gold_pairs.py   ghép cặp tập vàng (BM25 + e5 + ngẫu nhiên), phiếu chấm; --extend cho đợt 2
     agreement.py          so nhãn người với nhãn Claude trên các cặp kiểm chứng
+    build_audit_page.py   sinh trang chấm mù 50 cặp cho người (audit_blind.html), có bảng tiêu chí theo rubric
     export_profiles.py    xuất profile_json từ hệ thống (lệnh matching_export_dataset)
     check_profiles.py     đối chiếu profile_json với manifest, kiểm tra "không bịa"
     calibrate.py          AUC và mốc hiệu chuẩn cosine → điểm của từng phép so
+    calibrate_labeled.py  mốc quy đổi cosine → điểm của một bi-encoder, đo trên tập hiệu chỉnh có nhãn
+    calibrate_scale.py    dò mốc thang điểm bằng công thức đầy đủ của sản phẩm trên tập hiệu chỉnh
+    evaluate_calibration.py  công thức có và không có cross-encoder trên tập hiệu chỉnh
+    interpolate_model.py  nội suy trọng số giữa bi-encoder gốc và bản fine-tune (WiSE-FT)
     export_model.py       lưu mô hình vào models/<tên>/<phiên bản>/ cho ml-worker
     fetch_public.py       tải dữ liệu và mô hình công khai, ghi nguồn vào data/public/SOURCES.md
     merge_gold_passes.py  gộp hai lượt gán nhãn độc lập của đợt 2 tập vàng
     evaluate.py           đo các phương án trên tập vàng (validation; test chỉ một lần)
     evaluate_recommendations.py  đo gợi ý việc làm CV → tin trên nhãn yếu
+    check_score_floor.py  soát ngưỡng 30 điểm của gợi ý việc làm và Tìm CV khi đổi mô hình
+    error_analysis.py     soi lỗi của công thức đang chạy trên validation (tín hiệu, cosine theo nhãn, cặp lệch mức)
+    quality_gate.py       cổng chất lượng cho CV huấn luyện (generate_cvs.py --train), phiếu đọc kiểm 40 CV (labeling/train_cv_review*.md)
+    build_train_pairs.py  bộ ba huấn luyện bi-encoder, có chống rò rỉ sang tập vàng
+    build_calibration_pairs.py  ghép cặp tập hiệu chỉnh (14 tin, phiếu mù), gộp nhãn và đối chiếu với nhãn yếu
+    build_requirement_pairs.py  cặp (câu yêu cầu, câu CV) huấn luyện cross-encoder
+    build_requirement_eval.py  cặp yêu cầu–câu CV thật để đo cross-encoder (phiếu mù, gộp hai lượt nhãn)
+    evaluate_reranker.py  đo cross-encoder và các mốc so sánh trên cặp thật, chọn hai ngưỡng
+    evaluate_public.py    chuẩn ngoài resume-job-description-fit cho các bi-encoder
+    train.py              fine-tune bi-encoder E5 trên MPS
+    train_reranker.py     fine-tune cross-encoder phán từng yêu cầu
+    run_training.sh       chạy nối các bước dữ liệu → huấn luyện → đo
   labeling/               tài liệu gán nhãn (commit)
     rubric.md             thang chấm 0–4 đã chốt
+    requirement_rubric.md  quy tắc gán nhãn cặp yêu cầu–câu CV (đạt / có liên quan / không đạt)
+    requirement_labels.json  nhãn 358 cặp yêu cầu–câu CV thật (hai lượt gán, phiếu mù)
     gold_pairs.xlsx       phiếu chấm 150 cặp (tab Chấm), kèm nội dung JD và CV
     gold_pairs_claude.xlsx  nhãn 150 cặp do Claude gán (annotator = claude)
     gold_pairs_2.xlsx     phiếu chấm mù của đợt 2 (cặp 151–300)
     gold_pairs_claude_2.xlsx  nhãn đợt 2, kèm nhãn của từng lượt gán
     gold_pairs_2_passes.json  nhãn và lý do của hai lượt gán độc lập, phần phân xử
     education_key.json    bậc học theo chữ in ở tên bằng của 100 CV (đáp án khi kiểm tra trích xuất PDF)
-    audit_pairs.json      30 cặp kiểm chứng cố định (người chấm mù 5 cặp)
+    audit_pairs.json      50 cặp kiểm chứng cố định: 30 cặp đợt 1 + 20 cặp đợt 2 rút phân tầng
+    audit_blind.template.html  mẫu trang chấm mù; build_audit_page.py đổ nội dung tin và CV thành audit_blind.html (không commit)
+    audit_human.json      nhãn người chấm, xuất từ trang chấm mù (có khi người chấm xong)
     skill_merge.json      gộp kỹ năng trùng nghĩa khi nhập tin
+    calibration_jobs.json 14 tin của tập hiệu chỉnh (không vào huấn luyện; chọn bằng build_train_pairs.py)
+    calibration_labels.json  nhãn 0–4 của 321 cặp tập hiệu chỉnh (Claude gán theo rubric, phiếu mù)
+    train_cv_review*.md   phiếu đọc kiểm CV huấn luyện bằng mắt (lượt 1 đã chấm, lượt 2 đang chờ)
   data/                   KHÔNG commit (.gitignore)
     jd/
       jd_input.xlsx       100 tin thật, người làm đồ án nhập tay
@@ -54,6 +78,7 @@ ml/
     cv/
       cv_inventory.xlsx   sổ theo dõi kho CV
       synthetic/          CV-001…CV-100.json + manifest.json (nhãn yếu)
+      train/              CV huấn luyện TR-<tin>-<số>.json neo vào 70 tin ngoài tập vàng + manifest.json
       pdf/system/         15 PDF do hệ thống xuất (bản tải lên của CV tổng hợp)
       pdf/topcv/          36 PDF xuất từ TopCV, nhiều mẫu khác nhau
     labels/gold_pool.json nguồn ghép cặp và phép chia validation/test (không xem khi chấm)
@@ -67,7 +92,15 @@ ml/
     label_agreement.md, gold_batch2_agreement.md  đồng thuận nhãn (agreement.py, merge_gold_passes.py)
     check_profiles.md     trích xuất profile_json so với đáp án   (check_profiles.py)
     calibration_<mô hình>.md  AUC và mốc hiệu chuẩn               (calibrate.py)
+    calibration_set_<mô hình>.md  mốc và độ tách nhãn trên tập hiệu chỉnh (calibrate_labeled.py)
+    calibration_scale_<mô hình>.md  các bộ mốc thang điểm đã thử       (calibrate_scale.py)
+    eval_calibration.md   công thức có và không có cross-encoder   (evaluate_calibration.py)
+    requirement_labels.md, reranker_eval.md  nhãn và kết quả cross-encoder trên cặp thật (build_requirement_eval.py, evaluate_reranker.py)
+    eval_public.md        chuẩn ngoài tiếng Anh                    (evaluate_public.py)
+    calibration_labels.md  nhãn tập hiệu chỉnh, đối chiếu nhãn yếu  (build_calibration_pairs.py merge)
+    train_cv_gate.md, train_pairs.md, reranker_pairs.md  dữ liệu huấn luyện (quality_gate.py, build_train_pairs.py, build_requirement_pairs.py)
     eval_validation.{md,json}  bảng đo trên validation            (evaluate.py)
+    error_analysis_validation.md  lỗi của công thức đang chạy     (error_analysis.py)
     recommendations.{md,json}  đo gợi ý việc làm                  (evaluate_recommendations.py)
   models/                 KHÔNG commit; mô hình cho ml-worker (mount /models), kèm model_card.json
 ```
@@ -140,6 +173,27 @@ liệu cần Docker Compose đang chạy; mặc định chỉ chạy thử, thê
 
 11. `scripts/evaluate_recommendations.py`: đo gợi ý việc làm (CV → tin) trên nhãn yếu,
     so `semantic-v1` với luật `profile-rule-v2` và BM25 → `reports/recommendations.md`.
+    Mô hình khác mô hình gốc: `--model-version` kèm `--manage` có cùng phiên bản, kết quả ở
+    `reports/recommendations_<phiên bản>.md`.
+
+Huấn luyện và đưa một mô hình mới vào đo (đợt 26–27/11; cần Ollama cho bước sinh câu, tắt
+`backend` và `ml-worker` khi huấn luyện để đủ bộ nhớ MPS):
+
+12. Dữ liệu: `generate_cvs.py --train`, `enrich_cvs.py --train`, `quality_gate.py` (CV huấn
+    luyện và phiếu đọc kiểm), `build_train_pairs.py` (bộ ba, `reports/train_pairs.md`),
+    `build_requirement_pairs.py generate` rồi `pairs` (cặp cho cross-encoder,
+    `reports/reranker_pairs.md`).
+13. Tập hiệu chỉnh và nhãn: `build_calibration_pairs.py` (ghép cặp, phiếu mù) rồi `merge`;
+    `build_requirement_eval.py` rồi `merge` (cặp yêu cầu–câu CV thật).
+14. Huấn luyện: `train.py --mini-batch-size 2` (bi-encoder, khoảng 90 phút),
+    `interpolate_model.py` (trộn với mô hình gốc), `train_reranker.py` (cross-encoder).
+15. Hiệu chỉnh: `calibrate_labeled.py` rồi `calibrate_scale.py` cho bi-encoder,
+    `evaluate_reranker.py` cho hai ngưỡng cross-encoder; chép kết quả vào `CALIBRATIONS` và
+    `RERANKER_THRESHOLDS` (`backend/apps/matching/domain/calibration.py`).
+16. Đo: `evaluate.py --ablation --model … --hybrid-model … --reranker …` (luôn chạy đủ cờ,
+    thiếu cờ thì các dòng của mô hình khác biến mất khỏi báo cáo), `evaluate_calibration.py`,
+    `evaluate_public.py`, `matching_backfill --inline` với mô hình mới rồi bước 11 và
+    `check_score_floor.py`.
 
 Các script chạy lại an toàn: bỏ qua phần đã có.
 

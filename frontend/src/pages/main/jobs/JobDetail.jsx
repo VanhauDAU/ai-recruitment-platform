@@ -10,6 +10,7 @@ import { JobCompareButton } from '@/features/main/job/compare-jobs'
 import { ReportJobModal } from '@/features/main/job/report-job'
 import { useSession } from '@/entities/account/session'
 import { useSavedJob } from '@/features/main/job/saved-jobs'
+import { m } from '@/shared/config/i18n'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import { message } from '@/shared/lib/toast'
 import { buildJobDetailAlertPrefill } from './lib/job-detail-alert-prefill'
@@ -242,7 +243,7 @@ function NotFoundState() {
 }
 
 function EmptyRelatedJobs() {
-  return <p className="rounded-2xl border border-gray-200 bg-white p-5 text-sm text-slate-600">Chưa có việc làm liên quan. <Link to="/viec-lam" className="font-semibold !text-[var(--brand-primary)]">Xem tất cả việc làm</Link></p>
+  return <p className="rounded-2xl border border-gray-200 bg-white p-5 text-sm text-slate-600">{m.candidate_job_detail_related_empty()} <Link to="/viec-lam" className="font-semibold !text-[var(--brand-primary)]">{m.candidate_job_detail_all_jobs()}</Link></p>
 }
 
 function ApplyButtonLabel({ status }) {

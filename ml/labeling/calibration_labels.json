@@ -1,0 +1,2253 @@
+{
+ "annotator": "claude",
+ "rubric": "ml/labeling/rubric.md",
+ "pairs": [
+  {
+   "jd": "JD-09",
+   "cv": "TR-09-11",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Điều phối/quản lý kho 66 tháng, khác vị trí Tạp vụ – nấu ăn; chỉ cùng nhóm lao động ngoài B6 (kho vận) nên 1 theo E4; không có Nấu ăn, VSATTP, Sử dụng điện thoại, Sắp xếp công việc; Chu đáo là phẩm chất không đếm; A3 không đưa xuống 0."
+  },
+  {
+   "jd": "JD-09",
+   "cv": "TR-09-09",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Tạp vụ (43 tháng); có VSATTP (có chứng nhận), Sử dụng điện thoại, Sắp xếp công việc (suy từ quản lý lịch làm việc, A4), Bảo mật chỉ nêu ở tóm tắt; thiếu Nấu ăn là kỹ năng cốt lõi trong tiêu đề nên tối đa 2 (A1); tin không yêu cầu kinh nghiệm, học vấn Trung cấp đạt."
+  },
+  {
+   "jd": "JD-09",
+   "cv": "TR-31-09",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "CSKH logistics/xuất khẩu, thuộc nhóm Kinh doanh – CSKH (B6), khác ngành với Tạp vụ – nấu ăn; chỉ trùng thẻ Sắp xếp công việc, không có Nấu ăn, VSATTP; dừng ở bước vị trí."
+  },
+  {
+   "jd": "JD-09",
+   "cv": "TR-48-05",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Sales Logistics 22 tháng, nhóm Kinh doanh (B6), khác ngành; không có kỹ năng cần có nào của tin (Nấu ăn, VSATTP, Sắp xếp công việc, Sử dụng điện thoại, Bảo mật)."
+  },
+  {
+   "jd": "JD-09",
+   "cv": "TR-09-08",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Tạp vụ 14 tháng, có nấu bữa ăn hằng ngày cho 30 nhân viên; đủ cả Nấu ăn (cốt lõi), VSATTP (có chứng chỉ), Sắp xếp công việc, Sử dụng điện thoại, Bảo mật; tin không yêu cầu kinh nghiệm, Trung cấp ≥ THPT, cấp Nhân viên khớp (B1, B4)."
+  },
+  {
+   "jd": "JD-09",
+   "cv": "TR-31-11",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "CSKH bán lẻ 11 tháng, nhóm Kinh doanh – CSKH (B6), khác ngành; chỉ trùng thẻ Sắp xếp công việc, Trung thực là phẩm chất không đếm; không có Nấu ăn, VSATTP."
+  },
+  {
+   "jd": "JD-09",
+   "cv": "TR-98-04",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Nhân viên Kho 21 tháng, khác vị trí; chỉ cùng nhóm lao động ngoài B6 nên 1 (E4, A3); không có kỹ năng cần có nào của tin (Quản lý kho, Excel không dùng lại được), thiếu Nấu ăn cốt lõi."
+  },
+  {
+   "jd": "JD-09",
+   "cv": "TR-37-00",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Content Marketer, nhóm Marketing – Content (B6), khác ngành hẳn; không có kỹ năng cần có nào của tin."
+  },
+  {
+   "jd": "JD-09",
+   "cv": "TR-09-15",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Nhân viên Đóng gói 38 tháng, khác vị trí, chỉ cùng nhóm lao động ngoài B6 (sản xuất) nên 1 (E4); dùng lại được Sử dụng điện thoại, Bảo mật, Sắp xếp công việc; thiếu Nấu ăn cốt lõi, chứng chỉ an toàn thực phẩm nhưng không làm việc bếp/vệ sinh."
+  },
+  {
+   "jd": "JD-09",
+   "cv": "TR-32-10",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Cloud Engineer (CNTT phần mềm, B6), khác ngành hẳn; không có kỹ năng cần có nào của tin; dừng ở bước vị trí."
+  },
+  {
+   "jd": "JD-09",
+   "cv": "TR-98-02",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Nhân viên Kho/Điều phối kho 71 tháng, khác vị trí; chỉ cùng nhóm lao động ngoài B6 nên 1 (E4, A3); không có Nấu ăn, VSATTP, Sắp xếp công việc, Sử dụng điện thoại, Bảo mật."
+  },
+  {
+   "jd": "JD-09",
+   "cv": "TR-98-07",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Bảo vệ, mục Kinh nghiệm trống (6 tháng chỉ ghi ở dự án, B3; vị trí theo headline D7); lao động phổ thông cùng nhóm với Tạp vụ nhưng không làm đúng việc của tin nên 1 (E4, A3); không có kỹ năng cần có nào, thiếu Nấu ăn cốt lõi."
+  },
+  {
+   "jd": "JD-09",
+   "cv": "TR-09-14",
+   "label": 2,
+   "confidence": "không chắc",
+   "reason": "Đúng vị trí Tạp vụ 19 tháng; có Sử dụng điện thoại, Sắp xếp công việc, Bảo mật, VSATTP (có chứng chỉ); Nấu ăn không ghi trong kỹ năng, chỉ 'hỗ trợ chuẩn bị và phục vụ bữa trưa' là gợi ý mơ hồ nên không suy ra (A4) → thiếu cốt lõi, tối đa 2 (A1); phân vân với 4 nếu coi là có nấu ăn nên chọn mức thấp."
+  },
+  {
+   "jd": "JD-09",
+   "cv": "TR-09-13",
+   "label": 3,
+   "confidence": "không chắc",
+   "reason": "Đúng vị trí Tạp vụ – Nấu ăn 23 tháng tại bếp suất ăn; có Nấu ăn (cốt lõi), VSATTP (có chứng chỉ), Sắp xếp công việc; không thể hiện Sử dụng điện thoại và Bảo mật → thiếu 2 kỹ năng không cốt lõi nên 3; phân vân với 4 nếu Bảo mật được coi là phẩm chất không đếm (B1), chọn mức thấp; THPT đạt, không yêu cầu kinh nghiệm."
+  },
+  {
+   "jd": "JD-09",
+   "cv": "TR-09-07",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Nhân viên Đóng gói 9 tháng, khác vị trí, chỉ cùng nhóm lao động ngoài B6 nên 1 (E4, A3); chỉ dùng lại được Bảo mật (Chu đáo là phẩm chất không đếm); thiếu Nấu ăn cốt lõi, VSATTP, Sắp xếp công việc, Sử dụng điện thoại."
+  },
+  {
+   "jd": "JD-09",
+   "cv": "TR-09-10",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Vị trí Tạp vụ theo headline (D7), mục Kinh nghiệm trống nhưng tin không yêu cầu kinh nghiệm (B3); liệt kê đủ Nấu ăn (cốt lõi, không minh chứng), VSATTP, Sắp xếp công việc, Bảo mật (có ở dự án tạp vụ ngân hàng), Sử dụng điện thoại (không minh chứng); Trung cấp ≥ THPT, cấp bậc khớp (B1, B4)."
+  },
+  {
+   "jd": "JD-09",
+   "cv": "TR-98-10",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Nhân viên Kho 20 tháng, khác vị trí; chỉ cùng nhóm lao động ngoài B6 nên 1 (E4, A3); không có kỹ năng cần có nào của tin, thiếu Nấu ăn cốt lõi."
+  },
+  {
+   "jd": "JD-09",
+   "cv": "TR-09-03",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Nhân viên kho gần 5 năm, khác vị trí; chỉ cùng nhóm lao động ngoài B6 nên 1 (E4); chỉ dùng lại được Sắp xếp công việc (Cẩn thận là phẩm chất không đếm); thiếu Nấu ăn cốt lõi, VSATTP, Sử dụng điện thoại, Bảo mật."
+  },
+  {
+   "jd": "JD-09",
+   "cv": "TR-09-04",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Vị trí Tạp vụ theo headline (D7), mục Kinh nghiệm trống (9 tháng tạp vụ chỉ ghi ở dự án, B3) nhưng tin không yêu cầu kinh nghiệm; có Nấu ăn (cốt lõi, nấu bữa ăn công ty), VSATTP, Sắp xếp công việc, Bảo mật; chỉ thiếu Sử dụng điện thoại (1 kỹ năng không cốt lõi, B1); Trung cấp ≥ THPT, cấp bậc khớp."
+  },
+  {
+   "jd": "JD-09",
+   "cv": "TR-31-15",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "CSKH xuất khẩu thương mại điện tử 115 tháng, nhóm Kinh doanh – CSKH (B6), khác ngành; chỉ trùng thẻ Sắp xếp công việc; không có Nấu ăn, VSATTP."
+  },
+  {
+   "jd": "JD-09",
+   "cv": "TR-86-08",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Lễ tân khách sạn 35 tháng, nhóm Hành chính – Lễ tân (B6), khác ngành với Tạp vụ – nấu ăn; không có kỹ năng cần có nào của tin (Giao tiếp, phần mềm khách sạn không dùng lại được)."
+  },
+  {
+   "jd": "JD-09",
+   "cv": "TR-09-05",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Tạp vụ hơn 9 năm (có làm vệ sinh); có Sử dụng điện thoại, Sắp xếp công việc, Bảo mật; thiếu Nấu ăn (cốt lõi) và VSATTP → tối đa 2 (A1), khoảng một nửa kỹ năng; THPT đạt, không yêu cầu kinh nghiệm."
+  },
+  {
+   "jd": "JD-09",
+   "cv": "TR-84-15",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Hành chính văn phòng/Quản lý hành chính 104 tháng, nhóm Hành chính – Nhân sự (B6), khác ngành; không có kỹ năng cần có nào của tin."
+  },
+  {
+   "jd": "JD-09",
+   "cv": "TR-98-06",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Nhân viên Kho gần 5 năm, khác vị trí; chỉ cùng nhóm lao động ngoài B6 nên 1 (E4, A3); không có kỹ năng cần có nào của tin, thiếu Nấu ăn cốt lõi."
+  },
+  {
+   "jd": "JD-31",
+   "cv": "TR-72-04",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Kế toán công nợ, chưa có kinh nghiệm; khác nhóm ngành (Kế toán – Tài chính), không có kỹ năng cần có nào của tin CSKH xuất khẩu LCL (B6)."
+  },
+  {
+   "jd": "JD-31",
+   "cv": "TR-31-15",
+   "label": 2,
+   "confidence": "không chắc",
+   "reason": "Đúng vị trí CSKH Export, ~115 tháng (đủ), có cốt lõi Chứng từ xuất khẩu + Giao tiếp khách hàng, Giải quyết vấn đề, Làm việc nhóm (suy từ việc đã làm, A4); thiếu Phần mềm logistics và Quản lý thời gian → nền 3; học vấn THPT thấp hơn Cao đẳng trừ 1 (B4); tiếng Anh cơ bản đạt."
+  },
+  {
+   "jd": "JD-31",
+   "cv": "TR-98-05",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Nhân viên kho 21 tháng: cùng mảng logistics/kho vận nhưng khác vị trí, không làm chứng từ hay CSKH (E4); không có kỹ năng cần có nào ngoài phối hợp phòng ban; THPT và không ghi tiếng Anh nhưng không trừ xuống 0 (A3)."
+  },
+  {
+   "jd": "JD-31",
+   "cv": "TR-84-07",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Hành chính văn phòng ngân hàng 50 tháng; khác nhóm ngành (Hành chính – Nhân sự, B6), chỉ trùng Làm việc nhóm, không có chứng từ xuất khẩu, CSKH hay logistics."
+  },
+  {
+   "jd": "JD-31",
+   "cv": "TR-98-02",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Nhân viên/điều phối kho 71 tháng: cùng mảng logistics nhưng khác vị trí (E4); dùng lại được giao tiếp với nhà cung cấp, xử lý tình huống, phần mềm quản lý kho; thiếu cốt lõi Chứng từ xuất khẩu và Giao tiếp khách hàng; Trung cấp thấp hơn Cao đẳng, không trừ xuống 0 (A3)."
+  },
+  {
+   "jd": "JD-31",
+   "cv": "TR-48-09",
+   "label": 1,
+   "confidence": "không chắc",
+   "reason": "Sales Logistics 94 tháng: vị trí gần (C3, D6), cùng mảng logistics; chỉ có 2/6 kỹ năng (Giao tiếp khách hàng, Giải quyết vấn đề), thiếu cốt lõi Chứng từ xuất khẩu, Phần mềm logistics, Làm việc nhóm, Quản lý thời gian; phân vân 1–2 nên chọn mức thấp."
+  },
+  {
+   "jd": "JD-31",
+   "cv": "TR-72-03",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Kiểm toán viên nội bộ; khác nhóm ngành (Kế toán – Kiểm toán, B6), chỉ trùng Làm việc nhóm, không liên quan CSKH xuất khẩu."
+  },
+  {
+   "jd": "JD-31",
+   "cv": "TR-31-02",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Headline CSKH Export (D7), đủ 6/6 kỹ năng cần có kể cả cốt lõi Chứng từ xuất khẩu, Cao đẳng và tiếng Anh cơ bản đạt; nhưng mục Kinh nghiệm trống, 0/12 tháng (B3) → đủ kỹ năng nhưng lệch rõ kinh nghiệm: 2."
+  },
+  {
+   "jd": "JD-31",
+   "cv": "TR-31-14",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Headline Nhân viên CSKH (D7), đủ 6/6 kỹ năng cần có (Chứng từ xuất khẩu, Phần mềm logistics, LCL/FCL trong dự án), Cao đẳng Thương mại quốc tế, tiếng Anh cơ bản; mục Kinh nghiệm trống, 0/12 tháng (B3) → lệch rõ kinh nghiệm: 2."
+  },
+  {
+   "jd": "JD-31",
+   "cv": "TR-31-01",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Nhân viên CSKH tại công ty logistics/xuất nhập khẩu, ~33 tháng (đủ 12); có 5/6 kỹ năng: Chứng từ xuất khẩu (cốt lõi), Giao tiếp khách hàng, Quản lý thời gian, Giải quyết vấn đề, Làm việc nhóm (phối hợp đội XNK, A4); chỉ thiếu Phần mềm logistics không cốt lõi (B1); Cao đẳng, tiếng Anh cơ bản, cấp bậc khớp."
+  },
+  {
+   "jd": "JD-31",
+   "cv": "TR-98-09",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Nhân viên/điều phối kho 53 tháng: cùng mảng logistics nhưng khác vị trí (E4); kỹ năng chỉ Excel và phẩm chất cá nhân (không đếm), không có kỹ năng cần có nào; Trung cấp thấp hơn Cao đẳng, không trừ xuống 0 (A3)."
+  },
+  {
+   "jd": "JD-31",
+   "cv": "TR-48-02",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Sales Logistics mới tốt nghiệp: vị trí gần (C3, D6); có 2/6 kỹ năng (Giải quyết vấn đề, Giao tiếp khách hàng qua việc đã làm), thiếu cốt lõi Chứng từ xuất khẩu, Phần mềm logistics; mục Kinh nghiệm trống 0/12 tháng → cộng dồn dưới nửa kỹ năng và thiếu kinh nghiệm (C1): 1."
+  },
+  {
+   "jd": "JD-31",
+   "cv": "TR-61-10",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Graphic Designer 4 năm; khác ngành (Thiết kế – Media), không có kỹ năng cần có nào, không ghi tiếng Anh."
+  },
+  {
+   "jd": "JD-31",
+   "cv": "TR-50-03",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Tư vấn tuyển sinh/Telesales 8 tháng: cùng nhóm ngành, vị trí gần với CSKH (C3) nhưng mảng giáo dục; có 2/6 kỹ năng (Giao tiếp khách hàng, Quản lý thời gian), thiếu cốt lõi Chứng từ xuất khẩu, Phần mềm logistics; thiếu 4/12 tháng → 1."
+  },
+  {
+   "jd": "JD-31",
+   "cv": "TR-31-09",
+   "label": 3,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Nhân viên CSKH tại công ty logistics ~10 năm, có giao dịch LCL; có 4/6 kỹ năng: Chứng từ xuất khẩu (cốt lõi), Phần mềm logistics, Giao tiếp khách hàng, Giải quyết vấn đề; thiếu Làm việc nhóm và Quản lý thời gian (chỉ có Sắp xếp công việc, không tính tương đương) → thiếu 2 kỹ năng không cốt lõi: 3; Cử nhân, tiếng Anh cơ bản đạt; chức danh Nhân viên nên không thừa trình độ (B5)."
+  },
+  {
+   "jd": "JD-31",
+   "cv": "TR-86-14",
+   "label": 0,
+   "confidence": "không chắc",
+   "reason": "Lễ tân chuỗi bán lẻ ~32 tháng (D7): thuộc nhóm Hành chính – Lễ tân, khác nhóm với CSKH/logistics (B6); có chăm sóc khách hàng, giải quyết khiếu nại, tiếng Anh nhưng không có chứng từ xuất khẩu hay logistics; phân vân 0–1 nên chọn mức thấp."
+  },
+  {
+   "jd": "JD-31",
+   "cv": "TR-50-00",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Tư vấn online/CSKH ngân hàng, chỉ thực tập trong mục dự án: cùng nhóm ngành CSKH, khác mảng; có 2/6 kỹ năng (Giao tiếp khách hàng, Làm việc nhóm), thiếu cốt lõi Chứng từ xuất khẩu; 0/12 tháng kinh nghiệm (B3, C1) → 1; không ghi tiếng Anh nhưng không trừ xuống 0 (A3)."
+  },
+  {
+   "jd": "JD-31",
+   "cv": "TR-31-05",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Nhân viên Dịch vụ khách hàng thương mại điện tử 17 tháng (đủ 12): đúng nghề CSKH nhưng khác mảng; có 4/6 kỹ năng (Làm việc nhóm, Quản lý thời gian, Giao tiếp khách hàng, Giải quyết vấn đề qua xử lý khiếu nại – A4); thiếu cốt lõi Chứng từ xuất khẩu và Phần mềm logistics → tối đa 2; Cao đẳng, tiếng Anh cơ bản đạt."
+  },
+  {
+   "jd": "JD-31",
+   "cv": "TR-31-06",
+   "label": 3,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Nhân viên CSKH Export ~22 tháng (đủ 12), đủ 6/6 kỹ năng cần có có minh chứng (Chứng từ xuất khẩu, Phần mềm logistics…), tiếng Anh cơ bản, cấp bậc khớp → nền 4; học vấn THPT thấp hơn Cao đẳng trừ 1 (B4): 3."
+  },
+  {
+   "jd": "JD-31",
+   "cv": "TR-48-08",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Sales Logistics mới tốt nghiệp: vị trí gần (C3, D6); có 2/6 kỹ năng (Giao tiếp khách hàng, Giải quyết vấn đề), thiếu cốt lõi Chứng từ xuất khẩu, Phần mềm logistics, Quản lý thời gian; mục Kinh nghiệm trống 0/12 tháng → cộng dồn (C1): 1; Cao đẳng, tiếng Anh đạt."
+  },
+  {
+   "jd": "JD-31",
+   "cv": "TR-31-11",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Nhân viên CSKH bán lẻ 11 tháng (thiếu ≤ 1 tháng coi như đủ, B3): đúng nghề CSKH nhưng khác mảng; có 3/6 kỹ năng (Quản lý thời gian, Giao tiếp khách hàng, Giải quyết vấn đề – A4); thiếu cốt lõi Chứng từ xuất khẩu, Phần mềm logistics, Làm việc nhóm → tối đa 2; Cử nhân, tiếng Anh đạt."
+  },
+  {
+   "jd": "JD-31",
+   "cv": "TR-31-07",
+   "label": 1,
+   "confidence": "không chắc",
+   "reason": "CSKH chuỗi bán lẻ 53 tháng: cùng nghề CSKH nhưng khác hẳn mảng xuất khẩu; chỉ 2/6 kỹ năng suy từ việc đã làm (Giao tiếp khách hàng, Giải quyết vấn đề – A4), kỹ năng ghi trong CV toàn phẩm chất cá nhân; thiếu cốt lõi Chứng từ xuất khẩu, Phần mềm logistics, Làm việc nhóm, Quản lý thời gian; phân vân 1–2 (A2) nên chọn mức thấp."
+  },
+  {
+   "jd": "JD-32",
+   "cv": "TR-32-07",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "IT Helpdesk, cùng nhóm CNTT nhưng khác vị trí Cloud Engineer; không có AWS, Linux (chỉ Windows, ITIL); 0 tháng kinh nghiệm (chỉ có dự án, B3); Cao đẳng, tiếng Anh giao tiếp thấp hơn yêu cầu; không xuống 0 vì cùng nhóm ngành (A3, B6, D7)"
+  },
+  {
+   "jd": "JD-32",
+   "cv": "TR-09-15",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Nhân viên đóng gói, khác ngành hoàn toàn với Cloud Engineer; không có AWS, Linux hay kỹ năng CNTT nào (B6)"
+  },
+  {
+   "jd": "JD-32",
+   "cv": "TR-64-15",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Fullstack Developer (ReactJS, Java, automation test), cùng nhóm CNTT nhưng khác vị trí; thiếu cả AWS và Linux, chỉ có CI/CD Jenkins dùng lại được; 0 tháng kinh nghiệm (chỉ dự án, B3); tiếng Anh đạt (B6, D7)"
+  },
+  {
+   "jd": "JD-32",
+   "cv": "TR-64-12",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Automation Tester 15 tháng, cùng nhóm CNTT nhưng khác vị trí; thiếu cả AWS và Linux (cốt lõi), chỉ có CI/CD dùng lại được; tiếng Anh đạt (A1, B6)"
+  },
+  {
+   "jd": "JD-32",
+   "cv": "TR-64-06",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Automation Tester 11 tháng, cùng nhóm CNTT nhưng khác vị trí; thiếu cả AWS và Linux, chỉ có CI/CD Jenkins dùng lại được; tiếng Anh đạt (A1, B6)"
+  },
+  {
+   "jd": "JD-32",
+   "cv": "TR-92-00",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Graphic Designer (thiết kế đa phương tiện), khác ngành với Cloud Engineer; kỹ năng 'AI' là Adobe Illustrator, không có AWS, Linux; không có điểm chung (B6)"
+  },
+  {
+   "jd": "JD-32",
+   "cv": "TR-32-12",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Cloud Engineer đúng vị trí, khoảng 53 tháng (yêu cầu 24); có đủ AWS và Linux với minh chứng, thêm Terraform, bảo mật, khôi phục; Cử nhân, tiếng Anh làm việc đạt; chức danh vẫn là nhân viên nên không trừ thừa trình độ (B1, B5)"
+  },
+  {
+   "jd": "JD-32",
+   "cv": "TR-64-11",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "IT Helpdesk Specialist 37 tháng, cùng nhóm CNTT nhưng khác vị trí; thiếu cả AWS và Linux, chỉ có hỗ trợ kỹ thuật và Selenium; Cao đẳng thấp hơn yêu cầu; tiếng Anh đạt; không xuống 0 (A3, B6)"
+  },
+  {
+   "jd": "JD-32",
+   "cv": "TR-32-03",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Manual Tester 54 tháng, cùng nhóm CNTT nhưng khác vị trí; thiếu cả AWS và Linux; tiếng Anh giao tiếp thấp hơn mức làm việc; không xuống 0 vì cùng nhóm ngành (A3, B6)"
+  },
+  {
+   "jd": "JD-32",
+   "cv": "TR-32-01",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Cloud Engineer theo headline (D7), có AWS và Linux qua chứng chỉ LPI (A4) nhưng 0 tháng ở mục Kinh nghiệm so với 24 tháng yêu cầu (B3): đủ kỹ năng mà lệch rõ kinh nghiệm, nền 2; tiếng Anh giao tiếp thấp hơn mức làm việc bắt buộc, trừ 1 (A3)"
+  },
+  {
+   "jd": "JD-32",
+   "cv": "TR-48-12",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Sales Logistics, khác ngành với Cloud Engineer; không có AWS, Linux hay kỹ năng CNTT (B6)"
+  },
+  {
+   "jd": "JD-32",
+   "cv": "TR-64-02",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Automation Tester/QA Specialist khoảng 58 tháng, cùng nhóm CNTT nhưng khác vị trí; thiếu cả AWS và Linux, chỉ có CI/CD dùng lại được; Cao đẳng; tiếng Anh đạt (A1, B6)"
+  },
+  {
+   "jd": "JD-32",
+   "cv": "TR-32-05",
+   "label": 1,
+   "confidence": "không chắc",
+   "reason": "Cloud Engineer đúng vị trí, có AWS và Linux qua chứng chỉ (A4, không minh chứng Linux); kinh nghiệm 22–23 tháng so với 24, sát ngưỡng B3 nên phân vân nền 3 hay 4, lấy nền 3 (thiếu một bậc); Cao đẳng thấp hơn Đại học trừ 1; tiếng Anh giao tiếp thấp hơn mức làm việc trừ 1 (A3); phân vân 1–2, chọn mức thấp"
+  },
+  {
+   "jd": "JD-32",
+   "cv": "TR-32-13",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Cloud Engineer theo headline (D7), có AWS nhưng không thể hiện Linux (đúng một nửa kỹ năng) và 0 tháng ở mục Kinh nghiệm (chỉ thực tập trong dự án, B3): cộng dồn theo D8 thành 1; Cao đẳng và tiếng Anh giao tiếp đều thấp hơn yêu cầu nhưng không xuống 0 (A3)"
+  },
+  {
+   "jd": "JD-32",
+   "cv": "TR-86-15",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Pháp chế doanh nghiệp, khác ngành với Cloud Engineer; không có AWS, Linux hay kỹ năng CNTT (B6)"
+  },
+  {
+   "jd": "JD-32",
+   "cv": "TR-64-05",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Automation Tester khoảng 59 tháng, cùng nhóm CNTT nhưng khác vị trí; thiếu cả AWS và Linux, chỉ có CI/CD Jenkins dùng lại được; tiếng Anh đạt (A1, B6)"
+  },
+  {
+   "jd": "JD-32",
+   "cv": "TR-64-07",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "iOS Developer khoảng 24 tháng, cùng nhóm CNTT nhưng khác vị trí; thiếu cả AWS và Linux, không có hạ tầng cloud; tiếng Anh giao tiếp thấp hơn mức làm việc; không xuống 0 (A3, B6)"
+  },
+  {
+   "jd": "JD-32",
+   "cv": "TR-32-06",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Cloud Engineer/Cloud Support Engineer đúng vị trí, khoảng 56 tháng (yêu cầu 24); đủ AWS và Linux với minh chứng, có Cloud DevOps; Cử nhân, tiếng Anh làm việc đạt; cấp bậc nhân viên khớp (B1, B5)"
+  },
+  {
+   "jd": "JD-32",
+   "cv": "TR-32-15",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Manual Tester 53 tháng, cùng nhóm CNTT nhưng khác vị trí; thiếu cả AWS và Linux; tiếng Anh giao tiếp thấp hơn mức làm việc; không xuống 0 vì cùng nhóm ngành (A3, B6)"
+  },
+  {
+   "jd": "JD-32",
+   "cv": "TR-64-01",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Automation Tester 17 tháng, cùng nhóm CNTT nhưng khác vị trí; thiếu cả AWS và Linux, chỉ có CI/CD dùng lại được; tiếng Anh giao tiếp thấp hơn mức làm việc; không xuống 0 (A3, B6)"
+  },
+  {
+   "jd": "JD-32",
+   "cv": "TR-32-10",
+   "label": 3,
+   "confidence": "chắc",
+   "reason": "Cloud Engineer đúng vị trí, đủ AWS và Linux với minh chứng (chuyển đổi lên AWS, script Linux, giám sát); kinh nghiệm 13 tháng so với 24, thiếu 11 tháng chưa tới một nửa nên thiếu một bậc; Thạc sĩ, tiếng Anh làm việc đạt; không có điểm trừ"
+  },
+  {
+   "jd": "JD-32",
+   "cv": "TR-48-01",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Sales Logistics/giao nhận, khác ngành với Cloud Engineer; không có AWS, Linux hay kỹ năng CNTT (B6)"
+  },
+  {
+   "jd": "JD-32",
+   "cv": "TR-32-04",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Cloud Engineer đúng vị trí, đủ AWS và Linux với minh chứng, có Terraform và mạng cơ bản; kinh nghiệm 10 tháng so với 24, thiếu 14 tháng tức từ một nửa trở lên nên lệch rõ kinh nghiệm (mức 2); Cử nhân, tiếng Anh làm việc đạt"
+  },
+  {
+   "jd": "JD-32",
+   "cv": "TR-32-08",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Cloud Engineer đúng vị trí, khoảng 90 tháng (yêu cầu 24); đủ AWS và Linux với minh chứng, có Terraform, làm việc với nhóm toàn cầu; Cử nhân, tiếng Anh làm việc đạt; chức danh vẫn là nhân viên nên không trừ thừa trình độ (B1, B5)"
+  },
+  {
+   "jd": "JD-37",
+   "cv": "TR-37-14",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Content Marketing (13 tháng); đủ 4/4 kỹ năng cần có có minh chứng (Chỉnh sửa ảnh, Dựng video, Canva, Ứng dụng AI); tin không yêu cầu kinh nghiệm; Cử nhân Truyền thông; cấp Nhân viên chỉ cao hơn Thực tập sinh một bậc nên không trừ (B1, B5)."
+  },
+  {
+   "jd": "JD-37",
+   "cv": "TR-09-08",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Tạp vụ, lao động phổ thông, khác ngành hẳn; không có kỹ năng cần có nào; Trung cấp quản trị nhà hàng (B6, E4)."
+  },
+  {
+   "jd": "JD-37",
+   "cv": "TR-31-14",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Không có mục Kinh nghiệm, vị trí theo headline là Nhân viên CSKH (D7) nên cùng nhóm ngành Kinh doanh–Marketing–CSKH nhưng khác vị trí (B6); 0/4 kỹ năng cần có, nội dung thiên về chứng từ xuất khẩu/logistics; không hạ xuống 0 (A3)."
+  },
+  {
+   "jd": "JD-37",
+   "cv": "TR-82-08",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Chuyên viên SEO/SEM 21 tháng, cùng mảng marketing nhưng khác vị trí Content Marketing; 0/4 kỹ năng cần có (không có chỉnh sửa ảnh, dựng video, Canva, AI), chỉ có Google Search Ads thuộc kỹ năng ưu tiên; Cao đẳng đạt bậc tối thiểu vì tin tuyển sinh viên đại học (B4); vị trí gần mà dưới nửa kỹ năng nên dưới mức 2 (A2, D6, B6)."
+  },
+  {
+   "jd": "JD-37",
+   "cv": "TR-92-02",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Thiết kế đồ họa 114 tháng, vị trí gần với Content (B6) nên tối đa 2 (D6); có 2/4 kỹ năng cần có: Chỉnh sửa ảnh, Dựng video (Premiere Pro); thiếu Canva, 'AI' đi cùng Photoshop là mơ hồ (có thể là Illustrator) nên không suy ra Ứng dụng AI (A4); không trừ thừa trình độ vì chức danh ở cấp Nhân viên (B5)."
+  },
+  {
+   "jd": "JD-37",
+   "cv": "TR-82-01",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "SEO/SEM Specialist, từng là SEO Manager dẫn nhóm 5 người; cùng mảng marketing nhưng khác vị trí Content Marketing; 0/4 kỹ năng cần có, chỉ có Google Ads thuộc kỹ năng ưu tiên; thừa trình độ so với Thực tập sinh nhưng không hạ CV cùng nhóm ngành xuống 0 (A2, A3, B5, B6, D6)."
+  },
+  {
+   "jd": "JD-37",
+   "cv": "TR-37-06",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Content Marketing (Specialist rồi Content Marketing Intern, khoảng 34 tháng); đủ 4/4 kỹ năng cần có có minh chứng, thêm Chạy quảng cáo là kỹ năng ưu tiên; Cử nhân Truyền thông; cấp bậc khớp (B1)."
+  },
+  {
+   "jd": "JD-37",
+   "cv": "TR-82-02",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "SEO/SEM Specialist 11 tháng, cùng mảng marketing nhưng khác vị trí Content Marketing; 0/4 kỹ năng cần có, chỉ có Google Search Ads thuộc kỹ năng ưu tiên; Cử nhân CNTT đạt học vấn (A2, B6, D6)."
+  },
+  {
+   "jd": "JD-37",
+   "cv": "TR-37-02",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Content Marketer (11 tháng); có 3/4 kỹ năng cần có: Ứng dụng AI, Dựng video, Chỉnh sửa ảnh (chứng chỉ, không minh chứng trong kinh nghiệm); thiếu Canva là công cụ không cốt lõi nên vẫn đạt ngưỡng thiếu tối đa 1 kỹ năng (A1, B1); Cử nhân Truyền thông; tin không yêu cầu kinh nghiệm."
+  },
+  {
+   "jd": "JD-37",
+   "cv": "TR-61-00",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Graphic Designer lâu năm, vị trí gần với Content (B6) nên tối đa 2 (D6); có 2/4 kỹ năng cần có: Chỉnh sửa ảnh (Photoshop, chứng chỉ ACE), Dựng video (Premiere Pro, CapCut); thiếu Canva và Ứng dụng AI; Cao đẳng đạt bậc tối thiểu vì tin tuyển sinh viên đại học (B4); chức danh cấp Nhân viên nên không trừ thừa trình độ (B5)."
+  },
+  {
+   "jd": "JD-37",
+   "cv": "TR-37-03",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Trưởng nhóm/Tổng quản lý tổ chức sự kiện, cùng nhóm ngành marketing–truyền thông nhưng khác vị trí; 0/4 kỹ năng cần có, chỉ có Chạy quảng cáo thuộc kỹ năng ưu tiên; thừa trình độ từ hai bậc so với Thực tập sinh nhưng không hạ CV cùng nhóm ngành xuống 0 (A3, B5, B6, D3)."
+  },
+  {
+   "jd": "JD-37",
+   "cv": "TR-84-15",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Hành chính văn phòng 104 tháng, thuộc nhóm Hành chính–Nhân sự, khác ngành; 0/4 kỹ năng cần có; chỉ có lập kế hoạch, phân tích dữ liệu chung chung (B6)."
+  },
+  {
+   "jd": "JD-37",
+   "cv": "TR-37-08",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Content Marketer/Content Specialist (21 tháng); đủ 4/4 kỹ năng cần có có minh chứng (Canva, Chỉnh sửa ảnh, Ứng dụng AI, Dựng video), thêm Chạy quảng cáo là kỹ năng ưu tiên; Cao đẳng đạt bậc tối thiểu vì tin tuyển sinh viên đại học (B4); chức danh cấp Nhân viên nên không trừ thừa trình độ (B1, B5)."
+  },
+  {
+   "jd": "JD-37",
+   "cv": "TR-84-07",
+   "label": 0,
+   "confidence": "không chắc",
+   "reason": "Hành chính văn phòng ngân hàng 50 tháng, thuộc nhóm Hành chính–Nhân sự, khác ngành; chỉ có 1/4 kỹ năng cần có (Ứng dụng AI trong việc văn phòng), không có chỉnh sửa ảnh, dựng video, Canva; phân vân 0–1 nên chọn mức thấp (B6)."
+  },
+  {
+   "jd": "JD-37",
+   "cv": "TR-82-13",
+   "label": 1,
+   "confidence": "không chắc",
+   "reason": "SEO/SEM Specialist 12 tháng, có làm nội dung và ghi kỹ năng Content Marketing nhưng chức danh vẫn là SEO/SEM (D7); 0/4 kỹ năng cần có (không có chỉnh sửa ảnh, dựng video, Canva, AI), chỉ có Google Ads thuộc kỹ năng ưu tiên; phân vân 1–2 nên chọn mức thấp (A2, A4, B6, D6)."
+  },
+  {
+   "jd": "JD-37",
+   "cv": "TR-82-10",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Không có mục Kinh nghiệm, headline SEO/SEM Specialist (D7), cùng mảng marketing nhưng khác vị trí Content Marketing; 0/4 kỹ năng cần có, chỉ có Google Search Ads thuộc kỹ năng ưu tiên qua dự án thực tập; Thạc sĩ đạt học vấn (A2, B3, B6, D6)."
+  },
+  {
+   "jd": "JD-37",
+   "cv": "TR-84-10",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Tuyển dụng 37 tháng, thuộc nhóm Hành chính–Nhân sự, khác ngành; 0/4 kỹ năng cần có, không có điểm chung về chuyên môn (B6)."
+  },
+  {
+   "jd": "JD-37",
+   "cv": "TR-48-13",
+   "label": 0,
+   "confidence": "không chắc",
+   "reason": "Vị trí gần nhất là Kỹ sư Vận chuyển (logistics, ngoài nhóm ngành của tin), trước đó chỉ 2 tháng Sales Logistics (D7, E4); 0/4 kỹ năng cần có, chỉ có phân tích dữ liệu và giao tiếp chung; phân vân 0–1 vì headline là Sales nên chọn mức thấp (B6)."
+  },
+  {
+   "jd": "JD-37",
+   "cv": "TR-37-07",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Tổ chức sự kiện 21 tháng, cùng nhóm ngành marketing–truyền thông nhưng khác vị trí; chỉ có 1/4 kỹ năng cần có (Chỉnh sửa ảnh làm ấn phẩm, poster sự kiện), thiếu Dựng video, Canva, Ứng dụng AI; Cử nhân đạt học vấn (B6)."
+  },
+  {
+   "jd": "JD-37",
+   "cv": "TR-37-00",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Content Marketing qua ba công việc (khoảng 54 tháng); đủ 4/4 kỹ năng cần có (Ứng dụng AI, Chỉnh sửa ảnh, Canva có minh chứng; Dựng video ở mức phối hợp dựng), thêm Chạy quảng cáo là kỹ năng ưu tiên; Cao đẳng đạt bậc tối thiểu vì tin tuyển sinh viên đại học (B4); chức danh cấp Nhân viên nên không trừ thừa trình độ (B1, B5)."
+  },
+  {
+   "jd": "JD-37",
+   "cv": "TR-37-10",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Headline Content Marketing Intern, đúng vị trí và đúng cấp Thực tập sinh (D7); đủ 4/4 kỹ năng cần có thể hiện qua dự án (Dựng video, Ứng dụng AI, Chỉnh sửa ảnh, Canva), thêm Chạy quảng cáo là kỹ năng ưu tiên; chưa có mục Kinh nghiệm nhưng tin không yêu cầu (B3); Cử nhân Truyền thông (B1)."
+  },
+  {
+   "jd": "JD-48",
+   "cv": "TR-48-06",
+   "label": 3,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Sales Logistics; đủ 6/6 kỹ năng (MS Office, Freight Forwarding, Đàm phán, Giải quyết vấn đề, Giao tiếp, Lắng nghe) có minh chứng; tiếng Anh Làm việc đạt; Cử nhân ≥ Cao đẳng; kinh nghiệm 21 tháng so với 24 tháng (đọc chặt theo E1: ô và tiêu đề ghi 2 năm), thiếu 3 tháng < nửa nên thiếu một bậc → 3 (B3, E1)."
+  },
+  {
+   "jd": "JD-48",
+   "cv": "TR-48-09",
+   "label": 2,
+   "confidence": "không chắc",
+   "reason": "Đúng vị trí (sales logistics 94 tháng, chức danh hiện tại Sales Associate nên không trừ thừa trình độ, B5); có MS Office, Giao tiếp, Giải quyết vấn đề, Freight Forwarding suy từ nhiều năm bán dịch vụ logistics (A4/B2, không ghi đích danh); thiếu Đàm phán (chỉ có Thuyết phục) và Lắng nghe → nền 3; tiếng Anh Giao tiếp thấp hơn Làm việc bắt buộc trừ 1 (A3) → 2; phân vân 2–3 nếu tính Đàm phán, chọn thấp."
+  },
+  {
+   "jd": "JD-48",
+   "cv": "TR-50-00",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Tư vấn/CSKH online ngành ngân hàng, cùng nhóm Kinh doanh–CSKH nhưng khác vị trí (B6); chỉ có Giao tiếp, thiếu Freight Forwarding cốt lõi và các kỹ năng còn lại; mục Kinh nghiệm trống (0/24 tháng, B3); không ghi tiếng Anh; không xuống 0 vì cùng nhóm ngành (A3)."
+  },
+  {
+   "jd": "JD-48",
+   "cv": "TR-82-00",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "SEO/SEM Specialist ngân hàng, cùng nhóm Kinh doanh–Marketing nhưng khác vị trí (B6); không có kỹ năng cần có nào của tin, thiếu Freight Forwarding cốt lõi, không có kinh nghiệm logistics; tiếng Anh Conversational thấp hơn Làm việc; giữ 1 theo A3."
+  },
+  {
+   "jd": "JD-48",
+   "cv": "TR-48-07",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Sales Online hàng thương mại 50 tháng, cùng nhóm Kinh doanh nhưng không phải sales logistics; chỉ có Giải quyết vấn đề (1/6), thiếu Freight Forwarding cốt lõi, MS Office, Đàm phán, Giao tiếp, Lắng nghe; không có kinh nghiệm ngành logistics; tiếng Anh Làm việc đạt → 1 (B6, C1)."
+  },
+  {
+   "jd": "JD-48",
+   "cv": "TR-48-01",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Sales Logistics, 44 tháng ≥ 24; có Freight Forwarding (booking, chứng từ với hãng vận chuyển, CLP), MS Office (Excel + MOS, A4), Giao tiếp, Lắng nghe; thiếu Đàm phán và Giải quyết vấn đề (không cốt lõi) → nền 3; tiếng Anh Conversational thấp hơn Làm việc bắt buộc trừ 1 (A3) → 2; Cao đẳng đạt."
+  },
+  {
+   "jd": "JD-48",
+   "cv": "TR-84-05",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Quản lý tài khoản/dữ liệu tuyển dụng thuộc nhóm Nhân sự, khác nhóm ngành với Sales Logistics (B6); chỉ trùng kỹ năng chung MS Office, Giao tiếp; không có Freight Forwarding hay kinh nghiệm bán hàng/logistics → 0."
+  },
+  {
+   "jd": "JD-48",
+   "cv": "TR-72-14",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Kế toán công nợ phải trả (nhóm Kế toán–Tài chính), khác ngành (B6); chỉ có Excel là công cụ chung; không có kỹ năng cốt lõi hay kinh nghiệm sales/logistics → 0."
+  },
+  {
+   "jd": "JD-48",
+   "cv": "TR-98-06",
+   "label": 1,
+   "confidence": "không chắc",
+   "reason": "Nhân viên kho 59 tháng: cùng ngành logistics nhưng khác hẳn vị trí (kho so với sales giao nhận); chỉ dùng lại được Giao tiếp và xử lý tình huống; thiếu Freight Forwarding cốt lõi, MS Office, Đàm phán, Lắng nghe; THPT thấp hơn Cao đẳng, tiếng Anh Cơ bản; giữ 1 vì coi là cùng ngành logistics (E4, A3), không chắc vì B6 không xếp kho vận cùng nhóm Kinh doanh."
+  },
+  {
+   "jd": "JD-48",
+   "cv": "TR-48-02",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí theo headline Sales Logistics (D7); đủ kỹ năng: Freight Forwarding, Đàm phán, Giải quyết vấn đề, MS Office, Lắng nghe, Giao tiếp nêu ở tóm tắt; tiếng Anh Làm việc, Cao đẳng đạt; mục Kinh nghiệm trống (thực tập chỉ ở dự án, B3) nên thiếu hẳn 24 tháng, lệch rõ kinh nghiệm → 2 (E5, không cộng dồn C1/D8 vì đủ kỹ năng)."
+  },
+  {
+   "jd": "JD-48",
+   "cv": "TR-50-02",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Nhân viên tư vấn/telesales bán hàng online 49 tháng, cùng nhóm Kinh doanh (C3) nhưng không phải sales logistics; chỉ có Giao tiếp và giải quyết vấn đề khách hàng (2/6), thiếu Freight Forwarding cốt lõi, MS Office, Đàm phán, Lắng nghe; không có kinh nghiệm logistics; không ghi tiếng Anh; giữ 1 (C1, A3)."
+  },
+  {
+   "jd": "JD-48",
+   "cv": "TR-50-09",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Tư vấn/bán hàng online 8 tháng, cùng nhóm Kinh doanh nhưng khác vị trí; chỉ có Đàm phán (1/6), thiếu Freight Forwarding cốt lõi, MS Office, Giải quyết vấn đề, Giao tiếp, Lắng nghe; thiếu hơn nửa số năm và không thuộc logistics; tiếng Anh Giao tiếp thấp hơn Làm việc; giữ 1 (C1, A3)."
+  },
+  {
+   "jd": "JD-48",
+   "cv": "TR-31-15",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "CSKH xuất khẩu 115 tháng: vị trí gần (CSKH gần Sales, C3; có chứng từ xuất khẩu, Incoterms, LCL/FCL) nên tối đa 2 (D6); kỹ năng khoảng một nửa trở xuống: kiến thức giao nhận và Giải quyết vấn đề, thiếu MS Office, Đàm phán, Lắng nghe; trừ vì THPT thấp hơn Cao đẳng và tiếng Anh Cơ bản thấp hơn Làm việc; dừng ở 1 (A3)."
+  },
+  {
+   "jd": "JD-48",
+   "cv": "TR-48-12",
+   "label": 3,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Sale Logistics Officer; đủ 6/6 kỹ năng có minh chứng, có chứng chỉ Freight Forwarding; tiếng Anh Làm việc, Cao đẳng Kinh doanh quốc tế đạt; kinh nghiệm 16 tháng so với 24 tháng (E1 đọc chặt), thiếu 8 tháng < nửa nên thiếu một bậc → 3."
+  },
+  {
+   "jd": "JD-48",
+   "cv": "TR-48-11",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Môi giới bất động sản 17 tháng, cùng nhóm Kinh doanh nhưng khác vị trí (B6); chỉ có Đàm phán (1/6), thiếu Freight Forwarding cốt lõi và các kỹ năng khác; không có kinh nghiệm logistics; không ghi tiếng Anh; giữ 1 (A3)."
+  },
+  {
+   "jd": "JD-48",
+   "cv": "TR-31-06",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "CSKH xuất khẩu 22 tháng: vị trí gần (C3, D6 tối đa 2); có Giải quyết vấn đề, Giao tiếp khách hàng, kiến thức chứng từ xuất khẩu/phần mềm logistics; thiếu MS Office, Đàm phán, Lắng nghe; trừ vì THPT thấp hơn Cao đẳng và tiếng Anh Cơ bản thấp hơn Làm việc; dừng ở 1 (A3)."
+  },
+  {
+   "jd": "JD-48",
+   "cv": "TR-48-08",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí theo headline Sales Logistics (D7); có Đàm phán, MS Office, Giao tiếp, Giải quyết vấn đề, Lắng nghe; Freight Forwarding không ghi đích danh nhưng dự án thực tập bán hàng logistics, vận chuyển quốc tế đáp ứng yêu cầu ngành logistics/giao nhận (B2, A4); tiếng Anh Làm việc, Cao đẳng đạt; mục Kinh nghiệm trống (B3), thiếu hẳn 24 tháng, lệch rõ → 2 (E5)."
+  },
+  {
+   "jd": "JD-48",
+   "cv": "TR-50-01",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Bán hàng online/CSKH/telesales 117 tháng, cùng nhóm Kinh doanh (C3) nhưng không phải sales logistics; chỉ có Giao tiếp và giải quyết vấn đề khách hàng (2/6), thiếu Freight Forwarding cốt lõi, MS Office, Đàm phán, Lắng nghe; không có kinh nghiệm logistics; tiếng Anh Cơ bản thấp hơn Làm việc; giữ 1 (C1, A3)."
+  },
+  {
+   "jd": "JD-48",
+   "cv": "TR-48-15",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Telesales 80 tháng rồi CSKH tại công ty logistics 24 tháng: vị trí gần (C3, D6); có Đàm phán và xử lý yêu cầu khách hàng (khoảng 2/6), thiếu Freight Forwarding cốt lõi, MS Office, Lắng nghe, Giao tiếp không ghi; tiếng Anh Cơ bản thấp hơn Làm việc trừ 1; dừng ở 1 (A3)."
+  },
+  {
+   "jd": "JD-48",
+   "cv": "TR-64-02",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Automation Tester/QA thuộc CNTT phần mềm, khác ngành hoàn toàn (B6); không có kỹ năng cần có nào ngoài tiếng Anh; không có kinh nghiệm sales/logistics → 0."
+  },
+  {
+   "jd": "JD-48",
+   "cv": "TR-48-13",
+   "label": 1,
+   "confidence": "không chắc",
+   "reason": "Headline Sales Logistics nhưng vị trí gần nhất là Kỹ sư Vận chuyển 30 tháng (vận hành logistics, D7) nên coi là vị trí gần, tối đa 2 (D6); có Freight Forwarding, Giải quyết vấn đề, Giao tiếp, MS Office (4/6), thiếu Đàm phán, Lắng nghe; 31 tháng trong ngành; tiếng Anh Giao tiếp thấp hơn Làm việc bắt buộc trừ 1 (A3) → 1; phân vân 1–2 (nếu coi đúng vị trí thì 3−1=2), chọn thấp."
+  },
+  {
+   "jd": "JD-48",
+   "cv": "TR-48-00",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Sales Logistics; có Lắng nghe, Giải quyết vấn đề, Đàm phán, MS Office, Giao tiếp; Freight Forwarding không ghi đích danh, tính qua việc bán hàng logistics/tối ưu vận chuyển (B2, A4); tiếng Anh Làm việc, Cao đẳng đạt; kinh nghiệm 11 tháng so với 24 tháng, thiếu 13 tháng ≥ nửa nên lệch rõ → 2."
+  },
+  {
+   "jd": "JD-48",
+   "cv": "TR-50-12",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Sales Online/tư vấn khách hàng, mới tốt nghiệp, cùng nhóm Kinh doanh–CSKH nhưng khác vị trí (B6); chỉ có Giao tiếp (1/6), thiếu Freight Forwarding cốt lõi và các kỹ năng khác; mục Kinh nghiệm trống (B3); tiếng Anh Cơ bản; giữ 1 (A3)."
+  },
+  {
+   "jd": "JD-48",
+   "cv": "TR-48-14",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí theo headline Sales Logistics (D7); đủ 6/6 kỹ năng (Freight Forwarding, MS Office, Đàm phán, Giải quyết vấn đề, Giao tiếp, Lắng nghe), thực tập giao hàng đường biển/hàng không; tiếng Anh Làm việc, Cử nhân đạt; mục Kinh nghiệm trống (B3), thiếu hẳn 24 tháng, lệch rõ → 2 (E5)."
+  },
+  {
+   "jd": "JD-48",
+   "cv": "TR-72-00",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Kế toán công nợ phải trả chuỗi bán lẻ (nhóm Kế toán–Tài chính), khác ngành (B6); chỉ có Excel là công cụ chung; không có kỹ năng cốt lõi hay kinh nghiệm sales/logistics → 0."
+  },
+  {
+   "jd": "JD-48",
+   "cv": "TR-48-05",
+   "label": 2,
+   "confidence": "không chắc",
+   "reason": "Đúng vị trí Sales Logistics; có Giao tiếp, MS Office (MOS), Lắng nghe, Đàm phán (đàm phán hợp đồng cước với hãng tàu quốc tế, A4), Freight Forwarding suy từ việc đó (A4/B2, không ghi đích danh); thiếu Giải quyết vấn đề (5/6); kinh nghiệm 22 tháng so với 24, thiếu 2 tháng nên thiếu một bậc → nền 3; tiếng Anh Conversational thấp hơn Làm việc bắt buộc trừ 1 (A3) → 2; phân vân 2–3 (B3 sát ngưỡng), chọn thấp."
+  },
+  {
+   "jd": "JD-50",
+   "cv": "TR-31-14",
+   "label": 1,
+   "confidence": "không chắc",
+   "reason": "CSKH mảng logistics/xuất khẩu, vị trí gần (C3, D6 tối đa 2); có Giao tiếp (khách hàng), thiếu Tư vấn cốt lõi (A1) nên đạt 1/2 kỹ năng được đếm (Chịu áp lực không đếm); mục Kinh nghiệm trống (B3), tin ghi Dưới 1 năm nhưng nhận người chưa có kinh nghiệm; nếu coi là thiếu kinh nghiệm thì cộng dồn D8 còn 1, phân vân 1–2 nên chọn mức thấp"
+  },
+  {
+   "jd": "JD-50",
+   "cv": "TR-50-12",
+   "label": 3,
+   "confidence": "không chắc",
+   "reason": "Đúng vị trí Sales Online theo headline (D7); đủ Giao tiếp, Tư vấn (2/2, có minh chứng qua thực tập tư vấn, gọi điện); mục Kinh nghiệm trống (B3), tin ưu tiên 6 tháng nhưng vẫn nhận chưa có kinh nghiệm; phân vân 3–4 nên chọn 3 (thiếu một bậc kinh nghiệm theo cách đọc chặt, E5)"
+  },
+  {
+   "jd": "JD-50",
+   "cv": "TR-50-04",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí: Nhân viên Sales Online 11 tháng (12/2025–nay); đủ Giao tiếp, Tư vấn (2/2), Tư vấn cốt lõi có minh chứng; kinh nghiệm đạt Dưới 1 năm/ưu tiên 6 tháng; cấp Nhân viên khớp; học vấn vượt THPT (B4); B1"
+  },
+  {
+   "jd": "JD-50",
+   "cv": "TR-92-07",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "UI/UX Designer chưa có kinh nghiệm, khác ngành với tư vấn bán hàng qua điện thoại (B6, D2); không có Giao tiếp, Tư vấn; gần như không có điểm chung"
+  },
+  {
+   "jd": "JD-50",
+   "cv": "TR-50-00",
+   "label": 3,
+   "confidence": "không chắc",
+   "reason": "Đúng vị trí Nhân viên tư vấn online theo headline (D7); đủ Giao tiếp, Tư vấn (2/2), có CSKH, minh chứng qua thực tập tư vấn tại ngân hàng; mục Kinh nghiệm trống (B3), tin vẫn nhận chưa có kinh nghiệm; phân vân 3–4 nên chọn 3 (thiếu một bậc kinh nghiệm theo cách đọc chặt, E5)"
+  },
+  {
+   "jd": "JD-50",
+   "cv": "TR-50-02",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí: Nhân viên tư vấn 49 tháng (10/2022–nay), có telesales, bán hàng online, CSKH; đủ Giao tiếp, Tư vấn (2/2) cùng hai kỹ năng ưu tiên; chức danh vẫn là Nhân viên nên không trừ thừa trình độ (B5); B1"
+  },
+  {
+   "jd": "JD-50",
+   "cv": "TR-82-10",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "SEO/SEM Specialist chưa có kinh nghiệm: cùng nhóm Kinh doanh – Marketing (B6) nhưng khác vị trí; không có Giao tiếp, Tư vấn; không đưa xuống 0 vì cùng nhóm ngành (A3)"
+  },
+  {
+   "jd": "JD-50",
+   "cv": "TR-48-05",
+   "label": 3,
+   "confidence": "không chắc",
+   "reason": "Sales Logistics 23 tháng (01/2025–nay), cùng nghề Sales với telesales (C3); có Giao tiếp, Tư vấn qua consultative selling và cold calling (A4) nên 2/2; kinh nghiệm đủ; từng dẫn nhóm 8 người chỉ hơn một bậc (D3, B5 không trừ); việc đã làm là bán dịch vụ logistics B2B, khác loại công việc tư vấn sữa qua điện thoại nên nền 3 (E3); phân vân 3–4 chọn 3"
+  },
+  {
+   "jd": "JD-50",
+   "cv": "TR-84-05",
+   "label": 0,
+   "confidence": "không chắc",
+   "reason": "Quản lý tài khoản/dữ liệu tuyển dụng 21 tháng, thuộc nhóm Hành chính – Nhân sự, khác nhóm ngành với Sales/Telesales (B6); có Giao tiếp, thuyết phục ứng viên nhưng không có Tư vấn cốt lõi và không làm bán hàng; phân vân 0–1 chọn 0"
+  },
+  {
+   "jd": "JD-50",
+   "cv": "TR-50-09",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí: Nhân viên tư vấn online 8 tháng (03/2026–nay), có telesales, CSKH; Tư vấn có minh chứng, Giao tiếp suy từ việc tư vấn thuyết phục khách qua điện thoại (A4) nên 2/2; kinh nghiệm đạt; cấp Nhân viên khớp; B1"
+  },
+  {
+   "jd": "JD-50",
+   "cv": "TR-31-11",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Nhân viên CSKH bán lẻ 11 tháng (12/2025–nay), vị trí gần (C3, D6 tối đa 2); Giao tiếp suy từ xử lý khách qua điện thoại (A4), thiếu Tư vấn cốt lõi (A1) nên 1/2 kỹ năng được đếm; kinh nghiệm đủ; Chịu áp lực không đếm"
+  },
+  {
+   "jd": "JD-50",
+   "cv": "TR-50-14",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí: Tư vấn khách hàng online có telesales 28 tháng rồi CSKH, tổng 41 tháng (06/2023–nay); đủ Giao tiếp, Tư vấn (2/2) cùng Telesales, CSKH; chức danh Nhân viên nên không trừ thừa trình độ (B5); B1"
+  },
+  {
+   "jd": "JD-50",
+   "cv": "TR-48-15",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí: Telesales 80 tháng rồi CSKH, tổng 104 tháng (03/2018–nay), cùng nghề (C3); Giao tiếp và Tư vấn không ghi thẻ nhưng thể hiện qua 1.500 cuộc gọi telesales mỗi tháng (A4, không minh chứng bằng thẻ); có Telesales, CSKH ưu tiên; chức danh Nhân viên nên không trừ thừa trình độ (B5); B1"
+  },
+  {
+   "jd": "JD-50",
+   "cv": "TR-82-04",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Chuyên viên SEO/SEM chưa có kinh nghiệm: cùng nhóm Kinh doanh – Marketing (B6) nhưng khác vị trí; không có Giao tiếp, Tư vấn; không đưa xuống 0 vì cùng nhóm ngành (A3)"
+  },
+  {
+   "jd": "JD-50",
+   "cv": "TR-50-01",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí: bán hàng online, CSKH online, telesales tổng 117 tháng (02/2017–nay); có Giao tiếp, Tư vấn suy từ telesales và thuyết phục khách (A4) nên 2/2, thêm Telesales, CSKH; chức danh vẫn Nhân viên nên không trừ thừa trình độ (B5); B1"
+  },
+  {
+   "jd": "JD-50",
+   "cv": "TR-31-01",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Nhân viên CSKH mảng logistics/xuất khẩu 33 tháng (02/2024–nay), vị trí gần (C3) nên tối đa 2 (D6); đủ Giao tiếp, Tư vấn (2/2) có minh chứng; kinh nghiệm đủ; không có telesales/bán hàng"
+  },
+  {
+   "jd": "JD-50",
+   "cv": "TR-72-00",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Kế toán công nợ phải trả 5 năm, nhóm Kế toán – Tài chính, khác ngành hẳn với tư vấn bán hàng (B6); không có Giao tiếp, Tư vấn; gần như không có điểm chung"
+  },
+  {
+   "jd": "JD-50",
+   "cv": "TR-48-08",
+   "label": 2,
+   "confidence": "không chắc",
+   "reason": "Sales Logistics theo headline (D7), cùng nghề Sales (C3); có Giao tiếp, Tư vấn qua dự án bán hàng logistics (2/2, A4); việc đã làm là logistics/vận tải, khác loại công việc của tin nên nền 3 (E3); mục Kinh nghiệm trống (B3), cộng dồn theo cách đọc chặt còn 2; phân vân 2–3 chọn 2"
+  },
+  {
+   "jd": "JD-50",
+   "cv": "TR-50-03",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí: Tư vấn tuyển sinh 8 tháng (03/2026–nay) với 100 cuộc gọi telesales/ngày, có doanh số; Tư vấn có minh chứng, Giao tiếp suy từ việc gọi tư vấn (A4) nên 2/2, thêm Telesales, CSKH; kinh nghiệm đạt; cấp Nhân viên khớp; B1"
+  },
+  {
+   "jd": "JD-50",
+   "cv": "TR-48-06",
+   "label": 3,
+   "confidence": "không chắc",
+   "reason": "Sales Logistics 21 tháng (02/2025–nay), cùng nghề Sales (C3); có Giao tiếp, Tư vấn giải pháp vận chuyển cho khách (2/2, A4); kinh nghiệm đủ, cấp khớp; việc đã làm là bán dịch vụ giao nhận/xuất nhập khẩu B2B, khác loại công việc tư vấn qua điện thoại nên nền 3 (E3); phân vân 3–4 chọn 3"
+  },
+  {
+   "jd": "JD-50",
+   "cv": "TR-48-11",
+   "label": 3,
+   "confidence": "không chắc",
+   "reason": "Môi giới bất động sản 17 tháng (06/2025–nay), cùng nghề Sales (C3); Tư vấn có minh chứng (tư vấn khách mua bán), Giao tiếp suy từ đàm phán và duy trì quan hệ khách hàng (A4), CV chỉ ghi thẻ Đàm phán; kinh nghiệm đủ; sản phẩm và cách bán khác hẳn telesales tại văn phòng nên nền 3 (E3); phân vân 3–4 chọn 3"
+  },
+  {
+   "jd": "JD-61",
+   "cv": "TR-92-03",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Interior Designer: cùng nhóm Thiết kế nhưng khác vị trí; chỉ dùng lại được After Effects (có chứng chỉ, làm video marketing), không có Photoshop/Illustrator/Premiere/CapCut hay thiết kế đồ họa; không xuống 0 vì cùng nhóm ngành (A3, B6, D7)"
+  },
+  {
+   "jd": "JD-61",
+   "cv": "TR-92-13",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Graphic Designer, đủ 7/7 kỹ năng được đếm (Photoshop, Illustrator, Premiere, After Effects, CapCut, thiết kế đồ họa, dựng video có trong dự án); mục Kinh nghiệm trống: 0/24 tháng, thiếu từ một nửa trở lên là lệch rõ nên mức 2 (B3); học vấn đạt"
+  },
+  {
+   "jd": "JD-61",
+   "cv": "TR-61-00",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Graphic Designer, khoảng 10 năm (từ 11/2016), đủ 7/7 kỹ năng có minh chứng (Photoshop, Illustrator, After Effects, Premiere, CapCut, bao bì, video quảng cáo), đúng ngành TPCN/mỹ phẩm; chức danh cấp nhân viên nên không trừ thừa trình độ (B1, B5); Cao đẳng đạt"
+  },
+  {
+   "jd": "JD-61",
+   "cv": "TR-72-03",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Kiểm toán nội bộ: khác ngành (Kế toán – Kiểm toán), không có kỹ năng thiết kế hay dựng video nào (B6)"
+  },
+  {
+   "jd": "JD-61",
+   "cv": "TR-37-06",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Content Marketing: nhóm gần Thiết kế – Media nhưng khác vị trí; chỉ có dựng video và thiết kế bằng Canva, thiếu Photoshop, Illustrator, Premiere, After Effects, CapCut (dưới nửa kỹ năng); kinh nghiệm là content chứ không phải thiết kế đồ họa (B6, D7)"
+  },
+  {
+   "jd": "JD-61",
+   "cv": "TR-32-03",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Manual Tester: khác ngành (CNTT phần mềm), không có điểm chung với thiết kế đồ họa/dựng video (B6)"
+  },
+  {
+   "jd": "JD-61",
+   "cv": "TR-92-07",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "UI/UX Designer (vị trí gần), mục Kinh nghiệm trống 0/24 tháng; chỉ có Photoshop, After Effects và nền thiết kế đồ họa từ bằng cấp (3/7), thiếu dựng video, Illustrator, Premiere, CapCut; dưới nửa kỹ năng cộng dồn thiếu hẳn kinh nghiệm nên 1 (C1, D6, D7)"
+  },
+  {
+   "jd": "JD-61",
+   "cv": "TR-37-14",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Content Marketing 13–14 tháng: khác vị trí, nhóm gần; chỉ có dựng video và thiết kế banner bằng Canva, thiếu Photoshop, Illustrator, Premiere, After Effects, CapCut; chỉ vài kỹ năng dùng lại được (B6, D7)"
+  },
+  {
+   "jd": "JD-61",
+   "cv": "TR-37-00",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Content Marketer khoảng 4,5 năm: khác vị trí, nhóm gần; có dựng video (liệt kê, không minh chứng trực tiếp) và thiết kế hình ảnh bằng Canva, thiếu toàn bộ bộ công cụ Adobe và CapCut (B6, D7)"
+  },
+  {
+   "jd": "JD-61",
+   "cv": "TR-61-11",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Video Editor (vị trí gần), mục Kinh nghiệm trống 0/24 tháng; chỉ có dựng video và Premiere Pro (dự án, chứng chỉ), thiếu Photoshop, Illustrator, After Effects và không thể hiện thiết kế đồ họa ngoài bằng cấp; dưới nửa kỹ năng cộng dồn thiếu kinh nghiệm nên 1 (C1, D6, D7)"
+  },
+  {
+   "jd": "JD-61",
+   "cv": "TR-61-04",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Graphic Designer, khoảng 35 tháng (từ 01/2024) đủ 2 năm; đủ 7/7 kỹ năng (CapCut, After Effects, Premiere trong kinh nghiệm; Photoshop, Illustrator có chứng chỉ; thiết kế bao bì, video) ; cấp bậc khớp, học vấn vượt yêu cầu (A4, B1)"
+  },
+  {
+   "jd": "JD-61",
+   "cv": "TR-61-03",
+   "label": 1,
+   "confidence": "không chắc",
+   "reason": "UI/UX Designer (vị trí gần, tối đa 2), 20 tháng; có Photoshop, Illustrator, thiết kế đồ họa (3/7, dưới nửa), thiếu hẳn mảng video: dựng video (cốt lõi), Premiere, After Effects, CapCut; phân vân 1–2 nên chọn mức thấp (D6, D7, A4)"
+  },
+  {
+   "jd": "JD-61",
+   "cv": "TR-61-01",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí (Senior/Junior Graphic Designer), khoảng 48 tháng từ 12/2022; có 6/7 kỹ năng (After Effects, Photoshop, Illustrator, CapCut, dựng video, thiết kế đồ họa) cùng Motion Graphics ưu tiên; chỉ thiếu Premiere Pro không cốt lõi nên vẫn đạt mức 4 (B1)"
+  },
+  {
+   "jd": "JD-61",
+   "cv": "TR-64-03",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Data Engineer: khác ngành (CNTT dữ liệu), không có kỹ năng thiết kế hay dựng video (B6)"
+  },
+  {
+   "jd": "JD-61",
+   "cv": "TR-61-10",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Graphic Designer, khoảng 55 tháng (từ 04/2022); đủ 7/7 kỹ năng (After Effects, CapCut trong kinh nghiệm; Premiere trong dự án; Photoshop, Illustrator có chứng chỉ; bao bì, video), có Motion Graphics và ngành mỹ phẩm; cấp bậc khớp (B1)"
+  },
+  {
+   "jd": "JD-61",
+   "cv": "TR-61-13",
+   "label": 3,
+   "confidence": "không chắc",
+   "reason": "Đúng vị trí Graphic Designer, khoảng 40 tháng đủ kinh nghiệm; có CapCut, Illustrator, Photoshop (chứng chỉ), dựng video, thiết kế đồ họa; thiếu After Effects, Premiere Pro chỉ suy được mơ hồ từ chứng chỉ 'Video Editor by Adobe'; thiếu 1–2 kỹ năng không cốt lõi, phân vân 3–4 nên chọn 3 (A4, B1)"
+  },
+  {
+   "jd": "JD-61",
+   "cv": "TR-61-07",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Interior Designer hơn 4 năm: cùng nhóm Thiết kế nhưng khác vị trí; chỉ dùng lại được Illustrator và Motion Graphics, thiếu Photoshop, Premiere, After Effects, CapCut, dựng video; không xuống 0 vì cùng nhóm ngành (A3, B6, D7)"
+  },
+  {
+   "jd": "JD-61",
+   "cv": "TR-92-09",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Graphic Designer, khoảng 55 tháng (từ 04/2022); đủ 7/7 kỹ năng (After Effects, Photoshop, CapCut trong kinh nghiệm; Premiere Pro qua chứng chỉ; Illustrator liệt kê không minh chứng; nhận diện thương hiệu, video quảng cáo); Cao đẳng đạt, cấp bậc khớp (A4, B1)"
+  },
+  {
+   "jd": "JD-61",
+   "cv": "TR-92-02",
+   "label": 3,
+   "confidence": "không chắc",
+   "reason": "Đúng vị trí Thiết kế đồ họa, 114 tháng; có Premiere Pro, Photoshop, dựng/quay video, thiết kế đồ họa, CapCut tính tương đương qua Premiere; thiếu After Effects, Illustrator chỉ ghi 'AI' mơ hồ nên không tính; thiếu 1–2 kỹ năng không cốt lõi, phân vân 3–4 nên chọn 3; chức danh cấp nhân viên, không trừ thừa trình độ (A4, B5)"
+  },
+  {
+   "jd": "JD-61",
+   "cv": "TR-61-02",
+   "label": 3,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Graphic Designer, đủ 7/7 kỹ năng (Illustrator, Photoshop, CapCut, After Effects trong kinh nghiệm; Premiere liệt kê không minh chứng), đúng ngành mỹ phẩm/TPCN; kinh nghiệm khoảng 16/24 tháng, thiếu chưa tới một nửa là thiếu một bậc nên mức 3 (B3)"
+  },
+  {
+   "jd": "JD-61",
+   "cv": "TR-61-15",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Thiết kế nội thất 15 tháng: cùng nhóm Thiết kế nhưng khác vị trí; chỉ dùng lại được Motion Graphics làm video quảng cáo và Photoshop qua chứng chỉ, thiếu Illustrator, Premiere, After Effects, CapCut; không xuống 0 vì cùng nhóm ngành (A3, A4, B6, D7)"
+  },
+  {
+   "jd": "JD-61",
+   "cv": "TR-92-04",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Graphic Designer, 24 tháng (12/2024 đến nay) vừa đủ 2 năm; có 6/7 kỹ năng với minh chứng (Photoshop, Illustrator, After Effects, Premiere, hậu kỳ video, bao bì/nhận diện), chỉ thiếu CapCut (tương đương Premiere); một chức danh Senior 2 tháng không tới 2 bậc (B1, B3, B5)"
+  },
+  {
+   "jd": "JD-61",
+   "cv": "TR-92-01",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Graphic Designer, có Photoshop, Illustrator (chứng chỉ), Premiere Pro, dựng video, thiết kế đồ họa trong dự án, CapCut tương đương qua Premiere, thiếu After Effects; mục Kinh nghiệm trống 0/24 tháng là lệch rõ nên mức 2; Cao đẳng đạt (A4, B3)"
+  },
+  {
+   "jd": "JD-64",
+   "cv": "TR-64-05",
+   "label": 3,
+   "confidence": "không chắc",
+   "reason": "Đúng vị trí Automation Tester; đủ 6/6 kỹ năng (QA/QC, Automation, CI/CD, Agile, TestNG, Selenium có minh chứng + chứng chỉ); khoảng 59 tháng kinh nghiệm, tin tự mâu thuẫn (ô 3 năm, phần yêu cầu 7+ năm) nên lấy cách đọc chặt 84 tháng: thiếu khoảng 30% < một nửa = thiếu một bậc (E1, B1, B3)"
+  },
+  {
+   "jd": "JD-64",
+   "cv": "TR-32-10",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Cloud Engineer 13 tháng (AWS, Linux): cùng nhóm CNTT nhưng khác vị trí, không có kỹ năng cần có nào của tin (không Selenium/TestNG/Automation, không nêu CI/CD) (B6, A3, D7)"
+  },
+  {
+   "jd": "JD-64",
+   "cv": "TR-32-13",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Cloud Engineer chưa có mục Kinh nghiệm (chỉ dự án AWS, presale): cùng nhóm CNTT nhưng khác vị trí, 0/6 kỹ năng cần có, 0 tháng kinh nghiệm (B3, B6, A3, D7)"
+  },
+  {
+   "jd": "JD-64",
+   "cv": "TR-09-11",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Điều phối/quản lý kho 66 tháng: khác ngành, không có kỹ năng kiểm thử phần mềm nào (B6, E4)"
+  },
+  {
+   "jd": "JD-64",
+   "cv": "TR-92-14",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Graphic Designer khoảng 10 năm (Photoshop, Premiere, Blender): khác ngành, không có điểm chung với kiểm thử tự động (B6)"
+  },
+  {
+   "jd": "JD-64",
+   "cv": "TR-64-06",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Automation Tester, đủ 6/6 kỹ năng có minh chứng (Selenium, TestNG, Jenkins CI/CD, Agile, QA/QC) nhưng chỉ khoảng 11 tháng kinh nghiệm: thiếu hơn một nửa dù đọc 3 năm hay 7+ năm = lệch rõ về kinh nghiệm (B3, E1 không đổi nhãn)"
+  },
+  {
+   "jd": "JD-64",
+   "cv": "TR-64-15",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Headline Fullstack Developer, sinh viên, không có mục Kinh nghiệm (0 tháng): cùng nhóm CNTT phần mềm nhưng khác vị trí; có Selenium, TestNG, Automation Testing, CI/CD qua dự án, thiếu Agile và QA/QC; kỹ năng dùng lại được nhưng không đúng nghề kiểm thử và thiếu hẳn kinh nghiệm (D7, B3, B6)"
+  },
+  {
+   "jd": "JD-64",
+   "cv": "TR-82-13",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "SEO/SEM Specialist 12 tháng (Google Search Console, Ahrefs, Content): khác nhóm ngành Marketing, không có kỹ năng kiểm thử nào (B6)"
+  },
+  {
+   "jd": "JD-64",
+   "cv": "TR-32-08",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Cloud Engineer khoảng 7,5 năm (AWS, Linux, Terraform): cùng nhóm CNTT nhưng khác vị trí, không có Selenium/TestNG/Automation Testing, không nêu CI/CD hay Agile; chỉ vài hiểu biết hạ tầng dùng lại được (B6, A3, A4 không suy từ gợi ý mơ hồ)"
+  },
+  {
+   "jd": "JD-64",
+   "cv": "TR-64-12",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Automation Tester, đủ 6/6 kỹ năng (Selenium, TestNG, Automation, Agile, QA/QC, CI/CD có trong kinh nghiệm) nhưng chỉ khoảng 15 tháng: thiếu hơn một nửa số năm ở cả hai cách đọc (3 năm hay 7+ năm) = lệch rõ về kinh nghiệm (B3)"
+  },
+  {
+   "jd": "JD-64",
+   "cv": "TR-64-03",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Data Engineer mới tốt nghiệp, không có mục Kinh nghiệm (Databricks, MLOps, SQL, AWS): cùng nhóm CNTT phần mềm nhưng khác vị trí, 0/6 kỹ năng cần có (CI nhắc qua trong MLOps là gợi ý mơ hồ, không tính) (B6, A3, A4, D7)"
+  },
+  {
+   "jd": "JD-64",
+   "cv": "TR-61-13",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Graphic Designer 39 tháng (CapCut, Illustrator, Cinema 4D, dựng video): khác ngành, không có điểm chung với kiểm thử phần mềm (B6)"
+  },
+  {
+   "jd": "JD-64",
+   "cv": "TR-64-02",
+   "label": 3,
+   "confidence": "không chắc",
+   "reason": "Đúng vị trí (Automation Tester rồi QA Specialist), đủ 6/6 kỹ năng có minh chứng (Selenium, TestNG, Jenkins CI/CD, Agile, QA/QC, automation); khoảng 58 tháng kinh nghiệm, tin mâu thuẫn (ô 3 năm, yêu cầu 7+ năm) nên lấy cách đọc chặt 84 tháng: thiếu khoảng 30% < một nửa = thiếu một bậc; học vấn không yêu cầu (E1, B1, B3)"
+  },
+  {
+   "jd": "JD-64",
+   "cv": "TR-72-14",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Kế toán công nợ phải trả 17 tháng (VAS, Excel): khác nhóm ngành Kế toán, không có kỹ năng kiểm thử nào (B6)"
+  },
+  {
+   "jd": "JD-64",
+   "cv": "TR-64-11",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "IT Helpdesk Specialist khoảng 37 tháng: cùng nhóm CNTT nhưng khác vị trí; chỉ có Selenium (viết và chạy kịch bản kiểm thử tự động trong việc helpdesk) dùng lại được, thiếu TestNG, CI/CD, Agile, QA/QC (B6, A3, D7)"
+  },
+  {
+   "jd": "JD-64",
+   "cv": "TR-32-15",
+   "label": 1,
+   "confidence": "không chắc",
+   "reason": "Manual Tester 53 tháng: vị trí gần (cùng mảng kiểm thử, tối đa 2); chỉ có QA/QC (suy từ việc kiểm thử), thiếu toàn bộ kỹ năng cốt lõi Automation Testing/Selenium/TestNG (chỉ nhắc mơ hồ 'quy trình thử nghiệm tự động cho một số module'), thiếu CI/CD và Agile: dưới một nửa kỹ năng, cộng thêm thiếu năm so với 7+ năm; phân vân 1–2 nên chọn mức thấp (D5, D6, A4, E1)"
+  },
+  {
+   "jd": "JD-64",
+   "cv": "TR-64-07",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "iOS Developer khoảng 24 tháng (RxSwift, CocoaPods, REST API): cùng nhóm CNTT phần mềm nhưng khác vị trí; chỉ có TestNG dùng lại được, thiếu Selenium, Automation Testing theo nghĩa QA, CI/CD, Agile, QA/QC (B6, D7)"
+  },
+  {
+   "jd": "JD-64",
+   "cv": "TR-48-05",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Sales Logistics 22 tháng (cold calling, consultative selling): khác nhóm ngành Kinh doanh, không có kỹ năng kiểm thử nào (B6)"
+  },
+  {
+   "jd": "JD-64",
+   "cv": "TR-37-06",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Content Marketing 34 tháng (dựng video, Canva, chạy quảng cáo): khác nhóm ngành Marketing/Content, không có điểm chung với kiểm thử tự động (B6)"
+  },
+  {
+   "jd": "JD-64",
+   "cv": "TR-64-08",
+   "label": 3,
+   "confidence": "không chắc",
+   "reason": "Đúng vị trí Automation Tester, đủ 6/6 kỹ năng (Selenium, TestNG, CI/CD với Jenkins/Git, Agile, QA/QC, automation web và di động); khoảng 43 tháng kinh nghiệm, tin mâu thuẫn (ô 3 năm, yêu cầu 7+ năm) nên lấy cách đọc chặt 84 tháng: thiếu khoảng 49%, sát nhưng chưa tới một nửa = thiếu một bậc; học vấn không yêu cầu (E1, B1, B3)"
+  },
+  {
+   "jd": "JD-64",
+   "cv": "TR-32-01",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Cloud Engineer sinh viên, không có mục Kinh nghiệm (AWS, Solution Architecture, presale): cùng nhóm CNTT nhưng khác vị trí, 0/6 kỹ năng cần có, 0 tháng kinh nghiệm (B3, B6, A3, D7)"
+  },
+  {
+   "jd": "JD-64",
+   "cv": "TR-64-01",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Automation Tester, có 5/6 kỹ năng (Automation, Selenium, TestNG, CI/CD, QA/QC; thiếu Agile không cốt lõi) nhưng chỉ khoảng 17 tháng: thiếu từ một nửa số năm trở lên ở cả hai cách đọc (3 năm hay 7+ năm) = lệch rõ về kinh nghiệm; chưa dưới nửa kỹ năng nên không cộng dồn theo C1 (B3, C1 không áp dụng)"
+  },
+  {
+   "jd": "JD-64",
+   "cv": "TR-09-13",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Tạp vụ – nấu ăn 22 tháng: lao động phổ thông, khác ngành hoàn toàn, không có kỹ năng nào của tin (B6, E4)"
+  },
+  {
+   "jd": "JD-72",
+   "cv": "TR-72-04",
+   "label": 1,
+   "confidence": "không chắc",
+   "reason": "Đúng vị trí theo headline Kế toán công nợ (D7), có 3/4 kỹ năng (Kế toán công nợ, Phần mềm kế toán, Excel), thiếu VAS; mục Kinh nghiệm trống nên 0/24 tháng, lệch rõ (B3); thiếu 1 kỹ năng cộng dồn với lệch rõ kinh nghiệm, phân vân 1–2 nên chọn mức thấp (C2, E5); học vấn Thạc sĩ đạt."
+  },
+  {
+   "jd": "JD-72",
+   "cv": "TR-50-04",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Sales Online 11 tháng, khác nhóm ngành Kế toán (B6); không có kỹ năng cần có nào; dừng ở bước vị trí."
+  },
+  {
+   "jd": "JD-72",
+   "cv": "TR-48-13",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Sales Logistics/vận chuyển, khác nhóm ngành Kế toán (B6); chỉ có Microsoft Office suy ra Excel (A4), không có Kế toán công nợ, VAS, Phần mềm kế toán."
+  },
+  {
+   "jd": "JD-72",
+   "cv": "TR-31-01",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Nhân viên CSKH logistics, khác nhóm ngành Kế toán (B6); không có kỹ năng cần có nào."
+  },
+  {
+   "jd": "JD-72",
+   "cv": "TR-84-07",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Hành chính văn phòng, thuộc nhóm Hành chính – Nhân sự, khác nhóm Kế toán (B6); chỉ có Excel, thiếu Kế toán công nợ, VAS, Phần mềm kế toán."
+  },
+  {
+   "jd": "JD-72",
+   "cv": "TR-72-14",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Accounts Payable, đủ 4/4 kỹ năng (Excel, Kế toán công nợ, VAS, Phần mềm kế toán); 17/24 tháng, thiếu chưa tới một nửa nên thiếu một bậc, nền 3 (B3); học vấn Cao đẳng thấp hơn Đại học trừ 1 (B4)."
+  },
+  {
+   "jd": "JD-72",
+   "cv": "TR-72-11",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Kế toán tổng hợp hơn 6 năm, cùng nhóm ngành nhưng khác vị trí (B6, D6); không ghi kỹ năng cần có nào (Excel, Kế toán công nợ, VAS, Phần mềm kế toán), thiếu cốt lõi, không suy từ gợi ý mơ hồ (A1, A4)."
+  },
+  {
+   "jd": "JD-72",
+   "cv": "TR-72-01",
+   "label": 1,
+   "confidence": "không chắc",
+   "reason": "Đúng vị trí Kế toán công nợ, có 2/4 kỹ năng (Kế toán công nợ, Phần mềm kế toán), thiếu Excel và VAS không cốt lõi; khoảng 22/24 tháng, thiếu hơn 1 tháng nên thiếu một bậc, cộng dồn về 2 (B3, C2); Cao đẳng thấp hơn Đại học trừ 1 (B4); phân vân 1–2 nên chọn mức thấp."
+  },
+  {
+   "jd": "JD-72",
+   "cv": "TR-50-12",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Sales Online/CSKH, chưa có kinh nghiệm, khác nhóm ngành Kế toán (B6); không có kỹ năng cần có nào."
+  },
+  {
+   "jd": "JD-72",
+   "cv": "TR-31-14",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Nhân viên CSKH xuất nhập khẩu, chưa có kinh nghiệm, khác nhóm ngành Kế toán (B6); không có kỹ năng cần có nào."
+  },
+  {
+   "jd": "JD-72",
+   "cv": "TR-61-03",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "UI/UX Designer, khác ngành hoàn toàn (B6); không có kỹ năng cần có nào."
+  },
+  {
+   "jd": "JD-72",
+   "cv": "TR-72-00",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Accounts Payable tại chuỗi bán lẻ, đủ 4/4 kỹ năng (Excel, Kế toán công nợ, VAS, Phần mềm kế toán); khoảng 57 tháng so với 24 tháng yêu cầu; Cử nhân Kế toán đạt; chức danh Accountant/Specialist nên không trừ thừa trình độ (B1, B5)."
+  },
+  {
+   "jd": "JD-72",
+   "cv": "TR-72-07",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Kiểm toán viên nội bộ, cùng nhóm ngành nhưng khác vị trí (B6, D6, D7); chỉ có 1/4 kỹ năng (Kế toán công nợ), thiếu Excel, VAS, Phần mềm kế toán; 12/24 tháng, thiếu từ một nửa nên lệch rõ; dưới nửa kỹ năng cộng thiếu kinh nghiệm (C1)."
+  },
+  {
+   "jd": "JD-72",
+   "cv": "TR-72-08",
+   "label": 3,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Kế toán công nợ, đủ 4/4 kỹ năng (Excel, Phần mềm kế toán, Kế toán công nợ, VAS); 14/24 tháng, thiếu chưa tới một nửa nên thiếu một bậc (B3); học vấn Thạc sĩ đạt, không có điểm trừ."
+  },
+  {
+   "jd": "JD-72",
+   "cv": "TR-72-10",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí theo headline Kế toán công nợ (D7), đủ 4/4 kỹ năng (có minh chứng trong dự án); mục Kinh nghiệm trống nên 0/24 tháng, đủ kỹ năng nhưng lệch rõ kinh nghiệm (B3); học vấn Thạc sĩ đạt."
+  },
+  {
+   "jd": "JD-72",
+   "cv": "TR-98-02",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Nhân viên kho, khác nhóm ngành Kế toán (B6); chỉ có Excel, thiếu Kế toán công nợ, VAS, Phần mềm kế toán."
+  },
+  {
+   "jd": "JD-72",
+   "cv": "TR-72-03",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Kiểm toán viên nội bộ khoảng 3 năm, cùng nhóm ngành Kế toán – Kiểm toán nhưng khác vị trí (B6, D7); 0/4 kỹ năng cần có, thiếu cốt lõi Kế toán công nợ; không đưa xuống 0 vì cùng nhóm ngành (A3)."
+  },
+  {
+   "jd": "JD-72",
+   "cv": "TR-72-06",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Kế toán công nợ phải trả, đủ 4/4 kỹ năng (Phần mềm kế toán, Kế toán công nợ, VAS, Excel); khoảng 35 tháng so với 24 tháng yêu cầu; Cử nhân Kế toán đạt; cấp bậc nhân viên khớp (B1)."
+  },
+  {
+   "jd": "JD-72",
+   "cv": "TR-98-14",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Nhân viên kho, khác nhóm ngành Kế toán (B6); chỉ có Excel, thiếu Kế toán công nợ, VAS, Phần mềm kế toán."
+  },
+  {
+   "jd": "JD-72",
+   "cv": "TR-48-08",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Sales Logistics, chưa có kinh nghiệm, khác nhóm ngành Kế toán (B6); chỉ có Microsoft Office suy ra Excel (A4), thiếu các kỹ năng kế toán."
+  },
+  {
+   "jd": "JD-72",
+   "cv": "TR-98-05",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Nhân viên kho, khác nhóm ngành Kế toán (B6); chỉ có Excel, thiếu Kế toán công nợ, VAS, Phần mềm kế toán."
+  },
+  {
+   "jd": "JD-72",
+   "cv": "TR-98-09",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Nhân viên kho/điều phối kho, khác nhóm ngành Kế toán (B6); chỉ có Excel, các mục còn lại là phẩm chất cá nhân không đếm."
+  },
+  {
+   "jd": "JD-72",
+   "cv": "TR-31-06",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Nhân viên CSKH xuất khẩu, khác nhóm ngành Kế toán (B6); không có kỹ năng cần có nào."
+  },
+  {
+   "jd": "JD-82",
+   "cv": "TR-37-03",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Tổ chức sự kiện (trưởng nhóm), khác vị trí nhưng gần mảng marketing; chỉ có chạy quảng cáo trực tuyến + chứng chỉ quảng cáo dùng lại được, không có SEO, GA4, GSC, Ahrefs/Semrush; không có kinh nghiệm SEO/SEM; có tiếng Anh (B6, D7, A3)"
+  },
+  {
+   "jd": "JD-82",
+   "cv": "TR-82-01",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí SEO/SEM; có SEO, GA4, GSC, Google Ads (tính tương đương Google Search Ads), thiếu Ahrefs/Semrush (gộp một yêu cầu, không cốt lõi); khoảng 23/36 tháng, thiếu chưa tới nửa = thiếu một bậc; cộng dồn thiếu 1 kỹ năng + thiếu một bậc → 2; từng là SEO Manager dẫn nhóm (trưởng nhóm, chỉ hơn 1 bậc) nên không trừ; có tiếng Trung/Anh (C4, B2, C2, D3, B5)"
+  },
+  {
+   "jd": "JD-82",
+   "cv": "TR-82-07",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Vị trí theo mục Kinh nghiệm là Public Relations Manager (headline SEO không quyết định), cùng nhóm marketing nhưng khác vị trí; có Semrush, làm phân tích SEO/từ khóa, chứng chỉ Google Analytics; thiếu GSC và Google Search Ads; chỉ 15 tháng làm PR so với 36 tháng yêu cầu; có tiếng Anh (D7, B6, A4, D8)"
+  },
+  {
+   "jd": "JD-82",
+   "cv": "TR-82-10",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí SEO/SEM (theo headline), đủ 5/5 yêu cầu (SEO, GA4, GSC, Ahrefs, Google Search Ads) qua thực tập/dự án; mục Kinh nghiệm trống: 0/36 tháng, lệch rõ kinh nghiệm → 2; có tiếng Trung/Anh, thạc sĩ (D7, C4, B3, E5)"
+  },
+  {
+   "jd": "JD-82",
+   "cv": "TR-37-02",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Content Marketer 11 tháng, cùng nhóm marketing nhưng khác vị trí; kỹ năng là AI, dựng video, chỉnh sửa ảnh, không có kỹ năng cần có nào (SEO, GA4, GSC, Ahrefs/Semrush, Search Ads); có tiếng Anh (B6, D7)"
+  },
+  {
+   "jd": "JD-82",
+   "cv": "TR-82-00",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí SEO/SEM; đủ 5/5 yêu cầu có minh chứng (SEO, GA4, GSC, Ahrefs + Semrush, Google Search Ads); khoảng 58 tháng làm SEO/SEM ≥ 36 tháng; cấp nhân viên/chuyên viên khớp; có tiếng Trung/Anh; MBA (B1, C4, B5)"
+  },
+  {
+   "jd": "JD-82",
+   "cv": "TR-82-13",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí SEO/SEM; có SEO, GSC, Ahrefs, Google Ads (tương đương Search Ads), GA chỉ qua chứng chỉ Google Analytics (không minh chứng GA4); chỉ 13/36 tháng, thiếu hơn nửa = lệch rõ kinh nghiệm → 2; có tiếng Trung/Anh (C4, A4, B3)"
+  },
+  {
+   "jd": "JD-82",
+   "cv": "TR-82-02",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí SEO/SEM; có SEO, GSC, Ahrefs/Semrush, Google Search Ads, Google Analytics qua chứng chỉ và dự án; chỉ 12/36 tháng, thiếu hơn nửa = lệch rõ kinh nghiệm → 2; có tiếng Trung/Anh (C4, A4, B3)"
+  },
+  {
+   "jd": "JD-82",
+   "cv": "TR-72-11",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Kế toán tổng hợp hơn 6 năm, khác nhóm ngành (Kế toán – Tài chính), không có kỹ năng SEO/SEM nào (B6)"
+  },
+  {
+   "jd": "JD-82",
+   "cv": "TR-98-01",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Nhân viên kho, mới tốt nghiệp trung cấp, chưa có kinh nghiệm; khác ngành, không có kỹ năng SEO/SEM nào (B6, E4)"
+  },
+  {
+   "jd": "JD-82",
+   "cv": "TR-84-13",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Quản lý tài khoản/Tư vấn khách hàng ngân hàng (kinh doanh – CSKH), cùng nhóm ngành nhưng khác vị trí; chỉ có giao tiếp, thuyết phục dùng lại được, không có kỹ năng SEO/SEM nào; có tiếng Anh (B6, D7)"
+  },
+  {
+   "jd": "JD-82",
+   "cv": "TR-48-09",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Sales logistics gần 8 năm, cùng nhóm Kinh doanh – Marketing nhưng khác vị trí; chỉ có giao tiếp, phân tích dữ liệu dùng lại được, không có SEO, GA4, GSC, Ahrefs/Semrush, Search Ads; có tiếng Anh/Trung (B6, D7)"
+  },
+  {
+   "jd": "JD-82",
+   "cv": "TR-37-07",
+   "label": 0,
+   "confidence": "không chắc",
+   "reason": "Tổ chức sự kiện 21 tháng, không thuộc nhóm ngành nêu ở B6; kỹ năng là quản lý dự án, chỉnh sửa ảnh, quản lý khách hàng, không có điểm chung với SEO/SEM; phân vân 0–1 (sự kiện gần marketing) nên chọn mức thấp (B6, D7)"
+  },
+  {
+   "jd": "JD-82",
+   "cv": "TR-82-15",
+   "label": 1,
+   "confidence": "không chắc",
+   "reason": "Content Creator/Content Marketing khoảng 35 tháng, cùng nhóm nhưng khác vị trí; có GA4 và làm nội dung chuẩn SEO (2/5), thiếu GSC, Ahrefs/Semrush, Google Search Ads; chưa làm SEO/SEM chuyên trách; phân vân 1–2 nên chọn mức thấp; có tiếng Anh (B6, D7, A4, D6)"
+  },
+  {
+   "jd": "JD-82",
+   "cv": "TR-32-15",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Manual Tester 53 tháng, khác nhóm ngành (CNTT phần mềm), không có kỹ năng SEO/SEM nào (B6)"
+  },
+  {
+   "jd": "JD-82",
+   "cv": "TR-82-14",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí SEO/SEM; đủ 5/5 yêu cầu có minh chứng (SEO, GA4, GSC, Ahrefs/Semrush, Google Search Ads); khoảng 17/36 tháng, thiếu hơn nửa = lệch rõ kinh nghiệm → 2; có tiếng Trung/Anh (C4, B3)"
+  },
+  {
+   "jd": "JD-82",
+   "cv": "TR-98-14",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Nhân viên kho 77 tháng, khác ngành, học vấn THPT, không có kỹ năng SEO/SEM nào (B6, E4)"
+  },
+  {
+   "jd": "JD-82",
+   "cv": "TR-37-00",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Content Marketer/Creator khoảng 55 tháng, cùng nhóm nhưng khác vị trí; chỉ có chạy Google Ads (chứng chỉ Google Ads) dùng lại được, thiếu SEO (cốt lõi), GA4, GSC, Ahrefs/Semrush; không ghi ngoại ngữ nhưng không đưa CV cùng nhóm xuống 0 (B6, D7, A3)"
+  },
+  {
+   "jd": "JD-82",
+   "cv": "TR-82-04",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí SEO/SEM (theo headline), đủ 5/5 yêu cầu (SEO, GA4, GSC, Ahrefs, Google Search Ads) qua dự án; mục Kinh nghiệm trống: 0/36 tháng, lệch rõ kinh nghiệm → 2; có tiếng Trung/Anh (D7, C4, B3, E5)"
+  },
+  {
+   "jd": "JD-82",
+   "cv": "TR-37-10",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Thực tập Content Marketing, chưa có mục Kinh nghiệm; cùng nhóm nhưng khác vị trí; chỉ có chạy quảng cáo mạng xã hội + Google Ads Fundamentals dùng lại được, thiếu SEO, GA4, GSC, Ahrefs/Semrush; không ghi ngoại ngữ nhưng không đưa CV cùng nhóm xuống 0 (B6, D7, B3, A3)"
+  },
+  {
+   "jd": "JD-82",
+   "cv": "TR-86-14",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Lễ tân hơn 2,5 năm, nhóm Hành chính – Lễ tân, khác nhóm ngành; không có kỹ năng SEO/SEM nào (B6, D7)"
+  },
+  {
+   "jd": "JD-82",
+   "cv": "TR-82-08",
+   "label": 3,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Chuyên viên SEO/SEM; đủ 5/5 yêu cầu có minh chứng (SEO, GA4, GSC, Ahrefs + Semrush, Google Search Ads); khoảng 22/36 tháng, thiếu chưa tới nửa = thiếu một bậc kinh nghiệm → 3; cao đẳng đạt; có tiếng Trung/Anh (C4, B3, B4)"
+  },
+  {
+   "jd": "JD-82",
+   "cv": "TR-82-06",
+   "label": 3,
+   "confidence": "không chắc",
+   "reason": "Đúng vị trí Chuyên viên SEO/SEM; đủ 5/5 yêu cầu có minh chứng (SEO, GA4, GSC, Ahrefs + Semrush, Google Search Ads); khoảng 34/36 tháng theo mục Kinh nghiệm, thiếu hơn 1 tháng nên tính thiếu một bậc → 3; sát ngưỡng mức 4 nên chọn mức thấp; có tiếng Trung/Anh (C4, B3, B1)"
+  },
+  {
+   "jd": "JD-82",
+   "cv": "TR-37-08",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Content Marketer/Content Specialist 22 tháng, cùng nhóm nhưng khác vị trí; chỉ có chạy quảng cáo kỹ thuật số dùng lại được, thiếu SEO, GA4, GSC, Ahrefs/Semrush, Google Search Ads; có tiếng Anh (B6, D7)"
+  },
+  {
+   "jd": "JD-84",
+   "cv": "TR-84-14",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí (headline trùng tin, thực tập quản lý tài khoản tuyển dụng – D7); đủ 4/4 kỹ năng có minh chứng; tin không yêu cầu kinh nghiệm; tiếng Nhật mức Làm việc đạt; Thạc sĩ ≥ Cao đẳng, không trừ thừa trình độ (B4, B5) → B1"
+  },
+  {
+   "jd": "JD-84",
+   "cv": "TR-86-14",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Lễ tân chuỗi bán lẻ: cùng nhóm Hành chính – Nhân sự – Lễ tân nhưng khác vị trí (B6); chỉ có giao tiếp chung, thiếu Đọc hiểu tài liệu/Viết báo cáo/Làm việc nhóm; không có tiếng Nhật nhưng không hạ xuống 0 (A3)"
+  },
+  {
+   "jd": "JD-84",
+   "cv": "TR-86-04",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Lễ tân khách sạn: cùng nhóm ngành, khác vị trí (B6); chỉ có giao tiếp và chút làm việc nhóm dùng lại được; không có tiếng Nhật, giữ 1 theo A3"
+  },
+  {
+   "jd": "JD-84",
+   "cv": "TR-86-05",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Lễ tân khách sạn: cùng nhóm ngành, khác vị trí (B6); không có kỹ năng cần có nào rõ; tiếng Nhật không ghi, không hạ xuống 0 (A3)"
+  },
+  {
+   "jd": "JD-84",
+   "cv": "TR-84-07",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Hành chính văn phòng 50 tháng: cùng nhóm Hành chính – Nhân sự, khác vị trí tuyển dụng (B6); có Làm việc nhóm và báo cáo Excel (A4), thiếu Giao tiếp email/chat, Đọc hiểu tài liệu; tiếng Nhật chỉ mức Giao tiếp, thấp hơn yêu cầu (A3) → 1"
+  },
+  {
+   "jd": "JD-84",
+   "cv": "TR-84-05",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí quản lý tài khoản tuyển dụng, 21 tháng; có 3/4 kỹ năng (Giao tiếp email/chat, Làm việc nhóm, Viết báo cáo qua báo cáo định kỳ – A4), thiếu Đọc hiểu tài liệu, không cốt lõi (B1); tiếng Nhật: chứng chỉ N2 đúng mức tin nêu dù ô ngoại ngữ ghi Giao tiếp (theo chữ ghi ở chứng chỉ, tương tự E2) nên không trừ A3; Cử nhân đạt"
+  },
+  {
+   "jd": "JD-84",
+   "cv": "TR-61-13",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Graphic Designer: Thiết kế – Media, khác nhóm ngành với Tuyển dụng/Nhân sự (B6); không có kỹ năng cần có, không có tiếng Nhật"
+  },
+  {
+   "jd": "JD-84",
+   "cv": "TR-31-02",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "CSKH xuất khẩu/logistics, chưa có kinh nghiệm: khác nhóm ngành (B6); chỉ có Làm việc nhóm; không có tiếng Nhật"
+  },
+  {
+   "jd": "JD-84",
+   "cv": "TR-84-13",
+   "label": 0,
+   "confidence": "không chắc",
+   "reason": "Quản lý tài khoản/tư vấn khách hàng ngân hàng: trùng chữ chức danh nhưng là nghề kinh doanh – tài chính, khác nhóm ngành với Tuyển dụng (B6); có Đọc hiểu tài liệu, Làm việc nhóm dùng lại được; tiếng Nhật chỉ mức Giao tiếp; phân vân 0/1 nên chọn mức thấp"
+  },
+  {
+   "jd": "JD-84",
+   "cv": "TR-84-15",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Hành chính văn phòng 104 tháng (từng quản lý hành chính): cùng nhóm Hành chính – Nhân sự, khác vị trí (B6); có Giao tiếp email/chat và Viết báo cáo, thiếu Đọc hiểu tài liệu, Làm việc nhóm; không ghi tiếng Nhật, giữ 1 theo A3"
+  },
+  {
+   "jd": "JD-84",
+   "cv": "TR-84-02",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Headline Nhân viên quản lý tài khoản, dự án làm tuyển dụng (D7) → đúng vị trí; đủ 4/4 kỹ năng có minh chứng; tin không yêu cầu kinh nghiệm; tiếng Nhật mức Làm việc đạt; Cao đẳng đạt → B1"
+  },
+  {
+   "jd": "JD-84",
+   "cv": "TR-50-00",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Tư vấn online/CSKH ngân hàng, chưa có kinh nghiệm: khác nhóm ngành (B6); chỉ có giao tiếp chung; không có ngoại ngữ"
+  },
+  {
+   "jd": "JD-84",
+   "cv": "TR-84-10",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Tuyển dụng, 37 tháng; đủ 4/4 kỹ năng (Viết báo cáo suy từ lập báo cáo tuyển dụng hàng quý – A4); tiếng Nhật mức Làm việc đạt; cấp Nhân viên khớp, Thạc sĩ không trừ (B4, B5) → B1"
+  },
+  {
+   "jd": "JD-84",
+   "cv": "TR-92-13",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Graphic Designer mới tốt nghiệp: Thiết kế – Media, khác nhóm ngành (B6); không có kỹ năng cần có, không có tiếng Nhật"
+  },
+  {
+   "jd": "JD-84",
+   "cv": "TR-84-08",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí (headline trùng tin, dự án tuyển dụng – D7); đủ 4/4 kỹ năng có minh chứng; tin không yêu cầu kinh nghiệm; tiếng Nhật Làm việc + chứng chỉ N2; Cao đẳng đạt → B1"
+  },
+  {
+   "jd": "JD-84",
+   "cv": "TR-86-10",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Lễ tân khách sạn 13 tháng: cùng nhóm ngành, khác vị trí (B6); chỉ có giao tiếp chung; không có tiếng Nhật, giữ 1 theo A3"
+  },
+  {
+   "jd": "JD-84",
+   "cv": "TR-98-09",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Nhân viên kho: kho vận, khác ngành với Tuyển dụng (B6, E4); chỉ có báo cáo tồn kho; Trung cấp dưới Cao đẳng; không có tiếng Nhật"
+  },
+  {
+   "jd": "JD-84",
+   "cv": "TR-37-08",
+   "label": 0,
+   "confidence": "không chắc",
+   "reason": "Content Marketer 21 tháng: nhóm Kinh doanh – Marketing – Content, khác nhóm ngành với Tuyển dụng (B6); có chạy quảng cáo/tối ưu nội dung hơi gần mô tả việc nhưng không có kỹ năng cần có nào và không có tiếng Nhật; phân vân 0/1 nên chọn mức thấp"
+  },
+  {
+   "jd": "JD-84",
+   "cv": "TR-86-06",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Lễ tân resort, chưa có kinh nghiệm chính thức: cùng nhóm ngành, khác vị trí (B6); chỉ có giao tiếp và phối hợp đồng nghiệp; không có tiếng Nhật, giữ 1 theo A3"
+  },
+  {
+   "jd": "JD-84",
+   "cv": "TR-37-06",
+   "label": 0,
+   "confidence": "không chắc",
+   "reason": "Content Marketing 34 tháng: khác nhóm ngành với Tuyển dụng (B6); có chạy quảng cáo, phân tích dữ liệu hơi gần mô tả việc nhưng không có kỹ năng cần có nào và không có tiếng Nhật; phân vân 0/1 nên chọn mức thấp"
+  },
+  {
+   "jd": "JD-84",
+   "cv": "TR-64-02",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Automation Tester: CNTT phần mềm, khác ngành (B6); không có kỹ năng cần có, không có tiếng Nhật"
+  },
+  {
+   "jd": "JD-86",
+   "cv": "TR-86-06",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Lễ tân (D7 theo headline); đủ 4/4 kỹ năng cần có, có minh chứng ở dự án lễ tân resort (Giao tiếp, CSKH, Giải quyết vấn đề, Phần mềm quản lý khách sạn); tin không yêu cầu kinh nghiệm nên 0 tháng vẫn đủ (B3); Cao đẳng đạt; tiếng Anh Giao tiếp đạt; không trừ (B1)."
+  },
+  {
+   "jd": "JD-86",
+   "cv": "TR-86-12",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Lễ tân (D7); đủ 4/4 kỹ năng, minh chứng ở dự án lễ tân resort và chứng chỉ phần mềm khách sạn; tin không yêu cầu kinh nghiệm; Thạc sĩ cao hơn bậc tối thiểu (B4), không tính thừa trình độ vì chỉ xét chức danh (B5); tiếng Anh Giao tiếp đạt (B1)."
+  },
+  {
+   "jd": "JD-86",
+   "cv": "TR-86-10",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Lễ tân khách sạn 13 tháng, đúng vị trí và đúng loại công việc; đủ 4/4 kỹ năng có minh chứng trong kinh nghiệm; Cử nhân đạt; tiếng Anh Giao tiếp đạt; không trừ (B1)."
+  },
+  {
+   "jd": "JD-86",
+   "cv": "TR-84-15",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Hành chính văn phòng (quản lý rồi nhân viên, 104 tháng): cùng nhóm Hành chính – Nhân sự – Lễ tân nhưng khác vị trí (B6); chỉ có Giao tiếp, thiếu CSKH, Giải quyết vấn đề, Phần mềm quản lý khách sạn; không ghi tiếng Anh nhưng không đưa CV cùng nhóm xuống 0 (A3)."
+  },
+  {
+   "jd": "JD-86",
+   "cv": "TR-84-05",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Quản lý tài khoản/dữ liệu tuyển dụng 21 tháng: cùng nhóm Hành chính – Nhân sự – Lễ tân nhưng khác vị trí (B6); chỉ có Giao tiếp (1/4), thiếu CSKH, Giải quyết vấn đề, Phần mềm quản lý khách sạn; tiếng Anh Làm việc đạt."
+  },
+  {
+   "jd": "JD-86",
+   "cv": "TR-84-08",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Nhân viên quản lý tài khoản tuyển dụng, chưa có kinh nghiệm (D7 theo headline): cùng nhóm Nhân sự – Lễ tân nhưng khác vị trí (B6); chỉ suy ra được Giao tiếp từ giao tiếp qua email/chat (A4), thiếu 3 kỹ năng còn lại; Cao đẳng và tiếng Anh đạt."
+  },
+  {
+   "jd": "JD-86",
+   "cv": "TR-86-15",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Pháp chế doanh nghiệp 11 tháng (D7): khác ngành, ngoài nhóm Hành chính – Nhân sự – Lễ tân (B6); không có kỹ năng cần có nào; tiếng Anh Cơ bản thấp hơn yêu cầu."
+  },
+  {
+   "jd": "JD-86",
+   "cv": "TR-86-04",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Lễ tân khách sạn ở 3 nơi (khoảng 20 tháng), đúng vị trí và đúng loại công việc; đủ 4/4 kỹ năng có minh chứng và chứng chỉ; Cao đẳng đạt; tiếng Anh Giao tiếp đạt; không trừ (B1)."
+  },
+  {
+   "jd": "JD-86",
+   "cv": "TR-84-14",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Nhân viên quản lý tài khoản tuyển dụng, chỉ có thực tập ở mục dự án (D7 theo headline): cùng nhóm Nhân sự – Lễ tân nhưng khác vị trí (B6); chỉ suy ra được Giao tiếp (A4), thiếu CSKH, Phần mềm quản lý khách sạn, Giải quyết vấn đề chỉ nhắc mơ hồ; tiếng Anh đạt."
+  },
+  {
+   "jd": "JD-86",
+   "cv": "TR-86-09",
+   "label": 3,
+   "confidence": "chắc",
+   "reason": "Lễ tân 10 tháng, dùng phần mềm quản lý khách sạn để quản lý đặt phòng: đúng vị trí; có Giải quyết vấn đề, Phần mềm quản lý khách sạn, CSKH và Giao tiếp suy từ việc đã làm (A4) nên nền 4 (B1); trừ 1 vì tiếng Anh chỉ Cơ bản, thấp hơn mức Giao tiếp bắt buộc (A3)."
+  },
+  {
+   "jd": "JD-86",
+   "cv": "TR-31-06",
+   "label": 0,
+   "confidence": "không chắc",
+   "reason": "CSKH xuất khẩu 22 tháng: thuộc nhóm Kinh doanh – CSKH, khác nhóm với Lễ tân (B6) nên 0; có 3/4 kỹ năng dùng lại được (Giao tiếp, CSKH, Giải quyết vấn đề), thiếu Phần mềm quản lý khách sạn; THPT thấp hơn Cao đẳng, tiếng Anh Cơ bản thấp hơn yêu cầu (A3); phân vân 0–1, chọn mức thấp."
+  },
+  {
+   "jd": "JD-86",
+   "cv": "TR-72-07",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Kiểm toán viên nội bộ 12 tháng: nhóm Kế toán – Kiểm toán, khác ngành (B6); không có kỹ năng cần có nào; không ghi ngoại ngữ."
+  },
+  {
+   "jd": "JD-86",
+   "cv": "TR-86-08",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Lễ tân khách sạn/resort 35 tháng, đúng vị trí và đúng loại công việc; có Giao tiếp, Phần mềm quản lý khách sạn, Giải quyết vấn đề, CSKH suy từ xử lý yêu cầu dịch vụ và chứng chỉ dịch vụ khách hàng (A4); Cử nhân đạt; tiếng Anh Giao tiếp đạt (B1)."
+  },
+  {
+   "jd": "JD-86",
+   "cv": "TR-61-01",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Graphic/Creative Designer: nhóm Thiết kế – Media, khác ngành với Lễ tân (B6); không có kỹ năng cần có nào."
+  },
+  {
+   "jd": "JD-86",
+   "cv": "TR-84-07",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Hành chính văn phòng ngân hàng 50 tháng: cùng nhóm Hành chính – Nhân sự – Lễ tân nhưng khác vị trí (B6); chỉ suy ra được Giao tiếp/Giải quyết vấn đề ở mức phối hợp nội bộ (A4), thiếu CSKH và Phần mềm quản lý khách sạn; Cao đẳng và tiếng Anh Giao tiếp đạt."
+  },
+  {
+   "jd": "JD-86",
+   "cv": "TR-72-11",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Kế toán tổng hợp hơn 6 năm: nhóm Kế toán – Tài chính, khác ngành (B6); không có kỹ năng cần có nào; tiếng Anh Cơ bản."
+  },
+  {
+   "jd": "JD-86",
+   "cv": "TR-86-14",
+   "label": 3,
+   "confidence": "không chắc",
+   "reason": "Lễ tân khoảng 32 tháng nhưng ở siêu thị/trung tâm mua sắm, không phải khách sạn: trùng chức danh và đủ 4/4 thẻ kỹ năng (Phần mềm quản lý khách sạn chỉ liệt kê, không minh chứng) nhưng khác loại công việc nên nền 3 (E3); Cao đẳng và tiếng Anh Giao tiếp đạt; phân vân 3–4, chọn mức thấp."
+  },
+  {
+   "jd": "JD-86",
+   "cv": "TR-48-06",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Sales Logistics 21 tháng: nhóm Kinh doanh, khác nhóm với Lễ tân (B6); chỉ có Giao tiếp và Giải quyết vấn đề dùng lại được, thiếu CSKH và Phần mềm quản lý khách sạn; tiếng Anh đạt nhưng sai ngành nên dừng."
+  },
+  {
+   "jd": "JD-86",
+   "cv": "TR-86-05",
+   "label": 3,
+   "confidence": "chắc",
+   "reason": "Lễ tân khách sạn ở 3 nơi (khoảng 30 tháng), đúng vị trí và đúng loại công việc; có Phần mềm quản lý khách sạn, Giải quyết vấn đề, CSKH và Giao tiếp suy từ việc đã làm (A4) nên nền 4 (B1); trừ 1 vì tiếng Anh chỉ Cơ bản, thấp hơn mức Giao tiếp bắt buộc (A3)."
+  },
+  {
+   "jd": "JD-86",
+   "cv": "TR-31-05",
+   "label": 0,
+   "confidence": "không chắc",
+   "reason": "Nhân viên dịch vụ khách hàng 17 tháng (thương mại trực tuyến): thuộc nhóm Kinh doanh – CSKH, khác nhóm với Lễ tân (B6) nên 0; có 3/4 kỹ năng dùng lại được (Giao tiếp, CSKH, Giải quyết vấn đề), thiếu Phần mềm quản lý khách sạn; tiếng Anh Cơ bản thấp hơn yêu cầu (A3); phân vân 0–1, chọn mức thấp."
+  },
+  {
+   "jd": "JD-86",
+   "cv": "TR-48-01",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Sales Logistics hơn 3 năm (freight forwarding, telesales): nhóm Kinh doanh, khác nhóm với Lễ tân (B6); chỉ có Giao tiếp dùng lại được, thiếu CSKH, Giải quyết vấn đề, Phần mềm quản lý khách sạn; sai ngành nên dừng."
+  },
+  {
+   "jd": "JD-86",
+   "cv": "TR-84-13",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Quản lý tài khoản/tư vấn khách hàng ngân hàng khoảng 30 tháng: nhóm Tài chính – Kinh doanh, khác nhóm với Lễ tân (B6); chỉ có Giao tiếp, thiếu CSKH, Giải quyết vấn đề, Phần mềm quản lý khách sạn; sai ngành nên dừng."
+  },
+  {
+   "jd": "JD-92",
+   "cv": "TR-37-08",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Content Marketer 21 tháng: khác vị trí, cùng nhóm gần Thiết kế–Media (B6); chỉ có Photoshop, AI, dựng video (3/10), thiếu Illustrator, After Effects, Premiere, quay/chụp, 3D, multimedia; thiếu xa 60 tháng; cao đẳng và tiếng Anh cơ bản không kéo xuống 0 (A3)."
+  },
+  {
+   "jd": "JD-92",
+   "cv": "TR-92-02",
+   "label": 2,
+   "confidence": "không chắc",
+   "reason": "Đúng vị trí thiết kế đồ họa, 114 tháng đủ; có 8/10 nhóm kỹ năng (Photoshop, AI, Premiere, Video Production, quay phim, chụp ảnh, 3D gộp Blender/3ds Max/C4D theo C4, multimedia) nhưng không ghi Illustrator và After Effects là cốt lõi (A1; chứng chỉ Adobe Creative Suite không nêu đích danh nên không suy, A4) → tối đa 2; cấp nhân viên dưới Quản lý; ĐH và tiếng Anh giao tiếp đạt."
+  },
+  {
+   "jd": "JD-92",
+   "cv": "TR-92-09",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí Graphic Designer, 55 tháng (thiếu một bậc); có 8/10 (Photoshop, Illustrator, After Effects, Premiere qua chứng chỉ A4, video production, 3ds Max, chụp ảnh không minh chứng, multimedia), thiếu AI là cốt lõi trong tiêu đề (A1) và quay phim → tối đa 2; tiếng Anh Basic dưới mức giao tiếp bắt buộc −1 (A3), cao đẳng dưới ĐH −1; giữ 1 theo A3."
+  },
+  {
+   "jd": "JD-92",
+   "cv": "TR-61-00",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí, 120 tháng đủ; có 5/10 (Photoshop, Illustrator, After Effects, Premiere, video quảng cáo), thiếu AI cốt lõi (A1), quay phim, chụp ảnh, 3D, multimedia → nền 2; cao đẳng dưới ĐH −1; tiếng Anh giao tiếp đạt; cấp nhân viên dưới Quản lý."
+  },
+  {
+   "jd": "JD-92",
+   "cv": "TR-98-06",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Nhân viên kho: khác ngành hoàn toàn, không có kỹ năng thiết kế/video nào (B6)."
+  },
+  {
+   "jd": "JD-92",
+   "cv": "TR-37-06",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Content Marketing (3 tháng chính thức + 31 tháng thực tập): khác vị trí, nhóm gần Thiết kế–Media (B6); chỉ có dựng video và ứng dụng AI (2/10), thiếu toàn bộ bộ Adobe, 3D, quay/chụp; kinh nghiệm thiếu trên nửa; ĐH và tiếng Anh đạt."
+  },
+  {
+   "jd": "JD-92",
+   "cv": "TR-92-01",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Headline Graphic Designer (D7) nhưng 0 tháng ở mục Kinh nghiệm (B3) so với 60 tháng: lệch rõ; kỹ năng 8/10 (Photoshop, Illustrator qua chứng chỉ A4, AI, Premiere trong dự án, dựng video, quay phim, chụp ảnh, multimedia), thiếu After Effects cốt lõi và 3D → nền 2; cao đẳng −1, tiếng Anh cơ bản −1 (A3) → 1."
+  },
+  {
+   "jd": "JD-92",
+   "cv": "TR-84-08",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Tuyển dụng/nhân sự tiếng Nhật, mới tốt nghiệp: khác ngành (B6), không có kỹ năng thiết kế nào."
+  },
+  {
+   "jd": "JD-92",
+   "cv": "TR-92-00",
+   "label": 2,
+   "confidence": "không chắc",
+   "reason": "Đúng vị trí, đủ 10/10 nhóm kỹ năng (Photoshop, Illustrator, AI, After Effects, Premiere, video, 3ds Max, multimedia; quay phim và chụp ảnh không minh chứng); 32 tháng so với 60, thiếu 28 tháng sát ngưỡng một nửa (thiếu một bậc); chức danh hiện tại Junior, lệch cấp Quản lý → cộng dồn 2 (C2); thạc sĩ và tiếng Anh giao tiếp đạt."
+  },
+  {
+   "jd": "JD-92",
+   "cv": "TR-92-04",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí, đủ 10/10 nhóm kỹ năng (AI, chụp ảnh, multimedia không minh chứng); chỉ 23 tháng so với 60, thiếu trên nửa → lệch rõ kinh nghiệm: 2; ĐH và tiếng Anh giao tiếp đạt; cấp chưa tới Quản lý."
+  },
+  {
+   "jd": "JD-92",
+   "cv": "TR-31-06",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "CSKH xuất khẩu/logistics: khác ngành với thiết kế đồ họa (B6), không có kỹ năng chung."
+  },
+  {
+   "jd": "JD-92",
+   "cv": "TR-31-05",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "CSKH 17 tháng: khác ngành với thiết kế đồ họa (B6), không có kỹ năng chung."
+  },
+  {
+   "jd": "JD-92",
+   "cv": "TR-92-14",
+   "label": 2,
+   "confidence": "không chắc",
+   "reason": "Đúng vị trí, 119 tháng đủ, đủ 10/10 nhóm kỹ năng (After Effects, Premiere, quay phim, chụp ảnh, C4D không minh chứng), tiếng Anh giao tiếp đạt; Senior dẫn nhóm 3 người = Trưởng nhóm (D3), dưới Quản lý một bậc → nền 3; College Diploma dưới ĐH −1 → 2; phân vân 2–3 nên chọn thấp."
+  },
+  {
+   "jd": "JD-92",
+   "cv": "TR-61-02",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí nhưng chỉ 15 tháng so với 60 (thiếu trên nửa); có 5/10 (Photoshop, Illustrator, After Effects, Premiere không minh chứng, dựng video), thiếu AI cốt lõi (A1), quay/chụp, 3D, multimedia → nền tối đa 2; không ghi ngoại ngữ −1 (A3) → 1; thạc sĩ đạt."
+  },
+  {
+   "jd": "JD-92",
+   "cv": "TR-92-03",
+   "label": 1,
+   "confidence": "không chắc",
+   "reason": "Thiết kế nội thất 49 tháng: khác vị trí, cùng mảng thiết kế; chỉ dùng lại được After Effects (có minh chứng làm video/thuyết trình) và kinh nghiệm không gian cho phần booth 3D, thiếu Photoshop, Illustrator, AI, Premiere, quay/chụp (1/10); tiếng Anh và thạc sĩ đạt; phân vân 0–1 (D2 chỉ nêu cho tin Content)."
+  },
+  {
+   "jd": "JD-92",
+   "cv": "TR-92-13",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Headline Graphic Designer (D7), 0 tháng ở mục Kinh nghiệm (B3) so với 60: lệch rõ; kỹ năng 8/10 (Photoshop, Illustrator, After Effects, Premiere, dựng video, chụp ảnh, C4D, multimedia), thiếu AI cốt lõi (A1) và quay phim → nền 2; tiếng Anh cơ bản −1 (A3) → 1; ĐH đạt."
+  },
+  {
+   "jd": "JD-92",
+   "cv": "TR-92-07",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "UI/UX Designer mới tốt nghiệp, 0 tháng kinh nghiệm (B3): cùng nhóm thiết kế nhưng khác vị trí; chỉ có Photoshop và After Effects (2/10); cao đẳng dưới ĐH; tiếng Anh giao tiếp đạt; giữ 1 (A3)."
+  },
+  {
+   "jd": "JD-92",
+   "cv": "TR-61-10",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí, 55 tháng (thiếu một bậc); có 5/10 (Photoshop, Illustrator, After Effects, Premiere, dựng video), thiếu AI cốt lõi (A1), quay phim, chụp ảnh, 3D, multimedia → nền 2; không ghi ngoại ngữ −1 (A3) → 1; ĐH đạt; cấp nhân viên."
+  },
+  {
+   "jd": "JD-92",
+   "cv": "TR-61-01",
+   "label": 2,
+   "confidence": "không chắc",
+   "reason": "Đúng vị trí, 47 tháng (thiếu một bậc, chưa tới nửa nên không áp C1); chỉ 4/10 (Photoshop, Illustrator, After Effects, video production), thiếu AI và Premiere cốt lõi, quay/chụp, 3D, multimedia → nền 2 (A2); thạc sĩ và tiếng Anh giao tiếp đạt nên không trừ; chức danh hiện tại Junior lệch cấp Quản lý."
+  },
+  {
+   "jd": "JD-92",
+   "cv": "TR-61-04",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí, 34 tháng (thiếu 26, chưa tới nửa: một bậc); có 5/10 (Photoshop, Illustrator, After Effects, Premiere, dựng video), thiếu AI cốt lõi (A1), quay phim, chụp ảnh, 3D, multimedia → nền 2; thạc sĩ và tiếng Anh giao tiếp đạt, không trừ; cấp nhân viên."
+  },
+  {
+   "jd": "JD-92",
+   "cv": "TR-61-03",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "UI/UX Designer 19 tháng: cùng nhóm thiết kế nhưng khác vị trí; chỉ có Photoshop và Illustrator (2/10), thiếu AI, video, After Effects, Premiere, 3D, quay/chụp; kinh nghiệm thiếu trên nửa; ĐH và tiếng Anh đạt."
+  },
+  {
+   "jd": "JD-92",
+   "cv": "TR-37-14",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Content Marketing 13 tháng: khác vị trí, nhóm gần Thiết kế–Media (B6); chỉ có ứng dụng AI và dựng video (2/10), thiếu toàn bộ bộ Adobe, 3D, quay/chụp; kinh nghiệm thiếu trên nửa; ĐH và tiếng Anh giao tiếp đạt."
+  },
+  {
+   "jd": "JD-92",
+   "cv": "TR-92-06",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Đúng vị trí, đủ 10/10 nhóm kỹ năng có minh chứng (Photoshop, Illustrator, AI, After Effects, Premiere, video dài/ngắn, Blender/3ds Max/C4D, chụp ảnh, multimedia; quay phim liệt kê), từng là Head of Creative Production nên cấp khớp; 43 tháng so với 60, thiếu 17 tháng (một bậc) → nền 3; College Diploma dưới ĐH −1 → 2; tiếng Anh giao tiếp đạt."
+  },
+  {
+   "jd": "JD-98",
+   "cv": "TR-82-10",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "SEO/SEM (Marketing), chưa có kinh nghiệm; khác ngành với kho vận, không có kỹ năng cần có nào (Excel, Quản lý kho, Giao tiếp, Xử lý tình huống) → 0 (bước 3, B6)."
+  },
+  {
+   "jd": "JD-98",
+   "cv": "TR-31-06",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "CSKH Export ~23 tháng, cùng mảng logistics/XNK nhưng khác vị trí, không làm việc kho (E4, D7); có Giao tiếp, Giải quyết vấn đề ≈ Xử lý tình huống; thiếu Quản lý kho (cốt lõi, A1) và Excel; học vấn THPT dưới Trung cấp nhưng không trừ xuống 0 (A3) → 1."
+  },
+  {
+   "jd": "JD-98",
+   "cv": "TR-98-10",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Nhân viên Kho đúng vị trí, ~20 tháng ≥ 12 tháng (B3); đủ 4/4 kỹ năng có minh chứng (Excel, Quản lý kho, Giao tiếp, Xử lý tình huống); Trung cấp kho vận đạt; cấp Nhân viên khớp → 4 (B1)."
+  },
+  {
+   "jd": "JD-98",
+   "cv": "TR-31-09",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "CSKH tại công ty logistics ~10 năm, cùng mảng nhưng khác vị trí, không làm vận hành kho (E4, D7); có Giao tiếp, giải quyết vấn đề ≈ Xử lý tình huống; thiếu Quản lý kho (cốt lõi, A1) và Excel; học vấn Đại học đạt → 1."
+  },
+  {
+   "jd": "JD-98",
+   "cv": "TR-31-14",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "CSKH (headline, D7), mục Kinh nghiệm trống (0/12 tháng, B3); dự án về chứng từ xuất khẩu, phần mềm logistics: cùng mảng nhưng khác vị trí (E4); có Giao tiếp, Giải quyết vấn đề ≈ Xử lý tình huống; thiếu Quản lý kho (cốt lõi) và Excel; không trừ xuống 0 (A3) → 1."
+  },
+  {
+   "jd": "JD-98",
+   "cv": "TR-98-05",
+   "label": 3,
+   "confidence": "chắc",
+   "reason": "Nhân viên Kho đúng vị trí, ~21 tháng đủ; có Quản lý kho, Excel, Giao tiếp suy từ việc phối hợp các phòng ban (A4); thiếu Xử lý tình huống (không cốt lõi) → nền 4 (B1); học vấn THPT dưới Trung cấp trừ 1 → 3."
+  },
+  {
+   "jd": "JD-98",
+   "cv": "TR-09-08",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Tạp vụ 14 tháng (vệ sinh, nấu ăn); khác ngành với vận hành/điều phối kho, không có kỹ năng cần có nào, không làm việc kho (E4 không áp dụng) → 0."
+  },
+  {
+   "jd": "JD-98",
+   "cv": "TR-98-12",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Nhân viên Kho đúng vị trí, ~56 tháng ≥ 12 tháng, kho quy mô lớn; đủ 4/4 kỹ năng có minh chứng; Trung cấp Logistics đạt; chức danh Nhân viên nên không thừa trình độ (B5) → 4."
+  },
+  {
+   "jd": "JD-98",
+   "cv": "TR-48-06",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Sales Logistics (freight forwarding) ~21 tháng, cùng mảng logistics nhưng khác vị trí (E4, D7); có Giao tiếp, Giải quyết vấn đề ≈ Xử lý tình huống, Excel suy từ Microsoft Office (A4); thiếu Quản lý kho (cốt lõi, A1) → 1."
+  },
+  {
+   "jd": "JD-98",
+   "cv": "TR-09-11",
+   "label": 3,
+   "confidence": "chắc",
+   "reason": "Inventory Coordinator/Officer đúng vị trí, ~66 tháng đủ; có Quản lý kho (cốt lõi), Giao tiếp; thiếu Excel và Xử lý tình huống (2 kỹ năng không cốt lõi, đúng một nửa) → 3; chứng chỉ nghề 2 năm ngành logistics coi là đạt Trung cấp (E2); lệch ngôn ngữ không trừ."
+  },
+  {
+   "jd": "JD-98",
+   "cv": "TR-92-07",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "UI/UX Designer, chưa có kinh nghiệm; khác ngành (Thiết kế), không có kỹ năng cần có nào → 0 (bước 3, B6)."
+  },
+  {
+   "jd": "JD-98",
+   "cv": "TR-98-02",
+   "label": 4,
+   "confidence": "chắc",
+   "reason": "Nhân viên Kho/Điều phối Kho đúng vị trí, ~71 tháng, kho công nghiệp và nguyên vật liệu quy mô lớn; đủ 4/4 kỹ năng có minh chứng, có phần mềm quản lý kho; Trung cấp Quản lý Kho đạt; chức danh Nhân viên (B5) → 4."
+  },
+  {
+   "jd": "JD-98",
+   "cv": "TR-31-01",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "CSKH tại công ty logistics/XNK ~33 tháng, cùng mảng nhưng khác vị trí, không làm việc kho (E4, D7); có Giao tiếp, Xử lý tình huống; thiếu Quản lý kho (cốt lõi, A1) và Excel; Cao đẳng đạt → 1."
+  },
+  {
+   "jd": "JD-98",
+   "cv": "TR-98-04",
+   "label": 3,
+   "confidence": "chắc",
+   "reason": "Nhân viên Kho đúng vị trí, ~21 tháng đủ; đủ 4/4 kỹ năng có minh chứng → nền 4; học vấn THPT dưới Trung cấp trừ 1 → 3."
+  },
+  {
+   "jd": "JD-98",
+   "cv": "TR-09-03",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Nhân viên kho đúng vị trí, ~58 tháng đủ, Trung cấp Quản lý kho đạt; chỉ có Quản lý kho (cốt lõi, có phần mềm quản lý kho); thiếu Excel, Giao tiếp, Xử lý tình huống → 1/4, dưới một nửa kỹ năng → nền 2 (A2); đủ kinh nghiệm nên không cộng dồn C1."
+  },
+  {
+   "jd": "JD-98",
+   "cv": "TR-98-09",
+   "label": 3,
+   "confidence": "chắc",
+   "reason": "Nhân viên Kho/Điều phối Kho đúng vị trí, ~53 tháng đủ, Trung cấp đạt; có Excel, Quản lý kho qua việc đã làm và chứng chỉ (A4); thiếu Giao tiếp và Xử lý tình huống (2 kỹ năng không cốt lõi, đúng một nửa); phẩm chất cá nhân không đếm → 3."
+  },
+  {
+   "jd": "JD-98",
+   "cv": "TR-98-01",
+   "label": 2,
+   "confidence": "chắc",
+   "reason": "Nhân viên kho (headline, D7), mục Kinh nghiệm trống: 0/12 tháng, lệch rõ (B3); có Giao tiếp, Excel, Quản lý kho minh chứng ở dự án thực tập; thiếu Xử lý tình huống (không cốt lõi) → đủ kỹ năng theo B1 nhưng lệch rõ kinh nghiệm → 2; Trung cấp đạt; không áp C1/D8 vì trên một nửa kỹ năng."
+  },
+  {
+   "jd": "JD-98",
+   "cv": "TR-98-14",
+   "label": 3,
+   "confidence": "chắc",
+   "reason": "Nhân viên kho đúng vị trí, ~77 tháng đủ, chức danh Nhân viên (B5); có Excel, Quản lý kho, Giao tiếp có minh chứng; thiếu Xử lý tình huống (không cốt lõi) → nền 4 (B1); học vấn THPT dưới Trung cấp trừ 1 → 3."
+  },
+  {
+   "jd": "JD-98",
+   "cv": "TR-98-13",
+   "label": 1,
+   "confidence": "chắc",
+   "reason": "Nhân viên kho (headline, D7), mục Kinh nghiệm trống: 0/12 tháng (B3); có Quản lý kho, Excel ở dự án; thiếu Giao tiếp, Xử lý tình huống → đúng một nửa kỹ năng và thiếu hẳn kinh nghiệm → 1 (D8); THPT dưới Trung cấp nhưng không trừ xuống 0 (A3)."
+  },
+  {
+   "jd": "JD-98",
+   "cv": "TR-98-07",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Bảo vệ, chưa có kinh nghiệm; chỉ trực an ninh khu kho, không làm vận hành/quản lý kho nên khác nghề (E4 không áp dụng); không có kỹ năng cần có nào ngoài nhắc mơ hồ xử lý tình huống khẩn cấp (A4 không suy) → 0."
+  },
+  {
+   "jd": "JD-98",
+   "cv": "TR-92-04",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Graphic Designer ~23 tháng; khác ngành (Thiết kế – Media), không có kỹ năng cần có nào → 0 (bước 3, B6)."
+  },
+  {
+   "jd": "JD-98",
+   "cv": "TR-09-04",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Tạp vụ, mục Kinh nghiệm trống; việc vệ sinh, nấu ăn khác ngành với vận hành kho, không có kỹ năng cần có nào; phẩm chất cá nhân không đếm → 0."
+  },
+  {
+   "jd": "JD-98",
+   "cv": "TR-98-06",
+   "label": 3,
+   "confidence": "chắc",
+   "reason": "Nhân viên Kho đúng vị trí, ~59 tháng đủ, chức danh Nhân viên (B5); có Quản lý kho, Giao tiếp, Xử lý tình huống có minh chứng; thiếu Excel (không cốt lõi, A1) → nền 4 (B1); học vấn THPT dưới Trung cấp trừ 1 → 3."
+  },
+  {
+   "jd": "JD-98",
+   "cv": "TR-09-14",
+   "label": 0,
+   "confidence": "chắc",
+   "reason": "Tạp vụ ~19 tháng (dọn dẹp, phục vụ bữa ăn); khác ngành với vận hành/điều phối kho, không có kỹ năng cần có nào; phẩm chất cá nhân không đếm → 0."
+  }
+ ]
+}

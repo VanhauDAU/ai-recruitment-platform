@@ -5,7 +5,15 @@ kiện "vector so được với nhau"). `calibration`: mốc quy đổi cosine 
 của từng mô hình.
 """
 
-from .calibration import CALIBRATIONS, DEFAULT_CALIBRATION, Calibration, calibration_for, to_score
+from .calibration import (
+    CALIBRATIONS,
+    RERANKER_THRESHOLDS,
+    Calibration,
+    UnknownModelVersion,
+    calibration_for,
+    reranker_thresholds,
+    to_score,
+)
 from .features import (
     APPLICATION_RANKING_FLAG,
     CANDIDATE_FIT_FLAG,
@@ -14,7 +22,15 @@ from .features import (
     SEMANTIC_RECOMMENDATION_FLAG,
 )
 from .profile_view import OWNER, RECRUITER_SEARCH, public_cv_profile, redact_name, search_card
-from .versions import EXTRACTOR_VERSION, HASHING_MODEL_VERSION, SCORING_VERSION, model_version
+from .versions import (
+    EXTRACTOR_VERSION,
+    HASHING_MODEL_VERSION,
+    HASHING_RERANKER_VERSION,
+    SCORING_VERSION,
+    model_version,
+    reranker_version,
+    scoring_cache_version,
+)
 
 __all__ = [
     'CANDIDATE_SEARCH_FLAG',
@@ -28,10 +44,15 @@ __all__ = [
     'FEATURE_FLAGS',
     'SEMANTIC_RECOMMENDATION_FLAG',
     'CALIBRATIONS',
-    'DEFAULT_CALIBRATION',
+    'UnknownModelVersion',
     'EXTRACTOR_VERSION',
     'HASHING_MODEL_VERSION',
     'SCORING_VERSION',
+    'HASHING_RERANKER_VERSION',
+    'RERANKER_THRESHOLDS',
+    'reranker_thresholds',
+    'reranker_version',
+    'scoring_cache_version',
     'Calibration',
     'calibration_for',
     'model_version',

@@ -1,6 +1,7 @@
 import { RightOutlined } from '@ant-design/icons'
 import { Suspense, lazy, useState } from 'react'
 import { useSiteSettings } from '@/entities/system/site-settings'
+import { m } from '@/shared/config/i18n'
 import { ProcvMascot } from '@/shared/ui/mascot'
 import './job-fit-trigger.css'
 
@@ -17,7 +18,7 @@ export default function AnalyzeJobFit({ job, beforeOpen = () => true, onApply, p
   const [open, setOpen] = useState(false)
   if (settings.ai_job_match_enabled !== true) return null
 
-  const label = 'Xem độ phù hợp với CV của bạn'
+  const label = m.candidate_job_fit_trigger_label()
   const openDialog = () => beforeOpen() && setOpen(true)
 
   return (
@@ -25,7 +26,7 @@ export default function AnalyzeJobFit({ job, beforeOpen = () => true, onApply, p
       {placement === 'floating'
         ? (
             <button type="button" className="jf-fab" aria-label={label} onClick={openDialog}>
-              <span className="jf-fab__label" aria-hidden="true">Xem độ phù hợp CV</span>
+              <span className="jf-fab__label" aria-hidden="true">{m.candidate_job_fit_fab_label()}</span>
               <span className="jf-fab__robot">
                 <ProcvMascot blink emotion="happy" pose="wave" size={64} />
                 <span className="jf-fab__badge" aria-hidden="true">AI</span>
@@ -44,9 +45,9 @@ export default function AnalyzeJobFit({ job, beforeOpen = () => true, onApply, p
               </span>
               <span className="jf-trigger__text">
                 <span className="jf-trigger__title">
-                  Xem độ phù hợp <span className="jf-trigger__badge">AI</span>
+                  {m.candidate_job_fit_trigger_title()} <span className="jf-trigger__badge">AI</span>
                 </span>
-                <span className="jf-trigger__hint">So CV của bạn với từng yêu cầu của tin, chỉ ra kỹ năng còn thiếu.</span>
+                <span className="jf-trigger__hint">{m.candidate_job_fit_trigger_hint()}</span>
               </span>
               <span className="jf-trigger__go" aria-hidden="true"><RightOutlined /></span>
             </button>

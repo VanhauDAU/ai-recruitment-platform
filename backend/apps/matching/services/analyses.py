@@ -29,13 +29,13 @@ from rest_framework.exceptions import APIException
 from apps.cvs.services import is_unsaved_builder_baseline
 from apps.sitecontent.selectors import get_bool_setting
 
-from ..domain import CANDIDATE_FIT_FLAG, FEATURE_FLAGS
+from ..domain import CANDIDATE_FIT_FLAG, FEATURE_FLAGS, scoring_cache_version
 from ..models import MatchAnalysis, MatchDocument
 from .documents import chunk_vectors, ensure_cv_document, ensure_job_document, job_content_hash
 from .encoder import model_version
 from .explain import explain
 from .extraction import EXTRACTOR_VERSION, ExtractionError
-from .scoring import SCORING_VERSION, ScoringError, score_match
+from .scoring import ScoringError, score_match
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +100,7 @@ def request_analysis(*, user, job, cv):
         job=job,
         job_content_hash=digest,
         model_version=model_version(),
-        scoring_version=SCORING_VERSION,
+        scoring_version=scoring_cache_version(),
         defaults={'user': user},
     )
     if not created and analysis.status == MatchAnalysis.Status.FAILED:
@@ -187,7 +187,7 @@ def _chunks(document):
     return [{'section': chunk.section, 'text': chunk.text} for chunk in chunks], vectors
 
 
-def execute_analysis(analysis_id, *, job, encoder, catalog):
+def execute_analysis(analysis_id, *, job, encoder, catalog, reranker=None):
     """Tính một phân tích đang chờ; trả hàng đã cập nhật, hoặc None nếu hàng không còn chờ."""
     analysis = _claim(analysis_id)
     if analysis is None:
@@ -214,6 +214,8 @@ def execute_analysis(analysis_id, *, job, encoder, catalog):
                 cv_document_vector=_vector(cv_document),
                 job_document_vector=_vector(job_document),
                 model_version=encoder.version,
+                catalog=catalog,
+                reranker=reranker,
             )
         )
     except Exception as error:  # noqa: BLE001 - không để hàng kẹt ở `processing`
@@ -235,7 +237,8 @@ def execute_analysis(analysis_id, *, job, encoder, catalog):
     latency_ms = round((time.monotonic() - started) * 1000)
     result['meta'] = {
         'model_version': encoder.version,
-        'scoring_version': SCORING_VERSION,
+        'scoring_version': scoring_cache_version(),
+        'reranker_version': reranker.version if reranker is not None else None,
         'extractor_version': EXTRACTOR_VERSION,
         'latency_ms': latency_ms,
     }

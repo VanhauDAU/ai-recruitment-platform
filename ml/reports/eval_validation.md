@@ -3,20 +3,31 @@
 100 cặp của 10 tin; số cặp theo nhãn 0–4: 33, 42, 14, 8, 3. Nhãn do Claude gán theo `ml/labeling/rubric.md`.
 Khoảng tin cậy 95% là bootstrap lấy mẫu lại theo tin. Tạo bằng `ml/scripts/evaluate.py`.
 
-NDCG@5 khi xếp CV ngẫu nhiên là 0,448: mỗi tin chỉ có 10 CV nên mức sàn cao.
+NDCG@5 khi xếp CV ngẫu nhiên là 0,444: mỗi tin chỉ có 10 CV nên mức sàn cao.
 
 | Phương án | Spearman | Khoảng tin cậy | NDCG@5 | Khoảng tin cậy | Số tin hơn BM25 |
 | --- | ---: | --- | ---: | --- | ---: |
-| TF-IDF | 0,278 | 0,043 đến 0,539 | 0,640 | 0,447 đến 0,821 | 0/10 |
+| TF-IDF | 0,276 | 0,042 đến 0,536 | 0,640 | 0,447 đến 0,821 | 0/10 |
 | BM25 | 0,216 | -0,123 đến 0,548 | 0,679 | 0,486 đến 0,861 | – |
 | Luật `profile-rule-v2` | 0,628 | 0,479 đến 0,733 | 0,874 | 0,798 đến 0,938 | 6/10 |
 | Bi-encoder `e5-base-zs-v1` (cosine toàn văn) | 0,550 | 0,375 đến 0,720 | 0,758 | 0,577 đến 0,911 | 5/10 |
-| hybrid | 0,699 | 0,544 đến 0,821 | 0,857 | 0,756 đến 0,940 | 7/10 |
-| hybrid, bật khớp kỹ năng gần nghĩa | 0,626 | 0,412 đến 0,801 | 0,821 | 0,661 đến 0,939 | 6/10 |
-| hybrid, bỏ hệ số liên quan | 0,692 | 0,536 đến 0,814 | 0,857 | 0,765 đến 0,937 | 7/10 |
-| hybrid, tắt cả hai (công thức `hybrid-v1`) | 0,603 | 0,382 đến 0,772 | 0,815 | 0,645 đến 0,931 | 6/10 |
-| Bi-encoder `e5-small-zs-v1` (cosine toàn văn) | 0,457 | 0,224 đến 0,689 | 0,702 | 0,521 đến 0,867 | 3/10 |
-| Bi-encoder `minilm-l12-zs-v1` (cosine toàn văn) | 0,530 | 0,323 đến 0,733 | 0,663 | 0,487 đến 0,825 | 1/10 |
+| hybrid | 0,705 | 0,550 đến 0,828 | 0,870 | 0,769 đến 0,950 | 8/10 |
+| hybrid, bỏ nhóm kỹ năng thay thế (công thức `hybrid-v2`) | 0,698 | 0,532 đến 0,820 | 0,857 | 0,756 đến 0,943 | 7/10 |
+| hybrid, bật khớp kỹ năng gần nghĩa | 0,647 | 0,430 đến 0,823 | 0,839 | 0,676 đến 0,950 | 7/10 |
+| hybrid, bỏ hệ số liên quan | 0,682 | 0,523 đến 0,803 | 0,857 | 0,765 đến 0,937 | 7/10 |
+| hybrid, tắt cả ba (công thức `hybrid-v1`) | 0,596 | 0,404 đến 0,770 | 0,815 | 0,652 đến 0,933 | 6/10 |
+| Bi-encoder `e5-small-zs-v1` (cosine toàn văn) | 0,457 | 0,224 đến 0,682 | 0,702 | 0,511 đến 0,871 | 3/10 |
+| Bi-encoder `minilm-l12-zs-v1` (cosine toàn văn) | 0,530 | 0,322 đến 0,727 | 0,663 | 0,477 đến 0,823 | 1/10 |
+| Bi-encoder `e5-base-ft-v1` (cosine toàn văn) | 0,764 | 0,602 đến 0,869 | 0,824 | 0,719 đến 0,916 | 6/10 |
+| hybrid với `e5-base-ft-v1` | 0,802 | 0,688 đến 0,884 | 0,869 | 0,792 đến 0,936 | 6/10 |
+| hybrid với `e5-base-ft-v1` và `req-ce-v1` | 0,808 | 0,683 đến 0,887 | 0,923 | 0,870 đến 0,970 | 7/10 |
+| hybrid với `e5-base-ft-v1` và `req-ce-v1`, thêm độ phủ yêu cầu vào mức liên quan | 0,792 | 0,664 đến 0,880 | 0,915 | 0,864 đến 0,960 | 6/10 |
+| hybrid với `e5-base-ft-v1` và `req-ce-v1`, không dùng để nhận kỹ năng | 0,802 | 0,684 đến 0,881 | 0,869 | 0,789 đến 0,936 | 6/10 |
+| Bi-encoder `e5-base-wise-v1` (cosine toàn văn) | 0,803 | 0,665 đến 0,883 | 0,812 | 0,709 đến 0,910 | 5/10 |
+| hybrid với `e5-base-wise-v1` | 0,815 | 0,708 đến 0,885 | 0,874 | 0,795 đến 0,947 | 7/10 |
+| hybrid với `e5-base-wise-v1` và `req-ce-v1` | 0,822 | 0,722 đến 0,894 | 0,921 | 0,864 đến 0,969 | 7/10 |
+| hybrid với `e5-base-wise-v1` và `req-ce-v1`, thêm độ phủ yêu cầu vào mức liên quan | 0,802 | 0,684 đến 0,888 | 0,921 | 0,863 đến 0,968 | 7/10 |
+| hybrid với `e5-base-wise-v1` và `req-ce-v1`, không dùng để nhận kỹ năng | 0,815 | 0,708 đến 0,887 | 0,874 | 0,792 đến 0,949 | 7/10 |
 
 ## Thang điểm của `hybrid`
 
@@ -24,10 +35,62 @@ Kappa bậc hai giữa mức hiển thị và nhãn; điểm của 33 cặp nhã
 
 | Phương án | Kappa mức hiển thị | Nhãn 0: trung vị | Nhãn 0: cao nhất | Nhãn 0: từ 50 điểm |
 | --- | ---: | ---: | ---: | ---: |
-| hybrid | 0,663 | 11 | 46 | 0 |
-| hybrid, bật khớp kỹ năng gần nghĩa | 0,535 | 17 | 57 | 5 |
-| hybrid, bỏ hệ số liên quan | 0,672 | 27 | 48 | 0 |
-| hybrid, tắt cả hai (công thức `hybrid-v1`) | 0,511 | 28 | 65 | 6 |
+| hybrid | 0,697 | 13 | 47 | 0 |
+| hybrid, bỏ nhóm kỹ năng thay thế (công thức `hybrid-v2`) | 0,663 | 11 | 46 | 0 |
+| hybrid, bật khớp kỹ năng gần nghĩa | 0,557 | 17 | 57 | 5 |
+| hybrid, bỏ hệ số liên quan | 0,704 | 27 | 50 | 1 |
+| hybrid, tắt cả ba (công thức `hybrid-v1`) | 0,511 | 28 | 65 | 6 |
+| hybrid với `e5-base-ft-v1` | 0,630 | 4 | 37 | 0 |
+| hybrid với `e5-base-ft-v1` và `req-ce-v1` | 0,706 | 5 | 37 | 0 |
+| hybrid với `e5-base-ft-v1` và `req-ce-v1`, thêm độ phủ yêu cầu vào mức liên quan | 0,764 | 7 | 41 | 0 |
+| hybrid với `e5-base-ft-v1` và `req-ce-v1`, không dùng để nhận kỹ năng | 0,630 | 4 | 37 | 0 |
+| hybrid với `e5-base-wise-v1` | 0,708 | 6 | 36 | 0 |
+| hybrid với `e5-base-wise-v1` và `req-ce-v1` | 0,733 | 6 | 36 | 0 |
+| hybrid với `e5-base-wise-v1` và `req-ce-v1`, thêm độ phủ yêu cầu vào mức liên quan | 0,746 | 8 | 41 | 0 |
+| hybrid với `e5-base-wise-v1` và `req-ce-v1`, không dùng để nhận kỹ năng | 0,708 | 6 | 36 | 0 |
+
+Điểm trung bình theo nhãn (KHÔNG tăng dần):
+
+| Nhãn 0 | Nhãn 1 | Nhãn 2 | Nhãn 3 | Nhãn 4 |
+| ---: | ---: | ---: | ---: | ---: |
+| 16 | 34 | 57 | 73 | 64 |
+
+Số cặp theo mức hiển thị và nhãn (mức đúng của nhãn: 0–1 chưa phù hợp, 2 tương đối, 3 phù hợp, 4 rất phù hợp):
+
+| Mức hiển thị | Nhãn 0 | Nhãn 1 | Nhãn 2 | Nhãn 3 | Nhãn 4 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Chưa phù hợp | 33 | 34 | 6 | 0 | 1 |
+| Tương đối phù hợp | 0 | 8 | 3 | 2 | 0 |
+| Phù hợp | 0 | 0 | 3 | 4 | 1 |
+| Rất phù hợp | 0 | 0 | 2 | 2 | 1 |
+
+## So với `hybrid` (bootstrap ghép cặp)
+
+Hiệu số phương án trừ `hybrid`, đo trên cùng bộ tin ở mỗi vòng bootstrap. In đậm khi khoảng
+tin cậy 95% không chứa 0; còn lại là chưa kết luận được.
+
+| Phương án | Δ Spearman | Khoảng tin cậy | Δ NDCG@5 | Khoảng tin cậy |
+| --- | ---: | --- | ---: | --- |
+| TF-IDF | **-0,429** | -0,612 đến -0,200 | **-0,230** | -0,360 đến -0,106 |
+| BM25 | **-0,489** | -0,752 đến -0,176 | **-0,191** | -0,328 đến -0,065 |
+| Luật `profile-rule-v2` | -0,077 | -0,210 đến 0,044 | +0,004 | -0,104 đến 0,133 |
+| Bi-encoder `e5-base-zs-v1` (cosine toàn văn) | **-0,155** | -0,288 đến -0,017 | **-0,111** | -0,218 đến -0,019 |
+| hybrid, bỏ nhóm kỹ năng thay thế (công thức `hybrid-v2`) | -0,008 | -0,025 đến 0,003 | -0,012 | -0,066 đến 0,029 |
+| hybrid, bật khớp kỹ năng gần nghĩa | -0,058 | -0,146 đến 0,011 | -0,031 | -0,100 đến 0,011 |
+| hybrid, bỏ hệ số liên quan | -0,024 | -0,092 đến 0,022 | -0,012 | -0,036 đến 0,007 |
+| hybrid, tắt cả ba (công thức `hybrid-v1`) | **-0,109** | -0,242 đến -0,022 | -0,055 | -0,142 đến 0,011 |
+| Bi-encoder `e5-small-zs-v1` (cosine toàn văn) | **-0,248** | -0,412 đến -0,070 | **-0,168** | -0,283 đến -0,053 |
+| Bi-encoder `minilm-l12-zs-v1` (cosine toàn văn) | -0,175 | -0,334 đến 0,002 | **-0,207** | -0,351 đến -0,085 |
+| Bi-encoder `e5-base-ft-v1` (cosine toàn văn) | +0,059 | -0,086 đến 0,210 | -0,045 | -0,120 đến 0,018 |
+| hybrid với `e5-base-ft-v1` | **+0,096** | 0,002 đến 0,207 | -0,001 | -0,029 đến 0,028 |
+| hybrid với `e5-base-ft-v1` và `req-ce-v1` | **+0,103** | 0,008 đến 0,208 | +0,053 | -0,020 đến 0,163 |
+| hybrid với `e5-base-ft-v1` và `req-ce-v1`, thêm độ phủ yêu cầu vào mức liên quan | **+0,087** | 0,013 đến 0,170 | +0,045 | -0,024 đến 0,154 |
+| hybrid với `e5-base-ft-v1` và `req-ce-v1`, không dùng để nhận kỹ năng | **+0,096** | 0,002 đến 0,207 | -0,001 | -0,029 đến 0,028 |
+| Bi-encoder `e5-base-wise-v1` (cosine toàn văn) | +0,098 | -0,043 đến 0,240 | -0,057 | -0,159 đến 0,023 |
+| hybrid với `e5-base-wise-v1` | **+0,110** | 0,021 đến 0,212 | +0,005 | -0,028 đến 0,037 |
+| hybrid với `e5-base-wise-v1` và `req-ce-v1` | **+0,117** | 0,030 đến 0,212 | +0,051 | -0,024 đến 0,161 |
+| hybrid với `e5-base-wise-v1` và `req-ce-v1`, thêm độ phủ yêu cầu vào mức liên quan | **+0,097** | 0,026 đến 0,176 | +0,051 | -0,024 đến 0,161 |
+| hybrid với `e5-base-wise-v1` và `req-ce-v1`, không dùng để nhận kỹ năng | **+0,110** | 0,021 đến 0,212 | +0,005 | -0,028 đến 0,037 |
 
 ## Cặp khác ngôn ngữ (tin và CV một Việt một Anh)
 
@@ -37,9 +100,20 @@ Kappa bậc hai giữa mức hiển thị và nhãn; điểm của 33 cặp nhã
 | BM25 | 24 | 0,694 |
 | Luật `profile-rule-v2` | 24 | 0,733 |
 | Bi-encoder `e5-base-zs-v1` (cosine toàn văn) | 24 | 0,656 |
-| hybrid | 24 | 0,775 |
-| hybrid, bật khớp kỹ năng gần nghĩa | 24 | 0,785 |
-| hybrid, bỏ hệ số liên quan | 24 | 0,726 |
-| hybrid, tắt cả hai (công thức `hybrid-v1`) | 24 | 0,704 |
+| hybrid | 24 | 0,762 |
+| hybrid, bỏ nhóm kỹ năng thay thế (công thức `hybrid-v2`) | 24 | 0,772 |
+| hybrid, bật khớp kỹ năng gần nghĩa | 24 | 0,769 |
+| hybrid, bỏ hệ số liên quan | 24 | 0,699 |
+| hybrid, tắt cả ba (công thức `hybrid-v1`) | 24 | 0,704 |
 | Bi-encoder `e5-small-zs-v1` (cosine toàn văn) | 24 | 0,559 |
 | Bi-encoder `minilm-l12-zs-v1` (cosine toàn văn) | 24 | 0,655 |
+| Bi-encoder `e5-base-ft-v1` (cosine toàn văn) | 24 | 0,747 |
+| hybrid với `e5-base-ft-v1` | 24 | 0,762 |
+| hybrid với `e5-base-ft-v1` và `req-ce-v1` | 24 | 0,818 |
+| hybrid với `e5-base-ft-v1` và `req-ce-v1`, thêm độ phủ yêu cầu vào mức liên quan | 24 | 0,852 |
+| hybrid với `e5-base-ft-v1` và `req-ce-v1`, không dùng để nhận kỹ năng | 24 | 0,762 |
+| Bi-encoder `e5-base-wise-v1` (cosine toàn văn) | 24 | 0,748 |
+| hybrid với `e5-base-wise-v1` | 24 | 0,793 |
+| hybrid với `e5-base-wise-v1` và `req-ce-v1` | 24 | 0,834 |
+| hybrid với `e5-base-wise-v1` và `req-ce-v1`, thêm độ phủ yêu cầu vào mức liên quan | 24 | 0,852 |
+| hybrid với `e5-base-wise-v1` và `req-ce-v1`, không dùng để nhận kỹ năng | 24 | 0,793 |

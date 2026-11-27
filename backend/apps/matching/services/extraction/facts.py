@@ -301,3 +301,40 @@ def cv_languages(lines):
             if code not in found or level_rank(entry['level']) > level_rank(found[code]['level']):
                 found[code] = entry
     return list(found.values())
+
+
+# ---------------------------------------------------------------- loại câu yêu cầu
+
+# Câu yêu cầu của tin được chia loại để mỗi loại chỉ được đo một lần: bậc học, số năm,
+# ngoại ngữ đã có tiêu chí riêng; phẩm chất cá nhân không đo được từ CV. Chỉ loại
+# `skill` (kỹ năng, việc đã làm) đi qua mô hình phán "câu CV có đáp ứng yêu cầu không".
+_REQUIREMENT_KINDS = (
+    ('language', re.compile(
+        r'tiếng (?:anh|nhật|hàn|trung|pháp|đức)|ngoại ngữ|english|japanese|korean|chinese|ielts|toeic|toefl|jlpt|topik|hsk',
+        re.IGNORECASE,
+    )),
+    ('education', re.compile(
+        r'tốt nghiệp|bằng (?:cấp|cử nhân|đại học|cao đẳng|trung cấp)|đại học|cao đẳng|trung cấp|thpt|chuyên ngành'
+        r"|bachelor|master|degree|diploma|graduat",
+        re.IGNORECASE,
+    )),
+    ('years', re.compile(
+        r'\d+\s*(?:\+\s*)?(?:năm|years?|tháng|months?)|kinh nghiệm tối thiểu|minimum of|at least \w+ years',
+        re.IGNORECASE,
+    )),
+    ('trait', re.compile(
+        r'trung thực|chăm chỉ|nhanh nhẹn|cẩn thận|tỉ mỉ|chịu (?:được )?áp lực|nhiệt tình|năng động|cầu tiến|ham học'
+        r'|trách nhiệm|chủ động|kiên nhẫn|sức khỏe|tăng ca|ngoại hình|honest|hard-?working|responsible|proactive'
+        r'|eager to learn|willing to|positive attitude|team player',
+        re.IGNORECASE,
+    )),
+)  # fmt: skip
+
+
+def requirement_kind(text):
+    """`language`, `education`, `years`, `trait` hoặc `skill` (kỹ năng, việc đã làm).
+
+    Câu nói tới nhiều thứ lấy loại đứng trước trong bảng; câu có số năm kèm kỹ năng
+    ("2 năm kinh nghiệm ReactJS") là `years` vì phần kỹ năng đã có tiêu chí kỹ năng.
+    """
+    return next((kind for kind, pattern in _REQUIREMENT_KINDS if pattern.search(text)), 'skill')

@@ -1,7 +1,9 @@
+import { m } from '@/shared/config/i18n'
+
 const TABS = [
-  ['info', 'Thông tin'],
-  ['company', 'Công ty'],
-  ['related', 'Việc liên quan'],
+  ['info', m.candidate_job_detail_tab_info],
+  ['company', m.candidate_job_detail_tab_company],
+  ['related', m.candidate_job_detail_tab_related],
 ]
 
 /** Mobile: chia phần dưới khối đầu tin thành 3 tab; panel ẩn bằng `hidden` để giữ trạng thái. */
@@ -18,7 +20,7 @@ export default function JobDetailTabs({ active, onChange, relatedCount = 0, pane
   return (
     <div id="job-detail-tabs" className="job-tabs">
       <div className="job-tabs__bar">
-        <div role="tablist" aria-label="Nội dung tin tuyển dụng" className="job-tabs__list" onKeyDown={handleKeyDown}>
+        <div role="tablist" aria-label={m.candidate_job_detail_tabs_label()} className="job-tabs__list" onKeyDown={handleKeyDown}>
           {TABS.map(([key, label]) => (
             <button
               key={key}
@@ -31,7 +33,7 @@ export default function JobDetailTabs({ active, onChange, relatedCount = 0, pane
               onClick={() => onChange(key)}
               className="job-tabs__tab"
             >
-              {label}
+              {label()}
               {key === 'related' && relatedCount > 0 && <>{' '}<span className="job-tabs__count">{relatedCount}</span></>}
             </button>
           ))}

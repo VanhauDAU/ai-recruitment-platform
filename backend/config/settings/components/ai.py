@@ -13,6 +13,12 @@ MATCHING_MODEL_PATH = config(
     'MATCHING_MODEL_PATH', default='/models/multilingual-e5-base/zs-v1'
 ).strip()
 MATCHING_MODEL_VERSION = config('MATCHING_MODEL_VERSION', default='e5-base-zs-v1').strip()
+# Cross-encoder phán từng yêu cầu: `none` (không dùng), `cross_encoder`, `hashing` (test).
+MATCHING_RERANKER_BACKEND = config('MATCHING_RERANKER_BACKEND', default='none').strip()
+MATCHING_RERANKER_PATH = config(
+    'MATCHING_RERANKER_PATH', default='/models/mmarco-mMiniLMv2-L12/req-ce-v1'
+).strip()
+MATCHING_RERANKER_VERSION = config('MATCHING_RERANKER_VERSION', default='req-ce-v1').strip()
 # Tính sẵn vector khi CV có phiên bản mới hoặc tin chuyển sang đang mở.
 MATCHING_PRECOMPUTE_ENABLED = config('MATCHING_PRECOMPUTE_ENABLED', default=True, cast=bool)
 

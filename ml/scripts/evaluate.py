@@ -15,18 +15,28 @@ Phương án được đo:
 - Các dòng còn lại lấy từ lệnh `matching_evaluate` chạy trong container `ml-worker`,
   tức đúng mã trích xuất, mã hóa và chấm điểm của sản phẩm: điểm của bộ gợi ý theo
   luật `profile-rule-v2`, cosine toàn văn của bi-encoder, và điểm `hybrid` (công
-  thức đang chạy, hiện là `hybrid-v2`).
-- `--ablation` thêm ba dòng: `hybrid` với từng thay đổi của `hybrid-v2` bị tắt (khớp
-  kỹ năng gần nghĩa bật lại, bỏ hệ số liên quan) và tắt cả hai, tức `hybrid-v1`.
+  thức đang chạy, hiện là `hybrid-v3`).
+- `--ablation` thêm bốn dòng: `hybrid` với từng thay đổi bị tắt (bỏ nhóm kỹ năng thay
+  thế, tức `hybrid-v2`; khớp kỹ năng gần nghĩa bật lại; bỏ hệ số liên quan) và tắt cả
+  ba, tức `hybrid-v1`.
 - `--model tên=thư_mục[:noprefix]` thêm một bi-encoder khác trong `ml/models/` (chỉ
-  lấy cosine toàn văn, vì mốc quy đổi điểm của `hybrid` là theo từng mô hình).
+  lấy cosine toàn văn, vì mốc quy đổi điểm của `hybrid` là theo từng mô hình; mô hình
+  chưa có mốc trong `CALIBRATIONS` thì backend chỉ trả cosine, không chấm điểm).
+- `--hybrid-model tên=thư_mục` dành cho bi-encoder đã có mốc trong `CALIBRATIONS` của
+  backend: đo cả cosine toàn văn lẫn điểm `hybrid` chạy với mô hình đó.
+- `--reranker tên=thư_mục` đo thêm mỗi `--hybrid-model` khi chạy kèm cross-encoder, và
+  hai ablation của nó (thêm độ phủ yêu cầu vào mức liên quan; không dùng cross-encoder để
+  nhận kỹ năng).
 
 Chỉ số (mọi khoảng tin cậy là bootstrap 95%, lấy mẫu lại theo tin):
 - Spearman giữa điểm và nhãn 0–4, gộp mọi cặp.
 - NDCG@5 trung bình theo tin, độ lợi 2^nhãn − 1; kèm mức của xếp ngẫu nhiên.
 - Số tin mà phương án có NDCG@5 cao hơn BM25.
 - Riêng các dòng `hybrid`: kappa bậc hai giữa mức hiển thị và nhãn, và điểm của các
-  cặp nhãn 0 (khác ngành).
+  cặp nhãn 0 (khác ngành). Với `hybrid` đang chạy còn có điểm trung bình theo nhãn
+  (phải tăng dần) và bảng mức hiển thị theo nhãn.
+- Hiệu số của từng phương án so với `hybrid`, bootstrap ghép cặp: hai phương án đo
+  trên cùng bộ tin ở mỗi vòng, nên biết được chênh lệch có vượt nhiễu hay không.
 
 Kết quả: `ml/reports/eval_<phần>.md` và `.json`; điểm từng cặp ở `ml/data/eval/`.
 """
@@ -54,9 +64,13 @@ LABEL_BAND = {0: 0, 1: 0, 2: 1, 3: 2, 4: 3}
 HYBRID = 'hybrid'
 # (tên dòng, các thay đổi của công thức bị tắt): xem `scoring.ABLATIONS` ở backend.
 ABLATION_RUNS = (
+    ('hybrid, bỏ nhóm kỹ năng thay thế (công thức `hybrid-v2`)', ('no_skill_groups',)),
     ('hybrid, bật khớp kỹ năng gần nghĩa', ('semantic_skills',)),
     ('hybrid, bỏ hệ số liên quan', ('no_relevance_discount',)),
-    ('hybrid, tắt cả hai (công thức `hybrid-v1`)', ('semantic_skills', 'no_relevance_discount')),
+    (
+        'hybrid, tắt cả ba (công thức `hybrid-v1`)',
+        ('no_skill_groups', 'semantic_skills', 'no_relevance_discount'),
+    ),
 )
 BM25 = 'BM25'
 
@@ -171,6 +185,32 @@ def measure(pairs, scores, rng):
     }
 
 
+def paired_difference(pairs, scores, reference):
+    """Hiệu số (phương án − mốc) của Spearman và NDCG@5, bootstrap ghép cặp.
+
+    Mỗi vòng rút một bộ tin rồi đo cả hai phương án trên đúng bộ đó, nên nhiễu do tin
+    dễ hay khó triệt tiêu nhau. Khoảng tin cậy không chứa 0 mới kết luận được là hơn/kém.
+    """
+    rng = np.random.default_rng(SEED)  # cùng dãy rút cho mọi phép so, để các dòng so được với nhau
+    gold = np.array([pair['label'] for pair in pairs])
+    jobs = list(dict.fromkeys(pair['jd'] for pair in pairs))
+    members = {jd: [i for i, pair in enumerate(pairs) if pair['jd'] == jd] for jd in jobs}
+    ndcg, ndcg_reference = ndcg_by_job(pairs, scores), ndcg_by_job(pairs, reference)
+    scored = [jd for jd in jobs if jd in ndcg and jd in ndcg_reference]
+    rhos, ndcgs = [], []
+    for _ in range(BOOTSTRAP_ROUNDS):
+        drawn = rng.choice(jobs, size=len(jobs), replace=True)
+        rows = [index for jd in drawn for index in members[jd]]
+        rhos.append(spearman(scores[rows], gold[rows]) - spearman(reference[rows], gold[rows]))
+        ndcgs.append(np.mean([ndcg[jd] - ndcg_reference[jd] for jd in drawn if jd in scored]))
+    return {
+        'spearman': spearman(scores, gold) - spearman(reference, gold),
+        'spearman_ci': interval(rhos),
+        'ndcg': float(np.mean([ndcg[jd] - ndcg_reference[jd] for jd in scored])),
+        'ndcg_ci': interval(ndcgs),
+    }
+
+
 def band(score):
     return sum(score >= threshold for threshold in BAND_THRESHOLDS)
 
@@ -179,7 +219,15 @@ def score_quality(pairs, scores):
     """Chỉ cho phương án có thang 0–100: mức hiển thị so với nhãn, và điểm cặp khác ngành."""
     gold = [LABEL_BAND[pair['label']] for pair in pairs]
     unrelated = [score for pair, score in zip(pairs, scores, strict=True) if pair['label'] == 0]
+    by_label = [[s for pair, s in zip(pairs, scores, strict=True) if pair['label'] == label] for label in range(5)]
+    means = [float(np.mean(group)) if group else None for group in by_label]
+    known = [mean for mean in means if mean is not None]
     return {
+        # Điểm trung bình theo nhãn 0–4: thang điểm đúng thì phải tăng dần.
+        'mean_by_label': means,
+        'monotonic': all(low < high for low, high in zip(known, known[1:], strict=False)),
+        # Số cặp theo (mức hiển thị, nhãn): mỗi mức hiển thị gồm những nhãn nào.
+        'band_by_label': [[int(sum(band(s) == level for s in group)) for group in by_label] for level in range(4)],
         'band_kappa': float(
             cohen_kappa_score(gold, [band(s) for s in scores], weights='quadratic', labels=[0, 1, 2, 3])
         ),  # fmt: skip
@@ -206,7 +254,39 @@ def spread(ci):
     return '–' if ci is None else f'{number(ci[0])} đến {number(ci[1])}'
 
 
-def report(split, pairs, results, floor, quality, errors, cross):
+BAND_NAMES = ('Chưa phù hợp', 'Tương đối phù hợp', 'Phù hợp', 'Rất phù hợp')
+
+
+def difference(value, ci):
+    """Hiệu số có dấu; in đậm khi khoảng tin cậy không chứa 0."""
+    text = f'{value:+.3f}'.replace('.', ',')
+    return f'**{text}**' if ci and (ci[0] > 0 or ci[1] < 0) else text
+
+
+def scale_report(row):
+    """Hai bảng kiểm tra thang điểm của `hybrid`: điểm theo nhãn, mức hiển thị theo nhãn."""
+    means = ' | '.join(number(mean, 0) for mean in row['mean_by_label'])
+    lines = [
+        '',
+        f'Điểm trung bình theo nhãn ({"tăng dần" if row["monotonic"] else "KHÔNG tăng dần"}):',
+        '',
+        '| Nhãn 0 | Nhãn 1 | Nhãn 2 | Nhãn 3 | Nhãn 4 |',
+        '| ---: | ---: | ---: | ---: | ---: |',
+        f'| {means} |',
+        '',
+        'Số cặp theo mức hiển thị và nhãn (mức đúng của nhãn: 0–1 chưa phù hợp, 2 tương đối, 3 phù hợp, 4 rất phù hợp):',
+        '',
+        '| Mức hiển thị | Nhãn 0 | Nhãn 1 | Nhãn 2 | Nhãn 3 | Nhãn 4 |',
+        '| --- | ---: | ---: | ---: | ---: | ---: |',
+    ]
+    lines += [
+        f'| {name} | ' + ' | '.join(str(count) for count in counts) + ' |'
+        for name, counts in zip(BAND_NAMES, row['band_by_label'], strict=True)
+    ]
+    return lines
+
+
+def report(split, pairs, results, floor, quality, errors, cross, differences):
     jobs = len(dict.fromkeys(pair['jd'] for pair in pairs))
     counts = np.bincount([pair['label'] for pair in pairs], minlength=5)
     lines = [
@@ -245,6 +325,22 @@ def report(split, pairs, results, floor, quality, errors, cross):
         f'{number(row["unrelated_max"], 0)} | {row["unrelated_at_least_50"]} |'
         for name, row in quality.items()
     ]
+    lines += scale_report(quality[HYBRID])
+    lines += [
+        '',
+        f'## So với `{HYBRID}` (bootstrap ghép cặp)',
+        '',
+        f'Hiệu số phương án trừ `{HYBRID}`, đo trên cùng bộ tin ở mỗi vòng bootstrap. In đậm khi khoảng',
+        'tin cậy 95% không chứa 0; còn lại là chưa kết luận được.',
+        '',
+        '| Phương án | Δ Spearman | Khoảng tin cậy | Δ NDCG@5 | Khoảng tin cậy |',
+        '| --- | ---: | --- | ---: | --- |',
+    ]
+    lines += [
+        f'| {name} | {difference(row["spearman"], row["spearman_ci"])} | {spread(row["spearman_ci"])} | '
+        f'{difference(row["ndcg"], row["ndcg_ci"])} | {spread(row["ndcg_ci"])} |'
+        for name, row in differences.items()
+    ]
     if cross:
         lines += ['', '## Cặp khác ngôn ngữ (tin và CV một Việt một Anh)', '']
         lines += ['| Phương án | Số cặp | Spearman |', '| --- | ---: | ---: |']
@@ -261,6 +357,14 @@ def main():
     parser.add_argument('--final', action='store_true', help='Xác nhận đây là lần chạy test duy nhất.')
     parser.add_argument('--model', action='append', type=parse_model, default=[], metavar='TÊN=THƯ_MỤC')
     parser.add_argument('--ablation', action='store_true', help='Đo thêm hybrid với từng thay đổi bị tắt.')
+    parser.add_argument(
+        '--hybrid-model', action='append', type=parse_model, default=[], metavar='TÊN=THƯ_MỤC',
+        help='Bi-encoder đã có mốc trong CALIBRATIONS: đo cả cosine lẫn điểm hybrid với mô hình này.',
+    )  # fmt: skip
+    parser.add_argument(
+        '--reranker', type=parse_model, metavar='TÊN=THƯ_MỤC',
+        help='Cross-encoder trong ml/models: đo thêm mỗi --hybrid-model khi chạy kèm cross-encoder này.',
+    )  # fmt: skip
     options = parser.parse_args()
     if options.split != 'validation' and not options.final:
         raise SystemExit('Phần test chỉ chạy một lần ở giai đoạn nghiệm thu. Thêm --final nếu đúng lúc đó.')
@@ -289,6 +393,23 @@ def main():
         flags = ['--model-path', f'/models/{path}', '--model-version', name]
         rows = product_rows(pairs, name, flags + (['--no-prefix'] if no_prefix else []))
         collect(f'Bi-encoder `{name}` (cosine toàn văn)', rows, 'document_similarity')
+    for name, path, no_prefix in options.hybrid_model:
+        flags = ['--model-path', f'/models/{path}', '--model-version', name]
+        rows = product_rows(pairs, name, flags + (['--no-prefix'] if no_prefix else []))
+        collect(f'Bi-encoder `{name}` (cosine toàn văn)', rows, 'document_similarity')
+        collect(f'hybrid với `{name}`', rows, 'score')
+        hybrids.append(f'hybrid với `{name}`')
+        if options.reranker:
+            reranker, folder, _ = options.reranker
+            judged = [*flags, '--reranker-path', f'/models/{folder}', '--reranker-version', reranker]
+            for label, extra in (
+                (f'hybrid với `{name}` và `{reranker}`', []),
+                (f'hybrid với `{name}` và `{reranker}`, thêm độ phủ yêu cầu vào mức liên quan', ['--ablation', 'coverage_in_relevance']),
+                (f'hybrid với `{name}` và `{reranker}`, không dùng để nhận kỹ năng', ['--ablation', 'no_ce_skills']),
+            ):
+                key = f'{name}+{reranker}' + ''.join(extra[1:])
+                collect(label, product_rows(pairs, key, judged + extra), 'score')
+                hybrids.append(label)
 
     rng = np.random.default_rng(SEED)
     scores = {name: filled(values) for name, values in systems.items()}
@@ -302,7 +423,10 @@ def main():
     )
     quality = {name: score_quality(pairs, scores[name]) for name in hybrids}
     floor = random_ndcg(pairs, rng)
-    text = report(options.split, pairs, results, floor, quality, errors, cross)
+    differences = {
+        name: paired_difference(pairs, values, scores[HYBRID]) for name, values in scores.items() if name != HYBRID
+    }
+    text = report(options.split, pairs, results, floor, quality, errors, cross, differences)
 
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     (REPORTS_DIR / f'eval_{options.split}.md').write_text(text, encoding='utf-8')
@@ -313,6 +437,7 @@ def main():
         'systems': results,
         'hybrid_quality': quality[HYBRID],
         'hybrid_ablation_quality': {name: quality[name] for name in hybrids[1:]},
+        'difference_from_hybrid': differences,
         'cross_language': {name: {'pairs': count, 'spearman': rho} for name, (count, rho) in cross.items()},
     }
     (REPORTS_DIR / f'eval_{options.split}.json').write_text(

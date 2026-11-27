@@ -3,9 +3,11 @@
 python manage.py matching_export_dataset jobs
 python manage.py matching_export_dataset cvs [--email-domain synthetic.procv.test]
 python manage.py matching_export_dataset files /đường/dẫn/thư/mục
+python manage.py matching_export_dataset texts < tài_liệu.jsonl   # tài liệu ngoài DB (dữ liệu huấn luyện)
 """
 
 import json
+import sys
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -13,14 +15,14 @@ from apps.cvs.services import SYNTHETIC_EMAIL_DOMAIN
 
 from ...models import jobs_for_profile
 from ...selectors import cvs_for_profile
-from ...services.dataset import export_cvs, export_files, export_jobs, export_skills
+from ...services.dataset import export_cvs, export_files, export_jobs, export_skills, export_texts
 
 
 class Command(BaseCommand):
     help = 'Xuất profile_json của tin, CV hoặc tệp CV ra JSONL (chỉ đọc).'
 
     def add_arguments(self, parser):
-        parser.add_argument('kind', choices=['jobs', 'cvs', 'files', 'skills'])
+        parser.add_argument('kind', choices=['jobs', 'cvs', 'files', 'skills', 'texts'])
         parser.add_argument('directory', nargs='?', help='Thư mục PDF/DOCX (với kind=files).')
         parser.add_argument('--email-domain', default=SYNTHETIC_EMAIL_DOMAIN)
 
@@ -32,6 +34,7 @@ class Command(BaseCommand):
             'cvs': lambda: export_cvs(cvs_for_profile(email_domain)),
             'files': lambda: export_files(directory),
             'skills': export_skills,
+            'texts': lambda: export_texts(json.loads(line) for line in sys.stdin if line.strip()),
         }[kind]()
         for row in rows:
             self.stdout.write(json.dumps(row, ensure_ascii=False))

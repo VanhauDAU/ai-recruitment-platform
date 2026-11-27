@@ -142,6 +142,23 @@ function languagesSummary(detail) {
 }
 
 /**
+ * Kỹ năng còn thiếu, gộp các kỹ năng thay thế nhau thành một mục. Tin viết "một trong:
+ * Golang, Node.js, PHP" thì cả nhóm chỉ là một yêu cầu; backend gắn cùng số `group` cho
+ * các kỹ năng trong nhóm.
+ */
+export function groupMissingSkills(missing = []) {
+  const groups = new Map()
+  for (const skill of missing) {
+    const key = skill.group ? `group-${skill.group}` : skill.name
+    const entry = groups.get(key) || { key, names: [], importance: skill.importance }
+    entry.names.push(skill.name)
+    if (skill.importance === 'required') entry.importance = 'required'
+    groups.set(key, entry)
+  }
+  return [...groups.values()]
+}
+
+/**
  * Câu tóm tắt một tiêu chí, dựng từ `component.detail` để dịch được. Dành cho nhà
  * tuyển dụng; kết quả của ứng viên có sẵn `summary` do backend viết.
  */
@@ -149,8 +166,10 @@ export function criterionSummary(component) {
   const { key, status, detail = {} } = component
   if (status !== 'ok') return ''
   if (key === 'skills') {
+    // Đếm theo yêu cầu: một nhóm kỹ năng thay thế nhau là một yêu cầu (`detail.units`).
     const matched = detail.matched?.length || 0
-    return m.fit_summary_skills({ matched, total: matched + (detail.missing?.length || 0) })
+    const units = detail.units || { met: matched, total: matched + (detail.missing?.length || 0) }
+    return m.fit_summary_skills({ matched: units.met, total: units.total })
   }
   if (key === 'experience') return experienceSummary(detail)
   if (key === 'education') {

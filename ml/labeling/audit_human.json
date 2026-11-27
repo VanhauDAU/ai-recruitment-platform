@@ -1,0 +1,971 @@
+{
+  "version": "v1-50",
+  "exported_at": "2026-11-26T12:01:58.925Z",
+  "annotator": "human",
+  "pairs": [
+    {
+      "stt": 72,
+      "jd": "JD-36",
+      "cv": "CV-025",
+      "label": 3,
+      "confidence": "chắc",
+      "reason": "thiếu viết test case, chưa thấy kỹ năng nên có phù hợp như Boundary value testing, Abnormal testing, Exception handling, Jira",
+      "labeled_at": "2026-11-26",
+      "suggested": 3,
+      "criteria": {
+        "position": "same",
+        "skills": {
+          "Bug Reporting": "yes",
+          "Tư duy logic": "skip",
+          "Manual Testing": "yes",
+          "Có trách nhiệm": "skip",
+          "Viết test case": "no"
+        },
+        "core_missing": false,
+        "experience": "one",
+        "level": "ok",
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 80,
+      "jd": "JD-36",
+      "cv": "CV-042",
+      "label": 0,
+      "confidence": "chắc",
+      "reason": "khác ngành",
+      "labeled_at": "2026-11-26",
+      "suggested": 0,
+      "criteria": {
+        "position": "other",
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 222,
+      "jd": "JD-18",
+      "cv": "CV-018",
+      "label": 4,
+      "confidence": "chắc",
+      "reason": "",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": "same",
+        "skills": {
+          "Flutter": "yes",
+          "React Native": "yes"
+        },
+        "core_missing": false,
+        "experience": "ok",
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 226,
+      "jd": "JD-18",
+      "cv": "CV-011",
+      "label": 2,
+      "confidence": "chắc",
+      "reason": "Không có kỹ năng React native và Flutter",
+      "labeled_at": "2026-11-26",
+      "suggested": 2,
+      "criteria": {
+        "position": "near",
+        "skills": {
+          "React Native": "no",
+          "Flutter": "no"
+        },
+        "core_missing": false,
+        "experience": "ok",
+        "level": "ok",
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 61,
+      "jd": "JD-12",
+      "cv": "CV-011",
+      "label": 2,
+      "confidence": "chắc",
+      "reason": "Đúng vị trí và thừa kinh nghiệm (34 tháng, JD yêu cầu 6 tháng), nhưng CV chỉ có 2/5 kỹ năng cần có, thiếu Android Lifecycle, XML layout và MVVM.",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": "same",
+        "skills": {
+          "Kotlin": "yes"
+        },
+        "core_missing": false,
+        "experience": "ok",
+        "level": "ok",
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 64,
+      "jd": "JD-12",
+      "cv": "CV-099",
+      "label": 1,
+      "confidence": "chắc",
+      "reason": "Cùng nhóm ngành CNTT nhưng khác vị trí chuyên môn (Backend/Web Developer thay vì Android Developer), không đáp ứng kỹ năng cốt lõi và không có kinh nghiệm Android.",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 205,
+      "jd": "JD-07",
+      "cv": "CV-023",
+      "label": 0,
+      "confidence": "chắc",
+      "reason": "Khác ngành: JD là Nhân viên kho (kho vận, TMĐT), CV là Automation Tester (CNTT phần mềm). CV không có kỹ năng Quản lý kho và không có kinh nghiệm làm kho.",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 209,
+      "jd": "JD-07",
+      "cv": "CV-006",
+      "label": 0,
+      "confidence": "chắc",
+      "reason": "Khác ngành: JD là Nhân viên kho, CV là Backend Developer (CNTT phần mềm). CV có làm hệ thống quản lý tồn kho, nhưng đó là lập trình phần mềm, không phải làm kho, nên không tính là có kỹ năng Quản lý kho.",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 49,
+      "jd": "JD-75",
+      "cv": "CV-051",
+      "label": 2,
+      "confidence": "chắc",
+      "reason": "Đúng vị trí Content Marketing, đáp ứng 4/5 kỹ năng cần có, có SEO, Digital Marketing, Web3 và tiếng Anh thành thạo bắt buộc; tuy nhiên chưa đủ 2 năm kinh nghiệm và chưa thể xác nhận Content Creation từ mục Kinh nghiệm.",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 47,
+      "jd": "JD-75",
+      "cv": "CV-011",
+      "label": 0,
+      "confidence": "chắc",
+      "reason": "Khác ngành: JD thuộc nhóm Kinh doanh – Marketing – Content, CV là Android Developer (CNTT phần mềm). CV không có kỹ năng cần có nào (SEO, Content Marketing, Digital Marketing, Content Creation) và không có kinh nghiệm content.",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 58,
+      "jd": "JD-11",
+      "cv": "CV-015",
+      "label": 2,
+      "confidence": "chắc",
+      "reason": "Vị trí gần (iOS Developer và Android Developer đều thuộc phát triển ứng dụng di động), có MVVM nhưng thiếu các kỹ năng cốt lõi Kotlin, Jetpack Compose, Coroutines, REST API và chưa đáp ứng tiếng Anh làm việc bắt buộc.",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 60,
+      "jd": "JD-11",
+      "cv": "CV-011",
+      "label": 3,
+      "confidence": "chắc",
+      "reason": "Đúng vị trí Android Developer, đáp ứng 4/5 kỹ năng cốt lõi (Kotlin, Jetpack Compose, Kotlin Coroutines, REST API), đủ kinh nghiệm, học vấn và tiếng Anh; chưa xác nhận MVVM.",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 116,
+      "jd": "JD-59",
+      "cv": "CV-042",
+      "label": 2,
+      "confidence": "chắc",
+      "reason": "Cùng nhóm ngành kế toán và có 13 tháng kinh nghiệm kế toán công nợ, đáp ứng học vấn và phần mềm kế toán VAS; tuy nhiên khác vị trí kế toán tổng hợp, chưa chứng minh năng lực hạch toán tổng hợp, lập báo cáo tài chính và nghiệp vụ thuế.",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 114,
+      "jd": "JD-59",
+      "cv": "CV-043",
+      "label": 1,
+      "confidence": "chắc",
+      "reason": "Chuyên viên Thuế là vị trí gần (tối đa 2). CV đủ kinh nghiệm (khoảng 21 tháng) và có Luật thuế, nhưng thiếu phần mềm kế toán (HTKK chỉ là phần mềm khai thuế). Bậc học Cao đẳng thấp hơn yêu cầu Đại học nên trừ 1, còn 1.",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 279,
+      "jd": "JD-69",
+      "cv": "CV-026",
+      "label": 3,
+      "confidence": "chắc",
+      "reason": "CV đúng vị trí, đủ 5/5 kỹ năng cần có, tiếng Anh thành thạo đạt yêu cầu bắt buộc. JD tự mâu thuẫn về kinh nghiệm: phần thông tin chung ghi \"Dưới 1 năm\", phần yêu cầu ghi \"Minimum 4 years\". CV có khoảng 31 tháng; nếu tính theo mức 4 năm thì thiếu 17 tháng, chưa tới nửa, nên được 3.",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 125,
+      "jd": "JD-80",
+      "cv": "CV-094",
+      "label": 1,
+      "confidence": "chắc",
+      "reason": "Có kinh nghiệm thiết kế và dựng video, phù hợp một phần với Content Creator; nhưng thiếu TikTok, viết kịch bản, quay phim và chụp ảnh. Bằng Thạc sĩ cao hơn yêu cầu Cao đẳng 2 bậc.",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 127,
+      "jd": "JD-80",
+      "cv": "CV-051",
+      "label": 2,
+      "confidence": "chắc",
+      "reason": "Đúng nhóm Content Marketing, có kinh nghiệm sáng tạo nội dung blog, video và nghiên cứu xu hướng; nhưng chưa đủ 2 năm kinh nghiệm theo mục Kinh nghiệm, đồng thời thiếu TikTok, viết kịch bản, quay video, chụp ảnh và dựng video.",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 215,
+      "jd": "JD-10",
+      "cv": "CV-042",
+      "label": 1,
+      "confidence": "chắc",
+      "reason": "CV là Kế toán công nợ cấp nhân viên, JD tuyển Kế toán trưởng. CV thiếu Luật thuế, Quyết toán thuế và chứng chỉ Kế toán trưởng bắt buộc. Kinh nghiệm chỉ khoảng 14 tháng trên 3 năm yêu cầu, tức thiếu quá nửa.\n",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 22,
+      "jd": "JD-35",
+      "cv": "CV-042",
+      "label": 0,
+      "confidence": "chắc",
+      "reason": "CV thuộc ngành Kế toán, khác ngành CNTT phần mềm; không có kinh nghiệm QA/Testing, lập trình JavaScript/Python/TypeScript, Automation Testing hay CI/CD.",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 24,
+      "jd": "JD-35",
+      "cv": "CV-076",
+      "label": 1,
+      "confidence": "chắc",
+      "reason": "Cùng nhóm CNTT nhưng khác vị trí (DevOps, không phải QA/Testing). CV có JavaScript (JD ghi \"TypeScript/JavaScript, Python hoặc Go\" nên Python và TypeScript không đếm) và CI/CD qua công việc DevOps, nhưng thiếu AI.\n",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 160,
+      "jd": "JD-05",
+      "cv": "CV-089",
+      "label": 2,
+      "confidence": "chắc",
+      "reason": "CV đúng vị trí và đủ kinh nghiệm (khoảng 52 tháng), nhưng chỉ có 2/10 kỹ năng (AutoCAD, Thiết kế 2D). CV thiếu các kỹ năng cốt lõi SketchUp, V-Ray và Thiết kế 3D. Không xuống 1 vì kinh nghiệm đủ; JD chấp nhận cả bằng Đại học nên không bị trừ điểm.\n",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 147,
+      "jd": "JD-26",
+      "cv": "CV-034",
+      "label": 4,
+      "confidence": "chắc",
+      "reason": "Telesales và CSKH đúng loại việc JD chấp nhận. CV đủ 4/4 kỹ năng được đếm: Excel (JD ghi \"Excel/Google Sheets\" nên Google Sheets không đếm), Telesales, Chăm sóc khách hàng, Tư vấn. Kinh nghiệm khoảng 9 năm 10 tháng, vượt mức 1 năm; cấp bậc Nhân viên khớp.",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 149,
+      "jd": "JD-26",
+      "cv": "CV-032",
+      "label": 1,
+      "confidence": "chắc",
+      "reason": "Kinh doanh online (ngành chuyển phát) là vị trí gần với CSKH. CV đủ kinh nghiệm (khoảng 36 tháng) và có Tư vấn, Chăm sóc khách hàng, nhưng thiếu Excel/Google Sheets và Telesales, nên tối đa 2. Bậc học Trung cấp thấp hơn yêu cầu Cao đẳng nên trừ 1, còn 1.\n",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 6,
+      "jd": "JD-02",
+      "cv": "CV-019",
+      "label": 1,
+      "confidence": "chắc",
+      "reason": "Backend là vị trí gần với Fullstack, nhưng CV chỉ có REST API. CV thiếu cả nhóm ngôn ngữ backend cốt lõi (Golang, Node.js, Python, PHP), ReactJS và các cơ sở dữ liệu. Kinh nghiệm chỉ khoảng 10 tháng trên 5 năm yêu cầu.\n",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 2,
+      "jd": "JD-02",
+      "cv": "CV-036",
+      "label": 0,
+      "confidence": "chắc",
+      "reason": "Khác ngành: JD là Fullstack Developer (CNTT phần mềm), CV là Telesales (Kinh doanh). CV không có kỹ năng lập trình hay kinh nghiệm phát triển phần mềm nào.\n",
+      "labeled_at": "2026-11-18",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 288,
+      "jd": "JD-71",
+      "cv": "CV-043",
+      "label": 2,
+      "confidence": "chắc",
+      "reason": "Chuyên viên Thuế là vị trí gần với Kế toán công nợ (tối đa 2). CV có đủ các kỹ năng chính (Đối chiếu công nợ, Kế toán, quản lý công nợ có nêu trong phần tóm tắt) và đủ kinh nghiệm (khoảng 21 tháng); bậc Cao đẳng chỉ cao hơn yêu cầu Trung cấp 1 bậc nên không bị trừ.\n",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 254,
+      "jd": "JD-40",
+      "cv": "CV-088",
+      "label": 1,
+      "confidence": "chắc",
+      "reason": "Cùng nhóm Kinh doanh nhưng khác vị trí và cấp bậc: CV là Tư vấn tuyển sinh, chỉ từng dẫn nhóm 5 người, trong khi JD tuyển Giám đốc Thương mại. CV không có kỹ năng cần có nào (P&L, quản lý chuỗi, chiến lược, phân tích dữ liệu); bậc Cao đẳng thấp hơn yêu cầu Đại học nhưng giữ ở 1 vì cùng nhóm ngành.\n",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 82,
+      "jd": "JD-47",
+      "cv": "CV-064",
+      "label": 2,
+      "confidence": "chắc",
+      "reason": "Cùng vị trí Sales Online và thừa kinh nghiệm (khoảng 8 năm), nhưng CV chỉ có Tìm kiếm khách hàng. CV thiếu Đàm phán, Thuyết phục và Chốt sale; công việc thiên về quảng cáo online B2C, không phải bán hàng B2B ngành công nghiệp.\n",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 85,
+      "jd": "JD-47",
+      "cv": "CV-057",
+      "label": 1,
+      "confidence": "chắc",
+      "reason": "Quản lý tài khoản là vị trí gần với Sales, nhưng CV chỉ có Thuyết phục, thiếu Đàm phán, Tìm kiếm khách hàng và Chốt sale. CV không có mục Kinh nghiệm, tức 0 trên 2 năm yêu cầu.",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 249,
+      "jd": "JD-39",
+      "cv": "CV-093",
+      "label": 4,
+      "confidence": "chắc",
+      "reason": "Đúng vị trí IT Helpdesk, đủ 2/2 kỹ năng (Troubleshooting, Kiến thức IT). JD không yêu cầu kinh nghiệm và nhận fresher; CV có tiếng Anh thành thạo đạt yêu cầu bắt buộc và bằng Đại học CNTT.\n",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 247,
+      "jd": "JD-39",
+      "cv": "CV-081",
+      "label": 3,
+      "confidence": "chắc",
+      "reason": "Đúng vị trí, đủ 2/2 kỹ năng (Khắc phục sự cố máy tính tương ứng Troubleshooting; Windows, macOS, phần cứng tương ứng Kiến thức IT), JD không yêu cầu kinh nghiệm. Tiếng Anh chỉ ở mức Giao tiếp (IELTS 5.5), chưa đạt mức Thành thạo bắt buộc nên trừ 1.",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 261,
+      "jd": "JD-56",
+      "cv": "CV-035",
+      "label": 3,
+      "confidence": "chắc",
+      "reason": "Telesales đúng loại việc JD chấp nhận; CV đủ 3/3 kỹ năng (Bán hàng, Telesales, Chăm sóc khách hàng; Chịu áp lực là phẩm chất nên không đếm) và có khoảng 47 tháng kinh nghiệm. Tuy nhiên công việc hiện tại là Telesales Manager quản lý 20 người, cao hơn cấp Nhân viên của JD, nên cấp bậc chưa khớp.\nChắc chắn: Không chắc (phân vân 3–4)",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 269,
+      "jd": "JD-56",
+      "cv": "CV-088",
+      "label": 4,
+      "confidence": "chắc",
+      "reason": "Đúng vị trí Tư vấn tuyển sinh và đúng ngành giáo dục; CV đủ 3/3 kỹ năng: Bán hàng, Telesales, và Chăm sóc khách hàng qua việc hỗ trợ, duy trì quan hệ với học viên (Chịu áp lực không đếm). Kinh nghiệm khoảng 8 năm 9 tháng; chức danh vẫn là Tư vấn tuyển sinh nên cấp bậc khớp.\n",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 267,
+      "jd": "JD-56",
+      "cv": "CV-036",
+      "label": 4,
+      "confidence": "chắc",
+      "reason": "Telesales đúng loại việc JD chấp nhận; CV đủ 3/3 kỹ năng: Telesales, Bán hàng (có doanh số, thuyết phục khách mua), và Chăm sóc khách hàng qua xử lý phản hồi (Chịu áp lực không đếm). Kinh nghiệm khoảng 14 tháng, đủ 1 năm; cấp bậc và học vấn khớp.\n",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 268,
+      "jd": "JD-56",
+      "cv": "CV-067",
+      "label": 4,
+      "confidence": "chắc",
+      "reason": "Đúng vị trí Tư vấn tuyển sinh, đủ 3/3 kỹ năng (Bán hàng, Telesales, Chăm sóc khách hàng; Chịu áp lực không đếm). Kinh nghiệm khoảng 22 tháng, đủ 1 năm; cấp bậc khớp, bằng Đại học nằm trong mức JD chấp nhận.\n",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 296,
+      "jd": "JD-73",
+      "cv": "CV-056",
+      "label": 0,
+      "confidence": "chắc",
+      "reason": "Khác ngành: JD là Quản lý Kiểm toán nội bộ CNTT (nhóm Kiểm toán / CNTT), CV là Hành chính văn phòng. CV không có kỹ năng cần có nào (IT Audit, IT Risk Management, Information Security).\n",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 39,
+      "jd": "JD-60",
+      "cv": "CV-004",
+      "label": 0,
+      "confidence": "chắc",
+      "reason": "Khác ngành: JD là Kế toán tổng hợp, CV là Data Analyst (phân tích dữ liệu ngân hàng). CV không có kỹ năng kế toán nào (Kế toán tổng hợp, Báo cáo tài chính, Thuế, Phần mềm kế toán).\n",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 40,
+      "jd": "JD-60",
+      "cv": "CV-039",
+      "label": 1,
+      "confidence": "chắc",
+      "reason": "Kế toán nội bộ là vị trí gần với Kế toán tổng hợp, nhưng CV chỉ có 2/5 kỹ năng (Phần mềm kế toán, Báo cáo tài chính), thiếu Kế toán tổng hợp, Phân tích tài chính và Thuế. CV không có mục Kinh nghiệm, tức 0 trên 3 năm yêu cầu.\n",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 172,
+      "jd": "JD-16",
+      "cv": "CV-016",
+      "label": 2,
+      "confidence": "chắc",
+      "reason": "Đúng vị trí, có 7/8 kỹ năng và khoảng 88 tháng kinh nghiệm, vượt mức 3 năm. Tuy nhiên CV thiếu RxSwift, kỹ năng JD yêu cầu \"thành thạo\" cùng Swift nên có thể coi là cốt lõi; CV cũng chưa có vai trò Trưởng nhóm (chức danh luôn là iOS Developer).\n",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 140,
+      "jd": "JD-89",
+      "cv": "CV-072",
+      "label": 0,
+      "confidence": "chắc",
+      "reason": "Khác ngành: JD là Chuyên viên Tuyển dụng (nhóm Nhân sự), CV là Tạp vụ (lao động phổ thông, kho). CV không có kinh nghiệm hay kỹ năng tuyển dụng nào.\n",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 136,
+      "jd": "JD-89",
+      "cv": "CV-035",
+      "label": 0,
+      "confidence": "chắc",
+      "reason": "Khác ngành: JD là Chuyên viên Tuyển dụng (nhóm Nhân sự), CV là Telesales (nhóm Kinh doanh). CV có Thuyết phục và Excel nhưng không có kinh nghiệm tuyển dụng hay nhân sự nào.\n",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 19,
+      "jd": "JD-66",
+      "cv": "CV-077",
+      "label": 1,
+      "confidence": "chắc",
+      "reason": "Cùng nhóm CNTT nhưng khác vị trí (DevOps, không phải Fullstack). CV thiếu Python (cốt lõi), Fullstack và AI, chỉ có SQL/Database và chứng chỉ AWS; tiếng Anh IELTS 5.5 chưa đạt mức thành thạo bắt buộc, nhưng giữ ở 1 vì cùng nhóm ngành.\n",
+      "labeled_at": "2026-11-18",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 20,
+      "jd": "JD-66",
+      "cv": "CV-071",
+      "label": 0,
+      "confidence": "chắc",
+      "reason": "Khác ngành: JD là Fullstack Developer (CNTT phần mềm), CV là Brand Marketing / PR (nhóm Marketing). CV không có kỹ năng cần có nào (Python, SQL, AWS, AI, Fullstack).\n",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 101,
+      "jd": "JD-77",
+      "cv": "CV-050",
+      "label": 1,
+      "confidence": "chắc",
+      "reason": "Cùng nhóm Kinh doanh – Marketing nhưng khác vị trí (Content Marketing, không phải Sales/Business Development). CV không có kỹ năng cần có nào (Cold calling, Consultative selling, Đàm phán, Chốt sale) và chưa từng giữ vai trò Trưởng nhóm.\n",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 108,
+      "jd": "JD-77",
+      "cv": "CV-033",
+      "label": 2,
+      "confidence": "chắc",
+      "reason": "Đúng vị trí Business Development, đủ 6/6 kỹ năng, có thêm SaaS/CRM và tiếng Anh đạt mức Làm việc. Tuy nhiên kỳ thực tập nằm ở mục Dự án nên kinh nghiệm tính là 0 trên 2 năm, và ứng viên mới tốt nghiệp trong khi JD tuyển Trưởng nhóm.\n",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 98,
+      "jd": "JD-53",
+      "cv": "CV-031",
+      "label": 1,
+      "confidence": "chắc",
+      "reason": "Đúng vị trí Sales và JD không yêu cầu kinh nghiệm, nhưng CV không có kỹ năng nào được đếm (Word, Excel, Tin học văn phòng); Nhanh nhẹn, Trung thực, Hoạt ngôn, Kiên nhẫn là phẩm chất nên không đếm. Bậc học THPT thấp hơn yêu cầu Trung cấp nên trừ 1, từ 2 còn 1.\n",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 92,
+      "jd": "JD-53",
+      "cv": "CV-032",
+      "label": 2,
+      "confidence": "chắc",
+      "reason": "Đúng vị trí, đúng ngành chuyển phát nhanh, có khoảng 36 tháng kinh nghiệm và bằng Trung cấp đúng yêu cầu. Tuy nhiên CV chỉ có 1/4 kỹ năng được đếm (Xử lý tình huống), thiếu Word, Excel và Tin học văn phòng; Nhanh nhẹn, Trung thực, Hoạt ngôn, Kiên nhẫn là phẩm chất nên không đếm.\n",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 239,
+      "jd": "JD-27",
+      "cv": "CV-066",
+      "label": 3,
+      "confidence": "chắc",
+      "reason": "Đúng vị trí DevOps, đủ 13/13 kỹ năng, tiếng Anh đạt mức Làm việc bắt buộc. Kinh nghiệm khoảng 20 tháng trên 2 năm yêu cầu, thiếu 4 tháng (chưa tới nửa) nên xuống một bậc.\n",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 164,
+      "jd": "JD-08",
+      "cv": "CV-096",
+      "label": 2,
+      "confidence": "chắc",
+      "reason": "Có 19 tháng kinh nghiệm tư vấn tuyển sinh, chăm sóc khách hàng, xử lý vấn đề và thuyết phục; đáp ứng chuyên môn CSKH và có bằng Cao đẳng cao hơn mức Trung cấp. Tuy nhiên, CV chưa thể hiện Word, Excel, đánh máy, Facebook, Skype, Viber và không có tiếng Nhật (chỉ có tiếng Trung).",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    },
+    {
+      "stt": 166,
+      "jd": "JD-08",
+      "cv": "CV-087",
+      "label": 1,
+      "confidence": "không chắc",
+      "reason": "Sales Logistics là vị trí gần với CSKH (tối đa 2), CV có kinh nghiệm chăm sóc khách hàng qua dự án và JD không yêu cầu kinh nghiệm. Tuy nhiên CV chỉ có 2/9 kỹ năng (Word, Excel qua chứng chỉ MOS), thiếu Tư vấn, Thuyết phục, Làm việc nhóm, Đánh máy, Facebook, Skype, Viber.\n",
+      "labeled_at": "2026-11-26",
+      "suggested": null,
+      "criteria": {
+        "position": null,
+        "skills": {},
+        "core_missing": false,
+        "experience": null,
+        "level": null,
+        "education_low": false,
+        "language_missing": false
+      }
+    }
+  ]
+}

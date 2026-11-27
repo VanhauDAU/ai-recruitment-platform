@@ -17,6 +17,9 @@ CV_DIR = DATA_DIR / 'cv'
 CV_INVENTORY = CV_DIR / 'cv_inventory.xlsx'
 SYNTHETIC_CV_DIR = CV_DIR / 'synthetic'
 CV_MANIFEST = SYNTHETIC_CV_DIR / 'manifest.json'
+# Kho CV huấn luyện (`generate_cvs.py --train`), neo vào tin ngoài tập vàng.
+TRAIN_CV_DIR = CV_DIR / 'train'
+TRAIN_CV_MANIFEST = TRAIN_CV_DIR / 'manifest.json'
 CV_PDF_SYSTEM_DIR = CV_DIR / 'pdf' / 'system'
 CV_PDF_TOPCV_DIR = CV_DIR / 'pdf' / 'topcv'
 
@@ -27,6 +30,13 @@ GOLD_SHEET = LABELING_DIR / 'gold_pairs.xlsx'
 GOLD_SHEET_2 = LABELING_DIR / 'gold_pairs_2.xlsx'
 GOLD_CLAUDE_SHEETS = [LABELING_DIR / 'gold_pairs_claude.xlsx', LABELING_DIR / 'gold_pairs_claude_2.xlsx']
 SKILL_MERGE = LABELING_DIR / 'skill_merge.json'
+# Kiểm chứng nhãn: danh sách cặp cố định, trang chấm mù (sinh từ mẫu), kết quả người chấm xuất ra.
+AUDIT_PAIRS = LABELING_DIR / 'audit_pairs.json'
+AUDIT_TEMPLATE = LABELING_DIR / 'audit_blind.template.html'
+AUDIT_PAGE = LABELING_DIR / 'audit_blind.html'
+AUDIT_HUMAN = LABELING_DIR / 'audit_human.json'
+# 14 tin của tập hiệu chỉnh (chọn checkpoint, đặt mốc điểm); chọn một lần bằng build_train_pairs.py.
+CALIBRATION_JOBS = LABELING_DIR / 'calibration_jobs.json'
 LABELS_DIR = DATA_DIR / 'labels'
 GOLD_POOL = LABELS_DIR / 'gold_pool.json'
 
@@ -41,3 +51,6 @@ EVAL_DIR = DATA_DIR / 'eval'
 
 # Dữ liệu công khai tải về bằng `fetch_public.py`, kèm `SOURCES.md` (không commit).
 PUBLIC_DIR = DATA_DIR / 'public'
+
+# Bộ ba huấn luyện và tập dev (`build_train_pairs.py`), không commit.
+PAIRS_DIR = DATA_DIR / 'pairs'

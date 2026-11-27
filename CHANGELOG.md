@@ -8,6 +8,40 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-27
 
+#### Added — Lõi đối sánh CV–tin: công thức `hybrid-v3`, bi-encoder và cross-encoder đã huấn luyện
+
+- Công thức chấm `hybrid-v3` (`apps/matching`). **Nhóm kỹ năng thay thế** có hiệu lực ngay:
+  tin viết "A hoặc B", "một trong…", "such as…" thì CV có một kỹ năng là đạt cả nhóm; phần
+  kỹ năng còn thiếu hiện "A hoặc B". Kết quả cũ (`hybrid-v2`) được chấm lại khi mở.
+- Hai mô hình huấn luyện trên máy, **chưa bật mặc định**: bi-encoder `e5-base-wise-v1`
+  (fine-tune `multilingual-e5-base` rồi nội suy trọng số với mô hình gốc) và cross-encoder
+  `req-ce-v1` phán từng câu yêu cầu là đạt / có liên quan / chưa thấy, đồng thời nhận kỹ năng
+  qua câu chứng minh trong CV. Trên validation của tập vàng (100 cặp): Spearman 0,705 → 0,822,
+  NDCG@5 0,870 → 0,921, kappa mức hiển thị 0,697 → 0,733; cặp khác ngành trung vị 6 điểm, cao
+  nhất 36. Gợi ý việc làm: MRR 0,776 → 0,867. Số đo, dữ liệu và giới hạn ở mục 7 của
+  `docs/07-algorithms/thuat-toan-ai.md` và `ml/reports/`.
+- Biến môi trường mới `MATCHING_RERANKER_BACKEND` (`none` mặc định, `cross_encoder`),
+  `MATCHING_RERANKER_PATH`, `MATCHING_RERANKER_VERSION`. Quy trình bật ở local và production,
+  kèm mức bộ nhớ đã đo (nâng `mem_limit` của `ml-worker` lên 2.304 MB khi bật cross-encoder), ở
+  `docs/06-deployment/van-hanh-va-kill-switch.md`.
+- Chặn cấu hình sai: phiên bản mô hình chưa có mốc quy đổi thì `manage.py check` báo lỗi (bỏ
+  mốc mặc định); `ml-worker` dừng lúc nạp nếu `model_card.json` của thư mục mô hình không khớp
+  `MATCHING_MODEL_VERSION`. `docker-compose.prod.yml` ghi rõ phiên bản cạnh đường dẫn.
+- `result_json` bản 3: `overall.coverage`, `flags.reranker_used`, `meta.reranker_version`,
+  `detail.units` của tiêu chí kỹ năng; khóa cache gồm cả phiên bản cross-encoder.
+- Giao diện kết quả "Xem độ phù hợp" và bảng điểm hồ sơ của nhà tuyển dụng: gộp kỹ năng thiếu
+  theo nhóm thay thế, nhãn mức giữa của yêu cầu là "Có liên quan, chưa rõ".
+- `ml/`: đường ống dữ liệu huấn luyện (cổng chất lượng CV, bộ ba, chống rò rỉ), tập hiệu
+  chỉnh 321 cặp có nhãn, 358 cặp yêu cầu–câu CV có nhãn, script huấn luyện, hiệu chỉnh và đo
+  (bootstrap ghép cặp, chuẩn ngoài, ngưỡng điểm tối thiểu), trang chấm mù cho người.
+
+#### Fixed — Chữ của tab trang chi tiết tin và thẻ "Xem độ phù hợp" vào i18n
+
+- Nhãn ba tab, khối "Giới thiệu công ty", dải "Việc làm cùng công ty", dòng "Chưa có việc làm
+  liên quan" và chữ trên thẻ/nút "Xem độ phù hợp" chuyển từ viết cứng sang
+  `messages/candidate` (vi/en). Bước lint của Frontend CI đỏ vì các dòng này vượt trần chữ
+  tiếng Việt viết cứng (`features/main` 627/626, `pages/main` 755/744); nay còn 623 và 744.
+
 #### Changed — Trang chi tiết tin trên mobile: cụm thông tin chính gọn hơn, chia 3 tab
 
 - Trên mobile, Địa điểm / Kinh nghiệm / Hạn ứng tuyển ở đầu trang chi tiết tin chuyển từ

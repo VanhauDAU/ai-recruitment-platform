@@ -162,19 +162,46 @@ Kết quả đợt 2: 150 nhãn ở `gold_pairs_claude_2.xlsx` (kèm nhãn của
 và lý do đầy đủ của hai lượt cùng phần phân xử ở `gold_pairs_2_passes.json`. Phiếu
 chấm mù cho người là `gold_pairs_2.xlsx`.
 
-Hai tin có trường nhập tay lệch với nội dung, cần người làm đồ án xem lại trong
-`jd_input.xlsx`: JD-69 (kinh nghiệm "Dưới 1 năm", học vấn "Không yêu cầu" trong khi
-phần yêu cầu ghi tối thiểu 4 năm và bằng cử nhân) và JD-62 (vị trí chuyên môn
-"Backend Developer" cho tin kỹ sư hệ thống nhúng ô tô).
+Sửa trường nhập lệch (26/11/2026). Soát cả 100 tin thấy 8 tin có ô chọn (kinh nghiệm,
+học vấn, vị trí chuyên môn) trái với phần yêu cầu của chính tin đó; 7 tin lấy từ ITviec,
+nơi không có ô riêng cho các mục này nên lúc nhập còn giá trị mặc định. Người làm đồ án
+duyệt giá trị mới, lấy theo câu chữ của tin:
+
+| Tin | Phần | Sửa |
+| --- | --- | --- |
+| JD-62 | validation | Học vấn: Không yêu cầu → Đại học; vị trí chuyên môn: Backend Developer → IT phần cứng/mạng |
+| JD-69 | test | Kinh nghiệm: Dưới 1 năm → 4 năm; học vấn: Không yêu cầu → Đại học |
+| JD-63 | ngoài tập vàng | Kinh nghiệm: Dưới 1 năm → 3 năm |
+| JD-65 | ngoài tập vàng | Kinh nghiệm: 3 năm → 5 năm; học vấn: Không yêu cầu → Cao đẳng |
+| JD-67 | ngoài tập vàng | Kinh nghiệm: Dưới 1 năm → 2 năm |
+| JD-68 | ngoài tập vàng | Kinh nghiệm: 3 năm → Trên 5 năm; học vấn: Không yêu cầu → Cao đẳng |
+| JD-70 | ngoài tập vàng | Kinh nghiệm: 3 năm → 5 năm; học vấn: Không yêu cầu → Đại học |
+| JD-88 | ngoài tập vàng | Kinh nghiệm: Không yêu cầu → 1 năm |
+
+Nhãn tập vàng không đổi: nhãn vốn được chấm theo câu chữ của tin (quy tắc E1), nay ô chọn
+mà hệ thống đọc mới khớp với cách đọc đó. JD-69 thuộc phần test và được sửa trước lần
+chạy test duy nhất, không dựa vào điểm nào của hệ thống trên phần test. Sáu tin ngoài
+tập vàng có số năm đổi (JD-63, 65, 67, 68, 70, 88) không dùng làm tin neo cho tín hiệu
+thứ bậc và tập hiệu chỉnh, vì CV huấn luyện của chúng được sinh theo số năm cũ.
 
 ## Người gán nhãn
 
 Tập vàng (đợt 1: 150 cặp; đợt 2: thêm 150 cặp) do mô hình ngôn ngữ (Claude) gán theo rubric này, chỉ dựa trên
 nội dung tin và CV (không xem điểm hệ thống hay nguồn ghép cặp); các cặp phân vân
-được hỏi lại người làm đồ án. Người làm đồ án chấm mù 30 cặp (2 cặp mỗi tin) để đo
+được hỏi lại người làm đồ án. Người làm đồ án chấm mù một bộ cặp kiểm chứng để đo
 độ đồng thuận (quadratic weighted kappa). Báo cáo trình bày đúng như vậy.
 
-Kiểm chứng thực tế (18/11/2026): người làm đồ án chấm mù được 5/30 cặp dự kiến và
-quyết định dừng ở đó. Kết quả sơ bộ: trùng tuyệt đối 4/5, lệch không quá 1 mức 5/5
-(`ml/reports/label_agreement.md`); chưa đủ để tính kappa. Báo cáo phải nêu đây là
-giới hạn: nhãn tập vàng do mô hình ngôn ngữ gán, chỉ được người kiểm tra sơ bộ.
+Kiểm chứng thực tế:
+
+- **18/11/2026:** người làm đồ án chấm mù 5 cặp; trùng tuyệt đối 4/5, lệch không quá 1
+  mức 5/5.
+- **26/11/2026:** bộ kiểm chứng tăng lên 50 cặp (30 cặp đợt 1 rút ngẫu nhiên 2 cặp mỗi
+  tin, thêm 20 cặp đợt 2 rút phân tầng theo nhãn của Claude để đủ mức 3–4). Người làm đồ
+  án chấm mù cả 50 cặp trên trang `audit_blind.html` (`build_audit_page.py`), tự quyết
+  định điểm và tự ghi lý do; 5 cặp đã chấm ngày 18/11 giữ nhãn của lượt đó. Kết quả:
+  quadratic weighted kappa 0,915 (ngưỡng 0,70), trùng tuyệt đối 78%, lệch không quá 1
+  mức 98%, một cặp lệch hai mức (`ml/reports/label_agreement.md`). Nhãn người ở
+  `audit_human.json`.
+
+Báo cáo trình bày: nhãn tập vàng do mô hình ngôn ngữ gán, người làm đồ án kiểm chứng
+mù 50/300 cặp; phần 20 cặp thêm không rút hoàn toàn ngẫu nhiên.
