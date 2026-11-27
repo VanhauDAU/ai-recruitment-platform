@@ -22,6 +22,7 @@ import numpy as np
 from django.conf import settings
 
 from ..domain import HASHING_RERANKER_VERSION
+from .encoder import verify_model_card
 
 __all__ = ['CrossEncoderReranker', 'HashingReranker', 'get_reranker']
 
@@ -80,4 +81,5 @@ def get_reranker():
         return None
     if backend == 'hashing':
         return HashingReranker()
+    verify_model_card(settings.MATCHING_RERANKER_PATH, settings.MATCHING_RERANKER_VERSION)
     return CrossEncoderReranker(settings.MATCHING_RERANKER_PATH, settings.MATCHING_RERANKER_VERSION)

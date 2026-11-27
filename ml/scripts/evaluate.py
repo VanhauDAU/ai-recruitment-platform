@@ -20,7 +20,8 @@ Phương án được đo:
   thế, tức `hybrid-v2`; khớp kỹ năng gần nghĩa bật lại; bỏ hệ số liên quan) và tắt cả
   ba, tức `hybrid-v1`.
 - `--model tên=thư_mục[:noprefix]` thêm một bi-encoder khác trong `ml/models/` (chỉ
-  lấy cosine toàn văn, vì mốc quy đổi điểm của `hybrid` là theo từng mô hình).
+  lấy cosine toàn văn, vì mốc quy đổi điểm của `hybrid` là theo từng mô hình; mô hình
+  chưa có mốc trong `CALIBRATIONS` thì backend chỉ trả cosine, không chấm điểm).
 - `--hybrid-model tên=thư_mục` dành cho bi-encoder đã có mốc trong `CALIBRATIONS` của
   backend: đo cả cosine toàn văn lẫn điểm `hybrid` chạy với mô hình đó.
 - `--reranker tên=thư_mục` đo thêm mỗi `--hybrid-model` khi chạy kèm cross-encoder, và

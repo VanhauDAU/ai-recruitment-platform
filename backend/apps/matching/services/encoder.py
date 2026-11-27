@@ -12,17 +12,26 @@ Vector luôn được chuẩn hóa độ dài 1, nên tích vô hướng là cos
 """
 
 import hashlib
+import json
 import re
 import unicodedata
 from functools import lru_cache
+from pathlib import Path
 
 import numpy as np
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 
 from ..domain import HASHING_MODEL_VERSION, model_version
 from ..models import EMBEDDING_DIMENSIONS
 
-__all__ = ['HashingEncoder', 'SentenceTransformerEncoder', 'get_encoder', 'model_version']
+__all__ = [
+    'HashingEncoder',
+    'SentenceTransformerEncoder',
+    'get_encoder',
+    'model_version',
+    'verify_model_card',
+]
 
 
 _WORD = re.compile(r'[^\W_]+')
@@ -31,6 +40,24 @@ _WORD = re.compile(r'[^\W_]+')
 def _normalize(matrix):
     norms = np.linalg.norm(matrix, axis=1, keepdims=True)
     return matrix / np.where(norms == 0, 1, norms)
+
+
+def verify_model_card(path, version):
+    """Thư mục mô hình phải mang đúng phiên bản đang cấu hình.
+
+    Đường dẫn và tên phiên bản được cấu hình riêng. Đổi đường dẫn mà quên đổi tên thì vector
+    của mô hình mới bị lưu dưới tên mô hình cũ và đem so với vector cũ. `model_card.json`
+    do `ml/scripts/export_model.py`, `train.py` ghi kèm mô hình.
+    """
+    card = Path(path) / 'model_card.json'
+    try:
+        found = json.loads(card.read_text(encoding='utf-8')).get('model_version')
+    except (OSError, ValueError) as error:
+        raise ImproperlyConfigured(f'Không đọc được {card}: {error}') from error
+    if found != version:
+        raise ImproperlyConfigured(
+            f'Mô hình ở {path} là {found!r} nhưng cấu hình ghi phiên bản {version!r}.'
+        )
 
 
 class HashingEncoder:
@@ -86,4 +113,5 @@ class SentenceTransformerEncoder:
 def get_encoder():
     if settings.MATCHING_ENCODER_BACKEND == 'hashing':
         return HashingEncoder()
+    verify_model_card(settings.MATCHING_MODEL_PATH, settings.MATCHING_MODEL_VERSION)
     return SentenceTransformerEncoder(settings.MATCHING_MODEL_PATH, settings.MATCHING_MODEL_VERSION)

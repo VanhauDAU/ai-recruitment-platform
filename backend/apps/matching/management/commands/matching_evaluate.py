@@ -30,7 +30,7 @@ from apps.jobs.selectors import rule_scores_for_cv
 from ...models import jobs_for_profile
 from ...selectors import cvs_for_profile
 from ...services import SkillCatalog, get_encoder
-from ...services.encoder import SentenceTransformerEncoder
+from ...services.encoder import SentenceTransformerEncoder, verify_model_card
 from ...services.evaluation import InlineCv, evaluate_pairs, inline_cv
 from ...services.reranker import CrossEncoderReranker
 from ...services.scoring import ABLATIONS
@@ -42,6 +42,7 @@ def _encoder(model_path, model_version, no_prefix):
     if not model_version:
         raise CommandError('--model-path phải đi kèm --model-version.')
     prefixes = {'query': '', 'passage': ''} if no_prefix else None
+    verify_model_card(model_path, model_version)
     return SentenceTransformerEncoder(model_path, model_version, prefixes=prefixes)
 
 
@@ -97,6 +98,7 @@ class Command(BaseCommand):
         if options['reranker_path']:
             if not options['reranker_version']:
                 raise CommandError('--reranker-path phải đi kèm --reranker-version.')
+            verify_model_card(options['reranker_path'], options['reranker_version'])
             reranker = CrossEncoderReranker(options['reranker_path'], options['reranker_version'])
         rows = evaluate_pairs(
             [(jobs[pair['jd']], cvs[pair['cv']]) for pair in known],

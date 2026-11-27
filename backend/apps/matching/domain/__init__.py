@@ -7,9 +7,9 @@ của từng mô hình.
 
 from .calibration import (
     CALIBRATIONS,
-    DEFAULT_CALIBRATION,
     RERANKER_THRESHOLDS,
     Calibration,
+    UnknownModelVersion,
     calibration_for,
     reranker_thresholds,
     to_score,
@@ -44,7 +44,7 @@ __all__ = [
     'FEATURE_FLAGS',
     'SEMANTIC_RECOMMENDATION_FLAG',
     'CALIBRATIONS',
-    'DEFAULT_CALIBRATION',
+    'UnknownModelVersion',
     'EXTRACTOR_VERSION',
     'HASHING_MODEL_VERSION',
     'SCORING_VERSION',

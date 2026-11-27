@@ -22,8 +22,12 @@ class Calibration:
     semantic_skills: bool = False
 
 
-# Mốc theo phiên bản mô hình, đo bằng `ml/scripts/calibrate.py`; chỉnh lại trên
-# tập validation do người chấm ở tuần 6. Mô hình chưa đo dùng mốc của e5-base.
+class UnknownModelVersion(KeyError):
+    """Phiên bản mô hình chưa có mốc: phải đo rồi thêm vào bảng, không được đoán."""
+
+
+# Mốc theo phiên bản mô hình. Mô hình chưa đo thì không chấm được: dùng mốc của mô hình
+# khác cho ra điểm sai mà không báo lỗi (cosine của mỗi mô hình nằm trên một thang riêng).
 CALIBRATIONS = {
     'hashing-v1': Calibration(
         document=(0.05, 0.6),
@@ -66,7 +70,6 @@ CALIBRATIONS = {
         requirement_partial=0.49,
     ),
 }
-DEFAULT_CALIBRATION = CALIBRATIONS['e5-base-zs-v1']
 
 
 # Ngưỡng xác suất của cross-encoder: (đạt, có liên quan). `req-ce-v1` chọn trên 215 cặp
@@ -80,11 +83,20 @@ RERANKER_THRESHOLDS = {
 
 def reranker_thresholds(version):
     """Ngưỡng của một cross-encoder; phiên bản chưa đo thì báo lỗi thay vì đoán."""
-    return RERANKER_THRESHOLDS[version]
+    try:
+        return RERANKER_THRESHOLDS[version]
+    except KeyError:
+        raise UnknownModelVersion(f'Chưa có ngưỡng cho cross-encoder {version!r}.') from None
 
 
 def calibration_for(model_version):
-    return CALIBRATIONS.get(model_version, DEFAULT_CALIBRATION)
+    try:
+        return CALIBRATIONS[model_version]
+    except KeyError:
+        raise UnknownModelVersion(
+            f'Chưa có mốc quy đổi cho mô hình {model_version!r}; đo bằng '
+            'ml/scripts/calibrate_scale.py rồi thêm vào CALIBRATIONS.'
+        ) from None
 
 
 def to_score(similarity, marks):

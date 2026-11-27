@@ -8,13 +8,22 @@ Ngoài kiểm tra từng tiêu chí, có ba nhóm test chống hồi quy theo k�
 """
 
 import json
+import tempfile
+from pathlib import Path
 
 import numpy as np
+from django.core.exceptions import ImproperlyConfigured
 from django.test import SimpleTestCase, override_settings
 
-from ..domain import scoring_cache_version
+from ..checks import configuration_errors
+from ..domain import (
+    UnknownModelVersion,
+    calibration_for,
+    reranker_thresholds,
+    scoring_cache_version,
+)
 from ..services.documents import document_text
-from ..services.encoder import HASHING_MODEL_VERSION, HashingEncoder
+from ..services.encoder import HASHING_MODEL_VERSION, HashingEncoder, verify_model_card
 from ..services.explain import explain
 from ..services.extraction import cv_profile
 from ..services.reranker import HashingReranker
@@ -464,3 +473,38 @@ class RerankerTests(SimpleTestCase):
             MATCHING_RERANKER_BACKEND='cross_encoder', MATCHING_RERANKER_VERSION='req-ce-v1'
         ):
             self.assertEqual(scoring_cache_version(), 'hybrid-v3+req-ce-v1')
+
+
+class ModelConfigurationTests(SimpleTestCase):
+    """Cấu hình mô hình sai phải báo lỗi, không được lặng lẽ chấm bằng mốc của mô hình khác."""
+
+    def test_unknown_model_or_reranker_version_is_an_error(self):
+        with self.assertRaises(UnknownModelVersion):
+            calibration_for('e5-base-chua-do')
+        with self.assertRaises(UnknownModelVersion):
+            reranker_thresholds('ce-chua-do')
+        self.assertEqual(calibration_for('e5-base-wise-v1').document, (0.204, 0.772))
+
+    def test_startup_check_reports_uncalibrated_models(self):
+        self.assertEqual(configuration_errors(), [])
+        with override_settings(
+            MATCHING_ENCODER_BACKEND='sentence_transformers', MATCHING_MODEL_VERSION='moi-tinh'
+        ):
+            self.assertIn('moi-tinh', configuration_errors()[0])
+        with override_settings(
+            MATCHING_RERANKER_BACKEND='cross_encoder', MATCHING_RERANKER_VERSION='ce-la'
+        ):
+            self.assertIn('ce-la', configuration_errors()[0])
+        with override_settings(MATCHING_RERANKER_BACKEND='bat-ky'):
+            self.assertIn('không hợp lệ', configuration_errors()[0])
+
+    def test_model_directory_must_carry_the_configured_version(self):
+        with tempfile.TemporaryDirectory() as folder:
+            with self.assertRaises(ImproperlyConfigured):
+                verify_model_card(folder, 'e5-base-wise-v1')
+            Path(folder, 'model_card.json').write_text(
+                json.dumps({'model_version': 'e5-base-zs-v1'}), encoding='utf-8'
+            )
+            verify_model_card(folder, 'e5-base-zs-v1')
+            with self.assertRaises(ImproperlyConfigured):
+                verify_model_card(folder, 'e5-base-wise-v1')

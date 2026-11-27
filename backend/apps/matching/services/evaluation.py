@@ -11,11 +11,12 @@ from dataclasses import dataclass, replace
 from apps.cv_templates.models import CvLanguage
 from apps.cvs.services import CvDocumentRejected, cv_content_from_generated
 
-from ..domain import calibration_for
+from ..domain import CALIBRATIONS, Calibration
 from ..models import MatchDocument
 from .documents import cv_source, encode_profile
 from .extraction import ExtractionError, cv_profile, job_profile
 from .scoring import ScoringError, score_match
+from .scoring.semantic import cosine
 
 
 @dataclass(frozen=True)
@@ -49,6 +50,26 @@ def _cv_profile(cv, catalog):
     return cv_source(cv.latest_version)[1](catalog)
 
 
+def _similarities(job_side, cv_side):
+    """Hai cosine thô của một cặp (toàn văn, chức danh), không qua công thức chấm."""
+
+    def title(side):
+        index = next(
+            (i for i, chunk in enumerate(side['chunks']) if chunk['section'] == 'title'), None
+        )
+        return None if index is None else side['vectors'][index]
+
+    job_title, cv_title = title(job_side), title(cv_side)
+    return {
+        'document_similarity': cosine(job_side['embedding'], cv_side['embedding'])
+        if job_side['embedding'] is not None and cv_side['embedding'] is not None
+        else None,
+        'title_similarity': cosine(job_title, cv_title)
+        if job_title is not None and cv_title is not None
+        else None,
+    }
+
+
 def evaluate_pairs(
     pairs, *, encoder, catalog, detail=False, ablation=(), marks=None, reranker=None
 ):
@@ -64,11 +85,24 @@ def evaluate_pairs(
     `{tên: {'document': (low, high), 'title': (low, high)}}`: mỗi bộ mốc quy đổi cosine
     được chấm thêm một lượt trên cùng vector, kết quả nằm ở `variants` (dùng khi dò mốc).
     `reranker` là cross-encoder; không truyền thì chấm như khi không có nó.
+    Mô hình chưa có mốc quy đổi và không kèm `marks` thì dòng kết quả chỉ có hai cosine.
     """
+    # Mô hình chưa có mốc trong `CALIBRATIONS` (mô hình so sánh, mô hình đang dò mốc): mỗi
+    # bộ mốc trong `marks` thành một bộ hiệu chuẩn đầy đủ; không có `marks` thì chỉ trả cosine.
+    known = CALIBRATIONS.get(encoder.version)
     variants = {
-        name: replace(calibration_for(encoder.version), document=tuple(value['document']), title=tuple(value['title']))
+        name: replace(known, document=tuple(value['document']), title=tuple(value['title']))
+        if known
+        else Calibration(
+            document=tuple(value['document']),
+            title=tuple(value['title']),
+            skill=1.0,
+            requirement_met=1.0,
+            requirement_partial=1.0,
+        )
         for name, value in (marks or {}).items()
-    }  # fmt: skip
+    }
+    default = known or next(iter(variants.values()), None)
     sides = {}
 
     def side(key, kind, build):
@@ -98,8 +132,13 @@ def evaluate_pairs(
             'ablation': ablation,
             'reranker': reranker,
         }
+        if default is None:
+            yield _similarities(job_side, cv_side)
+            continue
         try:
-            result = score_match(cv_side['profile'], job_side['profile'], **inputs)
+            result = score_match(
+                cv_side['profile'], job_side['profile'], calibration=default, **inputs
+            )
             scored = {
                 name: score_match(cv_side['profile'], job_side['profile'], calibration=value, **inputs)['overall']['score']
                 for name, value in variants.items()
