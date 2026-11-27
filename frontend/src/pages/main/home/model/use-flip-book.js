@@ -31,13 +31,13 @@ export function useFlipBook(count) {
 
   const afterTurn = (kind) => (kind === 'next' ? first + 2 : kind === 'prev' ? first - 2 : CLOSED)
 
-  // Tiếng lật giấy chỉ theo thao tác của người dùng (nút, vuốt): trình duyệt chặn âm thanh
-  // chưa có thao tác, và tiếng lặp lại mỗi lần sách tự lật sẽ gây khó chịu.
+  // Tiếng lật giấy: lần lật do người dùng (nút, vuốt, chạm bìa) mở khoá âm thanh; sau đó cả
+  // lần sách tự lật cũng có tiếng. Chưa ai chạm thì trình duyệt chặn âm thanh nên bỏ qua.
   function turn(direction, { byUser = false } = {}) {
     if (!canTurn || turning) return
     if (direction === 'prev' && first === CLOSED) return
     const kind = direction === 'next' && first >= lastSpread ? 'close' : direction
-    if (byUser) playSoundEffect('pageFlip')
+    playSoundEffect('pageFlip', { onlyIfUnlocked: !byUser })
     if (reducedMotion) setFirst(afterTurn(kind))
     else setTurning(kind)
   }
@@ -90,6 +90,10 @@ export function useFlipBook(count) {
     canTurn,
     next: () => turn('next', { byUser: true }),
     prev: () => turn('prev', { byUser: true }),
+    open: () => {
+      holdAfterTouch()
+      turn('next', { byUser: true })
+    },
     goTo,
     finishTurn,
     togglePlaying: () => setPlaying((value) => !value),
