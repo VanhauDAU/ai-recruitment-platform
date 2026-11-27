@@ -8,6 +8,18 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-27
 
+#### Changed — Đăng nhập/đăng ký nhà tuyển dụng dễ dùng trên điện thoại
+
+- Header trang giới thiệu NTD luôn có nút "Đăng nhập" trên điện thoại (trước chỉ có trong menu,
+  nút nổi bật đều dẫn sang đăng ký).
+- Đăng nhập trên điện thoại: phần đầu gọn lại, form email lên trước, nút Google xuống dưới; cả
+  form nằm trong màn hình đầu. Desktop giữ bố cục cũ.
+- Đăng ký: thêm chỉ báo "Bước 1/2", trên điện thoại thu gọn sẵn khối Quy định, đưa link "Đăng nhập
+  ngay" lên đầu, không tự focus ô email, nút "Hoàn tất đăng ký" nằm trên "Quay lại".
+- Sửa lỗi desktop: panel bên phải trôi mất khi cuộn (`overflow-x-hidden` làm hỏng `sticky`) và
+  lỗi "Vui lòng nhập email" bị cảnh báo tên miền công ty đè lên.
+- Panel bên phải đổi từ số minh họa sang số liệu thật của nền tảng (`/public/jobs/stats/`): số
+  ứng viên, việc làm đang tuyển, công ty và biểu đồ việc làm mới 7 ngày; chỉ tải khi panel hiện.
 #### Changed — Hộp thoại "Xem độ phù hợp" gọn lại, nằm trọn trong màn hình, ghi tên mô hình
 
 - Hộp thoại không còn cao hơn màn hình: tiêu đề, phần kết luận (mức, điểm, thước bốn dải) và
