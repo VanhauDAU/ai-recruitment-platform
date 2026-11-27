@@ -14,6 +14,9 @@ const FEATURES = [
   { icon: <FilePdfOutlined />, label: 'Xuất PDF chuẩn', detail: 'Sẵn sàng ứng tuyển ngay' },
 ]
 
+// Đủ cho băng chuyền 5 vị trí desktop xoay vòng mà không quá nhiều ảnh xem trước phải tải.
+const SHOWCASE_LIMIT = 10
+
 // Desktop: băng chuyền 3D, thẻ đổi vị trí trái/giữa/phải (data-slot) theo nhịp. Dưới lg:
 // dãy thẻ vuốt kiểu coverflow, tự trượt sang thẻ kế. Hiệu ứng ở cv-showcase.css.
 function ShowcaseCard({ template, slot }) {
@@ -57,7 +60,7 @@ export default function CvTemplateShowcase() {
     staleTime: 5 * 60_000,
   })
 
-  const templates = (data?.results || []).slice(0, 3)
+  const templates = (data?.results || []).slice(0, SHOWCASE_LIMIT)
   const { center, deckRef, goTo, deckProps } = useShowcaseRotation(templates.length)
 
   if (!isLoading && templates.length === 0) return null
