@@ -1,169 +1,9 @@
-/* Khối "Tạo CV ấn tượng" trên trang chủ (chunk lazy của CvTemplateShowcase).
-   Dưới lg: tiêu đề → dãy thẻ CV vuốt kiểu coverflow → 4 tính năng 2×2 → nút CTA.
-   Coverflow chạy bằng CSS scroll-driven (animation-timeline: view(inline)), không
-   JS; trình duyệt chưa hỗ trợ vẫn có dãy vuốt snap bình thường. Từ lg: băng chuyền 3D,
-   thẻ đổi vị trí trái/giữa/phải theo data-slot (use-showcase-rotation) bằng transition. */
-
-.cv-showcase {
-  --cv-ease: cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.cv-showcase__card:nth-child(2) { --cv-i: 1; }
-.cv-showcase__card:nth-child(3) { --cv-i: 2; }
-
-.cv-showcase__card:hover .cv-showcase__card-body {
-  box-shadow: 0 22px 44px rgba(2, 44, 34, 0.18);
-}
-
-/* Mốc toạ độ cho offsetLeft khi căn thẻ vào giữa (CvTemplateShowcase). */
-.cv-showcase__deck {
-  position: relative;
-}
-
-.cv-showcase__dots {
-  display: flex;
-  justify-content: center;
-}
-
-/* Vùng chạm 28px, chấm hiển thị 8px; chấm đang xem kéo dài thành vạch. */
-.cv-showcase__dot {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: 0;
-  background: none;
-  cursor: pointer;
-}
-
-.cv-showcase__dot::after {
-  content: '';
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--brand-primary) 25%, transparent);
-  transition: width 0.35s var(--cv-ease), background-color 0.35s ease;
-}
-
-.cv-showcase__dot.is-active::after {
-  width: 22px;
-  background: var(--brand-primary);
-}
-
-.cv-showcase__dot:focus-visible {
-  outline: 2px solid var(--brand-primary);
-  outline-offset: -4px;
-  border-radius: 999px;
-}
-
-/* ── Băng chuyền 3D (lg) ──
-   Các thẻ xếp chồng một ô lưới trong cùng không gian phối cảnh: thẻ giữa nhô ra trước,
-   hai lớp mỗi bên (±1, ±2) xoay quanh trục dọc và lùi dần, các mẫu còn lại chờ phía sau.
-   Đổi data-slot → transform chuyển mượt; thẻ đi vòng qua phía sau nên không xuyên qua
-   thẻ giữa. */
-@media (min-width: 1024px) {
-  .cv-showcase__deck {
-    display: grid;
-    place-items: center;
-    padding-block: 28px 8px;
-    perspective: 1400px;
-    transform-style: preserve-3d;
-  }
-
-  .cv-showcase__deck > .cv-showcase__card {
-    grid-area: 1 / 1;
-    transition:
-      transform 1s var(--cv-ease),
-      opacity 1s ease,
-      filter 1s ease;
-  }
-
-  .cv-showcase__card[data-slot='center'] {
-    transform: translateZ(90px);
-  }
-
-  .cv-showcase__card[data-slot='left-1'] {
-    transform: translateX(-70%) translateZ(-110px) rotateY(36deg) scale(0.9);
-    filter: saturate(0.85) brightness(0.97);
-  }
-
-  .cv-showcase__card[data-slot='right-1'] {
-    transform: translateX(70%) translateZ(-110px) rotateY(-36deg) scale(0.9);
-    filter: saturate(0.85) brightness(0.97);
-  }
-
-  .cv-showcase__card[data-slot='left-2'] {
-    opacity: 0.8;
-    transform: translateX(-108%) translateZ(-260px) rotateY(48deg) scale(0.78);
-    filter: saturate(0.7) brightness(0.94);
-  }
-
-  .cv-showcase__card[data-slot='right-2'] {
-    opacity: 0.8;
-    transform: translateX(108%) translateZ(-260px) rotateY(-48deg) scale(0.78);
-    filter: saturate(0.7) brightness(0.94);
-  }
-
-  /* Mẫu chờ: lùi sâu giữa sân khấu và mờ hẳn, xoay vào lớp ngoài cùng khi tới lượt. */
-  .cv-showcase__card[data-slot='back'] {
-    opacity: 0;
-    pointer-events: none;
-    transform: translateZ(-420px) scale(0.7);
-  }
-
-  .cv-showcase__card[data-slot='center'] .cv-showcase__card-body {
-    box-shadow:
-      0 30px 60px -18px rgba(2, 44, 34, 0.35),
-      0 10px 22px rgba(2, 44, 34, 0.12);
-  }
-
-  /* Vệt sáng lướt qua mặt thẻ khi thẻ vừa vào giữa. */
-  .cv-showcase__card-body {
-    position: relative;
-    overflow: hidden;
-  }
-
-  .cv-showcase__card-body::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: linear-gradient(105deg, transparent 35%, rgb(255 255 255 / 0.55) 50%, transparent 65%);
-    opacity: 0;
-    translate: -120% 0;
-  }
-}
-
-@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
-  .cv-showcase__card[data-slot='center'] .cv-showcase__card-body {
-    animation: cv-float 5s ease-in-out 1s infinite;
-  }
-
-  .cv-showcase__card[data-slot='center'] .cv-showcase__card-body::after {
-    animation: cv-sheen 1.2s ease 0.45s both;
-  }
-}
-
-@keyframes cv-float {
-  0%, 100% { translate: 0 0; }
-  50% { translate: 0 -10px; }
-}
-
-@keyframes cv-sheen {
-  0% { opacity: 1; translate: -120% 0; }
-  100% { opacity: 1; translate: 120% 0; }
-}
-
-@media (min-width: 1024px) and (prefers-reduced-motion: reduce) {
-  .cv-showcase__deck > .cv-showcase__card {
-    transition: none;
-  }
-}
+/* Bố cục khối "Tạo CV ấn tượng" trên trang chủ (chunk lazy của CvTemplateShowcase).
+   Dưới lg: tiêu đề → cuốn sách mẫu CV (cv-flipbook.css) → 4 tính năng 2×2 → nút CTA. */
 
 @media (max-width: 1023.98px) {
   /* Khối dài trên điện thoại kéo dải xanh của gradient desktop thành vệt đậm:
-     thay bằng nền nhạt có quầng sáng sau dãy thẻ. */
+     thay bằng nền nhạt có quầng sáng sau cuốn sách mẫu CV. */
   .cv-showcase {
     padding-block: 2.5rem;
     background-image:
@@ -171,7 +11,7 @@
       linear-gradient(180deg, #fff 0%, var(--brand-primary-soft) 40%, var(--brand-primary-soft) 70%, #fff 100%);
   }
 
-  /* Cột chữ "tan" ra (display: contents) để dãy thẻ chen giữa tiêu đề và tính năng. */
+  /* Cột chữ "tan" ra (display: contents) để cuốn sách chen giữa tiêu đề và tính năng. */
   .cv-showcase__grid {
     display: flex;
     flex-direction: column;
@@ -184,7 +24,7 @@
   }
 
   .cv-showcase__intro { order: 1; }
-  .cv-showcase__stage { order: 2; margin-inline: -1rem; }
+  .cv-showcase__stage { order: 2; }
   .cv-showcase__features { order: 3; margin-top: 0; }
   .cv-showcase__cta { order: 4; margin-top: 0; }
 
@@ -201,18 +41,6 @@
   .cv-showcase__intro p {
     margin-top: 0.5rem;
     font-size: 14px;
-  }
-
-  /* Thẻ đầu/cuối cũng vào được giữa nhờ padding bằng nửa phần còn lại. */
-  .cv-showcase__deck {
-    --cv-card-w: min(62vw, 236px);
-    gap: 0.75rem;
-    padding: 0.75rem calc(50% - var(--cv-card-w) / 2) 1rem;
-    overscroll-behavior-x: contain;
-  }
-
-  .cv-showcase__card {
-    width: var(--cv-card-w);
   }
 
   .cv-showcase__features {
@@ -244,71 +72,5 @@
   .cv-showcase__cta-button {
     width: 100%;
     min-height: 3rem;
-  }
-}
-
-/* ── Chuyển động (tắt hết khi người dùng chọn giảm chuyển động) ──
-   Dưới lg chỉ biến dạng lớp trong (.cv-showcase__card-body); lớp ngoài là điểm snap
-   phải đứng yên, nếu không trình duyệt kéo dãy thẻ lệch khỏi thẻ đang ở giữa. */
-@media (max-width: 1023.98px) and (prefers-reduced-motion: no-preference) {
-  /* Khi khối hiện: thẻ "chia bài" trượt vào từ phải, lần lượt. */
-  .home-reveal.is-revealed .cv-showcase__card-body {
-    animation: cv-deal 0.9s var(--cv-ease) backwards;
-    animation-delay: calc(var(--cv-i, 0) * 110ms + 150ms);
-  }
-
-  @supports (animation-timeline: view()) {
-    .cv-showcase__card {
-      view-timeline: --cv-card inline;
-    }
-
-    .cv-showcase__card-body {
-      animation: cv-coverflow linear both;
-      animation-timeline: --cv-card;
-    }
-
-    .home-reveal.is-revealed .cv-showcase__card-body {
-      animation: cv-deal 0.9s var(--cv-ease) backwards, cv-coverflow linear both;
-      animation-delay: calc(var(--cv-i, 0) * 110ms + 150ms), 0s;
-      animation-timeline: auto, --cv-card;
-    }
-  }
-}
-
-@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
-  .home-reveal.is-revealed .cv-showcase__card {
-    animation: cv-rise 0.9s var(--cv-ease) backwards;
-    animation-delay: calc(var(--cv-i, 0) * 110ms + 200ms);
-  }
-}
-
-@keyframes cv-deal {
-  from {
-    translate: 70vw 0;
-  }
-}
-
-/* Thẻ ở mép phải quay mặt vào giữa, ở giữa thẳng và to nhất, sang trái quay ngược lại. */
-@keyframes cv-coverflow {
-  0% {
-    opacity: 0.5;
-    transform: perspective(700px) translateZ(-60px) rotateY(-44deg) scale(0.82);
-  }
-
-  50% {
-    opacity: 1;
-    transform: none;
-  }
-
-  100% {
-    opacity: 0.5;
-    transform: perspective(700px) translateZ(-60px) rotateY(44deg) scale(0.82);
-  }
-}
-
-@keyframes cv-rise {
-  from {
-    opacity: 0;
-    translate: 0 48px;
   }
 }
