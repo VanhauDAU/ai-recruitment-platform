@@ -8,6 +8,12 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-27
 
+#### Changed — Băng chuyền mẫu CV trang chủ hiện tối đa 10 mẫu
+
+- Khối "Tạo CV ấn tượng" lấy tối đa 10 mẫu thay vì 3. Desktop: băng chuyền 3D 5 vị trí (thẻ giữa,
+  hai lớp mỗi bên xoay và lùi dần), các mẫu còn lại chờ phía sau và lần lượt xoay vào; điện thoại
+  vuốt qua đủ các mẫu, chấm trang theo số mẫu.
+
 #### Added — Chia sẻ tin tuyển dụng lên các nền tảng trên điện thoại; thẻ mẫu CV 3D tự luân phiên
 
 - Nút chia sẻ ở đầu trang chi tiết tin trước chỉ sao chép liên kết (thanh nút mạng xã hội chỉ có
