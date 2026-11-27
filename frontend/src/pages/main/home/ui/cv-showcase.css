@@ -58,9 +58,10 @@
 }
 
 /* ── Băng chuyền 3D (lg) ──
-   Ba thẻ xếp chồng một ô lưới trong cùng không gian phối cảnh; thẻ giữa nhô ra trước,
-   hai thẻ bên xoay quanh trục dọc và lùi sâu. Đổi data-slot → transform chuyển mượt,
-   thẻ từ trái sang phải đi vòng phía sau (translateZ âm) nên không xuyên qua thẻ giữa. */
+   Các thẻ xếp chồng một ô lưới trong cùng không gian phối cảnh: thẻ giữa nhô ra trước,
+   hai lớp mỗi bên (±1, ±2) xoay quanh trục dọc và lùi dần, các mẫu còn lại chờ phía sau.
+   Đổi data-slot → transform chuyển mượt; thẻ đi vòng qua phía sau nên không xuyên qua
+   thẻ giữa. */
 @media (min-width: 1024px) {
   .cv-showcase__deck {
     display: grid;
@@ -79,20 +80,36 @@
   }
 
   .cv-showcase__card[data-slot='center'] {
-    z-index: 3;
     transform: translateZ(90px);
   }
 
-  .cv-showcase__card[data-slot='left'] {
-    z-index: 1;
-    transform: translateX(-74%) translateZ(-120px) rotateY(38deg) scale(0.9);
+  .cv-showcase__card[data-slot='left-1'] {
+    transform: translateX(-70%) translateZ(-110px) rotateY(36deg) scale(0.9);
     filter: saturate(0.85) brightness(0.97);
   }
 
-  .cv-showcase__card[data-slot='right'] {
-    z-index: 1;
-    transform: translateX(74%) translateZ(-120px) rotateY(-38deg) scale(0.9);
+  .cv-showcase__card[data-slot='right-1'] {
+    transform: translateX(70%) translateZ(-110px) rotateY(-36deg) scale(0.9);
     filter: saturate(0.85) brightness(0.97);
+  }
+
+  .cv-showcase__card[data-slot='left-2'] {
+    opacity: 0.8;
+    transform: translateX(-108%) translateZ(-260px) rotateY(48deg) scale(0.78);
+    filter: saturate(0.7) brightness(0.94);
+  }
+
+  .cv-showcase__card[data-slot='right-2'] {
+    opacity: 0.8;
+    transform: translateX(108%) translateZ(-260px) rotateY(-48deg) scale(0.78);
+    filter: saturate(0.7) brightness(0.94);
+  }
+
+  /* Mẫu chờ: lùi sâu giữa sân khấu và mờ hẳn, xoay vào lớp ngoài cùng khi tới lượt. */
+  .cv-showcase__card[data-slot='back'] {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateZ(-420px) scale(0.7);
   }
 
   .cv-showcase__card[data-slot='center'] .cv-showcase__card-body {

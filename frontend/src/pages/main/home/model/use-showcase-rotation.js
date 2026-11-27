@@ -93,10 +93,15 @@ export function useShowcaseRotation(count) {
   }
 }
 
-/** Vị trí 3D của thẻ `index` khi thẻ `center` ở giữa (desktop). */
+/**
+ * Vị trí 3D của thẻ `index` khi thẻ `center` ở giữa (desktop): độ lệch có dấu theo vòng
+ * tròn, ±1 và ±2 là hai lớp hai bên, xa hơn thì chờ phía sau ('back').
+ */
 export function showcaseSlot(index, center, count) {
   if (count < 2) return 'center'
-  const offset = (index - center + count) % count
+  const half = Math.floor(count / 2)
+  const offset = ((index - center + count + half) % count) - half
   if (offset === 0) return 'center'
-  return offset === 1 ? 'right' : 'left'
+  if (Math.abs(offset) > 2) return 'back'
+  return `${offset > 0 ? 'right' : 'left'}-${Math.abs(offset)}`
 }
