@@ -8,6 +8,17 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-27
 
+#### Changed — Sổ tay mẫu CV: sách đóng mở bìa, lật mềm như giấy, có tiếng lật trang
+
+- Lúc đầu sách đóng, chỉ thấy bìa cứng xanh ở giữa; lật bìa thì sách mở hai trang (trang lót +
+  mẫu đầu) và trượt ra giữa cùng nhịp; hết trang cuối thì gập về bìa để vòng lại.
+- Lật mượt: góc xoay chạy một mạch với một đường cong tốc độ (trước có mốc giữa nên khựng ở
+  90°), nhấc lên là hiệu ứng riêng; lá sách chia 4 dải uốn cong (mép ngoài đi trước khi nhấc,
+  trễ lại khi hạ), bóng liền mạch qua các dải.
+- Tiếng lật giấy khi người dùng tự lật (nút, vuốt), không phát khi sách tự lật; theo công tắc
+  tắt chuông. Tệp nén từ 23 KB còn 3,5 KB (mono 44,1 kHz 48 kbps), tải ở lần lật đầu. Phần
+  giải mã/phát Web Audio tách ra `shared/lib/sound-player` dùng chung với âm thanh toast.
+
 #### Fixed — Sách mẫu CV trên điện thoại mở đủ hai trang
 
 - Điện thoại không còn cắt trang trái: mọi cỡ màn hình dùng cùng cuốn sách mở hai trang, thu nhỏ
