@@ -20,6 +20,12 @@ Tập vàng chấm theo chiều tin → CV (mỗi tin 10 CV), nên chiều CV �
 
 Thứ hạng của hệ thống lấy từ lệnh `matching_evaluate_recommendations` (đúng selector của
 sản phẩm, vector đã tính sẵn trong DB). Kết quả: `ml/reports/recommendations.md`.
+
+Đo mô hình khác mô hình gốc: backfill vector của nó vào DB rồi chạy với cùng phiên bản ở
+hai chỗ, kết quả ghi vào `ml/reports/recommendations_<phiên bản>.md`:
+
+    ml/.venv/bin/python ml/scripts/evaluate_recommendations.py --intent-study --model-version e5-base-wise-v1 \
+        --manage "docker compose exec -T -e MATCHING_ENCODER_BACKEND=sentence_transformers -e MATCHING_MODEL_VERSION=e5-base-wise-v1 backend python manage.py"
 """
 
 import argparse
@@ -40,6 +46,7 @@ from rank_bm25 import BM25Okapi
 
 ANCHORED = ('strong', 'partial')
 MANAGE = 'docker compose exec -T backend python manage.py'
+BASE_MODEL = 'e5-base-zs-v1'
 POSITION_BONUSES = (0.10, 0.20, 0.30, 0.40, 0.50)
 MIN_TARGET_JOBS = 3
 
@@ -180,7 +187,10 @@ def main():
     parser.add_argument('--rankings', help='Tệp JSONL đã xuất bằng matching_evaluate_recommendations.')
     parser.add_argument('--manage', default=MANAGE, help='Lệnh gọi manage.py (mặc định: container backend).')
     parser.add_argument('--intent-study', action='store_true', help='Đo thêm phần nhu cầu đã khai.')
+    parser.add_argument('--model-version', default=BASE_MODEL, help='Mô hình đang được đo, phải trùng MATCHING_MODEL_VERSION của lệnh --manage; khác mô hình gốc thì ghi báo cáo riêng.')
     options = parser.parse_args()
+    semantic = f'`semantic-v1` (`{options.model_version}`)'
+    report = 'recommendations' if options.model_version == BASE_MODEL else f'recommendations_{options.model_version}'
     manifest = json.loads(CV_MANIFEST.read_text(encoding='utf-8'))
     codes_by_id = {value['job_public_id']: code for code, value in json.loads(JD_IMPORT_MAP.read_text(encoding='utf-8')).items()}  # fmt: skip
     specialization = {job['code']: job['specialization'] for job in load_jobs()}
@@ -193,7 +203,7 @@ def main():
     methods = {
         'BM25 (CV → tin)': bm25_rankings(codes),
         'Luật `profile-rule-v2`': {code: real_jobs(rows[code]['rule']) for code in codes},
-        '`semantic-v1` (e5-base gốc)': {code: real_jobs(rows[code]['semantic']) for code in codes},
+        semantic: {code: real_jobs(rows[code]['semantic']) for code in codes},
     }
     results = {name: measure(rankings, manifest, specialization) for name, rankings in methods.items()}
     sample = next(iter(results.values()))
@@ -216,13 +226,13 @@ def main():
         )
     if options.intent_study:
         study_lines, study = intent_study(
-            options, manifest, specialization, codes, real_jobs, methods['`semantic-v1` (e5-base gốc)']
+            options, manifest, specialization, codes, real_jobs, methods[semantic]
         )
         lines += study_lines
         results['intent_study'] = study
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
-    (REPORTS_DIR / 'recommendations.md').write_text('\n'.join(lines) + '\n', encoding='utf-8')
-    (REPORTS_DIR / 'recommendations.json').write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding='utf-8')
+    (REPORTS_DIR / f'{report}.md').write_text('\n'.join(lines) + '\n', encoding='utf-8')
+    (REPORTS_DIR / f'{report}.json').write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding='utf-8')
     print('\n'.join(lines))
 
 
