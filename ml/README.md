@@ -41,6 +41,7 @@ ml/
     merge_gold_passes.py  gộp hai lượt gán nhãn độc lập của đợt 2 tập vàng
     evaluate.py           đo các phương án trên tập vàng (validation; test chỉ một lần)
     evaluate_recommendations.py  đo gợi ý việc làm CV → tin trên nhãn yếu
+    check_score_floor.py  soát ngưỡng 30 điểm của gợi ý việc làm và Tìm CV khi đổi mô hình
     error_analysis.py     soi lỗi của công thức đang chạy trên validation (tín hiệu, cosine theo nhãn, cặp lệch mức)
     quality_gate.py       cổng chất lượng cho CV huấn luyện (generate_cvs.py --train), phiếu đọc kiểm 40 CV (labeling/train_cv_review*.md)
     build_train_pairs.py  bộ ba huấn luyện bi-encoder, có chống rò rỉ sang tập vàng
@@ -172,6 +173,27 @@ liệu cần Docker Compose đang chạy; mặc định chỉ chạy thử, thê
 
 11. `scripts/evaluate_recommendations.py`: đo gợi ý việc làm (CV → tin) trên nhãn yếu,
     so `semantic-v1` với luật `profile-rule-v2` và BM25 → `reports/recommendations.md`.
+    Mô hình khác mô hình gốc: `--model-version` kèm `--manage` có cùng phiên bản, kết quả ở
+    `reports/recommendations_<phiên bản>.md`.
+
+Huấn luyện và đưa một mô hình mới vào đo (đợt 26–27/11; cần Ollama cho bước sinh câu, tắt
+`backend` và `ml-worker` khi huấn luyện để đủ bộ nhớ MPS):
+
+12. Dữ liệu: `generate_cvs.py --train`, `enrich_cvs.py --train`, `quality_gate.py` (CV huấn
+    luyện và phiếu đọc kiểm), `build_train_pairs.py` (bộ ba, `reports/train_pairs.md`),
+    `build_requirement_pairs.py generate` rồi `pairs` (cặp cho cross-encoder,
+    `reports/reranker_pairs.md`).
+13. Tập hiệu chỉnh và nhãn: `build_calibration_pairs.py` (ghép cặp, phiếu mù) rồi `merge`;
+    `build_requirement_eval.py` rồi `merge` (cặp yêu cầu–câu CV thật).
+14. Huấn luyện: `train.py --mini-batch-size 2` (bi-encoder, khoảng 90 phút),
+    `interpolate_model.py` (trộn với mô hình gốc), `train_reranker.py` (cross-encoder).
+15. Hiệu chỉnh: `calibrate_labeled.py` rồi `calibrate_scale.py` cho bi-encoder,
+    `evaluate_reranker.py` cho hai ngưỡng cross-encoder; chép kết quả vào `CALIBRATIONS` và
+    `RERANKER_THRESHOLDS` (`backend/apps/matching/domain/calibration.py`).
+16. Đo: `evaluate.py --ablation --model … --hybrid-model … --reranker …` (luôn chạy đủ cờ,
+    thiếu cờ thì các dòng của mô hình khác biến mất khỏi báo cáo), `evaluate_calibration.py`,
+    `evaluate_public.py`, `matching_backfill --inline` với mô hình mới rồi bước 11 và
+    `check_score_floor.py`.
 
 Các script chạy lại an toàn: bỏ qua phần đã có.
 

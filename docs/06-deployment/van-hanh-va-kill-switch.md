@@ -278,12 +278,60 @@ Không gọi dịch vụ ngoài; mô hình chạy trong service `ml-worker`.
   đang chờ quá 10 phút tự chuyển `failed` (`analysis_timeout`).
 - Beat chạy `recover_stale_analyses` mỗi 60 giây: gửi lại phân tích chờ quá 30
   giây, đưa phân tích đang xử lý quá 60 giây (worker chết) về hàng chờ.
-- Đổi mô hình: sửa `MATCHING_MODEL_PATH` + `MATCHING_MODEL_VERSION`, khởi động
-  lại `ml-worker`, chạy `scripts/deploy/compose.sh exec ml-worker python manage.py
-  matching_backfill --inline`. Quay lui: đặt lại hai biến về bản cũ (kết quả cũ
-  vẫn còn trong cache theo phiên bản).
+- Đổi mô hình: xem "Bật mô hình đã huấn luyện" bên dưới. Quay lui: đặt lại các biến về
+  bản cũ (vector và kết quả cũ vẫn còn, vì cả hai lưu theo phiên bản mô hình).
 - `MATCHING_ENCODER_BACKEND=hashing` chỉ để thử luồng khi chưa có mô hình; điểm
   không có ý nghĩa.
+
+### Bật mô hình đã huấn luyện (`e5-base-wise-v1` + `req-ce-v1`)
+
+Mặc định sản phẩm chạy mô hình gốc `e5-base-zs-v1`, không cross-encoder. Số đo của cấu hình
+mới ở mục 7 của [`thuat-toan-ai.md`](../07-algorithms/thuat-toan-ai.md).
+
+| Biến | Mặc định | Cấu hình mới |
+| --- | --- | --- |
+| `MATCHING_MODEL_PATH` | `/models/multilingual-e5-base/zs-v1` | `/models/multilingual-e5-base/wise-v1` |
+| `MATCHING_MODEL_VERSION` | `e5-base-zs-v1` | `e5-base-wise-v1` |
+| `MATCHING_RERANKER_BACKEND` | `none` | `cross_encoder` |
+| `MATCHING_RERANKER_PATH` | `/models/mmarco-mMiniLMv2-L12/req-ce-v1` | giữ |
+| `MATCHING_RERANKER_VERSION` | `req-ce-v1` | giữ |
+
+Đường dẫn và phiên bản phải đổi **cùng lúc**: `manage.py check` báo lỗi khi phiên bản chưa có
+mốc quy đổi, và `ml-worker` dừng lúc nạp nếu `model_card.json` trong thư mục mô hình ghi phiên
+bản khác. Hai biến mô hình phải giống nhau ở mọi service backend (web đọc vector theo
+`MATCHING_MODEL_VERSION`); ở production chúng nằm trong khối `x-prod-env` của
+`docker-compose.prod.yml`, compose ghi đè giá trị trong `.env`.
+
+Local: sửa năm biến trong `backend/.env`, rồi
+
+```bash
+docker compose up -d --force-recreate backend ml-worker
+docker compose exec ml-worker python manage.py matching_backfill --inline
+```
+
+Production (làm theo thứ tự để không có lúc nào web thiếu vector):
+
+1. Trên máy dev, đẩy hai thư mục mô hình:
+   `MODEL=multilingual-e5-base/wise-v1 scripts/deploy/sync_ml_models.sh deploy@<ip>` và
+   `MODEL=mmarco-mMiniLMv2-L12/req-ce-v1 scripts/deploy/sync_ml_models.sh deploy@<ip>`
+   (1,1 GB và 465 MB). Thư mục mô hình gốc để nguyên.
+2. Tính sẵn vector của mô hình mới bằng container riêng, hệ thống đang chạy không đổi gì:
+   `scripts/deploy/compose.sh run --rm -e MATCHING_MODEL_PATH=/models/multilingual-e5-base/wise-v1
+   -e MATCHING_MODEL_VERSION=e5-base-wise-v1 ml-worker python manage.py matching_backfill --inline`.
+3. Sửa `docker-compose.prod.yml`: ba biến ở bảng trên trong `x-prod-env`, và `mem_limit` của
+   `ml-worker` từ `1792m` lên `2304m`. Đo trên máy dev 27/11: hai mô hình cùng nạp đạt đỉnh
+   2,05–2,14 GB khi chấm (chỉ bi-encoder: 1,48 GB), nên giới hạn 1.792 MB sát trần. Không muốn
+   nâng bộ nhớ thì để `MATCHING_RERANKER_BACKEND=none`: vẫn được bi-encoder mới, mất phần phán
+   từng yêu cầu (Spearman validation 0,815 thay vì 0,822, NDCG@5 0,874 thay vì 0,921).
+4. Deploy, rồi chạy lại `matching_backfill --inline` trong `ml-worker` cho CV và tin lưu
+   trong lúc chuyển. `--only applications` chấm lại hồ sơ ứng tuyển theo công thức mới.
+5. Kiểm: `docker stats` của `ml-worker` lúc backfill; bấm "Xem độ phù hợp" với một CV đúng
+   nghề và một CV khác ngành; `result_json.meta` ghi `model_version` và `reranker_version` mới.
+
+Quay lui: trả ba biến và `mem_limit` về giá trị cũ rồi deploy. Kết quả cũ không bị ghi đè
+(khóa cache gồm phiên bản mô hình và `hybrid-v3` hoặc `hybrid-v3+req-ce-v1`). Chỉ xóa thư mục
+`multilingual-e5-base/zs-v1` trên máy chủ (1,1 GB đĩa) khi không còn cần đường quay lui này;
+xóa nó **không** giảm RAM, vì `ml-worker` mỗi lúc chỉ nạp một bi-encoder.
 
 ## AI tạo tin tuyển dụng
 

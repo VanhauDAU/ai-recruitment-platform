@@ -269,7 +269,7 @@ trạng thái ở [tiến độ dự án](../TIEN-DO-DU-AN.md#aiml-chạy-local)
   (`ml/requirements.txt`, `ml/scripts/smoke_mps.py`); mô hình nền là
   `intfloat/multilingual-e5-base`.
 
-Trích xuất hồ sơ (`apps/matching/services/extraction/`, phiên bản `extract-v3`):
+Trích xuất hồ sơ (`apps/matching/services/extraction/`, phiên bản `extract-v4`):
 CV builder, CV tải lên và tin tuyển dụng đều thành `profile_json` gồm kỹ năng,
 kinh nghiệm, học vấn, cấp bậc, ngoại ngữ, địa điểm và các chunk (đoạn văn để
 tính vector). Cấu trúc của `profile_json` được mô tả bằng JSON Schema ở
@@ -329,6 +329,8 @@ tính sẵn khi lưu CV và tin; chỉ dùng bản hiện hành (`MatchDocument.
 | `semantic-v1` (e5-base gốc) | 0,650 | 0,975 | 0,780 | 0,430 | 0,830 |
 
 Ngang luật ở việc đưa đúng tin gốc của CV lên đầu, hơn ở việc gợi ý các tin cùng vị trí khác.
+Với bi-encoder đã huấn luyện `e5-base-wise-v1` (chưa bật mặc định, xem cuối mục): tin neo ở
+hạng 1 0,762, trong top 10 0,988, MRR 0,867, precision@5 0,490, NDCG@10 0,913, hơn luật ở mọi cột.
 
 Mức cộng vị trí mong muốn chọn bằng mô phỏng trên cùng 100 CV (`--intent-study`):
 
@@ -349,7 +351,7 @@ Luồng phân tích (`apps/matching/services/`):
 | 1 | `extraction/` | Hồ sơ `profile_json` (như trên) |
 | 2 | `encoder.py` | Câu → vector 768 chiều: E5 (tiền tố `query:` cho tin, `passage:` cho CV) trong `ml-worker`; `hashing` tất định cho test/CI |
 | 3 | `documents.py` | Lưu `MatchDocument`/`MatchChunk` theo (nguồn, hash nội dung, phiên bản trích xuất, phiên bản mô hình); vector tài liệu là vector toàn văn |
-| 4 | `scoring/` | Công thức `hybrid-v2` (bảng dưới) |
+| 4 | `scoring/` | Công thức `hybrid-v3`: bảng `hybrid-v2` dưới đây cộng ba thay đổi ở phần "Đợt huấn luyện" cuối mục |
 | 5 | `explain.py` | Câu tóm tắt từng tiêu chí và gợi ý theo luật, chỉ dạng "nếu bạn đã có…" |
 | 6 | `analyses.py` | Cache theo khóa, task `run_analysis` ở queue `ai-matching`, phục hồi job treo |
 
@@ -394,8 +396,9 @@ nhãn yếu, mô hình zero-shot):
 - Y nhân R/100: năm làm việc khác nghề không đem lại điểm số năm.
 
 Mốc hiệu chuẩn (cosine → 0–100) theo phiên bản mô hình nằm ở
-`scoring/semantic.py`, đo bằng `ml/scripts/calibrate.py`; tuần 6 đo lại trên tập
-validation do người chấm. Mức: ≥ 80 Rất phù hợp, 65–79 Phù hợp, 50–64 Tương đối
+`domain/calibration.py` (`CALIBRATIONS`). Mô hình gốc đo bằng `ml/scripts/calibrate.py`
+(nhãn yếu); mô hình đã huấn luyện đo bằng `calibrate_labeled.py` và `calibrate_scale.py`
+trên tập hiệu chỉnh có nhãn. Mức: ≥ 80 Rất phù hợp, 65–79 Phù hợp, 50–64 Tương đối
 phù hợp, < 50 Chưa phù hợp. Độ tin cậy giảm khi có tiêu chí thiếu dữ liệu hoặc
 số tháng kinh nghiệm chỉ ước lượng từ PDF bố cục đảo.
 
@@ -465,7 +468,7 @@ phép NTD tìm kiếm" (mỗi ứng viên một CV) theo mức phù hợp (`serv
 1. Lọc theo hồ sơ trích xuất (kỹ năng, số tháng kinh nghiệm, học vấn, ngoại ngữ, từ khóa chức
    danh) bằng tra cứu JSON trên `MatchDocument.profile_json`.
 2. Lấy 200 CV gần vector của tin nhất bằng pgvector (tìm chính xác).
-3. Chấm từng CV bằng `score_match` (`hybrid-v2`). Vector đã tính sẵn nên tiến trình web không
+3. Chấm từng CV bằng `score_match` (`hybrid-v3`, không cross-encoder). Vector đã tính sẵn nên tiến trình web không
    cần mô hình; chỉ truyền chunk chức danh, vì phần so từng câu yêu cầu không ảnh hưởng điểm.
 4. Bỏ CV dưới 30 điểm (cặp khác ngành có trung vị 11 điểm), ẩn danh kết quả: hồ sơ qua danh
    sách trắng `domain/profile_view.py` (nội dung từng mục của CV, không email, số điện thoại,
@@ -484,15 +487,100 @@ Không tìm bằng câu tự do: so ngữ nghĩa một câu truy vấn cần mã
 trình web không có mô hình; tin tuyển dụng là "câu truy vấn" đã được mã hóa sẵn. Đo trên DB
 dev với 100 CV tổng hợp bật tìm kiếm: một lượt tìm khoảng 0,02–0,06 giây.
 
-Chưa có: fine-tune bi-encoder, cross-encoder cho từng yêu cầu (kế hoạch bản 3, GĐ 3
-và phần còn lại của GĐ 5).
+**Đợt huấn luyện 26–27/11: `hybrid-v3`, `e5-base-wise-v1`, `req-ce-v1`.** Mã đã có trong
+`apps/matching`; cấu hình mặc định của sản phẩm **vẫn là mô hình gốc** `e5-base-zs-v1`, không
+cross-encoder. Bật mô hình mới theo [vận hành](../06-deployment/van-hanh-va-kill-switch.md#đối-sánh-cvtin-chạy-local).
+
+Ba thay đổi của công thức `hybrid-v3` so với `hybrid-v2` (`services/scoring/`):
+
+| Thay đổi | Cách làm | Cần mô hình mới |
+| --- | --- | --- |
+| Nhóm kỹ năng thay thế (`skill_groups.py`) | Các kỹ năng danh mục cùng nằm trong một câu yêu cầu có từ lựa chọn ("hoặc", "một trong", "như", "or", "such as"…) thành một nhóm; CV có một kỹ năng là đạt cả nhóm. 72/100 tin thật có câu dạng này. Điểm kỹ năng tính theo đơn vị (nhóm hoặc kỹ năng lẻ), ghi ở `detail.units` | Không |
+| Phán từng yêu cầu bằng cross-encoder (`requirements.py`, `services/reranker.py`) | Mỗi câu yêu cầu loại kỹ năng: bi-encoder chọn 3 câu CV gần nhất, cross-encoder cho xác suất "câu này đáp ứng yêu cầu", lấy cao nhất; tối đa 90 cặp một lượt. Trạng thái `met` / `partial` / `unmet` theo hai ngưỡng của `RERANKER_THRESHOLDS` | `req-ce-v1` |
+| Nhận kỹ năng qua câu chứng minh | Kỹ năng tin cần mà CV không ghi theo danh mục: cross-encoder so câu "Có kinh nghiệm làm việc với {tên kỹ năng}." với các câu CV; vượt ngưỡng "đạt" thì tính là có, kèm câu trích. Thay cho khớp gần nghĩa bằng bi-encoder đã tắt ở `hybrid-v2` | `req-ce-v1` |
+
+Độ phủ yêu cầu (trung bình xác suất của các câu yêu cầu) được tính và trả ở `overall.coverage`
+nhưng **không** vào điểm: đưa vào mức liên quan làm Spearman giảm 0,822 → 0,802 vì câu yêu
+cầu chung chung kéo trung bình xuống. Khóa cache của `MatchAnalysis` là
+`scoring_cache_version()`: `hybrid-v3` hoặc `hybrid-v3+req-ce-v1`, nên bật/tắt cross-encoder
+không trả nhầm kết quả cũ. `result_json` bản 3 thêm `overall.coverage`, `flags.reranker_used`,
+`meta.reranker_version`.
+
+Hai mô hình (script ở `ml/scripts/`, mô hình ở `ml/models/`, không commit):
+
+- **Bi-encoder `e5-base-wise-v1`.** Fine-tune `multilingual-e5-base` bằng
+  `CachedMultipleNegativesRankingLoss` hai chiều (tin ↔ CV), 512 token, 3 epoch, 93 phút trên
+  MPS, trên 5.936 bộ ba (tin, CV đúng, CV sai khó): 1.436 bộ từ 649 CV tổng hợp neo vào 56 tin
+  thật ngoài tập vàng, 3.000 từ VietJobs, 1.500 từ resume-job-description-fit. Bản fine-tune
+  (`e5-base-ft-v1`) rồi được **nội suy trọng số** với mô hình gốc (WiSE-FT, 70% fine-tune +
+  30% gốc, `interpolate_model.py`): giữ phần tăng trên dữ liệu của đề tài mà ít lệch khỏi mô
+  hình gốc hơn. Lượt huấn luyện thứ hai (thêm âm khó khai thác bằng mô hình và bộ ba thứ bậc)
+  không hơn nên không dùng.
+- **Cross-encoder `req-ce-v1`.** Fine-tune `mmarco-mMiniLMv2-L12-H384-v1` bằng
+  `BinaryCrossEntropyLoss`, nhãn 1 / 0,5 / 0, 160 token mỗi cặp, trên 5.473 cặp (câu yêu cầu,
+  câu CV) từ 1.070 câu yêu cầu thật; câu đáp ứng và câu gần đáp ứng do mô hình ngôn ngữ chạy
+  local (Ollama `qwen2.5:7b`) viết. Kiểm tra rò rỉ "chỉ nhìn câu CV" cho AUC 0,500 trên cặp máy viết.
+
+Chống rò rỉ: 30 tin vàng và 100 CV của tập vàng không có trong huấn luyện; 144 tin VietJobs
+giống một tin vàng bị loại; 14 tin của tập hiệu chỉnh và CV neo vào chúng giữ riêng.
+
+Mốc quy đổi và ngưỡng đo trên **tập hiệu chỉnh**: 14 tin ngoài tập vàng, 321 cặp nhãn 0–4
+theo rubric (`ml/labeling/calibration_labels.json`), không dùng để huấn luyện. `low` là trung
+vị cosine của cặp nhãn 0, `high` là phân vị 90 của cặp nhãn 3–4; hai ngưỡng cross-encoder
+(0,853 và 0,063) chọn trên 358 cặp yêu cầu–câu CV thật sao cho precision của "đạt" từ 0,85.
+
+Kết quả trên validation của tập vàng (100 cặp, 10 tin; `ml/reports/eval_validation.md`):
+
+| Cấu hình | Spearman | NDCG@5 | Kappa mức hiển thị | Nhãn 0: trung vị / cao nhất |
+| --- | ---: | ---: | ---: | ---: |
+| Luật `profile-rule-v2` | 0,628 | 0,874 | – | – |
+| `hybrid-v2`, mô hình gốc | 0,698 | 0,857 | 0,663 | 11 / 46 |
+| `hybrid-v3`, mô hình gốc (đang chạy) | 0,705 | 0,870 | 0,697 | 13 / 47 |
+| `hybrid-v3`, `e5-base-wise-v1` | 0,815 | 0,874 | 0,708 | 6 / 36 |
+| **`hybrid-v3`, `e5-base-wise-v1` + `req-ce-v1`** | **0,822** | **0,921** | **0,733** | **6 / 36** |
+
+Hiệu số Spearman của cấu hình cuối so với `hybrid-v3` mô hình gốc là +0,117, khoảng tin cậy
+95% theo bootstrap ghép cặp theo tin 0,030 đến 0,212 (không chứa 0). Cặp tin tiếng Anh – CV
+tiếng Việt và ngược lại: 0,834. Điểm trung bình tăng dần theo nhãn 0 → 4.
+
+Các phép đo khác:
+
+| Phép đo | Kết quả | Báo cáo |
+| --- | --- | --- |
+| Tập hiệu chỉnh, 321 cặp | Spearman 0,842, NDCG@5 0,935, kappa 0,83; có hay không cross-encoder gần như nhau vì CV tổng hợp ghi kỹ năng đúng tên danh mục | `eval_calibration.md` |
+| Cross-encoder trên 358 cặp thật (phần validation) | AUC đạt so với không đạt 0,956 (cosine của mô hình gốc 0,802; cross-encoder chưa huấn luyện 0,909); precision của "đạt" 0,947, recall 0,562 | `reranker_eval.md` |
+| Chuẩn ngoài resume-job-description-fit, 1.759 cặp tiếng Anh | Spearman 0,211 → 0,336, AUC 0,639 → 0,706 | `eval_public.md` |
+| Gợi ý việc làm, nhãn yếu | Tin neo ở hạng 1 0,650 → 0,762, MRR 0,776 → 0,867 (luật 0,795), NDCG@10 cùng vị trí 0,832 → 0,913 | `recommendations_e5-base-wise-v1.md` |
+| Ngưỡng 30 điểm của gợi ý và Tìm CV | Không cắt cặp khớp mạnh nào; kết quả không liên quan vượt ngưỡng giảm (Tìm CV 741 → 605 lượt) nên giữ nguyên ngưỡng | `score_floor.md` |
+| Kiểm chứng nhãn tập vàng | Người chấm mù 50/300 cặp, kappa có trọng số 0,915 so với nhãn của mô hình ngôn ngữ | `label_agreement.md` |
+
+Bộ nhớ và độ trễ (máy dev, CPU trong container): `ml-worker` nạp bi-encoder và cross-encoder
+đạt đỉnh 2,05–2,14 GB khi chấm; chỉ bi-encoder 1,48 GB. Chạy được 40 cặp dưới giới hạn
+1.792 MB của production mà không bị dừng, nhưng sát trần, nên bật cross-encoder thì nâng
+`mem_limit` lên 2.304 MB. Cross-encoder thêm khoảng 0,6 giây mỗi cặp. Tiến trình web không nạp
+mô hình: gợi ý việc làm và Tìm CV chỉ đổi theo vector và mốc quy đổi mới; Tìm CV không truyền
+câu yêu cầu nên không có cross-encoder và chưa dùng nhóm kỹ năng thay thế.
+
+Chặn cấu hình sai: phiên bản mô hình chưa có mốc trong `CALIBRATIONS` hoặc cross-encoder chưa
+có ngưỡng thì `manage.py check` báo lỗi (`apps/matching/checks.py`); lúc nạp, `model_card.json`
+trong thư mục mô hình phải ghi đúng `MATCHING_MODEL_VERSION`, sai thì dừng. Trước đây đổi đường
+dẫn mà quên đổi phiên bản sẽ lưu vector mới dưới tên mô hình cũ.
+
+Giới hạn phải nêu khi báo cáo: nhãn của tập vàng, tập hiệu chỉnh và cặp yêu cầu–câu CV do mô
+hình ngôn ngữ gán (có 50 cặp người chấm đối chiếu); CV đánh giá và CV huấn luyện do cùng một
+mô hình sinh viết nên số trên tập vàng có thể lạc quan (vì vậy có chuẩn ngoài); ở chuẩn ngoài,
+CV của phần test xuất hiện trong phần train (tin thì không); validation chỉ có 10 tin nên
+khoảng tin cậy rộng; tiêu chí học vấn gần như không mang tín hiệu (Spearman −0,04).
+
+Chưa làm: chạy tập test một lần (27/12/2026, `evaluate.py --split test --final`); lượt huấn
+luyện chỉ dùng dữ liệu công khai để tách phần đóng góp của CV tổng hợp; lượt gán nhãn thứ hai
+cho tập hiệu chỉnh; Tìm CV dùng nhóm kỹ năng thay thế.
 
 ## Việc còn mở
 
 - Import CV đã dùng runtime `ai_core` (hard switch, invocation log); còn thiếu quota
   theo người dùng ngoài throttle `cv_import`.
-- Chưa có trích xuất kỹ năng tự động vào `CvSkill`, OCR cho PDF scan hay đối
-  sánh phía nhà tuyển dụng. Hai Site Setting không có code đọc
+- Chưa có trích xuất kỹ năng tự động vào `CvSkill` và OCR cho PDF scan. Hai Site Setting không có code đọc
   (`ai_cv_review_enabled`, `ai_daily_request_limit`) đã được gỡ theo ADR-0026.
-- Đối sánh đang chạy trong sản phẩm vẫn là so khớp token/chuỗi con; embedding và
-  độ tương đồng ngữ nghĩa thuộc module ở mục 7, chưa có logic.
+- Đối sánh ngữ nghĩa (mục 7) đang chạy bằng mô hình gốc; hai mô hình đã huấn luyện
+  (`e5-base-wise-v1`, `req-ce-v1`) chưa bật trong cấu hình mặc định và tập test chưa chạy.
