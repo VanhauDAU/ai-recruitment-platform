@@ -8,6 +8,12 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-27
 
+#### Fixed — Hết phiên chỉ hiện một thông báo
+
+- Trang gọi nhiều API cùng lúc khi phiên hết hạn từng hiện một toast "Phiên đăng nhập đã hết hạn"
+  cho mỗi request 401 (cổng quản trị hiện 3 cái). Các request cùng báo trong một lượt, trước khi
+  effect theo `user` kịp hạ `loggedInRef`; giờ handler hạ cờ ngay khi nhận lần báo đầu.
+
 #### Fixed — Sách mẫu CV trên điện thoại mở đủ hai trang
 
 - Điện thoại không còn cắt trang trái: mọi cỡ màn hình dùng cùng cuốn sách mở hai trang, thu nhỏ
