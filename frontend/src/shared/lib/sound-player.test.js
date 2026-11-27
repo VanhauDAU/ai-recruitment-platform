@@ -47,3 +47,15 @@ test('stays silent when the user has muted sounds', async () => {
   expect(fetch).not.toHaveBeenCalled()
   expect(start).not.toHaveBeenCalled()
 })
+
+test('a page turned by the book itself only plays once a tap has unlocked audio', async () => {
+  const { playSoundEffect } = await import('./sound-player')
+
+  playSoundEffect('pageFlip', { onlyIfUnlocked: true })
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  expect(fetch).not.toHaveBeenCalled()
+
+  playSoundEffect('pageFlip')
+  playSoundEffect('pageFlip', { onlyIfUnlocked: true })
+  await vi.waitFor(() => expect(start).toHaveBeenCalledTimes(2))
+})

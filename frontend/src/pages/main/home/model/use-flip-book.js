@@ -3,6 +3,9 @@ import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import { playSoundEffect } from '@/shared/lib/sound-player'
 
 const AUTO_FLIP_MS = 5000
+// Sách vừa lướt tới: để bìa kịp trồi lên (HomeSection) rồi tự mở.
+const AUTO_OPEN_DELAY_MS = 900
+const AUTO_TICK_MS = 250
 // Người dùng vừa chạm/vuốt/kéo thanh trang: đợi một lúc rồi mới tự lật lại.
 const RESUME_AFTER_TOUCH_MS = 9000
 const SWIPE_PX = 40
@@ -26,18 +29,22 @@ export function useFlipBook(count) {
   const bookRef = useRef(null)
   const resumeTimer = useRef(null)
   const swipe = useRef({ x: 0, moved: false })
+  // Mốc lần lật gần nhất (kể cả do người dùng): tự lật đếm 5 giây từ đây.
+  const lastTurnAt = useRef(0)
+  const autoOpened = useRef(false)
   const canTurn = count > 1
   const lastSpread = count - 2
 
   const afterTurn = (kind) => (kind === 'next' ? first + 2 : kind === 'prev' ? first - 2 : CLOSED)
 
-  // Tiếng lật giấy chỉ theo thao tác của người dùng (nút, vuốt): trình duyệt chặn âm thanh
-  // chưa có thao tác, và tiếng lặp lại mỗi lần sách tự lật sẽ gây khó chịu.
+  // Tiếng lật giấy: lần lật do người dùng (nút, vuốt, chạm bìa) mở khoá âm thanh; sau đó cả
+  // lần sách tự lật cũng có tiếng. Chưa ai chạm thì trình duyệt chặn âm thanh nên bỏ qua.
   function turn(direction, { byUser = false } = {}) {
     if (!canTurn || turning) return
     if (direction === 'prev' && first === CLOSED) return
     const kind = direction === 'next' && first >= lastSpread ? 'close' : direction
-    if (byUser) playSoundEffect('pageFlip')
+    playSoundEffect('pageFlip', { onlyIfUnlocked: !byUser })
+    lastTurnAt.current = Date.now()
     if (reducedMotion) setFirst(afterTurn(kind))
     else setTurning(kind)
   }
@@ -59,21 +66,31 @@ export function useFlipBook(count) {
     resumeTimer.current = setTimeout(() => setHeld(false), RESUME_AFTER_TOUCH_MS)
   }
 
-  // Interval đọc hàm lật mới nhất qua ref để không phải dựng lại mỗi lần đổi trang.
+  // Bộ đếm đọc hàm lật và trang hiện tại qua ref để không phải dựng lại mỗi lần đổi trang.
   const turnRef = useRef(turn)
+  const closedRef = useRef(true)
   useEffect(() => {
     turnRef.current = turn
+    closedRef.current = first === CLOSED
   })
 
   useEffect(() => {
     const book = bookRef.current
     if (!canTurn || !playing || held || reducedMotion || !book || !('IntersectionObserver' in window)) return undefined
     let visible = false
-    const observer = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting }, { threshold: 0.5 })
+    const observer = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting
+      // Lần đầu lướt tới mà sách còn đóng: tự mở sau một nhịp ngắn thay vì chờ đủ 5 giây.
+      if (visible && !autoOpened.current && closedRef.current) {
+        autoOpened.current = true
+        lastTurnAt.current = Date.now() - AUTO_FLIP_MS + AUTO_OPEN_DELAY_MS
+      }
+    }, { threshold: 0.5 })
     observer.observe(book)
     const timer = setInterval(() => {
-      if (visible && !document.hidden) turnRef.current('next')
-    }, AUTO_FLIP_MS)
+      if (!visible || document.hidden) return
+      if (Date.now() - lastTurnAt.current >= AUTO_FLIP_MS) turnRef.current('next')
+    }, AUTO_TICK_MS)
     return () => {
       clearInterval(timer)
       observer.disconnect()
@@ -90,6 +107,10 @@ export function useFlipBook(count) {
     canTurn,
     next: () => turn('next', { byUser: true }),
     prev: () => turn('prev', { byUser: true }),
+    open: () => {
+      holdAfterTouch()
+      turn('next', { byUser: true })
+    },
     goTo,
     finishTurn,
     togglePlaying: () => setPlaying((value) => !value),

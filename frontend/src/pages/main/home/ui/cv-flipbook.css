@@ -1,8 +1,10 @@
 /* Cuốn sách mẫu CV trang chủ (CvFlipBook, chunk lazy của trang chủ).
    - Mọi cỡ màn hình: sách mở hai trang, gáy ở giữa, thu nhỏ theo bề ngang khung.
    - Lá sách (.cv-book__leaf) chỉ dựng khi đang lật: xoay liền một mạch quanh gáy (một đường
-     cong tốc độ, không có mốc giữa nên không khựng), nhấc lên là hiệu ứng riêng. Lá chia 4
-     dải lồng nhau (.cv-book__strip), mỗi dải uốn thêm một góc nhỏ nên giấy cong mềm.
+     cong tốc độ, không có mốc giữa nên không khựng), nhấc lên là hiệu ứng riêng. Lá liền một
+     tấm hai mặt (.cv-book__face) với dải sáng chạy ngang mặt trang gợi độ cong. Máy có chuột
+     (pointer: fine) dùng lá chia 4 dải lồng nhau (.cv-book__strip) uốn cong thật; màn cảm
+     ứng không dùng vì Safari iOS lộ sọc tối/sáng nhấp nháy giữa các dải.
    - Cỡ chữ trong trang theo bề rộng trang (container query, đơn vị cqw).
    - Bóng tối/sáng trên lá sách và bóng đổ lên trang bên dưới chạy cùng nhịp lật. */
 
@@ -62,16 +64,14 @@
 }
 
 .cv-book__page,
+.cv-book__face,
 .cv-book__slice-page {
   background: var(--paper);
   bottom: 0;
   container-type: inline-size;
+  overflow: hidden;
   position: absolute;
   top: 0;
-}
-
-.cv-book__page {
-  overflow: hidden;
 }
 
 .cv-book__page {
@@ -105,6 +105,7 @@
 
 /* Gáy sách: trang tối dần về phía nếp gấp (cả phần trang trên lá đang lật). */
 .cv-book__page::after,
+.cv-book__face::after,
 .cv-book__slice-page::after {
   content: '';
   inset: 0;
@@ -114,12 +115,16 @@
 }
 
 .cv-book__page--left::after,
+.cv-book__leaf--next .cv-book__face--back::after,
+.cv-book__leaf--prev .cv-book__face--front::after,
 .cv-book__leaf--next .cv-book__slice--back .cv-book__slice-page::after,
 .cv-book__leaf--prev .cv-book__slice--front .cv-book__slice-page::after {
   background: linear-gradient(to left, rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.04) 6%, transparent 16%);
 }
 
 .cv-book__page--right::after,
+.cv-book__leaf--next .cv-book__face--front::after,
+.cv-book__leaf--prev .cv-book__face--back::after,
 .cv-book__leaf--next .cv-book__slice--front .cv-book__slice-page::after,
 .cv-book__leaf--prev .cv-book__slice--back .cv-book__slice-page::after {
   background: linear-gradient(to right, rgb(0 0 0 / 0.18), rgb(0 0 0 / 0.04) 6%, transparent 16%);
@@ -263,6 +268,27 @@
   position: absolute;
 }
 
+.cv-book__cover-hint--light {
+  bottom: 11cqw;
+  color: rgb(255 255 255 / 0.85);
+}
+
+/* Sách đóng: cả bìa là nút mở. */
+.cv-book__open {
+  background: none;
+  border: 0;
+  border-radius: inherit;
+  cursor: pointer;
+  inset: 0;
+  position: absolute;
+  z-index: 5;
+}
+
+.cv-book__open:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: -6px;
+}
+
 .cv-book__sheet--end {
   align-items: flex-start;
   justify-content: center;
@@ -332,6 +358,56 @@
   transform-origin: right center;
 }
 
+.cv-book__face {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  inset: 0;
+}
+
+.cv-book__face--back {
+  transform: rotateY(180deg);
+}
+
+/* Mặt trước tối dần khi dựng lên, mặt sau sáng dần khi hạ xuống; một dải sáng chạy ngang mặt
+   trang trong lúc lật như ánh đèn trượt trên tờ giấy đang cong. */
+.cv-book__face::before {
+  background-repeat: no-repeat;
+  background-size: 260% 100%, 100% 100%;
+  content: '';
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  z-index: 4;
+}
+
+.cv-book__face--front::before {
+  animation:
+    cv-book-shade-rise var(--turn-ms) var(--turn-ease) both,
+    cv-book-sheen var(--turn-ms) var(--turn-ease) both;
+}
+
+.cv-book__face--back::before {
+  animation:
+    cv-book-shade-fall var(--turn-ms) var(--turn-ease) both,
+    cv-book-sheen var(--turn-ms) var(--turn-ease) both reverse;
+}
+
+.cv-book__leaf--next .cv-book__face--front::before,
+.cv-book__leaf--prev .cv-book__face--back::before {
+  background-image:
+    linear-gradient(100deg, transparent 38%, rgb(255 255 255 / 0.32) 50%, transparent 62%),
+    linear-gradient(to right, rgb(0 0 0 / 0.04), rgb(0 0 0 / 0.28));
+}
+
+.cv-book__leaf--next .cv-book__face--back::before,
+.cv-book__leaf--prev .cv-book__face--front::before {
+  background-image:
+    linear-gradient(80deg, transparent 38%, rgb(255 255 255 / 0.32) 50%, transparent 62%),
+    linear-gradient(to left, rgb(0 0 0 / 0.24), rgb(0 0 0 / 0.04));
+}
+
+/* ── Lá cong 4 dải (chỉ máy có chuột) ── */
 /* Dải 0 nằm sát gáy; mỗi dải sau lồng trong dải trước, nối ở mép xa gáy. */
 .cv-book__strip {
   bottom: 0;
@@ -463,6 +539,11 @@
   0%, 100% { transform: rotateY(0deg); }
   30% { transform: rotateY(13deg); }
   68% { transform: rotateY(-9deg); }
+}
+
+@keyframes cv-book-sheen {
+  from { background-position: 100% 0, 0 0; }
+  to { background-position: 0% 0, 0 0; }
 }
 
 @keyframes cv-book-shade-rise {

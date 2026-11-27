@@ -10,13 +10,15 @@ import { useEffect, useMemo } from 'react'
 import { Link } from 'react-router'
 import { CvTemplatePreview, templateColors, templatePreviewForColor } from '@/entities/cv/cv-template'
 import { m } from '@/shared/config/i18n'
+import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import { CLOSED, useFlipBook } from '../model/use-flip-book'
 import './cv-flipbook.css'
 
 const templateImage = (template) => templatePreviewForColor(template, templateColors(template)[0])
 
-// Lá sách chia thành các dải nối tiếp từ gáy ra mép; mỗi dải uốn thêm một góc nhỏ so với
-// dải trước nên cả lá cong như giấy thay vì một tấm phẳng (cv-flipbook.css).
+// Máy có chuột: lá sách chia thành các dải nối tiếp từ gáy ra mép, mỗi dải uốn thêm một góc
+// nhỏ nên cả lá cong như giấy. Màn cảm ứng dùng lá liền một tấm vì Safari iOS lộ sọc tối/sáng
+// nhấp nháy giữa các dải (cv-flipbook.css).
 const LEAF_STRIPS = 4
 
 /**
@@ -61,6 +63,9 @@ function BookPage({ page, number, count }) {
         <span className="cv-book__cover-frame" aria-hidden="true" />
         <p className="cv-book__cover-title">{m.candidate_cv_book_label()}</p>
         <p className="cv-book__cover-edition">{m.candidate_cv_book_cover_edition({ count })}</p>
+        <span className="cv-book__cover-hint cv-book__cover-hint--light">
+          {m.candidate_cv_book_open_hint()} <RightOutlined aria-hidden="true" />
+        </span>
       </div>
     )
   }
@@ -115,8 +120,9 @@ export default function CvFlipBook({ templates, loading }) {
   const pages = useMemo(() => buildPages(templates), [templates])
   const {
     bookRef, bookProps, first, turning, playing, canTurn,
-    next, prev, goTo, finishTurn, togglePlaying, holdAfterTouch,
+    next, prev, open, goTo, finishTurn, togglePlaying, holdAfterTouch,
   } = useFlipBook(loading ? 0 : pages.length)
+  const curl = useMediaQuery('(pointer: fine)')
   const total = pages.length
   const render = (index) => (
     index >= 0 && index < total ? <BookPage page={pages[index]} number={index} count={templates.length} /> : null
@@ -155,23 +161,37 @@ export default function CvFlipBook({ templates, loading }) {
         {leftIndex !== null && leftIndex >= 1 && (
           <div className="cv-book__page cv-book__page--left">{render(leftIndex)}</div>
         )}
-        <div className="cv-book__page cv-book__page--right">{render(rightIndex)}</div>
+        <div className="cv-book__page cv-book__page--right">
+          {render(rightIndex)}
+          {/* Sách đóng: chạm vào bìa là mở, không cần vuốt. */}
+          {closed && !turning && (
+            <button type="button" className="cv-book__open" onClick={open} aria-label={m.candidate_cv_book_open_label()} />
+          )}
+        </div>
         {turning && (
           <div
             className={`cv-book__leaf cv-book__leaf--${turning === 'next' ? 'next' : 'prev'}`}
-            // Lá sách chạy hai hiệu ứng (xoay, nhấc lên); chỉ hết vòng xoay mới đổi trang.
+            // Lá sách chạy hai hiệu ứng (xoay, nhấc lên); chỉ hết vòng xoay mới đổi trang, còn
+            // animationend của lớp bóng trên hai mặt nổi lên với target khác nên bị bỏ qua.
             onAnimationEnd={(event) => (
               event.target === event.currentTarget && event.animationName !== 'cv-book-lift' && finishTurn()
             )}
             aria-hidden="true"
             inert
           >
-            <LeafStrip
-              index={0}
-              direction={turning === 'next' ? 'next' : 'prev'}
-              front={render(leafFront)}
-              back={render(leafBack)}
-            />
+            {curl ? (
+              <LeafStrip
+                index={0}
+                direction={turning === 'next' ? 'next' : 'prev'}
+                front={render(leafFront)}
+                back={render(leafBack)}
+              />
+            ) : (
+              <>
+                <div className="cv-book__face cv-book__face--front">{render(leafFront)}</div>
+                <div className="cv-book__face cv-book__face--back">{render(leafBack)}</div>
+              </>
+            )}
           </div>
         )}
       </div>

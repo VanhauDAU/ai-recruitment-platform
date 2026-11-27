@@ -288,5 +288,7 @@
   "candidate_cv_book_seek": "Chọn trang",
   "candidate_cv_book_progress": "Trang {current}/{total}",
   "candidate_cv_book_cover_edition": "Bộ sưu tập {count} mẫu CV",
-  "candidate_cv_book_cover_label": "Bìa"
+  "candidate_cv_book_cover_label": "Bìa",
+  "candidate_cv_book_open_hint": "Chạm để mở",
+  "candidate_cv_book_open_label": "Mở sổ tay mẫu CV"
 }
