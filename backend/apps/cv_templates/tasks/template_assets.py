@@ -38,7 +38,11 @@ from common.storage.r2 import public_media_storage
 from ..services.printing import print_payload, render_document_pdf
 
 logger = logging.getLogger(__name__)
-SNAPSHOT_RENDERER_VERSION = 'catalogue-snapshot-v2'  # v2: Chromium print page (CVT-2)
+# v2: Chromium print page (CVT-2); v3: ảnh WebP thay PNG (nhẹ hơn ~2,3 lần), đổi phiên bản
+# để mọi ảnh mẫu cũ được dựng lại khi chạy regenerate_all_template_snapshots.
+SNAPSHOT_RENDERER_VERSION = 'catalogue-snapshot-v3'
+# Ảnh chụp trang CV (chữ, mảng màu phẳng): q85 không thấy khác PNG, đo 600px 85→36 KB.
+SNAPSHOT_WEBP_QUALITY = 85
 
 # Ảnh mẫu có ảnh đại diện minh họa (bóng người trung tính), không phải ảnh thật.
 SNAPSHOT_AVATAR_ID = 'catalogue-avatar'
@@ -102,8 +106,10 @@ def snapshot_fingerprint(link):
     return sha256(json.dumps(payload, sort_keys=True).encode('utf-8')).hexdigest(), locale
 
 
-def _first_page_png(pdf_bytes, *, width):
-    return first_pdf_page_image(pdf_bytes, width=width, image_format='PNG')
+def _first_page_webp(pdf_bytes, *, width):
+    return first_pdf_page_image(
+        pdf_bytes, width=width, image_format='WEBP', quality=SNAPSHOT_WEBP_QUALITY
+    )
 
 
 def _save_once(key, payload):
@@ -145,11 +151,11 @@ def generate_template_color_snapshot(link_id):
         payload = print_payload(frozen_version)
         payload['assets'][SNAPSHOT_AVATAR_ID] = {'url': SNAPSHOT_AVATAR_URI}
         pdf_bytes = render_document_pdf(payload)
-        preview_bytes = _first_page_png(pdf_bytes, width=1200)
-        thumbnail_bytes = _first_page_png(pdf_bytes, width=600)
+        preview_bytes = _first_page_webp(pdf_bytes, width=1200)
+        thumbnail_bytes = _first_page_webp(pdf_bytes, width=600)
         base = f'cv-templates/snapshots/{link.template.public_id}/{fingerprint}'
-        preview_key = _save_once(f'{base}-preview.png', preview_bytes)
-        thumbnail_key = _save_once(f'{base}-thumbnail.png', thumbnail_bytes)
+        preview_key = _save_once(f'{base}-preview.webp', preview_bytes)
+        thumbnail_key = _save_once(f'{base}-thumbnail.webp', thumbnail_bytes)
     except Exception:  # noqa: BLE001 - task never logs configured CV content
         logger.warning('Template colour snapshot %s failed.', link_id)
         record_metric('cv_snapshot_failure')
