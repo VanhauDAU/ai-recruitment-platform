@@ -8,6 +8,21 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-27
 
+#### Changed — Khối "Tạo CV ấn tượng" gọn trên điện thoại; trang chủ hết giật layout
+
+- Dưới 1024px khối mẫu CV đổi thứ tự: tiêu đề → dãy thẻ CV vuốt kiểu coverflow (thẻ giữa
+  thẳng và to, thẻ hai bên xoay vào, mờ dần theo vị trí vuốt; chạy bằng CSS scroll-driven,
+  không thêm thư viện) có chấm trang → 4 tính năng dạng lưới 2×2 chỉ icon + nhãn → nút
+  "Tạo CV ngay" rộng hết. Dãy mở đầu ở thẻ giữa, thẻ "chia bài" trượt vào khi khối hiện;
+  nền nhạt thay vệt xanh đậm. Desktop giữ bố cục xòe quạt.
+- Hiệu ứng vuốt chạy ở lớp trong của thẻ: biến dạng chính phần tử snap làm trình duyệt kéo
+  dãy thẻ lệch khỏi thẻ giữa.
+- Sửa giật layout dưới khối Thị trường: danh sách "Việc làm mới nhất" có 4 hàng trong 0,42
+  giây mỗi lần xoay (10 giây/lần) nên khối cao lên rồi co lại; nay khung cố định 3 hàng.
+  Lưới "Việc làm tốt nhất" cao thấp theo tiêu đề 1/2 dòng và trang cuối ít tin khi tự lật
+  trang; nay thẻ cao tối thiểu 113px và trang cuối có ô giữ chỗ. Đo trong 22 giây: dao động
+  vị trí khối bên dưới từ 241px (desktop) / 648px (điện thoại) còn 0 / 2px.
+
 #### Changed — Trang chủ ứng viên cuộn tới đâu tải tới đó, có hiệu ứng xuất hiện
 
 - Các khối dưới màn đầu (thị trường việc làm, Huy hiệu Sấm Chớp, mẫu CV, ngành/công ty nổi bật,

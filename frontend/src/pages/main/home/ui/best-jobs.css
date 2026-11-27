@@ -187,9 +187,17 @@
   display: flex;
   gap: 10px;
   height: 100%;
+  /* Cao bằng thẻ có tiêu đề 2 dòng (đo 113px): thẻ 1 dòng không làm lưới thấp đi
+     khi tự lật trang, nên khối Thị trường bên dưới không bị xô lên xuống. */
+  min-height: 113px;
   padding: 10px 12px;
   position: relative;
   transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* Ô trống giữ chỗ ở trang cuối ít tin (BestJobsResults fillPage). */
+.best-job-card-filler {
+  min-height: 113px;
 }
 
 .best-job-card:hover {

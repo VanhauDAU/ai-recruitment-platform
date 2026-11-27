@@ -33,7 +33,7 @@ function LoadingGrid({ count }) {
   )
 }
 
-export default function BestJobsResults({ animKey, jobs, loading, pageSize = BEST_JOBS_PAGE_SIZE }) {
+export default function BestJobsResults({ animKey, jobs, loading, pageSize = BEST_JOBS_PAGE_SIZE, fillPage = false }) {
   const newTab = useNewTabLinkProps()
   const navigate = useNavigate()
   const { isAuthenticated } = useSession()
@@ -176,6 +176,10 @@ export default function BestJobsResults({ animKey, jobs, loading, pageSize = BES
           </JobImpressionBoundary>
         )
       })}
+      {/* Trang cuối ít tin hơn: giữ đủ ô để lưới không thấp đi khi tự lật trang. */}
+      {fillPage && Array.from({ length: Math.max(0, pageSize - jobs.length) }).map((_, index) => (
+        <div key={`filler-${index}`} className="best-job-card-filler" aria-hidden="true" />
+      ))}
     </div>
   )
 }
