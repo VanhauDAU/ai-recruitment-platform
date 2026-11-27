@@ -35,6 +35,13 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
   chỉnh 321 cặp có nhãn, 358 cặp yêu cầu–câu CV có nhãn, script huấn luyện, hiệu chỉnh và đo
   (bootstrap ghép cặp, chuẩn ngoài, ngưỡng điểm tối thiểu), trang chấm mù cho người.
 
+#### Fixed — Chữ của tab trang chi tiết tin và thẻ "Xem độ phù hợp" vào i18n
+
+- Nhãn ba tab, khối "Giới thiệu công ty", dải "Việc làm cùng công ty", dòng "Chưa có việc làm
+  liên quan" và chữ trên thẻ/nút "Xem độ phù hợp" chuyển từ viết cứng sang
+  `messages/candidate` (vi/en). Bước lint của Frontend CI đỏ vì các dòng này vượt trần chữ
+  tiếng Việt viết cứng (`features/main` 627/626, `pages/main` 755/744); nay còn 623 và 744.
+
 #### Changed — Trang chi tiết tin trên mobile: cụm thông tin chính gọn hơn, chia 3 tab
 
 - Trên mobile, Địa điểm / Kinh nghiệm / Hạn ứng tuyển ở đầu trang chi tiết tin chuyển từ
