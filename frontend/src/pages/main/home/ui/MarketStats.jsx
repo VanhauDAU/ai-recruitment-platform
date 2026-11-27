@@ -68,12 +68,12 @@ export default function MarketStats() {
       {!stats ? (
         <Skeleton active paragraph={{ rows: 6 }} className="[&_.ant-skeleton-title]:!bg-white/10 [&_.ant-skeleton-paragraph_li]:!bg-white/10" />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-[260px_1fr] gap-6">
+        <div data-reveal-stagger className="grid grid-cols-1 md:grid-cols-[260px_1fr] gap-6">
           <LatestJobsFeed jobs={latest} enabled={hasEnteredView} />
 
           {/* Right: stat tiles + charts */}
           <div className="space-y-5">
-            <div className="grid grid-cols-3 gap-3">
+            <div data-reveal-stagger className="grid grid-cols-3 gap-3">
               <StatTile value={stats.new_jobs_24h} label="Việc làm mới 24h gần nhất" animate={hasEnteredView} />
               <StatTile value={stats.active_jobs} label="Việc làm đang tuyển" animate={hasEnteredView} />
               <StatTile value={stats.companies} label="Công ty đang tuyển" animate={hasEnteredView} />

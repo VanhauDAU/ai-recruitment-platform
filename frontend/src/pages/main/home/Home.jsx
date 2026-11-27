@@ -1,7 +1,7 @@
 import { EnvironmentOutlined, FireOutlined, SearchOutlined } from '@ant-design/icons'
 import { Button, Input, Typography } from 'antd'
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useRef, useState } from 'react'
+import { lazy, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { formatNumber, getJobCategories, getJobStats, jobKeys } from '@/entities/job/job'
 import { getBanners, HOME_HERO_PLACEMENT } from '@/entities/content/banner'
@@ -9,21 +9,25 @@ import { useSiteSettings } from '@/entities/system/site-settings'
 import BannerCarousel from '@/shared/ui/BannerCarousel'
 import BestJobs from './ui/BestJobs'
 import CategoryMenu from './ui/CategoryMenu'
-import CvTemplateShowcase from './ui/CvTemplateShowcase'
 import { BEST_JOBS_PAGE_SIZE } from './lib/best-jobs-config'
-import FeaturedIndustriesEmployers from './ui/FeaturedIndustriesEmployers'
-import FlashBadge from './ui/FlashBadge'
-import HotlineConsultation from './ui/HotlineConsultation'
 import HomeHeroMascot from './ui/HomeHeroMascot'
 import HeroTypingTitle from './ui/HeroTypingTitle'
 import { LocationFilter } from '@/entities/system/location'
-import MarketStats from './ui/MarketStats'
+import HomeSection from './ui/HomeSection'
 import { SearchDropdown, saveHistory } from '@/features/main/job/search-jobs'
 import { HeroSlide } from '@/widgets/common/hero-banner'
 import { CandidateJobRecommendations, useHomeRecommendationSummary } from '@/widgets/main/candidate-job-recommendations'
 import { m } from '@/shared/config/i18n'
 import { useMediaQuery } from '@/shared/hooks/use-media-query'
 import './home-mascot.css'
+import './home-motion.css'
+
+// Khối dưới màn đầu tách chunk riêng: chỉ tải khi cuộn tới (HomeSection).
+const MarketStats = lazy(() => import('./ui/MarketStats'))
+const FlashBadge = lazy(() => import('./ui/FlashBadge'))
+const CvTemplateShowcase = lazy(() => import('./ui/CvTemplateShowcase'))
+const FeaturedIndustriesEmployers = lazy(() => import('./ui/FeaturedIndustriesEmployers'))
+const HotlineConsultation = lazy(() => import('./ui/HotlineConsultation'))
 
 const SUGGESTED_JOBS = [
   'Lập trình viên React',
@@ -132,7 +136,8 @@ export default function Home() {
     : [<StatsSlide key="stats" jobCount={jobCount} categoryCount={categories.length} />]
 
   return (
-    <div className="pb-10">
+    <div className="home-motion pb-10">
+      <div className="home-scroll-progress" aria-hidden="true" />
       <section id="section-header" className="text-white">
         <div className="pointer-events-none absolute inset-0 z-[1] overflow-hidden">
           <div className="absolute left-1/2 top-0 h-64 w-[760px] -translate-x-1/2 rounded-full bg-white/10 blur-3xl" />
@@ -141,17 +146,17 @@ export default function Home() {
         </div>
         <div className="relative z-10 max-w-6xl mx-auto px-4 pt-6 sm:pt-12 pb-16 text-center">
           {/* Điện thoại: bỏ huy hiệu số việc + câu phụ cho tiêu đề và ô tìm kiếm lên trên fold. */}
-          <div className="hidden sm:inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/12 px-4 py-1.5 text-sm font-semibold home-hero-muted shadow-sm backdrop-blur">
+          <div data-enter="0" className="hidden sm:inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/12 px-4 py-1.5 text-sm font-semibold home-hero-muted shadow-sm backdrop-blur">
             <FireOutlined className="text-amber-200" />
             {formatNumber(jobCount)} việc làm đang tuyển hôm nay
           </div>
 
           <HeroTypingTitle siteName={siteName} />
-          <Typography.Paragraph className="hidden sm:block home-hero-muted !text-base md:!text-lg !mb-0">
+          <Typography.Paragraph data-enter="1" className="hidden sm:block home-hero-muted !text-base md:!text-lg !mb-0">
             Tiếp lợi thế, nối thành công cùng nền tảng nhân sự ứng dụng AI.
           </Typography.Paragraph>
 
-          <div className="home-search-stage max-w-6xl mx-auto">
+          <div data-enter="2" className="home-search-stage max-w-6xl mx-auto">
             {showMascot && <HomeHeroMascot />}
             <div
               ref={searchBoxRef}
@@ -199,7 +204,7 @@ export default function Home() {
           </div>
 
           {/* Một hàng: vừa thì canh giữa, chật thì vuốt ngang (không xuống dòng). */}
-          <div className="mt-4 max-w-6xl mx-auto overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div data-enter="3" className="mt-4 max-w-6xl mx-auto overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <div className="mx-auto flex w-max items-center gap-1.5 text-left">
               <span className="shrink-0 px-1 text-sm font-semibold home-hero-muted">Gợi ý:</span>
               {show('nearby_jobs_enabled') && (
@@ -227,7 +232,7 @@ export default function Home() {
       </section>
 
       {(show('home_show_categories') || show('home_show_banner')) && (
-        <section className="max-w-6xl mx-auto px-4 -mt-8 relative z-20">
+        <section data-enter="lcp" className="max-w-6xl mx-auto px-4 -mt-8 relative z-20">
           <CategoryMenu
             categories={show('home_show_categories') ? categories : []}
             banner={show('home_show_banner') ? <BannerCarousel slides={bannerSlides} /> : null}
@@ -236,35 +241,47 @@ export default function Home() {
       )}
 
       {show('home_show_featured_jobs') && (
-        <section className="max-w-6xl mx-auto px-4 pt-8">
-          <BestJobs categories={categories} pageSize={featuredJobsCount} />
-        </section>
+        <HomeSection eager>
+          <section className="max-w-6xl mx-auto px-4 pt-8">
+            <BestJobs categories={categories} pageSize={featuredJobsCount} />
+          </section>
+        </HomeSection>
       )}
 
-      <CandidateJobRecommendations variant="home" />
+      <HomeSection>
+        <CandidateJobRecommendations variant="home" />
+      </HomeSection>
 
       {show('home_show_stats') && (
-        <section className="pt-8">
+        <HomeSection reserve={620} className="pt-8">
           <div className="bg-white py-8">
             <div className="max-w-6xl mx-auto px-4">
               <MarketStats />
             </div>
           </div>
-        </section>
+        </HomeSection>
       )}
 
       {show('flash_badge_enabled') && (
-        <section className="pt-8">
+        <HomeSection reserve={420} className="pt-8">
           <FlashBadge
             responseRate={settings.flash_badge_min_response_rate}
             responseHours={settings.flash_badge_response_hours}
           />
-        </section>
+        </HomeSection>
       )}
 
-      {show('home_show_cv_templates') && <CvTemplateShowcase />}
-      <FeaturedIndustriesEmployers />
-      <HotlineConsultation />
+      {show('home_show_cv_templates') && (
+        <HomeSection reserve={640}>
+          <CvTemplateShowcase />
+        </HomeSection>
+      )}
+      <HomeSection reserve={720}>
+        <FeaturedIndustriesEmployers />
+      </HomeSection>
+      <HomeSection reserve={520}>
+        <HotlineConsultation />
+      </HomeSection>
     </div>
   )
 }

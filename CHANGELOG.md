@@ -8,6 +8,19 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-27
 
+#### Changed — Trang chủ ứng viên cuộn tới đâu tải tới đó, có hiệu ứng xuất hiện
+
+- Các khối dưới màn đầu (thị trường việc làm, Huy hiệu Sấm Chớp, mẫu CV, ngành/công ty nổi bật,
+  hotline) tách chunk riêng và chỉ dựng, gọi API, tải ảnh khi người dùng cuộn tới gần (cách
+  600px); giữ chỗ bằng chiều cao dự kiến + skeleton để thanh cuộn không giật. JavaScript của
+  route trang chủ lần tải đầu giảm 188,3 → 165,3 KiB gzip; bundle khởi tạo không đổi.
+- Hero trồi lên lần lượt khi vừa tải (khối banner chỉ trượt, không mờ dần để không trễ LCP);
+  mỗi khối trồi lên khi vào khung nhìn, thẻ trong lưới hiện so le; thanh tiến độ cuộn và lớp
+  trang trí parallax chạy bằng CSS scroll-driven, không JS. Chỉ animate opacity/translate,
+  điện thoại biên độ nhỏ hơn, tắt hết khi bật giảm chuyển động.
+- Sidebar tài khoản: "Xem hồ sơ NTD nhìn thấy" thành nút mềm cùng cỡ với "Đổi CV", hai nút
+  thẳng hàng thay vì link dính sát nút.
+
 #### Changed — Đăng nhập/đăng ký nhà tuyển dụng dễ dùng trên điện thoại
 
 - Header trang giới thiệu NTD luôn có nút "Đăng nhập" trên điện thoại (trước chỉ có trong menu,

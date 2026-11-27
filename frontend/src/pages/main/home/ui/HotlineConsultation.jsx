@@ -119,7 +119,7 @@ export default function HotlineConsultation() {
               decoding="async"
               className="pointer-events-none absolute inset-0 h-full w-full scale-105 object-cover opacity-20 blur-sm"
             />
-            <div className="relative z-10 grid gap-8 md:grid-cols-[1.1fr_0.9fr] md:items-center">
+            <div data-reveal-stagger className="relative z-10 grid gap-8 md:grid-cols-[1.1fr_0.9fr] md:items-center">
               <div>
                 <h3 className="text-2xl font-extrabold leading-tight text-[#1f2937] md:text-3xl">
                   {active.lead} <span className="text-[var(--brand-primary)]">{active.accent}</span>
