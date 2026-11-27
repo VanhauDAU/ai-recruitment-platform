@@ -1,10 +1,8 @@
-import { ArrowRightOutlined, BgColorsOutlined, CrownFilled, EditOutlined, FilePdfOutlined, RobotOutlined, StarFilled } from '@ant-design/icons'
+import { ArrowRightOutlined, BgColorsOutlined, EditOutlined, FilePdfOutlined, RobotOutlined, StarFilled } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router'
-import { CvTemplatePreview, getCvTemplates, TemplateColorSwatches, templateColors, templatePreviewForColor } from '@/entities/cv/cv-template'
-import { m } from '@/shared/config/i18n'
-import { showcaseSlot, useShowcaseRotation } from '../model/use-showcase-rotation'
+import { useNavigate } from 'react-router'
+import { getCvTemplates } from '@/entities/cv/cv-template'
+import CvFlipBook from './CvFlipBook'
 import './cv-showcase.css'
 
 const FEATURES = [
@@ -14,42 +12,8 @@ const FEATURES = [
   { icon: <FilePdfOutlined />, label: 'Xuất PDF chuẩn', detail: 'Sẵn sàng ứng tuyển ngay' },
 ]
 
-// Đủ cho băng chuyền 5 vị trí desktop xoay vòng mà không quá nhiều ảnh xem trước phải tải.
+// Mỗi mẫu là một trang của cuốn sách (CvFlipBook); đủ để lật mà không tải quá nhiều ảnh.
 const SHOWCASE_LIMIT = 10
-
-// Desktop: băng chuyền 3D, thẻ đổi vị trí trái/giữa/phải (data-slot) theo nhịp. Dưới lg:
-// dãy thẻ vuốt kiểu coverflow, tự trượt sang thẻ kế. Hiệu ứng ở cv-showcase.css.
-function ShowcaseCard({ template, slot }) {
-  const colors = templateColors(template)
-  const [color, setColor] = useState(colors[0])
-  return (
-    // Lớp ngoài là điểm snap + xòe quạt desktop; hiệu ứng vuốt chạy ở lớp trong để
-    // trình duyệt không tính điểm snap theo khung đang biến dạng.
-    <div data-slot={slot} className="cv-showcase__card group w-[228px] shrink-0 snap-center">
-      <div className="cv-showcase__card-body rounded-2xl border border-slate-100 bg-white p-2.5 shadow-[0_10px_30px_rgba(2,44,34,0.10)] transition-shadow duration-300">
-        <Link
-          to={`/mau-cv/chi-tiet/${template.slug}`}
-          aria-label={`Xem mẫu CV ${template.display_name}`}
-          className="relative block overflow-hidden rounded-xl"
-        >
-          <CvTemplatePreview template={{ ...template, theme_color: color.hex_code }} imageUrl={templatePreviewForColor(template, color)} />
-          {template.is_premium && (
-            <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-amber-400/95 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
-              <CrownFilled className="text-[9px]" /> PREMIUM
-            </span>
-          )}
-          <span className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center bg-gradient-to-t from-black/35 to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-            <span className="rounded-lg bg-white/95 px-3 py-1.5 text-xs font-bold text-[var(--brand-primary-hover)] shadow">Xem mẫu này</span>
-          </span>
-        </Link>
-        <div className="flex items-center justify-between gap-2 px-1.5 pb-1 pt-2.5">
-          <p className="line-clamp-1 text-sm font-bold text-slate-900">{template.display_name}</p>
-          <TemplateColorSwatches colors={colors.slice(0, 4)} selectedKey={color.slug} onSelect={setColor} sizeClass="h-3 w-3" ariaLabel={`Đổi màu mẫu ${template.display_name}`} />
-        </div>
-      </div>
-    </div>
-  )
-}
 
 // Section "Tạo CV ấn tượng": showcase mẫu CV thật từ catalogue để kéo ứng viên vào CV Builder.
 export default function CvTemplateShowcase() {
@@ -61,7 +25,6 @@ export default function CvTemplateShowcase() {
   })
 
   const templates = (data?.results || []).slice(0, SHOWCASE_LIMIT)
-  const { center, deckRef, goTo, deckProps } = useShowcaseRotation(templates.length)
 
   if (!isLoading && templates.length === 0) return null
 
@@ -112,34 +75,9 @@ export default function CvTemplateShowcase() {
           </div>
         </div>
 
-        {/* ── Cột phải: fan 3 mẫu CV thật; dưới lg là dãy vuốt có chấm trang ── */}
+        {/* ── Cột phải: cuốn sách mẫu CV đang lật; dưới lg nằm giữa tiêu đề và tính năng ── */}
         <div className="cv-showcase__stage">
-          <div ref={deckRef} {...deckProps} className="cv-showcase__deck flex snap-x snap-mandatory items-center gap-4 overflow-x-auto pb-4 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:justify-center lg:gap-0 lg:overflow-visible lg:pb-0">
-            {templates.length > 0
-              ? templates.map((template, index) => (
-                  <ShowcaseCard key={template.public_id || template.slug} template={template} slot={showcaseSlot(index, center, templates.length)} />
-                ))
-              : Array.from({ length: 3 }).map((_, index) => (
-                  <div key={index} data-slot={showcaseSlot(index, 1, 3)} className="cv-showcase__card w-[228px] shrink-0 rounded-2xl border border-slate-100 bg-white p-2.5 shadow-sm">
-                    <div className="aspect-[3/4] animate-pulse rounded-xl bg-slate-100" />
-                    <div className="mt-3 h-3.5 w-2/3 animate-pulse rounded bg-slate-100" />
-                  </div>
-                ))}
-          </div>
-          {templates.length > 1 && (
-            <div className="cv-showcase__dots" role="group" aria-label={m.candidate_cv_showcase_pick()}>
-              {templates.map((template, index) => (
-                <button
-                  key={template.public_id || template.slug}
-                  type="button"
-                  aria-label={m.candidate_cv_showcase_view({ name: template.display_name })}
-                  aria-current={index === center}
-                  onClick={() => goTo(index)}
-                  className={`cv-showcase__dot${index === center ? ' is-active' : ''}`}
-                />
-              ))}
-            </div>
-          )}
+          <CvFlipBook templates={templates} loading={isLoading} />
         </div>
       </div>
     </section>
