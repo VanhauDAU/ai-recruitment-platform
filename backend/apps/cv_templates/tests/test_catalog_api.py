@@ -470,7 +470,7 @@ class TemplateCatalogTests(TestCase):
         self.assertIn(response.status_code, {401, 403})
 
     @patch('apps.cv_templates.tasks.template_assets._save_once')
-    @patch('apps.cv_templates.tasks.template_assets._first_page_png', return_value=b'png')
+    @patch('apps.cv_templates.tasks.template_assets._first_page_webp', return_value=b'webp')
     @patch(
         'apps.cv_templates.tasks.template_assets.render_document_pdf', return_value=b'%PDF-snapshot'
     )
@@ -498,6 +498,8 @@ class TemplateCatalogTests(TestCase):
         self.assertEqual(len(link.snapshot_fingerprint), 64)
         self.assertIn(link.snapshot_fingerprint, link.thumbnail_url)
         self.assertIn(link.snapshot_fingerprint, link.preview_url)
+        self.assertTrue(link.thumbnail_url.endswith('-thumbnail.webp'))
+        self.assertTrue(link.preview_url.endswith('-preview.webp'))
         self.assertIsNotNone(link.snapshot_generated_at)
 
         generate_template_color_snapshot(link.pk)

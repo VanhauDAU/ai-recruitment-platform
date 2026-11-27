@@ -18,6 +18,8 @@ export function templateColors(template) {
   return [FALLBACK_COLOR]
 }
 
+// Ảnh cho thẻ/trang sách (rộng ~250–300px): bản thu nhỏ 600px là đủ nét ở màn 2×; bản
+// preview 1200px nặng gấp ~3 lần chỉ dành cho trang chi tiết mẫu (dùng preview_url trực tiếp).
 export function templatePreviewForColor(template, color) {
-  return color?.preview_url || color?.thumbnail_url || template?.thumbnail_url || ''
+  return color?.thumbnail_url || color?.preview_url || template?.thumbnail_url || ''
 }
