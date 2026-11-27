@@ -286,5 +286,7 @@
   "candidate_cv_book_play": "Tự lật trang",
   "candidate_cv_book_pause": "Dừng tự lật trang",
   "candidate_cv_book_seek": "Chọn trang",
-  "candidate_cv_book_progress": "Trang {current}/{total}"
+  "candidate_cv_book_progress": "Trang {current}/{total}",
+  "candidate_cv_book_cover_edition": "Bộ sưu tập {count} mẫu CV",
+  "candidate_cv_book_cover_label": "Bìa"
 }
