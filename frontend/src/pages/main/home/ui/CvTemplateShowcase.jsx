@@ -1,9 +1,10 @@
 import { ArrowRightOutlined, BgColorsOutlined, CrownFilled, EditOutlined, FilePdfOutlined, RobotOutlined, StarFilled } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { CvTemplatePreview, getCvTemplates, TemplateColorSwatches, templateColors, templatePreviewForColor } from '@/entities/cv/cv-template'
 import { m } from '@/shared/config/i18n'
+import { showcaseSlot, useShowcaseRotation } from '../model/use-showcase-rotation'
 import './cv-showcase.css'
 
 const FEATURES = [
@@ -13,24 +14,15 @@ const FEATURES = [
   { icon: <FilePdfOutlined />, label: 'Xuất PDF chuẩn', detail: 'Sẵn sàng ứng tuyển ngay' },
 ]
 
-// Desktop: các card "xòe quạt" theo số lượng. Dưới lg: dãy thẻ vuốt kiểu coverflow (cv-showcase.css).
-const FAN_LAYOUTS = {
-  1: ['lg:scale-[1.06]'],
-  2: ['lg:rotate-[-6deg] lg:translate-y-3 lg:translate-x-4', 'lg:z-10 lg:rotate-[6deg] lg:-translate-x-4'],
-  3: [
-    'lg:rotate-[-7deg] lg:translate-y-6 lg:translate-x-5',
-    'lg:z-10 lg:scale-[1.08] lg:-translate-y-2',
-    'lg:rotate-[7deg] lg:translate-y-6 lg:-translate-x-5',
-  ],
-}
-
-function ShowcaseCard({ template, fanClass }) {
+// Desktop: băng chuyền 3D, thẻ đổi vị trí trái/giữa/phải (data-slot) theo nhịp. Dưới lg:
+// dãy thẻ vuốt kiểu coverflow, tự trượt sang thẻ kế. Hiệu ứng ở cv-showcase.css.
+function ShowcaseCard({ template, slot }) {
   const colors = templateColors(template)
   const [color, setColor] = useState(colors[0])
   return (
     // Lớp ngoài là điểm snap + xòe quạt desktop; hiệu ứng vuốt chạy ở lớp trong để
     // trình duyệt không tính điểm snap theo khung đang biến dạng.
-    <div className={`cv-showcase__card group w-[228px] shrink-0 snap-center transition-all duration-300 hover:z-20 hover:-translate-y-3 hover:rotate-0 ${fanClass}`}>
+    <div data-slot={slot} className="cv-showcase__card group w-[228px] shrink-0 snap-center">
       <div className="cv-showcase__card-body rounded-2xl border border-slate-100 bg-white p-2.5 shadow-[0_10px_30px_rgba(2,44,34,0.10)] transition-shadow duration-300">
         <Link
           to={`/mau-cv/chi-tiet/${template.slug}`}
@@ -66,35 +58,7 @@ export default function CvTemplateShowcase() {
   })
 
   const templates = (data?.results || []).slice(0, 3)
-  const deckRef = useRef(null)
-  const [active, setActive] = useState(0)
-
-  // Dãy vuốt (dưới lg): đưa một thẻ vào giữa; desktop không cuộn nên không ảnh hưởng.
-  function centerCard(index, behavior = 'smooth') {
-    const deck = deckRef.current
-    const card = deck?.children[index]
-    if (!card) return
-    deck.scrollTo({ left: card.offsetLeft - (deck.clientWidth - card.offsetWidth) / 2, behavior })
-  }
-
-  function trackActive() {
-    const deck = deckRef.current
-    if (!deck) return
-    const middle = deck.scrollLeft + deck.clientWidth / 2
-    const cards = [...deck.children]
-    const nearest = cards.reduce((best, card, index) => {
-      const distance = Math.abs(card.offsetLeft + card.offsetWidth / 2 - middle)
-      return distance < best.distance ? { index, distance } : best
-    }, { index: 0, distance: Infinity })
-    setActive(nearest.index)
-  }
-
-  // Mở đầu với thẻ giữa ở tâm để hai thẻ bên ló ra, gợi ý vuốt; sự kiện scroll
-  // sau đó tự cập nhật chấm trang.
-  const middleIndex = Math.floor(templates.length / 2)
-  useEffect(() => {
-    if (templates.length > 1) centerCard(middleIndex, 'instant')
-  }, [templates.length, middleIndex])
+  const { center, deckRef, goTo, deckProps } = useShowcaseRotation(templates.length)
 
   if (!isLoading && templates.length === 0) return null
 
@@ -147,13 +111,13 @@ export default function CvTemplateShowcase() {
 
         {/* ── Cột phải: fan 3 mẫu CV thật; dưới lg là dãy vuốt có chấm trang ── */}
         <div className="cv-showcase__stage">
-          <div ref={deckRef} onScroll={trackActive} className="cv-showcase__deck flex snap-x snap-mandatory items-center gap-4 overflow-x-auto pb-4 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:justify-center lg:gap-0 lg:overflow-visible lg:pb-0">
+          <div ref={deckRef} {...deckProps} className="cv-showcase__deck flex snap-x snap-mandatory items-center gap-4 overflow-x-auto pb-4 pt-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:justify-center lg:gap-0 lg:overflow-visible lg:pb-0">
             {templates.length > 0
               ? templates.map((template, index) => (
-                  <ShowcaseCard key={template.public_id || template.slug} template={template} fanClass={FAN_LAYOUTS[templates.length]?.[index] || ''} />
+                  <ShowcaseCard key={template.public_id || template.slug} template={template} slot={showcaseSlot(index, center, templates.length)} />
                 ))
               : Array.from({ length: 3 }).map((_, index) => (
-                  <div key={index} className={`cv-showcase__card w-[228px] shrink-0 rounded-2xl border border-slate-100 bg-white p-2.5 shadow-sm ${FAN_LAYOUTS[3][index]}`}>
+                  <div key={index} data-slot={showcaseSlot(index, 1, 3)} className="cv-showcase__card w-[228px] shrink-0 rounded-2xl border border-slate-100 bg-white p-2.5 shadow-sm">
                     <div className="aspect-[3/4] animate-pulse rounded-xl bg-slate-100" />
                     <div className="mt-3 h-3.5 w-2/3 animate-pulse rounded bg-slate-100" />
                   </div>
@@ -166,9 +130,9 @@ export default function CvTemplateShowcase() {
                   key={template.public_id || template.slug}
                   type="button"
                   aria-label={m.candidate_cv_showcase_view({ name: template.display_name })}
-                  aria-current={index === active}
-                  onClick={() => centerCard(index)}
-                  className={`cv-showcase__dot${index === active ? ' is-active' : ''}`}
+                  aria-current={index === center}
+                  onClick={() => goTo(index)}
+                  className={`cv-showcase__dot${index === center ? ' is-active' : ''}`}
                 />
               ))}
             </div>
