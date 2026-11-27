@@ -37,9 +37,11 @@ test('starts closed on the cover; turning the cover opens the intro and the firs
   expect(screen.getByRole('button', { name: 'Lật về trang trước' })).toBeDisabled()
   expect(screen.getAllByText('Trang Bìa/7').length).toBeGreaterThan(0)
 
-  fireEvent.click(screen.getByRole('button', { name: 'Lật sang trang sau' }))
-  expect(sound.play).toHaveBeenCalledWith('pageFlip')
+  // Chạm vào bìa là mở sách, kèm tiếng lật do người dùng bấm.
+  fireEvent.click(screen.getByRole('button', { name: 'Mở sổ tay mẫu CV' }))
+  expect(sound.play).toHaveBeenCalledWith('pageFlip', { onlyIfUnlocked: false })
   expect(leaf(container)).toHaveClass('cv-book__leaf--next')
+  expect(screen.queryByRole('button', { name: 'Mở sổ tay mẫu CV' })).toBeNull()
   // Sách trượt ra giữa ngay khi bìa bắt đầu lật.
   expect(book(container)).not.toHaveAttribute('data-closed')
 
@@ -72,4 +74,33 @@ test('reduced motion turns instantly without a leaf', () => {
   fireEvent.click(screen.getByRole('button', { name: 'Lật sang trang sau' }))
   expect(leaf(container)).toBeNull()
   expect(screen.getAllByText('Trang 2–3/7').length).toBeGreaterThan(0)
+})
+
+test('opens by itself shortly after scrolling into view, then waits 5 s for the next turn', () => {
+  vi.useFakeTimers()
+  let notify
+  vi.stubGlobal('IntersectionObserver', class {
+    constructor(callback) { notify = callback }
+    observe() {}
+    disconnect() {}
+  })
+  try {
+    const { container } = renderBook()
+    act(() => notify([{ isIntersecting: true }]))
+
+    act(() => vi.advanceTimersByTime(500))
+    expect(leaf(container)).toBeNull()
+    act(() => vi.advanceTimersByTime(600))
+    expect(leaf(container)).toHaveClass('cv-book__leaf--next')
+    expect(sound.play).toHaveBeenCalledWith('pageFlip', { onlyIfUnlocked: true })
+
+    endTurn(container)
+    act(() => vi.advanceTimersByTime(3000))
+    expect(leaf(container)).toBeNull()
+    act(() => vi.advanceTimersByTime(2500))
+    expect(leaf(container)).toHaveClass('cv-book__leaf--next')
+  } finally {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  }
 })

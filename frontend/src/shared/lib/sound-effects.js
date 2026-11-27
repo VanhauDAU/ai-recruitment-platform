@@ -39,8 +39,8 @@ export const SOUND_EFFECTS = Object.freeze({
     preload: false,
     followsMute: true,
   }),
-  // Lật trang sổ tay mẫu CV trang chủ: chỉ khi người dùng tự lật (nút, vuốt), không phát
-  // khi sách tự lật. Tệp 3,5 KB, tải ở lần lật đầu.
+  // Lật trang sổ tay mẫu CV trang chủ: lần người dùng lật mở khoá âm thanh, sau đó cả lần
+  // sách tự lật cũng có tiếng. Tệp 3,5 KB, tải ở lần lật đầu.
   pageFlip: Object.freeze({
     src: '/audio/effects/page-flip.mp3',
     toastClassName: 'app-toast--sound-page-flip',

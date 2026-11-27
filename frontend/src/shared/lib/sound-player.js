@@ -36,13 +36,15 @@ let sharedContext = null
 const sharedBuffers = new Map()
 
 /**
- * Phát một hiệu ứng UI theo thao tác của người dùng (gọi trong handler click/chạm để trình
- * duyệt cho phép mở âm thanh). Tải ở lần phát đầu; tôn trọng công tắc tắt chuông với hiệu
- * ứng `followsMute`. Không bao giờ ném lỗi ra luồng gọi.
+ * Phát một hiệu ứng UI. Lần đầu phải gọi trong handler click/chạm để trình duyệt cho mở âm
+ * thanh; `onlyIfUnlocked` cho lần phát không do người dùng bấm (ví dụ sách tự lật): chỉ phát
+ * khi âm thanh đã được mở khoá trước đó. Tải ở lần phát đầu; tôn trọng công tắc tắt chuông
+ * với hiệu ứng `followsMute`. Không bao giờ ném lỗi ra luồng gọi.
  */
-export function playSoundEffect(name) {
+export function playSoundEffect(name, { onlyIfUnlocked = false } = {}) {
   const effect = getSoundEffect(name)
   if (!effect || (effect.followsMute && !isSoundOn())) return
+  if (onlyIfUnlocked && sharedContext?.state !== 'running') return
   sharedContext ||= createAudioContext()
   if (!sharedContext) return
   const ready = sharedContext.state === 'running' ? Promise.resolve() : sharedContext.resume().catch(() => {})
