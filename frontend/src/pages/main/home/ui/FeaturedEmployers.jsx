@@ -72,7 +72,7 @@ function PlatformStatistics({ stats }) {
       </div>
 
       {/* Điện thoại: ba cột icon / số / nhãn; từ sm: icon cạnh số (home-showcase.css). */}
-      <div className="platform-stats relative">
+      <div data-reveal-stagger className="platform-stats relative">
         {items.map((item) => (
           <div key={item.key} className="platform-stats__item">
             <span className={`platform-stats__icon ${item.iconClassName}`} aria-hidden="true">
@@ -139,7 +139,7 @@ export default function FeaturedEmployers({ employers, navigate, stats }) {
             isDragging={carousel.isDragging}
           >
             {(group) => (
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+              <div data-reveal-stagger className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
                 {group.map((employer) => (
                   <button
                     key={employer.public_id}

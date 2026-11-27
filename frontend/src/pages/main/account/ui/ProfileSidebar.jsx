@@ -116,14 +116,16 @@ function RecruiterSearchBlock() {
           ? <>{m.candidate_recruiter_search_current()} <b>{searchableCv.title}</b></>
           : m.candidate_recruiter_search_none()}
       </p>
-      {searchableCv && <RecruiterProfileButton cv={searchableCv} className="mt-1" />}
-      <button
-        type="button"
-        onClick={() => setListOpen(true)}
-        className="mt-2 inline-flex cursor-pointer rounded-full border border-[var(--brand-primary)] bg-white px-4 py-1.5 text-sm font-semibold text-[var(--brand-primary)] transition-colors hover:bg-[var(--brand-primary-soft)]"
-      >
-        {searchableCv ? m.candidate_recruiter_search_change() : m.candidate_recruiter_search_choose()}
-      </button>
+      <div className="mt-2.5 flex flex-wrap items-center gap-2">
+        {searchableCv && <RecruiterProfileButton cv={searchableCv} variant="pill" className="grow justify-center" />}
+        <button
+          type="button"
+          onClick={() => setListOpen(true)}
+          className="inline-flex h-8 grow cursor-pointer items-center justify-center rounded-full border border-[var(--brand-primary)] bg-white px-4 text-[13px] font-semibold text-[var(--brand-primary)] transition-colors hover:bg-[var(--brand-primary-soft)]"
+        >
+          {searchableCv ? m.candidate_recruiter_search_change() : m.candidate_recruiter_search_choose()}
+        </button>
+      </div>
       <RecruiterSearchListModal open={listOpen} onClose={() => setListOpen(false)} />
       <div className="mt-3 rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-500">
         {m.candidate_recruiter_search_hint()}
