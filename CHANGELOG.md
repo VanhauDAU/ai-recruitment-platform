@@ -13,7 +13,8 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 - Màn cảm ứng không còn chia lá sách thành 4 dải (Safari iOS lộ sọc tối/sáng nhấp nháy giữa
   các dải): dùng lá liền một tấm hai mặt, dải sáng chạy ngang mặt trang gợi độ cong. Máy có
   chuột (`pointer: fine`) giữ lá cong 4 dải.
-- Chạm vào bìa là mở sách (bìa có dòng "Chạm để mở"), không cần vuốt.
+- Chạm vào bìa là mở sách (bìa có dòng "Chạm để mở"), không cần vuốt. Lướt tới sách (một nửa
+  vào khung nhìn) thì sách tự mở sau 0,9 giây; tự lật đếm 5 giây từ lần lật gần nhất.
 - Sau lần đầu người dùng lật/chạm (âm thanh đã mở khoá), cả lần sách tự lật cũng có tiếng; trước
   đó vẫn im vì trình duyệt chặn. Trên iPhone, gạt nút im lặng thì Safari tắt âm thanh Web Audio.
 

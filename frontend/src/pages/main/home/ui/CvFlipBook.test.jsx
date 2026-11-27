@@ -75,3 +75,32 @@ test('reduced motion turns instantly without a leaf', () => {
   expect(leaf(container)).toBeNull()
   expect(screen.getAllByText('Trang 2–3/7').length).toBeGreaterThan(0)
 })
+
+test('opens by itself shortly after scrolling into view, then waits 5 s for the next turn', () => {
+  vi.useFakeTimers()
+  let notify
+  vi.stubGlobal('IntersectionObserver', class {
+    constructor(callback) { notify = callback }
+    observe() {}
+    disconnect() {}
+  })
+  try {
+    const { container } = renderBook()
+    act(() => notify([{ isIntersecting: true }]))
+
+    act(() => vi.advanceTimersByTime(500))
+    expect(leaf(container)).toBeNull()
+    act(() => vi.advanceTimersByTime(600))
+    expect(leaf(container)).toHaveClass('cv-book__leaf--next')
+    expect(sound.play).toHaveBeenCalledWith('pageFlip', { onlyIfUnlocked: true })
+
+    endTurn(container)
+    act(() => vi.advanceTimersByTime(3000))
+    expect(leaf(container)).toBeNull()
+    act(() => vi.advanceTimersByTime(2500))
+    expect(leaf(container)).toHaveClass('cv-book__leaf--next')
+  } finally {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  }
+})
