@@ -268,5 +268,7 @@
   "candidate_job_fit_tabs_label": "Các phần của kết quả",
   "candidate_job_fit_model": "Mô hình AI: {models}",
   "candidate_job_fit_next_step": "Nên làm trước",
-  "candidate_job_fit_all_suggestions": "Xem cả {count} gợi ý"
+  "candidate_job_fit_all_suggestions": "Xem cả {count} gợi ý",
+  "candidate_cv_showcase_pick": "Chọn mẫu CV",
+  "candidate_cv_showcase_view": "Xem mẫu {name}"
 }

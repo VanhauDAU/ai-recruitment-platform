@@ -268,5 +268,7 @@
   "candidate_job_fit_tabs_label": "Result sections",
   "candidate_job_fit_model": "AI model: {models}",
   "candidate_job_fit_next_step": "Do this first",
-  "candidate_job_fit_all_suggestions": "See all {count} tips"
+  "candidate_job_fit_all_suggestions": "See all {count} tips",
+  "candidate_cv_showcase_pick": "Choose a CV template",
+  "candidate_cv_showcase_view": "View the {name} template"
 }
