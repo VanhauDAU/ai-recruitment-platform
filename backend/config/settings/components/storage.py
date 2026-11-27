@@ -1,5 +1,6 @@
 """Media, lưu trữ (local/R2), phiên upload cách ly và quét ClamAV."""
 
+import mimetypes
 from pathlib import Path
 
 from decouple import Csv
@@ -7,6 +8,11 @@ from decouple import Csv
 from config.env import config
 
 from .core import BASE_DIR
+
+# Python 3.11 trong image không có /etc/mime.types nên không biết .webp; django-storages đoán
+# Content-Type theo đuôi tệp, nên ảnh WebP (ảnh mẫu CV, ảnh người dùng tải lên) lên R2 thành
+# application/octet-stream. Khai báo ở đây vì mọi tiến trình (web, worker, manage.py) đều nạp.
+mimetypes.add_type('image/webp', '.webp')
 
 STATIC_URL = 'static/'
 
