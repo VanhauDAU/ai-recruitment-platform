@@ -8,6 +8,14 @@ Tất cả thay đổi đáng chú ý của dự án sẽ được ghi lại tro
 
 ### 2026-11-27
 
+#### Changed — Ảnh mẫu CV chuyển sang WebP, thẻ và sách mẫu dùng bản thu nhỏ
+
+- Ảnh mẫu CV sinh từ PDF lưu WebP chất lượng 85 thay PNG (đo một mẫu thật: 600px 85→36 KB,
+  1200px 224→96 KB). `SNAPSHOT_RENDERER_VERSION` lên `catalogue-snapshot-v3` nên ảnh cũ được
+  dựng lại khi chạy `regenerate_all_template_snapshots`; mẫu mới/xuất bản lại tự sinh WebP.
+- `templatePreviewForColor` (thẻ `/mau-cv`, sách mẫu trang chủ) ưu tiên bản 600px thay bản 1200px;
+  trang chi tiết mẫu vẫn dùng bản lớn. Mỗi trang sách trên trang chủ từ ~224 KB còn ~36 KB.
+
 #### Changed — Mẫu CV trang chủ thành cuốn sách đang lật trang
 
 - Khối "Tạo CV ấn tượng" thay băng chuyền 3D bằng "Sổ tay mẫu CV": bìa → mỗi mẫu một trang
