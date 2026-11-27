@@ -5,19 +5,19 @@ const AUTO_FLIP_MS = 5000
 // Người dùng vừa chạm/vuốt/kéo thanh trang: đợi một lúc rồi mới tự lật lại.
 const RESUME_AFTER_TOUCH_MS = 9000
 const SWIPE_PX = 40
+// Sách luôn mở hai trang, mỗi lần lật một lá (hai trang mới).
+const STEP = 2
 
 export const wrapPage = (index, count) => ((index % count) + count) % count
 
 /**
- * Trạng thái cuốn sách mẫu CV: `first` là trang đầu đang mở (chia hết cho `step`, 2 trang
- * mỗi lần mở từ sm, 1 trang trên điện thoại), `turning` là chiều đang lật. Lật xong
+ * Trạng thái cuốn sách mẫu CV: `first` là trang trái đang mở (số chẵn), `turning` là chiều
+ * đang lật. Mọi cỡ màn hình cùng một cuốn sách mở hai trang. Lật xong
  * (animationend của lá sách) mới đổi trang. Tự lật khi sách trong khung nhìn, tab đang
  * hiện, không bị tạm dừng và không bật giảm chuyển động (lúc đó lật tức thì, không hiệu ứng).
  */
 export function useFlipBook(count) {
-  const spread = useMediaQuery('(min-width: 640px)')
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
-  const step = spread ? 2 : 1
   const [page, setPage] = useState(0)
   const [turning, setTurning] = useState(null)
   const [playing, setPlaying] = useState(true)
@@ -25,17 +25,17 @@ export function useFlipBook(count) {
   const bookRef = useRef(null)
   const resumeTimer = useRef(null)
   const swipe = useRef({ x: 0, moved: false })
-  const first = count ? wrapPage(page - (page % step), count) : 0
-  const canTurn = count > step
+  const first = count ? wrapPage(page - (page % STEP), count) : 0
+  const canTurn = count > STEP
 
   function turn(direction) {
     if (!canTurn || turning) return
-    if (reducedMotion) setPage(wrapPage(first + (direction === 'next' ? step : -step), count))
+    if (reducedMotion) setPage(wrapPage(first + (direction === 'next' ? STEP : -STEP), count))
     else setTurning(direction)
   }
 
   function finishTurn() {
-    setPage(wrapPage(first + (turning === 'next' ? step : -step), count))
+    setPage(wrapPage(first + (turning === 'next' ? STEP : -STEP), count))
     setTurning(null)
   }
 
@@ -76,7 +76,6 @@ export function useFlipBook(count) {
   return {
     bookRef,
     first,
-    step,
     turning,
     playing,
     canTurn,

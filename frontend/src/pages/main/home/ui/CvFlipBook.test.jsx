@@ -3,10 +3,8 @@ import { MemoryRouter } from 'react-router'
 import { beforeEach, expect, test, vi } from 'vitest'
 import CvFlipBook from './CvFlipBook'
 
-const media = vi.hoisted(() => ({ spread: true, reduced: false }))
-vi.mock('@/shared/hooks/use-media-query', () => ({
-  useMediaQuery: (query) => (query.includes('reduced-motion') ? media.reduced : media.spread),
-}))
+const media = vi.hoisted(() => ({ reduced: false }))
+vi.mock('@/shared/hooks/use-media-query', () => ({ useMediaQuery: () => media.reduced }))
 
 const TEMPLATES = ['Thanh Lịch', 'Chuyên Nghiệp', 'Hiện Đại', 'Đỉnh Cao'].map((name, index) => ({
   public_id: `t${index}`,
@@ -22,7 +20,6 @@ const leaf = (container) => container.querySelector('.cv-book__leaf')
 const endTurn = (container) => act(() => fireEvent(leaf(container), new Event('webkitAnimationEnd', { bubbles: true })))
 
 beforeEach(() => {
-  media.spread = true
   media.reduced = false
 })
 
@@ -52,22 +49,6 @@ test('previous from the first spread wraps to the last one with the "see all" pa
 
   expect(screen.getByRole('link', { name: /Xem tất cả mẫu CV/ })).toHaveAttribute('href', '/mau-cv')
   expect(screen.getAllByText('Trang 5–6/6').length).toBeGreaterThan(0)
-})
-
-test('phones keep an open book: the read page stays on the left, one page per turn', () => {
-  media.spread = false
-  const { container } = renderBook()
-  const left = () => container.querySelector('.cv-book__page--left')
-  const right = () => container.querySelector('.cv-book__page--right')
-
-  expect(right()).toHaveTextContent('Sổ tay mẫu CV')
-  fireEvent.click(screen.getByRole('button', { name: 'Lật sang trang sau' }))
-  expect(leaf(container).querySelector('.cv-book__face--back')).toHaveTextContent('Sổ tay mẫu CV')
-  endTurn(container)
-
-  expect(left()).toHaveTextContent('Sổ tay mẫu CV')
-  expect(right()).toHaveTextContent('Thanh Lịch')
-  expect(screen.getAllByText('Trang 2/6').length).toBeGreaterThan(0)
 })
 
 test('reduced motion turns instantly without a leaf', () => {
