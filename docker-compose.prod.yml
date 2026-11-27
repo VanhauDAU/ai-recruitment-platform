@@ -69,10 +69,12 @@ x-prod-env: &prod-env
   EMPLOYER_UPLOAD_SESSION_REQUIRED: 'False'
   CANDIDATE_UPLOAD_SESSION_REQUIRED: 'False'
   MATCHING_ENCODER_BACKEND: sentence_transformers
-  # Đường dẫn và phiên bản đổi cùng nhau (model_card.json trong thư mục phải khớp). Bật mô
-  # hình đã huấn luyện: docs/06-deployment/van-hanh-va-kill-switch.md.
-  MATCHING_MODEL_PATH: /models/multilingual-e5-base/zs-v1
-  MATCHING_MODEL_VERSION: e5-base-zs-v1
+  # Đường dẫn và phiên bản đổi cùng nhau (model_card.json trong thư mục phải khớp). Hai mô
+  # hình đã huấn luyện, bật 27/11; quay về mô hình gốc (zs-v1, e5-base-zs-v1, reranker none):
+  # docs/06-deployment/van-hanh-va-kill-switch.md.
+  MATCHING_MODEL_PATH: /models/multilingual-e5-base/wise-v1
+  MATCHING_MODEL_VERSION: e5-base-wise-v1
+  MATCHING_RERANKER_BACKEND: cross_encoder
 
 # Kiểm worker Celery còn nhận lệnh qua broker (tiến trình chính trả lời ngay cả
 # khi mọi slot đang bận). Mỗi lần kiểm nạp settings (~1–2 giây CPU) nên thưa.
@@ -321,10 +323,10 @@ services:
       - ./ml/models:/models:ro
     pids_limit: 128
     cpus: 2
-    # e5-base nằm sẵn trong RAM: đo cục bộ 25/11 ~0,9 GB lúc rảnh sau khi nạp mô
-    # hình; phần còn lại cho batch mã hóa + healthcheck. Đo lại khi rehearsal
-    # (`docker stats` lúc chạy matching_backfill) rồi chỉnh.
-    mem_limit: 1792m
+    # Bi-encoder e5-base và cross-encoder cùng nằm trong RAM: đo cục bộ 27/11 đỉnh
+    # 2,05–2,14 GB khi chấm (chỉ bi-encoder: 1,48 GB). Phần còn lại cho healthcheck
+    # (`celery inspect ping` thêm ~75 MB). Tắt cross-encoder thì 1792m là đủ.
+    mem_limit: 2560m
     stop_grace_period: 40s
     healthcheck:
       <<: *celery-healthcheck
