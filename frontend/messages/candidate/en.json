@@ -260,5 +260,13 @@
   "candidate_job_fit_trigger_label": "See how well your CV fits this job",
   "candidate_job_fit_fab_label": "Check CV fit",
   "candidate_job_fit_trigger_title": "Check your fit",
-  "candidate_job_fit_trigger_hint": "Compares your CV with each requirement of the job and points out missing skills."
+  "candidate_job_fit_trigger_hint": "Compares your CV with each requirement of the job and points out missing skills.",
+  "candidate_job_fit_tab_overview": "Overview",
+  "candidate_job_fit_tab_skills": "Skills",
+  "candidate_job_fit_tab_requirements": "Requirements",
+  "candidate_job_fit_tab_suggestions": "Tips",
+  "candidate_job_fit_tabs_label": "Result sections",
+  "candidate_job_fit_model": "AI model: {models}",
+  "candidate_job_fit_next_step": "Do this first",
+  "candidate_job_fit_all_suggestions": "See all {count} tips"
 }

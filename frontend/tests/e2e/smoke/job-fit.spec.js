@@ -104,15 +104,22 @@ test('candidate smoke: job fit analyses a CV and explains the result with eviden
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/${testInfo.project.name}-2-progress.png` })
 
   await expect(dialog.getByRole('img', { name: '74 điểm, mức Phù hợp' })).toBeVisible()
-  await expect(dialog.getByText('Xây dựng trang thanh toán bằng ReactJS và TypeScript.')).toBeVisible()
   await expect(dialog.getByText(/không phải quyết định tuyển dụng/)).toBeVisible()
+  await expect(dialog.getByText('Mô hình AI: e5-base-zs-v1')).toBeVisible()
+  // Hộp thoại nằm trọn trong màn hình ở mọi cỡ: chỉ phần nội dung tab cuộn.
+  const frame = await dialog.locator('.ant-modal-container').boundingBox()
+  const viewport = page.viewportSize()
+  expect(frame.y).toBeGreaterThanOrEqual(0)
+  expect(frame.y + frame.height).toBeLessThanOrEqual(viewport.height + 1)
+  expect(frame.x + frame.width).toBeLessThanOrEqual(viewport.width + 1)
+  await dialog.getByRole('tab', { name: /Kỹ năng/ }).click()
+  await expect(dialog.getByText('Xây dựng trang thanh toán bằng ReactJS và TypeScript.')).toBeVisible()
   await expect(dialog.getByText('chỉ liệt kê')).toBeVisible()
   await page.waitForTimeout(1000)
   if (SHOTS) {
-    await page.screenshot({ path: `${SHOTS}/${testInfo.project.name}-3-result.png` })
-    await dialog.locator('.ant-modal-body').evaluate((node) => node.scrollBy(0, 2000)).catch(() => {})
-    await page.mouse.wheel(0, 1600)
-    await page.screenshot({ path: `${SHOTS}/${testInfo.project.name}-4-result-bottom.png` })
+    await page.screenshot({ path: `${SHOTS}/${testInfo.project.name}-3-skills.png` })
+    await dialog.getByRole('tab', { name: /Yêu cầu/ }).click()
+    await page.screenshot({ path: `${SHOTS}/${testInfo.project.name}-4-requirements.png` })
   }
 
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
