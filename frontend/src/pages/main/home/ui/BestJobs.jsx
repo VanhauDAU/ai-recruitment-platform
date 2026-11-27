@@ -162,7 +162,7 @@ export default function BestJobs({ categories = [], pageSize }) {
         </div>
       )}
 
-      <BestJobsResults animKey={animKey} jobs={jobs} loading={loading} pageSize={pageSize} />
+      <BestJobsResults animKey={animKey} jobs={jobs} loading={loading} pageSize={pageSize} fillPage={totalPages > 1} />
 
       {totalPages > 1 && (
         <div className="best-jobs__pager mt-4 flex items-center justify-center gap-4">
