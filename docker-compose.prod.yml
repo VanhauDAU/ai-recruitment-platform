@@ -69,7 +69,10 @@ x-prod-env: &prod-env
   EMPLOYER_UPLOAD_SESSION_REQUIRED: 'False'
   CANDIDATE_UPLOAD_SESSION_REQUIRED: 'False'
   MATCHING_ENCODER_BACKEND: sentence_transformers
+  # Đường dẫn và phiên bản đổi cùng nhau (model_card.json trong thư mục phải khớp). Bật mô
+  # hình đã huấn luyện: docs/06-deployment/van-hanh-va-kill-switch.md.
   MATCHING_MODEL_PATH: /models/multilingual-e5-base/zs-v1
+  MATCHING_MODEL_VERSION: e5-base-zs-v1
 
 # Kiểm worker Celery còn nhận lệnh qua broker (tiến trình chính trả lời ngay cả
 # khi mọi slot đang bận). Mỗi lần kiểm nạp settings (~1–2 giây CPU) nên thưa.

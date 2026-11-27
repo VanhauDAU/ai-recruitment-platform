@@ -24,6 +24,8 @@ celerybeat-schedule*
 # ML workspace: mô hình đã huấn luyện và dữ liệu thô không commit
 ml/models/
 ml/data/
+# Trang chấm mù sinh từ mẫu (build_audit_page.py), chứa nguyên nội dung tin và CV
+ml/labeling/audit_blind.html
 
 # Python tooling
 .coverage

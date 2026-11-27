@@ -1,4 +1,4 @@
-"""Năm tiêu chí của công thức `hybrid-v2`, mỗi tiêu chí cho điểm 0–100.
+"""Năm tiêu chí của công thức `hybrid-v3`, mỗi tiêu chí cho điểm 0–100.
 
 Tiêu chí trả `status`:
 - `ok`: tính được, có điểm;
@@ -8,7 +8,7 @@ Tiêu chí trả `status`:
 
 | Tiêu chí | Cách tính |
 | --- | --- |
-| Kỹ năng | `Σ(w·m)/Σw`, w = trọng số kỹ năng × (1 cần có / 0,5 nên có), m = 1 khi CV có kỹ năng (theo danh mục); khớp theo câu gần nghĩa chỉ bật khi `Calibration.semantic_skills` |
+| Kỹ năng | `Σ(w·m)/Σw` trên các đơn vị chấm; đơn vị là một kỹ năng đứng riêng hoặc một nhóm kỹ năng thay thế nhau ("một trong", "hoặc"; xem `skill_groups.py`); w = trọng số kỹ năng × (1 cần có / 0,5 nên có), m = 1 khi CV có kỹ năng (theo danh mục, hoặc cross-encoder xác nhận một câu của CV cho thấy kỹ năng đó, xem `requirements.py`), với nhóm là có ít nhất một kỹ năng trong nhóm; khớp theo cosine của bi-encoder chỉ bật khi `Calibration.semantic_skills` |
 | Kinh nghiệm | `0,4·Y·R/100 + 0,6·R`; Y theo số năm (đủ 100, thiếu 1 bậc 60, thiếu ≥ 2 bậc 20); R = mức liên quan (trung bình điểm toàn văn và điểm chức danh, xem `semantic.py`). Y nhân R/100: năm làm việc khác nghề không được tính |
 | Học vấn | Đủ hoặc vượt 100, thấp 1 bậc 50, thấp ≥ 2 bậc 0 |
 | Cấp bậc | Lệch 0/1/2/≥3 bậc: 100/70/40/10, tính cả hai chiều |
@@ -66,6 +66,25 @@ class MatchInput:
     relevance_detail: dict
     # Có nhận kỹ năng viết khác tên qua câu gần nghĩa không (xem `Calibration`).
     semantic_skills: bool = False
+    # Nhóm kỹ năng thay thế nhau của tin: [(skill_id, ...)] (xem `skill_groups.py`).
+    skill_groups: tuple = ()
+    # Kỹ năng CV không ghi tên nhưng cross-encoder xác nhận: {skill_id: (xác suất, câu CV)}.
+    skill_evidence: dict = field(default_factory=dict)
+
+
+def _skill_match(data, skill, cv_skills):
+    """Cách CV đáp ứng một kỹ năng của tin, hoặc None."""
+    own = cv_skills.get(skill['skill_id'])
+    if own is not None:
+        return {'match_type': 'exact', 'similarity': None, 'evidence': own['evidence']}
+    # Cross-encoder xác nhận một câu của CV cho thấy kỹ năng này dù CV không ghi đúng tên.
+    if skill['skill_id'] in data.skill_evidence:
+        probability, sentence = data.skill_evidence[skill['skill_id']]
+        return {'match_type': 'semantic', 'similarity': probability, 'evidence': sentence}
+    similarity, sentence = data.skill_hits.get(skill['name'], (0.0, ''))
+    if data.semantic_skills and sentence and similarity >= data.calibration.skill:
+        return {'match_type': 'semantic', 'similarity': similarity, 'evidence': sentence}
+    return None
 
 
 def skills(data):
@@ -73,23 +92,30 @@ def skills(data):
     if not job_skills:
         return Component('skills', status='not_required')
     cv_skills = {skill['skill_id']: skill for skill in data.cv['skills']}
-    matched, missing = [], []
-    total = earned = 0.0
+    # Đơn vị chấm: một kỹ năng đứng riêng, hoặc một nhóm kỹ năng thay thế nhau (số
+    # thứ tự nhóm tính từ 1). Nhóm nặng bằng kỹ năng nặng nhất của nó và đạt khi CV
+    # có ít nhất một kỹ năng trong nhóm.
+    group_of = {
+        skill_id: number
+        for number, members in enumerate(data.skill_groups, start=1)
+        for skill_id in members
+    }
+    weights, satisfied, rows = {}, set(), []
     for skill in job_skills:
         factor = 1.0 if skill['importance'] == 'required' else PREFERRED_SKILL_FACTOR
-        weight = skill['weight'] * factor
-        total += weight
-        own = cv_skills.get(skill['skill_id'])
-        similarity, sentence = data.skill_hits.get(skill['name'], (0.0, ''))
-        if own is not None:
-            match = {'match_type': 'exact', 'similarity': None, 'evidence': own['evidence']}
-        elif data.semantic_skills and sentence and similarity >= data.calibration.skill:
-            match = {'match_type': 'semantic', 'similarity': similarity, 'evidence': sentence}
-        else:
-            missing.append({'name': skill['name'], 'importance': skill['importance']})
-            continue
-        earned += weight
-        matched.append({'name': skill['name'], 'importance': skill['importance'], **match})
+        group = group_of.get(skill['skill_id'])
+        unit = ('group', group) if group else ('skill', skill['skill_id'])
+        weights[unit] = max(weights.get(unit, 0.0), skill['weight'] * factor)
+        match = _skill_match(data, skill, cv_skills)
+        if match is not None:
+            satisfied.add(unit)
+        row = {'name': skill['name'], 'importance': skill['importance']}
+        rows.append((unit, {**row, 'group': group} if group else row, match))
+    total = sum(weights.values())
+    earned = sum(weight for unit, weight in weights.items() if unit in satisfied)
+    matched = [{**row, **match} for _, row, match in rows if match is not None]
+    # Kỹ năng CV không có nhưng nhóm của nó đã đạt nhờ kỹ năng khác thì không phải là thiếu.
+    missing = [row for unit, row, match in rows if match is None and unit not in satisfied]
     job_ids = {skill['skill_id'] for skill in data.job['skills']}
     extra = [
         skill['name']
@@ -98,7 +124,12 @@ def skills(data):
     ]
     # Tin có yêu cầu kỹ năng mà CV không thể hiện thì là 0 điểm, không phải
     # "thiếu dữ liệu": chấm theo những gì CV viết.
-    detail = {'matched': matched, 'missing': missing, 'extra': extra}
+    detail = {
+        'matched': matched,
+        'missing': missing,
+        'extra': extra,
+        'units': {'met': len(satisfied), 'total': len(weights)},
+    }
     return Component('skills', 100 * earned / total, detail=detail)
 
 

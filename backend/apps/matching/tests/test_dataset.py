@@ -11,6 +11,7 @@ from apps.jobs.tests.factories import open_visibility_window
 from apps.skills.models import Skill, SkillGroup
 
 from ..models import jobs_for_profile
+from ..services.dataset import export_texts
 from ..services.extraction import EXTRACTOR_VERSION, ExtractionError, job_profile
 from ..services.extraction.job import role_title
 from .profile_schema import schema_errors
@@ -19,6 +20,7 @@ REQUIREMENTS = (
     '<p>Yêu cầu ứng viên:</p><ul>'
     '<li>Có ít nhất 2 năm kinh nghiệm phát triển ReactJS.</li>'
     '<li>Giới tính: Nam, độ tuổi 25 - 30.</li>'
+    '<li>Ưu tiên nữ cao từ 158cm trở lên.</li>'
     '<li>Thành thạo Excel</li></ul><p>Required Skills</p>'
 )
 
@@ -119,6 +121,55 @@ class JobProfileTests(TestCase):
         rows = [json.loads(line) for line in output.getvalue().splitlines()]
         self.assertEqual([row['job_public_id'] for row in rows], [self.job.public_id])
         self.assertEqual(rows[0]['extractor_version'], EXTRACTOR_VERSION)
+        self.assertTrue(rows[0]['text'].startswith('Frontend Developer'))
         skills = StringIO()
         call_command('matching_export_dataset', 'skills', stdout=skills)
         self.assertIn('reactjs', json.loads(skills.getvalue().splitlines()[0])['terms'])
+
+
+class TrainingTextTests(TestCase):
+    """Văn bản huấn luyện của tài liệu ngoài DB được dựng bằng đúng hàm của sản phẩm."""
+
+    CV = {
+        'headline': 'Frontend Developer',
+        'summary': 'Hai năm phát triển giao diện web bằng ReactJS.',
+        'experience': [
+            {
+                'role': 'Frontend Developer',
+                'company': 'Công ty A',
+                'start_date': '2024-06',
+                'end_date': None,
+                'highlights': ['Xây dựng trang thanh toán bằng ReactJS và TypeScript.'],
+            }
+        ],
+        'education': {
+            'degree': 'Cử nhân CNTT',
+            'institution': 'ĐH B',
+            'degree_level': 'university',
+        },
+        'skills': [{'name': 'ReactJS', 'level': 4}],
+    }
+    JOB = {
+        'id': 'job-1',
+        'kind': 'job',
+        'title': 'Frontend Developer (ReactJS) - Lương 20 triệu',
+        'description': 'Phát triển giao diện thương mại điện tử cho hàng triệu khách hàng. ' * 4,
+        'requirements': 'Có ít nhất 2 năm kinh nghiệm phát triển ReactJS.\nGiới tính: Nam.',
+    }
+
+    def test_job_and_cv_texts_use_the_product_chunking(self):
+        cv = {'id': 'TR-0001', 'kind': 'cv', 'language': 'vi', 'data': self.CV}
+        job_row, cv_row = export_texts([self.JOB, cv])
+
+        self.assertEqual(job_row['title'], 'Frontend Developer')  # bỏ ngoặc và lương như lúc chạy
+        self.assertNotIn('Giới tính', job_row['text'])
+        self.assertIn(
+            {'section': 'requirement', 'text': 'Có ít nhất 2 năm kinh nghiệm phát triển ReactJS.'},
+            job_row['chunks'],
+        )
+        self.assertEqual(cv_row['title'], 'Frontend Developer')
+        self.assertIn('Xây dựng trang thanh toán bằng ReactJS và TypeScript.', cv_row['text'])
+
+    def test_too_short_job_is_reported_not_raised(self):
+        row = next(export_texts([{**self.JOB, 'description': 'Ngắn', 'requirements': ''}]))
+        self.assertEqual(row, {'id': 'job-1', 'error': 'job_text_too_short'})

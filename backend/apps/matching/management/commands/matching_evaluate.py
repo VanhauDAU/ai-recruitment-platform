@@ -30,8 +30,9 @@ from apps.jobs.selectors import rule_scores_for_cv
 from ...models import jobs_for_profile
 from ...selectors import cvs_for_profile
 from ...services import SkillCatalog, get_encoder
-from ...services.encoder import SentenceTransformerEncoder
-from ...services.evaluation import evaluate_pairs
+from ...services.encoder import SentenceTransformerEncoder, verify_model_card
+from ...services.evaluation import InlineCv, evaluate_pairs, inline_cv
+from ...services.reranker import CrossEncoderReranker
 from ...services.scoring import ABLATIONS
 
 
@@ -41,6 +42,7 @@ def _encoder(model_path, model_version, no_prefix):
     if not model_version:
         raise CommandError('--model-path phải đi kèm --model-version.')
     prefixes = {'query': '', 'passage': ''} if no_prefix else None
+    verify_model_card(model_path, model_version)
     return SentenceTransformerEncoder(model_path, model_version, prefixes=prefixes)
 
 
@@ -52,6 +54,10 @@ class Command(BaseCommand):
         parser.add_argument('--model-path', help='Thư mục mô hình; mặc định là mô hình sản phẩm.')
         parser.add_argument('--model-version', help='Tên phiên bản đi kèm --model-path.')
         parser.add_argument('--no-prefix', action='store_true', help='Không thêm tiền tố E5.')
+        parser.add_argument(
+            '--reranker-path', help='Thư mục cross-encoder; không có thì không dùng.'
+        )
+        parser.add_argument('--reranker-version', help='Tên phiên bản đi kèm --reranker-path.')
         parser.add_argument(
             '--cv-type', choices=UserCv.CvType.values, default=UserCv.CvType.BUILDER.value
         )
@@ -68,6 +74,13 @@ class Command(BaseCommand):
         except (OSError, json.JSONDecodeError) as error:
             raise CommandError(f'Không đọc được danh sách cặp: {error}') from error
 
+        # Danh sách cặp có thể là một đối tượng `{pairs, cvs, marks}`: `cvs` là CV nằm ngoài
+        # DB (`{id, language, data}` như của `import_cv_documents`), `marks` là các bộ mốc quy
+        # đổi cosine cần chấm thêm (xem `evaluate_pairs`).
+        inline, marks = [], None
+        if isinstance(requested, dict):
+            inline, marks = requested.get('cvs', []), requested.get('marks')
+            requested = requested['pairs']
         jobs = {
             job.public_id: job
             for job in jobs_for_profile(statuses=None).filter(
@@ -78,19 +91,28 @@ class Command(BaseCommand):
             cv.user.email.split('@', 1)[0].upper(): cv
             for cv in cvs_for_profile(email_domain).filter(cv_type=cv_type)
         }
+        cvs.update({item['id']: inline_cv(item) for item in inline})
         known = [pair for pair in requested if pair['jd'] in jobs and pair['cv'] in cvs]
         encoder = _encoder(options['model_path'], options['model_version'], options['no_prefix'])
+        reranker = None
+        if options['reranker_path']:
+            if not options['reranker_version']:
+                raise CommandError('--reranker-path phải đi kèm --reranker-version.')
+            verify_model_card(options['reranker_path'], options['reranker_version'])
+            reranker = CrossEncoderReranker(options['reranker_path'], options['reranker_version'])
         rows = evaluate_pairs(
             [(jobs[pair['jd']], cvs[pair['cv']]) for pair in known],
             encoder=encoder,
             catalog=SkillCatalog.load(),
             detail=options['detail'],
             ablation=tuple(options['ablation']),
+            marks=marks,
+            reranker=reranker,
         )
         rule_scores = {}
         for pair, row in zip(known, rows, strict=True):
             row = {'jd': pair['jd'], 'cv': pair['cv'], 'model_version': encoder.version, **row}
-            if rule_baseline:
+            if rule_baseline and not isinstance(cvs[pair['cv']], InlineCv):
                 cv = cvs[pair['cv']]
                 if cv.pk not in rule_scores:
                     rule_scores[cv.pk] = rule_scores_for_cv(

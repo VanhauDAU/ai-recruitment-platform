@@ -16,7 +16,7 @@ from django.db.models.fields.json import KT
 
 from apps.sitecontent.selectors import get_bool_setting
 
-from ..domain import APPLICATION_RANKING_FLAG, SCORING_VERSION, model_version
+from ..domain import APPLICATION_RANKING_FLAG, model_version, scoring_cache_version
 from ..models import MatchAnalysis
 
 RANKING = MatchAnalysis.Purpose.APPLICATION_RANKING
@@ -34,7 +34,7 @@ def _rankings(cv_version, job):
         job_id=job,
         purpose=RANKING,
         model_version=model_version(),
-        scoring_version=SCORING_VERSION,
+        scoring_version=scoring_cache_version(),
     ).order_by('-created_at')
 
 

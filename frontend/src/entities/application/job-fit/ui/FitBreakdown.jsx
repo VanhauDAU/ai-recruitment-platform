@@ -5,6 +5,7 @@ import {
   criterionStatusLabel,
   criterionSummary,
   fitLevelLabel,
+  groupMissingSkills,
 } from '../model/job-fit'
 import './job-fit.css'
 
@@ -37,6 +38,7 @@ function Criterion({ component }) {
  */
 export default function FitBreakdown({ result, showEvidence = true }) {
   const { overall, components, skills, flags = {} } = result
+  const missing = groupMissingSkills(skills.missing)
   const notes = [
     confidenceLabel(overall.confidence),
     flags.relevance_discount_applied && m.fit_note_relevance_discount(),
@@ -81,13 +83,13 @@ export default function FitBreakdown({ result, showEvidence = true }) {
         ) : <p className="fit-empty">{m.fit_skills_matched_empty()}</p>}
       </div>
 
-      {skills.missing.length > 0 && (
+      {missing.length > 0 && (
         <div>
-          <p className="fit-subheading">{m.fit_skills_missing({ count: skills.missing.length })}</p>
+          <p className="fit-subheading">{m.fit_skills_missing({ count: missing.length })}</p>
           <ul className="fit-chips">
-            {skills.missing.map((skill) => (
-              <li key={skill.name} className={skill.importance === 'required' ? 'fit-missing fit-missing--required' : 'fit-missing'}>
-                {skill.name}
+            {missing.map((skill) => (
+              <li key={skill.key} className={skill.importance === 'required' ? 'fit-missing fit-missing--required' : 'fit-missing'}>
+                {skill.names.join(' / ')}
                 {skill.importance !== 'required' && ` (${m.fit_skill_preferred()})`}
               </li>
             ))}

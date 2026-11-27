@@ -1,0 +1,5018 @@
+{
+ "annotator": "claude",
+ "rubric": "ml/labeling/requirement_rubric.md",
+ "pairs": [
+  {
+   "id": "C001",
+   "part": "calibration",
+   "job": "JD-50",
+   "cv": "TR-48-08",
+   "requirement": "Lưu ý: Hình thức làm việc Fulltime toàn thời gian, không hỗ trợ ứng viên còn vướng bận lịch học.",
+   "sentence": "Tôi đang tìm kiếm cơ hội làm việc trong lĩnh vực Logistics để phát triển kỹ năng của mình.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C002",
+   "part": "calibration",
+   "job": "JD-32",
+   "cv": "TR-32-04",
+   "requirement": "Experience in Cloud Architect or Solution Architect",
+   "sentence": "Cloud Engineer — SangThaiTech",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C003",
+   "part": "calibration",
+   "job": "JD-31",
+   "cv": "TR-31-01",
+   "requirement": "Am hiểu về consol, LCL, FCL.",
+   "sentence": "Có hơn 3 năm kinh nghiệm trong lĩnh vực tư vấn và hỗ trợ khách hàng, tôi am hiểu về quy định xuất khẩu và các phương thức vận chuyển quốc tế.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C004",
+   "part": "calibration",
+   "job": "JD-48",
+   "cv": "TR-50-09",
+   "requirement": "Proficient in MS Office (Word, Excel, PowerPoint).",
+   "sentence": "Nhân Viên Tư Vấn Online — TechPro Solutions",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C005",
+   "part": "calibration",
+   "job": "JD-98",
+   "cv": "TR-92-07",
+   "requirement": "Sử dụng tốt Excel và có kinh nghiệm làm việc với phần mềm quản lý kho.",
+   "sentence": "Đảm bảo trải nghiệm người dùng thân thiện và dễ sử dụng thông qua việc tối ưu hóa giao diện và chức năng.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C006",
+   "part": "calibration",
+   "job": "JD-32",
+   "cv": "TR-32-12",
+   "requirement": "Potential candidates are welcome and may join a training program prior to the project assignment.",
+   "sentence": "Hỗ trợ đội ngũ vận hành trong việc quản lý và duy trì hệ thống, đảm bảo tính ổn định và hiệu quả của hệ thống.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C007",
+   "part": "calibration",
+   "job": "JD-84",
+   "cv": "TR-84-10",
+   "requirement": "Có thể đọc hiểu tài liệu/manual và trình bày trong báo cáo một cách logic",
+   "sentence": "Đọc hiểu tài liệu về quy định tuyển dụng và chính sách nhân sự để triển khai các hoạt động.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C008",
+   "part": "calibration",
+   "job": "JD-61",
+   "cv": "TR-92-13",
+   "requirement": "Ưu tiên ứng viên có kinh nghiệm trong ngành thực phẩm chức năng, mỹ phẩm, FMCG hoặc các lĩnh vực liên quan.",
+   "sentence": "Tôi đã tham gia vào nhiều dự án, bao gồm thiết kế bao bì sản phẩm, card giới thiệu và banner quảng cáo.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C009",
+   "part": "calibration",
+   "job": "JD-98",
+   "cv": "TR-09-03",
+   "requirement": "Sử dụng tốt Excel và có kinh nghiệm làm việc với phần mềm quản lý kho.",
+   "sentence": "Tôi có kỹ năng sắp xếp công việc hiệu quả, cẩn thận trong công việc và sử dụng thành thạo phần mềm quản lý kho.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C010",
+   "part": "calibration",
+   "job": "JD-50",
+   "cv": "TR-50-01",
+   "requirement": "Chưa có kinh nghiệm sẽ được đào tạo bài bản",
+   "sentence": "Hiện đang tìm kiếm cơ hội mới để phát triển năng lực của mình.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C011",
+   "part": "calibration",
+   "job": "JD-98",
+   "cv": "TR-98-05",
+   "requirement": "Ưu tiên ứng viên từng làm việc tại kho hàng công nghiệp, kho nguyên vật liệu, kho sản xuất hoặc kho hàng có quy mô lớn.",
+   "sentence": "Ưu tiên làm việc tại kho công nghiệp quy mô lớn.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C012",
+   "part": "calibration",
+   "job": "JD-98",
+   "cv": "TR-98-05",
+   "requirement": "Có khả năng đọc hiểu chứng từ nhập – xuất kho, tổng hợp và đối chiếu số liệu.",
+   "sentence": "Đối chiếu và tổng hợp số liệu nhập – xuất kho, đảm bảo độ chính xác 99.5%.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C013",
+   "part": "calibration",
+   "job": "JD-32",
+   "cv": "TR-48-01",
+   "requirement": "Experience working in multinational or global project environments.",
+   "sentence": "Client Relationship Management System — Project Manager",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C014",
+   "part": "calibration",
+   "job": "JD-98",
+   "cv": "TR-98-05",
+   "requirement": "Có khả năng đọc hiểu chứng từ nhập – xuất kho, tổng hợp và đối chiếu số liệu.",
+   "sentence": "Ứng dụng Excel trong đếm, tính toán tồn kho và lập báo cáo hàng tuần.",
+   "rank": 2,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C015",
+   "part": "calibration",
+   "job": "JD-37",
+   "cv": "TR-09-08",
+   "requirement": "Ưu tiên ứng viên biết chạy ads hoặc đã có kinh nghiệm chạy ads",
+   "sentence": "Tôi là một người trung thực, chu đáo và có khả năng sắp xếp công việc hiệu quả.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C016",
+   "part": "calibration",
+   "job": "JD-32",
+   "cv": "TR-32-12",
+   "requirement": "Experience in Cloud Architect or Solution Architect",
+   "sentence": "Cloud Engineer — CloudMaster",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C017",
+   "part": "calibration",
+   "job": "JD-31",
+   "cv": "TR-84-07",
+   "requirement": "Sử dụng tốt vi tính văn phòng.",
+   "sentence": "Phối hợp với các bộ phận khác để đảm bảo hoạt động của văn phòng luôn suôn sẻ, từ việc tiếp nhận và xử lý giấy tờ đến việc sắp xếp lịch họp.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "partial"
+   ]
+  },
+  {
+   "id": "C018",
+   "part": "calibration",
+   "job": "JD-64",
+   "cv": "TR-48-05",
+   "requirement": "ISTQB or equivalent certification is a plus.",
+   "sentence": "Delivered presentations on sales strategies to cross-departmental teams, improving overall team performance.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C019",
+   "part": "calibration",
+   "job": "JD-48",
+   "cv": "TR-48-01",
+   "requirement": "Proficient in MS Office (Word, Excel, PowerPoint).",
+   "sentence": "Utilized Excel to manage inventory and track shipments, ensuring accurate billing and delivery schedules.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C020",
+   "part": "calibration",
+   "job": "JD-64",
+   "cv": "TR-64-01",
+   "requirement": "Hands-on experience with testing tools such as Selenium, JUnit, TestNG, Postman (for API testing), or equivalent tools.",
+   "sentence": "Developed and maintained automated test cases using Selenium and TestNG, ensuring consistency and reliability in the testing process.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C021",
+   "part": "calibration",
+   "job": "JD-48",
+   "cv": "TR-48-01",
+   "requirement": "Verbal/written communication and active listening skills.",
+   "sentence": "Leveraged active listening and CRM to build and maintain strong relationships with international clients, leading to a 20% increase in client retention rates.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C022",
+   "part": "calibration",
+   "job": "JD-92",
+   "cv": "TR-92-03",
+   "requirement": "hiểu cách kiểm soát tính nhất quán của sản phẩm và tối ưu chi phí AI.",
+   "sentence": "Utilized AutoCAD for detailed planning and implementation, ensuring a seamless transition for the company.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C023",
+   "part": "calibration",
+   "job": "JD-61",
+   "cv": "TR-92-04",
+   "requirement": "Khả năng làm việc nhóm: Tinh thần làm việc nhóm tốt, khả năng quản lý thời gian và dự án hiệu quả.",
+   "sentence": "Lãnh đạo đội nhóm trong việc phát triển nội dung truyền thông trực tuyến cho 5 công ty khách hàng khác nhau, đạt doanh thu trung bình 500 triệu đồng/tháng.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C024",
+   "part": "calibration",
+   "job": "JD-48",
+   "cv": "TR-50-09",
+   "requirement": "High attention to detail, accuracy, and the ability to work well under pressure.",
+   "sentence": "Nhân Viên Tư Vấn Online — TechPro Solutions",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C025",
+   "part": "calibration",
+   "job": "JD-92",
+   "cv": "TR-92-03",
+   "requirement": "Ứng viên phù hợp sẽ tham gia bài test video AI khoảng 30 giây.",
+   "sentence": "Created marketing materials using After Effects, including video testimonials and case studies, which increased project inquiries by 40%.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "partial",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C026",
+   "part": "calibration",
+   "job": "JD-37",
+   "cv": "TR-09-08",
+   "requirement": "Biết chỉnh sửa ảnh, video ở mức cơ bản",
+   "sentence": "Tôi là một người trung thực, chu đáo và có khả năng sắp xếp công việc hiệu quả.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C027",
+   "part": "calibration",
+   "job": "JD-32",
+   "cv": "TR-48-01",
+   "requirement": "Experience in cloud migration, landing zone implementation, disaster recovery, or cloud security projects.",
+   "sentence": "Executed comprehensive logistics solutions, including booking and documentation, for a wide range of clients, from small businesses to large corporations, totaling over 500 bookings annually.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C028",
+   "part": "calibration",
+   "job": "JD-64",
+   "cv": "TR-64-01",
+   "requirement": "Extensive experience in manual and automated testing for web and mobile applications.",
+   "sentence": "Proven track record in developing and executing automated test scripts and identifying bugs effectively.",
+   "rank": 2,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C029",
+   "part": "calibration",
+   "job": "JD-64",
+   "cv": "TR-64-08",
+   "requirement": "Proficiency in developing and executing automated test scripts.",
+   "sentence": "Có kinh nghiệm 43 tháng trong lĩnh vực tự động hóa kiểm thử phần mềm, đặc biệt là công nghệ Selenium và TestNG.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C030",
+   "part": "calibration",
+   "job": "JD-72",
+   "cv": "TR-72-10",
+   "requirement": "Học vấn / Education",
+   "sentence": "Kế toán công nợ — Ngân hàng Hạt Dẻ",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C031",
+   "part": "calibration",
+   "job": "JD-72",
+   "cv": "TR-31-14",
+   "requirement": "Có kỹ năng phối hợp liên phòng ban và giải quyết vấn đề tốt.",
+   "sentence": "Tham gia vào đội nhóm, hỗ trợ khách hàng giải quyết các vấn đề liên quan đến đơn hàng và chứng từ xuất khẩu, góp phần nâng cao chất lượng dịch vụ.",
+   "rank": 2,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "met"
+   ]
+  },
+  {
+   "id": "C032",
+   "part": "calibration",
+   "job": "JD-09",
+   "cv": "TR-98-02",
+   "requirement": "Coi trọng vệ sinh cá nhân và vệ sinh thực phẩm.",
+   "sentence": "Nhân viên Kho — Công ty Tín Phát",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C033",
+   "part": "calibration",
+   "job": "JD-48",
+   "cv": "TR-50-09",
+   "requirement": "Excellent negotiation, problem-solving, and customer-oriented mindset.",
+   "sentence": "Phát triển hơn 500 khách hàng mới thông qua các phương pháp telesales và consultative selling.",
+   "rank": 2,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C034",
+   "part": "calibration",
+   "job": "JD-32",
+   "cv": "TR-48-01",
+   "requirement": "Knowledge of AI/ML platforms, AI infrastructure, or GenAI architectures.",
+   "sentence": "Leveraged active listening and CRM to build and maintain strong relationships with international clients, leading to a 20% increase in client retention rates.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C035",
+   "part": "calibration",
+   "job": "JD-92",
+   "cv": "TR-92-00",
+   "requirement": "Có kỹ năng quay phim, chụp ảnh và hậu kỳ video.",
+   "sentence": "Learned and implemented basic multimedia design techniques, including video production and post-production with Premiere Pro and After Effects.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "met",
+    "partial"
+   ]
+  },
+  {
+   "id": "C036",
+   "part": "calibration",
+   "job": "JD-61",
+   "cv": "TR-61-15",
+   "requirement": "Creative Thinking: Ability to think creatively, with a keen sense of trends, and the capability to transform ideas into practical products.",
+   "sentence": "Áp dụng xu hướng thiết kế nội thất hiện đại và sáng tạo.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C037",
+   "part": "calibration",
+   "job": "JD-64",
+   "cv": "TR-64-01",
+   "requirement": "ISTQB or equivalent certification is a plus.",
+   "sentence": "Implemented continuous integration and continuous deployment (CI/CD) practices, improving deployment efficiency and reducing downtime.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C038",
+   "part": "calibration",
+   "job": "JD-72",
+   "cv": "TR-31-14",
+   "requirement": "Proficient in Excel, particularly VLOOKUP/XLOOKUP and Pivot Tables.",
+   "sentence": "Tối ưu hóa quy trình xuất khẩu — Thực hiện",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C039",
+   "part": "calibration",
+   "job": "JD-50",
+   "cv": "TR-48-08",
+   "requirement": "Chưa có kinh nghiệm sẽ được đào tạo bài bản",
+   "sentence": "Hợp tác với đối tác quốc tế — Thực tập sinh",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C040",
+   "part": "calibration",
+   "job": "JD-82",
+   "cv": "TR-82-00",
+   "requirement": "Có kinh nghiệm thực chiến SEO và độc lập chạy Google Search Ads tốt.",
+   "sentence": "Proficient in leveraging Google Search Ads, GA4, Ahrefs, and Semrush to optimize and grow online presence.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C041",
+   "part": "calibration",
+   "job": "JD-48",
+   "cv": "TR-48-06",
+   "requirement": "Hands-on experience in executing operational procedures, bookings, documentation, and maritime/aviation insurance systems.",
+   "sentence": "Giải quyết các vấn đề vận chuyển nhanh chóng, đảm bảo hàng hóa được giao đúng hẹn.",
+   "rank": 2,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C042",
+   "part": "calibration",
+   "job": "JD-64",
+   "cv": "TR-64-08",
+   "requirement": "Proficiency in developing and executing automated test scripts.",
+   "sentence": "Automation Tester — Công Ty Sáng Tạo",
+   "rank": 2,
+   "label": "partial",
+   "passes": [
+    "met",
+    "partial"
+   ]
+  },
+  {
+   "id": "C043",
+   "part": "calibration",
+   "job": "JD-32",
+   "cv": "TR-48-01",
+   "requirement": "Potential candidates are welcome and may join a training program prior to the project assignment.",
+   "sentence": "Coordinated with various carriers to manage bookings and documentation, contributing to a 10% reduction in operational delays.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C044",
+   "part": "calibration",
+   "job": "JD-64",
+   "cv": "TR-64-01",
+   "requirement": "Extensive experience in manual and automated testing for web and mobile applications.",
+   "sentence": "Developed and maintained automated test cases using Selenium and TestNG, ensuring consistency and reliability in the testing process.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C045",
+   "part": "calibration",
+   "job": "JD-37",
+   "cv": "TR-92-02",
+   "requirement": "Biết chỉnh sửa ảnh, video ở mức cơ bản",
+   "sentence": "Chụp ảnh và chỉnh sửa ảnh cho các sản phẩm mới, giúp tăng chuyển đổi mua sắm trên trang web.",
+   "rank": 2,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C046",
+   "part": "calibration",
+   "job": "JD-86",
+   "cv": "TR-84-08",
+   "requirement": "Không yêu cầu kinh nghiệm, được đào tạo",
+   "sentence": "Báo cáo phân tích ứng viên — Tác giả chính",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C047",
+   "part": "calibration",
+   "job": "JD-72",
+   "cv": "TR-72-00",
+   "requirement": "Kinh nghiệm / Experience",
+   "sentence": "Accounts Payable Specialist — FreshGrocery",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C048",
+   "part": "calibration",
+   "job": "JD-98",
+   "cv": "TR-92-07",
+   "requirement": "Ưu tiên ứng viên từng làm việc tại kho hàng công nghiệp, kho nguyên vật liệu, kho sản xuất hoặc kho hàng có quy mô lớn.",
+   "sentence": "Cơ hội phát triển sự nghiệp trong lĩnh vực UI/UX Design, với kinh nghiệm thiết kế user flow và sản phẩm, tôi mong muốn được góp phần tạo ra trải nghiệm người dùng tối ưu.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C049",
+   "part": "calibration",
+   "job": "JD-72",
+   "cv": "TR-72-00",
+   "requirement": "Kỹ năng và thái độ / Skills & Attitude",
+   "sentence": "Managed a team of 5 junior accountants, providing guidance and training on accounting processes.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C050",
+   "part": "calibration",
+   "job": "JD-64",
+   "cv": "TR-48-05",
+   "requirement": "Familiarity with CI/CD pipelines and tools like Jenkins, Git, and continuous testing integration.",
+   "sentence": "Implemented a client database system, improving customer relationship management and communication.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C051",
+   "part": "calibration",
+   "job": "JD-31",
+   "cv": "TR-31-01",
+   "requirement": "Sử dụng tốt vi tính văn phòng.",
+   "sentence": "Giải quyết các tình huống bất ngờ và các vấn đề phát sinh một cách nhanh chóng và hiệu quả.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C052",
+   "part": "calibration",
+   "job": "JD-72",
+   "cv": "TR-31-14",
+   "requirement": "Kỹ năng và thái độ / Skills & Attitude",
+   "sentence": "Tôi là một người năng động, trung thực và sẵn lòng học hỏi để cống hiến cho công việc của mình.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C053",
+   "part": "calibration",
+   "job": "JD-64",
+   "cv": "TR-64-01",
+   "requirement": "Hands-on experience with testing tools such as Selenium, JUnit, TestNG, Postman (for API testing), or equivalent tools.",
+   "sentence": "Proven track record in developing and executing automated test scripts and identifying bugs effectively.",
+   "rank": 2,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C054",
+   "part": "calibration",
+   "job": "JD-92",
+   "cv": "TR-92-00",
+   "requirement": "Thành thạo Photoshop, Illustrator, Premiere Pro, After Effects.",
+   "sentence": "Utilized Adobe Creative Suite (AI, After Effects, Premiere Pro, Illustrator) to create high-end multimedia designs and video productions.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C055",
+   "part": "calibration",
+   "job": "JD-61",
+   "cv": "TR-61-15",
+   "requirement": "Giao tiếp: Kỹ năng giao tiếp tốt để làm việc và phối hợp hiệu quả với các bộ phận khác.",
+   "sentence": "Tôi luôn tìm kiếm cơ hội để phát triển bản thân và mang lại giá trị cho doanh nghiệp.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C056",
+   "part": "calibration",
+   "job": "JD-98",
+   "cv": "TR-09-03",
+   "requirement": "Sử dụng tốt Excel và có kinh nghiệm làm việc với phần mềm quản lý kho.",
+   "sentence": "Lợi dụng phần mềm quản lý kho để tối ưu hóa quá trình vận hành, tăng hiệu suất làm việc 20%.",
+   "rank": 2,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C057",
+   "part": "calibration",
+   "job": "JD-09",
+   "cv": "TR-09-08",
+   "requirement": "Coi trọng vệ sinh cá nhân và vệ sinh thực phẩm.",
+   "sentence": "Cải thiện quy trình vệ sinh an toàn thực phẩm tại công ty, giảm 30% vi phạm vệ sinh trong 3 tháng đầu làm việc.",
+   "rank": 2,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C058",
+   "part": "calibration",
+   "job": "JD-98",
+   "cv": "TR-09-03",
+   "requirement": "Có khả năng đọc hiểu chứng từ nhập – xuất kho, tổng hợp và đối chiếu số liệu.",
+   "sentence": "Cẩn thận trong việc kiểm kê hàng hóa, đảm bảo số lượng và chất lượng hàng hóa luôn chính xác.",
+   "rank": 2,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C059",
+   "part": "calibration",
+   "job": "JD-31",
+   "cv": "TR-84-07",
+   "requirement": "Khả năng làm việc nhóm, làm việc độc lập dưới áp lực cao.",
+   "sentence": "Tham gia các hoạt động nhóm, góp phần xây dựng môi trường làm việc hiệu quả, thân thiện và năng động.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C060",
+   "part": "calibration",
+   "job": "JD-61",
+   "cv": "TR-61-15",
+   "requirement": "Khả năng làm việc nhóm: Tinh thần làm việc nhóm tốt, khả năng quản lý thời gian và dự án hiệu quả.",
+   "sentence": "Tổng cộng 10 dự án, mỗi dự án kéo dài 1-2 tháng.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C061",
+   "part": "calibration",
+   "job": "JD-31",
+   "cv": "TR-84-07",
+   "requirement": "Am hiểu về consol, LCL, FCL.",
+   "sentence": "Mục tiêu tìm kiếm một vị trí mới để phát triển sự nghiệp.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C062",
+   "part": "calibration",
+   "job": "JD-98",
+   "cv": "TR-09-03",
+   "requirement": "Ưu tiên ứng viên từng làm việc tại kho hàng công nghiệp, kho nguyên vật liệu, kho sản xuất hoặc kho hàng có quy mô lớn.",
+   "sentence": "Nhân viên kho — Công ty TNHH Minh Phát",
+   "rank": 2,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C063",
+   "part": "calibration",
+   "job": "JD-37",
+   "cv": "TR-92-02",
+   "requirement": "Biết chỉnh sửa ảnh, video ở mức cơ bản",
+   "sentence": "Chụp và chỉnh sửa ảnh sản phẩm, đảm bảo chất lượng hình ảnh cao cho trang web thương mại điện tử.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C064",
+   "part": "calibration",
+   "job": "JD-32",
+   "cv": "TR-48-01",
+   "requirement": "Potential candidates are welcome and may join a training program prior to the project assignment.",
+   "sentence": "Client Relationship Management System — Project Manager",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C065",
+   "part": "calibration",
+   "job": "JD-64",
+   "cv": "TR-48-05",
+   "requirement": "Strong understanding of testing methodologies, including Agile testing practices.",
+   "sentence": "Engaged in active listening with clients to understand their unique needs and provide tailored solutions.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C066",
+   "part": "calibration",
+   "job": "JD-64",
+   "cv": "TR-48-05",
+   "requirement": "Strong understanding of testing methodologies, including Agile testing practices.",
+   "sentence": "Delivered presentations on sales strategies to cross-departmental teams, improving overall team performance.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C067",
+   "part": "calibration",
+   "job": "JD-72",
+   "cv": "TR-31-14",
+   "requirement": "Có kỹ năng phối hợp liên phòng ban và giải quyết vấn đề tốt.",
+   "sentence": "Tạo ra môi trường làm việc tích cực, góp phần nâng cao tinh thần làm việc nhóm và thúc đẩy tinh thần trách nhiệm của từng thành viên.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C068",
+   "part": "calibration",
+   "job": "JD-50",
+   "cv": "TR-50-01",
+   "requirement": "Giọng nói rõ ràng, trôi chảy .",
+   "sentence": "Telesales — Hảo Thiên Công",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "partial",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C069",
+   "part": "calibration",
+   "job": "JD-92",
+   "cv": "TR-92-03",
+   "requirement": "Sử dụng được phần mềm 3D như Blender, 3ds Max hoặc Cinema 4D.",
+   "sentence": "Masterfully utilized After Effects for creating dynamic visual presentations, enhancing client understanding and approval of designs.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C070",
+   "part": "calibration",
+   "job": "JD-32",
+   "cv": "TR-32-04",
+   "requirement": "Experience in Linux system administration and troubleshooting.",
+   "sentence": "Quản lý và tối ưu hóa hệ thống Linux, giảm thời gian down time lên tới 95%.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C071",
+   "part": "calibration",
+   "job": "JD-86",
+   "cv": "TR-86-09",
+   "requirement": "Không yêu cầu kinh nghiệm, được đào tạo",
+   "sentence": "Cử nhân ngành Quản trị Dịch vụ Du lịch và Du lịch, tôi tự tin mang đến sự chuyên nghiệp và niềm vui cho khách hàng.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C072",
+   "part": "calibration",
+   "job": "JD-64",
+   "cv": "TR-48-05",
+   "requirement": "Working knowledge of SQL for database testing and validation.",
+   "sentence": "Implemented a client database system, improving customer relationship management and communication.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C073",
+   "part": "calibration",
+   "job": "JD-72",
+   "cv": "TR-72-00",
+   "requirement": "Ability to work under pressure, particularly during month-end closing periods.",
+   "sentence": "With 5 years of experience in managing accounts payable for retail chains, I have a strong background in Excel, VAS, and accounting procedures.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C074",
+   "part": "calibration",
+   "job": "JD-72",
+   "cv": "TR-72-00",
+   "requirement": "Có kinh nghiệm sử dụng phần mềm kế toán/ERP như MISA, FAST, SAP, Oracle hoặc các phần mềm tương đương.",
+   "sentence": "Implemented a new accounting software, reducing processing time by 15% and improving data accuracy.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C075",
+   "part": "calibration",
+   "job": "JD-82",
+   "cv": "TR-82-10",
+   "requirement": "Có kinh nghiệm thực chiến SEO và độc lập chạy Google Search Ads tốt.",
+   "sentence": "Launched and managed Google Search Ads campaigns, resulting in a 20% increase in targeted traffic to client websites within three months.",
+   "rank": 2,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C076",
+   "part": "calibration",
+   "job": "JD-48",
+   "cv": "TR-48-06",
+   "requirement": "Proficient in MS Office (Word, Excel, PowerPoint).",
+   "sentence": "Sử dụng Microsoft Office hiệu quả để quản lý hồ sơ và báo cáo bán hàng.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C077",
+   "part": "calibration",
+   "job": "JD-61",
+   "cv": "TR-92-13",
+   "requirement": "Khả năng làm việc nhóm: Tinh thần làm việc nhóm tốt, khả năng quản lý thời gian và dự án hiệu quả.",
+   "sentence": "Tôi đã tham gia vào nhiều dự án, bao gồm thiết kế bao bì sản phẩm, card giới thiệu và banner quảng cáo.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C078",
+   "part": "calibration",
+   "job": "JD-50",
+   "cv": "TR-50-01",
+   "requirement": "Chưa có kinh nghiệm sẽ được đào tạo bài bản",
+   "sentence": "Đạt doanh số trung bình 150 triệu đồng/ngày thông qua việc sử dụng kỹ năng telesales và thuyết phục.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C079",
+   "part": "calibration",
+   "job": "JD-48",
+   "cv": "TR-50-09",
+   "requirement": "Excellent negotiation, problem-solving, and customer-oriented mindset.",
+   "sentence": "Giảm tỷ lệ khách hàng phản hồi không hài lòng xuống còn 2% thông qua việc chăm sóc khách hàng kỹ lưỡng.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C080",
+   "part": "calibration",
+   "job": "JD-64",
+   "cv": "TR-64-08",
+   "requirement": "Working knowledge of SQL for database testing and validation.",
+   "sentence": "Automation Tester — Công Ty Sáng Tạo",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "partial",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C081",
+   "part": "calibration",
+   "job": "JD-92",
+   "cv": "TR-92-00",
+   "requirement": "Ứng viên phù hợp sẽ tham gia bài test video AI khoảng 30 giây.",
+   "sentence": "Utilized Adobe Creative Suite (AI, After Effects, Premiere Pro, Illustrator) to create high-end multimedia designs and video productions.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "partial",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C082",
+   "part": "calibration",
+   "job": "JD-32",
+   "cv": "TR-48-01",
+   "requirement": "Experience in cloud migration, landing zone implementation, disaster recovery, or cloud security projects.",
+   "sentence": "Coordinated with various carriers to manage bookings and documentation, contributing to a 10% reduction in operational delays.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C083",
+   "part": "calibration",
+   "job": "JD-92",
+   "cv": "TR-92-00",
+   "requirement": "Ứng viên phù hợp sẽ tham gia bài test video AI khoảng 30 giây.",
+   "sentence": "With over 3 years of experience in the field, specializing in AI and multimedia projects.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C084",
+   "part": "calibration",
+   "job": "JD-64",
+   "cv": "TR-64-01",
+   "requirement": "Working knowledge of SQL for database testing and validation.",
+   "sentence": "Proven track record in developing and executing automated test scripts and identifying bugs effectively.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C085",
+   "part": "calibration",
+   "job": "JD-61",
+   "cv": "TR-92-04",
+   "requirement": "Khả năng làm việc nhóm: Tinh thần làm việc nhóm tốt, khả năng quản lý thời gian và dự án hiệu quả.",
+   "sentence": "Chủ trì thiết kế các dự án quảng cáo cho 3 tập đoàn đa quốc gia, tăng độ nhận diện thương hiệu lên 25%.",
+   "rank": 2,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C086",
+   "part": "calibration",
+   "job": "JD-61",
+   "cv": "TR-92-13",
+   "requirement": "Khả năng làm việc nhóm: Tinh thần làm việc nhóm tốt, khả năng quản lý thời gian và dự án hiệu quả.",
+   "sentence": "Tôi đã áp dụng những kỹ năng của mình để tạo ra nội dung ấn tượng cho nhiều dự án nhỏ tại Cần Thơ.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C087",
+   "part": "calibration",
+   "job": "JD-84",
+   "cv": "TR-86-10",
+   "requirement": "Có thể trao đổi ý kiến trong các cuộc họp và thảo luận nhóm",
+   "sentence": "Tạo môi trường làm việc tích cực và chuyên nghiệp cho đội nhóm, giúp nâng cao tinh thần đồng đội.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C088",
+   "part": "calibration",
+   "job": "JD-48",
+   "cv": "TR-50-09",
+   "requirement": "Verbal/written communication and active listening skills.",
+   "sentence": "Nhân Viên Tư Vấn Online — TechPro Solutions",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "partial",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C089",
+   "part": "calibration",
+   "job": "JD-82",
+   "cv": "TR-82-00",
+   "requirement": "Kinh nghiệm & chuyên môn: Thành thạo các công cụ GA4, Google Search Console, Ahrefs/Semrush.",
+   "sentence": "Proficient in leveraging Google Search Ads, GA4, Ahrefs, and Semrush to optimize and grow online presence.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C090",
+   "part": "calibration",
+   "job": "JD-32",
+   "cv": "TR-32-04",
+   "requirement": "Experience in Linux system administration and troubleshooting.",
+   "sentence": "Nghiên cứu kỹ lưỡng các nền tảng đám mây, đặc biệt là AWS, cùng với kinh nghiệm quản lý hệ thống Linux.",
+   "rank": 2,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C091",
+   "part": "calibration",
+   "job": "JD-50",
+   "cv": "TR-31-14",
+   "requirement": "Lưu ý: Hình thức làm việc Fulltime toàn thời gian, không hỗ trợ ứng viên còn vướng bận lịch học.",
+   "sentence": "Tôi là một người năng động, trung thực và sẵn lòng học hỏi để cống hiến cho công việc của mình.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C092",
+   "part": "calibration",
+   "job": "JD-64",
+   "cv": "TR-48-05",
+   "requirement": "Understanding of performance testing tools like JMeter or LoadRunner is an advantage.",
+   "sentence": "Utilized Microsoft Office tools for report generation and analysis, improving operational efficiency by 10%.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C093",
+   "part": "calibration",
+   "job": "JD-72",
+   "cv": "TR-72-10",
+   "requirement": "Ability to work under pressure, particularly during month-end closing periods.",
+   "sentence": "Có kỹ năng sử dụng Phần mềm kế toán và Excel.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C094",
+   "part": "calibration",
+   "job": "JD-98",
+   "cv": "TR-92-07",
+   "requirement": "Sử dụng tốt Excel và có kinh nghiệm làm việc với phần mềm quản lý kho.",
+   "sentence": "Sử dụng Photoshop để chỉnh sửa và tạo các mẫu giao diện, đảm bảo tính nhất quán và chất lượng hình ảnh cao.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C095",
+   "part": "calibration",
+   "job": "JD-32",
+   "cv": "TR-32-04",
+   "requirement": "Experience in Cloud Architect or Solution Architect",
+   "sentence": "Nghiên cứu kỹ lưỡng các nền tảng đám mây, đặc biệt là AWS, cùng với kinh nghiệm quản lý hệ thống Linux.",
+   "rank": 2,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C096",
+   "part": "calibration",
+   "job": "JD-32",
+   "cv": "TR-32-12",
+   "requirement": "Understanding of basic networking",
+   "sentence": "Tối ưu hóa AWS cho doanh nghiệp địa phương — Cloud Engineer",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "partial",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C097",
+   "part": "calibration",
+   "job": "JD-48",
+   "cv": "TR-50-09",
+   "requirement": "High attention to detail, accuracy, and the ability to work well under pressure.",
+   "sentence": "Giảm tỷ lệ khách hàng phản hồi không hài lòng xuống còn 2% thông qua việc chăm sóc khách hàng kỹ lưỡng.",
+   "rank": 2,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C098",
+   "part": "calibration",
+   "job": "JD-98",
+   "cv": "TR-98-05",
+   "requirement": "Sẵn sàng làm việc tại kho (khoảng 80% thời gian), thường xuyên di chuyển và kiểm tra thực tế tại hiện trường.",
+   "sentence": "Ưu tiên làm việc tại kho công nghiệp quy mô lớn.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C099",
+   "part": "calibration",
+   "job": "JD-98",
+   "cv": "TR-98-05",
+   "requirement": "Sử dụng tốt Excel và có kinh nghiệm làm việc với phần mềm quản lý kho.",
+   "sentence": "Có 21 tháng kinh nghiệm trong quản lý kho và vận hành kho, với khả năng sử dụng Excel hiệu quả.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C100",
+   "part": "calibration",
+   "job": "JD-82",
+   "cv": "TR-82-10",
+   "requirement": "Có kinh nghiệm thực chiến SEO và độc lập chạy Google Search Ads tốt.",
+   "sentence": "A recent Master's graduate with a strong foundation in SEO and SEM, equipped with practical experience in GA4, Google Search Console, and Ahrefs.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C101",
+   "part": "calibration",
+   "job": "JD-84",
+   "cv": "TR-86-10",
+   "requirement": "Kinh nghiệm: Không yêu cầu (sẽ được đào tạo từ đầu)",
+   "sentence": "Lễ tân — Khách sạn Anh Thủy",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C102",
+   "part": "calibration",
+   "job": "JD-48",
+   "cv": "TR-48-06",
+   "requirement": "Verbal/written communication and active listening skills.",
+   "sentence": "Lắng nghe và đáp ứng nhu cầu của khách hàng, duy trì mối quan hệ bền vững.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C103",
+   "part": "calibration",
+   "job": "JD-64",
+   "cv": "TR-64-08",
+   "requirement": "Knowledge of security testing methodologies and tools.",
+   "sentence": "Có kinh nghiệm 43 tháng trong lĩnh vực tự động hóa kiểm thử phần mềm, đặc biệt là công nghệ Selenium và TestNG.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C104",
+   "part": "calibration",
+   "job": "JD-98",
+   "cv": "TR-92-07",
+   "requirement": "Sẵn sàng làm việc tại kho (khoảng 80% thời gian), thường xuyên di chuyển và kiểm tra thực tế tại hiện trường.",
+   "sentence": "Sử dụng After Effects để tạo hiệu ứng chuyển cảnh và chuyển tiếp, nâng cao chất lượng sản phẩm cuối cùng.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C105",
+   "part": "calibration",
+   "job": "JD-48",
+   "cv": "TR-48-01",
+   "requirement": "High attention to detail, accuracy, and the ability to work well under pressure.",
+   "sentence": "Coordinated with various carriers to manage bookings and documentation, contributing to a 10% reduction in operational delays.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C106",
+   "part": "calibration",
+   "job": "JD-98",
+   "cv": "TR-09-03",
+   "requirement": "Sẵn sàng làm việc tại kho (khoảng 80% thời gian), thường xuyên di chuyển và kiểm tra thực tế tại hiện trường.",
+   "sentence": "Tham gia vào quá trình cải tiến quy trình quản lý kho, giúp tăng năng suất làm việc 10%.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C107",
+   "part": "calibration",
+   "job": "JD-82",
+   "cv": "TR-37-00",
+   "requirement": "Kinh nghiệm & chuyên môn: Thành thạo các công cụ GA4, Google Search Console, Ahrefs/Semrush.",
+   "sentence": "Càng làm việc với nhiều công ty khác nhau, tôi đã tích lũy được kinh nghiệm về quản lý nội dung và tiếp thị đa kênh.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C108",
+   "part": "calibration",
+   "job": "JD-32",
+   "cv": "TR-32-12",
+   "requirement": "Understanding of basic networking",
+   "sentence": "Cloud Engineer — NetSecure",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "partial",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C109",
+   "part": "calibration",
+   "job": "JD-72",
+   "cv": "TR-72-10",
+   "requirement": "Ưu tiên ứng viên có kinh nghiệm làm việc tại các chuỗi bán lẻ/cửa hàng như siêu thị, F&B, thời trang, cửa hàng tiện lợi hoặc công ty Nhật Bản.",
+   "sentence": "Làm chủ hệ thống VAS, hỗ trợ bộ phận mua sắm trong việc kiểm tra và thanh toán đúng hạn, tăng hiệu quả quản lý lên 20%.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C110",
+   "part": "calibration",
+   "job": "JD-84",
+   "cv": "TR-84-10",
+   "requirement": "Kinh nghiệm: Không yêu cầu (sẽ được đào tạo từ đầu)",
+   "sentence": "Tuyển dụng — Công ty Thăng Long",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C111",
+   "part": "calibration",
+   "job": "JD-50",
+   "cv": "TR-50-01",
+   "requirement": "Lưu ý: Hình thức làm việc Fulltime toàn thời gian, không hỗ trợ ứng viên còn vướng bận lịch học.",
+   "sentence": "Giảm thời gian chờ đợi cuộc gọi từ 20 phút xuống chỉ còn 3 phút thông qua kỹ năng giao tiếp.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C112",
+   "part": "calibration",
+   "job": "JD-37",
+   "cv": "TR-92-02",
+   "requirement": "Biết sử dụng công cụ canva và ứng dụng AI trong công việc;",
+   "sentence": "Sử dụng Photoshop và AI để tạo ra các thiết kế mẫu sản phẩm mới, giúp nâng cao hiệu quả quảng cáo.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C113",
+   "part": "calibration",
+   "job": "JD-82",
+   "cv": "TR-82-10",
+   "requirement": "Kinh nghiệm & chuyên môn: Thành thạo các công cụ GA4, Google Search Console, Ahrefs/Semrush.",
+   "sentence": "A recent Master's graduate with a strong foundation in SEO and SEM, equipped with practical experience in GA4, Google Search Console, and Ahrefs.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C114",
+   "part": "calibration",
+   "job": "JD-31",
+   "cv": "TR-31-02",
+   "requirement": "Am hiểu về consol, LCL, FCL.",
+   "sentence": "Am hiểu các điều khoản thương mại quốc tế (Incoterms) để hỗ trợ khách hàng trong quá trình xuất khẩu.",
+   "rank": 2,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C115",
+   "part": "calibration",
+   "job": "JD-48",
+   "cv": "TR-48-06",
+   "requirement": "High attention to detail, accuracy, and the ability to work well under pressure.",
+   "sentence": "Giải quyết các vấn đề vận chuyển nhanh chóng, đảm bảo hàng hóa được giao đúng hẹn.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "partial"
+   ]
+  },
+  {
+   "id": "C116",
+   "part": "calibration",
+   "job": "JD-37",
+   "cv": "TR-92-02",
+   "requirement": "Ưu tiên ứng viên biết chạy ads hoặc đã có kinh nghiệm chạy ads",
+   "sentence": "Tôi là một nhà thiết kế đồ họa với 114 tháng kinh nghiệm, đã làm việc tại 3 công ty khác nhau, chủ yếu tập trung vào việc sáng tạo nội dung đa phương tiện và quảng bá thương hiệu.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C117",
+   "part": "calibration",
+   "job": "JD-32",
+   "cv": "TR-32-04",
+   "requirement": "This role offers opportunities to participate in large-scale cloud transformation projects, work with modern cloud-native technologies, and develop both technical and consulting capabilities.",
+   "sentence": "Nghiên cứu kỹ lưỡng các nền tảng đám mây, đặc biệt là AWS, cùng với kinh nghiệm quản lý hệ thống Linux.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "partial"
+   ]
+  },
+  {
+   "id": "C118",
+   "part": "calibration",
+   "job": "JD-84",
+   "cv": "TR-86-10",
+   "requirement": "Có thể trao đổi ý kiến trong các cuộc họp và thảo luận nhóm",
+   "sentence": "Sắp xếp và tổ chức các sự kiện nội bộ, đảm bảo sự hài lòng của tất cả các bên liên quan.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C119",
+   "part": "calibration",
+   "job": "JD-64",
+   "cv": "TR-64-08",
+   "requirement": "Attention to detail and a commitment to delivering high-quality software.",
+   "sentence": "Automation Tester — Doanh Nghiệp Tăng trưởng",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "partial",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C120",
+   "part": "calibration",
+   "job": "JD-98",
+   "cv": "TR-98-05",
+   "requirement": "Sử dụng tốt Excel và có kinh nghiệm làm việc với phần mềm quản lý kho.",
+   "sentence": "Ứng dụng Excel trong đếm, tính toán tồn kho và lập báo cáo hàng tuần.",
+   "rank": 2,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C121",
+   "part": "calibration",
+   "job": "JD-61",
+   "cv": "TR-92-04",
+   "requirement": "Design Skills: Proficient in design software such as Adobe Photoshop, Illustrator, InDesign, After Effects, Premiere Pro, and other video editing tools.",
+   "sentence": "Đào tạo và hướng dẫn 3 người mới vào nghề về cách sử dụng các công cụ Adobe như Photoshop và Illustrator.",
+   "rank": 2,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C122",
+   "part": "calibration",
+   "job": "JD-50",
+   "cv": "TR-31-14",
+   "requirement": "Giọng nói rõ ràng, trôi chảy .",
+   "sentence": "Tôi là một người năng động, trung thực và sẵn lòng học hỏi để cống hiến cho công việc của mình.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C123",
+   "part": "calibration",
+   "job": "JD-84",
+   "cv": "TR-84-10",
+   "requirement": "Có thể giao tiếp và trao đổi công việc cơ bản qua email/chat",
+   "sentence": "Thực hiện giao tiếp qua email/chat với các nhà tuyển dụng và ứng viên tiềm năng.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C124",
+   "part": "calibration",
+   "job": "JD-61",
+   "cv": "TR-92-13",
+   "requirement": "Preference is given to candidates with experience in the supplements, cosmetics, FMCG, or related industries.",
+   "sentence": "Tôi đã tham gia vào nhiều dự án, bao gồm thiết kế bao bì sản phẩm, card giới thiệu và banner quảng cáo.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C125",
+   "part": "calibration",
+   "job": "JD-64",
+   "cv": "TR-64-08",
+   "requirement": "Attention to detail and a commitment to delivering high-quality software.",
+   "sentence": "Thực hiện kiểm thử chất lượng phần mềm (QA) theo quy trình Agile, thúc đẩy hiệu suất công việc.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C126",
+   "part": "calibration",
+   "job": "JD-72",
+   "cv": "TR-72-10",
+   "requirement": "Thành thạo Excel, đặc biệt là các hàm VLOOKUP/XLOOKUP và Pivot Table.",
+   "sentence": "Có kỹ năng sử dụng Phần mềm kế toán và Excel.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C127",
+   "part": "calibration",
+   "job": "JD-09",
+   "cv": "TR-09-08",
+   "requirement": "Coi trọng vệ sinh cá nhân và vệ sinh thực phẩm.",
+   "sentence": "Nấu các bữa ăn hàng ngày cho hơn 30 nhân viên, đảm bảo chất lượng và vệ sinh thực phẩm.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C128",
+   "part": "calibration",
+   "job": "JD-72",
+   "cv": "TR-72-00",
+   "requirement": "Học vấn / Education",
+   "sentence": "Accounts Payable Specialist — FreshGrocery",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C129",
+   "part": "calibration",
+   "job": "JD-31",
+   "cv": "TR-31-02",
+   "requirement": "Khả năng làm việc nhóm, làm việc độc lập dưới áp lực cao.",
+   "sentence": "Tham gia quản lý và lên lịch làm việc linh hoạt, đảm bảo có thời gian phản hồi nhanh chóng cho khách hàng.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C130",
+   "part": "calibration",
+   "job": "JD-48",
+   "cv": "TR-48-01",
+   "requirement": "Hands-on experience in executing operational procedures, bookings, documentation, and maritime/aviation insurance systems.",
+   "sentence": "Coordinated with various carriers to manage bookings and documentation, contributing to a 10% reduction in operational delays.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C131",
+   "part": "calibration",
+   "job": "JD-37",
+   "cv": "TR-09-08",
+   "requirement": "Ưu tiên ứng viên biết chạy ads hoặc đã có kinh nghiệm chạy ads",
+   "sentence": "Tạp Vụ — Công ty Xanh Minh",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C132",
+   "part": "calibration",
+   "job": "JD-61",
+   "cv": "TR-92-13",
+   "requirement": "Communication: Good communication skills to work and collaborate effectively with other departments.",
+   "sentence": "Graphic Designer — Studio Vị Linh",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C133",
+   "part": "calibration",
+   "job": "JD-92",
+   "cv": "TR-92-00",
+   "requirement": "Có kỹ năng quay phim, chụp ảnh và hậu kỳ video.",
+   "sentence": "Created engaging multimedia content for various industries, including tech and entertainment, using skills in 3ds Max and Photoshop.",
+   "rank": 2,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C134",
+   "part": "calibration",
+   "job": "JD-72",
+   "cv": "TR-72-10",
+   "requirement": "Strong cross-functional coordination and problem-solving skills.",
+   "sentence": "Hiểu biết về quy trình xử lý công nợ.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C135",
+   "part": "calibration",
+   "job": "JD-72",
+   "cv": "TR-72-10",
+   "requirement": "Ability to work under pressure, particularly during month-end closing periods.",
+   "sentence": "Hiểu biết về quy trình xử lý công nợ.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C136",
+   "part": "calibration",
+   "job": "JD-50",
+   "cv": "TR-50-01",
+   "requirement": "Giọng nói rõ ràng, trôi chảy .",
+   "sentence": "Hiện đang tìm kiếm cơ hội mới để phát triển năng lực của mình.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C137",
+   "part": "calibration",
+   "job": "JD-50",
+   "cv": "TR-31-14",
+   "requirement": "Chưa có kinh nghiệm sẽ được đào tạo bài bản",
+   "sentence": "Tôi là một người năng động, trung thực và sẵn lòng học hỏi để cống hiến cho công việc của mình.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C138",
+   "part": "calibration",
+   "job": "JD-61",
+   "cv": "TR-61-15",
+   "requirement": "Teamwork: Strong teamwork skills, with the ability to manage time and projects effectively.",
+   "sentence": "Lãnh đạo một nhóm 5 người, tổ chức và quản lý các dự án nội thất từ khâu thiết kế đến thi công, đảm bảo tiến độ đúng hạn.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C139",
+   "part": "calibration",
+   "job": "JD-84",
+   "cv": "TR-84-10",
+   "requirement": "Kinh nghiệm: Không yêu cầu (sẽ được đào tạo từ đầu)",
+   "sentence": "Tuyển dụng — Công ty Vạn Niên",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C140",
+   "part": "calibration",
+   "job": "JD-82",
+   "cv": "TR-37-00",
+   "requirement": "Có kinh nghiệm thực chiến SEO và độc lập chạy Google Search Ads tốt.",
+   "sentence": "Chạy và tối ưu quảng cáo trên Facebook và Google Ads, tăng hiệu quả chuyển đổi lên 30% trong 6 tháng.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C141",
+   "part": "calibration",
+   "job": "JD-48",
+   "cv": "TR-48-01",
+   "requirement": "Excellent negotiation, problem-solving, and customer-oriented mindset.",
+   "sentence": "Enhanced client satisfaction through effective communication and CRM management, achieving a 12% increase in client referrals.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C142",
+   "part": "calibration",
+   "job": "JD-92",
+   "cv": "TR-92-00",
+   "requirement": "Có kinh nghiệm thực tế với các công cụ AI như Google Flow, Kling AI, Runway;",
+   "sentence": "With over 3 years of experience in the field, specializing in AI and multimedia projects.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C143",
+   "part": "calibration",
+   "job": "JD-48",
+   "cv": "TR-48-01",
+   "requirement": "Hands-on experience in executing operational procedures, bookings, documentation, and maritime/aviation insurance systems.",
+   "sentence": "Executed comprehensive logistics solutions, including booking and documentation, for a wide range of clients, from small businesses to large corporations, totaling over 500 bookings annually.",
+   "rank": 2,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C144",
+   "part": "calibration",
+   "job": "JD-32",
+   "cv": "TR-48-01",
+   "requirement": "Have good analytical, troubleshooting, and problem-solving skills.",
+   "sentence": "Utilized Excel to streamline inventory management and financial tracking, reducing errors by 30%.",
+   "rank": 2,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C145",
+   "part": "calibration",
+   "job": "JD-31",
+   "cv": "TR-31-02",
+   "requirement": "Am hiểu về consol, LCL, FCL.",
+   "sentence": "Tôi là một sinh viên mới tốt nghiệp với kinh nghiệm làm việc thực tế trong lĩnh vực xuất khẩu, đặc biệt trong lĩnh vực LCL.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C146",
+   "part": "calibration",
+   "job": "JD-72",
+   "cv": "TR-31-14",
+   "requirement": "Strong cross-functional coordination and problem-solving skills.",
+   "sentence": "Ứng dụng kỹ năng quản lý thời gian hiệu quả để xử lý số lượng lớn đơn hàng mỗi ngày, đảm bảo tiến độ giao hàng đúng hẹn.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C147",
+   "part": "calibration",
+   "job": "JD-72",
+   "cv": "TR-72-00",
+   "requirement": "Có kinh nghiệm sử dụng phần mềm kế toán/ERP như MISA, FAST, SAP, Oracle hoặc các phần mềm tương đương.",
+   "sentence": "Implemented VAS software, improving efficiency in invoice processing by 30%.",
+   "rank": 2,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C148",
+   "part": "calibration",
+   "job": "JD-72",
+   "cv": "TR-31-14",
+   "requirement": "Có kinh nghiệm sử dụng phần mềm kế toán/ERP như MISA, FAST, SAP, Oracle hoặc các phần mềm tương đương.",
+   "sentence": "Được đào tạo sử dụng phần mềm logistics, giúp tối ưu hóa quy trình quản lý kho và vận chuyển hàng hóa.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "partial",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C149",
+   "part": "calibration",
+   "job": "JD-64",
+   "cv": "TR-48-05",
+   "requirement": "ISTQB or equivalent certification is a plus.",
+   "sentence": "Implemented a client database system, improving customer relationship management and communication.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C150",
+   "part": "calibration",
+   "job": "JD-82",
+   "cv": "TR-82-00",
+   "requirement": "Kinh nghiệm & chuyên môn: Thành thạo các công cụ GA4, Google Search Console, Ahrefs/Semrush.",
+   "sentence": "Implemented GA4 and Google Search Console to monitor and analyze data, leading to the identification and resolution of several technical issues that improved the overall site performance.",
+   "rank": 2,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C151",
+   "part": "calibration",
+   "job": "JD-72",
+   "cv": "TR-31-14",
+   "requirement": "Strong cross-functional coordination and problem-solving skills.",
+   "sentence": "Tạo ra môi trường làm việc tích cực, góp phần nâng cao tinh thần làm việc nhóm và thúc đẩy tinh thần trách nhiệm của từng thành viên.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C152",
+   "part": "calibration",
+   "job": "JD-32",
+   "cv": "TR-32-12",
+   "requirement": "Experience with CI/CD and automation practices.",
+   "sentence": "Cloud Engineer — CloudMaster",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "partial",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C153",
+   "part": "calibration",
+   "job": "JD-48",
+   "cv": "TR-50-09",
+   "requirement": "Hands-on experience in executing operational procedures, bookings, documentation, and maritime/aviation insurance systems.",
+   "sentence": "Nhân Viên Tư Vấn Online — TechPro Solutions",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C154",
+   "part": "calibration",
+   "job": "JD-50",
+   "cv": "TR-48-08",
+   "requirement": "Giọng nói rõ ràng, trôi chảy .",
+   "sentence": "Duration: 6 tháng (Tháng 04/2022",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C155",
+   "part": "calibration",
+   "job": "JD-61",
+   "cv": "TR-92-13",
+   "requirement": "Creative Thinking: Ability to think creatively, with a keen sense of trends, and the capability to transform ideas into practical products.",
+   "sentence": "Video Giới Thiệu Sản Phẩm — Sáng tạo nội dung và dựng video",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C156",
+   "part": "calibration",
+   "job": "JD-37",
+   "cv": "TR-09-08",
+   "requirement": "Biết sử dụng công cụ canva và ứng dụng AI trong công việc;",
+   "sentence": "Sử dụng ứng dụng di động để ghi nhớ và sắp xếp công việc hàng ngày, giúp công việc trở nên hiệu quả hơn 20%.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C157",
+   "part": "calibration",
+   "job": "JD-84",
+   "cv": "TR-86-10",
+   "requirement": "Có thể đọc hiểu tài liệu/manual và trình bày trong báo cáo một cách logic",
+   "sentence": "Tổ chức sự kiện nội bộ — Lễ tân",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C158",
+   "part": "calibration",
+   "job": "JD-48",
+   "cv": "TR-48-06",
+   "requirement": "Excellent negotiation, problem-solving, and customer-oriented mindset.",
+   "sentence": "Giao tiếp hiệu quả với các bên liên quan, bao gồm khách hàng, nhà cung cấp và các bên vận chuyển.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "partial"
+   ]
+  },
+  {
+   "id": "C159",
+   "part": "calibration",
+   "job": "JD-48",
+   "cv": "TR-48-06",
+   "requirement": "Excellent negotiation, problem-solving, and customer-oriented mindset.",
+   "sentence": "Lắng nghe và đáp ứng nhu cầu của khách hàng, duy trì mối quan hệ bền vững.",
+   "rank": 2,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C160",
+   "part": "calibration",
+   "job": "JD-92",
+   "cv": "TR-92-03",
+   "requirement": "Yêu cầu hồ sơ: CV kèm Portfolio/Showreel, bao gồm ít nhất 01 video long-form và 01 video short-form.",
+   "sentence": "Proven track record in After Effects and AutoCAD, with a portfolio showcasing a range of projects from small-scale residential homes to large commercial spaces.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C161",
+   "part": "calibration",
+   "job": "JD-61",
+   "cv": "TR-92-04",
+   "requirement": "Giao tiếp: Kỹ năng giao tiếp tốt để làm việc và phối hợp hiệu quả với các bộ phận khác.",
+   "sentence": "Đào tạo và hướng dẫn 3 người mới vào nghề về cách sử dụng các công cụ Adobe như Photoshop và Illustrator.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C162",
+   "part": "calibration",
+   "job": "JD-64",
+   "cv": "TR-64-08",
+   "requirement": "Hands-on experience with testing tools such as Selenium, JUnit, TestNG, Postman (for API testing), or equivalent tools.",
+   "sentence": "Có kinh nghiệm 43 tháng trong lĩnh vực tự động hóa kiểm thử phần mềm, đặc biệt là công nghệ Selenium và TestNG.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C163",
+   "part": "calibration",
+   "job": "JD-37",
+   "cv": "TR-09-08",
+   "requirement": "Biết chỉnh sửa ảnh, video ở mức cơ bản",
+   "sentence": "Sử dụng ứng dụng di động để ghi nhớ và sắp xếp công việc hàng ngày, giúp công việc trở nên hiệu quả hơn 20%.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C164",
+   "part": "calibration",
+   "job": "JD-48",
+   "cv": "TR-48-06",
+   "requirement": "High attention to detail, accuracy, and the ability to work well under pressure.",
+   "sentence": "Tối ưu hóa quy trình giao hàng — Lãnh đạo dự án",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C165",
+   "part": "calibration",
+   "job": "JD-64",
+   "cv": "TR-64-01",
+   "requirement": "Attention to detail and a commitment to delivering high-quality software.",
+   "sentence": "Maintained a strong sense of responsibility and commitment to quality assurance, ensuring all projects met the highest standards.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "partial",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C166",
+   "part": "calibration",
+   "job": "JD-98",
+   "cv": "TR-09-03",
+   "requirement": "Có khả năng đọc hiểu chứng từ nhập – xuất kho, tổng hợp và đối chiếu số liệu.",
+   "sentence": "Tôi có kỹ năng sắp xếp công việc hiệu quả, cẩn thận trong công việc và sử dụng thành thạo phần mềm quản lý kho.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C167",
+   "part": "calibration",
+   "job": "JD-61",
+   "cv": "TR-92-04",
+   "requirement": "Communication: Good communication skills to work and collaborate effectively with other departments.",
+   "sentence": "Graphic Designer — Hải Long Media",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C168",
+   "part": "calibration",
+   "job": "JD-32",
+   "cv": "TR-32-04",
+   "requirement": "Experience with CI/CD and automation practices.",
+   "sentence": "Cloud Engineer — SangThaiTech",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "partial",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C169",
+   "part": "calibration",
+   "job": "JD-37",
+   "cv": "TR-37-08",
+   "requirement": "Biết chỉnh sửa ảnh, video ở mức cơ bản",
+   "sentence": "Chỉnh sửa ảnh và video để tạo ra các nội dung hấp dẫn, thu hút sự chú ý của khách hàng.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C170",
+   "part": "calibration",
+   "job": "JD-48",
+   "cv": "TR-48-01",
+   "requirement": "Excellent negotiation, problem-solving, and customer-oriented mindset.",
+   "sentence": "Proven success in managing CRM and telesales to maximize client satisfaction and business growth.",
+   "rank": 2,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C171",
+   "part": "calibration",
+   "job": "JD-92",
+   "cv": "TR-92-00",
+   "requirement": "Yêu cầu hồ sơ: CV kèm Portfolio/Showreel, bao gồm ít nhất 01 video long-form và 01 video short-form.",
+   "sentence": "Created engaging multimedia content for various industries, including tech and entertainment, using skills in 3ds Max and Photoshop.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C172",
+   "part": "calibration",
+   "job": "JD-84",
+   "cv": "TR-84-10",
+   "requirement": "Có thể trao đổi ý kiến trong các cuộc họp và thảo luận nhóm",
+   "sentence": "Tôi có khả năng làm việc nhóm, giao tiếp qua email/chat và đọc hiểu tài liệu, sẵn sàng mang lại giá trị cho công ty mới.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C173",
+   "part": "calibration",
+   "job": "JD-98",
+   "cv": "TR-09-03",
+   "requirement": "Ưu tiên ứng viên từng làm việc tại kho hàng công nghiệp, kho nguyên vật liệu, kho sản xuất hoặc kho hàng có quy mô lớn.",
+   "sentence": "Kinh nghiệm hơn 5 năm làm việc trong lĩnh vực quản lý kho, đặc biệt trong môi trường công ty khởi nghiệp tại Cần Thơ.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C174",
+   "part": "calibration",
+   "job": "JD-50",
+   "cv": "TR-48-08",
+   "requirement": "Giọng nói rõ ràng, trôi chảy .",
+   "sentence": "Tôi là một sinh viên mới tốt nghiệp Cao đẳng Kinh tế Quốc tế với kỹ năng giao tiếp xuất sắc và khả năng giải quyết vấn đề hiệu quả.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C175",
+   "part": "calibration",
+   "job": "JD-84",
+   "cv": "TR-86-10",
+   "requirement": "Kinh nghiệm: Không yêu cầu (sẽ được đào tạo từ đầu)",
+   "sentence": "Tổ chức sự kiện nội bộ — Lễ tân",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C176",
+   "part": "calibration",
+   "job": "JD-31",
+   "cv": "TR-31-01",
+   "requirement": "Khả năng làm việc nhóm, làm việc độc lập dưới áp lực cao.",
+   "sentence": "Giải quyết các tình huống bất ngờ và các vấn đề phát sinh một cách nhanh chóng và hiệu quả.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C177",
+   "part": "calibration",
+   "job": "JD-61",
+   "cv": "TR-61-15",
+   "requirement": "Khả năng làm việc nhóm: Tinh thần làm việc nhóm tốt, khả năng quản lý thời gian và dự án hiệu quả.",
+   "sentence": "Lãnh đạo một nhóm 5 người, tổ chức và quản lý các dự án nội thất từ khâu thiết kế đến thi công, đảm bảo tiến độ đúng hạn.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C178",
+   "part": "calibration",
+   "job": "JD-37",
+   "cv": "TR-92-02",
+   "requirement": "Ưu tiên ứng viên biết chạy ads hoặc đã có kinh nghiệm chạy ads",
+   "sentence": "Sản xuất các video quảng cáo ngắn 15 giây cho các chiến dịch tiếp thị, đạt tỷ lệ nhấp chuột cao.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C179",
+   "part": "calibration",
+   "job": "JD-98",
+   "cv": "TR-92-07",
+   "requirement": "Có khả năng đọc hiểu chứng từ nhập – xuất kho, tổng hợp và đối chiếu số liệu.",
+   "sentence": "Đảm bảo trải nghiệm người dùng thân thiện và dễ sử dụng thông qua việc tối ưu hóa giao diện và chức năng.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C180",
+   "part": "calibration",
+   "job": "JD-48",
+   "cv": "TR-48-06",
+   "requirement": "Proficient in MS Office (Word, Excel, PowerPoint).",
+   "sentence": "Tối ưu hóa quy trình giao hàng — Lãnh đạo dự án",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C181",
+   "part": "calibration",
+   "job": "JD-37",
+   "cv": "TR-37-08",
+   "requirement": "Biết sử dụng công cụ canva và ứng dụng AI trong công việc;",
+   "sentence": "Sử dụng các công cụ AI để phân tích và tối ưu hóa nội dung.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C182",
+   "part": "calibration",
+   "job": "JD-82",
+   "cv": "TR-82-00",
+   "requirement": "Có kinh nghiệm thực chiến SEO và độc lập chạy Google Search Ads tốt.",
+   "sentence": "A results-driven SEO/SEM specialist with over 5 years of experience in managing digital marketing campaigns for a national bank in Nha Trang, Vietnam.",
+   "rank": 2,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C183",
+   "part": "calibration",
+   "job": "JD-61",
+   "cv": "TR-92-13",
+   "requirement": "Preference is given to candidates with experience in the supplements, cosmetics, FMCG, or related industries.",
+   "sentence": "Với kinh nghiệm chụp ảnh và chỉnh sửa ảnh, tôi đã thực hiện chụp và chỉnh sửa hình ảnh sản phẩm cho các chiến dịch marketing, góp phần vào việc tăng doanh số bán hàng lên 15%.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C184",
+   "part": "calibration",
+   "job": "JD-98",
+   "cv": "TR-92-07",
+   "requirement": "Ưu tiên ứng viên từng làm việc tại kho hàng công nghiệp, kho nguyên vật liệu, kho sản xuất hoặc kho hàng có quy mô lớn.",
+   "sentence": "Đảm bảo trải nghiệm người dùng thân thiện và dễ sử dụng thông qua việc tối ưu hóa giao diện và chức năng.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C185",
+   "part": "calibration",
+   "job": "JD-61",
+   "cv": "TR-92-04",
+   "requirement": "Giao tiếp: Kỹ năng giao tiếp tốt để làm việc và phối hợp hiệu quả với các bộ phận khác.",
+   "sentence": "Senior Graphic Designer — Văn Hoa Tinh Hoa",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C186",
+   "part": "calibration",
+   "job": "JD-32",
+   "cv": "TR-32-04",
+   "requirement": "Knowledge of AI/ML platforms, AI infrastructure, or GenAI architectures.",
+   "sentence": "Nghiên cứu kỹ lưỡng các nền tảng đám mây, đặc biệt là AWS, cùng với kinh nghiệm quản lý hệ thống Linux.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C187",
+   "part": "calibration",
+   "job": "JD-84",
+   "cv": "TR-84-10",
+   "requirement": "Có thể giao tiếp và trao đổi công việc cơ bản qua email/chat",
+   "sentence": "Giao tiếp qua email/chat với các ứng viên, quản lý lịch phỏng vấn và lịch trình tuyển dụng.",
+   "rank": 2,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C188",
+   "part": "calibration",
+   "job": "JD-48",
+   "cv": "TR-48-01",
+   "requirement": "High attention to detail, accuracy, and the ability to work well under pressure.",
+   "sentence": "Leveraged active listening and CRM to build and maintain strong relationships with international clients, leading to a 20% increase in client retention rates.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C189",
+   "part": "calibration",
+   "job": "JD-84",
+   "cv": "TR-86-10",
+   "requirement": "Có thể đọc hiểu tài liệu/manual và trình bày trong báo cáo một cách logic",
+   "sentence": "Sử dụng phần mềm quản lý khách sạn để xử lý và cập nhật thông tin khách hàng, giúp tăng hiệu suất công việc lên 20%.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C190",
+   "part": "calibration",
+   "job": "JD-48",
+   "cv": "TR-48-06",
+   "requirement": "Hands-on experience in executing operational procedures, bookings, documentation, and maritime/aviation insurance systems.",
+   "sentence": "Sử dụng phần mềm quản lý vận chuyển để tối ưu hóa quy trình và giảm thiểu rủi ro.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C191",
+   "part": "calibration",
+   "job": "JD-61",
+   "cv": "TR-92-04",
+   "requirement": "Design Skills: Proficient in design software such as Adobe Photoshop, Illustrator, InDesign, After Effects, Premiere Pro, and other video editing tools.",
+   "sentence": "Nhân viên thiết kế đồ họa với hơn 23 tháng kinh nghiệm, đặc biệt thành thạo các công cụ như Photoshop, Illustrator, và After Effects, đồng thời có năng lực sáng tạo và tư duy chiến lược.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C192",
+   "part": "calibration",
+   "job": "JD-92",
+   "cv": "TR-92-03",
+   "requirement": "Yêu cầu hồ sơ: CV kèm Portfolio/Showreel, bao gồm ít nhất 01 video long-form và 01 video short-form.",
+   "sentence": "Created marketing materials using After Effects, including video testimonials and case studies, which increased project inquiries by 40%.",
+   "rank": 2,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C193",
+   "part": "calibration",
+   "job": "JD-61",
+   "cv": "TR-92-04",
+   "requirement": "Preference is given to candidates with experience in the supplements, cosmetics, FMCG, or related industries.",
+   "sentence": "Senior Graphic Designer — Văn Hoa Tinh Hoa",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C194",
+   "part": "calibration",
+   "job": "JD-50",
+   "cv": "TR-50-01",
+   "requirement": "Lưu ý: Hình thức làm việc Fulltime toàn thời gian, không hỗ trợ ứng viên còn vướng bận lịch học.",
+   "sentence": "Hiện đang tìm kiếm cơ hội mới để phát triển năng lực của mình.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C195",
+   "part": "calibration",
+   "job": "JD-31",
+   "cv": "TR-31-02",
+   "requirement": "Khả năng làm việc nhóm, làm việc độc lập dưới áp lực cao.",
+   "sentence": "Đóng vai trò quan trọng trong nhóm làm việc, thực hiện các cuộc họp và thảo luận để giải quyết vấn đề nhanh chóng.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C196",
+   "part": "calibration",
+   "job": "JD-32",
+   "cv": "TR-48-01",
+   "requirement": "Knowledge of AI/ML platforms, AI infrastructure, or GenAI architectures.",
+   "sentence": "Client Relationship Management System — Project Manager",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C197",
+   "part": "calibration",
+   "job": "JD-61",
+   "cv": "TR-61-15",
+   "requirement": "Kỹ năng thiết kế: Thành thạo các phần mềm thiết kế như Adobe Photoshop, Illustrator, InDesign, After Effects, Premiere Pro và các phần mềm chỉnh sửa video khác.",
+   "sentence": "Áp dụng xu hướng thiết kế nội thất hiện đại và sáng tạo.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C198",
+   "part": "calibration",
+   "job": "JD-37",
+   "cv": "TR-37-08",
+   "requirement": "Ưu tiên ứng viên biết chạy ads hoặc đã có kinh nghiệm chạy ads",
+   "sentence": "Tôi là người có kinh nghiệm 21 tháng trong lĩnh vực Content Marketing, với 2 công ty khác nhau tại TP.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "partial",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C199",
+   "part": "calibration",
+   "job": "JD-98",
+   "cv": "TR-92-07",
+   "requirement": "Sẵn sàng làm việc tại kho (khoảng 80% thời gian), thường xuyên di chuyển và kiểm tra thực tế tại hiện trường.",
+   "sentence": "Đảm bảo trải nghiệm người dùng thân thiện và dễ sử dụng thông qua việc tối ưu hóa giao diện và chức năng.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C200",
+   "part": "calibration",
+   "job": "JD-72",
+   "cv": "TR-72-10",
+   "requirement": "Strong cross-functional coordination and problem-solving skills.",
+   "sentence": "Tối ưu hóa quy trình quản lý công nợ — Lãnh đạo dự án",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C201",
+   "part": "calibration",
+   "job": "JD-61",
+   "cv": "TR-92-04",
+   "requirement": "Preference is given to candidates with experience in the supplements, cosmetics, FMCG, or related industries.",
+   "sentence": "Thiết kế bao bì và vật phẩm quảng cáo cho 4 sản phẩm khác nhau, giúp tăng doanh số bán hàng 15%.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C202",
+   "part": "calibration",
+   "job": "JD-31",
+   "cv": "TR-31-02",
+   "requirement": "Sử dụng tốt vi tính văn phòng.",
+   "sentence": "Tham gia quản lý và lên lịch làm việc linh hoạt, đảm bảo có thời gian phản hồi nhanh chóng cho khách hàng.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C203",
+   "part": "calibration",
+   "job": "JD-72",
+   "cv": "TR-72-00",
+   "requirement": "Ability to work under pressure, particularly during month-end closing periods.",
+   "sentence": "Accounts Payable Specialist — FreshGrocery",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C204",
+   "part": "calibration",
+   "job": "JD-37",
+   "cv": "TR-37-08",
+   "requirement": "Ưu tiên ứng viên biết chạy ads hoặc đã có kinh nghiệm chạy ads",
+   "sentence": "Chạy quảng cáo trên các nền tảng kỹ thuật số, cải thiện tỷ lệ chuyển đổi lên 15%.",
+   "rank": 2,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "C205",
+   "part": "calibration",
+   "job": "JD-84",
+   "cv": "TR-86-10",
+   "requirement": "Có thể giao tiếp và trao đổi công việc cơ bản qua email/chat",
+   "sentence": "Tôi đã có cơ hội làm việc tại một công ty vừa và nhỏ ở Cần Thơ, nơi tôi thể hiện được khả năng giải quyết vấn đề và giao tiếp hiệu quả.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C206",
+   "part": "calibration",
+   "job": "JD-32",
+   "cv": "TR-32-12",
+   "requirement": "This role offers opportunities to participate in large-scale cloud transformation projects, work with modern cloud-native technologies, and develop both technical and consulting capabilities.",
+   "sentence": "Cloud Engineer — CloudMaster",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "partial"
+   ]
+  },
+  {
+   "id": "C207",
+   "part": "calibration",
+   "job": "JD-32",
+   "cv": "TR-48-01",
+   "requirement": "Have good analytical, troubleshooting, and problem-solving skills.",
+   "sentence": "Utilized Excel to manage inventory and track shipments, ensuring accurate billing and delivery schedules.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C208",
+   "part": "calibration",
+   "job": "JD-09",
+   "cv": "TR-09-09",
+   "requirement": "Coi trọng vệ sinh cá nhân và vệ sinh thực phẩm.",
+   "sentence": "Khám Phá Phương Pháp Tối Ưu Vệ Sinh An Toàn Thực Phẩm — Tạp Vụ",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C209",
+   "part": "calibration",
+   "job": "JD-72",
+   "cv": "TR-72-10",
+   "requirement": "Học vấn / Education",
+   "sentence": "Có kỹ năng sử dụng Phần mềm kế toán và Excel.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C210",
+   "part": "calibration",
+   "job": "JD-61",
+   "cv": "TR-61-15",
+   "requirement": "Kỹ năng thiết kế: Thành thạo các phần mềm thiết kế như Adobe Photoshop, Illustrator, InDesign, After Effects, Premiere Pro và các phần mềm chỉnh sửa video khác.",
+   "sentence": "Sử dụng kỹ năng Motion Graphics để thiết kế các video quảng cáo nội thất, gia tăng sự chú ý của khách hàng lên đến 25%.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C211",
+   "part": "calibration",
+   "job": "JD-86",
+   "cv": "TR-84-08",
+   "requirement": "Không yêu cầu kinh nghiệm, được đào tạo",
+   "sentence": "Có kinh nghiệm làm việc tại công ty đa quốc gia trong lĩnh vực tuyển dụng.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C212",
+   "part": "calibration",
+   "job": "JD-72",
+   "cv": "TR-72-00",
+   "requirement": "Kinh nghiệm / Experience",
+   "sentence": "Accounts Payable Accountant — GreenMart",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "C213",
+   "part": "calibration",
+   "job": "JD-64",
+   "cv": "TR-64-08",
+   "requirement": "Working knowledge of SQL for database testing and validation.",
+   "sentence": "Thực hiện kiểm thử chất lượng phần mềm (QA) theo quy trình Agile, thúc đẩy hiệu suất công việc.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C214",
+   "part": "calibration",
+   "job": "JD-92",
+   "cv": "TR-92-03",
+   "requirement": "Có kinh nghiệm thực tế với các công cụ AI như Google Flow, Kling AI, Runway;",
+   "sentence": "Masterfully utilized After Effects for creating dynamic visual presentations, enhancing client understanding and approval of designs.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "C215",
+   "part": "calibration",
+   "job": "JD-37",
+   "cv": "TR-37-08",
+   "requirement": "Biết chỉnh sửa ảnh, video ở mức cơ bản",
+   "sentence": "Cải thiện kỹ năng chỉnh sửa video, tạo ra các nội dung video hấp dẫn hơn.",
+   "rank": 2,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V001",
+   "part": "validation",
+   "job": "JD-02",
+   "cv": "CV-008",
+   "requirement": "Có kỹ năng giao tiếp và làm việc nhóm tốt, phối hợp hiệu quả với Product, Design, QA và Engineering team.",
+   "sentence": "Làm việc với một đội ngũ phát triển 10 người, phát triển một hệ thống quản lý sản phẩm và đơn hàng sử dụng Golang, Node.js, và ReactJS.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "V002",
+   "part": "validation",
+   "job": "JD-16",
+   "cv": "CV-016",
+   "requirement": "Có hiểu biết về server",
+   "sentence": "Integrated RESTful API for seamless data synchronization and improved application performance.",
+   "rank": 2,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "V003",
+   "part": "validation",
+   "job": "JD-08",
+   "cv": "CV-031",
+   "requirement": "Có kỹ năng làm việc đội nhóm.",
+   "sentence": "Tạo ra môi trường làm việc tích cực thông qua việc tổ chức các cuộc họp định kỳ để chia sẻ thông tin và cải tiến quy trình.",
+   "rank": 2,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V004",
+   "part": "validation",
+   "job": "JD-62",
+   "cv": "CV-016",
+   "requirement": "Experience working with automotive OEMs, Tier-1 suppliers, or international teams.",
+   "sentence": "Led a team of developers in implementing MVVM architecture, ensuring high performance and maintainability of the applications.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V005",
+   "part": "validation",
+   "job": "JD-62",
+   "cv": "CV-007",
+   "requirement": "Guaranteed 13th month salary",
+   "sentence": "Backend Developer — KidoTech Solutions",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V006",
+   "part": "validation",
+   "job": "JD-66",
+   "cv": "CV-010",
+   "requirement": "Experience with large-scale ETL/batch processing and reliable data pipelines.",
+   "sentence": "Tham gia vào quá trình thiết kế và triển khai hệ thống ETL/batch processing, giúp cải thiện quy trình xử lý dữ liệu lên đến 25%.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V007",
+   "part": "validation",
+   "job": "JD-60",
+   "cv": "CV-054",
+   "requirement": "Sử dụng thành thạo các phần mềm kế toán, vi tính văn phòng (đặc biệt là excel).",
+   "sentence": "Sử dụng Excel để phân tích dữ liệu khách hàng, hỗ trợ bộ phận kinh doanh đưa ra quyết định kinh doanh nhanh chóng.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V008",
+   "part": "validation",
+   "job": "JD-30",
+   "cv": "CV-053",
+   "requirement": "Ưu tiên có chứng chỉ chuyên môn liên quan đến nhân sự (C&B, KPI, đào tạo, luật lao động,...).",
+   "sentence": "Có kinh nghiệm 54 tháng trong lĩnh vực tuyển dụng tại TP.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "partial",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V009",
+   "part": "validation",
+   "job": "JD-08",
+   "cv": "CV-058",
+   "requirement": "Giọng nói rõ ràng, dễ nghe, không ngọng, lắp hoặc tính vùng miền quá cao.",
+   "sentence": "Đạt 95% tỷ lệ hài lòng khách hàng trong 3 tháng đầu tiên, nhờ kỹ năng tư vấn và thuyết phục khách hàng.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V010",
+   "part": "validation",
+   "job": "JD-62",
+   "cv": "CV-007",
+   "requirement": "Experience working with automotive OEMs, Tier-1 suppliers, or international teams.",
+   "sentence": "Phối hợp chặt chẽ với đội ngũ thiết kế để đảm bảo hệ thống tuân thủ các quy tắc Design System.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V011",
+   "part": "validation",
+   "job": "JD-60",
+   "cv": "CV-038",
+   "requirement": "Sử dụng thành thạo các phần mềm kế toán, vi tính văn phòng (đặc biệt là excel).",
+   "sentence": "Skilled in using Microsoft Office and accounting software, with a proven track record of delivering accurate and timely financial reports.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V012",
+   "part": "validation",
+   "job": "JD-30",
+   "cv": "CV-053",
+   "requirement": "Có kinh nghiệm quản lý đội ngũ.",
+   "sentence": "Có kinh nghiệm 54 tháng trong lĩnh vực tuyển dụng tại TP.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V013",
+   "part": "validation",
+   "job": "JD-30",
+   "cv": "CV-053",
+   "requirement": "Kỹ năng giao tiếp, đàm phán và xử lý tình huống.",
+   "sentence": "Chuyên về giao tiếp qua email/chat, viết báo cáo và làm việc nhóm.",
+   "rank": 2,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "V014",
+   "part": "validation",
+   "job": "JD-30",
+   "cv": "CV-031",
+   "requirement": "Kỹ năng lãnh đạo, quản lý và phát triển đội ngũ.",
+   "sentence": "Tăng hiệu quả công việc của nhân viên từ 50% lên 70%.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "V015",
+   "part": "validation",
+   "job": "JD-75",
+   "cv": "CV-011",
+   "requirement": "Understanding of social media content strategies, community engagement, and digital marketing campaigns.",
+   "sentence": "Đã tham gia vào nhiều dự án thương mại điện tử, góp phần cải thiện hiệu suất và tính tương tác của ứng dụng.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V016",
+   "part": "validation",
+   "job": "JD-66",
+   "cv": "CV-014",
+   "requirement": "Exposure to AI/ML, data quality, or LLM-powered applications is advantageous.",
+   "sentence": "Proven track record of delivering robust and scalable applications.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V017",
+   "part": "validation",
+   "job": "JD-35",
+   "cv": "CV-084",
+   "requirement": "Thành thạo Unit, Integration, Contract Testing cho HTTP API và WebSocket/MQTT/Message Queue.",
+   "sentence": "TechGrowth App Campaign — Content Marketing Specialist",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V018",
+   "part": "validation",
+   "job": "JD-30",
+   "cv": "CV-031",
+   "requirement": "Kỹ năng lãnh đạo, quản lý và phát triển đội ngũ.",
+   "sentence": "Tạo ra môi trường làm việc tích cực thông qua việc tổ chức các cuộc họp định kỳ để chia sẻ thông tin và cải tiến quy trình.",
+   "rank": 2,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "V019",
+   "part": "validation",
+   "job": "JD-30",
+   "cv": "CV-031",
+   "requirement": "Kiến thức về xây dựng hệ thống, quy trình, chính sách nhân sự và quản trị hiệu suất.",
+   "sentence": "Tạo ra môi trường làm việc tích cực thông qua việc tổ chức các cuộc họp định kỳ để chia sẻ thông tin và cải tiến quy trình.",
+   "rank": 2,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "V020",
+   "part": "validation",
+   "job": "JD-62",
+   "cv": "CV-016",
+   "requirement": "Programming or scripting knowledge in C, C++, Python, CAPL, or MATLAB/Simulink.",
+   "sentence": "Skilled in Swift, MVVM architecture, and RESTful API implementation.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "V021",
+   "part": "validation",
+   "job": "JD-75",
+   "cv": "CV-011",
+   "requirement": "Ability to collaborate effectively across teams and manage multiple content tasks in a fast-paced environment.",
+   "sentence": "Xây dựng và triển khai các API RESTful hiệu quả, giúp ứng dụng hoạt động trơn tru trên nhiều nền tảng.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V022",
+   "part": "validation",
+   "job": "JD-62",
+   "cv": "CV-016",
+   "requirement": "Strong analytical, problem-solving, communication, and cross-functional coordination skills.",
+   "sentence": "Skilled in Swift, MVVM architecture, and RESTful API implementation.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V023",
+   "part": "validation",
+   "job": "JD-16",
+   "cv": "CV-028",
+   "requirement": "Có khả năng làm việc với áp lực cao",
+   "sentence": "Nâng Cấp Hệ Thống CRM — Lãnh đạo dự án",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V024",
+   "part": "validation",
+   "job": "JD-08",
+   "cv": "CV-058",
+   "requirement": "Có khả năng lắng nghe, phân tích và đánh giá vấn đề.",
+   "sentence": "Nhân Viên CSKH — TechSupport Connect",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V025",
+   "part": "validation",
+   "job": "JD-16",
+   "cv": "CV-028",
+   "requirement": "Có kinh nghiệm làm việc với các kiến trúc mobile: MVVM, MVP, clean architecture",
+   "sentence": "Chuyên viên Quản lý Kinh doanh Online — Tiếng Ngữ Global",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V026",
+   "part": "validation",
+   "job": "JD-08",
+   "cv": "CV-031",
+   "requirement": "Biết sử dụng các công cụ xã hội như Facebook, Skype, Viber...",
+   "sentence": "Tạo ra môi trường làm việc tích cực thông qua việc tổ chức các cuộc họp định kỳ để chia sẻ thông tin và cải tiến quy trình.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V027",
+   "part": "validation",
+   "job": "JD-08",
+   "cv": "CV-031",
+   "requirement": "Phải có kỹ năng đánh máy tốt, sử dụng thành thạo máy vi tính và các phần mềm văn phòng hỗ trợ: Word, Excel...",
+   "sentence": "Tăng hiệu quả công việc của nhân viên từ 50% lên 70%.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V028",
+   "part": "validation",
+   "job": "JD-35",
+   "cv": "CV-084",
+   "requirement": "Kinh nghiệm ứng dụng LLM/AI trong testing, Property-based Testing hoặc Mutation Testing.",
+   "sentence": "Skilled in leveraging AI and social media platforms to optimize user engagement and conversion.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V029",
+   "part": "validation",
+   "job": "JD-75",
+   "cv": "CV-011",
+   "requirement": "Experience in technology, fintech, Web3/ blockchain or digital trading products is a strong advantage.",
+   "sentence": "Android Developer — E-Commerce Pro",
+   "rank": 2,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V030",
+   "part": "validation",
+   "job": "JD-35",
+   "cv": "CV-084",
+   "requirement": "Có chứng chỉ ISTQB là lợi thế, không bắt buộc.",
+   "sentence": "TechGrowth App Campaign — Content Marketing Specialist",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V031",
+   "part": "validation",
+   "job": "JD-35",
+   "cv": "CV-020",
+   "requirement": "Có chứng chỉ ISTQB là lợi thế, không bắt buộc.",
+   "sentence": "Dự án ERP — Manual Tester",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "partial",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V032",
+   "part": "validation",
+   "job": "JD-08",
+   "cv": "CV-058",
+   "requirement": "Ưu tiên ứng viên có kinh nghiệm thực tế trong lĩnh vực tư vấn và chăm sóc khách hàng.",
+   "sentence": "Đạt 95% tỷ lệ hài lòng khách hàng trong 3 tháng đầu tiên, nhờ kỹ năng tư vấn và thuyết phục khách hàng.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V033",
+   "part": "validation",
+   "job": "JD-16",
+   "cv": "CV-016",
+   "requirement": "Có kinh nghiệm làm việc với các kiến trúc mobile: MVVM, MVP, clean architecture",
+   "sentence": "Led a team of developers in implementing MVVM architecture, ensuring high performance and maintainability of the applications.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V034",
+   "part": "validation",
+   "job": "JD-16",
+   "cv": "CV-016",
+   "requirement": "Có kinh nghiệm làm việc với cocoapods, RESTful API, Json",
+   "sentence": "Skilled in Swift, MVVM architecture, and RESTful API implementation.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "V035",
+   "part": "validation",
+   "job": "JD-08",
+   "cv": "CV-031",
+   "requirement": "Có khả năng lắng nghe, phân tích và đánh giá vấn đề.",
+   "sentence": "Tạo ra môi trường làm việc tích cực thông qua việc tổ chức các cuộc họp định kỳ để chia sẻ thông tin và cải tiến quy trình.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V036",
+   "part": "validation",
+   "job": "JD-62",
+   "cv": "CV-007",
+   "requirement": "Strong analytical, problem-solving, communication, and cross-functional coordination skills.",
+   "sentence": "Hệ thống Quản lý Nội dung — Lead Backend Developer",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V037",
+   "part": "validation",
+   "job": "JD-16",
+   "cv": "CV-028",
+   "requirement": "Có khả năng thiết kế hệ thống (flow design, detail design, sequence diagram design)",
+   "sentence": "Nâng Cấp Hệ Thống CRM — Lãnh đạo dự án",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V038",
+   "part": "validation",
+   "job": "JD-05",
+   "cv": "CV-006",
+   "requirement": "Hồ Sơ : Portfolio tổng hợp các sản phẩm/dự án 2D ,3D đã được thực hiện thực tế.",
+   "sentence": "Có 16 tháng kinh nghiệm làm Backend Developer, tập trung vào System Administration và Embedded C.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V039",
+   "part": "validation",
+   "job": "JD-66",
+   "cv": "CV-010",
+   "requirement": "German is a plus.",
+   "sentence": "Tối ưu hóa hệ thống xử lý ngôn ngữ tự nhiên (NLP) để tăng độ chính xác lên 95%.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V040",
+   "part": "validation",
+   "job": "JD-75",
+   "cv": "CV-011",
+   "requirement": "Experience in technology, fintech, Web3/ blockchain or digital trading products is a strong advantage.",
+   "sentence": "Đã tham gia vào nhiều dự án thương mại điện tử, góp phần cải thiện hiệu suất và tính tương tác của ứng dụng.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V041",
+   "part": "validation",
+   "job": "JD-62",
+   "cv": "CV-016",
+   "requirement": "Knowledge of Functional Safety (ISO 26262), Automotive Cybersecurity (ISO/SAE 21434), and Automotive SPICE.",
+   "sentence": "Implemented clean architecture principles, ensuring that the codebase was modular and easy to maintain.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V042",
+   "part": "validation",
+   "job": "JD-35",
+   "cv": "CV-020",
+   "requirement": "Kinh nghiệm kiểm thử IoT, time-series, Modbus/OCPP.",
+   "sentence": "Manual Tester — Công ty SmartCheck",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "V043",
+   "part": "validation",
+   "job": "JD-08",
+   "cv": "CV-031",
+   "requirement": "Có kỹ năng làm việc đội nhóm.",
+   "sentence": "Tăng hiệu quả công việc của nhân viên từ 50% lên 70%.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V044",
+   "part": "validation",
+   "job": "JD-16",
+   "cv": "CV-028",
+   "requirement": "Có kinh nghiệm làm việc với cocoapods, RESTful API, Json",
+   "sentence": "Chuyên viên Quản lý Kinh doanh Online — Tiếng Ngữ Global",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V045",
+   "part": "validation",
+   "job": "JD-16",
+   "cv": "CV-028",
+   "requirement": "Có kinh nghiệm làm việc với cocoapods, RESTful API, Json",
+   "sentence": "Nâng Cấp Hệ Thống CRM — Lãnh đạo dự án",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V046",
+   "part": "validation",
+   "job": "JD-35",
+   "cv": "CV-084",
+   "requirement": "Thành thạo AI coding tools (Claude Code, Cursor, Copilot…) trong tạo test, review code và phân tích lỗi.",
+   "sentence": "Utilized AI tools to analyze user behavior and optimize ad targeting, resulting in a 25% increase in app installs and a 15% decrease in cost per install (CPI).",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V047",
+   "part": "validation",
+   "job": "JD-35",
+   "cv": "CV-020",
+   "requirement": "Thành thạo AI coding tools (Claude Code, Cursor, Copilot…) trong tạo test, review code và phân tích lỗi.",
+   "sentence": "Có kỹ năng sử dụng AI để phân tích và dự đoán các vấn đề tiềm ẩn trong code, giúp tiết kiệm thời gian kiểm tra.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V048",
+   "part": "validation",
+   "job": "JD-35",
+   "cv": "CV-084",
+   "requirement": "Thành thạo Unit, Integration, Contract Testing cho HTTP API và WebSocket/MQTT/Message Queue.",
+   "sentence": "Skilled in leveraging AI and social media platforms to optimize user engagement and conversion.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V049",
+   "part": "validation",
+   "job": "JD-02",
+   "cv": "CV-024",
+   "requirement": "Có khả năng viết code sạch, dễ bảo trì và có khả năng mở rộng.",
+   "sentence": "Ứng dụng di động cho khách hàng — Fullstack Developer",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V050",
+   "part": "validation",
+   "job": "JD-75",
+   "cv": "CV-011",
+   "requirement": "Ability to collaborate effectively across teams and manage multiple content tasks in a fast-paced environment.",
+   "sentence": "Ứng dụng quản lý kho hàng — Android Developer",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V051",
+   "part": "validation",
+   "job": "JD-30",
+   "cv": "CV-053",
+   "requirement": "Sử dụng thành thạo Microsoft Office (Word, Excel, PowerPoint).",
+   "sentence": "Chuyên về giao tiếp qua email/chat, viết báo cáo và làm việc nhóm.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V052",
+   "part": "validation",
+   "job": "JD-02",
+   "cv": "CV-008",
+   "requirement": "Hiểu tốt về cơ sở dữ liệu quan hệ như MySQL, PostgreSQL.",
+   "sentence": "Cải thiện hiệu suất ứng dụng bằng cách tối ưu hóa cơ sở dữ liệu PostgreSQL, giảm thời gian truy vấn từ 5 giây xuống còn 1 giây, giúp cải thiện trải nghiệm người dùng.",
+   "rank": 2,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V053",
+   "part": "validation",
+   "job": "JD-66",
+   "cv": "CV-014",
+   "requirement": "familiarity with Module Federation, Vite, or Mantine is a plus.",
+   "sentence": "Skilled in JavaScript, Node.js, ReactJS, and Java, with a deep understanding of sequence diagrams and banking operations.",
+   "rank": 2,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "V054",
+   "part": "validation",
+   "job": "JD-16",
+   "cv": "CV-028",
+   "requirement": "Có khả năng đọc hiểu nắm bắt flow dự án và nắm bắt code của người khác nhanh",
+   "sentence": "Lên kế hoạch và triển khai hệ thống CRM mới, giúp tăng hiệu suất công việc lên 25%.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V055",
+   "part": "validation",
+   "job": "JD-08",
+   "cv": "CV-058",
+   "requirement": "Có kỹ năng tư vấn và thuyết phục khách hàng.",
+   "sentence": "Đạt 95% tỷ lệ hài lòng khách hàng trong 3 tháng đầu tiên, nhờ kỹ năng tư vấn và thuyết phục khách hàng.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V056",
+   "part": "validation",
+   "job": "JD-62",
+   "cv": "CV-007",
+   "requirement": "Lunch and mobile allowance…",
+   "sentence": "Hệ thống Quản lý Nội dung — Lead Backend Developer",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V057",
+   "part": "validation",
+   "job": "JD-75",
+   "cv": "CV-046",
+   "requirement": "Experience in technology, fintech, Web3/ blockchain or digital trading products is a strong advantage.",
+   "sentence": "Digital Marketing Coordinator — Innovatech",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V058",
+   "part": "validation",
+   "job": "JD-16",
+   "cv": "CV-028",
+   "requirement": "Có khả năng thiết kế hệ thống (flow design, detail design, sequence diagram design)",
+   "sentence": "Lên kế hoạch và triển khai hệ thống CRM mới, giúp tăng hiệu suất công việc lên 25%.",
+   "rank": 2,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "V059",
+   "part": "validation",
+   "job": "JD-02",
+   "cv": "CV-008",
+   "requirement": "Có kinh nghiệm với NoSQL hoặc các công nghệ lưu trữ/cache như MongoDB, DynamoDB, Redis hoặc tương đương.",
+   "sentence": "Cải thiện hiệu suất hệ thống bằng cách tối ưu hóa cơ sở dữ liệu và ứng dụng các kỹ thuật caching.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "V060",
+   "part": "validation",
+   "job": "JD-66",
+   "cv": "CV-010",
+   "requirement": "German is a plus.",
+   "sentence": "Kỹ năng làm việc độc lập và có thể làm việc hiệu quả trong đội ngũ quốc tế.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V061",
+   "part": "validation",
+   "job": "JD-05",
+   "cv": "CV-091",
+   "requirement": "V-Ray ( Chaosvantage chưa thành thạo sẽ được đào tạo).",
+   "sentence": "Sử dụng công cụ SketchUp và V-Ray để tạo ra các mô hình 3D chi tiết.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V062",
+   "part": "validation",
+   "job": "JD-30",
+   "cv": "CV-031",
+   "requirement": "Ưu tiên có chứng chỉ chuyên môn liên quan đến nhân sự (C&B, KPI, đào tạo, luật lao động,...).",
+   "sentence": "Tăng hiệu quả công việc của nhân viên từ 50% lên 70%.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V063",
+   "part": "validation",
+   "job": "JD-35",
+   "cv": "CV-084",
+   "requirement": "sử dụng tốt Docker và GitHub Actions/GitLab CI.",
+   "sentence": "TechGrowth App Campaign — Content Marketing Specialist",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V064",
+   "part": "validation",
+   "job": "JD-08",
+   "cv": "CV-058",
+   "requirement": "Có kỹ năng tư vấn và thuyết phục khách hàng.",
+   "sentence": "Thuyết phục thành công 80% khách hàng không hài lòng về sản phẩm trở lại sử dụng sau các cuộc tư vấn.",
+   "rank": 2,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V065",
+   "part": "validation",
+   "job": "JD-60",
+   "cv": "CV-038",
+   "requirement": "Biết tổng hợp và phân tích báo cáo, thi hành nhiệm vụ chính xác và đúng quy định.",
+   "sentence": "Participated in the preparation of tax returns and ensured that all necessary documents were submitted on time.",
+   "rank": 2,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "V066",
+   "part": "validation",
+   "job": "JD-02",
+   "cv": "CV-008",
+   "requirement": "Có kinh nghiệm làm việc thực tế với ReactJS hoặc các frontend framework hiện đại.",
+   "sentence": "Xây dựng một giao diện web sử dụng ReactJS và Redux, giúp cải thiện giao diện người dùng và khả năng tương tác với dữ liệu.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V067",
+   "part": "validation",
+   "job": "JD-62",
+   "cv": "CV-007",
+   "requirement": "Experience working with automotive OEMs, Tier-1 suppliers, or international teams.",
+   "sentence": "Backend Developer — KidoTech Solutions",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V068",
+   "part": "validation",
+   "job": "JD-16",
+   "cv": "CV-028",
+   "requirement": "Có khả năng đọc hiểu nắm bắt flow dự án và nắm bắt code của người khác nhanh",
+   "sentence": "Nâng Cấp Hệ Thống CRM — Lãnh đạo dự án",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V069",
+   "part": "validation",
+   "job": "JD-66",
+   "cv": "CV-010",
+   "requirement": "Exposure to AI/ML, data quality, or LLM-powered applications is advantageous.",
+   "sentence": "Có hơn 7 năm kinh nghiệm làm việc trong lĩnh vực phát triển phần mềm và AI.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V070",
+   "part": "validation",
+   "job": "JD-66",
+   "cv": "CV-014",
+   "requirement": "Ability to work independently while collaborating with local and international teams.",
+   "sentence": "Successfully managed a team of developers, guiding them in the implementation of advanced features and maintaining the application's performance and security.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "V071",
+   "part": "validation",
+   "job": "JD-66",
+   "cv": "CV-010",
+   "requirement": "Experience with React and TypeScript;",
+   "sentence": "Đã phát triển một hệ thống AI sử dụng Python và ReactJS, giúp cải thiện hiệu suất công việc lên đến 30%.",
+   "rank": 2,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V072",
+   "part": "validation",
+   "job": "JD-16",
+   "cv": "CV-016",
+   "requirement": "Có khả năng đọc hiểu nắm bắt flow dự án và nắm bắt code của người khác nhanh",
+   "sentence": "Skilled in Swift, MVVM architecture, and RESTful API implementation.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V073",
+   "part": "validation",
+   "job": "JD-35",
+   "cv": "CV-020",
+   "requirement": "Thành thạo Unit, Integration, Contract Testing cho HTTP API và WebSocket/MQTT/Message Queue.",
+   "sentence": "Có kinh nghiệm 36 tháng làm việc trong lĩnh vực manual testing, đặc biệt thành thạo công nghệ Python và AI, đã tham gia kiểm tra code và viết test case cho nhiều dự án khác nhau.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "V074",
+   "part": "validation",
+   "job": "JD-66",
+   "cv": "CV-014",
+   "requirement": "Experience with large-scale ETL/batch processing and reliable data pipelines.",
+   "sentence": "Utilized Java for critical backend services, ensuring high performance and reliability in transaction processing.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V075",
+   "part": "validation",
+   "job": "JD-66",
+   "cv": "CV-014",
+   "requirement": "Experience with large-scale ETL/batch processing and reliable data pipelines.",
+   "sentence": "Proven track record of delivering robust and scalable applications.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V076",
+   "part": "validation",
+   "job": "JD-02",
+   "cv": "CV-024",
+   "requirement": "Có kinh nghiệm làm việc thực tế với ReactJS hoặc các frontend framework hiện đại.",
+   "sentence": "Phát triển ứng dụng di động và web sử dụng ReactJS, đảm bảo trải nghiệm người dùng mượt mà và hiệu quả.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V077",
+   "part": "validation",
+   "job": "JD-02",
+   "cv": "CV-008",
+   "requirement": "Có kinh nghiệm thiết kế và phát triển RESTful APIs và/hoặc GraphQL APIs.",
+   "sentence": "Xây dựng một API backend RESTful và GraphQL để cung cấp dữ liệu cho các ứng dụng di động, giúp giảm thời gian tải trang trung bình từ 3 giây xuống 1 giây, cải thiện trải nghiệm người dùng.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V078",
+   "part": "validation",
+   "job": "JD-30",
+   "cv": "CV-031",
+   "requirement": "Kỹ năng giao tiếp, đàm phán và xử lý tình huống.",
+   "sentence": "Giảm tỷ lệ trễ hẹn tư vấn từ 15% xuống còn 5% bằng cách tối ưu hóa quản lý thời gian và quy trình làm việc.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V079",
+   "part": "validation",
+   "job": "JD-35",
+   "cv": "CV-020",
+   "requirement": "Có khả năng đọc backend code, truy vấn SQL/NoSQL, phân tích logs;",
+   "sentence": "Có kỹ năng sử dụng AI để phân tích và dự đoán các vấn đề tiềm ẩn trong code, giúp tiết kiệm thời gian kiểm tra.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "V080",
+   "part": "validation",
+   "job": "JD-60",
+   "cv": "CV-054",
+   "requirement": "Biết tổng hợp và phân tích báo cáo, thi hành nhiệm vụ chính xác và đúng quy định.",
+   "sentence": "Qua kinh nghiệm làm việc tại hai công ty khác nhau, tôi đã phát triển kỹ năng quan sát và sử dụng tin học văn phòng hiệu quả.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V081",
+   "part": "validation",
+   "job": "JD-62",
+   "cv": "CV-016",
+   "requirement": "Knowledge of Functional Safety (ISO 26262), Automotive Cybersecurity (ISO/SAE 21434), and Automotive SPICE.",
+   "sentence": "Skilled in Swift, MVVM architecture, and RESTful API implementation.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V082",
+   "part": "validation",
+   "job": "JD-16",
+   "cv": "CV-016",
+   "requirement": "Có khả năng đọc hiểu nắm bắt flow dự án và nắm bắt code của người khác nhanh",
+   "sentence": "iOS Developer — CodeCrafters",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V083",
+   "part": "validation",
+   "job": "JD-30",
+   "cv": "CV-053",
+   "requirement": "Sử dụng thành thạo Microsoft Office (Word, Excel, PowerPoint).",
+   "sentence": "Hồ Chí Minh, với 3 công việc đã làm.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V084",
+   "part": "validation",
+   "job": "JD-75",
+   "cv": "CV-046",
+   "requirement": "Familiarity with digital trading products, blockchain, digital assets, or related financial concepts is preferred.",
+   "sentence": "Content Creator — TechNova",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V085",
+   "part": "validation",
+   "job": "JD-60",
+   "cv": "CV-038",
+   "requirement": "Có kiến thức cơ bản về công nghệ, quy trình sản xuất trong công ty.",
+   "sentence": "Assisted in the preparation of financial reports and helped in the consolidation of financial data for the company's subsidiaries.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V086",
+   "part": "validation",
+   "job": "JD-75",
+   "cv": "CV-011",
+   "requirement": "Familiarity with digital trading products, blockchain, digital assets, or related financial concepts is preferred.",
+   "sentence": "Đã tham gia vào nhiều dự án thương mại điện tử, góp phần cải thiện hiệu suất và tính tương tác của ứng dụng.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V087",
+   "part": "validation",
+   "job": "JD-66",
+   "cv": "CV-014",
+   "requirement": "familiarity with Module Federation, Vite, or Mantine is a plus.",
+   "sentence": "Integrated new features such as multi-factor authentication and transaction alerts.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V088",
+   "part": "validation",
+   "job": "JD-05",
+   "cv": "CV-006",
+   "requirement": "Có hiểu biết về vật liệu nội thất (gỗ công nghiệp,Gỗ tự nhiên,đá,kim loại,da/da, phụ kiện hoàn thiện,... ).",
+   "sentence": "Có kinh nghiệm thiết kế hệ thống và quản lý hệ thống cho một chuỗi bán lẻ tại Cần Thơ.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V089",
+   "part": "validation",
+   "job": "JD-05",
+   "cv": "CV-006",
+   "requirement": "Sử dụng thành thạo phần mềm dựng hình/render chính: SketchUp",
+   "sentence": "Có 16 tháng kinh nghiệm làm Backend Developer, tập trung vào System Administration và Embedded C.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V090",
+   "part": "validation",
+   "job": "JD-62",
+   "cv": "CV-016",
+   "requirement": "Experience with Driver Assistance Systems, radar, camera, or other automotive sensors.",
+   "sentence": "Integrated RESTful API for seamless data synchronization and improved application performance.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V091",
+   "part": "validation",
+   "job": "JD-60",
+   "cv": "CV-054",
+   "requirement": "Có kiến thức cơ bản về công nghệ, quy trình sản xuất trong công ty.",
+   "sentence": "Tổ chức sự kiện ra mắt sản phẩm mới — Hỗ trợ tổ chức",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V092",
+   "part": "validation",
+   "job": "JD-05",
+   "cv": "CV-091",
+   "requirement": "Sử dụng thành thạo phần mềm dựng hình/render chính: SketchUp",
+   "sentence": "Sử dụng công cụ SketchUp và V-Ray để tạo ra các mô hình 3D chi tiết.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V093",
+   "part": "validation",
+   "job": "JD-02",
+   "cv": "CV-024",
+   "requirement": "Có khả năng viết code sạch, dễ bảo trì và có khả năng mở rộng.",
+   "sentence": "Fullstack Developer — Công ty XYZ",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V094",
+   "part": "validation",
+   "job": "JD-66",
+   "cv": "CV-014",
+   "requirement": "Strong SQL and PostgreSQL skills, including performance tuning and database design.",
+   "sentence": "Implemented sequence diagrams to optimize database operations, resulting in a 20% improvement in data processing speed.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "V095",
+   "part": "validation",
+   "job": "JD-02",
+   "cv": "CV-024",
+   "requirement": "Hiểu tốt về cơ sở dữ liệu quan hệ như MySQL, PostgreSQL.",
+   "sentence": "Xây dựng và quản lý API REST API để liên kết các dịch vụ backend và frontend, tăng cường tính tương tác của ứng dụng.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V096",
+   "part": "validation",
+   "job": "JD-35",
+   "cv": "CV-020",
+   "requirement": "Thành thạo AI coding tools (Claude Code, Cursor, Copilot…) trong tạo test, review code và phân tích lỗi.",
+   "sentence": "Có kinh nghiệm 36 tháng làm việc trong lĩnh vực manual testing, đặc biệt thành thạo công nghệ Python và AI, đã tham gia kiểm tra code và viết test case cho nhiều dự án khác nhau.",
+   "rank": 2,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "V097",
+   "part": "validation",
+   "job": "JD-62",
+   "cv": "CV-016",
+   "requirement": "Experience with Driver Assistance Systems, radar, camera, or other automotive sensors.",
+   "sentence": "Skilled in Swift, MVVM architecture, and RESTful API implementation.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V098",
+   "part": "validation",
+   "job": "JD-16",
+   "cv": "CV-016",
+   "requirement": "Có hiểu biết về server",
+   "sentence": "Skilled in Swift, MVVM architecture, and RESTful API implementation.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "V099",
+   "part": "validation",
+   "job": "JD-66",
+   "cv": "CV-010",
+   "requirement": "Experience with React and TypeScript;",
+   "sentence": "Fullstack Developer — TechCraft Solutions",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V100",
+   "part": "validation",
+   "job": "JD-30",
+   "cv": "CV-053",
+   "requirement": "Có kinh nghiệm quản lý đội ngũ.",
+   "sentence": "Quản Lý Nhân Sự — Công Ty TMDV Phát Triển Nhân Sự",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "V101",
+   "part": "validation",
+   "job": "JD-08",
+   "cv": "CV-058",
+   "requirement": "Ưu tiên ứng viên có kinh nghiệm thực tế trong lĩnh vực tư vấn và chăm sóc khách hàng.",
+   "sentence": "Công việc chăm sóc khách hàng đã làm cho 3 tập đoàn đa quốc gia, với 76 tháng kinh nghiệm và 3 vị trí khác nhau.",
+   "rank": 2,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V102",
+   "part": "validation",
+   "job": "JD-05",
+   "cv": "CV-006",
+   "requirement": "Nắm vững nguyên lý thẩm mỹ, bố cục không gian, ánh sáng và màu sắc.",
+   "sentence": "Có kinh nghiệm thiết kế hệ thống và quản lý hệ thống cho một chuỗi bán lẻ tại Cần Thơ.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V103",
+   "part": "validation",
+   "job": "JD-30",
+   "cv": "CV-031",
+   "requirement": "Kiến thức về xây dựng hệ thống, quy trình, chính sách nhân sự và quản trị hiệu suất.",
+   "sentence": "Tăng hiệu quả công việc của nhân viên từ 50% lên 70%.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "V104",
+   "part": "validation",
+   "job": "JD-02",
+   "cv": "CV-024",
+   "requirement": "Học hỏi nhanh, sẵn sàng tiếp cận công nghệ mới và phù hợp với môi trường phát triển sản phẩm.",
+   "sentence": "Sử dụng công cụ kiểm thử Appium để tự động hóa quá trình kiểm thử, đảm bảo chất lượng của sản phẩm trước khi tung ra thị trường.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V105",
+   "part": "validation",
+   "job": "JD-30",
+   "cv": "CV-031",
+   "requirement": "Kỹ năng phân tích số liệu và báo cáo.",
+   "sentence": "Tăng hiệu quả công việc của nhân viên từ 50% lên 70%.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V106",
+   "part": "validation",
+   "job": "JD-60",
+   "cv": "CV-038",
+   "requirement": "Biết tổng hợp và phân tích báo cáo, thi hành nhiệm vụ chính xác và đúng quy định.",
+   "sentence": "Responsible for preparing monthly financial reports, ensuring accuracy and compliance with company policies and local laws.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V107",
+   "part": "validation",
+   "job": "JD-02",
+   "cv": "CV-024",
+   "requirement": "Học hỏi nhanh, sẵn sàng tiếp cận công nghệ mới và phù hợp với môi trường phát triển sản phẩm.",
+   "sentence": "Kinh nghiệm 17 tháng làm việc trong lĩnh vực phát triển phần mềm tại một tập đoàn đa quốc gia, có kỹ năng toàn diện trong việc xây dựng ứng dụng di động và web, quản lý API REST và sử dụng công cụ kiểm thử Appium.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V108",
+   "part": "validation",
+   "job": "JD-16",
+   "cv": "CV-028",
+   "requirement": "Có kinh nghiệm làm việc với các kiến trúc mobile: MVVM, MVP, clean architecture",
+   "sentence": "Nâng Cấp Hệ Thống CRM — Lãnh đạo dự án",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V109",
+   "part": "validation",
+   "job": "JD-02",
+   "cv": "CV-024",
+   "requirement": "Hiểu cơ chế caching như Redis, Memcached để tối ưu hiệu năng hệ thống.",
+   "sentence": "Fullstack Developer — Công ty XYZ",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V110",
+   "part": "validation",
+   "job": "JD-30",
+   "cv": "CV-053",
+   "requirement": "Kỹ năng giao tiếp, đàm phán và xử lý tình huống.",
+   "sentence": "Tạo và duy trì mối quan hệ với các nhà tuyển dụng và ứng viên, hỗ trợ trao đổi thông tin và xử lý vấn đề.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V111",
+   "part": "validation",
+   "job": "JD-16",
+   "cv": "CV-028",
+   "requirement": "Có khả năng làm việc với áp lực cao",
+   "sentence": "Lên kế hoạch và triển khai hệ thống CRM mới, giúp tăng hiệu suất công việc lên 25%.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V112",
+   "part": "validation",
+   "job": "JD-62",
+   "cv": "CV-007",
+   "requirement": "International trainings in HELLA facilities (if needed)",
+   "sentence": "Hệ thống Quản lý Nội dung — Lead Backend Developer",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V113",
+   "part": "validation",
+   "job": "JD-02",
+   "cv": "CV-008",
+   "requirement": "Có kỹ năng giao tiếp và làm việc nhóm tốt, phối hợp hiệu quả với Product, Design, QA và Engineering team.",
+   "sentence": "Có 33 tháng kinh nghiệm trong việc phát triển và triển khai các dự án fullstack, từ backend đến frontend, với nhiều công nghệ hiện đại và cơ sở dữ liệu khác nhau.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V114",
+   "part": "validation",
+   "job": "JD-66",
+   "cv": "CV-010",
+   "requirement": "Strong SQL and PostgreSQL skills, including performance tuning and database design.",
+   "sentence": "Tham gia vào quá trình thiết kế và triển khai hệ thống ETL/batch processing, giúp cải thiện quy trình xử lý dữ liệu lên đến 25%.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "partial",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V115",
+   "part": "validation",
+   "job": "JD-35",
+   "cv": "CV-084",
+   "requirement": "Thành thạo AI coding tools (Claude Code, Cursor, Copilot…) trong tạo test, review code và phân tích lỗi.",
+   "sentence": "Skilled in leveraging AI and social media platforms to optimize user engagement and conversion.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V116",
+   "part": "validation",
+   "job": "JD-75",
+   "cv": "CV-046",
+   "requirement": "Familiarity with digital trading products, blockchain, digital assets, or related financial concepts is preferred.",
+   "sentence": "Lên kế hoạch và thực hiện các chiến dịch marketing kỹ thuật số, từ đó tăng cường giao tiếp và tạo ra cộng đồng khách hàng trung thành.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V117",
+   "part": "validation",
+   "job": "JD-75",
+   "cv": "CV-046",
+   "requirement": "Understanding of social media content strategies, community engagement, and digital marketing campaigns.",
+   "sentence": "Thiết lập và duy trì các chiến dịch marketing qua mạng xã hội, thu hút hơn 10.000 người theo dõi sau 3 tháng triển khai.",
+   "rank": 2,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V118",
+   "part": "validation",
+   "job": "JD-75",
+   "cv": "CV-046",
+   "requirement": "Understanding of social media content strategies, community engagement, and digital marketing campaigns.",
+   "sentence": "Tạo ra nội dung hấp dẫn, phù hợp với mục tiêu marketing và nhu cầu của khách hàng, từ đó tăng cường tương tác trên các kênh social media.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V119",
+   "part": "validation",
+   "job": "JD-35",
+   "cv": "CV-020",
+   "requirement": "Có chứng chỉ ISTQB là lợi thế, không bắt buộc.",
+   "sentence": "Manual Tester — Công ty SmartCheck",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "partial",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V120",
+   "part": "validation",
+   "job": "JD-05",
+   "cv": "CV-091",
+   "requirement": "Có hiểu biết về vật liệu nội thất (gỗ công nghiệp,Gỗ tự nhiên,đá,kim loại,da/da, phụ kiện hoàn thiện,... ).",
+   "sentence": "Làm việc với các vật liệu nội thất đa dạng, bao gồm cả gỗ óc chó, để đáp ứng yêu cầu của khách hàng.",
+   "rank": 2,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V121",
+   "part": "validation",
+   "job": "JD-02",
+   "cv": "CV-008",
+   "requirement": "Có kinh nghiệm làm việc thực tế với ReactJS hoặc các frontend framework hiện đại.",
+   "sentence": "Phát triển và triển khai một giao diện quản lý sản phẩm mới sử dụng ReactJS, giúp nhân viên bán hàng cập nhật thông tin sản phẩm nhanh chóng hơn 30%.",
+   "rank": 2,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V122",
+   "part": "validation",
+   "job": "JD-30",
+   "cv": "CV-031",
+   "requirement": "Kỹ năng giao tiếp, đàm phán và xử lý tình huống.",
+   "sentence": "Tạo ra môi trường làm việc tích cực thông qua việc tổ chức các cuộc họp định kỳ để chia sẻ thông tin và cải tiến quy trình.",
+   "rank": 2,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "V123",
+   "part": "validation",
+   "job": "JD-62",
+   "cv": "CV-007",
+   "requirement": "Guaranteed 13th month salary",
+   "sentence": "Hệ thống Quản lý Nội dung — Lead Backend Developer",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V124",
+   "part": "validation",
+   "job": "JD-75",
+   "cv": "CV-046",
+   "requirement": "Ability to collaborate effectively across teams and manage multiple content tasks in a fast-paced environment.",
+   "sentence": "Giao tiếp hiệu quả với đội ngũ thiết kế và kỹ thuật để đảm bảo nội dung đạt chuẩn và xuất bản đúng thời gian dự kiến.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V125",
+   "part": "validation",
+   "job": "JD-16",
+   "cv": "CV-016",
+   "requirement": "Có khả năng làm việc với áp lực cao",
+   "sentence": "iOS Developer — AppLanterns",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V126",
+   "part": "validation",
+   "job": "JD-30",
+   "cv": "CV-053",
+   "requirement": "Am hiểu văn hóa doanh nghiệp và các công cụ đo lường gắn kết nhân viên.",
+   "sentence": "Quản Lý Nhân Sự — Công Ty TMDV Phát Triển Nhân Sự",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "partial",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V127",
+   "part": "validation",
+   "job": "JD-08",
+   "cv": "CV-058",
+   "requirement": "Có kỹ năng làm việc đội nhóm.",
+   "sentence": "Tham gia làm việc nhóm trong việc tổ chức các buổi đào tạo kỹ năng CSKH cho nhân viên mới.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V128",
+   "part": "validation",
+   "job": "JD-62",
+   "cv": "CV-007",
+   "requirement": "Strong analytical, problem-solving, communication, and cross-functional coordination skills.",
+   "sentence": "Thực hiện việc quản trị hệ thống, đảm bảo hiệu suất, an toàn và bảo mật thông tin.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V129",
+   "part": "validation",
+   "job": "JD-05",
+   "cv": "CV-091",
+   "requirement": "Nắm vững nguyên lý thẩm mỹ, bố cục không gian, ánh sáng và màu sắc.",
+   "sentence": "Áp dụng kiến thức về ánh sáng và màu sắc để tạo ra không gian nội thất đẹp mắt và ấn tượng.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V130",
+   "part": "validation",
+   "job": "JD-02",
+   "cv": "CV-024",
+   "requirement": "Có kinh nghiệm làm việc thực tế với ReactJS hoặc các frontend framework hiện đại.",
+   "sentence": "Phát triển và tối ưu ứng dụng di động cho khách hàng sử dụng ReactJS, đạt hơn 100.000 lượt tải về.",
+   "rank": 2,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V131",
+   "part": "validation",
+   "job": "JD-02",
+   "cv": "CV-024",
+   "requirement": "Hiểu tốt về cơ sở dữ liệu quan hệ như MySQL, PostgreSQL.",
+   "sentence": "Ứng dụng di động cho khách hàng — Fullstack Developer",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V132",
+   "part": "validation",
+   "job": "JD-05",
+   "cv": "CV-091",
+   "requirement": "Sử dụng cơ bản các phần mềm liên quan: AutoCAD, Adobe Photoshop",
+   "sentence": "Trong quá trình làm việc, đã làm quen với phần mềm AutoCAD để tạo các bản vẽ kỹ thuật chi tiết, góp phần vào quy trình thiết kế tổng thể.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V133",
+   "part": "validation",
+   "job": "JD-66",
+   "cv": "CV-014",
+   "requirement": "Strong SQL and PostgreSQL skills, including performance tuning and database design.",
+   "sentence": "Optimized the application's backend to improve performance and scalability.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V134",
+   "part": "validation",
+   "job": "JD-02",
+   "cv": "CV-008",
+   "requirement": "Hiểu tốt về cơ sở dữ liệu quan hệ như MySQL, PostgreSQL.",
+   "sentence": "Cải thiện hiệu suất hệ thống bằng cách tối ưu hóa cơ sở dữ liệu và ứng dụng các kỹ thuật caching.",
+   "rank": 1,
+   "label": "partial",
+   "passes": [
+    "partial",
+    "partial"
+   ]
+  },
+  {
+   "id": "V135",
+   "part": "validation",
+   "job": "JD-05",
+   "cv": "CV-006",
+   "requirement": "Hồ Sơ : Portfolio tổng hợp các sản phẩm/dự án 2D ,3D đã được thực hiện thực tế.",
+   "sentence": "Hệ thống quản lý nhân viên — Lead Developer",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V136",
+   "part": "validation",
+   "job": "JD-35",
+   "cv": "CV-084",
+   "requirement": "Kinh nghiệm ứng dụng LLM/AI trong testing, Property-based Testing hoặc Mutation Testing.",
+   "sentence": "Utilized AI tools to analyze user behavior and optimize ad targeting, resulting in a 25% increase in app installs and a 15% decrease in cost per install (CPI).",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V137",
+   "part": "validation",
+   "job": "JD-08",
+   "cv": "CV-031",
+   "requirement": "Sử dụng Tiếng Việt lưu loát.",
+   "sentence": "Sales Online — Thịnh Phát",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V138",
+   "part": "validation",
+   "job": "JD-75",
+   "cv": "CV-046",
+   "requirement": "Experience in technology, fintech, Web3/ blockchain or digital trading products is a strong advantage.",
+   "sentence": "Lên kế hoạch và thực hiện các chiến dịch marketing kỹ thuật số, từ đó tăng cường giao tiếp và tạo ra cộng đồng khách hàng trung thành.",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V139",
+   "part": "validation",
+   "job": "JD-05",
+   "cv": "CV-006",
+   "requirement": "V-Ray ( Chaosvantage chưa thành thạo sẽ được đào tạo).",
+   "sentence": "Hệ thống quản lý nhân viên — Lead Developer",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V140",
+   "part": "validation",
+   "job": "JD-60",
+   "cv": "CV-038",
+   "requirement": "Có kiến thức cơ bản về công nghệ, quy trình sản xuất trong công ty.",
+   "sentence": "Trained new staff members on accounting and tax procedures, improving overall team efficiency by 20%.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V141",
+   "part": "validation",
+   "job": "JD-66",
+   "cv": "CV-014",
+   "requirement": "Exposure to AI/ML, data quality, or LLM-powered applications is advantageous.",
+   "sentence": "Optimized the application's backend to improve performance and scalability.",
+   "rank": 2,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  },
+  {
+   "id": "V142",
+   "part": "validation",
+   "job": "JD-05",
+   "cv": "CV-091",
+   "requirement": "Có hiểu biết về vật liệu nội thất (gỗ công nghiệp,Gỗ tự nhiên,đá,kim loại,da/da, phụ kiện hoàn thiện,... ).",
+   "sentence": "Thông qua việc lựa chọn vật liệu phù hợp, đã giúp nâng cao giá trị thẩm mỹ của không gian nội thất.",
+   "rank": 1,
+   "label": "met",
+   "passes": [
+    "met",
+    "met"
+   ]
+  },
+  {
+   "id": "V143",
+   "part": "validation",
+   "job": "JD-62",
+   "cv": "CV-007",
+   "requirement": "Lunch and mobile allowance…",
+   "sentence": "Backend Developer — KidoTech Solutions",
+   "rank": 1,
+   "label": "unmet",
+   "passes": [
+    "unmet",
+    "unmet"
+   ]
+  }
+ ]
+}

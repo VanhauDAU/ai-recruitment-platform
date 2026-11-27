@@ -23,7 +23,7 @@ from django.utils import timezone
 from apps.applications.models import Application
 from apps.sitecontent.selectors import get_bool_setting
 
-from ..domain import APPLICATION_RANKING_FLAG, EXTRACTOR_VERSION, SCORING_VERSION
+from ..domain import APPLICATION_RANKING_FLAG, EXTRACTOR_VERSION, scoring_cache_version
 from ..models import MatchAnalysis, MatchDocument, jobs_for_profile
 from .analyses import execute_analysis, reset_failed_analysis
 from .documents import job_document_hash
@@ -52,7 +52,7 @@ def _analysis_for(application, digest):
             job_id=application.job_id,
             job_content_hash=digest,
             model_version=model_version(),
-            scoring_version=SCORING_VERSION,
+            scoring_version=scoring_cache_version(),
             defaults={'user_id': application.candidate_id, 'purpose': RANKING},
         )
         if analysis.status == MatchAnalysis.Status.FAILED:
@@ -60,7 +60,7 @@ def _analysis_for(application, digest):
     return analysis
 
 
-def score_application(application_id, *, encoder, catalog):
+def score_application(application_id, *, encoder, catalog, reranker=None):
     """Chấm bản CV đã nộp của một hồ sơ với tin của nó.
 
     Trả `MatchAnalysis`, hoặc None khi hồ sơ không được chấm (tính năng tắt, ứng viên
@@ -79,7 +79,7 @@ def score_application(application_id, *, encoder, catalog):
     job = jobs_for_profile(statuses=None).filter(pk=application.job_id).first()
     analysis = _analysis_for(application, job_document_hash(job))
     if analysis.status != MatchAnalysis.Status.SUCCEEDED:
-        execute_analysis(analysis.pk, job=job, encoder=encoder, catalog=catalog)
+        execute_analysis(analysis.pk, job=job, encoder=encoder, catalog=catalog, reranker=reranker)
         analysis.refresh_from_db()
     return analysis
 
@@ -107,7 +107,7 @@ def applications_needing_score(job, digest=None):
         job_id=OuterRef('job_id'),
         job_content_hash=digest or job_document_hash(job),
         model_version=model_version(),
-        scoring_version=SCORING_VERSION,
+        scoring_version=scoring_cache_version(),
         purpose=RANKING,
     )
     return list(

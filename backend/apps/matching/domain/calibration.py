@@ -22,8 +22,12 @@ class Calibration:
     semantic_skills: bool = False
 
 
-# Mốc theo phiên bản mô hình, đo bằng `ml/scripts/calibrate.py`; chỉnh lại trên
-# tập validation do người chấm ở tuần 6. Mô hình chưa đo dùng mốc của e5-base.
+class UnknownModelVersion(KeyError):
+    """Phiên bản mô hình chưa có mốc: phải đo rồi thêm vào bảng, không được đoán."""
+
+
+# Mốc theo phiên bản mô hình. Mô hình chưa đo thì không chấm được: dùng mốc của mô hình
+# khác cho ra điểm sai mà không báo lỗi (cosine của mỗi mô hình nằm trên một thang riêng).
 CALIBRATIONS = {
     'hashing-v1': Calibration(
         document=(0.05, 0.6),
@@ -42,12 +46,57 @@ CALIBRATIONS = {
         requirement_met=0.855,
         requirement_partial=0.838,
     ),
+    # Bi-encoder fine-tune lượt đầu (27/11). Mốc toàn văn và chức danh đo trên 321 cặp có
+    # nhãn của tập hiệu chỉnh (`ml/reports/calibration_set_e5-base-ft-v1.md`): sau fine-tune
+    # cosine trải từ khoảng 0,13 tới 0,81 thay vì dồn trong 0,82–0,89. Ba ngưỡng theo câu
+    # (kỹ năng, yêu cầu) mới là tạm tính theo vị trí trong khoảng toàn văn, chưa đo riêng;
+    # trạng thái từng yêu cầu sẽ do cross-encoder quyết định.
+    'e5-base-ft-v1': Calibration(
+        document=(0.132, 0.809),
+        title=(0.338, 0.840),
+        skill=0.80,
+        requirement_met=0.64,
+        requirement_partial=0.47,
+    ),
+    # Nội suy trọng số 30% mô hình gốc + 70% `e5-base-ft-v1` (`ml/scripts/interpolate_model.py`).
+    # Mốc chọn bằng `ml/scripts/calibrate_scale.py` trên tập hiệu chỉnh: `low` là trung vị
+    # cosine của cặp nhãn 0, `high` là phân vị 90 của cặp nhãn 3–4. Ba ngưỡng theo câu là
+    # tạm tính như ở `e5-base-ft-v1`.
+    'e5-base-wise-v1': Calibration(
+        document=(0.204, 0.772),
+        title=(0.530, 0.851),
+        skill=0.80,
+        requirement_met=0.63,
+        requirement_partial=0.49,
+    ),
 }
-DEFAULT_CALIBRATION = CALIBRATIONS['e5-base-zs-v1']
+
+
+# Ngưỡng xác suất của cross-encoder: (đạt, có liên quan). `req-ce-v1` chọn trên 215 cặp
+# yêu cầu–câu CV thật của tập hiệu chỉnh: ngưỡng "đạt" thấp nhất còn giữ precision từ 0,85
+# (`ml/reports/reranker_eval.md`; trên 143 cặp validation precision là 0,947).
+RERANKER_THRESHOLDS = {
+    'hashing-ce-v1': (0.6, 0.3),
+    'req-ce-v1': (0.853, 0.063),
+}
+
+
+def reranker_thresholds(version):
+    """Ngưỡng của một cross-encoder; phiên bản chưa đo thì báo lỗi thay vì đoán."""
+    try:
+        return RERANKER_THRESHOLDS[version]
+    except KeyError:
+        raise UnknownModelVersion(f'Chưa có ngưỡng cho cross-encoder {version!r}.') from None
 
 
 def calibration_for(model_version):
-    return CALIBRATIONS.get(model_version, DEFAULT_CALIBRATION)
+    try:
+        return CALIBRATIONS[model_version]
+    except KeyError:
+        raise UnknownModelVersion(
+            f'Chưa có mốc quy đổi cho mô hình {model_version!r}; đo bằng '
+            'ml/scripts/calibrate_scale.py rồi thêm vào CALIBRATIONS.'
+        ) from None
 
 
 def to_score(similarity, marks):

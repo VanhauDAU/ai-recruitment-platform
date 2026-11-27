@@ -6,6 +6,7 @@ import {
   confidenceLabel,
   criterionLabel,
   criterionStatusLabel,
+  groupMissingSkills,
 } from '@/entities/application/job-fit'
 import { useCountUp, useRevealed } from './use-reveal'
 
@@ -19,7 +20,7 @@ const MASCOT_BY_BAND = {
 
 const REQUIREMENT_ICONS = {
   met: { icon: <CheckOutlined />, label: 'Đạt' },
-  partial: { icon: <MinusOutlined />, label: 'Một phần' },
+  partial: { icon: <MinusOutlined />, label: 'Có liên quan, chưa rõ' },
   unmet: { icon: <CloseOutlined />, label: 'Chưa thấy trong CV' },
 }
 
@@ -89,6 +90,7 @@ export default function JobFitResult({ result }) {
   const shownScore = useCountUp(overall.score)
   const revealed = useRevealed()
   const reached = requirements.filter((row) => row.status !== 'unmet')
+  const missing = groupMissingSkills(skills.missing)
 
   return (
     <div className="jf-result">
@@ -132,12 +134,12 @@ export default function JobFitResult({ result }) {
             ) : <p className="jf-empty">Chưa thấy kỹ năng nào của tin trong CV.</p>}
           </div>
           <div>
-            <p className="jf-subheading">Còn thiếu ({skills.missing.length})</p>
-            {skills.missing.length ? (
+            <p className="jf-subheading">Còn thiếu ({missing.length})</p>
+            {missing.length ? (
               <ul className="jf-chips">
-                {skills.missing.map((skill) => (
-                  <li key={skill.name} className={`jf-chip${skill.importance === 'required' ? ' jf-chip--required' : ''}`}>
-                    {skill.name}{skill.importance === 'required' ? '' : ' (nên có)'}
+                {missing.map((skill) => (
+                  <li key={skill.key} className={`jf-chip${skill.importance === 'required' ? ' jf-chip--required' : ''}`}>
+                    {skill.names.join(' hoặc ')}{skill.importance === 'required' ? '' : ' (nên có)'}
                   </li>
                 ))}
               </ul>

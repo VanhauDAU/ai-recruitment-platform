@@ -243,5 +243,22 @@
   "candidate_connections_decline_title": "Từ chối lời mời kết nối",
   "candidate_connections_decline_text": "{company} sẽ biết bạn chưa quan tâm vị trí {job} và không thể mời lại cho tin này.",
   "candidate_connections_load_failed": "Không tải được lời mời",
-  "candidate_connections_empty": "Bạn chưa có lời mời kết nối nào"
+  "candidate_connections_empty": "Bạn chưa có lời mời kết nối nào",
+  "candidate_job_detail_tab_info": "Thông tin",
+  "candidate_job_detail_tab_company": "Công ty",
+  "candidate_job_detail_tab_related": "Việc liên quan",
+  "candidate_job_detail_tabs_label": "Nội dung tin tuyển dụng",
+  "candidate_job_detail_company_about": "Giới thiệu công ty",
+  "candidate_job_detail_collapse": "Thu gọn",
+  "candidate_job_detail_expand": "Xem thêm",
+  "candidate_job_detail_company_industries": "Lĩnh vực",
+  "candidate_job_detail_company_jobs": "Việc làm cùng công ty",
+  "candidate_job_detail_company_jobs_all": "Xem tất cả ({total})",
+  "candidate_job_detail_company_jobs_rail": "Việc làm cùng công ty, vuốt ngang để xem thêm",
+  "candidate_job_detail_related_empty": "Chưa có việc làm liên quan.",
+  "candidate_job_detail_all_jobs": "Xem tất cả việc làm",
+  "candidate_job_fit_trigger_label": "Xem độ phù hợp với CV của bạn",
+  "candidate_job_fit_fab_label": "Xem độ phù hợp CV",
+  "candidate_job_fit_trigger_title": "Xem độ phù hợp",
+  "candidate_job_fit_trigger_hint": "So CV của bạn với từng yêu cầu của tin, chỉ ra kỹ năng còn thiếu."
 }

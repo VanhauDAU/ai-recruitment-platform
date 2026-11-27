@@ -30,10 +30,22 @@ LEVEL_LABELS = dict(JobLanguageRequirement.ProficiencyLevel.choices)
 PRIORITY_ORDER = {'high': 0, 'medium': 1, 'low': 2}
 
 
+def _listed(names):
+    shown = names[:MAX_LISTED]
+    more = len(names) - len(shown)
+    return ', '.join(shown) + (f' và {more} kỹ năng khác' if more > 0 else '')
+
+
 def _names(items):
-    names = [item['name'] for item in items[:MAX_LISTED]]
-    more = len(items) - len(names)
-    return ', '.join(names) + (f' và {more} kỹ năng khác' if more > 0 else '')
+    return _listed([item['name'] for item in items])
+
+
+def _missing_names(items):
+    """Tên kỹ năng còn thiếu; các kỹ năng thay thế nhau viết thành "A hoặc B"."""
+    alternatives = {}
+    for item in items:
+        alternatives.setdefault(item.get('group') or item['name'], []).append(item['name'])
+    return _listed([' hoặc '.join(names) for names in alternatives.values()])
 
 
 def _months_text(months):
@@ -55,8 +67,10 @@ def _summary(component):
             'position_level': 'Chưa xác định được cấp bậc từ chức danh trong CV.',
         }.get(key, 'Chưa đủ dữ liệu.')
     if key == 'skills':
+        # Đếm theo đơn vị chấm: một nhóm kỹ năng thay thế nhau là một yêu cầu.
         matched, missing = len(detail['matched']), len(detail['missing'])
-        return f'Đáp ứng {matched}/{matched + missing} kỹ năng tin yêu cầu.'
+        units = detail.get('units') or {'met': matched, 'total': matched + missing}
+        return f'Đáp ứng {units["met"]}/{units["total"]} kỹ năng tin yêu cầu.'
     if key == 'experience':
         parts = []
         if detail['cv_months'] is not None and detail['required_band']:
@@ -114,7 +128,7 @@ def _suggestions(result):
             'missing_required_skills',
             'high',
             'skills',
-            f'Tin yêu cầu {_names(required)}. Nếu bạn đã có, hãy ghi vào mục kỹ năng và kể một '
+            f'Tin yêu cầu {_missing_names(required)}. Nếu bạn đã có, hãy ghi vào mục kỹ năng và kể một '
             'việc đã làm với kỹ năng đó ở mục kinh nghiệm hoặc dự án.',
             skills=[skill['name'] for skill in required],
         )

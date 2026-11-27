@@ -16,11 +16,10 @@ cặp khớp mạnh) → 100 điểm.
 
 import numpy as np
 
-from ...domain import CALIBRATIONS, DEFAULT_CALIBRATION, Calibration, calibration_for, to_score
+from ...domain import CALIBRATIONS, Calibration, calibration_for, to_score
 
 __all__ = [
     'CALIBRATIONS',
-    'DEFAULT_CALIBRATION',
     'Calibration',
     'best_matches',
     'calibration_for',

@@ -243,5 +243,22 @@
   "candidate_connections_decline_title": "Decline connection request",
   "candidate_connections_decline_text": "{company} will learn you are not interested in {job} and cannot invite you again for this job.",
   "candidate_connections_load_failed": "Could not load invitations",
-  "candidate_connections_empty": "You have no connection requests yet"
+  "candidate_connections_empty": "You have no connection requests yet",
+  "candidate_job_detail_tab_info": "Details",
+  "candidate_job_detail_tab_company": "Company",
+  "candidate_job_detail_tab_related": "Related jobs",
+  "candidate_job_detail_tabs_label": "Job posting sections",
+  "candidate_job_detail_company_about": "About the company",
+  "candidate_job_detail_collapse": "Show less",
+  "candidate_job_detail_expand": "Show more",
+  "candidate_job_detail_company_industries": "Industry",
+  "candidate_job_detail_company_jobs": "More jobs at this company",
+  "candidate_job_detail_company_jobs_all": "View all ({total})",
+  "candidate_job_detail_company_jobs_rail": "More jobs at this company, swipe sideways to see more",
+  "candidate_job_detail_related_empty": "No related jobs yet.",
+  "candidate_job_detail_all_jobs": "View all jobs",
+  "candidate_job_fit_trigger_label": "See how well your CV fits this job",
+  "candidate_job_fit_fab_label": "Check CV fit",
+  "candidate_job_fit_trigger_title": "Check your fit",
+  "candidate_job_fit_trigger_hint": "Compares your CV with each requirement of the job and points out missing skills."
 }

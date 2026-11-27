@@ -274,6 +274,9 @@ chmod 600 deploy/certs/origin.key
 scripts/deploy/sync_ml_models.sh deploy@<ip-vps>
 ```
 
+Mặc định đẩy mô hình gốc `multilingual-e5-base/zs-v1`; mô hình khác chọn bằng biến `MODEL`.
+Bật hai mô hình đã huấn luyện: [vận hành](van-hanh-va-kill-switch.md#đối-sánh-cvtin-chạy-local).
+
 ## 5. Deploy lần đầu
 
 ```bash
